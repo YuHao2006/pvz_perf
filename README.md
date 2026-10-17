@@ -4,8 +4,10 @@
 文档维护当前有效机制与修复；现行实测和历史算法证据分开标注，不按日期追加开发过程。
 
 发行下载：[GitHub Releases](https://github.com/YuHao2006/pvz_perf/releases)。
-v1.0 提供 Windows x64 / Win32 / DX12 包，解压后运行 `pvz_perf.exe`；
-不附个人存档或设置。发行提供 Windows Win32/DX12、Linux X11/Vulkan 和 Wayland/Vulkan。
+**Windows 推荐下载 `x64-windows-vulkan.zip`**，完整解压后运行 `pvz_perf.exe`；
+另保留 `x64-win32-dx12.zip` 供需要 DirectX 12 的用户选择。
+不附个人存档或设置。发行提供 Windows Win32/Vulkan、Win32/DX12、
+Linux X11/Vulkan 和 Wayland/Vulkan。
 当前 Linux 包基于 Ubuntu 25.10 构建，要求 glibc 2.38、GLIBCXX 3.4.32 及兼容的
 Vulkan 驱动；仍使用本机 CPU 优化，不承诺兼容所有 x86-64 CPU 或 Ubuntu 22.04。
 Linux 依赖与外部效果许可随包提供，系统图形、窗口、音频运行库由用户安装。
@@ -24,13 +26,14 @@ Linux 依赖与外部效果许可随包提供，系统图形、窗口、音频�
 
 | 组合 | 构建入口 | 程序目录 |
 | --- | --- | --- |
+| Windows x64 / Win32 / Vulkan（推荐） | CMake：`PVZ_RENDER_BACKEND=VULKAN` | `out/x64-win32-vulkan/Release/` |
 | Windows x64 / Win32 / DX12 | `tools/build-d3d12-game.ps1` | `out/x64-win32-dx12/Release/` |
 | Linux x64 / X11 / Vulkan | `sh tools/build-linux-game.sh x11` | `out/x64-x11-vulkan/Release/` |
 | Linux x64 / Wayland / Vulkan | `sh tools/build-linux-game.sh wayland` | `out/x64-wayland-vulkan/Release/` |
 
 Linux 构建脚本按本机架构选择 x64 或 arm64；依赖 vcpkg、编译器、CMake、
 Ninja、Vulkan shader 工具以及对应窗口开发库。跨架构不能复用 CMakeCache。
-Windows DX12 是主要优化组合；没有为 DX12 Ultimate 单独创建后端。
+Windows 发行优先推荐 Vulkan，保留 DX12；没有为 DX12 Ultimate 单独创建后端。
 
 源码目录可以命名为 `pvzPerf`，文件夹名称不参与应用身份。
 改名或搬迁后重新配置并构建，不复用旧路径的 CMakeCache、Ninja 文件和 PDB。

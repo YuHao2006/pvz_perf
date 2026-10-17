@@ -10,6 +10,10 @@ import zipfile
 def package(args):
     root = Path(__file__).resolve().parents[1]
     release = args.release.resolve()
+    vulkan = args.backend == "vulkan"
+    api = "Vulkan" if vulkan else "DirectX 12"
+    shader_extension = ".spv" if vulkan else ".dxil"
+    recommendation = "Recommended Windows build.\n\n" if vulkan else ""
     files = {}
 
     def include(path, name):
@@ -26,12 +30,12 @@ def package(args):
     include(root / "effects/README.md", "effects/README.md")
     include(root / "pvzPerf/SexyAppFramework/PopCap Framework License.txt",
             "licenses/PopCap-Framework.txt")
-    for folder, extensions in (("shaders", {".dxil"}), ("effects", {".hlsl", ".hlsli", ".dds"})):
+    for folder, extensions in (("shaders", {shader_extension}), ("effects", {".hlsl", ".hlsli", ".dds"})):
         for path in sorted((release / folder).rglob("*")):
             if path.is_file() and path.suffix.lower() in extensions:
                 include(path, path.relative_to(release).as_posix())
     if not any(n.startswith("shaders/") for n in files):
-        raise ValueError("No compiled DXIL shaders found")
+        raise ValueError(f"No compiled {shader_extension} shaders found")
     for path in sorted(args.notices.iterdir()):
         if path.is_file():
             include(path, "licenses/" + path.name)
@@ -41,14 +45,15 @@ def package(args):
     if forbidden:
         raise ValueError(f"Personal or debug files in package: {forbidden}")
     readme = (
-        f"pvz_perf {args.version} - Windows x64 / Win32 / DirectX 12\n\n"
+        f"pvz_perf {args.version} - Windows x64 / Win32 / {api}\n\n"
+        f"{recommendation}"
         "Extract the entire archive into a writable directory, then run pvz_perf.exe.\n"
         "This package contains no player profiles, saves, or personal settings.\n"
         "The game creates its settings and profiles on first use.\n"
         "The DAT/DAT64 converter is in data/pvz_dat64_converter.exe.\n"
         "The game and converter use the installed Microsoft Visual C++ x64 runtime (/MD).\n"
         "External scaling effects are configured in scale.json; see effects/README.md.\n"
-        "Requires Windows with DirectX 12 and a GPU supporting the game's bindless path.\n\n"
+        f"Requires Windows with {api} and a GPU supporting the game's bindless path.\n\n"
         "This product includes portions of the PopCap Games Framework, "
         "(c) 2005-2009 PopCap Games, Inc. All rights reserved. "
         "(http://popcapframework.sourceforge.net/).\n"
@@ -76,4 +81,5 @@ if __name__ == "__main__":
     parser.add_argument("--notices", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--version", default="v1.0")
+    parser.add_argument("--backend", choices=("d3d12", "vulkan"), default="d3d12")
     package(parser.parse_args())

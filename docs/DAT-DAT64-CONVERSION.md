@@ -1,0 +1,121 @@
+# 存档转换与兼容性
+
+## 数据分工
+
+原版直接保存部分对象和池布局，指针宽度、枚举顺序与现代运行时不同。
+DAT64 使用显式字段布局、编号映射和完整校验，不能通过改扩展名转换。
+
+| 文件 | 当前格式 |
+| --- | --- |
+| `users.dat` | 原版用户摘要表，仍保留 DAT |
+| `user<ID>.dat` | 原版版本 12 的玩家详情 |
+| `user<ID>.dat64` | `PVZUSR64`、版本 13 的玩家详情 |
+| `game<ID>_<mode>.dat` | 原版 1073 关卡中断存档 |
+| `game<ID>_<mode>.dat64` | `PVZDAT64`、版本 1 的关卡中断存档 |
+
+用户名能读到不等于进度已读到：摘要、玩家详情和关卡快照是三个独立文件。
+Linux 启动使用的目录规则见[运行说明](../README.md)，改名 `pvz_perf`
+不修改原来的存档根目录。
+
+## 转换流程
+
+```text
+完整解析源格式
+→ 规范化字段、池和对象引用
+→ 映射模式与已保存的图像 ID
+→ 序列化目标格式
+→ 重新解析目标字节
+→ 比较完整规范化对象
+→ 写出文件
+```
+
+源语法、池代次、空闲链、数量、拥有关系和跨对象引用都必须有效。
+不能将每个四字节字段机械扩为八字节，也不能把当前 `sizeof(T)` 当磁盘协议。
+原生指针不作为可迁移的保存地址；GPU 描述符和纹理句柄不入档。
+
+当前池顺序共 11 个：
+Zombie、Plant、Projectile、Coin、LawnMower、GridItem、
+ParticleSystem、ParticleEmitter、Particle、Reanimation、Attachment。
+旧 Trail 没有运行时对应物，非空旧 Trail 池明确拒绝。
+Zombie 的规范槽从 360 字节映射到 376 字节，
+Reanimation 从 160 字节映射到 184 字节，按字段段表处理。
+
+实现与校验位于 `pvzPerf/Lawn/System/LevelSaveFormat.h`、
+`tools/saveConverter/src/LevelSaveConverter.cpp`、`pvzPerf/Lawn/System/SaveGame.cpp` 和
+`pvzPerf/Lawn/System/ProfileMgr.cpp`。
+部分早期项目布局只作为转换器的显式输入方言，不成为正常游戏的自动回退。
+
+## 头部与损坏拒绝
+
+原 DAT 头部为长度前缀 12、magic `0xFEEDDEAD`、版本 2、构建指纹。
+接受零售指纹 `0xAC9B80AC` 和已记录的早期项目指纹 `0xB7EFF6A8`。
+DAT64 字段为小端：
+
+| 偏移 | 字段 | 值 |
+| --- | --- | --- |
+| `0x00` | 八字节 magic | `PVZDAT64` |
+| `0x08` | 格式版本 | 1 |
+| `0x0C` | 头部长度 | 48 |
+| `0x10` | 权威构建 | 1073 |
+| `0x14` | 标志 | 1 |
+| `0x18` | 载荷字节数 | 与实际一致 |
+| `0x20` | 载荷 CRC32 | 与内容一致 |
+| `0x24` | schema | `0x00010731` |
+| `0x28` | 保留字段 | 0 |
+
+载荷末尾为 `0xB4A9ABBEBBA5A9AF`。长度、CRC、schema、保留值、结束标记
+和多余字节全部校验；CRC 只能检出损坏，不能证明纹理注册表编号相同。
+结构错误在修改活池之前拒绝，不靠快照重读回滚掩盖失败。
+
+## 模式与图像编号
+
+玩家详情版本 12 使用旧挑战模式索引，版本 13 按当前 GameMode 直接下标。
+小游戏完成项、文件名中的模式值分别映射；其他已识别字段和变长列表语义保留。
+无法反向表示的数据拒绝导出，例如非零的新挑战槽 72。
+`CUSTOM_LEVEL` 的枚举和槽 72 继续保留，删除 DLL 功能不压缩编号。
+
+关卡模式来自 `game<profileId>_<mode>` 文件名，而不是 Board 载荷中的字段。
+自动输出名应用 `kGameModeRemapV1ToV3` 或反向表；显式指定输出名时，
+调用者负责使用目标格式的模式编号。正常读取不猜测曾经命名错误的文件。
+
+| 编号空间 | 用途 | 是否由 `SyncImage` 保存 |
+| --- | --- | --- |
+| `ResourceId` | 879 槽图像/字体/声音变量表 | 保存其中的图像子集 |
+| `ImageSymbolId` | 编译后动画/粒子的图像身份 | 否 |
+| GPU descriptor slot | 设备运行时绑定 | 否 |
+
+`SaveGameContext::SyncImage` 通过 `GetIdByImage` / `GetImageById` 转换。
+空图像哨兵为 `RESOURCE_ID_MAX == 879`，重映射见 `tools/saveConverter/src/ResourceIdRemap.h`。
+图像 override 必须按字段语法访问，不能全文件搜索替换同值整数。
+
+保存槽 2 与已删除的合作商标图像符号不是同一编号。
+当前 `IMAGE_PARTNER_LOGO` 变量仍与 Blank 别名，反向映射可能将同一图像记为 2；
+因此槽 2 不能随纹理符号清理而移除。若将来改变已保存图像的编号空间，
+必须显式升级版本/schema、生成映射并验证全部图像字段，不能沿用旧版本重排。
+
+## 使用转换器
+
+程序为 `pvz_dat64_converter.exe` 或 Linux 的 `pvz_dat64_converter`，
+构建后部署到 `data/`。优先对副本指定单文件输入和新输出：
+
+```powershell
+.\pvz_dat64_converter.exe .\copies\user3.dat .\converted\user3.dat64
+.\pvz_dat64_converter.exe .\copies\game3_13.dat
+```
+
+第二条由工具生成带目标模式编号的文件名。单文件模式保留输入；
+写入成功可以替换已有输出，应使用新的目标路径。
+
+无参数模式扫描转换器自身目录：存在匹配的旧 DAT 时做 DAT→DAT64，
+否则做反向转换；每个文件成功后删除该输入，失败输入保留。
+`users.dat` 不匹配玩家详情模式。这个批量删除行为属于 CLI，
+不是转换核心 API 的隐含副作用。
+
+## 验证
+
+原版/现代往返需要比较规范化语义；适用输入再做字节往返。
+游戏加载、重存、拥有关系、图像 ID、空引用和坏输入拒绝要分别验证。
+已有 Pool 回归包含 44/44 保存语义案例，41 个坏输入验证拒绝后完整存档不变；
+玩家详情还覆盖模式重映射。对应证据索引见[修复总账](fix-ledger.md)。
+发行整理的四轮 Pool 均通过，固定场景的 1,920,000 字节画面一致；
+这不是新保存格式或新纹理编号迁移已经获准的证明。

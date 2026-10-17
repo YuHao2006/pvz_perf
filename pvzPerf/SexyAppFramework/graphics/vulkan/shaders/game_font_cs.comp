@@ -1,0 +1,129 @@
+#version 450
+#extension GL_EXT_nonuniform_qualifier : require
+#extension GL_ARB_gpu_shader_fp64 : require
+
+layout(local_size_x=8, local_size_y=8) in;
+layout(set=0,binding=0) uniform texture2D images[4096];
+layout(set=1,binding=0) uniform sampler samplers[4];
+layout(set=2,binding=0,rgba32f) writeonly uniform image2D target;
+layout(set=2,binding=1,std430) readonly buffer Source {
+    int width;
+    int height;
+    uint samplingFlags;
+    uint slot;
+} source;
+layout(push_constant) uniform Glyph {
+    ivec4 src;
+    ivec4 dst;
+    uint white;
+} glyph;
+
+uvec4 rawPixel(ivec2 position)
+{
+    position=clamp(position,ivec2(0),ivec2(source.width-1,source.height-1));
+    const uint slot=source.slot;
+    vec4 rgba=texelFetch(sampler2D(images[nonuniformEXT(slot&0xfffu)],samplers[0]),
+        position,0);
+    if ((slot&0x04000000u)!=0u) rgba.a=1.0;
+    if ((slot&0x80000000u)!=0u)
+        rgba.rgb=rgba.a>0.0?rgba.rgb/rgba.a:vec3(0.0);
+    return uvec4(round(clamp(rgba,vec4(0.0),vec4(1.0))*255.0));
+}
+
+uvec4 pixel(ivec2 position)
+{
+    uvec4 rgba=rawPixel(position);
+    if ((source.samplingFlags&0x08000000u)!=0u && rgba.a==0u) {
+        uvec3 rgb=uvec3(0);
+        uint count=0u;
+        for (int dy=-1;dy<=1;dy+=2) for (int dx=-1;dx<=1;++dx) {
+            const ivec2 neighbor=position+ivec2(dx,dy);
+            if (any(lessThan(neighbor,ivec2(0))) ||
+                any(greaterThanEqual(neighbor,ivec2(source.width,source.height))))
+                continue;
+            const uvec4 value=rawPixel(neighbor);
+            if (value.a!=0u) { rgb+=value.rgb;++count; }
+        }
+        rgba.rgb=count!=0u?rgb/count:uvec3(0);
+    }
+    return rgba;
+}
+
+// The separable integer weights mirror MI_SlowStretchBlt.inc, including
+// its asymmetric 257/256 factors and endpoint-aligned enlargement.
+struct Axis {
+    int first;
+    int last;
+    uint firstWeight;
+    uint lastWeight;
+    bool shrinking;
+    double factor;
+    int outputIndex;
+    uint unit;
+};
+
+Axis axis(int inputExtent,int outputExtent,int outputIndex,int start,int physicalExtent,uint unit)
+{
+    Axis result;
+    result.shrinking=inputExtent>=outputExtent;
+    result.outputIndex=outputIndex+1;
+    result.unit=unit;
+    if (result.shrinking) {
+        precise double factor=double(outputExtent)/double(inputExtent);
+        result.factor=factor;
+        result.first=max(0,int(floor(double(outputIndex)/factor))-1);
+        result.last=min(inputExtent-1,int(ceil(double(outputIndex+1)/factor))+1);
+        result.firstWeight=result.lastWeight=0u;
+    } else {
+        precise double factor=double(inputExtent-1)/double(outputExtent-1);
+        precise double coordinate=double(outputIndex)*factor;
+        if (unit==257u) coordinate+=double(start);
+        const int base=int(coordinate);
+        precise double fraction=coordinate-double(base);
+        result.first=base-(unit==257u?start:0);
+        result.last=unit==257u?min(result.first+1,physicalExtent-1-start):
+            min(result.first+1,inputExtent-1);
+        result.firstWeight=uint(double(unit)*(1.0-fraction));
+        result.lastWeight=unit-result.firstWeight;
+        result.factor=0.0;
+    }
+    return result;
+}
+
+uint weight(Axis value,int index)
+{
+    if (!value.shrinking)
+        return (index==value.first?value.firstWeight:0u)+(index==value.last?value.lastWeight:0u);
+    precise double begin=double(index)*value.factor+1.0;
+    precise double end=begin+value.factor;
+    const int a=int(begin),b=int(end);
+    if (a==b)
+        return a==value.outputIndex?uint(double(value.unit)*value.factor):0u;
+    return (a==value.outputIndex?uint(double(value.unit)*(double(b)-begin)):0u)+
+        (b==value.outputIndex?uint(double(value.unit)*(end-double(b))):0u);
+}
+
+void main()
+{
+    const ivec2 outputPosition=ivec2(gl_GlobalInvocationID.xy);
+    if (any(greaterThanEqual(outputPosition,glyph.dst.zw))) return;
+    const Axis x=axis(glyph.src.z,glyph.dst.z,outputPosition.x,glyph.src.x,source.width,257u);
+    const Axis y=axis(glyph.src.w,glyph.dst.w,outputPosition.y,glyph.src.y,source.height,256u);
+    uvec4 total=uvec4(0);
+    for (int iy=y.first;iy<=y.last;++iy) {
+        const uint wy=weight(y,iy);
+        if (wy==0u) continue;
+        uvec4 horizontal=uvec4(0);
+        for (int ix=x.first;ix<=x.last;++ix) {
+            const uint wx=weight(x,ix);
+            if (wx!=0u) horizontal+=pixel(glyph.src.xy+ivec2(ix,iy))*wx;
+        }
+        total+=horizontal*wy;
+    }
+    uvec4 result=total>>16u;
+    result.rgb=(result.rgb*result.a)>>8u;
+    if (result.a==0u) result.rgb=uvec3(0);
+    const float alpha=float(result.a)/255.0;
+    const vec3 rgb=glyph.white!=0u?vec3(1.0):vec3(result.rgb)/255.0;
+    imageStore(target,glyph.dst.xy+outputPosition,vec4(rgb*alpha,alpha));
+}

@@ -1,0 +1,78 @@
+{
+  "format": "pvz-resources-authoring-conversion-v1",
+  "source": {
+    "path": "C:\\UserProgram\\Plants_Vs_Zombies_V1.2.0.1073_EN\\pak\\properties\\resources.xml",
+    "bytes": 58937,
+    "sha256": "027c549ee156249c08b666724b01d8ae29b7faab999ae74b87fe0b4fda5380bf"
+  },
+  "authoring": {
+    "path": "tools/test-data/resources-authoring.json",
+    "bytes": 193361,
+    "sha256": "721e323be19f6b1e9a473d453c2adcba588de5ac1937721f23501a954a6de793"
+  },
+  "conversion": "One-time structured export: element tags, decoded string attributes and child order retained; comments and whitespace-only text omitted. No converter is kept in active tools.",
+  "group_count": 30,
+  "node_count": 949,
+  "attribute_count": 1977,
+  "ordered_tree_sha256": "b16f81bffe4bf75dd91046b481ab78e81d96212d53eece9d2168bed1ec5cbeea",
+  "prior_xml_compiler": {
+    "bytes": 267705,
+    "sha256": "9ca38afd3a221b160116233888ffa63570931d31dd7d5bdd5d79c4e089247922",
+    "header_words": [
+      1129534030,
+      1,
+      879,
+      2288,
+      2476,
+      2476,
+      985988813,
+      859010877,
+      267669
+    ],
+    "mapping_sha256": "8d63bacba10649d49a816ddb0097f0ffdd2455d1a9fd9c28221f554bdc8e2bf6",
+    "enum_order_sha256": "a598191c38cb156028a255b6eb72e234f3be90e6e324b6b8c865e1360a340956"
+  },
+  "deployed_numeric": {
+    "bytes": 267705,
+    "sha256": "9ca38afd3a221b160116233888ffa63570931d31dd7d5bdd5d79c4e089247922",
+    "equal_to_prior_compiler": true
+  },
+  "json_compiler_verification": {
+    "method": "Read-only in-memory compilation against the existing archive inventory; no headers, compiled assets or PAK were written.",
+    "bytes": 267705,
+    "sha256": "9ca38afd3a221b160116233888ffa63570931d31dd7d5bdd5d79c4e089247922",
+    "header_words": [
+      1129534030,
+      1,
+      879,
+      2288,
+      2476,
+      2476,
+      985988813,
+      859010877,
+      267669
+    ],
+    "mapping_sha256": "8d63bacba10649d49a816ddb0097f0ffdd2455d1a9fd9c28221f554bdc8e2bf6",
+    "enum_order_sha256": "a598191c38cb156028a255b6eb72e234f3be90e6e324b6b8c865e1360a340956",
+    "matches_prior_xml_compiler": true,
+    "matches_deployed_bytes": true
+  },
+  "compiler_inputs": {
+    "tools\\compile_numeric_resources.py": {
+      "bytes": 15709,
+      "sha256": "d69dbb18e3887b81b172d03413326da2e801fe431814c7f43493759a940b0f66"
+    },
+    "ResourceGroupId.h": {
+      "bytes": 1306,
+      "sha256": "722e34e23e6766a0430937c90338e7857e0157a9d8cf0354efc83c58e29de485"
+    },
+    "Sexy.TodLib\\generated\\ResourceId.h": {
+      "bytes": 38777,
+      "sha256": "263bd069eb18523b057ee170152af9e3e276463891cfaff6f19a406012a3a0dc"
+    },
+    "Sexy.TodLib\\generated\\image_symbol_ids.bin": {
+      "bytes": 88484,
+      "sha256": "ec128027351ba8848ede1efb9d8f7566ffafe8dbec1502277b49e51b2ee7a37b"
+    }
+  }
+}

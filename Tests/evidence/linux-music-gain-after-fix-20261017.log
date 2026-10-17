@@ -1,0 +1,51 @@
+sanitizers=OFF
+
+exit=0
+PASS cycle=1 actual-device=No Output
+PASS cycle=1 unpublished-start-muted source=33 actual=0.000000 expected=0.000000
+PASS cycle=1 unpublished-focus-restore source=33 actual=0.850000 expected=0.850000
+PASS cycle=1 unpublished-before-mute source=33 actual=0.850000 expected=0.850000
+PASS cycle=1 unpublished-immediate-mute source=33 actual=0.000000 expected=0.000000
+PASS cycle=1 published-main-restore source=33 actual=0.850000 expected=0.850000
+PASS cycle=1 published-layer-restore source=34 actual=0.340000 expected=0.340000
+PASS cycle=1 published-main-mute source=33 actual=0.000000 expected=0.000000
+PASS cycle=1 published-layer-mute source=34 actual=0.000000 expected=0.000000
+PASS cycle=1 published-song-volume source=34 actual=0.212500 expected=0.212500
+PASS cycle=1 real-load/publish/destruction
+PASS cycle=2 actual-device=No Output
+PASS cycle=2 unpublished-start-muted source=33 actual=0.000000 expected=0.000000
+PASS cycle=2 unpublished-focus-restore source=33 actual=0.850000 expected=0.850000
+PASS cycle=2 unpublished-before-mute source=33 actual=0.850000 expected=0.850000
+PASS cycle=2 unpublished-immediate-mute source=33 actual=0.000000 expected=0.000000
+PASS cycle=2 published-main-restore source=33 actual=0.850000 expected=0.850000
+PASS cycle=2 published-layer-restore source=34 actual=0.340000 expected=0.340000
+PASS cycle=2 published-main-mute source=33 actual=0.000000 expected=0.000000
+PASS cycle=2 published-layer-mute source=34 actual=0.000000 expected=0.000000
+PASS cycle=2 published-song-volume source=34 actual=0.212500 expected=0.212500
+PASS cycle=2 real-load/publish/destruction
+PASS cycle=3 actual-device=No Output
+PASS cycle=3 unpublished-start-muted source=33 actual=0.000000 expected=0.000000
+PASS cycle=3 unpublished-focus-restore source=33 actual=0.850000 expected=0.850000
+PASS cycle=3 unpublished-before-mute source=33 actual=0.850000 expected=0.850000
+PASS cycle=3 unpublished-immediate-mute source=33 actual=0.000000 expected=0.000000
+PASS cycle=3 published-main-restore source=33 actual=0.850000 expected=0.850000
+PASS cycle=3 published-layer-restore source=34 actual=0.340000 expected=0.340000
+PASS cycle=3 published-main-mute source=33 actual=0.000000 expected=0.000000
+PASS cycle=3 published-layer-mute source=34 actual=0.000000 expected=0.000000
+PASS cycle=3 published-song-volume source=34 actual=0.212500 expected=0.212500
+PASS cycle=3 real-load/publish/destruction
+PASS cycle=4 background-initialize-main-mute source=33 actual=0.000000 expected=0.000000
+PASS cycle=4 background-initialize-main-restore source=33 actual=0.850000 expected=0.850000
+PASS cycle=4 background-joined-layer-baseline source=34 actual=0.340000 expected=0.340000
+PASS cycle=4 background-joined-layer-mute source=34 actual=0.000000 expected=0.000000
+PASS cycle=4 background-joined-layer-restore source=34 actual=0.340000 expected=0.340000
+PASS controlled background LoadMusic/SetVolume interleave and destruction
+AL_GAIN checks=32 failures=0; lifecycle cycles=3; controlled-interleaves=1; driver=null; PCM=silence
+Linux audio: OpenAL device=OpenAL Soft renderer=OpenAL Soft
+[ALSOFT] (EE) Could not query RTKit: No such file or directory (2)
+[ALSOFT] (EE) Could not query RTKit: No such file or directory (2)
+Linux audio: OpenAL device=OpenAL Soft renderer=OpenAL Soft
+[ALSOFT] (EE) Could not query RTKit: No such file or directory (2)
+Linux audio: OpenAL device=OpenAL Soft renderer=OpenAL Soft
+Linux audio: OpenAL device=OpenAL Soft renderer=OpenAL Soft
+[ALSOFT] (EE) Could not query RTKit: No such file or directory (2)

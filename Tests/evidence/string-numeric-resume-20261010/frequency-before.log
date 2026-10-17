@@ -1,0 +1,13 @@
+== 误差（域 ±1.1 rad）==
+  Bhaskara   maxAbsErr=1.090e-03（±60° 域）
+  Poly7      maxAbsErr=6.497e-06（±60° 域）
+  Poly11全周期 maxAbsErr=1.192e-07（±60° 域）
+  Poly5      maxAbsErr=3.802e-04（±60° 域）
+== 吞吐（ns/次，含取点与累加）==
+  CRT sinf      12.864
+  CRT cosf      12.885
+  Bhaskara 三项  5.027
+  Poly7          4.367
+  Poly5          3.271
+  Poly7+折叠    11.482（全域可用）
+  Poly11全周期   7.946([-pi,pi])

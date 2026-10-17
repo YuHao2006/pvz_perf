@@ -1,0 +1,5 @@
+Validation passed: 49728 color scans, 37968 definition lookups, 45 changing-color sequences, 4032 duplicate-instance scans and 3808 declaration-order range lookups.
+Pinned process and benchmark thread to 0x4000 (LP14). CPU: Intel(R) Core(TM) Ultra 9 185H
+find_fadeout_present_systems             A    48.644 ns  B     5.978 ns  change  -87.711%
+find_fadeout_full_corpus                 A    29.648 ns  B     5.965 ns  change  -79.882%
+Benchmark wall time 0.676 seconds; 9 rounds. Results: C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\log\particle-emitter-fadeout-20261010-161157-045

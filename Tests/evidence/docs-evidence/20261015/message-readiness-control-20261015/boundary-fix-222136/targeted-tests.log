@@ -1,0 +1,45 @@
+Start testing: Oct 15 22:20 中国标准时间
+----------------------------------------------------------
+8/13 Testing: modern_message_readiness
+8/13 Test: modern_message_readiness
+Command: "C:/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/out/x64-win32-dx12/SexyAppFramework/modern_message_readiness_tests.exe"
+Directory: C:/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/out/x64-win32-dx12/SexyAppFramework
+"modern_message_readiness" start time: Oct 15 22:20 中国标准时间
+Output:
+----------------------------------------------------------
+PASS 100 updates x 1000 simulated boundary transitions; one extra native motion query per update
+PASS mixed keyboard/button/text/wheel/close FIFO; event coordinates; old input readiness
+PASS 400 pending button events consumed without a time budget; synthetic_us=14181.300
+PASS cross-thread sent callback; quiet queue after delivery
+PASS WM_QUIT readiness and retrieval
+LIMIT posted/sent contract only; no hardware movement or GPU performance tested
+<end of output>
+Test time =   0.06 sec
+----------------------------------------------------------
+Test Passed.
+"modern_message_readiness" end time: Oct 15 22:20 中国标准时间
+"modern_message_readiness" time elapsed: 00:00:00
+----------------------------------------------------------
+
+12/13 Testing: modern_message_readiness_asan
+12/13 Test: modern_message_readiness_asan
+Command: "C:/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/out/x64-win32-dx12/SexyAppFramework/modern_message_readiness_asan_tests.exe"
+Directory: C:/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/out/x64-win32-dx12/SexyAppFramework
+"modern_message_readiness_asan" start time: Oct 15 22:20 中国标准时间
+Output:
+----------------------------------------------------------
+PASS 100 updates x 1000 simulated boundary transitions; one extra native motion query per update
+PASS mixed keyboard/button/text/wheel/close FIFO; event coordinates; old input readiness
+PASS 400 pending button events consumed without a time budget; synthetic_us=14030.600
+PASS cross-thread sent callback; quiet queue after delivery
+PASS WM_QUIT readiness and retrieval
+LIMIT posted/sent contract only; no hardware movement or GPU performance tested
+<end of output>
+Test time =   0.11 sec
+----------------------------------------------------------
+Test Passed.
+"modern_message_readiness_asan" end time: Oct 15 22:20 中国标准时间
+"modern_message_readiness_asan" time elapsed: 00:00:00
+----------------------------------------------------------
+
+End testing: Oct 15 22:20 中国标准时间

@@ -1,0 +1,107 @@
+[
+  {
+    "build": "modern-d3d12-message-split",
+    "scenario": "Scenes",
+    "diagnostic": true,
+    "run": "C:\\Users\\Administrator\\CLionProjects\\codex\\PlantsVsZombiesModern\\out\\modern-d3d12-message-split\\Release\\log\\smoke\\20261015-185103-643-c04f328812204ca7b2017e4f74bdb0ba",
+    "sha256": "D81B2ABF0DBB9ED803EAF604108E2B5B1E0194A829C74C4A4EC0FEF8564B75F4",
+    "status": "passed",
+    "exitCode": 0,
+    "validation": "passed",
+    "affinity": "0x8000",
+    "purpose": "functional-only",
+    "originalPeerIds": [
+      4696
+    ]
+  },
+  {
+    "build": "modern-d3d12-message-split",
+    "scenario": "Pool",
+    "diagnostic": true,
+    "run": "C:\\Users\\Administrator\\CLionProjects\\codex\\PlantsVsZombiesModern\\out\\modern-d3d12-message-split\\Release\\log\\smoke\\20261015-185314-838-a0b0d5529efb438da0f85bfa80452d6a",
+    "sha256": "D81B2ABF0DBB9ED803EAF604108E2B5B1E0194A829C74C4A4EC0FEF8564B75F4",
+    "status": "passed",
+    "exitCode": 0,
+    "validation": "passed",
+    "affinity": "0x8000",
+    "purpose": "functional-only",
+    "originalPeerIds": [
+      4696
+    ]
+  },
+  {
+    "build": "modern-d3d12-message-split",
+    "scenario": "Survival",
+    "diagnostic": true,
+    "run": "C:\\Users\\Administrator\\CLionProjects\\codex\\PlantsVsZombiesModern\\out\\modern-d3d12-message-split\\Release\\log\\smoke\\20261015-185425-616-a938d125aa864819ae6d692f6afdc7da",
+    "sha256": "D81B2ABF0DBB9ED803EAF604108E2B5B1E0194A829C74C4A4EC0FEF8564B75F4",
+    "status": "passed",
+    "exitCode": 0,
+    "validation": "passed",
+    "affinity": "0x8000",
+    "purpose": "functional-only",
+    "originalPeerIds": [
+      4696
+    ]
+  },
+  {
+    "build": "modern-vulkan-message-split",
+    "scenario": "Scenes",
+    "diagnostic": true,
+    "run": "C:\\Users\\Administrator\\CLionProjects\\codex\\PlantsVsZombiesModern\\out\\modern-vulkan-message-split\\Release\\log\\smoke\\20261015-185718-983-876150fd7c7244a58fb597a3b86d5524",
+    "sha256": "7E4F2F8AB8F5D4C9137A95F49A75A9ABCCE46CCD41C52C5DAB11EC1BBE98DBAD",
+    "status": "passed",
+    "exitCode": 0,
+    "validation": "passed",
+    "affinity": "0x8000",
+    "purpose": "functional-only",
+    "originalPeerIds": [
+      4696
+    ]
+  },
+  {
+    "build": "modern-vulkan-message-split",
+    "scenario": "Pool",
+    "diagnostic": true,
+    "run": "C:\\Users\\Administrator\\CLionProjects\\codex\\PlantsVsZombiesModern\\out\\modern-vulkan-message-split\\Release\\log\\smoke\\20261015-190007-187-652869aed8984a5ea09116eafaacab5f",
+    "sha256": "7E4F2F8AB8F5D4C9137A95F49A75A9ABCCE46CCD41C52C5DAB11EC1BBE98DBAD",
+    "status": "passed",
+    "exitCode": 0,
+    "validation": "passed",
+    "affinity": "0x8000",
+    "purpose": "functional-only",
+    "originalPeerIds": [
+      4696
+    ]
+  },
+  {
+    "build": "modern-d3d12-heartbeat",
+    "scenario": "Pool",
+    "diagnostic": false,
+    "run": "C:\\Users\\Administrator\\CLionProjects\\codex\\PlantsVsZombiesModern\\out\\modern-d3d12-heartbeat\\Release\\log\\smoke\\20261015-190154-602-a84dfd061f2347f99a544c869cf2f32d",
+    "sha256": "35C9DCF58A06952F7F4096D0D6B026B8720E4E82EE61303535B2B54C4E0F2A88",
+    "status": "passed",
+    "exitCode": 0,
+    "validation": "passed",
+    "affinity": "0x8000",
+    "purpose": "functional-only",
+    "originalPeerIds": [
+      4696
+    ]
+  },
+  {
+    "build": "modern-vulkan-test",
+    "scenario": "Scenes",
+    "diagnostic": false,
+    "run": "C:\\Users\\Administrator\\CLionProjects\\codex\\PlantsVsZombiesModern\\out\\modern-vulkan-test\\Release\\log\\smoke\\20261015-190259-777-7a6bfae9154d4bdf8342c043e35c960b",
+    "sha256": "8C8E8933ADAA6F6CF2B40A3BA4E9811CE96400DB54D6B31D5FFAADC31958B906",
+    "status": "passed",
+    "exitCode": 0,
+    "validation": "passed",
+    "affinity": "0x8000",
+    "purpose": "functional-only",
+    "originalPeerIds": [
+      4696
+    ]
+  }
+]

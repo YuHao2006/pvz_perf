@@ -1,0 +1,2 @@
+Modern smoke PID=17476; output=C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\modern-game\Release\log\smoke\20261011-022553-512-be6dd502c1a2472cafe5e3c02ec1f4f9
+PASS loading-close stage=AfterParticles callback/loop/join/game-cleanup/destruction verified

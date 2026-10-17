@@ -1,0 +1,111 @@
+fixtures=alpha-composition-0 oracle=1073-integer-bitwise allRGBA=1 alphaZeroRGB=1 cpuFallback=0
+before textures=2344 retired=0 pools=1 vertexBuffers=1
+adopt pointerIdentity=1 pending=0 commit=0 unchangedChildPointers=0
+rgba case=plain-adopt-uncommitted size=17x19 pixels=323 zeroAlphaNonzeroRGB=47 different=0
+adopt pointerIdentity=1 pending=0 commit=1 unchangedChildPointers=0
+rgba case=plain-adopt-committed size=17x19 pixels=323 zeroAlphaNonzeroRGB=47 different=0
+adopt pointerIdentity=1 pending=0 commit=0 unchangedChildPointers=0
+rgba case=automatic-prefix size=17x19 pixels=323 zeroAlphaNonzeroRGB=1 different=0
+adopt pointerIdentity=1 pending=0 commit=1 unchangedChildPointers=0
+rgba case=automatic-suffix-no-extension size=17x19 pixels=323 zeroAlphaNonzeroRGB=1 different=0
+adopt pointerIdentity=1 pending=0 commit=1 unchangedChildPointers=0
+rgba case=automatic-prefix-priority size=17x19 pixels=323 zeroAlphaNonzeroRGB=1 different=0
+adopt pointerIdentity=1 pending=0 commit=1 unchangedChildPointers=0
+rgba case=automatic-disabled size=17x19 pixels=323 zeroAlphaNonzeroRGB=47 different=0
+adopt pointerIdentity=1 pending=0 commit=1 unchangedChildPointers=0
+rgba case=automatic-suffix-explicit-extension size=17x19 pixels=323 zeroAlphaNonzeroRGB=2 different=0
+adopt pointerIdentity=1 pending=0 commit=0 unchangedChildPointers=0
+rgba case=no-matching-sidecar-resource-protocol size=17x19 pixels=323 zeroAlphaNonzeroRGB=47 different=0
+adopt pointerIdentity=1 pending=0 commit=0 unchangedChildPointers=0
+rgba case=alpha-only-color-0 size=17x19 pixels=323 zeroAlphaNonzeroRGB=1 different=0
+adopt pointerIdentity=1 pending=0 commit=1 unchangedChildPointers=0
+rgba case=alpha-only-color-1 size=17x19 pixels=323 zeroAlphaNonzeroRGB=1 different=0
+adopt pointerIdentity=1 pending=0 commit=0 unchangedChildPointers=0
+rgba case=alpha-only-color-2 size=17x19 pixels=323 zeroAlphaNonzeroRGB=0 different=0
+adopt pointerIdentity=1 pending=0 commit=1 unchangedChildPointers=0
+rgba case=alpha-only-color-3 size=17x19 pixels=323 zeroAlphaNonzeroRGB=0 different=0
+adopt pointerIdentity=1 pending=0 commit=0 unchangedChildPointers=0
+rgba case=alpha-only-color-4 size=17x19 pixels=323 zeroAlphaNonzeroRGB=0 different=0
+decoderCases=13 defaultWhite=1 nonwhite=1 highByteOR=1 suffixWithoutExtension=1
+adopt pointerIdentity=1 pending=0 commit=0 unchangedChildPointers=0
+rgba case=append-grid-original-base-tails size=17x11 pixels=187 zeroAlphaNonzeroRGB=5 different=0
+grid tails=37 originalBaseRGBA=1
+adopt pointerIdentity=1 pending=0 commit=1 unchangedChildPointers=0
+rgba case=append-two-layers-replace-not-multiply size=17x11 pixels=187 zeroAlphaNonzeroRGB=1 different=0
+adopt pointerIdentity=1 pending=1 commit=1 unchangedChildPointers=3
+rgba case=recursive-four-level-blue-then-grid size=17x11 pixels=187 zeroAlphaNonzeroRGB=0 different=0
+appendCases=3 recursiveDepth=4 blueNotRecursiveAlpha=1 lastLayerWins=1
+rgba case=numeric-explicit-alpha-recursive size=17x11 pixels=187 zeroAlphaNonzeroRGB=1 different=0
+rgba case=numeric-explicit-grid-recursive-tails size=17x11 pixels=187 zeroAlphaNonzeroRGB=5 different=0
+rgba case=numeric-full-then-grid size=17x11 pixels=187 zeroAlphaNonzeroRGB=0 different=0
+rgba case=numeric-explicit-alpha-only-default-white size=17x11 pixels=187 zeroAlphaNonzeroRGB=0 different=0
+rgba case=numeric-explicit-grid-only-default-white size=17x11 pixels=187 zeroAlphaNonzeroRGB=5 different=0
+rgba case=numeric-automatic-alpha-only-high-byte size=17x11 pixels=187 zeroAlphaNonzeroRGB=0 different=0
+rgba case=numeric-automatic-prefix size=17x11 pixels=187 zeroAlphaNonzeroRGB=0 different=0
+numericAlphaCases=7 realManifest=1 explicitDefaultWhite=1 explicitDisablesAuto=1
+adopt pointerIdentity=1 pending=0 commit=0 unchangedChildPointers=0
+append-rejection mask=reject-wide.png columns=1 rows=1 alreadyPending=0 rejectedBeforeMutation=1 originalRGBAUnchanged=1
+adopt pointerIdentity=1 pending=0 commit=0 unchangedChildPointers=0
+append-rejection mask=reject-wide.png columns=1 rows=1 alreadyPending=1 rejectedBeforeMutation=1 originalRGBAUnchanged=1
+adopt pointerIdentity=1 pending=0 commit=0 unchangedChildPointers=0
+append-rejection mask=reject-high.png columns=1 rows=1 alreadyPending=0 rejectedBeforeMutation=1 originalRGBAUnchanged=1
+adopt pointerIdentity=1 pending=0 commit=0 unchangedChildPointers=0
+append-rejection mask=reject-high.png columns=1 rows=1 alreadyPending=1 rejectedBeforeMutation=1 originalRGBAUnchanged=1
+adopt pointerIdentity=1 pending=0 commit=0 unchangedChildPointers=0
+append-rejection mask=reject-cell.png columns=0 rows=2 alreadyPending=0 rejectedBeforeMutation=1 originalRGBAUnchanged=1
+adopt pointerIdentity=1 pending=0 commit=0 unchangedChildPointers=0
+append-rejection mask=reject-cell.png columns=0 rows=2 alreadyPending=1 rejectedBeforeMutation=1 originalRGBAUnchanged=1
+adopt pointerIdentity=1 pending=0 commit=0 unchangedChildPointers=0
+append-rejection mask=reject-cell.png columns=3 rows=0 alreadyPending=0 rejectedBeforeMutation=1 originalRGBAUnchanged=1
+adopt pointerIdentity=1 pending=0 commit=0 unchangedChildPointers=0
+append-rejection mask=reject-cell.png columns=3 rows=0 alreadyPending=1 rejectedBeforeMutation=1 originalRGBAUnchanged=1
+adopt pointerIdentity=1 pending=0 commit=0 unchangedChildPointers=0
+append-rejection mask=reject-cell.png columns=-1 rows=2 alreadyPending=0 rejectedBeforeMutation=1 originalRGBAUnchanged=1
+adopt pointerIdentity=1 pending=0 commit=0 unchangedChildPointers=0
+append-rejection mask=reject-cell.png columns=-1 rows=2 alreadyPending=1 rejectedBeforeMutation=1 originalRGBAUnchanged=1
+adopt pointerIdentity=1 pending=0 commit=0 unchangedChildPointers=0
+append-rejection mask=reject-cell.png columns=3 rows=-1 alreadyPending=0 rejectedBeforeMutation=1 originalRGBAUnchanged=1
+adopt pointerIdentity=1 pending=0 commit=0 unchangedChildPointers=0
+append-rejection mask=reject-cell.png columns=3 rows=-1 alreadyPending=1 rejectedBeforeMutation=1 originalRGBAUnchanged=1
+adopt pointerIdentity=1 pending=0 commit=0 unchangedChildPointers=0
+append-rejection mask=reject-cell.png columns=18 rows=2 alreadyPending=0 rejectedBeforeMutation=1 originalRGBAUnchanged=1
+adopt pointerIdentity=1 pending=0 commit=0 unchangedChildPointers=0
+append-rejection mask=reject-cell.png columns=18 rows=2 alreadyPending=1 rejectedBeforeMutation=1 originalRGBAUnchanged=1
+adopt pointerIdentity=1 pending=0 commit=0 unchangedChildPointers=0
+append-rejection mask=reject-cell.png columns=3 rows=12 alreadyPending=0 rejectedBeforeMutation=1 originalRGBAUnchanged=1
+adopt pointerIdentity=1 pending=0 commit=0 unchangedChildPointers=0
+append-rejection mask=reject-cell.png columns=3 rows=12 alreadyPending=1 rejectedBeforeMutation=1 originalRGBAUnchanged=1
+adopt pointerIdentity=1 pending=0 commit=0 unchangedChildPointers=0
+append-rejection mask=reject-full.png columns=3 rows=2 alreadyPending=0 rejectedBeforeMutation=1 originalRGBAUnchanged=1
+adopt pointerIdentity=1 pending=0 commit=0 unchangedChildPointers=0
+append-rejection mask=reject-full.png columns=3 rows=2 alreadyPending=1 rejectedBeforeMutation=1 originalRGBAUnchanged=1
+adopt pointerIdentity=1 pending=1 commit=1 unchangedChildPointers=2
+numeric-rejection mode=0 parseFailure=0 imagePublished=0 gpuUploaded=0
+numeric-rejection mode=1 parseFailure=0 imagePublished=0 gpuUploaded=0
+numeric-rejection mode=2 parseFailure=0 imagePublished=0 gpuUploaded=0
+numeric-rejection mode=3 parseFailure=0 imagePublished=0 gpuUploaded=0
+numeric-rejection mode=4 parseFailure=1 imagePublished=0 gpuUploaded=0
+numeric-rejection mode=5 parseFailure=1 imagePublished=0 gpuUploaded=0
+numeric-rejection mode=6 parseFailure=1 imagePublished=0 gpuUploaded=0
+numeric-rejection mode=7 parseFailure=1 imagePublished=0 gpuUploaded=0
+rejections decoder=2 append=18 gpu=1 numeric=8 exceptionTextNotRequired=1
+adopt pointerIdentity=1 pending=0 commit=0 unchangedChildPointers=0
+rgba case=alpha-texture-65x67 size=65x67 pixels=4355 zeroAlphaNonzeroRGB=18 different=0
+texture case=alpha-texture-65x67 size=65x67 different=0
+rgba case=alpha-texture-65x67-clone-source-destroyed size=65x67 pixels=4355 zeroAlphaNonzeroRGB=18 different=0
+texture case=alpha-texture-65x67-clone-source-destroyed size=65x67 different=0
+adopt pointerIdentity=1 pending=0 commit=1 unchangedChildPointers=0
+rgba case=alpha-texture-130x150 size=130x150 pixels=19500 zeroAlphaNonzeroRGB=77 different=0
+texture case=alpha-texture-130x150 size=130x150 different=0
+rgba case=alpha-texture-130x150-clone-source-destroyed size=130x150 pixels=19500 zeroAlphaNonzeroRGB=77 different=0
+texture case=alpha-texture-130x150-clone-source-destroyed size=130x150 different=0
+nativeTextureCases=2 nativeRGBA=1 clonesSurviveSource=1 staticSlotsUntouched=1
+adopt pointerIdentity=1 pending=0 commit=0 unchangedChildPointers=0
+rgba case=clone-source-composed size=17x19 pixels=323 zeroAlphaNonzeroRGB=2 different=0
+rgba case=revision-restored-original-rgba size=17x19 pixels=323 zeroAlphaNonzeroRGB=2 different=0
+rgba case=gpu-clone-all-rgba-including-alpha-zero-rgb size=17x19 pixels=323 zeroAlphaNonzeroRGB=2 different=0
+rgba case=gpu-clone-after-source-destruction size=17x19 pixels=323 zeroAlphaNonzeroRGB=2 different=0
+gpuClone independentTexture=1 sourceDestroyed=1 cpuRejected=1 exactHiddenRGB=1 staleRevisionRejected=1 staleCloneRejected=1
+after textures=2344 retired=0 pools=1 vertexBuffers=1
+ownershipRestored=1 screenRGBAUnchanged=1 cacheUnchanged=1 cpuPendingRejections=68 exactComparisons=31 comparedPixels=55071 alphaZeroNonzeroRGB=410
+PASS portable-alpha-composition

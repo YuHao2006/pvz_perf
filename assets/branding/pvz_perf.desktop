@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=pvz_perf
+Exec=pvz_perf
+Icon=pvz_perf
+Terminal=false
+Categories=Game;StrategyGame;
+StartupWMClass=pvz_perf

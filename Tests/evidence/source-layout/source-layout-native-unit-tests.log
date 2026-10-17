@@ -1,0 +1,13 @@
+Test project C:/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/out/x64-win32-dx12
+    Start  1: modern_rng_wire
+1/4 Test  #1: modern_rng_wire ..................   Passed    0.02 sec
+    Start  2: modern_array_pick
+2/4 Test  #2: modern_array_pick ................   Passed    0.01 sec
+    Start  9: modern_message_readiness
+3/4 Test  #9: modern_message_readiness .........   Passed    0.06 sec
+    Start 10: modern_message_filter
+4/4 Test #10: modern_message_filter ............   Passed    0.03 sec
+
+100% tests passed out of 4
+
+Total Test time (real) =   0.15 sec

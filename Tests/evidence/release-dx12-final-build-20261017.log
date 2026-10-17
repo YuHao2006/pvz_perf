@@ -1,0 +1,10 @@
+-- Configuring done (5.0s)
+-- Generating done (0.4s)
+-- Build files have been written to: C:/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/out/x64-win32-dx12
+[1/6] Generating reanim attacher masks (P4)
+gen: 144 types, max 171 tracks, 3 words, 12 attacher types -> Sexy.TodLib\generated\ReanimAttacherMasks.h
+[2/6] Building CXX object SexyAppFramework\graphics\d3d12\CMakeFiles\sexy_d3d12.dir\D3d12Context.cpp.obj
+[3/6] Linking CXX static library SexyAppFramework\graphics\d3d12\sexy_d3d12.lib
+[4/6] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\__\main.cpp.obj
+[5/6] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\platform\windows\Win32App.cpp.obj
+[6/6] Linking CXX executable Release\pvz_perf.exe; Staging the bidirectional dat/dat64 converter in the save directory

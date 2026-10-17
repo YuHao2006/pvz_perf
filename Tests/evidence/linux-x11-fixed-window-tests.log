@@ -1,0 +1,34 @@
+UpdateCTestConfiguration  from :/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/out/x64-x11-vulkan/DartConfiguration.tcl
+Parse Config file:/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/out/x64-x11-vulkan/DartConfiguration.tcl
+Test project /mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/out/x64-x11-vulkan
+Constructing a list of tests
+Done constructing a list of tests
+Updating test list for fixtures
+Added 0 tests to meet fixture requirements
+Checking test dependency graph...
+Checking test dependency graph end
+test 5
+    Start 5: sexy_pointer_snapshot
+
+5: Test command: /mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/out/x64-x11-vulkan/SexyAppFramework/platform/sexy_pointer_snapshot_tests
+5: Working Directory: /mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/out/x64-x11-vulkan/SexyAppFramework/platform
+5: Test timeout computed to be: 1500
+5: motion-100000-latest-only=PASS button-snapshot=PASS discrete-fifo=PASS enter-leave=PASS xkb-game-key-map=PASS input-time-wrap=PASS
+1/2 Test #5: sexy_pointer_snapshot ............   Passed    0.00 sec
+test 6
+    Start 6: sexy_native_window
+
+6: Test command: /mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/out/x64-x11-vulkan/SexyAppFramework/platform/sexy_native_window_tests
+6: Working Directory: /mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/out/x64-x11-vulkan/SexyAppFramework/platform
+6: Test timeout computed to be: 30
+6: x11-no-motion-subscription=PASS sent-motion-ui-suppressed=PASS button-key-fifo=PASS button-coordinates=PASS snapshot-batch=PASS
+6: native-handles=PASS nonblocking-pump=PASS pointer-sample=PASS window-lifetime-4-cycles=PASS application-resize-restore=PASS
+2/2 Test #6: sexy_native_window ...............   Passed    0.10 sec
+
+The following tests passed:
+	sexy_pointer_snapshot
+	sexy_native_window
+
+100% tests passed, 0 tests failed out of 2
+
+Total Test time (real) =   0.22 sec

@@ -1,0 +1,28 @@
+{
+  "benchmark": "survival-endless",
+  "acceptance": "User advanced retail endless to a typical zombie composition; this is the newly saved state from 2026-10-17 22:37:54 Asia/Shanghai.",
+  "source": "C:/ProgramData/PopCap Games/PlantsVsZombies/userdata/game3_13.dat",
+  "original": {
+    "file": "game3_13.dat",
+    "bytes": 519016,
+    "mode": 13,
+    "sha256": "a1bbc2f43a129b655f0068de8f28a731f1ef6814170419d3f4ec406436437cf1"
+  },
+  "project": {
+    "file": "game3_58.dat64",
+    "bytes": 563888,
+    "mode": 58,
+    "sha256": "0de22ff708e3f572a669a15cb138076148f59628f073e7cef46ffb252d96429a"
+  },
+  "conversion": {
+    "tool": "pvz_dat64_converter",
+    "executable_sha256": "03b239d7d3c65d80322df0e0aed18600b5fd110539348225e2e82f0bc54ba12c",
+    "validation": "Full source/target parse and canonical semantic comparison"
+  },
+  "saved_state": {
+    "currentWave": 0,
+    "mainCounter": 229196,
+    "nextSurvivalStageCounter": 0,
+    "card_selection_checkpoint": false
+  }
+}

@@ -1,0 +1,34 @@
+[
+  {
+    "index": 1,
+    "variant": "control",
+    "path": "C:\\Users\\Administrator\\CLionProjects\\codex\\PlantsVsZombiesModern\\out\\x64-win32-dx12\\Release\\log\\smoke\\20261017-125119-566-f110a302f89c42de9a379735096129eb",
+    "core": "LP14",
+    "lockedMultiplier": "11x",
+    "multiplierVerification": "user-confirmed"
+  },
+  {
+    "index": 2,
+    "variant": "candidate",
+    "path": "C:\\Users\\Administrator\\CLionProjects\\codex\\PlantsVsZombiesModern\\out\\x64-win32-dx12\\Release\\log\\smoke\\20261017-125226-242-a12d2ca6810049b8aa7153b90fa7de69",
+    "core": "LP14",
+    "lockedMultiplier": "11x",
+    "multiplierVerification": "user-confirmed"
+  },
+  {
+    "index": 3,
+    "variant": "candidate",
+    "path": "C:\\Users\\Administrator\\CLionProjects\\codex\\PlantsVsZombiesModern\\out\\x64-win32-dx12\\Release\\log\\smoke\\20261017-125333-820-f2e11780e0b243d59240bd3ea97e39d3",
+    "core": "LP14",
+    "lockedMultiplier": "11x",
+    "multiplierVerification": "user-confirmed"
+  },
+  {
+    "index": 4,
+    "variant": "control",
+    "path": "C:\\Users\\Administrator\\CLionProjects\\codex\\PlantsVsZombiesModern\\out\\x64-win32-dx12\\Release\\log\\smoke\\20261017-125439-339-90e5a68d272f4bc6b33de69ea91527fd",
+    "core": "LP14",
+    "lockedMultiplier": "11x",
+    "multiplierVerification": "user-confirmed"
+  }
+]

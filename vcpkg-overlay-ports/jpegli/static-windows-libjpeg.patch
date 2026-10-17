@@ -1,0 +1,47 @@
+diff --git a/lib/jpegli.cmake b/lib/jpegli.cmake
+index e2a4c26..1863ff4 100644
+--- a/lib/jpegli.cmake
++++ b/lib/jpegli.cmake
+@@ -24,14 +24,20 @@ elseif(JPEGLI_LIBJPEG_LIBRARY_SOVERSION STREQUAL "8")
+   set(JPEG_LIB_VERSION 80)
+ endif()
+ 
++if (NOT JPEGLI_LIBJPEG_INCLUDE_DIR)
++  message(FATAL_ERROR "JPEGLI_LIBJPEG_INCLUDE_DIR is required")
++endif()
++
+ configure_file(
+-  ../third_party/libjpeg-turbo/jconfig.h.in include/jpegli/jconfig.h)
++  "${JPEGLI_LIBJPEG_INCLUDE_DIR}/jconfig.h" include/jpegli/jconfig.h COPYONLY)
+ configure_file(
+-  ../third_party/libjpeg-turbo/jpeglib.h include/jpegli/jpeglib.h COPYONLY)
++  "${JPEGLI_LIBJPEG_INCLUDE_DIR}/jpeglib.h" include/jpegli/jpeglib.h COPYONLY)
+ configure_file(
+-  ../third_party/libjpeg-turbo/jmorecfg.h include/jpegli/jmorecfg.h COPYONLY)
++  "${JPEGLI_LIBJPEG_INCLUDE_DIR}/jmorecfg.h" include/jpegli/jmorecfg.h COPYONLY)
+ 
+-add_library(jpegli-static STATIC EXCLUDE_FROM_ALL "${JPEGLI_INTERNAL_JPEGLI_SOURCES}")
++add_library(jpegli-static STATIC EXCLUDE_FROM_ALL
++  "${JPEGLI_INTERNAL_JPEGLI_SOURCES}"
++  "${JPEGLI_INTERNAL_JPEGLI_WRAPPER_SOURCES}")
+ target_compile_options(jpegli-static PRIVATE "${JPEGLI_INTERNAL_FLAGS}")
+ target_compile_options(jpegli-static PUBLIC ${JPEGLI_COVERAGE_FLAGS})
+ set_property(TARGET jpegli-static PROPERTY POSITION_INDEPENDENT_CODE ON)
+@@ -41,9 +47,17 @@ target_include_directories(jpegli-static PRIVATE
+ )
+ target_include_directories(jpegli-static PUBLIC
+   "$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include/jpegli>"
++  "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/jpegli>"
+ )
+ target_link_libraries(jpegli-static PUBLIC ${JPEGLI_INTERNAL_LIBS})
+ 
++install(TARGETS jpegli-static EXPORT jpegliTargets
++  ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
++  LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
++  RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}")
++install(EXPORT jpegliTargets FILE jpegliTargets.cmake NAMESPACE jpegli::
++  DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/jpegli")
++
+ #
+ # Tests for jpegli-static
+ #

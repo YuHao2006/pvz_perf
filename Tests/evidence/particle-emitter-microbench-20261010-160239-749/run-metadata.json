@@ -1,0 +1,18 @@
+{
+    "utc_completed":  "2026-10-10T08:02:54.3485375Z",
+    "project_root":  "C:\\Users\\Administrator\\CLionProjects\\codex\\PlantsVsZombiesModern",
+    "golden_corpus":  "C:\\Users\\Administrator\\CLionProjects\\codex\\openPvz\\.particle_work\\baseline_v4",
+    "source_path":  "C:\\Users\\Administrator\\CLionProjects\\codex\\PlantsVsZombiesModern\\tools\\bench_particle_emitter_names.cpp",
+    "source_sha256":  "ea41a10fe383a190dbb2649e30fece53b1152cf374fd188c0d41b58b48f1e50c",
+    "generator_path":  "C:\\Users\\Administrator\\CLionProjects\\codex\\PlantsVsZombiesModern\\tools\\gen-particle-emitter-bench-fixture.py",
+    "generator_sha256":  "535646a566bb376746e720a43c09273fc5fde3e1169e5f0f6cdb950b67877b56",
+    "runner_path":  "C:\\Users\\Administrator\\CLionProjects\\codex\\PlantsVsZombiesModern\\tools\\run-particle-emitter-bench.ps1",
+    "runner_sha256":  "77caf582d972d0ec8dda33ee0daba53926143b785330d237551b7bdcd18805bb",
+    "visual_studio_environment":  "C:/UserProgram/Visual Studuio/2026/Community/VC/Auxiliary/Build/vcvars64.bat",
+    "compiler_command":  "cl.exe /nologo /std:c++23preview /O2 /Ob2 /DNDEBUG /EHsc /W4 /MD /GL- /fp:precise /FAcs /Fa\"C:\\Users\\Administrator\\AppData\\Local\\Temp\\particle-emitter-bench-9e4eef777ad741c9b642a014aa484c96\\bench_particle_emitter_names.asm\" /I\"C:\\Users\\Administrator\\AppData\\Local\\Temp\\particle-emitter-bench-9e4eef777ad741c9b642a014aa484c96\" /Fo\"C:\\Users\\Administrator\\AppData\\Local\\Temp\\particle-emitter-bench-9e4eef777ad741c9b642a014aa484c96\\bench_particle_emitter_names.obj\" /Fe\"C:\\Users\\Administrator\\AppData\\Local\\Temp\\particle-emitter-bench-9e4eef777ad741c9b642a014aa484c96\\bench_particle_emitter_names.exe\" \"C:\\Users\\Administrator\\CLionProjects\\codex\\PlantsVsZombiesModern\\tools\\bench_particle_emitter_names.cpp\" /link /INCREMENTAL:NO /OPT:REF /OPT:NOICF",
+    "standalone_executable_sha256":  "3684890dd59fc4402576efc1808dd24e6afe67fdbcf21b8d3da45bda02be08b9",
+    "build_directory":  "C:\\Users\\Administrator\\AppData\\Local\\Temp\\particle-emitter-bench-9e4eef777ad741c9b642a014aa484c96",
+    "output_directory":  "C:\\Users\\Administrator\\CLionProjects\\codex\\PlantsVsZombiesModern\\log\\particle-emitter-microbench-20261010-160239-749",
+    "game_sources_edited":  false,
+    "game_processes_started":  false
+}

@@ -1,0 +1,27 @@
+{
+  "schema": 1,
+  "controlRuns": [
+    "C:\\Users\\Administrator\\CLionProjects\\codex\\PlantsVsZombiesModern\\out\\x64-win32-dx12\\Release\\log\\smoke\\20261017-125119-566-f110a302f89c42de9a379735096129eb",
+    "C:\\Users\\Administrator\\CLionProjects\\codex\\PlantsVsZombiesModern\\out\\x64-win32-dx12\\Release\\log\\smoke\\20261017-125439-339-90e5a68d272f4bc6b33de69ea91527fd"
+  ],
+  "candidateRuns": [
+    "C:\\Users\\Administrator\\CLionProjects\\codex\\PlantsVsZombiesModern\\out\\x64-win32-dx12\\Release\\log\\smoke\\20261017-125226-242-a12d2ca6810049b8aa7153b90fa7de69",
+    "C:\\Users\\Administrator\\CLionProjects\\codex\\PlantsVsZombiesModern\\out\\x64-win32-dx12\\Release\\log\\smoke\\20261017-125333-820-f2e11780e0b243d59240bd3ea97e39d3"
+  ],
+  "affinity": "0x4000",
+  "pixelBytes": 1920000,
+  "exactPixelsEqual": true,
+  "controlMedianUs": 2452.0,
+  "candidateMedianUs": 2303.9249999999997,
+  "medianChangePercent": -6.038947797716165,
+  "controlP90Us": 2593.3999999999996,
+  "candidateP90Us": 2453.1,
+  "p90ChangePercent": -5.409886635304995,
+  "controlMedianThreadCycles": 7516493.0,
+  "candidateMedianThreadCycles": 7065293.25,
+  "gate": "pass",
+  "limitation": "Frozen CPU draw timing; excludes flush/fence/readback and does not prove physical mouse or battery FPS behavior.",
+  "core": "LP14",
+  "lockedMultiplier": "11x",
+  "multiplierVerification": "user-confirmed"
+}

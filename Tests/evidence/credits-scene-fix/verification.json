@@ -1,0 +1,7 @@
+{
+  "build_exit": 0,
+  "source_contract": "PASS: scene 6 set before CreditScreen construction; replay uses same entry; exit returns to menu",
+  "runtime_replay": "not performed",
+  "executable": "C:\\Users\\Administrator\\CLionProjects\\codex\\PlantsVsZombiesModern\\out\\x64-win32-dx12\\Release\\pvz_perf.exe",
+  "sha256": "419495c61f2817feac6b8c271936e948f895cf068cc6460b421d68a56087f975"
+}

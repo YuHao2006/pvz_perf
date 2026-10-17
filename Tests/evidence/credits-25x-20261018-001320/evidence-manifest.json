@@ -1,0 +1,86 @@
+{
+  "analysis-summary.json": {
+    "bytes": 2121,
+    "sha256": "95892f80ea68a970bc094c7742cf2c29f64321affe61607811d199e4a4771ed2"
+  },
+  "original-credits-25x/measurement/measurement.json": {
+    "bytes": 1669,
+    "sha256": "c45f8fe2dc9c16cc2bea24c4764bb584c5f013e7bc95289f96893de04e130a3a"
+  },
+  "original-credits-25x/measurement/samples.csv": {
+    "bytes": 21805,
+    "sha256": "9fdcf3b39e05c77aa62efd1bccedd9e6b0bffbf8ddfba7c727196d1746657c27"
+  },
+  "original-credits-25x/process-output.txt": {
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "original-credits-25x/retail-settings.json": {
+    "bytes": 103,
+    "sha256": "e1768cce18785059bc9bc596219cfe8b15ea08a4146ed3bbc98f8c6916006e67"
+  },
+  "original-credits-25x/scene-entry.json": {
+    "bytes": 289,
+    "sha256": "494c716d3c66037e0970b48661c0c3200fa064cd99f21ec28478e4e26365bb1e"
+  },
+  "original-credits-analysis.csv": {
+    "bytes": 23756,
+    "sha256": "396267be9d10d53a52f068a0e782c6714b9fcb5c7f883e8cee868b98838499f2"
+  },
+  "project-credits-25x/data/game1000003_58.dat64": {
+    "bytes": 563888,
+    "sha256": "0de22ff708e3f572a669a15cb138076148f59628f073e7cef46ffb252d96429a"
+  },
+  "project-credits-25x/data/user1000003.dat64": {
+    "bytes": 1246,
+    "sha256": "cd4349ab8870c5bcb6c321afdfa9935f133496ba553d608f7a2873b01327e8e8"
+  },
+  "project-credits-25x/data/users.dat": {
+    "bytes": 21,
+    "sha256": "405352952b22d235fc01b03e08a3569baff72ce2e9eb07869be93ee41bd062f7"
+  },
+  "project-credits-25x/measurement/measurement.json": {
+    "bytes": 1465,
+    "sha256": "6d93de20b4683b0344fb7c4a550176dcab31b421bc9d0b406fe5bfed5fa29255"
+  },
+  "project-credits-25x/measurement/samples.csv": {
+    "bytes": 20808,
+    "sha256": "184336a2551bb6389e741f034a9a0cfd952362b89eb893cc5de93353613d7aa3"
+  },
+  "project-credits-25x/process-output.txt": {
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "project-credits-25x/retail-settings.json": {
+    "bytes": 103,
+    "sha256": "e1768cce18785059bc9bc596219cfe8b15ea08a4146ed3bbc98f8c6916006e67"
+  },
+  "project-credits-25x/scene-entry.json": {
+    "bytes": 291,
+    "sha256": "255ec5097ef8ab72fa3b365ea97c444dc205fc2f9a7104e636a56e866c3931d2"
+  },
+  "project-credits-25x/settings.json": {
+    "bytes": 192,
+    "sha256": "88672f31a064beb4873d19a85beeac642ac94c07f2c054b80eb97029a120512d"
+  },
+  "project-credits-analysis.csv": {
+    "bytes": 22585,
+    "sha256": "733f84056add1db50f283559cd7fbe910e2e7f02859bab5385c058abb7bec014"
+  },
+  "results.json": {
+    "bytes": 3357,
+    "sha256": "78bea780fa8125bb3c7ed3b41ddacd0c90594c8c8bab4b149617cdb470972f87"
+  },
+  "retired-fixture-files/game1000003_13.dat": {
+    "bytes": 519016,
+    "sha256": "a1bbc2f43a129b655f0068de8f28a731f1ef6814170419d3f4ec406436437cf1"
+  },
+  "retired-fixture-files/user1000003.dat": {
+    "bytes": 1238,
+    "sha256": "7b4e96907a74e1c757bb5fab45cf609543b959139e71c76dc73111d577e118b9"
+  },
+  "users-before.dat": {
+    "bytes": 21,
+    "sha256": "405352952b22d235fc01b03e08a3569baff72ce2e9eb07869be93ee41bd062f7"
+  }
+}

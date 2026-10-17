@@ -1,0 +1,23 @@
+{
+    "schema":  1,
+    "executable":  "C:\\Users\\Administrator\\CLionProjects\\codex\\PlantsVsZombiesModern\\out\\modern-game\\Release\\PlantsVsZombiesModern.exe",
+    "executableSha256":  "D2ACD43FA01D7CF96881A2ED08806DE3F508C7BCE3136D0C43A9C8E21D72CC5D",
+    "scenario":  "Scenes",
+    "audio":  "disabled",
+    "scale":  false,
+    "scaleInitiallyOn":  false,
+    "runtimeScale":  false,
+    "hdr":  false,
+    "counterTrace":  false,
+    "rtssLayerDisabled":  false,
+    "timeoutSeconds":  300,
+    "createdUtc":  "2026-10-11T11:22:28.1816824Z",
+    "finishedUtc":  "2026-10-11T11:25:02.5993132Z",
+    "status":  "passed",
+    "processId":  15484,
+    "exitCode":  0,
+    "failure":  null,
+    "functionalStatus":  "passed",
+    "nativeValidationStatus":  "disabled-for-measurement",
+    "affinity":  "0x4000"
+}

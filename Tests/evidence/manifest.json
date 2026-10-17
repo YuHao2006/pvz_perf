@@ -1,0 +1,396 @@
+{
+  "scope": "Selected ledger evidence and source-layout acceptance records; no binaries or full log trees",
+  "files": [
+    {
+      "path": "docs-evidence/20261015/message-readiness-control-20261015/boundary-fix-222136/targeted-tests.log",
+      "bytes": 2650,
+      "sha256": "d388ee94beddf0ae94f85a7aee897dc5a205fbe81b429d85bc9d32ada64e5d33"
+    },
+    {
+      "path": "docs-evidence/20261015/message-readiness-control-20261015/manual-21404-boundary/boundary-intervals.json",
+      "bytes": 13593,
+      "sha256": "7aff2701b8890d4b2f1ed3a12da5c1c356c002745df08074f5ab29f67970229d"
+    },
+    {
+      "path": "docs-evidence/20261015/native-message-split-20261015/fullscreen-visibility-result.log",
+      "bytes": 264,
+      "sha256": "1000a20c515b332b9ea6b716623fea72b57b2f8fb767e2b3a0fca56883892ae7"
+    },
+    {
+      "path": "docs-evidence/20261015/native-message-split-20261015/functional-20261015-185103/modern-d3d12-heartbeat-Pool-driver.log",
+      "bytes": 33343,
+      "sha256": "758faeb968323f46ab5a76a8524f10a831540929ca950a5edc743cb43ca0cd95"
+    },
+    {
+      "path": "docs-evidence/20261015/native-message-split-20261015/functional-20261015-185103/modern-d3d12-message-split-Pool-driver.log",
+      "bytes": 33432,
+      "sha256": "2a4c0f3448a6d75c323424b40c6e429133eeb02f893fbcb16bc0ffbb8018ed57"
+    },
+    {
+      "path": "docs-evidence/20261015/native-message-split-20261015/functional-20261015-185103/modern-d3d12-message-split-Scenes-driver.log",
+      "bytes": 32516,
+      "sha256": "8ef846d7fac3dcf0f7d188bf86547e2bc7762d47dc048c00cc35cb42b2787989"
+    },
+    {
+      "path": "docs-evidence/20261015/native-message-split-20261015/functional-20261015-185103/modern-d3d12-message-split-Survival-driver.log",
+      "bytes": 7003,
+      "sha256": "723dbae42337ace730f4d9bb08668c9fa6fbf2398e591900f17a3ccdb9b3922e"
+    },
+    {
+      "path": "docs-evidence/20261015/native-message-split-20261015/functional-20261015-185103/modern-vulkan-message-split-Pool-driver.log",
+      "bytes": 33160,
+      "sha256": "c3dfad55a4bf52b3b4ba4a1468939e1834fbe7ade5d58025429e533d33fdf187"
+    },
+    {
+      "path": "docs-evidence/20261015/native-message-split-20261015/functional-20261015-185103/modern-vulkan-message-split-Scenes-driver.log",
+      "bytes": 31908,
+      "sha256": "d082a62f44aeddad6c056c6f6373d6ba56326e86286b57bca61cd30086a75193"
+    },
+    {
+      "path": "docs-evidence/20261015/native-message-split-20261015/functional-20261015-185103/modern-vulkan-test-Scenes-driver.log",
+      "bytes": 31890,
+      "sha256": "32f10bcb796cde9e33c50faa54630aeb1f5f367dc5ee725cc1ac4d0965622e36"
+    },
+    {
+      "path": "docs-evidence/20261015/native-message-split-20261015/functional-20261015-185103/runs.json",
+      "bytes": 3931,
+      "sha256": "d4d58425ddbe9f0b9db269b3cc77cde2013caeb826970e55b75a4a3e5c6de6bd"
+    },
+    {
+      "path": "docs-evidence/20261015/retired-modern-game/Release/log/save-converter-20261010-161348/conversion-results.json",
+      "bytes": 6041,
+      "sha256": "9eea559ea218d6db1e459571f77f342bcd98c4cfde627f0c9c3a1a341d81d379"
+    },
+    {
+      "path": "docs-evidence/20261015/retired-modern-game/Release/log/smoke/20261011-192227-844-6446cd197e9d41bda7d45e408384c730/verification.json",
+      "bytes": 839,
+      "sha256": "e20c63b75447a1081e410c6fc8dcdbd538b68eb2457ab50c50a94537fe68dae4"
+    },
+    {
+      "path": "docs-evidence/20261015/retired-modern-game/Release/log/smoke/20261014-113948-860-9d229a260dba4ee4b5024f8ad5610287/alpha-composition-cases.txt",
+      "bytes": 9636,
+      "sha256": "e14fc5d559d0bc0ac6147ca98f1c83200863be056dc9805bafca29a43d9eb192"
+    },
+    {
+      "path": "docs-evidence/20261015/retired-modern-game/Release/log/smoke/20261014-181541-185-82481113682a481cb3b6c50789e9024f/profile-pair-order.txt",
+      "bytes": 182,
+      "sha256": "37785d36dadf240cbccc20d2874bb393770d91b5b1bae1b989269c4a5ce213f2"
+    },
+    {
+      "path": "linux-music-gain-after-fix-20261017.log",
+      "bytes": 3564,
+      "sha256": "2acc105c8a972039ee89343506d300792f21c0e7c0434860fb3d0ccfbdd2626e"
+    },
+    {
+      "path": "linux-music-gain-after-fix-asan-ubsan-20261017.log",
+      "bytes": 3680,
+      "sha256": "25f6b7cb3f41f9892bcd5c16a7458435937e14d286f709296a9dd942cdcf78c0"
+    },
+    {
+      "path": "linux-music-gain-before-fix-20261017.log",
+      "bytes": 2841,
+      "sha256": "8f552fb1eecc8e7eeac876c679c405fe2dc8a03f630d0ab5c8294d6246a2512e"
+    },
+    {
+      "path": "linux-wayland-decoration-window-tests.log",
+      "bytes": 391,
+      "sha256": "070eb698502a46ffbbabf62ffdb0a326bf4715cf1997bbef0bd6c4bd9e277a38"
+    },
+    {
+      "path": "linux-wayland-fixed-window-tests.log",
+      "bytes": 84524,
+      "sha256": "b04c3d6713578ff59416e7b91e1d1aa2ac40aa2dfe226925d9a64e1b36bbf22f"
+    },
+    {
+      "path": "linux-x11-fixed-window-tests.log",
+      "bytes": 2003,
+      "sha256": "9b957e5633b2aed6263ca9b3c333b3793d2b3945226e7835efbc42dac2684509"
+    },
+    {
+      "path": "native-wave-stall-e81de7b3c651490f80e1204a90661a70/verified-logs/wave-spawn-smoke.log",
+      "bytes": 26175,
+      "sha256": "393b804f3ad25b91f84fcb91f5c5050725838a0153724f7eabfc8c6469606676"
+    },
+    {
+      "path": "native-wave-stall-e81de7b3c651490f80e1204a90661a70/zero-logs/zero-zombie-rate.log",
+      "bytes": 384,
+      "sha256": "f21abca5461cea23c3090bfdae5399067b1fafc7e2769c5d7d08814814e8ee1d"
+    },
+    {
+      "path": "particle-emitter-fadeout-20261010-161157-045/build.log",
+      "bytes": 426,
+      "sha256": "7a75a277f03e60077944ebdfe2236973ce12c965e46023be4bd0cccca790eb41"
+    },
+    {
+      "path": "particle-emitter-fadeout-20261010-161157-045/fixture-manifest.json",
+      "bytes": 27701,
+      "sha256": "fbacec6d48aef84dc10b9e8705c28d16c08c29f5d4735c119bc4db5db3dde598"
+    },
+    {
+      "path": "particle-emitter-fadeout-20261010-161157-045/results.json",
+      "bytes": 7797,
+      "sha256": "6d318a5adcc9b0eced28d2fc230b5817bcc4e549433f21f7a53cdbffaf9f5bbc"
+    },
+    {
+      "path": "particle-emitter-fadeout-20261010-161157-045/run-metadata.json",
+      "bytes": 2525,
+      "sha256": "e5e9a40c8084b44c62127c8c565c0813b070766f33d2278d2d7b92137dbd4dae"
+    },
+    {
+      "path": "particle-emitter-fadeout-20261010-161157-045/run.log",
+      "bytes": 608,
+      "sha256": "e077459a124655afe81d768ffd20190fd1bbea3e3b022fcfba1038a0df1fe7be"
+    },
+    {
+      "path": "particle-emitter-fadeout-20261010-161157-045/samples.csv",
+      "bytes": 3256,
+      "sha256": "7732ed129b676598190984463e14119b60a35fd606588b7cec5e2d6353a682a8"
+    },
+    {
+      "path": "particle-emitter-fadeout-20261010-161157-045/summary.csv",
+      "bytes": 589,
+      "sha256": "2e611999ad3c3c16070a94266f20883a1def47918d6125bec1afb5ff6c87080f"
+    },
+    {
+      "path": "particle-emitter-microbench-20261010-160239-749/build.log",
+      "bytes": 426,
+      "sha256": "7a75a277f03e60077944ebdfe2236973ce12c965e46023be4bd0cccca790eb41"
+    },
+    {
+      "path": "particle-emitter-microbench-20261010-160239-749/fixture-manifest.json",
+      "bytes": 27701,
+      "sha256": "b8b3344370db67638ff1078bb9e7d3181d6e2911e55acb9e309116e34737c4a0"
+    },
+    {
+      "path": "particle-emitter-microbench-20261010-160239-749/results.json",
+      "bytes": 49780,
+      "sha256": "cbed0baac898d210222c87424379f6dd4b4c9cd3b0911a2e7ad4653a5d6f562b"
+    },
+    {
+      "path": "particle-emitter-microbench-20261010-160239-749/run-metadata.json",
+      "bytes": 2352,
+      "sha256": "5915ad918ba72b42618121da8d05c2bc72754c305ef2b01a71706e80c9c212d0"
+    },
+    {
+      "path": "particle-emitter-microbench-20261010-160239-749/run.log",
+      "bytes": 2086,
+      "sha256": "7fac2f1a1d350785c7c3249ca3c161f1a26a4a695ae201abf29ba4fce0cdc93d"
+    },
+    {
+      "path": "particle-emitter-microbench-20261010-160239-749/samples.csv",
+      "bytes": 29394,
+      "sha256": "c4ee21893e5b3a873ddcac470c29843b7467ba2e74f078de43b1772420af4444"
+    },
+    {
+      "path": "particle-emitter-microbench-20261010-160239-749/summary.csv",
+      "bytes": 3306,
+      "sha256": "70302beefbf9c08ac70be2a1053716047eefa62a87761c8219aaf4e092692afb"
+    },
+    {
+      "path": "release-dx12-delivery-build-20261017.log",
+      "bytes": 15346,
+      "sha256": "b6c875852f25b32000f8092d393e71a768ccbbcd1b8f9394151a07823d1ecef1"
+    },
+    {
+      "path": "release-dx12-final-build-20261017.log",
+      "bytes": 828,
+      "sha256": "ea24708cff0d92c3eac7b1c5efbae716ae40fdb3f86151a49120efb89fd368a3"
+    },
+    {
+      "path": "release-fixed-draw-20261017-35dece7b/comparison.json",
+      "bytes": 1417,
+      "sha256": "3d0be04f4570be1be68bca67b547752fb19ae86e1a8183f0a9acc691fc23703a"
+    },
+    {
+      "path": "release-fixed-draw-20261017-35dece7b/run-1-control.log",
+      "bytes": 33706,
+      "sha256": "247e1402fb204501d4203349b6483647ee90f8264e524e51cf8479e913311f86"
+    },
+    {
+      "path": "release-fixed-draw-20261017-35dece7b/run-2-candidate.log",
+      "bytes": 33755,
+      "sha256": "3da54a18cbe75aeb0b70556c6a7ae197b4e52f266557c45d07df6f7bf0c3a8e0"
+    },
+    {
+      "path": "release-fixed-draw-20261017-35dece7b/run-3-candidate.log",
+      "bytes": 33700,
+      "sha256": "3566d3c6f14d590314eba1baf29827f5f1d87d0d9bddc9fc70657b4e2bd238bb"
+    },
+    {
+      "path": "release-fixed-draw-20261017-35dece7b/run-4-control.log",
+      "bytes": 33755,
+      "sha256": "e9309b233fdd9e1dee51e3e5a6df3cd8b7ed7f54bd4f929269ba2cfb09638a73"
+    },
+    {
+      "path": "release-fixed-draw-20261017-35dece7b/runs.json",
+      "bytes": 1361,
+      "sha256": "6639c59ee1e07976085eda943801f5727975573858835dd10e65220ef504611b"
+    },
+    {
+      "path": "release-wayland-final-build-20261017.log",
+      "bytes": 6343,
+      "sha256": "5dc272fbdf5b820da678ce3ba0d9c7f6dccaa0645d15275b0c3c9b1ce9695ade"
+    },
+    {
+      "path": "release-x11-final-build-20261017.log",
+      "bytes": 59985,
+      "sha256": "579b86bb6e37714768963521090b36b2505884c82e79937cbe376ff819419d27"
+    },
+    {
+      "path": "string-numeric-resume-20261010/gpu-font-kernel-pool-edge-20261011.log",
+      "bytes": 34336,
+      "sha256": "11192614a9f860f62839538eca1ad7396f5e53f9f9fd85b905b83115f11053b8"
+    },
+    {
+      "path": "string-numeric-resume-20261010/gpu-groups-scenes-context-fixed-20261011.log",
+      "bytes": 27812,
+      "sha256": "2af60c05384886e43c319a81752582ffb8331f6d7055a7611e8f74eff3778a71"
+    },
+    {
+      "path": "string-numeric-resume-20261010/gpu-image-factories-scenes-slot-fixed-20261011.log",
+      "bytes": 31976,
+      "sha256": "3cbc1fcca800ebf34b598e9a02f61e7b9de2d632c4fc0ff97cbfd6fce328295d"
+    },
+    {
+      "path": "string-numeric-resume-20261010/image-symbol-compact-20261011/particle-native-verification.json",
+      "bytes": 253,
+      "sha256": "5dde53c2d3107658a00541002b9a070a019717e20d3134855c2c7cb101b46036"
+    },
+    {
+      "path": "string-numeric-resume-20261010/immutable-gpu-source-shadow-final-20261011.log",
+      "bytes": 4092,
+      "sha256": "e5cc64528a37e403dfb7179a36f423f5dca6ad86592826051d1834ba3129cf4d"
+    },
+    {
+      "path": "string-numeric-resume-20261010/immutable-image-loading-close-20261011.log",
+      "bytes": 278,
+      "sha256": "e173c6c81e8bad449eacb8acba8c0d9b4cba8eaaff71b9ba51803f215ad84861"
+    },
+    {
+      "path": "string-numeric-resume-20261010/loading-close-AfterImages.log",
+      "bytes": 275,
+      "sha256": "b519351e838b3fcf340f4b396f71bc0fe9b7c8342071b54ed8f1e5575a9341f2"
+    },
+    {
+      "path": "string-numeric-resume-20261010/loading-close-AfterMusic.log",
+      "bytes": 274,
+      "sha256": "a951c295e787c4bbf81f192b2aa3d6468bb4e10da5b1642c6d7a6cd16867518f"
+    },
+    {
+      "path": "string-numeric-resume-20261010/loading-close-AfterParticles.log",
+      "bytes": 278,
+      "sha256": "1918e0279582d7ee327d4eb5036cf4c41201396b36209b77fe57d6712cc1a123"
+    },
+    {
+      "path": "string-numeric-resume-20261010/loading-close-BeforeImages.log",
+      "bytes": 276,
+      "sha256": "d57c87c959bec82df648f755e9834b5f77dd3e3c8091dcbf9a6c6b101569248c"
+    },
+    {
+      "path": "string-numeric-resume-20261010/loading-close-BeforeLoader.log",
+      "bytes": 276,
+      "sha256": "3ec890a854e2ea029f384310dc3683f6d9282210742962f03c273b4e810c7f03"
+    },
+    {
+      "path": "string-numeric-resume-20261010/loading-close-lp14-priority-fixed.log",
+      "bytes": 277,
+      "sha256": "35596ff498fe0e86eebbd48eaf6d0895555cccd09da44cf48f16cb681c6602fb"
+    },
+    {
+      "path": "string-numeric-resume-20261010/memory-data-views-final.log",
+      "bytes": 3362,
+      "sha256": "58b0682916ecd4a9b849c6205ecdc6a1f5b4af700ed76071b91e71fa4c2016a3"
+    },
+    {
+      "path": "string-numeric-resume-20261010/pool-data-views-final.log",
+      "bytes": 32910,
+      "sha256": "e0b3ae6d8dbfb98c4d3bf7dd69d87f63983ba3ac91727af55860b24fcf2035e0"
+    },
+    {
+      "path": "string-numeric-resume-20261010/reanim-isolation-final.log",
+      "bytes": 2978,
+      "sha256": "da65f6eea0487710faf12a3bfd0755396ab86ef962b3ac618ecb12686c0992e0"
+    },
+    {
+      "path": "string-numeric-resume-20261010/reanim-metadata-final/build.log",
+      "bytes": 324,
+      "sha256": "44ced2eb6896f0991a8306ab5ec536e355d6f52ac873528bcc2d448840831ad7"
+    },
+    {
+      "path": "string-numeric-resume-20261010/reanim-metadata-final/fixture-manifest.json",
+      "bytes": 112243,
+      "sha256": "b849273e0caff21a3257a1264e5af0f6efb88ac935ddae03532fb3c63fccd134"
+    },
+    {
+      "path": "string-numeric-resume-20261010/reanim-metadata-final/results.json",
+      "bytes": 4688,
+      "sha256": "ec2cbe8582700a4e339be08aae2e66f926bbfa737806900460cd108d38cf0f65"
+    },
+    {
+      "path": "string-numeric-resume-20261010/reanim-metadata-final/run-metadata.json",
+      "bytes": 1850,
+      "sha256": "8ca42e0f74d91865427c45136633843ac3548a88c9f89c8bfe4ae6bf7ce27b1a"
+    },
+    {
+      "path": "string-numeric-resume-20261010/reanim-metadata-final/run.log",
+      "bytes": 94,
+      "sha256": "5fbe65cbec7bbfe4cccff8eb03d34efdaea16db1aa5395a987a4e11ce81037ea"
+    },
+    {
+      "path": "string-numeric-resume-20261010/reanim-metadata-final/samples.csv",
+      "bytes": 3843,
+      "sha256": "57e186217bbde6b498248da1db0203e2ddf2d76ca54e3f9be21a17a0c6059658"
+    },
+    {
+      "path": "source-layout/source-layout-compiled-baseline.json",
+      "bytes": 42602,
+      "sha256": "691c3b9e77c84710d6ad37fa9d41a4d6dbbed54903968a43a5378392f944eac4"
+    },
+    {
+      "path": "source-layout/source-layout-resource-comparison.json",
+      "bytes": 87,
+      "sha256": "d44fadf38dacb561d06162fbec9249089e501108152d0158604a01fd436334ef"
+    },
+    {
+      "path": "source-layout/source-layout-validation.json",
+      "bytes": 613,
+      "sha256": "b573c09055987ce00f668d0587bbb8fbe93ce82bde9f130cbd1f62c0ee7c45dd"
+    },
+    {
+      "path": "source-layout/source-layout-render-audit.log",
+      "bytes": 656,
+      "sha256": "29cd57c9c3d372925b0f1977a40b772dc67a61315a08bb22152ee07154b53209"
+    },
+    {
+      "path": "source-layout/source-layout-native-unit-tests.log",
+      "bytes": 592,
+      "sha256": "ec6a4a1852bb7a34044b85b43fbc5960f00e6db6abdde2c72ce3fe1231ea7f05"
+    },
+    {
+      "path": "source-layout/source-layout-resource-tests.log",
+      "bytes": 203,
+      "sha256": "62037f5254ffccffa9329d55910a0c8fb3cded4b4c04aa313fa9ebcae9b38b53"
+    },
+    {
+      "path": "source-layout/source-layout-font-tests.log",
+      "bytes": 134,
+      "sha256": "4a5727739eb2ffebb7921ca197d836691ebca114692caa09aceb79712f9caeae"
+    },
+    {
+      "path": "source-layout/source-layout-review-notes.md",
+      "bytes": 994,
+      "sha256": "f8ce533f0c4fccc4dec6863192e1d8e7302f6c0ed0816da8e79631397cfe134f"
+    },
+    {
+      "path": "string-numeric-resume-20261010/frequency-before.log",
+      "bytes": 486,
+      "sha256": "18ce1c46ea566213fdd324e04ffcefc423599d657b75608bb0d5d3a3aa16befb"
+    },
+    {
+      "path": "string-numeric-resume-20261010/frequency-after.log",
+      "bytes": 486,
+      "sha256": "4297d11f11235bc78ecb295961abc6114cd705aa31fe3b6b90eafd92a7e301cb"
+    }
+  ],
+  "already_missing_references": []
+}

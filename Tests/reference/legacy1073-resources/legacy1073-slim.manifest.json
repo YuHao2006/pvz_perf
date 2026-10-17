@@ -1,0 +1,23 @@
+{
+  "format": "legacy1073-slim-pak64-v1",
+  "source": "C:\\Users\\Administrator\\CLionProjects\\codex\\PlantsVsZombies\\out\\legacy-msvc2\\Release\\main.pak64",
+  "source_sha256": "E8287F5E85749F28AC46BD21295ADB256FCEF09B6FD404765AC421E5C3F75641",
+  "output": "C:\\Users\\Administrator\\CLionProjects\\codex\\PlantsVsZombies\\distribution\\legacy1073-slim\\legacy1073-slim.pak64",
+  "output_sha256": "62BE568DAF94959EEFEF28C54376C42778098598E962445F03A523232B01580B",
+  "entries": 2896,
+  "compiled_definitions": 251,
+  "source_definitions": 0,
+  "removed_entries": 307,
+  "removed_compiled": [
+    "compiled/particles/artchallengeplant.xml.compiled",
+    "compiled/particles/circleevenspacing.xml.compiled",
+    "compiled/particles/kernelsplat.xml.compiled",
+    "compiled/particles/perftest.xml.compiled",
+    "compiled/particles/seedpacketpickup.xml.compiled",
+    "compiled/particles/simpleparticle.xml.compiled",
+    "compiled/reanim/zombie_dancer.reanim.compiled",
+    "compiled/reanim/zombie_jackson.reanim.compiled"
+  ],
+  "kept_shared_asset": "reanim/zombie_dancer__head.png",
+  "audit_command": "python tools/audit_pak64_semantics.py --trimmed <this package>"
+}

@@ -431,6 +431,8 @@ standalone_build.log
 !/Tests/evidence/**/*.txt
 !/Tests/evidence/**/*.md
 !/Tests/evidence/windows-endless-25x/*.png
+!/Tests/evidence/linux-wayland-20261018/*.png
+!/Tests/evidence/linux-wayland-20261018/*.svg
 
 # Local reverse-engineering material and optional historical binary fixtures.
 /reconstruction/

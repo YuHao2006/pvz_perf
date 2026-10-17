@@ -1,2 +1,5 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+
+# Preserve archived measurements byte-for-byte so their recorded hashes survive checkout.
+/Tests/evidence/linux-wayland-20261018/* -text -whitespace

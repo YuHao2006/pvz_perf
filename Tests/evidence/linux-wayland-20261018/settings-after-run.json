@@ -1,0 +1,11 @@
+{
+  "musicVolume": 85,
+  "sfxVolume": 55,
+  "muted": 0,
+  "screenMode": "windowed",
+  "preferredX": -1,
+  "preferredY": -1,
+  "customCursors": 0,
+  "waitForVSync": 0,
+  "customScale": 0
+}

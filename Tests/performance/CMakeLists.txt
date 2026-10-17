@@ -9,3 +9,13 @@ target_compile_definitions(pvz_game_perf_layout PRIVATE
 if(PVZ_RENDER_BACKEND STREQUAL "D3D12")
     target_compile_definitions(pvz_game_perf_layout PRIVATE PVZ_GPU_D3D12=1)
 endif()
+
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND TARGET LawnProject)
+    add_custom_target(pvz_linux_perf_tools
+        COMMAND "${Python3_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/run-linux-game-perf.py"
+            --prepare --build-dir "${CMAKE_BINARY_DIR}"
+        DEPENDS pvz_game_perf_layout LawnProject
+        COMMENT "Recording matching Linux game and performance layout"
+        VERBATIM)
+endif()

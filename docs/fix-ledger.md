@@ -281,6 +281,24 @@ Wayland 移除 resize capability，浮动目标尺寸不被全屏 configure 覆�
 `Tests/evidence/linux-{x11,wayland}-fixed-window-tests.log` 与对应 `fixed-window-game-build.log`。
 WSLg X11 实测仍可拖边框，未登记“禁止交互缩放已完成”；Wayland 标题栏拖动及实际全屏交互仍由用户验证。
 
+## Linux 桌面错误提示
+
+触发：缺少缩放 HLSL 等启动异常已写入 stderr/日志，但入口弹窗仅编译在 Windows 分支，
+Linux 从文件管理器启动时表现为无提示退出；通用 Popup 同样只有终端输出。
+
+现行为：Linux 入口异常、资源异常及通用错误 Popup/MsgBox 调用独立的桌面对话框，
+优先使用宿主 zenity，必要时回退 kdialog，不依赖游戏窗口或 Vulkan 初始化成功。
+诊断包含原始错误；入口异常另附游戏目录。参数通过 posix_spawnp 原样传递，不经 shell，
+禁用/转义 markup，保留日志及失败退出码。无显示会话、无可用提供程序时保留文本诊断；
+显式 hidden probe 不等待用户关闭弹窗。
+
+验证：X11、Wayland 两套 Release/LTO 重建成功；各 7 项回归通过，包含真实游戏缺少
+缩放文件时报错、特殊字符原样传递、提供程序回退、用户关闭及无桌面环境路径。
+真实桌面对话框已验证可见、等待关闭、关闭后游戏退出码为 1；两套正常资源加载也通过。
+实现：`pvzPerf/main.cpp`、`pvzPerf/SexyAppFramework/SexyAppBase.cpp`、
+`pvzPerf/SexyAppFramework/platform/linux/ErrorDialog.cpp`。
+临时回归程序已在验证后移出项目，保留实际修复和上述验证结果。
+
 ## Linux 音频增益与所有权
 
 ### 总音量变化刷新已初始化声源

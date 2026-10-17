@@ -5,7 +5,10 @@
 
 发行下载：[GitHub Releases](https://github.com/YuHao2006/pvz_perf/releases)。
 v1.0 提供 Windows x64 / Win32 / DX12 包，解压后运行 `pvz_perf.exe`；
-不附个人存档或设置。Linux 代码仍在完善，本次不发布 Linux 二进制。
+不附个人存档或设置。发行提供 Windows Win32/DX12、Linux X11/Vulkan 和 Wayland/Vulkan。
+当前 Linux 包基于 Ubuntu 25.10 构建，要求 glibc 2.38、GLIBCXX 3.4.32 及兼容的
+Vulkan 驱动；仍使用本机 CPU 优化，不承诺兼容所有 x86-64 CPU 或 Ubuntu 22.04。
+Linux 依赖与外部效果许可随包提供，系统图形、窗口、音频运行库由用户安装。
 贡献通过 fork 和 Pull Request 提交，由维护者审查，见 [参与开发](CONTRIBUTING.md)。
 
 - [性能总账](docs/perf-fix-ledger.md)：机制、同口径数据、收益范围。
@@ -83,6 +86,9 @@ desktop 文件安装后要求程序或启动器位于 PATH。
 
 当前直接依赖包括 glibc、C++ 运行库、Vulkan loader、OpenAL Soft、DXC/DXIL、
 BASS，以及 X11 或 Wayland/xkbcommon/libdecor 客户端库。
+Linux 桌面错误对话框使用系统的 `zenity`（GNOME）或 `kdialog`（KDE）；
+启动失败、缺少缩放效果或资源错误会显示诊断，不依赖游戏窗口或 Vulkan 初始化成功。
+没有显示会话或两项工具均不可用时，仍保留 stderr/日志与失败退出码。
 BASS 只负责解码，Linux 声音输出由 OpenAL Soft 完成；Windows 音效使用
 DirectSound，平台代码分离。
 
@@ -138,8 +144,11 @@ python3 Tests/performance/measure-linux-process.py --pid PID --cpu N \
 
 无尽改为 `--scene endless`，Wayland 改用其构建目录；两种窗口系统串行测量。
 该采样器不推算 FPS，帧率须由同轮独立采集或人工诊断显示补充。
-Linux 本轮不测。当前原生 Ubuntu 的 credits/无尽 CPU 与 FPS 对照尚未采集，不能把编译通过
-或 WSL 数据写成实机性能通过。
+原生 Ubuntu Wayland/Vulkan 已完成 credits 与统一无尽的 FPS/CPU 独立采集，
+结果及时间曲线见[性能总账](docs/perf-fix-ledger.md)。新入口为
+`Tests/performance/run-linux-game-perf.py`，配套构建与运行说明见
+[性能工具](Tests/performance/README.md)。本轮锁 25x 最高倍频上限（用户确认），X11 尚未实测；不能将其直接当作
+与 Windows 同核同频的性能对照，也不能把编译通过或 WSL 数据写成实机性能通过。
 
 总账直接引用的精选原始记录位于 `Tests/evidence/`，历史对照夹具位于
 `Tests/reference/`；两者均不作为当前发行包或现代项目冻结性能基线。

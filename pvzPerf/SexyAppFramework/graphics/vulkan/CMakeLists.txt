@@ -114,11 +114,15 @@ file(GLOB_RECURSE scaleIncludes CONFIGURE_DEPENDS "${PVZ_EFFECTS_ROOT}/*.hlsli")
 foreach(source IN LISTS scaleSources)
     list(APPEND numericEffects "${source}.vfx")
 endforeach()
-add_custom_command(OUTPUT ${numericEffects}
-    COMMAND "$<TARGET_FILE:compile_numeric_scale>" --effects "${PVZ_EFFECTS_ROOT}"
-    DEPENDS compile_numeric_scale ${scaleSources} ${scaleIncludes}
-    COMMENT "Baking numeric scale assets offline"
-    VERBATIM)
+if(numericEffects)
+    add_custom_command(OUTPUT ${numericEffects}
+        COMMAND "$<TARGET_FILE:compile_numeric_scale>" --effects "${PVZ_EFFECTS_ROOT}"
+        DEPENDS compile_numeric_scale ${scaleSources} ${scaleIncludes}
+        COMMENT "Baking numeric scale assets offline"
+        VERBATIM)
+else()
+    message(STATUS "No external scaling effects found; skipping offline effect baking")
+endif()
 add_custom_target(bake_numeric_scale DEPENDS ${numericEffects})
 
 target_link_libraries(sexy_vulkan PRIVATE sexy_vulkan_effects)

@@ -1,0 +1,146 @@
+{
+  "schema": 1,
+  "status": "complete",
+  "scene": "credits",
+  "executable": "/home/yuhao/\u684c\u9762/pvz_perf/out/x64-wayland-vulkan/Release/pvz_perf",
+  "executable_sha256": "996a3111e4579186955fdeccfe85a8754184fe86f21ea37d0a79e06ac5335ca8",
+  "layout": {
+    "layout": {
+      "pointerBytes": 8,
+      "mDrawCount": 1696,
+      "mUpdateCount": 1700,
+      "mGameScene": 2616,
+      "mGameMode": 2612,
+      "mBoard": 2496,
+      "mCreditScreen": 2536,
+      "mGameSelector": 2512,
+      "mTitleScreen": 2504,
+      "mAwardScreen": 2528,
+      "mDialogMap": 1160,
+      "mPlayerInfo": 2696,
+      "mLoaded": 1843,
+      "mHWnd": 1264,
+      "mActive": 1786,
+      "mHasFocus": 1790,
+      "board": {
+        "paused": 536,
+        "counter": 22044,
+        "wave": 22064,
+        "waves": 22040,
+        "sun": 22036
+      },
+      "selector": {
+        "options": 232,
+        "survival": 280
+      },
+      "widget": {
+        "x": 76,
+        "y": 80,
+        "width": 84,
+        "height": 88,
+        "parent": 40
+      },
+      "continueButton": 480,
+      "creditsButton": 512,
+      "awardStart": 192
+    },
+    "executable_sha256": "996a3111e4579186955fdeccfe85a8754184fe86f21ea37d0a79e06ac5335ca8",
+    "layout_tool_sha256": "108ab9cd6d6a901d38d7b091d1dd210fad56e65eae0bf812cd757245ca49d049"
+  },
+  "game_affinity": [
+    14
+  ],
+  "observer_affinity": [
+    15
+  ],
+  "cpu_before": {
+    "topology/core_id": "32",
+    "topology/physical_package_id": "0",
+    "topology/thread_siblings_list": "14",
+    "topology/core_type": null,
+    "cpufreq/scaling_governor": "powersave",
+    "cpufreq/scaling_min_freq": "400000",
+    "cpufreq/scaling_max_freq": "2500000",
+    "cpufreq/scaling_cur_freq": "400000",
+    "cpufreq/cpuinfo_max_freq": "2500000"
+  },
+  "observer_cpu": {
+    "topology/core_id": "33",
+    "topology/physical_package_id": "0",
+    "topology/thread_siblings_list": "15",
+    "topology/core_type": null,
+    "cpufreq/scaling_governor": "powersave",
+    "cpufreq/scaling_min_freq": "400000",
+    "cpufreq/scaling_max_freq": "2500000",
+    "cpufreq/scaling_cur_freq": "2499965",
+    "cpufreq/cpuinfo_max_freq": "2500000"
+  },
+  "frame_metric": "existing mDrawCount delta per real monotonic interval; produced draw frames, not display presents",
+  "cpu_basis": "process user+system ticks; one logical CPU = 100%",
+  "frequency_policy": "Affinity only; no fixed clock ratio configured or claimed",
+  "fixture_sha256": null,
+  "scale_config_sha256": "db45917f1dce3cfd432fb36dc8cbbb41e7f7fa067d8c6ce7ede326d3e4641c7d",
+  "profile_sha256": "8289ebebf93240e7d3976feda3d806863ae195d4c1a78b72e9d74649989af71c",
+  "sample_interval_s": 1,
+  "warmup_seconds": 8,
+  "formal_measurement": false,
+  "duration_limit_seconds": null,
+  "limitation": "Menu/paused/background/transition samples are excluded. No independent verification of XWayland/Wayland visible presents or hardware clock ratio.",
+  "pid": 27824,
+  "initialized_worker_affinity_corrections": [
+    {
+      "tid": 27836,
+      "name": "pvz_per:disk$0",
+      "previous": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15
+      ]
+    }
+  ],
+  "clock_ticks_per_second": 100,
+  "stop_reason": "game-exit",
+  "samples": 165,
+  "valid_samples": 160,
+  "valid_seconds": 160.00001898200026,
+  "draw_frames": 15999,
+  "cpu_seconds": 11.790000000000001,
+  "fps_mean": 99.99373813699273,
+  "cpu_percent": 7.368749125790014,
+  "cpu_ms_per_draw_frame": 0.736921057566098,
+  "final_state": {
+    "mDrawCount": 21794,
+    "mUpdateCount": 22092,
+    "mGameScene": 1,
+    "mGameMode": 0,
+    "focused": true,
+    "board": 0,
+    "paused": true,
+    "counter": null,
+    "wave": null
+  },
+  "cpu_after": {
+    "topology/core_id": "32",
+    "topology/physical_package_id": "0",
+    "topology/thread_siblings_list": "14",
+    "topology/core_type": null,
+    "cpufreq/scaling_governor": "powersave",
+    "cpufreq/scaling_min_freq": "400000",
+    "cpufreq/scaling_max_freq": "2500000",
+    "cpufreq/scaling_cur_freq": "2499854",
+    "cpufreq/cpuinfo_max_freq": "2500000"
+  }
+}

@@ -24,6 +24,9 @@ elseif(PVZ_WINDOW_BACKEND STREQUAL "WAYLAND")
 else()
     message(FATAL_ERROR "PVZ_WINDOW_BACKEND must be X11 or WAYLAND for this target")
 endif()
+target_sources(sexy_native_window PRIVATE linux/ErrorDialog.cpp)
+target_compile_definitions(sexy_native_window PRIVATE
+    "$<$<BOOL:${PVZ_ENABLE_GAME_PROBES}>:PVZ_ENABLE_GAME_PROBES=1>")
 target_compile_features(sexy_native_window PUBLIC cxx_std_20)
 target_include_directories(sexy_native_window PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
 target_compile_options(sexy_native_window PRIVATE

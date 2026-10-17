@@ -32,12 +32,6 @@ def package(args):
                 include(path, path.relative_to(release).as_posix())
     if not any(n.startswith("shaders/") for n in files):
         raise ValueError("No compiled DXIL shaders found")
-    for path in sorted(args.crt_directory.glob("*.dll")):
-        include(path, path.name)
-        include(path, "data/" + path.name)
-    for name in ("msvcp140.dll", "vcruntime140.dll", "vcruntime140_1.dll"):
-        if name not in {n.lower() for n in files}:
-            raise ValueError(f"Missing app-local CRT: {name}")
     for path in sorted(args.notices.iterdir()):
         if path.is_file():
             include(path, "licenses/" + path.name)
@@ -57,6 +51,7 @@ def package(args):
         "This package contains no player profiles, saves, or personal settings.\n"
         "The game creates its settings and profiles on first use.\n"
         "The DAT/DAT64 converter is in data/pvz_dat64_converter.exe.\n"
+        "The game and converter use the installed Microsoft Visual C++ x64 runtime (/MD).\n"
         "External scaling effects are configured in scale.json; see effects/README.md.\n"
         "Requires Windows with DirectX 12 and a GPU supporting the game's bindless path.\n\n"
         "This product includes portions of the PopCap Games Framework, "
@@ -67,7 +62,8 @@ def package(args):
     )
     manifest = {
         "version": args.version, "platform": "x64-win32-dx12",
-        "source_commit": args.commit, "personal_saves": False, "files": records,
+        "source_commit": args.commit, "personal_saves": False,
+        "msvc_runtime": "installed x64 runtime (/MD), not bundled", "files": records,
     }
     args.output.parent.mkdir(parents=True, exist_ok=True)
     with zipfile.ZipFile(args.output, "x", compression=zipfile.ZIP_DEFLATED, compresslevel=6) as archive:
@@ -89,7 +85,6 @@ def package(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--release", type=Path, required=True)
-    parser.add_argument("--crt-directory", type=Path, required=True)
     parser.add_argument("--notices", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--version", default="v1.0")

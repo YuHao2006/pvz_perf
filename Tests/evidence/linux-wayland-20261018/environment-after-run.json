@@ -1,0 +1,155 @@
+{
+  "captured_after_measurements": true,
+  "kernel": "6.17.0-41-generic",
+  "cpu_model": "Intel(R) Core(TM) Ultra 9 185H",
+  "os_release": "PRETTY_NAME=\"Ubuntu 25.10\"\nNAME=\"Ubuntu\"\nVERSION_ID=\"25.10\"\nVERSION=\"25.10 (Questing Quokka)\"\nVERSION_CODENAME=questing\nID=ubuntu\nID_LIKE=debian\nHOME_URL=\"https://www.ubuntu.com/\"\nSUPPORT_URL=\"https://help.ubuntu.com/\"\nBUG_REPORT_URL=\"https://bugs.launchpad.net/ubuntu/\"\nPRIVACY_POLICY_URL=\"https://www.ubuntu.com/legal/terms-and-policies/privacy-policy\"\nUBUNTU_CODENAME=questing\nLOGO=ubuntu-logo\n",
+  "compiler": "c++ (Ubuntu 15.2.0-4ubuntu4) 15.2.0",
+  "cores": [
+    {
+      "linux_cpu": 0,
+      "core_id": 16,
+      "apic_id": 32,
+      "thread_siblings": "0",
+      "hardware_max_khz": 4800000,
+      "policy_max_khz": 4800000,
+      "class_from_topology_and_185h_frequency": "P"
+    },
+    {
+      "linux_cpu": 1,
+      "core_id": 8,
+      "apic_id": 16,
+      "thread_siblings": "1",
+      "hardware_max_khz": 5100000,
+      "policy_max_khz": 5100000,
+      "class_from_topology_and_185h_frequency": "P"
+    },
+    {
+      "linux_cpu": 2,
+      "core_id": 12,
+      "apic_id": 24,
+      "thread_siblings": "2",
+      "hardware_max_khz": 5100000,
+      "policy_max_khz": 5100000,
+      "class_from_topology_and_185h_frequency": "P"
+    },
+    {
+      "linux_cpu": 3,
+      "core_id": 20,
+      "apic_id": 40,
+      "thread_siblings": "3",
+      "hardware_max_khz": 4800000,
+      "policy_max_khz": 4800000,
+      "class_from_topology_and_185h_frequency": "P"
+    },
+    {
+      "linux_cpu": 4,
+      "core_id": 24,
+      "apic_id": 48,
+      "thread_siblings": "4",
+      "hardware_max_khz": 4800000,
+      "policy_max_khz": 4800000,
+      "class_from_topology_and_185h_frequency": "P"
+    },
+    {
+      "linux_cpu": 5,
+      "core_id": 28,
+      "apic_id": 56,
+      "thread_siblings": "5",
+      "hardware_max_khz": 4800000,
+      "policy_max_khz": 4800000,
+      "class_from_topology_and_185h_frequency": "P"
+    },
+    {
+      "linux_cpu": 6,
+      "core_id": 0,
+      "apic_id": 0,
+      "thread_siblings": "6",
+      "hardware_max_khz": 3800000,
+      "policy_max_khz": 3800000,
+      "class_from_topology_and_185h_frequency": "E"
+    },
+    {
+      "linux_cpu": 7,
+      "core_id": 1,
+      "apic_id": 2,
+      "thread_siblings": "7",
+      "hardware_max_khz": 3800000,
+      "policy_max_khz": 3800000,
+      "class_from_topology_and_185h_frequency": "E"
+    },
+    {
+      "linux_cpu": 8,
+      "core_id": 2,
+      "apic_id": 4,
+      "thread_siblings": "8",
+      "hardware_max_khz": 3800000,
+      "policy_max_khz": 3800000,
+      "class_from_topology_and_185h_frequency": "E"
+    },
+    {
+      "linux_cpu": 9,
+      "core_id": 3,
+      "apic_id": 6,
+      "thread_siblings": "9",
+      "hardware_max_khz": 3800000,
+      "policy_max_khz": 3800000,
+      "class_from_topology_and_185h_frequency": "E"
+    },
+    {
+      "linux_cpu": 10,
+      "core_id": 4,
+      "apic_id": 8,
+      "thread_siblings": "10",
+      "hardware_max_khz": 3800000,
+      "policy_max_khz": 3800000,
+      "class_from_topology_and_185h_frequency": "E"
+    },
+    {
+      "linux_cpu": 11,
+      "core_id": 5,
+      "apic_id": 10,
+      "thread_siblings": "11",
+      "hardware_max_khz": 3800000,
+      "policy_max_khz": 3800000,
+      "class_from_topology_and_185h_frequency": "E"
+    },
+    {
+      "linux_cpu": 12,
+      "core_id": 6,
+      "apic_id": 12,
+      "thread_siblings": "12",
+      "hardware_max_khz": 3800000,
+      "policy_max_khz": 3800000,
+      "class_from_topology_and_185h_frequency": "E"
+    },
+    {
+      "linux_cpu": 13,
+      "core_id": 7,
+      "apic_id": 14,
+      "thread_siblings": "13",
+      "hardware_max_khz": 3800000,
+      "policy_max_khz": 3800000,
+      "class_from_topology_and_185h_frequency": "E"
+    },
+    {
+      "linux_cpu": 14,
+      "core_id": 32,
+      "apic_id": 64,
+      "thread_siblings": "14",
+      "hardware_max_khz": 2500000,
+      "policy_max_khz": 2500000,
+      "class_from_topology_and_185h_frequency": "LP-E"
+    },
+    {
+      "linux_cpu": 15,
+      "core_id": 33,
+      "apic_id": 66,
+      "thread_siblings": "15",
+      "hardware_max_khz": 2500000,
+      "policy_max_khz": 2500000,
+      "class_from_topology_and_185h_frequency": "LP-E"
+    }
+  ],
+  "windows_lp14_apic_id": null,
+  "notes": "Post-run hardware inventory; not a fixed-frequency measurement or a Windows/Linux core identity proof."
+}

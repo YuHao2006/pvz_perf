@@ -1,0 +1,36 @@
+Product: PopCap\PlantsVsZombies
+BuildNum: 0
+BuildDate: 
+libdecor-gtk-WARNING: Failed to initialize GTK
+Failed to load plugin 'libdecor-gtk.so': failed to init
+First Draw Time: 4785 ms
+MUSIC_SET_POSITION tune=7 file=1 requested=00000098 ok=1 error=0 actual=00000098
+LOADED: group=26 23 ms on Game Loading
+loading 'resources' 447 ms
+loading 'stuff' 0 ms
+LOADED: group=8 31 ms on Game Loading
+LOADED: group=9 47 ms on Game Loading
+LOADED: group=1 63 ms on Game Loading
+LOADED: group=10 24 ms on Game Loading
+LOADED: group=15 61 ms on Game Loading
+LOADED: group=16 134 ms on Game Loading
+Resource Loading Time: 8757
+MUSIC_SET_POSITION tune=6 file=1 requested=0000007A ok=1 error=0 actual=0000007A
+TRY_LOAD_GAME file=/home/yuhao/.local/share/PlantsVsZombiesModern/game1_58.dat64 mode=58 profile=1
+DAT64_BOARD_STATE file=/home/yuhao/.local/share/PlantsVsZombiesModern/game1_58.dat64 gameId=1787323084 background=2 wave=0/20 survivalStage=1024 musicTune=3 paused=1 bpm=71 speed=2
+Loaded save game
+MUSIC_RESUME tune=3 offset=0007005E drumsOffset=00000000 bpm=71 speed=2
+MUSIC_SET_POSITION tune=3 file=1 requested=0007005E ok=1 error=0 actual=001C005E
+MUSIC_SET_POSITION tune=3 file=2 requested=0007005E ok=1 error=0 actual=001C005E
+MUSIC_SET_POSITION tune=3 file=3 requested=0007005E ok=1 error=0 actual=001C005E
+MUSIC_SET_POSITION tune=6 file=1 requested=0000007A ok=1 error=0 actual=0000007A
+preloading: 0 ms
+MUSIC_SET_POSITION tune=7 file=1 requested=00000098 ok=1 error=0 actual=00000098
+MUSIC_SET_POSITION tune=7 file=1 requested=00000098 ok=1 error=0 actual=00000098
+Seconds       = 438.299
+Sleep Count   = 43356
+Update Count  = 43720
+Draw Count    = 43407
+Draw Time     = 116180
+Screen Blt    = 0
+Avg FPS       = 373

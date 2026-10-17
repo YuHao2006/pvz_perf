@@ -217,7 +217,7 @@ foreach(pvzTarget IN ITEMS LawnProject sexy_native_window sexy_vulkan
 endforeach()
 
 if(BUILD_TESTING)
-    if(WIN32 AND MSVC)
+    if((WIN32 AND MSVC) OR CMAKE_SYSTEM_NAME STREQUAL "Linux")
         add_subdirectory(Tests/performance Tests/performance/build)
     endif()
     add_executable(modern_rng_wire_tests tools/native-tests/portable_rng_tests.cpp

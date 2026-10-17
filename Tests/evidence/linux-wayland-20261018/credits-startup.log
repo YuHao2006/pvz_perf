@@ -1,0 +1,24 @@
+Product: PopCap\PlantsVsZombies
+BuildNum: 0
+BuildDate: 
+libdecor-gtk-WARNING: Failed to initialize GTK
+Failed to load plugin 'libdecor-gtk.so': failed to init
+First Draw Time: 4580 ms
+MUSIC_SET_POSITION tune=7 file=1 requested=00000098 ok=1 error=0 actual=00000098
+LOADED: group=26 22 ms on Game Loading
+loading 'resources' 447 ms
+loading 'stuff' 0 ms
+LOADED: group=8 31 ms on Game Loading
+LOADED: group=9 45 ms on Game Loading
+LOADED: group=1 64 ms on Game Loading
+LOADED: group=15 65 ms on Game Loading
+LOADED: group=16 129 ms on Game Loading
+Resource Loading Time: 8501
+MUSIC_SET_POSITION tune=7 file=1 requested=00000098 ok=1 error=0 actual=00000098
+Seconds       = 222.267
+Sleep Count   = 21825
+Update Count  = 22108
+Draw Count    = 21810
+Draw Time     = 6399
+Screen Blt    = 0
+Avg FPS       = 3408

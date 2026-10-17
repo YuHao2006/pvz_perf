@@ -1,0 +1,58 @@
+{
+  "credits-analysis.csv": {
+    "bytes": 22946,
+    "sha256": "dab4651b755c335028692c17ed2bade3562105dfabceffa829714eff34dce6f3"
+  },
+  "credits-measurement.json": {
+    "bytes": 4164,
+    "sha256": "9f7f2ed0b210261b159cf6743a70809529b4dbf954ac297a4af82b5de231b81d"
+  },
+  "credits-raw.csv": {
+    "bytes": 21906,
+    "sha256": "edf132e046e0f51c2dbe19e95292937b70d167e5e6d364b43345b682d72a0d44"
+  },
+  "credits-startup.log": {
+    "bytes": 812,
+    "sha256": "087fb85e2592a1754b98a9c0fffb9e305ef5d85d877fedef2dcb660894b16c34"
+  },
+  "endless-analysis.csv": {
+    "bytes": 59784,
+    "sha256": "a26fbbce3e62bd8b065a1b1d78f842268fe24174093b15d399ca279aa88893bd"
+  },
+  "endless-measurement.json": {
+    "bytes": 4215,
+    "sha256": "876fc2e820b5a877ca2db8e5f1ea80534fe054b293f4104439244c1c61a8976a"
+  },
+  "endless-raw.csv": {
+    "bytes": 56798,
+    "sha256": "b3bd5c6e08a9ec20bdbca0775934663fa851efb08bc1f62de08b1266b655c1fb"
+  },
+  "endless-startup.log": {
+    "bytes": 1724,
+    "sha256": "455a7d23a955ae715d40b3e78e6e7f06b221837cba20da7ae8e3130def589590"
+  },
+  "endless-timeline.png": {
+    "bytes": 243588,
+    "sha256": "3dceadd53242bbe3131f0c31c0174f13e260b55f866ce41db8b043a9476aeee5"
+  },
+  "endless-timeline.svg": {
+    "bytes": 157241,
+    "sha256": "44014d530070437bd0eed21bb57cbc175d33d33cdaa9b667b91a31c008c15589"
+  },
+  "environment-after-run.json": {
+    "bytes": 4425,
+    "sha256": "61535f010553df1a843446edaba68d053b3dcbd56312cb6786c2dfcfa68ac5b6"
+  },
+  "scale.json": {
+    "bytes": 503,
+    "sha256": "db45917f1dce3cfd432fb36dc8cbbb41e7f7fa067d8c6ce7ede326d3e4641c7d"
+  },
+  "settings-after-run.json": {
+    "bytes": 188,
+    "sha256": "0a19f3fb3aae20f45bb25395a79687b43209fd6848c600f2e654b80eec900201"
+  },
+  "summary.json": {
+    "bytes": 3433,
+    "sha256": "6047fb0917e47aac9968f15a04fb1d279f5629c5be23e6423383ba8995c4c2cd"
+  }
+}

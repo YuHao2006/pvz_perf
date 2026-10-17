@@ -41,6 +41,7 @@
 #include <shlobj.h>
 #else
 #include <unistd.h>
+#include "platform/linux/ErrorDialog.h"
 #include <fcntl.h>
 #include <sys/file.h>
 #include <sys/socket.h>
@@ -2551,6 +2552,7 @@ int SexyAppBase::MsgBox(const std::string& theText, const std::string& theTitle,
 #else
 	(void)theFlags;
 	fprintf(stderr, "%s: %s\n", theTitle.c_str(), theText.c_str());
+	ShowLinuxErrorDialog(theText.c_str(), theTitle.c_str());
 	int aResult = IDOK;
 #endif
 	EndPopup();
@@ -2574,6 +2576,7 @@ int SexyAppBase::MsgBox(const std::wstring& theText, const std::wstring& theTitl
 #else
 	(void)theFlags;
 	fprintf(stderr, "%s: %s\n", WStringToString(theTitle).c_str(), WStringToString(theText).c_str());
+	ShowLinuxErrorDialog(WStringToString(theText).c_str(), WStringToString(theTitle).c_str());
 	int aResult = IDOK;
 #endif
 	EndPopup();
@@ -2594,7 +2597,10 @@ void SexyAppBase::Popup(const std::string& theString)
 #ifdef _WIN32
 		::MessageBoxA(mHWnd, theString.c_str(), SexyStringToString((("FATAL ERROR"))).c_str(), MB_APPLMODAL | MB_ICONSTOP);
 #else
+	{
 		fprintf(stderr, "FATAL ERROR: %s\n", theString.c_str());
+		ShowLinuxErrorDialog(theString.c_str(), "pvz_perf - Fatal error");
+	}
 #endif
 	EndPopup();
 }
@@ -2612,7 +2618,10 @@ void SexyAppBase::Popup(const std::wstring& theString)
 #ifdef _WIN32
 		::MessageBoxW(mHWnd, theString.c_str(), SexyStringToWString((("FATAL ERROR"))).c_str(), MB_APPLMODAL | MB_ICONSTOP);
 #else
+	{
 		fprintf(stderr, "FATAL ERROR: %s\n", WStringToString(theString).c_str());
+		ShowLinuxErrorDialog(WStringToString(theString).c_str(), "pvz_perf - Fatal error");
+	}
 #endif
 	EndPopup();
 }

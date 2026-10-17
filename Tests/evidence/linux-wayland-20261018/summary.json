@@ -1,0 +1,83 @@
+{
+  "selection": "segment == game; validate valid == 1, expected scene/mode and focus",
+  "aggregation": "CPU ms/draw frame = total valid process CPU time / total valid draw count; FPS and CPU percentage weighted by real sample interval",
+  "limitations": [
+    "One observation per scene, no repeated ABBA.",
+    "CPU14 is Linux Core ID32; Windows LP14 physical identity not verified.",
+    "Maximum ratio limit 25x; user confirmation is separate from unchanged raw collector metadata. A maximum ratio limit allows downclocking and does not establish a constant operating frequency.",
+    "Vulkan/GCC on Linux and DX12/MSVC on Windows are different configurations.",
+    "No contemporaneous audio settings or customScale toggle snapshots were captured.",
+    "One-second /proc CPU ticks and state endpoints cannot resolve individual frames or all transitions."
+  ],
+  "results": [
+    {
+      "scene": "credits",
+      "source_directory": "/home/yuhao/桌面/pvz_perf/out/x64-wayland-vulkan/measurements/credits-20261018-014530-612976",
+      "valid_samples": 160,
+      "seconds": 160.00001898200026,
+      "draw_frames": 15999,
+      "cpu_seconds": 11.790000000000001,
+      "fps_mean": 99.99373813699273,
+      "cpu_percent": 7.368749125790014,
+      "cpu_ms_per_draw_frame": 0.736921057566098,
+      "fps_min_1s": 98.99580366686844,
+      "fps_p10_1s": 99.99045881043294,
+      "cpu_peak_1s": 12.00031352019335,
+      "segment_counts": {
+        "preroll": 2,
+        "background": 1,
+        "game": 160,
+        "other-scene": 2
+      },
+      "reported_frequency_khz_range": [
+        1096186,
+        2515969
+      ],
+      "executable_sha256": "996a3111e4579186955fdeccfe85a8754184fe86f21ea37d0a79e06ac5335ca8",
+      "scale_config_sha256": "db45917f1dce3cfd432fb36dc8cbbb41e7f7fa067d8c6ce7ede326d3e4641c7d",
+      "profile_sha256": "8289ebebf93240e7d3976feda3d806863ae195d4c1a78b72e9d74649989af71c",
+      "game_cpu": 14,
+      "observer_cpu": 15,
+      "constant_frequency_verified": false,
+      "maximum_ratio_limit": "25x",
+      "maximum_ratio_user_confirmed": true
+    },
+    {
+      "scene": "endless",
+      "source_directory": "/home/yuhao/桌面/pvz_perf/out/x64-wayland-vulkan/measurements/endless-20261018-014936-174820",
+      "valid_samples": 390,
+      "seconds": 390.0001297790004,
+      "draw_frames": 38997,
+      "cpu_seconds": 167.11,
+      "fps_mean": 99.99227441821174,
+      "cpu_percent": 42.84870369009761,
+      "cpu_ms_per_draw_frame": 4.2852014257506985,
+      "fps_min_1s": 98.01107270291538,
+      "fps_p10_1s": 99.98904330063871,
+      "cpu_peak_1s": 69.997140686799,
+      "segment_counts": {
+        "preroll": 2,
+        "background": 2,
+        "game": 390,
+        "other-scene": 10
+      },
+      "reported_frequency_khz_range": [
+        1099443,
+        2512271
+      ],
+      "executable_sha256": "996a3111e4579186955fdeccfe85a8754184fe86f21ea37d0a79e06ac5335ca8",
+      "scale_config_sha256": "db45917f1dce3cfd432fb36dc8cbbb41e7f7fa067d8c6ce7ede326d3e4641c7d",
+      "profile_sha256": "8289ebebf93240e7d3976feda3d806863ae195d4c1a78b72e9d74649989af71c",
+      "game_cpu": 14,
+      "observer_cpu": 15,
+      "constant_frequency_verified": false,
+      "wave_range": [
+        0,
+        20
+      ],
+      "fixture_sha256": "0de22ff708e3f572a669a15cb138076148f59628f073e7cef46ffb252d96429a",
+      "maximum_ratio_limit": "25x",
+      "maximum_ratio_user_confirmed": true
+    }
+  ]
+}

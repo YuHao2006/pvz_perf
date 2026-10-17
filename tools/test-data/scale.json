@@ -1,0 +1,19 @@
+{
+  "HDR": {
+    "enable": true,
+    "strength": 1.0
+  },
+  "window": {
+    "effects": [
+      { "path": "Anime4K/Anime4K_Upscale_Denoise_UL.hlsl" }
+    ]
+  },
+  "fullScreen": {
+    "output": { "width": 0, "height": 0 },
+    "effects": [
+      { "path": "Anime4K/Anime4K_Upscale_Denoise_UL.hlsl" },
+      { "path": "Anime4K/Anime4K_Upscale_Denoise_UL.hlsl" },
+      { "path": "SSimDownscaler.hlsl" }
+    ]
+  }
+}

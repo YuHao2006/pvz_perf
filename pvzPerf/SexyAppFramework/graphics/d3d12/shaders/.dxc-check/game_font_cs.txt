@@ -1,0 +1,697 @@
+;
+; Note: shader requires additional functionality:
+;       Double-precision floating point
+;       Double-precision extensions for 11.1
+;
+;
+; Input signature:
+;
+; Name                 Index   Mask Register SysValue  Format   Used
+; -------------------- ----- ------ -------- -------- ------- ------
+; no parameters
+;
+; Output signature:
+;
+; Name                 Index   Mask Register SysValue  Format   Used
+; -------------------- ----- ------ -------- -------- ------- ------
+; no parameters
+; shader hash: db0f101733afc466ae7e9b95a3b5f68c
+;
+; Pipeline Runtime Information: 
+;
+;PSVRuntimeInfo:
+; Compute Shader
+; NumThreads=(8,8,1)
+; NumBytesGroupSharedMemory: 0
+; MinimumExpectedWaveLaneCount: 0
+; MaximumExpectedWaveLaneCount: 4294967295
+; UsesViewID: false
+; SigInputElements: 0
+; SigOutputElements: 0
+; SigPatchConstOrPrimElements: 0
+; SigInputVectors: 0
+; SigOutputVectors[0]: 0
+; SigOutputVectors[1]: 0
+; SigOutputVectors[2]: 0
+; SigOutputVectors[3]: 0
+; EntryFunctionName: CSMain
+;
+;
+; Buffer Definitions:
+;
+; cbuffer FontConstants
+; {
+;
+;   struct FontConstants
+;   {
+;
+;       int4 src;                                     ; Offset:    0
+;       int4 dst;                                     ; Offset:   16
+;       uint white;                                   ; Offset:   32
+;       int sourceWidth;                              ; Offset:   36
+;       int sourceHeight;                             ; Offset:   40
+;       uint samplingFlags;                           ; Offset:   44
+;       uint sourceSlot;                              ; Offset:   48
+;   
+;   } FontConstants;                                  ; Offset:    0 Size:    52
+;
+; }
+;
+;
+; Resource Bindings:
+;
+; Name                                 Type  Format         Dim      ID      HLSL Bind  Count
+; ------------------------------ ---------- ------- ----------- ------- -------------- ------
+; FontConstants                     cbuffer      NA          NA     CB0            cb0     1
+; sourceImage                       texture     f32          2d      T0             t0     1
+; target                                UAV     f32          2d      U0             u0     1
+;
+target datalayout = "e-m:e-p:32:32-i1:32-i8:32-i16:32-i32:32-i64:64-f16:32-f32:32-f64:64-n8:16:32:64"
+target triple = "dxil-ms-dx"
+
+%dx.types.Handle = type { i8* }
+%dx.types.CBufRet.i32 = type { i32, i32, i32, i32 }
+%dx.types.ResRet.f32 = type { float, float, float, float, i32 }
+%"class.Texture2D<vector<float, 4> >" = type { <4 x float>, %"class.Texture2D<vector<float, 4> >::mips_type" }
+%"class.Texture2D<vector<float, 4> >::mips_type" = type { i32 }
+%"class.RWTexture2D<vector<float, 4> >" = type { <4 x float> }
+%FontConstants = type { <4 x i32>, <4 x i32>, i32, i32, i32, i32, i32 }
+
+define void @CSMain() {
+  %1 = call %dx.types.Handle @dx.op.createHandle(i32 57, i8 1, i32 0, i32 0, i1 false)  ; CreateHandle(resourceClass,rangeId,index,nonUniformIndex)
+  %2 = call %dx.types.Handle @dx.op.createHandle(i32 57, i8 0, i32 0, i32 0, i1 false)  ; CreateHandle(resourceClass,rangeId,index,nonUniformIndex)
+  %3 = call %dx.types.Handle @dx.op.createHandle(i32 57, i8 2, i32 0, i32 0, i1 false)  ; CreateHandle(resourceClass,rangeId,index,nonUniformIndex)
+  %4 = call i32 @dx.op.threadId.i32(i32 93, i32 0)  ; ThreadId(component)
+  %5 = call i32 @dx.op.threadId.i32(i32 93, i32 1)  ; ThreadId(component)
+  %6 = call %dx.types.CBufRet.i32 @dx.op.cbufferLoadLegacy.i32(i32 59, %dx.types.Handle %3, i32 1)  ; CBufferLoadLegacy(handle,regIndex)
+  %7 = extractvalue %dx.types.CBufRet.i32 %6, 2
+  %8 = extractvalue %dx.types.CBufRet.i32 %6, 3
+  %9 = icmp sge i32 %4, %7
+  %10 = icmp sge i32 %5, %8
+  %11 = or i1 %9, %10
+  br i1 %11, label %449, label %12
+
+; <label>:12                                      ; preds = %0
+  %13 = call %dx.types.CBufRet.i32 @dx.op.cbufferLoadLegacy.i32(i32 59, %dx.types.Handle %3, i32 0)  ; CBufferLoadLegacy(handle,regIndex)
+  %14 = extractvalue %dx.types.CBufRet.i32 %13, 0
+  %15 = extractvalue %dx.types.CBufRet.i32 %13, 2
+  %16 = icmp sge i32 %15, %7
+  %17 = add nsw i32 %4, 1
+  %18 = add nsw i32 %15, -1
+  %19 = sitofp i32 %4 to double
+  br i1 %16, label %20, label %41
+
+; <label>:20                                      ; preds = %12
+  %21 = sitofp i32 %7 to double
+  %22 = sitofp i32 %15 to double
+  %23 = fdiv double %21, %22
+  %24 = fdiv double %19, %23
+  %25 = fptosi double %24 to i32
+  %26 = sitofp i32 %25 to double
+  %27 = fcmp ogt double %26, %24
+  %28 = sext i1 %27 to i32
+  %29 = add i32 %25, -1
+  %30 = add i32 %29, %28
+  %31 = call i32 @dx.op.binary.i32(i32 37, i32 0, i32 %30)  ; IMax(a,b)
+  %32 = sitofp i32 %17 to double
+  %33 = fdiv double %32, %23
+  %34 = fptosi double %33 to i32
+  %35 = sitofp i32 %34 to double
+  %36 = fcmp olt double %35, %33
+  %37 = zext i1 %36 to i32
+  %38 = add i32 %34, 1
+  %39 = add i32 %38, %37
+  %40 = call i32 @dx.op.binary.i32(i32 38, i32 %18, i32 %39)  ; IMin(a,b)
+  br label %63
+
+; <label>:41                                      ; preds = %12
+  %42 = call %dx.types.CBufRet.i32 @dx.op.cbufferLoadLegacy.i32(i32 59, %dx.types.Handle %3, i32 2)  ; CBufferLoadLegacy(handle,regIndex)
+  %43 = extractvalue %dx.types.CBufRet.i32 %42, 1
+  %44 = sitofp i32 %18 to double
+  %45 = add nsw i32 %7, -1
+  %46 = sitofp i32 %45 to double
+  %47 = fdiv double %44, %46
+  %48 = fmul double %19, %47
+  %49 = sitofp i32 %14 to double
+  %50 = fadd double %49, %48
+  %51 = fptosi double %50 to i32
+  %52 = sitofp i32 %51 to double
+  %53 = fsub double %50, %52
+  %54 = sub nsw i32 %51, %14
+  %55 = xor i32 %14, -1
+  %56 = add i32 %43, %55
+  %57 = add nsw i32 %54, 1
+  %58 = call i32 @dx.op.binary.i32(i32 38, i32 %57, i32 %56)  ; IMin(a,b)
+  %59 = fsub fast double 1.000000e+00, %53
+  %60 = fmul fast double %59, 2.570000e+02
+  %61 = fptoui double %60 to i32
+  %62 = sub i32 257, %61
+  br label %63
+
+; <label>:63                                      ; preds = %41, %20
+  %64 = phi double [ %23, %20 ], [ 0.000000e+00, %41 ]
+  %65 = phi i32 [ 0, %20 ], [ %62, %41 ]
+  %66 = phi i32 [ 0, %20 ], [ %61, %41 ]
+  %67 = phi i32 [ %40, %20 ], [ %58, %41 ]
+  %68 = phi i32 [ %31, %20 ], [ %54, %41 ]
+  %69 = extractvalue %dx.types.CBufRet.i32 %13, 3
+  %70 = icmp sge i32 %69, %8
+  %71 = add nsw i32 %5, 1
+  %72 = add nsw i32 %69, -1
+  %73 = sitofp i32 %5 to double
+  br i1 %70, label %74, label %95
+
+; <label>:74                                      ; preds = %63
+  %75 = sitofp i32 %8 to double
+  %76 = sitofp i32 %69 to double
+  %77 = fdiv double %75, %76
+  %78 = fdiv double %73, %77
+  %79 = fptosi double %78 to i32
+  %80 = sitofp i32 %79 to double
+  %81 = fcmp ogt double %80, %78
+  %82 = sext i1 %81 to i32
+  %83 = add i32 %79, -1
+  %84 = add i32 %83, %82
+  %85 = call i32 @dx.op.binary.i32(i32 37, i32 0, i32 %84)  ; IMax(a,b)
+  %86 = sitofp i32 %71 to double
+  %87 = fdiv double %86, %77
+  %88 = fptosi double %87 to i32
+  %89 = sitofp i32 %88 to double
+  %90 = fcmp olt double %89, %87
+  %91 = zext i1 %90 to i32
+  %92 = add i32 %88, 1
+  %93 = add i32 %92, %91
+  %94 = call i32 @dx.op.binary.i32(i32 38, i32 %72, i32 %93)  ; IMin(a,b)
+  br label %110
+
+; <label>:95                                      ; preds = %63
+  %96 = sitofp i32 %72 to double
+  %97 = add nsw i32 %8, -1
+  %98 = sitofp i32 %97 to double
+  %99 = fdiv double %96, %98
+  %100 = fmul double %73, %99
+  %101 = fptosi double %100 to i32
+  %102 = sitofp i32 %101 to double
+  %103 = fsub double %100, %102
+  %104 = add nsw i32 %101, 1
+  %105 = call i32 @dx.op.binary.i32(i32 38, i32 %104, i32 %72)  ; IMin(a,b)
+  %106 = fsub double 1.000000e+00, %103
+  %107 = fmul double %106, 2.560000e+02
+  %108 = fptoui double %107 to i32
+  %109 = sub i32 256, %108
+  br label %110
+
+; <label>:110                                     ; preds = %95, %74
+  %111 = phi i32 [ %85, %74 ], [ %101, %95 ]
+  %112 = phi i32 [ %94, %74 ], [ %105, %95 ]
+  %113 = phi i32 [ 0, %74 ], [ %108, %95 ]
+  %114 = phi i32 [ 0, %74 ], [ %109, %95 ]
+  %115 = phi double [ %77, %74 ], [ 0.000000e+00, %95 ]
+  %116 = icmp sgt i32 %111, %112
+  br i1 %116, label %407, label %117
+
+; <label>:117                                     ; preds = %110
+  br label %118
+
+; <label>:118                                     ; preds = %399, %117
+  %119 = phi i32 [ %400, %399 ], [ 0, %117 ]
+  %120 = phi i32 [ %401, %399 ], [ 0, %117 ]
+  %121 = phi i32 [ %402, %399 ], [ 0, %117 ]
+  %122 = phi i32 [ %403, %399 ], [ 0, %117 ]
+  %123 = phi i32 [ %404, %399 ], [ %111, %117 ]
+  br i1 %70, label %130, label %124
+
+; <label>:124                                     ; preds = %118
+  %125 = icmp eq i32 %123, %111
+  %126 = select i1 %125, i32 %113, i32 0
+  %127 = icmp eq i32 %123, %112
+  %128 = select i1 %127, i32 %114, i32 0
+  %129 = add i32 %126, %128
+  br label %160
+
+; <label>:130                                     ; preds = %118
+  %131 = sitofp i32 %123 to double
+  %132 = fmul double %115, %131
+  %133 = fadd double %132, 1.000000e+00
+  %134 = fadd double %115, %133
+  %135 = fptosi double %133 to i32
+  %136 = fptosi double %134 to i32
+  %137 = icmp eq i32 %135, %136
+  %138 = icmp eq i32 %135, %71
+  br i1 %137, label %139, label %143
+
+; <label>:139                                     ; preds = %130
+  %140 = fmul double %115, 2.560000e+02
+  %141 = fptoui double %140 to i32
+  %142 = select i1 %138, i32 %141, i32 0
+  br label %160
+
+; <label>:143                                     ; preds = %130
+  br i1 %138, label %144, label %149
+
+; <label>:144                                     ; preds = %143
+  %145 = sitofp i32 %136 to double
+  %146 = fsub double %145, %133
+  %147 = fmul double %146, 2.560000e+02
+  %148 = fptoui double %147 to i32
+  br label %149
+
+; <label>:149                                     ; preds = %144, %143
+  %150 = phi i32 [ %148, %144 ], [ 0, %143 ]
+  %151 = icmp eq i32 %136, %71
+  br i1 %151, label %152, label %157
+
+; <label>:152                                     ; preds = %149
+  %153 = sitofp i32 %71 to double
+  %154 = fsub double %134, %153
+  %155 = fmul double %154, 2.560000e+02
+  %156 = fptoui double %155 to i32
+  br label %157
+
+; <label>:157                                     ; preds = %152, %149
+  %158 = phi i32 [ %156, %152 ], [ 0, %149 ]
+  %159 = add i32 %158, %150
+  br label %160
+
+; <label>:160                                     ; preds = %157, %139, %124
+  %161 = phi i32 [ %159, %157 ], [ %129, %124 ], [ %142, %139 ]
+  %162 = icmp eq i32 %161, 0
+  br i1 %162, label %399, label %163
+
+; <label>:163                                     ; preds = %160
+  %164 = icmp sgt i32 %68, %67
+  br i1 %164, label %386, label %165
+
+; <label>:165                                     ; preds = %163
+  br label %166
+
+; <label>:166                                     ; preds = %378, %165
+  %167 = phi i32 [ %379, %378 ], [ 0, %165 ]
+  %168 = phi i32 [ %380, %378 ], [ 0, %165 ]
+  %169 = phi i32 [ %381, %378 ], [ 0, %165 ]
+  %170 = phi i32 [ %382, %378 ], [ 0, %165 ]
+  %171 = phi i32 [ %383, %378 ], [ %68, %165 ]
+  br i1 %16, label %178, label %172
+
+; <label>:172                                     ; preds = %166
+  %173 = icmp eq i32 %171, %68
+  %174 = select i1 %173, i32 %66, i32 0
+  %175 = icmp eq i32 %171, %67
+  %176 = select i1 %175, i32 %65, i32 0
+  %177 = add i32 %174, %176
+  br label %208
+
+; <label>:178                                     ; preds = %166
+  %179 = sitofp i32 %171 to double
+  %180 = fmul double %64, %179
+  %181 = fadd double %180, 1.000000e+00
+  %182 = fadd double %64, %181
+  %183 = fptosi double %181 to i32
+  %184 = fptosi double %182 to i32
+  %185 = icmp eq i32 %183, %184
+  %186 = icmp eq i32 %183, %17
+  br i1 %185, label %187, label %191
+
+; <label>:187                                     ; preds = %178
+  %188 = fmul fast double %64, 2.570000e+02
+  %189 = fptoui double %188 to i32
+  %190 = select i1 %186, i32 %189, i32 0
+  br label %208
+
+; <label>:191                                     ; preds = %178
+  br i1 %186, label %192, label %197
+
+; <label>:192                                     ; preds = %191
+  %193 = sitofp i32 %184 to double
+  %194 = fsub fast double %193, %181
+  %195 = fmul fast double %194, 2.570000e+02
+  %196 = fptoui double %195 to i32
+  br label %197
+
+; <label>:197                                     ; preds = %192, %191
+  %198 = phi i32 [ %196, %192 ], [ 0, %191 ]
+  %199 = icmp eq i32 %184, %17
+  br i1 %199, label %200, label %205
+
+; <label>:200                                     ; preds = %197
+  %201 = sitofp i32 %17 to double
+  %202 = fsub fast double %182, %201
+  %203 = fmul fast double %202, 2.570000e+02
+  %204 = fptoui double %203 to i32
+  br label %205
+
+; <label>:205                                     ; preds = %200, %197
+  %206 = phi i32 [ %204, %200 ], [ 0, %197 ]
+  %207 = add i32 %206, %198
+  br label %208
+
+; <label>:208                                     ; preds = %205, %187, %172
+  %209 = phi i32 [ %207, %205 ], [ %177, %172 ], [ %190, %187 ]
+  %210 = icmp eq i32 %209, 0
+  br i1 %210, label %378, label %211
+
+; <label>:211                                     ; preds = %208
+  %212 = call %dx.types.CBufRet.i32 @dx.op.cbufferLoadLegacy.i32(i32 59, %dx.types.Handle %3, i32 0)  ; CBufferLoadLegacy(handle,regIndex)
+  %213 = extractvalue %dx.types.CBufRet.i32 %212, 0
+  %214 = extractvalue %dx.types.CBufRet.i32 %212, 1
+  %215 = add i32 %213, %171
+  %216 = add i32 %214, %123
+  %217 = call %dx.types.CBufRet.i32 @dx.op.cbufferLoadLegacy.i32(i32 59, %dx.types.Handle %3, i32 2)  ; CBufferLoadLegacy(handle,regIndex)
+  %218 = extractvalue %dx.types.CBufRet.i32 %217, 1
+  %219 = add nsw i32 %218, -1
+  %220 = extractvalue %dx.types.CBufRet.i32 %217, 2
+  %221 = add nsw i32 %220, -1
+  %222 = call i32 @dx.op.binary.i32(i32 37, i32 %215, i32 0)  ; IMax(a,b)
+  %223 = call i32 @dx.op.binary.i32(i32 37, i32 %216, i32 0)  ; IMax(a,b)
+  %224 = call i32 @dx.op.binary.i32(i32 38, i32 %222, i32 %219)  ; IMin(a,b)
+  %225 = call i32 @dx.op.binary.i32(i32 38, i32 %223, i32 %221)  ; IMin(a,b)
+  %226 = call %dx.types.ResRet.f32 @dx.op.textureLoad.f32(i32 66, %dx.types.Handle %2, i32 0, i32 %224, i32 %225, i32 undef, i32 undef, i32 undef, i32 undef)  ; TextureLoad(srv,mipLevelOrSampleCount,coord0,coord1,coord2,offset0,offset1,offset2)
+  %227 = extractvalue %dx.types.ResRet.f32 %226, 0
+  %228 = extractvalue %dx.types.ResRet.f32 %226, 1
+  %229 = extractvalue %dx.types.ResRet.f32 %226, 2
+  %230 = extractvalue %dx.types.ResRet.f32 %226, 3
+  %231 = call %dx.types.CBufRet.i32 @dx.op.cbufferLoadLegacy.i32(i32 59, %dx.types.Handle %3, i32 3)  ; CBufferLoadLegacy(handle,regIndex)
+  %232 = extractvalue %dx.types.CBufRet.i32 %231, 0
+  %233 = and i32 %232, 67108864
+  %234 = icmp ne i32 %233, 0
+  %235 = select i1 %234, float 1.000000e+00, float %230
+  %236 = icmp slt i32 %232, 0
+  br i1 %236, label %237, label %243
+
+; <label>:237                                     ; preds = %211
+  %238 = fcmp fast ogt float %235, 0.000000e+00
+  br i1 %238, label %239, label %243
+
+; <label>:239                                     ; preds = %237
+  %240 = fdiv fast float %227, %235
+  %241 = fdiv fast float %228, %235
+  %242 = fdiv fast float %229, %235
+  br label %243
+
+; <label>:243                                     ; preds = %239, %237, %211
+  %244 = phi float [ %227, %211 ], [ %240, %239 ], [ 0.000000e+00, %237 ]
+  %245 = phi float [ %228, %211 ], [ %241, %239 ], [ 0.000000e+00, %237 ]
+  %246 = phi float [ %229, %211 ], [ %242, %239 ], [ 0.000000e+00, %237 ]
+  %247 = call float @dx.op.binary.f32(i32 35, float %244, float 0.000000e+00)  ; FMax(a,b)
+  %248 = call float @dx.op.binary.f32(i32 35, float %245, float 0.000000e+00)  ; FMax(a,b)
+  %249 = call float @dx.op.binary.f32(i32 35, float %246, float 0.000000e+00)  ; FMax(a,b)
+  %250 = call float @dx.op.binary.f32(i32 35, float %235, float 0.000000e+00)  ; FMax(a,b)
+  %251 = call float @dx.op.binary.f32(i32 36, float %247, float 1.000000e+00)  ; FMin(a,b)
+  %252 = call float @dx.op.binary.f32(i32 36, float %248, float 1.000000e+00)  ; FMin(a,b)
+  %253 = call float @dx.op.binary.f32(i32 36, float %249, float 1.000000e+00)  ; FMin(a,b)
+  %254 = call float @dx.op.binary.f32(i32 36, float %250, float 1.000000e+00)  ; FMin(a,b)
+  %255 = fmul fast float %251, 2.550000e+02
+  %256 = fmul fast float %252, 2.550000e+02
+  %257 = fmul fast float %253, 2.550000e+02
+  %258 = fmul fast float %254, 2.550000e+02
+  %259 = call float @dx.op.unary.f32(i32 26, float %255)  ; Round_ne(value)
+  %260 = call float @dx.op.unary.f32(i32 26, float %256)  ; Round_ne(value)
+  %261 = call float @dx.op.unary.f32(i32 26, float %257)  ; Round_ne(value)
+  %262 = call float @dx.op.unary.f32(i32 26, float %258)  ; Round_ne(value)
+  %263 = fptoui float %259 to i32
+  %264 = fptoui float %260 to i32
+  %265 = fptoui float %261 to i32
+  %266 = fptoui float %262 to i32
+  %267 = extractvalue %dx.types.CBufRet.i32 %217, 3
+  %268 = and i32 %267, 134217728
+  %269 = icmp ne i32 %268, 0
+  %270 = icmp eq i32 %266, 0
+  %271 = and i1 %269, %270
+  br i1 %271, label %272, label %366
+
+; <label>:272                                     ; preds = %243
+  br label %273
+
+; <label>:273                                     ; preds = %357, %272
+  %274 = phi i32 [ %351, %357 ], [ 0, %272 ]
+  %275 = phi i32 [ %352, %357 ], [ 0, %272 ]
+  %276 = phi i32 [ %353, %357 ], [ 0, %272 ]
+  %277 = phi i32 [ %354, %357 ], [ 0, %272 ]
+  %278 = phi i32 [ %358, %357 ], [ -1, %272 ]
+  br label %279
+
+; <label>:279                                     ; preds = %350, %273
+  %280 = phi i32 [ %274, %273 ], [ %351, %350 ]
+  %281 = phi i32 [ %275, %273 ], [ %352, %350 ]
+  %282 = phi i32 [ %276, %273 ], [ %353, %350 ]
+  %283 = phi i32 [ %277, %273 ], [ %354, %350 ]
+  %284 = phi i32 [ -1, %273 ], [ %355, %350 ]
+  %285 = add i32 %284, %215
+  %286 = add i32 %278, %216
+  %287 = or i32 %285, %286
+  %288 = icmp slt i32 %287, 0
+  br i1 %288, label %350, label %289
+
+; <label>:289                                     ; preds = %279
+  %290 = call %dx.types.CBufRet.i32 @dx.op.cbufferLoadLegacy.i32(i32 59, %dx.types.Handle %3, i32 2)  ; CBufferLoadLegacy(handle,regIndex)
+  %291 = extractvalue %dx.types.CBufRet.i32 %290, 1
+  %292 = extractvalue %dx.types.CBufRet.i32 %290, 2
+  %293 = icmp sge i32 %285, %291
+  %294 = icmp sge i32 %286, %292
+  %295 = or i1 %293, %294
+  br i1 %295, label %350, label %296
+
+; <label>:296                                     ; preds = %289
+  %297 = add nsw i32 %291, -1
+  %298 = add nsw i32 %292, -1
+  %299 = call i32 @dx.op.binary.i32(i32 37, i32 %285, i32 0)  ; IMax(a,b)
+  %300 = call i32 @dx.op.binary.i32(i32 37, i32 %286, i32 0)  ; IMax(a,b)
+  %301 = call i32 @dx.op.binary.i32(i32 38, i32 %299, i32 %297)  ; IMin(a,b)
+  %302 = call i32 @dx.op.binary.i32(i32 38, i32 %300, i32 %298)  ; IMin(a,b)
+  %303 = call %dx.types.ResRet.f32 @dx.op.textureLoad.f32(i32 66, %dx.types.Handle %2, i32 0, i32 %301, i32 %302, i32 undef, i32 undef, i32 undef, i32 undef)  ; TextureLoad(srv,mipLevelOrSampleCount,coord0,coord1,coord2,offset0,offset1,offset2)
+  %304 = extractvalue %dx.types.ResRet.f32 %303, 0
+  %305 = extractvalue %dx.types.ResRet.f32 %303, 1
+  %306 = extractvalue %dx.types.ResRet.f32 %303, 2
+  %307 = extractvalue %dx.types.ResRet.f32 %303, 3
+  %308 = call %dx.types.CBufRet.i32 @dx.op.cbufferLoadLegacy.i32(i32 59, %dx.types.Handle %3, i32 3)  ; CBufferLoadLegacy(handle,regIndex)
+  %309 = extractvalue %dx.types.CBufRet.i32 %308, 0
+  %310 = and i32 %309, 67108864
+  %311 = icmp ne i32 %310, 0
+  %312 = select i1 %311, float 1.000000e+00, float %307
+  %313 = icmp slt i32 %309, 0
+  br i1 %313, label %314, label %320
+
+; <label>:314                                     ; preds = %296
+  %315 = fcmp fast ogt float %312, 0.000000e+00
+  br i1 %315, label %316, label %320
+
+; <label>:316                                     ; preds = %314
+  %317 = fdiv fast float %304, %312
+  %318 = fdiv fast float %305, %312
+  %319 = fdiv fast float %306, %312
+  br label %320
+
+; <label>:320                                     ; preds = %316, %314, %296
+  %321 = phi float [ %304, %296 ], [ %317, %316 ], [ 0.000000e+00, %314 ]
+  %322 = phi float [ %305, %296 ], [ %318, %316 ], [ 0.000000e+00, %314 ]
+  %323 = phi float [ %306, %296 ], [ %319, %316 ], [ 0.000000e+00, %314 ]
+  %324 = call float @dx.op.binary.f32(i32 35, float %312, float 0.000000e+00)  ; FMax(a,b)
+  %325 = call float @dx.op.binary.f32(i32 36, float %324, float 1.000000e+00)  ; FMin(a,b)
+  %326 = fmul fast float %325, 2.550000e+02
+  %327 = call float @dx.op.unary.f32(i32 26, float %326)  ; Round_ne(value)
+  %328 = fptoui float %327 to i32
+  %329 = icmp eq i32 %328, 0
+  br i1 %329, label %350, label %330
+
+; <label>:330                                     ; preds = %320
+  %331 = call float @dx.op.binary.f32(i32 35, float %323, float 0.000000e+00)  ; FMax(a,b)
+  %332 = call float @dx.op.binary.f32(i32 36, float %331, float 1.000000e+00)  ; FMin(a,b)
+  %333 = fmul fast float %332, 2.550000e+02
+  %334 = call float @dx.op.unary.f32(i32 26, float %333)  ; Round_ne(value)
+  %335 = fptoui float %334 to i32
+  %336 = call float @dx.op.binary.f32(i32 35, float %322, float 0.000000e+00)  ; FMax(a,b)
+  %337 = call float @dx.op.binary.f32(i32 36, float %336, float 1.000000e+00)  ; FMin(a,b)
+  %338 = fmul fast float %337, 2.550000e+02
+  %339 = call float @dx.op.unary.f32(i32 26, float %338)  ; Round_ne(value)
+  %340 = fptoui float %339 to i32
+  %341 = call float @dx.op.binary.f32(i32 35, float %321, float 0.000000e+00)  ; FMax(a,b)
+  %342 = call float @dx.op.binary.f32(i32 36, float %341, float 1.000000e+00)  ; FMin(a,b)
+  %343 = fmul fast float %342, 2.550000e+02
+  %344 = call float @dx.op.unary.f32(i32 26, float %343)  ; Round_ne(value)
+  %345 = fptoui float %344 to i32
+  %346 = add i32 %345, %280
+  %347 = add i32 %340, %281
+  %348 = add i32 %335, %282
+  %349 = add i32 %283, 1
+  br label %350
+
+; <label>:350                                     ; preds = %330, %320, %289, %279
+  %351 = phi i32 [ %280, %279 ], [ %280, %289 ], [ %346, %330 ], [ %280, %320 ]
+  %352 = phi i32 [ %281, %279 ], [ %281, %289 ], [ %347, %330 ], [ %281, %320 ]
+  %353 = phi i32 [ %282, %279 ], [ %282, %289 ], [ %348, %330 ], [ %282, %320 ]
+  %354 = phi i32 [ %283, %279 ], [ %283, %289 ], [ %349, %330 ], [ %283, %320 ]
+  %355 = add nsw i32 %284, 1
+  %356 = icmp eq i32 %355, 2
+  br i1 %356, label %357, label %279
+
+; <label>:357                                     ; preds = %350
+  %358 = add nsw i32 %278, 2
+  %359 = icmp slt i32 %278, 0
+  br i1 %359, label %273, label %360
+
+; <label>:360                                     ; preds = %357
+  %361 = icmp eq i32 %354, 0
+  br i1 %361, label %366, label %362
+
+; <label>:362                                     ; preds = %360
+  %363 = udiv i32 %351, %354
+  %364 = udiv i32 %352, %354
+  %365 = udiv i32 %353, %354
+  br label %366
+
+; <label>:366                                     ; preds = %362, %360, %243
+  %367 = phi i32 [ %263, %243 ], [ %363, %362 ], [ 0, %360 ]
+  %368 = phi i32 [ %264, %243 ], [ %364, %362 ], [ 0, %360 ]
+  %369 = phi i32 [ %265, %243 ], [ %365, %362 ], [ 0, %360 ]
+  %370 = mul i32 %367, %209
+  %371 = mul i32 %368, %209
+  %372 = mul i32 %369, %209
+  %373 = mul i32 %266, %209
+  %374 = add i32 %370, %167
+  %375 = add i32 %371, %168
+  %376 = add i32 %372, %169
+  %377 = add i32 %373, %170
+  br label %378
+
+; <label>:378                                     ; preds = %366, %208
+  %379 = phi i32 [ %374, %366 ], [ %167, %208 ]
+  %380 = phi i32 [ %375, %366 ], [ %168, %208 ]
+  %381 = phi i32 [ %376, %366 ], [ %169, %208 ]
+  %382 = phi i32 [ %377, %366 ], [ %170, %208 ]
+  %383 = add nsw i32 %171, 1
+  %384 = icmp slt i32 %171, %67
+  br i1 %384, label %166, label %385
+
+; <label>:385                                     ; preds = %378
+  br label %386
+
+; <label>:386                                     ; preds = %385, %163
+  %387 = phi i32 [ 0, %163 ], [ %379, %385 ]
+  %388 = phi i32 [ 0, %163 ], [ %380, %385 ]
+  %389 = phi i32 [ 0, %163 ], [ %381, %385 ]
+  %390 = phi i32 [ 0, %163 ], [ %382, %385 ]
+  %391 = mul i32 %387, %161
+  %392 = mul i32 %388, %161
+  %393 = mul i32 %389, %161
+  %394 = mul i32 %390, %161
+  %395 = add i32 %391, %119
+  %396 = add i32 %392, %120
+  %397 = add i32 %393, %121
+  %398 = add i32 %394, %122
+  br label %399
+
+; <label>:399                                     ; preds = %386, %160
+  %400 = phi i32 [ %119, %160 ], [ %395, %386 ]
+  %401 = phi i32 [ %120, %160 ], [ %396, %386 ]
+  %402 = phi i32 [ %121, %160 ], [ %397, %386 ]
+  %403 = phi i32 [ %122, %160 ], [ %398, %386 ]
+  %404 = add nsw i32 %123, 1
+  %405 = icmp slt i32 %123, %112
+  br i1 %405, label %118, label %406
+
+; <label>:406                                     ; preds = %399
+  br label %407
+
+; <label>:407                                     ; preds = %406, %110
+  %408 = phi i32 [ 0, %110 ], [ %400, %406 ]
+  %409 = phi i32 [ 0, %110 ], [ %401, %406 ]
+  %410 = phi i32 [ 0, %110 ], [ %402, %406 ]
+  %411 = phi i32 [ 0, %110 ], [ %403, %406 ]
+  %412 = lshr i32 %411, 16
+  %413 = icmp eq i32 %412, 0
+  %414 = uitofp i32 %412 to float
+  %415 = fmul fast float %414, 0x3F70101020000000
+  %416 = call %dx.types.CBufRet.i32 @dx.op.cbufferLoadLegacy.i32(i32 59, %dx.types.Handle %3, i32 2)  ; CBufferLoadLegacy(handle,regIndex)
+  %417 = extractvalue %dx.types.CBufRet.i32 %416, 0
+  %418 = icmp eq i32 %417, 0
+  br i1 %418, label %419, label %438
+
+; <label>:419                                     ; preds = %407
+  %420 = lshr i32 %410, 16
+  %421 = mul nuw i32 %412, %420
+  %422 = lshr i32 %421, 8
+  %423 = lshr i32 %409, 16
+  %424 = mul nuw i32 %412, %423
+  %425 = lshr i32 %424, 8
+  %426 = lshr i32 %408, 16
+  %427 = mul nuw i32 %412, %426
+  %428 = lshr i32 %427, 8
+  %429 = uitofp i32 %428 to float
+  %430 = uitofp i32 %425 to float
+  %431 = uitofp i32 %422 to float
+  %432 = fmul fast float %429, 0x3F70101020000000
+  %433 = select i1 %413, float 0.000000e+00, float %432
+  %434 = fmul fast float %430, 0x3F70101020000000
+  %435 = select i1 %413, float 0.000000e+00, float %434
+  %436 = fmul fast float %431, 0x3F70101020000000
+  %437 = select i1 %413, float 0.000000e+00, float %436
+  br label %438
+
+; <label>:438                                     ; preds = %419, %407
+  %439 = phi float [ %433, %419 ], [ 1.000000e+00, %407 ]
+  %440 = phi float [ %435, %419 ], [ 1.000000e+00, %407 ]
+  %441 = phi float [ %437, %419 ], [ 1.000000e+00, %407 ]
+  %442 = fmul fast float %439, %415
+  %443 = fmul fast float %440, %415
+  %444 = fmul fast float %441, %415
+  %445 = extractvalue %dx.types.CBufRet.i32 %6, 0
+  %446 = extractvalue %dx.types.CBufRet.i32 %6, 1
+  %447 = add i32 %445, %4
+  %448 = add i32 %446, %5
+  call void @dx.op.textureStore.f32(i32 67, %dx.types.Handle %1, i32 %447, i32 %448, i32 undef, float %442, float %443, float %444, float %415, i8 15)  ; TextureStore(srv,coord0,coord1,coord2,value0,value1,value2,value3,mask)
+  br label %449
+
+; <label>:449                                     ; preds = %438, %0
+  ret void
+}
+
+; Function Attrs: nounwind readnone
+declare i32 @dx.op.threadId.i32(i32, i32) #0
+
+; Function Attrs: nounwind
+declare void @dx.op.textureStore.f32(i32, %dx.types.Handle, i32, i32, i32, float, float, float, float, i8) #1
+
+; Function Attrs: nounwind readnone
+declare i32 @dx.op.binary.i32(i32, i32, i32) #0
+
+; Function Attrs: nounwind readonly
+declare %dx.types.ResRet.f32 @dx.op.textureLoad.f32(i32, %dx.types.Handle, i32, i32, i32, i32, i32, i32, i32) #2
+
+; Function Attrs: nounwind readnone
+declare float @dx.op.unary.f32(i32, float) #0
+
+; Function Attrs: nounwind readnone
+declare float @dx.op.binary.f32(i32, float, float) #0
+
+; Function Attrs: nounwind readonly
+declare %dx.types.CBufRet.i32 @dx.op.cbufferLoadLegacy.i32(i32, %dx.types.Handle, i32) #2
+
+; Function Attrs: nounwind readonly
+declare %dx.types.Handle @dx.op.createHandle(i32, i8, i32, i32, i1) #2
+
+attributes #0 = { nounwind readnone }
+attributes #1 = { nounwind }
+attributes #2 = { nounwind readonly }
+
+!llvm.ident = !{!0}
+!dx.version = !{!1}
+!dx.valver = !{!2}
+!dx.shaderModel = !{!3}
+!dx.resources = !{!4}
+!dx.entryPoints = !{!12}
+
+!0 = !{!"dxc(private) 1.9.0.5347 (fe2615732)"}
+!1 = !{i32 1, i32 0}
+!2 = !{i32 1, i32 10}
+!3 = !{!"cs", i32 6, i32 0}
+!4 = !{!5, !8, !10, null}
+!5 = !{!6}
+!6 = !{i32 0, %"class.Texture2D<vector<float, 4> >"* undef, !"", i32 0, i32 0, i32 1, i32 2, i32 0, !7}
+!7 = !{i32 0, i32 9}
+!8 = !{!9}
+!9 = !{i32 0, %"class.RWTexture2D<vector<float, 4> >"* undef, !"", i32 0, i32 0, i32 1, i32 2, i1 false, i1 false, i1 false, !7}
+!10 = !{!11}
+!11 = !{i32 0, %FontConstants* undef, !"", i32 0, i32 0, i32 1, i32 52, null}
+!12 = !{void ()* @CSMain, !"CSMain", null, !4, !13}
+!13 = !{i32 0, i64 68, i32 4, !14}
+!14 = !{i32 8, i32 8, i32 1}

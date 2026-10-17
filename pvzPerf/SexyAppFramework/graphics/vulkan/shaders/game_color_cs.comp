@@ -1,0 +1,51 @@
+#version 450
+
+#extension GL_EXT_nonuniform_qualifier : require
+
+// Raw immutable RGBA8 results; opaque draw metadata does not alter source bytes.
+layout(local_size_x=8, local_size_y=8, local_size_z=1) in;
+layout(set=0,binding=0) uniform texture2D images[4096];
+layout(set=1,binding=0) uniform sampler samplers[4];
+layout(set=2,binding=0,rgba8) writeonly uniform image2D target;
+layout(set=2,binding=1,std430) readonly buffer Source {
+    int width;
+    int height;
+    uint slot;
+} source;
+layout(push_constant) uniform Params {
+    ivec4 rectangle;
+    ivec4 tint;
+    uint operation;
+} params;
+
+void main()
+{
+    const ivec2 position=ivec2(gl_GlobalInvocationID.xy);
+    if (any(greaterThanEqual(position,params.rectangle.zw))) return;
+    const ivec2 inputPosition=position+params.rectangle.xy;
+    if (any(lessThan(inputPosition,ivec2(0))) ||
+        any(greaterThanEqual(inputPosition,ivec2(source.width,source.height)))) {
+        imageStore(target,position,vec4(0.0));
+        return;
+    }
+    const uint slot=source.slot;
+    vec4 rgba=texelFetch(sampler2D(images[nonuniformEXT(slot&0xfffu)],samplers[0]),
+        inputPosition,0);
+    if ((slot&0x80000000u)!=0u)
+        rgba.rgb=rgba.a>0.0?rgba.rgb/rgba.a:vec3(0.0);
+    const uvec4 value=uvec4(round(clamp(rgba,vec4(0.0),vec4(1.0))*255.0));
+    if (params.operation==0u) {
+        imageStore(target,position,vec4(value)/255.0);
+        return;
+    }
+    const uvec4 product=value*uvec4(params.tint);
+    uvec4 result;
+    // This is a pixel-wide branch, not an independent per-channel choice.
+    if (all(lessThanEqual(params.tint,ivec4(255))))
+        result=(product>>8u)&uvec4(255u);
+    else
+        result=min(product/255u,uvec4(255u));
+
+    // Do not premultiply, force opaque alpha, or discard hidden RGB.
+    imageStore(target,position,vec4(result)/255.0);
+}

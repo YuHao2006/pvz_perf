@@ -1,0 +1,17 @@
+{
+  "completed_utc": "2026-10-10T13:19:03.4329509Z",
+  "source": "C:\\Users\\Administrator\\CLionProjects\\codex\\PlantsVsZombiesModern\\tools\\bench_reanim_metadata.cpp",
+  "source_sha256": "257e08aba2e0cf8eae97ac8b30905b5c24ddc61bc7c6654bf6a857e201ac33a1",
+  "generator_sha256": "369335469b850ed630e82c8dbba1f183b05caac53b5e8ca1a542c490d4342385",
+  "runner_sha256": "c0b9720b57fff7c57c87df4397a291d9561d9e8535065b156e6a3d325ae6f34f",
+  "fixture_sha256": "b997e2aaef771ed599a39f75fecbde6f698e617c175c35e3cc55bc373c9da370",
+  "executable_sha256": "da5ad34705ed1a0b3c3e4d1f1022eb32dba14a773f40d9b7a889fc7fcf792d61",
+  "compile_command": "cl.exe /nologo /std:c++23preview /O2 /Ob2 /DNDEBUG /EHsc /W4 /MD /GL- /fp:precise /FAcs /Fa\"C:\\Users\\Administrator\\CLionProjects\\codex\\PlantsVsZombiesModern\\log\\string-numeric-resume-20261010\\reanim-metadata-final\\standalone-build\\bench_reanim_metadata.asm\" /I\"C:\\Users\\Administrator\\CLionProjects\\codex\\PlantsVsZombiesModern\\log\\string-numeric-resume-20261010\\reanim-metadata-final\\standalone-build\" /Fo\"C:\\Users\\Administrator\\CLionProjects\\codex\\PlantsVsZombiesModern\\log\\string-numeric-resume-20261010\\reanim-metadata-final\\standalone-build\\bench_reanim_metadata.obj\" /Fe\"C:\\Users\\Administrator\\CLionProjects\\codex\\PlantsVsZombiesModern\\log\\string-numeric-resume-20261010\\reanim-metadata-final\\standalone-build\\bench_reanim_metadata.exe\" \"C:\\Users\\Administrator\\CLionProjects\\codex\\PlantsVsZombiesModern\\tools\\bench_reanim_metadata.cpp\" /link /INCREMENTAL:NO /OPT:REF /OPT:NOICF",
+  "benchmark_process_id": 27456,
+  "benchmark_exit_code": 0,
+  "benchmark_timed_out": false,
+  "maximum_process_wall_ms": 30000,
+  "all_LP14_benchmarks_serialized_by_main": true,
+  "game_executables_started": false,
+  "total_game_loading_measured": false
+}

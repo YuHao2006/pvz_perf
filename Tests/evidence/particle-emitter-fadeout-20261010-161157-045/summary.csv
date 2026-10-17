@@ -1,0 +1,3 @@
+case,category,baseline,candidate,calls_per_pass,min_definitions,max_definitions,average_definitions,hits_per_pass,lookup_hits_per_pass,old_median_ns,new_median_ns,new_change_percent,paired_median_change_percent,speedup
+find_fadeout_present_systems,definition_find_only,stricmp_first_definition_scan,prebuilt_id_first_definition_table,5,2,2,2.000000,5,5,48.643760,5.977852,-87.710958,-87.697676,8.137331
+find_fadeout_full_corpus,definition_find_only,stricmp_first_definition_scan,prebuilt_id_first_definition_table,112,1,13,1.982143,5,5,29.648333,5.964516,-79.882458,-79.880884,4.970786

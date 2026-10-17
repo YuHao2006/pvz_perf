@@ -1,0 +1,22 @@
+diff --git a/lib/jpegli/memory_manager.cc b/lib/jpegli/memory_manager.cc
+--- a/lib/jpegli/memory_manager.cc
++++ b/lib/jpegli/memory_manager.cc
+@@ -65,7 +65,17 @@ void* Alloc(j_common_ptr cinfo, int pool_id, size_t sizeofobject) {
+   if (p == nullptr) {
+     JPEGLI_ERROR("Out of memory");
+   }
+-  mem->owned_ptrs[pool_id].push_back(p);
++  try {
++    mem->owned_ptrs[pool_id].push_back(p);
++  } catch (...) {
++    // The pool cannot free a block that has not been registered yet.
++    if (pool_id < JPOOL_NUMPOOLS) {
++      free(p);
++    } else {
++      hwy::FreeAlignedBytes(p, nullptr, nullptr);
++    }
++    throw;
++  }
+   mem->pool_memory_usage[pool_id] += sizeofobject;
+   mem->total_memory_usage += sizeofobject;
+   mem->peak_memory_usage =

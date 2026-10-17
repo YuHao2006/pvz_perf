@@ -1,0 +1,59 @@
+{
+  "source_directory": "C:\\Users\\Administrator\\CLionProjects\\codex\\PlantsVsZombiesModern\\out\\x64-win32-dx12\\measurements\\endless-25x-retry-20261017-234842",
+  "method": "Time-weighted game-only samples; CPU ms/frame = total CPU time / total draw count.",
+  "limitations": [
+    "One serial original/project pair, not repeated ABBA.",
+    "Retail Board offsets and pause filtering require verification.",
+    "Project settings muted audio; retail audio state was not recorded.",
+    "One-second samples cannot resolve individual frame costs or all transition boundaries."
+  ],
+  "results": [
+    {
+      "kind": "original",
+      "multiplier": "25x",
+      "core": "LP14",
+      "affinity": "0x4000",
+      "selection": "segment == game",
+      "valid_samples": 391,
+      "seconds": 391.0005130999998,
+      "draw_frames": 31678,
+      "cpu_seconds": 322.4375,
+      "fps_mean": 81.01779649557196,
+      "cpu_percent": 82.46472554309294,
+      "cpu_ms_per_draw_frame": 10.178593976892481,
+      "segment_counts": {
+        "preroll": 2,
+        "game": 391,
+        "background": 3,
+        "other-scene": 7
+      },
+      "executable": "C:\\UserProgram\\Plants_Vs_Zombies_V1.2.0.1073_EN\\PlantsVsZombies.exe",
+      "executable_sha256": "5f650f52d12751e08b63e590edb0d9b9f09d087cea900baa0eb39e4af8eda251",
+      "qualification": "Retail Board offsets require verification; pause filtering is provisional."
+    },
+    {
+      "kind": "project",
+      "multiplier": "25x",
+      "core": "LP14",
+      "affinity": "0x4000",
+      "selection": "segment == game",
+      "valid_samples": 393,
+      "seconds": 393.00005070000043,
+      "draw_frames": 39261,
+      "cpu_seconds": 211.328125,
+      "fps_mean": 99.9007504708191,
+      "cpu_percent": 53.773052859303306,
+      "cpu_ms_per_draw_frame": 5.38264753826953,
+      "segment_counts": {
+        "preroll": 2,
+        "paused": 3,
+        "game": 393,
+        "other-scene": 6,
+        "background": 1
+      },
+      "executable": "C:\\Users\\Administrator\\CLionProjects\\codex\\PlantsVsZombiesModern\\out\\x64-win32-dx12\\Release\\pvz_perf.exe",
+      "executable_sha256": "cf750d7bd5c193850db963849fdfd92df4428fc3d4b1f3a2a42877f8648af7d9",
+      "qualification": "Observed single run; no individual-frame timing was collected."
+    }
+  ]
+}

@@ -1,0 +1,100 @@
+// Legacy HDR final-blit math; only bindings/parameters changed for native Vulkan.
+// Scene/scale remain SDR UNORM. Decode SDR and encode PQ once, at presentation.
+#ifndef PVZ_HDR_COMPUTE_PROBE
+// bindless：呈现源（场景或缩放链输出）走全场纹理数组，槽位由顶点携带。
+// 不加非一致装饰是合法的：本着色器只服务呈现单四边形（一帧一纹理），
+// 槽位对全部片元恒同=动态一致；且 glslc 的 HLSL 前端没有
+// NonUniformResourceIndex 内建（场景/覆盖掩码的 GLSL 版走 nonuniformEXT）。
+// 采样器数组同 game_ps；呈现恒线性=索引 1（编译期常量，无需非一致装饰）。
+[[vk::binding(0, 0)]] Texture2D<float4> Tex[4096];
+[[vk::binding(0, 1)]] SamplerState Sam[4];
+struct PSIn { [[vk::location(0)]] float4 Color : COLOR0; [[vk::location(1)]] float2 UV : TEXCOORD0; [[vk::location(2)]] uint Slot : TEXCOORD1; };
+#endif
+float3 SRGBToLinear(float3 c) {
+	float3 lo = c / 12.92;
+	float3 hi = pow((c + 0.055) / 1.055, 2.4);
+	return lerp(lo, hi, step(0.04045, c));
+}
+float3 PQ(float3 L) {
+	const float m1 = 0.1593017578125, m2 = 78.84375;
+	const float c1 = 0.8359375, c2 = 18.8515625, c3 = 18.6875;
+	float3 lp = pow(max(L, 0) / 10000.0, m1);
+	return pow((c1 + c2 * lp) / (1 + c3 * lp), m2);
+}
+static const float3x3 M709to2020 = {
+	0.6274040, 0.3292860, 0.0433101,
+	0.0690970, 0.9195400, 0.0113612,
+	0.0163916, 0.0880132, 0.8955953 };
+static const float3x3 M709toEXP = {
+	0.753845, 0.198593, 0.047562,
+	0.045746, 0.941777, 0.012477,
+	-0.001211, 0.017604, 0.983607 };
+struct PresentParams { float2 viewport; float2 padding; float4 hdr; };
+[[vk::push_constant]] ConstantBuffer<PresentParams> params;
+#define PAPER_WHITE params.hdr.x
+#define MAX_NITS params.hdr.y
+#define REINHARD_PAPER params.hdr.z
+#define STRENGTH params.hdr.w
+static const float MSPx[5] = { 0.0, 0.3, 0.6, 0.9, 1.0 };
+static const float MSPy[5] = { 0.0, 0.470306, 1.56789, 6.24642, 10.0 };
+static const float MSEd[5] = { 1.56768, 2.19488, 5.92676, 23.6637, 37.5354 };
+static const float MSSlope[4] = { 1.56768, 3.65859, 15.5951, 37.5354 };
+static const float3 MLUMA_LERP = { 1.2, 1.1, 1.0 };
+static const float COLOR_SATURATION = 1.0;
+static const float3 COLOR_SAT_RGB = { 0.2, 0.2, 0.2 };
+static const float GAMUT_EXPANSION = 1.0;
+static const float3 GAMUT_START = { 1.0, 1.0, 1.0 };
+static const float3 GAMUT_STOP = { 3.5, 5.0, 5.0 };
+static const float MAX_REINHARD_NITS = 1000.0;
+static const float REINHARD_ML_LERP = 0.5;
+float SplineITM(float x) {
+	x = saturate(x);
+	int seg = (x >= 0.9) ? 3 : (x >= 0.6) ? 2 : (x >= 0.3) ? 1 : 0;
+	float dx = MSPx[seg + 1] - MSPx[seg] + 0.000001;
+	float t = x - MSPx[seg];
+	float c3 = (3.0 * MSSlope[seg] - 2.0 * MSEd[seg] - MSEd[seg + 1]) / dx;
+	float c4 = (MSEd[seg] + MSEd[seg + 1] - 2.0 * MSSlope[seg]) / (dx * dx);
+	return MSPy[seg] + MSEd[seg] * t + c3 * t * t + c4 * t * t * t;
+}
+float ReinhardITM(float x, float A, float K, float B) {
+	float lo = x / (1.0001 - x);
+	float hi = B + x * K / (K - x);
+	return x > 0.5 ? hi : lo;
+}
+float4 ConvertHdr(float3 signal) {
+    signal = saturate(signal);
+	float3 c = SRGBToLinear(signal);
+	float lum = dot(c, float3(0.212500, 0.715400, 0.072100));
+	float Cb = dot(c, float3(-0.099910, -0.336090, 0.436000));
+	float Cr = dot(c, float3(0.615000, -0.558610, -0.056390));
+	float A = MAX_REINHARD_NITS / REINHARD_PAPER;
+	float K = (A + 0.0001) / (A - 0.9999);
+	float B = 1.0 / (A + 1.0001);
+	float4 x4 = float4(c, lum);
+	float4 yRein = (x4 > 0.5) ? (B + x4 * K / (K - x4)) : (x4 / (1.0001 - x4));
+	float4 ySpl = float4(SplineITM(c.r), SplineITM(c.g), SplineITM(c.b), SplineITM(lum));
+	ySpl *= 100.0 / REINHARD_PAPER;
+	float4 curve = lerp(ySpl, yRein, REINHARD_ML_LERP);
+	float3 pres = curve.w * (c / max(lum, 0.0001));
+	float3 rec = float3(curve.w + 1.280330 * Cr,
+		curve.w - 0.214820 * Cb - 0.380590 * Cr,
+		curve.w + 2.127980 * Cb);
+	float3 outCol = MLUMA_LERP * pres + (1.0 - MLUMA_LERP) * rec;
+	float3 satW = COLOR_SATURATION * COLOR_SAT_RGB;
+	outCol = (1.0 - satW) * outCol + satW * curve.rgb;
+	outCol = 0.9 * outCol + 0.1 * (c * A);
+	float tGate = saturate((MAX_NITS - REINHARD_PAPER) / (MAX_REINHARD_NITS - REINHARD_PAPER));
+	outCol = lerp(c, outCol, tGate);
+	outCol *= REINHARD_PAPER / PAPER_WHITE;
+	float3 s2020 = mul(M709to2020, outCol);
+	float mx = max(outCol.x, max(outCol.y, outCol.z));
+	float3 gate = saturate((mx - GAMUT_START) / (GAMUT_STOP - GAMUT_START));
+	float3 sGam = lerp(s2020, mul(M709toEXP, outCol), gate);
+	float3 s = GAMUT_EXPANSION > 0 ? sGam : s2020;
+	float3 sdrRef = mul(M709to2020, c) * (REINHARD_PAPER / PAPER_WHITE);
+	s = lerp(sdrRef, s, STRENGTH);
+	return float4(PQ(s * PAPER_WHITE), 1.0);
+}
+#ifndef PVZ_HDR_COMPUTE_PROBE
+float4 main(PSIn input) : SV_Target { return ConvertHdr(Tex[input.Slot].Sample(Sam[1],input.UV).rgb*input.Color.rgb); }
+#endif

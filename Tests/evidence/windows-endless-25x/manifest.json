@@ -1,0 +1,42 @@
+{
+  "original-analysis.csv": {
+    "bytes": 55056,
+    "sha256": "07a0d3d6e8849e9104afca1beb2fb65481b89d0b5ca4baf83e324d2429f27f7e"
+  },
+  "original-measurement.json": {
+    "bytes": 1703,
+    "sha256": "5ea739ff47d121ea6dfd66fc514dd0da916d5d098b7ff43cb72615ac17e1040b"
+  },
+  "original-raw.csv": {
+    "bytes": 48494,
+    "sha256": "338a0e4cea6687e7131efcb50b225140f3459319f2b03d6dec3236bfd4c01854"
+  },
+  "original-timeline.png": {
+    "bytes": 258625,
+    "sha256": "ee01505e433bbfa0aa4465e159525c403df8053c0d17b695ab5ac1ec8c38f085"
+  },
+  "project-analysis.csv": {
+    "bytes": 55880,
+    "sha256": "22ab468dfbf93346a4769aff62caa5b9910f39c68ba6cdf8dae21dd038eb0b6f"
+  },
+  "project-measurement.json": {
+    "bytes": 1736,
+    "sha256": "d4cd4c901c5eb34f6c5ba2055ac318c40cd294a548c54034d1e0a0674f90feaa"
+  },
+  "project-raw.csv": {
+    "bytes": 50811,
+    "sha256": "9f0a03e67bc83e9bc0272f33c15a9b0f0b6f34e2292a65b8b99a12e686e7811c"
+  },
+  "project-settings.json": {
+    "bytes": 189,
+    "sha256": "0e0efba01a2385ac627c93d3a56b7f54e7e161cba0f1903b07dfb37c1614acbc"
+  },
+  "project-timeline.png": {
+    "bytes": 220950,
+    "sha256": "3f821a3e9e1b538f061c548aea77d56d4c82123c9e43b8d362d410bcf20ca7b9"
+  },
+  "summary.json": {
+    "bytes": 2361,
+    "sha256": "b68d2890f310cb7a7923591660ebcb1213a4de62b18a69ee6e5ec39d775530ce"
+  }
+}

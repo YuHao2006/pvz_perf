@@ -1,0 +1,15 @@
+{
+  "compiled_records": 273,
+  "package_hashes": {
+    "x64-win32-dx12": "54fd5a7adb9ea7da22bee967a67d4242ed8e1a9c8183194962d7ff0dc69030c2",
+    "x64-x11-vulkan": "54fd5a7adb9ea7da22bee967a67d4242ed8e1a9c8183194962d7ff0dc69030c2",
+    "x64-wayland-vulkan": "54fd5a7adb9ea7da22bee967a67d4242ed8e1a9c8183194962d7ff0dc69030c2"
+  },
+  "new_dat_sha256": "a1bbc2f43a129b655f0068de8f28a731f1ef6814170419d3f4ec406436437cf1",
+  "new_dat64_sha256": "0de22ff708e3f572a669a15cb138076148f59628f073e7cef46ffb252d96429a",
+  "unit_tests": {
+    "numeric_resources": 97,
+    "fonts": 30,
+    "native_basics": 4
+  }
+}

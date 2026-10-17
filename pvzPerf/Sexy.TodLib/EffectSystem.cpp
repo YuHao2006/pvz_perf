@@ -1,0 +1,628 @@
+#include "graphics/Graphics.h"
+#include "TodDebug.h"
+#include "Attachment.h"
+#include "Reanimator.h"
+#include "TodParticle.h"
+#include "EffectSystem.h"
+#include "GameConstants.h"
+#include "graphics/DDImage.h"
+#include "graphics/DDInterface.h"
+#include "graphics/RenderInterface.h"
+#include <memory>
+#include <stdexcept>
+
+EffectSystem* gEffectSystem = nullptr;  //[0x6A9EB8]
+
+EffectSystem::~EffectSystem()
+{
+	EffectSystemDispose();
+}
+
+//0x445330
+void EffectSystem::EffectSystemInitialize()
+{
+	if (gEffectSystem || mParticleHolder || mReanimationHolder || mAttachmentHolder)
+		throw std::logic_error("EffectSystem: initialization requires an empty system and no active global system");
+	auto aParticleData = std::make_unique<TodParticleData>();
+	aParticleData->Initialize();
+	auto aParticles = std::make_unique<TodParticleHolder>(aParticleData.get());
+	auto aReanimations = std::make_unique<ReanimationHolder>();
+	auto aAttachments = std::make_unique<AttachmentHolder>();
+	aReanimations->InitializeHolder();
+	aAttachments->InitializeHolder();
+
+	mParticleData = std::move(aParticleData);
+	mParticleHolder = std::move(aParticles);
+	mReanimationHolder = std::move(aReanimations);
+	mAttachmentHolder = std::move(aAttachments);
+	gEffectSystem = this; // Publish only after every pool is ready.
+}
+
+//0x445490
+void EffectSystem::EffectSystemDispose()
+{
+	// Particle destructors resolve through their still-live borrowed holder.
+	mParticleData.reset();
+	mParticleHolder.reset();
+	mReanimationHolder.reset();
+	mAttachmentHolder.reset();
+
+	if (gEffectSystem == this)
+		gEffectSystem = nullptr;
+}
+
+//0x4455E0
+void EffectSystem::EffectSystemFreeAll()
+{
+	mParticleHolder->mParticleSystems.DataArrayFreeAll();
+	mParticleHolder->mEmitters.DataArrayFreeAll();
+	mParticleHolder->mParticles.DataArrayFreeAll();
+
+	mReanimationHolder->mReanimations.DataArrayFreeAll();
+	mAttachmentHolder->mAttachments.DataArrayFreeAll();
+}
+
+//0x445680
+void EffectSystem::ProcessDeleteQueue()
+{
+	TodParticleSystem* aParticle = nullptr;
+	while (mParticleHolder->mParticleSystems.IterateNext(aParticle))
+		if (aParticle->mDead)
+		{
+			// 2026-10-05 泄漏修复（B 树无尽实机定罪：发射器池爬满 1024 拒生）：
+			// 自然死亡原先只释系统槽、发射器滞留池内（长局必满）。补完整 Die
+			// 序列（逐发射器 DeleteAll+释槽→清册），与显式 ParticleSystemDie 同构
+			aParticle->ParticleSystemDie();
+			mParticleHolder->mParticleSystems.DataArrayFree(aParticle);
+		}
+
+	Reanimation* aReanim = nullptr;
+	while (mReanimationHolder->mReanimations.IterateNext(aReanim))
+		if (aReanim->mDead)
+			mReanimationHolder->mReanimations.DataArrayFree(aReanim);
+
+	// P4 掩码 shadow（env PVZ_REANIM_TRACK_SHADOW=1 常驻可用，零成本默认关）：
+	// 单向"漏位"对拍——凡 blend>0/shake≠0/attach≠null 的轨道其活动位必置位、
+	// 凡组号 0..17 的轨道其占用位必置位（陈旧置位方向按设计允许，不查）。
+	// 漏活动位=混合/震动/附件停更，漏占用位=整组不绘制——都必须当场炸。
+	static const bool sTrackMaskShadow = getenv("PVZ_REANIM_TRACK_SHADOW") != nullptr;
+	if (sTrackMaskShadow)
+	{
+		Reanimation* aVReanim = nullptr;
+		while (mReanimationHolder->mReanimations.IterateNext(aVReanim))
+		{
+			if (aVReanim->mTrackInstances == nullptr || aVReanim->mDefinition == nullptr)
+				continue;
+			const int aCount = aVReanim->mDefinition->mTracks.count;
+			for (int i = 0; i < aCount; i++)
+			{
+				const ReanimatorTrackInstance& aTrack = aVReanim->mTrackInstances[i];
+				const bool aWantActive = aTrack.mBlendCounter > 0 || aTrack.mShakeOverride != 0.0f ||
+					aTrack.mAttachmentID != AttachmentID::ATTACHMENTID_NULL;
+				const bool aHasActive = (aVReanim->mActiveMask[i >> 6] & (1ull << (i & 63))) != 0;
+				if (aWantActive && !aHasActive)
+				{
+					const bool aAttachLive = mAttachmentHolder->mAttachments.DataArrayTryToGet(
+						(unsigned)aTrack.mAttachmentID) != nullptr;
+					throw std::runtime_error(StrFormat(
+						"PVZ_REANIM_TRACK_SHADOW: active track missing from mask: reanim type=%d track=%d id=%u blend=%d shake=%.2f attach=%u(attachLive=%d) dead=%d tracks=%d",
+						(int)aVReanim->mReanimationType, i,
+						(unsigned)aVReanim->GetTrackId(i),
+						aTrack.mBlendCounter, aTrack.mShakeOverride,
+						(unsigned)aTrack.mAttachmentID, (int)aAttachLive, (int)aVReanim->mDead,
+						aVReanim->mDefinition ? aVReanim->mDefinition->mTracks.count : -1));
+				}
+				if (aTrack.mRenderGroup >= 0 && aTrack.mRenderGroup < 18 &&
+					(aVReanim->mGroupOccMask & (1u << aTrack.mRenderGroup)) == 0)
+					throw std::runtime_error("PVZ_REANIM_TRACK_SHADOW: occupied render group missing from occupancy mask (would skip drawing)");
+			}
+		}
+	}
+
+	Attachment* aAttachment = nullptr;
+	while (mAttachmentHolder->mAttachments.IterateNext(aAttachment))
+		if (aAttachment->mDead)
+			mAttachmentHolder->mAttachments.DataArrayFree(aAttachment);
+}
+
+//0x445890
+void EffectSystem::Update()
+{
+	// 名册侧表 shadow（env PVZ_EMITTER_ROSTER_SHADOW=1 常驻可用，零成本默认
+	// 关）：发射器池按 mParticleSystem 回指分组 vs 各系统名册逐帧比对——
+	// 集合+计数双向（序由存档往返锚定），不一致抛错
+	static const bool sRosterShadow = getenv("PVZ_EMITTER_ROSTER_SHADOW") != nullptr;
+	if (sRosterShadow)
+	{
+		static int sVerifyCounts[1024];
+		static uint16_t sVerifySeen[1024];  // 每发射器被名册计入次数
+		std::memset(sVerifyCounts, 0, sizeof(sVerifyCounts));
+		std::memset(sVerifySeen, 0, sizeof(sVerifySeen));
+		TodParticleEmitter* aVerifyEmitter = nullptr;
+		auto* aEmitterPool = &mParticleHolder->mEmitters;
+		while (aEmitterPool->IterateNext(aVerifyEmitter))
+		{
+			TodParticleSystem* aOwner = aVerifyEmitter->mParticleSystem;
+			const int aOwnerSlot = (int)(mParticleHolder->mParticleSystems.DataArrayIndexOf(aOwner) & 0xFFFF);
+			if (aOwnerSlot >= 0 && aOwnerSlot < 1024)
+				sVerifyCounts[aOwnerSlot]++;
+			const int aEmitterSlot = (int)(aEmitterPool->DataArrayIndexOf(aVerifyEmitter) & 0xFFFF);
+			if (aEmitterSlot >= 0 && aEmitterSlot < 1024)
+				sVerifySeen[aEmitterSlot] = 1;
+		}
+		TodParticleSystem* aVerifySystem = nullptr;
+		while (mParticleHolder->mParticleSystems.IterateNext(aVerifySystem))
+		{
+			const int aSysSlot = (int)(mParticleHolder->mParticleSystems.DataArrayIndexOf(aVerifySystem) & 0xFFFF);
+			const int aRosterN = aVerifySystem->EmitterRosterCount();
+			int aLiveInRoster = 0;
+			for (int i = 0; i < aRosterN; i++)
+			{
+				TodParticleEmitter* aEmitter = aVerifySystem->EmitterRosterEmitterAt(i);
+				const int aSlot = (int)(mParticleHolder->mEmitters.DataArrayIndexOf(aEmitter) & 0xFFFF);
+				if (aSlot < 1024 && sVerifySeen[aSlot] == 2)
+					throw std::runtime_error("emitter roster shadow: duplicate roster entry");
+				if (aSlot < 1024)
+					sVerifySeen[aSlot] = (uint16_t)(sVerifySeen[aSlot] + 2);  // 3 = 名册+池双见
+				if (aEmitter->mParticleSystem == aVerifySystem)
+					aLiveInRoster++;
+			}
+			if (aSysSlot < 1024 && sVerifyCounts[aSysSlot] != aLiveInRoster)
+				throw std::runtime_error("emitter roster shadow: count mismatch system slot " + std::to_string(aSysSlot));
+		}
+		for (int aSlot = 0; aSlot < 1024; aSlot++)
+		{
+			if (sVerifySeen[aSlot] == 1)
+				throw std::runtime_error("emitter roster shadow: pool emitter missing from roster, slot " + std::to_string(aSlot));
+			if (sVerifySeen[aSlot] == 2)
+				throw std::runtime_error("emitter roster shadow: roster entry not in pool, slot " + std::to_string(aSlot));
+		}
+	}
+
+	// 粒子名册 shadow（env PVZ_PARTICLE_ROSTER_SHADOW=1 常驻可用，零成本
+	// 默认关）：粒子池按 mParticleEmitter 回指分组 vs 各发射器名册——
+	// 集合+计数+去重三向（序由存档往返锚定）
+	static const bool sParticleRosterShadow = getenv("PVZ_PARTICLE_ROSTER_SHADOW") != nullptr;
+	if (sParticleRosterShadow)
+	{
+		static uint16_t sPVerifySeen[1024];  // 1=池见 2=册见 3=双见
+		std::memset(sPVerifySeen, 0, sizeof(sPVerifySeen));
+		TodParticle* aVParticle = nullptr;
+		auto* aPPool = &mParticleHolder->mParticles;
+		while (aPPool->IterateNext(aVParticle))
+		{
+			const int aPSlot = (int)(aPPool->DataArrayIndexOf(aVParticle) & 0xFFFF);
+			if (aPSlot < 1024)
+				sPVerifySeen[aPSlot] = 1;
+		}
+		TodParticleEmitter* aVEmitter = nullptr;
+		auto* aEPool2 = &mParticleHolder->mEmitters;
+		while (aEPool2->IterateNext(aVEmitter))
+		{
+			const int aRosterN = aVEmitter->ParticleRosterCount();
+			for (int i = 0; i < aRosterN; i++)
+			{
+				TodParticle* aP = aVEmitter->ParticleRosterParticleAt(i);
+				const int aPSlot = (int)(aPPool->DataArrayIndexOf(aP) & 0xFFFF);
+				if (aPSlot >= 1024)
+					continue;
+				if (sPVerifySeen[aPSlot] == 2 || sPVerifySeen[aPSlot] == 3)
+					throw std::runtime_error("particle roster shadow: duplicate roster entry slot " + std::to_string(aPSlot));
+				sPVerifySeen[aPSlot] = (uint16_t)(sPVerifySeen[aPSlot] + 2);
+			}
+		}
+		for (int aSlot = 0; aSlot < 1024; aSlot++)
+		{
+			if (sPVerifySeen[aSlot] == 1)
+				throw std::runtime_error("particle roster shadow: pool particle missing from roster, slot " + std::to_string(aSlot));
+			if (sPVerifySeen[aSlot] == 2)
+				throw std::runtime_error("particle roster shadow: roster entry not in pool, slot " + std::to_string(aSlot));
+		}
+	}
+
+	TodParticleSystem* aParticle = nullptr;
+	while (mParticleHolder->mParticleSystems.IterateNext(aParticle))
+		if (!aParticle->mIsAttachment)
+			aParticle->Update();
+
+	Reanimation* aReanim = nullptr;
+	while (mReanimationHolder->mReanimations.IterateNext(aReanim))
+		if (!aReanim->mIsAttachment)
+			aReanim->Update();
+}
+
+// #################################################################################################### //
+// #################################################################################################### //
+// #################################################################################################### //
+
+static TriVertex		gTodVertexReservoir[64];
+static unsigned int		gTodVertexReservoirUsed = 0;
+
+static int FixedFloor(int x)
+{
+	if (x > 0)
+		return x & 0xFFFF0000;
+	else
+		return (x & 0xFFFF0000) - 0x10000;
+}
+
+//0x4459B0
+static inline void Tod_Tod_lClip(TriVertex& dst, const TriVertex& on, const TriVertex& off, const float edge)
+{
+	float delta = (edge - off.x) / (on.x - off.x);
+	dst.x = off.x + (on.x - off.x) * delta;
+	dst.y = off.y + (on.y - off.y) * delta;
+	dst.u = off.u + (on.u - off.u) * delta;
+	dst.v = off.v + (on.v - off.v) * delta;
+	dst.color =
+		((int)((off.color >> 24 & 0xff) + ((on.color >> 24 & 0xff) - (off.color >> 24 & 0xff)) * delta) << 24) |
+		((int)((off.color >> 16 & 0xff) + ((on.color >> 16 & 0xff) - (off.color >> 16 & 0xff)) * delta) << 16) |
+		((int)((off.color >>  8 & 0xff) + ((on.color >>  8 & 0xff) - (off.color >>  8 & 0xff)) * delta) << 8) |
+		((int)((off.color       & 0xff) + ((on.color       & 0xff) - (off.color       & 0xff)) * delta));
+}
+static inline void rClip(TriVertex& dst, const TriVertex& on, const TriVertex& off, const float edge)
+{
+	float delta = (edge - off.x) / (on.x - off.x);
+	dst.x = off.x + (on.x - off.x) * delta;
+	dst.y = off.y + (on.y - off.y) * delta;
+	dst.u = off.u + (on.u - off.u) * delta;
+	dst.v = off.v + (on.v - off.v) * delta;
+	dst.color =
+		((int)((off.color >> 24 & 0xff) + ((on.color >> 24 & 0xff) - (off.color >> 24 & 0xff)) * delta) << 24) |
+		((int)((off.color >> 16 & 0xff) + ((on.color >> 16 & 0xff) - (off.color >> 16 & 0xff)) * delta) << 16) |
+		((int)((off.color >>  8 & 0xff) + ((on.color >>  8 & 0xff) - (off.color >>  8 & 0xff)) * delta) << 8) |
+		((int)((off.color       & 0xff) + ((on.color       & 0xff) - (off.color       & 0xff)) * delta));
+}
+
+//0x445B50
+static inline void Tod_tClip(TriVertex& dst, const TriVertex& on, const TriVertex& off, const float edge)
+{
+	float delta = (edge - off.y) / (on.y - off.y);
+	dst.x = off.x + (on.x - off.x) * delta;
+	dst.y = off.y + (on.y - off.y) * delta;
+	dst.u = off.u + (on.u - off.u) * delta;
+	dst.v = off.v + (on.v - off.v) * delta;
+	dst.color = 
+		((int)((off.color >> 24 & 0xff) + ((on.color >> 24 & 0xff) - (off.color >> 24  & 0xff)) * delta) << 24) |
+		((int)((off.color >> 16 & 0xff) + ((on.color >> 16 & 0xff) - (off.color >> 16  & 0xff)) * delta) << 16) |
+		((int)((off.color >>  8 & 0xff) + ((on.color >>  8 & 0xff) - (off.color >>  8  & 0xff)) * delta) <<  8) |
+		((int)((off.color       & 0xff) + ((on.color       & 0xff) - (off.color        & 0xff)) * delta));
+}
+static inline void Tod_bClip(TriVertex& dst, const TriVertex& on, const TriVertex& off, const float edge)
+{
+	float delta = (edge - off.y) / (on.y - off.y);
+	dst.x = off.x + (on.x - off.x) * delta;
+	dst.y = off.y + (on.y - off.y) * delta;
+	dst.u = off.u + (on.u - off.u) * delta;
+	dst.v = off.v + (on.v - off.v) * delta;
+	dst.color = 
+		((int)((off.color >> 24 & 0xff) + ((on.color >> 24 & 0xff) - (off.color >> 24  & 0xff)) * delta) << 24) |
+		((int)((off.color >> 16 & 0xff) + ((on.color >> 16 & 0xff) - (off.color >> 16  & 0xff)) * delta) << 16) |
+		((int)((off.color >>  8 & 0xff) + ((on.color >>  8 & 0xff) - (off.color >>  8  & 0xff)) * delta) <<  8) |
+		((int)((off.color       & 0xff) + ((on.color       & 0xff) - (off.color        & 0xff)) * delta));
+}
+
+//0x445D00
+static inline unsigned int Tod_leClip(TriVertex** src, TriVertex** dst, const float edge)
+{
+	TriVertex** _dst = dst;
+
+	for (TriVertex** v = src; *v; ++v)
+	{
+		TriVertex* cur = *v;
+		TriVertex* nex = *(v + 1) ? *(v + 1) : *src;
+
+		switch ((cur->x < edge ? 1 : 0) | (nex->x < edge ? 2 : 0))
+		{
+		case 0:
+			*dst = *v;
+			++dst;
+			break;
+		case 1:
+		{
+			TriVertex& tmp = gTodVertexReservoir[gTodVertexReservoirUsed++];
+			Tod_Tod_lClip(tmp, *nex, *cur, edge);
+			*dst = &tmp;
+			++dst;
+			break;
+		}
+		case 2:
+		{
+			*dst = *v;
+			++dst;
+			TriVertex& tmp = gTodVertexReservoir[gTodVertexReservoirUsed++];
+			Tod_Tod_lClip(tmp, *cur, *nex, edge);
+			*dst = &tmp;
+			++dst;
+			break;
+		}
+		}
+	}
+	*dst = 0;
+	return static_cast<int>(dst - _dst);
+}
+
+//0x445E00
+static inline unsigned int Tod_reClip(TriVertex** src, TriVertex** dst, const float edge)
+{
+	TriVertex** _dst = dst;
+
+	for (TriVertex** v = src; *v; ++v)
+	{
+		TriVertex* cur = *v;
+		TriVertex* nex = *(v + 1) ? *(v + 1) : *src;
+
+		switch ((cur->x > edge ? 1 : 0) | (nex->x > edge ? 2 : 0))
+		{
+		case 0:
+			*dst = *v;
+			++dst;
+			break;
+		case 1:
+		{
+			TriVertex& tmp = gTodVertexReservoir[gTodVertexReservoirUsed++];
+			rClip(tmp, *nex, *cur, edge);
+			*dst = &tmp;
+			++dst;
+			break;
+		}
+		case 2:
+		{
+			*dst = *v;
+			++dst;
+			TriVertex& tmp = gTodVertexReservoir[gTodVertexReservoirUsed++];
+			rClip(tmp, *cur, *nex, edge);
+			*dst = &tmp;
+			++dst;
+			break;
+		}
+		}
+	}
+	*dst = 0;
+	return static_cast<int>(dst - _dst);
+}
+
+//0x445F00
+static inline unsigned int Tod_teClip(TriVertex** src, TriVertex** dst, const float edge)
+{
+	TriVertex** _dst = dst;
+
+	for (TriVertex** v = src; *v; ++v)
+	{
+		TriVertex* cur = *v;
+		TriVertex* nex = *(v + 1) ? *(v + 1) : *src;
+
+		switch ((cur->y < edge ? 1 : 0) | (nex->y < edge ? 2 : 0))
+		{
+		case 0:
+			*dst = *v;
+			++dst;
+			break;
+		case 1:
+		{
+			TriVertex& tmp = gTodVertexReservoir[gTodVertexReservoirUsed++];
+			Tod_tClip(tmp, *nex, *cur, edge);
+			*dst = &tmp;
+			++dst;
+			break;
+		}
+		case 2:
+		{
+			*dst = *v;
+			++dst;
+			TriVertex& tmp = gTodVertexReservoir[gTodVertexReservoirUsed++];
+			Tod_tClip(tmp, *cur, *nex, edge);
+			*dst = &tmp;
+			++dst;
+			break;
+		}
+		}
+	}
+	*dst = 0;
+	return static_cast<int>(dst - _dst);
+}
+
+//0x446000
+static inline unsigned int Tod_beClip(TriVertex** src, TriVertex** dst, const float edge)
+{
+	TriVertex** _dst = dst;
+
+	for (TriVertex** v = src; *v; ++v)
+	{
+		TriVertex* cur = *v;
+		TriVertex* nex = *(v + 1) ? *(v + 1) : *src;
+
+		switch ((cur->y > edge ? 1 : 0) | (nex->y > edge ? 2 : 0))
+		{
+		case 0:
+			*dst = *v;
+			++dst;
+			break;
+		case 1:
+		{
+			TriVertex& tmp = gTodVertexReservoir[gTodVertexReservoirUsed++];
+			Tod_bClip(tmp, *nex, *cur, edge);
+			*dst = &tmp;
+			++dst;
+			break;
+		}
+		case 2:
+		{
+			*dst = *v;
+			++dst;
+			TriVertex& tmp = gTodVertexReservoir[gTodVertexReservoirUsed++];
+			Tod_bClip(tmp, *cur, *nex, edge);
+			*dst = &tmp;
+			++dst;
+			break;
+		}
+		}
+	}
+	*dst = 0;
+	return static_cast<int>(dst - _dst);
+}
+
+//0x446100
+static inline int Tod_clipShape(TriVertex** dst, TriVertex* src, const float left, const float right, const float top, const float bottom)
+{
+	gTodVertexReservoirUsed = 0;
+
+	TriVertex* buf[64];
+	TriVertex* ptr[4];
+	ptr[0] = src;
+	ptr[1] = src + 1;
+	ptr[2] = src + 2;
+	ptr[3] = 0;
+
+	if (Tod_leClip(ptr, buf, left) < 3)
+		return 0;
+	if (Tod_reClip(buf, dst, right) < 3)
+		return 0;
+	if (Tod_teClip(dst, buf, top) < 3)
+		return 0;
+	return Tod_beClip(buf, dst, bottom);
+}
+
+bool gTodTriangleDrawAdditive = false;
+
+#include "TodDrawTriangleInc.cpp"
+
+//0x4461B0
+TodTriangleGroup::TodTriangleGroup()
+{
+	mImage = nullptr;
+	mDrawMode = Graphics::DRAWMODE_NORMAL;
+}
+
+//0x4461F0
+void TodTriangleGroup::DrawGroup(Graphics* g)
+{
+	if (mImage && !mVertArray.empty())
+	{
+		if (!DDImage::Check3D(g->mDestImage))
+			throw std::logic_error("Particle triangle group requires a GPU draw surface");
+		auto* image=static_cast<DDImage*>(g->mDestImage);
+		mImage->mDrawn = true;
+		auto& render=*image->mDDInterface->mRenderInterface;
+		render.SelectDrawSurface(image);
+		render.DrawTrianglesTex(mVertArray,Color::White,mDrawMode,mImage,0.0f,0.0f,g->mLinearBlend);
+		mVertArray.clear();
+		gTodTriangleDrawAdditive = false;
+	}
+}
+
+//0x446300
+void TodTriangleGroup::AddTriangle(Graphics* g, Image* theImage, const SexyMatrix3& theMatrix, const Rect& theClipRect, const Color& theColor, int theDrawMode, const Rect& theSrcRect)
+{
+	TOD_ASSERT(theImage != nullptr);
+
+	if (!mVertArray.empty() && (mDrawMode != theDrawMode || mImage != theImage))
+		DrawGroup(g);
+	mImage = theImage;
+	mDrawMode = theDrawMode;
+
+	SexyVector2 p[4];
+	float x = -theSrcRect.mWidth * 0.5f;
+	float y = -theSrcRect.mHeight * 0.5f;
+	p[0].x = x;
+	p[0].y = y;
+	p[1].x = x;
+	p[1].y = y + theSrcRect.mHeight;
+	p[2].x = x + theSrcRect.mWidth;
+	p[2].y = y;
+	p[3].x = x + theSrcRect.mWidth;
+	p[3].y = y + theSrcRect.mHeight;
+	SexyVector2 tp[4];
+	// 1073's DX7 rasterizer used integer pixel centers; native DX11/Vulkan
+	// use pixel corners, just like our non-atlas TextureData::BltTransformed.
+	// Keep the old offset only for CPU offscreen shapes (BltMatrixHelper).
+	const float aRasterOffset = DDImage::Check3D(g->mDestImage) ? 0.0f : 0.5f;
+	for (int i = 0; i < 4; i++)
+	{
+		tp[i] = theMatrix * p[i];
+		tp[i].x -= aRasterOffset;
+		tp[i].y -= aRasterOffset;
+	}
+
+	TOD_ASSERT(theSrcRect.mX >= 0 && theSrcRect.mWidth >= 0 && theSrcRect.mX + theSrcRect.mWidth <= mImage->mWidth);
+	TOD_ASSERT(theSrcRect.mY >= 0 && theSrcRect.mHeight >= 0 && theSrcRect.mY + theSrcRect.mHeight <= mImage->mHeight);
+
+	float aOneOverWidth = 1.0f / mImage->mWidth;
+	float aOneOverHeight = 1.0f / mImage->mHeight;
+	float aTexX1 = aOneOverWidth * theSrcRect.mX;
+	float aTexY1 = aOneOverHeight * theSrcRect.mY;
+	float aTexX2 = aOneOverWidth * (theSrcRect.mX + theSrcRect.mWidth);
+	float aTexY2 = aOneOverHeight * (theSrcRect.mY + theSrcRect.mHeight);
+	unsigned int aTexColor = theColor.ToInt();
+
+	bool aNoClipping = false;
+	std::array<std::array<TriVertex,3>,2> aVertBuffer;
+	auto* aTriRef=aVertBuffer.data();
+		if ((
+				theClipRect.mX == 0 && theClipRect.mY == 0 && theClipRect.mWidth == BOARD_WIDTH && theClipRect.mHeight == BOARD_HEIGHT && gSexyAppBase->mDDInterface->mIs3D
+			) || (
+				theClipRect.mX <= tp[0].x && theClipRect.mX + theClipRect.mWidth >= tp[0].x && 
+				theClipRect.mX <= tp[1].x && theClipRect.mX + theClipRect.mWidth >= tp[1].x &&
+				theClipRect.mX <= tp[2].x && theClipRect.mX + theClipRect.mWidth >= tp[2].x && 
+				theClipRect.mX <= tp[3].x && theClipRect.mX + theClipRect.mWidth >= tp[3].x &&
+				theClipRect.mY <= tp[0].y && theClipRect.mY + theClipRect.mHeight >= tp[0].y && 
+				theClipRect.mY <= tp[1].y && theClipRect.mY + theClipRect.mHeight >= tp[1].y &&
+				theClipRect.mY <= tp[2].y && theClipRect.mY + theClipRect.mHeight >= tp[2].y && 
+				theClipRect.mY <= tp[3].y && theClipRect.mY + theClipRect.mHeight >= tp[3].y
+			))
+		{
+			aNoClipping = true;
+			const auto start=mVertArray.size();
+			mVertArray.resize(start+2);
+			aTriRef=mVertArray.data()+start;
+		}
+
+	aTriRef[0][0].x = tp[0].x;
+	aTriRef[0][0].y = tp[0].y;
+	aTriRef[0][0].u = aTexX1;
+	aTriRef[0][0].v = aTexY1;
+	aTriRef[0][0].color = aTexColor;
+	aTriRef[0][1].x = tp[1].x;
+	aTriRef[0][1].y = tp[1].y;
+	aTriRef[0][1].u = aTexX1;
+	aTriRef[0][1].v = aTexY2;
+	aTriRef[0][1].color = aTexColor;
+	aTriRef[0][2].x = tp[2].x;
+	aTriRef[0][2].y = tp[2].y;
+	aTriRef[0][2].u = aTexX2;
+	aTriRef[0][2].v = aTexY1;
+	aTriRef[0][2].color = aTexColor;
+	aTriRef[1][0].x = tp[2].x;
+	aTriRef[1][0].y = tp[2].y;
+	aTriRef[1][0].u = aTexX2;
+	aTriRef[1][0].v = aTexY1;
+	aTriRef[1][0].color = aTexColor;
+	aTriRef[1][1].x = tp[1].x;
+	aTriRef[1][1].y = tp[1].y;
+	aTriRef[1][1].u = aTexX1;
+	aTriRef[1][1].v = aTexY2;
+	aTriRef[1][1].color = aTexColor;
+	aTriRef[1][2].x = tp[3].x;
+	aTriRef[1][2].y = tp[3].y;
+	aTriRef[1][2].u = aTexX2;
+	aTriRef[1][2].v = aTexY2;
+	aTriRef[1][2].color = aTexColor;
+
+	if (!aNoClipping)
+	{
+		TriVertex* clipped[64];
+		float clipX0 = theClipRect.mX;
+		float clipY0 = theClipRect.mY;
+		float clipX1 = theClipRect.mX + theClipRect.mWidth;
+		float clipY1 = theClipRect.mY + theClipRect.mHeight;
+		
+		for (int i = 0; i < 2; i++)
+		{
+			int vCount = Tod_clipShape(clipped, aTriRef[i].data(), clipX0, clipX1, clipY0, clipY1);
+			for (int j = 0; j < vCount - 2; j++)
+			{
+				mVertArray.push_back({*clipped[0],*clipped[j+1],*clipped[j+2]});
+			}
+		}
+	}
+}

@@ -1,0 +1,302 @@
+[0/2] Re-checking globbed directories...
+[1/2] Re-running CMake...
+-- Configuring done (90.6s)
+-- Generating done (3.7s)
+-- Build files have been written to: /mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/out/x64-x11-vulkan
+[0/4] Re-checking globbed directories...
+[1/9] Generating reanim attacher masks (P4)
+gen: 144 types, max 171 tracks, 3 words, 12 attacher types -> Sexy.TodLib/generated/ReanimAttacherMasks.h
+[2/9] Building CXX object SexyAppFramework/CMakeFiles/LawnProject.dir/platform/linux/audio/OpenALDevice.cpp.o
+[3/9] Building CXX object SexyAppFramework/graphics/vulkan/CMakeFiles/sexy_vulkan.dir/VulkanContext.cpp.o
+In file included from /mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:7:
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.h:15:5: warning: missing initializer for member ‘VkApplicationInfo::pNext’ [-Wmissing-field-initializers]
+   15 |     };
+      |     ^
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.h:15:5: warning: missing initializer for member ‘VkApplicationInfo::pEngineName’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.h:15:5: warning: missing initializer for member ‘VkApplicationInfo::engineVersion’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.h:19:5: warning: missing initializer for member ‘VkInstanceCreateInfo::pNext’ [-Wmissing-field-initializers]
+   19 |     };
+      |     ^
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.h:19:5: warning: missing initializer for member ‘VkInstanceCreateInfo::flags’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.h:19:5: warning: missing initializer for member ‘VkInstanceCreateInfo::enabledLayerCount’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.h:19:5: warning: missing initializer for member ‘VkInstanceCreateInfo::ppEnabledLayerNames’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.h:19:5: warning: missing initializer for member ‘VkInstanceCreateInfo::enabledExtensionCount’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.h:19:5: warning: missing initializer for member ‘VkInstanceCreateInfo::ppEnabledExtensionNames’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp: In function ‘VkDebugUtilsMessengerEXT_T* {anonymous}::RegisterDebugMessenger(VkInstance, PFN_vkDebugUtilsMessengerCallbackEXT)’:
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:84:68: warning: missing initializer for member ‘VkDebugUtilsMessengerCreateInfoEXT::pNext’ [-Wmissing-field-initializers]
+   84 |             VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT};
+      |                                                                    ^
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:84:68: warning: missing initializer for member ‘VkDebugUtilsMessengerCreateInfoEXT::flags’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:84:68: warning: missing initializer for member ‘VkDebugUtilsMessengerCreateInfoEXT::messageSeverity’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:84:68: warning: missing initializer for member ‘VkDebugUtilsMessengerCreateInfoEXT::messageType’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:84:68: warning: missing initializer for member ‘VkDebugUtilsMessengerCreateInfoEXT::pfnUserCallback’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:84:68: warning: missing initializer for member ‘VkDebugUtilsMessengerCreateInfoEXT::pUserData’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp: In function ‘bool {anonymous}::DescriptorIndexingSupported(VkPhysicalDevice)’:
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:144:66: warning: missing initializer for member ‘VkPhysicalDeviceVulkan12Features::pNext’ [-Wmissing-field-initializers]
+  144 |             VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES};
+      |                                                                  ^
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:144:66: warning: missing initializer for member ‘VkPhysicalDeviceVulkan12Features::samplerMirrorClampToEdge’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:144:66: warning: missing initializer for member ‘VkPhysicalDeviceVulkan12Features::drawIndirectCount’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:144:66: warning: missing initializer for member ‘VkPhysicalDeviceVulkan12Features::storageBuffer8BitAccess’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:144:66: warning: missing initializer for member ‘VkPhysicalDeviceVulkan12Features::uniformAndStorageBuffer8BitAccess’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:144:66: warning: missing initializer for member ‘VkPhysicalDeviceVulkan12Features::storagePushConstant8’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:144:66: warning: missing initializer for member ‘VkPhysicalDeviceVulkan12Features::shaderBufferInt64Atomics’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:144:66: warning: missing initializer for member ‘VkPhysicalDeviceVulkan12Features::shaderSharedInt64Atomics’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:144:66: warning: missing initializer for member ‘VkPhysicalDeviceVulkan12Features::shaderFloat16’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:144:66: warning: missing initializer for member ‘VkPhysicalDeviceVulkan12Features::shaderInt8’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:144:66: warning: missing initializer for member ‘VkPhysicalDeviceVulkan12Features::descriptorIndexing’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:144:66: warning: missing initializer for member ‘VkPhysicalDeviceVulkan12Features::shaderInputAttachmentArrayDynamicIndexing’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:144:66: warning: missing initializer for member ‘VkPhysicalDeviceVulkan12Features::shaderUniformTexelBufferArrayDynamicIndexing’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:144:66: warning: missing initializer for member ‘VkPhysicalDeviceVulkan12Features::shaderStorageTexelBufferArrayDynamicIndexing’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:144:66: warning: missing initializer for member ‘VkPhysicalDeviceVulkan12Features::shaderUniformBufferArrayNonUniformIndexing’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:144:66: warning: missing initializer for member ‘VkPhysicalDeviceVulkan12Features::shaderSampledImageArrayNonUniformIndexing’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:144:66: warning: missing initializer for member ‘VkPhysicalDeviceVulkan12Features::shaderStorageBufferArrayNonUniformIndexing’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:144:66: warning: missing initializer for member ‘VkPhysicalDeviceVulkan12Features::shaderStorageImageArrayNonUniformIndexing’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:144:66: warning: missing initializer for member ‘VkPhysicalDeviceVulkan12Features::shaderInputAttachmentArrayNonUniformIndexing’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:144:66: warning: missing initializer for member ‘VkPhysicalDeviceVulkan12Features::shaderUniformTexelBufferArrayNonUniformIndexing’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:144:66: warning: missing initializer for member ‘VkPhysicalDeviceVulkan12Features::shaderStorageTexelBufferArrayNonUniformIndexing’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:144:66: warning: missing initializer for member ‘VkPhysicalDeviceVulkan12Features::descriptorBindingUniformBufferUpdateAfterBind’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:144:66: warning: missing initializer for member ‘VkPhysicalDeviceVulkan12Features::descriptorBindingSampledImageUpdateAfterBind’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:144:66: warning: missing initializer for member ‘VkPhysicalDeviceVulkan12Features::descriptorBindingStorageImageUpdateAfterBind’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:144:66: warning: missing initializer for member ‘VkPhysicalDeviceVulkan12Features::descriptorBindingStorageBufferUpdateAfterBind’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:144:66: warning: missing initializer for member ‘VkPhysicalDeviceVulkan12Features::descriptorBindingUniformTexelBufferUpdateAfterBind’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:144:66: warning: missing initializer for member ‘VkPhysicalDeviceVulkan12Features::descriptorBindingStorageTexelBufferUpdateAfterBind’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:144:66: warning: missing initializer for member ‘VkPhysicalDeviceVulkan12Features::descriptorBindingUpdateUnusedWhilePending’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:144:66: warning: missing initializer for member ‘VkPhysicalDeviceVulkan12Features::descriptorBindingPartiallyBound’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:144:66: warning: missing initializer for member ‘VkPhysicalDeviceVulkan12Features::descriptorBindingVariableDescriptorCount’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:144:66: warning: missing initializer for member ‘VkPhysicalDeviceVulkan12Features::runtimeDescriptorArray’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:144:66: warning: missing initializer for member ‘VkPhysicalDeviceVulkan12Features::samplerFilterMinmax’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:144:66: warning: missing initializer for member ‘VkPhysicalDeviceVulkan12Features::scalarBlockLayout’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:144:66: warning: missing initializer for member ‘VkPhysicalDeviceVulkan12Features::imagelessFramebuffer’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:144:66: warning: missing initializer for member ‘VkPhysicalDeviceVulkan12Features::uniformBufferStandardLayout’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:144:66: warning: missing initializer for member ‘VkPhysicalDeviceVulkan12Features::shaderSubgroupExtendedTypes’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:144:66: warning: missing initializer for member ‘VkPhysicalDeviceVulkan12Features::separateDepthStencilLayouts’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:144:66: warning: missing initializer for member ‘VkPhysicalDeviceVulkan12Features::hostQueryReset’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:144:66: warning: missing initializer for member ‘VkPhysicalDeviceVulkan12Features::timelineSemaphore’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:144:66: warning: missing initializer for member ‘VkPhysicalDeviceVulkan12Features::bufferDeviceAddress’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:144:66: warning: missing initializer for member ‘VkPhysicalDeviceVulkan12Features::bufferDeviceAddressCaptureReplay’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:144:66: warning: missing initializer for member ‘VkPhysicalDeviceVulkan12Features::bufferDeviceAddressMultiDevice’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:144:66: warning: missing initializer for member ‘VkPhysicalDeviceVulkan12Features::vulkanMemoryModel’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:144:66: warning: missing initializer for member ‘VkPhysicalDeviceVulkan12Features::vulkanMemoryModelDeviceScope’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:144:66: warning: missing initializer for member ‘VkPhysicalDeviceVulkan12Features::vulkanMemoryModelAvailabilityVisibilityChains’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:144:66: warning: missing initializer for member ‘VkPhysicalDeviceVulkan12Features::shaderOutputViewportIndex’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:144:66: warning: missing initializer for member ‘VkPhysicalDeviceVulkan12Features::shaderOutputLayer’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:144:66: warning: missing initializer for member ‘VkPhysicalDeviceVulkan12Features::subgroupBroadcastDynamicId’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:146:63: warning: missing initializer for member ‘VkPhysicalDeviceFeatures2::features’ [-Wmissing-field-initializers]
+  146 |             VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2, &v12};
+      |                                                               ^
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp: In function ‘VkPhysicalDeviceVulkan12Features {anonymous}::DescriptorIndexingEnable()’:
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:155:66: warning: missing initializer for member ‘VkPhysicalDeviceVulkan12Features::pNext’ [-Wmissing-field-initializers]
+  155 |             VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES};
+      |                                                                  ^
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:155:66: warning: missing initializer for member ‘VkPhysicalDeviceVulkan12Features::samplerMirrorClampToEdge’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:155:66: warning: missing initializer for member ‘VkPhysicalDeviceVulkan12Features::drawIndirectCount’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:155:66: warning: missing initializer for member ‘VkPhysicalDeviceVulkan12Features::storageBuffer8BitAccess’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:155:66: warning: missing initializer for member ‘VkPhysicalDeviceVulkan12Features::uniformAndStorageBuffer8BitAccess’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:155:66: warning: missing initializer for member ‘VkPhysicalDeviceVulkan12Features::storagePushConstant8’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:155:66: warning: missing initializer for member ‘VkPhysicalDeviceVulkan12Features::shaderBufferInt64Atomics’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:155:66: warning: missing initializer for member ‘VkPhysicalDeviceVulkan12Features::shaderSharedInt64Atomics’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:155:66: warning: missing initializer for member ‘VkPhysicalDeviceVulkan12Features::shaderFloat16’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:155:66: warning: missing initializer for member ‘VkPhysicalDeviceVulkan12Features::shaderInt8’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:155:66: warning: missing initializer for member ‘VkPhysicalDeviceVulkan12Features::descriptorIndexing’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:155:66: warning: missing initializer for member ‘VkPhysicalDeviceVulkan12Features::shaderInputAttachmentArrayDynamicIndexing’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:155:66: warning: missing initializer for member ‘VkPhysicalDeviceVulkan12Features::shaderUniformTexelBufferArrayDynamicIndexing’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:155:66: warning: missing initializer for member ‘VkPhysicalDeviceVulkan12Features::shaderStorageTexelBufferArrayDynamicIndexing’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:155:66: warning: missing initializer for member ‘VkPhysicalDeviceVulkan12Features::shaderUniformBufferArrayNonUniformIndexing’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:155:66: warning: missing initializer for member ‘VkPhysicalDeviceVulkan12Features::shaderSampledImageArrayNonUniformIndexing’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:155:66: warning: missing initializer for member ‘VkPhysicalDeviceVulkan12Features::shaderStorageBufferArrayNonUniformIndexing’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:155:66: warning: missing initializer for member ‘VkPhysicalDeviceVulkan12Features::shaderStorageImageArrayNonUniformIndexing’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:155:66: warning: missing initializer for member ‘VkPhysicalDeviceVulkan12Features::shaderInputAttachmentArrayNonUniformIndexing’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:155:66: warning: missing initializer for member ‘VkPhysicalDeviceVulkan12Features::shaderUniformTexelBufferArrayNonUniformIndexing’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:155:66: warning: missing initializer for member ‘VkPhysicalDeviceVulkan12Features::shaderStorageTexelBufferArrayNonUniformIndexing’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:155:66: warning: missing initializer for member ‘VkPhysicalDeviceVulkan12Features::descriptorBindingUniformBufferUpdateAfterBind’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:155:66: warning: missing initializer for member ‘VkPhysicalDeviceVulkan12Features::descriptorBindingSampledImageUpdateAfterBind’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:155:66: warning: missing initializer for member ‘VkPhysicalDeviceVulkan12Features::descriptorBindingStorageImageUpdateAfterBind’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:155:66: warning: missing initializer for member ‘VkPhysicalDeviceVulkan12Features::descriptorBindingStorageBufferUpdateAfterBind’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:155:66: warning: missing initializer for member ‘VkPhysicalDeviceVulkan12Features::descriptorBindingUniformTexelBufferUpdateAfterBind’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:155:66: warning: missing initializer for member ‘VkPhysicalDeviceVulkan12Features::descriptorBindingStorageTexelBufferUpdateAfterBind’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:155:66: warning: missing initializer for member ‘VkPhysicalDeviceVulkan12Features::descriptorBindingUpdateUnusedWhilePending’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:155:66: warning: missing initializer for member ‘VkPhysicalDeviceVulkan12Features::descriptorBindingPartiallyBound’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:155:66: warning: missing initializer for member ‘VkPhysicalDeviceVulkan12Features::descriptorBindingVariableDescriptorCount’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:155:66: warning: missing initializer for member ‘VkPhysicalDeviceVulkan12Features::runtimeDescriptorArray’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:155:66: warning: missing initializer for member ‘VkPhysicalDeviceVulkan12Features::samplerFilterMinmax’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:155:66: warning: missing initializer for member ‘VkPhysicalDeviceVulkan12Features::scalarBlockLayout’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:155:66: warning: missing initializer for member ‘VkPhysicalDeviceVulkan12Features::imagelessFramebuffer’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:155:66: warning: missing initializer for member ‘VkPhysicalDeviceVulkan12Features::uniformBufferStandardLayout’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:155:66: warning: missing initializer for member ‘VkPhysicalDeviceVulkan12Features::shaderSubgroupExtendedTypes’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:155:66: warning: missing initializer for member ‘VkPhysicalDeviceVulkan12Features::separateDepthStencilLayouts’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:155:66: warning: missing initializer for member ‘VkPhysicalDeviceVulkan12Features::hostQueryReset’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:155:66: warning: missing initializer for member ‘VkPhysicalDeviceVulkan12Features::timelineSemaphore’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:155:66: warning: missing initializer for member ‘VkPhysicalDeviceVulkan12Features::bufferDeviceAddress’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:155:66: warning: missing initializer for member ‘VkPhysicalDeviceVulkan12Features::bufferDeviceAddressCaptureReplay’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:155:66: warning: missing initializer for member ‘VkPhysicalDeviceVulkan12Features::bufferDeviceAddressMultiDevice’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:155:66: warning: missing initializer for member ‘VkPhysicalDeviceVulkan12Features::vulkanMemoryModel’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:155:66: warning: missing initializer for member ‘VkPhysicalDeviceVulkan12Features::vulkanMemoryModelDeviceScope’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:155:66: warning: missing initializer for member ‘VkPhysicalDeviceVulkan12Features::vulkanMemoryModelAvailabilityVisibilityChains’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:155:66: warning: missing initializer for member ‘VkPhysicalDeviceVulkan12Features::shaderOutputViewportIndex’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:155:66: warning: missing initializer for member ‘VkPhysicalDeviceVulkan12Features::shaderOutputLayer’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:155:66: warning: missing initializer for member ‘VkPhysicalDeviceVulkan12Features::subgroupBroadcastDynamicId’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp: In function ‘VkDevice_T* {anonymous}::CreateLogicalDevice(VkPhysicalDevice, uint32_t, uint32_t, const VkPhysicalDeviceFeatures&, const std::vector<const char*>&, VkQueue_T**, VkQueue_T**)’:
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:259:59: warning: missing initializer for member ‘VkDeviceQueueCreateInfo::pNext’ [-Wmissing-field-initializers]
+  259 |                 VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO};
+      |                                                           ^
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:259:59: warning: missing initializer for member ‘VkDeviceQueueCreateInfo::flags’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:259:59: warning: missing initializer for member ‘VkDeviceQueueCreateInfo::queueFamilyIndex’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:259:59: warning: missing initializer for member ‘VkDeviceQueueCreateInfo::queueCount’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:259:59: warning: missing initializer for member ‘VkDeviceQueueCreateInfo::pQueuePriorities’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:275:75: warning: missing initializer for member ‘VkDeviceCreateInfo::pNext’ [-Wmissing-field-initializers]
+  275 |         VkDeviceCreateInfo createInfo{VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO};
+      |                                                                           ^
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:275:75: warning: missing initializer for member ‘VkDeviceCreateInfo::flags’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:275:75: warning: missing initializer for member ‘VkDeviceCreateInfo::queueCreateInfoCount’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:275:75: warning: missing initializer for member ‘VkDeviceCreateInfo::pQueueCreateInfos’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:275:75: warning: missing initializer for member ‘VkDeviceCreateInfo::enabledLayerCount’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:275:75: warning: missing initializer for member ‘VkDeviceCreateInfo::ppEnabledLayerNames’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:275:75: warning: missing initializer for member ‘VkDeviceCreateInfo::enabledExtensionCount’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:275:75: warning: missing initializer for member ‘VkDeviceCreateInfo::ppEnabledExtensionNames’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:275:75: warning: missing initializer for member ‘VkDeviceCreateInfo::pEnabledFeatures’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp: In member function ‘void VulkanContext::CreateSwapchain(const VkSurfaceCapabilitiesKHR&, VkExtent2D)’:
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:434:76: warning: missing initializer for member ‘VkImageViewCreateInfo::pNext’ [-Wmissing-field-initializers]
+  434 |         VkImageViewCreateInfo view{VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO};
+      |                                                                            ^
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:434:76: warning: missing initializer for member ‘VkImageViewCreateInfo::flags’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:434:76: warning: missing initializer for member ‘VkImageViewCreateInfo::image’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:434:76: warning: missing initializer for member ‘VkImageViewCreateInfo::viewType’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:434:76: warning: missing initializer for member ‘VkImageViewCreateInfo::format’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:434:76: warning: missing initializer for member ‘VkImageViewCreateInfo::components’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:434:76: warning: missing initializer for member ‘VkImageViewCreateInfo::subresourceRange’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp: In member function ‘void VulkanContext::CreateRenderPass()’:
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:501:50: warning: missing initializer for member ‘VkRenderPassCreateInfo::pNext’ [-Wmissing-field-initializers]
+  501 |         VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO};
+      |                                                  ^
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:501:50: warning: missing initializer for member ‘VkRenderPassCreateInfo::flags’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:501:50: warning: missing initializer for member ‘VkRenderPassCreateInfo::attachmentCount’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:501:50: warning: missing initializer for member ‘VkRenderPassCreateInfo::pAttachments’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:501:50: warning: missing initializer for member ‘VkRenderPassCreateInfo::subpassCount’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:501:50: warning: missing initializer for member ‘VkRenderPassCreateInfo::pSubpasses’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:501:50: warning: missing initializer for member ‘VkRenderPassCreateInfo::dependencyCount’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:501:50: warning: missing initializer for member ‘VkRenderPassCreateInfo::pDependencies’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp: In member function ‘void VulkanContext::CreateFramebuffers()’:
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:516:54: warning: missing initializer for member ‘VkFramebufferCreateInfo::pNext’ [-Wmissing-field-initializers]
+  516 |             VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO};
+      |                                                      ^
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:516:54: warning: missing initializer for member ‘VkFramebufferCreateInfo::flags’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:516:54: warning: missing initializer for member ‘VkFramebufferCreateInfo::renderPass’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:516:54: warning: missing initializer for member ‘VkFramebufferCreateInfo::attachmentCount’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:516:54: warning: missing initializer for member ‘VkFramebufferCreateInfo::pAttachments’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:516:54: warning: missing initializer for member ‘VkFramebufferCreateInfo::width’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:516:54: warning: missing initializer for member ‘VkFramebufferCreateInfo::height’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:516:54: warning: missing initializer for member ‘VkFramebufferCreateInfo::layers’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp: In member function ‘void VulkanContext::CreateFrameLoopAssets()’:
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:531:51: warning: missing initializer for member ‘VkCommandPoolCreateInfo::pNext’ [-Wmissing-field-initializers]
+  531 |         VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO};
+      |                                                   ^
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:531:51: warning: missing initializer for member ‘VkCommandPoolCreateInfo::flags’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:531:51: warning: missing initializer for member ‘VkCommandPoolCreateInfo::queueFamilyIndex’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:537:55: warning: missing initializer for member ‘VkCommandBufferAllocateInfo::pNext’ [-Wmissing-field-initializers]
+  537 |         VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO};
+      |                                                       ^
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:537:55: warning: missing initializer for member ‘VkCommandBufferAllocateInfo::commandPool’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:537:55: warning: missing initializer for member ‘VkCommandBufferAllocateInfo::level’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:537:55: warning: missing initializer for member ‘VkCommandBufferAllocateInfo::commandBufferCount’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:544:74: warning: missing initializer for member ‘VkSemaphoreCreateInfo::pNext’ [-Wmissing-field-initializers]
+  544 |     VkSemaphoreCreateInfo semInfo{VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO};
+      |                                                                          ^
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:544:74: warning: missing initializer for member ‘VkSemaphoreCreateInfo::flags’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:545:68: warning: missing initializer for member ‘VkFenceCreateInfo::pNext’ [-Wmissing-field-initializers]
+  545 |     VkFenceCreateInfo fenceInfo{VK_STRUCTURE_TYPE_FENCE_CREATE_INFO};
+      |                                                                    ^
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:545:68: warning: missing initializer for member ‘VkFenceCreateInfo::flags’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp: In member function ‘void VulkanContext::CreatePresentSemaphores()’:
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:560:74: warning: missing initializer for member ‘VkSemaphoreCreateInfo::pNext’ [-Wmissing-field-initializers]
+  560 |     VkSemaphoreCreateInfo semInfo{VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO};
+      |                                                                          ^
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:560:74: warning: missing initializer for member ‘VkSemaphoreCreateInfo::flags’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp: In member function ‘VulkanContext::FrameContext VulkanContext::BeginCommands()’:
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:687:52: warning: missing initializer for member ‘VkCommandBufferBeginInfo::pNext’ [-Wmissing-field-initializers]
+  687 |         VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO};
+      |                                                    ^
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:687:52: warning: missing initializer for member ‘VkCommandBufferBeginInfo::flags’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:687:52: warning: missing initializer for member ‘VkCommandBufferBeginInfo::pInheritanceInfo’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp: In member function ‘void VulkanContext::BeginPresentPass(VkClearColorValue)’:
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:703:49: warning: missing initializer for member ‘VkRenderPassBeginInfo::pNext’ [-Wmissing-field-initializers]
+  703 |         VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO};
+      |                                                 ^
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:703:49: warning: missing initializer for member ‘VkRenderPassBeginInfo::renderPass’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:703:49: warning: missing initializer for member ‘VkRenderPassBeginInfo::framebuffer’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:703:49: warning: missing initializer for member ‘VkRenderPassBeginInfo::renderArea’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:703:49: warning: missing initializer for member ‘VkRenderPassBeginInfo::clearValueCount’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:703:49: warning: missing initializer for member ‘VkRenderPassBeginInfo::pClearValues’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp: In member function ‘void VulkanContext::EndFrame()’:
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:738:54: warning: missing initializer for member ‘VkSubmitInfo::pNext’ [-Wmissing-field-initializers]
+  738 |     VkSubmitInfo submit{VK_STRUCTURE_TYPE_SUBMIT_INFO};
+      |                                                      ^
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:738:54: warning: missing initializer for member ‘VkSubmitInfo::waitSemaphoreCount’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:738:54: warning: missing initializer for member ‘VkSubmitInfo::pWaitSemaphores’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:738:54: warning: missing initializer for member ‘VkSubmitInfo::pWaitDstStageMask’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:738:54: warning: missing initializer for member ‘VkSubmitInfo::commandBufferCount’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:738:54: warning: missing initializer for member ‘VkSubmitInfo::pCommandBuffers’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:738:54: warning: missing initializer for member ‘VkSubmitInfo::signalSemaphoreCount’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:738:54: warning: missing initializer for member ‘VkSubmitInfo::pSignalSemaphores’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:751:64: warning: missing initializer for member ‘VkPresentInfoKHR::pNext’ [-Wmissing-field-initializers]
+  751 |     VkPresentInfoKHR present{VK_STRUCTURE_TYPE_PRESENT_INFO_KHR};
+      |                                                                ^
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:751:64: warning: missing initializer for member ‘VkPresentInfoKHR::waitSemaphoreCount’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:751:64: warning: missing initializer for member ‘VkPresentInfoKHR::pWaitSemaphores’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:751:64: warning: missing initializer for member ‘VkPresentInfoKHR::swapchainCount’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:751:64: warning: missing initializer for member ‘VkPresentInfoKHR::pSwapchains’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:751:64: warning: missing initializer for member ‘VkPresentInfoKHR::pImageIndices’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.cpp:751:64: warning: missing initializer for member ‘VkPresentInfoKHR::pResults’ [-Wmissing-field-initializers]
+[4/9] Linking CXX static library SexyAppFramework/graphics/vulkan/libsexy_vulkan.a
+[5/9] Building CXX object SexyAppFramework/CMakeFiles/LawnProject.dir/__/main.cpp.o
+In file included from /mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/GpuBackend.h:12,
+                 from /mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/SexyAppBase.h:12,
+                 from /mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/SexyApp.h:2,
+                 from /mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/LawnApp.h:4,
+                 from /mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/main.cpp:1:
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.h:15:5: warning: missing initializer for member ‘VkApplicationInfo::pNext’ [-Wmissing-field-initializers]
+   15 |     };
+      |     ^
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.h:15:5: warning: missing initializer for member ‘VkApplicationInfo::pEngineName’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.h:15:5: warning: missing initializer for member ‘VkApplicationInfo::engineVersion’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.h:19:5: warning: missing initializer for member ‘VkInstanceCreateInfo::pNext’ [-Wmissing-field-initializers]
+   19 |     };
+      |     ^
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.h:19:5: warning: missing initializer for member ‘VkInstanceCreateInfo::flags’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.h:19:5: warning: missing initializer for member ‘VkInstanceCreateInfo::enabledLayerCount’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.h:19:5: warning: missing initializer for member ‘VkInstanceCreateInfo::ppEnabledLayerNames’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.h:19:5: warning: missing initializer for member ‘VkInstanceCreateInfo::enabledExtensionCount’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.h:19:5: warning: missing initializer for member ‘VkInstanceCreateInfo::ppEnabledExtensionNames’ [-Wmissing-field-initializers]
+[6/9] Linking CXX executable Release/pvz_perf; Staging the configured native BASS library; Staging the bidirectional dat/dat64 converter in the save directory
+In member function ‘AssignRenderGroupToTrack’,
+    inlined from ‘AttachShield’ at /mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/Lawn/Zombie.cpp:9725:42,
+    inlined from ‘operator()’ at /mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/Lawn/Zombie.cpp:597:19,
+    inlined from ‘_FUN’ at /mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/Lawn/Zombie.cpp:599:5:
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/Sexy.TodLib/Reanimator.cpp:2016:55: warning: ‘aTrackName’ may be used uninitialized [-Wmaybe-uninitialized]
+ 2016 |         const int aTrackIndex = ReanimatorTrackIndexOf(mReanimationType, theTrackId);
+      |                                                       ^
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/Lawn/Zombie.cpp: In function ‘_FUN’:
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/Lawn/Zombie.cpp:9702:19: note: ‘aTrackName’ was declared here
+ 9702 |     ReanimTrackId aTrackName;
+      |                   ^
+In member function ‘AssignRenderGroupToTrack’,
+    inlined from ‘AttachShield’ at /mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/Lawn/Zombie.cpp:9725:42,
+    inlined from ‘operator()’ at /mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/Lawn/Zombie.cpp:295:19,
+    inlined from ‘_FUN’ at /mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/Lawn/Zombie.cpp:297:5:
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/Sexy.TodLib/Reanimator.cpp:2016:55: warning: ‘aTrackName’ may be used uninitialized [-Wmaybe-uninitialized]
+ 2016 |         const int aTrackIndex = ReanimatorTrackIndexOf(mReanimationType, theTrackId);
+      |                                                       ^
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/Lawn/Zombie.cpp: In function ‘_FUN’:
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/Lawn/Zombie.cpp:9702:19: note: ‘aTrackName’ was declared here
+ 9702 |     ReanimTrackId aTrackName;
+      |                   ^
+In member function ‘BossSpawnAttack’,
+    inlined from ‘operator()’ at /mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/Lawn/Zombie.cpp:11292:34,
+    inlined from ‘_FUN’ at /mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/Lawn/Zombie.cpp:11298:9:
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/Lawn/Zombie.cpp:10749:21: warning: ‘aTrackName’ may be used uninitialized [-Wmaybe-uninitialized]
+10749 |     PlayZombieReanim(aTrackName, ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD, 20, 12.0f);
+      |                     ^
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/Lawn/Zombie.cpp: In function ‘_FUN’:
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/Lawn/Zombie.cpp:10736:19: note: ‘aTrackName’ was declared here
+10736 |     ReanimTrackId aTrackName;
+      |                   ^

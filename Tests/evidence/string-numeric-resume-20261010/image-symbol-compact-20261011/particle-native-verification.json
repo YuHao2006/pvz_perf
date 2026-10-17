@@ -1,0 +1,11 @@
+{
+  "records": 112,
+  "emitter_name_count": 112,
+  "named_emitters": 159,
+  "unnamed_emitters": 63,
+  "raw_track_streams": 8988,
+  "name_table_crc32": "00998aed",
+  "old_v2_bytes": 278738,
+  "compact_v4_bytes": 114860,
+  "status": "passed"
+}

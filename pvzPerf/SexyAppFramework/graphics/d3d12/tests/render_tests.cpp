@@ -1,0 +1,288 @@
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#include <windows.h>
+#include <d3d12.h>
+#include <d3d12sdklayers.h>
+#include <wrl/client.h>
+#include "D3d12Context.h"
+#include "D3d12Renderer.h"
+#include "D3d12ScalePipeline.h"
+#include <algorithm>
+#include <array>
+#include <iostream>
+#include <fstream>
+#include <stdexcept>
+#include <string_view>
+
+namespace Sexy {
+const char* GetLogFilePathC(const char* name) {
+    static thread_local std::string path;
+    path = (std::filesystem::temp_directory_path() / name).string();
+    return path.c_str();
+}
+}
+namespace {
+using namespace Sexy;
+void Require(bool condition, const char* message) {
+    if (!condition) throw std::runtime_error(message);
+}
+class TestWindow {
+public:
+    HWND hwnd = nullptr;
+    TestWindow() {
+        WNDCLASSW cls{};
+        cls.lpfnWndProc = DefWindowProcW;
+        cls.hInstance = GetModuleHandleW(nullptr);
+        cls.lpszClassName = L"PvzD3d12Gate";
+        Require(RegisterClassW(&cls) != 0, "RegisterClassW failed");
+        hwnd = CreateWindowExW(0, cls.lpszClassName, L"D3D12 gate",
+            WS_OVERLAPPEDWINDOW, 0, 0, 800, 600, nullptr, nullptr,
+            cls.hInstance, nullptr);
+        Require(hwnd != nullptr, "CreateWindowExW failed");
+    }
+    ~TestWindow() {
+        if (hwnd) DestroyWindow(hwnd);
+        UnregisterClassW(L"PvzD3d12Gate", GetModuleHandleW(nullptr));
+    }
+};
+auto Quad(float x, float y, float width, float height, uint32_t slot,
+          float alpha = 1.0f) {
+    return std::array<GpuVertex, 6>{{
+        {x,y,1,1,1,alpha,0,0,slot,0},
+        {x+width,y,1,1,1,alpha,1,0,slot,0},
+        {x+width,y+height,1,1,1,alpha,1,1,slot,0},
+        {x,y,1,1,1,alpha,0,0,slot,0},
+        {x+width,y+height,1,1,1,alpha,1,1,slot,0},
+        {x,y+height,1,1,1,alpha,0,1,slot,0}
+    }};
+}
+void Pixel(const std::vector<uint32_t>& pixels, int x, int y, uint32_t expected) {
+    const auto actual = pixels.at(size_t(y) * 800 + x);
+    if (actual != expected) {
+        std::cerr << "pixel=" << x << ',' << y << " actual=0x" << std::hex
+                  << actual << " expected=0x" << expected << std::dec << '\n';
+        throw std::runtime_error("Exact pixel comparison failed");
+    }
+}
+void UploadAndBindless(D3d12Renderer& renderer) {
+    std::array<uint32_t, 20> pitched{};
+    std::array<uint32_t, 15> expected{};
+    for (unsigned y = 0; y < 5; ++y)
+        for (unsigned x = 0; x < 3; ++x)
+            pitched[y*4+x] = expected[y*3+x] = 0xff000000u | ((y*3+x+1)*0x010305u);
+    auto* npot = renderer.CreateTexture(3, 5, pitched.data(), 16);
+    pitched.fill(0);
+    const auto snapshot = renderer.ReadTexturePixels(npot);
+    Require(snapshot.width == 3 && snapshot.height == 5, "NPOT dimensions changed");
+    Require(std::equal(expected.begin(), expected.end(), snapshot.pixels.begin()),
+        "Upload snapshot or row pitch changed pixels");
+    uint32_t red = 0xffff0000, blue = 0xff0000ff;
+    auto* redImage = renderer.CreateTexture(1, 1, &red, 4);
+    auto* blueImage = renderer.CreateTexture(1, 1, &blue, 4);
+    red = blue = 0;
+    Require(renderer.BeginScene(), "Cannot begin bindless scene");
+    auto vertices = Quad(20, 20, 10, 10, D3d12Renderer::SlotOf(redImage));
+    const auto blueQuad = Quad(30, 20, 10, 10, D3d12Renderer::SlotOf(blueImage));
+    std::vector<GpuVertex> batch(vertices.begin(), vertices.end());
+    batch.insert(batch.end(), blueQuad.begin(), blueQuad.end());
+    renderer.SubmitTriangles(batch, redImage, false, false, GpuBlend::Opaque);
+    auto imageQuad = Quad(50, 20, 3, 5, D3d12Renderer::SlotOf(npot));
+    renderer.SubmitTriangles(imageQuad, npot, false, false, GpuBlend::Opaque);
+    batch.clear();
+    renderer.DestroyTexture(redImage);
+    renderer.DestroyTexture(blueImage);
+    renderer.DestroyTexture(npot);
+    renderer.EndSceneAndPresent();
+    const auto pixels = renderer.ReadScenePixels();
+    Pixel(pixels, 25, 25, 0xffff0000);
+    Pixel(pixels, 35, 25, 0xff0000ff);
+    for (unsigned y = 0; y < 5; ++y)
+        for (unsigned x = 0; x < 3; ++x)
+            Pixel(pixels, 50+x, 20+y, expected[y*3+x]);
+    std::cout << "npot-pitched-upload=PASS bindless-mixed-slots=PASS "
+                 "destroy-before-submit=PASS\n";
+}
+void Coverage(D3d12Renderer& renderer) {
+    std::array<uint8_t, 256> ramp{};
+    for (unsigned i = 0; i < ramp.size(); ++i) ramp[i] = uint8_t(i);
+    auto* mask = renderer.CreateCoverageMask(256, 1, ramp, 256);
+    ramp.fill(0);
+    Require(renderer.BeginScene(), "Cannot begin coverage scene");
+    auto black = Quad(0, 100, 256, 256, D3d12Renderer::SlotOf(renderer.whiteTexture));
+    for (auto& vertex : black) vertex.r = vertex.g = vertex.b = 0;
+    renderer.SubmitTriangles(black, renderer.whiteTexture, false, false, GpuBlend::Opaque);
+    std::vector<GpuVertex> rows;
+    for (unsigned alpha = 0; alpha < 256; ++alpha) {
+        const auto quad = Quad(0, float(100+alpha), 256, 1,
+            D3d12Renderer::SlotOf(mask), float(alpha)/255);
+        rows.insert(rows.end(), quad.begin(), quad.end());
+    }
+    renderer.SubmitCoverageTriangles(rows, mask, GpuBlend::Normal);
+    renderer.DestroyTexture(mask);
+    renderer.EndSceneAndPresent();
+    const auto pixels = renderer.ReadScenePixels();
+    for (unsigned alpha = 0; alpha < 256; ++alpha)
+        for (unsigned cover = 0; cover < 256; ++cover) {
+            const auto value = ((cover+1)*alpha)>>8;
+            Pixel(pixels, int(cover), 100+int(alpha), 0xff000000u | value*0x010101u);
+        }
+    std::cout << "coverage-exact-65536=PASS\n";
+}
+void ImageFactories(D3d12Renderer& renderer) {
+    const uint32_t sourcePixel = 0x80402010;
+    auto* source = renderer.CreateTexture(1, 1, &sourcePixel, 4);
+    const GpuImageProcessing processing{0,0,1,1,255,0,255,255,GpuImageOperation::Colorize};
+    auto* colored = renderer.ProcessImage(source, processing);
+    Require(renderer.ReadTexturePixels(colored).pixels[0] == 0x7f3f000f,
+        "Color factory changed byte semantics");
+    auto* padded = renderer.CopyTextureRegion(source, 0, 0, 3, 5);
+    const auto copy = renderer.ReadTexturePixels(padded);
+    Require(copy.pixels[0] == sourcePixel, "GPU region copy changed source pixel");
+    for (size_t i = 1; i < copy.pixels.size(); ++i)
+        Require(copy.pixels[i] == 0, "GPU region copy padding was not zero");
+    const uint32_t maskPixel = 0x00000033;
+    auto* mask = renderer.CreateTexture(1, 1, &maskPixel, 4);
+    auto* composed = renderer.ComposeAlpha(source, mask, 1, 1, 0, false);
+    Require(renderer.ReadTexturePixels(composed).pixels[0] == 0x33402010,
+        "GPU alpha composition changed RGB/alpha bytes");
+    const uint32_t bluePixel = 0xff0000ff;
+    auto* blue = renderer.CreateTexture(1, 1, &bluePixel, 4);
+    auto* target = renderer.CreateRenderImage(3, 5);
+    renderer.SetRenderImage(target);
+    Require(renderer.BeginScene(), "Cannot begin offscreen scene");
+    renderer.SubmitTriangles(Quad(0,0,3,5,D3d12Renderer::SlotOf(blue)),
+        blue, false, false, GpuBlend::Opaque);
+    renderer.EndSceneAndPresent();
+    renderer.SetRenderImage(nullptr);
+    const auto offscreen = renderer.ReadTexturePixels(target);
+    for (auto pixel : offscreen.pixels)
+        Require(pixel == bluePixel, "Generated image drawing changed opaque pixels");
+    auto* glyphTarget = renderer.CreateRenderImage(1, 1);
+    const std::array<GpuFontGlyph,1> glyph{{{0,0,1,1,0,0,1,1}}};
+    renderer.SetRenderImage(glyphTarget);
+    Require(renderer.BeginScene(), "Cannot begin font image scene");
+    renderer.RenderFontAtlas(glyphTarget, blue, glyph, 0, false);
+    renderer.EndSceneAndPresent();
+    renderer.SetRenderImage(nullptr);
+    // Legacy SlowStretch applies (RGB * alpha) >> 8 even for alpha 255.
+    Require(renderer.ReadTexturePixels(glyphTarget).pixels[0] == 0xff0000fe,
+        "GPU font factory changed legacy opaque texel");
+    for (auto* image : {source,colored,padded,mask,composed,blue,target,glyphTarget})
+        renderer.DestroyTexture(image);
+    std::cout << "color-alpha-copy-font-offscreen=PASS\n";
+}
+void SourceScale(D3d12Renderer& renderer, ScaleEffectRuntimeDesc& effect) {
+    const auto path = std::filesystem::temp_directory_path() /
+        ("pvz-d3d12-gpu-scale-" + std::to_string(GetCurrentProcessId()) + ".hlsl");
+    {
+        std::ofstream source(path);
+        source << R"(//!MAGPIE EFFECT
+//!VERSION 4
+//!TEXTURE
+Texture2D INPUT;
+//!TEXTURE
+Texture2D OUTPUT;
+//!SAMPLER
+//!FILTER POINT
+SamplerState pointSampler;
+//!PASS 1
+//!STYLE PS
+//!IN INPUT
+//!OUT OUTPUT
+float4 Pass1(float2 pos) { return INPUT.SampleLevel(pointSampler, pos, 0); }
+)";
+        Require(bool(source), "Cannot write source scale fixture");
+    }
+    ScaleEffectCompiler compiler;
+    std::string error;
+    const bool compiled = compiler.CompileD3d12(path.string(), {}, effect, error);
+    std::filesystem::remove(path);
+    Require(compiled, error.c_str());
+    D3d12ScaleStep step{&effect, {}};
+    step.scaling.mScaleX = step.scaling.mScaleY = 2;
+    renderer.PrepareScale(false, std::span<const D3d12ScaleStep>(&step, 1), 1600, 1200);
+    renderer.WarmScale(false);
+    renderer.SetScaleMode(true, false);
+    Require(renderer.PresentRetainedScene(), "Cannot present runtime-compiled scale");
+    const auto original = renderer.ReadScenePixels();
+    const auto scaled = renderer.ReadScalePixels(false);
+    const auto dimensions = renderer.ScaleOutput(false);
+    Require(dimensions.width == 1600 && dimensions.height == 1200,
+        "Runtime scale output dimensions changed");
+    for (unsigned y = 0; y < 1200; ++y)
+        for (unsigned x = 0; x < 1600; ++x)
+            Require(scaled[size_t(y)*1600+x] == original[size_t(y/2)*800+x/2],
+                "Runtime-compiled GPU nearest scale changed pixels");
+    renderer.SetScaleMode(false, false);
+    std::cout << "user-hlsl-runtime-scale-exact-1920000=PASS\n";
+}
+void StaticSlots(D3d12Renderer& renderer) {
+    constexpr uint32_t maxSymbol = 2287;
+    constexpr uint32_t staticBase = 4096-maxSymbol-1;
+    renderer.ReserveStaticTextureSlots(maxSymbol);
+    const uint32_t color = 0xff2468ac;
+    std::vector<D3d12Texture*> images;
+    images.reserve(2000);
+    for (uint32_t symbol = 1; symbol <= 2000; ++symbol) {
+        auto* image = renderer.CreateTextureStatic(1,1,&color,4,false,symbol);
+        Require((D3d12Renderer::SlotOf(image)&4095u) == staticBase+symbol,
+            "Static symbol did not use its compiled descriptor");
+        images.push_back(image);
+    }
+    Require(renderer.BeginScene(), "Cannot begin static slot scene");
+    renderer.SubmitTriangles(Quad(700,500,1,1,D3d12Renderer::SlotOf(images.back())),
+        images.back(),false,false,GpuBlend::Opaque);
+    for (auto* image : images) renderer.DestroyTexture(image);
+    renderer.EndSceneAndPresent();
+    Pixel(renderer.ReadScenePixels(),700,500,color);
+    std::cout << "static-symbols-2000-no-dynamic-duplicates=PASS\n";
+}
+void Validation(ID3D12Device* device) {
+    Microsoft::WRL::ComPtr<ID3D12InfoQueue> messages;
+    Require(SUCCEEDED(device->QueryInterface(IID_PPV_ARGS(&messages))),
+        "D3D12 debug information queue missing");
+    for (UINT64 i = 0; i < messages->GetNumStoredMessages(); ++i) {
+        SIZE_T bytes = 0;
+        Require(SUCCEEDED(messages->GetMessage(i, nullptr, &bytes)), "Debug message size failed");
+        std::vector<uint8_t> storage(bytes);
+        auto* message = reinterpret_cast<D3D12_MESSAGE*>(storage.data());
+        Require(SUCCEEDED(messages->GetMessage(i, message, &bytes)), "Debug message read failed");
+        if (message->Severity <= D3D12_MESSAGE_SEVERITY_ERROR) {
+            std::cerr << message->pDescription << '\n';
+            throw std::runtime_error("D3D12 validation error");
+        }
+    }
+    std::cout << "d3d12-debug-errors=0\n";
+}
+}
+int main() {
+    try {
+        TestWindow window;
+        Sexy::D3d12Context context(window.hwnd, true);
+        std::cout << "adapter=" << context.adapterDescription << '\n';
+        Sexy::ScaleEffectRuntimeDesc scaleEffect;
+        try {
+            Sexy::D3d12Renderer renderer(context, 800, 600, PVZ_D3D12_SHADER_DIRECTORY);
+            renderer.PrepareLoadingPipelines();
+            UploadAndBindless(renderer);
+            Coverage(renderer);
+            ImageFactories(renderer);
+            SourceScale(renderer, scaleEffect);
+            StaticSlots(renderer);
+        } catch (...) {
+            Validation(context.device);
+            throw;
+        }
+        context.WaitIdle();
+        Validation(context.device);
+        std::cout << "backend=D3D12 result=PASS\n";
+        return 0;
+    } catch (const std::exception& error) {
+        std::cerr << "D3D12 gate failed: " << error.what() << '\n';
+        return 1;
+    }
+}

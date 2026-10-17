@@ -1,0 +1,82 @@
+[
+  {
+    "tree": "A",
+    "fixture": "game3_13.dat.programdata-1639-latest",
+    "step": "first",
+    "returncode": 0,
+    "input": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\pvz-save-converter-58y5760p\\A\\legacy\\game3_13.dat.programdata-1639-latest",
+    "output": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\pvz-save-converter-58y5760p\\A\\legacy\\converted.dat64",
+    "stdout": "验证与转换完成：\r\n  C:\\Users\\Administrator\\AppData\\Local\\Temp\\pvz-save-converter-58y5760p\\A\\legacy\\game3_13.dat.programdata-1639-latest\r\n  PvZ 1.2.0.1073 game*.dat (521448 字节)\r\n    ->\r\n  C:\\Users\\Administrator\\AppData\\Local\\Temp\\pvz-save-converter-58y5760p\\A\\legacy\\converted.dat64\r\n  Legacy dat64 v1 (566756 字节)\r\n",
+    "stderr": ""
+  },
+  {
+    "tree": "A",
+    "fixture": "game3_13.dat.programdata-1639-latest",
+    "step": "back",
+    "returncode": 0,
+    "input": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\pvz-save-converter-58y5760p\\A\\legacy\\converted.dat64",
+    "output": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\pvz-save-converter-58y5760p\\A\\legacy\\roundtrip.dat",
+    "stdout": "验证与转换完成：\r\n  C:\\Users\\Administrator\\AppData\\Local\\Temp\\pvz-save-converter-58y5760p\\A\\legacy\\converted.dat64\r\n  Legacy dat64 v1 (566756 字节)\r\n    ->\r\n  C:\\Users\\Administrator\\AppData\\Local\\Temp\\pvz-save-converter-58y5760p\\A\\legacy\\roundtrip.dat\r\n  PvZ 1.2.0.1073 game*.dat (521448 字节)\r\n",
+    "stderr": ""
+  },
+  {
+    "tree": "A",
+    "fixture": "game3_58.dat64.weird-1716",
+    "step": "first",
+    "returncode": 0,
+    "input": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\pvz-save-converter-58y5760p\\A\\modern\\game3_58.dat64.weird-1716",
+    "output": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\pvz-save-converter-58y5760p\\A\\modern\\converted.dat",
+    "stdout": "验证与转换完成：\r\n  C:\\Users\\Administrator\\AppData\\Local\\Temp\\pvz-save-converter-58y5760p\\A\\modern\\game3_58.dat64.weird-1716\r\n  Legacy dat64 v1 (825208 字节)\r\n    ->\r\n  C:\\Users\\Administrator\\AppData\\Local\\Temp\\pvz-save-converter-58y5760p\\A\\modern\\converted.dat\r\n  PvZ 1.2.0.1073 game*.dat (744648 字节)\r\n",
+    "stderr": ""
+  },
+  {
+    "tree": "A",
+    "fixture": "game3_58.dat64.weird-1716",
+    "step": "back",
+    "returncode": 0,
+    "input": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\pvz-save-converter-58y5760p\\A\\modern\\converted.dat",
+    "output": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\pvz-save-converter-58y5760p\\A\\modern\\roundtrip.dat64",
+    "stdout": "验证与转换完成：\r\n  C:\\Users\\Administrator\\AppData\\Local\\Temp\\pvz-save-converter-58y5760p\\A\\modern\\converted.dat\r\n  PvZ 1.2.0.1073 game*.dat (744648 字节)\r\n    ->\r\n  C:\\Users\\Administrator\\AppData\\Local\\Temp\\pvz-save-converter-58y5760p\\A\\modern\\roundtrip.dat64\r\n  Legacy dat64 v1 (825208 字节)\r\n",
+    "stderr": ""
+  },
+  {
+    "tree": "B",
+    "fixture": "game3_13.dat.programdata-1639-latest",
+    "step": "first",
+    "returncode": 0,
+    "input": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\pvz-save-converter-58y5760p\\B\\legacy\\game3_13.dat.programdata-1639-latest",
+    "output": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\pvz-save-converter-58y5760p\\B\\legacy\\converted.dat64",
+    "stdout": "验证与转换完成：\r\n  C:\\Users\\Administrator\\AppData\\Local\\Temp\\pvz-save-converter-58y5760p\\B\\legacy\\game3_13.dat.programdata-1639-latest\r\n  PvZ 1.2.0.1073 game*.dat (521448 字节)\r\n    ->\r\n  C:\\Users\\Administrator\\AppData\\Local\\Temp\\pvz-save-converter-58y5760p\\B\\legacy\\converted.dat64\r\n  Legacy dat64 v1 (566756 字节)\r\n",
+    "stderr": ""
+  },
+  {
+    "tree": "B",
+    "fixture": "game3_13.dat.programdata-1639-latest",
+    "step": "back",
+    "returncode": 0,
+    "input": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\pvz-save-converter-58y5760p\\B\\legacy\\converted.dat64",
+    "output": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\pvz-save-converter-58y5760p\\B\\legacy\\roundtrip.dat",
+    "stdout": "验证与转换完成：\r\n  C:\\Users\\Administrator\\AppData\\Local\\Temp\\pvz-save-converter-58y5760p\\B\\legacy\\converted.dat64\r\n  Legacy dat64 v1 (566756 字节)\r\n    ->\r\n  C:\\Users\\Administrator\\AppData\\Local\\Temp\\pvz-save-converter-58y5760p\\B\\legacy\\roundtrip.dat\r\n  PvZ 1.2.0.1073 game*.dat (521448 字节)\r\n",
+    "stderr": ""
+  },
+  {
+    "tree": "B",
+    "fixture": "game3_58.dat64.weird-1716",
+    "step": "first",
+    "returncode": 0,
+    "input": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\pvz-save-converter-58y5760p\\B\\modern\\game3_58.dat64.weird-1716",
+    "output": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\pvz-save-converter-58y5760p\\B\\modern\\converted.dat",
+    "stdout": "验证与转换完成：\r\n  C:\\Users\\Administrator\\AppData\\Local\\Temp\\pvz-save-converter-58y5760p\\B\\modern\\game3_58.dat64.weird-1716\r\n  Legacy dat64 v1 (825208 字节)\r\n    ->\r\n  C:\\Users\\Administrator\\AppData\\Local\\Temp\\pvz-save-converter-58y5760p\\B\\modern\\converted.dat\r\n  PvZ 1.2.0.1073 game*.dat (744648 字节)\r\n",
+    "stderr": ""
+  },
+  {
+    "tree": "B",
+    "fixture": "game3_58.dat64.weird-1716",
+    "step": "back",
+    "returncode": 0,
+    "input": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\pvz-save-converter-58y5760p\\B\\modern\\converted.dat",
+    "output": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\pvz-save-converter-58y5760p\\B\\modern\\roundtrip.dat64",
+    "stdout": "验证与转换完成：\r\n  C:\\Users\\Administrator\\AppData\\Local\\Temp\\pvz-save-converter-58y5760p\\B\\modern\\converted.dat\r\n  PvZ 1.2.0.1073 game*.dat (744648 字节)\r\n    ->\r\n  C:\\Users\\Administrator\\AppData\\Local\\Temp\\pvz-save-converter-58y5760p\\B\\modern\\roundtrip.dat64\r\n  Legacy dat64 v1 (825208 字节)\r\n",
+    "stderr": ""
+  }
+]

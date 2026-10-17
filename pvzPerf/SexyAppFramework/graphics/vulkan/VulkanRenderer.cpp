@@ -1,0 +1,2149 @@
+#include "VulkanRenderer.h"
+#include <algorithm>
+#include <array>
+#include <cmath>
+#include <cstring>
+#include <fstream>
+#include <filesystem>
+#include <optional>
+#include <limits>
+#include <stdexcept>
+#include <unordered_map>
+#include <utility>
+
+namespace Sexy {
+namespace {
+void Check(VkResult result, const char* operation) {
+    if (result != VK_SUCCESS)
+        throw std::runtime_error(std::string(operation) + " failed: " + std::to_string(result));
+}
+#define VK_REQUIRE(call) Check((call), #call)
+
+uint32_t MemoryType(uint32_t mask, VkMemoryPropertyFlags flags) {
+    VkPhysicalDeviceMemoryProperties properties{};
+    vkGetPhysicalDeviceMemoryProperties(VulkanContext::physicalDevice, &properties);
+    for (uint32_t i = 0; i < properties.memoryTypeCount; ++i)
+        if ((mask & (1u << i)) && (properties.memoryTypes[i].propertyFlags & flags) == flags)
+            return i;
+    throw std::runtime_error("No suitable Vulkan memory type");
+}
+
+struct Buffer {
+    VkBuffer buffer = VK_NULL_HANDLE;
+    VkDeviceMemory memory = VK_NULL_HANDLE;
+    VkDeviceSize size = 0, used = 0;
+    void* mapped = nullptr;
+    ~Buffer() {
+        if (mapped) vkUnmapMemory(VulkanContext::device, memory);
+        if (buffer) vkDestroyBuffer(VulkanContext::device, buffer, nullptr);
+        if (memory) vkFreeMemory(VulkanContext::device, memory, nullptr);
+    }
+    void Create(VkDeviceSize bytes, VkBufferUsageFlags usage) {
+        size = bytes;
+        VkBufferCreateInfo info{VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO};
+        info.size = size;
+        info.usage = usage;
+        VK_REQUIRE(vkCreateBuffer(VulkanContext::device, &info, nullptr, &buffer));
+        VkMemoryRequirements req{};
+        vkGetBufferMemoryRequirements(VulkanContext::device, buffer, &req);
+        VkMemoryAllocateInfo alloc{VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO};
+        alloc.allocationSize = req.size;
+        alloc.memoryTypeIndex = MemoryType(req.memoryTypeBits,
+            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+        VK_REQUIRE(vkAllocateMemory(VulkanContext::device, &alloc, nullptr, &memory));
+        VK_REQUIRE(vkBindBufferMemory(VulkanContext::device, buffer, memory, 0));
+        VK_REQUIRE(vkMapMemory(VulkanContext::device, memory, 0, size, 0, &mapped));
+    }
+};
+
+void Barrier(VkCommandBuffer cmd, VkImage image, VkImageLayout oldLayout,
+             VkImageLayout newLayout, VkPipelineStageFlags srcStage,
+             VkPipelineStageFlags dstStage, VkAccessFlags srcAccess, VkAccessFlags dstAccess) {
+    VkImageMemoryBarrier barrier{VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER};
+    barrier.oldLayout = oldLayout;
+    barrier.newLayout = newLayout;
+    barrier.srcAccessMask = srcAccess;
+    barrier.dstAccessMask = dstAccess;
+    barrier.srcQueueFamilyIndex = barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    barrier.image = image;
+    barrier.subresourceRange = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
+    vkCmdPipelineBarrier(cmd, srcStage, dstStage, 0, 0, nullptr, 0, nullptr, 1, &barrier);
+}
+
+std::vector<uint32_t> ReadShader(const std::string& path) {
+    std::ifstream file(path, std::ios::binary | std::ios::ate);
+    if (!file) throw std::runtime_error("Missing SPIR-V: " + path);
+    const auto size = file.tellg();
+    if (size <= 0 || size % 4 != 0) throw std::runtime_error("Invalid SPIR-V length: " + path);
+    std::vector<uint32_t> words(static_cast<size_t>(size) / 4);
+    file.seekg(0);
+    if (!file.read(reinterpret_cast<char*>(words.data()), size))
+        throw std::runtime_error("Cannot read SPIR-V: " + path);
+    return words;
+}
+}
+
+struct VulkanTexture {
+    VkImage image = VK_NULL_HANDLE;
+    VkImageView view = VK_NULL_HANDLE;
+    VkDeviceMemory memory = VK_NULL_HANDLE;
+    VkFramebuffer framebuffer = VK_NULL_HANDLE;
+    VkDescriptorPool computePool = VK_NULL_HANDLE;
+    VkDescriptorSet computeSet = VK_NULL_HANDLE;
+    std::unique_ptr<Buffer> computeMetadata;
+    // bindless：纹理不再持有独立描述符集，只占纹理数组的一个槽位。
+    // 槽位在创建时写入数组元素，销毁走 retired → ReapRetired 后回收
+    // （在途帧的顶点还携带旧槽号，提前复用会让未完成的绘制采到新纹理）。
+    uint32_t slot = UINT32_MAX;
+    VulkanTexture** slotOwner = nullptr;
+    int width = 0, height = 0;
+    VkFormat format = VK_FORMAT_B8G8R8A8_UNORM;
+    uint32_t texelBytes = 4;
+    // Sampled-descriptor layout: GENERAL for compute-written images (caustics),
+    // SHADER_READ_ONLY for upload-owned ones. Readback and draw both honor it.
+    VkImageLayout sampledLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    VkImageLayout layout = VK_IMAGE_LAYOUT_UNDEFINED;
+    bool ownsImage = true;
+    bool generated = false;
+    bool opaque = false, uploaded = false;
+    size_t pendingUpload = SIZE_MAX;
+    uint64_t lastDraw = 0;
+    ~VulkanTexture() {
+        if (computeSet) vkFreeDescriptorSets(VulkanContext::device,computePool,1,&computeSet);
+        if (slotOwner && *slotOwner == this) *slotOwner = nullptr;
+        if (framebuffer) vkDestroyFramebuffer(VulkanContext::device, framebuffer, nullptr);
+        if (ownsImage && view) vkDestroyImageView(VulkanContext::device, view, nullptr);
+        if (ownsImage && image) vkDestroyImage(VulkanContext::device, image, nullptr);
+        if (memory) vkFreeMemory(VulkanContext::device, memory, nullptr);
+    }
+};
+
+struct VulkanRenderer::Impl {
+    VulkanContext& window;
+    VkDevice device;
+    int width, height;
+    bool sceneInitialized = false;
+    uint64_t frameSerial = 0;
+    VulkanContext::FrameContext frame{};
+    bool imageOnly = false, targetPassOpen = false;
+    VulkanTexture* renderImage = nullptr;
+    VkRenderPass scenePass = VK_NULL_HANDLE;
+    VkRenderPass imagePass = VK_NULL_HANDLE;
+    VkFramebuffer sceneFramebuffer = VK_NULL_HANDLE;
+    VkDescriptorSetLayout imageLayout = VK_NULL_HANDLE, samplerLayout = VK_NULL_HANDLE;
+    VkPipelineLayout pipelineLayout = VK_NULL_HANDLE;
+    std::array<VkPipeline, 3> pipelines{};
+    std::array<VkPipeline, 3> coveragePipelines{};
+    std::array<VkPipeline, 3> imagePipelines{}, imageCoveragePipelines{};
+    VkPipeline presentPipeline = VK_NULL_HANDLE;
+    VkShaderModule vertexShader = VK_NULL_HANDLE, fragmentShader = VK_NULL_HANDLE;
+    VkShaderModule hdrFragmentShader = VK_NULL_HANDLE;
+    std::optional<VulkanHdrParams> hdr;
+    std::array<VkSampler, 4> samplers{};
+    VkDescriptorSet samplerSet = VK_NULL_HANDLE;  // 4 采样器一数组，逐顶点声明
+    std::vector<VkDescriptorPool> pools;
+    std::vector<uint32_t> poolFreeSets;
+    // bindless 发号器（2026-10-05 用户两轮裁决终态：复用 + 永不烧穿）。
+    // 空闲号栈是账本的最小形态——不是 map，无 handle 反查：AllocSlot 优先
+    // 弹栈，栈空才递增发新号；Free 只在纹理销毁的同一道闸门调用
+    // （ReapRetired 围栏后 / ReleaseScale 的 WaitForFrame 后），安全性搭
+    // 纹理销毁既有不变量的便车——那道闸门已经保证无在途帧引用。复用后
+    // 65536 的烧穿条件从"全会话累计创建"变为"同时存活数"，实际永不
+    // 触发；栈体量=累计创建-存活-再用，长会话几十 KB。DataArray.h 传递
+    // 依赖游戏层，渲染器不可反向引入
+    // 容量实测（2026-10-05 热机三轮中位）：1024/4096/65536 三档帧时间
+    // 全部 ~230 带内重合（数组大小不进热路径）；4096=存活峰值 ~200 的
+    // 20 倍余量，模组极端场景亦无虞
+    static constexpr uint32_t kTextureSlots = 4096;
+    static constexpr uint32_t kSlotMask = kTextureSlots - 1;
+    static constexpr uint32_t kGeneratedPremult = 0x80000000u;
+    std::array<VulkanTexture*, kTextureSlots> slotOwners{};
+    // reanim-v4 静态槽位区（顶部）：[staticBase, kTextureSlots) 恒等映射
+    // 图像符号号（编译记录烘焙最终下标，零运行时翻译）。默认无静态区。
+    uint32_t staticBase = kTextureSlots;
+    uint32_t nextSlot = 0;
+    std::vector<uint32_t> freeSlots;
+    uint32_t AllocSlot() {
+        if (!freeSlots.empty()) {
+            const uint32_t slot = freeSlots.back();
+            freeSlots.pop_back();
+            return slot;
+        }
+        if (nextSlot >= staticBase)
+            throw std::runtime_error("Texture slot table exhausted (dynamic region full)");
+        return nextSlot++;
+    }
+    // 全场纹理数组描述符：binding0 = SAMPLED_IMAGE[kCount]，PARTIALLY_BOUND
+    // +UPDATE_AFTER_BIND，每纹理创建时写自己的元素，绘制时顶点携带槽位号。
+    VkDescriptorPool textureArrayPool = VK_NULL_HANDLE;
+    VkDescriptorSet textureArray = VK_NULL_HANDLE;
+    VkFormat presentFormat = VK_FORMAT_UNDEFINED;
+    VkCommandPool transferPool = VK_NULL_HANDLE;
+    VkFence transferFence = VK_NULL_HANDLE;
+    VkCommandBuffer transferCommand = VK_NULL_HANDLE;
+    // 上传+合成共用一条一次性命令缓冲（2026-10-11 装载回归修复）：原实现每张
+    // 合成图 FlushTextureUploads(提交+等待)+BeginTransfer+FinishTransfer(提交+
+    // 等待)两次全量 CPU-GPU 往返，2249 张图 ≈4500 次栅栏等待 ≈5s。改为
+    // 累积开放缓冲、批量提交、 CompleteTransfers 单点等待。
+    bool transferOpen = false;      // 录制中，未提交
+    bool transferInFlight = false;  // 已提交，栅栏未等待
+    std::vector<VkDescriptorSet> pendingComposeSets;
+    // 合成链裸图（底图/掩码/中间结果，2026-10-11 用户裁决）：不进全局纹理
+    // 表、不占槽，走 retired 延迟销毁——ReapRetired 在栅栏等待之后才析构，
+    // 时序天然安全（提前 clear 会在 dispatch 录制前销毁仍要引用的裸图）。
+    VkCommandPool imageCommandPool = VK_NULL_HANDLE;
+    VkCommandBuffer imageCommand = VK_NULL_HANDLE;
+    VkFence imageFence = VK_NULL_HANDLE;
+    std::vector<std::unique_ptr<Buffer>> streams;
+    uint64_t uploadedTextures=0, uploadBatches=0, uploadStagingAllocations=0;
+    uint64_t createdTextures=0, reusedUpdates=0;
+    std::unique_ptr<Buffer> textureStaging;
+    struct TextureUpload { VulkanTexture* texture; VkDeviceSize offset; };
+    std::vector<TextureUpload> pendingUploads;
+    DrawCommandCounts drawCommands{};
+    // Native command-buffer state, not emulated DX state. All scene/present
+    // pipelines share pipelineLayout and use dynamic viewport/scissor. Reset
+    // on each recording and whenever another owner records graphics state.
+    struct DrawState {
+        int width=0,height=0;
+        bool hasScissor=false;
+        VkRect2D scissor{};
+        VkPipeline pipeline=VK_NULL_HANDLE;
+        std::array<VkDescriptorSet,2> descriptors{};
+        VkBuffer vertexBuffer=VK_NULL_HANDLE; // 冲刷游程时的已绑定流缓冲
+    } drawState;
+    std::unique_ptr<VulkanTexture> scene;
+    std::unordered_map<VulkanTexture*, std::unique_ptr<VulkanTexture>> textures;
+    std::vector<std::unique_ptr<VulkanTexture>> retired;
+    VulkanTexture* white = nullptr;
+    // Pool caustics compute path: one pipeline, one LUT buffer, one target.
+    // The target stays in GENERAL layout so the compute write and the scene's
+    // fragment sampling share one layout without per-frame transitions.
+    struct Caustics {
+        VkShaderModule shader = VK_NULL_HANDLE;
+        VkPipeline pipeline = VK_NULL_HANDLE;
+        VkPipelineLayout layout = VK_NULL_HANDLE;
+        VkDescriptorSetLayout setLayout = VK_NULL_HANDLE;
+        VkDescriptorPool pool = VK_NULL_HANDLE;
+        VkDescriptorSet set = VK_NULL_HANDLE;
+        VulkanTexture* source = nullptr;
+        VulkanTexture* target = nullptr;
+        uint32_t counter = 0;
+        bool frameQueued = false;
+        uint32_t lastDispatched = 0;
+        uint64_t dispatchSerial = 0;
+    } caustics;
+    struct ImageKernel {
+        VkShaderModule shader=VK_NULL_HANDLE;
+        VkPipeline pipeline=VK_NULL_HANDLE;
+        VkPipelineLayout layout=VK_NULL_HANDLE;
+        VkDescriptorSetLayout setLayout=VK_NULL_HANDLE;
+        VkDescriptorPool pool=VK_NULL_HANDLE;
+        std::string shaderPath;
+    } fontKernel, colorKernel;
+    struct AlphaKernel {
+        VkShaderModule shader=VK_NULL_HANDLE;
+        VkPipeline pipeline=VK_NULL_HANDLE;
+        VkPipelineLayout layout=VK_NULL_HANDLE;
+        VkDescriptorSetLayout setLayout=VK_NULL_HANDLE;
+        VkDescriptorPool pool=VK_NULL_HANDLE;
+        std::string shaderPath;
+    } alphaKernel;
+    struct ScaleMode {
+        std::unique_ptr<VulkanScalePipeline> pipeline;
+        std::unique_ptr<VulkanTexture> sampledOutput;
+        bool warm = false;
+    };
+    std::unique_ptr<VulkanScaleLibrary> scaleLibrary;
+    std::array<std::unique_ptr<ScaleMode>,2> scaleModes;
+    bool scaleEnabled = false;
+    unsigned scaleMode = 0;
+    ScaleMode* ActiveScale() const { return scaleEnabled ? scaleModes[scaleMode].get() : nullptr; }
+    void ReleaseScale(unsigned index) {
+        auto& mode = scaleModes[index];
+        if (!mode) return;
+        // 调用方先 WaitForFrame 再到这里：无在途绘制引用，槽号可回收
+        if (mode->sampledOutput) freeSlots.push_back(mode->sampledOutput->slot);
+        mode.reset(); // borrowed image lives in the scale pipeline.
+    }
+
+    Impl(VulkanContext& w, int sw, int sh) : window(w), device(w.device), width(sw), height(sh) {}
+    ~Impl() {
+        // Lifetime failure is not a fallback: this only releases partial or
+        // completed initialization after the caller reports the original error.
+        if (device) vkDeviceWaitIdle(device);
+        // Pending uploads only own host snapshots; no unfinished transfer can
+        // reference this buffer because FlushTextureUploads waits for its fence.
+        pendingUploads.clear();
+        textureStaging.reset();
+        ReleaseScale(0); ReleaseScale(1);
+        scaleLibrary.reset();
+        retired.clear();
+        textures.clear();
+        if (sceneFramebuffer) vkDestroyFramebuffer(device, sceneFramebuffer, nullptr);
+        scene.reset();
+        streams.clear();
+        for (auto pipeline : pipelines) if (pipeline) vkDestroyPipeline(device, pipeline, nullptr);
+        for (auto pipeline : coveragePipelines) if (pipeline) vkDestroyPipeline(device, pipeline, nullptr);
+        for (auto pipeline : imagePipelines) if (pipeline) vkDestroyPipeline(device, pipeline, nullptr);
+        for (auto pipeline : imageCoveragePipelines) if (pipeline) vkDestroyPipeline(device, pipeline, nullptr);
+        if (presentPipeline) vkDestroyPipeline(device, presentPipeline, nullptr);
+        if (pipelineLayout) vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
+        if (scenePass) vkDestroyRenderPass(device, scenePass, nullptr);
+        if (imagePass) vkDestroyRenderPass(device, imagePass, nullptr);
+        if (caustics.pipeline) vkDestroyPipeline(device, caustics.pipeline, nullptr);
+        if (caustics.layout) vkDestroyPipelineLayout(device, caustics.layout, nullptr);
+        if (caustics.set) vkFreeDescriptorSets(device, caustics.pool, 1, &caustics.set);
+        if (caustics.pool) vkDestroyDescriptorPool(device, caustics.pool, nullptr);
+        if (caustics.setLayout) vkDestroyDescriptorSetLayout(device, caustics.setLayout, nullptr);
+        if (caustics.shader) vkDestroyShaderModule(device, caustics.shader, nullptr);
+        if (fontKernel.pipeline) vkDestroyPipeline(device,fontKernel.pipeline,nullptr);
+        if (fontKernel.layout) vkDestroyPipelineLayout(device,fontKernel.layout,nullptr);
+        if (fontKernel.pool) vkDestroyDescriptorPool(device,fontKernel.pool,nullptr);
+        if (fontKernel.setLayout) vkDestroyDescriptorSetLayout(device,fontKernel.setLayout,nullptr);
+        if (fontKernel.shader) vkDestroyShaderModule(device,fontKernel.shader,nullptr);
+        if (colorKernel.pipeline) vkDestroyPipeline(device,colorKernel.pipeline,nullptr);
+        if (colorKernel.layout) vkDestroyPipelineLayout(device,colorKernel.layout,nullptr);
+        if (colorKernel.pool) vkDestroyDescriptorPool(device,colorKernel.pool,nullptr);
+        if (colorKernel.setLayout) vkDestroyDescriptorSetLayout(device,colorKernel.setLayout,nullptr);
+        if (colorKernel.shader) vkDestroyShaderModule(device,colorKernel.shader,nullptr);
+        if (alphaKernel.pipeline) vkDestroyPipeline(device,alphaKernel.pipeline,nullptr);
+        if (alphaKernel.layout) vkDestroyPipelineLayout(device,alphaKernel.layout,nullptr);
+        if (alphaKernel.pool) vkDestroyDescriptorPool(device,alphaKernel.pool,nullptr);
+        if (alphaKernel.setLayout) vkDestroyDescriptorSetLayout(device,alphaKernel.setLayout,nullptr);
+        if (alphaKernel.shader) vkDestroyShaderModule(device,alphaKernel.shader,nullptr);
+        if (vertexShader) vkDestroyShaderModule(device, vertexShader, nullptr);
+        if (fragmentShader) vkDestroyShaderModule(device, fragmentShader, nullptr);
+        if (hdrFragmentShader) vkDestroyShaderModule(device, hdrFragmentShader, nullptr);
+        for (auto pool : pools) vkDestroyDescriptorPool(device, pool, nullptr);
+        for (auto sampler : samplers) if (sampler) vkDestroySampler(device, sampler, nullptr);
+        if (textureArrayPool) vkDestroyDescriptorPool(device, textureArrayPool, nullptr);
+        if (imageLayout) vkDestroyDescriptorSetLayout(device, imageLayout, nullptr);
+        if (samplerLayout) vkDestroyDescriptorSetLayout(device, samplerLayout, nullptr);
+        if (transferFence) vkDestroyFence(device, transferFence, nullptr);
+        if (transferPool) vkDestroyCommandPool(device, transferPool, nullptr);
+        if (imageFence) vkDestroyFence(device, imageFence, nullptr);
+        if (imageCommandPool) vkDestroyCommandPool(device, imageCommandPool, nullptr);
+    }
+
+    VkDescriptorSet AllocateSet(VkDescriptorSetLayout layout, VkDescriptorPool* outPool = nullptr) {
+        size_t index = 0;
+        while (index < pools.size() && poolFreeSets[index] == 0) ++index;
+        if (index == pools.size()) {
+            const VkDescriptorPoolSize sizes[] = {
+                {VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1024}, {VK_DESCRIPTOR_TYPE_SAMPLER, 1024}};
+            VkDescriptorPoolCreateInfo info{VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO};
+            info.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
+            info.maxSets = 1024;
+            info.poolSizeCount = 2;
+            info.pPoolSizes = sizes;
+            VkDescriptorPool pool{};
+            VK_REQUIRE(vkCreateDescriptorPool(device, &info, nullptr, &pool));
+            pools.push_back(pool);
+            poolFreeSets.push_back(1024);
+        }
+        VkDescriptorSetAllocateInfo alloc{VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO};
+        alloc.descriptorPool = pools[index];
+        alloc.descriptorSetCount = 1;
+        alloc.pSetLayouts = &layout;
+        VkDescriptorSet set{};
+        VK_REQUIRE(vkAllocateDescriptorSets(device, &alloc, &set));
+        --poolFreeSets[index];
+        if (outPool) *outPool = alloc.descriptorPool;
+        return set;
+    }
+
+    void ReapRetired() {
+        // 围栏已确认在途帧完成：纹理本体销毁，槽号回收入栈（同一道闸门，
+        // 先记账再销毁）。复用的安全性来源=这道闸门，与纹理销毁共用不变量。
+        //  retired 纹理还可能被未等待的传输/合成批引用：销毁前先等完
+        // （空 retire 不等待，常态零成本）。
+        if (!retired.empty()) CompleteTransfers();
+        for (const auto& texture : retired) {
+            // 裸图（合成中间体）slot=UINT32_MAX：无槽可回收
+            if (texture->slot >= kTextureSlots) continue;
+            if (slotOwners[texture->slot] == texture.get())
+                slotOwners[texture->slot] = nullptr;
+            // 静态槽永不回收（恒等映射区，重放置=原地覆盖描述符）
+            if (texture->slot < staticBase)
+                freeSlots.push_back(texture->slot);
+        }
+        retired.clear();
+    }
+
+    // 池水焦散 compute（一次性装配）：管线 + LUT SSBO + 目标图描述集。
+    // LUT 是 256x256 灰度字节，主机写入先于任何提交，HOST_COHERENT 直读。
+    void InitCaustics(VulkanTexture* target, VulkanTexture* source) {
+        auto& c = caustics;
+        c.target = target;
+        c.source = source;
+        c.frameQueued = true; // 装配后首帧即产出内容（counter=0），杜绝白帧
+        if (!c.setLayout) {
+            const VkDescriptorSetLayoutBinding bindings[] = {
+                {0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_COMPUTE_BIT, nullptr},
+                {1, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1, VK_SHADER_STAGE_COMPUTE_BIT, nullptr},
+            };
+            VkDescriptorSetLayoutCreateInfo info{VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO};
+            info.bindingCount = 2;
+            info.pBindings = bindings;
+            VK_REQUIRE(vkCreateDescriptorSetLayout(device, &info, nullptr, &c.setLayout));
+            VkDescriptorPoolSize sizes[] = {
+                {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1}, {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1}};
+            VkDescriptorPoolCreateInfo pool{VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO};
+            pool.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
+            pool.maxSets = 1;
+            pool.poolSizeCount = 2;
+            pool.pPoolSizes = sizes;
+            VK_REQUIRE(vkCreateDescriptorPool(device, &pool, nullptr, &c.pool));
+            VkDescriptorSetAllocateInfo alloc{VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO};
+            alloc.descriptorPool = c.pool;
+            alloc.descriptorSetCount = 1;
+            alloc.pSetLayouts = &c.setLayout;
+            VK_REQUIRE(vkAllocateDescriptorSets(device, &alloc, &c.set));
+            const VkPushConstantRange push{VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(uint32_t)};
+            VkPipelineLayoutCreateInfo layoutInfo{VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO};
+            layoutInfo.setLayoutCount = 1;
+            layoutInfo.pSetLayouts = &c.setLayout;
+            layoutInfo.pushConstantRangeCount = 1;
+            layoutInfo.pPushConstantRanges = &push;
+            VK_REQUIRE(vkCreatePipelineLayout(device, &layoutInfo, nullptr, &c.layout));
+            VkComputePipelineCreateInfo compute{VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO};
+            compute.stage = {VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO};
+            compute.stage.stage = VK_SHADER_STAGE_COMPUTE_BIT;
+            compute.stage.module = c.shader;
+            compute.stage.pName = "main";
+            compute.layout = c.layout;
+            VK_REQUIRE(vkCreateComputePipelines(device, VK_NULL_HANDLE, 1, &compute, nullptr, &c.pipeline));
+        }
+        // 目标可能换代（重开关卡）：改写 storage image 绑定即可，管线与 LUT 复用。
+        VkDescriptorImageInfo sourceInfo{samplers[0],source->view,source->sampledLayout};
+        VkDescriptorImageInfo imageInfo{};
+        imageInfo.sampler = VK_NULL_HANDLE;
+        imageInfo.imageView = target->view;
+        imageInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+        VkWriteDescriptorSet writes[2]{};
+        writes[0] = {VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET};
+        writes[0].dstSet = c.set;
+        writes[0].dstBinding = 0;
+        writes[0].descriptorCount = 1;
+        writes[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        writes[0].pImageInfo = &sourceInfo;
+        writes[1] = {VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET};
+        writes[1].dstSet = c.set;
+        writes[1].dstBinding = 1;
+        writes[1].descriptorCount = 1;
+        writes[1].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+        writes[1].pImageInfo = &imageInfo;
+        vkUpdateDescriptorSets(device, 2, writes, 0, nullptr);
+    }
+
+    // 每帧一次，BeginScene 里 render pass 之前记录（dispatch 不能进 pass）。
+    // 目标常驻 GENERAL（初始上传也落 GENERAL，见 FlushTextureUploads），
+    // 这里只做访问域屏障：上帧片元采样/计算写 → 本帧计算写 → 本帧片元采样。
+    void RecordCaustics(VkCommandBuffer cmd) {
+        auto& c = caustics;
+        if (!c.frameQueued || !c.target || !c.pipeline) return;
+        c.frameQueued = false;
+        Barrier(cmd, c.target->image, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_GENERAL,
+            VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+            VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+            VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_SHADER_WRITE_BIT);
+        vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, c.pipeline);
+        uint32_t counter = c.counter;
+        vkCmdPushConstants(cmd, c.layout, VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(counter), &counter);
+        vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, c.layout, 0, 1, &c.set, 0, nullptr);
+        vkCmdDispatch(cmd, (128 + 7) / 8, (64 + 3) / 4, 1);
+        c.lastDispatched = counter;
+        ++c.dispatchSerial;
+        Barrier(cmd, c.target->image, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_GENERAL,
+            VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+            VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT);
+    }
+
+    void CheckPresentEncoding() const {
+        if (hdr) {
+            hdr->Validate();
+            if (window.swapchainColorSpace!=VK_COLOR_SPACE_HDR10_ST2084_EXT ||
+                (window.swapchainFormat!=VK_FORMAT_A2B10G10R10_UNORM_PACK32 &&
+                 window.swapchainFormat!=VK_FORMAT_A2R10G10B10_UNORM_PACK32))
+                throw std::runtime_error("HDR renderer requires a 10-bit HDR10 ST2084 surface");
+        } else if (window.swapchainColorSpace!=VK_COLOR_SPACE_SRGB_NONLINEAR_KHR ||
+                   (window.swapchainFormat!=VK_FORMAT_B8G8R8A8_UNORM &&
+                    window.swapchainFormat!=VK_FORMAT_R8G8B8A8_UNORM))
+            throw std::runtime_error("SDR renderer requires an UNORM SDR surface");
+    }
+    void RefreshPresentPipeline() {
+        CheckPresentEncoding();
+        if (presentFormat == window.swapchainFormat) return;
+        // WSI has waited for old work and rebuilt its render pass.
+        if (presentPipeline) vkDestroyPipeline(device, presentPipeline, nullptr);
+        presentPipeline = VK_NULL_HANDLE;
+        presentPipeline = Pipeline(window.renderPass,VulkanBlend::Opaque,hdr ? hdrFragmentShader : fragmentShader);
+        presentFormat = window.swapchainFormat;
+    }
+
+    std::unique_ptr<VulkanTexture> Image(int w, int h, VkImageUsageFlags usage, bool opaque,
+        VkFormat format=VK_FORMAT_B8G8R8A8_UNORM,
+        VkImageLayout sampledLayout=VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+        uint32_t staticSlot=0xFFFFFFFFu, bool registerSlot=true) {
+        auto image = std::make_unique<VulkanTexture>();
+        image->width = w;
+        image->height = h;
+        image->opaque = opaque;
+        image->format = format;
+        image->texelBytes = format==VK_FORMAT_R8_UNORM?1:
+            format==VK_FORMAT_R32G32B32A32_SFLOAT?16:4;
+        VkImageCreateInfo info{VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO};
+        info.imageType = VK_IMAGE_TYPE_2D;
+        info.format = format;
+        info.extent = {static_cast<uint32_t>(w), static_cast<uint32_t>(h), 1};
+        info.mipLevels = info.arrayLayers = 1;
+        info.samples = VK_SAMPLE_COUNT_1_BIT;
+        info.tiling = VK_IMAGE_TILING_OPTIMAL;
+        info.usage = usage | VK_IMAGE_USAGE_SAMPLED_BIT;
+        VK_REQUIRE(vkCreateImage(device, &info, nullptr, &image->image));
+        VkMemoryRequirements req{};
+        vkGetImageMemoryRequirements(device, image->image, &req);
+        VkMemoryAllocateInfo alloc{VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO};
+        alloc.allocationSize = req.size;
+        alloc.memoryTypeIndex = MemoryType(req.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+        VK_REQUIRE(vkAllocateMemory(device, &alloc, nullptr, &image->memory));
+        VK_REQUIRE(vkBindImageMemory(device, image->image, image->memory, 0));
+        VkImageViewCreateInfo view{VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO};
+        view.image = image->image;
+        view.viewType = VK_IMAGE_VIEW_TYPE_2D;
+        view.format = info.format;
+        view.subresourceRange = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
+        VK_REQUIRE(vkCreateImageView(device, &view, nullptr, &image->view));
+        image->sampledLayout = sampledLayout;
+        if (!registerSlot) return image;  // 裸图：合成中间体，不占槽不进描述符数组
+        image->slot = staticSlot == 0xFFFFFFFFu ? AllocSlot() : staticBase + staticSlot;
+        if (image->slot >= kTextureSlots)
+            throw std::runtime_error("Static texture slot out of range");
+        VkDescriptorImageInfo binding{};
+        binding.imageView = image->view;
+        binding.imageLayout = sampledLayout;
+        VkWriteDescriptorSet write{VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET};
+        write.dstSet = textureArray;
+        write.dstArrayElement = image->slot;
+        write.descriptorCount = 1;
+        write.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+        write.pImageInfo = &binding;
+        vkUpdateDescriptorSets(device, 1, &write, 0, nullptr);
+        slotOwners[image->slot] = image.get();
+        image->slotOwner = &slotOwners[image->slot];
+        return image;
+    }
+
+    VkCommandBuffer BeginTransfer() {
+        // 开放缓冲复用：已有未提交录制直接续写；否则先等在途批次再重置池
+        // （池重置与 staging 复用的安全性都来自这一次等待）。
+        if (transferOpen) return transferCommand;
+        if (transferInFlight) CompleteTransfers();
+        VK_REQUIRE(vkResetCommandPool(device, transferPool, 0));
+        VkCommandBufferBeginInfo begin{VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO};
+        begin.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+        VK_REQUIRE(vkBeginCommandBuffer(transferCommand, &begin));
+        transferOpen = true;
+        return transferCommand;
+    }
+    void FinishTransfer() {
+        if (!transferOpen) return;
+        VK_REQUIRE(vkEndCommandBuffer(transferCommand));
+        VK_REQUIRE(vkResetFences(device, 1, &transferFence));
+        VkSubmitInfo submit{VK_STRUCTURE_TYPE_SUBMIT_INFO};
+        submit.commandBufferCount = 1;
+        submit.pCommandBuffers = &transferCommand;
+        VK_REQUIRE(vkQueueSubmit(window.graphicsQueue, 1, &submit, transferFence));
+        transferOpen = false;
+        transferInFlight = true;
+        // 不在此等待：完成点统一在 CompleteTransfers（帧界/批界/销毁前）。
+    }
+    void CompleteTransfers() {
+        if (transferInFlight) {
+            VK_REQUIRE(vkWaitForFences(device, 1, &transferFence, VK_TRUE, UINT64_MAX));
+            transferInFlight = false;
+        }
+        if (!transferOpen && !pendingComposeSets.empty()) {
+            // 合成描述集只在录制→提交→执行窗口内有效；批次完成后即回收，
+            // 目标纹理不持有（析构不二次释放）。
+            VK_REQUIRE(vkFreeDescriptorSets(device, alphaKernel.pool,
+                static_cast<uint32_t>(pendingComposeSets.size()), pendingComposeSets.data()));
+            pendingComposeSets.clear();
+        }
+    }
+
+    void RecordTextureUploads(VkCommandBuffer cmd) {
+        for (const auto& upload:pendingUploads) {
+            const auto& image=*upload.texture;
+            // An updated resident image can have earlier fragment reads or a
+            // preceding upload on this same graphics queue. Order both before
+            // the new write; a brand-new image has no prior layout/access.
+            // Compute-written images (caustics) rest in GENERAL, not
+            // SHADER_READ_ONLY, matching their sampled descriptors.
+            Barrier(cmd,image.image,
+                image.uploaded?image.sampledLayout:VK_IMAGE_LAYOUT_UNDEFINED,
+                VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                image.uploaded?(VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT|VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT|VK_PIPELINE_STAGE_TRANSFER_BIT):VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+                VK_PIPELINE_STAGE_TRANSFER_BIT,
+                image.uploaded?(VK_ACCESS_SHADER_READ_BIT|VK_ACCESS_SHADER_WRITE_BIT|VK_ACCESS_TRANSFER_WRITE_BIT):0,VK_ACCESS_TRANSFER_WRITE_BIT);
+            VkBufferImageCopy copy{};
+            copy.bufferOffset=upload.offset;
+            copy.imageSubresource={VK_IMAGE_ASPECT_COLOR_BIT,0,0,1};
+            copy.imageExtent={uint32_t(image.width),uint32_t(image.height),1};
+            vkCmdCopyBufferToImage(cmd,textureStaging->buffer,image.image,
+                VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,1,&copy);
+            Barrier(cmd,image.image,VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,image.sampledLayout,
+                VK_PIPELINE_STAGE_TRANSFER_BIT,VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT|VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+                VK_ACCESS_TRANSFER_WRITE_BIT,
+                VK_ACCESS_SHADER_READ_BIT|(image.sampledLayout==VK_IMAGE_LAYOUT_GENERAL?VK_ACCESS_SHADER_WRITE_BIT:0));
+        }
+    }
+
+    void FlushTextureUploads() {
+        if (pendingUploads.empty()) return;
+        const auto cmd = BeginTransfer();
+        RecordTextureUploads(cmd);
+        FinishTransfer();
+        for (const auto& upload:pendingUploads) {
+            upload.texture->uploaded=true;
+            upload.texture->pendingUpload=SIZE_MAX;
+        }
+        uploadedTextures+=pendingUploads.size();
+        ++uploadBatches;
+        pendingUploads.clear();
+        textureStaging->used=0;
+    }
+
+    void ReserveTextureUpload(VkDeviceSize bytes) {
+        // Bound accumulated host copies: one 4 MiB arena, enlarged only for a
+        // single larger texture. Overflow submits the existing batch, not a
+        // growing collection of per-texture mapped allocations.
+        constexpr VkDeviceSize defaultCapacity=4*1024*1024;
+        if (textureStaging && bytes>textureStaging->size-textureStaging->used)
+            FlushTextureUploads();
+        // 批次边界等待（必须在 flush 之后）：flush 提交在途批并把 staging
+        // used 归零，本次 memcpy 复用同一段宿主字节——在途 copy 未等完就
+        // 覆写会让已录制的副本读到别人的像素（多片图首行雪花即此竞态）。
+        if (transferInFlight) CompleteTransfers();
+        if (!textureStaging || bytes>textureStaging->size) {
+            auto next=std::make_unique<Buffer>();
+            next->Create(std::max(defaultCapacity,bytes),VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
+            textureStaging=std::move(next);
+            ++uploadStagingAllocations;
+        }
+    }
+
+    void QueueTextureUpload(VulkanTexture* texture,const void* pixels,int pitch) {
+        const auto imageWidth=texture->width,imageHeight=texture->height;
+        const VkDeviceSize rowBytes=VkDeviceSize(imageWidth)*texture->texelBytes;
+        const VkDeviceSize bytes=rowBytes*imageHeight;
+        // Odd-sized R8 masks must not misalign the next BGRA8 image copy.
+        const VkDeviceSize reserved=(bytes+3)&~VkDeviceSize(3);
+        VkDeviceSize offset;
+        if (texture->pendingUpload!=SIZE_MAX) {
+            // No draw can refer to the superseded version: ReplaceTexture uses
+            // a distinct image once that version is recorded in this frame.
+            offset=pendingUploads[texture->pendingUpload].offset;
+        } else {
+            ReserveTextureUpload(reserved);
+            offset=textureStaging->used;
+            pendingUploads.push_back({texture,offset});
+            texture->pendingUpload=pendingUploads.size()-1;
+            textureStaging->used+=reserved;
+        }
+        auto* destination=static_cast<std::byte*>(textureStaging->mapped)+offset;
+        if (VkDeviceSize(pitch)==rowBytes) std::memcpy(destination,pixels,size_t(bytes));
+        else for (int y=0;y<imageHeight;++y)
+            std::memcpy(destination+size_t(y)*rowBytes,
+                static_cast<const std::byte*>(pixels)+size_t(y)*pitch,size_t(rowBytes));
+    }
+
+    VkPipeline Pipeline(VkRenderPass pass, VulkanBlend blend, VkShaderModule pixelShader = VK_NULL_HANDLE,
+        bool premultiplied = false, bool coverage = false) {
+        const VkBool32 specializations[] = {premultiplied ? VK_TRUE : VK_FALSE,
+            coverage ? VK_TRUE : VK_FALSE};
+        const VkSpecializationMapEntry entries[] = {
+            {0, 0, sizeof(VkBool32)}, {1, sizeof(VkBool32), sizeof(VkBool32)}};
+        const VkSpecializationInfo specialization{2, entries, sizeof(specializations), specializations};
+        const VkPipelineShaderStageCreateInfo shaders[] = {
+            {VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO, nullptr, 0,
+                VK_SHADER_STAGE_VERTEX_BIT, vertexShader, "main", nullptr},
+            {VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO, nullptr, 0,
+                VK_SHADER_STAGE_FRAGMENT_BIT, pixelShader ? pixelShader : fragmentShader, "main",
+                premultiplied || coverage ? &specialization : nullptr}};
+        const VkVertexInputBindingDescription binding{0, sizeof(VulkanVertex), VK_VERTEX_INPUT_RATE_VERTEX};
+        const VkVertexInputAttributeDescription attributes[] = {
+            {0, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(VulkanVertex, x)},
+            {1, 0, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(VulkanVertex, r)},
+            {2, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(VulkanVertex, u)},
+            {3, 0, VK_FORMAT_R32_UINT, offsetof(VulkanVertex, slot)},
+            {4, 0, VK_FORMAT_R32_UINT, offsetof(VulkanVertex, sampler)}};
+        VkPipelineVertexInputStateCreateInfo input{VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO};
+        input.vertexBindingDescriptionCount = 1;
+        input.pVertexBindingDescriptions = &binding;
+        input.vertexAttributeDescriptionCount = 5;
+        input.pVertexAttributeDescriptions = attributes;
+        VkPipelineInputAssemblyStateCreateInfo assembly{VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO};
+        assembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+        VkPipelineRasterizationStateCreateInfo raster{VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO};
+        raster.polygonMode = VK_POLYGON_MODE_FILL;
+        raster.cullMode = VK_CULL_MODE_NONE;
+        raster.lineWidth = 1;
+        VkPipelineMultisampleStateCreateInfo msaa{VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO};
+        msaa.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+        VkPipelineViewportStateCreateInfo viewport{VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO};
+        viewport.viewportCount = viewport.scissorCount = 1;
+        const VkDynamicState states[] = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
+        VkPipelineDynamicStateCreateInfo dynamic{VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO};
+        dynamic.dynamicStateCount = 2;
+        dynamic.pDynamicStates = states;
+        VkPipelineColorBlendAttachmentState attachment{};
+        attachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
+            VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+        attachment.blendEnable = blend != VulkanBlend::Opaque;
+        attachment.srcColorBlendFactor = premultiplied ? VK_BLEND_FACTOR_ONE : VK_BLEND_FACTOR_SRC_ALPHA;
+        attachment.dstColorBlendFactor = blend == VulkanBlend::Additive ? VK_BLEND_FACTOR_ONE : VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+        attachment.colorBlendOp = attachment.alphaBlendOp = VK_BLEND_OP_ADD;
+        attachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+        attachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+        VkPipelineColorBlendStateCreateInfo blending{VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO};
+        blending.attachmentCount = 1;
+        blending.pAttachments = &attachment;
+        VkGraphicsPipelineCreateInfo info{VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO};
+        info.stageCount = 2;
+        info.pStages = shaders;
+        info.pVertexInputState = &input;
+        info.pInputAssemblyState = &assembly;
+        info.pViewportState = &viewport;
+        info.pRasterizationState = &raster;
+        info.pMultisampleState = &msaa;
+        info.pColorBlendState = &blending;
+        info.pDynamicState = &dynamic;
+        info.layout = pipelineLayout;
+        info.renderPass = pass;
+        VkPipeline pipeline{};
+        VK_REQUIRE(vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &info, nullptr, &pipeline));
+        return pipeline;
+    }
+
+    void Initialize(const std::string& vsPath, const std::string& psPath);
+    void InitImagePass();
+    std::unique_ptr<VulkanTexture> RenderImage(int w, int h);
+    void SnapshotRenderImage(VulkanTexture* image, bool force = false);
+    void BeginTargetPass();
+    void EndTargetPass();
+    struct LoadingPipelines {};
+    // Upload primitives keep their existing calls; only this tag permits creation.
+    void InitImageKernel(ImageKernel& kernel) const;
+    void InitImageKernel(ImageKernel& kernel, LoadingPipelines);
+    void InitAlphaKernel() const;
+    void InitAlphaKernel(LoadingPipelines);
+    void FinishImageBatch();
+    void Draw(std::span<const VulkanVertex>, VulkanTexture*,
+              VkPipeline, const VulkanClip*, int viewportWidth, int viewportHeight);
+    // P5 游程合并（2026-10-05）：连续同状态（流连续+管线/描述符/剪刀/视口未变）
+    // 的提交延迟 BindVertexBuffers+Draw 合一——图元顺序逐字保持（三角列表同序
+    // 合批=帧缓冲混合序列等价），任何状态变化/换流/帧尾先冲刷旧游程
+    struct PendingRun { Buffer* stream; VkDeviceSize offset; uint32_t count; };
+    PendingRun pendingRun{nullptr, 0, 0};
+    void FlushPendingRun(VkCommandBuffer);
+};
+
+void VulkanRenderer::Impl::Initialize(const std::string& vsPath, const std::string& psPath) {
+    if (width <= 0 || height <= 0) throw std::invalid_argument("Invalid game scene extent");
+    CheckPresentEncoding();
+    // 采样器数组（4 元素）：与纹理数组同法消除采样器切换断点——
+    // bit0=线性过滤 bit1=重复寻址，索引由顶点携带
+    VkDescriptorSetLayoutBinding binding{};
+    binding.descriptorCount = 4;
+    binding.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
+    binding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_COMPUTE_BIT;
+    VkDescriptorSetLayoutCreateInfo layout{VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO};
+    layout.bindingCount = 1;
+    layout.pBindings = &binding;
+    VK_REQUIRE(vkCreateDescriptorSetLayout(device, &layout, nullptr, &samplerLayout));
+    // bindless 纹理数组：binding0 = SAMPLED_IMAGE[65536]。PARTIALLY_BOUND 允许
+    // 未写入的槽存在（不可访问）；UPDATE_AFTER_BIND 允许纹理创建期逐元素
+    // 写入而不打断在途帧。需要设备特性 descriptor indexing（见 VulkanContext）。
+    VkDescriptorSetLayoutBinding arrayBinding{};
+    arrayBinding.binding = 0;
+    arrayBinding.descriptorCount = kTextureSlots;
+    arrayBinding.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+    arrayBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_COMPUTE_BIT;
+    VkDescriptorBindingFlags bindFlags = VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT |
+        VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT;
+    VkDescriptorSetLayoutBindingFlagsCreateInfo bindingFlags{
+        VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_BINDING_FLAGS_CREATE_INFO};
+    bindingFlags.bindingCount = 1;
+    bindingFlags.pBindingFlags = &bindFlags;
+    VkDescriptorSetLayoutCreateInfo arrayLayout{VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO};
+    arrayLayout.pNext = &bindingFlags;
+    arrayLayout.flags = VK_DESCRIPTOR_SET_LAYOUT_CREATE_UPDATE_AFTER_BIND_POOL_BIT;
+    arrayLayout.bindingCount = 1;
+    arrayLayout.pBindings = &arrayBinding;
+    VK_REQUIRE(vkCreateDescriptorSetLayout(device, &arrayLayout, nullptr, &imageLayout));
+    VkDescriptorPoolSize arraySize{VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, kTextureSlots};
+    VkDescriptorPoolCreateInfo arrayPool{VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO};
+    arrayPool.flags = VK_DESCRIPTOR_POOL_CREATE_UPDATE_AFTER_BIND_BIT;
+    arrayPool.maxSets = 1;
+    arrayPool.poolSizeCount = 1;
+    arrayPool.pPoolSizes = &arraySize;
+    VK_REQUIRE(vkCreateDescriptorPool(device, &arrayPool, nullptr, &textureArrayPool));
+    VkDescriptorSetAllocateInfo arrayAlloc{VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO};
+    arrayAlloc.descriptorPool = textureArrayPool;
+    arrayAlloc.descriptorSetCount = 1;
+    arrayAlloc.pSetLayouts = &imageLayout;
+    VK_REQUIRE(vkAllocateDescriptorSets(device, &arrayAlloc, &textureArray));
+    for (unsigned i = 0; i < 4; ++i) {
+        VkSamplerCreateInfo sampler{VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO};
+        sampler.magFilter = sampler.minFilter = (i & 1) ? VK_FILTER_LINEAR : VK_FILTER_NEAREST;
+        sampler.addressModeU = sampler.addressModeV = sampler.addressModeW = (i & 2) ?
+            VK_SAMPLER_ADDRESS_MODE_REPEAT : VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+        VK_REQUIRE(vkCreateSampler(device, &sampler, nullptr, &samplers[i]));
+    }
+    samplerSet = AllocateSet(samplerLayout);
+    for (unsigned i = 0; i < 4; ++i) {
+        VkDescriptorImageInfo imageBinding{};
+        imageBinding.sampler = samplers[i];
+        VkWriteDescriptorSet write{VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET};
+        write.dstSet = samplerSet;
+        write.dstArrayElement = i;
+        write.descriptorCount = 1;
+        write.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
+        write.pImageInfo = &imageBinding;
+        vkUpdateDescriptorSets(device, 1, &write, 0, nullptr);
+    }
+    const VkPushConstantRange push{VkShaderStageFlags(hdr ? VK_SHADER_STAGE_VERTEX_BIT|VK_SHADER_STAGE_FRAGMENT_BIT : VK_SHADER_STAGE_VERTEX_BIT),
+        0,hdr ? 32u : 8u};
+    const VkDescriptorSetLayout layouts[] = {imageLayout, samplerLayout};
+    VkPipelineLayoutCreateInfo pipelineInfo{VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO};
+    pipelineInfo.setLayoutCount = 2;
+    pipelineInfo.pSetLayouts = layouts;
+    pipelineInfo.pushConstantRangeCount = 1;
+    pipelineInfo.pPushConstantRanges = &push;
+    VK_REQUIRE(vkCreatePipelineLayout(device, &pipelineInfo, nullptr, &pipelineLayout));
+    const auto createShader = [&](const std::string& path, VkShaderModule& shader) {
+        auto words = ReadShader(path);
+        VkShaderModuleCreateInfo info{VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO};
+        info.codeSize = words.size() * sizeof(uint32_t);
+        info.pCode = words.data();
+        VK_REQUIRE(vkCreateShaderModule(device, &info, nullptr, &shader));
+    };
+    createShader(vsPath, vertexShader);
+    createShader(psPath, fragmentShader);
+    createShader((std::filesystem::path(psPath).parent_path()/"game_caustic_cs.spv").string(),caustics.shader);
+    fontKernel.shaderPath=(std::filesystem::path(psPath).parent_path()/"game_font_cs.spv").string();
+    colorKernel.shaderPath=(std::filesystem::path(psPath).parent_path()/"game_color_cs.spv").string();
+    alphaKernel.shaderPath=(std::filesystem::path(psPath).parent_path()/"game_alpha_cs.spv").string();
+    if (hdr) createShader((std::filesystem::path(psPath).parent_path()/"game_hdr_ps.spv").string(),hdrFragmentShader);
+    VkCommandPoolCreateInfo pool{VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO};
+    pool.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
+    pool.queueFamilyIndex = window.graphicsFamily;
+    VK_REQUIRE(vkCreateCommandPool(device, &pool, nullptr, &transferPool));
+    VkCommandBufferAllocateInfo command{VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO};
+    command.commandPool = transferPool;
+    command.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+    command.commandBufferCount = 1;
+    VK_REQUIRE(vkAllocateCommandBuffers(device, &command, &transferCommand));
+    VkFenceCreateInfo fence{VK_STRUCTURE_TYPE_FENCE_CREATE_INFO};
+    VK_REQUIRE(vkCreateFence(device, &fence, nullptr, &transferFence));
+    VK_REQUIRE(vkCreateCommandPool(device, &pool, nullptr, &imageCommandPool));
+    command.commandPool = imageCommandPool;
+    VK_REQUIRE(vkAllocateCommandBuffers(device, &command, &imageCommand));
+    VK_REQUIRE(vkCreateFence(device, &fence, nullptr, &imageFence));
+
+    scene = Image(width, height, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT |
+        VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, false);
+    VkAttachmentDescription attachment{};
+    attachment.format = VK_FORMAT_B8G8R8A8_UNORM;
+    attachment.samples = VK_SAMPLE_COUNT_1_BIT;
+    attachment.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD; // Dirty-region rendering retains the last scene.
+    attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+    attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+    attachment.initialLayout = attachment.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+    VkAttachmentReference ref{0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL};
+    VkSubpassDescription subpass{};
+    subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+    subpass.colorAttachmentCount = 1;
+    subpass.pColorAttachments = &ref;
+    VkRenderPassCreateInfo pass{VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO};
+    pass.attachmentCount = 1;
+    pass.pAttachments = &attachment;
+    pass.subpassCount = 1;
+    pass.pSubpasses = &subpass;
+    VK_REQUIRE(vkCreateRenderPass(device, &pass, nullptr, &scenePass));
+    VkFramebufferCreateInfo fb{VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO};
+    fb.renderPass = scenePass;
+    fb.attachmentCount = 1;
+    fb.pAttachments = &scene->view;
+    fb.width = width;
+    fb.height = height;
+    fb.layers = 1;
+    VK_REQUIRE(vkCreateFramebuffer(device, &fb, nullptr, &sceneFramebuffer));
+    for (unsigned i = 0; i < pipelines.size(); ++i) pipelines[i] = Pipeline(scenePass, static_cast<VulkanBlend>(i));
+    for (unsigned i = 0; i < coveragePipelines.size(); ++i)
+        coveragePipelines[i] = Pipeline(scenePass,static_cast<VulkanBlend>(i),fragmentShader,false,true);
+    RefreshPresentPipeline();
+}
+
+void VulkanRenderer::Impl::InitImagePass() {
+    if (imagePass) return;
+    constexpr VkFormat format = VK_FORMAT_R32G32B32A32_SFLOAT;
+    VkFormatProperties properties{};
+    vkGetPhysicalDeviceFormatProperties(window.physicalDevice, format, &properties);
+    constexpr VkFormatFeatureFlags required = VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT |
+        VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BLEND_BIT | VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT |
+        VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT |
+        VK_FORMAT_FEATURE_TRANSFER_SRC_BIT | VK_FORMAT_FEATURE_TRANSFER_DST_BIT |
+        VK_FORMAT_FEATURE_STORAGE_IMAGE_BIT;
+    if ((properties.optimalTilingFeatures & required) != required)
+        throw std::runtime_error("GPU render images require RGBA32F attachment, blend, sampling, linear filtering and transfers");
+    VkAttachmentDescription attachment{};
+    attachment.format = format;
+    attachment.samples = VK_SAMPLE_COUNT_1_BIT;
+    attachment.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
+    attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+    attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+    attachment.initialLayout = attachment.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+    const VkAttachmentReference reference{0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL};
+    VkSubpassDescription subpass{};
+    subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+    subpass.colorAttachmentCount = 1;
+    subpass.pColorAttachments = &reference;
+    VkRenderPassCreateInfo pass{VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO};
+    pass.attachmentCount = pass.subpassCount = 1;
+    pass.pAttachments = &attachment;
+    pass.pSubpasses = &subpass;
+    VK_REQUIRE(vkCreateRenderPass(device, &pass, nullptr, &imagePass));
+    try {
+        for (size_t i = 0; i < imagePipelines.size(); ++i) {
+            imagePipelines[i] = Pipeline(imagePass, static_cast<VulkanBlend>(i), fragmentShader, true);
+            imageCoveragePipelines[i] = Pipeline(imagePass, static_cast<VulkanBlend>(i), fragmentShader, true, true);
+        }
+    } catch (...) {
+        for (auto& pipeline : imagePipelines) {
+            if (pipeline) vkDestroyPipeline(device, pipeline, nullptr);
+            pipeline = VK_NULL_HANDLE;
+        }
+        for (auto& pipeline : imageCoveragePipelines) {
+            if (pipeline) vkDestroyPipeline(device, pipeline, nullptr);
+            pipeline = VK_NULL_HANDLE;
+        }
+        vkDestroyRenderPass(device, imagePass, nullptr);
+        imagePass = VK_NULL_HANDLE;
+        throw;
+    }
+}
+
+std::unique_ptr<VulkanTexture> VulkanRenderer::Impl::RenderImage(int w, int h) {
+    if (w <= 0 || h <= 0) throw std::invalid_argument("Invalid GPU render image extent");
+    InitImagePass();
+    constexpr VkImageUsageFlags usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT |
+        VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT |
+        VK_IMAGE_USAGE_STORAGE_BIT;
+    VkImageFormatProperties properties{};
+    VK_REQUIRE(vkGetPhysicalDeviceImageFormatProperties(window.physicalDevice,
+        VK_FORMAT_R32G32B32A32_SFLOAT, VK_IMAGE_TYPE_2D, VK_IMAGE_TILING_OPTIMAL, usage, 0, &properties));
+    VkPhysicalDeviceProperties deviceProperties{};
+    vkGetPhysicalDeviceProperties(window.physicalDevice, &deviceProperties);
+    if (uint32_t(w) > std::min(properties.maxExtent.width, deviceProperties.limits.maxFramebufferWidth) ||
+        uint32_t(h) > std::min(properties.maxExtent.height, deviceProperties.limits.maxFramebufferHeight) ||
+        uint32_t(w) > deviceProperties.limits.maxViewportDimensions[0] ||
+        uint32_t(h) > deviceProperties.limits.maxViewportDimensions[1])
+        throw std::invalid_argument("GPU render image exceeds device image/framebuffer limits");
+    auto image = Image(w, h, usage, false, VK_FORMAT_R32G32B32A32_SFLOAT);
+    image->generated = true;
+    VkFramebufferCreateInfo framebuffer{VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO};
+    framebuffer.renderPass = imagePass;
+    framebuffer.attachmentCount = 1;
+    framebuffer.pAttachments = &image->view;
+    framebuffer.width = uint32_t(w);
+    framebuffer.height = uint32_t(h);
+    framebuffer.layers = 1;
+    VK_REQUIRE(vkCreateFramebuffer(device, &framebuffer, nullptr, &image->framebuffer));
+    return image;
+}
+
+void VulkanRenderer::Impl::SnapshotRenderImage(VulkanTexture* image, bool force) {
+    if (!force && image->lastDraw != frameSerial) return;
+    if (targetPassOpen) throw std::logic_error("GPU snapshot requires an ended target pass");
+    auto next = RenderImage(image->width, image->height);
+    // Keep every earlier descriptor and recorded vertex unchanged. Only the
+    // stable public handle acquires the fresh writable backing and slot.
+    retired.reserve(retired.size() + 1);
+    Barrier(frame.cmd, image->image, image->layout, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+        VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT,
+        VK_ACCESS_MEMORY_READ_BIT | VK_ACCESS_MEMORY_WRITE_BIT, VK_ACCESS_TRANSFER_READ_BIT);
+    Barrier(frame.cmd, next->image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+        VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, VK_ACCESS_TRANSFER_WRITE_BIT);
+    VkImageCopy copy{};
+    copy.srcSubresource = copy.dstSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
+    copy.extent = {uint32_t(image->width), uint32_t(image->height), 1};
+    vkCmdCopyImage(frame.cmd, image->image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+        next->image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copy);
+    Barrier(frame.cmd, image->image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, image->sampledLayout,
+        VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+        VK_ACCESS_TRANSFER_READ_BIT, VK_ACCESS_SHADER_READ_BIT);
+    Barrier(frame.cmd, next->image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, next->sampledLayout,
+        VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+        VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT);
+    image->layout = image->sampledLayout;
+    next->layout = next->sampledLayout;
+    next->uploaded = true;
+    std::swap(image->image, next->image);
+    std::swap(image->view, next->view);
+    std::swap(image->memory, next->memory);
+    std::swap(image->framebuffer, next->framebuffer);
+    std::swap(image->slot, next->slot);
+    std::swap(image->slotOwner, next->slotOwner);
+    std::swap(image->lastDraw, next->lastDraw);
+    std::swap(image->computeSet,next->computeSet);
+    std::swap(image->computePool,next->computePool);
+    std::swap(image->computeMetadata,next->computeMetadata);
+    slotOwners[image->slot] = image;
+    slotOwners[next->slot] = next.get();
+    retired.push_back(std::move(next));
+    ++createdTextures;
+}
+
+void VulkanRenderer::Impl::BeginTargetPass() {
+    if (!frame.valid || targetPassOpen) throw std::logic_error("Invalid GPU target pass state");
+    VulkanTexture* target = renderImage ? renderImage : scene.get();
+    if (renderImage) SnapshotRenderImage(target);
+    if (!renderImage && !sceneInitialized) {
+        Barrier(frame.cmd, target->image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+            VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, VK_ACCESS_TRANSFER_WRITE_BIT);
+        const VkClearColorValue clear{{0, 0, 0, 1}};
+        const VkImageSubresourceRange range{VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
+        vkCmdClearColorImage(frame.cmd, target->image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &clear, 1, &range);
+        target->layout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+        sceneInitialized = true;
+    }
+    Barrier(frame.cmd, target->image, target->layout, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+        VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+        VK_ACCESS_MEMORY_READ_BIT | VK_ACCESS_MEMORY_WRITE_BIT,
+        VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT);
+    target->layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+    VkRenderPassBeginInfo pass{VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO};
+    pass.renderPass = renderImage ? imagePass : scenePass;
+    pass.framebuffer = renderImage ? target->framebuffer : sceneFramebuffer;
+    pass.renderArea.extent = {uint32_t(target->width), uint32_t(target->height)};
+    vkCmdBeginRenderPass(frame.cmd, &pass, VK_SUBPASS_CONTENTS_INLINE);
+    targetPassOpen = true;
+    drawState = {};
+}
+
+void VulkanRenderer::Impl::EndTargetPass() {
+    if (!targetPassOpen) throw std::logic_error("No GPU target pass to end");
+    FlushPendingRun(frame.cmd);
+    vkCmdEndRenderPass(frame.cmd);
+    VulkanTexture* target = renderImage ? renderImage : scene.get();
+    Barrier(frame.cmd, target->image, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, target->sampledLayout,
+        VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT |
+            VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT | VK_PIPELINE_STAGE_TRANSFER_BIT,
+        VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+        VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_TRANSFER_READ_BIT);
+    target->layout = target->sampledLayout;
+    targetPassOpen = false;
+    drawState = {};
+}
+
+void VulkanRenderer::Impl::FinishImageBatch() {
+    if (!frame.valid || !imageOnly) throw std::logic_error("No GPU image-only batch to finish");
+    EndTargetPass();
+    // 帧批引用的合成/上传必须先于帧批提交（队列同序）。
+    if (transferOpen) FinishTransfer();
+    FlushTextureUploads();
+    VK_REQUIRE(vkEndCommandBuffer(imageCommand));
+    VK_REQUIRE(vkResetFences(device, 1, &imageFence));
+    VkSubmitInfo submit{VK_STRUCTURE_TYPE_SUBMIT_INFO};
+    submit.commandBufferCount = 1;
+    submit.pCommandBuffers = &imageCommand;
+    VK_REQUIRE(vkQueueSubmit(window.graphicsQueue, 1, &submit, imageFence));
+    VK_REQUIRE(vkWaitForFences(device, 1, &imageFence, VK_TRUE, UINT64_MAX));
+    frame = {};
+    imageOnly = false;
+}
+
+VulkanRenderer::VulkanRenderer(VulkanContext& window, int width, int height,
+    const std::string& vs, const std::string& ps,const VulkanHdrParams* hdr)
+    : impl_(std::make_unique<Impl>(window, width, height)),
+      sceneOpen(impl_->frame.valid), whiteTexture(impl_->white),
+      causticsTexture(impl_->caustics.target), sceneWidth(impl_->width),
+      sceneHeight(impl_->height), drawCommandCounts(impl_->drawCommands) {
+    if (hdr) { hdr->Validate(); impl_->hdr=*hdr; }
+    impl_->Initialize(vs, ps);
+    const uint32_t pixel = 0xffffffff;
+    impl_->white = CreateTexture(1, 1, &pixel, 4, true);
+}
+VulkanRenderer::~VulkanRenderer() = default;
+void VulkanRenderer::PrepareLoadingPipelines() {
+    auto& s = *impl_;
+    if (s.frame.valid)
+        throw std::logic_error("Prepare Vulkan loading pipelines before opening a scene");
+    s.InitImageKernel(s.fontKernel, Impl::LoadingPipelines{});
+    s.InitImageKernel(s.colorKernel, Impl::LoadingPipelines{});
+    s.InitAlphaKernel(Impl::LoadingPipelines{});
+}
+uint32_t VulkanRenderer::SlotOf(const VulkanTexture* texture) {
+    return texture ? texture->slot | (texture->generated ? Impl::kGeneratedPremult : 0u) |
+        (texture->opaque ? VulkanVertex::kOpaqueInput : 0u) : 0u;
+}
+uint32_t VulkanRenderer::MaxImageDimension2D() const {
+    VkPhysicalDeviceProperties properties{};
+    vkGetPhysicalDeviceProperties(impl_->window.physicalDevice,&properties);
+    return properties.limits.maxImageDimension2D;
+}
+VulkanRenderer::ResourceCounts VulkanRenderer::GetResourceCounts() const {
+    const auto& s = *impl_;
+    return {s.textures.size(),s.retired.size(),s.pools.size(),s.streams.size()};
+}
+
+VulkanTexture* VulkanRenderer::CreateRenderImage(int width, int height) {
+    auto& s = *impl_;
+    auto image = s.RenderImage(width, height);
+    // A separate synchronous transfer touches only this new allocation. It never
+    // submits the open parent frame or rewinds its mapped vertex streams.
+    const auto cmd = s.BeginTransfer();
+    Barrier(cmd, image->image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+        VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, VK_ACCESS_TRANSFER_WRITE_BIT);
+    const VkClearColorValue clear{{0, 0, 0, 0}};
+    const VkImageSubresourceRange range{VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
+    vkCmdClearColorImage(cmd, image->image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &clear, 1, &range);
+    Barrier(cmd, image->image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, image->sampledLayout,
+        VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+        VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT);
+    s.FinishTransfer();
+    image->layout = image->sampledLayout;
+    image->uploaded = true;
+    auto* handle = image.get();
+    s.textures.emplace(handle, std::move(image));
+    ++s.createdTextures;
+    return handle;
+}
+
+void VulkanRenderer::SetRenderImage(VulkanTexture* image) {
+    auto& s = *impl_;
+    if (image && (!s.textures.contains(image) || !image->generated))
+        throw std::invalid_argument("Render target must be a live GPU render image in this renderer");
+    if (image == s.renderImage) return;
+    if (s.frame.valid && s.imageOnly && !image) {
+        s.FinishImageBatch();
+        s.renderImage = nullptr;
+        return;
+    }
+    if (s.frame.valid) s.EndTargetPass();
+    s.renderImage = image;
+    if (s.frame.valid) s.BeginTargetPass();
+}
+
+void VulkanRenderer::Impl::InitImageKernel(ImageKernel& kernel) const {
+    if (!kernel.pipeline)
+        throw std::logic_error("Vulkan compute pipeline was not prepared during loading: " +
+            kernel.shaderPath);
+}
+
+void VulkanRenderer::Impl::InitImageKernel(ImageKernel& kernel, LoadingPipelines) {
+    if (kernel.pipeline) return;
+    const auto words=ReadShader(kernel.shaderPath);
+    VkShaderModuleCreateInfo shader{VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO};
+    shader.codeSize=words.size()*sizeof(uint32_t);shader.pCode=words.data();
+    VK_REQUIRE(vkCreateShaderModule(device,&shader,nullptr,&kernel.shader));
+    const VkDescriptorSetLayoutBinding bindings[]={
+        {0,VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,1,VK_SHADER_STAGE_COMPUTE_BIT,nullptr},
+        {1,VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,1,VK_SHADER_STAGE_COMPUTE_BIT,nullptr}};
+    VkDescriptorSetLayoutCreateInfo setLayout{VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO};
+    setLayout.bindingCount=2;setLayout.pBindings=bindings;
+    VK_REQUIRE(vkCreateDescriptorSetLayout(device,&setLayout,nullptr,&kernel.setLayout));
+    const VkDescriptorSetLayout sets[]={imageLayout,samplerLayout,kernel.setLayout};
+    const VkPushConstantRange push{VK_SHADER_STAGE_COMPUTE_BIT,0,sizeof(VulkanFontGlyph)+sizeof(uint32_t)};
+    VkPipelineLayoutCreateInfo layout{VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO};
+    layout.setLayoutCount=3;layout.pSetLayouts=sets;
+    layout.pushConstantRangeCount=1;layout.pPushConstantRanges=&push;
+    VK_REQUIRE(vkCreatePipelineLayout(device,&layout,nullptr,&kernel.layout));
+    const VkDescriptorPoolSize sizes[]={
+        {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,kTextureSlots},
+        {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,kTextureSlots}};
+    VkDescriptorPoolCreateInfo pool{VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO};
+    pool.flags=VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
+    pool.maxSets=kTextureSlots;pool.poolSizeCount=2;pool.pPoolSizes=sizes;
+    VK_REQUIRE(vkCreateDescriptorPool(device,&pool,nullptr,&kernel.pool));
+    VkComputePipelineCreateInfo pipeline{VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO};
+    pipeline.layout=kernel.layout;
+    pipeline.stage={VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,nullptr,0,
+        VK_SHADER_STAGE_COMPUTE_BIT,kernel.shader,"main",nullptr};
+    VK_REQUIRE(vkCreateComputePipelines(device,VK_NULL_HANDLE,1,&pipeline,nullptr,&kernel.pipeline));
+}
+
+void VulkanRenderer::Impl::InitAlphaKernel() const {
+    if (!alphaKernel.pipeline)
+        throw std::logic_error("Vulkan alpha pipeline requires PrepareLoadingPipelines");
+}
+
+void VulkanRenderer::Impl::InitAlphaKernel(LoadingPipelines) {
+    auto& kernel=alphaKernel;
+    if(kernel.pipeline) return;
+    const auto words=ReadShader(kernel.shaderPath);
+    VkShaderModuleCreateInfo shader{VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO};
+    shader.codeSize=words.size()*sizeof(uint32_t);shader.pCode=words.data();
+    VK_REQUIRE(vkCreateShaderModule(device,&shader,nullptr,&kernel.shader));
+    const VkDescriptorSetLayoutBinding bindings[]={
+        {0,VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,1,VK_SHADER_STAGE_COMPUTE_BIT,nullptr},
+        {1,VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,1,VK_SHADER_STAGE_COMPUTE_BIT,nullptr},
+        {2,VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,1,VK_SHADER_STAGE_COMPUTE_BIT,nullptr}};
+    VkDescriptorSetLayoutCreateInfo setLayout{VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO};
+    setLayout.bindingCount=3;setLayout.pBindings=bindings;
+    VK_REQUIRE(vkCreateDescriptorSetLayout(device,&setLayout,nullptr,&kernel.setLayout));
+    const VkPushConstantRange push{VK_SHADER_STAGE_COMPUTE_BIT,0,24};
+    VkPipelineLayoutCreateInfo layout{VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO};
+    layout.setLayoutCount=1;layout.pSetLayouts=&kernel.setLayout;
+    layout.pushConstantRangeCount=1;layout.pPushConstantRanges=&push;
+    VK_REQUIRE(vkCreatePipelineLayout(device,&layout,nullptr,&kernel.layout));
+    const VkDescriptorPoolSize sizes[]={
+        {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,2u*kTextureSlots},
+        {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,kTextureSlots}};
+    VkDescriptorPoolCreateInfo pool{VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO};
+    // 2026-10-11 批量合成：每 dispatch 独立描述集（共享集跨未提交 dispatch
+    // 会被改写），池容量对齐纹理槽上限并带 FREE 位供 CompleteTransfers 回收。
+    pool.flags=VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
+    pool.maxSets=kTextureSlots;pool.poolSizeCount=2;
+    pool.pPoolSizes=sizes;
+    VK_REQUIRE(vkCreateDescriptorPool(device,&pool,nullptr,&kernel.pool));
+    VkComputePipelineCreateInfo pipeline{VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO};
+    pipeline.layout=kernel.layout;
+    pipeline.stage={VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,nullptr,0,
+        VK_SHADER_STAGE_COMPUTE_BIT,kernel.shader,"main",nullptr};
+    VK_REQUIRE(vkCreateComputePipelines(device,VK_NULL_HANDLE,1,&pipeline,nullptr,&kernel.pipeline));
+}
+
+VulkanTexture* VulkanRenderer::ComposeAlphaRaw(VulkanTexture* base,VulkanTexture* alpha,
+    int columns,int rows,uint32_t color,bool colorOnly) {
+    auto& s=*impl_;
+    if(!base || !alpha || columns<=0 || rows<=0 ||
+        base->width/columns!=alpha->width || base->height/rows!=alpha->height)
+        throw std::exception{};
+    s.InitAlphaKernel();
+    // 批量合成（2026-10-11）：上传副本与合成 dispatch 录入同一条开放传输
+    // 缓冲，随批提交；不再每张图 两次提交+两次栅栏等待。队列同序保证
+    // dispatch 读到的是本批已录制的副本结果。批上限 1024：小图成批装载
+    // 时可在单帧内超过描述符池容量，超限先提交并回收一批。
+    if (s.pendingComposeSets.size() >= 1024) {
+        s.FinishTransfer();
+        s.CompleteTransfers();
+    }
+    const auto cmd=s.BeginTransfer();
+    s.RecordTextureUploads(cmd);
+    auto target=s.Image(base->width,base->height,VK_IMAGE_USAGE_STORAGE_BIT |
+        VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT,false,
+        VK_FORMAT_R8G8B8A8_UNORM,VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,0xFFFFFFFFu,false);
+    const VkDescriptorImageInfo images[]={
+        {s.samplers[0],base->view,base->sampledLayout},
+        {s.samplers[0],alpha->view,alpha->sampledLayout},
+        {VK_NULL_HANDLE,target->view,VK_IMAGE_LAYOUT_GENERAL}};
+    // 每 dispatch 独立描述集：共享集跨多个未提交 dispatch 会被后续改写
+    // （描述集按提交时内容统一生效），批内互相踩踏。
+    VkDescriptorSet composeSet=VK_NULL_HANDLE;
+    VkDescriptorSetAllocateInfo composeAllocate{VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO};
+    composeAllocate.descriptorPool=s.alphaKernel.pool;composeAllocate.descriptorSetCount=1;
+    composeAllocate.pSetLayouts=&s.alphaKernel.setLayout;
+    VK_REQUIRE(vkAllocateDescriptorSets(s.device,&composeAllocate,&composeSet));
+    std::array<VkWriteDescriptorSet,3> writes{};
+    for(uint32_t i=0;i<3;++i) {
+        writes[i].sType=VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        writes[i].dstSet=composeSet;writes[i].dstBinding=i;writes[i].descriptorCount=1;
+        writes[i].descriptorType=i==2?VK_DESCRIPTOR_TYPE_STORAGE_IMAGE:VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        writes[i].pImageInfo=&images[i];
+    }
+    vkUpdateDescriptorSets(s.device,3,writes.data(),0,nullptr);
+    s.pendingComposeSets.push_back(composeSet);
+    Barrier(cmd,target->image,VK_IMAGE_LAYOUT_UNDEFINED,VK_IMAGE_LAYOUT_GENERAL,
+        VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,0,VK_ACCESS_SHADER_WRITE_BIT);
+    for(auto* input:{base,alpha})
+        Barrier(cmd,input->image,input->sampledLayout,input->sampledLayout,
+            VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+            VK_ACCESS_MEMORY_READ_BIT|VK_ACCESS_MEMORY_WRITE_BIT,VK_ACCESS_SHADER_READ_BIT);
+    vkCmdBindPipeline(cmd,VK_PIPELINE_BIND_POINT_COMPUTE,s.alphaKernel.pipeline);
+    vkCmdBindDescriptorSets(cmd,VK_PIPELINE_BIND_POINT_COMPUTE,s.alphaKernel.layout,0,1,&composeSet,0,nullptr);
+    struct Push { int width,height,columns,rows;uint32_t color,colorOnly; };
+    const Push push{base->width,base->height,columns,rows,color,colorOnly};
+    static_assert(sizeof(Push)==24);
+    vkCmdPushConstants(cmd,s.alphaKernel.layout,VK_SHADER_STAGE_COMPUTE_BIT,0,sizeof(push),&push);
+    vkCmdDispatch(cmd,(uint32_t(base->width)+7)/8,(uint32_t(base->height)+7)/8,1);
+    Barrier(cmd,target->image,VK_IMAGE_LAYOUT_GENERAL,target->sampledLayout,
+        VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT|VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+        VK_ACCESS_SHADER_WRITE_BIT,VK_ACCESS_SHADER_READ_BIT);
+    target->layout=target->sampledLayout;target->uploaded=true;
+    auto* handle=target.get();
+    s.retired.push_back(std::move(target));
+    return handle;
+}
+
+VulkanTexture* VulkanRenderer::AdoptComposedTexture(VulkanTexture* composed) {
+    auto& s=*impl_;
+    const auto owned=std::find_if(s.retired.begin(),s.retired.end(),
+        [composed](const std::unique_ptr<VulkanTexture>& texture){return texture.get()==composed;});
+    if(owned==s.retired.end())
+        throw std::invalid_argument("Adopt requires a renderer-owned raw compose image");
+    auto texture=std::move(*owned);
+    s.retired.erase(owned);
+    auto* handle=texture.get();
+    handle->slot=s.AllocSlot();
+    if(handle->slot>=s.kTextureSlots) throw std::runtime_error("Out of texture slots");
+    VkDescriptorImageInfo binding{};
+    binding.imageView=handle->view;
+    binding.imageLayout=handle->sampledLayout;
+    VkWriteDescriptorSet write{VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET};
+    write.dstSet=s.textureArray;
+    write.dstArrayElement=handle->slot;
+    write.descriptorCount=1;
+    write.descriptorType=VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+    write.pImageInfo=&binding;
+    vkUpdateDescriptorSets(s.device,1,&write,0,nullptr);
+    s.slotOwners[handle->slot]=handle;
+    handle->slotOwner=&s.slotOwners[handle->slot];
+    s.textures.emplace(handle,std::move(texture));
+    return handle;
+}
+
+VulkanTexture* VulkanRenderer::ComposeAlpha(VulkanTexture* base,VulkanTexture* alpha,
+    int columns,int rows,uint32_t color,bool colorOnly) {
+    auto& s=*impl_;
+    if(!base || !alpha || !s.textures.contains(base) || !s.textures.contains(alpha))
+        throw std::exception{};
+    // 注册版=裸图合成+采纳：语义与批量化前逐位一致，仅中间产物不再全局登记。
+    return AdoptComposedTexture(ComposeAlphaRaw(base,alpha,columns,rows,color,colorOnly));
+}
+
+void VulkanRenderer::BindStaticTexture(VulkanTexture* texture,uint32_t staticSlot) {
+    auto& s=*impl_;
+    const uint32_t slot=s.staticBase+staticSlot;
+    if(!s.textures.contains(texture) || slot>=s.kTextureSlots || texture->lastDraw || texture->slot>=s.staticBase)
+        throw std::exception{};
+    s.slotOwners[texture->slot]=nullptr;s.freeSlots.push_back(texture->slot);
+    texture->slot=slot;s.slotOwners[slot]=texture;texture->slotOwner=&s.slotOwners[slot];
+    const VkDescriptorImageInfo image{VK_NULL_HANDLE,texture->view,texture->sampledLayout};
+    VkWriteDescriptorSet write{VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET};
+    write.dstSet=s.textureArray;write.dstArrayElement=slot;write.descriptorCount=1;
+    write.descriptorType=VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;write.pImageInfo=&image;
+    vkUpdateDescriptorSets(s.device,1,&write,0,nullptr);
+}
+
+VulkanTexture* VulkanRenderer::CopyTextureRegion(VulkanTexture* source,int x,int y,int width,int height) {
+    auto& s=*impl_;
+    if(!s.textures.contains(source) ||
+        x<0 || y<0 || width<=0 || height<=0 || x>=source->width || y>=source->height)
+        throw std::exception{};
+    s.FlushTextureUploads();
+    auto allocated=s.Image(width,height,VK_IMAGE_USAGE_TRANSFER_SRC_BIT |
+        VK_IMAGE_USAGE_TRANSFER_DST_BIT,source->opaque,source->format);
+    auto* target=allocated.get();
+    s.textures.emplace(target,std::move(allocated));++s.createdTextures;
+    target->generated=source->generated;
+    const bool activeFrame=s.frame.valid;
+    if(activeFrame) s.EndTargetPass();
+    const auto cmd=activeFrame?s.frame.cmd:s.BeginTransfer();
+    Barrier(cmd,source->image,source->sampledLayout,VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+        VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,VK_PIPELINE_STAGE_TRANSFER_BIT,
+        VK_ACCESS_MEMORY_READ_BIT|VK_ACCESS_MEMORY_WRITE_BIT,VK_ACCESS_TRANSFER_READ_BIT);
+    Barrier(cmd,target->image,VK_IMAGE_LAYOUT_UNDEFINED,VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+        VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,VK_PIPELINE_STAGE_TRANSFER_BIT,0,VK_ACCESS_TRANSFER_WRITE_BIT);
+    const int copyWidth=std::min(width,source->width-x),copyHeight=std::min(height,source->height-y);
+    if(copyWidth!=width || copyHeight!=height) {
+        const VkClearColorValue clear{{0,0,0,0}};
+        const VkImageSubresourceRange range{VK_IMAGE_ASPECT_COLOR_BIT,0,1,0,1};
+        vkCmdClearColorImage(cmd,target->image,VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,&clear,1,&range);
+        Barrier(cmd,target->image,VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+            VK_PIPELINE_STAGE_TRANSFER_BIT,VK_PIPELINE_STAGE_TRANSFER_BIT,
+            VK_ACCESS_TRANSFER_WRITE_BIT,VK_ACCESS_TRANSFER_WRITE_BIT);
+    }
+    VkImageCopy copy{};
+    copy.srcSubresource=copy.dstSubresource={VK_IMAGE_ASPECT_COLOR_BIT,0,0,1};
+    copy.srcOffset={x,y,0};
+    copy.extent={uint32_t(copyWidth),uint32_t(copyHeight),1};
+    vkCmdCopyImage(cmd,source->image,VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+        target->image,VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,1,&copy);
+    Barrier(cmd,source->image,VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,source->sampledLayout,
+        VK_PIPELINE_STAGE_TRANSFER_BIT,VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT|VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+        VK_ACCESS_TRANSFER_READ_BIT,VK_ACCESS_SHADER_READ_BIT);
+    Barrier(cmd,target->image,VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,target->sampledLayout,
+        VK_PIPELINE_STAGE_TRANSFER_BIT,VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT|VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+        VK_ACCESS_TRANSFER_WRITE_BIT,VK_ACCESS_SHADER_READ_BIT);
+    if(activeFrame) {
+        source->lastDraw=target->lastDraw=s.frameSerial;
+        s.BeginTargetPass();
+    } else s.FinishTransfer();
+    target->layout=target->sampledLayout;target->uploaded=true;
+    return target;
+}
+
+VulkanTexture* VulkanRenderer::ProcessImage(VulkanTexture* source,
+    const VulkanImageProcessing& processing) {
+    auto& s=*impl_;
+    if(!source || !s.textures.contains(source) ||
+        processing.width<=0 || processing.height<=0 ||
+        uint32_t(processing.operation)>uint32_t(VulkanImageOperation::Colorize))
+        throw std::exception{};
+    s.InitImageKernel(s.colorKernel);
+    s.FlushTextureUploads();
+    auto target=s.Image(processing.width,processing.height,VK_IMAGE_USAGE_STORAGE_BIT |
+        VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT,false,VK_FORMAT_R8G8B8A8_UNORM);
+    const auto bytes=3*sizeof(uint32_t);
+    target->computeMetadata=std::make_unique<Buffer>();
+    target->computeMetadata->Create(bytes,VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
+    auto* words=static_cast<uint32_t*>(target->computeMetadata->mapped);
+    const std::array<uint32_t,3> metadata{uint32_t(source->width),uint32_t(source->height),
+        SlotOf(source)};
+    std::copy(metadata.begin(),metadata.end(),words);
+    VkDescriptorSetAllocateInfo allocate{VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO};
+    allocate.descriptorPool=s.colorKernel.pool;allocate.descriptorSetCount=1;
+    allocate.pSetLayouts=&s.colorKernel.setLayout;
+    VK_REQUIRE(vkAllocateDescriptorSets(s.device,&allocate,&target->computeSet));
+    target->computePool=s.colorKernel.pool;
+    const VkDescriptorImageInfo image{VK_NULL_HANDLE,target->view,VK_IMAGE_LAYOUT_GENERAL};
+    const VkDescriptorBufferInfo buffer{target->computeMetadata->buffer,0,bytes};
+    std::array<VkWriteDescriptorSet,2> writes{};
+    for(auto& write:writes) {
+        write.sType=VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        write.dstSet=target->computeSet;write.descriptorCount=1;
+    }
+    writes[0].descriptorType=VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;writes[0].pImageInfo=&image;
+    writes[1].dstBinding=1;writes[1].descriptorType=VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;writes[1].pBufferInfo=&buffer;
+    vkUpdateDescriptorSets(s.device,uint32_t(writes.size()),writes.data(),0,nullptr);
+    auto* handle=target.get();
+    s.textures.emplace(handle,std::move(target));++s.createdTextures;
+    const bool activeFrame=s.frame.valid;
+    if(activeFrame) s.EndTargetPass();
+    const auto cmd=activeFrame?s.frame.cmd:s.BeginTransfer();
+    Barrier(cmd,source->image,source->sampledLayout,source->sampledLayout,
+        VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+        VK_ACCESS_MEMORY_READ_BIT|VK_ACCESS_MEMORY_WRITE_BIT,VK_ACCESS_SHADER_READ_BIT);
+    if(activeFrame) source->lastDraw=s.frameSerial;
+    Barrier(cmd,handle->image,VK_IMAGE_LAYOUT_UNDEFINED,VK_IMAGE_LAYOUT_GENERAL,
+        VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,0,VK_ACCESS_SHADER_WRITE_BIT);
+    vkCmdBindPipeline(cmd,VK_PIPELINE_BIND_POINT_COMPUTE,s.colorKernel.pipeline);
+    const VkDescriptorSet sets[]={s.textureArray,s.samplerSet,handle->computeSet};
+    vkCmdBindDescriptorSets(cmd,VK_PIPELINE_BIND_POINT_COMPUTE,s.colorKernel.layout,0,3,sets,0,nullptr);
+    static_assert(sizeof(VulkanImageProcessing)==36);
+    vkCmdPushConstants(cmd,s.colorKernel.layout,VK_SHADER_STAGE_COMPUTE_BIT,
+        0,sizeof(processing),&processing);
+    vkCmdDispatch(cmd,(uint32_t(processing.width)+7)/8,(uint32_t(processing.height)+7)/8,1);
+    Barrier(cmd,handle->image,VK_IMAGE_LAYOUT_GENERAL,handle->sampledLayout,
+        VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+        VK_ACCESS_SHADER_WRITE_BIT,VK_ACCESS_MEMORY_READ_BIT|VK_ACCESS_MEMORY_WRITE_BIT);
+    handle->layout=handle->sampledLayout;handle->uploaded=true;
+    if(activeFrame) {
+        handle->lastDraw=s.frameSerial;
+        s.BeginTargetPass();
+    } else s.FinishTransfer();
+    return handle;
+}
+
+void VulkanRenderer::RenderFontAtlas(VulkanTexture* target,VulkanTexture* source,
+    std::span<const VulkanFontGlyph> glyphs,uint32_t samplingFlags,bool forceWhite) {
+    auto& s=*impl_;
+    if (!target || !s.textures.contains(target) ||
+        !s.frame.valid || s.renderImage!=target || !target->generated ||
+        !source || source==target || !s.textures.contains(source))
+        throw std::exception{};
+    for (const auto& glyph:glyphs)
+        if (glyph.sourceX<0 || glyph.sourceY<0 || glyph.sourceWidth<=0 || glyph.sourceHeight<=0 ||
+            int64_t(glyph.sourceX)+glyph.sourceWidth>source->width ||
+            int64_t(glyph.sourceY)+glyph.sourceHeight>source->height ||
+            glyph.targetX<0 || glyph.targetY<0 || glyph.targetWidth<=0 || glyph.targetHeight<=0 ||
+            int64_t(glyph.targetX)+glyph.targetWidth>target->width ||
+            int64_t(glyph.targetY)+glyph.targetHeight>target->height)
+            throw std::exception{};
+    s.InitImageKernel(s.fontKernel);
+    s.FlushTextureUploads();
+    s.EndTargetPass();
+    const auto bytes=4*sizeof(uint32_t);
+    auto metadata=std::make_unique<Buffer>();
+    metadata->Create(bytes,VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
+    auto* words=static_cast<uint32_t*>(metadata->mapped);
+    const std::array<uint32_t,4> header{uint32_t(source->width),uint32_t(source->height),
+        samplingFlags,SlotOf(source)};
+    std::copy(header.begin(),header.end(),words);
+    source->lastDraw=s.frameSerial;
+    Barrier(s.frame.cmd,source->image,source->sampledLayout,source->sampledLayout,
+        VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+        VK_ACCESS_MEMORY_READ_BIT|VK_ACCESS_MEMORY_WRITE_BIT,VK_ACCESS_SHADER_READ_BIT);
+    target->computeMetadata=std::move(metadata);
+    if (!target->computeSet) {
+        VkDescriptorSetAllocateInfo allocate{VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO};
+        allocate.descriptorPool=s.fontKernel.pool;allocate.descriptorSetCount=1;
+        allocate.pSetLayouts=&s.fontKernel.setLayout;
+        VK_REQUIRE(vkAllocateDescriptorSets(s.device,&allocate,&target->computeSet));
+        target->computePool=s.fontKernel.pool;
+    }
+    const VkDescriptorImageInfo image{VK_NULL_HANDLE,target->view,VK_IMAGE_LAYOUT_GENERAL};
+    const VkDescriptorBufferInfo buffer{target->computeMetadata->buffer,0,bytes};
+    std::array<VkWriteDescriptorSet,2> writes{};
+    for (auto& write:writes) {
+        write.sType=VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        write.dstSet=target->computeSet;write.descriptorCount=1;
+    }
+    writes[0].descriptorType=VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;writes[0].pImageInfo=&image;
+    writes[1].dstBinding=1;writes[1].descriptorType=VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;writes[1].pBufferInfo=&buffer;
+    vkUpdateDescriptorSets(s.device,uint32_t(writes.size()),writes.data(),0,nullptr);
+    Barrier(s.frame.cmd,target->image,target->layout,VK_IMAGE_LAYOUT_GENERAL,
+        VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+        VK_ACCESS_MEMORY_READ_BIT|VK_ACCESS_MEMORY_WRITE_BIT,VK_ACCESS_SHADER_WRITE_BIT);
+    target->layout=VK_IMAGE_LAYOUT_GENERAL;
+    vkCmdBindPipeline(s.frame.cmd,VK_PIPELINE_BIND_POINT_COMPUTE,s.fontKernel.pipeline);
+    const VkDescriptorSet sets[]={s.textureArray,s.samplerSet,target->computeSet};
+    vkCmdBindDescriptorSets(s.frame.cmd,VK_PIPELINE_BIND_POINT_COMPUTE,s.fontKernel.layout,
+        0,3,sets,0,nullptr);
+    struct Push { VulkanFontGlyph glyph;uint32_t white; };
+    static_assert(sizeof(Push)==36);
+    for (const auto& glyph:glyphs) {
+        const Push push{glyph,forceWhite};
+        vkCmdPushConstants(s.frame.cmd,s.fontKernel.layout,VK_SHADER_STAGE_COMPUTE_BIT,0,sizeof(push),&push);
+        vkCmdDispatch(s.frame.cmd,(uint32_t(glyph.targetWidth)+7)/8,(uint32_t(glyph.targetHeight)+7)/8,1);
+    }
+    Barrier(s.frame.cmd,target->image,VK_IMAGE_LAYOUT_GENERAL,target->sampledLayout,
+        VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+        VK_ACCESS_SHADER_WRITE_BIT,VK_ACCESS_MEMORY_READ_BIT|VK_ACCESS_MEMORY_WRITE_BIT);
+    target->layout=target->sampledLayout;
+    s.BeginTargetPass();
+    target->lastDraw=s.frameSerial;
+}
+VulkanRenderer::TextureUploadCounts VulkanRenderer::GetTextureUploadCounts() const {
+    const auto& s=*impl_;
+    return {s.uploadedTextures,s.uploadBatches,s.uploadStagingAllocations,s.pendingUploads.size(),
+        s.textureStaging?s.textureStaging->size:0,s.createdTextures,s.reusedUpdates};
+}
+
+VulkanTexture* VulkanRenderer::CreateTextureStatic(int width, int height, const void* bgra, int pitch, bool opaque, uint32_t staticSlot) {
+    if (width <= 0 || height <= 0 || !bgra || pitch < int64_t(width) * 4)
+        throw std::invalid_argument("Invalid BGRA texture source");
+    if (staticSlot == 0xFFFFFFFFu)
+        throw std::invalid_argument("Static texture slot required");
+    auto& s = *impl_;
+    const VkImageUsageFlags usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT|VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+    auto texture = s.Image(width, height, usage, opaque,
+        VK_FORMAT_B8G8R8A8_UNORM, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, staticSlot);
+    auto* handle = texture.get();
+    const auto position=s.textures.emplace(handle,std::move(texture)).first;
+    try {s.QueueTextureUpload(handle,bgra,pitch);}
+    catch (...) {s.textures.erase(position);throw;}
+    ++s.createdTextures;
+    return handle;
+}
+
+void VulkanRenderer::ReserveStaticTextureSlots(uint32_t count) {
+    auto& s = *impl_;
+    // count = 最高符号号（id 从 1 起，None=0 不占静态区）；内部 +1 补哨兵
+    const uint32_t aSlots = count + 1;
+    if (aSlots >= s.kTextureSlots)
+        throw std::invalid_argument("Static region too large");
+    s.staticBase = s.kTextureSlots - aSlots;
+    if (s.nextSlot > s.staticBase)
+        throw std::runtime_error("Dynamic slots already exceed static base");
+}
+
+VulkanTexture* VulkanRenderer::CreateTexture(int width, int height, const void* bgra, int pitch, bool opaque) {
+    if (width <= 0 || height <= 0 || !bgra || pitch < int64_t(width) * 4)
+        throw std::invalid_argument("Invalid BGRA texture source");
+    auto& s = *impl_;
+    auto texture = s.Image(width, height, VK_IMAGE_USAGE_TRANSFER_DST_BIT|VK_IMAGE_USAGE_TRANSFER_SRC_BIT, opaque);
+    texture->opaque=opaque;
+    auto* handle = texture.get();
+    const auto position=s.textures.emplace(handle,std::move(texture)).first;
+    try {s.QueueTextureUpload(handle,bgra,pitch);}
+    catch (...) {s.textures.erase(position);throw;}
+    ++s.createdTextures;
+    return handle;
+}
+
+VulkanTexture* VulkanRenderer::CreateRawTexture(int width, int height, const void* bgra, int pitch) {
+    if (width <= 0 || height <= 0 || !bgra || pitch < int64_t(width) * 4)
+        throw std::invalid_argument("Invalid BGRA texture source");
+    auto& s = *impl_;
+    // 裸图（registerSlot=false）：合成链中间载体，不占槽、不进全局表，
+    // rawComposeScratch 持有至批次完成（CompleteTransfers）销毁。
+    auto texture = s.Image(width, height,
+        VK_IMAGE_USAGE_TRANSFER_DST_BIT|VK_IMAGE_USAGE_TRANSFER_SRC_BIT, false,
+        VK_FORMAT_B8G8R8A8_UNORM, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, 0xFFFFFFFFu, false);
+    auto* handle = texture.get();
+    s.retired.push_back(std::move(texture));
+    s.QueueTextureUpload(handle,bgra,pitch);
+    ++s.createdTextures;
+    return handle;
+}
+
+VulkanTexture* VulkanRenderer::ReplaceTexture(VulkanTexture* previous, int width, int height,
+    const void* bgra, int pitch, bool opaque) {
+    if (width<=0 || height<=0 || !bgra || pitch<int64_t(width)*4)
+        throw std::invalid_argument("Invalid replacement BGRA texture source");
+    if (!previous) return CreateTexture(width,height,bgra,pitch,opaque);
+    auto& s=*impl_;
+    if (previous==s.white || !s.textures.contains(previous) || previous->generated)
+        throw std::invalid_argument("Cannot host-replace a renderer-owned, foreign or generated GPU texture");
+    const bool recordedInThisFrame=s.frame.valid && previous->lastDraw==s.frameSerial;
+    if (!recordedInThisFrame && previous->format==VK_FORMAT_B8G8R8A8_UNORM &&
+        previous->width==width && previous->height==height && previous->opaque==opaque) {
+        s.QueueTextureUpload(previous,bgra,pitch);
+        ++s.reusedUpdates;
+        return previous;
+    }
+    auto* next=CreateTexture(width,height,bgra,pitch,opaque);
+    DestroyTexture(previous);
+    return next;
+}
+
+VulkanTexture* VulkanRenderer::CreateCoverageMask(int width,int height,
+    std::span<const uint8_t> coverage,int pitch) {
+    if(width<=0 || height<=0 || pitch<width ||
+        coverage.size()<uint64_t(height-1)*uint64_t(pitch)+uint64_t(width))
+        throw std::invalid_argument("Invalid R8 coverage mask source");
+    auto& s=*impl_;
+    auto texture=s.Image(width,height,VK_IMAGE_USAGE_TRANSFER_DST_BIT,false,VK_FORMAT_R8_UNORM);
+    auto* handle=texture.get();
+    const auto position=s.textures.emplace(handle,std::move(texture)).first;
+    try {s.QueueTextureUpload(handle,coverage.data(),pitch);}
+    catch (...) {s.textures.erase(position);throw;}
+    ++s.createdTextures;
+    return handle;
+}
+
+void VulkanRenderer::DestroyTexture(VulkanTexture* texture) {
+    if (!texture) return;
+    auto& s = *impl_;
+    if (texture == s.white) throw std::invalid_argument("Cannot destroy renderer white texture");
+    if (texture == s.renderImage)
+        throw std::logic_error("Select another render target before destroying the selected GPU image");
+    auto node = s.textures.extract(texture);
+    if (node.empty()) throw std::invalid_argument("Texture does not belong to this renderer");
+    // 池水焦散目标被销毁（重开关卡）时先解关联，描述集等换代纹理改写。
+    if (texture == s.caustics.target) {
+        s.caustics.target = nullptr;
+        s.caustics.frameQueued = false;
+    }
+    // The current command buffer may still reference this texture even before
+    // queue submission. Retire it only after the next BeginCommands fence wait.
+    s.retired.push_back(std::move(node.mapped()));
+}
+
+VulkanTexture* VulkanRenderer::CreateCausticsTexture(int width, int height, VulkanTexture* source) {
+    if (width <= 0 || height <= 0 || source==nullptr || source->width!=256 || source->height!=256)
+        throw std::invalid_argument("Invalid caustics texture source");
+    auto& s = *impl_;
+    if (!s.textures.contains(source)) throw std::invalid_argument("Caustics source belongs to another renderer");
+    if (!s.caustics.shader) throw std::logic_error("Caustics compute shader not loaded");
+    // STORAGE 用途 + 常驻 GENERAL：compute 直写与场景采样共用同一布局。
+    // RGBA8 而非 BGRA8：焦散 shader 是 GLSL（HLSL 前端无法标注 storage
+    // image 格式），rgba8 限定符要求视图同为 RGBA8；写入值 RGB 全等、仅
+    // 字节序不同，采样结果与 BGRA8 版逐位一致。
+    auto texture = s.Image(width, height,
+        VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT |
+        VK_IMAGE_USAGE_STORAGE_BIT, false, VK_FORMAT_R8G8B8A8_UNORM,
+        VK_IMAGE_LAYOUT_GENERAL);
+    texture->opaque = false;
+    auto* handle = texture.get();
+    const auto position = s.textures.emplace(handle, std::move(texture)).first;
+    try {
+        s.FlushTextureUploads();
+        auto command=s.BeginTransfer();
+        Barrier(command,handle->image,VK_IMAGE_LAYOUT_UNDEFINED,VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+            VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,VK_PIPELINE_STAGE_TRANSFER_BIT,0,VK_ACCESS_TRANSFER_WRITE_BIT);
+        const VkClearColorValue clear{{1,1,1,0}};
+        const VkImageSubresourceRange range{VK_IMAGE_ASPECT_COLOR_BIT,0,1,0,1};
+        vkCmdClearColorImage(command,handle->image,VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,&clear,1,&range);
+        Barrier(command,handle->image,VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,VK_IMAGE_LAYOUT_GENERAL,
+            VK_PIPELINE_STAGE_TRANSFER_BIT,VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT|VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+            VK_ACCESS_TRANSFER_WRITE_BIT,VK_ACCESS_SHADER_WRITE_BIT|VK_ACCESS_SHADER_READ_BIT);
+        s.FinishTransfer();
+        handle->layout=VK_IMAGE_LAYOUT_GENERAL;
+        s.InitCaustics(handle,source);
+    }
+    catch (...) { s.textures.erase(position); throw; }
+    ++s.createdTextures;
+    return handle;
+}
+
+void VulkanRenderer::SetCausticsFrame(uint32_t counter) {
+    auto& s = *impl_;
+    s.caustics.counter = counter;
+    s.caustics.frameQueued = s.caustics.target != nullptr;
+}
+
+void VulkanRenderer::UseCausticsTexture(VulkanTexture* output,VulkanTexture* source) {
+    auto& s=*impl_;
+    if(s.frame.valid || !s.textures.contains(output) || !s.textures.contains(source) ||
+        output->sampledLayout!=VK_IMAGE_LAYOUT_GENERAL || source->width!=256 || source->height!=256)
+        throw std::logic_error("Invalid GPU caustics selection");
+    s.window.WaitForFrame();
+    s.InitCaustics(output,source);
+}
+
+bool VulkanRenderer::HasCausticsCompute() const { return impl_->caustics.shader != VK_NULL_HANDLE; }
+VulkanRenderer::CausticsStatus VulkanRenderer::CausticsState() const {
+    const auto& c = impl_->caustics;
+    return {c.target, c.lastDispatched, c.dispatchSerial};
+}
+
+bool VulkanRenderer::BeginScene() {
+    auto& s = *impl_;
+    if (s.frame.valid) throw std::logic_error("Scene already open");
+    // 新帧命令会引用累积批里的上传/合成结果：先提交开放传输缓冲，保持
+    // 队列提交序（传输批 → 帧批）。
+    if (s.transferOpen) s.FinishTransfer();
+    s.CompleteTransfers();  // 回收上批合成描述集；栅栏多半已 signaled，代价≈0
+    if (s.renderImage) {
+        // No swapchain acquire, surface queries or presentation semaphores.
+        // The prior main-frame fence protects all shared vertices/descriptors.
+        s.window.WaitForFrame();
+        s.FlushTextureUploads();
+        VK_REQUIRE(vkResetCommandPool(s.device, s.imageCommandPool, 0));
+        VkCommandBufferBeginInfo begin{VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO};
+        begin.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+        VK_REQUIRE(vkBeginCommandBuffer(s.imageCommand, &begin));
+        s.frame = {s.imageCommand, 0, {uint32_t(s.renderImage->width), uint32_t(s.renderImage->height)}, true};
+        s.imageOnly = true;
+    } else {
+        s.frame = s.window.BeginCommands();
+        if (!s.frame.valid) return false;
+        s.imageOnly = false;
+        s.FlushTextureUploads();
+        s.RefreshPresentPipeline();
+    }
+    ++s.frameSerial;
+    // Complete uploads before reclaiming retired textures: a texture may have
+    // been queued and destroyed outside a frame, including while minimized.
+    s.drawCommands = {};
+    s.drawState = {}; // Vulkan command buffers do not inherit last frame's state.
+    s.ReapRetired();
+    for (auto& stream : s.streams) stream->used = 0;
+    s.RecordCaustics(s.frame.cmd);
+    s.BeginTargetPass();
+    return true;
+}
+
+void VulkanRenderer::Impl::Draw(std::span<const VulkanVertex> vertices, VulkanTexture* texture,
+    VkPipeline pipeline, const VulkanClip* clip, int vw, int vh) {
+    // P5 对拍开关（env PVZ_RUN_MERGE=0）：立即冲刷=逐提交 bind+draw（合并前行为）
+    static const bool sMergeOff = getenv("PVZ_RUN_MERGE") != nullptr && strcmp(getenv("PVZ_RUN_MERGE"), "0") == 0;
+    if (!frame.valid) throw std::logic_error("Draw outside a frame");
+    if (!texture) throw std::invalid_argument("Missing draw texture");
+    if (vertices.empty()) { return; }
+    if (vertices.size() % 3 || vertices.size() > UINT32_MAX)
+        throw std::invalid_argument("Expected a triangle list");
+    int64_t left = 0, top = 0, right = vw, bottom = vh;
+    if (clip) {
+        left = std::max<int64_t>(0, clip->x);
+        top = std::max<int64_t>(0, clip->y);
+        right = std::min<int64_t>(vw, int64_t(clip->x) + clip->width);
+        bottom = std::min<int64_t>(vh, int64_t(clip->y) + clip->height);
+    }
+    if (right <= left || bottom <= top) { return; }
+    // 提交热路径单遍化（2026-10-11 回归定罪）：此前 校验/lastDraw 盖章/
+    // memcpy/slot 解析 共四遍逐顶点循环，SubmitImplDraw 1.26→3.46µs/次。
+    // 反馈检测按次——两个提交入口（SubmitTriangles/SubmitCoverageTriangles）
+    // 每次调用只携带一个纹理，其顶点 slot 下标恒等于该纹理槽位。
+    if (texture == renderImage) {
+        // Feedback reads observe the complete pre-draw image, never an image
+        // simultaneously bound as this pass's color attachment.
+        EndTargetPass();
+        SnapshotRenderImage(renderImage, true);
+        BeginTargetPass();
+    }
+    const VkDeviceSize bytes = vertices.size_bytes();
+    Buffer* stream = nullptr;
+    for (auto& candidate : streams)
+        if (candidate->size - candidate->used >= bytes) { stream = candidate.get(); break; }
+    if (!stream) {
+        auto allocation = std::make_unique<Buffer>();
+        allocation->Create(std::max<VkDeviceSize>(8 * 1024 * 1024, bytes), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
+        stream = allocation.get();
+        streams.push_back(std::move(allocation));
+    }
+    auto offset = stream->used;
+    auto* copiedVertices = reinterpret_cast<VulkanVertex*>(static_cast<std::byte*>(stream->mapped) + offset);
+    constexpr uint32_t kVertexSlotValid = kSlotMask | kGeneratedPremult |
+        VulkanVertex::kIndependentColorFilter | VulkanVertex::kColorFilterMask |
+        VulkanVertex::kAlphaEdgeFilter | VulkanVertex::kOpaqueInput;
+    constexpr uint32_t kVertexSlotKeep = VulkanVertex::kIndependentColorFilter |
+        VulkanVertex::kColorFilterMask | VulkanVertex::kAlphaEdgeFilter;
+    const VulkanTexture* lastSource = nullptr;
+    uint32_t ownerSlotBits = 0;
+    for (size_t i = 0; i < vertices.size(); ++i) {
+        const VulkanVertex& vertex = vertices[i];
+        if ((vertex.slot & ~kVertexSlotValid) != 0 || vertex.sampler >= samplers.size())
+            throw std::invalid_argument("Invalid encoded texture slot or sampler");
+        auto* source = slotOwners[vertex.slot & kSlotMask];
+        if (!source) throw std::invalid_argument("Draw refers to an unallocated texture slot");
+        if (source->lastDraw != frameSerial) source->lastDraw = frameSerial;
+        if (source != lastSource) {
+            lastSource = source;
+            ownerSlotBits = VulkanRenderer::SlotOf(source);
+        }
+        copiedVertices[i] = vertex;
+        copiedVertices[i].slot = ownerSlotBits | (vertex.slot & kVertexSlotKeep);
+    }
+    stream->used += bytes;
+    VkRect2D scissor{{static_cast<int32_t>(left), static_cast<int32_t>(top)},
+        {static_cast<uint32_t>(right-left), static_cast<uint32_t>(bottom-top)}};
+    auto cmd = frame.cmd;
+    // P5 游程：状态变化检测前置（先判后绑）。bindless+采样器数组后描述符
+    // 对恒为 {纹理数组, 采样器数组}——首绘绑定一次，帧内不再变化；断点
+    // 只剩 管线/剪刀/视口/换流
+    const std::array sets{textureArray,samplerSet};
+    const bool aVpChange = drawState.width!=vw || drawState.height!=vh;
+    const bool aScChange = !drawState.hasScissor || drawState.scissor.offset.x!=scissor.offset.x ||
+        drawState.scissor.offset.y!=scissor.offset.y || drawState.scissor.extent.width!=scissor.extent.width ||
+        drawState.scissor.extent.height!=scissor.extent.height;
+    const bool aPlChange = drawState.pipeline!=pipeline;
+    const bool aDsChange = drawState.descriptors!=sets;
+    if (pendingRun.count != 0 && (aVpChange || aScChange || aPlChange || aDsChange || pendingRun.stream != stream))
+        FlushPendingRun(cmd);
+    if (aVpChange) {
+        const VkViewport viewport{0,0,static_cast<float>(vw),static_cast<float>(vh),0,1};
+        vkCmdSetViewport(cmd,0,1,&viewport);
+        ++drawCommands.viewports;
+        const float extent[]={static_cast<float>(vw),static_cast<float>(vh)};
+        vkCmdPushConstants(cmd,pipelineLayout,
+            hdr ? VK_SHADER_STAGE_VERTEX_BIT|VK_SHADER_STAGE_FRAGMENT_BIT : VK_SHADER_STAGE_VERTEX_BIT,
+            0,sizeof(extent),extent);
+        ++drawCommands.extents;
+        drawState.width=vw;drawState.height=vh;
+    }
+    const auto& previous=drawState.scissor;
+    if (!drawState.hasScissor || previous.offset.x!=scissor.offset.x || previous.offset.y!=scissor.offset.y ||
+        previous.extent.width!=scissor.extent.width || previous.extent.height!=scissor.extent.height) {
+        vkCmdSetScissor(cmd,0,1,&scissor);
+        ++drawCommands.scissors;
+        drawState.scissor=scissor;drawState.hasScissor=true;
+    }
+    if (drawState.pipeline!=pipeline) {
+        vkCmdBindPipeline(cmd,VK_PIPELINE_BIND_POINT_GRAPHICS,pipeline);
+        ++drawCommands.pipelines;
+        drawState.pipeline=pipeline;
+    }
+    if (aDsChange) {
+        vkCmdBindDescriptorSets(cmd,VK_PIPELINE_BIND_POINT_GRAPHICS,pipelineLayout,0,2,sets.data(),0,nullptr);
+        ++drawCommands.descriptors;
+        drawState.descriptors=sets;
+    }
+    // P5：并入待决游程（流连续追加），bind+draw 延迟到冲刷点
+    if (pendingRun.count == 0)
+        pendingRun = PendingRun{stream, offset, 0};
+    pendingRun.count += static_cast<uint32_t>(vertices.size());
+    if (sMergeOff)
+        FlushPendingRun(cmd);
+}
+
+void VulkanRenderer::Impl::FlushPendingRun(VkCommandBuffer cmd) {
+    if (pendingRun.count == 0) return;
+    // 游程顶点总在流缓冲内连续追加：整个缓冲绑定一次，游程用 firstVertex
+    // 偏移取址（绑 22 次/帧纯属结构浪费）；仅换流缓冲时重绑
+    if (drawState.vertexBuffer != pendingRun.stream->buffer) {
+        const VkDeviceSize zero = 0;
+        vkCmdBindVertexBuffers(cmd, 0, 1, &pendingRun.stream->buffer, &zero);
+        ++drawCommands.vertexBuffers;
+        drawState.vertexBuffer = pendingRun.stream->buffer;
+    }
+    vkCmdDraw(cmd, pendingRun.count, 1,
+        static_cast<uint32_t>(pendingRun.offset / sizeof(VulkanVertex)), 0);
+    ++drawCommands.draws;
+    pendingRun.count = 0;
+}
+
+void VulkanRenderer::SubmitTriangles(std::span<const VulkanVertex> vertices, VulkanTexture* texture,
+    bool linear, bool wrap, VulkanBlend blend, const VulkanClip* clip) {
+    (void)linear; (void)wrap;  // 采样器随顶点携带（RenderInterface 填充），不再是绑定状态
+    auto& s = *impl_;
+    auto* output = s.renderImage ? s.renderImage : s.scene.get();
+    const auto& pipelines = s.renderImage ? s.imagePipelines : s.pipelines;
+    s.Draw(vertices, texture, pipelines.at(static_cast<size_t>(blend)), clip, output->width, output->height);
+}
+
+void VulkanRenderer::SubmitCoverageTriangles(std::span<const VulkanVertex> vertices,VulkanTexture* mask,
+    VulkanBlend blend,const VulkanClip* clip) {
+    auto& s=*impl_;
+    if(!mask || !s.textures.contains(mask) || mask->format!=VK_FORMAT_R8_UNORM)
+        throw std::invalid_argument("Coverage drawing requires a live R8 mask");
+    auto* output = s.renderImage ? s.renderImage : s.scene.get();
+    const auto& pipelines = s.renderImage ? s.imageCoveragePipelines : s.coveragePipelines;
+    s.Draw(vertices,mask,pipelines.at(static_cast<size_t>(blend)),clip,output->width,output->height);
+}
+
+void VulkanRenderer::EndSceneAndPresent() {
+    auto& s = *impl_;
+    if (!s.frame.valid) throw std::logic_error("No open scene");
+    // 帧批（含 present）引用的合成/上传结果必须先提交（队列同序）。
+    if (s.transferOpen) s.FinishTransfer();
+    if (s.imageOnly) {
+        s.FinishImageBatch();
+        return;
+    }
+    s.EndTargetPass();
+    auto* scale = s.ActiveScale();
+    VulkanTexture* presentImage = s.scene.get();
+    if (scale) {
+        if (!scale->warm) throw std::logic_error("Activating a scale chain before GPU warm-up");
+        scale->pipeline->Record(s.frame.cmd,s.scene->layout,
+            VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,VK_ACCESS_MEMORY_READ_BIT|VK_ACCESS_MEMORY_WRITE_BIT);
+        presentImage = scale->sampledOutput.get();
+    }
+    s.scene->layout = s.scene->sampledLayout;
+    s.window.BeginPresentPass({{0, 0, 0, 1}});
+    // Scale records through a different owner and BeginPresentPass sets the
+    // window viewport/scissor (and optionally a graphics pipeline). Re-establish
+    // all state before presenting, including when surface == logical canvas.
+    s.drawState = {};
+    const auto rect = PresentRect(int(s.frame.extent.width),int(s.frame.extent.height));
+    const float w = float(rect.width), h = float(rect.height);
+    const float x = float(rect.x), y = float(rect.y);
+    const VulkanVertex vertices[] = {
+        {x,y,1,1,1,1,0,0,presentImage->slot,1}, {x+w,y,1,1,1,1,1,0,presentImage->slot,1}, {x+w,y+h,1,1,1,1,1,1,presentImage->slot,1},
+        {x,y,1,1,1,1,0,0,presentImage->slot,1}, {x+w,y+h,1,1,1,1,1,1,presentImage->slot,1}, {x,y+h,1,1,1,1,0,1,presentImage->slot,1}};
+    if (s.hdr) {
+        const float push[]={float(s.frame.extent.width),float(s.frame.extent.height),0,0,
+            s.hdr->paperWhiteNits,s.hdr->peakNits,s.hdr->reinhardPaperNits,s.hdr->strength};
+        vkCmdPushConstants(s.frame.cmd,s.pipelineLayout,VK_SHADER_STAGE_VERTEX_BIT|VK_SHADER_STAGE_FRAGMENT_BIT,0,sizeof(push),push);
+    }
+    s.Draw(vertices, presentImage, s.presentPipeline, nullptr, s.frame.extent.width, s.frame.extent.height);
+    s.FlushPendingRun(s.frame.cmd);  // P5：present 四边形入令后冲刷
+    s.FlushTextureUploads(); // Includes textures first encountered during this scene.
+    s.window.EndFrame();
+    s.frame = {};
+    s.sceneInitialized = true;
+}
+
+bool VulkanRenderer::PresentRetainedScene() {
+    if (impl_->frame.valid || impl_->renderImage)
+        throw std::logic_error("Retained presentation requires the main scene selected and no open batch");
+    if (!impl_->sceneInitialized) return false;
+    if (!BeginScene()) return false;
+    EndSceneAndPresent();
+    return true;
+}
+bool VulkanRenderer::ResizePresent() {
+    auto& s = *impl_;
+    if (s.frame.valid) throw std::logic_error("Resize during game drawing");
+    if (!s.window.RecreateSwapchain()) return false;
+    s.RefreshPresentPipeline();
+    return true;
+}
+void VulkanRenderer::SetHdrParams(const VulkanHdrParams& params) {
+    params.Validate();
+    auto& s=*impl_;
+    if (!s.hdr) throw std::logic_error("Cannot set HDR metadata on an SDR renderer");
+    if (s.frame.valid) throw std::logic_error("Cannot change HDR metadata during a scene");
+    s.CheckPresentEncoding();
+    s.hdr=params;
+}
+VulkanHdrParams VulkanRenderer::HdrParams() const {
+    if (!impl_->hdr) throw std::logic_error("SDR renderer has no HDR parameters");
+    return *impl_->hdr;
+}
+
+void VulkanRenderer::PrepareScale(bool fullscreen,std::span<const VulkanScaleStep> steps,
+    uint32_t targetW,uint32_t targetH) {
+    auto& s=*impl_;
+    if (s.frame.valid) throw std::logic_error("Preparing scale during game drawing");
+    if (!s.scaleLibrary) s.scaleLibrary=std::make_unique<VulkanScaleLibrary>(
+        VulkanScaleDevice{s.window.physicalDevice,s.device,s.window.graphicsQueue,s.window.graphicsFamily});
+    std::unique_ptr<Impl::ScaleMode> next;
+    if (!steps.empty()) {
+        next=std::make_unique<Impl::ScaleMode>();
+        const VulkanScaleImage input{s.scene->image,s.scene->view,VK_FORMAT_B8G8R8A8_UNORM,uint32_t(s.width),uint32_t(s.height)};
+        next->pipeline=std::make_unique<VulkanScalePipeline>(*s.scaleLibrary,input,steps,targetW,targetH);
+        const auto output=next->pipeline->output;
+        next->sampledOutput=std::make_unique<VulkanTexture>();
+        auto& texture=*next->sampledOutput;
+        texture.ownsImage=false; texture.image=output.image; texture.view=output.view;
+        texture.width=int(output.width); texture.height=int(output.height);
+        texture.slot = s.AllocSlot();
+        texture.format = output.format;
+        texture.layout = texture.sampledLayout;
+        s.slotOwners[texture.slot] = &texture;
+        texture.slotOwner = &s.slotOwners[texture.slot];
+        const VkDescriptorImageInfo image{VK_NULL_HANDLE,texture.view,VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL};
+        VkWriteDescriptorSet write{VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET};
+        write.dstSet=s.textureArray; write.dstArrayElement=texture.slot; write.descriptorCount=1;
+        write.descriptorType=VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE; write.pImageInfo=&image;
+        vkUpdateDescriptorSets(s.device,1,&write,0,nullptr);
+    }
+    s.window.WaitForFrame();
+    s.ReleaseScale(unsigned(fullscreen));
+    s.scaleModes[unsigned(fullscreen)]=std::move(next);
+    if (s.scaleMode==unsigned(fullscreen)) s.scaleEnabled=false;
+}
+void VulkanRenderer::WarmScale(bool fullscreen) {
+    auto& s=*impl_;
+    auto* mode=s.scaleModes[unsigned(fullscreen)].get();
+    if (!mode || mode->warm) return;
+    if (s.frame.valid) throw std::logic_error("Warming scale during game drawing");
+    s.window.WaitForFrame();
+    auto cmd=s.BeginTransfer();
+    if (!s.sceneInitialized) {
+        Barrier(cmd,s.scene->image,VK_IMAGE_LAYOUT_UNDEFINED,VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+            VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,VK_PIPELINE_STAGE_TRANSFER_BIT,0,VK_ACCESS_TRANSFER_WRITE_BIT);
+        const VkClearColorValue clear{{0,0,0,1}};
+        const VkImageSubresourceRange range{VK_IMAGE_ASPECT_COLOR_BIT,0,1,0,1};
+        vkCmdClearColorImage(cmd,s.scene->image,VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,&clear,1,&range);
+        mode->pipeline->Record(cmd,VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+            VK_PIPELINE_STAGE_TRANSFER_BIT,VK_ACCESS_TRANSFER_WRITE_BIT);
+    } else {
+        mode->pipeline->Record(cmd,VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+            VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+            VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_SHADER_READ_BIT);
+    }
+    s.FinishTransfer();
+    s.CompleteTransfers();
+    s.sceneInitialized=true;
+    s.scene->layout=s.scene->sampledLayout;
+    mode->warm=true;
+}
+void VulkanRenderer::SetScaleMode(bool enabled,bool fullscreen) {
+    auto& s=*impl_;
+    if (s.frame.valid) throw std::logic_error("Switching scale during game drawing");
+    const auto* mode=s.scaleModes[unsigned(fullscreen)].get();
+    if (enabled && mode && !mode->warm) throw std::logic_error("Scale chain has not completed warm-up");
+    // Empty mode sections intentionally use direct present.
+    s.scaleMode=unsigned(fullscreen);
+    s.scaleEnabled=enabled && mode;
+}
+VulkanScaleImage VulkanRenderer::ScaleOutput(bool fullscreen) const {
+    const auto* mode=impl_->scaleModes[unsigned(fullscreen)].get();
+    return mode?mode->pipeline->output:VulkanScaleImage{};
+}
+VulkanClip VulkanRenderer::PresentRect(int fw,int fh) const {
+    if (fw<=0 || fh<=0) throw std::invalid_argument("Invalid scale surface dimensions");
+    const auto& s=*impl_;
+    if (const auto* mode=s.ActiveScale()) {
+        const auto image=mode->pipeline->output;
+        // User-defined output size: center and clip/letterbox, never rescale.
+        return {(fw-int(image.width))/2,(fh-int(image.height))/2,int(image.width),int(image.height)};
+    }
+    return FitSceneToSurface(s.width,s.height,fw,fh);
+}
+VulkanRenderer::ScaleCounts VulkanRenderer::GetScaleCounts() const {
+    const auto& s=*impl_;
+    ScaleCounts counts{s.scaleLibrary?s.scaleLibrary->ProgramCount():0,s.scaleLibrary?s.scaleLibrary->LookupCount():0,0};
+    for (const auto& mode:s.scaleModes) if (mode) counts.writableImages+=mode->pipeline->WritableImageCount();
+    return counts;
+}
+
+std::vector<uint32_t> VulkanRenderer::ReadScalePixels(bool fullscreen) {
+    auto& s=*impl_;
+    const auto image=ScaleOutput(fullscreen);
+    if (s.frame.valid || !image.image) throw std::logic_error("Scale readback requires a completed pipeline");
+    if (image.format!=VK_FORMAT_R8G8B8A8_UNORM)
+        throw std::runtime_error("Scale diagnostic readback currently requires RGBA8");
+    s.window.WaitForFrame();
+    Buffer readback;
+    readback.Create(VkDeviceSize(image.width)*image.height*4,VK_BUFFER_USAGE_TRANSFER_DST_BIT);
+    auto cmd=s.BeginTransfer();
+    Barrier(cmd,image.image,VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+        VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT|VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,VK_PIPELINE_STAGE_TRANSFER_BIT,
+        VK_ACCESS_SHADER_READ_BIT|VK_ACCESS_SHADER_WRITE_BIT,VK_ACCESS_TRANSFER_READ_BIT);
+    VkBufferImageCopy copy{};
+    copy.imageSubresource={VK_IMAGE_ASPECT_COLOR_BIT,0,0,1};copy.imageExtent={image.width,image.height,1};
+    vkCmdCopyImageToBuffer(cmd,image.image,VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,readback.buffer,1,&copy);
+    Barrier(cmd,image.image,VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+        VK_PIPELINE_STAGE_TRANSFER_BIT,VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT|VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+        VK_ACCESS_TRANSFER_READ_BIT,VK_ACCESS_SHADER_READ_BIT);
+    VkMemoryBarrier host{VK_STRUCTURE_TYPE_MEMORY_BARRIER};
+    host.srcAccessMask=VK_ACCESS_TRANSFER_WRITE_BIT;host.dstAccessMask=VK_ACCESS_HOST_READ_BIT;
+    vkCmdPipelineBarrier(cmd,VK_PIPELINE_STAGE_TRANSFER_BIT,VK_PIPELINE_STAGE_HOST_BIT,0,1,&host,0,nullptr,0,nullptr);
+    s.FinishTransfer();
+    s.CompleteTransfers();
+    const auto* source=static_cast<const uint32_t*>(readback.mapped);
+    std::vector<uint32_t> pixels(size_t(image.width)*image.height);
+    // Diagnostic PNG writer expects BGRA words. No CPU conversion in present.
+    for(size_t i=0;i<pixels.size();++i)
+        pixels[i]=(source[i]&0xff00ff00)|((source[i]&255)<<16)|((source[i]>>16)&255);
+    return pixels;
+}
+
+ImagePixels VulkanRenderer::ReadTexturePixels(VulkanTexture* handle) {
+    auto& s=*impl_;
+    if(s.frame.valid)throw std::logic_error("Texture readback requires a completed scene");
+    const auto found=s.textures.find(handle);
+    if(found==s.textures.end())throw std::invalid_argument("Readback texture is not live in this renderer");
+    auto& texture=*found->second;
+    const bool generated=texture.generated && texture.format==VK_FORMAT_R32G32B32A32_SFLOAT;
+    if(texture.format!=VK_FORMAT_B8G8R8A8_UNORM && texture.format!=VK_FORMAT_R8G8B8A8_UNORM && !generated)
+        throw std::invalid_argument("Texture diagnostic readback requires BGRA8, RGBA8 or a generated RGBA32F image");
+    const bool swizzle=texture.format==VK_FORMAT_R8G8B8A8_UNORM;
+    ImagePixels result(texture.width,texture.height);
+    s.window.WaitForFrame();
+    s.FlushTextureUploads(); // A diagnostic can read an image before its first draw.
+    // Compute-written images (caustics) live in GENERAL and carry shader writes;
+    // upload-owned ones sit in SHADER_READ_ONLY with fragment reads only.
+    const bool general=texture.sampledLayout==VK_IMAGE_LAYOUT_GENERAL;
+    const VkAccessFlags sampledAccess=VK_ACCESS_SHADER_READ_BIT|
+        (general?VK_ACCESS_SHADER_WRITE_BIT:0);
+    Buffer readback;readback.Create(VkDeviceSize(result.pixels.size())*texture.texelBytes,VK_BUFFER_USAGE_TRANSFER_DST_BIT);
+    auto cmd=s.BeginTransfer();
+    Barrier(cmd,texture.image,texture.sampledLayout,VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+        VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,VK_PIPELINE_STAGE_TRANSFER_BIT,
+        VK_ACCESS_MEMORY_READ_BIT|VK_ACCESS_MEMORY_WRITE_BIT,VK_ACCESS_TRANSFER_READ_BIT);
+    VkBufferImageCopy copy{};
+    copy.imageSubresource={VK_IMAGE_ASPECT_COLOR_BIT,0,0,1};
+    copy.imageExtent={uint32_t(texture.width),uint32_t(texture.height),1};
+    vkCmdCopyImageToBuffer(cmd,texture.image,VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,readback.buffer,1,&copy);
+    Barrier(cmd,texture.image,VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,texture.sampledLayout,
+        VK_PIPELINE_STAGE_TRANSFER_BIT,VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT|VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+        VK_ACCESS_TRANSFER_READ_BIT,sampledAccess);
+    VkMemoryBarrier host{VK_STRUCTURE_TYPE_MEMORY_BARRIER};
+    host.srcAccessMask=VK_ACCESS_TRANSFER_WRITE_BIT;host.dstAccessMask=VK_ACCESS_HOST_READ_BIT;
+    vkCmdPipelineBarrier(cmd,VK_PIPELINE_STAGE_TRANSFER_BIT,VK_PIPELINE_STAGE_HOST_BIT,0,1,&host,0,nullptr,0,nullptr);
+    s.FinishTransfer();
+    s.CompleteTransfers();
+    if(generated) {
+        // Explicit diagnostics/export only: rendering keeps all generated pixels
+        // in RGBA32F GPU memory and never routes through this host conversion.
+        const auto* source=static_cast<const float*>(readback.mapped);
+        const auto byte=[](float value) -> uint32_t {
+            if(!std::isfinite(value))return 0;
+            return uint32_t(std::lround(std::clamp(value,0.0f,1.0f)*255.0f));
+        };
+        for(size_t i=0;i<result.pixels.size();++i) {
+            const float* pixel=source+i*4;
+            const float alpha=pixel[3];
+            const float inverse=alpha>0.0f?1.0f/alpha:0.0f;
+            result.pixels[i]=(byte(alpha)<<24)|(byte(pixel[0]*inverse)<<16)|
+                (byte(pixel[1]*inverse)<<8)|byte(pixel[2]*inverse);
+        }
+    } else {
+        std::memcpy(result.pixels.data(),readback.mapped,result.pixels.size()*4);
+    }
+    if(swizzle) // RGBA8 源转 ImagePixels 的 BGRA 字节序契约
+        for(auto& pixel:result.pixels)
+            pixel=(pixel&0xFF00FF00u)|((pixel&0x00FF0000u)>>16)|((pixel&0x000000FFu)<<16);
+    if(texture.opaque)for(auto& pixel:result.pixels)pixel|=0xff000000u;
+    return result;
+}
+
+std::vector<uint32_t> VulkanRenderer::ReadScenePixels() {
+    auto& s = *impl_;
+    if (s.frame.valid || !s.sceneInitialized) throw std::logic_error("Readback requires a completed scene");
+    s.window.WaitForFrame();
+    Buffer readback;
+    readback.Create(VkDeviceSize(s.width) * s.height * 4, VK_BUFFER_USAGE_TRANSFER_DST_BIT);
+    auto cmd = s.BeginTransfer();
+    Barrier(cmd, s.scene->image, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+        VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_ACCESS_SHADER_READ_BIT, VK_ACCESS_TRANSFER_READ_BIT);
+    VkBufferImageCopy copy{};
+    copy.imageSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
+    copy.imageExtent = {static_cast<uint32_t>(s.width), static_cast<uint32_t>(s.height), 1};
+    vkCmdCopyImageToBuffer(cmd, s.scene->image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, readback.buffer, 1, &copy);
+    Barrier(cmd, s.scene->image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+        VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_ACCESS_TRANSFER_READ_BIT, VK_ACCESS_SHADER_READ_BIT);
+    VkMemoryBarrier host{VK_STRUCTURE_TYPE_MEMORY_BARRIER};
+    host.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+    host.dstAccessMask = VK_ACCESS_HOST_READ_BIT;
+    vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_HOST_BIT, 0, 1, &host, 0, nullptr, 0, nullptr);
+    s.FinishTransfer();
+    s.CompleteTransfers();
+    std::vector<uint32_t> pixels(size_t(s.width) * s.height);
+    std::memcpy(pixels.data(), readback.mapped, pixels.size() * 4);
+    return pixels;
+}
+}

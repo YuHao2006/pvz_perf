@@ -1,0 +1,31 @@
+#version 450
+layout(local_size_x=8,local_size_y=8) in;
+layout(set=0,binding=0) uniform sampler2D baseImage;
+layout(set=0,binding=1) uniform sampler2D alphaImage;
+layout(set=0,binding=2,rgba8) writeonly uniform image2D target;
+layout(push_constant) uniform Params {
+    int width;
+    int height;
+    int columns;
+    int rows;
+    uint color;
+    uint colorOnly;
+} params;
+void main()
+{
+    const ivec2 position=ivec2(gl_GlobalInvocationID.xy);
+    if(position.x>=params.width || position.y>=params.height) return;
+    vec4 value=texelFetch(baseImage,position,0);
+    const ivec2 cell=ivec2(params.width/params.columns,params.height/params.rows);
+    if(position.x<cell.x*params.columns && position.y<cell.y*params.rows) {
+        const uint alpha=uint(round(texelFetch(alphaImage,position%cell,0).b*255.0));
+        if(params.colorOnly!=0u) {
+            const uint packed=params.color|(alpha<<24u);
+            value=vec4(float((packed>>16u)&255u),float((packed>>8u)&255u),
+                float(packed&255u),float(packed>>24u))/255.0;
+        } else {
+            value.a=float(alpha)/255.0;
+        }
+    }
+    imageStore(target,position,value);
+}

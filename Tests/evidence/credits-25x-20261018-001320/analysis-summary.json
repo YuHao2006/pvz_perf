@@ -1,0 +1,54 @@
+{
+  "selection": "Common endpoint seconds 4..163; both foreground endpoints; original segment=game; project scene=5 and raw segment=other-scene.",
+  "project_scene_evidence": {
+    "manual_confirmation": "User confirms this run played project credits.",
+    "source": "pvzPerf/LawnApp.cpp::ShowCreditScreen",
+    "mechanism": "Creates CreditScreen without assigning mGameScene; the previous award scene (5) remains.",
+    "limitation": "Raw CSV has no CreditScreen pointer or playback position; credits attribution relies on manual confirmation and source audit."
+  },
+  "method": "sum(process CPU seconds) * 1000 / sum(draw frames); one-second interval averages, not individual-frame timings.",
+  "limitations": [
+    "One serial pair, not repeated ABBA.",
+    "Manual t=3 start does not prove frame-exact playback alignment.",
+    "One-second endpoint checks cannot exclude all subsecond interruptions."
+  ],
+  "results": [
+    {
+      "kind": "original",
+      "core": "LP14",
+      "multiplier": "25x",
+      "executable_sha256": "5f650f52d12751e08b63e590edb0d9b9f09d087cea900baa0eb39e4af8eda251",
+      "samples": 160,
+      "seconds": 159.99991150000096,
+      "draw_frames": 15899,
+      "cpu_seconds": 40.734375,
+      "cpu_ms_per_draw_frame": 2.5620715139316936,
+      "fps_mean": 99.36880496336964,
+      "cpu_percent": 25.45899845700837,
+      "raw_segment_counts": {
+        "preroll": 2,
+        "other-scene": 4,
+        "game": 161
+      }
+    },
+    {
+      "kind": "project",
+      "core": "LP14",
+      "multiplier": "25x",
+      "executable_sha256": "cf750d7bd5c193850db963849fdfd92df4428fc3d4b1f3a2a42877f8648af7d9",
+      "samples": 160,
+      "seconds": 159.99971059999916,
+      "draw_frames": 15999,
+      "cpu_seconds": 26.203125,
+      "cpu_ms_per_draw_frame": 1.6377976748546783,
+      "fps_mean": 99.99393086402297,
+      "cpu_percent": 16.37698274686763,
+      "raw_segment_counts": {
+        "preroll": 2,
+        "other-scene": 162,
+        "background": 1
+      }
+    }
+  ],
+  "cpu_ms_per_frame_reduction_percent": 36.07525527882892
+}

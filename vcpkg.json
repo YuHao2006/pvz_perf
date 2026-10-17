@@ -1,0 +1,21 @@
+{
+  "name": "plants-vs-zombies-legacy-modern",
+  "version-string": "0.1.0",
+  "builtin-baseline": "127402f1c75bb3d5ff6bce04b285faa4930a5aca",
+  "dependencies": [
+    "directx-dxc",
+    {
+      "name": "jpegli",
+      "version>=": "2026-06-01"
+    },
+    {
+      "name": "libspng",
+      "version>=": "0.7.4"
+    },
+    {
+      "name": "zlib",
+      "version>=": "1.3.2"
+    },
+    "nlohmann-json"
+  ]
+}

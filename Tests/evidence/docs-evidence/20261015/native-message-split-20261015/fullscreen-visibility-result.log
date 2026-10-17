@@ -1,0 +1,6 @@
+negative-control runtime-enter old_visible=0
+runtime-enter preserved_visible=1
+negative-control startup-exit old_visible=0
+startup-exit preserved_visible=1
+hidden-enter-and-exit visible=0
+PASS fullscreen visibility contract; offscreen, no activation, no GPU

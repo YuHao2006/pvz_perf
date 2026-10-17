@@ -1,0 +1,55 @@
+[0/2] Re-checking globbed directories...
+[1/4] Generating reanim attacher masks (P4)
+gen: 144 types, max 171 tracks, 3 words, 12 attacher types -> Sexy.TodLib/generated/ReanimAttacherMasks.h
+[2/4] Building CXX object SexyAppFramework/CMakeFiles/LawnProject.dir/__/main.cpp.o
+In file included from /mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/GpuBackend.h:12,
+                 from /mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/SexyAppBase.h:12,
+                 from /mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/SexyApp.h:2,
+                 from /mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/LawnApp.h:4,
+                 from /mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/main.cpp:1:
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.h:15:5: warning: missing initializer for member ‘VkApplicationInfo::pNext’ [-Wmissing-field-initializers]
+   15 |     };
+      |     ^
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.h:15:5: warning: missing initializer for member ‘VkApplicationInfo::pEngineName’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.h:15:5: warning: missing initializer for member ‘VkApplicationInfo::engineVersion’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.h:19:5: warning: missing initializer for member ‘VkInstanceCreateInfo::pNext’ [-Wmissing-field-initializers]
+   19 |     };
+      |     ^
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.h:19:5: warning: missing initializer for member ‘VkInstanceCreateInfo::flags’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.h:19:5: warning: missing initializer for member ‘VkInstanceCreateInfo::enabledLayerCount’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.h:19:5: warning: missing initializer for member ‘VkInstanceCreateInfo::ppEnabledLayerNames’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.h:19:5: warning: missing initializer for member ‘VkInstanceCreateInfo::enabledExtensionCount’ [-Wmissing-field-initializers]
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/SexyAppFramework/graphics/vulkan/VulkanContext.h:19:5: warning: missing initializer for member ‘VkInstanceCreateInfo::ppEnabledExtensionNames’ [-Wmissing-field-initializers]
+[3/4] Linking CXX executable Release/pvz_perf; Staging the configured native BASS library; Staging the bidirectional dat/dat64 converter in the save directory
+In member function ‘AssignRenderGroupToTrack’,
+    inlined from ‘AttachShield’ at /mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/Lawn/Zombie.cpp:9725:42,
+    inlined from ‘operator()’ at /mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/Lawn/Zombie.cpp:597:19,
+    inlined from ‘_FUN’ at /mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/Lawn/Zombie.cpp:599:5:
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/Sexy.TodLib/Reanimator.cpp:2016:55: warning: ‘aTrackName’ may be used uninitialized [-Wmaybe-uninitialized]
+ 2016 |         const int aTrackIndex = ReanimatorTrackIndexOf(mReanimationType, theTrackId);
+      |                                                       ^
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/Lawn/Zombie.cpp: In function ‘_FUN’:
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/Lawn/Zombie.cpp:9702:19: note: ‘aTrackName’ was declared here
+ 9702 |     ReanimTrackId aTrackName;
+      |                   ^
+In member function ‘AssignRenderGroupToTrack’,
+    inlined from ‘AttachShield’ at /mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/Lawn/Zombie.cpp:9725:42,
+    inlined from ‘operator()’ at /mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/Lawn/Zombie.cpp:295:19,
+    inlined from ‘_FUN’ at /mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/Lawn/Zombie.cpp:297:5:
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/Sexy.TodLib/Reanimator.cpp:2016:55: warning: ‘aTrackName’ may be used uninitialized [-Wmaybe-uninitialized]
+ 2016 |         const int aTrackIndex = ReanimatorTrackIndexOf(mReanimationType, theTrackId);
+      |                                                       ^
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/Lawn/Zombie.cpp: In function ‘_FUN’:
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/Lawn/Zombie.cpp:9702:19: note: ‘aTrackName’ was declared here
+ 9702 |     ReanimTrackId aTrackName;
+      |                   ^
+In member function ‘BossSpawnAttack’,
+    inlined from ‘operator()’ at /mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/Lawn/Zombie.cpp:11292:34,
+    inlined from ‘_FUN’ at /mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/Lawn/Zombie.cpp:11298:9:
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/Lawn/Zombie.cpp:10749:21: warning: ‘aTrackName’ may be used uninitialized [-Wmaybe-uninitialized]
+10749 |     PlayZombieReanim(aTrackName, ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD, 20, 12.0f);
+      |                     ^
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/Lawn/Zombie.cpp: In function ‘_FUN’:
+/mnt/c/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/Lawn/Zombie.cpp:10736:19: note: ‘aTrackName’ was declared here
+10736 |     ReanimTrackId aTrackName;
+      |                   ^

@@ -1,0 +1,3 @@
+avatar=0 different-pixels=0 ink=32400
+avatar=1 different-pixels=0 ink=32400
+bytes=1038 original-pairs=PASS converter-v13-remap=PASS game-resave-identical=PASS disk-roundtrip=PASS

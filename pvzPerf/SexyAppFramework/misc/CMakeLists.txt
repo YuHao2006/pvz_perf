@@ -1,0 +1,40 @@
+target_sources(${PROJECT_NAME} PRIVATE
+    "AutoCrit.h"
+    "Buffer.h"
+    "CritSect.h"
+    "Debug.h"
+    "DescParser.h"
+    "Flags.h"
+    "KeyCodes.h"
+    "memmgr.h"
+    "ModVal.h"
+    "MTRand.h"
+    "PerfTimer.h"
+    "Point.h"
+    "Ratio.h"
+    "Rect.h"
+    "ResourceManager.h"
+    "SEHCatcher.h"
+    "SexyMatrix.h"
+    "SexyVector.h"
+    
+#   "MiscBuildBase.cpp"
+    "Buffer.cpp"
+    "CritSect.cpp"
+    "Debug.cpp"
+    "DescParser.cpp"
+    "Flags.cpp"
+    "KeyCodes.cpp"
+    "MTRand.cpp"
+    "PerfTimer.cpp"
+    "Ratio.cpp"
+    "ResourceManager.cpp"
+    "SEHCatcher.cpp"
+    "Win32CrashDump.cpp"
+    "Win32CrashDump.h"
+    "SexyMatrix.cpp"
+)
+if(WIN32)
+    target_sources(${PROJECT_NAME} PRIVATE
+        "$<$<NOT:$<CONFIG:Release>>:${CMAKE_CURRENT_SOURCE_DIR}/ModVal.cpp>")
+endif()

@@ -1,0 +1,10 @@
+1073 render semantics audit: FAILED
+  - DrawRenderGroup must flush once before attachments and once at the end
+  - Tree of Wisdom next-garden button placement differs from GOTY 1073
+  - store page number or vertical position differs from GOTY 1073
+  - store packet-upgrade description can escape the GOTY 2011..2014 range
+  - intro presentation font differs from GOTY 1073
+  - Crazy Dave packet-upgrade dialog amount or slot count differs from GOTY 1073
+  - Dancer seed-packet transform differs from GOTY 1073
+  - particle IDs regressed to the emitter-list allocator instead of the 1073 particle-list allocator
+  - function not found: RGB_to_HSL

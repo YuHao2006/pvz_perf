@@ -40,11 +40,6 @@ def package(args):
                  or Path(name).name.lower() in {"users.dat", "settings.json"}]
     if forbidden:
         raise ValueError(f"Personal or debug files in package: {forbidden}")
-    records = {
-        name: {"bytes": path.stat().st_size,
-               "sha256": hashlib.sha256(path.read_bytes()).hexdigest()}
-        for name, path in sorted(files.items())
-    }
     readme = (
         f"pvz_perf {args.version} - Windows x64 / Win32 / DirectX 12\n\n"
         "Extract the entire archive into a writable directory, then run pvz_perf.exe.\n"
@@ -60,18 +55,11 @@ def package(args):
         "Third-party components and game resources retain their respective rights "
         "and licenses; see licenses/.\n"
     )
-    manifest = {
-        "version": args.version, "platform": "x64-win32-dx12",
-        "source_commit": args.commit, "personal_saves": False,
-        "msvc_runtime": "installed x64 runtime (/MD), not bundled", "files": records,
-    }
     args.output.parent.mkdir(parents=True, exist_ok=True)
     with zipfile.ZipFile(args.output, "x", compression=zipfile.ZIP_DEFLATED, compresslevel=6) as archive:
-        prefix = f"pvz_perf-{args.version}-windows-x64-dx12/"
         for name, path in sorted(files.items()):
-            archive.write(path, prefix + name)
-        archive.writestr(prefix + "README.txt", readme)
-        archive.writestr(prefix + "manifest.json", json.dumps(manifest, indent=2) + "\n")
+            archive.write(path, name)
+        archive.writestr("README.txt", readme)
     with zipfile.ZipFile(args.output) as archive:
         failed = archive.testzip()
         if failed:
@@ -88,5 +76,4 @@ if __name__ == "__main__":
     parser.add_argument("--notices", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--version", default="v1.0")
-    parser.add_argument("--commit", required=True)
     package(parser.parse_args())

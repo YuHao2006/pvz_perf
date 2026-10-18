@@ -18,9 +18,13 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: macos-build-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
-    runs-on: macos-14
+    runs-on: macos-15
     timeout-minutes: 90
     env:
       VCPKG_ROOT: ${{ github.workspace }}/out/vcpkg
@@ -40,7 +44,7 @@ jobs:
         id: shader_cache
         with:
           path: out/arm64-cocoa-metal/macos-shader-tools
-          key: macos14-arm64-shader-tools-${{ hashFiles('tools/build-macos-shader-tools.sh') }}
+          key: macos15-arm64-shader-tools-${{ hashFiles('tools/build-macos-shader-tools.sh') }}
       - name: Verify native Apple Silicon tools
         shell: bash
         run: |
@@ -123,4 +127,4 @@ jobs:
         if: always() && steps.shader_cache.outputs.cache-hit != 'true'
         with:
           path: out/arm64-cocoa-metal/macos-shader-tools
-          key: macos14-arm64-shader-tools-${{ hashFiles('tools/build-macos-shader-tools.sh') }}
+          key: macos15-arm64-shader-tools-${{ hashFiles('tools/build-macos-shader-tools.sh') }}

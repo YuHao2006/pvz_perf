@@ -68,7 +68,7 @@ jobs:
             https://www.un4seen.com/files/bass24-osx.zip \
             --output "$RUNNER_TEMP/bass24-osx.zip"
           unzip -q "$RUNNER_TEMP/bass24-osx.zip" -d "$(dirname "$PVZ_BASS_LIBRARY")"
-          lipo -verify_arch arm64 "$PVZ_BASS_LIBRARY"
+          lipo "$PVZ_BASS_LIBRARY" -verify_arch arm64
       - name: Compile metadata tools and actual game
         shell: bash
         run: sh tools/build-macos-game.sh
@@ -82,8 +82,8 @@ jobs:
           test -s "$output/shaders/game.metallib"
           test -s "$output/libbass.dylib"
           test -s "$output/data/pvz_dat64_converter"
-          lipo -verify_arch arm64 "$output/pvz_perf"
-          lipo -verify_arch arm64 "$output/libbass.dylib"
+          lipo "$output/pvz_perf" -verify_arch arm64
+          lipo "$output/libbass.dylib" -verify_arch arm64
           otool -L "$output/pvz_perf"
           python3 - "$output/scale.json" <<'PY'
           import json, sys

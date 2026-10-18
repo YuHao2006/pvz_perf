@@ -14,7 +14,7 @@ if [ ! -f "$bass_library" ]; then
     printf '%s\n' 'Set PVZ_BASS_LIBRARY to the official macOS libbass.dylib.' >&2
     exit 2
 fi
-lipo -verify_arch arm64 "$bass_library"
+lipo "$bass_library" -verify_arch arm64
 
 cmake -S "$project_root" -B "$build" -G Ninja \
     "-DCMAKE_TOOLCHAIN_FILE=$vcpkg_root/scripts/buildsystems/vcpkg.cmake" \

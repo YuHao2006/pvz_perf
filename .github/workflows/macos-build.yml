@@ -38,8 +38,10 @@ jobs:
         id: vcpkg_cache
         with:
           path: ~/.cache/vcpkg/archives
-          key: macos-arm64-vcpkg-${{ hashFiles('vcpkg.json', 'vcpkg-overlay-ports/**') }}
-          restore-keys: macos-arm64-vcpkg-
+          key: macos15-arm64-vcpkg-${{ hashFiles('vcpkg.json', 'vcpkg-overlay-ports/**') }}
+          restore-keys: |
+            macos15-arm64-vcpkg-
+            macos-arm64-vcpkg-
       - uses: actions/cache/restore@v4
         id: shader_cache
         with:
@@ -122,7 +124,7 @@ jobs:
         if: always() && steps.vcpkg_cache.outputs.cache-hit != 'true'
         with:
           path: ~/.cache/vcpkg/archives
-          key: macos-arm64-vcpkg-${{ hashFiles('vcpkg.json', 'vcpkg-overlay-ports/**') }}
+          key: macos15-arm64-vcpkg-${{ hashFiles('vcpkg.json', 'vcpkg-overlay-ports/**') }}
       - uses: actions/cache/save@v4
         if: always() && steps.shader_cache.outputs.cache-hit != 'true'
         with:

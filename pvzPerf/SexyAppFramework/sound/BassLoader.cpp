@@ -261,20 +261,20 @@ BASS_INSTANCE::~BASS_INSTANCE()
 }
 
 
-BOOL BASS_INSTANCE::BASS_MusicSetAmplify(HMUSIC handle, float amp)
+BASSBOOL BASS_INSTANCE::BASS_MusicSetAmplify(HMUSIC handle, float amp)
 {
 	BASS_ChannelSetAttribute(handle, BASS_ATTRIB_MUSIC_AMPLIFY, amp);
 	return true;
 }
 
 
-BOOL BASS_INSTANCE::BASS_MusicPlay(HMUSIC handle)
+BASSBOOL BASS_INSTANCE::BASS_MusicPlay(HMUSIC handle)
 {
 	return BASS_ChannelPlay(handle, true);
 }
 
 
-BOOL BASS_INSTANCE::BASS_MusicPlayEx(HMUSIC handle, DWORD pos, int flags, BOOL reset)
+BASSBOOL BASS_INSTANCE::BASS_MusicPlayEx(HMUSIC handle, DWORD pos, int flags, BASSBOOL reset)
 {
 	(void)reset;
 	//int anOffset = MAKEMUSICPOS(pos,0);
@@ -291,12 +291,12 @@ BOOL BASS_INSTANCE::BASS_MusicPlayEx(HMUSIC handle, DWORD pos, int flags, BOOL r
 }
 
 
-BOOL BASS_INSTANCE::BASS_ChannelResume(DWORD handle)
+BASSBOOL BASS_INSTANCE::BASS_ChannelResume(DWORD handle)
 {
 	return BASS_ChannelPlay(handle, false);
 }
 
-BOOL BASS_INSTANCE::BASS_StreamPlay(HSTREAM handle, BOOL flush, DWORD flags)
+BASSBOOL BASS_INSTANCE::BASS_StreamPlay(HSTREAM handle, BASSBOOL flush, DWORD flags)
 {
 	BASS_ChannelFlags(handle, flags, -1);
 	return BASS_ChannelPlay(handle, flush);

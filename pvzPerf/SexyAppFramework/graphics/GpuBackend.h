@@ -8,6 +8,10 @@
 #include "d3d12/D3d12Context.h"
 #include "d3d12/D3d12Renderer.h"
 #include "d3d12/D3d12ScalePipeline.h"
+#elif defined(PVZ_GPU_METAL)
+#include "metal/MetalContext.h"
+#include "metal/MetalRenderer.h"
+#include "metal/MetalScaleTypes.h"
 #else
 #include "vulkan/VulkanContext.h"
 #include "vulkan/VulkanRenderer.h"
@@ -21,6 +25,12 @@ using GpuRenderer = D3d12Renderer;
 using GpuTexture = D3d12Texture;
 using GpuScaleStep = D3d12ScaleStep;
 using GpuScaleImage = D3d12ScaleImage;
+#elif defined(PVZ_GPU_METAL)
+using GpuContext = MetalContext;
+using GpuRenderer = MetalRenderer;
+using GpuTexture = MetalTexture;
+using GpuScaleStep = MetalScaleStep;
+using GpuScaleImage = MetalScaleImage;
 #else
 using GpuContext = ::VulkanContext;
 using GpuRenderer = VulkanRenderer;
@@ -44,6 +54,8 @@ inline unsigned long long GpuHandleIdentity(NativeHandle handle) {
 inline unsigned long long GpuScaleIdentity(const GpuScaleImage& image) {
 #if defined(PVZ_GPU_D3D12)
     return GpuHandleIdentity(image.resource);
+#elif defined(PVZ_GPU_METAL)
+    return GpuHandleIdentity(image.texture);
 #else
     return GpuHandleIdentity(image.image);
 #endif

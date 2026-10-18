@@ -1,6 +1,6 @@
 #include "sound/BassMusicInterface.h"
 #include "sound/BassLoader.h"
-#include "platform/linux/audio/OpenALSoundManager.h"
+#include "platform/audio/openal/OpenALSoundManager.h"
 #include <cmath>
 #include <cstdarg>
 #include <chrono>

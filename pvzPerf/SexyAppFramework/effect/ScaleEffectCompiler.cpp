@@ -1,5 +1,5 @@
 #include "ScaleEffectCompiler.h"
-#include "SexyAppFramework/graphics/vulkan/VulkanEffectFormats.h"
+#include "ScaleEffectFormats.h"
 #if defined(SEXY_SCALE_EFFECT_AUTHORING)
 
 #ifdef _WIN32
@@ -811,7 +811,7 @@ bool ScaleEffectCompiler::GenerateAndCompilePasses(ScaleEffectDesc& ioDesc,
 				return false;
 			}
 			std::string aFormat = aTex->mFormat.empty() ? "R8G8B8A8_UNORM" : aTex->mFormat;
-			const AuthoringFormatInfo* aInfo = FindFormat(aFormat);
+			const ScaleAuthoringFormatInfo* aInfo = FindScaleEffectFormat(aFormat);
 			if (aInfo == nullptr)
 			{
 				ioDesc.mError = "unknown texture format: " + aFormat;
@@ -836,7 +836,7 @@ bool ScaleEffectCompiler::GenerateAndCompilePasses(ScaleEffectDesc& ioDesc,
 				return false;
 			}
 			std::string aFormat = aTex->mFormat.empty() ? "R8G8B8A8_UNORM" : aTex->mFormat;
-			const AuthoringFormatInfo* aInfo = FindFormat(aFormat);
+			const ScaleAuthoringFormatInfo* aInfo = FindScaleEffectFormat(aFormat);
 			if (aInfo == nullptr)
 			{
 				ioDesc.mError = "unknown texture format: " + aFormat;
@@ -1085,20 +1085,20 @@ bool ScaleEffectCompiler::BuildRuntimeMetadata(const ScaleEffectDesc& authored,
         if(item.mName=="OUTPUT") result.mOutput=texture.mId;
         if(!CompileSizeExpr(item.mWidthExpr,texture.mWidthExpr,error) ||
             !CompileSizeExpr(item.mHeightExpr,texture.mHeightExpr,error)) return false;
-        const auto* format=FindFormat(item.mFormat.empty()?"R8G8B8A8_UNORM":item.mFormat);
+        const auto* format=FindScaleEffectFormat(item.mFormat.empty()?"R8G8B8A8_UNORM":item.mFormat);
         if(!format) { error="Unknown scale texture format"; return false; }
-        texture.mFormat=format->mVulkan; texture.mSource=item.mSource;
+        texture.mFormat=format->mFormat; texture.mSource=item.mSource;
         result.mTextures.push_back(std::move(texture));
     }
     for(const auto& item:authored.mSamplers) {
         ScaleRuntimeSampler sampler;
-        if(item.mFilter.empty() || item.mFilter=="point") sampler.mFilter=VK_FILTER_NEAREST;
-        else if(item.mFilter=="linear") sampler.mFilter=VK_FILTER_LINEAR;
+        if(item.mFilter.empty() || item.mFilter=="point") sampler.mFilter=0;
+        else if(item.mFilter=="linear") sampler.mFilter=1;
         else { error="Unknown scale sampler filter"; return false; }
-        if(item.mAddress.empty() || item.mAddress=="clamp") sampler.mAddress=VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-        else if(item.mAddress=="wrap") sampler.mAddress=VK_SAMPLER_ADDRESS_MODE_REPEAT;
-        else if(item.mAddress=="mirror") sampler.mAddress=VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT;
-        else if(item.mAddress=="border") sampler.mAddress=VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
+        if(item.mAddress.empty() || item.mAddress=="clamp") sampler.mAddress=2;
+        else if(item.mAddress=="wrap") sampler.mAddress=0;
+        else if(item.mAddress=="mirror") sampler.mAddress=1;
+        else if(item.mAddress=="border") sampler.mAddress=3;
         else { error="Unknown scale sampler address"; return false; }
         result.mSamplers.push_back(sampler);
     }
@@ -1326,16 +1326,14 @@ bool ValidateRuntime(const ScaleEffectRuntimeDesc& effect,std::string& error,boo
     }
     for(size_t i=0;i<effect.mTextures.size();++i) {
         const auto& texture=effect.mTextures[i];
-        if(ScaleSlot(texture.mId)!=i || !FindFormat(static_cast<VkFormat>(texture.mFormat)) ||
+        if(ScaleSlot(texture.mId)!=i || !IsScaleEffectFormat(texture.mFormat) ||
             !ValidExpr(texture.mWidthExpr) || !ValidExpr(texture.mHeightExpr))
             return fail("Invalid scale binary resource/format/expression");
     }
     if(!effect.mTextures[ScaleSlot(effect.mInput)].mSource.empty() || !effect.mTextures[ScaleSlot(effect.mOutput)].mSource.empty())
         return fail("Invalid scale binary input/output source");
     for(const auto& sampler:effect.mSamplers)
-        if((sampler.mFilter!=VK_FILTER_NEAREST && sampler.mFilter!=VK_FILTER_LINEAR) ||
-            (sampler.mAddress!=VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE && sampler.mAddress!=VK_SAMPLER_ADDRESS_MODE_REPEAT &&
-             sampler.mAddress!=VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT && sampler.mAddress!=VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER))
+        if(sampler.mFilter>1 || sampler.mAddress>3)
             return fail("Invalid scale binary sampler enums");
     std::vector<bool> produced(effect.mTextures.size());
     produced[ScaleSlot(effect.mInput)]=true;
@@ -1426,9 +1424,9 @@ bool ScaleEffectBinary::Load(const std::filesystem::path& path,ScaleEffectRuntim
             p.mDefault=in.Float(); p.mMin=in.Float(); p.mMax=in.Float(); p.mStep=in.Float(); p.mInlineValue=in.Float();
         }
         result.mTextures.resize(in.Count());
-        for(auto& t:result.mTextures) { t.mId=static_cast<ScaleResourceId>(in.Word()); t.mFormat=static_cast<VkFormat>(in.Word()); t.mSource=in.Path(); t.mWidthExpr=in.Expr(); t.mHeightExpr=in.Expr(); }
+        for(auto& t:result.mTextures) { t.mId=static_cast<ScaleResourceId>(in.Word()); t.mFormat=in.Word(); t.mSource=in.Path(); t.mWidthExpr=in.Expr(); t.mHeightExpr=in.Expr(); }
         result.mSamplers.resize(in.Count());
-        for(auto& s:result.mSamplers) { s.mFilter=static_cast<VkFilter>(in.Word()); s.mAddress=static_cast<VkSamplerAddressMode>(in.Word()); }
+        for(auto& s:result.mSamplers) { s.mFilter=in.Word(); s.mAddress=in.Word(); }
         result.mPasses.resize(in.Count());
         for(auto& p:result.mPasses) {
             p.mId=static_cast<ScalePassId>(in.Word()); p.mPSStyle=in.Flag();

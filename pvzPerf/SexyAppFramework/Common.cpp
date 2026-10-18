@@ -21,6 +21,9 @@
 #include <stdexcept>
 
 #include "misc/PerfTimer.h"
+#ifdef __APPLE__
+#include "platform/macos/MacSystem.h"
+#endif
 
 HINSTANCE Sexy::gHInstance;
 namespace Sexy
@@ -599,7 +602,9 @@ std::string Sexy::GetFullPath(const std::string& theRelPath)
 
 std::string Sexy::GetExecutableDirectory()
 {
-#ifdef _WIN32
+#if defined(__APPLE__)
+    return AddTrailingSlash(MacExecutableDirectory(), true);
+#elif defined(_WIN32)
 	std::vector<char> aPath(MAX_PATH, '\0');
 	for (;;)
 	{

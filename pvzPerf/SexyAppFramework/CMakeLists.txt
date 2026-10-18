@@ -328,6 +328,33 @@ else()
     set_property(TARGET ${PROJECT_NAME} PROPERTY SOURCES "${_PVZ_GAME_SOURCES}")
 endif()
 
+if(APPLE)
+    get_target_property(_PVZ_GAME_SOURCES ${PROJECT_NAME} SOURCES)
+    list(FILTER _PVZ_GAME_SOURCES EXCLUDE REGEX "Smoke\\.cpp$")
+    list(FILTER _PVZ_GAME_SOURCES EXCLUDE REGEX "\\.(rc|cur)$")
+    list(FILTER _PVZ_GAME_SOURCES EXCLUDE REGEX "/platform/(windows|linux)/")
+    set_property(TARGET ${PROJECT_NAME} PROPERTY SOURCES "${_PVZ_GAME_SOURCES}")
+    file(GLOB macAppSources CONFIGURE_DEPENDS
+        "${CMAKE_CURRENT_SOURCE_DIR}/platform/macos/*.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/platform/macos/*.mm")
+    if(NOT macAppSources)
+        message(FATAL_ERROR "The Cocoa platform sources must be integrated before building LawnProject")
+    endif()
+    target_sources(${PROJECT_NAME} PRIVATE ${macAppSources})
+    target_compile_definitions(${PROJECT_NAME} PRIVATE
+        SEXY_WINDOW_COCOA=1 SEXY_RENDER_GPU=1 PVZ_GPU_METAL=1
+        "$<$<NOT:$<CONFIG:Release>>:SEXY_DISABLE_MODVAL=1>")
+    foreach(framework IN ITEMS Cocoa Metal QuartzCore AudioToolbox CoreAudio)
+        find_library(PVZ_MAC_${framework} NAMES ${framework} REQUIRED)
+        target_link_libraries(${PROJECT_NAME} PRIVATE "${PVZ_MAC_${framework}}")
+    endforeach()
+    set_target_properties(${PROJECT_NAME} PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/$<CONFIG>"
+        BUILD_RPATH "@loader_path"
+        INSTALL_RPATH "@loader_path")
+    message(STATUS "Experimental macOS: user HLSL scaling effects are unsupported; using native MSL")
+endif()
+
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     get_target_property(_PVZ_GAME_SOURCES ${PROJECT_NAME} SOURCES)
     list(FILTER _PVZ_GAME_SOURCES EXCLUDE REGEX
@@ -519,7 +546,23 @@ elseif(PVZ_RENDER_BACKEND STREQUAL "D3D12")
     target_link_libraries(${PROJECT_NAME} PRIVATE sexy_d3d12)
     add_dependencies(${PROJECT_NAME} sexy_d3d12_shaders)
     set(gameShaderDirectory "${CMAKE_BINARY_DIR}/SexyAppFramework/graphics/d3d12/shaders")
+elseif(PVZ_RENDER_BACKEND STREQUAL "METAL")
+    if(NOT TARGET sexy_metal)
+        message(FATAL_ERROR "Native Metal requires the real sexy_metal backend target")
+    endif()
+    target_link_libraries(${PROJECT_NAME} PRIVATE sexy_metal)
+    set(gameShaderDirectory "${CMAKE_BINARY_DIR}/SexyAppFramework/graphics/metal/shaders")
 endif()
+if(APPLE)
+    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+        COMMAND "${CMAKE_COMMAND}" -E copy_directory
+            "${gameShaderDirectory}" "$<TARGET_FILE_DIR:${PROJECT_NAME}>/shaders"
+        COMMAND "${CMAKE_COMMAND}"
+            "-DSOURCE=${CMAKE_CURRENT_SOURCE_DIR}/platform/macos/default-scale.json"
+            "-DDESTINATION=$<TARGET_FILE_DIR:${PROJECT_NAME}>"
+            -P "${CMAKE_SOURCE_DIR}/CMake/StageScaleConfig.cmake"
+        VERBATIM)
+else()
     add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
         COMMAND "${CMAKE_COMMAND}" -E copy_directory
             "${gameShaderDirectory}"
@@ -540,6 +583,7 @@ add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
     COMMAND "${CMAKE_COMMAND}" -E copy_if_different
         "$<TARGET_FILE_DIR:Microsoft::DirectXShaderCompiler>/${CMAKE_SHARED_LIBRARY_PREFIX}dxil${CMAKE_SHARED_LIBRARY_SUFFIX}"
         "$<TARGET_FILE_DIR:${PROJECT_NAME}>" VERBATIM)
+endif()
 
 set(ADDITIONAL_LIBRARY_DEPENDENCIES
     "$<$<CONFIG:Debug>:"
@@ -623,6 +667,10 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
 # Scaling source is compiled during configuration loading, never during drawing.
 if(PVZ_RENDER_BACKEND STREQUAL "D3D12")
     target_link_libraries(${PROJECT_NAME} PRIVATE sexy_d3d12_effects)
+elseif(PVZ_RENDER_BACKEND STREQUAL "METAL")
+    if(TARGET sexy_metal_effects)
+        target_link_libraries(${PROJECT_NAME} PRIVATE sexy_metal_effects)
+    endif()
 else()
     target_link_libraries(${PROJECT_NAME} PRIVATE sexy_vulkan_effects)
 endif()

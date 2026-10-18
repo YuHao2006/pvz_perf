@@ -157,7 +157,7 @@ bool RenderInterface::InitGPU()
 	const std::string shaderDir = AddTrailingSlash(GetExecutableDirectory(), true) + "shaders/";
 	const GpuHdrParams hdr{gSexyAppBase->mScaleHDRPaperWhite,gSexyAppBase->mScaleHDRMaxNits,
         gSexyAppBase->mScaleHDRReinhardPaperNits,gSexyAppBase->mScaleHDRStrength};
-#if defined(PVZ_GPU_D3D12)
+#if defined(PVZ_GPU_D3D12) || defined(PVZ_GPU_METAL)
     mRenderer = new GpuRenderer(*gSexyAppBase->mGpuContext, mWidth, mHeight,
         shaderDir,gSexyAppBase->mScaleHDREnabled?&hdr:nullptr);
 #else
@@ -929,7 +929,7 @@ void RenderInterface::UseCausticsImages(MemoryImage* output,MemoryImage* source)
 
 GpuTexture* RenderInterface::GetCausticsTexture() const
 {
-#if defined(PVZ_GPU_D3D12)
+#if defined(PVZ_GPU_D3D12) || defined(PVZ_GPU_METAL)
 	return mRenderer != NULL ? mRenderer->causticsState.target : NULL;
 #else
 	return mRenderer != NULL ? mRenderer->causticsTexture : NULL;

@@ -1,0 +1,108 @@
+name: Experimental macOS arm64 build
+
+on:
+  push:
+    branches: [macos-metal]
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'CMakeLists.txt'
+      - 'CMake/**'
+      - 'pvzPerf/**'
+      - 'tools/**'
+      - 'assets/**'
+      - 'vcpkg.json'
+      - 'vcpkg-overlay-ports/**'
+      - '.github/workflows/macos-build.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: macos-14
+    timeout-minutes: 90
+    env:
+      VCPKG_ROOT: ${{ github.workspace }}/out/vcpkg
+      PVZ_BASS_LIBRARY: ${{ runner.temp }}/pvz-bass/libbass.dylib
+      PVZ_MACOS_BUILD_DIR: ${{ github.workspace }}/out/arm64-cocoa-metal
+      CMAKE_BUILD_PARALLEL_LEVEL: 3
+      VCPKG_MAX_CONCURRENCY: 3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/vcpkg/archives
+          key: macos-arm64-vcpkg-${{ hashFiles('vcpkg.json', 'vcpkg-overlay-ports/**') }}
+          restore-keys: macos-arm64-vcpkg-
+      - name: Verify native Apple Silicon tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(uname -m)" = arm64
+          xcodebuild -version
+          xcrun --find clang++
+          xcrun --find metal
+          cmake --version
+          ninja --version
+          python3 --version
+      - name: Read pinned vcpkg baseline
+        id: baseline
+        shell: bash
+        run: |
+          python3 -c 'import json, os; data = json.load(open("vcpkg.json")); print("revision=" + data["builtin-baseline"], file=open(os.environ["GITHUB_OUTPUT"], "a"))'
+      - uses: actions/checkout@v4
+        with:
+          repository: microsoft/vcpkg
+          ref: ${{ steps.baseline.outputs.revision }}
+          path: out/vcpkg
+      - name: Bootstrap vcpkg
+        shell: bash
+        run: bash "$VCPKG_ROOT/bootstrap-vcpkg.sh" -disableMetrics
+      - name: Download official macOS BASS runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$(dirname "$PVZ_BASS_LIBRARY")"
+          curl --fail --location --retry 3 \
+            https://www.un4seen.com/files/bass24-osx.zip \
+            --output "$RUNNER_TEMP/bass24-osx.zip"
+          unzip -q "$RUNNER_TEMP/bass24-osx.zip" -d "$(dirname "$PVZ_BASS_LIBRARY")"
+          lipo -verify_arch arm64 "$PVZ_BASS_LIBRARY"
+      - name: Compile metadata tools and actual game
+        shell: bash
+        run: sh tools/build-macos-game.sh
+      - name: Verify portable output
+        shell: bash
+        run: |
+          set -euo pipefail
+          output="$PVZ_MACOS_BUILD_DIR/Release"
+          test -s "$output/pvz_perf"
+          test -s "$output/main.pak64"
+          test -s "$output/shaders/game.metallib"
+          test -s "$output/libbass.dylib"
+          test -s "$output/data/pvz_dat64_converter"
+          lipo -verify_arch arm64 "$output/pvz_perf"
+          lipo -verify_arch arm64 "$output/libbass.dylib"
+          otool -L "$output/pvz_perf"
+          python3 - "$output/scale.json" <<'PY'
+          import json, sys
+          with open(sys.argv[1]) as source:
+              config = json.load(source)
+          assert config["HDR"]["enable"] is False
+          assert config["window"]["multiplier"] == 1
+          assert config["window"]["effects"] == []
+          assert config["fullScreen"]["effects"] == []
+          PY
+          if find "$output" -type f \( -iname '*dxcompiler*' -o -iname '*dxil*' \
+              -o -iname '*vulkan*' -o -iname '*.hlsl' \) | grep -q .; then
+            echo 'Unexpected DXC, Vulkan, or HLSL runtime asset in the native Metal artifact.' >&2
+            exit 1
+          fi
+          tar -czf "$RUNNER_TEMP/pvz-macos-arm64-experimental.tar.gz" -C "$output" .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pvz-macos-arm64-experimental
+          path: ${{ runner.temp }}/pvz-macos-arm64-experimental.tar.gz
+          if-no-files-found: error
+          retention-days: 14

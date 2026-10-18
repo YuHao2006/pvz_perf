@@ -20,7 +20,9 @@
 #include <memory>
 #include <array>
 #include <exception>
-#ifndef _WIN32
+#if defined(__APPLE__)
+#include "platform/macos/MacWindow.h"
+#elif !defined(_WIN32)
 #include "platform/NativeWindow.h"
 #endif
 
@@ -141,7 +143,11 @@ class SexyAppBase : public ButtonListener, public DialogListener
 {
 public:
 #ifndef _WIN32
+#ifdef __APPLE__
+    std::unique_ptr<MacWindow> mNativeWindow;
+#else
     std::unique_ptr<NativeWindow> mNativeWindow;
+#endif
 	int mInstanceLockFd = -1;
 #endif
     std::unique_ptr<GpuContext> mGpuContext;
@@ -249,6 +255,8 @@ public:
 	bool					mAllowMonitorPowersave;
 #ifdef _WIN32
 	WindowsMessageList		mDeferredMessages;
+#elif defined(__APPLE__)
+	std::list<MacWindowEvent> mDeferredMessages;
 #else
 	std::list<NativeWindowEvent> mDeferredMessages;
 #endif
@@ -442,7 +450,9 @@ protected:
 	virtual void			SwitchScreenMode(bool wantWindowed, bool is3d, bool force = false);
 	void					ReconfigureScale(bool theUseCustomScale);
 	bool					ProcessDeferredMessages(bool singleMessage);
-#ifndef _WIN32
+#if defined(__APPLE__)
+	void ProcessMacWindowEvent(const MacWindowEvent& event);
+#elif !defined(_WIN32)
 	void ProcessNativeWindowEvent(const NativeWindowEvent& event);
 #endif
 #ifdef _WIN32

@@ -341,10 +341,11 @@ if(APPLE)
         message(FATAL_ERROR "The Cocoa platform sources must be integrated before building LawnProject")
     endif()
     target_sources(${PROJECT_NAME} PRIVATE ${macAppSources})
+    target_compile_options(${PROJECT_NAME} PRIVATE "$<$<COMPILE_LANGUAGE:OBJCXX>:-fobjc-arc>")
     target_compile_definitions(${PROJECT_NAME} PRIVATE
         SEXY_WINDOW_COCOA=1 SEXY_RENDER_GPU=1 PVZ_GPU_METAL=1
         "$<$<NOT:$<CONFIG:Release>>:SEXY_DISABLE_MODVAL=1>")
-    foreach(framework IN ITEMS Cocoa Metal QuartzCore AudioToolbox CoreAudio)
+    foreach(framework IN ITEMS Cocoa Metal QuartzCore AudioUnit AudioToolbox CoreAudio)
         find_library(PVZ_MAC_${framework} NAMES ${framework} REQUIRED)
         target_link_libraries(${PROJECT_NAME} PRIVATE "${PVZ_MAC_${framework}}")
     endforeach()

@@ -3,7 +3,14 @@
   "version-string": "0.1.0",
   "builtin-baseline": "127402f1c75bb3d5ff6bce04b285faa4930a5aca",
   "dependencies": [
-    "directx-dxc",
+    {
+      "name": "openal-soft",
+      "platform": "osx"
+    },
+    {
+      "name": "directx-dxc",
+      "platform": "!osx"
+    },
     {
       "name": "jpegli",
       "version>=": "2026-06-01"

@@ -2,7 +2,9 @@
 #include "NativeHandles.h"
 #include <cstdint>
 #include <thread>
-#ifndef _WIN32
+#if defined(__APPLE__)
+#include "macos/RuntimeTypes.h"
+#elif !defined(_WIN32)
 #include "linux/RuntimeTypes.h"
 #endif
 

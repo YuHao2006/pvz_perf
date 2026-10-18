@@ -41,7 +41,10 @@
 #include <shlobj.h>
 #else
 #include <unistd.h>
-#include "platform/linux/ErrorDialog.h"
+#include "platform/ErrorDialog.h"
+#ifdef __APPLE__
+#include "platform/macos/MacSystem.h"
+#endif
 #include <fcntl.h>
 #include <sys/file.h>
 #include <sys/socket.h>
@@ -83,7 +86,7 @@ using namespace Sexy;
 
 namespace
 {
-#ifndef _WIN32
+#if defined(__linux__)
 std::string TransferClipboard(const std::string* input)
 {
 	// Native selection owners must outlive the caller; xclip/wl-copy provide
@@ -2552,7 +2555,7 @@ int SexyAppBase::MsgBox(const std::string& theText, const std::string& theTitle,
 #else
 	(void)theFlags;
 	fprintf(stderr, "%s: %s\n", theTitle.c_str(), theText.c_str());
-	ShowLinuxErrorDialog(theText.c_str(), theTitle.c_str());
+	ShowNativeErrorDialog(theText.c_str(), theTitle.c_str());
 	int aResult = IDOK;
 #endif
 	EndPopup();
@@ -2576,7 +2579,7 @@ int SexyAppBase::MsgBox(const std::wstring& theText, const std::wstring& theTitl
 #else
 	(void)theFlags;
 	fprintf(stderr, "%s: %s\n", WStringToString(theTitle).c_str(), WStringToString(theText).c_str());
-	ShowLinuxErrorDialog(WStringToString(theText).c_str(), WStringToString(theTitle).c_str());
+	ShowNativeErrorDialog(WStringToString(theText).c_str(), WStringToString(theTitle).c_str());
 	int aResult = IDOK;
 #endif
 	EndPopup();
@@ -2599,7 +2602,7 @@ void SexyAppBase::Popup(const std::string& theString)
 #else
 	{
 		fprintf(stderr, "FATAL ERROR: %s\n", theString.c_str());
-		ShowLinuxErrorDialog(theString.c_str(), "pvz_perf - Fatal error");
+		ShowNativeErrorDialog(theString.c_str(), "pvz_perf - Fatal error");
 	}
 #endif
 	EndPopup();
@@ -2620,7 +2623,7 @@ void SexyAppBase::Popup(const std::wstring& theString)
 #else
 	{
 		fprintf(stderr, "FATAL ERROR: %s\n", WStringToString(theString).c_str());
-		ShowLinuxErrorDialog(WStringToString(theString).c_str(), "pvz_perf - Fatal error");
+		ShowNativeErrorDialog(WStringToString(theString).c_str(), "pvz_perf - Fatal error");
 	}
 #endif
 	EndPopup();
@@ -4561,7 +4564,12 @@ void SexyAppBase::CopyToClipboard(const std::string& theString)
 		CloseClipboard();
 	}
 #else
-	if (!mPlayingDemoBuffer) TransferClipboard(&theString);
+	if (!mPlayingDemoBuffer)
+#ifdef __APPLE__
+        MacClipboard(&theString);
+#else
+        TransferClipboard(&theString);
+#endif
 #endif
 }
 
@@ -4595,7 +4603,12 @@ std::string	SexyAppBase::GetClipboard()
 	return aString;
 #else
 	std::string value;
-	if (!mPlayingDemoBuffer) value = TransferClipboard(nullptr);
+	if (!mPlayingDemoBuffer)
+#ifdef __APPLE__
+        value = MacClipboard(nullptr);
+#else
+        value = TransferClipboard(nullptr);
+#endif
 	DemoSyncString(&value);
 	return value;
 #endif
@@ -4881,6 +4894,13 @@ void SexyAppBase::LoadScaleConfig()
 	}
 
 	// Decode protocol fields once; only numeric IDs/values survive in app state.
+#if defined(PVZ_GPU_METAL)
+    auto LoadPipelineEffects = [&aDoc](const char* section, ScalePipelineConfig&)
+    {
+        if (aDoc.GetArraySize(std::string(section) + "/effects") != 0)
+            throw std::runtime_error("Custom HLSL scaling is not yet implemented by the Metal backend");
+    };
+#else
     ScaleEffectCompiler sourceCompiler;
 	auto LoadPipelineEffects = [this,&aDoc,&sourceCompiler](const char* theSection, ScalePipelineConfig& thePipeline)
 	{
@@ -4955,6 +4975,7 @@ void SexyAppBase::LoadScaleConfig()
 		}
 	};
 
+#endif
 	if (aDoc.GetType("window") == JsonDoc::Type::Object)
 	{
 		mScaleWindowConfig.mDeclared = true;

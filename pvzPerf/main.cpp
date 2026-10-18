@@ -18,7 +18,7 @@
 #include <cstdlib>
 #include <exception>
 #ifndef _WIN32
-#include "SexyAppFramework/platform/linux/ErrorDialog.h"
+#include "SexyAppFramework/platform/ErrorDialog.h"
 #endif
 using namespace Sexy;
 
@@ -163,7 +163,7 @@ int main(int argc, char** argv)
         }
 #else
         const auto details = message + "\n\nGame directory: " + GetCurDir();
-        ShowLinuxErrorDialog(details.c_str(), "pvz_perf - Fatal error");
+        ShowNativeErrorDialog(details.c_str(), "pvz_perf - Fatal error");
 #endif
         return 1;
     } catch (const std::exception& error) {
@@ -175,7 +175,7 @@ int main(int argc, char** argv)
             MessageBoxA(nullptr,error.what(),"pvz_perf - Fatal error",MB_OK|MB_ICONERROR);
 #else
         const auto details = std::string(error.what()) + "\n\nGame directory: " + GetCurDir();
-        ShowLinuxErrorDialog(details.c_str(), "pvz_perf - Fatal error");
+        ShowNativeErrorDialog(details.c_str(), "pvz_perf - Fatal error");
 #endif
         return 1;
     }

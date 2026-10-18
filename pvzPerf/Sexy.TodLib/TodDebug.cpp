@@ -9,6 +9,9 @@
 #include "misc/Debug.h"
 #include "misc/SEHCatcher.h"
 #include "SexyAppFramework/SexyAppBase.h"
+#ifdef __APPLE__
+#include "SexyAppFramework/platform/macos/MacSystem.h"
+#endif
 
 // 命名污染审计：以下仅本 TU 使用，声明自对应头文件下沉（内部链接，前置声明供前部引用）。
 static void TodLogString(const char* theMsg);
@@ -35,7 +38,9 @@ void TodDebugOutput(const char* message)
 
 bool TodDebuggerPresent()
 {
-#ifdef _WIN32
+#if defined(__APPLE__)
+    return MacDebuggerPresent();
+#elif defined(_WIN32)
 	return IsDebuggerPresent() != FALSE;
 #else
 	FILE* status = std::fopen("/proc/self/status", "r");

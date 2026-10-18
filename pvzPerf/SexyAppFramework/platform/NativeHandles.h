@@ -2,6 +2,13 @@
 
 #ifdef _WIN32
 #include "windows/NativeHandles.h"
+#elif defined(__APPLE__)
+namespace Sexy {
+struct MacWindow;
+struct MacMonitor;
+}
+using NativeWindowHandle = Sexy::MacWindow*;
+using NativeMonitorHandle = Sexy::MacMonitor*;
 #elif defined(__linux__)
 namespace Sexy {
 class NativeWindow;

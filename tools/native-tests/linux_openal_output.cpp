@@ -1,5 +1,5 @@
-#include "SexyAppFramework/platform/linux/audio/OpenALDevice.h"
-#include "SexyAppFramework/platform/linux/audio/OpenALMusicPlayback.h"
+#include "SexyAppFramework/platform/audio/openal/OpenALDevice.h"
+#include "SexyAppFramework/platform/audio/openal/OpenALMusicPlayback.h"
 #include "SexyAppFramework/sound/BassLoader.h"
 #include <pulse/simple.h>
 #include <algorithm>

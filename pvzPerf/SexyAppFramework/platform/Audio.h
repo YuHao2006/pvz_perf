@@ -7,7 +7,7 @@ using NativeSoundManager = DSoundManager;
 using NativeSoundInstance = DSoundInstance;
 }
 #else
-#include "linux/audio/OpenALSoundManager.h"
+#include "audio/openal/OpenALSoundManager.h"
 namespace Sexy {
 using NativeSoundManager = OpenALSoundManager;
 using NativeSoundInstance = OpenALSoundInstance;

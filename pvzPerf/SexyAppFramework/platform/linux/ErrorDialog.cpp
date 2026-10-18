@@ -1,4 +1,4 @@
-#include "ErrorDialog.h"
+#include "../ErrorDialog.h"
 #include <cerrno>
 #include <cstdio>
 #include <cstdlib>
@@ -47,7 +47,7 @@ std::string QtPlainText(const char* message)
 }
 }
 
-bool ShowLinuxErrorDialog(const char* message, const char* title)
+bool ShowNativeErrorDialog(const char* message, const char* title)
 {
 #if PVZ_ENABLE_GAME_PROBES
     if (std::getenv("PVZ_MODERN_HIDDEN"))

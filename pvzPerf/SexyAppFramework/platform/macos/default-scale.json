@@ -1,0 +1,14 @@
+{
+  "HDR": {
+    "enable": false,
+    "strength": 1.0
+  },
+  "window": {
+    "multiplier": 1,
+    "effects": []
+  },
+  "fullScreen": {
+    "output": { "width": 0, "height": 0 },
+    "effects": []
+  }
+}

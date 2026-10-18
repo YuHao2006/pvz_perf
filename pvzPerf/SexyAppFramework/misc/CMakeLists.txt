@@ -30,11 +30,11 @@ target_sources(${PROJECT_NAME} PRIVATE
     "Ratio.cpp"
     "ResourceManager.cpp"
     "SEHCatcher.cpp"
-    "Win32CrashDump.cpp"
     "Win32CrashDump.h"
     "SexyMatrix.cpp"
 )
 if(WIN32)
     target_sources(${PROJECT_NAME} PRIVATE
+        "Win32CrashDump.cpp"
         "$<$<NOT:$<CONFIG:Release>>:${CMAKE_CURRENT_SOURCE_DIR}/ModVal.cpp>")
 endif()

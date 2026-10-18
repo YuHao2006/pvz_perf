@@ -121,11 +121,16 @@ std::string FormatWin32Error(DWORD theError)
 }
 #else
 std::mutex gBassMutex;
+#ifdef __APPLE__
+constexpr const char* NativeBassFilename = "libbass.dylib";
+#else
+constexpr const char* NativeBassFilename = "libbass.so";
+#endif
 std::string ResolveBassPath()
 {
 	if (const char* path = std::getenv("PVZ_BASS_LIBRARY"); path && *path)
 		return path;
-	return Sexy::GetExecutableDirectory() + "libbass.so";
+	return Sexy::GetExecutableDirectory() + NativeBassFilename;
 }
 #endif
 }
@@ -141,7 +146,7 @@ static void CheckBassFunction(bool theFound, const char *theName)
 		MessageBoxA(NULL,aMessage.c_str(),"Error",MB_OK | MB_ICONERROR);
 		std::exit(EXIT_FAILURE);
 #else
-		throw std::runtime_error(std::string("libbass.so is missing required symbol: ") + theName);
+		throw std::runtime_error(std::string(NativeBassFilename) + " is missing required symbol: " + theName);
 #endif
 	}
 }
@@ -327,7 +332,7 @@ void Sexy::LoadBassDLL()
 	if (!instance->mModule)
 	{
 		const char* error = dlerror();
-		throw std::runtime_error("Linux audio requires native BASS 2.4 libbass.so. Tried " +
+		throw std::runtime_error(std::string("Audio requires native BASS 2.4 ") + NativeBassFilename + ". Tried " +
 			path + ": " + (error ? error : "dlopen failed") +
 			". Install the matching architecture library beside the executable or set PVZ_BASS_LIBRARY.");
 	}

@@ -16,7 +16,7 @@ void ActiveReaderMustFinish()
     AudioUnitVoice voice;
     voice.state.store(AudioUnitVoiceState::Playing);
     std::latch reading(1), finish(1);
-    std::jthread reader([&] {
+    std::thread reader([&] {
         voice.readers.fetch_add(1);
         reading.count_down();
         finish.wait();
@@ -29,8 +29,9 @@ void ActiveReaderMustFinish()
     while (voice.state.load() == AudioUnitVoiceState::Playing) std::this_thread::yield();
     const bool waited = stopped.wait_for(std::chrono::seconds(0)) == std::future_status::timeout;
     finish.count_down();
-    Require(stopped.get() == AudioUnitVoiceState::Playing, "Lost the previous playback state");
+    const auto previous = stopped.get();
     reader.join();
+    Require(previous == AudioUnitVoiceState::Playing, "Lost the previous playback state");
     Require(waited, "Released source data while its render callback was still reading");
     Require(voice.readers.load() == 0, "Reader remained after quiescence");
 }
@@ -39,7 +40,7 @@ void ReconfigurationDoesNotTear()
     AudioUnitVoice voice;
     unsigned int first = 0, second = ~0u;
     std::atomic<bool> done{false}, torn{false};
-    std::jthread reader([&] {
+    std::thread reader([&] {
         while (!done.load()) {
             voice.readers.fetch_add(1);
             if (voice.state.load() == AudioUnitVoiceState::Playing)

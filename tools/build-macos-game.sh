@@ -34,9 +34,10 @@ cmake -S "$project_root" -B "$build" -G Ninja \
     -DPVZ_BUILD_LEGACY_GAME=ON \
     -DPVZ_BUILD_DAT64_CONVERTER=ON \
     -DPVZ_ENABLE_GAME_PROBES=OFF \
-    -DBUILD_TESTING=OFF \
+    -DBUILD_TESTING=ON \
     "-DPVZ_BASS_LIBRARY=$bass_library"
 cmake --build "$build" --config Release \
-    --target reanimc pvz_dat64_converter LawnProject \
+    --target reanimc pvz_dat64_converter pvz_audio_voice_tests LawnProject \
     --parallel "${CMAKE_BUILD_PARALLEL_LEVEL:-3}"
+ctest --test-dir "$build" -R '^pvz_audio_voice_lifetime$' --output-on-failure
 printf 'Experimental macOS game: %s/Release/pvz_perf\n' "$build"

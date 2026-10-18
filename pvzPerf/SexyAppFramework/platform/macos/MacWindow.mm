@@ -464,18 +464,15 @@ void MacWindow::PumpEvents()
     @autoreleasepool {
         constexpr NSEventMask motion = NSEventMaskMouseMoved | NSEventMaskLeftMouseDragged |
             NSEventMaskRightMouseDragged | NSEventMaskOtherMouseDragged;
-        // A flood cannot monopolize the game thread. Non-motion input keeps its FIFO.
-        for (int i = 0; i < 256; ++i) {
+        // Consume non-motion input in FIFO order; hover uses the game heartbeat.
+        for (;;) {
             NSEvent* event = [NSApp nextEventMatchingMask:(NSEventMaskAny & ~motion)
                 untilDate:NSDate.distantPast inMode:NSDefaultRunLoopMode dequeue:YES];
             if (!event) break;
             [NSApp sendEvent:event];
             RethrowCallbackError();
         }
-        for (int i = 0; i < 64; ++i) {
-            if (![NSApp nextEventMatchingMask:motion untilDate:NSDate.distantPast
-                inMode:NSDefaultRunLoopMode dequeue:YES]) break;
-        }
+        [NSApp discardEventsMatchingMask:motion beforeEvent:nil];
         [NSApp updateWindows];
         RethrowCallbackError();
     }

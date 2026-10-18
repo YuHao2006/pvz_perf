@@ -17,7 +17,7 @@
 using namespace Sexy;
 
 namespace {
-Point LogicalMouse(SexyAppBase& app, double x, double y)
+Sexy::Point LogicalMouse(SexyAppBase& app, double x, double y)
 {
     int sceneX = -1, sceneY = -1;
     app.MapWindowMouse(x, y, sceneX, sceneY);

@@ -36,6 +36,11 @@ jobs:
           path: ~/.cache/vcpkg/archives
           key: macos-arm64-vcpkg-${{ hashFiles('vcpkg.json', 'vcpkg-overlay-ports/**') }}
           restore-keys: macos-arm64-vcpkg-
+      - uses: actions/cache/restore@v4
+        id: shader_cache
+        with:
+          path: out/arm64-cocoa-metal/macos-shader-tools
+          key: macos14-arm64-shader-tools-${{ hashFiles('tools/build-macos-shader-tools.sh') }}
       - name: Verify native Apple Silicon tools
         shell: bash
         run: |
@@ -83,6 +88,7 @@ jobs:
           test -s "$output/main.pak64"
           test -s "$output/shaders/game.metallib"
           test -s "$output/libbass.dylib"
+          test -s "$output/libdxcompiler.dylib"
           test -s "$output/data/pvz_dat64_converter"
           lipo "$output/pvz_perf" -verify_arch arm64
           lipo "$output/libbass.dylib" -verify_arch arm64
@@ -96,9 +102,9 @@ jobs:
           assert config["window"]["effects"] == []
           assert config["fullScreen"]["effects"] == []
           PY
-          if find "$output" -type f \( -iname '*dxcompiler*' -o -iname '*dxil*' \
-              -o -iname '*vulkan*' -o -iname '*.hlsl' \) | grep -q .; then
-            echo 'Unexpected DXC, Vulkan, or HLSL runtime asset in the native Metal artifact.' >&2
+          if find "$output" -type f \( -iname '*dxil*' \
+              -o -iname '*vulkan*' -o -iname '*.spv' \) | grep -q .; then
+            echo 'Unexpected DXIL or Vulkan runtime asset in the native Metal artifact.' >&2
             exit 1
           fi
           tar -czf "$RUNNER_TEMP/pvz-macos-arm64-experimental.tar.gz" -C "$output" .
@@ -113,3 +119,8 @@ jobs:
         with:
           path: ~/.cache/vcpkg/archives
           key: macos-arm64-vcpkg-${{ hashFiles('vcpkg.json', 'vcpkg-overlay-ports/**') }}
+      - uses: actions/cache/save@v4
+        if: always() && steps.shader_cache.outputs.cache-hit != 'true'
+        with:
+          path: out/arm64-cocoa-metal/macos-shader-tools
+          key: macos14-arm64-shader-tools-${{ hashFiles('tools/build-macos-shader-tools.sh') }}

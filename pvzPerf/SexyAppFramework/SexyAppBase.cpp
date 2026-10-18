@@ -4894,13 +4894,6 @@ void SexyAppBase::LoadScaleConfig()
 	}
 
 	// Decode protocol fields once; only numeric IDs/values survive in app state.
-#if defined(PVZ_GPU_METAL)
-    auto LoadPipelineEffects = [&aDoc](const char* section, ScalePipelineConfig&)
-    {
-        if (aDoc.GetArraySize(std::string(section) + "/effects") != 0)
-            throw std::runtime_error("Custom HLSL scaling is not yet implemented by the Metal backend");
-    };
-#else
     ScaleEffectCompiler sourceCompiler;
 	auto LoadPipelineEffects = [this,&aDoc,&sourceCompiler](const char* theSection, ScalePipelineConfig& thePipeline)
 	{
@@ -4975,7 +4968,6 @@ void SexyAppBase::LoadScaleConfig()
 		}
 	};
 
-#endif
 	if (aDoc.GetType("window") == JsonDoc::Type::Object)
 	{
 		mScaleWindowConfig.mDeclared = true;

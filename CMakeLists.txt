@@ -36,8 +36,9 @@ endif()
 project(PlantsVsZombies C CXX)
 if(APPLE)
     enable_language(OBJCXX)
-    # CMake's AppleClang Objective-C++ standard table stops at C++20.
-    add_compile_options("$<$<COMPILE_LANGUAGE:OBJCXX>:-std=c++23>")
+    # AppleClang accepts C++23 in .mm files; older CMake tables omit the flags.
+    set(CMAKE_OBJCXX23_STANDARD_COMPILE_OPTION "-std=c++23")
+    set(CMAKE_OBJCXX23_EXTENSION_COMPILE_OPTION "-std=gnu++23")
     if(NOT CMAKE_OSX_ARCHITECTURES STREQUAL "arm64")
         message(FATAL_ERROR "The experimental macOS build currently supports arm64 only")
     endif()
@@ -245,6 +246,7 @@ if(PVZ_BUILD_FRAMEWORK_D3D12)
 endif()
 
 if(APPLE AND PVZ_BUILD_LEGACY_GAME)
+    include(CMake/MacShaderCompiler.cmake)
     add_subdirectory(pvzPerf/SexyAppFramework/graphics/metal SexyAppFramework/graphics/metal)
 endif()
 

@@ -554,6 +554,7 @@ elseif(PVZ_RENDER_BACKEND STREQUAL "METAL")
     set(gameShaderDirectory "${CMAKE_BINARY_DIR}/SexyAppFramework/graphics/metal/shaders")
 endif()
 if(APPLE)
+    pvz_stage_macos_shader_compiler(${PROJECT_NAME})
     add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
         COMMAND "${CMAKE_COMMAND}" -E copy_directory
             "${gameShaderDirectory}" "$<TARGET_FILE_DIR:${PROJECT_NAME}>/shaders"

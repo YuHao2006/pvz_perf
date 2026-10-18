@@ -45,9 +45,17 @@ target_link_libraries(sexy_metal PRIVATE
 add_dependencies(sexy_metal sexy_metal_shaders)
 add_library(sexy_metal_effects STATIC
     ../../effect/ScaleEffectCompiler.cpp
-    ../../effect/ScaleEffectSizing.cpp)
+    ../../effect/ScaleEffectSizing.cpp
+    MetalScalePipeline.mm)
 target_compile_features(sexy_metal_effects PUBLIC cxx_std_23)
+target_compile_definitions(sexy_metal_effects PUBLIC SEXY_SCALE_EFFECT_AUTHORING=1)
+target_compile_options(sexy_metal_effects PRIVATE
+    "$<$<COMPILE_LANGUAGE:OBJCXX>:-fobjc-arc>")
+target_link_libraries(sexy_metal_effects PRIVATE PVZ::MacShaderCompiler
+    "${PVZ_METAL_FRAMEWORK}" "${PVZ_FOUNDATION_FRAMEWORK}")
+target_link_libraries(sexy_metal PRIVATE sexy_metal_effects)
 target_include_directories(sexy_metal_effects PUBLIC
     "${CMAKE_CURRENT_SOURCE_DIR}/../../effect")
 set_target_properties(sexy_metal sexy_metal_effects PROPERTIES
+    OBJCXX_STANDARD 23 OBJCXX_STANDARD_REQUIRED YES OBJCXX_EXTENSIONS NO
     INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE)

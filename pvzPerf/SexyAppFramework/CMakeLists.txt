@@ -352,7 +352,7 @@ if(APPLE)
         RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/$<CONFIG>"
         BUILD_RPATH "@loader_path"
         INSTALL_RPATH "@loader_path")
-    message(STATUS "Experimental macOS: user HLSL scaling effects are unsupported; using native MSL")
+    message(STATUS "Experimental macOS: native MSL rendering and loading-time HLSL scale conversion")
 endif()
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")

@@ -77,7 +77,7 @@ public:
 	int							mPauseOffset;						//+0x38
 	int							mPauseOffsetDrums;					//+0x3C
 	bool						mPaused;							//+0x40
-	bool						mMusicDisabled;						//+0x41
+	mutable bool				mMusicDisabled;						//+0x41
 	int							mFadeOutCounter;					//+0x44
 	int							mFadeOutDuration;					//+0x48
 
@@ -89,9 +89,9 @@ public:
 	// loader to have finished, just like the rest of Music's state.
 	bool IsMusicDisabled() const noexcept
 	{
-		static_assert(std::atomic_ref<const bool>::is_always_lock_free);
-		static_assert(std::atomic_ref<const bool>::required_alignment <= alignof(bool));
-		return std::atomic_ref<const bool>(mMusicDisabled).load(std::memory_order_relaxed);
+		static_assert(std::atomic_ref<bool>::is_always_lock_free);
+		static_assert(std::atomic_ref<bool>::required_alignment <= alignof(bool));
+		return std::atomic_ref<bool>(mMusicDisabled).load(std::memory_order_relaxed);
 	}
 	void SetMusicDisabled(bool theDisabled) noexcept
 	{

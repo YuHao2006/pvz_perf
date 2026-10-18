@@ -89,7 +89,7 @@ enum AwardType
     AWARD_ACHIEVEMENTONLY,
     AWARD_PRECREDITS_ZOMBIENOTE,
 };
-enum BackgroundType
+enum BackgroundType : int
 {
     BACKGROUND_1_DAY,
     BACKGROUND_2_NIGHT,
@@ -1032,7 +1032,7 @@ enum PottedPlantNeed
     PLANTNEED_BUGSPRAY = 3,
     PLANTNEED_PHONOGRAPH = 4
 };
-enum ProjectileMotion
+enum ProjectileMotion : int
 {
     MOTION_STRAIGHT = 0,  // 水平向右
     MOTION_LOBBED = 1,  // 抛物线
@@ -1441,7 +1441,7 @@ enum TrialType
     TRIALTYPE_NONE,
     TRIALTYPE_STAGELOCKED
 };
-enum TutorialState
+enum TutorialState : int
 {
     TUTORIAL_OFF = 0,
     TUTORIAL_LEVEL_1_PICK_UP_PEASHOOTER = 1,

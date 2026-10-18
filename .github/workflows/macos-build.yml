@@ -30,7 +30,8 @@ jobs:
       VCPKG_MAX_CONCURRENCY: 3
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/cache@v4
+      - uses: actions/cache/restore@v4
+        id: vcpkg_cache
         with:
           path: ~/.cache/vcpkg/archives
           key: macos-arm64-vcpkg-${{ hashFiles('vcpkg.json', 'vcpkg-overlay-ports/**') }}
@@ -55,6 +56,7 @@ jobs:
         with:
           repository: microsoft/vcpkg
           ref: ${{ steps.baseline.outputs.revision }}
+          fetch-depth: 0
           path: out/vcpkg
       - name: Bootstrap vcpkg
         shell: bash
@@ -106,3 +108,8 @@ jobs:
           path: ${{ runner.temp }}/pvz-macos-arm64-experimental.tar.gz
           if-no-files-found: error
           retention-days: 14
+      - uses: actions/cache/save@v4
+        if: always() && steps.vcpkg_cache.outputs.cache-hit != 'true'
+        with:
+          path: ~/.cache/vcpkg/archives
+          key: macos-arm64-vcpkg-${{ hashFiles('vcpkg.json', 'vcpkg-overlay-ports/**') }}

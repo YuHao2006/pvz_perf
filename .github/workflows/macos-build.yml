@@ -24,7 +24,7 @@ jobs:
     timeout-minutes: 90
     env:
       VCPKG_ROOT: ${{ github.workspace }}/out/vcpkg
-      PVZ_BASS_LIBRARY: ${{ runner.temp }}/pvz-bass/libbass.dylib
+      PVZ_BASS_LIBRARY: ${{ github.workspace }}/out/macos-bass/libbass.dylib
       PVZ_MACOS_BUILD_DIR: ${{ github.workspace }}/out/arm64-cocoa-metal
       CMAKE_BUILD_PARALLEL_LEVEL: 3
       VCPKG_MAX_CONCURRENCY: 3

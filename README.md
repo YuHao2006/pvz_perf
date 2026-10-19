@@ -5,8 +5,9 @@
 
 发行下载：[GitHub Releases](https://github.com/YuHao2006/pvz_perf/releases)。
 **Windows 推荐下载 `x64-win10-vulkan-v1.1.zip`**，完整解压后运行 `pvz_perf.exe`。
-v1.1 本次提供 Win7/DX9、Win7/OpenGL、Win10/DX12、Win10/Vulkan 四种 Windows 组合，
-另附源码包。Linux X11/Vulkan 和 Wayland/Vulkan 的二进制发行留待 Ubuntu 实机阶段处理。
+v1.1 提供 Win7/DX9、Win7/OpenGL、Win7/Vulkan、Win10/DX12、Win10/Vulkan，
+以及 `x64-x11-vulkan-v1.1.zip`、`x64-wayland-vulkan-v1.1.zip` 两个 Linux 平铺 ZIP。
+另附源码包和独立的 `pvz_perf-test-saves-v1.1.zip`，后者合并 PerfTest 完美档与统一无尽基准。
 每个包包含生成的 PerfTest 完美用户档、统一无尽基准和外部 Magpie effects，
 不包含个人进度或个人设置。普通生存的完成记录为 5 旗，困难生存为 10 旗。
 **Win7 统一 SDR，不支持 HDR；DX9/OpenGL 的默认配置不启用自定义缩放效果。**
@@ -118,12 +119,10 @@ ELF 的递归依赖收集到 `env/`，使用配套 loader/libc 启动，生成�
 
 ## 诊断与性能采样
 
-保留原版诊断快捷键：`Ctrl+Alt+D` 启用，`F3` 显示帧率，
-`Shift+F3` 切换指标。GNOME 若拦截显示桌面，可单独禁用该系统绑定：
-
-```sh
-gsettings set org.gnome.desktop.wm.keybindings show-desktop "[]"
-```
+Linux 使用 `Ctrl+Shift+D` 切换诊断模式，避开桌面环境的 `Ctrl+Alt+D` 显示桌面绑定；
+Windows/macOS 保留原版 `Ctrl+Alt+D`。Linux 开关每次实际按下只切换一次，
+按住不会反复切换，组合键也不会继续传入游戏操作或文本输入。
+启用后按 `F3` 显示帧率，`Shift+F3` 切换指标。
 
 游戏内 Smoke 入口、逐帧计时、提交计数、临时日志和 shadow 对拍代码已从生产源码移除。
 独立回归测试与外部只读观测工具保留在测试目录，不向游戏注入探针。

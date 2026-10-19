@@ -176,6 +176,11 @@ void SexyAppBase::ProcessNativeWindowEvent(const NativeWindowEvent& event)
         if (!value) break;
         const auto key = static_cast<KeyCode>(value);
         app.mLastUserInputTick = SexyGetTickCount();
+        // A held space must not open the pause dialog and then dismiss it via
+        // auto-repeat. Keep Text events repeating for editable text fields.
+        if (key == KEYCODE_SPACE && event.pressed &&
+            (event.repeat || app.mWidgetManager->mKeyDown[KEYCODE_SPACE]))
+            break;
         if (key == KEYCODE_CONTROL) app.mCtrlDown = event.pressed;
         if (key == KEYCODE_MENU) app.mAltDown = event.pressed;
         if (key == KEYCODE_RETURN && event.pressed && app.mAltDown) {
@@ -211,6 +216,13 @@ void SexyAppBase::ProcessNativeWindowEvent(const NativeWindowEvent& event)
     case Kind::Text:
         if constexpr (sizeof(SexyChar) == 1)
             if (event.text >= 128) break;
+        // Ctrl+Shift+D is consumed by DispatchKeyDown, including its text event.
+        if (app.mWidgetManager->mKeyDown['D'] &&
+            app.mWidgetManager->mKeyDown[KEYCODE_CONTROL] &&
+            app.mWidgetManager->mKeyDown[KEYCODE_SHIFT] &&
+            !app.mWidgetManager->mKeyDown[KEYCODE_MENU] &&
+            (event.text == 4 || event.text == 'D' || event.text == 'd'))
+            break;
         if (app.mAltEnterDown) break;
         app.mLastUserInputTick = SexyGetTickCount();
         if (app.mRecordingDemoBuffer && !app.mShutdown) {

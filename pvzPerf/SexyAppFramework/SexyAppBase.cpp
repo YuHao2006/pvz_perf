@@ -359,7 +359,6 @@ SexyAppBase::SexyAppBase()
 	mFrameTime = 10;
 	mNonDrawCount = 0;
 	mDrawCount = 0;
-	mSleepCount = 0;
 	mUpdateCount = 0;	
 	mUpdateAppState = 0;
 	mUpdateAppDepth = 0;
@@ -431,15 +430,8 @@ SexyAppBase::SexyAppBase()
 	mDemoMute = false;
 	mMuteOnLostFocus = true;
 	mCurHandleNum = 0;
-	mFPSTime = 0;
-	mFPSStartTick = RuntimeTick();
-	mFPSFlipCount = 0;
-	mFPSCount = 0;
-	mFPSDirtyCount = 0;
 	mShowFPS = false;
 	mShowFPSMode = FPS_ShowFPS;
-	mDrawTime = 0;
-	mScreenBltTime = 0;
 	mAlphaDisabled = false;	
 	mDebugKeysEnabled = false;
 	mOldWndProc = 0;
@@ -2098,8 +2090,7 @@ void SexyAppBase::UpdateFrames()
 
 	if (!mMinimized)
 	{
-		if (mWidgetManager->UpdateFrame())
-			++mFPSDirtyCount;
+		mWidgetManager->UpdateFrame();
 	}
 
 	{
@@ -2187,8 +2178,7 @@ void SexyAppBase::Redraw(Rect* theClipRect)
         throw std::logic_error("Redraw without a native display");
     mRedrawInProgress = true;
     struct Reset { bool& value; ~Reset() { value = false; } } reset{mRedrawInProgress};
-    if (mDDInterface->Redraw(theClipRect))
-        ++mFPSFlipCount;
+    mDDInterface->Redraw(theClipRect);
 }
 
 ///////////////////////////// FPS Stuff
@@ -2410,12 +2400,6 @@ bool SexyAppBase::DrawDirtyStuff()
 
 		mDrawCount++;		
 
-		DWORD aMidTime = SexyGetTickCount();
-
-		mFPSCount++;
-		mFPSTime += aMidTime - aStartTime;
-
-		mDrawTime += aMidTime - aStartTime;
 
 		if (mShowFPS)
 		{
@@ -2443,24 +2427,6 @@ bool SexyAppBase::DrawDirtyStuff()
 
 		DWORD aEndTime = SexyGetTickCount();
 
-		mScreenBltTime = aEndTime - aPreScreenBltTime;
-
-#ifdef _DEBUG
-		/*if (mFPSTime >= 5000) // Show FPS about every 5 seconds
-		{
-			unsigned int aTickNow = RuntimeTick();
-
-			OutputDebugString(StrFormat(("Theoretical FPS: %d\r\n"), (int) (mFPSCount * 1000 / mFPSTime)));
-			OutputDebugString(StrFormat(("Actual      FPS: %d\r\n"), (mFPSFlipCount * 1000) / max((aTickNow - mFPSStartTick), 1)));
-			OutputDebugString(StrFormat(("Dirty Rate     : %d\r\n"), (mFPSDirtyCount * 1000) / max((aTickNow - mFPSStartTick), 1)));
-
-			mFPSTime = 0;
-			mFPSCount = 0;
-			mFPSFlipCount = 0;
-			mFPSStartTick = aTickNow;
-			mFPSDirtyCount = 0;
-		}*/
-#endif
 
 		if ((mLoadingThreadStarted) && (!mLoadingThreadCompleted))
 		{
@@ -2717,13 +2683,6 @@ void SexyAppBase::WriteDemoTimingBlock()
 	mDemoCmdOrder++;
 }
 
-namespace
-{
-int aNumBigMoveMessages = 0;
-int aNumSmallMoveMessages = 0;
-int aNumTimerMessages = 0;
-}  // namespace
-
 bool SexyAppBase::PrepareDemoCommand(bool required)
 {
     if (mDemoNeedsCommand)
@@ -2930,9 +2889,22 @@ bool SexyAppBase::IsAltKeyUsed(WPARAM wParam)
 
 void SexyAppBase::DispatchKeyDown(int theKey)
 {
+#ifdef __linux__
+	// Ctrl+Alt+D is a desktop shortcut on several Linux desktops. Consume the
+	// replacement chord and only toggle once until D is physically released.
+	if (theKey == 'D' && mWidgetManager->mKeyDown[KEYCODE_CONTROL] &&
+		mWidgetManager->mKeyDown[KEYCODE_SHIFT] && !mWidgetManager->mKeyDown[KEYCODE_MENU])
+	{
+		if (!mWidgetManager->mKeyDown['D'])
+			mDebugKeysEnabled = !mDebugKeysEnabled;
+		mWidgetManager->mKeyDown['D'] = true;
+		return;
+	}
+#else
 	if (theKey == 'D' && mWidgetManager->mKeyDown[KEYCODE_CONTROL] &&
 		mWidgetManager->mKeyDown[KEYCODE_MENU])
 		mDebugKeysEnabled = !mDebugKeysEnabled;
+#endif
 	if (!mDebugKeysEnabled || !DebugKeyDown(theKey))
 		mWidgetManager->KeyDown(static_cast<KeyCode>(theKey));
 }
@@ -3085,9 +3057,6 @@ void SexyAppBase::LoadingThreadProcStub(void *theArg)
 	try
 	{
 		aSexyApp->LoadingThreadProc();
-		char aStr[256];
-		sprintf(aStr, "Resource Loading Time: %u\r\n", (RuntimeTick() - aSexyApp->mTimeLoaded));
-		RuntimeDebugOutput(aStr);
 	}
 	catch (...)
 	{
@@ -3648,7 +3617,6 @@ bool SexyAppBase::Process(bool allowSleep)
 						return false;
 
 					// Wait till next processing cycle
-					++mSleepCount;
 					RuntimeSleep(aTimeToNextFrame);
 
 					aCumSleepTime += aTimeToNextFrame;					
@@ -3923,9 +3891,6 @@ void SexyAppBase::Start()
 	timeBeginPeriod(1);
 #endif
 
-	//int aCount = 0; // unused
-	//int aSleepCount = 0; // unused
-
 	DWORD aStartTime = SexyGetTickCount();		
 
 	mRunning = true;
@@ -3949,26 +3914,6 @@ void SexyAppBase::Start()
 	RethrowLoadingThreadError();
 	ProcessSafeDeleteList();
 
-	char aString[256];
-	sprintf(aString, "Seconds       = %g\r\n", (SexyGetTickCount() - aStartTime) / 1000.0);
-	RuntimeDebugOutput(aString);
-	//sprintf(aString, "Count         = %d\r\n", aCount);
-	//OutputDebugString(aString);
-	sprintf(aString, "Sleep Count   = %u\r\n", mSleepCount);
-	RuntimeDebugOutput(aString);
-	sprintf(aString, "Update Count  = %u\r\n", mUpdateCount);
-	RuntimeDebugOutput(aString);
-	sprintf(aString, "Draw Count    = %u\r\n", mDrawCount);
-	RuntimeDebugOutput(aString);
-	sprintf(aString, "Draw Time     = %llu\r\n", static_cast<unsigned long long>(mDrawTime));
-	RuntimeDebugOutput(aString);
-	sprintf(aString, "Screen Blt    = %u\r\n", mScreenBltTime);
-	RuntimeDebugOutput(aString);
-	if (mDrawTime+mScreenBltTime > 0)
-	{
-		sprintf(aString, "Avg FPS       = %llu\r\n", static_cast<unsigned long long>(FrameCounterMath::AverageFps(mDrawCount, mDrawTime, mScreenBltTime)));
-		RuntimeDebugOutput(aString);
-	}
 
 #ifdef _WIN32
 	timeEndPeriod(1);

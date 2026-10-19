@@ -296,7 +296,6 @@ public:
 	DWORD					mLastTime;
 	DWORD					mLastUserInputTick;
 
-	std::uint32_t			mSleepCount;
 	std::uint32_t			mDrawCount;
 	std::uint32_t			mUpdateCount;
 	int						mUpdateAppState;
@@ -320,15 +319,8 @@ public:
 	bool					mPhysMinimized;
 	bool					mIsDisabled;
 	bool					mHasFocus;
-	std::uint64_t			mDrawTime;
-	unsigned int			mFPSStartTick;
-	std::uint32_t			mFPSFlipCount;
-	std::uint32_t			mFPSDirtyCount;
-	std::uint64_t			mFPSTime;
-	std::uint32_t			mFPSCount;
 	bool					mShowFPS;
 	int						mShowFPSMode;
-	std::uint32_t			mScreenBltTime;
 	bool					mAutoStartLoadingThread;
 	std::atomic<bool>		mLoadingThreadStarted;
 	std::atomic<bool>		mLoadingThreadCompleted;

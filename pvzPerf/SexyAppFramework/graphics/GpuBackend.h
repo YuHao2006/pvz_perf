@@ -1,10 +1,19 @@
 #pragma once
 #include "GpuTypes.h"
+#include "GpuBackendAdapter.h"
 #include "vulkan/VulkanHdr.h"
 #include "vulkan/VulkanViewport.h"
 #include <cstdint>
 #include <type_traits>
-#if defined(PVZ_GPU_D3D12)
+#if defined(PVZ_GPU_D3D9)
+#include "d3d9/D3d9Context.h"
+#include "d3d9/D3d9Renderer.h"
+#include "d3d9/D3d9ScaleTypes.h"
+#elif defined(PVZ_GPU_OPENGL)
+#include "opengl/OpenGLContext.h"
+#include "opengl/OpenGLRenderer.h"
+#include "opengl/OpenGLScaleTypes.h"
+#elif defined(PVZ_GPU_D3D12)
 #include "d3d12/D3d12Context.h"
 #include "d3d12/D3d12Renderer.h"
 #include "d3d12/D3d12ScalePipeline.h"
@@ -19,7 +28,19 @@
 
 namespace Sexy {
 // CMake selects one concrete implementation; there is no per-draw dispatch.
-#if defined(PVZ_GPU_D3D12)
+#if defined(PVZ_GPU_D3D9)
+using GpuContext = D3d9Context;
+using GpuRenderer = D3d9Renderer;
+using GpuTexture = D3d9Texture;
+using GpuScaleStep = D3d9ScaleStep;
+using GpuScaleImage = D3d9ScaleImage;
+#elif defined(PVZ_GPU_OPENGL)
+using GpuContext = OpenGLContext;
+using GpuRenderer = OpenGLRenderer;
+using GpuTexture = OpenGLTexture;
+using GpuScaleStep = OpenGLScaleStep;
+using GpuScaleImage = OpenGLScaleImage;
+#elif defined(PVZ_GPU_D3D12)
 using GpuContext = D3d12Context;
 using GpuRenderer = D3d12Renderer;
 using GpuTexture = D3d12Texture;
@@ -52,12 +73,6 @@ inline unsigned long long GpuHandleIdentity(NativeHandle handle) {
         return static_cast<unsigned long long>(handle);
 }
 inline unsigned long long GpuScaleIdentity(const GpuScaleImage& image) {
-#if defined(PVZ_GPU_D3D12)
-    return GpuHandleIdentity(image.resource);
-#elif defined(PVZ_GPU_METAL)
-    return GpuHandleIdentity(image.texture);
-#else
-    return GpuHandleIdentity(image.image);
-#endif
+    return GpuHandleIdentity(GpuBackendDetail::ScaleHandle<BuildConfig::Graphics>(image));
 }
 }

@@ -131,12 +131,10 @@ struct D3d12Renderer::Impl {
     std::array<std::unique_ptr<ScaleMode>, 2> scaleModes;
     bool scaleEnabled = false;
     unsigned scaleMode = 0;
-    CausticsStatus causticsState{};
+    D3d12Texture* causticTarget = nullptr;
     D3d12Texture* causticSource = nullptr;
     UINT causticCounter = 0;
     bool causticQueued = false;
-    DrawCommandCounts drawCounts{};
-    TextureUploadCounts uploadCounts{};
     ID3D12PipelineState* boundPipeline = nullptr;
     Page* boundVertex = nullptr;
     bool gameBound = false;
@@ -413,7 +411,6 @@ struct D3d12Renderer::Impl {
     D3d12Texture* Own(std::unique_ptr<D3d12Texture> texture, bool registered) {
         auto* handle = texture.get();
         (registered ? textures : raw).emplace(handle, std::move(texture));
-        ++uploadCounts.createdTextures;
         return handle;
     }
 
@@ -500,10 +497,6 @@ struct D3d12Renderer::Impl {
         Check(page->resource->Map(0, &read, reinterpret_cast<void**>(&page->mapped)),
             "Map(upload buffer)", device);
         auto* result = page.get();
-        if (upload) {
-            ++uploadCounts.stagingAllocations;
-            uploadCounts.stagingCapacity += page->size;
-        }
         pages.push_back(std::move(page));
         return result;
     }
@@ -534,8 +527,6 @@ struct D3d12Renderer::Impl {
         dst.Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
         commands->CopyTextureRegion(&dst, 0, 0, 0, &src, nullptr);
         Transition(texture, SampleState);
-        ++uploadCounts.textures;
-        ++uploadCounts.pending;
     }
 
     void ReleaseSlot(D3d12Texture* texture, UINT slot) {
@@ -576,8 +567,6 @@ struct D3d12Renderer::Impl {
         for (auto& page : staging) page->used = 0;
         for (auto& page : vertices) page->used = 0;
         temporary = TextureSlots;
-        if (uploadCounts.pending) ++uploadCounts.batches;
-        uploadCounts.pending = 0;
         InvalidateDrawState();
     }
     void Finish(bool present, bool keepScratch = false) {
@@ -665,12 +654,10 @@ struct D3d12Renderer::Impl {
         InvalidateDrawState();
     }
     void RecordCaustics() {
-        if (!causticQueued || !causticsState.target) return;
-        if (causticsState.target->sampled) Snapshot(causticsState.target);
+        if (!causticQueued || !causticTarget) return;
+        if (causticTarget->sampled) Snapshot(causticTarget);
         const std::array inputs{causticSource};
-        Compute(causticKernel, causticsState.target, inputs, &causticCounter, 16, 16);
-        causticsState.lastDispatched = causticCounter;
-        ++causticsState.dispatchSerial;
+        Compute(causticKernel, causticTarget, inputs, &causticCounter, 16, 16);
         causticQueued = false;
     }
 
@@ -682,7 +669,6 @@ struct D3d12Renderer::Impl {
         commands->OMSetRenderTargets(1, &rtv, FALSE, nullptr);
         D3D12_VIEWPORT viewport{0, 0, float(target->width), float(target->height), 0, 1};
         commands->RSSetViewports(1, &viewport);
-        ++drawCounts.viewports;
         boundTarget = target;
         gameBound = false;
     }
@@ -697,7 +683,6 @@ struct D3d12Renderer::Impl {
             commands->SetGraphicsRootDescriptorTable(2,
                 samplerHeap->GetGPUDescriptorHandleForHeapStart());
             commands->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-            ++drawCounts.descriptors;
             gameBound = true;
         }
         const std::array<UINT, 4> constants{
@@ -705,29 +690,24 @@ struct D3d12Renderer::Impl {
             std::bit_cast<UINT>(float(target->height)),
             target->generated ? 1u : 0u, run.coverage ? 1u : 0u};
         commands->SetGraphicsRoot32BitConstants(0, 4, constants.data(), 0);
-        ++drawCounts.extents;
         auto* pipeline = (target->generated ? imagePipelines : scenePipelines)
             .at(size_t(run.blend)).Get();
         if (boundPipeline != pipeline) {
             commands->SetPipelineState(pipeline);
             boundPipeline = pipeline;
-            ++drawCounts.pipelines;
         }
         if (!hasScissor || std::memcmp(&boundScissor, &run.scissor, sizeof(boundScissor))) {
             commands->RSSetScissorRects(1, &run.scissor);
             boundScissor = run.scissor;
             hasScissor = true;
-            ++drawCounts.scissors;
         }
         if (boundVertex != run.page) {
             D3D12_VERTEX_BUFFER_VIEW view{run.page->resource->GetGPUVirtualAddress(),
                 UINT(run.page->size), sizeof(GpuVertex)};
             commands->IASetVertexBuffers(0, 1, &view);
             boundVertex = run.page;
-            ++drawCounts.vertexBuffers;
         }
         commands->DrawInstanced(run.count, 1, run.first, 0);
-        ++drawCounts.draws;
         run.count = 0;
     }
 
@@ -998,9 +978,8 @@ struct D3d12Renderer::Impl {
 D3d12Renderer::D3d12Renderer(D3d12Context& context, int width, int height,
     const std::filesystem::path& directory, const GpuHdrParams* hdr)
     : impl_(std::make_unique<Impl>(context, width, height, directory)),
-      whiteTexture(impl_->white), causticsState(impl_->causticsState),
-      sceneOpen(impl_->sceneOpen), sceneWidth(impl_->width), sceneHeight(impl_->height),
-      drawCommandCounts(impl_->drawCounts), textureUploadCounts(impl_->uploadCounts) {
+      whiteTexture(impl_->white), causticsTexture(impl_->causticTarget),
+      sceneOpen(impl_->sceneOpen), sceneWidth(impl_->width), sceneHeight(impl_->height) {
     if (hdr) {
         hdr->Validate();
         if (!context.hdr)
@@ -1065,7 +1044,6 @@ D3d12Texture* D3d12Renderer::ReplaceTexture(D3d12Texture* previous, int width,
     if (!previous->sampled && previous->format == DXGI_FORMAT_B8G8R8A8_UNORM &&
         previous->width == width && previous->height == height && previous->opaque == opaque) {
         s.Upload(previous, bgra, rowPitch, 4);
-        ++s.uploadCounts.reusedUpdates;
         return previous;
     }
     auto* next = previous->staticSlot != InvalidSlot ?
@@ -1284,8 +1262,8 @@ void D3d12Renderer::DestroyTexture(D3d12Texture* texture) {
         if (s.sceneOpen) throw std::logic_error("Cannot destroy an active D3D12 render image");
         s.renderImage = nullptr;
     }
-    if (texture == s.causticsState.target || texture == s.causticSource) {
-        s.causticsState.target = s.causticSource = nullptr;
+    if (texture == s.causticTarget || texture == s.causticSource) {
+        s.causticTarget = s.causticSource = nullptr;
         s.causticQueued = false;
     }
     if (s.commands || s.inFlight) s.retired.push_back(std::move(found->second));
@@ -1323,14 +1301,14 @@ void D3d12Renderer::UseCausticsTexture(D3d12Texture* output, D3d12Texture* sourc
         output->format != DXGI_FORMAT_R8G8B8A8_UNORM ||
         !(output->resource->GetDesc().Flags & D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS))
         throw std::invalid_argument("Invalid D3D12 GPU caustics selection");
-    s.causticsState.target = output;
+    s.causticTarget = output;
     s.causticSource = source;
 }
 void D3d12Renderer::SetCausticsFrame(uint32_t counter) {
     auto& s = *impl_;
     if (s.sceneOpen) throw std::logic_error("Set caustics counter between D3D12 scenes");
     s.causticCounter = counter;
-    s.causticQueued = s.causticsState.target != nullptr;
+    s.causticQueued = s.causticTarget != nullptr;
 }
 bool D3d12Renderer::HasCausticsCompute() const { return impl_->causticKernel.pipeline != nullptr; }
 bool D3d12Renderer::BeginScene() {
@@ -1340,7 +1318,6 @@ bool D3d12Renderer::BeginScene() {
     if (!s.renderImage && !s.context.BackBuffer()) return false;
     s.sceneOpen = true;
     s.imageOnly = s.renderImage != nullptr;
-    s.drawCounts = {};
     s.InvalidateDrawState();
     s.RecordCaustics();
     if (s.renderImage) s.Snapshot(s.renderImage);

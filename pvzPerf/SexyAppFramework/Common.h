@@ -3,11 +3,9 @@
 #pragma warning(disable:4786)
 #pragma warning(disable:4503)
 
-#undef _WIN32_WINNT
 #undef WIN32_LEAN_AND_MEAN
 
 #define WIN32_LEAN_AND_MEAN
-#define _WIN32_WINNT 0x0A00
 #undef _UNICODE
 #undef UNICODE
 #endif

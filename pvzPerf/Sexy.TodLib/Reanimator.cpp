@@ -21,32 +21,17 @@
 #include "paklib/PakInterface.h"
 
 #include <algorithm>
-#include <chrono>
 #include <climits>
 #include <cmath>
 #include <cstring>
-#ifdef _MSC_VER
-#include <intrin.h>
-#elif defined(__x86_64__) || defined(__i386__)
-#include <x86intrin.h>
-#endif
 #include <memory>
 #include <set>
-#include <thread>
 #include <vector>
 
 static unsigned int gReanimatorDefCount;                     //[0x6A9EE4]
 ReanimatorDefinition* gReanimatorDefArray;   //[0x6A9EE8]
 static unsigned int gReanimationParamArraySize;              //[0x6A9EEC]
 static ReanimationParams* gReanimationParamArray;   //[0x6A9EF0]
-
-// PVZ_MPHF_VERIFY=1：MPHF 查找结果同查"首见下标"真值并断言相等（诊断期对拍；
-// 默认关。Release 的 TOD_ASSERT 是空操作，故用显式报错退出保证对拍在 bench 构建生效）
-static const bool gMphfVerify = getenv("PVZ_MPHF_VERIFY") != nullptr;
-// PVZ_ACTION_CACHE：0=逐 tick GetFramesForLayer（对拍基线）；1=段级缓存（默认）。
-static const bool gActionCacheEnabled = [] { const char* e = getenv("PVZ_ACTION_CACHE"); return e == nullptr || e[0] != '0'; }();
-
-
 
 std::uint32_t ReanimatorTrackIdAt(ReanimationType theReanimType, int theTrackIndex)
 {
@@ -76,298 +61,9 @@ static int ReanimatorTrackIndexOf(ReanimationType theReanimType, ReanimTrackId t
 	//（TrackExists/AssignRenderGroupToTrack）取 false，直用式消费方经
 	// FindTrackIndex 弹错退出，绝不静默回轨道 0。
 	const int aIndex = MphfLookupGlobal((std::uint32_t)aType, (std::uint32_t)theTrackId);
-	if (gMphfVerify)
-	{
-		// Verify the compiler's first-occurrence index against the numeric runtime tracks.
-		const ReanimatorDefinition& aDef = gReanimatorDefArray[aType];
-		int aFirst = -1;
-		for (int i = 0; i < aDef.mTracks.count; ++i)
-			if (aDef.mTracks.tracks[i].mTrackId == theTrackId)
-			{
-				aFirst = i;
-				break;
-			}
-		const bool aInCorpus = MphfGlobalTypeInCorpus((std::uint32_t)aType);
-		if ((aIndex >= 0 || aInCorpus) && aIndex != aFirst)
-		{
-			TodErrorMessageBox(StrFormat(
-				"MPHF-global verify mismatch: type=%d id=%u global=%d first-occurrence=%d",
-				aType, (unsigned)(std::uint32_t)theTrackId, aIndex, aFirst).c_str(), "Error");
-			exit(0);
-		}
-	}
 	return aIndex;
 }
 
-
-// -reanimsmoke 自检：全量加载后，句柄查找/低频字符串查找必须与原版逐轨道
-// stricmp 扫描的返回值完全一致；返回不一致计数（0 = 通过）。
-#if PVZ_ENABLE_GAME_PROBES
-int ReanimatorSmokeVerify()
-{
-	// Load the definitions and numeric track identities for lookup verification.
-	for (unsigned int aType = 0; aType < gReanimatorDefCount; aType++)
-		ReanimatorEnsureDefinitionLoaded((ReanimationType)aType, true);
-	int aErrors = 0;
-	int aTracksChecked = 0;
-	for (unsigned int aType = 0; aType < gReanimatorDefCount; aType++)
-	{
-		ReanimatorDefinition* aDef = &gReanimatorDefArray[aType];
-		if (aDef->mTracks.tracks == nullptr)
-		{
-			TodLog("reanimsmoke: def %u not loaded", aType);
-			aErrors++;
-			continue;
-		}
-		aTracksChecked++;
-	}
-	TodLog("reanimsmoke: defs=%u tracks=%d errors=%d", gReanimatorDefCount, aTracksChecked, aErrors);
-	TodLog("reanimsmoke: origin v2=%u (v2 记录为唯一定义来源，v1 路径已删)", gReanimatorDefCount);
-	return aErrors;
-}
-
-// ====================================================================================================
-// ★ 【查找微基准】PVZ_BENCH_LOOKUP=1（LawnApp::Init 定义装载后触发）：四条查找路径 ns/op 对拍
-// ----------------------------------------------------------------------------------------------------
-// 查询集合 = 全部 (ReanimationType, ReanimTrackId) 中定义装载可查的组合（轨道有 id，
-// 且全局 MPHF 键映射与装载下标一致），四条路径对同一集合各测：
-//   2. ReanimatorTrackIndexOf repeat   同 (type,id) 重复查询（自动反映激活路径：默认全局单表）
-//   3. ReanimatorTrackIndexOf permute  每次换键（激活路径全查：全局 MPHF，构建期验证全命中）
-//   4. 1073 式线性扫描基线（模拟）       strnicmp 按查询串长度前缀比较直到命中；
-//      运行期定义已无轨道名字符串，名字副本 = ReanimTrackId.h 生成头内嵌名表（编译进 exe），
-//      按轨道下标顺序排列，等价模拟原版逐轨道扫描的访存与比较成本。
-//   6. pure_mphf_global                直调 MphfLookupGlobal(type,id) 本体（剥掉边界检查/
-//      回退链/计数递增的单张全局表：联合键打包 + 两段掩码哈希 + 一次 64 位比较）
-// 计时方法：__rdtsc（前置 lfence 串行化），steady_clock 校准 ticks/ns；每批 >= 1,000,000 次
-// 查询、外层一次计时；查询顺序 = 固定种子 xorshift32 Fisher-Yates 排列（四路径同一排列，
-// 防分支预测器/缓存给某条路径作弊）；内层结果累加 volatile sink 防优化消除；
-// 9 批有效 + 1 批预热，报告中位数/最小值。
-// 口径说明：路径 2 每键首拍是换键 miss（走一次激活路径后进入稳态），miss 占比 = 1/256，
-// 计入计时；路径 2/3 计数器（gTrackIndexLookup/gPerfMphfHits）被批量查询
-// 污染属预期，不改变任何查找路径行为。
-// ====================================================================================================
-static volatile unsigned int gLookupBenchSink = 0;
-
-static inline std::uint64_t BenchNowTsc()
-{
-	_mm_lfence();
-	return __rdtsc();
-}
-
-int ReanimLookupBenchmark()
-{
-	enum { kBatches = 9, kWarmupBatches = 1, kMinOpsPerBatch = 1000000, kMemoRepeats = 256 };
-
-	// TSC 校准：对 steady_clock（QPC）测 ticks/ns（睡眠窗口两时钟同为墙钟，免疫调度）
-	const double aTicksPerNs = [] {
-		const auto aC0 = std::chrono::steady_clock::now();
-		const std::uint64_t aT0 = __rdtsc();
-		std::this_thread::sleep_for(std::chrono::milliseconds(120));
-		const std::uint64_t aT1 = __rdtsc();
-		const auto aC1 = std::chrono::steady_clock::now();
-		return double(aT1 - aT0) / std::chrono::duration<double, std::nano>(aC1 - aC0).count();
-	}();
-
-	// ---- 查询集合：各类型定义中全部有 id 的轨道，id->下标经全局 MPHF 一致性预过滤 ----
-	struct LookupQuery
-	{
-		ReanimationType mType;
-		ReanimTrackId mId;
-		int mIndex;          // 期望轨道下标（= 装载 id 表下标 = MPHF 键映射值）
-	};
-	std::vector<LookupQuery> aQueries;
-	int aTypesInSet = 0, aSkippedNoMphf = 0, aSkippedMismatch = 0;
-	const int aTypeCount = (int)std::min<std::uint32_t>(gReanimatorDefCount, (std::uint32_t)(int)ReanimationType::NUM_REANIMS);
-	for (int aType = 0; aType < aTypeCount; aType++)
-	{
-		ReanimatorEnsureDefinitionLoaded((ReanimationType)aType, true);
-		ReanimatorDefinition* aDef = &gReanimatorDefArray[aType];
-		if (aDef->mTracks.tracks == nullptr)
-			continue;  // 定义加载失败（资源缺失）：该类型无查询
-		++aTypesInSet;
-		const bool aInCorpus = MphfGlobalTypeInCorpus((std::uint32_t)aType);
-		for (int j = 0; j < aDef->mTracks.count; j++)
-		{
-			const ReanimTrackId aId = aDef->mTracks.tracks[j].mTrackId;
-			if (aId == ReanimTrackId::None)
-				continue;
-			if (!aInCorpus)
-			{
-				++aSkippedNoMphf;  // 语料外类型：全局表无键，不符合“MPHF 全命中”口径（语料全覆盖后应为 0）
-				continue;
-			}
-			if (MphfLookupGlobal((std::uint32_t)aType, (std::uint32_t)aId) != j)
-			{
-				++aSkippedMismatch;  // 全局 MPHF 键映射与装载下标不一致：剔除，保证各路径同答案
-				continue;
-			}
-			aQueries.push_back(LookupQuery{(ReanimationType)aType, aId, j});
-		}
-	}
-	if (aQueries.empty())
-	{
-		TodLog("lookup_ab: EMPTY query set (defs=%u)", gReanimatorDefCount);
-		return 1;
-	}
-	const int aQueryCount = (int)aQueries.size();
-
-	// ---- 全域穷举对拍（含语料外类型）：真值 = 该类型 id 列表首见下标 ----
-	// bench 查询集因 path3 的"MPHF 全命中"口径跳过语料外类型（曾让
-	// REANIM_FLAG=140 的对拍语义缝隙漏网）；本扫独立于口径，覆盖每个已装
-	// 载定义 × 每条有 id 的轨道，逐格比对 ReanimatorTrackIndexOf 与首见真值
-		//（直接走唯一查找层——全局单表 MPHF——验证；此扫即"所有合法查询零
-		// 硬错"的运行期证明）。
-	{
-		int aSweepTypes = 0, aSweepQueries = 0, aSweepMismatch = 0;
-		for (int aType = 0; aType < aTypeCount; aType++)
-		{
-			const ReanimatorDefinition& aDef = gReanimatorDefArray[aType];
-			if (aDef.mTracks.tracks == nullptr)
-				continue;
-			++aSweepTypes;
-			for (int j = 0; j < aDef.mTracks.count; j++)
-			{
-				const ReanimTrackId aId = aDef.mTracks.tracks[j].mTrackId;
-				if (aId == ReanimTrackId::None)
-					continue;
-				int aFirst = 0;
-				while (aFirst < j && aDef.mTracks.tracks[aFirst].mTrackId != aId)
-					++aFirst;
-				++aSweepQueries;
-				if (ReanimatorTrackIndexOf((ReanimationType)aType, aId) != aFirst)
-					++aSweepMismatch;
-			}
-		}
-		TodLog("lookup_ab: exhaustive(types/queries/mismatch)=%d/%d/%d",
-			aSweepTypes, aSweepQueries, aSweepMismatch);
-		if (aSweepMismatch != 0)
-		{
-			TodLog("lookup_ab: EXHAUSTIVE FAILED (%d mismatches)", aSweepMismatch);
-			return aSweepMismatch;
-		}
-	}
-
-	// ---- 固定种子伪随机排列（四路径同一排列） ----
-	std::vector<int> aPerm(aQueryCount);
-	for (int i = 0; i < aQueryCount; i++)
-		aPerm[i] = i;
-	{
-		std::uint32_t s = 0x3C2B1A77u;  // 固定种子：xorshift32 + Fisher-Yates
-		for (int i = aQueryCount - 1; i > 0; i--)
-		{
-			s ^= s << 13; s ^= s >> 17; s ^= s << 5;
-			const int j = (int)(s % (std::uint32_t)(i + 1));
-			std::swap(aPerm[i], aPerm[j]);
-		}
-	}
-
-	// ---- 一致性预检（不计入结果）：路径 2/3/6 必须同答案；路径 4 单列前缀碰撞差异 ----
-	int aVerifyMismatch = 0;
-	for (int i = 0; i < aQueryCount; i++)
-	{
-		const LookupQuery& q = aQueries[i];
-		if (MphfLookupGlobal((std::uint32_t)q.mType, (std::uint32_t)q.mId) != q.mIndex ||
-		    ReanimatorTrackIndexOf(q.mType, q.mId) != q.mIndex)
-			++aVerifyMismatch;
-	}
-	if (aVerifyMismatch != 0)
-	{
-		TodLog("lookup_ab: VERIFY FAILED (%d mismatches)", aVerifyMismatch);
-		return aVerifyMismatch;
-	}
-
-	// ---- 批量计时骨架：每批一次 __rdtsc，theSweep() 返回本批查询数（>= kMinOpsPerBatch） ----
-	struct PathResult { double mMedianNs; double mMinNs; std::uint64_t mOpsPerBatch; };
-	const auto aRunPath = [&](const auto& theSweep) -> PathResult {
-		std::vector<double> aNs;
-		std::uint64_t aOps = 0;
-		for (int b = 0; b < kWarmupBatches + kBatches; b++)
-		{
-			const std::uint64_t aT0 = BenchNowTsc();
-			aOps = theSweep();
-			const std::uint64_t aT1 = BenchNowTsc();
-			if (b >= kWarmupBatches)
-				aNs.push_back(double(aT1 - aT0) / (aTicksPerNs * (double)aOps));
-		}
-		std::sort(aNs.begin(), aNs.end());
-		return PathResult{aNs[aNs.size() / 2], aNs.front(), aOps};
-	};
-
-	// 路径 2：repeat 稳态 —— 同 (type,id) 重复查询（激活路径原样：默认全局单表 MPHF）。
-	// 每键首拍换键 miss（走一次激活路径后进入稳态），miss 占比 = 1/kMemoRepeats，计入计时。
-	const PathResult aR2 = aRunPath([&] {
-		const std::uint64_t aOpsPerSweep = (std::uint64_t)aQueryCount * kMemoRepeats;
-		const std::uint32_t aSweeps = (std::uint32_t)((kMinOpsPerBatch + aOpsPerSweep - 1) / aOpsPerSweep);
-		for (std::uint32_t s = 0; s < aSweeps; s++)
-			for (int i = 0; i < aQueryCount; i++)
-			{
-				const LookupQuery& q = aQueries[aPerm[i]];
-				for (int r = 0; r < kMemoRepeats; r++)
-					gLookupBenchSink += (unsigned)ReanimatorTrackIndexOf(q.mType, q.mId);
-			}
-		return aSweeps * aOpsPerSweep;
-	});
-
-	// 路径 3：permute 失效流 —— 每次换键（排列内相邻键必不同）→ 激活路径全查
-	//（全局单表 MPHF，唯一查找层），构建期验证全命中。
-	const PathResult aR3 = aRunPath([&] {
-		const std::uint32_t aSweeps = (std::uint32_t)((kMinOpsPerBatch + aQueryCount - 1) / aQueryCount);
-		for (std::uint32_t s = 0; s < aSweeps; s++)
-			for (int i = 0; i < aQueryCount; i++)
-			{
-				const LookupQuery& q = aQueries[aPerm[i]];
-				gLookupBenchSink += (unsigned)ReanimatorTrackIndexOf(q.mType, q.mId);
-			}
-		return (std::uint64_t)aSweeps * aQueryCount;
-	});
-
-	// 路径 6：纯全局 MPHF —— 直调 MphfLookupGlobal(type,id) 本体，
-	// 剥掉边界检查/回退链/计数递增，单张全局表：联合键打包 + 两段掩码哈希 + 一次 64 位比较。
-	const PathResult aR6 = aRunPath([&] {
-		const std::uint32_t aSweeps = (std::uint32_t)((kMinOpsPerBatch + aQueryCount - 1) / aQueryCount);
-		for (std::uint32_t s = 0; s < aSweeps; s++)
-			for (int i = 0; i < aQueryCount; i++)
-			{
-				const LookupQuery& q = aQueries[aPerm[i]];
-				gLookupBenchSink += (unsigned)MphfLookupGlobal((std::uint32_t)q.mType, (std::uint32_t)q.mId);
-			}
-		return (std::uint64_t)aSweeps * aQueryCount;
-	});
-
-	// ---- 结果：stdout + lookup_ab.log（工作目录，与 reanim_perf.log 同级） ----
-	char aLine[512];
-	FILE* aOut = fopen("lookup_ab.log", "a");
-	const auto aEmit = [&](const char* theLine) {
-		std::printf("%s", theLine);
-		if (aOut != nullptr)
-			std::fprintf(aOut, "%s", theLine);
-	};
-	std::snprintf(aLine, sizeof(aLine),
-		"lookup_ab: set queries=%d types=%d/%u skipped(nomphf/mismatch)=%d/%d verify_mismatch=%d (path2/3 激活路径)\n",
-		aQueryCount, aTypesInSet, gReanimatorDefCount, aSkippedNoMphf, aSkippedMismatch,
-		aVerifyMismatch);
-	aEmit(aLine);
-	std::snprintf(aLine, sizeof(aLine),
-		"lookup_ab: timer=__rdtsc+lfence calib=%.4f ticks/ns (~%.2f GHz) batches=%d(warmup=%d) min_ops/batch=%d perm=xorshift32(0x3C2B1A77)-fisher-yates memo_repeats=%d\n",
-		aTicksPerNs, aTicksPerNs, kBatches, kWarmupBatches, kMinOpsPerBatch, kMemoRepeats);
-	aEmit(aLine);
-	std::snprintf(aLine, sizeof(aLine),
-		"lookup_ab: path2 indexof_repeat       median=%8.2f ns/op min=%8.2f ns/op ops/batch=%llu miss_mix=1/%d\n",
-		aR2.mMedianNs, aR2.mMinNs, (unsigned long long)aR2.mOpsPerBatch, kMemoRepeats);
-	aEmit(aLine);
-	std::snprintf(aLine, sizeof(aLine),
-		"lookup_ab: path3 indexof_permute  median=%8.2f ns/op min=%8.2f ns/op ops/batch=%llu mphf_all_hit=yes\n",
-		aR3.mMedianNs, aR3.mMinNs, (unsigned long long)aR3.mOpsPerBatch);
-	aEmit(aLine);
-	std::snprintf(aLine, sizeof(aLine),
-		"lookup_ab: path6 pure_mphf_global median=%8.2f ns/op min=%8.2f ns/op ops/batch=%llu direct=MphfLookupGlobal(type,id)\n",
-		aR6.mMedianNs, aR6.mMinNs, (unsigned long long)aR6.mOpsPerBatch);
-	aEmit(aLine);
-	if (aOut != nullptr)
-		fclose(aOut);
-	return 0;
-}
-#endif
 
 ReanimationParams gLawnReanimationArray[(int)ReanimationType::NUM_REANIMS] = { //0x6A1340
 	{ ReanimationType::REANIM_LOADBAR_SPROUT,                       "reanim\\LoadBar_sprout.reanim", 0},
@@ -619,26 +315,6 @@ static std::vector<AttacherSegmentRT> gAttacherSegments[(int)ReanimationType::NU
 // def 级 attacher 位掩码：kReanimAttacherMasks（编译期常量，转写 reanimc
 // compile-v2 发射的 kAttacherMaskByType——原始轨道表计算，含同 id 重复轨道；
 // 2026-10-06 起不再需要任何装载期补位）
-
-int ReanimatorAttacherSegmentStats(ReanimationType theType, int& theNoneCount, int& theMinStart, int& theMaxEnd)
-{
-	theNoneCount = 0;
-	theMinStart = 0;
-	theMaxEnd = 0;
-	if (theType < 0 || theType >= (ReanimationType)gReanimatorDefCount)
-		return 0;
-	const auto& aSegs = gAttacherSegments[(int)theType];
-	for (const AttacherSegmentRT& s : aSegs)
-	{
-		if (s.targetType == (std::uint32_t)ReanimationType::REANIM_NONE)
-			++theNoneCount;
-		if (aSegs.empty() || s.startFrame < theMinStart || theMaxEnd == 0)
-			theMinStart = s.startFrame;
-		if (s.endFrame > theMaxEnd)
-			theMaxEnd = s.endFrame;
-	}
-	return (int)aSegs.size();
-}
 
 static std::uint32_t ReanimCrc32(const std::uint8_t* theData, const std::size_t theSize)
 {
@@ -921,7 +597,7 @@ inline void ReanimClearActiveBit(Reanimation& r, int theTrackIndex)
 	r.mActiveMask[theTrackIndex >> 6] &= ~(1ull << (theTrackIndex & 63));
 }
 // 分组占用：0..31 置位；负值（HIDDEN=-1）不占可绘分组。只置不清——
-// 空分组多跑一遍无害，漏位才丢绘制（shadow 盯防）。
+// 空分组多跑一遍无害，漏位才丢绘制。
 inline void ReanimOccupyGroupBit(Reanimation& r, int theRenderGroup)
 {
 	if ((unsigned)theRenderGroup < 32u)
@@ -2192,7 +1868,7 @@ void Reanimation::UpdateAttacherTrack(int theTrackIndex)
 	if (aActionId != ReanimTrackId::None)  // 如果定义了附属动画的动作轨道
 	{
 		int aAnimFrameStart, aAnimFrameCount;
-		if (gActionCacheEnabled && aSeg->mActionFrameStart >= 0)
+		if (aSeg->mActionFrameStart >= 0)
 		{
 			// 段级缓存命中：f(targetType, actionTrackId) 是段纯函数，全实例共享
 			aAnimFrameStart = aSeg->mActionFrameStart;

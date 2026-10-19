@@ -396,7 +396,6 @@ bool ExportZombatarJpeg(const Zombatar& theZombatar, int theNumber, LawnApp* the
 {
 	if (theNumber <= 0 || !theApp)
 		return false;
-	TodTraceAndLog("ZOMBATAR_EXPORT_BEGIN number=%d", theNumber);
 
 	if (!theApp->mDDInterface || !theApp->mDDInterface->mIs3D ||
 		!theApp->mDDInterface->mRenderInterface ||
@@ -457,11 +456,6 @@ bool ExportZombatarJpeg(const Zombatar& theZombatar, int theNumber, LawnApp* the
 	}
 	// ImageLib::Image owns mBits by default; detach the borrowed vector buffer.
 	aExportImage.mBits = nullptr;
-	TodTraceAndLog(
-		"ZOMBATAR_EXPORT_END number=%d written=%d path=%s",
-		theNumber,
-		aWritten ? 1 : 0,
-		aFileName.c_str());
 	return aWritten;
 }
 

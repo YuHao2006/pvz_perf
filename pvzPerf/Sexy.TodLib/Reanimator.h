@@ -224,7 +224,7 @@ public:
     // 清位由 Update 访问自愈（三值全零即清），陈旧置位仅浪费一次空访
     //（安全方向）；存档读回/夹具直写后调 RebuildTrackActivityMasks 全量
     // 重建。mGroupOccMask 位=分组号（0..17），只置位不清——空分组多跑
-    // 一遍无害，漏位才会丢绘制（shadow 盯防）。均不入盘（派生态）。
+    // 一遍无害，漏位才会丢绘制。均不入盘（派生态）。
     uint64_t                        mActiveMask[kReanimActiveMaskWords];
     uint32_t                        mGroupOccMask;
 public:
@@ -293,15 +293,5 @@ void                                ReanimationPreload(ReanimationType theReanim
 
 // 轨道索引 -> 枚举（定义侧；实例侧用 Reanimation::GetTrackId）。
 std::uint32_t                       ReanimatorTrackIdAt(ReanimationType theReanimType, int theTrackIndex);
-// IDT3 段表统计（诊断）：返回段总数，noneCount = 目标为 REANIM_NONE 的段数，
-// minStart/maxEnd = 段帧区间覆盖范围
-int                                 ReanimatorAttacherSegmentStats(ReanimationType theType, int& theNoneCount, int& theMinStart, int& theMaxEnd);
-#if PVZ_ENABLE_GAME_PROBES
-int                                 ReanimatorSmokeVerify();
-// 查找路径微基准（PVZ_BENCH_LOOKUP=1，LawnApp::Init 定义装载完成后调用）：
-// repeat 稳态 / permute 全查 / 1073 式线性扫描 / 纯每类型 MPHF / 纯全局 MPHF
-// 五路径 ns/op 对拍。
-int                                 ReanimLookupBenchmark();
-#endif
 
 #

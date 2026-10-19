@@ -13,6 +13,7 @@ list(FILTER PVZ_RESOURCE_INPUTS EXCLUDE REGEX "/ReanimTrack(Id|MphfGlobal)\\.h$"
 
 add_custom_command(
     OUTPUT "${PVZ_RESOURCE_CACHE}/resources.stamp" "${PVZ_RESOURCE_CACHE}/main.pak64"
+    BYPRODUCTS "${PVZ_GAME_SOURCE_DIR}/Sexy.TodLib/generated/ImageAtlasGroups.h"
     COMMAND "${Python3_EXECUTABLE}" -B
         "${CMAKE_SOURCE_DIR}/tools/resourcePipeline/src/build_resources.py"
         --compiler "$<TARGET_FILE:reanimc>" --cache "${PVZ_RESOURCE_CACHE}"

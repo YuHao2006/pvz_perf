@@ -12,6 +12,22 @@
 `W/` = `Tests/evidence/docs-evidence/20261015/`；
 `P/` = `out/x64-win32-dx12/Release/log/smoke/20261017-125226-242-a12d2ca6810049b8aa7153b90fa7de69/`。
 
+## 点击闪屏与无响应误判
+
+触发：游戏画面持续更新，但鼠标停留在窗口内、消息队列长期没有非移动输入，
+随后点击时出现短暂闪屏，有时进入暂停。
+根因：过滤移动消息时，消息泵连通用 `PeekMessage` 查询也跳过了。
+Windows 因此把仍在更新的窗口判为无响应，建立 `Ghost` 替身窗口；
+替身与原窗口之间的隐藏、恢复和焦点切换会触发闪屏及失焦暂停。
+
+修复：每个逻辑心跳至多执行一次 `PeekMessage(PM_NOREMOVE)`，维持窗口响应性。
+移动消息仍不分发给游戏；按钮事件保留消息自带坐标和 FIFO 顺序，不使用时间预算截断。
+该行为位于共享 Win32 窗口层，适用于 Win7、Win10 和各图形后端。
+验证包括持续更新窗口的无响应阴性／阳性对照、混合输入顺序及坐标检查，
+并由用户实机确认点击闪屏与误暂停消失。
+入口为 `platform/windows/NativeMessageReadiness.h` 与 `Win32App.cpp`，
+独立回归位于 `tools/native-tests/win32_message_readiness_tests.cpp`。
+
 ## credits 场景状态
 
 触发：从奖励界面打开 credits，画面正常播放，但 `mGameScene` 仍为
@@ -316,7 +332,8 @@ Linux 从文件管理器启动时表现为无提示退出；通用 Popup 同样�
 ## 发行清理与验证边界
 
 用户 DLL 关卡入口及加载器删除；`GAMEMODE_CUSTOM_LEVEL=72` 保留，挑战页隐藏并拦截占位，既有枚举 / 存档编号不前移。
-正式 `PVZ_ENABLE_GAME_PROBES=OFF`，Smoke 不编入发行；watchdog、PhasePerf、鼠标及临时提交 / 动画计时日志删除。
+游戏内 Smoke 入口、watchdog、PhasePerf、鼠标及临时提交／动画计时、shadow 对拍代码从生产源码删除，
+不再提供可重新启用这些插桩的构建开关。独立回归及外部只读观测工具保留。
 证据：`CMakeLists.txt`、`pvzPerf/SexyAppFramework/CMakeLists.txt`、`main.cpp`、`pvzPerf/LawnApp.cpp`、`pvzPerf/Lawn/Widget/ChallengeScreen.cpp`；
 这些是当前工作区变化，不能把旧 Git 检查点当成已含全部发行清理。
 最终 Windows DX12、Linux X11/Vulkan、Wayland/Vulkan 三套 Release/LTO 编译退出码均为 0；

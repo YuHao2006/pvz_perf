@@ -52,13 +52,8 @@ public:
     MetalTexture* CreateCausticsTexture(int width, int height, MetalTexture* source);
     void UseCausticsTexture(MetalTexture* output, MetalTexture* source);
     void SetCausticsFrame(uint32_t counter);
+    MetalTexture* const& causticsTexture;
     bool HasCausticsCompute() const;
-    struct CausticsStatus {
-        MetalTexture* target{};
-        uint32_t lastDispatched{};
-        uint64_t dispatchSerial{};
-    };
-    const CausticsStatus& causticsState;
     bool BeginScene();
     const bool& sceneOpen;
     void SubmitTriangles(std::span<const GpuVertex> vertices, MetalTexture* texture,
@@ -84,17 +79,7 @@ public:
     const int& sceneWidth;
     const int& sceneHeight;
     uint32_t MaxImageDimension2D() const;
-    struct ResourceCounts { size_t textures, retiredTextures, descriptorPools, vertexBuffers; };
-    struct DrawCommandCounts {
-        uint64_t draws, pipelines, descriptors, viewports, scissors, extents, vertexBuffers;
-    };
-    struct TextureUploadCounts {
-        uint64_t textures, batches, stagingAllocations;
-        size_t pending;
-        uint64_t stagingCapacity, createdTextures, reusedUpdates;
-    };
+    struct ResourceCounts { size_t textures, retiredTextures, descriptorPools; };
     ResourceCounts GetResourceCounts() const;
-    const DrawCommandCounts& drawCommandCounts;
-    const TextureUploadCounts& textureUploadCounts;
 };
 }

@@ -67,22 +67,7 @@ def parse_attacher_mask_table():
     return type_count, words, rows
 
 
-def write_build_id():
-    import subprocess
-    import time
-    try:
-        h = subprocess.run(['git', 'rev-parse', '--short', 'HEAD'], capture_output=True, text=True).stdout.strip()
-    except Exception:
-        h = 'nogit'
-    content = ('// Generated -- DO NOT EDIT' + chr(10) +
-               'inline constexpr const char* kPvzBuildId = "git:%s built:%s";' + chr(10)) % (h, time.strftime('%Y%m%d-%H%M%S'))
-    out = os.path.join(ROOT, 'pvzPerf', 'Sexy.TodLib', 'generated', 'buildid.h')
-    if not os.path.exists(out) or io.open(out, encoding='utf-8').read() != content:
-        io.open(out, 'w', encoding='utf-8', newline=chr(10)).write(content)
-
-
 def main():
-    write_build_id()
     slots = parse_mphf_slots()
     if not slots:
         raise SystemExit('gen: kSlots has no real keys')

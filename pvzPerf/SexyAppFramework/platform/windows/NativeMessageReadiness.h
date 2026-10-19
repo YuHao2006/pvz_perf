@@ -7,6 +7,17 @@
 namespace Sexy {
 struct NativeFrameMotionPoll {
     unsigned mLastUpdate=~0u;
+    unsigned mLastHeartbeatUpdate=~0u;
+
+    bool PollHeartbeat(unsigned update) noexcept {
+        if(update==mLastHeartbeatUpdate) return false;
+        mLastHeartbeatUpdate=update;
+        // USER needs a general queue check; a sent-only peek still appears hung.
+        // Observe once per update, leaving queued mouse/button events untouched.
+        MSG message{};
+        PeekMessageW(&message,nullptr,0,0,PM_NOREMOVE);
+        return true;
+    }
 
     bool Allow(unsigned update,bool inGame) noexcept {
         if(inGame || update==mLastUpdate) return false;

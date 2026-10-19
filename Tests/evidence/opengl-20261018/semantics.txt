@@ -1,0 +1,24 @@
+adapter=NVIDIA GeForce RTX 4070 Laptop GPU/PCIe/SSE2 / 4.6.0 NVIDIA 591.44 context=4.6 GLSL=4.60 NVIDIA
+requested=3.0; actual version above is driver-reported, not a 3.0-only certification
+PASS GLSL130-compile-link
+atlas pages=4 images=26 occupied_pixels=10504 page_pixels=16384
+PASS atlas-multipage-NPOT-negative-UV-CPU-taps
+PASS atlas-vs-standalone-all-samplers-filters-zero-difference
+PASS primitive-order-replace-destroy-recorded-versions
+PASS slot-flags-coverage-65536
+PASS RGBA32F-self-sample-snapshot
+PASS RGBA32F-normal-additive-no-clamp
+PASS copy-zero-fill-compose-process
+PASS resource-lifetime-copy-metadata-page-reuse
+PASS static-slot-identity-atlas-migration
+PASS all-immutable-upload-collection-paths
+PASS static-replace-with-full-dynamic-region
+PASS caustics-CPU-reference
+PASS font-endpoint-expand-shrink-singleton
+effect preparation rejected: OpenGL 3.0 cannot execute the configured HLSL compute scaling chain; GLSL 1.30 has no compute stage
+effect preparation rejected: OpenGL 3.0 cannot execute the configured HLSL compute scaling chain; GLSL 1.30 has no compute stage
+PASS effects-prepare-rejection
+PASS hidden-retained-resize-simulated-suspension
+corpus atlas pages=1 images=2092 occupied_pixels=10102190 page_pixels=12845056 occupancy=0.786465
+PASS packaged-small-image-shapes
+failed=0; hidden HWND only; no Win7/old-GPU certification

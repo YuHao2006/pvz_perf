@@ -1,6 +1,7 @@
 #pragma once
 #include "dsoundversion.h"
 #include "sound/SoundManager.h"
+#include "sound/SoundDecode.h"
 
 namespace Sexy
 {
@@ -13,6 +14,7 @@ class DSoundManager : public SoundManager
 	friend class DSoundMusicInterface;
 
 protected:
+	SoundDecoderLease		mDecoder;
 	LPDIRECTSOUNDBUFFER		mSourceSounds[MAX_SOURCE_SOUNDS];
 	std::string				mSourceFileNames[MAX_SOURCE_SOUNDS];
 	LPDIRECTSOUNDBUFFER		mPrimaryBuffer;
@@ -26,9 +28,6 @@ protected:
 protected:
 	int						FindFreeChannel();
 	int						VolumeToDB(double theVolume);
-	bool					LoadOGGSound(unsigned int theSfxID, const std::string& theFilename);
-	bool					LoadWAVSound(unsigned int theSfxID, const std::string& theFilename);
-	bool					LoadAUSound(unsigned int theSfxID, const std::string& theFilename);
 	void					ReleaseFreeChannels();
 
 public:

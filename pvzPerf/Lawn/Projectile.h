@@ -62,9 +62,6 @@ public:
     void                    UpdateMotion();
     void                    CheckForCollision();
     [[nodiscard]] Zombie*                 FindCollisionTarget();
-    // shadow 对拍参照（env PVZ_ZOMBIE_ROW_SHADOW=1）：1073 原全池扫逐字保留，
-    // 非 shadow 路径不执行
-    [[nodiscard]] Zombie*                 FindCollisionTargetScanAll();
     void                    UpdateLobMotion();
     void                    CheckForHighGround();
     bool                    CantHitHighGround();

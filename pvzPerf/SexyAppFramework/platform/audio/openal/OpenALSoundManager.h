@@ -1,5 +1,6 @@
 #pragma once
 #include "OpenALDevice.h"
+#include "sound/SoundDecode.h"
 #include "sound/SoundManager.h"
 #include "sound/SoundInstance.h"
 #include <array>
@@ -42,12 +43,7 @@ public:
 };
 class OpenALSoundManager final : public SoundManager {
     friend class OpenALSoundInstance;
-    struct DecoderLease {
-        DecoderLease();
-        ~DecoderLease();
-        DecoderLease(const DecoderLease&) = delete;
-        DecoderLease& operator=(const DecoderLease&) = delete;
-    } mDecoder;
+    SoundDecoderLease mDecoder;
     // Reverse member destruction closes mixer threads before the decoder module.
     OpenALDevice mDevice;
     std::array<unsigned int, MAX_SOURCE_SOUNDS> mBuffers{};

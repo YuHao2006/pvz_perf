@@ -1,0 +1,20 @@
+{
+  "pid": 13420,
+  "status": "loaded-and-updating",
+  "snapshot": {
+    "pid": 13420,
+    "app": 18001536,
+    "mDrawCount": 70,
+    "mUpdateCount": 257,
+    "mGameScene": 0,
+    "mGameMode": 0,
+    "mHWnd": 1574584,
+    "mBoard": 0,
+    "mCreditScreen": 0,
+    "mGameSelector": 0,
+    "mTitleScreen": 148875472,
+    "mPlayerInfo": 0,
+    "mAwardScreen": 0
+  },
+  "exit_code": 0
+}

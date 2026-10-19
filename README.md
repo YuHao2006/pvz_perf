@@ -4,12 +4,16 @@
 文档维护当前有效机制与修复；现行实测和历史算法证据分开标注，不按日期追加开发过程。
 
 发行下载：[GitHub Releases](https://github.com/YuHao2006/pvz_perf/releases)。
-**Windows 推荐下载 `x64-windows-vulkan.zip`**，完整解压后运行 `pvz_perf.exe`；
-另保留 `x64-win32-dx12.zip` 供需要 DirectX 12 的用户选择。
-不附个人存档或设置。发行提供 Windows Win32/Vulkan、Win32/DX12、
-Linux X11/Vulkan 和 Wayland/Vulkan。
-当前 Linux 包基于 Ubuntu 25.10 构建，要求 glibc 2.38、GLIBCXX 3.4.32 及兼容的
-Vulkan 驱动；仍使用本机 CPU 优化，不承诺兼容所有 x86-64 CPU 或 Ubuntu 22.04。
+**Windows 推荐下载 `x64-win10-vulkan-v1.1.zip`**，完整解压后运行 `pvz_perf.exe`。
+v1.1 本次提供 Win7/DX9、Win7/OpenGL、Win10/DX12、Win10/Vulkan 四种 Windows 组合，
+另附源码包。Linux X11/Vulkan 和 Wayland/Vulkan 的二进制发行留待 Ubuntu 实机阶段处理。
+每个包包含生成的 PerfTest 完美用户档、统一无尽基准和外部 Magpie effects，
+不包含个人进度或个人设置。普通生存的完成记录为 5 旗，困难生存为 10 旗。
+**Win7 统一 SDR，不支持 HDR；DX9/OpenGL 的默认配置不启用自定义缩放效果。**
+Windows 游戏使用 `/MD`，发行包不携带 CRT DLL，运行机器需安装兼容的 VC++ x64 运行库；
+存档转换器使用 `/MT`。
+Linux 使用通用 x86-64 构建基线，实际 glibc、GLIBCXX、窗口及音频依赖要求
+见各发行包 README 和依赖清单，不承诺在所有 Linux 发行版直接运行。
 Linux 依赖与外部效果许可随包提供，系统图形、窗口、音频运行库由用户安装。
 贡献通过 fork 和 Pull Request 提交，由维护者审查，见 [参与开发](CONTRIBUTING.md)。
 
@@ -26,6 +30,8 @@ Linux 依赖与外部效果许可随包提供，系统图形、窗口、音频�
 
 | 组合 | 构建入口 | 程序目录 |
 | --- | --- | --- |
+| Windows 7 x64 / Win32 / DX9 | `tools/build-win7-opengl.ps1 -RenderBackend D3D9` | `out/x64-win7-d3d9/Release/` |
+| Windows 7 x64 / Win32 / OpenGL 3.0 | `tools/build-win7-opengl.ps1` | `out/x64-win7-opengl/Release/` |
 | Windows x64 / Win32 / Vulkan（推荐） | CMake：`PVZ_RENDER_BACKEND=VULKAN` | `out/x64-win32-vulkan/Release/` |
 | Windows x64 / Win32 / DX12 | `tools/build-d3d12-game.ps1` | `out/x64-win32-dx12/Release/` |
 | Linux x64 / X11 / Vulkan | `sh tools/build-linux-game.sh x11` | `out/x64-x11-vulkan/Release/` |
@@ -63,9 +69,10 @@ desktop 文件安装后要求程序或启动器位于 PATH。
 
 ## 资源与配置
 
-发行运行目录包含主程序、`main.pak64`、`shaders/`、`effects/`、
+发行运行目录包含主程序、`main.pak64`、`effects/`、
 `scale.json`、本平台运行库及图标。正式分发使用干净 staging，
-不要把个人存档、旧对照程序、烟测程序和历史日志混入发行包。
+仅附指定测试存档，不把个人存档、旧对照程序、烟测程序和历史日志混入发行包。
+Vulkan、DX12 和 DX9 的内置 shader 位于 `shaders/`；OpenGL 内置 GLSL 随 EXE 分发。
 
 | 资源 | 位置与规则 |
 | --- | --- |
@@ -78,12 +85,16 @@ desktop 文件安装后要求程序或启动器位于 PATH。
 用户配置，游戏不回写它。窗口为一次 Anime4K 2 倍放大；全屏为两次 2 倍
 放大后经 SSimDownscaler 按 `fit` 保持比例输出，`overSharp=1`。
 自定义缩放仍由游戏选项开关控制。Linux HDR 尚未实现，默认关闭。
+Win7 组合使用独立的空效果链默认值；随包 effects 用于保留外部资源和来源说明，
+不表示 DX9/OpenGL 已支持 Magpie 的 compute 效果。
 `settings.json` 按游戏设置写回；改名不迁移现有存档目录。
 
 原生 Linux 的数据目录依次由 `PVZ_APPDATA_DIR`、XDG 数据目录或
 `$HOME/.local/share/PlantsVsZombiesModern` 决定，保留旧名称以保留进度。
 显式 `PVZ_SETTINGS_FILE`、`PVZ_LOG_DIR`、`PVZ_SCALE_CONFIG_FILE`
 可用于隔离测试。不要把 WSL 的 `./data` 启动约定当作原生 Linux 默认值。
+v1.1 Linux 发行包的 `start.sh` 显式选择随包 `data/`，可直接使用 PerfTest 和无尽基准，
+并尊重用户提供的 `PVZ_APPDATA_DIR`；直接运行 ELF 时仍采用上述原生目录规则。
 
 ## Linux 运行库
 
@@ -114,9 +125,8 @@ ELF 的递归依赖收集到 `env/`，使用配套 loader/libc 启动，生成�
 gsettings set org.gnome.desktop.wm.keybindings show-desktop "[]"
 ```
 
-正式游戏默认 `PVZ_ENABLE_GAME_PROBES=OFF`。临时开启烟测需显式配置
-`-DPVZ_ENABLE_GAME_PROBES=ON`，测试结束后重新构建 OFF 的发行程序。
-测试源码保留，发行程序不包含这些入口、逐帧计时和提交计数。
+游戏内 Smoke 入口、逐帧计时、提交计数、临时日志和 shadow 对拍代码已从生产源码移除。
+独立回归测试与外部只读观测工具保留在测试目录，不向游戏注入探针。
 原版 TodLog、错误/崩溃处理和官方诊断功能保留。
 
 Windows 实玩对照双方为原版 1073 与当前项目，均用 **core LP14（`0x4000`）**；

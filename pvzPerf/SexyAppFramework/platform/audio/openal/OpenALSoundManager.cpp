@@ -1,25 +1,13 @@
 #include "OpenALSoundManager.h"
-#include "sound/BassLoader.h"
-#include "sound/LegacyAuDecode.h"
-#include "paklib/PakInterface.h"
 #include <algorithm>
 #include <cmath>
-#include <limits>
-#include <memory>
-#include <string_view>
-#include <vector>
+#include <utility>
 
 namespace Sexy {
-namespace {
-struct Decoder {
-    unsigned int handle;
-    ~Decoder() { gBass->BASS_StreamFree(handle); }
-};
-}
-OpenALSoundManager::DecoderLease::DecoderLease() { LoadBassDLL(); }
-OpenALSoundManager::DecoderLease::~DecoderLease() { FreeBassDLL(); }
 OpenALSoundManager::OpenALSoundManager(NativeWindowHandle)
 {
+    if (!alIsExtensionPresent("AL_EXT_FLOAT32"))
+        throw std::runtime_error("OpenAL sound requires AL_EXT_FLOAT32");
     mVolumes.fill(1);
     for (auto& channel : mChannels) {
         channel.mManager = this;
@@ -41,58 +29,26 @@ OpenALSoundManager::~OpenALSoundManager()
 bool OpenALSoundManager::LoadSound(unsigned int id, const std::string& name)
 {
     if (id >= mBuffers.size()) return false;
+    std::string resourceName = name;
     ReleaseSound(id);
-    for (const char* extension : {".wav", ".ogg", ".au"}) {
-        const std::string fileName = name + extension;
-        std::unique_ptr<PFILE, decltype(&p_fclose)> file(p_fopen(fileName.c_str(), "rb"), &p_fclose);
-        if (!file) continue;
-        if (p_fseek(file.get(), 0, SEEK_END) != 0)
-            throw std::runtime_error("Sound seek failed: " + fileName);
-        const int size = p_ftell(file.get());
-        if (size <= 0 || p_fseek(file.get(), 0, SEEK_SET) != 0)
-            throw std::runtime_error("Invalid sound size: " + fileName);
-        std::vector<unsigned char> encoded(static_cast<size_t>(size));
-        if (p_fread(encoded.data(), 1, size, file.get()) != encoded.size())
-            throw std::runtime_error("Sound read failed: " + fileName);
-        file.reset();
-        if (std::string_view(extension) == ".au")
-            encoded = DecodeLegacyAuToWave(encoded);
-        Decoder decoder{gBass->BASS_StreamCreateFile(TRUE, encoded.data(), 0, encoded.size(),
-            BASS_STREAM_DECODE)};
-        if (!decoder.handle)
-            throw std::runtime_error("BASS sound decoder failed: " + fileName);
-        BASS_CHANNELINFO info{};
-        if (!gBass->BASS_ChannelGetInfo(decoder.handle, &info) ||
-            (info.chans != 1 && info.chans != 2))
-            throw std::runtime_error("OpenAL sound requires mono/stereo PCM: " + fileName);
-        const auto bytes = gBass->BASS_ChannelGetLength(decoder.handle, BASS_POS_BYTE);
-        if (!bytes || bytes > static_cast<unsigned long long>(std::numeric_limits<int>::max()))
-            throw std::runtime_error("Invalid decoded sound length: " + fileName);
-        std::vector<unsigned char> pcm(static_cast<size_t>(bytes));
-        size_t decoded = 0;
-        while (decoded < pcm.size()) {
-            const auto count = gBass->BASS_ChannelGetData(decoder.handle, pcm.data() + decoded,
-                static_cast<unsigned int>(pcm.size() - decoded));
-            if (!count || count == static_cast<unsigned int>(-1))
-                throw std::runtime_error("Incomplete sound decode: " + fileName);
-            decoded += count;
-        }
-        unsigned int buffer = 0;
-        alGenBuffers(1, &buffer);
-        const bool eightBit = (info.flags & BASS_SAMPLE_8BITS) != 0;
-        const int format = info.chans == 1 ?
-            (eightBit ? AL_FORMAT_MONO8 : AL_FORMAT_MONO16) :
-            (eightBit ? AL_FORMAT_STEREO8 : AL_FORMAT_STEREO16);
-        alBufferData(buffer, format,
-            pcm.data(), static_cast<int>(pcm.size()), static_cast<int>(info.freq));
+    DecodedSound decoded;
+    if (!DecodeSound(resourceName, decoded)) return false;
+    unsigned int buffer = 0;
+    alGenBuffers(1, &buffer);
+    const int format = decoded.channels == 1 ? AL_FORMAT_MONO_FLOAT32 : AL_FORMAT_STEREO_FLOAT32;
+    try {
+        alBufferData(buffer, format, decoded.samples.data(),
+            static_cast<int>(decoded.samples.size() * sizeof(float)), static_cast<int>(decoded.frequency));
         CheckOpenAL("OpenAL sound buffer upload failed");
-        mBuffers[id] = buffer;
-        mNames[id] = name;
-        mFrequencies[id] = static_cast<int>(info.freq);
-        mFrameBytes[id] = static_cast<int>(info.chans) * (eightBit ? 1 : 2);
-        return true;
+    } catch (...) {
+        if (buffer) alDeleteBuffers(1, &buffer);
+        throw;
     }
-    return false;
+    mBuffers[id] = buffer;
+    mNames[id] = std::move(resourceName);
+    mFrequencies[id] = static_cast<int>(decoded.frequency);
+    mFrameBytes[id] = static_cast<int>(decoded.channels * sizeof(float));
+    return true;
 }
 int OpenALSoundManager::LoadSound(const std::string& name)
 {

@@ -178,9 +178,6 @@ struct D3d12Context::Impl {
             Check(validationQueue->RegisterMessageCallback(ValidationMessage,
                 D3D12_MESSAGE_CALLBACK_FLAG_NONE, nullptr, &validationCookie),
                 "RegisterMessageCallback", device.Get());
-#if PVZ_ENABLE_GAME_PROBES
-            std::fputs("D3D12 validation enabled\n", stdout);
-#endif
         }
         CheckTearing();
         CreateCommands();

@@ -1,7 +1,6 @@
 #include "graphics/GpuBackend.h"
 #include <stdexcept>
 //#define SEXY_TRACING_ENABLED
-//#define SEXY_PERF_ENABLED
 //#define SEXY_MEMTRACE
 
 #include "SexyAppBase.h"
@@ -79,9 +78,6 @@ extern char** environ;
 
 #include "misc/memmgr.h"
 
-#if PVZ_ENABLE_GAME_PROBES
-SexyAppAfterLoopHook gSexyAppAfterLoopHook = nullptr;  // 声明在 SexyAppBase.h 尾（namespace 外）
-#endif
 using namespace Sexy;
 
 namespace
@@ -2082,7 +2078,7 @@ void SexyAppBase::Shutdown()
 			mDDInterface->mRenderInterface->Flush();
 		CleanupScalePresent();
 #ifdef _WIN32
-        if (mHdrDisplayObserver) mHdrDisplayObserver->Close();
+        CloseWindowsHdr(mNativeHdrState);
 #endif
 
 		//ImageLib::CloseJPEG2000();
@@ -2122,7 +2118,6 @@ void SexyAppBase::DoUpdateFramesF(float theFrac)
 
 bool SexyAppBase::DoUpdateFrames()
 {
-	SEXY_AUTO_PERF(PerfKind::SexyAppBaseDoUpdateFrames);
 	RethrowLoadingThreadError();
 
 	// Linux keeps the inherited scheduling policy throughout loading.
@@ -2140,6 +2135,8 @@ bool SexyAppBase::DoUpdateFrames()
 #endif
 			mYieldMainThread = false;
 			LoadingThreadCompleted();
+			if (mDDInterface && mDDInterface->mRenderInterface)
+				mDDInterface->mRenderInterface->FinishLoadingTextures();
 		}
 
 		// Allow one update for a queued call-site command; overdue commands fail
@@ -2163,6 +2160,8 @@ bool SexyAppBase::DoUpdateFrames()
 			mLoaded = true;
 			mYieldMainThread = false;
 			LoadingThreadCompleted();
+			if (mDDInterface && mDDInterface->mRenderInterface)
+				mDDInterface->mRenderInterface->FinishLoadingTextures();
 
 			if (mRecordingDemoBuffer)
 			{
@@ -2179,7 +2178,6 @@ bool SexyAppBase::DoUpdateFrames()
 
 void SexyAppBase::Redraw(Rect* theClipRect)
 {
-    SEXY_AUTO_PERF(PerfKind::SexyAppBaseRedraw);
 
     // Native frame ownership is not a DirectDraw lost-surface state. WSI
     // deferral is handled by GpuContext; real failures propagate to WinMain.
@@ -2367,7 +2365,6 @@ static void UpdateScreenSaverInfo(DWORD theTick)
 
 bool SexyAppBase::DrawDirtyStuff()
 {
-	SEXY_AUTO_PERF(PerfKind::SexyAppBaseDrawDirtyStuff);
 	MTAutoDisallowRand aDisallowRand;
 
 	if (mShowFPS)
@@ -3014,22 +3011,6 @@ bool SexyAppBase::DebugKeyDown(int theKey)
 
 		return true;
 	}
-	else if (theKey == KEYCODE_F2)
-	{
-		bool isPerfOn = !SexyPerf::sPerfOn;
-		if (isPerfOn)
-		{
-//			MsgBox("Perf Monitoring: ON", "Perf Monitoring", MB_OK);
-			ClearUpdateBacklog();
-			SexyPerf::BeginPerf();
-		}
-		else
-		{
-			SexyPerf::EndPerf();
-			MsgBox(SexyPerf::GetResults().c_str(), "Perf Results", MB_OK);
-			ClearUpdateBacklog();
-		}
-	}
 	else
 		return false;
 
@@ -3176,7 +3157,7 @@ void SexyAppBase::RequestScreenMode(bool wantWindowed, bool useCustomScale)
         } else {
             // Commit both choices in the single mode transaction below. Do not
             // resize/present an intermediate window for the old mode first.
-            if (useCustomScale && (!mModernScalePrepared || getenv("PVZ_MODERN_UNSCALED")))
+            if (useCustomScale && !mModernScalePrepared)
                 throw std::logic_error("Requested a scale pipeline not prepared at startup");
             mUseCustomScale=useCustomScale;
             mWindowScale=mUseCustomScale?GetWindowScaleForCustomScale():1;
@@ -3189,11 +3170,7 @@ void SexyAppBase::RequestScreenMode(bool wantWindowed, bool useCustomScale)
 		return;
 
 #ifdef _WIN32
-    if (mHWnd
-#if PVZ_ENABLE_GAME_PROBES
-        && getenv("PVZ_MODERN_HIDDEN")==nullptr
-#endif
-    )
+    if (mHWnd)
         SetFocus(mHWnd);
 #endif
 	if (mSoundManager != NULL)
@@ -3860,7 +3837,6 @@ int SexyAppBase::InitDDInterface()
 
 bool SexyAppBase::PrepareScalePipelineObjects()
 {
-    if (getenv("PVZ_MODERN_UNSCALED")) return true; // Explicit diagnostic mode only.
     if (mModernScalePrepared) return true;
     auto& renderer=*mDDInterface->mRenderInterface->mRenderer;
     for (bool fullscreen : {false,true}) {
@@ -3922,21 +3898,14 @@ void SexyAppBase::Start()
 	if (mAutoStartLoadingThread)
 		StartLoadingThread();
 
-#if PVZ_ENABLE_GAME_PROBES
-    if (getenv("PVZ_MODERN_HIDDEN") == nullptr)
-#endif
     {
         if (!mIsWindowed) {
             SetWindowFullscreen(true);
             UpdateWindowGeometry();
         }
     }
-    // Also exercise the real startup path in hidden tests. With no scale
-    // warm-up there may be no first scene yet; that is a normal deferral.
+    // Without scale warm-up, presenting may defer until the first scene.
     mDDInterface->mRenderInterface->PresentRetainedFrame();
-#if PVZ_ENABLE_GAME_PROBES
-    if (getenv("PVZ_MODERN_HIDDEN") == nullptr)
-#endif
     {
         mNativeWindowShown=true;
 #ifdef _WIN32
@@ -3973,10 +3942,6 @@ void SexyAppBase::Start()
 		WaitForLoadingThread();
 		RethrowLoadingThreadError();
 	}
-#if PVZ_ENABLE_GAME_PROBES
-	if (gSexyAppAfterLoopHook != nullptr)
-		gSexyAppAfterLoopHook(*this);
-#endif
 
 	mRunning = false;
 
@@ -4299,19 +4264,7 @@ void SexyAppBase::Init()
 	// scale configuration. Both pipelines compile regardless of checkbox state.
 	ReadFromRegistry();
 	LoadScaleConfig();
-    if (getenv("PVZ_MODERN_UNSCALED") != nullptr) {
-        mUseCustomScale = false;
-        mScaleHDREnabled = false;
-        mIsWindowed = true;
-    }
 
-	if (getenv("PVZ_SCALE_DISABLE") != nullptr)
-	{
-		// The options checkbox reads mUseCustomScale; keep it in sync with
-		// the forced-off window scale so closing the options dialog does not
-		// silently re-enable custom scaling.
-		mUseCustomScale = false;
-	}
 	// The two XML pipelines are process-global immutable configuration. Read and
 	// inline-compile them exactly once before any main HWND exists, even when the
 	// direct (Custom Scale off) presentation path is initially selected. Their
@@ -4397,28 +4350,7 @@ void SexyAppBase::Init()
 #ifdef _WIN32
 	mNotifyGameMessage = RegisterWindowMessageA("pvz_perf.Notify");
 
-	// Production remains single-instance and distinct from Legacy/original.
-	// The explicitly hidden smoke harness has its own copied profiles/settings;
-	// it must not broadcast a notification to, or compete with, a playing user.
 	std::string instanceName="pvz_perf.SingleInstance";
-	// 2026-10-06 双开测量（用户指令：LP14/LP15 双实例对拍 CPU）：互斥名硬编码
-	// 于 exe、会话级命名空间——任何 cmd 包装都绕不开撞名。PVZ_INSTANCE_UNIQUE=1
-	// 给本实例名追加 PID（默认关闭，正常单开路径零变化）
-	if (getenv("PVZ_INSTANCE_UNIQUE"))
-	{
-		instanceName+="-Instance-"+std::to_string(GetCurrentProcessId());
-		mNotifyGameMessage=0;
-	}
-#if PVZ_ENABLE_GAME_PROBES
-	if (getenv("PVZ_MODERN_SMOKE") && getenv("PVZ_MODERN_HIDDEN")) {
-		for (const char* key : {"PVZ_APPDATA_DIR","PVZ_SETTINGS_FILE","PVZ_MODERN_SMOKE_OUTPUT","PVZ_LOG_DIR"}) {
-			const char* value=getenv(key);
-			if (!value || !*value) throw std::logic_error("Hidden smoke instance requires isolated data/settings/output/log paths");
-		}
-		instanceName="pvz_perf.HiddenSmoke-"+std::to_string(GetCurrentProcessId());
-		mNotifyGameMessage=0;
-	}
-#endif
 	::SetLastError(ERROR_SUCCESS);
 	mMutex = ::CreateMutexA(NULL, TRUE, instanceName.c_str());
 	const DWORD aMutexError = ::GetLastError();
@@ -4433,7 +4365,7 @@ void SexyAppBase::Init()
 	}
 #else
 	// flock lifetime follows the descriptor; a crash releases it automatically.
-	if (mOnlyAllowOneCopyToRun && !getenv("PVZ_INSTANCE_UNIQUE"))
+	if (mOnlyAllowOneCopyToRun)
 	{
 		const auto path = GetAppDataFolder() + ".instance.lock";
 		mInstanceLockFd = open(path.c_str(), O_RDWR | O_CREAT | O_CLOEXEC, 0600);
@@ -4780,8 +4712,6 @@ void SexyAppBase::DemoSyncRefreshRate()
 void SexyAppBase::ReconfigureScale(bool theUseCustomScale)
 {
     if (mUseCustomScale==theUseCustomScale) return;
-    if (getenv("PVZ_MODERN_UNSCALED") && theUseCustomScale)
-        throw std::logic_error("Custom Scale was explicitly excluded by this diagnostic run");
     if (!mModernScalePrepared) throw std::logic_error("Scale startup preparation was skipped");
     if (mSwitchingScreenMode) throw std::logic_error("Nested scale/mode transaction");
     mSwitchingScreenMode=true;
@@ -4894,6 +4824,14 @@ void SexyAppBase::LoadScaleConfig()
 	}
 
 	// Decode protocol fields once; only numeric IDs/values survive in app state.
+#if defined(PVZ_GPU_OPENGL) || defined(PVZ_GPU_D3D9)
+    auto LoadPipelineEffects = [&aDoc](const char* section, ScalePipelineConfig&)
+    {
+        if(aDoc.GetArraySize(std::string(section)+"/effects") != 0)
+            throw std::runtime_error(std::string("This graphics backend cannot execute HLSL/compute scale effects in ")+
+                section+"; use an empty effects array for built-in presentation scaling");
+    };
+#else
     ScaleEffectCompiler sourceCompiler;
 	auto LoadPipelineEffects = [this,&aDoc,&sourceCompiler](const char* theSection, ScalePipelineConfig& thePipeline)
 	{
@@ -4967,6 +4905,7 @@ void SexyAppBase::LoadScaleConfig()
             thePipeline.mEffects.push_back(std::move(config));
 		}
 	};
+#endif
 
 	if (aDoc.GetType("window") == JsonDoc::Type::Object)
 	{
@@ -4974,7 +4913,7 @@ void SexyAppBase::LoadScaleConfig()
 		const long long aMultiplier = aDoc.GetInt("window/multiplier", 0);
 		if (aMultiplier > 0)
 			mScaleConfigWindow = (int)aMultiplier;
-		if(!getenv("PVZ_MODERN_UNSCALED")) LoadPipelineEffects("window", mScaleWindowConfig);
+        LoadPipelineEffects("window", mScaleWindowConfig);
 	}
 
 	if (aDoc.GetType("fullScreen") == JsonDoc::Type::Object)
@@ -4986,7 +4925,7 @@ void SexyAppBase::LoadScaleConfig()
 		mScaleFullscreenConfig.mOutputHeight = std::max(0, aHeight);
 		mScaleConfigFullscreenWidth = mScaleFullscreenConfig.mOutputWidth;
 		mScaleConfigFullscreenHeight = mScaleFullscreenConfig.mOutputHeight;
-		if(!getenv("PVZ_MODERN_UNSCALED")) LoadPipelineEffects("fullScreen", mScaleFullscreenConfig);
+        LoadPipelineEffects("fullScreen", mScaleFullscreenConfig);
 	}
 
 	if (aDoc.GetType("HDR") == JsonDoc::Type::Object)
@@ -5015,19 +4954,10 @@ void SexyAppBase::LoadScaleConfig()
 // 唯一暴露项（AutoHDRStrength 同义，默认 1）。
 void SexyAppBase::ResolveHDRAutoParams()
 {
-#ifdef _WIN32
-    if (!mScaleHDREnabled) return;
-    if (!mHWnd) throw std::logic_error("HDR parameters require the target game window");
-    if (!mHdrDisplayObserver)
-        mHdrDisplayObserver=std::make_unique<VulkanHdrDisplayObserver>(TargetMonitor());
-    const auto snapshot=mHdrDisplayObserver->Snapshot();
-    const auto display=snapshot.display;
-    const auto params=display.Params(mScaleHDRStrength);
-    mScaleHDRPaperWhite=params.paperWhiteNits;
-    mScaleHDRMaxNits=params.peakNits;
-    mScaleHDRReinhardPaperNits=params.reinhardPaperNits;
-    mHdrDisplayRevision=snapshot.revision;
-    mHdrTopologyGeneration=mNativeMonitorGeneration;
+#if defined(PVZ_GPU_OPENGL) || defined(PVZ_GPU_D3D9)
+    mScaleHDREnabled = false;
+#elif defined(_WIN32)
+    ResolveWindowsHdr(mNativeHdrState, *this, mScaleHDREnabled ? TargetMonitor() : nullptr);
 #else
 	if (mScaleHDREnabled) throw std::runtime_error("Linux HDR output is not implemented");
 #endif
@@ -5037,7 +4967,10 @@ void SexyAppBase::CompileScaleEffects()
 {
     // Source was compiled while resolving startup configuration, before GPU preparation.
     if(mModernScalePrepared) throw std::logic_error("Scale shaders may only load before device preparation");
-    if(getenv("PVZ_MODERN_UNSCALED")) return;
+#if defined(PVZ_GPU_OPENGL) || defined(PVZ_GPU_D3D9)
+    if(!mScaleEffects.empty())
+        throw std::runtime_error("This graphics backend does not support HLSL/compute scale effects");
+#else
     for(const auto& effect:mScaleEffects) {
         std::string error;
 #if defined(PVZ_GPU_D3D12)
@@ -5046,6 +4979,7 @@ void SexyAppBase::CompileScaleEffects()
         if(!ScaleEffectBinary::Validate(effect,error)) throw std::runtime_error(error);
 #endif
     }
+#endif
 }
 
 	bool SexyAppBase::IsScalePresentActive() const
@@ -5055,7 +4989,7 @@ void SexyAppBase::CompileScaleEffects()
 
 	bool SexyAppBase::IsScalePresentActiveForMode(bool theWindowed) const
 	{
-		if (getenv("PVZ_SCALE_DISABLE") != nullptr || !mUseCustomScale)
+		if (!mUseCustomScale)
 			return false;
 		const ScalePipelineConfig& aConfig =
 			theWindowed ? mScaleWindowConfig : mScaleFullscreenConfig;

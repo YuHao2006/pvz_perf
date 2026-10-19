@@ -56,13 +56,6 @@ public:
 
 class LawnApp : public SexyApp
 {
-#if PVZ_ENABLE_GAME_PROBES
-    // The hidden lifetime audit drains the ordinary deferred-delete list at a
-    // completed scene boundary; no new public runtime API or object fields.
-    friend void CreditsAttachmentRetentionProbe(LawnApp& app);
-    friend void PortableSharedResourceSmoke(LawnApp& app);
-    friend void PortableImageDiagnosticsSmoke(LawnApp& app);
-#endif
 public:
 	_Font* GetDebugFont() override;
 	Board*							mBoard;											//+0x768

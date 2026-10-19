@@ -5,15 +5,15 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     include(CTest)
 endif()
 
-find_package(Vulkan REQUIRED)
+find_package(Vulkan 1.2 REQUIRED)
 find_program(PVZ_GLSLC NAMES glslc HINTS "$ENV{VULKAN_SDK}/Bin"
     "C:/UserProgram/VulkanSDK/1.4.350.0/Bin" REQUIRED)
 find_program(PVZ_SPIRV_VAL NAMES spirv-val HINTS "$ENV{VULKAN_SDK}/Bin"
     "C:/UserProgram/VulkanSDK/1.4.350.0/Bin" REQUIRED)
 
-add_library(sexy_vulkan STATIC VulkanContext.cpp VulkanRenderer.cpp VulkanHdrDisplay.cpp VulkanHdrObserver.cpp)
-if(PVZ_ENABLE_GAME_PROBES)
-    target_compile_definitions(sexy_vulkan PRIVATE PVZ_ENABLE_GAME_PROBES=1)
+add_library(sexy_vulkan STATIC VulkanContext.cpp VulkanRenderer.cpp)
+if(NOT WIN32 OR NOT PVZ_WINDOWS_PLATFORM STREQUAL "WIN7")
+    target_sources(sexy_vulkan PRIVATE VulkanHdrDisplay.cpp VulkanHdrObserver.cpp)
 endif()
 if(WIN32)
     target_sources(sexy_vulkan PRIVATE platform/Win32Surface.cpp)
@@ -34,7 +34,10 @@ target_include_directories(sexy_vulkan PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}" "${C
 target_compile_features(sexy_vulkan PUBLIC cxx_std_23)
 target_link_libraries(sexy_vulkan PUBLIC Vulkan::Vulkan)
 if(WIN32)
-    target_link_libraries(sexy_vulkan PRIVATE user32 runtimeobject ole32)
+    target_link_libraries(sexy_vulkan PRIVATE user32 ole32)
+    if(NOT PVZ_WINDOWS_PLATFORM STREQUAL "WIN7")
+        target_link_libraries(sexy_vulkan PRIVATE runtimeobject)
+    endif()
 endif()
 if(MSVC)
     target_compile_options(sexy_vulkan PRIVATE /W4 /utf-8 /permissive-)
@@ -68,9 +71,9 @@ foreach(stage IN ITEMS vs ps hdr_ps coverage_ps caustic_cs font_cs alpha_cs colo
     add_custom_command(OUTPUT "${output}"
         COMMAND "${CMAKE_COMMAND}" -E make_directory "${PVZ_NATIVE_SHADER_DIR}"
         COMMAND "${PVZ_GLSLC}" -Werror ${shaderLanguage} "-fshader-stage=${shaderStage}"
-            --target-env=vulkan1.1 -O "${shaderSource}"
+            --target-env=vulkan1.2 -O "${shaderSource}"
             -o "${output}"
-        COMMAND "${PVZ_SPIRV_VAL}" --target-env vulkan1.1 "${output}"
+        COMMAND "${PVZ_SPIRV_VAL}" --target-env vulkan1.2 "${output}"
         DEPENDS "${shaderSource}" VERBATIM)
     list(APPEND nativeShaders "${output}")
 endforeach()
@@ -150,7 +153,7 @@ endif()
 
 if(BUILD_TESTING AND WIN32)
     add_library(sexy_scale_authoring ALIAS sexy_vulkan_effects)
-    if(WIN32)
+    if(WIN32 AND NOT PVZ_WINDOWS_PLATFORM STREQUAL "WIN7")
         add_executable(sexy_vulkan_hdr_observer_tests tests/hdr_observer_tests.cpp)
         target_link_libraries(sexy_vulkan_hdr_observer_tests PRIVATE sexy_vulkan ole32)
         add_test(NAME sexy_vulkan_hdr_observer COMMAND sexy_vulkan_hdr_observer_tests)
@@ -166,23 +169,27 @@ if(BUILD_TESTING AND WIN32)
     target_link_libraries(sexy_vulkan_layer_probe PRIVATE sexy_vulkan)
     set(hdrProbe "${PVZ_NATIVE_SHADER_DIR}/hdr_probe.spv")
     add_custom_command(OUTPUT "${hdrProbe}"
-        COMMAND "${PVZ_GLSLC}" -Werror -x hlsl -fshader-stage=compute --target-env=vulkan1.1 -O
+        COMMAND "${PVZ_GLSLC}" -Werror -x hlsl -fshader-stage=compute --target-env=vulkan1.2 -O
             "${CMAKE_CURRENT_SOURCE_DIR}/tests/hdr_probe_cs.hlsl" -o "${hdrProbe}"
-        COMMAND "${PVZ_SPIRV_VAL}" --target-env vulkan1.1 "${hdrProbe}"
+        COMMAND "${PVZ_SPIRV_VAL}" --target-env vulkan1.2 "${hdrProbe}"
         DEPENDS tests/hdr_probe_cs.hlsl shaders/game_hdr_ps.hlsl VERBATIM)
     add_custom_target(sexy_vulkan_hdr_probe DEPENDS "${hdrProbe}")
     add_dependencies(sexy_vulkan_hdr_probe sexy_vulkan_shaders)
-    add_executable(sexy_vulkan_hdr_tests tests/hdr_tests.cpp)
-    target_link_libraries(sexy_vulkan_hdr_tests PRIVATE sexy_vulkan)
-    target_compile_definitions(sexy_vulkan_hdr_tests PRIVATE PVZ_NATIVE_SHADER_DIR="${PVZ_NATIVE_SHADER_DIR}")
-    add_dependencies(sexy_vulkan_hdr_tests sexy_vulkan_hdr_probe)
-    add_test(NAME sexy_vulkan_hdr COMMAND sexy_vulkan_hdr_tests)
-    set_tests_properties(sexy_vulkan_hdr PROPERTIES TIMEOUT 60 ENVIRONMENT "VK_LAYER_VALIDATE_SYNC=1")
+    if(NOT WIN32 OR NOT PVZ_WINDOWS_PLATFORM STREQUAL "WIN7")
+        add_executable(sexy_vulkan_hdr_tests tests/hdr_tests.cpp)
+        target_link_libraries(sexy_vulkan_hdr_tests PRIVATE sexy_vulkan)
+        target_compile_definitions(sexy_vulkan_hdr_tests PRIVATE PVZ_NATIVE_SHADER_DIR="${PVZ_NATIVE_SHADER_DIR}")
+        add_dependencies(sexy_vulkan_hdr_tests sexy_vulkan_hdr_probe)
+        add_test(NAME sexy_vulkan_hdr COMMAND sexy_vulkan_hdr_tests)
+        set_tests_properties(sexy_vulkan_hdr PROPERTIES TIMEOUT 60 ENVIRONMENT "VK_LAYER_VALIDATE_SYNC=1")
+    endif()
+    set(PVZ_TEST_EFFECTS_DIR "${CMAKE_SOURCE_DIR}/effects" CACHE PATH
+        "External scaling effect fixtures for Vulkan tests")
     add_executable(sexy_vulkan_scale_pipeline_tests tests/scale_pipeline_tests.cpp)
     target_link_libraries(sexy_vulkan_scale_pipeline_tests PRIVATE sexy_vulkan_effects sexy_vulkan)
     target_compile_definitions(sexy_vulkan_scale_pipeline_tests PRIVATE
         PVZ_NATIVE_SHADER_DIR="${PVZ_NATIVE_SHADER_DIR}"
-        PVZ_EFFECTS_DIR="${CMAKE_SOURCE_DIR}/effects")
+        PVZ_EFFECTS_DIR="${PVZ_TEST_EFFECTS_DIR}")
     add_custom_command(TARGET sexy_vulkan_scale_pipeline_tests POST_BUILD
         COMMAND "${CMAKE_COMMAND}" -E copy_if_different
             "$<TARGET_FILE:Microsoft::DirectXShaderCompiler>" "$<TARGET_FILE_DIR:sexy_vulkan_scale_pipeline_tests>")
@@ -191,12 +198,17 @@ if(BUILD_TESTING AND WIN32)
     add_executable(sexy_vulkan_scale_gpu_tests tests/scale_gpu_tests.cpp)
     target_link_libraries(sexy_vulkan_scale_gpu_tests PRIVATE sexy_vulkan_effects sexy_vulkan)
     target_compile_definitions(sexy_vulkan_scale_gpu_tests PRIVATE
-        PVZ_EFFECTS_DIR="${CMAKE_SOURCE_DIR}/effects")
+        PVZ_EFFECTS_DIR="${PVZ_TEST_EFFECTS_DIR}")
     add_custom_command(TARGET sexy_vulkan_scale_gpu_tests POST_BUILD
         COMMAND "${CMAKE_COMMAND}" -E copy_if_different
             "$<TARGET_FILE:Microsoft::DirectXShaderCompiler>" "$<TARGET_FILE_DIR:sexy_vulkan_scale_gpu_tests>")
     add_test(NAME sexy_vulkan_scale_gpu COMMAND sexy_vulkan_scale_gpu_tests)
     set_tests_properties(sexy_vulkan_scale_gpu PROPERTIES TIMEOUT 180 ENVIRONMENT "VK_LAYER_VALIDATE_SYNC=1")
+    if(WIN32)
+        add_executable(sexy_vulkan_compare_tests EXCLUDE_FROM_ALL
+            "${CMAKE_SOURCE_DIR}/Tests/native/BackendPixelCases.cpp")
+        target_link_libraries(sexy_vulkan_compare_tests PRIVATE sexy_vulkan)
+    endif()
     add_executable(sexy_vulkan_render_tests tests/render_tests.cpp)
     target_link_libraries(sexy_vulkan_render_tests PRIVATE sexy_vulkan)
     target_compile_definitions(sexy_vulkan_render_tests PRIVATE

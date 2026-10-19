@@ -51,8 +51,6 @@ struct Engine {
             }
             voice.readers.fetch_sub(1);
         }
-        for (size_t i = 0; i < size_t(frames) * 2; ++i)
-            output[i] = std::clamp(output[i], -1.0f, 1.0f);
         if (!playing) *flags |= kAudioUnitRenderAction_OutputIsSilence;
         return noErr;
     }

@@ -112,14 +112,6 @@ public:
     void SetCausticsFrame(uint32_t counter);
     VulkanTexture* const& causticsTexture;
     bool HasCausticsCompute() const;
-    // What the last recorded dispatch produced; serial bumps per dispatch so a
-    // verifier can tell "no new frame" from "frame 0 twice".
-    struct CausticsStatus {
-        VulkanTexture* target;
-        uint32_t lastDispatched;
-        uint64_t dispatchSerial;
-    };
-    CausticsStatus CausticsState() const;
 
     // A selected render image begins a WSI-independent batch, even minimized.
     // Only main-scene batches return false for minimized/out-of-date WSI.
@@ -163,21 +155,10 @@ public:
     uint32_t MaxImageDimension2D() const;
     struct ResourceCounts { size_t textures, retiredTextures, descriptorPools, vertexBuffers; };
     ResourceCounts GetResourceCounts() const;
-    // Actual commands recorded by this renderer in the current/last frame.
-    // Excludes the window's pass setup and the scale executor's compute commands.
-    struct DrawCommandCounts {
-        uint64_t draws, pipelines, descriptors, viewports, scissors, extents, vertexBuffers;
-    };
-    const DrawCommandCounts& drawCommandCounts;
-    struct TextureUploadCounts {
-        // Completed GPU copies/batches; coalesced CPU versions count once here.
-        uint64_t textures, batches, stagingAllocations;
+    struct TextureUploadState {
         size_t pending;
         uint64_t stagingCapacity;
-        // Successful handle creation / same-handle update requests. Updates can
-        // coalesce before submission, so these are not GPU command counts.
-        uint64_t createdTextures, reusedUpdates;
     };
-    TextureUploadCounts GetTextureUploadCounts() const;
+    TextureUploadState GetTextureUploadState() const;
 };
 }

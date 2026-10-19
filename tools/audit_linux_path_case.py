@@ -19,7 +19,6 @@ CPP_SUFFIXES = {".cpp", ".h", ".hpp", ".c", ".inl", ".inc"}
 PATH_SUFFIXES = CPP_SUFFIXES | {".cmake", ".rc", ".cur", ".hlsl", ".hlsli",
                               ".frag", ".comp", ".vert"}
 INCLUDE_ROOTS = ("", "pvzPerf", "pvzPerf/SexyAppFramework", "pvzPerf/Sexy.TodLib",
-                 "pvzPerf/SexyAppFramework/ogg", "pvzPerf/SexyAppFramework/ogg/include",
                  "pvzPerf/SexyAppFramework/platform", "pvzPerf/SexyAppFramework/graphics/vulkan",
                  "pvzPerf/SexyAppFramework/graphics/d3d12", "pvzPerf/SexyAppFramework/effect",
                  "tools/resourceCompiler/src/include")

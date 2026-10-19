@@ -1,5 +1,6 @@
 #pragma once
 #include "AudioUnitDevice.h"
+#include "sound/SoundDecode.h"
 #include "sound/SoundManager.h"
 #include "sound/SoundInstance.h"
 #include <array>
@@ -43,12 +44,7 @@ public:
 };
 class AudioUnitSoundManager final : public SoundManager {
     friend class AudioUnitSoundInstance;
-    struct DecoderLease {
-        DecoderLease();
-        ~DecoderLease();
-        DecoderLease(const DecoderLease&) = delete;
-        DecoderLease& operator=(const DecoderLease&) = delete;
-    } mDecoder;
+    SoundDecoderLease mDecoder;
     struct Sample {
         std::vector<float> pcm;
         std::string name;

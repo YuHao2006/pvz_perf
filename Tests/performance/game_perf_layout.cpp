@@ -25,6 +25,7 @@ int main()
     APP(mDialogMap);
     APP(mPlayerInfo);
     APP(mLoaded);
+    APP(mCacheFramesPrebuilt);
     APP(mHWnd);
     APP(mActive);
     APP(mHasFocus);

@@ -270,57 +270,6 @@ Zombie* Projectile::FindCollisionTarget()
 		}
 	}
 
-	// shadow 对拍（env PVZ_ZOMBIE_ROW_SHADOW=1，零成本默认关）
-	static const bool sZombieRowShadow = getenv("PVZ_ZOMBIE_ROW_SHADOW") != nullptr;
-	if (sZombieRowShadow)
-	{
-		Zombie* aReference = FindCollisionTargetScanAll();
-		if (aReference != aBestZombie)
-		{
-			throw std::runtime_error("zombie row segment mismatch: FindCollisionTarget");
-		}
-	}
-
-	return aBestZombie;
-}
-
-// shadow 对拍参照（1073 原全池扫逐字保留）：仅 PVZ_ZOMBIE_ROW_SHADOW=1 时执行
-Zombie* Projectile::FindCollisionTargetScanAll()
-{
-	if (PeaAboutToHitTorchwood())
-		return nullptr;
-
-	Rect aProjectileRect = GetProjectileRect();
-	Zombie* aBestZombie = nullptr;
-	int aMinX = 0;
-
-	Zombie* aZombie = nullptr;
-	while (mBoard->IterateZombies(aZombie))
-	{
-		if ((((ZombieFlagsOf(aZombie->mZombieType) & ZombieFlags::Boss) != 0) || aZombie->mRow == mRow) && aZombie->EffectedByDamage((unsigned int)mDamageRangeFlags))
-		{
-			if (aZombie->mZombiePhase == ZombiePhase::PHASE_SNORKEL_WALKING_IN_POOL && mPosZ <= 45.0f)
-			{
-				continue;
-			}
-
-			if (mProjectileType == ProjectileType::PROJECTILE_STAR && mProjectileAge < 25 && mVelX >= 0.0f && aZombie->mZombieType == ZombieType::ZOMBIE_DIGGER)
-			{
-				continue;
-			}
-
-			Rect aZombieRect = aZombie->GetZombieRect();
-			if (GetRectOverlap(aProjectileRect, aZombieRect) >= 0)
-			{
-				if (aBestZombie == nullptr || aZombie->mX < aMinX)
-				{
-					aBestZombie = aZombie;
-					aMinX = aZombie->mX;
-				}
-			}
-		}
-	}
-
 	return aBestZombie;
 }
 

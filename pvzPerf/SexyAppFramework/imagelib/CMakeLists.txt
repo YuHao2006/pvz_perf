@@ -1,6 +1,10 @@
 find_package(Threads REQUIRED)
 find_package(hwy CONFIG REQUIRED)
-find_package(jpegli CONFIG REQUIRED)
+if(WIN32 AND PVZ_WINDOWS_PLATFORM STREQUAL "WIN7")
+    include("${CMAKE_SOURCE_DIR}/CMake/Win7Jpegli.cmake")
+else()
+    find_package(jpegli CONFIG REQUIRED)
+endif()
 find_package(SPNG CONFIG REQUIRED)
 find_package(ZLIB REQUIRED)
 

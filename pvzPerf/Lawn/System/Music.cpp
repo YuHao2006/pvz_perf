@@ -306,19 +306,9 @@ void Music::PlayFromOffset(MusicFile theMusicFile, int theOffset, double theVolu
 		// contains both halves when it comes from GameMusicPause(); wrapping it
 		// in MAKELONG(theOffset, 0) used to discard the row and made a pause jump
 		// back to the beginning of the current order.
-		const BOOL aPositionSet = aMusicInfo->mPlayback.Seek(
+		aMusicInfo->mPlayback.Seek(
 			static_cast<QWORD>(static_cast<DWORD>(theOffset)),
 			BASS_POS_MUSIC_ORDER);  // 设置偏移位置
-		const int aPositionError = aPositionSet ? BASS_OK : gBass->BASS_ErrorGetCode();
-		const QWORD anActualPosition = aMusicInfo->mPlayback.Position(BASS_POS_MUSIC_ORDER);
-		TodTraceAndLog(
-			"MUSIC_SET_POSITION tune=%d file=%d requested=%08X ok=%d error=%d actual=%08X",
-			static_cast<int>(mCurMusicTune),
-			static_cast<int>(theMusicFile),
-			static_cast<unsigned int>(theOffset),
-			aPositionSet ? 1 : 0,
-			aPositionError,
-			static_cast<unsigned int>(anActualPosition));
 		aMusicInfo->mPlayback.Play(false);
 	}
 }
@@ -881,13 +871,6 @@ void Music::GameMusicPause(bool thePause)
 	}
 	else if (mPaused)
 	{
-		TodTraceAndLog(
-			"MUSIC_RESUME tune=%d offset=%08X drumsOffset=%08X bpm=%d speed=%d",
-			static_cast<int>(mCurMusicTune),
-			static_cast<unsigned int>(mPauseOffset),
-			static_cast<unsigned int>(mPauseOffsetDrums),
-			mBaseBPM,
-			mBaseModSpeed);
 		if (mCurMusicTune != MusicTune::MUSIC_TUNE_NONE)
 			PlayMusic(mCurMusicTune, mPauseOffset, mPauseOffsetDrums);
 		mPaused = false;

@@ -193,9 +193,6 @@ public:
     void                    DoSpecial();
     void                    Fire(Zombie* theTargetZombie, int theRow, PlantWeapon thePlantWeapon = PlantWeapon::WEAPON_PRIMARY);
     [[nodiscard]] Zombie*                 FindTargetZombie(int theRow, PlantWeapon thePlantWeapon = PlantWeapon::WEAPON_PRIMARY);
-    // shadow 对拍参照（env PVZ_ZOMBIE_ROW_SHADOW=1）：1073 原全池扫逐字保留，
-    // 非 shadow 路径不执行
-    [[nodiscard]] Zombie*                 FindTargetZombieScanAll(int theRow, PlantWeapon thePlantWeapon);
     void                    Die();
     void                    UpdateProductionPlant();
     void                    UpdateShooter();

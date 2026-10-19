@@ -213,7 +213,7 @@ struct ScaleEffectCompiler::Impl {
         const auto path = std::filesystem::absolute(std::filesystem::path(std::u8string(sourcePath.begin(), sourcePath.end())));
         const auto name = path.wstring(), directory = path.parent_path().wstring();
         const wchar_t* args[] = {name.c_str(), L"-E", L"__M", L"-T", L"cs_6_0",
-            L"-spirv", L"-fspv-target-env=vulkan1.1", L"-HV", L"2018",
+            L"-spirv", L"-fspv-target-env=vulkan1.2", L"-HV", L"2018",
             L"-O3", L"-Ges", L"-I", directory.c_str()};
         DxcBuffer input{source.data(), source.size(), DXC_CP_UTF8};
         DxcPtr<IDxcResult> result;

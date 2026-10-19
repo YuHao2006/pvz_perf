@@ -1,6 +1,3 @@
-// 临时定位探针（Continue 崩溃立案）：直写文件
-#include <cstdio>
-#define SLI_PROBE(tag) do { FILE* f = fopen("C:\\temp\\sli_probe.txt", "a"); if (f) { fprintf(f, "%s\\n", tag); fclose(f); } } while (0)
 #include "Sexy.TodLib/generated/EntityStrings.h"
 #include "Board.h"
 #include "Plant.h"

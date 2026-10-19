@@ -43,7 +43,6 @@ std::string MacClipboard(const std::string* input)
 bool ShowNativeErrorDialog(const char* message, const char* title)
 {
     if (![NSThread isMainThread]) return false;
-    if (std::getenv("PVZ_MODERN_HIDDEN")) return false;
     @autoreleasepool {
         @try {
             [NSApplication sharedApplication];

@@ -1,4 +1,6 @@
 target_sources(${PROJECT_NAME} PRIVATE
+    "SoundDecode.h"
+    "SoundDecode.cpp"
     "BassMusicInterface.h"
     "DummyMusicInterface.h"
     "MusicInterface.h"

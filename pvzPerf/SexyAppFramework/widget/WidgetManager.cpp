@@ -9,7 +9,6 @@
 #include "graphics/DDInterface.h"
 #include "graphics/RenderInterface.h"
 #include "SexyAppBase.h"
-#include "misc/PerfTimer.h"
 #include "misc/Debug.h"
 #include <typeinfo>
 
@@ -413,7 +412,6 @@ void WidgetManager::DrawWidgetsTo(Graphics* g)
 
 bool WidgetManager::DrawScreen()
 {
-	SEXY_AUTO_PERF(PerfKind::WidgetManagerDrawScreen);
 	//unsigned int start = SexyGetTickCount();
 
 	ModalFlags aModalFlags;
@@ -495,7 +493,6 @@ bool WidgetManager::DrawScreen()
 
 bool WidgetManager::UpdateFrame()
 {
-	SEXY_AUTO_PERF(PerfKind::WidgetManagerUpdateFrame);
 
 	ModalFlags aModalFlags;
 	InitModalFlags(&aModalFlags);
@@ -510,7 +507,6 @@ bool WidgetManager::UpdateFrame()
 
 bool WidgetManager::UpdateFrameF(float theFrac)
 {
-	SEXY_AUTO_PERF(PerfKind::WidgetManagerUpdateFrame);
 
 	ModalFlags aModalFlags;
 	InitModalFlags(&aModalFlags);

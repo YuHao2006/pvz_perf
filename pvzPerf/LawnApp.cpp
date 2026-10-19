@@ -1783,25 +1783,15 @@ void LawnApp::LoadingThreadProc()
 	mNumLoadingThreadTasks += GetNumPreloadingTasks();
 	mNumLoadingThreadTasks += mMusic->GetNumLoadingTasks();
 
-	PerfTimer aTimer;
-	aTimer.Start();
 
-	TodHesitationTrace("start loading");
-	TodHesitationBracket aHesitationResources("Resources");
-	TodHesitationTrace("loading thread start");
 
 	LoadGroup(ResourceGroupId::LoadingImages, 9);
 	LoadGroup(ResourceGroupId::LoadingFonts, 54);
 	if (mLoadingFailed || mShutdown || mCloseRequest)
 		return;
 
-	aHesitationResources.EndBracket();
-	TodTrace("loading '%s' %d ms", "resources", (int)aTimer.GetDuration());
 
 	mMusic->MusicInit();
-	// aDuration goes unused
-	//int aDuration = max(aTimer.GetDuration(), 0.0);
-	aTimer.Start();
 
 	// mPoolEffect 构造已移至 LoadingCompleted（主线程）：装载线程构造会经
 	// InstallCausticsCompute 直接触碰 Vulkan，与主线程传输并发成竞态
@@ -1810,18 +1800,12 @@ void LawnApp::LoadingThreadProc()
 	mReanimatorCache->ReanimatorCacheInitialize();
 	TodFoleyInitialize(gLawnFoleyParamArray, LENGTH(gLawnFoleyParamArray));
 
-	TodTrace("loading '%s' %d ms", "stuff", (int)aTimer.GetDuration());
-	aTimer.Start();
 
 	TodParticleLoadDefinitions(gLawnParticleArray, LENGTH(gLawnParticleArray));
-	//aDuration = max(aTimer.GetDuration(), 0.0);
-	aTimer.Start();
 
 	if (mLoadingFailed || mShutdown || mCloseRequest)
 		return;
 
-	//aDuration = max(aTimer.GetDuration(), 0.0);
-	aTimer.Start();
 
 	GetNumPreloadingTasks();
 	LoadGroup(ResourceGroupId::LoadingSounds, 54);

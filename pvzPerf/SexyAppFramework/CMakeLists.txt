@@ -9,7 +9,7 @@ set(Lawn__Board__Board_Include
     "../Lawn/Challenge.h"
     "../Lawn/Coin.h"
     "../Lawn/CursorObject.h"
-    "../Lawn/CutScene.h"
+    "../Lawn/Cutscene.h"
     "../Lawn/GameObject.h"
     "../Lawn/GridItem.h"
     "../Lawn/LawnMower.h"

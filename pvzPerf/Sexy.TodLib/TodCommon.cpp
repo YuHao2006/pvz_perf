@@ -1184,9 +1184,6 @@ bool ResourceManager::TodLoadResources(ResourceGroupId theGroup)
 	if (IsGroupLoaded(theGroup))
 		return true;
 
-	PerfTimer aTimer;
-	aTimer.Start();
-
 	StartLoadResources(theGroup);
 	while (!gSexyAppBase->mShutdown && TodLoadNextResource());
 	if (gSexyAppBase->mShutdown)
@@ -1213,11 +1210,6 @@ bool ResourceManager::TodLoadResources(ResourceGroupId theGroup)
 					// 预热队列直接携带图像符号；物理路径不参与槽号识别。
 					TodQueueTextureWarm(static_cast<ImageRes*>(aRes)->mImage, aRes->mImageSymbol);
 
-	int aDuration = std::max(aTimer.GetDuration(), 0.0);
-	if (aDuration > 20)
-	{
-		TodTraceAndLog("LOADED: group=%u %d ms on %s", static_cast<unsigned>(theGroup), aDuration, gGetCurrentLevelName().c_str());
-	}
 
 	return true;
 }

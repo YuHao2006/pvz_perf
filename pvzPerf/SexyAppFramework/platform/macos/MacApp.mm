@@ -286,7 +286,7 @@ void SexyAppBase::MakeWindow()
     ReInitImages();
     mWidgetManager->mImage = mDDInterface->mScreenImage;
     mWidgetManager->MarkAllDirty();
-    mActive = std::getenv("PVZ_MODERN_HIDDEN") != nullptr || mNativeWindow->Focused;
+    mActive = mNativeWindow->Focused;
     mPhysMinimized = mMinimized = false;
     mNativeWindowReady = true;
     RehupFocus();
@@ -380,8 +380,6 @@ void SexyAppBase::SwitchScreenMode(bool windowed, bool, bool force)
     if (mForceWindowed) windowed = true;
     else if (mForceFullscreen) windowed = false;
     if (mIsWindowed == windowed && !force) return;
-    if (std::getenv("PVZ_MODERN_HIDDEN") && !windowed)
-        throw std::logic_error("Fullscreen requires a visible Cocoa window");
     mSwitchingScreenMode = true;
     struct Reset { bool& flag; ~Reset() { flag = false; } } reset{mSwitchingScreenMode};
     mWidgetManager->CancelMouseDownState();
@@ -404,7 +402,6 @@ void SexyAppBase::SwitchScreenMode(bool windowed, bool, bool force)
 
 POINT SexyAppBase::ReadNativeMousePosition()
 {
-    if (mNativeMousePositionForTest) return mNativeMousePositionForTest(mHWnd);
     const auto pointer = mNativeWindow->SamplePointer();
     return {static_cast<LONG>(std::floor(pointer.x)), static_cast<LONG>(std::floor(pointer.y))};
 }
@@ -412,13 +409,9 @@ void SexyAppBase::SampleNativeMousePosition()
 {
     // Called once by UpdateFrames, the existing 100 Hz logical heartbeat.
     if (mPlayingDemoBuffer || !mActive || mPhysMinimized || mSwitchingScreenMode) return;
-    if (!mNativeWindowShown && !mNativeMousePositionForTest) return;
-    if (!mNativeMousePositionForTest && !mNativeWindow->BeginMouseSample(mUpdateCount)) return;
-    MacPointerState pointer;
-    if (mNativeMousePositionForTest) {
-        const auto injected = mNativeMousePositionForTest(mHWnd);
-        pointer = {static_cast<double>(injected.x), static_cast<double>(injected.y), true};
-    } else pointer = mNativeWindow->SamplePointer();
+    if (!mNativeWindowShown) return;
+    if (!mNativeWindow->BeginMouseSample(mUpdateCount)) return;
+    const auto pointer = mNativeWindow->SamplePointer();
     RecordMousePosition(*this, pointer.x, pointer.y);
     ApplyMousePosition(*this, pointer.x, pointer.y, pointer.inside);
     EnforceCursor();

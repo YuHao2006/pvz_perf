@@ -72,6 +72,57 @@ void Post(HWND window,const Event& event) {
     Require(PostMessageW(window,event.kind,event.value,event.position)!=FALSE,
         "PostMessage failed");
 }
+
+void CheckWindowLiveness(HINSTANCE instance,const wchar_t* className) {
+    struct Probe {
+        std::atomic<HWND> window{};
+        std::atomic<unsigned> updates=0;
+        std::exception_ptr error;
+    } idle,serviced;
+    const auto run=[&](std::stop_token stop,Probe& probe,bool service) {
+        try {
+            const auto window=CreateWindowExW(0,className,L"",0,0,0,32,32,
+                nullptr,nullptr,instance,nullptr);
+            Require(window!=nullptr,"Cannot create hidden liveness window");
+            MSG message{};
+            PeekMessageW(&message,nullptr,0,0,PM_NOREMOVE);
+            probe.window=window;
+            Sexy::NativeFrameMotionPoll poll;
+            unsigned update=0;
+            while(!stop.stop_requested()) {
+                if(service) poll.PollHeartbeat(update);
+                // Match the game's idle readiness query, with no queued input.
+                Sexy::NativeNonMoveReady();
+                probe.updates=++update;
+                Sleep(10);
+            }
+            DestroyWindow(window);
+        } catch(...) {
+            probe.error=std::current_exception();
+        }
+    };
+    std::jthread idleThread([&](std::stop_token stop){run(stop,idle,false);});
+    std::jthread servicedThread([&](std::stop_token stop){run(stop,serviced,true);});
+    bool idleHung=false,servicedHung=false;
+    const auto deadline=GetTickCount64()+9000;
+    while(GetTickCount64()<deadline) {
+        Pump();
+        if(idle.window && serviced.window) {
+            idleHung=IsHungAppWindow(idle.window)!=FALSE;
+            servicedHung=IsHungAppWindow(serviced.window)!=FALSE;
+            if(idleHung || servicedHung) break;
+        }
+        Sleep(10);
+    }
+    idleThread.request_stop();servicedThread.request_stop();
+    idleThread.join();servicedThread.join();
+    if(idle.error) std::rethrow_exception(idle.error);
+    if(serviced.error) std::rethrow_exception(serviced.error);
+    Require(idle.updates>100 && serviced.updates>100,"Liveness probes did not keep updating");
+    Require(idleHung,"Unserviced updating window did not reproduce USER hung detection");
+    Require(!servicedHung,"Heartbeat queue observation still became unresponsive");
+    std::puts("PASS live updating window reproduces hung detection without PeekMessage; nonremoving heartbeat stays responsive");
+}
 }
 
 int main() {
@@ -91,13 +142,15 @@ int main() {
         Require(!Sexy::NativeNonMoveReady(),"Empty queue reported pending work");
 
         Sexy::NativeFrameMotionPoll motionPoll;
-        unsigned nativeMotionPolls=0;
+        unsigned nativeMotionPolls=0,heartbeatPolls=0;
         for(unsigned frame=0;frame<100;++frame) {
             for(unsigned report=0;report<1000;++report) {
                 if(motionPoll.Allow(frame,(report&1)!=0)) ++nativeMotionPolls;
+                if(motionPoll.PollHeartbeat(frame)) ++heartbeatPolls;
             }
         }
         Require(nativeMotionPolls==100,"Repeated boundary crossings created extra motion polls");
+        Require(heartbeatPolls==100,"Responsiveness observation exceeded one call per update");
         Require(!motionPoll.Allow(99,false) && !motionPoll.Allow(100,true) &&
             motionPoll.Allow(100,false) && !motionPoll.Allow(100,false),
             "Native motion cadence depends on crossing count instead of updates");
@@ -118,6 +171,8 @@ int main() {
             {WM_CLOSE,0,0},
             {WM_APP+1,17,29}}};
         for(const auto& event:mixed) Post(window,event);
+        motionPoll.PollHeartbeat(101);
+        Require(received.events.empty(),"Heartbeat observation consumed posted button/key/motion messages");
         Require(Sexy::NativeNonMoveReady(),"Posted input did not become ready");
         GetQueueStatus(QS_ALLINPUT|QS_ALLPOSTMESSAGE);
         Require(Sexy::NativeNonMoveReady() && Sexy::NativeNonMoveReady(),
@@ -156,13 +211,14 @@ int main() {
         const auto deadline=GetTickCount64()+3000;
         while(!started.load() && GetTickCount64()<deadline) SwitchToThread();
         while(!done.load() && GetTickCount64()<deadline) {
-            Pump();
+            motionPoll.PollHeartbeat(++heartbeatPolls+1000);
             SwitchToThread();
         }
         sender.join();
         Require(sendPassed && received.sent==1,"Sent callback was starved");
         Pump();
         std::puts("PASS cross-thread sent callback; quiet queue after delivery");
+        CheckWindowLiveness(instance,type.lpszClassName);
 
         PostQuitMessage(37);
         Require(Sexy::NativeNonMoveReady(),"WM_QUIT did not wake readiness");

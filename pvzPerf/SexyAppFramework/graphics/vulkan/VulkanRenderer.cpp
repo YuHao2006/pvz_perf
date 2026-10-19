@@ -70,6 +70,14 @@ void Barrier(VkCommandBuffer cmd, VkImage image, VkImageLayout oldLayout,
     vkCmdPipelineBarrier(cmd, srcStage, dstStage, 0, 0, nullptr, 0, nullptr, 1, &barrier);
 }
 
+void HostReadBarrier(VkCommandBuffer cmd) {
+    VkMemoryBarrier barrier{VK_STRUCTURE_TYPE_MEMORY_BARRIER};
+    barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+    barrier.dstAccessMask = VK_ACCESS_HOST_READ_BIT;
+    vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_HOST_BIT,
+        0, 1, &barrier, 0, nullptr, 0, nullptr);
+}
+
 std::vector<uint32_t> ReadShader(const std::string& path) {
     std::ifstream file(path, std::ios::binary | std::ios::ate);
     if (!file) throw std::runtime_error("Missing SPIR-V: " + path);
@@ -195,12 +203,9 @@ struct VulkanRenderer::Impl {
     VkCommandBuffer imageCommand = VK_NULL_HANDLE;
     VkFence imageFence = VK_NULL_HANDLE;
     std::vector<std::unique_ptr<Buffer>> streams;
-    uint64_t uploadedTextures=0, uploadBatches=0, uploadStagingAllocations=0;
-    uint64_t createdTextures=0, reusedUpdates=0;
     std::unique_ptr<Buffer> textureStaging;
     struct TextureUpload { VulkanTexture* texture; VkDeviceSize offset; };
     std::vector<TextureUpload> pendingUploads;
-    DrawCommandCounts drawCommands{};
     // Native command-buffer state, not emulated DX state. All scene/present
     // pipelines share pipelineLayout and use dynamic viewport/scissor. Reset
     // on each recording and whenever another owner records graphics state.
@@ -230,8 +235,6 @@ struct VulkanRenderer::Impl {
         VulkanTexture* target = nullptr;
         uint32_t counter = 0;
         bool frameQueued = false;
-        uint32_t lastDispatched = 0;
-        uint64_t dispatchSerial = 0;
     } caustics;
     struct ImageKernel {
         VkShaderModule shader=VK_NULL_HANDLE;
@@ -453,8 +456,6 @@ struct VulkanRenderer::Impl {
         vkCmdPushConstants(cmd, c.layout, VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(counter), &counter);
         vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, c.layout, 0, 1, &c.set, 0, nullptr);
         vkCmdDispatch(cmd, (128 + 7) / 8, (64 + 3) / 4, 1);
-        c.lastDispatched = counter;
-        ++c.dispatchSerial;
         Barrier(cmd, c.target->image, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_GENERAL,
             VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
             VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT);
@@ -565,10 +566,8 @@ struct VulkanRenderer::Impl {
             transferInFlight = false;
         }
         if (!transferOpen && !pendingComposeSets.empty()) {
-            // 合成描述集只在录制→提交→执行窗口内有效；批次完成后即回收，
-            // 目标纹理不持有（析构不二次释放）。
             VK_REQUIRE(vkFreeDescriptorSets(device, alphaKernel.pool,
-                static_cast<uint32_t>(pendingComposeSets.size()), pendingComposeSets.data()));
+                static_cast<unsigned int>(pendingComposeSets.size()), pendingComposeSets.data()));
             pendingComposeSets.clear();
         }
     }
@@ -609,8 +608,6 @@ struct VulkanRenderer::Impl {
             upload.texture->uploaded=true;
             upload.texture->pendingUpload=SIZE_MAX;
         }
-        uploadedTextures+=pendingUploads.size();
-        ++uploadBatches;
         pendingUploads.clear();
         textureStaging->used=0;
     }
@@ -630,7 +627,6 @@ struct VulkanRenderer::Impl {
             auto next=std::make_unique<Buffer>();
             next->Create(std::max(defaultCapacity,bytes),VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
             textureStaging=std::move(next);
-            ++uploadStagingAllocations;
         }
     }
 
@@ -1006,7 +1002,6 @@ void VulkanRenderer::Impl::SnapshotRenderImage(VulkanTexture* image, bool force)
     slotOwners[image->slot] = image;
     slotOwners[next->slot] = next.get();
     retired.push_back(std::move(next));
-    ++createdTextures;
 }
 
 void VulkanRenderer::Impl::BeginTargetPass() {
@@ -1073,7 +1068,7 @@ VulkanRenderer::VulkanRenderer(VulkanContext& window, int width, int height,
     : impl_(std::make_unique<Impl>(window, width, height)),
       sceneOpen(impl_->frame.valid), whiteTexture(impl_->white),
       causticsTexture(impl_->caustics.target), sceneWidth(impl_->width),
-      sceneHeight(impl_->height), drawCommandCounts(impl_->drawCommands) {
+      sceneHeight(impl_->height) {
     if (hdr) { hdr->Validate(); impl_->hdr=*hdr; }
     impl_->Initialize(vs, ps);
     const uint32_t pixel = 0xffffffff;
@@ -1121,7 +1116,6 @@ VulkanTexture* VulkanRenderer::CreateRenderImage(int width, int height) {
     image->uploaded = true;
     auto* handle = image.get();
     s.textures.emplace(handle, std::move(image));
-    ++s.createdTextures;
     return handle;
 }
 
@@ -1206,8 +1200,6 @@ void VulkanRenderer::Impl::InitAlphaKernel(LoadingPipelines) {
         {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,2u*kTextureSlots},
         {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,kTextureSlots}};
     VkDescriptorPoolCreateInfo pool{VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO};
-    // 2026-10-11 批量合成：每 dispatch 独立描述集（共享集跨未提交 dispatch
-    // 会被改写），池容量对齐纹理槽上限并带 FREE 位供 CompleteTransfers 回收。
     pool.flags=VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
     pool.maxSets=kTextureSlots;pool.poolSizeCount=2;
     pool.pPoolSizes=sizes;
@@ -1226,10 +1218,7 @@ VulkanTexture* VulkanRenderer::ComposeAlphaRaw(VulkanTexture* base,VulkanTexture
         base->width/columns!=alpha->width || base->height/rows!=alpha->height)
         throw std::exception{};
     s.InitAlphaKernel();
-    // 批量合成（2026-10-11）：上传副本与合成 dispatch 录入同一条开放传输
-    // 缓冲，随批提交；不再每张图 两次提交+两次栅栏等待。队列同序保证
-    // dispatch 读到的是本批已录制的副本结果。批上限 1024：小图成批装载
-    // 时可在单帧内超过描述符池容量，超限先提交并回收一批。
+    // Each queued dispatch owns its bindings until this transfer batch completes.
     if (s.pendingComposeSets.size() >= 1024) {
         s.FinishTransfer();
         s.CompleteTransfers();
@@ -1243,13 +1232,11 @@ VulkanTexture* VulkanRenderer::ComposeAlphaRaw(VulkanTexture* base,VulkanTexture
         {s.samplers[0],base->view,base->sampledLayout},
         {s.samplers[0],alpha->view,alpha->sampledLayout},
         {VK_NULL_HANDLE,target->view,VK_IMAGE_LAYOUT_GENERAL}};
-    // 每 dispatch 独立描述集：共享集跨多个未提交 dispatch 会被后续改写
-    // （描述集按提交时内容统一生效），批内互相踩踏。
     VkDescriptorSet composeSet=VK_NULL_HANDLE;
-    VkDescriptorSetAllocateInfo composeAllocate{VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO};
-    composeAllocate.descriptorPool=s.alphaKernel.pool;composeAllocate.descriptorSetCount=1;
-    composeAllocate.pSetLayouts=&s.alphaKernel.setLayout;
-    VK_REQUIRE(vkAllocateDescriptorSets(s.device,&composeAllocate,&composeSet));
+    VkDescriptorSetAllocateInfo allocate{VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO};
+    allocate.descriptorPool=s.alphaKernel.pool;allocate.descriptorSetCount=1;
+    allocate.pSetLayouts=&s.alphaKernel.setLayout;
+    VK_REQUIRE(vkAllocateDescriptorSets(s.device,&allocate,&composeSet));
     std::array<VkWriteDescriptorSet,3> writes{};
     for(uint32_t i=0;i<3;++i) {
         writes[i].sType=VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -1340,7 +1327,7 @@ VulkanTexture* VulkanRenderer::CopyTextureRegion(VulkanTexture* source,int x,int
     auto allocated=s.Image(width,height,VK_IMAGE_USAGE_TRANSFER_SRC_BIT |
         VK_IMAGE_USAGE_TRANSFER_DST_BIT,source->opaque,source->format);
     auto* target=allocated.get();
-    s.textures.emplace(target,std::move(allocated));++s.createdTextures;
+    s.textures.emplace(target,std::move(allocated));
     target->generated=source->generated;
     const bool activeFrame=s.frame.valid;
     if(activeFrame) s.EndTargetPass();
@@ -1413,7 +1400,7 @@ VulkanTexture* VulkanRenderer::ProcessImage(VulkanTexture* source,
     writes[1].dstBinding=1;writes[1].descriptorType=VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;writes[1].pBufferInfo=&buffer;
     vkUpdateDescriptorSets(s.device,uint32_t(writes.size()),writes.data(),0,nullptr);
     auto* handle=target.get();
-    s.textures.emplace(handle,std::move(target));++s.createdTextures;
+    s.textures.emplace(handle,std::move(target));
     const bool activeFrame=s.frame.valid;
     if(activeFrame) s.EndTargetPass();
     const auto cmd=activeFrame?s.frame.cmd:s.BeginTransfer();
@@ -1510,10 +1497,9 @@ void VulkanRenderer::RenderFontAtlas(VulkanTexture* target,VulkanTexture* source
     s.BeginTargetPass();
     target->lastDraw=s.frameSerial;
 }
-VulkanRenderer::TextureUploadCounts VulkanRenderer::GetTextureUploadCounts() const {
+VulkanRenderer::TextureUploadState VulkanRenderer::GetTextureUploadState() const {
     const auto& s=*impl_;
-    return {s.uploadedTextures,s.uploadBatches,s.uploadStagingAllocations,s.pendingUploads.size(),
-        s.textureStaging?s.textureStaging->size:0,s.createdTextures,s.reusedUpdates};
+    return {s.pendingUploads.size(),s.textureStaging?s.textureStaging->size:0};
 }
 
 VulkanTexture* VulkanRenderer::CreateTextureStatic(int width, int height, const void* bgra, int pitch, bool opaque, uint32_t staticSlot) {
@@ -1529,7 +1515,6 @@ VulkanTexture* VulkanRenderer::CreateTextureStatic(int width, int height, const 
     const auto position=s.textures.emplace(handle,std::move(texture)).first;
     try {s.QueueTextureUpload(handle,bgra,pitch);}
     catch (...) {s.textures.erase(position);throw;}
-    ++s.createdTextures;
     return handle;
 }
 
@@ -1554,7 +1539,6 @@ VulkanTexture* VulkanRenderer::CreateTexture(int width, int height, const void* 
     const auto position=s.textures.emplace(handle,std::move(texture)).first;
     try {s.QueueTextureUpload(handle,bgra,pitch);}
     catch (...) {s.textures.erase(position);throw;}
-    ++s.createdTextures;
     return handle;
 }
 
@@ -1570,7 +1554,6 @@ VulkanTexture* VulkanRenderer::CreateRawTexture(int width, int height, const voi
     auto* handle = texture.get();
     s.retired.push_back(std::move(texture));
     s.QueueTextureUpload(handle,bgra,pitch);
-    ++s.createdTextures;
     return handle;
 }
 
@@ -1586,7 +1569,6 @@ VulkanTexture* VulkanRenderer::ReplaceTexture(VulkanTexture* previous, int width
     if (!recordedInThisFrame && previous->format==VK_FORMAT_B8G8R8A8_UNORM &&
         previous->width==width && previous->height==height && previous->opaque==opaque) {
         s.QueueTextureUpload(previous,bgra,pitch);
-        ++s.reusedUpdates;
         return previous;
     }
     auto* next=CreateTexture(width,height,bgra,pitch,opaque);
@@ -1605,7 +1587,6 @@ VulkanTexture* VulkanRenderer::CreateCoverageMask(int width,int height,
     const auto position=s.textures.emplace(handle,std::move(texture)).first;
     try {s.QueueTextureUpload(handle,coverage.data(),pitch);}
     catch (...) {s.textures.erase(position);throw;}
-    ++s.createdTextures;
     return handle;
 }
 
@@ -1660,7 +1641,6 @@ VulkanTexture* VulkanRenderer::CreateCausticsTexture(int width, int height, Vulk
         s.InitCaustics(handle,source);
     }
     catch (...) { s.textures.erase(position); throw; }
-    ++s.createdTextures;
     return handle;
 }
 
@@ -1680,10 +1660,6 @@ void VulkanRenderer::UseCausticsTexture(VulkanTexture* output,VulkanTexture* sou
 }
 
 bool VulkanRenderer::HasCausticsCompute() const { return impl_->caustics.shader != VK_NULL_HANDLE; }
-VulkanRenderer::CausticsStatus VulkanRenderer::CausticsState() const {
-    const auto& c = impl_->caustics;
-    return {c.target, c.lastDispatched, c.dispatchSerial};
-}
 
 bool VulkanRenderer::BeginScene() {
     auto& s = *impl_;
@@ -1713,7 +1689,6 @@ bool VulkanRenderer::BeginScene() {
     ++s.frameSerial;
     // Complete uploads before reclaiming retired textures: a texture may have
     // been queued and destroyed outside a frame, including while minimized.
-    s.drawCommands = {};
     s.drawState = {}; // Vulkan command buffers do not inherit last frame's state.
     s.ReapRetired();
     for (auto& stream : s.streams) stream->used = 0;
@@ -1724,8 +1699,6 @@ bool VulkanRenderer::BeginScene() {
 
 void VulkanRenderer::Impl::Draw(std::span<const VulkanVertex> vertices, VulkanTexture* texture,
     VkPipeline pipeline, const VulkanClip* clip, int vw, int vh) {
-    // P5 对拍开关（env PVZ_RUN_MERGE=0）：立即冲刷=逐提交 bind+draw（合并前行为）
-    static const bool sMergeOff = getenv("PVZ_RUN_MERGE") != nullptr && strcmp(getenv("PVZ_RUN_MERGE"), "0") == 0;
     if (!frame.valid) throw std::logic_error("Draw outside a frame");
     if (!texture) throw std::invalid_argument("Missing draw texture");
     if (vertices.empty()) { return; }
@@ -1802,37 +1775,30 @@ void VulkanRenderer::Impl::Draw(std::span<const VulkanVertex> vertices, VulkanTe
     if (aVpChange) {
         const VkViewport viewport{0,0,static_cast<float>(vw),static_cast<float>(vh),0,1};
         vkCmdSetViewport(cmd,0,1,&viewport);
-        ++drawCommands.viewports;
         const float extent[]={static_cast<float>(vw),static_cast<float>(vh)};
         vkCmdPushConstants(cmd,pipelineLayout,
             hdr ? VK_SHADER_STAGE_VERTEX_BIT|VK_SHADER_STAGE_FRAGMENT_BIT : VK_SHADER_STAGE_VERTEX_BIT,
             0,sizeof(extent),extent);
-        ++drawCommands.extents;
         drawState.width=vw;drawState.height=vh;
     }
     const auto& previous=drawState.scissor;
     if (!drawState.hasScissor || previous.offset.x!=scissor.offset.x || previous.offset.y!=scissor.offset.y ||
         previous.extent.width!=scissor.extent.width || previous.extent.height!=scissor.extent.height) {
         vkCmdSetScissor(cmd,0,1,&scissor);
-        ++drawCommands.scissors;
         drawState.scissor=scissor;drawState.hasScissor=true;
     }
     if (drawState.pipeline!=pipeline) {
         vkCmdBindPipeline(cmd,VK_PIPELINE_BIND_POINT_GRAPHICS,pipeline);
-        ++drawCommands.pipelines;
         drawState.pipeline=pipeline;
     }
     if (aDsChange) {
         vkCmdBindDescriptorSets(cmd,VK_PIPELINE_BIND_POINT_GRAPHICS,pipelineLayout,0,2,sets.data(),0,nullptr);
-        ++drawCommands.descriptors;
         drawState.descriptors=sets;
     }
     // P5：并入待决游程（流连续追加），bind+draw 延迟到冲刷点
     if (pendingRun.count == 0)
         pendingRun = PendingRun{stream, offset, 0};
     pendingRun.count += static_cast<uint32_t>(vertices.size());
-    if (sMergeOff)
-        FlushPendingRun(cmd);
 }
 
 void VulkanRenderer::Impl::FlushPendingRun(VkCommandBuffer cmd) {
@@ -1842,12 +1808,10 @@ void VulkanRenderer::Impl::FlushPendingRun(VkCommandBuffer cmd) {
     if (drawState.vertexBuffer != pendingRun.stream->buffer) {
         const VkDeviceSize zero = 0;
         vkCmdBindVertexBuffers(cmd, 0, 1, &pendingRun.stream->buffer, &zero);
-        ++drawCommands.vertexBuffers;
         drawState.vertexBuffer = pendingRun.stream->buffer;
     }
     vkCmdDraw(cmd, pendingRun.count, 1,
         static_cast<uint32_t>(pendingRun.offset / sizeof(VulkanVertex)), 0);
-    ++drawCommands.draws;
     pendingRun.count = 0;
 }
 
@@ -1895,6 +1859,18 @@ void VulkanRenderer::EndSceneAndPresent() {
     // all state before presenting, including when surface == logical canvas.
     s.drawState = {};
     const auto rect = PresentRect(int(s.frame.extent.width),int(s.frame.extent.height));
+    std::array<VkClearRect,4> borders{};
+    unsigned int borderCount=0;
+    for(const auto& border:PresentBorderRects(rect,int(s.frame.extent.width),int(s.frame.extent.height)))
+        if(border.width>0 && border.height>0)
+            borders[borderCount++]={{{border.x,border.y},
+                {static_cast<unsigned int>(border.width),static_cast<unsigned int>(border.height)}},0,1};
+    if(borderCount) {
+        VkClearAttachment black{};
+        black.aspectMask=VK_IMAGE_ASPECT_COLOR_BIT;
+        black.clearValue.color={{0,0,0,1}};
+        vkCmdClearAttachments(s.frame.cmd,1,&black,borderCount,borders.data());
+    }
     const float w = float(rect.width), h = float(rect.height);
     const float x = float(rect.x), y = float(rect.y);
     const VulkanVertex vertices[] = {
@@ -2048,9 +2024,7 @@ std::vector<uint32_t> VulkanRenderer::ReadScalePixels(bool fullscreen) {
     Barrier(cmd,image.image,VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
         VK_PIPELINE_STAGE_TRANSFER_BIT,VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT|VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
         VK_ACCESS_TRANSFER_READ_BIT,VK_ACCESS_SHADER_READ_BIT);
-    VkMemoryBarrier host{VK_STRUCTURE_TYPE_MEMORY_BARRIER};
-    host.srcAccessMask=VK_ACCESS_TRANSFER_WRITE_BIT;host.dstAccessMask=VK_ACCESS_HOST_READ_BIT;
-    vkCmdPipelineBarrier(cmd,VK_PIPELINE_STAGE_TRANSFER_BIT,VK_PIPELINE_STAGE_HOST_BIT,0,1,&host,0,nullptr,0,nullptr);
+    HostReadBarrier(cmd);
     s.FinishTransfer();
     s.CompleteTransfers();
     const auto* source=static_cast<const uint32_t*>(readback.mapped);
@@ -2091,9 +2065,7 @@ ImagePixels VulkanRenderer::ReadTexturePixels(VulkanTexture* handle) {
     Barrier(cmd,texture.image,VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,texture.sampledLayout,
         VK_PIPELINE_STAGE_TRANSFER_BIT,VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT|VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
         VK_ACCESS_TRANSFER_READ_BIT,sampledAccess);
-    VkMemoryBarrier host{VK_STRUCTURE_TYPE_MEMORY_BARRIER};
-    host.srcAccessMask=VK_ACCESS_TRANSFER_WRITE_BIT;host.dstAccessMask=VK_ACCESS_HOST_READ_BIT;
-    vkCmdPipelineBarrier(cmd,VK_PIPELINE_STAGE_TRANSFER_BIT,VK_PIPELINE_STAGE_HOST_BIT,0,1,&host,0,nullptr,0,nullptr);
+    HostReadBarrier(cmd);
     s.FinishTransfer();
     s.CompleteTransfers();
     if(generated) {
@@ -2136,10 +2108,7 @@ std::vector<uint32_t> VulkanRenderer::ReadScenePixels() {
     vkCmdCopyImageToBuffer(cmd, s.scene->image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, readback.buffer, 1, &copy);
     Barrier(cmd, s.scene->image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
         VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_ACCESS_TRANSFER_READ_BIT, VK_ACCESS_SHADER_READ_BIT);
-    VkMemoryBarrier host{VK_STRUCTURE_TYPE_MEMORY_BARRIER};
-    host.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-    host.dstAccessMask = VK_ACCESS_HOST_READ_BIT;
-    vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_HOST_BIT, 0, 1, &host, 0, nullptr, 0, nullptr);
+    HostReadBarrier(cmd);
     s.FinishTransfer();
     s.CompleteTransfers();
     std::vector<uint32_t> pixels(size_t(s.width) * s.height);

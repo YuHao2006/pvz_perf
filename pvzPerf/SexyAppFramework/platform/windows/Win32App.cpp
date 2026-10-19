@@ -9,6 +9,7 @@
 #include "misc/FrameCounterMath.h"
 #include "misc/DemoDialogTemplate.h"
 #include "misc/DemoJumpTime.h"
+#include "WindowApi.h"
 #include <windowsx.h>
 #include <mmsystem.h>
 #include <regstr.h>
@@ -16,15 +17,7 @@
 #include <cmath>
 #include <stdexcept>
 #include <utility>
-#if defined(PVZ_NATIVE_MESSAGE_PUMP_BUDGET)
-#include "NativeMessagePumpBudget.h"
-#endif
-#if defined(PVZ_NATIVE_MESSAGE_SKIP_MOVE)
-#include "NativeMessageQueueFlags.h"
-#endif
-#if defined(PVZ_NATIVE_MESSAGE_READINESS)
 #include "NativeMessageReadiness.h"
-#endif
 
 using namespace Sexy;
 
@@ -35,11 +28,6 @@ void SexyAppBase::RequestNativeClose() {
 namespace {
 constexpr char MainWindowClass[] = "pvz_perf";
 constexpr char HiddenWindowClass[] = "pvz_perf_hidden";
-#if defined(PVZ_NATIVE_MESSAGE_SKIP_MOVE)
-constexpr UINT NativeMessagePeekFlags=NativeMessageNoMovePeekFlags;
-#else
-constexpr UINT NativeMessagePeekFlags=PM_REMOVE;
-#endif
 [[noreturn]] void WindowFailure(const char* operation) {
     throw std::runtime_error(std::string(operation)+" failed: "+std::to_string(GetLastError()));
 }
@@ -58,10 +46,6 @@ void SetStyle(HWND window,int index,LONG_PTR style) {
     const auto previous=SetWindowLongPtrW(window,index,style);
     if(!previous && GetLastError()!=ERROR_SUCCESS) WindowFailure("SetWindowLongPtr");
 }
-#if defined(PVZ_NATIVE_CLIENT_HITTEST)
-#include "NativeClientHitTest.inl"
-#endif
-#if defined(PVZ_NATIVE_MESSAGE_READINESS)
 // The application owns one main native window; MakeWindow resets this state.
 NativeFrameMotionPoll nativeFrameMotionPoll;
 
@@ -78,7 +62,6 @@ bool NativeQueueReady(const SexyAppBase& app) {
     }
     return false;
 }
-#endif
 }
 
 void SexyAppBase::MapWindowMouse(double x,double y,int& sx,int& sy) const {
@@ -92,20 +75,26 @@ void SexyAppBase::MapWindowMouse(double x,double y,int& sx,int& sy) const {
 
 void SexyAppBase::MakeWindow() {
     if(mHWnd || mGpuContext) throw std::logic_error("Game window already exists");
-#if defined(PVZ_NATIVE_MESSAGE_READINESS)
+    if constexpr (!NativeWindowsWindowApi::HdrOutput) mScaleHDREnabled=false;
     nativeFrameMotionPoll={};
-#endif
     mTitle="pvz_perf";
     const DWORD style=WS_OVERLAPPED|WS_CAPTION|WS_SYSMENU|WS_MINIMIZEBOX;
     const DWORD exStyle=WS_EX_APPWINDOW;
     RECT bounds{0,0,mWidth,mHeight};
-    if(!AdjustWindowRectExForDpi(&bounds,style,FALSE,exStyle,GetDpiForSystem()))
-        WindowFailure("AdjustWindowRectExForDpi");
+    if(!NativeWindowsWindowApi::AdjustClientRect(bounds,style,exStyle,nullptr))
+        WindowFailure("AdjustClientRect");
     mHWnd=CreateWindowExA(exStyle,MainWindowClass,mTitle.c_str(),style,
         mPreferredX<0?CW_USEDEFAULT:mPreferredX,mPreferredY<0?CW_USEDEFAULT:mPreferredY,
         bounds.right-bounds.left,bounds.bottom-bounds.top,nullptr,nullptr,gHInstance,this);
     if(!mHWnd) WindowFailure("CreateWindowEx");
-#if defined(PVZ_GPU_D3D12)
+#if defined(PVZ_GPU_D3D9)
+    mScaleHDREnabled=false;
+    mGpuContext=std::make_unique<GpuContext>(mHWnd,false,false);
+#elif defined(PVZ_GPU_OPENGL)
+    mScaleHDREnabled=false;
+    mGpuContext=std::make_unique<GpuContext>(mHWnd,
+        getenv("PVZ_OPENGL_VALIDATION")!=nullptr,false);
+#elif defined(PVZ_GPU_D3D12)
     mGpuContext=std::make_unique<GpuContext>(mHWnd,
         getenv("PVZ_VULKAN_VALIDATION")!=nullptr,mScaleHDREnabled);
 #else
@@ -141,7 +130,7 @@ void SexyAppBase::MakeWindow() {
     ReInitImages();
     mWidgetManager->mImage=mDDInterface->mScreenImage;
     mWidgetManager->MarkAllDirty();
-    mActive=getenv("PVZ_MODERN_HIDDEN")!=nullptr || GetFocus()==mHWnd;
+    mActive=GetFocus()==mHWnd;
     mPhysMinimized=mMinimized=false;
     mNativeWindowReady=true;
     RehupFocus();
@@ -152,6 +141,9 @@ void SexyAppBase::RegisterWindowClasses() {
     mIsWideWindow=sizeof(SexyChar)==sizeof(wchar_t);
     WNDCLASSA windowClass{};
     windowClass.style=CS_DBLCLKS;
+#if defined(PVZ_GPU_OPENGL)
+    windowClass.style|=CS_OWNDC;
+#endif
     windowClass.hIcon=LoadIconA(gHInstance,"IDI_MAIN_ICON");
     windowClass.hInstance=gHInstance;
     windowClass.lpfnWndProc=WindowProc;
@@ -168,17 +160,9 @@ void SexyAppBase::RegisterWindowClasses() {
 
 void SexyAppBase::PumpWindowEvents() {
     MSG message{};
-#if defined(PVZ_NATIVE_MESSAGE_PUMP_BUDGET)
-    NativeMessagePumpBudget budget;
-#endif
-    while(
-#if defined(PVZ_NATIVE_MESSAGE_PUMP_BUDGET)
-        budget.NextAllowed() &&
-#endif
-#if defined(PVZ_NATIVE_MESSAGE_READINESS)
-        NativeQueueReady(*this) &&
-#endif
-        PeekMessageW(&message,nullptr,0,0,NativeMessagePeekFlags)) {
+    nativeFrameMotionPoll.PollHeartbeat(mUpdateCount);
+    while(NativeQueueReady(*this) &&
+        PeekMessageW(&message,nullptr,0,0,PM_REMOVE)) {
         if(message.message==WM_QUIT) {
             Shutdown();
             break;
@@ -229,8 +213,8 @@ void SexyAppBase::ResizeWindowClient(int width,int height) {
     RECT rect{0,0,width,height};
     const auto style=DWORD(GetWindowLongPtrW(mHWnd,GWL_STYLE));
     const auto exStyle=DWORD(GetWindowLongPtrW(mHWnd,GWL_EXSTYLE));
-    if(!AdjustWindowRectExForDpi(&rect,style,FALSE,exStyle,GetDpiForWindow(mHWnd)))
-        WindowFailure("AdjustWindowRectExForDpi");
+    if(!NativeWindowsWindowApi::AdjustClientRect(rect,style,exStyle,mHWnd))
+        WindowFailure("AdjustClientRect");
     if(!SetWindowPos(mHWnd,nullptr,0,0,rect.right-rect.left,rect.bottom-rect.top,
         SWP_NOMOVE|SWP_NOZORDER|SWP_NOACTIVATE)) WindowFailure("SetWindowPos");
     mNativeResizePending=true;
@@ -265,23 +249,9 @@ void SexyAppBase::SetWindowFullscreen(bool fullscreen) {
 }
 
 void SexyAppBase::UpdateHdrDisplay() {
-    if(!mHdrDisplayObserver || mShutdown || mPhysMinimized) return;
-    if(mHdrTargetPending || mHdrTopologyGeneration!=mNativeMonitorGeneration) {
-        mHdrDisplayObserver->Rebind(TargetMonitor(),mHdrTopologyGeneration!=mNativeMonitorGeneration);
-        mHdrTopologyGeneration=mNativeMonitorGeneration;
-        mHdrTargetPending=false;
+    if constexpr (NativeWindowsWindowApi::HdrOutput) {
+        UpdateWindowsHdr(mNativeHdrState,*this,[this] { return TargetMonitor(); });
     }
-    if(mHdrDisplayRevision==mHdrDisplayObserver->Revision()) return;
-    const auto snapshot=mHdrDisplayObserver->Snapshot();
-    const auto params=snapshot.display.Params(mScaleHDRStrength);
-    auto& render=*mDDInterface->mRenderInterface;
-    render.Flush();
-    render.mRenderer->SetHdrParams(params);
-    mScaleHDRPaperWhite=params.paperWhiteNits;
-    mScaleHDRMaxNits=params.peakNits;
-    mScaleHDRReinhardPaperNits=params.reinhardPaperNits;
-    mHdrDisplayRevision=snapshot.revision;
-    mWidgetManager->MarkAllDirty();
 }
 
 void SexyAppBase::PrepareFullscreenScaleForMonitor() {
@@ -343,8 +313,6 @@ void SexyAppBase::SwitchScreenMode(bool windowed,bool,bool force) {
     if(mForceWindowed) windowed=true;
     else if(mForceFullscreen) windowed=false;
     if(mIsWindowed==windowed && !force) return;
-    if(getenv("PVZ_MODERN_HIDDEN") && !windowed)
-        throw std::logic_error("Fullscreen verification requires a visible window");
     mSwitchingScreenMode=true;
     struct Reset {bool& flag;~Reset(){flag=false;}} reset{mSwitchingScreenMode};
     ReleaseCursorClip();
@@ -368,7 +336,6 @@ void SexyAppBase::SwitchScreenMode(bool windowed,bool,bool force) {
 }
 
 POINT SexyAppBase::ReadNativeMousePosition() {
-    if(mNativeMousePositionForTest) return mNativeMousePositionForTest(mHWnd);
     POINT position{};
     if(!GetCursorPos(&position)) WindowFailure("GetCursorPos");
     if(!ScreenToClient(mHWnd,&position)) WindowFailure("ScreenToClient");
@@ -376,7 +343,7 @@ POINT SexyAppBase::ReadNativeMousePosition() {
 }
 void SexyAppBase::SampleNativeMousePosition() {
     if(mPlayingDemoBuffer || !mActive || mPhysMinimized || mSwitchingScreenMode) return;
-    if(!mNativeWindowShown && !mNativeMousePositionForTest) return;
+    if(!mNativeWindowShown) return;
     const auto position=[&] {
         return ReadNativeMousePosition();
     }();
@@ -516,7 +483,7 @@ void SexyAppBase::UpdateNativeCursorSelection() {
 
 void SexyAppBase::DestroyGameWindow() {
     mNativeWindowReady=false;mNativeWindowShown=false;
-    mHdrDisplayObserver.reset();
+    ResetWindowsHdr(mNativeHdrState);
     mGpuContext.reset();
     if(mHWnd) {
         SetWindowLongPtrW(mHWnd,GWLP_USERDATA,0);
@@ -947,14 +914,6 @@ LRESULT CALLBACK SexyAppBase::WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 	};
 	switch (uMsg)
 	{
-#if defined(PVZ_NATIVE_CLIENT_HITTEST)
-	case WM_NCHITTEST:
-		if (NativePointInsideClient(hWnd,lParam))
-		{
-			return HTCLIENT;
-		}
-		break;
-#endif
 	case WM_KILLFOCUS:
 		if (aSexyApp != NULL && hWnd == aSexyApp->mHWnd)
 		{

@@ -761,14 +761,15 @@ void SyncLegacy1073DataArray(
 		{
 			auto& aNativeItem = theDataArray.mBlock[i];
 			LegacyByte* aLegacyItem = aLegacyBlock.data() + i * aLegacyItemSize;
-			if (aNativeItem.mID & DATA_ARRAY_KEY_MASK)
+			if (aNativeItem.mGeneration != 0)
 			{
 				Legacy1073Layout<T>::Write(aLegacyItem, aNativeItem.mItem);
 			}
+			const unsigned int anID = aNativeItem.PackedID();
 			std::memcpy(
 				aLegacyItem + Legacy1073Layout<T>::SIZE,
-				&aNativeItem.mID,
-				sizeof(aNativeItem.mID));
+				&anID,
+				sizeof(anID));
 		}
 	}
 
@@ -849,14 +850,15 @@ void SyncDat64DataArray(
 		{
 			auto& aNativeItem = theDataArray.mBlock[i];
 			LegacyByte* aDat64Item = aDat64Block.data() + i * aDat64ItemSize;
-			if (aNativeItem.mID & DATA_ARRAY_KEY_MASK)
+			if (aNativeItem.mGeneration != 0)
 			{
 				Dat64Layout<T>::Write(aDat64Item, aNativeItem.mItem);
 			}
+			const unsigned int anID = aNativeItem.PackedID();
 			std::memcpy(
 				aDat64Item + Dat64Layout<T>::SIZE,
-				&aNativeItem.mID,
-				sizeof(aNativeItem.mID));
+				&anID,
+				sizeof(anID));
 		}
 	}
 
@@ -1912,19 +1914,6 @@ static bool LoadDat64FromBuffer(Board* theBoard, Buffer& aFileBuffer, const std:
 			static_cast<unsigned long>(aContext.ByteLeftToRead()));
 		return false;
 	}
-	TodTraceAndLog(
-		"DAT64_BOARD_STATE file=%s gameId=%lld background=%d wave=%d/%d survivalStage=%d musicTune=%d paused=%d bpm=%d speed=%d",
-		theFilePath.c_str(),
-		static_cast<long long>(theBoard->mGameID),
-		static_cast<int>(theBoard->mBackground),
-		theBoard->mCurrentWave,
-		theBoard->mNumWaves,
-		theBoard->mChallenge ? theBoard->mChallenge->mSurvivalStage : -1,
-		static_cast<int>(theBoard->mApp->mMusic->mCurMusicTune),
-		theBoard->mApp->mMusic->mPaused ? 1 : 0,
-		theBoard->mApp->mMusic->mBaseBPM,
-		theBoard->mApp->mMusic->mBaseModSpeed);
-
 	TodTrace("Loaded save game");
 	theBoard->RebuildPlantCellBucket();  // 格桶为派生索引不进存档，装载验收后重建
 	theBoard->RebuildZombieRowBucket();  // 行段桶同款：整池镜像装载不走初始化尾

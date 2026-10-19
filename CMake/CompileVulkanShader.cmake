@@ -7,7 +7,7 @@ if(DEFINED SDK_BIN AND NOT SDK_BIN STREQUAL "")
 endif()
 
 execute_process(
-    COMMAND "${PROGRAM}" -O --target-env=vulkan1.3 -o "${OUTPUT}" "${SOURCE}"
+    COMMAND "${PROGRAM}" -O --target-env=vulkan1.2 -o "${OUTPUT}" "${SOURCE}"
     RESULT_VARIABLE compile_result
     OUTPUT_VARIABLE compile_output
     ERROR_VARIABLE compile_error
@@ -20,7 +20,7 @@ endif()
 
 if(DEFINED VALIDATOR AND NOT VALIDATOR STREQUAL "" AND EXISTS "${VALIDATOR}")
     execute_process(
-        COMMAND "${VALIDATOR}" --target-env vulkan1.3 "${OUTPUT}"
+        COMMAND "${VALIDATOR}" --target-env vulkan1.2 "${OUTPUT}"
         RESULT_VARIABLE validate_result
         OUTPUT_VARIABLE validate_output
         ERROR_VARIABLE validate_error

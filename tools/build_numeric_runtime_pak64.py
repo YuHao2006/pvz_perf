@@ -441,7 +441,8 @@ def numeric_kind(name: str) -> str | None:
     return None
 
 
-def validate_reanim(reader: Reader, count: int, registries: dict) -> None:
+def validate_reanim(reader: Reader, count: int, registries: dict,
+                    image_ids: set[int] | None = None) -> None:
     tracks = []
     lo, hi = registries["attacher_range"]
     for _ in range(count):
@@ -459,6 +460,8 @@ def validate_reanim(reader: Reader, count: int, registries: dict) -> None:
             require(image <= registries["image_max"] and font <= 1
                     and (image == 0 or registries["image_slots"][image] != RESOURCE_SLOT_NONE),
                     "Invalid IDT5 resource ID")
+            if image_ids is not None and image:
+                image_ids.add(image)
             if mode:
                 length = reader.count(limit=0x7FFFFFFE)
                 require(b"\0" not in reader.take(length), "NUL in IDT5 UI caption")
@@ -482,7 +485,8 @@ def validate_reanim(reader: Reader, count: int, registries: dict) -> None:
     reader.finish()
 
 
-def validate_particle(reader: Reader, count: int, body_size: int, registries: dict) -> None:
+def validate_particle(reader: Reader, count: int, body_size: int, registries: dict,
+                      image_ids: set[int] | None = None) -> None:
     body = Reader(reader.take(body_size))
 
     def track() -> None:
@@ -497,6 +501,8 @@ def validate_particle(reader: Reader, count: int, body_size: int, registries: di
         require(image <= registries["image_max"] and body.word() <= 4
                 and (image == 0 or registries["image_slots"][image] != RESOURCE_SLOT_NONE),
                 "Invalid IDP5 emitter identity")
+        if image_ids is not None and image:
+            image_ids.add(image)
         for _ in range(22):
             track()
         for _ in range(2):
@@ -555,7 +561,8 @@ def validate_font(reader: Reader, maps: int, layers: int, tags: int,
 
 def validate_numeric(name: str, data: bytes, registries: dict,
                      references: set[tuple[str, str]] | None = None, *,
-                     font_sources: set[str] | None = None) -> set[str]:
+                     font_sources: set[str] | None = None,
+                     image_ids: set[int] | None = None) -> set[str]:
     references = references if references is not None else set()
     kind = numeric_kind(name)
     require(kind is not None, f"Unrecognized numeric asset: {name}")
@@ -571,14 +578,14 @@ def validate_numeric(name: str, data: bytes, registries: dict,
                     (registries["track"], registries["image"], registries["font"])
                     and math.isfinite(fps) and fps > 0 and 0 < count <= registries["track_capacity"],
                     f"Invalid IDT5 header: {name}")
-            validate_reanim(Reader(data[36:]), count, registries)
+            validate_reanim(Reader(data[36:]), count, registries, image_ids)
         else:
             magic, image, emitter, count, body = struct.unpack_from("<5I", data, 12)
             require(magic == 0x35504449 and (image, emitter) ==
                     (registries["image"], registries["emitter"])
                     and count <= 1000 and body + 36 + 8 * count == size,
                     f"Invalid IDP5 header: {name}")
-            validate_particle(Reader(data[32:]), count, body, registries)
+            validate_particle(Reader(data[32:]), count, body, registries, image_ids)
         return set()
     if kind == "fonts":
         require(32 <= len(data) <= 16 * 1024 * 1024, f"Invalid font size: {name}")

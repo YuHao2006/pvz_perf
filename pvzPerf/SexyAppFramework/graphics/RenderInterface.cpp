@@ -157,13 +157,9 @@ bool RenderInterface::InitGPU()
 	const std::string shaderDir = AddTrailingSlash(GetExecutableDirectory(), true) + "shaders/";
 	const GpuHdrParams hdr{gSexyAppBase->mScaleHDRPaperWhite,gSexyAppBase->mScaleHDRMaxNits,
         gSexyAppBase->mScaleHDRReinhardPaperNits,gSexyAppBase->mScaleHDRStrength};
-#if defined(PVZ_GPU_D3D12) || defined(PVZ_GPU_METAL)
-    mRenderer = new GpuRenderer(*gSexyAppBase->mGpuContext, mWidth, mHeight,
-        shaderDir,gSexyAppBase->mScaleHDREnabled?&hdr:nullptr);
-#else
-    mRenderer = new GpuRenderer(*gSexyAppBase->mGpuContext, mWidth, mHeight,
-        shaderDir + "game_vs.spv", shaderDir + "game_ps.spv",gSexyAppBase->mScaleHDREnabled?&hdr:nullptr);
-#endif
+    mRenderer = GpuBackendDetail::CreateRenderer<BuildConfig::Graphics, GpuRenderer>(
+        *gSexyAppBase->mGpuContext, mWidth, mHeight,
+        shaderDir, gSexyAppBase->mScaleHDREnabled ? &hdr : nullptr);
 	mRenderer->PrepareLoadingPipelines();
 
 	gGpuRenderer = mRenderer;
@@ -929,11 +925,8 @@ void RenderInterface::UseCausticsImages(MemoryImage* output,MemoryImage* source)
 
 GpuTexture* RenderInterface::GetCausticsTexture() const
 {
-#if defined(PVZ_GPU_D3D12) || defined(PVZ_GPU_METAL)
-	return mRenderer != NULL ? mRenderer->causticsState.target : NULL;
-#else
-	return mRenderer != NULL ? mRenderer->causticsTexture : NULL;
-#endif
+	return mRenderer != NULL ?
+		GpuBackendDetail::CausticsTexture<BuildConfig::Graphics>(*mRenderer) : NULL;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1382,5 +1375,13 @@ void RenderInterface::Flush()
 			mRenderer->EndSceneAndPresent();
 		}
 		return;
+	}
+}
+
+void RenderInterface::FinishLoadingTextures()
+{
+	if constexpr (BuildConfig::Graphics == BuildConfig::GraphicsApi::OpenGL) {
+		Flush();
+		GpuBackendDetail::FinishLoadingTextures<BuildConfig::Graphics>(*mRenderer);
 	}
 }

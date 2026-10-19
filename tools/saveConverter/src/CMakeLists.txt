@@ -18,7 +18,7 @@ target_include_directories(pvz_dat64_converter PRIVATE
 
 if(MSVC)
     set_property(TARGET pvz_dat64_converter PROPERTY
-        MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
+        MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
     target_compile_options(pvz_dat64_converter PRIVATE /utf-8 /W4 /permissive-)
     target_compile_definitions(pvz_dat64_converter PRIVATE
         _SILENCE_CXX20_U8PATH_DEPRECATION_WARNING)

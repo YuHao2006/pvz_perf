@@ -20,7 +20,6 @@
 #include <cwchar>
 #include <stdexcept>
 
-#include "misc/PerfTimer.h"
 #ifdef __APPLE__
 #include "platform/macos/MacSystem.h"
 #endif

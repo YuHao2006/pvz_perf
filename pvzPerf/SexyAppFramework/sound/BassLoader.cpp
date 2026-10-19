@@ -112,7 +112,7 @@ std::string FormatWin32Error(DWORD theError)
 		static_cast<DWORD>(sizeof(aBuffer)),
 		NULL);
 	if (aLength == 0)
-		return StrFormat("Win32 error %lu", static_cast<unsigned long>(theError));
+		return "Win32 error " + std::to_string(theError);
 
 	std::string aMessage(aBuffer, aLength);
 	while (!aMessage.empty() && (aMessage.back() == '\r' || aMessage.back() == '\n' || aMessage.back() == ' '))
@@ -181,6 +181,8 @@ BASS_INSTANCE::BASS_INSTANCE(const char *dllName) : mModule(NULL)
 
 	GETPROC(BASS_Init);
 	GETPROC(BASS_Free);
+	GETPROC(BASS_GetDevice);
+	GETPROC(BASS_SetDevice);
 	GETPROC(BASS_Stop);
 	GETPROC(BASS_Start);
 	
@@ -317,13 +319,22 @@ void Sexy::LoadBassDLL()
 	if (gBass->mModule==NULL)
 	{
 		const DWORD anError = GetLastError();
-		const std::string aMessage = StrFormat(
-			"Can't load bass.dll.\n\nTried:\n%s\n\n%s",
-			aBassPath.c_str(),
-			FormatWin32Error(anError).c_str());
+		const std::string aMessage = "Can't load bass.dll.\n\nTried:\n" +
+			aBassPath + "\n\n" + FormatWin32Error(anError);
 		MessageBoxA(NULL, aMessage.c_str(), "Audio initialization error", MB_OK | MB_ICONERROR);
 		exit(1);
 	}
+	// Sound resources load before the music output device is initialized.
+	const auto previousDevice = gBass->BASS_GetDevice();
+	if (!gBass->BASS_Init(0, 44100, 0, nullptr, nullptr))
+	{
+		const int error = gBass->BASS_ErrorGetCode();
+		delete gBass;
+		gBass = nullptr;
+		InterlockedDecrement(&gBassLoadCount);
+		throw std::runtime_error("BASS decoder initialization failed: " + std::to_string(error));
+	}
+	if (previousDevice != ~0U) gBass->BASS_SetDevice(previousDevice);
 #else
 	std::lock_guard lock(gBassMutex);
 	if (gBass) { ++gBassLoadCount; return; }
@@ -361,9 +372,11 @@ void Sexy::FreeBassDLL()
 		if (--gBassLoadCount <= 0)
 #endif
 		{
-#ifndef _WIN32
+			const auto previousDevice = gBass->BASS_GetDevice();
+			gBass->BASS_SetDevice(0);
 			gBass->BASS_Free();
-#endif
+			if (previousDevice != 0 && previousDevice != ~0U)
+				gBass->BASS_SetDevice(previousDevice);
 			delete gBass;
 			gBass = NULL;
 		}

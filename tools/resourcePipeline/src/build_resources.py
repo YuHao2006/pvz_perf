@@ -27,6 +27,32 @@ def publish(path: Path, data: bytes) -> None:
         temporary.replace(path)
 
 
+def emit_image_atlas_groups(path: Path, groups: dict[str, set[int]],
+                           registry_hash: int) -> None:
+    ordered = []
+    for kind in ("reanim", "particles"):
+        names = sorted(name for name in groups if pak.numeric_kind(name) == kind)
+        pak.require(len(names) == pak.COUNTS[kind], f"Incomplete atlas {kind} corpus")
+        ordered.extend(names)
+    pak.require(len(ordered) == len(groups), "Unexpected atlas group kind")
+    offsets, symbols = [0], []
+    for name in ordered:
+        symbols.extend(sorted(groups[name] - {0}))
+        offsets.append(len(symbols))
+
+    def array(name: str, values: list[int]) -> str:
+        rows = ["    " + ", ".join(f"{value}u" for value in values[i:i + 12]) + ","
+                for i in range(0, len(values), 12)]
+        return (f"inline constexpr std::array<unsigned int, {len(values)}> {name}{{\n"
+                + "\n".join(rows) + "\n};\n")
+
+    text = ("#pragma once\n#include <array>\n\nnamespace Sexy::OpenGLAtlasCorpus {\n"
+            f"inline constexpr unsigned int RegistryHash = 0x{registry_hash:08X}u;\n"
+            f"inline constexpr unsigned int ReanimationGroups = {pak.COUNTS['reanim']}u;\n"
+            + array("GroupOffsets", offsets) + array("Symbols", symbols) + "}\n")
+    publish(path, text.encode("ascii"))
+
+
 def run(*arguments: object) -> None:
     subprocess.run([str(arg) for arg in arguments], cwd=ROOT, check=True)
 
@@ -126,8 +152,14 @@ def build(args: argparse.Namespace, work: Path) -> None:
         raise ValueError(f"Incomplete numeric resource corpus: {counts}")
     audit = pak.source_audit(ROOT, {}, set(records))
     references = set()
+    atlas_groups = {}
     for name, data in records.items():
-        pak.validate_numeric(name, data, audit["registries"], references)
+        image_ids = set() if pak.numeric_kind(name) in ("reanim", "particles") else None
+        pak.validate_numeric(name, data, audit["registries"], references, image_ids=image_ids)
+        if image_ids is not None:
+            atlas_groups[name] = image_ids
+    emit_image_atlas_groups(generated / "ImageAtlasGroups.h", atlas_groups,
+                           audit["registries"]["image"])
     selected = set()
     available = set(raw_files)
     for kind, name in references:

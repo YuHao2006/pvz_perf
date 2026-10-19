@@ -9,7 +9,7 @@ set(Lawn__Board__Board_Include
     "../Lawn/Challenge.h"
     "../Lawn/Coin.h"
     "../Lawn/CursorObject.h"
-    "../Lawn/Cutscene.h"
+    "../Lawn/CutScene.h"
     "../Lawn/GameObject.h"
     "../Lawn/GridItem.h"
     "../Lawn/LawnMower.h"
@@ -53,7 +53,6 @@ source_group("Lawn\\Common\\Common Include" FILES ${Lawn__Common__Common_Include
 
 set(Lawn__Common__Common_Source
     "../Lawn/LawnCommon.cpp"
-    "../Lawn/WaveSpawnSmoke.cpp"
 
     "../Resources.cpp"
 )
@@ -229,7 +228,6 @@ add_subdirectory(sound)
 add_subdirectory(widget)
 add_subdirectory(misc)
 add_subdirectory(paklib)
-add_subdirectory(ogg)
 add_subdirectory(imagelib)
 
 target_sources(${PROJECT_NAME} PRIVATE
@@ -248,85 +246,12 @@ target_sources(${PROJECT_NAME} PRIVATE
     "${CMAKE_SOURCE_DIR}/assets/branding/Cursor13.cur"
     "../LawnApp.cpp"
     "../LawnApp.h"
-    "../Lawn/ModernVulkanSmoke.cpp"
-    "../Lawn/ModernVulkanCreditsSmoke.cpp"
-    "../Lawn/PortableFixesSmoke.cpp"
-    "../Lawn/LoadingCloseSmoke.cpp"
-    "../Lawn/PortableTextProfileSmoke.cpp"
-    "../Lawn/PortableWidgetCounterSmoke.cpp"
-    "../Lawn/PortableAppCounterSmoke.cpp"
-    "../Lawn/PortableDemoToolsSmoke.cpp"
-    "../Lawn/PortableDemoReaderSmoke.cpp"
-    "../Lawn/PortableDemoDispatchSmoke.cpp"
-    "../Lawn/PortableSquirrelSmoke.cpp"
-    "../Lawn/PortableAwardVaseSmoke.cpp"
-    "../Lawn/PortableAquariumSmoke.cpp"
-    "../Lawn/PortableIZombieSmoke.cpp"
-    "../Lawn/PortableSpriteScalingSmoke.cpp"
-    "../Lawn/PortablePortalSmoke.cpp"
-    "../Lawn/PortableWhackSmoke.cpp"
-    "../Lawn/PortableTreeSmoke.cpp"
-    "../Lawn/PortableShovelSmoke.cpp"
-    "../Lawn/PortableRainCoffeeSmoke.cpp"
-    "../Lawn/PortableGarlicRewardSmoke.cpp"
-    "../Lawn/PortableZenSmoke.cpp"
-    "../Lawn/PortableSeedAvailabilitySmoke.cpp"
-    "../Lawn/PortableChooserTimingSmoke.cpp"
-    "../Lawn/PortableStoreAchievementSmoke.cpp"
-    "../Lawn/PortableNutArmorSmoke.cpp"
-    "../Lawn/PortableSplashFreezeSmoke.cpp"
-    "../Lawn/PortableFrameTimeSmoke.cpp"
-    "../Lawn/PortableTextSmoke.cpp"
-    "../Lawn/PortableRichTextSmoke.cpp"
-    "../Lawn/PortableTooltipSmoke.cpp"
-    "../Lawn/PortablePoolReadSmoke.cpp"
-    "../Lawn/PortableSaveFailureSmoke.cpp"
-    "../Lawn/PortableSurvivalSmoke.cpp"
-    "../Lawn/PortableContinueSmoke.cpp"
-    "../Lawn/PortableZenLifetimeSmoke.cpp"
-    "../Lawn/PortableModalLifetimeSmoke.cpp"
-    "../Lawn/PortableMessageFocusSmoke.cpp"
-    "../Lawn/PortableCreditsPauseSmoke.cpp"
-    "../Lawn/PortableZombatarDeleteSmoke.cpp"
-    "../Lawn/PortableChooserLifetimeSmoke.cpp"
-    "../Lawn/PortableStorePurchaseSmoke.cpp"
-    "../Lawn/PortableSelectorLifetimeSmoke.cpp"
-    "../Lawn/PortableDaveUpgradeSmoke.cpp"
-    "../Lawn/PortableAlmanacSmoke.cpp"
-    "../Lawn/PortableMatrixFontSmoke.cpp"
-    "../Lawn/PortableFontAtlasSmoke.cpp"
-    "../Lawn/PortableFontConfigurationSmoke.cpp"
-    "../Lawn/PortableGpuImageFactoriesSmoke.cpp"
-    "../Lawn/PortableTextureSubmissionSmoke.cpp"
-    "../Lawn/PortableSharedResourceSmoke.cpp"
-    "../Lawn/PortableImageDiagnosticsSmoke.cpp"
-    "../Lawn/PortableAlphaCompositionSmoke.cpp"
-    "../Lawn/PortableUpsellSmoke.cpp"
-    "../Lawn/PortableZombatarSmoke.cpp"
-    "../Lawn/PortableSellDialogSmoke.cpp"
-    "../Lawn/PortablePoolTimingSmoke.cpp"
-    "../Lawn/PortableBeghouledSmoke.cpp"
-    "../Lawn/PortableMiniGameCompletionSmoke.cpp"
-    "../Lawn/AttachmentLifetimeSmoke.cpp"
-    "../Lawn/ModernVulkanInputSmoke.cpp"
-    "../Lawn/ModernVulkanGameplaySmoke.cpp"
-    # 独立 dat64 转换器的库体直链进游戏目标：Zombatar 夹具两段式（手造 v12
-    # user.dat → 过转换器 → 断言 v13 dat64 + 游戏加载）在线内跑真转换。
-    "${CMAKE_SOURCE_DIR}/tools/saveConverter/src/LevelSaveConverter.cpp"
     "../main.cpp"
     ".gitattributes"
     ".gitignore"
     "resource.h"
     "LawnProject.rc"
 )
-
-if(PVZ_ENABLE_GAME_PROBES)
-    target_compile_definitions(${PROJECT_NAME} PRIVATE PVZ_ENABLE_GAME_PROBES=1)
-else()
-    get_target_property(_PVZ_GAME_SOURCES ${PROJECT_NAME} SOURCES)
-    list(FILTER _PVZ_GAME_SOURCES EXCLUDE REGEX "Smoke\\.cpp$")
-    set_property(TARGET ${PROJECT_NAME} PROPERTY SOURCES "${_PVZ_GAME_SOURCES}")
-endif()
 
 if(APPLE)
     get_target_property(_PVZ_GAME_SOURCES ${PROJECT_NAME} SOURCES)
@@ -362,9 +287,6 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
         "/(ModernVulkan[^/]*Smoke|Portable[^/]*Smoke|LoadingCloseSmoke|AttachmentLifetimeSmoke)\\.cpp$")
     list(FILTER _PVZ_GAME_SOURCES EXCLUDE REGEX "\\.(rc|cur)$")
     set_property(TARGET ${PROJECT_NAME} PROPERTY SOURCES "${_PVZ_GAME_SOURCES}")
-    if(PVZ_ENABLE_GAME_PROBES)
-        target_sources(${PROJECT_NAME} PRIVATE "../Lawn/NativeLinuxGameSmoke.cpp")
-    endif()
     target_sources(${PROJECT_NAME} PRIVATE
         "platform/linux/LinuxApp.cpp"
         "platform/linux/WindowGeometry.cpp"
@@ -393,49 +315,15 @@ if(PVZ_WINDOW_BACKEND STREQUAL "WIN32")
         "platform/windows/UserDirectories.cpp"
         "platform/windows/TabletCaret.cpp")
     target_compile_definitions(${PROJECT_NAME} PRIVATE SEXY_WINDOW_WIN32=1 SEXY_RENDER_GPU=1)
-    option(PVZ_NATIVE_MESSAGE_PUMP_BUDGET "Bound each Win32 message pump with a one millisecond soft budget" OFF)
-    if(PVZ_NATIVE_MESSAGE_PUMP_BUDGET)
-        set_property(SOURCE "platform/windows/Win32App.cpp" APPEND PROPERTY
-            COMPILE_DEFINITIONS PVZ_NATIVE_MESSAGE_PUMP_BUDGET=1)
-    endif()
-    option(PVZ_NATIVE_MESSAGE_SKIP_MOVE "Test the Win32 queue mask without mouse movement" OFF)
-    if(PVZ_NATIVE_MESSAGE_SKIP_MOVE)
-        set_property(SOURCE "platform/windows/Win32App.cpp" APPEND PROPERTY
-            COMPILE_DEFINITIONS PVZ_NATIVE_MESSAGE_SKIP_MOVE=1)
-    endif()
-    option(PVZ_NATIVE_MESSAGE_READINESS "Check non-movement queue readiness before ordinary retrieval" ON)
-    if(PVZ_NATIVE_MESSAGE_READINESS)
-        set_property(SOURCE "platform/windows/Win32App.cpp" APPEND PROPERTY
-            COMPILE_DEFINITIONS PVZ_NATIVE_MESSAGE_READINESS=1)
-    endif()
-    option(PVZ_NATIVE_CLIENT_HITTEST "Test the exact client rectangle hit-test shortcut" OFF)
-    if(PVZ_NATIVE_CLIENT_HITTEST)
-        set_property(SOURCE "platform/windows/Win32App.cpp" APPEND PROPERTY
-            COMPILE_DEFINITIONS PVZ_NATIVE_CLIENT_HITTEST=1)
-    endif()
     if(BUILD_TESTING)
         add_executable(modern_message_readiness_tests "${CMAKE_SOURCE_DIR}/tools/native-tests/win32_message_readiness_tests.cpp")
         target_compile_features(modern_message_readiness_tests PRIVATE cxx_std_20)
         target_link_libraries(modern_message_readiness_tests PRIVATE user32)
         add_test(NAME modern_message_readiness COMMAND modern_message_readiness_tests)
         set_tests_properties(modern_message_readiness PROPERTIES TIMEOUT 15)
-        add_executable(modern_message_filter_tests "${CMAKE_SOURCE_DIR}/tools/native-tests/win32_message_filter_tests.cpp")
-        target_compile_features(modern_message_filter_tests PRIVATE cxx_std_20)
-        target_link_libraries(modern_message_filter_tests PRIVATE user32)
-        add_test(NAME modern_message_filter COMMAND modern_message_filter_tests)
-        set_tests_properties(modern_message_filter PROPERTIES TIMEOUT 15)
-        add_executable(modern_client_hit_tests "${CMAKE_SOURCE_DIR}/tools/native-tests/win32_client_hit_tests.cpp")
-        target_compile_features(modern_client_hit_tests PRIVATE cxx_std_20)
-        target_link_libraries(modern_client_hit_tests PRIVATE user32)
-        add_test(NAME modern_client_hit COMMAND modern_client_hit_tests)
-        set_tests_properties(modern_client_hit PROPERTIES TIMEOUT 30)
-        add_executable(modern_message_budget_tests "${CMAKE_SOURCE_DIR}/tools/native-tests/win32_message_budget_tests.cpp")
-        target_compile_features(modern_message_budget_tests PRIVATE cxx_std_20)
-        target_link_libraries(modern_message_budget_tests PRIVATE user32)
-        add_test(NAME modern_message_budget COMMAND modern_message_budget_tests)
         if(MSVC AND CMAKE_SIZEOF_VOID_P EQUAL 8)
-            get_filename_component(_PVZ_BUDGET_MSVC_BIN "${CMAKE_CXX_COMPILER}" DIRECTORY)
-            if(EXISTS "${_PVZ_BUDGET_MSVC_BIN}/clang_rt.asan_dynamic-x86_64.dll")
+            get_filename_component(_PVZ_MESSAGE_MSVC_BIN "${CMAKE_CXX_COMPILER}" DIRECTORY)
+            if(EXISTS "${_PVZ_MESSAGE_MSVC_BIN}/clang_rt.asan_dynamic-x86_64.dll")
                 add_executable(modern_message_readiness_asan_tests "${CMAKE_SOURCE_DIR}/tools/native-tests/win32_message_readiness_tests.cpp")
                 target_compile_features(modern_message_readiness_asan_tests PRIVATE cxx_std_20)
                 target_compile_options(modern_message_readiness_asan_tests PRIVATE /fsanitize=address /Zi)
@@ -445,25 +333,12 @@ if(PVZ_WINDOW_BACKEND STREQUAL "WIN32")
                     INTERPROCEDURAL_OPTIMIZATION FALSE INTERPROCEDURAL_OPTIMIZATION_RELEASE FALSE)
                 add_custom_command(TARGET modern_message_readiness_asan_tests POST_BUILD
                     COMMAND "${CMAKE_COMMAND}" -E copy_if_different
-                        "${_PVZ_BUDGET_MSVC_BIN}/clang_rt.asan_dynamic-x86_64.dll"
+                        "${_PVZ_MESSAGE_MSVC_BIN}/clang_rt.asan_dynamic-x86_64.dll"
                         "$<TARGET_FILE_DIR:modern_message_readiness_asan_tests>" VERBATIM)
                 add_test(NAME modern_message_readiness_asan COMMAND modern_message_readiness_asan_tests)
                 set_tests_properties(modern_message_readiness_asan PROPERTIES TIMEOUT 15)
-                add_executable(modern_message_budget_asan_tests "${CMAKE_SOURCE_DIR}/tools/native-tests/win32_message_budget_tests.cpp")
-                target_compile_features(modern_message_budget_asan_tests PRIVATE cxx_std_20)
-                target_compile_options(modern_message_budget_asan_tests PRIVATE /fsanitize=address /Zi)
-                target_link_options(modern_message_budget_asan_tests PRIVATE /INCREMENTAL:NO /DEBUG)
-                target_link_libraries(modern_message_budget_asan_tests PRIVATE user32)
-                set_target_properties(modern_message_budget_asan_tests PROPERTIES
-                    INTERPROCEDURAL_OPTIMIZATION FALSE INTERPROCEDURAL_OPTIMIZATION_RELEASE FALSE)
-                add_custom_command(TARGET modern_message_budget_asan_tests POST_BUILD
-                    COMMAND "${CMAKE_COMMAND}" -E copy_if_different
-                        "${_PVZ_BUDGET_MSVC_BIN}/clang_rt.asan_dynamic-x86_64.dll"
-                        "$<TARGET_FILE_DIR:modern_message_budget_asan_tests>" VERBATIM)
-                add_test(NAME modern_message_budget_asan COMMAND modern_message_budget_asan_tests)
             endif()
         endif()
-        set_tests_properties(modern_message_budget PROPERTIES TIMEOUT 15)
     endif()
 endif()
 
@@ -547,6 +422,14 @@ elseif(PVZ_RENDER_BACKEND STREQUAL "D3D12")
     target_link_libraries(${PROJECT_NAME} PRIVATE sexy_d3d12)
     add_dependencies(${PROJECT_NAME} sexy_d3d12_shaders)
     set(gameShaderDirectory "${CMAKE_BINARY_DIR}/SexyAppFramework/graphics/d3d12/shaders")
+elseif(PVZ_RENDER_BACKEND STREQUAL "OPENGL")
+    target_compile_definitions(${PROJECT_NAME} PRIVATE PVZ_GPU_OPENGL=1)
+    target_link_libraries(${PROJECT_NAME} PRIVATE sexy_opengl)
+elseif(PVZ_RENDER_BACKEND STREQUAL "D3D9")
+    target_compile_definitions(${PROJECT_NAME} PRIVATE PVZ_GPU_D3D9=1)
+    target_link_libraries(${PROJECT_NAME} PRIVATE sexy_d3d9)
+    add_dependencies(${PROJECT_NAME} sexy_d3d9_shaders)
+    set(gameShaderDirectory "${CMAKE_BINARY_DIR}/SexyAppFramework/graphics/d3d9/shaders")
 elseif(PVZ_RENDER_BACKEND STREQUAL "METAL")
     if(NOT TARGET sexy_metal)
         message(FATAL_ERROR "Native Metal requires the real sexy_metal backend target")
@@ -561,6 +444,22 @@ if(APPLE)
             "${gameShaderDirectory}" "$<TARGET_FILE_DIR:${PROJECT_NAME}>/shaders"
         COMMAND "${CMAKE_COMMAND}"
             "-DSOURCE=${CMAKE_CURRENT_SOURCE_DIR}/platform/macos/default-scale.json"
+            "-DDESTINATION=$<TARGET_FILE_DIR:${PROJECT_NAME}>"
+            -P "${CMAKE_SOURCE_DIR}/CMake/StageScaleConfig.cmake"
+        VERBATIM)
+elseif(PVZ_RENDER_BACKEND STREQUAL "OPENGL")
+    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+        COMMAND "${CMAKE_COMMAND}"
+            "-DSOURCE=${CMAKE_CURRENT_SOURCE_DIR}/graphics/opengl/default-scale.json"
+            "-DDESTINATION=$<TARGET_FILE_DIR:${PROJECT_NAME}>"
+            -P "${CMAKE_SOURCE_DIR}/CMake/StageScaleConfig.cmake"
+        VERBATIM)
+elseif(PVZ_RENDER_BACKEND STREQUAL "D3D9")
+    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+        COMMAND "${CMAKE_COMMAND}" -E copy_directory
+            "${gameShaderDirectory}" "$<TARGET_FILE_DIR:${PROJECT_NAME}>/shaders"
+        COMMAND "${CMAKE_COMMAND}"
+            "-DSOURCE=${CMAKE_CURRENT_SOURCE_DIR}/graphics/opengl/default-scale.json"
             "-DDESTINATION=$<TARGET_FILE_DIR:${PROJECT_NAME}>"
             -P "${CMAKE_SOURCE_DIR}/CMake/StageScaleConfig.cmake"
         VERBATIM)
@@ -607,8 +506,6 @@ foreach(pvzTarget IN LISTS pvzFrameworkTargets)
     endif()
 endforeach()
 target_sources(${PROJECT_NAME} PRIVATE
-    "../Lawn/BoardStateDigest.h"
-    "../Lawn/BoardStateDigest.cpp"
     "../Sexy.TodLib/StateHasher.h"
     "../Sexy.TodLib/StateHasher.cpp"
 )
@@ -654,6 +551,10 @@ if(TARGET pvz_dat64_converter)
         COMMAND "${CMAKE_COMMAND}" -E copy_if_different
             "$<TARGET_FILE:pvz_dat64_converter>"
             "${CMAKE_BINARY_DIR}/$<CONFIG>/data/$<TARGET_FILE_NAME:pvz_dat64_converter>"
+        COMMAND "${CMAKE_COMMAND}" -E rm -f
+            "${CMAKE_BINARY_DIR}/$<CONFIG>/data/msvcp140.dll"
+            "${CMAKE_BINARY_DIR}/$<CONFIG>/data/vcruntime140.dll"
+            "${CMAKE_BINARY_DIR}/$<CONFIG>/data/vcruntime140_1.dll"
         DEPENDS pvz_dat64_converter
         COMMENT "Deploying the native dat/dat64 converter to data/"
         VERBATIM
@@ -673,7 +574,7 @@ elseif(PVZ_RENDER_BACKEND STREQUAL "METAL")
     if(TARGET sexy_metal_effects)
         target_link_libraries(${PROJECT_NAME} PRIVATE sexy_metal_effects)
     endif()
-else()
+elseif(NOT PVZ_RENDER_BACKEND MATCHES "^(OPENGL|D3D9)$")
     target_link_libraries(${PROJECT_NAME} PRIVATE sexy_vulkan_effects)
 endif()
 target_link_libraries(${PROJECT_NAME} PRIVATE nlohmann_json::nlohmann_json)

@@ -20,7 +20,9 @@
 #include <memory>
 #include <array>
 #include <exception>
-#if defined(__APPLE__)
+#if defined(_WIN32)
+#include "platform/windows/HdrPolicy.h"
+#elif defined(__APPLE__)
 #include "platform/macos/MacWindow.h"
 #elif !defined(_WIN32)
 #include "platform/NativeWindow.h"
@@ -164,7 +166,7 @@ public:
     LONG_PTR mNativeSavedWindowStyle = 0;
     LONG_PTR mNativeSavedWindowExStyle = 0;
 #ifdef _WIN32
-    std::unique_ptr<VulkanHdrDisplayObserver> mHdrDisplayObserver;
+    [[msvc::no_unique_address]] NativeWindowsHdrState mNativeHdrState;
 #endif
     uint64_t mHdrDisplayRevision=0, mHdrTopologyGeneration=0;
     bool mHdrTargetPending=false;
@@ -172,8 +174,6 @@ public:
     std::array<double, 3> mNativeLastClickTime{-1000,-1000,-1000};
     std::array<double, 3> mNativeLastClickX{}, mNativeLastClickY{};
     double mNativeWheelRemainder = 0;
-    // Hidden input probes supply positions without moving the desktop cursor.
-    POINT (*mNativeMousePositionForTest)(NativeWindowHandle) = nullptr;
     void PumpWindowEvents();
     void RequestNativeClose();
     void DrainWindowMessages() { ProcessDeferredMessages(false); }
@@ -695,10 +695,3 @@ public:
 extern SexyAppBase* gSexyAppBase;
 
 };
-
-#if PVZ_ENABLE_GAME_PROBES
-// 主循环尾钩子（2026-10-07 分层：Framework 不再 include 上层冒烟夹具
-// 头，Lawn 侧（LoadingCloseSmoke.cpp）静态注册注入；nullptr = 无钩子。
-typedef void (*SexyAppAfterLoopHook)(Sexy::SexyAppBase&);
-extern SexyAppAfterLoopHook gSexyAppAfterLoopHook;
-#endif

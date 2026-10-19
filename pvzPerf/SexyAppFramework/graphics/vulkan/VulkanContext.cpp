@@ -36,6 +36,10 @@ namespace {
     VkInstance CreateInstanceImpl(const VulkanInitConfig& config,
                                   const std::vector<const char*>& extensions,
                                   const std::vector<const char*>& layers) {
+        unsigned int loaderVersion = 0;
+        VK_CHECK(vkEnumerateInstanceVersion(&loaderVersion));
+        if (loaderVersion < VK_API_VERSION_1_2 || config.appInfo.apiVersion < VK_API_VERSION_1_2)
+            throw std::runtime_error("This renderer requires Vulkan 1.2");
         // Instance WSI extensions and requested validation/extra layers.
         VkInstanceCreateInfo createInfo = config.instanceInfo;
         createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;   // 强制
@@ -134,12 +138,11 @@ namespace {
         return true;
     }
 
-    // 自动过滤器 3（库内强制，bindless 纹理数组的先决条件）：descriptor
-    // indexing 三个位。渲染器把全场纹理放进一个 PARTIALLY_BOUND +
-    // UPDATE_AFTER_BIND 的采样图数组，片元按顶点槽位号非一致索引——
-    // Vulkan 1.2 核心特性，2019 年后的卡全支持；缺位直接拒绝该卡，
-    // 无回退路径（按方针：能力门在选卡，不在运行时）
-    bool DescriptorIndexingSupported(VkPhysicalDevice candidate) {
+    bool RequiredFeaturesSupported(VkPhysicalDevice candidate) {
+        VkPhysicalDeviceProperties properties{};
+        vkGetPhysicalDeviceProperties(candidate, &properties);
+        if (properties.apiVersion < VK_API_VERSION_1_2)
+            return false;
         VkPhysicalDeviceVulkan12Features v12{
             VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES};
         VkPhysicalDeviceFeatures2 features2{
@@ -183,7 +186,7 @@ namespace {
                 continue;
             if (!DeviceFeaturesSupported(candidate, wantedFeatures))
                 continue;
-            if (!DescriptorIndexingSupported(candidate))
+            if (!RequiredFeaturesSupported(candidate))
                 continue;
 
             if (!gpuFilter(candidate))
@@ -236,7 +239,7 @@ namespace {
             }
         }
         if (best == VK_NULL_HANDLE)
-            throw std::runtime_error("没有同时满足 graphics+present 的显卡");
+            throw std::runtime_error("No GPU supports Vulkan 1.2, descriptor indexing and graphics/present");
 
         return best;
     }
@@ -269,7 +272,6 @@ namespace {
                       VK_KHR_SWAPCHAIN_EXTENSION_NAME) == extensions.end())
             extensions.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
 
-        // descriptor indexing 特性链（选卡阶段已过滤支持；库内强制）
         VkPhysicalDeviceVulkan12Features v12 = DescriptorIndexingEnable();
 
         VkDeviceCreateInfo createInfo{VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO};
@@ -328,10 +330,6 @@ void VulkanContext::InitializeVulkan(const VulkanInitConfig& config) {
         instance = VK_NULL_HANDLE;
         throw;
     }
-#if PVZ_ENABLE_GAME_PROBES
-    if (config.enableValidation)
-        std::cout << "校验层可用，已启用\n";
-#endif
 }
 
 // ---- 每窗口：swapchain + 图像视图 ----
@@ -447,11 +445,9 @@ void VulkanContext::CreateRenderPass() {
     VkAttachmentDescription color{};
     color.format = swapchainFormat;
     color.samples = VK_SAMPLE_COUNT_1_BIT;
-    // 2026-10-06 微优化（用户裁决"热路径纳秒级也值得"）：present pass 的
-    // 全表面清除总是被随后的全屏场景/缩放四边形 100% 覆盖——loadOp 改
-    // DONT_CARE 让驱动跳过这次清除。clearValue 仍走 BeginPresentPass 参数
-    // 传递但被驱动忽略（layer_probe 等托管路径只取图不画，无视觉依赖）。
-    color.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;   // 全屏四边形必覆盖，清了也白清
+    // Presentation overwrites the game rectangle and explicitly clears any
+    // letterbox bands. No swapchain pixel depends on its previous contents.
+    color.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
     color.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
     color.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
     color.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
@@ -733,8 +729,7 @@ void VulkanContext::EndFrame() {
 
     // 提交：等 imageAvailable（等到才能往这幅图上画）→ 执行 → 交出本图的
     // 呈现信号量（每图一份，防 MAILBOX 下呈现引擎还占用旧信号量）
-    VkPipelineStageFlags waitStage =
-        VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    VkPipelineStageFlags waitStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
     VkSubmitInfo submit{VK_STRUCTURE_TYPE_SUBMIT_INFO};
     submit.waitSemaphoreCount = 1;
     submit.pWaitSemaphores = &imageAvailable_;

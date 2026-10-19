@@ -49,10 +49,6 @@ std::string QtPlainText(const char* message)
 
 bool ShowNativeErrorDialog(const char* message, const char* title)
 {
-#if PVZ_ENABLE_GAME_PROBES
-    if (std::getenv("PVZ_MODERN_HIDDEN"))
-        return false;
-#endif
     const char* display = std::getenv("DISPLAY");
     const char* wayland = std::getenv("WAYLAND_DISPLAY");
     if ((!display || !*display) && (!wayland || !*wayland))

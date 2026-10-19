@@ -39,7 +39,7 @@ static_assert(alignof(DataArrayKind) == alignof(const char*));
 template <typename T> class DataArray
 {
 public:
-	// Keep the exact official slot layout (T followed by a 32-bit ID), while
+	// Keep the official slot layout (T followed by the two halves of a 32-bit ID), while
 	// giving the slot itself a real lifetime. The byte storage is active for a
 	// free slot; T is constructed only while the slot is allocated.
 	class DataArrayItem
@@ -51,9 +51,18 @@ public:
 			T					mItem;
 			Storage				mStorage;
 		};
-		unsigned int			mID;
+		// Free slots store the former 32-bit free-list link across both halves.
+		alignas(unsigned int) unsigned short mIndex;
+		unsigned short			mGeneration;
 
-		DataArrayItem() noexcept : mID(0U)
+		static_assert(sizeof(unsigned short) == 2 && sizeof(unsigned int) == 4);
+
+		constexpr unsigned int PackedID() const noexcept
+		{
+			return (static_cast<unsigned int>(mGeneration) << DATA_ARRAY_KEY_SHIFT) | mIndex;
+		}
+
+		DataArrayItem() noexcept : mIndex(0), mGeneration(0)
 		{
 			// Default-initialize byte storage without clearing the whole pool.
 			// A slot is zeroed only when it is actually allocated, matching 1073.
@@ -166,11 +175,12 @@ public:
 	{
 		const unsigned int anIndex = DataArrayIndexOf(theItem);
 		DataArrayItem& aItem = mBlock[anIndex];
-		TOD_ASSERT(DataArrayGet(aItem.mID) == theItem,
+		TOD_ASSERT(DataArrayGet(aItem.PackedID()) == theItem,
 			"Failed: DataArrayFree(%p) in %llu", static_cast<void*>(theItem),
 			static_cast<unsigned long long>(mKind));
 		aItem.DestroyItem();
-		aItem.mID = mFreeListHead;
+		aItem.mIndex = static_cast<unsigned short>(mFreeListHead);
+		aItem.mGeneration = static_cast<unsigned short>(mFreeListHead >> DATA_ARRAY_KEY_SHIFT);
 		mFreeListHead = anIndex;
 		mSize--;
 	}
@@ -180,9 +190,10 @@ public:
 		for (unsigned int i = 0; i < mMaxUsedCount; ++i)
 		{
 			DataArrayItem& aItem = mBlock[i];
-			if (aItem.mID & DATA_ARRAY_KEY_MASK)
+			if (aItem.mGeneration != 0)
 				aItem.DestroyItem();
-			aItem.mID = 0U;
+			aItem.mIndex = 0;
+			aItem.mGeneration = 0;
 		}
 
 		mFreeListHead = 0U;
@@ -193,10 +204,10 @@ public:
 	inline unsigned int DataArrayGetID(T* theItem)
 	{
 		DataArrayItem& aItem = mBlock[DataArrayIndexOf(theItem)];
-		TOD_ASSERT(DataArrayGet(aItem.mID) == theItem,
+		TOD_ASSERT(DataArrayGet(aItem.PackedID()) == theItem,
 			"Failed: DataArrayGetID(%p) for %llu", static_cast<void*>(theItem),
 			static_cast<unsigned long long>(mKind));
-		return aItem.mID;
+		return aItem.PackedID();
 	}
 
 	bool IterateNext(T*& theItem)
@@ -207,7 +218,7 @@ public:
 		DataArrayItem* const anEnd = mBlock + mMaxUsedCount;
 		while (aSlot < anEnd)
 		{
-			if (aSlot->mID & DATA_ARRAY_KEY_MASK)
+			if (aSlot->mGeneration != 0)
 			{
 				theItem = std::addressof(aSlot->mItem);
 				return true;
@@ -239,7 +250,7 @@ public:
 		else
 		{
 			aNext = mFreeListHead;
-			mFreeListHead = mBlock[mFreeListHead].mID;
+			mFreeListHead = mBlock[mFreeListHead].PackedID();
 		}
 
 		DataArrayItem& aNewItem = mBlock[aNext];
@@ -258,16 +269,19 @@ public:
 			{
 				mMaxUsedCount = aNext;
 				mFreeListHead = aNext;
-				aNewItem.mID = 0U;
+				aNewItem.mIndex = 0;
+				aNewItem.mGeneration = 0;
 			}
 			else
 			{
-				aNewItem.mID = mFreeListHead;
+				aNewItem.mIndex = static_cast<unsigned short>(mFreeListHead);
+				aNewItem.mGeneration = static_cast<unsigned short>(mFreeListHead >> DATA_ARRAY_KEY_SHIFT);
 				mFreeListHead = aNext;
 			}
 			throw;
 		}
-		aNewItem.mID = (mNextKey++ << DATA_ARRAY_KEY_SHIFT) | aNext;
+		aNewItem.mIndex = static_cast<unsigned short>(aNext);
+		aNewItem.mGeneration = static_cast<unsigned short>(mNextKey++);
 		if (mNextKey == DATA_ARRAY_MAX_SIZE)
 			mNextKey = 1U;
 		mSize++;
@@ -282,17 +296,20 @@ public:
 	{
 		TOD_ASSERT(theIndex < mMaxSize);
 		DataArrayItem& aItem = mBlock[theIndex];
-		if (aItem.mID & DATA_ARRAY_KEY_MASK)
+		if (aItem.mGeneration != 0)
 			aItem.DestroyItem();
 		// A valid ID must never advertise an object whose constructor failed.
-		aItem.mID = 0U;
+		aItem.mIndex = 0;
+		aItem.mGeneration = 0;
 		if (!(theID & DATA_ARRAY_KEY_MASK))
 		{
-			aItem.mID = theID;
+			aItem.mIndex = static_cast<unsigned short>(theID);
+			aItem.mGeneration = static_cast<unsigned short>(theID >> DATA_ARRAY_KEY_SHIFT);
 			return nullptr;
 		}
 		T* aValue = std::addressof(aItem.ConstructItem());
-		aItem.mID = theID;
+		aItem.mIndex = static_cast<unsigned short>(theID);
+		aItem.mGeneration = static_cast<unsigned short>(theID >> DATA_ARRAY_KEY_SHIFT);
 		return aValue;
 	}
 
@@ -307,11 +324,12 @@ public:
 		for (unsigned int i = mMaxUsedCount; i-- > 0U;)
 		{
 			DataArrayItem& aItem = mBlock[i];
-			if (aItem.mID & DATA_ARRAY_KEY_MASK)
+			if (aItem.mGeneration != 0)
 				++mSize;
 			else
 			{
-				aItem.mID = mFreeListHead;
+				aItem.mIndex = static_cast<unsigned short>(mFreeListHead);
+				aItem.mGeneration = static_cast<unsigned short>(mFreeListHead >> DATA_ARRAY_KEY_SHIFT);
 				mFreeListHead = i;
 			}
 		}
@@ -323,7 +341,9 @@ public:
 			return nullptr;
 
 		DataArrayItem& aBlock = mBlock[theId & DATA_ARRAY_INDEX_MASK];
-		return (aBlock.mID == theId) ? std::addressof(aBlock.mItem) : nullptr;
+		return (aBlock.mIndex == (theId & DATA_ARRAY_INDEX_MASK) &&
+			aBlock.mGeneration == (theId >> DATA_ARRAY_KEY_SHIFT))
+			? std::addressof(aBlock.mItem) : nullptr;
 	}
 
 	T* DataArrayGet(unsigned int theId)

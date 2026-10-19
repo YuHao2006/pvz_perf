@@ -11,7 +11,6 @@
 #include "graphics/ImageFont.h"
 #include "imagelib/ImageLib.h"
 
-//#define SEXY_PERF_ENABLED
 #include "PerfTimer.h"
 
 using namespace Sexy;
@@ -441,9 +440,7 @@ bool ResourceManager::LoadAlphaGridImage(ImageRes *theRes, DDImage *theImage)
 ///////////////////////////////////////////////////////////////////////////////
 bool ResourceManager::LoadAlphaImage(ImageRes *theRes, DDImage *theImage)
 {
-	SEXY_PERF_BEGIN(PerfKind::ResourceManagerAlphaGetImage);
 	ImageLib::Image* anAlphaImage = ImageLib::GetImage(theRes->mAlphaImage,true);
-	SEXY_PERF_END(PerfKind::ResourceManagerAlphaGetImage);
 
 	if (anAlphaImage==NULL)
 		return Fail(ResourceFailure::AlphaMissing,theRes->mId);
@@ -464,7 +461,6 @@ bool ResourceManager::DoLoadImage(ImageRes *theRes)
 	const bool lookForAlpha = theRes->mAlphaImage.empty() &&
 		theRes->mAlphaGridImage.empty() && theRes->mAutoFindAlpha;
 
-	SEXY_PERF_BEGIN(PerfKind::ResourceManagerGetImage);
 
 	const auto prepare = [&](DDImage* aDDImage) -> bool
 	{
@@ -486,14 +482,12 @@ bool ResourceManager::DoLoadImage(ImageRes *theRes)
 
 		if (theRes->mDDSurface)
 		{
-			SEXY_PERF_BEGIN(PerfKind::ResourceManagerDDSurface);
 
 			aDDImage->CommitBits();
 
 			if (!aDDImage->mHasAlpha)
 				aDDImage->mPurgeBits = true;
 
-			SEXY_PERF_END(PerfKind::ResourceManagerDDSurface);
 		}
 
 		if (theRes->mAnimInfo.mAnimType != AnimType_None)
@@ -555,14 +549,12 @@ bool ResourceManager::DoLoadSound(SoundRes* theRes)
 {
 	SoundRes *aRes = theRes;
 
-	SEXY_PERF_BEGIN(PerfKind::ResourceManagerLoadSound);
 	int aSoundId = mApp->mSoundManager->GetFreeSoundId();
 	if (aSoundId<0)
 		return Fail(ResourceFailure::SoundSlotsExhausted,theRes->mId);
 
 	if(!mApp->mSoundManager->LoadSound(aSoundId, aRes->mPath))
 		return Fail(ResourceFailure::SoundMissing,aRes->mId);
-	SEXY_PERF_END(PerfKind::ResourceManagerLoadSound);
 
 	if (aRes->mVolume >= 0)
 		mApp->mSoundManager->SetBaseVolume(aSoundId, aRes->mVolume);
@@ -582,7 +574,6 @@ bool ResourceManager::DoLoadFont(FontRes* theRes)
 {
 	std::unique_ptr<_Font> aFont;
 
-	SEXY_PERF_BEGIN(PerfKind::ResourceManagerDoLoadFont);
 
 	if (theRes->mImagePath.empty())
 	{
@@ -630,7 +621,6 @@ bool ResourceManager::DoLoadFont(FontRes* theRes)
 
 	theRes->mFont = aFont.release();
 
-	SEXY_PERF_END(PerfKind::ResourceManagerDoLoadFont);
 
 	ResourceLoadedHook(theRes);
 	return true;

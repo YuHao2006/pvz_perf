@@ -325,7 +325,6 @@ public:
 	void							UpdateToolTip();
 	Plant*							GetTopPlantAt(int theGridX, int theGridY, PlantPriority thePriority);
 	void							GetPlantsOnLawn(int theGridX, int theGridY, PlantsOnLawn* thePlantOnLawn);
-	void							GetPlantsOnLawnPoolScan(int theGridX, int theGridY, PlantsOnLawn* thePlantOnLawn);
 	// 植物格桶（2026-10-03 用户方案）：层特化 0=底座(花盆/荷叶) 1=普通
 	// 2=南瓜壳 3=飞行(咖啡豆)。sizeof(Board) 受 DAT64 镜像硬校验不可加
 	// 成员（见上方注释），桶体在 Board.cpp 函数域 static（条目3/4 缓存
@@ -360,7 +359,6 @@ public:
 	void							RemoveZombieRowBucket(Zombie* theZombie);
 	void							MoveZombieRowBucket(Zombie* theZombie, int theOldRow);
 	void							RebuildZombieRowBucket();
-	void							VerifyZombieRowBucketShadow();
 	/*inline*/ int					CountSunFlowers();
 	int								GetSeedPacketPositionX(int theIndex);
 	void							AddGraveStones(int theGridX, int theCount, MTRand& theLevelRNG);

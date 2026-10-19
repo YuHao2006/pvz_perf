@@ -135,6 +135,7 @@ public:
 
 	bool					CreateImageTexture(MemoryImage *theImage);
 	void CloneUploadedImage(MemoryImage* target,const MemoryImage& source);
+	void FinishLoadingTextures();
 	// reanim-v4 静态槽位：纹理落在槽位区恒等位 staticBase+staticSlot
 	//（编译记录烘焙的最终下标）
 	bool					CreateImageTextureStatic(MemoryImage *theImage, uint32_t staticSlot);

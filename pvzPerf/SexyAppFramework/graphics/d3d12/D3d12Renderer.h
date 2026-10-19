@@ -77,14 +77,8 @@ public:
     D3d12Texture* CreateCausticsTexture(int width, int height, D3d12Texture* source);
     void UseCausticsTexture(D3d12Texture* output, D3d12Texture* source);
     void SetCausticsFrame(uint32_t counter);
+    D3d12Texture* const& causticsTexture;
     bool HasCausticsCompute() const;
-    struct CausticsStatus {
-        D3d12Texture* target;
-        uint32_t lastDispatched;
-        uint64_t dispatchSerial;
-    };
-    // Copy diagnostics by value when retaining a snapshot across renderer calls.
-    const CausticsStatus& causticsState;
 
     // Selecting an image permits a batch while the window is suspended.
     bool BeginScene();
@@ -123,17 +117,6 @@ public:
     struct ResourceCounts {
         size_t textures, retiredTextures, descriptorPools, vertexBuffers;
     };
-    struct DrawCommandCounts {
-        uint64_t draws, pipelines, descriptors, viewports, scissors, extents, vertexBuffers;
-    };
-    struct TextureUploadCounts {
-        uint64_t textures, batches, stagingAllocations;
-        size_t pending;
-        uint64_t stagingCapacity;
-        uint64_t createdTextures, reusedUpdates;
-    };
     ResourceCounts GetResourceCounts() const;
-    const DrawCommandCounts& drawCommandCounts;
-    const TextureUploadCounts& textureUploadCounts;
 };
 }

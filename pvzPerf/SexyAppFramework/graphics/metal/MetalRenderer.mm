@@ -62,10 +62,7 @@ struct MetalRenderer::Impl {
     bool sceneOpen = false, imageOnly = false, initialized = false;
     bool causticQueued = false;
     uint32_t causticCounter = 0;
-    CausticsStatus caustics{};
-    DrawCommandCounts draws{};
-    TextureUploadCounts uploads{};
-    size_t vertexBuffers = 0, submittedVertexBuffers = 0;
+    MetalTexture* causticTarget = nullptr;
 
     Impl(MetalContext& c, int w, int h, const std::filesystem::path& directory)
         : context(c), device((__bridge id<MTLDevice>)c.device),
@@ -159,7 +156,6 @@ struct MetalRenderer::Impl {
         result->height = h;
         result->generated = generated;
         result->renderable = renderable;
-        ++uploads.createdTextures;
         return result;
     }
     void Register(MetalTexture* image, uint32_t requested = InvalidSlot) {
@@ -189,7 +185,6 @@ struct MetalRenderer::Impl {
         for (auto& entry : raw) entry.first->sampled = false;
         scene->sampled = false;
         submittedResources = nil;
-        submittedVertexBuffers = 0;
     }
     void Wait() {
         if (!inFlight) return;
@@ -219,8 +214,6 @@ struct MetalRenderer::Impl {
         commands = nil;
         submittedResources = recordingResources;
         recordingResources = nil;
-        submittedVertexBuffers = vertexBuffers;
-        vertexBuffers = 0;
         [inFlight commit];
         if (wait) Wait();
     }
@@ -287,10 +280,6 @@ struct MetalRenderer::Impl {
         [encoder endEncoding];
         Keep(staging);
         Keep(texture->resource);
-        ++uploads.textures;
-        ++uploads.batches;
-        ++uploads.stagingAllocations;
-        uploads.stagingCapacity = std::max<uint64_t>(uploads.stagingCapacity, size);
         // Submit one image at a time; callers may release their source immediately.
         Finish(true);
     }
@@ -411,9 +400,6 @@ struct MetalRenderer::Impl {
         Keep(arguments);
         Keep(stream);
         Keep(target->resource);
-        ++vertexBuffers;
-        ++draws.draws; ++draws.pipelines; ++draws.descriptors;
-        ++draws.viewports; ++draws.scissors; ++draws.extents; ++draws.vertexBuffers;
     }
     bool Present() {
         context.RecreateSwapchain();
@@ -466,7 +452,6 @@ struct MetalRenderer::Impl {
         [encoder drawPrimitives:MTLPrimitiveTypeTriangle vertexStart:0 vertexCount:6];
         [encoder endEncoding];
         Keep(args); Keep(stream); Keep(source); Keep(drawable);
-        ++vertexBuffers;
         [commands presentDrawable:drawable];
         return true;
     }
@@ -523,9 +508,8 @@ struct MetalRenderer::Impl {
 MetalRenderer::MetalRenderer(MetalContext& context, int w, int h,
     const std::filesystem::path& shaders, const GpuHdrParams* hdr)
     : impl_(std::make_unique<Impl>(context, w, h, shaders)), whiteTexture(impl_->white),
-      causticsState(impl_->caustics), sceneOpen(impl_->sceneOpen),
-      sceneWidth(impl_->width), sceneHeight(impl_->height),
-      drawCommandCounts(impl_->draws), textureUploadCounts(impl_->uploads) {
+      causticsTexture(impl_->causticTarget), sceneOpen(impl_->sceneOpen),
+      sceneWidth(impl_->width), sceneHeight(impl_->height) {
     if (hdr || context.hdr) throw std::runtime_error("Metal HDR is not supported in this milestone");
     const uint32_t white = 0xffffffffu;
     impl_->white = CreateTexture(1, 1, &white, 4, true);
@@ -569,7 +553,6 @@ MetalTexture* MetalRenderer::ReplaceTexture(MetalTexture* previous, int w, int h
         previous->resource.pixelFormat == MTLPixelFormatBGRA8Unorm && !previous->sampled) {
         previous->opaque = opaque;
         s.Upload(previous, bytes, pitch, 4);
-        ++s.uploads.reusedUpdates;
         return previous;
     }
     auto* next = previous->staticSlot != InvalidSlot ?
@@ -742,8 +725,8 @@ void MetalRenderer::DestroyTexture(MetalTexture* texture) {
         if (s.sceneOpen) throw std::logic_error("Cannot destroy active Metal render image");
         s.renderImage = nullptr;
     }
-    if (texture == s.caustics.target || texture == s.causticSource) {
-        s.caustics.target = s.causticSource = nullptr;
+    if (texture == s.causticTarget || texture == s.causticSource) {
+        s.causticTarget = s.causticSource = nullptr;
         s.causticQueued = false;
     }
     auto& container = s.textures.contains(texture) ? s.textures : s.raw;
@@ -773,14 +756,14 @@ void MetalRenderer::UseCausticsTexture(MetalTexture* target, MetalTexture* sourc
         source->width != 256 || source->height != 256 ||
         target->resource.pixelFormat != MTLPixelFormatRGBA8Unorm)
         throw std::invalid_argument("Invalid Metal GPU caustics selection");
-    s.caustics.target = target;
+    s.causticTarget = target;
     s.causticSource = source;
 }
 void MetalRenderer::SetCausticsFrame(uint32_t counter) {
     auto& s = *impl_;
     if (s.sceneOpen) throw std::logic_error("Set Metal caustics counter between scenes");
     s.causticCounter = counter;
-    s.causticQueued = s.caustics.target != nullptr;
+    s.causticQueued = s.causticTarget != nullptr;
 }
 bool MetalRenderer::HasCausticsCompute() const { return impl_->causticKernel != nil; }
 bool MetalRenderer::BeginScene() {
@@ -789,14 +772,11 @@ bool MetalRenderer::BeginScene() {
     s.context.RecreateSwapchain();
     if (!s.renderImage && s.context.surfaceSuspended) return false;
     s.Begin();
-    s.draws = {};
-    if (s.causticQueued && s.caustics.target) {
-        s.Snapshot(s.caustics.target);
+    if (s.causticQueued && s.causticTarget) {
+        s.Snapshot(s.causticTarget);
         const MetalCausticConstants constants{s.causticCounter};
         const std::array inputs{s.causticSource};
-        s.Compute(s.causticKernel, s.caustics.target, inputs, &constants, sizeof(constants), 128, 64, 4);
-        s.caustics.lastDispatched = s.causticCounter;
-        ++s.caustics.dispatchSerial;
+        s.Compute(s.causticKernel, s.causticTarget, inputs, &constants, sizeof(constants), 128, 64, 4);
         s.causticQueued = false;
     }
     if (!s.renderImage && !s.initialized) {
@@ -926,6 +906,6 @@ std::vector<uint32_t> MetalRenderer::ReadScalePixels(bool fullscreen) {
 uint32_t MetalRenderer::MaxImageDimension2D() const { return 16384; }
 MetalRenderer::ResourceCounts MetalRenderer::GetResourceCounts() const {
     const auto& s = *impl_;
-    return {s.textures.size(), s.retired.size() + s.raw.size(), 0, s.vertexBuffers + s.submittedVertexBuffers};
+    return {s.textures.size(), s.retired.size() + s.raw.size(), 0};
 }
 }

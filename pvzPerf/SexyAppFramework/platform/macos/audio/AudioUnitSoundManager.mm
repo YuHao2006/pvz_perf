@@ -1,41 +1,12 @@
 #include "AudioUnitSoundManager.h"
-#include "sound/BassLoader.h"
-#include "sound/LegacyAuDecode.h"
-#include "paklib/PakInterface.h"
 #include <algorithm>
 #include <cmath>
-#include <cstring>
-#include <limits>
-#include <memory>
 #include <stdexcept>
-#include <string_view>
 #include <utility>
 
 namespace Sexy {
-namespace {
-struct Decoder {
-    unsigned int handle;
-    ~Decoder() { if (handle) gBass->BASS_StreamFree(handle); }
-};
-float ReadPCM(const unsigned char* bytes, unsigned int sampleBytes)
-{
-    if (sampleBytes == 1) return (static_cast<int>(*bytes) - 128) / 128.0f;
-    if (sampleBytes == 2) {
-        short value;
-        std::memcpy(&value, bytes, sizeof(value));
-        return value / 32768.0f;
-    }
-    float value;
-    std::memcpy(&value, bytes, sizeof(value));
-    if (!std::isfinite(value))
-        throw std::runtime_error("Sound PCM contains a non-finite sample");
-    return value;
-}
-}
 static_assert(std::atomic<unsigned int>::is_always_lock_free);
 
-AudioUnitSoundManager::DecoderLease::DecoderLease() { LoadBassDLL(); }
-AudioUnitSoundManager::DecoderLease::~DecoderLease() { FreeBassDLL(); }
 AudioUnitSoundManager::AudioUnitSoundManager(NativeWindowHandle)
 {
     try {
@@ -93,59 +64,20 @@ bool AudioUnitSoundManager::LoadSound(unsigned int id, const std::string& name)
     if (id >= mSamples.size()) return false;
     const std::string resourceName = name;
     ReleaseSound(id);
-    for (const char* extension : {".wav", ".ogg", ".au"}) {
-        const std::string path = resourceName + extension;
-        std::unique_ptr<PFILE, decltype(&p_fclose)> file(p_fopen(path.c_str(), "rb"), &p_fclose);
-        if (!file) continue;
-        if (p_fseek(file.get(), 0, SEEK_END) != 0)
-            throw std::runtime_error("Sound seek failed: " + path);
-        const int size = p_ftell(file.get());
-        if (size <= 0 || p_fseek(file.get(), 0, SEEK_SET) != 0)
-            throw std::runtime_error("Invalid sound size: " + path);
-        std::vector<unsigned char> encoded(static_cast<size_t>(size));
-        if (p_fread(encoded.data(), 1, size, file.get()) != encoded.size())
-            throw std::runtime_error("Sound read failed: " + path);
-        file.reset();
-        if (std::string_view(extension) == ".au") encoded = DecodeLegacyAuToWave(encoded);
-        Decoder decoder{gBass->BASS_StreamCreateFile(TRUE, encoded.data(), 0, encoded.size(),
-            BASS_STREAM_DECODE)};
-        if (!decoder.handle) throw std::runtime_error("BASS sound decode failed: " + path);
-        BASS_CHANNELINFO info{};
-        if (!gBass->BASS_ChannelGetInfo(decoder.handle, &info) ||
-            !info.freq || (info.chans != 1 && info.chans != 2))
-            throw std::runtime_error("Sound requires mono/stereo PCM: " + path);
-        const unsigned int sampleBytes = info.flags & BASS_SAMPLE_FLOAT ? 4 :
-            (info.flags & BASS_SAMPLE_8BITS ? 1 : 2);
-        const unsigned int frameBytes = info.chans * sampleBytes;
-        const unsigned long long bytes = gBass->BASS_ChannelGetLength(decoder.handle, BASS_POS_BYTE);
-        if (!bytes || bytes > static_cast<unsigned long long>(std::numeric_limits<int>::max()) ||
-            bytes % frameBytes)
-            throw std::runtime_error("Invalid decoded sound size: " + path);
-        std::vector<unsigned char> pcm(static_cast<size_t>(bytes));
-        unsigned int decoded = 0;
-        while (decoded < bytes) {
-            const auto count = gBass->BASS_ChannelGetData(decoder.handle, pcm.data() + decoded,
-                static_cast<unsigned int>(bytes - decoded));
-            if (!count || count == ~0U || count > bytes - decoded)
-                throw std::runtime_error("Incomplete sound decode: " + path);
-            decoded += count;
-        }
-        Sample candidate;
-        candidate.pcm.resize(pcm.size() / sampleBytes);
-        for (size_t index = 0; index < candidate.pcm.size(); ++index)
-            candidate.pcm[index] = ReadPCM(pcm.data() + index * sampleBytes, sampleBytes);
-        candidate.frequency = info.freq;
-        candidate.channels = info.chans;
-        candidate.frameBytes = frameBytes;
-        candidate.name = resourceName;
-        std::lock_guard lock(mControls);
-        candidate.volume = mSamples[id].volume;
-        candidate.pan = mSamples[id].pan;
-        ReleaseSample(id);
-        mSamples[id] = std::move(candidate);
-        return true;
-    }
-    return false;
+    DecodedSound decoded;
+    if (!DecodeSound(resourceName, decoded)) return false;
+    Sample candidate;
+    candidate.pcm = std::move(decoded.samples);
+    candidate.frequency = decoded.frequency;
+    candidate.channels = decoded.channels;
+    candidate.frameBytes = decoded.channels * sizeof(float);
+    candidate.name = resourceName;
+    std::lock_guard lock(mControls);
+    candidate.volume = mSamples[id].volume;
+    candidate.pan = mSamples[id].pan;
+    ReleaseSample(id);
+    mSamples[id] = std::move(candidate);
+    return true;
 }
 int AudioUnitSoundManager::LoadSound(const std::string& name)
 {

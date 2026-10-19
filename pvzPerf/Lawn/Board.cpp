@@ -34,8 +34,6 @@
 #include "widget/WidgetManager.h"
 #include "sound/SoundInstance.h"
 
-//#define SEXY_PERF_ENABLED
-#include "misc/PerfTimer.h"
 #include "Widget/AchievementsWidget.h"
 #include <chrono>
 
@@ -2475,10 +2473,6 @@ namespace
 // 2=南瓜壳 3=飞行(咖啡豆)。sizeof(Board) 受 dat64 整块镜像硬校验不可加
 // 成员（Board.h 注），桶体放函数域 static——条目3/4 缓存先例；单 Board
 // 存活期约定下安全，Board 构造/Dispose/池 FreeAll 后必须 Clear 或 Rebuild。
-// 桶写入者 = 参照实现 GetPlantsOnLawnPoolScan 本身（2026-10-03 用户方案
-// 迭代：注册/注销统一为懒重扫该格——叠种语义按构造全等，桶头=原全池扫
-// 胜者（槽位号最大者），头被移除时重扫自动提升影子株；池即完整名册，
-// 无需溢出链。植物创建/死亡/移动触发 O(池) 重扫，事件级频率，查询纯 O(1)。
 // 槽位号链（2026-10-03 用户方案）：next[槽号] = 同格同层链的下一株槽号
 // （降序排列=原池扫可见序；0xFFFF=链尾）。桶头即链头，头死 O(1) 顶替，
 // 全事件零重扫；改版可用链遍历叠种名册。uint16 槽号 2KB。
@@ -2518,8 +2512,8 @@ bool PlantCoversTwoCols(const Plant* thePlant)
 	return aSeedType == SeedType::SEED_COBCANNON;
 }
 
-// 层归属（单一真相：参照扫描 GetPlantsOnLawnPoolScan 与桶注册共用本函数；
-// 判定序与 1073 逐字一致，入参为已解析模仿者的类型）
+// Cell layer classification for bucket registration; the seed type has
+// already been resolved for imitater plants.
 int ResolvePlantCellLayer(SeedType theSeedType, GameMode theGameMode)
 {
 	if (Plant::IsFlying(theSeedType))
@@ -2647,95 +2641,6 @@ void Board::GetPlantsOnLawn(int theGridX, int theGridY, PlantsOnLawn* thePlantOn
 		case PLANT_CELL_PUMPKIN: thePlantOnLawn->mPumpkinPlant = aPlant; break;
 		case PLANT_CELL_FLYING: thePlantOnLawn->mFlyingPlant = aPlant; break;
 		default: thePlantOnLawn->mNormalPlant = aPlant; break;
-		}
-	}
-
-	// shadow 对拍（env PVZ_CELL_BUCKET_SHADOW=1 常驻可用，零成本默认关）：
-	// 桶读结果 vs 1073 全池扫逐格比对，任何不一致立即抛错进 modern-fatal。
-	static const bool sShadowCheck = getenv("PVZ_CELL_BUCKET_SHADOW") != nullptr;
-	if (sShadowCheck)
-	{
-		PlantsOnLawn aReference;
-		GetPlantsOnLawnPoolScan(theGridX, theGridY, &aReference);
-		if (aReference.mUnderPlant != thePlantOnLawn->mUnderPlant ||
-			aReference.mPumpkinPlant != thePlantOnLawn->mPumpkinPlant ||
-			aReference.mFlyingPlant != thePlantOnLawn->mFlyingPlant ||
-			aReference.mNormalPlant != thePlantOnLawn->mNormalPlant)
-		{
-			throw std::runtime_error("cell bucket mismatch: pool-scan disagrees with bucket at "
-				+ std::to_string(theGridX) + "," + std::to_string(theGridY));
-		}
-	}
-}
-
-// 1073 原全池扫实现，逐字保留：shadow 对拍参照 + 桶维护语义的权威文档。
-void Board::GetPlantsOnLawnPoolScan(int theGridX, int theGridY, PlantsOnLawn* thePlantOnLawn)
-{
-	thePlantOnLawn->mUnderPlant = nullptr;
-	thePlantOnLawn->mPumpkinPlant = nullptr;
-	thePlantOnLawn->mFlyingPlant = nullptr;
-	thePlantOnLawn->mNormalPlant = nullptr;
-
-	if (theGridX < 0 || theGridX >= MAX_GRID_SIZE_X || theGridY < 0 || theGridY >= MAX_GRID_SIZE_Y)
-		return;
-
-	if (mApp->IsWallnutBowlingLevel() && !mCutScene->IsInShovelTutorial())
-		return;
-
-	Plant* aPlant = nullptr;
-	while (IteratePlants(aPlant))
-	{
-		SeedType aSeedType = aPlant->mSeedType;
-		if (aSeedType == SeedType::SEED_IMITATER && aPlant->mImitaterType != SeedType::SEED_NONE)
-		{
-			aSeedType = aPlant->mImitaterType;
-		}
-
-		// 检测植物是否位于目标格子内
-		if (aPlant->mRow != theGridY)
-		{
-			continue;
-		}
-		if (aSeedType == SeedType::SEED_COBCANNON)
-		{
-			if (aPlant->mPlantCol < theGridX - 1 || aPlant->mPlantCol > theGridX)
-			{
-				continue;
-			}
-		}
-		else
-		{
-			if (aPlant->mPlantCol != theGridX)
-			{
-				continue;
-			}
-		}
-		if (aPlant->NotOnGround())
-		{
-			continue;
-		}
-
-		// 将植物写入 thePlantOnLawn 的记录
-		// 1073 0040FD50 tests the resolved type, including imitater coffee.
-		// 层判定走共享分类器（与桶注册同一份逻辑——单一真相）
-		switch (ResolvePlantCellLayer(aSeedType, mApp->mGameMode))
-		{
-		case PLANT_CELL_FLYING:
-			TOD_ASSERT(!thePlantOnLawn->mFlyingPlant);
-			thePlantOnLawn->mFlyingPlant = aPlant;
-			break;
-		case PLANT_CELL_UNDER:
-			TOD_ASSERT(!thePlantOnLawn->mUnderPlant);
-			thePlantOnLawn->mUnderPlant = aPlant;
-			break;
-		case PLANT_CELL_PUMPKIN:
-			TOD_ASSERT(!thePlantOnLawn->mPumpkinPlant);
-			thePlantOnLawn->mPumpkinPlant = aPlant;
-			break;
-		default:
-			TOD_ASSERT(!thePlantOnLawn->mNormalPlant);
-			thePlantOnLawn->mNormalPlant = aPlant;
-			break;
 		}
 	}
 }
@@ -3113,46 +3018,6 @@ void Board::RebuildZombieRowBucket()
 	while (IterateZombies(aZombie))
 	{
 		RegisterZombieRowBucket(aZombie);
-	}
-}
-
-// shadow 全量对拍（env PVZ_ZOMBIE_ROW_SHADOW=1，Board::Update 每帧一次）：
-// 行段+Boss 侧数组的成员与顺序 vs 全池扫重建参照，逐行逐槽比对
-void Board::VerifyZombieRowBucketShadow()
-{
-	static uint16_t aRefRows[MAX_GRID_SIZE_Y][ZOMBIE_POOL_CAPACITY];
-	static uint16_t aRefBosses[ZOMBIE_POOL_CAPACITY];
-	uint16_t aRefRowCount[MAX_GRID_SIZE_Y] = {};
-	uint16_t aRefBossCount = 0;
-	Zombie* aZombie = nullptr;
-	while (IterateZombies(aZombie))
-	{
-		const unsigned aSlot = ZombieSlotOf(aZombie);
-		if (aSlot >= ZOMBIE_POOL_CAPACITY)
-			continue;
-		if ((ZombieFlagsOf(aZombie->mZombieType) & ZombieFlags::Boss) != 0)
-		{
-			aRefBosses[aRefBossCount++] = (uint16_t)aSlot;
-		}
-		else if ((unsigned)aZombie->mRow < MAX_GRID_SIZE_Y)
-		{
-			aRefRows[aZombie->mRow][aRefRowCount[aZombie->mRow]++] = (uint16_t)aSlot;
-		}
-	}
-	ZombieRowBucket& aBucket = TheZombieRowBucket();
-	for (int aRow = 0; aRow < MAX_GRID_SIZE_Y; aRow++)
-	{
-		if (aBucket.mRowCount[aRow] != aRefRowCount[aRow] ||
-			std::memcmp(aBucket.mRows[aRow], aRefRows[aRow], aRefRowCount[aRow] * sizeof(uint16_t)) != 0)
-		{
-			throw std::runtime_error("zombie row bucket mismatch: row " + std::to_string(aRow) +
-				" bucket=" + std::to_string(aBucket.mRowCount[aRow]) + " pool=" + std::to_string(aRefRowCount[aRow]));
-		}
-	}
-	if (aBucket.mBossCount != aRefBossCount ||
-		std::memcmp(aBucket.mBosses, aRefBosses, aRefBossCount * sizeof(uint16_t)) != 0)
-	{
-		throw std::runtime_error("zombie row bucket mismatch: boss array");
 	}
 }
 
@@ -7180,13 +7045,6 @@ void Board::Update()
 
 	Widget::Update();
 	MarkDirty();
-
-	// 行段桶 shadow 全量对拍（env PVZ_ZOMBIE_ROW_SHADOW=1 常驻可用，默认零成本）
-	static const bool sZombieRowShadow = getenv("PVZ_ZOMBIE_ROW_SHADOW") != nullptr;
-	if (sZombieRowShadow)
-	{
-		VerifyZombieRowBucketShadow();
-	}
 
 	mCutScene->Update();
 	UpdateMousePosition();

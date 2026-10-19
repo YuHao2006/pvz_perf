@@ -1,11 +1,4 @@
 #include "LawnApp.h"
-#if PVZ_ENABLE_GAME_PROBES
-#include "Lawn/NativeLinuxGameSmoke.h"
-#ifdef _WIN32
-#include "Lawn/PortableFixesSmoke.h"
-#include "Lawn/LoadingCloseSmoke.h"
-#endif
-#endif
 #include "Resources.h"
 #include "Sexy.TodLib/TodStringFile.h"
 #include "Sexy.TodLib/TodDebug.h"
@@ -15,9 +8,10 @@
 #include "SexyAppFramework/widget/WidgetManager.h"
 #include <string>
 #include <cstdio>
-#include <cstdlib>
 #include <exception>
-#ifndef _WIN32
+#ifdef _WIN32
+#include "SexyAppFramework/platform/windows/WindowApi.h"
+#else
 #include "SexyAppFramework/platform/ErrorDialog.h"
 #endif
 using namespace Sexy;
@@ -73,38 +67,11 @@ int WINAPI WinMain(_In_ HINSTANCE /* hInstance */, _In_opt_ HINSTANCE /* hPrevIn
 int main(int argc, char** argv)
 #endif
 {
-#ifdef _WIN32
-#if PVZ_ENABLE_GAME_PROBES
-    if (std::getenv("PVZ_MODERN_HIDDEN")) {
-        // Hidden tests still write SEH crash diagnostics and fail the process,
-        // but must not wait forever for a user to dismiss an error dialog.
-        SEHCatcher::mShowUI=false;
-        const UINT previousMode=SetErrorMode(SEM_NOGPFAULTERRORBOX);
-        SetErrorMode(previousMode | SEM_NOGPFAULTERRORBOX);
-    }
-#endif
-	// Take control of display scaling ourselves: stop DWM from virtualizing the
-	// window at the system scale (e.g. 150%) and present at a fixed integer
-	// factor instead. DPI_AWARENESS_CONTEXT_SYSTEM_AWARE is -2 (UNAWARE is -1).
-	typedef BOOL(WINAPI* SetProcessDpiAwarenessContextFunc)(void*);
-	typedef BOOL(WINAPI* SetProcessDPIAwareFunc)();
-	HMODULE aUser32 = GetModuleHandleA("user32.dll");
-	if (aUser32 != nullptr)
-	{
-		auto aSetDpiAwarenessContext =
-			(SetProcessDpiAwarenessContextFunc)GetProcAddress(aUser32, "SetProcessDpiAwarenessContext");
-		if (aSetDpiAwarenessContext != nullptr)
-			aSetDpiAwarenessContext((void*)-2);
-		else
-		{
-			auto aSetProcessDpiAware = (SetProcessDPIAwareFunc)GetProcAddress(aUser32, "SetProcessDPIAware");
-			if (aSetProcessDpiAware != nullptr)
-				aSetProcessDpiAware();
-		}
-	}
-#endif
-
 	try {
+#ifdef _WIN32
+    if (!NativeWindowsWindowApi::EnableSystemDpiAwareness())
+        throw std::runtime_error("Cannot establish system DPI awareness");
+#endif
 	gTodStringFormats = gLawnStringFormats;
 	gTodStringFormatCount = gLawnStringFormatCount;
 	gGetCurrentLevelName = LawnGetCurrentLevelName;
@@ -124,29 +91,13 @@ int main(int argc, char** argv)
 			equals == std::string::npos ? "" : argument.substr(equals + 1));
 	}
 	gLawnApp->mCmdLineParsed = true;
-#if PVZ_ENABLE_GAME_PROBES
-	PrepareNativeLinuxGameSmoke(*gLawnApp);
-#endif
-#elif PVZ_ENABLE_GAME_PROBES
-        PortableBeforeInitSmoke(*gLawnApp);
 #endif
         gLawnApp->Init();
-#if PVZ_ENABLE_GAME_PROBES && defined(_WIN32)
-        LoadingCloseSmoke::AfterInit(*gLawnApp);
-#endif
         gLawnApp->Start();
         gLawnApp->Shutdown();
 		gLawnApp->RethrowLoadingThreadError();
-#if PVZ_ENABLE_GAME_PROBES && defined(_WIN32)
-        LoadingCloseSmoke::AfterShutdown(*gLawnApp);
-        PortableStoreCloseAfterShutdown(*gLawnApp);
-#endif
         delete gLawnApp;
         gLawnApp = nullptr;
-#if PVZ_ENABLE_GAME_PROBES && defined(_WIN32)
-        LoadingCloseSmoke::AfterDestruction();
-        PortableStoreCloseAfterDestruction();
-#endif
         return 0;
     } catch (const ResourceManagerException& exception) {
         const auto& error=exception.error;
@@ -154,13 +105,7 @@ int main(int argc, char** argv)
 			static_cast<unsigned>(error.reason),error.slot,error.value,error.offset);
 		WriteFatalLog(message.c_str());
 #ifdef _WIN32
-#if PVZ_ENABLE_GAME_PROBES
-        if(getenv("PVZ_MODERN_HIDDEN")==nullptr) {
-#else
-        {
-#endif
-            MessageBoxA(nullptr,message.c_str(),"pvz_perf - Fatal error",MB_OK|MB_ICONERROR);
-        }
+        MessageBoxA(nullptr,message.c_str(),"pvz_perf - Fatal error",MB_OK|MB_ICONERROR);
 #else
         const auto details = message + "\n\nGame directory: " + GetCurDir();
         ShowNativeErrorDialog(details.c_str(), "pvz_perf - Fatal error");
@@ -169,10 +114,7 @@ int main(int argc, char** argv)
     } catch (const std::exception& error) {
 		WriteFatalLog(error.what());
 #ifdef _WIN32
-#if PVZ_ENABLE_GAME_PROBES
-        if(getenv("PVZ_MODERN_HIDDEN")==nullptr)
-#endif
-            MessageBoxA(nullptr,error.what(),"pvz_perf - Fatal error",MB_OK|MB_ICONERROR);
+        MessageBoxA(nullptr,error.what(),"pvz_perf - Fatal error",MB_OK|MB_ICONERROR);
 #else
         const auto details = std::string(error.what()) + "\n\nGame directory: " + GetCurDir();
         ShowNativeErrorDialog(details.c_str(), "pvz_perf - Fatal error");

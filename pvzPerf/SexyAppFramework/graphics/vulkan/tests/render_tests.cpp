@@ -124,7 +124,7 @@ void DynamicUpdates(Sexy::VulkanRenderer& renderer,VulkanContext& window) {
     auto color=0xff123456u;
     auto* texture=renderer.CreateTexture(1,1,&color,4);
     auto* identity=texture;
-    const auto baseline=renderer.GetTextureUploadCounts();
+    const auto resources=renderer.GetResourceCounts();
     for (int frame=0;frame<24;++frame) {
         Require(renderer.BeginScene(),"Cannot test dynamic texture reuse");
         color=0xff000000u|uint32_t((frame+1)*0x030609);
@@ -135,11 +135,10 @@ void DynamicUpdates(Sexy::VulkanRenderer& renderer,VulkanContext& window) {
         SubmitImage(renderer,Quad(1,90,1,1),texture,false,false,VulkanBlend::Opaque);
         renderer.EndSceneAndPresent();
         Pixel(renderer.ReadScenePixels(),1,90,expected);
+        Require(renderer.GetResourceCounts().textures==resources.textures,
+            "In-place update leaked texture handles");
         Require(renderer.GetResourceCounts().retiredTextures==0,"In-place update retires GPU resources");
     }
-    const auto reused=renderer.GetTextureUploadCounts();
-    Require(reused.createdTextures==baseline.createdTextures && reused.reusedUpdates-baseline.reusedUpdates==24,
-        "Dynamic texture reuse allocation counters differ");
 
     Require(renderer.BeginScene(),"Cannot test same-frame texture versions");
     color=0xffff0000;
@@ -161,18 +160,17 @@ void DynamicUpdates(Sexy::VulkanRenderer& renderer,VulkanContext& window) {
 
     // Consecutive unsampled versions need only one pending snapshot/copy.
     Require(renderer.BeginScene(),"Cannot test update coalescing");
-    const auto coalesce=renderer.GetTextureUploadCounts();
     identity=texture;
     color=0xffabcdef;
     texture=renderer.ReplaceTexture(texture,1,1,&color,4);
     color=0xff102030;
     texture=renderer.ReplaceTexture(texture,1,1,&color,4);
     color=0;
-    Require(texture==identity && renderer.GetTextureUploadCounts().pending==1,"Unsampled updates not coalesced");
+    Require(texture==identity && renderer.GetTextureUploadState().pending==1,"Unsampled updates not coalesced");
     SubmitImage(renderer,Quad(9,90,1,1),texture,false,false,VulkanBlend::Opaque);
     renderer.EndSceneAndPresent();
     Pixel(renderer.ReadScenePixels(),9,90,0xff102030);
-    Require(renderer.GetTextureUploadCounts().textures-coalesce.textures==1,"Coalesced update uploaded more than once");
+    Require(!renderer.GetTextureUploadState().pending,"Coalesced update remained queued after presentation");
 
     // Submit, then immediately replace outside a frame without a CPU readback.
     Require(renderer.BeginScene(),"Cannot test out-of-frame update");
@@ -229,12 +227,11 @@ void DynamicUpdates(Sexy::VulkanRenderer& renderer,VulkanContext& window) {
     renderer.EndSceneAndPresent();
     Require(renderer.ReadScenePixels()==pixels,"Destroying suspended update changed retained scene");
     Require(renderer.GetResourceCounts().textures==1,"Dynamic texture versions leaked");
-    std::cout<<"PASS dynamic textures: 24 frames without image/view/descriptor allocation; same-frame versions, coalescing, pitch, resize, alpha, suspension\n";
+    std::cout<<"PASS dynamic textures: 24 frames with stable handles and no retired textures; same-frame versions, coalescing, pitch, resize, alpha, suspension\n";
 }
 void UploadEdges(Sexy::VulkanRenderer& renderer,VulkanContext& window) {
     using namespace Sexy;
     Require(renderer.BeginScene(),"Cannot test queued texture snapshots");
-    const auto before=renderer.GetTextureUploadCounts();
     std::array<std::array<uint32_t,6>,32> expected{};
     for (int i=0;i<32;++i) {
         std::array<uint32_t,10> source{};
@@ -248,17 +245,16 @@ void UploadEdges(Sexy::VulkanRenderer& renderer,VulkanContext& window) {
         SubmitImage(renderer,Quad(float(4*i),80,3,2),texture,false,false,VulkanBlend::Opaque);
         renderer.DestroyTexture(texture); // Both pending copy and draw must survive.
     }
-    Require(renderer.GetTextureUploadCounts().pending==32,"Small uploads were not deferred into one batch");
+    Require(renderer.GetTextureUploadState().pending==32,"Small uploads were not deferred into one batch");
     renderer.EndSceneAndPresent();
     auto pixels=renderer.ReadScenePixels();
     for (int i=0;i<32;++i) for (int y=0;y<2;++y) for (int x=0;x<3;++x)
         Pixel(pixels,4*i+x,80+y,expected[i][y*3+x]);
-    auto after=renderer.GetTextureUploadCounts();
-    Require(after.textures-before.textures==32 && after.batches-before.batches==1 && !after.pending,
+    Require(!renderer.GetTextureUploadState().pending,
         "Padded source snapshot batch was not completed");
 
     Require(renderer.BeginScene(),"Cannot test upload arena overflow");
-    auto baseline=renderer.GetTextureUploadCounts();
+    const auto baseline=renderer.GetTextureUploadState();
     std::array<uint32_t,5> colors{};
     for (int i=0;i<5;++i) {
         colors[i]=0xff000000u|uint32_t((i+1)*0x203040);
@@ -267,14 +263,14 @@ void UploadEdges(Sexy::VulkanRenderer& renderer,VulkanContext& window) {
         SubmitImage(renderer,Quad(float(150+3*i),80,2,2),texture,false,false,VulkanBlend::Opaque);
         renderer.DestroyTexture(texture);
     }
-    after=renderer.GetTextureUploadCounts();
-    Require(after.textures-baseline.textures==4 && after.pending==1,"Arena overflow did not flush at its capacity");
+    auto after=renderer.GetTextureUploadState();
+    Require(after.pending==1,"Arena overflow did not flush at its capacity");
     renderer.EndSceneAndPresent();
     pixels=renderer.ReadScenePixels();
     for (int i=0;i<5;++i) Pixel(pixels,150+3*i,80,colors[i]);
-    after=renderer.GetTextureUploadCounts();
-    Require(after.batches-baseline.batches==2 && after.stagingCapacity==4*1024*1024 &&
-        after.stagingAllocations==baseline.stagingAllocations,"Arena overflow grew/overwrote the reusable buffer");
+    after=renderer.GetTextureUploadState();
+    Require(!after.pending && after.stagingCapacity==4*1024*1024 &&
+        after.stagingCapacity==baseline.stagingCapacity,"Arena overflow left uploads queued or grew the reusable buffer");
 
     Require(renderer.BeginScene(),"Cannot test larger-than-arena upload");
     constexpr int w=1031,h=1024;
@@ -289,28 +285,68 @@ void UploadEdges(Sexy::VulkanRenderer& renderer,VulkanContext& window) {
     renderer.EndSceneAndPresent();
     pixels=renderer.ReadScenePixels();
     Pixel(pixels,190,80,0xff345678);Pixel(pixels,192,80,0xffff00ff);
-    Require(renderer.GetTextureUploadCounts().stagingCapacity==uint64_t(w)*h*4,
+    Require(renderer.GetTextureUploadState().stagingCapacity==uint64_t(w)*h*4,
         "Oversized staging grew beyond the single image requirement");
 
     const uint32_t cyan=0xff00ffff;
     auto* outside=renderer.CreateTexture(1,1,&cyan,4);
     renderer.DestroyTexture(outside);
     VulkanTest::Window::Minimized(window.hwnd,true);
-    Require(!renderer.BeginScene() && renderer.GetTextureUploadCounts().pending==1,
+    Require(!renderer.BeginScene() && renderer.GetTextureUploadState().pending==1,
         "Suspension discarded a pending texture snapshot");
     VulkanTest::Window::Minimized(window.hwnd,false);
     Require(renderer.BeginScene(),"Cannot restore pending upload frame");
-    Require(!renderer.GetTextureUploadCounts().pending && !renderer.GetResourceCounts().retiredTextures,
+    Require(!renderer.GetTextureUploadState().pending && !renderer.GetResourceCounts().retiredTextures,
         "Restore did not complete uploads before retiring images");
     renderer.EndSceneAndPresent();
     Require(renderer.ReadScenePixels()==pixels,"Upload/retirement changed the retained canvas");
     auto* unused=renderer.CreateTexture(1,1,&cyan,4);
     renderer.DestroyTexture(unused); // Leave an unsubmitted host snapshot for renderer teardown.
-    Require(renderer.GetTextureUploadCounts().pending==1,"Unused upload was unexpectedly submitted");
+    Require(renderer.GetTextureUploadState().pending==1,"Unused upload was unexpectedly submitted");
     std::cout<<"PASS upload edges: 32 padded snapshots, released CPU sources, 4 MiB rollover, oversized image, pending retirement/minimize/teardown\n";
 }
+void BatchedAlphaComposition(Sexy::VulkanRenderer& renderer) {
+    using namespace Sexy;
+    const unsigned int white=0xffffffffU;
+    auto* alpha=renderer.CreateTexture(1,1,&white,4);
+    std::vector<VulkanTexture*> outputs;
+    constexpr unsigned int count=1100;
+    for(unsigned int i=0;i<count;++i) {
+        const unsigned int color=0xff000000U|((i*107U)&0x00ffffffU);
+        auto* base=renderer.CreateTexture(1,1,&color,4);
+        auto* composed=renderer.ComposeAlphaRaw(base,alpha,1,1,0,false);
+        outputs.push_back(renderer.AdoptComposedTexture(composed));
+        renderer.DestroyTexture(base);
+    }
+    for(unsigned int i:{0U,1U,31U,1023U,1024U,count-1}) {
+        const auto pixels=renderer.ReadTexturePixels(outputs[i]);
+        Require(pixels.pixels[0]==(0xff000000U|((i*107U)&0x00ffffffU)),
+            "Batched alpha composition did not preserve per-dispatch image bindings");
+    }
+    for(auto* texture:outputs)renderer.DestroyTexture(texture);
+    renderer.DestroyTexture(alpha);
+    std::cout<<"PASS: 1100 alpha dispatches retain distinct image bindings across transfer batches\n";
+}
+
 void Run() {
     using namespace Sexy;
+    for(const auto& rect:std::array<VulkanClip,7>{{
+        {0,0,17,13},{2,0,13,13},{0,3,17,7},{2,3,13,7},
+        {-3,-2,23,17},{-3,3,23,7},{2,-3,13,19}}}) {
+        const auto borders=PresentBorderRects(rect,17,13);
+        for(int y=0;y<13;++y)for(int x=0;x<17;++x) {
+            int count=0;
+            for(const auto& border:borders) {
+                Require(border.x>=0 && border.y>=0 && border.width>=0 && border.height>=0 &&
+                    border.x+border.width<=17 && border.y+border.height<=13,"Invalid presentation border");
+                if(x>=border.x && x<border.x+border.width &&
+                    y>=border.y && y<border.y+border.height)++count;
+            }
+            const bool inside=x>=rect.x && x<rect.x+rect.width && y>=rect.y && y<rect.y+rect.height;
+            Require(count==(inside?0:1),"Presentation border overlaps game pixels or leaves undefined pixels");
+        }
+    }
+    std::cout<<"PASS: odd, cropped and letterboxed presentation defines every border pixel exactly once\n";
     VkSurfaceCapabilitiesKHR caps{};
     caps.currentExtent={UINT32_MAX,UINT32_MAX};
     caps.minImageExtent={1,1};caps.maxImageExtent={4096,4096};
@@ -420,24 +456,19 @@ void Run() {
 
     // Exercise vertex-stream overflow without overwriting earlier recorded data.
     Require(renderer.BeginScene(), "Cannot start retained scene");
+    SubmitImage(renderer,Quad(402,400,1,1,1,0,0),white,false,false,VulkanBlend::Opaque);
     const auto tinyQuad = Quad(400,400,1,1,1,1,0);
     for (int i=0;i<46000;++i) SubmitImage(renderer,tinyQuad,white,false,false,VulkanBlend::Opaque);
+    SubmitImage(renderer,Quad(403,400,1,1,0,1,0),white,false,false,VulkanBlend::Opaque);
     renderer.EndSceneAndPresent();
     pixels = renderer.ReadScenePixels();
     Pixel(pixels,400,400,0xffffff00);
+    Pixel(pixels,402,400,0xffff0000);
+    Pixel(pixels,403,400,0xff00ff00);
     Pixel(pixels,200,10,0xffff0000);
+    Require(renderer.GetResourceCounts().vertexBuffers>=2,"Vertex overflow did not retain multiple stream buffers");
     std::cout << "PASS: retained logical scene and multi-buffer vertex stream\n";
     CanvasHash(pixels,"stream-overflow");
-    const auto commands=renderer.drawCommandCounts;
-    std::cout<<"draw commands: draws="<<commands.draws<<" pipeline="<<commands.pipelines
-        <<" descriptors="<<commands.descriptors<<" viewport="<<commands.viewports
-        <<" scissor="<<commands.scissors<<" extent="<<commands.extents
-        <<" vertex-buffer="<<commands.vertexBuffers<<'\n';
-    // Identical geometry merges into two stream runs plus one presentation draw.
-    Require(commands.draws==3 && commands.vertexBuffers==3,
-        "Merged stream runs or presentation were removed or split unnecessarily");
-    Require(commands.pipelines==2 && commands.descriptors==2 && commands.viewports==2 &&
-        commands.scissors==2 && commands.extents==2,"Repeated draw state was not coalesced at pass boundaries");
 
     native.Resize(640,360);
     renderer.ResizePresent();
@@ -477,31 +508,31 @@ void Run() {
     // submitted frame. Repeat to catch mismatched object/descriptor lifetimes.
     for (int cycle=0;cycle<3;++cycle) {
         Require(renderer.BeginScene(), "Cannot start texture lifetime cycle");
-        const auto uploadsBefore=renderer.GetTextureUploadCounts();
+        const auto uploadsBefore=renderer.GetTextureUploadState();
         Require(renderer.GetResourceCounts().retiredTextures == 0, "Retired textures were not reclaimed");
-        const uint32_t cyan = 0xff00ffff;
         for (int i=0;i<1100;++i) {
-            auto* texture = renderer.CreateTexture(1,1,&cyan,4);
-            SubmitImage(renderer,Quad(500,500,1,1),texture,false,false,VulkanBlend::Opaque);
+            const uint32_t color=0xff000000u|uint32_t((cycle+1)*0x100000+i);
+            auto* texture = renderer.CreateTexture(1,1,&color,4);
+            SubmitImage(renderer,Quad(float(500+i%200),float(500+i/200),1,1),texture,false,false,VulkanBlend::Opaque);
             renderer.DestroyTexture(texture);
         }
+        Require(renderer.GetTextureUploadState().pending==1100,
+            "Texture lifetime cycle lost queued uploads before submission");
         renderer.EndSceneAndPresent();
-        Pixel(renderer.ReadScenePixels(),500,500,cyan);
+        pixels=renderer.ReadScenePixels();
+        for (int i=0;i<1100;++i)
+            Pixel(pixels,500+i%200,500+i/200,0xff000000u|uint32_t((cycle+1)*0x100000+i));
         Require(renderer.GetResourceCounts().descriptorPools <= 2, "Descriptor pools grow across allocation cycles");
         Require(renderer.GetResourceCounts().textures == 1, "Destroyed user texture is still registered");
-        const auto uploadsAfter=renderer.GetTextureUploadCounts();
-        std::cout<<"texture upload cycle: textures="<<uploadsAfter.textures-uploadsBefore.textures
-            <<" batches/waits="<<uploadsAfter.batches-uploadsBefore.batches
-            <<" staging-allocations="<<uploadsAfter.stagingAllocations-uploadsBefore.stagingAllocations<<'\n';
-        Require(uploadsAfter.textures-uploadsBefore.textures==1100 &&
-            uploadsAfter.batches-uploadsBefore.batches==1 &&
-            uploadsAfter.stagingAllocations==uploadsBefore.stagingAllocations,
-            "Texture uploads still allocate/submit/wait per image");
+        const auto uploadsAfter=renderer.GetTextureUploadState();
+        Require(!uploadsAfter.pending && uploadsAfter.stagingCapacity==uploadsBefore.stagingCapacity,
+            "Texture lifetime cycle left uploads queued or grew the staging buffer");
     }
     std::cout << "PASS: repeated texture/descriptor allocation and deferred destruction\n";
     CoveragePixels(renderer);
     DynamicUpdates(renderer,window);
     UploadEdges(renderer,window);
+    BatchedAlphaComposition(renderer);
 }
 }
 

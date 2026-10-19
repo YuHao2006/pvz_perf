@@ -4,13 +4,6 @@
 #include <cstdlib>
 #include "LawnApp.h"
 #include "Sexy.TodLib/generated/ImageSymbolId.h"
-#if PVZ_ENABLE_GAME_PROBES
-#include "Lawn/ModernVulkanSmoke.h"
-#include "Lawn/NativeLinuxGameSmoke.h"
-#include "Lawn/WaveSpawnSmoke.h"
-#include "Lawn/PortableFixesSmoke.h"
-#include "Lawn/LoadingCloseSmoke.h"
-#endif
 #include "misc/StableTime.h"
 #include "Lawn/Board.h"
 #include "Lawn/Plant.h"
@@ -494,8 +487,6 @@ bool LawnApp::TryLoadGame()
 
 	if (this->FileExists(aSaveName))
 	{
-		TodTraceAndLog("TRY_LOAD_GAME file=%s mode=%d profile=%d", aSaveName.c_str(),
-			static_cast<int>(mGameMode), mPlayerInfo ? mPlayerInfo->mId : -1);
 		MakeNewBoard();
 		if (mBoard->LoadGame(aSaveName))
 		{
@@ -504,7 +495,6 @@ bool LawnApp::TryLoadGame()
 			return true;
 		}
 
-		TodTraceAndLog("TRY_LOAD_GAME_FAILED file=%s", aSaveName.c_str());
 		KillBoard();
 		// 存档在而 LoadGame 失败：以前静默回落开新局，新局过关存档会覆盖坏档，
 		// 是"无尽档丢失"事故的帮凶。现弹错并拒绝进入（退出而非开新局），
@@ -1289,10 +1279,6 @@ static void BetaSubmitFunc()
 
 //0x451880
 // GOTY @Patoke: 0x454C60
-#if PVZ_ENABLE_GAME_PROBES
-static bool gReanimSmokeRequested = false;
-#endif
-
 void LawnApp::Init()
 {
 	DoParseCmdLine();
@@ -1391,24 +1377,6 @@ void LawnApp::Init()
 	// Preload the loader-bar definitions before the loading thread starts.
 	ReanimatorEnsureDefinitionLoaded(ReanimationType::REANIM_LOADBAR_SPROUT, true);
 	ReanimatorEnsureDefinitionLoaded(ReanimationType::REANIM_LOADBAR_ZOMBIEHEAD, true);
-#if PVZ_ENABLE_GAME_PROBES
-	if (getenv("PVZ_BENCH_LOOKUP") != nullptr)
-	{
-		// 查找路径微基准（PVZ_BENCH_LOOKUP=1）：四条 reanim 轨道查找路径 ns/op 对拍，
-		// 定义装载完成后执行（函数内部补齐全量定义装载），结果打印 stdout 并写
-		// 工作目录 lookup_ab.log（与 reanim_perf.log 同级）。
-		const int aLookupErrors = ReanimLookupBenchmark();
-		exit(aLookupErrors == 0 ? 0 : 1);
-	}
-	if (gReanimSmokeRequested)
-	{
-		// 自检门：全量定义句柄查找与原版 stricmp 语义对拍，结果写日志后退出。
-		const int aErrors = ReanimatorSmokeVerify();
-		TodLog("reanimsmoke result: %d errors", aErrors);
-		exit(aErrors == 0 ? 0 : 1);
-	}
-#endif
-
 #ifdef _DEBUG
 	aDuration = mTimer.GetDuration();
 	TodTrace("loading: 'loaderbar' %d ms", aDuration);
@@ -1447,12 +1415,6 @@ void LawnApp::HandleCmdLineParam(const std::string& theParamName, const std::str
 		mDebugKeysEnabled = true;
 #endif
 	}
-#if PVZ_ENABLE_GAME_PROBES
-	else if (theParamName == "-reanimsmoke")
-	{
-		gReanimSmokeRequested = true;
-	}
-#endif
 	else
 	{
 		SexyApp::HandleCmdLineParam(theParamName, theParamValue);
@@ -1820,10 +1782,6 @@ void LawnApp::LoadingThreadProc()
 	mNumLoadingThreadTasks += 636;
 	mNumLoadingThreadTasks += GetNumPreloadingTasks();
 	mNumLoadingThreadTasks += mMusic->GetNumLoadingTasks();
-#if PVZ_ENABLE_GAME_PROBES && defined(_WIN32)
-	PortableLoadingPlanSmoke(*this);
-	LoadingCloseSmoke::Stage(*this,"BeforeImages");
-#endif
 
 	PerfTimer aTimer;
 	aTimer.Start();
@@ -1834,9 +1792,6 @@ void LawnApp::LoadingThreadProc()
 
 	LoadGroup(ResourceGroupId::LoadingImages, 9);
 	LoadGroup(ResourceGroupId::LoadingFonts, 54);
-#if PVZ_ENABLE_GAME_PROBES && defined(_WIN32)
-	LoadingCloseSmoke::Stage(*this,"AfterImages");
-#endif
 	if (mLoadingFailed || mShutdown || mCloseRequest)
 		return;
 
@@ -1844,9 +1799,6 @@ void LawnApp::LoadingThreadProc()
 	TodTrace("loading '%s' %d ms", "resources", (int)aTimer.GetDuration());
 
 	mMusic->MusicInit();
-#if PVZ_ENABLE_GAME_PROBES && defined(_WIN32)
-	LoadingCloseSmoke::Stage(*this,"AfterMusic");
-#endif
 	// aDuration goes unused
 	//int aDuration = max(aTimer.GetDuration(), 0.0);
 	aTimer.Start();
@@ -1862,9 +1814,6 @@ void LawnApp::LoadingThreadProc()
 	aTimer.Start();
 
 	TodParticleLoadDefinitions(gLawnParticleArray, LENGTH(gLawnParticleArray));
-#if PVZ_ENABLE_GAME_PROBES && defined(_WIN32)
-	LoadingCloseSmoke::Stage(*this,"AfterParticles");
-#endif
 	//aDuration = max(aTimer.GetDuration(), 0.0);
 	aTimer.Start();
 
@@ -2429,9 +2378,6 @@ bool LawnApp::UpdateApp()
 {
 	if (mCloseRequest)
 	{
-#if PVZ_ENABLE_GAME_PROBES && defined(_WIN32)
-		LoadingCloseSmoke::CloseUpdate(*this);
-#endif
 		Shutdown();
 		return false;
 	}
@@ -2459,35 +2405,6 @@ bool LawnApp::UpdateApp()
 
 	bool updated = SexyAppBase::UpdateApp();
 
-#if PVZ_ENABLE_GAME_PROBES
-	// Diagnostic driver for the custom-scale rebuild path: PVZ_AUTOTOGGLE=1
-	// flips ReconfigureScale on/off at fixed update counts so the scene
-	// probe (d3d11.log, first frames after each renderer rebuild) reveals
-	// whether rebuilding the D3D11 renderer blackens the scene.
-	if (getenv("PVZ_AUTOTOGGLE") != nullptr)
-	{
-		// Update count can jump by a lot in a single Process() (load
-		// catch-up), so use range thresholds instead of exact matches.
-		static int aToggleStage = 0;
-		if (aToggleStage == 0 && mUpdateCount >= 2000)
-		{
-			RequestScreenMode(mIsWindowed, true);
-			aToggleStage = 1;
-		}
-		else if (aToggleStage == 1 && mUpdateCount >= 2400)
-		{
-			RequestScreenMode(mIsWindowed, false);
-			aToggleStage = 2;
-		}
-	}
-
-	WaveSpawnSmokeTick(*this);
-#ifdef _WIN32
-	ModernVulkanSmokeTick(*this);
-#else
-	NativeLinuxGameSmokeTick(*this);
-#endif
-#endif
 	return updated;
 }
 

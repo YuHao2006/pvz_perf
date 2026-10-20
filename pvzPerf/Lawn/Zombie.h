@@ -1,4 +1,5 @@
 #pragma once
+#include "misc/TimeCounter.h"
 #include "GameObject.h"
 #include "GameConstants.h"
 #include "Sexy.TodLib/ReanimTrackId.h"
@@ -92,23 +93,23 @@ public:
 	float				            mPosX;                                      //+0x2C
 	float				            mPosY;                                      //+0x30
 	float				            mVelX;                                      //+0x34
-    int                             mAnimCounter;                               //+0x38
-    int                             mGroanCounter;                              //+0x3C
+    Sexy::TimeCounter                             mAnimCounter;                               //+0x38
+    Sexy::TimeCounter                             mGroanCounter;                              //+0x3C
     int                             mAnimTicksPerFrame;                         //+0x40
     int                             mAnimFrames;                                //+0x44
     int                             mFrame;                                     //+0x48
     int                             mPrevFrame;                                 //+0x4C
     bool                            mVariant;                                   //+0x50
     bool                            mIsEating;                                  //+0x51
-    int                             mJustGotShotCounter;                        //+0x54
-    int                             mShieldJustGotShotCounter;                  //+0x58
-    int                             mShieldRecoilCounter;                       //+0x5C
-    int                             mZombieAge;                                 //+0x60
+    Sexy::TimeCounter                             mJustGotShotCounter;                        //+0x54
+    Sexy::TimeCounter                             mShieldJustGotShotCounter;                  //+0x58
+    Sexy::TimeCounter                             mShieldRecoilCounter;                       //+0x5C
+    Sexy::TimeCounter                             mZombieAge;                                 //+0x60
     ZombieHeight                    mZombieHeight;                              //+0x64
-    int                             mPhaseCounter;                              //+0x68
+    Sexy::TimeCounter                             mPhaseCounter;                              //+0x68
     int                             mFromWave;                                  //+0x6C
     bool                            mDroppedLoot;                               //+0x70
-    int                             mZombieFade;                                //+0x74
+    Sexy::TimeCounter                             mZombieFade;                                //+0x74
     bool                            mFlatTires;                                 //+0x78
     int                             mUseLadderCol;                              //+0x7C
     int                             mTargetCol;                                 //+0x80
@@ -116,9 +117,9 @@ public:
     bool                            mHitUmbrella;                               //+0x88
     Rect                            mZombieRect;                                //+0x8C
     Rect                            mZombieAttackRect;                          //+0x9C
-    int                             mChilledCounter;                            //+0xAC
-    int                             mButteredCounter;                           //+0xB0
-    int                             mIceTrapCounter;                            //+0xB4
+    Sexy::TimeCounter                             mChilledCounter;                            //+0xAC
+    Sexy::TimeCounter                             mButteredCounter;                           //+0xB0
+    Sexy::TimeCounter                             mIceTrapCounter;                            //+0xB4
     bool                            mMindControlled;                            //+0xB8
     bool                            mBlowingAway;                               //+0xB9
     bool                            mHasHead;                                   //+0xBA
@@ -127,7 +128,7 @@ public:
     bool                            mInPool;                                    //+0xBD
     bool                            mOnHighGround;                              //+0xBE
     bool                            mYuckyFace;                                 //+0xBF
-    int                             mYuckyFaceCounter;                          //+0xC0
+    Sexy::TimeCounter                             mYuckyFaceCounter;                          //+0xC0
     HelmType                        mHelmType;                                  //+0xC4
     int                             mBodyHealth;                                //+0xC8
     int                             mBodyMaxHealth;                             //+0xCC
@@ -145,7 +146,7 @@ public:
     int                             mParticleOffsetX;                           //+0x108
     int                             mParticleOffsetY;                           //+0x10C
     AttachmentID                    mAttachmentID;                              //+0x110
-    int                             mSummonCounter;                             //+0x114
+    Sexy::TimeCounter                             mSummonCounter;                             //+0x114
     ReanimationID                   mBodyReanimID;                              //+0x118
     float                           mScaleZombie;                               //+0x11C
     float                           mVelZ;                                      //+0x120
@@ -153,9 +154,9 @@ public:
     PlantID                         mTargetPlantID;                             //+0x128
     int                             mBossMode;                                  //+0x12C
     int                             mTargetRow;                                 //+0x130
-    int                             mBossBungeeCounter;                         //+0x134
-    int                             mBossStompCounter;                          //+0x138
-    int                             mBossHeadCounter;                           //+0x13C
+    Sexy::TimeCounter                             mBossBungeeCounter;                         //+0x134
+    Sexy::TimeCounter                             mBossStompCounter;                          //+0x138
+    Sexy::TimeCounter                             mBossHeadCounter;                           //+0x13C
     ReanimationID                   mBossFireBallReanimID;                      //+0x140
     ReanimationID                   mSpecialHeadReanimID;                       //+0x144
     ReanimationID                   mZombatarHeadReanimID;                      //+GOTY @Patoke: 0x148

@@ -1,4 +1,5 @@
 #pragma once
+#include "misc/TimeCounter.h"
 #include "ConstEnums.h"
 #include "widget/Dialog.h"
 using namespace Sexy;
@@ -27,7 +28,7 @@ public:
     ChallengePage               mPageIndex;                                 //+0x1C8
     bool                        mCheatEnableChallenges;                     //+0x1CC
     UnlockingState              mUnlockState;                               //+0x1D0
-    int                         mUnlockStateCounter;                        //+0x1D4
+    Sexy::TimeCounter                         mUnlockStateCounter;                        //+0x1D4
     int                         mUnlockChallengeIndex;                      //+0x1D8
     float                       mLockShakeX;                                //+0x1DC
     float                       mLockShakeY;                                //+0x1E0

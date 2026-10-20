@@ -11,6 +11,7 @@
 #include "graphics/ImageDiagnostics.h"
 #include "graphics/GpuBackend.h"
 #include "misc/Ratio.h"
+#include "misc/FrameTiming.h"
 #include "effect/ScaleEffectCompiler.h"
 #include "effect/ScaleEffectSizing.h"
 #include <atomic>
@@ -210,7 +211,7 @@ public:
 	std::string				mRegKey;
 	std::string				mChangeDirTo;
 	
-	int						mRelaxUpdateBacklogCount; // app doesn't try to catch up for this many frames
+	double					mRelaxUpdateBacklogCount; // Remaining milliseconds without catch-up.
 	int						mPreferredX;
 	int						mPreferredY;
 	int						mWidth;
@@ -284,6 +285,7 @@ public:
 	
 	int						mNonDrawCount;
 	int						mFrameTime;
+	FrameTiming				mFrameTiming{};
 
 		bool					mIsDrawing;
 		bool					mRedrawInProgress;
@@ -292,7 +294,7 @@ public:
 	bool					mHasPendingDraw;
 	double					mPendingUpdatesAcc;
 	double					mUpdateFTimeAcc;
-	DWORD					mLastTimeCheck;
+	FrameDeadline::TimePoint	mLastTimeCheck{};
 	DWORD					mLastTime;
 	DWORD					mLastUserInputTick;
 

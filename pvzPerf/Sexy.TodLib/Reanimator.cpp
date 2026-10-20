@@ -722,7 +722,7 @@ void Reanimation::Update()
 
 	TOD_ASSERT(_finite(mAnimRate));
 	mLastFrameTime = mAnimTime;  // 更新上一帧的循环率
-	mAnimTime += SECONDS_PER_UPDATE * mAnimRate / mFrameCount;  // 更新当前循环率
+	mAnimTime += SECONDS_PER_UPDATE * Sexy::gUpdateTicks * mAnimRate / mFrameCount;
 
 	// 循环推进：模式按 ReanimLoopType 槽位直查（行序 = 枚举序 0..5），
 	// 正放/倒放归一为边界方向参数——原两段镜像 switch 合并为单路径。
@@ -905,7 +905,7 @@ void Reanimation::GetCurrentTransform(int theTrackIndex, ReanimatorTransform* th
 	ReanimatorTrackInstance* aTrack = &mTrackInstances[theTrackIndex];
 	if (FloatRoundToInt(theTransformCurrent->mFrame) >= 0 && aTrack->mBlendCounter > 0)  // 若当前不为空白帧且轨道处于变换混合过程中
 	{
-		float aBlendFactor = aTrack->mBlendCounter / (float)aTrack->mBlendTime;
+		float aBlendFactor = aTrack->mBlendCounter.LegacyTicks() / (float)aTrack->mBlendTime;
 		BlendTransform(theTransformCurrent, *theTransformCurrent, aTrack->mBlendTransform, aBlendFactor);  // 结合覆写变换计算混合后的实际变换
 	}
 }

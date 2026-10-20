@@ -1,4 +1,5 @@
 #pragma once
+#include "misc/TimeCounter.h"
 #include "ConstEnums.h"
 #include "Lawn/System/PlayerInfo.h"
 #include "Sexy.TodLib/DataArray.h"
@@ -30,15 +31,15 @@ public:
 	NewLawnButton*				mPrevButton;                    //+0x158
 	NewLawnButton*				mNextButton;                    //+0x15C
     Widget*                     mOverlayWidget;                 //+0x160
-	int                         mStoreTime;                     //+0x164
+	Sexy::TimeCounter                         mStoreTime;                     //+0x164
 	std::string                      mBubbleText;                    //+0x168
-    int                         mBubbleCountDown;               //+0x184
+    Sexy::TimeCounter                         mBubbleCountDown;               //+0x184
     bool                        mBubbleClickToContinue;         //+0x188
-    int                         mAmbientSpeechCountDown;        //+0x18C
+    Sexy::TimeCounter                         mAmbientSpeechCountDown;        //+0x18C
     int                         mPreviousAmbientSpeechIndex;    //+0x190
     StorePages                  mPage;                          //+0x194
     StoreItem                   mMouseOverItem;                 //+0x198
-    int                         mHatchTimer;                    //+0x19C
+    Sexy::TimeCounter                         mHatchTimer;                    //+0x19C
     bool                        mHatchOpen;                     //+0x1A0
     int                         mShakeX;                        //+0x1A4
     int                         mShakeY;                        //+0x1A8

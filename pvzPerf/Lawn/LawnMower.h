@@ -1,4 +1,5 @@
 #pragma once
+#include "misc/TimeCounter.h"
 #include "ConstEnums.h"
 #include "misc/Rect.h"
 
@@ -22,9 +23,9 @@ public:
     int                 mRow;                   //+0x14
     int                 mAnimTicksPerFrame;     //+0x18
     ReanimationID       mReanimID;              //+0x1C
-    int                 mChompCounter;          //+0x20
-    int                 mRollingInCounter;      //+0x24
-    int                 mSquishedCounter;       //+0x28
+    Sexy::TimeCounter                 mChompCounter;          //+0x20
+    Sexy::TimeCounter                 mRollingInCounter;      //+0x24
+    Sexy::TimeCounter                 mSquishedCounter;       //+0x28
     LawnMowerState      mMowerState;            //+0x2C
     bool                mDead;                  //+0x30
     bool                mVisible;               //+0x31

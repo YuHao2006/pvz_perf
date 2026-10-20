@@ -16,6 +16,7 @@
 #include "Sexy.TodLib/TodAllocator.h"
 #include "Sexy.TodLib/TodCommon.h"
 #include "Sexy.TodLib/EffectSystem.h"
+#include "TimeCounterFields.h"
 
 #include <climits>
 #include <cstddef>
@@ -111,10 +112,17 @@ struct Legacy1073Layout<Zombie>
 	static void Read(Zombie& v, const LegacyByte* p)
 	{
 		ReadGameObjectLayout(v, p, SIZE, &v.mZombieType);
+		ImportTimeCounters(v);
 	}
 	static void Write(LegacyByte* p, const Zombie& v)
 	{
 		WriteGameObjectLayout(p, SIZE, v, &v.mZombieType);
+		const auto& layout = LevelSaveFormat::GetRecordLayout(LevelSaveFormat::RecordKind::Zombie);
+		for (size_t i = 0; i < layout.mSegmentCount; ++i)
+		{
+			const auto& segment = layout.mSegments[i];
+			ExportTimeCounters(p, v, segment.mDat64Offset, segment.mLegacyOffset, segment.mSize);
+		}
 	}
 };
 
@@ -125,10 +133,17 @@ struct Legacy1073Layout<Plant>
 	static void Read(Plant& v, const LegacyByte* p)
 	{
 		ReadGameObjectLayout(v, p, SIZE, &v.mSeedType);
+		ImportTimeCounters(v);
 	}
 	static void Write(LegacyByte* p, const Plant& v)
 	{
 		WriteGameObjectLayout(p, SIZE, v, &v.mSeedType);
+		const auto& layout = LevelSaveFormat::GetRecordLayout(LevelSaveFormat::RecordKind::Plant);
+		for (size_t i = 0; i < layout.mSegmentCount; ++i)
+		{
+			const auto& segment = layout.mSegments[i];
+			ExportTimeCounters(p, v, segment.mDat64Offset, segment.mLegacyOffset, segment.mSize);
+		}
 	}
 };
 
@@ -139,10 +154,17 @@ struct Legacy1073Layout<Projectile>
 	static void Read(Projectile& v, const LegacyByte* p)
 	{
 		ReadGameObjectLayout(v, p, SIZE, &v.mFrame);
+		ImportTimeCounters(v);
 	}
 	static void Write(LegacyByte* p, const Projectile& v)
 	{
 		WriteGameObjectLayout(p, SIZE, v, &v.mFrame);
+		const auto& layout = LevelSaveFormat::GetRecordLayout(LevelSaveFormat::RecordKind::Projectile);
+		for (size_t i = 0; i < layout.mSegmentCount; ++i)
+		{
+			const auto& segment = layout.mSegments[i];
+			ExportTimeCounters(p, v, segment.mDat64Offset, segment.mLegacyOffset, segment.mSize);
+		}
 	}
 };
 
@@ -158,12 +180,19 @@ struct Legacy1073Layout<Coin>
 		// PottedPlant is 8-byte aligned in x86 but follows immediately after
 		// mUsableSeedType in the x64 class. Its own 88-byte layout is stable.
 		CopyFromLegacy(&v.mPottedPlantSpec, p, 112, 96);
+		ImportTimeCounters(v);
 	}
 	static void Write(LegacyByte* p, const Coin& v)
 	{
 		CopyToLegacy(p, 8, &v.mX, 28);
 		CopyToLegacy(p, 36, &v.mPosX, 72);
 		CopyToLegacy(p, 112, &v.mPottedPlantSpec, 96);
+		const auto& layout = LevelSaveFormat::GetRecordLayout(LevelSaveFormat::RecordKind::Coin);
+		for (size_t i = 0; i < layout.mSegmentCount; ++i)
+		{
+			const auto& segment = layout.mSegments[i];
+			ExportTimeCounters(p, v, segment.mDat64Offset, segment.mLegacyOffset, segment.mSize);
+		}
 	}
 };
 
@@ -175,10 +204,17 @@ struct Legacy1073Layout<LawnMower>
 	{
 		ClearNativeObject(v);
 		CopyFromLegacy(&v.mPosX, p, 8, SIZE - 8);
+		ImportTimeCounters(v);
 	}
 	static void Write(LegacyByte* p, const LawnMower& v)
 	{
 		CopyToLegacy(p, 8, &v.mPosX, SIZE - 8);
+		const auto& layout = LevelSaveFormat::GetRecordLayout(LevelSaveFormat::RecordKind::LawnMower);
+		for (size_t i = 0; i < layout.mSegmentCount; ++i)
+		{
+			const auto& segment = layout.mSegments[i];
+			ExportTimeCounters(p, v, segment.mDat64Offset, segment.mLegacyOffset, segment.mSize);
+		}
 	}
 };
 
@@ -190,10 +226,17 @@ struct Legacy1073Layout<GridItem>
 	{
 		ClearNativeObject(v);
 		CopyFromLegacy(&v.mGridItemType, p, 8, SIZE - 8);
+		ImportTimeCounters(v);
 	}
 	static void Write(LegacyByte* p, const GridItem& v)
 	{
 		CopyToLegacy(p, 8, &v.mGridItemType, SIZE - 8);
+		const auto& layout = LevelSaveFormat::GetRecordLayout(LevelSaveFormat::RecordKind::GridItem);
+		for (size_t i = 0; i < layout.mSegmentCount; ++i)
+		{
+			const auto& segment = layout.mSegments[i];
+			ExportTimeCounters(p, v, segment.mDat64Offset, segment.mLegacyOffset, segment.mSize);
+		}
 	}
 };
 
@@ -206,11 +249,18 @@ struct Legacy1073Layout<TodParticleSystem>
 		ClearNativeObject(v);
 		CopyFromLegacy(&v.mEffectType, p, 0, 4);
 		CopyFromLegacy(&v.mDead, p, 28, 12);
+		ImportTimeCounters(v);
 	}
 	static void Write(LegacyByte* p, const TodParticleSystem& v)
 	{
 		CopyToLegacy(p, 0, &v.mEffectType, 4);
 		CopyToLegacy(p, 28, &v.mDead, 12);
+		const auto& layout = LevelSaveFormat::GetRecordLayout(LevelSaveFormat::RecordKind::ParticleSystem);
+		for (size_t i = 0; i < layout.mSegmentCount; ++i)
+		{
+			const auto& segment = layout.mSegments[i];
+			ExportTimeCounters(p, v, segment.mDat64Offset, segment.mLegacyOffset, segment.mSize);
+		}
 	}
 };
 
@@ -223,11 +273,18 @@ struct Legacy1073Layout<TodParticleEmitter>
 		ClearNativeObject(v);
 		CopyFromLegacy(&v.mSpawnAccum, p, 24, 60);
 		CopyFromLegacy(&v.mCrossFadeEmitterID, p, 88, 84);
+		ImportTimeCounters(v);
 	}
 	static void Write(LegacyByte* p, const TodParticleEmitter& v)
 	{
 		CopyToLegacy(p, 24, &v.mSpawnAccum, 60);
 		CopyToLegacy(p, 88, &v.mCrossFadeEmitterID, 84);
+		const auto& layout = LevelSaveFormat::GetRecordLayout(LevelSaveFormat::RecordKind::ParticleEmitter);
+		for (size_t i = 0; i < layout.mSegmentCount; ++i)
+		{
+			const auto& segment = layout.mSegments[i];
+			ExportTimeCounters(p, v, segment.mDat64Offset, segment.mLegacyOffset, segment.mSize);
+		}
 	}
 };
 
@@ -242,10 +299,17 @@ struct Legacy1073Layout<TodParticle>
 		// 段外派生量补算：mParticleDurationInv 不入盘（段自 mParticleDuration 起），
 		// 读回后按原式重算，供 mParticleTimeValue 由除改乘
 		v.mParticleDurationInv = 1.0f / ((float)v.mParticleDuration - 1.0f);
+		ImportTimeCounters(v);
 	}
 	static void Write(LegacyByte* p, const TodParticle& v)
 	{
 		CopyToLegacy(p, 4, &v.mParticleDuration, SIZE - 4);
+		const auto& layout = LevelSaveFormat::GetRecordLayout(LevelSaveFormat::RecordKind::Particle);
+		for (size_t i = 0; i < layout.mSegmentCount; ++i)
+		{
+			const auto& segment = layout.mSegments[i];
+			ExportTimeCounters(p, v, segment.mDat64Offset, segment.mLegacyOffset, segment.mSize);
+		}
 	}
 };
 
@@ -260,6 +324,7 @@ struct Legacy1073Layout<Reanimation>
 		CopyFromLegacy(&v.mLoopType, p, 16, 72);
 		CopyFromLegacy(&v.mLoopCount, p, 92, 4);
 		CopyFromLegacy(&v.mIsAttachment, p, 100, 56);
+		ImportTimeCounters(v);
 	}
 	static void Write(LegacyByte* p, const Reanimation& v)
 	{
@@ -267,6 +332,12 @@ struct Legacy1073Layout<Reanimation>
 		CopyToLegacy(p, 16, &v.mLoopType, 72);
 		CopyToLegacy(p, 92, &v.mLoopCount, 4);
 		CopyToLegacy(p, 100, &v.mIsAttachment, 56);
+		const auto& layout = LevelSaveFormat::GetRecordLayout(LevelSaveFormat::RecordKind::Reanimation);
+		for (size_t i = 0; i < layout.mSegmentCount; ++i)
+		{
+			const auto& segment = layout.mSegments[i];
+			ExportTimeCounters(p, v, segment.mDat64Offset, segment.mLegacyOffset, segment.mSize);
+		}
 	}
 };
 
@@ -277,10 +348,17 @@ struct Legacy1073Layout<Attachment>
 	static void Read(Attachment& v, const LegacyByte* p)
 	{
 		std::memcpy(&v, p, SIZE);
+		ImportTimeCounters(v);
 	}
 	static void Write(LegacyByte* p, const Attachment& v)
 	{
 		std::memcpy(p, &v, SIZE);
+		const auto& layout = LevelSaveFormat::GetRecordLayout(LevelSaveFormat::RecordKind::Attachment);
+		for (size_t i = 0; i < layout.mSegmentCount; ++i)
+		{
+			const auto& segment = layout.mSegments[i];
+			ExportTimeCounters(p, v, segment.mDat64Offset, segment.mLegacyOffset, segment.mSize);
+		}
 	}
 };
 
@@ -291,10 +369,17 @@ struct Legacy1073Layout<CursorObject>
 	static void Read(CursorObject& v, const LegacyByte* p)
 	{
 		ReadGameObjectLayout(v, p, SIZE, &v.mSeedBankIndex);
+		ImportTimeCounters(v);
 	}
 	static void Write(LegacyByte* p, const CursorObject& v)
 	{
 		WriteGameObjectLayout(p, SIZE, v, &v.mSeedBankIndex);
+		const auto& layout = LevelSaveFormat::GetRecordLayout(LevelSaveFormat::RecordKind::CursorObject);
+		for (size_t i = 0; i < layout.mSegmentCount; ++i)
+		{
+			const auto& segment = layout.mSegments[i];
+			ExportTimeCounters(p, v, segment.mDat64Offset, segment.mLegacyOffset, segment.mSize);
+		}
 	}
 };
 
@@ -305,10 +390,17 @@ struct Legacy1073Layout<CursorPreview>
 	static void Read(CursorPreview& v, const LegacyByte* p)
 	{
 		ReadGameObjectLayout(v, p, SIZE, &v.mGridX);
+		ImportTimeCounters(v);
 	}
 	static void Write(LegacyByte* p, const CursorPreview& v)
 	{
 		WriteGameObjectLayout(p, SIZE, v, &v.mGridX);
+		const auto& layout = LevelSaveFormat::GetRecordLayout(LevelSaveFormat::RecordKind::CursorPreview);
+		for (size_t i = 0; i < layout.mSegmentCount; ++i)
+		{
+			const auto& segment = layout.mSegments[i];
+			ExportTimeCounters(p, v, segment.mDat64Offset, segment.mLegacyOffset, segment.mSize);
+		}
 	}
 };
 
@@ -320,10 +412,17 @@ struct Legacy1073Layout<MessageWidget>
 	{
 		ClearNativeObject(v);
 		CopyFromLegacy(&v.mLabel, p, 4, SIZE - 4);
+		ImportTimeCounters(v);
 	}
 	static void Write(LegacyByte* p, const MessageWidget& v)
 	{
 		CopyToLegacy(p, 4, &v.mLabel, SIZE - 4);
+		const auto& layout = LevelSaveFormat::GetRecordLayout(LevelSaveFormat::RecordKind::MessageWidget);
+		for (size_t i = 0; i < layout.mSegmentCount; ++i)
+		{
+			const auto& segment = layout.mSegments[i];
+			ExportTimeCounters(p, v, segment.mDat64Offset, segment.mLegacyOffset, segment.mSize);
+		}
 	}
 };
 
@@ -334,10 +433,17 @@ struct Legacy1073Layout<SeedPacket>
 	static void Read(SeedPacket& v, const LegacyByte* p)
 	{
 		ReadGameObjectLayout(v, p, SIZE, &v.mRefreshCounter);
+		ImportTimeCounters(v);
 	}
 	static void Write(LegacyByte* p, const SeedPacket& v)
 	{
 		WriteGameObjectLayout(p, SIZE, v, &v.mRefreshCounter);
+		const auto& layout = LevelSaveFormat::GetRecordLayout(LevelSaveFormat::RecordKind::SeedPacket);
+		for (size_t i = 0; i < layout.mSegmentCount; ++i)
+		{
+			const auto& segment = layout.mSegments[i];
+			ExportTimeCounters(p, v, segment.mDat64Offset, segment.mLegacyOffset, segment.mSize);
+		}
 	}
 };
 
@@ -357,6 +463,7 @@ struct Legacy1073Layout<SeedBank>
 				p + 40 + i * Legacy1073Layout<SeedPacket>::SIZE);
 		}
 		CopyFromLegacy(&v.mCutSceneDarken, p, 840, 8);
+		ImportTimeCounters(v);
 	}
 	static void Write(LegacyByte* p, const SeedBank& v)
 	{
@@ -369,6 +476,7 @@ struct Legacy1073Layout<SeedBank>
 				v.mSeedPackets[i]);
 		}
 		CopyToLegacy(p, 840, &v.mCutSceneDarken, 8);
+		ExportTimeCounters(p, v, offsetof(SeedBank, mCutSceneDarken), 840, 8);
 	}
 };
 
@@ -380,10 +488,17 @@ struct Legacy1073Layout<Challenge>
 	{
 		ClearNativeObject(v);
 		CopyFromLegacy(&v.mBeghouledMouseCapture, p, 8, SIZE - 8);
+		ImportTimeCounters(v);
 	}
 	static void Write(LegacyByte* p, const Challenge& v)
 	{
 		CopyToLegacy(p, 8, &v.mBeghouledMouseCapture, SIZE - 8);
+		const auto& layout = LevelSaveFormat::GetRecordLayout(LevelSaveFormat::RecordKind::Challenge);
+		for (size_t i = 0; i < layout.mSegmentCount; ++i)
+		{
+			const auto& segment = layout.mSegments[i];
+			ExportTimeCounters(p, v, segment.mDat64Offset, segment.mLegacyOffset, segment.mSize);
+		}
 	}
 };
 
@@ -399,10 +514,17 @@ struct Legacy1073Layout<Music>
 		ClearNativeObject(v);
 		CopyFromLegacy(&v.mCurMusicTune, p, 8, SIZE - 8);
 		v.SetMusicDisabled(aRuntimeMusicDisabled);
+		ImportTimeCounters(v);
 	}
 	static void Write(LegacyByte* p, const Music& v)
 	{
 		CopyToLegacy(p, 8, &v.mCurMusicTune, SIZE - 8);
+		const auto& layout = LevelSaveFormat::GetRecordLayout(LevelSaveFormat::RecordKind::Music);
+		for (size_t i = 0; i < layout.mSegmentCount; ++i)
+		{
+			const auto& segment = layout.mSegments[i];
+			ExportTimeCounters(p, v, segment.mDat64Offset, segment.mLegacyOffset, segment.mSize);
+		}
 	}
 };
 
@@ -416,12 +538,19 @@ struct Legacy1073Layout<ReanimatorTrackInstance>
 		CopyFromLegacy(&v.mBlendCounter, p, 0, 40);
 		CopyFromLegacy(&v.mShakeOverride, p, 52, 16);
 		CopyFromLegacy(&v.mRenderGroup, p, 72, 24);
+		ImportTimeCounters(v);
 	}
 	static void Write(LegacyByte* p, const ReanimatorTrackInstance& v)
 	{
 		CopyToLegacy(p, 0, &v.mBlendCounter, 40);
 		CopyToLegacy(p, 52, &v.mShakeOverride, 16);
 		CopyToLegacy(p, 72, &v.mRenderGroup, 24);
+		const auto& layout = LevelSaveFormat::GetRecordLayout(LevelSaveFormat::RecordKind::ReanimatorTrackInstance);
+		for (size_t i = 0; i < layout.mSegmentCount; ++i)
+		{
+			const auto& segment = layout.mSegments[i];
+			ExportTimeCounters(p, v, segment.mDat64Offset, segment.mLegacyOffset, segment.mSize);
+		}
 	}
 };
 
@@ -448,6 +577,7 @@ struct MappedDat64Layout
 				p + aSegment.mDat64Offset,
 				aSegment.mSize);
 		}
+		ImportTimeCounters(v);
 	}
 
 	static void Write(LegacyByte* p, const T& v)
@@ -459,6 +589,8 @@ struct MappedDat64Layout
 				p + aSegment.mDat64Offset,
 				ObjectBytes(v) + aSegment.mDat64Offset,
 				aSegment.mSize);
+			ExportTimeCounters(p, v, aSegment.mDat64Offset,
+				aSegment.mDat64Offset, aSegment.mSize);
 		}
 	}
 };
@@ -521,6 +653,7 @@ struct Dat64Layout<SeedBank>
 			&v.mCutSceneDarken,
 			p + LevelSaveFormat::DAT64_SEED_BANK_TAIL_OFFSET,
 			LevelSaveFormat::SEED_BANK_TAIL_SIZE);
+		ImportTimeCounters(v);
 	}
 
 	static void Write(LegacyByte* p, const SeedBank& v)
@@ -538,6 +671,8 @@ struct Dat64Layout<SeedBank>
 			p + LevelSaveFormat::DAT64_SEED_BANK_TAIL_OFFSET,
 			&v.mCutSceneDarken,
 			LevelSaveFormat::SEED_BANK_TAIL_SIZE);
+		ExportTimeCounters(p, v, offsetof(SeedBank, mCutSceneDarken),
+			LevelSaveFormat::DAT64_SEED_BANK_TAIL_OFFSET, LevelSaveFormat::SEED_BANK_TAIL_SIZE);
 	}
 };
 
@@ -928,6 +1063,8 @@ void SyncLegacy1073BoardState(
 			aLegacyBytes.data(),
 			aNativeStart,
 			LEGACY_GAME_ID_OFFSET);
+		ExportTimeCounters(aLegacyBytes.data(), theBoard, offsetof(Board, mPaused),
+			0, LEGACY_GAME_ID_OFFSET);
 		const int32_t aLegacyGameID = static_cast<int32_t>(theBoard.mGameID);
 		std::memcpy(
 			aLegacyBytes.data() + LEGACY_GAME_ID_OFFSET,
@@ -962,6 +1099,7 @@ void SyncLegacy1073BoardState(
 		&theBoard.mGravesCleared,
 		aLegacyBytes.data() + LEGACY_AFTER_GAME_ID_OFFSET,
 		LEGACY_AFTER_GAME_ID_SIZE);
+	ImportTimeCounters(theBoard);
 }
 
 void SyncDat64BoardState(
@@ -981,6 +1119,7 @@ void SyncDat64BoardState(
 	if (!theContext.mReading)
 	{
 		std::memcpy(aDat64Bytes.data(), aNativeStart, aNativeSize);
+		ExportTimeCounters(aDat64Bytes.data(), theBoard, offsetof(Board, mPaused), 0, aNativeSize);
 		// x64 aligns intptr_t mGameID to eight bytes.  The four bytes before it
 		// are schema padding, not game state, and must be deterministic so the
 		// standalone converter can reject pointer/padding contamination.
@@ -998,6 +1137,7 @@ void SyncDat64BoardState(
 	{
 		std::memset(aNativeStart, 0, aNativeSize);
 		std::memcpy(aNativeStart, aDat64Bytes.data(), aNativeSize);
+		ImportTimeCounters(theBoard);
 	}
 }
 

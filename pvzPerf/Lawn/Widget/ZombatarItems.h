@@ -1,4 +1,5 @@
 #pragma once
+#include "misc/TimeCounter.h"
 #include "ConstEnums.h"
 #include "Sexy.TodLib/ReanimTrackId.h"
 #include "Lawn/System/PlayerInfo.h"
@@ -148,7 +149,7 @@ public:
 	std::array<ZombatarItemCell, MAX_ITEM_CELLS> mItemCells;
 	Zombatar mZombatar;
 	ZombatarEditorState mState;
-	int mTransitionCounter;
+	Sexy::TimeCounter mTransitionCounter;
 	int mSelectedZombatar;
 	int mPortraitGap;
 	bool mSelectionChanged;

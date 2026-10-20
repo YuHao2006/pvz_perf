@@ -326,7 +326,7 @@ void Projectile::CheckForCollision()
 		{
 			const ProjectileDefinition& aProjectileDef = GetProjectileDef();
 			aPlant->mPlantHealth -= aProjectileDef.mDamage;
-			aPlant->mEatenFlashCountdown = std::max(aPlant->mEatenFlashCountdown, 25);
+			aPlant->mEatenFlashCountdown = std::max<Sexy::TimeCounter>(aPlant->mEatenFlashCountdown, 25);
 
 			mApp->PlayFoley(FoleyType::FOLEY_SPLAT);
 			mApp->AddTodParticle(mPosX - 3.0f, mPosY + 17.0f, mRenderOrder + 1, ParticleEffect::PARTICLE_PEA_SPLAT);
@@ -540,14 +540,14 @@ void Projectile::UpdateLobMotion()
 		mRotation = -PI / 2;
 	}
 
-	mVelZ += mAccZ;
+	mVelZ += Sexy::UpdateDelta(mAccZ);
 	if (mApp->mGameMode == GameMode::GAMEMODE_LIMBO_HIGH_GRAVITY)
 	{
-		mVelZ += mAccZ;
+		mVelZ += Sexy::UpdateDelta(mAccZ);
 	}
-	mPosX += mVelX;
-	mPosY += mVelY;
-	mPosZ += mVelZ;
+	mPosX += Sexy::UpdateDelta(mVelX);
+	mPosY += Sexy::UpdateDelta(mVelY);
+	mPosZ += Sexy::UpdateDelta(mVelZ);
 
 	bool isRising = mVelZ < 0.0f;
 	if (isRising && (mProjectileType == ProjectileType::PROJECTILE_BASKETBALL || mProjectileType == ProjectileType::PROJECTILE_COBBIG))
@@ -642,7 +642,7 @@ void Projectile::UpdateLobMotion()
 		else
 		{
 			aPlant->mPlantHealth -= GetProjectileDef().mDamage;
-			aPlant->mEatenFlashCountdown = std::max(aPlant->mEatenFlashCountdown, 25);
+			aPlant->mEatenFlashCountdown = std::max<Sexy::TimeCounter>(aPlant->mEatenFlashCountdown, 25);
 			mApp->PlayFoley(FoleyType::FOLEY_SPLAT);
 			Die();
 		}
@@ -674,7 +674,7 @@ using ProjMotionFn = void (*)(Projectile&);
 // 原 else（无 case 的 0/1/5 型与表外值共用）
 void ProjMotionDefault(Projectile& p)
 {
-	p.mPosX += 3.33f;
+	p.mPosX += Sexy::UpdateDelta(3.33f);
 }
 
 // 匿名 lambda 函数指针表，行序 = ProjectileMotion 枚举值序（0..9）。
@@ -684,41 +684,41 @@ constexpr ProjMotionFn kProjMotionCases[(int)ProjectileMotion::MOTION_HOMING + 1
     // 原 case MOTION_THREEPEATER
     [](Projectile& p)
     {
-        p.mPosX += 3.33f;
-        p.mPosY += p.mVelY;
-        p.mVelY *= 0.97f;
-        p.mShadowY += p.mVelY;
+        p.mPosX += Sexy::UpdateDelta(3.33f);
+        p.mPosY += Sexy::UpdateDelta(p.mVelY);
+        p.mVelY *= Sexy::UpdateDecay(0.97f);
+        p.mShadowY += Sexy::UpdateDelta(p.mVelY);
     },  // 2 MOTION_THREEPEATER
     // 原 case MOTION_BEE
     [](Projectile& p)
     {
         if (p.mProjectileAge < 60)
         {
-            p.mPosY -= 0.5f;
+            p.mPosY -= Sexy::UpdateDelta(0.5f);
         }
-        p.mPosX += 3.33f;
+        p.mPosX += Sexy::UpdateDelta(3.33f);
     },  // 3 MOTION_BEE
     // 原 case MOTION_BEE_BACKWARDS
     [](Projectile& p)
     {
         if (p.mProjectileAge < 60)
         {
-            p.mPosY -= 0.5f;
+            p.mPosY -= Sexy::UpdateDelta(0.5f);
         }
-        p.mPosX -= 3.33f;
+        p.mPosX -= Sexy::UpdateDelta(3.33f);
     },  // 4 MOTION_BEE_BACKWARDS
     &ProjMotionDefault,  // 5 MOTION_PUFF（原 else）
     // 原 case MOTION_BACKWARDS
     [](Projectile& p)
     {
-        p.mPosX -= 3.33f;
+        p.mPosX -= Sexy::UpdateDelta(3.33f);
     },  // 6 MOTION_BACKWARDS
     // 原 case MOTION_STAR
     [](Projectile& p)
     {
-        p.mPosY += p.mVelY;
-        p.mPosX += p.mVelX;
-        p.mShadowY += p.mVelY;
+        p.mPosY += Sexy::UpdateDelta(p.mVelY);
+        p.mPosX += Sexy::UpdateDelta(p.mVelX);
+        p.mShadowY += Sexy::UpdateDelta(p.mVelY);
 
         if (p.mVelY != 0.0f)
         {
@@ -730,12 +730,12 @@ constexpr ProjMotionFn kProjMotionCases[(int)ProjectileMotion::MOTION_HOMING + 1
     {
         if (p.mVelZ < 0.0f)
         {
-            p.mVelZ += 0.002f;
+            p.mVelZ += Sexy::UpdateDelta(0.002f);
             p.mVelZ = std::min(p.mVelZ, 0.0f);
-            p.mPosY += p.mVelZ;
+            p.mPosY += Sexy::UpdateDelta(p.mVelZ);
             p.mRotation = 0.3f - 0.7f * p.mVelZ * PI * 0.25f;
         }
-        p.mPosX += 0.4f;
+        p.mPosX += Sexy::UpdateDelta(0.4f);
     },  // 8 MOTION_FLOAT_OVER
     // 原 case MOTION_HOMING
     [](Projectile& p)
@@ -749,7 +749,7 @@ constexpr ProjMotionFn kProjMotionCases[(int)ProjectileMotion::MOTION_HOMING + 1
             SexyVector2 aToTarget = (aTargetCenter - aProjectileCenter).Normalize();
             SexyVector2 aMotion(p.mVelX, p.mVelY);
 
-            aMotion += aToTarget * (0.001f * p.mProjectileAge);
+            aMotion += aToTarget * Sexy::UpdateDelta(0.001f * p.mProjectileAge);
             aMotion = aMotion.Normalize();
             aMotion *= 2.0f;
 
@@ -758,9 +758,9 @@ constexpr ProjMotionFn kProjMotionCases[(int)ProjectileMotion::MOTION_HOMING + 1
             p.mRotation = -atan2(p.mVelY, p.mVelX);
         }
 
-        p.mPosY += p.mVelY;
-        p.mPosX += p.mVelX;
-        p.mShadowY += p.mVelY;
+        p.mPosY += Sexy::UpdateDelta(p.mVelY);
+        p.mPosX += Sexy::UpdateDelta(p.mVelX);
+        p.mShadowY += Sexy::UpdateDelta(p.mVelY);
         p.mRow = p.mBoard->PixelToGridYKeepOnBoard(p.mPosX, p.mPosY);
     },  // 9 MOTION_HOMING
 };
@@ -788,14 +788,14 @@ void Projectile::UpdateNormalMotion()
 	{
 		if (mMotionType == ProjectileMotion::MOTION_FLOAT_OVER)
 		{
-			mVelZ += 0.004f;
+			mVelZ += Sexy::UpdateDelta(0.004f);
 		}
 		else
 		{
-			mVelZ += 0.2f;
+			mVelZ += Sexy::UpdateDelta(0.2f);
 		}
 
-		mPosY += mVelZ;
+		mPosY += Sexy::UpdateDelta(mVelZ);
 	}
 
 	CheckForCollision();
@@ -807,7 +807,10 @@ void Projectile::UpdateMotion()
 {
 	if (mAnimTicksPerFrame > 0)
 	{
-		mAnimCounter = (mAnimCounter + 1) % (mNumFrames * mAnimTicksPerFrame);
+		++mAnimCounter;
+		const int aPeriod = mNumFrames * mAnimTicksPerFrame;
+		if (mAnimCounter >= aPeriod)
+			mAnimCounter -= aPeriod;
 		mFrame = mAnimCounter / mAnimTicksPerFrame;
 	}
 
@@ -1063,7 +1066,7 @@ void Projectile::Update()
 	{
 		mClickBackoffCounter--;
 	}
-	mRotation += mRotationSpeed;
+	mRotation += Sexy::UpdateDelta(mRotationSpeed);
 
 	UpdateMotion();
 	AttachmentUpdateAndMove(mAttachmentID, mPosX, mPosY + mPosZ);

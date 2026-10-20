@@ -1,4 +1,5 @@
 #pragma once
+#include "misc/TimeCounter.h"
 #include "ResourceGroupId.h"
 #include "ConstEnums.h"
 #include "SexyAppFramework/SexyApp.h"
@@ -87,11 +88,11 @@ public:
 	PlayerInfo*						mPlayerInfo;									//+0x82C
 	LevelStats*						mLastLevelStats;								//+0x830
 	std::atomic<bool>			mCloseRequest;									//+0x834 in the 32-bit reference layout
-	uint32_t						mAppCounter;									//+0x838
+	Sexy::UnsignedTimeCounter						mAppCounter;									//+0x838
 	Music*							mMusic;											//+0x83C
 	ReanimationID					mCrazyDaveReanimID;								//+0x840
 	CrazyDaveState					mCrazyDaveState;								//+0x844
-	int								mCrazyDaveBlinkCounter;							//+0x848
+	Sexy::TimeCounter								mCrazyDaveBlinkCounter;							//+0x848
 	ReanimationID					mCrazyDaveBlinkReanimID;						//+0x84C
 	int								mCrazyDaveMessageIndex;							//+0x850
 	SexyString						mCrazyDaveMessageText;							//+0x854

@@ -1085,8 +1085,7 @@ LRESULT CALLBACK SexyAppBase::WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 						case 'p':
 						case 'P':
 							aSexyApp->mPaused = !aSexyApp->mPaused;
-							aSexyApp->mLastTimeCheck = SexyGetTickCount();
-							aSexyApp->mUpdateFTimeAcc = 0.0;
+							aSexyApp->ClearUpdateBacklog();
 							break;
 
 						case 'n':

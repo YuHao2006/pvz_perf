@@ -1,4 +1,5 @@
 #pragma once
+#include "misc/TimeCounter.h"
 #include "widget/Widget.h"
 #include "widget/ButtonListener.h"
 #include <atomic>
@@ -36,14 +37,14 @@ public:
 	float					mBarStartProgress;			//+0x9C
 	bool					mRegisterClicked;			//+0xA0
 	bool					mLoadingThreadComplete;		//+0xA1
-	int						mTitleAge;					//+0xA4
+	Sexy::TimeCounter						mTitleAge;					//+0xA4
 	KeyCode					mQuickLoadKey;				//+0xA8
 	bool					mNeedShowRegisterBox;		//+0xAD
 	bool					mDrawnYet;					//+0xAE
 	bool					mNeedToInit;				//+0xAF
 	float					mPrevLoadingPercent;		//+0xB0
 	TitleState				mTitleState;				//+0xB4
-	int						mTitleStateCounter;			//+0xB8
+	Sexy::TimeCounter						mTitleStateCounter;			//+0xB8
 	int						mTitleStateDuration;		//+0xBC
 	bool					mDisplayPartnerLogo;		//+0xC0
 	std::atomic<bool>		mLoaderScreenIsLoaded;		//+0xC1 in the 32-bit reference layout

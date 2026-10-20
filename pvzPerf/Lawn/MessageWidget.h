@@ -1,4 +1,5 @@
 #pragma once
+#include "misc/TimeCounter.h"
 #include "ConstEnums.h"
 #include "SexyAppFramework/Common.h"
 #include "LawnApp.h"
@@ -18,12 +19,12 @@ class MessageWidget
 public:
 	LawnApp*			mApp;									//+0x0
 	SexyChar			mLabel[MAX_MESSAGE_LENGTH];				//+0x4
-	int					mDisplayTime;							//+0x84
-	int					mDuration;								//+0x88
+	Sexy::TimeCounter					mDisplayTime;							//+0x84
+	Sexy::TimeCounter	mDuration;								//+0x88
 	MessageStyle		mMessageStyle;							//+0x8C
 	ReanimationID		mTextReanimID[MAX_MESSAGE_LENGTH];		//+0x90
 	ReanimationType		mReanimType;							//+0x290
-	int					mSlideOffTime;							//+0x294
+	Sexy::TimeCounter					mSlideOffTime;							//+0x294
 	SexyChar			mLabelNext[MAX_MESSAGE_LENGTH];			//+0x298
 	MessageStyle		mMessageStyleNext;						//+0x318
 

@@ -1,4 +1,5 @@
 #pragma once
+#include "misc/TimeCounter.h"
 #include "ConstEnums.h"
 
 #define NUM_MOTION_TRAIL_FRAMES 12
@@ -28,7 +29,7 @@ public:
 	GridItemState			mGridItemState;									//+0xC
 	int						mGridX;											//+0x10
 	int						mGridY;											//+0x14
-	int						mGridItemCounter;								//+0x18
+	Sexy::TimeCounter						mGridItemCounter;								//+0x18
 	int						mRenderOrder;									//+0x1C
 	bool					mDead;											//+0x20
 	float					mPosX;											//+0x24
@@ -41,7 +42,7 @@ public:
 	SeedType				mSeedType;										//+0x40
 	ScaryPotType			mScaryPotType;									//+0x44
 	bool					mHighlighted;									//+0x48
-	int						mTransparentCounter;							//+0x4C
+	Sexy::TimeCounter						mTransparentCounter;							//+0x4C
 	int						mSunCount;										//+0x50
 	MotionTrailFrame		mMotionTrailFrames[NUM_MOTION_TRAIL_FRAMES];	//+0x54
 	int						mMotionTrailCount;								//+0xE4

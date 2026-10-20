@@ -1,4 +1,5 @@
 #pragma once
+#include "misc/TimeCounter.h"
 #include "ConstEnums.h"
 #include "Sexy.TodLib/DataArray.h"
 #include "widget/Widget.h"
@@ -149,19 +150,19 @@ public:
 	int								mSpecialGraveStoneX;									//+0x5C8
 	int								mSpecialGraveStoneY;									//+0x5CC
 	float							mFogOffset;												//+0x5D0
-	int								mFogBlownCountDown;										//+0x5D4
+	Sexy::TimeCounter								mFogBlownCountDown;										//+0x5D4
 	PlantRowType					mPlantRow[MAX_GRID_SIZE_Y];								//+0x5D8
 	int								mWaveRowGotLawnMowered[MAX_GRID_SIZE_Y];				//+0x5F0
 	int								mBonusLawnMowersRemaining;								//+0x608
 	int								mIceMinX[MAX_GRID_SIZE_Y];								//+0x60C
-	int								mIceTimer[MAX_GRID_SIZE_Y];								//+0x624
+	Sexy::TimeCounter								mIceTimer[MAX_GRID_SIZE_Y];								//+0x624
 	ParticleSystemID				mIceParticleID[MAX_GRID_SIZE_Y];						//+0x63C
 	TodSmoothArray					mRowPickingArray[MAX_GRID_SIZE_Y];						//+0x654
 	ZombieType						mZombiesInWave[MAX_ZOMBIE_WAVES][MAX_ZOMBIES_IN_WAVE];	//+0x6B4
 	bool							mZombieAllowed[100];									//+0x54D4
-	int								mSunCountDown;											//+0x5538
+	Sexy::TimeCounter								mSunCountDown;											//+0x5538
 	int								mNumSunsFallen;											//+0x553C
-	int								mShakeCounter;											//+0x5540
+	Sexy::TimeCounter								mShakeCounter;											//+0x5540
 	int								mShakeAmountX;											//+0x5544
 	int								mShakeAmountY;											//+0x5548
 	BackgroundType					mBackground;											//+0x554C
@@ -171,44 +172,44 @@ public:
 	int								mPrevMouseY;											//+0x555C
 	int								mSunMoney;												//+0x5560
 	int								mNumWaves;												//+0x5564
-	uint32_t						mMainCounter;											//+0x5568
-	uint32_t						mEffectCounter;											//+0x556C（存储 uint；DrawRain 按 1073 有符号取模读取，负分数钳回起点）
+	Sexy::UnsignedTimeCounter						mMainCounter;											//+0x5568
+	Sexy::UnsignedTimeCounter						mEffectCounter;											//+0x556C（存储 uint；DrawRain 按 1073 有符号取模读取，负分数钳回起点）
 	int								mDrawCount;												//+0x5570
-	int								mRiseFromGraveCounter;									//+0x5574
-	int								mOutOfMoneyCounter;										//+0x5578
+	Sexy::TimeCounter								mRiseFromGraveCounter;									//+0x5574
+	Sexy::TimeCounter								mOutOfMoneyCounter;										//+0x5578
 	int								mCurrentWave;											//+0x557C
 	int								mTotalSpawnedWaves;										//+0x5580
 	TutorialState					mTutorialState;											//+0x5584
 	ParticleSystemID				mTutorialParticleID;									//+0x5588
-	int								mTutorialTimer;											//+0x558C
+	Sexy::TimeCounter								mTutorialTimer;											//+0x558C
 	int								mLastBungeeWave;										//+0x5590
 	int								mZombieHealthToNextWave;								//+0x5594
 	int								mZombieHealthWaveStart;									//+0x5598
-	int								mZombieCountDown;										//+0x559C
+	Sexy::TimeCounter								mZombieCountDown;										//+0x559C
 	int								mZombieCountDownStart;									//+0x55A0
-	int								mHugeWaveCountDown;										//+0x55A4
+	Sexy::TimeCounter								mHugeWaveCountDown;										//+0x55A4
 	bool							mHelpDisplayed[NUM_ADVICE_TYPES];						//+0x55A8
 	AdviceType						mHelpIndex;												//+0x55EC
 	bool							mFinalBossKilled;										//+0x55F0
 	bool							mShowShovel;											//+0x55F1
-	int								mCoinBankFadeCount;										//+0x55F4
+	Sexy::TimeCounter								mCoinBankFadeCount;										//+0x55F4
 	DebugTextMode					mDebugTextMode;											//+0x55F8
 	bool							mLevelComplete;											//+0x55FC
-	int								mBoardFadeOutCounter;									//+0x5600
-	int								mNextSurvivalStageCounter;								//+0x5604
-	int								mScoreNextMowerCounter;									//+0x5608
+	Sexy::TimeCounter								mBoardFadeOutCounter;									//+0x5600
+	Sexy::TimeCounter								mNextSurvivalStageCounter;								//+0x5604
+	Sexy::TimeCounter								mScoreNextMowerCounter;									//+0x5608
 	bool							mLevelAwardSpawned;										//+0x560C
 	int								mProgressMeterWidth;									//+0x5610
-	int								mFlagRaiseCounter;										//+0x5614
-	int								mIceTrapCounter;										//+0x5618
+	Sexy::TimeCounter								mFlagRaiseCounter;										//+0x5614
+	Sexy::TimeCounter								mIceTrapCounter;										//+0x5618
 	int								mBoardRandSeed;											//+0x561C
 	ParticleSystemID				mPoolSparklyParticleID;									//+0x5620
 	ReanimationID					mFwooshID[MAX_GRID_SIZE_Y][12];							//+0x5624
-	int								mFwooshCountDown;										//+0x5744
-	int								mTimeStopCounter;										//+0x5748
+	Sexy::TimeCounter								mFwooshCountDown;										//+0x5744
+	Sexy::TimeCounter								mTimeStopCounter;										//+0x5748
 	bool							mDroppedFirstCoin;										//+0x574C
-	int								mFinalWaveSoundCounter;									//+0x5750
-	int								mCobCannonCursorDelayCounter;							//+0x5754
+	Sexy::TimeCounter								mFinalWaveSoundCounter;									//+0x5750
+	Sexy::TimeCounter								mCobCannonCursorDelayCounter;							//+0x5754
 	int								mCobCannonMouseX;										//+0x5758
 	int								mCobCannonMouseY;										//+0x575C
 	bool							mKilledYeti;											//+0x5760

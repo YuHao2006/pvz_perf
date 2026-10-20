@@ -1,4 +1,5 @@
 #pragma once
+#include "misc/TimeCounter.h"
 #include <atomic>
 #include <string>
 #include "sound/bass.h"
@@ -70,15 +71,15 @@ public:
 	int							mBaseBPM;							//+0x1C
 	int							mBaseModSpeed;						//+0x20
 	MusicBurstState				mMusicBurstState;					//+0x24
-	int							mBurstStateCounter;					//+0x28
+	Sexy::TimeCounter							mBurstStateCounter;					//+0x28
 	MusicDrumsState				mMusicDrumsState;					//+0x2C
 	int							mQueuedDrumTrackPackedOrder;		//+0x30
-	int							mDrumsStateCounter;					//+0x34
+	Sexy::TimeCounter							mDrumsStateCounter;					//+0x34
 	int							mPauseOffset;						//+0x38
 	int							mPauseOffsetDrums;					//+0x3C
 	bool						mPaused;							//+0x40
 	mutable bool				mMusicDisabled;						//+0x41
-	int							mFadeOutCounter;					//+0x44
+	Sexy::TimeCounter							mFadeOutCounter;					//+0x44
 	int							mFadeOutDuration;					//+0x48
 
 public:

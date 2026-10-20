@@ -72,9 +72,9 @@ void AchievementsWidget::Update() {
 	if (mScrollValue > mDefaultScrollValue)
 		mScrollValue = mDefaultScrollValue;
 
-	mScrollValue -= mScrollDecay;
+	mScrollValue -= mScrollDecay * Sexy::gWholeLegacyTicks;
 
-	int aNewY = mY + mScrollValue * mScrollDirection;
+	int aNewY = mY + mScrollValue * mScrollDirection * Sexy::gWholeLegacyTicks;
 	if (aNewY >= mApp->mHeight)
 		aNewY = mApp->mHeight;
 

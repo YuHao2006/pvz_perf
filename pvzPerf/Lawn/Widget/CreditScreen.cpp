@@ -1125,7 +1125,7 @@ void CreditScreen::Update()
         UpdateMovie();
         // 1073 004396F0: 0.25 logical pixels per 100 Hz update, then wrap
         // after the whole roll and a further 120 pixels have passed.
-        mCreditsScrollPosition -= 0.25f;
+        mCreditsScrollPosition -= Sexy::UpdateDelta(0.25f);
         if (mCreditsScrollPosition < -static_cast<float>(mCreditsContentHeight + 120))
             mCreditsScrollPosition = static_cast<float>(mMainMenuButton->mY - 50);
     }
@@ -1144,7 +1144,8 @@ void CreditScreen::Update()
         }
 
         int aUnsyncedDuration = aDurationSinceStart - aDurationReanimation;
-        int aUnsyncedFrames = (aUnsyncedDuration + 5) / 10;
+        const double aFrameMs = mApp->mFrameTiming.mIntervalNs / 1'000'000.0;
+        int aUnsyncedFrames = static_cast<int>((aUnsyncedDuration + aFrameMs * 0.5) / aFrameMs);
         if (aUnsyncedFrames < 0)
         {
             TodTrace("Movie playing too fast %d frames", 1 - aUnsyncedFrames);
@@ -1557,8 +1558,8 @@ void CreditScreen::UpdateMovie()
         {
             aSunFlowerReanim->SetImageOverride(ReanimTrackId::anim_idle, IMAGE_REANIM_SUNFLOWER_HEAD_WINK);
             Reanimation* aStageReanim = FindSubReanim(aCreditsReanim, ReanimationType::REANIM_CREDITS_STAGE);
-            aSunFlowerReanim->mAnimTime -= aSunFlowerReanim->mAnimRate * SECONDS_PER_UPDATE / aSunFlowerReanim->mFrameCount;
-            aStageReanim->mAnimTime -= aStageReanim->mAnimRate * SECONDS_PER_UPDATE / aStageReanim->mFrameCount;
+            aSunFlowerReanim->mAnimTime -= aSunFlowerReanim->mAnimRate * SECONDS_PER_UPDATE * Sexy::gUpdateTicks / aSunFlowerReanim->mFrameCount;
+            aStageReanim->mAnimTime -= aStageReanim->mAnimRate * SECONDS_PER_UPDATE * Sexy::gUpdateTicks / aStageReanim->mFrameCount;
         }
         else
         {

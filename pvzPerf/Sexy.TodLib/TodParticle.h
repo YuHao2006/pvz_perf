@@ -1,4 +1,5 @@
 #pragma once
+#include "misc/TimeCounter.h"
 
 #include "generated/ParticleEmitterName.h"
 #include <cstddef>
@@ -344,7 +345,7 @@ class TodParticle
 public:
 	TodParticleEmitter*				mParticleEmitter;
 	int								mParticleDuration;
-	int								mParticleAge;
+	Sexy::TimeCounter								mParticleAge;
 	float							mParticleTimeValue;
 	float							mParticleLastTimeValue;
 	float							mAnimationTimeValue;
@@ -380,7 +381,7 @@ public:
 	float							mSpawnAccum;													//+0x18
 	Sexy::SexyVector2				mSystemCenter;													//+0x1C
 	int								mParticlesSpawned;												//+0x24
-	int								mSystemAge;														//+0x28
+	Sexy::TimeCounter								mSystemAge;														//+0x28
 	int								mSystemDuration;												//+0x2C
 	float							mSystemTimeValue;												//+0x30
 	float							mSystemLastTimeValue;											//+0x34
@@ -390,7 +391,7 @@ public:
 	float							mScaleOverride;													//+0x50
 	Sexy::Image*					mImageOverride;													//+0x54
 	ParticleEmitterID				mCrossFadeEmitterID;											//+0x58
-	int								mEmitterCrossFadeCountDown;										//+0x5C
+	Sexy::TimeCounter								mEmitterCrossFadeCountDown;										//+0x5C
 	int								mFrameOverride;													//+0x60
 	float							mTrackInterp[ParticleSystemTracks::NUM_SYSTEM_TRACKS];			//+0x64
 	float							mSystemFieldInterp[MAX_PARTICLE_FIELDS][2];						//+0x8C

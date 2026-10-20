@@ -1,4 +1,5 @@
 #pragma once
+#include "misc/TimeCounter.h"
 #include <cstdint>
 
 #include "ConstEnums.h"
@@ -19,7 +20,7 @@ public:
 	// Legacy smoke-test inspection field; GPU-only production keeps it null.
 	Sexy::MemoryImage*	mCausticImage = nullptr;
 	LawnApp*			mApp = nullptr;
-	uint32_t			mPoolCounter = 0;
+	Sexy::UnsignedTimeCounter	mPoolCounter = 0;
 	// Installation state only; unavailable GPU compute is an error.
 	bool				mCausticGPU = false;
 

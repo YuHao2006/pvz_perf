@@ -1,4 +1,5 @@
 #pragma once
+#include "misc/TimeCounter.h"
 
 #include <string>
 #include "GameObject.h"
@@ -136,7 +137,7 @@ class Plant : public GameObject
 public:
     SeedType                mSeedType;                      //+0x24
     int                     mPlantCol;                      //+0x28
-    int                     mAnimCounter;                   //+0x2C
+    Sexy::TimeCounter                     mAnimCounter;                   //+0x2C
     int                     mFrame;                         //+0x30
     int                     mFrameLength;                   //+0x34
     int                     mNumFrames;                     //+0x38
@@ -144,10 +145,10 @@ public:
     int                     mPlantHealth;                   //+0x40
     int                     mPlantMaxHealth;                //+0x44
     int                     mSubclass;                      //+0x48
-    int                     mDisappearCountdown;            //+0x4C
-    int                     mDoSpecialCountdown;            //+0x50
-    int                     mStateCountdown;                //+0x54
-    int                     mLaunchCounter;                 //+0x58
+    Sexy::TimeCounter                     mDisappearCountdown;            //+0x4C
+    Sexy::TimeCounter                     mDoSpecialCountdown;            //+0x50
+    Sexy::TimeCounter                     mStateCountdown;                //+0x54
+    Sexy::TimeCounter                     mLaunchCounter;                 //+0x58
     int                     mLaunchRate;                    //+0x5C
     Rect                    mPlantRect;                     //+0x60
     Rect                    mPlantAttackRect;               //+0x70
@@ -155,7 +156,7 @@ public:
     int                     mTargetY;                       //+0x84
     int                     mStartRow;                      //+0x88
     ParticleSystemID        mParticleID;                    //+0x8C
-    int                     mShootingCounter;               //+0x90
+    Sexy::TimeCounter                     mShootingCounter;               //+0x90
     ReanimationID           mBodyReanimID;                  //+0x94
     ReanimationID           mHeadReanimID;                  //+0x98
     ReanimationID           mHeadReanimID2;                 //+0x9C
@@ -163,15 +164,15 @@ public:
     ReanimationID           mBlinkReanimID;                 //+0xA4
     ReanimationID           mLightReanimID;                 //+0xA8
     ReanimationID           mSleepingReanimID;              //+0xAC
-    int                     mBlinkCountdown;                //+0xB0
-    int                     mRecentlyEatenCountdown;        //+0xB4
-    int                     mEatenFlashCountdown;           //+0xB8
-    int                     mBeghouledFlashCountdown;       //+0xBC
+    Sexy::TimeCounter                     mBlinkCountdown;                //+0xB0
+    Sexy::TimeCounter                     mRecentlyEatenCountdown;        //+0xB4
+    Sexy::TimeCounter                     mEatenFlashCountdown;           //+0xB8
+    Sexy::TimeCounter                     mBeghouledFlashCountdown;       //+0xBC
     float                   mShakeOffsetX;                  //+0xC0
     float                   mShakeOffsetY;                  //+0xC4
     MagnetItem              mMagnetItems[MAX_MAGNET_ITEMS]; //+0xC8
     ZombieID                mTargetZombieID;                //+0x12C
-    int                     mWakeUpCounter;                 //+0x130
+    Sexy::TimeCounter                     mWakeUpCounter;                 //+0x130
     PlantOnBungeeState      mOnBungeeState;                 //+0x134
     SeedType                mImitaterType;                  //+0x138
     int                     mPottedPlantIndex;              //+0x13C

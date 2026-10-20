@@ -1255,7 +1255,7 @@ void Plant::UpdateProductionPlant()
     if (mLaunchCounter <= 100)
     {
         int aFlashCountdown = TodAnimateCurve(100, 0, mLaunchCounter, 0, 100, Curves::Linear);
-        mEatenFlashCountdown = std::max(mEatenFlashCountdown, aFlashCountdown);
+        mEatenFlashCountdown = std::max<Sexy::TimeCounter>(mEatenFlashCountdown, aFlashCountdown);
     }
     if (mLaunchCounter <= 0)
     {
@@ -2537,8 +2537,8 @@ void Plant::UpdateMagnetShroom()
             SexyVector2 aVectorToPlant(mX + aMagnetItem->mDestOffsetX - aMagnetItem->mPosX, mY + aMagnetItem->mDestOffsetY - aMagnetItem->mPosY);
             if (aVectorToPlant.Magnitude() > 20.0f)
             {
-                aMagnetItem->mPosX += aVectorToPlant.x * 0.05f;
-                aMagnetItem->mPosY += aVectorToPlant.y * 0.05f;
+                aMagnetItem->mPosX += Sexy::UpdateDelta(aVectorToPlant.x * 0.05f);
+                aMagnetItem->mPosY += Sexy::UpdateDelta(aVectorToPlant.y * 0.05f);
             }
         }
     }
@@ -2797,8 +2797,8 @@ void Plant::UpdateGoldMagnetShroom()
             else
             {
                 float aSpeed = TodAnimateCurveFloatTime(30.0f, 0.0f, aDistance, 0.02f, 0.05f, Curves::Linear);
-                aMagnetItem->mPosX += aVectorToPlant.x * aSpeed;
-                aMagnetItem->mPosY += aVectorToPlant.y * aSpeed;
+                aMagnetItem->mPosX += Sexy::UpdateDelta(aVectorToPlant.x * aSpeed);
+                aMagnetItem->mPosY += Sexy::UpdateDelta(aVectorToPlant.y * aSpeed);
 
                 aIsSuckingCoin = true;
             }
@@ -2827,7 +2827,7 @@ void Plant::UpdateGoldMagnetShroom()
             mStateCountdown = RandRangeInt(200, 300);
         }
     }
-    else if (!IsAGoldMagnetAboutToSuck() && Sexy::Rand(50) == 0 && FindGoldMagnetTarget())
+    else if (!IsAGoldMagnetAboutToSuck() && Sexy::UpdateChance(50) && FindGoldMagnetTarget())
     {
         mBoard->mCoinBankFadeCount = 1000;
         mState = PlantState::STATE_MAGNETSHROOM_SUCKING;

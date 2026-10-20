@@ -1,4 +1,5 @@
 #pragma once
+#include "misc/TimeCounter.h"
 #include "ConstEnums.h"
 #include "widget/Widget.h"
 #include "misc/PerfTimer.h"
@@ -63,10 +64,10 @@ public:
 	GameButton*				mCloseButton;				//+0x8C
 	LawnApp*				mApp;						//+0x90
 	CreditsPhase			mCreditsPhase;				//+0x94
-	int						mCreditsPhaseCounter;		//+0x98
+	Sexy::TimeCounter						mCreditsPhaseCounter;		//+0x98
 	ReanimationID			mCreditsReanimID;			//+0x9C
 	ParticleSystemID		mFogParticleID;				//+0xA0
-	int						mBlinkCountdown;			//+0xA4
+	Sexy::TimeCounter						mBlinkCountdown;			//+0xA4
 	LawnStoneButton*		mMainMenuButton;			//+0xA8
 	NewLawnButton*			mReplayButton;				//+0xAC
 	Widget*					mOverlayWidget;				//+0xB0

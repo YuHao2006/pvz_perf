@@ -1,4 +1,5 @@
 #pragma once
+#include "misc/TimeCounter.h"
 #include "ConstEnums.h"
 #include "GameObject.h"
 
@@ -23,7 +24,7 @@ class Projectile : public GameObject
 public:
     int                     mFrame;                 //+0x24
     int                     mNumFrames;             //+0x28
-    int                     mAnimCounter;           //+0x2C
+    Sexy::TimeCounter                     mAnimCounter;           //+0x2C
     float                   mPosX;                  //+0x30
     float                   mPosY;                  //+0x34
     float                   mPosZ;                  //+0x38
@@ -36,8 +37,8 @@ public:
     int                     mAnimTicksPerFrame;     //+0x54
     ProjectileMotion        mMotionType;            //+0x58
     ProjectileType          mProjectileType;        //+0x5C
-    int                     mProjectileAge;         //+0x60
-    int                     mClickBackoffCounter;   //+0x64
+    Sexy::TimeCounter                     mProjectileAge;         //+0x60
+    Sexy::TimeCounter                     mClickBackoffCounter;   //+0x64
     float                   mRotation;              //+0x68
     float                   mRotationSpeed;         //+0x6C
     bool                    mOnHighGround;          //+0x70

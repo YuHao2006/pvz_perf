@@ -6991,7 +6991,7 @@ void Board::UpdateGame()
 		}
 		else if (mFogOffset < aMaxFogOffset)
 		{
-			mFogOffset = TodAnimateCurveFloat(-5, aMaxFogOffset, mFogOffset * 1.1f, 0, aMaxFogOffset, Curves::Linear);
+			mFogOffset = TodAnimateCurveFloat(-5, aMaxFogOffset, mFogOffset * Sexy::UpdateDecay(1.1f), 0, aMaxFogOffset, Curves::Linear);
 		}
 	}
 
@@ -7099,7 +7099,7 @@ void Board::Update()
 		}
 		else
 		{
-			if (!Rand(3))
+			if (Sexy::UpdateChance(3))
 			{
 				mShakeAmountX = -mShakeAmountX;
 			}
@@ -8322,17 +8322,17 @@ constexpr MusicStateLabelFn kMusicBurstStateLabels[(int)MusicBurstState::MUSIC_B
     // 原 MUSIC_BURST_STARTING 支
     [](Music& aMusic, SexyString& aText)
     {
-	    		aText += StrFormat(("Starting %d/%d"), aMusic.mBurstStateCounter, 400);
+				aText += StrFormat(("Starting %d/%d"), static_cast<int>(aMusic.mBurstStateCounter), 400);
     },  // 1 MUSIC_BURST_STARTING
     // 原 MUSIC_BURST_ON 支
     [](Music& aMusic, SexyString& aText)
     {
-	    		aText += StrFormat(("On at least until %d/%d"), aMusic.mBurstStateCounter, 800);
+				aText += StrFormat(("On at least until %d/%d"), static_cast<int>(aMusic.mBurstStateCounter), 800);
     },  // 2 MUSIC_BURST_ON
     // 原 MUSIC_BURST_FINISHING 支
     [](Music& aMusic, SexyString& aText)
     {
-	    		aText += StrFormat(("Finishing %d/%d"), aMusic.mBurstStateCounter, 400);
+				aText += StrFormat(("Finishing %d/%d"), static_cast<int>(aMusic.mBurstStateCounter), 400);
     },  // 3 MUSIC_BURST_FINISHING
 };
 static_assert(sizeof(kMusicBurstStateLabels) / sizeof(kMusicBurstStateLabels[0]) ==
@@ -8364,7 +8364,7 @@ constexpr MusicStateLabelFn kMusicDrumsStateLabels[(int)MusicDrumsState::MUSIC_D
     // 原 MUSIC_DRUMS_FADING 支
     [](Music& aMusic, SexyString& aText)
     {
-	    		aText += StrFormat((", Drums fading off %d/%d"), aMusic.mDrumsStateCounter, 50);
+				aText += StrFormat((", Drums fading off %d/%d"), static_cast<int>(aMusic.mDrumsStateCounter), 50);
     },  // 4 MUSIC_DRUMS_FADING
 };
 static_assert(sizeof(kMusicDrumsStateLabels) / sizeof(kMusicDrumsStateLabels[0]) ==
@@ -8414,10 +8414,10 @@ constexpr DebugTextCaseFn kDebugTextCases[(int)DebugTextMode::DEBUG_TEXT_COLLISI
     		Zombie* aBossZombie = aBoard.GetBossZombie();
     		if (aBossZombie)
     		{
-    			aText += StrFormat(("\nSpawn: %d\n"), aBossZombie->mSummonCounter);
-    			aText += StrFormat(("Stomp: %d\n"), aBossZombie->mBossStompCounter);
-    			aText += StrFormat(("Bungee: %d\n"), aBossZombie->mBossBungeeCounter);
-    			aText += StrFormat(("Head: %d\n"), aBossZombie->mBossHeadCounter);
+				aText += StrFormat(("\nSpawn: %d\n"), static_cast<int>(aBossZombie->mSummonCounter));
+				aText += StrFormat(("Stomp: %d\n"), static_cast<int>(aBossZombie->mBossStompCounter));
+				aText += StrFormat(("Bungee: %d\n"), static_cast<int>(aBossZombie->mBossBungeeCounter));
+				aText += StrFormat(("Head: %d\n"), static_cast<int>(aBossZombie->mBossHeadCounter));
     			aText += StrFormat(("Health: %d of %d\n"), aBossZombie->mBodyHealth, aBossZombie->mBodyMaxHealth);
     		}
     },  // 1 DEBUG_TEXT_ZOMBIE_SPAWN

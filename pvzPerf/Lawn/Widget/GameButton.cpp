@@ -242,7 +242,7 @@ void GameButton::Update()
 			mOverAlpha = 0;
 			return;
 		}
-		mOverAlpha -= mOverAlphaSpeed;
+		mOverAlpha -= Sexy::UpdateDelta(mOverAlphaSpeed);
 		if (mOverAlpha < 0)
 			mOverAlpha = 0;
 	}
@@ -250,7 +250,7 @@ void GameButton::Update()
 	{
 		if (mOverAlphaFadeInSpeed > 0)
 		{
-			mOverAlpha += mOverAlphaFadeInSpeed;
+			mOverAlpha += Sexy::UpdateDelta(mOverAlphaFadeInSpeed);
 			if (mOverAlpha > 1)
 				mOverAlpha = 1;
 		}

@@ -1,4 +1,5 @@
 #pragma once
+#include "misc/TimeCounter.h"
 #include "GameObject.h"
 #include "System/PlayerInfo.h"
 
@@ -18,13 +19,13 @@ public:
     float                   mVelY;                  //+0x30
     float                   mScale;                 //+0x34
     bool                    mDead;                  //+0x38
-    int                     mFadeCount;             //+0x3C
+    Sexy::TimeCounter                     mFadeCount;             //+0x3C
     float                   mCollectX;              //+0x40
     float                   mCollectY;              //+0x44
     int                     mGroundY;               //+0x48
-    int                     mCoinAge;               //+0x4C
+    Sexy::TimeCounter                     mCoinAge;               //+0x4C
     bool                    mIsBeingCollected;      //+0x50
-    int                     mDisappearCounter;      //+0x54
+    Sexy::TimeCounter                     mDisappearCounter;      //+0x54
     CoinType                mType;                  //+0x58
     CoinMotion              mCoinMotion;            //+0x5C
     AttachmentID            mAttachmentID;          //+0x60

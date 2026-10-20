@@ -47,8 +47,8 @@ public:
 	int						mMouseDownY;
 
 	int						mUpdateMode;
-	int						mUpdateAcc;
-	int						mButtonAcc;
+	TimeCounter				mUpdateAcc;
+	TimeCounter				mButtonAcc;
 	int						mLastMouseX;
 	int						mLastMouseY;
 	ScrollListener*			mScrollListener;

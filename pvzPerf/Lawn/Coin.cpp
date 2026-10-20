@@ -445,10 +445,10 @@ void Coin::UpdateFall()
 {
     if (mCoinMotion == CoinMotion::COIN_MOTION_FROM_PRESENT)
     {
-        mPosX += mVelX;
-        mPosY += mVelY;
-        mVelX *= 0.95f;
-        mVelY *= 0.95f;
+        mPosX += Sexy::UpdateDelta(mVelX);
+        mPosY += Sexy::UpdateDelta(mVelY);
+        mVelX *= Sexy::UpdateDecay(0.95f);
+        mVelY *= Sexy::UpdateDecay(0.95f);
         if (mCoinAge >= 80)
         {
             Collect();
@@ -456,17 +456,17 @@ void Coin::UpdateFall()
     }
     else if (mPosY + mVelY < mGroundY)
     {
-        mPosY += mVelY;
+        mPosY += Sexy::UpdateDelta(mVelY);
         if (mCoinMotion == CoinMotion::COIN_MOTION_FROM_PLANT)
         {
-            mVelY += 0.09f;
+            mVelY += Sexy::UpdateDelta(0.09f);
         }
         else if (mCoinMotion == CoinMotion::COIN_MOTION_COIN || mCoinMotion == CoinMotion::COIN_MOTION_FROM_BOSS)
         {
-            mVelY += 0.15f;
+            mVelY += Sexy::UpdateDelta(0.15f);
         }
 
-        mPosX += mVelX;
+        mPosX += Sexy::UpdateDelta(mVelX);
         if (mPosX > BOARD_WIDTH - mWidth && mCoinMotion != CoinMotion::COIN_MOTION_FROM_BOSS)
         {
             mPosX = BOARD_WIDTH - mWidth;
@@ -576,7 +576,7 @@ void Coin::UpdateFall()
         float aFinalScale = GetSunScale();
         if (mScale < aFinalScale)
         {
-            mScale += 0.02f;
+            mScale += Sexy::UpdateDelta(0.02f);
         }
         else
         {
@@ -653,19 +653,19 @@ void Coin::UpdateCollected()
     float aDeltaY = abs(mPosY - aDestY);
     if (mPosX > aDestX)
     {
-        mPosX -= aDeltaX / 21.0f;
+        mPosX -= Sexy::UpdateDelta(aDeltaX / 21.0f);
     }
     else if (mPosX < aDestX)
     {
-        mPosX += aDeltaX / 21.0f;
+        mPosX += Sexy::UpdateDelta(aDeltaX / 21.0f);
     }
     if (mPosY > aDestY)
     {
-        mPosY -= aDeltaY / 21.0f;
+        mPosY -= Sexy::UpdateDelta(aDeltaY / 21.0f);
     }
     else if (mPosY < aDestY)
     {
-        mPosY += aDeltaY / 21.0f;
+        mPosY += Sexy::UpdateDelta(aDeltaY / 21.0f);
     }
 
     mCollectionDistance = sqrt(aDeltaY * aDeltaY + aDeltaX * aDeltaX);
@@ -1330,7 +1330,7 @@ void Coin::DroppedUsableSeed()
 
     if (mTimesDropped == 0)
     {
-        mDisappearCounter = std::min(mDisappearCounter, 1200);
+        mDisappearCounter = std::min<Sexy::TimeCounter>(mDisappearCounter, 1200);
     }
 
     mTimesDropped++;

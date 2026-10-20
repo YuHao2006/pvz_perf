@@ -264,7 +264,7 @@ void ButtonWidget::Update()
 	{
 		if (mOverAlphaSpeed>0)
 		{
-			mOverAlpha -= mOverAlphaSpeed;
+			mOverAlpha -= Sexy::UpdateDelta(mOverAlphaSpeed);
 			if (mOverAlpha < 0)
 				mOverAlpha = 0;
 		}
@@ -275,7 +275,7 @@ void ButtonWidget::Update()
 	}
 	else if (mIsOver && mOverAlphaFadeInSpeed>0 && mOverAlpha<1)
 	{
-		mOverAlpha += mOverAlphaFadeInSpeed;
+		mOverAlpha += Sexy::UpdateDelta(mOverAlphaFadeInSpeed);
 		if (mOverAlpha > 1)
 			mOverAlpha = 1;
 		MarkDirty();

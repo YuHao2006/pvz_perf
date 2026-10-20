@@ -1483,7 +1483,7 @@ void Zombie::UpdateZombieBungee()
     static constexpr BungeePhaseFn kBungeeDiving = [](Zombie& z)
     {
         float aOldAltitude = z.mAltitude;
-        z.mAltitude -= 8.0f;
+        z.mAltitude -= Sexy::UpdateDelta(8.0f);
         if (z.mAltitude <= BUNGEE_ZOMBIE_HEIGHT - 404.0f && aOldAltitude > BUNGEE_ZOMBIE_HEIGHT - 404.0f && z.mRelatedZombieID == ZombieID::ZOMBIEID_NULL)
         {
             z.mApp->PlayFoley(FoleyType::FOLEY_GRASSSTEP);  // 靶子扎地的音效
@@ -1516,7 +1516,7 @@ void Zombie::UpdateZombieBungee()
         // 原 else-if PHASE_BUNGEE_RISING
         [](Zombie& z)
         {
-            z.mAltitude += 8.0f;
+            z.mAltitude += Sexy::UpdateDelta(8.0f);
             if (z.mAltitude >= 600.0f)
             {
                 z.DieNoLoot();
@@ -1832,7 +1832,7 @@ void Zombie::UpdateZombieFlyer()
 {
     if (mApp->mGameMode == GameMode::GAMEMODE_LIMBO_HIGH_GRAVITY && mPosX < 720.0f)
     {
-        mAltitude -= 0.1f;
+        mAltitude -= Sexy::UpdateDelta(0.1f);
         if (mAltitude < -35.0f)
         {
             LandFlyer(0U);
@@ -2544,9 +2544,9 @@ void Zombie::UpdateZombieImp()
 {
     if (mZombiePhase == ZombiePhase::PHASE_IMP_GETTING_THROWN)
     {
-        mVelZ -= THOWN_ZOMBIE_GRAVITY;
-        mAltitude += mVelZ;
-        mPosX -= mVelX;
+        mVelZ -= Sexy::UpdateDelta(THOWN_ZOMBIE_GRAVITY);
+        mAltitude += Sexy::UpdateDelta(mVelZ);
+        mPosX -= Sexy::UpdateDelta(mVelX);
 
         float aDiffY = GetPosYBasedOnRow(mRow) - mPosY;
         mPosY += aDiffY;
@@ -2979,10 +2979,10 @@ void Zombie::UpdateZombieBobsled()
         }
     }
 
-    mBoard->mIceTimer[mRow] = std::max(500, mBoard->mIceTimer[mRow]);
-    if (mPosX + 10.0f < mBoard->mIceMinX[mRow] && GetBobsledPosition() == 0)
+    mBoard->mIceTimer[mRow] = std::max<Sexy::TimeCounter>(500, mBoard->mIceTimer[mRow]);
+    if (mPosX + 10.0f < mBoard->mIceMinX[mRow] && GetBobsledPosition() == 0 && Sexy::gWholeLegacyTicks > 0)
     {
-        TakeDamage(6, 8U);
+        TakeDamage(6 * Sexy::gWholeLegacyTicks, 8U);
     }
 }
 
@@ -3563,7 +3563,7 @@ void Zombie::UpdateZombiquarium()
     if (aIsOutOfBounds)
     {
         aMaxSpeed = mVelX * 0.3f;
-        mPhaseCounter = std::min(100, mPhaseCounter);
+        mPhaseCounter = std::min<Sexy::TimeCounter>(100, mPhaseCounter);
     }
     else if (mZombiePhase == ZombiePhase::PHASE_ZOMBIQUARIUM_ACCEL)
     {
@@ -3588,11 +3588,11 @@ void Zombie::UpdateZombiquarium()
         aMaxSpeed = 0.05f;
     }
 
-    mVelX = std::min(aMaxSpeed, mVelX + 0.01f);
+    mVelX = std::min(aMaxSpeed, mVelX + Sexy::UpdateDelta(0.01f));
     aVelX *= mVelX;
     aVelY *= mVelX;
-    mPosX += aVelX;
-    mPosY += aVelY;
+    mPosX += Sexy::UpdateDelta(aVelX);
+    mPosY += Sexy::UpdateDelta(aVelY);
 
     if (!mBoard->HasLevelAwardDropped())
     {
@@ -3623,10 +3623,10 @@ void Zombie::UpdateZombiePool()
 {
     if (mZombieHeight == ZombieHeight::HEIGHT_OUT_OF_POOL)
     {
-        mAltitude++;
+        mAltitude += Sexy::UpdateDelta(1.0f);
         if (mZombieType == ZombieType::ZOMBIE_SNORKEL)
         {
-            mAltitude++;
+            mAltitude += Sexy::UpdateDelta(1.0f);
         }
 
         if (mAltitude >= 0.0f)
@@ -3638,7 +3638,7 @@ void Zombie::UpdateZombiePool()
     }
     else if (mZombieHeight == ZombieHeight::HEIGHT_IN_TO_POOL)
     {
-        mAltitude--;
+        mAltitude -= Sexy::UpdateDelta(1.0f);
         int aDepth = -40 * mScaleZombie;
         if (mAltitude <= aDepth)
         {
@@ -3649,7 +3649,7 @@ void Zombie::UpdateZombiePool()
     }
     else if (mZombieHeight == ZombieHeight::HEIGHT_DRAGGED_UNDER)
     {
-        mAltitude--;
+        mAltitude -= Sexy::UpdateDelta(1.0f);
     }
 }
 
@@ -3661,7 +3661,7 @@ void Zombie::UpdateZombieHighGround()
 
     if (mZombieHeight == ZombieHeight::HEIGHT_UP_TO_HIGH_GROUND)
     {
-        mAltitude++;
+        mAltitude += Sexy::UpdateDelta(1.0f);
         if (mAltitude >= HIGH_GROUND_HEIGHT)
         {
             mAltitude = HIGH_GROUND_HEIGHT;
@@ -3670,7 +3670,7 @@ void Zombie::UpdateZombieHighGround()
     }
     else if (mZombieHeight == ZombieHeight::HEIGHT_DOWN_OFF_HIGH_GROUND)
     {
-        mAltitude--;
+        mAltitude -= Sexy::UpdateDelta(1.0f);
         if (mAltitude <= 0.0f)
         {
             mAltitude = 0.0f;
@@ -3683,10 +3683,10 @@ void Zombie::UpdateZombieHighGround()
 //0x529770
 void Zombie::UpdateZombieFalling()
 {
-    mAltitude--;
+    mAltitude -= Sexy::UpdateDelta(1.0f);
     if (mZombiePhase == ZombiePhase::PHASE_POLEVAULTER_PRE_VAULT)
     {
-        mAltitude--;
+        mAltitude -= Sexy::UpdateDelta(1.0f);
     }
 
     int aGroundHeight = 0;
@@ -4408,7 +4408,7 @@ void Zombie::UpdateZamboni()
     }
     else if (mFlatTires && mVelX > 0.0005f)
     {
-        mVelX -= 0.0005f;
+        mVelX -= Sexy::UpdateDelta(0.0005f);
     }
 
     int anIceX = mPosX + 118;
@@ -4525,11 +4525,11 @@ void Zombie::UpdateZombieWalking()
 
         if (IsWalkingBackwards() || mZombiePhase == ZombiePhase::PHASE_DANCER_DANCING_IN)
         {
-            mPosX += aSpeed;
+            mPosX += Sexy::UpdateDelta(aSpeed);
         }
         else
         {
-            mPosX -= aSpeed;
+            mPosX -= Sexy::UpdateDelta(aSpeed);
         }
 
         if (mZombieType == ZombieType::ZOMBIE_FOOTBALL && mFromWave != Zombie::ZOMBIE_WAVE_WINNER)
@@ -4592,11 +4592,11 @@ void Zombie::UpdateZombieWalking()
 
             if (IsWalkingBackwards())
             {
-                mPosX += aSpeed;
+                mPosX += Sexy::UpdateDelta(aSpeed);
             }
             else
             {
-                mPosX -= aSpeed;
+                mPosX -= Sexy::UpdateDelta(aSpeed);
             }
         }
     }
@@ -4663,7 +4663,7 @@ void Zombie::UpdateZombiePosition()
 
     if (mBlowingAway)
     {
-        mPosX += 10.0f;
+        mPosX += Sexy::UpdateDelta(10.0f);
         if (mX > 850)
         {
             DieWithLoot();
@@ -4676,11 +4676,11 @@ void Zombie::UpdateZombiePosition()
         float aDesiredY = GetPosYBasedOnRow(mRow);
         if (mPosY < aDesiredY)
         {
-            mPosY += std::min(aDesiredY - mPosY, 1.0f);
+            mPosY += Sexy::UpdateDelta(std::min(aDesiredY - mPosY, 1.0f));
         }
         else if (mPosY > aDesiredY)
         {
-            mPosY -= std::min(mPosY - aDesiredY, 1.0f);
+            mPosY -= Sexy::UpdateDelta(std::min(mPosY - aDesiredY, 1.0f));
         }
     }
 }
@@ -4815,10 +4815,10 @@ void Zombie::UpdateClimbingLadder()
         return;
     }
 
-    mAltitude += 0.8f;
+    mAltitude += Sexy::UpdateDelta(0.8f);
     if (mVelX < 0.5f)
     {
-        mPosX -= 0.5f;
+        mPosX -= Sexy::UpdateDelta(0.5f);
     }
 
     float aTargetHeight = 90.0f;
@@ -5062,9 +5062,10 @@ void Zombie::UpdatePlaying()
                 aDamage = 3;
             }
 
-            if (Rand(5) == 0)
+            for (int tick = 0; tick < Sexy::gWholeLegacyTicks && !IsDeadOrDying(); ++tick)
             {
-                TakeDamage(aDamage, 9U);
+                if (Rand(5) == 0)
+                    TakeDamage(aDamage, 9U);
             }
         }
     }
@@ -5277,7 +5278,7 @@ void Zombie::AnimateChewEffect()
         GridItem* aBrain = mBoard->mChallenge->IZombieGetBrainTarget(this);
         if (aBrain)
         {
-            aBrain->mTransparentCounter = std::max(aBrain->mTransparentCounter, 25);
+            aBrain->mTransparentCounter = std::max<Sexy::TimeCounter>(aBrain->mTransparentCounter, 25);
             return;
         }
     }
@@ -5315,7 +5316,7 @@ void Zombie::AnimateChewEffect()
             mApp->AddTodParticle(aPosX, aPosY, aRenderOrder, ParticleEffect::PARTICLE_WALLNUT_EAT_SMALL);
         }
 
-        aPlant->mEatenFlashCountdown = std::max(aPlant->mEatenFlashCountdown, 25);
+        aPlant->mEatenFlashCountdown = std::max<Sexy::TimeCounter>(aPlant->mEatenFlashCountdown, 25);
     }
 }
 
@@ -6420,7 +6421,7 @@ void Zombie::GetDrawPos(ZombieDrawPosition& theDrawPos)
         }
         else
         {
-            float aHeightLimit = std::min(mPhaseCounter, 40);
+            float aHeightLimit = std::min<Sexy::TimeCounter>(mPhaseCounter, 40);
             theDrawPos.mClipHeight = theDrawPos.mBodyY + aHeightLimit;
         }
 
@@ -8232,7 +8233,7 @@ void Zombie::ApplyChill(bool theIsIceTrap)
     {
         aChillTime = 2000;
     }
-    mChilledCounter = std::max(aChillTime, mChilledCounter);
+    mChilledCounter = std::max<Sexy::TimeCounter>(aChillTime, mChilledCounter);
 
     UpdateAnimSpeed();
 }
@@ -11138,7 +11139,7 @@ void Zombie::UpdateBossFireball()
             aFireballReanim->mRenderOrder = Board::MakeRenderOrder(RenderLayer::RENDER_LAYER_PARTICLE, mFireballRow, 0);
         }
 
-        if (aFireballReanim->mLoopType == ReanimLoopType::REANIM_LOOP && Rand(10) == 0)
+        if (aFireballReanim->mLoopType == ReanimLoopType::REANIM_LOOP && Sexy::UpdateChance(10))
         {
             float aBallPosX = aPosX + 100.0f + RandRangeFloat(0.0f, 20.0f);
             float aBallPosY = mBoard->GetPosYBasedOnRow(aBallPosX - 40.0f, mFireballRow) + 90.0f + RandRangeFloat(-50.0f, 0.0f);
@@ -11154,7 +11155,7 @@ void Zombie::UpdateBossFireball()
             aFireballReanim->mRenderOrder = Board::MakeRenderOrder(RenderLayer::RENDER_LAYER_PARTICLE, mFireballRow, 0);
         }
 
-        if (aFireballReanim->mLoopType == ReanimLoopType::REANIM_LOOP && Rand(10) == 0)
+        if (aFireballReanim->mLoopType == ReanimLoopType::REANIM_LOOP && Sexy::UpdateChance(10))
         {
             float aBallPosX = aPosX + 100.0f + RandRangeFloat(0.0f, 20.0f);
             float aBallPosY = mBoard->GetPosYBasedOnRow(aBallPosX - 40.0f, mFireballRow) + 90.0f + RandRangeFloat(-50.0f, 0.0f);

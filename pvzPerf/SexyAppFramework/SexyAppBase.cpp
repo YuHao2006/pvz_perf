@@ -202,7 +202,9 @@ std::string SettingsPath()
 {
 #ifdef _WIN32
 	if (const char* path = std::getenv("PVZ_SETTINGS_FILE"); path && *path) return path;
-	return "settings.json";
+	return gSexyAppBase && !gSexyAppBase->mChangeDirTo.empty()
+		? AddTrailingSlash(gSexyAppBase->mChangeDirTo, true) + "settings.json"
+		: "settings.json";
 #else
 	static const std::string path = [] {
 		if (const char* overridePath = std::getenv("PVZ_SETTINGS_FILE"); overridePath && *overridePath)
@@ -369,7 +371,7 @@ SexyAppBase::SexyAppBase()
 	mRedrawInProgress = false;
 	mLastDrawWasEmpty = false;	
 
-	mLastTimeCheck = 0;
+	mLastTimeCheck = {};
 	mUpdateMultiplier = 1;
 	mPaused = false;
 	mFastForwardToUpdateNum = 0;
@@ -607,7 +609,8 @@ SexyAppBase::~SexyAppBase()
 
 void SexyAppBase::ClearUpdateBacklog(bool relaxForASecond)
 {
-	mLastTimeCheck = SexyGetTickCount();
+	mLastTimeCheck = std::chrono::time_point_cast<std::chrono::nanoseconds>(
+		FrameDeadline::Clock::now());
 	mUpdateFTimeAcc = 0.0;
 
 	if (relaxForASecond)
@@ -1347,6 +1350,7 @@ bool SexyAppBase::RegistryWriteData(const std::string&, const uchar*, unsigned i
 void SexyAppBase::WriteToRegistry()
 {
 	JsonDoc aDoc;
+	aDoc.SetInt("targetFps", mFrameTiming.mTargetFps);
 	aDoc.SetInt("musicVolume", (long long)(mMusicVolume * 100));
 	aDoc.SetInt("sfxVolume", (long long)(mSfxVolume * 100));
 	aDoc.SetInt("muted", (mMuteCount - mAutoMuteCount > 0) ? 1 : 0);
@@ -1689,6 +1693,8 @@ void SexyAppBase::ReadFromRegistry()
 	if (!aDoc.LoadFile(SettingsPath().c_str()))
 		return;
 
+	if (aDoc.GetType("targetFps") == JsonDoc::Type::Number)
+		mFrameTiming = FrameTiming::FromSetting(aDoc.GetFloat("targetFps", 100));
 	if (aDoc.Has("musicVolume"))
 		mMusicVolume = aDoc.GetInt("musicVolume", 0) / 100.0;
 	if (aDoc.Has("sfxVolume"))
@@ -2408,13 +2414,6 @@ bool SexyAppBase::DrawDirtyStuff()
 		
 			if (mPlayingDemoBuffer)
 				g.DrawImage(gDemoTimeLeftImage,mWidth-gDemoTimeLeftImage->mWidth-10,mHeight-gFPSImage->mHeight-gDemoTimeLeftImage->mHeight-15);
-		}
-
-		if (mWaitForVSync && mIsPhysWindowed && mSoftVSyncWait)
-		{
-			DWORD aTick = SexyGetTickCount();
-			if (aTick-mLastDrawTick < mDDInterface->mMillisecondsPerFrame)
-				RuntimeSleep(mDDInterface->mMillisecondsPerFrame - (aTick-mLastDrawTick));
 		}
 
 		DWORD aPreScreenBltTime = SexyGetTickCount();
@@ -3330,16 +3329,17 @@ void SexyAppBase::ProcessSafeDeleteList()
 
 void SexyAppBase::UpdateFTimeAcc()
 {
-	DWORD aCurTime = SexyGetTickCount();
+	const auto aCurTime = std::chrono::time_point_cast<std::chrono::nanoseconds>(
+		FrameDeadline::Clock::now());
+	if (mLastTimeCheck != FrameDeadline::TimePoint{})
+	{
+		const double aDeltaTime =
+			std::chrono::duration<double, std::milli>(aCurTime - mLastTimeCheck).count();
+		const double aBacklogLimit = std::max(200.0, mFrameTiming.mIntervalNs / 500'000.0);
+		mUpdateFTimeAcc = std::min(mUpdateFTimeAcc + aDeltaTime, aBacklogLimit);
 
-	if (mLastTimeCheck != 0)
-	{				
-		int aDeltaTime = aCurTime - mLastTimeCheck;		
-
-		mUpdateFTimeAcc = std::min(mUpdateFTimeAcc + aDeltaTime, 200.0);
-
-		if (mRelaxUpdateBacklogCount > 0)				
-			mRelaxUpdateBacklogCount = std::max(mRelaxUpdateBacklogCount - aDeltaTime, 0);				
+		if (mRelaxUpdateBacklogCount > 0)
+			mRelaxUpdateBacklogCount = std::max(mRelaxUpdateBacklogCount - aDeltaTime, 0.0);
 	}
 
 	mLastTimeCheck = aCurTime;
@@ -3374,11 +3374,11 @@ bool SexyAppBase::Process(bool allowSleep)
 	if (mVSyncUpdates)
 	{
 		aFrameFTime = (1000.0 / mSyncRefreshRate) / mUpdateMultiplier;
-		anUpdatesPerUpdateF = (float) (1000.0 / (mFrameTime * mSyncRefreshRate));
+		anUpdatesPerUpdateF = 1'000'000'000.0 / (mFrameTiming.mIntervalNs * mSyncRefreshRate);
 	}
 	else
 	{
-		aFrameFTime = mFrameTime / mUpdateMultiplier;
+		aFrameFTime = (mFrameTiming.mIntervalNs / 1'000'000.0) / mUpdateMultiplier;
 		anUpdatesPerUpdateF = 1.0;
 	}
 
@@ -3502,7 +3502,7 @@ bool SexyAppBase::Process(bool allowSleep)
 					if ((!mPlayingDemoBuffer) && (mUpdateMultiplier == 1.0))
 					{
 						mVSyncBrokenTestUpdates++;
-						if (mVSyncBrokenTestUpdates >= (DWORD) ((1000+mFrameTime-1)/mFrameTime))
+						if (mVSyncBrokenTestUpdates >= mFrameTiming.mTargetFps)
 						{
 							// It has to be running 33% fast to be "broken" (25% = 1/0.800)
 							if (aStartTime - mVSyncBrokenTestStartTick <= 800)
@@ -3602,7 +3602,8 @@ bool SexyAppBase::Process(bool allowSleep)
 			else
 			{
 				// Let us take into account the time it took to draw dirty stuff
-				int aTimeToNextFrame = (int) (aFrameFTime - mUpdateFTimeAcc);
+				double aTimeToNextFrame = aFrameFTime - mUpdateFTimeAcc;
+				auto aWaitOrigin = mLastTimeCheck;
 				if (aTimeToNextFrame <= 0)
 				{
 					// Prevent a tight non-sleeping loop when the accumulator is
@@ -3610,6 +3611,8 @@ bool SexyAppBase::Process(bool allowSleep)
 					// and an unresponsive window before the first frame.
 					aTimeToNextFrame = 1;
 					mUpdateFTimeAcc = 0;
+					aWaitOrigin = std::chrono::time_point_cast<std::chrono::nanoseconds>(
+						FrameDeadline::Clock::now());
 				}
 				if (aTimeToNextFrame > 0)
 				{
@@ -3617,9 +3620,14 @@ bool SexyAppBase::Process(bool allowSleep)
 						return false;
 
 					// Wait till next processing cycle
-					RuntimeSleep(aTimeToNextFrame);
-
-					aCumSleepTime += aTimeToNextFrame;					
+					const auto aDeadline = aWaitOrigin +
+						std::chrono::duration_cast<std::chrono::nanoseconds>(
+							std::chrono::duration<double, std::milli>(aTimeToNextFrame));
+					const auto aSleepStart = FrameDeadline::Clock::now();
+					std::this_thread::sleep_until(aDeadline);
+					aCumSleepTime += static_cast<int>(
+						std::chrono::duration_cast<std::chrono::milliseconds>(
+							FrameDeadline::Clock::now() - aSleepStart).count());
 				}
 			}
 		}
@@ -4208,6 +4216,10 @@ void SexyAppBase::Init()
 	// Settings (settings.json, incl. customScale) are read before the immutable
 	// scale configuration. Both pipelines compile regardless of checkbox state.
 	ReadFromRegistry();
+	gUpdateTicks = static_cast<double>(mFrameTiming.mIntervalNs) / FrameTiming::LegacyTickNs;
+	gStepsPerLegacyTick = 1.0 / gUpdateTicks;
+	gUpdateIntervalNs = mFrameTiming.mIntervalNs;
+	gLegacyTickPhaseNs = 0;
 	LoadScaleConfig();
 
 	// The two XML pipelines are process-global immutable configuration. Read and
@@ -4263,6 +4275,8 @@ void SexyAppBase::Init()
 	
 	if (!mCmdLineParsed)
 		DoParseCmdLine();
+	if ((mPlayingDemoBuffer || mRecordingDemoBuffer) && mFrameTiming.mTargetFps != 100)
+		throw std::runtime_error("Legacy demo recording/playback requires targetFps=100");
 
 	if (mIsScreenSaver)
 		mOnlyAllowOneCopyToRun = false;	

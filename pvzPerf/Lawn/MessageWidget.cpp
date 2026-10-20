@@ -82,7 +82,7 @@ void MessageWidget::ClearLabel()
 {
 	if (mReanimType != ReanimationType::REANIM_NONE)
 	{
-		mDuration = std::min(mDuration, 100 + mSlideOffTime + 1);
+		mDuration = std::min<Sexy::TimeCounter>(mDuration, 100 + mSlideOffTime + 1);
 	}
 	else
 	{

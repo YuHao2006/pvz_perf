@@ -1,4 +1,5 @@
 #pragma once
+#include "misc/TimeCounter.h"
 #include "Common.h"
 #include "misc/Rect.h"
 #include "misc/Flags.h"
@@ -23,8 +24,8 @@ public:
 
 	bool					mUpdateIteratorModified;
 	WidgetList::iterator	mUpdateIterator;
-	std::uint32_t			mLastWMUpdateCount;
-	std::uint32_t			mUpdateCnt;
+	Sexy::UnsignedTimeCounter			mLastWMUpdateCount;
+	Sexy::UnsignedTimeCounter			mUpdateCnt;
 	bool					mDirty;
 	int						mX;
 	int						mY;

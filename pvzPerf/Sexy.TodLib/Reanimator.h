@@ -1,4 +1,5 @@
 #pragma once
+#include "misc/TimeCounter.h"
 #include "DataArray.h"
 #include "FilterEffect.h"
 #include "misc/SexyMatrix.h"
@@ -158,7 +159,7 @@ public:
 class ReanimatorTrackInstance
 {
 public:
-    int                             mBlendCounter;                  //+0x0
+    Sexy::TimeCounter                             mBlendCounter;                  //+0x0
     int                             mBlendTime;                     //+0x4
     ReanimatorTransform             mBlendTransform;                //+0x8
     float                           mShakeOverride;                 //+0x34

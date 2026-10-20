@@ -159,7 +159,7 @@ void SeedPacket::Update()
 	{
 		mSlotMachineCountDown--;
 		float aFlipsPerSecont = TodAnimateCurveFloat(SLOT_MACHINE_TIME, 0, mSlotMachineCountDown, 6.0f, 2.0f, Curves::Linear);
-		mSlotMachiningPosition += aFlipsPerSecont * 0.01f;
+		mSlotMachiningPosition += Sexy::UpdateDelta(aFlipsPerSecont * 0.01f);
 
 		if (mSlotMachiningPosition >= 1.0f)
 		{

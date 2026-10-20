@@ -1727,7 +1727,7 @@ void ZenGarden::StinkyUpdate(GridItem* theStinky)
     aSpeedY *= TodAnimateCurveFloatTime(20.0f, 5.0f, fabs(aDeltaY), 1.0f, 0.2f, Curves::Linear);
     if (theStinky->mGridItemState == GridItemState::GRIDITEM_STINKY_WALKING_LEFT)
     {
-        theStinky->mPosX -= aSpeedX;
+        theStinky->mPosX -= Sexy::UpdateDelta(aSpeedX);
         if (theStinky->mPosX < theStinky->mGoalX)
         {
             theStinky->mPosX = theStinky->mGoalX;
@@ -1735,7 +1735,7 @@ void ZenGarden::StinkyUpdate(GridItem* theStinky)
     }
     else if (theStinky->mGridItemState == GridItemState::GRIDITEM_STINKY_WALKING_RIGHT)
     {
-        theStinky->mPosX += aSpeedX;
+        theStinky->mPosX += Sexy::UpdateDelta(aSpeedX);
         if (theStinky->mPosX > theStinky->mGoalX)
         {
             theStinky->mPosX = theStinky->mGoalX;
@@ -1750,11 +1750,11 @@ void ZenGarden::StinkyUpdate(GridItem* theStinky)
         }
         else if (aDeltaY > 0.0f)
         {
-            theStinky->mPosY -= aSpeedY;
+            theStinky->mPosY -= Sexy::UpdateDelta(aSpeedY);
         }
         else
         {
-            theStinky->mPosY += aSpeedY;
+            theStinky->mPosY += Sexy::UpdateDelta(aSpeedY);
         }
 
         if (fabs(aDeltaX) < 5.0f && fabs(aDeltaY) < 5.0f)

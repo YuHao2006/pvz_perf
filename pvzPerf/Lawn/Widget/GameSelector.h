@@ -1,4 +1,5 @@
 #pragma once
+#include "misc/TimeCounter.h"
 #include "ConstEnums.h"
 #include "widget/Widget.h"
 #include "widget/ButtonListener.h"
@@ -67,7 +68,7 @@ public:
     NewLawnButton*              mQuickPlayButton;           //+GOTY @Patoke: 0xC8
     Widget*                     mOverlayWidget;             //+0xBC
     bool                        mStartingGame;              //+0xC0
-    int                         mStartingGameCounter;       //+0xC4
+    Sexy::TimeCounter                         mStartingGameCounter;       //+0xC4
     bool                        mMinigamesLocked;           //+0xC8
     bool                        mPuzzleLocked;              //+0xC9
     bool                        mSurvivalLocked;            //+0xCA
@@ -75,18 +76,18 @@ public:
     ParticleSystemID            mTrophyParticleID;          //+0xCC
     ReanimationID               mSelectorReanimID;          //+0xD0
     ReanimationID               mCloudReanimID[6];          //+0xD4
-    int                         mCloudCounter[6];           //+0xEC
+    Sexy::TimeCounter                         mCloudCounter[6];           //+0xEC
     ReanimationID               mFlowerReanimID[3];         //+0x104
     ReanimationID               mLeafReanimID;              //+0x110
     ReanimationID               mHandReanimID;              //+0x114
-    int                         mLeafCounter;               //+0x118
+    Sexy::TimeCounter                         mLeafCounter;               //+0x118
     SelectorAnimState           mSelectorState;             //+0x11C
     int                         mLevel;                     //+0x120
     bool                        mLoading;                   //+0x124
     ToolTipWidget*              mToolTip;                   //+0x128
     bool                        mHasTrophy;                 //+0x12C
     bool                        mUnlockSelectorCheat;       //+0x12D
-    int                         mSlideCounter;              //+GOTY @Patoke: 0x154
+    Sexy::TimeCounter                         mSlideCounter;              //+GOTY @Patoke: 0x154
     int                         mStartX;                    //+GOTY @Patoke: 0x158
     int                         mStartY;                    //+GOTY @Patoke: 0x15C
     int                         mDestX;                     //+GOTY @Patoke: 0x160

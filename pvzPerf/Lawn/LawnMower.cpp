@@ -94,7 +94,7 @@ constexpr MowerPoolFn kMowerPoolCases[(int)MowerHeight::MOWER_HEIGHT_UP_TO_LAND 
     [](LawnMower& m, bool isPoolRange, Reanimation* aMowerReanim)
     {
         (void)isPoolRange;
-        m.mAltitude -= 2.0f;
+        m.mAltitude -= Sexy::UpdateDelta(2.0f);
         if (m.mAltitude <= -28.0f)
         {
             m.mAltitude = 0.0f;
@@ -122,7 +122,7 @@ constexpr MowerPoolFn kMowerPoolCases[(int)MowerHeight::MOWER_HEIGHT_UP_TO_LAND 
     {
         (void)isPoolRange;
         (void)aMowerReanim;
-        m.mAltitude += 2.0f;
+        m.mAltitude += Sexy::UpdateDelta(2.0f);
         if (m.mAltitude >= 0.0f)
         {
             m.mAltitude = 0.0f;
@@ -263,7 +263,7 @@ void LawnMower::Update()
         mChompCounter--;
         aSpeed = TodAnimateCurveFloat(50, 0, mChompCounter, aSpeed, 1.0f, Curves::BounceSlowMiddle);
     }
-    mPosX += aSpeed;
+    mPosX += Sexy::UpdateDelta(aSpeed);
     mPosY = mBoard->GetPosYBasedOnRow(mPosX + 40.0f, mRow) + 23.0f;
 
     if (mMowerType == LawnMowerType::LAWNMOWER_POOL)

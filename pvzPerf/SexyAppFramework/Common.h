@@ -16,6 +16,7 @@
 #include <map>
 #include <list>
 #include <algorithm>
+#include "misc/TimeCounter.h"
 #include <cstdlib>
 #include <cstdint>
 #include <cstdarg>
@@ -100,6 +101,13 @@ extern HINSTANCE	gHInstance;
 int					Rand();
 int					Rand(int range);
 float				Rand(float range);
+inline bool UpdateChance(int range)
+{
+	for (int tick = 0; tick < gWholeLegacyTicks; ++tick)
+		if (Rand(range) == 0)
+			return true;
+	return false;
+}
 void				SRand(unsigned int theSeed);
 void				GetRandState(unsigned int* theState, int& theIndex);
 extern std::string	vformat(const char* fmt, va_list argPtr) SEXY_FORMAT_ATTRIBUTE(1, 0);

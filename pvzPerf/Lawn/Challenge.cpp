@@ -1466,7 +1466,7 @@ int Challenge::UpdateBeghouledPlant(Plant* thePlant)
 	int aMoving = false;
 	int aDiffX = mBoard->GridToPixelX(thePlant->mPlantCol, thePlant->mRow) - thePlant->mX;
 	int aDiffY = mBoard->GridToPixelY(thePlant->mPlantCol, thePlant->mRow) - thePlant->mY;
-	int aDelta = mChallengeState == STATECHALLENGE_BEGHOULED_MOVING ? 3 : TodAnimateCurve(90, 30, mChallengeStateCounter, 1, 20, Curves::EaseIn);
+	int aDelta = (mChallengeState == STATECHALLENGE_BEGHOULED_MOVING ? 3 : TodAnimateCurve(90, 30, mChallengeStateCounter, 1, 20, Curves::EaseIn)) * Sexy::gWholeLegacyTicks;
 	int aDeltaX = 0, aDeltaY = 0;
 
 	if (aDiffX > 0)
@@ -3871,7 +3871,7 @@ void Challenge::ZombiquariumUpdate()
 		if (aGridItem->mGridItemType == GRIDITEM_BRAIN)
 		{
 			aGridItem->mGridItemCounter++;
-			aGridItem->mPosY += 0.15f;
+			aGridItem->mPosY += Sexy::UpdateDelta(0.15f);
 			if (aGridItem->mPosY >= 500.0f)
 			{
 				aGridItem->GridItemDie();
@@ -5323,7 +5323,7 @@ void Challenge::SquirrelFound(GridItem* theSquirrel)
 //0x42C1B0
 void Challenge::SquirrelUpdateOne(GridItem* theSquirrel)
 {
-	int& aCounter = theSquirrel->mGridItemCounter;
+	auto& aCounter = theSquirrel->mGridItemCounter;
 	if (aCounter > 0)
 		aCounter--;
 
@@ -5455,7 +5455,7 @@ void Challenge::LastStandCompletedStage()
 		if (aPlant->mState == STATE_CHOMPER_DIGESTING || aPlant->mState == STATE_COBCANNON_ARMING ||
 			aPlant->mState == STATE_MAGNETSHROOM_SUCKING || aPlant->mState == STATE_MAGNETSHROOM_CHARGING)
 		{
-			aPlant->mStateCountdown = std::min(aPlant->mStateCountdown, 200);
+			aPlant->mStateCountdown = std::min<Sexy::TimeCounter>(aPlant->mStateCountdown, 200);
 		}
 	}
 

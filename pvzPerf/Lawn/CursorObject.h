@@ -1,4 +1,5 @@
 #pragma once
+#include "misc/TimeCounter.h"
 #include "GameObject.h"
 
 class CursorObject : public GameObject
@@ -12,7 +13,7 @@ public:
 	PlantID					mGlovePlantID;			//+0x38
 	PlantID					mDuplicatorPlantID;		//+0x3C
 	PlantID					mCobCannonPlantID;		//+0x40
-	int						mHammerDownCounter;		//+0x44
+	Sexy::TimeCounter						mHammerDownCounter;		//+0x44
 	ReanimationID			mReanimCursorID;		//+0x48
 
 public:

@@ -1,4 +1,5 @@
 #pragma once
+#include "misc/TimeCounter.h"
 #include "ConstEnums.h"
 #include "widget/Widget.h"
 #include <cstdint>
@@ -18,8 +19,8 @@ class ChosenSeed
 public:
     int                     mX;                                //+0x0
     int                     mY;                                //+0x4
-    std::uint32_t           mTimeStartMotion;                  //+0x8
-    std::uint32_t           mTimeEndMotion;                    //+0xC
+    Sexy::UnsignedTimeCounter           mTimeStartMotion;                  //+0x8
+    Sexy::UnsignedTimeCounter           mTimeEndMotion;                    //+0xC
     int                     mStartX;                           //+0x10
     int                     mStartY;                           //+0x14
     int                     mEndX;                             //+0x18
@@ -28,7 +29,7 @@ public:
     ChosenSeedState         mSeedState;                        //+0x24
     int                     mSeedIndexInBank;                  //+0x28
     bool                    mRefreshing;                       //+0x2C
-    int                     mRefreshCounter;                   //+0x30
+    Sexy::TimeCounter                     mRefreshCounter;                   //+0x30
     SeedType                mImitaterType;                     //+0x34
     bool                    mCrazyDavePicked;                  //+0x38
 };
@@ -59,7 +60,7 @@ public:
     LawnApp*                mApp;                               //+0xD10
     Board*                  mBoard;                             //+0xD14
     int                     mNumSeedsToChoose;                  //+0xD18
-    std::uint32_t           mSeedChooserAge;                    //+0xD1C, UI-local wrapping tick
+    Sexy::UnsignedTimeCounter           mSeedChooserAge;                    //+0xD1C, UI-local wrapping tick
     int                     mSeedsInFlight;                     //+0xD20
     int                     mSeedsInBank;                       //+0xD24
     ToolTipWidget*          mToolTip;                           //+0xD28
@@ -67,7 +68,7 @@ public:
     int                     mLastMouseX;                        //+0xD30
     int                     mLastMouseY;                        //+0xD34
     SeedChooserState        mChooseState;                       //+0xD38
-    int                     mViewLawnTime;                      //+0xD3C
+    Sexy::TimeCounter                     mViewLawnTime;                      //+0xD3C
 
 public:
     SeedChooserScreen();

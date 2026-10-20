@@ -1692,6 +1692,7 @@ void LawnApp::UpdateFrames()
 
 	for (int i = 0; i < aUpdateCount; i++)
 	{
+		Sexy::BeginTimedUpdate();
 		mAppCounter++;
 		
 		if (mBoard)

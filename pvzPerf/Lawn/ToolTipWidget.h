@@ -1,4 +1,5 @@
 #pragma once
+#include "misc/TimeCounter.h"
 #include <vector>
 
 #include "SexyAppFramework/Common.h"
@@ -22,7 +23,7 @@ public:
     int                 mMinLeft;               //+0x68
     int                 mMaxBottom;             //+0x6C
     int                 mGetsLinesWidth;        //+0x70
-    int                 mWarningFlashCounter;   //+0x74
+    Sexy::TimeCounter                 mWarningFlashCounter;   //+0x74
     // C++23 第一批·条目7：CalculateSize 算好缓存、Draw 直接复用的行数组（非 1073 布局）
     std::vector<SexyString> mLines;
 

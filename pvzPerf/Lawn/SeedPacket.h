@@ -1,4 +1,5 @@
 #pragma once
+#include "misc/TimeCounter.h"
 #include "GameObject.h"
 #include "GameConstants.h"
 
@@ -9,13 +10,13 @@ class HitResult;
 class SeedPacket : public GameObject
 {
 public:
-    int                 mRefreshCounter;                            //+0x24
+    Sexy::TimeCounter                 mRefreshCounter;                            //+0x24
     int                 mRefreshTime;                               //+0x28
     int                 mIndex;                                     //+0x2C
     int                 mOffsetX;                                   //+0x30
     SeedType            mPacketType;                                //+0x34
     SeedType            mImitaterType;                              //+0x38
-    int                 mSlotMachineCountDown;                      //+0x3C
+    Sexy::TimeCounter                 mSlotMachineCountDown;                      //+0x3C
     SeedType            mSlotMachiningNextSeed;                     //+0x40
     float               mSlotMachiningPosition;                     //+0x44
     bool                mActive;                                    //+0x48
@@ -45,7 +46,7 @@ public:
     int				    mNumPackets;                    //+0x24
     SeedPacket		    mSeedPackets[SEEDBANK_MAX];     //+0x28
     int				    mCutSceneDarken;                //+0x348
-    int				    mConveyorBeltCounter;           //+0x34C
+    Sexy::TimeCounter				    mConveyorBeltCounter;           //+0x34C
 
 public:
     SeedBank();

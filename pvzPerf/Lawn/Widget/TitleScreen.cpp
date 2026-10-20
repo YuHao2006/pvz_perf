@@ -292,7 +292,7 @@ void TitleScreen::Update()
 	mApp->mEffectSystem->Update();
 
 	float aPrevWidth = mCurBarWidth;
-	mCurBarWidth += mBarVel;
+	mCurBarWidth += Sexy::UpdateDelta(mBarVel);
 	if (!mLoadingThreadComplete)
 	{
 		if (mCurBarWidth > mTotalBarWidth * 0.99f)
@@ -315,7 +315,7 @@ void TitleScreen::Update()
 		{
 			aAcceleration = 0.0001f;
 		}
-		mBarVel += aDiff * abs(aDiff) * aAcceleration;
+		mBarVel += Sexy::UpdateDelta(aDiff * abs(aDiff) * aAcceleration);
 
 		float aMinVelocity = TodAnimateCurveFloatTime(0, 1, aLoadingPercent, 0.2f, 0.01f, Curves::Linear);
 		float aMaxVelocity = 2;

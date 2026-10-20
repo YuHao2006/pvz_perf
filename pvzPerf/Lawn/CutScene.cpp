@@ -1542,7 +1542,7 @@ void CutScene::Update()
 	// 僵尸进家过场的更新
 	if (mApp->mGameScene == GameScenes::SCENE_ZOMBIES_WON)
 	{
-		mCutsceneTime += 10;
+		mCutsceneTime.Advance(10);
 		UpdateZombiesWon();
 		return;
 	}
@@ -1574,13 +1574,13 @@ void CutScene::Update()
 	}
 	if (mApp->mGameMode == GameMode::GAMEMODE_INTRO)
 	{
-		mCutsceneTime += 10;
+		mCutsceneTime.Advance(10);
 		UpdateIntro();
 		return;
 	}
 	if (!aCutsceneTimeStop)
 	{
-		mCutsceneTime += 10;
+		mCutsceneTime.Advance(10);
 		if (mCutsceneTime == TimeSeedChoserSlideOnEnd + mCrazyDaveTime && mBoard->ChooseSeedsOnCurrentLevel())
 		{
 			StartSeedChooser();

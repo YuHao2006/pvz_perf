@@ -1,4 +1,5 @@
 #pragma once
+#include "misc/TimeCounter.h"
 #include "misc/KeyCodes.h"
 #include "Zombie.h"
 
@@ -12,7 +13,7 @@ class CutScene
 public:
     LawnApp*                    mApp;                             //+0x0
     Board*                      mBoard;                           //+0x4
-    int                         mCutsceneTime;                    //+0x8
+    Sexy::TimeCounter                         mCutsceneTime;                    //+0x8
     int                         mSodTime;                         //+0xC
     int                         mGraveStoneTime;                  //+0x10
     int                         mReadySetPlantTime;               //+0x14
@@ -26,7 +27,7 @@ public:
     bool                        mPreloaded;                       //+0x34
     bool                        mPlacedZombies;                   //+0x35
     bool                        mPlacedLawnItems;                 //+0x36
-    int                         mCrazyDaveCountDown;              //+0x38 ���������򵹼�ʱ��
+    Sexy::TimeCounter                         mCrazyDaveCountDown;              //+0x38 ���������򵹼�ʱ��
     int                         mCrazyDaveLastTalkIndex;          //+0x3C �����������Ļ��ı�š�
     bool                        mUpsellHideBoard;                 //+0x40 ���������عؿ����桿
     ChallengeScreen*            mUpsellChallengeScreen;           //+0x44 �����������С��Ϸ���桿

@@ -1,6 +1,7 @@
 #include "Sexy.TodLib/generated/EntityStrings.h"
 #include "Resources.h"
 #include "ToolTipWidget.h"
+#include "ToolTipLayout.h"
 #include "GameConstants.h"
 #include "Sexy.TodLib/TodCommon.h"
 #include "graphics/Font.h"
@@ -123,31 +124,25 @@ void ToolTipWidget::Draw(Graphics* g)
 {
 	if (!mVisible)
 		return;
+	const int x = ToolTipLayout::LegacyX(mX, mWidth, mCenter, mMinLeft, BOARD_WIDTH, g->mTransX);
+	const int y = ToolTipLayout::LegacyY(mY, mHeight, mMaxBottom, g->mTransY);
+	DrawAt(g, x, y);
+}
 
-	int aPosX = mX;
-	if (mCenter)
-	{
-		aPosX -= mWidth / 2;
-	}
-	if (mMinLeft - g->mTransX > aPosX)  // aPosX + g->mTransX < mMinLeft
-	{
-		aPosX = mMinLeft - (int)g->mTransX;
-	}
-	else if (aPosX + mWidth + g->mTransX > BOARD_WIDTH)
-	{
-		aPosX = BOARD_WIDTH - g->mTransX - mWidth;
-	}
+void ToolTipWidget::Draw(Graphics* g, const Rect& theLocalBounds)
+{
+	if (!mVisible)
+		return;
 
-	int aPosY = mY;
-	if (-g->mTransY > aPosY)  // aPosY + g->mTransY > 0
-	{
-		aPosY = (int)-g->mTransY;
-	}
-	else if (mMaxBottom < mY + mHeight + g->mTransY)
-	{
-		aPosY = mMaxBottom - (int)g->mTransY - mHeight;
-	}
+	const int x = ToolTipLayout::Position(mX, mWidth, mCenter,
+		theLocalBounds.mX, theLocalBounds.mX + theLocalBounds.mWidth);
+	const int y = ToolTipLayout::Position(mY, mHeight, false,
+		theLocalBounds.mY, theLocalBounds.mY + theLocalBounds.mHeight);
+	DrawAt(g, x, y);
+}
 
+void ToolTipWidget::DrawAt(Graphics* g, int aPosX, int aPosY)
+{
 	g->mColor = Color(255, 255, 200, 255);
 	g->FillRect(aPosX, aPosY, mWidth, mHeight);
 	g->mColor = Color::Black;

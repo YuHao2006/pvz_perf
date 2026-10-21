@@ -420,6 +420,7 @@ public:
 	void							InitZombieWavesForLevel(int theForLevel);
 	unsigned int					SeedNotRecommendedForLevel(SeedType theSeedType);
 	void							DrawTopRightUI(Graphics* g);
+	void							RefreshHudLayout();
 	void							DrawFog(Graphics* g);
 	void							UpdateFog();
 	/*inline*/ int					LeftFogColumn();
@@ -527,7 +528,7 @@ public:
 	void							SetMustacheMode(bool theEnableMustache);
 	int								CountCoinByType(CoinType theCoinType);
 	void							SetSuperMowerMode(bool theEnableSuperMower);
-	void							DrawZenWheelBarrowButton(Graphics* g, int theOffsetY);
+	void							DrawZenWheelBarrowButton(Graphics* g, const Rect& aButtonRect, int theOffsetY);
 	void							DrawZenButtons(Graphics* g);
 	/*inline*/ void					OffsetYForPlanting(int& theY, SeedType theSeedType);
 	void							SetDanceMode(bool theEnableDance);

@@ -1,8 +1,5 @@
 #include "graphics/GpuBackend.h"
 #include <stdexcept>
-//#define SEXY_TRACING_ENABLED
-//#define SEXY_MEMTRACE
-
 #include "SexyAppBase.h"
 #include <optional>
 #include "misc/SEHCatcher.h"
@@ -2436,9 +2433,6 @@ bool SexyAppBase::DrawDirtyStuff()
 			if ((int) (aEndTime - mNextDrawTick) >= 0)			
 				mNextDrawTick = aEndTime;			
 
-			/*char aStr[256];
-			sprintf(aStr, "Next Draw Time: %d\r\n", mNextDrawTick);
-			OutputDebugString(aStr);*/
 		}
 		else
 			mNextDrawTick = aEndTime;
@@ -3345,20 +3339,8 @@ void SexyAppBase::UpdateFTimeAcc()
 	mLastTimeCheck = aCurTime;
 }
 
-//int aNumCalls = 0;
-//DWORD aLastCheck = 0;
-
 bool SexyAppBase::Process(bool allowSleep)
 {
-
-	/*DWORD aTimeNow = GetTickCount();
-	if (aTimeNow - aLastCheck >= 10000)
-	{
-		OutputDebugString(StrFormat(("FUpdates: %d\n"), aNumCalls).c_str());
-		aLastCheck = aTimeNow;
-		aNumCalls = 0;
-	}*/
-
 	if (mLoadingFailed)
 	{
 		WaitForLoadingThread();
@@ -3804,7 +3786,6 @@ int SexyAppBase::InitDDInterface()
     PreDDInterfaceInitHook();
     const int result = mDDInterface->Init(mHWnd, mIsWindowed);
     if (result != DDInterface::RESULT_OK) return result;
-    mScreenBounds = Rect(0,0,mWidth,mHeight);
     mWidgetManager->Resize(mScreenBounds,mDDInterface->mVisibleGameRect);
     DemoSyncRefreshRate();
     PostDDInterfaceInitHook();
@@ -3815,15 +3796,26 @@ bool SexyAppBase::PrepareScalePipelineObjects()
 {
     if (mModernScalePrepared) return true;
     auto& renderer=*mDDInterface->mRenderInterface->mRenderer;
+    const int windowScale = std::max(1, mScaleWindowConfig.mEffects.empty() ?
+        mScaleConfigWindow : mWindowScaleFromPipeline);
+    const int windowTargetW = renderer.sceneWidth * windowScale;
+    const int windowTargetH = renderer.sceneHeight * windowScale;
+    std::vector<GpuScaleStep> steps;
+    steps.reserve(std::max(mScaleWindowConfig.mEffects.size(),
+        mScaleFullscreenConfig.mEffects.size()));
     for (bool fullscreen : {false,true}) {
-        std::vector<ScaleEffectRuntimeDesc*> effects;
-        std::vector<ScaleEffectScaling> scaling;
-        const auto& config=fullscreen?mScaleFullscreenConfig:mScaleWindowConfig;
-        if (config.mDeclared && !BuildScalePipelineForMode(!fullscreen,effects,scaling))
-            throw std::runtime_error("Cannot resolve complete Vulkan scale pipeline");
-        std::vector<GpuScaleStep> steps;
-        for (size_t i=0;i<effects.size();++i) steps.push_back({effects[i],scaling[i]});
-        int targetW=mWidth*GetWindowScaleForCustomScale(),targetH=mHeight*GetWindowScaleForCustomScale();
+        steps.clear();
+        const ScalePipelineConfig& config = fullscreen ?
+            mScaleFullscreenConfig : mScaleWindowConfig;
+        if (config.mDeclared) {
+            for (const ScaleEffectConfig& entry : config.mEffects) {
+                if (entry.mEffectSlot >= mScaleEffects.size())
+                    throw std::runtime_error("Cannot resolve complete scale pipeline");
+                steps.push_back({&mScaleEffects[entry.mEffectSlot],
+                    {entry.mScalingType, entry.mScaleX, entry.mScaleY}});
+            }
+        }
+        int targetW = windowTargetW, targetH = windowTargetH;
         if (fullscreen) {
 #ifdef _WIN32
             const auto mode=TargetVideoMode();
@@ -3852,7 +3844,7 @@ void SexyAppBase::WarmScalePipelinesBeforeShow()
     renderer.WarmScale(true);
     renderer.SetScaleMode(IsScalePresentActive(),!mIsWindowed);
     if (mIsWindowed) {
-        int width=mWidth,height=mHeight;
+        int width=renderer.sceneWidth,height=renderer.sceneHeight;
         if (IsScalePresentActive()) {
             const auto image=renderer.ScaleOutput(false);
             width=int(image.width); height=int(image.height);
@@ -4685,7 +4677,7 @@ void SexyAppBase::ReconfigureScale(bool theUseCustomScale)
     // All expensive compilation/preparation/warm-up finished at startup.
     // Only now change geometry, then present the retained GPU canvas.
     if (mIsWindowed) {
-        int width=mWidth,height=mHeight;
+        int width=render.mRenderer->sceneWidth,height=render.mRenderer->sceneHeight;
         if (IsScalePresentActive()) {
             const auto image=render.mRenderer->ScaleOutput(false);
             width=int(image.width);height=int(image.height);
@@ -4985,8 +4977,8 @@ bool SexyAppBase::BuildScalePipelineForMode(bool theWindowed,
 		int aTgtH = theSrcH;
 		if (theWindowed)
 		{
-			aTgtW = mWidth * GetWindowScaleForCustomScale();
-			aTgtH = mHeight * GetWindowScaleForCustomScale();
+			aTgtW = theSrcW * GetWindowScaleForCustomScale();
+			aTgtH = theSrcH * GetWindowScaleForCustomScale();
 		}
 		else
 		{

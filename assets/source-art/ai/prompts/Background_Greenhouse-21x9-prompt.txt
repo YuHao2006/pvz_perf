@@ -1,0 +1,13 @@
+Use case: precise-object-edit.
+Asset type: one source background texture for an existing 2D game.
+Extend this 1408x608 source canvas only in its masked left [0,300) and
+right [1100,1400) strips, both y=[0,600). The original 800x600 scene is
+at x=[300,1100), y=[0,600), and must stay at exactly that size and position.
+Extend only the greenhouse's side windows, walls and soil. No new benches, planting trays, watering cans, hoses, tools or flower pots.
+Match the existing painted cartoon style, perspective, colors and lighting.
+Make the new side scenery natural and asymmetric, without reflected, mirrored
+or kaleidoscope patterns, cloned prominent objects, stretching or empty bands.
+Keep every original planting location, prop and surface in the unmasked center
+unchanged. No scene recentering, zoom, cropping or scaling. No text, buttons,
+labels, borders, UI, characters or extra gameplay objects. The rightmost eight
+columns and bottom eight rows are padding and must remain unchanged.

@@ -20,6 +20,37 @@ static bool gZombieDefeated[NUM_ZOMBIE_TYPES] = { false };
 
 namespace
 {
+void RefreshAlmanacLayout(AlmanacDialog& theDialog)
+{
+	const Rect& aBounds = theDialog.mApp->mScreenBounds;
+	// Battle viewports can be asymmetric while the page remains 800 units wide.
+	theDialog.Move(aBounds.mX + (aBounds.mWidth - theDialog.mWidth) / 2, theDialog.mY);
+	const int aRight = aBounds.mX + aBounds.mWidth;
+	// Keep the original 800-wide page's button margins at the visible edges.
+	theDialog.mIndexButton->mX = aBounds.mX - theDialog.mX + 32;
+	theDialog.mCloseButton->mX = aRight - theDialog.mX - 35 - theDialog.mCloseButton->mWidth;
+	theDialog.mMouseInsets.mLeft = std::min(0, aBounds.mX - theDialog.mX);
+	theDialog.mMouseInsets.mRight = std::min(0, theDialog.mX + theDialog.mWidth - aRight);
+}
+
+void DrawAlmanacBackground(Graphics* g, Image* theImage, const Rect& theBounds, int theOriginX)
+{
+	const int aArtPadding = (theImage->mWidth - BOARD_WIDTH) / 2;
+	const int aBorderWidth = 16;
+	const int aPaperWidth = theBounds.mWidth - aBorderWidth * 2;
+	const int aLeft = theBounds.mX - theOriginX;
+	const int aSourceX = aArtPadding + aLeft + aBorderWidth;
+	Graphics aBackground(*g);
+	aBackground.ClipRect(aLeft, theBounds.mY, theBounds.mWidth, theBounds.mHeight);
+	// Crop the fixed native canvas; only the frame edges follow the visible bounds.
+	aBackground.DrawImage(theImage, aLeft, 0,
+		Rect(0, 0, aBorderWidth, theImage->mHeight));
+	aBackground.DrawImage(theImage, aLeft + aBorderWidth, 0,
+		Rect(aSourceX, 0, aPaperWidth, theImage->mHeight));
+	aBackground.DrawImage(theImage, aLeft + theBounds.mWidth - aBorderWidth, 0,
+		Rect(theImage->mWidth - aBorderWidth, 0, aBorderWidth, theImage->mHeight));
+}
+
 void DrawAlmanacScrollbar(Graphics* g, const Rect& theDescRect, int theScroll, int theScrollMax)
 {
 	if (theScrollMax <= 0)
@@ -81,8 +112,8 @@ AlmanacDialog::AlmanacDialog(LawnApp* theApp) : LawnDialog(theApp, DIALOG_ALMANA
 	mZombie = nullptr;
 	mPlant = nullptr;
 	mDrawStandardBack = false;
+	mClip = false;
 	TodLoadResources(ResourceGroupId::DelayLoad_Almanac);
-	for (size_t i = 0; i < LENGTH(mZombiePerfTest); i++) mZombiePerfTest[i] = nullptr;
 	LawnDialog::Resize(0, 0, BOARD_WIDTH, BOARD_HEIGHT);
 
 	mCloseButton = new GameButton(AlmanacDialog::ALMANAC_BUTTON_CLOSE);
@@ -145,6 +176,7 @@ AlmanacDialog::AlmanacDialog(LawnApp* theApp) : LawnDialog(theApp, DIALOG_ALMANA
 	mZombieButton->mParentWidget = this;
 
 	SetPage(ALMANAC_PAGE_INDEX);
+	RefreshAlmanacLayout(*this);
 	if (!mApp->mBoard || !mApp->mBoard->mPaused)
 		mApp->mMusic->MakeSureMusicIsPlaying(MUSIC_TUNE_CHOOSE_YOUR_SEEDS);
 }
@@ -174,15 +206,6 @@ void AlmanacDialog::ClearPlantsAndZombies()
 		mZombie->DieNoLoot();
 		delete mZombie;
 		mZombie = nullptr;
-	}
-	for (Zombie* &aZombie : mZombiePerfTest)
-	{
-		if (aZombie)
-		{
-			aZombie->DieNoLoot();
-			delete aZombie;
-		}
-		aZombie = nullptr;
 	}
 }
 
@@ -284,22 +307,16 @@ void AlmanacDialog::ShowZombie(ZombieType theZombieType)
 //0x401D30
 void AlmanacDialog::Update()
 {
+	RefreshAlmanacLayout(*this);
 	mCloseButton->Update();
 	mIndexButton->Update();
 	mPlantButton->Update();
 	mZombieButton->Update();
 	if (mPlant) mPlant->Update();
 	if (mZombie) mZombie->Update();
-	for (Zombie* aZombie : mZombiePerfTest)
-	{
-		if (aZombie)
-		{
-			aZombie->Update();
-		}
-	}
 
-	int aMouseX = mApp->mWidgetManager->mLastMouseX;
-	int aMouseY = mApp->mWidgetManager->mLastMouseY;
+	int aMouseX = mApp->mWidgetManager->mLastMouseX - mX;
+	int aMouseY = mApp->mWidgetManager->mLastMouseY - mY;
 	if (SeedHitTest(aMouseX, aMouseY) != SeedType::SEED_NONE || ZombieHitTest(aMouseX, aMouseY) != ZombieType::ZOMBIE_INVALID || 
 		mCloseButton->IsMouseOver() || mIndexButton->IsMouseOver() || mPlantButton->IsMouseOver() || mZombieButton->IsMouseOver())
 	{
@@ -317,7 +334,10 @@ void AlmanacDialog::Update()
 //0x401E70
 void AlmanacDialog::DrawIndex(Graphics* g)
 {
-	g->DrawImage(Sexy::IMAGE_ALMANAC_INDEXBACK, 0, 0);
+	DrawAlmanacBackground(g, Sexy::IMAGE_ALMANAC_INDEXBACK, mApp->mScreenBounds, mX);
+	Graphics aContentGraphics(*g);
+	aContentGraphics.ClipRect(0, 0, BOARD_WIDTH, BOARD_HEIGHT);
+	g = &aContentGraphics;
 	TodDrawString(g, gStr.SUBURBAN_ALMANAC_INDEX, BOARD_WIDTH / 2, 60, Sexy::FONT_HOUSEOFTERROR28, Color(220, 220, 220), DrawStringJustification::DS_ALIGN_CENTER);
 	
 	if (mPlant)
@@ -337,10 +357,13 @@ void AlmanacDialog::DrawIndex(Graphics* g)
 //0x402060
 void AlmanacDialog::DrawPlants(Graphics* g)
 {
-	g->DrawImage(Sexy::IMAGE_ALMANAC_PLANTBACK, 0, 0);
+	DrawAlmanacBackground(g, Sexy::IMAGE_ALMANAC_PLANTBACK, mApp->mScreenBounds, mX);
+	Graphics aContentGraphics(*g);
+	aContentGraphics.ClipRect(0, 0, BOARD_WIDTH, BOARD_HEIGHT);
+	g = &aContentGraphics;
 	TodDrawString(g, gStr.SUBURBAN_ALMANAC_PLANTS, BOARD_WIDTH / 2, 48, Sexy::FONT_HOUSEOFTERROR20, Color(213, 159, 43), DrawStringJustification::DS_ALIGN_CENTER);
 
-	SeedType aSeedMouseOn = SeedHitTest(mApp->mWidgetManager->mLastMouseX, mApp->mWidgetManager->mLastMouseY);
+	SeedType aSeedMouseOn = SeedHitTest(mApp->mWidgetManager->mLastMouseX - mX, mApp->mWidgetManager->mLastMouseY - mY);
 	for (SeedType aSeedType = SeedType::SEED_PEASHOOTER; aSeedType < NUM_ALMANAC_SEEDS; aSeedType = (SeedType)(aSeedType + 1))
 	{
 		int aPosX, aPosY;
@@ -370,11 +393,10 @@ void AlmanacDialog::DrawPlants(Graphics* g)
 
 		if (mApp->mDDInterface->mIs3D)
 		{
-			g->SetClipRect(475, 0, 397, 500);
-			g->mTransY -= 145;
-			mApp->mPoolEffect->PoolEffectDraw(g, aNight);
-			g->mTransY += 145;
-			g->ClearClipRect();
+			Graphics aPoolGraphics(*g);
+			aPoolGraphics.ClipRect(475, 0, 397, 500);
+			aPoolGraphics.Translate(0, -145);
+			mApp->mPoolEffect->PoolEffectDraw(&aPoolGraphics, aNight);
 		}
 	}
 	else
@@ -522,10 +544,13 @@ static_assert(sizeof(kAlmanacPortraitOffset) / sizeof(kAlmanacPortraitOffset[0])
 // GOTY @Patoke: 0x403DE0
 void AlmanacDialog::DrawZombies(Graphics* g)
 {
-	g->DrawImage(Sexy::IMAGE_ALMANAC_ZOMBIEBACK, 0, 0);
+	DrawAlmanacBackground(g, Sexy::IMAGE_ALMANAC_ZOMBIEBACK, mApp->mScreenBounds, mX);
+	Graphics aContentGraphics(*g);
+	aContentGraphics.ClipRect(0, 0, BOARD_WIDTH, BOARD_HEIGHT);
+	g = &aContentGraphics;
 	TodDrawString(g, gStr.SUBURBAN_ALMANAC_ZOMBIES, BOARD_WIDTH / 2, 54, Sexy::FONT_DWARVENTODCRAFT24, Color(0, 196, 0), DS_ALIGN_CENTER);
 
-	ZombieType aZombieMouseOn = ZombieHitTest(mApp->mWidgetManager->mLastMouseX, mApp->mWidgetManager->mLastMouseY);
+	ZombieType aZombieMouseOn = ZombieHitTest(mApp->mWidgetManager->mLastMouseX - mX, mApp->mWidgetManager->mLastMouseY - mY);
 	for (int i = 0; i < NUM_ALMANAC_ZOMBIES; i++)
 	{
 		ZombieType aZombieType = GetZombieType(i);
@@ -661,21 +686,17 @@ void AlmanacDialog::DrawZombies(Graphics* g)
 //0x403810
 void AlmanacDialog::Draw(Graphics* g)
 {
+	const int aPreviousX = mX;
+	RefreshAlmanacLayout(*this);
+	Graphics aPageGraphics(*g);
+	aPageGraphics.Translate(mX - aPreviousX, 0);
+	g = &aPageGraphics;
 	g->mLinearBlend = true;
 	switch (mOpenPage)
 	{
 	case AlmanacPage::ALMANAC_PAGE_INDEX:	DrawIndex(g);	break;
 	case AlmanacPage::ALMANAC_PAGE_PLANTS:	DrawPlants(g);	break;
 	case AlmanacPage::ALMANAC_PAGE_ZOMBIES:	DrawZombies(g);	break;
-	}
-
-	for (Zombie* aZombie : mZombiePerfTest)
-	{
-		if (aZombie)
-		{
-			Graphics aTestGraphics = Graphics(*g);
-			aZombie->Draw(&aTestGraphics);
-		}
 	}
 
 	mCloseButton->Draw(g);
@@ -816,6 +837,7 @@ ZombieType AlmanacDialog::ZombieHitTest(int x, int y)
 //0x403C60
 void AlmanacDialog::MouseUp(int x, int y, int theClickCount)
 {
+	RefreshAlmanacLayout(*this);
 	(void)x;(void)y;(void)theClickCount;
 	mDescScrollBarDragging = false;
 	if (mPlantButton->IsMouseOver())		SetPage(ALMANAC_PAGE_PLANTS);
@@ -828,6 +850,9 @@ void AlmanacDialog::MouseUp(int x, int y, int theClickCount)
 // GOTY @Patoke: 0x404F10
 void AlmanacDialog::MouseDown(int x, int y, int theClickCount)
 {
+	const int aPreviousX = mX;
+	RefreshAlmanacLayout(*this);
+	x += aPreviousX - mX;
 	(void)theClickCount;
 
 	Rect aDescRect = GetDescRect();

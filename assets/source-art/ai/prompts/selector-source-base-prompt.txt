@@ -1,0 +1,22 @@
+Use case: compositing.
+Asset type: source background textures for a layered 2D game, joined for one
+seamless edit and then cut back into separate animated texture resources.
+Edit target: supplied 1744x608 source-background canvas. The left side is the
+main menu sky source; the right side is the portrait editor's night background.
+The narrow wall/grass strip in the join belongs to a separately animated main
+menu foreground. Its exact silhouette and placement must remain unchanged.
+The absence of a tree, house, main gravestone body, vases, and UI is intentional:
+all those are independently animated layers and MUST NOT be painted here.
+Primary request: harmonize only the masked narrow vertical join, x=880..1100,
+y=0..599. Make the sky color and lighting connect naturally. Continue the
+right-side stone wall, grass and ground within this narrow join. Preserve
+wall geometry and grass silhouettes exactly, changing only discontinuous
+colors, outlines at the seam, and mismatched lighting. Never expand a tiny
+cropped foreground edge into a gravestone.
+Invariants: preserve the exact framing, coordinates and scale of every
+unmasked pixel. No new scene composition, no layout changes. Keep the left
+unmasked sky an empty color-gradient background. Preserve all unmasked clouds,
+wall, grass, flowers and BACK stone on the right at their original positions.
+No tree, house, large gravestone, vases, menu buttons, signs, characters,
+plants, new text, logos, borders or watermarks. The bottom 8 and rightmost
+11 pixels are padding. Keep the original canvas aspect and do not crop.

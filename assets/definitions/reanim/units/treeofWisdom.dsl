@@ -701,7 +701,7 @@ export component treeofWisdom {
     Track {
         source-name: "grass";
         frame-count: 354;
-        frame 0 { y: 596.799988; image: IMAGE_REANIM_TREE_GRASS; }
+        frame 0 { x: -44; y: 596.799988; image: IMAGE_REANIM_TREE_GRASS; }
         frame 1 { y: 545.799988; image: none; }
         frame 2 { y: 494.799988; }
         frame 3 { y: 443.799988; }
@@ -713,7 +713,7 @@ export component treeofWisdom {
         frame 9 { y: 388.299988; scale-y: 1.02199996; }
         frame 10 { y: 393.100006; scale-y: 1; }
         frame 11 { y: -10000; scale-y: -10000; }
-        frame 345 { x: 0.699999988; y: 392.799988; }
+        frame 345 { x: -43.2999992; y: 392.799988; }
         frame 346 { x: -10000; y: -10000; }
     }
     Track {

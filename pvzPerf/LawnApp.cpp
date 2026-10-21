@@ -53,6 +53,7 @@
 #include "SexyAppFramework/graphics/DDInterface.h"
 #include "SexyAppFramework/graphics/DDImage.h"
 #include "SexyAppFramework/graphics/RenderInterface.h"
+#include "SexyAppFramework/graphics/GameViewport.h"
 #include "Resources.h"
 
 #include "widget/Checkbox.h"
@@ -65,6 +66,35 @@ static bool gSlowMo = false;  //0x6A9EAA
 static bool gFastMo = false;  //0x6A9EAB
 LawnApp* gLawnApp = nullptr;  //0x6A9EC0
 static int gSlowMoCounter = 0;  //0x6A9EC4
+
+namespace
+{
+void RefreshGameViewport(LawnApp& app)
+{
+	const int width = app.mScreenBounds.mWidth;
+	Sexy::GameViewport view{width, BOARD_HEIGHT, (BOARD_WIDTH - width) / 2};
+	const bool battle = app.mBoard && app.mBoard->mBackground >= BACKGROUND_1_DAY &&
+		app.mBoard->mBackground <= BACKGROUND_6_BOSS &&
+		(app.mGameScene == SCENE_PLAYING || app.mGameScene == SCENE_LEVEL_INTRO ||
+		 app.mGameScene == SCENE_ZOMBIES_WON);
+	app.mViewportWorldBounds = battle ?
+		Rect(-BOARD_OFFSET, 0, BOARD_OFFSET + BOARD_IMAGE_WIDTH_OFFSET, BOARD_HEIGHT) : Rect();
+	if (battle)
+	{
+		view = view.WithinWorld(-BOARD_OFFSET, BOARD_IMAGE_WIDTH_OFFSET);
+	}
+	if (app.mScreenBounds.mX == view.left &&
+		app.mWidgetManager->mMouseDestRect.mX == view.left &&
+		app.mWidgetManager->mMouseDestRect.mWidth == width)
+		return;
+	const int delta = view.left - app.mWidgetManager->mMouseDestRect.mX;
+	app.mScreenBounds.mX = view.left;
+	app.mWidgetManager->mMouseDestRect = app.mScreenBounds;
+	app.mWidgetManager->mLastMouseX += delta;
+	app.mWidgetManager->MarkAllDirty();
+	app.mWidgetManager->RehupMouse();
+}
+}
 
 //0x44E8A0
 bool LawnGetCloseRequest()
@@ -132,6 +162,7 @@ LawnApp::LawnApp()
 	mDebugKeysEnabled = false;
 	mFullCompanyName = "PopCap Games";
 	mProdName = "PopCap\\PlantsVsZombies";
+	mProductVersion = "1.3.0";
 	std::string aTitleName = "pvz_perf";
 #ifdef _DEBUG
 	aTitleName += " BETA ";
@@ -364,6 +395,7 @@ void LawnApp::KillBoard()
 		mBoard = nullptr;
 	}
 
+	RefreshGameViewport(*this);
 	SetCursor(CURSOR_POINTER);
 }
 
@@ -491,6 +523,7 @@ bool LawnApp::TryLoadGame()
 		if (mBoard->LoadGame(aSaveName))
 		{
 			mFirstTimeGameSelector = false;
+			RefreshGameViewport(*this);
 			DoContinueDialog();
 			return true;
 		}
@@ -522,6 +555,7 @@ void LawnApp::NewGame()
 	mBoardResult = BoardResult::BOARDRESULT_NONE;
 	mGameScene = GameScenes::SCENE_LEVEL_INTRO;
 
+	RefreshGameViewport(*this);
 	ShowSeedChooserScreen();
 	mBoard->mCutScene->StartLevelIntro();
 }
@@ -1663,6 +1697,7 @@ void LawnApp::UpdatePlayTimeStats()
 //0x452650
 void LawnApp::UpdateFrames()
 {
+	RefreshGameViewport(*this);
 	if ((!mActive || mMinimized) && mBoard)
 	{
 		mBoard->ResetFPSStats();
@@ -1730,9 +1765,6 @@ void LawnApp::ToggleFastMo()
 //0x452740
 void LawnApp::LoadGroup(ResourceGroupId theGroup, int theGroupAveMsToLoad)
 {
-	PerfTimer aTimer;
-	aTimer.Start();
-
 	mResourceManager->StartLoadResources(theGroup);
 	while (!mShutdown && !mCloseRequest && !mLoadingFailed && TodLoadNextResource())
 	{
@@ -1748,9 +1780,6 @@ void LawnApp::LoadGroup(ResourceGroupId theGroup, int theGroupAveMsToLoad)
 		mLoadingFailed = true;
 	}
 
-	//int aTotalGroupWeight = mResourceManager->GetNumResources(theGroup) * theGroupAveMsToLoad;
-	//int aGroupTime = max(aTimer.GetDuration(), 0.0);
-	//TraceLoadGroup(theGroup, aGroupTime, aTotalGroupWeight, theGroupAveMsToLoad);
 }
 
 //0x4528E0

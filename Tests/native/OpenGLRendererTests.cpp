@@ -1103,6 +1103,29 @@ int main(int argc, char** argv)
         rendererTest("caustics-CPU-reference",Caustics);
         rendererTest("font-endpoint-expand-shrink-singleton",FontEndpoints);
         rendererTest("effects-prepare-rejection",EffectsBoundary);
+        rendererTest("canvas-resize-preserves-resident-image", [](OpenGLRenderer& r) {
+            const unsigned int color = 0xff2468ac;
+            auto* source = r.CreateTexture(1, 1, &color, 4);
+            const auto slot = OpenGLRenderer::SlotOf(source);
+            for (const int width : {801, 960, 999, 1065, 1066, SceneW}) {
+                r.ResizeScene(width, SceneH);
+                Require(r.sceneWidth == width && r.sceneHeight == SceneH,
+                    "Incorrect canvas extent");
+                Require(!r.PresentRetainedScene(), "Old-size canvas survived resize");
+                Require(OpenGLRenderer::SlotOf(source) == slot &&
+                    r.ReadTexturePixels(source).pixels[0] == color,
+                    "Canvas resize changed resident image");
+                Require(r.BeginScene(), "Begin resized canvas");
+                Draw(r, source, Quad(source, 0, 0, float(width), SceneH));
+                r.EndSceneAndPresent();
+                const auto pixels = r.ReadScenePixels();
+                Require(pixels.size() == size_t(width) * SceneH &&
+                    std::all_of(pixels.begin(), pixels.end(),
+                        [=](auto pixel) { return pixel == color; }),
+                    "Canvas resize left incorrect pixels");
+            }
+            r.DestroyTexture(source);
+        });
         rendererTest("hidden-retained-resize-simulated-suspension",
             [&](OpenGLRenderer& r) { Retained(r,context,window); });
         if(argc>2) {

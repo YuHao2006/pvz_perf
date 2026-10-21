@@ -88,6 +88,45 @@ AU 解码和 MO3 播放是格式处理，不是包加密。
 旧 build_numeric_runtime_pak64.py 的历史包转换模式仍按排除清单保留旧条目，
 它不再充当主构建的资源选入策略。
 
+### 已退休菜单图片
+
+QuickPlay 子菜单没有实际绘制入口。2026-10-21 核对游戏代码、全部数值
+reanim/particle 和字体图片引用后，将以下 10 个 author Image 描述符的
+path 设为 `blank`，并设置 `noalpha`。原有 id、slot、symbol、group 和
+源图片保留；组加载及 Resources.cpp 的提取表仍获得可加载的空白图片。
+不能仅将这些 author 描述符标为 unavailable：组加载和提取仍会访问它们。
+
+| 源图片（assets/runtime/images/ 下） | 稳定 slot | 原包图片字节 |
+| --- | ---: | ---: |
+| selector_morewaystoplay_background.png | 100 | 432,161 |
+| quickplay_minigames_button.png | 113 | 31,499 |
+| quickplay_minigames_button_highlight.png | 114 | 32,890 |
+| quickplay_minigames_cloud.png | 115 | 31,688 |
+| quickplay_puzzles_button.png | 116 | 20,725 |
+| quickplay_puzzles_button_highlight.png | 117 | 21,875 |
+| quickplay_puzzles_cloud.png | 118 | 27,903 |
+| quickplay_survival_button.png | 119 | 31,281 |
+| quickplay_survival_button_highlight.png | 120 | 32,474 |
+| quickplay_survival_cloud.png | 121 | 36,278 |
+| 合计 | | 698,774 |
+
+698,774 字节是审计时这 10 张图片的原始 payload 之和，不包含 ZIP 条目
+开销及 compiled/resources.compiled 路径缩短带来的变化。源图仍在仓库，
+主流水线根据修改后的引用闭包自然不再选入包。
+quickplay_back_button.png 和 quickplay_back_button_highlight.png 仍被
+GameSelector 构造按钮时使用，继续保留。字体 glyph 和独立 alpha 配图不属于
+这次退休范围；不能仅凭游戏代码没有直接使用某个图像变量就删除它们。
+
+构建后运行 `python -B tools/verify_runtime_resources.py <Release/main.pak64>`
+验证所有数值记录及文件闭包、字体 glyph、10 个退休资源的稳定身份和空白
+路径、原图不入包，以及返回按钮仍存在。工具会检查全部 compiled
+reanim/particle 的真实 image ID；保守的 C++ token 检查会忽略注释和字符串
+中的变量名，保留未知预处理分支，检测退休符号或原图路径被重新使用。
+Resources.cpp/.h 的稳定声明和提取表不作为绘制消费者。这不是完整的 C++
+语义可达性证明；恢复子菜单时应同步恢复描述符并更新这份退休约定。
+`--predict-retirement` 可对清理前的包作只读预测：仅在内存替换资源清单，
+检查其余描述符不变并验证排除这 10 张图后的闭包，不修改现有包。
+
 Tests/reference/render-groups/source-baseline.tar.gz 是旧渲染分组审计的默认输入，
 旧资源包位于 Tests/reference/legacy1073-resources；它们不进入当前发行包。
 若撤除此历史审计，应同时移除或改造其入口，不能只删除夹具而留下失效工具。

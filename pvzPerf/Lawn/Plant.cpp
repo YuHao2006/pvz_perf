@@ -4411,11 +4411,7 @@ float PlantDrawHeightOffset(Board* theBoard, Plant* thePlant, SeedType theSeedTy
         {
             aHeightOffset += 0.0f;
         }
-        else if (theRow == aBottomRow && theCol >= 7 && theBoard->StageHas6Rows())
-        {
-            aHeightOffset += 1.0f;
-        }
-        else if (theRow == aBottomRow && theCol < 7)
+        else if (theRow == aBottomRow)
         {
             aHeightOffset += 12.0f;
         }

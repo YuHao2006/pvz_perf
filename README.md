@@ -4,11 +4,12 @@
 文档维护当前有效机制与修复；现行实测和历史算法证据分开标注，不按日期追加开发过程。
 
 发行下载：[GitHub Releases](https://github.com/YuHao2006/pvz_perf/releases)。
-**Windows 推荐下载 `x64-win10-vulkan-v1.1.zip`**，完整解压后运行 `pvz_perf.exe`。
-v1.1 提供 Win7/DX9、Win7/OpenGL、Win7/Vulkan、Win10/DX12、Win10/Vulkan，
-以及 `x64-x11-vulkan-v1.1.zip`、`x64-wayland-vulkan-v1.1.zip` 两个 Linux 平铺 ZIP。
-另附源码包和独立的 `pvz_perf-test-saves-v1.1.zip`，后者合并 PerfTest 完美档与统一无尽基准。
-每个包包含生成的 PerfTest 完美用户档、统一无尽基准和外部 Magpie effects，
+**当前版本 v1.3 仅发布 `x64-win10-vulkan-v1.3.zip`**，完整解压后运行 `pvz_perf.exe`。
+本版包含 800～1400×600 可变画幅、菜单及花园素材更新、输入坐标修复、
+可配置目标帧率、计时兼容处理和绘制优化，详见 [v1.3 发布说明](docs/releases/v1.3.md)。
+其他 Windows 和 Linux 组合的现有二进制仍留在 v1.1，此次不更新，
+没有额外上传源码 ZIP 或独立测试存档 ZIP。
+v1.3 包包含生成的 PerfTest 完美用户档、统一无尽基准和外部 Magpie effects，
 不包含个人进度或个人设置。普通生存的完成记录为 5 旗，困难生存为 10 旗。
 **Win7 统一 SDR，不支持 HDR；DX9/OpenGL 的默认配置不启用自定义缩放效果。**
 Windows 游戏使用 `/MD`，发行包不携带 CRT DLL，运行机器需安装兼容的 VC++ x64 运行库；

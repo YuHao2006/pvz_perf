@@ -823,6 +823,22 @@ bool MetalRenderer::ResizePresent() {
     s.context.RecreateSwapchain();
     return !s.context.surfaceSuspended;
 }
+void MetalRenderer::ResizeScene(int width, int height) {
+    auto& s = *impl_;
+    if (s.sceneOpen || s.renderImage)
+        throw std::logic_error("Resize the main Metal canvas between scenes");
+    if (s.width == width && s.height == height) return;
+    s.Finish(true);
+    auto next = s.Image(width, height, MTLPixelFormatBGRA8Unorm, false, true);
+    next->slot = 0;
+    s.scaleModes = {};
+    s.scaleEnabled = false;
+    s.scene = std::move(next);
+    s.owners[0] = s.scene.get();
+    s.width = width;
+    s.height = height;
+    s.initialized = false;
+}
 void MetalRenderer::SetHdrParams(const GpuHdrParams&) {
     throw std::runtime_error("Metal HDR is not supported in this milestone");
 }

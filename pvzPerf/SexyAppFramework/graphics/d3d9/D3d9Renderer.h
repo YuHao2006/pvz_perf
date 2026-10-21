@@ -63,6 +63,7 @@ public:
     void EndSceneAndPresent();
     bool PresentRetainedScene();
     bool ResizePresent();
+    void ResizeScene(int width, int height);
     void SetHdrParams(const VulkanHdrParams&);
     VulkanHdrParams HdrParams() const;
     void PrepareScale(bool, std::span<const D3d9ScaleStep>, unsigned int, unsigned int);

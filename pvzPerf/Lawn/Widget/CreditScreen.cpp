@@ -294,6 +294,7 @@ CreditsOverlay::CreditsOverlay(CreditScreen* theCreditScreen)
 	mParent = theCreditScreen;
 	mMouseVisible = false;
 	mHasAlpha = true;
+    mClip = false;
 }
 
 void CreditsOverlay::Draw(Graphics* g)
@@ -740,7 +741,9 @@ void CreditScreen::DrawOverlay(Graphics* g)
         if (aFadeAlpha > 0)
         {
             g->mColor = Color(0, 0, 0, aFadeAlpha);
-            g->FillRect(0, 0, mWidth, mHeight);
+            Rect screen = mApp->mScreenBounds;
+            screen.Offset(-mX, -mY);
+            g->FillRect(screen);
         }
     }
 }
@@ -791,6 +794,14 @@ static void DrawReanimToPreload(Graphics* g, ReanimationType theReanimType)
 //0x435B60
 void CreditScreen::Draw(Graphics* g)
 {
+    if (mApp->mScreenBounds.mWidth > mWidth) {
+        {
+            Graphics background(*g);
+            background.mColor = Color::Black;
+            background.FillRect(mApp->mScreenBounds);
+        }
+        g->ClipRect(0, 0, mWidth, mHeight);
+    }
     g->mLinearBlend = true;
 
     if (!mPreloaded)

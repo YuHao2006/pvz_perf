@@ -83,6 +83,7 @@ public:
     /*inline*/ bool         SeedNotAllowedToPick(SeedType theSeedType);
     /*inline*/ bool         SeedNotAllowedDuringTrial(SeedType theSeedType);
     virtual void            Draw(Graphics* g);
+    void                    DrawZombieToolTip(Graphics* g);
     void                    UpdateViewLawn();
     void                    LandFlyingSeed(ChosenSeed& theChosenSeed);
     void                    UpdateCursor();

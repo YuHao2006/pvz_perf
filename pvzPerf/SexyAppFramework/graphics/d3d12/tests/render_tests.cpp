@@ -258,6 +258,60 @@ void Validation(ID3D12Device* device) {
     }
     std::cout << "d3d12-debug-errors=0\n";
 }
+
+void ResizeCanvas(D3d12Renderer& renderer, ScaleEffectRuntimeDesc& effect) {
+    const unsigned int red = 0xffff0000;
+    auto* source = renderer.CreateTextureStatic(1, 1, &red, 4, true, 2001);
+    const auto slot = D3d12Renderer::SlotOf(source);
+    auto* generated = renderer.CreateRenderImage(3, 5);
+    const auto generatedSlot = D3d12Renderer::SlotOf(generated);
+    for (const int width : {801, 960, 999, 1065, 1066, 1399, 1400, 800}) {
+        renderer.ResizeScene(width, 600);
+        Require(renderer.sceneWidth == width && renderer.sceneHeight == 600,
+            "Canvas dimensions did not change");
+        Require(!renderer.PresentRetainedScene(), "Old-size canvas was retained after resize");
+        Require(D3d12Renderer::SlotOf(source) == slot &&
+            D3d12Renderer::SlotOf(generated) == generatedSlot,
+            "Canvas resize changed a resident image slot");
+        Require(renderer.ReadTexturePixels(source).pixels[0] == red,
+            "Canvas resize changed resident image contents");
+        Require(renderer.BeginScene(), "Cannot draw a resized canvas");
+        const auto quad = Quad(0, 0, float(width), 600, slot);
+        renderer.SubmitTriangles(quad, source, false, false, GpuBlend::Opaque);
+        renderer.EndSceneAndPresent();
+        const auto pixels = renderer.ReadScenePixels();
+        Require(pixels.size() == size_t(width) * 600 &&
+            std::all_of(pixels.begin(), pixels.end(), [=](auto pixel) { return pixel == red; }),
+            "Resized canvas has incorrect pixels or uncovered edges");
+        D3d12ScaleStep step{&effect, {}};
+        step.scaling.mScaleX = step.scaling.mScaleY = 1;
+        renderer.PrepareScale(false, {&step, 1}, unsigned(width), 600);
+        renderer.WarmScale(false);
+        renderer.SetScaleMode(true, false);
+        Require(renderer.ScaleOutput(false).width == unsigned(width),
+            "Scale chain still uses the old canvas");
+        Require(renderer.ReadScalePixels(false) == pixels,
+            "Rebuilt scale chain changed resized canvas pixels");
+        const auto scaleOutput = renderer.ScaleOutput(false);
+        renderer.ResizeScene(width, 600);
+        Require(renderer.PresentRetainedScene(),
+            "Same-size resize discarded the retained scene");
+        const auto unchangedScaleOutput = renderer.ScaleOutput(false);
+        Require(unchangedScaleOutput.resource == scaleOutput.resource &&
+            unchangedScaleOutput.width == scaleOutput.width &&
+            unchangedScaleOutput.height == scaleOutput.height,
+            "Same-size resize rebuilt the scale output");
+        Require(D3d12Renderer::SlotOf(source) == slot &&
+            D3d12Renderer::SlotOf(generated) == generatedSlot &&
+            renderer.ReadScenePixels() == pixels &&
+            renderer.ReadScalePixels(false) == pixels,
+            "Same-size resize changed resident slots or retained pixels");
+        renderer.SetScaleMode(false, false);
+    }
+    renderer.DestroyTexture(source);
+    renderer.DestroyTexture(generated);
+    std::cout << "canvas-resize-800-through-1400-resident-textures-and-scale=PASS\n";
+}
 }
 int main() {
     try {
@@ -273,6 +327,7 @@ int main() {
             ImageFactories(renderer);
             SourceScale(renderer, scaleEffect);
             StaticSlots(renderer);
+            ResizeCanvas(renderer, scaleEffect);
         } catch (...) {
             Validation(context.device);
             throw;

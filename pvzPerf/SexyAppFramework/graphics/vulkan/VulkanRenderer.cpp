@@ -1904,6 +1904,41 @@ bool VulkanRenderer::ResizePresent() {
     s.RefreshPresentPipeline();
     return true;
 }
+void VulkanRenderer::ResizeScene(int width, int height) {
+    auto& s = *impl_;
+    if (s.frame.valid || s.renderImage)
+        throw std::logic_error("Resize the main Vulkan canvas between scenes");
+    if (s.width == width && s.height == height) return;
+    if (width <= 0 || height <= 0 ||
+        unsigned(width) > MaxImageDimension2D() || unsigned(height) > MaxImageDimension2D())
+        throw std::invalid_argument("Invalid Vulkan canvas size");
+    s.FlushTextureUploads();
+    if (s.transferOpen) s.FinishTransfer();
+    s.CompleteTransfers();
+    s.window.WaitForFrame();
+    auto next = s.Image(width, height, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT |
+        VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, false);
+    VkFramebufferCreateInfo info{VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO};
+    info.renderPass = s.scenePass;
+    info.attachmentCount = 1;
+    info.pAttachments = &next->view;
+    info.width = unsigned(width);
+    info.height = unsigned(height);
+    info.layers = 1;
+    VkFramebuffer framebuffer = VK_NULL_HANDLE;
+    VK_REQUIRE(vkCreateFramebuffer(s.device, &info, nullptr, &framebuffer));
+    s.ReleaseScale(0);
+    s.ReleaseScale(1);
+    s.scaleEnabled = false;
+    vkDestroyFramebuffer(s.device, s.sceneFramebuffer, nullptr);
+    const auto oldSlot = s.scene->slot;
+    s.scene = std::move(next);
+    s.freeSlots.push_back(oldSlot);
+    s.sceneFramebuffer = framebuffer;
+    s.width = width;
+    s.height = height;
+    s.sceneInitialized = false;
+}
 void VulkanRenderer::SetHdrParams(const VulkanHdrParams& params) {
     params.Validate();
     auto& s=*impl_;

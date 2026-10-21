@@ -1,0 +1,19 @@
+Use case: compositing.
+Asset type: a 2D game's SOURCE shop background, not a game screenshot.
+The input was assembled ONLY from existing artwork: an original 1400x600
+Ultra Widescreen backdrop and a 1066x600 Widescreen backdrop placed at x=167.
+The middle 800 pixels, x=300..1099, keep the original centered shop layout.
+Repair only the masked left join near x=167 and right join near x=1233.
+In dark-blue nighttime, connect the tree canopy, fence, shrubs, sky and pavement
+naturally across the joins. Use existing scene content, proportions and style.
+Make the sky continuous, without vertical brightness bands, white gaps, cut
+roof fragments, or floating fence parts. Fill any exposed blank patch with
+coherent existing-style background ground or sky as appropriate.
+Do NOT mirror, reflect, clone, tile or stretch any image or prominent object.
+Do NOT invent a different scene or move the layout. Keep all unmasked pixels,
+including x=300..1099, unchanged and at the same pixel scale and coordinates.
+Car, Dave, shop sign, shelves, goods, speech bubbles and buttons are separate
+foreground sprites and intentionally absent. Do not add them. No characters,
+new prominent objects, writing, logos or UI.
+Keep the original 1408x608 framing; the rightmost and bottom eight pixels
+are padding and will be discarded.

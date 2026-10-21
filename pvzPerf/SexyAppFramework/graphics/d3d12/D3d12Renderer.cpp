@@ -103,8 +103,8 @@ struct D3d12Renderer::Impl {
     D3d12Context& context;
     ID3D12Device* device;
     std::filesystem::path directory;
-    const int width;
-    const int height;
+    int width;
+    int height;
     ComPtr<ID3D12DescriptorHeap> heap, samplerHeap, rtvHeap;
     UINT descriptorStride = 0, rtvStride = 0;
     UINT temporary = TextureSlots, staticBase = TextureSlots;
@@ -1366,6 +1366,28 @@ bool D3d12Renderer::ResizePresent() {
     s.Drain();
     s.context.RecreateSwapchain();
     return s.context.BackBuffer() != nullptr;
+}
+void D3d12Renderer::ResizeScene(int width, int height) {
+    auto& s = *impl_;
+    if (s.sceneOpen || s.renderImage)
+        throw std::logic_error("Resize the main D3D12 canvas between scenes");
+    if (s.width == width && s.height == height) return;
+    s.Dimensions(width, height);
+    s.Drain();
+    auto next = s.Image(width, height, DXGI_FORMAT_B8G8R8A8_UNORM,
+        true, false, false, {0, 0, 0, 1});
+    for (auto& mode : s.scaleModes) {
+        if (mode) s.ReleaseSlots(mode->sampledOutput.get());
+        mode.reset();
+    }
+    s.scaleEnabled = false;
+    s.ReleaseSlots(s.scene.get());
+    s.scene = std::move(next);
+    s.Register(s.scene.get());
+    s.width = width;
+    s.height = height;
+    s.sceneInitialized = false;
+    s.InvalidateDrawState();
 }
 void D3d12Renderer::SetHdrParams(const GpuHdrParams& params) {
     params.Validate();

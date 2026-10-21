@@ -1,8 +1,10 @@
 #include <time.h>
 #include <type_traits>
 #include "ZenGarden.h"
+#include "GardenHudLayout.h"
 #include "BoardInclude.h"
 #include "graphics/DDInterface.h"
+#include "graphics/MemoryImage.h"
 #include "ZombieFlags.h"
 #include "LawnCommon.h"
 #include "System/Music.h"
@@ -19,6 +21,7 @@
 #include "Sexy.TodLib/TodDebug.h"
 #include "Sexy.TodLib/TodFoley.h"
 #include "Widget/SeedChooserScreen.h"
+#include "Widget/SeedChooserLayout.h"
 #include "Sexy.TodLib/Attachment.h"
 #include "Sexy.TodLib/Reanimator.h"
 #include "widget/Dialog.h"
@@ -188,6 +191,7 @@ Board::Board(LawnApp* theApp)
 	if (mApp->mGameMode == GameMode::GAMEMODE_LIMBO_ZEN_GARDEN || mApp->mGameMode == GameMode::GAMEMODE_TREE_OF_WISDOM)
 	{
 		mMenuButton->mLabel = gStr.MAIN_MENU_BUTTON;
+		mMenuButton->mParentWidget = this;
 		mMenuButton->mX = 628;
 		mMenuButton->mY = -10;
 		mMenuButton->mWidth = 163;
@@ -220,6 +224,7 @@ Board::Board(LawnApp* theApp)
 		mStoreButton->mDisabled = true;
 	}
 
+	RefreshHudLayout();
 }
 
 //0x408670、0x408690
@@ -1515,6 +1520,7 @@ Rect Board::GetShovelButtonRect()
 	{
 		aRect.mX = 600;
 	}
+	aRect.mX += mApp->mScreenBounds.mX;
 	return aRect;
 }
 
@@ -1530,18 +1536,29 @@ void Board::GetZenButtonRect(GameObjectType theObjectType, Rect& theRect)
 	// Rect aButtonRect = GetShovelButtonRect();
 	// GetZenButtonRect(xxx, aButtonRect);
 
+	const auto frame = GardenHudLayout::ViewportInBoard(
+		mApp->mScreenBounds.mX, mApp->mScreenBounds.mWidth, mX, mY);
+	theRect.mY = frame.top;
+	if (mApp->mGameMode == GameMode::GAMEMODE_LIMBO_ZEN_GARDEN &&
+		mChallenge->mChallengeState == ChallengeState::STATECHALLENGE_ZEN_FADING)
+		theRect.mY += TodAnimateCurve(50, 0, mChallenge->mChallengeStateCounter, 0, -72, Curves::EaseInOut);
+	if (theObjectType == GameObjectType::OBJECT_TYPE_NEXT_GARDEN)
+	{
+		theRect.mX = frame.left + 564;
+		return;
+	}
 	if (mApp->mGameMode == GameMode::GAMEMODE_TREE_OF_WISDOM)
 	{
-		// Only tree food moves to x30; NEXT_GARDEN is positioned separately
-		// by DrawZenButtons/MouseHitTest. 1073 compares object 0x0E here.
+		// Only tree food occupies x30 in the original left-anchored toolbar.
+		// NEXT_GARDEN is handled above for both drawing and input.
 		if (theObjectType == GameObjectType::OBJECT_TYPE_TREE_FOOD)
 		{
-			theRect.mX = 30;
+			theRect.mX = frame.left + 30;
 		}
 		return;
 	}
 
-	theRect.mX = 30;
+	theRect.mX = frame.left + 30;
 	bool usable = true;
 	for (int anObject = GameObjectType::OBJECT_TYPE_WATERING_CAN; anObject <= GameObjectType::OBJECT_TYPE_NEXT_GARDEN; anObject++)
 	{
@@ -1553,7 +1570,7 @@ void Board::GetZenButtonRect(GameObjectType theObjectType, Rect& theRect)
 	}
 	if (usable)
 	{
-		theRect.mX = 0;
+		theRect.mX = frame.left;
 	}
 
 	for (int anObject = GameObjectType::OBJECT_TYPE_WATERING_CAN; anObject < theObjectType; anObject++)
@@ -4229,7 +4246,8 @@ void Board::UpdateToolTip()
 			return;
 		}
 
-		if (mSeedBank->ContainsPoint(mWidgetManager->mLastMouseX, mWidgetManager->mLastMouseY) ||
+		if (mSeedBank->ContainsPoint(mWidgetManager->mLastMouseX - mApp->mScreenBounds.mX,
+			mWidgetManager->mLastMouseY) ||
 			mApp->mSeedChooserScreen->mAlmanacButton->IsMouseOver() ||
 			mApp->mSeedChooserScreen->mStoreButton->IsMouseOver() ||
 			mApp->mSeedChooserScreen->mImitaterButton->IsMouseOver())
@@ -4269,7 +4287,9 @@ void Board::UpdateToolTip()
 		mToolTip->mVisible = true;
 		mToolTip->mCenter = true;
 
-		mToolTip->mMinLeft = IMAGE_SEEDCHOOSER_BACKGROUND->mWidth;
+		// The chooser draws this overlay in Board's frame, including camera pan.
+		mToolTip->mMinLeft = SeedChooserLayout::RebaseX(IMAGE_SEEDCHOOSER_BACKGROUND->mWidth,
+			mApp->mSeedChooserScreen->mX, mX);
 		if (mApp->mSeedChooserScreen->mAlmanacButton->mBtnNoDraw && mApp->mSeedChooserScreen->mStoreButton->mBtnNoDraw)
 		{
 			mToolTip->mMaxBottom = 600;
@@ -4281,7 +4301,7 @@ void Board::UpdateToolTip()
 		if (!mApp->mSeedChooserScreen->mImitaterButton->mBtnNoDraw)
 		{
 			mToolTip->CalculateSize();
-			if (mX + mToolTip->mX - mToolTip->mWidth / 2 < 524)
+			if (mX + mToolTip->mX - mToolTip->mWidth / 2 < mApp->mSeedChooserScreen->mX + 524)
 			{
 				mToolTip->mMaxBottom = 503;
 			}
@@ -4296,7 +4316,7 @@ void Board::UpdateToolTip()
 		return;
 	}
 
-	mToolTip->mMinLeft = 0;
+	mToolTip->mMinLeft = mApp->mScreenBounds.mX;
 	mToolTip->mMaxBottom = BOARD_HEIGHT;
 	mToolTip->SetTitle((""));
 	mToolTip->SetLabel((""));
@@ -4325,7 +4345,8 @@ void Board::UpdateToolTip()
 	{
 		mToolTip->SetLabel(gStr.NEXT_GARDEN_TOOLTIP);
 		Rect aButtonRect = GetShovelButtonRect();
-		mToolTip->mX = 599;
+		GetZenButtonRect(GameObjectType::OBJECT_TYPE_NEXT_GARDEN, aButtonRect);
+		mToolTip->mX = aButtonRect.mX + 35;
 		mToolTip->mY = aButtonRect.mY + 52;
 		mToolTip->mCenter = true;
 		mToolTip->mVisible = true;
@@ -4468,7 +4489,7 @@ void Board::UpdateToolTip()
 		}
 	}
 
-	mToolTip->mX = (SEED_PACKET_WIDTH - mToolTip->mWidth) / 2 + mSeedBank->mX + aSeedPacket->mOffsetX + aSeedPacket->mX;
+	mToolTip->mX = (SEED_PACKET_WIDTH - mToolTip->mWidth) / 2 + mSeedBank->mX + aSeedPacket->mOffsetX + aSeedPacket->mX + mApp->mScreenBounds.mX;
 	mToolTip->mY = mSeedBank->mY + aSeedPacket->mY + 70;
 	mToolTip->mVisible = true;
 }
@@ -5094,6 +5115,7 @@ bool Board::MouseHitTestPlant(int x, int y, HitResult* theHitResult)
 //0x411730
 bool Board::MouseHitTest(int x, int y, HitResult* theHitResult)
 {
+	RefreshHudLayout();
 	if (mBoardFadeOutCounter >= 0 || IsScaryPotterDaveTalking())
 	{
 		theHitResult->mObject = nullptr;
@@ -5188,14 +5210,7 @@ bool Board::MouseHitTest(int x, int y, HitResult* theHitResult)
 			if (CanUseGameObject(aTool) && (aTool != GameObjectType::OBJECT_TYPE_TREE_FOOD || mChallenge->TreeOfWisdomCanFeed()))
 			{
 				Rect aButtonRect = GetShovelButtonRect();
-				if (aTool == GameObjectType::OBJECT_TYPE_NEXT_GARDEN)
-				{
-					aButtonRect.mX = 564;
-				}
-				else
-				{
-					GetZenButtonRect(aTool, aButtonRect);
-				}
+				GetZenButtonRect(aTool, aButtonRect);
 
 				if (aButtonRect.Contains(x, y))
 				{
@@ -5397,6 +5412,7 @@ void Board::PickUpTool(GameObjectType theObjectType)
 //0x411F20
 void Board::MouseDown(int x, int y, int theClickCount)
 {
+	RefreshHudLayout();
 	// Move and click may arrive between updates; feeding tools use highlights.
 	UpdateMousePosition();
 	Widget::MouseDown(x, y, theClickCount);
@@ -5732,6 +5748,7 @@ static_assert(kStoreButtonAction[(int)GameMode::GAMEMODE_ADVENTURE] == StoreButt
 //0x412540
 void Board::MouseUp(int x, int y, int theClickCount)
 {
+	RefreshHudLayout();
 	Widget::MouseUp(x, y, theClickCount);
 	if (mIgnoreMouseUp)
 	{
@@ -6920,7 +6937,7 @@ constexpr TutorialStateCaseFn kTutorialStateCases[(int)TutorialState::TUTORIAL_W
     {
     		b.DisplayAdvice(gStr.ADVICE_CLICK_SHOVEL, MessageStyle::MESSAGE_STYLE_HINT_STAY, AdviceType::ADVICE_NONE);
     		Rect aShovelButtonRect = b.GetShovelButtonRect();
-    		int aPosX = aShovelButtonRect.mX + aShovelButtonRect.mWidth / 2 - 25;
+			int aPosX = aShovelButtonRect.mX - b.mApp->mScreenBounds.mX + aShovelButtonRect.mWidth / 2 - 25;
     		int aPosY = aShovelButtonRect.mY + aShovelButtonRect.mHeight - 65;
     		b.TutorialArrowShow(aPosX, aPosY);
     },  // 15 TUTORIAL_SHOVEL_PICKUP
@@ -7043,6 +7060,7 @@ void Board::Update()
 
 	TodHesitationBracket aHesitation("Board::Update");
 
+	RefreshHudLayout();
 	Widget::Update();
 	MarkDirty();
 
@@ -7173,6 +7191,10 @@ int Board::GetIceZPos(int theRow)
 //0x416140
 void Board::DrawIce(Graphics* g, int theGridY)
 {
+	// Survival repick also starts timers on empty rows; their sentinel is not an ice cap.
+	if (mIceTimer[theGridY] == 0 || mIceMinX[theGridY] == BOARD_ICE_START)
+		return;
+
 	int aPosY = GridToPixelY(8, theGridY) + 20;
 	int aHeight = Sexy::IMAGE_ICE->mHeight;
 	int aWidth = Sexy::IMAGE_ICE->mWidth;
@@ -7218,6 +7240,38 @@ void Board::DrawBackdrop(Graphics* g)
 		TOD_ASSERT(false);
 	}
 
+	if (mApp->mScreenBounds.mWidth > BOARD_WIDTH)
+	{
+		const Rect& aBounds = mApp->mScreenBounds;
+		const int aLeft = aBounds.mX - mX;
+		const int aTop = aBounds.mY - mY;
+		const bool aUnsodded =
+			(mLevel >= 1 && mLevel <= 4 && mApp->IsFirstTimeAdventureMode()) ||
+			mApp->mGameMode == GameMode::GAMEMODE_LIMBO_RESODDED;
+		Image* aBaseImage = aUnsodded ? Sexy::IMAGE_BACKGROUND1UNSODDED : aBgImage;
+		const bool aGarden = aBaseImage &&
+			(aBaseImage == Sexy::IMAGE_BACKGROUND_MUSHROOMGARDEN ||
+			 aBaseImage == Sexy::IMAGE_BACKGROUND_GREENHOUSE ||
+			 aBaseImage == Sexy::IMAGE_AQUARIUM1);
+		const int aBaseX = aGarden ? (BOARD_WIDTH - aBaseImage->mWidth) / 2 : -BOARD_OFFSET;
+		const MemoryImage* aBaseMemory = AsMemoryImage(aBaseImage);
+		// Skip the full-screen underlay only when an already committed, opaque
+		// backdrop overwrites it completely. Unknown alpha and camera gaps retain it.
+		const bool aCovered = aBaseMemory && !aBaseMemory->mBitsChanged &&
+			!aBaseMemory->mPendingDecoded && !aBaseMemory->mHasAlpha && !aBaseMemory->mHasTrans &&
+			g->mDrawMode == Graphics::DRAWMODE_NORMAL &&
+			(!g->mColorizeImages || g->mColor.mAlpha == 255) &&
+			g->mScaleX == 1.0f && g->mScaleY == 1.0f &&
+			aLeft >= aBaseX && aLeft + aBounds.mWidth <= aBaseX + aBaseImage->mWidth &&
+			aTop >= 0 && aTop + aBounds.mHeight <= aBaseImage->mHeight;
+		if (!aCovered)
+		{
+			Graphics background(*g);
+			background.mColor = Color::Black;
+			background.FillRect(aLeft, aTop, aBounds.mWidth, aBounds.mHeight);
+		}
+	}
+
 	if (mLevel == 1 && mApp->IsFirstTimeAdventureMode())
 	{
 		g->DrawImage(Sexy::IMAGE_BACKGROUND1UNSODDED, -BOARD_OFFSET, 0);
@@ -7245,7 +7299,8 @@ void Board::DrawBackdrop(Graphics* g)
 	{
 		if (aBgImage == Sexy::IMAGE_BACKGROUND_MUSHROOMGARDEN || aBgImage == Sexy::IMAGE_BACKGROUND_GREENHOUSE || aBgImage == Sexy::IMAGE_AQUARIUM1)
 		{
-			g->DrawImage(aBgImage, 0, 0);
+			// Centered extensions retain the original garden's 800-pixel core.
+			g->DrawImage(aBgImage, (BOARD_WIDTH - aBgImage->mWidth) / 2, 0);
 		}
 		else
 		{
@@ -7651,7 +7706,20 @@ void Board::DrawGameObjects(Graphics* g)
 		/* [6]  RENDER_ITEM_PLANT_OVERLAY        */ [](Board* aBoard, Graphics* g, RenderItem& aRenderItem) { Plant* aPlant = aRenderItem.mPlant; if (aPlant->BeginDraw(g)) { aBoard->mApp->mZenGarden->DrawPlantOverlay(g, aPlant); aPlant->EndDraw(g); } },
 		/* [7]  RENDER_ITEM_PLANT_MAGNET_ITEMS   */ [](Board*, Graphics* g, RenderItem& aRenderItem) { Plant* aPlant = aRenderItem.mPlant; if (aPlant->BeginDraw(g)) { aPlant->DrawMagnetItems(g); aPlant->EndDraw(g); } },
 		/* [8]  RENDER_ITEM_CURSOR_PREVIEW       */ [](Board*, Graphics* g, RenderItem& aRenderItem) { CursorPreview* aCursorPreview = aRenderItem.mCursorPreview; if (aCursorPreview->BeginDraw(g)) { aCursorPreview->Draw(g); aCursorPreview->EndDraw(g); } },
-		/* [9]  RENDER_ITEM_PARTICLE             */ [](Board*, Graphics* g, RenderItem& aRenderItem) { aRenderItem.mParticleSytem->Draw(g); },
+		/* [9]  RENDER_ITEM_PARTICLE             */ [](Board* aBoard, Graphics* g, RenderItem& aRenderItem) {
+			const ParticleEffect aEffect = aRenderItem.mParticleSytem->mEffectType;
+			const bool aBankArrow = aEffect == ParticleEffect::PARTICLE_SEED_PACKET_PICK &&
+				aBoard->mApp->mGameMode != GameMode::GAMEMODE_LIMBO_ZEN_GARDEN &&
+				aBoard->mApp->mGameMode != GameMode::GAMEMODE_TREE_OF_WISDOM;
+			if (aEffect == ParticleEffect::PARTICLE_SEED_PACKET_FLASH || aBankArrow)
+			{
+                Graphics aBankGraphics(*g);
+                aBankGraphics.Translate(aBoard->mApp->mScreenBounds.mX, 0);
+				aRenderItem.mParticleSytem->Draw(&aBankGraphics);
+				return;
+			}
+			aRenderItem.mParticleSytem->Draw(g);
+		},
 		/* [10] RENDER_ITEM_REANIMATION          */ [](Board*, Graphics* g, RenderItem& aRenderItem) { aRenderItem.mReanimation->Draw(g); },
 		/* [11] RENDER_ITEM_ICE                  */ [](Board* aBoard, Graphics* g, RenderItem& aRenderItem) { aBoard->DrawIce(g, aRenderItem.mBoardGridY); },
 		/* [12] RENDER_ITEM_TOP_UI               */ [](Board* aBoard, Graphics* g, RenderItem&) { aBoard->DrawUITop(g); },
@@ -7836,6 +7904,9 @@ void Board::DrawProgressMeter(Graphics* g)
 	if (!HasProgressMeter())
 		return;
 
+    Graphics aHudGraphics(*g);
+    g = &aHudGraphics;
+	g->Translate(mApp->mScreenBounds.mX + mApp->mScreenBounds.mWidth - BOARD_WIDTH, 0);
 	// ====================================================================================================
 	// ▲ 绘制进度条进度部分的贴图
 	// ====================================================================================================
@@ -7988,6 +8059,9 @@ void Board::DrawHouseDoorTop(Graphics* g)
 // GOTY @Patoke: 0x41A700
 void Board::DrawLevel(Graphics* g)
 {
+    Graphics aHudGraphics(*g);
+    g = &aHudGraphics;
+	g->Translate(mApp->mScreenBounds.mX + mApp->mScreenBounds.mWidth - BOARD_WIDTH, 0);
 	// ====================================================================================================
 	// ▲ 获取完整的关卡名称的字符串
 	// C++23 第一批·条目3：值变才重建（键=mLevel+mGameMode+生存旗数/连击段），输出逐字节等价
@@ -8075,10 +8149,8 @@ void Board::DrawLevel(Graphics* g)
 }
 
 //0x4182D0
-void Board::DrawZenWheelBarrowButton(Graphics* g, int theOffsetY)
+void Board::DrawZenWheelBarrowButton(Graphics* g, const Rect& aButtonRect, int theOffsetY)
 {
-	Rect aButtonRect = GetShovelButtonRect();
-	GetZenButtonRect(GameObjectType::OBJECT_TYPE_WHEELBARROW, aButtonRect);
 	PottedPlant* aPlant = mApp->mZenGarden->GetPottedPlantInWheelbarrow();
 	if (aPlant && mCursorObject->mCursorType != CursorType::CURSOR_TYPE_PLANT_FROM_WHEEL_BARROW)
 	{
@@ -8207,7 +8279,7 @@ constexpr ZenToolDrawFn kZenToolDraw[GameObjectType::OBJECT_TYPE_TREE_FOOD - Gam
 	// 原 else if aTool == OBJECT_TYPE_WHEELBARROW
 	[](Board& aBoard, Graphics* g, const Rect& aButtonRect, int aOffsetY)
 	{
-			aBoard.DrawZenWheelBarrowButton(g, aOffsetY);
+			aBoard.DrawZenWheelBarrowButton(g, aButtonRect, aOffsetY);
 	},  // 13 OBJECT_TYPE_WHEELBARROW
 	// 原 else if aTool == OBJECT_TYPE_TREE_FOOD
 	[](Board& aBoard, Graphics* g, const Rect& aButtonRect, int aOffsetY)
@@ -8240,38 +8312,45 @@ static_assert(sizeof(kZenToolDraw) / sizeof(kZenToolDraw[0]) == GameObjectType::
 //0x418500
 void Board::DrawZenButtons(Graphics* g)
 {
-	int aOffsetY = 0;
-	if (mChallenge->mChallengeState == ChallengeState::STATECHALLENGE_ZEN_FADING)
-	{
-		aOffsetY = TodAnimateCurve(50, 0, mChallenge->mChallengeStateCounter, 0, -72, Curves::EaseInOut);
-	}
-
+	std::array<bool, 10> available{};
+	static_assert(available.size() == OBJECT_TYPE_NEXT_GARDEN - OBJECT_TYPE_WATERING_CAN + 1);
+	for (int slot = 0; slot < int(available.size()); ++slot)
+		available[slot] = CanUseGameObject(GameObjectType(OBJECT_TYPE_WATERING_CAN + slot));
+	const auto frame = GardenHudLayout::ViewportInBoard(
+		mApp->mScreenBounds.mX, mApp->mScreenBounds.mWidth, mX, mY);
+	int fadeOffset = 0;
+	if (mApp->mGameMode == GameMode::GAMEMODE_LIMBO_ZEN_GARDEN &&
+		mChallenge->mChallengeState == ChallengeState::STATECHALLENGE_ZEN_FADING)
+		fadeOffset = TodAnimateCurve(50, 0, mChallenge->mChallengeStateCounter, 0, -72, Curves::EaseInOut);
+	const auto positions = GardenHudLayout::LayoutTools(
+		available, frame, mApp->mGameMode == GameMode::GAMEMODE_TREE_OF_WISDOM, fadeOffset);
+	Rect aButtonRect = GetShovelButtonRect();
+	aButtonRect.mY = positions.y;
 	for (GameObjectType aTool = GameObjectType::OBJECT_TYPE_WATERING_CAN; aTool <= GameObjectType::OBJECT_TYPE_NEXT_GARDEN; aTool = (GameObjectType)(aTool + 1))
 	{
-		if (!CanUseGameObject(aTool))
+		const int slot = aTool - OBJECT_TYPE_WATERING_CAN;
+		if (!available[slot])
 			continue;
 
-			Rect aButtonRect = GetShovelButtonRect();
-			if (aTool == GameObjectType::OBJECT_TYPE_NEXT_GARDEN)
+		aButtonRect.mX = positions.x[slot];
+		if (aTool == GameObjectType::OBJECT_TYPE_NEXT_GARDEN)
+		{
+			if (!mMenuButton->mBtnNoDraw)
 			{
-				aButtonRect.mX = 564;
-				if (!mMenuButton->mBtnNoDraw)
-				{
-					g->DrawImage(Sexy::IMAGE_ZEN_NEXTGARDEN, aButtonRect.mX + 2, aButtonRect.mY + aOffsetY);
-				}
+				g->DrawImage(Sexy::IMAGE_ZEN_NEXTGARDEN, aButtonRect.mX + 2, aButtonRect.mY);
 			}
-			else
+		}
+		else
+		{
+			g->DrawImage(Sexy::IMAGE_SHOVELBANK, aButtonRect.mX, aButtonRect.mY);
+			if ((int)mCursorObject->mCursorType == (int)CursorType::CURSOR_TYPE_WATERING_CAN + (int)aTool - 6)
 			{
-				GetZenButtonRect(aTool, aButtonRect);
-				g->DrawImage(Sexy::IMAGE_SHOVELBANK, aButtonRect.mX, aButtonRect.mY + aOffsetY);
-				if ((int)mCursorObject->mCursorType == (int)CursorType::CURSOR_TYPE_WATERING_CAN + (int)aTool - 6)
-				{
-					continue;  // 如果工具正在被手持，则跳过绘制
-				}
+				continue;  // 如果工具正在被手持，则跳过绘制
+			}
 
-				// C 形态 -> 函数指针表（上方 kZenToolDraw，aTool 平移下标 WATERING_CAN..TREE_FOOD）
-				kZenToolDraw[(int)aTool - GameObjectType::OBJECT_TYPE_WATERING_CAN](*this, g, aButtonRect, aOffsetY);
-			}
+			// C 形态 -> 函数指针表（上方 kZenToolDraw，aTool 平移下标 WATERING_CAN..TREE_FOOD）
+			kZenToolDraw[(int)aTool - GameObjectType::OBJECT_TYPE_WATERING_CAN](*this, g, aButtonRect, 0);
+		}
 	}
 }
 
@@ -8628,25 +8707,46 @@ void Board::DrawFadeOut(Graphics* g)
 	{
 		g->mColor = Color(255, 255, 255, anAlpha);
 	}
-	g->FillRect(0, 0, mWidth, mHeight);
+	Rect aScreenRect = mApp->mScreenBounds;
+	aScreenRect.Offset(-mX, -mY);
+	g->FillRect(aScreenRect);
+}
+
+void Board::RefreshHudLayout()
+{
+	const Rect& aBounds = mApp->mScreenBounds;
+	const int aRightDelta = aBounds.mX + aBounds.mWidth - BOARD_WIDTH;
+	const bool aZenMenu = mApp->mGameMode == GameMode::GAMEMODE_LIMBO_ZEN_GARDEN ||
+		mApp->mGameMode == GameMode::GAMEMODE_TREE_OF_WISDOM;
+	mMenuButton->mX = (aZenMenu ? 628 : 681) + aRightDelta;
+	if (aZenMenu)
+	{
+		const auto frame = GardenHudLayout::ViewportInBoard(
+			aBounds.mX, aBounds.mWidth, mX, mY);
+		const bool fading = mApp->mGameMode == GameMode::GAMEMODE_LIMBO_ZEN_GARDEN &&
+			mChallenge->mChallengeState == ChallengeState::STATECHALLENGE_ZEN_FADING;
+		mMenuButton->mX = GardenHudLayout::RightButtonX(628, frame);
+		mMenuButton->mY = frame.top + (fading ?
+			TodAnimateCurve(50, 0, mChallenge->mChallengeStateCounter, -10, -50, Curves::EaseInOut) : -10);
+		if (mStoreButton)
+		{
+			const int start = GardenHudLayout::RightButtonX(678, frame);
+			mStoreButton->mX = fading ?
+				TodAnimateCurve(50, 0, mChallenge->mChallengeStateCounter, start, frame.right, Curves::EaseInOut) : start;
+			mStoreButton->mY = frame.top + 33;
+		}
+		mMouseInsets.mTop = aBounds.mY - mY;
+		mMouseInsets.mBottom = mY + mHeight - aBounds.mY - aBounds.mHeight;
+	}
+	// Negative insets admit HUD input in the margins without widening the world.
+	mMouseInsets.mLeft = std::min(0, aBounds.mX - mX);
+	mMouseInsets.mRight = std::min(0, mX - aRightDelta);
 }
 
 //0x419F60
 void Board::DrawTopRightUI(Graphics* g)
 {
-	if (mApp->mGameMode == GameMode::GAMEMODE_LIMBO_ZEN_GARDEN)
-	{
-		if (mChallenge->mChallengeState == STATECHALLENGE_ZEN_FADING)
-		{
-			mMenuButton->mY = TodAnimateCurve(50, 0, mChallenge->mChallengeStateCounter, -10, -50, Curves::EaseInOut);
-			mStoreButton->mX = TodAnimateCurve(50, 0, mChallenge->mChallengeStateCounter, 678, 800, Curves::EaseInOut);
-		}
-		else
-		{
-			mMenuButton->mY = -10;
-			mStoreButton->mX = 678;
-		}
-	}
+	RefreshHudLayout();
 
 	if (mTutorialState == TutorialState::TUTORIAL_ZEN_GARDEN_COMPLETED)
 	{
@@ -8680,6 +8780,21 @@ void Board::DrawUIBottom(Graphics* g)
 		g->DrawImageCel(Sexy::IMAGE_WAVECENTER, 320, 40, aWaveTime);
 		g->DrawImageCel(Sexy::IMAGE_WAVECENTER, 480, 40, aWaveTime);
 		TodDrawImageCelScaled(g, Sexy::IMAGE_WAVESIDE, 800, 40, 0, aWaveTime, -1.0f, 1.0f);
+		if (mApp->mScreenBounds.mWidth > BOARD_WIDTH)
+		{
+			const int left = std::min(0, mApp->mScreenBounds.mX - mX);
+			const int right = std::max(BOARD_WIDTH,
+				mApp->mScreenBounds.mX + mApp->mScreenBounds.mWidth - mX);
+			const int waveWidth = Sexy::IMAGE_WAVESIDE->GetCelWidth();
+			Graphics aLeftWaves(*g);
+			aLeftWaves.ClipRect(left, 0, -left, BOARD_HEIGHT);
+			for (int edge = 0; edge > left; edge -= waveWidth)
+				TodDrawImageCelScaled(&aLeftWaves, Sexy::IMAGE_WAVESIDE, edge, 40, 0, aWaveTime, -1.0f, 1.0f);
+			Graphics aRightWaves(*g);
+			aRightWaves.ClipRect(BOARD_WIDTH, 0, right - BOARD_WIDTH, BOARD_HEIGHT);
+			for (int edge = BOARD_WIDTH; edge < right; edge += waveWidth)
+				aRightWaves.DrawImageCel(Sexy::IMAGE_WAVESIDE, edge, 40, aWaveTime);
+		}
 		g->mDrawMode = Graphics::DRAWMODE_NORMAL;
 	}
 
@@ -8691,6 +8806,23 @@ void Board::DrawUIBottom(Graphics* g)
 			Rect(0, 0, BOARD_WIDTH, BOARD_HEIGHT), 
 			Rect(0, 0, IMAGE_BACKGROUND_GREENHOUSE_OVERLAY->mWidth, IMAGE_BACKGROUND_GREENHOUSE_OVERLAY->mHeight)
 		);
+		if (mApp->mScreenBounds.mWidth > BOARD_WIDTH)
+		{
+			// Reflect only the margins, retaining the existing central light mask and scale.
+			const int left = std::min(0, mApp->mScreenBounds.mX - mX);
+			const int right = std::max(BOARD_WIDTH,
+				mApp->mScreenBounds.mX + mApp->mScreenBounds.mWidth - mX);
+			const Rect aSource(0, 0, IMAGE_BACKGROUND_GREENHOUSE_OVERLAY->mWidth,
+				IMAGE_BACKGROUND_GREENHOUSE_OVERLAY->mHeight);
+			Graphics aLeftLight(*g);
+			aLeftLight.ClipRect(left, 0, -left, BOARD_HEIGHT);
+			aLeftLight.DrawImageMirror(IMAGE_BACKGROUND_GREENHOUSE_OVERLAY,
+				Rect(-BOARD_WIDTH, 0, BOARD_WIDTH, BOARD_HEIGHT), aSource);
+			Graphics aRightLight(*g);
+			aRightLight.ClipRect(BOARD_WIDTH, 0, right - BOARD_WIDTH, BOARD_HEIGHT);
+			aRightLight.DrawImageMirror(IMAGE_BACKGROUND_GREENHOUSE_OVERLAY,
+				Rect(BOARD_WIDTH, 0, BOARD_WIDTH, BOARD_HEIGHT), aSource);
+		}
 		g->mDrawMode = Graphics::DRAWMODE_NORMAL;
 	}
 
@@ -8724,7 +8856,7 @@ void Board::DrawUICoinBank(Graphics* g)
 	if (mCoinBankFadeCount <= 0)
 		return;
 
-	int aPosX = 57;
+	int aPosX = 57 + mApp->mScreenBounds.mX;
 	int aPosY = 599 - Sexy::IMAGE_COINBANK->mHeight;
 	if (mApp->mGameMode == GameMode::GAMEMODE_LIMBO_ZEN_GARDEN || mApp->mCrazyDaveState != CrazyDaveState::CRAZY_DAVE_OFF)
 	{
@@ -8901,6 +9033,9 @@ bool Board::IsScaryPotterDaveTalking()
 //0x41AA40
 void Board::DrawUITop(Graphics* g)
 {
+	Rect aScreenRect = mApp->mScreenBounds;
+	aScreenRect.Offset(-mX, -mY);
+
 	if (StageHasFog())
 	{
 		DrawTopRightUI(g);
@@ -8909,7 +9044,7 @@ void Board::DrawUITop(Graphics* g)
 	if (mTimeStopCounter > 0)
 	{
 		g->mColor = Color(200, 200, 200, 210);
-		g->FillRect(0, 0, BOARD_WIDTH, BOARD_HEIGHT);
+		g->FillRect(aScreenRect);
 	}
 
 	if (mApp->mGameScene == GameScenes::SCENE_PLAYING || mApp->mGameMode == GameMode::GAMEMODE_TREE_OF_WISDOM)
@@ -8925,7 +9060,7 @@ void Board::DrawUITop(Graphics* g)
 	if (mApp->mGameMode == GameMode::GAMEMODE_INTRO && mCutScene->mUpsellHideBoard)
 	{
 		g->mColor = Color(0, 0, 0);
-		g->FillRect(0, 0, BOARD_WIDTH, BOARD_HEIGHT);
+		g->FillRect(aScreenRect);
 	}
 
 	if (mApp->mGameMode == GameMode::GAMEMODE_INTRO)
@@ -8955,7 +9090,15 @@ void Board::DrawUITop(Graphics* g)
 		mCursorObject->EndDraw(g);
 	}
 
-	mToolTip->Draw(g);
+	if (mApp->mGameScene == GameScenes::SCENE_LEVEL_INTRO && mApp->mSeedChooserScreen &&
+		mCutScene->mSeedChoosing)
+		mApp->mSeedChooserScreen->DrawZombieToolTip(g);
+	else if (mApp->mGameMode == GameMode::GAMEMODE_LIMBO_ZEN_GARDEN ||
+		mApp->mGameMode == GameMode::GAMEMODE_TREE_OF_WISDOM)
+		mToolTip->Draw(g, Rect(mApp->mScreenBounds.mX - mX, -mY,
+			mApp->mScreenBounds.mWidth, std::min(BOARD_HEIGHT, mToolTip->mMaxBottom)));
+	else
+		mToolTip->Draw(g);
 	DrawDebugText(g);
 	DrawDebugObjectRects(g);
 }

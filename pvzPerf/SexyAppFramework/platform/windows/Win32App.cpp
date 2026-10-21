@@ -3,6 +3,7 @@
 #include "graphics/DDImage.h"
 #include "graphics/RenderInterface.h"
 #include "graphics/GpuBackend.h"
+#include "graphics/GameViewport.h"
 #include "widget/WidgetManager.h"
 #include "misc/StableTime.h"
 #include "misc/Debug.h"
@@ -35,6 +36,16 @@ RECT ClientRect(HWND window) {
     RECT rect{};
     if(!GetClientRect(window,&rect)) WindowFailure("GetClientRect");
     return rect;
+}
+WindowTrackLimits WindowClientLimits(const SexyAppBase& app) {
+    int height=600;
+    if(app.mModernScalePrepared && app.IsScalePresentActiveForMode(true) &&
+        app.mDDInterface && app.mDDInterface->mRenderInterface &&
+        app.mDDInterface->mRenderInterface->mRenderer) {
+        const auto output=app.mDDInterface->mRenderInterface->mRenderer->ScaleOutput(false);
+        if(output.height>0) height=int(output.height);
+    }
+    return WindowTrackLimits::FromScaleOutputHeight(height);
 }
 Point LogicalMouse(SexyAppBase& app,double x,double y) {
     int sx=0,sy=0;
@@ -69,8 +80,9 @@ void SexyAppBase::MapWindowMouse(double x,double y,int& sx,int& sy) const {
     const int width=client.right,height=client.bottom;
     if(width<=0 || height<=0) {sx=sy=-1;return;}
     const auto rect=mDDInterface->mRenderInterface->mRenderer->PresentRect(width,height);
-    const auto point=WindowPointToScene(x,y,width,height,width,height,rect,mWidth,mHeight);
-    sx=point.x;sy=point.y;
+    const auto point=WindowPointToScene(x,y,width,height,width,height,rect,
+        mScreenBounds.mWidth,mScreenBounds.mHeight);
+    sx=point.x+mScreenBounds.mX;sy=point.y+mScreenBounds.mY;
 }
 
 void SexyAppBase::MakeWindow() {
@@ -78,9 +90,10 @@ void SexyAppBase::MakeWindow() {
     if constexpr (!NativeWindowsWindowApi::HdrOutput) mScaleHDREnabled=false;
     nativeFrameMotionPoll={};
     mTitle="pvz_perf";
-    const DWORD style=WS_OVERLAPPED|WS_CAPTION|WS_SYSMENU|WS_MINIMIZEBOX;
+    const DWORD style=WS_OVERLAPPED|WS_CAPTION|WS_SYSMENU|WS_MINIMIZEBOX|
+        WS_THICKFRAME;
     const DWORD exStyle=WS_EX_APPWINDOW;
-    RECT bounds{0,0,mWidth,mHeight};
+    RECT bounds{0,0,GameViewport::MaximumWidth,600};
     if(!NativeWindowsWindowApi::AdjustClientRect(bounds,style,exStyle,nullptr))
         WindowFailure("AdjustClientRect");
     mHWnd=CreateWindowExA(exStyle,MainWindowClass,mTitle.c_str(),style,
@@ -210,6 +223,9 @@ DEVMODEW SexyAppBase::TargetVideoMode() const {
 void SexyAppBase::ResizeWindowClient(int width,int height) {
     if(width<=0 || height<=0) throw std::invalid_argument("Invalid window client size");
     if(mNativeFullscreen) throw std::logic_error("Cannot resize a fullscreen client as a window");
+    const auto limits=WindowClientLimits(*this);
+    width=limits.ConstrainWidth(width);
+    height=limits.height;
     RECT rect{0,0,width,height};
     const auto style=DWORD(GetWindowLongPtrW(mHWnd,GWL_STYLE));
     const auto exStyle=DWORD(GetWindowLongPtrW(mHWnd,GWL_EXSTYLE));
@@ -324,8 +340,8 @@ void SexyAppBase::SwitchScreenMode(bool windowed,bool,bool force) {
     SetWindowFullscreen(!windowed);
     if(windowed) {
         const auto scaled=renderer.ScaleOutput(false);
-        ResizeWindowClient(IsScalePresentActiveForMode(true)?int(scaled.width):mWidth,
-            IsScalePresentActiveForMode(true)?int(scaled.height):mHeight);
+        ResizeWindowClient(IsScalePresentActiveForMode(true)?int(scaled.width):renderer.sceneWidth,
+            IsScalePresentActiveForMode(true)?int(scaled.height):renderer.sceneHeight);
     }
     renderer.SetScaleMode(IsScalePresentActiveForMode(windowed),!windowed);
     mIsWindowed=windowed;mIsPhysWindowed=true;
@@ -380,7 +396,7 @@ void SexyAppBase::NativeMouseMove(double x,double y) {
     const auto pos=LogicalMouse(*this,x,y);
     const auto client=ClientRect(mHWnd);
     const bool inside=x>=0 && y>=0 && x<client.right && y<client.bottom &&
-        pos.mX>=0 && pos.mY>=0 && pos.mX<mWidth && pos.mY<mHeight;
+        mScreenBounds.Contains(pos.mX,pos.mY);
     const bool moved=pos.mX!=mWidgetManager->mLastMouseX ||
         pos.mY!=mWidgetManager->mLastMouseY || inside!=mMouseIn;
     mMouseIn=inside;
@@ -762,7 +778,6 @@ static bool ScreenSaverWindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 		{
 			int aMouseX = LOWORD(lParam);
 			int aMouseY = HIWORD(lParam);
-//			SEXY_TRACE(StrFormat("SCR MouseMove: %d %d",aMouseX,aMouseY).c_str());
 			if (aMouseX!=gLastMouseX || aMouseY!=gLastMouseY)
 			{
 				gLastMouseX = aMouseX;
@@ -856,24 +871,6 @@ static bool ScreenSaverWindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 	gClosed = true;
 	PostMessage(hWnd, WM_CLOSE, 0, 0);
 
-/*	const char *str = "";
-	switch (uMsg)
-	{
-		case WM_CREATE: str="WM_CREATE"; break;
-		case WM_SYSCOMMAND: str="WM_SYSCOMMAND"; break;
-		case WM_MOUSEMOVE: str="WM_MOUSEMOVE"; break;
-		case WM_NCACTIVATE: str="WM_NCACTIVATE"; break;
-		case WM_ACTIVATE: str="WM_ACTIVATE"; break;
-		case WM_ACTIVATEAPP: str="WM_ACTIVATEAPP"; break;
-		case WM_CLOSE: str="WM_CLOSE"; break;
-		case WM_LBUTTONDOWN: str="WM_LBUTTONDOWN"; break;
-		case WM_RBUTTONDOWN: str="WM_RBUTTONDOWN"; break;
-		case WM_MBUTTONDOWN: str="WM_MBUTTONDOWN"; break;
-		case WM_KEYDOWN: str="WM_KEYDOWN"; break;
-		case WM_SYSKEYDOWN: str="WM_SYSKEYDOWN"; break;
-	}
-
-	SEXY_TRACE(StrFormat("Scr shutdown: %s",str).c_str());*/
 	return false;
 }
 
@@ -899,13 +896,49 @@ LRESULT CALLBACK SexyAppBase::WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 			SetWindowLongPtr(hWnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(aSexyApp));
 	}
 	// CreateWindow sends messages before MakeWindow has constructed the renderer.
-	if (!aSexyApp || !aSexyApp->mNativeWindowReady)
+	if (!aSexyApp)
 	{
 		return DefWindowProc(hWnd, uMsg, wParam, lParam);
 	}
 
 	try
 	{
+	if ((uMsg == WM_GETMINMAXINFO || uMsg == WM_SIZING) &&
+		!aSexyApp->mNativeFullscreen &&
+		(GetWindowLongPtrW(hWnd, GWL_STYLE) & WS_THICKFRAME) &&
+		(hWnd == aSexyApp->mHWnd || !aSexyApp->mHWnd))
+	{
+		const auto limits = WindowClientLimits(*aSexyApp);
+		RECT border{};
+		if (!NativeWindowsWindowApi::AdjustClientRect(border,
+			DWORD(GetWindowLongPtrW(hWnd, GWL_STYLE)),
+			DWORD(GetWindowLongPtrW(hWnd, GWL_EXSTYLE)), hWnd))
+			WindowFailure("AdjustClientRect");
+		const int borderWidth = border.right - border.left;
+		const int windowHeight = limits.height + border.bottom - border.top;
+		if (uMsg == WM_GETMINMAXINFO)
+		{
+			auto& info = *reinterpret_cast<MINMAXINFO*>(lParam);
+			info.ptMinTrackSize = {limits.minimumWidth + borderWidth, windowHeight};
+			info.ptMaxTrackSize = {limits.maximumWidth + borderWidth, windowHeight};
+			return 0;
+		}
+		auto& rect = *reinterpret_cast<RECT*>(lParam);
+		const int width = limits.ConstrainWidth(
+			int(rect.right - rect.left) - borderWidth) + borderWidth;
+		if (wParam == WMSZ_LEFT || wParam == WMSZ_TOPLEFT || wParam == WMSZ_BOTTOMLEFT)
+			rect.left = rect.right - width;
+		else
+			rect.right = rect.left + width;
+		if (wParam == WMSZ_TOP || wParam == WMSZ_TOPLEFT || wParam == WMSZ_TOPRIGHT)
+			rect.top = rect.bottom - windowHeight;
+		else
+			rect.bottom = rect.top + windowHeight;
+		return TRUE;
+	}
+	if (!aSexyApp->mNativeWindowReady)
+		return DefWindowProc(hWnd, uMsg, wParam, lParam);
+
 	auto deferMessage = [&] {
 		MSG message{};
 		message.hwnd = hWnd; message.message = uMsg;
@@ -945,8 +978,15 @@ LRESULT CALLBACK SexyAppBase::WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 		if (!aSexyApp->mNativeFullscreen)
 		{
 			const auto& rect = *reinterpret_cast<const RECT*>(lParam);
+			const auto client = ClientRect(hWnd);
+			const auto limits = WindowClientLimits(*aSexyApp);
+			RECT bounds{0, 0, limits.ConstrainWidth(client.right), limits.height};
+			if (!NativeWindowsWindowApi::AdjustClientRect(bounds,
+				DWORD(GetWindowLongPtrW(hWnd, GWL_STYLE)),
+				DWORD(GetWindowLongPtrW(hWnd, GWL_EXSTYLE)), hWnd))
+				WindowFailure("AdjustClientRect");
 			if (!SetWindowPos(hWnd, nullptr, rect.left, rect.top,
-				rect.right - rect.left, rect.bottom - rect.top,
+				bounds.right - bounds.left, bounds.bottom - bounds.top,
 				SWP_NOZORDER | SWP_NOACTIVATE))
 				throw std::runtime_error("WM_DPICHANGED SetWindowPos failed");
 		}
@@ -1237,9 +1277,6 @@ LRESULT CALLBACK SexyAppBase::WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 				else if (uMsg == WM_CLOSE)
 				{
 					aSexyApp->ReleaseCursorClip();
-					/*char aStr[256];
-					sprintf(aStr, "CLOSED HWND: %d\r\n", hWnd);
-					OutputDebugString(aStr);*/
 					
 					aSexyApp->CloseRequestAsync();
 					return 0;
@@ -1293,24 +1330,10 @@ LRESULT CALLBACK SexyAppBase::WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 
 		break;
 
-/*	case WM_DISPLAYCHANGE:
-		SEXY_TRACE("WM_DISPLAYCHANGE 1");
-		if (aSexyApp!=NULL && aSexyApp->mIsWindowed && aSexyApp->mDDInterface!=NULL && aSexyApp->mHWnd==hWnd && aSexyApp->mLoaded)
-		{
-			SEXY_TRACE("WM_DISPLAYCHANGE 2");
-			aSexyApp->mDDInterface->Init(aSexyApp->mHWnd,aSexyApp->mIsWindowed);
-			aSexyApp->mWidgetManager->mImage = aSexyApp->mDDInterface->mScreenImage;
-			aSexyApp->mWidgetManager->MarkAllDirty();
-		}
-		break;*/
-
 	case WM_DESTROY:
 		{
 			if (aSexyApp != NULL)
 				aSexyApp->ReleaseCursorClip();
-			char aStr[256];
-			sprintf(aStr, "DESTROYED HWND: %p\r\n", hWnd);
-			OutputDebugStringA(aStr);
 		}
 		break;	
 	case WM_ERASEBKGND:

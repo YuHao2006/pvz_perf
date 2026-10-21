@@ -1127,10 +1127,11 @@ void Projectile::Draw(Graphics* g)
 		}
 		else
 		{
-			float aOffsetX = mPosX + aCelWidth * 0.5f;
-			float aOffsetY = mPosZ + mPosY + aCelHeight * 0.5f;
+			// TodBltMatrix takes absolute coordinates; BeginDraw already translated g by mX/mY.
+			float aOffsetX = mPosX - mX + aCelWidth * 0.5f + g->mTransX;
+			float aOffsetY = mPosZ + mPosY - mY + aCelHeight * 0.5f + g->mTransY;
 			SexyTransform2D aTransform;
-			TodScaleRotateTransformMatrix(aTransform, aOffsetX + mBoard->mX, aOffsetY + mBoard->mY, mRotation, aScale, aScale);
+			TodScaleRotateTransformMatrix(aTransform, aOffsetX, aOffsetY, mRotation, aScale, aScale);
 			TodBltMatrix(g, aImage, aTransform, g->mClipRect, Color::White, g->mDrawMode, aSrcRect);
 		}
 	}

@@ -489,7 +489,8 @@ void MessageWidget::Draw(Graphics* g)
 		if (aRectHeight > 0)
 		{
 			aOutlineColor = Color(0, 0, 0, 128);
-			Rect aRect(0, aPosY, BOARD_WIDTH, aRectHeight);
+			const Rect& aBounds = mApp->mScreenBounds;
+			Rect aRect(aBounds.mX - mApp->mBoard->mX, aPosY, aBounds.mWidth, aRectHeight);
 			g->mColor = aOutlineColor;
 			g->FillRect(aRect);
 

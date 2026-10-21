@@ -133,7 +133,7 @@ export component SelectorScreen {
     Track {
         source-name: "SelectorScreen_BG";
         frame-count: 706;
-        frame 0 { scale-x: 8; scale-y: 8; image: IMAGE_REANIM_SELECTORSCREEN_BG; }
+        frame 0 { x: -300; image: IMAGE_REANIM_SELECTORSCREEN_BG; }
         frame 1 { scale-x: -10000; scale-y: -10000; image: none; }
         frame 41 { cel: -1; }
         frame 42 { cel: -10000; }
@@ -715,7 +715,7 @@ export component SelectorScreen {
     Track {
         source-name: "SelectorScreen_BG_Left";
         frame-count: 706;
-        frame 0 { image: IMAGE_REANIM_SELECTORSCREEN_BG_LEFT; }
+        frame 0 { x: -300; image: IMAGE_REANIM_SELECTORSCREEN_BG_LEFT; }
         frame 1 { y: -6.5; image: none; }
         frame 2 { y: -13.1999998; }
         frame 3 { y: -19.7999992; }

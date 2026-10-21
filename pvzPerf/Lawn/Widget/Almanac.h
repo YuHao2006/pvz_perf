@@ -44,7 +44,6 @@ public:
 	ZombieType					mSelectedZombie;		//+0x198
 	Plant*						mPlant;					//+0x19C
 	Zombie*						mZombie;				//+0x1A0
-	Zombie*						mZombiePerfTest[400];	//+0x1A4
 	int							mPlantDescScroll;
 	int							mPlantDescScrollMax;
 	int							mZombieDescScroll;

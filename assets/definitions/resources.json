@@ -916,7 +916,8 @@
             "tag": "Image",
             "attrs": {
               "id": "SELECTORSCREEN_MOREWAYSTOPLAY_BG",
-              "path": "selector_morewaystoplay_background"
+              "path": "blank",
+              "noalpha": "true"
             },
             "children": []
           },
@@ -1020,7 +1021,8 @@
             "tag": "Image",
             "attrs": {
               "id": "QUICKPLAY_MINIGAMES_BUTTON",
-              "path": "quickplay_minigames_button"
+              "path": "blank",
+              "noalpha": "true"
             },
             "children": []
           },
@@ -1028,7 +1030,8 @@
             "tag": "Image",
             "attrs": {
               "id": "QUICKPLAY_MINIGAMES_BUTTON_HIGHLIGHT",
-              "path": "quickplay_minigames_button_highlight"
+              "path": "blank",
+              "noalpha": "true"
             },
             "children": []
           },
@@ -1036,7 +1039,8 @@
             "tag": "Image",
             "attrs": {
               "id": "QUICKPLAY_MINIGAMES_CLOUD",
-              "path": "quickplay_minigames_cloud"
+              "path": "blank",
+              "noalpha": "true"
             },
             "children": []
           },
@@ -1044,7 +1048,8 @@
             "tag": "Image",
             "attrs": {
               "id": "QUICKPLAY_PUZZLES_BUTTON",
-              "path": "quickplay_puzzles_button"
+              "path": "blank",
+              "noalpha": "true"
             },
             "children": []
           },
@@ -1052,7 +1057,8 @@
             "tag": "Image",
             "attrs": {
               "id": "QUICKPLAY_PUZZLES_BUTTON_HIGHLIGHT",
-              "path": "quickplay_puzzles_button_highlight"
+              "path": "blank",
+              "noalpha": "true"
             },
             "children": []
           },
@@ -1060,7 +1066,8 @@
             "tag": "Image",
             "attrs": {
               "id": "QUICKPLAY_PUZZLES_CLOUD",
-              "path": "quickplay_puzzles_cloud"
+              "path": "blank",
+              "noalpha": "true"
             },
             "children": []
           },
@@ -1068,7 +1075,8 @@
             "tag": "Image",
             "attrs": {
               "id": "QUICKPLAY_SURVIVAL_BUTTON",
-              "path": "quickplay_survival_button"
+              "path": "blank",
+              "noalpha": "true"
             },
             "children": []
           },
@@ -1076,7 +1084,8 @@
             "tag": "Image",
             "attrs": {
               "id": "QUICKPLAY_SURVIVAL_BUTTON_HIGHLIGHT",
-              "path": "quickplay_survival_button_highlight"
+              "path": "blank",
+              "noalpha": "true"
             },
             "children": []
           },
@@ -1084,7 +1093,8 @@
             "tag": "Image",
             "attrs": {
               "id": "QUICKPLAY_SURVIVAL_CLOUD",
-              "path": "quickplay_survival_cloud"
+              "path": "blank",
+              "noalpha": "true"
             },
             "children": []
           },

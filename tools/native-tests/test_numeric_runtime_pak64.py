@@ -366,7 +366,9 @@ class NumericResourceAuthoringTests(unittest.TestCase):
 
     def test_retail_json_conversion_evidence_preserves_ordered_tree_and_attributes(self):
         directory = TOOL.parent / "test-data"
-        data = (directory / "resources-authoring.json").read_bytes()
+        # Git may check this text fixture out as CRLF on Windows; the archived
+        # conversion evidence hashes its canonical LF bytes.
+        data = (directory / "resources-authoring.json").read_bytes().replace(b"\r\n", b"\n")
         evidence = json.loads((directory / "resources-authoring-verification.json").read_bytes())
         self.assertEqual(evidence["authoring"]["sha256"], pak.digest(data))
         self.assertEqual(evidence["authoring"]["bytes"], len(data))

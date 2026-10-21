@@ -3,6 +3,7 @@
 #include "ZenGarden.h"
 #include "LawnApp.h"
 #include "CursorObject.h"
+#include "GardenHudLayout.h"
 #include "Resources.h"
 #include "Sexy.TodLib/Reanimator.h"
 #include "widget/WidgetManager.h"
@@ -59,8 +60,9 @@ void CursorObject::Update()
     }
 
     mVisible = true;
-    mX = mApp->mWidgetManager->mLastMouseX - 25;
-    mY = mApp->mWidgetManager->mLastMouseY - 35;
+    // The mouse is window/world logical; BeginDraw inherits Board's origin.
+    mX = GardenHudLayout::CursorInBoard(mApp->mWidgetManager->mLastMouseX, mBoard->mX, 25);
+    mY = GardenHudLayout::CursorInBoard(mApp->mWidgetManager->mLastMouseY, mBoard->mY, 35);
 }
 
 void CursorObject::Die()
@@ -236,7 +238,19 @@ void CursorObject::Draw(Graphics* g)
     const unsigned aCursorIndex = static_cast<unsigned>(mCursorType);
     if (aCursorIndex <= static_cast<unsigned>(CursorType::CURSOR_TYPE_TREE_FOOD))
     {
-        kCursorDrawCases[aCursorIndex](*this, g);
+        if (mApp->mGameMode == GameMode::GAMEMODE_LIMBO_ZEN_GARDEN ||
+            mApp->mGameMode == GameMode::GAMEMODE_TREE_OF_WISDOM)
+        {
+            // BeginDraw already applied the stored cursor origin. Refresh only
+            // its presentation against the live mouse, without shifting plants.
+            Graphics cursor(*g);
+            const int x = GardenHudLayout::CursorInBoard(mApp->mWidgetManager->mLastMouseX, mBoard->mX, 25);
+            const int y = GardenHudLayout::CursorInBoard(mApp->mWidgetManager->mLastMouseY, mBoard->mY, 35);
+            cursor.Translate(x - mX, y - mY);
+            kCursorDrawCases[aCursorIndex](*this, &cursor);
+        }
+        else
+            kCursorDrawCases[aCursorIndex](*this, g);
     }
 
 }
@@ -265,6 +279,8 @@ void CursorPreview::Update()
     SeedType aSeedType = mBoard->GetSeedTypeInCursor();
     int aMouseX = mApp->mWidgetManager->mLastMouseX;
     int aMouseY = mApp->mWidgetManager->mLastMouseY;
+    aMouseX = GardenHudLayout::CursorInBoard(aMouseX, mBoard->mX, 0);
+    aMouseY = GardenHudLayout::CursorInBoard(aMouseY, mBoard->mY, 0);
     mGridX = mBoard->PlantingPixelToGridX(aMouseX, aMouseY, aSeedType);
     mGridY = mBoard->PlantingPixelToGridY(aMouseX, aMouseY, aSeedType);
     if (mGridX >= 0 && mGridX < MAX_GRID_SIZE_X && mGridY >= 0 && mGridY <= MAX_GRID_SIZE_Y)

@@ -194,6 +194,14 @@ bool RenderInterface::ResizePresent(int thePresentWidth, int thePresentHeight)
     return true;
 }
 
+void RenderInterface::ResizeScene(int width, int height)
+{
+    if (mSceneBegun) Flush();
+    mRenderer->ResizeScene(width, height);
+    mWidth = gGpuSceneWidth = width;
+    mHeight = gGpuSceneHeight = height;
+}
+
 bool RenderInterface::PresentRetainedFrame()
 {
     if (!mRenderer || mSceneBegun)

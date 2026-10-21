@@ -1,0 +1,38 @@
+Use case: compositing.
+Asset type: THREE COMPLETE separate source textures for a layered 2D game menu.
+Image 1 is the EDIT TARGET, a 1536x1312 source-layer atlas on pure magenta.
+Image 2 is ONLY a layout/lighting reference: the complete menu composition.
+Image 3 is ONLY the existing right foreground, which stays a separate original.
+
+Regenerate ALL THREE COMPLETE panels in image 1 together, in one coherent
+hand-painted cartoon treatment matching the original game. The current leftmost
+167 columns of the tree have an obviously patched texture and lighting.
+Remove this mismatch by repainting the WHOLE TREE AND GROUND PANEL, the WHOLE
+HOUSE/DISTANT-GROUND PANEL and the WHOLE SKY PANEL coherently, not by drawing
+another small left extension, seam strip, cloned edge or mirrored patch.
+Match foliage density, brushwork, saturation, edge detail and ground lighting
+over the full panels; continue the complete original tree naturally leftward.
+
+EXACT OUTPUT ATLAS LAYOUT, unchanged 1536x1312 framing:
+A: x=0..1399,y=0..599: entire opaque sky texture, 1400x600.
+B: x=0..775,y=624..1303: entire tree/near-ground texture, 776x680.
+C: x=800..1519,y=624..973: entire house/distant-landscape texture, 720x350.
+All other atlas space stays solid pure magenta RGB(255,0,255).
+In B and C all transparent holes and exterior remain PURE MAGENTA.
+Do not paint sky into B or C. Do not paint tree, house, grass, walls, menu
+gravestone or clouds into A. The animated clouds remain separate game sprites.
+Keep B's tree trunk, branches, foliage and ground silhouette at the same
+coordinates and scale, with the same transparent holes; keep C's house, roof,
+fence, road and ground silhouettes at exactly their original coordinates.
+Do not shift, crop, rescale, relayout or duplicate any panel or scene object.
+The tree's full 680-pixel height matters, including its top 80 pixels outside
+the steady menu view. Preserve all full panels, including hidden portions.
+
+Image 2 shows how the panels meet at steady state: atlas A draws at (0,80),
+B at (0,0), C at (380,330), and the unchanged foreground D at (371,121).
+The old vertical boundary within B at x=167 must completely disappear.
+Use D as palette and lighting context so the near-ground meets its grass
+naturally, without baking any part of D into A, B or C.
+No text, interface, sign, button, menu labels, extra house, additional tree,
+characters, ornaments, new flowers, border or watermark.
+Return only the same three-panel source atlas as image 1, never image 2.

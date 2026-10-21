@@ -16,6 +16,38 @@
 #include "Sexy.TodLib/TodStringFile.h"
 #include "AchievementsWidget.h"
 
+namespace
+{
+void RefreshAwardLayout(AwardScreen& theScreen)
+{
+	const Rect& aBounds = theScreen.mApp->mScreenBounds;
+	theScreen.Move(aBounds.mX + (aBounds.mWidth - BOARD_WIDTH) / 2,
+		aBounds.mY + (aBounds.mHeight - BOARD_HEIGHT) / 2);
+	theScreen.mMouseInsets.mLeft = std::min(0, aBounds.mX - theScreen.mX);
+	theScreen.mMouseInsets.mRight = std::min(0,
+		theScreen.mX + theScreen.mWidth - aBounds.mX - aBounds.mWidth);
+}
+
+void DrawAwardBackground(Graphics* g, Image* theImage, const AwardScreen& theScreen)
+{
+	Rect aBounds = theScreen.mApp->mScreenBounds;
+	aBounds.Offset(-theScreen.mX, -theScreen.mY);
+	const int aBorder = 16;
+	const int aPadding = (theImage->mWidth - BOARD_WIDTH) / 2;
+	const int aSourceX = aPadding + aBounds.mX + aBorder;
+	Graphics aBackground(*g);
+	aBackground.ClipRect(aBounds);
+	// Native center crops retain the authored UI; the outer frame follows the viewport.
+	// AwardScreen_Back uses the original brown wooden border.
+	aBackground.DrawImage(theImage, aBounds.mX, 0,
+		Rect(0, 0, aBorder, theImage->mHeight));
+	aBackground.DrawImage(theImage, aBounds.mX + aBorder, 0,
+		Rect(aSourceX, 0, aBounds.mWidth - 2 * aBorder, theImage->mHeight));
+	aBackground.DrawImage(theImage, aBounds.mX + aBounds.mWidth - aBorder, 0,
+		Rect(theImage->mWidth - aBorder, 0, aBorder, theImage->mHeight));
+}
+}
+
 //0x405780
 // GOTY @Patoke: 0x4063E0
 AwardScreen::AwardScreen(LawnApp* theApp, AwardType theAwardType, bool theShowingAchievements)
@@ -110,6 +142,7 @@ AwardScreen::AwardScreen(LawnApp* theApp, AwardType theAwardType, bool theShowin
 	mStartButton->mWidth = 156;
 	mStartButton->mHeight = 42;
 	mStartButton->mTextOffsetY = -1;
+	mStartButton->mParentWidget = this;
 
 	// @Patoke: implemented
 	mContinueButton = new GameButton(AwardScreen::AwardScreen_Start);
@@ -250,7 +283,6 @@ bool AwardScreen::IsPaperNote()
 //0x4064D0
 void AwardScreen::DrawBottom(Graphics* g, const SexyString& theTitle, const SexyString& theAward, const SexyString& theMessage)
 {
-	g->DrawImage(Sexy::IMAGE_AWARDSCREEN_BACK, 0, 0);
 	TodDrawString(g, theTitle, BOARD_WIDTH / 2, 58, Sexy::FONT_DWARVENTODCRAFT24, Color(213, 159, 43), DS_ALIGN_CENTER);
 	TodDrawString(g, theAward, BOARD_WIDTH / 2, 326, Sexy::FONT_DWARVENTODCRAFT18YELLOW, Color::White, DS_ALIGN_CENTER);
 	TodDrawStringWrapped(g, theMessage, Rect(285, 360, 230, 90), Sexy::FONT_BRIANNETOD16, Color(40, 50, 90), DS_ALIGN_CENTER_VERTICAL_MIDDLE);
@@ -277,9 +309,18 @@ void AwardScreen::DrawAwardSeed(Graphics* g)
 // GOTY @Patoke: 0x4081C0
 void AwardScreen::Draw(Graphics* g)
 {
+	Graphics aGraphics(*g);
+	const int anOldX = mX;
+	const int anOldY = mY;
+	RefreshAwardLayout(*this);
+	aGraphics.mTransX += mX - anOldX;
+	aGraphics.mTransY += mY - anOldY;
+	g = &aGraphics;
 	g->mLinearBlend = true;
 
 	int aLevel = mApp->mPlayerInfo->mLevel;
+	if (!mShowingAchievements && !IsPaperNote() && mAwardType != AWARD_ACHIEVEMENTONLY)
+		DrawAwardBackground(g, Sexy::IMAGE_AWARDSCREEN_BACK, *this);
 	if (mShowingAchievements) // @Patoke: add call
 		DrawAchievements(g);
 	else if (mAwardType == AWARD_CREDITS_ZOMBIENOTE)
@@ -289,7 +330,8 @@ void AwardScreen::Draw(Graphics* g)
 		g->DrawImage(Sexy::IMAGE_BACKGROUND6BOSS, -900, -400, 2800, 1200);
 		g->mColorizeImages = false;
 		g->mColor = Color(0, 0, 0, 64);
-		g->FillRect(0, 525, BOARD_WIDTH, BOARD_HEIGHT);
+		g->FillRect(mApp->mScreenBounds.mX - mX, 525,
+			mApp->mScreenBounds.mWidth, BOARD_HEIGHT - 525);
 		g->DrawImage(Sexy::IMAGE_ZOMBIE_NOTE, 75, 60);
 		g->DrawImage(Sexy::IMAGE_CREDITS_ZOMBIENOTE, 149, 103, 475, 325);
 	}
@@ -395,13 +437,16 @@ void AwardScreen::Draw(Graphics* g)
 
 	int aFadeInAlpha = TodAnimateCurve(180, 0, mFadeInCounter, 255, 0, Curves::Linear);
 	g->mColor = IsPaperNote() ? Color(0, 0, 0, aFadeInAlpha) : Color(255, 255, 255, aFadeInAlpha);
-	g->FillRect(0, 0, BOARD_WIDTH, BOARD_HEIGHT);
+	Rect aScreenRect = mApp->mScreenBounds;
+	aScreenRect.Offset(-mX, -mY);
+	g->FillRect(aScreenRect);
 }
 
 //0x4076A0
 // GOTY @Patoke: 0x408FE0
 void AwardScreen::Update()
 {
+	RefreshAwardLayout(*this);
 	Widget::Update();
 	// @Patoke: implemented
 	if (mShowingAchievements) {
@@ -535,6 +580,7 @@ void AwardScreen::StartButtonPressed()
 // GOTY @Patoke: 0x4097A0
 void AwardScreen::MouseDown(int x, int y, int theClickCount)
 {
+	RefreshAwardLayout(*this);
 	(void)x;(void)y;
 	if (theClickCount == 1) {
 		mStartButton->Update(); // @Patoke: implemented
@@ -549,6 +595,7 @@ void AwardScreen::MouseDown(int x, int y, int theClickCount)
 // GOTY @Patoke: 0x409840
 void AwardScreen::MouseUp(int x, int y, int theClickCount)
 {
+	RefreshAwardLayout(*this);
 	(void)x;(void)y;
 	if (theClickCount == 1)
 	{
@@ -570,10 +617,12 @@ void AwardScreen::DrawAchievements(Graphics* g) {
 	g->mColorizeImages = true;
 	// Rect aTextWrap = Rect(0, 0, 0, 77); // unused
 	g->mColor = Color(255, 255, 255);
-	g->FillRect(0, 0, mWidth, mHeight);
+	Rect aScreenRect = mApp->mScreenBounds;
+	aScreenRect.Offset(-mX, -mY);
+	g->FillRect(aScreenRect);
 	g->mColorizeImages = false;
 
-	g->DrawImage(IMAGE_CHALLENGE_BACKGROUND, 0, 0);
+	DrawAwardBackground(g, IMAGE_CHALLENGE_BACKGROUND, *this);
 
 	TodDrawString(g, ("ACHIEVEMENTS"), BOARD_WIDTH / 2, 58, FONT_HOUSEOFTERROR28, Color(220, 220, 220), DS_ALIGN_CENTER);
 

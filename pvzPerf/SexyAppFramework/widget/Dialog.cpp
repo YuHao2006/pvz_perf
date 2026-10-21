@@ -343,15 +343,16 @@ void Dialog::MouseDrag(int x, int y)
 		int aNewX = mX + x - mDragMouseX;
 		int aNewY = mY + y - mDragMouseY;	
 
-		if (aNewX < -8)
-			aNewX = -8;
-		else if (aNewX + mWidth > mWidgetManager->mWidth + 8)
-			aNewX = mWidgetManager->mWidth - mWidth + 8;
+        const auto& view = mWidgetManager->mMouseDestRect;
+		if (aNewX < view.mX - 8)
+			aNewX = view.mX - 8;
+		else if (aNewX + mWidth > view.mX + view.mWidth + 8)
+			aNewX = view.mX + view.mWidth - mWidth + 8;
 
-		if (aNewY < -8)
-			aNewY = -8;
-		else if (aNewY + mHeight > mWidgetManager->mHeight + 8)
-			aNewY = mWidgetManager->mHeight- mHeight + 8;
+		if (aNewY < view.mY - 8)
+			aNewY = view.mY - 8;
+		else if (aNewY + mHeight > view.mY + view.mHeight + 8)
+			aNewY = view.mY + view.mHeight - mHeight + 8;
 
 		mDragMouseX = mX + x - aNewX;
 		mDragMouseY = mY + y - aNewY;

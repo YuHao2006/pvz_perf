@@ -2,9 +2,11 @@
 #include "VulkanEnumeration.h"
 #include <atomic>
 #include <iostream>
+#include <string>
 
 namespace {
 std::atomic<unsigned> validationErrors = 0;
+unsigned rejectedGpuCandidates = 0;
 VkBool32 VKAPI_CALL Validate(VkDebugUtilsMessageSeverityFlagBitsEXT severity,
     VkDebugUtilsMessageTypeFlagsEXT types, const VkDebugUtilsMessengerCallbackDataEXT* data, void* user) {
     if (severity >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT) ++validationErrors;
@@ -49,13 +51,22 @@ void Run() {
 
         caught = false;
         auto noGpu = config;
-        noGpu.gpuFilter = [](VkPhysicalDevice) { return false; };
+        rejectedGpuCandidates = 0;
+        noGpu.gpuFilter = [](VkPhysicalDevice) {
+            ++rejectedGpuCandidates;
+            return false;
+        };
+        std::string rejectionReason;
         try { VulkanContext rejected(noGpu,native.hwnd,swapchain); }
         catch (const std::runtime_error& error) {
-            caught = std::string(error.what()).find("graphics+present") != std::string::npos;
+            caught = true;
+            rejectionReason = error.what();
         }
-        Require(caught, "Rejected GPU created a usable window/device");
+        Require(caught, "Reject-all GPU filter did not fail initialization");
         NoSharedDevice();
+        Require(rejectedGpuCandidates > 0, "Reject-all GPU filter was never evaluated");
+        if (rejectionReason.find("No GPU supports Vulkan") == std::string::npos)
+            throw std::runtime_error("Unexpected GPU rejection reason: " + rejectionReason);
 
         // Borrowed HWNDs must survive both failed and successful GPU lifetimes.
         {

@@ -97,6 +97,8 @@ public:
     // Runtime-only ownership/session state, never part of player or level saves.
     Dialog*                     mWaitingDialog = nullptr;
     std::uint64_t               mProfileRevision = 0;
+    int                         mZombatarSlideDistance = 800;
+    bool                        mZombatarPanning = false;
 
 private:
     int                         WaitForSelectorDialog(Dialog* dialog);
@@ -133,6 +135,8 @@ public:
     // @Patoke: implement functions
     /*inline*/ void             SlideTo(int theX, int theY);
     void                        ShowZombatarScreen();
+    void                        HideZombatarScreen();
+    void                        LayoutZombatarPage();
     void                        ShowAchievementsWidget(); // @Patoke: unofficial name
 };
 

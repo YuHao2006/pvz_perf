@@ -1,0 +1,17 @@
+Use case: precise-object-edit.
+Asset type: the source background texture of a 2D game's shop, NOT a screenshot.
+This is a 1408x608 padded canvas; the active background is 1400x600.
+Repair ONLY the masked regions, in daylight, with the existing blue-to-pale-green sky gradient.
+At the lower left, replace the accidental white/blank background patch with
+natural continuous pavement, soil or low foliage that fits the adjacent fence
+and ground perspective. Do not leave a white wedge, white glow or empty patch.
+At the upper right, join the sky smoothly across the vertical seam near x=1180.
+Remove the tiny isolated fence fragment floating in the sky around x=1195,
+y=220..300; retain the actual distant house, its roof and its real lower fence.
+Preserve the cartoon painting style, all unmasked tree/fence/house silhouettes,
+their exact positions, sizes, perspective and lighting. No mirrored or cloned
+scenery. No changes to composition, framing, scale or canvas aspect.
+This source intentionally contains no car, Dave, sign, speech bubble, goods or
+UI: they are independent foregrounds. Do not add any of them, or any writing,
+characters, logos, objects or borders. The rightmost 8 columns and bottom 8
+rows are padding. Keep all unmasked pixels unchanged.

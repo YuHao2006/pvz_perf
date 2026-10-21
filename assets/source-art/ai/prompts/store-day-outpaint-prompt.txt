@@ -1,0 +1,20 @@
+Use case: precise-object-edit / outpainting.
+Asset type: one original source background for a layered 2D game shop.
+The original 800x600 background is at x=300..1099, y=0..599 in a 1408x608
+canvas. The empty 300-pixel strips on both sides must be genuinely OUTPAINTED.
+Create a natural continuous 1400x600 background in bright daytime, preserving
+the central scene's native scale and perspective. Continue the left tree
+canopy, fence, shrubs, ground and pavement organically into the new left side,
+and continue the sky and distant neighborhood into the new right side.
+Do NOT reflect, mirror, clone, tile, stretch or duplicate the original tree,
+fence, clouds, houses, or any other object. Avoid symmetrical duplicated trunks.
+The sky must be one continuous painting, without vertical brightness bands,
+hard seam lines, half fence fragments or floating objects.
+Replace the white/empty area below the horizon with coherent ground or pavement;
+do not leave a white wedge, white glow, blank block or unpainted border.
+Preserve central tree/fence scale and placement; do not recenter or zoom.
+IMPORTANT: this is ONLY a backdrop. Dave, car, open hatch, shop sign, shelves,
+merchandise, speech bubbles and all UI are drawn as separate foregrounds by the
+game. Do not add any of them. No characters, new prominent props, text or logos.
+Match the original cartoon art style and lighting. Return the same framing.
+The rightmost 8 columns and bottom 8 rows are padding, to be discarded.

@@ -25,6 +25,7 @@
 #include "widget/WidgetManager.h"
 #include "AchievementsWidget.h"
 #include "widget/WidgetLifetimeHold.h"
+#include <algorithm>
 #include <limits>
 #include <memory>
 
@@ -84,7 +85,10 @@ LawnDialog* StoreScreen::ShowPurchaseDialog(int id, const SexyString& header,
     const SexyString& lines, const SexyString& footer, int buttons)
 {
     auto dialog = std::make_unique<StorePurchaseDialog>(*this, id, header, lines, footer, buttons);
-    mApp->CenterDialog(dialog.get(), dialog->mWidth, dialog->mHeight);
+    const Rect& bounds = mApp->mScreenBounds;
+    dialog->Resize(bounds.mX + (bounds.mWidth - dialog->mWidth) / 2,
+        bounds.mY + (bounds.mHeight - dialog->mHeight) / 2,
+        dialog->mWidth, dialog->mHeight);
     mApp->AddDialog(dialog.get());
     return dialog.release();
 }
@@ -215,6 +219,18 @@ StoreScreen::StoreScreen(LawnApp* theApp) : Dialog(nullptr, nullptr, DIALOG_STOR
     mGoToTreeNow = false;
     mPurchasedFullVersion = false;
     mTrialLockedWhenStoreOpened = mApp->IsTrialStageLocked();
+    RefreshLayout();
+}
+
+void StoreScreen::RefreshLayout()
+{
+    const Rect& bounds = mApp->mScreenBounds;
+    // Use the actual viewport center, including asymmetrically clamped battle
+    // bounds. All authored positions remain local to the same 800-pixel core.
+    Move(bounds.mX + (bounds.mWidth - BOARD_WIDTH) / 2,
+        bounds.mY + (bounds.mHeight - BOARD_HEIGHT) / 2);
+    mMouseInsets.mLeft = std::min(0, bounds.mX - mX);
+    mMouseInsets.mRight = std::min(0, mX + mWidth - bounds.mX - bounds.mWidth);
 }
 
 //0x48A610、0x48A630
@@ -584,19 +600,28 @@ void StoreScreen::DrawItem(Graphics* g, int theItemPosition, StoreItem theItemTy
 //0x48B4C0
 void StoreScreen::Draw(Graphics* g)
 {
+    const int previousX = mX, previousY = mY;
+    RefreshLayout();
+    Graphics centered(*g);
+    centered.Translate(mX - previousX, mY - previousY);
+    g = &centered;
     g->mLinearBlend = true;
     mDrawnOnce = true;
 
     int aStoreSignPosY = TodAnimateCurve(50, 110, mStoreTime, -150, 0, Curves::EaseInOut);
     if (mApp->IsNight())
     {
-        g->DrawImage(Sexy::IMAGE_STORE_BACKGROUNDNIGHT, 0, 0);
+        g->DrawImage(Sexy::IMAGE_STORE_BACKGROUNDNIGHT,
+            (BOARD_WIDTH - Sexy::IMAGE_STORE_BACKGROUNDNIGHT->mWidth) / 2, 0);
     }
     else
     {
-        g->DrawImage(Sexy::IMAGE_STORE_BACKGROUND, 0, 0);
+        g->DrawImage(Sexy::IMAGE_STORE_BACKGROUND,
+            (BOARD_WIDTH - Sexy::IMAGE_STORE_BACKGROUND->mWidth) / 2, 0);
     }
 
+    // Foreground extensions keep their authored left edges; centering each
+    // layer separately would move the shelves away from their item hit boxes.
     if (!mHatchTimer && mHatchOpen)
     {
         g->DrawImage(Sexy::IMAGE_STORE_CAR, mShakeX + 196, mShakeY + 138);
@@ -802,6 +827,7 @@ bool StoreScreen::CanInteractWithButtons()
 //0x48BF60
 void StoreScreen::Update()
 {
+    RefreshLayout();
     mApp->mMusic->MakeSureMusicIsPlaying(MUSIC_TUNE_TITLE_CRAZY_DAVE_MAIN_THEME);
     mApp->UpdateCrazyDave();
 
@@ -959,6 +985,7 @@ void StoreScreen::Update()
 //0x48C350
 void StoreScreen::AddedToManager(WidgetManager* theWidgetManager)
 {
+    RefreshLayout();
     WidgetContainer::AddedToManager(theWidgetManager);
     AddWidget(mBackButton);
     AddWidget(mPrevButton);
@@ -1329,6 +1356,10 @@ void StoreScreen::AdvanceCrazyDaveDialog()
 //0x48D130
 void StoreScreen::MouseDown(int x, int y, int theClickCount)
 {
+    const int previousX = mX, previousY = mY;
+    RefreshLayout();
+    x += previousX - mX;
+    y += previousY - mY;
     (void)theClickCount;
     if (mBubbleClickToContinue)
     {

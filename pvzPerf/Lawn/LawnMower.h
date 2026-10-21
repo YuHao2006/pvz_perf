@@ -21,7 +21,7 @@ public:
     float               mPosY;                  //+0xC
     int                 mRenderOrder;           //+0x10
     int                 mRow;                   //+0x14
-    int                 mAnimTicksPerFrame;     //+0x18
+    Sexy::TimeCounter                 mAnimTicksPerFrame;     //+0x18
     ReanimationID       mReanimID;              //+0x1C
     Sexy::TimeCounter                 mChompCounter;          //+0x20
     Sexy::TimeCounter                 mRollingInCounter;      //+0x24

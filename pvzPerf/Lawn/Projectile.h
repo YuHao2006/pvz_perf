@@ -34,7 +34,7 @@ public:
     float                   mAccZ;                  //+0x48
     float                   mShadowY;               //+0x4C
     bool                    mDead;                  //+0x50
-    int                     mAnimTicksPerFrame;     //+0x54
+    Sexy::TimeCounter                     mAnimTicksPerFrame;     //+0x54
     ProjectileMotion        mMotionType;            //+0x58
     ProjectileType          mProjectileType;        //+0x5C
     Sexy::TimeCounter                     mProjectileAge;         //+0x60

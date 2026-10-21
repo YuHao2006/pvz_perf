@@ -344,7 +344,7 @@ class TodParticle
 {
 public:
 	TodParticleEmitter*				mParticleEmitter;
-	int								mParticleDuration;
+	Sexy::TimeCounter								mParticleDuration;
 	Sexy::TimeCounter								mParticleAge;
 	float							mParticleTimeValue;
 	float							mParticleLastTimeValue;
@@ -355,7 +355,7 @@ public:
 	float							mSpinPosition;
 	float							mSpinVelocity;
 	ParticleID						mCrossFadeParticleID;
-	int								mCrossFadeDuration;
+	Sexy::TimeCounter								mCrossFadeDuration;
 	float							mParticleInterp[ParticleTracks::NUM_PARTICLE_TRACKS];
 	float							mParticleFieldInterp[MAX_PARTICLE_FIELDS][2];
 	// 持续期倒数（=1/(mParticleDuration-1)）：mParticleTimeValue 由除改乘用。
@@ -382,7 +382,7 @@ public:
 	Sexy::SexyVector2				mSystemCenter;													//+0x1C
 	int								mParticlesSpawned;												//+0x24
 	Sexy::TimeCounter								mSystemAge;														//+0x28
-	int								mSystemDuration;												//+0x2C
+	Sexy::TimeCounter								mSystemDuration;												//+0x2C
 	float							mSystemTimeValue;												//+0x30
 	float							mSystemLastTimeValue;											//+0x34
 	bool							mDead;															//+0x38

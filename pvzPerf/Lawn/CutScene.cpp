@@ -13,6 +13,7 @@
 #include "MessageWidget.h"
 #include "GameConstants.h"
 #include "Widget/LawnDialog.h"
+#include "Widget/ZombiesWonLayout.h"
 #include "Widget/GameButton.h"
 #include "System/PlayerInfo.h"
 #include "Widget/StoreScreen.h"
@@ -500,7 +501,7 @@ void CutScene::PreloadResources()
 	PlaceStreetZombies();
 
 	mBoard->mPreloadTime = std::max(aTimer.GetDuration(), 0.0);
-	TodTrace("preloading: %d ms", mBoard->mPreloadTime);
+	TodTrace("preloading: %d ms", static_cast<int>(mBoard->mPreloadTime));
 	// 关卡放行门（2026-10-09 用户规格"加载界面卡住不放行，首绘路径不得
 	// 存在"）：过场预载批次（僵尸定义/植物资源/棋盘阴影/选卡图/字体）刚
 	// 入队完毕——立即排干+清扫到位。过场为此可以卡住；不留任何图给
@@ -1663,10 +1664,15 @@ void CutScene::StartZombiesWon()
 //0x43C410
 void CutScene::UpdateZombiesWon()
 {
-	// 画面滚动
-	if (mCutsceneTime > LostTimePanRightStart && mCutsceneTime <= LostTimePanRightEnd)
+	// Retail 1073 (0043F650) pans 0 -> 220 with the original easing.
+	// Keep that curve, constrained by the backdrop visible at this width.
+	const Rect& aView = mApp->mScreenBounds;
+	mBoard->Move(ZombiesWonLayout::CameraX(
+		CalcPosition(LostTimePanRightStart, LostTimePanRightEnd, 0, BOARD_OFFSET),
+		aView.mX, aView.mWidth), 0);
+	if (Reanimation* aWon = mApp->ReanimationTryToGet(mZombiesWonReanimID))
 	{
-		mBoard->Move(CalcPosition(LostTimePanRightStart, LostTimePanRightEnd, 0, BOARD_OFFSET), 0);
+		aWon->mOverlayMatrix.m02 = ZombiesWonLayout::CanvasX(aView.mX, aView.mWidth, mBoard->mX);
 	}
 	
 	// 啃食脑子的音效
@@ -1680,7 +1686,9 @@ void CutScene::UpdateZombiesWon()
 	{
 		ReanimatorEnsureDefinitionLoaded(ReanimationType::REANIM_ZOMBIES_WON, true);
 		int aRenderPosition = Board::MakeRenderOrder(RenderLayer::RENDER_LAYER_SCREEN_FADE, 0, 0);
-		Reanimation* aReanimation = mApp->AddReanimation(-BOARD_OFFSET, 0, aRenderPosition, ReanimationType::REANIM_ZOMBIES_WON);
+		Reanimation* aReanimation = mApp->AddReanimation(
+			ZombiesWonLayout::CanvasX(aView.mX, aView.mWidth, mBoard->mX),
+			0, aRenderPosition, ReanimationType::REANIM_ZOMBIES_WON);
 		aReanimation->mAnimRate = 12.0f;
 		aReanimation->mLoopType = ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD;
 		aReanimation->GetTrackInstanceByName(ReanimTrackId::fullscreen)->mTrackColor = Color::Black;
@@ -2326,6 +2334,8 @@ void CutScene::DrawUpsell(Graphics* g)
 //0x441480
 void CutScene::UpdateIntro()
 {
+	// Retain the authored intro pan. At the widest viewport the native backdrop
+	// has no spare pan margin, so uncovered sides intentionally remain black.
 	mBoard->Move(-TodAnimateCurve(TimeIntro_PanRightStart, TimeIntro_PanRightEnd, mCutsceneTime, -100, 100, Curves::Linear), 0);
 
 	if (mCutsceneTime == 10)
@@ -2360,11 +2370,13 @@ void CutScene::UpdateIntro()
 //0x441590
 void CutScene::DrawIntro(Graphics* g)
 {
+	const Rect& aBounds = mApp->mScreenBounds;
+	const Rect aScreenRect(aBounds.mX - mBoard->mX, aBounds.mY - mBoard->mY,
+		aBounds.mWidth, aBounds.mHeight);
 	if (mCutsceneTime <= TimeIntro_PanRightStart || mCutsceneTime > TimeIntro_FadeOutEnd)
 	{
 		g->mColor = Color::Black;
-		g->FillRect(mApp->mScreenBounds.mX - mBoard->mX, -mBoard->mY,
-            mApp->mScreenBounds.mWidth, mApp->mScreenBounds.mHeight);
+		g->FillRect(aScreenRect);
 	}
 
 	// 绘制“PopCap Games 出品”字样
@@ -2392,7 +2404,8 @@ void CutScene::DrawIntro(Graphics* g)
 		float aScale = TodAnimateCurveFloat(TimeIntro_LogoStart, TimeIntro_LogoEnd, mCutsceneTime, 5, 1, Curves::EaseOut);
 		float aCenter = aScale * 0.5;
 		int aOffsetX = BOARD_WIDTH / 2 - mBoard->mX, aOffsetY = BOARD_HEIGHT / 2 - mBoard->mY;
-		Rect aRect(aOffsetX - BOARD_WIDTH * aCenter, aOffsetY - 75 * aScale, BOARD_WIDTH * aScale, 150 * aScale);
+		const Rect aRect(aScreenRect.mX, aOffsetY - 75 * aScale,
+			aScreenRect.mWidth, 150 * aScale);
 		g->mColor = Color(0, 0, 0, 128);
 		g->FillRect(aRect);
 		Image* aImage = IMAGE_PVZ_LOGO;
@@ -2402,8 +2415,7 @@ void CutScene::DrawIntro(Graphics* g)
 	if (mCutsceneTime > TimeIntro_FadeOut && mCutsceneTime <= TimeIntro_FadeOutEnd)
 	{
 		g->mColor = Color(0, 0, 0, TodAnimateCurve(TimeIntro_FadeOut, TimeIntro_FadeOutEnd, mCutsceneTime, 0, 255, Curves::Linear));
-		g->FillRect(mApp->mScreenBounds.mX - mBoard->mX, -mBoard->mY,
-            mApp->mScreenBounds.mWidth, mApp->mScreenBounds.mHeight);
+		g->FillRect(aScreenRect);
 	}
 }
 

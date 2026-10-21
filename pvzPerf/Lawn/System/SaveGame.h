@@ -23,12 +23,6 @@ struct SaveFileHeader
     unsigned int    mBuildDate;
 };
 
-enum class LevelSaveEncoding
-{
-    Legacy1073,
-    Dat64V1
-};
-
 class SaveGameLoadRejected : public std::runtime_error
 {
 public:
@@ -41,7 +35,6 @@ public:
     Buffer          mBuffer;            //+0x0
     bool            mFailed;            //+0x20
     bool            mReading;           //+0x21
-    LevelSaveEncoding mEncoding;
 
 public:
     inline int      ByteLeftToRead() { return (mBuffer.mDataBitSize - mBuffer.mReadBitPos + 7) / 8; }

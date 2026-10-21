@@ -2,6 +2,8 @@
 #include "SexyAppFramework/graphics/vulkan/VulkanViewport.h"
 #include "Lawn/Widget/SelectorLayout.h"
 #include "Lawn/Widget/SeedChooserLayout.h"
+#include "Lawn/Widget/ZombiesWonLayout.h"
+#include "Sexy.TodLib/ReanimRenderSemantics.h"
 #include "Lawn/ToolTipLayout.h"
 #include "Lawn/GardenHudLayout.h"
 #include <stdexcept>
@@ -10,6 +12,39 @@ using namespace Sexy;
 
 static void Check(bool condition) {
     if (!condition) throw std::runtime_error("Game viewport regression");
+}
+
+static void CheckZombiesWonLayout() {
+    static_assert(ReanimRenderSemantics::IsFullscreenTrack(ReanimTrackId::fullscreen));
+    static_assert(!ReanimRenderSemantics::IsFullscreenTrack(ReanimTrackId::fullscreen2));
+    static_assert(!ReanimRenderSemantics::IsFullscreenTrack(ReanimTrackId::ZombiesWon));
+    // Retail camera and canvas positions at 800x600.
+    Check(ZombiesWonLayout::CameraX(220, 0, 800) == 220);
+    Check(ZombiesWonLayout::CanvasX(0, 800, 220) == -220);
+    // The widest battle viewport is deliberately asymmetric: [-220,1180].
+    Check(ZombiesWonLayout::CameraX(220, -220, 1400) == 0);
+    Check(ZombiesWonLayout::CanvasX(-220, 1400, 0) == 80);
+    for (int width = 800; width <= 1400; ++width) {
+        const auto view = GameViewport::Fit(width, 600).WithinWorld(-220, 1180);
+        for (int requested = 0; requested <= 220; ++requested) {
+            const int camera = ZombiesWonLayout::CameraX(requested, view.left, width);
+            // Both visible edges must stay inside the unchanged world backdrop.
+            Check(view.left - camera >= -220);
+            Check(view.left + width - camera <= 1180);
+            const int canvas = ZombiesWonLayout::CanvasX(view.left, width, camera);
+            Check(canvas + camera - view.left == (width - 800) / 2);
+        }
+        for (const int dialogWidth : {200, 339, 400, 587}) {
+            const int x = ZombiesWonLayout::DialogX(view.left, width, dialogWidth);
+            const int padding = x - view.left;
+            Check(padding == (width - dialogWidth) / 2);
+            Check(width - dialogWidth - padding >= padding);
+            for (const int draggedX : {x, x - 100, x + 75}) {
+                const int menuX = ZombiesWonLayout::MenuX(view.left, width, draggedX);
+                Check(draggedX + menuX - view.left + 163 == width - 2);
+            }
+        }
+    }
 }
 
 static void CheckGardenToolButtons() {
@@ -141,6 +176,7 @@ static void CheckGardenHudLayout() {
 }
 
 int main() {
+    CheckZombiesWonLayout();
     CheckGardenToolButtons();
     CheckGardenHudLayout();
     // The legacy X/Y paths truncate at different points. Compare their actual

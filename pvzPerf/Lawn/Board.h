@@ -186,7 +186,7 @@ public:
 	int								mZombieHealthToNextWave;								//+0x5594
 	int								mZombieHealthWaveStart;									//+0x5598
 	Sexy::TimeCounter								mZombieCountDown;										//+0x559C
-	int								mZombieCountDownStart;									//+0x55A0
+	Sexy::TimeCounter								mZombieCountDownStart;									//+0x55A0
 	Sexy::TimeCounter								mHugeWaveCountDown;										//+0x55A4
 	bool							mHelpDisplayed[NUM_ADVICE_TYPES];						//+0x55A8
 	AdviceType						mHelpIndex;												//+0x55EC
@@ -228,14 +228,14 @@ public:
 	bool							mMushroomAndCoffeeBeansOnly;							//+GOTY @Patoke: 0x5790
 	bool							mMushroomsUsed;											//+GOTY @Patoke: 0x5791
 	int								mTriggeredLawnMowers;									//+0x576C
-	int								mPlayTimeActiveLevel;									//+0x5770
-	int								mPlayTimeInactiveLevel;									//+0x5774
+	Sexy::SecondCounter								mPlayTimeActiveLevel;									//+0x5770
+	Sexy::SecondCounter								mPlayTimeInactiveLevel;									//+0x5774
 	int								mMaxSunPlants;											//+0x5778
-	DWORD							mStartDrawTime;											//+0x577C
-	DWORD							mIntervalDrawTime;										//+0x5780
+	Sexy::UnsignedMillisecondCounter							mStartDrawTime;											//+0x577C
+	Sexy::UnsignedMillisecondCounter							mIntervalDrawTime;										//+0x5780
 	int								mIntervalDrawCountStart;								//+0x5784
 	float							mMinFPS;												//+0x5788
-	int								mPreloadTime;											//+0x578C
+	Sexy::MillisecondCounter								mPreloadTime;											//+0x578C
 	intptr_t						mGameID;												//+0x5790
 	int								mGravesCleared;											//+0x5794
 	int								mPlantsEaten;											//+0x5798
@@ -244,8 +244,8 @@ public:
 	int								mDiamondsCollected;										//+0x57A4 GOTY @Patoke: 0x57CC
 	int								mPottedPlantsCollected;									//+0x57A8
 	int								mChocolateCollected;									//+0x57AC
-	// 注：不可在此追加成员——dat64 存档按 mPaused..对象尾整块内存镜像写出，
-	// sizeof(Board) 受 LevelSaveFormat::DAT64_BOARD_STATE_SIZE 硬校验（条目3/4 缓存因此用函数域 static）。
+	// SaveRecordMapping pins the persistent members to the versioned wire ABI;
+	// native padding and transient timer crossing state never enter a save.
 
 public:
 	Board(LawnApp* theApp);

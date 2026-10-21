@@ -70,11 +70,17 @@ def main():
             subprocess.run([str(converter), str(source), str(target)], check=True)
         if roundtrip.read_bytes() != profile:
             raise ValueError("Completed profile DAT64/DAT roundtrip differs")
+        checkpoint = directory / "game1_58.dat64"
+        subprocess.run([str(converter), "--target", "dat64-v2",
+                        str(source_files["project"]), str(checkpoint)], check=True)
+        checkpoint_bytes = checkpoint.read_bytes()
+        if checkpoint_bytes[:8] != b"PVZDAT64" or struct.unpack_from("<I", checkpoint_bytes, 8)[0] != 2:
+            raise ValueError("Modern checkpoint must use DAT64 v2")
         args.output.parent.mkdir(parents=True, exist_ok=True)
         with zipfile.ZipFile(args.output, "x", zipfile.ZIP_DEFLATED) as archive:
             archive.writestr("data/users.dat", summary)
             archive.writestr("data/user1.dat64", profile)
-            archive.write(source_files["project"], "data/game1_58.dat64")
+            archive.write(checkpoint, "data/game1_58.dat64")
             archive.writestr("retail/users.dat", summary)
             archive.write(dat, "retail/user1.dat")
             archive.write(source_files["original"], "retail/game1_13.dat")
@@ -87,7 +93,8 @@ def main():
                 "20 achievements, ten seed slots, permanent store upgrades and coins.\n"
                 "Wisdom tree: 1000. Zen garden and custom Zombatars are empty.\n"
                 "No personal user profile is included; this profile is generated for testing.\n\n"
-                "data/game1_58.dat64 is the unmodified Tests endless benchmark.\n"
+                "data/game1_58.dat64 is the Tests endless benchmark converted to DAT64 v2.\n"
+                "The converter verifies that all saved semantics are preserved.\n"
                 "Do not advance it and reuse the progressed checkpoint as a new baseline.\n"
                 "Re-extract the benchmark before each comparison.\n"
                 "retail/ contains equivalent profile/checkpoint files for original 1073.\n"

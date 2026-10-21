@@ -70,6 +70,7 @@ public:
     void EndSceneAndPresent();
     bool PresentRetainedScene();
     bool ResizePresent();
+    void ResizeScene(int width, int height);
     void SetHdrParams(const VulkanHdrParams& params);
     VulkanHdrParams HdrParams() const;
     void PrepareScale(bool fullscreen, std::span<const OpenGLScaleStep> steps,

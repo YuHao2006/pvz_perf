@@ -24,6 +24,7 @@
 #include "widget/WidgetManager.h"
 #include "ZombatarScreen.h"
 #include "ZombatarItems.h"
+#include "SelectorLayout.h"
 #include "LawnDialog.h"
 #include "Sexy.TodLib/TodStringFile.h"
 #include "widget/WidgetLifetimeHold.h"
@@ -103,6 +104,7 @@ int GameSelector::SelectorMessageBox(int id, const SexyChar* header, const SexyC
 }
 
 static constexpr float SELECTOR_MAIN_PAGE_X = 800.0f;
+static constexpr float SELECTOR_LEFT_ART_EXTENSION = 300.0f;
 static constexpr float gFlowerCenter[3][2] = {
 	{ 1565.0f, 483.0f }, { 1463.0f, 455.0f }, { 1501.0f, 439.0f }
 };  // GOTY 1.2.0.1073: 0x6E3328
@@ -130,6 +132,7 @@ GameSelector::GameSelector(LawnApp* theApp)
 	unsigned int aAfterResources = SexyGetTickCount();
 
 	mApp = theApp;
+    mClip = false; // The background art extends outside the original menu page.
 	mLevel = 1;
 	mLoading = false;
 	mHasTrophy = false;
@@ -433,7 +436,9 @@ GameSelector::GameSelector(LawnApp* theApp)
 	mDestX = 0;
 	mDestY = 0;
 	mZombatarScreen = new ZombatarScreen(mApp);
-	mZombatarScreen->Move((int)SELECTOR_MAIN_PAGE_X * 2, 0);
+	mZombatarScreen->Move(int(SELECTOR_MAIN_PAGE_X) + BOARD_WIDTH, 0);
+    mZombatarScreen->mVisible = false;
+    mZombatarScreen->mWidgetFlagsMod.mRemoveFlags |= WIDGETFLAGS_UPDATE;
 	mAchievementsWidget = new AchievementsWidget(this->mApp);
 	mAchievementsWidget->Move((int)SELECTOR_MAIN_PAGE_X, mApp->mHeight);
 	unsigned int aAfterWidgets = SexyGetTickCount();
@@ -697,6 +702,25 @@ void GameSelector::Draw(Graphics* g)
 	if (mApp->GetDialog(Dialogs::DIALOG_STORE) || mApp->GetDialog(Dialogs::DIALOG_ALMANAC))
 		return;
 
+    LayoutZombatarPage();
+    {
+        Graphics background(*g);
+        background.Translate(mZombatarScreen->mX, mZombatarScreen->mY);
+        // The overlap's wall and grass belong to the animated menu foreground.
+        background.ClipRect(int(SELECTOR_LEFT_ART_EXTENSION), 0,
+            BOARD_WIDTH - int(SELECTOR_LEFT_ART_EXTENSION), BOARD_HEIGHT);
+        if (background.mClipRect.mWidth > 0 && background.mClipRect.mHeight > 0)
+            mZombatarScreen->DrawBackground(&background);
+    }
+    Graphics menu(*g);
+    menu.ClipRect(int(SELECTOR_MAIN_PAGE_X - SELECTOR_LEFT_ART_EXTENSION), 0,
+        BOARD_WIDTH + int(SELECTOR_LEFT_ART_EXTENSION * 2), BOARD_HEIGHT);
+    // DrawAll still visits the visible page's children after this returns.
+    // Avoid walking all menu animation tracks when the page is fully offscreen.
+    if (menu.mClipRect.mWidth <= 0 || menu.mClipRect.mHeight <= 0)
+        return;
+    g = &menu;
+    Reanimation* aSelectorReanim = mApp->ReanimationGet(mSelectorReanimID);
 	// The original 1073 does not paint a black backdrop here. At rest the page
 	// artwork fully covers the viewport, so the fill only exposes black through
 	// any hole; it was only masking slide ghosting in earlier port builds.
@@ -713,7 +737,6 @@ void GameSelector::Draw(Graphics* g)
 	g->mLinearBlend = true;
 	g->Translate(800, 0);
 
-	Reanimation* aSelectorReanim = mApp->ReanimationGet(mSelectorReanimID);
 	aSelectorReanim->DrawRenderGroup(g, 1);  // "SelectorScreen_BG"
 	for (int i = 0; i < 6; i++)
 		mApp->ReanimationGet(mCloudReanimID[i])->Draw(g);
@@ -757,7 +780,10 @@ void GameSelector::Draw(Graphics* g)
 		aOffsetMatrix.Translate(
 			SELECTOR_MAIN_PAGE_X + 170.5f - (int)(aStringWidth * 0.5f) + mX,
 			102.5f + mY);
-		TodDrawStringMatrix(g, Sexy::FONT_BRIANNETOD16, aOverlayMatrix * aOffsetMatrix, aWelcomeStr, Color(255, 245, 200));
+        SexyTransform2D aWelcomeMatrix = aOverlayMatrix * aOffsetMatrix;
+        aWelcomeMatrix.m02 += g->mTransX - mX;
+        aWelcomeMatrix.m12 += g->mTransY - mY;
+		TodDrawStringMatrix(g, Sexy::FONT_BRIANNETOD16, aWelcomeMatrix, aWelcomeStr, Color(255, 245, 200));
 
 	}
 
@@ -775,6 +801,12 @@ void GameSelector::Draw(Graphics* g)
 // GOTY @Patoke: 0x44D750
 void GameSelector::DrawOverlay(Graphics* g)
 {
+    Graphics menu(*g);
+    menu.ClipRect(-int(SELECTOR_LEFT_ART_EXTENSION), 0,
+        BOARD_WIDTH + int(SELECTOR_LEFT_ART_EXTENSION * 2), BOARD_HEIGHT);
+    if (menu.mClipRect.mWidth <= 0 || menu.mClipRect.mHeight <= 0)
+        return;
+    g = &menu;
 	g->mLinearBlend = true;
 	if (mApp->mPlayerInfo == nullptr)
 		return;
@@ -855,14 +887,12 @@ void GameSelector::DrawOverlay(Graphics* g)
 		g->ClearClipRect();
 	}
 
-	g->Translate(-(mX + 800), 0);
+    // Leaves share the selector overlay's frame, including its page slide.
 	Reanimation* aLeafReanim = mApp->ReanimationTryToGet(mLeafReanimID);
 	if (aLeafReanim)
 	{
 		aLeafReanim->Draw(g);
 	}
-	g->Translate(mX + 800, 0);
-
 	for (int i = 0; i < 3; i++)
 		mApp->ReanimationGet(mFlowerReanimID[i])->Draw(g);
 
@@ -883,6 +913,7 @@ void GameSelector::DrawOverlay(Graphics* g)
 	int aLeftIdx = aSelectorReanim->FindTrackIndex(ReanimTrackId::SelectorScreen_BG_Left);
 	ReanimatorTransform aTransformLeft;
 	aSelectorReanim->GetCurrentTransform(aLeftIdx, &aTransformLeft);
+    aTransformLeft.mTransX += SELECTOR_LEFT_ART_EXTENSION;
 	if (mHasTrophy)
 	{
 		// @Patoke: updated pos to match GOTY
@@ -949,7 +980,12 @@ void GameSelector::Update()
 		Move(aNewX, aNewY);
 
 		mSlideCounter--;
+        if (mSlideCounter <= 0) {
+            Move(mDestX, mDestY);
+            mZombatarPanning = false;
+        }
 	}
+    LayoutZombatarPage();
 
 	mApp->mZenGarden->UpdatePlantNeeds();
 
@@ -1140,7 +1176,8 @@ void GameSelector::Update()
 	TrackButton(mStoreButton, ReanimTrackId::SelectorScreen_BG_Right, SELECTOR_MAIN_PAGE_X + 334.0f, 441.0f);
 	TrackButton(mChangeUserButton, ReanimTrackId::woodsign2, SELECTOR_MAIN_PAGE_X + 24.0f, 10.0f);
 	TrackButton(mZombatarButton, ReanimTrackId::woodsign3, SELECTOR_MAIN_PAGE_X, 0.0f); // @Patoke: add shart here
-	TrackButton(mAchievementsButton, ReanimTrackId::SelectorScreen_BG_Left, SELECTOR_MAIN_PAGE_X + 20.0f, 480.0f);
+	TrackButton(mAchievementsButton, ReanimTrackId::SelectorScreen_BG_Left,
+        SELECTOR_MAIN_PAGE_X + SELECTOR_LEFT_ART_EXTENSION + 20.0f, 480.0f);
 	aSelectorReanim->SetImageOverride(ReanimTrackId::woodsign2, (mChangeUserButton->mIsOver || mChangeUserButton->mIsDown) ? Sexy::IMAGE_REANIM_SELECTORSCREEN_WOODSIGN2_PRESS : nullptr);
 	aSelectorReanim->SetImageOverride(ReanimTrackId::woodsign3, (mZombatarButton->mIsOver || mZombatarButton->mIsDown) ? Sexy::IMAGE_REANIM_SELECTORSCREEN_WOODSIGN3_PRESS : nullptr);
 }
@@ -1627,18 +1664,55 @@ void GameSelector::SlideTo(int theX, int theY) {
 	mStartY = mY;
 }
 
-// GOTY 1.2.0.1073 places this page at selector-local x=1600.
 void GameSelector::ShowZombatarScreen() {
 	if (!mZombatarScreen)
 		return;
 
+    mSlideCounter = 0;
+    mZombatarPanning = false;
+    Move(-(int)SELECTOR_MAIN_PAGE_X, 0);
+    LayoutZombatarPage();
 	mZombatarScreen->PrepareToShow();
-	SlideTo(-(int)SELECTOR_MAIN_PAGE_X * 2, 0);
+    mZombatarScreen->mWidgetFlagsMod.mRemoveFlags &=
+        ~(WIDGETFLAGS_UPDATE | WIDGETFLAGS_ALLOW_MOUSE | WIDGETFLAGS_ALLOW_FOCUS);
+    mZombatarScreen->SetVisible(true);
+    mZombatarPanning = true;
+    SlideTo(-int(SELECTOR_MAIN_PAGE_X) - mZombatarSlideDistance, 0);
 	// 1073 focuses the selector child that owns the category controls.  If the
 	// outer full-screen Dialog is focused instead, GameButton::Update suppresses
 	// all hover/down state while a modal dialog exists and the mouse semantics
 	// become inconsistent.
 	mWidgetManager->SetFocus(mZombatarScreen->mZombatarItems);
+}
+
+void GameSelector::HideZombatarScreen() {
+    if (!mZombatarScreen) return;
+    mZombatarScreen->mZombatarItems->CancelDeleteDialog();
+    mZombatarScreen->SetVisible(false);
+    mZombatarScreen->mWidgetFlagsMod.mRemoveFlags |=
+        WIDGETFLAGS_UPDATE | WIDGETFLAGS_ALLOW_MOUSE | WIDGETFLAGS_ALLOW_FOCUS;
+    mZombatarPanning = true;
+    SlideTo(-int(SELECTOR_MAIN_PAGE_X), 0);
+    if (mWidgetManager) mWidgetManager->SetFocus(this);
+    MarkDirtyFull();
+}
+
+void GameSelector::LayoutZombatarPage() {
+    const int mainX = int(SELECTOR_MAIN_PAGE_X);
+    const Rect& view = mApp->mScreenBounds;
+    const int distance = SelectorLayout::ZombatarSlideDistance(view.mX, view.mWidth);
+    const int previousDistance = mZombatarSlideDistance;
+    if (distance == previousDistance) return;
+    if ((mZombatarScreen->mVisible || mZombatarPanning) && previousDistance > 0) {
+        // Preserve the opening/closing fraction when resized mid-transition.
+        const auto remap = [=](int position) {
+            return -mainX + int((position + mainX) * 1LL * distance / previousDistance);
+        };
+        Move(remap(mX), mY);
+        mStartX = remap(mStartX);
+        mDestX = remap(mDestX);
+    }
+    mZombatarSlideDistance = distance;
 }
 
 // GOTY @Patoke: 0x450200

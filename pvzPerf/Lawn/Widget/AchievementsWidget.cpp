@@ -17,10 +17,13 @@
 #include "Sexy.TodLib/TodParticle.h"
 #include "widget/Dialog.h"
 #include "widget/WidgetManager.h"
+#include <algorithm>
 
 namespace
 {
-Rect aBackButtonRect = { 120, 35, 130, 80 };
+constexpr int kBackgroundExtension = 300;
+constexpr int kBackgroundWidth = BOARD_WIDTH + 2 * kBackgroundExtension;
+const Rect aBackButtonRect = { 120, 35, 130, 80 };
 }  // namespace
 
 AchievementItem gAchievementList[MAX_ACHIEVEMENTS] = {
@@ -49,7 +52,10 @@ AchievementItem gAchievementList[MAX_ACHIEVEMENTS] = {
 // GOTY @Patoke: 0x401000
 AchievementsWidget::AchievementsWidget(LawnApp* theApp) {
 	mApp = theApp;
-	mWidth = 800;
+	mWidth = BOARD_WIDTH;
+	mClip = false;
+	mMouseInsets.mLeft = -kBackgroundExtension;
+	mMouseInsets.mRight = -kBackgroundExtension;
 	mHeight = IMAGE_ACHEESEMENTS_CHINA->mHeight + IMAGE_SELECTORSCREEN_ACHIEVEMENTS_BG->mHeight + 15700;
 	mScrollDirection = -1;
 	mScrollValue = 0;
@@ -69,10 +75,8 @@ void AchievementsWidget::Update() {
 	if (mScrollValue <= 0)
 		return;
 
-	if (mScrollValue > mDefaultScrollValue)
-		mScrollValue = mDefaultScrollValue;
-
-	mScrollValue -= mScrollDecay * Sexy::gWholeLegacyTicks;
+	mScrollValue = std::max(0, std::min(mScrollValue, mDefaultScrollValue) -
+		mScrollDecay * Sexy::gWholeLegacyTicks);
 
 	int aNewY = mY + mScrollValue * mScrollDirection * Sexy::gWholeLegacyTicks;
 	if (aNewY >= mApp->mHeight)
@@ -82,19 +86,13 @@ void AchievementsWidget::Update() {
 	if (aNewY <= aMaxScroll)
 		aNewY = aMaxScroll;
 
-	int aOldY = mY;
-	mY = aNewY;
-
-	int aDelta = aNewY - aOldY;
-	mMoreRockRect.mY += aDelta;
-	aBackButtonRect.mY += aDelta;
-
-	if (mScrollValue <= 0)
-		mScrollValue = 0;
+	// Mouse events and hit rectangles are already in this widget's local frame.
+	Move(mX, aNewY);
 }
 
 // GOTY @Patoke: 0x401160
 void AchievementsWidget::Draw(Graphics* g) {
+	g->ClipRect(-kBackgroundExtension, 0, kBackgroundWidth, mHeight);
 	if (g->mClipRect.mWidth <= 0 || g->mClipRect.mHeight <= 0)
 		return;
 
@@ -103,20 +101,23 @@ void AchievementsWidget::Draw(Graphics* g) {
 		mWidgetManager->mLastMouseX - anAbsolutePosition.mX,
 		mWidgetManager->mLastMouseY - anAbsolutePosition.mY);
 
-	g->DrawImage(IMAGE_SELECTORSCREEN_ACHIEVEMENTS_BG, 0, 0);
+	// Opaque underpaint also covers the original artwork's antialiased edges.
+	g->mColor = Color(55, 37, 19);
+	g->FillRect(-kBackgroundExtension, 0, kBackgroundWidth, mHeight);
+	g->DrawImage(IMAGE_SELECTORSCREEN_ACHIEVEMENTS_BG, -kBackgroundExtension, 0);
 
 	int aHeight = IMAGE_SELECTORSCREEN_ACHIEVEMENTS_BG->mHeight;
 	for (int i = 1; i <= 70; i++)
-		g->DrawImage(IMAGE_ACHEESEMENTS_HOLE_TILE, 0, aHeight * i);
+		g->DrawImage(IMAGE_ACHEESEMENTS_HOLE_TILE, -kBackgroundExtension, aHeight * i);
 
-	g->DrawImage(IMAGE_ACHEESEMENTS_BOOKWORM, 0, 1125);
-	g->DrawImage(IMAGE_ACHEESEMENTS_BEJEWELED, 0, 2250);
-	g->DrawImage(IMAGE_ACHEESEMENTS_CHUZZLE, 0, 4500);
-	g->DrawImage(IMAGE_ACHEESEMENTS_PEGGLE, 0, 6750);
-	g->DrawImage(IMAGE_ACHEESEMENTS_PIPE, 0, 9000);
-	g->DrawImage(IMAGE_ACHEESEMENTS_ZUMA, 0, 11250);
+	g->DrawImage(IMAGE_ACHEESEMENTS_BOOKWORM, -kBackgroundExtension, 1125);
+	g->DrawImage(IMAGE_ACHEESEMENTS_BEJEWELED, -kBackgroundExtension, 2250);
+	g->DrawImage(IMAGE_ACHEESEMENTS_CHUZZLE, -kBackgroundExtension, 4500);
+	g->DrawImage(IMAGE_ACHEESEMENTS_PEGGLE, -kBackgroundExtension, 6750);
+	g->DrawImage(IMAGE_ACHEESEMENTS_PIPE, -kBackgroundExtension, 9000);
+	g->DrawImage(IMAGE_ACHEESEMENTS_ZUMA, -kBackgroundExtension, 11250);
 
-	g->DrawImage(IMAGE_ACHEESEMENTS_CHINA, 0, mHeight - IMAGE_ACHEESEMENTS_CHINA->mHeight - 50);
+	g->DrawImage(IMAGE_ACHEESEMENTS_CHINA, -kBackgroundExtension, mHeight - IMAGE_ACHEESEMENTS_CHINA->mHeight - 50);
 	
 	if (aBackButtonRect.Contains(aMousePosition))
 		g->DrawImage(IMAGE_ACHEESEMENTS_BACK_HIGHLIGHT, 128, 55);
@@ -195,8 +196,12 @@ void AchievementsWidget::MouseUp(int x, int y, int theClickCount) {
 	(void)theClickCount;
 	Point aPos = Point(x, y);
 	if (aBackButtonRect.Contains(aPos)) {
-		mApp->mGameSelector->SlideTo(-800, 0);
+		mScrollValue = 0;
+		mDidPressMoreButton = false;
+		Move(mX, mApp->mHeight);
+		mApp->mGameSelector->SlideTo(-mX, 0);
 		mApp->mGameSelector->mWidgetManager->SetFocus(mApp->mGameSelector);
+		return;
 	}
 
 	if (mMoreRockRect.Contains(aPos)) {
@@ -217,6 +222,8 @@ void AchievementsWidget::MouseLeave() {
 
 // GOTY @Patoke: 0x4019A0
 void AchievementsWidget::MouseWheel(int theDelta) {
+	if (theDelta == 0)
+		return;
 	mScrollValue = mDefaultScrollValue;
 
 	if (theDelta > 0)

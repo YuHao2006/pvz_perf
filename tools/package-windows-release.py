@@ -106,6 +106,10 @@ def package(args):
     for folder, extensions in folders:
         for path in sorted((release / folder).rglob("*")):
             if path.is_file() and path.suffix.lower() in extensions:
+                # HDR regression tests share the build output directory; their
+                # probe is not a runtime shader or a release dependency.
+                if path.stem == "hdr_probe":
+                    continue
                 include(path, path.relative_to(release).as_posix())
     if shader_extension and not any(n.startswith("shaders/") for n in files):
         raise ValueError(f"No compiled {shader_extension} shaders found")

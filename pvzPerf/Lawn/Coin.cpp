@@ -788,6 +788,33 @@ SeedType Coin::GetFinalSeedPacketType()
 //0x431810
 void Coin::Draw(Graphics* g)
 {
+    struct RestoreTranslation
+    {
+        Graphics* mGraphics;
+        float mTransX;
+        ~RestoreTranslation() { mGraphics->mTransX = mTransX; }
+    } aRestoreTranslation{g, g->mTransX};
+
+    if (mIsBeingCollected && mApp->mScreenBounds.mX != 0 &&
+        mApp->mDialogMap.find((int)Dialogs::DIALOG_STORE) == mApp->mDialogMap.end())
+    {
+        const bool aSun = IsSun();
+        const bool aOrdinaryMoney = IsMoney() &&
+            mApp->mGameMode != GameMode::GAMEMODE_LIMBO_ZEN_GARDEN &&
+            mApp->mCrazyDaveState == CrazyDaveState::CRAZY_DAVE_OFF;
+        if (aSun || aOrdinaryMoney)
+        {
+            const float aFlightX = (aSun ? 15.0f : 39.0f) - mCollectX;
+            const float aFlightY = (aSun ? 0.0f : 558.0f) - mCollectY;
+            const float aFlightLengthSquared = aFlightX * aFlightX + aFlightY * aFlightY;
+            // Project the simulated flight onto its original vector; shift only rendering.
+            const float aProgress = aFlightLengthSquared > 0.0f ?
+                ClampFloat(((mPosX - mCollectX) * aFlightX +
+                    (mPosY - mCollectY) * aFlightY) / aFlightLengthSquared, 0.0f, 1.0f) : 1.0f;
+            g->TranslateF(mApp->mScreenBounds.mX * aProgress, 0.0f);
+        }
+    }
+
     g->mColor = GetColor();
     if (mType == CoinType::COIN_DIAMOND)
     {

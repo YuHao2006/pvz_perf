@@ -13,7 +13,6 @@
 #include "DefinitionCacheReader.h"
 #include <zlib.h> // CRC32 is part of the definition schema hash; no inflate/deflate is used here.
 #include "paklib/PakInterface.h"
-#include "misc/PerfTimer.h"
 
 static void DefinitionFillWithDefaults(DefMap* theDefMap, void* theDefinition);
 static void* DefinitionReadCompiledPayload(void* theCompiledBuffer, size_t theCompiledBufferSize, size_t& theDataSize, const SexyString& theCompiledFilePath);
@@ -386,8 +385,6 @@ PFILE* DefinitionOpenCompiledFile(const char* theCompiledFilePath)
 //0x444560 : (void* def, *defMap, eax = string& compiledFilePath)  //esp -= 8
 bool DefinitionReadCompiledFile(const SexyString& theCompiledFilePath, DefMap* theDefMap, void* theDefinition)
 {
-    PerfTimer aTimer;
-    aTimer.Start();
     std::unique_ptr<PFILE, decltype(&p_fclose)> pFile(
         DefinitionOpenCompiledFile(theCompiledFilePath.c_str()), &p_fclose);
     if (!pFile) {
@@ -452,9 +449,6 @@ bool DefinitionReadCompiledFromBytes(const char* theData, const size_t theDataSi
         return false;
     }
     uint aDefHash = DefinitionCalcHash(theDefMap);
-    TodTrace("%u %s %zu %d %u\n",static_cast<unsigned int>(DefinitionReadEvent::Header),
-        theSourceName.c_str(),theDataSize,aRecordSize,aDefHash);
-
     uint aCashHash;
     if (!reader.Read(&aCashHash, sizeof(aCashHash))) return false;
     if (aCashHash != aDefHash) {

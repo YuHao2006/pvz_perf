@@ -194,7 +194,6 @@ public:
     void NativeMouseMove(double x, double y);
     POINT ReadNativeMousePosition();
     void SampleNativeMousePosition();
-    // Owning-thread diagnostic heartbeat during long synchronous operations.
     void NativeMouseButton(int button, bool pressed, double x, double y, double time);
     void NativeMouseWheel(int delta);
     void NativeMouseLeave();
@@ -386,6 +385,8 @@ public:
 
 	bool					mWidescreenAware;
 	Rect					mScreenBounds;
+	// Optional source-art bounds for horizontal framing; zero width means centered.
+	Rect					mViewportWorldBounds;
 	bool					mEnableWindowAspect;
 	Ratio					mWindowAspect;
 	int						mWindowScale;

@@ -27,9 +27,22 @@
 #include "misc/PerfTimer.h"
 #include "widget/WidgetManager.h"
 #include "widget/WidgetLifetimeHold.h"
+#include <algorithm>
 
 namespace
 {
+// The canonical backdrop spans [-220, 1180]. Extended art retains this core;
+// do not count its side padding again when choosing camera endpoints.
+constexpr int ConstrainSeedChooserCameraX(int theX, int theViewportLeft, int theViewportWidth)
+{
+	return std::clamp(theX, theViewportLeft + theViewportWidth - BOARD_IMAGE_WIDTH_OFFSET,
+		theViewportLeft + BOARD_OFFSET);
+}
+
+static_assert(ConstrainSeedChooserCameraX(-380, -133, 1066) == -247);
+static_assert(ConstrainSeedChooserCameraX(220, -133, 1066) == 87);
+static_assert(ConstrainSeedChooserCameraX(-380, 0, 801) == -379);
+
 // CutScene is owned by Board, not itself a Widget. Retain the Board across
 // the nested wait, but reject results after DisposeBoard changes the session.
 class DaveUpgradeSession
@@ -846,7 +859,7 @@ void CutScene::StartLevelIntro()
 	mBoard->mSeedBank->mY = -IMAGE_SEEDBANK->mHeight;
 	mBoard->mMenuButton->mBtnNoDraw = true;
 	mApp->mSeedChooserScreen->mMouseVisible = false;
-	mApp->mSeedChooserScreen->Move(0, SEED_CHOOSER_OFFSET_Y);
+	mApp->mSeedChooserScreen->Move(mApp->mScreenBounds.mX, SEED_CHOOSER_OFFSET_Y);
 	mApp->mSeedChooserScreen->mMenuButton->mBtnNoDraw = true;
 	mBoard->mShowShovel = false;
 	mBoard->mSeedBank->mCutSceneDarken = 255;
@@ -976,7 +989,8 @@ void CutScene::StartLevelIntro()
 
 	if (IsScrolledLeftAtStart())
 	{
-		mBoard->Move(220, 0);
+		mBoard->Move(ConstrainSeedChooserCameraX(BOARD_OFFSET,
+			mApp->mScreenBounds.mX, mApp->mScreenBounds.mWidth), 0);
 	}
 	if (IsNonScrollingCutscene() && mCrazyDaveTime == 0)
 	{
@@ -1066,7 +1080,7 @@ void CutScene::CancelIntro()
 		mCutsceneTime = TimeSeedChoserSlideOnEnd + mCrazyDaveTime - 20;
 		if (!IsNonScrollingCutscene())
 		{
-			mBoard->Move(mApp->mWidth - BOARD_IMAGE_WIDTH_OFFSET, 0);
+			UpdateSeedChooserCamera();
 		}
 		if (mBoard->mAdvice->mMessageStyle == MessageStyle::MESSAGE_STYLE_HOUSE_NAME)
 		{
@@ -1138,6 +1152,7 @@ void CutScene::CancelIntro()
 		}
 		mApp->mSoundSystem->StopFoley(FoleyType::FOLEY_DIGGER);
 	}
+	UpdateSeedChooserCamera();
 }
 
 //0x43B6A0
@@ -1215,10 +1230,57 @@ int CutScene::CalcPosition(int theTimeStart, int theTimeEnd, int thePositionStar
 	return TodAnimateCurve(theTimeStart, theTimeEnd, mCutsceneTime, thePositionStart, thePositionEnd, Curves::EaseInOut);
 }
 
+void CutScene::UpdateSeedChooserCamera()
+{
+	if (mApp->mGameScene != GameScenes::SCENE_LEVEL_INTRO ||
+		mApp->mGameMode == GameMode::GAMEMODE_INTRO)
+		return;
+
+	if (mBoard->mBackground >= BackgroundType::BACKGROUND_MUSHROOM_GARDEN)
+	{
+		// Gardens have centered artwork, not the battle backdrop's [-220,1180] camera.
+		mBoard->Move(0, 0);
+		return;
+	}
+
+	const Rect& aBounds = mApp->mScreenBounds;
+	const int aChooserX = ConstrainSeedChooserCameraX(BOARD_WIDTH - BOARD_IMAGE_WIDTH_OFFSET,
+		aBounds.mX, aBounds.mWidth);
+	const int aStartX = ConstrainSeedChooserCameraX(IsScrolledLeftAtStart() ? BOARD_OFFSET : 0,
+		aBounds.mX, aBounds.mWidth);
+	int aCameraX;
+	const SeedChooserScreen* aChooser = mApp->mSeedChooserScreen;
+	if (mSeedChoosing && aChooser && aChooser->mChooseState == CHOOSE_VIEW_LAWN)
+	{
+		if (aChooser->mViewLawnTime <= 100)
+			aCameraX = TodAnimateCurve(0, 100, aChooser->mViewLawnTime, aChooserX, 0, Curves::EaseInOut);
+		else if (aChooser->mViewLawnTime <= 250)
+			aCameraX = 0;
+		else
+			aCameraX = TodAnimateCurve(250, 350, aChooser->mViewLawnTime, 0, aChooserX, Curves::EaseInOut);
+	}
+	else if (mCutsceneTime <= TimePanRightStart + mCrazyDaveTime)
+		aCameraX = aStartX;
+	else if (mCutsceneTime <= TimePanRightEnd + mCrazyDaveTime)
+		aCameraX = CalcPosition(TimePanRightStart + mCrazyDaveTime,
+			TimePanRightEnd + mCrazyDaveTime, aStartX, aChooserX);
+	else if (mCutsceneTime <= TimePanLeftStart + mCrazyDaveTime)
+		aCameraX = aChooserX;
+	else
+		aCameraX = CalcPosition(TimePanLeftStart + mCrazyDaveTime,
+			TimePanLeftEnd + mCrazyDaveTime, aChooserX, 0);
+
+	// Board::Update applies shake after CutScene::Update. The chooser reapplies
+	// this camera afterwards, including the tick that resets shake to zero.
+	// The native backdrop is exactly 600 high, so vertical shake has no margin.
+	if (mBoard->mShakeCounter > 0)
+		aCameraX += TodAnimateCurve(12, 0, mBoard->mShakeCounter, 0, mBoard->mShakeAmountX, Curves::Bounce);
+	mBoard->Move(ConstrainSeedChooserCameraX(aCameraX, aBounds.mX, aBounds.mWidth), 0);
+}
+
 //0x43B7D0
 void CutScene::AnimateBoard()
 {
-	int aTimePanRightStart = TimePanRightStart + mCrazyDaveTime;
 	int aTimePanRightEnd = TimePanRightEnd + mCrazyDaveTime;
 	int aTimePanLeftStart = TimePanLeftStart + mCrazyDaveTime;
 	int aTimePanLeftEnd = TimePanLeftEnd + mCrazyDaveTime;
@@ -1248,16 +1310,7 @@ void CutScene::AnimateBoard()
 	// ====================================================================================================
 	// ▲ 关卡界面右移的更新
 	// ====================================================================================================
-	int aBoardOffset = IsScrolledLeftAtStart() ? BOARD_OFFSET : 0;
-	if (mCutsceneTime <= aTimePanRightStart)
-	{
-		mBoard->Move(aBoardOffset, 0);
-	}
-	if (mCutsceneTime > aTimePanRightStart && mCutsceneTime <= aTimePanRightEnd)
-	{
-		int aPanOffset = CalcPosition(aTimePanRightStart, aTimePanRightEnd, -aBoardOffset, BOARD_IMAGE_WIDTH_OFFSET - mApp->mWidth);
-		mBoard->Move(-aPanOffset, 0);
-	}
+	UpdateSeedChooserCamera();
 	
 	// ====================================================================================================
 	// ▲ 选卡界面动态的更新
@@ -1272,7 +1325,7 @@ void CutScene::AnimateBoard()
 		// ====================================================================================================
 		if (mCutsceneTime > aTimeSeedChoserSlideOnStart && mCutsceneTime <= aTimeSeedChoserSlideOnEnd)
 		{
-			aSeedChoser->Move(0, CalcPosition(aTimeSeedChoserSlideOnStart, aTimeSeedChoserSlideOnEnd, SEED_CHOOSER_OFFSET_Y, 0));
+			aSeedChoser->Move(mApp->mScreenBounds.mX, CalcPosition(aTimeSeedChoserSlideOnStart, aTimeSeedChoserSlideOnEnd, SEED_CHOOSER_OFFSET_Y, 0));
 			aSeedChoser->mMenuButton->mY = CalcPosition(aTimeSeedChoserSlideOnStart, aTimeSeedChoserSlideOnEnd, -50, -10);
 			aSeedChoser->mMenuButton->mBtnNoDraw = false;
 		}
@@ -1283,18 +1336,9 @@ void CutScene::AnimateBoard()
 		int aTimeSeedChoserSlideOffEnd = TimeSeedChoserSlideOffEnd + mCrazyDaveTime;
 		if (mCutsceneTime > aTimeSeedChoserSlideOffStart && mCutsceneTime <= aTimeSeedChoserSlideOffEnd)
 		{
-			aSeedChoser->Move(0, CalcPosition(aTimeSeedChoserSlideOffStart, aTimeSeedChoserSlideOffEnd, 0, SEED_CHOOSER_OFFSET_Y));
+			aSeedChoser->Move(mApp->mScreenBounds.mX, CalcPosition(aTimeSeedChoserSlideOffStart, aTimeSeedChoserSlideOffEnd, 0, SEED_CHOOSER_OFFSET_Y));
 			aSeedChoser->mMenuButton->mDisabled = true;
 		}
-	}
-
-	// ====================================================================================================
-	// ▲ 关卡界面左移的更新
-	// ====================================================================================================
-	if (mCutsceneTime > aTimePanLeftStart)
-	{
-		int aPanOffset = CalcPosition(aTimePanLeftStart, aTimePanLeftEnd, BOARD_IMAGE_WIDTH_OFFSET - mApp->mWidth, 0);
-		mBoard->Move(-aPanOffset, 0);
 	}
 
 	// ====================================================================================================
@@ -2319,7 +2363,8 @@ void CutScene::DrawIntro(Graphics* g)
 	if (mCutsceneTime <= TimeIntro_PanRightStart || mCutsceneTime > TimeIntro_FadeOutEnd)
 	{
 		g->mColor = Color::Black;
-		g->FillRect(-mBoard->mX, -mBoard->mY, BOARD_WIDTH, BOARD_HEIGHT);
+		g->FillRect(mApp->mScreenBounds.mX - mBoard->mX, -mBoard->mY,
+            mApp->mScreenBounds.mWidth, mApp->mScreenBounds.mHeight);
 	}
 
 	// 绘制“PopCap Games 出品”字样
@@ -2357,7 +2402,8 @@ void CutScene::DrawIntro(Graphics* g)
 	if (mCutsceneTime > TimeIntro_FadeOut && mCutsceneTime <= TimeIntro_FadeOutEnd)
 	{
 		g->mColor = Color(0, 0, 0, TodAnimateCurve(TimeIntro_FadeOut, TimeIntro_FadeOutEnd, mCutsceneTime, 0, 255, Curves::Linear));
-		g->FillRect(-mBoard->mX, -mBoard->mY, BOARD_WIDTH, BOARD_HEIGHT);
+		g->FillRect(mApp->mScreenBounds.mX - mBoard->mX, -mBoard->mY,
+            mApp->mScreenBounds.mWidth, mApp->mScreenBounds.mHeight);
 	}
 }
 

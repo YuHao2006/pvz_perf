@@ -1,6 +1,7 @@
 #include "Sexy.TodLib/generated/EntityStrings.h"  // 动态键实体表（阶段 3）
 #include "GameButton.h"
 #include "LawnApp.h"
+#include "GameConstants.h"
 #include "Lawn/System/Music.h"
 #include "ChallengeScreen.h"
 #include "Lawn/LawnCommon.h"
@@ -576,8 +577,24 @@ void ChallengeScreen::DrawButton(Graphics* g, int theChallengeIndex)
 //0x42F160
 void ChallengeScreen::Draw(Graphics* g)
 {
+    mBackButton->mX = mApp->mScreenBounds.mX + 18;
 	g->mLinearBlend = true;
-	g->DrawImage(Sexy::IMAGE_CHALLENGE_BACKGROUND, 0, 0);
+	Image* aBackgroundImage = Sexy::IMAGE_CHALLENGE_BACKGROUND;
+	const Rect& aBounds = mApp->mScreenBounds;
+	const int aBorderWidth = 16;
+	const int aPaperWidth = aBounds.mWidth - aBorderWidth * 2;
+	// Keep paper and the title plaque in the original 800-wide world coordinates.
+	// Move only the native stone edge strips as the viewport changes, including odd widths.
+	const int aArtPadding = (aBackgroundImage->mWidth - BOARD_WIDTH) / 2;
+	const int aSourceX = aArtPadding + aBounds.mX + aBorderWidth;
+	Graphics aBackground(*g);
+	aBackground.ClipRect(aBounds);
+	aBackground.DrawImage(aBackgroundImage, aBounds.mX, 0,
+		Rect(0, 0, aBorderWidth, aBackgroundImage->mHeight));
+	aBackground.DrawImage(aBackgroundImage, aBounds.mX + aBorderWidth, 0,
+		Rect(aSourceX, 0, aPaperWidth, aBackgroundImage->mHeight));
+	aBackground.DrawImage(aBackgroundImage, aBounds.mX + aBounds.mWidth - aBorderWidth, 0,
+		Rect(aBackgroundImage->mWidth - aBorderWidth, 0, aBorderWidth, aBackgroundImage->mHeight));
 
 	SexyString aTitleString = 
 		mPageIndex == CHALLENGE_PAGE_SURVIVAL ? gStr.PICK_AREA.c_str() : 
@@ -606,6 +623,7 @@ void ChallengeScreen::Draw(Graphics* g)
 //0x42F510
 void ChallengeScreen::Update()
 {
+    mBackButton->mX = mApp->mScreenBounds.mX + 18;
 	Widget::Update();
 	UpdateToolTip();
 

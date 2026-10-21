@@ -19,6 +19,7 @@ public:
 
 	void Update() override;
 	void Draw(Graphics* g) override;
+    void DrawBackground(Graphics* g);
 	void MouseDown(int x, int y, int theClickCount) override;
 	void MouseDown(int x, int y, int theBtnNum, int theClickCount) override;
 	void MouseDrag(int x, int y) override;

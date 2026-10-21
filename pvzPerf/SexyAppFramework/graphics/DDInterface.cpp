@@ -6,6 +6,7 @@
 #include "misc/AutoCrit.h"
 #include "widget/WidgetManager.h"
 #include "SexyAppFramework/platform/WindowGeometry.h"
+#include "GameViewport.h"
 
 #include <algorithm>
 #include <stdexcept>
@@ -109,7 +110,8 @@ bool DDInterface::Redraw(Rect* theClipRect)
 	{
 		if (mInitialized)
 		{
-			theX = (theX - mVisibleGameRect.mX) * mWidth / std::max(1, mVisibleGameRect.mWidth);
+			theX = (theX - mVisibleGameRect.mX) * mWidth / std::max(1, mVisibleGameRect.mWidth)
+                + mApp->mScreenBounds.mX;
 			theY = (theY - mVisibleGameRect.mY) * mHeight / std::max(1, mVisibleGameRect.mHeight);
 		}
 	}
@@ -198,6 +200,13 @@ int DDInterface::Init(NativeWindowHandle theWindow, bool isWindowed)
     mIs3D = true;
     const auto client = QueryNativeClientExtent(mHWnd);
     mDisplayWidth=client.width;mDisplayHeight=client.height;
+    auto viewport = GameViewport::Fit(client.width, client.height);
+    const Rect& worldBounds = mApp->mViewportWorldBounds;
+    if (worldBounds.mWidth > 0)
+        viewport = viewport.WithinWorld(worldBounds.mX, worldBounds.mX + worldBounds.mWidth);
+    mWidth = viewport.width;
+    mHeight = viewport.height;
+    mAspect = Ratio(mWidth, mHeight);
     mDesktopWidth = mDisplayWidth; mDesktopHeight = mDisplayHeight;
     mDisplayAspect = Ratio(mDisplayWidth,mDisplayHeight);
     mDesktopAspect = mDisplayAspect;
@@ -223,7 +232,7 @@ int DDInterface::Init(NativeWindowHandle theWindow, bool isWindowed)
     mApp->mWidgetManager->mImage=mScreenImage;
     if (!mRenderInterface->InitFromDDInterface(this)) return RESULT_3D_FAIL;
     UpdateVisibleGameRect();
-    mApp->mScreenBounds=Rect(0,0,mWidth,mHeight);
+    mApp->mScreenBounds=Rect(viewport.left,0,mWidth,mHeight);
     ++mInitCount;
     mInitialized=true;
     return RESULT_OK;
@@ -253,13 +262,35 @@ int DDInterface::ResizePreparedPresent()
     const auto [width, height] = QueryNativeClientExtent(mHWnd);
     if(mApp->mPhysMinimized || width<=0 || height<=0) return RESULT_DEFERRED;
     if (!mRenderInterface->ResizePresent(width,height)) return RESULT_DEFERRED;
+    auto viewport = GameViewport::Fit(width, height);
+    const Rect& worldBounds = mApp->mViewportWorldBounds;
+    if (worldBounds.mWidth > 0)
+        viewport = viewport.WithinWorld(worldBounds.mX, worldBounds.mX + worldBounds.mWidth);
+    if (viewport.width != mWidth || viewport.height != mHeight) {
+        mRenderInterface->ResizeScene(viewport.width, viewport.height);
+        mWidth = viewport.width;
+        mHeight = viewport.height;
+        mAspect = Ratio(mWidth, mHeight);
+        mScreenImage->mWidth = mWidth;
+        mScreenImage->mHeight = mHeight;
+        // Scale chains borrow the main canvas. Rebuild only after its fence and
+        // only on an aspect change; resident game images never need host pixels.
+        if (mApp->mModernScalePrepared) {
+            mApp->mModernScalePrepared = false;
+            mApp->PrepareScalePipelineObjects();
+            auto& renderer = *mRenderInterface->mRenderer;
+            renderer.WarmScale(false);
+            renderer.WarmScale(true);
+            renderer.SetScaleMode(mApp->IsScalePresentActive(), !mIsWindowed);
+        }
+    }
     mDisplayWidth=width; mDisplayHeight=height;
     mPresentationRect=Rect(0,0,width,height);
     mDisplayAspect=Ratio(width,height);
 
 	mRenderInterface->mIsWindowed = mIsWindowed;
 	UpdateVisibleGameRect();
-	mApp->mScreenBounds = Rect(0, 0, mWidth, mHeight);
+	mApp->mScreenBounds = Rect(viewport.left, 0, mWidth, mHeight);
 	if (mApp->mWidgetManager != nullptr)
 		mApp->mWidgetManager->mImage = mScreenImage;
 	mInitCount++;

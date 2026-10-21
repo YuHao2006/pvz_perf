@@ -2,6 +2,7 @@
 #include "TestWin32Window.h"
 #include "VulkanSurfaceExtent.h"
 #include <array>
+#include <algorithm>
 #include <atomic>
 #include <cmath>
 #include <iostream>
@@ -533,6 +534,29 @@ void Run() {
     DynamicUpdates(renderer,window);
     UploadEdges(renderer,window);
     BatchedAlphaComposition(renderer);
+    const uint32_t resizeColor = 0xff2468ac;
+    auto* resident = renderer.CreateTexture(1, 1, &resizeColor, 4);
+    const auto residentSlot = VulkanRenderer::SlotOf(resident);
+    for (const int width : {801, 960, 999, 1065, 1066, 1399, 1400, 800}) {
+        renderer.ResizeScene(width, 600);
+        Require(renderer.sceneWidth == width && renderer.sceneHeight == 600,
+            "Canvas resize did not update dimensions");
+        Require(!renderer.PresentRetainedScene(), "Old-size canvas survived resize");
+        Require(VulkanRenderer::SlotOf(resident) == residentSlot &&
+            renderer.ReadTexturePixels(resident).pixels[0] == resizeColor,
+            "Canvas resize changed a resident texture");
+        Require(renderer.BeginScene(), "Cannot begin resized scene");
+        SubmitImage(renderer, Quad(0, 0, float(width), 600), resident,
+            false, false, VulkanBlend::Opaque);
+        renderer.EndSceneAndPresent();
+        pixels = renderer.ReadScenePixels();
+        Require(pixels.size() == size_t(width) * 600 &&
+            std::all_of(pixels.begin(), pixels.end(),
+                [=](auto pixel) { return pixel == resizeColor; }),
+            "Canvas resize left incorrect pixels or uncovered edges");
+    }
+    renderer.DestroyTexture(resident);
+    std::cout << "PASS canvas-resize-800-through-1400-resident-textures\n";
 }
 }
 

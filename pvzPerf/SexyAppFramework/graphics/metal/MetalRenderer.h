@@ -63,6 +63,7 @@ public:
     void EndSceneAndPresent();
     bool PresentRetainedScene();
     bool ResizePresent();
+    void ResizeScene(int width, int height);
     void SetHdrParams(const GpuHdrParams& params);
     GpuHdrParams HdrParams() const;
     void PrepareScale(bool fullscreen, std::span<const MetalScaleStep> steps,

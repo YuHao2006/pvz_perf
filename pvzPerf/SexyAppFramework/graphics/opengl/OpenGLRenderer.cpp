@@ -543,6 +543,24 @@ bool OpenGLRenderer::ResizePresent()
     if (impl_->open) throw std::logic_error("Resize OpenGL presentation between scenes");
     return impl_->context.BeginPresent();
 }
+void OpenGLRenderer::ResizeScene(int width, int height)
+{
+    auto& s = *impl_;
+    if (s.open || s.selected)
+        throw std::logic_error("Resize the main OpenGL canvas between scenes");
+    if (s.width == width && s.height == height) return;
+    auto* next = s.Allocate(width, height, GL_RGBA8, false, false);
+    auto* previous = s.scene;
+    s.scene = next;
+    s.width = width;
+    s.height = height;
+    s.sceneInitialized = false;
+    DestroyTexture(previous);
+    s.BindTarget();
+    glDisable(GL_SCISSOR_TEST);
+    glClearColor(0, 0, 0, 1);
+    glClear(GL_COLOR_BUFFER_BIT);
+}
 void OpenGLRenderer::SetHdrParams(const VulkanHdrParams& params) { params.Validate(); impl_->hdr = params; }
 VulkanHdrParams OpenGLRenderer::HdrParams() const { return impl_->hdr; }
 void OpenGLRenderer::PrepareScale(bool, std::span<const OpenGLScaleStep> steps, unsigned int, unsigned int)

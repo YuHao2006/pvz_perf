@@ -144,12 +144,16 @@ void ZombatarScreen::Update()
 	MarkDirty();
 }
 
+void ZombatarScreen::DrawBackground(Graphics* g)
+{
+    // The adjacent main-menu art overlaps this background and is painted above it.
+    g->DrawImage(IMAGE_ZOMBATAR_MAIN_BG, 0, 0);
+}
+
 void ZombatarScreen::Draw(Graphics* g)
 {
 	if (g->mClipRect.mWidth <= 0 || g->mClipRect.mHeight <= 0)
 		return;
-
-	g->DrawImage(IMAGE_ZOMBATAR_MAIN_BG, 0, 0);
 
 	if (mZombiePreview)
 	{

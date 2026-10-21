@@ -23,6 +23,7 @@ TitleScreen::TitleScreen(LawnApp* theApp)
 	mBarStartProgress = 0.0f;
 	mPrevLoadingPercent = 0.0f;
 	mApp = theApp;
+    mClip = false;
 	mTitleAge = 0;
 	mRegisterClicked = false;
 	mNeedShowRegisterBox = false;
@@ -66,7 +67,7 @@ void TitleScreen::Draw(Graphics* g)
 	if (mTitleState == TitleState::TITLESTATE_WAITING_FOR_FIRST_DRAW)
 	{
 		g->mColor = Color::Black;
-		g->FillRect(0, 0, mWidth, mHeight);
+		g->FillRect(mApp->mScreenBounds);
 
 		if (!mDrawnYet)
 		{
@@ -80,7 +81,7 @@ void TitleScreen::Draw(Graphics* g)
 	if (mTitleState == TitleState::TITLESTATE_POPCAP_LOGO)
 	{
 		g->mColor = Color::Black;
-		g->FillRect(0, 0, mWidth, mHeight);
+		g->FillRect(mApp->mScreenBounds);
 
 		int anAlpha = 255;
 		if (mTitleStateCounter < mTitleStateDuration - 50)
@@ -102,11 +103,13 @@ void TitleScreen::Draw(Graphics* g)
 	if (!mLoaderScreenIsLoaded)
 	{
 		g->mColor = Color::Black;
-		g->FillRect(0, 0, mWidth, mHeight);
+		g->FillRect(mApp->mScreenBounds);
 		return;
 	}
 
-	g->DrawImage(IMAGE_TITLESCREEN, 0, 0);
+	g->mColor = Color::Black;
+	g->FillRect(mApp->mScreenBounds);
+	g->DrawImage(IMAGE_TITLESCREEN, (BOARD_WIDTH - IMAGE_TITLESCREEN->mWidth) / 2, 0);
 	if (mNeedToInit)
 	{
 		return;
@@ -148,7 +151,8 @@ void TitleScreen::Draw(Graphics* g)
 		SexyTransform2D aTransform;
 		TodScaleRotateTransformMatrix(aTransform, aGrassX + 11.0f + aRollLen, aGrassY - 3.0f - 35.0f * aScale + 35.0f, aRotation, aScale, aScale);
 		Rect aSrcRect(0, 0, IMAGE_REANIM_SODROLLCAP->mWidth, IMAGE_REANIM_SODROLLCAP->mHeight);
-		TodBltMatrix(g, IMAGE_REANIM_SODROLLCAP, aTransform, g->mClipRect, Color::White, g->mDrawMode, aSrcRect);
+        // This is a widget-local matrix; Graphics applies the viewport offset.
+        g->DrawImageMatrix(IMAGE_REANIM_SODROLLCAP, aTransform, aSrcRect);
 	}
 
 	Reanimation* aReanim = nullptr;

@@ -25,7 +25,8 @@ using VulkanImageProcessing = GpuImageProcessing;
 
 // Lives inside SexyFramework. VulkanContext owns GPU/WSI resources; this owns the
 // logical game render target, textures, samplers, pipelines and vertex streams.
-// A resize changes only WSI resources, never the game scene or uploaded assets.
+// ResizePresent changes WSI only; ResizeScene explicitly replaces the canvas.
+// Neither operation replaces resident game images.
 // Read-only metadata references borrow stable storage from this renderer's Impl.
 class VulkanRenderer final {
     struct Impl;
@@ -129,6 +130,7 @@ public:
     // false: no scene yet or WSI temporarily unavailable. Errors throw.
     bool PresentRetainedScene();
     bool ResizePresent(); // false: WSI deferred; canvas/textures remain intact.
+    void ResizeScene(int width, int height);
     // HDR monitor metadata only; updates next frame's push constants. Does not
     // rebuild pipelines, textures, swapchains or re-read effect source files.
     void SetHdrParams(const VulkanHdrParams& params);

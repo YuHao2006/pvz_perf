@@ -5506,7 +5506,11 @@ void Challenge::TreeOfWisdomDraw(Graphics* g)
 
 	Reanimation* aReanimTree = mApp->ReanimationGet(mReanimChallenge);
 	aReanimTree->mEnableExtraOverlayDraw = false;
-	aReanimTree->DrawRenderGroup(g, 1);  // 绘制背景
+	const Rect& view = mApp->mScreenBounds;
+	// Ultra uses this same gradient sky; only the backdrop fills the viewport.
+	g->DrawImage(Sexy::IMAGE_REANIM_TREE_BG,
+		Rect(view.mX - mBoard->mX, view.mY - mBoard->mY, view.mWidth, view.mHeight),
+		Rect(0, 0, Sexy::IMAGE_REANIM_TREE_BG->mWidth, Sexy::IMAGE_REANIM_TREE_BG->mHeight));
 	for (int i = 0; i < 6; i++)
 	{
 		mApp->ReanimationGet(mReanimClouds[i])->Draw(g);
@@ -5580,6 +5584,8 @@ void Challenge::TreeOfWisdomDraw(Graphics* g)
 
 		SexyTransform2D aMatrix;
 		TodScaleTransformMatrix(aMatrix, 400.0f - aStrWidth * 0.5f, 20.0f + aStrHeight * 0.5f, aScale, aScale);
+		aMatrix.m02 += g->mTransX;
+		aMatrix.m12 += g->mTransY;
 		TodDrawStringMatrix(g, Sexy::FONT_HOUSEOFTERROR16, aMatrix, aSizeStr, Color(255, 255, 255));
 	}
 }

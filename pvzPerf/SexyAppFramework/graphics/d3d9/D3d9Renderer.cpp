@@ -630,6 +630,23 @@ bool D3d9Renderer::ResizePresent()
     if (impl_->open) throw std::logic_error("Resize D3D9 between scenes");
     return impl_->context.BeginPresent();
 }
+void D3d9Renderer::ResizeScene(int width, int height)
+{
+    auto& s = *impl_;
+    if (s.open || s.selected)
+        throw std::logic_error("Resize the main D3D9 canvas between scenes");
+    if (s.width == width && s.height == height) return;
+    auto* next = s.Allocate(width, height, D3DFMT_A8R8G8B8, false, false);
+    auto* previous = s.scene;
+    s.scene = next;
+    s.width = width;
+    s.height = height;
+    s.sceneInitialized = false;
+    DestroyTexture(previous);
+    s.BindTarget();
+    Check(s.context.device->Clear(0, nullptr, D3DCLEAR_TARGET, 0xff000000, 1, 0),
+        "Clear resized D3D9 canvas");
+}
 void D3d9Renderer::SetHdrParams(const VulkanHdrParams& params) { params.Validate(); impl_->hdr = params; }
 VulkanHdrParams D3d9Renderer::HdrParams() const { return impl_->hdr; }
 void D3d9Renderer::PrepareScale(bool, std::span<const D3d9ScaleStep> steps, unsigned int, unsigned int)

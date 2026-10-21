@@ -1,0 +1,15 @@
+Use case: precise-object-edit.
+Asset type: one independently animated 2D game tree foreground layer.
+Edit target: image 1 is a 1024x1024 canvas. The original 609x680 RGBA
+sprite was placed at x=167,y=0 over a flat magenta chroma-key background.
+Fill ONLY the masked 167x680 strip on the left, continuing the existing
+green canopy above, its small leftmost branch where it meets the margin,
+and the grassy ground below. Extend the current painted cartoon texture
+and silhouette seamlessly into the added strip, with no additional tree trunk.
+Keep all empty space solid pure magenta RGB(255,0,255), including empty
+space between canopy and grass. Do not paint sky or another background.
+Preserve every original sprite pixel, its position, shape, scale and lighting.
+No new tree, trunk, house, gravestone, garden pot, watering can, characters,
+text, buttons, labels or ornaments. Do not resize, recenter, zoom or crop.
+The original 167..775 columns and all padding beyond x=775 or y=679 must
+remain unchanged. Output the same 1024x1024 square framing.

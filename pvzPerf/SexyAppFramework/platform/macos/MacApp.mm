@@ -2,6 +2,7 @@
 #include "MacWindow.h"
 #include "graphics/DDInterface.h"
 #include "graphics/GpuBackend.h"
+#include "graphics/GameViewport.h"
 #include "graphics/RenderInterface.h"
 #include "widget/WidgetManager.h"
 #include "misc/KeyCodes.h"
@@ -69,8 +70,7 @@ void ApplyMousePosition(SexyAppBase& app, double x, double y, bool nativeInside)
     const auto& window = *app.mNativeWindow;
     const bool inside = nativeInside && x >= 0 && y >= 0 &&
         x < window.Width && y < window.Height &&
-        position.mX >= 0 && position.mY >= 0 &&
-        position.mX < app.mWidth && position.mY < app.mHeight;
+        app.mScreenBounds.Contains(position.mX, position.mY);
     const bool moved = position.mX != app.mWidgetManager->mLastMouseX ||
         position.mY != app.mWidgetManager->mLastMouseY || inside != app.mMouseIn;
     app.mMouseIn = inside;
@@ -245,9 +245,10 @@ void SexyAppBase::MapWindowMouse(double x, double y, int& sceneX, int& sceneY) c
     const auto rect = mDDInterface->mRenderInterface->mRenderer->PresentRect(
         window.DrawableWidth, window.DrawableHeight);
     const auto point = WindowPointToScene(x, y, window.Width, window.Height,
-        window.DrawableWidth, window.DrawableHeight, rect, mWidth, mHeight);
-    sceneX = point.x;
-    sceneY = point.y;
+        window.DrawableWidth, window.DrawableHeight, rect,
+        mScreenBounds.mWidth, mScreenBounds.mHeight);
+    sceneX = point.x + mScreenBounds.mX;
+    sceneY = point.y + mScreenBounds.mY;
 }
 
 void SexyAppBase::RegisterWindowClasses()
@@ -269,7 +270,7 @@ void SexyAppBase::MakeWindow()
         throw std::logic_error("Cocoa HDR display policy is not implemented");
     MacWindowConfig config;
     config.title = mTitle;
-    config.width = mWidth;
+    config.width = GameViewport::MaximumWidth;
     config.height = mHeight;
     config.callback = QueueEvent;
     config.callbackContext = this;
@@ -389,8 +390,8 @@ void SexyAppBase::SwitchScreenMode(bool windowed, bool, bool force)
     SetWindowFullscreen(!windowed);
     if (windowed) {
         const auto scaled = render.mRenderer->ScaleOutput(false);
-        ResizeWindowClient(IsScalePresentActiveForMode(true) ? static_cast<int>(scaled.width) : mWidth,
-                           IsScalePresentActiveForMode(true) ? static_cast<int>(scaled.height) : mHeight);
+        ResizeWindowClient(IsScalePresentActiveForMode(true) ? static_cast<int>(scaled.width) : render.mRenderer->sceneWidth,
+                           IsScalePresentActiveForMode(true) ? static_cast<int>(scaled.height) : render.mRenderer->sceneHeight);
     }
     mIsWindowed = windowed;
     mIsPhysWindowed = true;

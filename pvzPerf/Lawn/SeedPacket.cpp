@@ -526,7 +526,11 @@ void DrawSeedPacket(Graphics* g, float x, float y, SeedType theSeedType, SeedTyp
 		else
 		{
 			SexyMatrix3 aMatrix;
-			TodScaleTransformMatrix(aMatrix, aTextOffsetX * g->mScaleX + x, aTextOffsetY * g->mScaleY + y, g->mScaleX, g->mScaleY);
+			// Matrix text needs the same destination translation as the packet image.
+			TodScaleTransformMatrix(aMatrix,
+				aTextOffsetX * g->mScaleX + x + g->mTransX,
+				aTextOffsetY * g->mScaleY + y + g->mTransY,
+				g->mScaleX, g->mScaleY);
 			if (g->mScaleX > 1.8f)
 			{
 				g->mLinearBlend = false;
@@ -938,6 +942,9 @@ void SeedBank::Draw(Graphics* g)
 		return;
 	}
 
+    Graphics aBankGraphics(*g);
+    g = &aBankGraphics;
+	g->Translate(mApp->mScreenBounds.mX, 0);
 	if (mApp->mGameScene != GameScenes::SCENE_PLAYING)
 	{
 		g->mTransX -= mBoard->mX;
@@ -1013,6 +1020,7 @@ void SeedBank::Draw(Graphics* g)
 //0x489970
 bool SeedBank::MouseHitTest(int x, int y, HitResult* theHitResult)
 {
+	x -= mApp->mScreenBounds.mX;
 	if (x - mX <= mWidth - 5 && mNumPackets > 0)
 	{
 		for (SeedPacket& aSeedPacket : mSeedPackets)
@@ -1032,6 +1040,7 @@ bool SeedBank::MouseHitTest(int x, int y, HitResult* theHitResult)
 //0x489A20
 bool SeedBank::ContainsPoint(int theX, int theY)
 {
+	theX -= mApp->mScreenBounds.mX;
 	return theX >= mX && theX < mX + mWidth && theY >= mY && theY < mY + mHeight;
 }
 

@@ -505,10 +505,6 @@ foreach(pvzTarget IN LISTS pvzFrameworkTargets)
         target_link_libraries(${pvzTarget} PRIVATE pvz_source_headers)
     endif()
 endforeach()
-target_sources(${PROJECT_NAME} PRIVATE
-    "../Sexy.TodLib/StateHasher.h"
-    "../Sexy.TodLib/StateHasher.cpp"
-)
 if(MSVC)
     target_compile_options(${PROJECT_NAME} PRIVATE /Brepro)
     target_link_options(${PROJECT_NAME} PRIVATE /Brepro)

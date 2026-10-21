@@ -1432,7 +1432,8 @@ void RenderParticle(Graphics* g, TodParticle* theParticle, const Color& theColor
 		Color anOldColor = g->mColor;
 		int anOldDrawMode = g->mDrawMode;
 		g->mColor = theColor;
-		g->FillRect(-g->mTransX, -g->mTransY, BOARD_WIDTH, BOARD_HEIGHT);
+		// Fullscreen particles cover the render destination, independent of world width.
+		g->FillRect(-g->mTransX, -g->mTransY, g->mDestImage->mWidth, g->mDestImage->mHeight);
 		g->mColor = anOldColor;
 		g->mDrawMode = anOldDrawMode;
 	}

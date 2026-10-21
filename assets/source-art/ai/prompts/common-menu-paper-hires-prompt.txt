@@ -1,0 +1,8 @@
+Use case: precise-object-edit.
+Asset type: a shared high-resolution background for the Survival, Minigames, Puzzle and Almanac pages of an existing 2D game.
+Edit target: the supplied blank framed menu background. The image contains a grey stone outer frame, a blank grey title plaque with rubble, and warm painted parchment.
+Output request: 2304x1296 pixels, landscape. Produce a genuinely higher-resolution rendering with clean painted detail. Preserve the supplied composition and proportions, without horizontal stretching.
+Primary edit: harmonize and refine the blank parchment paper inside the frame. Keep it quiet, continuous, and unobtrusive so many buttons and labels can be drawn on top later. Remove composite seams and any rectangle-shaped patch around the title plaque. Maintain the existing warm yellow/orange paper color and subtle texture.
+Preserve the original grey stone outer border, its corners, cracks and thickness, and the title plaque/rubble at their original proportional locations. Do not remove the stone border. Do not invent a different border or flatten the plaque into the paper.
+No text, letters, numbers, icons, buttons, trophies, game characters, vegetation, decorative symbols or watermarks. The title plaque must remain blank.
+The masked paper is the editable region. Protected stone artwork should retain the original design. This is background artwork only; the game draws its UI separately.

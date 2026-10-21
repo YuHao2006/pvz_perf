@@ -13,6 +13,7 @@
 #include "Lawn/Plant.h"
 #include "Lawn/ToolTipWidget.h"
 #include "SeedChooserScreen.h"
+#include "SeedChooserLayout.h"
 #include "GameConstants.h"
 #include "Lawn/System/PlayerInfo.h"
 #include "Lawn/System/PopDRMComm.h"
@@ -26,6 +27,39 @@
 
 namespace
 {
+void RefreshChooserHudLayout(SeedChooserScreen& theChooser)
+{
+	const Rect& aBounds = theChooser.mApp->mScreenBounds;
+	theChooser.Move(aBounds.mX, theChooser.mY);
+	theChooser.mAlmanacButton->mX = SeedChooserLayout::RightButtonX(560, aBounds.mWidth);
+	theChooser.mStoreButton->mX = SeedChooserLayout::RightButtonX(680, aBounds.mWidth);
+	theChooser.mMenuButton->mX = 681 + aBounds.mX + aBounds.mWidth - BOARD_WIDTH;
+	theChooser.mMouseInsets.mLeft = std::min(0, aBounds.mX - theChooser.mX);
+	theChooser.mMouseInsets.mRight = std::min(0,
+		theChooser.mX + theChooser.mWidth - aBounds.mX - aBounds.mWidth);
+	theChooser.mToolTip->mMinLeft = aBounds.mX;
+}
+
+int ChosenSeedPresentationX(const SeedChooserScreen& theChooser, const ChosenSeed& theSeed)
+{
+	const int aLeft = SeedChooserLayout::RebaseX(0, theChooser.mApp->mScreenBounds.mX, theChooser.mX);
+	if (theSeed.mSeedState == SEED_IN_BANK)
+		return theSeed.mX + aLeft;
+	if (theSeed.mSeedState != SEED_FLYING_TO_BANK && theSeed.mSeedState != SEED_FLYING_TO_CHOOSER)
+		return theSeed.mX;
+
+	// Keep flight coordinates canonical, including bank-to-bank gap closing.
+	// Apply the current viewport offset to the appropriate curve endpoints.
+	const bool aToBank = theSeed.mSeedState == SEED_FLYING_TO_BANK;
+	const bool aFromBank = !aToBank || theSeed.mStartY == theSeed.mEndY;
+	const std::uint32_t aDuration = theSeed.mTimeEndMotion - theSeed.mTimeStartMotion;
+	const std::uint32_t aElapsed = theChooser.mSeedChooserAge - theSeed.mTimeStartMotion;
+	return TodAnimateCurve(0, static_cast<int>(aDuration),
+		static_cast<int>(std::min(aElapsed, aDuration)),
+		theSeed.mStartX + (aFromBank ? aLeft : 0),
+		theSeed.mEndX + (aToBank ? aLeft : 0), Curves::EaseInOut);
+}
+
 // A modal wait can dispose a Board even when its Widget has not yet been
 // deleted. Retaining the chooser is necessary, but its Board/session must also
 // still be current before a result is applied.
@@ -87,6 +121,7 @@ SeedChooserScreen::SeedChooserScreen()
 	mStartButton->mY = 545;
 	mStartButton->mWidth = 156;
 	mStartButton->mHeight = 42;
+	mStartButton->mParentWidget = this;
 	mStartButton->mTextOffsetY = -1;
 	EnableStartButton(false);
 
@@ -110,6 +145,7 @@ SeedChooserScreen::SeedChooserScreen()
 	mRandomButton->mY = 546;
 	mRandomButton->mWidth = 100;
 	mRandomButton->mHeight = 30;
+	mRandomButton->mParentWidget = this;
 	if (!mApp->mTodCheatKeys)
 	{
 		mRandomButton->mBtnNoDraw = true;
@@ -239,6 +275,7 @@ SeedChooserScreen::SeedChooserScreen()
 	if (mApp->IsAdventureMode() && !mApp->IsFirstTimeAdventureMode())
 		CrazyDavePickSeeds();
 	UpdateImitaterButton();
+	RefreshChooserHudLayout(*this);
 }
 
 int SeedChooserScreen::PickFromWeightedArrayUsingSpecialRandSeed(TodWeightedArray* theArray, int theCount, MTRand& theLevelRNG)
@@ -349,7 +386,8 @@ void SeedChooserScreen::GetSeedPositionInChooser(int theIndex, int& x, int& y)
 //0x484480
 void SeedChooserScreen::GetSeedPositionInBank(int theIndex, int& x, int& y)
 {
-	x = mBoard->mSeedBank->mX - mX + mBoard->GetSeedPacketPositionX(theIndex);
+	// Flight endpoints stay canonical when the chooser moves with the viewport.
+	x = mBoard->mSeedBank->mX + mBoard->GetSeedPacketPositionX(theIndex);
 	y = mBoard->mSeedBank->mY - mY + 8;
 }
 
@@ -391,6 +429,11 @@ bool SeedChooserScreen::SeedNotAllowedDuringTrial(SeedType theSeedType)
 //0x484690
 void SeedChooserScreen::Draw(Graphics* g)
 {
+	const int aPreviousX = mX;
+	RefreshChooserHudLayout(*this);
+	Graphics aChooserG(*g);
+	aChooserG.Translate(mX - aPreviousX, 0);
+	g = &aChooserG;
 	if (mApp->GetDialog(DIALOG_STORE) || mApp->GetDialog(DIALOG_ALMANAC))
 		return;
 
@@ -437,6 +480,7 @@ void SeedChooserScreen::Draw(Graphics* g)
 		{
 			int x, y;
 			GetSeedPositionInBank(anIndex, x, y);
+			x = SeedChooserLayout::RebaseX(x, mApp->mScreenBounds.mX, mX);
 			g->DrawImage(Sexy::IMAGE_SEEDPACKETSILHOUETTE, x, y);
 		}
 	}
@@ -453,11 +497,10 @@ void SeedChooserScreen::Draw(Graphics* g)
 				SeedNotAllowedDuringTrial(aSeedType))
 				aGrayed = true;
 			
-			int aPosX = aChosenSeed.mX;
+			int aPosX = ChosenSeedPresentationX(*this, aChosenSeed);
 			int aPosY = aChosenSeed.mY;
 			if (aSeedState == SEED_IN_BANK)
 			{
-				aPosX -= mX;
 				aPosY -= mY;
 			}
 			DrawSeedPacket(g, aPosX, aPosY, aChosenSeed.mSeedType, aChosenSeed.mImitaterType, 0, aGrayed ? 115 : 255, true, false);
@@ -471,7 +514,7 @@ void SeedChooserScreen::Draw(Graphics* g)
 		ChosenSeedState aSeedState = aChosenSeed.mSeedState;
 		if (mApp->SeedTypeAvailable(aSeedType) && (aSeedState == SEED_FLYING_TO_BANK || aSeedState == SEED_FLYING_TO_CHOOSER))
 		{
-			DrawSeedPacket(g, aChosenSeed.mX, aChosenSeed.mY, aChosenSeed.mSeedType, aChosenSeed.mImitaterType, 0, 255, true, false);
+			DrawSeedPacket(g, ChosenSeedPresentationX(*this, aChosenSeed), aChosenSeed.mY, aChosenSeed.mSeedType, aChosenSeed.mImitaterType, 0, 255, true, false);
 		}
 	}
 
@@ -484,7 +527,21 @@ void SeedChooserScreen::Draw(Graphics* g)
 	aBoardFrameG.mTransX -= mX;
 	aBoardFrameG.mTransY -= mY;
 	mMenuButton->Draw(&aBoardFrameG);
-	mToolTip->Draw(g);
+	if (mToolTip->mVisible)
+		mToolTip->Draw(g,
+			Rect(mApp->mScreenBounds.mX - mX, -mY, mApp->mScreenBounds.mWidth, mToolTip->mMaxBottom));
+}
+
+void SeedChooserScreen::DrawZombieToolTip(Graphics* g)
+{
+	ToolTipWidget& aTip = *mBoard->mToolTip;
+	if (!aTip.mVisible || mToolTip->mVisible || mChooseState == CHOOSE_VIEW_LAWN)
+		return;
+	// Called with Board's graphics, so both the anchor and bounds are board local.
+	const int aRight = SeedChooserLayout::RebaseX(mApp->mScreenBounds.mWidth,
+		mApp->mScreenBounds.mX, mBoard->mX);
+	aTip.Draw(g,
+		Rect(aTip.mMinLeft, -mBoard->mY, aRight - aTip.mMinLeft, aTip.mMaxBottom));
 }
 
 //0x484C30
@@ -495,23 +552,19 @@ void SeedChooserScreen::UpdateViewLawn()
 	if (mViewLawnTime == 100) mBoard->DisplayAdviceAgain(gStr.CLICK_TO_CONTINUE, MESSAGE_STYLE_HINT_STAY, ADVICE_CLICK_TO_CONTINUE);
 	else if (mViewLawnTime == 251) mViewLawnTime = 250;
 
-	int aBoardX = BOARD_IMAGE_WIDTH_OFFSET - mApp->mWidth;
 	int aSeedChooserY = SEED_CHOOSER_OFFSET_Y - Sexy::IMAGE_SEEDCHOOSER_BACKGROUND->mHeight;
 	if (mViewLawnTime <= 100)
 	{
-		mBoard->Move(-TodAnimateCurve(0, 100, mViewLawnTime, aBoardX, 0, Curves::EaseInOut), 0);
-		Move(0, TodAnimateCurve(0, 40, mViewLawnTime, aSeedChooserY, SEED_CHOOSER_OFFSET_Y, Curves::EaseInOut));
+		Move(mApp->mScreenBounds.mX, TodAnimateCurve(0, 40, mViewLawnTime, aSeedChooserY, SEED_CHOOSER_OFFSET_Y, Curves::EaseInOut));
 	}
 	else if (mViewLawnTime <= 250)
 	{
-		mBoard->Move(0, 0);
-		Move(0, SEED_CHOOSER_OFFSET_Y);
+		Move(mApp->mScreenBounds.mX, SEED_CHOOSER_OFFSET_Y);
 	}
 	else if (mViewLawnTime <= 350)
 	{
 		mBoard->ClearAdvice(ADVICE_CLICK_TO_CONTINUE);
-		mBoard->Move(-TodAnimateCurve(250, 350, mViewLawnTime, 0, aBoardX, Curves::EaseInOut), 0);
-		Move(0, TodAnimateCurve(310, 350, mViewLawnTime, SEED_CHOOSER_OFFSET_Y, aSeedChooserY, Curves::EaseInOut));
+		Move(mApp->mScreenBounds.mX, TodAnimateCurve(310, 350, mViewLawnTime, SEED_CHOOSER_OFFSET_Y, aSeedChooserY, Curves::EaseInOut));
 	}
 	else
 	{
@@ -573,10 +626,12 @@ void SeedChooserScreen::UpdateCursor()
 //0x4851A0
 void SeedChooserScreen::Update()
 {
+	RefreshChooserHudLayout(*this);
 	Widget::Update();
+	UpdateViewLawn();
 
-	mLastMouseX = mApp->mWidgetManager->mLastMouseX;
-	mLastMouseY = mApp->mWidgetManager->mLastMouseY;
+	mLastMouseX = SeedChooserLayout::RebaseX(mApp->mWidgetManager->mLastMouseX, 0, mX);
+	mLastMouseY = mApp->mWidgetManager->mLastMouseY - mY;
 
 	mSeedChooserAge++;
 	mToolTip->Update();
@@ -603,7 +658,6 @@ void SeedChooserScreen::Update()
 		}
 	}
 
-	ShowToolTip();
 	mStartButton->Update();
 	mRandomButton->Update();
 	mViewLawnButton->Update();
@@ -611,7 +665,13 @@ void SeedChooserScreen::Update()
 	mImitaterButton->Update();
 	mStoreButton->Update();
 	mMenuButton->Update();
-	UpdateViewLawn();
+	mBoard->mCutScene->UpdateSeedChooserCamera();
+	ShowToolTip();
+	if (mApp->mGameScene == SCENE_LEVEL_INTRO && mBoard->mCutScene->mSeedChoosing)
+	{
+		// Resolve the hit and label after the final camera and button positions.
+		mBoard->UpdateToolTip();
+	}
 	UpdateCursor();
 	MarkDirty();
 }
@@ -878,7 +938,7 @@ SeedType SeedChooserScreen::SeedHitTest(int x, int y)
 		{
 			ChosenSeed& aChosenSeed = mChosenSeeds[aSeedType];
 			if (!mApp->SeedTypeAvailable(aSeedType) || aChosenSeed.mSeedState == SEED_PACKET_HIDDEN) continue;
-			if (Rect(aChosenSeed.mX, aChosenSeed.mY, SEED_PACKET_WIDTH, SEED_PACKET_HEIGHT).Contains(x, y)) return aSeedType;
+			if (Rect(ChosenSeedPresentationX(*this, aChosenSeed), aChosenSeed.mY, SEED_PACKET_WIDTH, SEED_PACKET_HEIGHT).Contains(x, y)) return aSeedType;
 		}
 	}
 	return SEED_NONE;
@@ -1034,18 +1094,24 @@ void SeedChooserScreen::ShowToolTip()
 					mToolTip->SetTitle(Plant::GetNameString(aSeedType, SEED_NONE));
 					mToolTip->SetLabel(Plant::GetToolTip(aSeedType));
 				}
-
+			}
+			if (aSeedType != SEED_NONE)
+			{
+				ChosenSeed& aChosenSeed = mChosenSeeds[aSeedType];
 				int aSeedX, aSeedY;
 				if (aChosenSeed.mSeedState == SEED_IN_BANK)
 				{
 					GetSeedPositionInBank(aChosenSeed.mSeedIndexInBank, aSeedX, aSeedY);
+					aSeedX = SeedChooserLayout::RebaseX(aSeedX, mApp->mScreenBounds.mX, mX);
 				}
 				else
 				{
 					GetSeedPositionInChooser(aSeedType, aSeedX, aSeedY);
 				}
 
-				mToolTip->mX = ClampInt((SEED_PACKET_WIDTH - mToolTip->mWidth) / 2 + aSeedX, 0, BOARD_WIDTH - mToolTip->mWidth);
+				mToolTip->mX = ClampInt((SEED_PACKET_WIDTH - mToolTip->mWidth) / 2 + aSeedX,
+					mApp->mScreenBounds.mX - mX,
+					mApp->mScreenBounds.mX + mApp->mScreenBounds.mWidth - mX - mToolTip->mWidth);
 				mToolTip->mY = aSeedY + 70;
 				mToolTip->mVisible = true;
 				mToolTipSeed = aSeedType;
@@ -1063,6 +1129,7 @@ void SeedChooserScreen::CancelLawnView()
 //0x486630
 void SeedChooserScreen::MouseUp(int x, int y, int theClickCount)
 {
+	RefreshChooserHudLayout(*this);
 	(void)x;(void)y;
 	if (theClickCount == 1)
 	{
@@ -1091,6 +1158,9 @@ void SeedChooserScreen::UpdateImitaterButton()
 //0x486770
 void SeedChooserScreen::MouseDown(int x, int y, int theClickCount)
 {
+	const int aPreviousX = mX;
+	RefreshChooserHudLayout(*this);
+	x = SeedChooserLayout::RebaseX(x, aPreviousX, mX);
     ChooserModalSession aSession(*this);
     if (!aSession.IsCurrent())
         return;
@@ -1141,7 +1211,8 @@ void SeedChooserScreen::MouseDown(int x, int y, int theClickCount)
 	{
 		if (!mBoard->mSeedBank->ContainsPoint(x, y) && !mAlmanacButton->IsMouseOver() && !mStoreButton->IsMouseOver() && mApp->CanShowAlmanac())
 		{
-			Zombie* aZombie = mBoard->ZombieHitTest(x - mBoard->mX, y - mBoard->mY);
+			Zombie* aZombie = mBoard->ZombieHitTest(
+				SeedChooserLayout::RebaseX(x, mX, mBoard->mX), y + mY - mBoard->mY);
 			if (aZombie && aZombie->mFromWave == Zombie::ZOMBIE_WAVE_CUTSCENE && aZombie->mZombieType != ZOMBIE_REDEYE_GARGANTUAR)
 			{
 				mApp->PlaySample(Sexy::SOUND_TAP);

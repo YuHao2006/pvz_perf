@@ -93,6 +93,7 @@ public:
     void EndSceneAndPresent();
     bool PresentRetainedScene();
     bool ResizePresent();
+    void ResizeScene(int width, int height);
     void SetHdrParams(const GpuHdrParams& params);
     GpuHdrParams HdrParams() const;
     // Effect descriptors must remain alive at stable addresses. Prepare and

@@ -1,0 +1,7 @@
+Use case: compositing.
+Asset type: a native-resolution panoramic background for an existing 2D game.
+Edit target: the supplied 1744x608 image. It is an existing daytime main-menu background joined to an existing nighttime portrait-editor background. The blank gravestone on the left and the BACK stone on the right are deliberate original game artwork.
+Primary request: harmonize ONLY the narrow masked vertical join, approximately x=933 through x=1079. Make the sky lighting, stone wall, grass, flowers and ground connect naturally across that join. Remove the blue ghosting and mismatched wall outlines caused by the preliminary crossfade. Keep the original painted cartoon style, perspective and pixel scale.
+Invariants: preserve the entire scene outside the mask; keep all objects, the large gravestone silhouette, tree, house, wall structure and BACK stone in exactly the same positions and sizes. Do not redraw, translate, crop, zoom, stretch or rescale the image. Keep the original canvas exactly 1744x608. The bottom 8 pixels and rightmost 11 pixels are padding and must stay unchanged.
+The main menu remains the upper layer in the overlap. Blend the adjacent backgrounds without adding a border or a new panel.
+Avoid new characters, zombies, plants, buttons, labels, logos, watermarks, ornaments or new text. Do not add anything to the blank gravestone. Preserve existing text outside the mask verbatim.

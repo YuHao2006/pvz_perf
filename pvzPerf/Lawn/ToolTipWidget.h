@@ -1,5 +1,6 @@
 #pragma once
 #include "misc/TimeCounter.h"
+#include "misc/Rect.h"
 #include <vector>
 
 #include "SexyAppFramework/Common.h"
@@ -31,10 +32,15 @@ public:
     ToolTipWidget();
 
     void                Draw(Sexy::Graphics* g);
+    // Explicit bounds share the caller's graphics coordinate frame.
+    void                Draw(Sexy::Graphics* g, const Sexy::Rect& theLocalBounds);
     void                SetLabel(const SexyString& theLabel);
     void                SetTitle(const SexyString& theTitle);
     void                SetWarningText(const SexyString& theWarningText);
     void                CalculateSize();
     void                GetLines(std::vector<SexyString>& theLines);
     inline void         Update() { if (mWarningFlashCounter > 0) mWarningFlashCounter--; }
+
+private:
+    void                DrawAt(Sexy::Graphics* g, int x, int y);
 };

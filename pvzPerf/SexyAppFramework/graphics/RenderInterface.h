@@ -114,6 +114,7 @@ public:
 	void					PopTransform();
 	
 	bool					PreDraw();
+    void ResizeScene(int width, int height);
 	DDImage*                CreateRenderImage(int width, int height);
 	DDImage* ProcessImage(MemoryImage* source,const GpuImageProcessing& processing);
 	void RenderFontAtlas(DDImage* target,MemoryImage* source,

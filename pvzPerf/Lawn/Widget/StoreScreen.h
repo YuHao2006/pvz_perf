@@ -59,6 +59,7 @@ public:
     Dialog*                     mPurchaseDialog = nullptr;
 
 private:
+    void                        RefreshLayout();
     LawnDialog*                 ShowPurchaseDialog(int id, const SexyString& header,
                                     const SexyString& lines, const SexyString& footer, int buttons);
     int                         WaitForPurchaseDialog(Dialog* dialog);

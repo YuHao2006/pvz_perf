@@ -323,8 +323,8 @@ void WidgetManager::RemoveBaseModal(Widget* theWidget)
 
 void WidgetManager::Resize(const Rect& theMouseDestRect, const Rect& theMouseSourceRect)
 {	
-	mWidth = theMouseDestRect.mWidth + 2 * theMouseDestRect.mX;
-	mHeight = theMouseDestRect.mHeight + 2 * theMouseDestRect.mY;
+    mWidth = mApp->mWidth;
+    mHeight = mApp->mHeight;
 	mMouseDestRect = theMouseDestRect;
 	mMouseSourceRect = theMouseSourceRect;
 }
@@ -466,6 +466,19 @@ bool WidgetManager::DrawScreen()
 
 			if ((aWidget->mDirty) && (aWidget->mVisible))
 			{
+                // Centered, unextended full-screen pages own black sidebars.
+                // Clear them only when that page redraws, so a modal dialog
+                // cannot erase the retained wide scene underneath it.
+                if (mMouseDestRect.mWidth > mApp->mWidth && aWidget->mClip &&
+                    aWidget->mWidth == mApp->mWidth && aWidget->mHeight == mApp->mHeight)
+                {
+                    Graphics borders(aScrG);
+                    borders.mColor = Color::Black;
+                    const int pad = -mMouseDestRect.mX;
+                    borders.FillRect(0, 0, pad, mImage->mHeight);
+                    borders.FillRect(pad + mApp->mWidth, 0,
+                        mImage->mWidth - pad - mApp->mWidth, mImage->mHeight);
+                }
 				Graphics aClipG(g);
 				aClipG.mFastStretch = !is3D;
 				aClipG.mLinearBlend = is3D;

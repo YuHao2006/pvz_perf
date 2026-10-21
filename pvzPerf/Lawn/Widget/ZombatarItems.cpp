@@ -1875,9 +1875,7 @@ void ZombatarItems::ReturnToMainMenu()
 	ResetZombatar();
 	if (mApp && mApp->mGameSelector)
 	{
-		mApp->mGameSelector->SlideTo(-800, 0);
-		if (mApp->mWidgetManager)
-			mApp->mWidgetManager->SetFocus(mApp->mGameSelector);
+		mApp->mGameSelector->HideZombatarScreen();
 	}
 }
 

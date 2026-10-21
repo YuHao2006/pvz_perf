@@ -133,6 +133,8 @@ set_target_properties(sexy_vulkan sexy_vulkan_effects PROPERTIES
     INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE)
 
 if(BUILD_TESTING)
+    set(PVZ_TEST_EFFECTS_DIR "${CMAKE_SOURCE_DIR}/effects" CACHE PATH
+        "External scaling effect fixtures for Vulkan tests")
     add_executable(sexy_vulkan_enumeration_tests tests/enumeration_tests.cpp)
     target_compile_features(sexy_vulkan_enumeration_tests PRIVATE cxx_std_23)
     target_include_directories(sexy_vulkan_enumeration_tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
@@ -142,7 +144,7 @@ if(BUILD_TESTING)
     add_executable(sexy_vulkan_scale_compile_tests tests/scale_compile_tests.cpp)
     target_link_libraries(sexy_vulkan_scale_compile_tests PRIVATE sexy_vulkan_effects)
     target_compile_definitions(sexy_vulkan_scale_compile_tests PRIVATE
-        PVZ_EFFECTS_DIR="${CMAKE_SOURCE_DIR}/effects")
+        PVZ_EFFECTS_DIR="${PVZ_TEST_EFFECTS_DIR}")
     add_custom_command(TARGET sexy_vulkan_scale_compile_tests POST_BUILD
         COMMAND "${CMAKE_COMMAND}" -E copy_if_different
             "$<TARGET_FILE:Microsoft::DirectXShaderCompiler>"
@@ -183,8 +185,6 @@ if(BUILD_TESTING AND WIN32)
         add_test(NAME sexy_vulkan_hdr COMMAND sexy_vulkan_hdr_tests)
         set_tests_properties(sexy_vulkan_hdr PROPERTIES TIMEOUT 60 ENVIRONMENT "VK_LAYER_VALIDATE_SYNC=1")
     endif()
-    set(PVZ_TEST_EFFECTS_DIR "${CMAKE_SOURCE_DIR}/effects" CACHE PATH
-        "External scaling effect fixtures for Vulkan tests")
     add_executable(sexy_vulkan_scale_pipeline_tests tests/scale_pipeline_tests.cpp)
     target_link_libraries(sexy_vulkan_scale_pipeline_tests PRIVATE sexy_vulkan_effects sexy_vulkan)
     target_compile_definitions(sexy_vulkan_scale_pipeline_tests PRIVATE

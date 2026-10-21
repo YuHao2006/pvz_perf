@@ -41,6 +41,7 @@ public:
     void                        CancelIntro();
     void                        Update();
     void                        AnimateBoard();
+    void                        UpdateSeedChooserCamera();
     /*inline*/ void             StartSeedChooser();
     /*inline*/ void             EndSeedChooser();
     /*inline*/ int              CalcPosition(int theTimeStart, int theTimeEnd, int thePositionStart, int thePositionEnd);

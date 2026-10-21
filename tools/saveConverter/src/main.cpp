@@ -49,12 +49,16 @@ void PrintUsage(const std::filesystem::path& theProgram)
         << "用法：\n  " << theProgram.filename().string()
         << "\n  " << theProgram.filename().string()
         << " <输入 game*.dat|game*.dat64|user*.dat|user*.dat64> [输出文件]\n\n"
+        << "选项：--target legacy|dat64-v1|dat64-v2；--round-time nearest。\n"
+        << "关卡 .dat 默认生成纳秒 dat64 v2；旧 dat64 v1/v2 默认导出 .dat。\n"
+        << "导出旧格式要求时间精确可表示；只有明确指定 nearest 才允许舍入。\n\n"
+        << "DAT64 v1/v2 不校验内容 CRC 或哈希；直接改合法数值无需重算校验码。\n\n"
         << "无参数：扫描转换器所在目录。若存在任何 .dat（game数字_数字.dat 或"
            " user数字.dat），全部转为 dat64；否则把全部 .dat64 转回 .dat。"
            "每份成功后删除源文件，失败的源文件保留。\n\n"
         << "关卡档文件名里的模式数字随格式换算（dat 是 v1 枚举值，dat64 是 v3"
            " 枚举值；模式值只存在于文件名，存档体内没有）。\n"
-        << "省略输出文件时自动生成对应名称；转换器会完整验证输入和生成结果，"
+        << "省略输出文件时自动生成对应名称；转换器检查格式、字段边界和转换一致性，"
            "失败时不会写出目标文件。\n";
 }
 
@@ -227,14 +231,43 @@ int main(int argc, char** argv)
         {
             return RunDirectoryBatch(GetExecutableDirectory(argc > 0 ? argv[0] : nullptr));
         }
-        if (argc > 3)
+        PvzDat64::ConversionOptions options;
+        std::vector<std::string> positional;
+        for (int i = 1; i < argc; ++i)
+        {
+            const std::string arg = argv[i];
+            if (arg == "--help" || arg == "-h")
+            {
+                PrintUsage(argv[0]);
+                return 0;
+            }
+            if (arg == "--target")
+            {
+                if (++i == argc) throw std::runtime_error("--target requires legacy, dat64-v1 or dat64-v2");
+                const std::string target = argv[i];
+                if (target == "legacy") options.mTargetFormat = PvzDat64::Format::Legacy1073Dat;
+                else if (target == "dat64-v1") options.mTargetFormat = PvzDat64::Format::Dat64V1;
+                else if (target == "dat64-v2") options.mTargetFormat = PvzDat64::Format::Dat64V2;
+                else throw std::runtime_error("unknown --target: " + target);
+            }
+            else if (arg == "--round-time")
+            {
+                if (++i == argc || std::string(argv[i]) != "nearest")
+                    throw std::runtime_error("--round-time requires nearest");
+                options.mRoundTimeToNearestTick = true;
+            }
+            else if (arg.starts_with("--"))
+                throw std::runtime_error("unknown option: " + arg);
+            else positional.push_back(arg);
+        }
+        if (positional.empty() || positional.size() > 2)
         {
             PrintUsage(argc > 0 ? std::filesystem::path(argv[0]) : "pvz_dat64_converter");
             return 2;
         }
 
         const std::filesystem::path anInput =
-            std::filesystem::absolute(std::filesystem::u8path(argv[1]));
+            std::filesystem::absolute(std::filesystem::u8path(positional[0]));
         // 先按内容识别关卡档（magic/全量解析）；不是关卡档再按 user 档识别。
         // 文件名只决定默认输出名，格式判定一律以内容为准。两条链的失败都
         // 保留在报告里：user 兜底不能吞掉关卡档的真实错误。
@@ -262,10 +295,12 @@ int main(int argc, char** argv)
 
         if (isUserSave)
         {
+            if (options.mTargetFormat || options.mRoundTimeToNearestTick)
+                throw std::runtime_error("time/level format options apply only to game saves");
             const PvzDat64::UserFormat anInputFormat =
                 PvzDat64::DetectUserFormat(anInput);
-            const std::filesystem::path anOutput = argc == 3
-                ? std::filesystem::absolute(std::filesystem::u8path(argv[2]))
+            const std::filesystem::path anOutput = positional.size() == 2
+                ? std::filesystem::absolute(std::filesystem::u8path(positional[1]))
                 : PvzDat64::DefaultUserOutputPath(anInput, anInputFormat);
             const PvzDat64::UserConversionResult aResult =
                 PvzDat64::ConvertUserFile(anInput, anOutput);
@@ -281,12 +316,16 @@ int main(int argc, char** argv)
         }
 
         const PvzDat64::Format anInputFormat = PvzDat64::DetectFormat(anInput);
-        const std::filesystem::path anOutput = argc == 3
-            ? std::filesystem::absolute(std::filesystem::u8path(argv[2]))
+        if (positional.size() == 1 && options.mTargetFormat &&
+            ((*options.mTargetFormat == PvzDat64::Format::Legacy1073Dat) ==
+             (anInputFormat == PvzDat64::Format::Legacy1073Dat)))
+            throw std::runtime_error("same-family conversion requires an explicit output file");
+        const std::filesystem::path anOutput = positional.size() == 2
+            ? std::filesystem::absolute(std::filesystem::u8path(positional[1]))
             : PvzDat64::DefaultOutputPath(anInput, anInputFormat);
 
         const PvzDat64::ConversionResult aResult =
-            PvzDat64::ConvertFile(anInput, anOutput);
+            PvzDat64::ConvertFile(anInput, anOutput, options);
         std::cout
             << "验证与转换完成：\n  "
             << aResult.mSourcePath.string() << "\n  "

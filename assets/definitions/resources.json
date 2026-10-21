@@ -916,8 +916,7 @@
             "tag": "Image",
             "attrs": {
               "id": "SELECTORSCREEN_MOREWAYSTOPLAY_BG",
-              "path": "blank",
-              "noalpha": "true"
+              "path": "selector_morewaystoplay_background"
             },
             "children": []
           },
@@ -1021,8 +1020,7 @@
             "tag": "Image",
             "attrs": {
               "id": "QUICKPLAY_MINIGAMES_BUTTON",
-              "path": "blank",
-              "noalpha": "true"
+              "path": "quickplay_minigames_button"
             },
             "children": []
           },
@@ -1030,8 +1028,7 @@
             "tag": "Image",
             "attrs": {
               "id": "QUICKPLAY_MINIGAMES_BUTTON_HIGHLIGHT",
-              "path": "blank",
-              "noalpha": "true"
+              "path": "quickplay_minigames_button_highlight"
             },
             "children": []
           },
@@ -1039,8 +1036,7 @@
             "tag": "Image",
             "attrs": {
               "id": "QUICKPLAY_MINIGAMES_CLOUD",
-              "path": "blank",
-              "noalpha": "true"
+              "path": "quickplay_minigames_cloud"
             },
             "children": []
           },
@@ -1048,8 +1044,7 @@
             "tag": "Image",
             "attrs": {
               "id": "QUICKPLAY_PUZZLES_BUTTON",
-              "path": "blank",
-              "noalpha": "true"
+              "path": "quickplay_puzzles_button"
             },
             "children": []
           },
@@ -1057,8 +1052,7 @@
             "tag": "Image",
             "attrs": {
               "id": "QUICKPLAY_PUZZLES_BUTTON_HIGHLIGHT",
-              "path": "blank",
-              "noalpha": "true"
+              "path": "quickplay_puzzles_button_highlight"
             },
             "children": []
           },
@@ -1066,8 +1060,7 @@
             "tag": "Image",
             "attrs": {
               "id": "QUICKPLAY_PUZZLES_CLOUD",
-              "path": "blank",
-              "noalpha": "true"
+              "path": "quickplay_puzzles_cloud"
             },
             "children": []
           },
@@ -1075,8 +1068,7 @@
             "tag": "Image",
             "attrs": {
               "id": "QUICKPLAY_SURVIVAL_BUTTON",
-              "path": "blank",
-              "noalpha": "true"
+              "path": "quickplay_survival_button"
             },
             "children": []
           },
@@ -1084,8 +1076,7 @@
             "tag": "Image",
             "attrs": {
               "id": "QUICKPLAY_SURVIVAL_BUTTON_HIGHLIGHT",
-              "path": "blank",
-              "noalpha": "true"
+              "path": "quickplay_survival_button_highlight"
             },
             "children": []
           },
@@ -1093,8 +1084,7 @@
             "tag": "Image",
             "attrs": {
               "id": "QUICKPLAY_SURVIVAL_CLOUD",
-              "path": "blank",
-              "noalpha": "true"
+              "path": "quickplay_survival_cloud"
             },
             "children": []
           },

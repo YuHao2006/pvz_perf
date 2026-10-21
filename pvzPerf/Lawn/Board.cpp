@@ -8471,7 +8471,7 @@ constexpr DebugTextCaseFn kDebugTextCases[(int)DebugTextMode::DEBUG_TEXT_COLLISI
     		aText += StrFormat(("ZOMBIE SPAWNING DEBUG\n"));
     		aText += StrFormat(("CurrentWave: %d of %d\n"), aBoard.mCurrentWave, aBoard.mNumWaves);
     		aText += StrFormat(("TimeSinseLastSpawn: %d %s\n"), aTime, aTime > 400 ? ("") : ("(too soon)"));
-		aText += StrFormat(("ZombieCountDown: %d/%d(%.0f%%)\n"), aBoard.mZombieCountDown, aBoard.mZombieCountDownStart, aCountDownFraction);
+		aText += StrFormat(("ZombieCountDown: %d/%d(%.0f%%)\n"), static_cast<int>(aBoard.mZombieCountDown), static_cast<int>(aBoard.mZombieCountDownStart), aCountDownFraction);
 
     		if (aBoard.mZombieHealthToNextWave != -1)
     		{
@@ -8487,7 +8487,7 @@ constexpr DebugTextCaseFn kDebugTextCases[(int)DebugTextMode::DEBUG_TEXT_COLLISI
 
     		if (aBoard.mHugeWaveCountDown > 0)
     		{
-    			aText += StrFormat(("HugeWaveCountDown: %d\n"), aBoard.mHugeWaveCountDown);
+				aText += StrFormat(("HugeWaveCountDown: %d\n"), static_cast<int>(aBoard.mHugeWaveCountDown));
     		}
 
     		Zombie* aBossZombie = aBoard.GetBossZombie();

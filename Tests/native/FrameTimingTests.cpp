@@ -84,7 +84,8 @@ int main()
             gUpdateIntervalNs = timing.mIntervalNs;
             gLegacyTickPhaseNs = 0;
             TimeCounter countdown = 150;
-            const int initialSteps = countdown.mSteps;
+            const auto initialNanoseconds = countdown.mNanoseconds;
+            const auto initialSteps = (initialNanoseconds + timing.mIntervalNs - 1) / timing.mIntervalNs;
             int frames = 0, hit25 = 0, hit50 = 0;
             while (countdown > 0)
             {
@@ -122,13 +123,13 @@ int main()
                 const int wire = static_cast<int>(live);
                 Require(std::abs(wire - legacy) <= (fps < 100 ? 1 : 0),
                     "Save export leaked runtime step units");
-                unsigned char bytes[4]{};
-                std::memcpy(bytes, &wire, sizeof(wire));
+                unsigned char bytes[8]{};
+                std::memcpy(bytes, &live.mNanoseconds, sizeof(live.mNanoseconds));
                 gUpdateTicks = 1;
                 gStepsPerLegacyTick = 1;
-                int diskValue = 0;
-                std::memcpy(&diskValue, bytes, sizeof(diskValue));
-                const TimeCounter restored = diskValue;
+                TimeCounter restored{};
+                std::memcpy(&restored.mNanoseconds, bytes, sizeof(restored.mNanoseconds));
+                restored.mPreviousNanoseconds = restored.mNanoseconds;
                 Require(restored == wire, "A 100 Hz process could not import the save");
                 gUpdateTicks = static_cast<double>(timing.mIntervalNs) / FrameTiming::LegacyTickNs;
                 gStepsPerLegacyTick = 1.0 / gUpdateTicks;
@@ -136,7 +137,7 @@ int main()
         }
         gUpdateTicks = gStepsPerLegacyTick = 1;
         gUpdateIntervalNs = FrameTiming::LegacyTickNs;
-        std::cout << "PASS: integer FPS, deadlines, 60/100/144/240/250/1000 Hz timers, motion, save units\n";
+        std::cout << "PASS: integer FPS, deadlines, 60/100/144/240/250/1000 Hz timers, motion, nanosecond state\n";
         return EXIT_SUCCESS;
     }
     catch (const std::exception& error)

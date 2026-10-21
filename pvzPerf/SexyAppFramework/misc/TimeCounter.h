@@ -2,13 +2,12 @@
 #include <algorithm>
 #include <compare>
 #include <cmath>
+#include <cstdint>
 #include <limits>
 #include <type_traits>
 
 namespace Sexy
 {
-// Counter payloads keep their four-byte save layout. Runtime units are update
-// steps; integer constants and save files retain the original 100 Hz units.
 inline double gUpdateTicks = 1.0;
 inline double gStepsPerLegacyTick = 1.0;
 inline unsigned long long gUpdateIntervalNs = 10'000'000ULL;
@@ -20,91 +19,175 @@ inline void BeginTimedUpdate()
     gWholeLegacyTicks = static_cast<int>(gLegacyTickPhaseNs / 10'000'000ULL);
     gLegacyTickPhaseNs %= 10'000'000ULL;
 }
-inline float UpdateDelta(float value)
-{
-    return value * static_cast<float>(gUpdateTicks);
-}
+inline float UpdateDelta(float value) { return value * static_cast<float>(gUpdateTicks); }
 inline float UpdateDecay(float value)
 {
     return gUpdateTicks == 1.0 ? value : std::pow(value, static_cast<float>(gUpdateTicks));
 }
 
-template<class Storage = int>
+// Numeric constants retain their documented unit. State stores nanoseconds,
+// independent of target FPS; legacy conversion is confined to explicit I/O.
+template<class Storage = int, std::int64_t UnitNs = 10'000'000>
 struct BasicTimeCounter
 {
-    Storage mSteps;
+    using Nanoseconds = std::conditional_t<std::is_unsigned_v<Storage>, std::uint64_t, std::int64_t>;
+    Nanoseconds mNanoseconds;
+    Nanoseconds mPreviousNanoseconds;
 
     BasicTimeCounter() = default;
     template<class T> requires std::is_arithmetic_v<T>
-    BasicTimeCounter(T value) : mSteps(Encode(value)) {}
-
+    BasicTimeCounter(T value) : mNanoseconds(Encode(value)), mPreviousNanoseconds(mNanoseconds) {}
     template<class T> requires std::is_arithmetic_v<T>
-    static Storage Encode(T value)
+    static Nanoseconds Encode(T value)
     {
-        if (gStepsPerLegacyTick == 1.0)
-            return static_cast<Storage>(value);
-        const double scaled = static_cast<double>(value) * gStepsPerLegacyTick;
+        if constexpr (std::is_integral_v<T>)
+        {
+            if constexpr (std::is_unsigned_v<Storage>)
+            {
+                // Legacy unsigned values wrap at 2^32 units, including -1.
+                return std::uint64_t(static_cast<std::uint32_t>(value)) * UnitNs;
+            }
+            else
+            {
+                if (value > std::numeric_limits<std::int64_t>::max() / UnitNs)
+                    return std::numeric_limits<std::int64_t>::max();
+                if constexpr (std::is_signed_v<T>)
+                    if (value < std::numeric_limits<std::int64_t>::min() / UnitNs)
+                        return std::numeric_limits<std::int64_t>::min();
+                return static_cast<std::int64_t>(value) * UnitNs;
+            }
+        }
+        const long double rounded = std::round(static_cast<long double>(value) * UnitNs);
         if constexpr (std::is_unsigned_v<Storage>)
         {
-            const double rounded = scaled >= 0 ? scaled + 0.5 : scaled - 0.5;
-            if (rounded >= 0 && rounded < 4294967296.0)
-                return static_cast<Storage>(rounded);
-            double wrapped = std::fmod(std::trunc(rounded), 4294967296.0);
-            if (wrapped < 0) wrapped += 4294967296.0;
-            return static_cast<Storage>(wrapped);
+            constexpr std::uint64_t modulus = (std::uint64_t(1) << 32) * UnitNs;
+            long double wrapped = std::fmod(rounded, static_cast<long double>(modulus));
+            if (wrapped < 0) wrapped += modulus;
+            return static_cast<Nanoseconds>(wrapped);
+        }
+        if (rounded >= static_cast<long double>(std::numeric_limits<Nanoseconds>::max()))
+            return std::numeric_limits<Nanoseconds>::max();
+        if (rounded <= static_cast<long double>(std::numeric_limits<Nanoseconds>::min()))
+            return std::numeric_limits<Nanoseconds>::min();
+        return static_cast<Nanoseconds>(rounded);
+    }
+    operator Storage() const
+    {
+        if constexpr (std::is_unsigned_v<Storage>)
+        {
+            const std::uint64_t units = mNanoseconds / UnitNs +
+                (mNanoseconds % UnitNs >= (UnitNs + 1) / 2);
+            return static_cast<Storage>(units & 0xffffffffULL);
         }
         else
         {
-            const double rounded = scaled >= 0 ? scaled + 0.5 : scaled - 0.5;
+            const std::int64_t units = mNanoseconds / UnitNs;
+            const std::int64_t remainder = mNanoseconds % UnitNs;
+            const std::int64_t rounded = units + (remainder >= (UnitNs + 1) / 2)
+                - (remainder <= -(UnitNs + 1) / 2);
             return static_cast<Storage>(std::clamp(rounded,
-                static_cast<double>(std::numeric_limits<Storage>::min()),
-                static_cast<double>(std::numeric_limits<Storage>::max())));
+                std::int64_t(std::numeric_limits<Storage>::min()),
+                std::int64_t(std::numeric_limits<Storage>::max())));
         }
     }
-
-    operator Storage() const
+    explicit operator bool() const { return mNanoseconds != 0; }
+    double LegacyTicks() const { return static_cast<double>(mNanoseconds) / UnitNs; }
+    void AddNanoseconds(std::int64_t delta)
     {
-        if (gUpdateTicks == 1.0) return mSteps;
-        const double ticks = mSteps * gUpdateTicks;
-        return static_cast<Storage>(ticks >= 0 ? ticks + 0.5 : ticks - 0.5);
+        mPreviousNanoseconds = mNanoseconds;
+        if constexpr (std::is_unsigned_v<Storage>)
+        {
+            constexpr std::uint64_t modulus = (std::uint64_t(1) << 32) * UnitNs;
+            const std::uint64_t base = mNanoseconds % modulus;
+            const std::uint64_t magnitude = delta < 0
+                ? std::uint64_t(0) - static_cast<std::uint64_t>(delta)
+                : static_cast<std::uint64_t>(delta);
+            const auto change = magnitude % modulus;
+            mNanoseconds = delta < 0 ? (base >= change ? base - change : modulus - (change - base))
+                : (base >= modulus - change ? base - (modulus - change) : base + change);
+        }
+        else
+        {
+            const auto maximum = std::numeric_limits<std::int64_t>::max();
+            const auto minimum = std::numeric_limits<std::int64_t>::min();
+            const std::int64_t next = delta > 0 && mNanoseconds > maximum - delta ? maximum
+                : delta < 0 && mNanoseconds < minimum - delta ? minimum : mNanoseconds + delta;
+            mNanoseconds = next;
+        }
     }
-    explicit operator bool() const { return mSteps != 0; }
-    double LegacyTicks() const { return mSteps * gUpdateTicks; }
-    BasicTimeCounter& operator++() { ++mSteps; return *this; }
-    BasicTimeCounter& operator--() { --mSteps; return *this; }
-    BasicTimeCounter operator++(int) { const auto old = *this; ++*this; return old; }
-    BasicTimeCounter operator--(int) { const auto old = *this; --*this; return old; }
-    BasicTimeCounter& operator+=(double value) { mSteps += Encode(value); return *this; }
-    BasicTimeCounter& operator-=(double value) { mSteps -= Encode(value); return *this; }
-    BasicTimeCounter& operator*=(double value) { mSteps = static_cast<Storage>(mSteps * value); return *this; }
-    BasicTimeCounter& operator/=(double value) { mSteps = static_cast<Storage>(mSteps / value); return *this; }
-    void Advance(int steps) { mSteps += steps; }
-
-    bool operator==(const BasicTimeCounter& rhs) const = default;
-    auto operator<=>(const BasicTimeCounter& rhs) const = default;
+    void Advance(int steps)
+    {
+        const auto magnitude = steps < 0 ? std::uint64_t(0) - std::uint64_t(steps) : std::uint64_t(steps);
+        const auto maximum = std::uint64_t(std::numeric_limits<std::int64_t>::max());
+        const auto delta = magnitude && gUpdateIntervalNs > maximum / magnitude
+            ? maximum : magnitude * gUpdateIntervalNs;
+        AddNanoseconds(steps < 0 ? -static_cast<std::int64_t>(delta) : static_cast<std::int64_t>(delta));
+        if constexpr (!std::is_unsigned_v<Storage>)
+        {
+            // Countdown users test == 0; expiry cannot skip over zero.
+            if ((mPreviousNanoseconds > 0 && mNanoseconds < 0) ||
+                (mPreviousNanoseconds < 0 && mNanoseconds > 0))
+                mNanoseconds = 0;
+        }
+    }
+    BasicTimeCounter& operator++() { Advance(1); return *this; }
+    BasicTimeCounter& operator--() { Advance(-1); return *this; }
+    BasicTimeCounter operator++(int) { auto old = *this; ++*this; return old; }
+    BasicTimeCounter operator--(int) { auto old = *this; --*this; return old; }
+    BasicTimeCounter& operator+=(double value) { AddNanoseconds(BasicTimeCounter<int, UnitNs>::Encode(value)); return *this; }
+    BasicTimeCounter& operator-=(double value) { AddNanoseconds(BasicTimeCounter<int, UnitNs>::Encode(-value)); return *this; }
+    BasicTimeCounter& operator*=(double value) { mPreviousNanoseconds = mNanoseconds; if (value != 1) mNanoseconds = Encode(LegacyTicks() * value); return *this; }
+    BasicTimeCounter& operator/=(double value) { mPreviousNanoseconds = mNanoseconds; if (value != 1) mNanoseconds = Encode(LegacyTicks() / value); return *this; }
+    bool operator==(const BasicTimeCounter& rhs) const { return mNanoseconds == rhs.mNanoseconds; }
+    auto operator<=>(const BasicTimeCounter& rhs) const { return mNanoseconds <=> rhs.mNanoseconds; }
     template<class T> requires std::is_arithmetic_v<T>
-    bool operator==(T value) const { return mSteps == Encode(value); }
+    bool operator==(T value) const
+    {
+        const auto target = Encode(value);
+        return mNanoseconds == target ||
+            (mPreviousNanoseconds < target && mNanoseconds > target) ||
+            (mPreviousNanoseconds > target && mNanoseconds < target);
+    }
     template<class T> requires std::is_arithmetic_v<T>
-    std::strong_ordering operator<=>(T value) const { return mSteps <=> Encode(value); }
-
+    std::strong_ordering operator<=>(T value) const { return mNanoseconds <=> Encode(value); }
     template<class T> requires std::is_integral_v<T>
     int operator%(T period) const
     {
-        if (period == 1 || period == -1) return 0;
-        if (!period) return 0;
-        if (gUpdateTicks == 1.0) return static_cast<int>(mSteps % period);
-        const double ticks = LegacyTicks();
-        const double before = ticks - gUpdateTicks;
-        if (std::floor(ticks / period) != std::floor(before / period)) return 0;
-        const double remainder = std::fmod(ticks, static_cast<double>(period));
-        const int legacy = static_cast<int>(remainder);
-        return legacy ? legacy : (remainder > 0 ? 1 : -1);
+        if (!period || period == 1 || period == -1) return 0;
+        const auto p = static_cast<std::int64_t>(period);
+        const auto magnitude = p < 0 ? std::uint64_t(0) - std::uint64_t(p) : std::uint64_t(p);
+        if (magnitude > std::uint64_t(std::numeric_limits<std::int64_t>::max()) / UnitNs)
+            return mNanoseconds ? 1 : 0;
+        const auto duration = static_cast<std::int64_t>(magnitude * UnitNs);
+        if constexpr (std::is_unsigned_v<Storage>)
+        {
+            const auto divisor = static_cast<std::uint64_t>(duration);
+            const auto quotient = [&](std::uint64_t ns) {
+                return ns / divisor + (mNanoseconds < mPreviousNanoseconds && ns % divisor != 0);
+            };
+            if (quotient(mNanoseconds) != quotient(mPreviousNanoseconds)) return 0;
+            const auto remainder = mNanoseconds % divisor;
+            const int legacy = static_cast<int>(remainder / UnitNs);
+            return legacy ? legacy : remainder ? 1 : 0;
+        }
+        else
+        {
+            const auto quotient = [&](std::int64_t ns) {
+                const auto q = ns / duration, r = ns % duration;
+                return mNanoseconds >= mPreviousNanoseconds ? q - (r < 0) : q + (r > 0);
+            };
+            if (quotient(mNanoseconds) != quotient(mPreviousNanoseconds)) return 0;
+            const auto remainder = mNanoseconds % duration;
+            const int legacy = static_cast<int>(remainder / UnitNs);
+            return legacy ? legacy : remainder > 0 ? 1 : remainder < 0 ? -1 : 0;
+        }
     }
 };
 using TimeCounter = BasicTimeCounter<int>;
 using UnsignedTimeCounter = BasicTimeCounter<unsigned int>;
-static_assert(sizeof(TimeCounter) == sizeof(int));
-static_assert(alignof(TimeCounter) == alignof(int));
+using MillisecondCounter = BasicTimeCounter<int, 1'000'000>;
+using UnsignedMillisecondCounter = BasicTimeCounter<unsigned int, 1'000'000>;
+using SecondCounter = BasicTimeCounter<int, 1'000'000'000>;
+static_assert(sizeof(TimeCounter) == 16 && sizeof(UnsignedTimeCounter) == 16);
 static_assert(std::is_trivially_copyable_v<TimeCounter>);
-static_assert(sizeof(UnsignedTimeCounter) == sizeof(unsigned int));
 }

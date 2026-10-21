@@ -95,7 +95,7 @@ public:
 	float				            mVelX;                                      //+0x34
     Sexy::TimeCounter                             mAnimCounter;                               //+0x38
     Sexy::TimeCounter                             mGroanCounter;                              //+0x3C
-    int                             mAnimTicksPerFrame;                         //+0x40
+    Sexy::TimeCounter                             mAnimTicksPerFrame;                         //+0x40
     int                             mAnimFrames;                                //+0x44
     int                             mFrame;                                     //+0x48
     int                             mPrevFrame;                                 //+0x4C

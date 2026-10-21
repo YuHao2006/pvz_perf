@@ -10,6 +10,7 @@ add_executable(pvz_dat64_converter
     LevelSaveConverter.cpp
     LevelSaveConverter.h
     "${PVZ_CONVERTER_ROOT}/pvzPerf/Lawn/System/LevelSaveFormat.h"
+    "${PVZ_CONVERTER_ROOT}/pvzPerf/Lawn/System/Dat64TimeSchema.h"
 )
 
 target_compile_features(pvz_dat64_converter PRIVATE cxx_std_23)

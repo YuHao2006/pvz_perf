@@ -139,7 +139,7 @@ public:
     int                     mPlantCol;                      //+0x28
     Sexy::TimeCounter                     mAnimCounter;                   //+0x2C
     int                     mFrame;                         //+0x30
-    int                     mFrameLength;                   //+0x34
+    Sexy::TimeCounter                     mFrameLength;                   //+0x34
     int                     mNumFrames;                     //+0x38
     PlantState              mState;                         //+0x3C
     int                     mPlantHealth;                   //+0x40
@@ -149,7 +149,7 @@ public:
     Sexy::TimeCounter                     mDoSpecialCountdown;            //+0x50
     Sexy::TimeCounter                     mStateCountdown;                //+0x54
     Sexy::TimeCounter                     mLaunchCounter;                 //+0x58
-    int                     mLaunchRate;                    //+0x5C
+    Sexy::TimeCounter                     mLaunchRate;                    //+0x5C
     Rect                    mPlantRect;                     //+0x60
     Rect                    mPlantAttackRect;               //+0x70
     int                     mTargetX;                       //+0x80
@@ -321,7 +321,7 @@ public:
     int                     mSeedCost;          //+0x10
     int                     mRefreshTime;       //+0x14
     PlantSubClass           mSubClass;          //+0x18
-    int                     mLaunchRate;        //+0x1C
+    Sexy::TimeCounter                     mLaunchRate;        //+0x1C
 };
 
 /*inline*/ PlantDefinition& GetPlantDefinition(SeedType theSeedType);

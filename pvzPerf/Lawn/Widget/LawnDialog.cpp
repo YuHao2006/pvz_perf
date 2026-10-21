@@ -1,6 +1,7 @@
 #include "Sexy.TodLib/generated/EntityStrings.h"
 #include "Lawn/Board.h"
 #include "LawnDialog.h"
+#include "ZombiesWonLayout.h"
 #include "GameButton.h"
 #include "LawnApp.h"
 #include "Lawn/LawnCommon.h"
@@ -447,11 +448,14 @@ GameOverDialog::GameOverDialog(const SexyString& theMessage, bool theShowChallen
         mContentInsets.mTop += 15;
     }
     CalcSize(0, 0);
-    mApp->CenterDialog(this, mWidth, mHeight);
+    const Rect& aView = mApp->mScreenBounds;
+    Resize(ZombiesWonLayout::DialogX(aView.mX, aView.mWidth, mWidth),
+        aView.mY + (aView.mHeight - mHeight) / 2, mWidth, mHeight);
     mClip = false;
 
     mMenuButton = MakeButton(1, this, gStr.MAIN_MENU_BUTTON);
-    mMenuButton->Resize(635 - mX, -10 - mY, 163, 46);
+    mMenuButton->Resize(ZombiesWonLayout::MenuX(aView.mX, aView.mWidth, mX),
+        aView.mY - 10 - mY, 163, 46);
 
     gLawnApp->mBoard->mShowShovel = false;
     gLawnApp->mBoard->mMenuButton->mBtnNoDraw = true;
@@ -499,6 +503,10 @@ void GameOverDialog::AddedToManager(WidgetManager* theWidgetManager)
     LawnDialog::AddedToManager(theWidgetManager);
     if (mMenuButton)
     {
+        // Attachment may follow a viewport resize after construction.
+        const Rect& aView = mApp->mScreenBounds;
+        Resize(ZombiesWonLayout::DialogX(aView.mX, aView.mWidth, mWidth),
+            aView.mY + (aView.mHeight - mHeight) / 2, mWidth, mHeight);
         AddWidget(mMenuButton);
     }
 }
@@ -517,8 +525,29 @@ void GameOverDialog::RemovedFromManager(WidgetManager* theWidgetManager)
 void GameOverDialog::MouseDrag(int x, int y)
 {
     LawnDialog::MouseDrag(x, y);
+}
+
+void GameOverDialog::Resize(int theX, int theY, int theWidth, int theHeight)
+{
+    LawnDialog::Resize(theX, theY, theWidth, theHeight);
     if (mMenuButton)
     {
-        mMenuButton->Resize(635 - mX, -10 - mY, 163, 46);
+        const Rect& aView = mApp->mScreenBounds;
+        mMenuButton->Resize(ZombiesWonLayout::MenuX(aView.mX, aView.mWidth, mX),
+            aView.mY - 10 - mY, 163, 46);
+    }
+}
+
+void GameOverDialog::Update()
+{
+    LawnDialog::Update();
+    const Rect& aView = mApp->mScreenBounds;
+    // The pinned menu button retains the previous viewport edge. Recenter
+    // after a viewport change while preserving ordinary dialog dragging.
+    if (mMenuButton && (mX + mMenuButton->mX != aView.mX + aView.mWidth - 165 ||
+        mY + mMenuButton->mY != aView.mY - 10))
+    {
+        Resize(ZombiesWonLayout::DialogX(aView.mX, aView.mWidth, mWidth),
+            aView.mY + (aView.mHeight - mHeight) / 2, mWidth, mHeight);
     }
 }

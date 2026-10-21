@@ -4,6 +4,7 @@
 #include "Definition.h"
 #include "TodAllocator.h"
 #include "Reanimator.h"
+#include "ReanimRenderSemantics.h"
 #include "ReanimTrackMphfGlobal.h"  // 全局单表 MPHF（唯一 MPHF 层）：(type,id) 联合键 -> trackIndex + 语料成员位图（reanimc compile-v2 生成）
 #include "generated/ReanimAttacherMasks.h"  // P4：每类型轨道数 + attacher 位掩码（编译期生成，与本 cpp 独占包含）
 #include "generated/ImageSymbolId.h"  // v4 纹理符号注册表（名字表 = sidecar 重建哈希的单一事实源）
@@ -1066,8 +1067,8 @@ bool Reanimation::DrawTrack(Graphics* g, int theTrackIndex, int theRenderGroup, 
 	}
 	else
 	{
-		if (!ReanimTrackRanges::fullscreen.Contains(
-		        static_cast<ReanimTrackId>(ReanimatorTrackIdAt(mReanimationType, theTrackIndex))))  // 不是 fullscreen 轨道（编译期 id 区间）
+		if (!ReanimRenderSemantics::IsFullscreenTrack(
+		        static_cast<ReanimTrackId>(ReanimatorTrackIdAt(mReanimationType, theTrackIndex))))  // 原版为完整名称比较，不匹配 fullscreen2
 			return false;  // 无需绘制
 		aFullScreen = true;  // 标记全屏轨道，后续会填充一个屏幕大小的矩形
 	}
@@ -1121,7 +1122,10 @@ bool Reanimation::DrawTrack(Graphics* g, int theTrackIndex, int theRenderGroup, 
 	{
 		Color aOldColor = g->mColor;  // 备份颜色
 		g->mColor = aColor;
-		g->FillRect(-g->mTransX, -g->mTransY, BOARD_WIDTH, BOARD_HEIGHT);
+		// Fullscreen is a destination-space fill, like fullscreen particles.
+		// FillRect applies translation and the effective clip itself.
+		g->FillRect(-g->mTransX, -g->mTransY,
+			g->mDestImage->mWidth, g->mDestImage->mHeight);
 		g->mColor = aOldColor;  // 还原颜色
 	}
 	return true;

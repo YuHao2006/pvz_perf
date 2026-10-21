@@ -575,10 +575,10 @@ void TodParticleEmitter::TodEmitterInitialize(float theX, float theY, TodParticl
 	// 粒子名册侧表：发射器池槽位键天然就位，无需分配器（链表成员已退役）
 
 	if (FloatTrackIsSet(mEmitterDef->mSystemDuration))
-		mSystemDuration = FloatTrackEvaluate(mEmitterDef->mSystemDuration, 0.0f, Sexy::Rand(1.0f));
+		mSystemDuration = static_cast<int>(FloatTrackEvaluate(mEmitterDef->mSystemDuration, 0.0f, Sexy::Rand(1.0f)));
 	else
-		mSystemDuration = FloatTrackEvaluate(mEmitterDef->mParticleDuration, 0.0f, 1.0f);
-	mSystemDuration = std::max(1, mSystemDuration);
+		mSystemDuration = static_cast<int>(FloatTrackEvaluate(mEmitterDef->mParticleDuration, 0.0f, 1.0f));
+	mSystemDuration = std::max<Sexy::TimeCounter>(1, mSystemDuration);
 
 	for (int i = 0; i < mEmitterDef->mSystemFields.count; i++)
 	{
@@ -705,8 +705,8 @@ TodParticle* TodParticleEmitter::SpawnParticle(int theIndex, int theSpawnCount)
 	float aLaunchSpeedInterp = Sexy::Rand(1.0f);
 	float aEmitterOffsetXInterp = Sexy::Rand(1.0f);
 	float aEmitterOffsetYInterp = Sexy::Rand(1.0f);
-	aParticle->mParticleDuration = FloatTrackEvaluate(mEmitterDef->mParticleDuration, mSystemTimeValue, aParticleDurationInterp);
-	aParticle->mParticleDuration = std::max(1, aParticle->mParticleDuration);  // 初始化粒子持续时间（至少为 1）
+	aParticle->mParticleDuration = static_cast<int>(FloatTrackEvaluate(mEmitterDef->mParticleDuration, mSystemTimeValue, aParticleDurationInterp));
+	aParticle->mParticleDuration = std::max<Sexy::TimeCounter>(1, aParticle->mParticleDuration);  // 初始化粒子持续时间（至少为 1）
 	aParticle->mParticleDurationInv = 1.0f / (aParticle->mParticleDuration - 1);  // 持续期倒数：时间值由除改乘
 	aParticle->mParticleAge = 0;
 	aParticle->mParticleEmitter = this;
@@ -883,14 +883,14 @@ constexpr ParticleFieldCaseFn kParticleFieldCases[(int)ParticleFieldType::PARTIC
     		float aLastX = FloatTrackEvaluateFromLastTime(theParticleField->mX, theParticle->mParticleLastTimeValue, aInterpX);
     		float aLastY = FloatTrackEvaluateFromLastTime(theParticleField->mY, theParticle->mParticleLastTimeValue, aInterpY);
     		// 先恢复上一次震动效果的影响
-        int aLastRandSeed = theParticle->mParticleAge.mSteps - 1;
+        int aLastRandSeed = static_cast<int>(theParticle->mParticleAge.mNanoseconds / Sexy::gUpdateIntervalNs) - 1;
     		if (aLastRandSeed == -1)
-            aLastRandSeed = Sexy::TimeCounter::Encode(theParticle->mParticleDuration) - 1;
+            aLastRandSeed = static_cast<int>(theParticle->mParticleDuration.mNanoseconds / Sexy::gUpdateIntervalNs) - 1;
     		srand(aLastRandSeed * (uintptr_t)theParticle);
     		theParticle->mPosition.x -= aLastX * ((float)rand() / RAND_MAX * 2.0f - 1.0f);
     		theParticle->mPosition.y -= aLastY * ((float)rand() / RAND_MAX * 2.0f - 1.0f);
     		// 再随机取得当前帧的震动效果
-        srand(theParticle->mParticleAge.mSteps * (uintptr_t)theParticle);
+        srand((theParticle->mParticleAge.mNanoseconds / Sexy::gUpdateIntervalNs) * (uintptr_t)theParticle);
     		theParticle->mPosition.x += x * ((float)rand() / RAND_MAX * 2.0f - 1.0f);
     		theParticle->mPosition.y += y * ((float)rand() / RAND_MAX * 2.0f - 1.0f);
     },  // 9 FIELD_SHAKE

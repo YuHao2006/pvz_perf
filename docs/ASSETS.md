@@ -88,13 +88,13 @@ AU 解码和 MO3 播放是格式处理，不是包加密。
 旧 build_numeric_runtime_pak64.py 的历史包转换模式仍按排除清单保留旧条目，
 它不再充当主构建的资源选入策略。
 
-### 已退休菜单图片
+### 保留 QuickPlay 菜单素材
 
-QuickPlay 子菜单没有实际绘制入口。2026-10-21 核对游戏代码、全部数值
-reanim/particle 和字体图片引用后，将以下 10 个 author Image 描述符的
-path 设为 `blank`，并设置 `noalpha`。原有 id、slot、symbol、group 和
-源图片保留；组加载及 Resources.cpp 的提取表仍获得可加载的空白图片。
-不能仅将这些 author 描述符标为 unavailable：组加载和提取仍会访问它们。
+用户要求保留整套 QuickPlay 素材，以便后续探索其用途。下一版将以下
+10 个 author Image 描述符恢复为原始路径和自动 alpha 设置，不再指向
+`blank`，不再设置 `noalpha`。id、slot、symbol、group 完全不变；
+源图片和运行包内图片均保留。已发布 v1.3 的包与 tag 保持不变，
+其历史清理策略及对应验证器以 v1.3 tag 为准。
 
 | 源图片（assets/runtime/images/ 下） | 稳定 slot | 原包图片字节 |
 | --- | ---: | ---: |
@@ -111,21 +111,19 @@ path 设为 `blank`，并设置 `noalpha`。原有 id、slot、symbol、group �
 | 合计 | | 698,774 |
 
 698,774 字节是审计时这 10 张图片的原始 payload 之和，不包含 ZIP 条目
-开销及 compiled/resources.compiled 路径缩短带来的变化。源图仍在仓库，
-主流水线根据修改后的引用闭包自然不再选入包。
+开销。恢复后的资源描述符把它们纳入主流水线引用闭包，不以当前界面
+是否绘制或代码是否直接使用图像变量作为删除依据。
 quickplay_back_button.png 和 quickplay_back_button_highlight.png 仍被
-GameSelector 构造按钮时使用，继续保留。字体 glyph 和独立 alpha 配图不属于
-这次退休范围；不能仅凭游戏代码没有直接使用某个图像变量就删除它们。
+GameSelector 构造按钮时使用，同样保留。字体 glyph 和独立 alpha 配图
+继续按完整引用闭包校验。
 
 构建后运行 `python -B tools/verify_runtime_resources.py <Release/main.pak64>`
-验证所有数值记录及文件闭包、字体 glyph、10 个退休资源的稳定身份和空白
-路径、原图不入包，以及返回按钮仍存在。工具会检查全部 compiled
-reanim/particle 的真实 image ID；保守的 C++ token 检查会忽略注释和字符串
-中的变量名，保留未知预处理分支，检测退休符号或原图路径被重新使用。
-Resources.cpp/.h 的稳定声明和提取表不作为绘制消费者。这不是完整的 C++
-语义可达性证明；恢复子菜单时应同步恢复描述符并更新这份退休约定。
-`--predict-retirement` 可对清理前的包作只读预测：仅在内存替换资源清单，
-检查其余描述符不变并验证排除这 10 张图后的闭包，不修改现有包。
+验证所有数值记录及文件闭包、字体 glyph、10 个保留资源的稳定身份、
+原始路径和自动 alpha，以及全部原图和返回按钮仍在包内。工具检查全部
+compiled reanim/particle 的真实 image ID 均有可加载的描述符。
+QuickPlay 符号可以被代码、动画或粒子重新使用，不再触发退休项错误。
+当前验证器仅校验包与当前作者清单，不提供历史 `--predict-retirement`
+分支；检查已发布 v1.3 时使用该 tag 自带的验证器。
 
 Tests/reference/render-groups/source-baseline.tar.gz 是旧渲染分组审计的默认输入，
 旧资源包位于 Tests/reference/legacy1073-resources；它们不进入当前发行包。

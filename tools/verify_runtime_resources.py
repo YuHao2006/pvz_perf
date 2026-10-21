@@ -1,16 +1,15 @@
 #!/usr/bin/env python3
-"""Read-only numeric PAK64 closure and retired-menu regression checks.
+"""Read-only numeric PAK64 closure and preserved QuickPlay resource checks.
 
-Normal mode verifies an already rebuilt package. --predict-retirement substitutes
-only an in-memory resources.compiled and excludes the ten retired images while
-checking an older package; it never creates or changes a package or source file.
+Verifies a package against the current author manifest. The published v1.3
+retirement policy belongs to that tag; this tool requires all original menu
+images and descriptors, and never creates or changes a package or source file.
 """
 from __future__ import annotations
 
 import argparse
 from pathlib import Path
 import posixpath
-import re
 import struct
 import zipfile
 
@@ -22,7 +21,7 @@ import compile_numeric_resources as resources
 ROOT = Path(__file__).resolve().parents[1]
 # Explicit stable identities, not positions inferred from a filtered registry.
 # name, ResourceId slot, ImageSymbolId, original file, audited payload bytes.
-RETIRED = (
+MENU_IMAGES = (
     ("IMAGE_SELECTORSCREEN_MOREWAYSTOPLAY_BG", 100, 1943,
      "images/selector_morewaystoplay_background.png", 432161),
     ("IMAGE_QUICKPLAY_MINIGAMES_BUTTON", 113, 197,
@@ -63,57 +62,35 @@ def descriptors(data: bytes) -> dict[int, tuple]:
     return result
 
 
-def check_retired_descriptors(records: dict[int, tuple], image_ids: set[int]) -> None:
-    for name, slot, symbol, _, _ in RETIRED:
+def check_menu_resources(records: dict[int, tuple], available: set[str]) -> None:
+    for name, slot, symbol, path, _ in MENU_IMAGES:
         fields, paths, _ = records[slot]
-        pak.require(fields == (slot, symbol, 28, 0, resources.PALLETIZE,
+        pak.require(fields == (slot, symbol, 28, 0, resources.PALLETIZE | resources.AUTO_ALPHA,
                                resources.NONE, 0),
-                    f"Retired descriptor identity or flags changed: {name}")
-        pak.require(paths == ("images/blank", "", "", ""),
-                    f"Retired descriptor must load blank with no alpha: {name}")
-        pak.require(symbol not in image_ids,
-                    f"Compiled animation/particle revived retired image: {name}")
+                    f"Preserved menu descriptor identity or flags changed: {name}")
+        pak.require(paths == (posixpath.splitext(path)[0], "", "", ""),
+                    f"Preserved menu descriptor must retain its original path: {name}")
+        pak.require(path in available, f"Missing preserved menu image: {path}")
     for slot, symbol, path in BACK_BUTTONS:
         fields, paths, _ = records[slot]
-        pak.require(fields[:4] == (slot, symbol, 28, 0) and paths[0] == path
-                    and not fields[4] & (resources.PROGRAM | resources.UNAVAILABLE),
+        pak.require(fields == (slot, symbol, 28, 0, resources.PALLETIZE | resources.AUTO_ALPHA,
+                               resources.NONE, 0) and paths == (path, "", "", ""),
                     f"Active QuickPlay back button changed: {path}")
+        pak.require(path + ".png" in available, f"Missing active back button: {path}")
 
 
-def check_cpp_text(text: str, label: str) -> None:
-    """Conservative C++ token audit, retaining unknown preprocessor branches.
-
-    Ignore comments/string contents as identifiers; inspect string literals
-    separately for physical paths. This is not a general C++ reachability proof.
-    """
-    text = pak.production_text(text)
-    identifiers = set(re.findall(r"\b[A-Za-z_]\w*\b",
-                                pak.TOKEN.sub(lambda match: " " * len(match[0]), text)))
-    retired_names = {name for name, *_ in RETIRED}
-    revived = identifiers & (retired_names | {name + "_ID" for name in retired_names})
-    pak.require(not revived, f"Retired menu symbol used in {label}: {sorted(revived)}")
-    retired_stems = {posixpath.splitext(path)[0].casefold() for _, _, _, path, _ in RETIRED}
-    for _, value in pak.literals(text):
-        normalized = value.replace("\\", "/").casefold()
-        stem = posixpath.splitext(normalized)[0]
-        pak.require(normalized not in retired_stems and stem not in retired_stems,
-                    f"Retired menu path used in {label}: {value}")
+def check_compiled_images(records: dict[int, tuple], image_ids: set[int]) -> None:
+    """Every image referenced by compiled animations/particles must be loadable."""
+    by_symbol = {fields[1]: (fields, paths)
+                 for fields, paths, _ in records.values() if fields[3] == 0 and fields[1]}
+    for symbol in image_ids:
+        pak.require(symbol in by_symbol, f"Compiled image lacks descriptor: {symbol}")
+        fields, paths = by_symbol[symbol]
+        pak.require(not fields[4] & (resources.PROGRAM | resources.UNAVAILABLE) and bool(paths[0]),
+                    f"Compiled image descriptor is not loadable: {symbol}")
 
 
-def check_cpp_sources(root: Path) -> None:
-    game = root / "pvzPerf"
-    for path in sorted(game.rglob("*")):
-        if (path.suffix not in pak.CPP_SUFFIXES or "generated" in path.parts
-                or path.name in ("Resources.cpp", "Resources.h")):
-            continue
-        # Resources.cpp/.h intentionally retain stable global declarations,
-        # extraction and ID lookup tables. They are not rendering consumers.
-        check_cpp_text(path.read_text(encoding="utf-8-sig"),
-                       path.relative_to(root).as_posix())
-
-
-def verify(package: Path, root: Path = ROOT, *, predict_retirement: bool = False) -> dict:
-    check_cpp_sources(root)
+def verify(package: Path, root: Path = ROOT) -> dict:
     with zipfile.ZipFile(package) as archive:
         index = pak.archive_index(archive)
         numeric = {name for name in index if pak.numeric_kind(name)}
@@ -129,26 +106,8 @@ def verify(package: Path, root: Path = ROOT, *, predict_retirement: bool = False
             root, (root / "assets/definitions/resources.json").read_bytes(), input_paths,
             root / "pvzPerf/Sexy.TodLib/generated/image_symbol_ids.bin", tags)
         actual = archive.read(index[pak.RESOURCE_PATH])
-        retired_paths = {path for _, _, _, path, _ in RETIRED}
-        if predict_retirement:
-            before, after = descriptors(actual), descriptors(expected)
-            pak.require(before.keys() == after.keys(), "Prediction changed resource slot inventory")
-            retired_slots = {slot for _, slot, _, _, _ in RETIRED}
-            for slot in before.keys() - retired_slots:
-                pak.require(before[slot] == after[slot],
-                            f"Prediction would change unrelated descriptor: {slot}")
-            for name, slot, symbol, path, _ in RETIRED:
-                fields, paths, tail = before[slot]
-                pak.require(fields == (slot, symbol, 28, 0, 1040, resources.NONE, 0)
-                            and paths == (str(Path(path).with_suffix("")).replace("\\", "/"),
-                                          "", "", "")
-                            and tail == after[slot][2],
-                            f"Prediction input is not the audited old menu descriptor: {name}")
-            pak.require(retired_paths <= index.keys(), "Prediction input lacks retired images")
-        else:
-            pak.require(actual == expected, "resources.compiled differs from current author manifest")
-            pak.require(not retired_paths & index.keys(), "Retired menu images remain in package")
-        available = {name for name, info in index.items() if not info.is_dir()} - retired_paths
+        pak.require(actual == expected, "resources.compiled differs from current author manifest")
+        available = {name for name, info in index.items() if not info.is_dir()}
         references, image_ids, required_fonts = set(), set(), set()
         for name in sorted(numeric):
             data = expected if name == pak.RESOURCE_PATH else archive.read(index[name])
@@ -159,20 +118,19 @@ def verify(package: Path, root: Path = ROOT, *, predict_retirement: bool = False
         resolved = set()
         for kind, path in sorted(references):
             resolved.update(pak.physical_references(kind, path, available))
-        check_retired_descriptors(descriptors(expected), image_ids)
-        for _, _, path in BACK_BUTTONS:
-            pak.require(path + ".png" in available, f"Missing active back button: {path}")
-        removed_bytes = sum(index[path].file_size for path in retired_paths if path in index)
+        records = descriptors(actual)
+        check_menu_resources(records, available)
+        check_compiled_images(records, image_ids)
         return {
-            "mode": "prediction (no files changed)" if predict_retirement else "package verification",
-            "entries": len(index) - (len(retired_paths) if predict_retirement else 0),
+            "mode": "package verification",
+            "entries": len(index),
             "numeric_counts": counts,
             "physical_references": len(resolved),
             "compiled_image_ids": len(image_ids),
-            "retired_image_payload_bytes": removed_bytes if predict_retirement else sum(
-                item[4] for item in RETIRED),
-            "resource_manifest_bytes_before": len(actual),
-            "resource_manifest_bytes_after": len(expected),
+            "preserved_menu_images": len(MENU_IMAGES) + len(BACK_BUTTONS),
+            "preserved_menu_payload_bytes": sum(index[path].file_size
+                                                for _, _, _, path, _ in MENU_IMAGES),
+            "resource_manifest_bytes": len(actual),
         }
 
 
@@ -180,10 +138,9 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("package", type=Path)
     parser.add_argument("--root", type=Path, default=ROOT)
-    parser.add_argument("--predict-retirement", action="store_true")
     args = parser.parse_args()
     try:
-        report = verify(args.package, args.root, predict_retirement=args.predict_retirement)
+        report = verify(args.package, args.root)
     except (ValueError, OSError, KeyError, zipfile.BadZipFile, struct.error) as error:
         parser.exit(1, f"Runtime resource verification failed: {error}\n")
     for key, value in report.items():

@@ -9,7 +9,6 @@
 #include "Resources.h"
 #include "ConstEnums.h"
 #include "Lawn/MessageWidget.h"
-#include <zlib.h>
 #include "Sexy.TodLib/Attachment.h"
 #include "Sexy.TodLib/Reanimator.h"
 #include "Sexy.TodLib/TodParticle.h"
@@ -17,6 +16,9 @@
 #include "Sexy.TodLib/TodCommon.h"
 #include "Sexy.TodLib/EffectSystem.h"
 #include "TimeCounterFields.h"
+#include "NativeSaveFields.h"
+#include "Dat64TimeSchema.h"
+#include <span>
 
 #include <climits>
 #include <cstddef>
@@ -25,702 +27,13 @@
 #include <memory>
 #include <stdexcept>
 #include <vector>
+#include "SaveRecordMapping.h"
 
-// 1073 stores the CRC32 of this exact, intentionally space-less build string.
-// "Feb 16 200923:03:38" belongs to the older executable and produces a
-// different header, so a 1073 in-progress save is rejected before its board is
-// even inspected if that value leaks into Legacy.
-static const char* FILE_COMPILE_TIME_STRING = "Jul  2 201011:47:03";
-static const unsigned int SAVE_FILE_MAGIC_NUMBER = 0xFEEDDEAD;
-static const unsigned int SAVE_FILE_VERSION = 2U;
-static unsigned int SAVE_FILE_DATE = crc32(0, (Bytef*)FILE_COMPILE_TIME_STRING, strlen(FILE_COMPILE_TIME_STRING));  //[0x6AA7EC]
+using namespace SaveRecordMapping;
 
 namespace
 {
 using LegacyByte = unsigned char;
-
-template <typename T>
-LegacyByte* ObjectBytes(T& theObject)
-{
-	return reinterpret_cast<LegacyByte*>(&theObject);
-}
-
-template <typename T>
-const LegacyByte* ObjectBytes(const T& theObject)
-{
-	return reinterpret_cast<const LegacyByte*>(&theObject);
-}
-
-void CopyFromLegacy(
-	void* theNativeDestination,
-	const LegacyByte* theLegacySource,
-	size_t theLegacyOffset,
-	size_t theLength)
-{
-	std::memcpy(theNativeDestination, theLegacySource + theLegacyOffset, theLength);
-}
-
-void CopyToLegacy(
-	LegacyByte* theLegacyDestination,
-	size_t theLegacyOffset,
-	const void* theNativeSource,
-	size_t theLength)
-{
-	std::memcpy(theLegacyDestination + theLegacyOffset, theNativeSource, theLength);
-}
-
-template <typename T>
-void ClearNativeObject(T& theObject)
-{
-	std::memset(ObjectBytes(theObject), 0, sizeof(T));
-}
-
-template <typename T>
-struct Legacy1073Layout;
-
-// GameObject has two pointers in front of 28 bytes of fixed-width state. On
-// x64 the derived object starts at 48 rather than 36 because the base has an
-// additional four bytes of tail padding. All classes using this helper have a
-// pointer-free derived tail in the 1073 save image.
-template <typename T>
-void ReadGameObjectLayout(
-	T& theObject,
-	const LegacyByte* theLegacy,
-	size_t theLegacySize,
-	void* theFirstDerivedField)
-{
-	ClearNativeObject(theObject);
-	CopyFromLegacy(&theObject.mX, theLegacy, 8, 28);
-	CopyFromLegacy(theFirstDerivedField, theLegacy, 36, theLegacySize - 36);
-}
-
-template <typename T>
-void WriteGameObjectLayout(
-	LegacyByte* theLegacy,
-	size_t theLegacySize,
-	const T& theObject,
-	const void* theFirstDerivedField)
-{
-	CopyToLegacy(theLegacy, 8, &theObject.mX, 28);
-	CopyToLegacy(theLegacy, 36, theFirstDerivedField, theLegacySize - 36);
-}
-
-template <>
-struct Legacy1073Layout<Zombie>
-{
-	static constexpr size_t SIZE = 356;
-	static void Read(Zombie& v, const LegacyByte* p)
-	{
-		ReadGameObjectLayout(v, p, SIZE, &v.mZombieType);
-		ImportTimeCounters(v);
-	}
-	static void Write(LegacyByte* p, const Zombie& v)
-	{
-		WriteGameObjectLayout(p, SIZE, v, &v.mZombieType);
-		const auto& layout = LevelSaveFormat::GetRecordLayout(LevelSaveFormat::RecordKind::Zombie);
-		for (size_t i = 0; i < layout.mSegmentCount; ++i)
-		{
-			const auto& segment = layout.mSegments[i];
-			ExportTimeCounters(p, v, segment.mDat64Offset, segment.mLegacyOffset, segment.mSize);
-		}
-	}
-};
-
-template <>
-struct Legacy1073Layout<Plant>
-{
-	static constexpr size_t SIZE = 328;
-	static void Read(Plant& v, const LegacyByte* p)
-	{
-		ReadGameObjectLayout(v, p, SIZE, &v.mSeedType);
-		ImportTimeCounters(v);
-	}
-	static void Write(LegacyByte* p, const Plant& v)
-	{
-		WriteGameObjectLayout(p, SIZE, v, &v.mSeedType);
-		const auto& layout = LevelSaveFormat::GetRecordLayout(LevelSaveFormat::RecordKind::Plant);
-		for (size_t i = 0; i < layout.mSegmentCount; ++i)
-		{
-			const auto& segment = layout.mSegments[i];
-			ExportTimeCounters(p, v, segment.mDat64Offset, segment.mLegacyOffset, segment.mSize);
-		}
-	}
-};
-
-template <>
-struct Legacy1073Layout<Projectile>
-{
-	static constexpr size_t SIZE = 144;
-	static void Read(Projectile& v, const LegacyByte* p)
-	{
-		ReadGameObjectLayout(v, p, SIZE, &v.mFrame);
-		ImportTimeCounters(v);
-	}
-	static void Write(LegacyByte* p, const Projectile& v)
-	{
-		WriteGameObjectLayout(p, SIZE, v, &v.mFrame);
-		const auto& layout = LevelSaveFormat::GetRecordLayout(LevelSaveFormat::RecordKind::Projectile);
-		for (size_t i = 0; i < layout.mSegmentCount; ++i)
-		{
-			const auto& segment = layout.mSegments[i];
-			ExportTimeCounters(p, v, segment.mDat64Offset, segment.mLegacyOffset, segment.mSize);
-		}
-	}
-};
-
-template <>
-struct Legacy1073Layout<Coin>
-{
-	static constexpr size_t SIZE = 208;
-	static void Read(Coin& v, const LegacyByte* p)
-	{
-		ClearNativeObject(v);
-		CopyFromLegacy(&v.mX, p, 8, 28);
-		CopyFromLegacy(&v.mPosX, p, 36, 72);
-		// PottedPlant is 8-byte aligned in x86 but follows immediately after
-		// mUsableSeedType in the x64 class. Its own 88-byte layout is stable.
-		CopyFromLegacy(&v.mPottedPlantSpec, p, 112, 96);
-		ImportTimeCounters(v);
-	}
-	static void Write(LegacyByte* p, const Coin& v)
-	{
-		CopyToLegacy(p, 8, &v.mX, 28);
-		CopyToLegacy(p, 36, &v.mPosX, 72);
-		CopyToLegacy(p, 112, &v.mPottedPlantSpec, 96);
-		const auto& layout = LevelSaveFormat::GetRecordLayout(LevelSaveFormat::RecordKind::Coin);
-		for (size_t i = 0; i < layout.mSegmentCount; ++i)
-		{
-			const auto& segment = layout.mSegments[i];
-			ExportTimeCounters(p, v, segment.mDat64Offset, segment.mLegacyOffset, segment.mSize);
-		}
-	}
-};
-
-template <>
-struct Legacy1073Layout<LawnMower>
-{
-	static constexpr size_t SIZE = 68;
-	static void Read(LawnMower& v, const LegacyByte* p)
-	{
-		ClearNativeObject(v);
-		CopyFromLegacy(&v.mPosX, p, 8, SIZE - 8);
-		ImportTimeCounters(v);
-	}
-	static void Write(LegacyByte* p, const LawnMower& v)
-	{
-		CopyToLegacy(p, 8, &v.mPosX, SIZE - 8);
-		const auto& layout = LevelSaveFormat::GetRecordLayout(LevelSaveFormat::RecordKind::LawnMower);
-		for (size_t i = 0; i < layout.mSegmentCount; ++i)
-		{
-			const auto& segment = layout.mSegments[i];
-			ExportTimeCounters(p, v, segment.mDat64Offset, segment.mLegacyOffset, segment.mSize);
-		}
-	}
-};
-
-template <>
-struct Legacy1073Layout<GridItem>
-{
-	static constexpr size_t SIZE = 232;
-	static void Read(GridItem& v, const LegacyByte* p)
-	{
-		ClearNativeObject(v);
-		CopyFromLegacy(&v.mGridItemType, p, 8, SIZE - 8);
-		ImportTimeCounters(v);
-	}
-	static void Write(LegacyByte* p, const GridItem& v)
-	{
-		CopyToLegacy(p, 8, &v.mGridItemType, SIZE - 8);
-		const auto& layout = LevelSaveFormat::GetRecordLayout(LevelSaveFormat::RecordKind::GridItem);
-		for (size_t i = 0; i < layout.mSegmentCount; ++i)
-		{
-			const auto& segment = layout.mSegments[i];
-			ExportTimeCounters(p, v, segment.mDat64Offset, segment.mLegacyOffset, segment.mSize);
-		}
-	}
-};
-
-template <>
-struct Legacy1073Layout<TodParticleSystem>
-{
-	static constexpr size_t SIZE = 40;
-	static void Read(TodParticleSystem& v, const LegacyByte* p)
-	{
-		ClearNativeObject(v);
-		CopyFromLegacy(&v.mEffectType, p, 0, 4);
-		CopyFromLegacy(&v.mDead, p, 28, 12);
-		ImportTimeCounters(v);
-	}
-	static void Write(LegacyByte* p, const TodParticleSystem& v)
-	{
-		CopyToLegacy(p, 0, &v.mEffectType, 4);
-		CopyToLegacy(p, 28, &v.mDead, 12);
-		const auto& layout = LevelSaveFormat::GetRecordLayout(LevelSaveFormat::RecordKind::ParticleSystem);
-		for (size_t i = 0; i < layout.mSegmentCount; ++i)
-		{
-			const auto& segment = layout.mSegments[i];
-			ExportTimeCounters(p, v, segment.mDat64Offset, segment.mLegacyOffset, segment.mSize);
-		}
-	}
-};
-
-template <>
-struct Legacy1073Layout<TodParticleEmitter>
-{
-	static constexpr size_t SIZE = 172;
-	static void Read(TodParticleEmitter& v, const LegacyByte* p)
-	{
-		ClearNativeObject(v);
-		CopyFromLegacy(&v.mSpawnAccum, p, 24, 60);
-		CopyFromLegacy(&v.mCrossFadeEmitterID, p, 88, 84);
-		ImportTimeCounters(v);
-	}
-	static void Write(LegacyByte* p, const TodParticleEmitter& v)
-	{
-		CopyToLegacy(p, 24, &v.mSpawnAccum, 60);
-		CopyToLegacy(p, 88, &v.mCrossFadeEmitterID, 84);
-		const auto& layout = LevelSaveFormat::GetRecordLayout(LevelSaveFormat::RecordKind::ParticleEmitter);
-		for (size_t i = 0; i < layout.mSegmentCount; ++i)
-		{
-			const auto& segment = layout.mSegments[i];
-			ExportTimeCounters(p, v, segment.mDat64Offset, segment.mLegacyOffset, segment.mSize);
-		}
-	}
-};
-
-template <>
-struct Legacy1073Layout<TodParticle>
-{
-	static constexpr size_t SIZE = 156;
-	static void Read(TodParticle& v, const LegacyByte* p)
-	{
-		ClearNativeObject(v);
-		CopyFromLegacy(&v.mParticleDuration, p, 4, SIZE - 4);
-		// 段外派生量补算：mParticleDurationInv 不入盘（段自 mParticleDuration 起），
-		// 读回后按原式重算，供 mParticleTimeValue 由除改乘
-		v.mParticleDurationInv = 1.0f / ((float)v.mParticleDuration - 1.0f);
-		ImportTimeCounters(v);
-	}
-	static void Write(LegacyByte* p, const TodParticle& v)
-	{
-		CopyToLegacy(p, 4, &v.mParticleDuration, SIZE - 4);
-		const auto& layout = LevelSaveFormat::GetRecordLayout(LevelSaveFormat::RecordKind::Particle);
-		for (size_t i = 0; i < layout.mSegmentCount; ++i)
-		{
-			const auto& segment = layout.mSegments[i];
-			ExportTimeCounters(p, v, segment.mDat64Offset, segment.mLegacyOffset, segment.mSize);
-		}
-	}
-};
-
-template <>
-struct Legacy1073Layout<Reanimation>
-{
-	static constexpr size_t SIZE = 156;
-	static void Read(Reanimation& v, const LegacyByte* p)
-	{
-		ClearNativeObject(v);
-		CopyFromLegacy(&v.mReanimationType, p, 0, 12);
-		CopyFromLegacy(&v.mLoopType, p, 16, 72);
-		CopyFromLegacy(&v.mLoopCount, p, 92, 4);
-		CopyFromLegacy(&v.mIsAttachment, p, 100, 56);
-		ImportTimeCounters(v);
-	}
-	static void Write(LegacyByte* p, const Reanimation& v)
-	{
-		CopyToLegacy(p, 0, &v.mReanimationType, 12);
-		CopyToLegacy(p, 16, &v.mLoopType, 72);
-		CopyToLegacy(p, 92, &v.mLoopCount, 4);
-		CopyToLegacy(p, 100, &v.mIsAttachment, 56);
-		const auto& layout = LevelSaveFormat::GetRecordLayout(LevelSaveFormat::RecordKind::Reanimation);
-		for (size_t i = 0; i < layout.mSegmentCount; ++i)
-		{
-			const auto& segment = layout.mSegments[i];
-			ExportTimeCounters(p, v, segment.mDat64Offset, segment.mLegacyOffset, segment.mSize);
-		}
-	}
-};
-
-template <>
-struct Legacy1073Layout<Attachment>
-{
-	static constexpr size_t SIZE = 776;
-	static void Read(Attachment& v, const LegacyByte* p)
-	{
-		std::memcpy(&v, p, SIZE);
-		ImportTimeCounters(v);
-	}
-	static void Write(LegacyByte* p, const Attachment& v)
-	{
-		std::memcpy(p, &v, SIZE);
-		const auto& layout = LevelSaveFormat::GetRecordLayout(LevelSaveFormat::RecordKind::Attachment);
-		for (size_t i = 0; i < layout.mSegmentCount; ++i)
-		{
-			const auto& segment = layout.mSegments[i];
-			ExportTimeCounters(p, v, segment.mDat64Offset, segment.mLegacyOffset, segment.mSize);
-		}
-	}
-};
-
-template <>
-struct Legacy1073Layout<CursorObject>
-{
-	static constexpr size_t SIZE = 76;
-	static void Read(CursorObject& v, const LegacyByte* p)
-	{
-		ReadGameObjectLayout(v, p, SIZE, &v.mSeedBankIndex);
-		ImportTimeCounters(v);
-	}
-	static void Write(LegacyByte* p, const CursorObject& v)
-	{
-		WriteGameObjectLayout(p, SIZE, v, &v.mSeedBankIndex);
-		const auto& layout = LevelSaveFormat::GetRecordLayout(LevelSaveFormat::RecordKind::CursorObject);
-		for (size_t i = 0; i < layout.mSegmentCount; ++i)
-		{
-			const auto& segment = layout.mSegments[i];
-			ExportTimeCounters(p, v, segment.mDat64Offset, segment.mLegacyOffset, segment.mSize);
-		}
-	}
-};
-
-template <>
-struct Legacy1073Layout<CursorPreview>
-{
-	static constexpr size_t SIZE = 44;
-	static void Read(CursorPreview& v, const LegacyByte* p)
-	{
-		ReadGameObjectLayout(v, p, SIZE, &v.mGridX);
-		ImportTimeCounters(v);
-	}
-	static void Write(LegacyByte* p, const CursorPreview& v)
-	{
-		WriteGameObjectLayout(p, SIZE, v, &v.mGridX);
-		const auto& layout = LevelSaveFormat::GetRecordLayout(LevelSaveFormat::RecordKind::CursorPreview);
-		for (size_t i = 0; i < layout.mSegmentCount; ++i)
-		{
-			const auto& segment = layout.mSegments[i];
-			ExportTimeCounters(p, v, segment.mDat64Offset, segment.mLegacyOffset, segment.mSize);
-		}
-	}
-};
-
-template <>
-struct Legacy1073Layout<MessageWidget>
-{
-	static constexpr size_t SIZE = 796;
-	static void Read(MessageWidget& v, const LegacyByte* p)
-	{
-		ClearNativeObject(v);
-		CopyFromLegacy(&v.mLabel, p, 4, SIZE - 4);
-		ImportTimeCounters(v);
-	}
-	static void Write(LegacyByte* p, const MessageWidget& v)
-	{
-		CopyToLegacy(p, 4, &v.mLabel, SIZE - 4);
-		const auto& layout = LevelSaveFormat::GetRecordLayout(LevelSaveFormat::RecordKind::MessageWidget);
-		for (size_t i = 0; i < layout.mSegmentCount; ++i)
-		{
-			const auto& segment = layout.mSegments[i];
-			ExportTimeCounters(p, v, segment.mDat64Offset, segment.mLegacyOffset, segment.mSize);
-		}
-	}
-};
-
-template <>
-struct Legacy1073Layout<SeedPacket>
-{
-	static constexpr size_t SIZE = 80;
-	static void Read(SeedPacket& v, const LegacyByte* p)
-	{
-		ReadGameObjectLayout(v, p, SIZE, &v.mRefreshCounter);
-		ImportTimeCounters(v);
-	}
-	static void Write(LegacyByte* p, const SeedPacket& v)
-	{
-		WriteGameObjectLayout(p, SIZE, v, &v.mRefreshCounter);
-		const auto& layout = LevelSaveFormat::GetRecordLayout(LevelSaveFormat::RecordKind::SeedPacket);
-		for (size_t i = 0; i < layout.mSegmentCount; ++i)
-		{
-			const auto& segment = layout.mSegments[i];
-			ExportTimeCounters(p, v, segment.mDat64Offset, segment.mLegacyOffset, segment.mSize);
-		}
-	}
-};
-
-template <>
-struct Legacy1073Layout<SeedBank>
-{
-	static constexpr size_t SIZE = 848;
-	static void Read(SeedBank& v, const LegacyByte* p)
-	{
-		ClearNativeObject(v);
-		CopyFromLegacy(&v.mX, p, 8, 28);
-		CopyFromLegacy(&v.mNumPackets, p, 36, 4);
-		for (int i = 0; i < SEEDBANK_MAX; ++i)
-		{
-			Legacy1073Layout<SeedPacket>::Read(
-				v.mSeedPackets[i],
-				p + 40 + i * Legacy1073Layout<SeedPacket>::SIZE);
-		}
-		CopyFromLegacy(&v.mCutSceneDarken, p, 840, 8);
-		ImportTimeCounters(v);
-	}
-	static void Write(LegacyByte* p, const SeedBank& v)
-	{
-		CopyToLegacy(p, 8, &v.mX, 28);
-		CopyToLegacy(p, 36, &v.mNumPackets, 4);
-		for (int i = 0; i < SEEDBANK_MAX; ++i)
-		{
-			Legacy1073Layout<SeedPacket>::Write(
-				p + 40 + i * Legacy1073Layout<SeedPacket>::SIZE,
-				v.mSeedPackets[i]);
-		}
-		CopyToLegacy(p, 840, &v.mCutSceneDarken, 8);
-		ExportTimeCounters(p, v, offsetof(SeedBank, mCutSceneDarken), 840, 8);
-	}
-};
-
-template <>
-struct Legacy1073Layout<Challenge>
-{
-	static constexpr size_t SIZE = 188;
-	static void Read(Challenge& v, const LegacyByte* p)
-	{
-		ClearNativeObject(v);
-		CopyFromLegacy(&v.mBeghouledMouseCapture, p, 8, SIZE - 8);
-		ImportTimeCounters(v);
-	}
-	static void Write(LegacyByte* p, const Challenge& v)
-	{
-		CopyToLegacy(p, 8, &v.mBeghouledMouseCapture, SIZE - 8);
-		const auto& layout = LevelSaveFormat::GetRecordLayout(LevelSaveFormat::RecordKind::Challenge);
-		for (size_t i = 0; i < layout.mSegmentCount; ++i)
-		{
-			const auto& segment = layout.mSegments[i];
-			ExportTimeCounters(p, v, segment.mDat64Offset, segment.mLegacyOffset, segment.mSize);
-		}
-	}
-};
-
-template <>
-struct Legacy1073Layout<Music>
-{
-	static constexpr size_t SIZE = 76;
-	static void Read(Music& v, const LegacyByte* p)
-	{
-		// Audio availability belongs to this process, not the saved board.
-		// Keep the wire field for 1073/dat64 conversion compatibility.
-		const bool aRuntimeMusicDisabled = v.IsMusicDisabled();
-		ClearNativeObject(v);
-		CopyFromLegacy(&v.mCurMusicTune, p, 8, SIZE - 8);
-		v.SetMusicDisabled(aRuntimeMusicDisabled);
-		ImportTimeCounters(v);
-	}
-	static void Write(LegacyByte* p, const Music& v)
-	{
-		CopyToLegacy(p, 8, &v.mCurMusicTune, SIZE - 8);
-		const auto& layout = LevelSaveFormat::GetRecordLayout(LevelSaveFormat::RecordKind::Music);
-		for (size_t i = 0; i < layout.mSegmentCount; ++i)
-		{
-			const auto& segment = layout.mSegments[i];
-			ExportTimeCounters(p, v, segment.mDat64Offset, segment.mLegacyOffset, segment.mSize);
-		}
-	}
-};
-
-template <>
-struct Legacy1073Layout<ReanimatorTrackInstance>
-{
-	static constexpr size_t SIZE = 96;
-	static void Read(ReanimatorTrackInstance& v, const LegacyByte* p)
-	{
-		ClearNativeObject(v);
-		CopyFromLegacy(&v.mBlendCounter, p, 0, 40);
-		CopyFromLegacy(&v.mShakeOverride, p, 52, 16);
-		CopyFromLegacy(&v.mRenderGroup, p, 72, 24);
-		ImportTimeCounters(v);
-	}
-	static void Write(LegacyByte* p, const ReanimatorTrackInstance& v)
-	{
-		CopyToLegacy(p, 0, &v.mBlendCounter, 40);
-		CopyToLegacy(p, 52, &v.mShakeOverride, 16);
-		CopyToLegacy(p, 72, &v.mRenderGroup, 24);
-		const auto& layout = LevelSaveFormat::GetRecordLayout(LevelSaveFormat::RecordKind::ReanimatorTrackInstance);
-		for (size_t i = 0; i < layout.mSegmentCount; ++i)
-		{
-			const auto& segment = layout.mSegments[i];
-			ExportTimeCounters(p, v, segment.mDat64Offset, segment.mLegacyOffset, segment.mSize);
-		}
-	}
-};
-
-template <typename T>
-struct Dat64Layout;
-
-template <typename T, LevelSaveFormat::RecordKind Kind>
-struct MappedDat64Layout
-{
-	static constexpr auto& RECORD = LevelSaveFormat::GetRecordLayout(Kind);
-	static constexpr size_t SIZE = RECORD.mDat64Size;
-	// 文件槽步长（与原生 sizeof(DataArrayItem) 解耦：Reanimation 原生尾部有
-	// 24B 不持久化的动作块缓存，文件槽仍为 184）
-	static constexpr size_t SLOT_SIZE = RECORD.mDat64ArraySlotSize;
-
-	static void Read(T& v, const LegacyByte* p)
-	{
-		ClearNativeObject(v);
-		for (size_t i = 0; i < RECORD.mSegmentCount; ++i)
-		{
-			const auto& aSegment = RECORD.mSegments[i];
-			std::memcpy(
-				ObjectBytes(v) + aSegment.mDat64Offset,
-				p + aSegment.mDat64Offset,
-				aSegment.mSize);
-		}
-		ImportTimeCounters(v);
-	}
-
-	static void Write(LegacyByte* p, const T& v)
-	{
-		for (size_t i = 0; i < RECORD.mSegmentCount; ++i)
-		{
-			const auto& aSegment = RECORD.mSegments[i];
-			std::memcpy(
-				p + aSegment.mDat64Offset,
-				ObjectBytes(v) + aSegment.mDat64Offset,
-				aSegment.mSize);
-			ExportTimeCounters(p, v, aSegment.mDat64Offset,
-				aSegment.mDat64Offset, aSegment.mSize);
-		}
-	}
-};
-
-#define DECLARE_DAT64_LAYOUT(Type, KindName) \
-	template <> \
-	struct Dat64Layout<Type> \
-		: MappedDat64Layout<Type, LevelSaveFormat::RecordKind::KindName> \
-	{};
-
-DECLARE_DAT64_LAYOUT(Zombie, Zombie);
-DECLARE_DAT64_LAYOUT(Plant, Plant);
-DECLARE_DAT64_LAYOUT(Projectile, Projectile);
-DECLARE_DAT64_LAYOUT(Coin, Coin);
-DECLARE_DAT64_LAYOUT(LawnMower, LawnMower);
-DECLARE_DAT64_LAYOUT(GridItem, GridItem);
-DECLARE_DAT64_LAYOUT(TodParticleSystem, ParticleSystem);
-DECLARE_DAT64_LAYOUT(TodParticleEmitter, ParticleEmitter);
-DECLARE_DAT64_LAYOUT(TodParticle, Particle);
-DECLARE_DAT64_LAYOUT(Reanimation, Reanimation);
-DECLARE_DAT64_LAYOUT(Attachment, Attachment);
-DECLARE_DAT64_LAYOUT(CursorObject, CursorObject);
-DECLARE_DAT64_LAYOUT(CursorPreview, CursorPreview);
-DECLARE_DAT64_LAYOUT(MessageWidget, MessageWidget);
-DECLARE_DAT64_LAYOUT(SeedPacket, SeedPacket);
-DECLARE_DAT64_LAYOUT(Challenge, Challenge);
-DECLARE_DAT64_LAYOUT(ReanimatorTrackInstance, ReanimatorTrackInstance);
-
-#undef DECLARE_DAT64_LAYOUT
-
-template <>
-struct Dat64Layout<Music> : MappedDat64Layout<Music, LevelSaveFormat::RecordKind::Music>
-{
-	static void Read(Music& v, const LegacyByte* p)
-	{
-		const bool aRuntimeMusicDisabled = v.IsMusicDisabled();
-		MappedDat64Layout<Music, LevelSaveFormat::RecordKind::Music>::Read(v, p);
-		v.SetMusicDisabled(aRuntimeMusicDisabled);
-	}
-};
-
-template <>
-struct Dat64Layout<SeedBank>
-{
-	static constexpr size_t SIZE = LevelSaveFormat::DAT64_SEED_BANK_SIZE;
-
-	static void Read(SeedBank& v, const LegacyByte* p)
-	{
-		ClearNativeObject(v);
-		std::memcpy(ObjectBytes(v) + 16, p + 16, 28);
-		std::memcpy(ObjectBytes(v) + 48, p + 48, 4);
-		for (size_t i = 0; i < LevelSaveFormat::SEED_BANK_PACKET_COUNT; ++i)
-		{
-			Dat64Layout<SeedPacket>::Read(
-				v.mSeedPackets[i],
-				p + LevelSaveFormat::DAT64_SEED_BANK_PACKET_OFFSET +
-					i * Dat64Layout<SeedPacket>::SIZE);
-		}
-		std::memcpy(
-			&v.mCutSceneDarken,
-			p + LevelSaveFormat::DAT64_SEED_BANK_TAIL_OFFSET,
-			LevelSaveFormat::SEED_BANK_TAIL_SIZE);
-		ImportTimeCounters(v);
-	}
-
-	static void Write(LegacyByte* p, const SeedBank& v)
-	{
-		std::memcpy(p + 16, ObjectBytes(v) + 16, 28);
-		std::memcpy(p + 48, ObjectBytes(v) + 48, 4);
-		for (size_t i = 0; i < LevelSaveFormat::SEED_BANK_PACKET_COUNT; ++i)
-		{
-			Dat64Layout<SeedPacket>::Write(
-				p + LevelSaveFormat::DAT64_SEED_BANK_PACKET_OFFSET +
-					i * Dat64Layout<SeedPacket>::SIZE,
-				v.mSeedPackets[i]);
-		}
-		std::memcpy(
-			p + LevelSaveFormat::DAT64_SEED_BANK_TAIL_OFFSET,
-			&v.mCutSceneDarken,
-			LevelSaveFormat::SEED_BANK_TAIL_SIZE);
-		ExportTimeCounters(p, v, offsetof(SeedBank, mCutSceneDarken),
-			LevelSaveFormat::DAT64_SEED_BANK_TAIL_OFFSET, LevelSaveFormat::SEED_BANK_TAIL_SIZE);
-	}
-};
-
-static_assert(sizeof(GameObject) == 48);
-static_assert(offsetof(GameObject, mSaveLayoutPadding) == 44);
-static_assert(sizeof(Zombie) == 368);
-static_assert(sizeof(Plant) == 344);
-static_assert(sizeof(Projectile) == 160);
-static_assert(sizeof(Coin) == 216);
-static_assert(sizeof(LawnMower) == 80);
-static_assert(sizeof(GridItem) == 240);
-static_assert(sizeof(TodParticleSystem) == 72);
-static_assert(sizeof(TodParticleEmitter) == 208);
-// 168 = 原始 160 + 4B 段外倒数 mParticleDurationInv（不入盘，Read 补算）+ 4B 8 对齐垫；
-// dat64 裸段仍自 &mParticleDuration 起 152B，与 156B 盘上记录逐字节不变
-static_assert(sizeof(TodParticle) == 168);
-// Reanimation and track-instance save layouts are unchanged.
-static_assert(sizeof(Reanimation) == 216);
-static_assert(sizeof(Attachment) == 776);
-static_assert(sizeof(CursorObject) == 88);
-static_assert(sizeof(CursorPreview) == 56);
-static_assert(sizeof(MessageWidget) == 800);
-static_assert(sizeof(SeedPacket) == 96);
-static_assert(sizeof(SeedBank) == 1024);
-static_assert(sizeof(Challenge) == 200);
-static_assert(sizeof(Music) == 88);
-static_assert(sizeof(ReanimatorTrackInstance) == 112);
-static_assert(sizeof(typename DataArray<Zombie>::DataArrayItem) == 376);
-static_assert(sizeof(typename DataArray<Plant>::DataArrayItem) == 352);
-static_assert(sizeof(typename DataArray<Projectile>::DataArrayItem) == 168);
-static_assert(sizeof(typename DataArray<Coin>::DataArrayItem) == 224);
-static_assert(sizeof(typename DataArray<LawnMower>::DataArrayItem) == 88);
-static_assert(sizeof(typename DataArray<GridItem>::DataArrayItem) == 248);
-static_assert(sizeof(typename DataArray<TodParticleSystem>::DataArrayItem) == 80);
-static_assert(sizeof(typename DataArray<TodParticleEmitter>::DataArrayItem) == 216);
-static_assert(sizeof(typename DataArray<TodParticle>::DataArrayItem) == 176);
-static_assert(sizeof(typename DataArray<Reanimation>::DataArrayItem) == 224);  // Reanimation 不内嵌 Transform，不变
-static_assert(sizeof(typename DataArray<Attachment>::DataArrayItem) == 780);
-
-template <typename T>
-inline constexpr size_t LEGACY_1073_DATA_ARRAY_ITEM_SIZE =
-	Legacy1073Layout<T>::SIZE + sizeof(uint32_t);
-
-// Coin contains PottedPlant's 64-bit timestamps. MSVC x86 gives Coin 8-byte
-// alignment, so DataArray<Coin>::DataArrayItem has four tail-padding bytes
-// after its 32-bit ID. The official game3_13.dat confirms 216-byte slots.
-template <>
-inline constexpr size_t LEGACY_1073_DATA_ARRAY_ITEM_SIZE<Coin> = 216;
 }
 
 //0x4813D0
@@ -784,28 +97,9 @@ void SaveGameContext::SyncInt(int& theInt)
 namespace
 {
 template <typename T>
-void SyncLegacy1073Object(SaveGameContext& theContext, T& theObject)
-{
-	std::vector<LegacyByte> aLegacyBytes(Legacy1073Layout<T>::SIZE, 0);
-	if (!theContext.mReading)
-	{
-		Legacy1073Layout<T>::Write(aLegacyBytes.data(), theObject);
-	}
-
-	theContext.SyncBytes(
-		aLegacyBytes.data(),
-		static_cast<int>(aLegacyBytes.size()));
-	if (theContext.mReading && !theContext.mFailed)
-	{
-		Legacy1073Layout<T>::Read(theObject, aLegacyBytes.data());
-	}
-}
-
-template <typename T>
 void SyncDat64Object(SaveGameContext& theContext, T& theObject)
 {
-	static_assert(Dat64Layout<T>::SIZE == sizeof(T));
-	std::vector<LegacyByte> aDat64Bytes(Dat64Layout<T>::SIZE, 0);
+	std::vector<LegacyByte> aDat64Bytes(Dat64Layout<T>::Size(), 0);
 	if (!theContext.mReading)
 	{
 		Dat64Layout<T>::Write(aDat64Bytes.data(), theObject);
@@ -864,98 +158,10 @@ bool ValidateDataArraySlots(const LegacyByte* theBlock, size_t theStride,
 }
 
 template <typename T>
-void SyncLegacy1073DataArray(
-	SaveGameContext& theContext,
-	DataArray<T>& theDataArray)
-{
-	if (theContext.mFailed)
-		return;
-	unsigned int aFreeListHead = theDataArray.mFreeListHead;
-	unsigned int aMaxUsedCount = theDataArray.mMaxUsedCount;
-	unsigned int aSize = theDataArray.mSize;
-	theContext.SyncUint(aFreeListHead);
-	theContext.SyncUint(aMaxUsedCount);
-	theContext.SyncUint(aSize);
-
-	constexpr size_t aLegacyItemSize = LEGACY_1073_DATA_ARRAY_ITEM_SIZE<T>;
-	if (theContext.mFailed || aMaxUsedCount > theDataArray.mMaxSize ||
-		aSize > aMaxUsedCount || aFreeListHead > aMaxUsedCount ||
-		aMaxUsedCount > static_cast<size_t>(INT_MAX) / aLegacyItemSize)
-	{
-		theContext.mFailed = true;
-		return;
-	}
-
-	const size_t aLegacyBlockSize =
-		static_cast<size_t>(aMaxUsedCount) * aLegacyItemSize;
-	std::vector<LegacyByte> aLegacyBlock(aLegacyBlockSize, 0);
-	LegacyByte anEmptyBlockByte = 0;
-	if (!theContext.mReading)
-	{
-		for (unsigned int i = 0; i < theDataArray.mMaxUsedCount; ++i)
-		{
-			auto& aNativeItem = theDataArray.mBlock[i];
-			LegacyByte* aLegacyItem = aLegacyBlock.data() + i * aLegacyItemSize;
-			if (aNativeItem.mGeneration != 0)
-			{
-				Legacy1073Layout<T>::Write(aLegacyItem, aNativeItem.mItem);
-			}
-			const unsigned int anID = aNativeItem.PackedID();
-			std::memcpy(
-				aLegacyItem + Legacy1073Layout<T>::SIZE,
-				&anID,
-				sizeof(anID));
-		}
-	}
-
-	theContext.SyncBytes(
-		aLegacyBlock.empty() ? &anEmptyBlockByte : aLegacyBlock.data(),
-		static_cast<int>(aLegacyBlock.size()));
-	if (!theContext.mReading || theContext.mFailed)
-	{
-		return;
-	}
-
-	if (!ValidateDataArraySlots(aLegacyBlock.data(), aLegacyItemSize,
-		Legacy1073Layout<T>::SIZE, aMaxUsedCount, aSize, aFreeListHead))
-	{
-		theContext.mFailed = true;
-		return;
-	}
-	// Only a fully read, structurally valid block may replace live objects.
-	theDataArray.DataArrayFreeAll();
-	theDataArray.mFreeListHead = aFreeListHead;
-	theDataArray.mMaxUsedCount = aMaxUsedCount;
-	theDataArray.mSize = aSize;
-	try
-	{
-		for (unsigned int i = 0; i < aMaxUsedCount; ++i)
-		{
-			const LegacyByte* aLegacyItem =
-				aLegacyBlock.data() + i * aLegacyItemSize;
-			unsigned int anID = 0U;
-			std::memcpy(
-				&anID,
-				aLegacyItem + Legacy1073Layout<T>::SIZE,
-				sizeof(anID));
-			T* aNativeItem = theDataArray.DataArrayPrepareItemForLoad(i, anID);
-			if (aNativeItem != nullptr)
-				Legacy1073Layout<T>::Read(*aNativeItem, aLegacyItem);
-		}
-	}
-	catch (...)
-	{
-		theDataArray.DataArrayRepairAfterFailedLoad();
-		throw;
-	}
-}
-
-template <typename T>
 void SyncDat64DataArray(
 	SaveGameContext& theContext,
 	DataArray<T>& theDataArray)
 {
-	static_assert(Dat64Layout<T>::SIZE <= sizeof(T));  // Reanimation：文件 176B < 原生 200B（尾部缓存不落盘）
 	using DataArrayItem = typename DataArray<T>::DataArrayItem;
 	if (theContext.mFailed)
 		return;
@@ -966,7 +172,7 @@ void SyncDat64DataArray(
 	theContext.SyncUint(aMaxUsedCount);
 	theContext.SyncUint(aSize);
 
-	constexpr size_t aDat64ItemSize = Dat64Layout<T>::SLOT_SIZE;  // 文件步长（非原生步长）
+	const size_t aDat64ItemSize = Dat64Layout<T>::SlotSize();  // 文件步长（非原生步长）
 	if (theContext.mFailed || aMaxUsedCount > theDataArray.mMaxSize ||
 		aSize > aMaxUsedCount || aFreeListHead > aMaxUsedCount ||
 		aMaxUsedCount > static_cast<size_t>(INT_MAX) / aDat64ItemSize)
@@ -991,7 +197,7 @@ void SyncDat64DataArray(
 			}
 			const unsigned int anID = aNativeItem.PackedID();
 			std::memcpy(
-				aDat64Item + Dat64Layout<T>::SIZE,
+				aDat64Item + Dat64Layout<T>::Size(),
 				&anID,
 				sizeof(anID));
 		}
@@ -1006,7 +212,7 @@ void SyncDat64DataArray(
 	}
 
 	if (!ValidateDataArraySlots(aDat64Block.data(), aDat64ItemSize,
-		Dat64Layout<T>::SIZE, aMaxUsedCount, aSize, aFreeListHead))
+		Dat64Layout<T>::Size(), aMaxUsedCount, aSize, aFreeListHead))
 	{
 		theContext.mFailed = true;
 		return;
@@ -1024,7 +230,7 @@ void SyncDat64DataArray(
 			unsigned int anID = 0U;
 			std::memcpy(
 				&anID,
-				aDat64Item + Dat64Layout<T>::SIZE,
+				aDat64Item + Dat64Layout<T>::Size(),
 				sizeof(anID));
 			T* aNativeItem = theDataArray.DataArrayPrepareItemForLoad(i, anID);
 			if (aNativeItem != nullptr)
@@ -1038,96 +244,14 @@ void SyncDat64DataArray(
 	}
 }
 
-void SyncLegacy1073BoardState(
-	SaveGameContext& theContext,
-	Board& theBoard)
-{
-	static constexpr size_t LEGACY_BOARD_STATE_SIZE = 22108;
-	static constexpr size_t LEGACY_GAME_ID_OFFSET = 22076;
-	static constexpr size_t LEGACY_AFTER_GAME_ID_OFFSET = 22080;
-	static constexpr size_t LEGACY_AFTER_GAME_ID_SIZE = 28;
-
-	std::vector<LegacyByte> aLegacyBytes(LEGACY_BOARD_STATE_SIZE, 0);
-	LegacyByte* aNativeStart = reinterpret_cast<LegacyByte*>(&theBoard.mPaused);
-	const size_t aNativeSize =
-		reinterpret_cast<LegacyByte*>(&theBoard + 1) - aNativeStart;
-	if (aNativeSize != 22120)
-	{
-		theContext.mFailed = true;
-		return;
-	}
-
-	if (!theContext.mReading)
-	{
-		std::memcpy(
-			aLegacyBytes.data(),
-			aNativeStart,
-			LEGACY_GAME_ID_OFFSET);
-		ExportTimeCounters(aLegacyBytes.data(), theBoard, offsetof(Board, mPaused),
-			0, LEGACY_GAME_ID_OFFSET);
-		const int32_t aLegacyGameID = static_cast<int32_t>(theBoard.mGameID);
-		std::memcpy(
-			aLegacyBytes.data() + LEGACY_GAME_ID_OFFSET,
-			&aLegacyGameID,
-			sizeof(aLegacyGameID));
-		std::memcpy(
-			aLegacyBytes.data() + LEGACY_AFTER_GAME_ID_OFFSET,
-			&theBoard.mGravesCleared,
-			LEGACY_AFTER_GAME_ID_SIZE);
-	}
-
-	theContext.SyncBytes(
-		aLegacyBytes.data(),
-		static_cast<int>(aLegacyBytes.size()));
-	if (!theContext.mReading || theContext.mFailed)
-	{
-		return;
-	}
-
-	std::memset(aNativeStart, 0, aNativeSize);
-	std::memcpy(
-		aNativeStart,
-		aLegacyBytes.data(),
-		LEGACY_GAME_ID_OFFSET);
-	int32_t aLegacyGameID = 0;
-	std::memcpy(
-		&aLegacyGameID,
-		aLegacyBytes.data() + LEGACY_GAME_ID_OFFSET,
-		sizeof(aLegacyGameID));
-	theBoard.mGameID = static_cast<intptr_t>(aLegacyGameID);
-	std::memcpy(
-		&theBoard.mGravesCleared,
-		aLegacyBytes.data() + LEGACY_AFTER_GAME_ID_OFFSET,
-		LEGACY_AFTER_GAME_ID_SIZE);
-	ImportTimeCounters(theBoard);
-}
-
 void SyncDat64BoardState(
 	SaveGameContext& theContext,
 	Board& theBoard)
 {
-	LegacyByte* aNativeStart = reinterpret_cast<LegacyByte*>(&theBoard.mPaused);
-	const size_t aNativeSize =
-		reinterpret_cast<LegacyByte*>(&theBoard + 1) - aNativeStart;
-	if (aNativeSize != LevelSaveFormat::DAT64_BOARD_STATE_SIZE)
-	{
-		theContext.mFailed = true;
-		return;
-	}
-
-	std::vector<LegacyByte> aDat64Bytes(aNativeSize, 0);
+	std::vector<LegacyByte> aDat64Bytes(Dat64Layout<Board>::Size(), 0);
 	if (!theContext.mReading)
 	{
-		std::memcpy(aDat64Bytes.data(), aNativeStart, aNativeSize);
-		ExportTimeCounters(aDat64Bytes.data(), theBoard, offsetof(Board, mPaused), 0, aNativeSize);
-		// x64 aligns intptr_t mGameID to eight bytes.  The four bytes before it
-		// are schema padding, not game state, and must be deterministic so the
-		// standalone converter can reject pointer/padding contamination.
-		std::memset(
-			aDat64Bytes.data() + LevelSaveFormat::LEGACY_BOARD_GAME_ID_OFFSET,
-			0,
-			LevelSaveFormat::DAT64_BOARD_GAME_ID_OFFSET -
-				LevelSaveFormat::LEGACY_BOARD_GAME_ID_OFFSET);
+		Dat64Layout<Board>::Write(aDat64Bytes.data(), theBoard);
 	}
 
 	theContext.SyncBytes(
@@ -1135,53 +259,7 @@ void SyncDat64BoardState(
 		static_cast<int>(aDat64Bytes.size()));
 	if (theContext.mReading && !theContext.mFailed)
 	{
-		std::memset(aNativeStart, 0, aNativeSize);
-		std::memcpy(aNativeStart, aDat64Bytes.data(), aNativeSize);
-		ImportTimeCounters(theBoard);
-	}
-}
-
-void SyncLegacy1073TrackInstances(
-	SaveGameContext& theContext,
-	ReanimatorTrackInstance* theTrackInstances,
-	int theTrackCount)
-{
-	if (theTrackCount < 0 ||
-		static_cast<size_t>(theTrackCount) >
-			static_cast<size_t>(INT_MAX) / Legacy1073Layout<ReanimatorTrackInstance>::SIZE)
-	{
-		theContext.mFailed = true;
-		return;
-	}
-
-	const size_t aLegacySize = static_cast<size_t>(theTrackCount) *
-		Legacy1073Layout<ReanimatorTrackInstance>::SIZE;
-	std::vector<LegacyByte> aLegacyBytes(aLegacySize, 0);
-	if (!theContext.mReading)
-	{
-		for (int i = 0; i < theTrackCount; ++i)
-		{
-			Legacy1073Layout<ReanimatorTrackInstance>::Write(
-				aLegacyBytes.data() +
-					i * Legacy1073Layout<ReanimatorTrackInstance>::SIZE,
-				theTrackInstances[i]);
-		}
-	}
-
-	theContext.SyncBytes(
-		aLegacyBytes.data(),
-		static_cast<int>(aLegacyBytes.size()));
-	if (!theContext.mReading || theContext.mFailed)
-	{
-		return;
-	}
-
-	for (int i = 0; i < theTrackCount; ++i)
-	{
-		Legacy1073Layout<ReanimatorTrackInstance>::Read(
-			theTrackInstances[i],
-			aLegacyBytes.data() +
-				i * Legacy1073Layout<ReanimatorTrackInstance>::SIZE);
+		Dat64Layout<Board>::Read(theBoard, aDat64Bytes.data());
 	}
 }
 
@@ -1192,14 +270,14 @@ void SyncDat64TrackInstances(
 {
 	if (theTrackCount < 0 ||
 		static_cast<size_t>(theTrackCount) >
-			static_cast<size_t>(INT_MAX) / Dat64Layout<ReanimatorTrackInstance>::SIZE)
+			static_cast<size_t>(INT_MAX) / Dat64Layout<ReanimatorTrackInstance>::Size())
 	{
 		theContext.mFailed = true;
 		return;
 	}
 
 	const size_t aDat64Size = static_cast<size_t>(theTrackCount) *
-		Dat64Layout<ReanimatorTrackInstance>::SIZE;
+		Dat64Layout<ReanimatorTrackInstance>::Size();
 	std::vector<LegacyByte> aDat64Bytes(aDat64Size, 0);
 	if (!theContext.mReading)
 	{
@@ -1207,7 +285,7 @@ void SyncDat64TrackInstances(
 		{
 			Dat64Layout<ReanimatorTrackInstance>::Write(
 				aDat64Bytes.data() +
-					i * Dat64Layout<ReanimatorTrackInstance>::SIZE,
+					i * Dat64Layout<ReanimatorTrackInstance>::Size(),
 				theTrackInstances[i]);
 		}
 	}
@@ -1225,7 +303,7 @@ void SyncDat64TrackInstances(
 		Dat64Layout<ReanimatorTrackInstance>::Read(
 			theTrackInstances[i],
 			aDat64Bytes.data() +
-				i * Dat64Layout<ReanimatorTrackInstance>::SIZE);
+				i * Dat64Layout<ReanimatorTrackInstance>::Size());
 	}
 }
 }
@@ -1601,10 +679,7 @@ void SyncReanimation(Board* theBoard, Reanimation* theReanimation, SaveGameConte
 				anAllocator->Calloc(aNativeSize)));
 			aTracks = aPendingTracks.get();
 		}
-		if (theContext.mEncoding == LevelSaveEncoding::Dat64V1)
-			SyncDat64TrackInstances(theContext, aTracks, aTrackCount);
-		else
-			SyncLegacy1073TrackInstances(theContext, aTracks, aTrackCount);
+		SyncDat64TrackInstances(theContext, aTracks, aTrackCount);
 		if (theContext.mFailed)
 			return;
 
@@ -1665,7 +740,6 @@ void SyncBoard(SaveGameContext& theContext, Board* theBoard)
 		theBoard->mApp->mEffectSystem->mAttachmentHolder->mAttachments.DataArrayFreeAll();
 	}
 
-	if (theContext.mEncoding == LevelSaveEncoding::Dat64V1)
 	{
 		SyncDat64BoardState(theContext, *theBoard);
 		SyncDat64DataArray(theContext, theBoard->mZombies);
@@ -1679,21 +753,6 @@ void SyncBoard(SaveGameContext& theContext, Board* theBoard)
 		SyncDat64DataArray(theContext, theBoard->mApp->mEffectSystem->mParticleHolder->mParticles);
 		SyncDat64DataArray(theContext, theBoard->mApp->mEffectSystem->mReanimationHolder->mReanimations);
 		SyncDat64DataArray(theContext, theBoard->mApp->mEffectSystem->mAttachmentHolder->mAttachments);
-	}
-	else
-	{
-		SyncLegacy1073BoardState(theContext, *theBoard);
-		SyncLegacy1073DataArray(theContext, theBoard->mZombies);									//0x482190
-		SyncLegacy1073DataArray(theContext, theBoard->mPlants);										//0x482280
-		SyncLegacy1073DataArray(theContext, theBoard->mProjectiles);								//0x482370
-		SyncLegacy1073DataArray(theContext, theBoard->mCoins);										//0x482460
-		SyncLegacy1073DataArray(theContext, theBoard->mLawnMowers);								//0x482550
-		SyncLegacy1073DataArray(theContext, theBoard->mGridItems);									//0x482650
-		SyncLegacy1073DataArray(theContext, theBoard->mApp->mEffectSystem->mParticleHolder->mParticleSystems);	//0x482740
-		SyncLegacy1073DataArray(theContext, theBoard->mApp->mEffectSystem->mParticleHolder->mEmitters);			//0x482830
-		SyncLegacy1073DataArray(theContext, theBoard->mApp->mEffectSystem->mParticleHolder->mParticles);			//0x482920
-		SyncLegacy1073DataArray(theContext, theBoard->mApp->mEffectSystem->mReanimationHolder->mReanimations);	//0x482920
-		SyncLegacy1073DataArray(theContext, theBoard->mApp->mEffectSystem->mAttachmentHolder->mAttachments);		//0x482A10
 	}
 	if (theContext.mFailed)
 	{
@@ -1725,7 +784,6 @@ void SyncBoard(SaveGameContext& theContext, Board* theBoard)
 	// 装载孤儿修剪已撤（2026-10-05 用户裁决：属回退路径，同"服务器有问题
 	// 就定时重启"——根因已修于死亡回收，污染存档经一次性装载清创完毕）
 
-	if (theContext.mEncoding == LevelSaveEncoding::Dat64V1)
 	{
 		SyncDat64Object(theContext, *theBoard->mCursorObject);
 		SyncDat64Object(theContext, *theBoard->mCursorPreview);
@@ -1739,32 +797,6 @@ void SyncBoard(SaveGameContext& theContext, Board* theBoard)
 		if (theContext.mReading && anEndMarker != LevelSaveFormat::DAT64_END_MARKER)
 		{
 			theContext.mFailed = true;
-		}
-	}
-	else
-	{
-		SyncLegacy1073Object(theContext, *theBoard->mCursorObject);
-		SyncLegacy1073Object(theContext, *theBoard->mCursorPreview);
-		SyncLegacy1073Object(theContext, *theBoard->mAdvice);
-		SyncLegacy1073Object(theContext, *theBoard->mSeedBank);
-		SyncLegacy1073Object(theContext, *theBoard->mChallenge);
-		SyncLegacy1073Object(theContext, *theBoard->mApp->mMusic);
-
-		if (theContext.mReading)
-		{
-			if ((unsigned long)theContext.ByteLeftToRead() < 4)
-			{
-				theContext.mFailed = true;
-			}
-
-			if (theContext.mFailed || (unsigned int)theContext.mBuffer.ReadLong() != SAVE_FILE_MAGIC_NUMBER)
-			{
-				theContext.mFailed = true;
-			}
-		}
-		else
-		{
-			theContext.mBuffer.WriteLong(SAVE_FILE_MAGIC_NUMBER);
 		}
 	}
 }
@@ -1858,7 +890,7 @@ bool ValidateNextDat64Pool(const LegacyByte* thePayload, size_t thePayloadSize,
     const unsigned int aUsed = ReadWord(4);
     const unsigned int aSize = ReadWord(8);
     const unsigned int aBytes = ReadWord(12);
-    constexpr size_t aStride = Dat64Layout<T>::SLOT_SIZE;  // 文件槽步长（与原生解耦）
+    const size_t aStride = Dat64Layout<T>::SlotSize();  // 文件槽步长（与原生解耦）
     if (aUsed > thePool.mMaxSize || aSize > aUsed || aFreeHead > aUsed ||
         aUsed > static_cast<size_t>(INT_MAX) / aStride)
         return false;
@@ -1866,7 +898,7 @@ bool ValidateNextDat64Pool(const LegacyByte* thePayload, size_t thePayloadSize,
     if (aBytes != aExpectedBytes || aExpectedBytes > thePayloadSize - theOffset - 16)
         return false;
     if (!ValidateDataArraySlots(thePayload + theOffset + 16, aStride,
-        Dat64Layout<T>::SIZE, aUsed, aSize, aFreeHead))
+        Dat64Layout<T>::Size(), aUsed, aSize, aFreeHead))
         return false;
     theOffset += 16 + aExpectedBytes;
     return true;
@@ -1879,12 +911,13 @@ bool ValidateDat64PoolHeaders(const LegacyByte* thePayload, size_t thePayloadSiz
     const Board& theBoard, DataArrayKind& theFailedPool)
 {
     theFailedPool = DataArrayKind::Unknown;
-    size_t anOffset = 4 + LevelSaveFormat::DAT64_BOARD_STATE_SIZE;
+    const size_t boardSize = Dat64Layout<Board>::Size();
+    size_t anOffset = 4 + boardSize;
     if (thePayloadSize < anOffset)
         return false;
     unsigned int aBoardSize = 0;
     std::memcpy(&aBoardSize, thePayload, sizeof(aBoardSize));
-    if (aBoardSize != LevelSaveFormat::DAT64_BOARD_STATE_SIZE)
+    if (aBoardSize != boardSize)
         return false;
     const auto Check = [&](const auto& thePool)
     {
@@ -1910,7 +943,6 @@ static bool BuildDat64SaveBuffer(Board* theBoard, Buffer& theOutBuffer)
 	SaveGameContext aContext;
 	aContext.mFailed = false;
 	aContext.mReading = false;
-	aContext.mEncoding = LevelSaveEncoding::Dat64V1;
 	SyncBoard(aContext, theBoard);
 	if (aContext.mFailed)
 	{
@@ -1918,10 +950,6 @@ static bool BuildDat64SaveBuffer(Board* theBoard, Buffer& theOutBuffer)
 	}
 
 	const int aPayloadSize = aContext.mBuffer.GetDataLen();
-	const std::uint32_t aPayloadCRC = crc32(
-		0,
-		const_cast<Bytef*>(reinterpret_cast<const Bytef*>(aContext.mBuffer.GetDataPtr())),
-		static_cast<uInt>(aPayloadSize));
 
 	const auto WriteU32 = [](Buffer& theBuffer, std::uint32_t theValue)
 	{
@@ -1942,13 +970,13 @@ static bool BuildDat64SaveBuffer(Board* theBoard, Buffer& theOutBuffer)
 	theOutBuffer.WriteBytes(
 		LevelSaveFormat::DAT64_MAGIC.data(),
 		static_cast<int>(LevelSaveFormat::DAT64_MAGIC.size()));
-	WriteU32(theOutBuffer, LevelSaveFormat::DAT64_VERSION);
+	WriteU32(theOutBuffer, Dat64TimeSchema::VERSION);
 	WriteU32(theOutBuffer, LevelSaveFormat::DAT64_HEADER_SIZE);
 	WriteU32(theOutBuffer, LevelSaveFormat::DAT64_AUTHORITY_BUILD);
-	WriteU32(theOutBuffer, LevelSaveFormat::DAT64_FLAGS);
+	WriteU32(theOutBuffer, Dat64TimeSchema::FLAGS);
 	WriteU64(theOutBuffer, static_cast<std::uint64_t>(aPayloadSize));
-	WriteU32(theOutBuffer, aPayloadCRC);
-	WriteU32(theOutBuffer, LevelSaveFormat::DAT64_SCHEMA_ID);
+	WriteU32(theOutBuffer, 0); // Former payload CRC32; reserved and ignored.
+	WriteU32(theOutBuffer, Dat64TimeSchema::SCHEMA_ID);
 	WriteU64(theOutBuffer, 0);
 	TOD_ASSERT(theOutBuffer.GetDataLen() == LevelSaveFormat::DAT64_HEADER_SIZE);
 	theOutBuffer.WriteBytes(aContext.mBuffer.GetDataPtr(), aPayloadSize);
@@ -1989,16 +1017,8 @@ static bool LoadDat64FromBuffer(Board* theBoard, Buffer& aFileBuffer, const std:
 	const std::uint32_t anAuthorityBuild = ReadU32(aFileData + 16);
 	const std::uint32_t aFlags = ReadU32(aFileData + 20);
 	const std::uint64_t aPayloadSize = ReadU64(aFileData + 24);
-	const std::uint32_t aStoredCRC = ReadU32(aFileData + 32);
 	const std::uint32_t aSchemaID = ReadU32(aFileData + 36);
-	const std::uint64_t aReserved = ReadU64(aFileData + 40);
-	if (aVersion != LevelSaveFormat::DAT64_VERSION ||
-		aHeaderSize != LevelSaveFormat::DAT64_HEADER_SIZE ||
-		anAuthorityBuild != LevelSaveFormat::DAT64_AUTHORITY_BUILD ||
-		aFlags != LevelSaveFormat::DAT64_FLAGS ||
-		aSchemaID != LevelSaveFormat::DAT64_SCHEMA_ID ||
-		aReserved != 0 ||
-		aPayloadSize != static_cast<std::uint64_t>(aFileSize - aHeaderSize) ||
+	if (!LevelSaveFormat::IsCurrentDat64Header(std::span(aFileData, static_cast<size_t>(aFileSize))) ||
 		aPayloadSize > static_cast<std::uint64_t>(INT_MAX))
 	{
 		TodTraceAndLog(
@@ -2014,19 +1034,8 @@ static bool LoadDat64FromBuffer(Board* theBoard, Buffer& aFileBuffer, const std:
 	}
 
 	const LegacyByte* aPayload = aFileData + aHeaderSize;
-	const std::uint32_t anActualCRC = crc32(
-		0,
-		const_cast<Bytef*>(reinterpret_cast<const Bytef*>(aPayload)),
-		static_cast<uInt>(aPayloadSize));
-	if (anActualCRC != aStoredCRC)
-	{
-		TodTraceAndLog(
-			"DAT64_CRC_REJECT file=%s stored=%08X actual=%08X",
-			theFilePath.c_str(),
-			aStoredCRC,
-			anActualCRC);
-		return false;
-	}
+	// Offset 0x20 was a payload CRC32. The current format ignores it,
+	// so editing valid fields never requires recalculating a checksum.
 
 	DataArrayKind aFailedPool = DataArrayKind::Unknown;
 	if (!ValidateDat64PoolHeaders(aPayload, static_cast<size_t>(aPayloadSize), *theBoard, aFailedPool))
@@ -2039,7 +1048,6 @@ static bool LoadDat64FromBuffer(Board* theBoard, Buffer& aFileBuffer, const std:
 	SaveGameContext aContext;
 	aContext.mFailed = false;
 	aContext.mReading = true;
-	aContext.mEncoding = LevelSaveEncoding::Dat64V1;
 	aContext.mBuffer.SetData(
 		const_cast<LegacyByte*>(aPayload),
 		static_cast<int>(aPayloadSize));

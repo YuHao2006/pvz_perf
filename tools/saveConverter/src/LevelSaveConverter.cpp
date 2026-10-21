@@ -3,6 +3,7 @@
 // The standalone converter and game probes share the game-source include root.
 #include "ConstEnums.h"
 #include "Lawn/System/LevelSaveFormat.h"
+#include "Lawn/System/Dat64TimeSchema.h"
 #include "Resources.h"
 #include "ResourceIdRemap.h"
 
@@ -180,6 +181,7 @@ public:
 
     std::span<const Byte> mData;
     std::size_t mPosition;
+    std::vector<std::uint64_t> mNanoseconds;
 
     void SetPosition(std::size_t thePosition, const std::string& theField)
     {
@@ -256,6 +258,8 @@ class Writer
 public:
     std::size_t Position() const { return mData.size(); }
     std::vector<Byte> mData;
+    const std::vector<std::uint64_t>* mNanoseconds = nullptr;
+    std::size_t mTimeIndex = 0;
 
     void U32(std::uint32_t theValue)
     {
@@ -298,6 +302,37 @@ std::uint32_t ReadU32At(std::span<const Byte> theData, std::size_t theOffset)
         (static_cast<std::uint32_t>(theData[theOffset + 1]) << 8) |
         (static_cast<std::uint32_t>(theData[theOffset + 2]) << 16) |
         (static_cast<std::uint32_t>(theData[theOffset + 3]) << 24);
+}
+
+std::vector<Byte> ReadTimeRecord(
+    Reader& reader, std::span<const Byte> bytes, Dat64TimeSchema::Fields fields,
+    Format format)
+{
+    if (format != Format::Dat64V2)
+        return {bytes.begin(), bytes.end()};
+    return Dat64TimeSchema::Collapse(bytes, fields,
+        [&](const Dat64TimeSchema::Field& field, std::uint64_t ns)
+        {
+            reader.mNanoseconds.push_back(ns);
+            // The complete value is retained separately. This temporary v1
+            // image exists solely for the established structural validators.
+            try { return Dat64TimeSchema::QuantizeNanoseconds(field, ns, true); }
+            catch (const std::exception&) { return std::uint32_t(0); }
+        });
+}
+
+std::vector<Byte> WriteTimeRecord(
+    Writer& writer, std::span<const Byte> bytes, Dat64TimeSchema::Fields fields,
+    Format format)
+{
+    if (format != Format::Dat64V2) return {bytes.begin(), bytes.end()};
+    return Dat64TimeSchema::Expand(bytes, fields,
+        [&](const Dat64TimeSchema::Field&, std::uint32_t)
+        {
+            if (!writer.mNanoseconds || writer.mTimeIndex >= writer.mNanoseconds->size())
+                Fail("内部错误：写出时间字段缺失");
+            return (*writer.mNanoseconds)[writer.mTimeIndex++];
+        });
 }
 
 std::int32_t ReadI32At(std::span<const Byte> theData, std::size_t theOffset)
@@ -1071,6 +1106,7 @@ struct ReanimationSupplement
 
 struct Document
 {
+    std::vector<std::uint64_t> mNanoseconds;
     std::vector<Byte> mCanonicalBoard;
     std::array<ArraySnapshot, ARRAY_DESCRIPTORS.size()> mArrays;
     RetiredTrailPool mRetiredTrailPool;
@@ -1084,6 +1120,52 @@ struct Document
     std::vector<Byte> mMusic;
     bool operator==(const Document&) const = default;
 };
+
+template<class Callback>
+void VisitTimeRecords(Document& document, Callback callback)
+{
+    callback(document.mCanonicalBoard, Dat64TimeSchema::BoardFields());
+    for (auto& array : document.mArrays)
+        for (auto& slot : array.mSlots)
+            callback(slot.mCanonicalRecord, Dat64TimeSchema::GetFields(array.mKind));
+    for (auto& reanimation : document.mReanimations)
+        for (auto& track : reanimation.mCanonicalTracks)
+            callback(track, Dat64TimeSchema::GetFields(RecordKind::ReanimatorTrackInstance));
+    callback(document.mCursorObject, Dat64TimeSchema::GetFields(RecordKind::CursorObject));
+    callback(document.mCursorPreview, Dat64TimeSchema::GetFields(RecordKind::CursorPreview));
+    callback(document.mMessageWidget, Dat64TimeSchema::GetFields(RecordKind::MessageWidget));
+    callback(document.mSeedBank, Dat64TimeSchema::SeedBankFields());
+    callback(document.mChallenge, Dat64TimeSchema::GetFields(RecordKind::Challenge));
+    callback(document.mMusic, Dat64TimeSchema::GetFields(RecordKind::Music));
+}
+
+void CaptureLegacyTimes(Document& document)
+{
+    document.mNanoseconds.clear();
+    VisitTimeRecords(document, [&](auto& bytes, Dat64TimeSchema::Fields fields)
+    {
+        for (const auto& field : fields)
+            document.mNanoseconds.push_back(
+                Dat64TimeSchema::LegacyToNanoseconds(field, ReadU32At(bytes, field.mOffset)));
+    });
+}
+
+void QuantizeDocumentTimes(Document& document, bool round)
+{
+    std::size_t index = 0;
+    VisitTimeRecords(document, [&](auto& bytes, Dat64TimeSchema::Fields fields)
+    {
+        for (const auto& field : fields)
+        {
+            if (index >= document.mNanoseconds.size()) Fail("内部错误：时间字段缺失");
+            const auto ticks = Dat64TimeSchema::QuantizeNanoseconds(
+                field, document.mNanoseconds[index], round);
+            WriteU32At(bytes, field.mOffset, ticks);
+            document.mNanoseconds[index++] = Dat64TimeSchema::LegacyToNanoseconds(field, ticks);
+        }
+    });
+    if (index != document.mNanoseconds.size()) Fail("内部错误：时间字段多余");
+}
 
 std::vector<std::uint32_t> LiveIDs(const ArraySnapshot& theArray)
 {
@@ -1187,6 +1269,12 @@ ArraySnapshot ReadArray(
     std::uint32_t anObjectSize = theFormat == Format::Legacy1073Dat
         ? aLayout.mLegacySize
         : aLayout.mDat64Size;
+    const auto timeFields = Dat64TimeSchema::GetFields(theDescriptor.mKind);
+    if (theFormat == Format::Dat64V2)
+    {
+        aSlotSize = static_cast<std::uint32_t>(Dat64TimeSchema::V2Size(aSlotSize, timeFields));
+        anObjectSize = static_cast<std::uint32_t>(Dat64TimeSchema::V2Size(anObjectSize, timeFields));
+    }
 
     const std::size_t aLengthOffset = theReader.mPosition;
     const std::uint32_t aBlockLength = theReader.U32(std::string(theDescriptor.mName) + ".slots.size");
@@ -1238,9 +1326,13 @@ ArraySnapshot ReadArray(
     for (std::uint32_t i = 0; i < aResult.mMaxUsedCount; ++i)
     {
         const std::size_t aSlotOffset = static_cast<std::size_t>(i) * aSlotSize;
-        const auto aSlotBytes = aBlock.subspan(aSlotOffset, aSlotSize);
+        const auto aWireSlot = aBlock.subspan(aSlotOffset, aSlotSize);
+        const auto aCollapsed = ReadTimeRecord(theReader, aWireSlot, timeFields, theFormat);
+        const std::span<const Byte> aSlotBytes(aCollapsed);
+        const std::size_t aV1ObjectSize = theFormat == Format::Dat64V2
+            ? aLayout.mDat64Size : anObjectSize;
         SlotSnapshot aSlot;
-        aSlot.mID = ReadU32At(aSlotBytes, anObjectSize);
+        aSlot.mID = ReadU32At(aSlotBytes, aV1ObjectSize);
         if (aSlot.mID & DATA_ARRAY_KEY_MASK)
         {
             if (theDescriptor.mKind == RecordKind::Zombie &&
@@ -1250,8 +1342,8 @@ ArraySnapshot ReadArray(
                     "旧构建（348 槽）Zombie 记录存在存活对象：该布局缺 12 字节字段的映射，无法迁移到 dat64");
             }
             aSlot.mCanonicalRecord = ToCanonicalRecord(
-                aSlotBytes.first(anObjectSize),
-                theFormat,
+                aSlotBytes.first(aV1ObjectSize),
+                theFormat == Format::Dat64V2 ? Format::Dat64V1 : theFormat,
                 theDescriptor.mKind,
                 aBlockOffset + aSlotOffset,
                 std::string(theDescriptor.mName) + "[" + std::to_string(i) + "]");
@@ -1270,9 +1362,9 @@ ArraySnapshot ReadArray(
                 std::min<std::size_t>(aRawSize, aLayout.mDat64Size));
         }
 
-        if (theFormat == Format::Dat64V1)
+        if (theFormat != Format::Legacy1073Dat)
         {
-            for (std::size_t p = anObjectSize + 4; p < aSlotSize; ++p)
+            for (std::size_t p = aV1ObjectSize + 4; p < aSlotBytes.size(); ++p)
             {
                 if (aSlotBytes[p] != 0)
                 {
@@ -1454,10 +1546,14 @@ std::vector<ReanimationSupplement> ReadReanimations(
     const std::size_t aStart = theReader.mPosition;
     const RecordLayout& aTrackLayout =
         LevelSaveFormat::GetRecordLayout(RecordKind::ReanimatorTrackInstance);
+    const auto trackFields = Dat64TimeSchema::GetFields(RecordKind::ReanimatorTrackInstance);
     const std::size_t aTrackSize = theFormat == Format::Legacy1073Dat
         ? aTrackLayout.mLegacySize
-        : aTrackLayout.mDat64Size;
-    const std::size_t aTrackBoolOffset = theFormat == Format::Legacy1073Dat ? 92 : 108;
+        : theFormat == Format::Dat64V2
+            ? Dat64TimeSchema::V2Size(aTrackLayout.mDat64Size, trackFields)
+            : aTrackLayout.mDat64Size;
+    const std::size_t aTrackBoolOffset = theFormat == Format::Legacy1073Dat ? 92
+        : theFormat == Format::Dat64V2 ? Dat64TimeSchema::V2Offset(108, trackFields) : 108;
     const int aResourceMaximum = static_cast<int>(Sexy::ResourceId::RESOURCE_ID_MAX);
 
     std::unordered_map<ReanimationChoiceKey, int, ReanimationChoiceHash> aMemo;
@@ -1564,9 +1660,12 @@ std::vector<ReanimationSupplement> ReadReanimations(
             aReanimation.mImageResourceIDs.reserve(aTrackCount);
             for (int track = 0; track < aTrackCount; ++track)
             {
-                aReanimation.mCanonicalTracks.push_back(ToCanonicalRecord(
+                const auto bytes = ReadTimeRecord(theReader,
                     aTrackBlock.subspan(static_cast<std::size_t>(track) * aTrackSize, aTrackSize),
-                    theFormat,
+                    trackFields, theFormat);
+                aReanimation.mCanonicalTracks.push_back(ToCanonicalRecord(
+                    bytes,
+                    theFormat == Format::Dat64V2 ? Format::Dat64V1 : theFormat,
                     RecordKind::ReanimatorTrackInstance,
                     aTrackBlockOffset + static_cast<std::size_t>(track) * aTrackSize,
                     "Reanimation.track[" + std::to_string(track) + "]"));
@@ -1645,11 +1744,16 @@ Document ParsePayload(
     const std::size_t aBoardSize = theFormat == Format::Legacy1073Dat
         ? LevelSaveFormat::LEGACY_BOARD_STATE_SIZE
         : LevelSaveFormat::DAT64_BOARD_STATE_SIZE;
-    if (theFormat == Format::Dat64V1)
+    if (theFormat != Format::Legacy1073Dat)
     {
         BoardDialect anUnusedDialect = BoardDialect::Canonical;
+        const auto fields = Dat64TimeSchema::BoardFields();
+        const auto bytes = ReadTimeRecord(theReader,
+            theReader.SyncBytes(theFormat == Format::Dat64V2
+                ? Dat64TimeSchema::V2Size(aBoardSize, fields) : aBoardSize, "Board"),
+            fields, theFormat);
         aDocument.mCanonicalBoard = BoardToCanonical(
-            theReader.SyncBytes(aBoardSize, "Board"), theFormat, aBoardOffset, anUnusedDialect);
+            bytes, Format::Dat64V1, aBoardOffset, anUnusedDialect);
     }
     else
     {
@@ -1744,7 +1848,7 @@ Document ParsePayload(
         }
     }
 
-    if (theFormat == Format::Dat64V1)
+    if (theFormat != Format::Legacy1073Dat)
     {
         for (std::size_t i = 0; i + 1 < ARRAY_DESCRIPTORS.size(); ++i)
         {
@@ -1797,7 +1901,17 @@ Document ParsePayload(
             aDocument.mParticleSystems.push_back(std::move(aSystem));
         }
 
-        const std::size_t aFixedTailSize = DAT64_FIXED_TAIL_SIZE;
+        std::size_t aFixedTailSize = DAT64_FIXED_TAIL_SIZE;
+        if (theFormat == Format::Dat64V2)
+        {
+            aFixedTailSize += 4 * (
+                Dat64TimeSchema::GetFields(RecordKind::CursorObject).size() +
+                Dat64TimeSchema::GetFields(RecordKind::CursorPreview).size() +
+                Dat64TimeSchema::GetFields(RecordKind::MessageWidget).size() +
+                Dat64TimeSchema::SeedBankFields().size() +
+                Dat64TimeSchema::GetFields(RecordKind::Challenge).size() +
+                Dat64TimeSchema::GetFields(RecordKind::Music).size());
+        }
         if (theReader.Size() < aFixedTailSize)
         {
             Fail(theReader.mPosition, "fixedTail", "文件短于固定尾块");
@@ -1821,9 +1935,14 @@ Document ParsePayload(
             ? aLayout.mLegacySize
             : aLayout.mDat64Size;
         const std::size_t anOffset = theReader.mPosition + 4;
+        const auto fields = Dat64TimeSchema::GetFields(theKind);
+        const auto bytes = ReadTimeRecord(theReader,
+            theReader.SyncBytes(theFormat == Format::Dat64V2
+                ? Dat64TimeSchema::V2Size(aSize, fields) : aSize, theName),
+            fields, theFormat);
         return ToCanonicalRecord(
-            theReader.SyncBytes(aSize, theName),
-            theFormat,
+            bytes,
+            theFormat == Format::Dat64V2 ? Format::Dat64V1 : theFormat,
             theKind,
             anOffset,
             theName);
@@ -1837,9 +1956,14 @@ Document ParsePayload(
         ? LevelSaveFormat::LEGACY_SEED_BANK_SIZE
         : LevelSaveFormat::DAT64_SEED_BANK_SIZE;
     const std::size_t aSeedBankOffset = theReader.mPosition + 4;
+    const auto seedFields = Dat64TimeSchema::SeedBankFields();
+    const auto seedBytes = ReadTimeRecord(theReader,
+        theReader.SyncBytes(theFormat == Format::Dat64V2
+            ? Dat64TimeSchema::V2Size(aSeedBankSize, seedFields) : aSeedBankSize, "SeedBank"),
+        seedFields, theFormat);
     aDocument.mSeedBank = SeedBankToCanonical(
-        theReader.SyncBytes(aSeedBankSize, "SeedBank"),
-        theFormat,
+        seedBytes,
+        theFormat == Format::Dat64V2 ? Format::Dat64V1 : theFormat,
         aSeedBankOffset);
 
     aDocument.mChallenge = ReadFixed(RecordKind::Challenge, "Challenge");
@@ -1867,6 +1991,10 @@ Document ParsePayload(
     }
 
     ValidateReferences(aDocument);
+    if (theFormat == Format::Dat64V2)
+        aDocument.mNanoseconds = std::move(theReader.mNanoseconds);
+    else
+        CaptureLegacyTimes(aDocument);
     return aDocument;
 }
 
@@ -1902,12 +2030,8 @@ Document ParseDat64(std::span<const Byte> theFile, std::uint32_t& theDateEcho)
     {
         Fail(0, "dat64.magic", "不是 PVZDAT64");
     }
-    if (ReadU32At(theFile, 8) != LevelSaveFormat::DAT64_VERSION ||
-        ReadU32At(theFile, 12) != LevelSaveFormat::DAT64_HEADER_SIZE ||
-        ReadU32At(theFile, 16) != LevelSaveFormat::DAT64_AUTHORITY_BUILD ||
-        ReadU32At(theFile, 20) != LevelSaveFormat::DAT64_FLAGS ||
-        ReadU32At(theFile, 36) != LevelSaveFormat::DAT64_SCHEMA_ID ||
-        ReadU64At(theFile, 40) != 0)
+    const bool isV2 = ReadU32At(theFile, 8) == Dat64TimeSchema::VERSION;
+    if (!LevelSaveFormat::IsSupportedDat64Header(theFile))
     {
         Fail(8, "dat64.header", "版本、权威版本、flags、schema 或保留字段错误");
     }
@@ -1917,15 +2041,7 @@ Document ParseDat64(std::span<const Byte> theFile, std::uint32_t& theDateEcho)
         Fail(24, "dat64.payloadSize", "与实际文件长度不一致");
     }
     const auto aPayload = theFile.subspan(LevelSaveFormat::DAT64_HEADER_SIZE);
-    const std::uint32_t aStoredCRC = ReadU32At(theFile, 32);
-    const std::uint32_t anActualCRC = Crc32(aPayload);
-    if (aStoredCRC != anActualCRC)
-    {
-        std::ostringstream aReason;
-        aReason << "CRC32 为 0x" << std::hex << anActualCRC
-                << "，头部记录 0x" << aStoredCRC;
-        Fail(32, "dat64.payloadCRC32", aReason.str());
-    }
+    // The former payload CRC at 0x20 is ignored for both v1 and v2.
     // 现行 11 池语法优先；失败则按“过渡 dat64”方言（2026-09-30 便携构建：
     // 12 池含退役 Trail 池，其余一致）重试一次。
     Reader aReader(aPayload);
@@ -1933,10 +2049,11 @@ Document ParseDat64(std::span<const Byte> theFile, std::uint32_t& theDateEcho)
     {
         try
         {
-            return ParsePayload(aReader, Format::Dat64V1, Dat64Grammar::Current);
+            return ParsePayload(aReader, isV2 ? Format::Dat64V2 : Format::Dat64V1, Dat64Grammar::Current);
         }
         catch (const std::exception& aCurrentError)
         {
+            if (isV2) throw;
             try
             {
                 Reader aRetry(aPayload);
@@ -2002,9 +2119,12 @@ void WriteArray(
     BoardDialect theDialect)
 {
     const RecordLayout& aLayout = LevelSaveFormat::GetRecordLayout(theArray.mKind);
-    const std::size_t aSlotSize = theFormat == Format::Legacy1073Dat
+    const auto timeFields = Dat64TimeSchema::GetFields(theArray.mKind);
+    const std::size_t aV1SlotSize = theFormat == Format::Legacy1073Dat
         ? LegacySlotSizeFor(theDescriptor, theDialect)
         : aLayout.mDat64ArraySlotSize;
+    const std::size_t aSlotSize = theFormat == Format::Dat64V2
+        ? Dat64TimeSchema::V2Size(aV1SlotSize, timeFields) : aV1SlotSize;
     // 记录长度/ID 偏移与 ReadArray 同规则（Coin 尾衬垫；旧方言 Zombie 344）。
     const std::size_t anObjectSize = theFormat == Format::Legacy1073Dat
         ? (theArray.mKind == RecordKind::Zombie &&
@@ -2019,12 +2139,13 @@ void WriteArray(
     for (std::size_t i = 0; i < theArray.mSlots.size(); ++i)
     {
         const SlotSnapshot& aSlot = theArray.mSlots[i];
-        Byte* aDestination = aBlock.data() + i * aSlotSize;
+        std::vector<Byte> aV1Slot(aV1SlotSize, 0);
+        Byte* aDestination = aV1Slot.data();
         if (aSlot.mID & DATA_ARRAY_KEY_MASK)
         {
             const std::vector<Byte> aRecord = FromCanonicalRecord(
                 aSlot.mCanonicalRecord,
-                theFormat,
+                theFormat == Format::Dat64V2 ? Format::Dat64V1 : theFormat,
                 theArray.mKind);
             std::memcpy(aDestination, aRecord.data(), aRecord.size());
         }
@@ -2037,9 +2158,11 @@ void WriteArray(
                 std::min<std::size_t>(anObjectSize, aSlot.mCanonicalRecord.size()));
         }
         WriteU32At(
-            std::span<Byte>(aDestination, aSlotSize),
+            std::span<Byte>(aDestination, aV1SlotSize),
             anObjectSize,
             aSlot.mID);
+        const auto wireSlot = WriteTimeRecord(theWriter, aV1Slot, timeFields, theFormat);
+        std::memcpy(aBlock.data() + i * aSlotSize, wireSlot.data(), wireSlot.size());
     }
     theWriter.SyncBytes(aBlock);
 }
@@ -2050,11 +2173,13 @@ std::vector<Byte> WritePayload(
 {
     BoardDialect aDialect = BoardDialect::Canonical;
     Writer aWriter;
+    aWriter.mNanoseconds = &theDocument.mNanoseconds;
     // Document image IDs use modern enum space. Supplement IDs are remapped
     // below when writing the legacy exe space.
     const std::vector<Byte> aBoard =
-        BoardFromCanonical(theDocument.mCanonicalBoard, theFormat, aDialect);
-    aWriter.SyncBytes(aBoard);
+        BoardFromCanonical(theDocument.mCanonicalBoard,
+            theFormat == Format::Dat64V2 ? Format::Dat64V1 : theFormat, aDialect);
+    aWriter.SyncBytes(WriteTimeRecord(aWriter, aBoard, Dat64TimeSchema::BoardFields(), theFormat));
 
     for (std::size_t i = 0; i + 1 < ARRAY_DESCRIPTORS.size(); ++i)
     {
@@ -2094,18 +2219,21 @@ std::vector<Byte> WritePayload(
         {
             const RecordLayout& aLayout =
                 LevelSaveFormat::GetRecordLayout(RecordKind::ReanimatorTrackInstance);
+            const auto fields = Dat64TimeSchema::GetFields(RecordKind::ReanimatorTrackInstance);
             const std::size_t aTrackSize = theFormat == Format::Legacy1073Dat
                 ? aLayout.mLegacySize
-                : aLayout.mDat64Size;
+                : theFormat == Format::Dat64V2
+                    ? Dat64TimeSchema::V2Size(aLayout.mDat64Size, fields) : aLayout.mDat64Size;
             std::vector<Byte> aTrackBlock(
                 aReanimation.mCanonicalTracks.size() * aTrackSize,
                 0);
             for (std::size_t track = 0; track < aReanimation.mCanonicalTracks.size(); ++track)
             {
-                const std::vector<Byte> aTrack = FromCanonicalRecord(
+                const std::vector<Byte> aV1Track = FromCanonicalRecord(
                     aReanimation.mCanonicalTracks[track],
-                    theFormat,
+                    theFormat == Format::Dat64V2 ? Format::Dat64V1 : theFormat,
                     RecordKind::ReanimatorTrackInstance);
+                const auto aTrack = WriteTimeRecord(aWriter, aV1Track, fields, theFormat);
                 std::memcpy(
                     aTrackBlock.data() + track * aTrackSize,
                     aTrack.data(),
@@ -2129,16 +2257,19 @@ std::vector<Byte> WritePayload(
 
     const auto WriteFixed = [&](RecordKind theKind, const std::vector<Byte>& theRecord)
     {
-        aWriter.SyncBytes(FromCanonicalRecord(theRecord, theFormat, theKind));
+        const auto bytes = FromCanonicalRecord(theRecord,
+            theFormat == Format::Dat64V2 ? Format::Dat64V1 : theFormat, theKind);
+        aWriter.SyncBytes(WriteTimeRecord(aWriter, bytes, Dat64TimeSchema::GetFields(theKind), theFormat));
     };
     WriteFixed(RecordKind::CursorObject, theDocument.mCursorObject);
     WriteFixed(RecordKind::CursorPreview, theDocument.mCursorPreview);
     WriteFixed(RecordKind::MessageWidget, theDocument.mMessageWidget);
 
-    if (theFormat == Format::Dat64V1)
+    if (theFormat != Format::Legacy1073Dat)
     {
         // SeedBank canonical 里已带日期戳回记（见 Parse*），整块写出。
-        aWriter.SyncBytes(theDocument.mSeedBank);
+        aWriter.SyncBytes(WriteTimeRecord(aWriter, theDocument.mSeedBank,
+            Dat64TimeSchema::SeedBankFields(), theFormat));
     }
     else
     {
@@ -2157,6 +2288,8 @@ std::vector<Byte> WritePayload(
         WriteU64At(anEnd, 0, LevelSaveFormat::DAT64_END_MARKER);
         aWriter.SyncBytes(anEnd);
     }
+    if (theFormat == Format::Dat64V2 && aWriter.mTimeIndex != theDocument.mNanoseconds.size())
+        Fail("内部错误：写出时间字段多余");
     return aWriter.mData;
 }
 
@@ -2179,13 +2312,15 @@ std::vector<Byte> WriteFileImage(
     else
     {
         aFile.Bytes(LevelSaveFormat::DAT64_MAGIC);
-        aFile.U32(LevelSaveFormat::DAT64_VERSION);
+        aFile.U32(theFormat == Format::Dat64V2 ? Dat64TimeSchema::VERSION : LevelSaveFormat::DAT64_V1_VERSION);
         aFile.U32(LevelSaveFormat::DAT64_HEADER_SIZE);
         aFile.U32(LevelSaveFormat::DAT64_AUTHORITY_BUILD);
-        aFile.U32(LevelSaveFormat::DAT64_FLAGS);
+        aFile.U32(theFormat == Format::Dat64V2 ? Dat64TimeSchema::FLAGS : LevelSaveFormat::DAT64_V1_FLAGS);
         aFile.U64(aPayload.size());
-        aFile.U32(Crc32(aPayload));
-        aFile.U32(LevelSaveFormat::DAT64_SCHEMA_ID);
+        // v1 exports retain a CRC for older v1 readers; current v2 reserves
+        // the slot as zero. Neither version requires a matching CRC on input.
+        aFile.U32(theFormat == Format::Dat64V1 ? Crc32(aPayload) : 0);
+        aFile.U32(theFormat == Format::Dat64V2 ? Dat64TimeSchema::SCHEMA_ID : LevelSaveFormat::DAT64_V1_SCHEMA_ID);
         aFile.U64(0);
         if (aFile.Position() != LevelSaveFormat::DAT64_HEADER_SIZE)
         {
@@ -2611,9 +2746,13 @@ std::vector<Byte> WriteUserV13Image(const UserDocument& theDocument)
 
 const char* FormatName(Format theFormat)
 {
-    return theFormat == Format::Legacy1073Dat
-        ? "PvZ 1.2.0.1073 game*.dat"
-        : "Legacy dat64 v1";
+    switch (theFormat)
+    {
+    case Format::Legacy1073Dat: return "PvZ 1.2.0.1073 game*.dat";
+    case Format::Dat64V1: return "Legacy dat64 v1";
+    case Format::Dat64V2: return "Nanosecond dat64 v2";
+    }
+    return "Unknown";
 }
 
 Format DetectFormat(const std::filesystem::path& thePath)
@@ -2627,7 +2766,8 @@ Format DetectFormat(const std::filesystem::path& thePath)
     {
         std::uint32_t aDateEcho = 0;
         ParseDat64(aData, aDateEcho);
-        return Format::Dat64V1;
+        return ReadU32At(aData, 8) == Dat64TimeSchema::VERSION
+            ? Format::Dat64V2 : Format::Dat64V1;
     }
     if (aData.size() >= 16 && ReadU32At(aData, 0) == 12 &&
         ReadU32At(aData, 4) == LEGACY_MAGIC)
@@ -2678,7 +2818,8 @@ std::filesystem::path DefaultOutputPath(
 
 ConversionResult ConvertFile(
     const std::filesystem::path& theInput,
-    const std::filesystem::path& theOutput)
+    const std::filesystem::path& theOutput,
+    const ConversionOptions& theOptions)
 {
     const std::filesystem::path anInput = std::filesystem::absolute(theInput).lexically_normal();
     const std::filesystem::path anOutput = std::filesystem::absolute(theOutput).lexically_normal();
@@ -2695,7 +2836,10 @@ ConversionResult ConvertFile(
             LevelSaveFormat::DAT64_MAGIC.end(),
             aSource.begin()))
     {
-        aSourceFormat = Format::Dat64V1;
+        // Parse below checks the complete header before any output is opened.
+        aSourceFormat = aSource.size() >= LevelSaveFormat::DAT64_HEADER_SIZE &&
+            ReadU32At(aSource, 8) == Dat64TimeSchema::VERSION
+            ? Format::Dat64V2 : Format::Dat64V1;
     }
     else if (aSource.size() >= 16 && ReadU32At(aSource, 0) == 12 &&
              ReadU32At(aSource, 4) == LEGACY_MAGIC)
@@ -2709,10 +2853,11 @@ ConversionResult ConvertFile(
 
     // Full parse and validation happens before any output file is opened.
     std::uint32_t aDateEcho = 0;
-    const Document aDocument = Parse(aSource, aSourceFormat, aDateEcho);
-    const Format aTargetFormat = aSourceFormat == Format::Legacy1073Dat
-        ? Format::Dat64V1
-        : Format::Legacy1073Dat;
+    Document aDocument = Parse(aSource, aSourceFormat, aDateEcho);
+    const Format aTargetFormat = theOptions.mTargetFormat.value_or(
+        aSourceFormat == Format::Legacy1073Dat ? Format::Dat64V2 : Format::Legacy1073Dat);
+    if (aTargetFormat != Format::Dat64V2)
+        QuantizeDocumentTimes(aDocument, theOptions.mRoundTimeToNearestTick);
     const std::vector<Byte> aTarget = WriteFileImage(aDocument, aTargetFormat, aDateEcho);
 
     // Parse the generated target with the opposite grammar and compare every

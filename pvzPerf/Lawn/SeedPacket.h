@@ -11,7 +11,7 @@ class SeedPacket : public GameObject
 {
 public:
     Sexy::TimeCounter                 mRefreshCounter;                            //+0x24
-    int                 mRefreshTime;                               //+0x28
+    Sexy::TimeCounter                 mRefreshTime;                               //+0x28
     int                 mIndex;                                     //+0x2C
     int                 mOffsetX;                                   //+0x30
     SeedType            mPacketType;                                //+0x34

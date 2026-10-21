@@ -80,7 +80,7 @@ public:
 	bool						mPaused;							//+0x40
 	mutable bool				mMusicDisabled;						//+0x41
 	Sexy::TimeCounter							mFadeOutCounter;					//+0x44
-	int							mFadeOutDuration;					//+0x48
+	Sexy::TimeCounter							mFadeOutDuration;					//+0x48
 
 public:
 	Music();

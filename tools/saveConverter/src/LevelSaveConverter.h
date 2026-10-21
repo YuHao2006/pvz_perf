@@ -1,5 +1,6 @@
 #pragma once
 #include <filesystem>
+#include <optional>
 #include <string>
 
 namespace PvzDat64
@@ -7,7 +8,15 @@ namespace PvzDat64
 enum class Format
 {
     Legacy1073Dat,
-    Dat64V1
+    Dat64V1,
+    Dat64V2
+};
+
+struct ConversionOptions
+{
+    // With no explicit target, legacy inputs become v2; DAT64 inputs become legacy.
+    std::optional<Format> mTargetFormat;
+    bool mRoundTimeToNearestTick = false;
 };
 
 struct ConversionResult
@@ -46,7 +55,8 @@ std::filesystem::path DefaultOutputPath(
     Format theInputFormat);
 ConversionResult ConvertFile(
     const std::filesystem::path& theInput,
-    const std::filesystem::path& theOutput);
+    const std::filesystem::path& theOutput,
+    const ConversionOptions& theOptions = {});
 const char* FormatName(Format theFormat);
 
 UserFormat DetectUserFormat(const std::filesystem::path& thePath);

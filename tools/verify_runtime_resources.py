@@ -8,10 +8,13 @@ images and descriptors, and never creates or changes a package or source file.
 from __future__ import annotations
 
 import argparse
+import io
+import json
 from pathlib import Path
 import posixpath
 import struct
 import zipfile
+from PIL import Image
 
 import build_numeric_runtime_pak64 as pak
 import compile_numeric_fonts as fonts
@@ -104,15 +107,56 @@ def verify(package: Path, root: Path = ROOT) -> dict:
         tags = fonts.tag_registry(fonts.load_corpus(root / "assets/definitions/fonts"))
         expected, _, _, _ = resources.compile_manifest(
             root, (root / "assets/definitions/resources.json").read_bytes(), input_paths,
-            root / "pvzPerf/Sexy.TodLib/generated/image_symbol_ids.bin", tags)
+            resources.program_symbols_path(root), tags)
         actual = archive.read(index[pak.RESOURCE_PATH])
+        definitions_v5 = all(struct.unpack_from("<I", archive.read(index[name]))[0] in
+                             (0xDEADFED9, 0xDEADFEDA)
+                             for name in numeric if pak.numeric_kind(name) in ("reanim", "particles"))
+        if definitions_v5:
+            sidecar = resources.program_symbols_path(root)
+            symbol_names = dict(resources.read_symbols(sidecar)[0])
+            roots = resources.code_image_roots(root, symbol_names)
+            _, mapping, _, _ = resources.compile_manifest(
+                root, (root / "assets/definitions/resources.json").read_bytes(), input_paths, sidecar, tags)
+            expected, _, _, _ = resources.prune_definition_images(
+                expected, mapping, {symbol for symbol, name in symbol_names.items() if name in roots})
         pak.require(actual == expected, "resources.compiled differs from current author manifest")
         available = {name for name, info in index.items() if not info.is_dir()}
         references, image_ids, required_fonts = set(), set(), set()
+        bindings = audit["definition_images"]
+        if definitions_v5:
+            pak.require(set(bindings) == {name for name in numeric
+                                         if pak.numeric_kind(name) in ("reanim", "particles")},
+                        "Program definition image bindings do not cover the numeric corpus")
+            pak.require({name for name in available if name.endswith(".atlas.png")} ==
+                        {image for image in bindings.values() if image},
+                        "Packaged atlas images differ from program bindings")
+        report_path = package.with_name("manifest.json")
+        report_bindings = {}
+        if report_path.exists():
+            report_bindings = json.loads(report_path.read_text(encoding="utf-8")).get("definition_atlases", {})
         for name in sorted(numeric):
             data = expected if name == pak.RESOURCE_PATH else archive.read(index[name])
             required_fonts.update(pak.validate_numeric(
-                name, data, audit["registries"], references, image_ids=image_ids))
+                name, data, audit["registries"], references, image_ids=image_ids,
+                atlas_path=bindings.get(name)))
+            if pak.numeric_kind(name) in ("reanim", "particles") and struct.unpack_from("<I", data)[0] in (0xDEADFED9, 0xDEADFEDA):
+                atlas = pak.parse_definition_atlas(name, data)
+                pak.require(name in bindings, f"Missing program definition image binding: {name}")
+                atlas_path = bindings[name]
+                if name in report_bindings:
+                    pak.require(report_bindings[name]["atlas_path"] == atlas_path,
+                                f"Program/report definition atlas binding differs: {name}")
+                if atlas["count"]:
+                    pak.require(bool(atlas_path), f"Nonempty definition has no program atlas binding: {name}")
+                    pak.require(atlas_path in index, f"Missing definition atlas: {atlas_path}")
+                    with Image.open(io.BytesIO(archive.read(index[atlas_path]))) as image:
+                        pak.require(image.format == "PNG" and image.mode == "RGBA" and
+                                    image.size == (atlas["width"], atlas["height"]),
+                                    f"Invalid definition atlas: {atlas_path}")
+                        image.load()
+                else:
+                    pak.require(not atlas_path, f"Empty definition has an atlas binding: {name}")
         pak.require(required_fonts <= numeric,
                     f"Missing numeric fonts: {sorted(required_fonts - numeric)}")
         resolved = set()
@@ -127,6 +171,8 @@ def verify(package: Path, root: Path = ROOT) -> dict:
             "numeric_counts": counts,
             "physical_references": len(resolved),
             "compiled_image_ids": len(image_ids),
+            "definition_v5": definitions_v5,
+            "definition_atlases": sum(kind == "atlas" for kind, _ in references),
             "preserved_menu_images": len(MENU_IMAGES) + len(BACK_BUTTONS),
             "preserved_menu_payload_bytes": sum(index[path].file_size
                                                 for _, _, _, path, _ in MENU_IMAGES),

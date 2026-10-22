@@ -30,13 +30,13 @@ enum VertexConstant : unsigned {
     Projection = 0, // (2/viewportW, -2/viewportH, -1-1/viewportW, 1+1/viewportH)
 };
 enum PixelConstant : unsigned {
-    SourceRect = 0,       // image/font/present only: (atlasX, atlasY, logicalWidth, logicalHeight)
+    SourceRect = 0,       // image/font/present only: (0, 0, textureWidth, textureHeight)
     SourceTexture = 1,    // (1/physicalWidth, 1/physicalHeight, 0, 0)
     SourceFlags = 2,      // image/font only: (generated/premultiplied, opaque, alphaEdge, filterKind)
     Sampling = 3,         // scene uses only w=targetPremult; present uses x=linear
     Modes = 4,            // (coverageInput, fontForceWhite, composeColorOnly, tintAllLE255)
     Rectangle = 5,        // (sourceOffsetX, sourceOffsetY, outputWidth, outputHeight)
-    AlphaRect = 6,        // (atlasX, atlasY, logicalOriginalWidth, logicalOriginalHeight)
+    AlphaRect = 6,        // (0, 0, originalMaskWidth, originalMaskHeight)
     AlphaTexture = 7,     // (1/physicalWidth, 1/physicalHeight, 0, 0)
     PackedColor = 8,      // (R,G,B,A), integer bytes decoded on CPU from packed ARGB
     Cells = 9,            // (columns, rows, floor(outputWidth/columns), floor(outputHeight/rows))
@@ -74,8 +74,8 @@ enum SceneFlag : unsigned {
 struct Vertex {
     float x, y;       // POSITION0 FLOAT2, viewport-local pixel EDGES, top-down
     float r, g, b, a; // COLOR0 FLOAT4 (not normalized packed bytes)
-    float u, v;       // TEXCOORD0 FLOAT2, logical image UV
-    Float4 rect;      // TEXCOORD1 FLOAT4, (atlasX,atlasY,logicalWidth,logicalHeight)
+    float u, v;       // TEXCOORD0 FLOAT2, source texture UV
+    Float4 rect;      // TEXCOORD1 FLOAT4, (0,0,textureWidth,textureHeight)
     float flags;      // TEXCOORD2 FLOAT1, exact integer 0..255; see SceneFlag
 };
 static_assert(sizeof(Float4) == 16 && sizeof(Vertex) == 52);
@@ -87,8 +87,8 @@ static_assert(offsetof(Vertex, rect) == 32 && offsetof(Vertex, flags) == 48);
 // generated+2*opaque+4*edge+8*filterKind+32*independent+64*linear+128*repeat
 // into Vertex.flags, never the original 32-bit word. Duplicate rect and flags
 // on EVERY vertex of each triangle; scenePS rounds them floor(value+0.5).
-// Scene batches share physical texture storage/blend/clip, not logical rect
-// or flags. SourceTexture is physical-page inverse extent. Scene uniforms
+// Scene batches share texture storage/blend/clip, not flags.
+// SourceTexture is the source texture's inverse extent. Scene uniforms
 // Sampling.w=targetPremult and Modes.x=coverage remain per batch.
 // CPU validates repeat coordinates per axis, including all triangle vertices:
 // abs(floor(uv*logicalExtent))+3*logicalExtent+2 <= 16777216.

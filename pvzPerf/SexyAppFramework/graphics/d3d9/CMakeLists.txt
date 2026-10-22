@@ -29,7 +29,7 @@ pvz_d3d9_shader(font_ps fontPS ps_3_0 font_ps)
 pvz_d3d9_shader(present_ps presentPS ps_3_0 present_ps)
 add_custom_target(sexy_d3d9_shaders DEPENDS ${shaderOutputs})
 add_library(sexy_d3d9 STATIC D3d9Context.cpp D3d9Renderer.cpp
-    D3d9Atlas.cpp D3d9ImageOps.cpp ../../effect/ScaleEffectSizing.cpp)
+    D3d9ImageOps.cpp ../../effect/ScaleEffectSizing.cpp)
 include(CheckIPOSupported)
 check_ipo_supported(RESULT d3d9IpoSupported OUTPUT d3d9IpoError LANGUAGES CXX)
 if(NOT d3d9IpoSupported)

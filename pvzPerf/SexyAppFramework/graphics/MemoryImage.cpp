@@ -142,8 +142,6 @@ MemoryImage::MemoryImage(const MemoryImage& theMemoryImage) :
 MemoryImage::~MemoryImage()
 {	
 	mImageType = ImageType::MemoryImage;
-	mCustomDestroy = nullptr;
-	mMaintenanceHook = nullptr;
 	mApp->RemoveMemoryImage(this);
 	
 	delete [] mBits;
@@ -1120,7 +1118,6 @@ void MemoryImage::PurgeBits()
 	// The decoder owns pixels until the GPU upload has taken its snapshot.
 	if (mD3DData == NULL)
 	{
-		NotifyMaintenance(ImageMaintenanceOperation::PurgeBits);
 		return;
 	}
 	
@@ -1136,7 +1133,6 @@ void MemoryImage::PurgeBits()
 		delete [] mColorTable;
 		mColorTable = NULL;
 	}	
-	NotifyMaintenance(ImageMaintenanceOperation::PurgeBits);
 }
 
 void MemoryImage::DeleteSWBuffers()
@@ -1149,20 +1145,17 @@ void MemoryImage::DeleteSWBuffers()
 
 	delete [] mRLAlphaData;
 	mRLAlphaData = NULL;
-	NotifyMaintenance(ImageMaintenanceOperation::DeleteSWBuffers);
 }
 
 void MemoryImage::Delete3DBuffers()
 {
 	mApp->Remove3DData(this);
-	NotifyMaintenance(ImageMaintenanceOperation::Delete3DBuffers);
 }
 
 void MemoryImage::DeleteExtraBuffers()
 {
 	DeleteSWBuffers();
 	Delete3DBuffers();
-	NotifyMaintenance(ImageMaintenanceOperation::DeleteExtraBuffers);
 }
 
 void MemoryImage::ReInit()
@@ -1173,7 +1166,6 @@ void MemoryImage::ReInit()
 			
 	if (mPurgeBits)
 		PurgeBits();
-	NotifyMaintenance(ImageMaintenanceOperation::ReInit);
 }
 
 void MemoryImage::DeleteNativeData()
@@ -1183,7 +1175,6 @@ void MemoryImage::DeleteNativeData()
 
 	delete [] mRLAdditiveData;
 	mRLAdditiveData = NULL;	
-	NotifyMaintenance(ImageMaintenanceOperation::DeleteNativeData);
 }
 
 void MemoryImage::AdoptDecodedImage(std::unique_ptr<ImageLib::Image> image,bool commitBits)

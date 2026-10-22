@@ -302,38 +302,39 @@ struct TrackIdEntry final {
                                    const std::filesystem::path& output,
                                    std::string* error = nullptr);
 
-// Production IDT5 records use <stem>.compiled and retain the DEADFED7 cookie.
+// Offline IDT5 source records use <stem>.source-record and the DEADFED7 envelope.
 // Outer header: u32 cookie, payloadSize, crc32(payload), then payload.
 // Payload (all u32/f32 little-endian):
-//   magic=0x35544449, trackTableHash, imageRegistryHash, fontRegistryHash,
+//   magic=0x35544449, trackTableHash, imageHash=0, fontRegistryHash,
 //   fpsBits, trackCount;
 //   per track: trackId, frameCount, elementSize=32, textMode (0/1),
 //              frameCount * {x,y,kx,ky,sx,sy,cel,alpha} f32;
-//   per track, per frame: imageId, fontId;
+//   per track, per frame: sourceImageHandle, fontId;
 //              ONLY textMode=1: UI text byte length + bytes (sparse/inherited).
 //   segmentTrackCount; per segment track: trackIndex, segmentCount;
 //              per segment: start,end,targetType,actionTrackId,rateBits,loop,
 //                           runStart,runEnd (both bounds pairs end-exclusive).
 // Mode 0 has no text/name length slots. Attacher routing and clear markers
-// compile to numeric segments, never text. Numeric transforms/symbols stay raw.
-using SymbolIdRegistry = std::map<std::string, std::uint32_t>;
+// compile to numeric segments, never text. Image handles index image_sources.txt
+// and are replaced with inline rectangles by the final offline atlas compiler.
+using SourceImageHandles = std::map<std::string, std::uint32_t>;
+using FontIdRegistry = std::map<std::string, std::uint32_t>;
 // sidecar（'MYSI' 格式：magic+count+{id,len,bytes}*）；fileHash=文件字节
-// crc32，写进每条 v4 记录防注册表/记录错配
-[[nodiscard]] bool LoadSymbolIdRegistry(const std::filesystem::path& sidecar,
-                                        SymbolIdRegistry& out,
+// crc32，写进每条源记录防font注册表/记录错配
+[[nodiscard]] bool LoadFontIdRegistry(const std::filesystem::path& sidecar,
+                                        FontIdRegistry& out,
                                         std::uint32_t* fileHash = nullptr,
                                         std::string* error = nullptr);
 [[nodiscard]] std::vector<std::uint8_t> SerializeV4(
     const RawReanim& source, const std::vector<TrackIdEntry>& table,
     const std::vector<ReanimTypeMapEntry>& typeMap,
-    const SymbolIdRegistry& imageSymbols, const SymbolIdRegistry& fontSymbols,
-    std::uint32_t imageRegistryHash, std::uint32_t fontRegistryHash);
+    const SourceImageHandles& sourceImageHandles, const FontIdRegistry& fontSymbols,
+    std::uint32_t fontRegistryHash);
 [[nodiscard]] bool WriteCompiledV4(const RawReanim& source,
                                    const std::vector<TrackIdEntry>& table,
                                    const std::vector<ReanimTypeMapEntry>& typeMap,
-                                   const SymbolIdRegistry& imageSymbols,
-                                   const SymbolIdRegistry& fontSymbols,
-                                   std::uint32_t imageRegistryHash,
+                                   const SourceImageHandles& sourceImageHandles,
+                                   const FontIdRegistry& fontSymbols,
                                    std::uint32_t fontRegistryHash,
                                    const std::filesystem::path& output,
                                    std::string* error = nullptr);

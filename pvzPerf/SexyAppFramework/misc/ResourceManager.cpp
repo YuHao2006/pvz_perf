@@ -250,12 +250,17 @@ bool ResourceManager::ParseNumericResourcesFile(const std::string& theFilename)
     const unsigned registryCrc = input.U32(), payloadCrc = input.U32(), payloadBytes = input.U32();
     if (!input.valid || magic != 0x4353524Eu || version != 1 || baseCount != unsigned(ResourceId::RESOURCE_ID_MAX) ||
         symbolCount != std::size(gImageSymbolResourceSlots) ||
-        slotCount != NUMERIC_RESOURCE_SLOT_COUNT || recordCount != slotCount ||
+        slotCount != NUMERIC_RESOURCE_SLOT_COUNT || recordCount > slotCount ||
         registryCrc != IMAGE_SYMBOL_REGISTRY_CRC || payloadBytes != input.size - input.pos)
         return Fail(ResourceFailure::ManifestHeader,RESOURCE_SLOT_NONE,magic,input.pos);
     const unsigned actualCrc=crc32(0, input.data + input.pos, payloadBytes);
     if (actualCrc != payloadCrc)
         return Fail(ResourceFailure::ManifestChecksum,RESOURCE_SLOT_NONE,actualCrc,input.pos);
+    unsigned liveSlotCount=0;
+    for (unsigned slot=0;slot<slotCount;++slot)
+        if (ResourceKindForSlot(slot)!=3) ++liveSlotCount;
+    if (recordCount!=liveSlotCount)
+        return Fail(ResourceFailure::ManifestHeader,RESOURCE_SLOT_NONE,recordCount,input.pos);
 
     std::vector<std::unique_ptr<BaseRes>> owned;
     owned.reserve(recordCount);
@@ -366,16 +371,17 @@ bool ResourceManager::ParseNumericResourcesFile(const std::string& theFilename)
     if (!input.Complete())
         return Fail(ResourceFailure::ManifestTrailing,RESOURCE_SLOT_NONE,0,input.pos);
     for (unsigned slot=0;slot<slots.size();++slot)
-        if (slots[slot] == nullptr) return Fail(ResourceFailure::MissingSlot,slot,0,input.pos);
+        if (slots[slot] == nullptr && ResourceKindForSlot(slot)!=3)
+            return Fail(ResourceFailure::MissingSlot,slot,0,input.pos);
     for (unsigned symbol = 1; symbol < symbolCount; ++symbol)
-        if (imageSlots[symbol] == nullptr)
+        if (imageSlots[symbol] == nullptr && ResourceSlotForImageSymbol(symbol)!=RESOURCE_SLOT_NONE)
             return Fail(ResourceFailure::MissingSymbol,RESOURCE_SLOT_NONE,symbol,input.pos);
     for (BaseRes* res : slots)
     {
-        if (res->mType != ResType_Font) continue;
+        if (!res || res->mType != ResType_Font) continue;
         FontRes* font = static_cast<FontRes*>(res);
         if (font->mReferenceId != RESOURCE_SLOT_NONE &&
-            slots[font->mReferenceId]->mType != ResType_Font)
+            (!slots[font->mReferenceId] || slots[font->mReferenceId]->mType != ResType_Font))
             return Fail(ResourceFailure::FontReferenceType,res->mId,font->mReferenceId,input.pos);
     }
     // Publish all indexes together after every bounded descriptor has validated.
@@ -881,6 +887,10 @@ _Font* ResourceManager::GetFont(unsigned theId)
 
 SharedImageRef ResourceManager::GetImageThrow(unsigned theId)
 {
+	// Generated group extractors retain stable base IDs for retired definition
+	// images; these globals are deliberately empty in the v5 resource closure.
+	if (theId<NUMERIC_RESOURCE_SLOT_COUNT && ResourceKindForSlot(theId)==3)
+		return {};
 	BaseRes* aBase = GetResourceBySlot(theId);
 	if (aBase != nullptr && aBase->mType == ResType_Image)
 	{

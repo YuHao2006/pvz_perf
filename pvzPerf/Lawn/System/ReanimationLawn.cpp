@@ -174,7 +174,8 @@ void CollectReanimationFilters(FilterPrebuildSources& sources, ReanimationType t
 	if (!gReanimatorDefArray ||
 		!gReanimatorDefArray[static_cast<int>(type)].mTracks.tracks)
 		throw std::logic_error("ReanimatorCache: prebuild requires loaded animation definitions");
-	const auto& tracks = gReanimatorDefArray[static_cast<int>(type)].mTracks;
+	const auto& definition = gReanimatorDefArray[static_cast<int>(type)];
+	const auto& tracks = definition.mTracks;
 	for (int t = 0; t < tracks.count; ++t)
 	{
 		const auto& track = tracks.tracks[t];
@@ -187,9 +188,12 @@ void CollectReanimationFilters(FilterPrebuildSources& sources, ReanimationType t
 			continue;
 		for (int f = 0; f < track.mTransforms.count; ++f)
 		{
-			Image* image = track.mTransforms.mTransforms[f].mImage;
-			if (image)
-				sources[image] |= 1u << effect;
+			if (track.mTransforms.mTransforms[f].mImageRegion.mWidth)
+			{
+				// Every image region in this definition uses the same atlas.
+				sources[definition.mAtlas.image.get()] |= 1u << effect;
+				return;
+			}
 		}
 	}
 }
@@ -228,19 +232,14 @@ void PrebuildGameplayFilters()
 	sources[IMAGE_PACKET_PLANTS] |=
 		(1u << FILTER_EFFECT_WASHED_OUT) | (1u << FILTER_EFFECT_LESS_WASHED_OUT);
 
-	unsigned int count = 0;
-	unsigned long long pixels = 0;
 	for (const auto& [image, mask] : sources)
 	{
 		for (int effect = 0; effect < NUM_FILTER_EFFECTS; ++effect)
 		{
 			if (!(mask & (1u << effect))) continue;
 			FilterEffectPrebuildImage(image, static_cast<FilterEffect>(effect));
-			++count;
-			pixels += static_cast<unsigned long long>(image->mWidth) * image->mHeight;
 		}
 	}
-	TodLog("cache prebuild: filter-images=%u filter-pixels=%llu", count, pixels);
 }
 }
 

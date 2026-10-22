@@ -13,18 +13,102 @@
 #include "DefinitionCacheReader.h"
 #include <zlib.h> // CRC32 is part of the definition schema hash; no inflate/deflate is used here.
 #include "paklib/PakInterface.h"
+#include "graphics/DDImage.h"
+#include "graphics/AtlasImageRegion.h"
+#include "generated/DefinitionImageBindings.h"
+#include <climits>
+#include <limits>
+#include <iterator>
+#include <mutex>
+#include <unordered_map>
+
+namespace
+{
+std::shared_ptr<Sexy::ResidentImage> LoadSharedDefinitionAtlas(const std::string& path,
+    unsigned width,unsigned height)
+{
+    // Loading workers and the main-thread early animation can request the same
+    // PNG concurrently. Publish only a fully decoded image, once per live path.
+    static std::mutex mutex;
+    static std::unordered_map<std::string,std::weak_ptr<Sexy::ResidentImage>> images;
+    std::lock_guard lock(mutex);
+    auto& entry=images[path];
+    auto image=entry.lock();
+    if (!image)
+    {
+        image=Sexy::ResidentImage::DecodePng(path);
+        if (!image || image->mWidth!=int(width) || image->mHeight!=int(height))
+            throw std::runtime_error("definition atlas PNG dimensions mismatch: "+path);
+        entry=image;
+    }
+    else if (image->mWidth!=int(width) || image->mHeight!=int(height))
+        throw std::runtime_error("shared definition atlas dimensions disagree: "+path);
+    return image;
+}
+}
+
+DefinitionAtlas DefinitionLoadAtlas(std::span<const std::uint8_t> payload,
+    std::size_t& position, std::uint32_t magic)
+{
+    const auto u32 = [&]() {
+        if (position > payload.size() || payload.size()-position < 4)
+            throw std::runtime_error("truncated definition atlas");
+        std::uint32_t value;
+        std::memcpy(&value,payload.data()+position,4);
+        position+=4;
+        return value;
+    };
+    if (u32()!=magic) throw std::runtime_error("definition atlas format mismatch");
+    const auto width=u32(),height=u32();
+    if (width>INT_MAX || height>INT_MAX || ((width==0)!=(height==0)))
+        throw std::runtime_error("invalid definition atlas dimensions");
+    return {nullptr,int(width),int(height)};
+}
+
+DefinitionImageRegion DefinitionReadImageRegion(std::span<const std::uint8_t> payload,
+    std::size_t& position, const DefinitionAtlas& atlas)
+{
+    if (position>payload.size() || payload.size()-position<24)
+        throw std::runtime_error("truncated definition image rectangle");
+    std::uint32_t words[6];
+    std::memcpy(words,payload.data()+position,sizeof(words));
+    position+=sizeof(words);
+    if (std::all_of(std::begin(words),std::end(words),[](auto word){return word==0;}))
+        return {};
+    if (std::any_of(std::begin(words),std::end(words),[](auto word){return word>INT_MAX;}))
+        throw std::runtime_error("definition image rectangle integer overflow");
+    DefinitionImageRegion r{int(words[0]),int(words[1]),int(words[2]),int(words[3]),int(words[4]),int(words[5])};
+    if (!Sexy::IsValidAtlasImageRegion({r.mX,r.mY,r.mWidth,r.mHeight,atlas.width,atlas.height,r.mRows,r.mCols}) ||
+        r.mX<2 || r.mY<2 || uint64_t(r.mX)+r.mWidth+2>unsigned(atlas.width) ||
+        uint64_t(r.mY)+r.mHeight+2>unsigned(atlas.height))
+        throw std::runtime_error("invalid definition image rectangle");
+    return r;
+}
+
+void DefinitionBindAtlas(DefinitionAtlas& atlas,const std::string& compiledPath)
+{
+    if (atlas.width==0)
+    {
+        atlas.image.reset();
+        return;
+    }
+    std::string normalized=compiledPath;
+    std::replace(normalized.begin(),normalized.end(),'\\','/');
+    std::transform(normalized.begin(),normalized.end(),normalized.begin(),[](unsigned char c) {
+        return c>='A' && c<='Z' ? char(c-'A'+'a') : char(c);
+    });
+    const auto& bindings=DefinitionImageBindings::Bindings;
+    const auto found=std::lower_bound(bindings.begin(),bindings.end(),std::string_view(normalized),
+        [](const auto& binding,std::string_view path){return binding.definition<path;});
+    if (found==bindings.end() || found->definition!=normalized || found->image.empty())
+        throw std::runtime_error("definition atlas binding missing: "+normalized);
+    atlas.image=LoadSharedDefinitionAtlas(std::string(found->image),atlas.width,atlas.height);
+}
 
 static void DefinitionFillWithDefaults(DefMap* theDefMap, void* theDefinition);
-static void* DefinitionReadCompiledPayload(void* theCompiledBuffer, size_t theCompiledBufferSize, size_t& theDataSize, const SexyString& theCompiledFilePath);
+static void* DefinitionReadCompiledPayload(void* theCompiledBuffer, size_t theCompiledBufferSize, size_t& theDataSize);
 static bool DefMapReadFromCache(DefinitionCacheReader& reader, DefMap* theDefMap, void* theDefinition);
 static void DefinitionFreeArrayField(DefinitionArrayDef* theArray, DefMap* theDefMap);
-
-static void DefinitionTraceFileEvent(DefinitionReadEvent event, const SexyString& path,
-    std::uint64_t actual, std::uint64_t expected)
-{
-    TodTrace("%u %s %llu %llu\n",static_cast<unsigned int>(event),path.c_str(),
-        static_cast<unsigned long long>(actual),static_cast<unsigned long long>(expected));
-}
 
 static bool DefinitionHasField(const DefField& field)
 {
@@ -212,13 +296,6 @@ bool DefReadFromCacheFloatTrack(DefinitionCacheReader& reader, FloatParameterTra
         std::memcpy(&aRawCurve, reinterpret_cast<const char*>(&aNode) + 12, sizeof(aRawCurve));
         int aCurveInt = (int)(std::uint32_t)aRawCurve;
         int aDistInt = (int)(std::uint32_t)(aRawCurve >> 32);
-        // 探针：无效曲线 int 落日志后再硬错——弹窗阻断无头运行，日志先留现场。
-        if ((unsigned int)aCurveInt > 13u || (unsigned int)aDistInt > 13u)
-        {
-            TodTraceAndLog("%u %d %d %d %d %.6g %.6g %.6g\n",
-                static_cast<unsigned int>(DefinitionReadEvent::TrackCurve),i + 1, count, aCurveInt, aDistInt,
-                aNode.mTime, aNode.mLowValue, aNode.mHighValue);
-        }
         aNode.mCurveTypeEval = TodCurveResolveEval(aCurveInt);
         aNode.mDistributionEval = TodCurveResolveEval(aDistInt);
     }
@@ -328,24 +405,19 @@ uint DefinitionCalcHash(DefMap* theDefMap)
 // PAK64 compiled definitions are deliberately raw.  The 32-bit release used
 // a zlib stream here, but x64 Legacy only mounts main.pak64 and must not pay a
 // decompression/allocation cost on this path.
-static void* DefinitionReadCompiledPayload(void* theCompiledBuffer, size_t theCompiledBufferSize, size_t& theDataSize, const SexyString& theCompiledFilePath)
+static void* DefinitionReadCompiledPayload(void* theCompiledBuffer, size_t theCompiledBufferSize, size_t& theDataSize)
 {
     if (theCompiledBufferSize < sizeof(CompiledDefinitionHeader))
     {
-        DefinitionTraceFileEvent(DefinitionReadEvent::HeaderBounds,theCompiledFilePath,
-            theCompiledBufferSize,sizeof(CompiledDefinitionHeader));
         return nullptr;
     }
     auto* aHeader = static_cast<CompiledDefinitionHeader*>(theCompiledBuffer);
     if (aHeader->mCookie != 0xDEADFED5u)
     {
-        DefinitionTraceFileEvent(DefinitionReadEvent::Cookie,theCompiledFilePath,aHeader->mCookie,0xDEADFED5u);
         return nullptr;
     }
     if (aHeader->mDataSize != theCompiledBufferSize - sizeof(CompiledDefinitionHeader))
     {
-        DefinitionTraceFileEvent(DefinitionReadEvent::PayloadSize,theCompiledFilePath,aHeader->mDataSize,
-            theCompiledBufferSize-sizeof(CompiledDefinitionHeader));
         return nullptr;
     }
     auto* aData = static_cast<unsigned char*>(DefinitionAlloc(aHeader->mDataSize));
@@ -388,24 +460,20 @@ bool DefinitionReadCompiledFile(const SexyString& theCompiledFilePath, DefMap* t
     std::unique_ptr<PFILE, decltype(&p_fclose)> pFile(
         DefinitionOpenCompiledFile(theCompiledFilePath.c_str()), &p_fclose);
     if (!pFile) {
-        DefinitionTraceFileEvent(DefinitionReadEvent::Open,theCompiledFilePath,0,0);
         return false;
     }
 
     if (p_fseek(pFile.get(), 0, 2) != 0)
     {
-        DefinitionTraceFileEvent(DefinitionReadEvent::SeekEnd,theCompiledFilePath,0,0);
         return false;
     }
     const int aFileSize = p_ftell(pFile.get());
     if (aFileSize < 0)
     {
-        DefinitionTraceFileEvent(DefinitionReadEvent::FileSize,theCompiledFilePath,0,0);
         return false;
     }
     if (p_fseek(pFile.get(), 0, 0) != 0)
     {
-        DefinitionTraceFileEvent(DefinitionReadEvent::Rewind,theCompiledFilePath,0,0);
         return false;
     }
     const size_t aCompiledSize = static_cast<size_t>(aFileSize);
@@ -414,13 +482,12 @@ bool DefinitionReadCompiledFile(const SexyString& theCompiledFilePath, DefMap* t
     const size_t aReadSize=p_fread(aCompiledBuffer.get(), sizeof(char), aCompiledSize, pFile.get());
     pFile.reset();
     if (aReadSize!=aCompiledSize) {
-        DefinitionTraceFileEvent(DefinitionReadEvent::Read,theCompiledFilePath,aReadSize,aCompiledSize);
         return false;
     }
 
     size_t aDataSize;
     std::unique_ptr<char[]> aDataBuffer(static_cast<char*>(
-        DefinitionReadCompiledPayload(aCompiledBuffer.get(), aCompiledSize, aDataSize, theCompiledFilePath)));
+        DefinitionReadCompiledPayload(aCompiledBuffer.get(), aCompiledSize, aDataSize)));
     aCompiledBuffer.reset();
     if (!aDataBuffer) return false;
 
@@ -429,30 +496,24 @@ bool DefinitionReadCompiledFile(const SexyString& theCompiledFilePath, DefMap* t
 
 // Numeric generic records are used by bounded-reader regression probes;
 // production reanimation and particle records have dedicated loaders.
-bool DefinitionReadCompiledFromBytes(const char* theData, const size_t theDataSize, DefMap* theDefMap, void* theDefinition, const SexyString& theSourceName)
+bool DefinitionReadCompiledFromBytes(const char* theData, const size_t theDataSize, DefMap* theDefMap, void* theDefinition, const SexyString&)
 {
     DefinitionCacheReader reader(theData, theDataSize);
     DefMapHashVisited visited;
     if (!DefinitionValidateMap(reader, theDefMap, visited))
     {
-        TodTraceAndLog("%u %s %u %zu %zu %u\n",static_cast<unsigned int>(DefinitionReadEvent::Schema),theSourceName.c_str(),
-            static_cast<unsigned int>(reader.mField),reader.mPosition,theDataSize,
-            static_cast<unsigned int>(reader.mError));
         return false;
     }
     reader.mField = 0;
     const int aRecordSize = DefinitionRecordSize(theDefMap);
     if (theDefMap->mDefSize <= 0 || aRecordSize <= 0 ||
         theDataSize < static_cast<size_t>(aRecordSize) + sizeof(uint)) {
-        TodTrace("%u %s %u %zu %zu %u\n",static_cast<unsigned int>(DefinitionReadEvent::SmallPayload),
-            theSourceName.c_str(),0u,reader.mPosition,theDataSize,0u);
         return false;
     }
     uint aDefHash = DefinitionCalcHash(theDefMap);
     uint aCashHash;
     if (!reader.Read(&aCashHash, sizeof(aCashHash))) return false;
     if (aCashHash != aDefHash) {
-        DefinitionTraceFileEvent(DefinitionReadEvent::Hash,theSourceName,aCashHash,aDefHash);
         return false;
     }
 
@@ -462,14 +523,8 @@ bool DefinitionReadCompiledFromBytes(const char* theData, const size_t theDataSi
     bool aResult = DefMapReadFromCache(reader, theDefMap, theDefinition);
     if (aResult && !reader.AtEnd()) {
         DefinitionFreeMap(theDefMap, static_cast<char*>(theDefinition));
-        TodTraceAndLog("%u %s %u %zu %zu %u\n",static_cast<unsigned int>(DefinitionReadEvent::TrailingBytes),theSourceName.c_str(),
-            static_cast<unsigned int>(reader.mField),reader.mPosition,theDataSize,0u);
         return false;
     }
-    if (!aResult)
-        TodTraceAndLog("%u %s %u %zu %zu %u\n",static_cast<unsigned int>(DefinitionReadEvent::NestedData),theSourceName.c_str(),
-            static_cast<unsigned int>(reader.mField),reader.mPosition,theDataSize,
-            static_cast<unsigned int>(reader.mError));
     return aResult;
 }
 

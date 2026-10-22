@@ -539,7 +539,9 @@ visit(offsetof(Type, mFadeOutDuration), 80, 4, sizeof(Type::mFadeOutDuration));
 if constexpr (std::is_same_v<Type, ReanimatorTrackInstance>) {
 visit(offsetof(Type, mBlendCounter), 0, 4, sizeof(Type::mBlendCounter));
 visit(offsetof(Type, mBlendTime), 4, 4, sizeof(Type::mBlendTime));
-visit(offsetof(Type, mBlendTransform), 8, 56, sizeof(Type::mBlendTransform));
+// Only the eight blend floats are persisted. Image geometry, fonts and text
+// belong to definitions and are excluded regardless of the native layout.
+visit(offsetof(Type, mBlendTransform), 8, 32, 32);
 visit(offsetof(Type, mShakeOverride), 64, 4, sizeof(Type::mShakeOverride));
 visit(offsetof(Type, mShakeX), 68, 4, sizeof(Type::mShakeX));
 visit(offsetof(Type, mShakeY), 72, 4, sizeof(Type::mShakeY));

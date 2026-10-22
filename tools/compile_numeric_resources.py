@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Compile the ordered JSON author manifest and stable image sidecar into numeric resources.
+"""Compile the ordered JSON manifest and program-owned image IDs into numeric resources.
 
 All logical resource names are resolved offline. The runtime record contains
 numeric slots, enum properties and file paths only. Existing enum IDs never move.
@@ -65,8 +65,42 @@ def read_authoring(data: bytes) -> dict:
     return manifest
 
 
+def program_symbols_path(root: Path) -> Path:
+    program = root / 'pvzPerf/Sexy.TodLib/ProgramImageSymbols.h'
+    return program if program.exists() else root / 'pvzPerf/Sexy.TodLib/generated/ImageSymbolId.h'
+
+
 def read_symbols(path: Path) -> tuple[list[tuple[int, str]], int]:
+    """Read program source IDs, or a historical binary registry for fixtures."""
     data = path.read_bytes()
+    if path.suffix.casefold() == '.h':
+        text = data.decode('utf-8-sig')
+        block = re.search(r'enum\s+class\s+ImageSymbolId\s*:\s*std::uint32_t\s*\{(.*?)\};',
+                          text, re.S)
+        if not block:
+            raise ValueError('Program ImageSymbolId enum not found')
+        result = []
+        for identifier, number, original in re.findall(
+                r'^\s*(\w+)\s*=\s*(\d+)\s*,[ \t]*(?://[ \t]*registry-name:[ \t]*"([^"]+)")?',
+                block[1], re.M):
+            symbol = int(number)
+            if symbol == 0 and identifier == 'None':
+                continue
+            if symbol != len(result) + 1:
+                raise ValueError('Image symbols must preserve dense existing IDs')
+            result.append((symbol, original or identifier))
+        if not result:
+            raise ValueError('Program image symbol enum is empty')
+        canonical = bytearray(struct.pack('<II', 0x4953594D, len(result)))
+        for symbol, name in result:
+            raw_name = name.encode('utf-8')
+            canonical.extend(struct.pack('<II', symbol, len(raw_name)))
+            canonical.extend(raw_name)
+        crc = zlib.crc32(canonical)
+        declared = re.search(r'\bIMAGE_SYMBOL_ID_REGISTRY_CRC\s*=\s*(0x[0-9A-Fa-f]+|\d+)[uU]?\s*;', text)
+        if declared and int(declared[1], 0) != crc:
+            raise ValueError('Program image symbol CRC differs from the declared stable registry')
+        return result, crc
     magic, count = struct.unpack_from('<II', data)
     if magic != 0x4953594D:
         raise ValueError('Invalid image symbol sidecar')
@@ -267,7 +301,66 @@ def compile_manifest(root: Path, authoring: bytes, archive_paths: list[str], sid
     return header + payload, mapping, registry_crc, enum_names
 
 
-def emit_headers(root: Path, mapping: list[int], registry_crc: int, enum_names: list[str]) -> None:
+def prune_definition_images(data: bytes, mapping: list[int],
+                            code_symbols: set[int]) -> tuple[bytes, list[int], list[int], set[int]]:
+    """Retain UI descriptors and actual code roots; definitions own all other images."""
+    header = list(struct.unpack_from('<9I', data))
+    base = header[2]
+    records, kinds, removed = [], [3] * base, set()
+    new_mapping = [NONE] * len(mapping)
+    offset = 36
+    for _ in range(header[5]):
+        length = struct.unpack_from('<I', data, offset)[0]
+        record = bytearray(data[offset + 4:offset + 4 + length])
+        offset += 4 + length
+        slot, symbol, _, kind = struct.unpack_from('<4I', record)
+        path_length = struct.unpack_from('<I', record, 28)[0]
+        path = record[32:32 + path_length].decode('utf-8').casefold()
+        ui = slot < base and not path.startswith(('reanim/', 'particles/'))
+        if kind == 0 and symbol and not ui and symbol not in code_symbols:
+            removed.add(symbol)
+            continue
+        if slot < base:
+            kinds[slot] = kind
+        else:
+            slot = base + sum(struct.unpack_from('<I', value, 4)[0] >= base for value in records)
+            struct.pack_into('<I', record, 0, slot)
+        if symbol:
+            new_mapping[symbol] = slot
+        records.append(struct.pack('<I', len(record)) + record)
+    payload = b''.join(records)
+    header[4] = max(base, max((slot + 1 for slot in new_mapping if slot != NONE), default=base))
+    header[5], header[7], header[8] = len(records), zlib.crc32(payload), len(payload)
+    return struct.pack('<9I', *header) + payload, new_mapping, kinds, removed
+
+
+def code_image_roots(root: Path, symbol_names: dict[int, str]) -> set[str]:
+    """Find real uses, including legacy globals, ResourceId wrappers and tables."""
+    exact = set(symbol_names.values())
+    enum_path = program_symbols_path(root)
+    aliases = ({identifier: symbol_names[int(number)]
+                for identifier, number in re.findall(r'^\s*(\w+)\s*=\s*(\d+),',
+                    enum_path.read_text(encoding='utf-8'), re.M) if int(number) in symbol_names}
+               if enum_path.exists() else {})
+    roots = set()
+    for source in (root / 'pvzPerf').rglob('*'):
+        if source.suffix not in {'.cpp', '.h', '.hpp', '.inl'} or 'generated' in source.parts:
+            continue
+        if source.name in {'Resources.cpp', 'Resources.h', 'ProgramImageSymbols.h'}:
+            continue
+        # Import lazily: the standalone compiler has no package-audit dependency.
+        import build_numeric_runtime_pak64 as pak
+        text = pak.clean_comments(source.read_text(encoding='utf-8-sig'))
+        for token in re.findall(r'\b(?:IMAGE_|FONT_IMAGE_)\w+', text):
+            name = token[:-3] if token.endswith('_ID') else token
+            name = aliases.get(name, name)
+            if name in exact:
+                roots.add(name)
+    return roots
+
+
+def emit_headers(root: Path, mapping: list[int], registry_crc: int, enum_names: list[str],
+                 resource_kinds: list[int] | None = None) -> None:
     _, original_enum = resource_enum(root)
     header = '// Shared stable 1073 resource slots. Generated; do not renumber.\n#pragma once\n#include <cstdint>\nnamespace Sexy\n{\n'
     header += '    enum class ResourceId : int\n    {\n'
@@ -282,8 +375,8 @@ def emit_headers(root: Path, mapping: list[int], registry_crc: int, enum_names: 
         text = text.replace(original_enum, '')
         text = text.replace('#include <cstdint>', '#include <cstdint>\n#include "Sexy.TodLib/generated/ResourceId.h"', 1)
         write_changed(resources, text)
-    kinds = [0 if name.startswith('IMAGE_') or name == 'FONT_IMAGE_HOUSEOFTERROR28' else 1 if name.startswith('SOUND_') else 2 for name in enum_names]
-    slot_count = max(slot for slot in mapping if slot != NONE) + 1
+    kinds = resource_kinds if resource_kinds is not None else [0 if name.startswith('IMAGE_') or name == 'FONT_IMAGE_HOUSEOFTERROR28' else 1 if name.startswith('SOUND_') else 2 for name in enum_names]
+    slot_count = max(len(enum_names), max(slot for slot in mapping if slot != NONE) + 1)
     output = ['// Generated numeric image bindings; no logical name registry.', '#pragma once', '#include <cstdint>',
               f'inline constexpr std::uint32_t IMAGE_SYMBOL_REGISTRY_CRC = 0x{registry_crc:08X}u;',
               f'inline constexpr unsigned NUMERIC_RESOURCE_SLOT_COUNT = {slot_count};',
@@ -306,13 +399,13 @@ def main() -> int:
     ap.add_argument('--root', type=Path, default=ROOT)
     ap.add_argument('--archive', type=Path, default=ROOT / 'out/x64-win32-dx12/Release/main.pak64')
     ap.add_argument('--authoring', type=Path, help='ordered JSON resource author manifest')
-    ap.add_argument('--sidecar', type=Path)
+    ap.add_argument('--sidecar', type=Path, help='program symbol header (historical .bin accepted for fixtures)')
     ap.add_argument('--output', type=Path)
     ap.add_argument('--headers', action='store_true')
     ap.add_argument('--verify', action='store_true', help='compare with existing output without writing')
     args = ap.parse_args()
     authoring = args.authoring or args.root / 'assets/definitions/resources.json'
-    sidecar = args.sidecar or args.root / 'pvzPerf/Sexy.TodLib/generated/image_symbol_ids.bin'
+    sidecar = args.sidecar or program_symbols_path(args.root)
     output = args.output or args.archive.parent / 'compiled/resources.compiled'
     with zipfile.ZipFile(args.archive) as archive:
         data, mapping, crc, names = compile_manifest(args.root, authoring.read_bytes(), archive.namelist(), sidecar)

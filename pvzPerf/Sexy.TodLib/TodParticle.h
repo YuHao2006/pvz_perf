@@ -4,8 +4,10 @@
 #include "generated/ParticleEmitterName.h"
 #include <cstddef>
 #include <array>
+#include <atomic>
 #include <memory>
 #include "DataArray.h"
+#include "DefinitionAtlas.h"
 #include "misc/SexyVector.h"
 namespace Sexy
 {
@@ -133,7 +135,7 @@ public:
 class TodEmitterDefinition
 {
 public:
-    Image*                      mImage;
+    DefinitionImageRegion       mImageRegion;
     int                         mImageCol;
     int                         mImageRow;
     int                         mImageFrames;
@@ -202,6 +204,7 @@ public:
 class TodParticleDefinition
 {
 public:
+    DefinitionAtlas             mAtlas;
     TodEmitterDefinition*       mEmitterDefs;
     int                         mEmitterDefCount;
     std::array<int, static_cast<std::size_t>(ParticleEmitterName::top)> mEmitterIndexByName = [] {
@@ -213,6 +216,7 @@ public:
 
 extern int gParticleDefCount;                       // [0x6A9F08]
 extern TodParticleDefinition* gParticleDefArray;    // [0x6A9F0C]。于 LawnApp::LoadingThreadProc() 函数中读取并赋值
+extern std::atomic<bool> gParticleAllDefinitionDataLoaded;
 
 // ====================================================================================================
 // ★ 【粒子参数】

@@ -9,7 +9,9 @@
 | 定义编译器 | tools/resourceCompiler/src，C++23 编写；由主 CMake 构建 |
 | 存档转换器 | tools/saveConverter/src，C++ 编写；和资源编译器分别使用独立构建子目录 |
 | 定义源 | assets/definitions/reanim、particles；particle-reference 为现有粒子编译器需要的对照输入 |
-| 资源注册输入 | image_symbol_ids.bin、font symbol sidecar、reanim 类型/轨道映射；生产资源清单为 assets/definitions/resources.json |
+| 图集搜索缓存 | assets/definitions/atlas-cache 中经当前几何、模型与求解器版本验证的完成记录；只作编译输入，不进入运行包 |
+| 程序图片符号 | 普通源码 Sexy.TodLib/ProgramImageSymbols.h/.cpp，独立于 reanim/particle 编译；保留已有编号 |
+| 定义注册输入 | font symbol sidecar、reanim 类型/轨道映射；生产资源清单为 assets/definitions/resources.json |
 | 字体 | assets/definitions/fonts 中的 20 份定义，以及 assets/runtime/data 中的字库图片；不再读取原版安装目录 |
 | 运行资源 | 被定义和游戏代码引用的图片、音效、音乐、字体、UI 文本和其他实际读取的数据 |
 | 内置 shader | HLSL，以及 Vulkan 当前使用的 GLSL .frag/.comp 和 include；输出 DXIL/SPIR-V 是可再生构建产物 |
@@ -17,9 +19,18 @@
 | 测试与文档 | Tests 中统一 DAT/DAT64、Tests/performance 中的性能工具、测试源码和夹具、docs、README；性能原始证据不能用未完成的新测量替代 |
 | 来源和许可 | 根 LICENSE、第三方依赖与外部效果各自的来源、许可说明 |
 
-稳定图像注册表采用显式追加，不能任意重排现有 ID。
+程序图片枚举在源码中显式维护，不能任意重排现有 ID。
 游戏代码中的 ImageSymbolId 引用也是资源闭包的根，不能只从 reanim/particle DSL 收集图片。
 字体图片、UI 资源、遮罩/alpha 配图也必须计入依赖。
+
+v5 中定义直接持有离线生成的图集，图集不占全局 ImageSymbolId 纹理绑定；
+定义专用源图片不再发行独立纹理。作者素材按名称和路径离线解析，完全不依赖程序图片枚举；已有基础 ResourceId
+不重排。全局图片、ResourceId 和代码指针表的真实使用及字体路径共同保护独立资源。
+协议和加载边界见 [RESOURCE-V5-FORMAT.md](RESOURCE-V5-FORMAT.md)。
+定义编译器不接受 `--image-registry`，不会生成程序图片符号代码。
+其临时 `.source-record` 和 `image_sources.txt` 仅用于离线素材解析，
+最终 `.compiled` 的图片字段直接记录矩形。旧 `image_symbol_ids.bin`
+仅保留给历史对照工具，不是生产构建输入。
 
 ## Shader 对应关系
 
@@ -60,6 +71,12 @@ Linux 的 Vulkan 共用 Vulkan shader；DX12 使用其对应 shader。
 
 主 CMake 通过 CMake/Resources.cmake 构建 reanimc，再调用
 tools/resourcePipeline/src/build_resources.py：
+
+Python 构建环境需安装 Pillow，用于离线解码和打包图集；游戏运行时不依赖它。
+精确布局还需 OR-Tools；依赖列表位于 `tools/resourcePipeline/requirements.txt`。
+构建配置入口为 `assets/definitions/ResourceBuild.pvzbuild`，选择 reanim/particle
+定义文件并声明同种或跨种共享图集组。原先两个总 root DSL 已删除，定义源通过明确
+文件列表传入编译器；轨道前缀仍由 `tools/reanim_track_families.txt` 定义。
 
 1. 按 reanim、particle、游戏代码顺序扫描图像符号，保留现有编号并显式追加新符号。
 2. 编译 DSL 和字体、生成数值资源清单，生成的 C++ 头文件与源文件写回 pvzPerf 的源码目录。

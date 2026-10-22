@@ -18,7 +18,7 @@ enum FilterEffect
 
 void                FilterEffectInitForApp();
 void                FilterEffectDisposeForApp();
-MemoryImage*        FilterEffectCreateImage(Image* theImage, FilterEffect theFilterEffect);
+Image*              FilterEffectCreateImage(Image* theImage, FilterEffect theFilterEffect);
 // Main thread, after source textures are loaded. Idempotent; owns no CPU pixels.
 void                FilterEffectPrebuildImage(Image* theImage, FilterEffect theFilterEffect);
 // Lookup only. Missing entries are loading errors, never draw-time allocations.

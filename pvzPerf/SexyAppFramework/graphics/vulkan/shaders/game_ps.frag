@@ -214,14 +214,18 @@ void main()
         outColor = vec4(source.rgb * color.rgb * color.a, source.a * color.a);
     } else {
         const bool generated = (slot & 0x80000000u) != 0u;
+        // Raw filter aliases must interpolate the same premultiplied texels as
+        // a prefiltered render image. Explicit independent sampling is retained.
+        const bool filteredPremult = !generated && colorFilterKind != 0u &&
+            (slot & 0x40000000u) == 0u;
         if (colorFilterKind != 0u || sandStraight) {
             const bool linear = (samplerIndex & 1u) != 0u;
             // Ordinary scene sampling interpolates generated sources as
             // premultiplied, but straight sources as independent channels.
-            source = (linear || sandStraight) ? filterSource(descriptorIndex, !generated) :
-                filterSample(source, !generated);
+            source = (linear || sandStraight) ? filterSource(descriptorIndex, !generated && !filteredPremult) :
+                filterSample(source, !generated && !filteredPremult);
         }
-        if (generated)
+        if (generated || filteredPremult)
             source.rgb = source.a > 0.0 ? source.rgb / source.a : vec3(0.0);
         outColor = source * color;
     }

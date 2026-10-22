@@ -176,7 +176,6 @@ void Music::LoadSong(MusicFile theMusicFile, const std::string& theFileName)
 	if (IsMusicDisabled())
 		return;
 
-	TodHesitationTrace("preloadsong");
 	if (!TodLoadMusic(theMusicFile, theFileName))
 	{
 		TodTrace("music failed to load\n");
@@ -185,7 +184,6 @@ void Music::LoadSong(MusicFile theMusicFile, const std::string& theFileName)
 	else
 	{
 		gBass->BASS_ChannelSetAttribute(GetBassMusicHandle(theMusicFile), BASS_ATTRIB_MUSIC_PSCALER, 4);  // 设置音乐定位精确度属性
-		TodHesitationTrace("song '%s'", theFileName.c_str());
 	}
 }
 

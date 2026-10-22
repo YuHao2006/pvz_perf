@@ -3,13 +3,6 @@
 #include <string>
 
 namespace Sexy::GpuBackendDetail {
-template<BuildConfig::GraphicsApi Selected, class Renderer>
-inline void FinishLoadingTextures(Renderer& renderer)
-{
-    if constexpr (Selected == BuildConfig::GraphicsApi::OpenGL ||
-        Selected == BuildConfig::GraphicsApi::D3d9)
-        renderer.FinishLoadingTextures();
-}
 // Keep backend-specific shapes behind the concrete shared rendering interface.
 template<BuildConfig::GraphicsApi Selected, class Renderer, class Context, class Hdr>
 inline Renderer* CreateRenderer(Context& context, int width, int height,

@@ -22,25 +22,6 @@ enum class DefinitionReadFailure : std::uint8_t
     ImageBinding,
     FontBinding
 };
-enum class DefinitionReadEvent : std::uint8_t
-{
-    Schema,
-    NestedData,
-    SmallPayload,
-    TrailingBytes,
-    TrackCurve,
-    HeaderBounds,
-    Cookie,
-    PayloadSize,
-    Open,
-    SeekEnd,
-    FileSize,
-    Rewind,
-    Read,
-    Header,
-    Hash
-};
-
 class DefinitionCacheReader
 {
 public:

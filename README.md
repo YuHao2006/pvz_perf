@@ -4,12 +4,15 @@
 文档维护当前有效机制与修复；现行实测和历史算法证据分开标注，不按日期追加开发过程。
 
 发行下载：[GitHub Releases](https://github.com/YuHao2006/pvz_perf/releases)。
-**当前版本 v1.3 仅发布 `x64-win10-vulkan-v1.3.zip`**，完整解压后运行 `pvz_perf.exe`。
-本版包含 800～1400×600 可变画幅、菜单及花园素材更新、输入坐标修复、
-可配置目标帧率、计时兼容处理和绘制优化，详见 [v1.3 发布说明](docs/releases/v1.3.md)。
-其他 Windows 和 Linux 组合的现有二进制仍留在 v1.1，此次不更新，
-没有额外上传源码 ZIP 或独立测试存档 ZIP。
-v1.3 包包含生成的 PerfTest 完美用户档、统一无尽基准和外部 Magpie effects，
+**当前版本 v2.0：存档与 PAK64 均有不兼容变更，不能直接沿用旧关卡存档或旧运行包。**
+本次提供 `x64-win10-vulkan-v2.0.zip`（推荐）及 `x64-win7-opengl-v2.0.zip`，
+完整解压到新的可写目录后运行 `pvz_perf.exe`。
+游戏仅接受 **DAT64 v2 纳秒关卡存档**；原 DAT 和 DAT64 v1 必须先用独立转换器升级。
+`main.pak64` 使用 **reanim/particle v5 离线图集**，主程序和资源包必须成套更新，
+不能混用 v1.x 与 v2.0 的 EXE/PAK64。用户摘要 `users.dat` 与玩家详情
+`PVZUSR64` 版本 13 的格式保持不变，关卡存档和玩家详情的版本号分别管理。
+转换步骤及完整变更见 [v2.0 发布说明](docs/releases/v2.0.md)。
+发行包包含生成的 PerfTest 完美用户档、DAT64 v2 统一无尽基准和外部 Magpie effects，
 不包含个人进度或个人设置。普通生存的完成记录为 5 旗，困难生存为 10 旗。
 **Win7 统一 SDR，不支持 HDR；DX9/OpenGL 的默认配置不启用自定义缩放效果。**
 Windows 游戏使用 `/MD`，发行包不携带 CRT DLL，运行机器需安装兼容的 VC++ x64 运行库；
@@ -55,6 +58,9 @@ Windows 发行优先推荐 Vulkan，保留 DX12；没有为 DX12 Ultimate 单独
 主 CMake 自动生成源码及数值定义，PAK64 先写入
 `out/<组合>/cache/resources/`，再部署到对应 `Release/`。
 性能工具集中在 `Tests/performance/`，生产编译和打包工具留在 `tools/`。
+离线图集的已完成搜索缓存保存在 `assets/definitions/atlas-cache/`，
+按图片尺寸、边距、模型及求解器版本验证后复用；中断检查点不会当作已完成结果。
+当前资源配置给每张图集 60 秒求解预算，超时保留最佳合法排布并如实记录未证明最优。
 主项目同时构建本平台的存档转换器：Windows 生成 `data/pvz_dat64_converter.exe`，
 Linux 生成 `data/pvz_dat64_converter`。每次构建都检查并部署转换器，
 即使游戏没有重新链接也会更新；安装目标同样放入 `data/`。

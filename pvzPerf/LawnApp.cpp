@@ -3,7 +3,7 @@
 #include <time.h>
 #include <cstdlib>
 #include "LawnApp.h"
-#include "Sexy.TodLib/generated/ImageSymbolId.h"
+#include "Sexy.TodLib/ProgramImageSymbols.h"
 #include "misc/StableTime.h"
 #include "Lawn/Board.h"
 #include "Lawn/Plant.h"
@@ -105,12 +105,6 @@ bool LawnGetCloseRequest()
 	return gLawnApp->mCloseRequest;
 }
 
-//0x44E8C0
-bool LawnHasUsedCheatKeys()
-{
-	return gLawnApp && gLawnApp->mPlayerInfo && gLawnApp->mPlayerInfo->mHasUsedCheatKeys;
-}
-
 //0x44EAA0
 // GOTY @Patoke: 0x451D70
 LawnApp::LawnApp()
@@ -162,7 +156,7 @@ LawnApp::LawnApp()
 	mDebugKeysEnabled = false;
 	mFullCompanyName = "PopCap Games";
 	mProdName = "PopCap\\PlantsVsZombies";
-	mProductVersion = "1.3.0";
+	mProductVersion = "2.0.0";
 	std::string aTitleName = "pvz_perf";
 #ifdef _DEBUG
 	aTitleName += " BETA ";
@@ -781,9 +775,6 @@ void LawnApp::DoNewOptions(bool theFromGameSelector)
 // GOTY @Patoke: 0x453410
 AlmanacDialog* LawnApp::DoAlmanacDialog(SeedType theSeedType, ZombieType theZombieType)
 {
-	PerfTimer mTimer;
-	mTimer.Start();
-
 	//FinishModelessDialogs();
 
 	AlmanacDialog* aDialog = new AlmanacDialog(this);
@@ -798,9 +789,6 @@ AlmanacDialog* LawnApp::DoAlmanacDialog(SeedType theSeedType, ZombieType theZomb
 	{
 		aDialog->ShowZombie(theZombieType);
 	}
-
-	int aDuration = mTimer.GetDuration();
-	TodTrace("almanac load time: %d ms", aDuration);
 
 	return aDialog;
 }
@@ -1346,9 +1334,6 @@ void LawnApp::Init()
 		return;
 	}
 
-	PerfTimer mTimer;
-	mTimer.Start();
-
 	mProfileMgr->Load();
 
 	std::string aCurUser;
@@ -1368,12 +1353,6 @@ void LawnApp::Init()
 	mTitleScreen->Resize(0, 0, mWidth, mHeight);
 	mWidgetManager->AddWidget(mTitleScreen);
 	mWidgetManager->SetFocus(mTitleScreen);
-
-#ifdef _DEBUG
-	int aDuration = mTimer.GetDuration();
-	TodTrace("loading: 'profiles' %d ms", aDuration);
-#endif
-	mTimer.Start();
 
 	mMusic = new Music();
 	mSoundSystem = new TodFoley();
@@ -1401,21 +1380,10 @@ void LawnApp::Init()
 	mDaisyCheck = new TypingCheck({0x44, 0x41, 0x49, 0x53, 0x49, 0x45, 0x53});
 	mSukhbirCheck = new TypingCheck({0x53, 0x55, 0x4B, 0x48, 0x42, 0x49, 0x52});
 
-#ifdef _DEBUG
-	aDuration = mTimer.GetDuration();
-	TodTrace("loading: 'system' %d ms", aDuration);
-#endif
-	mTimer.Start();
-
 	ReanimatorLoadDefinitions(gLawnReanimationArray, ReanimationType::NUM_REANIMS);
 	// Preload the loader-bar definitions before the loading thread starts.
 	ReanimatorEnsureDefinitionLoaded(ReanimationType::REANIM_LOADBAR_SPROUT, true);
 	ReanimatorEnsureDefinitionLoaded(ReanimationType::REANIM_LOADBAR_ZOMBIEHEAD, true);
-#ifdef _DEBUG
-	aDuration = mTimer.GetDuration();
-	TodTrace("loading: 'loaderbar' %d ms", aDuration);
-#endif
-	mTimer.Start();
 }
 
 //0x4522A0
@@ -1870,7 +1838,6 @@ void LawnApp::LoadingThreadProc()
 	// v4 符号绑定（装载完成期顺序单趟零二分）——泵排空后调用，
 	// DrawTrack 快路经 gImageSymbolBinds[id] 直取 Image*/w/h
 	TodBindSymbolTable();
-	TodHesitationTrace("finished loading");
 }
 
 //0x452C60
@@ -2408,8 +2375,8 @@ bool LawnApp::UpdateApp()
 	if (mBoard == nullptr && mLoadingThreadStarted && !mLoadingThreadCompleted
 		&& TodWarmQueueEmpty() && TodWarmFinalSweep() == 0)
 	{
-		ReanimatorUploadAllTexturesToGPU();
-		TodWarmMarkSweepClean();
+		if (ReanimatorUploadAllTexturesToGPU()>=0)
+			TodWarmMarkSweepClean();
 	}
 
 	//if (mLoadingThreadCompleted)
@@ -3190,7 +3157,6 @@ void LawnApp::PreloadForUser()
 	int aNumTasks = mCompletedLoadingThreadTasks + GetNumPreloadingTasks();
 	if (mTitleScreen && mTitleScreen->mQuickLoadKey != KeyCode::KEYCODE_UNKNOWN)
 	{
-		TodTrace("preload canceled\n");
 		mCompletedLoadingThreadTasks = aNumTasks;
 		return;
 	}
@@ -3223,7 +3189,6 @@ void LawnApp::PreloadForUser()
 
 				if (mTitleScreen && mTitleScreen->mQuickLoadKey != KeyCode::KEYCODE_UNKNOWN)
 				{
-					TodTrace("preload canceled\n");
 					mCompletedLoadingThreadTasks = aNumTasks;
 					return;
 				}
@@ -3252,7 +3217,6 @@ void LawnApp::PreloadForUser()
 
 			if (mTitleScreen && mTitleScreen->mQuickLoadKey != KeyCode::KEYCODE_UNKNOWN)
 			{
-				TodTrace("preload canceled\n");
 				mCompletedLoadingThreadTasks = aNumTasks;
 				return;
 			}
@@ -3374,50 +3338,6 @@ SexyString LawnApp::GetMoneyString(int theAmount)
 	{
 		return StrFormat(("$%d"), aValue);
 	}
-}
-
-//0x455EE0
-SexyString LawnGetCurrentLevelName()
-{
-	if (gLawnApp == nullptr)
-	{
-		return ("Before App");
-	}
-	if (gLawnApp->mGameScene == GameScenes::SCENE_LOADING)
-	{
-		return ("Game Loading");
-	}
-	if (gLawnApp->mGameScene == GameScenes::SCENE_MENU)
-	{
-		return ("Game Selector");
-	}
-	if (gLawnApp->mGameScene == GameScenes::SCENE_AWARD)
-	{
-		return ("Award Screen");
-	}
-	if (gLawnApp->mGameScene == GameScenes::SCENE_CHALLENGE)
-	{
-		return ("Challenge Screen");
-	}
-	if (gLawnApp->mGameScene == GameScenes::SCENE_CREDIT)
-	{
-		return ("Credits");
-	}
-	if (gLawnApp->mBoard == nullptr)
-	{
-		return ("Not Playing");
-	}
-
-	if (gLawnApp->IsFirstTimeAdventureMode())
-	{
-		return gLawnApp->GetStageString(gLawnApp->mBoard->mLevel);
-	}
-	if (gLawnApp->IsAdventureMode())
-	{
-		return StrFormat(("F%s"), gLawnApp->GetStageString(gLawnApp->mBoard->mLevel).c_str());
-	}
-
-	return gLawnApp->GetCurrentChallengeDef().mChallengeName;
 }
 
 //0x456060

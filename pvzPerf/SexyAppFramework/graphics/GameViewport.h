@@ -49,4 +49,16 @@ struct WindowTrackLimits {
     }
 };
 
+struct WindowStartupSize {
+    int width;
+    int height;
+
+    static constexpr WindowStartupSize FromMonitor(int monitorWidth, int monitorHeight,
+        int outputHeight = 600) {
+        const auto view = GameViewport::Fit(monitorWidth, monitorHeight);
+        const int height = outputHeight > 0 ? outputHeight : 600;
+        return {int((view.width * 1LL * height + 300) / 600), height};
+    }
+};
+
 }

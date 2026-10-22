@@ -21,15 +21,6 @@ public:
     D3d9Renderer(const D3d9Renderer&) = delete;
     D3d9Renderer& operator=(const D3d9Renderer&) = delete;
     void PrepareLoadingPipelines();
-    void FinishLoadingTextures();
-    void FinishLoadingTextures(std::span<const unsigned int> offsets,
-        std::span<const unsigned int> symbols, unsigned int reanimationGroups);
-    struct AtlasCounts {
-        size_t pages, images;
-        unsigned long long pixels, capacity;
-        size_t reanimationPages{}, particlePages{}, copies{};
-    };
-    AtlasCounts GetAtlasCounts() const;
     D3d9Texture* CreateTexture(int, int, const void*, int, bool opaque = false);
     D3d9Texture* CreateTextureStatic(int, int, const void*, int, bool, unsigned int);
     D3d9Texture* CreateRawTexture(int, int, const void*, int);

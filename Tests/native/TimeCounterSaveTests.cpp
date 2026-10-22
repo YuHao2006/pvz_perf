@@ -1,5 +1,6 @@
 #include "Lawn/Board.h"
 #include "Lawn/Zombie.h"
+#include "Lawn/CatapultState.h"
 #include "Lawn/Plant.h"
 #include "Lawn/Projectile.h"
 #include "Lawn/Coin.h"
@@ -17,6 +18,8 @@
 #include "Lawn/System/LevelSaveFormat.h"
 #include "misc/FrameTiming.h"
 #include <array>
+#include <bit>
+#include <cmath>
 #include <iostream>
 #include <stdexcept>
 #include <vector>
@@ -219,6 +222,66 @@ void CheckLiveSave()
 }
 }
 
+namespace
+{
+void CheckBlendRegionSave()
+{
+    static_assert(sizeof(ReanimatorTransform) == 72);
+    static_assert(offsetof(ReanimatorTransform, mImageRegion) == 32);
+    static_assert(std::is_trivially_copyable_v<ReanimatorTrackInstance>);
+    // Construct zeroed native records without the gameplay track constructor.
+    auto source = std::bit_cast<ReanimatorTrackInstance>(
+        std::array<std::byte, sizeof(ReanimatorTrackInstance)>{});
+    const auto withoutRegion = WriteSaveRecord(source);
+    source.mBlendTransform.mImageRegion = {2, 2, 16, 8, 1, 1};
+    Require(WriteSaveRecord(source) == withoutRegion,
+        "Definition atlas geometry leaked into DAT64");
+    auto restored = source;
+    ReadSaveRecord(restored, withoutRegion.data());
+    Require(restored.mBlendTransform.mImageRegion.mWidth == 0,
+        "Loading DAT64 retained definition atlas geometry");
+}
+
+void CheckCatapultCycle()
+{
+    using enum CatapultLoadState;
+    Require(SaveV2Size<Zombie>() == 436 && Dat64Layout<Zombie>::SlotSize() == 444,
+        "Catapult presentation changed the DAT64 v2 record");
+    Require(CatapultCycle::Resolve(true, true, CatapultCycle::ProjectileEvent) == Loaded,
+        "Projectile creation incorrectly released the carried ball early");
+    Require(CatapultCycle::Resolve(true, true, 17.0f / 31.0f) == Released,
+        "Catapult release boundary lost");
+    Require(CatapultCycle::Resolve(true, true, 1.0f) == Loaded,
+        "Catapult did not reload at completion");
+    for (int fps : {60, 100, 144, 240, 250, 1000})
+        for (float rate : {0.0f, 12.0f, 24.0f}) // Immobilized, chilled and normal.
+        {
+            float progress = 0.0f;
+            const float step = rate / (32.0f * fps);
+            for (int update = 0; update < fps * 3; ++update)
+            {
+                // Independent reference: the launch clip is 25..56. The
+                // historic discrete pose carries a ball outside frames 42..55.
+                const int frame = int(std::floor(25.0f + progress * 31.0f));
+                const auto expected = frame < 42 || frame >= 56 ? Loaded : Released;
+                Require(CatapultCycle::Resolve(true, true, progress) == expected,
+                    "Catapult pose changed across FPS/chill/freeze");
+                Require(CatapultCycle::Resolve(true, false, progress) == Empty,
+                    "Catapult displayed ammunition after exhaustion");
+                Require(CatapultCycle::Resolve(false, true, progress) == Loaded,
+                    "Normal/reloading/death state retained the firing pose");
+                // Loading derives the same state using only saved phase,
+                // ammunition and numeric progress; no transient event history.
+                const float savedProgress = progress;
+                Require(CatapultCycle::Resolve(true, true, savedProgress) == expected,
+                    "Catapult load recovery changed the carried ball");
+                if (step == 0.0f) break;
+                progress = std::min(1.0f, progress + step);
+            }
+        }
+}
+}
+
 int main()
 {
     try
@@ -244,10 +307,12 @@ int main()
         CheckRecord<Reanimation>();
         CheckRecord<Attachment>();
         CheckRuntime();
+        CheckBlendRegionSave();
+        CheckCatapultCycle();
         CheckLiveSave<TodParticle>();
         CheckLiveSave<TodParticleEmitter>();
         Configure(100);
-        std::cout << "PASS: 20 native save types, 134 exact 64-bit mappings; six FPS settings, "
+        std::cout << "PASS: 20 native save types, 134 exact 64-bit mappings; catapult cycle/recovery; six FPS settings, "
             "nanosecond advancement, countdown expiry, periodic events, sentinels and unsigned wrap\n";
         return 0;
     }

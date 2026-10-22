@@ -5,6 +5,7 @@
 #include "misc/SexyMatrix.h"
 #include <map>
 #include "ReanimTrackId.h"
+#include "DefinitionAtlas.h"
 //using namespace std;
 using namespace Sexy;
 
@@ -63,6 +64,7 @@ class ReanimatorDefinition
 public:
     ReanimatorTrackArray            mTracks;
     float                           mFPS;
+    DefinitionAtlas                 mAtlas;
 
 public:
     ReanimatorDefinition() : mTracks({nullptr, 0}), mFPS(12.0f) { }
@@ -148,7 +150,7 @@ public:
     float                           mScaleY;
     float                           mFrame;
     float                           mAlpha;
-    Image*                          mImage;
+    DefinitionImageRegion           mImageRegion;
     _Font*                           mFont;
     const char*                     mText;                          // UI captions only; never track/resource/attacher identifiers. SaveGame ABI retained.
 
@@ -267,7 +269,6 @@ public:
     void                            AssignRenderGroupToRange(const ReanimTrackIdRange& theRange, int theRenderGroup);
     void                            PropogateColorToAttachments();
     bool                            ShouldTriggerTimedEvent(float theEventTime);
-    Image*                          GetCurrentTrackImage(ReanimTrackId theTrackId);
     AttachEffect*                   AttachParticleToTrack(ReanimTrackId theTrackId, TodParticleSystem* theParticleSystem, float thePosX, float thePosY);
     void                            GetTrackBasePoseMatrix(int theTrackIndex, SexyTransform2D& theBasePosMatrix);
     bool                            IsTrackShowing(ReanimTrackId theTrackId);

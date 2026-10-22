@@ -25,7 +25,6 @@
 #include "Sexy.TodLib/Reanimator.h"
 #include "Sexy.TodLib/TodParticle.h"
 #include "Sexy.TodLib/TodStringFile.h"
-#include "misc/PerfTimer.h"
 #include "widget/WidgetManager.h"
 #include "widget/WidgetLifetimeHold.h"
 #include <algorithm>
@@ -377,16 +376,12 @@ bool CutScene::Is2x2Zombie(ZombieType theZombieType)
 // GOTY @Patoke: 0x43C840
 void CutScene::PreloadResources()
 {
-	TodHesitationTrace("pre-CutScene::PreloadResources()");
 
 	if (mPreloaded)
 	{
 		return;
 	}
 	mPreloaded = true;
-
-	PerfTimer aTimer;
-	aTimer.Start();
 
 	for (int aWave = 0; aWave < mBoard->mNumWaves; aWave++)
 	{
@@ -500,14 +495,11 @@ void CutScene::PreloadResources()
 
 	PlaceStreetZombies();
 
-	mBoard->mPreloadTime = std::max(aTimer.GetDuration(), 0.0);
-	TodTrace("preloading: %d ms", static_cast<int>(mBoard->mPreloadTime));
 	// 关卡放行门（2026-10-09 用户规格"加载界面卡住不放行，首绘路径不得
 	// 存在"）：过场预载批次（僵尸定义/植物资源/棋盘阴影/选卡图/字体）刚
 	// 入队完毕——立即排干+清扫到位。过场为此可以卡住；不留任何图给
 	// intro 播放期的首绘在绘制路径上传（2ms/帧的泵追不上首绘的教训）。
 	TodWarmDrainAll();
-	TodHesitationTrace("CutScene::PreloadResources");
 }
 
 //0x43A140

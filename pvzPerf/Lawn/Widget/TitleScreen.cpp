@@ -71,7 +71,6 @@ void TitleScreen::Draw(Graphics* g)
 
 		if (!mDrawnYet)
 		{
-			TodHesitationTrace("TitleScreen First Draw");
 			mDrawnYet = true;
 		}
 

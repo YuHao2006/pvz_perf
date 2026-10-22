@@ -46,43 +46,17 @@ void OpenGLRenderer::Impl::Register(OpenGLTexture* texture)
     for (unsigned int slot = 1; slot < staticBase; ++slot)
         if (!slots[slot]) {
             texture->slot = slot; slots[slot] = texture;
-            if(texture->atlased)RememberAtlasCopy(texture,texture->storage,texture->x,texture->y);
             return;
         }
     throw std::runtime_error("OpenGL logical texture slots exhausted");
 }
 OpenGLTexture* OpenGLRenderer::Impl::Allocate(int w, int h, unsigned int format,
-    bool atlas, bool registerSlot)
+    bool registerSlot)
 {
     Dimensions(w, h);
     auto result = std::make_unique<OpenGLTexture>();
     result->width = w; result->height = h;
-    result->atlasEligible = atlas && format == GL_RGBA8 &&
-        w <= std::min(256, pageSize) && h <= std::min(256, pageSize);
-    if (result->atlasEligible && atlasFinalized) {
-        Page* page = nullptr;
-        for (auto& candidate : pages) {
-            if(candidate.kind!=2)continue;
-            // No live handle or queued CPU draw owns this page. Earlier GL
-            // commands precede the next upload, so reusing it needs no fence.
-            if (candidate.storage.use_count() == 1)
-                candidate.free = {{0, 0, candidate.storage->width, candidate.storage->height}};
-            if (Place(candidate,w,h,result->x,result->y)) {
-                page = &candidate; break;
-            }
-        }
-        if (!page) {
-            const int size = std::max({packedPageSize,w,h});
-            pages.push_back({Storage(size,size,GL_RGBA8),{{0,0,size,size}}});
-            page = &pages.back();
-            if (!Place(*page,w,h,result->x,result->y))
-                throw std::logic_error("OpenGL atlas placement failed in an empty page");
-        }
-        result->storage = page->storage;
-        result->atlased = true;
-    } else {
-        result->storage = Storage(w, h, format);
-    }
+    result->storage = Storage(w, h, format);
     if (registerSlot) Register(result.get());
     auto* pointer = result.get();
     textures.emplace(pointer, std::move(result));
@@ -106,7 +80,7 @@ void OpenGLRenderer::Impl::Upload(OpenGLTexture* texture, const void* data, int 
     glBindTexture(GL_TEXTURE_2D, texture->storage->image);
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
     glPixelStorei(GL_UNPACK_ROW_LENGTH, pitch / bytes);
-    glTexSubImage2D(GL_TEXTURE_2D, 0, texture->x, texture->y, texture->width,
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, texture->width,
         texture->height, format, GL_UNSIGNED_BYTE, data);
     glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
     GL3::CheckError("Upload OpenGL image");
@@ -133,7 +107,7 @@ unsigned int OpenGLRenderer::Impl::Program(std::string_view vs, std::string_view
         fragment = shader(GL_FRAGMENT_SHADER, fs);
         program = glCreateProgram();
         glAttachShader(program, vertex); glAttachShader(program, fragment);
-        constexpr const char* attributes[]{"inPosition", "inColor", "inUV", "inSlot", "inSampler", "inRect"};
+        constexpr const char* attributes[]{"inPosition", "inColor", "inUV", "inSlot", "inSampler"};
         for (unsigned int i = 0; i < std::size(attributes); ++i)
             glBindAttribLocation(program, i, attributes[i]);
         glBindFragDataLocation(program, 0, "outColor");
@@ -157,13 +131,6 @@ OpenGLRenderer::Impl::Impl(OpenGLContext& window, int w, int h)
 {
     context.MakeCurrent();
     glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maximum);
-    pageSize = maximum;
-    if (const char* value = std::getenv("PVZ_GL_ATLAS_SIZE")) {
-        const int requested = std::stoi(value);
-        if (requested < 16 || requested > maximum)
-            throw std::invalid_argument("PVZ_GL_ATLAS_SIZE is outside device limits");
-        pageSize = requested;
-    }
     glDisable(GL_DEPTH_TEST); glDisable(GL_CULL_FACE); glDisable(GL_DITHER);
     glDisable(GL_FRAMEBUFFER_SRGB);
     glClampColor(GL_CLAMP_READ_COLOR, GL_FALSE);
@@ -179,14 +146,12 @@ OpenGLRenderer::Impl::Impl(OpenGLContext& window, int w, int h)
         reinterpret_cast<const void*>(offsetof(Vertex, draw) + offsetof(GpuVertex, slot)));
     glEnableVertexAttribArray(4); glVertexAttribIPointer(4, 1, GL_UNSIGNED_INT, sizeof(Vertex),
         reinterpret_cast<const void*>(offsetof(Vertex, draw) + offsetof(GpuVertex, sampler)));
-    glEnableVertexAttribArray(5); glVertexAttribIPointer(5, 4, GL_INT, sizeof(Vertex),
-        reinterpret_cast<const void*>(offsetof(Vertex, x)));
     vertices.reserve(16384); batches.reserve(1024);
 }
 OpenGLRenderer::Impl::~Impl()
 {
     context.MakeCurrent();
-    textures.clear(); pages.clear(); batches.clear();
+    textures.clear(); batches.clear();
     for (const auto program : {sceneProgram, imageProgram, fontProgram, presentProgram})
         if (program) glDeleteProgram(program);
     if (stream) glDeleteBuffers(1, &stream);
@@ -248,7 +213,7 @@ std::shared_ptr<OpenGLStorage> OpenGLRenderer::Impl::Snapshot(OpenGLTexture* tex
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, destination);
     glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, copy->image, 0);
     glDisable(GL_SCISSOR_TEST);
-    glBlitFramebuffer(texture->x, texture->y, texture->x + texture->width, texture->y + texture->height,
+    glBlitFramebuffer(0, 0, texture->width, texture->height,
         0, 0, texture->width, texture->height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
     glDeleteFramebuffers(1, &source); glDeleteFramebuffers(1, &destination);
     Check("Snapshot OpenGL feedback source");
@@ -273,15 +238,9 @@ void OpenGLRenderer::Impl::Submit(std::span<const GpuVertex> input, OpenGLTextur
         auto* image = slots[input[index].slot & 4095U];
         if (!image) throw std::logic_error("OpenGL draw references an unbound logical texture");
         auto storage = image->storage;
-        int x = image->x, y = image->y;
-        if(image->atlasCopies.size()>1 && preferredAtlas && preferredAtlas->atlasRegions) {
-            const auto& region=(*preferredAtlas->atlasRegions)[image->slot];
-            if(region.owner==image){storage=preferredAtlas;x=region.x;y=region.y;}
-        }
-        if(image->atlased && preferredAtlas!=storage)preferredAtlas=storage;
         if (storage == target->storage) {
             if (!feedback) feedback = Snapshot(image);
-            storage = feedback; x = y = 0;
+            storage = feedback;
         }
         const size_t first = vertices.size();
         for (size_t corner = 0; corner < 3; ++corner) {
@@ -290,7 +249,7 @@ void OpenGLRenderer::Impl::Submit(std::span<const GpuVertex> input, OpenGLTextur
             // fixes it to the last; duplicate only flat metadata, never UV/color.
             draw.slot = input[index].slot;
             draw.sampler = coverage ? 0 : input[index].sampler;
-            vertices.push_back({draw, x, y, image->width, image->height});
+            vertices.push_back({draw});
         }
         const auto sameClip = [](const GpuClip& a, const GpuClip& b) {
             return a.x == b.x && a.y == b.y && a.width == b.width && a.height == b.height;
@@ -315,7 +274,7 @@ OpenGLRenderer::OpenGLRenderer(OpenGLContext& context, int w, int h,
     impl_->white = CreateTexture(1, 1, &white, 4);
     impl_->slots[impl_->white->slot] = nullptr;
     impl_->white->slot = 0; impl_->slots[0] = impl_->white;
-    impl_->scene = impl_->Allocate(w, h, GL_RGBA8, false, false);
+    impl_->scene = impl_->Allocate(w, h, GL_RGBA8, false);
     impl_->BindTarget(); glDisable(GL_SCISSOR_TEST);
     glClearColor(0, 0, 0, 1); glClear(GL_COLOR_BUFFER_BIT);
 }
@@ -344,7 +303,7 @@ void OpenGLRenderer::PrepareLoadingPipelines()
 }
 OpenGLTexture* OpenGLRenderer::CreateTexture(int w, int h, const void* pixels, int pitch, bool opaque)
 {
-    auto* texture = impl_->Allocate(w, h, GL_RGBA8, true, true);
+    auto* texture = impl_->Allocate(w, h, GL_RGBA8, true);
     try { impl_->Upload(texture, pixels, pitch, GL_BGRA); }
     catch (...) { DestroyTexture(texture); throw; }
     texture->flags = opaque ? GpuVertex::kOpaqueInput : 0;
@@ -352,7 +311,7 @@ OpenGLTexture* OpenGLRenderer::CreateTexture(int w, int h, const void* pixels, i
 }
 OpenGLTexture* OpenGLRenderer::CreateRawTexture(int w, int h, const void* pixels, int pitch)
 {
-    auto* texture = impl_->Allocate(w, h, GL_RGBA8, false, false);
+    auto* texture = impl_->Allocate(w, h, GL_RGBA8, false);
     try { impl_->Upload(texture, pixels, pitch, GL_BGRA); }
     catch (...) { DestroyTexture(texture); throw; }
     return texture;
@@ -378,21 +337,13 @@ void OpenGLRenderer::BindStaticTexture(OpenGLTexture* texture, unsigned int slot
         throw std::invalid_argument("OpenGL texture already has a different static symbol");
     if (texture->slot != ~0U && s.slots[texture->slot] == texture)
         s.slots[texture->slot] = nullptr;
-    for(const auto& copy:texture->atlasCopies) {
-        auto& region=(*copy.storage->atlasRegions)[texture->slot];
-        if(region.owner==texture)region={};
-    }
     texture->slot = texture->staticSlot = s.staticBase + slot;
     s.slots[texture->slot] = texture;
-    if(texture->atlased && texture->atlasCopies.empty())
-        s.RememberAtlasCopy(texture,texture->storage,texture->x,texture->y);
-    else for(const auto& copy:texture->atlasCopies)
-        (*copy.storage->atlasRegions)[texture->slot]={texture,copy.x,copy.y};
 }
 OpenGLTexture* OpenGLRenderer::CreateTextureStatic(int w, int h, const void* pixels,
     int pitch, bool opaque, unsigned int slot)
 {
-    auto* texture = impl_->Allocate(w, h, GL_RGBA8, true, false);
+    auto* texture = impl_->Allocate(w, h, GL_RGBA8, false);
     texture->flags = opaque ? GpuVertex::kOpaqueInput : 0;
     try { impl_->Upload(texture, pixels, pitch, GL_BGRA); BindStaticTexture(texture, slot); }
     catch (...) { DestroyTexture(texture); throw; }
@@ -404,10 +355,8 @@ OpenGLTexture* OpenGLRenderer::ReplaceTexture(OpenGLTexture* old, int w, int h,
     if (!old) return CreateTexture(w,h,pixels,pitch,opaque);
     if (!impl_->textures.contains(old) || old == impl_->white || old->render || old->caustic)
         throw std::invalid_argument("Cannot host-replace this OpenGL image");
-    impl_->Flush();
-    // Mutable images have dedicated storage; repeated updates cannot fragment
-    // the immutable atlas or grow the number of pages without bound.
-    auto* next = impl_->Allocate(w, h, GL_RGBA8, false, false);
+    // Recorded batches retain the previous storage while this handle gets a new resource.
+    auto* next = impl_->Allocate(w, h, GL_RGBA8, false);
     next->flags = opaque ? GpuVertex::kOpaqueInput : 0;
     try {
         impl_->Upload(next, pixels, pitch, GL_BGRA);
@@ -427,7 +376,7 @@ OpenGLTexture* OpenGLRenderer::CreateCoverageMask(int w, int h,
 {
     if (pitch < w || coverage.size() < size_t(pitch) * (h - 1) + w)
         throw std::invalid_argument("Incomplete OpenGL coverage mask");
-    auto* image = impl_->Allocate(w, h, GL_R8, false, true);
+    auto* image = impl_->Allocate(w, h, GL_R8, true);
     try { impl_->Upload(image, coverage.data(), pitch, GL_RED); }
     catch (...) { DestroyTexture(image); throw; }
     return image;
@@ -435,7 +384,7 @@ OpenGLTexture* OpenGLRenderer::CreateCoverageMask(int w, int h,
 OpenGLTexture* OpenGLRenderer::CreateRenderImage(int w, int h)
 {
     auto& s = *impl_; s.Flush();
-    auto* image = s.Allocate(w, h, GL_RGBA32F, false, true);
+    auto* image = s.Allocate(w, h, GL_RGBA32F, true);
     image->render = true; image->flags = 0x80000000U;
     auto* previous = s.selected; s.selected = image;
     try {
@@ -455,7 +404,6 @@ void OpenGLRenderer::DestroyTexture(OpenGLTexture* image)
     if (image == s.selected) throw std::logic_error("Deselect OpenGL render image before destruction");
     if (image == s.causticTarget) s.causticTarget = nullptr;
     if (image == s.causticSource) s.causticSource = nullptr;
-    s.ForgetAtlasCopies(image);
     if (image->slot != ~0U && s.slots[image->slot] == image) s.slots[image->slot] = nullptr;
     s.textures.erase(image);
 }
@@ -480,7 +428,6 @@ bool OpenGLRenderer::BeginScene()
     if (s.open) throw std::logic_error("OpenGL scene already open");
     if (!s.selected && !s.context.BeginPresent()) return false;
     s.open = true; s.mainFrame = !s.selected;
-    s.preferredAtlas.reset();
     if (s.causticsQueued && s.causticTarget && s.causticSource) {
         s.ImagePass(s.causticTarget, s.causticSource, nullptr, 3);
         s.causticsQueued = false;
@@ -549,7 +496,7 @@ void OpenGLRenderer::ResizeScene(int width, int height)
     if (s.open || s.selected)
         throw std::logic_error("Resize the main OpenGL canvas between scenes");
     if (s.width == width && s.height == height) return;
-    auto* next = s.Allocate(width, height, GL_RGBA8, false, false);
+    auto* next = s.Allocate(width, height, GL_RGBA8, false);
     auto* previous = s.scene;
     s.scene = next;
     s.width = width;

@@ -17,6 +17,8 @@ target_sources(${PROJECT_NAME} PRIVATE
     ImageFont.cpp
     ImageFont.h
     Image.h
+    ResidentImage.cpp
+    ResidentImage.h
     inc_routines
     MemoryImage.cpp
     MemoryImage.h

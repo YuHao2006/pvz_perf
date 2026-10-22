@@ -276,14 +276,16 @@ float4 PSMain(VertexOut input) : SV_Target0
     else
     {
         const bool generated = (slot & 0x80000000u) != 0u;
+        const bool filteredPremult = !generated && colorFilterKind != 0u &&
+            (slot & 0x40000000u) == 0u;
         if (colorFilterKind != 0u || sandStraight)
         {
             const bool linearFiltering = (samplerIndex & 1u) != 0u;
             source = (linearFiltering || sandStraight) ?
-                FilterSource(descriptorIndex, slot, samplerIndex, input.uv, !generated) :
-                FilterSample(source, slot, !generated);
+                FilterSource(descriptorIndex, slot, samplerIndex, input.uv, !generated && !filteredPremult) :
+                FilterSample(source, slot, !generated && !filteredPremult);
         }
-        if (generated)
+        if (generated || filteredPremult)
             source.rgb = source.a > 0.0 ? source.rgb / source.a : float3(0.0, 0.0, 0.0);
         return source * input.color;
     }

@@ -866,21 +866,21 @@ void CreditScreen::Draw(Graphics* g)
         
         if (aTransformBackground2.mFrame != -1.0f)
         {
-            aBackground2G.ClipRect(aTransformBackground2.mTransX, aTransformBackground2.mTransY, aTransformBackground2.mImage->mWidth - 1, aTransformBackground2.mImage->mHeight - 1);
+            aBackground2G.ClipRect(aTransformBackground2.mTransX, aTransformBackground2.mTransY, aTransformBackground2.mImageRegion.mWidth - 1, aTransformBackground2.mImageRegion.mHeight - 1);
             aBackground2G.DrawImageF(IMAGE_BACKGROUND1, aTransformBackground2.mTransX - BOARD_WIDTH / 2, aTransformBackground2.mTransY - BOARD_HEIGHT / 2);
             aBackground2G.ClearClipRect();
         }
         if (aTransformBackground3.mFrame != -1.0f)
         {
             Graphics aBackground3G(*g);
-            aBackground3G.ClipRect(aTransformBackground3.mTransX, aTransformBackground3.mTransY, aTransformBackground3.mImage->mWidth - 1, aTransformBackground3.mImage->mHeight - 1);
+            aBackground3G.ClipRect(aTransformBackground3.mTransX, aTransformBackground3.mTransY, aTransformBackground3.mImageRegion.mWidth - 1, aTransformBackground3.mImageRegion.mHeight - 1);
             // 1073 00438CE8: this window crops a different part of the same yard.
             aBackground3G.DrawImageF(IMAGE_BACKGROUND1, aTransformBackground3.mTransX - 600.0f, aTransformBackground3.mTransY - 300.0f);
         }
         if (aTransformBackground4.mFrame != -1.0f)
         {
             Graphics aBackground4G(*g);
-            aBackground4G.ClipRect(aTransformBackground4.mTransX, aTransformBackground4.mTransY, aTransformBackground4.mImage->mWidth - 1, aTransformBackground4.mImage->mHeight - 1);
+            aBackground4G.ClipRect(aTransformBackground4.mTransX, aTransformBackground4.mTransY, aTransformBackground4.mImageRegion.mWidth - 1, aTransformBackground4.mImageRegion.mHeight - 1);
             aBackground4G.DrawImageF(IMAGE_BACKGROUND2, aTransformBackground4.mTransX - BOARD_WIDTH / 2, aTransformBackground4.mTransY - BOARD_HEIGHT / 2);
         }
     }
@@ -899,7 +899,7 @@ void CreditScreen::Draw(Graphics* g)
         if (aTransformBackground1.mFrame != -1.0f)
         {
             Graphics aBackground1G(*g);
-            aBackground1G.ClipRect(aTransformBackground1.mTransX, aTransformBackground1.mTransY, aTransformBackground1.mImage->mWidth - 1, aTransformBackground1.mImage->mHeight - 1);
+            aBackground1G.ClipRect(aTransformBackground1.mTransX, aTransformBackground1.mTransY, aTransformBackground1.mImageRegion.mWidth - 1, aTransformBackground1.mImageRegion.mHeight - 1);
             // 1073 00438F42/00438F61: the tricycle scene uses (-80, -360).
             aBackground1G.DrawImageF(IMAGE_BACKGROUND1, aTransformBackground1.mTransX - 80.0f, aTransformBackground1.mTransY - 360.0f);
         }
@@ -908,14 +908,14 @@ void CreditScreen::Draw(Graphics* g)
             Graphics aBackground3G(*g);
             aBackground3G.mTransX += aTransformBackground3.mTransX - 20.0f;
             aBackground3G.mTransY += aTransformBackground3.mTransY - 260.0f;
-            aBackground3G.ClipRect(20, 260, aTransformBackground3.mImage->mWidth - 1, aTransformBackground3.mImage->mHeight - 1);
+            aBackground3G.ClipRect(20, 260, aTransformBackground3.mImageRegion.mWidth - 1, aTransformBackground3.mImageRegion.mHeight - 1);
             aBackground3G.DrawImageF(IMAGE_BACKGROUND3, -220.0f, 0.0f);
             aBackground3G.DrawImageF(IMAGE_POOL, 34.0f, 278.0f);
         }
         if (aTransformBackground4.mFrame != -1.0f)
         {
             Graphics aBackground4G(*g);
-            aBackground4G.ClipRect(aTransformBackground4.mTransX, aTransformBackground4.mTransY, aTransformBackground4.mImage->mWidth - 1, aTransformBackground4.mImage->mHeight - 1);
+            aBackground4G.ClipRect(aTransformBackground4.mTransX, aTransformBackground4.mTransY, aTransformBackground4.mImageRegion.mWidth - 1, aTransformBackground4.mImageRegion.mHeight - 1);
             aBackground4G.DrawImageF(IMAGE_BACKGROUND2, aTransformBackground4.mTransX - BOARD_WIDTH / 2, aTransformBackground4.mTransY - BOARD_HEIGHT / 2);
         }
     }
@@ -1157,15 +1157,6 @@ void CreditScreen::Update()
         int aUnsyncedDuration = aDurationSinceStart - aDurationReanimation;
         const double aFrameMs = mApp->mFrameTiming.mIntervalNs / 1'000'000.0;
         int aUnsyncedFrames = static_cast<int>((aUnsyncedDuration + aFrameMs * 0.5) / aFrameMs);
-        if (aUnsyncedFrames < 0)
-        {
-            TodTrace("Movie playing too fast %d frames", 1 - aUnsyncedFrames);
-        }
-        else if (aUnsyncedFrames > 2)
-        {
-            TodTrace("Movie playing too slow %d frames", aUnsyncedFrames - 1);
-        }
-
         if (aUnsyncedDuration > 10000)
         {
             JumpToFrame((CreditsPhase)((int)mCreditsPhase + 1), 0.0f);

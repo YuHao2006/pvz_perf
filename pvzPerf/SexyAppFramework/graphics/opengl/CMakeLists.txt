@@ -2,7 +2,7 @@ if(NOT WIN32)
     message(FATAL_ERROR "OpenGL currently requires the Win32 WGL window backend")
 endif()
 add_library(sexy_opengl STATIC
-    OpenGLApi.cpp OpenGLContext.cpp OpenGLRenderer.cpp OpenGLShaders.cpp OpenGLImageOps.cpp OpenGLAtlas.cpp
+    OpenGLApi.cpp OpenGLContext.cpp OpenGLRenderer.cpp OpenGLShaders.cpp OpenGLImageOps.cpp
     ../../effect/ScaleEffectSizing.cpp)
 set_property(TARGET sexy_opengl PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE)
 target_compile_features(sexy_opengl PUBLIC cxx_std_23)

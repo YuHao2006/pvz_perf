@@ -2129,8 +2129,6 @@ bool SexyAppBase::DoUpdateFrames()
 #endif
 			mYieldMainThread = false;
 			LoadingThreadCompleted();
-			if (mDDInterface && mDDInterface->mRenderInterface)
-				mDDInterface->mRenderInterface->FinishLoadingTextures();
 		}
 
 		// Allow one update for a queued call-site command; overdue commands fail
@@ -2154,8 +2152,6 @@ bool SexyAppBase::DoUpdateFrames()
 			mLoaded = true;
 			mYieldMainThread = false;
 			LoadingThreadCompleted();
-			if (mDDInterface && mDDInterface->mRenderInterface)
-				mDDInterface->mRenderInterface->FinishLoadingTextures();
 
 			if (mRecordingDemoBuffer)
 			{

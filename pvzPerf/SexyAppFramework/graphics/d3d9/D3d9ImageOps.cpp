@@ -39,11 +39,11 @@ void D3d9Renderer::Impl::ImagePass(D3d9Texture* target, D3d9Texture* source,
     D3d9Texture sourceCopy, alphaCopy;
     if (source->storage == target->storage) {
         sourceCopy = *source; sourceCopy.storage = Snapshot(source);
-        sourceCopy.x = sourceCopy.y = 0; source = &sourceCopy;
+        source = &sourceCopy;
     }
     if (alpha && alpha->storage == target->storage) {
         alphaCopy = *alpha; alphaCopy.storage = Snapshot(alpha);
-        alphaCopy.x = alphaCopy.y = 0; alpha = &alphaCopy;
+        alpha = &alphaCopy;
     }
     Target(target->storage->surface.value, target->width, target->height);
     Check(device->SetVertexShader(imageVS.value), "Bind D3D9 image vertex shader");
@@ -55,7 +55,7 @@ void D3d9Renderer::Impl::ImagePass(D3d9Texture* target, D3d9Texture* source,
     c[S::Rectangle] = {float(processing ? processing->x : 0), float(processing ? processing->y : 0),
         float(target->width), float(target->height)};
     const auto* mask = alpha ? alpha : source;
-    c[S::AlphaRect] = {float(mask->x), float(mask->y), float(mask->width), float(mask->height)};
+    c[S::AlphaRect] = {0, 0, float(mask->width), float(mask->height)};
     c[S::AlphaTexture] = {1.0f / float(mask->storage->width), 1.0f / float(mask->storage->height), 0, 0};
     c[S::PackedColor] = ColorBytes(color);
     c[S::Cells] = {float(columns), float(rows), float(target->width / columns), float(target->height / rows)};
@@ -81,10 +81,9 @@ D3d9Texture* D3d9Renderer::ProcessImage(D3d9Texture* source, const GpuImageProce
     if (!source || !s.textures.contains(source)) throw std::invalid_argument("D3D9 image processing requires a live source");
     if (processing.operation != GpuImageOperation::Copy && processing.operation != GpuImageOperation::Colorize)
         throw std::invalid_argument("Unknown D3D9 image operation");
-    auto* target = s.Allocate(processing.width, processing.height, D3DFMT_A8R8G8B8, false, true);
+    auto* target = s.Allocate(processing.width, processing.height, D3DFMT_A8R8G8B8, true);
     try {
         s.ImagePass(target, source, nullptr, processing.operation == GpuImageOperation::Copy ? 0 : 1, &processing);
-        s.CollectImmutable(target);
     } catch (...) { DestroyTexture(target); throw; }
     return target;
 }
@@ -93,7 +92,7 @@ D3d9Texture* D3d9Renderer::CopyTextureRegion(D3d9Texture* source, int x, int y, 
     auto& s = *impl_;
     if (!source || !s.textures.contains(source)) throw std::invalid_argument("D3D9 region copy requires a live source");
     s.Flush();
-    auto* target = s.Allocate(w, h, source->storage->format, false, true);
+    auto* target = s.Allocate(w, h, source->storage->format, true);
     target->flags = source->flags; target->render = source->render;
     try {
         s.Target(target->storage->surface.value, w, h);
@@ -103,12 +102,11 @@ D3d9Texture* D3d9Renderer::CopyTextureRegion(D3d9Texture* source, int x, int y, 
         const int right = static_cast<int>(std::clamp<long long>(static_cast<long long>(x) + w, 0, source->width));
         const int bottom = static_cast<int>(std::clamp<long long>(static_cast<long long>(y) + h, 0, source->height));
         if (right > left && bottom > top) {
-            RECT from{source->x + left, source->y + top, source->x + right, source->y + bottom};
+            RECT from{left, top, right, bottom};
             RECT to{left - x, top - y, right - x, bottom - y};
             Check(s.device->StretchRect(source->storage->surface.value, &from, target->storage->surface.value,
                 &to, D3DTEXF_NONE), "Lossless D3D9 region copy");
         }
-        s.CollectImmutable(target);
     } catch (...) { DestroyTexture(target); throw; }
     return target;
 }
@@ -120,7 +118,7 @@ D3d9Texture* D3d9Renderer::ComposeAlphaRaw(D3d9Texture* base, D3d9Texture* alpha
         columns <= 0 || rows <= 0 || columns > base->width || rows > base->height ||
         alpha->width < base->width / columns || alpha->height < base->height / rows)
         throw std::invalid_argument("Invalid D3D9 alpha composition dimensions");
-    auto* target = s.Allocate(base->width, base->height, D3DFMT_A8R8G8B8, false, false);
+    auto* target = s.Allocate(base->width, base->height, D3DFMT_A8R8G8B8, false);
     try { s.ImagePass(target, base, alpha, 2, nullptr, columns, rows, color, colorOnly); }
     catch (...) { DestroyTexture(target); throw; }
     return target;
@@ -131,8 +129,6 @@ D3d9Texture* D3d9Renderer::AdoptComposedTexture(D3d9Texture* image)
     if (!image || !s.textures.contains(image) || image->slot != ~0U)
         throw std::invalid_argument("Only raw D3D9 composition can be adopted");
     s.Register(image);
-    try { s.CollectImmutable(image); }
-    catch (...) { DestroyTexture(image); throw; }
     for (auto it = s.textures.begin(); it != s.textures.end();) {
         auto* candidate = it->first;
         if (candidate != s.scene && candidate != s.selected && candidate->slot == ~0U)
@@ -225,7 +221,7 @@ void D3d9Renderer::RenderFontAtlas(D3d9Texture* target, D3d9Texture* source,
     D3d9Texture sourceCopy;
     if (source->storage == target->storage) {
         sourceCopy = *source; sourceCopy.storage = s.Snapshot(source);
-        sourceCopy.x = sourceCopy.y = 0; source = &sourceCopy;
+        source = &sourceCopy;
     }
     // Validate all rectangles before modifying the target.
     for (const auto& glyph : glyphs)
@@ -276,7 +272,7 @@ D3d9Texture* D3d9Renderer::CreateCausticsTexture(int w, int h, D3d9Texture* sour
     if (w != 128 || h != 64) throw std::invalid_argument("D3D9 caustics output must be 128 by 64");
     auto& s = *impl_;
     s.Flush();
-    auto* target = s.Allocate(w, h, D3DFMT_A8R8G8B8, false, true); target->caustic = true;
+    auto* target = s.Allocate(w, h, D3DFMT_A8R8G8B8, true); target->caustic = true;
     try {
         s.Target(target->storage->surface.value, w, h);
         Check(s.device->Clear(0, nullptr, D3DCLEAR_TARGET, 0x00ffffff, 1, 0), "Clear D3D9 caustics");
@@ -314,12 +310,12 @@ std::vector<float> D3d9Renderer::ReadTextureFloats(D3d9Texture* image)
     try {
         result.resize(size_t(image->width) * image->height * 4);
         for (int y = 0; y < image->height; ++y) {
-            const auto* row = static_cast<const unsigned char*>(lock.pBits) + size_t(y + image->y) * lock.Pitch;
+            const auto* row = static_cast<const unsigned char*>(lock.pBits) + size_t(y) * lock.Pitch;
             auto* destination = result.data() + size_t(y) * image->width * 4;
             if (storage.format == D3DFMT_A32B32G32R32F)
-                std::memcpy(destination, row + size_t(image->x) * 16, size_t(image->width) * 16);
+                std::memcpy(destination, row, size_t(image->width) * 16);
             else for (int x = 0; x < image->width; ++x) {
-                const auto* pixel = row + size_t(x + image->x) * 4;
+                const auto* pixel = row + size_t(x) * 4;
                 destination[x * 4] = pixel[2] / 255.0f; destination[x * 4 + 1] = pixel[1] / 255.0f;
                 destination[x * 4 + 2] = pixel[0] / 255.0f; destination[x * 4 + 3] = pixel[3] / 255.0f;
             }

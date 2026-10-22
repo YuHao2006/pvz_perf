@@ -176,6 +176,20 @@ static void CheckGardenHudLayout() {
 }
 
 int main() {
+    for (const int height : {600, 900, 1200}) {
+        const auto checkStartup = [height](int monitorWidth,int monitorHeight,int logicalWidth) {
+            const auto size=WindowStartupSize::FromMonitor(monitorWidth,monitorHeight,height);
+            Check(size.height==height);
+            Check(size.width==int((logicalWidth*1LL*height+300)/600));
+        };
+        checkStartup(1600,1200,800);
+        checkStartup(1920,1080,1067);
+        checkStartup(1920,1200,960);
+        checkStartup(2520,1080,1400);
+        checkStartup(3440,1440,1400);
+        checkStartup(1080,1920,800);
+    }
+    Check(WindowStartupSize::FromMonitor(1920,1080,0).height==600);
     CheckZombiesWonLayout();
     CheckGardenToolButtons();
     CheckGardenHudLayout();

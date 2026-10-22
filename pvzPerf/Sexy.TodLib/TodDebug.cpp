@@ -249,10 +249,6 @@ void TodTrace(const char* theFormat, ...)
 	TodDebugOutput(aButter);
 }
 
-void TodHesitationTrace(...)
-{
-}
-
 void TodTraceAndLog(const char* theFormat, ...)
 {
 	char aButter[1024];

@@ -148,6 +148,7 @@ source_group("TodLib\\Common\\TodCommon Include" FILES ${TodLib__Common__TodComm
 set(TodLib__Common__TodCommon_Source
     "../Sexy.TodLib/Definition.cpp"
     "../Sexy.TodLib/TodCommon.cpp"
+    "../Sexy.TodLib/ProgramImageSymbols.cpp"
     "misc/FastMath.cpp"
     "../Sexy.TodLib/TodDebug.cpp"
     "../Sexy.TodLib/TodFoley.cpp"

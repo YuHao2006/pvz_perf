@@ -13,21 +13,24 @@ list(FILTER PVZ_RESOURCE_INPUTS EXCLUDE REGEX "/ReanimTrack(Id|MphfGlobal)\\.h$"
 
 add_custom_command(
     OUTPUT "${PVZ_RESOURCE_CACHE}/resources.stamp" "${PVZ_RESOURCE_CACHE}/main.pak64"
-    BYPRODUCTS "${PVZ_GAME_SOURCE_DIR}/Sexy.TodLib/generated/ImageAtlasGroups.h"
+    BYPRODUCTS "${PVZ_GAME_SOURCE_DIR}/Sexy.TodLib/generated/DefinitionImageBindings.h"
     COMMAND "${Python3_EXECUTABLE}" -B
         "${CMAKE_SOURCE_DIR}/tools/resourcePipeline/src/build_resources.py"
         --compiler "$<TARGET_FILE:reanimc>" --cache "${PVZ_RESOURCE_CACHE}"
+        --config "${CMAKE_SOURCE_DIR}/assets/definitions/ResourceBuild.pvzbuild"
     DEPENDS reanimc ${PVZ_RESOURCE_INPUTS}
         "${CMAKE_SOURCE_DIR}/tools/resourcePipeline/src/build_resources.py"
+        "${CMAKE_SOURCE_DIR}/tools/definition_atlas.py"
+        "${CMAKE_SOURCE_DIR}/tools/resource_build_config.py"
+        "${CMAKE_SOURCE_DIR}/tools/exact_atlas.py"
         "${CMAKE_SOURCE_DIR}/tools/compile_numeric_resources.py"
         "${CMAKE_SOURCE_DIR}/tools/compile_numeric_fonts.py"
         "${CMAKE_SOURCE_DIR}/tools/build_numeric_runtime_pak64.py"
-        "${CMAKE_SOURCE_DIR}/tools/gen_image_symbol_registry.py"
         "${CMAKE_SOURCE_DIR}/tools/gen_reanim_attacher_masks.py"
         "${CMAKE_SOURCE_DIR}/tools/reanim_type_map.txt"
         "${CMAKE_SOURCE_DIR}/tools/reanim_track_families.txt"
         "${CMAKE_SOURCE_DIR}/tools/font_symbol_ids.bin"
-        "${PVZ_GAME_SOURCE_DIR}/Sexy.TodLib/generated/image_symbol_ids.bin"
+        "${PVZ_GAME_SOURCE_DIR}/Sexy.TodLib/ProgramImageSymbols.h"
     COMMENT "Compiling definitions, generated C++ and runtime PAK64"
     VERBATIM)
 add_custom_target(pvz_resources

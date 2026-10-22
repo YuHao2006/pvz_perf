@@ -13,8 +13,6 @@
 //0x469A60
 void PoolEffect::PoolEffectInitialize()
 {
-    TodHesitationBracket aHesitation("PoolEffectInitialize");
-
     auto* aSource = AsMemoryImage(IMAGE_POOL_CAUSTIC_EFFECT);
     if (aSource == nullptr || aSource->mWidth != 256 || aSource->mHeight != 256)
         throw std::runtime_error("PoolEffect: caustic source must be a 256x256 GPU texture");

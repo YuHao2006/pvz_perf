@@ -1,0 +1,113 @@
+{
+  "format": "pvz-exact-atlas-v2",
+  "geometry": {
+    "max_side": 16384,
+    "padding": 2
+  },
+  "key": "1c2a3748a7ac3a0a8725ccaf849bd811851ec3bf344724b8879fdd2b40b7776c",
+  "layout": {
+    "exact": {
+      "best_bound": 119011,
+      "cache_hit": false,
+      "cache_key": "1c2a3748a7ac3a0a8725ccaf849bd811851ec3bf344724b8879fdd2b40b7776c",
+      "elapsed_seconds": 3.611419400003797,
+      "gap": 0.0,
+      "model_version": "integer-nonrotating-padded-global-area-v2",
+      "objective_area": 119011,
+      "optimal": true,
+      "proof_scope": "minimum integer atlas area; fixed orientation; configured padding and max_side",
+      "search_complete": true,
+      "solve_budget_seconds": null,
+      "solver": "ortools-cp-sat",
+      "solver_version": "9.15.6755",
+      "status": "OPTIMAL"
+    },
+    "height": 1951,
+    "method": "native-maxrects",
+    "regions": [
+      [
+        2,
+        2,
+        57,
+        156
+      ],
+      [
+        2,
+        162,
+        57,
+        156
+      ],
+      [
+        2,
+        322,
+        57,
+        156
+      ],
+      [
+        2,
+        482,
+        57,
+        156
+      ],
+      [
+        2,
+        642,
+        57,
+        156
+      ],
+      [
+        2,
+        802,
+        57,
+        156
+      ],
+      [
+        2,
+        962,
+        57,
+        156
+      ],
+      [
+        2,
+        1122,
+        57,
+        156
+      ],
+      [
+        2,
+        1282,
+        57,
+        156
+      ],
+      [
+        2,
+        1442,
+        57,
+        156
+      ],
+      [
+        2,
+        1602,
+        57,
+        156
+      ],
+      [
+        2,
+        1762,
+        57,
+        156
+      ],
+      [
+        2,
+        1922,
+        32,
+        27
+      ]
+    ],
+    "search_attempts": 1206,
+    "search_microseconds": 1158,
+    "shelf_area": 119011,
+    "width": 61
+  },
+  "layout_sha256": "0508e99c87c5bf50f9ea19b713b79942850c049e3057e1cf14fde8c2612ce9e7"
+}

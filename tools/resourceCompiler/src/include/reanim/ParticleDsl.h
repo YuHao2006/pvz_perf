@@ -315,12 +315,12 @@ inline constexpr std::uint32_t kParticleEmitterNativeDumpSize = 688;
     const std::vector<std::uint8_t>& runtimePayload,
     const std::vector<std::uint32_t>& onDurationTargets);
 
-// Emit compact, pointer-free numeric records from the gold track bytes.
+// Emit offline source-record intermediates using gold track bytes and parsed
+// DSL image names. sourceImageHandles indexes sorted image_sources.txt only.
 [[nodiscard]] std::vector<std::uint8_t> SerializeParticleV4(
     const std::vector<std::uint8_t>& runtimePayload,
-    const std::vector<std::pair<std::size_t, std::string>>& imageFields,
-    const std::map<std::string, std::uint32_t>& imageSymbols,
-    std::uint32_t imageRegistryHash,
+    const ParticleDefinition& source,
+    const std::map<std::string, std::uint32_t>& sourceImageHandles,
     const std::vector<std::uint32_t>& onDurationTargets,
     const std::vector<std::uint32_t>& nameIds,
     std::uint32_t nameTableHash);

@@ -22,16 +22,6 @@ public:
     OpenGLRenderer(const OpenGLRenderer&) = delete;
     OpenGLRenderer& operator=(const OpenGLRenderer&) = delete;
     void PrepareLoadingPipelines();
-    void FinishLoadingTextures();
-    // Offsets include a trailing sentinel; symbols are stable image-symbol IDs.
-    void FinishLoadingTextures(std::span<const unsigned int> offsets,
-        std::span<const unsigned int> symbols,unsigned int reanimationGroups);
-    struct AtlasCounts {
-        size_t pages,images;
-        unsigned long long pixels,capacity;
-        size_t reanimationPages{},particlePages{},copies{};
-    };
-    AtlasCounts GetAtlasCounts() const;
     OpenGLTexture* CreateTexture(int width, int height, const void* bgra, int pitch, bool opaque = false);
     OpenGLTexture* CreateTextureStatic(int width, int height, const void* bgra,
         int pitch, bool opaque, unsigned int slot);

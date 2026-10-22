@@ -69,6 +69,26 @@ def file_key(name: str) -> str:
     return key(name)
 
 
+def read_definition_image_bindings(root: Path) -> dict[str, str]:
+    """Read compiler-owned program bindings; compiled definitions carry no paths."""
+    path = root / "pvzPerf/Sexy.TodLib/generated/DefinitionImageBindings.h"
+    if not path.exists():
+        return {}
+    text = clean_comments(path.read_text(encoding="utf-8-sig"))
+    result = {}
+    for definition, image in re.findall(r'\{\s*"([^"]+)"\s*,\s*"([^"]*)"\s*\}', text):
+        name = file_key(definition)
+        require(numeric_kind(name) in ("reanim", "particles") and name not in result,
+                f"Invalid or duplicate program definition binding: {definition}")
+        if image:
+            image = file_key(image)
+            require(image.startswith("compiled/") and image.endswith(".atlas.png"),
+                    f"Invalid program definition atlas path: {image}")
+        result[name] = image
+    require(bool(result), "Program definition image bindings are empty or malformed")
+    return result
+
+
 def digest(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
 
@@ -189,13 +209,13 @@ def source_audit(root: Path, removed: dict[str, str], numeric_names: set[str]) -
         "LawnApp.cpp": ['ParseResourcesFile("compiled/resources.compiled")'],
         "Sexy.TodLib/Reanimator.cpp": [
             'DefinitionCompiledPath(gReanimationParamArray[(int)theReanimType].mReanimFileName)',
-            "DefinitionOpenCompiledFile(aV4Path.c_str())",
-            "0x35544449u", "ReanimationTryLoadDefinitionV4(theReanimType, aReanimDef)",
+            "DefinitionOpenCompiledFile(aV5Path.c_str())",
+            "0x35544449u", "ReanimationTryLoadDefinitionV5(theReanimType, aReanimDef)",
         ],
         "Sexy.TodLib/TodParticle.cpp": [
             'DefinitionCompiledPath(theParticleFileName)',
             "DefinitionOpenCompiledFile(path.c_str())",
-            "0x35504449u", "TodParticleTryLoadDefinitionV4(theParticleDef, theParticleFileName)",
+            "0x35504449u", "TodParticleTryLoadDefinitionV5(theParticleDef, theParticleFileName)",
         ],
         "SexyAppFramework/graphics/ImageFont.cpp": [
             "ResolveCompiledFontPath(theFontDescFileName)", '"compiled/fonts/"',
@@ -312,7 +332,9 @@ def source_audit(root: Path, removed: dict[str, str], numeric_names: set[str]) -
         "slots": constant("NUMERIC_RESOURCE_SLOT_COUNT", "Sexy.TodLib/generated/NumericResourceBindings.h"),
         "track_max": constant("PVZ_REANIM_TRACK_ID_COUNT", "Sexy.TodLib/ReanimTrackId.h"),
         "track_capacity": constant("kReanimActiveMaskCapacityBits", "Sexy.TodLib/Reanimator.h"),
-        "image_max": constant("IMAGE_SYMBOL_ID_MAX", "Sexy.TodLib/generated/ImageSymbolId.h"),
+        "image_max": constant("IMAGE_SYMBOL_ID_MAX", "Sexy.TodLib/ProgramImageSymbols.h"
+                              if "Sexy.TodLib/ProgramImageSymbols.h" in production
+                              else "Sexy.TodLib/generated/ImageSymbolId.h"),
         "emitter_count": constant("kParticleEmitterNameCount", "Sexy.TodLib/generated/ParticleEmitterName.h") + 1,
         "groups": constant("RESOURCE_GROUP_COUNT", "ResourceGroupId.h"),
         "reanim_types": reanim_types,
@@ -368,7 +390,8 @@ def source_audit(root: Path, removed: dict[str, str], numeric_names: set[str]) -
             "accepted_numeric_references": accepted,
             "scale_binary_readers": binary_readers, "offline_scale_binary_readers": offline_readers,
             "numeric_definition_tables": {k: sorted(v) for k, v in table_paths.items()},
-            "registries": registries}
+            "registries": registries,
+            "definition_images": read_definition_image_bindings(root)}
 
 
 def font_path(name: str) -> str:
@@ -442,7 +465,7 @@ def numeric_kind(name: str) -> str | None:
 
 
 def validate_reanim(reader: Reader, count: int, registries: dict,
-                    image_ids: set[int] | None = None) -> None:
+                    image_ids: set[int] | None = None, *, inline_images: bool = False) -> None:
     tracks = []
     lo, hi = registries["attacher_range"]
     for _ in range(count):
@@ -456,9 +479,12 @@ def validate_reanim(reader: Reader, count: int, registries: dict,
         tracks.append((track, frames, mode))
     for _, frames, mode in tracks:
         for _ in range(frames):
-            image, font = reader.unpack("<2I")
-            require(image <= registries["image_max"] and font <= 1
-                    and (image == 0 or registries["image_slots"][image] != RESOURCE_SLOT_NONE),
+            image = 0 if inline_images else reader.word()
+            if inline_images:
+                reader.take(24)
+            font = reader.word()
+            require(font <= 1 and (inline_images or image <= registries["image_max"]
+                    and (image == 0 or registries["image_slots"][image] != RESOURCE_SLOT_NONE)),
                     "Invalid IDT5 resource ID")
             if image_ids is not None and image:
                 image_ids.add(image)
@@ -486,7 +512,7 @@ def validate_reanim(reader: Reader, count: int, registries: dict,
 
 
 def validate_particle(reader: Reader, count: int, body_size: int, registries: dict,
-                      image_ids: set[int] | None = None) -> None:
+                      image_ids: set[int] | None = None, *, inline_images: bool = False) -> None:
     body = Reader(reader.take(body_size))
 
     def track() -> None:
@@ -496,10 +522,12 @@ def validate_particle(reader: Reader, count: int, body_size: int, registries: di
                     and curve <= 13 and distribution <= 13, "Invalid IDP5 track node")
 
     for _ in range(count):
-        image = body.word()
+        image = 0 if inline_images else body.word()
+        if inline_images:
+            body.take(24)
         body.take(20)
-        require(image <= registries["image_max"] and body.word() <= 4
-                and (image == 0 or registries["image_slots"][image] != RESOURCE_SLOT_NONE),
+        require(body.word() <= 4 and (inline_images or image <= registries["image_max"]
+                and (image == 0 or registries["image_slots"][image] != RESOURCE_SLOT_NONE)),
                 "Invalid IDP5 emitter identity")
         if image_ids is not None and image:
             image_ids.add(image)
@@ -559,33 +587,124 @@ def validate_font(reader: Reader, maps: int, layers: int, tags: int,
     reader.finish()
 
 
+def parse_definition_atlas(name: str, data: bytes) -> dict | None:
+    """Scan inline geometry. Texture paths and resource symbols are not stored."""
+    kind = numeric_kind(name)
+    if kind not in ("reanim", "particles") or len(data) < 12:
+        return None
+    cookie = struct.unpack_from("<I", data)[0]
+    if cookie != (0xDEADFED9 if kind == "reanim" else 0xDEADFEDA):
+        return None
+    envelope = Reader(data)
+    _, size, crc = envelope.unpack("<3I")
+    require(size == len(data) - 12 and zlib.crc32(data[12:]) == crc,
+            f"Invalid {kind} envelope: {name}")
+    prefix = Reader(data[12:])
+    magic, width, height = prefix.unpack("<3I")
+    require(magic == (0x35564152 if kind == "reanim" else 0x35564150),
+            f"Invalid v5 atlas header: {name}")
+    reader = Reader(data[24:])
+    fields, offsets = [], []
+
+    def image() -> None:
+        offsets.append(24 + reader.at)
+        fields.append(reader.unpack("<6I"))
+
+    if kind == "reanim":
+        inner, _, _, _, _, count = reader.unpack("<4IfI")
+        require(inner == 0x35544449 and count <= 1 << 20, "Invalid inline IDT5 header")
+        tracks = []
+        for _ in range(count):
+            _, frames, stride, mode = reader.unpack("<4I")
+            require(stride == 32 and mode <= 1 and frames <= 1 << 20, "Invalid inline IDT5 track")
+            reader.take(frames * 32)
+            tracks.append((frames, mode))
+        for frames, mode in tracks:
+            for _ in range(frames):
+                image()
+                reader.take(4)  # Independent font ID.
+                if mode:
+                    reader.take(reader.word())
+    else:
+        inner, _, _, count, body_size = reader.unpack("<5I")
+        require(inner == 0x35504449 and count <= 1000, "Invalid inline IDP5 header")
+        end = reader.at + body_size
+
+        def track() -> None:
+            reader.take(reader.count(20, 100000) * 20)
+
+        for _ in range(count):
+            image()
+            reader.take(24)  # Original emitter properties and type.
+            for _ in range(22):
+                track()
+            for _ in range(2):
+                for _ in range(reader.count(12, 4)):
+                    reader.take(4)
+                    track()
+                    track()
+            for _ in range(16):
+                track()
+        require(reader.at == end, "Invalid inline IDP5 body size")
+    regions = list(dict.fromkeys(region for region in fields if any(region)))
+    require((not regions and width == height == 0) or
+            (regions and 0 < width <= 16384 and 0 < height <= 16384),
+            f"Invalid v5 atlas header: {name}")
+    rectangles = []
+    for x, y, w, h, rows, cols in regions:
+        require(w > 0 and h > 0 and 0 < rows <= h and 0 < cols <= w
+                and x >= 2 and y >= 2 and x + w + 2 <= width and y + h + 2 <= height,
+                f"Invalid v5 atlas region: {name}")
+        rectangle = (x - 2, y - 2, x + w + 2, y + h + 2)
+        require(all(rectangle == old or rectangle[2] <= old[0] or old[2] <= rectangle[0]
+                    or rectangle[3] <= old[1] or old[3] <= rectangle[1]
+                    for old in rectangles), f"Overlapping v5 atlas regions: {name}")
+        rectangles.append(rectangle)
+    return {"width": width, "height": height, "count": len(regions), "regions": regions,
+            "image_fields": fields, "image_offsets": offsets, "body_offset": 24}
+
+
 def validate_numeric(name: str, data: bytes, registries: dict,
                      references: set[tuple[str, str]] | None = None, *,
                      font_sources: set[str] | None = None,
-                     image_ids: set[int] | None = None) -> set[str]:
+                     image_ids: set[int] | None = None,
+                     atlas_path: str | None = None) -> set[str]:
     references = references if references is not None else set()
     kind = numeric_kind(name)
     require(kind is not None, f"Unrecognized numeric asset: {name}")
     if kind in ("reanim", "particles"):
         require(len(data) >= (40 if kind == "reanim" else 48), f"Truncated {kind} header: {name}")
         cookie, size, crc = struct.unpack_from("<3I", data)
-        require(cookie == (0xDEADFED7 if kind == "reanim" else 0xDEADFED8)
+        v5 = cookie == (0xDEADFED9 if kind == "reanim" else 0xDEADFEDA)
+        require((v5 or cookie == (0xDEADFED7 if kind == "reanim" else 0xDEADFED8))
                 and size == len(data) - 12 and zlib.crc32(data[12:]) == crc,
                 f"Invalid {kind} envelope: {name}")
+        body_offset = 12
+        if v5:
+            atlas = parse_definition_atlas(name, data)
+            regions = atlas["count"]
+            body_offset = atlas["body_offset"]
+            size -= body_offset - 12
+            registries = {**registries, "image": 0}
+            if regions and atlas_path:
+                references.add(("atlas", file_key(atlas_path)))
+            require(regions or not atlas_path, f"Empty definition has an atlas binding: {name}")
         if kind == "reanim":
-            magic, track, image, font, fps, count = struct.unpack_from("<4IfI", data, 12)
+            magic, track, image, font, fps, count = struct.unpack_from("<4IfI", data, body_offset)
             require(magic == 0x35544449 and (track, image, font) ==
                     (registries["track"], registries["image"], registries["font"])
                     and math.isfinite(fps) and fps > 0 and 0 < count <= registries["track_capacity"],
                     f"Invalid IDT5 header: {name}")
-            validate_reanim(Reader(data[36:]), count, registries, image_ids)
+            validate_reanim(Reader(data[body_offset + 24:]), count, registries,
+                            None if v5 else image_ids, inline_images=v5)
         else:
-            magic, image, emitter, count, body = struct.unpack_from("<5I", data, 12)
+            magic, image, emitter, count, body = struct.unpack_from("<5I", data, body_offset)
             require(magic == 0x35504449 and (image, emitter) ==
                     (registries["image"], registries["emitter"])
                     and count <= 1000 and body + 36 + 8 * count == size,
                     f"Invalid IDP5 header: {name}")
-            validate_particle(Reader(data[32:]), count, body, registries, image_ids)
+            validate_particle(Reader(data[body_offset + 20:]), count, body, registries,
+                              None if v5 else image_ids, inline_images=v5)
         return set()
     if kind == "fonts":
         require(32 <= len(data) <= 16 * 1024 * 1024, f"Invalid font size: {name}")
@@ -945,7 +1064,9 @@ def migrated_numeric_path(name: str) -> str | None:
 
 def physical_references(kind: str, path: str, available: set[str]) -> set[str]:
     normalized = file_key(path)
-    if kind == "sound":
+    if kind == "atlas":
+        found = {normalized} & available
+    elif kind == "sound":
         # DSoundManager appends an extension even when the supplied stem has one.
         found = {normalized + suffix for suffix in (".wav", ".ogg", ".au")} & available
     else:
@@ -1176,12 +1297,22 @@ def build(source: Path, stage: Path, output: Path, root: Path = ROOT,
         retired, external_dds = effect_retirement(original, index, root)
         removed.update(retired)
         require(numeric == required, "Staged numeric paths differ from the complete 146/106/20/1 corpus")
-        require(not any(n.startswith("compiled/") and n not in numeric for n in staged),
+        atlas_names = set()
+        for name in numeric:
+            if numeric_kind(name) not in ("reanim", "particles"):
+                continue
+            atlas = parse_definition_atlas(name, staged[name][1].read_bytes())
+            if atlas and atlas["count"]:
+                image = initial_audit["definition_images"].get(name)
+                require(bool(image), f"Missing program definition image binding: {name}")
+                atlas_names.add(image)
+        require(atlas_names <= set(staged), "Missing staged definition atlas")
+        require(not any(n.startswith("compiled/") and n not in numeric | atlas_names for n in staged),
                 "Unexpected non-numeric file in staged compiled tree")
         audit = source_audit(root, removed, numeric)
         require(initial_audit["fingerprint"] == audit["fingerprint"],
                 "Runtime sources changed during packaging")
-        selected = set(numeric) | {n for n in staged if n.startswith("effects/") and
+        selected = set(numeric) | atlas_names | {n for n in staged if n.startswith("effects/") and
                                   n.endswith(".dds") and n not in retired}
         require(not any(n.startswith("effects/") and n.endswith((".hlsl", ".fx"))
                         for n in index), "Authored effect source in input; requires a separate source audit")
@@ -1197,7 +1328,9 @@ def build(source: Path, stage: Path, output: Path, root: Path = ROOT,
                 validated_stamps[name] = {"sha256": digest(data), "bytes": len(data)}
             if numeric_kind(name):
                 dependencies = set()
-                font_refs.update(validate_numeric(name, data, audit["registries"], dependencies))
+                font_refs.update(validate_numeric(
+                    name, data, audit["registries"], dependencies,
+                    atlas_path=audit["definition_images"].get(name)))
                 file_refs[name] = dependencies
         require(font_refs == {n for n in required if numeric_kind(n) == "fonts"},
                 "Numeric resource font paths do not cover the original 20 fonts")
@@ -1217,7 +1350,8 @@ def build(source: Path, stage: Path, output: Path, root: Path = ROOT,
                 require(spelling == index[name].filename,
                         f"Staged/archive collision differs in name or bytes: {spelling}")
                 if stamp["sha256"] != entry_hash(original, index[name]):
-                    require(replace_definitions and numeric_kind(name) in ("reanim", "particles"),
+                    require(replace_definitions and
+                            (numeric_kind(name) in ("reanim", "particles") or name in atlas_names),
                             f"Staged/archive collision differs in name or bytes: {spelling}")
                     removed[name] = "numeric_record_rebuild"
                     additions.append(name)
@@ -1323,6 +1457,7 @@ def build(source: Path, stage: Path, output: Path, root: Path = ROOT,
                 "source_reference_audit": audit, "numeric_counts": COUNTS,
                 "package_layout": {
                     "definitions": "compiled/{reanim,particles}/<stem>.compiled",
+                    "definition_atlases": "program DefinitionImageBindings; inline compiled geometry only",
                     "fonts": "compiled/fonts/<stem>.compiled",
                     "resources": RESOURCE_PATH,
                     "built_in_shaders": "external build output; never packaged",

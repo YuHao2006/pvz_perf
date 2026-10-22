@@ -36,11 +36,6 @@ using OpenGLScaleStep = D3d9ScaleStep;
 namespace {
 using namespace Sexy;
 constexpr int SceneW = 320, SceneH = 280;
-#if defined(PVZ_TEST_D3D9)
-constexpr const char* AtlasSizeVariable = "PVZ_D3D9_ATLAS_SIZE";
-#else
-constexpr const char* AtlasSizeVariable = "PVZ_GL_ATLAS_SIZE";
-#endif
 void Require(bool value, const char* message)
 {
     if (!value) throw std::runtime_error(message);
@@ -69,24 +64,6 @@ public:
     {
         Require(SetWindowPos(hwnd, nullptr, 0, 0, w, h,
             SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE) != FALSE, "SetWindowPos");
-    }
-};
-// Restore the caller's setting; a fresh renderer must see the test atlas size.
-class SmallAtlas {
-    std::string previous_;
-    bool existed_{};
-public:
-    SmallAtlas()
-    {
-        const char* previous = std::getenv(AtlasSizeVariable);
-        existed_ = previous != nullptr;
-        if (previous) previous_ = previous;
-        // The backend uses getenv: update the CRT environment as well as Win32.
-        Require(_putenv_s(AtlasSizeVariable, "64") == 0, "Cannot force small atlas");
-    }
-    ~SmallAtlas()
-    {
-        _putenv_s(AtlasSizeVariable, existed_ ? previous_.c_str() : "");
     }
 };
 using QuadVertices = std::array<GpuVertex, 6>;
@@ -127,7 +104,7 @@ std::vector<unsigned int> Pattern(int w, int h)
 unsigned int Sample(const std::vector<unsigned int>& p, int w, int h,
     double u, double v, bool linear, bool repeat)
 {
-    // Wrap each tap in logical image coordinates, before atlas placement.
+    // Wrap each tap in image coordinates.
     const auto address = [repeat](int i, int extent) {
         return repeat ? (i % extent + extent) % extent : std::clamp(i, 0, extent-1);
     };
@@ -191,9 +168,9 @@ void CompileShaders()
     }
 }
 #endif
-void AtlasSampling(OpenGLRenderer& r)
+void IndependentTextureSampling(OpenGLRenderer& r)
 {
-    // 24 * 23 * 19 exceeds two 64x64 pages even without gutters.
+    // Mixed independent images exercise every logical slot in one submission.
     std::vector<OpenGLTexture*> textures;
     for (unsigned int i = 0; i < 24; ++i) {
         std::vector<unsigned int> p(23*19, 0xff000000u | (i+1)*0x050307u);
@@ -206,20 +183,14 @@ void AtlasSampling(OpenGLRenderer& r)
     auto* a = r.CreateTexture(3,5,pitched.data(),16);
     std::fill(pitched.begin(),pitched.end(),0);
     auto* b = r.CreateTexture(79,67,large.data(),79*4);
-    r.FinishLoadingTextures();
-    const auto atlas=r.GetAtlasCounts();
-    Require(atlas.pages>=3 && atlas.images>=25 && atlas.capacity>=atlas.pixels,
-        "Small textures did not populate multiple packed pages");
-    std::cout<<"atlas pages="<<atlas.pages<<" images="<<atlas.images
-        <<" occupied_pixels="<<atlas.pixels<<" page_pixels="<<atlas.capacity<<'\n';
     const auto snapshot = r.ReadTexturePixels(a);
     Require(snapshot.width==3 && snapshot.height==5 && snapshot.pixels==small,
         "Pitched NPOT upload lost its snapshot");
     const auto standalone = r.ReadTexturePixels(b);
     Require(standalone.width==79 && standalone.height==67 && standalone.pixels==large,
         "Large standalone NPOT upload mismatch");
-    Require(r.BeginScene(), "Begin atlas scene");
-    // One submission with A/B/A page changes must preserve primitive order.
+    Require(r.BeginScene(), "Begin independent texture scene");
+    // One submission with storage changes must preserve primitive order.
     std::vector<GpuVertex> mixed;
     for (int i=0; i<24; ++i) {
         auto q = Quad(textures[i],float(i*2),0,2,2);
@@ -242,17 +213,15 @@ void AtlasSampling(OpenGLRenderer& r)
     for (auto* t : textures) r.DestroyTexture(t);
     r.DestroyTexture(a); r.DestroyTexture(b);
 }
-void AtlasVersusStandalone(OpenGLRenderer& r)
+void ReplacementSampling(OpenGLRenderer& r)
 {
     auto pixels=Pattern(7,9);
     for(size_t i=0;i<pixels.size();i+=3) pixels[i]&=0x00ffffffu;
     auto* standalone=r.CreateTexture(7,9,pixels.data(),28);
     standalone=r.ReplaceTexture(standalone,7,9,pixels.data(),28);
-    auto* packed=r.CreateTexture(7,9,pixels.data(),28);
-    r.FinishLoadingTextures();
-    Require(r.GetAtlasCounts().images==2,"Comparison did not separate atlas and standalone images");
+    auto* uploaded=r.CreateTexture(7,9,pixels.data(),28);
     const auto render=[&](OpenGLTexture* texture) {
-        Require(r.BeginScene(),"Atlas equivalence scene unavailable");
+        Require(r.BeginScene(),"Replacement equivalence scene unavailable");
         auto background=Quad(r.whiteTexture,0,0,SceneW,SceneH);
         for(auto& vertex:background) vertex.r=vertex.g=vertex.b=0;
         Draw(r,r.whiteTexture,background);
@@ -267,16 +236,13 @@ void AtlasVersusStandalone(OpenGLRenderer& r)
         return r.ReadScenePixels();
     };
     const auto original=render(standalone);
-    const auto atlas=render(packed);
-    Require(original==atlas,"Packing changed logical-image filtering or edge semantics");
-    r.DestroyTexture(standalone);r.DestroyTexture(packed);
+    const auto fresh=render(uploaded);
+    Require(original==fresh,"Replacement changed image filtering or edge semantics");
+    r.DestroyTexture(standalone);r.DestroyTexture(uploaded);
 }
 struct GroupedImages {
-    // A sorts after shared; B and particle sort before it, moving the copy rectangle.
     static constexpr std::array<int,4> Widths{16,8,24,16};
     static constexpr std::array<int,4> Heights{8,8,16,16};
-    static constexpr std::array<unsigned int,4> Offsets{0,2,4,6};
-    static constexpr std::array<unsigned int,6> Symbols{1,2,1,3,1,4};
     std::array<std::vector<unsigned int>,4> pixels;
     std::array<OpenGLTexture*,4> textures{};
     std::array<unsigned int,4> slots{};
@@ -299,26 +265,11 @@ struct GroupedImages {
     {
         for(size_t i=0;i<textures.size();++i) {
             Require(OpenGLRenderer::SlotOf(textures[i])==slots[i],
-                "Grouped packing changed a stable static slot");
+                "Drawing changed a stable static slot");
             const auto original=r.ReadTexturePixels(textures[i]);
             Require(original.width==Widths[i] && original.height==Heights[i] &&
-                original.pixels==pixels[i],"Grouped canonical image changed pixels");
+                original.pixels==pixels[i],"Independent image changed pixels");
         }
-    }
-    void Finish(OpenGLRenderer& r) const
-    {
-        CheckOriginals(r);
-        r.FinishLoadingTextures(Offsets,Symbols,2);
-        const auto counts=r.GetAtlasCounts();
-        Require(counts.reanimationPages==2 && counts.particlePages==1,
-            "Each reanimation/particle definition must have its own page");
-        Require(counts.pages>=3 && (counts.images==4 || counts.images==5) && counts.copies>=6,
-            "Grouped atlas is missing pages, logical images or physical copies");
-        // Any ungrouped image (including white) contributes one physical copy.
-        Require(counts.copies-counts.images==2 &&
-            counts.copies-(counts.images-4)==6,
-            "Four grouped logical images must occupy six physical copies");
-        CheckOriginals(r);
     }
     void Destroy(OpenGLRenderer& r) const
     {
@@ -335,10 +286,174 @@ void ClearGroupedScene(OpenGLRenderer& r)
     Require(r.GetResourceCounts().queuedBatches==0,
         "Completed background scene retained pending batches");
 }
-void GroupedAtlasBatches(OpenGLRenderer& r)
+struct PrecompiledAtlas {
+    static constexpr int Width=32,Height=16;
+    struct Region { int x,y,width,height; };
+    static constexpr std::array<Region,3> Regions{{{1,1,7,5},{12,2,4,9},{23,5,5,3}}};
+    std::array<std::vector<unsigned int>,3> regions;
+    std::vector<unsigned int> pixels=std::vector<unsigned int>(Width*Height,0);
+    explicit PrecompiledAtlas()
+    {
+        // Fixed placement and one-pixel extrusion model the offline PNG payload.
+        for(size_t i=0;i<Regions.size();++i) {
+            const auto& region=Regions[i];
+            regions[i]=Pattern(region.width,region.height);
+            for(auto& pixel:regions[i])pixel^=static_cast<unsigned int>(i)*0x00132749U;
+            for(int y=-1;y<=region.height;++y)
+                for(int x=-1;x<=region.width;++x)
+                    pixels[size_t(region.y+y)*Width+region.x+x]=regions[i][
+                        size_t(std::clamp(y,0,region.height-1))*region.width+
+                        std::clamp(x,0,region.width-1)];
+        }
+    }
+    static QuadVertices RegionQuad(OpenGLTexture* texture,size_t index,
+        float x,float y,float width,float height)
+    {
+        const auto& region=Regions[index];
+        return Quad(texture,x,y,width,height,
+            float(region.x)/Width,float(region.y)/Height,
+            float(region.x+region.width)/Width,float(region.y+region.height)/Height);
+    }
+};
+void PrecompiledAtlasRegions(OpenGLRenderer& r)
+{
+    const PrecompiledAtlas atlas;
+    const auto initial=r.GetResourceCounts().textures;
+    auto* texture=r.CreateTexture(PrecompiledAtlas::Width,PrecompiledAtlas::Height,
+        atlas.pixels.data(),PrecompiledAtlas::Width*4);
+    Require(r.GetResourceCounts().textures==initial+1,
+        "Uploading one precompiled atlas created extra logical images");
+    Require(r.ReadTexturePixels(texture).pixels==atlas.pixels,
+        "Precompiled atlas pixels changed during direct upload");
+    std::array<OpenGLTexture*,3> standalone{};
+    for(size_t i=0;i<standalone.size();++i) {
+        const auto& region=PrecompiledAtlas::Regions[i];
+        standalone[i]=r.CreateTexture(region.width,region.height,atlas.regions[i].data(),
+            region.width*4);
+    }
+    const auto capture=[&](bool useAtlas,unsigned int sampler,unsigned int filter) {
+        ClearGroupedScene(r);
+        Require(r.BeginScene(),"Begin precompiled atlas region scene");
+        std::vector<GpuVertex> vertices;
+        for(size_t i=0;i<standalone.size();++i) {
+            const auto& region=PrecompiledAtlas::Regions[i];
+            // Repeat addresses the entire uploaded texture. Keep repeated
+            // region samples inside their texel centers; the offline gutter
+            // represents clamp edges, not a per-region repeat boundary.
+            const float inset=(sampler&2U)!=0 ? 0.5f : 0.0f;
+            const float width=float(useAtlas?PrecompiledAtlas::Width:region.width);
+            const float height=float(useAtlas?PrecompiledAtlas::Height:region.height);
+            const float originX=float(useAtlas?region.x:0),originY=float(useAtlas?region.y:0);
+            auto q=Quad(useAtlas?texture:standalone[i],float(i)*80,0,64,48,
+                (originX+inset)/width,(originY+inset)/height,
+                (originX+region.width-inset)/width,(originY+region.height-inset)/height);
+            for(auto& vertex:q) {
+                vertex.sampler=sampler;
+                vertex.slot|=filter<<28;
+            }
+            vertices.insert(vertices.end(),q.begin(),q.end());
+        }
+        r.SubmitTriangles(vertices,useAtlas?texture:standalone.front(),
+            (sampler&1U)!=0,(sampler&2U)!=0,GpuBlend::Opaque);
+        Require(r.GetResourceCounts().queuedBatches==(useAtlas?1u:3u),
+            "Precompiled regions did not share exactly one GPU storage batch");
+        r.EndSceneAndPresent();
+        return r.ReadScenePixels();
+    };
+    for(unsigned int filter=0;filter<4;++filter)
+        for(unsigned int sampler=0;sampler<4;++sampler) {
+            const auto reference=capture(false,sampler,filter);
+            const auto actual=capture(true,sampler,filter);
+            for(int y=0;y<48;++y)
+                for(int x=0;x<240;++x)
+                    Pixel(actual,SceneW,x,y,reference[size_t(y)*SceneW+x],1);
+        }
+    // Negative UV and repeat must use the full atlas extent, including gutters
+    // and empty pixels, just like every other directly uploaded texture.
+    ClearGroupedScene(r);
+    Require(r.BeginScene(),"Begin precompiled atlas full-image sampler scene");
+    for(unsigned int sampler=0;sampler<4;++sampler)
+        Draw(r,texture,Quad(texture,float(sampler)*64,0,64,48,
+            -1.25f,-0.75f,2.25f,1.75f),(sampler&1U)!=0,(sampler&2U)!=0);
+    r.EndSceneAndPresent();
+    const auto sampled=r.ReadScenePixels();
+    for(unsigned int sampler=0;sampler<4;++sampler)
+        for(int y=0;y<48;++y)for(int x=0;x<64;++x)
+            Pixel(sampled,SceneW,int(sampler)*64+x,y,
+                Sample(atlas.pixels,PrecompiledAtlas::Width,PrecompiledAtlas::Height,
+                    -1.25+(x+0.5)*3.5/64,-0.75+(y+0.5)*2.5/48,
+                    (sampler&1U)!=0,(sampler&2U)!=0),1);
+    auto* second=r.CreateTexture(PrecompiledAtlas::Width,PrecompiledAtlas::Height,
+        atlas.pixels.data(),PrecompiledAtlas::Width*4);
+    ClearGroupedScene(r);
+    Require(r.BeginScene(),"Begin multiple precompiled atlas storage scene");
+    const std::array<OpenGLTexture*,3> order{texture,second,texture};
+    for(size_t group=0;group<order.size();++group)
+        for(size_t region=0;region<PrecompiledAtlas::Regions.size();++region) {
+            Draw(r,order[group],PrecompiledAtlas::RegionQuad(order[group],region,
+                float(group*80+region*16),0,8,8));
+            Require(r.GetResourceCounts().queuedBatches==group+1,
+                "Independent precompiled atlases lost primitive storage order");
+        }
+    r.DestroyTexture(texture);r.DestroyTexture(second);
+    r.EndSceneAndPresent();
+    const auto result=r.ReadScenePixels();
+    for(size_t group=0;group<order.size();++group)
+        for(size_t region=0;region<PrecompiledAtlas::Regions.size();++region) {
+            const auto& rect=PrecompiledAtlas::Regions[region];
+            Pixel(result,SceneW,int(group*80+region*16),0,
+                Sample(atlas.regions[region],rect.width,rect.height,0.5/8,0.5/8,false,false));
+        }
+    for(auto* image:standalone)r.DestroyTexture(image);
+    Require(r.GetResourceCounts().textures==initial,
+        "Precompiled atlas region draws leaked logical images");
+}
+void PrecompiledAtlasVersions(OpenGLRenderer& r)
+{
+    const PrecompiledAtlas atlas;
+    r.ReserveStaticTextureSlots(8);
+    auto* texture=r.CreateTextureStatic(PrecompiledAtlas::Width,PrecompiledAtlas::Height,
+        atlas.pixels.data(),PrecompiledAtlas::Width*4,false,1);
+    const auto slot=OpenGLRenderer::SlotOf(texture);
+    const auto drawRegions=[&](int row) {
+        for(size_t region=0;region<PrecompiledAtlas::Regions.size();++region) {
+            const auto& rect=PrecompiledAtlas::Regions[region];
+            Draw(r,texture,PrecompiledAtlas::RegionQuad(texture,region,float(region*32),
+                float(row*16),float(rect.width),float(rect.height)));
+        }
+    };
+    const std::vector<unsigned int> green(PrecompiledAtlas::Width*PrecompiledAtlas::Height,0xff00ff00U);
+    const std::vector<unsigned int> blue(green.size(),0xff0000ffU);
+    ClearGroupedScene(r);
+    Require(r.BeginScene(),"Begin precompiled atlas replacement scene");
+    drawRegions(0);
+    Require(r.GetResourceCounts().queuedBatches==1,"Original atlas regions did not batch");
+    texture=r.ReplaceTexture(texture,PrecompiledAtlas::Width,PrecompiledAtlas::Height,
+        green.data(),PrecompiledAtlas::Width*4);
+    Require(OpenGLRenderer::SlotOf(texture)==slot,"Replacing atlas changed its static slot");
+    drawRegions(1);
+    r.DestroyTexture(texture);
+    texture=r.CreateTextureStatic(PrecompiledAtlas::Width,PrecompiledAtlas::Height,
+        blue.data(),PrecompiledAtlas::Width*4,false,1);
+    Require(OpenGLRenderer::SlotOf(texture)==slot,"Atlas slot reuse changed its identity");
+    drawRegions(2);
+    Require(r.GetResourceCounts().queuedBatches==3,
+        "Queued destroyed atlas storage was merged with the reused slot");
+    r.DestroyTexture(texture);
+    r.EndSceneAndPresent();
+    const auto result=r.ReadScenePixels();
+    for(int row=0;row<3;++row)
+        for(size_t region=0;region<PrecompiledAtlas::Regions.size();++region) {
+            const auto& rect=PrecompiledAtlas::Regions[region];
+            for(int y=0;y<rect.height;++y)for(int x=0;x<rect.width;++x)
+                Pixel(result,SceneW,int(region*32)+x,row*16+y,row==0 ?
+                    atlas.regions[region][size_t(y)*rect.width+x] : row==1?green[0]:blue[0]);
+        }
+}
+void IndependentTextureBatches(OpenGLRenderer& r)
 {
     GroupedImages images(r);
-    images.Finish(r);
+    images.CheckOriginals(r);
     ClearGroupedScene(r);
     Require(r.BeginScene(),"Begin grouped batch scene");
     const std::array<size_t,8> order{1,0,1,2,0,2,3,0};
@@ -351,12 +466,12 @@ void GroupedAtlasBatches(OpenGLRenderer& r)
         auto* texture=images.textures[image];
         Draw(r,texture,Quad(texture,float(i*32),0,
             float(GroupedImages::Widths[image]),float(GroupedImages::Heights[image])));
-        const size_t expected=i<3 ? 1 : i<6 ? 2 : 3;
+        const size_t expected=i+1;
         Require(r.GetResourceCounts().queuedBatches==expected,
-            "Shared image did not use the current page copy for batching");
+            "Distinct texture storage was merged into one batch");
     }
-    Require(r.GetResourceCounts().queuedBatches==3,
-        "A/shared/A, B/shared/B, particle/shared must queue exactly three batches");
+    Require(r.GetResourceCounts().queuedBatches==order.size(),
+        "Interleaved independent images must preserve eight storage batches");
     r.EndSceneAndPresent();
     Require(r.GetResourceCounts().queuedBatches==0,
         "Presented grouped batches were not drained");
@@ -394,7 +509,7 @@ void RepeatedTargetSelection(OpenGLRenderer& r)
     }
     r.DestroyTexture(image);
 }
-void GroupedAtlasDistinctRectangles(OpenGLRenderer& r)
+void IndependentTextureRectangles(OpenGLRenderer& r)
 {
     r.ReserveStaticTextureSlots(16);
     const std::array<std::array<int,2>,4> sizes{{{7,9},{5,4},{24,16},{16,16}}};
@@ -404,7 +519,7 @@ void GroupedAtlasDistinctRectangles(OpenGLRenderer& r)
         images[i]=r.CreateTextureStatic(sizes[i][0],sizes[i][1],pixels.data(),
             sizes[i][0]*4,false,static_cast<unsigned int>(i+1));
     }
-    const auto capture=[&](bool packed,unsigned int sampler) {
+    const auto capture=[&](bool verifyBatches,unsigned int sampler) {
         ClearGroupedScene(r);
         Require(r.BeginScene(),"Begin different-layout grouped scene");
         for(size_t group=0;group<3;++group) {
@@ -414,27 +529,26 @@ void GroupedAtlasDistinctRectangles(OpenGLRenderer& r)
             auto q=Quad(images[0],float(group)*80,0,72,64,-0.75f,-0.5f,1.75f,1.5f);
             for(auto& vertex:q)vertex.slot|=GpuVertex::kAlphaEdgeFilter;
             Draw(r,images[0],q,sampler&1U,sampler&2U,GpuBlend::Normal);
-            if(packed)Require(r.GetResourceCounts().queuedBatches==group+1,
-                "Shared image used a canonical rectangle instead of the current page rectangle");
+            if(verifyBatches)Require(r.GetResourceCounts().queuedBatches==2*(group+1),
+                "Distinct images were merged across storage changes");
         }
         r.EndSceneAndPresent();
         return r.ReadScenePixels();
     };
     std::array<std::vector<unsigned int>,4> original;
     for(unsigned int sampler=0;sampler<4;++sampler)original[sampler]=capture(false,sampler);
-    r.FinishLoadingTextures(GroupedImages::Offsets,GroupedImages::Symbols,2);
     for(unsigned int sampler=0;sampler<4;++sampler)
         Require(capture(true,sampler)==original[sampler],
-            "Different physical rectangles changed a shared image's sampling");
+            "Interleaved texture dimensions changed repeated sampling");
     for(auto* image:images)r.DestroyTexture(image);
 }
-void GroupedAtlasSampling(OpenGLRenderer& r)
+void IndependentTextureFilterSampling(OpenGLRenderer& r)
 {
     GroupedImages images(r);
-    // Exercise shared on all three pages, then each unique image's canonical page.
+    // Exercise storage changes and repeated draws from the same storage.
     const std::array<std::pair<size_t,size_t>,6> cases{
         std::pair<size_t,size_t>{1,0},{2,0},{3,0},{1,1},{2,2},{3,3}};
-    const auto render=[&](size_t anchor,size_t image,bool packed) {
+    const auto render=[&](size_t anchor,size_t image,bool verifyBatches) {
         ClearGroupedScene(r);
         Require(r.BeginScene(),"Begin grouped sampler equivalence scene");
         auto* unique=images.textures[anchor];
@@ -447,23 +561,23 @@ void GroupedAtlasSampling(OpenGLRenderer& r)
                 for(auto& vertex:q) vertex.slot|=GpuVertex::kAlphaEdgeFilter|(filter<<28);
                 Draw(r,texture,q,mode&1,mode&2,GpuBlend::Normal);
             }
-        if(packed)
-            Require(r.GetResourceCounts().queuedBatches==1,
-                "Sampler comparison did not sample the anchor page copy");
+        if(verifyBatches)
+            Require(r.GetResourceCounts().queuedBatches==(anchor==image?1u:2u),
+                "Sampler flags changed storage batching");
         r.EndSceneAndPresent();
         return r.ReadScenePixels();
     };
     std::array<std::vector<unsigned int>,cases.size()> standalone;
     for(size_t i=0;i<cases.size();++i)
         standalone[i]=render(cases[i].first,cases[i].second,false);
-    images.Finish(r);
+    images.CheckOriginals(r);
     for(size_t i=0;i<cases.size();++i)
         Require(standalone[i]==render(cases[i].first,cases[i].second,true),
-            "Grouped copy changed clamp/repeat, negative UV, filtering or alpha edges");
+            "Repeated rendering changed clamp/repeat, negative UV, filtering or alpha edges");
     images.CheckOriginals(r);
     images.Destroy(r);
 }
-void GroupedAtlasExclusions(OpenGLRenderer& r)
+void IndependentTextureFormats(OpenGLRenderer& r)
 {
     GroupedImages images(r);
     const auto largePixels=Pattern(257,8);
@@ -474,17 +588,6 @@ void GroupedAtlasExclusions(OpenGLRenderer& r)
     auto* mutableImage=r.CreateTextureStatic(16,8,mutablePixels.data(),64,false,7);
     mutableImage=r.ReplaceTexture(mutableImage,16,8,mutablePixels.data(),64);
     auto* dynamicImage=r.CreateTexture(16,8,mutablePixels.data(),64);
-    // Repeat the exclusions in every group: admitting them would add copies.
-    // Symbol 8 has no static binding; an ordinary dynamic image is not a definition member.
-    constexpr std::array<unsigned int,4> offsets{0,6,12,18};
-    constexpr std::array<unsigned int,18> symbols{
-        1,2,5,6,7,8,1,3,5,6,7,8,1,4,5,6,7,8};
-    r.FinishLoadingTextures(offsets,symbols,2);
-    const auto counts=r.GetAtlasCounts();
-    Require(counts.reanimationPages==2 && counts.particlePages==1,
-        "Oversized, float or mutable images created grouped pages");
-    Require(counts.images>=4 && counts.copies==counts.images+2,
-        "Oversized, float or mutable images were copied into definition pages");
     Require(r.ReadTexturePixels(large).pixels==largePixels,
         "Excluded oversized image changed pixels");
     Require(r.ReadTexturePixels(mutableImage).pixels==mutablePixels,
@@ -495,7 +598,7 @@ void GroupedAtlasExclusions(OpenGLRenderer& r)
     Require(floats.size()==16*8*4 &&
         std::all_of(floats.begin(),floats.end(),[](float value){return value==0;}),
         "Excluded float image changed format or contents");
-    // Use each excluded image after every anchor so a stale page lookup is visible.
+    // Alternate dimensions, formats and update paths to catch stale storage bindings.
     ClearGroupedScene(r);
     Require(r.BeginScene(),"Begin grouped exclusion draws");
     int column=0;
@@ -519,15 +622,15 @@ void GroupedAtlasExclusions(OpenGLRenderer& r)
     r.DestroyTexture(dynamicImage);
     images.Destroy(r);
 }
-void GroupedAtlasVersions(OpenGLRenderer& r)
+void IndependentTextureVersions(OpenGLRenderer& r)
 {
     GroupedImages images(r);
-    images.Finish(r);
+    images.CheckOriginals(r);
     const auto sharedSlot=images.slots[0];
     const std::vector<unsigned int> green(16*8,0xff00ff00u),blue(16*8,0xff0000ffu);
     ClearGroupedScene(r);
     Require(r.BeginScene(),"Begin grouped same-slot versions");
-    const auto drawOnPages=[&](int firstColumn) {
+    const auto drawVersions=[&](int firstColumn) {
         for(size_t anchor=1;anchor<4;++anchor) {
             auto* unique=images.textures[anchor];
             Draw(r,unique,Quad(unique,300,260,16,8));
@@ -535,16 +638,16 @@ void GroupedAtlasVersions(OpenGLRenderer& r)
                 float((firstColumn+int(anchor)-1)*16),0,16,8));
         }
     };
-    drawOnPages(0);
+    drawVersions(0);
     images.textures[0]=r.ReplaceTexture(images.textures[0],16,8,green.data(),64);
     Require(OpenGLRenderer::SlotOf(images.textures[0])==sharedSlot,
         "Replacing grouped shared image changed its static slot");
-    drawOnPages(3);
+    drawVersions(3);
     r.DestroyTexture(images.textures[0]);
     images.textures[0]=r.CreateTextureStatic(16,8,blue.data(),64,false,1);
     Require(OpenGLRenderer::SlotOf(images.textures[0])==sharedSlot,
         "Reallocating grouped static symbol did not reuse the same slot");
-    drawOnPages(6);
+    drawVersions(6);
     // Keep both destroyed versions and the final version in recorded geometry.
     r.DestroyTexture(images.textures[0]);
     images.textures[0]=nullptr;
@@ -556,7 +659,7 @@ void GroupedAtlasVersions(OpenGLRenderer& r)
                 images.pixels[0][size_t(y)*16+x] : column<6 ? green[0] : blue[0]);
     for(size_t i=1;i<images.textures.size();++i) r.DestroyTexture(images.textures[i]);
 }
-void GroupedAtlasBlendAndClipOrder(OpenGLRenderer& r)
+void IndependentTextureBlendAndClipOrder(OpenGLRenderer& r)
 {
     GroupedImages images(r);
     auto* target=r.CreateRenderImage(SceneW,SceneH);
@@ -570,7 +673,7 @@ void GroupedAtlasBlendAndClipOrder(OpenGLRenderer& r)
         {0,GpuBlend::Normal,{8,8,16,16}},
         {1,GpuBlend::Normal,{0,0,24,24}},
         {0,GpuBlend::Additive,{8,0,24,24}}}};
-    const auto render=[&](bool packed) {
+    const auto render=[&](bool verifyBatches) {
         r.SetRenderImage(target);
         Require(r.BeginScene(),"Clear grouped blend float target");
         auto background=Quad(r.whiteTexture,0,0,SceneW,SceneH);
@@ -586,7 +689,7 @@ void GroupedAtlasBlendAndClipOrder(OpenGLRenderer& r)
             auto q=Quad(texture,0,0,32,32,u,v,u,v);
             for(auto& vertex:q) vertex.a=0.5f;
             r.SubmitTriangles(q,texture,false,false,layer.blend,&layer.clip);
-            if(packed)
+            if(verifyBatches)
                 Require(r.GetResourceCounts().queuedBatches==i+1,
                     "Blend/clip changes were merged or earlier batches were reordered");
         }
@@ -596,9 +699,9 @@ void GroupedAtlasBlendAndClipOrder(OpenGLRenderer& r)
         return result;
     };
     const auto before=render(false);
-    images.Finish(r);
+    images.CheckOriginals(r);
     const auto after=render(true);
-    Require(before==after,"Grouped pages reordered interleaved transparent blend/clip draws");
+    Require(before==after,"Repeated rendering reordered interleaved transparent blend/clip draws");
     // Independent per-pixel painter's-order reference, including uncovered pixels.
     for(int y=0;y<32;++y) for(int x=0;x<32;++x) {
         std::array<double,3> expected{};
@@ -779,7 +882,7 @@ void ImageFactories(OpenGLRenderer& r)
 }
 void ResourceLifetime(OpenGLRenderer& r)
 {
-    r.FinishLoadingTextures();
+    const auto initial=r.GetResourceCounts().textures;
     const unsigned int hiddenColor=0x00402010u;
     auto* opaque=r.CreateTexture(1,1,&hiddenColor,4,true);
     auto* copied=r.CopyTextureRegion(opaque,0,0,1,1);
@@ -799,13 +902,13 @@ void ResourceLifetime(OpenGLRenderer& r)
         auto* image=r.CreateTexture(32,32,data.data(),128);
         r.DestroyTexture(image);
     }
-    const auto pages=r.GetAtlasCounts().pages;
-    Require(pages<=3,"Empty atlas pages were not reused");
+    Require(r.GetResourceCounts().textures==initial,
+        "Destroyed textures retained logical storage");
     auto* changing=r.CreateTexture(32,32,data.data(),128);
     for(int i=0;i<200;++i) changing=r.ReplaceTexture(changing,32,32,data.data(),128);
     r.DestroyTexture(changing);
-    Require(r.GetAtlasCounts().pages<=pages+1,
-        "Replacing mutable textures grew immutable atlas pages");
+    Require(r.GetResourceCounts().textures==initial,
+        "Replacing textures retained obsolete logical storage");
 }
 void StaticIdentity(OpenGLRenderer& r)
 {
@@ -817,8 +920,7 @@ void StaticIdentity(OpenGLRenderer& r)
     Require(r.BeginScene(),"Static identity first scene");
     Draw(r,old,Quad(old,0,0,2,2));
     r.EndSceneAndPresent();
-    r.FinishLoadingTextures();
-    Require(OpenGLRenderer::SlotOf(old)==slot,"Atlas migration changed the static logical slot");
+    Require(OpenGLRenderer::SlotOf(old)==slot,"Drawing changed the static logical slot");
     auto* next=r.CreateTextureStatic(2,2,blue.data(),8,false,5);
     Require(OpenGLRenderer::SlotOf(next)==slot,"Static replacement changed logical identity");
     r.DestroyTexture(old);
@@ -829,19 +931,16 @@ void StaticIdentity(OpenGLRenderer& r)
     Pixel(pixels,SceneW,0,0,red[0]); Pixel(pixels,SceneW,2,0,blue[0]);
     r.DestroyTexture(next);
 }
-void CollectionPaths(OpenGLRenderer& r)
+void CompositionPaths(OpenGLRenderer& r)
 {
     const std::array<unsigned int,4> color{0xff234567u,0xff234567u,0xff234567u,0xff234567u};
     auto* first=r.ReplaceTexture(nullptr,2,2,color.data(),8);
     auto* raw=r.CreateRawTexture(2,2,color.data(),8);
     auto* composed=r.AdoptComposedTexture(r.ComposeAlphaRaw(raw,raw,1,1,0,false));
-    r.FinishLoadingTextures();
-    Require(r.GetAtlasCounts().images==3,"First upload or adopted composition escaped collection");
-    Require(r.ReadTexturePixels(first).pixels[0]==color[0],"First upload changed during packing");
-    Require(r.ReadTexturePixels(composed).pixels[0]==0x67234567u,"Adopted composition changed during packing");
+    Require(r.ReadTexturePixels(first).pixels[0]==color[0],"First upload changed pixels");
+    Require(r.ReadTexturePixels(composed).pixels[0]==0x67234567u,"Adopted composition changed pixels");
     auto* late=r.ComposeAlpha(first,first,1,1,0,false);
-    Require(r.GetAtlasCounts().images==4,"Late immutable composition did not enter an atlas");
-    Require(r.ReadTexturePixels(late).pixels[0]==0x67234567u,"Late composition atlas copy changed pixels");
+    Require(r.ReadTexturePixels(late).pixels[0]==0x67234567u,"Late composition changed pixels");
     r.DestroyTexture(first);r.DestroyTexture(composed);r.DestroyTexture(late);
 }
 void FullDynamicStaticReplace(OpenGLRenderer& r)
@@ -871,17 +970,12 @@ void PackagedShapes(OpenGLRenderer& r,const char* path)
         images.emplace_back(r.CreateTexture(width,height,pixels.data(),width*4),color);
     }
     Require(!images.empty(),"Empty packaged image shape corpus");
-    r.FinishLoadingTextures();
-    const auto atlas=r.GetAtlasCounts();
-    Require(atlas.images==images.size()+1,"Packaged small images escaped the atlas");
-    std::cout<<"corpus atlas pages="<<atlas.pages<<" images="<<atlas.images
-        <<" occupied_pixels="<<atlas.pixels<<" page_pixels="<<atlas.capacity
-        <<" occupancy="<<double(atlas.pixels)/atlas.capacity<<'\n';
     for(const auto& [image,color]:images) {
         const auto result=r.ReadTexturePixels(image);
         Require(std::all_of(result.pixels.begin(),result.pixels.end(),
-            [color](auto pixel){return pixel==color;}),"Atlas migration changed/overlapped packaged image pixels");
+            [color](auto pixel){return pixel==color;}),"Packaged image upload changed pixels");
     }
+    for(const auto& [image,color]:images) r.DestroyTexture(image);
 }
 // Scalar legacy caustics reference. uint32 arithmetic intentionally wraps.
 unsigned int Caustic(const std::vector<unsigned int>& source, unsigned int x,
@@ -1035,7 +1129,6 @@ int main(int argc, char** argv)
         Require(SetProcessAffinityMask(GetCurrentProcess(),0x8000)!=FALSE,
             "Cannot pin DX9 functional tests to LP15");
 #endif
-        SmallAtlas smallAtlas;
         Window window;
         OpenGLContext context(window.hwnd,true,false);
         context.MakeCurrent();
@@ -1082,23 +1175,25 @@ int main(int argc, char** argv)
                 test(renderer);
             });
         };
-        rendererTest("atlas-multipage-NPOT-negative-UV-CPU-taps",AtlasSampling);
-        rendererTest("atlas-vs-standalone-all-samplers-filters-zero-difference",AtlasVersusStandalone);
+        rendererTest("precompiled-atlas-direct-upload-regions-filters-storage-batches",PrecompiledAtlasRegions);
+        rendererTest("precompiled-atlas-replace-destroy-static-slot-reuse",PrecompiledAtlasVersions);
+        rendererTest("independent-NPOT-negative-UV-CPU-taps",IndependentTextureSampling);
+        rendererTest("replacement-all-samplers-filters-zero-difference",ReplacementSampling);
         rendererTest("repeated-main-and-offscreen-target-selection-preserves-batching",RepeatedTargetSelection);
-        rendererTest("grouped-atlas-two-reanimations-one-particle-current-page-three-batches",GroupedAtlasBatches);
-        rendererTest("grouped-atlas-shared-different-rectangles-zero-difference",GroupedAtlasDistinctRectangles);
-        rendererTest("grouped-atlas-canonical-and-all-copies-samplers-filters-zero-difference",GroupedAtlasSampling);
-        rendererTest("grouped-atlas-excludes-oversized-float-mutable",GroupedAtlasExclusions);
-        rendererTest("grouped-atlas-shared-replace-destroy-static-slot-reuse",GroupedAtlasVersions);
-        rendererTest("grouped-atlas-transparent-blend-clip-painter-order",GroupedAtlasBlendAndClipOrder);
+        rendererTest("independent-storage-eight-ordered-batches",IndependentTextureBatches);
+        rendererTest("independent-dimensions-repeat-sampling",IndependentTextureRectangles);
+        rendererTest("independent-samplers-filters-repeat-sampling",IndependentTextureFilterSampling);
+        rendererTest("independent-large-float-mutable-images",IndependentTextureFormats);
+        rendererTest("independent-replace-destroy-static-slot-reuse",IndependentTextureVersions);
+        rendererTest("independent-transparent-blend-clip-painter-order",IndependentTextureBlendAndClipOrder);
         rendererTest("primitive-order-replace-destroy-recorded-versions",OrderAndVersions);
         rendererTest("slot-flags-coverage-65536",FlagsAndCoverage);
         rendererTest("RGBA32F-self-sample-snapshot",FloatAndSelfSample);
         rendererTest("RGBA32F-normal-additive-no-clamp",FloatBlending);
         rendererTest("copy-zero-fill-compose-process",ImageFactories);
-        rendererTest("resource-lifetime-copy-metadata-page-reuse",ResourceLifetime);
-        rendererTest("static-slot-identity-atlas-migration",StaticIdentity);
-        rendererTest("all-immutable-upload-collection-paths",CollectionPaths);
+        rendererTest("resource-lifetime-copy-metadata-replacement",ResourceLifetime);
+        rendererTest("static-slot-identity-replacement",StaticIdentity);
+        rendererTest("upload-adopt-composition-paths",CompositionPaths);
         rendererTest("static-replace-with-full-dynamic-region",FullDynamicStaticReplace);
         rendererTest("caustics-CPU-reference",Caustics);
         rendererTest("font-endpoint-expand-shrink-singleton",FontEndpoints);
@@ -1129,7 +1224,6 @@ int main(int argc, char** argv)
         rendererTest("hidden-retained-resize-simulated-suspension",
             [&](OpenGLRenderer& r) { Retained(r,context,window); });
         if(argc>2) {
-            Require(_putenv_s(AtlasSizeVariable,"")==0,"Cannot select device atlas limit");
             rendererTest("packaged-small-image-shapes",
                 [&](OpenGLRenderer& r){PackagedShapes(r,argv[2]);});
         }

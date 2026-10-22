@@ -13,7 +13,6 @@
 #include <span>
 #include <stdexcept>
 #include <memory>
-#include "generated/ImageSymbolId.h"
 namespace
 {
 	// 反射 CRC-32（多项式 0xEDB88320）查表改由 consteval 生成器在编译期填充
@@ -101,6 +100,7 @@ void FreeParticleDefinition(TodParticleDefinition& definition)
     definition.mEmitterDefs = nullptr;
     definition.mEmitterDefCount = 0;
     definition.mEmitterIndexByName.fill(-1);
+    definition.mAtlas={};
 }
 
 class ParticleRecordReader final
@@ -178,10 +178,11 @@ private:
     std::size_t mPosition = 0;
 };
 
-void DecodeParticleRecord(TodParticleDefinition& definition, std::span<const std::uint8_t> bytes)
+void DecodeParticleRecord(TodParticleDefinition& definition, std::span<const std::uint8_t> bytes,
+    const std::string& path)
 {
     ParticleRecordReader header(bytes);
-    if (header.U32() != 0xDEADFED8u)
+    if (header.U32() != 0xDEADFEDAu)
         throw std::runtime_error("particle record cookie mismatch");
     const auto payloadSize = header.U32();
     const auto storedCrc = header.U32();
@@ -189,10 +190,15 @@ void DecodeParticleRecord(TodParticleDefinition& definition, std::span<const std
     if (!header.AtEnd() || TodParticleCrc32(payload.data(), payload.size()) != storedCrc)
         throw std::runtime_error("particle record size or CRC mismatch");
 
-    ParticleRecordReader reader(payload);
+    TodParticleDefinition pending{};
+    const auto release = [](TodParticleDefinition* value) { FreeParticleDefinition(*value); };
+    std::unique_ptr<TodParticleDefinition, decltype(release)> owner(&pending, release);
+    std::size_t position=0;
+    pending.mAtlas=DefinitionLoadAtlas(payload,position,0x35564150u);
+    ParticleRecordReader reader(payload.subspan(position));
     if (reader.U32() != 0x35504449u) // IDP5: compact scalar/track body, IDT3 and IDT5.
         throw std::runtime_error("particle record format mismatch");
-    if (reader.U32() != TodImageSymbolRegistryHash())
+    if (reader.U32() != 0)
         throw std::runtime_error("particle image registry mismatch");
     if (reader.U32() != kParticleEmitterNameTableHash)
         throw std::runtime_error("particle emitter ID table mismatch");
@@ -202,18 +208,13 @@ void DecodeParticleRecord(TodParticleDefinition& definition, std::span<const std
     const auto bodySize = reader.U32();
     ParticleRecordReader body(reader.Take(bodySize));
 
-    TodParticleDefinition pending{};
-    const auto release = [](TodParticleDefinition* value) { FreeParticleDefinition(*value); };
-    std::unique_ptr<TodParticleDefinition, decltype(release)> owner(&pending, release);
     pending.mEmitterDefs = new TodEmitterDefinition[count]{};
     pending.mEmitterDefCount = static_cast<int>(count);
     for (std::uint32_t i = 0; i < count; ++i)
     {
         TodEmitterDefinition& emitter = pending.mEmitterDefs[i];
-        const auto imageId = body.U32();
-        if (imageId > IMAGE_SYMBOL_ID_MAX)
-            throw std::runtime_error("particle image symbol out of range");
-        emitter.mImage = imageId ? TodDefinitionLoadImageById(imageId) : nullptr;
+        std::size_t regionPosition=0;
+        emitter.mImageRegion=DefinitionReadImageRegion(body.Take(24),regionPosition,pending.mAtlas);
         emitter.mImageCol = body.I32();
         emitter.mImageRow = body.I32();
         emitter.mImageFrames = body.I32();
@@ -255,12 +256,13 @@ void DecodeParticleRecord(TodParticleDefinition& definition, std::span<const std
     }
     if (!reader.AtEnd())
         throw std::runtime_error("particle record has trailing bytes");
-    definition = pending;
+    DefinitionBindAtlas(pending.mAtlas,path);
+    definition = std::move(pending);
     owner.release();
 }
 }
 
-static bool TodParticleTryLoadDefinitionV4(TodParticleDefinition* theParticleDef, const char* theParticleFileName)
+static bool TodParticleTryLoadDefinitionV5(TodParticleDefinition* theParticleDef, const char* theParticleFileName)
 {
     const std::string path = DefinitionCompiledPath(theParticleFileName);
     PFILE* file = DefinitionOpenCompiledFile(path.c_str());
@@ -281,7 +283,7 @@ static bool TodParticleTryLoadDefinitionV4(TodParticleDefinition* theParticleDef
         throw std::runtime_error("particle record unreadable: " + path);
     try
     {
-        DecodeParticleRecord(*theParticleDef, bytes);
+        DecodeParticleRecord(*theParticleDef, bytes, path);
     }
     catch (const std::exception& error)
     {
@@ -292,6 +294,7 @@ static bool TodParticleTryLoadDefinitionV4(TodParticleDefinition* theParticleDef
 
 int gParticleDefCount;                      // [0x6A9F08]
 TodParticleDefinition* gParticleDefArray;   // [0x6A9F0C]
+std::atomic<bool> gParticleAllDefinitionDataLoaded{false};
 static int gParticleParamArraySize;				// [0x6A9F10]
 static ParticleParams* gParticleParamArray;		// [0x6A9F14]
 
@@ -407,10 +410,9 @@ ParticleParams gLawnParticleArray[(int)ParticleEffect::NUM_PARTICLES] = {
 //0x515640 : (ecx = *theParticleFileName, *theParticleDef)  //esp -= 4
 static bool TodParticleLoadADef(TodParticleDefinition* theParticleDef, const char* theParticleFileName)
 {
-	TodHesitationBracket(("Load Particle %s"), theParticleFileName);
-	// v4 唯一装载（用户裁决，与 reanim 同法）：烘焙符号号，记录内零资源
-	// 字符串；缺失/损坏/注册表错配均已在其内硬错，不回落 v2/v1 掩盖。
-	if (!TodParticleTryLoadDefinitionV4(theParticleDef, theParticleFileName))
+	// V5 records bind a resident atlas and carry inline image rectangles. Missing/corrupt
+	// records are fatal; older formats are not a runtime fallback.
+	if (!TodParticleTryLoadDefinitionV5(theParticleDef, theParticleFileName))
 		return false;
 	for (int i = 0; i < theParticleDef->mEmitterDefCount; i++)
 	{
@@ -459,7 +461,7 @@ static bool TodParticleLoadADef(TodParticleDefinition* theParticleDef, const cha
 //0x515CE0
 void TodParticleLoadDefinitions(ParticleParams* theParticleParamArray, int theParticleParamArraySize)
 {
-	TodHesitationBracket aHesitiation("TodParticleLoadDefinitions");
+	gParticleAllDefinitionDataLoaded.store(false,std::memory_order_release);
 	TOD_ASSERT(!gParticleParamArray && !gParticleDefArray);
 	// 1073 initializes every emitter pointer/count before loading the first file.
 	// Publish only after allocation succeeds, so cleanup never sees a count with
@@ -497,11 +499,13 @@ void TodParticleLoadDefinitions(ParticleParams* theParticleParamArray, int thePa
 			has(12, aDef.mParticleSpinSpeed); has(13, aDef.mParticleSpinAngle);
 			aDef.mRenderTrackMask = aMask;
 		}
+	gParticleAllDefinitionDataLoaded.store(true,std::memory_order_release);
 }
 
 //0x515E30
 void TodParticleFreeDefinitions()
 {
+	gParticleAllDefinitionDataLoaded.store(false,std::memory_order_release);
 	for (int i = 0; i < gParticleDefCount; i++)
 		FreeParticleDefinition(gParticleDefArray[i]);
 	delete[] gParticleDefArray;
@@ -1378,12 +1382,31 @@ void RenderParticle(Graphics* g, TodParticle* theParticle, const Color& theColor
 {
 	TodParticleEmitter* aEmitter = theParticle->mParticleEmitter;
 	TodEmitterDefinition* aEmitterDef = aEmitter->mEmitterDef;
-	Image* aImage = aEmitter->mImageOverride != nullptr ? aEmitter->mImageOverride : aEmitterDef->mImage;  // 优先使用覆写贴图，无覆写贴图则使用定义的贴图
-	if (aImage == nullptr)
-		return;  // 不存在贴图时，取消绘制
-
-	int aCelWidth = aImage->GetCelWidth();
-	int aCelHeight = aImage->GetCelHeight();
+	Image* aImage = aEmitter->mImageOverride;
+	int aSourceX = 0, aSourceY = 0;
+	int aColumns, aRows, aCelWidth, aCelHeight;
+	if (aImage)
+	{
+		aColumns = aImage->mNumCols;
+		aRows = aImage->mNumRows;
+		aCelWidth = aImage->mWidth / aColumns;
+		aCelHeight = aImage->mHeight / aRows;
+	}
+	else
+	{
+		const auto& aRegion = aEmitterDef->mImageRegion;
+		if (!aRegion.mWidth)
+			return;
+		aImage = aEmitter->mParticleSystem->mParticleDef->mAtlas.image.get();
+		if (!aImage)
+			return;  // 不存在贴图时，取消绘制
+		aSourceX = aRegion.mX;
+		aSourceY = aRegion.mY;
+		aColumns = aRegion.mCols;
+		aRows = aRegion.mRows;
+		aCelWidth = aRegion.mWidth / aColumns;
+		aCelHeight = aRegion.mHeight / aRows;
+	}
 	int aFrame = aEmitter->mFrameOverride;
 	if (aFrame == -1)  // 如果未定义覆写帧
 	{
@@ -1395,10 +1418,10 @@ void RenderParticle(Graphics* g, TodParticle* theParticle, const Color& theColor
 			aFrame = theParticle->mImageFrame;  // 帧固定的粒子，直接取其贴图帧
 	}
 	aFrame += aEmitterDef->mImageCol;  // 当前帧加上定义中的图像起始列，得到当前帧在贴图中的列数
-	if (aFrame >= aImage->mNumCols)
-		aFrame = aImage->mNumCols - 1;
+	if (aFrame >= aColumns)
+		aFrame = aColumns - 1;
 
-	Rect aSrcRect(aFrame * aCelWidth, std::min(aEmitterDef->mImageRow, aImage->mNumRows - 1) * aCelHeight, aCelWidth, aCelHeight);
+	Rect aSrcRect(aFrame * aCelWidth, std::min(aEmitterDef->mImageRow, aRows - 1) * aCelHeight, aCelWidth, aCelHeight);
 	float aClipTop = TodParticleEmitter::ParticleTrackEvaluate(aEmitterDef->mClipTop, theParticle, ParticleTracks::TRACK_PARTICLE_CLIP_TOP);
 	float aClipBottom = TodParticleEmitter::ParticleTrackEvaluate(aEmitterDef->mClipBottom, theParticle, ParticleTracks::TRACK_PARTICLE_CLIP_BOTTOM);
 	float aClipLeft = TodParticleEmitter::ParticleTrackEvaluate(aEmitterDef->mClipLeft, theParticle, ParticleTracks::TRACK_PARTICLE_CLIP_LEFT);
@@ -1417,6 +1440,8 @@ void RenderParticle(Graphics* g, TodParticle* theParticle, const Color& theColor
 	TOD_ASSERT(aSrcRect.mY == aCelHeight * aEmitterDef->mImageRow + FloatRoundToInt(aClipTop * aCelHeight));
 	TOD_ASSERT(aSrcRect.mX >= 0 && aSrcRect.mX < 10000);
 	TOD_ASSERT(aSrcRect.mY >= 0 && aSrcRect.mY < 10000);
+	aSrcRect.mX += aSourceX;
+	aSrcRect.mY += aSourceY;
 
 	if (TestBit(aEmitterDef->mParticleFlags, (int)ParticleFlags::PARTICLE_ALIGN_TO_PIXELS))  // 坐标对齐至整数像素点
 	{
@@ -1475,7 +1500,7 @@ void TodParticleEmitter::DrawParticle(Graphics* g, TodParticle* theParticle, Tod
 			aParams.mPosY += g->mTransY;
 
 			TodParticle* aParticle;
-			if (mImageOverride || mEmitterDef->mImage)  // 粒子有贴图时，渲染该粒子
+			if (mImageOverride || mEmitterDef->mImageRegion.mWidth)  // 粒子有贴图时，渲染该粒子
 				aParticle = theParticle;
 			else  // 粒子没有贴图时，尝试渲染交叉混合来源的粒子
 				aParticle = mParticleSystem->mParticleHolder->mParticles.DataArrayTryToGet((unsigned int)theParticle->mCrossFadeParticleID);

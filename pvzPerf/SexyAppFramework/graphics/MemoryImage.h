@@ -18,31 +18,8 @@ class NativeDisplay;
 class SexyAppBase;
 class GpuImageCpuAccess final : public std::exception {};
 
-enum class ImageMaintenanceOperation : unsigned char
-{
-	PurgeBits,
-	DeleteSWBuffers,
-	Delete3DBuffers,
-	DeleteExtraBuffers,
-	ReInit,
-	DeleteNativeData
-};
-
 class MemoryImage : public Image
 {
-protected:
-	// Registered only by extensions. Copies retain the default null callback.
-	void (*mMaintenanceHook)(MemoryImage&, ImageMaintenanceOperation) = nullptr;
-
-	template<class T>
-	void SetMaintenanceType() noexcept
-	{
-		mMaintenanceHook = [](MemoryImage& image, ImageMaintenanceOperation operation)
-		{
-			static_cast<T&>(image).OnImageMaintenance(operation);
-		};
-	}
-
 public:
 	unsigned int*					mBits;
 	int						mBitsChangedCount;
@@ -71,12 +48,6 @@ public:
 	
 private:
 	void					Init();
-	void NotifyMaintenance(ImageMaintenanceOperation operation)
-	{
-		if (mMaintenanceHook != nullptr)
-			mMaintenanceHook(*this, operation);
-	}
-
 public:
 	void*			GetNativeAlphaData(NativeDisplay *theNative);
 	uchar*			GetRLAlphaData();

@@ -1,5 +1,4 @@
 #include "reanim/ParticleDsl.h"
-#include "reanim/Pak64.h"  // pak64::LoadSymbolIdRegistry（v4 --image-registry）
 
 #include <algorithm>
 #include <cctype>
@@ -2042,15 +2041,13 @@ std::vector<std::uint8_t> SerializeParticleV2(
 
 std::vector<std::uint8_t> SerializeParticleV4(
     const std::vector<std::uint8_t>& runtimePayload,
-    const std::vector<std::pair<std::size_t, std::string>>& imageFields,
-    const std::map<std::string, std::uint32_t>& imageSymbols,
-    const std::uint32_t imageRegistryHash,
+    const ParticleDefinition& source,
+    const std::map<std::string, std::uint32_t>& sourceImageHandles,
     const std::vector<std::uint32_t>& onDurationTargets,
     const std::vector<std::uint32_t>& nameIds,
     const std::uint32_t nameTableHash)
 {
-    if (imageFields.size() % 3 != 0 ||
-        imageFields.size() / 3 != nameIds.size() ||
+    if (source.emitters.size() != nameIds.size() ||
         nameIds.size() != onDurationTargets.size())
         throw std::runtime_error("particle v4: emitter tables disagree");
 
@@ -2083,15 +2080,16 @@ std::vector<std::uint8_t> SerializeParticleV4(
     };
     for (std::uint32_t e = 0; e < count; ++e) {
         const std::size_t dumpAt = dumpsAt + e * kParticleEmitterNativeDumpSize;
-        const std::string image = reader.String("image");
-        std::uint32_t imageId = 0;
+        reader.String("legacy gold image");
+        const std::string& image=source.emitters[e].image;
+        std::uint32_t sourceImageHandle = 0;
         if (!image.empty()) {
-            const auto found = imageSymbols.find(image);
-            if (found == imageSymbols.end())
-                throw std::runtime_error("particle image absent from registry: " + image);
-            imageId = found->second;
+            const auto found = sourceImageHandles.find(image);
+            if (found == sourceImageHandles.end())
+                throw std::runtime_error("particle image absent from source handles: " + image);
+            sourceImageHandle = found->second;
         }
-        PutU32(body, imageId);
+        PutU32(body, sourceImageHandle);
         for (const std::size_t offset : {8u, 12u, 16u, 20u, 24u, 28u})
             PutU32(body, dump32(dumpAt + offset));
         // Gold strings are consumed only by the compiler. No length or text is emitted.
@@ -2122,7 +2120,7 @@ std::vector<std::uint8_t> SerializeParticleV4(
 
     std::vector<std::uint8_t> payload;
     PutU32(payload, kParticleV4PayloadMagic);
-    PutU32(payload, imageRegistryHash);
+    PutU32(payload, 0);  // No game image registry participates in source records.
     PutU32(payload, nameTableHash);
     PutU32(payload, count);
     PutU32(payload, static_cast<std::uint32_t>(body.size()));
@@ -2489,19 +2487,20 @@ int RunInspectParticle(const std::vector<std::string>& args)
 
 int RunCompileParticleV2(const std::vector<std::string>& args)
 {
-    fs::path input, output, gold64, verify, imageRegistryPath;
+    fs::path input, inputList, output, gold64, verify;
+    if ((args.size()-1)%2) { std::cerr << "reanimc: option requires a value: " << args.back() << '\n'; return 2; }
     for (std::size_t i = 1; i + 1 < args.size(); i += 2) {
         if (args[i] == "--input") input = args[i + 1];
+        else if (args[i] == "--input-list") inputList = args[i + 1];
         else if (args[i] == "--output") output = args[i + 1];
         else if (args[i] == "--gold64") gold64 = args[i + 1];
         else if (args[i] == "--verify") verify = args[i + 1];
-        else if (args[i] == "--image-registry") imageRegistryPath = args[i + 1];
         else {
             std::cerr << "reanimc: unknown option " << args[i] << '\n';
             return 2;
         }
     }
-    if (input.empty() || output.empty() || gold64.empty()) {
+    if ((input.empty() == inputList.empty()) || output.empty() || gold64.empty()) {
         std::cerr << "reanimc: compile-particle-v2 requires --input, --output and "
                      "--gold64 (runtime-native gold records, e.g. extracted from "
                      "main.pak64 compiled/particles)\n";
@@ -2509,7 +2508,36 @@ int RunCompileParticleV2(const std::vector<std::string>& args)
     }
     ParticleDslBundle bundle;
     std::string error;
-    if (!LoadParticleDslBundle(input, bundle, &error)) {
+    if (!inputList.empty()) {
+        std::ifstream list(inputList);
+        if (!list) { std::cerr << "reanimc: cannot open " << inputList.string() << '\n'; return 1; }
+        std::set<std::string> names;
+        std::string path;
+        while (std::getline(list, path)) {
+            if (!path.empty() && path.back() == '\r') path.pop_back();
+            if (path.empty()) continue;
+            std::string text;
+            ParticleDslFileDirectives file;
+            if (!ReadFileText(path, text, &error) || !ParseParticleDslFileText(text, file, &error)) {
+                std::cerr << "reanimc: " << error << '\n'; return 1;
+            }
+            if (!file.imports.empty() || !file.forwards.empty()) {
+                std::cerr << "reanimc: compilation sources belong in the build configuration: " << path << '\n';
+                return 1;
+            }
+            bundle.files.emplace_back(path);
+            for (auto& module : file.modules) {
+                if (!names.insert(module.name).second) {
+                    std::cerr << "reanimc: duplicate particle module: " << module.name << '\n'; return 1;
+                }
+                bundle.publicNames.push_back(module.name);
+                bundle.modules.push_back(std::move(module));
+            }
+        }
+        std::sort(bundle.modules.begin(), bundle.modules.end(),
+                  [](const auto& a, const auto& b) { return a.name < b.name; });
+        if (bundle.modules.empty()) { std::cerr << "reanimc: empty particle input list\n"; return 1; }
+    } else if (!LoadParticleDslBundle(input, bundle, &error)) {
         std::cerr << "reanimc: " << error << '\n';
         return 1;
     }
@@ -2517,16 +2545,24 @@ int RunCompileParticleV2(const std::vector<std::string>& args)
         std::cerr << "reanimc: --gold64 is not a directory: " << gold64.string() << '\n';
         return 2;
     }
-    // Numeric production output uses a clean stem; v2 records remain offline gold.
-    std::map<std::string, std::uint32_t> imageSymbols;
-    std::uint32_t imageRegistryHash = 0;
-    const bool emitV4 = !imageRegistryPath.empty();
-    if (emitV4) {
-        std::string error;
-        if (!pak64::LoadSymbolIdRegistry(imageRegistryPath, imageSymbols,
-                                         &imageRegistryHash, &error)) {
-            std::cerr << "reanimc: " << error << '\n';
-            return 1;
+    // Each selected source corpus owns its sorted offline image handle list.
+    std::map<std::string, std::uint32_t> sourceImageHandles;
+    for (const auto& definition:bundle.modules)
+        for (const auto& emitter:definition.emitters)
+            if (!emitter.image.empty()) sourceImageHandles.emplace(emitter.image,0);
+    fs::create_directories(output);
+    {
+        std::ofstream sources(output / "image_sources.txt",std::ios::binary | std::ios::trunc);
+        std::uint32_t nextHandle=1;
+        for (auto& [name,handle]:sourceImageHandles) {
+            if (name.find_first_of("\r\n")!=std::string::npos || name.find('\0')!=std::string::npos) {
+                std::cerr << "reanimc: image source names cannot contain line breaks or NUL\n"; return 1;
+            }
+            handle=nextHandle++;
+            sources << name << '\n';
+        }
+        if (!sources) {
+            std::cerr << "reanimc: cannot write image_sources.txt\n"; return 1;
         }
     }
     // 发射器名字语料表（2026-10-09 用户设计，镜像 reanim 轨道名模式）：
@@ -2577,9 +2613,8 @@ int RunCompileParticleV2(const std::vector<std::string>& args)
             return 1;
         }
         std::vector<std::pair<std::string, std::string>> emitterStrings;
-        std::vector<std::pair<std::size_t, std::string>> imageFields;
         if (!ExtractParticleEmitterStrings(payload, emitterStrings, &error,
-                                           emitV4 ? &imageFields : nullptr)) {
+                                           nullptr)) {
             std::cerr << "reanimc: " << gold->second.string() << ": " << error << '\n';
             return 1;
         }
@@ -2647,8 +2682,8 @@ int RunCompileParticleV2(const std::vector<std::string>& args)
                   << " (emitters=" << emitterStrings.size()
                   << ", onDuration links=" << recordLinks
                   << ", bytes=" << bytes.size() << ")\n";
-        if (emitV4) {
-            const fs::path v4record = output / (base + ".compiled");
+        {
+            const fs::path v4record = output / (base + ".source-record");
             if (OutputMissing(v4record)) {
                 std::cerr << "reanimc: output exists or is empty; choose a new path: "
                           << v4record.string() << '\n';
@@ -2656,8 +2691,8 @@ int RunCompileParticleV2(const std::vector<std::string>& args)
             }
             std::vector<std::uint8_t> v4bytes;
             try {
-                v4bytes = SerializeParticleV4(payload, imageFields, imageSymbols,
-                                              imageRegistryHash, targets, nameIds,
+                v4bytes = SerializeParticleV4(payload, definition, sourceImageHandles,
+                                              targets, nameIds,
                                               emitterNameTableHash);
             } catch (const std::exception& e) {
                 std::cerr << "reanimc: " << definition.name << ": " << e.what() << '\n';
@@ -2675,7 +2710,7 @@ int RunCompileParticleV2(const std::vector<std::string>& args)
                 return 1;
             }
             std::cout << definition.name << " -> " << v4record.string()
-                      << " (numeric image symbols=" << imageFields.size()
+                      << " (offline source image handles=" << definition.emitters.size()
                       << ", bytes=" << v4bytes.size() << ")\n";
         }
         if (verify.empty()) continue;

@@ -12,6 +12,7 @@ if(WIN32)
 endif()
 
 add_executable(reanimc
+    AtlasPacking.cpp
     main.cpp
     Pak64.cpp
     ParticleDsl.cpp

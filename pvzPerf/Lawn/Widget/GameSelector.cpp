@@ -127,7 +127,6 @@ GameSelectorOverlay::GameSelectorOverlay(GameSelector* theGameSelector)
 GameSelector::GameSelector(LawnApp* theApp)
 {
 	unsigned int aCtorStart = SexyGetTickCount();
-	TodHesitationTrace("pregameselector");
 	TodLoadResources(ResourceGroupId::DelayLoad_Zombatar);
 	unsigned int aAfterResources = SexyGetTickCount();
 
@@ -463,7 +462,6 @@ GameSelector::GameSelector(LawnApp* theApp)
 	// draw above every selector button.
 	this->AddWidget(mOverlayWidget);
 
-	TodHesitationTrace("gameselectorinit");
 }
 
 //0x449D00、0x449D20

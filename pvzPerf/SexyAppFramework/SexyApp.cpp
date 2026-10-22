@@ -244,15 +244,6 @@ void SexyApp::Init()
 	SEHCatcher::mCrashMessage =
 		L"程序发生错误。诊断信息已保存到程序目录的 log\\crash.txt。";
 
-#ifdef _WIN32
-	OutputDebugString(StrFormat("Product: %s\r\n", mProdName.c_str()).c_str());
-	OutputDebugString(StrFormat("BuildNum: %d\r\n", mBuildNum).c_str());
-	OutputDebugString(StrFormat("BuildDate: %s\r\n", mBuildDate.c_str()).c_str());	
-#else
-	fprintf(stderr, "Product: %s\nBuildNum: %d\nBuildDate: %s\n",
-		mProdName.c_str(), mBuildNum, mBuildDate.c_str());
-#endif
-
 	SexyAppBase::Init();
 
 	if (mIsScreenSaver)

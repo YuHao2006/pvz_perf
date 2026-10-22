@@ -17,8 +17,6 @@
 using namespace Sexy;
 
 bool (*gAppCloseRequest)();				//[0x69E6A0]
-bool (*gAppHasUsedCheatKeys)();			//[0x69E6A4]
-SexyString (*gGetCurrentLevelName)();
 
 namespace
 {
@@ -74,9 +72,7 @@ int main(int argc, char** argv)
 #endif
 	gTodStringFormats = gLawnStringFormats;
 	gTodStringFormatCount = gLawnStringFormatCount;
-	gGetCurrentLevelName = LawnGetCurrentLevelName;
 	gAppCloseRequest = LawnGetCloseRequest;
-	gAppHasUsedCheatKeys = LawnHasUsedCheatKeys;
 	gExtractResourcesByGroup = Sexy::ExtractResourcesByGroup;
 	gLawnApp = new LawnApp();
 	gLawnApp->mChangeDirTo = SelectRuntimeRoot(gLawnApp->mChangeDirTo);

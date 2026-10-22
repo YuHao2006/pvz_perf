@@ -1,6 +1,7 @@
 #include "Plant.h"
 #include "Board.h"
 #include "Zombie.h"
+#include "CatapultState.h"
 #include "ZombieFlags.h"
 #include "Cutscene.h"
 #include "GridItem.h"
@@ -1753,7 +1754,7 @@ void Zombie::UpdateZombieCatapult()
     else if (mZombiePhase == ZombiePhase::PHASE_CATAPULT_LAUNCHING)
     {
         Reanimation* aBodyReanim = mApp->ReanimationGet(mBodyReanimID);
-        if (aBodyReanim->ShouldTriggerTimedEvent(0.545f))
+        if (aBodyReanim->ShouldTriggerTimedEvent(CatapultCycle::ProjectileEvent))
         {
             Plant* aPlant = FindCatapultTarget();
             ZombieCatapultFire(aPlant);
@@ -5717,22 +5718,21 @@ void Zombie::UpdateReanim()
 
     if (mZombieType == ZombieType::ZOMBIE_CATAPULT)
     {
+        const CatapultLoadState loadState = CatapultCycle::Resolve(
+            mZombiePhase == ZombiePhase::PHASE_CATAPULT_LAUNCHING,
+            mSummonCounter > 0, aBodyReanim->mAnimTime);
+        const bool loaded = loadState == CatapultLoadState::Loaded;
         if (GetBodyDamageIndex() == 2 || mZombiePhase == ZombiePhase::PHASE_ZOMBIE_DYING)
         {
-            Reanimation* aReanim = mApp->ReanimationGet(mBodyReanimID);
-            Image* aPoleImage = aReanim->GetCurrentTrackImage(ReanimTrackId::Zombie_catapult_pole);
-            if (aPoleImage == IMAGE_REANIM_ZOMBIE_CATAPULT_POLE_WITHBALL && mSummonCounter != 0)
-            {
-                aReanim->SetImageOverride(ReanimTrackId::Zombie_catapult_pole, IMAGE_REANIM_ZOMBIE_CATAPULT_POLE_DAMAGE_WITHBALL);
-            }
-            else
-            {
-                aReanim->SetImageOverride(ReanimTrackId::Zombie_catapult_pole, IMAGE_REANIM_ZOMBIE_CATAPULT_POLE_DAMAGE);
-            }
+            aBodyReanim->SetImageOverride(ReanimTrackId::Zombie_catapult_pole, loaded
+                ? IMAGE_REANIM_ZOMBIE_CATAPULT_POLE_DAMAGE_WITHBALL
+                : IMAGE_REANIM_ZOMBIE_CATAPULT_POLE_DAMAGE);
         }
-        else if (mSummonCounter == 0)
+        else
         {
-            aBodyReanim->SetImageOverride(ReanimTrackId::Zombie_catapult_pole, IMAGE_REANIM_ZOMBIE_CATAPULT_POLE);
+            aBodyReanim->SetImageOverride(ReanimTrackId::Zombie_catapult_pole, loaded
+                ? IMAGE_REANIM_ZOMBIE_CATAPULT_POLE_WITHBALL
+                : IMAGE_REANIM_ZOMBIE_CATAPULT_POLE);
         }
     }
 

@@ -231,11 +231,13 @@ fragment float4 pvz_game_fragment(MetalGameVaryings input [[stage_in]],
             source.rgb *= source.a;
         return float4(source.rgb * input.color.rgb * input.color.a, source.a * input.color.a);
     }
+    const bool filteredPremult = !generated && kind != 0u &&
+        (slot & 0x40000000u) == 0u;
     if (kind != 0u || sandStraight)
         source = (linearFiltering || sandStraight) ?
-            pvz_filter_source(resources.images[index], slot, samplerIndex, input.uv, !generated) :
-            pvz_filter_sample(source, slot, !generated);
-    if (generated)
+            pvz_filter_source(resources.images[index], slot, samplerIndex, input.uv, !generated && !filteredPremult) :
+            pvz_filter_sample(source, slot, !generated && !filteredPremult);
+    if (generated || filteredPremult)
         source.rgb = source.a > 0.0f ? source.rgb / source.a : float3(0.0f);
     return source * input.color;
 }

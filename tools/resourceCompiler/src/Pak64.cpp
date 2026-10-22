@@ -1875,15 +1875,15 @@ bool WriteCompiledV2(const RawReanim& source, const std::vector<TrackIdEntry>& t
     }
 }
 
-// ── reanim-v4：sidecar 装载与符号烘焙发射 ────────────────────────────
-bool LoadSymbolIdRegistry(const std::filesystem::path& sidecar,
-                          SymbolIdRegistry& out,
+// Independent font identifiers; images never load a game registry.
+bool LoadFontIdRegistry(const std::filesystem::path& sidecar,
+                          FontIdRegistry& out,
                           std::uint32_t* fileHash,
                           std::string* error)
 {
     try {
         std::ifstream in(sidecar, std::ios::binary);
-        if (!in) { Fail(error, "cannot open symbol sidecar " + sidecar.string()); return false; }
+        if (!in) { Fail(error, "cannot open font sidecar " + sidecar.string()); return false; }
         std::vector<std::uint8_t> bytes((std::istreambuf_iterator<char>(in)),
                                         std::istreambuf_iterator<char>());
         if (fileHash) *fileHash = Crc32(bytes);
@@ -1916,9 +1916,8 @@ bool LoadSymbolIdRegistry(const std::filesystem::path& sidecar,
 std::vector<std::uint8_t> SerializeV4(const RawReanim& source,
                                       const std::vector<TrackIdEntry>& table,
                                       const std::vector<ReanimTypeMapEntry>& typeMap,
-                                      const SymbolIdRegistry& imageSymbols,
-                                      const SymbolIdRegistry& fontSymbols,
-                                      const std::uint32_t imageRegistryHash,
+                                      const SourceImageHandles& sourceImageHandles,
+                                      const FontIdRegistry& fontSymbols,
                                       const std::uint32_t fontRegistryHash)
 {
     // Preserve source text identity before numeric decode merges routing runs.
@@ -1929,11 +1928,11 @@ std::vector<std::uint8_t> SerializeV4(const RawReanim& source,
         for (std::size_t i = 0; i < probe.tracks.size(); ++i)
             localSegs[i] = std::move(probe.tracks[i].attacherSegments);
     }
-    const auto symbolOf = [](const SymbolIdRegistry& registry, const std::string& name,
+    const auto idOf = [](const auto& registry, const std::string& name,
                              const char* what, const std::string& module) -> std::uint32_t {
         const auto it = registry.find(name);
         if (it == registry.end())
-            throw std::runtime_error(std::string(what) + " symbol missing from registry: "
+            throw std::runtime_error(std::string(what) + " missing from offline table: "
                 + name + " (module " + module + ")");
         return it->second;
     };
@@ -1944,7 +1943,7 @@ std::vector<std::uint8_t> SerializeV4(const RawReanim& source,
     std::vector<std::uint8_t> payload;
     PutU32(payload, 0x35544449 /* 'IDT5' */);
     PutU32(payload, TrackIdTableHash(table));
-    PutU32(payload, imageRegistryHash);
+    PutU32(payload, 0);  // Image handles are local to image_sources.txt.
     PutU32(payload, fontRegistryHash);
     std::uint32_t fpsBits = 0;
     std::memcpy(&fpsBits, &source.fps, 4);
@@ -1963,9 +1962,9 @@ std::vector<std::uint8_t> SerializeV4(const RawReanim& source,
         const RawTrack& track = source.tracks[ti];
         for (const RawTransform& frame : track.frames) {
             PutU32(payload, frame.image.empty() ? 0
-                : symbolOf(imageSymbols, frame.image, "image", source.name));
+                : idOf(sourceImageHandles, frame.image, "source image", source.name));
             PutU32(payload, frame.font.empty() ? 0
-                : symbolOf(fontSymbols, frame.font, "font", source.name));
+                : idOf(fontSymbols, frame.font, "font", source.name));
             if (hasUiText[ti]) PutString(payload, frame.text);
         }
     }
@@ -1992,7 +1991,7 @@ std::vector<std::uint8_t> SerializeV4(const RawReanim& source,
     }
 
     std::vector<std::uint8_t> out;
-    PutU32(out, 0xDEADFED7u);  // v4 path/cookie, IDT5 payload
+    PutU32(out, 0xDEADFED7u);  // Offline source-record envelope, IDT5 payload.
     PutU32(out, static_cast<std::uint32_t>(payload.size()));
     PutU32(out, Crc32(payload));
     out.insert(out.end(), payload.begin(), payload.end());
@@ -2002,17 +2001,16 @@ std::vector<std::uint8_t> SerializeV4(const RawReanim& source,
 bool WriteCompiledV4(const RawReanim& source,
                      const std::vector<TrackIdEntry>& table,
                      const std::vector<ReanimTypeMapEntry>& typeMap,
-                     const SymbolIdRegistry& imageSymbols,
-                     const SymbolIdRegistry& fontSymbols,
-                     const std::uint32_t imageRegistryHash,
+                     const SourceImageHandles& sourceImageHandles,
+                     const FontIdRegistry& fontSymbols,
                      const std::uint32_t fontRegistryHash,
                      const std::filesystem::path& output,
                      std::string* error)
 {
     try {
         const std::vector<std::uint8_t> bytes = SerializeV4(
-            source, table, typeMap, imageSymbols, fontSymbols,
-            imageRegistryHash, fontRegistryHash);
+            source, table, typeMap, sourceImageHandles, fontSymbols,
+            fontRegistryHash);
         if (!output.parent_path().empty())
             std::filesystem::create_directories(output.parent_path());
         std::ofstream out(output, std::ios::binary | std::ios::trunc);

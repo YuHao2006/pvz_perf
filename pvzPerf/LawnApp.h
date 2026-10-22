@@ -308,9 +308,7 @@ protected:
 	virtual void					SwitchScreenMode(bool wantWindowed, bool is3d, bool force = false);
 };
 
-SexyString							LawnGetCurrentLevelName();
 bool								LawnGetCloseRequest();
-bool								LawnHasUsedCheatKeys();
 
 
 extern bool gIsPartnerBuild;

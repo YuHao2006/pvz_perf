@@ -3,7 +3,6 @@
 #include <algorithm>
 #include <cmath>
 #include <cstring>
-#include <cstdlib>
 #include <fstream>
 #include <limits>
 
@@ -107,36 +106,17 @@ void D3d9Renderer::Impl::Register(D3d9Texture* image)
     for (unsigned int slot = 1; slot < staticBase; ++slot)
         if (!slots[slot]) {
             image->slot = slot; slots[slot] = image;
-            if (image->atlased) RememberAtlasCopy(image, image->storage, image->x, image->y);
             return;
         }
     throw std::runtime_error("D3D9 logical texture slots exhausted");
 }
 D3d9Texture* D3d9Renderer::Impl::Allocate(int w, int h, D3DFORMAT format,
-    bool atlas, bool registerSlot)
+    bool registerSlot)
 {
     Dimensions(w, h);
     auto image = std::make_unique<D3d9Texture>();
     image->width = w; image->height = h;
-    image->atlasEligible = atlas && format == D3DFMT_A8R8G8B8 &&
-        w <= std::min(256, pageSize) && h <= std::min(256, pageSize);
-    if (image->atlasEligible && atlasFinalized) {
-        Page* page = nullptr;
-        for (auto& candidate : pages) {
-            if (candidate.kind != 2) continue;
-            if (candidate.storage.use_count() == 1)
-                candidate.free = {{0, 0, candidate.storage->width, candidate.storage->height}};
-            if (Place(candidate, w, h, image->x, image->y)) { page = &candidate; break; }
-        }
-        if (!page) {
-            const int edge = std::max({packedPageSize, w, h, 16});
-            pages.push_back({Storage(edge, edge, format), {{0, 0, edge, edge}}});
-            page = &pages.back();
-            if (!Place(*page, w, h, image->x, image->y))
-                throw std::logic_error("Cannot place image on empty D3D9 atlas");
-        }
-        image->storage = page->storage; image->atlased = true;
-    } else image->storage = Storage(w, h, format);
+    image->storage = Storage(w, h, format);
     if (registerSlot) Register(image.get());
     auto* result = image.get();
     textures.emplace(result, std::move(image));
@@ -155,18 +135,9 @@ void D3d9Renderer::Impl::Upload(D3d9Texture* image, const void* pixels, int pitc
         std::memcpy(static_cast<unsigned char*>(lock.pBits) + size_t(row) * lock.Pitch,
             static_cast<const unsigned char*>(pixels) + size_t(row) * pitch, size_t(image->width) * 4);
     Check(staging->UnlockRect(), "Unlock D3D9 upload staging");
-    POINT destination{image->x, image->y};
-    Check(device->UpdateSurface(staging.value, nullptr, image->storage->surface.value, &destination),
+    Check(device->UpdateSurface(staging.value, nullptr, image->storage->surface.value, nullptr),
         "Upload D3D9 texture");
     // Staging and caller pixels are disposable immediately after UpdateSurface.
-}
-void D3d9Renderer::Impl::Copy(const D3d9Texture* source,
-    const std::shared_ptr<D3d9Storage>& destination, int x, int y)
-{
-    RECT from{source->x, source->y, source->x + source->width, source->y + source->height};
-    RECT to{x, y, x + source->width, y + source->height};
-    Check(device->StretchRect(source->storage->surface.value, &from,
-        destination->surface.value, &to, D3DTEXF_NONE), "Copy D3D9 texture region");
 }
 D3d9Renderer::Impl::Impl(D3d9Context& ctx, int w, int h, const std::filesystem::path& shaders)
     : context(ctx), device(ctx.device), width(w), height(h), shaderDirectory(shaders)
@@ -174,12 +145,6 @@ D3d9Renderer::Impl::Impl(D3d9Context& ctx, int w, int h, const std::filesystem::
     context.MakeCurrent();
     if (!device || context.hdr) throw std::runtime_error("D3D9 renderer requires an SDR hardware context");
     maximum = static_cast<int>(std::min(context.caps.maxTextureWidth, context.caps.maxTextureHeight));
-    pageSize = maximum;
-    if (const char* value = std::getenv("PVZ_D3D9_ATLAS_SIZE")) {
-        pageSize = std::stoi(value);
-        if (pageSize < 16 || pageSize > maximum)
-            throw std::invalid_argument("PVZ_D3D9_ATLAS_SIZE is outside device limits");
-    }
     if (context.caps.maxSimultaneousTextures < 5 ||
         context.caps.maxPixelShaderInstructionSlots < 512 ||
         context.caps.maxPixelShaderInstructionsExecuted < 65535 ||
@@ -245,19 +210,16 @@ void D3d9Renderer::Impl::BindTarget()
     const auto* target = selected ? selected : scene;
     Target(target->storage->surface.value, target->width, target->height);
 }
-void D3d9Renderer::Impl::Source(Constants& c, const std::shared_ptr<D3d9Storage>& storage,
-    const GpuClip& rect, unsigned int flags, unsigned int sampler) const
+void D3d9Renderer::Impl::Source(Constants& c, const D3d9Texture* image, unsigned int sampler) const
 {
-    c[S::SourceRect] = {float(rect.x), float(rect.y), float(rect.width), float(rect.height)};
+    const auto& storage = image->storage;
+    const auto flags = image->flags;
+    c[S::SourceRect] = {0, 0, float(image->width), float(image->height)};
     c[S::SourceTexture] = {1.0f / float(storage->width), 1.0f / float(storage->height), 0, 0};
     c[S::SourceFlags] = {float(bool(flags & 0x80000000U)), float(bool(flags & GpuVertex::kOpaqueInput)),
         float(bool(flags & GpuVertex::kAlphaEdgeFilter)), float((flags >> 28) & 3)};
     c[S::Sampling] = {float(sampler & 1), float((sampler >> 1) & 1),
         float(bool(flags & GpuVertex::kIndependentColorFilter)), 0};
-}
-void D3d9Renderer::Impl::Source(Constants& c, const D3d9Texture* image, unsigned int sampler) const
-{
-    Source(c, image->storage, {image->x, image->y, image->width, image->height}, image->flags, sampler);
 }
 void D3d9Renderer::Impl::SetConstants(const Constants& constants)
 {
@@ -336,7 +298,8 @@ std::shared_ptr<D3d9Storage> D3d9Renderer::Impl::Snapshot(D3d9Texture* image)
 {
     Flush();
     auto copy = Storage(image->width, image->height, image->storage->format);
-    Copy(image, copy, 0, 0);
+    Check(device->StretchRect(image->storage->surface.value, nullptr,
+        copy->surface.value, nullptr, D3DTEXF_NONE), "Snapshot D3D9 texture");
     return copy;
 }
 void D3d9Renderer::Impl::Submit(std::span<const GpuVertex> input, D3d9Texture*,
@@ -357,15 +320,9 @@ void D3d9Renderer::Impl::Submit(std::span<const GpuVertex> input, D3d9Texture*,
         auto* image = slots[firstVertex.slot & 4095];
         if (!image) throw std::logic_error("D3D9 draw references an unbound logical texture");
         auto storage = image->storage;
-        int x = image->x, y = image->y;
-        if (image->atlasCopies.size() > 1 && preferredAtlas && preferredAtlas->atlasRegions) {
-            const auto& region = (*preferredAtlas->atlasRegions)[image->slot];
-            if (region.owner == image) { storage = preferredAtlas; x = region.x; y = region.y; }
-        }
-        if (image->atlased && preferredAtlas != storage) preferredAtlas = storage;
         if (storage == target->storage) {
             if (!feedback) feedback = Snapshot(image);
-            storage = feedback; x = y = 0;
+            storage = feedback;
         }
         const auto first = vertices.size();
         const auto flags = firstVertex.slot;
@@ -394,7 +351,7 @@ void D3d9Renderer::Impl::Submit(std::span<const GpuVertex> input, D3d9Texture*,
         for (size_t corner = 0; corner < 3; ++corner) {
             const auto& v = input[index + corner];
             vertices.push_back({v.x, v.y, v.r, v.g, v.b, v.a, v.u, v.v,
-                {float(x), float(y), float(image->width), float(image->height)}, float(packed)});
+                {0, 0, float(image->width), float(image->height)}, float(packed)});
         }
         if (!batches.empty() && batches.back().storage == storage && batches.back().blend == blend &&
             batches.back().coverage == coverage && Same(batches.back().clip, clip)) batches.back().count += 3;
@@ -413,7 +370,7 @@ D3d9Renderer::D3d9Renderer(D3d9Context& context, int w, int h,
     impl_->white = CreateTexture(1, 1, &white, 4);
     impl_->slots[impl_->white->slot] = nullptr;
     impl_->white->slot = 0; impl_->slots[0] = impl_->white;
-    impl_->scene = impl_->Allocate(w, h, D3DFMT_A8R8G8B8, false, false);
+    impl_->scene = impl_->Allocate(w, h, D3DFMT_A8R8G8B8, false);
     impl_->BindTarget();
     Check(context.device->Clear(0, nullptr, D3DCLEAR_TARGET, 0xff000000, 1, 0), "Clear D3D9 scene");
 }
@@ -438,7 +395,7 @@ void D3d9Renderer::PrepareLoadingPipelines()
 }
 D3d9Texture* D3d9Renderer::CreateTexture(int w, int h, const void* pixels, int pitch, bool opaque)
 {
-    auto* image = impl_->Allocate(w, h, D3DFMT_A8R8G8B8, true, true);
+    auto* image = impl_->Allocate(w, h, D3DFMT_A8R8G8B8, true);
     try { impl_->Upload(image, pixels, pitch); }
     catch (...) { DestroyTexture(image); throw; }
     image->flags = opaque ? GpuVertex::kOpaqueInput : 0;
@@ -446,7 +403,7 @@ D3d9Texture* D3d9Renderer::CreateTexture(int w, int h, const void* pixels, int p
 }
 D3d9Texture* D3d9Renderer::CreateRawTexture(int w, int h, const void* pixels, int pitch)
 {
-    auto* image = impl_->Allocate(w, h, D3DFMT_A8R8G8B8, false, false);
+    auto* image = impl_->Allocate(w, h, D3DFMT_A8R8G8B8, false);
     try { impl_->Upload(image, pixels, pitch); }
     catch (...) { DestroyTexture(image); throw; }
     return image;
@@ -470,21 +427,13 @@ void D3d9Renderer::BindStaticTexture(D3d9Texture* image, unsigned int slot)
     if (image->staticSlot != ~0U && image->staticSlot != s.staticBase + slot)
         throw std::invalid_argument("D3D9 image already has a different static symbol");
     if (image->slot != ~0U && s.slots[image->slot] == image) s.slots[image->slot] = nullptr;
-    for (const auto& copy : image->atlasCopies)
-        if (image->slot != ~0U) {
-            auto& region = (*copy.storage->atlasRegions)[image->slot];
-            if (region.owner == image) region = {};
-        }
     image->slot = image->staticSlot = s.staticBase + slot;
     s.slots[image->slot] = image;
-    if (image->atlased && image->atlasCopies.empty()) s.RememberAtlasCopy(image, image->storage, image->x, image->y);
-    else for (const auto& copy : image->atlasCopies)
-        (*copy.storage->atlasRegions)[image->slot] = {image, copy.x, copy.y};
 }
 D3d9Texture* D3d9Renderer::CreateTextureStatic(int w, int h, const void* pixels,
     int pitch, bool opaque, unsigned int slot)
 {
-    auto* image = impl_->Allocate(w, h, D3DFMT_A8R8G8B8, true, false);
+    auto* image = impl_->Allocate(w, h, D3DFMT_A8R8G8B8, false);
     image->flags = opaque ? GpuVertex::kOpaqueInput : 0;
     try { impl_->Upload(image, pixels, pitch); BindStaticTexture(image, slot); }
     catch (...) { DestroyTexture(image); throw; }
@@ -498,7 +447,7 @@ D3d9Texture* D3d9Renderer::ReplaceTexture(D3d9Texture* old, int w, int h,
     if (!s.textures.contains(old) || old == s.white || old->render || old->caustic)
         throw std::invalid_argument("Cannot host-replace this D3D9 image");
     // Always create a new resource version: queued batches retain the old storage.
-    auto* image = s.Allocate(w, h, D3DFMT_A8R8G8B8, false, false);
+    auto* image = s.Allocate(w, h, D3DFMT_A8R8G8B8, false);
     image->flags = opaque ? GpuVertex::kOpaqueInput : 0;
     try {
         s.Upload(image, pixels, pitch);
@@ -516,7 +465,7 @@ D3d9Texture* D3d9Renderer::CreateCoverageMask(int w, int h, std::span<const unsi
     std::vector<unsigned int> pixels(size_t(w) * h);
     for (int y = 0; y < h; ++y) for (int x = 0; x < w; ++x)
         pixels[size_t(y) * w + x] = 0xff000000U | (unsigned(coverage[size_t(y) * pitch + x]) << 16);
-    auto* image = impl_->Allocate(w, h, D3DFMT_A8R8G8B8, false, true);
+    auto* image = impl_->Allocate(w, h, D3DFMT_A8R8G8B8, true);
     try { impl_->Upload(image, pixels.data(), w * 4); }
     catch (...) { DestroyTexture(image); throw; }
     return image;
@@ -525,7 +474,7 @@ D3d9Texture* D3d9Renderer::CreateRenderImage(int w, int h)
 {
     auto& s = *impl_;
     s.Flush();
-    auto* image = s.Allocate(w, h, D3DFMT_A32B32G32R32F, false, true);
+    auto* image = s.Allocate(w, h, D3DFMT_A32B32G32R32F, true);
     image->render = true; image->flags = 0x80000000U;
     try {
         s.Target(image->storage->surface.value, w, h);
@@ -542,7 +491,6 @@ void D3d9Renderer::DestroyTexture(D3d9Texture* image)
     if (image == s.selected) throw std::logic_error("Deselect D3D9 render image before destruction");
     if (image == s.causticTarget) { s.causticTarget = nullptr; s.causticsQueued = false; }
     if (image == s.causticSource) s.causticSource = nullptr;
-    s.ForgetAtlasCopies(image);
     if (image->slot != ~0U && s.slots[image->slot] == image) s.slots[image->slot] = nullptr;
     s.textures.erase(image);
 }
@@ -566,7 +514,7 @@ bool D3d9Renderer::BeginScene()
     if (s.open) throw std::logic_error("D3D9 scene already open");
     if (!s.selected && !s.context.BeginPresent()) return false;
     s.context.MakeCurrent();
-    s.open = true; s.mainFrame = !s.selected; s.preferredAtlas.reset();
+    s.open = true; s.mainFrame = !s.selected;
     try {
         if (s.causticsQueued && s.causticTarget && s.causticSource) {
             s.ImagePass(s.causticTarget, s.causticSource, nullptr, 3);
@@ -636,7 +584,7 @@ void D3d9Renderer::ResizeScene(int width, int height)
     if (s.open || s.selected)
         throw std::logic_error("Resize the main D3D9 canvas between scenes");
     if (s.width == width && s.height == height) return;
-    auto* next = s.Allocate(width, height, D3DFMT_A8R8G8B8, false, false);
+    auto* next = s.Allocate(width, height, D3DFMT_A8R8G8B8, false);
     auto* previous = s.scene;
     s.scene = next;
     s.width = width;

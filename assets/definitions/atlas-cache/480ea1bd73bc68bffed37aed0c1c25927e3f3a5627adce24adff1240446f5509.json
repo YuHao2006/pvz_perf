@@ -1,0 +1,125 @@
+{
+  "format": "pvz-exact-atlas-v2",
+  "geometry": {
+    "max_side": 16384,
+    "padding": 2
+  },
+  "key": "480ea1bd73bc68bffed37aed0c1c25927e3f3a5627adce24adff1240446f5509",
+  "layout": {
+    "exact": {
+      "best_bound": 54978,
+      "cache_hit": false,
+      "cache_key": "480ea1bd73bc68bffed37aed0c1c25927e3f3a5627adce24adff1240446f5509",
+      "elapsed_seconds": 24.845496900001308,
+      "gap": 0.0,
+      "model_version": "integer-nonrotating-padded-global-area-v2",
+      "objective_area": 54978,
+      "optimal": true,
+      "proof_scope": "minimum integer atlas area; fixed orientation; configured padding and max_side",
+      "search_complete": true,
+      "solve_budget_seconds": null,
+      "solver": "ortools-cp-sat",
+      "solver_version": "9.15.6755",
+      "status": "OPTIMAL"
+    },
+    "height": 539,
+    "method": "native-maxrects",
+    "regions": [
+      [
+        2,
+        2,
+        72,
+        73
+      ],
+      [
+        2,
+        79,
+        72,
+        73
+      ],
+      [
+        2,
+        156,
+        72,
+        73
+      ],
+      [
+        2,
+        233,
+        72,
+        73
+      ],
+      [
+        2,
+        310,
+        72,
+        73
+      ],
+      [
+        2,
+        387,
+        72,
+        73
+      ],
+      [
+        2,
+        464,
+        72,
+        73
+      ],
+      [
+        78,
+        2,
+        22,
+        56
+      ],
+      [
+        78,
+        62,
+        22,
+        56
+      ],
+      [
+        78,
+        122,
+        22,
+        56
+      ],
+      [
+        78,
+        182,
+        22,
+        56
+      ],
+      [
+        78,
+        242,
+        22,
+        56
+      ],
+      [
+        78,
+        302,
+        22,
+        56
+      ],
+      [
+        78,
+        362,
+        22,
+        56
+      ],
+      [
+        78,
+        422,
+        22,
+        56
+      ]
+    ],
+    "search_attempts": 1587,
+    "search_microseconds": 1516,
+    "shelf_area": 56980,
+    "width": 102
+  },
+  "layout_sha256": "434c75b8c60e11f2b16d64e59f0dcc396df72e749b6aec3814ce28794b56667f"
+}

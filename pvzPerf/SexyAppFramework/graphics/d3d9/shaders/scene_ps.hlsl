@@ -137,6 +137,7 @@ float4 scenePS(float2 uv : TEXCOORD0, float4 rect : TEXCOORD1,
     bool generated = data.flags.x != 0.0;
     bool linearSampling = data.sampleMode.x != 0.0;
     bool independent = data.sampleMode.z != 0.0;
+    bool filteredPremult = !generated && data.flags.w != 0.0 && !independent;
     bool premultipliedOutput = data.sampleMode.w != 0.0;
     bool sandStraight = data.flags.z != 0.0 && !generated;
     bool hasFilter = data.flags.w != 0.0 || sandStraight;
@@ -155,7 +156,7 @@ float4 scenePS(float2 uv : TEXCOORD0, float4 rect : TEXCOORD1,
             }
         } else if (hasFilter) {
             filtered = true;
-            straightResult = !generated;
+            straightResult = !generated && !filteredPremult;
         }
     }
     float4 source = sampleSource(uv, filtered, straightResult, data);
@@ -170,7 +171,7 @@ float4 scenePS(float2 uv : TEXCOORD0, float4 rect : TEXCOORD1,
         if (independent || (!filtered && !generated)) source.rgb *= source.a;
         return float4(source.rgb * color.rgb * color.a, source.a * color.a);
     }
-    if (generated)
+    if (generated || filteredPremult)
         source.rgb = source.a > 0.0 ? source.rgb / source.a : float3(0.0, 0.0, 0.0);
     return source * color;
 }

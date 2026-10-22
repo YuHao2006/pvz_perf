@@ -60,7 +60,6 @@ Board::Board(LawnApp* theApp)
 {
 	mApp = theApp;
 	mApp->mBoard = this;
-	TodHesitationTrace("preboard");
 
 	mZombies.DataArrayInitialize(ZOMBIE_POOL_CAPACITY, DataArrayKind::Zombies);
 	mPlants.DataArrayInitialize(PLANT_POOL_CAPACITY, DataArrayKind::Plants);
@@ -70,7 +69,6 @@ Board::Board(LawnApp* theApp)
 	RebuildZombieRowBucket();  // 行段桶同款：构造时清跨局残留
 	mLawnMowers.DataArrayInitialize(32U, DataArrayKind::LawnMowers);
 	mGridItems.DataArrayInitialize(128U, DataArrayKind::GridItems);
-	TodHesitationTrace("board dataarrays");
 
 	mApp->mEffectSystem->EffectSystemFreeAll();
 	mBoardRandSeed = mApp->mAppRandSeed;
@@ -7058,7 +7056,6 @@ void Board::UpdateGame()
 void Board::Update()
 {
 
-	TodHesitationBracket aHesitation("Board::Update");
 
 	RefreshHudLayout();
 	Widget::Update();
@@ -7484,7 +7481,6 @@ static inline void AddUIRenderItem(RenderItem* theRenderList, int& theCurRenderI
 //0x416880
 void Board::DrawGameObjects(Graphics* g)
 {
-	TodHesitationTrace("creating render list");
 
 	RenderItem aRenderList[MAX_RENDER_ITEMS];
 	int aRenderItemCount = 0;
@@ -7687,10 +7683,8 @@ void Board::DrawGameObjects(Graphics* g)
 	}
 	AddGameObjectRenderItemCursorPreview(aRenderList, aRenderItemCount, RenderObjectType::RENDER_ITEM_CURSOR_PREVIEW, mCursorPreview);
 
-	TodHesitationTrace("start sort");
 	std::sort(aRenderList, aRenderList + aRenderItemCount, RenderItemSortFunc);
 
-	TodHesitationTrace("end sort, start draw");
 	// 渲染项绘制分发：25 类型 lambda 表——union 对象变体/板 UI/带参项统一形态，
 	// 原 24 case 跳转表化为取指直呼，循环体只剩越界守卫 + 间接调用。槽位锚
 	// 枚举首尾（RENDER_ITEM_COIN=0、GRID_ITEM_OVERLAY=24）；越界保持原
@@ -7753,7 +7747,6 @@ void Board::DrawGameObjects(Graphics* g)
 		}
 	}
 
-	TodHesitationTrace("end draw");
 }
 
 //0x4173C0

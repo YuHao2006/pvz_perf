@@ -10,9 +10,8 @@
 #include "TodDebug.h"
 #include "TodCommon.h"
 #include "Definition.h"  // DefinitionLoadImage（③d 号直取的回落路径）
-#include "generated/ImageSymbolId.h"
+#include "ProgramImageSymbols.h"
 #include "generated/NumericResourceBindings.h"  // v4 图像符号注册表（泵静态槽位放置）
-#include "generated/ImageSymbolTable.h"  // v4 符号绑定表（id→Image*/w/h）
 #include "generated/EntityStrings.h"  // 动态键实体表（阶段 3）
 #include "EffectSystem.h"
 #include "Resources.h"
@@ -986,8 +985,6 @@ bool TodLoadResources(ResourceGroupId theGroup)
 // 不留位图"）。零线程：装载线程/主线程把已解码图压入（持 SharedImageRef
 // 拷贝=引用计数保命），主线程每拍泵出预算内逐张 CreateImageTexture——
 // staging 竞技场自动攒批，mPurgeBits 位图上传即弃（RenderInterface 侧）。
-// v4 符号绑定表：id → {Image*, w, h}（装载完成期顺序单趟绑定，零二分）
-Sexy::ImageSymbolBind gImageSymbolBinds[IMAGE_SYMBOL_ID_COUNT] = {};
 
 namespace
 {
@@ -1263,8 +1260,6 @@ bool ResourceManager::TodLoadNextResource()
 {
 	if (HadError() || mCurResGroupList == nullptr)
 		return false;
-	SexyGetTickCount();
-	TodHesitationTrace("preres");
 
 	while (mCurResGroupListItr != mCurResGroupList->end())
 	{
@@ -1317,9 +1312,6 @@ bool ResourceManager::TodLoadNextResource()
 		if (!LoadNextResource())
 			break;
 
-		SexyGetTickCount();
-		TodHesitationTrace("Loading: '%s'", aRes->mPath.c_str());
-		TodHesitationTrace("resource '%s'", aRes->mPath.c_str());
 		return true;
 	}
 

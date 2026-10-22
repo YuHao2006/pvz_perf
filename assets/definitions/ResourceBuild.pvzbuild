@@ -1,0 +1,86 @@
+# .pvzbuild selects definition files; .dsl files contain only asset definitions.
+resource_build(1)
+
+sources(reanim "reanim/units/*.dsl")
+sources(particle "particles/particles/*.particle.dsl")
+
+# Exact CP-SAT runs offline, starting from the native MaxRects layout.
+# Cached proofs depend on dimensions, model revision and solver version.
+# Give each atlas 60 seconds; publish the best valid layout if proof takes longer.
+# Reports retain the actual proof status and gap. No image rotation is allowed.
+atlas_defaults(
+    solver exact
+    padding 2
+    max_side 16384
+    time_limit_seconds 60
+    require_optimal false
+    workers 1
+)
+
+# Members may mix reanim:Name and particle:Name.
+atlas(pea_family
+    reanim:PeaShooter
+    reanim:PeaShooterSingle
+    reanim:SnowPea
+    reanim:SplitPea
+    reanim:ThreePeater
+    reanim:GatlingPea
+)
+
+# The same scene sprites recur across these animation definitions.
+atlas(credits_stage
+    reanim:Credits_Main
+    reanim:Credits_Main2
+    reanim:Credits_Main3
+    reanim:Credits_AnyHour
+    reanim:ZombiesWon
+    reanim:Credits_WeAreTheUndead
+)
+atlas(dave_family reanim:CrazyDave reanim:Credits_CrazyDave)
+atlas(credits_brain reanim:Credits_BigBrain reanim:Credits_Throat)
+atlas(boss_family reanim:Zombie_boss reanim:Credits_Bossdance)
+atlas(selector_clouds reanim:SelectorScreen reanim:TreeOfWisdomClouds)
+atlas(sunflower_family reanim:SunFlower reanim:TwinSunflower)
+atlas(melon_family reanim:Melonpult reanim:WinterMelon)
+
+# Cross-kind groups use the same ownership and binding rules.
+atlas(potato_mine reanim:PotatoMine particle:PotatoMine)
+atlas(zamboni_family
+    reanim:Zombie_zamboni
+    particle:ZamboniExplosion
+    particle:ZamboniExplosion2
+    particle:ZamboniSmoke
+    particle:ZamboniTire
+)
+
+# The ground dirt image is already part of the rising dirt image set.
+atlas(rising_dirt
+    particle:DancerRise
+    particle:DiggerTunnel
+    particle:WhackAZombieRise
+    particle:ZombieRise
+    particle:DiggerRise
+    particle:GraveBusterDie
+    particle:GraveStoneRise
+    particle:Planting
+    particle:PotatoMineRise
+    particle:SodRoll
+)
+# The remaining families have identical source image sets.
+atlas(vase_shards particle:VaseShatter particle:VaseShatterLeaf particle:VaseShatterZombie)
+atlas(award_rays particle:Award particle:CreditsRaysWipe)
+atlas(fireball_burst particle:FireballDeath particle:ZombieBossFireball)
+atlas(pool_splash particle:PlantingPool particle:PoolSplash)
+atlas(zombie_heads particle:MoweredZombieHead particle:ZombieHead particle:ZombieHeadPool)
+atlas(pickup_starburst particle:PresentPickup particle:Starburst)
+atlas(projectile_splat particle:CabbageSplat particle:PeaSplat)
+atlas(dust particle:DustFoot particle:DustSquash)
+atlas(ice_trail particle:BossIceBallTrail particle:IceBallDeath particle:SnowPeaTrail)
+atlas(pickup_arrows particle:CoinPickupArrow particle:SeedPacketPick particle:UpsellArrow)
+atlas(zombie_arms particle:MoweredZombieArm particle:ZombieArm)
+atlas(sparkles particle:IceSparkle particle:TrophySparkle)
+atlas(ice_trap_burst particle:IceTrapRelease particle:IceTrapZombie)
+atlas(puff_spores particle:PuffShroomMuzzle particle:PuffShroomTrail particle:PuffSplat)
+atlas(fume_cloud particle:FumeCloud particle:GloomCloud)
+atlas(portal_particles particle:PortalCircle particle:PortalSquare)
+atlas(screen_flash particle:CreditsStrobe particle:ScreenFlash)

@@ -694,13 +694,13 @@ void SyncReanimation(Board* theBoard, Reanimation* theReanimation, SaveGameConte
 			{
 				aTrackInstance.mBlendTransform.mText = nullptr;
 				TOD_ASSERT(aTrackInstance.mBlendTransform.mFont == nullptr);
-				TOD_ASSERT(aTrackInstance.mBlendTransform.mImage == nullptr);
+				TOD_ASSERT(aTrackInstance.mBlendTransform.mImageRegion.mWidth == 0);
 			}
 			else
 			{
 				TOD_ASSERT(aTrackInstance.mBlendTransform.mText == nullptr);
 				TOD_ASSERT(aTrackInstance.mBlendTransform.mFont == nullptr);
-				TOD_ASSERT(aTrackInstance.mBlendTransform.mImage == nullptr);
+				TOD_ASSERT(aTrackInstance.mBlendTransform.mImageRegion.mWidth == 0);
 			}
 		}
 	}
@@ -1062,7 +1062,6 @@ static bool LoadDat64FromBuffer(Board* theBoard, Buffer& aFileBuffer, const std:
 			static_cast<unsigned long>(aContext.ByteLeftToRead()));
 		return false;
 	}
-	TodTrace("Loaded save game");
 	theBoard->RebuildPlantCellBucket();  // 格桶为派生索引不进存档，装载验收后重建
 	theBoard->RebuildZombieRowBucket();  // 行段桶同款：整池镜像装载不走初始化尾
 	// 关卡放行门（与 LawnApp::StartPlaying 同语义，2026-10-09 用户规格

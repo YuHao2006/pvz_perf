@@ -1,7 +1,8 @@
-"""Validate atlas metadata against the cached corpus; never run the compiler or game."""
+"""Validate program atlas bindings and inline geometry without compiling or launching."""
 from __future__ import annotations
 
 import importlib.util
+import json
 import os
 from pathlib import Path
 import re
@@ -16,11 +17,15 @@ import zlib
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "tools"))
 import build_numeric_runtime_pak64 as pak
+import compile_numeric_resources as resources
+import resource_build_config
 
 SPEC = importlib.util.spec_from_file_location(
     "atlas_resource_pipeline", ROOT / "tools/resourcePipeline/src/build_resources.py")
 pipeline = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(pipeline)
+PACKAGE = Path(os.environ.get(
+    "PVZ_RESOURCE_PACKAGE", str(ROOT / "out/x64-win32-vulkan/cache/resources/main.pak64")))
 
 
 def envelope(cookie: int, payload: bytes) -> bytes:
@@ -31,18 +36,17 @@ def reseal(data: bytes) -> bytes:
     return envelope(struct.unpack_from("<I", data)[0], data[12:])
 
 
-def reanim(registries: dict, images: list[int]) -> bytes:
+def legacy_reanim(registries: dict, images: list[int]) -> bytes:
     payload = struct.pack("<4IfI", 0x35544449, registries["track"], registries["image"],
                           registries["font"], 12.0, 1)
     payload += struct.pack("<4I", 0, len(images), 32, 0)
     payload += struct.pack(f"<{8 * len(images)}f", *([0.0] * (8 * len(images))))
-    # A nonzero font ID must never be mistaken for an image symbol.
+    # A nonzero independent font ID must not be collected as an image ID.
     payload += b"".join(struct.pack("<2I", image, 1) for image in images)
     return envelope(0xDEADFED7, payload + struct.pack("<I", 0))
 
 
-def particle(registries: dict, images: list[int]) -> bytes:
-    # These five unrelated emitter words deliberately resemble valid image IDs.
+def legacy_particle(registries: dict, images: list[int]) -> bytes:
     body = b"".join(struct.pack("<7I40I", image, 1, 1, 1, 1, 1, 0, *([0] * 40))
                     for image in images)
     payload = struct.pack("<5I", 0x35504449, registries["image"], registries["emitter"],
@@ -54,167 +58,218 @@ def particle(registries: dict, images: list[int]) -> bytes:
     return envelope(0xDEADFED8, payload)
 
 
-class AtlasGroupMetadataTests(unittest.TestCase):
+class ProgramAtlasMetadataTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        archive_path = ROOT / "out/x64-win7-opengl/cache/resources/main.pak64"
-        with zipfile.ZipFile(archive_path) as archive:
+        with zipfile.ZipFile(PACKAGE) as archive:
             cls.records = {name: archive.read(name) for name in archive.namelist()
                            if pak.numeric_kind(name) is not None}
+            cls.available = set(archive.namelist())
+        cls.report = json.loads(PACKAGE.with_name("manifest.json").read_text(encoding="utf-8"))
         cls.registries = pak.source_audit(ROOT, {}, set(cls.records))["registries"]
-        cls.groups = {}
-        for name, data in cls.records.items():
-            images = set()
-            pak.validate_numeric(name, data, cls.registries, image_ids=images)
-            if pak.numeric_kind(name) in ("reanim", "particles"):
-                cls.groups[name] = images
-        cls.names = [name for kind in ("reanim", "particles")
-                     for name in sorted(cls.groups) if pak.numeric_kind(name) == kind]
+        cls.bindings = pak.read_definition_image_bindings(ROOT)
+        cls.names = sorted(name for name in cls.records
+                           if pak.numeric_kind(name) in ("reanim", "particles"))
+        cls.atlases = {name: pak.parse_definition_atlas(name, cls.records[name])
+                       for name in cls.names}
 
-    def header(self, groups=None):
-        with tempfile.TemporaryDirectory() as temporary:
-            path = Path(temporary) / "ImageAtlasGroups.h"
-            pipeline.emit_image_atlas_groups(
-                path, self.groups if groups is None else groups, self.registries["image"])
-            return path.read_text(encoding="ascii")
-
-    def array(self, text, name):
-        match = re.search(r"std::array<unsigned int, (\d+)> " + name + r"\{\n(.*?)\n\};",
-                          text, re.S)
-        self.assertIsNotNone(match)
-        values = [int(value) for value in re.findall(r"(\d+)u", match[2])]
-        self.assertEqual(len(values), int(match[1]))
-        return values
-
-    def test_complete_corpus_bounds_order_and_shared_symbols(self):
+    def test_complete_binding_corpus_and_empty_images(self):
         self.assertEqual({kind: sum(pak.numeric_kind(name) == kind for name in self.records)
                           for kind in pak.COUNTS}, pak.COUNTS)
-        self.assertEqual(len(self.groups), 252)
-        text = self.header()
-        offsets, symbols = self.array(text, "GroupOffsets"), self.array(text, "Symbols")
-        self.assertEqual(len(offsets), 253)
-        self.assertEqual(offsets[0], 0)
-        self.assertEqual(offsets[-1], len(symbols))
-        self.assertEqual(offsets, sorted(offsets))
-        for index, name in enumerate(self.names):
-            group = symbols[offsets[index]:offsets[index + 1]]
-            self.assertEqual(group, sorted(self.groups[name]))
-            self.assertEqual(len(group), len(set(group)))
-            for symbol in group:
-                self.assertGreater(symbol, 0)
-                self.assertLessEqual(symbol, self.registries["image_max"])
-                self.assertNotEqual(self.registries["image_slots"][symbol], pak.RESOURCE_SLOT_NONE)
-        reanim_groups = [self.groups[name] for name in self.names[:146]]
-        particle_groups = [self.groups[name] for name in self.names[146:]]
-        self.assertTrue(any(a & b for i, a in enumerate(reanim_groups)
-                            for b in reanim_groups[i + 1:]))
-        self.assertTrue(any(a & b for a in reanim_groups for b in particle_groups))
-        self.assertIn("namespace Sexy::OpenGLAtlasCorpus {", text)
-        self.assertIn("#include <array>", text)
-        self.assertIn("ReanimationGroups = 146u;", text)
-        self.assertNotIn('"', text)
-        self.assertFalse(any(name in text for name in self.names))
-        self.assertRegex(text, r"RegistryHash = 0x%08Xu;" % self.registries["image"])
-        sidecar = ROOT / "pvzPerf/Sexy.TodLib/generated/image_symbol_ids.bin"
-        self.assertEqual(zlib.crc32(sidecar.read_bytes()), self.registries["image"])
+        self.assertEqual(len(self.names), 252)
+        self.assertEqual(set(self.bindings), set(self.names))
+        self.assertEqual(list(self.bindings), sorted(self.bindings))
+        for name in self.names:
+            with self.subTest(definition=name):
+                atlas, path = self.atlases[name], self.bindings[name]
+                self.assertIsNotNone(atlas)
+                if atlas["count"]:
+                    self.assertTrue(path)
+                    self.assertIn(path, self.available)
+                    self.assertEqual(path, self.report["definition_atlases"][name]["atlas_path"])
+                else:
+                    self.assertEqual(path, "")
+                    self.assertEqual((atlas["width"], atlas["height"]), (0, 0))
+                    self.assertTrue(all(field == (0,) * 6 for field in atlas["image_fields"]))
 
-    def test_deterministic_publication_preserves_mtime(self):
-        reversed_groups = {name: set(reversed(sorted(self.groups[name])))
-                           for name in reversed(self.names)}
-        self.assertEqual(self.header(), self.header(reversed_groups))
+    def test_configured_groups_share_program_images_across_definition_kinds(self):
+        config_path = Path(os.environ.get("PVZ_RESOURCE_BUILD_CONFIG",
+                                         str(ROOT / self.report["build_config"].replace("\\", "/"))))
+        config = resource_build_config.load(config_path)
+        configured_atlases = resource_build_config.resolve_atlases(config, set(self.names))
+        report_groups = self.report["atlas_groups"]
+        grouped, mixed = set(), []
+        for group, members in configured_atlases.items():
+            with self.subTest(group=group):
+                self.assertTrue(set(members) <= set(self.names))
+                self.assertFalse(grouped & set(members))
+                grouped.update(members)
+                self.assertEqual(report_groups[group]["members"], members)
+                image_path = f"compiled/atlases/{group}.atlas.png"
+                self.assertEqual(report_groups[group]["path"], image_path)
+                active = [name for name in members if self.atlases[name]["count"]]
+                self.assertEqual({self.bindings[name] for name in active},
+                                 {image_path} if active else set())
+                dimensions = {(self.atlases[name]["width"], self.atlases[name]["height"])
+                              for name in active}
+                self.assertEqual(dimensions, {(report_groups[group]["width"],
+                                               report_groups[group]["height"])} if active else set())
+                sources = {row.get("source", row.get("symbol")) for name in members
+                           for row in self.report["definition_atlases"][name]["images"]}
+                self.assertEqual(report_groups[group]["images"], len(sources))
+                for name in members:
+                    self.assertNotIn(image_path.encode("ascii"), self.records[name])
+                    if name not in active:
+                        self.assertEqual(self.bindings[name], "")
+                if {pak.numeric_kind(name) for name in members} == {"reanim", "particles"}:
+                    mixed.append(group)
+                    for kind in ("reanim", "particles"):
+                        self.assertTrue(all(self.bindings[name] == image_path for name in active
+                                            if pak.numeric_kind(name) == kind))
+        # Every definition belongs to exactly one configured or standalone unit.
+        standalone = set(self.names) - grouped
+        self.assertEqual(set(report_groups), set(configured_atlases) | standalone)
+        for name in standalone:
+            with self.subTest(standalone=name):
+                self.assertEqual(report_groups[name]["members"], [name])
+                expected = name.removesuffix(".compiled") + ".atlas.png" if self.atlases[name]["count"] else ""
+                self.assertEqual(self.bindings[name], expected)
+        configured_mixed = [group for group, members in configured_atlases.items()
+                            if {pak.numeric_kind(name) for name in members} == {"reanim", "particles"}]
+        self.assertEqual(mixed, configured_mixed)
+        expected_images = {image for image in self.bindings.values() if image}
+        self.assertEqual({name for name in self.available if name.endswith(".atlas.png")}, expected_images)
+        self.assertEqual(len(expected_images), self.report["atlas_memory"]["definition_atlas_count"])
+        self.assertEqual(set(self.report["files"]), self.available)
+
+    def test_compiled_fields_are_inline_rectangles_without_resource_ids(self):
+        unrelated_registry = {**self.registries, "image": 0xBAD0CAFE,
+                              "image_max": 0, "image_slots": [pak.RESOURCE_SLOT_NONE]}
+        fields_checked = 0
+        for name in self.names:
+            with self.subTest(definition=name):
+                data, atlas = self.records[name], self.atlases[name]
+                cookie, size, crc = struct.unpack_from("<3I", data)
+                kind = pak.numeric_kind(name)
+                self.assertEqual(cookie, 0xDEADFED9 if kind == "reanim" else 0xDEADFEDA)
+                self.assertEqual(size, len(data) - 12)
+                self.assertEqual(crc, zlib.crc32(data[12:]))
+                self.assertEqual(atlas["body_offset"], 24)
+                magic, width, height = struct.unpack_from("<3I", data, 12)
+                self.assertEqual(magic, 0x35564152 if kind == "reanim" else 0x35564150)
+                self.assertEqual((width, height), (atlas["width"], atlas["height"]))
+                image_hash_offset = 24 + (8 if kind == "reanim" else 4)
+                self.assertEqual(struct.unpack_from("<I", data, image_hash_offset)[0], 0)
+                self.assertNotIn(b".atlas.png", data)
+                self.assertNotIn(b"compiled/", data)
+                self.assertEqual(len(atlas["image_fields"]), len(atlas["image_offsets"]))
+                for region, offset in zip(atlas["image_fields"], atlas["image_offsets"]):
+                    self.assertEqual(struct.unpack_from("<6I", data, offset), region)
+                    if not any(region):
+                        self.assertEqual(region, (0,) * 6)
+                        continue
+                    x, y, w, h, rows, cols = region
+                    self.assertGreaterEqual(x, 2)
+                    self.assertGreaterEqual(y, 2)
+                    self.assertGreaterEqual(w, cols)
+                    self.assertGreaterEqual(h, rows)
+                    self.assertGreater(cols, 0)
+                    self.assertGreater(rows, 0)
+                    self.assertLessEqual(x + w + 2, width)
+                    self.assertLessEqual(y + h + 2, height)
+                    fields_checked += 1
+                collected, references = {0xFFFFFFFF}, set()
+                pak.validate_numeric(name, data, unrelated_registry, references,
+                                     image_ids=collected, atlas_path=self.bindings[name])
+                self.assertEqual(collected, {0xFFFFFFFF})
+                self.assertEqual(references, {("atlas", self.bindings[name])}
+                                 if atlas["count"] else set())
+        self.assertGreater(fields_checked, 1000)
+
+    def test_bindings_publication_is_deterministic_and_preserves_mtime(self):
+        definitions = self.report["definition_atlases"]
+        reverse = dict(reversed(list(definitions.items())))
         with tempfile.TemporaryDirectory() as temporary:
-            path = Path(temporary) / "generated/ImageAtlasGroups.h"
-            pipeline.emit_image_atlas_groups(path, self.groups, self.registries["image"])
+            path = Path(temporary) / "generated/DefinitionImageBindings.h"
+            pipeline.emit_definition_image_bindings(path, definitions)
             original = path.read_bytes()
             os.utime(path, ns=(1_600_000_000_000_000_000, 1_600_000_000_000_000_000))
             before = path.stat().st_mtime_ns
-            pipeline.emit_image_atlas_groups(path, reversed_groups, self.registries["image"])
+            pipeline.emit_definition_image_bindings(path, reverse)
             self.assertEqual(path.stat().st_mtime_ns, before)
             self.assertEqual(path.read_bytes(), original)
             self.assertEqual(list(path.parent.iterdir()), [path])
+            self.assertEqual(original, (ROOT / "pvzPerf/Sexy.TodLib/generated/DefinitionImageBindings.h").read_bytes())
 
-    def test_empty_groups_keep_positions_and_terminal_sentinel(self):
-        groups = {name: set(ids) for name, ids in self.groups.items()}
-        for index in (0, 145, 146, 251):
-            groups[self.names[index]] = {0}
-        text = self.header(groups)
-        offsets, symbols = self.array(text, "GroupOffsets"), self.array(text, "Symbols")
-        self.assertEqual(len(offsets), 253)
-        for index in (0, 145, 146, 251):
-            self.assertEqual(offsets[index], offsets[index + 1])
-        self.assertEqual(offsets[-1], len(symbols))
-        self.assertNotIn(0, symbols)
-        text = self.header(dict.fromkeys(self.names, set()))
-        self.assertEqual(self.array(text, "GroupOffsets"), [0] * 253)
-        self.assertEqual(self.array(text, "Symbols"), [])
+    def test_program_registry_crc_comes_from_program_source(self):
+        program = ROOT / "pvzPerf/Sexy.TodLib/ProgramImageSymbols.h"
+        symbols, crc = resources.read_symbols(program)
+        declaration = re.search(r"IMAGE_SYMBOL_ID_REGISTRY_CRC\s*=\s*(0x[0-9A-Fa-f]+)",
+                                program.read_text(encoding="utf-8"))
+        self.assertIsNotNone(declaration)
+        self.assertEqual(crc, int(declaration[1], 0))
+        self.assertEqual(crc, self.registries["image"])
+        self.assertEqual(len(symbols), self.registries["image_max"])
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "ProgramImageSymbols.h"
+            path.write_text(program.read_text(encoding="utf-8").replace(
+                declaration[1], f"0x{crc ^ 1:08X}"), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "CRC|crc|hash"):
+                resources.read_symbols(path)
 
-    def test_incomplete_or_unexpected_group_corpus_rejected(self):
-        for kind in ("reanim", "particles"):
-            groups = dict(self.groups)
-            del groups[next(name for name in groups if pak.numeric_kind(name) == kind)]
-            with self.assertRaisesRegex(ValueError, "Incomplete atlas"):
-                self.header(groups)
-        with self.assertRaisesRegex(ValueError, "Unexpected atlas"):
-            self.header({**self.groups, pak.RESOURCE_PATH: set()})
-
-    def test_collection_does_not_change_existing_validation_results(self):
-        for name, data in self.records.items():
-            with self.subTest(name=name):
-                references, old_references = set(), set()
-                images = {0xFFFFFFFF}
-                old = pak.validate_numeric(name, data, self.registries, old_references)
-                new = pak.validate_numeric(name, data, self.registries, references,
-                                           image_ids=images)
-                self.assertEqual(new, old)
-                self.assertEqual(references, old_references)
-                self.assertEqual(images, self.groups.get(name, set()) | {0xFFFFFFFF})
-
-    def test_collect_only_image_words_and_deduplicate(self):
-        symbol = next(symbol for symbol in range(2, self.registries["image_max"] + 1)
-                      if self.registries["image_slots"][symbol] != pak.RESOURCE_SLOT_NONE)
-        for kind, factory in (("reanim", reanim), ("particles", particle)):
-            with self.subTest(kind=kind):
-                name = f"compiled/{kind}/fixture.compiled"
-                data = factory(self.registries, [symbol, 0, symbol])
-                images = set()
-                pak.validate_numeric(name, data, self.registries, image_ids=images)
-                self.assertEqual(images, {symbol})
-                direct = set()
-                if kind == "reanim":
-                    pak.validate_reanim(pak.Reader(data[36:]), 1, self.registries, direct)
-                    pak.validate_reanim(pak.Reader(data[36:]), 1, self.registries)
-                else:
-                    body = struct.unpack_from("<I", data, 28)[0]
-                    pak.validate_particle(pak.Reader(data[32:]), 3, body, self.registries, direct)
-                    pak.validate_particle(pak.Reader(data[32:]), 3, body, self.registries)
-                self.assertEqual(direct, images)
-
-    def test_corpus_crc_and_registry_validation_remain_required(self):
+    def test_corpus_crc_hash_and_geometry_validation_remain_required(self):
         for name in self.names:
             original = self.records[name]
             corrupted = bytearray(original)
             corrupted[-1] ^= 1
-            with self.subTest(name=name, failure="crc"):
-                for collector in (None, set()):
-                    with self.assertRaisesRegex(ValueError, "envelope"):
-                        pak.validate_numeric(name, bytes(corrupted), self.registries,
-                                             image_ids=collector)
+            with self.subTest(definition=name, failure="crc"):
+                with self.assertRaisesRegex(ValueError, "envelope"):
+                    pak.validate_numeric(name, bytes(corrupted), self.registries)
             stale = bytearray(original)
-            image_offset = 20 if pak.numeric_kind(name) == "reanim" else 16
-            struct.pack_into("<I", stale, image_offset, self.registries["image"] ^ 1)
-            with self.subTest(name=name, failure="registry"):
+            image_offset = 24 + (8 if pak.numeric_kind(name) == "reanim" else 4)
+            struct.pack_into("<I", stale, image_offset, 1)
+            with self.subTest(definition=name, failure="image hash"):
                 with self.assertRaisesRegex(ValueError, "header"):
-                    pak.validate_numeric(name, reseal(stale), self.registries, image_ids=set())
+                    pak.validate_numeric(name, reseal(stale), self.registries)
+            for region, offset in zip(self.atlases[name]["image_fields"],
+                                      self.atlases[name]["image_offsets"]):
+                if not any(region):
+                    continue
+                malformed = bytearray(original)
+                struct.pack_into("<I", malformed, offset, 1)
+                with self.subTest(definition=name, failure="geometry"):
+                    with self.assertRaisesRegex(ValueError, "region"):
+                        pak.validate_numeric(name, reseal(malformed), self.registries)
+                break
 
-    def test_full_structural_validation_remains_required_with_collector(self):
-        for kind, factory in (("reanim", reanim), ("particles", particle)):
+
+class LegacyStructuralValidationTests(unittest.TestCase):
+    """Offline v4 fixtures still exercise the bounded structural readers."""
+    @classmethod
+    def setUpClass(cls):
+        with zipfile.ZipFile(PACKAGE) as archive:
+            numeric = {name for name in archive.namelist() if pak.numeric_kind(name)}
+        cls.registries = pak.source_audit(ROOT, {}, numeric)["registries"]
+
+    def test_legacy_collector_reads_only_image_words(self):
+        symbol = next(symbol for symbol in range(2, self.registries["image_max"] + 1)
+                      if self.registries["image_slots"][symbol] != pak.RESOURCE_SLOT_NONE)
+        for kind, factory in (("reanim", legacy_reanim), ("particles", legacy_particle)):
+            with self.subTest(kind=kind):
+                name = f"compiled/{kind}/fixture.compiled"
+                collected = set()
+                pak.validate_numeric(name, factory(self.registries, [symbol, 0, symbol]),
+                                     self.registries, image_ids=collected)
+                self.assertEqual(collected, {symbol})
+
+    def test_legacy_structural_checks_remain_required_with_collector(self):
+        for kind, factory in (("reanim", legacy_reanim), ("particles", legacy_particle)):
             name = f"compiled/{kind}/fixture.compiled"
             original = factory(self.registries, [0])
-            cases = []
             invalid_image = bytearray(original)
             struct.pack_into("<I", invalid_image, 84 if kind == "reanim" else 32,
                              self.registries["image_max"] + 1)
-            cases.append(invalid_image)
+            cases = [invalid_image]
             malformed = bytearray(original)
             if kind == "reanim":
                 struct.pack_into("<f", malformed, 52, float("nan"))
@@ -229,8 +284,8 @@ class AtlasGroupMetadataTests(unittest.TestCase):
                 cases.append(invalid_track)
             cases.append(malformed)
             for data in cases:
-                with self.subTest(kind=kind, data=bytes(data)):
-                    for collector in (None, set()):
+                for collector in (None, set()):
+                    with self.subTest(kind=kind, failure=bytes(data), collector=collector):
                         with self.assertRaises(ValueError):
                             pak.validate_numeric(name, reseal(data), self.registries,
                                                  image_ids=collector)

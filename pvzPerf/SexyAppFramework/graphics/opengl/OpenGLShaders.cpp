@@ -10,13 +10,11 @@ in vec4 inColor;
 in vec2 inUV;
 in uint inSlot;
 in uint inSampler;
-in ivec4 inRect;
 uniform vec2 targetExtent;
 out vec4 color;
 out vec2 uv;
 flat out uint slot;
 flat out uint samplerIndex;
-flat out ivec4 rect;
 void main()
 {
     gl_Position = vec4(inPosition / targetExtent * 2.0 - 1.0, 0.0, 1.0);
@@ -24,7 +22,6 @@ void main()
     uv = inUV;
     slot = inSlot;
     samplerIndex = inSampler;
-    rect = inRect;
 }
 )GLSL";
 }
@@ -39,7 +36,6 @@ in vec4 color;
 in vec2 uv;
 flat in uint slot;
 flat in uint samplerIndex;
-flat in ivec4 rect;
 out vec4 outColor;
 
 vec3 rgbToHsl(vec3 rgb)
@@ -134,7 +130,7 @@ int repeatPixel(int pixel, int extent)
 
 ivec2 addressPixel(ivec2 pixel)
 {
-    ivec2 extent = rect.zw;
+    ivec2 extent = textureSize(image, 0);
     if ((samplerIndex & 2u) != 0u)
         return ivec2(repeatPixel(pixel.x, extent.x), repeatPixel(pixel.y, extent.y));
     return clamp(pixel, ivec2(0), extent - ivec2(1));
@@ -142,13 +138,13 @@ ivec2 addressPixel(ivec2 pixel)
 
 vec4 rawTexel(ivec2 pixel)
 {
-    return texelFetch(image, rect.xy + addressPixel(pixel), 0);
+    return texelFetch(image, addressPixel(pixel), 0);
 }
 
 vec4 filterTexel(ivec2 pixel, bool straightResult)
 {
     pixel = addressPixel(pixel);
-    vec4 source = texelFetch(image, rect.xy + pixel, 0);
+    vec4 source = texelFetch(image, pixel, 0);
     if ((slot & 0x04000000u) != 0u) source.a = 1.0;
     if ((slot & 0x08000000u) != 0u &&
         (slot & 0x80000000u) == 0u && source.a == 0.0) {
@@ -158,9 +154,9 @@ vec4 filterTexel(ivec2 pixel, bool straightResult)
             for (int dx = -1; dx <= 1; ++dx) {
                 ivec2 neighborPixel = pixel + ivec2(dx, dy);
                 if (any(lessThan(neighborPixel, ivec2(0))) ||
-                    any(greaterThanEqual(neighborPixel, rect.zw)))
+                    any(greaterThanEqual(neighborPixel, textureSize(image, 0))))
                     continue;
-                vec4 neighbor = texelFetch(image, rect.xy + neighborPixel, 0);
+                vec4 neighbor = texelFetch(image, neighborPixel, 0);
                 if (neighbor.a != 0.0) {
                     vec3 byteRgb = round(clamp(neighbor.rgb, vec3(0.0), vec3(1.0)) * 255.0);
                     rgbSum += ivec3(byteRgb);
@@ -181,8 +177,8 @@ vec4 filterTexel(ivec2 pixel, bool straightResult)
 vec4 rawSource()
 {
     if ((samplerIndex & 1u) == 0u)
-        return rawTexel(ivec2(floor(uv * vec2(rect.zw))));
-    vec2 position = uv * vec2(rect.zw) - vec2(0.5);
+        return rawTexel(ivec2(floor(uv * vec2(textureSize(image, 0)))));
+    vec2 position = uv * vec2(textureSize(image, 0)) - vec2(0.5);
     ivec2 base = ivec2(floor(position));
     vec2 weight = fract(position);
     vec4 top = mix(rawTexel(base), rawTexel(base + ivec2(1, 0)), weight.x);
@@ -194,8 +190,8 @@ vec4 rawSource()
 vec4 filterSource(bool straightResult)
 {
     if ((samplerIndex & 1u) == 0u)
-        return filterTexel(ivec2(floor(uv * vec2(rect.zw))), straightResult);
-    vec2 position = uv * vec2(rect.zw) - vec2(0.5);
+        return filterTexel(ivec2(floor(uv * vec2(textureSize(image, 0)))), straightResult);
+    vec2 position = uv * vec2(textureSize(image, 0)) - vec2(0.5);
     ivec2 base = ivec2(floor(position));
     vec2 weight = fract(position);
     vec4 top = mix(filterTexel(base, straightResult),
@@ -237,12 +233,14 @@ void main()
         outColor = vec4(source.rgb * color.rgb * color.a, source.a * color.a);
     } else {
         bool generated = (slot & 0x80000000u) != 0u;
+        bool filteredPremult = !generated && colorFilterKind != 0u &&
+            (slot & 0x40000000u) == 0u;
         if (colorFilterKind != 0u || sandStraight) {
             bool linear = (samplerIndex & 1u) != 0u;
-            source = (linear || sandStraight) ? filterSource(!generated) :
-                filterSample(source, !generated);
+            source = (linear || sandStraight) ? filterSource(!generated && !filteredPremult) :
+                filterSample(source, !generated && !filteredPremult);
         }
-        if (generated)
+        if (generated || filteredPremult)
             source.rgb = source.a > 0.0 ? source.rgb / source.a : vec3(0.0);
         outColor = source * color;
     }

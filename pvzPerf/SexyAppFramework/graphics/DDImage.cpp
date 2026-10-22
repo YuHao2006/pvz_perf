@@ -35,8 +35,6 @@ DDImage::DDImage(const DDImage& theImage)
 DDImage::~DDImage()
 {
 	mImageType = ImageType::MemoryImage;
-	mCustomDestroy = nullptr;
-	mMaintenanceHook = nullptr;
 }
 
 bool DDImage::Check3D(Image *theImage)

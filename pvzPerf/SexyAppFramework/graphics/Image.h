@@ -44,12 +44,14 @@ class SexyMatrix3;
 class TriVertex;
 class MemoryImage;
 class DDImage;
+class ResidentImage;
 
 enum class ImageType : unsigned char
 {
 	Image,
 	MemoryImage,
-	DDImage
+	DDImage,
+	ResidentImage
 };
 
 class Image
@@ -57,16 +59,6 @@ class Image
 protected:
 	// Constructors and destructors advance this tag with the active class.
 	ImageType mImageType = ImageType::Image;
-	void (*mCustomDestroy)(Image*) noexcept = nullptr;
-
-	// An extension with its own destructor registers its exact allocation type.
-	// Slicing/copying a base image deliberately does not copy this callback.
-	template<class T>
-	void SetDestroyType() noexcept
-	{
-		mCustomDestroy = [](Image* image) noexcept { delete static_cast<T*>(image); };
-	}
-
 public:
 	bool					mDrawn;
 	std::string				mFilePath;
@@ -91,6 +83,8 @@ public:
 	const MemoryImage* AsMemoryImage() const noexcept;
 	DDImage* AsDDImage() noexcept;
 	const DDImage* AsDDImage() const noexcept;
+	ResidentImage* AsResidentImage() noexcept;
+	const ResidentImage* AsResidentImage() const noexcept;
 
 	inline int				GetCelWidth() { return mWidth / mNumCols; }
 	inline int				GetCelHeight() { return mHeight / mNumRows; }
@@ -116,6 +110,14 @@ inline DDImage* AsDDImage(Image* image) noexcept
 inline const DDImage* AsDDImage(const Image* image) noexcept
 {
 	return image ? image->AsDDImage() : nullptr;
+}
+inline ResidentImage* AsResidentImage(Image* image) noexcept
+{
+	return image ? image->AsResidentImage() : nullptr;
+}
+inline const ResidentImage* AsResidentImage(const Image* image) noexcept
+{
+	return image ? image->AsResidentImage() : nullptr;
 }
 
 struct ImageDeleter

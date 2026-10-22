@@ -2,6 +2,7 @@
 #include "reanim/ParticleDsl.h"
 #include "reanim/StringIdGen.h"
 #include "reanim/TrailDsl.h"
+#include "reanim/AtlasPacking.h"
 
 #include <algorithm>
 #include <cctype>
@@ -25,6 +26,8 @@ namespace {
 void PrintUsage()
 {
     std::cout
+        << "reanimc pack-atlas-layout --input BATCH --output LAYOUT\n"
+        << "    Deterministic offline MaxRects batch layout; no rotation or pixels.\n"
         << "reanimc import --input SOURCE.reanim --output SOURCE.reanim.dsl\n"
         << "    Read a Legacy reanim XML source and emit the equivalent DSL.\n"
         << "reanimc compile --input SOURCE.reanim.dsl [--output DIR|FILE]\n"
@@ -34,12 +37,15 @@ void PrintUsage()
         << "    the input; --output may be a directory (same naming) or an\n"
         << "    explicit file path.\n"
         << "reanimc compile-v2 --input DIR|FILE.dsl --output DIR\n"
+        << "    Or --input-list FILE: definition paths selected by ResourceBuild.pvzbuild.\n"
         << "    [--header FILE] [--table FILE]\n"
         << "    Corpus compile with compile-time track-id interning: identical\n"
         << "    track names (case-folded) are replaced by one uint32 id (from 1;\n"
         << "    0 = not found, preserving the legacy fall-back-to-track-0 rule).\n"
-        << "    With --image-registry and --font-registry, production numeric\n"
-        << "    records are named <Module>.compiled (no author/version suffix).\n"
+        << "    With --font-registry, offline numeric source records are named\n"
+        << "    <Module>.source-record. image_sources.txt lists their source-local\n"
+        << "    image handles in sorted order (line 1 = handle 1; 0 = no image).\n"
+        << "    These handles never use the game's image symbol registry.\n"
         << "    Offline v2 gold remains <Module>.reanim.v2.compiled, plus ReanimTrackId.h\n"
         << "    (the string<->int enum) and reanim_track_ids.bin (sidecar id table).\n"
         << "    The header, table and every record come from the same build.\n"
@@ -92,6 +98,7 @@ void PrintUsage()
         << "    Parse a compiled particle record and print its structure\n"
         << "    summary (emitters, tracks, fields).\n"
         << "reanimc compile-particle-v2 --input particles.root.dsl --output DIR\n"
+        << "    Or --input-list FILE: explicit particle source selection, without a root DSL.\n"
         << "    --gold64 GOLD_DIR [--verify GOLD64_DIR]\n"
         << "    Compile runtime-native v2 particle records (cookie DEADFED7):\n"
         << "    payload = 'IDP3' magic + the x64 runtime v1 payload (byte-identical\n"
@@ -100,8 +107,9 @@ void PrintUsage()
         << "    in-definition emitter def index (stricmp fold, first declaration\n"
         << "    wins, 0xFFFFFFFF = none). The DSL bundle supplies the module list\n"
         << "    and a per-emitter Name/OnDuration consistency check. Writes\n"
-        << "    <name>.xml.v2.compiled as offline gold per module. With\n"
-        << "    --image-registry, production numeric records are <name>.compiled.\n"
+        << "    <name>.xml.v2.compiled as offline gold per module, plus\n"
+        << "    <name>.source-record and sorted image_sources.txt (line 1 =\n"
+        << "    source-local image handle 1; 0 = no image).\n"
         << "    --verify re-compares the\n"
         << "    embedded v1 segment against GOLD64_DIR.\n";
 
@@ -278,20 +286,21 @@ int RunInspect(const std::vector<std::string>& args)
 
 int RunCompileV2(const std::vector<std::string>& args)
 {
-    fs::path input, output, header, tablePath, familyFile, typeMapPath;
-    fs::path imageRegistryPath, fontRegistryPath;
+    fs::path input, inputList, output, header, tablePath, familyFile, typeMapPath;
+    fs::path fontRegistryPath;
+    if ((args.size()-1)%2) { std::cerr << "reanimc: option requires a value: " << args.back() << '\n'; return 2; }
     for (std::size_t i = 1; i + 1 < args.size(); i += 2) {
         if (args[i] == "--input") input = args[i + 1];
+        else if (args[i] == "--input-list") inputList = args[i + 1];
         else if (args[i] == "--output") output = args[i + 1];
         else if (args[i] == "--header") header = args[i + 1];
         else if (args[i] == "--table") tablePath = args[i + 1];
         else if (args[i] == "--family-file") familyFile = args[i + 1];
         else if (args[i] == "--type-map") typeMapPath = args[i + 1];
-        else if (args[i] == "--image-registry") imageRegistryPath = args[i + 1];
         else if (args[i] == "--font-registry") fontRegistryPath = args[i + 1];
         else { std::cerr << "reanimc: unknown option " << args[i] << '\n'; return 2; }
     }
-    if (input.empty() || output.empty()) return 2;
+    if ((input.empty() == inputList.empty()) || output.empty()) return 2;
 
     // 类型映射表（attacher 目标模块的折叠名 -> ReanimationType 数值，
     // 由嫁接仓库 tools/extract_reanim_type_map.py 从游戏源码生成）。
@@ -340,7 +349,17 @@ int RunCompileV2(const std::vector<std::string>& args)
         return true;
     };
     std::error_code ec;
-    if (fs::is_directory(input, ec)) {
+    if (!inputList.empty()) {
+        std::ifstream list(inputList);
+        if (!list) { std::cerr << "reanimc: cannot open " << inputList.string() << '\n'; return 1; }
+        std::string path;
+        while (std::getline(list, path)) {
+            if (!path.empty() && path.back() == '\r') path.pop_back();
+            if (path.empty()) continue;
+            const fs::path source(path);
+            if (source.extension() != ".dsl" || !addDsl(source)) return 1;
+        }
+    } else if (fs::is_directory(input, ec)) {
         std::vector<fs::path> entries;
         for (const auto& entry : fs::directory_iterator(input))
             if (entry.path().extension() == ".reanim" || entry.path().extension() == ".dsl")
@@ -391,17 +410,27 @@ int RunCompileV2(const std::vector<std::string>& args)
                    pak64::MakeTrackMphfGlobalHeader(corpus, table, typeMap)))
         return 1;
 
-    // Both sidecars are required for numeric production records; v2 stays offline gold.
-    pak64::SymbolIdRegistry imageSymbols, fontSymbols;
-    std::uint32_t imageRegistryHash = 0, fontRegistryHash = 0;
-    const bool emitV4 = !imageRegistryPath.empty() && !fontRegistryPath.empty();
-    if (!imageRegistryPath.empty() &&
-        !pak64::LoadSymbolIdRegistry(imageRegistryPath, imageSymbols, &imageRegistryHash, &error)) {
-        std::cerr << "reanimc: " << error << '\n';
-        return 1;
+    // Images are source-local names, independent of every game image registry.
+    pak64::SourceImageHandles sourceImageHandles;
+    for (const auto& definition:corpus)
+        for (const auto& track:definition.tracks)
+            for (const auto& frame:track.frames)
+                if (!frame.image.empty()) sourceImageHandles.emplace(frame.image,0);
+    std::string imageSources;
+    std::uint32_t nextImageHandle=1;
+    for (auto& [name,handle]:sourceImageHandles) {
+        if (name.find_first_of("\r\n")!=std::string::npos || name.find('\0')!=std::string::npos) {
+            std::cerr << "reanimc: image source names cannot contain line breaks or NUL\n"; return 1;
+        }
+        handle=nextImageHandle++;
+        imageSources+=name+'\n';
     }
+    if (!WriteText(output / "image_sources.txt",imageSources)) return 1;
+    pak64::FontIdRegistry fontSymbols;
+    std::uint32_t fontRegistryHash = 0;
+    const bool emitSourceRecords = !fontRegistryPath.empty();
     if (!fontRegistryPath.empty() &&
-        !pak64::LoadSymbolIdRegistry(fontRegistryPath, fontSymbols, &fontRegistryHash, &error)) {
+        !pak64::LoadFontIdRegistry(fontRegistryPath, fontSymbols, &fontRegistryHash, &error)) {
         std::cerr << "reanimc: " << error << '\n';
         return 1;
     }
@@ -415,17 +444,17 @@ int RunCompileV2(const std::vector<std::string>& args)
             return 1;
         }
         v2Bytes += fs::file_size(record);
-        if (emitV4) {
-            const fs::path v4record = output / (raw.name + ".compiled");
+        if (emitSourceRecords) {
+            const fs::path v4record = output / (raw.name + ".source-record");
             if (OutputMissing(v4record)) return 2;
-            if (!pak64::WriteCompiledV4(raw, table, typeMap, imageSymbols, fontSymbols,
-                                        imageRegistryHash, fontRegistryHash, v4record, &error)) {
+            if (!pak64::WriteCompiledV4(raw, table, typeMap, sourceImageHandles, fontSymbols,
+                                        fontRegistryHash, v4record, &error)) {
                 std::cerr << "reanimc: " << error << '\n';
                 return 1;
             }
             v4Bytes += fs::file_size(v4record);
             std::cout << raw.name << " -> " << v4record.string()
-                      << " (numeric, bytes=" << fs::file_size(v4record) << ")\n";
+                      << " (offline source handles, bytes=" << fs::file_size(v4record) << ")\n";
         }
         v1Bytes += pak64::Serialize(raw).size();
         trackSlots += raw.tracks.size();
@@ -685,6 +714,7 @@ int main(int argc, char** argv)
     }
     // 未捕获异常诊断：构建期 Fail 抛 std::runtime_error，带消息退出而非静默 abort。
     try {
+        if (args[0] == "pack-atlas-layout") return openpvz::reanim::atlas::RunPackAtlasLayout(args);
         if (args[0] == "import") return RunImport(args);
         if (args[0] == "compile") return RunCompile(args);
         if (args[0] == "compile-v2") return RunCompileV2(args);

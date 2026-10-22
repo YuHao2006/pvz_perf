@@ -1,6 +1,7 @@
 #include "Image.h"
 #include "Graphics.h"
 #include "DDImage.h"
+#include "ResidentImage.h"
 #include <memory>
 
 using namespace Sexy;
@@ -33,18 +34,19 @@ Image::Image(const Image& theImage) :
 Image::~Image()
 {
 	mImageType = ImageType::Image;
-	mCustomDestroy = nullptr;
 	delete mAnimInfo;
 }
 
 MemoryImage* Image::AsMemoryImage() noexcept
 {
-	return mImageType != ImageType::Image ? static_cast<MemoryImage*>(this) : nullptr;
+	return mImageType == ImageType::MemoryImage || mImageType == ImageType::DDImage
+		? static_cast<MemoryImage*>(this) : nullptr;
 }
 
 const MemoryImage* Image::AsMemoryImage() const noexcept
 {
-	return mImageType != ImageType::Image ? static_cast<const MemoryImage*>(this) : nullptr;
+	return mImageType == ImageType::MemoryImage || mImageType == ImageType::DDImage
+		? static_cast<const MemoryImage*>(this) : nullptr;
 }
 
 DDImage* Image::AsDDImage() noexcept
@@ -57,16 +59,25 @@ const DDImage* Image::AsDDImage() const noexcept
 	return mImageType == ImageType::DDImage ? static_cast<const DDImage*>(this) : nullptr;
 }
 
+ResidentImage* Image::AsResidentImage() noexcept
+{
+	return mImageType == ImageType::ResidentImage ? static_cast<ResidentImage*>(this) : nullptr;
+}
+
+const ResidentImage* Image::AsResidentImage() const noexcept
+{
+	return mImageType == ImageType::ResidentImage ? static_cast<const ResidentImage*>(this) : nullptr;
+}
+
 void Image::Destroy(Image* image) noexcept
 {
 	if (image == nullptr)
 		return;
-	if (image->mCustomDestroy != nullptr)
-		return image->mCustomDestroy(image);
 	switch (image->mImageType)
 	{
 	case ImageType::DDImage: delete static_cast<DDImage*>(image); return;
 	case ImageType::MemoryImage: delete static_cast<MemoryImage*>(image); return;
+	case ImageType::ResidentImage: delete static_cast<ResidentImage*>(image); return;
 	case ImageType::Image: delete image; return;
 	}
 	std::terminate();

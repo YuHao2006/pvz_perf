@@ -177,6 +177,11 @@ class NumericResourceAuthoringTests(unittest.TestCase):
         self.sidecar.write_bytes(struct.pack("<2I", 0x4953594D, len(symbols)) + b"".join(
             struct.pack("<2I", symbol, len(name)) + name.encode()
             for symbol, name in enumerate(symbols, 1)))
+        (generated.parent / "ProgramImageSymbols.h").write_text(
+            "enum class ImageSymbolId : std::uint32_t {\n    None = 0,\n"
+            + "".join(f"    {name} = {identifier},\n"
+                      for identifier, name in enumerate(symbols, 1))
+            + "};\n", encoding="utf-8")
 
         def node(tag, **attrs):
             return {"tag": tag, "attrs": attrs, "children": []}
@@ -461,14 +466,14 @@ class NumericRuntimePak64Tests(unittest.TestCase):
             "Lawn/Fixture.cpp": '#if defined(SEXY_FONT_TEXT_COMPAT_TEST_ONLY)\nLoadDescriptor("data/Font00.txt");\n#endif\n',
             "Sexy.TodLib/Reanimator.cpp":
                 'DefinitionCompiledPath(gReanimationParamArray[(int)theReanimType].mReanimFileName);\n'
-                'DefinitionOpenCompiledFile(aV4Path.c_str());\n'
-                '0x35544449u; ReanimationTryLoadDefinitionV4(theReanimType, aReanimDef);\n'
+                'DefinitionOpenCompiledFile(aV5Path.c_str());\n'
+                '0x35544449u; ReanimationTryLoadDefinitionV5(theReanimType, aReanimDef);\n'
                 + "".join(f'{{ ReanimationType::Fixture{i}, "reanim\\\\Asset{i:03}.reanim", 0 }},\n'
                           for i in range(146)),
             "Sexy.TodLib/TodParticle.cpp":
                 'DefinitionCompiledPath(theParticleFileName);\n'
                 'DefinitionOpenCompiledFile(path.c_str());\n'
-                '0x35504449u; TodParticleTryLoadDefinitionV4(theParticleDef, theParticleFileName);\n'
+                '0x35504449u; TodParticleTryLoadDefinitionV5(theParticleDef, theParticleFileName);\n'
                 + "".join(f'{{ ParticleEffect::Fixture{i}, "particles\\\\Asset{i:03}.xml" }},\n'
                           for i in range(106)),
             "Sexy.TodLib/TodCommon.cpp": "TodFontSymbolRegistryHash() { return 0x21u; }\n",
@@ -1582,6 +1587,52 @@ class NumericRuntimePak64Tests(unittest.TestCase):
         self.assertFalse(self.output.exists())
         self.assertEqual(manifest.read_bytes(), b"concurrent user data")
         self.assertEqual(list(self.base.glob(".numeric-*")), [])
+
+
+class ProgramAtlasBindingTests(unittest.TestCase):
+    def test_program_binding_parser_preserves_empty_and_rejects_duplicates(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            path = root / "pvzPerf/Sexy.TodLib/generated/DefinitionImageBindings.h"
+            path.parent.mkdir(parents=True)
+            path.write_text('{"compiled/reanim/a.compiled", "compiled/atlases/shared.atlas.png"},\n'
+                            '{"compiled/reanim/b.compiled", ""},\n', encoding="utf-8")
+            self.assertEqual(pak.read_definition_image_bindings(root),
+                             {"compiled/reanim/a.compiled": "compiled/atlases/shared.atlas.png",
+                              "compiled/reanim/b.compiled": ""})
+            path.write_text('{"compiled/reanim/a.compiled", ""},\n' * 2, encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "duplicate"):
+                pak.read_definition_image_bindings(root)
+            path.write_text('{"compiled/reanim/a.compiled", "../outside.png"},\n', encoding="utf-8")
+            with self.assertRaises(ValueError):
+                pak.read_definition_image_bindings(root)
+
+    def test_packager_resolves_inline_atlas_from_program_binding_only(self):
+        from PIL import Image
+        sys.path.insert(0, str(TOOL.parent))
+        import definition_atlas
+        fixture = NumericRuntimePak64Tests()
+        fixture.setUp()
+        self.addCleanup(fixture.doCleanups)
+        fixture.build()
+        source = fixture.base / "pixels.png"
+        Image.new("RGBA", (3, 2), (10, 20, 30, 40)).save(source)
+        name, image = "compiled/particles/asset000.compiled", "compiled/atlases/shared.atlas.png"
+        descriptor = definition_atlas.ImageDescriptor(1, "x/pixels", "", "", 0, 1, 1, 0xFFFFFF)
+        data, png, _ = definition_atlas.compile_definition(
+            name, particle(), {1: descriptor}, {"x/pixels.png": source}, atlas_path=image)
+        self.assertNotIn(image.encode(), data)
+        fixture.write(fixture.stage / name, data)
+        fixture.write(fixture.stage / image, png)
+        header = fixture.root / "pvzPerf/Sexy.TodLib/generated/DefinitionImageBindings.h"
+        fixture.write(header, ('{"' + name + '", "' + image + '"},\n').encode())
+        candidate = fixture.base / "inline-candidate.pak64"
+        report = pak.build(fixture.output, fixture.stage, candidate, fixture.root,
+                           replace_definitions=True)
+        self.assertIn(image, report["numeric_file_references"][name])
+        with zipfile.ZipFile(candidate) as archive:
+            self.assertEqual(archive.read(name), data)
+            self.assertEqual(archive.read(image), png)
 
 
 if __name__ == "__main__":

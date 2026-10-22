@@ -329,6 +329,48 @@ void BatchedAlphaComposition(Sexy::VulkanRenderer& renderer) {
     std::cout<<"PASS: 1100 alpha dispatches retain distinct image bindings across transfer batches\n";
 }
 
+void RawFilterAliasEdges(Sexy::VulkanRenderer& renderer) {
+    using namespace Sexy;
+    // Opaque red beside fully transparent blue exposes straight-RGB leakage.
+    // The other two texels cover partial alpha and different HSL hues.
+    const std::array<uint32_t,4> pixels{0xffff0000u,0x000000ffu,0x8000ff00u,0x11ff00ffu};
+    auto* source=renderer.CreateTexture(4,1,pixels.data(),16);
+    for (uint32_t filter=1;filter<=3;++filter) {
+        auto* cached=renderer.CreateRenderImage(4,1);
+        // This is the old FilterEffect path: filter once into a floating-point
+        // premultiplied render image, then sample the cached result normally.
+        renderer.SetRenderImage(cached);
+        Require(renderer.BeginScene(),"Cannot begin reference filter image");
+        auto reference=Quad(0,0,4,1);
+        EncodeSource(reference,source,false,false);
+        for (auto& vertex:reference) vertex.slot|=filter<<28u;
+        renderer.SubmitTriangles(reference,source,false,false,VulkanBlend::Opaque);
+        renderer.SetRenderImage(nullptr); // Completes the image-only batch.
+
+        for (bool linear:{false,true}) {
+            Require(renderer.BeginScene(),"Cannot compare raw filter alias edges");
+            SubmitImage(renderer,Quad(0,0,160,24,0,0,0),renderer.whiteTexture,
+                false,false,VulkanBlend::Opaque);
+            auto alias=Quad(0,0,64,16);
+            EncodeSource(alias,source,linear,false);
+            for (auto& vertex:alias) vertex.slot|=filter<<28u;
+            renderer.SubmitTriangles(alias,source,linear,false,VulkanBlend::Normal);
+            SubmitImage(renderer,Quad(80,0,64,16),cached,linear,false,VulkanBlend::Normal);
+            renderer.EndSceneAndPresent();
+            const auto actual=renderer.ReadScenePixels();
+            for (int y=0;y<16;++y) for (int x=0;x<64;++x) {
+                const auto expected=actual.at(size_t(y)*800+x+80);
+                // The two routes use separate pipeline specializations; allow
+                // at most one encoded byte of floating-point rounding.
+                Pixel(actual,x,y,expected,1);
+            }
+        }
+        renderer.DestroyTexture(cached);
+    }
+    renderer.DestroyTexture(source);
+    std::cout<<"PASS raw filter aliases: WHITE/WASHED/LESS nearest+linear match premultiplied cache edges\n";
+}
+
 void Run() {
     using namespace Sexy;
     for(const auto& rect:std::array<VulkanClip,7>{{
@@ -531,6 +573,7 @@ void Run() {
     }
     std::cout << "PASS: repeated texture/descriptor allocation and deferred destruction\n";
     CoveragePixels(renderer);
+    RawFilterAliasEdges(renderer);
     DynamicUpdates(renderer,window);
     UploadEdges(renderer,window);
     BatchedAlphaComposition(renderer);

@@ -1,0 +1,65 @@
+{
+  "format": "pvz-exact-atlas-v2",
+  "geometry": {
+    "max_side": 16384,
+    "padding": 2
+  },
+  "key": "ee733250d4e45776199155f6d136994be078c6186eb9ca288f4899399534ed39",
+  "layout": {
+    "exact": {
+      "best_bound": 13575,
+      "cache_hit": false,
+      "cache_key": "ee733250d4e45776199155f6d136994be078c6186eb9ca288f4899399534ed39",
+      "elapsed_seconds": 0.03824969999550376,
+      "gap": 0.0,
+      "model_version": "integer-nonrotating-padded-global-area-v2",
+      "objective_area": 13575,
+      "optimal": true,
+      "proof_scope": "minimum integer atlas area; fixed orientation; configured padding and max_side",
+      "search_complete": true,
+      "solve_budget_seconds": null,
+      "solver": "ortools-cp-sat",
+      "solver_version": "9.15.6755",
+      "status": "OPTIMAL"
+    },
+    "height": 75,
+    "method": "native-maxrects",
+    "regions": [
+      [
+        96,
+        2,
+        83,
+        38
+      ],
+      [
+        79,
+        44,
+        44,
+        28
+      ],
+      [
+        2,
+        41,
+        73,
+        32
+      ],
+      [
+        127,
+        44,
+        41,
+        24
+      ],
+      [
+        2,
+        2,
+        90,
+        35
+      ]
+    ],
+    "search_attempts": 1147,
+    "search_microseconds": 374,
+    "shelf_area": 14006,
+    "width": 181
+  },
+  "layout_sha256": "6fc676718138855574faa9151dca2b5aee96f87861b34ab675247d6dbe136b67"
+}

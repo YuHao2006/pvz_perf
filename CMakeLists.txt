@@ -342,6 +342,26 @@ endif()
 if(BUILD_TESTING AND PVZ_BUILD_LEGACY_GAME)
     add_test(NAME completed_test_profile
         COMMAND "${Python3_EXECUTABLE}" -B "${CMAKE_SOURCE_DIR}/Tests/native/test_completed_profile.py")
+    add_test(NAME definition_atlas_pixels
+        COMMAND "${Python3_EXECUTABLE}" -B "${CMAKE_SOURCE_DIR}/tools/native-tests/test_definition_atlas.py")
+    add_test(NAME definition_compiler_sources
+        COMMAND "${Python3_EXECUTABLE}" -B "${CMAKE_SOURCE_DIR}/tools/native-tests/test_definition_compiler_sources.py")
+    add_test(NAME resource_build_config
+        COMMAND "${Python3_EXECUTABLE}" -B "${CMAKE_SOURCE_DIR}/tools/native-tests/test_resource_build_config.py")
+    add_test(NAME program_image_symbols
+        COMMAND "${Python3_EXECUTABLE}" -B "${CMAKE_SOURCE_DIR}/tools/native-tests/test_program_image_symbols.py")
+    add_test(NAME exact_atlas
+        COMMAND "${Python3_EXECUTABLE}" -B "${CMAKE_SOURCE_DIR}/tools/native-tests/test_exact_atlas.py")
+    add_test(NAME atlas_proof_publication
+        COMMAND "${Python3_EXECUTABLE}" -B "${CMAKE_SOURCE_DIR}/tools/native-tests/test_atlas_proof_publication.py")
+    set_tests_properties(definition_atlas_pixels definition_compiler_sources PROPERTIES
+        ENVIRONMENT "PVZ_ATLAS_COMPILER=$<TARGET_FILE:reanimc>")
+    add_test(NAME definition_atlas_metadata
+        COMMAND "${Python3_EXECUTABLE}" -B "${CMAKE_SOURCE_DIR}/Tests/native/test_atlas_group_metadata.py")
+    add_test(NAME definition_atlas_corpus
+        COMMAND "${Python3_EXECUTABLE}" -B "${CMAKE_SOURCE_DIR}/Tests/native/test_definition_atlas_corpus.py")
+    set_tests_properties(definition_atlas_metadata definition_atlas_corpus PROPERTIES
+        ENVIRONMENT "PVZ_RESOURCE_PACKAGE=${PVZ_RESOURCE_CACHE}/main.pak64")
 endif()
 
 foreach(pvzTarget IN ITEMS LawnProject sexy_native_window sexy_vulkan
@@ -354,6 +374,10 @@ endforeach()
 
 if(BUILD_TESTING)
     find_package(Threads REQUIRED)
+    add_executable(pvz_atlas_image_region_tests EXCLUDE_FROM_ALL Tests/native/AtlasImageRegionTests.cpp)
+    target_link_libraries(pvz_atlas_image_region_tests PRIVATE pvz_source_headers)
+    target_compile_features(pvz_atlas_image_region_tests PRIVATE cxx_std_23)
+    add_test(NAME pvz_atlas_image_region COMMAND pvz_atlas_image_region_tests)
     add_executable(pvz_game_viewport_tests EXCLUDE_FROM_ALL Tests/native/GameViewportTests.cpp)
     target_link_libraries(pvz_game_viewport_tests PRIVATE pvz_source_headers)
     target_compile_features(pvz_game_viewport_tests PRIVATE cxx_std_23)

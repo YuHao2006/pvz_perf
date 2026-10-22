@@ -49,11 +49,22 @@ $compile = 'call "{0}" >nul && {1}"{2}" --build "{3}" --target {4} --parallel 12
 if ($LASTEXITCODE -ne 0) { throw "Win7 $RenderBackend build failed: $LASTEXITCODE" }
 if ($Target -contains 'LawnProject') {
     if ($StageRuntime) {
-        $source = Join-Path $root 'out\x64-win32-dx12\Release'
+        $source = Join-Path $root 'out\x64-win32-vulkan\Release'
         $destination = Join-Path $build 'Release'
         foreach ($file in @('main.pak64', 'bass.dll')) {
             if (!(Test-Path -LiteralPath (Join-Path $destination $file))) {
                 Copy-Item -LiteralPath (Join-Path $source $file) -Destination (Join-Path $destination $file)
+            }
+        }
+        $redistRoot = Join-Path ([IO.Path]::GetFullPath((Join-Path $toolset '..\..\..'))) 'Redist\MSVC'
+        $redist = Get-ChildItem -LiteralPath $redistRoot -Directory |
+            Where-Object Name -Like '14.44.*' | Sort-Object Name -Descending | Select-Object -First 1
+        if (!$redist) { throw "Matching Win7 CRT redistributables are missing: $redistRoot" }
+        $crt = Join-Path $redist.FullName 'x64\Microsoft.VC143.CRT'
+        foreach ($file in @('msvcp140.dll', 'vcruntime140.dll', 'vcruntime140_1.dll')) {
+            $targetFile = Join-Path $destination $file
+            if (!(Test-Path -LiteralPath $targetFile)) {
+                Copy-Item -LiteralPath (Join-Path $crt $file) -Destination $targetFile
             }
         }
     }

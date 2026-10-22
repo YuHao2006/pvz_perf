@@ -16,11 +16,11 @@ void OpenGLRenderer::Impl::ImagePass(OpenGLTexture* target, OpenGLTexture* sourc
     OpenGLTexture sourceCopy, alphaCopy;
     if (source->storage == target->storage) {
         sourceCopy = *source; sourceCopy.storage = Snapshot(source);
-        sourceCopy.x = sourceCopy.y = 0; source = &sourceCopy;
+        source = &sourceCopy;
     }
     if (alpha && alpha->storage == target->storage) {
         alphaCopy = *alpha; alphaCopy.storage = Snapshot(alpha);
-        alphaCopy.x = alphaCopy.y = 0; alpha = &alphaCopy;
+        alpha = &alphaCopy;
     }
     auto* previous = selected;
     selected = target;
@@ -29,13 +29,13 @@ void OpenGLRenderer::Impl::ImagePass(OpenGLTexture* target, OpenGLTexture* sourc
         glActiveTexture(GL_TEXTURE0); glBindTexture(GL_TEXTURE_2D, source->storage->image);
         glUniform1i(imageUniforms[uSourceImage], 0);
         glUniform4i(imageUniforms[uSourceRect],
-            source->x, source->y, source->width, source->height);
+            0, 0, source->width, source->height);
         glActiveTexture(GL_TEXTURE0 + 1);
         glBindTexture(GL_TEXTURE_2D, (alpha ? alpha : source)->storage->image);
         glUniform1i(imageUniforms[uAlphaImage], 1);
         const auto* mask = alpha ? alpha : source;
         glUniform4i(imageUniforms[uAlphaRect],
-            mask->x, mask->y, mask->width, mask->height);
+            0, 0, mask->width, mask->height);
         glUniform1ui(imageUniforms[uSourceSlot], source->flags);
         glUniform1i(imageUniforms[uOperation], operation);
         glUniform4i(imageUniforms[uRectangle],
@@ -66,11 +66,10 @@ OpenGLTexture* OpenGLRenderer::ProcessImage(OpenGLTexture* source, const GpuImag
     if (processing.operation != GpuImageOperation::Copy &&
         processing.operation != GpuImageOperation::Colorize)
         throw std::invalid_argument("Unknown OpenGL image operation");
-    auto* target = s.Allocate(processing.width, processing.height, GL_RGBA8, false, true);
+    auto* target = s.Allocate(processing.width, processing.height, GL_RGBA8, true);
     try {
         s.ImagePass(target, source, nullptr,
             processing.operation == GpuImageOperation::Copy ? 0 : 1, &processing);
-        s.CollectImmutable(target);
     }
     catch (...) { DestroyTexture(target); throw; }
     return target;
@@ -81,7 +80,7 @@ OpenGLTexture* OpenGLRenderer::CopyTextureRegion(OpenGLTexture* source, int x, i
     if (!source || !s.textures.contains(source))
         throw std::invalid_argument("OpenGL region copy requires a live source");
     s.Flush();
-    auto* target = s.Allocate(w, h, source->storage->format, false, true);
+    auto* target = s.Allocate(w, h, source->storage->format, true);
     target->flags = source->flags;
     target->render = source->render;
     auto* previous = s.selected;
@@ -97,7 +96,7 @@ OpenGLTexture* OpenGLRenderer::CopyTextureRegion(OpenGLTexture* source, int x, i
         const int right = static_cast<int>(std::clamp<long long>(static_cast<long long>(x)+w,0,source->width));
         const int top = static_cast<int>(std::clamp<long long>(static_cast<long long>(y)+h,0,source->height));
         if (right > left && top > bottom)
-            glBlitFramebuffer(source->x+left,source->y+bottom,source->x+right,source->y+top,
+            glBlitFramebuffer(left,bottom,right,top,
                 left-x,bottom-y,right-x,top-y,GL_COLOR_BUFFER_BIT,GL_NEAREST);
         glDeleteFramebuffers(1,&read); read = 0;
         s.Check("Lossless OpenGL region copy");
@@ -106,8 +105,6 @@ OpenGLTexture* OpenGLRenderer::CopyTextureRegion(OpenGLTexture* source, int x, i
         s.selected = previous; DestroyTexture(target); throw;
     }
     s.selected = previous;
-    try { s.CollectImmutable(target); }
-    catch (...) { DestroyTexture(target); throw; }
     return target;
 }
 OpenGLTexture* OpenGLRenderer::ComposeAlphaRaw(OpenGLTexture* base, OpenGLTexture* alpha,
@@ -118,7 +115,7 @@ OpenGLTexture* OpenGLRenderer::ComposeAlphaRaw(OpenGLTexture* base, OpenGLTextur
         columns <= 0 || rows <= 0 || columns > base->width || rows > base->height ||
         alpha->width < base->width / columns || alpha->height < base->height / rows)
         throw std::invalid_argument("Invalid OpenGL alpha composition dimensions");
-    auto* target = s.Allocate(base->width, base->height, GL_RGBA8, false, false);
+    auto* target = s.Allocate(base->width, base->height, GL_RGBA8, false);
     try { s.ImagePass(target, base, alpha, 2, nullptr, columns, rows, color, colorOnly); }
     catch (...) { DestroyTexture(target); throw; }
     return target;
@@ -129,8 +126,6 @@ OpenGLTexture* OpenGLRenderer::AdoptComposedTexture(OpenGLTexture* texture)
     if (!texture || !s.textures.contains(texture) || texture->slot != ~0U)
         throw std::invalid_argument("Only a raw OpenGL composition can be adopted");
     s.Register(texture);
-    try { s.CollectImmutable(texture); }
-    catch (...) { DestroyTexture(texture); throw; }
     // Composition scratch is scoped to this serialized upload chain. GL retains
     // already issued command references; no host wait or CPU pixel copy is needed.
     for (auto it = s.textures.begin(); it != s.textures.end();) {
@@ -191,7 +186,7 @@ void OpenGLRenderer::RenderFontAtlas(OpenGLTexture* target, OpenGLTexture* sourc
     OpenGLTexture sourceCopy;
     if (target->storage == source->storage) {
         sourceCopy = *source; sourceCopy.storage = s.Snapshot(source);
-        sourceCopy.x = sourceCopy.y = 0; source = &sourceCopy;
+        source = &sourceCopy;
     }
     auto* previous = s.selected;
     s.selected = target;
@@ -199,7 +194,7 @@ void OpenGLRenderer::RenderFontAtlas(OpenGLTexture* target, OpenGLTexture* sourc
         s.BindTarget(); glUseProgram(s.fontProgram);
         glUniform1i(s.fontUniforms[Impl::uSourceImage], 0);
         glUniform4i(s.fontUniforms[Impl::uSourceRect],
-            source->x, source->y, source->width, source->height);
+            0, 0, source->width, source->height);
         glUniform1ui(s.fontUniforms[Impl::uSourceSlot], source->flags);
         glUniform1ui(s.fontUniforms[Impl::uSamplingFlags], samplingFlags);
         glUniform1i(s.fontUniforms[Impl::uForceWhite], forceWhite);
@@ -243,7 +238,7 @@ OpenGLTexture* OpenGLRenderer::CreateCausticsTexture(int w, int h, OpenGLTexture
 {
     if (w != 128 || h != 64)
         throw std::invalid_argument("OpenGL caustics output must be 128 by 64");
-    auto* target = impl_->Allocate(w, h, GL_RGBA8, false, true);
+    auto* target = impl_->Allocate(w, h, GL_RGBA8, true);
     target->caustic = true;
     auto* previous=impl_->selected;
     try {
@@ -289,7 +284,7 @@ std::vector<float> OpenGLRenderer::ReadTextureFloats(OpenGLTexture* texture)
         throw std::runtime_error("OpenGL diagnostic framebuffer is incomplete");
     }
     glPixelStorei(GL_PACK_ALIGNMENT, 1);
-    glReadPixels(texture->x, texture->y, texture->width, texture->height, GL_RGBA, GL_FLOAT, output.data());
+    glReadPixels(0, 0, texture->width, texture->height, GL_RGBA, GL_FLOAT, output.data());
     glDeleteFramebuffers(1, &framebuffer);
     s.Check("Read OpenGL float image");
     return output;

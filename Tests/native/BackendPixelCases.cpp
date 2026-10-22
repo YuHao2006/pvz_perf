@@ -106,9 +106,6 @@ void Benchmark(Renderer& renderer, Context& context, bool standalone)
     auto pixels = Pattern(extent, extent);
     for (unsigned int i = 0; i < 16; ++i)
         textures.push_back(renderer.CreateTexture(extent, extent, pixels.data(), extent*4));
-#if defined(PVZ_COMPARE_GL) || defined(PVZ_COMPARE_D3D9)
-    renderer.FinishLoadingTextures();
-#endif
     auto* target = renderer.CreateRenderImage(Width, Height);
     renderer.SetRenderImage(target);
     std::vector<GpuVertex> vertices;
@@ -193,9 +190,6 @@ int main(int argc, char** argv)
         };
         const auto pixels = Pattern(7, 9);
         auto* source = renderer.CreateTexture(7,9,pixels.data(),7*4);
-#if defined(PVZ_COMPARE_GL) || defined(PVZ_COMPARE_D3D9)
-        renderer.FinishLoadingTextures();
-#endif
         Require(renderer.BeginScene(), "Comparison scene unavailable");
         for (unsigned int filter = 0; filter < 4; ++filter)
             for (unsigned int sampling = 0; sampling < 4; ++sampling) {

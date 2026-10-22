@@ -59,6 +59,7 @@ void SetStyle(HWND window,int index,LONG_PTR style) {
 }
 // The application owns one main native window; MakeWindow resets this state.
 NativeFrameMotionPoll nativeFrameMotionPoll;
+GameViewport nativeStartupViewport;
 
 bool NativeQueueReady(const SexyAppBase& app) {
     if(!app.mNativeWindowShown || !app.mActive || app.mPhysMinimized ||
@@ -93,7 +94,14 @@ void SexyAppBase::MakeWindow() {
     const DWORD style=WS_OVERLAPPED|WS_CAPTION|WS_SYSMENU|WS_MINIMIZEBOX|
         WS_THICKFRAME;
     const DWORD exStyle=WS_EX_APPWINDOW;
-    RECT bounds{0,0,GameViewport::MaximumWidth,600};
+    const POINT preferred{mPreferredX < 0 ? 0 : mPreferredX,
+        mPreferredY < 0 ? 0 : mPreferredY};
+    const auto monitor = MonitorFromPoint(preferred, MONITOR_DEFAULTTOPRIMARY);
+    MONITORINFO monitorInfo{sizeof(monitorInfo)};
+    if(!monitor || !GetMonitorInfoW(monitor,&monitorInfo)) WindowFailure("GetMonitorInfo(startup)");
+    const auto& display = monitorInfo.rcMonitor;
+    nativeStartupViewport = GameViewport::Fit(display.right-display.left,display.bottom-display.top);
+    RECT bounds{0,0,nativeStartupViewport.width,nativeStartupViewport.height};
     if(!NativeWindowsWindowApi::AdjustClientRect(bounds,style,exStyle,nullptr))
         WindowFailure("AdjustClientRect");
     mHWnd=CreateWindowExA(exStyle,MainWindowClass,mTitle.c_str(),style,
@@ -224,6 +232,11 @@ void SexyAppBase::ResizeWindowClient(int width,int height) {
     if(width<=0 || height<=0) throw std::invalid_argument("Invalid window client size");
     if(mNativeFullscreen) throw std::logic_error("Cannot resize a fullscreen client as a window");
     const auto limits=WindowClientLimits(*this);
+    // WarmScalePipelinesBeforeShow resizes the hidden window a second time.
+    // Keep the chosen monitor ratio while applying its prepared output height.
+    if(!mNativeWindowShown)
+        width=WindowStartupSize::FromMonitor(
+            nativeStartupViewport.width,nativeStartupViewport.height,limits.height).width;
     width=limits.ConstrainWidth(width);
     height=limits.height;
     RECT rect{0,0,width,height};

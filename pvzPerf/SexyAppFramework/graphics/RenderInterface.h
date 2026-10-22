@@ -16,6 +16,7 @@ namespace Sexy
 
 class DDInterface;
 class DDImage;
+class ResidentImage;
 class SexyMatrix3;
 class TriVertex;
 
@@ -51,6 +52,7 @@ public:
 	uint32_t mSamplingFlags = 0;
 	// Static descriptor identity survives replacement uploads.
 	uint32_t mStaticSlot;
+	bool mOwnsTexture = true;
 
 	TextureData();
 	~TextureData();
@@ -85,12 +87,13 @@ public:
 
 	typedef std::set<MemoryImage*> ImageSet;
 	ImageSet mImageSet;
+	std::set<ResidentImage*> mResidentImageSet;
 
 	typedef std::list<SexyMatrix3> TransformStack;
 	TransformStack mTransformStack;
 
 	GpuRenderer*			mRenderer;
-	DDImage*                mDrawSurface = nullptr;
+	Image*                  mDrawSurface = nullptr;
 
 public:
 	// 池水焦散 GPU 直写（2026-10-05 立项：每帧 CPU 生成 8192px + 纹理重传
@@ -116,17 +119,21 @@ public:
 	bool					PreDraw();
     void ResizeScene(int width, int height);
 	DDImage*                CreateRenderImage(int width, int height);
+	ResidentImage* CreateResidentRenderImage(int width, int height);
+	ResidentImage* CreateResidentFilterImage(ResidentImage* source, GpuImageColorFilter filter);
 	DDImage* ProcessImage(MemoryImage* source,const GpuImageProcessing& processing);
 	void RenderFontAtlas(DDImage* target,MemoryImage* source,
 		std::span<const GpuFontGlyph> glyphs,bool forceWhite);
-	void                    SelectDrawSurface(DDImage* image);
+	void                    SelectDrawSurface(Image* image);
 	inline static uint32_t  sImageSamplingFlags = 0;
 	inline static bool      sSamplerAddressWrap = false;
 	void					Flush();
 	// Diagnostic/export only, on the owning thread with a flushed scene.
 	// Never calls GetBits or changes the source's CPU/GPU representation.
 	ImagePixels ReadImagePixels(const MemoryImage& image);
+	ImagePixels ReadImagePixels(const Image& image);
 	void					RemoveMemoryImage(MemoryImage *theImage);
+	void RemoveResidentImage(ResidentImage* image);
 	// Window/fullscreen or custom-scale changes: resize the swapchain only.
 	// The device, scene target and uploaded image textures all survive, so
 	// toggling modes never triggers a full re-upload or GPU stall.
@@ -134,9 +141,9 @@ public:
     // false means deferred, not failed. Invalid ownership / Vulkan errors throw.
 	bool					PresentRetainedFrame();
 
-	bool					CreateImageTexture(MemoryImage *theImage);
+	// Prepare/upload once and return the same data for the ensuing draw.
+	TextureData*			CreateImageTexture(Image *theImage);
 	void CloneUploadedImage(MemoryImage* target,const MemoryImage& source);
-	void FinishLoadingTextures();
 	// reanim-v4 静态槽位：纹理落在槽位区恒等位 staticBase+staticSlot
 	//（编译记录烘焙的最终下标）
 	bool					CreateImageTextureStatic(MemoryImage *theImage, uint32_t staticSlot);
@@ -171,9 +178,9 @@ public:
 class GpuImageDrawScope
 {
 	RenderInterface& mRender;
-	DDImage* mPrevious;
+	Image* mPrevious;
 public:
-	GpuImageDrawScope(RenderInterface& render, DDImage* image) :
+	GpuImageDrawScope(RenderInterface& render, Image* image) :
 		mRender(render), mPrevious(render.mDrawSurface) { render.SelectDrawSurface(image); }
 	~GpuImageDrawScope() noexcept(false) { mRender.SelectDrawSurface(mPrevious); }
 	GpuImageDrawScope(const GpuImageDrawScope&) = delete;

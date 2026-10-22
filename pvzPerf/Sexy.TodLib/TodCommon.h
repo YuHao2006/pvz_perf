@@ -106,12 +106,8 @@ int TodCurveIndexFromEval(TodCurveEvalFn theEval);
 
 // P5-⑥ 快速三角（见 TodCommon.cpp 实现注释）；域 [-π,π]
 #include "SexyAppFramework/misc/FastMath.h"
-// 诊断回调钩子（2026-10-07 分层：声明自 LawnApp.h 下放——TodLib 落盘
-// 日志需要当前关卡名，宿主 main.cpp 注入实现；
-// TodLib 不再认识 LawnApp）。SexyString 定义见 Common.h（L1）。
-extern SexyString (*gGetCurrentLevelName)();
+// Host shutdown callback, injected by main.cpp without a LawnApp dependency.
 extern bool (*gAppCloseRequest)();       // 同批下放（原 LawnApp.h，0x69E6A0）
-extern bool (*gAppHasUsedCheatKeys)();   // 同批下放（原 LawnApp.h，0x69E6A4）  // FastSin/FastCos 已下放共享层（2026-10-07）
 
 namespace Curves  // 曲线扭曲原语：限定名访问（Curves::Quad），不污染命名池。
 {                 // 定义唯一定义于 TodCommon.cpp（原 1073 地址 0x5118C0/0x5118F0/0x511970/0x5119B0）

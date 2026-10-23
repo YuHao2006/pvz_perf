@@ -132,9 +132,13 @@ class Zombie;
 class Reanimation;
 class TodParticleSystem;
 
-class Plant : public GameObject
+class Plant : public FloatGameObject
 {
 public:
+    double                 mRootOriginX = 0;
+    std::uint32_t           mRootBindingGeneration = 0;
+    float                  mRootScale = 0;
+    std::int64_t            mBowlingRowArrivalTimeNs = 0;
     SeedType                mSeedType;                      //+0x24
     int                     mPlantCol;                      //+0x28
     Sexy::TimeCounter                     mAnimCounter;                   //+0x2C
@@ -148,7 +152,13 @@ public:
     Sexy::TimeCounter                     mDisappearCountdown;            //+0x4C
     Sexy::TimeCounter                     mDoSpecialCountdown;            //+0x50
     Sexy::TimeCounter                     mStateCountdown;                //+0x54
-    Sexy::TimeCounter                     mLaunchCounter;                 //+0x58
+    // ZenGarden production duration; mutually exclusive bowling counts impacts
+    // in legacy units in this same historical auxiliary slot.
+    Sexy::TimeCounter                     mZenProductionCountdown;       //+0x58
+    std::int64_t            mNextLaunchTimeNs = 0;
+    std::int64_t            mLaunchClockSampleNs = 0;
+    std::int64_t            mLaunchWindowStartNs = 0;
+    bool                    mLaunchClockActive = false;
     Sexy::TimeCounter                     mLaunchRate;                    //+0x5C
     Rect                    mPlantRect;                     //+0x60
     Rect                    mPlantAttackRect;               //+0x70

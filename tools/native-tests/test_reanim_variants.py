@@ -132,7 +132,7 @@ class ReanimVariantCompilerTests(unittest.TestCase):
                 handles, descriptors, actions.get(name))
             parsed = pak.parse_definition_atlas(f"compiled/reanim/{name.casefold()}.compiled", packed)
             self.assertEqual(parsed["variant_count"], len(definition["variants"]))
-            self.assertEqual(struct.unpack_from("<I", packed, parsed["body_offset"])[0], 0x36544449)
+            self.assertEqual(struct.unpack_from("<I", packed, parsed["body_offset"])[0], 0x46544449)
 
     def compile(self, source, success=True):
         directory = Path(self.temporary.name)

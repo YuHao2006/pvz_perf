@@ -136,8 +136,8 @@ def image_offsets(kind: str, payload: bytes) -> list[int]:
     reader = pak.Reader(payload)
     offsets = []
     if kind == "reanim":
-        magic, _, _, _, _, count = reader.unpack("<4IfI")
-        pak.require(magic == 0x35544449, "Expected IDT5 compiler payload")
+        magic, _, _, _, _, count = reader.unpack("<6I")
+        pak.require(magic in (0x35544449, 0x46544449), "Expected IDT5/IDTF compiler payload")
         tracks = []
         for _ in range(count):
             _, frames, stride, mode = reader.unpack("<4I")
@@ -152,15 +152,15 @@ def image_offsets(kind: str, payload: bytes) -> list[int]:
                     reader.take(reader.word())
     else:
         magic, _, _, count, body_bytes = reader.unpack("<5I")
-        pak.require(kind == "particles" and magic in (0x35504449, 0x34524449),
+        pak.require(kind == "particles" and magic in (0x35504449, 0x34524449, 0x46524449),
                     "Expected particle compiler payload")
         end = reader.at + body_bytes
 
         def track() -> None:
-            reader.take(reader.word() * 20)
+            reader.take(reader.word() * (24 if magic == 0x46524449 else 20))
 
         for _ in range(count):
-            if magic == 0x34524449:
+            if magic in (0x34524449, 0x46524449):
                 for _ in range(reader.count(4, 100000)):
                     offsets.append(reader.at)
                     pak.require(reader.word() != 0, "Null particle frame image handle")
@@ -354,8 +354,8 @@ def compile_reanim_variants(name: str, data: bytes, metadata: dict, variants: li
     pak.require(cookie == 0xDEADFED7 and size == len(data) - 12 and
                 zlib.crc32(data[12:]) == crc, "Invalid reanim source envelope")
     reader = pak.Reader(data[12:])
-    magic, track_hash, image_hash, font_hash, fps, track_count = reader.unpack("<4IfI")
-    pak.require(magic == 0x35544449 and image_hash == 0 and
+    magic, track_hash, image_hash, font_hash, fps_bits, track_count = reader.unpack("<6I")
+    pak.require(magic in (0x35544449, 0x46544449) and image_hash == 0 and
                 track_count == len(metadata["tracks"]), "Invalid reanim variant root")
     tracks = []
     for _ in range(track_count):
@@ -364,7 +364,8 @@ def compile_reanim_variants(name: str, data: bytes, metadata: dict, variants: li
         values = reader.take(frames * 32)
         tracks.append((track_id, frames, mode, values))
     phase1_end = reader.at
-    body_parts = [struct.pack("<I", 0x36544449), data[16:12 + phase1_end]]
+    authored = magic == 0x46544449
+    body_parts = [struct.pack("<I", 0x46544449 if authored else 0x36544449), data[16:12 + phase1_end]]
     slot_keys, slot_map = [None], {}
     for t, (_, frames, mode, values) in enumerate(tracks):
         previous, previous_cel = "", 0.0
@@ -374,7 +375,7 @@ def compile_reanim_variants(name: str, data: bytes, metadata: dict, variants: li
             if handle:
                 pak.require(handle in source_names, "Unknown reanim source image")
                 previous = source_names[handle]
-            cel = struct.unpack_from("<f", values, f * 32 + 24)[0]
+            cel = struct.unpack_from("<i" if authored else "<f", values, f * 32 + 24)[0]
             if cel == -10000.0:
                 cel = previous_cel
             previous_cel = cel
@@ -450,7 +451,8 @@ def compile_particle_variants(name: str, data: bytes, rows: list[dict]) -> tuple
                 "Particle appearance root requires expanded IDR5")
     source = pak.Reader(data[24:])
     magic, total, emitter_hash, count, body_size = source.unpack("<5I")
-    pak.require(magic == 0x35524449, "Particle appearance root requires IDR5")
+    pak.require(magic in (0x35524449, 0x46524449), "Particle appearance root requires IDR5/IDRF")
+    stride = 24 if magic == 0x46524449 else 20
     end = source.at + body_size
     parts, offset = [], 0
     for frames in atlas["frame_counts"]:
@@ -459,19 +461,19 @@ def compile_particle_variants(name: str, data: bytes, rows: list[dict]) -> tuple
         start = source.at
         source.take(16)
         for _ in range(22):
-            source.take(source.count(20, 100000) * 20)
+            source.take(source.count(stride, 100000) * stride)
         for _ in range(2):
             for _ in range(source.count(12, 4)):
                 source.take(4)
                 for _ in range(2):
-                    source.take(source.count(20, 100000) * 20)
+                    source.take(source.count(stride, 100000) * stride)
         for _ in range(16):
-            source.take(source.count(20, 100000) * 20)
+            source.take(source.count(stride, 100000) * stride)
         parts.append(struct.pack("<2I", offset, frames) + source.data[start:source.at])
         offset += frames
     pak.require(source.at == end and offset == total, "Particle root behavior size differs")
     body = b"".join(parts)
-    behavior = (struct.pack("<5I", 0x36524449, total, emitter_hash, count, len(body)) + body
+    behavior = (struct.pack("<5I", 0x46524449 if stride == 24 else 0x36524449, total, emitter_hash, count, len(body)) + body
                 + source.take(len(source.data) - source.at))
     appearance = struct.pack("<2I", len(rows), total)
     appearance += b"".join(struct.pack("<2I", row["width"], row["height"]) for row in rows)
@@ -525,7 +527,8 @@ def compile_definition(name: str, data: bytes, source_images: dict[int | str, Im
                        source_images[symbol].cols) for symbol in symbols}
     for row in image_rows:
         row["region"] = inline[row["source" if source_names is not None else "symbol"]]
-    explicit_frames = kind == "particles" and struct.unpack_from("<I", body)[0] == 0x34524449
+    authored = struct.unpack_from("<I", body)[0] == 0x46524449
+    explicit_frames = kind == "particles" and struct.unpack_from("<I", body)[0] in (0x34524449, 0x46524449)
     frame_rows = []
     if kind == "particles" and not explicit_frames:
         original_body_size = struct.unpack_from("<I", body, 16)[0]
@@ -552,7 +555,7 @@ def compile_definition(name: str, data: bytes, source_images: dict[int | str, Im
     body = b"".join(parts)
     if explicit_frames:
         body = bytearray(body)
-        struct.pack_into("<I", body, 0, 0x35524449)
+        struct.pack_into("<I", body, 0, 0x46524449 if authored else 0x35524449)
         struct.pack_into("<I", body, 4, len(offsets))
         struct.pack_into("<I", body, 16, struct.unpack_from("<I", body, 16)[0] + 12 * len(offsets))
         body = bytes(body)

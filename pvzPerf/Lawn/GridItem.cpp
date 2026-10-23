@@ -149,7 +149,7 @@ void GridItem::DrawGraveStone(Graphics* g)
     if (mGridItemCounter <= 0)
         return;
 
-    int aHeightPosition = TodAnimateCurve(0, 100, mGridItemCounter, 1000, 0, Curves::EaseInOut);
+    int aHeightPosition = TodAnimateCurveNs(0, 1'000'000'000, mGridItemCounter.mNanoseconds, 1000, 0, Curves::EaseInOut);
     int aGridCelLook = mBoard->mGridCelLook[mGridX][mGridY];
     int aGridCelOffsetX = mBoard->mGridCelOffset[mGridX][mGridY][0];
     int aGridCelOffsetY = mBoard->mGridCelOffset[mGridX][mGridY][1];
@@ -177,7 +177,7 @@ void GridItem::DrawGraveStone(Graphics* g)
     Plant* aPlant = mBoard->GetTopPlantAt(mGridX, mGridY, PlantPriority::TOPPLANT_ONLY_NORMAL_POSITION);
     if (aPlant && aPlant->mState == PlantState::STATE_GRAVEBUSTER_EATING)
     {
-        aExtraTopClip = TodAnimateCurveFloat(400, 0, aPlant->mStateCountdown, 10.0f, 40.0f, Curves::Linear);
+        aExtraTopClip = TodAnimateCurveNs(4'000'000'000LL, 0, aPlant->mStateCountdown.mNanoseconds, 10.0f, 40.0f, Curves::Linear);
     }
 
     Rect aSrcRect(aCelWidth * aGraveCol, aCelHeight * aGraveRow + aExtraTopClip, aCelWidth, aVisibleHeight - aExtraBottomClip - aExtraTopClip);
@@ -192,7 +192,8 @@ void GridItem::DrawGraveStone(Graphics* g)
 void GridItem::DrawStinky(Graphics* g)
 {
     Reanimation* aStinkyReanim = mApp->ReanimationGet(mGridItemReanimID);
-    float aOriginalTime = aStinkyReanim->mAnimTime;
+    const auto aOriginalClock = aStinkyReanim->mPhaseOriginNs;
+    const auto aOriginalStart = aStinkyReanim->mStartTimeNs;
 
     TOD_ASSERT(mMotionTrailCount <= NUM_MOTION_TRAIL_FRAMES);
     for (int i = mMotionTrailCount - 1; i >= 0; i--)
@@ -206,7 +207,11 @@ void GridItem::DrawStinky(Graphics* g)
             int anAlpha = TodAnimateCurve(0, 11, i, 64, 16, Curves::Linear);
             g->mColor = Color(255, 255, 255, anAlpha);
             g->mColorizeImages = true;
-            aStinkyReanim->mAnimTime = aFrame.mAnimTime;
+            aStinkyReanim->mPhaseOriginNs = ReanimClock::SignedMulDiv(aFrame.mAnimClock,
+                aStinkyReanim->mPeriodNs, aStinkyReanim->mFrameCount * ReanimClock::Frame);
+            aStinkyReanim->mStartTimeNs = aStinkyReanim->mTimeDomain == ReanimTimeDomain::Battle ?
+                aStinkyReanim->mReanimationHolder->mBattleTimeNs :
+                aStinkyReanim->mReanimationHolder->mVisualTimeNs;
 
             g->mTransX += aDiffX;
             g->mTransY += aDiffY;
@@ -217,7 +222,8 @@ void GridItem::DrawStinky(Graphics* g)
             g->mTransY -= aDiffY;
         }
     }
-    aStinkyReanim->mAnimTime = aOriginalTime;
+    aStinkyReanim->mPhaseOriginNs = aOriginalClock;
+    aStinkyReanim->mStartTimeNs = aOriginalStart;
 
     if (mGridItemType == GridItemType::GRIDITEM_STINKY && mHighlighted)
     {
@@ -236,7 +242,7 @@ void GridItem::DrawCrater(Graphics* g)
     float aYPos = mBoard->GridToPixelY(mGridX, mGridY) + 40.0f;
     if (mGridItemCounter < 25)
     {
-        int anAlpha = TodAnimateCurve(25, 0, mGridItemCounter, 255, 0, Curves::Linear);
+        int anAlpha = TodAnimateCurveNs(250'000'000, 0, mGridItemCounter.mNanoseconds, 255, 0, Curves::Linear);
         g->mColor = Color(255, 255, 255, anAlpha);
         g->mColorizeImages = true;
     }
@@ -377,7 +383,7 @@ void GridItem::DrawScaryPot(Graphics* g)
             }
         }
 
-        int aAlpha = TodAnimateCurve(0, 50, mTransparentCounter, 255, 58, Curves::Linear);
+        int aAlpha = TodAnimateCurveNs(0, 500'000'000, mTransparentCounter.mNanoseconds, 255, 58, Curves::Linear);
         g->mColorizeImages = true;
         g->mColor = Color(255, 255, 255, aAlpha);
     }
@@ -416,23 +422,23 @@ void GridItem::DrawSquirrel(Graphics* g)
     int aYPos = mBoard->GridToPixelY(mGridX, mGridY);
     if (mGridItemState == GridItemState::GRIDITEM_STATE_SQUIRREL_PEEKING)
     {
-        aYPos += TodAnimateCurve(50, 0, mGridItemCounter, 0, -40, Curves::BounceSlowMiddle);
+        aYPos += TodAnimateCurveNs(500'000'000, 0, mGridItemCounter.mNanoseconds, 0, -40, Curves::BounceSlowMiddle);
     }
     else if (mGridItemState == GridItemState::GRIDITEM_STATE_SQUIRREL_RUNNING_UP)
     {
-        aYPos += TodAnimateCurve(50, 0, mGridItemCounter, 100, 0, Curves::EaseIn);
+        aYPos += TodAnimateCurveNs(500'000'000, 0, mGridItemCounter.mNanoseconds, 100, 0, Curves::EaseIn);
     }
     else if (mGridItemState == GridItemState::GRIDITEM_STATE_SQUIRREL_RUNNING_DOWN)
     {
-        aYPos += TodAnimateCurve(50, 0, mGridItemCounter, -100, 0, Curves::EaseIn);
+        aYPos += TodAnimateCurveNs(500'000'000, 0, mGridItemCounter.mNanoseconds, -100, 0, Curves::EaseIn);
     }
     else if (mGridItemState == GridItemState::GRIDITEM_STATE_SQUIRREL_RUNNING_LEFT)
     {
-        aXPos += TodAnimateCurve(50, 0, mGridItemCounter, 80, 0, Curves::EaseIn);
+        aXPos += TodAnimateCurveNs(500'000'000, 0, mGridItemCounter.mNanoseconds, 80, 0, Curves::EaseIn);
     }
     else if (mGridItemState == GridItemState::GRIDITEM_STATE_SQUIRREL_RUNNING_RIGHT)
     {
-        aXPos += TodAnimateCurve(50, 0, mGridItemCounter, -80, 0, Curves::EaseIn);
+        aXPos += TodAnimateCurveNs(500'000'000, 0, mGridItemCounter.mNanoseconds, -80, 0, Curves::EaseIn);
     }
 
     // @Patoke: assets, removed, perhaps add back?
@@ -661,7 +667,7 @@ void GridItem::UpdateRake()
         if (RakeFindZombie())
         {
             Reanimation* aRakeReanim = mApp->ReanimationGet(mGridItemReanimID);
-            aRakeReanim->mAnimRate = 20.0f;
+            aRakeReanim->ApplyRate(20.0f);
             mGridItemCounter = 200;
             mGridItemState = GridItemState::GRIDITEM_STATE_RAKE_TRIGGERED;
             mApp->PlayFoley(FoleyType::FOLEY_SWING);

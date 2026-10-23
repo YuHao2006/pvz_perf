@@ -17,7 +17,7 @@ export component Credits_WeAreTheUndead {
     Track {
         source-name: "attacher__Zombie1";
         frame-count: 88;
-        frame 0 { x: 68.4000015; y: 399.399994; text: "attacher__Zombie_credits_dance__anim_dance1[21]"; }
+        frame 0 { x: 68.4; y: 399.4; text: "attacher__Zombie_credits_dance__anim_dance1[21]"; }
         frame 1 { x: -10000; y: -10000; text: ""; }
     }
     Track {
@@ -25,7 +25,7 @@ export component Credits_WeAreTheUndead {
         frame-count: 88;
         frame 0 { cel: -1; }
         frame 1 { cel: -10000; }
-        frame 2 { x: 330.299988; y: 44.4000015; skew-x: 180; cel: 0; text: "attacher__Zombie_credits_dance__anim_dance2[21]"; }
+        frame 2 { x: 330.3; y: 44.4; skew-x: 180; cel: 0; text: "attacher__Zombie_credits_dance__anim_dance2[21]"; }
         frame 3 { x: -10000; y: -10000; skew-x: -10000; cel: -10000; text: ""; }
         frame 44 { cel: -1; }
         frame 45 { cel: -10000; }
@@ -37,7 +37,7 @@ export component Credits_WeAreTheUndead {
         frame-count: 88;
         frame 0 { cel: -1; }
         frame 1 { cel: -10000; }
-        frame 4 { x: 305.399994; y: 371.399994; cel: 0; text: "attacher__Zombie_credits_dance__anim_dance2[21]"; }
+        frame 4 { x: 305.4; y: 371.4; cel: 0; text: "attacher__Zombie_credits_dance__anim_dance2[21]"; }
         frame 5 { x: -10000; y: -10000; cel: -10000; text: ""; }
         frame 44 { cel: -1; }
         frame 45 { cel: -10000; }
@@ -49,7 +49,7 @@ export component Credits_WeAreTheUndead {
         frame-count: 88;
         frame 0 { cel: -1; }
         frame 1 { cel: -10000; }
-        frame 6 { x: 488.299988; y: 173.399994; skew-x: 180; cel: 0; text: "attacher__Zombie_credits_dance__anim_dance5[22.75]"; }
+        frame 6 { x: 488.3; y: 173.4; skew-x: 180; cel: 0; text: "attacher__Zombie_credits_dance__anim_dance5[22.75]"; }
         frame 7 { x: -10000; y: -10000; skew-x: -10000; cel: -10000; text: ""; }
         frame 44 { cel: -1; }
         frame 45 { cel: -10000; }
@@ -61,7 +61,7 @@ export component Credits_WeAreTheUndead {
         frame-count: 88;
         frame 0 { cel: -1; }
         frame 1 { cel: -10000; }
-        frame 9 { x: 689.400024; y: 15.3999996; cel: 0; text: "attacher__Zombie_credits_dance__anim_dance5[22.75]"; }
+        frame 9 { x: 689.4; y: 15.4; cel: 0; text: "attacher__Zombie_credits_dance__anim_dance5[22.75]"; }
         frame 10 { x: -10000; y: -10000; cel: -10000; text: ""; }
         frame 44 { cel: -1; }
         frame 45 { cel: -10000; }
@@ -73,7 +73,7 @@ export component Credits_WeAreTheUndead {
         frame-count: 88;
         frame 0 { cel: -1; }
         frame 1 { cel: -10000; }
-        frame 11 { x: 671.400024; y: 428.399994; cel: 0; text: "attacher__Zombie_credits_dance__anim_dance6[21.875]"; }
+        frame 11 { x: 671.4; y: 428.4; cel: 0; text: "attacher__Zombie_credits_dance__anim_dance6[21.875]"; }
         frame 12 { x: -10000; y: -10000; cel: -10000; text: ""; }
         frame 44 { cel: -1; }
         frame 45 { cel: -10000; }
@@ -85,7 +85,7 @@ export component Credits_WeAreTheUndead {
         frame-count: 88;
         frame 0 { cel: -1; }
         frame 1 { cel: -10000; }
-        frame 11 { x: 123.300003; y: 25.3999996; skew-x: 180; cel: 0; text: "attacher__Zombie_credits_dance__anim_dance8[44.19]"; }
+        frame 11 { x: 123.3; y: 25.4; skew-x: 180; cel: 0; text: "attacher__Zombie_credits_dance__anim_dance8[44.19]"; }
         frame 12 { x: -10000; y: -10000; skew-x: -10000; cel: -10000; text: ""; }
         frame 44 { cel: -1; }
         frame 45 { cel: -10000; }
@@ -97,7 +97,7 @@ export component Credits_WeAreTheUndead {
         frame-count: 88;
         frame 0 { cel: -1; }
         frame 1 { cel: -10000; }
-        frame 13 { x: 751.599976; y: 185.800003; skew-x: 180; cel: 0; text: "attacher__Zombie_credits_dance__anim_dance2[21]"; }
+        frame 13 { x: 751.6; y: 185.8; skew-x: 180; cel: 0; text: "attacher__Zombie_credits_dance__anim_dance2[21]"; }
         frame 14 { x: -10000; y: -10000; skew-x: -10000; cel: -10000; text: ""; }
         frame 44 { cel: -1; }
         frame 45 { cel: -10000; }
@@ -109,7 +109,7 @@ export component Credits_WeAreTheUndead {
         frame-count: 88;
         frame 0 { cel: -1; }
         frame 1 { cel: -10000; }
-        frame 13 { x: 292.700012; y: 404.799988; skew-x: 180; cel: 0; text: "attacher__Zombie_credits_dance__anim_dance1[21]"; }
+        frame 13 { x: 292.7; y: 404.8; skew-x: 180; cel: 0; text: "attacher__Zombie_credits_dance__anim_dance1[21]"; }
         frame 14 { x: -10000; y: -10000; skew-x: -10000; cel: -10000; text: ""; }
         frame 44 { cel: -1; }
         frame 45 { cel: -10000; }
@@ -121,7 +121,7 @@ export component Credits_WeAreTheUndead {
         frame-count: 88;
         frame 0 { cel: -1; }
         frame 1 { cel: -10000; }
-        frame 17 { x: 411.399994; y: 6.4000001; cel: 0; text: "attacher__Zombie_credits_dance__anim_dance1[21]"; }
+        frame 17 { x: 411.4; y: 6.4; cel: 0; text: "attacher__Zombie_credits_dance__anim_dance1[21]"; }
         frame 18 { x: -10000; y: -10000; cel: -10000; text: ""; }
         frame 44 { cel: -1; }
         frame 45 { cel: -10000; }
@@ -133,7 +133,7 @@ export component Credits_WeAreTheUndead {
         frame-count: 88;
         frame 0 { cel: -1; }
         frame 1 { cel: -10000; }
-        frame 20 { x: 651.299988; y: 177.399994; skew-x: 180; cel: 0; text: "attacher__Zombie9"; }
+        frame 20 { x: 651.3; y: 177.4; skew-x: 180; cel: 0; text: "attacher__Zombie9"; }
         frame 21 { x: -10000; y: -10000; skew-x: -10000; cel: -10000; text: ""; }
         frame 44 { cel: -1; }
         frame 45 { cel: -10000; }
@@ -145,7 +145,7 @@ export component Credits_WeAreTheUndead {
         frame-count: 88;
         frame 0 { cel: -1; }
         frame 1 { cel: -10000; }
-        frame 20 { x: 422.299988; y: 225.399994; skew-x: 180; cel: 0; text: "attacher__Zombie_credits_dance__anim_dance6[21.875]"; }
+        frame 20 { x: 422.3; y: 225.4; skew-x: 180; cel: 0; text: "attacher__Zombie_credits_dance__anim_dance6[21.875]"; }
         frame 21 { x: -10000; y: -10000; skew-x: -10000; cel: -10000; text: ""; }
         frame 44 { cel: -1; }
         frame 45 { cel: -10000; }
@@ -157,7 +157,7 @@ export component Credits_WeAreTheUndead {
         frame-count: 88;
         frame 0 { cel: -1; }
         frame 1 { cel: -10000; }
-        frame 29 { x: 523.5; y: 47.2999992; skew-x: 180; scale-x: 0.921999991; scale-y: 0.499000013; cel: 0; image: IMAGE_REANIM_STORE_SPEECHBUBBLE2; }
+        frame 29 { x: 523.5; y: 47.3; skew-x: 180; scale-x: 0.922; scale-y: 0.499; cel: 0; image: IMAGE_REANIM_STORE_SPEECHBUBBLE2; }
         frame 30 { x: -10000; y: -10000; skew-x: -10000; scale-x: -10000; scale-y: -10000; cel: -10000; image: none; }
         frame 44 { cel: -1; }
         frame 45 { cel: -10000; }
@@ -169,7 +169,7 @@ export component Credits_WeAreTheUndead {
         frame-count: 88;
         frame 0 { cel: -1; }
         frame 1 { cel: -10000; }
-        frame 29 { x: 397.899994; y: 66.6999969; scale-x: 0.800000012; scale-y: 0.800000012; cel: 0; font: "FONT_BRIANNETOD32"; text: "We are the undead"; }
+        frame 29 { x: 397.9; y: 66.7; scale-x: 0.8; scale-y: 0.8; cel: 0; font: "FONT_BRIANNETOD32"; text: "We are the undead"; }
         frame 30 { x: -10000; y: -10000; scale-x: -10000; scale-y: -10000; cel: -10000; font: none; text: ""; }
         frame 44 { cel: -1; }
         frame 45 { cel: -10000; }
@@ -181,7 +181,7 @@ export component Credits_WeAreTheUndead {
         frame-count: 88;
         frame 0 { cel: -1; }
         frame 1 { cel: -10000; }
-        frame 35 { x: 236.300003; y: 210.600006; scale-x: 0.915000021; scale-y: 0.499000013; cel: 0; image: IMAGE_REANIM_STORE_SPEECHBUBBLE2; }
+        frame 35 { x: 236.3; y: 210.6; scale-x: 0.915; scale-y: 0.499; cel: 0; image: IMAGE_REANIM_STORE_SPEECHBUBBLE2; }
         frame 36 { x: -10000; y: -10000; scale-x: -10000; scale-y: -10000; cel: -10000; image: none; }
         frame 44 { cel: -1; }
         frame 45 { cel: -10000; }
@@ -193,7 +193,7 @@ export component Credits_WeAreTheUndead {
         frame-count: 88;
         frame 0 { cel: -1; }
         frame 1 { cel: -10000; }
-        frame 35 { x: 368; y: 231.100006; scale-x: 0.800000012; scale-y: 0.800000012; cel: 0; font: "FONT_BRIANNETOD32"; text: "We are the undead"; }
+        frame 35 { x: 368; y: 231.1; scale-x: 0.8; scale-y: 0.8; cel: 0; font: "FONT_BRIANNETOD32"; text: "We are the undead"; }
         frame 36 { x: -10000; y: -10000; scale-x: -10000; scale-y: -10000; cel: -10000; font: none; text: ""; }
         frame 44 { cel: -1; }
         frame 45 { cel: -10000; }
@@ -205,7 +205,7 @@ export component Credits_WeAreTheUndead {
         frame-count: 88;
         frame 0 { cel: -1; }
         frame 1 { cel: -10000; }
-        frame 41 { x: 492.299988; y: 302.399994; scale-x: 1.079; scale-y: 0.421999991; cel: 0; image: IMAGE_REANIM_STORE_SPEECHBUBBLE; }
+        frame 41 { x: 492.3; y: 302.4; scale-x: 1.079; scale-y: 0.422; cel: 0; image: IMAGE_REANIM_STORE_SPEECHBUBBLE; }
         frame 42 { x: -10000; y: -10000; scale-x: -10000; scale-y: -10000; cel: -10000; image: none; }
         frame 44 { cel: -1; }
         frame 45 { cel: -10000; }
@@ -217,7 +217,7 @@ export component Credits_WeAreTheUndead {
         frame-count: 88;
         frame 0 { cel: -1; }
         frame 1 { cel: -10000; }
-        frame 41 { x: 647.099976; y: 318; scale-x: 0.800000012; scale-y: 0.800000012; cel: 0; font: "FONT_BRIANNETOD32"; text: "We are the undead"; }
+        frame 41 { x: 647.1; y: 318; scale-x: 0.8; scale-y: 0.8; cel: 0; font: "FONT_BRIANNETOD32"; text: "We are the undead"; }
         frame 42 { x: -10000; y: -10000; scale-x: -10000; scale-y: -10000; cel: -10000; font: none; text: ""; }
         frame 44 { cel: -1; }
         frame 45 { cel: -10000; }
@@ -229,18 +229,18 @@ export component Credits_WeAreTheUndead {
         frame-count: 88;
         frame 0 { cel: -1; }
         frame 1 { cel: -10000; }
-        frame 25 { x: 109.199997; y: 613.799988; scale-x: 0.800000012; scale-y: 0.800000012; cel: 0; image: IMAGE_REANIM_CREDITS_WEARETHEUNDEAD; }
-        frame 26 { x: 90.0999985; y: 576.099976; scale-x: 0.850000024; scale-y: 0.850000024; cel: -10000; image: none; }
-        frame 27 { x: 70.8000031; y: 538.5; scale-x: 0.899999976; scale-y: 0.899999976; }
-        frame 28 { x: 51.7000008; y: 500.799988; scale-x: 0.949999988; scale-y: 0.949999988; }
+        frame 25 { x: 109.2; y: 613.8; scale-x: 0.8; scale-y: 0.8; cel: 0; image: IMAGE_REANIM_CREDITS_WEARETHEUNDEAD; }
+        frame 26 { x: 90.1; y: 576.1; scale-x: 0.85; scale-y: 0.85; cel: -10000; image: none; }
+        frame 27 { x: 70.8; y: 538.5; scale-x: 0.9; scale-y: 0.9; }
+        frame 28 { x: 51.7; y: 500.8; scale-x: 0.95; scale-y: 0.95; }
         frame 29 { x: 32.5; y: 463; scale-x: 1; scale-y: 1; }
         frame 30 { x: -10000; y: -10000; scale-x: -10000; scale-y: -10000; }
         frame 44 { cel: -1; }
         frame 45 { cel: -10000; }
-        frame 69 { x: 109.199997; y: 613.799988; scale-x: 0.800000012; scale-y: 0.800000012; cel: 0; }
-        frame 70 { x: 90.0999985; y: 576.099976; scale-x: 0.850000024; scale-y: 0.850000024; cel: -10000; }
-        frame 71 { x: 70.8000031; y: 538.5; scale-x: 0.899999976; scale-y: 0.899999976; }
-        frame 72 { x: 51.7000008; y: 500.799988; scale-x: 0.949999988; scale-y: 0.949999988; }
+        frame 69 { x: 109.2; y: 613.8; scale-x: 0.8; scale-y: 0.8; cel: 0; }
+        frame 70 { x: 90.1; y: 576.1; scale-x: 0.85; scale-y: 0.85; cel: -10000; }
+        frame 71 { x: 70.8; y: 538.5; scale-x: 0.9; scale-y: 0.9; }
+        frame 72 { x: 51.7; y: 500.8; scale-x: 0.95; scale-y: 0.95; }
         frame 73 { x: 32.5; y: 463; scale-x: 1; scale-y: 1; }
         frame 74 { x: -10000; y: -10000; scale-x: -10000; scale-y: -10000; }
     }

@@ -14,6 +14,7 @@ using namespace Sexy;
 
 class Reanimation;
 class TodParticleSystem;
+enum class ReanimTimeDomain : std::uint32_t;
 
 class AttachEffect
 {
@@ -37,6 +38,7 @@ public:
     ~Attachment();
 
     void                    Update();
+    void                    UpdateAt(std::int64_t nowNs, ReanimTimeDomain domain);
     void                    SetPosition(const SexyVector2& thePosition);
     void                    SetMatrix(const SexyTransform2D& theMatrix);
     void                    OverrideColor(const Color& theColor);
@@ -55,7 +57,9 @@ AttachEffect*               AttachParticle(AttachmentID& theAttachmentID, TodPar
 /*inline*/ void             AttachmentOverrideColor(AttachmentID& theAttachmentID, const Color& theColor);
 /*inline*/ void             AttachmentOverrideScale(AttachmentID& theAttachmentID, float theScale);
 /*inline*/ void             AttachmentUpdateAndMove(AttachmentID& theAttachmentID, float theX, float theY);
+void                        AttachmentUpdateAndMoveAt(AttachmentID& theAttachmentID, float theX, float theY, std::int64_t nowNs, ReanimTimeDomain domain);
 /*inline*/ void             AttachmentUpdateAndSetMatrix(AttachmentID& theAttachmentID, SexyTransform2D& theMatrix);
+void                        AttachmentUpdateAndSetMatrixAt(AttachmentID& theAttachmentID, SexyTransform2D& theMatrix, std::int64_t nowNs, ReanimTimeDomain domain);
 /*inline*/ void             AttachmentDraw(AttachmentID& theAttachmentID, Graphics* g, bool theParentHidden);
 /*inline*/ void             AttachmentDetach(AttachmentID& theAttachmentID);
 /*inline*/ void             AttachmentDetachCrossFadeParticleType(AttachmentID& theAttachmentID, ParticleEffect theParticleEffect);

@@ -133,7 +133,7 @@ void ReanimatorCache::DrawReanimatorFrame(Graphics* g, float thePosX, float theP
 	}
 	else if (theReanimationType == ReanimationType::REANIM_SUNFLOWER)
 	{
-		aReanim.mAnimTime = 0.15f;
+		aReanim.Seek(150);
 	}
 	aReanim.AssignRenderGroupToTrack(ReanimTrackId::anim_waterline, RENDER_GROUP_HIDDEN);
 

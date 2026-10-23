@@ -28,6 +28,9 @@
 #include <string>
 #include <thread>
 #include <vector>
+#include <cmath>
+#include <random>
+#include "ActorFloatRuntimeChecks.h"
 
 // Replace only the real game's entry point; all application/rendering objects
 // and generated definition objects come from the existing production build.
@@ -156,7 +159,7 @@ struct StaticSnapshot
     }
     StaticSnapshot()
     {
-        static_assert(sizeof(FloatParameterTrackNode) == 28);
+        static_assert(sizeof(FloatParameterTrackNode) == 24);
         Add(Definitions::Reanimations, Definitions::ReanimationCount, "reanimation roots");
         Add(Definitions::Particles, Definitions::ParticleCount, "particle roots and name lookup");
         Add(Definitions::Projectiles.mProjectiles.data(), 14, "projectile visuals");
@@ -442,6 +445,193 @@ void RealConsumers(int reanimationIndex, int particleIndex)
         "Real particle system did not borrow the static emitter backing");
 }
 
+void ReanimationIntegerPlayback()
+{
+    using I = std::int64_t;
+    const auto initialize = [](Reanimation& animation, ReanimLoopType loop, float rate) {
+        animation.ReanimationInitializeType(0, 0, ReanimationType::REANIM_STINKY);
+        animation.PlayReanim(ReanimTrackId::anim_crawl, loop, 0, rate);
+        animation.Seek(337);
+    };
+    for (const auto loop : {ReanimLoopType::REANIM_LOOP, ReanimLoopType::REANIM_LOOP_FULL_LAST_FRAME})
+    for (const auto rate : {13.3072289f, -13.3072289f, 700.001f})
+    {
+        constexpr I total = 13'781'234'567;
+        Reanimation reference;
+        initialize(reference, loop, rate);
+        const auto rootOrigin = reference.RootMotion(ReanimTrackId::_ground, 15.0f);
+        const auto clippedOrigin = reference.RootMotionClamped(ReanimTrackId::_ground, 15.0f, 50.0f);
+        const auto future = reference.RootMotion(ReanimTrackId::_ground, 15.0f, total);
+        reference.Advance(total);
+        const auto expected = reference.SamplePlayback();
+        Require(reference.RootMotion(ReanimTrackId::_ground, 15.0f) == future,
+            "Production future root sample differs from actual elapsed playback");
+        const auto analytic = [&reference, loop](bool clipped) {
+            const auto position = reference.SamplePlayback();
+            const auto* keys = reference.mDefinition->mTracks.tracks[
+                reference.FindTrackIndex(ReanimTrackId::_ground)].mTransforms.mTransforms;
+            const int count = reference.mFrameCount;
+            const int intervals = loop == ReanimLoopType::REANIM_LOOP_FULL_LAST_FRAME ? count : count - 1;
+            const long double source = static_cast<long double>(position.phaseNs) * intervals / reference.mPeriodNs;
+            const int current = int(source);
+            const long double seconds = static_cast<long double>(reference.mPeriodNs) / intervals / 1e9L;
+            long double cycle = 0, partial = 0;
+            for (int i = 0; i < intervals; ++i)
+            {
+                const auto delta = (static_cast<long double>(
+                    keys[reference.mFrameStart + std::min(i + 1, count - 1)].mTransX) -
+                    keys[reference.mFrameStart + i].mTransX);
+                const long double velocity = delta * static_cast<long double>(count) * 15 / intervals / seconds;
+                const long double distance = (clipped ? std::max(velocity, 50.0L) : velocity) * seconds;
+                cycle += distance;
+                if (i < current) partial += distance;
+                else if (i == current) partial += distance * (source - current);
+            }
+            return position.cycles * cycle + partial;
+        };
+        const auto checkAnalytic = [](double actual, long double integral) {
+            Require(std::fabs(static_cast<long double>(actual) - integral) <=
+                1e-9L * (1 + std::fabs(integral)),
+                "Production root differs from independently integrated source intervals");
+        };
+        checkAnalytic(reference.RootMotion(ReanimTrackId::_ground, 15.0f), analytic(false));
+        checkAnalytic(reference.RootMotionClamped(ReanimTrackId::_ground, 15.0f, 50.0f), analytic(true));
+        for (const int frequency : {30, 60, 100, 144, 200, 240, 1000, 0})
+        {
+            Reanimation animation;
+            initialize(animation, loop, rate);
+            I elapsed = 0, events = 0;
+            double lastRoot = rootOrigin, lastClipped = clippedOrigin;
+            std::mt19937_64 random(0x7181);
+            for (I n = 1; elapsed < total; ++n)
+            {
+                const I next = frequency ? std::min(total, n * 1'000'000'000 / frequency) :
+                    std::min(total, elapsed + I(random() % 71'000'003 + 1));
+                animation.Advance(next - elapsed);
+                elapsed = next;
+                lastRoot = animation.RootMotion(ReanimTrackId::_ground, 15.0f);
+                lastClipped = animation.RootMotionClamped(ReanimTrackId::_ground, 15.0f, 50.0f);
+                events += animation.TimedEventCount(2, 5);
+            }
+            const auto actual = animation.SamplePlayback();
+            Require(actual.phaseNs == expected.phaseNs && actual.cycles == expected.cycles &&
+                animation.mLastUpdateTimeNs == total && animation.mLoopCount == reference.mLoopCount,
+                "Production elapsed playback depends on outer update partition");
+            Require(lastRoot == future && lastClipped ==
+                reference.RootMotionClamped(ReanimTrackId::_ground, 15.0f, 50.0f),
+                "Production root movement depends on outer update partition");
+            Require(events == reference.TimedEventCount(2, 5),
+                "Production event multiplicity depends on outer update partition");
+        }
+        const auto generation = reference.mPlaybackGeneration;
+        reference.ApplyRate(0);
+        const auto paused = reference.SamplePlayback();
+        reference.Advance(7'000'000'001);
+        Require(reference.SamplePlayback().phaseNs == paused.phaseNs &&
+            reference.SamplePlayback().cycles == paused.cycles, "Production pause moved phase");
+        const auto oldPeriod = reference.mPeriodNs;
+        reference.ApplyRate(17.003f);
+        const auto resumed = reference.SamplePlayback();
+        Require(resumed.phaseNs == ReanimClock::SignedMulDiv(paused.phaseNs, reference.mPeriodNs, oldPeriod) &&
+            resumed.cycles == paused.cycles && reference.mPlaybackGeneration == generation,
+            "Production rate change reset playback or discarded whole phase");
+        reference.ApplyRate(-17.003f);
+        Require(reference.SamplePlayback().phaseNs == resumed.phaseNs,
+            "Production reverse-rate switch reset phase");
+    }
+    Reanimation held;
+    initialize(held, ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD, 12.0f);
+    held.Advance(90'000'000'000);
+    Require(held.SamplePlayback().phaseNs == held.mPeriodNs && held.mLoopCount == 1 && !held.mDead,
+        "Production hold failed to clamp at end");
+    Reanimation synchronized;
+    initialize(synchronized, ReanimLoopType::REANIM_LOOP, 6.0f);
+    synchronized.SynchronizePhase(held);
+    Require(synchronized.SamplePlayback().phaseNs == synchronized.mPeriodNs,
+        "Production synchronized phase lost the held final frame");
+    Reanimation mode;
+    initialize(mode, ReanimLoopType::REANIM_LOOP, 13.3072289f);
+    mode.Advance(mode.mPeriodNs * 17 + mode.mPeriodNs / 3);
+    const auto original = mode.SamplePlayback();
+    const auto generation = mode.mPlaybackGeneration;
+    mode.ChangeLoopType(ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD);
+    Require(mode.SamplePlayback().phaseNs == original.phaseNs && mode.SamplePlayback().cycles == 0 &&
+        mode.mLoopCount == 0 && !mode.mHasLastFrame && mode.mPlaybackGeneration == generation + 1,
+        "Production mode change retained historical cycles or reset phase");
+    mode.Advance(17);
+    const auto startTime = mode.mStartTimeNs;
+    mode.ChangeLoopType(ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD);
+    Require(mode.mStartTimeNs == startTime && mode.mPlaybackGeneration == generation + 1,
+        "Unchanged production mode rebased playback");
+    mode.Advance(mode.mPeriodNs);
+    Require(mode.SamplePlayback().phaseNs == mode.mPeriodNs && mode.mLoopCount == 1,
+        "Production mode change did not finish from preserved phase");
+    mode.ChangeLoopType(ReanimLoopType::REANIM_LOOP_FULL_LAST_FRAME);
+    Require(mode.SamplePlayback().phaseNs == mode.mPeriodNs,
+        "Production mode change discarded held endpoint");
+    mode.Advance(1);
+    Require(mode.SamplePlayback().phaseNs == 1 && mode.mLoopCount == 1,
+        "Production held endpoint did not wrap in the new loop mode");
+    // Zombie actions read events before UpdateReanim consumes the published
+    // clock. A later query must not include the preceding update's interval.
+    ReanimationHolder clocks;
+    for (const auto domain : {ReanimTimeDomain::Battle, ReanimTimeDomain::Visual})
+    for (const float rate : {13.3072289f, -13.3072289f})
+    {
+        Reanimation events;
+        events.mReanimationHolder = &clocks;
+        events.mTimeDomain = domain;
+        auto& now = domain == ReanimTimeDomain::Battle ? clocks.mBattleTimeNs : clocks.mVisualTimeNs;
+        now = 123'456'789'000;
+        initialize(events, ReanimLoopType::REANIM_LOOP, rate);
+        events.Seek(rate > 0 ? 0 : 800);
+        const I origin = now, period = events.mPeriodNs;
+        const I threshold = rate > 0 ? 400 : 700;
+        now = origin + period / 2;
+        events.UpdateAt(now);
+        Require(events.TimedEventCount(threshold, 1000) == (rate > 0 ? 1 : -1),
+            "Production published-clock event setup did not cross its threshold");
+        now = origin + period * 3 / 5;
+        Require(events.TimedEventCount(threshold, 1000) == 0 &&
+            !events.ShouldTriggerTimedEvent(static_cast<float>(threshold) / 1000),
+            "Production event query before UpdateAt repeated the preceding interval");
+        events.UpdateAt(now);
+        Require(events.TimedEventCount(threshold, 1000) == 0,
+            "Production event interval changed after consuming the published clock");
+
+        events.ApplyRate(13.3072289f);
+        events.Seek(0);
+        const I rateStart = now, originalPeriod = events.mPeriodNs;
+        now = rateStart + originalPeriod / 2;
+        events.ApplyRate(6.65361445f);
+        Require(events.TimedEventCount(2, 5) == 1,
+            "Production rate change discarded the consumed event interval");
+        events.UpdateAt(now);
+        Require(events.TimedEventCount(2, 5) == 1,
+            "Production same-time UpdateAt discarded the rate-change event interval");
+        now += events.mPeriodNs / 10;
+        Require(events.TimedEventCount(2, 5) == 0,
+            "Production pre-update event query repeated a rate-change interval");
+        events.UpdateAt(now);
+        events.Seek(0);
+        now += events.mPeriodNs / 2;
+        events.ApplyRate(0);
+        Require(events.TimedEventCount(2, 5) == 1,
+            "Production pause discarded the consumed event interval");
+        events.UpdateAt(now);
+        Require(events.TimedEventCount(2, 5) == 1,
+            "Production same-time pause update discarded its event interval");
+        now += events.mPeriodNs;
+        Require(events.TimedEventCount(2, 5) == 0,
+            "Production pre-update paused query repeated the pause event interval");
+        events.UpdateAt(now);
+        Require(events.TimedEventCount(2, 5) == 0,
+            "Production paused update repeated the pause event interval");
+    }
+    std::cout << "PASS production reanimation integer playback, original-speed roots, clipped roots, "
+        "rate continuity, hold, synchronization, and partition-independent events\n";
+}
+
 void PrepareResources(TestApp& app)
 {
     Require(app.mResourceManager->ParseResourcesFile("compiled/resources.compiled"),
@@ -451,10 +641,23 @@ void PrepareResources(TestApp& app)
 void Lifecycle(TestApp& app, const StaticSnapshot& snapshot, int reanimationIndex, int particleIndex)
 {
     PrepareResources(app);
+    std::cerr << "PASS lifecycle resource plans\n";
     for (int repeat = 0; repeat < 2; ++repeat)
     {
         LoadAll(app);
+        std::cerr << "PASS lifecycle definitions loaded: repeat " << repeat << '\n';
+        ReanimationIntegerPlayback();
+        std::cerr << "PASS lifecycle reanimation playback\n";
+        // Actor checks consume then release the one-shot resource plans needed
+        // by the real Board constructor. Their own schedules cover repeated
+        // actors; the outer loop separately exercises definition reloads.
+        if (repeat == 0)
+        {
+            ActorFloatRuntime::Check(app);
+            std::cerr << "PASS lifecycle actor coordinates\n";
+        }
         RealConsumers(reanimationIndex, particleIndex);
+        std::cerr << "PASS lifecycle real consumers\n";
         snapshot.Check();
         auto& reanimation = Definitions::Reanimations[reanimationIndex];
         auto& particle = Definitions::Particles[particleIndex];

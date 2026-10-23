@@ -23,9 +23,6 @@ public:
 class Projectile : public GameObject
 {
 public:
-    int                     mFrame;                 //+0x24
-    int                     mNumFrames;             //+0x28
-    Sexy::TimeCounter                     mAnimCounter;           //+0x2C
     float                   mPosX;                  //+0x30
     float                   mPosY;                  //+0x34
     float                   mPosZ;                  //+0x38
@@ -35,11 +32,15 @@ public:
     float                   mAccZ;                  //+0x48
     float                   mShadowY;               //+0x4C
     bool                    mDead;                  //+0x50
-    Sexy::TimeCounter                     mAnimTicksPerFrame;     //+0x54
     ProjectileMotion        mMotionType;            //+0x58
     ProjectileType          mProjectileType;        //+0x5C
-    Sexy::TimeCounter                     mProjectileAge;         //+0x60
-    Sexy::TimeCounter                     mClickBackoffCounter;   //+0x64
+    std::int64_t            mCreationTimeNs;
+    std::int64_t            mMotionOriginTimeNs;
+    float                   mOriginX;
+    float                   mOriginY;
+    float                   mOriginZ;
+    float                   mOriginRotation;
+    float                   mOriginShadowY;
     float                   mRotation;              //+0x68
     float                   mRotationSpeed;         //+0x6C
     bool                    mOnHighGround;          //+0x70

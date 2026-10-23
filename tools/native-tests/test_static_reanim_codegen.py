@@ -11,10 +11,10 @@ import static_reanim_codegen as static
 import test_reanim_variants as fixtures
 
 
-def record(frames, resources, *, mode=1, segments=(), track=7):
-    body = struct.pack("<4IfI", 0x36544449, 11, 0, 33, 12.0, 1)
+def record(frames, resources, *, mode=1, segments=(), track=7, source_float=False):
+    body = struct.pack("<4IfI", 0x46544449 if source_float else 0x36544449, 11, 0, 33, 12.0, 1)
     body += struct.pack("<4I", track, len(frames), 32, mode)
-    body += b"".join(struct.pack("<8f", *frame) for frame in frames)
+    body += b"".join(struct.pack("<6fif" if source_float else "<8f", *frame) for frame in frames)
     for slot, font, text in resources:
         body += struct.pack("<2I", slot, font)
         if mode:
@@ -48,14 +48,28 @@ class StaticReanimTests(unittest.TestCase):
         self.assertEqual(output["summary"]["frames"], 4)
         self.assertEqual(output, self.generate(data))
 
-    def test_placeholders_inherit_caption_and_font_with_exact_float_roundtrip(self):
+    def test_float_source_record_preserves_submilli_values_and_full_integer_cel(self):
+        values = (.000123456789, -.123456789, 29.3125, 25.59375, .791999996, 1, 2147483647, .123456789)
+        data = record([values], [(0, 0, b"")], mode=0, source_float=True)
+        parsed = static._parse("compiled/reanim/root.compiled", data, 1)
+        expected = struct.unpack("<6fif", struct.pack("<6fif", *values))
+        self.assertEqual(parsed["tracks"][0]["frames"][0]["values"], expected)
+        source = self.generate(data)["files"]["ReanimData00.cpp"].decode()
+        self.assertIn("2147483647", source)
+        self.assertIn("29.3125f, 25.59375f", source)
+        self.assertIn("0.00012345679f", source)
+        for bad in (float("nan"), float("inf")):
+            with self.subTest(value=bad), self.assertRaises(ValueError):
+                self.generate(record([(bad, *values[1:])], [(0, 0, b"")], mode=0, source_float=True))
+
+    def test_placeholders_inherit_caption_and_font_with_float_roundtrip(self):
         missing = (-10000.0,) * 8
         special = struct.unpack("<f", bytes.fromhex("0100803f"))[0]
         data = record([missing, (special, *missing[1:]), missing],
                       [(0, 0, b""), (0, 1, "字幕".encode()), (0, 0, b"")])
         output = self.generate(data)
         source = output["files"]["ReanimData00.cpp"].decode()
-        self.assertIn("{0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f, 0u, nullptr, nullptr}", source)
+        self.assertIn("{0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0, 1.0f, 0u, nullptr, nullptr}", source)
         self.assertEqual(source.count("1.00000012f"), 2)
         self.assertEqual(source.count('"\\xe5\\xad\\x97\\xe5\\xb9\\x95"'), 2)
         self.assertEqual(output["font_bindings"],

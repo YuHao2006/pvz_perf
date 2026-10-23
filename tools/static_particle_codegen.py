@@ -4,6 +4,7 @@ from __future__ import annotations
 import math
 from pathlib import Path
 import re
+from fractions import Fraction
 
 import build_numeric_runtime_pak64 as pak
 from static_definition_codegen import array, cpp_float
@@ -53,15 +54,21 @@ def _parse(path: str, data: bytes, name_count: int, name_hash: int) -> dict:
                 f"Static particles require PAV6: {path}")
     reader = pak.Reader(data[20:atlas["appearance_offset"]])
     magic, total, hash_, count, body_size = reader.unpack("<5I")
-    pak.require(magic == 0x36524449 and hash_ == name_hash
+    authored = magic == 0x46524449
+    pak.require(magic in (0x36524449, 0x46524449) and hash_ == name_hash
                 and count == atlas["emitter_count"] and total == atlas["slot_count"],
                 f"Invalid static IDR6 header: {path}")
     body = pak.Reader(reader.take(body_size))
 
     def track() -> list[tuple]:
-        nodes = [body.unpack("<3f2I") for _ in range(body.count(20, 100000))]
-        pak.require(all(all(math.isfinite(v) for v in node[:3])
-                        and node[3] < len(CURVES) and node[4] < len(CURVES)
+        nodes = [body.unpack("<2i2f2I" if authored else "<3f2I")
+                 for _ in range(body.count(24 if authored else 20, 100000))]
+        if not authored:
+            nodes = [(*Fraction(node[0]).limit_denominator(100000).as_integer_ratio(),
+                      node[1], node[2], *node[3:])
+                     for node in nodes]
+        pak.require(all(node[1] > 0 and math.isfinite(node[2]) and math.isfinite(node[3])
+                        and node[4] < len(CURVES) and node[5] < len(CURVES)
                         for node in nodes), "Invalid static IDR6 track node")
         return nodes
 
@@ -85,9 +92,9 @@ def _parse(path: str, data: bytes, name_count: int, name_hash: int) -> dict:
         tracks.update(zip(PARTICLE_TRACKS, (track() for _ in PARTICLE_TRACKS)))
         for name, value in DEFAULTS.items():
             if not tracks[name]:
-                tracks[name] = [(0.0, value, value, 0, 1)]
+                tracks[name] = [(0, 1, value, value, 0, 1)]
         mask = sum(1 << bit for bit, name in enumerate(RENDER_TRACKS)
-                   if tracks[name] and CURVES[tracks[name][0][3]] != "Constant")
+                   if tracks[name] and CURVES[tracks[name][0][4]] != "Constant")
         emitters.append({"offset": offset, "frames": frames, "image_frames": image_frames,
                          "animated": animated, "flags": flags, "type": type_,
                          "tracks": tracks, "fields": fields, "mask": mask})
@@ -138,8 +145,8 @@ def generate(config, records: dict[str, bytes]) -> dict:
 
         def emit_track(nodes: list[tuple]) -> str:
             nonlocal node_number
-            values = ["{" + ", ".join((*map(cpp_float, node[:3]),
-                       "Curves::" + CURVES[node[3]], "Curves::" + CURVES[node[4]])) + "}"
+            values = ["{" + ", ".join(cpp_float(value) if i in (2, 3) else str(value)
+                                     for i, value in enumerate(node)) + "}"
                       for node in nodes]
             pointer = array(declarations, code, "FloatParameterTrackNode",
                             f"{prefix}Nodes{node_number}", values)

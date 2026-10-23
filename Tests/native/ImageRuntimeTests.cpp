@@ -482,7 +482,7 @@ void ReanimationAppearancePixels(SexyAppBase& app)
     const int stem=lookup.FindTrackIndex(ReanimTrackId::Garlic_stem1);
     const int trackCount=std::max(face,stem)+1;
     std::vector<ReanimatorTrack> tracks(trackCount);
-    std::vector<ReanimatorTransform> transforms(trackCount);
+    std::vector<ReanimatorSourceTransform> transforms(trackCount);
     for (int t=0;t<trackCount;++t)
     {
         auto& transform=transforms[t];
@@ -830,7 +830,6 @@ void ProjectileAtlasPixels(LawnApp& app)
     projectile.mShadowY=130;
     projectile.mOnHighGround=false;
     projectile.mRow=0;
-    projectile.mFrame=0;
     constexpr int width=360,height=300;
     Image* target=render.CreateRenderImage(width,height);
     struct FreeTarget { Image* image; ~FreeTarget() { delete image; } } freeTarget{target};
@@ -922,7 +921,7 @@ void ProjectileAtlasPixels(LawnApp& app)
                 std::cerr<<label<<" type="<<int(projectile.mProjectileType)
                     <<" rotation="<<projectile.mRotation
                     <<" motion="<<int(projectile.mMotionType)
-                    <<" age="<<projectile.mProjectileAge
+                    <<" creationTimeNs="<<projectile.mCreationTimeNs
                     <<" pixel="<<i%width<<","<<i/width
                     <<" actual="<<std::hex<<result.pixels[i]
                     <<" expected="<<expected.pixels[i]<<std::dec<<'\n';
@@ -931,7 +930,7 @@ void ProjectileAtlasPixels(LawnApp& app)
         if (boundaryDifferences)
             std::cout<<"Nearest texel boundaries type="<<int(projectile.mProjectileType)
                 <<" rotation="<<projectile.mRotation<<" motion="<<int(projectile.mMotionType)
-                <<" age="<<projectile.mProjectileAge<<" pixels="<<boundaryDifferences
+                <<" creationTimeNs="<<projectile.mCreationTimeNs<<" pixels="<<boundaryDifferences
                 <<" maxChannelDelta="<<maximumDifference
                 <<" (all match adjacent CPU texels; all other pixels exact within2)\n";
     };
@@ -945,7 +944,8 @@ void ProjectileAtlasPixels(LawnApp& app)
             for (const bool rotated:{false,true})
                 for (const bool mirror:{false,true})
                 {
-                    projectile.mProjectileAge=age;
+                    projectile.mCreationTimeNs=
+                        static_cast<std::int64_t>(board.mMainCounter.mNanoseconds)-age*10'000'000LL;
                     projectile.mRotation=rotated ? 0.37f : 0.0f;
                     projectile.mMotionType=mirror ? ProjectileMotion::MOTION_BEE_BACKWARDS :
                         ProjectileMotion::MOTION_STRAIGHT;
@@ -1447,9 +1447,10 @@ void ParticleDefinitionsAndFrames(SexyAppBase& app, const char* pakPath)
             Require(draw(false,0)==last,"Particle fixed random frame was not retained");
             const int animated=glasses.mAnimated;
             glasses.mAnimated=1;
-            particle.mParticleTimeValue=0.99f;
+            particle.mParticleDuration=101;
+            particle.mParticleSampleAgeNs=990'000'000;
             Require(draw(false,0)==last,"Particle lifetime animation selected the wrong frame");
-            particle.mParticleTimeValue=0;
+            particle.mParticleSampleAgeNs=0;
             Require(draw(false,0)==first,"Particle lifetime animation did not return to frame zero");
             glasses.mAnimated=animated;
         }

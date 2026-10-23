@@ -374,10 +374,6 @@ if(BUILD_TESTING AND PVZ_BUILD_LEGACY_GAME)
         COMMAND "${Python3_EXECUTABLE}" -B "${CMAKE_SOURCE_DIR}/tools/native-tests/test_portal_relocation.py")
     set_tests_properties(portal_relocation PROPERTIES
         ENVIRONMENT "PVZ_TEST_CXX=${CMAKE_CXX_COMPILER}")
-    add_test(NAME bowling_timing
-        COMMAND "${Python3_EXECUTABLE}" -B "${CMAKE_SOURCE_DIR}/tools/native-tests/test_bowling_timing.py")
-    set_tests_properties(bowling_timing PROPERTIES
-        ENVIRONMENT "PVZ_TEST_CXX=${CMAKE_CXX_COMPILER}")
     add_test(NAME resource_build_config
         COMMAND "${Python3_EXECUTABLE}" -B "${CMAKE_SOURCE_DIR}/tools/native-tests/test_resource_build_config.py")
     add_test(NAME resource_load_plan
@@ -400,6 +396,10 @@ if(BUILD_TESTING AND PVZ_BUILD_LEGACY_GAME)
         COMMAND "${Python3_EXECUTABLE}" -B "${CMAKE_SOURCE_DIR}/tools/native-tests/test_static_reanim_codegen.py")
     add_test(NAME static_particle_codegen
         COMMAND "${Python3_EXECUTABLE}" -B "${CMAKE_SOURCE_DIR}/tools/native-tests/test_static_particle_codegen.py")
+    add_test(NAME v7_definition_numbers
+        COMMAND "${Python3_EXECUTABLE}" -B "${CMAKE_SOURCE_DIR}/tools/native-tests/test_v7_definition_numbers.py")
+    set_tests_properties(v7_definition_numbers PROPERTIES
+        ENVIRONMENT "PVZ_RESOURCE_COMPILER=$<TARGET_FILE:reanimc>")
     add_test(NAME program_images
         COMMAND "${Python3_EXECUTABLE}" -B "${CMAKE_SOURCE_DIR}/tools/native-tests/test_program_images.py")
     add_test(NAME exact_atlas
@@ -446,6 +446,30 @@ if(BUILD_TESTING)
     target_link_libraries(pvz_frame_timing_tests PRIVATE pvz_source_headers)
     target_compile_features(pvz_frame_timing_tests PRIVATE cxx_std_23)
     add_test(NAME pvz_frame_timing COMMAND pvz_frame_timing_tests)
+    add_executable(pvz_reanim_clock_tests EXCLUDE_FROM_ALL Tests/native/ReanimClockTests.cpp)
+    target_compile_features(pvz_reanim_clock_tests PRIVATE cxx_std_23)
+    add_test(NAME pvz_reanim_clock COMMAND pvz_reanim_clock_tests)
+    add_executable(pvz_plant_launch_clock_tests EXCLUDE_FROM_ALL Tests/native/PlantLaunchClockTests.cpp)
+    target_compile_features(pvz_plant_launch_clock_tests PRIVATE cxx_std_23)
+    add_test(NAME pvz_plant_launch_clock COMMAND pvz_plant_launch_clock_tests)
+    add_executable(pvz_projectile_motion_tests EXCLUDE_FROM_ALL Tests/native/ProjectileMotionTests.cpp)
+    target_include_directories(pvz_projectile_motion_tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/pvzPerf")
+    target_compile_features(pvz_projectile_motion_tests PRIVATE cxx_std_23)
+    add_test(NAME pvz_projectile_motion COMMAND pvz_projectile_motion_tests)
+    add_executable(pvz_particle_v7_tests EXCLUDE_FROM_ALL
+        Tests/native/ParticleV7Tests.cpp
+        pvzPerf/Sexy.TodLib/TodParticle.cpp
+        pvzPerf/Sexy.TodLib/Definition.cpp
+        pvzPerf/SexyAppFramework/graphics/Color.cpp)
+    target_link_libraries(pvz_particle_v7_tests PRIVATE pvz_source_headers)
+    target_compile_features(pvz_particle_v7_tests PRIVATE cxx_std_23)
+    if(PVZ_RENDER_BACKEND STREQUAL "VULKAN")
+        find_package(Vulkan REQUIRED)
+        target_link_libraries(pvz_particle_v7_tests PRIVATE Vulkan::Headers)
+    else()
+        target_compile_definitions(pvz_particle_v7_tests PRIVATE "PVZ_GPU_${PVZ_RENDER_BACKEND}=1")
+    endif()
+    add_test(NAME pvz_particle_v7 COMMAND pvz_particle_v7_tests)
     add_executable(pvz_time_counter_save_tests EXCLUDE_FROM_ALL Tests/native/TimeCounterSaveTests.cpp
         pvzPerf/SexyAppFramework/graphics/Color.cpp)
     target_link_libraries(pvz_time_counter_save_tests PRIVATE pvz_source_headers)
@@ -461,6 +485,10 @@ if(BUILD_TESTING)
     target_link_libraries(pvz_dat64_nanosecond_tests PRIVATE pvz_source_headers)
     target_compile_features(pvz_dat64_nanosecond_tests PRIVATE cxx_std_23)
     add_test(NAME pvz_dat64_nanosecond COMMAND pvz_dat64_nanosecond_tests)
+    add_executable(pvz_v7_save_schema_tests EXCLUDE_FROM_ALL Tests/native/V7SaveSchemaTests.cpp)
+    target_link_libraries(pvz_v7_save_schema_tests PRIVATE pvz_source_headers)
+    target_compile_features(pvz_v7_save_schema_tests PRIVATE cxx_std_23)
+    add_test(NAME pvz_v7_save_schema COMMAND pvz_v7_save_schema_tests)
     if(WIN32)
         add_executable(pvz_windows_platform_tests EXCLUDE_FROM_ALL Tests/native/WindowsPlatformTests.cpp)
         target_link_libraries(pvz_windows_platform_tests PRIVATE pvz_source_headers user32)

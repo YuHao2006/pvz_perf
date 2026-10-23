@@ -144,7 +144,7 @@ void DefinitionUnbindAtlas(Sexy::GpuTexture*& texture)
 }
 
 //0x4448E0
-float FloatTrackEvaluate(FloatParameterTrack& theTrack, float theTimeValue, float theInterp)
+float FloatTrackEvaluate(const FloatParameterTrack& theTrack, double theTimeValue, float theInterp)
 {
     if (theTrack.mCountNodes == 0)
         return 0.0f;
@@ -152,48 +152,53 @@ float FloatTrackEvaluate(FloatParameterTrack& theTrack, float theTimeValue, floa
     // 常值轨快路：单节点 low==high 时，任何分布曲线在任何 t 下恒返 low
     //（Curves 族全部经 EvalFull(t,a,b,...)=a+(b-a)*warp(t) 或端点钳制，
     // a==b ⇒ 代数上逐位等于 low）——省一次间接调用，热路径常打。
-    if (theTrack.mCountNodes == 1 && theTrack.mNodes[0].mLowValue == theTrack.mNodes[0].mHighValue)
-        return theTrack.mNodes[0].mLowValue;
+    if (theTrack.mCountNodes == 1 && theTrack.mNodes[0].mLow == theTrack.mNodes[0].mHigh)
+        return theTrack.mNodes[0].mLow;
 
-    if (theTimeValue < theTrack.mNodes[0].mTime)  // 如果当前时间小于第一个节点的开始时间
-        return theTrack.mNodes[0].mDistributionEval(theInterp, theTrack.mNodes[0].mLowValue, theTrack.mNodes[0].mHighValue);
+    const auto time = [](const FloatParameterTrackNode& node) {
+        return static_cast<double>(node.mTimeNumerator) / node.mTimeDenominator;
+    };
+    const auto value = [theInterp](const FloatParameterTrackNode& node) {
+        return TodCurveResolveEval(node.mDistribution)(theInterp,
+            node.mLow, node.mHigh);
+    };
+    if (theTimeValue < time(theTrack.mNodes[0]))
+        return value(theTrack.mNodes[0]);
 
     for (int i = 1; i < theTrack.mCountNodes; i++)
     {
-        FloatParameterTrackNode* aNodeNxt = &theTrack.mNodes[i];
-        if (theTimeValue <= aNodeNxt->mTime)  // 寻找首个开始时间大于当前时间的节点
+        const FloatParameterTrackNode* aNodeNxt = &theTrack.mNodes[i];
+        if (theTimeValue <= time(*aNodeNxt))
         {
-            FloatParameterTrackNode* aNodeCur = &theTrack.mNodes[i - 1];
+            const FloatParameterTrackNode* aNodeCur = &theTrack.mNodes[i - 1];
             // 计算当前时间在〔当前节点至下一节点〕的过程中的进度
-            float aTimeFraction = (theTimeValue - aNodeCur->mTime) / (aNodeNxt->mTime - aNodeCur->mTime);
-            float aLeftValue = aNodeCur->mDistributionEval(theInterp, aNodeCur->mLowValue, aNodeCur->mHighValue);
-            float aRightValue = aNodeNxt->mDistributionEval(theInterp, aNodeNxt->mLowValue, aNodeNxt->mHighValue);
-            return aNodeCur->mCurveTypeEval(aTimeFraction, aLeftValue, aRightValue);
+            const double span = time(*aNodeNxt) - time(*aNodeCur);
+            const float aTimeFraction = span > 0.0
+                ? static_cast<float>((theTimeValue - time(*aNodeCur)) / span) : 1.0f;
+            return TodCurveResolveEval(aNodeCur->mCurveType)(aTimeFraction,
+                value(*aNodeCur), value(*aNodeNxt));
         }
     }
 
-    FloatParameterTrackNode* aLastNode = &theTrack.mNodes[theTrack.mCountNodes - 1];  // 如果当前时间大于最后一个节点的开始时间
-    return aLastNode->mDistributionEval(theInterp, aLastNode->mLowValue, aLastNode->mHighValue);
+    return value(theTrack.mNodes[theTrack.mCountNodes - 1]);
 }
 
 bool FloatTrackIsSet(const FloatParameterTrack& theTrack)
 {
-    // 默认轨=指针直比（生成的默认节点曲线恒为 TodCurveResolveEval(0)=
-    // Curves::Constant）。曲线定义唯一定义于 TodCommon.cpp——单一符号单一地址，
-    // 比较跨 TU 恒定，不做旗标兜底：若实现回迁头文件（inline 多副本），此处会
-    // 立刻误判、粒子消失，问题直接暴露。
-    // 槽 0 与 8 同指 Constant：残渣槽 8 节点全部 low=high=0（等价常量），语义不变。
-    return theTrack.mCountNodes != 0 && theTrack.mNodes[0].mCurveTypeEval != Curves::Constant;
+    // Constant marks an omitted/default track. Historical curve slot 8 aliases
+    // Constant too; retain the original default-track behavior for that slot.
+    return theTrack.mCountNodes != 0 && theTrack.mNodes[0].mCurveType != 0 &&
+        theTrack.mNodes[0].mCurveType != 8;
 }
 
 bool FloatTrackIsConstantZero(FloatParameterTrack& theTrack)
 {
     // 当轨道无节点，或仅存在一个节点且该节点的最大、最小值均为 0 时，认为该轨道上的值恒为零
-    return theTrack.mCountNodes == 0 || (theTrack.mCountNodes == 1 && theTrack.mNodes[0].mLowValue == 0.0f && theTrack.mNodes[0].mHighValue == 0.0f);
+    return theTrack.mCountNodes == 0 || (theTrack.mCountNodes == 1 && theTrack.mNodes[0].mLow == 0 && theTrack.mNodes[0].mHigh == 0);
 }
 
 //0x5167F0
-float FloatTrackEvaluateFromLastTime(FloatParameterTrack& theTrack, float theTimeValue, float theInterp)
+float FloatTrackEvaluateFromLastTime(const FloatParameterTrack& theTrack, double theTimeValue, float theInterp)
 {
     return theTimeValue < 0.0f ? 0.0f : FloatTrackEvaluate(theTrack, theTimeValue, theInterp);
 }

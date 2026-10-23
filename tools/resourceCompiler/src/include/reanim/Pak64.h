@@ -53,6 +53,7 @@ inline constexpr std::uint32_t kReanimSchemaHash = 166247922u;
 inline constexpr float kPlaceholder = -10000.0f;
 
 struct RawTransform final {
+    std::int32_t cel = -10000;
     float values[8] = {kPlaceholder, kPlaceholder, kPlaceholder, kPlaceholder,
                        kPlaceholder, kPlaceholder, kPlaceholder, kPlaceholder};
     std::string image;  // canonicalized: trimmed, prefix-uppercased

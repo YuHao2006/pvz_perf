@@ -51,6 +51,12 @@ void CheckRecord()
         nativeFields.emplace_back(offset, isUnsigned);
     });
     const auto fields = SaveTimeFields<T>();
+    if constexpr (std::is_same_v<T, Projectile>)
+    {
+        Require(nativeFields.empty() && fields.size() == 4,
+            "Projectile frozen timer projections were mistaken for native countdowns");
+        return;
+    }
     Require(nativeFields.size() == fields.size(), "Schema and native time inventory disagree");
     for (const auto& field : fields)
     {
@@ -70,6 +76,8 @@ void CheckRuntime()
     static_assert(sizeof(Sexy::UnsignedTimeCounter::Nanoseconds) == 8);
     static_assert(sizeof(Sexy::MillisecondCounter::Nanoseconds) == 8);
     static_assert(sizeof(Sexy::SecondCounter::Nanoseconds) == 8);
+    static_assert(std::is_same_v<decltype(Board::mMainCounter), Sexy::MonotonicTimeCounter>);
+    static_assert(std::is_same_v<decltype(Plant::mZenProductionCountdown), Sexy::TimeCounter>);
     for (const unsigned fps : {60u, 100u, 144u, 240u, 250u, 1000u})
     {
         Configure(fps);
@@ -169,6 +177,16 @@ void CheckRuntime()
             "Unsigned counter lost its legacy wrap period");
         ++wrapped;
         Require(wrapped.mNanoseconds == 0, "Unsigned counter failed to wrap to zero");
+        Sexy::MonotonicTimeCounter battle = 0;
+        battle.mNanoseconds = modulus - 1;
+        battle.mPreviousNanoseconds = battle.mNanoseconds;
+        ++battle;
+        Require(battle.mNanoseconds == modulus - 1 + Sexy::gUpdateIntervalNs,
+            "Battle clock wrapped at the legacy unsigned 32-bit tick boundary");
+        Sexy::MonotonicTimeCounter fromLongTicks = 4'294'967'297ULL;
+        Require(fromLongTicks.mNanoseconds == modulus + 10'000'000 &&
+            static_cast<std::uint64_t>(fromLongTicks) == 4'294'967'297ULL,
+            "Battle clock constructor or legacy-unit projection truncated its high tick bits");
         Sexy::SecondCounter seconds = 3;
         Sexy::MillisecondCounter milliseconds = 3;
         Require(seconds.mNanoseconds == 3'000'000'000LL &&
@@ -192,6 +210,22 @@ void CheckLiveSave()
     // These two particle record types have ordinary aggregate lifetimes, so
     // their actual save functions can run without constructing game/UI objects.
     T source{};
+    if constexpr (std::is_same_v<T, TodParticle>)
+    {
+        source.mParticleSampleAgeNs = 31'234'567;
+        source.mParticleLastSampleAgeNs = 21'234'567;
+        source.mAnimationElapsedNs = 123'456'789'012;
+        source.mAnimationSampleIntegral = 987'654'321;
+        source.mRandomSeed = 0x71234567U;
+    }
+    else if constexpr (std::is_same_v<T, TodParticleEmitter>)
+    {
+        source.mSystemSampleAgeNs = 34'567'891;
+        source.mSystemLastSampleAgeNs = 24'567'891;
+        source.mSpawnRemainder = 123'456'789'012;
+        source.mExternalTarget = {12.25f, -31.5f};
+        source.mExternalAppliedCenter = {-21.5f, 43.25f};
+    }
     const auto fields = SaveTimeFields<T>();
     std::uint64_t ordinal = 0;
     for (const auto& field : fields)
@@ -224,9 +258,54 @@ void CheckLiveSave()
 
 namespace
 {
+void CheckPlantDeadlineSave()
+{
+    static_assert(std::is_trivially_copyable_v<Plant>);
+    auto source = std::bit_cast<Plant>(std::array<std::byte, sizeof(Plant)>{});
+    source.mSeedType = SeedType::SEED_PEASHOOTER;
+    source.mState = PlantState::STATE_READY;
+    source.mLaunchClockSampleNs = 91'234'567'891;
+    source.mLaunchWindowStartNs = 91'230'000'003;
+    source.mNextLaunchTimeNs = source.mLaunchClockSampleNs + 217'123'456;
+    source.mZenProductionCountdown.mNanoseconds = 333'333'333;
+    const auto wire = WriteSaveRecord(source);
+    Require(wire.size() == SaveV2Size<Plant>() + 56 &&
+        V7SaveSchema::Time(wire, LevelSaveFormat::RecordKind::Plant, 100) == 217'123'456,
+        "Battle launch compatibility projection lost exact remaining nanoseconds");
+    const auto tail = std::span(wire).subspan(SaveV2Size<Plant>());
+    Require(V7SaveSchema::Read(tail, 32, 8) == std::uint64_t(source.mNextLaunchTimeNs) &&
+        V7SaveSchema::Read(tail, 40, 8) == std::uint64_t(source.mLaunchClockSampleNs) &&
+        V7SaveSchema::Read(tail, 48, 8) == std::uint64_t(source.mLaunchWindowStartNs) &&
+        tail.size() == 56,
+        "Native Plant deadline/cursor fields or compact tail differ from the frozen wire");
+    auto restored = std::bit_cast<Plant>(std::array<std::byte, sizeof(Plant)>{});
+    ReadSaveRecord(restored, wire.data());
+    Require(restored.mNextLaunchTimeNs == source.mNextLaunchTimeNs &&
+        restored.mLaunchClockSampleNs == source.mLaunchClockSampleNs &&
+        restored.mLaunchWindowStartNs == source.mLaunchWindowStartNs &&
+        WriteSaveRecord(restored) == wire,
+        "Real Plant record save/load changed absolute deadline or event cursor");
+    source.mState = PlantState::STATE_BOWLING_UP;
+    source.mZenProductionCountdown = 7;
+    const auto bowling = WriteSaveRecord(source);
+    Require(V7SaveSchema::Time(bowling, LevelSaveFormat::RecordKind::Plant, 100) == 70'000'000,
+        "Bowling compatibility projection serialized the launch deadline as its collision count");
+    ReadSaveRecord(restored, bowling.data());
+    Require(static_cast<int>(restored.mZenProductionCountdown) == 7,
+        "Bowling auxiliary count did not survive native save/load");
+    source.mState = PlantState::STATE_READY;
+    source.mNextLaunchTimeNs = source.mLaunchClockSampleNs - 123'456'789;
+    const auto overdue = WriteSaveRecord(source);
+    ReadSaveRecord(restored, overdue.data());
+    Require(restored.mNextLaunchTimeNs == source.mNextLaunchTimeNs &&
+        std::bit_cast<std::int64_t>(V7SaveSchema::Time(
+            overdue, LevelSaveFormat::RecordKind::Plant, 100)) == -123'456'789,
+        "Overdue launch deadline was clamped or wrapped during native save");
+}
+
 void CheckMusicFloatSave()
 {
-    static_assert(LevelSaveFormat::DAT64_VERSION == 3);
+    static_assert(LevelSaveFormat::DAT64_VERSION == 3 && LevelSaveFormat::DAT64_MINOR_VERSION == 3);
     static_assert(std::is_same_v<decltype(Music::mBaseBPM), float>);
     static_assert(std::is_same_v<decltype(Music::mBaseModSpeed), float>);
     static_assert(std::is_trivially_copyable_v<Music>);
@@ -271,8 +350,9 @@ void CheckBlendRegionSave()
 void CheckCatapultCycle()
 {
     using enum CatapultLoadState;
-    Require(SaveV2Size<Zombie>() == 436 && Dat64Layout<Zombie>::SlotSize() == 444,
-        "Catapult presentation changed the DAT64 v2 record");
+    Require(SaveV2Size<Zombie>() == 436 &&
+        Dat64Layout<Zombie>::SlotSize() == 444 + V7SaveSchema::Size(LevelSaveFormat::RecordKind::Zombie),
+        "Catapult presentation changed the frozen prefix or v3.3 motion tail");
     Require(CatapultCycle::Resolve(true, true, CatapultCycle::ProjectileEvent) == Loaded,
         "Projectile creation incorrectly released the carried ball early");
     Require(CatapultCycle::Resolve(true, true, 17.0f / 31.0f) == Released,
@@ -333,14 +413,16 @@ int main()
         CheckRecord<Reanimation>();
         CheckRecord<Attachment>();
         CheckRuntime();
+        CheckPlantDeadlineSave();
         CheckMusicFloatSave();
         CheckBlendRegionSave();
         CheckCatapultCycle();
         CheckLiveSave<TodParticle>();
         CheckLiveSave<TodParticleEmitter>();
         Configure(100);
-        std::cout << "PASS: 20 native save types, 134 exact 64-bit mappings; float music attributes; catapult cycle/recovery; six FPS settings, "
-            "nanosecond advancement, countdown expiry, periodic events, sentinels and unsigned wrap\n";
+        std::cout << "PASS: 20 native save types, frozen wire timer inventory with Projectile projections; float music attributes; catapult cycle/recovery; six FPS settings, "
+            "nanosecond advancement, countdown expiry, periodic events, sentinels, legacy unsigned wrap "
+            "and monotonic battle time beyond 2^32 ticks\n";
         return 0;
     }
     catch (const std::exception& error)

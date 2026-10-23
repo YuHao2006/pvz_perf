@@ -5,29 +5,72 @@ export component FireballTrail {
         images: ["particles/frames/zombie_boss_fireball_groundparticles_r0_c0.png","particles/frames/zombie_boss_fireball_groundparticles_r0_c1.png","particles/frames/zombie_boss_fireball_groundparticles_r0_c2.png","particles/frames/zombie_boss_fireball_groundparticles_r0_c3.png"];
         name: "Fireball_Trail_ground";
         imageFrames: 4;
-        spawnMinActive: 1;
-        spawnMaxLaunched: 1;
-        particleDuration: range { 500 600; }
-        particleAlpha: track { 0 1,5 1,95 0; }
-        particleScale: track { .1 [.5 1.1],20; }
+        animated: 0;
+        emitterType: Box;
+        spawnMinActive: nodes {
+            { time: 0; low: 1; high: 1; curve: Linear; distribution: Linear; }
+        }
+        spawnMaxLaunched: nodes {
+            { time: 0; low: 1; high: 1; curve: Linear; distribution: Linear; }
+        }
+        particleDuration: nodes {
+            { time: 0; low: 500; high: 600; curve: Linear; distribution: Linear; }
+        }
+        particleAlpha: nodes {
+            { time: 0; low: 0; high: 0; curve: Linear; distribution: Linear; }
+            { time: 0.05; low: 1; high: 1; curve: Linear; distribution: Linear; }
+            { time: 0.95; low: 1; high: 1; curve: Linear; distribution: Linear; }
+            { time: 1; low: 0; high: 0; curve: Linear; distribution: Linear; }
+        }
+        particleScale: nodes {
+            { time: 0; low: 0.1; high: 0.1; curve: Linear; distribution: Linear; }
+            { time: 0.2; low: 0.5; high: 1.1; curve: Linear; distribution: Linear; }
+        }
     }
     Emitter {
         image: "IMAGE_ZOMBIE_BOSS_FIREBALL_ADDITIVEPARTICLE";
         name: "Fireball_Trail_embers";
+        imageFrames: 1;
+        animated: 0;
         emitterType: Circle;
         additive: 1;
-        systemDuration: 400;
-        spawnRate: track { 15,80 0; }
-        emitterRadius: range { 0 30; }
-        particleDuration: range { 10 40; }
-        systemAlpha: track { 1,80 0; }
-        launchSpeed: track { [15 60] [10 30]; }
-        launchAngle: range { 120 240; }
-        particleAlpha: track { 1,80 0; }
-        particleScale: range { .2 0.7; }
+        systemDuration: nodes {
+            { time: 0; low: 400; high: 400; curve: Linear; distribution: Linear; }
+        }
+        spawnRate: nodes {
+            { time: 0.8; low: 15; high: 15; curve: Linear; distribution: Linear; }
+            { time: 1; low: 0; high: 0; curve: Linear; distribution: Linear; }
+        }
+        emitterRadius: nodes {
+            { time: 0; low: 0; high: 30; curve: Linear; distribution: Linear; }
+        }
+        particleDuration: nodes {
+            { time: 0; low: 10; high: 40; curve: Linear; distribution: Linear; }
+        }
+        systemGreen: nodes {
+            { time: 0.8; low: 1; high: 1; curve: Linear; distribution: Linear; }
+            { time: 1; low: 0; high: 0; curve: Linear; distribution: Linear; }
+        }
+        systemAlpha: nodes {
+            { time: 0; low: 15; high: 60; curve: Linear; distribution: Linear; }
+            { time: 1; low: 10; high: 30; curve: Linear; distribution: Linear; }
+        }
+        systemBrightness: nodes {
+            { time: 0; low: 120; high: 240; curve: Linear; distribution: Linear; }
+        }
+        particleAlpha: nodes {
+            { time: 0.8; low: 1; high: 1; curve: Linear; distribution: Linear; }
+            { time: 1; low: 0; high: 0; curve: Linear; distribution: Linear; }
+        }
+        particleScale: nodes {
+            { time: 0; low: 0.2; high: 0.7; curve: Linear; distribution: Linear; }
+        }
         field {
             fieldType: Velocity;
-            x: track { [-50 50] 0; }
+            x: nodes {
+                { time: 0; low: -50; high: 50; curve: Linear; distribution: Linear; }
+                { time: 1; low: 0; high: 0; curve: Linear; distribution: Linear; }
+            }
         }
     }
 }

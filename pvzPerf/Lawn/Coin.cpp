@@ -15,6 +15,7 @@
 #include "Sexy.TodLib/TodDebug.h"
 #include "Sexy.TodLib/Reanimator.h"
 #include "Sexy.TodLib/Attachment.h"
+#include "Sexy.TodLib/EffectSystem.h"
 #include "Widget/AchievementsWidget.h"
 
 // 礼物植物候选表：各背景礼盒开出的盆栽种子（原版五连 else-if 各内联一张数组）。
@@ -200,8 +201,8 @@ void Coin::CoinInitialize(int theX, int theY, CoinType theCoinType, CoinMotion t
         Reanimation* aSunReanim = mApp->AddReanimation(0.0f, 0.0f, 0, ReanimationType::REANIM_SUN);
         aSunReanim->mOverlayMatrix.m02 = mPosX + aPosX;
         aSunReanim->mOverlayMatrix.m12 = mPosY + aPosY;
-        aSunReanim->mLoopType = ReanimLoopType::REANIM_LOOP;
-        aSunReanim->mAnimRate = 6.0f;
+        aSunReanim->ChangeLoopType(ReanimLoopType::REANIM_LOOP);
+        aSunReanim->ApplyRate(6.0f);
         AttachReanim(mAttachmentID, aSunReanim, aPosX, aPosY);
     }
     else if (mType == CoinType::COIN_SILVER)
@@ -214,9 +215,9 @@ void Coin::CoinInitialize(int theX, int theY, CoinType theCoinType, CoinMotion t
         Reanimation* aCoinReanim = mApp->AddReanimation(0.0f, 0.0f, 0, ReanimationType::REANIM_COIN_SILVER);
         aCoinReanim->mOverlayMatrix.m02 = mPosX + aPosX;
         aCoinReanim->mOverlayMatrix.m12 = mPosY + aPosY;
-        aCoinReanim->mLoopType = ReanimLoopType::REANIM_LOOP;
-        aCoinReanim->mAnimTime = RandRangeFloat(0.0f, 0.99f);
-        aCoinReanim->mAnimRate *= RandRangeFloat(0.6f, 1.0f);
+        aCoinReanim->ChangeLoopType(ReanimLoopType::REANIM_LOOP);
+        aCoinReanim->SeekRatio(RandRangeFloat(0.0f, 0.99f));
+        aCoinReanim->ApplyRate(aCoinReanim->mAnimRate * RandRangeFloat(0.6f, 1.0f));
         AttachReanim(mAttachmentID, aCoinReanim, aPosX, aPosY);
     }
     else if (mType == CoinType::COIN_GOLD)
@@ -229,9 +230,9 @@ void Coin::CoinInitialize(int theX, int theY, CoinType theCoinType, CoinMotion t
         Reanimation* aCoinReanim = mApp->AddReanimation(0.0f, 0.0f, 0, ReanimationType::REANIM_COIN_GOLD);
         aCoinReanim->mOverlayMatrix.m02 = mPosX + aPosX;
         aCoinReanim->mOverlayMatrix.m12 = mPosY + aPosY;
-        aCoinReanim->mLoopType = ReanimLoopType::REANIM_LOOP;
-        aCoinReanim->mAnimTime = RandRangeFloat(0.0f, 0.99f);
-        aCoinReanim->mAnimRate *= RandRangeFloat(0.6f, 1.0f);
+        aCoinReanim->ChangeLoopType(ReanimLoopType::REANIM_LOOP);
+        aCoinReanim->SeekRatio(RandRangeFloat(0.0f, 0.99f));
+        aCoinReanim->ApplyRate(aCoinReanim->mAnimRate * RandRangeFloat(0.6f, 1.0f));
         AttachReanim(mAttachmentID, aCoinReanim, aPosX, aPosY);
     }
     else if (mType == CoinType::COIN_DIAMOND)
@@ -244,9 +245,9 @@ void Coin::CoinInitialize(int theX, int theY, CoinType theCoinType, CoinMotion t
         Reanimation* aCoinReanim = mApp->AddReanimation(0.0f, 0.0f, 0, ReanimationType::REANIM_DIAMOND);
         aCoinReanim->mOverlayMatrix.m02 = mPosX + aPosX;
         aCoinReanim->mOverlayMatrix.m12 = mPosY + aPosY;
-        aCoinReanim->mLoopType = ReanimLoopType::REANIM_LOOP;
-        aCoinReanim->mAnimTime = RandRangeFloat(0.0f, 0.99f);
-        aCoinReanim->mAnimRate = RandRangeFloat(50.0f, 80.0f);
+        aCoinReanim->ChangeLoopType(ReanimLoopType::REANIM_LOOP);
+        aCoinReanim->SeekRatio(RandRangeFloat(0.0f, 0.99f));
+        aCoinReanim->ApplyRate(RandRangeFloat(50.0f, 80.0f));
         AttachReanim(mAttachmentID, aCoinReanim, aPosX, aPosY);
     }
 
@@ -643,9 +644,12 @@ void Coin::UpdateCollected()
 
     if (IsLevelAward())
     {
-        mScale = TodAnimateCurveFloat(0, 400, mDisappearCounter, 1.01f, 2.0f, Curves::EaseInOut);
-        mPosX = TodAnimateCurveFloat(0, 350, mDisappearCounter, mCollectX, aDestX, Curves::EaseOut);
-        mPosY = TodAnimateCurveFloat(0, 350, mDisappearCounter, mCollectY, aDestY, Curves::EaseOut);
+        mScale = TodAnimateCurveNs(0, 4'000'000'000LL, mDisappearCounter.mNanoseconds,
+            1.01f, 2.0f, Curves::EaseInOut);
+        mPosX = TodAnimateCurveNs(0, 3'500'000'000LL, mDisappearCounter.mNanoseconds,
+            mCollectX, static_cast<float>(aDestX), Curves::EaseOut);
+        mPosY = TodAnimateCurveNs(0, 3'500'000'000LL, mDisappearCounter.mNanoseconds,
+            mCollectY, static_cast<float>(aDestY), Curves::EaseOut);
         return;
     }
 
@@ -745,7 +749,10 @@ void Coin::Update()
             aOffsetY = 13.0f - 13.0f * mScale;
         }
 
-        AttachmentUpdateAndMove(mAttachmentID, mPosX + aOffsetX, mPosY + aOffsetY);
+        const auto domain = mBoard ? mBoard->AnimationTimeDomain() : ReanimTimeDomain::Visual;
+        const auto& clocks = *mApp->mEffectSystem->mReanimationHolder;
+        AttachmentUpdateAndMoveAt(mAttachmentID, mPosX + aOffsetX, mPosY + aOffsetY,
+            domain == ReanimTimeDomain::Battle ? clocks.mBattleTimeNs : clocks.mVisualTimeNs, domain);
         AttachmentOverrideColor(mAttachmentID, GetColor());
         AttachmentOverrideScale(mAttachmentID, mScale);
 
@@ -767,7 +774,7 @@ Color Coin::GetColor()
 
     if (mFadeCount > 0)
     {
-        int aAlpha = TodAnimateCurve(15, 0, mFadeCount, 255, 0, Curves::Linear);
+        int aAlpha = TodAnimateCurveNs(150'000'000, 0, mFadeCount.mNanoseconds, 255, 0, Curves::Linear);
         return Color(255, 255, 255, aAlpha);
     }
 

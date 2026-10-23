@@ -10,12 +10,13 @@ enum class Format
     Legacy1073Dat,
     Dat64V1,
     Dat64V2,
-    Dat64V32
+    Dat64V32,
+    Dat64V33
 };
 
 struct ConversionOptions
 {
-    // With no explicit target, legacy inputs become v3.2; DAT64 inputs become legacy.
+    // With no explicit target, legacy inputs become current v3.3; DAT64 inputs become legacy.
     std::optional<Format> mTargetFormat;
     bool mRoundTimeToNearestTick = false;
 };

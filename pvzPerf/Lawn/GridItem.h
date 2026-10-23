@@ -17,7 +17,7 @@ class MotionTrailFrame
 public:
 	float					mPosX;
 	float					mPosY;
-	float					mAnimTime;
+	std::int64_t			mAnimClock;
 };
 
 class GridItem
@@ -46,6 +46,14 @@ public:
 	int						mSunCount;										//+0x50
 	MotionTrailFrame		mMotionTrailFrames[NUM_MOTION_TRAIL_FRAMES];	//+0x54
 	int						mMotionTrailCount;								//+0xE4
+	double				mRootWorldX = 0;
+	double				mRootSample = 0;
+	ReanimationID			mRootReanimID = ReanimationID::REANIMATIONID_NULL;
+	std::uint32_t			mRootGeneration = 0;
+	std::int32_t			mRootDirection = 0;
+	float				mRootLastOutputX = 0;
+	std::int64_t			mRootPeriodNs = 0;
+	bool					mRootChocolate = false;
 
 public:
 	GridItem();

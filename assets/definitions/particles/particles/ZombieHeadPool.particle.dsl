@@ -4,18 +4,40 @@ export component ZombieHeadPool {
     Emitter {
         image: "IMAGE_ZOMBIEHEAD";
         name: "HeadPool";
-        randomLaunchSpin: 1;
-        systemDuration: 50;
-        spawnMinActive: 1;
-        emitterOffsetX: 5;
-        systemAlpha: track { 1,80 0,100; }
-        launchSpeed: 330.0;
-        launchAngle: range { 150 185; }
-        particleSpinSpeed: track { [-720 720] 0,40; }
-        particleScale: .8;
+        imageFrames: 1;
+        animated: 0;
+        emitterType: Box;
+        systemDuration: nodes {
+            { time: 0; low: 50; high: 50; curve: Linear; distribution: Linear; }
+        }
+        spawnMinActive: nodes {
+            { time: 0; low: 1; high: 1; curve: Linear; distribution: Linear; }
+        }
+        emitterOffsetX: nodes {
+            { time: 0; low: 5; high: 5; curve: Linear; distribution: Linear; }
+        }
+        systemGreen: nodes {
+            { time: 0.8; low: 1; high: 1; curve: Linear; distribution: Linear; }
+            { time: 1; low: 0; high: 0; curve: Linear; distribution: Linear; }
+        }
+        systemAlpha: nodes {
+            { time: 0; low: 330; high: 330; curve: Linear; distribution: Linear; }
+        }
+        systemBrightness: nodes {
+            { time: 0; low: 150; high: 185; curve: Linear; distribution: Linear; }
+        }
+        particleSpinSpeed: nodes {
+            { time: 0; low: -720; high: 720; curve: Linear; distribution: Linear; }
+            { time: 0.4; low: 0; high: 0; curve: Linear; distribution: Linear; }
+        }
+        particleScale: nodes {
+            { time: 0; low: 0.8; high: 0.8; curve: Linear; distribution: Linear; }
+        }
         field {
             fieldType: Acceleration;
-            y: 17.0;
+            y: nodes {
+                { time: 0; low: 17; high: 17; curve: Linear; distribution: Linear; }
+            }
         }
     }
 }

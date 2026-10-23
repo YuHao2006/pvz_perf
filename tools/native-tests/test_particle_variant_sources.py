@@ -184,8 +184,10 @@ class ParticleVariantSourceTests(unittest.TestCase):
         spec.loader.exec_module(pipeline)
         target = self.root / "pvzPerf/Sexy.TodLib/generated/DefinitionImageBindings.h"
         pipeline.emit_definition_image_bindings(target, {
-            "compiled/particles/variant1.compiled": {"atlas_path": "compiled/atlases/shared.atlas.png"},
-            "compiled/particles/variant0.compiled": {"atlas_path": "compiled/atlases/shared.atlas.png"},
+            "compiled/particles/variant1.compiled": {
+                "atlas_path": "compiled/atlases/shared.atlas.png", "atlas_width": 64, "atlas_height": 32},
+            "compiled/particles/variant0.compiled": {
+                "atlas_path": "compiled/atlases/shared.atlas.png", "atlas_width": 64, "atlas_height": 32},
         })
         bindings = pak.read_definition_image_bindings(self.root)
         self.assertEqual(list(bindings), ["compiled/particles/variant0.compiled",

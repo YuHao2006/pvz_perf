@@ -1,4 +1,5 @@
 #include "reanim/Pak64.h"
+#include "reanim/SourceNumber.h"
 
 #include <algorithm>
 #include <cctype>
@@ -215,6 +216,7 @@ enum class TokenKind { identifier, string, number, brace, colon, semicolon, assi
 struct Token final {
     TokenKind kind = TokenKind::end;
     std::string text;
+    std::size_t line = 1;
 };
 
 class Lexer final {
@@ -240,6 +242,10 @@ public:
             break;
         }
         token_ = {};
+        line_ += static_cast<std::size_t>(std::count(source_.begin() + countedAt_,
+                                                   source_.begin() + position_, '\n'));
+        countedAt_ = position_;
+        token_.line = line_;
         if (position_ >= source_.size()) return;
         const char c = source_[position_];
         if (c == '"') {
@@ -313,6 +319,7 @@ public:
     }
 
 private:
+    std::size_t line_ = 1, countedAt_ = 0;
     std::string_view source_;
     std::size_t position_ = 0;
     Token token_;
@@ -505,11 +512,12 @@ private:
         lexer_.Advance();
         if (lexer_.current().kind != TokenKind::colon) Fail(error_, "expected ':' after fps");
         lexer_.Advance();
-        if (lexer_.current().kind != TokenKind::number) Fail(error_, "expected fps number");
-        float parsed = 0.0f;
-        if (!ParseFloatPrefix(lexer_.current().text, parsed) || parsed == kPlaceholder)
-            Fail(error_, "invalid fps value");
-        module.fps = parsed;
+        try {
+            module.fps = ParseFiniteFloat(lexer_.current().text);
+            if (module.fps <= 0) Fail(error_, "fps must be positive");
+        } catch (const std::exception& e) {
+            Fail(error_, "line " + std::to_string(lexer_.current().line) + ", fps: " + e.what());
+        }
         lexer_.Advance();
         ExpectSemicolon();
     }
@@ -555,7 +563,9 @@ private:
                 lexer_.Advance();
                 if (lexer_.current().kind != TokenKind::number)
                     Fail(error_, "expected frame-count number");
-                frameCount = std::strtoull(lexer_.current().text.c_str(), nullptr, 10);
+                const auto parsedCount = ParseDecimalInteger(lexer_.current().text);
+                if (parsedCount < 0) Fail(error_, "frame-count must be nonnegative");
+                frameCount = static_cast<std::uint64_t>(parsedCount);
                 if (frameCount > kMaxFramesPerTrack) Fail(error_, "frame-count out of range");
                 explicitCount = true;
                 lexer_.Advance();
@@ -563,7 +573,9 @@ private:
             } else if (property == "frame") {
                 if (lexer_.current().kind != TokenKind::number)
                     Fail(error_, "expected nonnegative integer frame index");
-                const std::uint64_t index = std::strtoull(lexer_.current().text.c_str(), nullptr, 10);
+                const auto parsedIndex = ParseDecimalInteger(lexer_.current().text);
+                if (parsedIndex < 0) Fail(error_, "frame index must be nonnegative");
+                const std::uint64_t index = static_cast<std::uint64_t>(parsedIndex);
                 if (index >= kMaxFramesPerTrack) Fail(error_, "frame index out of range");
                 lexer_.Advance();
                 ExpectBrace("{");
@@ -594,7 +606,10 @@ private:
                 track.frames[fill] = track.frames[previous];
             RawTransform merged = track.frames[previous];
             for (int i = 0; i < 8; ++i)
-                if (item.set[i]) merged.values[i] = item.value.values[i];
+                if (item.set[i]) {
+                    merged.values[i] = item.value.values[i];
+                    if (i == 6) merged.cel = item.value.cel;
+                }
             if (item.setImage) merged.image = item.value.image;
             if (item.setFont) merged.font = item.value.font;
             if (item.setText) {
@@ -652,11 +667,16 @@ private:
             } else {
                 const auto found = std::find(names, names + 8, field);
                 if (found == names + 8) Fail(error_, "unknown frame property <" + field + ">");
-                if (lexer_.current().kind != TokenKind::number) Fail(error_, "expected number");
-                float parsed = 0.0f;
-                if (!ParseFloatPrefix(lexer_.current().text, parsed))
-                    Fail(error_, "invalid number");
-                transform.values[found - names] = parsed;
+                const int index = static_cast<int>(found - names);
+                try {
+                    if (index == 6) {
+                        transform.cel = ParseDecimalInteger(lexer_.current().text);
+                        transform.values[index] = static_cast<float>(transform.cel);
+                    } else transform.values[index] = ParseFiniteFloat(lexer_.current().text);
+                } catch (const std::exception& e) {
+                    Fail(error_, "line " + std::to_string(lexer_.current().line) +
+                         ", " + field + ": " + e.what());
+                }
                 set[found - names] = true;
                 lexer_.Advance();
             }
@@ -686,6 +706,7 @@ void WriteEscaped(std::ostream& out, const std::string_view text)
 
 std::string FloatText(const float value)
 {
+    if (!std::isfinite(value)) throw std::runtime_error("nonfinite reanim source value");
     std::ostringstream out;
     out << std::setprecision(std::numeric_limits<float>::max_digits10) << value;
     return out.str();
@@ -1369,13 +1390,13 @@ AttacherDecoded DecodeAttacherText(const std::string_view text, bool blankFrame)
         if (end == std::string_view::npos)
             break;
         const std::string code(text.substr(at + 1, end - at - 1));
-        float parsed = 0.0f;
-        if (std::sscanf(code.c_str(), "%f", &parsed) == 1)
-            d.rate = parsed;
-        else if (code == "hold")
+        if (code == "hold")
             d.loop = 1;
         else if (code == "once")
             d.loop = 2;
+        else {
+            d.rate = ParseFiniteFloat(code);
+        }
         at = text.find('[', end + 1);
     }
     return d;
@@ -2107,13 +2128,11 @@ std::vector<std::uint8_t> SerializeV4(const RawReanim& source,
     for (const RawTrack& track : source.tracks)
         hasUiText.push_back(HasUiText(track));
     std::vector<std::uint8_t> payload;
-    PutU32(payload, 0x35544449 /* 'IDT5' */);
+    PutU32(payload, 0x46544449 /* 'IDTF': finite float sources, integer cel */);
     PutU32(payload, TrackIdTableHash(table));
     PutU32(payload, 0);  // Image handles are local to image_sources.txt.
     PutU32(payload, fontRegistryHash);
-    std::uint32_t fpsBits = 0;
-    std::memcpy(&fpsBits, &source.fps, 4);
-    PutU32(payload, fpsBits);
+    PutF32(payload, source.fps);
     PutU32(payload, static_cast<std::uint32_t>(source.tracks.size()));
     for (std::size_t ti = 0; ti < source.tracks.size(); ++ti) {
         const RawTrack& track = source.tracks[ti];
@@ -2122,7 +2141,10 @@ std::vector<std::uint8_t> SerializeV4(const RawReanim& source,
         PutU32(payload, 32);  // 8 x f32; no native pointers or padding
         PutU32(payload, hasUiText[ti] ? 1u : 0u);
         for (const RawTransform& frame : track.frames)
-            for (int i = 0; i < 8; ++i) PutF32(payload, frame.values[i]);
+            for (int i = 0; i < 8; ++i) {
+                if (i == 6) PutU32(payload, static_cast<std::uint32_t>(frame.cel));
+                else PutF32(payload, frame.values[i]);
+            }
     }
     for (std::size_t ti = 0; ti < source.tracks.size(); ++ti) {
         const RawTrack& track = source.tracks[ti];

@@ -175,11 +175,11 @@ void CutScene::PlaceAZombie(ZombieType theZombieType, int theGridX, int theGridY
 	// 1073 0043C389: previews use logical row 0; theGridY only places the sprite.
 	Zombie* aZombie = mBoard->AddZombieInRow(theZombieType, 0, -2);
 	TOD_ASSERT(aZombie);
-	aZombie->mPosX = theGridX * 56 + 830;
-	aZombie->mPosY = theGridY * 90 + 70;
+	{ aZombie->mX = (theGridX * 56 + 830); aZombie->mRootBindingGeneration = 0; }
+	aZombie->mY = (theGridY * 90 + 70);
 	if (theGridX % 2 == 1)
 	{
-		aZombie->mPosY += 30.0f;
+		aZombie->mY += (30.0f);
 	}
 
 	if (aPutOnDuckyTube)
@@ -189,31 +189,31 @@ void CutScene::PlaceAZombie(ZombieType theZombieType, int theGridX, int theGridY
 	}
 	if (mBoard->StageHasRoof())
 	{
-		aZombie->mPosY -= theGridY * 2 - theGridX * 7 + 30;  //7 * (5 - theGridX) - 2 * (5 - theGridY) + 5;
-		aZombie->mPosX -= 5.0f;
+		aZombie->mY -= (theGridY * 2 - theGridX * 7 + 30);  //7 * (5 - theGridX) - 2 * (5 - theGridY) + 5;
+		{ aZombie->mX -= (5.0f); aZombie->mRootBindingGeneration = 0; }
 	}
 	if (theZombieType == ZombieType::ZOMBIE_ZAMBONI)
 	{
-		aZombie->mPosY -= 10.0f;
-		aZombie->mPosX -= 30.0f;
+		aZombie->mY -= (10.0f);
+		{ aZombie->mX -= (30.0f); aZombie->mRootBindingGeneration = 0; }
 	}
 	else if (mApp->IsLittleTroubleLevel())
 	{
-		aZombie->mPosY += Rand(50) - 25;  //RandRangeInt(-25, 24);
-		aZombie->mPosX += Rand(50) - 25;  //RandRangeInt(-25, 24);
+		aZombie->mY += (Rand(50) - 25);  //RandRangeInt(-25, 24);
+		{ aZombie->mX += (Rand(50) - 25); aZombie->mRootBindingGeneration = 0; }  //RandRangeInt(-25, 24);
 	}
 	else if (Is2x2Zombie(theZombieType))
 	{
-		aZombie->mPosX += Rand(15) - 20;  //RandRangeInt(-20, -6);
+		{ aZombie->mX += (Rand(15) - 20); aZombie->mRootBindingGeneration = 0; }  //RandRangeInt(-20, -6);
 	}
 	else if (theGridY == 4 && (mApp->CanShowAlmanac() || mApp->CanShowStore()))
 	{
-		aZombie->mPosX += Rand(15);  //RandRangeInt(0, 14);
+		{ aZombie->mX += (Rand(15)); aZombie->mRootBindingGeneration = 0; }  //RandRangeInt(0, 14);
 	}
 	else
 	{
-		aZombie->mPosY += Rand(15);  //RandRangeInt(0, 14);
-		aZombie->mPosX += Rand(15);  //RandRangeInt(0, 14);
+		aZombie->mY += (Rand(15));  //RandRangeInt(0, 14);
+		{ aZombie->mX += (Rand(15)); aZombie->mRootBindingGeneration = 0; }  //RandRangeInt(0, 14);
 	}
 	aZombie->mRenderOrder = Board::MakeRenderOrder(RenderLayer::RENDER_LAYER_LAWN, 0, (theGridX % 2) * 2 + theGridY * 4);
 
@@ -221,15 +221,15 @@ void CutScene::PlaceAZombie(ZombieType theZombieType, int theGridX, int theGridY
 	{
 		aZombie->mRenderOrder = Board::MakeRenderOrder(RenderLayer::RENDER_LAYER_GROUND, 0, 0);
 		aZombie->mRow = 0;
-		aZombie->mPosX = theGridX * 50.0f + 950.0f;
-		aZombie->mPosY = 50.0f;
+		{ aZombie->mX = (theGridX * 50.0f + 950.0f); aZombie->mRootBindingGeneration = 0; }
+		aZombie->mY = (50.0f);
 	}
 	else if (theZombieType == ZombieType::ZOMBIE_BOBSLED)
 	{
 		aZombie->mRenderOrder = Board::MakeRenderOrder(RenderLayer::RENDER_LAYER_LAWN, 0, 1000);
 		aZombie->mRow = 0;
-		aZombie->mPosX = 1105.0f;
-		aZombie->mPosY = 480.0f;
+		{ aZombie->mX = (1105.0f); aZombie->mRootBindingGeneration = 0; }
+		aZombie->mY = (480.0f);
 	}
 }
 
@@ -283,9 +283,9 @@ bool CutScene::CanZombieGoInGridSpot(ZombieType theZombieType, int theGridX, int
 		return false;
 	}
 
-	if (Is2x2Zombie(theZombieType) || 
-		theZombieType == ZombieType::ZOMBIE_ZAMBONI || 
-		theZombieType == ZombieType::ZOMBIE_BOBSLED || 
+	if (Is2x2Zombie(theZombieType) ||
+		theZombieType == ZombieType::ZOMBIE_ZAMBONI ||
+		theZombieType == ZombieType::ZOMBIE_BOBSLED ||
 		theZombieType == ZombieType::ZOMBIE_POLEVAULTER)
 	{
 		if (theGridX == 0)
@@ -570,7 +570,7 @@ void CutScene::PlaceStreetZombies()
 	{
 		aZombieTypeCount[(int)ZombieType::ZOMBIE_DUCKY_TUBE] = 1;  // 泳池关卡，必定出现鸭子僵尸预览
 	}
-	
+
 	bool aZombieGrid[5][5] = {{ false }};
 	int aPreviewCapacity = 10;
 	if (mApp->IsLittleTroubleLevel())
@@ -629,22 +629,22 @@ void CutScene::PlaceLawnItems()
 //0x43A710
 bool CutScene::IsSurvivalRepick()
 {
-	return (mApp->IsSurvivalMode() && mBoard->mChallenge->mSurvivalStage > 0 && mApp->mGameScene == GameScenes::SCENE_LEVEL_INTRO); 
+	return (mApp->IsSurvivalMode() && mBoard->mChallenge->mSurvivalStage > 0 && mApp->mGameScene == GameScenes::SCENE_LEVEL_INTRO);
 }
 
 //0x43A740
 bool CutScene::IsNonScrollingCutscene()
 {
 	return
-		mApp->mGameMode == GameMode::GAMEMODE_LIMBO_ICE || 
+		mApp->mGameMode == GameMode::GAMEMODE_LIMBO_ICE ||
 		mApp->mGameMode == GameMode::GAMEMODE_LIMBO_ZEN_GARDEN ||
-		mApp->mGameMode == GameMode::GAMEMODE_TREE_OF_WISDOM || 
-		mApp->mGameMode == GameMode::GAMEMODE_MINIGAME_ZOMBIQUARIUM || 
-		mApp->IsScaryPotterLevel() || 
-		mApp->IsIZombieLevel() || 
+		mApp->mGameMode == GameMode::GAMEMODE_TREE_OF_WISDOM ||
+		mApp->mGameMode == GameMode::GAMEMODE_MINIGAME_ZOMBIQUARIUM ||
+		mApp->IsScaryPotterLevel() ||
+		mApp->IsIZombieLevel() ||
 		mApp->IsWhackAZombieLevel() ||
-		mApp->IsShovelLevel() || 
-		mApp->IsSquirrelLevel() || 
+		mApp->IsShovelLevel() ||
+		mApp->IsSquirrelLevel() ||
 		mApp->IsWallnutBowlingLevel();
 }
 
@@ -683,9 +683,9 @@ bool CutScene::CanGetPacketUpgrade(int theUpgradeIndex)
 {
 	int aCost = StoreScreen::GetItemCost(StoreItem::STORE_ITEM_PACKET_UPGRADE);
 
-	return 
+	return
 		mApp->mPlayerInfo->mPurchases[StoreItem::STORE_ITEM_PACKET_UPGRADE] == theUpgradeIndex &&  // theUpgradeIndex 从首次为 0 开始计算
-		mApp->mPlayerInfo->mCoins >= aCost && 
+		mApp->mPlayerInfo->mCoins >= aCost &&
 		mApp->mPlayerInfo->mDidntPurchasePacketUpgrade < 2;
 }
 
@@ -1304,7 +1304,7 @@ void CutScene::AnimateBoard()
 	// ▲ 关卡界面右移的更新
 	// ====================================================================================================
 	UpdateSeedChooserCamera();
-	
+
 	// ====================================================================================================
 	// ▲ 选卡界面动态的更新
 	// ====================================================================================================
@@ -1464,7 +1464,7 @@ void CutScene::AnimateBoard()
 		mBoard->mChallenge->mChallengeState = ChallengeState::STATECHALLENGE_STORM_FLASH_2;
 		mBoard->mChallenge->mChallengeStateCounter = 310;
 	}
-	
+
 	// ====================================================================================================
 	// ▲ 僵王博士的入场
 	// ====================================================================================================
@@ -1515,12 +1515,12 @@ void CutScene::AnimateBoard()
 //0x43C140
 void CutScene::ShowShovel()
 {
-	if (mApp->IsWhackAZombieLevel() || 
-		mApp->IsWallnutBowlingLevel() || 
-		mApp->mGameMode == GameMode::GAMEMODE_MINIGAME_BEGHOULED || 
+	if (mApp->IsWhackAZombieLevel() ||
+		mApp->IsWallnutBowlingLevel() ||
+		mApp->mGameMode == GameMode::GAMEMODE_MINIGAME_BEGHOULED ||
 		mApp->mGameMode == GameMode::GAMEMODE_MINIGAME_BEGHOULED_TWIST ||
-		mApp->mGameMode == GameMode::GAMEMODE_LIMBO_ZEN_GARDEN || 
-		mApp->mGameMode == GameMode::GAMEMODE_MINIGAME_ZOMBIQUARIUM || 
+		mApp->mGameMode == GameMode::GAMEMODE_LIMBO_ZEN_GARDEN ||
+		mApp->mGameMode == GameMode::GAMEMODE_MINIGAME_ZOMBIQUARIUM ||
 		mApp->mGameMode == GameMode::GAMEMODE_TREE_OF_WISDOM ||
 		mApp->IsIZombieLevel())
 		return;
@@ -1535,8 +1535,8 @@ void CutScene::ShowShovel()
 bool CutScene::IsInShovelTutorial()
 {
 	return
-		mBoard->mTutorialState == TutorialState::TUTORIAL_SHOVEL_PICKUP || 
-		mBoard->mTutorialState == TutorialState::TUTORIAL_SHOVEL_DIG || 
+		mBoard->mTutorialState == TutorialState::TUTORIAL_SHOVEL_PICKUP ||
+		mBoard->mTutorialState == TutorialState::TUTORIAL_SHOVEL_DIG ||
 		mBoard->mTutorialState == TutorialState::TUTORIAL_SHOVEL_KEEP_DIGGING;
 }
 
@@ -1666,7 +1666,7 @@ void CutScene::UpdateZombiesWon()
 	{
 		aWon->mOverlayMatrix.m02 = ZombiesWonLayout::CanvasX(aView.mX, aView.mWidth, mBoard->mX);
 	}
-	
+
 	// 啃食脑子的音效
 	if (mCutsceneTime == LostTimeBrainGraphicStart - 400 || mCutsceneTime == LostTimeBrainGraphicStart - 900)
 	{
@@ -1681,8 +1681,8 @@ void CutScene::UpdateZombiesWon()
 		Reanimation* aReanimation = mApp->AddReanimation(
 			ZombiesWonLayout::CanvasX(aView.mX, aView.mWidth, mBoard->mX),
 			0, aRenderPosition, ReanimationType::REANIM_ZOMBIES_WON);
-		aReanimation->mAnimRate = 12.0f;
-		aReanimation->mLoopType = ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD;
+		aReanimation->ApplyRate(12.0f);
+		aReanimation->ChangeLoopType(ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD);
 		aReanimation->GetTrackInstanceByName(ReanimTrackId::fullscreen)->mTrackColor = Color::Black;
 		mZombiesWonReanimID = mApp->ReanimationGetID(aReanimation);
 		aReanimation->SetFramesForLayer(ReanimTrackId::ZombiesWon);
@@ -1912,11 +1912,11 @@ void CutScene::KeyDown(KeyCode theKey)
 			mApp->mMusic->GameMusicPause(true);
 
 			int aResult = mApp->LawnMessageBox(
-				Dialogs::DIALOG_MESSAGE, 
-				gStr.UPSELL_PAUSE_HEADER.c_str(), 
-				gStr.UPSELL_PAUSE_BODY.c_str(), 
-				gStr.UPSELL_RESUME_BUTTON.c_str(), 
-				gStr.MAIN_MENU_BUTTON.c_str(), 
+				Dialogs::DIALOG_MESSAGE,
+				gStr.UPSELL_PAUSE_HEADER.c_str(),
+				gStr.UPSELL_PAUSE_BODY.c_str(),
+				gStr.UPSELL_RESUME_BUTTON.c_str(),
+				gStr.MAIN_MENU_BUTTON.c_str(),
 				Dialog::BUTTONS_YES_NO
 			);
 			if (aResult == Dialog::ID_NO)
@@ -1973,7 +1973,7 @@ void CutScene::ClearUpsellBoard()
 		mBoard->mIceTimer[i] = 0;
 		mBoard->mIceMinX[i] = BOARD_WIDTH;
 	}
-	
+
 	mBoard->mZombies.DataArrayFreeAll();
 	mBoard->RebuildZombieRowBucket();  // 行段桶：池清空后桶必须同步清（intro 案：街头预览僵尸
 	                                   // 清池后留幽灵条目，演示僵尸同号槽注册被陈旧 mSlotIdx 拒，
@@ -2009,11 +2009,11 @@ void CutScene::ClearUpsellBoard()
 void CutScene::AddUpsellZombie(ZombieType theZombieType, int thePixelX, int theGridY)
 {
 	Zombie* aZombie = mBoard->AddZombieInRow(theZombieType, theGridY, 0);
-	aZombie->mPosX = thePixelX;
-	aZombie->mPosY = aZombie->GetPosYBasedOnRow(theGridY);
+	{ aZombie->mX = (thePixelX); aZombie->mRootBindingGeneration = 0; }
+	aZombie->mY = (aZombie->GetPosYBasedOnRow(theGridY));
 	aZombie->SetRow(theGridY);
-	aZombie->mX = (int)aZombie->mPosX;
-	aZombie->mY = (int)aZombie->mPosY;
+
+
 }
 
 //0x43DBA0
@@ -2380,12 +2380,12 @@ void CutScene::DrawIntro(Graphics* g)
 					  TodAnimateCurve(aTimePanRightStart - 600, aTimePanRightStart - 300, mCutsceneTime, 255, 0, Curves::Linear);
 
 		TodDrawString(
-			g, 
-			gStr.INTRO_PRESENTS, 
-			BOARD_WIDTH / 2 - mBoard->mX, 
-			310 - mBoard->mY, 
+			g,
+			gStr.INTRO_PRESENTS,
+			BOARD_WIDTH / 2 - mBoard->mX,
+			310 - mBoard->mY,
 			FONT_BRIANNETOD32,
-			Color(255, 255, 255, anAlpha), 
+			Color(255, 255, 255, anAlpha),
 			DrawStringJustification::DS_ALIGN_CENTER
 		);
 	}

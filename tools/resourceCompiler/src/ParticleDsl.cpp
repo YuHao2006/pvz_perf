@@ -1,4 +1,5 @@
 #include "reanim/ParticleDsl.h"
+#include "reanim/SourceNumber.h"
 
 #include <algorithm>
 #include <cctype>
@@ -10,6 +11,7 @@
 #include <iostream>
 #include <limits>
 #include <map>
+#include <numeric>
 #include <ostream>
 #include <set>
 #include <sstream>
@@ -492,6 +494,213 @@ bool ParseFloatTrackOracle(std::string_view text, std::vector<TrackNode>& nodes,
     return true;
 }
 
+namespace {
+struct AuthoredNode {
+    std::int32_t numerator = -1, denominator = 1;
+    float low = 0, high = 0;
+    std::int32_t curve = 1, distribution = 1;
+};
+struct AuthoredLiteralError : std::runtime_error {
+    std::size_t lineOffset;
+    AuthoredLiteralError(std::size_t offset, const std::string& message)
+        : std::runtime_error(message), lineOffset(offset) {}
+};
+
+std::vector<AuthoredNode> ParseExplicitNodes(std::string_view text)
+{
+    std::size_t at = 6; // "nodes{"
+    std::vector<AuthoredNode> nodes;
+    const auto whitespace = [&] { while (at < text.size() && IsSpace(text[at])) ++at; };
+    const auto expect = [&](char c) {
+        whitespace();
+        if (at >= text.size() || text[at++] != c)
+            throw std::runtime_error(std::string("particle nodes expected '") + c + "'");
+    };
+    while (true) {
+        whitespace();
+        if (at < text.size() && text[at] == '}') { ++at; break; }
+        expect('{');
+        AuthoredNode node;
+        bool low = false, high = false;
+        while (true) {
+            whitespace();
+            if (at < text.size() && text[at] == '}') { ++at; break; }
+            auto start = at;
+            while (at < text.size() && text[at] != ':' && !IsSpace(text[at])) ++at;
+            const std::string key(text.substr(start, at - start));
+            expect(':'); whitespace(); start = at;
+            while (at < text.size() && text[at] != ';' && !IsSpace(text[at])) ++at;
+            const auto value = text.substr(start, at - start);
+            expect(';');
+            if (key == "time") {
+                const auto ratio = ParseTimeRatio(value);
+                node.numerator = ratio.first;
+                node.denominator = ratio.second;
+                if (node.numerator < 0 || node.numerator > node.denominator)
+                    throw std::runtime_error("particle node time must be in [0, 1]");
+            } else if (key == "low") { node.low = ParseFiniteFloat(value); low = true; }
+            else if (key == "high") { node.high = ParseFiniteFloat(value); high = true; }
+            else if (key == "curve" || key == "distribution") {
+                std::int32_t curve = 0;
+                std::size_t length = 0;
+                if (value != "Constant" &&
+                    (!CurveAt(value, 0, curve, length) || length != value.size()))
+                    throw std::runtime_error("unknown particle curve '" + std::string(value) + "'");
+                (key == "curve" ? node.curve : node.distribution) = curve;
+            } else throw std::runtime_error("unknown particle node field '" + key + "'");
+        }
+        if (!low || !high) throw std::runtime_error("particle node requires low and high");
+        nodes.push_back(node);
+        if (nodes.size() > 100000) throw std::runtime_error("too many particle nodes");
+    }
+    whitespace();
+    if (at != text.size()) throw std::runtime_error("trailing particle nodes text");
+    // Only omitted times are inferred; explicit decimal anchors stay exact.
+    std::size_t base = 0;
+    std::int64_t previousNum = 0, previousDen = 1;
+    while (base < nodes.size()) {
+        std::size_t anchor = base;
+        while (anchor < nodes.size() && nodes[anchor].numerator < 0) ++anchor;
+        const auto nextNum = anchor < nodes.size() ? nodes[anchor].numerator : 1;
+        const auto nextDen = anchor < nodes.size() ? nodes[anchor].denominator : 1;
+        const auto span = base == 0 ? (anchor == nodes.size() ? nodes.size() - 1 : anchor)
+                                   : (anchor == nodes.size() ? nodes.size() - base : anchor - base + 1);
+        const auto common = std::lcm(previousDen, static_cast<std::int64_t>(nextDen));
+        for (auto i = base; i < anchor; ++i) {
+            const std::int64_t step = i - base + (base == 0 ? 0 : 1);
+            const std::int64_t intervals = span == 0 ? 1 : span;
+            std::int64_t num = previousNum * (common / previousDen) * (intervals - step) +
+                               nextNum * (common / nextDen) * step;
+            std::int64_t den = common * intervals;
+            const auto divisor = std::gcd(num, den);
+            num /= divisor; den /= divisor;
+            if (num < INT32_MIN || num > INT32_MAX || den > INT32_MAX)
+                throw std::runtime_error("particle node rational exceeds int32");
+            nodes[i].numerator = static_cast<std::int32_t>(num);
+            nodes[i].denominator = static_cast<std::int32_t>(den);
+        }
+        if (anchor < nodes.size()) {
+            const auto divisor = std::gcd(nodes[anchor].numerator, nodes[anchor].denominator);
+            nodes[anchor].numerator /= divisor;
+            nodes[anchor].denominator /= divisor;
+        }
+        previousNum = nextNum; previousDen = nextDen;
+        base = anchor + 1;
+    }
+    return nodes;
+}
+
+std::vector<AuthoredNode> ParseAuthoredTrack(std::string_view text)
+{
+    // Validate every literal, including tokens consumed by the historical
+    // track grammar without becoming a node. No overprecision can hide in a
+    // discarded curve token.
+    for (std::size_t i = 0; i < text.size();) {
+        if (IsSpace(text[i]) || std::string_view("[]{}:,;").find(text[i]) != std::string_view::npos) {
+            ++i; continue;
+        }
+        const auto start = i;
+        while (i < text.size() && !IsSpace(text[i]) &&
+               std::string_view("[]{}:,;").find(text[i]) == std::string_view::npos) ++i;
+        const auto token = text.substr(start, i - start);
+        try {
+        if ((token[0] >= '0' && token[0] <= '9') || token[0] == '+' ||
+            token[0] == '-' || token[0] == '.') {
+            (void)ParseFiniteFloat(token);
+        } else {
+            std::int32_t curve = 0;
+            std::size_t length = 0;
+            if (token != "nodes" && token != "time" && token != "low" && token != "high" &&
+                token != "curve" && token != "distribution" && token != "Constant" &&
+                (!CurveAt(token, 0, curve, length) || length != token.size()))
+                throw std::runtime_error("invalid particle numeric/curve token '" + std::string(token) + "'");
+        }
+        } catch (const std::exception& e) {
+            throw AuthoredLiteralError(static_cast<std::size_t>(
+                std::count(text.begin(), text.begin() + start, '\n')), e.what());
+        }
+    }
+    if (text.starts_with("nodes{")) return ParseExplicitNodes(text);
+    std::vector<AuthoredNode> nodes;
+    std::size_t at = 0;
+    const auto numberText = [&]() {
+        while (at < text.size() && IsSpace(text[at])) ++at;
+        const auto start = at;
+        while (at < text.size() && !IsSpace(text[at]) &&
+               text[at] != ',' && text[at] != ']') ++at;
+        return text.substr(start, at - start);
+    };
+    const auto number = [&]() { return ParseFiniteFloat(numberText()); };
+    const auto ratio = [](AuthoredNode& node, std::int64_t num, std::int64_t den) {
+        const auto gcd = std::gcd(num, den);
+        num /= gcd; den /= gcd;
+        if (den <= 0 || den > INT32_MAX || num < INT32_MIN || num > INT32_MAX)
+            throw std::runtime_error("particle node time rational exceeds int32");
+        node.numerator = static_cast<std::int32_t>(num);
+        node.denominator = static_cast<std::int32_t>(den);
+    };
+    while (true) {
+        while (at < text.size() && IsSpace(text[at])) ++at;
+        if (at == text.size()) break;
+        AuthoredNode node;
+        const bool range = text[at] == '[';
+        if (range) ++at;
+        node.low = node.high = number();
+        if (range) {
+            if (at < text.size() && text[at] == ' ') {
+                ++at;
+                std::size_t length = 0;
+                if (CurveAt(text, at, node.distribution, length)) at += length + 1;
+                if (at < text.size() && text[at] != ']') node.high = number();
+            }
+            if (at >= text.size() || text[at] != ']')
+                throw std::runtime_error("particle range missing ']'");
+            ++at;
+        } else if (at < text.size() && text[at] == ']') ++at;
+        if (at < text.size() && text[at] == ',') {
+            ++at;
+            const auto stamp = ParseTimeRatio(numberText(), 100);
+            ratio(node, stamp.first, stamp.second);
+        }
+        if (at < text.size()) {
+            ++at;
+            if (!range) {
+                std::size_t length = 0;
+                if (CurveAt(text, at, node.curve, length)) {
+                    at += length;
+                    if (at < text.size()) ++at;
+                } else {
+                    // Preserve the original track grammar's consumed curve token.
+                    while (at < text.size() && IsSpace(text[at])) ++at;
+                    while (at < text.size() && !IsSpace(text[at])) ++at;
+                }
+            }
+        }
+        nodes.push_back(node);
+    }
+    std::size_t base = 0;
+    std::int64_t lowNum = 0, lowDen = 1;
+    while (base < nodes.size()) {
+        std::size_t anchor = base;
+        while (anchor < nodes.size() && nodes[anchor].numerator < 0) ++anchor;
+        const std::int64_t highNum = anchor < nodes.size() ? nodes[anchor].numerator : 1;
+        const std::int64_t highDen = anchor < nodes.size() ? nodes[anchor].denominator : 1;
+        // Match the established compiler's omitted-time expansion exactly,
+        // retaining its rational value instead of an intermediate float.
+        const std::int64_t intervals = anchor > base + 1 ? anchor - 1 - base : 1;
+        for (auto i = base; i < anchor; ++i) {
+            const std::int64_t step = anchor > base + 1 ? i - base : 0;
+            const auto common = std::lcm(lowDen, highDen);
+            ratio(nodes[i], lowNum * (common / lowDen) * (intervals - step) +
+                           highNum * (common / highDen) * step, common * intervals);
+        }
+        base = anchor + 1;
+        lowNum = highNum; lowDen = highDen;
+    }
+    return nodes;
+}
+}
+
 // ------------------------------------------------------------ XML 读取
 
 namespace {
@@ -805,6 +1014,7 @@ enum class TokKind {
 struct Token final {
     TokKind kind = TokKind::end;
     std::string text;
+    std::size_t line = 1;
 };
 
 class Lexer final {
@@ -834,6 +1044,10 @@ public:
             break;
         }
         token_ = {};
+        line_ += static_cast<std::size_t>(std::count(source_.begin() + countedAt_,
+                                                   source_.begin() + position_, '\n'));
+        countedAt_ = position_;
+        token_.line = line_;
         if (position_ >= source_.size()) return;
         const char c = source_[position_];
         if (c == '"') {
@@ -910,7 +1124,7 @@ public:
     }
     // track { 原文 } / range { 原文 }：捕获花括号内原文区间（不分词，保真
     // 逗号/括号/多空格），允许末尾一个 ';'。
-    [[nodiscard]] std::string TakeRawBlock()
+    [[nodiscard]] std::string TakeRawBlock(bool preserveWhitespace = false)
     {
         while (position_ < source_.size() &&
                std::isspace(static_cast<unsigned char>(source_[position_])))
@@ -919,9 +1133,16 @@ public:
             Fail(nullptr, "expected '{' after track/range");
         ++position_;
         const std::size_t begin = position_;
-        while (position_ < source_.size() && source_[position_] != '}') ++position_;
+        int depth = 1;
+        while (position_ < source_.size()) {
+            if (source_[position_] == '{') ++depth;
+            if (source_[position_] == '}' && --depth == 0) break;
+            ++position_;
+        }
         if (position_ >= source_.size()) Fail(nullptr, "unterminated raw block");
-        std::string raw = Trimmed(source_.substr(begin, position_ - begin));
+        std::string raw = preserveWhitespace
+            ? std::string(source_.substr(begin, position_ - begin))
+            : Trimmed(source_.substr(begin, position_ - begin));
         ++position_;  // '}'
         if (!raw.empty() && raw.back() == ';') raw = Trimmed(raw.substr(0, raw.size() - 1));
         Advance();
@@ -929,6 +1150,7 @@ public:
     }
 
 private:
+    std::size_t line_ = 1, countedAt_ = 0;
     std::string_view source_;
     std::size_t position_ = 0;
     Token token_;
@@ -1137,7 +1359,7 @@ private:
                     if (sysTrack < 0 && partTrack < 0)
                         Fail(error_, "unknown emitter property <" + property + ">");
                     std::string raw;
-                    ReadTrackValue(raw);
+                    ReadTrackValue(raw, property);
                     if (sysTrack >= 0) emitter.systemTracks[sysTrack] = raw;
                     else emitter.particleTracks[partTrack] = raw;
                 }
@@ -1207,7 +1429,7 @@ private:
                 ExpectSemicolon();
             } else if (property == "x" || property == "y") {
                 std::string raw;
-                ReadTrackValue(raw);
+                ReadTrackValue(raw, key + "." + property);
                 (property == "x" ? field.x : field.y) = raw;
             } else {
                 Fail(error_, "unknown property <" + property + "> inside " + key);
@@ -1217,23 +1439,34 @@ private:
         if (field.fieldType < 0) Fail(error_, key + " requires fieldType");
     }
     // 值形式：number; | track { raw } | range { raw }
-    void ReadTrackValue(std::string& raw)
+    void ReadTrackValue(std::string& raw, const std::string& field)
     {
+        const auto line = lexer_.current().line;
         const Token& token = lexer_.current();
         if (token.kind == TokKind::number) {
             raw = token.text;
             lexer_.Advance();
             ExpectSemicolon();
         } else if (token.kind == TokKind::identifier &&
-                   (token.text == "track" || token.text == "range")) {
+                   (token.text == "track" || token.text == "range" || token.text == "nodes")) {
             const bool range = token.text == "range";
+            const bool explicitNodes = token.text == "nodes";
             // 不 Advance：TakeRawBlock 直接从 position_（紧跟 track/range
             // 标识符之后、'{' 之前）捕获原文，避免把 '{' 分词吞掉。
-            raw = lexer_.TakeRawBlock();
+            raw = lexer_.TakeRawBlock(explicitNodes);
             if (range) raw = "[" + Trimmed(raw) + "]";
+            if (explicitNodes) raw = "nodes{" + raw + "}";
             OptionalSemicolon();
         } else {
-            Fail(error_, "track values must be numbers or track {}/range {} blocks");
+            Fail(error_, "line " + std::to_string(line) + ", " + field +
+                 ": track value must be decimal or track {}/range {}: '" + token.text + "'");
+        }
+        try { (void)ParseAuthoredTrack(raw); }
+        catch (const AuthoredLiteralError& e) {
+            Fail(error_, "line " + std::to_string(line + e.lineOffset) + ", " + field + ": " + e.what());
+        }
+        catch (const std::exception& e) {
+            Fail(error_, "line " + std::to_string(line) + ", " + field + ": " + e.what());
         }
     }
     [[nodiscard]] bool IsIdent(const std::string_view keyword) const
@@ -1518,7 +1751,16 @@ void SerializeTrack(ByteSink& sink, const std::string& raw, const std::string& l
                     std::string* error)
 {
     std::vector<TrackNode> nodes;
-    if (!raw.empty() && !ParseFloatTrackOracle(raw, nodes, error))
+    if (raw.starts_with("nodes{")) {
+        for (const auto& authored : ParseAuthoredTrack(raw)) {
+            TrackNode node;
+            node.time = static_cast<float>(static_cast<double>(authored.numerator) / authored.denominator);
+            node.low = authored.low;
+            node.high = authored.high;
+            node.curve = authored.curve; node.distribution = authored.distribution;
+            nodes.push_back(node);
+        }
+    } else if (!raw.empty() && !ParseFloatTrackOracle(raw, nodes, error))
         Fail(error, (error && !error->empty() ? *error : std::string("track parse failed")) +
                         " in " + label);
     SerializeTrackNodes(sink, nodes, label);
@@ -2237,11 +2479,25 @@ std::vector<std::uint8_t> SerializeParticleV4(
         return value;
     };
     std::vector<std::uint8_t> body;
-    const auto copyTrack = [&] {
-        const std::size_t start = reader.At();
-        reader.Track("float track");
-        body.insert(body.end(), runtimePayload.begin() + start,
-                    runtimePayload.begin() + reader.At());
+    // Native runtime track order differs from the historical import/oracle
+    // order stored in ParticleEmitter::systemTracks.
+    constexpr int authoredSystemIndex[kSystemTrackCount] = {
+        0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 13, 11, 14, 20, 21, 15, 16, 17, 18, 19};
+    const auto writeAuthoredTrack = [&](const std::string& raw) {
+        const auto nodes = ParseAuthoredTrack(raw);
+        PutU32(body, static_cast<std::uint32_t>(nodes.size()));
+        for (const auto& node : nodes) {
+            PutU32(body, static_cast<std::uint32_t>(node.numerator));
+            PutU32(body, static_cast<std::uint32_t>(node.denominator));
+            PutF32(body, node.low);
+            PutF32(body, node.high);
+            PutU32(body, static_cast<std::uint32_t>(node.curve));
+            PutU32(body, static_cast<std::uint32_t>(node.distribution));
+        }
+    };
+    const auto copyTrack = [&](const std::string& raw) {
+        reader.Track("legacy comparison track");
+        writeAuthoredTrack(raw);
     };
     for (std::uint32_t e = 0; e < count; ++e) {
         const std::size_t dumpAt = dumpsAt + e * kParticleEmitterNativeDumpSize;
@@ -2256,36 +2512,43 @@ std::vector<std::uint8_t> SerializeParticleV4(
                 throw std::runtime_error("particle image absent from source handles: " + image);
             PutU32(body, found->second);
         }
-        for (const std::size_t offset : {16u, 20u, 24u, 28u})
-            PutU32(body, dump32(dumpAt + offset));
+        for (auto value : {source.emitters[e].imageFrames, source.emitters[e].animated,
+                           static_cast<std::int32_t>(source.emitters[e].flags),
+                           source.emitters[e].emitterType})
+            PutU32(body, static_cast<std::uint32_t>(value));
         // Gold strings are consumed only by the compiler. No length or text is emitted.
         reader.String("name");
-        copyTrack();
+        copyTrack(source.emitters[e].systemTracks[authoredSystemIndex[0]]);
         reader.String("onDuration");
         for (int t = 1; t < kSystemTrackCount; ++t)
-            copyTrack();
+            copyTrack(source.emitters[e].systemTracks[authoredSystemIndex[t]]);
 
         for (const std::size_t countOffset : {408u, 424u}) {
+            const auto& authoredFields = countOffset == 408u
+                ? source.emitters[e].particleFields : source.emitters[e].systemFields;
             const std::uint32_t fieldCount = dump32(dumpAt + countOffset);
             if (fieldCount > 4 || reader.U32("field size") != kParticleFieldDumpSize)
                 throw std::runtime_error("particle v4: invalid gold field array");
-            const std::size_t fieldsAt = reader.At();
             reader.Skip(fieldCount * kParticleFieldDumpSize, "field dumps");
-            PutU32(body, fieldCount);
             for (std::uint32_t f = 0; f < fieldCount; ++f) {
-                PutU32(body, dump32(fieldsAt + f * kParticleFieldDumpSize));
-                copyTrack();
-                copyTrack();
+                reader.Track("legacy field x");
+                reader.Track("legacy field y");
+            }
+            PutU32(body, static_cast<std::uint32_t>(authoredFields.size()));
+            for (const auto& field : authoredFields) {
+                PutU32(body, static_cast<std::uint32_t>(field.fieldType));
+                writeAuthoredTrack(field.x);
+                writeAuthoredTrack(field.y);
             }
         }
         for (int t = 0; t < kParticleTrackCount; ++t)
-            copyTrack();
+            copyTrack(source.emitters[e].particleTracks[t]);
     }
     if (reader.At() != runtimePayload.size())
         throw std::runtime_error("particle v4: unconsumed gold payload");
 
     std::vector<std::uint8_t> payload;
-    PutU32(payload, kParticleV4PayloadMagic);
+    PutU32(payload, 0x46524449u); // IDRF: finite float bounds, rational times.
     PutU32(payload, 0);  // No game image registry participates in source records.
     PutU32(payload, nameTableHash);
     PutU32(payload, count);

@@ -23,8 +23,10 @@ inline constexpr std::array<std::uint8_t, 8> DAT64_MAGIC = {
 };
 inline constexpr std::uint32_t DAT64_V1_VERSION = 1;
 inline constexpr std::uint32_t DAT64_V2_VERSION = 2;
+inline constexpr std::uint32_t DAT64_V32_VERSION = 3;
+inline constexpr std::uint32_t DAT64_V32_MINOR_VERSION = 2;
 inline constexpr std::uint32_t DAT64_VERSION = 3;
-inline constexpr std::uint32_t DAT64_MINOR_VERSION = 2;
+inline constexpr std::uint32_t DAT64_MINOR_VERSION = 3;
 inline constexpr std::uint32_t DAT64_HEADER_SIZE = 48;
 inline constexpr std::uint32_t DAT64_AUTHORITY_BUILD = 1073;
 inline constexpr std::uint32_t DAT64_FLAG_LITTLE_ENDIAN = 1U << 0;
@@ -36,7 +38,11 @@ inline constexpr std::uint32_t DAT64_V2_SCHEMA_ID = 0x00010732U;
 // Unpublished schemas are named only for explicit rejection tests.
 inline constexpr std::uint32_t DAT64_V3_SCHEMA_ID = 0x00010733U;
 inline constexpr std::uint32_t DAT64_V31_SCHEMA_ID = 0x00010734U;
-inline constexpr std::uint32_t DAT64_SCHEMA_ID = 0x00010735U;
+inline constexpr std::uint32_t DAT64_V32_SCHEMA_ID = 0x00010735U;
+inline constexpr std::uint32_t DAT64_V33_FIXED_SCHEMA_ID = 0x00010736U;
+inline constexpr std::uint32_t DAT64_V33_RELATIVE_SCHEMA_ID = 0x00010737U;
+inline constexpr std::uint32_t DAT64_V33_ACTOR_CLOCK_SCHEMA_ID = 0x00010738U;
+inline constexpr std::uint32_t DAT64_SCHEMA_ID = 0x00010739U;
 inline constexpr std::uint64_t DAT64_END_MARKER = 0xB4A9ABBEBBA5A9AFULL;
 
 // Header bytes, all little-endian except the literal magic:
@@ -48,7 +54,7 @@ inline constexpr std::uint64_t DAT64_END_MARKER = 0xB4A9ABBEBBA5A9AFULL;
 //   18 u64 payload size
 //   20 u32 ignored former payload CRC32 (v2/v3 write zero; v1 exports retain CRC)
 //   24 u32 schema id
-//   28 u32 minor version (zero in v1/v2, two in v3.2)
+//   28 u32 minor version (zero in v1/v2, two in v3.2, three in v3.3)
 //   2C u32 reserved (must be zero)
 // RECORD_LAYOUTS and size/offset constants below describe the fixed v1
 // canonical ABI. Dat64TimeSchema expands its time fields for v2/v3.2.
@@ -56,6 +62,10 @@ inline constexpr std::uint64_t DAT64_END_MARKER = 0xB4A9ABBEBBA5A9AFULL;
 // removes track bytes 80..87 plus supplemental per-track image ResourceIds,
 // and stores ParticleSystem base effect (original 106 order) plus mVariant at 4.
 // Unpublished v3.0/v3.1 are unsupported by both game and converter.
+// V3.3 schema 10739 appends V7SaveSchema exact state to affected pool objects:
+// absolute playback/projectile/bowling times, float actor positions and anchored
+// motion, particle simulation and random state. Frozen prefixes stay convertible.
+// Earlier v3.3 fixed-point, relative-time and actor-clock schemas are input-only.
 // Historical canonical layouts
 // below remain frozen for offline conversion.
 
@@ -72,21 +82,29 @@ constexpr bool IsSupportedDat64Header(const std::span<const std::uint8_t>& file)
 			value |= std::uint64_t(file[offset + i]) << (i * 8);
 		return value;
 	};
-	const bool v3 = read(8, 4) == DAT64_VERSION;
+	const bool v33 = read(8, 4) == DAT64_VERSION &&
+        read(40, 4) == DAT64_MINOR_VERSION && read(36, 4) == DAT64_SCHEMA_ID;
+    const bool v33Fixed = read(8, 4) == DAT64_VERSION &&
+        read(40, 4) == DAT64_MINOR_VERSION && read(36, 4) == DAT64_V33_FIXED_SCHEMA_ID;
+    const bool v33Relative = read(8, 4) == DAT64_VERSION &&
+        read(40, 4) == DAT64_MINOR_VERSION && read(36, 4) == DAT64_V33_RELATIVE_SCHEMA_ID;
+    const bool v33ActorClock = read(8, 4) == DAT64_VERSION &&
+        read(40, 4) == DAT64_MINOR_VERSION && read(36, 4) == DAT64_V33_ACTOR_CLOCK_SCHEMA_ID;
+    const bool v3 = read(8, 4) == DAT64_V32_VERSION;
 	const bool v2 = read(8, 4) == DAT64_V2_VERSION;
-	const bool v32 = v3 && read(40, 4) == DAT64_MINOR_VERSION &&
-		read(36, 4) == DAT64_SCHEMA_ID;
-	return (v32 || v2 || read(8, 4) == DAT64_V1_VERSION) &&
+	const bool v32 = v3 && read(40, 4) == DAT64_V32_MINOR_VERSION &&
+		read(36, 4) == DAT64_V32_SCHEMA_ID;
+	return (v33 || v33Fixed || v33Relative || v33ActorClock || v32 || v2 || read(8, 4) == DAT64_V1_VERSION) &&
 		read(12, 4) == DAT64_HEADER_SIZE &&
 		read(16, 4) == DAT64_AUTHORITY_BUILD &&
-		read(20, 4) == (v3 || v2 ? DAT64_FLAGS : DAT64_V1_FLAGS) &&
+		read(20, 4) == (v33 || v3 || v2 ? DAT64_FLAGS : DAT64_V1_FLAGS) &&
 		read(24, 8) == file.size() - DAT64_HEADER_SIZE &&
-		(v32 || (read(36, 4) == (v2 ? DAT64_V2_SCHEMA_ID : DAT64_V1_SCHEMA_ID) &&
+		(v33 || v33Fixed || v33Relative || v33ActorClock || v32 || (read(36, 4) == (v2 ? DAT64_V2_SCHEMA_ID : DAT64_V1_SCHEMA_ID) &&
 			read(40, 4) == 0)) &&
 		read(44, 4) == 0;
 }
 
-// The runtime accepts only the current nanosecond format. Historical formats
+// The runtime accepts only the current v3.3 format. Historical formats
 // are inputs to the standalone converter, never alternate game load paths.
 constexpr bool IsCurrentDat64Header(const std::span<const std::uint8_t>& file)
 {

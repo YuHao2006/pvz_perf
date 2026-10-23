@@ -3,44 +3,121 @@ export component SeedPacketPickup {
     source-name: "seedpacketpickup";
     Emitter {
         image: "IMAGE_ZombieHead";
+        imageFrames: 1;
+        animated: 0;
         emitterType: CircleEvenSpacing;
-        systemDuration: 200;
-        spawnMinActive: track { 15,0 15,20 30,20 30,40 45,40; }
-        emitterRadius: 40;
-        particleDuration: 120;
-        systemAlpha: track { 1,80 0; }
-        particleRed: .9;
-        particleGreen: .9;
-        particleBlue: .7;
-        particleAlpha: track { 0 1,20 1,90 0; }
-        particleScale: track { .5 EaseIn 5; }
+        systemDuration: nodes {
+            { time: 0; low: 200; high: 200; curve: Linear; distribution: Linear; }
+        }
+        spawnMinActive: nodes {
+            { time: 0; low: 15; high: 15; curve: Linear; distribution: Linear; }
+            { time: 0.2; low: 15; high: 15; curve: Linear; distribution: Linear; }
+            { time: 0.2; low: 30; high: 30; curve: Linear; distribution: Linear; }
+            { time: 0.4; low: 30; high: 30; curve: Linear; distribution: Linear; }
+            { time: 0.4; low: 45; high: 45; curve: Linear; distribution: Linear; }
+        }
+        emitterRadius: nodes {
+            { time: 0; low: 40; high: 40; curve: Linear; distribution: Linear; }
+        }
+        particleDuration: nodes {
+            { time: 0; low: 120; high: 120; curve: Linear; distribution: Linear; }
+        }
+        systemGreen: nodes {
+            { time: 0.8; low: 1; high: 1; curve: Linear; distribution: Linear; }
+            { time: 1; low: 0; high: 0; curve: Linear; distribution: Linear; }
+        }
+        particleRed: nodes {
+            { time: 0; low: 0.9; high: 0.9; curve: Linear; distribution: Linear; }
+        }
+        particleGreen: nodes {
+            { time: 0; low: 0.9; high: 0.9; curve: Linear; distribution: Linear; }
+        }
+        particleBlue: nodes {
+            { time: 0; low: 0.7; high: 0.7; curve: Linear; distribution: Linear; }
+        }
+        particleAlpha: nodes {
+            { time: 0; low: 0; high: 0; curve: Linear; distribution: Linear; }
+            { time: 0.2; low: 1; high: 1; curve: Linear; distribution: Linear; }
+            { time: 0.9; low: 1; high: 1; curve: Linear; distribution: Linear; }
+            { time: 1; low: 0; high: 0; curve: Linear; distribution: Linear; }
+        }
+        particleScale: nodes {
+            { time: 0; low: 0.5; high: 0.5; curve: EaseIn; distribution: Linear; }
+            { time: 1; low: 5; high: 5; curve: Linear; distribution: Linear; }
+        }
         field {
             fieldType: Away;
-            x: track { 0 300; }
-            y: track { 3 0; }
+            x: nodes {
+                { time: 0; low: 0; high: 0; curve: Linear; distribution: Linear; }
+                { time: 1; low: 300; high: 300; curve: Linear; distribution: Linear; }
+            }
+            y: nodes {
+                { time: 0; low: 3; high: 3; curve: Linear; distribution: Linear; }
+                { time: 1; low: 0; high: 0; curve: Linear; distribution: Linear; }
+            }
         }
     }
     Emitter {
         image: "IMAGE_ZombieHead";
+        imageFrames: 1;
+        animated: 0;
         emitterType: CircleEvenSpacing;
-        systemDuration: 200;
-        spawnMinActive: track { 0,10 11,10 11,30 27,30 27,50 42,50; }
-        emitterRadius: 40;
-        particleDuration: 120;
-        systemAlpha: track { 1,80 0; }
-        particleRed: .9;
-        particleGreen: .9;
-        particleBlue: .9;
-        particleAlpha: track { 0 1,20 1,90 0; }
-        particleScale: track { .5 EaseIn 5; }
+        systemDuration: nodes {
+            { time: 0; low: 200; high: 200; curve: Linear; distribution: Linear; }
+        }
+        spawnMinActive: nodes {
+            { time: 0.1; low: 0; high: 0; curve: Linear; distribution: Linear; }
+            { time: 0.1; low: 11; high: 11; curve: Linear; distribution: Linear; }
+            { time: 0.3; low: 11; high: 11; curve: Linear; distribution: Linear; }
+            { time: 0.3; low: 27; high: 27; curve: Linear; distribution: Linear; }
+            { time: 0.5; low: 27; high: 27; curve: Linear; distribution: Linear; }
+            { time: 0.5; low: 42; high: 42; curve: Linear; distribution: Linear; }
+        }
+        emitterRadius: nodes {
+            { time: 0; low: 40; high: 40; curve: Linear; distribution: Linear; }
+        }
+        particleDuration: nodes {
+            { time: 0; low: 120; high: 120; curve: Linear; distribution: Linear; }
+        }
+        systemGreen: nodes {
+            { time: 0.8; low: 1; high: 1; curve: Linear; distribution: Linear; }
+            { time: 1; low: 0; high: 0; curve: Linear; distribution: Linear; }
+        }
+        particleRed: nodes {
+            { time: 0; low: 0.9; high: 0.9; curve: Linear; distribution: Linear; }
+        }
+        particleGreen: nodes {
+            { time: 0; low: 0.9; high: 0.9; curve: Linear; distribution: Linear; }
+        }
+        particleBlue: nodes {
+            { time: 0; low: 0.9; high: 0.9; curve: Linear; distribution: Linear; }
+        }
+        particleAlpha: nodes {
+            { time: 0; low: 0; high: 0; curve: Linear; distribution: Linear; }
+            { time: 0.2; low: 1; high: 1; curve: Linear; distribution: Linear; }
+            { time: 0.9; low: 1; high: 1; curve: Linear; distribution: Linear; }
+            { time: 1; low: 0; high: 0; curve: Linear; distribution: Linear; }
+        }
+        particleScale: nodes {
+            { time: 0; low: 0.5; high: 0.5; curve: EaseIn; distribution: Linear; }
+            { time: 1; low: 5; high: 5; curve: Linear; distribution: Linear; }
+        }
         field {
             fieldType: Away;
-            x: track { 0 300; }
-            y: track { 3 0; }
+            x: nodes {
+                { time: 0; low: 0; high: 0; curve: Linear; distribution: Linear; }
+                { time: 1; low: 300; high: 300; curve: Linear; distribution: Linear; }
+            }
+            y: nodes {
+                { time: 0; low: 3; high: 3; curve: Linear; distribution: Linear; }
+                { time: 1; low: 0; high: 0; curve: Linear; distribution: Linear; }
+            }
         }
         field {
             fieldType: Circle;
-            x: 50;
+            x: nodes {
+                { time: 0; low: 50; high: 50; curve: Linear; distribution: Linear; }
+            }
         }
     }
 }

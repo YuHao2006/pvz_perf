@@ -4,201 +4,465 @@ export component GloomCloud {
     Emitter {
         image: "IMAGE_PUFFSHROOM_PUFF1";
         name: "Gloom_East";
-        spawnMinActive: track { 0 5,20; }
-        spawnMaxLaunched: 5;
-        emitterOffsetX: 40;
-        emitterOffsetY: -5;
-        particleDuration: range { 20 30; }
-        systemAlpha: track { .9,80 0; }
-        particleAlpha: track { .9,80 0; }
-        particleScale: range { .7 1.1; }
+        imageFrames: 1;
+        animated: 0;
+        emitterType: Box;
+        spawnMinActive: nodes {
+            { time: 0; low: 0; high: 0; curve: Linear; distribution: Linear; }
+            { time: 0.2; low: 5; high: 5; curve: Linear; distribution: Linear; }
+        }
+        spawnMaxLaunched: nodes {
+            { time: 0; low: 5; high: 5; curve: Linear; distribution: Linear; }
+        }
+        emitterOffsetX: nodes {
+            { time: 0; low: 40; high: 40; curve: Linear; distribution: Linear; }
+        }
+        emitterOffsetY: nodes {
+            { time: 0; low: -5; high: -5; curve: Linear; distribution: Linear; }
+        }
+        particleDuration: nodes {
+            { time: 0; low: 20; high: 30; curve: Linear; distribution: Linear; }
+        }
+        systemGreen: nodes {
+            { time: 0.8; low: 0.9; high: 0.9; curve: Linear; distribution: Linear; }
+            { time: 1; low: 0; high: 0; curve: Linear; distribution: Linear; }
+        }
+        particleAlpha: nodes {
+            { time: 0.8; low: 0.9; high: 0.9; curve: Linear; distribution: Linear; }
+            { time: 1; low: 0; high: 0; curve: Linear; distribution: Linear; }
+        }
+        particleScale: nodes {
+            { time: 0; low: 0.7; high: 1.1; curve: Linear; distribution: Linear; }
+        }
         field {
             fieldType: Away;
-            x: track { 400 0; }
+            x: nodes {
+                { time: 0; low: 400; high: 400; curve: Linear; distribution: Linear; }
+                { time: 1; low: 0; high: 0; curve: Linear; distribution: Linear; }
+            }
         }
         field {
             fieldType: Circle;
-            x: range { -100 100; }
+            x: nodes {
+                { time: 0; low: -100; high: 100; curve: Linear; distribution: Linear; }
+            }
         }
         field {
             fieldType: Shake;
-            x: track { 1 0; }
-            y: track { 1 0; }
+            x: nodes {
+                { time: 0; low: 1; high: 1; curve: Linear; distribution: Linear; }
+                { time: 1; low: 0; high: 0; curve: Linear; distribution: Linear; }
+            }
+            y: nodes {
+                { time: 0; low: 1; high: 1; curve: Linear; distribution: Linear; }
+                { time: 1; low: 0; high: 0; curve: Linear; distribution: Linear; }
+            }
         }
     }
     Emitter {
         image: "IMAGE_PUFFSHROOM_PUFF1";
         name: "Gloom_South";
-        spawnMinActive: track { 0 5,20; }
-        spawnMaxLaunched: 5;
-        emitterOffsetX: 0;
-        emitterOffsetY: 28;
-        particleDuration: range { 20 30; }
-        systemAlpha: track { .9,80 0; }
-        particleAlpha: track { .9,80 0; }
-        particleScale: range { .7 1.1; }
+        imageFrames: 1;
+        animated: 0;
+        emitterType: Box;
+        spawnMinActive: nodes {
+            { time: 0; low: 0; high: 0; curve: Linear; distribution: Linear; }
+            { time: 0.2; low: 5; high: 5; curve: Linear; distribution: Linear; }
+        }
+        spawnMaxLaunched: nodes {
+            { time: 0; low: 5; high: 5; curve: Linear; distribution: Linear; }
+        }
+        emitterOffsetX: nodes {
+            { time: 0; low: 0; high: 0; curve: Linear; distribution: Linear; }
+        }
+        emitterOffsetY: nodes {
+            { time: 0; low: 28; high: 28; curve: Linear; distribution: Linear; }
+        }
+        particleDuration: nodes {
+            { time: 0; low: 20; high: 30; curve: Linear; distribution: Linear; }
+        }
+        systemGreen: nodes {
+            { time: 0.8; low: 0.9; high: 0.9; curve: Linear; distribution: Linear; }
+            { time: 1; low: 0; high: 0; curve: Linear; distribution: Linear; }
+        }
+        particleAlpha: nodes {
+            { time: 0.8; low: 0.9; high: 0.9; curve: Linear; distribution: Linear; }
+            { time: 1; low: 0; high: 0; curve: Linear; distribution: Linear; }
+        }
+        particleScale: nodes {
+            { time: 0; low: 0.7; high: 1.1; curve: Linear; distribution: Linear; }
+        }
         field {
             fieldType: Away;
-            x: track { 400 0; }
+            x: nodes {
+                { time: 0; low: 400; high: 400; curve: Linear; distribution: Linear; }
+                { time: 1; low: 0; high: 0; curve: Linear; distribution: Linear; }
+            }
         }
         field {
             fieldType: Circle;
-            x: range { -100 100; }
+            x: nodes {
+                { time: 0; low: -100; high: 100; curve: Linear; distribution: Linear; }
+            }
         }
         field {
             fieldType: Shake;
-            x: track { 1 0; }
-            y: track { 1 0; }
+            x: nodes {
+                { time: 0; low: 1; high: 1; curve: Linear; distribution: Linear; }
+                { time: 1; low: 0; high: 0; curve: Linear; distribution: Linear; }
+            }
+            y: nodes {
+                { time: 0; low: 1; high: 1; curve: Linear; distribution: Linear; }
+                { time: 1; low: 0; high: 0; curve: Linear; distribution: Linear; }
+            }
         }
     }
     Emitter {
         image: "IMAGE_PUFFSHROOM_PUFF1";
         name: "Gloom_North";
-        spawnMinActive: track { 0 5,20; }
-        spawnMaxLaunched: 5;
-        emitterOffsetX: 0;
-        emitterOffsetY: -48;
-        particleDuration: range { 20 30; }
-        systemAlpha: track { .9,80 0; }
-        particleAlpha: track { .9,80 0; }
-        particleScale: range { .7 1.1; }
+        imageFrames: 1;
+        animated: 0;
+        emitterType: Box;
+        spawnMinActive: nodes {
+            { time: 0; low: 0; high: 0; curve: Linear; distribution: Linear; }
+            { time: 0.2; low: 5; high: 5; curve: Linear; distribution: Linear; }
+        }
+        spawnMaxLaunched: nodes {
+            { time: 0; low: 5; high: 5; curve: Linear; distribution: Linear; }
+        }
+        emitterOffsetX: nodes {
+            { time: 0; low: 0; high: 0; curve: Linear; distribution: Linear; }
+        }
+        emitterOffsetY: nodes {
+            { time: 0; low: -48; high: -48; curve: Linear; distribution: Linear; }
+        }
+        particleDuration: nodes {
+            { time: 0; low: 20; high: 30; curve: Linear; distribution: Linear; }
+        }
+        systemGreen: nodes {
+            { time: 0.8; low: 0.9; high: 0.9; curve: Linear; distribution: Linear; }
+            { time: 1; low: 0; high: 0; curve: Linear; distribution: Linear; }
+        }
+        particleAlpha: nodes {
+            { time: 0.8; low: 0.9; high: 0.9; curve: Linear; distribution: Linear; }
+            { time: 1; low: 0; high: 0; curve: Linear; distribution: Linear; }
+        }
+        particleScale: nodes {
+            { time: 0; low: 0.7; high: 1.1; curve: Linear; distribution: Linear; }
+        }
         field {
             fieldType: Away;
-            x: track { 400 0; }
+            x: nodes {
+                { time: 0; low: 400; high: 400; curve: Linear; distribution: Linear; }
+                { time: 1; low: 0; high: 0; curve: Linear; distribution: Linear; }
+            }
         }
         field {
             fieldType: Circle;
-            x: range { -100 100; }
+            x: nodes {
+                { time: 0; low: -100; high: 100; curve: Linear; distribution: Linear; }
+            }
         }
         field {
             fieldType: Shake;
-            x: track { 1 0; }
-            y: track { 1 0; }
+            x: nodes {
+                { time: 0; low: 1; high: 1; curve: Linear; distribution: Linear; }
+                { time: 1; low: 0; high: 0; curve: Linear; distribution: Linear; }
+            }
+            y: nodes {
+                { time: 0; low: 1; high: 1; curve: Linear; distribution: Linear; }
+                { time: 1; low: 0; high: 0; curve: Linear; distribution: Linear; }
+            }
         }
     }
     Emitter {
         image: "IMAGE_PUFFSHROOM_PUFF1";
         name: "Gloom_West";
-        spawnMinActive: track { 0 5,20; }
-        spawnMaxLaunched: 5;
-        emitterOffsetX: -40;
-        emitterOffsetY: -5;
-        particleDuration: range { 20 30; }
-        systemAlpha: track { .9,80 0; }
-        particleAlpha: track { .9,80 0; }
-        particleScale: range { .7 1.1; }
+        imageFrames: 1;
+        animated: 0;
+        emitterType: Box;
+        spawnMinActive: nodes {
+            { time: 0; low: 0; high: 0; curve: Linear; distribution: Linear; }
+            { time: 0.2; low: 5; high: 5; curve: Linear; distribution: Linear; }
+        }
+        spawnMaxLaunched: nodes {
+            { time: 0; low: 5; high: 5; curve: Linear; distribution: Linear; }
+        }
+        emitterOffsetX: nodes {
+            { time: 0; low: -40; high: -40; curve: Linear; distribution: Linear; }
+        }
+        emitterOffsetY: nodes {
+            { time: 0; low: -5; high: -5; curve: Linear; distribution: Linear; }
+        }
+        particleDuration: nodes {
+            { time: 0; low: 20; high: 30; curve: Linear; distribution: Linear; }
+        }
+        systemGreen: nodes {
+            { time: 0.8; low: 0.9; high: 0.9; curve: Linear; distribution: Linear; }
+            { time: 1; low: 0; high: 0; curve: Linear; distribution: Linear; }
+        }
+        particleAlpha: nodes {
+            { time: 0.8; low: 0.9; high: 0.9; curve: Linear; distribution: Linear; }
+            { time: 1; low: 0; high: 0; curve: Linear; distribution: Linear; }
+        }
+        particleScale: nodes {
+            { time: 0; low: 0.7; high: 1.1; curve: Linear; distribution: Linear; }
+        }
         field {
             fieldType: Away;
-            x: track { 400 0; }
+            x: nodes {
+                { time: 0; low: 400; high: 400; curve: Linear; distribution: Linear; }
+                { time: 1; low: 0; high: 0; curve: Linear; distribution: Linear; }
+            }
         }
         field {
             fieldType: Circle;
-            x: range { -100 100; }
+            x: nodes {
+                { time: 0; low: -100; high: 100; curve: Linear; distribution: Linear; }
+            }
         }
         field {
             fieldType: Shake;
-            x: track { 1 0; }
-            y: track { 1 0; }
+            x: nodes {
+                { time: 0; low: 1; high: 1; curve: Linear; distribution: Linear; }
+                { time: 1; low: 0; high: 0; curve: Linear; distribution: Linear; }
+            }
+            y: nodes {
+                { time: 0; low: 1; high: 1; curve: Linear; distribution: Linear; }
+                { time: 1; low: 0; high: 0; curve: Linear; distribution: Linear; }
+            }
         }
     }
     Emitter {
         image: "IMAGE_PUFFSHROOM_PUFF1";
         name: "Gloom_SouthEast";
-        spawnMinActive: track { 0 5,20; }
-        spawnMaxLaunched: 5;
-        emitterOffsetX: 28;
-        emitterOffsetY: 17;
-        particleDuration: range { 20 30; }
-        systemAlpha: track { .9,80 0; }
-        particleAlpha: track { .9,80 0; }
-        particleScale: range { .7 1.1; }
+        imageFrames: 1;
+        animated: 0;
+        emitterType: Box;
+        spawnMinActive: nodes {
+            { time: 0; low: 0; high: 0; curve: Linear; distribution: Linear; }
+            { time: 0.2; low: 5; high: 5; curve: Linear; distribution: Linear; }
+        }
+        spawnMaxLaunched: nodes {
+            { time: 0; low: 5; high: 5; curve: Linear; distribution: Linear; }
+        }
+        emitterOffsetX: nodes {
+            { time: 0; low: 28; high: 28; curve: Linear; distribution: Linear; }
+        }
+        emitterOffsetY: nodes {
+            { time: 0; low: 17; high: 17; curve: Linear; distribution: Linear; }
+        }
+        particleDuration: nodes {
+            { time: 0; low: 20; high: 30; curve: Linear; distribution: Linear; }
+        }
+        systemGreen: nodes {
+            { time: 0.8; low: 0.9; high: 0.9; curve: Linear; distribution: Linear; }
+            { time: 1; low: 0; high: 0; curve: Linear; distribution: Linear; }
+        }
+        particleAlpha: nodes {
+            { time: 0.8; low: 0.9; high: 0.9; curve: Linear; distribution: Linear; }
+            { time: 1; low: 0; high: 0; curve: Linear; distribution: Linear; }
+        }
+        particleScale: nodes {
+            { time: 0; low: 0.7; high: 1.1; curve: Linear; distribution: Linear; }
+        }
         field {
             fieldType: Away;
-            x: track { 400 0; }
+            x: nodes {
+                { time: 0; low: 400; high: 400; curve: Linear; distribution: Linear; }
+                { time: 1; low: 0; high: 0; curve: Linear; distribution: Linear; }
+            }
         }
         field {
             fieldType: Circle;
-            x: range { -100 100; }
+            x: nodes {
+                { time: 0; low: -100; high: 100; curve: Linear; distribution: Linear; }
+            }
         }
         field {
             fieldType: Shake;
-            x: track { 1 0; }
-            y: track { 1 0; }
+            x: nodes {
+                { time: 0; low: 1; high: 1; curve: Linear; distribution: Linear; }
+                { time: 1; low: 0; high: 0; curve: Linear; distribution: Linear; }
+            }
+            y: nodes {
+                { time: 0; low: 1; high: 1; curve: Linear; distribution: Linear; }
+                { time: 1; low: 0; high: 0; curve: Linear; distribution: Linear; }
+            }
         }
     }
     Emitter {
         image: "IMAGE_PUFFSHROOM_PUFF1";
         name: "Gloom_SouthWest";
-        spawnMinActive: track { 0 5,20; }
-        spawnMaxLaunched: 5;
-        emitterOffsetX: -28;
-        emitterOffsetY: 17;
-        particleDuration: range { 20 30; }
-        systemAlpha: track { .9,80 0; }
-        particleAlpha: track { .9,80 0; }
-        particleScale: range { .7 1.1; }
+        imageFrames: 1;
+        animated: 0;
+        emitterType: Box;
+        spawnMinActive: nodes {
+            { time: 0; low: 0; high: 0; curve: Linear; distribution: Linear; }
+            { time: 0.2; low: 5; high: 5; curve: Linear; distribution: Linear; }
+        }
+        spawnMaxLaunched: nodes {
+            { time: 0; low: 5; high: 5; curve: Linear; distribution: Linear; }
+        }
+        emitterOffsetX: nodes {
+            { time: 0; low: -28; high: -28; curve: Linear; distribution: Linear; }
+        }
+        emitterOffsetY: nodes {
+            { time: 0; low: 17; high: 17; curve: Linear; distribution: Linear; }
+        }
+        particleDuration: nodes {
+            { time: 0; low: 20; high: 30; curve: Linear; distribution: Linear; }
+        }
+        systemGreen: nodes {
+            { time: 0.8; low: 0.9; high: 0.9; curve: Linear; distribution: Linear; }
+            { time: 1; low: 0; high: 0; curve: Linear; distribution: Linear; }
+        }
+        particleAlpha: nodes {
+            { time: 0.8; low: 0.9; high: 0.9; curve: Linear; distribution: Linear; }
+            { time: 1; low: 0; high: 0; curve: Linear; distribution: Linear; }
+        }
+        particleScale: nodes {
+            { time: 0; low: 0.7; high: 1.1; curve: Linear; distribution: Linear; }
+        }
         field {
             fieldType: Away;
-            x: track { 400 0; }
+            x: nodes {
+                { time: 0; low: 400; high: 400; curve: Linear; distribution: Linear; }
+                { time: 1; low: 0; high: 0; curve: Linear; distribution: Linear; }
+            }
         }
         field {
             fieldType: Circle;
-            x: range { -100 100; }
+            x: nodes {
+                { time: 0; low: -100; high: 100; curve: Linear; distribution: Linear; }
+            }
         }
         field {
             fieldType: Shake;
-            x: track { 1 0; }
-            y: track { 1 0; }
+            x: nodes {
+                { time: 0; low: 1; high: 1; curve: Linear; distribution: Linear; }
+                { time: 1; low: 0; high: 0; curve: Linear; distribution: Linear; }
+            }
+            y: nodes {
+                { time: 0; low: 1; high: 1; curve: Linear; distribution: Linear; }
+                { time: 1; low: 0; high: 0; curve: Linear; distribution: Linear; }
+            }
         }
     }
     Emitter {
         image: "IMAGE_PUFFSHROOM_PUFF1";
         name: "Gloom_NorthEast";
-        spawnMinActive: track { 0 5,20; }
-        spawnMaxLaunched: 5;
-        emitterOffsetX: 34;
-        emitterOffsetY: -34;
-        particleDuration: range { 20 30; }
-        systemAlpha: track { .9,80 0; }
-        particleAlpha: track { .9,80 0; }
-        particleScale: range { .7 1.1; }
+        imageFrames: 1;
+        animated: 0;
+        emitterType: Box;
+        spawnMinActive: nodes {
+            { time: 0; low: 0; high: 0; curve: Linear; distribution: Linear; }
+            { time: 0.2; low: 5; high: 5; curve: Linear; distribution: Linear; }
+        }
+        spawnMaxLaunched: nodes {
+            { time: 0; low: 5; high: 5; curve: Linear; distribution: Linear; }
+        }
+        emitterOffsetX: nodes {
+            { time: 0; low: 34; high: 34; curve: Linear; distribution: Linear; }
+        }
+        emitterOffsetY: nodes {
+            { time: 0; low: -34; high: -34; curve: Linear; distribution: Linear; }
+        }
+        particleDuration: nodes {
+            { time: 0; low: 20; high: 30; curve: Linear; distribution: Linear; }
+        }
+        systemGreen: nodes {
+            { time: 0.8; low: 0.9; high: 0.9; curve: Linear; distribution: Linear; }
+            { time: 1; low: 0; high: 0; curve: Linear; distribution: Linear; }
+        }
+        particleAlpha: nodes {
+            { time: 0.8; low: 0.9; high: 0.9; curve: Linear; distribution: Linear; }
+            { time: 1; low: 0; high: 0; curve: Linear; distribution: Linear; }
+        }
+        particleScale: nodes {
+            { time: 0; low: 0.7; high: 1.1; curve: Linear; distribution: Linear; }
+        }
         field {
             fieldType: Away;
-            x: track { 400 0; }
+            x: nodes {
+                { time: 0; low: 400; high: 400; curve: Linear; distribution: Linear; }
+                { time: 1; low: 0; high: 0; curve: Linear; distribution: Linear; }
+            }
         }
         field {
             fieldType: Circle;
-            x: range { -100 100; }
+            x: nodes {
+                { time: 0; low: -100; high: 100; curve: Linear; distribution: Linear; }
+            }
         }
         field {
             fieldType: Shake;
-            x: track { 1 0; }
-            y: track { 1 0; }
+            x: nodes {
+                { time: 0; low: 1; high: 1; curve: Linear; distribution: Linear; }
+                { time: 1; low: 0; high: 0; curve: Linear; distribution: Linear; }
+            }
+            y: nodes {
+                { time: 0; low: 1; high: 1; curve: Linear; distribution: Linear; }
+                { time: 1; low: 0; high: 0; curve: Linear; distribution: Linear; }
+            }
         }
     }
     Emitter {
         image: "IMAGE_PUFFSHROOM_PUFF1";
         name: "Gloom_NorthWest";
-        spawnMinActive: track { 0 5,20; }
-        spawnMaxLaunched: 5;
-        emitterOffsetX: -34;
-        emitterOffsetY: -34;
-        particleDuration: range { 20 30; }
-        systemAlpha: track { .9,80 0; }
-        particleAlpha: track { .9,80 0; }
-        particleScale: range { .7 1.1; }
+        imageFrames: 1;
+        animated: 0;
+        emitterType: Box;
+        spawnMinActive: nodes {
+            { time: 0; low: 0; high: 0; curve: Linear; distribution: Linear; }
+            { time: 0.2; low: 5; high: 5; curve: Linear; distribution: Linear; }
+        }
+        spawnMaxLaunched: nodes {
+            { time: 0; low: 5; high: 5; curve: Linear; distribution: Linear; }
+        }
+        emitterOffsetX: nodes {
+            { time: 0; low: -34; high: -34; curve: Linear; distribution: Linear; }
+        }
+        emitterOffsetY: nodes {
+            { time: 0; low: -34; high: -34; curve: Linear; distribution: Linear; }
+        }
+        particleDuration: nodes {
+            { time: 0; low: 20; high: 30; curve: Linear; distribution: Linear; }
+        }
+        systemGreen: nodes {
+            { time: 0.8; low: 0.9; high: 0.9; curve: Linear; distribution: Linear; }
+            { time: 1; low: 0; high: 0; curve: Linear; distribution: Linear; }
+        }
+        particleAlpha: nodes {
+            { time: 0.8; low: 0.9; high: 0.9; curve: Linear; distribution: Linear; }
+            { time: 1; low: 0; high: 0; curve: Linear; distribution: Linear; }
+        }
+        particleScale: nodes {
+            { time: 0; low: 0.7; high: 1.1; curve: Linear; distribution: Linear; }
+        }
         field {
             fieldType: Away;
-            x: track { 400 0; }
+            x: nodes {
+                { time: 0; low: 400; high: 400; curve: Linear; distribution: Linear; }
+                { time: 1; low: 0; high: 0; curve: Linear; distribution: Linear; }
+            }
         }
         field {
             fieldType: Circle;
-            x: range { -100 100; }
+            x: nodes {
+                { time: 0; low: -100; high: 100; curve: Linear; distribution: Linear; }
+            }
         }
         field {
             fieldType: Shake;
-            x: track { 1 0; }
-            y: track { 1 0; }
+            x: nodes {
+                { time: 0; low: 1; high: 1; curve: Linear; distribution: Linear; }
+                { time: 1; low: 0; high: 0; curve: Linear; distribution: Linear; }
+            }
+            y: nodes {
+                { time: 0; low: 1; high: 1; curve: Linear; distribution: Linear; }
+                { time: 1; low: 0; high: 0; curve: Linear; distribution: Linear; }
+            }
         }
     }
 }

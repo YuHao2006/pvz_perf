@@ -615,7 +615,7 @@ void Music::UpdateMusicBurst()
 		case MusicBurstState::MUSIC_BURST_STARTING:
 			if (aBurstScheme == 1)
 			{
-				aFadeTrackVolume = TodAnimateCurveFloat(400, 0, mBurstStateCounter, 0.0f, 1.0f, Curves::Linear);
+				aFadeTrackVolume = TodAnimateCurveNs(4'000'000'000LL, 0, mBurstStateCounter.mNanoseconds, 0.0f, 1.0f, Curves::Linear);
 				if (mBurstStateCounter == 100)
 				{
 					mMusicDrumsState = MusicDrumsState::MUSIC_DRUMS_ON_QUEUED;
@@ -639,7 +639,7 @@ void Music::UpdateMusicBurst()
 					mBurstStateCounter = 400;
 				else
 				{
-					aMainTrackVolume = TodAnimateCurveFloat(400, 0, mBurstStateCounter, 1.0f, 0.0f, Curves::Linear);
+					aMainTrackVolume = TodAnimateCurveNs(4'000'000'000LL, 0, mBurstStateCounter.mNanoseconds, 1.0f, 0.0f, Curves::Linear);
 					if (mBurstStateCounter == 0)
 					{
 						mMusicBurstState = MusicBurstState::MUSIC_BURST_ON;
@@ -672,9 +672,9 @@ void Music::UpdateMusicBurst()
 			break;
 		case MusicBurstState::MUSIC_BURST_FINISHING:
 			if (aBurstScheme == 1)
-				aFadeTrackVolume = TodAnimateCurveFloat(800, 0, mBurstStateCounter, 1.0f, 0.0f, Curves::Linear);
+				aFadeTrackVolume = TodAnimateCurveNs(8'000'000'000LL, 0, mBurstStateCounter.mNanoseconds, 1.0f, 0.0f, Curves::Linear);
 			else
-				aMainTrackVolume = TodAnimateCurveFloat(400, 0, mBurstStateCounter, 0.0f, 1.0f, Curves::Linear);
+				aMainTrackVolume = TodAnimateCurveNs(4'000'000'000LL, 0, mBurstStateCounter.mNanoseconds, 0.0f, 1.0f, Curves::Linear);
 			if (mBurstStateCounter == 0 && mMusicDrumsState == MusicDrumsState::MUSIC_DRUMS_OFF)
 				mMusicBurstState = MusicBurstState::MUSIC_BURST_OFF;
 			break;
@@ -721,9 +721,9 @@ void Music::UpdateMusicBurst()
 			break;
 		case MusicDrumsState::MUSIC_DRUMS_FADING:
 			if (aBurstScheme == 2)
-				aDrumsVolume = TodAnimateCurveFloat(800, 0, mDrumsStateCounter, 1.0f, 0.0f, Curves::Linear);
+				aDrumsVolume = TodAnimateCurveNs(8'000'000'000LL, 0, mDrumsStateCounter.mNanoseconds, 1.0f, 0.0f, Curves::Linear);
 			else
-				aDrumsVolume = TodAnimateCurveFloat(50, 0, mDrumsStateCounter, 1.0f, 0.0f, Curves::Linear);
+				aDrumsVolume = TodAnimateCurveNs(500'000'000, 0, mDrumsStateCounter.mNanoseconds, 1.0f, 0.0f, Curves::Linear);
 			if (mDrumsStateCounter == 0)
 				mMusicDrumsState = MusicDrumsState::MUSIC_DRUMS_OFF;
 			break;
@@ -762,7 +762,7 @@ void Music::MusicUpdate()
 			StopAllMusic();
 		else
 		{
-			float aFadeLevel = TodAnimateCurveFloat(mFadeOutDuration, 0, mFadeOutCounter, 1.0f, 0.0f, Curves::Linear);
+			float aFadeLevel = TodAnimateCurveNs(mFadeOutDuration.mNanoseconds, 0, mFadeOutCounter.mNanoseconds, 1.0f, 0.0f, Curves::Linear);
 			mMusicInterface->SetSongVolume(mCurMusicFileMain, aFadeLevel);
 		}
 	}

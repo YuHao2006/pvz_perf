@@ -5,26 +5,55 @@ export component Pinata {
         images: ["particles/frames/pinata_r0_c0.png","particles/frames/pinata_r0_c1.png","particles/frames/pinata_r0_c2.png","particles/frames/pinata_r0_c3.png","particles/frames/pinata_r0_c4.png"];
         name: "pinata";
         imageFrames: 5;
+        animated: 0;
         emitterType: Circle;
-        randomLaunchSpin: 1;
         dieIfOverloaded: 1;
-        spawnMinActive: range { 10 15; }
-        emitterRadius: range { 0 70; }
-        particleDuration: 180;
-        systemAlpha: track { 1,95 0,100; }
-        launchSpeed: range { 200 500; }
-        launchAngle: range { 130 190; }
-        particleSpinSpeed: track { [-720 720] 0,40; }
-        particleScale: .8;
-        collisionReflect: track { .3 .3,40 0,50; }
-        collisionSpin: track { [-10 -50] 0,40; }
+        spawnMinActive: nodes {
+            { time: 0; low: 10; high: 15; curve: Linear; distribution: Linear; }
+        }
+        emitterRadius: nodes {
+            { time: 0; low: 0; high: 70; curve: Linear; distribution: Linear; }
+        }
+        particleDuration: nodes {
+            { time: 0; low: 180; high: 180; curve: Linear; distribution: Linear; }
+        }
+        systemGreen: nodes {
+            { time: 0.95; low: 1; high: 1; curve: Linear; distribution: Linear; }
+            { time: 1; low: 0; high: 0; curve: Linear; distribution: Linear; }
+        }
+        systemAlpha: nodes {
+            { time: 0; low: 200; high: 500; curve: Linear; distribution: Linear; }
+        }
+        systemBrightness: nodes {
+            { time: 0; low: 130; high: 190; curve: Linear; distribution: Linear; }
+        }
+        particleSpinSpeed: nodes {
+            { time: 0; low: -720; high: 720; curve: Linear; distribution: Linear; }
+            { time: 0.4; low: 0; high: 0; curve: Linear; distribution: Linear; }
+        }
+        particleScale: nodes {
+            { time: 0; low: 0.8; high: 0.8; curve: Linear; distribution: Linear; }
+        }
+        collisionReflect: nodes {
+            { time: 0; low: 0.3; high: 0.3; curve: Linear; distribution: Linear; }
+            { time: 0.4; low: 0.3; high: 0.3; curve: Linear; distribution: Linear; }
+            { time: 0.5; low: 0; high: 0; curve: Linear; distribution: Linear; }
+        }
+        collisionSpin: nodes {
+            { time: 0; low: -10; high: -50; curve: Linear; distribution: Linear; }
+            { time: 0.4; low: 0; high: 0; curve: Linear; distribution: Linear; }
+        }
         field {
             fieldType: Acceleration;
-            y: 17.0;
+            y: nodes {
+                { time: 0; low: 17; high: 17; curve: Linear; distribution: Linear; }
+            }
         }
         field {
             fieldType: GroundConstraint;
-            y: 90.0;
+            y: nodes {
+                { time: 0; low: 90; high: 90; curve: Linear; distribution: Linear; }
+            }
         }
     }
 }

@@ -4,72 +4,72 @@ namespace GeneratedDefinitions {
 static_assert(static_cast<unsigned>(ParticleEmitterName::top) == 113u);
 static_assert(kParticleEmitterNameTableHash == 10062573u);
 constinit FloatParameterTrackNode Particle3Nodes0[1] = {
-    {0.0f, 50.0f, 50.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 50.0f, 50.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle3Nodes3[1] = {
-    {0.0f, 50.0f, 50.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 50.0f, 50.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle3Nodes4[1] = {
-    {0.0f, -1.0f, -1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, -1.0f, -1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle3Nodes5[1] = {
-    {0.0f, 50.0f, 50.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 50.0f, 50.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle3Nodes6[1] = {
-    {0.0f, 1.0f, 50.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 1.0f, 50.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle3Nodes14[1] = {
-    {0.0f, 50.0f, 50.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 50.0f, 50.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle3Nodes17[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle3Nodes18[2] = {
-    {0.800000012f, 1.0f, 1.0f, Curves::Linear, Curves::Linear},
-    {1.0f, 0.0f, 0.0f, Curves::Linear, Curves::Linear},
+    {4, 5, 1.0f, 1.0f, 1, 1},
+    {1, 1, 0.0f, 0.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle3Nodes19[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle3Nodes20[1] = {
-    {0.0f, 300.0f, 600.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 300.0f, 600.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle3Nodes21[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle3Nodes22[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle3Nodes23[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle3Nodes24[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle3Nodes25[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle3Nodes26[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle3Nodes28[2] = {
-    {0.0f, -720.0f, 720.0f, Curves::Linear, Curves::Linear},
-    {0.800000012f, -90.0f, 90.0f, Curves::Linear, Curves::Linear},
+    {0, 1, -720.0f, 720.0f, 1, 1},
+    {4, 5, -90.0f, 90.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle3Nodes29[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle3Nodes30[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle3Nodes38[1] = {
-    {0.0f, 0.0500000007f, 0.0500000007f, Curves::Linear, Curves::Linear},
+    {0, 1, 0.0500000007f, 0.0500000007f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle3Nodes39[1] = {
-    {0.0f, 0.0500000007f, 0.0500000007f, Curves::Linear, Curves::Linear},
+    {0, 1, 0.0500000007f, 0.0500000007f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle3Nodes41[1] = {
-    {0.0f, 5.0f, 5.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 5.0f, 5.0f, 1, 1},
 };
 constinit ParticleField Particle3Emitter0Fields0[2] = {
     {static_cast<ParticleFieldType>(1), {Particle3Nodes38, 1}, {Particle3Nodes39, 1}},
@@ -95,78 +95,78 @@ constinit const Sexy::Rect Particle3Rects[5] = {
     {130, 2, 28, 30},
 };
 constinit FloatParameterTrackNode Particle11Nodes0[1] = {
-    {0.0f, 50.0f, 50.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 50.0f, 50.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle11Nodes3[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle11Nodes4[1] = {
-    {0.0f, -1.0f, -1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, -1.0f, -1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle11Nodes5[1] = {
-    {0.0f, -1.0f, -1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, -1.0f, -1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle11Nodes14[1] = {
-    {0.0f, 100.0f, 100.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 100.0f, 100.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle11Nodes17[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle11Nodes18[2] = {
-    {0.800000012f, 1.0f, 1.0f, Curves::Linear, Curves::Linear},
-    {1.0f, 0.0f, 0.0f, Curves::Linear, Curves::Linear},
+    {4, 5, 1.0f, 1.0f, 1, 1},
+    {1, 1, 0.0f, 0.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle11Nodes19[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle11Nodes20[1] = {
-    {0.0f, 200.0f, 200.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 200.0f, 200.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle11Nodes21[1] = {
-    {0.0f, 120.0f, 160.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 120.0f, 160.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle11Nodes22[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle11Nodes23[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle11Nodes24[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle11Nodes25[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle11Nodes26[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle11Nodes27[1] = {
-    {0.0f, 30.0f, 30.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 30.0f, 30.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle11Nodes28[2] = {
-    {0.0f, -200.0f, -600.0f, Curves::Linear, Curves::Linear},
-    {1.0f, -100.0f, -300.0f, Curves::Linear, Curves::Linear},
+    {0, 1, -200.0f, -600.0f, 1, 1},
+    {1, 1, -100.0f, -300.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle11Nodes29[1] = {
-    {0.0f, 0.800000012f, 0.800000012f, Curves::Linear, Curves::Linear},
+    {0, 1, 0.800000012f, 0.800000012f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle11Nodes30[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle11Nodes31[1] = {
-    {0.0f, 0.300000012f, 0.300000012f, Curves::Linear, Curves::Linear},
+    {0, 1, 0.300000012f, 0.300000012f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle11Nodes32[1] = {
-    {0.0f, -3.0f, -6.0f, Curves::Linear, Curves::Linear},
+    {0, 1, -3.0f, -6.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle11Nodes39[1] = {
-    {0.0f, 17.0f, 17.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 17.0f, 17.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle11Nodes41[1] = {
-    {0.0f, 90.0f, 90.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 90.0f, 90.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle11Nodes42[1] = {
-    {0.0f, 100.0f, 100.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 100.0f, 100.0f, 1, 1},
 };
 constinit ParticleField Particle11Emitter0Fields0[3] = {
     {static_cast<ParticleFieldType>(2), {nullptr, 0}, {Particle11Nodes39, 1}},
@@ -189,93 +189,93 @@ constinit const Sexy::Rect Particle11Rects[1] = {
     {2, 2, 62, 67},
 };
 constinit FloatParameterTrackNode Particle19Nodes0[1] = {
-    {0.0f, 200.0f, 200.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 200.0f, 200.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle19Nodes2[2] = {
-    {0.0f, 200.0f, 200.0f, Curves::Linear, Curves::Linear},
-    {1.0f, 100.0f, 100.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 200.0f, 200.0f, 1, 1},
+    {1, 1, 100.0f, 100.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle19Nodes3[1] = {
-    {0.0f, -1.0f, -1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, -1.0f, -1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle19Nodes4[1] = {
-    {0.0f, -1.0f, -1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, -1.0f, -1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle19Nodes5[1] = {
-    {0.0f, -1.0f, -1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, -1.0f, -1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle19Nodes9[2] = {
-    {0.0f, 0.0f, 25.0f, Curves::Linear, Curves::Linear},
-    {1.0f, 0.0f, 1.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 0.0f, 25.0f, 1, 1},
+    {1, 1, 0.0f, 1.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle19Nodes10[2] = {
-    {0.0f, -130.0f, 0.0f, Curves::Linear, Curves::Linear},
-    {1.0f, -100.0f, 0.0f, Curves::Linear, Curves::Linear},
+    {0, 1, -130.0f, 0.0f, 1, 1},
+    {1, 1, -100.0f, 0.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle19Nodes14[1] = {
-    {0.0f, 10.0f, 25.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 10.0f, 25.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle19Nodes17[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle19Nodes18[2] = {
-    {0.800000012f, 1.0f, 1.0f, Curves::Linear, Curves::Linear},
-    {1.0f, 0.0f, 0.0f, Curves::Linear, Curves::Linear},
+    {4, 5, 1.0f, 1.0f, 1, 1},
+    {1, 1, 0.0f, 0.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle19Nodes19[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle19Nodes20[1] = {
-    {0.0f, 100.0f, 100.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 100.0f, 100.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle19Nodes21[1] = {
-    {0.0f, 90.0f, 180.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 90.0f, 180.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle19Nodes22[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle19Nodes23[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle19Nodes24[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle19Nodes25[2] = {
-    {0.699999988f, 1.0f, 1.0f, Curves::Linear, Curves::Linear},
-    {1.0f, 0.0f, 0.0f, Curves::Linear, Curves::Linear},
+    {7, 10, 1.0f, 1.0f, 1, 1},
+    {1, 1, 0.0f, 0.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle19Nodes26[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle19Nodes28[1] = {
-    {0.0f, -1720.0f, 1720.0f, Curves::Linear, Curves::Linear},
+    {0, 1, -1720.0f, 1720.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle19Nodes29[1] = {
-    {0.0f, 0.699999988f, 0.899999976f, Curves::Linear, Curves::Linear},
+    {0, 1, 0.699999988f, 0.899999976f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle19Nodes30[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle19Nodes38[1] = {
-    {0.0f, 0.0500000007f, 0.0500000007f, Curves::Linear, Curves::Linear},
+    {0, 1, 0.0500000007f, 0.0500000007f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle19Nodes39[1] = {
-    {0.0f, 0.0500000007f, 0.0500000007f, Curves::Linear, Curves::Linear},
+    {0, 1, 0.0500000007f, 0.0500000007f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle19Nodes41[1] = {
-    {0.0f, 10.0f, 10.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 10.0f, 10.0f, 1, 1},
 };
 constinit ParticleField Particle19Emitter0Fields0[2] = {
     {static_cast<ParticleFieldType>(1), {Particle19Nodes38, 1}, {Particle19Nodes39, 1}},
     {static_cast<ParticleFieldType>(2), {nullptr, 0}, {Particle19Nodes41, 1}},
 };
 constinit FloatParameterTrackNode Particle19Nodes42[2] = {
-    {0.0f, 0.0f, 0.0f, Curves::Linear, Curves::Linear},
-    {1.0f, 740.0f, 740.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 0.0f, 0.0f, 1, 1},
+    {1, 1, 740.0f, 740.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle19Nodes43[2] = {
-    {0.0f, 30.0f, 30.0f, Curves::Linear, Curves::Linear},
-    {1.0f, 0.0f, 0.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 30.0f, 30.0f, 1, 1},
+    {1, 1, 0.0f, 0.0f, 1, 1},
 };
 constinit ParticleField Particle19Emitter0Fields1[1] = {
     {static_cast<ParticleFieldType>(7), {Particle19Nodes42, 2}, {Particle19Nodes43, 2}},
@@ -303,64 +303,64 @@ constinit const Sexy::Rect Particle19Rects[8] = {
     {310, 86, 40, 40},
 };
 constinit FloatParameterTrackNode Particle27Nodes2[1] = {
-    {0.0f, 12.0f, 12.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 12.0f, 12.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle27Nodes3[1] = {
-    {0.0f, -1.0f, -1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, -1.0f, -1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle27Nodes4[1] = {
-    {0.0f, -1.0f, -1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, -1.0f, -1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle27Nodes5[1] = {
-    {0.0f, -1.0f, -1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, -1.0f, -1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle27Nodes9[1] = {
-    {0.0f, 23.0f, 800.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 23.0f, 800.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle27Nodes10[1] = {
-    {0.0f, 28.0f, 74.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 28.0f, 74.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle27Nodes14[1] = {
-    {0.0f, 80.0f, 200.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 80.0f, 200.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle27Nodes17[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle27Nodes18[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle27Nodes19[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle27Nodes20[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle27Nodes21[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle27Nodes22[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle27Nodes23[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle27Nodes24[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle27Nodes25[4] = {
-    {0.0f, 0.0f, 0.0f, Curves::Linear, Curves::Linear},
-    {0.200000003f, 1.0f, 1.0f, Curves::Linear, Curves::Linear},
-    {0.800000012f, 1.0f, 1.0f, Curves::Linear, Curves::Linear},
-    {1.0f, 0.0f, 0.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 0.0f, 0.0f, 1, 1},
+    {1, 5, 1.0f, 1.0f, 1, 1},
+    {4, 5, 1.0f, 1.0f, 1, 1},
+    {1, 1, 0.0f, 0.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle27Nodes26[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle27Nodes29[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle27Nodes30[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit TodEmitterDefinition Particle27Emitters[1] = {
     {0u, 3, 3, 0, 40, static_cast<EmitterType>(1), static_cast<ParticleEmitterName>(0), {nullptr, 0}, {nullptr, 0}, {Particle27Nodes2, 1}, {Particle27Nodes3, 1}, {Particle27Nodes4, 1}, {Particle27Nodes5, 1}, {nullptr, 0}, {nullptr, 0}, {nullptr, 0}, {Particle27Nodes9, 1}, {Particle27Nodes10, 1}, {nullptr, 0}, {nullptr, 0}, {nullptr, 0}, {Particle27Nodes14, 1}, {nullptr, 0}, {nullptr, 0}, {Particle27Nodes17, 1}, {Particle27Nodes18, 1}, {Particle27Nodes19, 1}, {Particle27Nodes20, 1}, {Particle27Nodes21, 1}, {nullptr, 0}, {nullptr, 0}, {Particle27Nodes22, 1}, {Particle27Nodes23, 1}, {Particle27Nodes24, 1}, {Particle27Nodes25, 4}, {Particle27Nodes26, 1}, {nullptr, 0}, {nullptr, 0}, {Particle27Nodes29, 1}, {Particle27Nodes30, 1}, {nullptr, 0}, {nullptr, 0}, {nullptr, 0}, {nullptr, 0}, {nullptr, 0}, {nullptr, 0}, {nullptr, 0}, -1, 1280u},
@@ -380,74 +380,74 @@ constinit const Sexy::Rect Particle27Rects[3] = {
     {2, 50, 20, 20},
 };
 constinit FloatParameterTrackNode Particle35Nodes0[1] = {
-    {0.0f, 200.0f, 200.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 200.0f, 200.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle35Nodes2[2] = {
-    {0.0f, 40.0f, 40.0f, Curves::Linear, Curves::Linear},
-    {1.0f, 0.0f, 0.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 40.0f, 40.0f, 1, 1},
+    {1, 1, 0.0f, 0.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle35Nodes3[1] = {
-    {0.0f, -1.0f, -1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, -1.0f, -1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle35Nodes4[1] = {
-    {0.0f, -1.0f, -1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, -1.0f, -1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle35Nodes5[1] = {
-    {0.0f, 3.0f, 3.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 3.0f, 3.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle35Nodes6[1] = {
-    {0.0f, 0.0f, 10.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 0.0f, 10.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle35Nodes14[1] = {
-    {0.0f, 30.0f, 60.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 30.0f, 60.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle35Nodes17[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle35Nodes18[2] = {
-    {0.800000012f, 1.0f, 1.0f, Curves::Linear, Curves::Linear},
-    {1.0f, 0.0f, 0.0f, Curves::Linear, Curves::Linear},
+    {4, 5, 1.0f, 1.0f, 1, 1},
+    {1, 1, 0.0f, 0.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle35Nodes19[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle35Nodes20[1] = {
-    {0.0f, 100.0f, 120.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 100.0f, 120.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle35Nodes21[1] = {
-    {0.0f, 180.0f, 210.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 180.0f, 210.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle35Nodes22[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle35Nodes23[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle35Nodes24[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle35Nodes25[2] = {
-    {0.800000012f, 1.0f, 1.0f, Curves::Linear, Curves::Linear},
-    {1.0f, 0.0f, 0.0f, Curves::Linear, Curves::Linear},
+    {4, 5, 1.0f, 1.0f, 1, 1},
+    {1, 1, 0.0f, 0.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle35Nodes26[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle35Nodes28[1] = {
-    {0.0f, -1400.0f, 1400.0f, Curves::Linear, Curves::Linear},
+    {0, 1, -1400.0f, 1400.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle35Nodes29[1] = {
-    {0.0f, 0.899999976f, 1.10000002f, Curves::Linear, Curves::Linear},
+    {0, 1, 0.899999976f, 1.10000002f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle35Nodes30[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle35Nodes39[1] = {
-    {0.0f, 8.0f, 8.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 8.0f, 8.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle35Nodes40[2] = {
-    {0.0f, 0.0f, 0.0f, Curves::Linear, Curves::Linear},
-    {1.0f, -40.0f, 10.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 0.0f, 0.0f, 1, 1},
+    {1, 1, -40.0f, 10.0f, 1, 1},
 };
 constinit ParticleField Particle35Emitter0Fields0[2] = {
     {static_cast<ParticleFieldType>(2), {nullptr, 0}, {Particle35Nodes39, 1}},
@@ -473,132 +473,132 @@ constinit const Sexy::Rect Particle35Rects[5] = {
     {2, 50, 8, 8},
 };
 constinit FloatParameterTrackNode Particle43Nodes0[1] = {
-    {0.0f, 20.0f, 20.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 20.0f, 20.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle43Nodes3[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle43Nodes4[1] = {
-    {0.0f, -1.0f, -1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, -1.0f, -1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle43Nodes5[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle43Nodes6[1] = {
-    {0.0f, 0.0f, 10.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 0.0f, 10.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle43Nodes14[1] = {
-    {0.0f, 20.0f, 20.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 20.0f, 20.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle43Nodes17[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle43Nodes18[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle43Nodes19[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle43Nodes20[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle43Nodes21[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle43Nodes22[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle43Nodes23[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle43Nodes24[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle43Nodes25[2] = {
-    {0.699999988f, 0.899999976f, 0.899999976f, Curves::Linear, Curves::Linear},
-    {1.0f, 0.0f, 0.0f, Curves::Linear, Curves::Linear},
+    {7, 10, 0.899999976f, 0.899999976f, 1, 1},
+    {1, 1, 0.0f, 0.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle43Nodes26[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle43Nodes29[2] = {
-    {0.0f, 0.400000006f, 0.600000024f, Curves::Linear, Curves::Linear},
-    {1.0f, 0.800000012f, 1.20000005f, Curves::Linear, Curves::Linear},
+    {0, 1, 0.400000006f, 0.600000024f, 1, 1},
+    {1, 1, 0.800000012f, 1.20000005f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle43Nodes30[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle43Nodes38[1] = {
-    {0.0f, 30.0f, 30.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 30.0f, 30.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle43Nodes41[1] = {
-    {0.0f, 6.0f, 10.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 6.0f, 10.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle43Nodes42[1] = {
-    {0.0f, -1.0f, -1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, -1.0f, -1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle43Nodes43[1] = {
-    {0.0f, -1.0f, -1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, -1.0f, -1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle43Nodes44[1] = {
-    {0.0f, 0.0f, 1.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 0.0f, 1.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle43Nodes52[1] = {
-    {0.0f, 30.0f, 30.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 30.0f, 30.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle43Nodes55[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle43Nodes56[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle43Nodes57[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle43Nodes58[1] = {
-    {0.0f, 150.0f, 150.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 150.0f, 150.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle43Nodes59[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle43Nodes60[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle43Nodes61[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle43Nodes62[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle43Nodes63[2] = {
-    {0.800000012f, 1.0f, 1.0f, Curves::Linear, Curves::Linear},
-    {1.0f, 0.0f, 0.0f, Curves::Linear, Curves::Linear},
+    {4, 5, 1.0f, 1.0f, 1, 1},
+    {1, 1, 0.0f, 0.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle43Nodes64[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle43Nodes66[1] = {
-    {0.0f, -200.0f, 200.0f, Curves::Linear, Curves::Linear},
+    {0, 1, -200.0f, 200.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle43Nodes67[4] = {
-    {0.0f, 0.300000012f, 0.300000012f, Curves::Linear, Curves::Linear},
-    {0.100000001f, 0.800000012f, 1.20000005f, Curves::Linear, Curves::Linear},
-    {0.699999988f, 0.800000012f, 1.20000005f, Curves::Linear, Curves::Linear},
-    {1.0f, 0.0f, 0.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 0.300000012f, 0.300000012f, 1, 1},
+    {1, 10, 0.800000012f, 1.20000005f, 1, 1},
+    {7, 10, 0.800000012f, 1.20000005f, 1, 1},
+    {1, 1, 0.0f, 0.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle43Nodes68[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle43Nodes76[2] = {
-    {0.400000006f, 0.0f, 0.0f, Curves::Linear, Curves::Linear},
-    {1.0f, 0.100000001f, 0.100000001f, Curves::Linear, Curves::Linear},
+    {2, 5, 0.0f, 0.0f, 1, 1},
+    {1, 1, 0.100000001f, 0.100000001f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle43Nodes77[2] = {
-    {0.400000006f, 0.0f, 0.0f, Curves::Linear, Curves::Linear},
-    {1.0f, 0.100000001f, 0.100000001f, Curves::Linear, Curves::Linear},
+    {2, 5, 0.0f, 0.0f, 1, 1},
+    {1, 1, 0.100000001f, 0.100000001f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle43Nodes79[1] = {
-    {0.0f, 10.0f, 10.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 10.0f, 10.0f, 1, 1},
 };
 constinit ParticleField Particle43Emitter1Fields0[2] = {
     {static_cast<ParticleFieldType>(1), {Particle43Nodes76, 2}, {Particle43Nodes77, 2}},
@@ -627,83 +627,83 @@ constinit const Sexy::Rect Particle43Rects[7] = {
     {32, 58, 11, 11},
 };
 constinit FloatParameterTrackNode Particle51Nodes0[1] = {
-    {0.0f, 20.0f, 20.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 20.0f, 20.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle51Nodes3[1] = {
-    {0.0f, 6.0f, 8.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 6.0f, 8.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle51Nodes4[1] = {
-    {0.0f, -1.0f, -1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, -1.0f, -1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle51Nodes5[1] = {
-    {0.0f, -1.0f, -1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, -1.0f, -1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle51Nodes6[1] = {
-    {0.0f, 0.0f, 5.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 0.0f, 5.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle51Nodes14[1] = {
-    {0.0f, 20.0f, 20.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 20.0f, 20.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle51Nodes17[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle51Nodes18[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle51Nodes19[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle51Nodes20[1] = {
-    {0.0f, 0.0f, 0.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 0.0f, 0.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle51Nodes21[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle51Nodes22[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle51Nodes23[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle51Nodes24[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle51Nodes25[2] = {
-    {0.800000012f, 0.300000012f, 0.800000012f, Curves::Linear, Curves::Linear},
-    {1.0f, 0.0f, 0.0f, Curves::Linear, Curves::Linear},
+    {4, 5, 0.300000012f, 0.800000012f, 1, 1},
+    {1, 1, 0.0f, 0.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle51Nodes26[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle51Nodes28[1] = {
-    {0.0f, -200.0f, 200.0f, Curves::Linear, Curves::Linear},
+    {0, 1, -200.0f, 200.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle51Nodes29[3] = {
-    {0.0f, 0.200000003f, 0.300000012f, Curves::Linear, Curves::Linear},
-    {0.699999988f, 0.600000024f, 0.800000012f, Curves::Linear, Curves::Linear},
-    {1.0f, 0.0f, 0.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 0.200000003f, 0.300000012f, 1, 1},
+    {7, 10, 0.600000024f, 0.800000012f, 1, 1},
+    {1, 1, 0.0f, 0.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle51Nodes30[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle51Nodes38[2] = {
-    {0.400000006f, 0.0f, 0.0f, Curves::Linear, Curves::Linear},
-    {1.0f, 0.100000001f, 0.100000001f, Curves::Linear, Curves::Linear},
+    {2, 5, 0.0f, 0.0f, 1, 1},
+    {1, 1, 0.100000001f, 0.100000001f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle51Nodes39[2] = {
-    {0.400000006f, 0.0f, 0.0f, Curves::Linear, Curves::Linear},
-    {1.0f, 0.100000001f, 0.100000001f, Curves::Linear, Curves::Linear},
+    {2, 5, 0.0f, 0.0f, 1, 1},
+    {1, 1, 0.100000001f, 0.100000001f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle51Nodes41[1] = {
-    {0.0f, 5.0f, 5.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 5.0f, 5.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle51Nodes42[2] = {
-    {0.0f, 0.0f, 0.0f, Curves::Linear, Curves::Linear},
-    {1.0f, 20.0f, 40.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 0.0f, 0.0f, 1, 1},
+    {1, 1, 20.0f, 40.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle51Nodes43[2] = {
-    {0.0f, 0.0f, 0.0f, Curves::Linear, Curves::Linear},
-    {1.0f, -30.0f, 20.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 0.0f, 0.0f, 1, 1},
+    {1, 1, -30.0f, 20.0f, 1, 1},
 };
 constinit ParticleField Particle51Emitter0Fields0[3] = {
     {static_cast<ParticleFieldType>(1), {Particle51Nodes38, 2}, {Particle51Nodes39, 2}},
@@ -726,137 +726,137 @@ constinit const Sexy::Rect Particle51Rects[1] = {
     {2, 2, 21, 21},
 };
 constinit FloatParameterTrackNode Particle59Nodes0[1] = {
-    {0.0f, 20.0f, 20.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 20.0f, 20.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle59Nodes2[1] = {
-    {0.0f, 30.0f, 30.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 30.0f, 30.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle59Nodes3[1] = {
-    {0.0f, -1.0f, -1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, -1.0f, -1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle59Nodes4[1] = {
-    {0.0f, -1.0f, -1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, -1.0f, -1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle59Nodes5[1] = {
-    {0.0f, -1.0f, -1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, -1.0f, -1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle59Nodes6[1] = {
-    {0.0f, 0.0f, 4.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 0.0f, 4.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle59Nodes14[1] = {
-    {0.0f, 40.0f, 60.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 40.0f, 60.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle59Nodes17[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle59Nodes18[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle59Nodes19[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle59Nodes20[1] = {
-    {0.0f, 10.0f, 10.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 10.0f, 10.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle59Nodes21[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle59Nodes22[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle59Nodes23[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle59Nodes24[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle59Nodes25[3] = {
-    {0.0f, 1.0f, 1.0f, Curves::Linear, Curves::Linear},
-    {0.800000012f, 0.400000006f, 0.800000012f, Curves::Linear, Curves::Linear},
-    {1.0f, 0.0f, 0.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 1, 1},
+    {4, 5, 0.400000006f, 0.800000012f, 1, 1},
+    {1, 1, 0.0f, 0.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle59Nodes26[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle59Nodes28[2] = {
-    {0.0f, -800.0f, 800.0f, Curves::Linear, Curves::Linear},
-    {1.0f, 0.0f, 0.0f, Curves::Linear, Curves::Linear},
+    {0, 1, -800.0f, 800.0f, 1, 1},
+    {1, 1, 0.0f, 0.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle59Nodes29[4] = {
-    {0.0f, 0.300000012f, 0.300000012f, Curves::Linear, Curves::Linear},
-    {0.200000003f, 0.5f, 0.800000012f, Curves::Linear, Curves::Linear},
-    {0.600000024f, 0.800000012f, 1.0f, Curves::Linear, Curves::Linear},
-    {1.0f, 0.0f, 0.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 0.300000012f, 0.300000012f, 1, 1},
+    {1, 5, 0.5f, 0.800000012f, 1, 1},
+    {3, 5, 0.800000012f, 1.0f, 1, 1},
+    {1, 1, 0.0f, 0.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle59Nodes30[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle59Nodes39[1] = {
-    {0.0f, -1.0f, -1.0f, Curves::Linear, Curves::Linear},
+    {0, 1, -1.0f, -1.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle59Nodes40[2] = {
-    {0.0f, 0.0f, 0.0f, Curves::EaseOut, Curves::Linear},
-    {1.0f, 30.0f, 30.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 0.0f, 0.0f, 3, 1},
+    {1, 1, 30.0f, 30.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle59Nodes41[2] = {
-    {0.0f, 0.0f, 0.0f, Curves::Linear, Curves::Linear},
-    {1.0f, -20.0f, -20.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 0.0f, 0.0f, 1, 1},
+    {1, 1, -20.0f, -20.0f, 1, 1},
 };
 constinit ParticleField Particle59Emitter0Fields0[2] = {
     {static_cast<ParticleFieldType>(2), {nullptr, 0}, {Particle59Nodes39, 1}},
     {static_cast<ParticleFieldType>(6), {Particle59Nodes40, 2}, {Particle59Nodes41, 2}},
 };
 constinit FloatParameterTrackNode Particle59Nodes43[1] = {
-    {0.0f, 50.0f, 50.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 50.0f, 50.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle59Nodes45[1] = {
-    {0.0f, -1.0f, -1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, -1.0f, -1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle59Nodes46[1] = {
-    {0.0f, -1.0f, -1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, -1.0f, -1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle59Nodes47[1] = {
-    {0.0f, -1.0f, -1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, -1.0f, -1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle59Nodes56[1] = {
-    {0.0f, 100.0f, 100.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 100.0f, 100.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle59Nodes59[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle59Nodes60[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle59Nodes61[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle59Nodes62[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle59Nodes63[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle59Nodes64[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle59Nodes65[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle59Nodes66[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle59Nodes67[2] = {
-    {0.0f, 1.0f, 1.0f, Curves::Linear, Curves::Linear},
-    {1.0f, 0.0f, 0.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 1, 1},
+    {1, 1, 0.0f, 0.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle59Nodes68[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle59Nodes71[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle59Nodes72[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit TodEmitterDefinition Particle59Emitters[2] = {
     {0u, 3, 3, 0, 41, static_cast<EmitterType>(0), static_cast<ParticleEmitterName>(0), {Particle59Nodes0, 1}, {nullptr, 0}, {Particle59Nodes2, 1}, {Particle59Nodes3, 1}, {Particle59Nodes4, 1}, {Particle59Nodes5, 1}, {Particle59Nodes6, 1}, {nullptr, 0}, {nullptr, 0}, {nullptr, 0}, {nullptr, 0}, {nullptr, 0}, {nullptr, 0}, {nullptr, 0}, {Particle59Nodes14, 1}, {nullptr, 0}, {nullptr, 0}, {Particle59Nodes17, 1}, {Particle59Nodes18, 1}, {Particle59Nodes19, 1}, {Particle59Nodes20, 1}, {Particle59Nodes21, 1}, {Particle59Emitter0Fields0, 2}, {nullptr, 0}, {Particle59Nodes22, 1}, {Particle59Nodes23, 1}, {Particle59Nodes24, 1}, {Particle59Nodes25, 3}, {Particle59Nodes26, 1}, {nullptr, 0}, {Particle59Nodes28, 2}, {Particle59Nodes29, 4}, {Particle59Nodes30, 1}, {nullptr, 0}, {nullptr, 0}, {nullptr, 0}, {nullptr, 0}, {nullptr, 0}, {nullptr, 0}, {nullptr, 0}, -1, 5384u},
@@ -877,132 +877,132 @@ constinit const Sexy::Rect Particle59Rects[3] = {
     {690, 165, 26, 22},
 };
 constinit FloatParameterTrackNode Particle67Nodes2[1] = {
-    {0.0f, 20.0f, 20.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 20.0f, 20.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle67Nodes3[1] = {
-    {0.0f, -1.0f, -1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, -1.0f, -1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle67Nodes4[1] = {
-    {0.0f, -1.0f, -1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, -1.0f, -1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle67Nodes5[1] = {
-    {0.0f, -1.0f, -1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, -1.0f, -1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle67Nodes6[1] = {
-    {0.0f, 0.0f, 30.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 0.0f, 30.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle67Nodes7[1] = {
-    {0.0f, 60.0f, 60.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 60.0f, 60.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle67Nodes14[1] = {
-    {0.0f, 40.0f, 40.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 40.0f, 40.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle67Nodes17[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle67Nodes18[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle67Nodes19[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle67Nodes20[1] = {
-    {0.0f, 10.0f, 10.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 10.0f, 10.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle67Nodes21[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle67Nodes22[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle67Nodes23[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle67Nodes24[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle67Nodes25[3] = {
-    {0.0f, 1.0f, 1.0f, Curves::Linear, Curves::Linear},
-    {0.800000012f, 0.400000006f, 0.800000012f, Curves::Linear, Curves::Linear},
-    {1.0f, 0.0f, 0.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 1, 1},
+    {4, 5, 0.400000006f, 0.800000012f, 1, 1},
+    {1, 1, 0.0f, 0.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle67Nodes26[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle67Nodes28[1] = {
-    {0.0f, -600.0f, 600.0f, Curves::Linear, Curves::Linear},
+    {0, 1, -600.0f, 600.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle67Nodes29[4] = {
-    {0.0f, 0.600000024f, 0.600000024f, Curves::Linear, Curves::Linear},
-    {0.100000001f, 0.400000006f, 1.0f, Curves::Linear, Curves::Linear},
-    {0.699999988f, 0.800000012f, 2.0f, Curves::Linear, Curves::Linear},
-    {1.0f, 0.0f, 0.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 0.600000024f, 0.600000024f, 1, 1},
+    {1, 10, 0.400000006f, 1.0f, 1, 1},
+    {7, 10, 0.800000012f, 2.0f, 1, 1},
+    {1, 1, 0.0f, 0.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle67Nodes30[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle67Nodes39[1] = {
-    {0.0f, 3.0f, 3.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 3.0f, 3.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle67Nodes40[2] = {
-    {0.0f, 0.0f, 0.0f, Curves::EaseOut, Curves::Linear},
-    {1.0f, 20.0f, 20.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 0.0f, 0.0f, 3, 1},
+    {1, 1, 20.0f, 20.0f, 1, 1},
 };
 constinit ParticleField Particle67Emitter0Fields0[2] = {
     {static_cast<ParticleFieldType>(2), {nullptr, 0}, {Particle67Nodes39, 1}},
     {static_cast<ParticleFieldType>(6), {Particle67Nodes40, 2}, {nullptr, 0}},
 };
 constinit FloatParameterTrackNode Particle67Nodes43[1] = {
-    {0.0f, 50.0f, 50.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 50.0f, 50.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle67Nodes45[1] = {
-    {0.0f, -1.0f, -1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, -1.0f, -1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle67Nodes46[1] = {
-    {0.0f, -1.0f, -1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, -1.0f, -1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle67Nodes47[1] = {
-    {0.0f, -1.0f, -1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, -1.0f, -1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle67Nodes56[1] = {
-    {0.0f, 100.0f, 100.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 100.0f, 100.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle67Nodes59[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle67Nodes60[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle67Nodes61[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle67Nodes62[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle67Nodes63[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle67Nodes64[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle67Nodes65[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle67Nodes66[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle67Nodes67[2] = {
-    {0.0f, 1.0f, 1.0f, Curves::Linear, Curves::Linear},
-    {1.0f, 0.0f, 0.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 1, 1},
+    {1, 1, 0.0f, 0.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle67Nodes68[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle67Nodes71[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle67Nodes72[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit TodEmitterDefinition Particle67Emitters[2] = {
     {0u, 3, 3, 0, 41, static_cast<EmitterType>(0), static_cast<ParticleEmitterName>(0), {nullptr, 0}, {nullptr, 0}, {Particle67Nodes2, 1}, {Particle67Nodes3, 1}, {Particle67Nodes4, 1}, {Particle67Nodes5, 1}, {Particle67Nodes6, 1}, {Particle67Nodes7, 1}, {nullptr, 0}, {nullptr, 0}, {nullptr, 0}, {nullptr, 0}, {nullptr, 0}, {nullptr, 0}, {Particle67Nodes14, 1}, {nullptr, 0}, {nullptr, 0}, {Particle67Nodes17, 1}, {Particle67Nodes18, 1}, {Particle67Nodes19, 1}, {Particle67Nodes20, 1}, {Particle67Nodes21, 1}, {Particle67Emitter0Fields0, 2}, {nullptr, 0}, {Particle67Nodes22, 1}, {Particle67Nodes23, 1}, {Particle67Nodes24, 1}, {Particle67Nodes25, 3}, {Particle67Nodes26, 1}, {nullptr, 0}, {Particle67Nodes28, 1}, {Particle67Nodes29, 4}, {Particle67Nodes30, 1}, {nullptr, 0}, {nullptr, 0}, {nullptr, 0}, {nullptr, 0}, {nullptr, 0}, {nullptr, 0}, {nullptr, 0}, -1, 5384u},
@@ -1023,159 +1023,159 @@ constinit const Sexy::Rect Particle67Rects[3] = {
     {50, 202, 20, 20},
 };
 constinit FloatParameterTrackNode Particle75Nodes0[1] = {
-    {0.0f, 250.0f, 250.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 250.0f, 250.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle75Nodes2[1] = {
-    {0.0f, 40.0f, 40.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 40.0f, 40.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle75Nodes3[1] = {
-    {0.0f, -1.0f, -1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, -1.0f, -1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle75Nodes4[1] = {
-    {0.0f, -1.0f, -1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, -1.0f, -1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle75Nodes5[1] = {
-    {0.0f, 40.0f, 40.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 40.0f, 40.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle75Nodes9[1] = {
-    {0.0f, -40.0f, 40.0f, Curves::Linear, Curves::Linear},
+    {0, 1, -40.0f, 40.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle75Nodes10[1] = {
-    {0.0f, -10.0f, 40.0f, Curves::Linear, Curves::Linear},
+    {0, 1, -10.0f, 40.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle75Nodes14[1] = {
-    {0.0f, 30.0f, 30.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 30.0f, 30.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle75Nodes17[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle75Nodes18[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle75Nodes19[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle75Nodes20[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle75Nodes21[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle75Nodes22[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle75Nodes23[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle75Nodes24[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle75Nodes25[2] = {
-    {0.800000012f, 1.0f, 1.0f, Curves::Linear, Curves::Linear},
-    {1.0f, 0.0f, 0.0f, Curves::Linear, Curves::Linear},
+    {4, 5, 1.0f, 1.0f, 1, 1},
+    {1, 1, 0.0f, 0.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle75Nodes26[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle75Nodes27[1] = {
-    {0.0f, 0.0f, 10.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 0.0f, 10.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle75Nodes28[1] = {
-    {0.0f, -50.0f, 50.0f, Curves::Linear, Curves::Linear},
+    {0, 1, -50.0f, 50.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle75Nodes29[2] = {
-    {0.0f, 0.100000001f, 0.100000001f, Curves::Linear, Curves::Linear},
-    {0.5f, 0.800000012f, 1.20000005f, Curves::Linear, Curves::Linear},
+    {0, 1, 0.100000001f, 0.100000001f, 1, 1},
+    {1, 2, 0.800000012f, 1.20000005f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle75Nodes30[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle75Nodes38[2] = {
-    {0.0f, 0.0f, 0.0f, Curves::Linear, Curves::Linear},
-    {1.0f, -70.0f, -100.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 0.0f, 0.0f, 1, 1},
+    {1, 1, -70.0f, -100.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle75Nodes39[2] = {
-    {0.0f, 0.0f, 0.0f, Curves::Linear, Curves::Linear},
-    {1.0f, -10.0f, 30.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 0.0f, 0.0f, 1, 1},
+    {1, 1, -10.0f, 30.0f, 1, 1},
 };
 constinit ParticleField Particle75Emitter0Fields0[1] = {
     {static_cast<ParticleFieldType>(6), {Particle75Nodes38, 2}, {Particle75Nodes39, 2}},
 };
 constinit FloatParameterTrackNode Particle75Nodes40[1] = {
-    {0.0f, 250.0f, 250.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 250.0f, 250.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle75Nodes42[1] = {
-    {0.0f, 40.0f, 40.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 40.0f, 40.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle75Nodes43[1] = {
-    {0.0f, -1.0f, -1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, -1.0f, -1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle75Nodes44[1] = {
-    {0.0f, -1.0f, -1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, -1.0f, -1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle75Nodes45[1] = {
-    {0.0f, 40.0f, 40.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 40.0f, 40.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle75Nodes49[1] = {
-    {0.0f, -40.0f, 40.0f, Curves::Linear, Curves::Linear},
+    {0, 1, -40.0f, 40.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle75Nodes50[1] = {
-    {0.0f, -10.0f, 40.0f, Curves::Linear, Curves::Linear},
+    {0, 1, -10.0f, 40.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle75Nodes54[1] = {
-    {0.0f, 15.0f, 25.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 15.0f, 25.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle75Nodes57[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle75Nodes58[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle75Nodes59[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle75Nodes60[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle75Nodes61[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle75Nodes62[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle75Nodes63[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle75Nodes64[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle75Nodes65[2] = {
-    {0.800000012f, 1.0f, 1.0f, Curves::Linear, Curves::Linear},
-    {1.0f, 0.0f, 0.0f, Curves::Linear, Curves::Linear},
+    {4, 5, 1.0f, 1.0f, 1, 1},
+    {1, 1, 0.0f, 0.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle75Nodes66[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle75Nodes67[1] = {
-    {0.0f, 0.0f, 10.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 0.0f, 10.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle75Nodes68[1] = {
-    {0.0f, -30.0f, 30.0f, Curves::Linear, Curves::Linear},
+    {0, 1, -30.0f, 30.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle75Nodes69[2] = {
-    {0.0f, 0.100000001f, 0.100000001f, Curves::Linear, Curves::Linear},
-    {0.5f, 0.800000012f, 1.20000005f, Curves::Linear, Curves::Linear},
+    {0, 1, 0.100000001f, 0.100000001f, 1, 1},
+    {1, 2, 0.800000012f, 1.20000005f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle75Nodes70[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle75Nodes78[2] = {
-    {0.0f, 0.0f, 0.0f, Curves::Linear, Curves::Linear},
-    {1.0f, -70.0f, -100.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 0.0f, 0.0f, 1, 1},
+    {1, 1, -70.0f, -100.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle75Nodes79[2] = {
-    {0.0f, 0.0f, 0.0f, Curves::Linear, Curves::Linear},
-    {1.0f, -10.0f, 30.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 0.0f, 0.0f, 1, 1},
+    {1, 1, -10.0f, 30.0f, 1, 1},
 };
 constinit ParticleField Particle75Emitter1Fields0[1] = {
     {static_cast<ParticleFieldType>(6), {Particle75Nodes78, 2}, {Particle75Nodes79, 2}},
@@ -1211,75 +1211,75 @@ constinit const Sexy::Rect Particle75Rects[12] = {
     {2, 152, 87, 46},
 };
 constinit FloatParameterTrackNode Particle83Nodes2[1] = {
-    {0.0f, 20.0f, 20.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 20.0f, 20.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle83Nodes3[1] = {
-    {0.0f, -1.0f, -1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, -1.0f, -1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle83Nodes4[1] = {
-    {0.0f, -1.0f, -1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, -1.0f, -1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle83Nodes5[1] = {
-    {0.0f, -1.0f, -1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, -1.0f, -1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle83Nodes6[1] = {
-    {0.0f, 0.0f, 30.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 0.0f, 30.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle83Nodes7[1] = {
-    {0.0f, 30.0f, 30.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 30.0f, 30.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle83Nodes8[1] = {
-    {0.0f, 40.0f, 100.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 40.0f, 100.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle83Nodes14[1] = {
-    {0.0f, 50.0f, 100.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 50.0f, 100.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle83Nodes17[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle83Nodes18[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle83Nodes19[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle83Nodes20[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle83Nodes21[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle83Nodes22[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle83Nodes23[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle83Nodes24[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle83Nodes25[4] = {
-    {0.0f, 0.0f, 0.0f, Curves::Linear, Curves::Linear},
-    {0.333333343f, 1.0f, 1.0f, Curves::Linear, Curves::Linear},
-    {0.666666687f, 1.0f, 1.0f, Curves::Linear, Curves::Linear},
-    {1.0f, 0.0f, 0.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 0.0f, 0.0f, 1, 1},
+    {1, 3, 1.0f, 1.0f, 1, 1},
+    {2, 3, 1.0f, 1.0f, 1, 1},
+    {1, 1, 0.0f, 0.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle83Nodes26[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle83Nodes29[1] = {
-    {0.0f, 0.100000001f, 0.5f, Curves::Linear, Curves::EaseIn},
+    {0, 1, 0.100000001f, 0.5f, 1, 2},
 };
 constinit FloatParameterTrackNode Particle83Nodes30[1] = {
-    {0.0f, 0.5f, 1.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 0.5f, 1.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle83Nodes38[2] = {
-    {0.0f, 0.0f, 0.0f, Curves::EaseOut, Curves::Linear},
-    {1.0f, 10.0f, 10.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 0.0f, 0.0f, 3, 1},
+    {1, 1, 10.0f, 10.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle83Nodes39[2] = {
-    {0.0f, 0.0f, 0.0f, Curves::Linear, Curves::Linear},
-    {1.0f, -5.0f, 5.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 0.0f, 0.0f, 1, 1},
+    {1, 1, -5.0f, 5.0f, 1, 1},
 };
 constinit ParticleField Particle83Emitter0Fields0[1] = {
     {static_cast<ParticleFieldType>(6), {Particle83Nodes38, 2}, {Particle83Nodes39, 2}},
@@ -1300,76 +1300,76 @@ constinit const Sexy::Rect Particle83Rects[1] = {
     {2, 2, 16, 16},
 };
 constinit FloatParameterTrackNode Particle91Nodes3[1] = {
-    {0.0f, 16.0f, 16.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 16.0f, 16.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle91Nodes4[1] = {
-    {0.0f, -1.0f, -1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, -1.0f, -1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle91Nodes5[1] = {
-    {0.0f, 16.0f, 16.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 16.0f, 16.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle91Nodes9[1] = {
-    {0.0f, -10.0f, 40.0f, Curves::Linear, Curves::Linear},
+    {0, 1, -10.0f, 40.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle91Nodes10[1] = {
-    {0.0f, 0.0f, 70.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 0.0f, 70.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle91Nodes14[1] = {
-    {0.0f, 100.0f, 100.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 100.0f, 100.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle91Nodes17[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle91Nodes18[2] = {
-    {0.899999976f, 1.0f, 1.0f, Curves::Linear, Curves::Linear},
-    {1.0f, 0.0f, 0.0f, Curves::Linear, Curves::Linear},
+    {9, 10, 1.0f, 1.0f, 1, 1},
+    {1, 1, 0.0f, 0.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle91Nodes19[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle91Nodes20[1] = {
-    {0.0f, 40.0f, 80.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 40.0f, 80.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle91Nodes21[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle91Nodes22[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle91Nodes23[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle91Nodes24[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle91Nodes25[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle91Nodes26[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle91Nodes28[2] = {
-    {0.0f, -1120.0f, 1120.0f, Curves::Linear, Curves::Linear},
-    {0.5f, 0.0f, 0.0f, Curves::Linear, Curves::Linear},
+    {0, 1, -1120.0f, 1120.0f, 1, 1},
+    {1, 2, 0.0f, 0.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle91Nodes29[1] = {
-    {0.0f, 0.800000012f, 0.899999976f, Curves::Linear, Curves::Linear},
+    {0, 1, 0.800000012f, 0.899999976f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle91Nodes30[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle91Nodes31[2] = {
-    {0.400000006f, 0.400000006f, 0.400000006f, Curves::Linear, Curves::Linear},
-    {0.5f, 0.0f, 0.0f, Curves::Linear, Curves::Linear},
+    {2, 5, 0.400000006f, 0.400000006f, 1, 1},
+    {1, 2, 0.0f, 0.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle91Nodes32[1] = {
-    {0.0f, 0.0f, 0.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 0.0f, 0.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle91Nodes39[1] = {
-    {0.0f, 7.0f, 7.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 7.0f, 7.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle91Nodes41[1] = {
-    {0.0f, 65.0f, 78.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 65.0f, 78.0f, 1, 1},
 };
 constinit ParticleField Particle91Emitter0Fields0[2] = {
     {static_cast<ParticleFieldType>(2), {nullptr, 0}, {Particle91Nodes39, 1}},
@@ -1399,72 +1399,72 @@ constinit const Sexy::Rect Particle91Rects[9] = {
     {74, 290, 32, 32},
 };
 constinit FloatParameterTrackNode Particle99Nodes0[1] = {
-    {0.0f, 18500.0f, 18500.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 18500.0f, 18500.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle99Nodes2[1] = {
-    {0.0f, 10.0f, 10.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 10.0f, 10.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle99Nodes3[1] = {
-    {0.0f, -1.0f, -1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, -1.0f, -1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle99Nodes4[1] = {
-    {0.0f, -1.0f, -1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, -1.0f, -1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle99Nodes5[1] = {
-    {0.0f, 6.0f, 10.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 6.0f, 10.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle99Nodes9[1] = {
-    {0.0f, -40.0f, 40.0f, Curves::Linear, Curves::Linear},
+    {0, 1, -40.0f, 40.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle99Nodes10[1] = {
-    {0.0f, -10.0f, 10.0f, Curves::Linear, Curves::Linear},
+    {0, 1, -10.0f, 10.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle99Nodes14[1] = {
-    {0.0f, 18000.0f, 18000.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 18000.0f, 18000.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle99Nodes17[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle99Nodes18[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle99Nodes19[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle99Nodes20[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle99Nodes21[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle99Nodes22[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle99Nodes23[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle99Nodes24[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle99Nodes25[4] = {
-    {0.0f, 0.0f, 0.0f, Curves::Linear, Curves::Linear},
-    {0.00400000019f, 1.0f, 1.0f, Curves::Linear, Curves::Linear},
-    {0.995000005f, 1.0f, 1.0f, Curves::Linear, Curves::Linear},
-    {1.0f, 0.0f, 0.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 0.0f, 0.0f, 1, 1},
+    {1, 250, 1.0f, 1.0f, 1, 1},
+    {199, 200, 1.0f, 1.0f, 1, 1},
+    {1, 1, 0.0f, 0.0f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle99Nodes26[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle99Nodes29[2] = {
-    {0.0f, 0.0f, 0.0f, Curves::Linear, Curves::Linear},
-    {0.00499999989f, 0.600000024f, 1.20000005f, Curves::Linear, Curves::Linear},
+    {0, 1, 0.0f, 0.0f, 1, 1},
+    {1, 200, 0.600000024f, 1.20000005f, 1, 1},
 };
 constinit FloatParameterTrackNode Particle99Nodes30[1] = {
-    {0.0f, 1.0f, 1.0f, Curves::Constant, Curves::Linear},
+    {0, 1, 1.0f, 1.0f, 0, 1},
 };
 constinit FloatParameterTrackNode Particle99Nodes39[2] = {
-    {0.0f, 0.0f, 0.0f, Curves::Linear, Curves::Linear},
-    {0.00499999989f, -10.0f, -10.0f, Curves::Linear, Curves::Linear},
+    {0, 1, 0.0f, 0.0f, 1, 1},
+    {1, 200, -10.0f, -10.0f, 1, 1},
 };
 constinit ParticleField Particle99Emitter0Fields0[1] = {
     {static_cast<ParticleFieldType>(6), {nullptr, 0}, {Particle99Nodes39, 2}},

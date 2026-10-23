@@ -30,7 +30,7 @@ CursorObject::CursorObject()
         Reanimation* aHammerReanim = mApp->AddReanimation(-25.0f, 16.0f, 0, ReanimationType::REANIM_HAMMER);
         aHammerReanim->mIsAttachment = true;
         aHammerReanim->PlayReanim(ReanimTrackId::anim_whack_zombie, ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD, 0, 24.0f);
-        aHammerReanim->mAnimTime = 1.0f;
+        aHammerReanim->Seek(1000);
         mReanimCursorID = mApp->ReanimationGetID(aHammerReanim);
     }
 

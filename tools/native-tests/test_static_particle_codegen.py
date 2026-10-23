@@ -1,5 +1,6 @@
 """Particle C++ storage agrees with an independent interpretation of the wire."""
 from pathlib import Path
+from fractions import Fraction
 from types import SimpleNamespace
 import os
 import json
@@ -39,7 +40,9 @@ def reference(data):
     body_end = offset + body_size
 
     def track():
-        return [take("<3f2I") for _ in range(take("<I")[0])]
+        nodes = [take("<3f2I") for _ in range(take("<I")[0])]
+        return [(*Fraction(node[0]).limit_denominator(100000).as_integer_ratio(),
+                 node[1], node[2], *node[3:]) for node in nodes]
 
     emitters = []
     for _ in range(count):
@@ -50,10 +53,10 @@ def reference(data):
             fields.append([(take("<I")[0], track(), track())
                            for _ in range(take("<I")[0])])
         tracks += [track() for _ in range(16)]
-        tracks = [nodes if nodes or not default else [(0.0, default, default, 0, 1)]
+        tracks = [nodes if nodes or not default else [(0, 1, default, default, 0, 1)]
                   for nodes, default in zip(tracks, DEFAULT_VALUES)]
         mask = sum(1 << bit for bit, index in enumerate(RENDER_INDICES)
-                   if tracks[index] and tracks[index][0][3] not in (0, 8))
+                   if tracks[index] and tracks[index][0][4] not in (0, 8))
         emitters.append(dict(header=header, tracks=tracks, fields=fields, mask=mask))
     assert offset == body_end
     assert take("<2I") == (0x33544449, count)
@@ -63,7 +66,7 @@ def reference(data):
     return emitters, targets, names, slots
 
 
-def fixture(curve=8, distribution=13):
+def fixture(curve=8, distribution=13, source_float=False):
     # Two emitters have the same name; first authored occurrence must win.
     emitters = []
     for _ in range(2):
@@ -71,15 +74,18 @@ def fixture(curve=8, distribution=13):
         for index in range(22):
             nodes = [(0.0, 0.125, 0.25, curve, distribution)] if index == 17 else []
             body += struct.pack("<I", len(nodes))
-            body += b"".join(struct.pack("<3f2I", *node) for node in nodes)
+            body += b"".join(struct.pack("<2i2f2I", 1, 3, .000123456789, 13.3072289, *node[3:])
+                             if source_float else struct.pack("<3f2I", *node) for node in nodes)
         # Particle field X is authored; its empty Y track must stay empty.
         body += struct.pack("<II", 1, 3)
-        body += struct.pack("<I3f2I", 1, 0.0, 2.0, 3.0, 4, 6)
+        body += (struct.pack("<I2i2f2I", 1, 0, 1, 2, 3, 4, 6) if source_float else
+                 struct.pack("<I3f2I", 1, 0.0, 2.0, 3.0, 4, 6))
         body += struct.pack("<2I", 0, 0)
         body += struct.pack("<16I", *([0] * 16))
         emitters.append(body)
     body = b"".join(emitters)
-    behavior = struct.pack("<5I", 0x36524449, 0, static._registry()[1], 2, len(body)) + body
+    behavior = struct.pack("<5I", 0x46524449 if source_float else 0x36524449,
+                           0, static._registry()[1], 2, len(body)) + body
     behavior += struct.pack("<4I", 0x33544449, 2, 1, 0xFFFFFFFF)
     behavior += struct.pack("<4I", 0x35544449, 2, 1, 1)
     payload = struct.pack("<2I", 0x36564150, len(behavior)) + behavior
@@ -88,16 +94,28 @@ def fixture(curve=8, distribution=13):
 
 
 class StaticParticleTests(unittest.TestCase):
+    def test_float_source_record_keeps_exact_thirds_and_unquantized_bounds(self):
+        path = "compiled/particles/test.compiled"
+        data = fixture(source_float=True)
+        parsed = static._parse(path, data, *static._registry())
+        node = parsed["emitters"][0]["tracks"]["SystemRed"][0]
+        expected = struct.unpack("<2i2f2I", struct.pack("<2i2f2I", 1, 3, .000123456789, 13.3072289, 8, 13))
+        self.assertEqual(node, expected)
+        output = static.generate(SimpleNamespace(
+            definition_orders={"particle": [("PARTICLE_TEST", "Test")]}), {path: data})
+        self.assertIn("1, 3, 0.00012345679f, 13.307229f, 8, 13",
+                      output["files"]["ParticleData00.cpp"].decode())
+
     def test_defaults_alias_mask_lookup_and_static_addresses(self):
         path = "compiled/particles/test.compiled"
         data = fixture()
         parsed = static._parse(path, data, *static._registry())
         first = parsed["emitters"][0]
         self.assertEqual(first["mask"], 0)  # Slot eight aliases the constant function.
-        self.assertEqual(first["tracks"]["SpawnMinActive"], [(0, -1, -1, 0, 1)])
-        self.assertEqual(first["tracks"]["ParticleStretch"], [(0, 1, 1, 0, 1)])
+        self.assertEqual(first["tracks"]["SpawnMinActive"], [(0, 1, -1, -1, 0, 1)])
+        self.assertEqual(first["tracks"]["ParticleStretch"], [(0, 1, 1, 1, 0, 1)])
         self.assertEqual(first["tracks"]["EmitterPath"], [])
-        self.assertEqual(first["fields"], [[(3, [(0.0, 2.0, 3.0, 4, 6)], [])], []])
+        self.assertEqual(first["fields"], [[(3, [(0, 1, 2, 3, 4, 6)], [])], []])
         self.assertEqual(parsed["lookup"][1], 0)
         self.assertEqual(parsed["lookup"][0], -1)
         self.assertEqual([e["duration"] for e in parsed["emitters"]], [1, -1])
@@ -108,7 +126,7 @@ class StaticParticleTests(unittest.TestCase):
         self.assertEqual(set(output["files"]),
                          {f"ParticleData{i:02d}.cpp" for i in range(8)})
         text = b"\n".join(output["files"].values()).decode()
-        self.assertIn("0.125f, 0.25f, Curves::Constant, Curves::EaseSinWave", text)
+        self.assertIn("0, 1, 0.125f, 0.25f, 8, 13", text)
         self.assertIn("constinit TodEmitterDefinition Particle0Emitters[2]", text)
         self.assertIn("constinit Sexy::GpuTexture* Particle0Textures[1]", text)
         self.assertNotRegex(text, r"\b(?:new|memcpy|TodCurveResolveEval|FloatTrackSetDefault)\b")
@@ -167,16 +185,14 @@ class StaticParticleTests(unittest.TestCase):
         for key, count in counts.items():
             self.assertEqual(output["summary"][key], count)
         self.assertEqual(output["summary"]["nodes"], len(expected_nodes))
-        # Inspect every emitted node, including float32 round-trip and function addresses.
-        pattern = (r"\{([-+.\deEf]+), ([-+.\deEf]+), ([-+.\deEf]+), "
-                   r"Curves::(\w+), Curves::(\w+)\}")
+        # Inspect every emitted exact rational/milli node and function address.
+        pattern = r"\{(-?\d+), (-?\d+), ([-+.\deE]+)f, ([-+.\deE]+)f, (\d+), (\d+)\}"
         actual_nodes = []
         for source in output["files"].values():
             for match in re.finditer(pattern, source.decode()):
-                actual_nodes.append(tuple(struct.pack("<f", float(v[:-1]))
-                                          for v in match.groups()[:3]) + match.groups()[3:])
-        expected_nodes = [tuple(struct.pack("<f", v) for v in node[:3])
-                          + (CURVE_NAMES[node[3]], CURVE_NAMES[node[4]])
+                actual_nodes.append(tuple(float(v) if i in (2, 3) else int(v)
+                                          for i, v in enumerate(match.groups())))
+        expected_nodes = [tuple(node)
                           for node in expected_nodes]
         self.assertCountEqual(actual_nodes, expected_nodes)
         text = b"\n".join(output["files"].values()).decode()

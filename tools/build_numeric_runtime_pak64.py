@@ -685,7 +685,7 @@ def validate_projectile_atlas_image(record: dict, data: bytes, name: str) -> Non
 
 def validate_reanim(reader: Reader, count: int, registries: dict,
                     image_ids: set[int] | None = None, *, inline_images: bool = False,
-                    slot_count: int | None = None) -> None:
+                    slot_count: int | None = None, authored: bool = False) -> None:
     tracks = []
     lo, hi = registries["attacher_range"]
     for _ in range(count):
@@ -694,7 +694,7 @@ def validate_reanim(reader: Reader, count: int, registries: dict,
                 and not (lo <= track < hi and mode != 0) and 0 < frames <= 1 << 20,
                 "Invalid IDT5 track header")
         values = reader.take(frames * 32)
-        require(all(math.isfinite(v) for frame in struct.iter_unpack("<8f", values) for v in frame),
+        require(all(math.isfinite(v) for frame in struct.iter_unpack("<6fif" if authored else "<8f", values) for v in frame),
                 "Nonfinite IDT5 transform")
         tracks.append((track, frames, mode))
     for _, frames, mode in tracks:
@@ -734,12 +734,17 @@ def validate_reanim(reader: Reader, count: int, registries: dict,
 
 def validate_particle(reader: Reader, count: int, body_size: int, registries: dict,
                       image_ids: set[int] | None = None, *, inline_images: bool = False,
-                      explicit_frames: bool = False, slot_offsets: bool = False) -> None:
+                      explicit_frames: bool = False, slot_offsets: bool = False,
+                      authored: bool = False) -> None:
     body = Reader(reader.take(body_size))
 
     def track() -> None:
-        for _ in range(body.count(20, 100000)):
-            time, low, high, curve, distribution = body.unpack("<3f2I")
+        for _ in range(body.count(24 if authored else 20, 100000)):
+            if authored:
+                time, denominator, low, high, curve, distribution = body.unpack("<2i2f2I")
+                require(denominator > 0, "Invalid IDRF node time denominator")
+            else:
+                time, low, high, curve, distribution = body.unpack("<3f2I")
             require(all(math.isfinite(v) for v in (time, low, high))
                     and curve <= 13 and distribution <= 13, "Invalid IDP5 track node")
 
@@ -897,8 +902,9 @@ def parse_reanim_variants(name: str, data: bytes) -> dict:
     reader.finish()
     body_offset = 20
     reader = Reader(behavior)
+    authored = behavior[:4] == b"IDTF"
     inner, _, image, _, fps, track_count = reader.unpack("<4IfI")
-    require(inner == 0x36544449 and image == 0 and math.isfinite(fps) and fps > 0
+    require(inner in (0x36544449, 0x46544449) and image == 0 and math.isfinite(fps) and fps > 0
             and 0 < track_count <= 1 << 20, "Invalid IDT6 header")
     tracks = []
     for _ in range(track_count):
@@ -935,7 +941,8 @@ def parse_particle_variants(name: str, data: bytes) -> dict:
     require(magic == 0x36564150, "Invalid PAV6 header")
     behavior = Reader(envelope.take(behavior_bytes))
     inner, total, emitter_hash, emitters, body_size = behavior.unpack("<5I")
-    require(inner == 0x36524449 and emitters <= 1000, "Invalid IDR6 header")
+    require(inner in (0x36524449, 0x46524449) and emitters <= 1000, "Invalid IDR6/IDRF header")
+    stride = 24 if inner == 0x46524449 else 20
     body = Reader(behavior.take(body_size))
     frame_counts, slot_offsets, offset = [], [], 0
     for _ in range(emitters):
@@ -947,14 +954,14 @@ def parse_particle_variants(name: str, data: bytes) -> dict:
         offset += frames
         body.take(16)
         for _ in range(22):
-            body.take(body.count(20, 100000) * 20)
+            body.take(body.count(stride, 100000) * stride)
         for _ in range(2):
             for _ in range(body.count(12, 4)):
                 body.take(4)
                 for _ in range(2):
-                    body.take(body.count(20, 100000) * 20)
+                    body.take(body.count(stride, 100000) * stride)
         for _ in range(16):
-            body.take(body.count(20, 100000) * 20)
+            body.take(body.count(stride, 100000) * stride)
     body.finish()
     require(offset == total, "IDR6 total frame count differs")
     appearance_offset = 12 + envelope.at
@@ -1024,8 +1031,8 @@ def parse_definition_atlas(name: str, data: bytes) -> dict | None:
         fields.append(reader.unpack("<6I"))
 
     if kind == "reanim":
-        inner, _, _, _, _, count = reader.unpack("<4IfI")
-        require(inner == 0x35544449 and count <= 1 << 20, "Invalid inline IDT5 header")
+        inner, _, _, _, _, count = reader.unpack("<6I")
+        require(inner in (0x35544449, 0x46544449) and count <= 1 << 20, "Invalid inline IDT5/IDTF header")
         tracks = []
         for _ in range(count):
             _, frames, stride, mode = reader.unpack("<4I")
@@ -1058,16 +1065,17 @@ def parse_definition_atlas(name: str, data: bytes) -> dict | None:
                     "Invalid inherited particle size or frame count")
         else:
             emitter_hash = struct.unpack_from("<I", data, 32)[0]
-        require(inner in (0x35504449, 0x35524449, 0x31564449) and count <= 1000, "Invalid inline particle header")
-        if inner == 0x35524449:
+        require(inner in (0x35504449, 0x35524449, 0x46524449, 0x31564449) and count <= 1000, "Invalid inline particle header")
+        stride = 24 if inner == 0x46524449 else 20
+        if inner in (0x35524449, 0x46524449):
             require(total_frames <= body_size // 16, "Invalid particle total frame count")
         end = reader.at + body_size
 
         def track() -> None:
-            reader.take(reader.count(20, 100000) * 20)
+            reader.take(reader.count(stride, 100000) * stride)
 
         for _ in range(0 if parent is not None else count):
-            if inner == 0x35524449:
+            if inner in (0x35524449, 0x46524449):
                 frames = reader.count(16, 100000)
                 frame_counts.append(frames)
                 for _ in range(frames):
@@ -1087,7 +1095,7 @@ def parse_definition_atlas(name: str, data: bytes) -> dict | None:
             for _ in range(16):
                 track()
         require(parent is not None or reader.at == end, "Invalid inline IDP5 body size")
-        if inner == 0x35524449:
+        if inner in (0x35524449, 0x46524449):
             require(total_frames == len(frame_fields), "Particle total frame count differs")
     regions = list(dict.fromkeys(region for region in fields if any(region)))
     require((not regions and not frame_fields and width == height == 0) or
@@ -1339,38 +1347,40 @@ def validate_numeric(name: str, data: bytes, registries: dict,
                     if path:
                         references.add(("atlas", file_key(path)))
         if kind == "reanim":
+            authored = data[body_offset:body_offset + 4] == b"IDTF"
             magic, track, image, font, fps, count = struct.unpack_from("<4IfI", data, body_offset)
-            require(magic == (0x36544449 if "variant_count" in atlas else 0x35544449) and (track, image, font) ==
+            require(magic in (0x46544449, (0x36544449 if "variant_count" in atlas else 0x35544449)) and (track, image, font) ==
                     (registries["track"], registries["image"], registries["font"])
                     and math.isfinite(fps) and fps > 0 and 0 < count <= registries["track_capacity"],
                     f"Invalid IDT5 header: {name}")
             behavior_end = body_offset + atlas["behavior_bytes"] if "behavior_bytes" in atlas else len(data)
             validate_reanim(Reader(data[body_offset + 24:behavior_end]), count, registries,
                             None if v5 else image_ids, inline_images=v5 and "variant_count" not in atlas,
-                            slot_count=atlas.get("slot_count") if v5 else None)
+                            slot_count=atlas.get("slot_count") if v5 else None, authored=authored)
         else:
             magic, image, emitter, count, body = struct.unpack_from("<5I", data, body_offset)
-            if magic == 0x36524449:
+            if magic in (0x36524449, 0x46524449) and "variant_count" in atlas:
                 require(v5 and emitter == registries["emitter"] and image == atlas["total_frame_count"]
                         and count == atlas["emitter_count"] and body + 36 + 8 * count == atlas["behavior_bytes"],
                         f"Invalid IDR6 header: {name}")
                 validate_particle(Reader(data[body_offset + 20:body_offset + atlas["behavior_bytes"]]),
-                                  count, body, registries, inline_images=True, slot_offsets=True)
+                                  count, body, registries, inline_images=True, slot_offsets=True,
+                                  authored=magic == 0x46524449)
                 return set()
             if magic == 0x31564449:
                 require(v5 and image == registries["emitter"], f"Invalid IDV1 emitter registry: {name}")
                 return set()
-            explicit_frames = magic in (0x34524449, 0x35524449)
-            require(magic in (0x35504449, 0x34524449, 0x35524449) and
+            explicit_frames = magic in (0x34524449, 0x35524449, 0x46524449)
+            require(magic in (0x35504449, 0x34524449, 0x35524449, 0x46524449) and
                     (magic != 0x34524449 or not v5) and (magic != 0x35524449 or v5) and
                     emitter == registries["emitter"] and
-                    image == (atlas["total_frame_count"] if magic == 0x35524449 else
+                    image == (atlas["total_frame_count"] if magic == 0x35524449 or (magic == 0x46524449 and v5) else
                               0 if explicit_frames else registries["image"])
                     and count <= 1000 and body + 36 + 8 * count == size,
                     f"Invalid IDP5 header: {name}")
             validate_particle(Reader(data[body_offset + 20:]), count, body, registries,
                               None if v5 else image_ids, inline_images=v5,
-                              explicit_frames=explicit_frames)
+                              explicit_frames=explicit_frames, authored=magic == 0x46524449)
         return set()
     if kind == "fonts":
         require(32 <= len(data) <= 16 * 1024 * 1024, f"Invalid font size: {name}")

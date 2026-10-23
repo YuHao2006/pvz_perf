@@ -588,6 +588,7 @@ def build(args: argparse.Namespace, work: Path) -> None:
                        for _, _, sizes in used_units for width, height in sizes)
     report = {
         "format": "pvz-resource-build-static-v1",
+        "definition_source_format": "IDTF-IDRF-float-v1",
         "numeric_counts": counts,
         "code_images": sorted(code_images),
         "retained_program_images": sorted(retained_roots),

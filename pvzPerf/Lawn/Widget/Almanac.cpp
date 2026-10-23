@@ -240,8 +240,8 @@ void AlmanacDialog::SetupPlant()
 	mPlant->mBoard = nullptr;
 	mPlant->mIsOnBoard = false;
 	mPlant->PlantInitialize(0, 0, mSelectedSeed, SEED_NONE);
-	mPlant->mX = aPosX;
-	mPlant->mY = aPosY;
+	{ mPlant->mX = (aPosX); mPlant->mRootBindingGeneration = 0; }
+	mPlant->mY = (aPosY);
 }
 
 //0x401B70
@@ -253,8 +253,8 @@ void AlmanacDialog::SetupZombie()
 	mZombie = new Zombie();
 	mZombie->mBoard = nullptr;
 	mZombie->ZombieInitialize(0, mSelectedZombie, false, nullptr, Zombie::ZOMBIE_WAVE_UI);
-	mZombie->mPosX = ALMANAC_ZOMBIE_POSITION_X;
-	mZombie->mPosY = ALMANAC_ZOMBIE_POSITION_Y;
+	{ mZombie->mX = (ALMANAC_ZOMBIE_POSITION_X); mZombie->mRootBindingGeneration = 0; }
+	mZombie->mY = (ALMANAC_ZOMBIE_POSITION_Y);
 }
 
 //0x401BE0
@@ -269,14 +269,14 @@ void AlmanacDialog::SetPage(AlmanacPage thePage)
 		mPlant->mBoard = nullptr;
 		mPlant->mIsOnBoard = false;
 		mPlant->PlantInitialize(0, 0, SeedType::SEED_SUNFLOWER, SeedType::SEED_NONE);
-		mPlant->mX = ALMANAC_INDEXPLANT_POSITION_X;
-		mPlant->mY = ALMANAC_INDEXPLANT_POSITION_Y;
+		{ mPlant->mX = (ALMANAC_INDEXPLANT_POSITION_X); mPlant->mRootBindingGeneration = 0; }
+		mPlant->mY = (ALMANAC_INDEXPLANT_POSITION_Y);
 
 		mZombie = new Zombie();
 		mZombie->mBoard = nullptr;
 		mZombie->ZombieInitialize(0, ZombieType::ZOMBIE_NORMAL, false, nullptr, Zombie::ZOMBIE_WAVE_UI);
-		mZombie->mPosX = ALMANAC_INDEXZOMBIE_POSITION_X;
-		mZombie->mPosY = ALMANAC_INDEXZOMBIE_POSITION_Y;
+		{ mZombie->mX = (ALMANAC_INDEXZOMBIE_POSITION_X); mZombie->mRootBindingGeneration = 0; }
+		mZombie->mY = (ALMANAC_INDEXZOMBIE_POSITION_Y);
 
 		mIndexButton->mBtnNoDraw = true;
 		mPlantButton->mBtnNoDraw = false;
@@ -323,7 +323,7 @@ void AlmanacDialog::Update()
 
 	int aMouseX = mApp->mWidgetManager->mLastMouseX - mX;
 	int aMouseY = mApp->mWidgetManager->mLastMouseY - mY;
-	if (SeedHitTest(aMouseX, aMouseY) != SeedType::SEED_NONE || ZombieHitTest(aMouseX, aMouseY) != ZombieType::ZOMBIE_INVALID || 
+	if (SeedHitTest(aMouseX, aMouseY) != SeedType::SEED_NONE || ZombieHitTest(aMouseX, aMouseY) != ZombieType::ZOMBIE_INVALID ||
 		mCloseButton->IsMouseOver() || mIndexButton->IsMouseOver() || mPlantButton->IsMouseOver() || mZombieButton->IsMouseOver())
 	{
 		mApp->SetCursor(CURSOR_HAND);
@@ -347,7 +347,7 @@ void AlmanacDialog::DrawIndex(Graphics* g)
 	aContentGraphics.ClipRect(0, 0, BOARD_WIDTH, BOARD_HEIGHT);
 	g = &aContentGraphics;
 	TodDrawString(g, gStr.SUBURBAN_ALMANAC_INDEX, BOARD_WIDTH / 2, 60, Sexy::FONT_HOUSEOFTERROR28, Color(220, 220, 220), DrawStringJustification::DS_ALIGN_CENTER);
-	
+
 	if (mPlant)
 	{
 		Graphics aPlantGraphics = Graphics(*g);
@@ -395,7 +395,7 @@ void AlmanacDialog::DrawPlants(Graphics* g)
 		}
 	}
 
-	if (mSelectedSeed == SeedType::SEED_LILYPAD || mSelectedSeed == SeedType::SEED_TANGLEKELP || 
+	if (mSelectedSeed == SeedType::SEED_LILYPAD || mSelectedSeed == SeedType::SEED_TANGLEKELP ||
 		mSelectedSeed == SeedType::SEED_CATTAIL || mSelectedSeed == SeedType::SEED_SEASHROOM)
 	{
 		bool aNight = mSelectedSeed == SeedType::SEED_SEASHROOM;
@@ -414,7 +414,7 @@ void AlmanacDialog::DrawPlants(Graphics* g)
 			mSelectedSeed == SeedType::SEED_FLOWERPOT ? AlmanacSprite::ALMANAC_GROUNDROOF : AlmanacSprite::ALMANAC_GROUNDDAY;
 		DrawAtlasImage(g,aTexture,AlmanacAtlas::Images[static_cast<unsigned>(aGround)],521,107);
 	}
-	
+
 	if (mPlant)
 	{
 		Graphics aPlantGraphics = Graphics(*g);

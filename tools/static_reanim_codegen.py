@@ -15,8 +15,9 @@ def _parse(path: str, data: bytes, type_count: int) -> dict:
     pak.require(atlas is not None and "action_keys" in atlas,
                 f"Static reanimation requires RAV7: {path}")
     reader = pak.Reader(data[atlas["body_offset"]:atlas["appearance_offset"]])
+    authored = data[atlas["body_offset"]:][:4] == b"IDTF"
     magic, _, image, _, fps, count = reader.unpack("<4IfI")
-    pak.require(magic == 0x36544449 and image == 0 and math.isfinite(fps) and fps > 0
+    pak.require(magic in (0x36544449, 0x46544449) and image == 0 and math.isfinite(fps) and fps > 0
                 and 0 < count <= 1 << 20, "Invalid static IDT6 header")
     tracks = []
     for _ in range(count):
@@ -26,11 +27,12 @@ def _parse(path: str, data: bytes, type_count: int) -> dict:
         previous = _DEFAULTS
         transforms = []
         for _ in range(frames):
-            values = reader.unpack("<8f")
+            values = reader.unpack("<6fif" if authored else "<8f")
             pak.require(all(math.isfinite(value) for value in values), "Nonfinite IDT6 transform")
-            previous = tuple(old if value == -10000.0 else value
-                             for old, value in zip(previous, values))
-            transforms.append({"values": previous})
+            previous = tuple(old if value == -10000 else value
+                             for i, (old, value) in enumerate(zip(previous, values)))
+            pak.require(previous[6] == int(previous[6]), "Noninteger reanim cel")
+            transforms.append({"values": (*previous[:6], int(previous[6]), previous[7])})
         tracks.append({"id": track, "mode": mode, "frames": transforms})
     for track in tracks:
         previous_font, previous_text = 0, None
@@ -114,13 +116,14 @@ def generate(config, records: dict[str, bytes]) -> dict:
             values = []
             for f, frame in enumerate(track["frames"]):
                 text = "nullptr" if frame["text"] is None else cpp_string(frame["text"])
-                values.append("{" + ", ".join([*(cpp_float(v) for v in frame["values"]),
+                values.append("{" + ", ".join([*(str(v) if i == 6 else cpp_float(v)
+                                                for i, v in enumerate(frame["values"])),
                                               f'{frame["slot"]}u', "nullptr", text]) + "}")
                 if frame["font"]:
                     target = f"{prefix}Frames{t}[{f}].mFont"
                     font_bindings.append(f"{target} = font;")
                     font_resets.append(f"{target} = nullptr;")
-            frames_name = emit("ReanimatorTransform", f"Frames{t}", values)
+            frames_name = emit("ReanimatorSourceTransform", f"Frames{t}", values)
             track_values.append(f'{{static_cast<ReanimTrackId>({track["id"]}u), '
                                 f'{{{frames_name}, {len(values)}}}}}')
             summary["frames"] += len(values)

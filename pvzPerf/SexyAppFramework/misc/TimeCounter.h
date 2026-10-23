@@ -4,6 +4,7 @@
 #include <cmath>
 #include <cstdint>
 #include <limits>
+#include <stdexcept>
 #include <type_traits>
 
 namespace Sexy
@@ -44,8 +45,17 @@ struct BasicTimeCounter
         {
             if constexpr (std::is_unsigned_v<Storage>)
             {
-                // Legacy unsigned values wrap at 2^32 units, including -1.
-                return std::uint64_t(static_cast<std::uint32_t>(value)) * UnitNs;
+                if constexpr (sizeof(Storage) <= 4)
+                    // Legacy unsigned values wrap at 2^32 units, including -1.
+                    return std::uint64_t(static_cast<std::uint32_t>(value)) * UnitNs;
+                else
+                {
+                    if constexpr (std::is_signed_v<T>)
+                        if (value < 0) throw std::overflow_error("negative simulation clock");
+                    if (static_cast<std::uint64_t>(value) > UINT64_MAX / UnitNs)
+                        throw std::overflow_error("simulation clock overflow");
+                    return static_cast<std::uint64_t>(value) * UnitNs;
+                }
             }
             else
             {
@@ -60,10 +70,20 @@ struct BasicTimeCounter
         const long double rounded = std::round(static_cast<long double>(value) * UnitNs);
         if constexpr (std::is_unsigned_v<Storage>)
         {
-            constexpr std::uint64_t modulus = (std::uint64_t(1) << 32) * UnitNs;
-            long double wrapped = std::fmod(rounded, static_cast<long double>(modulus));
-            if (wrapped < 0) wrapped += modulus;
-            return static_cast<Nanoseconds>(wrapped);
+            if constexpr (sizeof(Storage) <= 4)
+            {
+                constexpr std::uint64_t modulus = (std::uint64_t(1) << 32) * UnitNs;
+                long double wrapped = std::fmod(rounded, static_cast<long double>(modulus));
+                if (wrapped < 0) wrapped += modulus;
+                return static_cast<Nanoseconds>(wrapped);
+            }
+            else
+            {
+                if (!std::isfinite(rounded) || rounded < 0 ||
+                    rounded >= 18'446'744'073'709'551'616.0L)
+                    throw std::overflow_error("simulation clock overflow");
+                return static_cast<Nanoseconds>(rounded);
+            }
         }
         if (rounded >= static_cast<long double>(std::numeric_limits<Nanoseconds>::max()))
             return std::numeric_limits<Nanoseconds>::max();
@@ -77,7 +97,9 @@ struct BasicTimeCounter
         {
             const std::uint64_t units = mNanoseconds / UnitNs +
                 (mNanoseconds % UnitNs >= (UnitNs + 1) / 2);
-            return static_cast<Storage>(units & 0xffffffffULL);
+            if constexpr (sizeof(Storage) <= 4)
+                return static_cast<Storage>(units & 0xffffffffULL);
+            else return static_cast<Storage>(units);
         }
         else
         {
@@ -97,14 +119,24 @@ struct BasicTimeCounter
         mPreviousNanoseconds = mNanoseconds;
         if constexpr (std::is_unsigned_v<Storage>)
         {
-            constexpr std::uint64_t modulus = (std::uint64_t(1) << 32) * UnitNs;
-            const std::uint64_t base = mNanoseconds % modulus;
             const std::uint64_t magnitude = delta < 0
                 ? std::uint64_t(0) - static_cast<std::uint64_t>(delta)
                 : static_cast<std::uint64_t>(delta);
-            const auto change = magnitude % modulus;
-            mNanoseconds = delta < 0 ? (base >= change ? base - change : modulus - (change - base))
-                : (base >= modulus - change ? base - (modulus - change) : base + change);
+            if constexpr (sizeof(Storage) <= 4)
+            {
+                constexpr std::uint64_t modulus = (std::uint64_t(1) << 32) * UnitNs;
+                const std::uint64_t base = mNanoseconds % modulus;
+                const auto change = magnitude % modulus;
+                mNanoseconds = delta < 0 ? (base >= change ? base - change : modulus - (change - base))
+                    : (base >= modulus - change ? base - (modulus - change) : base + change);
+            }
+            else
+            {
+                if ((delta < 0 && magnitude > mNanoseconds) ||
+                    (delta >= 0 && magnitude > UINT64_MAX - mNanoseconds))
+                    throw std::overflow_error("simulation clock overflow");
+                mNanoseconds = delta < 0 ? mNanoseconds - magnitude : mNanoseconds + magnitude;
+            }
         }
         else
         {
@@ -185,6 +217,7 @@ struct BasicTimeCounter
 };
 using TimeCounter = BasicTimeCounter<int>;
 using UnsignedTimeCounter = BasicTimeCounter<unsigned int>;
+using MonotonicTimeCounter = BasicTimeCounter<std::uint64_t>;
 using MillisecondCounter = BasicTimeCounter<int, 1'000'000>;
 using UnsignedMillisecondCounter = BasicTimeCounter<unsigned int, 1'000'000>;
 using SecondCounter = BasicTimeCounter<int, 1'000'000'000>;

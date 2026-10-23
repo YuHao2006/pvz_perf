@@ -4,25 +4,55 @@ export component MoweredZombieArm {
     Emitter {
         image: "IMAGE_ZOMBIEARM";
         name: "MoweredArm";
-        randomLaunchSpin: 1;
-        systemDuration: 60;
-        spawnMinActive: 1;
-        emitterOffsetX: 30;
-        systemAlpha: track { 1,90 0,100; }
-        launchSpeed: 340.0;
-        launchAngle: range { 190 220; }
-        particleSpinAngle: -90;
-        particleSpinSpeed: track { [-180 -360] 0,40; }
-        particleScale: .8;
-        collisionReflect: .5;
-        collisionSpin: 15;
+        imageFrames: 1;
+        animated: 0;
+        emitterType: Box;
+        systemDuration: nodes {
+            { time: 0; low: 60; high: 60; curve: Linear; distribution: Linear; }
+        }
+        spawnMinActive: nodes {
+            { time: 0; low: 1; high: 1; curve: Linear; distribution: Linear; }
+        }
+        emitterOffsetX: nodes {
+            { time: 0; low: 30; high: 30; curve: Linear; distribution: Linear; }
+        }
+        systemGreen: nodes {
+            { time: 0.9; low: 1; high: 1; curve: Linear; distribution: Linear; }
+            { time: 1; low: 0; high: 0; curve: Linear; distribution: Linear; }
+        }
+        systemAlpha: nodes {
+            { time: 0; low: 340; high: 340; curve: Linear; distribution: Linear; }
+        }
+        systemBrightness: nodes {
+            { time: 0; low: 190; high: 220; curve: Linear; distribution: Linear; }
+        }
+        particleSpinAngle: nodes {
+            { time: 0; low: -90; high: -90; curve: Linear; distribution: Linear; }
+        }
+        particleSpinSpeed: nodes {
+            { time: 0; low: -180; high: -360; curve: Linear; distribution: Linear; }
+            { time: 0.4; low: 0; high: 0; curve: Linear; distribution: Linear; }
+        }
+        particleScale: nodes {
+            { time: 0; low: 0.8; high: 0.8; curve: Linear; distribution: Linear; }
+        }
+        collisionReflect: nodes {
+            { time: 0; low: 0.5; high: 0.5; curve: Linear; distribution: Linear; }
+        }
+        collisionSpin: nodes {
+            { time: 0; low: 15; high: 15; curve: Linear; distribution: Linear; }
+        }
         field {
             fieldType: Acceleration;
-            y: 15.0;
+            y: nodes {
+                { time: 0; low: 15; high: 15; curve: Linear; distribution: Linear; }
+            }
         }
         field {
             fieldType: GroundConstraint;
-            y: 0.0;
+            y: nodes {
+                { time: 0; low: 0; high: 0; curve: Linear; distribution: Linear; }
+            }
         }
     }
 }

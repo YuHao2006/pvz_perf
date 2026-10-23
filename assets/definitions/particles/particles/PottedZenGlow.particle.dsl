@@ -4,25 +4,54 @@ export component PottedZenGlow {
     Emitter {
         image: "IMAGE_GLOW_PARTICLE2";
         name: "Sparks";
+        imageFrames: 1;
+        animated: 0;
         emitterType: Circle;
         systemLoops: 1;
-        spawnRate: 30;
-        emitterRadius: range { 40 50; }
-        emitterOffsetX: 0;
-        emitterOffsetY: 20;
-        particleDuration: range { 30 60; }
-        launchSpeed: range { 40 70; }
-        launchAngle: range { 90 270; }
-        particleAlpha: track { 0 1,30 1,70 0; }
-        particleScale: range { .7 .9; }
+        spawnRate: nodes {
+            { time: 0; low: 30; high: 30; curve: Linear; distribution: Linear; }
+        }
+        emitterRadius: nodes {
+            { time: 0; low: 40; high: 50; curve: Linear; distribution: Linear; }
+        }
+        emitterOffsetX: nodes {
+            { time: 0; low: 0; high: 0; curve: Linear; distribution: Linear; }
+        }
+        emitterOffsetY: nodes {
+            { time: 0; low: 20; high: 20; curve: Linear; distribution: Linear; }
+        }
+        particleDuration: nodes {
+            { time: 0; low: 30; high: 60; curve: Linear; distribution: Linear; }
+        }
+        systemAlpha: nodes {
+            { time: 0; low: 40; high: 70; curve: Linear; distribution: Linear; }
+        }
+        systemBrightness: nodes {
+            { time: 0; low: 90; high: 270; curve: Linear; distribution: Linear; }
+        }
+        particleAlpha: nodes {
+            { time: 0; low: 0; high: 0; curve: Linear; distribution: Linear; }
+            { time: 0.3; low: 1; high: 1; curve: Linear; distribution: Linear; }
+            { time: 0.7; low: 1; high: 1; curve: Linear; distribution: Linear; }
+            { time: 1; low: 0; high: 0; curve: Linear; distribution: Linear; }
+        }
+        particleScale: nodes {
+            { time: 0; low: 0.7; high: 0.9; curve: Linear; distribution: Linear; }
+        }
         field {
             fieldType: Friction;
-            x: 0.015;
-            y: 0.015;
+            x: nodes {
+                { time: 0; low: 0.015; high: 0.015; curve: Linear; distribution: Linear; }
+            }
+            y: nodes {
+                { time: 0; low: 0.015; high: 0.015; curve: Linear; distribution: Linear; }
+            }
         }
         field {
             fieldType: Acceleration;
-            y: 1.0;
+            y: nodes {
+                { time: 0; low: 1; high: 1; curve: Linear; distribution: Linear; }
+            }
         }
     }
 }

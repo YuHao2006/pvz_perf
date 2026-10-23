@@ -155,5 +155,6 @@ public:
     void                        EffectSystemFreeAll();
     void                        ProcessDeleteQueue();
     void                        Update();
+    void                        UpdateAt(std::int64_t visualNowNs, std::int64_t battleNowNs);
 };
 extern EffectSystem* gEffectSystem;  //[0x6A9EB8]

@@ -12,7 +12,7 @@ export component PotatoMine {
         particleScale: .9;
     }
     Emitter {
-        image: "IMAGE_POTATOMINE_PARTICLES";
+        images: ["particles/frames/potatomine_particles_r0_c0.png","particles/frames/potatomine_particles_r0_c1.png","particles/frames/potatomine_particles_r0_c2.png","particles/frames/potatomine_particles_r0_c3.png","particles/frames/potatomine_particles_r0_c4.png","particles/frames/potatomine_particles_r0_c5.png"];
         name: "LowParts";
         imageFrames: 6;
         emitterType: Circle;
@@ -38,7 +38,7 @@ export component PotatoMine {
         }
     }
     Emitter {
-        image: "IMAGE_POTATOMINE_PARTICLES";
+        images: ["particles/frames/potatomine_particles_r0_c0.png","particles/frames/potatomine_particles_r0_c1.png","particles/frames/potatomine_particles_r0_c2.png","particles/frames/potatomine_particles_r0_c3.png","particles/frames/potatomine_particles_r0_c4.png","particles/frames/potatomine_particles_r0_c5.png"];
         name: "HighParts";
         imageFrames: 6;
         emitterType: Circle;

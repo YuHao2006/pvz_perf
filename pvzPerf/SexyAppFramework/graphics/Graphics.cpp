@@ -1,8 +1,6 @@
 #include "Graphics.h"
 #include "Image.h"
 #include "Font.h"
-#include "DDImage.h"
-#include "MemoryImage.h"
 #include "misc/Rect.h"
 #include "misc/Debug.h"
 #include "misc/SexyMatrix.h"
@@ -14,12 +12,11 @@
 
 using namespace Sexy;
 
-Image GraphicsState::mStaticImage;
 const Point* Graphics::mPFPoints;
 namespace {
-inline DDImage* RequireDrawDestination(DDImage* image, DrawOperation operation)
+inline Image* RequireDrawDestination(Image* image, DrawOperation operation)
 {
-    if (image == nullptr)
+	if (image == nullptr)
         throw NonScreenDrawError(operation);
     return image;
 }
@@ -32,15 +29,22 @@ class GraphicsPolygonScratch
     const Point* mPreviousPoints;
     int mPreviousVertexCount;
 public:
-    std::unique_ptr<int[]> mIndices;
-    std::unique_ptr<Edge[]> mEdges;
+    int* mIndices = nullptr;
+    Edge* mEdges = nullptr;
     GraphicsPolygonScratch(Graphics& g, const Point* points, int count)
         : mGraphics(g), mPreviousEdges(g.mPFActiveEdgeList),
           mPreviousEdgeCount(g.mPFNumActiveEdges), mPreviousPoints(g.mPFPoints),
-          mPreviousVertexCount(g.mPFNumVertices),
-          mIndices(new int[count]), mEdges(new Edge[count])
+          mPreviousVertexCount(g.mPFNumVertices)
     {
-        g.mPFActiveEdgeList = mEdges.get();
+        try {
+            mIndices = new int[count];
+            mEdges = new Edge[count];
+        } catch (...) {
+            delete[] mIndices;
+            delete[] mEdges;
+            throw;
+        }
+        g.mPFActiveEdgeList = mEdges;
         g.mPFNumActiveEdges = 0;
         g.mPFPoints = points;
         g.mPFNumVertices = count;
@@ -51,6 +55,8 @@ public:
         mGraphics.mPFNumActiveEdges = mPreviousEdgeCount;
         mGraphics.mPFPoints = mPreviousPoints;
         mGraphics.mPFNumVertices = mPreviousVertexCount;
+        delete[] mIndices;
+        delete[] mEdges;
     }
     GraphicsPolygonScratch(const GraphicsPolygonScratch&) = delete;
     GraphicsPolygonScratch& operator=(const GraphicsPolygonScratch&) = delete;
@@ -63,7 +69,7 @@ Graphics::Graphics(const Graphics& theGraphics) : GraphicsState(theGraphics)
 {
 }
 
-Graphics::Graphics(DDImage* theDestImage)
+Graphics::Graphics(Image* theDestImage)
 {
 	mTransX = 0;
 	mTransY = 0;
@@ -79,14 +85,7 @@ Graphics::Graphics(DDImage* theDestImage)
 	mWriteColoredString = true;
 	mLinearBlend = false;
 
-	if (mDestImage == NULL)
-	{
-		mDestImage = &mStaticImage;
-	}
-	mDDDestImage = theDestImage;
-	mIs3D = mDDDestImage != nullptr && DDImage::Check3D(mDDDestImage);
-
-	mClipRect = Rect(0, 0, mDestImage->mWidth, mDestImage->mHeight);
+	mClipRect = mDestImage ? Rect(0,0,mDestImage->mWidth,mDestImage->mHeight) : Rect();
 }
 
 Graphics::~Graphics()
@@ -128,7 +127,7 @@ void Graphics::FillRect(int theX, int theY, int theWidth, int theHeight)
 		return;
 
 	Rect aDestRect = Rect(theX + mTransX, theY + mTransY, theWidth, theHeight).Intersection(mClipRect);
-	RequireDrawDestination(mDDDestImage, DrawOperation::FillRect)->FillRect(aDestRect, mColor, mDrawMode);
+	RequireDrawDestination(mDestImage, DrawOperation::FillRect)->FillRect(aDestRect, mColor, mDrawMode);
 }
 
 void Graphics::FillRect(const Rect& theRect)
@@ -147,7 +146,7 @@ void Graphics::DrawRect(int theX, int theY, int theWidth, int theHeight)
 
 	if (aFullDestRect == aFullClippedRect)
 	{		
-		auto* image = RequireDrawDestination(mDDDestImage, DrawOperation::FillRect);
+		auto* image = RequireDrawDestination(mDestImage, DrawOperation::FillRect);
 		image->FillRect(Rect(aDestRect.mX, aDestRect.mY, aDestRect.mWidth + 1, 1), mColor, mDrawMode);
 		image->FillRect(Rect(aDestRect.mX, aDestRect.mY + aDestRect.mHeight, aDestRect.mWidth + 1, 1), mColor, mDrawMode);
 		image->FillRect(Rect(aDestRect.mX, aDestRect.mY + 1, 1, aDestRect.mHeight - 1), mColor, mDrawMode);
@@ -234,7 +233,7 @@ void Graphics::PolyFill(const Point *theVertexList, int theNumVertices, bool con
 	if (theNumVertices <= 0) return;
 	if (!theVertexList) throw std::invalid_argument("Graphics polygon: null vertex list");
 	if (mClipRect.mWidth <= 0 || mClipRect.mHeight <= 0) return;
-	if (convex && mDDDestImage != nullptr && mDDDestImage->PolyFill3D(theVertexList,theNumVertices,&mClipRect,mColor,mDrawMode,mTransX,mTransY))
+	if (convex && mDestImage != nullptr && mDestImage->PolyFill3D(theVertexList,theNumVertices,&mClipRect,mColor,mDrawMode,mTransX,mTransY))
 		return;
 
 	Span aSpans[MAX_TEMP_SPANS];
@@ -249,7 +248,7 @@ void Graphics::PolyFill(const Point *theVertexList, int theNumVertices, bool con
 	int aMaxY = mClipRect.mY + mClipRect.mHeight - 1;
 
 	GraphicsPolygonScratch aScratch(*this, theVertexList, theNumVertices);
-	int* ind = aScratch.mIndices.get();
+	int* ind = aScratch.mIndices;
 
     /* create y-sorted array of indices ind[k] into vertex list */
     for (k=0; k<mPFNumVertices; k++)
@@ -317,7 +316,7 @@ void Graphics::PolyFill(const Point *theVertexList, int theNumVertices, bool con
 
 	if (aSpanPos > 0)
 	{
-		auto* image = RequireDrawDestination(mDDDestImage, DrawOperation::FillRect);
+		auto* image = RequireDrawDestination(mDestImage, DrawOperation::FillRect);
 		for (int i = 0; i < aSpanPos; ++i)
 		{
 			const auto& span = aSpans[i];
@@ -333,7 +332,7 @@ void Graphics::PolyFillAA(const Point *theVertexList, int theNumVertices, bool c
 	if (theNumVertices <= 0) return;
 	if (!theVertexList) throw std::invalid_argument("Graphics polygon: null vertex list");
 	if (mClipRect.mWidth <= 0 || mClipRect.mHeight <= 0) return;
-	if (convex && mDDDestImage != nullptr && mDDDestImage->PolyFill3D(theVertexList,theNumVertices,&mClipRect,mColor,mDrawMode,mTransX,mTransY))
+	if (convex && mDestImage != nullptr && mDestImage->PolyFill3D(theVertexList,theNumVertices,&mClipRect,mColor,mDrawMode,mTransX,mTransY))
 		return;
 
 	int i;
@@ -388,7 +387,7 @@ void Graphics::PolyFillAA(const Point *theVertexList, int theNumVertices, bool c
 	int aMaxY = mClipRect.mY + mClipRect.mHeight - 1;
 
 	GraphicsPolygonScratch aScratch(*this, theVertexList, theNumVertices);
-	int* ind = aScratch.mIndices.get();
+	int* ind = aScratch.mIndices;
 
     /* create y-sorted array of indices ind[k] into vertex list */
     for (k=0; k<mPFNumVertices; k++)
@@ -513,7 +512,7 @@ void Graphics::PolyFillAA(const Point *theVertexList, int theNumVertices, bool c
 		}
 	}
 
-	RequireDrawDestination(mDDDestImage, DrawOperation::FillScanLinesWithCoverage)->FillScanLinesWithCoverage(aSpans, aSpanPos, mColor, mDrawMode, coverPtr, aCoverLeft, aCoverTop, aCoverWidth, aCoverHeight);
+	RequireDrawDestination(mDestImage, DrawOperation::FillScanLinesWithCoverage)->FillScanLinesWithCoverage(aSpans, aSpanPos, mColor, mDrawMode, coverPtr, aCoverLeft, aCoverTop, aCoverWidth, aCoverHeight);
 	
 
 
@@ -601,7 +600,7 @@ void Graphics::DrawLine(int theStartX, int theStartY, int theEndX, int theEndY)
 	if (!DrawLineClipHelper(&aStartX, &aStartY, &aEndX, &aEndY))
 		return;
 
-	RequireDrawDestination(mDDDestImage, DrawOperation::DrawLine)->DrawLine(aStartX, aStartY, aEndX, aEndY, mColor, mDrawMode);
+	RequireDrawDestination(mDestImage, DrawOperation::DrawLine)->DrawLine(aStartX, aStartY, aEndX, aEndY, mColor, mDrawMode);
 }
 
 void Graphics::DrawLineAA(int theStartX, int theStartY, int theEndX, int theEndY)
@@ -614,7 +613,7 @@ void Graphics::DrawLineAA(int theStartX, int theStartY, int theEndX, int theEndY
 	if (!DrawLineClipHelper(&aStartX, &aStartY, &aEndX, &aEndY))
 		return;
 
-	RequireDrawDestination(mDDDestImage, DrawOperation::DrawLineAA)->DrawLineAA(aStartX, aStartY, aEndX, aEndY, mColor, mDrawMode);
+	RequireDrawDestination(mDestImage, DrawOperation::DrawLineAA)->DrawLineAA(aStartX, aStartY, aEndX, aEndY, mColor, mDrawMode);
 }
 
 void Graphics::DrawString(const SexyString& theString, int theX, int theY)
@@ -638,7 +637,7 @@ void Graphics::DrawImage(Sexy::Image* theImage, int theX, int theY)
 	Rect aSrcRect(aDestRect.mX - theX, aDestRect.mY - theY, aDestRect.mWidth, aDestRect.mHeight);
 
 	if ((aSrcRect.mWidth > 0) && (aSrcRect.mHeight > 0))
-		RequireDrawDestination(mDDDestImage, DrawOperation::Blt)->Blt(theImage, aDestRect.mX, aDestRect.mY, aSrcRect, mColorizeImages ? mColor : Color::White, mDrawMode);
+		RequireDrawDestination(mDestImage, DrawOperation::Blt)->Blt(theImage, aDestRect.mX, aDestRect.mY, aSrcRect, mColorizeImages ? mColor : Color::White, mDrawMode);
 }
 
 void Graphics::DrawImage(Image* theImage, int theX, int theY, const Rect& theSrcRect)
@@ -656,7 +655,7 @@ void Graphics::DrawImage(Image* theImage, int theX, int theY, const Rect& theSrc
 	if (mScaleX!=1 || mScaleY!=1)
 	{
 		Rect aDestRect(mScaleOrigX+floor((theX-mScaleOrigX)*mScaleX),mScaleOrigY+floor((theY-mScaleOrigY)*mScaleY),ceil(theSrcRect.mWidth*mScaleX),ceil(theSrcRect.mHeight*mScaleY));
-		RequireDrawDestination(mDDDestImage, DrawOperation::StretchBlt)->StretchBlt(theImage, aDestRect, theSrcRect, mClipRect, mColorizeImages ? mColor : Color::White, mDrawMode, mFastStretch);
+		RequireDrawDestination(mDestImage, DrawOperation::StretchBlt)->StretchBlt(theImage, aDestRect, theSrcRect, mClipRect, mColorizeImages ? mColor : Color::White, mDrawMode, mFastStretch);
 		return;
 	}
 
@@ -664,7 +663,7 @@ void Graphics::DrawImage(Image* theImage, int theX, int theY, const Rect& theSrc
 	Rect aSrcRect(theSrcRect.mX + aDestRect.mX - theX, theSrcRect.mY + aDestRect.mY - theY, aDestRect.mWidth, aDestRect.mHeight);
 
 	if ((aSrcRect.mWidth > 0) && (aSrcRect.mHeight > 0))
-		RequireDrawDestination(mDDDestImage, DrawOperation::Blt)->Blt(theImage, aDestRect.mX, aDestRect.mY, aSrcRect, mColorizeImages ? mColor : Color::White, mDrawMode);
+		RequireDrawDestination(mDestImage, DrawOperation::Blt)->Blt(theImage, aDestRect.mX, aDestRect.mY, aSrcRect, mColorizeImages ? mColor : Color::White, mDrawMode);
 }
 
 void Graphics::DrawImageMirror(Image* theImage, int theX, int theY, bool mirror)
@@ -699,7 +698,7 @@ void Graphics::DrawImageMirror(Image* theImage, int theX, int theY, const Rect& 
 	Rect aSrcRect(theSrcRect.mX + aRightClip, theSrcRect.mY + aDestRect.mY - theY, aDestRect.mWidth, aDestRect.mHeight);
 
 	if ((aSrcRect.mWidth > 0) && (aSrcRect.mHeight > 0))
-		RequireDrawDestination(mDDDestImage, DrawOperation::BltMirror)->BltMirror(theImage, aDestRect.mX, aDestRect.mY, aSrcRect, mColorizeImages ? mColor : Color::White, mDrawMode);
+		RequireDrawDestination(mDestImage, DrawOperation::BltMirror)->BltMirror(theImage, aDestRect.mX, aDestRect.mY, aSrcRect, mColorizeImages ? mColor : Color::White, mDrawMode);
 }
 
 void Graphics::DrawImageMirror(Image* theImage, const Rect& theDestRect, const Rect& theSrcRect, bool mirror)
@@ -712,7 +711,7 @@ void Graphics::DrawImageMirror(Image* theImage, const Rect& theDestRect, const R
 
 	Rect aDestRect = Rect(theDestRect.mX + mTransX, theDestRect.mY + mTransY, theDestRect.mWidth, theDestRect.mHeight);
 
-	RequireDrawDestination(mDDDestImage, DrawOperation::StretchBltMirror)->StretchBltMirror(theImage, aDestRect, theSrcRect, mClipRect, mColorizeImages ? mColor : Color::White, mDrawMode, mFastStretch);
+	RequireDrawDestination(mDestImage, DrawOperation::StretchBltMirror)->StretchBltMirror(theImage, aDestRect, theSrcRect, mClipRect, mColorizeImages ? mColor : Color::White, mDrawMode, mFastStretch);
 }
 
 
@@ -721,14 +720,14 @@ void Graphics::DrawImage(Image* theImage, int theX, int theY, int theStretchedWi
 	Rect aDestRect = Rect(theX + mTransX, theY + mTransY, theStretchedWidth, theStretchedHeight);
 	Rect aSrcRect = Rect(0, 0, theImage->mWidth, theImage->mHeight);
 
-	RequireDrawDestination(mDDDestImage, DrawOperation::StretchBlt)->StretchBlt(theImage, aDestRect, aSrcRect, mClipRect, mColorizeImages ? mColor : Color::White, mDrawMode, mFastStretch);
+	RequireDrawDestination(mDestImage, DrawOperation::StretchBlt)->StretchBlt(theImage, aDestRect, aSrcRect, mClipRect, mColorizeImages ? mColor : Color::White, mDrawMode, mFastStretch);
 }
 
 void Graphics::DrawImage(Image* theImage, const Rect& theDestRect, const Rect& theSrcRect)
 {	
 	Rect aDestRect = Rect(theDestRect.mX + mTransX, theDestRect.mY + mTransY, theDestRect.mWidth, theDestRect.mHeight);
 
-	RequireDrawDestination(mDDDestImage, DrawOperation::StretchBlt)->StretchBlt(theImage, aDestRect, theSrcRect, mClipRect, mColorizeImages ? mColor : Color::White, mDrawMode, mFastStretch);
+	RequireDrawDestination(mDestImage, DrawOperation::StretchBlt)->StretchBlt(theImage, aDestRect, theSrcRect, mClipRect, mColorizeImages ? mColor : Color::White, mDrawMode, mFastStretch);
 }
 
 void Graphics::DrawImageF(Image* theImage, float theX, float theY)
@@ -737,7 +736,7 @@ void Graphics::DrawImageF(Image* theImage, float theX, float theY)
 	theY += mTransY;	
 
 	Rect aSrcRect(0, 0, theImage->mWidth, theImage->mHeight);
-	RequireDrawDestination(mDDDestImage, DrawOperation::BltF)->BltF(theImage, theX, theY, aSrcRect, mClipRect, mColorizeImages ? mColor : Color::White, mDrawMode);
+	RequireDrawDestination(mDestImage, DrawOperation::BltF)->BltF(theImage, theX, theY, aSrcRect, mClipRect, mColorizeImages ? mColor : Color::White, mDrawMode);
 }
 
 void Graphics::DrawImageF(Image* theImage, float theX, float theY, const Rect& theSrcRect)
@@ -748,7 +747,7 @@ void Graphics::DrawImageF(Image* theImage, float theX, float theY, const Rect& t
 	theX += mTransX;
 	theY += mTransY;
 	
-	RequireDrawDestination(mDDDestImage, DrawOperation::BltF)->BltF(theImage, theX, theY, theSrcRect, mClipRect, mColorizeImages ? mColor : Color::White, mDrawMode);
+	RequireDrawDestination(mDestImage, DrawOperation::BltF)->BltF(theImage, theX, theY, theSrcRect, mClipRect, mColorizeImages ? mColor : Color::White, mDrawMode);
 }
 
 void Graphics::DrawImageRotated(Image* theImage, int theX, int theY, double theRot, const Rect *theSrcRect)
@@ -800,26 +799,26 @@ void Graphics::DrawImageRotatedF(Image* theImage, float theX, float theY, double
 	if (theSrcRect==NULL)
 	{
 		Rect aSrcRect(0,0,theImage->mWidth,theImage->mHeight);
-		RequireDrawDestination(mDDDestImage, DrawOperation::BltRotated)->BltRotated(theImage, theX, theY, aSrcRect, mClipRect, mColorizeImages ? mColor : Color::White, mDrawMode, theRot, theRotCenterX, theRotCenterY);
+		RequireDrawDestination(mDestImage, DrawOperation::BltRotated)->BltRotated(theImage, theX, theY, aSrcRect, mClipRect, mColorizeImages ? mColor : Color::White, mDrawMode, theRot, theRotCenterX, theRotCenterY);
 	}
 	else
-		RequireDrawDestination(mDDDestImage, DrawOperation::BltRotated)->BltRotated(theImage, theX, theY, *theSrcRect, mClipRect, mColorizeImages ? mColor : Color::White, mDrawMode, theRot, theRotCenterX, theRotCenterY);
+		RequireDrawDestination(mDestImage, DrawOperation::BltRotated)->BltRotated(theImage, theX, theY, *theSrcRect, mClipRect, mColorizeImages ? mColor : Color::White, mDrawMode, theRot, theRotCenterX, theRotCenterY);
 }
 
 void Graphics::DrawImageMatrix(Image* theImage, const SexyMatrix3 &theMatrix, float x, float y)
 {	
 	Rect aSrcRect(0,0,theImage->mWidth,theImage->mHeight);
-	RequireDrawDestination(mDDDestImage, DrawOperation::BltMatrix)->BltMatrix(theImage,x+mTransX,y+mTransY,theMatrix,mClipRect,mColorizeImages?mColor:Color::White,mDrawMode,aSrcRect,mLinearBlend);
+	RequireDrawDestination(mDestImage, DrawOperation::BltMatrix)->BltMatrix(theImage,x+mTransX,y+mTransY,theMatrix,mClipRect,mColorizeImages?mColor:Color::White,mDrawMode,aSrcRect,mLinearBlend);
 }
 
 void Graphics::DrawImageMatrix(Image* theImage, const SexyMatrix3 &theMatrix, const Rect &theSrcRect, float x, float y)
 {
-	RequireDrawDestination(mDDDestImage, DrawOperation::BltMatrix)->BltMatrix(theImage,x+mTransX,y+mTransY,theMatrix,mClipRect,mColorizeImages?mColor:Color::White,mDrawMode,theSrcRect,mLinearBlend);
+	RequireDrawDestination(mDestImage, DrawOperation::BltMatrix)->BltMatrix(theImage,x+mTransX,y+mTransY,theMatrix,mClipRect,mColorizeImages?mColor:Color::White,mDrawMode,theSrcRect,mLinearBlend);
 }
 
 void Graphics::DrawImageTransformHelper(Image* theImage, const Transform &theTransform, const Rect &theSrcRect, float x, float y, bool useFloat)
 {
-	if (theTransform.mComplex || (mDDDestImage != nullptr && DDImage::Check3D(mDDDestImage) && useFloat))
+	if (theTransform.mComplex || useFloat)
 	{
 		DrawImageMatrix(theImage,theTransform.GetMatrix(),theSrcRect,x,y);
 		return;
@@ -837,10 +836,7 @@ void Graphics::DrawImageTransformHelper(Image* theImage, const Transform &theTra
 		x = x + theTransform.mTransX2 - rx + 0.5f;
 		y = y + theTransform.mTransY2 - ry + 0.5f;
 
-		if (useFloat)
-			DrawImageRotatedF(theImage,x,y,theTransform.mRot,rx,ry,&theSrcRect);
-		else
-			DrawImageRotated(theImage,x,y,theTransform.mRot,rx,ry,&theSrcRect);
+		DrawImageRotated(theImage,x,y,theTransform.mRot,rx,ry,&theSrcRect);
 	}
 	else if (theTransform.mHaveScale)
 	{
@@ -871,10 +867,7 @@ void Graphics::DrawImageTransformHelper(Image* theImage, const Transform &theTra
 		x = x + theTransform.mTransX1 + theTransform.mTransX2 - w2 + 0.5f;
 		y = y + theTransform.mTransY1 + theTransform.mTransY2 - h2 + 0.5f;
 
-		if (useFloat)
-			DrawImageF(theImage,x,y,theSrcRect);
-		else
-			DrawImage(theImage,x,y,theSrcRect);
+		DrawImage(theImage,x,y,theSrcRect);
 	}
 }
 
@@ -901,23 +894,23 @@ void Graphics::DrawImageTransformF(Image* theImage, const Transform &theTransfor
 void Graphics::DrawTriangleTex(Image *theTexture, const TriVertex &v1, const TriVertex &v2, const TriVertex &v3)
 {
 	TriVertex v[1][3] = {{v1,v2,v3}};
-	RequireDrawDestination(mDDDestImage, DrawOperation::BltTrianglesTex)->BltTrianglesTex(theTexture,v,1,mClipRect,mColorizeImages?mColor:Color::White,mDrawMode,mTransX,mTransY,mLinearBlend);
+	RequireDrawDestination(mDestImage, DrawOperation::BltTrianglesTex)->BltTrianglesTex(theTexture,v,1,mClipRect,mColorizeImages?mColor:Color::White,mDrawMode,mTransX,mTransY,mLinearBlend);
 }
 
 void Graphics::DrawTrianglesTex(Image *theTexture, const TriVertex theVertices[][3], int theNumTriangles)
 {
-	RequireDrawDestination(mDDDestImage, DrawOperation::BltTrianglesTex)->BltTrianglesTex(theTexture,theVertices,theNumTriangles,mClipRect,mColorizeImages?mColor:Color::White,mDrawMode,mTransX,mTransY,mLinearBlend);
+	RequireDrawDestination(mDestImage, DrawOperation::BltTrianglesTex)->BltTrianglesTex(theTexture,theVertices,theNumTriangles,mClipRect,mColorizeImages?mColor:Color::White,mDrawMode,mTransX,mTransY,mLinearBlend);
 }
 
 void Graphics::ClearClipRect()
 {
-	mClipRect = Rect(0, 0, mDestImage->mWidth, mDestImage->mHeight);
+	mClipRect = mDestImage ? Rect(0,0,mDestImage->mWidth,mDestImage->mHeight) : Rect();
 }
 
 void Graphics::SetClipRect(int theX, int theY, int theWidth, int theHeight)
 {
 	mClipRect = 
-		Rect(0, 0, mDestImage->mWidth, mDestImage->mHeight).Intersection(
+		(mDestImage ? Rect(0,0,mDestImage->mWidth,mDestImage->mHeight) : Rect()).Intersection(
 			Rect(theX + mTransX, theY + mTransY, theWidth, theHeight));
 }
 
@@ -1009,45 +1002,6 @@ void Graphics::DrawImageBox(const Rect& theSrc, const Rect &theDest, Image* theC
 	for (aCol = 0; aCol < (theDest.mWidth-cw*2+cmw-1)/cmw; aCol++)
 		for (aRow = 0; aRow < (theDest.mHeight-ch*2+cmh-1)/cmh; aRow++)
 			aMidClip.DrawImage(theComponentImage, theDest.mX + cw + aCol*cmw, theDest.mY + ch + aRow*cmh, Rect(cx + cw, cy + ch, cmw, cmh));
-}
-
-void Graphics::DrawImageCel(Image* theImageStrip, int theX, int theY, int theCel)
-{
-	DrawImageCel(theImageStrip, theX, theY, theCel % theImageStrip->mNumCols, theCel / theImageStrip->mNumCols); 
-}
-
-void Graphics::DrawImageCel(Image* theImageStrip, const Rect& theDestRect, int theCel)
-{
-	DrawImageCel(theImageStrip, theDestRect, theCel % theImageStrip->mNumCols, theCel / theImageStrip->mNumCols); 
-}
-
-void Graphics::DrawImageCel(Image* theImageStrip, int theX, int theY, int theCelCol, int theCelRow)
-{
-	if (theCelRow<0 || theCelCol<0 || theCelRow >= theImageStrip->mNumRows || theCelCol >= theImageStrip->mNumCols)
-		return;
-
-	int aCelWidth = theImageStrip->mWidth / theImageStrip->mNumCols;
-	int aCelHeight = theImageStrip->mHeight / theImageStrip->mNumRows;
-	Rect aSrcRect(aCelWidth*theCelCol, aCelHeight*theCelRow, aCelWidth, aCelHeight);
-
-	DrawImage(theImageStrip,theX,theY,aSrcRect);
-}
-
-void Graphics::DrawImageAnim(Image* theImageAnim, int theX, int theY, int theTime)
-{
-	DrawImageCel(theImageAnim, theX, theY, theImageAnim->GetAnimCel(theTime));
-}
-
-void Graphics::DrawImageCel(Image* theImageStrip, const Rect& theDestRect, int theCelCol, int theCelRow)
-{
-	if (theCelRow<0 || theCelCol<0 || theCelRow >= theImageStrip->mNumRows || theCelCol >= theImageStrip->mNumCols)
-		return;
-
-	int aCelWidth = theImageStrip->mWidth / theImageStrip->mNumCols;
-	int aCelHeight = theImageStrip->mHeight / theImageStrip->mNumRows;
-	Rect aSrcRect(aCelWidth*theCelCol, aCelHeight*theCelRow, aCelWidth, aCelHeight);
-
-	DrawImage(theImageStrip,theDestRect,aSrcRect);
 }
 
 int Graphics::WriteString(const SexyString& theString, int theX, int theY, int theWidth, int theJustification, bool drawString, int theOffset, int theLength, int theOldColor)

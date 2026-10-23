@@ -7,7 +7,10 @@
 #include <string>
 #include <vector>
 
+namespace ImageLib { class Image; }
+
 namespace Sexy {
+class RenderInterface;
 inline uint64_t AddImageBytes(uint64_t a,uint64_t b) {
     if(b>(std::numeric_limits<uint64_t>::max)()-a)throw std::overflow_error("Image diagnostic byte count overflow");
     return a+b;
@@ -23,12 +26,25 @@ struct ImageCpuUsage {
         return total;
     }
 };
+ImageCpuUsage MeasureDecodedImageCpuUsage(const ImageLib::Image* image);
 // Reads metadata only; the caller must own the image lifetime and exclude writes.
 template<class Image> ImageCpuUsage MeasureImageCpuUsage(const Image& image) {
-    const auto bytes=ImageTexelBytes(image.mWidth,image.mHeight),pixels=bytes/4;
-    return {image.mBits?AddImageBytes(bytes,4):0, image.mColorTable?1024u:0u,
-        image.mColorIndices?pixels:0, image.mNativeAlphaData?(image.mColorTable?1024u:bytes):0,
-        image.mRLAlphaData?pixels:0, image.mRLAdditiveData?pixels:0};
+    if constexpr (requires { image.mBits; image.mColorTable; }) {
+        const auto bytes=ImageTexelBytes(image.mWidth,image.mHeight),pixels=bytes/4;
+        ImageCpuUsage usage{image.mBits?AddImageBytes(bytes,4):0,
+            image.mColorTable?1024u:0u,image.mColorIndices?pixels:0};
+        if constexpr (requires { image.mNativeAlphaData; })
+            usage.nativeAlpha=image.mNativeAlphaData?(image.mColorTable?1024u:bytes):0;
+        if constexpr (requires { image.mRLAlphaData; })
+            usage.rlAlpha=image.mRLAlphaData?pixels:0;
+        if constexpr (requires { image.mRLAdditiveData; })
+            usage.rlAdditive=image.mRLAdditiveData?pixels:0;
+        return usage;
+    } else if constexpr (requires { image.mPendingDecoded; }) {
+        return MeasureDecodedImageCpuUsage(image.mPendingDecoded);
+    } else {
+        return {};
+    }
 }
 struct ImageDiagnosticRecord {
     std::string path,traits,pixelStatus;
@@ -40,6 +56,10 @@ struct ImageDiagnosticRecord {
     std::optional<ImagePixels> pixels;
     uint64_t Total() const {return AddImageBytes(cpu.Total(),gpuTexels);}
 };
+// Caller holds the application's image lifetime lock and flushes before pixels.
+// Shared atlas textures are renderer-owned, outside the ordinary Image set.
+void AppendAtlasTextureDiagnostics(RenderInterface& render,
+    std::vector<ImageDiagnosticRecord>& records,bool includePixels);
 struct ImageDiagnosticTotals {
     uint64_t cpu=0,gpuTexels=0,images=0,texturedImages=0;
 };

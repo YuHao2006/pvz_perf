@@ -2,7 +2,7 @@ export component ZamboniTire {
     kind: particle;
     source-name: "zambonitire";
     Emitter {
-        image: "IMAGE_DIRTSMALL";
+        images: ["particles/frames/dirtsmall_r0_c0.png","particles/frames/dirtsmall_r0_c1.png","particles/frames/dirtsmall_r0_c2.png","particles/frames/dirtsmall_r0_c3.png","particles/frames/dirtsmall_r0_c4.png","particles/frames/dirtsmall_r0_c5.png","particles/frames/dirtsmall_r0_c6.png","particles/frames/dirtsmall_r0_c7.png"];
         name: "Rocks";
         imageFrames: 8;
         emitterType: Circle;
@@ -23,7 +23,7 @@ export component ZamboniTire {
         }
     }
     Emitter {
-        image: "IMAGE_ZAMBONISMOKE";
+        images: ["particles/frames/zambonismoke_r0_c0.png","particles/frames/zambonismoke_r0_c1.png","particles/frames/zambonismoke_r0_c2.png"];
         imageFrames: 3;
         emitterType: Circle;
         randomLaunchSpin: 1;

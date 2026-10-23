@@ -29,26 +29,53 @@ void Set32(std::vector<std::uint8_t>& bytes, std::size_t at, std::uint32_t value
 void CheckEditableHeader()
 {
     using namespace LevelSaveFormat;
-    for (const bool current : {false, true})
+    for (const auto [version, minor, schema] :
+         {std::array{DAT64_V1_VERSION, 0U, DAT64_V1_SCHEMA_ID},
+          std::array{DAT64_V2_VERSION, 0U, DAT64_V2_SCHEMA_ID},
+          std::array{DAT64_VERSION, DAT64_MINOR_VERSION, DAT64_SCHEMA_ID}})
     {
+        const bool current = version == DAT64_VERSION && minor == DAT64_MINOR_VERSION &&
+            schema == DAT64_SCHEMA_ID;
         std::vector<std::uint8_t> file(DAT64_HEADER_SIZE + 16, 0);
         std::copy(DAT64_MAGIC.begin(), DAT64_MAGIC.end(), file.begin());
-        Set32(file, 8, current ? DAT64_VERSION : DAT64_V1_VERSION);
+        Set32(file, 8, version);
         Set32(file, 12, DAT64_HEADER_SIZE);
         Set32(file, 16, DAT64_AUTHORITY_BUILD);
-        Set32(file, 20, current ? DAT64_FLAGS : DAT64_V1_FLAGS);
+        Set32(file, 20, version == DAT64_V1_VERSION ? DAT64_V1_FLAGS : DAT64_FLAGS);
         Set32(file, 24, 16);
-        Set32(file, 36, current ? DAT64_SCHEMA_ID : DAT64_V1_SCHEMA_ID);
+        Set32(file, 36, schema);
+        Set32(file, 40, minor);
         Require(IsSupportedDat64Header(file), "Game/converter header rejected a supported version");
-        Require(IsCurrentDat64Header(file) == current, "Runtime must accept only DAT64 v2");
+        Require(IsCurrentDat64Header(file) == current, "Runtime must accept only DAT64 v3.2");
         // Neither the payload nor the former CRC field participates in the header decision.
         Set32(file, 32, 0xdeadbeef);
         file[DAT64_HEADER_SIZE + 3] ^= 0x37;
         Require(IsSupportedDat64Header(file), "Payload edit required updating the former CRC");
         Require(IsCurrentDat64Header(file) == current, "Edited payload changed runtime version policy");
         auto bad = file;
-        Set32(bad, 8, 3);
+        Set32(bad, 8, 4);
         Require(!IsSupportedDat64Header(bad), "Unknown version accepted");
+        bad = file;
+        Set32(bad, 40, 3);
+        Require(!IsSupportedDat64Header(bad), "Unknown minor version accepted");
+        if (current)
+        {
+            for (const auto [unpublishedMinor, unpublishedSchema] :
+                 {std::array{0U, DAT64_V3_SCHEMA_ID}, std::array{1U, DAT64_V31_SCHEMA_ID}})
+            {
+                bad = file;
+                Set32(bad, 40, unpublishedMinor);
+                Set32(bad, 36, unpublishedSchema);
+                Require(!IsSupportedDat64Header(bad) && !IsCurrentDat64Header(bad),
+                    "Unpublished v3.0/v3.1 accepted");
+            }
+            bad = file;
+            Set32(bad, 40, 1);
+            Require(!IsSupportedDat64Header(bad), "Current particle layout accepted an old minor header");
+        }
+        bad = file;
+        Set32(bad, 44, 1);
+        Require(!IsSupportedDat64Header(bad), "Nonzero reserved header field accepted");
         bad = file;
         Set32(bad, 36, 0x12345678);
         Require(!IsSupportedDat64Header(bad), "Unknown schema accepted");

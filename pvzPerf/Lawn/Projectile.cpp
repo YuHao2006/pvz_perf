@@ -13,22 +13,43 @@
 #include "Sexy.TodLib/Reanimator.h"
 #include "Sexy.TodLib/Attachment.h"
 #include "Widget/AchievementsWidget.h"
+#include "ProjectileResources.h"
+#include "Sexy.TodLib/DefinitionImageRegion.h"
+#include "Sexy.TodLib/generated/GeneratedDefinitions.h"
+#include "graphics/RenderInterface.h"
+#include "graphics/TextureSource.h"
+
+namespace
+{
+auto& gProjectileResources = GeneratedDefinitions::Projectiles;
+static_assert((int)ProjectileType::NUM_PROJECTILES == 14);
+}
+
+void ProjectileLoadResources()
+{
+	GeneratedDefinitions::LoadProjectileImages();
+}
+
+void ProjectileFreeResources()
+{
+	GeneratedDefinitions::ReleaseProjectileImages();
+}
 
 static ProjectileDefinition gProjectileDefinition[] = {  //0x69F1C0
-	{ ProjectileType::PROJECTILE_PEA,           0,  20  },
-	{ ProjectileType::PROJECTILE_SNOWPEA,       0,  20  },
-	{ ProjectileType::PROJECTILE_CABBAGE,       0,  40  },
-	{ ProjectileType::PROJECTILE_MELON,         0,  80  },
-	{ ProjectileType::PROJECTILE_PUFF,          0,  20  },
-	{ ProjectileType::PROJECTILE_WINTERMELON,   0,  80  },
-	{ ProjectileType::PROJECTILE_FIREBALL,      0,  40  },
-	{ ProjectileType::PROJECTILE_STAR,          0,  20  },
-	{ ProjectileType::PROJECTILE_SPIKE,         0,  20  },
-	{ ProjectileType::PROJECTILE_BASKETBALL,    0,  75  },
-	{ ProjectileType::PROJECTILE_KERNEL,        0,  20  },
-	{ ProjectileType::PROJECTILE_COBBIG,        0,  300 },
-	{ ProjectileType::PROJECTILE_BUTTER,        0,  40  },
-	{ ProjectileType::PROJECTILE_ZOMBIE_PEA,    0,  20  }
+	{ ProjectileType::PROJECTILE_PEA,           20  },
+	{ ProjectileType::PROJECTILE_SNOWPEA,       20  },
+	{ ProjectileType::PROJECTILE_CABBAGE,       40  },
+	{ ProjectileType::PROJECTILE_MELON,         80  },
+	{ ProjectileType::PROJECTILE_PUFF,          20  },
+	{ ProjectileType::PROJECTILE_WINTERMELON,   80  },
+	{ ProjectileType::PROJECTILE_FIREBALL,      40  },
+	{ ProjectileType::PROJECTILE_STAR,          20  },
+	{ ProjectileType::PROJECTILE_SPIKE,         20  },
+	{ ProjectileType::PROJECTILE_BASKETBALL,    75  },
+	{ ProjectileType::PROJECTILE_KERNEL,        20  },
+	{ ProjectileType::PROJECTILE_COBBIG,        300 },
+	{ ProjectileType::PROJECTILE_BUTTER,        40  },
+	{ ProjectileType::PROJECTILE_ZOMBIE_PEA,    20  }
 };
 
 Projectile::Projectile()
@@ -73,15 +94,17 @@ void Projectile::ProjectileInitialize(int theX, int theY, int theRenderOrder, in
 	mRenderOrder = theRenderOrder;
 	mRotation = 0.0f;
 	mRotationSpeed = 0.0f;
-	mWidth = 40;
-	mHeight = 40;
+	mWidth = mProjectileType == ProjectileType::PROJECTILE_COBBIG ?
+		gProjectileResources.mProjectiles[mProjectileType].mSource.mWidth : 40;
+	mHeight = mProjectileType == ProjectileType::PROJECTILE_COBBIG ?
+		gProjectileResources.mProjectiles[mProjectileType].mSource.mHeight : 40;
 	mProjectileAge = 0;
 	mClickBackoffCounter = 0;
 	mAnimTicksPerFrame = 0;
 
 	// B 形态 -> 常量表 kProjInitRows（原 9 支链合并；行序 = ProjectileType 枚举序
 	// 0..13，NUM_PROJECTILES 锚定）。mSpeedLo/mSpeedHi 双 0 槽 = 原链不改角速度
-	// （亦不消耗 RNG）；FIREBALL 断言与 COBBIG 图像 W/H 并入行数据；零槽 =
+	// （亦不消耗 RNG）；FIREBALL 断言在表外，COBBIG 尺寸来自编译后的源矩形；零槽 =
 	// 原链不匹配。
 	static constexpr struct {
 		float mRotation;            // 初始角（mRandomRot 时忽略）
@@ -91,24 +114,23 @@ void Projectile::ProjectileInitialize(int theX, int theY, int theRenderOrder, in
 		ParticleEffect mTrail;      // 附加尾迹粒子；PARTICLE_NONE = 无
 		float mTrailOffX;
 		float mTrailOffY;
-		Image* const* mSizeImage;   // W/H 改取图像尺寸；nullptr = 不改
 		bool mRandomRot;            // 初始角随机取 [0,2PI)
 		bool mFlipSpeed;            // 50% 概率角速度取反
 	} kProjInitRows[(int)ProjectileType::NUM_PROJECTILES] = {
-		{ 0.0f,              0.0f,   0.0f,   0.0f, ParticleEffect::PARTICLE_NONE,       0.0f,  0.0f, nullptr,                        false, false },  // 0 PEA（原链不匹配）
-		{ 0.0f,              0.0f,   0.0f,   0.0f, ParticleEffect::PARTICLE_SNOWPEA_TRAIL, 8.0f, 13.0f, nullptr,                    false, false },  // 1 SNOWPEA
-		{ (float)(-7 * PI / 25), -0.08f, -0.02f,  0.0f, ParticleEffect::PARTICLE_NONE,       0.0f,  0.0f, nullptr,                        false, false },  // 2 CABBAGE
-		{ (float)(-2 * PI / 5),  -0.08f, -0.02f,  0.0f, ParticleEffect::PARTICLE_NONE,       0.0f,  0.0f, nullptr,                        false, false },  // 3 MELON
-		{ 0.0f,              0.0f,   0.0f,   0.0f, ParticleEffect::PARTICLE_PUFFSHROOM_TRAIL, 13.0f, 13.0f, nullptr,              false, false },  // 4 PUFF
-		{ (float)(-2 * PI / 5),  -0.08f, -0.02f,  0.0f, ParticleEffect::PARTICLE_NONE,       0.0f,  0.0f, nullptr,                        false, false },  // 5 WINTERMELON（共体）
-		{ 0.0f,              0.0f,   0.0f,   0.0f, ParticleEffect::PARTICLE_NONE,       0.0f,  0.0f, nullptr,                        false, false },  // 6 FIREBALL（断言见表外）
-		{ 0.0f,              0.05f,  0.1f,  15.0f, ParticleEffect::PARTICLE_NONE,       0.0f,  0.0f, nullptr,                        false, true  },  // 7 STAR
-		{ 0.0f,              0.0f,   0.0f,   0.0f, ParticleEffect::PARTICLE_NONE,       0.0f,  0.0f, nullptr,                        false, false },  // 8 SPIKE（原链不匹配）
-		{ 0.0f,              0.05f,  0.1f,   0.0f, ParticleEffect::PARTICLE_NONE,       0.0f,  0.0f, nullptr,                        true,  false },  // 9 BASKETBALL
-		{ 0.0f,             -0.2f,  -0.08f,  0.0f, ParticleEffect::PARTICLE_NONE,       0.0f,  0.0f, nullptr,                        false, false },  // 10 KERNEL
-		{ (float)(PI / 2),   0.0f,   0.0f,   0.0f, ParticleEffect::PARTICLE_NONE,       0.0f,  0.0f, &IMAGE_REANIM_COBCANNON_COB,    false, false },  // 11 COBBIG
-		{ (float)(-7 * PI / 25), -0.08f, -0.02f,  0.0f, ParticleEffect::PARTICLE_NONE,       0.0f,  0.0f, nullptr,                        false, false },  // 12 BUTTER（共体）
-		{ 0.0f,              0.0f,   0.0f,   0.0f, ParticleEffect::PARTICLE_NONE,       0.0f,  0.0f, nullptr,                        false, false },  // 13 ZOMBIE_PEA（原链不匹配）
+		{ 0.0f,              0.0f,   0.0f,   0.0f, ParticleEffect::PARTICLE_NONE,       0.0f,  0.0f, false, false },  // 0 PEA
+		{ 0.0f,              0.0f,   0.0f,   0.0f, ParticleEffect::PARTICLE_SNOWPEA_TRAIL, 8.0f, 13.0f, false, false },  // 1 SNOWPEA
+		{ (float)(-7 * PI / 25), -0.08f, -0.02f,  0.0f, ParticleEffect::PARTICLE_NONE,       0.0f,  0.0f, false, false },  // 2 CABBAGE
+		{ (float)(-2 * PI / 5),  -0.08f, -0.02f,  0.0f, ParticleEffect::PARTICLE_NONE,       0.0f,  0.0f, false, false },  // 3 MELON
+		{ 0.0f,              0.0f,   0.0f,   0.0f, ParticleEffect::PARTICLE_PUFFSHROOM_TRAIL, 13.0f, 13.0f, false, false },  // 4 PUFF
+		{ (float)(-2 * PI / 5),  -0.08f, -0.02f,  0.0f, ParticleEffect::PARTICLE_NONE,       0.0f,  0.0f, false, false },  // 5 WINTERMELON
+		{ 0.0f,              0.0f,   0.0f,   0.0f, ParticleEffect::PARTICLE_NONE,       0.0f,  0.0f, false, false },  // 6 FIREBALL
+		{ 0.0f,              0.05f,  0.1f,  15.0f, ParticleEffect::PARTICLE_NONE,       0.0f,  0.0f, false, true  },  // 7 STAR
+		{ 0.0f,              0.0f,   0.0f,   0.0f, ParticleEffect::PARTICLE_NONE,       0.0f,  0.0f, false, false },  // 8 SPIKE
+		{ 0.0f,              0.05f,  0.1f,   0.0f, ParticleEffect::PARTICLE_NONE,       0.0f,  0.0f, true,  false },  // 9 BASKETBALL
+		{ 0.0f,             -0.2f,  -0.08f,  0.0f, ParticleEffect::PARTICLE_NONE,       0.0f,  0.0f, false, false },  // 10 KERNEL
+		{ (float)(PI / 2),   0.0f,   0.0f,   0.0f, ParticleEffect::PARTICLE_NONE,       0.0f,  0.0f, false, false },  // 11 COBBIG
+		{ (float)(-7 * PI / 25), -0.08f, -0.02f,  0.0f, ParticleEffect::PARTICLE_NONE,       0.0f,  0.0f, false, false },  // 12 BUTTER
+		{ 0.0f,              0.0f,   0.0f,   0.0f, ParticleEffect::PARTICLE_NONE,       0.0f,  0.0f, false, false },  // 13 ZOMBIE_PEA
 	};
 	static_assert(sizeof(kProjInitRows) / sizeof(kProjInitRows[0]) == (int)ProjectileType::NUM_PROJECTILES,
 		"kProjInitRows 槽位须与 ProjectileType 枚举同步");
@@ -116,11 +138,6 @@ void Projectile::ProjectileInitialize(int theX, int theY, int theRenderOrder, in
 	if ((unsigned)mProjectileType < sizeof(kProjInitRows) / sizeof(kProjInitRows[0]))
 	{
 		const auto& aRow = kProjInitRows[(int)mProjectileType];
-		if (aRow.mSizeImage != nullptr)
-		{
-			mWidth = (*aRow.mSizeImage)->mWidth;
-			mHeight = (*aRow.mSizeImage)->mHeight;
-		}
 		mRotation = aRow.mRandomRot ? RandRangeFloat(0.0f, 2 * PI) : aRow.mRotation;
 		if (aRow.mSpeedLo != 0.0f || aRow.mSpeedHi != 0.0f)
 		{
@@ -1075,35 +1092,12 @@ void Projectile::Update()
 //0x46E540
 void Projectile::Draw(Graphics* g)
 {
-	const ProjectileDefinition& aProjectileDef = GetProjectileDef();
-
-	// 弹体贴图/缩放：按 ProjectileType 槽位直查 {图, 缩放}，行序 = 枚举序。
-	// 孢子缩放随飞行龄曲线变化（保留特例）；火豌豆无贴图（走附件/粒子）。
-	// 表存全局 Image* 变量的地址（constexpr 取址常量），用时解引用——
-	// IMAGE_* 为运行期装载的全局，constexpr 直存指针不可行。
-	static constexpr struct { Image* const* mImage; float mScale; } kDrawParams[] = {
-		{ &IMAGE_PROJECTILEPEA,                     1.0f  },  // PROJECTILE_PEA          豌豆
-		{ &IMAGE_PROJECTILESNOWPEA,                 1.0f  },  // PROJECTILE_SNOWPEA      冰豌豆
-		{ &IMAGE_REANIM_CABBAGEPULT_CABBAGE,        1.0f  },  // PROJECTILE_CABBAGE      卷心菜
-		{ &IMAGE_REANIM_MELONPULT_MELON,            1.0f  },  // PROJECTILE_MELON        西瓜
-		{ &IMAGE_PUFFSHROOM_PUFF1,                  0.3f  },  // PROJECTILE_PUFF         孢子（缩放走曲线，下行覆盖）
-		{ &IMAGE_REANIM_WINTERMELON_PROJECTILE,     1.0f  },  // PROJECTILE_WINTERMELON  冰瓜
-		{ nullptr,                                 1.0f  },  // PROJECTILE_FIREBALL（空，占位）     火豌豆
-		{ &IMAGE_PROJECTILE_STAR,                   1.0f  },  // PROJECTILE_STAR         星星
-		{ &IMAGE_PROJECTILECACTUS,                  1.0f  },  // PROJECTILE_SPIKE        尖刺
-		{ &IMAGE_REANIM_ZOMBIE_CATAPULT_BASKETBALL, 1.1f  },  // PROJECTILE_BASKETBALL   篮球
-		{ &IMAGE_REANIM_CORNPULT_KERNAL,            0.95f },  // PROJECTILE_KERNEL       玉米粒
-		{ &IMAGE_REANIM_COBCANNON_COB,              0.9f  },  // PROJECTILE_COBBIG       玉米加农炮
-		{ &IMAGE_REANIM_CORNPULT_BUTTER,            0.8f  },  // PROJECTILE_BUTTER       黄油
-		{ &IMAGE_PROJECTILEPEA,                     1.0f  },  // PROJECTILE_ZOMBIE_PEA   僵尸豌豆
-	};
-	static_assert(sizeof(kDrawParams) / sizeof(kDrawParams[0]) == (int)ProjectileType::NUM_PROJECTILES,
-		"弹体贴图槽位须与 ProjectileType 枚举同步");
-	Image* aImage = kDrawParams[mProjectileType].mImage ? *kDrawParams[mProjectileType].mImage : nullptr;
-	float aScale = kDrawParams[mProjectileType].mScale;
+	const auto& aVisual = gProjectileResources.mProjectiles[mProjectileType];
+	float aScale = aVisual.mScale;
 	if (mProjectileType == ProjectileType::PROJECTILE_PUFF)
 	{
-		aScale = TodAnimateCurveFloat(0, 30, mProjectileAge, 0.3f, 1.0f, Curves::Linear);
+		aScale = TodAnimateCurveFloat(0, 30, mProjectileAge, 0.3f, 1.0f, Curves::Linear) *
+			(aVisual.mScale / 0.3f);
 	}
 
 	bool aMirror = false;
@@ -1112,27 +1106,35 @@ void Projectile::Draw(Graphics* g)
 		aMirror = true;
 	}
 
-	if (aImage)
+	if (aVisual.mSource.mWidth != 0)
 	{
-		TOD_ASSERT(aProjectileDef.mImageRow < aImage->mNumRows);
-		TOD_ASSERT(mFrame < aImage->mNumCols);
-
-		int aCelWidth = aImage->GetCelWidth();
-		int aCelHeight = aImage->GetCelHeight();
-		Rect aSrcRect(aCelWidth * mFrame, aCelHeight * aProjectileDef.mImageRow, aCelWidth, aCelHeight);
+		TOD_ASSERT(mFrame == 0);
+		const Rect& aSrcRect = aVisual.mSource;
+		const TextureSource aTexture{gProjectileResources.mTexture,
+			gProjectileResources.mWidth, gProjectileResources.mHeight};
 		if (FloatApproxEqual(mRotation, 0.0f) && FloatApproxEqual(aScale, 1.0f))
 		{
-			Rect aDestRect(0, 0, aCelWidth, aCelHeight);
-			g->DrawImageMirror(aImage, aDestRect, aSrcRect, aMirror);
+			SexyTransform2D aTransform;
+			TodScaleRotateTransformMatrix(aTransform,
+				(int)g->mTransX + aSrcRect.mWidth * 0.5f,
+				(int)g->mTransY + aSrcRect.mHeight * 0.5f,
+				0.0f, aMirror ? -1.0f : 1.0f, 1.0f);
+			const Color& aColor = g->mColorizeImages ? g->mColor : Color::White;
+			if (!g->mDestImage || !g->mDestImage->IsGpuDrawTarget())
+				throw NonScreenDrawError(DrawOperation::StretchBlt);
+			auto& aRender = *g->mDestImage->mRenderOwner;
+			aRender.SelectDrawSurface(g->mDestImage);
+			aRender.BltTransformed(aTexture, &g->mClipRect, aColor, g->mDrawMode,
+				aSrcRect, aTransform, !g->mFastStretch, 0.0f, 0.0f, true);
 		}
 		else
 		{
 			// TodBltMatrix takes absolute coordinates; BeginDraw already translated g by mX/mY.
-			float aOffsetX = mPosX - mX + aCelWidth * 0.5f + g->mTransX;
-			float aOffsetY = mPosZ + mPosY - mY + aCelHeight * 0.5f + g->mTransY;
+			float aOffsetX = mPosX - mX + aSrcRect.mWidth * 0.5f + g->mTransX;
+			float aOffsetY = mPosZ + mPosY - mY + aSrcRect.mHeight * 0.5f + g->mTransY;
 			SexyTransform2D aTransform;
 			TodScaleRotateTransformMatrix(aTransform, aOffsetX, aOffsetY, mRotation, aScale, aScale);
-			TodBltMatrix(g, aImage, aTransform, g->mClipRect, Color::White, g->mDrawMode, aSrcRect);
+			TodBltMatrix(g, aTexture, aTransform, g->mClipRect, Color::White, g->mDrawMode, aSrcRect);
 		}
 	}
 
@@ -1147,7 +1149,7 @@ void Projectile::Draw(Graphics* g)
 //0x46E8C0
 void Projectile::DrawShadow(Graphics* g)
 {
-	int aCelCol = 0;
+	int aShadowFrame = 0;
 	float aScale = 1.0f;
 	float aStretch = 1.0f;
 	float aOffsetX = mPosX - mX;
@@ -1170,7 +1172,7 @@ void Projectile::DrawShadow(Graphics* g)
 
 	if (mBoard->StageIsNight())
 	{
-		aCelCol = 1;
+		aShadowFrame = 1;
 	}
 
 	// 阴影参数：按 ProjectileType 槽位直查 {dx, dy, 缩放, 拉伸, 跳过}，行序 = 枚举序。
@@ -1209,7 +1211,28 @@ void Projectile::DrawShadow(Graphics* g)
 		aScale *= 200.0f / (aHeight + 200.0f);
 	}
 
-	TodDrawImageCelScaledF(g, IMAGE_PEA_SHADOWS, aOffsetX, (mShadowY - mPosY + aOffsetY), aCelCol, 0, aScale * aStretch, aScale);
+	const Rect& aSource = gProjectileResources.mShadows[aShadowFrame];
+	const TextureSource aTexture{gProjectileResources.mTexture,
+		gProjectileResources.mWidth, gProjectileResources.mHeight};
+	SexyTransform2D aTransform;
+	TodScaleRotateTransformMatrix(aTransform,
+		aOffsetX + g->mTransX + aSource.mWidth * 0.5f * aScale * aStretch,
+		mShadowY - mPosY + aOffsetY + g->mTransY + aSource.mHeight * 0.5f * aScale,
+		0.0f, aScale * aStretch, aScale);
+	const Color& aColor = g->mColorizeImages ? g->mColor : Color::White;
+	if (aScale * aStretch == 1.0f && aScale == 1.0f)
+	{
+		// The old unscaled shadow uses DrawImageF's linear sampling even
+		// when the graphics object's transformed-image filter is nearest.
+		if (!g->mDestImage || !g->mDestImage->IsGpuDrawTarget())
+			throw NonScreenDrawError(DrawOperation::BltF);
+		auto& aRender = *g->mDestImage->mRenderOwner;
+		aRender.SelectDrawSurface(g->mDestImage);
+		aRender.BltTransformed(aTexture, &g->mClipRect, aColor, g->mDrawMode,
+			aSource, aTransform, true, 0.0f, 0.0f, true);
+	}
+	else
+		TodBltMatrix(g, aTexture, aTransform, g->mClipRect, aColor, g->mDrawMode, aSource);
 }
 
 //0x46EB20

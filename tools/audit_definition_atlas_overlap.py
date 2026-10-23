@@ -13,15 +13,14 @@ from collections import defaultdict
 import hashlib
 import json
 from pathlib import Path
-import re
 
 import definition_atlas
 import resource_build_config
+import runtime_asset_sources
+from migrate_particle_frame_images import Source
 from stage_runtime_package import PARTICLE_COMPILER_FIXTURES
 
 ROOT = Path(__file__).resolve().parents[1]
-IMAGE = re.compile(r'\bimage\s*:\s*(?:"([^"]+)"|((?:IMAGE_|FONT_IMAGE_)\w+))')
-COMMENTS = re.compile(r'//[^\n]*|/\*.*?\*/', re.S)
 SOURCE_IMAGE_FIELDS = ("source", "width", "height", "rows", "cols",
                        "rgba_bytes", "rgba_sha256", "files")
 
@@ -35,6 +34,38 @@ def label(name: str) -> str:
     return name.removeprefix("compiled/").removesuffix(".compiled").replace("particles/", "particle:")
 
 
+def component_image_sources(text: str, kind: str) -> list[tuple[str, str, set[str]]]:
+    """Read component-local image references without treating strings as comments."""
+    source = Source(text)
+    result = []
+    for component, (opening, _) in source.components().items():
+        props = source.properties(opening)
+        source_name = source.scalar(props, "source-name", component) if kind == "particle" else component
+        if not isinstance(source_name, str) or not source_name:
+            raise ValueError(f"Invalid component source-name: {component}")
+        images = set()
+        end = source.ends[opening]
+        for i in range(opening + 1, end - 1):
+            field = source.tokens[i].text
+            if field not in ("image", "images") or source.tokens[i + 1].text != ":":
+                continue
+            if field == "images":
+                value = i + 2
+                if source.tokens[value].text != "[":
+                    raise ValueError(f"Expected image list: {component}")
+                values = source.tokens[value + 1:source.ends[value]]
+            else:
+                values = source.tokens[i + 2:i + 3]
+            for token in values:
+                if token.text in ("[", "]", ","):
+                    continue
+                name = json.loads(token.text) if token.text.startswith('"') else token.text
+                if name.casefold() != "none":
+                    images.add(name)
+        result.append((component, source_name.casefold(), images))
+    return result
+
+
 def audit(root: Path, manifest_path: Path, compiler: Path, top: int) -> dict:
     raw_manifest = manifest_path.read_bytes()
     manifest = json.loads(raw_manifest)
@@ -45,15 +76,15 @@ def audit(root: Path, manifest_path: Path, compiler: Path, top: int) -> dict:
     for kind, paths in config.sources.items():
         for path in paths:
             text = path.read_text(encoding="utf-8-sig")
-            text = COMMENTS.sub("", text)
-            name = re.search(r"\bexport\s+component\s+(\w+)", text)[1]
-            key = f"compiled/{'particles' if kind == 'particle' else kind}/{name.casefold()}.compiled"
-            if kind == "particle" and f"{name.casefold()}.compiled" in PARTICLE_COMPILER_FIXTURES:
-                continue
-            key = normalized_names.get(key.replace("_", ""), key)
-            component_names[key] = f"{kind}:{name}"
-            selected[key] = {quoted or bare for quoted, bare in IMAGE.findall(text)
-                             if (quoted or bare).casefold() != "none"}
+            for name, source_name, images in component_image_sources(text, kind):
+                if kind == "particle" and f"{name.casefold()}.compiled" in PARTICLE_COMPILER_FIXTURES:
+                    continue
+                key = f"compiled/{'particles' if kind == 'particle' else kind}/{source_name}.compiled"
+                key = normalized_names.get(key.replace("_", ""), key)
+                if key in selected:
+                    raise ValueError(f"Duplicate selected component source-name: {key}")
+                component_names[key] = f"{kind}:{name}"
+                selected[key] = images
             source_hashes[path.relative_to(root).as_posix()] = hashlib.sha256(path.read_bytes()).hexdigest()
     if set(selected) != set(definitions):
         raise ValueError(f"Selected source definitions differ from cache manifest: "
@@ -93,8 +124,7 @@ def audit(root: Path, manifest_path: Path, compiler: Path, top: int) -> dict:
             "rgba_bytes": definition["atlas_rgba_bytes"],
             "unique_author_images": len(atlas_sources[path]),
             "png_bytes": manifest["files"][path]["bytes"]})
-    raw_files = {definition_atlas.pak.file_key(path.relative_to(root / "assets/runtime").as_posix()): path
-                 for path in (root / "assets/runtime").rglob("*") if path.is_file()}
+    raw_files = runtime_asset_sources.inventory(root)
     author_names = set(images) | set().union(*selected.values())
     descriptors = definition_atlas.authoring_descriptors(
         (root / "assets/definitions/resources.json").read_bytes(), raw_files, author_names)
@@ -334,8 +364,10 @@ def markdown(data: dict) -> str:
              "ReanimatorUploadAllTexturesToGPU); pvzPerf/Sexy.TodLib/TodParticle.cpp "
              "(TodParticleLoadDefinitions).",
              "",
-             "The compiled wire format stores each image reference as an inline six-u32 rectangle "
-             "(x, y, width, height, rows, cols). It contains no local image ID, region table or atlas path; "
+             "Reanimation references retain inline six-u32 geometry "
+             "(x, y, width, height, rows, cols). Particle IDR5 emitters store a frame count followed by "
+             "ordered four-i32 rectangles (x, y, width, height), including repeated frames. "
+             "Neither format stores a local image ID or atlas path; "
              "the generated DefinitionImageBindings.h provides definition-to-atlas path bindings. "
              "Manifest image rows may carry atlas-specific region coordinates. This audit compares only "
              "source image metadata across occurrences of one author image name, excluding those coordinates and "

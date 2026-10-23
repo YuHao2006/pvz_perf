@@ -33,6 +33,8 @@ Image::Image()
 
 Image::~Image()
 {
+	for (auto* layer : mAlphaLayers)
+		delete layer;
 	delete[] mBits;
 }
 
@@ -1306,19 +1308,22 @@ Image* ImageLib::GetImage(const std::string& theFilename, bool lookForAlphaImage
 	else
 		aFilename = theFilename;
 
-	std::unique_ptr<Image> anImage;
+	Image* anImage = nullptr;
+	Image* anAlphaImage = nullptr;
+	try
+	{
 
 	if ((anImage == NULL) && ((stricmp(anExt.c_str(), ".tga") == 0) || (anExt.length() == 0)))
-		anImage.reset(GetTGAImage(aFilename + ".tga"));
+		anImage = GetTGAImage(aFilename + ".tga");
 
 	if ((anImage == NULL) && ((stricmp(anExt.c_str(), ".jpg") == 0) || (anExt.length() == 0)))
-		anImage.reset(GetJPEGImage(aFilename + ".jpg"));
+		anImage = GetJPEGImage(aFilename + ".jpg");
 
 	if ((anImage == NULL) && ((stricmp(anExt.c_str(), ".png") == 0) || (anExt.length() == 0)))
-		anImage.reset(GetPNGImage(aFilename + ".png"));
+		anImage = GetPNGImage(aFilename + ".png");
 
 	if ((anImage == NULL) && ((stricmp(anExt.c_str(), ".gif") == 0) || (anExt.length() == 0)))
-		anImage.reset(GetGIFImage(aFilename + ".gif"));
+		anImage = GetGIFImage(aFilename + ".gif");
 
 	if ((anImage == NULL) && (stricmp(anExt.c_str(), ".j2k") == 0))
 		return nullptr; // There are no JPEG2000 files in the project
@@ -1329,16 +1334,15 @@ Image* ImageLib::GetImage(const std::string& theFilename, bool lookForAlphaImage
 
 
 	// Check for alpha images
-	std::unique_ptr<Image> anAlphaImage;
 	if(lookForAlphaImage)
 	{
 		// Check _ImageName
-		anAlphaImage.reset(GetImage(theFilename.substr(0, aLastSlashPos+1) + "_" +
-			theFilename.substr(aLastSlashPos+1, theFilename.length() - aLastSlashPos - 1), false));
+		anAlphaImage = GetImage(theFilename.substr(0, aLastSlashPos+1) + "_" +
+			theFilename.substr(aLastSlashPos+1, theFilename.length() - aLastSlashPos - 1), false);
 
 		// Check ImageName_
 		if(anAlphaImage==NULL)
-			anAlphaImage.reset(GetImage(aFilename + "_" + anExt, false));
+			anAlphaImage = GetImage(aFilename + "_" + anExt, false);
 	}
 
 
@@ -1366,7 +1370,8 @@ Image* ImageLib::GetImage(const std::string& theFilename, bool lookForAlphaImage
 		}
 		else if (gAlphaComposeColor==0xFFFFFF)
 		{
-			anImage = std::move(anAlphaImage);
+			anImage = anAlphaImage;
+			anAlphaImage = nullptr;
 			unsigned int* aBits1 = anImage->mBits;
 			const int aSize = anImage->mWidth*anImage->mHeight;
 			for (int i = 0; i < aSize; i++)
@@ -1378,7 +1383,8 @@ Image* ImageLib::GetImage(const std::string& theFilename, bool lookForAlphaImage
 		else
 		{
 			const int aColor = gAlphaComposeColor;
-			anImage = std::move(anAlphaImage);
+			anImage = anAlphaImage;
+			anAlphaImage = nullptr;
 			unsigned int* aBits1 = anImage->mBits;
 			const int aSize = anImage->mWidth*anImage->mHeight;
 			for (int i = 0; i < aSize; i++)
@@ -1389,5 +1395,13 @@ Image* ImageLib::GetImage(const std::string& theFilename, bool lookForAlphaImage
 		}
 	}
 
-	return anImage.release();
+	delete anAlphaImage;
+	return anImage;
+	}
+	catch (...)
+	{
+		delete anAlphaImage;
+		delete anImage;
+		throw;
+	}
 }

@@ -136,8 +136,7 @@ ChallengeScreen::ChallengeScreen(LawnApp* theApp, ChallengePage thePage)
 	mUnlockStateCounter = 0;
 	TodLoadResources(ResourceGroupId::DelayLoad_ChallengeScreen);
 
-	mBackButton = MakeNewButton(ChallengeScreen::ChallengeScreen_Back, this, gStr.BACK_TO_MENU, nullptr, Sexy::IMAGE_SEEDCHOOSER_BUTTON2, 
-		Sexy::IMAGE_SEEDCHOOSER_BUTTON2_GLOW, Sexy::IMAGE_SEEDCHOOSER_BUTTON2_GLOW);
+	mBackButton = MakeFixedUIBackButton(ChallengeScreen::ChallengeScreen_Back, this, gStr.BACK_TO_MENU);
 	mBackButton->mTextDownOffsetX = 1;
 	mBackButton->mTextDownOffsetY = 1;
 	mBackButton->mColors[ButtonWidget::COLOR_LABEL] = Color(42, 42, 90);
@@ -469,11 +468,11 @@ void ChallengeScreen::DrawButton(Graphics* g, int theChallengeIndex)
 
 			if (mPageIndex == CHALLENGE_PAGE_SURVIVAL)
 			{
-				g->DrawImageCel(Sexy::IMAGE_SURVIVAL_THUMBNAILS, aPosX + 13, aPosY + 4, aDef.mChallengeIconIndex);
+				g->DrawImage(Sexy::IMAGE_SURVIVAL_THUMBNAILS, aPosX + 13, aPosY + 4, Rect(aDef.mChallengeIconIndex * 80, 0, 80, 65));
 			}
 			else
 			{
-				g->DrawImageCel(Sexy::IMAGE_CHALLENGE_THUMBNAILS, aPosX + 13, aPosY + 4, aDef.mChallengeIconIndex);
+				g->DrawImage(Sexy::IMAGE_CHALLENGE_THUMBNAILS, aPosX + 13, aPosY + 4, Rect(aDef.mChallengeIconIndex * 80, 0, 80, 65));
 			}
 
 			// ============================================================================================

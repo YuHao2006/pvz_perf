@@ -2,7 +2,7 @@ export component ZombieSeaweed {
     kind: particle;
     source-name: "zombie_seaweed";
     Emitter {
-        image: "IMAGE_ZOMBIE_SEAWEED";
+        images: ["particles/frames/zombie_seaweed_r0_c0.png","particles/frames/zombie_seaweed_r0_c1.png","particles/frames/zombie_seaweed_r0_c2.png","particles/frames/zombie_seaweed_r0_c3.png"];
         name: "SeaweedHead";
         imageFrames: 4;
         emitterType: Circle;

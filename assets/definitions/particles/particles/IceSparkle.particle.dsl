@@ -2,7 +2,7 @@ export component IceSparkle {
     kind: particle;
     source-name: "icesparkle";
     Emitter {
-        image: "IMAGE_ICE_SPARKLES";
+        images: ["particles/frames/ice_sparkles_r0_c0.png","particles/frames/ice_sparkles_r0_c1.png","particles/frames/ice_sparkles_r0_c2.png"];
         imageFrames: 3;
         systemLoops: 1;
         particlesDontFollow: 1;

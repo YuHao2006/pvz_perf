@@ -146,9 +146,17 @@ void ImageFactories(D3d12Renderer& renderer) {
         Require(copy.pixels[i] == 0, "GPU region copy padding was not zero");
     const uint32_t maskPixel = 0x00000033;
     auto* mask = renderer.CreateTexture(1, 1, &maskPixel, 4);
-    auto* composed = renderer.ComposeAlpha(source, mask, 1, 1, 0, false);
+    bool mismatchRejected=false;
+    try { renderer.ComposeAlphaRaw(padded,mask,0,false); }
+    catch (const std::invalid_argument&) { mismatchRejected=true; }
+    Require(mismatchRejected,"GPU alpha composition accepted unequal dimensions");
+    auto* composed = renderer.ComposeAlpha(source, mask, 0, false);
     Require(renderer.ReadTexturePixels(composed).pixels[0] == 0x33402010,
         "GPU alpha composition changed RGB/alpha bytes");
+    auto* colorOnly=renderer.ComposeAlpha(source,mask,0x80472513u,true);
+    Require(renderer.ReadTexturePixels(colorOnly).pixels[0]==0xb3472513u,
+        "GPU color-only composition changed packed-alpha OR semantics");
+    renderer.DestroyTexture(colorOnly);
     const uint32_t bluePixel = 0xff0000ff;
     auto* blue = renderer.CreateTexture(1, 1, &bluePixel, 4);
     auto* target = renderer.CreateRenderImage(3, 5);

@@ -1,6 +1,6 @@
 #include "SexyAppBase.h"
 #include "graphics/DDInterface.h"
-#include "graphics/DDImage.h"
+#include "graphics/Image.h"
 #include "graphics/RenderInterface.h"
 #include "graphics/GpuBackend.h"
 #include "graphics/GameViewport.h"
@@ -148,7 +148,6 @@ void SexyAppBase::MakeWindow() {
     mDDInterface=new DDInterface(this);
     if(InitDDInterface()!=DDInterface::RESULT_OK)
         throw std::runtime_error("Native Vulkan display initialization failed");
-    ReInitImages();
     mWidgetManager->mImage=mDDInterface->mScreenImage;
     mWidgetManager->MarkAllDirty();
     mActive=GetFocus()==mHWnd;
@@ -337,7 +336,7 @@ void SexyAppBase::UpdateWindowGeometry() {
     mWidgetManager->MarkAllDirty();
 }
 
-void SexyAppBase::SwitchScreenMode(bool windowed,bool,bool force) {
+void SexyAppBase::SwitchScreenMode(bool windowed,bool force) {
     if(mSwitchingScreenMode) return;
     if(mForceWindowed) windowed=true;
     else if(mForceFullscreen) windowed=false;

@@ -5,9 +5,10 @@ namespace Sexy {
 class NativeMusicPlayback final {
     unsigned int mHandle = 0;
 public:
+    static constexpr unsigned int OutputDevice = 1;
     static constexpr bool PerVoiceMasterGain = false;
     static inline bool OpenOutput(NativeWindowHandle window) {
-        return gBass->BASS_Init(1, 44100, BASS_DEVICE_DSOUND, window, nullptr) != FALSE;
+        return gBass->BASS_Init(OutputDevice, 44100, BASS_DEVICE_DSOUND, window, nullptr) != FALSE;
     }
     static inline void CloseOutput() {
         gBass->BASS_Stop();

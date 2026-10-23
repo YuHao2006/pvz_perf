@@ -161,6 +161,8 @@ Running ./pvz_perf directly uses its native HOME data default.
 The launcher does not copy saves into HOME or overwrite an existing HOME profile.
 Re-extract the supplied baseline before each benchmark comparison.
 data/pvz_dat64_converter converts supported DAT/DAT64 saves.
+Supported level formats: original 1073 DAT, DAT64 v1, v2 and v3.2 only.
+Unpublished DAT64 v3.0/v3.1 inputs and targets are unsupported.
 
 ELF symbol requirements from the packaged binaries: {requirement_text}.
 Requires a compatible Linux kernel and a GPU/driver supporting the game's Vulkan bindless path.

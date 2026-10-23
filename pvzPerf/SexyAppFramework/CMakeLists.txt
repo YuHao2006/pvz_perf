@@ -129,6 +129,7 @@ set(Lawn__Widget__Widget_Source
     "../Lawn/Widget/ZombatarColors.cpp"
     "../Lawn/Widget/ZombatarItems.cpp"
     "../Lawn/Widget/ZombatarScreen.cpp"
+    "../Lawn/Widget/ZombatarResources.cpp"
 )
 source_group("Lawn\\Widget\\Widget Source" FILES ${Lawn__Widget__Widget_Source})
 
@@ -148,13 +149,13 @@ source_group("TodLib\\Common\\TodCommon Include" FILES ${TodLib__Common__TodComm
 set(TodLib__Common__TodCommon_Source
     "../Sexy.TodLib/Definition.cpp"
     "../Sexy.TodLib/TodCommon.cpp"
-    "../Sexy.TodLib/ProgramImageSymbols.cpp"
     "misc/FastMath.cpp"
     "../Sexy.TodLib/TodDebug.cpp"
     "../Sexy.TodLib/TodFoley.cpp"
     "../Sexy.TodLib/TodAllocator.cpp"
     "../Sexy.TodLib/TodStringFile.cpp"
     "../Sexy.TodLib/generated/LawnStrings.cpp"
+    ${PVZ_STATIC_DEFINITION_SOURCES}
     "../Sexy.TodLib/generated/EntityStrings.cpp"
     "../Sexy.TodLib/generated/DaveDialogueMetadata.cpp"
 )
@@ -209,10 +210,13 @@ endif()
 # P4：reanim attacher 掩码编译期生成（reanimc 重跑更新 MPHF 头 → 联动重生成，
 # 仅 Reanimator.cpp 包含 → 改版只重编一个 obj）。恒跑目标 + 生成器内容比对：
 # 无变化零写盘，ninja 不重编任何 obj
+set_source_files_properties(${PVZ_STATIC_DEFINITION_SOURCES} PROPERTIES GENERATED TRUE)
 if(MSVC)
     add_executable(${PROJECT_NAME} WIN32 ${ALL_FILES})
+    target_compile_options(${PROJECT_NAME} PRIVATE /we4834)
 else()
 add_executable(${PROJECT_NAME} ${ALL_FILES})
+target_compile_options(${PROJECT_NAME} PRIVATE -Werror=unused-result)
 endif()
 add_dependencies(${PROJECT_NAME} pvz_resources)
 

@@ -1,5 +1,5 @@
 #include "DDInterface.h"
-#include "DDImage.h"
+#include "Image.h"
 #include "RenderInterface.h"
 #include "Graphics.h"
 #include "SexyAppBase.h"
@@ -18,7 +18,6 @@ using namespace Sexy;
 DDInterface::DDInterface(SexyAppBase* theApp)
 	: mApp(theApp),
 	mRenderInterface(NULL),
-	mIs3D(false),
 	mInRedraw(false),
 	mWidth(640),
 	mHeight(480),
@@ -95,7 +94,7 @@ bool DDInterface::Redraw(Rect* theClipRect)
 {
 	(void)theClipRect;
 	AutoCrit anAutoCrit(mCritSect);
-    if (!mInitialized || !mIs3D || !mRenderInterface || !mRenderInterface->mRenderer)
+    if (!mInitialized || !mRenderInterface || !mRenderInterface->mRenderer)
         throw std::logic_error("Redraw without an initialized native Vulkan renderer");
     mInRedraw = true;
     struct Reset { bool& value; ~Reset() { value = false; } } reset{mInRedraw};
@@ -131,27 +130,9 @@ unsigned int DDInterface::GetColorRef(unsigned int theRGB)
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-void DDInterface::AddDDImage(DDImage* theDDImage)
+void DDInterface::Remove3DData(Image* theImage)
 {
-	AutoCrit anAutoCrit(mCritSect);
-	mDDImageSet.insert(theDDImage);
-}
-
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-void DDInterface::RemoveDDImage(DDImage* theDDImage)
-{
-	AutoCrit anAutoCrit(mCritSect);
-	DDImageSet::iterator anItr = mDDImageSet.find(theDDImage);
-	if (anItr != mDDImageSet.end())
-		mDDImageSet.erase(anItr);
-}
-
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-void DDInterface::Remove3DData(MemoryImage* theImage)
-{
-	mRenderInterface->RemoveMemoryImage(theImage);
+	mRenderInterface->RemoveImage(theImage);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -172,7 +153,7 @@ void DDInterface::Cleanup()
 
 	if (mScreenImage != NULL)
 	{
-		Image::Destroy(mScreenImage);
+		delete (mScreenImage);
 		mScreenImage = NULL;
 	}
 
@@ -197,7 +178,6 @@ int DDInterface::Init(NativeWindowHandle theWindow, bool isWindowed)
     mWidth = mApp->mWidth; mHeight = mApp->mHeight;
     mAspect = Ratio(mWidth,mHeight);
     mIsWindowed = isWindowed;
-    mIs3D = true;
     const auto client = QueryNativeClientExtent(mHWnd);
     mDisplayWidth=client.width;mDisplayHeight=client.height;
     auto viewport = GameViewport::Fit(client.width, client.height);
@@ -224,7 +204,8 @@ int DDInterface::Init(NativeWindowHandle theWindow, bool isWindowed)
         mGreenConvTable[i]=static_cast<unsigned int>(i)<<8;
         mBlueConvTable[i]=static_cast<unsigned int>(i);
     }
-    mScreenImage = new DDImage(this);
+    mScreenImage = new Image(mApp);
+    mScreenImage->mRenderOwner=mRenderInterface;
     mScreenImage->mWidth=mWidth; mScreenImage->mHeight=mHeight;
     mScreenImage->mForcedMode = true;
     mScreenImage->mHasTrans = false;

@@ -12,7 +12,10 @@
 #include "Sexy.TodLib/EffectSystem.h"
 #include "Sexy.TodLib/TodStringFile.h"
 #include "graphics/ImageFont.h"
+#include "graphics/AtlasDraw.h"
+#include "Sexy.TodLib/generated/SceneAtlasData.h"
 
+namespace { using enum FixedUIAtlas::Sprite; }
 
 //0x456A80
 LawnDialog::LawnDialog(LawnApp* theApp, int theId, bool isModal, const SexyString& theDialogHeader, const SexyString& theDialogLines, const SexyString& theDialogFooter, int theButtonMode) :
@@ -74,8 +77,8 @@ void LawnDialog::CalcSize(int theExtraX, int theExtraY)
     // 最小宽度需要额外考虑到标题字符串的宽度
     if (mDialogHeader.size() > 0) aWidth += mHeaderFont->StringWidth(mDialogHeader);
     // 对话框贴图的最小宽度
-    int aTopMidWidth = Sexy::IMAGE_DIALOG_TOPMIDDLE->mWidth;
-    int aImageWidth = Sexy::IMAGE_DIALOG_TOPLEFT->mWidth + Sexy::IMAGE_DIALOG_TOPRIGHT->mWidth + aTopMidWidth;
+    int aTopMidWidth = FixedUIAtlas::Images[size_t(DIALOG_TOPMIDDLE)].mWidth;
+    int aImageWidth = FixedUIAtlas::Images[size_t(DIALOG_TOPLEFT)].mWidth + FixedUIAtlas::Images[size_t(DIALOG_TOPRIGHT)].mWidth + aTopMidWidth;
     // 计算最终的宽度
     if (aWidth <= aImageWidth)
     {
@@ -108,8 +111,8 @@ void LawnDialog::CalcSize(int theExtraX, int theExtraY)
     }
     aHeight += mButtonHeight;
     // 对话框贴图的最小高度
-    int aBottomHeight = (mTallBottom ? Sexy::IMAGE_DIALOG_BIGBOTTOMLEFT : Sexy::IMAGE_DIALOG_BOTTOMLEFT)->mHeight;
-    int aImageHeight = Sexy::IMAGE_DIALOG_TOPLEFT->mHeight + aBottomHeight + DIALOG_HEADER_OFFSET;
+    int aBottomHeight = FixedUIAtlas::Images[size_t(mTallBottom ? DIALOG_BIGBOTTOMLEFT : DIALOG_BOTTOMLEFT)].mHeight;
+    int aImageHeight = FixedUIAtlas::Images[size_t(DIALOG_TOPLEFT)].mHeight + aBottomHeight + DIALOG_HEADER_OFFSET;
     // 计算最终的高度
     if (aHeight < aImageHeight)
     {
@@ -117,7 +120,7 @@ void LawnDialog::CalcSize(int theExtraX, int theExtraY)
     }
     else
     {
-        int aCenterHeight = Sexy::IMAGE_DIALOG_CENTERLEFT->mHeight;
+        int aCenterHeight = FixedUIAtlas::Images[size_t(DIALOG_CENTERLEFT)].mHeight;
         int anExtraHeight = (aHeight - aImageHeight) % aCenterHeight;
         if (anExtraHeight) aHeight += aCenterHeight - anExtraHeight;
     }
@@ -219,12 +222,12 @@ void LawnDialog::Resize(int theX, int theY, int theWidth, int theHeight)
     Dialog::Resize(theX, theY, theWidth, theHeight);
 
     int aButtonAreaX = mContentInsets.mLeft + mBackgroundInsets.mLeft - 5;
-    int aButtonAreaY = mHeight - mContentInsets.mBottom - mBackgroundInsets.mBottom - IMAGE_BUTTON_LEFT->mHeight + 2;
+    int aButtonAreaY = mHeight - mContentInsets.mBottom - mBackgroundInsets.mBottom - FixedUIAtlas::Images[size_t(BUTTON_LEFT)].mHeight + 2;
     int aButtonAreaWidth = mWidth - mContentInsets.mRight - mBackgroundInsets.mRight - mBackgroundInsets.mLeft - mContentInsets.mLeft + 8;
     // 按钮贴图限制下，按钮的最小宽度
-    int aButtonMinWidth = IMAGE_BUTTON_LEFT->mWidth + IMAGE_BUTTON_RIGHT->mWidth;
+    int aButtonMinWidth = FixedUIAtlas::Images[size_t(BUTTON_LEFT)].mWidth + FixedUIAtlas::Images[size_t(BUTTON_RIGHT)].mWidth;
     // 按钮区域额外空余的宽度
-    int aBtnMidWidth = IMAGE_BUTTON_MIDDLE->mWidth;
+    int aBtnMidWidth = FixedUIAtlas::Images[size_t(BUTTON_MIDDLE)].mWidth;
     int aButtonExtraWidth = (aButtonAreaWidth - 10) / 2 - aBtnMidWidth - aButtonMinWidth + 1;
     // 计算按钮可以拓展的额外宽度
     if (aButtonExtraWidth <= 0)
@@ -250,8 +253,8 @@ void LawnDialog::Resize(int theX, int theY, int theWidth, int theHeight)
 
     if (mYesButton && mNoButton)
     {
-        mYesButton->Resize(aButtonAreaX, aButtonAreaY, aButtonWidth, IMAGE_BUTTON_LEFT->mHeight);
-        mNoButton->Resize(aButtonAreaWidth - aButtonWidth + aButtonAreaX, aButtonAreaY, aButtonWidth, IMAGE_BUTTON_LEFT->mHeight);
+        mYesButton->Resize(aButtonAreaX, aButtonAreaY, aButtonWidth, FixedUIAtlas::Images[size_t(BUTTON_LEFT)].mHeight);
+        mNoButton->Resize(aButtonAreaWidth - aButtonWidth + aButtonAreaX, aButtonAreaY, aButtonWidth, FixedUIAtlas::Images[size_t(BUTTON_LEFT)].mHeight);
     }
     else if (mYesButton)
     {
@@ -270,7 +273,7 @@ void LawnDialog::Resize(int theX, int theY, int theWidth, int theHeight)
         }
         int aButtonWidth = aButtonMinWidth + aButtonExtraWidth;
 
-        mYesButton->Resize(aButtonAreaX + (aButtonAreaWidth - aButtonWidth) / 2, aButtonAreaY, aButtonWidth, IMAGE_BUTTON_LEFT->mHeight);
+        mYesButton->Resize(aButtonAreaX + (aButtonAreaWidth - aButtonWidth) / 2, aButtonAreaY, aButtonWidth, FixedUIAtlas::Images[size_t(BUTTON_LEFT)].mHeight);
     }
 
     if (mReanimation->mReanim)
@@ -285,58 +288,60 @@ void LawnDialog::Draw(Graphics* g)
     if (!mDrawStandardBack)
         return;
 
-    Image* aBottomLeftImage = IMAGE_DIALOG_BOTTOMLEFT;
-    Image* aBottomMiddleImage = IMAGE_DIALOG_BOTTOMMIDDLE;
-    Image* aBottomRightImage = IMAGE_DIALOG_BOTTOMRIGHT;
-    if (mTallBottom)
-    {
-        aBottomLeftImage = IMAGE_DIALOG_BIGBOTTOMLEFT;
-        aBottomMiddleImage = IMAGE_DIALOG_BIGBOTTOMMIDDLE;
-        aBottomRightImage = IMAGE_DIALOG_BIGBOTTOMRIGHT;
-    }
+    const Rect& bottomLeft = FixedUIAtlas::Images[size_t(mTallBottom ? DIALOG_BIGBOTTOMLEFT : DIALOG_BOTTOMLEFT)];
+    const Rect& bottomMiddle = FixedUIAtlas::Images[size_t(mTallBottom ? DIALOG_BIGBOTTOMMIDDLE : DIALOG_BOTTOMMIDDLE)];
+    const Rect& bottomRight = FixedUIAtlas::Images[size_t(mTallBottom ? DIALOG_BIGBOTTOMRIGHT : DIALOG_BOTTOMRIGHT)];
+    const Rect& topLeft = FixedUIAtlas::Images[size_t(DIALOG_TOPLEFT)];
+    const Rect& topMiddle = FixedUIAtlas::Images[size_t(DIALOG_TOPMIDDLE)];
+    const Rect& topRight = FixedUIAtlas::Images[size_t(DIALOG_TOPRIGHT)];
+    const Rect& centerLeft = FixedUIAtlas::Images[size_t(DIALOG_CENTERLEFT)];
+    const Rect& centerMiddle = FixedUIAtlas::Images[size_t(DIALOG_CENTERMIDDLE)];
+    const Rect& centerRight = FixedUIAtlas::Images[size_t(DIALOG_CENTERRIGHT)];
+    const Rect& header = FixedUIAtlas::Images[size_t(DIALOG_HEADER)];
+    const Sexy::TextureSource texture{FixedUIAtlas::Texture, FixedUIAtlas::Width, FixedUIAtlas::Height};
 
-    int aRepeatX = (mWidth - IMAGE_DIALOG_TOPRIGHT->mWidth - IMAGE_DIALOG_TOPLEFT->mWidth) / IMAGE_DIALOG_TOPMIDDLE->mWidth;
-    int aRepeatY = (mHeight - IMAGE_DIALOG_TOPLEFT->mHeight - aBottomLeftImage->mHeight - DIALOG_HEADER_OFFSET) / IMAGE_DIALOG_CENTERLEFT->mHeight;
+    int aRepeatX = (mWidth - topRight.mWidth - topLeft.mWidth) / topMiddle.mWidth;
+    int aRepeatY = (mHeight - topLeft.mHeight - bottomLeft.mHeight - DIALOG_HEADER_OFFSET) / centerLeft.mHeight;
 
     int aPosX = 0;
     int aPosY = DIALOG_HEADER_OFFSET;
-    g->DrawImage(IMAGE_DIALOG_TOPLEFT, aPosX, aPosY);
-    aPosX += IMAGE_DIALOG_TOPLEFT->mWidth;
+    Sexy::DrawAtlasImage(g, texture, topLeft, aPosX, aPosY);
+    aPosX += topLeft.mWidth;
     for (int i = 0; i < aRepeatX; i++)
     {
-        g->DrawImage(IMAGE_DIALOG_TOPMIDDLE, aPosX, aPosY);
-        aPosX += IMAGE_DIALOG_TOPMIDDLE->mWidth;
+        Sexy::DrawAtlasImage(g, texture, topMiddle, aPosX, aPosY);
+        aPosX += topMiddle.mWidth;
     }
-    g->DrawImage(IMAGE_DIALOG_TOPRIGHT, aPosX, aPosY);
+    Sexy::DrawAtlasImage(g, texture, topRight, aPosX, aPosY);
 
-    aPosY += IMAGE_DIALOG_TOPRIGHT->mHeight;
+    aPosY += topRight.mHeight;
     for (int y = 0; y < aRepeatY; y++)
     {
         aPosX = 0;
 
-        g->DrawImage(IMAGE_DIALOG_CENTERLEFT, aPosX, aPosY);
-        aPosX += IMAGE_DIALOG_CENTERLEFT->mWidth;
+        Sexy::DrawAtlasImage(g, texture, centerLeft, aPosX, aPosY);
+        aPosX += centerLeft.mWidth;
 
         for (int x = 0; x < aRepeatX; x++)
         {
-            g->DrawImage(IMAGE_DIALOG_CENTERMIDDLE, aPosX, aPosY);
-            aPosX += IMAGE_DIALOG_CENTERMIDDLE->mWidth;
+            Sexy::DrawAtlasImage(g, texture, centerMiddle, aPosX, aPosY);
+            aPosX += centerMiddle.mWidth;
         }
 
-        g->DrawImage(IMAGE_DIALOG_CENTERRIGHT, aPosX, aPosY);
-        aPosY += IMAGE_DIALOG_CENTERLEFT->mHeight;
+        Sexy::DrawAtlasImage(g, texture, centerRight, aPosX, aPosY);
+        aPosY += centerLeft.mHeight;
     }
 
     aPosX = 0;
-    g->DrawImage(aBottomLeftImage, aPosX, aPosY);
-    aPosX += aBottomLeftImage->mWidth;
+    Sexy::DrawAtlasImage(g, texture, bottomLeft, aPosX, aPosY);
+    aPosX += bottomLeft.mWidth;
     for (int i = 0; i < aRepeatX; i++)
     {
-        g->DrawImage(aBottomMiddleImage, aPosX, aPosY);
-        aPosX += aBottomMiddleImage->mWidth;
+        Sexy::DrawAtlasImage(g, texture, bottomMiddle, aPosX, aPosY);
+        aPosX += bottomMiddle.mWidth;
     }
-    g->DrawImage(aBottomRightImage, aPosX, aPosY);
-    g->DrawImage(IMAGE_DIALOG_HEADER, (mWidth - IMAGE_DIALOG_HEADER->mWidth) / 2 - 5, 0);
+    Sexy::DrawAtlasImage(g, texture, bottomRight, aPosX, aPosY);
+    Sexy::DrawAtlasImage(g, texture, header, (mWidth - header.mWidth) / 2 - 5, 0);
 
     int aFontY = mContentInsets.mTop + mBackgroundInsets.mTop + DIALOG_HEADER_OFFSET;
     if (mDialogHeader.size() > 0)

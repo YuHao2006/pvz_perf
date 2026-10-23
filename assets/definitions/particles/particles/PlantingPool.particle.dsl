@@ -2,7 +2,7 @@ export component PlantingPool {
     kind: particle;
     source-name: "plantingpool";
     Emitter {
-        image: "IMAGE_WATERPARTICLE";
+        images: ["particles/frames/waterparticle_r0_c0.png","particles/frames/waterparticle_r0_c1.png","particles/frames/waterparticle_r0_c2.png","particles/frames/waterparticle_r0_c3.png","particles/frames/waterparticle_r0_c4.png","particles/frames/waterparticle_r0_c5.png"];
         name: "PlantingPool";
         imageFrames: 6;
         randomLaunchSpin: 1;

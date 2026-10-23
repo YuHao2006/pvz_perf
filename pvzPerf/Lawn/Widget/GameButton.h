@@ -6,6 +6,7 @@
 using namespace Sexy;
 
 class LawnApp;
+namespace Sexy { struct TextureSource; }
 class GameButton
 {
 public:
@@ -71,6 +72,8 @@ public:
 	/*inline*/ void			SetFont(_Font* theFont);
 	/*inline*/ bool			IsButtonDown();
 	void					Draw(Graphics* g);
+	void                    DrawAtlas(Graphics* g, const Sexy::TextureSource& texture,
+                                const Rect* overlay = nullptr);
 	/*inline*/ bool			IsMouseOver();
 	void					Update();
 };
@@ -105,4 +108,5 @@ public:
 
 LawnStoneButton*			MakeButton(int theId, ButtonListener* theListener, const SexyString& theText);
 NewLawnButton*				MakeNewButton(int theId, ButtonListener* theListener, const SexyString& theText, _Font* theFont, Image* theImageNormal, Image* theImageOver, Image* theImageDown);
+NewLawnButton* MakeFixedUIBackButton(int id, ButtonListener* listener, const SexyString& text);
 

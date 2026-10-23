@@ -16,6 +16,7 @@ add_executable(reanimc
     main.cpp
     Pak64.cpp
     ParticleDsl.cpp
+    ProjectileDsl.cpp
     StringIdGen.cpp
     TrailDsl.cpp)
 target_include_directories(reanimc PRIVATE include)

@@ -292,7 +292,6 @@ void SexyAppBase::MakeWindow()
     mDDInterface = new DDInterface(this);
     if (InitDDInterface() != DDInterface::RESULT_OK)
         throw std::runtime_error("Linux Vulkan display initialization failed");
-    ReInitImages();
     mWidgetManager->mImage = mDDInterface->mScreenImage;
     mWidgetManager->MarkAllDirty();
     mActive = mNativeWindow->Focused;
@@ -392,7 +391,7 @@ void SexyAppBase::UpdateHdrDisplay()
         throw std::logic_error("Linux HDR output is not implemented");
 }
 
-void SexyAppBase::SwitchScreenMode(bool windowed, bool, bool force)
+void SexyAppBase::SwitchScreenMode(bool windowed, bool force)
 {
     if (mSwitchingScreenMode) return;
     if (mForceWindowed) windowed = true;

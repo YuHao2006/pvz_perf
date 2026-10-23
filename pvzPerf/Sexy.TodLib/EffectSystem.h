@@ -3,6 +3,7 @@
 #include "ConstEnums.h"
 #include "graphics/SWTri.h"
 #include "graphics/Graphics.h"
+#include "graphics/TextureSource.h"
 #include <memory>
 #include <array>
 #include <vector>
@@ -21,13 +22,14 @@ public:
 class TodTriangleGroup
 {
 public:
-    Image*                      mImage;
+    TextureSource               mTexture;
     std::vector<std::array<TriVertex,3>> mVertArray;
     int                         mDrawMode;
 
     TodTriangleGroup();
     void                        DrawGroup(Graphics* g);
     void                        AddTriangle(Graphics* g, Image* theImage, const SexyMatrix3& theMatrix, const Rect& theClipRect, const Color& theColor, int theDrawMode, const Rect& theSrcRect);
+    void                        AddTriangle(Graphics* g, const TextureSource& texture, const SexyMatrix3& theMatrix, const Rect& theClipRect, const Color& theColor, int theDrawMode, const Rect& theSrcRect);
 };
 
 extern bool gTodTriangleDrawAdditive;  //0x6A9EF5

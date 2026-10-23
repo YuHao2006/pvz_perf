@@ -194,7 +194,7 @@ Board 32、普通记录 71、SeedBank 31。
 | Board.mCurrentWave、mLastBungeeWave、mWaveRowGotLawnMowered[] | 波号及波号快照 |
 | Music.mPauseOffset、mPauseOffsetDrums | BASS byte position 或 packed module order/row |
 | Music.mQueuedDrumTrackPackedOrder | packed module order/row |
-| Music.mBaseBPM、mBaseModSpeed | 音乐节拍速率参数 |
+| Music.mBaseBPM、mBaseModSpeed | v3 为 32 位浮点音乐节拍速率参数，不属于纳秒计时字段 |
 | SeedPacket.mTimesUsed、Coin.mTimesDropped、Emitter.mParticlesSpawned | 事件次数 |
 | Attachment.mNumEffects、各实体ID及池槽 | 数量、身份及代次编码 |
 | Particle.mParticleDurationInv | 派生 float 倒数，不入存档 |

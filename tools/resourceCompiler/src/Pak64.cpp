@@ -6,6 +6,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <fstream>
+#include <functional>
 #include <iomanip>
 #include <limits>
 #include <map>
@@ -403,15 +404,70 @@ private:
             ConsumeIdentifier();
         }
         ExpectBrace("{");
+        bool hasImages = false, hasFps = false;
         while (lexer_.current().kind == TokenKind::identifier) {
-            if (lexer_.current().text == "fps")
+            if (lexer_.current().text == "variant-of") {
+                if (!module.variantOf.empty()) Fail(error_, "duplicate variant-of");
+                lexer_.Advance();
+                if (lexer_.current().kind != TokenKind::colon) Fail(error_, "expected ':'");
+                lexer_.Advance();
+                if (lexer_.current().kind != TokenKind::identifier) Fail(error_, "expected variant parent");
+                module.variantOf = lexer_.current().text;
+                lexer_.Advance();
+                ExpectSemicolon();
+            } else if (lexer_.current().text == "images") {
+                if (hasImages) Fail(error_, "duplicate variant images");
+                hasImages = true;
+                lexer_.Advance();
+                if (lexer_.current().kind != TokenKind::colon) Fail(error_, "expected ':'");
+                lexer_.Advance();
+                const auto bracket = [&](std::string_view value) {
+                    if (lexer_.current().kind != TokenKind::bracket || lexer_.current().text != value)
+                        Fail(error_, "expected '" + std::string(value) + "'");
+                    lexer_.Advance();
+                };
+                bracket("[");
+                while (lexer_.current().text != "]") {
+                    bracket("[");
+                    std::vector<std::string> images;
+                    while (lexer_.current().text != "]") {
+                        std::string image;
+                        if (lexer_.current().kind == TokenKind::identifier && lexer_.current().text == "none")
+                            lexer_.Advance();
+                        else {
+                            image = TakeString();
+                            if (image.empty() || image.find_first_of("\r\n") != std::string::npos ||
+                                image.find('\0') != std::string::npos)
+                                Fail(error_, "variant images require non-empty source names or none");
+                            image = CanonicalResource(image);
+                        }
+                        images.push_back(std::move(image));
+                        if (lexer_.current().kind != TokenKind::comma) break;
+                        lexer_.Advance();
+                        if (lexer_.current().text == "]") Fail(error_, "trailing variant image comma");
+                    }
+                    bracket("]");
+                    module.variantImages.push_back(std::move(images));
+                    if (lexer_.current().kind != TokenKind::comma) break;
+                    lexer_.Advance();
+                    if (lexer_.current().text == "]") Fail(error_, "trailing variant track comma");
+                }
+                bracket("]");
+                ExpectSemicolon();
+            } else if (lexer_.current().text == "fps") {
+                hasFps = true;
                 ReadFps(module);
+            }
             else if (lexer_.current().text == "texture")
                 Fail(error_, "texture declarations were removed; write image: <resource-name> directly");
             else
                 ReadTrack(module);
         }
         ExpectBrace("}");
+        if (!module.variantOf.empty()) {
+            if (!hasImages) Fail(error_, "reanim variant requires images");
+            if (hasFps || !module.tracks.empty()) Fail(error_, "reanim variant cannot override behavior");
+        } else if (hasImages) Fail(error_, "variant images requires variant-of");
         for (const RawReanim& existing : outputs_)
             if (existing.name == module.name)
                 Fail(error_, "duplicate module name <" + module.name + ">");
@@ -670,6 +726,116 @@ bool ParseDslFileText(const std::string_view source, DslFileDirectives& file,
         if (error && error->empty()) *error = e.what();
         return false;
     }
+}
+
+void ResolveReanimVariants(std::vector<RawReanim>& corpus)
+{
+    std::map<std::string, std::size_t> names;
+    std::set<std::string> paths;
+    for (std::size_t i = 0; i < corpus.size(); ++i) {
+        std::string folded = corpus[i].name;
+        std::transform(folded.begin(), folded.end(), folded.begin(),
+                       [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+        if (!names.emplace(corpus[i].name, i).second || !paths.insert(folded).second)
+            throw std::runtime_error("duplicate reanim module/source name: " + corpus[i].name);
+    }
+    std::vector<unsigned char> state(corpus.size());
+    std::function<void(std::size_t)> visit = [&](std::size_t i) {
+        auto& item = corpus[i];
+        if (state[i] == 2) return;
+        if (state[i] == 1) throw std::runtime_error("reanim variant cycle: " + item.name);
+        state[i] = 1;
+        if (item.variantOf.empty()) {
+            item.variantRoot = item.name;
+            item.variantImages.clear();
+            for (const auto& track : item.tracks) {
+                std::vector<std::string> images;
+                for (const auto& frame : track.frames)
+                    if (!frame.image.empty() && std::find(images.begin(), images.end(), frame.image) == images.end())
+                        images.push_back(frame.image);
+                item.variantImages.push_back(std::move(images));
+            }
+        } else {
+            const auto parent = names.find(item.variantOf);
+            if (parent == names.end()) throw std::runtime_error("missing reanim variant parent: " + item.variantOf);
+            visit(parent->second);
+            item.variantRoot = corpus[parent->second].variantRoot;
+            const auto& root = corpus[names.at(item.variantRoot)];
+            if (item.variantImages.size() != root.tracks.size())
+                throw std::runtime_error("reanim variant requires one images list per root track: " + item.name);
+            item.fps = root.fps;
+            for (std::size_t t = 0; t < root.tracks.size(); ++t) {
+                const auto& original = root.variantImages[t];
+                if (item.variantImages[t].size() != original.size())
+                    throw std::runtime_error("reanim variant image count differs from root track: " + item.name);
+            }
+        }
+        state[i] = 2;
+    };
+    for (std::size_t i = 0; i < corpus.size(); ++i) visit(i);
+}
+
+std::string MakeReanimVariantMetadata(const std::vector<RawReanim>& corpus)
+{
+    std::ostringstream out;
+    out << "{\"roots\":{";
+    bool firstRoot = true;
+    for (const auto& root : corpus) {
+        if (!root.variantOf.empty()) continue;
+        if (!firstRoot) out << ',';
+        firstRoot = false;
+        WriteEscaped(out, root.name);
+        out << ":{\"tracks\":[";
+        for (std::size_t t = 0; t < root.tracks.size(); ++t) {
+            if (t) out << ',';
+            WriteEscaped(out, root.tracks[t].name);
+        }
+        out << "],\"variants\":[";
+        std::vector<const RawReanim*> variants{&root};
+        for (const auto& item : corpus)
+            if (!item.variantOf.empty() && item.variantRoot == root.name) variants.push_back(&item);
+        std::sort(variants.begin() + 1, variants.end(), [](auto* a, auto* b) { return a->name < b->name; });
+        for (std::size_t v = 0; v < variants.size(); ++v) {
+            if (v) out << ',';
+            const auto& item = *variants[v];
+            out << "{\"name\":"; WriteEscaped(out, item.name);
+            out << ",\"parent\":"; WriteEscaped(out, item.variantOf);
+            out << ",\"index\":" << v << ",\"images\":[";
+            for (std::size_t t = 0; t < item.variantImages.size(); ++t) {
+                if (t) out << ',';
+                out << '[';
+                for (std::size_t s = 0; s < item.variantImages[t].size(); ++s) {
+                    if (s) out << ',';
+                    if (item.variantImages[t][s].empty()) out << "null";
+                    else WriteEscaped(out, item.variantImages[t][s]);
+                }
+                out << ']';
+            }
+            out << "]}";
+        }
+        out << "]}";
+    }
+    out << "}}\n";
+    return out.str();
+}
+
+std::string MakeReanimVariantHeader(const std::vector<RawReanim>& corpus)
+{
+    std::ostringstream out;
+    out << "// Generated from reanim variant declarations.\n#pragma once\n#include <cstdint>\nnamespace ReanimVariants {\n";
+    for (const auto& root : corpus) {
+        if (!root.variantOf.empty()) continue;
+        out << "enum class " << root.name << " : std::uint32_t { Default = 0";
+        std::vector<std::string> names;
+        for (const auto& item : corpus)
+            if (!item.variantOf.empty() && item.variantRoot == root.name) names.push_back(item.name);
+        std::sort(names.begin(), names.end());
+        for (std::size_t i = 0; i < names.size(); ++i)
+            out << ", " << names[i] << " = " << i + 1;
+        out << " };\n";
+    }
+    out << "}\n";
+    return out.str();
 }
 
 namespace {

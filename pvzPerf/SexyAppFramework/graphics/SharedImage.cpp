@@ -1,5 +1,5 @@
 #include "SharedImage.h"
-#include "graphics/DDImage.h"
+#include "graphics/Image.h"
 #include "SexyAppBase.h"
 #include <utility>
 
@@ -10,7 +10,7 @@ namespace
 void SwapReferenceState(SharedImageRef& a, SharedImageRef& b) noexcept
 {
 	std::swap(a.mSharedImage, b.mSharedImage);
-	std::swap(a.mUnsharedImage, b.mUnsharedImage);
+	std::swap(a.mImage, b.mImage);
 	std::swap(a.mOwnsUnshared, b.mOwnsUnshared);
 }
 }
@@ -26,14 +26,14 @@ SharedImageRef::SharedImageRef(const SharedImageRef& theSharedImageRef)
 	mSharedImage = theSharedImageRef.mSharedImage;
 	if (mSharedImage != NULL)
 		mSharedImage->mRefCount++;
-	mUnsharedImage = theSharedImageRef.mUnsharedImage;	
+	mImage = theSharedImageRef.mImage;
 	mOwnsUnshared = false;
 }
 
 SharedImageRef::SharedImageRef()
 {
 	mSharedImage = NULL;
-	mUnsharedImage = NULL;
+	mImage = NULL;
 	mOwnsUnshared = false;
 }
 
@@ -43,7 +43,7 @@ SharedImageRef::SharedImageRef(SharedImage* theSharedImage)
 	if (theSharedImage != NULL)
 		mSharedImage->mRefCount++;
 
-	mUnsharedImage = NULL;
+	mImage = theSharedImage != nullptr ? theSharedImage->mImage : nullptr;
 	mOwnsUnshared = false;
 }
 
@@ -58,10 +58,10 @@ void SharedImageRef::Release()
 	// release or rebind this reference. Do not delete it twice or erase that
 	// new binding after the callback returns.
 	SharedImage* aSharedImage = std::exchange(mSharedImage, nullptr);
-	MemoryImage* anUnsharedImage = std::exchange(mUnsharedImage, nullptr);
+	Image* anImage = std::exchange(mImage, nullptr);
 	const bool ownsUnshared = std::exchange(mOwnsUnshared, false);
 	if (ownsUnshared)
-		Image::Destroy(anUnsharedImage);
+		delete anImage;
 	if (aSharedImage != nullptr)
 	{
 		if (--aSharedImage->mRefCount == 0)
@@ -73,9 +73,9 @@ SharedImageRef& SharedImageRef::operator=(const SharedImageRef& theSharedImageRe
 {
 	if (this == &theSharedImageRef)
 		return *this;
-	if (theSharedImageRef.mSharedImage == nullptr &&
-		theSharedImageRef.mUnsharedImage != nullptr &&
-		theSharedImageRef.mUnsharedImage == static_cast<MemoryImage*>(*this))
+	Image* incoming = theSharedImageRef.mImage;
+	if (theSharedImageRef.mSharedImage == nullptr && incoming != nullptr &&
+		incoming == mImage)
 		return *this;
 	// Acquire/snapshot the incoming view BEFORE releasing the old image;
 	// the source reference can even be a member of that image.
@@ -86,46 +86,30 @@ SharedImageRef& SharedImageRef::operator=(const SharedImageRef& theSharedImageRe
 
 SharedImageRef&	SharedImageRef::operator=(SharedImage* theSharedImage)
 {
-	if (theSharedImage != nullptr && theSharedImage == mSharedImage && mUnsharedImage == nullptr)
+	if (theSharedImage != nullptr && theSharedImage == mSharedImage)
 		return *this;
 	SharedImageRef aReplacement(theSharedImage);
 	SwapReferenceState(*this, aReplacement);
 	return *this;
 }
 
-SharedImageRef& SharedImageRef::operator=(MemoryImage* theUnsharedImage)
+SharedImageRef& SharedImageRef::operator=(Image* theImage)
 {
-	if (theUnsharedImage != nullptr && theUnsharedImage == static_cast<MemoryImage*>(*this))
+	if (theImage != nullptr && theImage == mImage)
 		return *this;
 	SharedImageRef aReplacement;
-	aReplacement.mUnsharedImage = theUnsharedImage;
+	aReplacement.mImage = theImage;
 	SwapReferenceState(*this, aReplacement);
 	return *this;
 }
 
-MemoryImage* SharedImageRef::operator->()
+Image* SharedImageRef::operator->()
 {
-	return (MemoryImage*) *this;
+	return mImage;
 }
 
 
 SharedImageRef::operator Image*()
 {	
-	return (MemoryImage*) *this;
-}
-
-SharedImageRef::operator MemoryImage*()
-{
-	if (mUnsharedImage != NULL)
-		return mUnsharedImage;
-	else
-		return (DDImage*) *this;
-}
-
-SharedImageRef::operator DDImage*()
-{
-	if (mSharedImage != NULL)
-		return mSharedImage->mImage;
-	else
-		return NULL;
+	return mImage;
 }

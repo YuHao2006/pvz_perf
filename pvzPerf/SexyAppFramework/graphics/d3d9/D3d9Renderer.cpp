@@ -91,15 +91,13 @@ void D3d9Renderer::Impl::Dimensions(int w, int h) const
     if (w <= 0 || h <= 0 || w > maximum || h > maximum)
         throw std::invalid_argument("D3D9 texture dimensions exceed hardware limits");
 }
-std::shared_ptr<D3d9Storage> D3d9Renderer::Impl::Storage(int w, int h, D3DFORMAT format)
+void D3d9Renderer::Impl::InitializeTexture(D3d9Texture& result, int w, int h, D3DFORMAT format)
 {
     Dimensions(w, h);
-    auto result = std::make_shared<D3d9Storage>();
-    result->width = w; result->height = h; result->format = format;
+    result.width = w; result.height = h; result.format = format;
     Check(device->CreateTexture(w, h, 1, D3DUSAGE_RENDERTARGET, format, D3DPOOL_DEFAULT,
-        result->image.put(), nullptr), "Allocate D3D9 render texture");
-    Check(result->image->GetSurfaceLevel(0, result->surface.put()), "Get D3D9 texture surface");
-    return result;
+        result.image.put(), nullptr), "Allocate D3D9 render texture");
+    Check(result.image->GetSurfaceLevel(0, result.surface.put()), "Get D3D9 texture surface");
 }
 void D3d9Renderer::Impl::Register(D3d9Texture* image)
 {
@@ -113,14 +111,26 @@ void D3d9Renderer::Impl::Register(D3d9Texture* image)
 D3d9Texture* D3d9Renderer::Impl::Allocate(int w, int h, D3DFORMAT format,
     bool registerSlot)
 {
-    Dimensions(w, h);
-    auto image = std::make_unique<D3d9Texture>();
-    image->width = w; image->height = h;
-    image->storage = Storage(w, h, format);
-    if (registerSlot) Register(image.get());
-    auto* result = image.get();
-    textures.emplace(result, std::move(image));
-    return result;
+    auto* image = new D3d9Texture;
+    try {
+        InitializeTexture(*image, w, h, format);
+        textures.insert(image);
+        if (registerSlot) Register(image);
+    } catch (...) {
+        textures.erase(image);
+        delete image;
+        throw;
+    }
+    return image;
+}
+void D3d9Renderer::Impl::Retire(D3d9Texture* image)
+{
+    if (!batches.empty()) retiredTextures.push_back(image);
+    if (image == causticTarget) { causticTarget = nullptr; causticsQueued = false; }
+    if (image == causticSource) causticSource = nullptr;
+    if (image->slot != ~0U && slots[image->slot] == image) slots[image->slot] = nullptr;
+    textures.erase(image);
+    if (batches.empty()) delete image;
 }
 void D3d9Renderer::Impl::Upload(D3d9Texture* image, const void* pixels, int pitch)
 {
@@ -135,7 +145,7 @@ void D3d9Renderer::Impl::Upload(D3d9Texture* image, const void* pixels, int pitc
         std::memcpy(static_cast<unsigned char*>(lock.pBits) + size_t(row) * lock.Pitch,
             static_cast<const unsigned char*>(pixels) + size_t(row) * pitch, size_t(image->width) * 4);
     Check(staging->UnlockRect(), "Unlock D3D9 upload staging");
-    Check(device->UpdateSurface(staging.value, nullptr, image->storage->surface.value, nullptr),
+    Check(device->UpdateSurface(staging.value, nullptr, image->surface.value, nullptr),
         "Upload D3D9 texture");
     // Staging and caller pixels are disposable immediately after UpdateSurface.
 }
@@ -168,6 +178,8 @@ D3d9Renderer::Impl::~Impl()
     device->SetVertexShader(nullptr); device->SetPixelShader(nullptr);
     device->SetVertexDeclaration(nullptr);
     if (context.backBuffer) device->SetRenderTarget(0, context.backBuffer);
+    for (auto* image : retiredTextures) delete image;
+    for (auto* image : textures) delete image;
 }
 void D3d9Renderer::Impl::InitializeStates()
 {
@@ -208,14 +220,13 @@ void D3d9Renderer::Impl::Target(IDirect3DSurface9* surface, int w, int h)
 void D3d9Renderer::Impl::BindTarget()
 {
     const auto* target = selected ? selected : scene;
-    Target(target->storage->surface.value, target->width, target->height);
+    Target(target->surface.value, target->width, target->height);
 }
 void D3d9Renderer::Impl::Source(Constants& c, const D3d9Texture* image, unsigned int sampler) const
 {
-    const auto& storage = image->storage;
     const auto flags = image->flags;
     c[S::SourceRect] = {0, 0, float(image->width), float(image->height)};
-    c[S::SourceTexture] = {1.0f / float(storage->width), 1.0f / float(storage->height), 0, 0};
+    c[S::SourceTexture] = {1.0f / float(image->width), 1.0f / float(image->height), 0, 0};
     c[S::SourceFlags] = {float(bool(flags & 0x80000000U)), float(bool(flags & GpuVertex::kOpaqueInput)),
         float(bool(flags & GpuVertex::kAlphaEdgeFilter)), float((flags >> 28) & 3)};
     c[S::Sampling] = {float(sampler & 1), float((sampler >> 1) & 1),
@@ -234,7 +245,11 @@ void D3d9Renderer::Impl::Projection(int w, int h)
 }
 void D3d9Renderer::Impl::Flush()
 {
-    if (vertices.empty()) return;
+    if (vertices.empty()) {
+        for (auto* image : retiredTextures) delete image;
+        retiredTextures.clear();
+        return;
+    }
     context.MakeCurrent();
     BindTarget();
     const auto* target = selected ? selected : scene;
@@ -261,10 +276,10 @@ void D3d9Renderer::Impl::Flush()
     try {
         const Batch* previous = nullptr;
         for (const auto& batch : batches) {
-            const bool textureChanged = !previous || previous->storage != batch.storage;
+            const bool textureChanged = !previous || previous->image != batch.image;
             if(textureChanged || previous->coverage != batch.coverage) {
                 std::array<S::Float4,4> constants{};
-                constants[0] = {1.0f / float(batch.storage->width), 1.0f / float(batch.storage->height), 0, 0};
+                constants[0] = {1.0f / float(batch.width), 1.0f / float(batch.height), 0, 0};
                 constants[S::Sampling-S::SourceTexture].w = float(target->render);
                 constants[S::Modes-S::SourceTexture].x = float(batch.coverage);
                 Check(device->SetPixelShaderConstantF(S::SourceTexture,
@@ -272,7 +287,7 @@ void D3d9Renderer::Impl::Flush()
                     "Set D3D9 scene constants");
             }
             if(textureChanged)
-                Check(device->SetTexture(S::SourceImage, batch.storage->image.value), "Bind D3D9 batch image");
+                Check(device->SetTexture(S::SourceImage, batch.image), "Bind D3D9 batch image");
             if(!previous || !Same(previous->clip,batch.clip)) {
                 RECT clip{batch.clip.x, batch.clip.y, batch.clip.x + batch.clip.width, batch.clip.y + batch.clip.height};
                 Check(device->SetScissorRect(&clip), "Set D3D9 scissor");
@@ -293,14 +308,16 @@ void D3d9Renderer::Impl::Flush()
     } catch (...) { device->EndScene(); throw; }
     Check(device->EndScene(), "End D3D9 draw commands");
     vertices.clear(); batches.clear();
+    for (auto* image : retiredTextures) delete image;
+    retiredTextures.clear();
 }
-std::shared_ptr<D3d9Storage> D3d9Renderer::Impl::Snapshot(D3d9Texture* image)
+void D3d9Renderer::Impl::Snapshot(D3d9Texture& copy, D3d9Texture* image)
 {
     Flush();
-    auto copy = Storage(image->width, image->height, image->storage->format);
-    Check(device->StretchRect(image->storage->surface.value, nullptr,
-        copy->surface.value, nullptr, D3DTEXF_NONE), "Snapshot D3D9 texture");
-    return copy;
+    InitializeTexture(copy, image->width, image->height, image->format);
+    copy.flags = image->flags; copy.render = image->render;
+    Check(device->StretchRect(image->surface.value, nullptr,
+        copy.surface.value, nullptr, D3DTEXF_NONE), "Snapshot D3D9 texture");
 }
 void D3d9Renderer::Impl::Submit(std::span<const GpuVertex> input, D3d9Texture*,
     GpuBlend blend, const GpuClip* requested, bool coverage)
@@ -314,15 +331,21 @@ void D3d9Renderer::Impl::Submit(std::span<const GpuVertex> input, D3d9Texture*,
     clip.width = static_cast<int>(std::max<long long>(0, right - clip.x));
     clip.height = static_cast<int>(std::max<long long>(0, bottom - clip.y));
     if (!clip.width || !clip.height) return;
-    std::shared_ptr<D3d9Storage> feedback;
+    D3d9Texture* feedback = nullptr;
     for (size_t index = 0; index < input.size(); index += 3) {
         const auto& firstVertex = input[index];
         auto* image = slots[firstVertex.slot & 4095];
         if (!image) throw std::logic_error("D3D9 draw references an unbound logical texture");
-        auto storage = image->storage;
-        if (storage == target->storage) {
-            if (!feedback) feedback = Snapshot(image);
-            storage = feedback;
+        auto* texture = image;
+        if (image == target) {
+            if (!feedback) {
+                feedback = new D3d9Texture;
+                try {
+                    Snapshot(*feedback, image);
+                    retiredTextures.push_back(feedback);
+                } catch (...) { delete feedback; throw; }
+            }
+            texture = feedback;
         }
         const auto first = vertices.size();
         const auto flags = firstVertex.slot;
@@ -353,9 +376,10 @@ void D3d9Renderer::Impl::Submit(std::span<const GpuVertex> input, D3d9Texture*,
             vertices.push_back({v.x, v.y, v.r, v.g, v.b, v.a, v.u, v.v,
                 {0, 0, float(image->width), float(image->height)}, float(packed)});
         }
-        if (!batches.empty() && batches.back().storage == storage && batches.back().blend == blend &&
+        if (!batches.empty() && batches.back().image == texture->image.value && batches.back().blend == blend &&
             batches.back().coverage == coverage && Same(batches.back().clip, clip)) batches.back().count += 3;
-        else batches.push_back({std::move(storage), first, 3, blend, clip, coverage});
+        else batches.push_back({texture->image.value, texture->width, texture->height,
+            first, 3, blend, clip, coverage});
     }
 }
 D3d9Renderer::D3d9Renderer(D3d9Context& context, int w, int h,
@@ -446,7 +470,7 @@ D3d9Texture* D3d9Renderer::ReplaceTexture(D3d9Texture* old, int w, int h,
     auto& s = *impl_;
     if (!s.textures.contains(old) || old == s.white || old->render || old->caustic)
         throw std::invalid_argument("Cannot host-replace this D3D9 image");
-    // Always create a new resource version: queued batches retain the old storage.
+    // Always create a new version. Retire keeps queued draws' previous texture alive.
     auto* image = s.Allocate(w, h, D3DFMT_A8R8G8B8, false);
     image->flags = opaque ? GpuVertex::kOpaqueInput : 0;
     try {
@@ -477,7 +501,7 @@ D3d9Texture* D3d9Renderer::CreateRenderImage(int w, int h)
     auto* image = s.Allocate(w, h, D3DFMT_A32B32G32R32F, true);
     image->render = true; image->flags = 0x80000000U;
     try {
-        s.Target(image->storage->surface.value, w, h);
+        s.Target(image->surface.value, w, h);
         Check(s.device->Clear(0, nullptr, D3DCLEAR_TARGET, 0, 1, 0), "Clear D3D9 float render image");
     } catch (...) { DestroyTexture(image); throw; }
     return image;
@@ -489,10 +513,7 @@ void D3d9Renderer::DestroyTexture(D3d9Texture* image)
     if (!s.textures.contains(image) || image == s.white)
         throw std::invalid_argument("Cannot destroy white/foreign D3D9 image");
     if (image == s.selected) throw std::logic_error("Deselect D3D9 render image before destruction");
-    if (image == s.causticTarget) { s.causticTarget = nullptr; s.causticsQueued = false; }
-    if (image == s.causticSource) s.causticSource = nullptr;
-    if (image->slot != ~0U && s.slots[image->slot] == image) s.slots[image->slot] = nullptr;
-    s.textures.erase(image);
+    s.Retire(image);
 }
 unsigned int D3d9Renderer::SlotOf(const D3d9Texture* image)
 {
@@ -554,7 +575,7 @@ bool D3d9Renderer::Impl::Present()
     Check(device->SetVertexShader(imageVS.value), "Bind D3D9 presentation vertex shader");
     Check(device->SetPixelShader(presentPS.value), "Bind D3D9 presentation pixel shader");
     Constants c{}; Source(c, scene, 1); c[S::Presentation] = {0, 0, 0, 0}; SetConstants(c);
-    Check(device->SetTexture(S::SourceImage, scene->storage->image.value), "Bind retained D3D9 scene");
+    Check(device->SetTexture(S::SourceImage, scene->image.value), "Bind retained D3D9 scene");
     Quad(rect.width, rect.height); context.Present();
     return true;
 }
@@ -612,6 +633,7 @@ GpuClip D3d9Renderer::PresentRect(int w, int h) const { return FitSceneToSurface
 unsigned int D3d9Renderer::MaxImageDimension2D() const { return impl_->maximum; }
 D3d9Renderer::ResourceCounts D3d9Renderer::GetResourceCounts() const
 {
-    return {impl_->textures.size(), 0, 0, size_t(bool(impl_->stream)), impl_->batches.size()};
+    return {impl_->textures.size(), impl_->retiredTextures.size(), 0,
+        size_t(bool(impl_->stream)), impl_->batches.size()};
 }
 }

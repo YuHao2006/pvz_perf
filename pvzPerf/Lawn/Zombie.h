@@ -181,9 +181,6 @@ public:
     void                            DieNoLoot();
     /*inline*/ void                 DieWithLoot();
     void                            Draw(Graphics* g);
-//  void                            DrawZombie(Graphics* g, const ZombieDrawPosition& theDrawPos);
-//  void                            DrawZombieWithParts(Graphics* g, const ZombieDrawPosition& theDrawPos);
-    void                            DrawZombiePart(Graphics* g, Image* theImage, int theFrame, int theRow, const ZombieDrawPosition& theDrawPos);
     void                            DrawBungeeCord(Graphics* g, int theOffsetX);
     void                            TakeDamage(int theDamage, unsigned int theDamageFlags);
     /*inline*/ void                 SetRow(int theRow);
@@ -213,7 +210,6 @@ public:
     /*inline*/ void                 StartZombieSound();
     void                            StopZombieSound();
     void                            UpdateZombieJackInTheBox();
-    void                            DrawZombieHead(Graphics* g, const ZombieDrawPosition& theDrawPos, int theFrame);
     void                            UpdateZombiePosition();
     Rect                            GetZombieRect();
     Rect                            GetZombieAttackRect();

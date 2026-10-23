@@ -29,6 +29,12 @@ public:
     using std::runtime_error::runtime_error;
 };
 
+class SaveGameUpgradeRequired : public SaveGameLoadRejected
+{
+public:
+    using SaveGameLoadRejected::SaveGameLoadRejected;
+};
+
 class SaveGameContext
 {
 public:
@@ -42,8 +48,6 @@ public:
     void            SyncInt(int& theInt);
     inline void     SyncUint(unsigned int& theInt) { SyncInt((signed int&)theInt); }
     void            SyncReanimationDef(ReanimatorDefinition*& theDefinition);
-    void            SyncParticleDef(TodParticleDefinition*& theDefinition);
-    void            SyncImage(Image*& theImage);
 };
 
 // The active game stream contains eleven pools; Trail is not a runtime pool.

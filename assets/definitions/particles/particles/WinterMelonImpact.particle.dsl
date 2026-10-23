@@ -2,7 +2,7 @@ export component WinterMelonImpact {
     kind: particle;
     source-name: "wintermelonimpact";
     Emitter {
-        image: "IMAGE_WINTERMELON_PARTICLES";
+        images: ["particles/frames/wintermelon_particles_r0_c0.png","particles/frames/wintermelon_particles_r0_c1.png","particles/frames/wintermelon_particles_r0_c2.png","particles/frames/wintermelon_particles_r0_c3.png","particles/frames/wintermelon_particles_r0_c4.png","particles/frames/wintermelon_particles_r0_c5.png","particles/frames/wintermelon_particles_r0_c6.png","particles/frames/wintermelon_particles_r0_c7.png","particles/frames/wintermelon_particles_r0_c8.png"];
         imageFrames: 9;
         emitterType: Circle;
         randomLaunchSpin: 1;

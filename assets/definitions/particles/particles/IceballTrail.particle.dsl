@@ -2,7 +2,7 @@ export component IceballTrail {
     kind: particle;
     source-name: "iceball_trail";
     Emitter {
-        image: "IMAGE_ZOMBIE_BOSS_ICEBALL_GROUNDPARTICLES";
+        images: ["particles/frames/zombie_boss_iceball_groundparticles_r0_c0.png","particles/frames/zombie_boss_iceball_groundparticles_r0_c1.png","particles/frames/zombie_boss_iceball_groundparticles_r0_c2.png","particles/frames/zombie_boss_iceball_groundparticles_r0_c3.png"];
         imageFrames: 4;
         spawnMinActive: 1;
         spawnMaxLaunched: 1;

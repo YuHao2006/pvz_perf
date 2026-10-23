@@ -9,6 +9,19 @@ import resource_build_config as build
 
 
 class ResourceBuildConfigTests(unittest.TestCase):
+    def test_explicit_variant_glob_has_no_implicit_inheritance_grouping(self):
+        definitions = {"compiled/reanim/pea.compiled", "compiled/reanim/pea_v00000001.compiled",
+                       "compiled/reanim/pea_v00000002.compiled", "compiled/particles/splat.compiled"}
+        config = self.load(self.prefix + "atlas(a reanim:Pea reanim:Pea_V*)")
+        self.assertEqual(build.resolve_atlases(config, definitions)["a"],
+                         sorted(definitions - {"compiled/particles/splat.compiled"}))
+        config = self.load(self.prefix + "atlas(a reanim:Unknown_V*)")
+        with self.assertRaisesRegex(ValueError, "empty explicit pattern"):
+            build.resolve_atlases(config, definitions)
+        config = self.load(self.prefix + "atlas(a reanim:Pea_V*)\natlas(b reanim:Pea_V00000001)")
+        with self.assertRaisesRegex(ValueError, "multiple atlas groups"):
+            build.resolve_atlases(config, definitions)
+
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory()
         self.root = Path(self.temporary.name)
@@ -39,6 +52,24 @@ class ResourceBuildConfigTests(unittest.TestCase):
         self.assertEqual(config.atlases["peas"],
                          ["compiled/reanim/pea.compiled", "compiled/particles/splat.compiled"])
         self.assertEqual(len(config.sources["reanim"]), 1)
+
+    def test_scene_sources_are_explicit_and_can_select_one_complete_module(self):
+        (self.root / "scene").mkdir()
+        (self.root / "scene/Magnet.dsl").write_text(
+            'export atlas Magnet { sprite Pogo { image: "images/pogo.png"; } }', encoding="utf-8")
+        config = self.load(self.prefix + '''
+            sources(scene "scene/*.dsl")
+            atlas(magnet scene:Magnet)
+        ''')
+        self.assertEqual([path.name for path in config.sources["scene"]], ["Magnet.dsl"])
+        self.assertEqual(build.resolve_atlases(config, {"compiled/scene/magnet.compiled"}),
+                         {"magnet": ["compiled/scene/magnet.compiled"]})
+        with self.assertRaisesRegex(ValueError, "multiple atlas groups"):
+            self.load(self.prefix + '''
+                sources(scene "scene/*.dsl")
+                atlas(first scene:Magnet)
+                atlas(second scene:Magnet)
+            ''')
 
     def test_bad_or_duplicate_members_rejected(self):
         for tail in ("atlas(a reanim:Pea)\natlas(b reanim:Pea)",
@@ -107,7 +138,12 @@ class ResourceBuildConfigTests(unittest.TestCase):
     def test_actual_configuration_has_no_root_dsl(self):
         root = Path(__file__).resolve().parents[2]
         config = build.load(root / "assets/definitions/ResourceBuild.pvzbuild")
-        self.assertEqual(len(config.sources["reanim"]), 146)
+        self.assertEqual(sum(path.parent.name == "units" for path in config.sources["reanim"]), 146)
+        appearances = sorted((root / "assets/definitions/reanim/appearances").glob("*.dsl"))
+        self.assertTrue(appearances)
+        self.assertEqual(sorted(path for path in config.sources["reanim"] if path.parent.name == "appearances"),
+                         appearances)
+        self.assertEqual(len(config.sources["reanim"]), 146 + len(appearances))
         self.assertEqual(len(config.sources["particle"]), 112)
         self.assertFalse((root / "assets/definitions/reanim/root.dsl").exists())
         self.assertFalse((root / "assets/definitions/particles/all.root.dsl").exists())
@@ -115,6 +151,20 @@ class ResourceBuildConfigTests(unittest.TestCase):
         self.assertEqual(config.defaults.time_limit_seconds, 60)
         self.assertFalse(config.defaults.require_optimal)
         self.assertEqual(config.defaults.solver, "exact")
+        self.assertEqual(len(config.definition_orders["reanim"]), 144)
+        self.assertEqual(len(config.definition_orders["particle"]), 106)
+
+    def test_definition_order_rejects_ambiguous_ids_and_roots(self):
+        for tail in (
+                "definition_order(reanim REANIM_PEA:Pea REANIM_PEA:Other)",
+                "definition_order(reanim REANIM_PEA:Pea REANIM_OTHER:pea)",
+                "definition_order(reanim PARTICLE_PEA:Pea)",
+                "definition_order(particle REANIM_PEA:Pea)",
+                "definition_order(projectile PROJECTILE_PEA:Pea)",
+                "definition_order(reanim REANIM_PEA)",
+                "definition_order(reanim REANIM_PEA:Pea)\ndefinition_order(reanim REANIM_OTHER:Other)"):
+            with self.subTest(tail=tail), self.assertRaises(ValueError):
+                self.load(self.prefix + tail)
 
     def test_component_names_resolve_explicit_particle_output_names(self):
         (self.root / "particle/Splat.dsl").write_text(

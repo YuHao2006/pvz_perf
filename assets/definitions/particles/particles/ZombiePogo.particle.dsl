@@ -2,8 +2,7 @@ export component ZombiePogo {
     kind: particle;
     source-name: "zombiepogo";
     Emitter {
-        image: "IMAGE_ZOMBIEPOGO";
-        imageCol: 2;
+        images: ["particles/frames/zombiepogo_r0_c2.png"];
         randomLaunchSpin: 1;
         systemDuration: 40;
         spawnMinActive: 1;

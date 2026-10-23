@@ -1,11 +1,12 @@
 #include "Sexy.TodLib/generated/EntityStrings.h"
 #include "ZombatarItems.h"
+#include "GameButton.h"
 #include "LawnApp.h"
 #include "Resources.h"
 #include "Sexy.TodLib/Reanimator.h"
 #include "Sexy.TodLib/TodCommon.h"
 #include "Sexy.TodLib/TodStringFile.h"
-#include "SexyAppFramework/graphics/DDImage.h"
+#include "SexyAppFramework/graphics/Image.h"
 #include "SexyAppFramework/graphics/DDInterface.h"
 #include "SexyAppFramework/graphics/RenderInterface.h"
 #include "SexyAppFramework/imagelib/ImageLib.h"
@@ -22,10 +23,104 @@
 #include <cstdint>
 #include <cstdio>
 #include <cstring>
-#include <memory>
 #include <stdexcept>
 #include <string>
 #include <vector>
+
+ZombatarButton::ZombatarButton(int theId, ZombatarImage theNormal,
+	ZombatarImage theHover, ZombatarImage thePressed, ZombatarImage theInactive)
+	: mApp(static_cast<LawnApp*>(gSexyAppBase)), mId(theId),
+	  mNormalImage(theNormal), mHoverImage(theHover),
+	  mPressedImage(thePressed), mInactiveImage(theInactive)
+{
+	const ZombatarImage aSizeImage = theNormal != ZombatarImage::None ? theNormal :
+		(theHover != ZombatarImage::None ? theHover : thePressed);
+	if (aSizeImage != ZombatarImage::None)
+	{
+		const Rect& aSize = gZombatarAtlas.mImages[static_cast<size_t>(aSizeImage)];
+		mWidth = aSize.mWidth;
+		mHeight = aSize.mHeight;
+	}
+}
+
+void ZombatarButton::DrawNormal(Graphics* g)
+{
+	DrawZombatarImage(g, mNormalImage,
+		mX, mY);
+}
+
+bool ZombatarButton::IsButtonDown() const
+{
+	return mIsDown && mIsOver && !mDisabled && !mBtnNoDraw;
+}
+
+bool ZombatarButton::IsMouseOver() const
+{
+	if (mDisabled || mBtnNoDraw)
+		return false;
+	WidgetManager* aManager = mApp->mWidgetManager;
+	const bool aFocusMatches = aManager->mFocusWidget &&
+		aManager->mFocusWidget == mParentWidget;
+	if (!aFocusMatches && mApp->GetDialogCount() > 0)
+		return false;
+	int aMouseX = aManager->mLastMouseX;
+	int aMouseY = aManager->mLastMouseY;
+	if (mParentWidget)
+	{
+		const Point aPosition = mParentWidget->GetAbsPos();
+		aMouseX -= aPosition.mX;
+		aMouseY -= aPosition.mY;
+	}
+	return Rect(mX, mY, mWidth, mHeight).Contains(aMouseX, aMouseY);
+}
+
+void ZombatarButton::Update()
+{
+	WidgetManager* aManager = mApp->mWidgetManager;
+	int aMouseX = aManager->mLastMouseX;
+	int aMouseY = aManager->mLastMouseY;
+	if (mParentWidget)
+	{
+		const Point aPosition = mParentWidget->GetAbsPos();
+		aMouseX -= aPosition.mX;
+		aMouseY -= aPosition.mY;
+	}
+	if ((aManager->mFocusWidget && aManager->mFocusWidget == mParentWidget) ||
+		mApp->GetDialogCount() <= 0)
+	{
+		mIsOver = Rect(mX, mY, mWidth, mHeight).Contains(aMouseX, aMouseY);
+		mIsDown = (aManager->mDownButtons & 5) != 0;
+	}
+	else
+		mIsOver = mIsDown = false;
+}
+
+void ZombatarButton::Draw(Graphics* g)
+{
+	if (mBtnNoDraw)
+		return;
+	const bool isDown = IsButtonDown();
+	const bool isHighlighted = IsMouseOver();
+	g->mTransX += mX;
+	g->mTransY += mY;
+	const int aX = 0;
+	const int aY = 0;
+	if (isDown)
+	{
+		if (mPressedImage != ZombatarImage::None)
+			DrawZombatarImage(g, mPressedImage, aX, aY);
+		else
+			DrawZombatarImage(g, mHoverImage != ZombatarImage::None ? mHoverImage : mNormalImage, aX + 1, aY + 1);
+	}
+	else if (mDisabled && mInactiveImage != ZombatarImage::None)
+		DrawZombatarImage(g, mInactiveImage, aX, aY);
+	else
+		DrawZombatarImage(g, isHighlighted && mHoverImage != ZombatarImage::None ? mHoverImage : mNormalImage, aX, aY);
+	// Match the image-only GameButton's final text state.
+	g->mColor = Color::Black;
+	g->mFont = nullptr;
+	g->Translate(-mX, -mY);
+}
 
 namespace
 {
@@ -124,143 +219,143 @@ const Color gZombatarColors[] = {
 };
 
 const ZombatarItem gHairItems[] = {
-	{ IMAGE_ZOMBATAR_HAIR_1, IMAGE_ZOMBATAR_HAIR_1_MASK, 23, 0, 8, 1, ZOMBATAR_COLOR_HAIR, 32, ReanimTrackId::hair_00, ReanimTrackId::hair_00_line, 8 },
-	{ IMAGE_ZOMBATAR_HAIR_2, IMAGE_ZOMBATAR_HAIR_2_MASK, 23, 25, 2, 3, ZOMBATAR_COLOR_HAIR, 32, ReanimTrackId::hair_01, ReanimTrackId::hair_01_line, 8 },
-	{ IMAGE_ZOMBATAR_HAIR_3, nullptr, 23, 30, 0, 0, ZOMBATAR_COLOR_NOT_APPLICABLE, 32, ReanimTrackId::None, ReanimTrackId::hair_02_line, 8 },
-	{ IMAGE_ZOMBATAR_HAIR_4, nullptr, 30, 15, 0, 0, ZOMBATAR_COLOR_HAIR, 32, ReanimTrackId::hair_03, ReanimTrackId::hair_03_line, 8 },
-	{ IMAGE_ZOMBATAR_HAIR_5, nullptr, 36, 37, 0, 0, ZOMBATAR_COLOR_HAIR, 32, ReanimTrackId::hair_04, ReanimTrackId::hair_04_line, 8 },
-	{ IMAGE_ZOMBATAR_HAIR_6, nullptr, 39, 13, 0, 0, ZOMBATAR_COLOR_HAIR, 32, ReanimTrackId::hair_05, ReanimTrackId::hair_05_line, 8 },
-	{ IMAGE_ZOMBATAR_HAIR_7, nullptr, 51, 22, 0, 0, ZOMBATAR_COLOR_HAIR, 32, ReanimTrackId::hair_06, ReanimTrackId::hair_06_line, 8 },
-	{ IMAGE_ZOMBATAR_HAIR_8, nullptr, 28, 15, 0, 0, ZOMBATAR_COLOR_HAIR, 32, ReanimTrackId::hair_07, ReanimTrackId::hair_07_line, 8 },
-	{ IMAGE_ZOMBATAR_HAIR_9, nullptr, 128, 55, 0, 0, ZOMBATAR_COLOR_HAIR, 32, ReanimTrackId::hair_08, ReanimTrackId::hair_08_line, 8 },
-	{ IMAGE_ZOMBATAR_HAIR_10, nullptr, 22, 32, 0, 0, ZOMBATAR_COLOR_HAIR, 32, ReanimTrackId::hair_09, ReanimTrackId::hair_09_line, 8 },
-	{ IMAGE_ZOMBATAR_HAIR_11, IMAGE_ZOMBATAR_HAIR_11_MASK, 25, 19, 2, 2, ZOMBATAR_COLOR_HAIR, 32, ReanimTrackId::hair_10, ReanimTrackId::hair_10_line, 8 },
-	{ IMAGE_ZOMBATAR_HAIR_12, IMAGE_ZOMBATAR_HAIR_12_MASK, 51, -5, 2, 2, ZOMBATAR_COLOR_HAIR, 2, ReanimTrackId::hair_11, ReanimTrackId::hair_11_line, 8 },
-	{ IMAGE_ZOMBATAR_HAIR_13, IMAGE_ZOMBATAR_HAIR_13_MASK, 33, 13, 2, 2, ZOMBATAR_COLOR_HAIR, 32, ReanimTrackId::hair_12, ReanimTrackId::hair_12_line, 8 },
-	{ IMAGE_ZOMBATAR_HAIR_14, IMAGE_ZOMBATAR_HAIR_14_MASK, 9, -2, 1, 5, ZOMBATAR_COLOR_HAIR, 32, ReanimTrackId::hair_13, ReanimTrackId::hair_13_line, 8 },
-	{ IMAGE_ZOMBATAR_HAIR_15, IMAGE_ZOMBATAR_HAIR_15_MASK, 45, 4, 0, -1, ZOMBATAR_COLOR_HAIR, 32, ReanimTrackId::hair_14, ReanimTrackId::hair_14_line, 8 },
-	{ IMAGE_ZOMBATAR_HAIR_16, nullptr, 26, 20, 0, 0, ZOMBATAR_COLOR_HAIR, 2, ReanimTrackId::hair_15, ReanimTrackId::hair_15_line, 8 }
+	{ ZombatarImage::HAIR_1, ZombatarImage::HAIR_1_MASK, 23, 0, 8, 1, ZOMBATAR_COLOR_HAIR, 32, ReanimTrackId::hair_00, ReanimTrackId::hair_00_line, 8 },
+	{ ZombatarImage::HAIR_2, ZombatarImage::HAIR_2_MASK, 23, 25, 2, 3, ZOMBATAR_COLOR_HAIR, 32, ReanimTrackId::hair_01, ReanimTrackId::hair_01_line, 8 },
+	{ ZombatarImage::HAIR_3, ZombatarImage::None, 23, 30, 0, 0, ZOMBATAR_COLOR_NOT_APPLICABLE, 32, ReanimTrackId::None, ReanimTrackId::hair_02_line, 8 },
+	{ ZombatarImage::HAIR_4, ZombatarImage::None, 30, 15, 0, 0, ZOMBATAR_COLOR_HAIR, 32, ReanimTrackId::hair_03, ReanimTrackId::hair_03_line, 8 },
+	{ ZombatarImage::HAIR_5, ZombatarImage::None, 36, 37, 0, 0, ZOMBATAR_COLOR_HAIR, 32, ReanimTrackId::hair_04, ReanimTrackId::hair_04_line, 8 },
+	{ ZombatarImage::HAIR_6, ZombatarImage::None, 39, 13, 0, 0, ZOMBATAR_COLOR_HAIR, 32, ReanimTrackId::hair_05, ReanimTrackId::hair_05_line, 8 },
+	{ ZombatarImage::HAIR_7, ZombatarImage::None, 51, 22, 0, 0, ZOMBATAR_COLOR_HAIR, 32, ReanimTrackId::hair_06, ReanimTrackId::hair_06_line, 8 },
+	{ ZombatarImage::HAIR_8, ZombatarImage::None, 28, 15, 0, 0, ZOMBATAR_COLOR_HAIR, 32, ReanimTrackId::hair_07, ReanimTrackId::hair_07_line, 8 },
+	{ ZombatarImage::HAIR_9, ZombatarImage::None, 128, 55, 0, 0, ZOMBATAR_COLOR_HAIR, 32, ReanimTrackId::hair_08, ReanimTrackId::hair_08_line, 8 },
+	{ ZombatarImage::HAIR_10, ZombatarImage::None, 22, 32, 0, 0, ZOMBATAR_COLOR_HAIR, 32, ReanimTrackId::hair_09, ReanimTrackId::hair_09_line, 8 },
+	{ ZombatarImage::HAIR_11, ZombatarImage::HAIR_11_MASK, 25, 19, 2, 2, ZOMBATAR_COLOR_HAIR, 32, ReanimTrackId::hair_10, ReanimTrackId::hair_10_line, 8 },
+	{ ZombatarImage::HAIR_12, ZombatarImage::HAIR_12_MASK, 51, -5, 2, 2, ZOMBATAR_COLOR_HAIR, 2, ReanimTrackId::hair_11, ReanimTrackId::hair_11_line, 8 },
+	{ ZombatarImage::HAIR_13, ZombatarImage::HAIR_13_MASK, 33, 13, 2, 2, ZOMBATAR_COLOR_HAIR, 32, ReanimTrackId::hair_12, ReanimTrackId::hair_12_line, 8 },
+	{ ZombatarImage::HAIR_14, ZombatarImage::HAIR_14_MASK, 9, -2, 1, 5, ZOMBATAR_COLOR_HAIR, 32, ReanimTrackId::hair_13, ReanimTrackId::hair_13_line, 8 },
+	{ ZombatarImage::HAIR_15, ZombatarImage::HAIR_15_MASK, 45, 4, 0, -1, ZOMBATAR_COLOR_HAIR, 32, ReanimTrackId::hair_14, ReanimTrackId::hair_14_line, 8 },
+	{ ZombatarImage::HAIR_16, ZombatarImage::None, 26, 20, 0, 0, ZOMBATAR_COLOR_HAIR, 2, ReanimTrackId::hair_15, ReanimTrackId::hair_15_line, 8 }
 };
 
 const ZombatarItem gFacialHairItems[] = {
-	{ IMAGE_ZOMBATAR_FACIALHAIR_1, IMAGE_ZOMBATAR_FACIALHAIR_1_MASK, 35, 107, 1, 0, ZOMBATAR_COLOR_HAIR, 32, ReanimTrackId::facialHair_00, ReanimTrackId::facialHair_00_line, 6 },
-	{ IMAGE_ZOMBATAR_FACIALHAIR_2, nullptr, 51, 110, 0, 0, ZOMBATAR_COLOR_HAIR, 32, ReanimTrackId::facialHair_01, ReanimTrackId::facialHair_01_line, 6 },
-	{ IMAGE_ZOMBATAR_FACIALHAIR_3, nullptr, 45, 110, 0, 0, ZOMBATAR_COLOR_HAIR, 32, ReanimTrackId::facialHair_02, ReanimTrackId::facialHair_02_line, 6 },
-	{ IMAGE_ZOMBATAR_FACIALHAIR_4, IMAGE_ZOMBATAR_FACIALHAIR_4_MASK, 38, 105, 3, 2, ZOMBATAR_COLOR_HAIR, 32, ReanimTrackId::facialHair_03, ReanimTrackId::facialHair_03_line, 6 },
-	{ IMAGE_ZOMBATAR_FACIALHAIR_5, nullptr, 69, 145, 0, 0, ZOMBATAR_COLOR_HAIR, 32, ReanimTrackId::facialHair_04, ReanimTrackId::facialHair_04_line, 6 },
-	{ IMAGE_ZOMBATAR_FACIALHAIR_6, nullptr, 48, 112, 0, 0, ZOMBATAR_COLOR_HAIR, 32, ReanimTrackId::facialHair_05, ReanimTrackId::facialHair_05_line, 6 },
-	{ IMAGE_ZOMBATAR_FACIALHAIR_7, nullptr, 13, 107, 0, 0, ZOMBATAR_COLOR_HAIR, 32, ReanimTrackId::facialHair_06, ReanimTrackId::facialHair_06_line, 6 },
-	{ IMAGE_ZOMBATAR_FACIALHAIR_8, IMAGE_ZOMBATAR_FACIALHAIR_8_MASK, 45, 105, 1, 1, ZOMBATAR_COLOR_HAIR, 32, ReanimTrackId::facialHair_07, ReanimTrackId::facialHair_07_line, 6 },
-	{ IMAGE_ZOMBATAR_FACIALHAIR_9, IMAGE_ZOMBATAR_FACIALHAIR_9_MASK, 41, 105, 1, 1, ZOMBATAR_COLOR_HAIR, 32, ReanimTrackId::facialHair_08, ReanimTrackId::facialHair_08_line, 6 },
-	{ IMAGE_ZOMBATAR_FACIALHAIR_10, IMAGE_ZOMBATAR_FACIALHAIR_10_MASK, 44, 112, 1, 2, ZOMBATAR_COLOR_HAIR, 32, ReanimTrackId::facialHair_09, ReanimTrackId::facialHair_09_line, 6 },
-	{ IMAGE_ZOMBATAR_FACIALHAIR_11, IMAGE_ZOMBATAR_FACIALHAIR_11_MASK, 43, 88, 1, 4, ZOMBATAR_COLOR_HAIR, 32, ReanimTrackId::facialHair_10, ReanimTrackId::facialHair_10_line, 6 },
-	{ IMAGE_ZOMBATAR_FACIALHAIR_12, IMAGE_ZOMBATAR_FACIALHAIR_12_MASK, 28, 105, 8, 1, ZOMBATAR_COLOR_HAIR, 32, ReanimTrackId::facialHair_11, ReanimTrackId::facialHair_11_line, 6 },
-	{ IMAGE_ZOMBATAR_FACIALHAIR_13, nullptr, 45, 110, 0, 0, ZOMBATAR_COLOR_HAIR, 32, ReanimTrackId::facialHair_12, ReanimTrackId::facialHair_12_line, 6 },
-	{ IMAGE_ZOMBATAR_FACIALHAIR_14, IMAGE_ZOMBATAR_FACIALHAIR_14_MASK, 18, 103, 1, 1, ZOMBATAR_COLOR_HAIR, 32, ReanimTrackId::facialHair_13, ReanimTrackId::facialHair_13_line, 6 },
-	{ IMAGE_ZOMBATAR_FACIALHAIR_15, IMAGE_ZOMBATAR_FACIALHAIR_15_MASK, 63, 145, 2, 1, ZOMBATAR_COLOR_HAIR, 4, ReanimTrackId::facialHair_14, ReanimTrackId::facialHair_14_line, 6 },
-	{ IMAGE_ZOMBATAR_FACIALHAIR_16, IMAGE_ZOMBATAR_FACIALHAIR_16_MASK, 63, 140, 1, 1, ZOMBATAR_COLOR_HAIR, 32, ReanimTrackId::facialHair_15, ReanimTrackId::facialHair_15_line, 6 },
-	{ IMAGE_ZOMBATAR_FACIALHAIR_17, nullptr, 43, 110, 0, 0, ZOMBATAR_COLOR_HAIR, 32, ReanimTrackId::facialHair_16, ReanimTrackId::facialHair_16_line, 6 },
-	{ IMAGE_ZOMBATAR_FACIALHAIR_18, IMAGE_ZOMBATAR_FACIALHAIR_18_MASK, 58, 96, 1, 3, ZOMBATAR_COLOR_HAIR, 32, ReanimTrackId::facialHair_17, ReanimTrackId::facialHair_17_line, 6 },
-	{ IMAGE_ZOMBATAR_FACIALHAIR_19, nullptr, 46, 92, 0, 0, ZOMBATAR_COLOR_HAIR, 32, ReanimTrackId::facialHair_18, ReanimTrackId::facialHair_18_line, 6 },
-	{ IMAGE_ZOMBATAR_FACIALHAIR_20, nullptr, 114, 80, 0, 0, ZOMBATAR_COLOR_HAIR, 32, ReanimTrackId::facialHair_19, ReanimTrackId::facialHair_19_line, 6 },
-	{ IMAGE_ZOMBATAR_FACIALHAIR_21, IMAGE_ZOMBATAR_FACIALHAIR_21_MASK, 118, 83, 1, 1, ZOMBATAR_COLOR_HAIR, 32, ReanimTrackId::facialHair_20, ReanimTrackId::facialHair_20_line, 6 },
-	{ IMAGE_ZOMBATAR_FACIALHAIR_22, IMAGE_ZOMBATAR_FACIALHAIR_22_MASK, 13, 87, 3, 4, ZOMBATAR_COLOR_HAIR, 4, ReanimTrackId::facialHair_21, ReanimTrackId::facialHair_21_line, 6 },
-	{ IMAGE_ZOMBATAR_FACIALHAIR_23, IMAGE_ZOMBATAR_FACIALHAIR_23_MASK, 58, 145, 1, 1, ZOMBATAR_COLOR_HAIR, 32, ReanimTrackId::facialHair_22, ReanimTrackId::facialHair_22_line, 6 },
-	{ IMAGE_ZOMBATAR_FACIALHAIR_24, IMAGE_ZOMBATAR_FACIALHAIR_24_MASK, 38, 108, 4, 2, ZOMBATAR_COLOR_HAIR, 4, ReanimTrackId::facialHair_23, ReanimTrackId::facialHair_23_line, 6 }
+	{ ZombatarImage::FACIALHAIR_1, ZombatarImage::FACIALHAIR_1_MASK, 35, 107, 1, 0, ZOMBATAR_COLOR_HAIR, 32, ReanimTrackId::facialHair_00, ReanimTrackId::facialHair_00_line, 6 },
+	{ ZombatarImage::FACIALHAIR_2, ZombatarImage::None, 51, 110, 0, 0, ZOMBATAR_COLOR_HAIR, 32, ReanimTrackId::facialHair_01, ReanimTrackId::facialHair_01_line, 6 },
+	{ ZombatarImage::FACIALHAIR_3, ZombatarImage::None, 45, 110, 0, 0, ZOMBATAR_COLOR_HAIR, 32, ReanimTrackId::facialHair_02, ReanimTrackId::facialHair_02_line, 6 },
+	{ ZombatarImage::FACIALHAIR_4, ZombatarImage::FACIALHAIR_4_MASK, 38, 105, 3, 2, ZOMBATAR_COLOR_HAIR, 32, ReanimTrackId::facialHair_03, ReanimTrackId::facialHair_03_line, 6 },
+	{ ZombatarImage::FACIALHAIR_5, ZombatarImage::None, 69, 145, 0, 0, ZOMBATAR_COLOR_HAIR, 32, ReanimTrackId::facialHair_04, ReanimTrackId::facialHair_04_line, 6 },
+	{ ZombatarImage::FACIALHAIR_6, ZombatarImage::None, 48, 112, 0, 0, ZOMBATAR_COLOR_HAIR, 32, ReanimTrackId::facialHair_05, ReanimTrackId::facialHair_05_line, 6 },
+	{ ZombatarImage::FACIALHAIR_7, ZombatarImage::None, 13, 107, 0, 0, ZOMBATAR_COLOR_HAIR, 32, ReanimTrackId::facialHair_06, ReanimTrackId::facialHair_06_line, 6 },
+	{ ZombatarImage::FACIALHAIR_8, ZombatarImage::FACIALHAIR_8_MASK, 45, 105, 1, 1, ZOMBATAR_COLOR_HAIR, 32, ReanimTrackId::facialHair_07, ReanimTrackId::facialHair_07_line, 6 },
+	{ ZombatarImage::FACIALHAIR_9, ZombatarImage::FACIALHAIR_9_MASK, 41, 105, 1, 1, ZOMBATAR_COLOR_HAIR, 32, ReanimTrackId::facialHair_08, ReanimTrackId::facialHair_08_line, 6 },
+	{ ZombatarImage::FACIALHAIR_10, ZombatarImage::FACIALHAIR_10_MASK, 44, 112, 1, 2, ZOMBATAR_COLOR_HAIR, 32, ReanimTrackId::facialHair_09, ReanimTrackId::facialHair_09_line, 6 },
+	{ ZombatarImage::FACIALHAIR_11, ZombatarImage::FACIALHAIR_11_MASK, 43, 88, 1, 4, ZOMBATAR_COLOR_HAIR, 32, ReanimTrackId::facialHair_10, ReanimTrackId::facialHair_10_line, 6 },
+	{ ZombatarImage::FACIALHAIR_12, ZombatarImage::FACIALHAIR_12_MASK, 28, 105, 8, 1, ZOMBATAR_COLOR_HAIR, 32, ReanimTrackId::facialHair_11, ReanimTrackId::facialHair_11_line, 6 },
+	{ ZombatarImage::FACIALHAIR_13, ZombatarImage::None, 45, 110, 0, 0, ZOMBATAR_COLOR_HAIR, 32, ReanimTrackId::facialHair_12, ReanimTrackId::facialHair_12_line, 6 },
+	{ ZombatarImage::FACIALHAIR_14, ZombatarImage::FACIALHAIR_14_MASK, 18, 103, 1, 1, ZOMBATAR_COLOR_HAIR, 32, ReanimTrackId::facialHair_13, ReanimTrackId::facialHair_13_line, 6 },
+	{ ZombatarImage::FACIALHAIR_15, ZombatarImage::FACIALHAIR_15_MASK, 63, 145, 2, 1, ZOMBATAR_COLOR_HAIR, 4, ReanimTrackId::facialHair_14, ReanimTrackId::facialHair_14_line, 6 },
+	{ ZombatarImage::FACIALHAIR_16, ZombatarImage::FACIALHAIR_16_MASK, 63, 140, 1, 1, ZOMBATAR_COLOR_HAIR, 32, ReanimTrackId::facialHair_15, ReanimTrackId::facialHair_15_line, 6 },
+	{ ZombatarImage::FACIALHAIR_17, ZombatarImage::None, 43, 110, 0, 0, ZOMBATAR_COLOR_HAIR, 32, ReanimTrackId::facialHair_16, ReanimTrackId::facialHair_16_line, 6 },
+	{ ZombatarImage::FACIALHAIR_18, ZombatarImage::FACIALHAIR_18_MASK, 58, 96, 1, 3, ZOMBATAR_COLOR_HAIR, 32, ReanimTrackId::facialHair_17, ReanimTrackId::facialHair_17_line, 6 },
+	{ ZombatarImage::FACIALHAIR_19, ZombatarImage::None, 46, 92, 0, 0, ZOMBATAR_COLOR_HAIR, 32, ReanimTrackId::facialHair_18, ReanimTrackId::facialHair_18_line, 6 },
+	{ ZombatarImage::FACIALHAIR_20, ZombatarImage::None, 114, 80, 0, 0, ZOMBATAR_COLOR_HAIR, 32, ReanimTrackId::facialHair_19, ReanimTrackId::facialHair_19_line, 6 },
+	{ ZombatarImage::FACIALHAIR_21, ZombatarImage::FACIALHAIR_21_MASK, 118, 83, 1, 1, ZOMBATAR_COLOR_HAIR, 32, ReanimTrackId::facialHair_20, ReanimTrackId::facialHair_20_line, 6 },
+	{ ZombatarImage::FACIALHAIR_22, ZombatarImage::FACIALHAIR_22_MASK, 13, 87, 3, 4, ZOMBATAR_COLOR_HAIR, 4, ReanimTrackId::facialHair_21, ReanimTrackId::facialHair_21_line, 6 },
+	{ ZombatarImage::FACIALHAIR_23, ZombatarImage::FACIALHAIR_23_MASK, 58, 145, 1, 1, ZOMBATAR_COLOR_HAIR, 32, ReanimTrackId::facialHair_22, ReanimTrackId::facialHair_22_line, 6 },
+	{ ZombatarImage::FACIALHAIR_24, ZombatarImage::FACIALHAIR_24_MASK, 38, 108, 4, 2, ZOMBATAR_COLOR_HAIR, 4, ReanimTrackId::facialHair_23, ReanimTrackId::facialHair_23_line, 6 }
 };
 
 const ZombatarItem gTidbitsItems[] = {
-	{ IMAGE_ZOMBATAR_TIDBITS_1, IMAGE_ZOMBATAR_TIDBITS_3, 28, 63, 18, 48, ZOMBATAR_COLOR_BRIGHT, 32, ReanimTrackId::tidBits_00, ReanimTrackId::tidBits_00_line, 2 },
-	{ IMAGE_ZOMBATAR_TIDBITS_2, nullptr, 28, 63, 0, 0, ZOMBATAR_COLOR_BRIGHT, 32, ReanimTrackId::tidBits_01, ReanimTrackId::tidBits_01_line, 2 },
-	{ IMAGE_ZOMBATAR_TIDBITS_3, nullptr, 46, 111, 0, 0, ZOMBATAR_COLOR_BRIGHT, 32, ReanimTrackId::tidBits_02, ReanimTrackId::None, 2 },
-	{ IMAGE_ZOMBATAR_TIDBITS_4, nullptr, 31, 62, 0, 0, ZOMBATAR_COLOR_NOT_APPLICABLE, 32, ReanimTrackId::tidBits_03, ReanimTrackId::None, 2 },
-	{ IMAGE_ZOMBATAR_TIDBITS_5, nullptr, 31, 58, 0, 0, ZOMBATAR_COLOR_NOT_APPLICABLE, 32, ReanimTrackId::tidBits_04, ReanimTrackId::None, 2 },
-	{ IMAGE_ZOMBATAR_TIDBITS_6, nullptr, 28, 66, 0, 0, ZOMBATAR_COLOR_NOT_APPLICABLE, 32, ReanimTrackId::tidBits_05, ReanimTrackId::None, 2 },
-	{ IMAGE_ZOMBATAR_TIDBITS_7, nullptr, 28, 72, 0, 0, ZOMBATAR_COLOR_NOT_APPLICABLE, 32, ReanimTrackId::tidBits_06, ReanimTrackId::None, 2 },
-	{ IMAGE_ZOMBATAR_TIDBITS_8, nullptr, 33, 55, 0, 0, ZOMBATAR_COLOR_NOT_APPLICABLE, 32, ReanimTrackId::tidBits_07, ReanimTrackId::None, 2 },
-	{ IMAGE_ZOMBATAR_TIDBITS_9, nullptr, 21, 76, 0, 0, ZOMBATAR_COLOR_NOT_APPLICABLE, 32, ReanimTrackId::tidBits_08, ReanimTrackId::None, 2 },
-	{ IMAGE_ZOMBATAR_TIDBITS_10, nullptr, 36, 71, 0, 0, ZOMBATAR_COLOR_BRIGHT, 32, ReanimTrackId::tidBits_09, ReanimTrackId::tidBits_09_line, 2 },
-	{ IMAGE_ZOMBATAR_TIDBITS_11, nullptr, 36, 70, 0, 0, ZOMBATAR_COLOR_BRIGHT, 32, ReanimTrackId::tidBits_10, ReanimTrackId::tidBits_10_line, 2 },
-	{ IMAGE_ZOMBATAR_TIDBITS_12, nullptr, 86, 91, 0, 6, ZOMBATAR_COLOR_BRIGHT, 32, ReanimTrackId::tidBits_11, ReanimTrackId::tidBits_11_line, 2 },
-	{ IMAGE_ZOMBATAR_TIDBITS_13, nullptr, 88, 50, 0, 8, ZOMBATAR_COLOR_NOT_APPLICABLE, 32, ReanimTrackId::tidBits_12, ReanimTrackId::None, 2 },
-	{ IMAGE_ZOMBATAR_TIDBITS_14, nullptr, 113, 115, 0, 0, ZOMBATAR_COLOR_NOT_APPLICABLE, 32, ReanimTrackId::tidBits_13, ReanimTrackId::None, 2 }
+	{ ZombatarImage::TIDBITS_1, ZombatarImage::TIDBITS_3, 28, 63, 18, 48, ZOMBATAR_COLOR_BRIGHT, 32, ReanimTrackId::tidBits_00, ReanimTrackId::tidBits_00_line, 2 },
+	{ ZombatarImage::TIDBITS_2, ZombatarImage::None, 28, 63, 0, 0, ZOMBATAR_COLOR_BRIGHT, 32, ReanimTrackId::tidBits_01, ReanimTrackId::tidBits_01_line, 2 },
+	{ ZombatarImage::TIDBITS_3, ZombatarImage::None, 46, 111, 0, 0, ZOMBATAR_COLOR_BRIGHT, 32, ReanimTrackId::tidBits_02, ReanimTrackId::None, 2 },
+	{ ZombatarImage::TIDBITS_4, ZombatarImage::None, 31, 62, 0, 0, ZOMBATAR_COLOR_NOT_APPLICABLE, 32, ReanimTrackId::tidBits_03, ReanimTrackId::None, 2 },
+	{ ZombatarImage::TIDBITS_5, ZombatarImage::None, 31, 58, 0, 0, ZOMBATAR_COLOR_NOT_APPLICABLE, 32, ReanimTrackId::tidBits_04, ReanimTrackId::None, 2 },
+	{ ZombatarImage::TIDBITS_6, ZombatarImage::None, 28, 66, 0, 0, ZOMBATAR_COLOR_NOT_APPLICABLE, 32, ReanimTrackId::tidBits_05, ReanimTrackId::None, 2 },
+	{ ZombatarImage::TIDBITS_7, ZombatarImage::None, 28, 72, 0, 0, ZOMBATAR_COLOR_NOT_APPLICABLE, 32, ReanimTrackId::tidBits_06, ReanimTrackId::None, 2 },
+	{ ZombatarImage::TIDBITS_8, ZombatarImage::None, 33, 55, 0, 0, ZOMBATAR_COLOR_NOT_APPLICABLE, 32, ReanimTrackId::tidBits_07, ReanimTrackId::None, 2 },
+	{ ZombatarImage::TIDBITS_9, ZombatarImage::None, 21, 76, 0, 0, ZOMBATAR_COLOR_NOT_APPLICABLE, 32, ReanimTrackId::tidBits_08, ReanimTrackId::None, 2 },
+	{ ZombatarImage::TIDBITS_10, ZombatarImage::None, 36, 71, 0, 0, ZOMBATAR_COLOR_BRIGHT, 32, ReanimTrackId::tidBits_09, ReanimTrackId::tidBits_09_line, 2 },
+	{ ZombatarImage::TIDBITS_11, ZombatarImage::None, 36, 70, 0, 0, ZOMBATAR_COLOR_BRIGHT, 32, ReanimTrackId::tidBits_10, ReanimTrackId::tidBits_10_line, 2 },
+	{ ZombatarImage::TIDBITS_12, ZombatarImage::None, 86, 91, 0, 6, ZOMBATAR_COLOR_BRIGHT, 32, ReanimTrackId::tidBits_11, ReanimTrackId::tidBits_11_line, 2 },
+	{ ZombatarImage::TIDBITS_13, ZombatarImage::None, 88, 50, 0, 8, ZOMBATAR_COLOR_NOT_APPLICABLE, 32, ReanimTrackId::tidBits_12, ReanimTrackId::None, 2 },
+	{ ZombatarImage::TIDBITS_14, ZombatarImage::None, 113, 115, 0, 0, ZOMBATAR_COLOR_NOT_APPLICABLE, 32, ReanimTrackId::tidBits_13, ReanimTrackId::None, 2 }
 };
 
 const ZombatarItem gEyewearItems[] = {
-	{ IMAGE_ZOMBATAR_EYEWEAR_1, IMAGE_ZOMBATAR_EYEWEAR_1_MASK, 28, 73, 0, 0, ZOMBATAR_COLOR_BRIGHT, 32, ReanimTrackId::eyeWear_00, ReanimTrackId::eyeWear_00_line, 10 },
-	{ IMAGE_ZOMBATAR_EYEWEAR_2, IMAGE_ZOMBATAR_EYEWEAR_2_MASK, 31, 85, 0, -1, ZOMBATAR_COLOR_BRIGHT, 32, ReanimTrackId::eyeWear_01, ReanimTrackId::eyeWear_01_line, 10 },
-	{ IMAGE_ZOMBATAR_EYEWEAR_3, IMAGE_ZOMBATAR_EYEWEAR_3_MASK, 28, 69, 0, 1, ZOMBATAR_COLOR_BRIGHT, 32, ReanimTrackId::eyeWear_02, ReanimTrackId::eyeWear_02_line, 10 },
-	{ IMAGE_ZOMBATAR_EYEWEAR_4, IMAGE_ZOMBATAR_EYEWEAR_4_MASK, 28, 78, 0, -1, ZOMBATAR_COLOR_BRIGHT, 32, ReanimTrackId::eyeWear_03, ReanimTrackId::eyeWear_03_line, 10 },
-	{ IMAGE_ZOMBATAR_EYEWEAR_5, IMAGE_ZOMBATAR_EYEWEAR_5_MASK, 30, 75, -1, -1, ZOMBATAR_COLOR_BRIGHT, 32, ReanimTrackId::eyeWear_04, ReanimTrackId::eyeWear_04_line, 10 },
-	{ IMAGE_ZOMBATAR_EYEWEAR_6, IMAGE_ZOMBATAR_EYEWEAR_6_MASK, 30, 78, -1, -1, ZOMBATAR_COLOR_BRIGHT, 32, ReanimTrackId::eyeWear_05, ReanimTrackId::eyeWear_05_line, 10 },
-	{ IMAGE_ZOMBATAR_EYEWEAR_7, IMAGE_ZOMBATAR_EYEWEAR_7_MASK, 50, 90, -1, -1, ZOMBATAR_COLOR_BRIGHT, 32, ReanimTrackId::eyeWear_06, ReanimTrackId::eyeWear_06_line, 10 },
-	{ IMAGE_ZOMBATAR_EYEWEAR_8, IMAGE_ZOMBATAR_EYEWEAR_8_MASK, 32, 70, -1, -1, ZOMBATAR_COLOR_BRIGHT, 32, ReanimTrackId::eyeWear_07, ReanimTrackId::eyeWear_07_line, 10 },
-	{ IMAGE_ZOMBATAR_EYEWEAR_9, IMAGE_ZOMBATAR_EYEWEAR_9_MASK, 36, 100, -1, -1, ZOMBATAR_COLOR_BRIGHT, 32, ReanimTrackId::eyeWear_08, ReanimTrackId::eyeWear_08_line, 10 },
-	{ IMAGE_ZOMBATAR_EYEWEAR_10, IMAGE_ZOMBATAR_EYEWEAR_10_MASK, 31, 75, -1, -1, ZOMBATAR_COLOR_BRIGHT, 32, ReanimTrackId::eyeWear_09, ReanimTrackId::eyeWear_09_line, 10 },
-	{ IMAGE_ZOMBATAR_EYEWEAR_11, IMAGE_ZOMBATAR_EYEWEAR_11_MASK, 31, 67, -1, -1, ZOMBATAR_COLOR_BRIGHT, 32, ReanimTrackId::eyeWear_10, ReanimTrackId::eyeWear_10_line, 10 },
-	{ IMAGE_ZOMBATAR_EYEWEAR_12, IMAGE_ZOMBATAR_EYEWEAR_12_MASK, 38, 95, -1, -1, ZOMBATAR_COLOR_BRIGHT, 32, ReanimTrackId::eyeWear_11, ReanimTrackId::eyeWear_11_line, 10 },
-	{ IMAGE_ZOMBATAR_EYEWEAR_13, nullptr, 30, 81, 0, 0, ZOMBATAR_COLOR_NOT_APPLICABLE, 32, ReanimTrackId::eyeWear_12, ReanimTrackId::None, 10 },
-	{ IMAGE_ZOMBATAR_EYEWEAR_14, nullptr, 35, 64, 0, 0, ZOMBATAR_COLOR_NOT_APPLICABLE, 32, ReanimTrackId::eyeWear_13, ReanimTrackId::None, 10 },
-	{ IMAGE_ZOMBATAR_EYEWEAR_15, nullptr, 42, 65, 0, 0, ZOMBATAR_COLOR_NOT_APPLICABLE, 32, ReanimTrackId::eyeWear_14, ReanimTrackId::None, 10 },
-	{ IMAGE_ZOMBATAR_EYEWEAR_16, nullptr, 35, 65, 0, 0, ZOMBATAR_COLOR_NOT_APPLICABLE, 32, ReanimTrackId::eyeWear_15, ReanimTrackId::None, 10 }
+	{ ZombatarImage::EYEWEAR_1, ZombatarImage::EYEWEAR_1_MASK, 28, 73, 0, 0, ZOMBATAR_COLOR_BRIGHT, 32, ReanimTrackId::eyeWear_00, ReanimTrackId::eyeWear_00_line, 10 },
+	{ ZombatarImage::EYEWEAR_2, ZombatarImage::EYEWEAR_2_MASK, 31, 85, 0, -1, ZOMBATAR_COLOR_BRIGHT, 32, ReanimTrackId::eyeWear_01, ReanimTrackId::eyeWear_01_line, 10 },
+	{ ZombatarImage::EYEWEAR_3, ZombatarImage::EYEWEAR_3_MASK, 28, 69, 0, 1, ZOMBATAR_COLOR_BRIGHT, 32, ReanimTrackId::eyeWear_02, ReanimTrackId::eyeWear_02_line, 10 },
+	{ ZombatarImage::EYEWEAR_4, ZombatarImage::EYEWEAR_4_MASK, 28, 78, 0, -1, ZOMBATAR_COLOR_BRIGHT, 32, ReanimTrackId::eyeWear_03, ReanimTrackId::eyeWear_03_line, 10 },
+	{ ZombatarImage::EYEWEAR_5, ZombatarImage::EYEWEAR_5_MASK, 30, 75, -1, -1, ZOMBATAR_COLOR_BRIGHT, 32, ReanimTrackId::eyeWear_04, ReanimTrackId::eyeWear_04_line, 10 },
+	{ ZombatarImage::EYEWEAR_6, ZombatarImage::EYEWEAR_6_MASK, 30, 78, -1, -1, ZOMBATAR_COLOR_BRIGHT, 32, ReanimTrackId::eyeWear_05, ReanimTrackId::eyeWear_05_line, 10 },
+	{ ZombatarImage::EYEWEAR_7, ZombatarImage::EYEWEAR_7_MASK, 50, 90, -1, -1, ZOMBATAR_COLOR_BRIGHT, 32, ReanimTrackId::eyeWear_06, ReanimTrackId::eyeWear_06_line, 10 },
+	{ ZombatarImage::EYEWEAR_8, ZombatarImage::EYEWEAR_8_MASK, 32, 70, -1, -1, ZOMBATAR_COLOR_BRIGHT, 32, ReanimTrackId::eyeWear_07, ReanimTrackId::eyeWear_07_line, 10 },
+	{ ZombatarImage::EYEWEAR_9, ZombatarImage::EYEWEAR_9_MASK, 36, 100, -1, -1, ZOMBATAR_COLOR_BRIGHT, 32, ReanimTrackId::eyeWear_08, ReanimTrackId::eyeWear_08_line, 10 },
+	{ ZombatarImage::EYEWEAR_10, ZombatarImage::EYEWEAR_10_MASK, 31, 75, -1, -1, ZOMBATAR_COLOR_BRIGHT, 32, ReanimTrackId::eyeWear_09, ReanimTrackId::eyeWear_09_line, 10 },
+	{ ZombatarImage::EYEWEAR_11, ZombatarImage::EYEWEAR_11_MASK, 31, 67, -1, -1, ZOMBATAR_COLOR_BRIGHT, 32, ReanimTrackId::eyeWear_10, ReanimTrackId::eyeWear_10_line, 10 },
+	{ ZombatarImage::EYEWEAR_12, ZombatarImage::EYEWEAR_12_MASK, 38, 95, -1, -1, ZOMBATAR_COLOR_BRIGHT, 32, ReanimTrackId::eyeWear_11, ReanimTrackId::eyeWear_11_line, 10 },
+	{ ZombatarImage::EYEWEAR_13, ZombatarImage::None, 30, 81, 0, 0, ZOMBATAR_COLOR_NOT_APPLICABLE, 32, ReanimTrackId::eyeWear_12, ReanimTrackId::None, 10 },
+	{ ZombatarImage::EYEWEAR_14, ZombatarImage::None, 35, 64, 0, 0, ZOMBATAR_COLOR_NOT_APPLICABLE, 32, ReanimTrackId::eyeWear_13, ReanimTrackId::None, 10 },
+	{ ZombatarImage::EYEWEAR_15, ZombatarImage::None, 42, 65, 0, 0, ZOMBATAR_COLOR_NOT_APPLICABLE, 32, ReanimTrackId::eyeWear_14, ReanimTrackId::None, 10 },
+	{ ZombatarImage::EYEWEAR_16, ZombatarImage::None, 35, 65, 0, 0, ZOMBATAR_COLOR_NOT_APPLICABLE, 32, ReanimTrackId::eyeWear_15, ReanimTrackId::None, 10 }
 };
 
 const ZombatarItem gClothesItems[] = {
-	{ IMAGE_ZOMBATAR_CLOTHES_1, nullptr, 88, 110, 0, 0, ZOMBATAR_COLOR_NOT_APPLICABLE, 20, ReanimTrackId::None, ReanimTrackId::None, 0 },
-	{ IMAGE_ZOMBATAR_CLOTHES_2, nullptr, 75, 100, 0, 0, ZOMBATAR_COLOR_NOT_APPLICABLE, 20, ReanimTrackId::None, ReanimTrackId::None, 0 },
-	{ IMAGE_ZOMBATAR_CLOTHES_3, nullptr, 85, 112, 0, 0, ZOMBATAR_COLOR_NOT_APPLICABLE, 20, ReanimTrackId::None, ReanimTrackId::None, 0 },
-	{ IMAGE_ZOMBATAR_CLOTHES_4, nullptr, 76, 110, 0, 0, ZOMBATAR_COLOR_NOT_APPLICABLE, 20, ReanimTrackId::None, ReanimTrackId::None, 0 },
-	{ IMAGE_ZOMBATAR_CLOTHES_5, nullptr, 89, 115, 0, 0, ZOMBATAR_COLOR_NOT_APPLICABLE, 20, ReanimTrackId::None, ReanimTrackId::None, 0 },
-	{ IMAGE_ZOMBATAR_CLOTHES_6, nullptr, 93, 110, 0, 0, ZOMBATAR_COLOR_NOT_APPLICABLE, 32, ReanimTrackId::None, ReanimTrackId::None, 0 },
-	{ IMAGE_ZOMBATAR_CLOTHES_7, nullptr, 78, 105, 0, 0, ZOMBATAR_COLOR_NOT_APPLICABLE, 20, ReanimTrackId::None, ReanimTrackId::None, 0 },
-	{ IMAGE_ZOMBATAR_CLOTHES_8, nullptr, 88, 110, 0, 0, ZOMBATAR_COLOR_NOT_APPLICABLE, 20, ReanimTrackId::None, ReanimTrackId::None, 0 },
-	{ IMAGE_ZOMBATAR_CLOTHES_9, nullptr, 88, 102, 0, 0, ZOMBATAR_COLOR_NOT_APPLICABLE, 20, ReanimTrackId::None, ReanimTrackId::None, 0 },
-	{ IMAGE_ZOMBATAR_CLOTHES_10, nullptr, 85, 110, 0, 0, ZOMBATAR_COLOR_NOT_APPLICABLE, 20, ReanimTrackId::None, ReanimTrackId::None, 0 },
-	{ IMAGE_ZOMBATAR_CLOTHES_11, nullptr, 85, 110, 0, 0, ZOMBATAR_COLOR_NOT_APPLICABLE, 20, ReanimTrackId::None, ReanimTrackId::None, 0 },
-	{ IMAGE_ZOMBATAR_CLOTHES_12, nullptr, 79, 112, 0, 0, ZOMBATAR_COLOR_NOT_APPLICABLE, 20, ReanimTrackId::None, ReanimTrackId::None, 0 }
+	{ ZombatarImage::CLOTHES_1, ZombatarImage::None, 88, 110, 0, 0, ZOMBATAR_COLOR_NOT_APPLICABLE, 20, ReanimTrackId::None, ReanimTrackId::None, 0 },
+	{ ZombatarImage::CLOTHES_2, ZombatarImage::None, 75, 100, 0, 0, ZOMBATAR_COLOR_NOT_APPLICABLE, 20, ReanimTrackId::None, ReanimTrackId::None, 0 },
+	{ ZombatarImage::CLOTHES_3, ZombatarImage::None, 85, 112, 0, 0, ZOMBATAR_COLOR_NOT_APPLICABLE, 20, ReanimTrackId::None, ReanimTrackId::None, 0 },
+	{ ZombatarImage::CLOTHES_4, ZombatarImage::None, 76, 110, 0, 0, ZOMBATAR_COLOR_NOT_APPLICABLE, 20, ReanimTrackId::None, ReanimTrackId::None, 0 },
+	{ ZombatarImage::CLOTHES_5, ZombatarImage::None, 89, 115, 0, 0, ZOMBATAR_COLOR_NOT_APPLICABLE, 20, ReanimTrackId::None, ReanimTrackId::None, 0 },
+	{ ZombatarImage::CLOTHES_6, ZombatarImage::None, 93, 110, 0, 0, ZOMBATAR_COLOR_NOT_APPLICABLE, 32, ReanimTrackId::None, ReanimTrackId::None, 0 },
+	{ ZombatarImage::CLOTHES_7, ZombatarImage::None, 78, 105, 0, 0, ZOMBATAR_COLOR_NOT_APPLICABLE, 20, ReanimTrackId::None, ReanimTrackId::None, 0 },
+	{ ZombatarImage::CLOTHES_8, ZombatarImage::None, 88, 110, 0, 0, ZOMBATAR_COLOR_NOT_APPLICABLE, 20, ReanimTrackId::None, ReanimTrackId::None, 0 },
+	{ ZombatarImage::CLOTHES_9, ZombatarImage::None, 88, 102, 0, 0, ZOMBATAR_COLOR_NOT_APPLICABLE, 20, ReanimTrackId::None, ReanimTrackId::None, 0 },
+	{ ZombatarImage::CLOTHES_10, ZombatarImage::None, 85, 110, 0, 0, ZOMBATAR_COLOR_NOT_APPLICABLE, 20, ReanimTrackId::None, ReanimTrackId::None, 0 },
+	{ ZombatarImage::CLOTHES_11, ZombatarImage::None, 85, 110, 0, 0, ZOMBATAR_COLOR_NOT_APPLICABLE, 20, ReanimTrackId::None, ReanimTrackId::None, 0 },
+	{ ZombatarImage::CLOTHES_12, ZombatarImage::None, 79, 112, 0, 0, ZOMBATAR_COLOR_NOT_APPLICABLE, 20, ReanimTrackId::None, ReanimTrackId::None, 0 }
 };
 
 const ZombatarItem gAccessoriesItems[] = {
-	{ IMAGE_ZOMBATAR_ACCESSORY_1, nullptr, 103, 110, 0, 0, ZOMBATAR_COLOR_NOT_APPLICABLE, 32, ReanimTrackId::accessories_00, ReanimTrackId::None, 4 },
-	{ IMAGE_ZOMBATAR_ACCESSORY_2, nullptr, 108, 110, 0, 0, ZOMBATAR_COLOR_NOT_APPLICABLE, 32, ReanimTrackId::accessories_01, ReanimTrackId::None, 4 },
-	{ IMAGE_ZOMBATAR_ACCESSORY_3, nullptr, 86, 113, 0, 0, ZOMBATAR_COLOR_NOT_APPLICABLE, 32, ReanimTrackId::accessories_02, ReanimTrackId::None, 4 },
-	{ IMAGE_ZOMBATAR_ACCESSORY_4, nullptr, 131, 95, 0, 0, ZOMBATAR_COLOR_NOT_APPLICABLE, 32, ReanimTrackId::accessories_03, ReanimTrackId::None, 4 },
-	{ IMAGE_ZOMBATAR_ACCESSORY_5, nullptr, 131, 100, 0, 0, ZOMBATAR_COLOR_NOT_APPLICABLE, 32, ReanimTrackId::accessories_04, ReanimTrackId::None, 4 },
-	{ IMAGE_ZOMBATAR_ACCESSORY_6, nullptr, 131, 100, 0, 0, ZOMBATAR_COLOR_NOT_APPLICABLE, 32, ReanimTrackId::accessories_14, ReanimTrackId::None, 4 },
-	{ IMAGE_ZOMBATAR_ACCESSORY_8, nullptr, 104, 111, 0, 0, ZOMBATAR_COLOR_NOT_APPLICABLE, 32, ReanimTrackId::accessories_05, ReanimTrackId::None, 4 },
-	{ IMAGE_ZOMBATAR_ACCESSORY_9, nullptr, 118, 65, 0, 0, ZOMBATAR_COLOR_BRIGHT, 32, ReanimTrackId::accessories_06, ReanimTrackId::None, 4 },
-	{ IMAGE_ZOMBATAR_ACCESSORY_10, nullptr, 61, 118, 0, 0, ZOMBATAR_COLOR_NOT_APPLICABLE, 32, ReanimTrackId::accessories_12, ReanimTrackId::None, 4 },
-	{ IMAGE_ZOMBATAR_ACCESSORY_11, nullptr, 43, 100, 0, 0, ZOMBATAR_COLOR_BRIGHT, 32, ReanimTrackId::accessories_07, ReanimTrackId::None, 4 },
-	{ IMAGE_ZOMBATAR_ACCESSORY_12, nullptr, 135, 92, 0, 0, ZOMBATAR_COLOR_NOT_APPLICABLE, 32, ReanimTrackId::accessories_09, ReanimTrackId::None, 4 },
-	{ IMAGE_ZOMBATAR_ACCESSORY_13, nullptr, 78, 130, 0, 0, ZOMBATAR_COLOR_BRIGHT, 32, ReanimTrackId::accessories_10, ReanimTrackId::None, 4 },
-	{ IMAGE_ZOMBATAR_ACCESSORY_14, nullptr, 68, 145, 0, 0, ZOMBATAR_COLOR_BRIGHT, 32, ReanimTrackId::accessories_11, ReanimTrackId::None, 4 },
-	{ IMAGE_ZOMBATAR_ACCESSORY_15, nullptr, 133, 70, 0, 0, ZOMBATAR_COLOR_NOT_APPLICABLE, 32, ReanimTrackId::accessories_13, ReanimTrackId::None, 4 },
-	{ IMAGE_ZOMBATAR_ACCESSORY_16, nullptr, 13, 40, 0, 0, ZOMBATAR_COLOR_NOT_APPLICABLE, 32, ReanimTrackId::accessories_08, ReanimTrackId::None, 10 }
+	{ ZombatarImage::ACCESSORY_1, ZombatarImage::None, 103, 110, 0, 0, ZOMBATAR_COLOR_NOT_APPLICABLE, 32, ReanimTrackId::accessories_00, ReanimTrackId::None, 4 },
+	{ ZombatarImage::ACCESSORY_2, ZombatarImage::None, 108, 110, 0, 0, ZOMBATAR_COLOR_NOT_APPLICABLE, 32, ReanimTrackId::accessories_01, ReanimTrackId::None, 4 },
+	{ ZombatarImage::ACCESSORY_3, ZombatarImage::None, 86, 113, 0, 0, ZOMBATAR_COLOR_NOT_APPLICABLE, 32, ReanimTrackId::accessories_02, ReanimTrackId::None, 4 },
+	{ ZombatarImage::ACCESSORY_4, ZombatarImage::None, 131, 95, 0, 0, ZOMBATAR_COLOR_NOT_APPLICABLE, 32, ReanimTrackId::accessories_03, ReanimTrackId::None, 4 },
+	{ ZombatarImage::ACCESSORY_5, ZombatarImage::None, 131, 100, 0, 0, ZOMBATAR_COLOR_NOT_APPLICABLE, 32, ReanimTrackId::accessories_04, ReanimTrackId::None, 4 },
+	{ ZombatarImage::ACCESSORY_6, ZombatarImage::None, 131, 100, 0, 0, ZOMBATAR_COLOR_NOT_APPLICABLE, 32, ReanimTrackId::accessories_14, ReanimTrackId::None, 4 },
+	{ ZombatarImage::ACCESSORY_8, ZombatarImage::None, 104, 111, 0, 0, ZOMBATAR_COLOR_NOT_APPLICABLE, 32, ReanimTrackId::accessories_05, ReanimTrackId::None, 4 },
+	{ ZombatarImage::ACCESSORY_9, ZombatarImage::None, 118, 65, 0, 0, ZOMBATAR_COLOR_BRIGHT, 32, ReanimTrackId::accessories_06, ReanimTrackId::None, 4 },
+	{ ZombatarImage::ACCESSORY_10, ZombatarImage::None, 61, 118, 0, 0, ZOMBATAR_COLOR_NOT_APPLICABLE, 32, ReanimTrackId::accessories_12, ReanimTrackId::None, 4 },
+	{ ZombatarImage::ACCESSORY_11, ZombatarImage::None, 43, 100, 0, 0, ZOMBATAR_COLOR_BRIGHT, 32, ReanimTrackId::accessories_07, ReanimTrackId::None, 4 },
+	{ ZombatarImage::ACCESSORY_12, ZombatarImage::None, 135, 92, 0, 0, ZOMBATAR_COLOR_NOT_APPLICABLE, 32, ReanimTrackId::accessories_09, ReanimTrackId::None, 4 },
+	{ ZombatarImage::ACCESSORY_13, ZombatarImage::None, 78, 130, 0, 0, ZOMBATAR_COLOR_BRIGHT, 32, ReanimTrackId::accessories_10, ReanimTrackId::None, 4 },
+	{ ZombatarImage::ACCESSORY_14, ZombatarImage::None, 68, 145, 0, 0, ZOMBATAR_COLOR_BRIGHT, 32, ReanimTrackId::accessories_11, ReanimTrackId::None, 4 },
+	{ ZombatarImage::ACCESSORY_15, ZombatarImage::None, 133, 70, 0, 0, ZOMBATAR_COLOR_NOT_APPLICABLE, 32, ReanimTrackId::accessories_13, ReanimTrackId::None, 4 },
+	{ ZombatarImage::ACCESSORY_16, ZombatarImage::None, 13, 40, 0, 0, ZOMBATAR_COLOR_NOT_APPLICABLE, 32, ReanimTrackId::accessories_08, ReanimTrackId::None, 10 }
 };
 
 const ZombatarItem gHatsItems[] = {
-	{ IMAGE_ZOMBATAR_HATS_1, IMAGE_ZOMBATAR_HATS_1_MASK, 28, 5, 2, 1, ZOMBATAR_COLOR_BRIGHT, 32, ReanimTrackId::hats_00, ReanimTrackId::hats_00_line, 12 },
-	{ IMAGE_ZOMBATAR_HATS_2, nullptr, 47, 12, 0, 0, ZOMBATAR_COLOR_BRIGHT, 32, ReanimTrackId::hats_01, ReanimTrackId::hats_01_line, 12 },
-	{ IMAGE_ZOMBATAR_HATS_3, IMAGE_ZOMBATAR_HATS_3_MASK, 36, 20, 15, -1, ZOMBATAR_COLOR_BRIGHT, 32, ReanimTrackId::hats_02, ReanimTrackId::hats_02_line, 12 },
-	{ IMAGE_ZOMBATAR_HATS_4, nullptr, 11, 10, 0, 0, ZOMBATAR_COLOR_BRIGHT, 32, ReanimTrackId::hats_03, ReanimTrackId::hats_03_line, 12 },
-	{ IMAGE_ZOMBATAR_HATS_5, nullptr, 41, 16, 0, 0, ZOMBATAR_COLOR_BRIGHT, 32, ReanimTrackId::hats_04, ReanimTrackId::hats_04_line, 12 },
-	{ IMAGE_ZOMBATAR_HATS_6, IMAGE_ZOMBATAR_HATS_6_MASK, 18, 3, 4, -2, ZOMBATAR_COLOR_BRIGHT, 32, ReanimTrackId::hats_05, ReanimTrackId::hats_05_line, 12 },
-	{ IMAGE_ZOMBATAR_HATS_7, IMAGE_ZOMBATAR_HATS_7_MASK, 53, 17, 0, 15, ZOMBATAR_COLOR_BRIGHT, 2, ReanimTrackId::hats_06, ReanimTrackId::hats_06_line, 12 },
-	{ IMAGE_ZOMBATAR_HATS_8, IMAGE_ZOMBATAR_HATS_8_MASK, 3, 0, 0, -2, ZOMBATAR_COLOR_BRIGHT, 2, ReanimTrackId::hats_07, ReanimTrackId::hats_07_line, 12 },
-	{ IMAGE_ZOMBATAR_HATS_9, IMAGE_ZOMBATAR_HATS_9_MASK, 38, 0, -1, -2, ZOMBATAR_COLOR_BRIGHT, 2, ReanimTrackId::hats_08, ReanimTrackId::hats_08_line, 12 },
-	{ IMAGE_ZOMBATAR_HATS_10, nullptr, 13, 45, 0, 0, ZOMBATAR_COLOR_BRIGHT, 32, ReanimTrackId::hats_09, ReanimTrackId::hats_09_line, 12 },
-	{ IMAGE_ZOMBATAR_HATS_11, IMAGE_ZOMBATAR_HATS_11_MASK, 63, 8, 1, 14, ZOMBATAR_COLOR_BRIGHT, 32, ReanimTrackId::hats_10, ReanimTrackId::hats_10_line, 12 },
-	{ IMAGE_ZOMBATAR_HATS_12, nullptr, 43, 15, 0, 0, ZOMBATAR_COLOR_BRIGHT, 32, ReanimTrackId::hats_11, ReanimTrackId::hats_11_line, 12 },
-	{ IMAGE_ZOMBATAR_HATS_13, nullptr, 18, 0, 0, 0, ZOMBATAR_COLOR_NOT_APPLICABLE, 32, ReanimTrackId::None, ReanimTrackId::hats_12_line, 12 },
-	{ IMAGE_ZOMBATAR_HATS_14, nullptr, 23, 5, 0, 0, ZOMBATAR_COLOR_BRIGHT, 32, ReanimTrackId::hats_13, ReanimTrackId::hats_13_line, 12 }
+	{ ZombatarImage::HATS_1, ZombatarImage::HATS_1_MASK, 28, 5, 2, 1, ZOMBATAR_COLOR_BRIGHT, 32, ReanimTrackId::hats_00, ReanimTrackId::hats_00_line, 12 },
+	{ ZombatarImage::HATS_2, ZombatarImage::None, 47, 12, 0, 0, ZOMBATAR_COLOR_BRIGHT, 32, ReanimTrackId::hats_01, ReanimTrackId::hats_01_line, 12 },
+	{ ZombatarImage::HATS_3, ZombatarImage::HATS_3_MASK, 36, 20, 15, -1, ZOMBATAR_COLOR_BRIGHT, 32, ReanimTrackId::hats_02, ReanimTrackId::hats_02_line, 12 },
+	{ ZombatarImage::HATS_4, ZombatarImage::None, 11, 10, 0, 0, ZOMBATAR_COLOR_BRIGHT, 32, ReanimTrackId::hats_03, ReanimTrackId::hats_03_line, 12 },
+	{ ZombatarImage::HATS_5, ZombatarImage::None, 41, 16, 0, 0, ZOMBATAR_COLOR_BRIGHT, 32, ReanimTrackId::hats_04, ReanimTrackId::hats_04_line, 12 },
+	{ ZombatarImage::HATS_6, ZombatarImage::HATS_6_MASK, 18, 3, 4, -2, ZOMBATAR_COLOR_BRIGHT, 32, ReanimTrackId::hats_05, ReanimTrackId::hats_05_line, 12 },
+	{ ZombatarImage::HATS_7, ZombatarImage::HATS_7_MASK, 53, 17, 0, 15, ZOMBATAR_COLOR_BRIGHT, 2, ReanimTrackId::hats_06, ReanimTrackId::hats_06_line, 12 },
+	{ ZombatarImage::HATS_8, ZombatarImage::HATS_8_MASK, 3, 0, 0, -2, ZOMBATAR_COLOR_BRIGHT, 2, ReanimTrackId::hats_07, ReanimTrackId::hats_07_line, 12 },
+	{ ZombatarImage::HATS_9, ZombatarImage::HATS_9_MASK, 38, 0, -1, -2, ZOMBATAR_COLOR_BRIGHT, 2, ReanimTrackId::hats_08, ReanimTrackId::hats_08_line, 12 },
+	{ ZombatarImage::HATS_10, ZombatarImage::None, 13, 45, 0, 0, ZOMBATAR_COLOR_BRIGHT, 32, ReanimTrackId::hats_09, ReanimTrackId::hats_09_line, 12 },
+	{ ZombatarImage::HATS_11, ZombatarImage::HATS_11_MASK, 63, 8, 1, 14, ZOMBATAR_COLOR_BRIGHT, 32, ReanimTrackId::hats_10, ReanimTrackId::hats_10_line, 12 },
+	{ ZombatarImage::HATS_12, ZombatarImage::None, 43, 15, 0, 0, ZOMBATAR_COLOR_BRIGHT, 32, ReanimTrackId::hats_11, ReanimTrackId::hats_11_line, 12 },
+	{ ZombatarImage::HATS_13, ZombatarImage::None, 18, 0, 0, 0, ZOMBATAR_COLOR_NOT_APPLICABLE, 32, ReanimTrackId::None, ReanimTrackId::hats_12_line, 12 },
+	{ ZombatarImage::HATS_14, ZombatarImage::None, 23, 5, 0, 0, ZOMBATAR_COLOR_BRIGHT, 32, ReanimTrackId::hats_13, ReanimTrackId::hats_13_line, 12 }
 };
 
 const ZombatarItem gBackdropItems[] = {
-	{ IMAGE_ZOMBATAR_BACKGROUND_CRAZYDAVE, nullptr, 0, 0, 0, 0, ZOMBATAR_COLOR_NOT_APPLICABLE, 32, ReanimTrackId::None, ReanimTrackId::None, 0 },
-	{ IMAGE_ZOMBATAR_BACKGROUND_MENU, nullptr, 0, 0, 0, 0, ZOMBATAR_COLOR_NOT_APPLICABLE, 32, ReanimTrackId::None, ReanimTrackId::None, 0 },
-	{ IMAGE_ZOMBATAR_BACKGROUND_MENU_DOS, nullptr, 0, 0, 0, 0, ZOMBATAR_COLOR_NOT_APPLICABLE, 32, ReanimTrackId::None, ReanimTrackId::None, 0 },
-	{ IMAGE_ZOMBATAR_BACKGROUND_ROOF, nullptr, 0, 0, 0, 0, ZOMBATAR_COLOR_NOT_APPLICABLE, 32, ReanimTrackId::None, ReanimTrackId::None, 0 },
-	{ IMAGE_ZOMBATAR_BACKGROUND_BLANK, nullptr, 0, 0, 0, 0, ZOMBATAR_COLOR_BRIGHT, 32, ReanimTrackId::None, ReanimTrackId::None, 0 }
+	{ ZombatarImage::BACKGROUND_CRAZYDAVE, ZombatarImage::None, 0, 0, 0, 0, ZOMBATAR_COLOR_NOT_APPLICABLE, 32, ReanimTrackId::None, ReanimTrackId::None, 0 },
+	{ ZombatarImage::BACKGROUND_MENU, ZombatarImage::None, 0, 0, 0, 0, ZOMBATAR_COLOR_NOT_APPLICABLE, 32, ReanimTrackId::None, ReanimTrackId::None, 0 },
+	{ ZombatarImage::BACKGROUND_MENU_DOS, ZombatarImage::None, 0, 0, 0, 0, ZOMBATAR_COLOR_NOT_APPLICABLE, 32, ReanimTrackId::None, ReanimTrackId::None, 0 },
+	{ ZombatarImage::BACKGROUND_ROOF, ZombatarImage::None, 0, 0, 0, 0, ZOMBATAR_COLOR_NOT_APPLICABLE, 32, ReanimTrackId::None, ReanimTrackId::None, 0 },
+	{ ZombatarImage::BACKGROUND_BLANK, ZombatarImage::None, 0, 0, 0, 0, ZOMBATAR_COLOR_BRIGHT, 32, ReanimTrackId::None, ReanimTrackId::None, 0 }
 };
 
 struct ZombatarItemSpan
@@ -294,34 +389,21 @@ ZombatarItemSpan GetRawItems(ZombatarCustomizationPage thePage)
 	return (unsigned)thePage < sizeof(kPageItems) / sizeof(kPageItems[0]) ? kPageItems[thePage] : ZombatarItemSpan{ nullptr, 0 };
 }
 
-GameButton* MakeZombatarButton(
+ZombatarButton* MakeZombatarButton(
 	int theId,
 	Widget* theParent,
-	Image* theNormalImage,
-	Image* theOverImage,
-	Image* theDownImage,
-	Image* theDisabledImage = nullptr)
+	ZombatarImage theNormalImage,
+	ZombatarImage theOverImage,
+	ZombatarImage theDownImage,
+	ZombatarImage theDisabledImage = ZombatarImage::None)
 {
-	GameButton* aButton = new GameButton(theId);
+	ZombatarButton* aButton = new ZombatarButton(theId, theNormalImage,
+		theOverImage, theDownImage, theDisabledImage);
 	aButton->mParentWidget = theParent;
-	aButton->mButtonImage = theNormalImage;
-	aButton->mOverImage = theOverImage;
-	aButton->mDownImage = theDownImage;
-	aButton->mDisabledImage = theDisabledImage;
-
-	Image* aSizeImage = theNormalImage ? theNormalImage :
-		(theOverImage ? theOverImage : theDownImage);
-	if (aSizeImage)
-	{
-		aButton->mX = 0;
-		aButton->mY = 0;
-		aButton->mWidth = aSizeImage->mWidth;
-		aButton->mHeight = aSizeImage->mHeight;
-	}
 	return aButton;
 }
 
-void MoveButton(GameButton* theButton, int theX, int theY)
+void MoveButton(ZombatarButton* theButton, int theX, int theY)
 {
 	if (theButton)
 	{
@@ -330,40 +412,26 @@ void MoveButton(GameButton* theButton, int theX, int theY)
 	}
 }
 
-bool CanPress(const GameButton* theButton)
+bool CanPress(const ZombatarButton* theButton)
 {
 	return theButton && theButton->mIsOver && !theButton->mDisabled &&
 		!theButton->mBtnNoDraw;
-}
-
-Rect ClampSourceRect(const Rect& theRect, const Image* theImage)
-{
-	if (!theImage)
-		return Rect();
-
-	const int aLeft = std::clamp(theRect.mX, 0, theImage->mWidth);
-	const int aTop = std::clamp(theRect.mY, 0, theImage->mHeight);
-	const int aRight = std::clamp(
-		theRect.mX + theRect.mWidth, aLeft, theImage->mWidth);
-	const int aBottom = std::clamp(
-		theRect.mY + theRect.mHeight, aTop, theImage->mHeight);
-	return Rect(aLeft, aTop, aRight - aLeft, aBottom - aTop);
 }
 
 // The alignment bits in the 1073 Zombatar table are the same bits used by
 // the original FitIconRect helper: 2=top, 4=bottom, 8=left, 16=right.
 // Keeping this separate from the portrait coordinates prevents the thumbnail
 // page from accidentally treating vertical alignment as horizontal.
-Rect FitZombatarIconRect(const Rect& theCell, const Image* theImage, int theAlignment)
+Rect FitZombatarIconRect(const Rect& theCell, ZombatarImage theImage, int theAlignment)
 {
-	if (!theImage)
+	if (theImage == ZombatarImage::None)
 		return Rect();
 
 	const int aInset = 10;
 	const int aAvailableWidth = std::max(1, theCell.mWidth - aInset * 2);
 	const int aAvailableHeight = std::max(1, theCell.mHeight - aInset * 2);
-	int aWidth = theImage->mWidth;
-	int aHeight = theImage->mHeight;
+	int aWidth = gZombatarAtlas.mImages[static_cast<size_t>(theImage)].mWidth;
+	int aHeight = gZombatarAtlas.mImages[static_cast<size_t>(theImage)].mHeight;
 	const bool aWidthOverflows = aWidth > aAvailableWidth;
 	const bool aHeightOverflows = aHeight > aAvailableHeight;
 	if (aWidthOverflows && (!aHeightOverflows || aWidth >= aHeight))
@@ -397,7 +465,7 @@ bool ExportZombatarJpeg(const Zombatar& theZombatar, int theNumber, LawnApp* the
 	if (theNumber <= 0 || !theApp)
 		return false;
 
-	if (!theApp->mDDInterface || !theApp->mDDInterface->mIs3D ||
+	if (!theApp->mDDInterface ||
 		!theApp->mDDInterface->mRenderInterface ||
 		!theApp->mDDInterface->mRenderInterface->mRenderer)
 		throw std::logic_error("Zombatar export requires a native GPU renderer");
@@ -406,24 +474,29 @@ bool ExportZombatarJpeg(const Zombatar& theZombatar, int theNumber, LawnApp* the
 	const ZombatarItem* aBackdrop = ZombatarGetItem(
 		ZOMBATAR_CUSTOM_BACKDROPS,
 		theZombatar.mItems[ZOMBATAR_CUSTOM_BACKDROPS]);
-	Image* aBackdropImage =
-		aBackdrop && aBackdrop->mImage ? *aBackdrop->mImage : nullptr;
-	const int aWidth = aBackdropImage ? aBackdropImage->mWidth : 180;
-	const int aHeight = aBackdropImage ? aBackdropImage->mHeight : 180;
+	const int aWidth = aBackdrop ? gZombatarAtlas.mImages[static_cast<size_t>(aBackdrop->mImage)].mWidth : 180;
+	const int aHeight = aBackdrop ? gZombatarAtlas.mImages[static_cast<size_t>(aBackdrop->mImage)].mHeight : 180;
 	if (aWidth <= 0 || aHeight <= 0)
 		throw std::logic_error("Zombatar export requires valid GPU target dimensions");
 
-	std::unique_ptr<DDImage> aRenderImage(aRender.CreateRenderImage(aWidth, aHeight));
+	Image* aRenderImage = aRender.CreateRenderImage(aWidth, aHeight);
 	ImagePixels aPixels;
+	try
 	{
-		GpuImageDrawScope aDrawScope(aRender, aRenderImage.get());
-		Graphics aGraphics(aRenderImage.get());
+		GpuImageDrawScope aDrawScope(aRender, aRenderImage);
+		Graphics aGraphics(aRenderImage);
 		aGraphics.mLinearBlend = true;
 		DrawZombatarPortrait(&aGraphics, theZombatar, 0, 0);
 		aRender.Flush();
 		// Snapshot the export before restoring the caller's in-progress scene.
 		aPixels = aRender.ReadImagePixels(*aRenderImage);
 	}
+	catch (...)
+	{
+		delete aRenderImage;
+		throw;
+	}
+	delete aRenderImage;
 
 	const auto aDesktopPath = Sexy::ResolveDesktopDirectory();
 	if (!aDesktopPath)
@@ -459,7 +532,7 @@ bool ExportZombatarJpeg(const Zombatar& theZombatar, int theNumber, LawnApp* the
 	return aWritten;
 }
 
-std::array<GameButton*, 18> GetAllButtons(ZombatarItems* theItems)
+std::array<ZombatarButton*, 18> GetAllButtons(ZombatarItems* theItems)
 {
 	return {
 		theItems->mPrevPageButton,
@@ -620,12 +693,9 @@ void DrawZombatarPortrait(Graphics* g, const Zombatar& theZombatar, int theX, in
 	// Zombatar renderer establishes the portrait canvas before composing those
 	// images; without that state adjacent saved portraits can bleed into one
 	// another and through the stone display frame.
-	const int aPortraitWidth = IMAGE_ZOMBATAR_BACKGROUND_BLANK
-		? IMAGE_ZOMBATAR_BACKGROUND_BLANK->mWidth
-		: 180;
-	const int aPortraitHeight = IMAGE_ZOMBATAR_BACKGROUND_BLANK
-		? IMAGE_ZOMBATAR_BACKGROUND_BLANK->mHeight
-		: 180;
+	const Rect& aCanvas = gZombatarAtlas.mImages[static_cast<size_t>(ZombatarImage::BACKGROUND_BLANK)];
+	const int aPortraitWidth = aCanvas.mWidth;
+	const int aPortraitHeight = aCanvas.mHeight;
 	g->ClipRect(theX, theY, aPortraitWidth, aPortraitHeight);
 	const Zombatar aNormalized = NormalizeZombatarForRender(theZombatar);
 	// A portrait may follow a reanimation draw in the same Graphics object.
@@ -636,46 +706,38 @@ void DrawZombatarPortrait(Graphics* g, const Zombatar& theZombatar, int theX, in
 	const ZombatarItem* aBackdrop = ZombatarGetItem(
 		ZOMBATAR_CUSTOM_BACKDROPS,
 		aNormalized.mItems[ZOMBATAR_CUSTOM_BACKDROPS]);
-	if (aBackdrop && aBackdrop->mImage && *aBackdrop->mImage)
+	if (aBackdrop && aBackdrop->mImage != ZombatarImage::None)
 	{
 		if (aBackdrop->mColorMode != ZOMBATAR_COLOR_NOT_APPLICABLE)
 		{
 			g->mColor = ZombatarGetColor(aNormalized.mColors[ZOMBATAR_CUSTOM_BACKDROPS]);
 			g->mColorizeImages = true;
 		}
-		g->DrawImage(*aBackdrop->mImage, theX + aBackdrop->mX, theY + aBackdrop->mY);
+		DrawZombatarImage(g, aBackdrop->mImage, theX + aBackdrop->mX, theY + aBackdrop->mY);
 		g->mColorizeImages = false;
 		g->mColor = Color::White;
 	}
 
-	Image* aSkin = IMAGE_ZOMBATAR_ZOMBIE_BLANK_SKIN;
-	Image* aBlank = IMAGE_ZOMBATAR_ZOMBIE_BLANK;
-	if (aSkin && aBlank)
+	const ZombatarImage aSkin = ZombatarImage::ZOMBIE_BLANK_SKIN;
+	const ZombatarImage aBlank = ZombatarImage::ZOMBIE_BLANK;
 	{
 		// 1073 FUN_00530970 aligns both zombie base images to the backdrop's
 		// bottom-right corner.  Centering them shifts the portrait about
 		// 19 pixels left and 20 pixels up in the 180x180 display window.
 		// 1073 anchors the two base images to the blank-background canvas,
 		// rather than to whichever backdrop happens to be selected.
-		Image* aBlankBackdrop = IMAGE_ZOMBATAR_BACKGROUND_BLANK;
-		const int aSkinX = theX + (aBlankBackdrop
-			? aBlankBackdrop->mWidth - aSkin->mWidth
-			: 0);
-		const int aSkinY = theY + (aBlankBackdrop
-			? aBlankBackdrop->mHeight - aSkin->mHeight
-			: 0);
+		const Rect& aSkinRect = gZombatarAtlas.mImages[static_cast<size_t>(aSkin)];
+		const Rect& aBlankRect = gZombatarAtlas.mImages[static_cast<size_t>(aBlank)];
+		const int aSkinX = theX + aCanvas.mWidth - aSkinRect.mWidth;
+		const int aSkinY = theY + aCanvas.mHeight - aSkinRect.mHeight;
 		g->mColor = ZombatarGetColor(aNormalized.mColors[ZOMBATAR_CUSTOM_SKIN]);
 		g->mColorizeImages = true;
-		g->DrawImage(aSkin, aSkinX, aSkinY);
+		DrawZombatarImage(g, aSkin, aSkinX, aSkinY);
 		g->mColorizeImages = false;
 
-		const int aBlankX = theX + (aBlankBackdrop
-			? aBlankBackdrop->mWidth - aBlank->mWidth
-			: 0);
-		const int aBlankY = theY + (aBlankBackdrop
-			? aBlankBackdrop->mHeight - aBlank->mHeight
-			: 0);
-		g->DrawImage(aBlank, aBlankX, aBlankY);
+		const int aBlankX = theX + aCanvas.mWidth - aBlankRect.mWidth;
+		const int aBlankY = theY + aCanvas.mHeight - aBlankRect.mHeight;
+		DrawZombatarImage(g, aBlank, aBlankX, aBlankY);
 		g->mColor = Color::White;
 	}
 
@@ -705,7 +767,7 @@ void DrawZombatarPortrait(Graphics* g, const Zombatar& theZombatar, int theX, in
 	for (const SelectedItem& aSelected : aSelectedItems)
 	{
 		const ZombatarItem& anItem = *aSelected.mItem;
-		if (!anItem.mImage || !*anItem.mImage)
+		if (anItem.mImage == ZombatarImage::None)
 			continue;
 
 		if (anItem.mColorMode != ZOMBATAR_COLOR_NOT_APPLICABLE)
@@ -714,18 +776,18 @@ void DrawZombatarPortrait(Graphics* g, const Zombatar& theZombatar, int theX, in
 			g->mColorizeImages = true;
 		}
 
-		if (anItem.mColorMask && *anItem.mColorMask)
+		if (anItem.mColorMask != ZombatarImage::None)
 		{
-			g->DrawImage(
-				*anItem.mColorMask,
+			DrawZombatarImage(g,
+				anItem.mColorMask,
 				theX + anItem.mX + anItem.mMaskX,
 				theY + anItem.mY + anItem.mMaskY);
 			g->mColorizeImages = false;
-			g->DrawImage(*anItem.mImage, theX + anItem.mX, theY + anItem.mY);
+			DrawZombatarImage(g, anItem.mImage, theX + anItem.mX, theY + anItem.mY);
 		}
 		else
 		{
-			g->DrawImage(*anItem.mImage, theX + anItem.mX, theY + anItem.mY);
+			DrawZombatarImage(g, anItem.mImage, theX + anItem.mX, theY + anItem.mY);
 			g->mColorizeImages = false;
 		}
 		g->mColor = Color::White;
@@ -774,106 +836,104 @@ ZombatarItems::ZombatarItems(LawnApp* theApp) :
 {
 	// 1073 gives the child the asset width but keeps the full logical screen
 	// height for the controls below the 560x493 artwork.
-	const int aWidth = IMAGE_ZOMBATAR_WIDGET_BG
-		? IMAGE_ZOMBATAR_WIDGET_BG->mWidth
-		: 560;
+	const int aWidth = gZombatarAtlas.mImages[static_cast<size_t>(ZombatarImage::WIDGET_BG)].mWidth;
 	const int aHeight = mApp ? mApp->mHeight : 600;
 	Resize(25, 25, aWidth, aHeight);
 
 	mPrevPageButton = MakeZombatarButton(
-		BUTTON_PREV_PAGE, this, IMAGE_ZOMBATAR_PREV_BUTTON,
-		IMAGE_ZOMBATAR_PREV_BUTTON_HIGHLIGHT,
-		IMAGE_ZOMBATAR_PREV_BUTTON_HIGHLIGHT,
-		IMAGE_ZOMBATAR_PREV_BUTTON);
+		BUTTON_PREV_PAGE, this, ZombatarImage::PREV_BUTTON,
+		ZombatarImage::PREV_BUTTON_HIGHLIGHT,
+		ZombatarImage::PREV_BUTTON_HIGHLIGHT,
+		ZombatarImage::PREV_BUTTON);
 	mNextPageButton = MakeZombatarButton(
-		BUTTON_NEXT_PAGE, this, IMAGE_ZOMBATAR_NEXT_BUTTON,
-		IMAGE_ZOMBATAR_NEXT_BUTTON_HIGHLIGHT,
-		IMAGE_ZOMBATAR_NEXT_BUTTON_HIGHLIGHT,
-		IMAGE_ZOMBATAR_NEXT_BUTTON);
+		BUTTON_NEXT_PAGE, this, ZombatarImage::NEXT_BUTTON,
+		ZombatarImage::NEXT_BUTTON_HIGHLIGHT,
+		ZombatarImage::NEXT_BUTTON_HIGHLIGHT,
+		ZombatarImage::NEXT_BUTTON);
 
 	const int aPageButtonY = mHeight - mPrevPageButton->mHeight - 215;
 	MoveButton(mPrevPageButton, 150, aPageButtonY);
 	MoveButton(mNextPageButton, mWidth - mNextPageButton->mWidth - 55, aPageButtonY);
 
 	mSkinButton = MakeZombatarButton(
-		BUTTON_SKIN, this, IMAGE_ZOMBATAR_SKIN_BUTTON,
-		IMAGE_ZOMBATAR_SKIN_BUTTON, IMAGE_ZOMBATAR_SKIN_BUTTON_HIGHLIGHT);
+		BUTTON_SKIN, this, ZombatarImage::SKIN_BUTTON,
+		ZombatarImage::SKIN_BUTTON, ZombatarImage::SKIN_BUTTON_HIGHLIGHT);
 	mHairButton = MakeZombatarButton(
-		BUTTON_HAIR, this, IMAGE_ZOMBATAR_HAIR_BUTTON,
-		IMAGE_ZOMBATAR_HAIR_BUTTON_OVER, IMAGE_ZOMBATAR_HAIR_BUTTON_HIGHLIGHT);
+		BUTTON_HAIR, this, ZombatarImage::HAIR_BUTTON,
+		ZombatarImage::HAIR_BUTTON_OVER, ZombatarImage::HAIR_BUTTON_HIGHLIGHT);
 	mFacialHairButton = MakeZombatarButton(
-		BUTTON_FACIAL_HAIR, this, IMAGE_ZOMBATAR_FACIAL_HAIR_BUTTON,
-		IMAGE_ZOMBATAR_FACIAL_HAIR_BUTTON_OVER, IMAGE_ZOMBATAR_FACIAL_HAIR_BUTTON_HIGHLIGHT);
+		BUTTON_FACIAL_HAIR, this, ZombatarImage::FACIAL_HAIR_BUTTON,
+		ZombatarImage::FACIAL_HAIR_BUTTON_OVER, ZombatarImage::FACIAL_HAIR_BUTTON_HIGHLIGHT);
 	mTidbitsButton = MakeZombatarButton(
-		BUTTON_TIDBITS, this, IMAGE_ZOMBATAR_TIDBITS_BUTTON,
-		IMAGE_ZOMBATAR_TIDBITS_BUTTON_OVER, IMAGE_ZOMBATAR_TIDBITS_BUTTON_HIGHLIGHT);
+		BUTTON_TIDBITS, this, ZombatarImage::TIDBITS_BUTTON,
+		ZombatarImage::TIDBITS_BUTTON_OVER, ZombatarImage::TIDBITS_BUTTON_HIGHLIGHT);
 	mEyeWearButton = MakeZombatarButton(
-		BUTTON_EYEWEAR, this, IMAGE_ZOMBATAR_EYEWEAR_BUTTON,
-		IMAGE_ZOMBATAR_EYEWEAR_BUTTON_OVER, IMAGE_ZOMBATAR_EYEWEAR_BUTTON_HIGHLIGHT);
+		BUTTON_EYEWEAR, this, ZombatarImage::EYEWEAR_BUTTON,
+		ZombatarImage::EYEWEAR_BUTTON_OVER, ZombatarImage::EYEWEAR_BUTTON_HIGHLIGHT);
 	mClothesButton = MakeZombatarButton(
-		BUTTON_CLOTHES, this, IMAGE_ZOMBATAR_CLOTHES_BUTTON,
-		IMAGE_ZOMBATAR_CLOTHES_BUTTON_OVER, IMAGE_ZOMBATAR_CLOTHES_BUTTON_HIGHLIGHT);
+		BUTTON_CLOTHES, this, ZombatarImage::CLOTHES_BUTTON,
+		ZombatarImage::CLOTHES_BUTTON_OVER, ZombatarImage::CLOTHES_BUTTON_HIGHLIGHT);
 	mAccessoryButton = MakeZombatarButton(
-		BUTTON_ACCESSORIES, this, IMAGE_ZOMBATAR_ACCESSORY_BUTTON,
-		IMAGE_ZOMBATAR_ACCESSORY_BUTTON_OVER, IMAGE_ZOMBATAR_ACCESSORY_BUTTON_HIGHLIGHT);
+		BUTTON_ACCESSORIES, this, ZombatarImage::ACCESSORY_BUTTON,
+		ZombatarImage::ACCESSORY_BUTTON_OVER, ZombatarImage::ACCESSORY_BUTTON_HIGHLIGHT);
 	mHatsButton = MakeZombatarButton(
-		BUTTON_HATS, this, IMAGE_ZOMBATAR_HATS_BUTTON,
-		IMAGE_ZOMBATAR_HATS_BUTTON_OVER, IMAGE_ZOMBATAR_HATS_BUTTON_HIGHLIGHT);
+		BUTTON_HATS, this, ZombatarImage::HATS_BUTTON,
+		ZombatarImage::HATS_BUTTON_OVER, ZombatarImage::HATS_BUTTON_HIGHLIGHT);
 	mBackdropsButton = MakeZombatarButton(
-		BUTTON_BACKDROPS, this, IMAGE_ZOMBATAR_BACKDROPS_BUTTON,
-		IMAGE_ZOMBATAR_BACKDROPS_BUTTON_OVER, IMAGE_ZOMBATAR_BACKDROPS_BUTTON_HIGHLIGHT);
+		BUTTON_BACKDROPS, this, ZombatarImage::BACKDROPS_BUTTON,
+		ZombatarImage::BACKDROPS_BUTTON_OVER, ZombatarImage::BACKDROPS_BUTTON_HIGHLIGHT);
 
-	const std::array<GameButton*, 9> aCategoryButtons = {
+	const std::array<ZombatarButton*, 9> aCategoryButtons = {
 		mSkinButton, mHairButton, mFacialHairButton, mTidbitsButton,
 		mEyeWearButton, mClothesButton, mAccessoryButton, mHatsButton,
 		mBackdropsButton
 	};
 	int aCategoryY = 103;
-	for (GameButton* aButton : aCategoryButtons)
+	for (ZombatarButton* aButton : aCategoryButtons)
 	{
 		MoveButton(aButton, 33, aCategoryY);
 		aCategoryY += aButton->mHeight - 3;
 	}
 
 	mBackButton = MakeZombatarButton(
-		BUTTON_BACK, this, IMAGE_ZOMBATAR_BACK_BUTTON,
-		IMAGE_ZOMBATAR_BACK_BUTTON_HIGHLIGHT, nullptr);
+		BUTTON_BACK, this, ZombatarImage::BACK_BUTTON,
+		ZombatarImage::BACK_BUTTON_HIGHLIGHT, ZombatarImage::None);
 	MoveButton(mBackButton, 360, 320);
 
 	mFinishedButton = MakeZombatarButton(
-		BUTTON_FINISHED, this, IMAGE_ZOMBATAR_FINISHED_BUTTON,
-		IMAGE_ZOMBATAR_FINISHED_BUTTON_HIGHLIGHT, IMAGE_ZOMBATAR_FINISHED_BUTTON_HIGHLIGHT);
+		BUTTON_FINISHED, this, ZombatarImage::FINISHED_BUTTON,
+		ZombatarImage::FINISHED_BUTTON_HIGHLIGHT, ZombatarImage::FINISHED_BUTTON_HIGHLIGHT);
 	MoveButton(mFinishedButton, 420, 447);
 
 	mNewZombieButton = MakeZombatarButton(
-		BUTTON_NEW_ZOMBIE, this, IMAGE_ZOMBATAR_NEWZOMBIE_BUTTON,
-		IMAGE_ZOMBATAR_NEWZOMBIE_BUTTON_HIGHLIGHT, IMAGE_ZOMBATAR_NEWZOMBIE_BUTTON_HIGHLIGHT);
+		BUTTON_NEW_ZOMBIE, this, ZombatarImage::NEWZOMBIE_BUTTON,
+		ZombatarImage::NEWZOMBIE_BUTTON_HIGHLIGHT, ZombatarImage::NEWZOMBIE_BUTTON_HIGHLIGHT);
 	MoveButton(mNewZombieButton, 170, 370);
 
 	mNextZombieButton = MakeZombatarButton(
-		BUTTON_NEXT_ZOMBIE, this, IMAGE_ZOMBATAR_NEXT_BUTTON,
-		IMAGE_ZOMBATAR_NEXT_BUTTON_HIGHLIGHT,
-		IMAGE_ZOMBATAR_NEXT_BUTTON_HIGHLIGHT,
-		IMAGE_ZOMBATAR_NEXT_BUTTON);
+		BUTTON_NEXT_ZOMBIE, this, ZombatarImage::NEXT_BUTTON,
+		ZombatarImage::NEXT_BUTTON_HIGHLIGHT,
+		ZombatarImage::NEXT_BUTTON_HIGHLIGHT,
+		ZombatarImage::NEXT_BUTTON);
 	mPrevZombieButton = MakeZombatarButton(
-		BUTTON_PREV_ZOMBIE, this, IMAGE_ZOMBATAR_PREV_BUTTON,
-		IMAGE_ZOMBATAR_PREV_BUTTON_HIGHLIGHT,
-		IMAGE_ZOMBATAR_PREV_BUTTON_HIGHLIGHT,
-		IMAGE_ZOMBATAR_PREV_BUTTON);
+		BUTTON_PREV_ZOMBIE, this, ZombatarImage::PREV_BUTTON,
+		ZombatarImage::PREV_BUTTON_HIGHLIGHT,
+		ZombatarImage::PREV_BUTTON_HIGHLIGHT,
+		ZombatarImage::PREV_BUTTON);
 	const int aBrowseButtonY = mHeight - mNextZombieButton->mHeight - 189;
 	MoveButton(mNextZombieButton, mWidth - mNextZombieButton->mWidth - 85, aBrowseButtonY);
 	MoveButton(mPrevZombieButton, 95, aBrowseButtonY);
 
 	mMainMenuButton = MakeZombatarButton(
-		BUTTON_MAIN_MENU, this, nullptr,
-		IMAGE_ZOMBATAR_MAINMENUBACK_HIGHLIGHT,
-		IMAGE_ZOMBATAR_MAINMENUBACK_HIGHLIGHT);
+		BUTTON_MAIN_MENU, this, ZombatarImage::None,
+		ZombatarImage::MAINMENUBACK_HIGHLIGHT,
+		ZombatarImage::MAINMENUBACK_HIGHLIGHT);
 	MoveButton(mMainMenuButton, 253, mHeight - 97);
 
 	mViewButton = MakeZombatarButton(
-		BUTTON_VIEW, this, IMAGE_ZOMBATAR_VIEW_BUTTON,
-		IMAGE_ZOMBATAR_VIEW_BUTTON_HIGHLIGHT,
-		IMAGE_ZOMBATAR_VIEW_BUTTON_HIGHLIGHT);
+		BUTTON_VIEW, this, ZombatarImage::VIEW_BUTTON,
+		ZombatarImage::VIEW_BUTTON_HIGHLIGHT,
+		ZombatarImage::VIEW_BUTTON_HIGHLIGHT);
 	// FUN_0052D550 initially gives button 0x3F0 the same location as the
 	// main-menu hit target.  FUN_0052E710 moves it to the editor frame's
 	// lower-left corner before every draw; Draw() reproduces that second step.
@@ -893,7 +953,7 @@ ZombatarItems::~ZombatarItems()
 	delete mColors;
 	mColors = nullptr;
 
-	for (GameButton* aButton : GetAllButtons(this))
+	for (ZombatarButton* aButton : GetAllButtons(this))
 		delete aButton;
 }
 
@@ -947,7 +1007,7 @@ void ZombatarItems::ResetTransientLayout()
 
 void ZombatarItems::UpdateViewButtonLayout()
 {
-	if (!mViewButton || !IMAGE_ZOMBATAR_VIEW_BUTTON_HIGHLIGHT)
+	if (!mViewButton)
 		return;
 
 	// FUN_0052E710 applies this relocation before the input pass as well as
@@ -1008,8 +1068,8 @@ void ZombatarItems::LayoutCategoryItems()
 	mPageCount = std::max(1, (mItemCount + mItemsPerPage - 1) / mItemsPerPage);
 	mCurrentPage = std::clamp(mCurrentPage, 1, mPageCount);
 
-	const int aTileWidth = IMAGE_ZOMBATAR_ACCESSORY_BG->mWidth;
-	const int aTileHeight = IMAGE_ZOMBATAR_ACCESSORY_BG->mHeight;
+	const int aTileWidth = gZombatarAtlas.mImages[static_cast<size_t>(ZombatarImage::ACCESSORY_BG)].mWidth;
+	const int aTileHeight = gZombatarAtlas.mImages[static_cast<size_t>(ZombatarImage::ACCESSORY_BG)].mHeight;
 	const int aStartX = (mWidth - (aTileWidth + mItemGap) * 6) / 2 + 50;
 	const int aStartY = mItemGap * 2 + 120;
 
@@ -1029,15 +1089,15 @@ void ZombatarItems::LayoutCategoryItems()
 		aCell.mX = aStartX + aColumn * (aTileWidth + mItemGap);
 		aCell.mY = aStartY + aRow * (aTileHeight + mItemGap + 3);
 
-		if (!aCell.mItem || !aCell.mItem->mImage || !*aCell.mItem->mImage)
+		if (!aCell.mItem || aCell.mItem->mImage == ZombatarImage::None)
 			continue;
 
 		// Keep the complete source image.  1073 fits the icon into the cell
 		// (preserving aspect ratio) and applies the alignment bits to the
 		// destination rectangle; cropping the source changes the visible part
 		// of large hats/facial hair.
-		Image* anImage = *aCell.mItem->mImage;
-		aCell.mSourceRect = Rect(0, 0, anImage->mWidth, anImage->mHeight);
+		const Rect& anImage = gZombatarAtlas.mImages[static_cast<size_t>(aCell.mItem->mImage)];
+		aCell.mSourceRect = Rect(0, 0, anImage.mWidth, anImage.mHeight);
 	}
 
 	mPrevPageButton->mDisabled = mCurrentPage <= 1;
@@ -1073,7 +1133,7 @@ void ZombatarItems::RefreshState()
 		mState == ZombatarEditorState::ENTERING_CONFIRMATION ||
 		mState == ZombatarEditorState::CONFIRMATION;
 
-	for (GameButton* aButton : {
+	for (ZombatarButton* aButton : {
 		mPrevPageButton, mNextPageButton, mSkinButton, mHairButton,
 		mFacialHairButton, mTidbitsButton, mEyeWearButton, mClothesButton,
 		mAccessoryButton, mHatsButton, mBackdropsButton })
@@ -1108,7 +1168,7 @@ void ZombatarItems::RefreshState()
 
 void ZombatarItems::UpdateEditorButtons()
 {
-	for (GameButton* aButton : GetAllButtons(this))
+	for (ZombatarButton* aButton : GetAllButtons(this))
 		aButton->Update();
 }
 
@@ -1163,7 +1223,7 @@ void ZombatarItems::Draw(Graphics* g)
 	// (253, appHeight-97) is the separate transparent Main Menu/Back target.
 	UpdateViewButtonLayout();
 
-	g->DrawImage(IMAGE_ZOMBATAR_WIDGET_BG, 0, 0);
+	DrawZombatarImage(g, ZombatarImage::WIDGET_BG, 0, 0);
 
 	// C 形态 -> 成员函数内 lambda 表（表在类作用域内→private 方法 DrawEditor/
 	// DrawConfirmation/DrawSavedZombatars 可访问）；ENTERING/LEAVING 共体
@@ -1209,8 +1269,8 @@ void ZombatarItems::Draw(Graphics* g)
 
 void ZombatarItems::DrawEditor(Graphics* g)
 {
-	g->DrawImage(IMAGE_ZOMBATAR_WIDGET_INNER_BG, 127, 100);
-	for (GameButton* aButton : {
+	DrawZombatarImage(g, ZombatarImage::WIDGET_INNER_BG, 127, 100);
+	for (ZombatarButton* aButton : {
 		mSkinButton, mHairButton, mFacialHairButton, mTidbitsButton,
 		mEyeWearButton, mClothesButton, mAccessoryButton, mHatsButton,
 		mBackdropsButton })
@@ -1247,8 +1307,8 @@ void ZombatarItems::DrawItemGrid(Graphics* g)
 	const int aFirstIndex = (mCurrentPage - 1) * mItemsPerPage;
 	const int anEndIndex = std::min(mItemCount, aFirstIndex + mItemsPerPage);
 	const int aSelectedIndex = mZombatar.mItems[mCurrentCategory];
-	const int aTileWidth = IMAGE_ZOMBATAR_ACCESSORY_BG->mWidth;
-	const int aTileHeight = IMAGE_ZOMBATAR_ACCESSORY_BG->mHeight;
+	const int aTileWidth = gZombatarAtlas.mImages[static_cast<size_t>(ZombatarImage::ACCESSORY_BG)].mWidth;
+	const int aTileHeight = gZombatarAtlas.mImages[static_cast<size_t>(ZombatarImage::ACCESSORY_BG)].mHeight;
 
 	for (int anIndex = aFirstIndex; anIndex < anEndIndex; ++anIndex)
 	{
@@ -1261,7 +1321,7 @@ void ZombatarItems::DrawItemGrid(Graphics* g)
 			// In 1073 only the selected cell has the green border.  Hovering a
 			// cell cancels the dim overlay but keeps its normal stone frame.
 			g->mColorizeImages = false;
-			g->DrawImage(IMAGE_ZOMBATAR_ACCESSORY_BG_HIGHLIGHT, aCell.mX, aCell.mY);
+			DrawZombatarImage(g, ZombatarImage::ACCESSORY_BG_HIGHLIGHT, aCell.mX, aCell.mY);
 		}
 		else
 		{
@@ -1272,17 +1332,17 @@ void ZombatarItems::DrawItemGrid(Graphics* g)
 				g->mColorizeImages = true;
 				g->mColor = Color(128, 128, 128, 128);
 			}
-			g->DrawImage(IMAGE_ZOMBATAR_ACCESSORY_BG, aCell.mX, aCell.mY);
+			DrawZombatarImage(g, ZombatarImage::ACCESSORY_BG, aCell.mX, aCell.mY);
 		}
 
 		if (!aCell.mItem)
 		{
 			// The separator/none image inherits the same cell-wide state as the
 			// stone frame. 1073 does not establish a second tint here.
-			g->DrawImage(IMAGE_ZOMBATAR_ACCESSORY_BG_NONE, aCell.mX, aCell.mY);
+			DrawZombatarImage(g, ZombatarImage::ACCESSORY_BG_NONE, aCell.mX, aCell.mY);
 			continue;
 		}
-		if (!aCell.mItem->mImage || !*aCell.mItem->mImage)
+		if (aCell.mItem->mImage == ZombatarImage::None)
 		{
 			continue;
 		}
@@ -1290,12 +1350,11 @@ void ZombatarItems::DrawItemGrid(Graphics* g)
 		// The clothes page shows the same cropped blank zombie behind every
 		// clothing item in 1073.  It is part of the editor, not a separate
 		// saved component.
-		if (mCurrentCategory == ZOMBATAR_CUSTOM_CLOTHES &&
-			IMAGE_ZOMBATAR_ZOMBIE_BLANK_SKIN && IMAGE_ZOMBATAR_ZOMBIE_BLANK)
+		if (mCurrentCategory == ZOMBATAR_CUSTOM_CLOTHES)
 		{
 			GraphicsAutoState aClothesState(g);
 			// 1073 0x530117/0x530152 deliberately queries the dimensions of
-			// IMAGE_ZOMBATAR_ACCESSORY_BG, not the 142x140 zombie images.  Both
+			// ZombatarImage::ACCESSORY_BG, not the 142x140 zombie images.  Both
 			// zombie layers are therefore scaled to the 67x67 stone-cell size,
 			// positioned ten pixels up/left, and clipped by the inset cell rect.
 			// Drawing the source images at native size leaves only a giant eye and
@@ -1312,15 +1371,15 @@ void ZombatarItems::DrawItemGrid(Graphics* g)
 				aSkinColor.mAlpha = 128;
 			g->mColorizeImages = true;
 			g->mColor = aSkinColor;
-			g->DrawImage(
-				IMAGE_ZOMBATAR_ZOMBIE_BLANK_SKIN,
+			DrawZombatarImage(g,
+				ZombatarImage::ZOMBIE_BLANK_SKIN,
 				aCell.mX - mCellPadding,
 				aCell.mY - mCellPadding,
 				aTileWidth,
 				aTileHeight);
 			g->mColorizeImages = false;
-			g->DrawImage(
-				IMAGE_ZOMBATAR_ZOMBIE_BLANK,
+			DrawZombatarImage(g,
+				ZombatarImage::ZOMBIE_BLANK,
 				aCell.mX - mCellPadding,
 				aCell.mY - mCellPadding,
 				aTileWidth,
@@ -1328,35 +1387,36 @@ void ZombatarItems::DrawItemGrid(Graphics* g)
 			g->mColor = Color::White;
 		}
 
-		Image* anImage = *aCell.mItem->mImage;
+		const ZombatarImage anImage = aCell.mItem->mImage;
+		const Rect& anImageRect = gZombatarAtlas.mImages[static_cast<size_t>(anImage)];
 		const Rect aIconRect = FitZombatarIconRect(
 			Rect(aCell.mX, aCell.mY, aTileWidth, aTileHeight),
 			anImage,
 			aCell.mItem->mAlignment);
-		const Rect aSourceRect(0, 0, anImage->mWidth, anImage->mHeight);
+		const Rect aSourceRect(0, 0, anImageRect.mWidth, anImageRect.mHeight);
 
-		if (aCell.mItem->mColorMask && *aCell.mItem->mColorMask)
+		if (aCell.mItem->mColorMask != ZombatarImage::None)
 		{
-			Image* aMask = *aCell.mItem->mColorMask;
-			if (aMask)
+			const ZombatarImage aMask = aCell.mItem->mColorMask;
 			{
-				const float aScaleX = static_cast<float>(aIconRect.mWidth) / anImage->mWidth;
-				const float aScaleY = static_cast<float>(aIconRect.mHeight) / anImage->mHeight;
+				const Rect& aMaskSource = gZombatarAtlas.mImages[static_cast<size_t>(aMask)];
+				const float aScaleX = static_cast<float>(aIconRect.mWidth) / anImageRect.mWidth;
+				const float aScaleY = static_cast<float>(aIconRect.mHeight) / anImageRect.mHeight;
 				const Rect aMaskRect(
 					aIconRect.mX + static_cast<int>(aCell.mItem->mMaskX * aScaleX),
 					aIconRect.mY + static_cast<int>(aCell.mItem->mMaskY * aScaleY),
-					std::max(1, static_cast<int>(aMask->mWidth * aScaleX)),
-					std::max(1, static_cast<int>(aMask->mHeight * aScaleY)));
-				g->DrawImage(aMask, aMaskRect,
-					Rect(0, 0, aMask->mWidth, aMask->mHeight));
+					std::max(1, static_cast<int>(aMaskSource.mWidth * aScaleX)),
+					std::max(1, static_cast<int>(aMaskSource.mHeight * aScaleY)));
+				DrawZombatarImage(g, aMask, aMaskRect,
+					Rect(0, 0, aMaskSource.mWidth, aMaskSource.mHeight));
 			}
 			// The mask and primary image both inherit the cell-wide gray/original
 			// state. Thumbnail colors never follow the selected portrait palette.
-			g->DrawImage(anImage, aIconRect, aSourceRect);
+			DrawZombatarImage(g, anImage, aIconRect, aSourceRect);
 		}
 		else
 		{
-			g->DrawImage(anImage, aIconRect, aSourceRect);
+			DrawZombatarImage(g, anImage, aIconRect, aSourceRect);
 		}
 	}
 	g->mColorizeImages = false;
@@ -1366,7 +1426,7 @@ void ZombatarItems::DrawItemGrid(Graphics* g)
 	{
 		// 1073 draws the normal arrow through the image-color path with this
 		// translucent blue-grey tint after reaching the first or last page.
-		auto DrawPageButton = [g](GameButton* theButton)
+		auto DrawPageButton = [g](ZombatarButton* theButton)
 		{
 			if (!theButton->mDisabled)
 			{
@@ -1376,12 +1436,7 @@ void ZombatarItems::DrawItemGrid(Graphics* g)
 
 			g->mColorizeImages = true;
 			g->mColor = Color(108, 109, 140, 40);
-			theButton->DrawButtonImage(
-				g,
-				theButton->mButtonImage,
-				theButton->mNormalRect,
-				theButton->mX,
-				theButton->mY);
+			theButton->DrawNormal(g);
 			g->mColorizeImages = false;
 		};
 		DrawPageButton(mPrevPageButton);
@@ -1401,51 +1456,51 @@ void ZombatarItems::DrawItemGrid(Graphics* g)
 
 void ZombatarItems::DrawCategoryHighlight(Graphics* g)
 {
-	Image* aHighlight = nullptr;
-	GameButton* aButton = nullptr;
+	ZombatarImage aHighlight = ZombatarImage::None;
+	ZombatarButton* aButton = nullptr;
 	switch (mCurrentCategory)
 	{
 	case ZOMBATAR_CUSTOM_SKIN:
-		aHighlight = IMAGE_ZOMBATAR_SKIN_BUTTON_HIGHLIGHT;
+		aHighlight = ZombatarImage::SKIN_BUTTON_HIGHLIGHT;
 		aButton = mSkinButton;
 		break;
 	case ZOMBATAR_CUSTOM_CLOTHES:
-		aHighlight = IMAGE_ZOMBATAR_CLOTHES_BUTTON_HIGHLIGHT;
+		aHighlight = ZombatarImage::CLOTHES_BUTTON_HIGHLIGHT;
 		aButton = mClothesButton;
 		break;
 	case ZOMBATAR_CUSTOM_TIDBITS:
-		aHighlight = IMAGE_ZOMBATAR_TIDBITS_BUTTON_HIGHLIGHT;
+		aHighlight = ZombatarImage::TIDBITS_BUTTON_HIGHLIGHT;
 		aButton = mTidbitsButton;
 		break;
 	case ZOMBATAR_CUSTOM_ACCESSORIES:
-		aHighlight = IMAGE_ZOMBATAR_ACCESSORY_BUTTON_HIGHLIGHT;
+		aHighlight = ZombatarImage::ACCESSORY_BUTTON_HIGHLIGHT;
 		aButton = mAccessoryButton;
 		break;
 	case ZOMBATAR_CUSTOM_FACIAL_HAIR:
-		aHighlight = IMAGE_ZOMBATAR_FACIAL_HAIR_BUTTON_HIGHLIGHT;
+		aHighlight = ZombatarImage::FACIAL_HAIR_BUTTON_HIGHLIGHT;
 		aButton = mFacialHairButton;
 		break;
 	case ZOMBATAR_CUSTOM_HAIR:
-		aHighlight = IMAGE_ZOMBATAR_HAIR_BUTTON_HIGHLIGHT;
+		aHighlight = ZombatarImage::HAIR_BUTTON_HIGHLIGHT;
 		aButton = mHairButton;
 		break;
 	case ZOMBATAR_CUSTOM_EYEWEAR:
-		aHighlight = IMAGE_ZOMBATAR_EYEWEAR_BUTTON_HIGHLIGHT;
+		aHighlight = ZombatarImage::EYEWEAR_BUTTON_HIGHLIGHT;
 		aButton = mEyeWearButton;
 		break;
 	case ZOMBATAR_CUSTOM_HATS:
-		aHighlight = IMAGE_ZOMBATAR_HATS_BUTTON_HIGHLIGHT;
+		aHighlight = ZombatarImage::HATS_BUTTON_HIGHLIGHT;
 		aButton = mHatsButton;
 		break;
 	case ZOMBATAR_CUSTOM_BACKDROPS:
-		aHighlight = IMAGE_ZOMBATAR_BACKDROPS_BUTTON_HIGHLIGHT;
+		aHighlight = ZombatarImage::BACKDROPS_BUTTON_HIGHLIGHT;
 		aButton = mBackdropsButton;
 		break;
 	default:
 		break;
 	}
-	if (aHighlight && aButton)
-		g->DrawImage(aHighlight, aButton->mX, aButton->mY);
+	if (aHighlight != ZombatarImage::None && aButton)
+		DrawZombatarImage(g, aHighlight, aButton->mX, aButton->mY);
 }
 
 void ZombatarItems::DrawConfirmation(Graphics* g)
@@ -1498,9 +1553,7 @@ void ZombatarItems::DrawSavedZombatars(Graphics* g)
 	// FUN_0052FE90 uses the fixed blank-background canvas for the three
 	// adjacent portraits.  Using the selected backdrop's width makes the
 	// neighbours drift when records contain different backgrounds.
-	const int aPortraitWidth = IMAGE_ZOMBATAR_BACKGROUND_BLANK
-		? IMAGE_ZOMBATAR_BACKGROUND_BLANK->mWidth
-		: (IMAGE_ZOMBATAR_ZOMBIE_BLANK ? IMAGE_ZOMBATAR_ZOMBIE_BLANK->mWidth : 180);
+	const int aPortraitWidth = gZombatarAtlas.mImages[static_cast<size_t>(ZombatarImage::BACKGROUND_BLANK)].mWidth;
 	const int aCurrentX = (mWidth - 30) / 2 + mPortraitGap / 2 - aPortraitWidth / 2;
 	const int aPortraitY = 150;
 
@@ -1573,8 +1626,8 @@ int ZombatarItems::HitTestItem(int x, int y) const
 		const Rect aHitRect(
 			aCell.mX + mCellPadding,
 			aCell.mY + mCellPadding,
-			IMAGE_ZOMBATAR_ACCESSORY_BG->mWidth - mCellPadding * 2,
-			IMAGE_ZOMBATAR_ACCESSORY_BG->mHeight - mCellPadding * 2);
+			gZombatarAtlas.mImages[static_cast<size_t>(ZombatarImage::ACCESSORY_BG)].mWidth - mCellPadding * 2,
+			gZombatarAtlas.mImages[static_cast<size_t>(ZombatarImage::ACCESSORY_BG)].mHeight - mCellPadding * 2);
 		if (aHitRect.Contains(x, y))
 			return anIndex;
 	}
@@ -1584,7 +1637,7 @@ int ZombatarItems::HitTestItem(int x, int y) const
 void ZombatarItems::MouseMove(int x, int y)
 {
 	UpdateViewButtonLayout();
-	GameButton* aHoveredButton = HitTestButton(x, y);
+	ZombatarButton* aHoveredButton = HitTestButton(x, y);
 	if (mState == ZombatarEditorState::EDITING)
 	{
 		mHoveredItem = HitTestItem(x, y);
@@ -1620,9 +1673,9 @@ void ZombatarItems::MouseLeave()
 	MarkDirty();
 }
 
-GameButton* ZombatarItems::FindPressedButton() const
+ZombatarButton* ZombatarItems::FindPressedButton() const
 {
-	for (GameButton* aButton : GetAllButtons(const_cast<ZombatarItems*>(this)))
+	for (ZombatarButton* aButton : GetAllButtons(const_cast<ZombatarItems*>(this)))
 	{
 		if (CanPress(aButton))
 			return aButton;
@@ -1630,9 +1683,9 @@ GameButton* ZombatarItems::FindPressedButton() const
 	return nullptr;
 }
 
-GameButton* ZombatarItems::HitTestButton(int x, int y) const
+ZombatarButton* ZombatarItems::HitTestButton(int x, int y) const
 {
-	for (GameButton* aButton : GetAllButtons(const_cast<ZombatarItems*>(this)))
+	for (ZombatarButton* aButton : GetAllButtons(const_cast<ZombatarItems*>(this)))
 	{
 		if (aButton == nullptr || aButton->mDisabled || aButton->mBtnNoDraw)
 			continue;
@@ -1655,7 +1708,7 @@ void ZombatarItems::MouseDown(int x, int y, int theBtnNum, int theClickCount)
 	mPressedButtonId = -1;
 	if (theBtnNum == 0 && theClickCount > 0)
 	{
-		if (GameButton* aButton = HitTestButton(x, y))
+		if (ZombatarButton* aButton = HitTestButton(x, y))
 			mPressedButtonId = aButton->mId;
 	}
 	Widget::MouseDown(x, y, theBtnNum, theClickCount);
@@ -1680,7 +1733,7 @@ void ZombatarItems::MouseUp(int x, int y, int theBtnNum, int theClickCount)
 	mPressedButtonId = -1;
 	if (aPressedButtonId >= 0)
 	{
-		for (GameButton* aButton : GetAllButtons(this))
+		for (ZombatarButton* aButton : GetAllButtons(this))
 		{
 			if (aButton == nullptr || aButton->mId != aPressedButtonId ||
 				aButton->mDisabled || aButton->mBtnNoDraw)

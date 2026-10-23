@@ -24,3 +24,7 @@ export component ZombieMustache {
         }
     }
 }
+
+// Compile-time appearances share this definition's motion and atlas.
+export component ZombieMustache2 { kind: particle; source-name: "zombiemustache2"; variant-of: ZombieMustache; images: [["IMAGE_REANIM_ZOMBIE_MUSTACHE2"]]; }
+export component ZombieMustache3 { kind: particle; source-name: "zombiemustache3"; variant-of: ZombieMustache; images: [["IMAGE_REANIM_ZOMBIE_MUSTACHE3"]]; }

@@ -43,6 +43,45 @@ def particle_gold(names: list[str]) -> bytes:
     return struct.pack("<2I", 0xDEADFED5, len(payload)) + payload
 
 
+def particle_source_emitters(payload: bytes):
+    """Walk IDR4 without depending on the packer's layout implementation."""
+    magic, registry, _, count, size = struct.unpack_from("<5I", payload)
+    assert magic == 0x34524449 and registry == 0
+    at = 20
+    result = []
+    def track():
+        nonlocal at
+        nodes = struct.unpack_from("<I", payload, at)[0]
+        at += 4 + 20 * nodes
+    for _ in range(count):
+        images = struct.unpack_from("<I", payload, at)[0]
+        at += 4
+        offsets = list(range(at, at + images * 4, 4))
+        handles = [struct.unpack_from("<I", payload, p)[0] for p in offsets]
+        at += images * 4
+        motion = at
+        frames, animated, flags, kind = struct.unpack_from("<4I", payload, at)
+        at += 16
+        for _ in range(22):
+            track()
+        for _ in range(2):
+            fields = struct.unpack_from("<I", payload, at)[0]
+            at += 4
+            for _ in range(fields):
+                at += 4
+                track()
+                track()
+        for _ in range(16):
+            track()
+        result.append(dict(offsets=offsets, handles=handles,
+                           frames=frames, animated=animated, flags=flags,
+                           kind=kind, motion=payload[motion:at]))
+    assert at == 20 + size
+    assert struct.unpack_from("<2I", payload, at) == (0x33544449, count)
+    assert struct.unpack_from("<2I", payload, at + 8 + count * 4) == (0x35544449, count)
+    return result
+
+
 @unittest.skipUnless(COMPILER, "Set PVZ_RESOURCE_COMPILER or PVZ_ATLAS_COMPILER")
 class DefinitionCompilerSourceTests(unittest.TestCase):
     def setUp(self):
@@ -77,7 +116,8 @@ class DefinitionCompilerSourceTests(unittest.TestCase):
         payload = data[12:]
         hash_offset = 8 if kind == "reanim" else 4
         self.assertEqual(struct.unpack_from("<I", payload, hash_offset)[0], 0)
-        offsets = definition_atlas.image_offsets(kind, payload)
+        offsets = ([p for e in particle_source_emitters(payload) for p in e["offsets"]]
+                   if kind == "particles" else definition_atlas.image_offsets(kind, payload))
         handles = [struct.unpack_from("<I", payload, offset)[0] for offset in offsets]
         return handles
 
@@ -108,7 +148,7 @@ class DefinitionCompilerSourceTests(unittest.TestCase):
         source.write_text(
             'export component IndependentParticle {\n kind: particle;\n'
             ' source-name: "independent";\n'
-            f' Emitter {{ image: "{ZED}"; name: "First"; imageFrames: 1; emitterType: Circle; }}\n'
+            f' Emitter {{ images: ["{ZED}", "{ALPHA}", "{ZED}"]; name: "First"; imageFrames: 1; emitterType: Circle; }}\n'
             f' Emitter {{ image: "{ALPHA}"; name: "Second"; imageFrames: 1; emitterType: Circle; }}\n'
             '}\n', encoding="utf-8")
         gold.mkdir()
@@ -118,7 +158,11 @@ class DefinitionCompilerSourceTests(unittest.TestCase):
         self.assertEqual((output / "image_sources.txt").read_text(), f"{ALPHA}\n{ZED}\n")
         records = list(output.glob("*.source-record"))
         self.assertEqual([p.name for p in records], ["Independent.source-record"])
-        self.assertEqual(self.read_record(records[0], 0xDEADFED8, "particles"), [2, 1])
+        self.assertEqual(self.read_record(records[0], 0xDEADFED8, "particles"), [2, 1, 2, 1])
+        emitters = particle_source_emitters(records[0].read_bytes()[12:])
+        self.assertEqual(emitters[0]["handles"], [2, 1, 2])
+        self.assertEqual(emitters[1]["handles"], [1])
+        self.assertEqual([e["frames"] for e in emitters], [1, 1])
         self.assertNotIn("GOLD_IMAGE", (output / "image_sources.txt").read_text())
         self.assertFalse((output / "Independent.compiled").exists())
         self.assert_independent_headers(output)

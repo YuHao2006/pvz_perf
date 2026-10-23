@@ -1,5 +1,6 @@
 #include "reanim/Pak64.h"
 #include "reanim/ParticleDsl.h"
+#include "reanim/ProjectileDsl.h"
 #include "reanim/StringIdGen.h"
 #include "reanim/TrailDsl.h"
 #include "reanim/AtlasPacking.h"
@@ -27,6 +28,8 @@ void PrintUsage()
 {
     std::cout
         << "reanimc pack-atlas-layout --input BATCH --output LAYOUT\n"
+        << "reanimc compile-projectile --input Projectiles.projectile.dsl --output FILE.json\n"
+        << "    Compile projectile image paths, scales, and shadow crops to offline source metadata.\n"
         << "    Deterministic offline MaxRects batch layout; no rotation or pixels.\n"
         << "reanimc import --input SOURCE.reanim --output SOURCE.reanim.dsl\n"
         << "    Read a Legacy reanim XML source and emit the equivalent DSL.\n"
@@ -388,8 +391,14 @@ int RunCompileV2(const std::vector<std::string>& args)
         return 1;
     }
 
-    const std::vector<pak64::TrackIdEntry> table = pak64::BuildTrackIdTable(corpus);
+    try { pak64::ResolveReanimVariants(corpus); }
+    catch (const std::exception& failure) { std::cerr << "reanimc: " << failure.what() << '\n'; return 1; }
+    std::vector<RawReanim> roots;
+    for (const auto& item : corpus) if (item.variantOf.empty()) roots.push_back(item);
+    const std::vector<pak64::TrackIdEntry> table = pak64::BuildTrackIdTable(roots);
     fs::create_directories(output);
+    if (!WriteText(output / "reanim_variants.json", pak64::MakeReanimVariantMetadata(corpus)) ||
+        !WriteText(output / "ReanimVariantId.h", pak64::MakeReanimVariantHeader(corpus))) return 1;
     if (header.empty()) header = output / "ReanimTrackId.h";
     if (tablePath.empty()) tablePath = output / "reanim_track_ids.bin";
     if (!WriteText(header, pak64::MakeTrackIdHeader(table, families))) return 1;
@@ -407,15 +416,20 @@ int RunCompileV2(const std::vector<std::string>& args)
     }
     const fs::path mphfGlobalHeader = output / "ReanimTrackMphfGlobal.h";
     if (!WriteText(mphfGlobalHeader,
-                   pak64::MakeTrackMphfGlobalHeader(corpus, table, typeMap)))
+                   pak64::MakeTrackMphfGlobalHeader(roots, table, typeMap)))
         return 1;
 
     // Images are source-local names, independent of every game image registry.
     pak64::SourceImageHandles sourceImageHandles;
     for (const auto& definition:corpus)
+    {
         for (const auto& track:definition.tracks)
             for (const auto& frame:track.frames)
                 if (!frame.image.empty()) sourceImageHandles.emplace(frame.image,0);
+        for (const auto& images : definition.variantImages)
+            for (const auto& image : images)
+                if (!image.empty()) sourceImageHandles.emplace(image, 0);
+    }
     std::string imageSources;
     std::uint32_t nextImageHandle=1;
     for (auto& [name,handle]:sourceImageHandles) {
@@ -436,7 +450,7 @@ int RunCompileV2(const std::vector<std::string>& args)
     }
 
     std::uint64_t v2Bytes = 0, v4Bytes = 0, v1Bytes = 0, trackSlots = 0;
-    for (const RawReanim& raw : corpus) {
+    for (const RawReanim& raw : roots) {
         const fs::path record = output / (raw.name + ".reanim.v2.compiled");
         if (OutputMissing(record)) return 2;
         if (!pak64::WriteCompiledV2(raw, table, typeMap, record, &error)) {
@@ -715,6 +729,7 @@ int main(int argc, char** argv)
     // 未捕获异常诊断：构建期 Fail 抛 std::runtime_error，带消息退出而非静默 abort。
     try {
         if (args[0] == "pack-atlas-layout") return openpvz::reanim::atlas::RunPackAtlasLayout(args);
+        if (args[0] == "compile-projectile") return openpvz::reanim::projectile::RunCompileProjectile(args);
         if (args[0] == "import") return RunImport(args);
         if (args[0] == "compile") return RunCompile(args);
         if (args[0] == "compile-v2") return RunCompileV2(args);

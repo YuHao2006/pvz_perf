@@ -5,8 +5,10 @@
 #include <cstdlib>
 #include <cstring>
 #include <fstream>
+#include <functional>
 #include <iomanip>
 #include <iostream>
+#include <limits>
 #include <map>
 #include <ostream>
 #include <set>
@@ -935,8 +937,9 @@ private:
 class DslParser final {
 public:
     DslParser(std::string_view source, ParticleDslFileDirectives* directives,
-              std::vector<ParticleDefinition>& outputs, std::string* error)
-        : lexer_(source), directives_(directives), outputs_(outputs), error_(error) {}
+              std::vector<ParticleDefinition>& outputs, std::string* error, bool legacy)
+        : lexer_(source), directives_(directives), outputs_(outputs), error_(error),
+          legacy_(legacy) {}
 
     void Run()
     {
@@ -982,6 +985,7 @@ private:
         lexer_.Advance();
         ExpectBrace("{");
         bool sawKind = false;
+        bool sawVariant = false, sawImage = false, sawImages = false;
         while (!(lexer_.current().kind == TokKind::brace &&
                  lexer_.current().text == "}")) {
             if (lexer_.current().kind != TokKind::identifier)
@@ -999,11 +1003,44 @@ private:
                 ExpectColon();
                 module.sourceName = TakeString();
                 ExpectSemicolon();
+            } else if (property == "variant-of") {
+                if (sawVariant) Fail(error_, "duplicate variant-of in <" + module.name + ">");
+                sawVariant = true;
+                ExpectColon();
+                if (lexer_.current().kind != TokKind::identifier)
+                    Fail(error_, "variant-of requires a component name");
+                module.variantOf = lexer_.current().text;
+                lexer_.Advance();
+                ExpectSemicolon();
+            } else if (property == "image") {
+                if (!legacy_)
+                    Fail(error_, "particle variants require per-emitter images lists");
+                if (sawImage) Fail(error_, "duplicate variant image in <" + module.name + ">");
+                sawImage = true;
+                ExpectColon();
+                module.variantImage = TakeString();
+                ExpectSemicolon();
+            } else if (property == "images") {
+                if (sawImages) Fail(error_, "duplicate variant images");
+                sawImages = true;
+                ExpectColon();
+                ExpectBracket("[");
+                if (lexer_.current().text != "]") {
+                    for (;;) {
+                        if (module.variantImages.size() >= 65536)
+                            Fail(error_, "too many variant image lists");
+                        module.variantImages.push_back(ReadImages());
+                        if (lexer_.current().kind != TokKind::comma) break;
+                        lexer_.Advance();
+                    }
+                }
+                ExpectBracket("]");
+                ExpectSemicolon();
             } else if (property == "Emitter" || property == "emitter") {
                 ParseEmitter(module);
             } else {
                 Fail(error_, "unknown component property <" + property +
-                                 "> (expected kind/source-name/Emitter)");
+                                 "> (expected kind/source-name/variant-of/images/Emitter)");
             }
         }
         ExpectBrace("}");
@@ -1011,6 +1048,18 @@ private:
         if (module.sourceName.empty())
             Fail(error_, "particle component <" + module.name +
                              "> requires source-name (names the compiled record)");
+        if (sawVariant && legacy_ && !sawImages && (!sawImage || module.variantImage.empty()))
+            Fail(error_, "particle variant <" + module.name + "> requires a non-empty image");
+        if (sawImage && !sawVariant)
+            Fail(error_, "component image requires variant-of in <" + module.name + ">");
+        if (sawImages && !sawVariant)
+            Fail(error_, "component images requires variant-of in <" + module.name + ">");
+        if (sawVariant && !legacy_ && !sawImages)
+            Fail(error_, "particle variant <" + module.name + "> requires images");
+        if (sawImage && sawImages)
+            Fail(error_, "variant image and images cannot be combined");
+        if (sawVariant && !module.emitters.empty())
+            Fail(error_, "particle variant <" + module.name + "> cannot declare Emitter blocks");
         for (const ParticleDefinition& existing : outputs_)
             if (existing.name == module.name)
                 Fail(error_, "duplicate module name <" + module.name + ">");
@@ -1022,6 +1071,7 @@ private:
     {
         ExpectBrace("{");
         ParticleEmitter emitter;
+        bool sawImages = false;
         while (!(lexer_.current().kind == TokKind::brace &&
                  lexer_.current().text == "}")) {
             if (lexer_.current().kind != TokKind::identifier)
@@ -1037,8 +1087,17 @@ private:
             }
             ExpectColon();
             if (property == "image") {
+                if (sawImages) Fail(error_, "duplicate emitter image/images");
+                sawImages = true;
                 emitter.image = TakeStringOrIdent();
                 if (IEquals(emitter.image, "none")) emitter.image.clear();
+                if (!emitter.image.empty()) emitter.images.push_back(emitter.image);
+                ExpectSemicolon();
+            } else if (property == "images") {
+                if (sawImages) Fail(error_, "duplicate emitter image/images");
+                sawImages = true;
+                emitter.images = ReadImages();
+                emitter.image = emitter.images.empty() ? "" : emitter.images.front();
                 ExpectSemicolon();
             } else if (property == "name") {
                 emitter.name = TakeString();
@@ -1048,6 +1107,8 @@ private:
                 ExpectSemicolon();
             } else if (property == "imageRow" || property == "imageCol" ||
                        property == "imageFrames" || property == "animated") {
+                if (!legacy_ && (property == "imageRow" || property == "imageCol"))
+                    Fail(error_, "imageRow/imageCol are legacy-only; use images");
                 const long value = TakeInt();
                 if (property == "imageRow")
                     emitter.imageRow = static_cast<std::int32_t>(value);
@@ -1083,7 +1144,51 @@ private:
             }
         }
         ExpectBrace("}");
+        if (!legacy_) {
+            if (emitter.imageFrames <= 0 || emitter.imageFrames > 65536)
+                Fail(error_, "imageFrames must be in [1, 65536]");
+        }
         module.emitters.push_back(std::move(emitter));
+    }
+    void ExpectBracket(std::string_view bracket)
+    {
+        if (lexer_.current().kind != TokKind::bracket || lexer_.current().text != bracket)
+            Fail(error_, "expected '" + std::string(bracket) + "'");
+        lexer_.Advance();
+    }
+    std::int32_t ReadInteger()
+    {
+        if (lexer_.current().kind != TokKind::number)
+            Fail(error_, "expected integer");
+        const std::string text = lexer_.current().text;
+        std::size_t consumed = 0;
+        long long value = 0;
+        try { value = std::stoll(text, &consumed, 10); }
+        catch (...) { Fail(error_, "integer out of range"); }
+        if (consumed != text.size() || value < std::numeric_limits<std::int32_t>::min() ||
+            value > std::numeric_limits<std::int32_t>::max())
+            Fail(error_, "expected 32-bit integer");
+        lexer_.Advance();
+        return static_cast<std::int32_t>(value);
+    }
+    std::vector<std::string> ReadImages()
+    {
+        std::vector<std::string> images;
+        ExpectBracket("[");
+        if (lexer_.current().text != "]") {
+            for (;;) {
+                if (images.size() >= 65536) Fail(error_, "too many particle images");
+                std::string image = TakeString();
+                if (image.empty() || image.find_first_of("\r\n") != std::string::npos ||
+                    image.find('\0') != std::string::npos)
+                    Fail(error_, "particle images require non-empty source names without line breaks or NUL");
+                images.push_back(std::move(image));
+                if (lexer_.current().kind != TokKind::comma) break;
+                lexer_.Advance();
+            }
+        }
+        ExpectBracket("]");
+        return images;
     }
     void ParseField(const std::string& key, ParticleField& field)
     {
@@ -1184,9 +1289,7 @@ private:
     }
     long TakeInt()
     {
-        if (lexer_.current().kind != TokKind::number) Fail(error_, "expected number");
-        const long value = std::strtol(lexer_.current().text.c_str(), nullptr, 10);
-        lexer_.Advance();
+        const long value = ReadInteger();
         ExpectSemicolon();
         return value;
     }
@@ -1195,16 +1298,18 @@ private:
     ParticleDslFileDirectives* directives_;
     std::vector<ParticleDefinition>& outputs_;
     std::string* error_;
+    bool legacy_;
 };
 
 } // namespace
 
 bool ParseParticleDslFileText(const std::string_view source,
-                              ParticleDslFileDirectives& file, std::string* error)
+                              ParticleDslFileDirectives& file, std::string* error,
+                              const bool legacy)
 {
     try {
         file = ParticleDslFileDirectives{};
-        DslParser parser(source, &file, file.modules, error);
+        DslParser parser(source, &file, file.modules, error, legacy);
         parser.Run();
         return true;
     } catch (const std::exception& e) {
@@ -1215,9 +1320,67 @@ bool ParseParticleDslFileText(const std::string_view source,
 
 namespace {
 
+// Resolve only after all files are loaded: neither declaration order nor input-list
+// order determines visibility. Metadata stays compiler-side and is never serialized.
+void ResolveParticleVariants(ParticleDslBundle& bundle, std::string* error, bool legacy = false)
+{
+    std::map<std::string, std::size_t> byName;
+    std::set<std::string> sourceNames;
+    bool hasVariants = false;
+    for (std::size_t i = 0; i < bundle.modules.size(); ++i) {
+        const auto& module = bundle.modules[i];
+        if (!byName.emplace(module.name, i).second)
+            Fail(error, "duplicate particle module <" + module.name + ">");
+        hasVariants |= !module.variantOf.empty();
+    }
+    // Output records must not overwrite another component, including case-insensitive
+    // filesystems and gold files whose filename casing differs from source-name.
+    for (const auto& module : bundle.modules)
+        if (!sourceNames.insert(Lowered(module.sourceName)).second)
+            Fail(error, "duplicate particle source-name <" + module.sourceName + ">");
+    for (const auto& module : bundle.modules)
+        if (module.sourceName.empty() || module.sourceName.find_first_of("/\\:\r\n\t") != std::string::npos ||
+            std::any_of(module.sourceName.begin(), module.sourceName.end(),
+                        [](unsigned char c) { return c < 32; }))
+            Fail(error, "invalid particle source-name <" + module.sourceName + ">");
+    if (!hasVariants) return;
+    std::vector<unsigned char> state(bundle.modules.size(), 0);
+    std::function<void(std::size_t)> resolve = [&](const std::size_t index) {
+        auto& module = bundle.modules[index];
+        if (state[index] == 2) return;
+        if (state[index] == 1)
+            Fail(error, "particle variant cycle at <" + module.name + ">");
+        state[index] = 1;
+        if (!module.variantOf.empty()) {
+            const auto base = byName.find(module.variantOf);
+            if (base == byName.end())
+                Fail(error, "particle variant <" + module.name + "> has missing base <" +
+                                module.variantOf + ">");
+            resolve(base->second);
+            module.emitters = bundle.modules[base->second].emitters;
+            if ((!legacy || !module.variantImages.empty()) &&
+                module.variantImages.size() != module.emitters.size())
+                Fail(error, "particle variant <" + module.name +
+                                "> requires one images list per inherited emitter");
+            for (std::size_t e = 0; e < module.emitters.size(); ++e) {
+                auto& emitter = module.emitters[e];
+                if (!legacy && module.variantImages[e].size() != emitter.images.size())
+                    Fail(error, "particle variant <" + module.name +
+                                    "> images count differs from inherited emitter " + std::to_string(e));
+                emitter.images = module.variantImages.empty()
+                    ? std::vector<std::string>{module.variantImage} : module.variantImages[e];
+                emitter.image = emitter.images.empty() ? "" : emitter.images.front();
+            }
+        }
+        state[index] = 2;
+    };
+    for (std::size_t i = 0; i < bundle.modules.size(); ++i) resolve(i);
+}
+
 class BundleLoader final {
 public:
-    explicit BundleLoader(ParticleDslBundle& bundle) : bundle_(bundle) {}
+    explicit BundleLoader(ParticleDslBundle& bundle, bool legacy)
+        : bundle_(bundle), legacy_(legacy) {}
 
     std::size_t Load(const std::filesystem::path& path, std::string* error)
     {
@@ -1240,7 +1403,7 @@ public:
         bundle_.files.push_back(path);
         stack_.push_back(key);
         ParticleDslFileDirectives directives;
-        if (!ParseParticleDslFileText(text, directives, error))
+        if (!ParseParticleDslFileText(text, directives, error, legacy_))
             Fail(error, (error && !error->empty()
                              ? *error + " (in " + path.string() + ")"
                              : std::string("while parsing ") + path.string()));
@@ -1285,16 +1448,17 @@ public:
     std::vector<ParticleDslFileDirectives> files_;
     std::map<std::string, std::size_t> byPath_;
     std::vector<std::string> stack_;
+    bool legacy_;
 };
 
 } // namespace
 
 bool LoadParticleDslBundle(const std::filesystem::path& rootFile,
-                           ParticleDslBundle& bundle, std::string* error)
+                           ParticleDslBundle& bundle, std::string* error, const bool legacy)
 {
     try {
         bundle = ParticleDslBundle{};
-        BundleLoader loader(bundle);
+        BundleLoader loader(bundle, legacy);
         const std::size_t root = loader.Load(rootFile, error);
         std::map<std::string, bool> seen;
         for (const ParticleDslFileDirectives& file : loader.files_) {
@@ -1316,6 +1480,7 @@ bool LoadParticleDslBundle(const std::filesystem::path& rootFile,
             std::unique(bundle.publicNames.begin(), bundle.publicNames.end()),
             bundle.publicNames.end());
         if (bundle.modules.empty()) Fail(error, "no module found in bundle");
+        ResolveParticleVariants(bundle, error, legacy);
         return true;
     } catch (const std::exception& e) {
         if (error && error->empty()) *error = e.what();
@@ -2081,16 +2246,17 @@ std::vector<std::uint8_t> SerializeParticleV4(
     for (std::uint32_t e = 0; e < count; ++e) {
         const std::size_t dumpAt = dumpsAt + e * kParticleEmitterNativeDumpSize;
         reader.String("legacy gold image");
-        const std::string& image=source.emitters[e].image;
-        std::uint32_t sourceImageHandle = 0;
-        if (!image.empty()) {
+        const auto& images = source.emitters[e].images;
+        if (images.size() > 65536)
+            throw std::runtime_error("particle source has too many images");
+        PutU32(body, static_cast<std::uint32_t>(images.size()));
+        for (const auto& image : images) {
             const auto found = sourceImageHandles.find(image);
-            if (found == sourceImageHandles.end())
+            if (image.empty() || found == sourceImageHandles.end())
                 throw std::runtime_error("particle image absent from source handles: " + image);
-            sourceImageHandle = found->second;
+            PutU32(body, found->second);
         }
-        PutU32(body, sourceImageHandle);
-        for (const std::size_t offset : {8u, 12u, 16u, 20u, 24u, 28u})
+        for (const std::size_t offset : {16u, 20u, 24u, 28u})
             PutU32(body, dump32(dumpAt + offset));
         // Gold strings are consumed only by the compiler. No length or text is emitted.
         reader.String("name");
@@ -2379,7 +2545,7 @@ int RunCompileParticle(const std::vector<std::string>& args)
     }
     ParticleDslBundle bundle;
     std::string error;
-    if (!LoadParticleDslBundle(input, bundle, &error)) {
+    if (!LoadParticleDslBundle(input, bundle, &error, true)) {
         std::cerr << "reanimc: " << error << '\n';
         return 1;
     }
@@ -2537,6 +2703,11 @@ int RunCompileParticleV2(const std::vector<std::string>& args)
         std::sort(bundle.modules.begin(), bundle.modules.end(),
                   [](const auto& a, const auto& b) { return a.name < b.name; });
         if (bundle.modules.empty()) { std::cerr << "reanimc: empty particle input list\n"; return 1; }
+        try {
+            ResolveParticleVariants(bundle, &error);
+        } catch (const std::exception& e) {
+            std::cerr << "reanimc: " << e.what() << '\n'; return 1;
+        }
     } else if (!LoadParticleDslBundle(input, bundle, &error)) {
         std::cerr << "reanimc: " << error << '\n';
         return 1;
@@ -2549,7 +2720,8 @@ int RunCompileParticleV2(const std::vector<std::string>& args)
     std::map<std::string, std::uint32_t> sourceImageHandles;
     for (const auto& definition:bundle.modules)
         for (const auto& emitter:definition.emitters)
-            if (!emitter.image.empty()) sourceImageHandles.emplace(emitter.image,0);
+            for (const auto& image : emitter.images)
+                sourceImageHandles.emplace(image, 0);
     fs::create_directories(output);
     {
         std::ofstream sources(output / "image_sources.txt",std::ios::binary | std::ios::trunc);
@@ -2600,8 +2772,70 @@ int RunCompileParticleV2(const std::vector<std::string>& args)
     }
     fs::create_directories(output);
     std::size_t linked = 0, verified = 0, mismatches = 0;
+    std::map<std::string, const ParticleDefinition*> definitionsByName;
+    for (const auto& definition : bundle.modules)
+        definitionsByName.emplace(definition.name, &definition);
+    {
+        std::map<std::string, std::string> inheritance;
+        for (const auto& definition : bundle.modules)
+            if (!definition.variantOf.empty())
+                inheritance.emplace("compiled/particles/" + Lowered(definition.sourceName) + ".compiled",
+                    "compiled/particles/" + Lowered(definitionsByName.at(definition.variantOf)->sourceName) + ".compiled");
+        std::ofstream sidecar(output / "particle_inheritance.json", std::ios::binary | std::ios::trunc);
+        sidecar << "{\n";
+        bool first = true;
+        for (const auto& [child, parent] : inheritance) {
+            if (!first) sidecar << ",\n";
+            first = false;
+            sidecar << "  "; WriteEscaped(sidecar, child);
+            sidecar << ": "; WriteEscaped(sidecar, parent);
+        }
+        sidecar << "\n}\n";
+        if (!sidecar) { std::cerr << "reanimc: cannot write particle_inheritance.json\n"; return 1; }
+        std::map<std::string, std::vector<const ParticleDefinition*>> roots;
+        for (const auto& definition : bundle.modules) {
+            const auto* root = &definition;
+            while (!root->variantOf.empty()) root = definitionsByName.at(root->variantOf);
+            roots[root->name].push_back(&definition);
+        }
+        std::ofstream metadata(output / "particle_variants.json", std::ios::binary | std::ios::trunc);
+        std::ofstream enums(output / "ParticleVariantId.h", std::ios::binary | std::ios::trunc);
+        metadata << "{\"roots\":{";
+        enums << "// Generated particle appearance indices.\n#pragma once\n#include <cstdint>\nnamespace ParticleVariants {\n";
+        bool firstRoot = true;
+        for (auto& [rootName, variants] : roots) {
+            const auto* root = definitionsByName.at(rootName);
+            std::sort(variants.begin(), variants.end(), [root](auto* a, auto* b) {
+                if (a == root || b == root) return a == root && b != root;
+                return a->name < b->name;
+            });
+            if (!firstRoot) metadata << ',';
+            firstRoot = false;
+            WriteEscaped(metadata, "compiled/particles/" + Lowered(root->sourceName) + ".compiled");
+            metadata << ":{\"name\":"; WriteEscaped(metadata, rootName);
+            metadata << ",\"variants\":[";
+            enums << "enum class " << rootName << " : std::uint32_t { Default = 0";
+            for (std::size_t i = 0; i < variants.size(); ++i) {
+                const auto* item = variants[i];
+                if (i) { metadata << ','; enums << ", " << item->name << " = " << i; }
+                metadata << "{\"name\":"; WriteEscaped(metadata, item->name);
+                metadata << ",\"source\":"; WriteEscaped(metadata, item->sourceName);
+                metadata << ",\"path\":";
+                WriteEscaped(metadata, "compiled/particles/" + Lowered(item->sourceName) + ".compiled");
+                metadata << ",\"index\":" << i << '}';
+            }
+            metadata << "]}";
+            enums << " };\n";
+        }
+        metadata << "}}\n";
+        enums << "}\n";
+        if (!metadata || !enums) { std::cerr << "reanimc: cannot write particle variant metadata\n"; return 1; }
+    }
     for (const ParticleDefinition& definition : bundle.modules) {
-        const auto gold = goldByStem.find(definition.sourceName);
+        const ParticleDefinition* original = &definition;
+        while (!original->variantOf.empty())
+            original = definitionsByName.at(original->variantOf);
+        const auto gold = goldByStem.find(original->sourceName);
         if (gold == goldByStem.end()) {
             std::cerr << "reanimc: no runtime gold record for <" << definition.sourceName
                       << "> under " << gold64.string() << '\n';
@@ -2660,6 +2894,7 @@ int RunCompileParticleV2(const std::vector<std::string>& args)
         // 产物命名沿用金标准主名（<原名>.xml.v2.compiled）。
         std::string base = gold->second.filename().string();
         base = base.substr(0, base.size() - 13);  // 去 ".xml.compiled"
+        if (!definition.variantOf.empty()) base = definition.sourceName;
         const fs::path record = output / (base + ".xml.v2.compiled");
         if (OutputMissing(record)) {
             std::cerr << "reanimc: output exists or is empty; choose a new path: "

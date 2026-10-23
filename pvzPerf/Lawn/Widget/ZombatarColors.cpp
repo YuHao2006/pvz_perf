@@ -35,7 +35,7 @@ ZombatarColors::ZombatarColors(LawnApp* theApp) :
 	mSelectionChanged(false),
 	mSelectionChangedLastFrame(false)
 {
-	Resize(190, 310, IMAGE_ZOMBATAR_COLORS_BG->mWidth, IMAGE_ZOMBATAR_COLORS_BG->mHeight);
+	Resize(190, 310, gZombatarAtlas.mImages[static_cast<size_t>(ZombatarImage::COLORS_BG)].mWidth, gZombatarAtlas.mImages[static_cast<size_t>(ZombatarImage::COLORS_BG)].mHeight);
 	SetColorMode(ZOMBATAR_COLOR_NOT_APPLICABLE, -1);
 }
 
@@ -48,7 +48,7 @@ void ZombatarColors::Update()
 
 void ZombatarColors::Draw(Graphics* g)
 {
-	g->DrawImage(IMAGE_ZOMBATAR_COLORS_BG, 6, 0);
+	DrawZombatarImage(g, ZombatarImage::COLORS_BG, 6, 0);
 
 	if (!IsPaletteMode(mColorMode))
 	{
@@ -72,18 +72,18 @@ void ZombatarColors::Draw(Graphics* g)
 		const int aColorIndex = mPaletteStart + anOffset;
 		const int aColumn = anOffset % mColumns;
 		const int aRow = anOffset / mColumns;
-		const int aX = COLOR_PICKER_X + aColumn * (IMAGE_ZOMBATAR_COLORPICKER->mWidth + mGap);
-		const int aY = COLOR_PICKER_Y + aRow * (IMAGE_ZOMBATAR_COLORPICKER->mHeight + mGap);
+		const int aX = COLOR_PICKER_X + aColumn * (gZombatarAtlas.mImages[static_cast<size_t>(ZombatarImage::COLORPICKER)].mWidth + mGap);
+		const int aY = COLOR_PICKER_Y + aRow * (gZombatarAtlas.mImages[static_cast<size_t>(ZombatarImage::COLORPICKER)].mHeight + mGap);
 
 		Color aColor = ZombatarGetColor(aColorIndex);
 		aColor.mAlpha = aColorIndex == mSelectedColor
 			? 255
 			: aColorIndex == mHoveredColor ? 128 : 64;
 		g->mColor = aColor;
-		g->DrawImage(
+		DrawZombatarImage(g,
 			aColorIndex == 29 || aColorIndex == 47
-				? IMAGE_ZOMBATAR_COLORPICKER_NONE
-				: IMAGE_ZOMBATAR_COLORPICKER,
+				? ZombatarImage::COLORPICKER_NONE
+				: ZombatarImage::COLORPICKER,
 			aX,
 			aY);
 	}
@@ -156,10 +156,10 @@ int ZombatarColors::HitTest(int x, int y) const
 		const int aColumn = anOffset % mColumns;
 		const int aRow = anOffset / mColumns;
 		const Rect aRect(
-			COLOR_PICKER_X + aColumn * (IMAGE_ZOMBATAR_COLORPICKER->mWidth + mGap),
-			COLOR_PICKER_Y + aRow * (IMAGE_ZOMBATAR_COLORPICKER->mHeight + mGap),
-			IMAGE_ZOMBATAR_COLORPICKER->mWidth,
-			IMAGE_ZOMBATAR_COLORPICKER->mHeight);
+			COLOR_PICKER_X + aColumn * (gZombatarAtlas.mImages[static_cast<size_t>(ZombatarImage::COLORPICKER)].mWidth + mGap),
+			COLOR_PICKER_Y + aRow * (gZombatarAtlas.mImages[static_cast<size_t>(ZombatarImage::COLORPICKER)].mHeight + mGap),
+			gZombatarAtlas.mImages[static_cast<size_t>(ZombatarImage::COLORPICKER)].mWidth,
+			gZombatarAtlas.mImages[static_cast<size_t>(ZombatarImage::COLORPICKER)].mHeight);
 		if (aRect.Contains(x, y))
 			return mPaletteStart + anOffset;
 	}

@@ -2,7 +2,7 @@ export component WallnutEatSmall {
     kind: particle;
     source-name: "wallnuteatsmall";
     Emitter {
-        image: "IMAGE_WALLNUTPARTICLESSMALL";
+        images: ["particles/frames/wallnutparticlessmall_r0_c0.png","particles/frames/wallnutparticlessmall_r0_c1.png","particles/frames/wallnutparticlessmall_r0_c2.png","particles/frames/wallnutparticlessmall_r0_c3.png","particles/frames/wallnutparticlessmall_r0_c4.png"];
         imageFrames: 5;
         emitterType: Circle;
         randomLaunchSpin: 1;

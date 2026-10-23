@@ -2,7 +2,7 @@ export component DiggerTunnel {
     kind: particle;
     source-name: "diggertunnel";
     Emitter {
-        image: "IMAGE_DIRTSMALL";
+        images: ["particles/frames/dirtsmall_r0_c0.png","particles/frames/dirtsmall_r0_c1.png","particles/frames/dirtsmall_r0_c2.png","particles/frames/dirtsmall_r0_c3.png","particles/frames/dirtsmall_r0_c4.png","particles/frames/dirtsmall_r0_c5.png","particles/frames/dirtsmall_r0_c6.png","particles/frames/dirtsmall_r0_c7.png"];
         name: "Tossed Rocks";
         imageFrames: 8;
         randomLaunchSpin: 1;
@@ -32,7 +32,7 @@ export component DiggerTunnel {
         }
     }
     Emitter {
-        image: "IMAGE_DIRTBIG";
+        images: ["particles/frames/dirtbig_r0_c0.png","particles/frames/dirtbig_r0_c1.png","particles/frames/dirtbig_r0_c2.png","particles/frames/dirtbig_r0_c3.png"];
         name: "Ground Rocks";
         imageFrames: 4;
         randomLaunchSpin: 1;

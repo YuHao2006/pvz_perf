@@ -7,7 +7,6 @@ struct AtlasImageRegion
     int mX = 0, mY = 0;
     int mWidth = 0, mHeight = 0;
     int mTextureWidth = 0, mTextureHeight = 0;
-    int mRows = 1, mCols = 1;
 };
 
 constexpr bool IsValidAtlasImageRegion(const AtlasImageRegion& region)
@@ -18,9 +17,7 @@ constexpr bool IsValidAtlasImageRegion(const AtlasImageRegion& region)
         region.mWidth <= region.mTextureWidth &&
         region.mHeight <= region.mTextureHeight &&
         region.mX <= region.mTextureWidth - region.mWidth &&
-        region.mY <= region.mTextureHeight - region.mHeight &&
-        region.mRows > 0 && region.mCols > 0 &&
-        region.mCols <= region.mWidth && region.mRows <= region.mHeight;
+        region.mY <= region.mTextureHeight - region.mHeight;
 }
 
 // Pixel coordinates belong to the logical source image. Do not clamp them:

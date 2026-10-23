@@ -9,7 +9,7 @@ constexpr const int CAUSTIC_IMAGE_HEIGHT = 64;
 
 namespace Sexy
 {
-	class MemoryImage;
+	class Image;
 	class Graphics;
 };
 
@@ -17,8 +17,7 @@ class LawnApp;
 class PoolEffect
 {
 public:
-	// Legacy smoke-test inspection field; GPU-only production keeps it null.
-	Sexy::MemoryImage*	mCausticImage = nullptr;
+	Sexy::Image*	mCausticImage = nullptr;
 	LawnApp*			mApp = nullptr;
 	Sexy::UnsignedTimeCounter	mPoolCounter = 0;
 	// Installation state only; unavailable GPU compute is an error.

@@ -8,7 +8,8 @@
 #include "Resources.h"
 #include "MessageWidget.h"
 #include "graphics/Font.h"
-#include "Sexy.TodLib/FilterEffect.h"
+#include "graphics/DDInterface.h"
+#include "graphics/RenderInterface.h"
 #include "misc/SexyMatrix.h"
 
 SeedPacket::SeedPacket()
@@ -187,14 +188,14 @@ static void SeedPacketDrawSeed(Graphics* g, float x, float y, SeedType theSeedTy
 {
 	Image* aImage = IMAGE_PACKET_PLANTS;
 	SeedType aSeedType = theSeedType;
+	GpuImageColorFilter aColorFilter = GpuImageColorFilter::None;
 	if (theSeedType == SeedType::SEED_IMITATER && theImitaterType != SeedType::SEED_NONE)
 	{
 		aSeedType = theImitaterType;
-		FilterEffect aFilterEffect = FilterEffect::FILTER_EFFECT_WASHED_OUT;
+		aColorFilter = GpuImageColorFilter::WashedOut;
 		if (theImitaterType == SeedType::SEED_HYPNOSHROOM || theImitaterType == SeedType::SEED_SQUASH || theImitaterType == SeedType::SEED_POTATOMINE ||
 			theImitaterType == SeedType::SEED_GARLIC || theImitaterType == SeedType::SEED_LILYPAD)
-			aFilterEffect = FilterEffect::FILTER_EFFECT_LESS_WASHED_OUT;
-		aImage = FilterEffectGetImage(aImage, aFilterEffect);
+			aColorFilter = GpuImageColorFilter::LessWashedOut;
 	}
 
 	// B 形态 -> cel 列号表 kSeedPacketCel（原 13 支同判别式链合并；行序 =
@@ -263,7 +264,12 @@ static void SeedPacketDrawSeed(Graphics* g, float x, float y, SeedType theSeedTy
 		(unsigned)aSeedType < sizeof(kSeedPacketCel) / sizeof(kSeedPacketCel[0]) &&
 		kSeedPacketCel[(int)aSeedType] != kSeedPacketCelNone)
 	{
-		TodDrawImageCelScaledF(g, aImage, x, y, kSeedPacketCel[(int)aSeedType], 0, g->mScaleX, g->mScaleY);
+		auto& aRender = *gSexyAppBase->mDDInterface->mRenderInterface;
+		auto aSamplingFlags = aRender.sImageSamplingFlags;
+		if (aColorFilter != GpuImageColorFilter::None)
+			aSamplingFlags = (aSamplingFlags & ~0x30000000u) | static_cast<uint32_t>(aColorFilter);
+		GpuImageSamplingScope aSamplingScope(aRender, aSamplingFlags);
+		TodDrawImageRectScaledF(g, aImage, x, y, Rect(kSeedPacketCel[(int)aSeedType] * 50, 0, 50, 70), g->mScaleX, g->mScaleY);
 	}
 	else
 	{
@@ -306,11 +312,11 @@ void DrawSeedPacket(Graphics* g, float x, float y, SeedType theSeedType, SeedTyp
 
 	if (g->mScaleX > 1)
 	{
-		TodDrawImageCelScaledF(g, Sexy::IMAGE_SEEDPACKET_LARGER, x, y, 0, 0, g->mScaleX * 0.5f, g->mScaleY * 0.5f);
+		TodDrawImageRectScaledF(g, Sexy::IMAGE_SEEDPACKET_LARGER, x, y, Rect(0, 0, IMAGE_SEEDPACKET_LARGER->mWidth, IMAGE_SEEDPACKET_LARGER->mHeight), g->mScaleX * 0.5f, g->mScaleY * 0.5f);
 	}
 	else
 	{
-		TodDrawImageCelScaledF(g, Sexy::IMAGE_SEEDS, x, y, aPacketBackground, 0, g->mScaleX, g->mScaleY);
+		TodDrawImageRectScaledF(g, Sexy::IMAGE_SEEDS, x, y, Rect(aPacketBackground * 50, 0, 50, 70), g->mScaleX, g->mScaleY);
 	}
 
 	// 种子卡内图绘制参数（缩放/偏移）：按 SeedType 槽位直查，原 switch 长链退役。
@@ -436,7 +442,7 @@ void DrawSeedPacket(Graphics* g, float x, float y, SeedType theSeedType, SeedTyp
 		aPlantG.mColor = Color(64, 64, 64, 255);
 		aPlantG.mColorizeImages = true;
 		aPlantG.ClipRect(x, y, SEED_PACKET_WIDTH, aDarknessHeight);
-		TodDrawImageCelScaledF(&aPlantG, Sexy::IMAGE_SEEDS, x, y, aPacketBackground, 0, aPlantG.mScaleX, aPlantG.mScaleY);
+		TodDrawImageRectScaledF(&aPlantG, Sexy::IMAGE_SEEDS, x, y, Rect(aPacketBackground * 50, 0, 50, 70), aPlantG.mScaleX, aPlantG.mScaleY);
 		if (aDrawSeedInMiddle)
 		{
 			SeedPacketDrawSeed(&aPlantG, x, y, theSeedType, theImitaterType, aOffsetX, aOffsetY, aScale);
@@ -958,7 +964,7 @@ void SeedBank::Draw(Graphics* g)
 	else if (mBoard->HasConveyorBeltSeedBank())
 	{
 		g->DrawImage(IMAGE_CONVEYORBELT_BACKDROP, 83, 0);
-		g->DrawImageCel(IMAGE_CONVEYORBELT, 90, 63, mConveyorBeltCounter / 4 % 6);
+		g->DrawImage(IMAGE_CONVEYORBELT, 90, 63, Rect(0, (mConveyorBeltCounter / 4 % 6) * 16, 502, 16));
 		g->SetClipRect(90, 0, 501, BOARD_HEIGHT);
 	}
 	else

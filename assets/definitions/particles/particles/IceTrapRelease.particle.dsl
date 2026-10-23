@@ -2,7 +2,7 @@ export component IceTrapRelease {
     kind: particle;
     source-name: "icetraprelease";
     Emitter {
-        image: "IMAGE_ICETRAP_PARTICLES";
+        images: ["particles/frames/icetrap_particles_r0_c0.png","particles/frames/icetrap_particles_r0_c1.png","particles/frames/icetrap_particles_r0_c2.png","particles/frames/icetrap_particles_r0_c3.png"];
         imageFrames: 4;
         randomLaunchSpin: 1;
         spawnMinActive: range { 5 10; }

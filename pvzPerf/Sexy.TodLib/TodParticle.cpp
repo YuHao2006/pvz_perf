@@ -4,294 +4,11 @@
 #include "EffectSystem.h"
 #include "Reanimator.h"
 #include "GameConstants.h"
+#include "generated/GeneratedDefinitions.h"
 #include "graphics/Graphics.h"
 #include "graphics/DDInterface.h"
 #include "graphics/RenderInterface.h"
-#include "paklib/PakInterface.h"
-#include <array>
-#include <bit>
-#include <span>
 #include <stdexcept>
-#include <memory>
-namespace
-{
-	// 反射 CRC-32（多项式 0xEDB88320）查表改由 consteval 生成器在编译期填充
-	// （模式同 SexyAppFramework/misc/Buffer.cpp 的 GenerateCRCTable/crc_table 先例），
-	// 与旧函数内 static 表 + lazy flag 的逐位结果一致，无运行期首用锁。
-	consteval std::array<std::uint32_t, 256> GenerateParticleCrcTable()
-	{
-		std::array<std::uint32_t, 256> aTable{};
-		for (std::uint32_t i = 0; i < aTable.size(); i++)
-		{
-			std::uint32_t aValue = i;
-			for (int aBit = 0; aBit < 8; aBit++)
-				aValue = (aValue & 1) ? (0xEDB88320u ^ (aValue >> 1)) : (aValue >> 1);
-			aTable[i] = aValue;
-		}
-		return aTable;
-	}
-
-	constexpr auto gParticleCrcTable = GenerateParticleCrcTable();
-	static_assert(gParticleCrcTable[0] == 0x00000000u && gParticleCrcTable[1] == 0x77073096u &&
-		gParticleCrcTable[255] == 0x2D02EF8Du,
-		"particle CRC table must stay bit-for-bit identical to the old lazy-init table");
-}
-
-static std::uint32_t TodParticleCrc32(const std::uint8_t* theData, const std::size_t theSize)
-{
-	std::uint32_t aCrc = 0xFFFFFFFFu;
-	for (std::size_t i = 0; i < theSize; i++)
-		aCrc = gParticleCrcTable[(aCrc ^ theData[i]) & 0xFF] ^ (aCrc >> 8);
-	return aCrc ^ 0xFFFFFFFFu;
-}
-
-namespace
-{
-using EmitterTrackMember = FloatParameterTrack TodEmitterDefinition::*;
-constexpr EmitterTrackMember kEmitterSystemTracks[] = {
-    &TodEmitterDefinition::mSystemDuration, &TodEmitterDefinition::mCrossFadeDuration,
-    &TodEmitterDefinition::mSpawnRate, &TodEmitterDefinition::mSpawnMinActive,
-    &TodEmitterDefinition::mSpawnMaxActive, &TodEmitterDefinition::mSpawnMaxLaunched,
-    &TodEmitterDefinition::mEmitterRadius, &TodEmitterDefinition::mEmitterOffsetX,
-    &TodEmitterDefinition::mEmitterOffsetY, &TodEmitterDefinition::mEmitterBoxX,
-    &TodEmitterDefinition::mEmitterBoxY, &TodEmitterDefinition::mEmitterPath,
-    &TodEmitterDefinition::mEmitterSkewX, &TodEmitterDefinition::mEmitterSkewY,
-    &TodEmitterDefinition::mParticleDuration, &TodEmitterDefinition::mSystemRed,
-    &TodEmitterDefinition::mSystemGreen, &TodEmitterDefinition::mSystemBlue,
-    &TodEmitterDefinition::mSystemAlpha, &TodEmitterDefinition::mSystemBrightness,
-    &TodEmitterDefinition::mLaunchSpeed, &TodEmitterDefinition::mLaunchAngle
-};
-constexpr EmitterTrackMember kEmitterParticleTracks[] = {
-    &TodEmitterDefinition::mParticleRed, &TodEmitterDefinition::mParticleGreen,
-    &TodEmitterDefinition::mParticleBlue, &TodEmitterDefinition::mParticleAlpha,
-    &TodEmitterDefinition::mParticleBrightness, &TodEmitterDefinition::mParticleSpinAngle,
-    &TodEmitterDefinition::mParticleSpinSpeed, &TodEmitterDefinition::mParticleScale,
-    &TodEmitterDefinition::mParticleStretch, &TodEmitterDefinition::mCollisionReflect,
-    &TodEmitterDefinition::mCollisionSpin, &TodEmitterDefinition::mClipTop,
-    &TodEmitterDefinition::mClipBottom, &TodEmitterDefinition::mClipLeft,
-    &TodEmitterDefinition::mClipRight, &TodEmitterDefinition::mAnimationRate
-};
-static_assert(std::size(kEmitterSystemTracks) == 22 && std::size(kEmitterParticleTracks) == 16);
-
-void FreeParticleFields(EmitterFieldArray& fields)
-{
-    for (int i = 0; i < fields.count; ++i)
-    {
-        delete[] fields.Fields[i].mX.mNodes;
-        delete[] fields.Fields[i].mY.mNodes;
-    }
-    delete[] fields.Fields;
-    fields = {};
-}
-
-void FreeParticleDefinition(TodParticleDefinition& definition)
-{
-    for (int i = 0; i < definition.mEmitterDefCount; ++i)
-    {
-        TodEmitterDefinition& emitter = definition.mEmitterDefs[i];
-        for (const auto member : kEmitterSystemTracks)
-            delete[] (emitter.*member).mNodes;
-        for (const auto member : kEmitterParticleTracks)
-            delete[] (emitter.*member).mNodes;
-        FreeParticleFields(emitter.mParticleFields);
-        FreeParticleFields(emitter.mSystemFields);
-    }
-    delete[] definition.mEmitterDefs;
-    definition.mEmitterDefs = nullptr;
-    definition.mEmitterDefCount = 0;
-    definition.mEmitterIndexByName.fill(-1);
-    definition.mAtlas={};
-}
-
-class ParticleRecordReader final
-{
-public:
-    explicit ParticleRecordReader(std::span<const std::uint8_t> bytes) : mBytes(bytes) {}
-
-    std::span<const std::uint8_t> Take(std::size_t size)
-    {
-        if (size > mBytes.size() - mPosition)
-            throw std::runtime_error("truncated particle record");
-        const auto result = mBytes.subspan(mPosition, size);
-        mPosition += size;
-        return result;
-    }
-    std::uint32_t U32()
-    {
-        std::uint32_t value;
-        const auto bytes = Take(sizeof(value));
-        std::memcpy(&value, bytes.data(), sizeof(value));
-        return value;
-    }
-    int I32() { return std::bit_cast<std::int32_t>(U32()); }
-    bool AtEnd() const { return mPosition == mBytes.size(); }
-
-    void Track(FloatParameterTrack& track)
-    {
-        const auto count = U32();
-        if (count > 100000)
-            throw std::runtime_error("particle track node count out of range");
-        const auto bytes = Take(count * kFloatTrackNodeRecordSize);
-        if (count == 0)
-            return;
-        auto nodes = std::make_unique<FloatParameterTrackNode[]>(count);
-        for (std::uint32_t i = 0; i < count; ++i)
-        {
-            const auto* record = bytes.data() + i * kFloatTrackNodeRecordSize;
-            FloatParameterTrackNode& node = nodes[i];
-            std::memcpy(&node.mTime, record, 4);
-            std::memcpy(&node.mLowValue, record + 4, 4);
-            std::memcpy(&node.mHighValue, record + 8, 4);
-            int curve, distribution;
-            std::memcpy(&curve, record + 12, 4);
-            std::memcpy(&distribution, record + 16, 4);
-            if (unsigned(curve) > 13 || unsigned(distribution) > 13)
-                throw std::runtime_error("particle track curve out of range");
-            node.mCurveTypeEval = TodCurveResolveEval(curve);
-            node.mDistributionEval = TodCurveResolveEval(distribution);
-        }
-        track.mNodes = nodes.release();
-        track.mCountNodes = static_cast<int>(count);
-    }
-
-    void Fields(EmitterFieldArray& fields)
-    {
-        const auto count = U32();
-        if (count > MAX_PARTICLE_FIELDS)
-            throw std::runtime_error("particle field count out of range");
-        if (count == 0)
-            return;
-        fields.Fields = new ParticleField[count]{};
-        fields.count = static_cast<int>(count);
-        for (std::uint32_t i = 0; i < count; ++i)
-        {
-            const int type = I32();
-            if (type <= FIELD_INVALID || type >= PARTICLE_FIELD_COUNT)
-                throw std::runtime_error("particle field type out of range");
-            fields.Fields[i].mFieldType = static_cast<ParticleFieldType>(type);
-            Track(fields.Fields[i].mX);
-            Track(fields.Fields[i].mY);
-        }
-    }
-private:
-    std::span<const std::uint8_t> mBytes;
-    std::size_t mPosition = 0;
-};
-
-void DecodeParticleRecord(TodParticleDefinition& definition, std::span<const std::uint8_t> bytes,
-    const std::string& path)
-{
-    ParticleRecordReader header(bytes);
-    if (header.U32() != 0xDEADFEDAu)
-        throw std::runtime_error("particle record cookie mismatch");
-    const auto payloadSize = header.U32();
-    const auto storedCrc = header.U32();
-    const auto payload = header.Take(payloadSize);
-    if (!header.AtEnd() || TodParticleCrc32(payload.data(), payload.size()) != storedCrc)
-        throw std::runtime_error("particle record size or CRC mismatch");
-
-    TodParticleDefinition pending{};
-    const auto release = [](TodParticleDefinition* value) { FreeParticleDefinition(*value); };
-    std::unique_ptr<TodParticleDefinition, decltype(release)> owner(&pending, release);
-    std::size_t position=0;
-    pending.mAtlas=DefinitionLoadAtlas(payload,position,0x35564150u);
-    ParticleRecordReader reader(payload.subspan(position));
-    if (reader.U32() != 0x35504449u) // IDP5: compact scalar/track body, IDT3 and IDT5.
-        throw std::runtime_error("particle record format mismatch");
-    if (reader.U32() != 0)
-        throw std::runtime_error("particle image registry mismatch");
-    if (reader.U32() != kParticleEmitterNameTableHash)
-        throw std::runtime_error("particle emitter ID table mismatch");
-    const auto count = reader.U32();
-    if (count > 1000)
-        throw std::runtime_error("particle emitter count out of range");
-    const auto bodySize = reader.U32();
-    ParticleRecordReader body(reader.Take(bodySize));
-
-    pending.mEmitterDefs = new TodEmitterDefinition[count]{};
-    pending.mEmitterDefCount = static_cast<int>(count);
-    for (std::uint32_t i = 0; i < count; ++i)
-    {
-        TodEmitterDefinition& emitter = pending.mEmitterDefs[i];
-        std::size_t regionPosition=0;
-        emitter.mImageRegion=DefinitionReadImageRegion(body.Take(24),regionPosition,pending.mAtlas);
-        emitter.mImageCol = body.I32();
-        emitter.mImageRow = body.I32();
-        emitter.mImageFrames = body.I32();
-        emitter.mAnimated = body.I32();
-        emitter.mParticleFlags = body.I32();
-        const auto emitterType = body.U32();
-        if (emitterType > static_cast<unsigned>(EmitterType::EMITTER_CIRCLE_EVEN_SPACING))
-            throw std::runtime_error("particle emitter type out of range");
-        emitter.mEmitterType = static_cast<EmitterType>(emitterType);
-        for (const auto member : kEmitterSystemTracks)
-            body.Track(emitter.*member);
-        body.Fields(emitter.mParticleFields);
-        body.Fields(emitter.mSystemFields);
-        for (const auto member : kEmitterParticleTracks)
-            body.Track(emitter.*member);
-    }
-    if (!body.AtEnd())
-        throw std::runtime_error("particle body has trailing bytes");
-
-    if (reader.U32() != 0x33544449u || reader.U32() != count)
-        throw std::runtime_error("particle IDT3 section mismatch");
-    for (std::uint32_t i = 0; i < count; ++i)
-    {
-        const auto target = reader.U32();
-        if (target != 0xFFFFFFFFu && target >= count)
-            throw std::runtime_error("particle IDT3 target out of range");
-        pending.mEmitterDefs[i].mOnDurationEmitterIndex = target == 0xFFFFFFFFu ? -1 : int(target);
-    }
-    if (reader.U32() != 0x35544449u || reader.U32() != count)
-        throw std::runtime_error("particle IDT5 section mismatch");
-    for (std::uint32_t i = 0; i < count; ++i)
-    {
-        const auto id = reader.U32();
-        if (id >= static_cast<unsigned>(ParticleEmitterName::top))
-            throw std::runtime_error("particle name ID out of range");
-        pending.mEmitterDefs[i].mNameId = static_cast<ParticleEmitterName>(id);
-        if (pending.mEmitterIndexByName[id] < 0)
-            pending.mEmitterIndexByName[id] = int(i);
-    }
-    if (!reader.AtEnd())
-        throw std::runtime_error("particle record has trailing bytes");
-    DefinitionBindAtlas(pending.mAtlas,path);
-    definition = std::move(pending);
-    owner.release();
-}
-}
-
-static bool TodParticleTryLoadDefinitionV5(TodParticleDefinition* theParticleDef, const char* theParticleFileName)
-{
-    const std::string path = DefinitionCompiledPath(theParticleFileName);
-    PFILE* file = DefinitionOpenCompiledFile(path.c_str());
-    if (!file)
-        throw std::runtime_error("particle record missing: " + path);
-    p_fseek(file, 0, 2);
-    const long size = p_ftell(file);
-    p_fseek(file, 0, 0);
-    if (size < 12)
-    {
-        p_fclose(file);
-        throw std::runtime_error("particle record truncated: " + path);
-    }
-    std::vector<std::uint8_t> bytes(size);
-    const bool read = p_fread(bytes.data(), 1, bytes.size(), file) == bytes.size();
-    p_fclose(file);
-    if (!read)
-        throw std::runtime_error("particle record unreadable: " + path);
-    try
-    {
-        DecodeParticleRecord(*theParticleDef, bytes, path);
-    }
-    catch (const std::exception& error)
-    {
-        throw std::runtime_error(path + ": " + error.what());
-    }
-    return true;
-}
-
 int gParticleDefCount;                      // [0x6A9F08]
 TodParticleDefinition* gParticleDefArray;   // [0x6A9F0C]
 std::atomic<bool> gParticleAllDefinitionDataLoaded{false};
@@ -325,7 +42,7 @@ ParticleParams gLawnParticleArray[(int)ParticleEffect::NUM_PARTICLES] = {
 	{ ParticleEffect::PARTICLE_ZOMBIE_RISE, "particles\\ZombieRise.xml" },
 	{ ParticleEffect::PARTICLE_GRAVE_BUSTER, "particles\\GraveBuster.xml" },
 	{ ParticleEffect::PARTICLE_GRAVE_BUSTER_DIE, "particles\\GraveBusterDie.xml" },
-	{ ParticleEffect::PARTICLE_POOL_SPLASH, "particles\\PoolSplash.xml" },  // unused：全库零生成调用点（枚举值是存档/粒子池协议数字，保留占位不删）
+	{ ParticleEffect::PARTICLE_POOL_SPLASH, "particles\\PoolSplash.xml" },
 	{ ParticleEffect::PARTICLE_ICE_SPARKLE, "particles\\IceSparkle.xml" },
 	{ ParticleEffect::PARTICLE_SEED_PACKET, "particles\\SeedPacket.xml" },
 	{ ParticleEffect::PARTICLE_TALL_NUT_BLOCK, "particles\\TallNutBlock.xml" },
@@ -356,7 +73,7 @@ ParticleParams gLawnParticleArray[(int)ParticleEffect::NUM_PARTICLES] = {
 	{ ParticleEffect::PARTICLE_ZOMBIE_LADDER, "particles\\ZombieLadder.xml" },
 	{ ParticleEffect::PARTICLE_UMBRELLA_REFLECT, "particles\\UmbrellaReflect.xml" },
 	{ ParticleEffect::PARTICLE_SEED_PACKET_PICK, "particles\\SeedPacketPick.xml" },
-	{ ParticleEffect::PARTICLE_ICE_TRAP_ZOMBIE, "particles\\IceTrapZombie.xml" },  // unused：全库零生成调用点（枚举值是存档/粒子池协议数字，保留占位不删）
+	{ ParticleEffect::PARTICLE_ICE_TRAP_ZOMBIE, "particles\\IceTrapZombie.xml" },
 	{ ParticleEffect::PARTICLE_ICE_TRAP_RELEASE, "particles\\IceTrapRelease.xml" },
 	{ ParticleEffect::PARTICLE_ZAMBONI_SMOKE, "particles\\ZamboniSmoke.xml" },
 	{ ParticleEffect::PARTICLE_GLOOMCLOUD, "particles\\GloomCloud.xml" },
@@ -366,7 +83,7 @@ ParticleParams gLawnParticleArray[(int)ParticleEffect::NUM_PARTICLES] = {
 	{ ParticleEffect::PARTICLE_ZAMBONI_EXPLOSION2, "particles\\ZamboniExplosion2.xml" },
 	{ ParticleEffect::PARTICLE_CATAPULT_EXPLOSION, "particles\\CatapultExplosion.xml" },
 	{ ParticleEffect::PARTICLE_MOWER_CLOUD, "particles\\MowerCloud.xml" },
-	{ ParticleEffect::PARTICLE_BOSS_ICE_BALL, "particles\\BossIceBallTrail.xml" },  // unused：全库零生成调用点（枚举值是存档/粒子池协议数字，保留占位不删）
+	{ ParticleEffect::PARTICLE_BOSS_ICE_BALL, "particles\\BossIceBallTrail.xml" },
 	{ ParticleEffect::PARTICLE_BLASTMARK, "particles\\BlastMark.xml" },
 	{ ParticleEffect::PARTICLE_COIN_PICKUP_ARROW, "particles\\CoinPickupArrow.xml" },
 	{ ParticleEffect::PARTICLE_PRESENT_PICKUP, "particles\\PresentPickup.xml" },
@@ -375,7 +92,7 @@ ParticleParams gLawnParticleArray[(int)ParticleEffect::NUM_PARTICLES] = {
 	{ ParticleEffect::PARTICLE_MOWERED_ZOMBIE_ARM, "particles\\MoweredZombieArm.xml" },
 	{ ParticleEffect::PARTICLE_ZOMBIE_HEAD_POOL, "particles\\ZombieHeadPool.xml" },
 	{ ParticleEffect::PARTICLE_ZOMBIE_BOSS_FIREBALL, "particles\\Zombie_boss_fireball.xml" },
-	{ ParticleEffect::PARTICLE_FIREBALL_DEATH, "particles\\FireballDeath.xml" },  // unused：全库零生成调用点（枚举值是存档/粒子池协议数字，保留占位不删）
+	{ ParticleEffect::PARTICLE_FIREBALL_DEATH, "particles\\FireballDeath.xml" },
 	{ ParticleEffect::PARTICLE_ICEBALL_DEATH, "particles\\IceballDeath.xml" },
 	{ ParticleEffect::PARTICLE_ICEBALL_TRAIL, "particles\\Iceball_Trail.xml" },
 	{ ParticleEffect::PARTICLE_FIREBALL_TRAIL, "particles\\Fireball_Trail.xml" },
@@ -384,7 +101,7 @@ ParticleParams gLawnParticleArray[(int)ParticleEffect::NUM_PARTICLES] = {
 	{ ParticleEffect::PARTICLE_TROPHY_SPARKLE, "particles\\TrophySparkle.xml" },
 	{ ParticleEffect::PARTICLE_PORTAL_CIRCLE, "particles\\PortalCircle.xml" },
 	{ ParticleEffect::PARTICLE_PORTAL_SQUARE, "particles\\PortalSquare.xml" },
-	{ ParticleEffect::PARTICLE_POTTED_PLANT_GLOW, "particles\\PottedPlantGlow.xml" },  // unused：全库零生成调用点（枚举值是存档/粒子池协议数字，保留占位不删）
+	{ ParticleEffect::PARTICLE_POTTED_PLANT_GLOW, "particles\\PottedPlantGlow.xml" },
 	{ ParticleEffect::PARTICLE_POTTED_WATER_PLANT_GLOW, "particles\\PottedWaterPlantGlow.xml" },
 	{ ParticleEffect::PARTICLE_POTTED_ZEN_GLOW, "particles\\PottedZenGlow.xml" },
 	{ ParticleEffect::PARTICLE_MIND_CONTROL, "particles\\MindControl.xml" },
@@ -405,110 +122,41 @@ ParticleParams gLawnParticleArray[(int)ParticleEffect::NUM_PARTICLES] = {
 	{ ParticleEffect::PARTICLE_STARBURST, "particles\\Starburst.xml" },
 	{ ParticleEffect::PARTICLE_CREDITS_FOG, "particles\\Credits_fog.xml" },
 	{ ParticleEffect::PARTICLE_PERSENT_PICK_UP_ARROW, "particles\\UpsellArrow.xml" },
-};  // 0x6A0FF0
-
-//0x515640 : (ecx = *theParticleFileName, *theParticleDef)  //esp -= 4
-static bool TodParticleLoadADef(TodParticleDefinition* theParticleDef, const char* theParticleFileName)
-{
-	// V5 records bind a resident atlas and carry inline image rectangles. Missing/corrupt
-	// records are fatal; older formats are not a runtime fallback.
-	if (!TodParticleTryLoadDefinitionV5(theParticleDef, theParticleFileName))
-		return false;
-	for (int i = 0; i < theParticleDef->mEmitterDefCount; i++)
-	{
-		TodEmitterDefinition& aDef = theParticleDef->mEmitterDefs[i];
-		FloatTrackSetDefault(aDef.mSystemDuration, 0.0f);
-		FloatTrackSetDefault(aDef.mSpawnRate, 0.0f);
-		FloatTrackSetDefault(aDef.mSpawnMinActive, -1.0f);
-		FloatTrackSetDefault(aDef.mSpawnMaxActive, -1.0f);
-		FloatTrackSetDefault(aDef.mSpawnMaxLaunched, -1.0f);
-		FloatTrackSetDefault(aDef.mEmitterRadius, 0.0f);
-		FloatTrackSetDefault(aDef.mEmitterOffsetX, 0.0f);
-		FloatTrackSetDefault(aDef.mEmitterOffsetY, 0.0f);
-		FloatTrackSetDefault(aDef.mEmitterBoxX, 0.0f);
-		FloatTrackSetDefault(aDef.mEmitterBoxY, 0.0f);
-		FloatTrackSetDefault(aDef.mEmitterSkewX, 0.0f);
-		FloatTrackSetDefault(aDef.mEmitterSkewY, 0.0f);
-		FloatTrackSetDefault(aDef.mParticleDuration, 100.0f);
-		FloatTrackSetDefault(aDef.mLaunchSpeed, 0.0f);
-		FloatTrackSetDefault(aDef.mSystemRed, 1.0f);
-		FloatTrackSetDefault(aDef.mSystemGreen, 1.0f);
-		FloatTrackSetDefault(aDef.mSystemBlue, 1.0f);
-		FloatTrackSetDefault(aDef.mSystemAlpha, 1.0f);
-		FloatTrackSetDefault(aDef.mSystemBrightness, 1.0f);
-		FloatTrackSetDefault(aDef.mLaunchAngle, 0.0f);
-		FloatTrackSetDefault(aDef.mCrossFadeDuration, 0.0f);
-		FloatTrackSetDefault(aDef.mParticleRed, 1.0f);
-		FloatTrackSetDefault(aDef.mParticleGreen, 1.0f);
-		FloatTrackSetDefault(aDef.mParticleBlue, 1.0f);
-		FloatTrackSetDefault(aDef.mParticleAlpha, 1.0f);
-		FloatTrackSetDefault(aDef.mParticleBrightness, 1.0f);
-		FloatTrackSetDefault(aDef.mParticleSpinAngle, 0.0f);
-		FloatTrackSetDefault(aDef.mParticleSpinSpeed, 0.0f);
-		FloatTrackSetDefault(aDef.mParticleScale, 1.0f);
-		FloatTrackSetDefault(aDef.mParticleStretch, 1.0f);
-		FloatTrackSetDefault(aDef.mCollisionReflect, 0.0f);
-		FloatTrackSetDefault(aDef.mCollisionSpin, 0.0f);
-		FloatTrackSetDefault(aDef.mClipTop, 0.0f);
-		FloatTrackSetDefault(aDef.mClipBottom, 0.0f);
-		FloatTrackSetDefault(aDef.mClipLeft, 0.0f);
-		FloatTrackSetDefault(aDef.mClipRight, 0.0f);
-		FloatTrackSetDefault(aDef.mAnimationRate, 0.0f);
-	}
-	return true;
-}
+};
 
 //0x515CE0
 void TodParticleLoadDefinitions(ParticleParams* theParticleParamArray, int theParticleParamArraySize)
 {
+	if (gParticleParamArray || gParticleDefArray)
+		return;
+	if (theParticleParamArray != gLawnParticleArray ||
+		theParticleParamArraySize != (int)ParticleEffect::NUM_PARTICLES)
+		throw std::invalid_argument("invalid static particle catalog");
 	gParticleAllDefinitionDataLoaded.store(false,std::memory_order_release);
-	TOD_ASSERT(!gParticleParamArray && !gParticleDefArray);
-	// 1073 initializes every emitter pointer/count before loading the first file.
-	// Publish only after allocation succeeds, so cleanup never sees a count with
-	// a null array, or garbage in definitions that have not been loaded yet.
-	auto* aDefinitions = new TodParticleDefinition[theParticleParamArraySize]{};
 	gParticleParamArraySize = theParticleParamArraySize;
 	gParticleParamArray = theParticleParamArray;
 	gParticleDefCount = theParticleParamArraySize;
-	gParticleDefArray = aDefinitions;
+	gParticleDefArray = GeneratedDefinitions::Particles;
 
-	for (int i = 0; i < gParticleParamArraySize; i++)
+	try
 	{
-		ParticleParams& aParticleParams = gParticleParamArray[i];
-		TOD_ASSERT(aParticleParams.mParticleEffect == i);
-		if (!TodParticleLoadADef(&gParticleDefArray[i], aParticleParams.mParticleFileName))
-		{
-			const std::string aMessage = std::string("Failed to load particle '") + aParticleParams.mParticleFileName + "'";
-			TodErrorMessageBox(aMessage.c_str(), "Error");
-		}
-		gSexyAppBase->mCompletedLoadingThreadTasks += 6;
-	}
-
-	// P5-④：粒子 def 渲染轨道预扫描位掩码（装载后一次性；bit=通道有已设轨）
-	for (int d = 0; d < gParticleDefCount; d++)
-		for (int e = 0; e < gParticleDefArray[d].mEmitterDefCount; e++)
-		{
-			TodEmitterDefinition& aDef = gParticleDefArray[d].mEmitterDefs[e];
-			unsigned aMask = 0;
-			auto has = [&aMask](int bit, const FloatParameterTrack& t) { if (FloatTrackIsSet(t)) aMask |= 1u << bit; };
-			has(0, aDef.mSystemRed); has(1, aDef.mSystemGreen); has(2, aDef.mSystemBlue);
-			has(3, aDef.mSystemAlpha); has(4, aDef.mSystemBrightness);
-			has(5, aDef.mParticleRed); has(6, aDef.mParticleGreen); has(7, aDef.mParticleBlue);
-			has(8, aDef.mParticleAlpha); has(9, aDef.mParticleBrightness);
-			has(10, aDef.mParticleScale); has(11, aDef.mParticleStretch);
-			has(12, aDef.mParticleSpinSpeed); has(13, aDef.mParticleSpinAngle);
-			aDef.mRenderTrackMask = aMask;
-		}
+	GeneratedDefinitions::LoadParticleImages();
+	if (gSexyAppBase)
+		gSexyAppBase->mCompletedLoadingThreadTasks += 6 * gParticleParamArraySize;
 	gParticleAllDefinitionDataLoaded.store(true,std::memory_order_release);
+	}
+	catch (...)
+	{
+		TodParticleFreeDefinitions();
+		throw;
+	}
 }
 
 //0x515E30
 void TodParticleFreeDefinitions()
 {
 	gParticleAllDefinitionDataLoaded.store(false,std::memory_order_release);
-	for (int i = 0; i < gParticleDefCount; i++)
-		FreeParticleDefinition(gParticleDefArray[i]);
-	delete[] gParticleDefArray;
+	GeneratedDefinitions::ReleaseParticleImages();
 	gParticleDefArray = nullptr;
 	gParticleDefCount = 0;
 	gParticleParamArray = nullptr;
@@ -518,6 +166,7 @@ void TodParticleFreeDefinitions()
 TodParticleSystem::TodParticleSystem()
 {
 	mEffectType = ParticleEffect::PARTICLE_NONE;
+	mVariant = 0;
 	mParticleDef = nullptr;
 	mParticleHolder = nullptr;
 	mDead = false;
@@ -532,12 +181,15 @@ TodParticleSystem::~TodParticleSystem()
 }
 
 //0x515E90 : (edx = theEffectType, *theDefinition, ecx = theRenderOrder, theY, theX, *this)
-void TodParticleSystem::TodParticleInitializeFromDef(float theX, float theY, int theRenderOrder, TodParticleDefinition* theDefinition, ParticleEffect theEffectType)
+void TodParticleSystem::TodParticleInitializeFromDef(float theX, float theY, int theRenderOrder, TodParticleDefinition* theDefinition, ParticleEffect theEffectType, std::uint32_t theVariant)
 {
 	TOD_ASSERT(mParticleHolder);
+	if (!theDefinition || theVariant>=theDefinition->mVariantCount)
+		throw std::out_of_range("particle appearance variant out of range");
 	// 名册侧表：系统池槽位键天然就位，无需分配器（链表成员已退役）
 	mParticleDef = theDefinition;
 	mEffectType = theEffectType;
+	mVariant = theVariant;
 	mRenderOrder = theRenderOrder;
 
 	for (int i = 0; i < theDefinition->mEmitterDefCount; i++)
@@ -573,7 +225,6 @@ void TodParticleEmitter::TodEmitterInitialize(float theX, float theY, TodParticl
 	mParticleSystem = theSystem;
 	mScaleOverride = 1.0f;
 	mExtraAdditiveDrawOverride = false;
-	mImageOverride = nullptr;
 	mSystemDuration = 0;
 	mEmitterDef = theEmitterDef;
 	// 粒子名册侧表：发射器池槽位键天然就位，无需分配器（链表成员已退役）
@@ -1382,31 +1033,11 @@ void RenderParticle(Graphics* g, TodParticle* theParticle, const Color& theColor
 {
 	TodParticleEmitter* aEmitter = theParticle->mParticleEmitter;
 	TodEmitterDefinition* aEmitterDef = aEmitter->mEmitterDef;
-	Image* aImage = aEmitter->mImageOverride;
-	int aSourceX = 0, aSourceY = 0;
-	int aColumns, aRows, aCelWidth, aCelHeight;
-	if (aImage)
-	{
-		aColumns = aImage->mNumCols;
-		aRows = aImage->mNumRows;
-		aCelWidth = aImage->mWidth / aColumns;
-		aCelHeight = aImage->mHeight / aRows;
-	}
-	else
-	{
-		const auto& aRegion = aEmitterDef->mImageRegion;
-		if (!aRegion.mWidth)
-			return;
-		aImage = aEmitter->mParticleSystem->mParticleDef->mAtlas.image.get();
-		if (!aImage)
-			return;  // 不存在贴图时，取消绘制
-		aSourceX = aRegion.mX;
-		aSourceY = aRegion.mY;
-		aColumns = aRegion.mCols;
-		aRows = aRegion.mRows;
-		aCelWidth = aRegion.mWidth / aColumns;
-		aCelHeight = aRegion.mHeight / aRows;
-	}
+	if (!aEmitterDef->mImageRectCount)
+		return;
+	const auto& system = *aEmitter->mParticleSystem;
+	const auto& definition = *system.mParticleDef;
+	const auto variant = system.mVariant;
 	int aFrame = aEmitter->mFrameOverride;
 	if (aFrame == -1)  // 如果未定义覆写帧
 	{
@@ -1417,11 +1048,17 @@ void RenderParticle(Graphics* g, TodParticle* theParticle, const Color& theColor
 		else
 			aFrame = theParticle->mImageFrame;  // 帧固定的粒子，直接取其贴图帧
 	}
-	aFrame += aEmitterDef->mImageCol;  // 当前帧加上定义中的图像起始列，得到当前帧在贴图中的列数
-	if (aFrame >= aColumns)
-		aFrame = aColumns - 1;
-
-	Rect aSrcRect(aFrame * aCelWidth, std::min(aEmitterDef->mImageRow, aRows - 1) * aCelHeight, aCelWidth, aCelHeight);
+	const auto& aRegion = definition.mImageRects[std::size_t(variant)*definition.mImageRectCount+
+		aEmitterDef->mImageRectOffset+std::clamp(aFrame, 0, aEmitterDef->mImageRectCount - 1)];
+	if (aRegion.mWidth==0 || aRegion.mHeight==0)
+		return;
+	if (!definition.mTextures[variant])
+		throw std::logic_error("particle appearance atlas is not uploaded");
+	TextureSource source{definition.mTextures[variant],definition.mTextureWidths[variant],
+		definition.mTextureHeights[variant],0};
+	const int aSourceX = aRegion.mX, aSourceY = aRegion.mY;
+	const int aCelWidth = aRegion.mWidth, aCelHeight = aRegion.mHeight;
+	Rect aSrcRect(0, 0, aCelWidth, aCelHeight);
 	float aClipTop = TodParticleEmitter::ParticleTrackEvaluate(aEmitterDef->mClipTop, theParticle, ParticleTracks::TRACK_PARTICLE_CLIP_TOP);
 	float aClipBottom = TodParticleEmitter::ParticleTrackEvaluate(aEmitterDef->mClipBottom, theParticle, ParticleTracks::TRACK_PARTICLE_CLIP_BOTTOM);
 	float aClipLeft = TodParticleEmitter::ParticleTrackEvaluate(aEmitterDef->mClipLeft, theParticle, ParticleTracks::TRACK_PARTICLE_CLIP_LEFT);
@@ -1436,8 +1073,8 @@ void RenderParticle(Graphics* g, TodParticle* theParticle, const Color& theColor
 	aSrcRect.mY += FloatRoundToInt(aClipTop * aCelHeight);
 	aSrcRect.mWidth -= FloatRoundToInt(aCelWidth * (aClipLeft + aClipRight));
 	aSrcRect.mHeight -= FloatRoundToInt(aCelHeight * (aClipBottom + aClipTop));  // 以上根据裁剪各方向的比例调整源矩形
-	TOD_ASSERT(aSrcRect.mX == aCelWidth * aFrame + FloatRoundToInt(aClipLeft * aCelWidth));
-	TOD_ASSERT(aSrcRect.mY == aCelHeight * aEmitterDef->mImageRow + FloatRoundToInt(aClipTop * aCelHeight));
+	TOD_ASSERT(aSrcRect.mX == FloatRoundToInt(aClipLeft * aCelWidth));
+	TOD_ASSERT(aSrcRect.mY == FloatRoundToInt(aClipTop * aCelHeight));
 	TOD_ASSERT(aSrcRect.mX >= 0 && aSrcRect.mX < 10000);
 	TOD_ASSERT(aSrcRect.mY >= 0 && aSrcRect.mY < 10000);
 	aSrcRect.mX += aSourceX;
@@ -1473,9 +1110,9 @@ void RenderParticle(Graphics* g, TodParticle* theParticle, const Color& theColor
 			theParams->mParticleScale, 
 			theParams->mParticleStretch * theParams->mParticleScale
 		);
-		theTriangleGroup->AddTriangle(g, aImage, aTransform, g->mClipRect, theColor, aDrawMode, aSrcRect);
+		theTriangleGroup->AddTriangle(g, source, aTransform, g->mClipRect, theColor, aDrawMode, aSrcRect);
 		if (aEmitter->mExtraAdditiveDrawOverride)
-			theTriangleGroup->AddTriangle(g, aImage, aTransform, g->mClipRect, theColor, Graphics::DRAWMODE_ADDITIVE, aSrcRect);
+			theTriangleGroup->AddTriangle(g, source, aTransform, g->mClipRect, theColor, Graphics::DRAWMODE_ADDITIVE, aSrcRect);
 	}
 }
 
@@ -1500,7 +1137,7 @@ void TodParticleEmitter::DrawParticle(Graphics* g, TodParticle* theParticle, Tod
 			aParams.mPosY += g->mTransY;
 
 			TodParticle* aParticle;
-			if (mImageOverride || mEmitterDef->mImageRegion.mWidth)  // 粒子有贴图时，渲染该粒子
+			if (mEmitterDef->mImageRectCount)  // 粒子有贴图时，渲染该粒子
 				aParticle = theParticle;
 			else  // 粒子没有贴图时，尝试渲染交叉混合来源的粒子
 				aParticle = mParticleSystem->mParticleHolder->mParticles.DataArrayTryToGet((unsigned int)theParticle->mCrossFadeParticleID);
@@ -1523,9 +1160,7 @@ void TodParticleSystem::Draw(Graphics* g)
 //0x5183A0
 void TodParticleEmitter::Draw(Graphics* g)
 {
-	bool aHardWare = gSexyAppBase->mDDInterface->mIs3D;
-	if ((TestBit(mEmitterDef->mParticleFlags, (int)ParticleFlags::PARTICLE_SOFTWARE_ONLY) && aHardWare) ||
-		(TestBit(mEmitterDef->mParticleFlags, (int)ParticleFlags::PARTICLE_HARDWARE_ONLY) && !aHardWare))
+	if (TestBit(mEmitterDef->mParticleFlags, (int)ParticleFlags::PARTICLE_SOFTWARE_ONLY))
 		return;
 
 	TodTriangleGroup aTriangleGroup;
@@ -1610,31 +1245,6 @@ void TodParticleSystem::OverrideExtraAdditiveDraw(ParticleEmitterName theName, b
 		TodParticleEmitter* aEmitter = EmitterRosterEmitterAt(i);
 		if (static_cast<ParticleEmitterName>(aEmitter->mEmitterDef->mNameId) == theName)
 			aEmitter->mExtraAdditiveDrawOverride = theEnableExtraAdditiveDraw;
-	}
-}
-
-
-//0x518600
-// GOTY @Patoke: 0x522CB0
-void TodParticleSystem::OverrideImage(ParticleEmitterNameRange theRange, Image* theImage)
-{
-	const int aRosterCount = EmitterRosterCount();
-	for (int i = 0; i < aRosterCount; i++)
-	{
-		TodParticleEmitter* aEmitter = EmitterRosterEmitterAt(i);
-		if (theRange.Contains(static_cast<ParticleEmitterName>(aEmitter->mEmitterDef->mNameId)))
-			aEmitter->mImageOverride = theImage;
-	}
-}
-
-void TodParticleSystem::OverrideImage(ParticleEmitterName theName, Image* theImage)
-{
-	const int aRosterCount = EmitterRosterCount();
-	for (int i = 0; i < aRosterCount; i++)
-	{
-		TodParticleEmitter* aEmitter = EmitterRosterEmitterAt(i);
-		if (static_cast<ParticleEmitterName>(aEmitter->mEmitterDef->mNameId) == theName)
-			aEmitter->mImageOverride = theImage;
 	}
 }
 
@@ -1995,8 +1605,10 @@ bool TodParticleHolder::IsOverLoaded()
 	return mParticleSystems.mSize > MAX_PARTICLES_SIZE || mEmitters.mSize > MAX_PARTICLES_SIZE || mParticles.mSize > MAX_PARTICLES_SIZE;
 }
 
-TodParticleSystem* TodParticleHolder::AllocParticleSystemFromDef(float theX, float theY, int theRenderOrder, TodParticleDefinition* theDefinition, ParticleEffect theParticleEffect)
+TodParticleSystem* TodParticleHolder::AllocParticleSystemFromDef(float theX, float theY, int theRenderOrder, TodParticleDefinition* theDefinition, ParticleEffect theParticleEffect, std::uint32_t theVariant)
 {
+	if (!theDefinition || theVariant>=theDefinition->mVariantCount)
+		throw std::out_of_range("particle appearance variant out of range");
 	if (mParticleSystems.mSize == mParticleSystems.mMaxSize)
 	{
 		TodTrace("Too many particle systems\n");
@@ -2010,13 +1622,13 @@ TodParticleSystem* TodParticleHolder::AllocParticleSystemFromDef(float theX, flo
 
 	TodParticleSystem* aTodParticle = mParticleSystems.DataArrayAlloc();
 	aTodParticle->mParticleHolder = this;
-	aTodParticle->TodParticleInitializeFromDef(theX, theY, theRenderOrder, theDefinition, theParticleEffect);
+	aTodParticle->TodParticleInitializeFromDef(theX, theY, theRenderOrder, theDefinition, theParticleEffect, theVariant);
 	return aTodParticle;
 }
 
 //0x518A70
-TodParticleSystem* TodParticleHolder::AllocParticleSystem(float theX, float theY, int theRenderOrder, ParticleEffect theParticleEffect)
+TodParticleSystem* TodParticleHolder::AllocParticleSystem(float theX, float theY, int theRenderOrder, ParticleEffect theParticleEffect, std::uint32_t theVariant)
 {
 	TOD_ASSERT((int)theParticleEffect >= 0 && (int)theParticleEffect < gParticleDefCount);
-	return AllocParticleSystemFromDef(theX, theY, theRenderOrder, &gParticleDefArray[(int)theParticleEffect], theParticleEffect);
+	return AllocParticleSystemFromDef(theX, theY, theRenderOrder, &gParticleDefArray[(int)theParticleEffect], theParticleEffect, theVariant);
 }

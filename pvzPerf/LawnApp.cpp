@@ -3,10 +3,11 @@
 #include <time.h>
 #include <cstdlib>
 #include "LawnApp.h"
-#include "Sexy.TodLib/ProgramImageSymbols.h"
+#include "Sexy.TodLib/generated/ReanimVariantOptions.h"
 #include "misc/StableTime.h"
 #include "Lawn/Board.h"
 #include "Lawn/Plant.h"
+#include "Lawn/Projectile.h"
 #include "Sexy.TodLib/generated/EntityStrings.h"  // 动态键实体表（阶段 3）
 #include "Lawn/Zombie.h"
 #include "Lawn/Cutscene.h"
@@ -33,6 +34,8 @@
 #include "Lawn/Widget/CheatDialog.h"
 #include "Lawn/Widget/GameSelector.h"
 #include "Lawn/Widget/ZombatarItems.h"
+#include "Lawn/Widget/ZombatarResources.h"
+#include "Sexy.TodLib/generated/SceneAtlasData.h"
 #include "Lawn/Widget/CreditScreen.h"
 #include "Sexy.TodLib/EffectSystem.h"
 #include "Sexy.TodLib/FilterEffect.h"
@@ -51,7 +54,7 @@
 #include "misc/ResourceManager.h"
 #include "misc/AutoCrit.h"
 #include "SexyAppFramework/graphics/DDInterface.h"
-#include "SexyAppFramework/graphics/DDImage.h"
+#include "SexyAppFramework/graphics/Image.h"
 #include "SexyAppFramework/graphics/RenderInterface.h"
 #include "SexyAppFramework/graphics/GameViewport.h"
 #include "Resources.h"
@@ -169,7 +172,6 @@ LawnApp::LawnApp()
 	mFirstTimeGameSelector = true;
 	mGameMode = GameMode::GAMEMODE_ADVENTURE;
 	mEasyPlantingCheat = false;
-	mAutoEnable3D = true;
 	Tod_SWTri_AddAllDrawTriFuncs();
 	mLoadingZombiesThreadCompleted = true;
 	mGamesPlayed = 0;
@@ -351,9 +353,12 @@ void LawnApp::Shutdown()
 			mReanimatorCache = nullptr;
 		}
 
-		FilterEffectDisposeForApp();
 		TodParticleFreeDefinitions();
 		ReanimatorFreeDefinitions();
+		ProjectileFreeResources();
+		ZombatarFreeResources();
+		FreeSceneAtlases();
+		DefinitionFreeAtlasImages();
 		TodWarmDispose();
 		FreeGlobalAllocators();
 		SexyAppBase::Shutdown();
@@ -514,7 +519,19 @@ bool LawnApp::TryLoadGame()
 	if (this->FileExists(aSaveName))
 	{
 		MakeNewBoard();
-		if (mBoard->LoadGame(aSaveName))
+		bool aLoaded = false;
+		try
+		{
+			aLoaded = mBoard->LoadGame(aSaveName);
+		}
+		catch (const SaveGameUpgradeRequired&)
+		{
+			// An older recognized format is not a damaged save. Detach the
+			// new board before reporting it so shutdown cannot save over it.
+			KillBoard();
+			throw;
+		}
+		if (aLoaded)
 		{
 			mFirstTimeGameSelector = false;
 			RefreshGameViewport(*this);
@@ -559,6 +576,7 @@ void LawnApp::NewGame()
 void LawnApp::ShowGameSelector()
 {
 	KillBoard();
+	Sexy::ReleaseTitleScreenResource(mResourceManager);
 	if (mGameSelector)
 	{
 		mWidgetManager->RemoveWidget(mGameSelector);
@@ -1742,7 +1760,7 @@ void LawnApp::LoadGroup(ResourceGroupId theGroup, int theGroupAveMsToLoad)
 	if (mShutdown || mCloseRequest)
 		return;
 
-	if (mResourceManager->HadError() || !ExtractResourcesByGroup(mResourceManager, theGroup))
+	if (mResourceManager->HadError() || !mResourceManager->FinishLoadResources(theGroup))
 	{
 		ShowResourceError();
 		mLoadingFailed = true;
@@ -1764,12 +1782,13 @@ void LawnApp::LoadingThreadProc()
 		mTitleScreen->mLoaderScreenIsLoaded = true;
 	}
 
-	// 全量动画定义装载（2026-10-09 锁核黑屏案拆分）：原在 Init 主线程同步
-	// 装载全部 def（1GHz 单核下 100-600ms×N——主线程跑完前画不出任何帧=
-	// 装载屏黑 7-9 秒；低配机/断电=本项目目标场景，真 bug 必修）。挪到装载
-	// 线程后主线程轻装（Init 只留分配+装载条 sprout 一个 def），装载屏即刻
-	// 可画。装载线程顺序：LoaderBar（先解锁装载屏）→ 本全量定义 → 其余组。
+	// All definition data is already resident. Decode the generated atlas PNG
+	// bindings here; the primary thread uploads them after loading completes.
+	// The loading-screen atlases were bound earlier in Init.
 	ReanimatorLoadAllDefinitionData();
+	ProjectileLoadResources();
+	ZombatarLoadResources();
+	LoadSceneAtlases();
 
 	const ResourceGroupId groups[] = { ResourceGroupId::LoadingFonts, ResourceGroupId::LoadingImages, ResourceGroupId::LoadingSounds };
 	int group_ave_ms_to_load[] = { 54, 9, 54 };
@@ -1812,13 +1831,13 @@ void LawnApp::LoadingThreadProc()
 	// 被禁用（新版本组占位，走 dispatch 尾部 return false = 空弹窗退出，
 	// 实机教训），故不在此列）。原调用点的 TodLoadResources 全部退化为
 	// IsGroupLoaded 即时命中。装载屏期间主线程预热泵并行流式上传纹理
-	// （UpdateApp），mPurgeBits 位图上传即弃。
+	// （UpdateApp），位图上传即弃。
 		for (ResourceGroupId aGroup : {
 			ResourceGroupId::DelayLoad_Background1, ResourceGroupId::DelayLoad_Background2, ResourceGroupId::DelayLoad_Background3,
 			ResourceGroupId::DelayLoad_Background4, ResourceGroupId::DelayLoad_Background5, ResourceGroupId::DelayLoad_Background6,
 			ResourceGroupId::DelayLoad_BackgroundUnsodded, ResourceGroupId::DelayLoad_Almanac, ResourceGroupId::DelayLoad_AwardScreen,
 			ResourceGroupId::DelayLoad_ChallengeScreen, ResourceGroupId::DelayLoad_Credits, ResourceGroupId::DelayLoad_Store,
-			ResourceGroupId::DelayLoad_Zombatar, ResourceGroupId::DelayLoad_Zombiquarium,
+			ResourceGroupId::DelayLoad_Zombiquarium,
 			ResourceGroupId::DelayLoad_MushroomGarden, ResourceGroupId::DelayLoad_GreenHouseGarden, ResourceGroupId::DelayLoad_GreenHouseOverlay,
 			ResourceGroupId::DelayLoad_ZombieNote, ResourceGroupId::DelayLoad_ZombieNote1, ResourceGroupId::DelayLoad_ZombieNote2,
 			ResourceGroupId::DelayLoad_ZombieNote3, ResourceGroupId::DelayLoad_ZombieNote4, ResourceGroupId::DelayLoad_ZombieNoteHelp,
@@ -1835,9 +1854,6 @@ void LawnApp::LoadingThreadProc()
 	while (!TodWarmDrained() && !gSexyAppBase->mShutdown && !mCloseRequest)
 		std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
-	// v4 符号绑定（装载完成期顺序单趟零二分）——泵排空后调用，
-	// DrawTrack 快路经 gImageSymbolBinds[id] 直取 Image*/w/h
-	TodBindSymbolTable();
 }
 
 //0x452C60
@@ -1855,23 +1871,6 @@ void LawnApp::FastLoad(GameMode theGameMode)
 
 void LawnApp::LoadingThreadCompleted()
 {
-	// Warm the heavy Achievements / Zombatar GPU textures here, once, while the
-	// title screen is still visible. GameSelector's constructor used to do this
-	// synchronously, turning the first main-menu entry into a ~125ms click
-	// hitch; doing it at load-completion keeps the click instant without
-	// reintroducing the first-open hitch on those two screens.
-	if (mDDInterface != nullptr && mDDInterface->mRenderInterface != nullptr
-		&& mDDInterface->mRenderInterface->mRenderer != nullptr)
-	{
-		TodLoadResources(ResourceGroupId::DelayLoad_Zombatar);
-		Sexy::RenderInterface* aD3D = mDDInterface->mRenderInterface;
-		aD3D->CreateImageTexture((Sexy::MemoryImage*)IMAGE_ZOMBATAR_MAIN_BG);
-		aD3D->CreateImageTexture((Sexy::MemoryImage*)IMAGE_ZOMBATAR_LOGO);
-		aD3D->CreateImageTexture((Sexy::MemoryImage*)IMAGE_SELECTORSCREEN_ACHIEVEMENTS_BG);
-		aD3D->CreateImageTexture((Sexy::MemoryImage*)IMAGE_ACHEESEMENTS_HOLE_TILE);
-		aD3D->CreateImageTexture((Sexy::MemoryImage*)IMAGE_ACHEESEMENTS_ICONS);
-		aD3D->CreateImageTexture((Sexy::MemoryImage*)IMAGE_ACHEESEMENTS_CHINA);
-	}
 	mReanimatorCache->PrebuildCacheFrames();
 	// Cached-frame draws must finish before compute-owned pool resources are created.
 	mDDInterface->mRenderInterface->Flush();
@@ -1891,8 +1890,6 @@ void LawnApp::LoadingCompleted()
 {
 	mWidgetManager->RemoveWidget(mTitleScreen);
 	SafeDeleteWidget(mTitleScreen);	mTitleScreen = nullptr;
-
-	mResourceManager->DeleteImage(Sexy::ResourceId::IMAGE_TITLESCREEN_ID);
 
 	ShowGameSelector();
 }
@@ -2498,9 +2495,9 @@ Reanimation* LawnApp::AddReanimation(float theX, float theY, int theRenderOrder,
 }
 
 //0x453C80
-TodParticleSystem* LawnApp::AddTodParticle(float theX, float theY, int theRenderOrder, ParticleEffect theEffect)
+TodParticleSystem* LawnApp::AddTodParticle(float theX, float theY, int theRenderOrder, ParticleEffect theEffect, std::uint32_t theVariant)
 {
-	return mEffectSystem->mParticleHolder->AllocParticleSystem(theX, theY, theRenderOrder, theEffect);
+	return mEffectSystem->mParticleHolder->AllocParticleSystem(theX, theY, theRenderOrder, theEffect, theVariant);
 }
 
 ParticleSystemID LawnApp::ParticleGetID(TodParticleSystem* theParticle)
@@ -2708,7 +2705,7 @@ void LawnApp::CrazyDaveLeave()
 		}
 
 		aCrazyDaveReanim->PlayReanim(ReanimTrackId::anim_leave, ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD, 20, 24.0f);
-		aCrazyDaveReanim->SetImageOverride(ReanimTrackId::Dave_mouths, nullptr);
+		aCrazyDaveReanim->SetVariantOption(ReanimTrackId::Dave_mouths, 0);
 
 		mCrazyDaveState = CrazyDaveState::CRAZY_DAVE_LEAVING;
 		mCrazyDaveMessageIndex = -1;
@@ -2769,7 +2766,7 @@ void LawnApp::CrazyDaveTalkMessage(const SexyString& theMessage, const DaveDialo
 
 	const auto aWordsCount = UiTextVisibleLength(theMessage);
 
-	aCrazyDaveReanim->SetImageOverride(ReanimTrackId::Dave_mouths, nullptr);
+	aCrazyDaveReanim->SetVariantOption(ReanimTrackId::Dave_mouths, 0);
 
 	if (mCrazyDaveState != CrazyDaveState::CRAZY_DAVE_TALKING || doSound)
 	{
@@ -2916,7 +2913,7 @@ void LawnApp::CrazyDaveTalkMessage(const SexyString& theMessage, const DaveDialo
 			Reanimation* aMoneyBagReanim = AddReanimation(0.0f, 0.0f, 0, ReanimationType::REANIM_ZENGARDEN_FERTILIZER);
 			aMoneyBagReanim->PlayReanim(ReanimTrackId::bag, ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD, 0, 24.0f);
 			aMoneyBagReanim->mAnimRate = 0.0f;
-			aMoneyBagReanim->SetImageOverride(ReanimTrackId::bag, IMAGE_MONEYBAG);
+			aMoneyBagReanim->SetVariantOption(ReanimTrackId::bag, ReanimOptions::ZenGarden_fertilizer::bag::MONEYBAG);
 
 			ReanimatorTrackInstance* aHandTrackInstance = aCrazyDaveReanim->GetTrackInstanceByName(ReanimTrackId::Dave_handinghand);
 			AttachReanim(aHandTrackInstance->mAttachmentID, aMoneyBagReanim, 90.0f, 405.0f);
@@ -2984,7 +2981,7 @@ void LawnApp::CrazyDaveStopTalking()
 	}
 
 	Reanimation* aCrazyDaveReanim = ReanimationGet(mCrazyDaveReanimID);
-	aCrazyDaveReanim->SetImageOverride(ReanimTrackId::Dave_mouths, nullptr);
+	aCrazyDaveReanim->SetVariantOption(ReanimTrackId::Dave_mouths, 0);
 	if (mCrazyDaveState == CrazyDaveState::CRAZY_DAVE_HANDING_TALKING && !aDoneHanding)
 	{
 		aCrazyDaveReanim->PlayReanim(ReanimTrackId::anim_idle_handing, ReanimLoopType::REANIM_LOOP, 20, 12.0f);
@@ -3034,19 +3031,19 @@ void LawnApp::UpdateCrazyDave()
 	{
 		if (mCrazyDaveDialogueMetadata.mouth == DaveMouth::BigSmile)
 		{
-			aCrazyDaveReanim->SetImageOverride(ReanimTrackId::Dave_mouths, IMAGE_REANIM_CRAZYDAVE_MOUTH1);
+			aCrazyDaveReanim->SetVariantOption(ReanimTrackId::Dave_mouths, ReanimOptions::CrazyDave::Dave_mouths::CRAZYDAVE_MOUTH1);
 		}
 		else if (mCrazyDaveDialogueMetadata.mouth == DaveMouth::SmallSmile)
 		{
-			aCrazyDaveReanim->SetImageOverride(ReanimTrackId::Dave_mouths, IMAGE_REANIM_CRAZYDAVE_MOUTH5);
+			aCrazyDaveReanim->SetVariantOption(ReanimTrackId::Dave_mouths, ReanimOptions::CrazyDave::Dave_mouths::CRAZYDAVE_MOUTH5);
 		}
 		else if (mCrazyDaveDialogueMetadata.mouth == DaveMouth::BigOh)
 		{
-			aCrazyDaveReanim->SetImageOverride(ReanimTrackId::Dave_mouths, IMAGE_REANIM_CRAZYDAVE_MOUTH4);
+			aCrazyDaveReanim->SetVariantOption(ReanimTrackId::Dave_mouths, ReanimOptions::CrazyDave::Dave_mouths::CRAZYDAVE_MOUTH4);
 		}
 		else if (mCrazyDaveDialogueMetadata.mouth == DaveMouth::SmallOh)
 		{
-			aCrazyDaveReanim->SetImageOverride(ReanimTrackId::Dave_mouths, IMAGE_REANIM_CRAZYDAVE_MOUTH6);
+			aCrazyDaveReanim->SetVariantOption(ReanimTrackId::Dave_mouths, ReanimOptions::CrazyDave::Dave_mouths::CRAZYDAVE_MOUTH6);
 		}
 	}
 
@@ -3297,14 +3294,6 @@ bool LawnApp::IsTrialStageLocked()
 //0x455CC0
 void LawnApp::InitHook()
 {
-	// v4 静态槽位区预约（顶部=图像符号恒等映射+哨兵）。时序：MakeWindow
-	// 已建渲染器（InitHook 在其后、装载线程前），任何图像入队之前。
-	if (mDDInterface != nullptr && mDDInterface->mRenderInterface != nullptr
-		&& mDDInterface->mRenderInterface->mRenderer != nullptr)
-		mDDInterface->mRenderInterface->ReserveStaticTextureSlots(IMAGE_SYMBOL_ID_MAX);
-	// ③d 符号槽挂接（同址时序：任何资源声明/入图之前；重复挂接幂等）
-	TodAttachImageSlots();
-
 #ifdef _DEBUG
 	mDRM = nullptr;
 #else
@@ -3377,9 +3366,9 @@ void LawnApp::PlaySample(int theSoundNum)
 }
 
 //0x4560E0
-void LawnApp::SwitchScreenMode(bool wantWindowed, bool is3d, bool force)
+void LawnApp::SwitchScreenMode(bool wantWindowed, bool force)
 {
-	SexyAppBase::SwitchScreenMode(wantWindowed, is3d, force);
+	SexyAppBase::SwitchScreenMode(wantWindowed, force);
 
 	NewOptionsDialog* aNewOptionsDialog = (NewOptionsDialog*)GetDialog(Dialogs::DIALOG_NEWOPTIONS);
 	if (aNewOptionsDialog)

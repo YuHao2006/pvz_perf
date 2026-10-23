@@ -23,7 +23,7 @@ export component Doom {
         }
     }
     Emitter {
-        image: "IMAGE_DOOMSHROOM_EXPLOSION_BASE";
+        images: ["particles/frames/doomshroom_explosion_base_r0_c0.png","particles/frames/doomshroom_explosion_base_r0_c1.png","particles/frames/doomshroom_explosion_base_r0_c2.png"];
         name: "DoomBase";
         imageFrames: 3;
         systemDuration: 400;

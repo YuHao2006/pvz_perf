@@ -46,8 +46,7 @@ private:
         GameSelector_Survival = 110,
         GameSelector_Zombatar = 111, // @Patoke: add stuff after 110
         GameSelector_AchievementsBack = 112,
-        GameSelector_Achievements = 113,
-        GameSelector_QuickPlay = 114
+        GameSelector_Achievements = 113
     };
 
 public:
@@ -65,7 +64,6 @@ public:
     NewLawnButton*              mChangeUserButton;          //+0xB8
     NewLawnButton*              mZombatarButton;             //+GOTY @Patoke: 0xC0
     NewLawnButton*              mAchievementsButton;        //+GOTY @Patoke: 0xC4
-    NewLawnButton*              mQuickPlayButton;           //+GOTY @Patoke: 0xC8
     Widget*                     mOverlayWidget;             //+0xBC
     bool                        mStartingGame;              //+0xC0
     Sexy::TimeCounter                         mStartingGameCounter;       //+0xC4

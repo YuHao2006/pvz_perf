@@ -308,6 +308,35 @@ void UploadEdges(Sexy::VulkanRenderer& renderer,VulkanContext& window) {
 }
 void BatchedAlphaComposition(Sexy::VulkanRenderer& renderer) {
     using namespace Sexy;
+    const std::array<unsigned int,4> sourcePixels{
+        0x80402010u,0xffaabbccu,0x204080c0u,0xff123456u};
+    const std::array<unsigned int,4> maskPixels{
+        0x00000033u,0x000000c1u,0x00000012u,0x00000087u};
+    auto* source=renderer.CreateTexture(2,2,sourcePixels.data(),8);
+    auto* mask=renderer.CreateTexture(2,2,maskPixels.data(),8);
+    for (const auto dimensions:{std::array<int,2>{1,2},std::array<int,2>{2,1}}) {
+        auto* mismatch=renderer.CreateTexture(dimensions[0],dimensions[1],
+            maskPixels.data(),dimensions[0]*4);
+        for (bool colorOnly:{false,true}) {
+            bool rejected=false;
+            try { renderer.ComposeAlphaRaw(source,mismatch,0,colorOnly); }
+            catch (const std::invalid_argument&) { rejected=true; }
+            Require(rejected,"Vulkan alpha composition accepted unequal dimensions");
+        }
+        renderer.DestroyTexture(mismatch);
+    }
+    auto* covered=renderer.ComposeAlpha(source,mask,0,false);
+    auto* colorOnly=renderer.ComposeAlpha(source,mask,0x80472513u,true);
+    const auto coveredPixels=renderer.ReadTexturePixels(covered);
+    const auto coloredPixels=renderer.ReadTexturePixels(colorOnly);
+    for (unsigned int i=0;i<sourcePixels.size();++i) {
+        const auto alpha=(maskPixels[i]&255u)<<24;
+        Require(coveredPixels.pixels[i]==((sourcePixels[i]&0xffffffu)|alpha),
+            "Vulkan alpha composition did not overwrite coverage per pixel");
+        Require(coloredPixels.pixels[i]==(0x80472513u|alpha),
+            "Vulkan color-only composition changed packed-alpha OR semantics");
+    }
+    for (auto* texture:{source,mask,covered,colorOnly}) renderer.DestroyTexture(texture);
     const unsigned int white=0xffffffffU;
     auto* alpha=renderer.CreateTexture(1,1,&white,4);
     std::vector<VulkanTexture*> outputs;
@@ -315,7 +344,7 @@ void BatchedAlphaComposition(Sexy::VulkanRenderer& renderer) {
     for(unsigned int i=0;i<count;++i) {
         const unsigned int color=0xff000000U|((i*107U)&0x00ffffffU);
         auto* base=renderer.CreateTexture(1,1,&color,4);
-        auto* composed=renderer.ComposeAlphaRaw(base,alpha,1,1,0,false);
+        auto* composed=renderer.ComposeAlphaRaw(base,alpha,0,false);
         outputs.push_back(renderer.AdoptComposedTexture(composed));
         renderer.DestroyTexture(base);
     }

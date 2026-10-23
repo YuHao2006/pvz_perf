@@ -1,0 +1,37 @@
+export atlas Achievements {
+    sprite SELECTORSCREEN_ACHIEVEMENTS_BG { image: "IMAGE_SELECTORSCREEN_ACHIEVEMENTS_BG"; }
+    sprite ACHEESEMENTS_BEJEWELED { image: "IMAGE_ACHEESEMENTS_BEJEWELED"; }
+    sprite ACHEESEMENTS_BOOKWORM { image: "IMAGE_ACHEESEMENTS_BOOKWORM"; }
+    sprite ACHEESEMENTS_CHINA { image: "IMAGE_ACHEESEMENTS_CHINA"; }
+    sprite ACHEESEMENTS_CHUZZLE { image: "IMAGE_ACHEESEMENTS_CHUZZLE"; }
+    sprite ACHEESEMENTS_HOLE_TILE { image: "IMAGE_ACHEESEMENTS_HOLE_TILE"; }
+    sprite ACHEESEMENTS_PEGGLE { image: "IMAGE_ACHEESEMENTS_PEGGLE"; }
+    sprite ACHEESEMENTS_PIPE { image: "IMAGE_ACHEESEMENTS_PIPE"; }
+    sprite ACHEESEMENTS_ZUMA { image: "IMAGE_ACHEESEMENTS_ZUMA"; }
+    sprite ACHEESEMENTS_BACK_HIGHLIGHT { image: "IMAGE_ACHEESEMENTS_BACK_HIGHLIGHT"; }
+    sprite ACHEESEMENTS_MORE_ROCK { image: "IMAGE_ACHEESEMENTS_MORE_ROCK"; }
+    sprite ACHEESEMENTS_MORE_BUTTON { image: "IMAGE_ACHEESEMENTS_MORE_BUTTON"; }
+    sprite ACHEESEMENTS_MORE_BUTTON_HIGHLIGHT { image: "IMAGE_ACHEESEMENTS_MORE_BUTTON_HIGHLIGHT"; }
+    sprite ACHEESEMENTS_TOP_BUTTON { image: "IMAGE_ACHEESEMENTS_TOP_BUTTON"; }
+    sprite ACHEESEMENTS_TOP_BUTTON_HIGHLIGHT { image: "IMAGE_ACHEESEMENTS_TOP_BUTTON_HIGHLIGHT"; }
+    sprite ICON_0 { image: "IMAGE_ACHEESEMENTS_ICONS"; rect: [0, 0, 70, 70]; }
+    sprite ICON_1 { image: "IMAGE_ACHEESEMENTS_ICONS"; rect: [70, 0, 70, 70]; }
+    sprite ICON_2 { image: "IMAGE_ACHEESEMENTS_ICONS"; rect: [140, 0, 70, 70]; }
+    sprite ICON_3 { image: "IMAGE_ACHEESEMENTS_ICONS"; rect: [210, 0, 70, 70]; }
+    sprite ICON_4 { image: "IMAGE_ACHEESEMENTS_ICONS"; rect: [280, 0, 70, 70]; }
+    sprite ICON_5 { image: "IMAGE_ACHEESEMENTS_ICONS"; rect: [350, 0, 70, 70]; }
+    sprite ICON_6 { image: "IMAGE_ACHEESEMENTS_ICONS"; rect: [420, 0, 70, 70]; }
+    sprite ICON_7 { image: "IMAGE_ACHEESEMENTS_ICONS"; rect: [0, 70, 70, 70]; }
+    sprite ICON_8 { image: "IMAGE_ACHEESEMENTS_ICONS"; rect: [70, 70, 70, 70]; }
+    sprite ICON_9 { image: "IMAGE_ACHEESEMENTS_ICONS"; rect: [140, 70, 70, 70]; }
+    sprite ICON_10 { image: "IMAGE_ACHEESEMENTS_ICONS"; rect: [210, 70, 70, 70]; }
+    sprite ICON_11 { image: "IMAGE_ACHEESEMENTS_ICONS"; rect: [280, 70, 70, 70]; }
+    sprite ICON_12 { image: "IMAGE_ACHEESEMENTS_ICONS"; rect: [350, 70, 70, 70]; }
+    sprite ICON_13 { image: "IMAGE_ACHEESEMENTS_ICONS"; rect: [420, 70, 70, 70]; }
+    sprite ICON_14 { image: "IMAGE_ACHEESEMENTS_ICONS"; rect: [0, 140, 70, 70]; }
+    sprite ICON_15 { image: "IMAGE_ACHEESEMENTS_ICONS"; rect: [70, 140, 70, 70]; }
+    sprite ICON_16 { image: "IMAGE_ACHEESEMENTS_ICONS"; rect: [140, 140, 70, 70]; }
+    sprite ICON_17 { image: "IMAGE_ACHEESEMENTS_ICONS"; rect: [210, 140, 70, 70]; }
+    sprite ICON_18 { image: "IMAGE_ACHEESEMENTS_ICONS"; rect: [280, 140, 70, 70]; }
+    sprite ICON_19 { image: "IMAGE_ACHEESEMENTS_ICONS"; rect: [350, 140, 70, 70]; }
+}

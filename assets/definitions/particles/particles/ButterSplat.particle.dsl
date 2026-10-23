@@ -2,7 +2,7 @@ export component ButterSplat {
     kind: particle;
     source-name: "buttersplat";
     Emitter {
-        image: "IMAGE_STAR_PARTICLES";
+        images: ["particles/frames/star_particles_r0_c0.png","particles/frames/star_particles_r0_c1.png","particles/frames/star_particles_r0_c2.png"];
         name: "StarSplatBits";
         imageFrames: 3;
         emitterType: Circle;

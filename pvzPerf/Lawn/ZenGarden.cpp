@@ -1,4 +1,5 @@
 #include "Sexy.TodLib/generated/EntityStrings.h"
+#include "Sexy.TodLib/generated/ReanimVariantOptions.h"
 #include <time.h>
 #include "platform/CalendarTime.h"
 #include <iterator>
@@ -756,11 +757,11 @@ void ZenGarden::UpdatePlantEffectState(Plant* thePlant)
             thePlant->mState == PlantState::STATE_ZEN_GARDEN_NEEDY || 
             thePlant->mState == PlantState::STATE_ZEN_GARDEN_HAPPY)
         {
-            aPotReanim->SetImageOverride(ReanimTrackId::Pot_top, IMAGE_REANIM_POT_TOP_DARK);
+            aPotReanim->SetVariantOption(ReanimTrackId::Pot_top, ReanimOptions::Pot::Pot_top::POT_TOP_DARK);
         }
         else
         {
-            aPotReanim->SetImageOverride(ReanimTrackId::Pot_top, nullptr);
+            aPotReanim->SetVariantOption(ReanimTrackId::Pot_top, 0);
         }
     }
     if (aOriginalState == PlantState::STATE_ZEN_GARDEN_HAPPY)
@@ -2132,7 +2133,7 @@ void ZenGarden::DrawBackdrop(Graphics* g)
         {
             if (mBoard->GetTopPlantAt(aGrid.mGridX, aGrid.mGridY, PlantPriority::TOPPLANT_ZEN_TOOL_ORDER) == nullptr)
             {
-                TodDrawImageCelScaled(g, IMAGE_PLANTSHADOW, aGrid.mPixelX - 35, (aGrid.mPixelY + 33), 0, 0, 1.7f, 1.7f);
+                TodDrawImageRectScaled(g, IMAGE_PLANTSHADOW, aGrid.mPixelX - 35, (aGrid.mPixelY + 33), Rect(0, 0, IMAGE_PLANTSHADOW->mWidth, IMAGE_PLANTSHADOW->mHeight), 1.7f, 1.7f);
             }
         }
     }
@@ -2370,7 +2371,7 @@ void ZenGarden::PottedPlantUpdate(Plant* thePlant)
 namespace
 {
     // ZenGarden::DrawPlantOverlay 需求图标表：原 switch 五 case 中三槽同构
-    // DrawImageCel(IMAGE_ZEN_NEED_ICONS, x, 7, cel, 0)（行序 = PLANTNEED_
+    // IMAGE_ZEN_NEED_ICONS 的 30x30 图标（行序 = PLANTNEED_
     // FERTILIZER..PHONOGRAPH 枚举段序 0..2）；WATER/NONE 不入表（见分发点）。
     struct ZenNeedIcon
     {
@@ -2405,7 +2406,7 @@ void ZenGarden::DrawPlantOverlay(Graphics* g, Plant* thePlant)
 
     g->DrawImage(IMAGE_PLANTSPEECHBUBBLE, 50, 0);
     // B 形态 -> 常量表（上方 kZenNeedIcon）：FERTILIZER/BUGSPRAY/PHONOGRAPH
-    // 三槽同构 DrawImageCel；WATER 特例（DrawImage 单帧水滴）表外；NONE 已
+    // 三槽同构源矩形；WATER 特例（DrawImage 单帧水滴）表外；NONE 已
     // 提前 return（原 NONE case 为防御空操作）。
     if (aPlantNeed == PottedPlantNeed::PLANTNEED_WATER)
     {
@@ -2414,7 +2415,7 @@ void ZenGarden::DrawPlantOverlay(Graphics* g, Plant* thePlant)
     else
     {
         const ZenNeedIcon& aIcon = kZenNeedIcon[(int)aPlantNeed - (int)PottedPlantNeed::PLANTNEED_FERTILIZER];
-        g->DrawImageCel(IMAGE_ZEN_NEED_ICONS, aIcon.mX, 7, aIcon.mCel, 0);
+        g->DrawImage(IMAGE_ZEN_NEED_ICONS, aIcon.mX, 7, Rect(aIcon.mCel * 30, 0, 30, 30));
     }
 }
 

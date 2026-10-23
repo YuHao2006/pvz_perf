@@ -1191,7 +1191,7 @@ void VulkanRenderer::Impl::InitAlphaKernel(LoadingPipelines) {
     VkDescriptorSetLayoutCreateInfo setLayout{VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO};
     setLayout.bindingCount=3;setLayout.pBindings=bindings;
     VK_REQUIRE(vkCreateDescriptorSetLayout(device,&setLayout,nullptr,&kernel.setLayout));
-    const VkPushConstantRange push{VK_SHADER_STAGE_COMPUTE_BIT,0,24};
+    const VkPushConstantRange push{VK_SHADER_STAGE_COMPUTE_BIT,0,16};
     VkPipelineLayoutCreateInfo layout{VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO};
     layout.setLayoutCount=1;layout.pSetLayouts=&kernel.setLayout;
     layout.pushConstantRangeCount=1;layout.pPushConstantRanges=&push;
@@ -1212,11 +1212,10 @@ void VulkanRenderer::Impl::InitAlphaKernel(LoadingPipelines) {
 }
 
 VulkanTexture* VulkanRenderer::ComposeAlphaRaw(VulkanTexture* base,VulkanTexture* alpha,
-    int columns,int rows,uint32_t color,bool colorOnly) {
+    uint32_t color,bool colorOnly) {
     auto& s=*impl_;
-    if(!base || !alpha || columns<=0 || rows<=0 ||
-        base->width/columns!=alpha->width || base->height/rows!=alpha->height)
-        throw std::exception{};
+    if(!base || !alpha || base->width!=alpha->width || base->height!=alpha->height)
+        throw std::invalid_argument("Invalid Vulkan alpha composition dimensions");
     s.InitAlphaKernel();
     // Each queued dispatch owns its bindings until this transfer batch completes.
     if (s.pendingComposeSets.size() >= 1024) {
@@ -1254,9 +1253,9 @@ VulkanTexture* VulkanRenderer::ComposeAlphaRaw(VulkanTexture* base,VulkanTexture
             VK_ACCESS_MEMORY_READ_BIT|VK_ACCESS_MEMORY_WRITE_BIT,VK_ACCESS_SHADER_READ_BIT);
     vkCmdBindPipeline(cmd,VK_PIPELINE_BIND_POINT_COMPUTE,s.alphaKernel.pipeline);
     vkCmdBindDescriptorSets(cmd,VK_PIPELINE_BIND_POINT_COMPUTE,s.alphaKernel.layout,0,1,&composeSet,0,nullptr);
-    struct Push { int width,height,columns,rows;uint32_t color,colorOnly; };
-    const Push push{base->width,base->height,columns,rows,color,colorOnly};
-    static_assert(sizeof(Push)==24);
+    struct Push { int width,height;uint32_t color,colorOnly; };
+    const Push push{base->width,base->height,color,colorOnly};
+    static_assert(sizeof(Push)==16);
     vkCmdPushConstants(cmd,s.alphaKernel.layout,VK_SHADER_STAGE_COMPUTE_BIT,0,sizeof(push),&push);
     vkCmdDispatch(cmd,(uint32_t(base->width)+7)/8,(uint32_t(base->height)+7)/8,1);
     Barrier(cmd,target->image,VK_IMAGE_LAYOUT_GENERAL,target->sampledLayout,
@@ -1296,12 +1295,12 @@ VulkanTexture* VulkanRenderer::AdoptComposedTexture(VulkanTexture* composed) {
 }
 
 VulkanTexture* VulkanRenderer::ComposeAlpha(VulkanTexture* base,VulkanTexture* alpha,
-    int columns,int rows,uint32_t color,bool colorOnly) {
+    uint32_t color,bool colorOnly) {
     auto& s=*impl_;
     if(!base || !alpha || !s.textures.contains(base) || !s.textures.contains(alpha))
         throw std::exception{};
     // 注册版=裸图合成+采纳：语义与批量化前逐位一致，仅中间产物不再全局登记。
-    return AdoptComposedTexture(ComposeAlphaRaw(base,alpha,columns,rows,color,colorOnly));
+    return AdoptComposedTexture(ComposeAlphaRaw(base,alpha,color,colorOnly));
 }
 
 void VulkanRenderer::BindStaticTexture(VulkanTexture* texture,uint32_t staticSlot) {

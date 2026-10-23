@@ -51,7 +51,7 @@ foreach ($expected in @(@($v2,2,3,0x10732), @($roundtrip,1,1,0x10731))) {
         if ([BitConverter]::ToUInt32($bytes,$field[0]) -ne $field[1]) { throw 'Header field mismatch' }
     }
 }
-foreach ($bad in @(@(8,3),@(20,1),@(36,0x10731))) {
+foreach ($bad in @(@(8,4),@(20,1),@(36,0x10731))) {
     $source = Join-Path $output "bad-header-$($bad[0]).dat64"
     $target = Join-Path $output "rejected-$($bad[0]).dat64"
     [Dat64NanosecondRegression]::Patch($v2,$source,$bad[0],$bad[1],$false)
@@ -77,4 +77,63 @@ Invoke-Expected 0 @('--target','dat64-v2',$stale,$normalized)
 if ((Get-FileHash -LiteralPath $fractional).Hash -ne (Get-FileHash -LiteralPath $normalized).Hash) {
     throw 'v2 stale CRC was not ignored and cleared'
 }
-Write-Host "PASS: editable v1/v2 payloads without CRC updates, version dispatch, header rejection, precise roundtrip and explicit rounding; fixtures: $output"
+# Music is the final fixed record before the 12-byte SyncBytes end marker.
+# Its v2 length is 88 v1 bytes plus four expanded time fields.
+$musicOffset = [IO.File]::ReadAllBytes($v2).Length - 12 - 104
+$oldIntegerV2 = Join-Path $output 'old-integer-tempo-v2.dat64'
+[Dat64NanosecondRegression]::Patch($v2,$oldIntegerV2,($musicOffset + 36),155,$false)
+[Dat64NanosecondRegression]::Patch($oldIntegerV2,$oldIntegerV2,($musicOffset + 40),3,$false)
+$upgradedTempo = Join-Path $output 'float-tempo-v32.dat64'
+Invoke-Expected 0 @('--target','dat64-v3.2',$oldIntegerV2,$upgradedTempo)
+$tempoBytes = [IO.File]::ReadAllBytes($upgradedTempo)
+$musicOffset = $tempoBytes.Length - 12 - 104
+if ([BitConverter]::ToUInt32($tempoBytes,8) -ne 3 -or
+    [BitConverter]::ToUInt32($tempoBytes,36) -ne 0x10735 -or
+    [BitConverter]::ToUInt32($tempoBytes,40) -ne 2 -or
+    [BitConverter]::ToSingle($tempoBytes,($musicOffset + 36)) -ne 155.0 -or
+    [BitConverter]::ToSingle($tempoBytes,($musicOffset + 40)) -ne 3.0) {
+    throw 'Old v2 integer tempos were not upgraded numerically with the v3.2 header/schema'
+}
+$fractionalTempo = Join-Path $output 'fractional-tempo-v32.dat64'
+[Dat64NanosecondRegression]::Patch($upgradedTempo,$fractionalTempo,($musicOffset + 36),([BitConverter]::SingleToUInt32Bits([single]155.25)),$false)
+[Dat64NanosecondRegression]::Patch($fractionalTempo,$fractionalTempo,($musicOffset + 40),([BitConverter]::SingleToUInt32Bits([single]3.5)),$false)
+$tempoCopy = Join-Path $output 'fractional-tempo-copy.dat64'
+Invoke-Expected 0 @('--target','dat64-v3.2',$fractionalTempo,$tempoCopy)
+if ((Get-FileHash -LiteralPath $fractionalTempo).Hash -ne (Get-FileHash -LiteralPath $tempoCopy).Hash) {
+    throw 'v3.2 copy lost fractional tempos'
+}
+$integerTempo = Join-Path $output 'integer-tempo-v1.dat64'
+Invoke-Expected 0 @('--target','dat64-v1',$fractionalTempo,$integerTempo)
+$tempoBytes = [IO.File]::ReadAllBytes($integerTempo)
+$v1MusicOffset = $tempoBytes.Length - 12 - 88
+if ([BitConverter]::ToInt32($tempoBytes,($v1MusicOffset + 36)) -ne 155 -or
+    [BitConverter]::ToInt32($tempoBytes,($v1MusicOffset + 40)) -ne 4) {
+    throw 'Integer tempo export did not round numerically'
+}
+$integerV2 = Join-Path $output 'integer-tempo-v2.dat64'
+Invoke-Expected 0 @('--target','dat64-v2',$fractionalTempo,$integerV2)
+$tempoBytes = [IO.File]::ReadAllBytes($integerV2)
+$v2MusicOffset = $tempoBytes.Length - 12 - 104
+if ([BitConverter]::ToUInt32($tempoBytes,8) -ne 2 -or
+    [BitConverter]::ToUInt32($tempoBytes,36) -ne 0x10732 -or
+    [BitConverter]::ToInt32($tempoBytes,($v2MusicOffset + 36)) -ne 155 -or
+    [BitConverter]::ToInt32($tempoBytes,($v2MusicOffset + 40)) -ne 4) {
+    throw 'Explicit v2 export did not restore the old header and integer tempos'
+}
+foreach ($unsupported in @(@(0,0x10733),@(1,0x10734),@(0,0x10735),@(1,0x10735),@(2,0x10734),@(3,0x10735))) {
+    $source = Join-Path $output "unsupported-$($unsupported[0])-$($unsupported[1]).dat64"
+    $target = Join-Path $output "unsupported-output-$($unsupported[0])-$($unsupported[1]).dat64"
+    [Dat64NanosecondRegression]::Patch($upgradedTempo,$source,36,$unsupported[1],$false)
+    [Dat64NanosecondRegression]::Patch($source,$source,40,$unsupported[0],$false)
+    $sourceHash = (Get-FileHash -LiteralPath $source).Hash
+    Invoke-Expected 1 @('--target','dat64-v3.2',$source,$target)
+    if ((Test-Path -LiteralPath $target) -or (Get-FileHash -LiteralPath $source).Hash -ne $sourceHash) {
+        throw 'Unsupported input produced output or changed its source'
+    }
+}
+foreach ($targetName in @('dat64-v3','dat64-v3.0','dat64-v3.1')) {
+    $target = Join-Path $output "$targetName-rejected.dat64"
+    Invoke-Expected 1 @('--target',$targetName,$fixturePath,$target)
+    if (Test-Path -LiteralPath $target) { throw 'Unsupported target created output' }
+}
+Write-Host "PASS: legacy/v1/v2/v3.2, unsupported v3/v3.1 and mismatched headers/targets rejected, precise nanoseconds, float tempos, integer exports and explicit time rounding; fixtures: $output"

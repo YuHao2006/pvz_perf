@@ -1,19 +1,31 @@
+"""Compare recorded retail resource order with frozen converter history."""
+import argparse
+import json
+from pathlib import Path
 import re
 
 # ---- 原版: resources.xml 顺序解析（SetDefaults 切前缀/路径）----
-xml = open(r'C:/UserProgram/Plants_Vs_Zombies_V1.2.0.1073_EN/pak/properties/resources.xml', encoding='utf-8', errors='replace').read()
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument("--original-resources", type=Path,
+                    help="Optional explicit original resources.xml; defaults to the recorded EXE mapping")
+args = parser.parse_args()
+root = Path(__file__).resolve().parents[1]
 orig = []
 prefix = ''
-for m in re.finditer(r'<SetDefaults[^>]*idprefix="([^"]*)"[^>]*/>|<(Image|Font|Sound)\s+id="([^"]+)"', xml):
-    if m.group(1) is not None:
-        prefix = m.group(1)
-    else:
-        orig.append(prefix + m.group(3))
-print('原版资源总数(xml序):', len(orig))
+if args.original_resources:
+    xml = args.original_resources.read_text(encoding='utf-8', errors='replace')
+    for m in re.finditer(r'<SetDefaults[^>]*idprefix="([^"]*)"[^>]*/>|<(Image|Font|Sound)\s+id="([^"]+)"', xml):
+        if m.group(1) is not None:
+            prefix = m.group(1)
+        else:
+            orig.append(prefix + m.group(3))
+else:
+    recorded = json.loads((root / "tools/_exe_resid_final.json").read_text(encoding="utf-8"))
+    orig = [name for name, index in sorted(recorded.items(), key=lambda item: item[1])]
+print('原版资源总数:', len(orig))
 
-# ---- 现代: shared ResourceId.h 枚举序 ----
-from pathlib import Path
-txt = (Path(__file__).resolve().parents[1] / 'Sexy.TodLib/generated/ResourceId.h').read_text(encoding='utf-8')
+# ---- 现代: converter-only 冻结历史枚举序 ----
+txt = (root / 'tools/saveConverter/src/FrozenResourceIds.h').read_text(encoding='utf-8')
 i = txt.index('enum class ResourceId')
 seg = txt[i:]
 seg = seg[:seg.index('RESOURCE_ID_MAX')]

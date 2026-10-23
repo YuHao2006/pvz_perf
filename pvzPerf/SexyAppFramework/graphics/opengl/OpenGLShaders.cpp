@@ -272,7 +272,6 @@ uniform ivec4 tint;
 uniform uint sourceSlot;
 uniform uint packedColor;
 uniform uint counter;
-uniform ivec2 cells;
 uniform bool colorOnly;
 uniform int operation;
 out vec4 outColor;
@@ -334,17 +333,14 @@ void main()
     if (any(greaterThanEqual(position, rectangle.zw))) discard;
     if (operation == 2) {
         vec4 value = texelFetch(sourceImage, sourceRect.xy + position, 0);
-        ivec2 cell = rectangle.zw / cells;
-        if (position.x < cell.x * cells.x && position.y < cell.y * cells.y) {
-            uint alpha = uint(round(texelFetch(alphaImage,
-                alphaRect.xy + position % cell, 0).b * 255.0));
-            if (colorOnly) {
-                uint combinedColor = packedColor | (alpha << 24u);
-                value = vec4(float((combinedColor >> 16u) & 255u), float((combinedColor >> 8u) & 255u),
-                    float(combinedColor & 255u), float(combinedColor >> 24u)) / 255.0;
-            } else {
-                value.a = float(alpha) / 255.0;
-            }
+        uint alpha = uint(round(texelFetch(alphaImage,
+            alphaRect.xy + position, 0).b * 255.0));
+        if (colorOnly) {
+            uint combinedColor = packedColor | (alpha << 24u);
+            value = vec4(float((combinedColor >> 16u) & 255u), float((combinedColor >> 8u) & 255u),
+                float(combinedColor & 255u), float(combinedColor >> 24u)) / 255.0;
+        } else {
+            value.a = float(alpha) / 255.0;
         }
         outColor = value;
         return;

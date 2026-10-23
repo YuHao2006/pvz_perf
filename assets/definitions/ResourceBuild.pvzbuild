@@ -2,7 +2,17 @@
 resource_build(1)
 
 sources(reanim "reanim/units/*.dsl")
+sources(reanim "reanim/appearances/*.dsl")
 sources(particle "particles/particles/*.particle.dsl")
+sources(projectile "projectiles/*.projectile.dsl")
+sources(zombatar "zombatar/*.zombatar.json")
+sources(scene "ui/*.atlas.dsl")
+
+atlas(projectiles projectile:Projectiles)
+atlas(zombatar zombatar:Zombatar)
+atlas(magnet_items scene:Magnet)
+atlas(almanac_ui scene:Almanac)
+atlas(achievements_ui scene:Achievements)
 
 # Exact CP-SAT runs offline, starting from the native MaxRects layout.
 # Cached proofs depend on dimensions, model revision and solver version.
@@ -36,22 +46,51 @@ atlas(credits_stage
     reanim:ZombiesWon
     reanim:Credits_WeAreTheUndead
 )
-atlas(dave_family reanim:CrazyDave reanim:Credits_CrazyDave)
+atlas(dave_family reanim:CrazyDave reanim:Credits_CrazyDave reanim:CrazyDave_V*)
 atlas(credits_brain reanim:Credits_BigBrain reanim:Credits_Throat)
-atlas(boss_family reanim:Zombie_boss reanim:Credits_Bossdance)
-atlas(selector_clouds reanim:SelectorScreen reanim:TreeOfWisdomClouds)
-atlas(sunflower_family reanim:SunFlower reanim:TwinSunflower)
+atlas(boss_family reanim:Zombie_boss reanim:Credits_Bossdance reanim:Zombie_boss_V*)
+atlas(selector_clouds reanim:SelectorScreen reanim:TreeOfWisdomClouds reanim:SelectorScreen_V*)
+atlas(sunflower_family reanim:SunFlower reanim:TwinSunflower reanim:SunFlower_V*)
 atlas(melon_family reanim:Melonpult reanim:WinterMelon)
 
 # Cross-kind groups use the same ownership and binding rules.
 atlas(potato_mine reanim:PotatoMine particle:PotatoMine)
 atlas(zamboni_family
     reanim:Zombie_zamboni
+    reanim:Zombie_zamboni_V*
     particle:ZamboniExplosion
     particle:ZamboniExplosion2
     particle:ZamboniSmoke
     particle:ZamboniTire
 )
+
+# Explicit appearance packing policy. variant-of alone never joins atlases.
+atlas(appearance_garlic reanim:Garlic reanim:Garlic_V*)
+atlas(appearance_pot reanim:Pot reanim:Pot_V*)
+atlas(appearance_pumpkin reanim:Pumpkin reanim:Pumpkin_V*)
+atlas(appearance_tallnut reanim:Tallnut reanim:Tallnut_V*)
+atlas(appearance_wallnut reanim:Wallnut reanim:Wallnut_V*)
+atlas(appearance_fertilizer reanim:ZenGarden_fertilizer reanim:ZenGarden_fertilizer_V*)
+atlas(appearance_zombie reanim:Zombie reanim:Zombie_V*)
+atlas(appearance_backup reanim:Zombie_backup reanim:Zombie_backup_V*)
+atlas(appearance_balloon reanim:Zombie_balloon reanim:Zombie_balloon_V*)
+atlas(appearance_bobsled reanim:Zombie_bobsled reanim:Zombie_bobsled_V*)
+atlas(appearance_catapult reanim:Zombie_catapult reanim:Zombie_catapult_V*)
+atlas(appearance_charred_gargantuar reanim:Zombie_charred_gargantuar reanim:Zombie_charred_gargantuar_V*)
+atlas(appearance_digger reanim:Zombie_digger reanim:Zombie_digger_V*)
+atlas(appearance_disco reanim:Zombie_disco reanim:Zombie_disco_V*)
+atlas(appearance_dolphin reanim:Zombie_dolphinrider reanim:Zombie_dolphinrider_V*)
+atlas(appearance_flag reanim:Zombie_flagpole reanim:Zombie_flagpole_V*)
+atlas(appearance_football reanim:Zombie_football reanim:Zombie_football_V*)
+atlas(appearance_gargantuar reanim:Zombie_gargantuar reanim:Zombie_gargantuar_V*)
+atlas(appearance_imp reanim:Zombie_imp reanim:Zombie_imp_V*)
+atlas(appearance_jackbox reanim:Zombie_jackbox reanim:Zombie_jackbox_V*)
+atlas(appearance_ladder reanim:Zombie_ladder reanim:Zombie_ladder_V*)
+atlas(appearance_paper reanim:Zombie_paper reanim:Zombie_paper_V*)
+atlas(appearance_pogo reanim:Zombie_pogo reanim:Zombie_pogo_V*)
+atlas(appearance_polevaulter reanim:Zombie_polevaulter reanim:Zombie_polevaulter_V*)
+atlas(appearance_snorkle reanim:Zombie_snorkle reanim:Zombie_snorkle_V*)
+atlas(appearance_yeti reanim:Zombie_yeti reanim:Zombie_yeti_V*)
 
 # The ground dirt image is already part of the rising dirt image set.
 atlas(rising_dirt
@@ -71,16 +110,300 @@ atlas(vase_shards particle:VaseShatter particle:VaseShatterLeaf particle:VaseSha
 atlas(award_rays particle:Award particle:CreditsRaysWipe)
 atlas(fireball_burst particle:FireballDeath particle:ZombieBossFireball)
 atlas(pool_splash particle:PlantingPool particle:PoolSplash)
-atlas(zombie_heads particle:MoweredZombieHead particle:ZombieHead particle:ZombieHeadPool)
+atlas(zombie_heads
+    particle:MoweredZombieHead particle:ZombieHead particle:ZombieHeadPool
+    particle:ZombieHeadPolevaulter particle:ZombieHeadFootball
+    particle:ZombieHeadDancer particle:ZombieHeadBackupDancer
+    particle:ZombieHeadSnorkel particle:ZombieHeadBobsled
+    particle:ZombieHeadDolphinRider particle:ZombieHeadDigger
+    particle:ZombieHeadYeti particle:ZombieHeadLadder particle:ZombieHeadImp
+    particle:MoweredZombieHeadPolevaulter particle:MoweredZombieHeadFootball
+    particle:MoweredZombieHeadDancer particle:MoweredZombieHeadBackupDancer
+    particle:MoweredZombieHeadSnorkel particle:MoweredZombieHeadBobsled
+    particle:MoweredZombieHeadDolphinRider particle:MoweredZombieHeadDigger
+    particle:MoweredZombieHeadYeti particle:MoweredZombieHeadLadder particle:MoweredZombieHeadImp
+    particle:ZombieHeadPoolPolevaulter particle:ZombieHeadPoolFootball
+    particle:ZombieHeadPoolDancer particle:ZombieHeadPoolBackupDancer
+    particle:ZombieHeadPoolSnorkel particle:ZombieHeadPoolBobsled
+    particle:ZombieHeadPoolDolphinRider particle:ZombieHeadPoolDigger
+    particle:ZombieHeadPoolYeti particle:ZombieHeadPoolLadder particle:ZombieHeadPoolImp
+)
 atlas(pickup_starburst particle:PresentPickup particle:Starburst)
 atlas(projectile_splat particle:CabbageSplat particle:PeaSplat)
 atlas(dust particle:DustFoot particle:DustSquash)
-atlas(ice_trail particle:BossIceBallTrail particle:IceBallDeath particle:SnowPeaTrail)
+atlas(ice_trail particle:BossIceBallTrail particle:IceBallDeath particle:SnowPeaTrail particle:ZombieBossIceballBurst)
 atlas(pickup_arrows particle:CoinPickupArrow particle:SeedPacketPick particle:UpsellArrow)
-atlas(zombie_arms particle:MoweredZombieArm particle:ZombieArm)
+atlas(zombie_arms
+    particle:MoweredZombieArm particle:ZombieArm
+    particle:ZombieArmHand particle:ZombieArmNewspaper particle:ZombieArmFootball
+    particle:ZombieArmDancer particle:ZombieArmBackupDancer particle:ZombieArmBobsled
+    particle:ZombieArmJackbox particle:ZombieArmDigger particle:ZombieArmYeti particle:ZombieArmImp
+    particle:MoweredZombieArmHand particle:MoweredZombieArmNewspaper particle:MoweredZombieArmFootball
+    particle:MoweredZombieArmDancer particle:MoweredZombieArmBackupDancer particle:MoweredZombieArmBobsled
+    particle:MoweredZombieArmJackbox particle:MoweredZombieArmDigger particle:MoweredZombieArmYeti particle:MoweredZombieArmImp
+)
+atlas(zombie_mustaches particle:ZombieMustache particle:ZombieMustache2 particle:ZombieMustache3)
 atlas(sparkles particle:IceSparkle particle:TrophySparkle)
 atlas(ice_trap_burst particle:IceTrapRelease particle:IceTrapZombie)
 atlas(puff_spores particle:PuffShroomMuzzle particle:PuffShroomTrail particle:PuffSplat)
 atlas(fume_cloud particle:FumeCloud particle:GloomCloud)
 atlas(portal_particles particle:PortalCircle particle:PortalSquare)
 atlas(screen_flash particle:CreditsStrobe particle:ScreenFlash)
+
+# Runtime definition IDs follow these existing enum slots exactly.
+# Zombie_dancer and Zombie_Jackson remain compiler-only reanim roots.
+definition_order(reanim
+    REANIM_LOADBAR_SPROUT:LoadBar_sprout
+    REANIM_LOADBAR_ZOMBIEHEAD:LoadBar_Zombiehead
+    REANIM_SODROLL:SodRoll
+    REANIM_FINAL_WAVE:FinalWave
+    REANIM_PEASHOOTER:PeaShooterSingle
+    REANIM_WALLNUT:Wallnut
+    REANIM_LILYPAD:LilyPad
+    REANIM_SUNFLOWER:SunFlower
+    REANIM_LAWNMOWER:LawnMower
+    REANIM_READYSETPLANT:StartReadySetPlant
+    REANIM_CHERRYBOMB:CherryBomb
+    REANIM_SQUASH:Squash
+    REANIM_DOOMSHROOM:DoomShroom
+    REANIM_SNOWPEA:SnowPea
+    REANIM_REPEATER:PeaShooter
+    REANIM_SUNSHROOM:SunShroom
+    REANIM_TALLNUT:Tallnut
+    REANIM_FUMESHROOM:FumeShroom
+    REANIM_PUFFSHROOM:PuffShroom
+    REANIM_HYPNOSHROOM:HypnoShroom
+    REANIM_CHOMPER:Chomper
+    REANIM_ZOMBIE:Zombie
+    REANIM_SUN:Sun
+    REANIM_POTATOMINE:PotatoMine
+    REANIM_SPIKEWEED:Caltrop
+    REANIM_SPIKEROCK:SpikeRock
+    REANIM_THREEPEATER:ThreePeater
+    REANIM_MARIGOLD:Marigold
+    REANIM_ICESHROOM:IceShroom
+    REANIM_ZOMBIE_FOOTBALL:Zombie_football
+    REANIM_ZOMBIE_NEWSPAPER:Zombie_paper
+    REANIM_ZOMBIE_ZAMBONI:Zombie_zamboni
+    REANIM_SPLASH:splash
+    REANIM_JALAPENO:Jalapeno
+    REANIM_JALAPENO_FIRE:fire
+    REANIM_COIN_SILVER:Coin_silver
+    REANIM_ZOMBIE_CHARRED:Zombie_charred
+    REANIM_ZOMBIE_CHARRED_IMP:Zombie_charred_imp
+    REANIM_ZOMBIE_CHARRED_DIGGER:Zombie_charred_digger
+    REANIM_ZOMBIE_CHARRED_ZAMBONI:Zombie_charred_zamboni
+    REANIM_ZOMBIE_CHARRED_CATAPULT:Zombie_charred_catapult
+    REANIM_ZOMBIE_CHARRED_GARGANTUAR:Zombie_charred_gargantuar
+    REANIM_SCRAREYSHROOM:ScaredyShroom
+    REANIM_PUMPKIN:Pumpkin
+    REANIM_PLANTERN:Plantern
+    REANIM_TORCHWOOD:Torchwood
+    REANIM_SPLITPEA:SplitPea
+    REANIM_SEASHROOM:SeaShroom
+    REANIM_BLOVER:Blover
+    REANIM_FLOWER_POT:Pot
+    REANIM_CACTUS:Cactus
+    REANIM_TANGLEKELP:Tanglekelp
+    REANIM_STARFRUIT:Starfruit
+    REANIM_POLEVAULTER:Zombie_polevaulter
+    REANIM_BALLOON:Zombie_balloon
+    REANIM_GARGANTUAR:Zombie_gargantuar
+    REANIM_IMP:Zombie_imp
+    REANIM_DIGGER:Zombie_digger
+    REANIM_DIGGER_DIRT:Digger_rising_dirt
+    REANIM_ZOMBIE_DOLPHINRIDER:Zombie_dolphinrider
+    REANIM_POGO:Zombie_pogo
+    REANIM_BOBSLED:Zombie_bobsled
+    REANIM_JACKINTHEBOX:Zombie_jackbox
+    REANIM_SNORKEL:Zombie_snorkle
+    REANIM_BUNGEE:Zombie_bungi
+    REANIM_CATAPULT:Zombie_catapult
+    REANIM_LADDER:Zombie_ladder
+    REANIM_PUFF:Puff
+    REANIM_SLEEPING:Z
+    REANIM_GRAVE_BUSTER:Gravebuster
+    REANIM_ZOMBIES_WON:ZombiesWon
+    REANIM_MAGNETSHROOM:Magnetshroom
+    REANIM_BOSS:Zombie_boss
+    REANIM_CABBAGEPULT:Cabbagepult
+    REANIM_KERNELPULT:Cornpult
+    REANIM_MELONPULT:Melonpult
+    REANIM_COFFEEBEAN:Coffeebean
+    REANIM_UMBRELLALEAF:Umbrellaleaf
+    REANIM_GATLINGPEA:GatlingPea
+    REANIM_CATTAIL:Cattail
+    REANIM_GLOOMSHROOM:GloomShroom
+    REANIM_BOSS_ICEBALL:Zombie_boss_iceball
+    REANIM_BOSS_FIREBALL:Zombie_boss_fireball
+    REANIM_COBCANNON:CobCannon
+    REANIM_GARLIC:Garlic
+    REANIM_GOLD_MAGNET:GoldMagnet
+    REANIM_WINTER_MELON:WinterMelon
+    REANIM_TWIN_SUNFLOWER:TwinSunflower
+    REANIM_POOL_CLEANER:PoolCleaner
+    REANIM_ROOF_CLEANER:RoofCleaner
+    REANIM_FIRE_PEA:FirePea
+    REANIM_IMITATER:Imitater
+    REANIM_YETI:Zombie_yeti
+    REANIM_BOSS_DRIVER:Zombie_Boss_driver
+    REANIM_LAWN_MOWERED_ZOMBIE:LawnMoweredZombie
+    REANIM_CRAZY_DAVE:CrazyDave
+    REANIM_TEXT_FADE_ON:TextFadeOn
+    REANIM_HAMMER:Hammer
+    REANIM_SLOT_MACHINE_HANDLE:SlotMachine
+    REANIM_CREDITS_FOOTBALL:Credits_Football
+    REANIM_CREDITS_JACKBOX:Credits_Jackbox
+    REANIM_SELECTOR_SCREEN:SelectorScreen
+    REANIM_PORTAL_CIRCLE:Portal_Circle
+    REANIM_PORTAL_SQUARE:Portal_Square
+    REANIM_ZENGARDEN_SPROUT:ZenGarden_sprout
+    REANIM_ZENGARDEN_WATERINGCAN:ZenGarden_wateringcan
+    REANIM_ZENGARDEN_FERTILIZER:ZenGarden_fertilizer
+    REANIM_ZENGARDEN_BUGSPRAY:ZenGarden_bugspray
+    REANIM_ZENGARDEN_PHONOGRAPH:ZenGarden_phonograph
+    REANIM_DIAMOND:Diamond
+    REANIM_ZOMBIE_HAND:Zombie_hand
+    REANIM_STINKY:Stinky
+    REANIM_RAKE:Rake
+    REANIM_RAIN_CIRCLE:Rain_circle
+    REANIM_RAIN_SPLASH:Rain_splash
+    REANIM_ZOMBIE_SURPRISE:Zombie_surprise
+    REANIM_COIN_GOLD:Coin_gold
+    REANIM_TREEOFWISDOM:treeofWisdom
+    REANIM_TREEOFWISDOM_CLOUDS:TreeOfWisdomClouds
+    REANIM_TREEOFWISDOM_TREEFOOD:TreeFood
+    REANIM_CREDITS_MAIN:Credits_Main
+    REANIM_CREDITS_MAIN2:Credits_Main2
+    REANIM_CREDITS_MAIN3:Credits_Main3
+    REANIM_ZOMBIE_CREDITS_DANCE:Zombie_credits_dance
+    REANIM_CREDITS_STAGE:Credits_stage
+    REANIM_CREDITS_BIGBRAIN:Credits_BigBrain
+    REANIM_CREDITS_FLOWER_PETALS:Credits_Flower_petals
+    REANIM_CREDITS_INFANTRY:Credits_Infantry
+    REANIM_CREDITS_THROAT:Credits_Throat
+    REANIM_CREDITS_CRAZYDAVE:Credits_CrazyDave
+    REANIM_CREDITS_BOSSDANCE:Credits_Bossdance
+    REANIM_ZOMBIE_CREDITS_SCREEN_DOOR:Zombie_credits_screendoor
+    REANIM_ZOMBIE_CREDITS_CONEHEAD:Zombie_credits_conehead
+    REANIM_CREDITS_ZOMBIEARMY1:Credits_ZombieArmy1
+    REANIM_CREDITS_ZOMBIEARMY2:Credits_ZombieArmy2
+    REANIM_CREDITS_TOMBSTONES:Credits_Tombstones
+    REANIM_CREDITS_SOLARPOWER:Credits_SolarPower
+    REANIM_CREDITS_ANYHOUR:Credits_AnyHour
+    REANIM_CREDITS_WEARETHEUNDEAD:Credits_WeAreTheUndead
+    REANIM_CREDITS_DISCOLIGHTS:Credits_DiscoLights
+    REANIM_FLAG:Zombie_flagpole
+    REANIM_DANCER:Zombie_disco
+    REANIM_BACKUP_DANCER:Zombie_backup
+    REANIM_ZOMBATAR_HEAD:zombatar_zombie_head
+)
+
+definition_order(particle
+    PARTICLE_MELONSPLASH:melonimpact
+    PARTICLE_WINTERMELON:wintermelonimpact
+    PARTICLE_FUMECLOUD:fumecloud
+    PARTICLE_POPCORNSPLASH:popcornsplash
+    PARTICLE_POWIE:powie
+    PARTICLE_JACKEXPLODE:jackexplode
+    PARTICLE_ZOMBIE_HEAD:zombiehead
+    PARTICLE_ZOMBIE_ARM:zombiearm
+    PARTICLE_ZOMBIE_TRAFFIC_CONE:zombietrafficcone
+    PARTICLE_ZOMBIE_PAIL:zombiepail
+    PARTICLE_ZOMBIE_HELMET:zombiehelmet
+    PARTICLE_ZOMBIE_FLAG:zombieflag
+    PARTICLE_ZOMBIE_DOOR:zombiedoor
+    PARTICLE_ZOMBIE_NEWSPAPER:zombienewspaper
+    PARTICLE_ZOMBIE_HEADLIGHT:zombieheadlight
+    PARTICLE_POW:pow
+    PARTICLE_ZOMBIE_POGO:zombiepogo
+    PARTICLE_ZOMBIE_NEWSPAPER_HEAD:zombienewspaperhead
+    PARTICLE_ZOMBIE_BALLOON_HEAD:zombieballoonhead
+    PARTICLE_SOD_ROLL:sodroll
+    PARTICLE_GRAVE_STONE_RISE:gravestonerise
+    PARTICLE_PLANTING:planting
+    PARTICLE_PLANTING_POOL:plantingpool
+    PARTICLE_ZOMBIE_RISE:zombierise
+    PARTICLE_GRAVE_BUSTER:gravebuster
+    PARTICLE_GRAVE_BUSTER_DIE:gravebusterdie
+    PARTICLE_POOL_SPLASH:poolsplash
+    PARTICLE_ICE_SPARKLE:icesparkle
+    PARTICLE_SEED_PACKET:seedpacket
+    PARTICLE_TALL_NUT_BLOCK:tallnutblock
+    PARTICLE_DOOM:doom
+    PARTICLE_DIGGER_RISE:diggerrise
+    PARTICLE_DIGGER_TUNNEL:diggertunnel
+    PARTICLE_DANCER_RISE:dancerrise
+    PARTICLE_POOL_SPARKLY:poolsparkly
+    PARTICLE_WALLNUT_EAT_SMALL:wallnuteatsmall
+    PARTICLE_WALLNUT_EAT_LARGE:wallnuteatlarge
+    PARTICLE_PEA_SPLAT:peasplat
+    PARTICLE_BUTTER_SPLAT:buttersplat
+    PARTICLE_CABBAGE_SPLAT:cabbagesplat
+    PARTICLE_PUFF_SPLAT:puffsplat
+    PARTICLE_STAR_SPLAT:starsplat
+    PARTICLE_ICE_TRAP:icetrap
+    PARTICLE_SNOWPEA_SPLAT:snowpeasplat
+    PARTICLE_SNOWPEA_PUFF:snowpeapuff
+    PARTICLE_SNOWPEA_TRAIL:snowpeatrail
+    PARTICLE_LANTERN_SHINE:lanternshine
+    PARTICLE_SEED_PACKET_PICKUP:award
+    PARTICLE_POTATO_MINE:potatomine
+    PARTICLE_POTATO_MINE_RISE:potatominerise
+    PARTICLE_PUFFSHROOM_TRAIL:puffshroomtrail
+    PARTICLE_PUFFSHROOM_MUZZLE:puffshroommuzzle
+    PARTICLE_SEED_PACKET_FLASH:seedpacketflash
+    PARTICLE_WHACK_A_ZOMBIE_RISE:whackazombierise
+    PARTICLE_ZOMBIE_LADDER:zombieladder
+    PARTICLE_UMBRELLA_REFLECT:umbrellareflect
+    PARTICLE_SEED_PACKET_PICK:seedpacketpick
+    PARTICLE_ICE_TRAP_ZOMBIE:icetrapzombie
+    PARTICLE_ICE_TRAP_RELEASE:icetraprelease
+    PARTICLE_ZAMBONI_SMOKE:zambonismoke
+    PARTICLE_GLOOMCLOUD:gloomcloud
+    PARTICLE_ZOMBIE_POGO_HEAD:zombiepogohead
+    PARTICLE_ZAMBONI_TIRE:zambonitire
+    PARTICLE_ZAMBONI_EXPLOSION:zamboniexplosion
+    PARTICLE_ZAMBONI_EXPLOSION2:zamboniexplosion2
+    PARTICLE_CATAPULT_EXPLOSION:catapultexplosion
+    PARTICLE_MOWER_CLOUD:mowercloud
+    PARTICLE_BOSS_ICE_BALL:bossiceballtrail
+    PARTICLE_BLASTMARK:blastmark
+    PARTICLE_COIN_PICKUP_ARROW:coinpickuparrow
+    PARTICLE_PRESENT_PICKUP:presentpickup
+    PARTICLE_IMITATER_MORPH:imitatermorph
+    PARTICLE_MOWERED_ZOMBIE_HEAD:moweredzombiehead
+    PARTICLE_MOWERED_ZOMBIE_ARM:moweredzombiearm
+    PARTICLE_ZOMBIE_HEAD_POOL:zombieheadpool
+    PARTICLE_ZOMBIE_BOSS_FIREBALL:zombie_boss_fireball
+    PARTICLE_FIREBALL_DEATH:fireballdeath
+    PARTICLE_ICEBALL_DEATH:iceballdeath
+    PARTICLE_ICEBALL_TRAIL:iceball_trail
+    PARTICLE_FIREBALL_TRAIL:fireball_trail
+    PARTICLE_BOSS_EXPLOSION:bossexplosion
+    PARTICLE_SCREEN_FLASH:screenflash
+    PARTICLE_TROPHY_SPARKLE:trophysparkle
+    PARTICLE_PORTAL_CIRCLE:portalcircle
+    PARTICLE_PORTAL_SQUARE:portalsquare
+    PARTICLE_POTTED_PLANT_GLOW:pottedplantglow
+    PARTICLE_POTTED_WATER_PLANT_GLOW:pottedwaterplantglow
+    PARTICLE_POTTED_ZEN_GLOW:pottedzenglow
+    PARTICLE_MIND_CONTROL:mindcontrol
+    PARTICLE_VASE_SHATTER:vaseshatter
+    PARTICLE_VASE_SHATTER_LEAF:vaseshatterleaf
+    PARTICLE_VASE_SHATTER_ZOMBIE:vaseshatterzombie
+    PARTICLE_AWARD_PICKUP_ARROW:awardpickuparrow
+    PARTICLE_ZOMBIE_SEAWEED:zombie_seaweed
+    PARTICLE_ZOMBIE_MUSTACHE:zombiemustache
+    PARTICLE_ZOMBIE_SUNGLASS:zombiefutureglasses
+    PARTICLE_ZOMBIE_PINATA:pinata
+    PARTICLE_DUST_SQUASH:dust_squash
+    PARTICLE_DUST_FOOT:dust_foot
+    PARTICLE_ZOMBIE_DAISIES:daisy
+    PARTICLE_CREDIT_STROBE:credits_strobe
+    PARTICLE_CREDITS_RAYSWIPE:credits_rayswipe
+    PARTICLE_CREDITS_ZOMBIEHEADWIPE:credits_zombieheadwipe
+    PARTICLE_STARBURST:starburst
+    PARTICLE_CREDITS_FOG:credits_fog
+    PARTICLE_PERSENT_PICK_UP_ARROW:upsellarrow
+)

@@ -5,7 +5,7 @@
 #include "TodParticle.h"
 #include "EffectSystem.h"
 #include "GameConstants.h"
-#include "graphics/DDImage.h"
+#include "graphics/Image.h"
 #include "graphics/DDInterface.h"
 #include "graphics/RenderInterface.h"
 #include <memory>
@@ -360,22 +360,20 @@ bool gTodTriangleDrawAdditive = false;
 //0x4461B0
 TodTriangleGroup::TodTriangleGroup()
 {
-	mImage = nullptr;
 	mDrawMode = Graphics::DRAWMODE_NORMAL;
 }
 
 //0x4461F0
 void TodTriangleGroup::DrawGroup(Graphics* g)
 {
-	if (mImage && !mVertArray.empty())
+	if (mTexture.mTexture && !mVertArray.empty())
 	{
-		if (!DDImage::Check3D(g->mDestImage))
-			throw std::logic_error("Particle triangle group requires a GPU draw surface");
-		auto* image=static_cast<DDImage*>(g->mDestImage);
-		mImage->mDrawn = true;
-		auto& render=*image->mDDInterface->mRenderInterface;
+		if (!g->mDestImage || !g->mDestImage->IsGpuDrawTarget())
+			throw NonScreenDrawError(DrawOperation::BltTrianglesTex);
+		auto* image=g->mDestImage;
+		auto& render=*image->mRenderOwner;
 		render.SelectDrawSurface(image);
-		render.DrawTrianglesTex(mVertArray,Color::White,mDrawMode,mImage,0.0f,0.0f,g->mLinearBlend);
+		render.DrawTrianglesTex(mVertArray,Color::White,mDrawMode,mTexture,0.0f,0.0f,g->mLinearBlend);
 		mVertArray.clear();
 		gTodTriangleDrawAdditive = false;
 	}
@@ -385,10 +383,24 @@ void TodTriangleGroup::DrawGroup(Graphics* g)
 void TodTriangleGroup::AddTriangle(Graphics* g, Image* theImage, const SexyMatrix3& theMatrix, const Rect& theClipRect, const Color& theColor, int theDrawMode, const Rect& theSrcRect)
 {
 	TOD_ASSERT(theImage != nullptr);
+	if (!g->mDestImage || !g->mDestImage->IsGpuDrawTarget())
+		throw NonScreenDrawError(DrawOperation::BltTrianglesTex);
+	auto& render=*g->mDestImage->mRenderOwner;
+	auto* gpuTexture=render.CreateImageTexture(theImage);
+	if (!gpuTexture) return;
+	const TextureSource texture{gpuTexture, theImage->mWidth, theImage->mHeight, theImage->mGpuSamplingFlags};
+	AddTriangle(g, texture, theMatrix, theClipRect, theColor, theDrawMode, theSrcRect);
+}
 
-	if (!mVertArray.empty() && (mDrawMode != theDrawMode || mImage != theImage))
+void TodTriangleGroup::AddTriangle(Graphics* g, const TextureSource& texture, const SexyMatrix3& theMatrix, const Rect& theClipRect, const Color& theColor, int theDrawMode, const Rect& theSrcRect)
+{
+	TOD_ASSERT(texture.mTexture != nullptr);
+
+	if (!mVertArray.empty() && (mDrawMode != theDrawMode ||
+		mTexture.mTexture != texture.mTexture || mTexture.mSamplingFlags != texture.mSamplingFlags ||
+		mTexture.mWidth != texture.mWidth || mTexture.mHeight != texture.mHeight))
 		DrawGroup(g);
-	mImage = theImage;
+	mTexture = texture;
 	mDrawMode = theDrawMode;
 
 	SexyVector2 p[4];
@@ -403,22 +415,17 @@ void TodTriangleGroup::AddTriangle(Graphics* g, Image* theImage, const SexyMatri
 	p[3].x = x + theSrcRect.mWidth;
 	p[3].y = y + theSrcRect.mHeight;
 	SexyVector2 tp[4];
-	// 1073's DX7 rasterizer used integer pixel centers; native DX11/Vulkan
-	// use pixel corners, just like our non-atlas TextureData::BltTransformed.
-	// Keep the old offset only for CPU offscreen shapes (BltMatrixHelper).
-	const float aRasterOffset = DDImage::Check3D(g->mDestImage) ? 0.0f : 0.5f;
+	// Native GPU coordinates use pixel corners, matching TextureSource::BltTransformed.
 	for (int i = 0; i < 4; i++)
 	{
 		tp[i] = theMatrix * p[i];
-		tp[i].x -= aRasterOffset;
-		tp[i].y -= aRasterOffset;
 	}
 
-	TOD_ASSERT(theSrcRect.mX >= 0 && theSrcRect.mWidth >= 0 && theSrcRect.mX + theSrcRect.mWidth <= mImage->mWidth);
-	TOD_ASSERT(theSrcRect.mY >= 0 && theSrcRect.mHeight >= 0 && theSrcRect.mY + theSrcRect.mHeight <= mImage->mHeight);
+	TOD_ASSERT(theSrcRect.mX >= 0 && theSrcRect.mWidth >= 0 && theSrcRect.mX + theSrcRect.mWidth <= mTexture.mWidth);
+	TOD_ASSERT(theSrcRect.mY >= 0 && theSrcRect.mHeight >= 0 && theSrcRect.mY + theSrcRect.mHeight <= mTexture.mHeight);
 
-	float aOneOverWidth = 1.0f / mImage->mWidth;
-	float aOneOverHeight = 1.0f / mImage->mHeight;
+	float aOneOverWidth = 1.0f / mTexture.mWidth;
+	float aOneOverHeight = 1.0f / mTexture.mHeight;
 	float aTexX1 = aOneOverWidth * theSrcRect.mX;
 	float aTexY1 = aOneOverHeight * theSrcRect.mY;
 	float aTexX2 = aOneOverWidth * (theSrcRect.mX + theSrcRect.mWidth);
@@ -429,7 +436,7 @@ void TodTriangleGroup::AddTriangle(Graphics* g, Image* theImage, const SexyMatri
 	std::array<std::array<TriVertex,3>,2> aVertBuffer;
 	auto* aTriRef=aVertBuffer.data();
 		if ((
-				theClipRect.mX == 0 && theClipRect.mY == 0 && theClipRect.mWidth == BOARD_WIDTH && theClipRect.mHeight == BOARD_HEIGHT && gSexyAppBase->mDDInterface->mIs3D
+				theClipRect.mX == 0 && theClipRect.mY == 0 && theClipRect.mWidth == BOARD_WIDTH && theClipRect.mHeight == BOARD_HEIGHT
 			) || (
 				theClipRect.mX <= tp[0].x && theClipRect.mX + theClipRect.mWidth >= tp[0].x && 
 				theClipRect.mX <= tp[1].x && theClipRect.mX + theClipRect.mWidth >= tp[1].x &&

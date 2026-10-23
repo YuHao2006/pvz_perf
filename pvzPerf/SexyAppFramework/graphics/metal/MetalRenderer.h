@@ -40,10 +40,10 @@ public:
     MetalTexture* CopyTextureRegion(MetalTexture* source, int x, int y, int width, int height);
     MetalTexture* ProcessImage(MetalTexture* source, const GpuImageProcessing& processing);
     MetalTexture* ComposeAlphaRaw(MetalTexture* base, MetalTexture* alpha,
-        int columns, int rows, uint32_t color, bool colorOnly);
+        uint32_t color, bool colorOnly);
     MetalTexture* AdoptComposedTexture(MetalTexture* composed);
     MetalTexture* ComposeAlpha(MetalTexture* base, MetalTexture* alpha,
-        int columns, int rows, uint32_t color, bool colorOnly);
+        uint32_t color, bool colorOnly);
     void RenderFontAtlas(MetalTexture* target, MetalTexture* source,
         std::span<const GpuFontGlyph> glyphs, uint32_t samplingFlags, bool forceWhite);
     void DestroyTexture(MetalTexture* texture);

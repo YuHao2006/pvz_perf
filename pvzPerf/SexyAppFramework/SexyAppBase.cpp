@@ -17,9 +17,9 @@
 #include "JsonDoc.h"
 #include "graphics/DDInterface.h"
 #include "graphics/RenderInterface.h"
-#include "graphics/DDImage.h"
+#include "graphics/Image.h"
 #include "graphics/Font.h"
-#include "graphics/MemoryImage.h"
+#include "graphics/Image.h"
 #include "widget/Dialog.h"
 #include "imagelib/ImageLib.h"
 #include "graphics/ImageDiagnostics.h"
@@ -268,8 +268,8 @@ static bool gScreenSaverActive = false;
 #endif
 
 
-static DDImage* gFPSImage = NULL; 
-static DDImage* gDemoTimeLeftImage = nullptr;
+static Image* gFPSImage = NULL;
+static Image* gDemoTimeLeftImage = nullptr;
 
 //////////////////////////////////////////////////////////////////////////
 
@@ -444,7 +444,6 @@ SexyAppBase::SexyAppBase()
 	mVSyncBrokenTestUpdates = 0;
 	mWaitForVSync = false;
 	mSoftVSyncWait = true;
-	mAutoEnable3D = false;
 	mTest3D = false;
 	mMinVidMemory3D = 6;
 	mRecommendedVidMemory3D = 14;
@@ -579,7 +578,7 @@ SexyAppBase::~SexyAppBase()
 	{
 		SharedImage* aSharedImage = &aSharedImageItr->second;
 		DBG_ASSERTE(aSharedImage->mRefCount == 0);		
-		Image::Destroy(aSharedImage->mImage);
+		delete (aSharedImage->mImage);
 		mSharedImageMap.erase(aSharedImageItr++);		
 	}
 	
@@ -1191,36 +1190,36 @@ std::optional<std::vector<ImageDiagnosticRecord>> SexyAppBase::CaptureImageDiagn
     auto& render = *mDDInterface->mRenderInterface;
     if (includePixels) render.Flush();
     std::vector<ImageDiagnosticRecord> records;
-    records.reserve(mMemoryImageSet.size());
-    for (const auto* image : mMemoryImageSet)
+    records.reserve(mGpuImageSet.size());
+    for (const auto* image : mGpuImageSet)
     {
         ImageDiagnosticRecord record;
-        record.path = image->mFilePath;
+        record.path = "<generated GPU image>";
+        for (const auto& entry : mSharedImageMap)
+            if (entry.second.mImage == image) {
+                record.path = entry.first.first;
+                break;
+            }
         record.width = image->mWidth; record.height = image->mHeight;
         record.cpu = MeasureImageCpuUsage(*image);
-        record.traits = std::string(image->mIsVolatile ? "volatile " : "") +
-            (image->mForcedMode ? "forced " : "") + (image->mHasAlpha ? "alpha " : "") +
+        record.traits = std::string(image->mForcedMode ? "forced " : "") + (image->mHasAlpha ? "alpha " : "") +
             (image->mHasTrans ? "trans " : "");
-        if (image->mD3DData)
-        {
-            const auto& textures = *static_cast<const TextureData*>(image->mD3DData);
-            if (textures.mTexture)
-                record.gpuTexels = AddImageBytes(record.gpuTexels, ImageTexelBytes(textures.mWidth, textures.mHeight));
-        }
+        if (image->mTexture)
+            record.gpuTexels = ImageTexelBytes(image->mWidth, image->mHeight);
         const bool screen = image == mDDInterface->mScreenImage;
         if (screen) record.gpuTexels = AddImageBytes(record.gpuTexels, ImageTexelBytes(record.width, record.height));
         if (!includePixels) record.pixelStatus = "metadata only";
         else if (record.width == 0 || record.height == 0) record.pixelStatus = "empty image";
-        else if (!image->mBits && !image->mColorTable && !image->mD3DData && !screen)
-            record.pixelStatus = "no CPU/GPU pixels available; no pixels synthesized";
+        else if (!image->mTexture && !screen)
+            record.pixelStatus = "no GPU pixels available; no pixels synthesized";
         else
         {
             record.pixels = render.ReadImagePixels(*image);
-            record.pixelStatus = screen ? "native screen" :
-                (image->mBits ? "CPU" : (image->mColorTable ? "indexed CPU" : "native GPU"));
+            record.pixelStatus = screen ? "native screen" : "native GPU";
         }
         records.push_back(std::move(record));
     }
+    AppendAtlasTextureDiagnostics(render, records, includePixels);
     std::stable_sort(records.begin(), records.end(), [](const auto& a, const auto& b) {
         return a.Total() > b.Total();
     });
@@ -2995,41 +2994,11 @@ void SexyAppBase::Done3dTesting()
 
 
 
-void SexyAppBase::DeleteNativeImageData()
-{
-	AutoCrit anAutoCrit(mDDInterface->mCritSect);
-	MemoryImageSet::iterator anItr = mMemoryImageSet.begin();
-	while (anItr != mMemoryImageSet.end())
-	{
-		MemoryImage* aMemoryImage = *anItr;		
-		aMemoryImage->DeleteNativeData();			
-		++anItr;
-	}
-}
 
-void SexyAppBase::DeleteExtraImageData()
-{
-	AutoCrit anAutoCrit(mDDInterface->mCritSect);
-	MemoryImageSet::iterator anItr = mMemoryImageSet.begin();
-	while (anItr != mMemoryImageSet.end())
-	{
-		MemoryImage* aMemoryImage = *anItr;
-		aMemoryImage->DeleteExtraBuffers();
-		++anItr;
-	}
-}
 
-void SexyAppBase::ReInitImages()
-{
-	AutoCrit anAutoCrit(mDDInterface->mCritSect);
-	MemoryImageSet::iterator anItr = mMemoryImageSet.begin();
-	while (anItr != mMemoryImageSet.end())
-	{
-		MemoryImage* aMemoryImage = *anItr;				
-		aMemoryImage->ReInit();
-		++anItr;
-	}
-}
+
+
+
 
 
 void SexyAppBase::LoadingThreadProc()
@@ -3123,7 +3092,7 @@ void SexyAppBase::RequestScreenMode(bool wantWindowed, bool useCustomScale)
     }
     // The virtual completion hook still synchronizes the options checkboxes.
     // ReconfigureScale already completed a scale-only resize; do not do it twice.
-    SwitchScreenMode(anEffectiveWindowed,true,false);
+    SwitchScreenMode(anEffectiveWindowed,false);
 	if (mShutdown)
 		return;
 
@@ -3282,7 +3251,7 @@ void SexyAppBase::SwitchScreenMode(bool wantWindowed)
 
 void SexyAppBase::SwitchScreenMode()
 {
-	SwitchScreenMode(mIsWindowed, mDDInterface->mIs3D, true);
+	SwitchScreenMode(mIsWindowed, true);
 }
 
 void SexyAppBase::SetAlphaDisabled(bool isDisabled)
@@ -3933,8 +3902,8 @@ bool SexyAppBase::CheckSignature(const Buffer& theBuffer, const std::string& the
 void SexyAppBase::ShowResourceError(bool doExit)
 {
 	const auto& error=mResourceManager->mError;
-	Popup(StrFormat("Resource loading failed.\nError code: %u\nResource slot: %u\nValue: %u\nByte offset: %zu",
-		static_cast<unsigned>(error.reason),error.slot,error.value,error.offset));
+	Popup(StrFormat("Resource loading failed.\nError code: %u\nPlan record: %u\nValue: %u\nByte offset: %zu",
+		static_cast<unsigned>(error.reason),error.record,error.value,error.offset));
 	if (doExit)
 		DoExit(1);
 }
@@ -4505,38 +4474,42 @@ void SexyAppBase::EnableCustomCursors(bool enabled)
 	EnforceCursor();
 }
 
-Sexy::DDImage* SexyAppBase::GetImage(const std::string& theFileName, bool commitBits, bool lookForAlphaImage)
+Sexy::Image* SexyAppBase::GetImage(const std::string& theFileName, bool commitBits, bool lookForAlphaImage)
 {
-	std::unique_ptr<ImageLib::Image> loaded(ImageLib::GetImage(theFileName, lookForAlphaImage));
+	ImageLib::Image* loaded = ImageLib::GetImage(theFileName, lookForAlphaImage);
 	if (!loaded)
 		return nullptr;
-	auto image = std::make_unique<DDImage>(mDDInterface);
-	image->mFilePath = theFileName;
-	image->AdoptDecodedImage(std::move(loaded),commitBits);
-	return image.release();
+	Image* image = nullptr;
+	try {
+		image = new Image(this);
+		image->AdoptDecodedImage(std::exchange(loaded, nullptr), commitBits);
+		return image;
+	} catch (...) {
+		delete image;
+		delete loaded;
+		throw;
+	}
 }
 
-DDImage* SexyAppBase::CreateColorizedImage(Image* theImage, const Color& theColor)
+Image* SexyAppBase::CreateColorizedImage(Image* theImage, const Color& theColor)
 {
-	auto* source=AsMemoryImage(theImage);
+	auto* source=theImage;
 	if(!source) throw GpuImageCpuAccess{};
 	const GpuImageProcessing processing{0,0,source->mWidth,source->mHeight,
 		theColor.mRed,theColor.mGreen,theColor.mBlue,theColor.mAlpha,GpuImageOperation::Colorize};
 	return mDDInterface->mRenderInterface->ProcessImage(source,processing);
 }
 
-DDImage* SexyAppBase::CopyImage(Image* theImage, const Rect& theRect)
+Image* SexyAppBase::CopyImage(Image* theImage, const Rect& theRect)
 {
-	auto* source=AsMemoryImage(theImage);
+	auto* source=theImage;
 	if(!source) throw GpuImageCpuAccess{};
 	const GpuImageProcessing processing{theRect.mX,theRect.mY,theRect.mWidth,theRect.mHeight,
 		0,0,0,0,GpuImageOperation::Copy};
-	auto image=std::unique_ptr<DDImage>(mDDInterface->mRenderInterface->ProcessImage(source,processing));
-	image->CopyAttributes(theImage);
-	return image.release();
+	return mDDInterface->mRenderInterface->ProcessImage(source,processing);
 }
 
-DDImage* SexyAppBase::CopyImage(Image* theImage)
+Image* SexyAppBase::CopyImage(Image* theImage)
 {
 	return CopyImage(theImage, Rect(0, 0, theImage->mWidth, theImage->mHeight));
 }
@@ -4612,23 +4585,23 @@ void SexyAppBase::SetSfxVolume(double theVolume)
 		mSoundManager->SetVolume((mMuteCount > 0) ? 0.0 : mSfxVolume);
 }
 
-void SexyAppBase::AddMemoryImage(MemoryImage* theMemoryImage)
+void SexyAppBase::AddGpuImage(Image* image)
 {
 	AutoCrit anAutoCrit(mDDInterface->mCritSect);
-	mMemoryImageSet.insert(theMemoryImage);
+	mGpuImageSet.insert(image);
 }
 
-void SexyAppBase::RemoveMemoryImage(MemoryImage* theMemoryImage)
+void SexyAppBase::RemoveGpuImage(Image* image)
 {
 	AutoCrit anAutoCrit(mDDInterface->mCritSect);
-	MemoryImageSet::iterator anItr = mMemoryImageSet.find(theMemoryImage);
-	if (anItr != mMemoryImageSet.end())
-		mMemoryImageSet.erase(anItr);
+	GpuImageSet::iterator anItr = mGpuImageSet.find(image);
+	if (anItr != mGpuImageSet.end())
+		mGpuImageSet.erase(anItr);
 
-	Remove3DData(theMemoryImage);
+	Remove3DData(image);
 }
 
-void SexyAppBase::Remove3DData(MemoryImage* theMemoryImage)
+void SexyAppBase::Remove3DData(Image* theMemoryImage)
 {
 	if (mDDInterface)
 		mDDInterface->Remove3DData(theMemoryImage);
@@ -5038,7 +5011,7 @@ void SexyAppBase::CleanupScalePresent()
 }
 
 SharedImageRef SexyAppBase::LoadSharedImage(const std::string& file, unsigned variant,
-	bool* isNew, const std::function<DDImage*()>& load)
+	bool* isNew, const std::function<Image*()>& load)
 {
 	const SharedImageMap::key_type key(StringToUpper(file), variant);
 	SharedImageRef result;
@@ -5080,16 +5053,19 @@ SharedImageRef SexyAppBase::LoadSharedImage(const std::string& file, unsigned va
 			// Never hold the registry/render lock while waiting for this key.
 			ready.get();
 		}
+		result.mImage=result.mSharedImage->mImage;
 		return result;
 	}
+	Image* image = nullptr;
 	try
 	{
 		// Decode and prepare privately. Other keys and image registration can
 		// proceed; waiters keep this map node alive through counted references.
-		std::unique_ptr<DDImage, ImageDeleter> image(load());
+		image = load();
 		{
 			AutoCrit lock(mDDInterface->mCritSect);
-			result.mSharedImage->mImage = image.release();
+			result.mSharedImage->mImage = std::exchange(image, nullptr);
+			result.mImage=result.mSharedImage->mImage;
 			result.mSharedImage->mLoadReady = {};
 			result.mSharedImage->mLoaderThread = {};
 		}
@@ -5097,6 +5073,7 @@ SharedImageRef SexyAppBase::LoadSharedImage(const std::string& file, unsigned va
 	}
 	catch (...)
 	{
+		delete image;
 		// Publish the actual failure to all existing waiters, then propagate.
 		// Keep it on this node until normal zero-reference cache cleanup.
 		completion->set_exception(std::current_exception());
@@ -5105,21 +5082,26 @@ SharedImageRef SexyAppBase::LoadSharedImage(const std::string& file, unsigned va
 	return result;
 }
 
-SharedImageRef SexyAppBase::SetSharedImage(const std::string& theFileName, unsigned theVariant, DDImage* theImage, bool* isNew)
+SharedImageRef SexyAppBase::SetSharedImage(const std::string& theFileName, unsigned theVariant, Image* theImage, bool* isNew)
 {
 	// Only the winning insertion adopts the input. A hit never owns/deletes it.
 	return LoadSharedImage(theFileName, theVariant, isNew, [theImage] { return theImage; });
 }
 
 SharedImageRef SexyAppBase::GetPreparedSharedImage(const std::string& file, unsigned variant,
-	bool* isNew, const std::function<void(DDImage*)>& prepare, bool lookForAlphaImage)
+	bool* isNew, const std::function<void(Image*)>& prepare, bool lookForAlphaImage)
 {
 	return LoadSharedImage(file, variant, isNew, [&]
 	{
-		std::unique_ptr<DDImage> image(GetImage(file, false, lookForAlphaImage));
-		if (image && prepare)
-			prepare(image.get());
-		return image.release();
+		Image* image = GetImage(file, false, lookForAlphaImage);
+		try {
+			if (image && prepare)
+				prepare(image);
+			return image;
+		} catch (...) {
+			delete image;
+			throw;
+		}
 	});
 }
 
@@ -5147,7 +5129,7 @@ void SexyAppBase::CleanSharedImages()
 			SharedImage* aSharedImage = &aSharedImageItr->second;
 			if (aSharedImage->mRefCount == 0)
 			{
-				Image::Destroy(aSharedImage->mImage);
+				delete (aSharedImage->mImage);
 				mSharedImageMap.erase(aSharedImageItr++);
 			}
 			else

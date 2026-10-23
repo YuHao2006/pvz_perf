@@ -16,6 +16,7 @@ import build_numeric_runtime_pak64 as pak
 import stage_runtime_package as stage
 import verify_numeric_compiler as compiler_check
 import test_numeric_runtime_pak64 as fixtures
+pak = fixtures.pak  # Explicit historical NRSC1 fixtures; production uses NRSC4.
 
 
 class NumericCompilerPipelineTests(unittest.TestCase):

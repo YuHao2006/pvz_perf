@@ -51,21 +51,16 @@ kernel void pvz_alpha_kernel(
     if (position.x >= p.width || position.y >= p.height)
         return;
     float4 value = baseImage.read(id);
-    const int2 cell = int2(p.width / p.columns, p.height / p.rows);
-    if (position.x < cell.x * p.columns && position.y < cell.y * p.rows)
+    const unsigned int alpha = unsigned(rint(alphaImage.read(id).b * 255.0f));
+    if (p.colorOnly != 0u)
     {
-        const unsigned int alpha = unsigned(rint(
-            alphaImage.read(uint2(position % cell)).b * 255.0f));
-        if (p.colorOnly != 0u)
-        {
-            const unsigned int packed = p.color | (alpha << 24u);
-            value = float4(float((packed >> 16u) & 255u),
-                float((packed >> 8u) & 255u), float(packed & 255u),
-                float(packed >> 24u)) / 255.0f;
-        }
-        else
-            value.a = float(alpha) / 255.0f;
+        const unsigned int packed = p.color | (alpha << 24u);
+        value = float4(float((packed >> 16u) & 255u),
+            float((packed >> 8u) & 255u), float(packed & 255u),
+            float(packed >> 24u)) / 255.0f;
     }
+    else
+        value.a = float(alpha) / 255.0f;
     target.write(value, id);
 }
 

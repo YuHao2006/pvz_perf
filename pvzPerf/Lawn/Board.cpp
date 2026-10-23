@@ -4,7 +4,7 @@
 #include "GardenHudLayout.h"
 #include "BoardInclude.h"
 #include "graphics/DDInterface.h"
-#include "graphics/MemoryImage.h"
+#include "graphics/Image.h"
 #include "ZombieFlags.h"
 #include "LawnCommon.h"
 #include "System/Music.h"
@@ -7251,7 +7251,7 @@ void Board::DrawBackdrop(Graphics* g)
 			 aBaseImage == Sexy::IMAGE_BACKGROUND_GREENHOUSE ||
 			 aBaseImage == Sexy::IMAGE_AQUARIUM1);
 		const int aBaseX = aGarden ? (BOARD_WIDTH - aBaseImage->mWidth) / 2 : -BOARD_OFFSET;
-		const MemoryImage* aBaseMemory = AsMemoryImage(aBaseImage);
+		const Image* aBaseMemory = aBaseImage;
 		// Skip the full-screen underlay only when an already committed, opaque
 		// backdrop overwrites it completely. Unknown alpha and camera gaps retain it.
 		const bool aCovered = aBaseMemory && !aBaseMemory->mBitsChanged &&
@@ -7903,9 +7903,9 @@ void Board::DrawProgressMeter(Graphics* g)
 	// ====================================================================================================
 	// ▲ 绘制进度条进度部分的贴图
 	// ====================================================================================================
-	g->DrawImageCel(Sexy::IMAGE_FLAGMETER, 600, 575, 0);
-	int aCelWidth = Sexy::IMAGE_FLAGMETER->GetCelWidth();
-	int aCelHeight = Sexy::IMAGE_FLAGMETER->GetCelHeight();
+	g->DrawImage(Sexy::IMAGE_FLAGMETER, 600, 575, Rect(0, 0, 158, 27));
+	constexpr int aCelWidth = 158;
+	constexpr int aCelHeight = 27;
 	int aClipWidth = TodAnimateCurve(0, PROGRESS_METER_COUNTER, mProgressMeterWidth, 0, 143, Curves::Linear);
 	Rect aSrcRect(aCelWidth - aClipWidth - 7, aCelHeight, aClipWidth, aCelHeight);
 	Rect aDstRect(aCelWidth - aClipWidth + 593, 575, aClipWidth, aCelHeight);
@@ -7967,9 +7967,9 @@ void Board::DrawProgressMeter(Graphics* g)
 			// 计算旗帜的横坐标
 			int aPosX = TodAnimateCurve(0, mNumWaves, aTotalWavesAtFlag, aFlagsPosEnd, 606, Curves::Linear);
 			// 绘制旗杆
-			g->DrawImageCel(Sexy::IMAGE_FLAGMETERPARTS, aPosX, 571, 1, 0);
+			g->DrawImage(Sexy::IMAGE_FLAGMETERPARTS, aPosX, 571, Rect(25, 0, 25, 25));
 			// 绘制旗帜
-			g->DrawImageCel(Sexy::IMAGE_FLAGMETERPARTS, aPosX, 572 - aHeight, 2, 0);
+			g->DrawImage(Sexy::IMAGE_FLAGMETERPARTS, aPosX, 572 - aHeight, Rect(50, 0, 25, 25));
 		}
 	}
 
@@ -7989,7 +7989,7 @@ void Board::DrawProgressMeter(Graphics* g)
 		return;
 	// 绘制僵尸头
 	int aHeadProgress = TodAnimateCurve(0, 150, mProgressMeterWidth, 0, 135, Curves::Linear);
-	g->DrawImageCel(Sexy::IMAGE_FLAGMETERPARTS, aCelWidth - aHeadProgress + 580, 572, 0, 0);
+	g->DrawImage(Sexy::IMAGE_FLAGMETERPARTS, aCelWidth - aHeadProgress + 580, 572, Rect(0, 0, 25, 25));
 }
 
 namespace
@@ -8767,26 +8767,27 @@ void Board::DrawUIBottom(Graphics* g)
 	if (mBackground == BackgroundType::BACKGROUND_ZOMBIQUARIUM)
 	{
 		int aWaveTime = std::abs(static_cast<int>((mMainCounter / 8) % 22) - 11);
+		const Rect aWaveSource(0, aWaveTime * 27, 160, 27);
 		g->mDrawMode = Graphics::DRAWMODE_ADDITIVE;
-		g->DrawImageCel(Sexy::IMAGE_WAVESIDE, 0, 40, aWaveTime);
-		g->DrawImageCel(Sexy::IMAGE_WAVECENTER, 160, 40, aWaveTime);
-		g->DrawImageCel(Sexy::IMAGE_WAVECENTER, 320, 40, aWaveTime);
-		g->DrawImageCel(Sexy::IMAGE_WAVECENTER, 480, 40, aWaveTime);
-		TodDrawImageCelScaled(g, Sexy::IMAGE_WAVESIDE, 800, 40, 0, aWaveTime, -1.0f, 1.0f);
+		g->DrawImage(Sexy::IMAGE_WAVESIDE, 0, 40, aWaveSource);
+		g->DrawImage(Sexy::IMAGE_WAVECENTER, 160, 40, aWaveSource);
+		g->DrawImage(Sexy::IMAGE_WAVECENTER, 320, 40, aWaveSource);
+		g->DrawImage(Sexy::IMAGE_WAVECENTER, 480, 40, aWaveSource);
+		TodDrawImageRectScaled(g, Sexy::IMAGE_WAVESIDE, 800, 40, aWaveSource, -1.0f, 1.0f);
 		if (mApp->mScreenBounds.mWidth > BOARD_WIDTH)
 		{
 			const int left = std::min(0, mApp->mScreenBounds.mX - mX);
 			const int right = std::max(BOARD_WIDTH,
 				mApp->mScreenBounds.mX + mApp->mScreenBounds.mWidth - mX);
-			const int waveWidth = Sexy::IMAGE_WAVESIDE->GetCelWidth();
+			constexpr int waveWidth = 160;
 			Graphics aLeftWaves(*g);
 			aLeftWaves.ClipRect(left, 0, -left, BOARD_HEIGHT);
 			for (int edge = 0; edge > left; edge -= waveWidth)
-				TodDrawImageCelScaled(&aLeftWaves, Sexy::IMAGE_WAVESIDE, edge, 40, 0, aWaveTime, -1.0f, 1.0f);
+				TodDrawImageRectScaled(&aLeftWaves, Sexy::IMAGE_WAVESIDE, edge, 40, aWaveSource, -1.0f, 1.0f);
 			Graphics aRightWaves(*g);
 			aRightWaves.ClipRect(BOARD_WIDTH, 0, right - BOARD_WIDTH, BOARD_HEIGHT);
 			for (int edge = BOARD_WIDTH; edge < right; edge += waveWidth)
-				aRightWaves.DrawImageCel(Sexy::IMAGE_WAVESIDE, edge, 40, aWaveTime);
+				aRightWaves.DrawImage(Sexy::IMAGE_WAVESIDE, edge, 40, aWaveSource);
 		}
 		g->mDrawMode = Graphics::DRAWMODE_NORMAL;
 	}
@@ -8968,7 +8969,8 @@ void Board::UpdateFog()
 //0x41A730
 void Board::DrawFog(Graphics* g)
 {
-	Image* aImageFog = mApp->mDDInterface->mIs3D ? Sexy::IMAGE_FOG : Sexy::IMAGE_FOG_SOFTWARE;
+	Image* aImageFog = Sexy::IMAGE_FOG;
+	const Rect aFogFrame(0, 0, 210, 190);
 	for (int x = 0; x < MAX_GRID_SIZE_X; x++)
 	{
 		for (int y = 0; y < MAX_GRID_SIZE_Y + 1; y++)
@@ -8995,22 +8997,14 @@ void Board::DrawFog(Graphics* g)
 
 			int aColorVariant = 255 - aCelLook * 1.5 - aMotion * 1.5;
 			int aLightnessVariant = 255 - aCelLook - aMotion;
-			if (!mApp->mDDInterface->mIs3D)
-			{
-				aPosX += 10;
-				aPosY += 3;
-				aCelCol = aCelLook % Sexy::IMAGE_FOG_SOFTWARE->mNumCols;
-				aColorVariant = 255;
-				aLightnessVariant = 255;
-			}
-
 			g->mColorizeImages = true;
 			g->mColor = Color(aColorVariant, aColorVariant, aLightnessVariant, aFadeAmount);
-			g->DrawImageCel(aImageFog, aPosX, aPosY, aCelCol, 0);
+			const Rect aFogSource(aCelCol * aFogFrame.mWidth, 0, aFogFrame.mWidth, aFogFrame.mHeight);
+			g->DrawImage(aImageFog, aPosX, aPosY, aFogSource);
 
 			if (x == MAX_GRID_SIZE_X - 1)
 			{
-				g->DrawImageCel(aImageFog, aPosX + 80, aPosY, aCelCol, 0);
+				g->DrawImage(aImageFog, aPosX + 80, aPosY, aFogSource);
 			}
 			g->mColorizeImages = false;
 		}

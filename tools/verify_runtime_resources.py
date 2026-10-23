@@ -1,13 +1,9 @@
 #!/usr/bin/env python3
-"""Read-only numeric PAK64 closure and preserved QuickPlay resource checks.
-
-Verifies a package against the current author manifest. The published v1.3
-retirement policy belongs to that tag; this tool requires all original menu
-images and descriptors, and never creates or changes a package or source file.
-"""
+"""Read-only NRSC4 PAK64 closure and retired QuickPlay source preservation."""
 from __future__ import annotations
 
 import argparse
+import hashlib
 import io
 import json
 from pathlib import Path
@@ -22,75 +18,59 @@ import compile_numeric_resources as resources
 
 
 ROOT = Path(__file__).resolve().parents[1]
-# Explicit stable identities, not positions inferred from a filtered registry.
-# name, ResourceId slot, ImageSymbolId, original file, audited payload bytes.
+# Author labels and original source paths have no numeric runtime identity.
 MENU_IMAGES = (
-    ("IMAGE_SELECTORSCREEN_MOREWAYSTOPLAY_BG", 100, 1943,
+    ("IMAGE_SELECTORSCREEN_MOREWAYSTOPLAY_BG", "IMAGE_SELECTORSCREEN_MOREWAYSTOPLAY_BG",
      "images/selector_morewaystoplay_background.png", 432161),
-    ("IMAGE_QUICKPLAY_MINIGAMES_BUTTON", 113, 197,
+    ("IMAGE_QUICKPLAY_MINIGAMES_BUTTON", "IMAGE_QUICKPLAY_MINIGAMES_BUTTON",
      "images/quickplay_minigames_button.png", 31499),
-    ("IMAGE_QUICKPLAY_MINIGAMES_BUTTON_HIGHLIGHT", 114, 198,
+    ("IMAGE_QUICKPLAY_MINIGAMES_BUTTON_HIGHLIGHT", "IMAGE_QUICKPLAY_MINIGAMES_BUTTON_HIGHLIGHT",
      "images/quickplay_minigames_button_highlight.png", 32890),
-    ("IMAGE_QUICKPLAY_MINIGAMES_CLOUD", 115, 199,
+    ("IMAGE_QUICKPLAY_MINIGAMES_CLOUD", "IMAGE_QUICKPLAY_MINIGAMES_CLOUD",
      "images/quickplay_minigames_cloud.png", 31688),
-    ("IMAGE_QUICKPLAY_PUZZLES_BUTTON", 116, 200,
+    ("IMAGE_QUICKPLAY_PUZZLES_BUTTON", "IMAGE_QUICKPLAY_PUZZLES_BUTTON",
      "images/quickplay_puzzles_button.png", 20725),
-    ("IMAGE_QUICKPLAY_PUZZLES_BUTTON_HIGHLIGHT", 117, 201,
+    ("IMAGE_QUICKPLAY_PUZZLES_BUTTON_HIGHLIGHT", "IMAGE_QUICKPLAY_PUZZLES_BUTTON_HIGHLIGHT",
      "images/quickplay_puzzles_button_highlight.png", 21875),
-    ("IMAGE_QUICKPLAY_PUZZLES_CLOUD", 118, 202,
+    ("IMAGE_QUICKPLAY_PUZZLES_CLOUD", "IMAGE_QUICKPLAY_PUZZLES_CLOUD",
      "images/quickplay_puzzles_cloud.png", 27903),
-    ("IMAGE_QUICKPLAY_SURVIVAL_BUTTON", 119, 203,
+    ("IMAGE_QUICKPLAY_SURVIVAL_BUTTON", "IMAGE_QUICKPLAY_SURVIVAL_BUTTON",
      "images/quickplay_survival_button.png", 31281),
-    ("IMAGE_QUICKPLAY_SURVIVAL_BUTTON_HIGHLIGHT", 120, 204,
+    ("IMAGE_QUICKPLAY_SURVIVAL_BUTTON_HIGHLIGHT", "IMAGE_QUICKPLAY_SURVIVAL_BUTTON_HIGHLIGHT",
      "images/quickplay_survival_button_highlight.png", 32474),
-    ("IMAGE_QUICKPLAY_SURVIVAL_CLOUD", 121, 205,
+    ("IMAGE_QUICKPLAY_SURVIVAL_CLOUD", "IMAGE_QUICKPLAY_SURVIVAL_CLOUD",
      "images/quickplay_survival_cloud.png", 36278),
 )
 BACK_BUTTONS = (
-    (122, 195, "images/quickplay_back_button"),
-    (123, 196, "images/quickplay_back_button_highlight"),
+    ("IMAGE_QUICKPLAY_BACK_BUTTON", "images/quickplay_back_button"),
+    ("IMAGE_QUICKPLAY_BACK_BUTTON_HIGHLIGHT", "images/quickplay_back_button_highlight"),
 )
 
 
-def descriptors(data: bytes) -> dict[int, tuple]:
-    """Decode identities/paths; validate_numeric separately checks every tail."""
-    reader = pak.Reader(data[36:])
+def descriptors(data: bytes) -> dict[tuple[int, int], tuple]:
+    """Decode transient group steps; none of these keys are image identities."""
     result = {}
-    while reader.at < len(reader.data):
-        record = pak.Reader(reader.take(reader.word()))
-        fields = record.unpack("<7I")
-        paths = tuple(record.path() for _ in range(4))
-        pak.require(fields[0] not in result, "Duplicate resource slot")
-        result[fields[0]] = (fields, paths, record.take(len(record.data) - record.at))
+    for group, step, fields, paths, tail in pak.resource_records(data):
+        if fields[0] == 0:
+            result[group, step] = (group, fields, paths, tail)
     return result
 
 
-def check_menu_resources(records: dict[int, tuple], available: set[str]) -> None:
-    for name, slot, symbol, path, _ in MENU_IMAGES:
-        fields, paths, _ = records[slot]
-        pak.require(fields == (slot, symbol, 28, 0, resources.PALLETIZE | resources.AUTO_ALPHA,
-                               resources.NONE, 0),
-                    f"Preserved menu descriptor identity or flags changed: {name}")
-        pak.require(paths == (posixpath.splitext(path)[0], "", "", ""),
-                    f"Preserved menu descriptor must retain its original path: {name}")
-        pak.require(path in available, f"Missing preserved menu image: {path}")
-    for slot, symbol, path in BACK_BUTTONS:
-        fields, paths, _ = records[slot]
-        pak.require(fields == (slot, symbol, 28, 0, resources.PALLETIZE | resources.AUTO_ALPHA,
-                               resources.NONE, 0) and paths == (path, "", "", ""),
-                    f"Active QuickPlay back button changed: {path}")
-        pak.require(path + ".png" in available, f"Missing active back button: {path}")
+def check_menu_resources(records: dict, available: set[str], root: Path = ROOT) -> None:
+    paths = {path for _, _, path, _ in MENU_IMAGES}
+    paths.update(path + ".png" for _, path in BACK_BUTTONS)
+    stems = {posixpath.splitext(path)[0] for path in paths}
+    for path in sorted(paths):
+        pak.require((root / "assets/runtime" / path).is_file(),
+                    f"Missing preserved QuickPlay source image: {path}")
+        pak.require(path not in available, f"Retired QuickPlay image remains packaged: {path}")
+    for _, _, resource_paths, _ in records.values():
+        pak.require(not any(posixpath.splitext(path.casefold())[0] in stems for path in resource_paths if path),
+                    "Retired QuickPlay image remains in a load descriptor")
 
 
-def check_compiled_images(records: dict[int, tuple], image_ids: set[int]) -> None:
-    """Every image referenced by compiled animations/particles must be loadable."""
-    by_symbol = {fields[1]: (fields, paths)
-                 for fields, paths, _ in records.values() if fields[3] == 0 and fields[1]}
-    for symbol in image_ids:
-        pak.require(symbol in by_symbol, f"Compiled image lacks descriptor: {symbol}")
-        fields, paths = by_symbol[symbol]
-        pak.require(not fields[4] & (resources.PROGRAM | resources.UNAVAILABLE) and bool(paths[0]),
-                    f"Compiled image descriptor is not loadable: {symbol}")
+def check_compiled_images(records: dict, image_ids: set[int]) -> None:
+    pak.require(not image_ids, "Production definitions must not contain global image IDs")
 
 
 def verify(package: Path, root: Path = ROOT) -> dict:
@@ -98,52 +78,113 @@ def verify(package: Path, root: Path = ROOT) -> dict:
         index = pak.archive_index(archive)
         numeric = {name for name in index if pak.numeric_kind(name)}
         counts = {kind: sum(pak.numeric_kind(name) == kind for name in numeric)
-                  for kind in pak.COUNTS}
-        pak.require(counts == pak.COUNTS, f"Incomplete numeric corpus: {counts}")
+                  for kind in set(pak.expected_counts(root)) | {pak.numeric_kind(name) for name in numeric}}
+        pak.require(counts == pak.expected_counts(root), f"Incomplete numeric corpus: {counts}")
         audit = pak.source_audit(root, {}, numeric)
+        pak.validate_particle_inheritance({name: archive.read(index[name]) for name in numeric
+                                          if pak.numeric_kind(name) == "particles"})
         runtime = root / "assets/runtime"
         input_paths = [path.relative_to(runtime).as_posix()
                        for path in sorted(runtime.rglob("*")) if path.is_file()]
         tags = fonts.tag_registry(fonts.load_corpus(root / "assets/definitions/fonts"))
         expected, _, _, _ = resources.compile_manifest(
             root, (root / "assets/definitions/resources.json").read_bytes(), input_paths,
-            resources.program_symbols_path(root), tags)
+            resources.read_names(root), tags)
         actual = archive.read(index[pak.RESOURCE_PATH])
-        definitions_v5 = all(struct.unpack_from("<I", archive.read(index[name]))[0] in
-                             (0xDEADFED9, 0xDEADFEDA)
+        definitions_v6 = not audit["static_definitions"] and all(struct.unpack_from("<I", archive.read(index[name]))[0] in
+                             (0xDEADFEDB, 0xDEADFEDC)
                              for name in numeric if pak.numeric_kind(name) in ("reanim", "particles"))
-        if definitions_v5:
-            sidecar = resources.program_symbols_path(root)
-            symbol_names = dict(resources.read_symbols(sidecar)[0])
-            roots = resources.code_image_roots(root, symbol_names)
-            _, mapping, _, _ = resources.compile_manifest(
-                root, (root / "assets/definitions/resources.json").read_bytes(), input_paths, sidecar, tags)
-            expected, _, _, _ = resources.prune_definition_images(
-                expected, mapping, {symbol for symbol, name in symbol_names.items() if name in roots})
         pak.require(actual == expected, "resources.compiled differs from current author manifest")
         available = {name for name, info in index.items() if not info.is_dir()}
         references, image_ids, required_fonts = set(), set(), set()
         bindings = audit["definition_images"]
-        if definitions_v5:
+        variant_bindings = audit["definition_variant_images"]
+        if audit["static_definitions"]:
+            pak.require(not any(pak.numeric_kind(name) in ("reanim", "particles", "projectiles")
+                                for name in available),
+                        "Static definitions must not ship compiled behavior records")
+            expected_roots = set().union(*(
+                set(rows) for rows in audit["numeric_definition_tables"].values())) | {pak.PROJECTILE_PATH}
+            if (root / "pvzPerf/Lawn/Widget/ZombatarResources.h").exists():
+                expected_roots.add(pak.ZOMBATAR_DEFINITION_PATH)
+            pak.require(pak.ZOMBATAR_DEFINITION_PATH not in available,
+                        "Zombatar atlas geometry must be native static data")
+            pak.require(set(bindings) == expected_roots,
+                        "Static program definition bindings differ from runtime catalogs")
+            expected_atlases = ({image for rows in variant_bindings.values() for image in rows if image}
+                               | set(audit.get("scene_atlases", {})))
+            pak.require({name for name in available if name.endswith(".atlas.png")} == expected_atlases
+                        == set(audit["static_atlas_extents"]),
+                        "Packaged static atlases differ from generated loading functions")
+            for name, dimensions in audit["static_atlas_extents"].items():
+                with Image.open(io.BytesIO(archive.read(index[name]))) as image:
+                    pak.require(image.format == "PNG" and image.mode == "RGBA" and image.size == dimensions,
+                                f"Static atlas dimensions or encoding mismatch: {name}")
+                references.add(("atlas", name))
+            for sheet in audit.get("scene_sheets", []):
+                with Image.open(io.BytesIO(archive.read(index[sheet["atlas"]]))) as image:
+                    x, y, width, height = sheet["rect"]
+                    pak.require(x >= 2 and y >= 2 and width > 0 and height > 0
+                                and x + width + 2 <= image.width and y + height + 2 <= image.height,
+                                f"Scene source sheet outside its atlas: {sheet['source']}")
+                    pixels = image.crop((x, y, x + width, y + height)).tobytes()
+                    pak.require(hashlib.sha256(pixels).hexdigest() == sheet["rgba_sha256"],
+                                f"Scene source sheet pixels changed: {sheet['source']}")
+        elif definitions_v6:
             pak.require(set(bindings) == {name for name in numeric
-                                         if pak.numeric_kind(name) in ("reanim", "particles")},
+                                         if pak.numeric_kind(name) in ("reanim", "particles", "projectiles")},
                         "Program definition image bindings do not cover the numeric corpus")
             pak.require({name for name in available if name.endswith(".atlas.png")} ==
-                        {image for image in bindings.values() if image},
+                        {image for rows in variant_bindings.values() for image in rows if image},
                         "Packaged atlas images differ from program bindings")
         report_path = package.with_name("manifest.json")
         report_bindings = {}
         if report_path.exists():
             report_bindings = json.loads(report_path.read_text(encoding="utf-8")).get("definition_atlases", {})
+        checked_atlases = {}
         for name in sorted(numeric):
             data = expected if name == pak.RESOURCE_PATH else archive.read(index[name])
             required_fonts.update(pak.validate_numeric(
                 name, data, audit["registries"], references, image_ids=image_ids,
+                atlas_paths=variant_bindings.get(name),
                 atlas_path=bindings.get(name)))
-            if pak.numeric_kind(name) in ("reanim", "particles") and struct.unpack_from("<I", data)[0] in (0xDEADFED9, 0xDEADFEDA):
+            if pak.numeric_kind(name) == "projectiles":
+                atlas = pak.parse_projectiles(name, data)
+                atlas_path = bindings.get(name, pak.PROJECTILE_ATLAS_PATH)
+                pak.require(atlas_path in index, f"Missing projectile atlas: {atlas_path}")
+                pak.validate_projectile_atlas_image(atlas, archive.read(index[atlas_path]), atlas_path)
+                if name in report_bindings:
+                    pak.require(report_bindings[name]["atlas_path"] == atlas_path,
+                                f"Program/report projectile atlas binding differs: {name}")
+                continue
+            if pak.numeric_kind(name) in ("reanim", "particles") and struct.unpack_from("<I", data)[0] in (0xDEADFEDB, 0xDEADFEDC):
                 atlas = pak.parse_definition_atlas(name, data)
                 pak.require(name in bindings, f"Missing program definition image binding: {name}")
                 atlas_path = bindings[name]
+                if "variant_count" in atlas:
+                    paths = variant_bindings[name]
+                    pak.require(len(paths) == atlas["variant_count"], "Incomplete reanim variant bindings")
+                    report_rows = report_bindings.get(name, {}).get("variants", [])
+                    if report_rows:
+                        pak.require([row["atlas_path"] for row in report_rows] == paths,
+                                    "Program/report reanim variant binding differs")
+                    for variant, path in enumerate(paths):
+                        count = atlas["variant_counts"][variant]
+                        pak.require(bool(path) == bool(count), "Invalid reanim variant atlas binding")
+                        if not path:
+                            continue
+                        pak.require(path in index, f"Missing definition atlas: {path}")
+                        if path in checked_atlases:
+                            pak.require(checked_atlases[path] == atlas["variant_dimensions"][variant],
+                                        f"Inconsistent definition atlas dimensions: {path}")
+                            continue
+                        with Image.open(io.BytesIO(archive.read(index[path]))) as image:
+                            pak.require(image.format == "PNG" and image.mode == "RGBA" and
+                                        image.size == atlas["variant_dimensions"][variant],
+                                        f"Invalid definition atlas: {path}")
+                            image.load()
+                            checked_atlases[path] = image.size
+                    continue
                 if name in report_bindings:
                     pak.require(report_bindings[name]["atlas_path"] == atlas_path,
                                 f"Program/report definition atlas binding differs: {name}")
@@ -163,7 +204,7 @@ def verify(package: Path, root: Path = ROOT) -> dict:
         for kind, path in sorted(references):
             resolved.update(pak.physical_references(kind, path, available))
         records = descriptors(actual)
-        check_menu_resources(records, available)
+        check_menu_resources(records, available, root)
         check_compiled_images(records, image_ids)
         return {
             "mode": "package verification",
@@ -171,11 +212,16 @@ def verify(package: Path, root: Path = ROOT) -> dict:
             "numeric_counts": counts,
             "physical_references": len(resolved),
             "compiled_image_ids": len(image_ids),
-            "definition_v5": definitions_v5,
+            "static_definitions": audit["static_definitions"],
+            "definition_v6": definitions_v6,
             "definition_atlases": sum(kind == "atlas" for kind, _ in references),
-            "preserved_menu_images": len(MENU_IMAGES) + len(BACK_BUTTONS),
-            "preserved_menu_payload_bytes": sum(index[path].file_size
-                                                for _, _, _, path, _ in MENU_IMAGES),
+            "scene_atlases": len(audit.get("scene_atlases", {})),
+            "scene_source_sheets": len(audit.get("scene_sheets", [])),
+            "retired_menu_images": len(MENU_IMAGES) + len(BACK_BUTTONS),
+            "preserved_menu_source_bytes": sum((root / "assets/runtime" / path).stat().st_size
+                                               for _, _, path, _ in MENU_IMAGES)
+                + sum((root / "assets/runtime" / (path + ".png")).stat().st_size
+                      for _, path in BACK_BUTTONS),
             "resource_manifest_bytes": len(actual),
         }
 

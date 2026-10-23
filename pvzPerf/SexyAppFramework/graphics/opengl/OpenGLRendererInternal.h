@@ -5,28 +5,26 @@
 #include <array>
 #include <memory>
 #include <string_view>
-#include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 namespace Sexy {
-struct OpenGLTexture;
-struct OpenGLStorage {
+struct OpenGLTexture {
     unsigned int image = 0, framebuffer = 0;
     int width = 0, height = 0;
     unsigned int format = 0;
-    ~OpenGLStorage();
-};
-struct OpenGLTexture {
-    std::shared_ptr<OpenGLStorage> storage;
-    int width = 0, height = 0;
     unsigned int slot = ~0U, staticSlot = ~0U, flags = 0;
     bool render = false, caustic = false;
+    OpenGLTexture() = default;
+    ~OpenGLTexture();
+    OpenGLTexture(const OpenGLTexture&) = delete;
+    OpenGLTexture& operator=(const OpenGLTexture&) = delete;
 };
 struct OpenGLRenderer::Impl {
     enum Uniform : unsigned int {
         uTargetExtent, uImage, uPremultipliedOutput, uCoverageInput,
         uSourceImage, uAlphaImage, uSourceRect, uAlphaRect, uSourceSlot,
-        uOperation, uRectangle, uTint, uPackedColor, uCounter, uCells, uColorOnly,
+        uOperation, uRectangle, uTint, uPackedColor, uCounter, uColorOnly,
         uSamplingFlags, uForceWhite, uXRanges, uYRanges, uXTaps, uYTaps,
         uXTapExtent, uYTapExtent, uGlyphSrc, uGlyphDst, uUniformCount
     };
@@ -35,7 +33,7 @@ struct OpenGLRenderer::Impl {
         GpuVertex draw;
     };
     struct Batch {
-        std::shared_ptr<OpenGLStorage> storage;
+        unsigned int image;
         size_t first, count;
         GpuBlend blend;
         GpuClip clip;
@@ -56,13 +54,16 @@ struct OpenGLRenderer::Impl {
     OpenGLTexture* causticTarget = nullptr;
     VulkanHdrParams hdr{80, 1000, 150, 1};
     std::array<OpenGLTexture*, 4096> slots{};
-    std::unordered_map<OpenGLTexture*, std::unique_ptr<OpenGLTexture>> textures;
+    std::unordered_set<OpenGLTexture*> textures;
+    // Native names in queued batches remain valid through Flush, even if their
+    // public texture was replaced/destroyed. No per-triangle reference counting.
+    std::vector<OpenGLTexture*> retired;
     std::vector<Vertex> vertices;
     std::vector<Batch> batches;
     Impl(OpenGLContext& context, int width, int height);
     ~Impl();
     void Dimensions(int width, int height) const;
-    std::shared_ptr<OpenGLStorage> Storage(int width, int height, unsigned int format);
+    void AllocateStorage(OpenGLTexture& texture, int width, int height, unsigned int format);
     OpenGLTexture* Allocate(int width, int height, unsigned int format, bool registerSlot);
     void Register(OpenGLTexture* texture);
     void Upload(OpenGLTexture* texture, const void* data, int pitch, unsigned int format);
@@ -73,10 +74,10 @@ struct OpenGLRenderer::Impl {
     unsigned int Program(std::string_view vertex, std::string_view fragment);
     void ImagePass(OpenGLTexture* target, OpenGLTexture* source, OpenGLTexture* alpha,
         int operation, const GpuImageProcessing* processing = nullptr,
-        int columns = 1, int rows = 1, unsigned int color = 0, bool colorOnly = false);
+        unsigned int color = 0, bool colorOnly = false);
     void Quad();
     bool Present();
-    std::shared_ptr<OpenGLStorage> Snapshot(OpenGLTexture* texture);
+    void Snapshot(const OpenGLTexture& source, OpenGLTexture& copy);
     void Check([[maybe_unused]] const char* operation) const
     {
 #if !defined(NDEBUG)

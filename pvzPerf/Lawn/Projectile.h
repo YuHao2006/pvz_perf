@@ -5,6 +5,8 @@
 
 class Plant;
 class Zombie;
+void ProjectileLoadResources();
+void ProjectileFreeResources();
 namespace Sexy
 {
     class Graphics;
@@ -15,7 +17,6 @@ class ProjectileDefinition
 {
 public:
     ProjectileType          mProjectileType;
-    int                     mImageRow;
     int                     mDamage;
 };
 

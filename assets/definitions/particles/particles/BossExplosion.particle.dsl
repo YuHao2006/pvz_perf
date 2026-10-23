@@ -2,7 +2,7 @@ export component BossExplosion {
     kind: particle;
     source-name: "bossexplosion";
     Emitter {
-        image: "IMAGE_ZOMBOSS_PARTICLES";
+        images: ["particles/frames/zomboss_particles_r0_c0.png","particles/frames/zomboss_particles_r0_c1.png","particles/frames/zomboss_particles_r0_c2.png","particles/frames/zomboss_particles_r0_c3.png","particles/frames/zomboss_particles_r0_c4.png"];
         name: "Parts";
         imageFrames: 5;
         randomLaunchSpin: 1;

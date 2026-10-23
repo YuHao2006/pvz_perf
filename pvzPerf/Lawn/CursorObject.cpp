@@ -153,7 +153,7 @@ void CursorObject::Draw(Graphics* g)
     c.mBoard->MouseHitTest(c.mBoard->mPrevMouseX, c.mBoard->mPrevMouseY, &aHitResult);
     if (aHitResult.mObjectType == GameObjectType::OBJECT_TYPE_NONE && c.mBoard->mPrevMouseY >= 80)
     {
-    g->DrawImageCel(IMAGE_COBCANNON_TARGET, -11, 7, 0);
+    g->DrawImage(IMAGE_COBCANNON_TARGET, -11, 7, Rect(0, 0, IMAGE_COBCANNON_TARGET->mWidth, IMAGE_COBCANNON_TARGET->mHeight));
     }
     },  // 8 CURSOR_TYPE_COBCANNON_TARGET
     // 原 case CURSOR_TYPE_WATERING_CAN

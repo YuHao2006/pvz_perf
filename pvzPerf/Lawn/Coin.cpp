@@ -256,47 +256,47 @@ void Coin::CoinInitialize(int theX, int theY, CoinType theCoinType, CoinMotion t
     }
 
     // B 形态 -> 常量表 kCoinSizeRows（原 15 支链合并；行序 = CoinType 枚举序
-    // 0..27，count_last=末值 PRESENT_SURVIVAL_MODE 锚定）。nullptr 槽 = 原链
+    // 0..27，count_last=末值 PRESENT_SURVIVAL_MODE 锚定）。零尺寸槽 = 原链
     // 不匹配（无 default 体）。PRESENT_PLANT/AWARD_PRESENT 原链只取 W/H 不改
     // renderOrder（mSetOrder=false），礼物内容挑选特例保留在表外。
-    static constexpr struct { Image* const* mImage; RenderLayer mLayer; uint8_t mRow; uint8_t mLayerOffset; bool mSetOrder; } kCoinSizeRows[] = {
-        { nullptr,                   RenderLayer::RENDER_LAYER_ABOVE_UI, 0, 0, false },  // 0 COIN_NONE（原链不匹配）
-        { nullptr,                   RenderLayer::RENDER_LAYER_ABOVE_UI, 0, 0, false },  // 1 COIN_SILVER（原链不匹配）
-        { nullptr,                   RenderLayer::RENDER_LAYER_ABOVE_UI, 0, 0, false },  // 2 COIN_GOLD（原链不匹配）
-        { nullptr,                   RenderLayer::RENDER_LAYER_ABOVE_UI, 0, 0, false },  // 3 COIN_DIAMOND（原链不匹配）
-        { nullptr,                   RenderLayer::RENDER_LAYER_ABOVE_UI, 0, 0, false },  // 4 COIN_SUN（原链不匹配）
-        { nullptr,                   RenderLayer::RENDER_LAYER_ABOVE_UI, 0, 0, false },  // 5 COIN_SMALLSUN（原链不匹配）
-        { nullptr,                   RenderLayer::RENDER_LAYER_ABOVE_UI, 0, 0, false },  // 6 COIN_LARGESUN（原链不匹配）
-        { &IMAGE_SEEDS,              RenderLayer::RENDER_LAYER_ABOVE_UI, 0, 0, true  },  // 7 COIN_FINAL_SEED_PACKET
-        { &IMAGE_TROPHY,             RenderLayer::RENDER_LAYER_ABOVE_UI, 0, 0, true  },  // 8 COIN_TROPHY
-        { &IMAGE_SHOVEL,             RenderLayer::RENDER_LAYER_ABOVE_UI, 0, 0, true  },  // 9 COIN_SHOVEL
-        { &IMAGE_ALMANAC,            RenderLayer::RENDER_LAYER_ABOVE_UI, 0, 0, true  },  // 10 COIN_ALMANAC
-        { &IMAGE_CARKEYS,            RenderLayer::RENDER_LAYER_ABOVE_UI, 0, 0, true  },  // 11 COIN_CARKEYS
-        { &IMAGE_SCARY_POT,          RenderLayer::RENDER_LAYER_ABOVE_UI, 0, 0, true  },  // 12 COIN_VASE
-        { &IMAGE_WATERINGCAN,        RenderLayer::RENDER_LAYER_ABOVE_UI, 0, 0, true  },  // 13 COIN_WATERING_CAN
-        { &IMAGE_TACO,               RenderLayer::RENDER_LAYER_ABOVE_UI, 0, 0, true  },  // 14 COIN_TACO
-        { &IMAGE_ZOMBIE_NOTE_SMALL,  RenderLayer::RENDER_LAYER_ABOVE_UI, 0, 0, true  },  // 15 COIN_NOTE
-        { &IMAGE_SEEDS,              RenderLayer::RENDER_LAYER_FOG,      0, 2, true  },  // 16 COIN_USABLE_SEED_PACKET
-        { &IMAGE_PRESENT,            RenderLayer::RENDER_LAYER_ABOVE_UI, 0, 0, false },  // 17 COIN_PRESENT_PLANT（不改 renderOrder）
-        { &IMAGE_MONEYBAG,           RenderLayer::RENDER_LAYER_ABOVE_UI, 0, 0, true  },  // 18 COIN_AWARD_MONEY_BAG
-        { &IMAGE_PRESENT,            RenderLayer::RENDER_LAYER_ABOVE_UI, 0, 0, false },  // 19 COIN_AWARD_PRESENT（不改 renderOrder）
-        { &IMAGE_MONEYBAG,           RenderLayer::RENDER_LAYER_ABOVE_UI, 0, 0, true  },  // 20 COIN_AWARD_BAG_DIAMOND（共体）
-        { &IMAGE_SUNFLOWER_TROPHY,   RenderLayer::RENDER_LAYER_ABOVE_UI, 0, 0, true  },  // 21 COIN_AWARD_SILVER_SUNFLOWER
-        { &IMAGE_SUNFLOWER_TROPHY,   RenderLayer::RENDER_LAYER_ABOVE_UI, 0, 0, true  },  // 22 COIN_AWARD_GOLD_SUNFLOWER（共体）
-        { &IMAGE_CHOCOLATE,          RenderLayer::RENDER_LAYER_ABOVE_UI, 0, 0, true  },  // 23 COIN_CHOCOLATE
-        { &IMAGE_CHOCOLATE,          RenderLayer::RENDER_LAYER_ABOVE_UI, 0, 0, true  },  // 24 COIN_AWARD_CHOCOLATE（共体）
-        { &IMAGE_PRESENT,            RenderLayer::RENDER_LAYER_ABOVE_UI, 0, 0, true  },  // 25 COIN_PRESENT_MINIGAMES
-        { &IMAGE_PRESENT,            RenderLayer::RENDER_LAYER_ABOVE_UI, 0, 0, true  },  // 26 COIN_PRESENT_PUZZLE_MODE
-        { &IMAGE_PRESENT,            RenderLayer::RENDER_LAYER_ABOVE_UI, 0, 0, true  },  // 27 COIN_PRESENT_SURVIVAL_MODE
+    static constexpr struct { int mWidth; int mHeight; RenderLayer mLayer; uint8_t mRow; uint8_t mLayerOffset; bool mSetOrder; } kCoinSizeRows[] = {
+        {   0,   0, RenderLayer::RENDER_LAYER_ABOVE_UI, 0, 0, false },  // 0 COIN_NONE（原链不匹配）
+        {   0,   0, RenderLayer::RENDER_LAYER_ABOVE_UI, 0, 0, false },  // 1 COIN_SILVER（原链不匹配）
+        {   0,   0, RenderLayer::RENDER_LAYER_ABOVE_UI, 0, 0, false },  // 2 COIN_GOLD（原链不匹配）
+        {   0,   0, RenderLayer::RENDER_LAYER_ABOVE_UI, 0, 0, false },  // 3 COIN_DIAMOND（原链不匹配）
+        {   0,   0, RenderLayer::RENDER_LAYER_ABOVE_UI, 0, 0, false },  // 4 COIN_SUN（原链不匹配）
+        {   0,   0, RenderLayer::RENDER_LAYER_ABOVE_UI, 0, 0, false },  // 5 COIN_SMALLSUN（原链不匹配）
+        {   0,   0, RenderLayer::RENDER_LAYER_ABOVE_UI, 0, 0, false },  // 6 COIN_LARGESUN（原链不匹配）
+        {  50,  70, RenderLayer::RENDER_LAYER_ABOVE_UI, 0, 0, true  },  // 7 COIN_FINAL_SEED_PACKET
+        {  83,  63, RenderLayer::RENDER_LAYER_ABOVE_UI, 0, 0, true  },  // 8 COIN_TROPHY
+        {  80,  80, RenderLayer::RENDER_LAYER_ABOVE_UI, 0, 0, true  },  // 9 COIN_SHOVEL
+        {  80,  80, RenderLayer::RENDER_LAYER_ABOVE_UI, 0, 0, true  },  // 10 COIN_ALMANAC
+        {  80,  80, RenderLayer::RENDER_LAYER_ABOVE_UI, 0, 0, true  },  // 11 COIN_CARKEYS
+        {  80, 101, RenderLayer::RENDER_LAYER_ABOVE_UI, 0, 0, true  },  // 12 COIN_VASE
+        {  80,  80, RenderLayer::RENDER_LAYER_ABOVE_UI, 0, 0, true  },  // 13 COIN_WATERING_CAN
+        {  80,  80, RenderLayer::RENDER_LAYER_ABOVE_UI, 0, 0, true  },  // 14 COIN_TACO
+        {  78,  52, RenderLayer::RENDER_LAYER_ABOVE_UI, 0, 0, true  },  // 15 COIN_NOTE
+        {  50,  70, RenderLayer::RENDER_LAYER_FOG,      0, 2, true  },  // 16 COIN_USABLE_SEED_PACKET
+        {  80,  80, RenderLayer::RENDER_LAYER_ABOVE_UI, 0, 0, false },  // 17 COIN_PRESENT_PLANT（不改 renderOrder）
+        {  91,  78, RenderLayer::RENDER_LAYER_ABOVE_UI, 0, 0, true  },  // 18 COIN_AWARD_MONEY_BAG
+        {  80,  80, RenderLayer::RENDER_LAYER_ABOVE_UI, 0, 0, false },  // 19 COIN_AWARD_PRESENT（不改 renderOrder）
+        {  91,  78, RenderLayer::RENDER_LAYER_ABOVE_UI, 0, 0, true  },  // 20 COIN_AWARD_BAG_DIAMOND（共体）
+        { 157, 269, RenderLayer::RENDER_LAYER_ABOVE_UI, 0, 0, true  },  // 21 COIN_AWARD_SILVER_SUNFLOWER
+        { 157, 269, RenderLayer::RENDER_LAYER_ABOVE_UI, 0, 0, true  },  // 22 COIN_AWARD_GOLD_SUNFLOWER（共体）
+        {  57,  66, RenderLayer::RENDER_LAYER_ABOVE_UI, 0, 0, true  },  // 23 COIN_CHOCOLATE
+        {  57,  66, RenderLayer::RENDER_LAYER_ABOVE_UI, 0, 0, true  },  // 24 COIN_AWARD_CHOCOLATE（共体）
+        {  80,  80, RenderLayer::RENDER_LAYER_ABOVE_UI, 0, 0, true  },  // 25 COIN_PRESENT_MINIGAMES
+        {  80,  80, RenderLayer::RENDER_LAYER_ABOVE_UI, 0, 0, true  },  // 26 COIN_PRESENT_PUZZLE_MODE
+        {  80,  80, RenderLayer::RENDER_LAYER_ABOVE_UI, 0, 0, true  },  // 27 COIN_PRESENT_SURVIVAL_MODE
     };
     static_assert(sizeof(kCoinSizeRows) / sizeof(kCoinSizeRows[0]) == (int)CoinType::COIN_PRESENT_SURVIVAL_MODE + 1,
         "kCoinSizeRows 槽位须与 CoinType 枚举同步");
 
-    if ((unsigned)mType < sizeof(kCoinSizeRows) / sizeof(kCoinSizeRows[0]) && kCoinSizeRows[(int)mType].mImage != nullptr)
+    if ((unsigned)mType < sizeof(kCoinSizeRows) / sizeof(kCoinSizeRows[0]) && kCoinSizeRows[(int)mType].mWidth != 0)
     {
         const auto& aRow = kCoinSizeRows[(int)mType];
-        mWidth = (*aRow.mImage)->GetCelWidth();
-        mHeight = (*aRow.mImage)->GetCelHeight();
+        mWidth = aRow.mWidth;
+        mHeight = aRow.mHeight;
         if (aRow.mSetOrder)
         {
             mRenderOrder = Board::MakeRenderOrder(aRow.mLayer, aRow.mRow, aRow.mLayerOffset);
@@ -920,41 +920,41 @@ void Coin::Draw(Graphics* g)
     // 0..27，count_last=末值 PRESENT_SURVIVAL_MODE 锚定）。mCentered = 原链
     // "-= mWidth/2、-= mHeight/2"（整数除法保留在应用处）；nullptr 槽 = 表外
     // 预检（Sun 族/两种卡包）或原 default（NONE/DIAMOND 不在此绘制）。
-    static constexpr struct { Image* const* mImage; uint8_t mCelCol; float mOffX; float mOffY; float mScaleMul; bool mCentered; } kCoinDrawRows[] = {
-        { nullptr,                          0,   0.0f,   0.0f, 1.0f, false },  // 0 COIN_NONE（原 default）
-        { &IMAGE_REANIM_COIN_SILVER_DOLLAR, 0,   8.0f,  10.0f, 1.0f, false },  // 1 COIN_SILVER
-        { &IMAGE_REANIM_COIN_GOLD_DOLLAR,   0,   8.0f,  10.0f, 1.0f, false },  // 2 COIN_GOLD
-        { nullptr,                          0,   0.0f,   0.0f, 1.0f, false },  // 3 COIN_DIAMOND（原 default，走 reanim 特效）
-        { nullptr,                          0,   0.0f,   0.0f, 1.0f, false },  // 4 COIN_SUN（表外预检）
-        { nullptr,                          0,   0.0f,   0.0f, 1.0f, false },  // 5 COIN_SMALLSUN（表外预检）
-        { nullptr,                          0,   0.0f,   0.0f, 1.0f, false },  // 6 COIN_LARGESUN（表外预检）
-        { nullptr,                          0,   0.0f,   0.0f, 1.0f, false },  // 7 COIN_FINAL_SEED_PACKET（表外预检）
-        { &IMAGE_TROPHY_HI_RES,             0,   0.0f,   0.0f, 0.5f, true  },  // 8 COIN_TROPHY
-        { &IMAGE_SHOVEL_HI_RES,             0, -20.0f, -20.0f, 0.5f, false },  // 9 COIN_SHOVEL
-        { &IMAGE_ALMANAC,                   0,   0.0f,   0.0f, 1.0f, false },  // 10 COIN_ALMANAC
-        { &IMAGE_CARKEYS,                   0,   0.0f,   0.0f, 1.0f, false },  // 11 COIN_CARKEYS
-        { &IMAGE_SCARY_POT,                 0,   0.0f,   0.0f, 1.0f, false },  // 12 COIN_VASE
-        { &IMAGE_WATERINGCAN,               0,   0.0f,   0.0f, 1.0f, false },  // 13 COIN_WATERING_CAN
-        { &IMAGE_TACO,                      0,   0.0f,   0.0f, 1.0f, false },  // 14 COIN_TACO
-        { &IMAGE_ZOMBIE_NOTE_SMALL,         0,   0.0f,   0.0f, 1.0f, false },  // 15 COIN_NOTE
-        { nullptr,                          0,   0.0f,   0.0f, 1.0f, false },  // 16 COIN_USABLE_SEED_PACKET（表外预检）
-        { &IMAGE_PRESENT,                   0,   0.0f, -20.0f, 1.0f, false },  // 17 COIN_PRESENT_PLANT
-        { &IMAGE_MONEYBAG_HI_RES,           0,   0.0f,   0.0f, 0.5f, true  },  // 18 COIN_AWARD_MONEY_BAG
-        { &IMAGE_PRESENT,                   0,   0.0f, -20.0f, 1.0f, false },  // 19 COIN_AWARD_PRESENT
-        { &IMAGE_MONEYBAG_HI_RES,           0,   0.0f,   0.0f, 0.5f, true  },  // 20 COIN_AWARD_BAG_DIAMOND
-        { &IMAGE_SUNFLOWER_TROPHY,          0,  -5.0f,   0.0f, 0.6f, false },  // 21 COIN_AWARD_SILVER_SUNFLOWER
-        { &IMAGE_SUNFLOWER_TROPHY,          1,  -5.0f,   0.0f, 0.6f, false },  // 22 COIN_AWARD_GOLD_SUNFLOWER
-        { &IMAGE_CHOCOLATE,                 0,   0.0f,   0.0f, 1.0f, false },  // 23 COIN_CHOCOLATE
-        { &IMAGE_CHOCOLATE,                 0,   0.0f,   0.0f, 1.0f, false },  // 24 COIN_AWARD_CHOCOLATE（共体）
-        { &IMAGE_PRESENT,                   0,   0.0f, -20.0f, 1.0f, false },  // 25 COIN_PRESENT_MINIGAMES（共体）
-        { &IMAGE_PRESENT,                   0,   0.0f, -20.0f, 1.0f, false },  // 26 COIN_PRESENT_PUZZLE_MODE（共体）
-        { &IMAGE_PRESENT,                   0,   0.0f, -20.0f, 1.0f, false },  // 27 COIN_PRESENT_SURVIVAL_MODE（共体）
+    static constexpr struct { Image* const* mImage; Rect mSource; float mOffX; float mOffY; float mScaleMul; bool mCentered; } kCoinDrawRows[] = {
+        { nullptr,                         Rect(),                0.0f,   0.0f, 1.0f, false },  // 0 COIN_NONE（原 default）
+        { &IMAGE_REANIM_COIN_SILVER_DOLLAR, Rect(0, 0, 43, 40),     8.0f,  10.0f, 1.0f, false },  // 1 COIN_SILVER
+        { &IMAGE_REANIM_COIN_GOLD_DOLLAR,   Rect(0, 0, 45, 45),     8.0f,  10.0f, 1.0f, false },  // 2 COIN_GOLD
+        { nullptr,                         Rect(),                0.0f,   0.0f, 1.0f, false },  // 3 COIN_DIAMOND（原 default，走 reanim 特效）
+        { nullptr,                         Rect(),                0.0f,   0.0f, 1.0f, false },  // 4 COIN_SUN（表外预检）
+        { nullptr,                         Rect(),                0.0f,   0.0f, 1.0f, false },  // 5 COIN_SMALLSUN（表外预检）
+        { nullptr,                         Rect(),                0.0f,   0.0f, 1.0f, false },  // 6 COIN_LARGESUN（表外预检）
+        { nullptr,                         Rect(),                0.0f,   0.0f, 1.0f, false },  // 7 COIN_FINAL_SEED_PACKET（表外预检）
+        { &IMAGE_TROPHY_HI_RES,             Rect(0, 0, 166, 136),   0.0f,   0.0f, 0.5f, true  },  // 8 COIN_TROPHY
+        { &IMAGE_SHOVEL_HI_RES,             Rect(0, 0, 116, 125), -20.0f, -20.0f, 0.5f, false },  // 9 COIN_SHOVEL
+        { &IMAGE_ALMANAC,                   Rect(0, 0, 80, 80),     0.0f,   0.0f, 1.0f, false },  // 10 COIN_ALMANAC
+        { &IMAGE_CARKEYS,                   Rect(0, 0, 80, 80),     0.0f,   0.0f, 1.0f, false },  // 11 COIN_CARKEYS
+        { &IMAGE_SCARY_POT,                 Rect(0, 0, 80, 101),    0.0f,   0.0f, 1.0f, false },  // 12 COIN_VASE
+        { &IMAGE_WATERINGCAN,               Rect(0, 0, 80, 80),     0.0f,   0.0f, 1.0f, false },  // 13 COIN_WATERING_CAN
+        { &IMAGE_TACO,                      Rect(0, 0, 80, 80),     0.0f,   0.0f, 1.0f, false },  // 14 COIN_TACO
+        { &IMAGE_ZOMBIE_NOTE_SMALL,         Rect(0, 0, 78, 52),     0.0f,   0.0f, 1.0f, false },  // 15 COIN_NOTE
+        { nullptr,                         Rect(),                0.0f,   0.0f, 1.0f, false },  // 16 COIN_USABLE_SEED_PACKET（表外预检）
+        { &IMAGE_PRESENT,                   Rect(0, 0, 80, 80),     0.0f, -20.0f, 1.0f, false },  // 17 COIN_PRESENT_PLANT
+        { &IMAGE_MONEYBAG_HI_RES,           Rect(0, 0, 182, 171),   0.0f,   0.0f, 0.5f, true  },  // 18 COIN_AWARD_MONEY_BAG
+        { &IMAGE_PRESENT,                   Rect(0, 0, 80, 80),     0.0f, -20.0f, 1.0f, false },  // 19 COIN_AWARD_PRESENT
+        { &IMAGE_MONEYBAG_HI_RES,           Rect(0, 0, 182, 171),   0.0f,   0.0f, 0.5f, true  },  // 20 COIN_AWARD_BAG_DIAMOND
+        { &IMAGE_SUNFLOWER_TROPHY,          Rect(0, 0, 157, 269),  -5.0f,   0.0f, 0.6f, false },  // 21 COIN_AWARD_SILVER_SUNFLOWER
+        { &IMAGE_SUNFLOWER_TROPHY,          Rect(157, 0, 157, 269),-5.0f,   0.0f, 0.6f, false },  // 22 COIN_AWARD_GOLD_SUNFLOWER
+        { &IMAGE_CHOCOLATE,                 Rect(0, 0, 57, 66),     0.0f,   0.0f, 1.0f, false },  // 23 COIN_CHOCOLATE
+        { &IMAGE_CHOCOLATE,                 Rect(0, 0, 57, 66),     0.0f,   0.0f, 1.0f, false },  // 24 COIN_AWARD_CHOCOLATE（共体）
+        { &IMAGE_PRESENT,                   Rect(0, 0, 80, 80),     0.0f, -20.0f, 1.0f, false },  // 25 COIN_PRESENT_MINIGAMES（共体）
+        { &IMAGE_PRESENT,                   Rect(0, 0, 80, 80),     0.0f, -20.0f, 1.0f, false },  // 26 COIN_PRESENT_PUZZLE_MODE（共体）
+        { &IMAGE_PRESENT,                   Rect(0, 0, 80, 80),     0.0f, -20.0f, 1.0f, false },  // 27 COIN_PRESENT_SURVIVAL_MODE（共体）
     };
     static_assert(sizeof(kCoinDrawRows) / sizeof(kCoinDrawRows[0]) == (int)CoinType::COIN_PRESENT_SURVIVAL_MODE + 1,
         "kCoinDrawRows 槽位须与 CoinType 枚举同步");
 
     Image* aImage = nullptr;
-    int aImageCelCol = 0;
+    Rect aSourceRect;
     float aDrawScale = mScale;
     float aOffsetX = 0.0f;
     float aOffsetY = 0.0f;
@@ -962,7 +962,7 @@ void Coin::Draw(Graphics* g)
     {
         const auto& aRow = kCoinDrawRows[(int)mType];
         aImage = *aRow.mImage;
-        aImageCelCol = aRow.mCelCol;
+        aSourceRect = aRow.mSource;
         aDrawScale = mScale * aRow.mScaleMul;
         aOffsetX = aRow.mOffX;
         aOffsetY = aRow.mOffY;
@@ -981,12 +981,13 @@ void Coin::Draw(Graphics* g)
     if (IsPresentWithAdvice() && mIsBeingCollected)
     {
         aImage = IMAGE_PRESENTOPEN;
+        aSourceRect = Rect(0, 0, 100, 100);
         aOffsetX = -10.0f;
         aOffsetY = -10.0f;
     }
 
     g->mColorizeImages = true;
-    TodDrawImageCelCenterScaledF(g, aImage, mPosX + aOffsetX, mPosY + aOffsetY, aImageCelCol, aDrawScale, aDrawScale);
+    TodDrawImageRectCenterScaledF(g, aImage, mPosX + aOffsetX, mPosY + aOffsetY, aSourceRect, aDrawScale, aDrawScale);
     g->mColorizeImages = false;
 }
 
@@ -1224,7 +1225,7 @@ void Coin::Collect()
             mApp->AddTodParticle(mPosX + 30.0f, mPosY + 30.0f, mRenderOrder + 1, ParticleEffect::PARTICLE_PRESENT_PICKUP);
             mFadeCount = 15;
         }
-        else if (!aIsEndlessAward && mApp->mDDInterface->mIs3D)
+        else if (!aIsEndlessAward)
         {
             float aParticleOffsetX = mWidth / 2;
             float aParticleOffsetY = mHeight / 2;

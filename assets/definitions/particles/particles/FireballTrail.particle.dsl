@@ -2,7 +2,7 @@ export component FireballTrail {
     kind: particle;
     source-name: "fireball_trail";
     Emitter {
-        image: "IMAGE_ZOMBIE_BOSS_FIREBALL_GROUNDPARTICLES";
+        images: ["particles/frames/zombie_boss_fireball_groundparticles_r0_c0.png","particles/frames/zombie_boss_fireball_groundparticles_r0_c1.png","particles/frames/zombie_boss_fireball_groundparticles_r0_c2.png","particles/frames/zombie_boss_fireball_groundparticles_r0_c3.png"];
         name: "Fireball_Trail_ground";
         imageFrames: 4;
         spawnMinActive: 1;

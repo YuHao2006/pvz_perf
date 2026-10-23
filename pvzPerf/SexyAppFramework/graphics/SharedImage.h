@@ -8,13 +8,11 @@ namespace Sexy
 {
 
 class Image;
-class DDImage;
-class MemoryImage;
 
 class SharedImage
 {
 public:
-	DDImage*				mImage;
+	Image*				mImage;
 	std::atomic<int>		mRefCount;
 	// Protected by the cache map lock. A valid future denotes loading or a
 	// recorded failure; successful entries drop this allocation after publish.
@@ -33,7 +31,7 @@ class SharedImageRef
     // is a no-op so it cannot discard the lifetime that keeps that image alive.
 public:
 	SharedImage*			mSharedImage;
-	MemoryImage*			mUnsharedImage;
+	Image*					mImage;
 	bool					mOwnsUnshared;
 
 public:
@@ -46,11 +44,9 @@ public:
 
 	SharedImageRef&			operator=(const SharedImageRef& theSharedImageRef);
 	SharedImageRef&			operator=(SharedImage* theSharedImage);
-	SharedImageRef&			operator=(MemoryImage* theUnsharedImage);
-	MemoryImage*			operator->();
+	SharedImageRef&			operator=(Image* theImage);
+	Image*					operator->();
 	operator Image*();
-	operator MemoryImage*();
-	operator DDImage*();
 };
 
 }

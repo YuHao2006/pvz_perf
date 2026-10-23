@@ -15,6 +15,8 @@
 #include "Sexy.TodLib/TodCommon.h"
 #include "Sexy.TodLib/TodStringFile.h"
 #include "AchievementsWidget.h"
+#include "Sexy.TodLib/generated/SceneAtlasData.h"
+#include "graphics/AtlasDraw.h"
 
 namespace
 {
@@ -23,6 +25,8 @@ void RefreshAwardLayout(AwardScreen& theScreen)
 	const Rect& aBounds = theScreen.mApp->mScreenBounds;
 	theScreen.Move(aBounds.mX + (aBounds.mWidth - BOARD_WIDTH) / 2,
 		aBounds.mY + (aBounds.mHeight - BOARD_HEIGHT) / 2);
+	theScreen.mMenuButton->mX = aBounds.mX + aBounds.mWidth - theScreen.mX
+		- 12 - theScreen.mMenuButton->mWidth;
 	theScreen.mMouseInsets.mLeft = std::min(0, aBounds.mX - theScreen.mX);
 	theScreen.mMouseInsets.mRight = std::min(0,
 		theScreen.mX + theScreen.mWidth - aBounds.mX - aBounds.mWidth);
@@ -129,11 +133,10 @@ AwardScreen::AwardScreen(LawnApp* theApp, AwardType theAwardType, bool theShowin
 	}
 
 	mStartButton = new GameButton(AwardScreen::AwardScreen_Start);
-	mStartButton->mButtonImage = Sexy::IMAGE_SEEDCHOOSER_BUTTON;
+	mStartButton->mNormalRect = FixedUIAtlas::Images[size_t(FixedUIAtlas::Sprite::SEEDCHOOSER_BUTTON)];
 	mStartButton->mOverImage = nullptr;
 	mStartButton->mDownImage = nullptr;
-	mStartButton->mDisabledImage = Sexy::IMAGE_SEEDCHOOSER_BUTTON_DISABLED;
-	mStartButton->mOverOverlayImage = Sexy::IMAGE_SEEDCHOOSER_BUTTON_GLOW;
+	mStartButton->mDisabledRect = FixedUIAtlas::Images[size_t(FixedUIAtlas::Sprite::SEEDCHOOSER_BUTTON_DISABLED)];
 	mStartButton->SetFont(Sexy::FONT_DWARVENTODCRAFT15);
 	mStartButton->mColors[ButtonWidget::COLOR_LABEL] = Color(213, 159, 43);
 	mStartButton->mColors[ButtonWidget::COLOR_LABEL_HILITE] = Color(213, 159, 43);
@@ -146,11 +149,10 @@ AwardScreen::AwardScreen(LawnApp* theApp, AwardType theAwardType, bool theShowin
 
 	// @Patoke: implemented
 	mContinueButton = new GameButton(AwardScreen::AwardScreen_Start);
-	mContinueButton->mButtonImage = Sexy::IMAGE_SEEDCHOOSER_BUTTON;
+	mContinueButton->mNormalRect = FixedUIAtlas::Images[size_t(FixedUIAtlas::Sprite::SEEDCHOOSER_BUTTON)];
 	mContinueButton->mOverImage = nullptr;
 	mContinueButton->mDownImage = nullptr;
-	mContinueButton->mDisabledImage = Sexy::IMAGE_SEEDCHOOSER_BUTTON_DISABLED;
-	mContinueButton->mOverOverlayImage = Sexy::IMAGE_SEEDCHOOSER_BUTTON_GLOW;
+	mContinueButton->mDisabledRect = FixedUIAtlas::Images[size_t(FixedUIAtlas::Sprite::SEEDCHOOSER_BUTTON_DISABLED)];
 	mContinueButton->SetFont(Sexy::FONT_DWARVENTODCRAFT15);
 	mContinueButton->mColors[ButtonWidget::COLOR_LABEL] = Color(213, 159, 43);
 	mContinueButton->mColors[ButtonWidget::COLOR_LABEL_HILITE] = Color(213, 159, 43);
@@ -165,8 +167,8 @@ AwardScreen::AwardScreen(LawnApp* theApp, AwardType theAwardType, bool theShowin
 
 	mMenuButton = new GameButton(AwardScreen::AwardScreen_Menu);
 	mMenuButton->mLabel = gStr.AWARD_MAIN_MENU_BUTTON;
-	mMenuButton->mButtonImage = Sexy::IMAGE_SEEDCHOOSER_BUTTON2;
-	mMenuButton->mOverImage = Sexy::IMAGE_SEEDCHOOSER_BUTTON2_GLOW;
+	mMenuButton->mNormalRect = FixedUIAtlas::Images[size_t(FixedUIAtlas::Sprite::SEEDCHOOSER_BUTTON2)];
+	mMenuButton->mOverRect = FixedUIAtlas::Images[size_t(FixedUIAtlas::Sprite::SEEDCHOOSER_BUTTON2_GLOW)];
 	mMenuButton->mDownImage = nullptr;
 	mMenuButton->SetFont(Sexy::FONT_BRIANNETOD12);
 	mMenuButton->mColors[ButtonWidget::COLOR_LABEL] = Color(42, 42, 90);
@@ -348,7 +350,7 @@ void AwardScreen::Draw(Graphics* g)
 			if (mApp->EarnedGoldTrophy())
 			{
 				DrawBottom(g, gStr.BEAT_GAME_MESSAGE1, gStr.GOLD_SUNFLOWER_TROPHY, gStr.BEAT_GAME_MESSAGE2);
-				TodDrawImageCelCenterScaledF(g, Sexy::IMAGE_SUNFLOWER_TROPHY, 325, 65, 1, 0.6f, 0.6f);
+				TodDrawImageRectCenterScaledF(g, Sexy::IMAGE_SUNFLOWER_TROPHY, 325, 65, Rect(157, 0, 157, 269), 0.6f, 0.6f);
 			}
 			else
 			{
@@ -422,7 +424,7 @@ void AwardScreen::Draw(Graphics* g)
 			else if (aLevel == 1 && mApp->HasFinishedAdventure())
 			{
 				DrawBottom(g, gStr.WIN_MESSAGE1, gStr.SILVER_SUNFLOWER_TROPHY, gStr.WIN_MESSAGE2);
-				TodDrawImageCelCenterScaledF(g, Sexy::IMAGE_SUNFLOWER_TROPHY, 325, 65, 0, 0.7f, 0.7f);
+				TodDrawImageRectCenterScaledF(g, Sexy::IMAGE_SUNFLOWER_TROPHY, 325, 65, Rect(0, 0, 157, 269), 0.7f, 0.7f);
 			}
 			else
 			{
@@ -431,9 +433,11 @@ void AwardScreen::Draw(Graphics* g)
 		}
 	}
 
-	mStartButton->Draw(g);
-	mMenuButton->Draw(g);
-	mContinueButton->Draw(g); // @Patoke: add call
+	const Sexy::TextureSource fixedUI{FixedUIAtlas::Texture, FixedUIAtlas::Width, FixedUIAtlas::Height};
+	const Rect& glow = FixedUIAtlas::Images[size_t(FixedUIAtlas::Sprite::SEEDCHOOSER_BUTTON_GLOW)];
+	mStartButton->DrawAtlas(g, fixedUI, &glow);
+	mMenuButton->DrawAtlas(g, fixedUI);
+	mContinueButton->DrawAtlas(g, fixedUI, &glow);
 
 	int aFadeInAlpha = TodAnimateCurve(180, 0, mFadeInCounter, 255, 0, Curves::Linear);
 	g->mColor = IsPaperNote() ? Color(0, 0, 0, aFadeInAlpha) : Color(255, 255, 255, aFadeInAlpha);
@@ -614,6 +618,7 @@ void AwardScreen::MouseUp(int x, int y, int theClickCount)
 // @Patoke: implement functions
 // GOTY @Patoke: 0x407C20
 void AwardScreen::DrawAchievements(Graphics* g) {
+	const TextureSource aTexture{AchievementsAtlas::Texture,AchievementsAtlas::Width,AchievementsAtlas::Height};
 	g->mColorizeImages = true;
 	// Rect aTextWrap = Rect(0, 0, 0, 77); // unused
 	g->mColor = Color(255, 255, 255);
@@ -631,11 +636,12 @@ void AwardScreen::DrawAchievements(Graphics* g) {
 		std::string aAchievementDesc = gAchievementList[mAchievementItems[i].mId].description;
 		aAchievementName.append(" Earned!");
 
-		Rect aSrcRect = Rect(70 * (mAchievementItems[i].mId % 7), 70 * (mAchievementItems[i].mId / 7), 70, 70);
+		const Rect& aIcon=AchievementsAtlas::Icons[mAchievementItems[i].mId];
+		const Rect aSrcRect(0,0,aIcon.mWidth,aIcon.mHeight);
 		Rect aDestRect = Rect(220, mAchievementItems[i].mY + 10, 70, 70);
 		Rect aTextRect = Rect(300, mAchievementItems[i].mY + 20, 300, 60);
 
-		g->DrawImage(IMAGE_ACHEESEMENTS_ICONS, aDestRect, aSrcRect);
+		DrawAtlasImage(g,aTexture,aIcon,aDestRect,aSrcRect);
 
 		TodDrawString(g, aAchievementName, 450, mAchievementItems[i].mY + 25, FONT_DWARVENTODCRAFT15, Color(224, 187, 98), DS_ALIGN_CENTER);
 		TodDrawStringWrapped(g, aAchievementDesc, aTextRect, FONT_DWARVENTODCRAFT12, Color(255, 255, 255), DS_ALIGN_CENTER_VERTICAL_MIDDLE);

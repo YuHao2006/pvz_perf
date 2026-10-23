@@ -5,7 +5,7 @@
 #include "misc/SexyMatrix.h"
 #include <map>
 #include "ReanimTrackId.h"
-#include "DefinitionAtlas.h"
+#include "DefinitionImageRegion.h"
 //using namespace std;
 using namespace Sexy;
 
@@ -42,11 +42,8 @@ struct ReanimatorTransformArray {
 class ReanimatorTrack
 {
 public:
-    ReanimTrackId                   mTrackId;                       // Numeric identity; no runtime track name storage.
-    ReanimatorTransformArray        mTransforms;
-    
-public:
-    ReanimatorTrack() : mTrackId(ReanimTrackId::None), mTransforms({nullptr, 0}) { }
+    ReanimTrackId                   mTrackId = ReanimTrackId::None;
+    ReanimatorTransformArray        mTransforms{nullptr, 0};
 };
 
 struct ReanimatorTrackArray {
@@ -62,14 +59,39 @@ struct ReanimatorTrackArray {
 class ReanimatorDefinition
 {
 public:
-    ReanimatorTrackArray            mTracks;
-    float                           mFPS;
-    DefinitionAtlas                 mAtlas;
+    ReanimatorTrackArray            mTracks{nullptr, 0};
+    float                           mFPS = 12.0f;
+    Sexy::GpuTexture**              mTextures = nullptr;
+    int*                            mTextureWidths = nullptr;
+    int*                            mTextureHeights = nullptr;
+    std::uint32_t                   mVariantCount = 0;
+    std::uint32_t                   mImageSlotCount = 0;
+    std::uint32_t                   mVariantActionCount = 0;
+    // Static definition data [variant][image slot]. Row zero supplies geometry.
+    const Sexy::Rect*               mImageRects = nullptr;
+    std::uint32_t*                  mVariantTransitions = nullptr;
+    // Generated data indexed by the existing MPHF track index.
+    std::uint32_t*                  mVariantActionStarts = nullptr;
+    std::uint32_t*                  mVariantActionCounts = nullptr;
+    std::uint32_t*                  mVariantOptions = nullptr;
 
-public:
-    ReanimatorDefinition() : mTracks({nullptr, 0}), mFPS(12.0f) { }
 };
 extern ReanimatorDefinition* gReanimatorDefArray;   //[0x6A9EE8]
+
+struct AttacherSegmentRT final
+{
+    std::uint32_t trackIndex;
+    std::uint32_t startFrame;
+    std::uint32_t endFrame;
+    std::uint32_t targetType;
+    std::uint32_t actionTrackId;
+    float rate;
+    std::uint32_t loop;
+    std::uint32_t textRunStart;
+    std::uint32_t textRunEnd;
+    int mActionFrameStart = -1;
+    int mActionFrameCount = -1;
+};
 
 // ====================================================================================================
 // ★ 【动画参数】
@@ -84,8 +106,6 @@ public:
     int                             mReanimParamFlags;
 };
 
-inline void                         ReanimationFillInMissingData(float& thePrev, float& theValue);
-inline void                         ReanimationFillInMissingData(void*& thePrev, void*& theValue);
 void                                ReanimatorEnsureDefinitionLoaded(ReanimationType theReanimType, bool theIsPreloading);
 void                                ReanimatorLoadDefinitions(ReanimationParams* theReanimationParamArray, int theReanimationParamArraySize);
 // 全量动画定义装载（数据+图像）【装载线程专用】（2026-10-09
@@ -142,20 +162,17 @@ public:
 class ReanimatorTransform
 {
 public:
-    float                           mTransX;
-    float                           mTransY;
-    float                           mSkewX;
-    float                           mSkewY;
-    float                           mScaleX;
-    float                           mScaleY;
-    float                           mFrame;
-    float                           mAlpha;
-    DefinitionImageRegion           mImageRegion;
-    _Font*                           mFont;
-    const char*                     mText;                          // UI captions only; never track/resource/attacher identifiers. SaveGame ABI retained.
-
-public:
-    ReanimatorTransform();
+    float                           mTransX = DEFAULT_FIELD_PLACEHOLDER;
+    float                           mTransY = DEFAULT_FIELD_PLACEHOLDER;
+    float                           mSkewX = DEFAULT_FIELD_PLACEHOLDER;
+    float                           mSkewY = DEFAULT_FIELD_PLACEHOLDER;
+    float                           mScaleX = DEFAULT_FIELD_PLACEHOLDER;
+    float                           mScaleY = DEFAULT_FIELD_PLACEHOLDER;
+    float                           mFrame = DEFAULT_FIELD_PLACEHOLDER;
+    float                           mAlpha = DEFAULT_FIELD_PLACEHOLDER;
+    std::uint32_t                   mImageSlot = 0;
+    _Font*                          mFont = nullptr;
+    const char*                     mText = nullptr;
 };
 
 class ReanimatorTrackInstance
@@ -168,7 +185,6 @@ public:
     float                           mShakeX;                        //+0x38
     float                           mShakeY;                        //+0x3C
     AttachmentID                    mAttachmentID;                  //+0x40
-    Image*                          mImageOverride;                 //+0x44
     int                             mRenderGroup;                   //+0x48
     Color                           mTrackColor;                    //+0x4C
     bool                            mIgnoreClipRect;                //+0x5C
@@ -197,6 +213,7 @@ class Reanimation
 {
 public:
     ReanimationType                 mReanimationType;
+    std::uint32_t                   mVariant;
     float                           mAnimTime;
     float                           mAnimRate;
     ReanimatorDefinition*           mDefinition;
@@ -259,8 +276,9 @@ public:
     void                            StartBlend(int theBlendTime);
     /*inline*/ void                 SetShakeOverride(ReanimTrackId theTrackId, float theShakeAmount);
     float                           GetTrackVelocity(ReanimTrackId theTrackId);
-    /*inline*/ void                 SetImageOverride(ReanimTrackId theTrackId, Image* theImage);
-    /*inline*/ Image*               GetImageOverride(ReanimTrackId theTrackId);
+    void                            SelectVariant(std::uint32_t theVariant);
+    void                            SetVariantOption(ReanimTrackId theTrackId, std::uint32_t theOption);
+    std::uint32_t                   VariantOption(ReanimTrackId theTrackId);
     void                            ShowOnlyTrack(ReanimTrackId theTrackId);
     void                            GetTrackMatrix(int theTrackIndex, SexyTransform2D& theMatrix);
     void                            AssignRenderGroupToTrack(ReanimTrackId theTrackId, int theRenderGroup);
@@ -285,7 +303,6 @@ public:
     void                            AttacherSynchWalkSpeed(int theTrackIndex, Reanimation* theAttachReanim, int theTextRunStart, int theTextRunEnd);
     /*inline*/ bool                 IsAnimPlaying(ReanimTrackId theTrackId);
     void                            SetBasePoseFromAnim(ReanimTrackId theTrackId);
-    void                            ReanimBltMatrix(Graphics* g, Image* theImage, SexyMatrix3& theTransform, const Rect& theClipRect, const Color& theColor, int theDrawMode, const Rect& theSrcRect);
     Reanimation*                    FindSubReanim(ReanimationType theReanimType);
 };
 

@@ -7,6 +7,7 @@
 #include "ReanimRenderSemantics.h"
 #include "ReanimTrackMphfGlobal.h"  // 全局单表 MPHF（唯一 MPHF 层）：(type,id) 联合键 -> trackIndex + 语料成员位图（reanimc compile-v2 生成）
 #include "generated/ReanimAttacherMasks.h"  // P4：每类型轨道数 + attacher 位掩码（编译期生成，与本 cpp 独占包含）
+#include "generated/GeneratedDefinitions.h"
 #include "Attachment.h"
 #include "EffectSystem.h"
 #include "GameConstants.h"
@@ -17,14 +18,12 @@
 #include "graphics/MemoryImage.h"
 #include "graphics/DDInterface.h"
 #include "graphics/RenderInterface.h"
-#include "paklib/PakInterface.h"
 
 #include <algorithm>
 #include <climits>
 #include <cmath>
 #include <cstring>
-#include <memory>
-#include <set>
+#include <utility>
 #include <vector>
 
 static unsigned int gReanimatorDefCount;                     //[0x6A9EE4]
@@ -211,366 +210,6 @@ ReanimationParams gLawnReanimationArray[(int)ReanimationType::NUM_REANIMS] = { /
 	{ ReanimationType::REANIM_ZOMBATAR_HEAD,                        "reanim\\zombatar_zombie_head.reanim", 0}, // @Patoke: GOTY has different reanim name
 };
 
-//0x471540
-ReanimatorTransform::ReanimatorTransform() :
-	mTransX(DEFAULT_FIELD_PLACEHOLDER),
-	mTransY(DEFAULT_FIELD_PLACEHOLDER),
-	mSkewX(DEFAULT_FIELD_PLACEHOLDER),
-	mSkewY(DEFAULT_FIELD_PLACEHOLDER),
-	mScaleX(DEFAULT_FIELD_PLACEHOLDER),
-	mScaleY(DEFAULT_FIELD_PLACEHOLDER),
-	mFrame(DEFAULT_FIELD_PLACEHOLDER),
-	mAlpha(DEFAULT_FIELD_PLACEHOLDER),
-	mImageRegion{},
-	mFont(nullptr),
-	mText(nullptr) { }
-
-inline void ReanimationFillInMissingData(float& thePrev, float& theValue)
-{
-	if (theValue == DEFAULT_FIELD_PLACEHOLDER)
-		theValue = thePrev;  // 若当前帧上的值未设定，则以前一帧的数值赋值当前帧
-	else
-		thePrev = theValue;  // 否则，将当前帧的数据记录为“前一帧的数据”
-}
-
-inline void ReanimationFillInMissingData(void*& thePrev, void*& theValue)
-{
-	if (theValue == nullptr)
-		theValue = thePrev;
-	else
-		thePrev = theValue;
-}
-
-//0x4715F0 : (*def, eax = string& fileName)  //esp -= 0x4
-//0x471620
-static void ReanimationFillTrackPlaceholders(ReanimatorDefinition* theDefinition)
-{
-	for (int aTrackIndex = 0; aTrackIndex < theDefinition->mTracks.count; aTrackIndex++)
-	{
-		ReanimatorTrack* aTrack = &theDefinition->mTracks.tracks[aTrackIndex];
-		float aPrevTransX = 0.0f;
-		float aPrevTransY = 0.0f;
-		float aPrevSkewX = 0.0f;
-		float aPrevSkewY = 0.0f;
-		float aPrevScaleX = 1.0f;
-		float aPrevScaleY = 1.0f;
-		float aPrevFrame = 0.0f;
-		float aPrevAlpha = 1.0f;
-		DefinitionImageRegion aPrevImageRegion{};
-		_Font* aPrevFont = nullptr;
-		const char* aPrevText = nullptr;
-
-		// 遍历每一帧，依次用前一帧的数据填充后一帧的未定义数据，并重新记录前一帧的数据
-		for (int i = 0; i < aTrack->mTransforms.count; i++)
-		{
-			ReanimatorTransform& aTransform = aTrack->mTransforms.mTransforms[i];
-			ReanimationFillInMissingData(aPrevTransX, aTransform.mTransX);
-			ReanimationFillInMissingData(aPrevTransY, aTransform.mTransY);
-			ReanimationFillInMissingData(aPrevSkewX, aTransform.mSkewX);
-			ReanimationFillInMissingData(aPrevSkewY, aTransform.mSkewY);
-			ReanimationFillInMissingData(aPrevScaleX, aTransform.mScaleX);
-			ReanimationFillInMissingData(aPrevScaleY, aTransform.mScaleY);
-			ReanimationFillInMissingData(aPrevFrame, aTransform.mFrame);
-			ReanimationFillInMissingData(aPrevAlpha, aTransform.mAlpha);
-			if (aTransform.mImageRegion.mWidth == 0)
-				aTransform.mImageRegion = aPrevImageRegion;
-			else
-				aPrevImageRegion = aTransform.mImageRegion;
-			ReanimationFillInMissingData((void*&)aPrevFont, (void*&)aTransform.mFont);
-			if (aTransform.mText == nullptr)
-				aTransform.mText = aPrevText;
-			else
-				aPrevText = aTransform.mText;
-		}
-	}
-}
-
-// ====================================================================================================
-// V5 definitions bind one resident atlas; IDT5 frames carry inline rectangles.
-// The outer cookie and atlas prefix reject older records.
-// ====================================================================================================
-static constexpr std::uint32_t gReanimV5Cookie = 0xDEADFED9u;
-static constexpr std::uint32_t gReanimPayloadMagic = 0x35544449u;  // 'IDT5'
-static void ReanimationFreeDefinition(ReanimatorDefinition* theDefinition);
-
-namespace
-{
-// IDT3 段表 side storage：每定义（轨道索引 -> 段列表，按 trackIndex 升序 push）。
-struct AttacherSegmentRT final
-{
-	std::uint32_t trackIndex;    // 所属 attacher 轨道（查找过滤用）
-	std::uint32_t startFrame;
-	std::uint32_t endFrame;      // 不含
-	std::uint32_t targetType;    // ReanimationType 数值（即 gReanimatorDefArray 下标）
-	std::uint32_t actionTrackId; // ReanimTrackId（0 = 无动作切换）
-	float rate;
-	std::uint32_t loop;          // 0=Loop 1=PlayOnceAndHold 2=PlayOnce
-	std::uint32_t textRunStart;
-	std::uint32_t textRunEnd;    // Exclusive inherited routing-text run, independent of segment visibility.
-	// 动作帧域解析缓存：(帧始,帧数) = f(targetType, actionTrackId) 是段的纯函数，
-	// 全实例共享。mActionFrameStart=-1 表示未解析（首个使用该段的 tick 解析一次）。
-	int mActionFrameStart = -1;
-	int mActionFrameCount = -1;
-};
-}  // namespace
-static std::vector<AttacherSegmentRT> gAttacherSegments[(int)ReanimationType::NUM_REANIMS];
-// def 级 attacher 位掩码：kReanimAttacherMasks（编译期常量，转写 reanimc
-// compile-v2 发射的 kAttacherMaskByType——原始轨道表计算，含同 id 重复轨道；
-// 2026-10-06 起不再需要任何装载期补位）
-
-static std::uint32_t ReanimCrc32(const std::uint8_t* theData, const std::size_t theSize)
-{
-	static std::uint32_t aTable[256];
-	static bool aReady = false;
-	if (!aReady)
-	{
-		for (std::uint32_t i = 0; i < 256; i++)
-		{
-			std::uint32_t aValue = i;
-			for (int aBit = 0; aBit < 8; aBit++)
-				aValue = (aValue & 1) ? (0xEDB88320u ^ (aValue >> 1)) : (aValue >> 1);
-			aTable[i] = aValue;
-		}
-		aReady = true;
-	}
-	std::uint32_t aCrc = 0xFFFFFFFFu;
-	for (std::size_t i = 0; i < theSize; i++)
-		aCrc = aTable[(aCrc ^ theData[i]) & 0xFF] ^ (aCrc >> 8);
-	return aCrc ^ 0xFFFFFFFFu;
-}
-
-// The compiler's font symbol table currently contains one numeric binding.
-static constexpr std::uint32_t kReanimFontSymbolCount = 1;
-
-namespace
-{
-std::string ReanimationDefinitionV5Path(ReanimationType theReanimType)
-{
-	return DefinitionCompiledPath(gReanimationParamArray[(int)theReanimType].mReanimFileName);
-}
-
-// IDT5 phases: numeric transforms, numeric resources plus optional UI captions,
-// then numeric attacher segments with inherited routing-text run bounds.
-bool ReanimationTryLoadDefinitionV5(ReanimationType theReanimType, ReanimatorDefinition* theDefinition)
-{
-	TOD_ASSERT(theReanimType >= 0 && theReanimType < (ReanimationType)gReanimatorDefCount);
-	const std::string aV5Path = ReanimationDefinitionV5Path(theReanimType);
-	std::unique_ptr<PFILE, decltype(&p_fclose)> aFile(DefinitionOpenCompiledFile(aV5Path.c_str()), &p_fclose);
-	if (aFile == nullptr)
-	{
-		TodErrorMessageBox(StrFormat("reanim v5 record missing for type %u: %s",
-			(unsigned)theReanimType, aV5Path.c_str()).c_str(), "Error");
-		exit(0);
-	}
-
-	ReanimatorDefinition aReady;
-	const auto dispose = [](ReanimatorDefinition* def) { ReanimationFreeDefinition(def); };
-	std::unique_ptr<ReanimatorDefinition, decltype(dispose)> aOwner(&aReady, dispose);
-	const auto fail = [&](const char* why) -> bool {
-		aOwner.reset();
-		TodErrorMessageBox(StrFormat("reanim v5 record corrupt (%s): %s", why, aV5Path.c_str()).c_str(), "Error");
-		exit(0);
-	};
-	if (p_fseek(aFile.get(), 0, 2) != 0) return fail("seek failed");
-	const long aSize = p_ftell(aFile.get());
-	if (aSize < 40 || p_fseek(aFile.get(), 0, 0) != 0) return fail("invalid record size or rewind failed");
-	std::vector<std::uint8_t> aBytes(static_cast<std::size_t>(aSize));
-	if (p_fread(aBytes.data(), 1, aBytes.size(), aFile.get()) != aBytes.size())
-		return fail("record unreadable");
-	aFile.reset();
-
-	std::uint32_t aCookie = 0, aDeclared = 0, aStoredCrc = 0;
-	memcpy(&aCookie, aBytes.data(), 4);
-	memcpy(&aDeclared, aBytes.data() + 4, 4);
-	memcpy(&aStoredCrc, aBytes.data() + 8, 4);
-	if (aCookie != gReanimV5Cookie) return fail("cookie mismatch");
-	if (aBytes.size() - 12 != aDeclared) return fail("payload size mismatch");
-	const std::uint8_t* p = aBytes.data() + 12;
-	const std::size_t aPayloadSize = aBytes.size() - 12;
-	if (ReanimCrc32(p, aPayloadSize) != aStoredCrc) return fail("payload crc mismatch");
-
-	std::size_t at = 0;
-	try { aReady.mAtlas=DefinitionLoadAtlas({p,aPayloadSize},at,0x35564152u); }
-	catch (const std::exception& error) { return fail(error.what()); }
-	const auto take32 = [&](std::uint32_t& v) -> bool {
-		if (aPayloadSize - at < 4) return false;
-		memcpy(&v, p + at, 4);
-		at += 4;
-		return true;
-	};
-	std::uint32_t aMagic = 0, aTableHash = 0, aImageHash = 0, aFontHash = 0;
-	if (!take32(aMagic) || !take32(aTableHash) || !take32(aImageHash) || !take32(aFontHash))
-		return fail("truncated header");
-	if (aMagic != gReanimPayloadMagic) return fail("payload magic mismatch (IDT5 required)");
-	if (aTableHash != PVZ_REANIM_TRACK_TABLE_HASH) return fail("track table hash mismatch");
-	if (aImageHash != 0 || aFontHash != TodFontSymbolRegistryHash())
-		return fail("resource registry hash mismatch");
-
-	std::uint32_t aFpsBits = 0, aTrackCount = 0;
-	if (!take32(aFpsBits) || !take32(aTrackCount)) return fail("truncated definition header");
-	memcpy(&aReady.mFPS, &aFpsBits, 4);
-	if (!std::isfinite(aReady.mFPS) || aReady.mFPS <= 0.0f) return fail("invalid fps");
-	if (aTrackCount == 0 || aTrackCount > kReanimActiveMaskCapacityBits ||
-		aTrackCount > (aPayloadSize - at) / 16 || aTrackCount > INT_MAX / sizeof(ReanimatorTrack))
-		return fail("track count outside supported range");
-	aReady.mTracks.tracks = (ReanimatorTrack*)DefinitionAlloc(static_cast<int>(aTrackCount * sizeof(ReanimatorTrack)));
-	aReady.mTracks.count = static_cast<int>(aTrackCount);
-	for (std::uint32_t t = 0; t < aTrackCount; ++t)
-		new (&aReady.mTracks.tracks[t]) ReanimatorTrack();
-	std::vector<std::uint32_t> aTextModes(aTrackCount);
-
-	// Phase 1: {id, frameCount, elemSize32, textMode} plus unchanged 8xf32 transforms.
-	for (std::uint32_t t = 0; t < aTrackCount; ++t)
-	{
-		ReanimatorTrack& aTrack = aReady.mTracks.tracks[t];
-		std::uint32_t aTrackId = 0, aFrameCount = 0, aTransformElement = 0;
-		if (!take32(aTrackId) || !take32(aFrameCount) || !take32(aTransformElement) || !take32(aTextModes[t]))
-			return fail("truncated track header");
-		if (aTrackId > PVZ_REANIM_TRACK_ID_COUNT) return fail("track id out of range");
-		if (aTransformElement != 32) return fail("compact transform element size mismatch");
-		if (aTextModes[t] > 1) return fail("invalid track text mode");
-		aTrack.mTrackId = static_cast<ReanimTrackId>(aTrackId);
-		if (ReanimTrackRanges::attacher__.Contains(aTrack.mTrackId) && aTextModes[t] != 0)
-			return fail("attacher track cannot contain UI text");
-		if (aFrameCount == 0 || aFrameCount > INT_MAX / sizeof(ReanimatorTransform) ||
-			aFrameCount > (aPayloadSize - at) / 32)
-			return fail("frame count outside supported range");
-		aTrack.mTransforms.mTransforms = (ReanimatorTransform*)DefinitionAlloc(static_cast<int>(aFrameCount * sizeof(ReanimatorTransform)));
-		aTrack.mTransforms.count = static_cast<int>(aFrameCount);
-		for (std::uint32_t f = 0; f < aFrameCount; ++f)
-		{
-			ReanimatorTransform& aTransform = aTrack.mTransforms.mTransforms[f];
-			new (&aTransform) ReanimatorTransform();
-			float* const aFields[8] = {
-				&aTransform.mTransX, &aTransform.mTransY, &aTransform.mSkewX, &aTransform.mSkewY,
-				&aTransform.mScaleX, &aTransform.mScaleY, &aTransform.mFrame, &aTransform.mAlpha};
-			for (float* aField : aFields)
-			{
-				std::uint32_t aValue = 0;
-				if (!take32(aValue)) return fail("truncated frame values");
-				memcpy(aField, &aValue, 4);
-				if (!std::isfinite(*aField)) return fail("nonfinite frame value");
-			}
-		}
-	}
-
-	// Phase 2: inline atlas rectangles and font IDs; mode 1 adds captions.
-	for (std::uint32_t t = 0; t < aTrackCount; ++t)
-	{
-		ReanimatorTrack& aTrack = aReady.mTracks.tracks[t];
-		for (int f = 0; f < aTrack.mTransforms.count; ++f)
-		{
-			ReanimatorTransform& aTransform = aTrack.mTransforms.mTransforms[f];
-			try { aTransform.mImageRegion=DefinitionReadImageRegion({p,aPayloadSize},at,aReady.mAtlas); }
-			catch (const std::exception& error) { return fail(error.what()); }
-			std::uint32_t aFontSymbol = 0;
-			if (!take32(aFontSymbol)) return fail("truncated frame font reference");
-			if (aFontSymbol > kReanimFontSymbolCount) return fail("font symbol out of range");
-			if (aFontSymbol != 0)
-			{
-				aTransform.mFont = TodDefinitionLoadFontById(aFontSymbol);
-				if (aTransform.mFont == nullptr) return fail("font bind failed");
-			}
-			if (aTextModes[t] == 1)
-			{
-				std::uint32_t aLength = 0;
-				if (!take32(aLength) || aLength >= INT_MAX || aLength > aPayloadSize - at)
-					return fail("invalid UI caption length");
-				if (aLength != 0)
-				{
-					if (memchr(p + at, '\0', aLength)) return fail("embedded NUL in UI caption");
-					char* aCopy = (char*)DefinitionAlloc(static_cast<int>(aLength + 1));
-					memcpy(aCopy, p + at, aLength);
-					aCopy[aLength] = '\0';
-					aTransform.mText = aCopy;
-				}
-				at += aLength;
-			}
-		}
-	}
-
-	// Phase 3: ordered attacher tracks, tuple8 {start,end,target,action,rate,loop,runStart,runEnd}.
-	std::vector<AttacherSegmentRT> aSegments;
-	std::uint32_t aSegmentTrackCount = 0, aPreviousTrack = 0;
-	if (!take32(aSegmentTrackCount)) return fail("truncated attacher segment header");
-	if (aSegmentTrackCount > aTrackCount || aSegmentTrackCount > (aPayloadSize - at) / 8)
-		return fail("attacher segment track count out of range");
-	for (std::uint32_t s = 0; s < aSegmentTrackCount; ++s)
-	{
-		std::uint32_t aTrackIndex = 0, aSegmentCount = 0;
-		if (!take32(aTrackIndex) || !take32(aSegmentCount)) return fail("truncated attacher track header");
-		if (aTrackIndex >= aTrackCount || (s != 0 && aTrackIndex <= aPreviousTrack))
-			return fail("attacher track indices invalid or unordered");
-		aPreviousTrack = aTrackIndex;
-		const ReanimatorTrack& aTrack = aReady.mTracks.tracks[aTrackIndex];
-		if (!ReanimTrackRanges::attacher__.Contains(aTrack.mTrackId) || aTextModes[aTrackIndex] != 0)
-			return fail("segment assigned to non-attacher track");
-		if (aSegmentCount > (unsigned)aTrack.mTransforms.count || aSegmentCount > (aPayloadSize - at) / 32)
-			return fail("attacher segment count out of range");
-		std::uint32_t aPreviousEnd = 0;
-		for (std::uint32_t g = 0; g < aSegmentCount; ++g)
-		{
-			AttacherSegmentRT aSeg;
-			aSeg.trackIndex = aTrackIndex;
-			std::uint32_t aRateBits = 0;
-			if (!take32(aSeg.startFrame) || !take32(aSeg.endFrame) || !take32(aSeg.targetType) ||
-				!take32(aSeg.actionTrackId) || !take32(aRateBits) || !take32(aSeg.loop) ||
-				!take32(aSeg.textRunStart) || !take32(aSeg.textRunEnd))
-				return fail("truncated attacher segment");
-			memcpy(&aSeg.rate, &aRateBits, 4);
-			if (aSeg.startFrame >= aSeg.endFrame || aSeg.endFrame > (unsigned)aTrack.mTransforms.count ||
-				(g != 0 && aSeg.startFrame < aPreviousEnd)) return fail("invalid attacher segment bounds");
-			if (aSeg.textRunStart > aSeg.startFrame || aSeg.textRunEnd < aSeg.endFrame ||
-				aSeg.textRunStart >= aSeg.textRunEnd || aSeg.textRunEnd > (unsigned)aTrack.mTransforms.count)
-				return fail("invalid attacher text-run bounds");
-			if (aSeg.targetType != (std::uint32_t)ReanimationType::REANIM_NONE && aSeg.targetType >= gReanimatorDefCount)
-				return fail("attacher target type out of range");
-			if (aSeg.actionTrackId > PVZ_REANIM_TRACK_ID_COUNT || aSeg.loop > 2 || !std::isfinite(aSeg.rate))
-				return fail("invalid attacher action, loop or rate");
-			aPreviousEnd = aSeg.endFrame;
-			aSegments.push_back(aSeg);
-		}
-	}
-	if (at != aPayloadSize) return fail("trailing payload bytes");
-
-	ReanimationFillTrackPlaceholders(&aReady);
-	try { DefinitionBindAtlas(aReady.mAtlas,aV5Path); }
-	catch (const std::exception& error) { return fail(error.what()); }
-	*theDefinition = std::move(aReady);
-	aOwner.release();
-	gAttacherSegments[(int)theReanimType] = std::move(aSegments);
-	return true;
-}
-}  // namespace
-
-
-//0x4717D0
-static void ReanimationFreeDefinition(ReanimatorDefinition* theDefinition)
-{
-	for (int aTrackIndex = 0; aTrackIndex < theDefinition->mTracks.count; ++aTrackIndex)
-	{
-		ReanimatorTrack& aTrack = theDefinition->mTracks.tracks[aTrackIndex];
-		const char* aPreviousText = nullptr;
-		for (int i = 0; i < aTrack.mTransforms.count; ++i)
-		{
-			ReanimatorTransform& aTransform = aTrack.mTransforms.mTransforms[i];
-			const char* const aText = aTransform.mText;
-			// Every explicit caption owns its allocation; placeholder inheritance shares
-			// it only with subsequent frames in this run. Compare before dereferencing
-			// so inherited pointers are never read after the allocation is freed.
-			if (aText != aPreviousText && aText != nullptr && *aText != '\0')
-				delete[] const_cast<char*>(aText);
-			aPreviousText = aText;
-			aTransform.mText = nullptr;
-		}
-		delete[] reinterpret_cast<char*>(aTrack.mTransforms.mTransforms);
-		aTrack.mTransforms = {nullptr, 0};
-	}
-	delete[] reinterpret_cast<char*>(theDefinition->mTracks.tracks);
-	theDefinition->mTracks = {nullptr, 0};
-	theDefinition->mAtlas={};
-}
-
 //0x471890
 ReanimatorTrackInstance::ReanimatorTrackInstance()
 {
@@ -582,7 +221,6 @@ ReanimatorTrackInstance::ReanimatorTrackInstance()
 	mAttachmentID = AttachmentID::ATTACHMENTID_NULL;
 	mRenderGroup = RENDER_GROUP_NORMAL;
 	mIgnoreClipRect = false;
-	mImageOverride = nullptr;
 	mTruncateDisappearingFrames = true;
 	mTrackColor = Color::White;
 	mIgnoreColorOverride = false;
@@ -639,6 +277,7 @@ Reanimation::Reanimation()
 	mTrackInstances = nullptr;
 	mFilterEffect = FilterEffect::FILTER_EFFECT_NONE;
 	mReanimationType = ReanimationType::REANIM_NONE;
+	mVariant = 0;
 }
 
 //0x471A20
@@ -682,6 +321,7 @@ void Reanimation::ReanimationInitialize(float theX, float theY, ReanimatorDefini
 	mOverlayMatrix.m02 = theX;
 	mOverlayMatrix.m12 = theY;
 	mDefinition = theDefinition;
+	mVariant = 0;
 	mAnimRate = theDefinition->mFPS;
 	mLastFrameTime = -1.0f;
 
@@ -890,7 +530,7 @@ static void BlendTransform(ReanimatorTransform* theResult, const ReanimatorTrans
 	theResult->mFrame = theTransform1.mFrame;
 	theResult->mFont = theTransform1.mFont;
 	theResult->mText = theTransform1.mText;
-	theResult->mImageRegion = theTransform1.mImageRegion;
+	theResult->mImageSlot = theTransform1.mImageSlot;
 }
 
 //0x471F90
@@ -929,7 +569,7 @@ void Reanimation::GetTransformAtTime(int theTrackIndex, ReanimatorTransform* the
 	theTransform->mScaleX = FloatLerp(aTransBefore.mScaleX, aTransAfter.mScaleX, theFrameTime->mFraction);
 	theTransform->mScaleY = FloatLerp(aTransBefore.mScaleY, aTransAfter.mScaleY, theFrameTime->mFraction);
 	theTransform->mAlpha = FloatLerp(aTransBefore.mAlpha, aTransAfter.mAlpha, theFrameTime->mFraction);
-	theTransform->mImageRegion = aTransBefore.mImageRegion;
+	theTransform->mImageSlot = aTransBefore.mImageSlot;
 	theTransform->mFont = aTransBefore.mFont;
 	theTransform->mText = aTransBefore.mText;
 
@@ -958,50 +598,6 @@ void Reanimation::MatrixFromTransform(const ReanimatorTransform& theTransform, S
 	theMatrix.m02 = theTransform.mTransX;
 	theMatrix.m12 = theTransform.mTransY;
 	theMatrix.m22 = 1.0f;
-}
-
-//0x472190
-void Reanimation::ReanimBltMatrix(Graphics* g, Image* theImage, SexyMatrix3& theTransform, const Rect& theClipRect, const Color& theColor, int theDrawMode, const Rect& theSrcRect)
-{
-	if (!gSexyAppBase->mDDInterface->mIs3D &&  // 未开启 3D 硬件加速
-		TestBit(gReanimationParamArray[(int)mReanimationType].mReanimParamFlags, ReanimFlags::FastDrawInSwModeBit) &&  // 动画允许使用软件渲染
-		FloatApproxEqual(theTransform.m01, 0.0f) && FloatApproxEqual(theTransform.m10, 0.0f) &&  // 横向和纵向的倾斜值均为 0
-		theTransform.m00 > 0.0f && theTransform.m11 > 0.0f &&  // 横向和纵向的拉伸值均大于 0
-		theColor == Color::White)
-	{
-		float aScaleX = theTransform.m00;
-		float aScaleY = theTransform.m11;
-		int aPosX = FloatRoundToInt(theTransform.m02 - aScaleX * theSrcRect.mWidth * 0.5f);
-		int aPosY = FloatRoundToInt(theTransform.m12 - aScaleY * theSrcRect.mHeight * 0.5f);
-		int aOldMode = g->mDrawMode;  // 备份原绘制模式
-		g->mDrawMode = theDrawMode;
-		Rect aOldClipRect = g->mClipRect;  // 备份原裁剪矩形
-		float aOldTransX = g->mTransX;
-		float aOldTransY = g->mTransY;
-		// The transform already contains the Graphics translation.  DrawImage
-		// applies that translation again, so temporarily remove it here to avoid
-		// double-shifting large axis-aligned reanim images during a page slide.
-		g->mTransX = 0.0f;
-		g->mTransY = 0.0f;
-		g->mClipRect = theClipRect;
-
-		if (FloatApproxEqual(aScaleX, 1.0f) && FloatApproxEqual(aScaleY, 1.0f))  // 如果无拉伸
-			g->DrawImage(theImage, aPosX, aPosY, theSrcRect);
-		else
-		{
-			int aWidth = FloatRoundToInt(aScaleX * theSrcRect.mWidth);
-			int aHeight = FloatRoundToInt(aScaleY * theSrcRect.mHeight);
-			Rect aDestRect(aPosX, aPosY, aWidth, aHeight);
-			g->DrawImage(theImage, aDestRect, theSrcRect);
-		}
-
-		g->mDrawMode = aOldMode;  // 还原绘制模式
-		g->mTransX = aOldTransX;
-		g->mTransY = aOldTransY;
-		g->mClipRect = aOldClipRect;  // 还原裁剪矩形
-	}
-	else
-		TodBltMatrix(g, theImage, theTransform, theClipRect, theColor, theDrawMode, theSrcRect);
 }
 
 //0x4723B0
@@ -1051,15 +647,16 @@ bool Reanimation::DrawTrack(Graphics* g, int theTrackIndex, int theRenderGroup, 
 		aClipRect = Rect(0, 0, BOARD_WIDTH, BOARD_HEIGHT);  // 裁剪矩形重置为屏幕矩形
 	}
 
-	const auto& aRegion = aTransform.mImageRegion;
-	Image* aImage = aRegion.mWidth ? mDefinition->mAtlas.image.get() : nullptr;
+	const auto aSlot = aTransform.mImageSlot;
+	const bool aHasImage = aSlot != 0;
+	const auto& aGeometry = mDefinition->mImageRects[aSlot];
 	int aCelWidth = 0, aCelHeight = 0;
 	SexyMatrix3 aMatrix;
 	bool aFullScreen = false;
-	if (aImage != nullptr)
+	if (aHasImage)
 	{
-		aCelWidth = aRegion.mWidth / aRegion.mCols;
-		aCelHeight = aRegion.mHeight / aRegion.mRows;
+		aCelWidth = aGeometry.mWidth;
+		aCelHeight = aGeometry.mHeight;
 		aMatrix.LoadIdentity();
 		SexyMatrix3Translation(aMatrix, aCelWidth * 0.5f, aCelHeight * 0.5f);  // 将矩阵变换的坐标设定在贴图的中心位置
 	}
@@ -1083,37 +680,37 @@ bool Reanimation::DrawTrack(Graphics* g, int theTrackIndex, int theRenderGroup, 
 	SexyMatrix3Multiply(aMatrix, mOverlayMatrix, aMatrix);  // 以动画覆写矩阵作用 aMatrix
 	SexyMatrix3Translation(aMatrix, aTrackInstance->mShakeX + g->mTransX - 0.5f, aTrackInstance->mShakeY + g->mTransY - 0.5f);  // 轨道震动及 g 的影响
 
-	if (aImage != nullptr)
+	if (aHasImage)
 	{
-		int aColumns = aRegion.mCols;
-		int aSourceX = aRegion.mX, aSourceY = aRegion.mY;
-		if (aTrackInstance->mImageOverride != nullptr)  // 如果轨道存在覆写贴图
+		const Rect& aSrcRect = mDefinition->mImageRects[std::size_t(mVariant) * mDefinition->mImageSlotCount + aSlot];
+		// A blank appearance suppresses only the image, not the track's original
+		// geometry or its attachment visibility.
+		if (aSrcRect.mWidth == 0 || aSrcRect.mHeight == 0)
+			return true;
+		auto* const aTexture = mDefinition->mTextures[mVariant];
+		if (!aTexture)
+			throw std::logic_error("reanimation appearance atlas is not uploaded");
+		TextureSource source{aTexture,mDefinition->mTextureWidths[mVariant],mDefinition->mTextureHeights[mVariant],0};
+		static constexpr std::uint32_t filterFlags[] = {
+			0, std::uint32_t(GpuImageColorFilter::WashedOut),
+			std::uint32_t(GpuImageColorFilter::LessWashedOut),
+			std::uint32_t(GpuImageColorFilter::White)
+		};
+		if (mFilterEffect != FilterEffect::FILTER_EFFECT_NONE)
 		{
-			aImage = aTrackInstance->mImageOverride;  // 将贴图替换为覆写贴图
-			aColumns = aImage->mNumCols;
-			aCelWidth = aImage->GetCelWidth();
-			aCelHeight = aImage->GetCelHeight();
-			aSourceX = aSourceY = 0;
+			source.mSamplingFlags = (source.mSamplingFlags & ~0x30000000u) |
+				filterFlags[static_cast<int>(mFilterEffect) + 1];
 		}
-		if (mFilterEffect != FilterEffect::FILTER_EFFECT_NONE)  // 如果动画存在滤镜
-		{
-			aImage = FilterEffectGetImage(aImage, mFilterEffect);  // 将贴图替换为滤镜后的贴图
-		}
-		while (aImageFrame >= aColumns)
-		{
-			aImageFrame -= aColumns;  // 确保绘制的列数不会超过贴图最后一列
-		}
-
-		Rect aSrcRect(aSourceX + aImageFrame * aCelWidth, aSourceY, aCelWidth, aCelHeight);
-		ReanimBltMatrix(g, aImage, aMatrix, aClipRect, aColor, g->mDrawMode, aSrcRect);  // 带矩阵绘制轨道图像
+		TodBltMatrix(g, source, aMatrix, aClipRect, aColor, g->mDrawMode, aSrcRect);
 		if (mEnableExtraAdditiveDraw)
 		{
-			ReanimBltMatrix(g, aImage, aMatrix, aClipRect, aExtraAdditiveColor, Graphics::DRAWMODE_ADDITIVE, aSrcRect);
+			TodBltMatrix(g, source, aMatrix, aClipRect, aExtraAdditiveColor, Graphics::DRAWMODE_ADDITIVE, aSrcRect);
 		}
 		if (mEnableExtraOverlayDraw)
 		{
-			Image* aOverlayImage = FilterEffectGetImage(aImage, FilterEffect::FILTER_EFFECT_WHITE);
-			ReanimBltMatrix(g, aOverlayImage, aMatrix, aClipRect, aExtraOverlayColor, Graphics::DRAWMODE_NORMAL, aSrcRect);
+			source.mSamplingFlags = (source.mSamplingFlags & ~0x30000000u) |
+				std::uint32_t(GpuImageColorFilter::White);
+			TodBltMatrix(g, source, aMatrix, aClipRect, aExtraOverlayColor, Graphics::DRAWMODE_NORMAL, aSrcRect);
 		}
 	}
 	else if (aTransform.mFont != nullptr && aTransform.mText != nullptr)  // 如果不存在图像但存在文本
@@ -1147,13 +744,13 @@ void Reanimation::GetTrackMatrix(int theTrackIndex, SexyTransform2D& theMatrix)
 	ReanimatorTransform aTransform;
 	GetCurrentTransform(theTrackIndex, &aTransform);
 	int aImageFrame = FloatRoundToInt(aTransform.mFrame);
-	const auto* aRegion = &aTransform.mImageRegion;
+	const auto* aRegion = &mDefinition->mImageRects[aTransform.mImageSlot];
 
 	theMatrix.LoadIdentity();
 	if (aRegion->mWidth != 0 && aImageFrame >= 0)
 	{
-		int aCelWidth = aRegion->mWidth / aRegion->mCols;
-		int aCelHeight = aRegion->mHeight / aRegion->mRows;
+		int aCelWidth = aRegion->mWidth;
+		int aCelHeight = aRegion->mHeight;
 		SexyMatrix3Translation(theMatrix, aCelWidth * 0.5f, aCelHeight * 0.5f);  // 将矩阵变换的坐标设定在贴图的中心位置
 	}
 	else if (aTransform.mFont != nullptr && aTransform.mText != nullptr)
@@ -1413,7 +1010,7 @@ void Reanimation::StartBlend(int theBlendTime)
 			ReanimSetActiveBit(*this, aTrackIndex);  // P4：混合置位；归零后由 Update 自愈清位
 			aTrackInstance->mBlendTransform.mFont = nullptr;
 			aTrackInstance->mBlendTransform.mText = nullptr;
-			aTrackInstance->mBlendTransform.mImageRegion = {};
+			aTrackInstance->mBlendTransform.mImageSlot = 0;
 		}
 	}
 }
@@ -1442,16 +1039,33 @@ void Reanimation::SetShakeOverride(ReanimTrackId theTrackId, float theShakeAmoun
 }
 
 //0x473470
-Image* Reanimation::GetImageOverride(ReanimTrackId theTrackId)
+void Reanimation::SelectVariant(std::uint32_t theVariant)
 {
-	return GetTrackInstanceByName(theTrackId)->mImageOverride;
+	if (!mDefinition || theVariant >= mDefinition->mVariantCount)
+		throw std::out_of_range("reanimation appearance variant out of range");
+	mVariant = theVariant;
 }
 
 //0x473490
 // GOTY @Patoke: 0x477BB0
-void Reanimation::SetImageOverride(ReanimTrackId theTrackId, Image* theImage)
+void Reanimation::SetVariantOption(ReanimTrackId theTrackId, std::uint32_t theOption)
 {
-	GetTrackInstanceByName(theTrackId)->mImageOverride = theImage;
+	const int track = FindTrackIndex(theTrackId);
+	if (theOption >= mDefinition->mVariantActionCounts[track])
+	{
+		if (theOption == 0 && mDefinition->mVariantActionCounts[track] == 0)
+			return;
+		throw std::out_of_range("reanimation appearance track option out of range");
+	}
+	mVariant = mDefinition->mVariantTransitions[
+		std::size_t(mVariant) * mDefinition->mVariantActionCount +
+		mDefinition->mVariantActionStarts[track] + theOption];
+}
+
+std::uint32_t Reanimation::VariantOption(ReanimTrackId theTrackId)
+{
+	const int track = FindTrackIndex(theTrackId);
+	return mDefinition->mVariantOptions[std::size_t(mVariant) * mDefinition->mTracks.count + track];
 }
 
 //0x4734B0
@@ -1497,44 +1111,30 @@ Reanimation* ReanimationHolder::AllocReanimation(float theX, float theY, int the
 void ReanimatorEnsureDefinitionLoaded(ReanimationType theReanimType, bool theIsPreloading)
 {
 	TOD_ASSERT(theReanimType >= 0 && theReanimType < gReanimatorDefCount);
-	ReanimatorDefinition* aReanimDef = &gReanimatorDefArray[(int)theReanimType];
-	if (aReanimDef->mTracks.tracks != nullptr)  // 如果轨道指针不为空指针，说明定义数据已经加载
+	if (theIsPreloading && gSexyAppBase && (gSexyAppBase->mShutdown || gAppCloseRequest()))
 		return;
-	ReanimationParams* aReanimParams = &gReanimationParamArray[(int)theReanimType];
-	if (theIsPreloading)
-	{
-		if (gSexyAppBase->mShutdown || gAppCloseRequest())  // 预加载时若程序退出，则取消加载
-			return;
-	}
-	// V5 records are required for every definition; missing/corrupt data is fatal.
-	if (!ReanimationTryLoadDefinitionV5(theReanimType, aReanimDef))
-	{
-		TodErrorMessageBox(StrFormat(
-			"reanim definition unavailable without v5 record: type=%d ('%s')",
-			(int)theReanimType, aReanimParams->mReanimFileName).c_str(), "Error");
-		exit(0);
-	}
+	GeneratedDefinitions::LoadReanimationImages((int)theReanimType);
 }
 
 //0x473750
 void ReanimatorLoadDefinitions(ReanimationParams* theReanimationParamArray, int theReanimationParamArraySize)
 {
-	TOD_ASSERT(!gReanimationParamArray && !gReanimatorDefArray);
-	// Do not publish a nonzero count/null array if allocation throws.
-	auto* aDefinitions = new ReanimatorDefinition[theReanimationParamArraySize];
+	if (gReanimatorDefArray)
+		return;
+	if (theReanimationParamArray != gLawnReanimationArray ||
+		theReanimationParamArraySize != (int)ReanimationType::NUM_REANIMS)
+		throw std::invalid_argument("invalid static reanimation catalog");
 	gReanimationParamArraySize = theReanimationParamArraySize;
 	gReanimationParamArray = theReanimationParamArray;
 	gReanimatorDefCount = theReanimationParamArraySize;
-	gReanimatorDefArray = aDefinitions;
+	gReanimatorDefArray = GeneratedDefinitions::Reanimations;
 
 	// P4：attacher 位掩码已前移编译期（generated/ReanimAttacherMasks.h，
 	// 由 MPHF 头 + attacher__ 区间生成；reanimc 重跑经 CMake 依赖联动再生）
 	TOD_ASSERT(theReanimationParamArraySize <= kReanimAttacherTypeCount);
 
-	// 2026-10-09 锁核黑屏案拆分：全量 def 装载（以下原循环）挪到装载线程的
-	// ReanimatorLoadAllDefinitionData——原在此处同步跑（1GHz 单核 100-600ms
-	// ×N，主线程跑完前画不出任何帧=装载屏黑 7-9 秒）。本函数现只做分配，
-	// 调用方（LawnApp::Init）随后单独预载装载条那一个 def（sprout）。
+	// Definitions are static. Early loading-screen atlases bind on the primary
+	// thread; the remaining PNGs decode on the loading thread.
 }
 
 // Decode definitions and their owned atlas PNGs on the loading thread.
@@ -1547,17 +1147,7 @@ void ReanimatorLoadAllDefinitionData()
 	if (gReanimatorDefArray == nullptr || gReanimationParamArray == nullptr)
 		return;
 
-	for (unsigned int i = 0; i < gReanimatorDefCount; i++)
-	{
-		ReanimationParams* aReanimationParams = &gReanimationParamArray[i];
-		TOD_ASSERT(aReanimationParams->mReanimationType == i);
-		const std::string aV5Path = ReanimationDefinitionV5Path(aReanimationParams->mReanimationType);
-		std::unique_ptr<PFILE, decltype(&p_fclose)> aFile(p_fopen(aV5Path.c_str(), "rb"), &p_fclose);
-		if (aFile == nullptr)
-			continue;
-		aFile.reset();
-		ReanimatorEnsureDefinitionLoaded(aReanimationParams->mReanimationType, true);
-	}
+	GeneratedDefinitions::LoadAllImages();
 	gReanimatorAllDefinitionDataLoaded.store(true, std::memory_order_release);
 
 }
@@ -1587,44 +1177,14 @@ int ReanimatorUploadAllTexturesToGPU()
 		!gParticleAllDefinitionDataLoaded.load(std::memory_order_acquire))
 		return -1;
 
-	std::set<Sexy::ResidentImage*> aImages;
-	for (unsigned int i = 0; i < gReanimatorDefCount; ++i)
-	{
-		ReanimatorDefinition& aDefinition = gReanimatorDefArray[i];
-		if (aDefinition.mAtlas.image)
-			aImages.insert(aDefinition.mAtlas.image.get());
-	}
-	for (int i=0;i<gParticleDefCount;++i)
-		if (gParticleDefArray[i].mAtlas.image)
-			aImages.insert(gParticleDefArray[i].mAtlas.image.get());
-
-	Sexy::RenderInterface* aD3D = gSexyAppBase->mDDInterface->mRenderInterface;
-	int aUploaded = 0;
-	for (Sexy::ResidentImage* aImage : aImages)
-	{
-		if (aImage == nullptr)
-			continue;
-		if (aImage->mWidth <= 0 || aImage->mHeight <= 0)
-		{
-			continue;
-		}
-		// Source textures remain resident on the GPU; upload releases CPU pixels.
-		if (aD3D->CreateImageTexture(aImage))
-			++aUploaded;
-	}
-
-	return aUploaded;
+	return DefinitionUploadAtlasImages();
 }
 
 //0x473870
 void ReanimatorFreeDefinitions()
 {
-	for (auto& segs : gAttacherSegments)
-		segs.clear();
-	for (unsigned int i = 0; i < gReanimatorDefCount; i++)
-		ReanimationFreeDefinition(&gReanimatorDefArray[i]);
-
-	delete[] gReanimatorDefArray;
+	gReanimatorAllDefinitionDataLoaded.store(false,std::memory_order_release);
+	GeneratedDefinitions::ReleaseReanimationImages();
 	gReanimatorDefArray = nullptr;
 	gReanimatorDefCount = 0;
 	gReanimationParamArray = nullptr;
@@ -1810,7 +1370,7 @@ void Reanimation::UpdateAttacherTrack(int theTrackIndex)
 	// 只有显式 targetType=REANIM_NONE 的段才代表原版的名字解析失败。
 	// （与 v1 运行时对拍：v1 在这些帧重复解析同一编码，附件保持。）
 	AttacherSegmentRT* aSeg = nullptr;
-	for (AttacherSegmentRT& seg : gAttacherSegments[(int)mReanimationType])
+	for (AttacherSegmentRT& seg : GeneratedDefinitions::AttacherSegments[(int)mReanimationType])
 		if (seg.trackIndex == static_cast<std::uint32_t>(theTrackIndex) &&
 		    seg.startFrame <= aFrame && aFrame < seg.endFrame)
 		{
@@ -1847,19 +1407,9 @@ void Reanimation::UpdateAttacherTrack(int theTrackIndex)
 
 	if (aActionId != ReanimTrackId::None)  // 如果定义了附属动画的动作轨道
 	{
-		int aAnimFrameStart, aAnimFrameCount;
-		if (aSeg->mActionFrameStart >= 0)
-		{
-			// 段级缓存命中：f(targetType, actionTrackId) 是段纯函数，全实例共享
-			aAnimFrameStart = aSeg->mActionFrameStart;
-			aAnimFrameCount = aSeg->mActionFrameCount;
-		}
-		else
-		{
-			aAttachReanim->GetFramesForLayer(aActionId, aAnimFrameStart, aAnimFrameCount);
-			aSeg->mActionFrameStart = aAnimFrameStart;
-			aSeg->mActionFrameCount = aAnimFrameCount;
-		}
+		// The generated segment already contains its target action's frame range.
+		const int aAnimFrameStart = aSeg->mActionFrameStart;
+		const int aAnimFrameCount = aSeg->mActionFrameCount;
 		if (aAttachReanim->mFrameStart != aAnimFrameStart || aAttachReanim->mFrameCount != aAnimFrameCount)  // if (!aAttachReanim->IsAnimPlaying(……))
 		{
 			aAttachReanim->StartBlend(20);

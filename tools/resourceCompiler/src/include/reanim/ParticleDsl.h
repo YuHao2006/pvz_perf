@@ -119,6 +119,8 @@ struct ParticleEmitter final {
     std::string onDuration;
     std::int32_t imageCol = 0;
     std::int32_t imageRow = 0;
+    // Ordered source images, one full image per drawable frame. Repeats matter.
+    std::vector<std::string> images;
     std::int32_t imageFrames = 1;  // 官方构造默认 1
     std::int32_t animated = 0;
     std::uint32_t flags = 0;
@@ -138,6 +140,11 @@ struct ParticleDefinition final {
     // <source-name>.xml.compiled。
     std::string sourceName;
     std::vector<ParticleEmitter> emitters;
+    // Compile-time image variant. Resolved after collecting the complete bundle;
+    // retained only so the compiler can reuse the original runtime gold layout.
+    std::string variantOf;
+    std::string variantImage;
+    std::vector<std::vector<std::string>> variantImages;
 };
 
 // 读取 legacy particle XML（<Emitter> 列表；子标签 Image/ImageRow/ImageCol/
@@ -163,11 +170,16 @@ struct ParticleDefinition final {
 //   kind: particle;                 // 必填，且必须为 particle
 //   source-name: "melonimpact";
 //   Emitter { ... }                 // 每 XML <Emitter> 一条块
+// Image-only variants replace Emitter blocks with:
+//   variant-of: BaseComponent;      // may appear later or in another input file
+//   images: [["frame0.png", "frame1.png"], ["other.png"]]; // one list per emitter
+// The base definition remains in the output; variants may inherit variants.
 // Emitter 体字段（XML 标签名折叠小驼峰）：
 //   image: "IMAGE_MELONPULT_PARTICLES";   // 或 none
 //   name: "AwardRay8";
 //   onDuration: "...";
-//   imageRow/imageCol/imageFrames/animated: <int>;
+//   images: ["frame0.png", "frame1.png"]; // ordered full-image frames
+//   imageFrames/animated: <int>; // logical frame count, independent of image count
 //   emitterType: Circle|Box|BoxPath|CirclePath|CircleEvenSpacing;
 //   <flag>: 1;   // randomLaunchSpin/additive/... 出现即置位（值被忽略）
 //   <track>: 200;                     // 单数值原文
@@ -185,7 +197,8 @@ struct ParticleDslFileDirectives final {
 
 [[nodiscard]] bool ParseParticleDslFileText(std::string_view source,
                                             ParticleDslFileDirectives& file,
-                                            std::string* error = nullptr);
+                                            std::string* error = nullptr,
+                                            bool legacy = false);
 
 struct ParticleDslBundle final {
     std::vector<ParticleDefinition> modules;  // 闭包内全部模块，按模块名排序
@@ -195,7 +208,8 @@ struct ParticleDslBundle final {
 
 [[nodiscard]] bool LoadParticleDslBundle(const std::filesystem::path& rootFile,
                                          ParticleDslBundle& bundle,
-                                         std::string* error = nullptr);
+                                         std::string* error = nullptr,
+                                         bool legacy = false);
 
 // ---------------------------------------------------------------- 序列化
 
@@ -282,10 +296,12 @@ struct ParticleRecord final {
 inline constexpr std::uint32_t kParticleV2Cookie = 0xDEADFED7u;
 inline constexpr std::uint32_t kParticleV2PayloadMagic = 0x33504449u;  // 'IDP3'
 // Compact particle records carry scalar integers and raw 20-byte track nodes.
-// IDP5 header: image registry hash, emitter-name table hash, count, body size.
+// IDR4 source header: zero registry hash, emitter-name hash, count, body size.
+// Each emitter: image count, ordered source handles (including repeats),
+// logical imageFrames, animated, flags, type, then unchanged gold tracks/fields.
 // IDT3 carries declaration-order OnDuration indices; IDT5 carries numeric name IDs.
 inline constexpr std::uint32_t kParticleV4Cookie = 0xDEADFED8u;
-inline constexpr std::uint32_t kParticleV4PayloadMagic = 0x35504449u;  // 'IDP5'
+inline constexpr std::uint32_t kParticleV4PayloadMagic = 0x34524449u;  // 'IDR4'
 inline constexpr std::uint32_t kParticleOnDurationNone = 0xFFFFFFFFu;
 inline constexpr std::uint32_t kParticleEmitterNativeDumpSize = 688;
 

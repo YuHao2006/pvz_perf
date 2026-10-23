@@ -1,12 +1,13 @@
 target_sources(${PROJECT_NAME} PRIVATE
     Color.cpp
     Color.h
+    AtlasDraw.cpp
+    AtlasDraw.h
     ImageDiagnostics.cpp
     ImageDiagnostics.h
     RenderInterface.cpp
     RenderInterface.h
-    DDImage.cpp
-    DDImage.h
+    ImageDrawing.cpp
     DDInterface.cpp
     DDInterface.h
     Font.cpp
@@ -17,8 +18,6 @@ target_sources(${PROJECT_NAME} PRIVATE
     ImageFont.cpp
     ImageFont.h
     Image.h
-    ResidentImage.cpp
-    ResidentImage.h
     inc_routines
     MemoryImage.cpp
     MemoryImage.h

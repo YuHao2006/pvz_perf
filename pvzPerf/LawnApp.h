@@ -219,7 +219,7 @@ public:
 	bool							KillAlmanacDialog();
 	int								GetSeedsAvailable();
 	Reanimation*					AddReanimation(float theX, float theY, int theRenderOrder, ReanimationType theReanimationType);
-	TodParticleSystem*				AddTodParticle(float theX, float theY, int theRenderOrder, ParticleEffect theEffect);
+	TodParticleSystem*				AddTodParticle(float theX, float theY, int theRenderOrder, ParticleEffect theEffect, std::uint32_t theVariant = 0);
 	/*inline*/ ParticleSystemID		ParticleGetID(TodParticleSystem* theParticle);
 	/*inline*/ TodParticleSystem*	ParticleGet(ParticleSystemID theParticleID);
 	/*inline*/ TodParticleSystem*	ParticleTryToGet(ParticleSystemID theParticleID);
@@ -305,7 +305,7 @@ public:
 	static /*inline*/ void			CenterDialog(Dialog* theDialog, int theWidth, int theHeight);
 
 protected:
-	virtual void					SwitchScreenMode(bool wantWindowed, bool is3d, bool force = false);
+	virtual void					SwitchScreenMode(bool wantWindowed, bool force);
 };
 
 bool								LawnGetCloseRequest();

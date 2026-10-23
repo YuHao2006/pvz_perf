@@ -4,14 +4,14 @@
 #include <cstdarg>
 #include <cstdio>
 #include <atomic>
+#include <chrono>
 #include <deque>
+#include <future>
 #include <mutex>
 #include <utility>
 #include "TodDebug.h"
 #include "TodCommon.h"
 #include "Definition.h"  // DefinitionLoadImage（③d 号直取的回落路径）
-#include "ProgramImageSymbols.h"
-#include "generated/NumericResourceBindings.h"  // v4 图像符号注册表（泵静态槽位放置）
 #include "generated/EntityStrings.h"  // 动态键实体表（阶段 3）
 #include "EffectSystem.h"
 #include "Resources.h"
@@ -19,7 +19,8 @@
 #include "GameConstants.h"
 #include "graphics/Font.h"
 #include "misc/Debug.h"
-#include "graphics/DDImage.h"
+#include "misc/AutoCrit.h"
+#include "graphics/Image.h"
 #include "graphics/Graphics.h"
 #include "graphics/ImageFont.h"
 #include "misc/PerfTimer.h"
@@ -451,16 +452,10 @@ void TodDrawString(Graphics* g, const SexyString& theText, int thePosX, int theP
 }
 
 //0x511D90
-void TodDrawImageCelScaled(Graphics* g, Image* theImageStrip, int thePosX, int thePosY, int theCelCol, int theCelRow, float theScaleX, float theScaleY)
+void TodDrawImageRectScaled(Graphics* g, Image* theImage, int thePosX, int thePosY, const Rect& theSrcRect, float theScaleX, float theScaleY)
 {
-	TOD_ASSERT(theCelCol >= 0 && theCelCol < theImageStrip->mNumCols);
-	TOD_ASSERT(theCelRow >= 0 && theCelRow < theImageStrip->mNumRows);
-
-	int aCelWidth = theImageStrip->GetCelWidth();
-	int aCelHeight = theImageStrip->GetCelHeight();
-	Rect aSrcRect(aCelWidth * theCelCol, aCelHeight * theCelRow, aCelWidth, aCelHeight);
-	Rect aDestRect(thePosX, thePosY, FloatRoundToInt(aCelWidth * theScaleX), FloatRoundToInt(aCelHeight * theScaleY));
-	g->DrawImage(theImageStrip, aDestRect, aSrcRect);
+	Rect aDestRect(thePosX, thePosY, FloatRoundToInt(theSrcRect.mWidth * theScaleX), FloatRoundToInt(theSrcRect.mHeight * theScaleY));
+	g->DrawImage(theImage, aDestRect, theSrcRect);
 }
 
 static const int POOL_SIZE = 4096;
@@ -623,15 +618,9 @@ void TodDrawStringMatrix(Graphics* g, const _Font* theFont, const SexyMatrix3& t
 
 //0x512570
 // GOTY @Patoke: 0x51C863
-void TodDrawImageCelF(Graphics* g, Image* theImageStrip, float thePosX, float thePosY, int theCelCol, int theCelRow)
+void TodDrawImageRectF(Graphics* g, Image* theImage, float thePosX, float thePosY, const Rect& theSrcRect)
 {
-	TOD_ASSERT(theCelCol >= 0 && theCelCol < theImageStrip->mNumCols);
-	TOD_ASSERT(theCelRow >= 0 && theCelRow < theImageStrip->mNumRows);
-
-	int aCelWidth = theImageStrip->GetCelWidth();
-	int aCelHeight = theImageStrip->GetCelHeight();
-	Rect theSrcRect(aCelWidth * theCelCol, aCelHeight * theCelRow, aCelWidth, aCelHeight);
-	g->DrawImageF(theImageStrip, thePosX, thePosY, theSrcRect);
+	g->DrawImageF(theImage, thePosX, thePosY, theSrcRect);
 }
 
 void SexyMatrix3Translation(SexyMatrix3& m, float x, float y)
@@ -698,55 +687,55 @@ void TodMarkImageForSanding(Image* theImage)
 //0x512650
 void TodBltMatrix(Graphics* g, Image* theImage, const SexyMatrix3& theTransform, const Rect& theClipRect, const Color& theColor, int theDrawMode, const Rect& theSrcRect)
 {
-	float aOffsetX = 0.0f;
-	float aOffsetY = 0.0f;
-	// The original subtracts 0.5 here because DX7 puts integer coordinates
-	// at pixel centers. D3D11 puts them at pixel corners, so the offset must
-	// stay zero; keeping it shifts every reanim image half a pixel and makes
-	// the whole selector (signs, daisy) look soft compared to the original.
-	if (theDrawMode == Graphics::DRAWMODE_ADDITIVE)
-	{
-		gTodTriangleDrawAdditive = true;
+	if (!g->mDestImage || !g->mDestImage->IsGpuDrawTarget())
+		throw NonScreenDrawError(DrawOperation::BltMatrix);
+	auto& render=*g->mDestImage->mRenderOwner;
+	render.SelectDrawSurface(g->mDestImage);
+	const Rect* effectiveClip=(theClipRect.mX == 0 && theClipRect.mY == 0 &&
+		theClipRect.mWidth == BOARD_WIDTH && theClipRect.mHeight == BOARD_HEIGHT) ? nullptr : &theClipRect;
+	// Native GPU coordinates use pixel corners, with no DX7 half-pixel offset.
+	gTodTriangleDrawAdditive = theDrawMode == Graphics::DRAWMODE_ADDITIVE;
+	try {
+		render.BltTransformed(theImage, effectiveClip, theColor, theDrawMode, theSrcRect,
+			theTransform, g->mLinearBlend, 0.0f, 0.0f, true);
+	} catch (...) {
+		gTodTriangleDrawAdditive = false;
+		throw;
 	}
+	gTodTriangleDrawAdditive = false;
+}
 
-	if (!g->mDDDestImage) throw NonScreenDrawError(DrawOperation::BltMatrix);
-
-	if (theClipRect.mX != 0 || theClipRect.mY != 0 || theClipRect.mWidth != BOARD_WIDTH || theClipRect.mHeight != BOARD_HEIGHT)
-	{
-		g->mDDDestImage->BltMatrix(theImage, aOffsetX, aOffsetY, theTransform, theClipRect, theColor, theDrawMode, theSrcRect, g->mLinearBlend);
+void TodBltMatrix(Graphics* g, const TextureSource& texture, const SexyMatrix3& transform,
+	const Rect& clip, const Color& color, int drawMode, const Rect& source)
+{
+	if (!g->mDestImage || !g->mDestImage->IsGpuDrawTarget())
+		throw NonScreenDrawError(DrawOperation::BltMatrix);
+	auto& render=*g->mDestImage->mRenderOwner;
+	render.SelectDrawSurface(g->mDestImage);
+	const Rect* effectiveClip=(clip.mX == 0 && clip.mY == 0 &&
+		clip.mWidth == BOARD_WIDTH && clip.mHeight == BOARD_HEIGHT) ? nullptr : &clip;
+	gTodTriangleDrawAdditive = drawMode == Graphics::DRAWMODE_ADDITIVE;
+	try {
+		render.BltTransformed(texture, effectiveClip, color, drawMode, source,
+			transform, g->mLinearBlend, 0.0f, 0.0f, true);
+	} catch (...) {
+		gTodTriangleDrawAdditive = false;
+		throw;
 	}
-	else if (DDImage::Check3D(g->mDDDestImage))
-	{
-		theImage->mDrawn = true;
-		RenderInterface* aInterface = g->mDDDestImage->mDDInterface->mRenderInterface;
-		aInterface->SelectDrawSurface(g->mDDDestImage);
-		aInterface->BltTransformed(theImage, nullptr, theColor, theDrawMode, theSrcRect, theTransform, g->mLinearBlend, aOffsetX, aOffsetY, true);
-	}
-	else
-	{
-		Rect aBufFixClipRect(0, 0, BOARD_WIDTH + 1, BOARD_HEIGHT + 1);
-		g->mDDDestImage->BltMatrix(theImage, aOffsetX, aOffsetY, theTransform, aBufFixClipRect, theColor, theDrawMode, theSrcRect, g->mLinearBlend);
-	}
-
 	gTodTriangleDrawAdditive = false;
 }
 
 //0x5127C0
-void TodDrawImageCelCenterScaledF(Graphics* g, Image* theImageStrip, float thePosX, float thePosY, int theCelCol, float theScaleX, float theScaleY)
+void TodDrawImageRectCenterScaledF(Graphics* g, Image* theImage, float thePosX, float thePosY, const Rect& theSrcRect, float theScaleX, float theScaleY)
 {
-	TOD_ASSERT(theCelCol >= 0 && theCelCol < theImageStrip->mNumCols);
-
-	int aCelWidth = theImageStrip->GetCelWidth();
-	int aCelHeight = theImageStrip->GetCelHeight();
-	Rect aSrcRect(aCelWidth * theCelCol, 0, aCelWidth, aCelHeight);
 	if (theScaleX == 1.0f && theScaleY == 1.0f)
 	{
-		g->DrawImageF(theImageStrip, thePosX, thePosY, aSrcRect);
+		g->DrawImageF(theImage, thePosX, thePosY, theSrcRect);
 		return;
 	}
 
-	float aTransX = aCelWidth * 0.5f + thePosX + g->mTransX;
-	float aTransY = aCelHeight * 0.5f + thePosY + g->mTransY;
+	float aTransX = theSrcRect.mWidth * 0.5f + thePosX + g->mTransX;
+	float aTransY = theSrcRect.mHeight * 0.5f + thePosY + g->mTransY;
 
 	SexyMatrix3 aTransform;
 	aTransform.m00 = theScaleX;
@@ -760,25 +749,20 @@ void TodDrawImageCelCenterScaledF(Graphics* g, Image* theImageStrip, float thePo
 	aTransform.m22 = 1.0f;
 
 	const Color& aColor = g->mColorizeImages ? g->mColor : Color::White;
-	TodBltMatrix(g, theImageStrip, aTransform, g->mClipRect, aColor, g->mDrawMode, aSrcRect);
+	TodBltMatrix(g, theImage, aTransform, g->mClipRect, aColor, g->mDrawMode, theSrcRect);
 }
 
 //0x512880
-void TodDrawImageCelScaledF(Graphics* g, Image* theImageStrip, float thePosX, float thePosY, int theCelCol, int theCelRow, float theScaleX, float theScaleY)
+void TodDrawImageRectScaledF(Graphics* g, Image* theImage, float thePosX, float thePosY, const Rect& theSrcRect, float theScaleX, float theScaleY)
 {
-	TOD_ASSERT(theCelCol >= 0 && theCelCol < theImageStrip->mNumCols);
-
-	int aCelWidth = theImageStrip->GetCelWidth();
-	int aCelHeight = theImageStrip->GetCelHeight();
-	Rect aSrcRect(aCelWidth * theCelCol, aCelHeight * theCelRow, aCelWidth, aCelHeight);
 	if (theScaleX == 1.0f && theScaleY == 1.0f)
 	{
-		g->DrawImageF(theImageStrip, thePosX, thePosY, aSrcRect);
+		g->DrawImageF(theImage, thePosX, thePosY, theSrcRect);
 		return;
 	}
 
-	float aTransX = aCelWidth * 0.5f * theScaleX + thePosX + g->mTransX;
-	float aTransY = aCelHeight * 0.5f * theScaleY + thePosY + g->mTransY;
+	float aTransX = theSrcRect.mWidth * 0.5f * theScaleX + thePosX + g->mTransX;
+	float aTransY = theSrcRect.mHeight * 0.5f * theScaleY + thePosY + g->mTransY;
 
 	SexyMatrix3 aTransform;
 	aTransform.m00 = theScaleX;
@@ -792,7 +776,7 @@ void TodDrawImageCelScaledF(Graphics* g, Image* theImageStrip, float thePosX, fl
 	aTransform.m22 = 1.0f;
 
 	const Color& aColor = g->mColorizeImages ? g->mColor : Color::White;
-	TodBltMatrix(g, theImageStrip, aTransform, g->mClipRect, aColor, g->mDrawMode, aSrcRect);
+	TodBltMatrix(g, theImage, aTransform, g->mClipRect, aColor, g->mDrawMode, theSrcRect);
 }
 
 //0x512950
@@ -855,7 +839,7 @@ void TodDrawImageCenterScaledF(Graphics* g, Image* theImage, float thePosX, floa
 //0x512C60
 void FixPixelsOnAlphaEdgeForBlending(Image* theImage)
 {
-	static_cast<MemoryImage*>(theImage)->mGpuSamplingFlags |= GpuVertex::kAlphaEdgeFilter;
+	static_cast<Image*>(theImage)->mGpuSamplingFlags |= GpuVertex::kAlphaEdgeFilter;
 }
 
 static void SexyMatrix3Transpose(const SexyMatrix3& m, SexyMatrix3 &r)
@@ -984,13 +968,12 @@ bool TodLoadResources(ResourceGroupId theGroup)
 // ── GPU 纹理预热队列（2026-10-07 用户架构"全部启动时装载+流式上传+CPU
 // 不留位图"）。零线程：装载线程/主线程把已解码图压入（持 SharedImageRef
 // 拷贝=引用计数保命），主线程每拍泵出预算内逐张 CreateImageTexture——
-// staging 竞技场自动攒批，mPurgeBits 位图上传即弃（RenderInterface 侧）。
+// staging 竞技场自动攒批，位图上传即弃（RenderInterface 侧）。
 
 namespace
 {
 	std::mutex gWarmMutex;
-	struct TodWarmEntry { SharedImageRef mRef; std::uint32_t mSymbol = 0; };
-	std::deque<TodWarmEntry> gWarmQueue;
+	std::deque<SharedImageRef> gWarmQueue;
 
 
 	// 排水协议（装载线程等待用）：队列空 && 主线程清扫净（双条件硬保证——
@@ -1000,19 +983,19 @@ namespace
 	std::atomic<bool> gWarmSweepClean{false};
 }
 
-void TodQueueTextureWarm(SharedImageRef theRef, std::uint32_t theSymbol)
+void TodQueueTextureWarm(SharedImageRef theRef)
 {
-	if (Sexy::MemoryImage* aImage = theRef)
+	if (Sexy::Image* aImage = theRef)
 		// 像素来源判定（2026-10-09 首绘案修正）：Palletize 图（海量声明资源
 		// 与字体层图）像素存 mColorIndices/mColorTable 而 mBits==nullptr——
 		// 旧守卫只认 mBits 把整类图挡在队列外，成品只能首绘重建。GetBits()
 		// 支持调色板重建，故此处放行。
-		if ((aImage->mBits != nullptr || aImage->mColorIndices != nullptr)
+		if (aImage->mPendingDecoded != nullptr
 			&& aImage->mWidth > 0 && aImage->mHeight > 0
-			&& aImage->mD3DData == nullptr)
+			&& aImage->mTexture == nullptr)
 		{
 			std::unique_lock aLock(gWarmMutex);
-			gWarmQueue.push_back({std::move(theRef), theSymbol});
+			gWarmQueue.push_back(std::move(theRef));
 			gWarmSweepClean.store(false, std::memory_order_release);
 		}
 }
@@ -1028,7 +1011,6 @@ void TodWarmDispose()
 	std::unique_lock aLock(gWarmMutex);
 	gWarmQueue.clear();
 	gWarmSweepClean.store(false, std::memory_order_release);
-	memset(gImageSymbolBinds, 0, sizeof(gImageSymbolBinds));
 }
 
 // 排水协议（装载线程等待用）：队列空 && 主线程清扫净（双条件硬保证——
@@ -1044,26 +1026,6 @@ void TodWarmMarkSweepClean()
 	gWarmSweepClean.store(true, std::memory_order_release);
 }
 
-void TodBindSymbolTable()
-{
-    if (gSexyAppBase == nullptr || gSexyAppBase->mResourceManager == nullptr)
-        return;
-    auto* manager = gSexyAppBase->mResourceManager;
-    memset(gImageSymbolBinds, 0, sizeof(gImageSymbolBinds));
-    for (std::uint32_t id = 1; id <= IMAGE_SYMBOL_ID_MAX; ++id)
-    {
-        auto* resource = manager->GetImageResBySlot(id);
-        if (resource == nullptr)
-            continue;
-        if (MemoryImage* image = resource->mImage)
-        {
-            gImageSymbolBinds[id].mImage = image;
-            gImageSymbolBinds[id].mWidth = static_cast<std::uint16_t>(image->mWidth);
-            gImageSymbolBinds[id].mHeight = static_cast<std::uint16_t>(image->mHeight);
-        }
-    }
-}
-
 int TodWarmPump(int theBudgetMs)
 {
 	if (gSexyAppBase == nullptr || gSexyAppBase->mDDInterface == nullptr
@@ -1074,7 +1036,7 @@ int TodWarmPump(int theBudgetMs)
 	int aMade = 0;
 	for (;;)
 	{
-		TodWarmEntry aEntry;
+		SharedImageRef aEntry;
 		{
 			std::unique_lock aLock(gWarmMutex);
 			if (gWarmQueue.empty())
@@ -1082,64 +1044,51 @@ int TodWarmPump(int theBudgetMs)
 			aEntry = std::move(gWarmQueue.front());
 			gWarmQueue.pop_front();
 		}
-		Sexy::MemoryImage* aImage = aEntry.mRef;
+		Sexy::Image* aImage = aEntry;
 		// 像素来源判定同 TodQueueTextureWarm（Palletize 图 mBits==nullptr 但
 		// 调色板可重建像素，不得跳过）
-		if (aImage == nullptr || (aImage->mBits == nullptr && aImage->mColorIndices == nullptr)
-			|| aImage->mD3DData != nullptr)
+		if (aImage == nullptr || aImage->mPendingDecoded == nullptr
+			|| aImage->mTexture != nullptr)
 		{
 			continue;  // 排队期间被 purge/重建/抢先上传——跳过
 		}
-		// v4 静态槽位：注册表命中的图落在恒等位 staticBase+符号号（编译
-		// 记录烘焙的最终下标）；未命中（首绘合成图等）走动态区慢路
-		const uint32_t aSymbol = aEntry.mSymbol;
-		if (aSymbol != 0)
-			gSexyAppBase->mDDInterface->mRenderInterface->CreateImageTextureStatic(aImage, aSymbol);
-		else
-			gSexyAppBase->mDDInterface->mRenderInterface->CreateImageTexture(aImage);
+		gSexyAppBase->mDDInterface->mRenderInterface->CreateImageTexture(aImage);
 		aMade++;
 		if (aTimer.GetDuration() >= theBudgetMs)
 			return aMade;
 	}
 }
 
-// 装载期兜底清扫（用户裁决"任何一个资源在加载阶段不被跳过"）：队列
-// 排空只保证"已入队条目被消费"（可被消费为跳过），未入队的已解码图对
-// 队列不可见——典型=装载线程绑定 reanim 定义时懒解码的图像资源。本清扫
-// 对资源槽全表核验：每张"已解码（有位图）但不在 GPU（无 D3DData）"
-// 的图就地补传。【仅主线程调用】——内走 Vulkan 上传，装载线程调用=与主
-// 线程泵并发的跨线程竞态（2026-10-07 焦散案同型，校验层 THREADING
-// ERROR 定罪过一次）。屏幕画布/离屏合成目标/字体图集不在资源槽
-//（各自路径，按设计）。
+// Main-thread loading sweep visits finalized shared-cache images. A cache entry
+// publishes mImage under this lock only after decode/prepare has completed.
+// The application's GPU registry also contains constructor-registered images
+// whose worker initialization may still be in progress; do not inspect those.
 int TodWarmFinalSweep()
 {
-	if (gSexyAppBase == nullptr || gSexyAppBase->mResourceManager == nullptr
-		|| gSexyAppBase->mDDInterface == nullptr || gSexyAppBase->mDDInterface->mRenderInterface == nullptr)
+	if (gSexyAppBase == nullptr || gSexyAppBase->mDDInterface == nullptr
+		|| gSexyAppBase->mDDInterface->mRenderInterface == nullptr)
 		return 0;
+	AutoCrit lock(gSexyAppBase->mDDInterface->mCritSect);
+	for (const auto& entry:gSexyAppBase->mSharedImageMap)
+		if (entry.second.mLoadReady.valid() &&
+			entry.second.mLoadReady.wait_for(std::chrono::seconds(0))!=std::future_status::ready)
+			return -1; // Work remains; the loading screen must not mark the sweep clean.
 	RenderInterface* aRI = gSexyAppBase->mDDInterface->mRenderInterface;
 	int aSwept = 0;
-	for (auto* aResource : gSexyAppBase->mResourceManager->mResourceSlots)
+	for (const auto& entry:gSexyAppBase->mSharedImageMap)
 	{
-		if (aResource == nullptr || aResource->mType != ResourceManager::ResType_Image)
-			continue;
-		auto* aRes = static_cast<ResourceManager::ImageRes*>(aResource);
-		Sexy::MemoryImage* aImage = aRes->mImage;
-		if (aImage && aImage->mD3DData)
+		Sexy::Image* aImage=entry.second.mImage;
+		if (aImage && aImage->mTexture)
 		{
 			aImage->PurgeBits();
 			continue;
 		}
 		// 像素来源判定同 TodQueueTextureWarm（Palletize 图 mBits==nullptr
 		// 但调色板可重建像素，清扫不得跳过）；0 尺寸空图跳过。
-		if (aImage == nullptr || (aImage->mBits == nullptr && aImage->mColorIndices == nullptr)
+		if (aImage == nullptr || aImage->mPendingDecoded == nullptr
 			|| aImage->mWidth <= 0 || aImage->mHeight <= 0)
 			continue;
-		aImage->mPurgeBits = true;
-		const uint32_t aSymbol = aRes->mImageSymbol;
-		if (aSymbol != 0)
-			aRI->CreateImageTextureStatic(aImage, aSymbol);
-		else
-			aRI->CreateImageTexture(aImage);
+		aRI->CreateImageTexture(aImage);
 		++aSwept;
 	}
 	return aSwept;
@@ -1169,7 +1118,7 @@ int TodWarmDrainAll()
 		if (!TodWarmQueueEmpty())
 			continue;  // 泵期间新入队（防御；同线程下不可达）
 		const int aSwept = TodWarmFinalSweep();
-		aTotal += aSwept;
+		if (aSwept>0) aTotal += aSwept;
 		if (aSwept == 0 && TodWarmQueueEmpty())
 			break;
 	}
@@ -1184,176 +1133,33 @@ bool ResourceManager::TodLoadResources(ResourceGroupId theGroup)
 	StartLoadResources(theGroup);
 	while (!gSexyAppBase->mShutdown && TodLoadNextResource());
 	if (gSexyAppBase->mShutdown)
+	{
+		DeleteResources(theGroup);
 		return false;
+	}
 
-	if (HadError())
+	if (HadError() || !FinishLoadResources(theGroup))
 	{
 		gSexyAppBase->ShowResourceError(true);
 		return false;
 	}
-
-	if (gExtractResourcesByGroup && !gExtractResourcesByGroup(this, theGroup))
-	{
-		gSexyAppBase->ShowResourceError(true);
-		return false;
-	}
-
-	SetGroupLoaded(theGroup);
-	// 声明图入预热队列（装载线程/主线程皆经此；动态图走 AddImageToMap 钩子）
-	if (const ResList* aGroup = GetResGroupList(theGroup))
-		for (BaseRes* aRes : *aGroup)
-			if (aRes->mType == ResType_Image)
-				if (Sexy::MemoryImage* aImage = static_cast<ImageRes*>(aRes)->mImage)
-					// 预热队列直接携带图像符号；物理路径不参与槽号识别。
-					TodQueueTextureWarm(static_cast<ImageRes*>(aRes)->mImage, aRes->mImageSymbol);
-
 
 	return true;
 }
 
-void TodAttachImageSlots()
+_Font* TodLoadCreditsFont()
 {
-    if (gSexyAppBase != nullptr && gSexyAppBase->mResourceManager != nullptr)
-        gSexyAppBase->mResourceManager->AttachImageSlots(IMAGE_SYMBOL_ID_MAX);
-}
-
-Image* TodDefinitionLoadImageById(std::uint32_t theSymbolId)
-{
-    if (theSymbolId == 0 || theSymbolId > IMAGE_SYMBOL_ID_MAX ||
-        gSexyAppBase == nullptr || gSexyAppBase->mResourceManager == nullptr)
+    if (gSexyAppBase == nullptr || gSexyAppBase->mResourceManager == nullptr)
         return nullptr;
-    auto* manager = gSexyAppBase->mResourceManager;
-    SharedImageRef image = manager->LoadImageBySlot(theSymbolId);
-    if (static_cast<Image*>(image) != nullptr)
-    {
-        TodQueueTextureWarm(image, theSymbolId);
-    }
-    return static_cast<Image*>(image);
-}
-
-_Font* TodDefinitionLoadFontById(std::uint32_t theSymbolId)
-{
-    if (theSymbolId != 1 || gSexyAppBase == nullptr || gSexyAppBase->mResourceManager == nullptr)
+    if (!FONT_BRIANNETOD32 &&
+        !gSexyAppBase->mResourceManager->TodLoadResources(ResourceGroupId::DelayLoad_Credits))
         return nullptr;
-    return gSexyAppBase->mResourceManager->LoadFontByResourceSlot(
-        static_cast<unsigned>(ResourceId::FONT_BRIANNETOD32_ID));
-}
-
-std::uint32_t TodImageSymbolRegistryHash()
-{
-    return IMAGE_SYMBOL_REGISTRY_CRC;
-}
-
-std::uint32_t TodFontSymbolRegistryHash()
-{
-    // Fingerprint of the compiler's existing one-entry font symbol sidecar.
-    return 0xA4345491u;
+    return FONT_BRIANNETOD32;
 }
 
 bool TodLoadNextResource()
 {
 	return gSexyAppBase->mResourceManager->TodLoadNextResource();
-}
-
-//0x513330
-bool ResourceManager::TodLoadNextResource()
-{
-	if (HadError() || mCurResGroupList == nullptr)
-		return false;
-
-	while (mCurResGroupListItr != mCurResGroupList->end())
-	{
-		BaseRes* aRes = *mCurResGroupListItr;
-		if (aRes->mFromProgram)
-		{
-			mCurResGroupListItr++;
-			continue;
-		}
-
-		switch (aRes->mType)
-		{
-		case ResType_Image:
-		{
-			ImageRes* anImageRes = (ImageRes*)aRes;
-			if ((DDImage*)anImageRes->mImage != nullptr)
-			{
-				mCurResGroupListItr++;
-				continue;
-			}
-
-			break;
-		}
-
-		case ResType_Sound:
-		{
-			SoundRes* aSoundRes = (SoundRes*)aRes;
-			if (aSoundRes->mSoundId != -1)
-			{
-				mCurResGroupListItr++;
-				continue;
-			}
-
-			break;
-		}
-
-		case ResType_Font:
-		{
-			FontRes* aFontRes = (FontRes*)aRes;
-			if (aFontRes->mFont != nullptr)
-			{
-				mCurResGroupListItr++;
-				continue;
-			}
-
-			break;
-		}
-		}
-
-		if (!LoadNextResource())
-			break;
-
-		return true;
-	}
-
-	return false;
-}
-
-bool TodFindImagePath(Image* theImage, std::string* thePath)
-{
-	return gSexyAppBase->mResourceManager->FindImagePath(theImage, thePath);
-}
-
-// @Patoke implemented
-bool TodFindFontPath(_Font* theFont, std::string* thePath) {
-	return gSexyAppBase->mResourceManager->FindFontPath(theFont, thePath);
-}
-
-bool ResourceManager::FindFontPath(_Font* theFont, std::string* thePath)
-{
-	const auto matches = [&](BaseRes* resource) {
-		if (resource == nullptr || resource->mType != ResType_Font ||
-			static_cast<FontRes*>(resource)->mFont != theFont)
-			return false;
-		*thePath = resource->mPath;
-		return true;
-	};
-	for (auto* resource : mResourceSlots)
-		if (matches(resource)) return true;
-	return false;
-}
-
-bool ResourceManager::FindImagePath(Image* theImage, std::string* thePath)
-{
-	const auto matches = [&](BaseRes* resource) {
-		if (resource == nullptr || resource->mType != ResType_Image ||
-			static_cast<Image*>(static_cast<ImageRes*>(resource)->mImage) != theImage)
-			return false;
-		*thePath = resource->mPath;
-		return true;
-	};
-	for (auto* resource : mResourceSlots)
-		if (matches(resource)) return true;
-	return false;
 }
 
 TodAllocator gGlobalAllocators[MAX_GLOBAL_ALLOCATORS];  //0x6A7B68

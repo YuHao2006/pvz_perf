@@ -2,9 +2,8 @@ export component DancerRise {
     kind: particle;
     source-name: "dancerrise";
     Emitter {
-        image: "IMAGE_DIRTSMALL";
+        images: ["particles/frames/dirtsmall_r1_c0.png","particles/frames/dirtsmall_r1_c1.png","particles/frames/dirtsmall_r1_c2.png","particles/frames/dirtsmall_r1_c3.png","particles/frames/dirtsmall_r1_c4.png","particles/frames/dirtsmall_r1_c5.png","particles/frames/dirtsmall_r1_c6.png","particles/frames/dirtsmall_r1_c7.png"];
         name: "DancerDirtSplash";
-        imageRow: 1;
         imageFrames: 8;
         randomLaunchSpin: 1;
         dieIfOverloaded: 1;
@@ -31,9 +30,8 @@ export component DancerRise {
         }
     }
     Emitter {
-        image: "IMAGE_DIRTBIG";
+        images: ["particles/frames/dirtbig_r1_c0.png","particles/frames/dirtbig_r1_c1.png","particles/frames/dirtbig_r1_c2.png","particles/frames/dirtbig_r1_c3.png"];
         name: "DancerDirtClumps";
-        imageRow: 1;
         imageFrames: 4;
         systemDuration: 200;
         spawnMinActive: 10;

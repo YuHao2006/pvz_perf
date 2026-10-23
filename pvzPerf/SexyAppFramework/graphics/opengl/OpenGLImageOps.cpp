@@ -10,28 +10,28 @@ using namespace GL3;
 
 void OpenGLRenderer::Impl::ImagePass(OpenGLTexture* target, OpenGLTexture* source,
     OpenGLTexture* alpha, int operation, const GpuImageProcessing* processing,
-    int columns, int rows, unsigned int color, bool colorOnly)
+    unsigned int color, bool colorOnly)
 {
     Flush();
     OpenGLTexture sourceCopy, alphaCopy;
-    if (source->storage == target->storage) {
-        sourceCopy = *source; sourceCopy.storage = Snapshot(source);
+    if (source == target) {
+        Snapshot(*source, sourceCopy);
         source = &sourceCopy;
     }
-    if (alpha && alpha->storage == target->storage) {
-        alphaCopy = *alpha; alphaCopy.storage = Snapshot(alpha);
+    if (alpha == target) {
+        Snapshot(*alpha, alphaCopy);
         alpha = &alphaCopy;
     }
     auto* previous = selected;
     selected = target;
     try {
         BindTarget(); glUseProgram(imageProgram);
-        glActiveTexture(GL_TEXTURE0); glBindTexture(GL_TEXTURE_2D, source->storage->image);
+        glActiveTexture(GL_TEXTURE0); glBindTexture(GL_TEXTURE_2D, source->image);
         glUniform1i(imageUniforms[uSourceImage], 0);
         glUniform4i(imageUniforms[uSourceRect],
             0, 0, source->width, source->height);
         glActiveTexture(GL_TEXTURE0 + 1);
-        glBindTexture(GL_TEXTURE_2D, (alpha ? alpha : source)->storage->image);
+        glBindTexture(GL_TEXTURE_2D, (alpha ? alpha : source)->image);
         glUniform1i(imageUniforms[uAlphaImage], 1);
         const auto* mask = alpha ? alpha : source;
         glUniform4i(imageUniforms[uAlphaRect],
@@ -46,7 +46,6 @@ void OpenGLRenderer::Impl::ImagePass(OpenGLTexture* target, OpenGLTexture* sourc
             processing ? processing->blue : 255, processing ? processing->alpha : 255);
         glUniform1ui(imageUniforms[uPackedColor], color);
         glUniform1ui(imageUniforms[uCounter], causticCounter);
-        glUniform2i(imageUniforms[uCells], columns, rows);
         glUniform1i(imageUniforms[uColorOnly], colorOnly);
         Quad(); Check("OpenGL image processing pass");
     } catch (...) {
@@ -80,7 +79,7 @@ OpenGLTexture* OpenGLRenderer::CopyTextureRegion(OpenGLTexture* source, int x, i
     if (!source || !s.textures.contains(source))
         throw std::invalid_argument("OpenGL region copy requires a live source");
     s.Flush();
-    auto* target = s.Allocate(w, h, source->storage->format, true);
+    auto* target = s.Allocate(w, h, source->format, true);
     target->flags = source->flags;
     target->render = source->render;
     auto* previous = s.selected;
@@ -90,7 +89,7 @@ OpenGLTexture* OpenGLRenderer::CopyTextureRegion(OpenGLTexture* source, int x, i
         glDisable(GL_SCISSOR_TEST); glClearColor(0,0,0,0); glClear(GL_COLOR_BUFFER_BIT);
         glGenFramebuffers(1, &read); glBindFramebuffer(GL_READ_FRAMEBUFFER, read);
         glFramebufferTexture2D(GL_READ_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D,
-            source->storage->image, 0);
+            source->image, 0);
         const int left = static_cast<int>(std::clamp<long long>(x,0,source->width));
         const int bottom = static_cast<int>(std::clamp<long long>(y,0,source->height));
         const int right = static_cast<int>(std::clamp<long long>(static_cast<long long>(x)+w,0,source->width));
@@ -108,15 +107,14 @@ OpenGLTexture* OpenGLRenderer::CopyTextureRegion(OpenGLTexture* source, int x, i
     return target;
 }
 OpenGLTexture* OpenGLRenderer::ComposeAlphaRaw(OpenGLTexture* base, OpenGLTexture* alpha,
-    int columns, int rows, unsigned int color, bool colorOnly)
+    unsigned int color, bool colorOnly)
 {
     auto& s = *impl_;
     if (!base || !alpha || !s.textures.contains(base) || !s.textures.contains(alpha) ||
-        columns <= 0 || rows <= 0 || columns > base->width || rows > base->height ||
-        alpha->width < base->width / columns || alpha->height < base->height / rows)
+        alpha->width != base->width || alpha->height != base->height)
         throw std::invalid_argument("Invalid OpenGL alpha composition dimensions");
     auto* target = s.Allocate(base->width, base->height, GL_RGBA8, false);
-    try { s.ImagePass(target, base, alpha, 2, nullptr, columns, rows, color, colorOnly); }
+    try { s.ImagePass(target, base, alpha, 2, nullptr, color, colorOnly); }
     catch (...) { DestroyTexture(target); throw; }
     return target;
 }
@@ -129,17 +127,18 @@ OpenGLTexture* OpenGLRenderer::AdoptComposedTexture(OpenGLTexture* texture)
     // Composition scratch is scoped to this serialized upload chain. GL retains
     // already issued command references; no host wait or CPU pixel copy is needed.
     for (auto it = s.textures.begin(); it != s.textures.end();) {
-        auto* candidate = it->first;
-        if (candidate != s.scene && candidate != s.selected && candidate->slot == ~0U)
+        auto* candidate = *it;
+        if (candidate != s.scene && candidate != s.selected && candidate->slot == ~0U) {
+            delete candidate;
             it = s.textures.erase(it);
-        else ++it;
+        } else ++it;
     }
     return texture;
 }
 OpenGLTexture* OpenGLRenderer::ComposeAlpha(OpenGLTexture* base, OpenGLTexture* alpha,
-    int columns, int rows, unsigned int color, bool colorOnly)
+    unsigned int color, bool colorOnly)
 {
-    return AdoptComposedTexture(ComposeAlphaRaw(base, alpha, columns, rows, color, colorOnly));
+    return AdoptComposedTexture(ComposeAlphaRaw(base, alpha, color, colorOnly));
 }
 
 namespace {
@@ -184,8 +183,8 @@ void OpenGLRenderer::RenderFontAtlas(OpenGLTexture* target, OpenGLTexture* sourc
         throw std::invalid_argument("OpenGL font generation requires a live float render image");
     s.Flush();
     OpenGLTexture sourceCopy;
-    if (target->storage == source->storage) {
-        sourceCopy = *source; sourceCopy.storage = s.Snapshot(source);
+    if (target == source) {
+        s.Snapshot(*source, sourceCopy);
         source = &sourceCopy;
     }
     auto* previous = s.selected;
@@ -225,7 +224,7 @@ void OpenGLRenderer::RenderFontAtlas(OpenGLTexture* target, OpenGLTexture* sourc
                 glyph.sourceX, glyph.sourceY, glyph.sourceWidth, glyph.sourceHeight);
             glUniform4i(s.fontUniforms[Impl::uGlyphDst],
                 glyph.targetX, glyph.targetY, glyph.targetWidth, glyph.targetHeight);
-            glActiveTexture(GL_TEXTURE0); glBindTexture(GL_TEXTURE_2D, source->storage->image);
+            glActiveTexture(GL_TEXTURE0); glBindTexture(GL_TEXTURE_2D, source->image);
             glViewport(glyph.targetX, glyph.targetY, glyph.targetWidth, glyph.targetHeight);
             s.Quad(); s.Check("Generate OpenGL font glyph");
         }
@@ -255,7 +254,7 @@ void OpenGLRenderer::UseCausticsTexture(OpenGLTexture* output, OpenGLTexture* so
     auto& s = *impl_;
     if (s.open || !output || !source || !s.textures.contains(output) || !s.textures.contains(source) ||
         !output->caustic || output->width != 128 || output->height != 64 ||
-        output->storage->format != GL_RGBA8 ||
+        output->format != GL_RGBA8 ||
         source->width != 256 || source->height != 256)
         throw std::invalid_argument("Invalid OpenGL caustics source or output");
     s.causticTarget = output; s.causticSource = source;
@@ -278,7 +277,7 @@ std::vector<float> OpenGLRenderer::ReadTextureFloats(OpenGLTexture* texture)
     unsigned int framebuffer = 0;
     glGenFramebuffers(1, &framebuffer); glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D,
-        texture->storage->image, 0);
+        texture->image, 0);
     if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
         glDeleteFramebuffers(1, &framebuffer);
         throw std::runtime_error("OpenGL diagnostic framebuffer is incomplete");

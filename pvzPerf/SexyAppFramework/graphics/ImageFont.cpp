@@ -2,8 +2,6 @@
 #include "Graphics.h"
 #include "Image.h"
 #include "SexyAppBase.h"
-#include "MemoryImage.h"
-#include "graphics/DDImage.h"
 #include "graphics/DDInterface.h"
 #include "graphics/RenderInterface.h"
 #include "misc/AutoCrit.h"
@@ -627,7 +625,7 @@ bool FontData::HandleCommand(const ListDataElement& theParams)
 				std::string aFileName = GetPathFrom(aFileNameString, GetFileDir(mSourceFile));
 
 				SharedImageRef anImage = mApp->GetPreparedSharedImage(aFileName, 0, nullptr,
-					[](DDImage* image) { image->Palletize(); });
+					[](Image* image) { image->Palletize(); });
 
 				if ((Image*)anImage != NULL)
 				{
@@ -635,7 +633,7 @@ bool FontData::HandleCommand(const ListDataElement& theParams)
 					// 首绘防线（2026-10-09 用户规格"首绘路径不得存在"）：字体
 					// 层图不在资源槽——诞生即入 GPU 预热队列
 					//（线程安全；装载期主线程泵排干，玩法期关卡放行门兜底）。
-					TodQueueTextureWarm(anImage, 0);
+					TodQueueTextureWarm(anImage);
 				}
 				else
 				{
@@ -1119,7 +1117,7 @@ bool FontData::LoadLegacy(Image* theFontImage, const std::string& theFontDescFil
 	FontLayerMap aLayerMap{{"", aFontLayer}};
 	CharMap aCharMap;
 	std::string aSourceFile = theFontDescFileName;
-	aFontLayer->mImage = (MemoryImage*)theFontImage;
+	aFontLayer->mImage = (Image*)theFontImage;
 	aFontLayer->mDefaultHeight = aFontLayer->mImage->mHeight;
 	aFontLayer->mAscent = aFontLayer->mImage->mHeight;
 
@@ -1165,7 +1163,7 @@ bool FontData::LoadLegacy(Image* theFontImage, const std::string& theFontDescFil
 	mCharMap.swap(aCharMap);
 	mSourceFile.swap(aSourceFile);
 	// The source and every scaled atlas belong to the same application.
-	mApp = static_cast<MemoryImage*>(theFontImage)->mApp;
+	mApp = static_cast<Image*>(theFontImage)->mApp;
 	mInitialized = true;
 
 	return true;
@@ -1336,8 +1334,7 @@ bool FontData::Load(SexyAppBase* theSexyApp, const std::string& theFontDescFileN
 	for (auto& layer : layers)
 	{
 		const auto& imagePath = imagePaths[index++];
-		layer.mImage = theSexyApp->GetPreparedSharedImage(imagePath, 0, nullptr,
-			[](DDImage* image) { image->mPurgeBits=true; });
+		layer.mImage = theSexyApp->GetPreparedSharedImage(imagePath, 0, nullptr, {});
 		if (static_cast<Image*>(layer.mImage) == nullptr) return false;
 		for (const auto& glyph : layer.mCharData)
 		{
@@ -1347,7 +1344,7 @@ bool FontData::Load(SexyAppBase* theSexyApp, const std::string& theFontDescFileN
 				|| static_cast<long long>(rect.mY) + rect.mHeight > layer.mImage->mHeight) return false;
 		}
 	}
-	for (auto& layer : layers) TodQueueTextureWarm(layer.mImage, 0);
+	for (auto& layer : layers) TodQueueTextureWarm(layer.mImage);
 	mFontLayerList.swap(layers);
 	mCharMap.swap(charMap);
 	mDefaultPointSize = pointSize;
@@ -1374,13 +1371,13 @@ ActiveFontLayer::ActiveFontLayer(const ActiveFontLayer& theActiveFontLayer) :
 		std::end(theActiveFontLayer.mScaledCharImageRects), std::begin(mScaledCharImageRects));
 	// Owned GPU atlases retain the same rectangle map; duplication is GPU-only.
 	if (mOwnsImage)
-		mScaledImage = new MemoryImage(*static_cast<MemoryImage*>(theActiveFontLayer.mScaledImage));
+		mScaledImage = new Image(*static_cast<Image*>(theActiveFontLayer.mScaledImage));
 }
 
 ActiveFontLayer::~ActiveFontLayer()
 {
 	if (mOwnsImage)
-		Image::Destroy(mScaledImage);
+		delete static_cast<Image*>(mScaledImage);
 }
 
 ////
@@ -1404,7 +1401,7 @@ ImageFont::ImageFont(Image* theFontImage)
 	mScale = 1.0;
 	auto aFontData = std::make_unique<FontData>();
 	mFontData = aFontData.get();
-	mFontData->mApp = static_cast<MemoryImage*>(theFontImage)->mApp;
+	mFontData->mApp = static_cast<Image*>(theFontImage)->mApp;
 	mFontData->Ref();
 	mFontData->mInitialized = true;
 	mPointSize = mFontData->mDefaultPointSize;
@@ -1418,7 +1415,7 @@ ImageFont::ImageFont(Image* theFontImage)
 	(void)mFontData->mFontLayerMap.insert(FontLayerMap::value_type("", aFontLayer)).first;
 #endif
 
-	aFontLayer->mImage = (MemoryImage*)theFontImage;
+	aFontLayer->mImage = (Image*)theFontImage;
 	aFontLayer->mDefaultHeight = aFontLayer->mImage->mHeight;
 	aFontLayer->mAscent = aFontLayer->mImage->mHeight;
 	aFontData.release();
@@ -1607,7 +1604,7 @@ void ImageFont::GenerateActiveFontLayers()
 						glyphs.push_back({source.mX,source.mY,source.mWidth,source.mHeight,
 							target.mX,target.mY,target.mWidth,target.mHeight});
 					}
-					render.RenderFontAtlas(aMemoryImage,static_cast<MemoryImage*>(aFontLayer->mImage),
+					render.RenderFontAtlas(aMemoryImage,static_cast<Image*>(aFontLayer->mImage),
 						glyphs,mForceScaledImagesWhite);
 				}
 

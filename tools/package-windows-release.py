@@ -153,6 +153,8 @@ def package(args):
         "No personal settings or progressed personal saves are included.\n"
         "Re-extract the supplied baseline before each benchmark comparison.\n"
         "The DAT/DAT64 converter is in data/pvz_dat64_converter.exe.\n"
+        "Supported level formats: original 1073 DAT, DAT64 v1, v2 and v3.2 only.\n"
+        "Unpublished DAT64 v3.0/v3.1 inputs and targets are unsupported.\n"
         "The game uses the Microsoft Visual C++ x64 runtime (/MD); the converter is /MT.\n"
         "CRT DLLs are not bundled. Install a compatible Microsoft Visual C++ x64 runtime on the host.\n"
         + ("External scaling effects are configured in scale.json; see effects/README.md.\n"

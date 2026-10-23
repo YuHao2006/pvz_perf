@@ -5,7 +5,7 @@
 namespace Sexy
 {
     class Graphics;
-    class DDImage;
+    class Image;
 };
 using namespace Sexy;
 
@@ -14,9 +14,9 @@ inline constexpr size_t IMAGE_VARIATION_COUNT = static_cast<size_t>(VARIATION_AQ
 class ImageVariationTable
 {
 public:
-    std::array<std::array<DDImage*,IMAGE_VARIATION_COUNT>,NUM_SEED_TYPES> mImages{};
+    std::array<std::array<Image*,IMAGE_VARIATION_COUNT>,NUM_SEED_TYPES> mImages{};
     int mCount = 0;
-    DDImage*& At(SeedType seed, DrawVariation variation)
+    Image*& At(SeedType seed, DrawVariation variation)
     {
         return mImages.at(static_cast<size_t>(seed)).at(static_cast<size_t>(variation));
     }
@@ -25,10 +25,10 @@ class Reanimation;
 class ReanimatorCache
 {
 public:
-    DDImage*			mPlantImages[SeedType::NUM_SEED_TYPES]{};
+    Image*			mPlantImages[SeedType::NUM_SEED_TYPES]{};
     ImageVariationTable    mImageVariations;
-    DDImage*                mLawnMowers[LawnMowerType::NUM_MOWER_TYPES]{};
-    DDImage*                mZombieImages[ZombieType::NUM_CACHED_ZOMBIE_TYPES]{};
+    Image*                mLawnMowers[LawnMowerType::NUM_MOWER_TYPES]{};
+    Image*                mZombieImages[ZombieType::NUM_CACHED_ZOMBIE_TYPES]{};
     LawnApp*                mApp = nullptr;
 
 public:
@@ -42,10 +42,10 @@ public:
     void                    DrawCachedPlant(Graphics* g, float thePosX, float thePosY, SeedType theSeedType, DrawVariation theDrawVariation);
     void                    DrawCachedMower(Graphics* g, float thePosX, float thePosY, LawnMowerType theMowerType);
     void                    DrawCachedZombie(Graphics* g, float thePosX, float thePosY, ZombieType theZombieType);
-    DDImage*                MakeBlankRenderImage(int theWidth, int theHeight);
-    DDImage*                MakeCachedPlantFrame(SeedType theSeedType, DrawVariation theDrawVariation);
-    DDImage*                MakeCachedMowerFrame(LawnMowerType theMowerType);
-    DDImage*                MakeCachedZombieFrame(ZombieType theZombieType);
+    Image*                MakeBlankRenderImage(int theWidth, int theHeight);
+    Image*                MakeCachedPlantFrame(SeedType theSeedType, DrawVariation theDrawVariation);
+    Image*                MakeCachedMowerFrame(LawnMowerType theMowerType);
+    Image*                MakeCachedZombieFrame(ZombieType theZombieType);
     // Main-thread loading barrier, after definitions/resources and source GPU uploads.
     // Includes bounded plant variants and gameplay filters; draw paths require cache hits.
     void                    PrebuildCacheFrames();

@@ -15,7 +15,9 @@ namespace Sexy
 {
 	class Graphics;
 	class SexyMatrix;
+	class SexyMatrix3;
 	class SexyVector2;
+	struct TextureSource;
 };
 //using namespace std;
 using namespace Sexy;
@@ -60,8 +62,8 @@ int						TodPickFromSmoothArray(TodSmoothArray* theArray, int theCount);
 // GPU 纹理预热队列（2026-10-07 用户架构"启动全量装载+流式上传+CPU 不留
 // 位图"）：已解码图入队（持 SharedImageRef 保命；装载/主线程皆可调），
 // 主线程 TodWarmPump 预算内逐张 CreateImageTexture（staging 自动攒批，
-// mPurgeBits 位图上传即弃）。返回本拍上传张数。
-void					TodQueueTextureWarm(SharedImageRef theRef, std::uint32_t theSymbol = 0);
+// 位图上传即弃）。返回本拍上传张数。
+void					TodQueueTextureWarm(SharedImageRef theRef);
 int						TodWarmPump(int theBudgetMs);
 // 预热队列是否已清空（装载屏期主线程泵持续排干）
 bool					TodWarmQueueEmpty();
@@ -72,28 +74,14 @@ void					TodWarmDispose();
 bool					TodWarmDrained();
 // 主线程清扫返回 0 时置位（与 TodWarmDrained 配对）
 void					TodWarmMarkSweepClean();
-// 装载期清扫【仅主线程】：资源槽全表核验，已解码不在 GPU 的图
-// 就地补传；返回补传张数（0=完备性成立）
+// Main-thread sweep of finalized shared-cache images. Returns uploads, or -1
+// while a shared initializer is active; only 0 establishes cache residency.
 int						TodWarmFinalSweep();
 // 主线程阻塞排干+全表清扫【仅主线程】（2026-10-09 用户规格"装载=全量
 // 物化，首绘路径不得存在"）：循环不限预算泵+清扫直到队列空且清扫 0 补传
 // 才返回。调用点=关卡放行门（LawnApp::StartPlaying）；非主线程调用空转。
 int						TodWarmDrainAll();
-// v4 符号绑定（装载完成期顺序单趟，零二分；填 gImageSymbolBinds）
-void					TodBindSymbolTable();
-// ③d 符号槽挂接（InitHook：注册表名→号注入 ResourceManager 平行槽表，
-// 存量声明回填；重复挂接幂等）
-void					TodAttachImageSlots();
-// ③d 号直取装载：热路=槽表数组命中（零字符串零 map 树）；未命中回落
-// 注册表名路径。reanim v4 烘焙号 / DefMap DT_IMAGE（粒子等）共用。
-Image*					TodDefinitionLoadImageById(std::uint32_t theSymbolId);
-_Font*					TodDefinitionLoadFontById(std::uint32_t theSymbolId);
-std::uint32_t			TodFontSymbolRegistryHash();
-// v4 注册表哈希门（reanim/粒子共用）：代码侧名字表重建 sidecar 流的 CRC32，
-// 与编译器烘焙值比对防注册表/记录换代错配
-std::uint32_t			TodImageSymbolRegistryHash();
-bool					TodFindImagePath(Image* theImage, std::string* thePath);
-bool					TodFindFontPath(_Font* theFont, std::string* thePath);
+_Font*					TodLoadCreditsFont();
 
 // #################################################################################################### //
 
@@ -180,11 +168,12 @@ void					TodDrawString(Graphics* g, const SexyString& theText, int thePosX, int 
 void					TodDrawStringMatrix(Graphics* g, const _Font* theFont, const SexyMatrix3& theMatrix, const SexyString& theString, const Color& theColor);
 void					TodDrawImageScaledF(Graphics* g, Image* theImage, float thePosX, float thePosY, float theScaleX, float theScaleY);
 void					TodDrawImageCenterScaledF(Graphics* g, Image* theImage, float thePosX, float thePosY, float theScaleX, float theScaleY);
-void					TodDrawImageCelF(Graphics* g, Image* theImageStrip, float thePosX, float thePosY, int theCelCol, int theCelRow);
-void					TodDrawImageCelScaled(Graphics* g, Image* theImageStrip, int thePosX, int thePosY, int theCelCol, int theCelRow, float theScaleX, float theScaleY);
-void					TodDrawImageCelScaledF(Graphics* g, Image* theImageStrip, float thePosX, float thePosY, int theCelCol, int theCelRow, float theScaleX, float theScaleY);
-void					TodDrawImageCelCenterScaledF(Graphics* g, Image* theImageStrip, float thePosX, float thePosY, int theCelCol, float theScaleX, float theScaleY);
+void					TodDrawImageRectF(Graphics* g, Image* theImage, float thePosX, float thePosY, const Rect& theSrcRect);
+void					TodDrawImageRectScaled(Graphics* g, Image* theImage, int thePosX, int thePosY, const Rect& theSrcRect, float theScaleX, float theScaleY);
+void					TodDrawImageRectScaledF(Graphics* g, Image* theImage, float thePosX, float thePosY, const Rect& theSrcRect, float theScaleX, float theScaleY);
+void					TodDrawImageRectCenterScaledF(Graphics* g, Image* theImage, float thePosX, float thePosY, const Rect& theSrcRect, float theScaleX, float theScaleY);
 void					TodBltMatrix(Graphics* g, Image* theImage, const SexyMatrix3& theTransform, const Rect& theClipRect, const Color& theColor, int theDrawMode, const Rect& theSrcRect);
+void					TodBltMatrix(Graphics* g, const TextureSource& texture, const SexyMatrix3& transform, const Rect& clip, const Color& color, int drawMode, const Rect& source);
 void					TodMarkImageForSanding(Image* theImage);
 void					FixPixelsOnAlphaEdgeForBlending(Image* theImage);
 void					Tod_SWTri_AddAllDrawTriFuncs();

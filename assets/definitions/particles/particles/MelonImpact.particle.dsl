@@ -2,7 +2,7 @@ export component MelonImpact {
     kind: particle;
     source-name: "melonimpact";
     Emitter {
-        image: "IMAGE_MELONPULT_PARTICLES";
+        images: ["particles/frames/melonpult_particles_r0_c0.png","particles/frames/melonpult_particles_r0_c1.png","particles/frames/melonpult_particles_r0_c2.png","particles/frames/melonpult_particles_r0_c3.png","particles/frames/melonpult_particles_r0_c4.png","particles/frames/melonpult_particles_r0_c5.png","particles/frames/melonpult_particles_r0_c6.png","particles/frames/melonpult_particles_r0_c7.png","particles/frames/melonpult_particles_r0_c8.png"];
         imageFrames: 9;
         emitterType: Circle;
         randomLaunchSpin: 1;

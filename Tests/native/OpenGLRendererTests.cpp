@@ -459,7 +459,7 @@ void IndependentTextureBatches(OpenGLRenderer& r)
     const std::array<size_t,8> order{1,0,1,2,0,2,3,0};
     for(size_t i=0;i<order.size();++i) {
         const auto pending=r.GetResourceCounts().queuedBatches;
-        r.SetRenderImage(nullptr); // DDImage selects its destination before every draw.
+        r.SetRenderImage(nullptr); // Image selects its destination before every draw.
         Require(r.GetResourceCounts().queuedBatches==pending,
             "Selecting the same main target flushed grouped batches");
         const auto image=order[i];
@@ -749,7 +749,12 @@ void OrderAndVersions(OpenGLRenderer& r)
     auto* reuse = r.CreateTexture(1,1,&green,4);
     Draw(r,reuse,Quad(reuse,13,0,1,1));
     r.DestroyTexture(reuse);
+    Require(r.GetResourceCounts().queuedBatches > 0 &&
+        r.GetResourceCounts().retiredTextures > 0,
+        "Destroy flushed recorded draws or released their native resources");
     r.EndSceneAndPresent();
+    Require(r.GetResourceCounts().retiredTextures == 0,
+        "Submitted texture versions were not reclaimed after Flush");
     const auto p = r.ReadScenePixels();
     Pixel(p,SceneW,3,3,0xffbf2060u,1);
     Pixel(p,SceneW,10,0,red); Pixel(p,SceneW,11,0,green);
@@ -826,6 +831,8 @@ void FloatAndSelfSample(OpenGLRenderer& r)
     const std::array<unsigned int,4> shifted{colors[0],colors[0],colors[1],colors[2]};
     Require(std::equal(shifted.begin(),shifted.end(),self.pixels.begin(),self.pixels.end()),
         "Self-sample did not read a stable pre-draw snapshot");
+    Require(r.GetResourceCounts().retiredTextures == 0,
+        "Feedback snapshot survived its submitted draws");
     r.DestroyTexture(source); r.DestroyTexture(t);
 }
 void FloatBlending(OpenGLRenderer& r)
@@ -852,16 +859,27 @@ void ImageFactories(OpenGLRenderer& r)
     Require(p.width==4 && p.height==4, "Copy extent");
     for (int y=0; y<4; ++y) for (int x=0; x<4; ++x)
         Pixel(p.pixels,4,x,y,(x>=1&&x<=2&&y>=1&&y<=2)?source[(y-1)*2+x-1]:0);
-    const std::array<unsigned int,2> maskBytes{0x00000033u,0x000000c1u};
-    auto* mask = r.CreateTexture(1,2,maskBytes.data(),4);
-    auto* composed = r.ComposeAlpha(t,mask,2,1,0,false);
-    auto* colorOnly = r.ComposeAlpha(t,mask,2,1,0x00472513u,true);
+    const std::array<unsigned int,4> maskBytes{0x00000033u,0x000000c1u,0x00000012u,0x00000087u};
+    auto* mask = r.CreateTexture(2,2,maskBytes.data(),8);
+    for (const auto dimensions:{std::array<int,2>{1,2},std::array<int,2>{2,1}}) {
+        auto* mismatch=r.CreateTexture(dimensions[0],dimensions[1],
+            maskBytes.data(),dimensions[0]*4);
+        for (bool colorOnly : {false,true}) {
+            bool rejected=false;
+            try { r.ComposeAlphaRaw(t,mismatch,0,colorOnly); }
+            catch (const std::invalid_argument&) { rejected=true; }
+            Require(rejected,"Alpha composition accepted unequal image dimensions");
+        }
+        r.DestroyTexture(mismatch);
+    }
+    auto* composed = r.ComposeAlpha(t,mask,0,false);
+    auto* colorOnly = r.ComposeAlpha(t,mask,0x80472513u,true);
     const auto composedPixels = r.ReadTexturePixels(composed);
     const auto colorPixels = r.ReadTexturePixels(colorOnly);
     for (int y=0; y<2; ++y) for (int x=0; x<2; ++x) {
-        const auto alpha=(maskBytes[y]&255u)<<24;
+        const auto alpha=(maskBytes[y*2+x]&255u)<<24;
         Pixel(composedPixels.pixels,2,x,y,(source[y*2+x]&0xffffffu)|alpha);
-        Pixel(colorPixels.pixels,2,x,y,0x00472513u|alpha);
+        Pixel(colorPixels.pixels,2,x,y,0x80472513u|alpha);
     }
     for (const auto tint : {std::array<int,4>{255,0,255,255},std::array<int,4>{400,300,257,511}}) {
         auto* colored = r.ProcessImage(composed,
@@ -936,10 +954,10 @@ void CompositionPaths(OpenGLRenderer& r)
     const std::array<unsigned int,4> color{0xff234567u,0xff234567u,0xff234567u,0xff234567u};
     auto* first=r.ReplaceTexture(nullptr,2,2,color.data(),8);
     auto* raw=r.CreateRawTexture(2,2,color.data(),8);
-    auto* composed=r.AdoptComposedTexture(r.ComposeAlphaRaw(raw,raw,1,1,0,false));
+    auto* composed=r.AdoptComposedTexture(r.ComposeAlphaRaw(raw,raw,0,false));
     Require(r.ReadTexturePixels(first).pixels[0]==color[0],"First upload changed pixels");
     Require(r.ReadTexturePixels(composed).pixels[0]==0x67234567u,"Adopted composition changed pixels");
-    auto* late=r.ComposeAlpha(first,first,1,1,0,false);
+    auto* late=r.ComposeAlpha(first,first,0,false);
     Require(r.ReadTexturePixels(late).pixels[0]==0x67234567u,"Late composition changed pixels");
     r.DestroyTexture(first);r.DestroyTexture(composed);r.DestroyTexture(late);
 }

@@ -42,7 +42,7 @@ def main():
         checkpoint = archive.read("data/game1_58.dat64")
     if (profile[:8] != b"PVZUSR64" or checkpoint[:8] != b"PVZDAT64"
             or struct.unpack_from("<I", checkpoint, 8)[0] != 3
-            or struct.unpack_from("<II", checkpoint, 36) != (0x10739, 3)):
+            or struct.unpack_from("<II", checkpoint, 36) != (0x10740, 3)):
         raise ValueError("Expected a completed profile and a v3.3 checkpoint")
     plans = []
     for directory in args.data:

@@ -284,13 +284,13 @@ void TodUpdateSmoothArrayPick(TodSmoothArray* theArray, int theCount, int thePic
 // 不得用于：需要逐位对拍 CRT 的场景（对拍/存档哈希类调用点保持 sinf/cosf）。
 namespace Curves
 {
-	float Identity(float theTime) { return theTime; }
-	float Quad(float theTime) { return theTime * theTime; }
-	static float InvQuad(float theTime) { return 2 * theTime - theTime * theTime; }
+	double Identity(double theTime) { return theTime; }
+	double Quad(double theTime) { return theTime * theTime; }
+	static double InvQuad(double theTime) { return 2 * theTime - theTime * theTime; }
 	//0x5118C0
-	float S(float theTime) { return 3 * theTime * theTime - 2 * theTime * theTime * theTime; }
+	double S(double theTime) { return 3 * theTime * theTime - 2 * theTime * theTime * theTime; }
 	//0x5118F0
-	static float InvQuadS(float theTime)
+	static double InvQuadS(double theTime)
 	{
 		if (theTime <= 0.5f)
 		{
@@ -299,37 +299,39 @@ namespace Curves
 		return Quad((theTime - 0.5f) * 2.0f) * 0.5f + 0.5f;
 	}
 	//0x511970
-	static float BounceW(float theTime) { return 1 - fabs(2 * theTime - 1); }
-	static float DoubleS(float theTime) { return S(S(theTime)); }
-	static float DoubleInvQuadS(float theTime) { return InvQuadS(InvQuadS(theTime)); }
-	static float QuadBounce(float theTime) { return Quad(BounceW(theTime)); }
-	static float InvQuadBounce(float theTime) { return InvQuad(BounceW(theTime)); }
-	static float SinW(float theTime) { return FastSin(2 * 3.14159265f * theTime); }
-	static float EaseSinW(float theTime) { return FastSin(2 * 3.14159265f * S(theTime)); }
+	static double BounceW(double theTime) { return 1 - fabs(2 * theTime - 1); }
+	static double DoubleS(double theTime) { return S(S(theTime)); }
+	static double DoubleInvQuadS(double theTime) { return InvQuadS(InvQuadS(theTime)); }
+	static double QuadBounce(double theTime) { return Quad(BounceW(theTime)); }
+	static double InvQuadBounce(double theTime) { return InvQuad(BounceW(theTime)); }
+	// The existing fast trigonometric approximation returns float. Keep that
+	// rendering primitive while retaining double progress through the warp.
+	static double SinW(double theTime) { return FastSin(static_cast<float>(6.283185307179586 * theTime)); }
+	static double EaseSinW(double theTime) { return SinW(S(theTime)); }
 
-	static float EvalFull(float theTime, float thePositionStart, float thePositionEnd, float (*theWarp)(float), bool theReturnToStart)
+	static float EvalFull(double theTime, float thePositionStart, float thePositionEnd, double (*theWarp)(double), bool theReturnToStart)
 	{
 		if (theTime <= 0.0f)
 			return thePositionStart;
 		if (theTime >= 1.0f)
 			return theReturnToStart ? thePositionStart : thePositionEnd;
-		return (thePositionEnd - thePositionStart) * theWarp(theTime) + thePositionStart;
+		return static_cast<float>((double(thePositionEnd) - thePositionStart) * theWarp(theTime) + thePositionStart);
 	}
 
 	// 命名曲线（t, 起点, 终点）→ 值；调用点形态 Curves::EaseInOut(a, b, t)
-	float Constant(float, float a, float) { return a; }
-	float Linear(float t, float a, float b) { return EvalFull(t, a, b, Identity, false); }
-	float EaseIn(float t, float a, float b) { return EvalFull(t, a, b, Quad, false); }
-	float EaseOut(float t, float a, float b) { return EvalFull(t, a, b, InvQuad, false); }
-	float EaseInOut(float t, float a, float b) { return EvalFull(t, a, b, DoubleS, false); }
-	float EaseInOutWeak(float t, float a, float b) { return EvalFull(t, a, b, S, false); }
-	float FastInOut(float t, float a, float b) { return EvalFull(t, a, b, DoubleInvQuadS, false); }
-	float FastInOutWeak(float t, float a, float b) { return EvalFull(t, a, b, InvQuadS, false); }
-	float Bounce(float t, float a, float b) { return EvalFull(t, a, b, BounceW, true); }
-	float BounceFastMiddle(float t, float a, float b) { return EvalFull(t, a, b, QuadBounce, true); }
-	float BounceSlowMiddle(float t, float a, float b) { return EvalFull(t, a, b, InvQuadBounce, true); }
-	float SinWave(float t, float a, float b) { return EvalFull(t, a, b, SinW, true); }
-	float EaseSinWave(float t, float a, float b) { return EvalFull(t, a, b, EaseSinW, true); }
+	float Constant(double, float a, float) { return a; }
+	float Linear(double t, float a, float b) { return EvalFull(t, a, b, Identity, false); }
+	float EaseIn(double t, float a, float b) { return EvalFull(t, a, b, Quad, false); }
+	float EaseOut(double t, float a, float b) { return EvalFull(t, a, b, InvQuad, false); }
+	float EaseInOut(double t, float a, float b) { return EvalFull(t, a, b, DoubleS, false); }
+	float EaseInOutWeak(double t, float a, float b) { return EvalFull(t, a, b, S, false); }
+	float FastInOut(double t, float a, float b) { return EvalFull(t, a, b, DoubleInvQuadS, false); }
+	float FastInOutWeak(double t, float a, float b) { return EvalFull(t, a, b, InvQuadS, false); }
+	float Bounce(double t, float a, float b) { return EvalFull(t, a, b, BounceW, true); }
+	float BounceFastMiddle(double t, float a, float b) { return EvalFull(t, a, b, QuadBounce, true); }
+	float BounceSlowMiddle(double t, float a, float b) { return EvalFull(t, a, b, InvQuadBounce, true); }
+	float SinWave(double t, float a, float b) { return EvalFull(t, a, b, SinW, true); }
+	float EaseSinWave(double t, float a, float b) { return EvalFull(t, a, b, EaseSinW, true); }
 }
 
 // 曲线 = 时间扭曲函数，按装载记录 int（0..13 连续）直下标取函数指针。
@@ -386,38 +388,50 @@ int TodCurveIndexFromEval(TodCurveEvalFn theEval)
 	exit(0);
 }
 
-static float TodCurveEvaluate(float theTime, float thePositionStart, float thePositionEnd, float (*theCurve)(float, float, float))
+float TodAnimateCurveFloat(double theRangeStart, double theRangeEnd, double theValue, float thePositionStart, float thePositionEnd, TodCurveEvalFn theCurve)
 {
-	return theCurve(theTime, thePositionStart, thePositionEnd);
+	const double aWarpedAge = theRangeStart == theRangeEnd
+		? (theValue < theRangeEnd ? 0.0 : 1.0)
+		: (theValue - theRangeStart) / (theRangeEnd - theRangeStart);
+	return theCurve(aWarpedAge, thePositionStart, thePositionEnd);
 }
 
-//0x511B30
-float TodCurveEvaluateClamped(float theTime, float thePositionStart, float thePositionEnd, float (*theCurve)(float, float, float))
+int TodAnimateCurve(double theRangeStart, double theRangeEnd, double theValue, int thePositionStart, int thePositionEnd, TodCurveEvalFn theCurve)
 {
-	return theCurve(theTime, thePositionStart, thePositionEnd);
+	return FloatRoundToInt(TodAnimateCurveFloat(theRangeStart, theRangeEnd, theValue,
+		static_cast<float>(thePositionStart), static_cast<float>(thePositionEnd), theCurve));
 }
 
-//0x511BA0
-float TodAnimateCurveFloatTime(float theTimeStart, float theTimeEnd, float theTimeAge, float thePositionStart, float thePositionEnd, float (*theCurve)(float, float, float))
+float TodAnimateCurveNs(std::int64_t theStartNs, std::int64_t theEndNs, std::int64_t theTimeNs,
+	float thePositionStart, float thePositionEnd, TodCurveEvalFn theCurve)
 {
-	float aWarpedAge = (theTimeAge - theTimeStart) / (theTimeEnd - theTimeStart);
-	return TodCurveEvaluateClamped(aWarpedAge, thePositionStart, thePositionEnd, theCurve);
+	double progress;
+	if (theStartNs == theEndNs)
+		progress = theTimeNs < theEndNs ? 0.0 : 1.0;
+	else if (theStartNs < theEndNs)
+	{
+		if (theTimeNs <= theStartNs) progress = 0.0;
+		else if (theTimeNs >= theEndNs) progress = 1.0;
+		else progress = double(std::uint64_t(theTimeNs) - std::uint64_t(theStartNs)) /
+			double(std::uint64_t(theEndNs) - std::uint64_t(theStartNs));
+	}
+	else
+	{
+		if (theTimeNs >= theStartNs) progress = 0.0;
+		else if (theTimeNs <= theEndNs) progress = 1.0;
+		else progress = double(std::uint64_t(theStartNs) - std::uint64_t(theTimeNs)) /
+			double(std::uint64_t(theStartNs) - std::uint64_t(theEndNs));
+	}
+	// Unsigned differences represent even INT64_MIN..INT64_MAX without signed
+	// overflow. Only these local differences are converted to floating point.
+	return theCurve(progress, thePositionStart, thePositionEnd);
 }
 
-//0x511BF0
-float TodAnimateCurveFloat(int theTimeStart, int theTimeEnd, int theTimeAge, float thePositionStart, float thePositionEnd, float (*theCurve)(float, float, float))
+int TodAnimateCurveNs(std::int64_t theStartNs, std::int64_t theEndNs, std::int64_t theTimeNs,
+	int thePositionStart, int thePositionEnd, TodCurveEvalFn theCurve)
 {
-	//return TodAnimateCurveFloatTime(theTimeStart, theTimeEnd, theTimeAge, thePositionStart, thePositionEnd, theCurve);
-
-	float aWarpedAge = (theTimeAge - theTimeStart) / (float)(theTimeEnd - theTimeStart);
-	return TodCurveEvaluateClamped(aWarpedAge, thePositionStart, thePositionEnd, theCurve);
-}
-
-//0x511C40
-// GOTY @Patoke: 0x51BEA0
-int TodAnimateCurve(int theTimeStart, int theTimeEnd, int theTimeAge, int thePositionStart, int thePositionEnd, float (*theCurve)(float, float, float))
-{
-	return FloatRoundToInt(TodAnimateCurveFloat(theTimeStart, theTimeEnd, theTimeAge, thePositionStart, thePositionEnd, theCurve));
+	return FloatRoundToInt(TodAnimateCurveNs(theStartNs, theEndNs, theTimeNs,
+		static_cast<float>(thePositionStart), static_cast<float>(thePositionEnd), theCurve));
 }
 
 int RandRangeInt(int theMin, int theMax)

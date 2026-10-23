@@ -55,9 +55,11 @@ public:
 };
 }
 namespace Curves { inline constexpr int Linear = 0; }
-float TodAnimateCurveFloat(int start, int end, int age, float first, float last, int)
+float TodAnimateCurveNs(std::int64_t start, std::int64_t end, std::int64_t age,
+    float first, float last, int)
 {
-    return first + (last - first) * std::clamp(float(age - start) / float(end - start), 0.0f, 1.0f);
+    const auto progress = std::clamp(double(age - start) / double(end - start), 0.0, 1.0);
+    return static_cast<float>(first + (double(last) - first) * progress);
 }
 static unsigned currentOrder = 48;
 unsigned Music::GetMusicOrder(MusicFile) { return currentOrder; }

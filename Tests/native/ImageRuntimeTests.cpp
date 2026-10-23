@@ -940,18 +940,18 @@ void ProjectileAtlasPixels(LawnApp& app)
         const auto& visual=definition.mProjectiles[type];
         Image body(&app);
         sourceImage(body,visual.mSource);
-        for (const int age:{0,30})
+        for (const std::int64_t ageNs:{0LL,123'456'789LL,300'000'000LL})
             for (const bool rotated:{false,true})
                 for (const bool mirror:{false,true})
                 {
                     projectile.mCreationTimeNs=
-                        static_cast<std::int64_t>(board.mMainCounter.mNanoseconds)-age*10'000'000LL;
+                        static_cast<std::int64_t>(board.mMainCounter.mNanoseconds)-ageNs;
                     projectile.mRotation=rotated ? 0.37f : 0.0f;
                     projectile.mMotionType=mirror ? ProjectileMotion::MOTION_BEE_BACKWARDS :
                         ProjectileMotion::MOTION_STRAIGHT;
                     float scale=visual.mScale;
                     if (type==int(ProjectileType::PROJECTILE_PUFF))
-                        scale=TodAnimateCurveFloat(0,30,age,0.3f,1.0f,Curves::Linear)*(visual.mScale/0.3f);
+                        scale=TodAnimateCurveNs(0,300'000'000,ageNs,0.3f,1.0f,Curves::Linear)*(visual.mScale/0.3f);
                     SexyTransform2D nearestTransform;
                     TodScaleRotateTransformMatrix(nearestTransform,
                         projectile.mPosX-projectile.mX+body.mWidth*0.5f+110.25f,
@@ -1448,9 +1448,9 @@ void ParticleDefinitionsAndFrames(SexyAppBase& app, const char* pakPath)
             const int animated=glasses.mAnimated;
             glasses.mAnimated=1;
             particle.mParticleDuration=101;
-            particle.mParticleSampleAgeNs=990'000'000;
+            particle.mParticleAge.mNanoseconds=990'000'000;
             Require(draw(false,0)==last,"Particle lifetime animation selected the wrong frame");
-            particle.mParticleSampleAgeNs=0;
+            particle.mParticleAge.mNanoseconds=0;
             Require(draw(false,0)==first,"Particle lifetime animation did not return to frame zero");
             glasses.mAnimated=animated;
         }

@@ -34,7 +34,7 @@ Copy-Item -LiteralPath $taskOriginal -Destination $taskCopy
 if ($RejectVariant) {
     if (!$PakFile) { throw 'Variant rejection needs the production resource package' }
     $taskBytes=[IO.File]::ReadAllBytes($taskCopy)
-    if ($taskBytes.Length -lt 52 -or [BitConverter]::ToUInt32($taskBytes,36) -ne 0x10739 -or
+    if ($taskBytes.Length -lt 52 -or [BitConverter]::ToUInt32($taskBytes,36) -ne 0x10740 -or
         [BitConverter]::ToUInt32($taskBytes,40) -ne 3) {
         throw 'Variant rejection requires a current DAT64 v3.3 copy'
     }
@@ -44,8 +44,8 @@ if ($RejectVariant) {
         $taskCursor+=16+[BitConverter]::ToUInt32($taskBytes,($taskCursor+12))
     }
     $taskUsed=[BitConverter]::ToUInt32($taskBytes,($taskCursor+4))
-    $taskRecordSize=if ($RejectVariant -eq 'Particle') { 84 } else { 244 }
-    $taskStride=if ($RejectVariant -eq 'Particle') { 92 } else { 252 }
+    $taskRecordSize=if ($RejectVariant -eq 'Particle') { 76 } else { 244 }
+    $taskStride=if ($RejectVariant -eq 'Particle') { 84 } else { 252 }
     $taskVariantOffset=if ($RejectVariant -eq 'Particle') { 4 } else { 12 }
     if ([BitConverter]::ToUInt32($taskBytes,($taskCursor+12)) -ne $taskUsed*$taskStride) {
         throw 'Unexpected current pool layout in variant rejection fixture'

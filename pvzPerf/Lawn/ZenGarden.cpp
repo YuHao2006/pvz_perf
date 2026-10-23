@@ -183,8 +183,11 @@ void ZenGarden::DrawPottedPlant(Graphics* g, float x, float y, PottedPlant* theP
 
 void ZenGarden::PlantSetLaunchCounter(Plant* thePlant)
 {
-    int aTime = PlantGetMinutesSinceHappy(thePlant);
-    int aCounterMax = TodAnimateCurve(5, 30, aTime, 3000, 15000, Curves::Linear);
+    PottedPlant* aPottedPlant = PottedPlantFromIndex(thePlant->mPottedPlantIndex);
+    const uint64_t aElapsedSeconds = mFrameTime > aPottedPlant->mLastNeedFulfilledTime && !PlantHighOnChocolate(aPottedPlant)
+        ? static_cast<uint64_t>(mFrameTime) - static_cast<uint64_t>(aPottedPlant->mLastNeedFulfilledTime) : 0;
+    const int64_t aAgeNs = static_cast<int64_t>(aElapsedSeconds > 1800 ? 1800 : aElapsedSeconds) * 1'000'000'000LL;
+    int aCounterMax = TodAnimateCurveNs(300'000'000'000LL, 1'800'000'000'000LL, aAgeNs, 3000, 15000, Curves::Linear);
     thePlant->mZenProductionCountdown = RandRangeInt(1800, aCounterMax);
 }
 
@@ -2327,18 +2330,6 @@ void ZenGarden::SetPlantAnimSpeed(Plant* thePlant)
     }
 }
 
-//0x521CC0
-int ZenGarden::PlantGetMinutesSinceHappy(Plant* thePlant)
-{
-    PottedPlant* aPottedPlant = PottedPlantFromIndex(thePlant->mPottedPlantIndex);
-	int aMinutes = static_cast<int>((mFrameTime - aPottedPlant->mLastNeedFulfilledTime) / 60);
-    if (PlantHighOnChocolate(aPottedPlant))
-    {
-        aMinutes = 0;
-    }
-    return aMinutes;
-}
-
 //0x521D40
 void ZenGarden::PlantUpdateProduction(Plant* thePlant)
 {
@@ -2356,7 +2347,10 @@ void ZenGarden::PlantUpdateProduction(Plant* thePlant)
         mApp->PlayFoley(FoleyType::FOLEY_SPAWN_SUN);
 
         int aCoinHit = Rand(1000);
-        aCoinHit += TodAnimateCurve(5, 30, PlantGetMinutesSinceHappy(thePlant), 0, 80, Curves::Linear);
+        const uint64_t aElapsedSeconds = mFrameTime > aPottedPlant->mLastNeedFulfilledTime && !PlantHighOnChocolate(aPottedPlant)
+            ? static_cast<uint64_t>(mFrameTime) - static_cast<uint64_t>(aPottedPlant->mLastNeedFulfilledTime) : 0;
+        const int64_t aAgeNs = static_cast<int64_t>(aElapsedSeconds > 1800 ? 1800 : aElapsedSeconds) * 1'000'000'000LL;
+        aCoinHit += TodAnimateCurveNs(300'000'000'000LL, 1'800'000'000'000LL, aAgeNs, 0, 80, Curves::Linear);
         CoinType aCoinType = CoinType::COIN_SILVER;
         if (aCoinHit < 100)
         {

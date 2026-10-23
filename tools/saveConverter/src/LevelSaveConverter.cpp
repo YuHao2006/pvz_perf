@@ -53,6 +53,7 @@ using LevelSaveFormat::RecordLayout;
 constexpr std::uint32_t MILLI_V33_SCHEMA_ID = LevelSaveFormat::DAT64_V33_FIXED_SCHEMA_ID;
 constexpr std::uint32_t RELATIVE_V33_SCHEMA_ID = 0x10737;
 constexpr std::uint32_t ACTOR_CLOCK_V33_SCHEMA_ID = LevelSaveFormat::DAT64_V33_ACTOR_CLOCK_SCHEMA_ID;
+constexpr std::uint32_t TIMESTAMP_V33_SCHEMA_ID = LevelSaveFormat::DAT64_V33_PROJECTILE_CLOCK_SCHEMA_ID;
 
 constexpr bool IsNanosecondFormat(Format format)
 {
@@ -284,6 +285,7 @@ public:
     bool mMilliV33Source = false;
     bool mRelativeV33Source = false;
     bool mActorClockV33Source = false;
+    bool mTimestampV33Source = false;
 
     void SetPosition(std::size_t thePosition, const std::string& theField)
     {
@@ -422,7 +424,8 @@ Format Dat64Format(std::span<const Byte> file)
             (ReadU32At(file, 36) == LevelSaveFormat::DAT64_SCHEMA_ID ||
              ReadU32At(file, 36) == MILLI_V33_SCHEMA_ID ||
              ReadU32At(file, 36) == RELATIVE_V33_SCHEMA_ID ||
-             ReadU32At(file, 36) == ACTOR_CLOCK_V33_SCHEMA_ID))
+             ReadU32At(file, 36) == ACTOR_CLOCK_V33_SCHEMA_ID ||
+             ReadU32At(file, 36) == TIMESTAMP_V33_SCHEMA_ID))
             return Format::Dat64V33;
         Fail(36, "dat64.schema", "不支持的存档版本；仅支持原版 DAT、DAT64 v1、v2、v3.2、v3.3，未发布的 v3.0/v3.1 不受支持");
     default: Fail(8, "dat64.version", "不支持的存档版本");
@@ -1286,11 +1289,35 @@ constexpr std::size_t ActorClockV33StateSize(RecordKind kind)
     }
 }
 
+constexpr std::size_t TimestampV33StateSize(RecordKind kind)
+{
+    if (kind == RecordKind::Projectile) return 36;
+    return ActorClockV33StateSize(kind);
+}
+
+std::vector<Byte> UpgradeParticleStepV33State(RecordKind kind, std::span<const Byte> source)
+{
+    if (source.size() != TimestampV33StateSize(kind))
+        Fail("timestamp v3.3 state length differs from its frozen schema");
+    std::vector<Byte> result(V7SaveSchema::Size(kind), 0);
+    if (kind == RecordKind::ParticleSystem)
+        std::copy_n(source.begin() + 8, 4, result.begin());
+    else if (kind == RecordKind::Particle)
+        std::copy_n(source.begin() + 8, 28, result.begin());
+    else
+    {
+        std::copy(source.begin(), source.end(), result.begin());
+        if (kind == RecordKind::ParticleEmitter)
+            WriteU64At(result, 8, 0); // New active-emission integral starts at migration.
+    }
+    return result;
+}
+
 std::vector<Byte> UpgradeRelativeV33State(RecordKind kind, std::span<const Byte> source)
 {
     if (source.size() != RelativeV33StateSize(kind))
         Fail("relative v3.3 state length differs from its frozen schema");
-    std::vector<Byte> result(V7SaveSchema::Size(kind), 0);
+    std::vector<Byte> result(TimestampV33StateSize(kind), 0);
     std::copy(source.begin(), source.end(), result.begin());
     if (kind == RecordKind::Reanimation)
     {
@@ -1301,7 +1328,7 @@ std::vector<Byte> UpgradeRelativeV33State(RecordKind kind, std::span<const Byte>
         WriteU32At(result, 0, 1); // Battle domain.
         WriteU64At(result, 4, static_cast<std::uint64_t>(-elapsed));
     }
-    return result;
+    return UpgradeParticleStepV33State(kind, result);
 }
 
 std::vector<Byte> UpgradeMilliV33State(RecordKind kind, std::span<const Byte> source)
@@ -1908,6 +1935,7 @@ ArraySnapshot ReadArray(
         ? (theReader.mMilliV33Source ? MilliV33StateSize(theDescriptor.mKind) :
             theReader.mRelativeV33Source ? RelativeV33StateSize(theDescriptor.mKind) :
             theReader.mActorClockV33Source ? ActorClockV33StateSize(theDescriptor.mKind) :
+            theReader.mTimestampV33Source ? TimestampV33StateSize(theDescriptor.mKind) :
             V7SaveSchema::Size(theDescriptor.mKind)) : 0;
     aSlotSize += static_cast<std::uint32_t>(aV7Size);
 
@@ -1986,6 +2014,8 @@ ArraySnapshot ReadArray(
                 aSlot.mV7State = UpgradeRelativeV33State(theDescriptor.mKind, aSlot.mV7State);
                 aSlot.mNeedsClockBinding = true;
             }
+            else if (theReader.mActorClockV33Source || theReader.mTimestampV33Source)
+                aSlot.mV7State = UpgradeParticleStepV33State(theDescriptor.mKind, aSlot.mV7State);
         }
         aSlot.mID = ReadU32At(aSlotBytes, aV1ObjectSize);
         if (theDescriptor.mKind == RecordKind::Plant)
@@ -2699,7 +2729,8 @@ Document ParsePayload(
         aDocument.mNanoseconds = std::move(theReader.mNanoseconds);
     else
         CaptureLegacyTimes(aDocument);
-    if (theReader.mMilliV33Source || theReader.mRelativeV33Source || theReader.mActorClockV33Source)
+    if (theReader.mMilliV33Source || theReader.mRelativeV33Source ||
+        theReader.mActorClockV33Source || theReader.mTimestampV33Source)
     {
         PrepareV7Output(aDocument, Format::Dat64V33);
         for (auto& array : aDocument.mArrays)
@@ -2753,7 +2784,9 @@ Document ParseDat64(std::span<const Byte> theFile, std::uint32_t& theDateEcho)
         ReadU32At(theFile, 36) == RELATIVE_V33_SCHEMA_ID;
     const bool actorClockV33 = format == Format::Dat64V33 &&
         ReadU32At(theFile, 36) == ACTOR_CLOCK_V33_SCHEMA_ID;
-    const bool supportedMilliHeader = (milliV33 || relativeV33 || actorClockV33) &&
+    const bool timestampV33 = format == Format::Dat64V33 &&
+        ReadU32At(theFile, 36) == TIMESTAMP_V33_SCHEMA_ID;
+    const bool supportedMilliHeader = (milliV33 || relativeV33 || actorClockV33 || timestampV33) &&
         ReadU32At(theFile, 12) == LevelSaveFormat::DAT64_HEADER_SIZE &&
         ReadU32At(theFile, 16) == LevelSaveFormat::DAT64_AUTHORITY_BUILD &&
         ReadU32At(theFile, 20) == LevelSaveFormat::DAT64_FLAGS &&
@@ -2777,6 +2810,7 @@ Document ParseDat64(std::span<const Byte> theFile, std::uint32_t& theDateEcho)
     aReader.mMilliV33Source = milliV33;
     aReader.mRelativeV33Source = relativeV33;
     aReader.mActorClockV33Source = actorClockV33;
+    aReader.mTimestampV33Source = timestampV33;
     Document aDocument = [&]()
     {
         try

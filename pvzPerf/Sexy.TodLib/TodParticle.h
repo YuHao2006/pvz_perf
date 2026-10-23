@@ -7,6 +7,7 @@
 #include <array>
 #include <atomic>
 #include <memory>
+#include <span>
 #include "DataArray.h"
 #include "DefinitionImageRegion.h"
 #include "misc/SexyVector.h"
@@ -345,7 +346,6 @@ public:
 	TodParticleEmitter*				mParticleEmitter;
 	Sexy::TimeCounter								mParticleDuration;
 	Sexy::TimeCounter								mParticleAge;
-	std::int64_t					mParticleSampleAgeNs;
 	std::int64_t					mParticleLastSampleAgeNs;
 	std::int64_t					mAnimationElapsedNs;
 	std::int64_t					mAnimationSampleIntegral; // fixed initial phase for constant rate; sampled integral otherwise
@@ -393,10 +393,10 @@ public:
 	int								mParticlesSpawned;												//+0x24
 	Sexy::TimeCounter								mSystemAge;														//+0x28
 	Sexy::TimeCounter								mSystemDuration;												//+0x2C
-	std::int64_t					mSystemSampleAgeNs;
+	std::int64_t					mEmissionElapsedNs; // total active emission time, independent of lifetime loops
 	std::int64_t					mSystemLastSampleAgeNs;
 	Sexy::SexyVector2				mExternalTarget; // input held until the next SystemMove event
-	Sexy::SexyVector2				mExternalAppliedCenter; // last canonical input sample
+	Sexy::SexyVector2				mExternalAppliedCenter; // last main-step input sample
 	bool							mDead;															//+0x38
 	Sexy::Color						mColorOverride;													//+0x3C
 	bool							mExtraAdditiveDrawOverride;										//+0x4C
@@ -423,15 +423,16 @@ public:
 	void							ParticleRosterClear();
 
 	void							TodEmitterInitialize(float theX, float theY, TodParticleSystem* theSystem, TodEmitterDefinition* theEmitterDef);
-	void							Update();
+	void							Update(std::uint64_t deltaNs);
+	void							Update(std::uint64_t deltaNs, std::span<const ParticleID> theParticles);
 	float							RandomFloat(float theMaximum);
 	int								RandomInt(int theMaximum);
 	void							Draw(Graphics* g);
 	void							SystemMove(float theX, float theY);
 	static bool						GetRenderParams(TodParticle* theParticle, ParticleRenderParams* theParams);
 	void							DrawParticle(Graphics* g, TodParticle* theParticle, TodTriangleGroup* theTriangleGroup);
-	void							UpdateSpawning();
-	bool							UpdateParticle(TodParticle* theParticle);
+	void							UpdateSpawning(std::uint64_t deltaNs);
+	bool							UpdateParticle(TodParticle* theParticle, std::uint64_t deltaNs);
 	TodParticle*					SpawnParticle(int theIndex, int theSpawnCount);
 	bool							CrossFadeParticle(TodParticle* theParticle, TodParticleEmitter* theToEmitter);
 	void							CrossFadeEmitter(TodParticleEmitter* theToEmitter);
@@ -441,8 +442,8 @@ public:
 	// 按发射器 def 直取交叉淡入（分配实例 + 入表 + CrossFadeParticle）。
 	bool							CrossFadeParticleToDef(TodParticle* theParticle, TodEmitterDefinition* theToEmitterDef);
 	void							DeleteAll();
-	void							UpdateParticleField(TodParticle* theParticle, ParticleField* theParticleField, float theParticleTimeValue, int theFieldIndex);
-	void							UpdateSystemField(ParticleField* theParticleField, float theParticleTimeValue, int theFieldIndex);
+	void							UpdateParticleField(TodParticle* theParticle, ParticleField* theParticleField, double theParticleTimeValue, int theFieldIndex, double theDeltaTicks);
+	void							UpdateSystemField(ParticleField* theParticleField, double theParticleTimeValue, int theFieldIndex);
     /*inline*/ float				SystemTrackEvaluate(FloatParameterTrack& theTrack, ParticleSystemTracks theSystemTrack);
 	static /*inline*/ float			ParticleTrackEvaluate(FloatParameterTrack& theTrack, TodParticle* theParticle, ParticleTracks theParticleTrack);
 	void							DeleteParticle(TodParticle* theParticle);
@@ -472,7 +473,6 @@ public:
     bool							mIsAttachment;					//+0x1D
     int								mRenderOrder;					//+0x20
     bool							mDontUpdate;					//+0x24
-    std::uint64_t                   mSimulationRemainderNs;
     std::uint32_t                   mRandomState;
 
 public:

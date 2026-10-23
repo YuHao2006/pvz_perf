@@ -173,8 +173,8 @@ float FloatTrackEvaluate(const FloatParameterTrack& theTrack, double theTimeValu
             const FloatParameterTrackNode* aNodeCur = &theTrack.mNodes[i - 1];
             // 计算当前时间在〔当前节点至下一节点〕的过程中的进度
             const double span = time(*aNodeNxt) - time(*aNodeCur);
-            const float aTimeFraction = span > 0.0
-                ? static_cast<float>((theTimeValue - time(*aNodeCur)) / span) : 1.0f;
+            const double aTimeFraction = span > 0.0
+                ? (theTimeValue - time(*aNodeCur)) / span : 1.0;
             return TodCurveResolveEval(aNodeCur->mCurveType)(aTimeFraction,
                 value(*aNodeCur), value(*aNodeNxt));
         }

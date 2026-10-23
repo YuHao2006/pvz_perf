@@ -30,6 +30,7 @@
 #include <vector>
 #include <cmath>
 #include <random>
+#include <limits>
 #include "ActorFloatRuntimeChecks.h"
 
 // Replace only the real game's entry point; all application/rendering objects
@@ -445,6 +446,92 @@ void RealConsumers(int reanimationIndex, int particleIndex)
         "Real particle system did not borrow the static emitter backing");
 }
 
+void CurveTiming()
+{
+    using I = std::int64_t;
+    constexpr I span = 1'000'000'000;
+    constexpr I epoch = 8'000'000'000'000'000'000LL;
+    const auto local = TodAnimateCurveNs(0, span, 1, 0.0f, 1.0f, Curves::Linear);
+    Require(local > 0 && local == static_cast<float>(1.0 / span),
+        "Production nanosecond curve discarded a one-nanosecond interval");
+    Require(TodAnimateCurveNs(epoch, epoch + span, epoch + 1,
+        0.0f, 1.0f, Curves::Linear) == local,
+        "Production curve converted an absolute epoch before subtracting timestamps");
+    constexpr I fractionalAge = 1'234'567, fractionalSpan = 17'000'003;
+    const auto fractional = TodAnimateCurveNs(0, fractionalSpan, fractionalAge,
+        0.0f, 1.0f, Curves::Linear);
+    Require(fractional == static_cast<float>(double(fractionalAge) / fractionalSpan) &&
+        fractional != TodAnimateCurveNs(0, fractionalSpan, 0, 0.0f, 1.0f, Curves::Linear),
+        "Production curve quantized a fractional legacy tick");
+    Require(TodAnimateCurveNs(span, 0, span - 1, 0.0f, 1.0f, Curves::Linear) == local &&
+        TodAnimateCurveNs(epoch + span, epoch, epoch + span - 1,
+            0.0f, 1.0f, Curves::Linear) == local,
+        "Production reversed curve lost local nanosecond progress");
+    Require(TodAnimateCurveNs(-1'000'000'003, 1'000'000'007, 7,
+        0.0f, 1.0f, Curves::Linear) ==
+        static_cast<float>(1'000'000'010.0 / 2'000'000'010.0),
+        "Production curve mishandled a negative origin followed by a positive time");
+
+    constexpr I minimum = std::numeric_limits<I>::min();
+    constexpr I maximum = std::numeric_limits<I>::max();
+    const float fullRangeFirst = static_cast<float>(
+        1.0 / double(std::numeric_limits<std::uint64_t>::max()));
+    Require(TodAnimateCurveNs(minimum, maximum, minimum + 1,
+        0.0f, 1.0f, Curves::Linear) == fullRangeFirst &&
+        TodAnimateCurveNs(maximum, minimum, maximum - 1,
+            0.0f, 1.0f, Curves::Linear) == fullRangeFirst,
+        "Production full signed timestamp range overflowed or lost its first interval");
+    Require(TodAnimateCurveNs(minimum, maximum, 0, 0.0f, 1.0f, Curves::Linear) == 0.5f &&
+        TodAnimateCurveNs(maximum, minimum, 0, 0.0f, 1.0f, Curves::Linear) == 0.5f,
+        "Production full signed timestamp range did not interpolate through zero");
+    Require(TodAnimateCurveNs(41, 41, 40, 3.0f, 7.0f, Curves::Linear) == 3.0f &&
+        TodAnimateCurveNs(41, 41, 41, 3.0f, 7.0f, Curves::Linear) == 7.0f &&
+        TodAnimateCurveNs(41, 41, 42, 3.0f, 7.0f, Curves::Linear) == 7.0f &&
+        TodAnimateCurveNs(maximum, maximum, maximum, 3.0f, 7.0f, Curves::Linear) == 7.0f,
+        "Production zero-duration curve does not act as an instantaneous step");
+
+    struct EndpointCase { TodCurveEvalFn curve; bool returnsToStart; };
+    constexpr EndpointCase curves[] = {
+        {Curves::Constant, true}, {Curves::Linear, false},
+        {Curves::EaseIn, false}, {Curves::EaseOut, false},
+        {Curves::EaseInOut, false}, {Curves::EaseInOutWeak, false},
+        {Curves::FastInOut, false}, {Curves::FastInOutWeak, false},
+        {Curves::Bounce, true}, {Curves::BounceFastMiddle, true},
+        {Curves::BounceSlowMiddle, true}, {Curves::SinWave, true},
+        {Curves::EaseSinWave, true}
+    };
+    for (const auto& entry : curves)
+    {
+        constexpr float start = -3.25f, end = 8.75f;
+        const float finish = entry.returnsToStart ? start : end;
+        for (const I time : {I(99), I(100)})
+            Require(TodAnimateCurveNs(100, 107, time, start, end, entry.curve) == start,
+                "Production curve changed its initial endpoint or clamp");
+        for (const I time : {I(107), I(108)})
+            Require(TodAnimateCurveNs(100, 107, time, start, end, entry.curve) == finish,
+                "Production curve changed its final endpoint or return-to-start behavior");
+        Require(TodAnimateCurveNs(107, 100, 108, start, end, entry.curve) == start &&
+            TodAnimateCurveNs(107, 100, 99, start, end, entry.curve) == finish &&
+            entry.curve(-1.0, start, end) == start &&
+            entry.curve(2.0, start, end) == finish,
+            "Production reverse range or direct curve endpoint clamp changed");
+    }
+    Require(TodAnimateCurveNs(0, 10, 5, 0, 1, Curves::Linear) == 1 &&
+        TodAnimateCurveNs(0, 10, 5, 0, -1, Curves::Linear) == -1 &&
+        TodAnimateCurveNs(10, 0, 5, 0, 3, Curves::Linear) == 2,
+        "Production integer curve output no longer uses legacy nearest rounding");
+    Require(TodAnimateCurveFloat(4.25, 9.75, 4.375, 0.0f, 44.0f, Curves::Linear) == 1.0f &&
+        TodAnimateCurve(0.0, 10.0, 2.5, 0, 10, Curves::Linear) == 3,
+        "Production generic range truncated a fractional distance or input");
+    constexpr float farEndpoint = 1'000'000'000.0f;
+    const double tinyProgress = 1.0 / (double(farEndpoint) + 1.0);
+    Require(std::fabs(TodAnimateCurveFloat(0.0, 1.0, tinyProgress,
+        -1.0f, farEndpoint, Curves::Linear)) < 1e-12f,
+        "Production curve rounded local progress to float before evaluating its warp");
+    std::cout << "PASS production curves: nanoseconds, extreme epochs, signed and reversed ranges, "
+        "zero-duration steps, 13 endpoint contracts, integer rounding and double progress\n";
+}
+
 void ReanimationIntegerPlayback()
 {
     using I = std::int64_t;
@@ -646,6 +733,8 @@ void Lifecycle(TestApp& app, const StaticSnapshot& snapshot, int reanimationInde
     {
         LoadAll(app);
         std::cerr << "PASS lifecycle definitions loaded: repeat " << repeat << '\n';
+        CurveTiming();
+        std::cerr << "PASS lifecycle curve timing\n";
         ReanimationIntegerPlayback();
         std::cerr << "PASS lifecycle reanimation playback\n";
         // Actor checks consume then release the one-shot resource plans needed

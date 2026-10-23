@@ -34,6 +34,7 @@ void CheckEditableHeader()
           std::array{DAT64_V2_VERSION, 0U, DAT64_V2_SCHEMA_ID},
           std::array{DAT64_V32_VERSION, DAT64_V32_MINOR_VERSION, DAT64_V32_SCHEMA_ID},
           std::array{DAT64_VERSION, DAT64_MINOR_VERSION, DAT64_V33_ACTOR_CLOCK_SCHEMA_ID},
+          std::array{DAT64_VERSION, DAT64_MINOR_VERSION, DAT64_V33_PROJECTILE_CLOCK_SCHEMA_ID},
           std::array{DAT64_VERSION, DAT64_MINOR_VERSION, DAT64_SCHEMA_ID}})
     {
         const bool current = version == DAT64_VERSION && minor == DAT64_MINOR_VERSION &&

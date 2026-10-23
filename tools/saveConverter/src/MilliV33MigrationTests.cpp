@@ -270,6 +270,63 @@ void CheckOldProjectileWire()
     }
 }
 
+void CheckParticleStepMigration()
+{
+    std::vector<Byte> system(12);
+    PutSigned(system, 0, 7'654'321, 8);
+    PutSigned(system, 8, 0xfedcba98U, 4);
+    const auto rng = UpgradeParticleStepV33State(RecordKind::ParticleSystem, system);
+    Require(rng.size() == 4 && ReadU32At(rng, 0) == 0xfedcba98U,
+        "Particle system migration retained pending step time or lost its RNG");
+    std::vector<Byte> particle(36);
+    PutSigned(particle, 0, 987'654'321, 8); // Removed current sample must be ignored.
+    PutSigned(particle, 8, -1, 8);
+    PutSigned(particle, 16, 123'456'789'012LL, 8);
+    PutSigned(particle, 24, 375'000'000'000LL, 8);
+    PutSigned(particle, 32, 0x71234567U, 4);
+    const auto migrated = UpgradeParticleStepV33State(RecordKind::Particle, particle);
+    V7SaveSchema::Validate(RecordKind::Particle, migrated);
+    Require(migrated.size() == 28 && ReadU64At(migrated, 0) == UINT64_MAX &&
+        ReadU64At(migrated, 8) == 123'456'789'012LL &&
+        ReadU64At(migrated, 16) == 375'000'000'000LL &&
+        ReadU32At(migrated, 24) == 0x71234567U,
+        "Particle migration shifted last/animation/anchor/seed into the removed current-sample slot");
+    std::vector<Byte> emitter(40);
+    PutSigned(emitter, 0, 125'000'000'000LL, 8);
+    PutSigned(emitter, 8, 987'654'321, 8);
+    PutSigned(emitter, 16, -1, 8);
+    V7SaveSchema::PutFloat(emitter, 24, 12.345678f);
+    V7SaveSchema::PutFloat(emitter, 32, -0.000123456789f);
+    const auto emission = UpgradeParticleStepV33State(RecordKind::ParticleEmitter, emitter);
+    V7SaveSchema::Validate(RecordKind::ParticleEmitter, emission);
+    Require(ReadU64At(emission, 0) == 125'000'000'000LL &&
+        ReadU64At(emission, 8) == 0 && ReadU64At(emission, 16) == UINT64_MAX &&
+        std::equal(emitter.begin() + 24, emitter.end(), emission.begin() + 24),
+        "Emitter migration lost spawn remainder, last-sample sentinel or external centers");
+}
+
+std::vector<Byte> AsTimestampState(RecordKind kind, std::span<const Byte> state)
+{
+    std::vector<Byte> old(TimestampV33StateSize(kind));
+    if (kind == RecordKind::ParticleSystem)
+    {
+        PutSigned(old, 0, 7'654'321, 8);
+        std::copy_n(state.begin(), 4, old.begin() + 8);
+    }
+    else if (kind == RecordKind::Particle)
+    {
+        PutSigned(old, 0, 987'654'321, 8);
+        std::copy_n(state.begin(), 28, old.begin() + 8);
+    }
+    else
+    {
+        std::copy(state.begin(), state.end(), old.begin());
+        if (kind == RecordKind::ParticleEmitter)
+            PutSigned(old, 8, 987'654'321, 8);
+    }
+    return old;
+}
+
 std::vector<Byte> AsRelativeState(RecordKind kind, std::span<const Byte> state,
     std::int64_t now)
 {
@@ -323,6 +380,8 @@ std::vector<Byte> MakeOldWire(std::span<const Byte> current, Document& expected,
 {
     const bool fixed = schema == MILLI_V33_SCHEMA_ID;
     const bool actorClock = schema == ACTOR_CLOCK_V33_SCHEMA_ID;
+    const bool timestampClock = schema == TIMESTAMP_V33_SCHEMA_ID;
+    const bool absoluteClock = actorClock || timestampClock;
     const auto now = SavedBattleClock(expected);
     const auto boardEnd = LevelSaveFormat::DAT64_HEADER_SIZE + 4 + ReadU32At(current, 48);
     Writer result;
@@ -344,15 +403,15 @@ std::vector<Byte> MakeOldWire(std::span<const Byte> current, Document& expected,
         {
             const auto wire = current.subspan(cursor + 16 + i * slotSize, slotSize);
             block.Bytes(wire.first(objectSize));
-            const auto relative = actorClock ? std::vector<Byte>(
-                array.mSlots[i].mV7State.begin(), array.mSlots[i].mV7State.begin() +
-                    ActorClockV33StateSize(array.mKind)) :
-                AsRelativeState(array.mKind, array.mSlots[i].mV7State, now);
+            const auto timestamp = AsTimestampState(array.mKind, array.mSlots[i].mV7State);
+            const auto relative = timestampClock ? timestamp : actorClock ? std::vector<Byte>(
+                timestamp.begin(), timestamp.begin() + ActorClockV33StateSize(array.mKind)) :
+                AsRelativeState(array.mKind, timestamp, now);
             const auto old = fixed ? AsOldState(array.mKind, relative) : relative;
             block.Bytes(old);
             block.Bytes(wire.subspan(objectSize + V7SaveSchema::Size(array.mKind)));
             auto& slot = array.mSlots[i];
-            if (array.mKind == RecordKind::Projectile)
+            if (array.mKind == RecordKind::Projectile && !timestampClock)
             {
                 slot.mV7State = slot.mID & DATA_ARRAY_KEY_MASK ?
                     V7SaveSchema::FromHistorical(array.mKind, slot.mCanonicalRecord, wire.first(objectSize)) :
@@ -361,9 +420,10 @@ std::vector<Byte> MakeOldWire(std::span<const Byte> current, Document& expected,
             }
             else
             {
-                slot.mV7State = actorClock ? old : UpgradeRelativeV33State(array.mKind,
+                slot.mV7State = absoluteClock ? UpgradeParticleStepV33State(array.mKind, old) :
+                    UpgradeRelativeV33State(array.mKind,
                     fixed ? UpgradeMilliV33State(array.mKind, old) : old);
-                slot.mNeedsClockBinding = !actorClock;
+                slot.mNeedsClockBinding = !absoluteClock;
             }
             BindHistoricalClock(slot, array.mKind, now, expected.mCanonicalBoard);
             if (actorClock && array.mKind == RecordKind::Plant)
@@ -397,7 +457,7 @@ void CheckWire(const std::filesystem::path& fixture, std::uint32_t schema)
     const auto migrated = Parse(old, Format::Dat64V33, echo);
     Require(migrated == expected, "Frozen whole-file parsing changed canonical or exact state");
     const auto upgraded = WriteFileImage(migrated, Format::Dat64V33, echo);
-    Require(ReadU32At(upgraded, 36) == 0x10739 &&
+    Require(ReadU32At(upgraded, 36) == 0x10740 &&
         LevelSaveFormat::IsCurrentDat64Header(upgraded) &&
         Parse(upgraded, Format::Dat64V33, echo) == expected,
         "Frozen input did not write current float schema with stable semantics");
@@ -460,10 +520,12 @@ int main(int argc, char** argv)
         CheckFields();
         CheckClockBindings();
         CheckOldProjectileWire();
+        CheckParticleStepMigration();
         CheckWire(argv[1], MILLI_V33_SCHEMA_ID);
         CheckWire(argv[1], RELATIVE_V33_SCHEMA_ID);
         CheckWire(argv[1], ACTOR_CLOCK_V33_SCHEMA_ID);
-        std::cout << "PASS input-only v3.3 10736/10737/10738 migration, projectile/bowling clocks, exact tails, and all output formats\n";
+        CheckWire(argv[1], TIMESTAMP_V33_SCHEMA_ID);
+        std::cout << "PASS input-only v3.3 10736/10737/10738/10739 migration, main-step particles, exact tails, and all output formats\n";
     }
     catch (const std::exception& error)
     {

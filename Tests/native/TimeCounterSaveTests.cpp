@@ -212,7 +212,6 @@ void CheckLiveSave()
     T source{};
     if constexpr (std::is_same_v<T, TodParticle>)
     {
-        source.mParticleSampleAgeNs = 31'234'567;
         source.mParticleLastSampleAgeNs = 21'234'567;
         source.mAnimationElapsedNs = 123'456'789'012;
         source.mAnimationSampleIntegral = 987'654'321;
@@ -220,7 +219,7 @@ void CheckLiveSave()
     }
     else if constexpr (std::is_same_v<T, TodParticleEmitter>)
     {
-        source.mSystemSampleAgeNs = 34'567'891;
+        source.mEmissionElapsedNs = 34'567'891;
         source.mSystemLastSampleAgeNs = 24'567'891;
         source.mSpawnRemainder = 123'456'789'012;
         source.mExternalTarget = {12.25f, -31.5f};
@@ -236,6 +235,18 @@ void CheckLiveSave()
         std::memcpy(ObjectBytes(source) + offset + 8, &ns, 8);
     }
     const auto original = WriteSaveRecord(source);
+    const auto tail = std::span(original).subspan(SaveV2Size<T>());
+    if constexpr (std::is_same_v<T, TodParticle>)
+        Require(tail.size() == 28 && V7SaveSchema::Read(tail, 0, 8) == 21'234'567 &&
+            V7SaveSchema::Read(tail, 8, 8) == 123'456'789'012LL &&
+            V7SaveSchema::Read(tail, 16, 8) == 987'654'321 &&
+            V7SaveSchema::Read(tail, 24, 4) == 0x71234567U,
+            "Native particle main-step tail retained a removed current sample or shifted its exact fields");
+    else if constexpr (std::is_same_v<T, TodParticleEmitter>)
+        Require(tail.size() == 40 && V7SaveSchema::Read(tail, 0, 8) == 123'456'789'012LL &&
+            V7SaveSchema::Read(tail, 8, 8) == 34'567'891 &&
+            V7SaveSchema::Read(tail, 16, 8) == 24'567'891,
+            "Native emitter did not retain its active-emission integral independently of system age");
     for (const unsigned fps : {60u, 100u, 144u, 240u, 250u, 1000u})
     {
         Configure(fps);

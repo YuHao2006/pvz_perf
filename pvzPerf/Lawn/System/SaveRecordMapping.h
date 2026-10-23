@@ -20,7 +20,8 @@ template<class T> void ClearNativeObject(T& value)
     std::memset(ObjectBytes(value), 0, sizeof(T));
 }
 
-// These mappings pin the wire ABI to v1, while native timer members are 64 bit.
+// These mappings retain frozen wire coordinates before nanosecond expansion,
+// with explicit v3.2 reanimation additions/compaction and particle variants.
 // Every field is addressed by name; padding and native pointers are never copied.
 template<class T> struct SaveRecordKind;
 #define SAVE_KIND(Type, Kind) template<> struct SaveRecordKind<Type> { \
@@ -91,13 +92,24 @@ template<class T, class Fn> void VisitSaveSegments(Fn&& visit)
     {
         const auto& layout = LevelSaveFormat::GetRecordLayout(SaveRecordKind<T>::value);
         for (size_t i = 0; i < layout.mSegmentCount; ++i)
-            visit(layout.mSegments[i].mDat64Offset, layout.mSegments[i].mLegacyOffset, layout.mSegments[i].mSize);
+        {
+            const auto& segment = layout.mSegments[i];
+            size_t wire = segment.mDat64Offset;
+            if constexpr (std::is_same_v<T, ReanimatorTrackInstance>)
+                if (wire >= 88) wire -= 8;
+            visit(wire, segment.mLegacyOffset, segment.mSize);
+        }
+        if constexpr (std::is_same_v<T, Reanimation>)
+            visit(size_t(12), size_t(12), size_t(4));
+        if constexpr (std::is_same_v<T, TodParticleSystem>)
+            visit(size_t(4), size_t(4), size_t(4));
     }
 }
 template<class T> size_t SaveV1Size()
 {
     if constexpr (std::is_same_v<T, Board>) return 22120;
     else if constexpr (std::is_same_v<T, SeedBank>) return 1024;
+    else if constexpr (std::is_same_v<T, ReanimatorTrackInstance>) return 104;
     else return LevelSaveFormat::GetRecordLayout(SaveRecordKind<T>::value).mDat64Size;
 }
 template<class T> size_t SaveV2Size()

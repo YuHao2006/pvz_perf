@@ -2,7 +2,7 @@ export component KernelSplat {
     kind: particle;
     source-name: "kernelsplat";
     Emitter {
-        image: "IMAGE_STAR_SPLATS";
+        images: ["particles/frames/star_splats_r0_c0.png","particles/frames/star_splats_r0_c1.png","particles/frames/star_splats_r0_c2.png","particles/frames/star_splats_r0_c3.png"];
         name: "StarSplat";
         imageFrames: 4;
         emitterType: Circle;
@@ -16,7 +16,7 @@ export component KernelSplat {
         particleScale: track { [.4 .6] [.8 1.2]; }
     }
     Emitter {
-        image: "IMAGE_STAR_PARTICLES";
+        images: ["particles/frames/star_particles_r0_c0.png","particles/frames/star_particles_r0_c1.png","particles/frames/star_particles_r0_c2.png"];
         name: "StarSplatBits";
         imageFrames: 3;
         emitterType: Circle;

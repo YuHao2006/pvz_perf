@@ -2,8 +2,7 @@ export component GraveBusterDie {
     kind: particle;
     source-name: "gravebusterdie";
     Emitter {
-        image: "IMAGE_DIRTSMALL";
-        imageRow: 1;
+        images: ["particles/frames/dirtsmall_r1_c0.png","particles/frames/dirtsmall_r1_c1.png","particles/frames/dirtsmall_r1_c2.png","particles/frames/dirtsmall_r1_c3.png","particles/frames/dirtsmall_r1_c4.png","particles/frames/dirtsmall_r1_c5.png","particles/frames/dirtsmall_r1_c6.png","particles/frames/dirtsmall_r1_c7.png"];
         imageFrames: 8;
         randomLaunchSpin: 1;
         systemDuration: 500;

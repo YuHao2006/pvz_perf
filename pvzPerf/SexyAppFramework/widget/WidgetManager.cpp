@@ -5,7 +5,7 @@
 #include "graphics/Image.h"
 #include "misc/KeyCodes.h"
 #include "misc/StableTime.h"
-#include "graphics/DDImage.h"
+#include "graphics/Image.h"
 #include "graphics/DDInterface.h"
 #include "graphics/RenderInterface.h"
 #include "SexyAppBase.h"
@@ -163,8 +163,8 @@ void WidgetManager::FlushDeferredOverlayWidgets(int theMaxPriority)
 					Graphics g(*mCurG);
 					g.Translate(-mMouseDestRect.mX, -mMouseDestRect.mY);
 					g.Translate(aWidget->mX, aWidget->mY);
-					g.mFastStretch = !g.mIs3D;
-					g.mLinearBlend = g.mIs3D;
+					g.mFastStretch = false;
+					g.mLinearBlend = true;
 
 					aWidget->DrawOverlay(&g, aPriority);
 					mDeferredOverlayWidgets[i].first = NULL;
@@ -445,16 +445,10 @@ bool WidgetManager::DrawScreen()
 	Graphics aScrG(mImage);
 	mCurG = &aScrG;
 
-	DDImage* aDDImage = mImage;
-	bool surfaceLocked = false;
-	if (aDDImage != NULL)
-		surfaceLocked = aDDImage->LockSurface();
-
 	if (aDirtyCount > 0)
 	{
 		Graphics g(aScrG);
 		g.Translate(-mMouseDestRect.mX, -mMouseDestRect.mY);
-		bool is3D = mApp->mDDInterface->mIs3D;
 
 		WidgetList::iterator anItr = mWidgets.begin();
 		while (anItr != mWidgets.end())
@@ -480,8 +474,8 @@ bool WidgetManager::DrawScreen()
                         mImage->mWidth - pad - mApp->mWidth, mImage->mHeight);
                 }
 				Graphics aClipG(g);
-				aClipG.mFastStretch = !is3D;
-				aClipG.mLinearBlend = is3D;
+				aClipG.mFastStretch = false;
+				aClipG.mLinearBlend = true;
 				aClipG.Translate(aWidget->mX, aWidget->mY);				
 				aWidget->DrawAll(&aModalFlags, &aClipG);
 				 
@@ -495,9 +489,6 @@ bool WidgetManager::DrawScreen()
 	}
 	
 	FlushDeferredOverlayWidgets(0x7FFFFFFF);
-
-	if (aDDImage != NULL && surfaceLocked)
-		aDDImage->UnlockSurface();
 
 	mCurG = NULL;
 

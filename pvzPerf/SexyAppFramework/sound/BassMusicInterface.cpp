@@ -134,6 +134,15 @@ bool BassMusicInterface::LoadMusic(int theSongId, const std::string& theFileName
 	}
 	if (!SlotIndexValid(theSongId) || mMusicSlots[theSongId])
 		return false; // Never replace a playing song or report a rejected insert as success.
+#ifdef _WIN32
+	// BASS selects its device per thread. The title loads on the main thread,
+	// but MusicInit loads the other layers on a fresh worker, whose default is
+	// the silent decoding device 0. Bind every playback channel to the same output
+	// used by OpenOutput before creating either a module or a stream.
+	if (!gBass->BASS_SetDevice(NativeMusicPlayback::OutputDevice))
+		throw std::runtime_error("BASS music output device selection failed: " +
+			std::to_string(gBass->BASS_ErrorGetCode()));
+#endif
 	std::string anExt;
 	const size_t aDot = theFileName.find_last_of('.');
 	if (aDot != std::string::npos)

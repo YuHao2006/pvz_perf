@@ -1,7 +1,9 @@
 #pragma once
-// Frozen MSVC x64 v1 ABI, captured before native counters were widened.
-// Offsets/sizes describe v1 only; offsetof(Type, member) follows the live ABI.
-// Do not regenerate these numbers from the current (nanosecond) classes.
+// Wire coordinates are frozen v1 positions before time-field expansion, except
+// the compacted v3.2 track record, Reanimation.mVariant at 12, and the v3.2
+// ParticleSystem.mVariant at 4.
+// offsetof(Type, member) follows the live ABI; never regenerate wire positions
+// from the current (nanosecond) classes. Historical layouts remain in LevelSaveFormat.
 #include <cstddef>
 #include <type_traits>
 template<class T, class Fn> void VisitNativeSaveFields(Fn&& visit) {
@@ -361,6 +363,7 @@ visit(offsetof(Type, mMotionTrailCount), 236, 4, sizeof(Type::mMotionTrailCount)
 }
 if constexpr (std::is_same_v<Type, TodParticleSystem>) {
 visit(offsetof(Type, mEffectType), 0, 4, sizeof(Type::mEffectType));
+visit(offsetof(Type, mVariant), 4, 4, sizeof(Type::mVariant));
 visit(offsetof(Type, mParticleDef), 8, 8, sizeof(Type::mParticleDef));
 visit(offsetof(Type, mParticleHolder), 16, 8, sizeof(Type::mParticleHolder));
 visit(offsetof(Type, mEmitterListPad), 24, 32, sizeof(Type::mEmitterListPad));
@@ -384,7 +387,7 @@ visit(offsetof(Type, mDead), 80, 1, sizeof(Type::mDead));
 visit(offsetof(Type, mColorOverride), 84, 16, sizeof(Type::mColorOverride));
 visit(offsetof(Type, mExtraAdditiveDrawOverride), 100, 1, sizeof(Type::mExtraAdditiveDrawOverride));
 visit(offsetof(Type, mScaleOverride), 104, 4, sizeof(Type::mScaleOverride));
-visit(offsetof(Type, mImageOverride), 112, 8, sizeof(Type::mImageOverride));
+// [112,120) remains a zeroed reserved wire slot after image overrides retired.
 visit(offsetof(Type, mCrossFadeEmitterID), 120, 4, sizeof(Type::mCrossFadeEmitterID));
 visit(offsetof(Type, mEmitterCrossFadeCountDown), 124, 4, sizeof(Type::mEmitterCrossFadeCountDown));
 visit(offsetof(Type, mFrameOverride), 128, 4, sizeof(Type::mFrameOverride));
@@ -413,6 +416,7 @@ if constexpr (std::is_same_v<Type, Reanimation>) {
 visit(offsetof(Type, mReanimationType), 0, 4, sizeof(Type::mReanimationType));
 visit(offsetof(Type, mAnimTime), 4, 4, sizeof(Type::mAnimTime));
 visit(offsetof(Type, mAnimRate), 8, 4, sizeof(Type::mAnimRate));
+visit(offsetof(Type, mVariant), 12, 4, sizeof(Type::mVariant));
 visit(offsetof(Type, mDefinition), 16, 8, sizeof(Type::mDefinition));
 visit(offsetof(Type, mLoopType), 24, 4, sizeof(Type::mLoopType));
 visit(offsetof(Type, mDead), 28, 1, sizeof(Type::mDead));
@@ -546,12 +550,11 @@ visit(offsetof(Type, mShakeOverride), 64, 4, sizeof(Type::mShakeOverride));
 visit(offsetof(Type, mShakeX), 68, 4, sizeof(Type::mShakeX));
 visit(offsetof(Type, mShakeY), 72, 4, sizeof(Type::mShakeY));
 visit(offsetof(Type, mAttachmentID), 76, 4, sizeof(Type::mAttachmentID));
-visit(offsetof(Type, mImageOverride), 80, 8, sizeof(Type::mImageOverride));
-visit(offsetof(Type, mRenderGroup), 88, 4, sizeof(Type::mRenderGroup));
-visit(offsetof(Type, mTrackColor), 92, 16, sizeof(Type::mTrackColor));
-visit(offsetof(Type, mIgnoreClipRect), 108, 1, sizeof(Type::mIgnoreClipRect));
-visit(offsetof(Type, mTruncateDisappearingFrames), 109, 1, sizeof(Type::mTruncateDisappearingFrames));
-visit(offsetof(Type, mIgnoreColorOverride), 110, 1, sizeof(Type::mIgnoreColorOverride));
-visit(offsetof(Type, mIgnoreExtraAdditiveColor), 111, 1, sizeof(Type::mIgnoreExtraAdditiveColor));
+visit(offsetof(Type, mRenderGroup), 80, 4, sizeof(Type::mRenderGroup));
+visit(offsetof(Type, mTrackColor), 84, 16, sizeof(Type::mTrackColor));
+visit(offsetof(Type, mIgnoreClipRect), 100, 1, sizeof(Type::mIgnoreClipRect));
+visit(offsetof(Type, mTruncateDisappearingFrames), 101, 1, sizeof(Type::mTruncateDisappearingFrames));
+visit(offsetof(Type, mIgnoreColorOverride), 102, 1, sizeof(Type::mIgnoreColorOverride));
+visit(offsetof(Type, mIgnoreExtraAdditiveColor), 103, 1, sizeof(Type::mIgnoreExtraAdditiveColor));
 }
 }

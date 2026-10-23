@@ -1,11 +1,10 @@
 #include "PoolEffect.h"
-#include <memory>
 #include <stdexcept>
 #include "LawnApp.h"
 #include "Resources.h"
 #include "GameConstants.h"
 #include "Sexy.TodLib/TodDebug.h"
-#include "graphics/DDImage.h"
+#include "graphics/Image.h"
 #include "graphics/Graphics.h"
 #include "graphics/DDInterface.h"
 #include "graphics/RenderInterface.h"
@@ -13,18 +12,18 @@
 //0x469A60
 void PoolEffect::PoolEffectInitialize()
 {
-    auto* aSource = AsMemoryImage(IMAGE_POOL_CAUSTIC_EFFECT);
+    auto* aSource = IMAGE_POOL_CAUSTIC_EFFECT;
     if (aSource == nullptr || aSource->mWidth != 256 || aSource->mHeight != 256)
         throw std::runtime_error("PoolEffect: caustic source must be a 256x256 GPU texture");
 
     auto* aApp = gLawnApp;
-    if (aApp == nullptr || !aApp->mDDInterface->mIs3D || aApp->mDDInterface == nullptr ||
+    if (aApp == nullptr || aApp->mDDInterface == nullptr ||
         aApp->mDDInterface->mRenderInterface == nullptr)
         throw std::runtime_error("PoolEffect: GPU caustics renderer is required");
     RenderInterface* anInterface = aApp->mDDInterface->mRenderInterface;
 
     // The output has metadata only; compute owns all of its pixels.
-    auto aImage = std::make_unique<MemoryImage>(aApp);
+    auto* aImage = new Image(aApp);
     aImage->mWidth = CAUSTIC_IMAGE_WIDTH;
     aImage->mHeight = CAUSTIC_IMAGE_HEIGHT;
     aImage->mForcedMode = true;
@@ -32,11 +31,16 @@ void PoolEffect::PoolEffectInitialize()
     aImage->mHasAlpha = true;
 
     PoolEffectDispose();
-    if (!anInterface->InstallCausticsCompute(aImage.get(), aSource))
-        throw std::runtime_error("PoolEffect: GPU caustics compute installation failed");
-    anInterface->SetCausticsFrame(0u);
+    try {
+        if (!anInterface->InstallCausticsCompute(aImage, aSource))
+            throw std::runtime_error("PoolEffect: GPU caustics compute installation failed");
+        anInterface->SetCausticsFrame(0u);
+    } catch (...) {
+        delete aImage;
+        throw;
+    }
 
-    mCausticImage = aImage.release();
+    mCausticImage = aImage;
     mApp = aApp;
     mPoolCounter = 0;
     mCausticGPU = true;
@@ -49,7 +53,7 @@ PoolEffect::~PoolEffect()
 
 void PoolEffect::PoolEffectDispose()
 {
-    Image::Destroy(mCausticImage);
+    delete mCausticImage;
     mCausticImage = nullptr;
     mCausticGPU = false;
 }
@@ -58,13 +62,12 @@ void PoolEffect::PoolEffectDispose()
 
 void PoolEffect::PoolEffectDraw(Sexy::Graphics* g, bool theIsNight)
 {
-    if (!mCausticGPU || mCausticImage == nullptr || mApp == nullptr || !mApp->mDDInterface->mIs3D)
+    if (!mCausticGPU || mCausticImage == nullptr || mApp == nullptr)
         throw std::runtime_error("PoolEffect: drawing requires installed GPU caustics");
-    auto* aDestImage = g != nullptr ? AsDDImage(g->mDestImage) : nullptr;
-    if (aDestImage == nullptr || aDestImage->mDDInterface == nullptr ||
-        aDestImage->mDDInterface->mRenderInterface == nullptr)
+    auto* aDestImage = g != nullptr ? g->mDestImage : nullptr;
+    if (aDestImage == nullptr || aDestImage->mRenderOwner == nullptr)
         throw std::runtime_error("PoolEffect: drawing requires a GPU destination");
-    RenderInterface* anInterface = aDestImage->mDDInterface->mRenderInterface;
+    RenderInterface* anInterface = aDestImage->mRenderOwner;
 
     float aGridSquareX = IMAGE_POOL->mWidth / 15.0f;
     float aGridSquareY = IMAGE_POOL->mHeight / 5.0f;
@@ -182,7 +185,7 @@ void PoolEffect::PoolEffectDraw(Sexy::Graphics* g, bool theIsNight)
 
 void PoolEffect::PoolEffectUpdate()
 {
-    if (!mCausticGPU || mCausticImage == nullptr || mApp == nullptr || !mApp->mDDInterface->mIs3D ||
+    if (!mCausticGPU || mCausticImage == nullptr || mApp == nullptr ||
         mApp->mDDInterface == nullptr || mApp->mDDInterface->mRenderInterface == nullptr)
         throw std::runtime_error("PoolEffect: updating requires installed GPU caustics");
     ++mPoolCounter;

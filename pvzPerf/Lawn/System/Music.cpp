@@ -29,8 +29,8 @@ Music::Music()
 	mMusicDrumsState = MusicDrumsState::MUSIC_DRUMS_OFF;
 	mDrumsStateCounter = 0;
 	mQueuedDrumTrackPackedOrder = -1;
-	mBaseBPM = 155;
-	mBaseModSpeed = 3;
+	mBaseBPM = 155.0f;
+	mBaseModSpeed = 3.0f;
 	mMusicBurstState = MusicBurstState::MUSIC_BURST_OFF;
 	mBurstStateCounter = 0;
 	mPauseOffset = 0;
@@ -511,12 +511,8 @@ void Music::PlayMusic(MusicTune theMusicTune, int theOffset, int theDrumsOffset)
 	else
 	{
 		HMUSIC aHMusic = GetBassMusicHandle(mCurMusicFileMain);
-		float aBaseBPM = 0.0f;
-		float aBaseModSpeed = 0.0f;
-		gBass->BASS_ChannelGetAttribute(aHMusic, BASS_ATTRIB_MUSIC_BPM, &aBaseBPM);
-		gBass->BASS_ChannelGetAttribute(aHMusic, BASS_ATTRIB_MUSIC_SPEED, &aBaseModSpeed);
-		mBaseBPM = static_cast<int>(aBaseBPM);
-		mBaseModSpeed = static_cast<int>(aBaseModSpeed);
+		gBass->BASS_ChannelGetAttribute(aHMusic, BASS_ATTRIB_MUSIC_BPM, &mBaseBPM);
+		gBass->BASS_ChannelGetAttribute(aHMusic, BASS_ATTRIB_MUSIC_SPEED, &mBaseModSpeed);
 	}
 }
 
@@ -536,15 +532,15 @@ void Music::MusicResyncChannel(MusicFile theMusicFileToMatch, MusicFile theMusic
 	{
 		HMUSIC aHMusic = GetBassMusicHandle(theMusicFileToSync);
 
-		int aBPM = mBaseBPM;
+		float aBPM = mBaseBPM;
 		if (aDiff > 2)
-			aBPM -= 2;
+			aBPM -= 2.0f;
 		else if (aDiff > 0)
-			aBPM -= 1;
+			aBPM -= 1.0f;
 		else if (aDiff < -2)
-			aBPM += 2;
+			aBPM += 2.0f;
 		else if (aDiff < 0)
-			aBPM += 1;
+			aBPM += 1.0f;
 
 		gBass->BASS_ChannelSetAttribute(aHMusic, BASS_ATTRIB_MUSIC_BPM, aBPM);  // 适当调整待同步音乐的速率以缩小差距
 	}

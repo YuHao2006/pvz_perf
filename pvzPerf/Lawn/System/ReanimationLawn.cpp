@@ -8,11 +8,10 @@
 #include "graphics/Color.h"
 #include "Sexy.TodLib/Reanimator.h"
 #include "graphics/MemoryImage.h"
-#include "graphics/DDImage.h"
+#include "graphics/Image.h"
 #include "graphics/DDInterface.h"
 #include "graphics/RenderInterface.h"
 #include <memory>
-#include <map>
 #include <stdexcept>
 
 namespace
@@ -154,7 +153,7 @@ void ReanimatorCache::DrawReanimatorFrame(Graphics* g, float thePosX, float theP
 }
 
 //0x46F280
-DDImage* ReanimatorCache::MakeBlankRenderImage(int theWidth, int theHeight)
+Image* ReanimatorCache::MakeBlankRenderImage(int theWidth, int theHeight)
 {
 	return mApp->mDDInterface->mRenderInterface->CreateRenderImage(theWidth,theHeight);
 }
@@ -165,82 +164,6 @@ DrawVariation ImitaterVariation(SeedType seed)
 	return seed == SEED_HYPNOSHROOM || seed == SEED_SQUASH || seed == SEED_POTATOMINE ||
 		seed == SEED_GARLIC || seed == SEED_LILYPAD ? VARIATION_IMITATER_LESS : VARIATION_IMITATER;
 }
-
-using FilterPrebuildSources = std::map<Image*, unsigned int>;
-
-void CollectReanimationFilters(FilterPrebuildSources& sources, ReanimationType type,
-	FilterEffect effect)
-{
-	if (!gReanimatorDefArray ||
-		!gReanimatorDefArray[static_cast<int>(type)].mTracks.tracks)
-		throw std::logic_error("ReanimatorCache: prebuild requires loaded animation definitions");
-	const auto& definition = gReanimatorDefArray[static_cast<int>(type)];
-	const auto& tracks = definition.mTracks;
-	for (int t = 0; t < tracks.count; ++t)
-	{
-		const auto& track = tracks.tracks[t];
-		// TreeOfWisdomDraw only overlays groups 2 and 4, never its background.
-		if (type == REANIM_TREEOFWISDOM &&
-			!ReanimTrackRanges::tree.Contains(track.mTrackId) &&
-			!ReanimTrackRanges::overlay.Contains(track.mTrackId) &&
-			!ReanimTrackRanges::leaf.Contains(track.mTrackId) &&
-			!ReanimTrackRanges::bunch.Contains(track.mTrackId))
-			continue;
-		for (int f = 0; f < track.mTransforms.count; ++f)
-		{
-			if (track.mTransforms.mTransforms[f].mImageRegion.mWidth)
-			{
-				// Every image region in this definition uses the same atlas.
-				sources[definition.mAtlas.image.get()] |= 1u << effect;
-				return;
-			}
-		}
-	}
-}
-
-void PrebuildGameplayFilters()
-{
-	FilterPrebuildSources sources;
-	for (int i = SEED_PEASHOOTER; i < SEED_GATLINGPEA; ++i)
-	{
-		const auto seed = static_cast<SeedType>(i);
-		CollectReanimationFilters(sources, GetPlantDefinition(seed).mReanimationType,
-			ImitaterVariation(seed) == VARIATION_IMITATER_LESS ?
-				FILTER_EFFECT_LESS_WASHED_OUT : FILTER_EFFECT_WASHED_OUT);
-	}
-	// IZombieInitLevel (nine layouts plus endless); also covers all nine
-	// BeghouledPickSeed choices/upgrades and their blink/head attachments.
-	constexpr SeedType whiteSeeds[] = {
-		SEED_CACTUS, SEED_CHOMPER, SEED_FUMESHROOM, SEED_GARLIC, SEED_KERNELPULT,
-		SEED_MAGNETSHROOM, SEED_PEASHOOTER, SEED_POTATOMINE, SEED_PUFFSHROOM,
-		SEED_REPEATER, SEED_SCAREDYSHROOM, SEED_SNOWPEA, SEED_SPIKEWEED,
-		SEED_SPLITPEA, SEED_SQUASH, SEED_STARFRUIT, SEED_SUNFLOWER, SEED_TALLNUT,
-		SEED_THREEPEATER, SEED_TORCHWOOD, SEED_UMBRELLA, SEED_WALLNUT
-	};
-	for (SeedType seed : whiteSeeds)
-		CollectReanimationFilters(sources, GetPlantDefinition(seed).mReanimationType, FILTER_EFFECT_WHITE);
-	CollectReanimationFilters(sources, REANIM_TREEOFWISDOM, FILTER_EFFECT_WHITE);
-
-	// Runtime image overrides are absent from the animation definitions.
-	for (Image* image : {IMAGE_REANIM_WALLNUT_CRACKED1, IMAGE_REANIM_WALLNUT_CRACKED2,
-		IMAGE_REANIM_TALLNUT_CRACKED1, IMAGE_REANIM_TALLNUT_CRACKED2})
-		sources[image] |= (1u << FILTER_EFFECT_WASHED_OUT) | (1u << FILTER_EFFECT_WHITE);
-	for (Image* image : {IMAGE_REANIM_GARLIC_BODY2, IMAGE_REANIM_GARLIC_BODY3})
-		sources[image] |= (1u << FILTER_EFFECT_LESS_WASHED_OUT) | (1u << FILTER_EFFECT_WHITE);
-	for (Image* image : {IMAGE_REANIM_PUMPKIN_DAMAGE1, IMAGE_REANIM_PUMPKIN_DAMAGE3})
-		sources[image] |= 1u << FILTER_EFFECT_WASHED_OUT;
-	sources[IMAGE_PACKET_PLANTS] |=
-		(1u << FILTER_EFFECT_WASHED_OUT) | (1u << FILTER_EFFECT_LESS_WASHED_OUT);
-
-	for (const auto& [image, mask] : sources)
-	{
-		for (int effect = 0; effect < NUM_FILTER_EFFECTS; ++effect)
-		{
-			if (!(mask & (1u << effect))) continue;
-			FilterEffectPrebuildImage(image, static_cast<FilterEffect>(effect));
-		}
-	}
-}
 }
 
 // Main-thread loading barrier: sources must be loaded/uploaded before this call.
@@ -249,7 +172,6 @@ void ReanimatorCache::PrebuildCacheFrames()
 {
 	if (CurrentNativeThreadIdentity() != mApp->mPrimaryThreadId)
 		throw std::logic_error("ReanimatorCache: prebuild requires the main thread");
-	PrebuildGameplayFilters();
 	for (int seed = static_cast<int>(SeedType::SEED_PEASHOOTER);
 		seed < static_cast<int>(SeedType::NUM_SEED_TYPES); ++seed)
 	{
@@ -319,7 +241,7 @@ namespace
 // ReanimatorCache::MakeCachedMowerFrame 割草机帧分发表：表内匿名 lambda =
 // 原 case 体逐句迁移（生成器 + 逆变换 token 对拍 0 差异）；四型仅
 // 缩放/偏移/轨道/动画型参数差。
-using CachedImagePtr = std::unique_ptr<DDImage, ImageDeleter>;
+using CachedImagePtr = Image*;
 using MowerFrameCaseFn = void (*)(ReanimatorCache&, CachedImagePtr&);
 
 // 原 default（无 case 的 0 型与表外哨兵共用）
@@ -333,8 +255,8 @@ constexpr MowerFrameCaseFn kMowerFrameCases[(int)LawnMowerType::NUM_MOWER_TYPES]
     // 原 case LAWNMOWER_LAWN
     [](ReanimatorCache& rc, CachedImagePtr& aImage)
     {
-    		aImage.reset(rc.MakeBlankRenderImage(90, 100));
-    		Graphics aMemoryGraphics(aImage.get());
+        aImage = rc.MakeBlankRenderImage(90, 100);
+        Graphics aMemoryGraphics(aImage);
             aMemoryGraphics.mLinearBlend = true;
     		aMemoryGraphics.mScaleX = 0.85f;
     		aMemoryGraphics.mScaleY = 0.85f;
@@ -343,8 +265,8 @@ constexpr MowerFrameCaseFn kMowerFrameCases[(int)LawnMowerType::NUM_MOWER_TYPES]
     // 原 case LAWNMOWER_POOL
     [](ReanimatorCache& rc, CachedImagePtr& aImage)
     {
-    		aImage.reset(rc.MakeBlankRenderImage(90, 100));
-    		Graphics aMemoryGraphics(aImage.get());
+        aImage = rc.MakeBlankRenderImage(90, 100);
+        Graphics aMemoryGraphics(aImage);
             aMemoryGraphics.mLinearBlend = true;
     		aMemoryGraphics.mScaleX = 0.8f;
     		aMemoryGraphics.mScaleY = 0.8f;
@@ -353,8 +275,8 @@ constexpr MowerFrameCaseFn kMowerFrameCases[(int)LawnMowerType::NUM_MOWER_TYPES]
     // 原 case LAWNMOWER_ROOF
     [](ReanimatorCache& rc, CachedImagePtr& aImage)
     {
-    		aImage.reset(rc.MakeBlankRenderImage(90, 100));
-    		Graphics aMemoryGraphics(aImage.get());
+        aImage = rc.MakeBlankRenderImage(90, 100);
+        Graphics aMemoryGraphics(aImage);
             aMemoryGraphics.mLinearBlend = true;
     		aMemoryGraphics.mScaleX = 0.85f;
     		aMemoryGraphics.mScaleY = 0.85f;
@@ -363,8 +285,8 @@ constexpr MowerFrameCaseFn kMowerFrameCases[(int)LawnMowerType::NUM_MOWER_TYPES]
     // 原 case LAWNMOWER_SUPER_MOWER
     [](ReanimatorCache& rc, CachedImagePtr& aImage)
     {
-    		aImage.reset(rc.MakeBlankRenderImage(90, 100));
-    		Graphics aMemoryGraphics(aImage.get());
+        aImage = rc.MakeBlankRenderImage(90, 100);
+        Graphics aMemoryGraphics(aImage);
             aMemoryGraphics.mLinearBlend = true;
     		aMemoryGraphics.mScaleX = 0.85f;
     		aMemoryGraphics.mScaleY = 0.85f;
@@ -376,14 +298,16 @@ static_assert(sizeof(kMowerFrameCases) / sizeof(kMowerFrameCases[0]) ==
 }  // namespace
 
 //0x46F330
-DDImage* ReanimatorCache::MakeCachedMowerFrame(LawnMowerType theMowerType)
+Image* ReanimatorCache::MakeCachedMowerFrame(LawnMowerType theMowerType)
 {
+	Image* aImage = nullptr;
+	try
+	{
 	GpuImageDrawScope drawing(*mApp->mDDInterface->mRenderInterface,nullptr);
-	CachedImagePtr aImage;
 
 	// C 形态 -> 匿名 lambda 函数指针表：行序 = LawnMowerType 枚举序（0..3，
-	// 全覆盖）。aImage（函数级 unique_ptr）经引用传递：槽内 reset、函数尾
-	// release 保持原位；越界 = 原 default（TOD_ASSERT）具名复用。
+	// 全覆盖）。裸指针经引用传递；失败时由当前函数清理，成功时
+	// 交给缓存持有；越界 = 原 default（TOD_ASSERT）具名复用。
 	const unsigned aMowerIndex = static_cast<unsigned>(theMowerType);
 	if (aMowerIndex < static_cast<unsigned>(LawnMowerType::NUM_MOWER_TYPES))
 	{
@@ -394,18 +318,26 @@ DDImage* ReanimatorCache::MakeCachedMowerFrame(LawnMowerType theMowerType)
 		MowerFrameDefault(*this, aImage);
 	}
 
-	return aImage.release();
+	return aImage;
+	}
+	catch (...)
+	{
+		delete aImage;
+		throw;
+	}
 }
 
 //0x46F550
-DDImage* ReanimatorCache::MakeCachedPlantFrame(SeedType theSeedType, DrawVariation theDrawVariation)
+Image* ReanimatorCache::MakeCachedPlantFrame(SeedType theSeedType, DrawVariation theDrawVariation)
 {
 	int aOffsetX, aOffsetY, aWidth, aHeight;
 	GetPlantImageSize(theSeedType, aOffsetX, aOffsetY, aWidth, aHeight);
-	CachedImagePtr aMemoryImage(MakeBlankRenderImage(aWidth, aHeight));
+	Image* aMemoryImage = MakeBlankRenderImage(aWidth, aHeight);
+	try
+	{
 	GpuImageDrawScope drawing(*mApp->mDDInterface->mRenderInterface,
-		aMemoryImage.get());
-	Graphics aMemoryGraphics(aMemoryImage.get());
+		aMemoryImage);
+	Graphics aMemoryGraphics(aMemoryImage);
 	aMemoryGraphics.mLinearBlend = true;
 
 	PlantDefinition& aPlantDef = GetPlantDefinition(theSeedType);
@@ -451,16 +383,24 @@ DDImage* ReanimatorCache::MakeCachedPlantFrame(SeedType theSeedType, DrawVariati
 		}
 	}
 
-	return aMemoryImage.release();
+	return aMemoryImage;
+	}
+	catch (...)
+	{
+		delete aMemoryImage;
+		throw;
+	}
 }
 
 //0x46F8A0
-DDImage* ReanimatorCache::MakeCachedZombieFrame(ZombieType theZombieType)
+Image* ReanimatorCache::MakeCachedZombieFrame(ZombieType theZombieType)
 {
-	CachedImagePtr aMemoryImage(MakeBlankRenderImage(200, 210));
+	Image* aMemoryImage = MakeBlankRenderImage(200, 210);
+	try
+	{
 	GpuImageDrawScope drawing(*mApp->mDDInterface->mRenderInterface,
-		aMemoryImage.get());
-	Graphics aMemoryGraphics(aMemoryImage.get());
+		aMemoryImage);
+	Graphics aMemoryGraphics(aMemoryImage);
 	aMemoryGraphics.mLinearBlend = true;
 
 	ZombieType aUseZombieType = theZombieType;
@@ -528,7 +468,13 @@ DDImage* ReanimatorCache::MakeCachedZombieFrame(ZombieType theZombieType)
 
 		DrawReanimatorFrame(&aMemoryGraphics, aPosX, aPosY, aZombieDef.mReanimationType, aTrackName, DrawVariation::VARIATION_NORMAL);
 	}
-	return aMemoryImage.release();
+	return aMemoryImage;
+	}
+	catch (...)
+	{
+		delete aMemoryImage;
+		throw;
+	}
 }
 
 ReanimatorCache::~ReanimatorCache()
@@ -547,26 +493,26 @@ void ReanimatorCache::ReanimatorCacheDispose()
 {
 	for (int i = 0; i < SeedType::NUM_SEED_TYPES; i++)
 	{
-		Image::Destroy(mPlantImages[i]);
+		delete mPlantImages[i];
 		mPlantImages[i] = nullptr;
 	}
 	for (auto& variants : mImageVariations.mImages)
 	{
 		for (auto*& image : variants)
 		{
-			Image::Destroy(image);
+			delete image;
 			image=nullptr;
 		}
 	}
 	mImageVariations.mCount=0;
 	for (int i = 0; i < LawnMowerType::NUM_MOWER_TYPES; i++)
 	{
-		Image::Destroy(mLawnMowers[i]);
+		delete mLawnMowers[i];
 		mLawnMowers[i] = nullptr;
 	}
 	for (int i = 0; i < ZombieType::NUM_CACHED_ZOMBIE_TYPES; i++)
 	{
-		Image::Destroy(mZombieImages[i]);
+		delete mZombieImages[i];
 		mZombieImages[i] = nullptr;
 	}
 }
@@ -577,7 +523,7 @@ void ReanimatorCache::DrawCachedPlant(Graphics* g, float thePosX, float thePosY,
 {
 	TOD_ASSERT(theSeedType >= 0 && theSeedType < SeedType::NUM_SEED_TYPES);
 
-	DDImage* aImage = nullptr;
+	Image* aImage = nullptr;
 	if (theDrawVariation != DrawVariation::VARIATION_NORMAL)
 	{
 		aImage=mImageVariations.At(theSeedType,theDrawVariation);
@@ -592,10 +538,7 @@ void ReanimatorCache::DrawCachedPlant(Graphics* g, float thePosX, float thePosY,
 
 	int aOffsetX, aOffsetY, aWidth, aHeight;
 	GetPlantImageSize(theSeedType, aOffsetX, aOffsetY, aWidth, aHeight);
-	if (!mApp->mDDInterface->mIs3D && g->mScaleX == 1.0f && g->mScaleY == 1.0f)
-		g->DrawImage(aImage, thePosX + aOffsetX, thePosY + aOffsetY);
-	else
-		TodDrawImageScaledF(g, aImage, thePosX + (aOffsetX * g->mScaleX), thePosY + (aOffsetY * g->mScaleY), g->mScaleX, g->mScaleY);
+	TodDrawImageScaledF(g, aImage, thePosX + (aOffsetX * g->mScaleX), thePosY + (aOffsetY * g->mScaleY), g->mScaleX, g->mScaleY);
 }
 
 //0x470110

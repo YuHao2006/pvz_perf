@@ -16,7 +16,7 @@ public:
 	_T mHeight;
 
 public:
-	TRect(_T theX, _T theY, _T theWidth, _T theHeight) :
+	constexpr TRect(_T theX, _T theY, _T theWidth, _T theHeight) :
 	  mX(theX), mY(theY), mWidth(theWidth), mHeight(theHeight)
 	{
 	}
@@ -28,7 +28,7 @@ public:
 	}
 	*/
 
-	TRect() :
+	constexpr TRect() :
 	  mX(0), mY(0), mWidth(0), mHeight(0)
 	{
 	}

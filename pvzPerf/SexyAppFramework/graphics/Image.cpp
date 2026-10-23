@@ -1,242 +1,233 @@
 #include "Image.h"
+#include "DDInterface.h"
 #include "Graphics.h"
-#include "DDImage.h"
-#include "ResidentImage.h"
-#include <memory>
+#include "RenderInterface.h"
+#include "SexyAppBase.h"
+#include "imagelib/ImageLib.h"
+#include "Quantize.h"
+#include <algorithm>
+#include <cstring>
+#include <limits>
+#include <stdexcept>
+#include <utility>
 
 using namespace Sexy;
 
-Image::Image()
+ImageMetadata::ImageMetadata()
 {
 	mWidth = 0;
 	mHeight = 0;
-
-	mNumRows = 1;
-	mNumCols = 1;
-
-	mAnimInfo = NULL;
-	mDrawn = false;
 }
 
-Image::Image(const Image& theImage) :
+ImageMetadata::ImageMetadata(const ImageMetadata& theImage) :
 	mWidth(theImage.mWidth),
-	mHeight(theImage.mHeight),
-	mNumRows(theImage.mNumRows),
-	mNumCols(theImage.mNumCols)
+	mHeight(theImage.mHeight)
 {
-	mDrawn = false;
-	if (theImage.mAnimInfo != NULL)
-		mAnimInfo = new AnimInfo(*theImage.mAnimInfo);
-	else
-		mAnimInfo = NULL;
+}
+
+ImageMetadata::~ImageMetadata()
+{
+}
+
+Image::Image(SexyAppBase* app) : mApp(app ? app : gSexyAppBase)
+{
+	if (mApp) mApp->AddGpuImage(this);
+}
+
+Image::Image(const Image& source) :
+	ImageMetadata(source),
+	mApp(source.mApp),
+	mGpuSamplingFlags(source.mGpuSamplingFlags),
+	mForcedMode(source.mForcedMode),
+	mHasTrans(source.mHasTrans),
+	mHasAlpha(source.mHasAlpha)
+{
+	try
+	{
+		if (source.mTexture || source.mPendingDecoded)
+		{
+			if (!mApp || !mApp->mDDInterface || !mApp->mDDInterface->mRenderInterface)
+				throw GpuImageCpuAccess{};
+			auto* render = mApp->mDDInterface->mRenderInterface;
+			render->CloneUploadedImage(this, source);
+			mHasTrans=source.mHasTrans;
+			mHasAlpha=source.mHasAlpha;
+		}
+		if (mApp) mApp->AddGpuImage(this);
+	}
+	catch (...)
+	{
+		if (mRenderOwner) mRenderOwner->RemoveImage(this);
+		throw;
+	}
 }
 
 Image::~Image()
 {
-	mImageType = ImageType::Image;
-	delete mAnimInfo;
+	if (mRenderOwner) mRenderOwner->RemoveImage(this);
+	delete std::exchange(mPendingDecoded, nullptr);
+	if (mApp) mApp->RemoveGpuImage(this);
 }
 
-MemoryImage* Image::AsMemoryImage() noexcept
+namespace
 {
-	return mImageType == ImageType::MemoryImage || mImageType == ImageType::DDImage
-		? static_cast<MemoryImage*>(this) : nullptr;
+size_t PixelCount(int width, int height)
+{
+	if (width <= 0 || height <= 0 ||
+		size_t(width) > (std::numeric_limits<size_t>::max() / sizeof(unsigned int) - 1) / size_t(height))
+		throw std::invalid_argument("Invalid image dimensions");
+	return size_t(width) * size_t(height);
+}
 }
 
-const MemoryImage* Image::AsMemoryImage() const noexcept
+void Image::AdoptDecodedImage(ImageLib::Image* decoded, bool commitBits)
 {
-	return mImageType == ImageType::MemoryImage || mImageType == ImageType::DDImage
-		? static_cast<const MemoryImage*>(this) : nullptr;
-}
-
-DDImage* Image::AsDDImage() noexcept
-{
-	return mImageType == ImageType::DDImage ? static_cast<DDImage*>(this) : nullptr;
-}
-
-const DDImage* Image::AsDDImage() const noexcept
-{
-	return mImageType == ImageType::DDImage ? static_cast<const DDImage*>(this) : nullptr;
-}
-
-ResidentImage* Image::AsResidentImage() noexcept
-{
-	return mImageType == ImageType::ResidentImage ? static_cast<ResidentImage*>(this) : nullptr;
-}
-
-const ResidentImage* Image::AsResidentImage() const noexcept
-{
-	return mImageType == ImageType::ResidentImage ? static_cast<const ResidentImage*>(this) : nullptr;
-}
-
-void Image::Destroy(Image* image) noexcept
-{
-	if (image == nullptr)
+	if (decoded && decoded == mPendingDecoded)
+	{
+		if (commitBits) CommitBits();
 		return;
-	switch (image->mImageType)
-	{
-	case ImageType::DDImage: delete static_cast<DDImage*>(image); return;
-	case ImageType::MemoryImage: delete static_cast<MemoryImage*>(image); return;
-	case ImageType::ResidentImage: delete static_cast<ResidentImage*>(image); return;
-	case ImageType::Image: delete image; return;
 	}
-	std::terminate();
-}
-
-Rect Image::GetCelRect(int theCel)
-{
-	int h = GetCelHeight();
-	int w = GetCelWidth();
-	int x = (theCel % mNumCols) * w;
-	int y = (theCel / mNumCols) * h;
-
-	return Rect(x, y, w, h);
-}
-
-Rect Image::GetCelRect(int theCol, int theRow)
-{
-	int h = GetCelHeight();
-	int w = GetCelWidth();
-	int x = theCol * w;
-	int y = theRow * h;
-
-	return Rect(x, y, w, h);
-}
-
-AnimInfo::AnimInfo()
-{
-	mAnimType = AnimType_None;
-	mFrameDelay = 1;
-	mNumCels = 1;
-}
-
-void AnimInfo::SetPerFrameDelay(int theFrame, int theTime)
-{
-	if ((int)mPerFrameDelay.size()<=theFrame)
-		mPerFrameDelay.resize(theFrame+1);
-
-	mPerFrameDelay[theFrame] = theTime;
-}
-
-void AnimInfo::Compute(int theNumCels, int theBeginFrameTime, int theEndFrameTime)
-{
-	int i;
-
-	mNumCels = theNumCels;
-	if (mNumCels<=0)
-		mNumCels = 1;
-
-	if (mFrameDelay<=0)
-		mFrameDelay = 1;
-
-	if (mAnimType==AnimType_PingPong && mNumCels>1)
+	// Ownership transfers on entry, including rejected inputs.
+	try
 	{
-		mFrameMap.resize(theNumCels*2-2);
-		int index = 0;
-		for (i=0; i<theNumCels; i++)
-			mFrameMap[index++] = i;
-		for (i=theNumCels-2; i>=1; i--)
-			mFrameMap[index++] = i;
+		if (!decoded || !decoded->mBits || mTexture || mPendingDecoded)
+			throw GpuImageCpuAccess{};
+		const auto count = PixelCount(decoded->mWidth, decoded->mHeight);
+		if (decoded->mPixelCapacity && decoded->mPixelCapacity < count)
+			throw std::invalid_argument("Decoded image allocation is smaller than its dimensions");
 	}
-
-	if (!mFrameMap.empty())
-		mNumCels = (int)mFrameMap.size();
-
-	if (theBeginFrameTime>0) 
-		SetPerFrameDelay(0,theBeginFrameTime);
-
-	if (theEndFrameTime>0)
-		SetPerFrameDelay(mNumCels-1,theEndFrameTime);
-
-	if (!mPerFrameDelay.empty())
+	catch (...)
 	{
-		mTotalAnimTime = 0;
-		mPerFrameDelay.resize(mNumCels);
+		delete decoded;
+		throw;
+	}
+	mWidth = decoded->mWidth;
+	mHeight = decoded->mHeight;
+	mPendingDecoded = decoded;
+	BitsChanged();
+	if (decoded->HasComposition())
+	{
+		mForcedMode = true;
+		mHasTrans = true;
+		mHasAlpha = true;
+	}
+	if (commitBits) CommitBits();
+}
 
-		for (i=0; i<mNumCels; i++)
+void Image::AppendAlphaImage(ImageLib::Image* decoded)
+{
+	if (decoded && decoded == mPendingDecoded)
+		throw std::invalid_argument("Alpha payload aliases its destination");
+	try
+	{
+		if (!decoded || !decoded->mBits || !mPendingDecoded || mTexture)
+			throw GpuImageCpuAccess{};
+		if (mWidth != decoded->mWidth || mHeight != decoded->mHeight)
+			throw ImageLib::ImageAlphaSizeMismatch{};
+		// Composition inputs are CPU decode objects, never runtime GPU owners.
+		mPendingDecoded->mAlphaLayers.push_back(decoded);
+	}
+	catch (...)
+	{
+		delete decoded;
+		throw;
+	}
+	mForcedMode = true;
+	mHasTrans = true;
+	mHasAlpha = true;
+}
+
+void Image::SetBits(unsigned int* bits, int width, int height, bool commitBits)
+{
+	if (mTexture) throw GpuImageCpuAccess{};
+	const auto count = PixelCount(width, height);
+	if (!bits) throw std::invalid_argument("Missing source image pixels");
+	auto* decoded = new ImageLib::Image;
+	try
+	{
+		decoded->mWidth = width;
+		decoded->mHeight = height;
+		decoded->mBits = new unsigned int[count + 1];
+		decoded->mPixelCapacity = count + 1;
+		std::copy_n(bits, count, decoded->mBits);
+	}
+	catch (...) { delete decoded; throw; }
+	delete std::exchange(mPendingDecoded, nullptr);
+	AdoptDecodedImage(decoded, commitBits);
+}
+
+void Image::Create(int width, int height)
+{
+	if (mTexture) throw GpuImageCpuAccess{};
+	const auto count = PixelCount(width, height);
+	auto* decoded = new ImageLib::Image;
+	try
+	{
+		decoded->mWidth = width;
+		decoded->mHeight = height;
+		decoded->mBits = new unsigned int[count + 1]{};
+		decoded->mPixelCapacity = count + 1;
+	}
+	catch (...) { delete decoded; throw; }
+	delete std::exchange(mPendingDecoded, nullptr);
+	AdoptDecodedImage(decoded, true);
+}
+
+void Image::BitsChanged()
+{
+	if (mTexture || !mPendingDecoded) throw GpuImageCpuAccess{};
+	mBitsChanged = true;
+}
+
+void Image::CommitBits()
+{
+	if (!mBitsChanged) return;
+	if (!mForcedMode)
+	{
+		if (!mPendingDecoded || !mPendingDecoded->mBits) throw GpuImageCpuAccess{};
+		mHasAlpha = false;
+		mHasTrans = false;
+		const auto count = PixelCount(mWidth, mHeight);
+		for (size_t i = 0; i < count; ++i)
 		{
-			if (mPerFrameDelay[i]<=0)
-				mPerFrameDelay[i] = mFrameDelay;
-				
-			mTotalAnimTime += mPerFrameDelay[i];
+			const auto alpha = mPendingDecoded->mBits[i] >> 24;
+			mHasTrans |= alpha == 0;
+			mHasAlpha |= alpha != 0 && alpha != 255;
 		}
 	}
-	else
-		mTotalAnimTime = mFrameDelay*mNumCels;
-
-	if (!mFrameMap.empty())
-		mFrameMap.resize(mNumCels);
+	mBitsChanged = false;
 }
-	
-int AnimInfo::GetPerFrameCel(int theTime)
+
+void Image::PurgeBits()
 {
-	for (int i=0; i<mNumCels; i++)
+	delete std::exchange(mPendingDecoded, nullptr);
+}
+
+bool Image::Palletize()
+{
+	if (!mPendingDecoded || mTexture || mPendingDecoded->HasComposition())
+		return false;
+	CommitBits();
+	const auto count = PixelCount(mWidth, mHeight);
+	unsigned char* indices = nullptr;
+	unsigned int* palette = nullptr;
+	try
 	{
-		theTime -= mPerFrameDelay[i];
-		if (theTime<0)
-			return i;
+		indices = new unsigned char[count];
+		palette = new unsigned int[256];
+		if (!Quantize8Bit(mPendingDecoded->mBits, mWidth, mHeight, indices, palette))
+		{
+			delete[] indices;
+			delete[] palette;
+			return false;
+		}
+		// Preserve the old load-time quantization, without retaining a palette.
+		for (size_t i = 0; i < count; ++i)
+			mPendingDecoded->mBits[i] = palette[indices[i]];
 	}
-
-	return mNumCels-1;
-}
-
-
-
-int AnimInfo::GetCel(int theTime)
-{
-	if (mAnimType==AnimType_Once && theTime>=mTotalAnimTime)
-	{
-		if (!mFrameMap.empty())
-			return mFrameMap[mFrameMap.size()-1];
-		else
-			return mNumCels-1;
-	}
-
-	theTime = theTime%mTotalAnimTime;
-
-	int aFrame;
-	if (!mPerFrameDelay.empty())
-		aFrame = GetPerFrameCel(theTime);
-	else
-		aFrame = (theTime/mFrameDelay)%mNumCels;
-
-	if (mFrameMap.empty())
-		return aFrame;
-	else
-		return mFrameMap[aFrame];	
-}
-
-int	Image::GetAnimCel(int theTime)
-{
-	if (mAnimInfo==NULL)
-		return 0;
-	else
-		return mAnimInfo->GetCel(theTime);
-}
-
-Rect Image::GetAnimCelRect(int theTime)
-{
-	Rect aRect;
-	int aCel = GetAnimCel(theTime);
-	int aCelWidth = GetCelWidth();
-	int aCelHeight = GetCelHeight();
-	if (mNumCols>1)
-		return Rect(aCel*aCelWidth,0,aCelWidth,mHeight);
-	else
-		return Rect(0,aCel*aCelHeight,mWidth,aCelHeight);
-}
-
-void Image::CopyAttributes(Image *from)
-{
-	if (from == this)
-		return;
-	std::unique_ptr<AnimInfo> aAnimInfo;
-	if (from->mAnimInfo != nullptr)
-		aAnimInfo = std::make_unique<AnimInfo>(*from->mAnimInfo);
-
-	mNumCols = from->mNumCols;
-	mNumRows = from->mNumRows;
-	delete mAnimInfo;
-	mAnimInfo = aAnimInfo.release();
+	catch (...) { delete[] indices; delete[] palette; throw; }
+	delete[] indices;
+	delete[] palette;
+	return true;
 }
 

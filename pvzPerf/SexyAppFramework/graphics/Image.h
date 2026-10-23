@@ -3,6 +3,12 @@
 #include "Color.h"
 #include "misc/Rect.h"
 #include "misc/Point.h"
+#include "GpuBackend.h"
+#include <array>
+#include <cstdint>
+#include <exception>
+
+namespace ImageLib { class Image; }
 
 namespace Sexy
 {
@@ -14,115 +20,95 @@ struct Span
 	int						mWidth;
 };
 
-enum AnimType
-{
-	AnimType_None,
-	AnimType_Once,
-	AnimType_PingPong,
-	AnimType_Loop
-};
-
-struct AnimInfo
-{
-	AnimType				mAnimType;
-	int						mFrameDelay; // 1/100s
-	int						mNumCels;
-	std::vector<int>		mPerFrameDelay;
-	std::vector<int>		mFrameMap;
-	int						mTotalAnimTime;
-
-	AnimInfo();
-	void SetPerFrameDelay(int theFrame, int theTime);
-	void Compute(int theNumCels, int theBeginFrameTime = 0, int theEndFrameTime = 0);
-
-	int GetPerFrameCel(int theTime);
-	int GetCel(int theTime);
-};
-
 class Graphics;
 class SexyMatrix3;
 class TriVertex;
 class MemoryImage;
-class DDImage;
-class ResidentImage;
-
-enum class ImageType : unsigned char
+class RenderInterface;
+class SexyAppBase;
+class GraphicsState;
+class GpuImageCpuAccess final : public std::exception {};
+enum class DrawOperation : uint8_t
 {
-	Image,
-	MemoryImage,
-	DDImage,
-	ResidentImage
+	FillRect, DrawLine, DrawLineAA, PolyFill3D, Blt, BltF, BltRotated,
+	StretchBlt, BltMatrix, BltTrianglesTex, BltMirror, StretchBltMirror,
+	FillScanLinesWithCoverage
+};
+class NonScreenDrawError final : public std::exception
+{
+public:
+	const DrawOperation operation;
+	explicit NonScreenDrawError(DrawOperation value) noexcept : operation(value) {}
 };
 
-class Image
+// Shared dimensions contain no pixels or GPU state.
+class ImageMetadata
 {
-protected:
-	// Constructors and destructors advance this tag with the active class.
-	ImageType mImageType = ImageType::Image;
 public:
-	bool					mDrawn;
-	std::string				mFilePath;
 	int						mWidth;
 	int						mHeight;
 
-	// for image strips
-	int						mNumRows; 
-	int						mNumCols;
-
-	// for animations
-	AnimInfo				*mAnimInfo;
-
-public:
-	Image();
-	Image(const Image& theImage);
-	Image& operator=(const Image& theImage) = delete;
-	// Base pointers must be released with Destroy or ImageDeleter.
-	~Image();
-	static void Destroy(Image* theImage) noexcept;
-	MemoryImage* AsMemoryImage() noexcept;
-	const MemoryImage* AsMemoryImage() const noexcept;
-	DDImage* AsDDImage() noexcept;
-	const DDImage* AsDDImage() const noexcept;
-	ResidentImage* AsResidentImage() noexcept;
-	const ResidentImage* AsResidentImage() const noexcept;
-
-	inline int				GetCelWidth() { return mWidth / mNumCols; }
-	inline int				GetCelHeight() { return mHeight / mNumRows; }
-	int						GetAnimCel(int theTime); // use animinfo to return appropriate cel to draw at the time
-	Rect					GetAnimCelRect(int theTime);
-	Rect					GetCelRect(int theCel);				// Gets the rectangle for the given cel at the specified row/col 
-	Rect					GetCelRect(int theCol, int theRow);	// Same as above, but for an image with both multiple rows and cols
-	void					CopyAttributes(Image *from);
+	ImageMetadata();
+	ImageMetadata(const ImageMetadata& image);
+	ImageMetadata& operator=(const ImageMetadata&) = delete;
+protected:
+	~ImageMetadata();
 };
 
-inline MemoryImage* AsMemoryImage(Image* image) noexcept
+// Ordinary program-image drawing receives this GPU interface. Atlas sources
+// live as direct GPU pointers in definitions and use temporary TextureSource.
+// Images directly own GPU textures. No nested GPU image/data wrapper.
+class Image : public ImageMetadata
 {
-	return image ? image->AsMemoryImage() : nullptr;
-}
-inline const MemoryImage* AsMemoryImage(const Image* image) noexcept
-{
-	return image ? image->AsMemoryImage() : nullptr;
-}
-inline DDImage* AsDDImage(Image* image) noexcept
-{
-	return image ? image->AsDDImage() : nullptr;
-}
-inline const DDImage* AsDDImage(const Image* image) noexcept
-{
-	return image ? image->AsDDImage() : nullptr;
-}
-inline ResidentImage* AsResidentImage(Image* image) noexcept
-{
-	return image ? image->AsResidentImage() : nullptr;
-}
-inline const ResidentImage* AsResidentImage(const Image* image) noexcept
-{
-	return image ? image->AsResidentImage() : nullptr;
-}
+public:
+	explicit Image(SexyAppBase* app = nullptr);
+	// Copies metadata and asks the renderer to clone any live texture.
+	// Copying an uploaded/pending image requires the main renderer thread.
+	Image(const Image& image);
+	~Image();
+	GpuTexture* mTexture = nullptr;
+	ImageLib::Image* mPendingDecoded = nullptr;
+	RenderInterface* mRenderOwner = nullptr;
+	SexyAppBase* mApp = nullptr;
+	std::uint32_t mGpuSamplingFlags = 0;
+	bool mRenderTarget = false;
+	bool mBitsChanged = false;
+	bool mForcedMode = false;
+	bool mHasTrans = false;
+	bool mHasAlpha = false;
 
-struct ImageDeleter
-{
-	void operator()(Image* image) const noexcept { Image::Destroy(image); }
+	Image& operator=(const Image&) = delete;
+	void AdoptDecodedImage(ImageLib::Image* image, bool commitBits = true);
+	void AppendAlphaImage(ImageLib::Image* image);
+	void SetBits(unsigned int* bits, int width, int height, bool commitBits = true);
+	void Create(int width, int height);
+	void BitsChanged();
+	void CommitBits();
+	void PurgeBits();
+	bool Palletize();
+	bool IsGpuDrawTarget() const noexcept;
+	void FillRect(const Rect& rect, const Color& color, int drawMode);
+	void DrawRect(const Rect& rect, const Color& color, int drawMode);
+	void FillScanLines(Span* spans, int count, const Color& color, int drawMode);
+	void DrawLine(double x1, double y1, double x2, double y2, const Color& color, int drawMode);
+	void DrawLineAA(double x1, double y1, double x2, double y2, const Color& color, int drawMode);
+	bool PolyFill3D(const Point vertices[], int count, const Rect* clip, const Color& color,
+		int drawMode, int tx, int ty);
+	void Blt(Image* image, int x, int y, const Rect& source, const Color& color, int drawMode);
+	void BltF(Image* image, float x, float y, const Rect& source, const Rect& clip, const Color& color, int drawMode);
+	void BltRotated(Image* image, float x, float y, const Rect& source, const Rect& clip,
+		const Color& color, int drawMode, double angle, float centerX, float centerY);
+	void StretchBlt(Image* image, const Rect& target, const Rect& source, const Rect& clip,
+		const Color& color, int drawMode, bool fastStretch);
+	void BltMatrix(Image* image, float x, float y, const SexyMatrix3& matrix, const Rect& clip,
+		const Color& color, int drawMode, const Rect& source, bool blend);
+	void BltTrianglesTex(Image* image, const TriVertex vertices[][3], int count, const Rect& clip,
+		const Color& color, int drawMode, float tx, float ty, bool blend);
+	void BltMirror(Image* image, int x, int y, const Rect& source, const Color& color, int drawMode);
+	void StretchBltMirror(Image* image, const Rect& target, const Rect& source, const Rect& clip,
+		const Color& color, int drawMode, bool fastStretch);
+	void FillScanLinesWithCoverage(Span* spans, int count, const Color& color, int drawMode,
+		const BYTE* coverage, int x, int y, int width, int height);
 };
 
 }

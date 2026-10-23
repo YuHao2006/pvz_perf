@@ -16,7 +16,7 @@ export component IceTrap {
         particleScale: 1600;
     }
     Emitter {
-        image: "IMAGE_SNOWFLAKES";
+        images: ["particles/frames/snowflakes_r0_c0.png","particles/frames/snowflakes_r0_c1.png","particles/frames/snowflakes_r0_c2.png"];
         name: "IceTrap";
         imageFrames: 3;
         emitterType: Circle;

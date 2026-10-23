@@ -7,38 +7,39 @@
 #include "graphics/Graphics.h"
 #include "Sexy.TodLib/TodStringFile.h"
 #include "widget/WidgetManager.h"
+#include "graphics/AtlasDraw.h"
+#include "Sexy.TodLib/generated/SceneAtlasData.h"
 
 static Color gGameButtonColors[6] = { Color(0, 0, 0), Color(0, 0, 0), Color(0, 0, 0), Color(255, 255, 255), Color(132, 132, 132), Color(212, 212, 212) };
 
 //0x447B00
 static void DrawStoneButton(Graphics* g, int x, int y, int theWidth, int theHeight, bool isDown, bool isHighLighted, const SexyString& theLabel)
 {
-	Image* aLeftImage = Sexy::IMAGE_BUTTON_LEFT;
-	Image* aMiddleImage = Sexy::IMAGE_BUTTON_MIDDLE;
-	Image* aRightImage = Sexy::IMAGE_BUTTON_RIGHT;
+	using enum FixedUIAtlas::Sprite;
+	const Rect& left = FixedUIAtlas::Images[static_cast<size_t>(isDown ? BUTTON_DOWN_LEFT : BUTTON_LEFT)];
+	const Rect& middle = FixedUIAtlas::Images[static_cast<size_t>(isDown ? BUTTON_DOWN_MIDDLE : BUTTON_MIDDLE)];
+	const Rect& right = FixedUIAtlas::Images[static_cast<size_t>(isDown ? BUTTON_DOWN_RIGHT : BUTTON_RIGHT)];
+	const Sexy::TextureSource texture{FixedUIAtlas::Texture, FixedUIAtlas::Width, FixedUIAtlas::Height};
 	int aFontX = x;
 	int aFontY = y;
 	int aImageX = x;
 	if (isDown)
 	{
-		aLeftImage = Sexy::IMAGE_BUTTON_DOWN_LEFT;
-		aMiddleImage = Sexy::IMAGE_BUTTON_DOWN_MIDDLE;
-		aRightImage = Sexy::IMAGE_BUTTON_DOWN_RIGHT;
 		aFontX++;
 		aFontY++;
 		aImageX++;
 	}
 
-	int aRepeat = (theWidth - aLeftImage->mWidth - aRightImage->mWidth) / aMiddleImage->mWidth;
-	g->DrawImage(aLeftImage, aImageX, y);
-	aImageX += aLeftImage->mWidth;
+	int aRepeat = (theWidth - left.mWidth - right.mWidth) / middle.mWidth;
+	Sexy::DrawAtlasImage(g, texture, left, aImageX, y);
+	aImageX += left.mWidth;
 	while (aRepeat > 0)
 	{
-		g->DrawImage(aMiddleImage, aImageX, y);
-		aImageX += aMiddleImage->mWidth;
+		Sexy::DrawAtlasImage(g, texture, middle, aImageX, y);
+		aImageX += middle.mWidth;
 		--aRepeat;
 	}
-	g->DrawImage(aRightImage, aImageX, y);
+	Sexy::DrawAtlasImage(g, texture, right, aImageX, y);
 
 	g->mFont = isHighLighted ? Sexy::FONT_DWARVENTODCRAFT18BRIGHTGREENINSET : Sexy::FONT_DWARVENTODCRAFT18GREENINSET;
 	aFontX += (theWidth - Sexy::FONT_DWARVENTODCRAFT18GREENINSET->StringWidth(theLabel)) / 2 + 1;
@@ -185,6 +186,70 @@ void GameButton::Draw(Graphics* g)
 		}
 	}
 
+	g->Translate(-mX, -mY);
+}
+
+void GameButton::DrawAtlas(Graphics* g, const Sexy::TextureSource& texture, const Rect* overlay)
+{
+	if (mBtnNoDraw)
+		return;
+	const bool down = IsButtonDown() ^ mInverted;
+	const bool highlighted = IsMouseOver();
+	if (!mFont && !mLabel.empty())
+		throw FontNotConfigured{};
+	int fontX = mTextOffsetX;
+	int fontY = mTextOffsetY;
+	if (mFont)
+	{
+		if (mLabelJustify == BUTTON_LABEL_CENTER)
+			fontX += (mWidth - mFont->StringWidth(mLabel)) / 2;
+		else if (mLabelJustify == BUTTON_LABEL_RIGHT)
+			fontX += mWidth - mFont->StringWidth(mLabel);
+		fontY += (mHeight - mFont->mAscent / 6 + mFont->mAscent - 1) / 2;
+	}
+	g->Translate(mX, mY);
+	g->mFont = mFont;
+	const auto draw = [&](const Rect& rectangle, int x = 0, int y = 0) {
+		Sexy::DrawAtlasImage(g, texture, rectangle,
+			x + mButtonOffsetX, y + mButtonOffsetY);
+	};
+	if (!down)
+	{
+		if (mDisabled && mDisabledRect.mWidth)
+			draw(mDisabledRect);
+		else if (mOverAlpha > 0 && mOverRect.mWidth)
+		{
+			if (mNormalRect.mWidth && mOverAlpha < 1)
+				draw(mNormalRect);
+			g->mColorizeImages = true;
+			g->mColor = Color(255, 255, 255, mOverAlpha * 255);
+			draw(mOverRect);
+			g->mColorizeImages = false;
+		}
+		else if (highlighted && mOverRect.mWidth)
+			draw(mOverRect);
+		else
+			draw(mNormalRect);
+		g->mColor = mColors[highlighted ? COLOR_LABEL_HILITE : COLOR_LABEL];
+		g->DrawString(mLabel, fontX, fontY);
+	}
+	else
+	{
+		if (mDownRect.mWidth)
+			draw(mDownRect);
+		else if (mOverRect.mWidth)
+			draw(mOverRect, 1, 1);
+		else
+			draw(mNormalRect, 1, 1);
+		g->mColor = mColors[COLOR_LABEL_HILITE];
+		g->DrawString(mLabel, fontX + 1, fontY + 1);
+	}
+	if (highlighted && overlay)
+	{
+		g->mDrawMode = Graphics::DRAWMODE_ADDITIVE;
+		draw(*overlay);
+		g->mDrawMode = Graphics::DRAWMODE_NORMAL;
+	}
 	g->Translate(-mX, -mY);
 }
 
@@ -400,5 +465,75 @@ NewLawnButton* MakeNewButton(int theId, ButtonListener* theListener, const SexyS
 	aButton->mTranslateY = 1;
 
 	return aButton;
+}
+
+namespace {
+class FixedUIBackButton final : public NewLawnButton
+{
+public:
+	FixedUIBackButton(int id, ButtonListener* listener, const SexyString& text)
+		: NewLawnButton(nullptr, id, listener)
+	{
+		using enum FixedUIAtlas::Sprite;
+		mNormalRect = FixedUIAtlas::Images[static_cast<size_t>(SEEDCHOOSER_BUTTON2)];
+		mOverRect = mDownRect = FixedUIAtlas::Images[static_cast<size_t>(SEEDCHOOSER_BUTTON2_GLOW)];
+		mLabel = text;
+		SetFont(Sexy::FONT_BRIANNETOD12);
+		mWidth = mNormalRect.mWidth;
+		mHeight = mNormalRect.mHeight;
+		mHasAlpha = mHasTransparencies = true;
+		mTranslateX = mTranslateY = 1;
+	}
+
+	void Draw(Graphics* g) override
+	{
+		if (mBtnNoDraw)
+			return;
+		const Sexy::TextureSource texture{
+			FixedUIAtlas::Texture, FixedUIAtlas::Width, FixedUIAtlas::Height};
+		const bool down = (mIsDown && mIsOver && !mDisabled) ^ mInverted;
+		int fontX = mTextOffsetX + mTranslateX;
+		int fontY = mTextOffsetY + mTranslateY;
+		if (mFont)
+		{
+			if (mLabelJustify == ButtonWidget::BUTTON_LABEL_CENTER)
+				fontX += (mWidth - mFont->StringWidth(mLabel)) / 2;
+			else if (mLabelJustify == ButtonWidget::BUTTON_LABEL_RIGHT)
+				fontX += mWidth - mFont->StringWidth(mLabel);
+			fontY += (mHeight - mFont->mAscent / 6 + mFont->mAscent - 1) / 2;
+		}
+		const auto draw = [&](const Rect& rectangle, bool pressed) {
+			Sexy::DrawAtlasImage(g, texture, rectangle,
+				mButtonOffsetX + (pressed ? mTranslateX : 0),
+				mButtonOffsetY + (pressed ? mTranslateY : 0));
+		};
+		g->mColorizeImages = true;
+		g->mColor = mColors[ButtonWidget::COLOR_BKG];
+		if (down)
+			draw(mDownRect, true);
+		else if (mDisabled && mDisabledRect.mWidth)
+			draw(mDisabledRect, false);
+		else if (mOverAlpha > 0)
+		{
+			if (mOverAlpha < 1)
+				draw(mNormalRect, false);
+			g->mColor.mAlpha = mOverAlpha * 255;
+			draw(mOverRect, false);
+		}
+		else
+			draw(mIsOver || mIsDown ? mOverRect : mNormalRect, false);
+		g->mColorizeImages = false;
+		g->mFont = down || mIsOver ? (mHiliteFont ? mHiliteFont : mFont) : mFont;
+		g->mColor = mColors[down || mIsOver
+			? ButtonWidget::COLOR_LABEL_HILITE : ButtonWidget::COLOR_LABEL];
+		g->DrawString(mLabel, fontX + (down ? mTextDownOffsetX : 0),
+			fontY + (down ? mTextDownOffsetY : 0));
+	}
+};
+}
+
+NewLawnButton* MakeFixedUIBackButton(int id, ButtonListener* listener, const SexyString& text)
+{
+	return new FixedUIBackButton(id, listener, text);
 }
 

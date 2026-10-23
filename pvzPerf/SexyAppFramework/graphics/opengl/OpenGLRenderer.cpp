@@ -12,7 +12,7 @@
 namespace Sexy {
 using namespace GL3;
 
-OpenGLStorage::~OpenGLStorage()
+OpenGLTexture::~OpenGLTexture()
 {
     if (framebuffer) glDeleteFramebuffers(1, &framebuffer);
     if (image) glDeleteTextures(1, &image);
@@ -22,10 +22,10 @@ void OpenGLRenderer::Impl::Dimensions(int w, int h) const
     if (w <= 0 || h <= 0 || w > maximum || h > maximum)
         throw std::invalid_argument("OpenGL texture dimensions exceed GL_MAX_TEXTURE_SIZE");
 }
-std::shared_ptr<OpenGLStorage> OpenGLRenderer::Impl::Storage(int w, int h, unsigned int format)
+void OpenGLRenderer::Impl::AllocateStorage(OpenGLTexture& texture, int w, int h, unsigned int format)
 {
     Dimensions(w, h);
-    auto result = std::make_shared<OpenGLStorage>();
+    auto* result = &texture;
     result->width = w; result->height = h; result->format = format;
     glGenTextures(1, &result->image);
     glBindTexture(GL_TEXTURE_2D, result->image);
@@ -39,7 +39,6 @@ std::shared_ptr<OpenGLStorage> OpenGLRenderer::Impl::Storage(int w, int h, unsig
         format == GL_R8 ? GL_RED : GL_RGBA,
         format == GL_RGBA32F ? GL_FLOAT : GL_UNSIGNED_BYTE, nullptr);
     GL3::CheckError("Allocate OpenGL image");
-    return result;
 }
 void OpenGLRenderer::Impl::Register(OpenGLTexture* texture)
 {
@@ -54,13 +53,17 @@ OpenGLTexture* OpenGLRenderer::Impl::Allocate(int w, int h, unsigned int format,
     bool registerSlot)
 {
     Dimensions(w, h);
-    auto result = std::make_unique<OpenGLTexture>();
-    result->width = w; result->height = h;
-    result->storage = Storage(w, h, format);
-    if (registerSlot) Register(result.get());
-    auto* pointer = result.get();
-    textures.emplace(pointer, std::move(result));
-    return pointer;
+    auto* result = new OpenGLTexture;
+    try {
+        AllocateStorage(*result, w, h, format);
+        textures.insert(result);
+        if (registerSlot) Register(result);
+    } catch (...) {
+        textures.erase(result);
+        delete result;
+        throw;
+    }
+    return result;
 }
 void OpenGLRenderer::Impl::Upload(OpenGLTexture* texture, const void* data, int pitch,
     unsigned int format)
@@ -77,7 +80,7 @@ void OpenGLRenderer::Impl::Upload(OpenGLTexture* texture, const void* data, int 
                 size_t(texture->width) * bytes);
         data = packed.data(); pitch = texture->width * bytes;
     }
-    glBindTexture(GL_TEXTURE_2D, texture->storage->image);
+    glBindTexture(GL_TEXTURE_2D, texture->image);
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
     glPixelStorei(GL_UNPACK_ROW_LENGTH, pitch / bytes);
     glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, texture->width,
@@ -151,7 +154,9 @@ OpenGLRenderer::Impl::Impl(OpenGLContext& window, int w, int h)
 OpenGLRenderer::Impl::~Impl()
 {
     context.MakeCurrent();
-    textures.clear(); batches.clear();
+    batches.clear();
+    for (auto* texture : textures) delete texture;
+    for (auto* texture : retired) delete texture;
     for (const auto program : {sceneProgram, imageProgram, fontProgram, presentProgram})
         if (program) glDeleteProgram(program);
     if (stream) glDeleteBuffers(1, &stream);
@@ -160,7 +165,7 @@ OpenGLRenderer::Impl::~Impl()
 void OpenGLRenderer::Impl::BindTarget()
 {
     auto* target = selected ? selected : scene;
-    auto& storage = *target->storage;
+    auto& storage = *target;
     if (!storage.framebuffer) {
         glGenFramebuffers(1, &storage.framebuffer);
         glBindFramebuffer(GL_FRAMEBUFFER, storage.framebuffer);
@@ -172,7 +177,11 @@ void OpenGLRenderer::Impl::BindTarget()
 }
 void OpenGLRenderer::Impl::Flush()
 {
-    if (vertices.empty()) return;
+    if (vertices.empty()) {
+        for (auto* texture : retired) delete texture;
+        retired.clear();
+        return;
+    }
     BindTarget();
     const auto* target = selected ? selected : scene;
     glBindVertexArray(vao); glBindBuffer(GL_ARRAY_BUFFER, stream);
@@ -185,7 +194,7 @@ void OpenGLRenderer::Impl::Flush()
     glUniform1i(sceneUniforms[uPremultipliedOutput], target->render);
     glActiveTexture(GL_TEXTURE0);
     for (const auto& batch : batches) {
-        glBindTexture(GL_TEXTURE_2D, batch.storage->image);
+        glBindTexture(GL_TEXTURE_2D, batch.image);
         glUniform1i(sceneUniforms[uCoverageInput], batch.coverage);
         glEnable(GL_SCISSOR_TEST);
         glScissor(batch.clip.x, batch.clip.y, batch.clip.width, batch.clip.height);
@@ -199,17 +208,23 @@ void OpenGLRenderer::Impl::Flush()
         glDrawArrays(GL_TRIANGLES, static_cast<int>(batch.first), static_cast<int>(batch.count));
     }
     vertices.clear(); batches.clear();
+    for (auto* texture : retired) delete texture;
+    retired.clear();
     Check("Draw OpenGL triangles");
 }
-std::shared_ptr<OpenGLStorage> OpenGLRenderer::Impl::Snapshot(OpenGLTexture* texture)
+void OpenGLRenderer::Impl::Snapshot(const OpenGLTexture& original, OpenGLTexture& result)
 {
     Flush();
-    auto copy = Storage(texture->width, texture->height, texture->storage->format);
+    const auto* texture = &original;
+    auto* copy = &result;
+    AllocateStorage(result, texture->width, texture->height, texture->format);
+    result.flags = texture->flags;
+    result.render = texture->render;
     unsigned int source = 0, destination = 0;
     glGenFramebuffers(1, &source); glGenFramebuffers(1, &destination);
     glBindFramebuffer(GL_READ_FRAMEBUFFER, source);
     glFramebufferTexture2D(GL_READ_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D,
-        texture->storage->image, 0);
+        texture->image, 0);
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, destination);
     glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, copy->image, 0);
     glDisable(GL_SCISSOR_TEST);
@@ -217,7 +232,6 @@ std::shared_ptr<OpenGLStorage> OpenGLRenderer::Impl::Snapshot(OpenGLTexture* tex
         0, 0, texture->width, texture->height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
     glDeleteFramebuffers(1, &source); glDeleteFramebuffers(1, &destination);
     Check("Snapshot OpenGL feedback source");
-    return copy;
 }
 void OpenGLRenderer::Impl::Submit(std::span<const GpuVertex> input, OpenGLTexture* source,
     GpuBlend blend, const GpuClip* requested, bool coverage)
@@ -233,14 +247,21 @@ void OpenGLRenderer::Impl::Submit(std::span<const GpuVertex> input, OpenGLTextur
     clip.x = std::max(0, clip.x); clip.y = std::max(0, clip.y);
     clip.width = std::max(0, right - clip.x); clip.height = std::max(0, top - clip.y);
     if (!clip.width || !clip.height) return;
-    std::shared_ptr<OpenGLStorage> feedback;
+    OpenGLTexture* feedback = nullptr;
     for (size_t index = 0; index < input.size(); index += 3) {
         auto* image = slots[input[index].slot & 4095U];
         if (!image) throw std::logic_error("OpenGL draw references an unbound logical texture");
-        auto storage = image->storage;
-        if (storage == target->storage) {
-            if (!feedback) feedback = Snapshot(image);
-            storage = feedback;
+        auto native = image->image;
+        if (image == target) {
+            if (!feedback) {
+                auto* copy = new OpenGLTexture;
+                try {
+                    Snapshot(*image, *copy);
+                    retired.push_back(copy);
+                } catch (...) { delete copy; throw; }
+                feedback = copy;
+            }
+            native = feedback->image;
         }
         const size_t first = vertices.size();
         for (size_t corner = 0; corner < 3; ++corner) {
@@ -254,11 +275,11 @@ void OpenGLRenderer::Impl::Submit(std::span<const GpuVertex> input, OpenGLTextur
         const auto sameClip = [](const GpuClip& a, const GpuClip& b) {
             return a.x == b.x && a.y == b.y && a.width == b.width && a.height == b.height;
         };
-        if (!batches.empty() && batches.back().storage == storage &&
+        if (!batches.empty() && batches.back().image == native &&
             batches.back().blend == blend && batches.back().coverage == coverage &&
             sameClip(batches.back().clip, clip))
             batches.back().count += 3;
-        else batches.push_back({std::move(storage), first, 3, blend, clip, coverage});
+        else batches.push_back({native, first, 3, blend, clip, coverage});
     }
 }
 OpenGLRenderer::OpenGLRenderer(OpenGLContext& context, int w, int h,
@@ -289,7 +310,7 @@ void OpenGLRenderer::PrepareLoadingPipelines()
     s.presentProgram = s.Program(QuadVertexShader(), PresentFragmentShader());
     constexpr std::array names{"targetExtent","image","premultipliedOutput","coverageInput",
         "sourceImage","alphaImage","sourceRect","alphaRect","sourceSlot",
-        "operation","rectangle","tint","packedColor","counter","cells","colorOnly",
+        "operation","rectangle","tint","packedColor","counter","colorOnly",
         "samplingFlags","forceWhite","xRanges","yRanges","xTaps","yTaps",
         "xTapExtent","yTapExtent","glyphSrc","glyphDst"};
     static_assert(names.size()==Impl::uUniformCount);
@@ -355,7 +376,7 @@ OpenGLTexture* OpenGLRenderer::ReplaceTexture(OpenGLTexture* old, int w, int h,
     if (!old) return CreateTexture(w,h,pixels,pitch,opaque);
     if (!impl_->textures.contains(old) || old == impl_->white || old->render || old->caustic)
         throw std::invalid_argument("Cannot host-replace this OpenGL image");
-    // Recorded batches retain the previous storage while this handle gets a new resource.
+    // Recorded batches keep the old native name until Flush completes.
     auto* next = impl_->Allocate(w, h, GL_RGBA8, false);
     next->flags = opaque ? GpuVertex::kOpaqueInput : 0;
     try {
@@ -402,10 +423,12 @@ void OpenGLRenderer::DestroyTexture(OpenGLTexture* image)
     if (!s.textures.contains(image) || image == s.white)
         throw std::invalid_argument("Cannot destroy the OpenGL white image or a foreign handle");
     if (image == s.selected) throw std::logic_error("Deselect OpenGL render image before destruction");
+    if (!s.batches.empty()) s.retired.push_back(image);
     if (image == s.causticTarget) s.causticTarget = nullptr;
     if (image == s.causticSource) s.causticSource = nullptr;
     if (image->slot != ~0U && s.slots[image->slot] == image) s.slots[image->slot] = nullptr;
     s.textures.erase(image);
+    if (s.batches.empty()) delete image;
 }
 unsigned int OpenGLRenderer::SlotOf(const OpenGLTexture* texture)
 {
@@ -458,7 +481,7 @@ bool OpenGLRenderer::Impl::Present()
     const auto rect = FitSceneToSurface(width, height, context.width, context.height);
     glViewport(rect.x, context.height - rect.y - rect.height, rect.width, rect.height);
     glUseProgram(presentProgram); glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, scene->storage->image);
+    glBindTexture(GL_TEXTURE_2D, scene->image);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glUniform1i(presentUniforms[uImage], 0);
@@ -529,6 +552,6 @@ GpuClip OpenGLRenderer::PresentRect(int w, int h) const
 unsigned int OpenGLRenderer::MaxImageDimension2D() const { return impl_->maximum; }
 OpenGLRenderer::ResourceCounts OpenGLRenderer::GetResourceCounts() const
 {
-    return {impl_->textures.size(),0,0,1,impl_->batches.size()};
+    return {impl_->textures.size(),impl_->retired.size(),0,1,impl_->batches.size()};
 }
 }

@@ -31,12 +31,8 @@ public:
 };
 
 class SexyAppBase;
-class DDImage;
 class Image;
-class MemoryImage;
 class RenderInterface;
-
-typedef std::set<DDImage*> DDImageSet;
 
 // Native display: owns the screen image, presentation geometry,
 // refresh rate and cursor state, and forwards all drawing to the Vulkan
@@ -59,7 +55,6 @@ public:
 
 	SexyAppBase*			mApp;
 	RenderInterface*			mRenderInterface;
-	bool					mIs3D;
 
 	CritSect				mCritSect;
 	bool					mInRedraw;
@@ -97,8 +92,7 @@ public:
 	bool					mInitialized;
 	NativeWindowHandle		mHWnd;
 	bool					mIsWindowed;
-	DDImage*				mScreenImage;
-	DDImageSet				mDDImageSet;
+	Image*				mScreenImage;
 	bool					mVideoOnlyDraw;
 	unsigned int					mInitCount;
 
@@ -113,9 +107,7 @@ public:
 
 public:
 	unsigned int					GetColorRef(unsigned int theRGB);
-	void					AddDDImage(DDImage* theDDImage);
-	void					RemoveDDImage(DDImage* theDDImage);
-	void					Remove3DData(MemoryImage* theImage);
+	void					Remove3DData(Image* theImage);
 
 	void					Cleanup();
 

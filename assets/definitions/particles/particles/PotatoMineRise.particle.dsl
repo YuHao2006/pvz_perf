@@ -2,7 +2,7 @@ export component PotatoMineRise {
     kind: particle;
     source-name: "potatominerise";
     Emitter {
-        image: "IMAGE_DIRTSMALL";
+        images: ["particles/frames/dirtsmall_r0_c0.png","particles/frames/dirtsmall_r0_c1.png","particles/frames/dirtsmall_r0_c2.png","particles/frames/dirtsmall_r0_c3.png","particles/frames/dirtsmall_r0_c4.png","particles/frames/dirtsmall_r0_c5.png","particles/frames/dirtsmall_r0_c6.png","particles/frames/dirtsmall_r0_c7.png"];
         imageFrames: 8;
         randomLaunchSpin: 1;
         systemDuration: 120;

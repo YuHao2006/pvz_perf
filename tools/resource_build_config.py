@@ -5,6 +5,7 @@ from dataclasses import dataclass, field, replace
 import json
 from pathlib import Path
 import re
+import fnmatch
 
 
 @dataclass(frozen=True)
@@ -20,10 +21,12 @@ class AtlasSettings:
 @dataclass
 class BuildConfig:
     path: Path
-    sources: dict[str, list[Path]] = field(default_factory=lambda: {"reanim": [], "particle": []})
+    sources: dict[str, list[Path]] = field(default_factory=lambda: {
+        "reanim": [], "particle": [], "projectile": [], "zombatar": [], "scene": []})
     defaults: AtlasSettings = field(default_factory=AtlasSettings)
     atlases: dict[str, list[str]] = field(default_factory=dict)
     settings: dict[str, AtlasSettings] = field(default_factory=dict)
+    definition_orders: dict[str, list[tuple[str, str]]] = field(default_factory=dict)
 
 
 TOKEN = re.compile(r'\s+|#[^\n]*|"(?:\\.|[^"\\])*"|[()]|[^\s()"#]+')
@@ -107,7 +110,7 @@ def load(path: Path) -> BuildConfig:
     for command, arguments in parsed[1:]:
         if command == "sources":
             if len(arguments) < 2 or arguments[0] not in config.sources:
-                raise ValueError("sources() requires reanim or particle and one or more paths/globs")
+                raise ValueError("sources() requires a definition kind (including scene) and paths/globs")
             kind = arguments[0]
             for pattern in arguments[1:]:
                 if Path(pattern).is_absolute() or ".." in Path(pattern).parts:
@@ -117,12 +120,34 @@ def load(path: Path) -> BuildConfig:
                     raise ValueError(f"Source pattern matched no files: {pattern}")
                 for source in matches:
                     source = source.resolve()
-                    if not source.is_relative_to(path.parent) or not source.is_file() or source.suffix != ".dsl":
+                    suffix = ".json" if kind == "zombatar" else ".dsl"
+                    if not source.is_relative_to(path.parent) or not source.is_file() or source.suffix != suffix:
                         raise ValueError(f"Invalid definition source: {source}")
                     if source in seen_files:
                         raise ValueError(f"Definition source selected more than once: {source}")
                     seen_files.add(source)
                     config.sources[kind].append(source)
+        elif command == "definition_order":
+            if len(arguments) < 2 or arguments[0] not in ("reanim", "particle"):
+                raise ValueError("definition_order() requires reanim or particle and ENUM:Definition pairs")
+            kind = arguments[0]
+            if kind in config.definition_orders:
+                raise ValueError(f"Duplicate definition_order({kind})")
+            order, enums, names = [], set(), set()
+            for value in arguments[1:]:
+                pair = value.split(":")
+                if (len(pair) != 2 or not re.fullmatch(r"[A-Z][A-Z0-9_]*", pair[0])
+                        or not re.fullmatch(r"[A-Za-z0-9_-]+", pair[1])):
+                    raise ValueError(f"Invalid definition order member: {value}")
+                enum, name = pair
+                if not enum.startswith("REANIM_" if kind == "reanim" else "PARTICLE_"):
+                    raise ValueError(f"Wrong enum namespace in definition order: {value}")
+                if enum in enums or name.casefold() in names:
+                    raise ValueError(f"Duplicate definition order member: {value}")
+                enums.add(enum)
+                names.add(name.casefold())
+                order.append((enum, name))
+            config.definition_orders[kind] = order
         elif command == "atlas_defaults":
             if seen_defaults:
                 raise ValueError("Only one atlas_defaults() command is allowed")
@@ -137,11 +162,13 @@ def load(path: Path) -> BuildConfig:
             members = []
             for value in arguments[1:]:
                 if ":" not in value:
-                    raise ValueError("Atlas members use reanim:Name or particle:Name")
+                    raise ValueError("Atlas members use reanim:Name, particle:Name, projectile:Name or zombatar:Name")
                 kind, definition = value.split(":", 1)
-                if kind not in config.sources or not re.fullmatch(r"[A-Za-z0-9_-]+", definition):
+                if kind not in config.sources or not re.fullmatch(r"[A-Za-z0-9_-]+\*?", definition):
                     raise ValueError(f"Invalid atlas member: {value}")
-                member = f"compiled/{'particles' if kind == 'particle' else 'reanim'}/{definition.casefold()}.compiled"
+                directory = {"particle": "particles", "reanim": "reanim", "projectile": "projectiles",
+                             "zombatar": "zombatar", "scene": "scene"}[kind]
+                member = f"compiled/{directory}/{definition.casefold()}.compiled"
                 if member in members or any(member in group for group in config.atlases.values()):
                     raise ValueError(f"Definition belongs to multiple atlas groups: {value}")
                 members.append(member)
@@ -152,8 +179,12 @@ def load(path: Path) -> BuildConfig:
             overrides[arguments[0]] = arguments[1:]
         else:
             raise ValueError(f"Unknown resource build command: {command}")
-    if any(not sources for sources in config.sources.values()):
+    if any(not config.sources[kind] for kind in ("reanim", "particle")):
         raise ValueError("Build configuration must select reanim and particle source files")
+    if len(config.sources["projectile"]) > 1:
+        raise ValueError("Build configuration selects one combined projectile definition")
+    if len(config.sources["zombatar"]) > 1:
+        raise ValueError("Build configuration selects one combined Zombatar definition")
     for name, arguments in overrides.items():
         if name not in config.atlases:
             raise ValueError(f"Settings refer to undefined atlas group {name}")
@@ -165,7 +196,8 @@ def resolve_atlases(config: BuildConfig, definitions: set[str]) -> dict[str, lis
     """Resolve author component names to the compiler's published record names."""
     aliases = {}
     for kind, sources in config.sources.items():
-        directory = "particles" if kind == "particle" else "reanim"
+        directory = {"particle": "particles", "reanim": "reanim", "projectile": "projectiles",
+                     "zombatar": "zombatar", "scene": "scene"}[kind]
         for source in sources:
             text = source.read_text(encoding="utf-8-sig")
             component = re.search(r"^\s*export\s+component\s+(\w+)\s*\{", text, re.M)
@@ -180,7 +212,15 @@ def resolve_atlases(config: BuildConfig, definitions: set[str]) -> dict[str, lis
             aliases[alias] = target
     resolved, assigned = {}, set()
     for name, members in config.atlases.items():
-        group = [aliases.get(member, member) for member in members]
+        group = []
+        for member in members:
+            if "*" in member:
+                matches = sorted(value for value in definitions if fnmatch.fnmatchcase(value, member))
+                if not matches:
+                    raise ValueError(f"Atlas group {name} has an empty explicit pattern: {member}")
+                group.extend(matches)
+            else:
+                group.append(aliases.get(member, member))
         missing = set(group) - definitions
         if missing:
             raise ValueError(f"Atlas group {name} contains unknown definitions: {sorted(missing)}")

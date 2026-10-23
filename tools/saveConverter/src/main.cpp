@@ -45,14 +45,21 @@ void PrintErrorRed(const std::string& theMessage)
 void PrintUsage(const std::filesystem::path& theProgram)
 {
     std::cout
-        << "PvZ 1.2.0.1073 存档双向转换器（关卡档 game*.dat + 玩家明细档 user*.dat）\n\n"
+        << "PvZ 1.2.0.1073 存档双向转换器 v2.1（关卡档 game*.dat + 玩家明细档 user*.dat）\n\n"
         << "用法：\n  " << theProgram.filename().string()
         << "\n  " << theProgram.filename().string()
         << " <输入 game*.dat|game*.dat64|user*.dat|user*.dat64> [输出文件]\n\n"
-        << "选项：--target legacy|dat64-v1|dat64-v2；--round-time nearest。\n"
-        << "关卡 .dat 默认生成纳秒 dat64 v2；旧 dat64 v1/v2 默认导出 .dat。\n"
+        << "选项：--target legacy|dat64-v1|dat64-v2|dat64-v3.2；--round-time nearest。\n"
+        << "关卡 .dat 默认生成 dat64 v3.2；DAT64 默认导出 .dat。\n"
         << "导出旧格式要求时间精确可表示；只有明确指定 nearest 才允许舍入。\n\n"
-        << "DAT64 v1/v2 不校验内容 CRC 或哈希；直接改合法数值无需重算校验码。\n\n"
+        << "dat64 v3.2 保存基础粒子定义 ID、内部外观和浮点 BPM/速度；旧值导入时自动转换，"
+           "导出旧格式时速度四舍五入。\n"
+        << "dat64 v3.2 保存 reanimation 外观 variant 索引，移除逐轨道图片覆写；"
+           "未知旧覆写组合拒绝转换，不丢失外观。\n"
+        << "dat64 v3.2 恢复原版106个粒子基础定义编号，粒子外观另存根内variant；"
+           "旧版外观按冻结目录无损转换。未发布的 v3.0/v3.1 不受支持。\n"
+        << "dat64 v2 保留纳秒时间，粒子使用原定义与图片覆写，BPM/速度为整数。\n"
+        << "所有 DAT64 版本均不校验内容 CRC 或哈希；直接改合法数值无需重算校验码。\n\n"
         << "无参数：扫描转换器所在目录。若存在任何 .dat（game数字_数字.dat 或"
            " user数字.dat），全部转为 dat64；否则把全部 .dat64 转回 .dat。"
            "每份成功后删除源文件，失败的源文件保留。\n\n"
@@ -243,11 +250,12 @@ int main(int argc, char** argv)
             }
             if (arg == "--target")
             {
-                if (++i == argc) throw std::runtime_error("--target requires legacy, dat64-v1 or dat64-v2");
+                if (++i == argc) throw std::runtime_error("--target requires legacy, dat64-v1, dat64-v2 or dat64-v3.2");
                 const std::string target = argv[i];
                 if (target == "legacy") options.mTargetFormat = PvzDat64::Format::Legacy1073Dat;
                 else if (target == "dat64-v1") options.mTargetFormat = PvzDat64::Format::Dat64V1;
                 else if (target == "dat64-v2") options.mTargetFormat = PvzDat64::Format::Dat64V2;
+                else if (target == "dat64-v3.2") options.mTargetFormat = PvzDat64::Format::Dat64V32;
                 else throw std::runtime_error("unknown --target: " + target);
             }
             else if (arg == "--round-time")

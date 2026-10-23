@@ -1185,19 +1185,18 @@ D3d12Texture* D3d12Renderer::ProcessImage(D3d12Texture* source,
     return impl_->Process(source, processing, true);
 }
 D3d12Texture* D3d12Renderer::ComposeAlphaRaw(D3d12Texture* base, D3d12Texture* alpha,
-    int columns, int rows, uint32_t color, bool colorOnly) {
+    uint32_t color, bool colorOnly) {
     auto& s = *impl_;
     if (s.inFlight) s.Begin();
     s.Require(base);
     s.Require(alpha);
-    if (columns <= 0 || rows <= 0 || base->width / columns != alpha->width ||
-        base->height / rows != alpha->height)
-        throw std::invalid_argument("Invalid D3D12 alpha composition cells");
-    s.InitKernel(s.alphaKernel, "game_alpha_cs", 6, 2);
+    if (base->width != alpha->width || base->height != alpha->height)
+        throw std::invalid_argument("Invalid D3D12 alpha composition dimensions");
+    s.InitKernel(s.alphaKernel, "game_alpha_cs", 4, 2);
     auto* target = s.Own(s.Image(base->width, base->height, DXGI_FORMAT_R8G8B8A8_UNORM,
         false, true, false), false);
-    struct Constants { int width, height, columns, rows; UINT color, colorOnly; };
-    const Constants constants{base->width, base->height, columns, rows, color,
+    struct Constants { int width, height; UINT color, colorOnly; };
+    const Constants constants{base->width, base->height, color,
         colorOnly ? 1u : 0u};
     const std::array inputs{base, alpha};
     s.Compute(s.alphaKernel, target, inputs, &constants,
@@ -1216,8 +1215,8 @@ D3d12Texture* D3d12Renderer::AdoptComposedTexture(D3d12Texture* composed) {
     return composed;
 }
 D3d12Texture* D3d12Renderer::ComposeAlpha(D3d12Texture* base, D3d12Texture* alpha,
-    int columns, int rows, uint32_t color, bool colorOnly) {
-    return AdoptComposedTexture(ComposeAlphaRaw(base, alpha, columns, rows, color, colorOnly));
+    uint32_t color, bool colorOnly) {
+    return AdoptComposedTexture(ComposeAlphaRaw(base, alpha, color, colorOnly));
 }
 void D3d12Renderer::RenderFontAtlas(D3d12Texture* target, D3d12Texture* source,
     std::span<const GpuFontGlyph> glyphs, uint32_t samplingFlags, bool forceWhite) {

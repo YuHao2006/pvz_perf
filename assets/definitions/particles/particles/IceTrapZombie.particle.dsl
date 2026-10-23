@@ -2,7 +2,7 @@ export component IceTrapZombie {
     kind: particle;
     source-name: "icetrapzombie";
     Emitter {
-        image: "IMAGE_ICETRAP_PARTICLES";
+        images: ["particles/frames/icetrap_particles_r0_c0.png","particles/frames/icetrap_particles_r0_c1.png","particles/frames/icetrap_particles_r0_c2.png","particles/frames/icetrap_particles_r0_c3.png"];
         name: "IceTrapParticles";
         imageFrames: 4;
         randomLaunchSpin: 1;

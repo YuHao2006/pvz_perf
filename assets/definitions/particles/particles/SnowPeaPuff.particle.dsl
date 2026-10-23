@@ -2,8 +2,7 @@ export component SnowPeaPuff {
     kind: particle;
     source-name: "snowpeapuff";
     Emitter {
-        image: "IMAGE_SNOWPEA_PUFF";
-        imageCol: 3;
+        images: ["particles/frames/snowpea_puff_r0_c3.png","particles/frames/snowpea_puff_r0_c4.png","particles/frames/snowpea_puff_r0_c5.png"];
         animated: 1;
         emitterType: Circle;
         systemDuration: 20;
@@ -21,7 +20,7 @@ export component SnowPeaPuff {
         }
     }
     Emitter {
-        image: "IMAGE_SNOWPEA_PARTICLES";
+        images: ["particles/frames/snowpea_particles_r0_c0.png","particles/frames/snowpea_particles_r0_c1.png","particles/frames/snowpea_particles_r0_c2.png"];
         imageFrames: 3;
         emitterType: Circle;
         randomLaunchSpin: 1;

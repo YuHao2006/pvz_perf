@@ -349,87 +349,6 @@ void SaveGameContext::SyncReanimationDef(ReanimatorDefinition*& theDefinition)
 	}
 }
 
-//0x481560
-void SaveGameContext::SyncParticleDef(TodParticleDefinition*& theDefinition)
-{
-	if (mReading)
-	{
-		int aParticleType;
-		SyncInt(aParticleType);
-		if (mFailed)
-			return;
-		if (aParticleType == (int)ParticleEffect::PARTICLE_NONE)
-		{
-			theDefinition = nullptr;
-		}
-		else if (aParticleType >= 0 && aParticleType < (int)ParticleEffect::NUM_PARTICLES)
-		{
-			theDefinition = &gParticleDefArray[aParticleType];
-		}
-		else
-		{
-			mFailed = true;
-		}
-	}
-	else
-	{
-		int aParticleType = (int)ParticleEffect::PARTICLE_NONE;
-		for (int i = 0; i < (int)ParticleEffect::NUM_PARTICLES; i++)
-		{
-			TodParticleDefinition* aDef = &gParticleDefArray[i];
-			if (theDefinition == aDef)
-			{
-				aParticleType = i;
-				break;
-			}
-		}
-		SyncInt(aParticleType);
-	}
-}
-
-
-//0x481690
-void SaveGameContext::SyncImage(Image*& theImage)
-{
-	if (mReading)
-	{
-		int aResource = 0;
-		SyncInt(aResource);
-		if (mFailed)
-		{
-			theImage = nullptr;
-			return;
-		}
-		const auto aResID = static_cast<ResourceId>(aResource);
-		if (aResID == Sexy::ResourceId::RESOURCE_ID_MAX)
-		{
-			theImage = nullptr;
-		}
-		else if (IsImageResourceId(aResID))
-		{
-			theImage = GetImageById(aResID);
-		}
-		else
-		{
-			mFailed = true;
-			theImage = nullptr;
-		}
-	}
-	else
-	{
-		ResourceId aResID;
-		if (theImage != nullptr)
-		{
-			aResID = GetIdByImage(theImage);
-		}
-		else
-		{
-			aResID = Sexy::ResourceId::RESOURCE_ID_MAX;
-		}
-		SyncInt((int&)aResID);
-	}
-}
-
 //0x481710
 // 【存档层 TodList 三件套已删（2026-10-02）】SwapDataIDLists/SyncDataIDList/
 // ValidateOwnedDataIDs 自 P3 名册化起零调用（名册块内联于 SyncParticleSystem/
@@ -464,8 +383,6 @@ static void SyncParticleEmitter(TodParticleSystem* theParticleSystem, TodParticl
 		theContext.SyncInt(aEmitterDefIndex);
 	}
 
-	Image* anImage = theParticleEmitter->mImageOverride;
-	theContext.SyncImage(anImage);
 	auto& aHolder = *theParticleSystem->mParticleHolder;
 	// 粒子名册（2026-10-04 P3 第二步连续化）：磁盘格式不变——count(int)+
 	// N×4B ID 序列逐字节同旧 SyncDataIDList（头→尾序=新→旧）；读写走侧表
@@ -527,7 +444,6 @@ static void SyncParticleEmitter(TodParticleSystem* theParticleSystem, TodParticl
 	{
 		theParticleEmitter->mParticleSystem = theParticleSystem;
 		theParticleEmitter->mEmitterDef = &theParticleSystem->mParticleDef->mEmitterDefs[aEmitterDefIndex];
-		theParticleEmitter->mImageOverride = anImage;
 		// 入册：盘上头→尾（新→旧）→侧表尾存（旧→新）= 倒序填
 		theParticleEmitter->ParticleRosterClear();
 		for (int i = aRosterCount - 1; i >= 0; --i)
@@ -543,9 +459,23 @@ void SyncParticleSystem(Board* theBoard, TodParticleSystem* theParticleSystem, S
 {
 	if (theContext.mFailed)
 		return;
-	TodParticleDefinition* aDefinition = theParticleSystem->mParticleDef;
-	theContext.SyncParticleDef(aDefinition);
-	if (theContext.mFailed || aDefinition == nullptr)
+	// Current v3.2 stores the original base effect and its internal appearance
+	// index in the fixed pool record, with no supplemental identity.
+	const int aEffectType = static_cast<int>(theParticleSystem->mEffectType);
+	if (!gParticleDefArray || aEffectType < 0 ||
+		aEffectType >= static_cast<int>(ParticleEffect::NUM_PARTICLES) ||
+		aEffectType >= gParticleDefCount)
+	{
+		theContext.mFailed = true;
+		return;
+	}
+	TodParticleDefinition* aDefinition = &gParticleDefArray[aEffectType];
+	if (theParticleSystem->mVariant >= aDefinition->mVariantCount)
+	{
+		theContext.mFailed = true;
+		return;
+	}
+	if (!theContext.mReading && theParticleSystem->mParticleDef != aDefinition)
 	{
 		theContext.mFailed = true;
 		return;
@@ -649,6 +579,14 @@ void SyncReanimation(Board* theBoard, Reanimation* theReanimation, SaveGameConte
 		theContext.mFailed = true;
 		return;
 	}
+	if (theReanimation->mReanimationType < 0 ||
+		theReanimation->mReanimationType >= ReanimationType::NUM_REANIMS ||
+		aDefinition != &gReanimatorDefArray[theReanimation->mReanimationType] ||
+		theReanimation->mVariant >= aDefinition->mVariantCount)
+	{
+		theContext.mFailed = true;
+		return;
+	}
 
 	const int aTrackCount = aDefinition->mTracks.count;
 	if (aTrackCount < 0 || static_cast<size_t>(aTrackCount) >
@@ -686,21 +624,17 @@ void SyncReanimation(Board* theBoard, Reanimation* theReanimation, SaveGameConte
 		for (int aTrackIndex = 0; aTrackIndex < aTrackCount; aTrackIndex++)
 		{
 			ReanimatorTrackInstance& aTrackInstance = aTracks[aTrackIndex];
-			theContext.SyncImage(aTrackInstance.mImageOverride);
-			if (theContext.mFailed)
-				return;
-
 			if (theContext.mReading)
 			{
 				aTrackInstance.mBlendTransform.mText = nullptr;
 				TOD_ASSERT(aTrackInstance.mBlendTransform.mFont == nullptr);
-				TOD_ASSERT(aTrackInstance.mBlendTransform.mImageRegion.mWidth == 0);
+				TOD_ASSERT(aTrackInstance.mBlendTransform.mImageSlot == 0);
 			}
 			else
 			{
 				TOD_ASSERT(aTrackInstance.mBlendTransform.mText == nullptr);
 				TOD_ASSERT(aTrackInstance.mBlendTransform.mFont == nullptr);
-				TOD_ASSERT(aTrackInstance.mBlendTransform.mImageRegion.mWidth == 0);
+				TOD_ASSERT(aTrackInstance.mBlendTransform.mImageSlot == 0);
 			}
 		}
 	}
@@ -977,7 +911,8 @@ static bool BuildDat64SaveBuffer(Board* theBoard, Buffer& theOutBuffer)
 	WriteU64(theOutBuffer, static_cast<std::uint64_t>(aPayloadSize));
 	WriteU32(theOutBuffer, 0); // Former payload CRC32; reserved and ignored.
 	WriteU32(theOutBuffer, Dat64TimeSchema::SCHEMA_ID);
-	WriteU64(theOutBuffer, 0);
+	WriteU32(theOutBuffer, LevelSaveFormat::DAT64_MINOR_VERSION);
+	WriteU32(theOutBuffer, 0);
 	TOD_ASSERT(theOutBuffer.GetDataLen() == LevelSaveFormat::DAT64_HEADER_SIZE);
 	theOutBuffer.WriteBytes(aContext.mBuffer.GetDataPtr(), aPayloadSize);
 	return true;
@@ -1018,7 +953,24 @@ static bool LoadDat64FromBuffer(Board* theBoard, Buffer& aFileBuffer, const std:
 	const std::uint32_t aFlags = ReadU32(aFileData + 20);
 	const std::uint64_t aPayloadSize = ReadU64(aFileData + 24);
 	const std::uint32_t aSchemaID = ReadU32(aFileData + 36);
-	if (!LevelSaveFormat::IsCurrentDat64Header(std::span(aFileData, static_cast<size_t>(aFileSize))) ||
+	const std::span aFile(aFileData, static_cast<size_t>(aFileSize));
+	if (LevelSaveFormat::IsSupportedDat64Header(aFile) && !LevelSaveFormat::IsCurrentDat64Header(aFile))
+	{
+		const auto aMinor = ReadU32(aFileData + 40);
+		TodTraceAndLog("DAT64_UPGRADE_REQUIRED file=%s version=%u.%u current=%u.%u",
+			theFilePath.c_str(), aVersion, aMinor, LevelSaveFormat::DAT64_VERSION,
+			LevelSaveFormat::DAT64_MINOR_VERSION);
+		throw SaveGameUpgradeRequired(StrFormat(
+			"Saved game needs a format upgrade:\n%s\n\n"
+			"This file uses DAT64 v%u.%u (schema 0x%08X);\n"
+			"this build reads DAT64 v%u.%u (schema 0x%08X).\n"
+			"Use the bundled save converter to create a current-format copy.\n"
+			"This load attempt has not changed the original file.\n"
+			"A new game will not be started over this save.",
+			theFilePath.c_str(), aVersion, aMinor, aSchemaID, LevelSaveFormat::DAT64_VERSION,
+			LevelSaveFormat::DAT64_MINOR_VERSION, LevelSaveFormat::DAT64_SCHEMA_ID));
+	}
+	if (!LevelSaveFormat::IsCurrentDat64Header(aFile) ||
 		aPayloadSize > static_cast<std::uint64_t>(INT_MAX))
 	{
 		TodTraceAndLog(

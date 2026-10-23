@@ -7,11 +7,10 @@
 #include <atomic>
 #include <memory>
 #include "DataArray.h"
-#include "DefinitionAtlas.h"
+#include "DefinitionImageRegion.h"
 #include "misc/SexyVector.h"
 namespace Sexy
 {
-	class Image;
 	class Graphics;
 };
 //using namespace std;
@@ -89,10 +88,9 @@ public:
 };
 #pragma pack(pop)
 
-// 记录/写档侧的节点尺寸：只含持久字段 5×4B = 20B（部署记录与 reanimc 输出同构）。
-inline constexpr std::size_t kFloatTrackNodeRecordSize = 20;
-static_assert(sizeof(FloatParameterTrackNode) == 28, "布局漂移须复核记录前缀与解析偏移");
-static_assert(offsetof(FloatParameterTrackNode, mCurveTypeEval) == 12, "记录 int 字节位与指针槽必须重合");
+// Preserve the runtime layout shared by live particle instances and saves.
+static_assert(sizeof(FloatParameterTrackNode) == 28);
+static_assert(offsetof(FloatParameterTrackNode, mCurveTypeEval) == 12);
 static_assert(offsetof(FloatParameterTrackNode, mDistributionEval) == 20, "分布指针槽位漂移");
 
 // ====================================================================================================
@@ -135,9 +133,9 @@ public:
 class TodEmitterDefinition
 {
 public:
-    DefinitionImageRegion       mImageRegion;
-    int                         mImageCol;
-    int                         mImageRow;
+    // Index into every appearance row; all variants share this emitter behavior.
+    std::uint32_t               mImageRectOffset = 0;
+    int                         mImageRectCount = 0;
     int                         mImageFrames;
     int                         mAnimated;
     int                         mParticleFlags;
@@ -185,9 +183,7 @@ public:
     FloatParameterTrack         mAnimationRate;
     // IDT3 stores the first matching definition index in declaration order.
     int                         mOnDurationEmitterIndex = -1;
-    // P5-④（2026-10-05）def 级渲染轨道预扫描位掩码（装载后一次性；bit=通道
-    // 有已设轨）：全零 def 的 GetRenderParams 跳过 20 次求值直给默认色。
-    // 派生态不入盘（dat64 记录按 DefMap 布局，不破坏）
+    // Generated render-channel mask; unset channels use their default values.
     unsigned                    mRenderTrackMask = 0;
 };
 
@@ -204,9 +200,14 @@ public:
 class TodParticleDefinition
 {
 public:
-    DefinitionAtlas             mAtlas;
-    TodEmitterDefinition*       mEmitterDefs;
-    int                         mEmitterDefCount;
+    Sexy::GpuTexture**          mTextures = nullptr;
+    int*                        mTextureWidths = nullptr;
+    int*                        mTextureHeights = nullptr;
+    std::uint32_t               mVariantCount = 0;
+    std::uint32_t               mImageRectCount = 0;
+    const Sexy::Rect*           mImageRects = nullptr;
+    TodEmitterDefinition*       mEmitterDefs = nullptr;
+    int                         mEmitterDefCount = 0;
     std::array<int, static_cast<std::size_t>(ParticleEmitterName::top)> mEmitterIndexByName = [] {
         std::array<int, static_cast<std::size_t>(ParticleEmitterName::top)> indices{};
         indices.fill(-1);
@@ -317,8 +318,8 @@ public:
 	TodParticleHolder(const TodParticleHolder&) = delete;
 	TodParticleHolder& operator=(const TodParticleHolder&) = delete;
 
-    TodParticleSystem*				AllocParticleSystemFromDef(float theX, float theY, int theRenderOrder, TodParticleDefinition* theDefinition, ParticleEffect theParticleEffect);
-    TodParticleSystem*				AllocParticleSystem(float theX, float theY, int theRenderOrder, ParticleEffect theParticleEffect);
+    TodParticleSystem*				AllocParticleSystemFromDef(float theX, float theY, int theRenderOrder, TodParticleDefinition* theDefinition, ParticleEffect theParticleEffect, std::uint32_t theVariant = 0);
+    TodParticleSystem*				AllocParticleSystem(float theX, float theY, int theRenderOrder, ParticleEffect theParticleEffect, std::uint32_t theVariant = 0);
     /*inline*/ bool					IsOverLoaded();
 };
 
@@ -393,7 +394,6 @@ public:
 	Sexy::Color						mColorOverride;													//+0x3C
 	bool							mExtraAdditiveDrawOverride;										//+0x4C
 	float							mScaleOverride;													//+0x50
-	Sexy::Image*					mImageOverride;													//+0x54
 	ParticleEmitterID				mCrossFadeEmitterID;											//+0x58
 	Sexy::TimeCounter								mEmitterCrossFadeCountDown;										//+0x5C
 	int								mFrameOverride;													//+0x60
@@ -450,6 +450,7 @@ class TodParticleSystem
 {
 public:
 	ParticleEffect					mEffectType;					//+0x0
+    std::uint32_t                   mVariant = 0;
     TodParticleDefinition*			mParticleDef;					//+0x4
     TodParticleHolder*				mParticleHolder;				//+0x8
     // 已退役（2026-10-04 P3 名册连续化；2026-10-02 TodList 模板退役后占位
@@ -477,7 +478,7 @@ public:
     bool							EmitterRosterAdd(TodParticleEmitter* theEmitter);
     void							EmitterRosterClear();
 
-    void							TodParticleInitializeFromDef(float theX, float theY, int theRenderOrder, TodParticleDefinition* theDefinition, ParticleEffect theEffectType);
+    void							TodParticleInitializeFromDef(float theX, float theY, int theRenderOrder, TodParticleDefinition* theDefinition, ParticleEffect theEffectType, std::uint32_t theVariant = 0);
     void							ParticleSystemDie();
     void							Update();
     void							Draw(Graphics* g);
@@ -486,8 +487,6 @@ public:
     void							OverrideColor(ParticleEmitterNameRange theRange, const Color& theColor);
     void							OverrideExtraAdditiveDraw(ParticleEmitterName theName, bool theEnableExtraAdditiveDraw);
     void							OverrideExtraAdditiveDraw(ParticleEmitterNameRange theRange, bool theEnableExtraAdditiveDraw);
-    void							OverrideImage(ParticleEmitterName theName, Image* theImage);
-    void							OverrideImage(ParticleEmitterNameRange theRange, Image* theImage);
     void							OverrideFrame(ParticleEmitterName theName, int theFrame);
     void							OverrideFrame(ParticleEmitterNameRange theRange, int theFrame);
     void							OverrideScale(ParticleEmitterName theName, float theScale);

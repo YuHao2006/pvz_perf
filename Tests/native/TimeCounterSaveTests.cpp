@@ -224,22 +224,48 @@ void CheckLiveSave()
 
 namespace
 {
+void CheckMusicFloatSave()
+{
+    static_assert(LevelSaveFormat::DAT64_VERSION == 3);
+    static_assert(std::is_same_v<decltype(Music::mBaseBPM), float>);
+    static_assert(std::is_same_v<decltype(Music::mBaseModSpeed), float>);
+    static_assert(std::is_trivially_copyable_v<Music>);
+    auto source = std::bit_cast<Music>(std::array<std::byte, sizeof(Music)>{});
+    source.mBaseBPM = 120.5f;
+    source.mBaseModSpeed = 3.25f;
+    source.mBurstStateCounter.mNanoseconds = 123'456'789;
+    const auto wire = WriteSaveRecord(source);
+    float bpm = 0, speed = 0;
+    std::memcpy(&bpm, wire.data() + 36, sizeof(bpm));
+    std::memcpy(&speed, wire.data() + 40, sizeof(speed));
+    Require(bpm == source.mBaseBPM && speed == source.mBaseModSpeed,
+        "Music save truncated floating-point attributes or changed their wire offsets");
+    auto restored = std::bit_cast<Music>(std::array<std::byte, sizeof(Music)>{});
+    ReadSaveRecord(restored, wire.data());
+    Require(restored.mBaseBPM == 120.5f && restored.mBaseModSpeed == 3.25f &&
+        restored.mBurstStateCounter.mNanoseconds == 123'456'789 &&
+        WriteSaveRecord(restored) == wire,
+        "Music float attributes did not round-trip with exact nanosecond timers");
+}
+
 void CheckBlendRegionSave()
 {
-    static_assert(sizeof(ReanimatorTransform) == 72);
-    static_assert(offsetof(ReanimatorTransform, mImageRegion) == 32);
+    static_assert(sizeof(ReanimatorTransform) == 56);
+    static_assert(offsetof(ReanimatorTransform, mImageSlot) == 32);
     static_assert(std::is_trivially_copyable_v<ReanimatorTrackInstance>);
     // Construct zeroed native records without the gameplay track constructor.
     auto source = std::bit_cast<ReanimatorTrackInstance>(
         std::array<std::byte, sizeof(ReanimatorTrackInstance)>{});
     const auto withoutRegion = WriteSaveRecord(source);
-    source.mBlendTransform.mImageRegion = {2, 2, 16, 8, 1, 1};
+    Require(withoutRegion.size() == 112,
+        "Current DAT64 retained the removed eight-byte track image pointer gap");
+    source.mBlendTransform.mImageSlot = 123;
     Require(WriteSaveRecord(source) == withoutRegion,
-        "Definition atlas geometry leaked into DAT64");
+        "Definition image slot leaked into DAT64 blend state");
     auto restored = source;
     ReadSaveRecord(restored, withoutRegion.data());
-    Require(restored.mBlendTransform.mImageRegion.mWidth == 0,
-        "Loading DAT64 retained definition atlas geometry");
+    Require(restored.mBlendTransform.mImageSlot == 0,
+        "Loading DAT64 retained a derived definition image slot");
 }
 
 void CheckCatapultCycle()
@@ -307,12 +333,13 @@ int main()
         CheckRecord<Reanimation>();
         CheckRecord<Attachment>();
         CheckRuntime();
+        CheckMusicFloatSave();
         CheckBlendRegionSave();
         CheckCatapultCycle();
         CheckLiveSave<TodParticle>();
         CheckLiveSave<TodParticleEmitter>();
         Configure(100);
-        std::cout << "PASS: 20 native save types, 134 exact 64-bit mappings; catapult cycle/recovery; six FPS settings, "
+        std::cout << "PASS: 20 native save types, 134 exact 64-bit mappings; float music attributes; catapult cycle/recovery; six FPS settings, "
             "nanosecond advancement, countdown expiry, periodic events, sentinels and unsigned wrap\n";
         return 0;
     }

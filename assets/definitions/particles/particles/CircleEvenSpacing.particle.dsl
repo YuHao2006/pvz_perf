@@ -3,7 +3,6 @@ export component CircleEvenSpacing {
     source-name: "circleevenspacing";
     Emitter {
         image: "IMAGE_PROJECTILE";
-        imageRow: 8;
         emitterType: CircleEvenSpacing;
         randomLaunchSpin: 1;
         systemDuration: 220;

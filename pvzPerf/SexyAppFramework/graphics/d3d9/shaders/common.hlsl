@@ -10,7 +10,6 @@ float4 rectangle : register(c5);
 float4 alphaRect : register(c6);
 float4 alphaTexture : register(c7);
 float4 packedColor : register(c8);
-float4 cells : register(c9);
 float4 causticOffset0 : register(c10);
 float4 causticOffset1 : register(c11);
 float4 glyphSource : register(c12);

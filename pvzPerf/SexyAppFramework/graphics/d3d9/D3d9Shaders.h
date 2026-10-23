@@ -39,7 +39,6 @@ enum PixelConstant : unsigned {
     AlphaRect = 6,        // (0, 0, originalMaskWidth, originalMaskHeight)
     AlphaTexture = 7,     // (1/physicalWidth, 1/physicalHeight, 0, 0)
     PackedColor = 8,      // (R,G,B,A), integer bytes decoded on CPU from packed ARGB
-    Cells = 9,            // (columns, rows, floor(outputWidth/columns), floor(outputHeight/rows))
     CausticOffset0 = 10,  // (uHighModulo256, uLow16, vHighModulo256, vLow16)
     CausticOffset1 = 11,  // same; see CPU recipe below
     GlyphSource = 12,     // (x,y,width,height)

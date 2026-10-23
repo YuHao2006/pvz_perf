@@ -2,7 +2,7 @@ export component ZombieFutureGlasses {
     kind: particle;
     source-name: "zombiefutureglasses";
     Emitter {
-        image: "IMAGE_ZOMBIEFUTUREGLASSES";
+        images: ["particles/frames/zombiefutureglasses_r0_c0.png","particles/frames/zombiefutureglasses_r0_c1.png","particles/frames/zombiefutureglasses_r0_c2.png","particles/frames/zombiefutureglasses_r0_c3.png"];
         name: "FutureGlasses";
         imageFrames: 4;
         randomLaunchSpin: 1;

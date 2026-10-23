@@ -66,10 +66,9 @@ public:
 	MusicFile					mCurMusicFileDrums;					//+0x10
 	MusicFile					mCurMusicFileHihats;				//+0x14
 	int							mBurstOverride;						//+0x18
-	// 1073/BASS 2.2 stores these module attributes as signed 32-bit integers.
-	// BASS 2.4's float-only API is adapted at the call boundary in Music.cpp.
-	int							mBaseBPM;							//+0x1C
-	int							mBaseModSpeed;						//+0x20
+	// Keep BASS 2.4 module attributes as floats through reads, resync and resume.
+	float						mBaseBPM;							//+0x1C
+	float						mBaseModSpeed;						//+0x20
 	MusicBurstState				mMusicBurstState;					//+0x24
 	Sexy::TimeCounter							mBurstStateCounter;					//+0x28
 	MusicDrumsState				mMusicDrumsState;					//+0x2C

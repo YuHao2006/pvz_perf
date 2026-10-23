@@ -1,4 +1,5 @@
 #include "Sexy.TodLib/generated/EntityStrings.h"
+#include "Sexy.TodLib/generated/ReanimVariantOptions.h"
 #include "Lawn/LawnCommon.h"
 #include "Lawn/Board.h"
 #include "GameButton.h"
@@ -344,23 +345,6 @@ GameSelector::GameSelector(LawnApp* theApp)
 	mAlmanacButton->mClip = false; // @Patoke: not in original but fixes stuff
 	mAlmanacButton->mMouseVisible = false;
 
-	mQuickPlayButton = MakeNewButton(
-		GameSelector::GameSelector_QuickPlay,
-		this,
-		"",
-		nullptr,
-		Sexy::IMAGE_QUICKPLAY_BACK_BUTTON,
-		Sexy::IMAGE_QUICKPLAY_BACK_BUTTON_HIGHLIGHT,
-		Sexy::IMAGE_QUICKPLAY_BACK_BUTTON_HIGHLIGHT
-	);
-	mQuickPlayButton->Resize(mApp->mWidth - 150, 455, Sexy::IMAGE_QUICKPLAY_BACK_BUTTON->mWidth, Sexy::IMAGE_QUICKPLAY_BACK_BUTTON->mHeight);
-	// The Quick Play submenu was cut before 1073 shipped: the handler is a
-	// stub and there are no localized strings. Hide the dead sign so it does
-	// not surface on the main menu during page slides.
-	mQuickPlayButton->mBtnNoDraw = true;
-	mQuickPlayButton->mDisabled = true;
-	mQuickPlayButton->mVisible = false;
-
 	mApp->mMusic->MakeSureMusicIsPlaying(MusicTune::MUSIC_TUNE_TITLE_CRAZY_DAVE_MAIN_THEME);
 
 	mStartingGame = false;
@@ -457,7 +441,6 @@ GameSelector::GameSelector(LawnApp* theApp)
 	this->AddWidget(mAchievementsButton);
 	this->AddWidget(mZombatarScreen);
 	this->AddWidget(mAchievementsWidget);
-	this->AddWidget(mQuickPlayButton);
 	// 1073 adds the overlay last so the hand, leaf, flowers, trophy and tooltip
 	// draw above every selector button.
 	this->AddWidget(mOverlayWidget);
@@ -504,8 +487,6 @@ GameSelector::~GameSelector()
 		delete mAchievementsButton;
 	if (mAchievementsWidget)
 		delete mAchievementsWidget;
-	if (mQuickPlayButton)
-		delete mQuickPlayButton;
 
 	delete mToolTip;
 }
@@ -530,14 +511,14 @@ void GameSelector::SyncButtons()
 	{
 		aSelectorReanim->AssignRenderGroupToRange(ReanimTrackRanges::almanac_key_shadow, RENDER_GROUP_NORMAL);
 		if (aStoreOpen)
-			aSelectorReanim->SetImageOverride(ReanimTrackId::almanac_key_shadow, nullptr);
+			aSelectorReanim->SetVariantOption(ReanimTrackId::almanac_key_shadow, 0);
 		else
-			aSelectorReanim->SetImageOverride(ReanimTrackId::almanac_key_shadow, Sexy::IMAGE_REANIM_SELECTORSCREEN_ALMANAC_SHADOW);
+			aSelectorReanim->SetVariantOption(ReanimTrackId::almanac_key_shadow, ReanimOptions::SelectorScreen::almanac_key_shadow::SELECTORSCREEN_ALMANAC_SHADOW);
 	}
 	else if (aStoreOpen)
 	{
 		aSelectorReanim->AssignRenderGroupToRange(ReanimTrackRanges::almanac_key_shadow, RENDER_GROUP_NORMAL);
-		aSelectorReanim->SetImageOverride(ReanimTrackId::almanac_key_shadow, Sexy::IMAGE_REANIM_SELECTORSCREEN_KEY_SHADOW);
+		aSelectorReanim->SetVariantOption(ReanimTrackId::almanac_key_shadow, ReanimOptions::SelectorScreen::almanac_key_shadow::SELECTORSCREEN_KEY_SHADOW);
 	}
 	else
 		aSelectorReanim->AssignRenderGroupToRange(ReanimTrackRanges::almanac_key_shadow, RENDER_GROUP_HIDDEN);
@@ -785,14 +766,6 @@ void GameSelector::Draw(Graphics* g)
 
 	}
 
-	// The Quick Play submenu was cut before 1073 shipped. The four draws below
-	// are its left-hand page (background + three clouds); in the 64-bit port's
-	// coordinate pass they render over the main menu's right side as a long
-	// dark-green band. Keep the assets, but do not draw the dead page.
-	// g->DrawImage(IMAGE_SELECTORSCREEN_MOREWAYSTOPLAY_BG, M(0), M(0));
-	// g->DrawImage(IMAGE_QUICKPLAY_MINIGAMES_CLOUD, M(20), M(40));
-	// g->DrawImage(IMAGE_QUICKPLAY_PUZZLES_CLOUD, M(350), M(285));
-	// g->DrawImage(IMAGE_QUICKPLAY_SURVIVAL_CLOUD, M(130), M(135));
 }
 
 //0x44AB50
@@ -858,15 +831,15 @@ void GameSelector::DrawOverlay(Graphics* g)
 		g->mColorizeImages = true;
 		g->mColor = mAdventureButton->mColors[ButtonWidget::COLOR_BKG];
 		// @Patoke: changed positions for GOTY adventure icon
-		TodDrawImageCelF(g, Sexy::IMAGE_SELECTORSCREEN_LEVELNUMBERS, aTransAreaX + 486.0f, aTransAreaY + 47.f, aStage, 0);  // 绘制大关数
+		TodDrawImageRectF(g, Sexy::IMAGE_SELECTORSCREEN_LEVELNUMBERS, aTransAreaX + 486.0f, aTransAreaY + 47.f, Rect(aStage * 12, 0, 12, 17));  // 绘制大关数
 		if (aSub < 10)
 		{
-			TodDrawImageCelF(g, Sexy::IMAGE_SELECTORSCREEN_LEVELNUMBERS, aTransSubX + 509.f, aTransSubY + 50.f, aSub, 0);
+			TodDrawImageRectF(g, Sexy::IMAGE_SELECTORSCREEN_LEVELNUMBERS, aTransSubX + 509.f, aTransSubY + 50.f, Rect(aSub * 12, 0, 12, 17));
 		}
 		else if (aSub == 10)
 		{
-			TodDrawImageCelF(g, Sexy::IMAGE_SELECTORSCREEN_LEVELNUMBERS, aTransSubX + 509.f, aTransSubY + 50.f, 1, 0);
-			TodDrawImageCelF(g, Sexy::IMAGE_SELECTORSCREEN_LEVELNUMBERS, aTransSubX + 518.f, aTransSubY + 51.f, 0, 0);
+			TodDrawImageRectF(g, Sexy::IMAGE_SELECTORSCREEN_LEVELNUMBERS, aTransSubX + 509.f, aTransSubY + 50.f, Rect(12, 0, 12, 17));
+			TodDrawImageRectF(g, Sexy::IMAGE_SELECTORSCREEN_LEVELNUMBERS, aTransSubX + 518.f, aTransSubY + 51.f, Rect(0, 0, 12, 17));
 		}
 		g->mColorizeImages = false;
 	}
@@ -916,9 +889,9 @@ void GameSelector::DrawOverlay(Graphics* g)
 	{
 		// @Patoke: updated pos to match GOTY
 		if (mApp->EarnedGoldTrophy())
-			TodDrawImageCelF(g, Sexy::IMAGE_SUNFLOWER_TROPHY, aTransformLeft.mTransX + 12.f, aTransformLeft.mTransY + 345.f, 1, 0);
+			TodDrawImageRectF(g, Sexy::IMAGE_SUNFLOWER_TROPHY, aTransformLeft.mTransX + 12.f, aTransformLeft.mTransY + 345.f, Rect(157, 0, 157, 269));
 		else
-			TodDrawImageCelF(g, Sexy::IMAGE_SUNFLOWER_TROPHY, aTransformLeft.mTransX + 12.f, aTransformLeft.mTransY + 345.f, 0, 0);
+			TodDrawImageRectF(g, Sexy::IMAGE_SUNFLOWER_TROPHY, aTransformLeft.mTransX + 12.f, aTransformLeft.mTransY + 345.f, Rect(0, 0, 157, 269));
 		
 		TodParticleSystem* aTrophyParticle = mApp->ParticleTryToGet(mTrophyParticleID);
 		if (aTrophyParticle)
@@ -1176,8 +1149,10 @@ void GameSelector::Update()
 	TrackButton(mZombatarButton, ReanimTrackId::woodsign3, SELECTOR_MAIN_PAGE_X, 0.0f); // @Patoke: add shart here
 	TrackButton(mAchievementsButton, ReanimTrackId::SelectorScreen_BG_Left,
         SELECTOR_MAIN_PAGE_X + SELECTOR_LEFT_ART_EXTENSION + 20.0f, 480.0f);
-	aSelectorReanim->SetImageOverride(ReanimTrackId::woodsign2, (mChangeUserButton->mIsOver || mChangeUserButton->mIsDown) ? Sexy::IMAGE_REANIM_SELECTORSCREEN_WOODSIGN2_PRESS : nullptr);
-	aSelectorReanim->SetImageOverride(ReanimTrackId::woodsign3, (mZombatarButton->mIsOver || mZombatarButton->mIsDown) ? Sexy::IMAGE_REANIM_SELECTORSCREEN_WOODSIGN3_PRESS : nullptr);
+	aSelectorReanim->SetVariantOption(ReanimTrackId::woodsign2, (mChangeUserButton->mIsOver || mChangeUserButton->mIsDown)
+		? ReanimOptions::SelectorScreen::woodsign2::SELECTORSCREEN_WOODSIGN2_PRESS : 0);
+	aSelectorReanim->SetVariantOption(ReanimTrackId::woodsign3, (mZombatarButton->mIsOver || mZombatarButton->mIsDown)
+		? ReanimOptions::SelectorScreen::woodsign3::SELECTORSCREEN_WOODSIGN3_PRESS : 0);
 }
 
 //0x44BB20
@@ -1470,16 +1445,16 @@ void GameSelector::ButtonDepress(int theId)
 
 	// C 形态 -> 成员函数内 lambda 表（表在类作用域内→lambda 可访问 private 方法；
 	// aSession 经引用传入，early return 经标志回传——Store/Almanac 用）
-	// 行序 = 按钮枚举**数值序**（100..114 平移 100），每行锚注释即该槽的枚举名。
+	// 行序 = 按钮枚举**数值序**（100..113 平移 100），每行锚注释即该槽的枚举名。
 	// 事故教训（2026-10-03 B 树实测抓获）：初版按原 switch 的**文本 case 序**
 	// 排槽，而 Survival 文本位第 4、数值位 110，中间 7 槽整体错位——点生存进
 	// 花园、点商店进账户。id 键控表必须按枚举数值序排槽 + 逐行枚举锚注释。
 	{
 		constexpr int kFirst = GameSelector::GameSelector_Adventure;
-		constexpr int kCount = GameSelector::GameSelector_QuickPlay - kFirst + 1;
+		constexpr int kCount = GameSelector::GameSelector_Achievements - kFirst + 1;
 		static_assert(GameSelector::GameSelector_Options - kFirst == 3 &&
 			GameSelector::GameSelector_Survival - kFirst == 10 &&
-			GameSelector::GameSelector_QuickPlay - kFirst == 14,
+			GameSelector::GameSelector_Achievements - kFirst == 13,
 			"按钮枚举数值序与表槽注释一致性锚");
 		static constexpr void (*kCases[kCount])(GameSelector&, SelectorModalSession&, bool&) = {
 		    /* [100] GameSelector_Adventure */
@@ -1531,8 +1506,6 @@ void GameSelector::ButtonDepress(int theId)
 		    [](GameSelector& g, SelectorModalSession&, bool&) { g.SlideTo(-(int)SELECTOR_MAIN_PAGE_X, 0); },
 		    /* [113] GameSelector_Achievements */
 		    [](GameSelector& g, SelectorModalSession&, bool&) { g.ShowAchievementsWidget(); },
-		    /* [114] GameSelector_QuickPlay（已禁用，原 case 体即注释掉的调用） */
-		    [](GameSelector&, SelectorModalSession&, bool&) {},
 		};
 		bool anEarlyReturn = false;
 		const unsigned aCaseIndex = static_cast<unsigned>(theId - kFirst);

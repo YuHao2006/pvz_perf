@@ -664,14 +664,14 @@ MetalTexture* MetalRenderer::ProcessImage(MetalTexture* source, const GpuImagePr
     return target;
 }
 MetalTexture* MetalRenderer::ComposeAlphaRaw(MetalTexture* base, MetalTexture* alpha,
-    int columns, int rows, uint32_t color, bool colorOnly) {
+    uint32_t color, bool colorOnly) {
     auto& s = *impl_;
     s.Require(base); s.Require(alpha);
-    if (columns <= 0 || rows <= 0 || base->width / columns != alpha->width ||
-        base->height / rows != alpha->height || base->generated || alpha->generated)
-        throw std::invalid_argument("Metal alpha composition requires raw images and matching cells");
+    if (base->width != alpha->width || base->height != alpha->height ||
+        base->generated || alpha->generated)
+        throw std::invalid_argument("Metal alpha composition requires raw images and matching dimensions");
     auto* target = s.Own(s.Image(base->width, base->height, MTLPixelFormatRGBA8Unorm, false, false), false);
-    const MetalAlphaConstants constants{base->width, base->height, columns, rows, color, colorOnly ? 1u : 0u};
+    const MetalAlphaConstants constants{base->width, base->height, color, colorOnly ? 1u : 0u};
     const std::array inputs{base, alpha};
     s.Compute(s.alphaKernel, target, inputs, &constants, sizeof(constants), base->width, base->height);
     return target;
@@ -687,8 +687,8 @@ MetalTexture* MetalRenderer::AdoptComposedTexture(MetalTexture* texture) {
     return texture;
 }
 MetalTexture* MetalRenderer::ComposeAlpha(MetalTexture* base, MetalTexture* alpha,
-    int columns, int rows, uint32_t color, bool colorOnly) {
-    return AdoptComposedTexture(ComposeAlphaRaw(base, alpha, columns, rows, color, colorOnly));
+    uint32_t color, bool colorOnly) {
+    return AdoptComposedTexture(ComposeAlphaRaw(base, alpha, color, colorOnly));
 }
 void MetalRenderer::RenderFontAtlas(MetalTexture* target, MetalTexture* source,
     std::span<const GpuFontGlyph> glyphs, uint32_t flags, bool white) {

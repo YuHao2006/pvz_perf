@@ -173,7 +173,8 @@ def _cache_key(sizes: list[tuple[int, int]], padding: int, max_side: int, versio
 def _manifest_geometry(manifest: dict, group: dict) -> tuple[list[tuple[int, int]], int, int]:
     source_sizes = {}
     for member in group["members"]:
-        for row in manifest["definition_atlases"][member]["images"]:
+        reports = {**manifest["definition_atlases"], **manifest.get("scene_atlases", {})}
+        for row in reports[member]["images"]:
             size = (_integer(row["width"], "source width", 1),
                     _integer(row["height"], "source height", 1))
             if row["source"] in source_sizes and source_sizes[row["source"]] != size:

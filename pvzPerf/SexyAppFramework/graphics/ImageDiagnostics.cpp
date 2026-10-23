@@ -1,5 +1,6 @@
 #include "ImageDiagnostics.h"
 #include "SexyAppFramework/imagelib/ImageLib.h"
+#include "RenderInterface.h"
 #include <fstream>
 
 namespace Sexy {
@@ -20,6 +21,40 @@ std::filesystem::path NewDirectory(const std::filesystem::path& root) {
     }
 }
 }
+ImageCpuUsage MeasureDecodedImageCpuUsage(const ImageLib::Image* image) {
+    if(!image)return {};
+    ImageCpuUsage usage;
+    if(image->mBits) {
+        const auto capacity=uint64_t(image->mPixelCapacity);
+        usage.bits=AddImageBytes(capacity,capacity);
+        usage.bits=AddImageBytes(usage.bits,usage.bits);
+    }
+    for(const auto* layer:image->mAlphaLayers)
+        if(layer)
+            usage.bits=AddImageBytes(usage.bits,MeasureDecodedImageCpuUsage(layer).Total());
+    return usage;
+}
+void AppendAtlasTextureDiagnostics(RenderInterface& render,
+    std::vector<ImageDiagnosticRecord>& records,bool includePixels) {
+    if(includePixels && render.mSceneBegun)
+        throw std::logic_error("Atlas diagnostic readback requires Flush");
+    for(const auto& [texture,dimensions]:render.mAtlasTextures) {
+        ImageDiagnosticRecord record;
+        record.path="<definition atlas>";
+        record.width=dimensions[0];record.height=dimensions[1];
+        record.traits="renderer-owned definition atlas";
+        record.path="<definition atlas slot "+std::to_string(GpuRenderer::SlotOf(texture))+">";
+        record.gpuTexels=ImageTexelBytes(record.width,record.height);
+        if(!includePixels)record.pixelStatus="metadata only";
+        else {
+            record.pixels=render.mRenderer->ReadTexturePixels(texture);
+            if(record.pixels->width!=record.width || record.pixels->height!=record.height)
+                throw std::logic_error("Atlas diagnostic snapshot dimensions disagree");
+            record.pixelStatus="native definition atlas GPU";
+        }
+        records.push_back(std::move(record));
+    }
+}
 std::string DescribeImageDiagnostics(const std::vector<ImageDiagnosticRecord>& records) {
     const auto totals=CountImageDiagnostics(records);
     std::ostringstream text;
@@ -27,7 +62,8 @@ std::string DescribeImageDiagnostics(const std::vector<ImageDiagnosticRecord>& r
         <<"CPU pixel/storage buffers: "<<totals.cpu<<" bytes\r\n"
         <<"Resident image texel payload: "<<totals.gpuTexels<<" bytes\r\n"
         <<"Images with GPU payload: "<<totals.texturedImages<<"\r\n\r\n"
-        <<"GPU payload includes whole-image texels and the logical screen.\r\n"
+        <<"GPU payload includes owned whole-image texels, definition atlases and the logical screen.\r\n"
+        <<"Filter aliases share their owner's texture and add no texel payload.\r\n"
         <<"It excludes driver alignment, retired textures, swapchains and scaling intermediates.\r\n"
         <<"This is not the process RAM usage or a measured VRAM budget.";
     return text.str();

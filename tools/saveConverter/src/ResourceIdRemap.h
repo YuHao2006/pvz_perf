@@ -6,10 +6,10 @@
 // 双向校验：6 个存档经验锚点（南瓜 232/手臂 248/梯子 307·308·310/玩偶匣 297）全中。
 // 空间定义：
 //   legacy(.dat)  = 1073 exe 的 ResourceId 序
-//   dat64(规范态) = 本工程 Resources.h 枚举序
+//   dat64 v1/v2(规范态) = 冻结的本工程历史枚举序
 // 879 = RESOURCE_ID_MAX 哨兵（两空间同值，直通不映射）。
 #include <cstdint>
-#include "Resources.h"
+#include "FrozenResourceIds.h"
 
 namespace LevelSaveRemap {
 inline constexpr int kResourceCount = 879;      // 0..878
@@ -172,7 +172,7 @@ inline constexpr std::int32_t kModernToExe[kResourceCount + 1] = {
 };
 
 // legacy(exe) 空间的"是图像"位图（0..878 资源 + 哨兵 0）。modern 空间沿用
-// Sexy::IsImageResourceId（有 static_assert 对 gResources 兜底）。
+// FrozenSaveResources::IsImageResourceId；不依赖运行时资源或公开图片符号。
 inline constexpr bool kExeIsImage[kResourceCount + 1] = {
     1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
@@ -237,7 +237,7 @@ constexpr bool HasConsistentImageMask() noexcept
     for (int id = 0; id < kResourceCount; ++id)
     {
         if (kExeIsImage[id] !=
-                Sexy::IsImageResourceId(static_cast<Sexy::ResourceId>(kExeToModern[id])))
+                FrozenSaveResources::IsImageResourceId(static_cast<FrozenSaveResources::ResourceId>(kExeToModern[id])))
         {
             return false;
         }
@@ -245,15 +245,15 @@ constexpr bool HasConsistentImageMask() noexcept
     return true;
 }
 
-static_assert(kResourceCount == static_cast<int>(Sexy::ResourceId::RESOURCE_ID_MAX));
+static_assert(kResourceCount == static_cast<int>(FrozenSaveResources::ResourceId::RESOURCE_ID_MAX));
 static_assert(kResourceIdSentinel == kResourceCount);
 static_assert(kExeToModern[kResourceIdSentinel] == kResourceIdSentinel &&
     kModernToExe[kResourceIdSentinel] == kResourceIdSentinel);
 static_assert(!kExeIsImage[kResourceIdSentinel] &&
-    !Sexy::IsImageResourceId(Sexy::ResourceId::RESOURCE_ID_MAX));
+    !FrozenSaveResources::IsImageResourceId(FrozenSaveResources::ResourceId::RESOURCE_ID_MAX));
 static_assert(HasBoundedResourceMappings(), "Resource mappings must stay in bounds");
 static_assert(HasBijectiveResourceMappings(), "Resource mappings must be inverses");
-static_assert(HasConsistentImageMask(), "Legacy image mask must match Resources.h");
+static_assert(HasConsistentImageMask(), "Legacy image mask must match frozen historical slot kinds");
 static_assert(kExeIsImage[kModernToExe[
-    static_cast<int>(Sexy::ResourceId::FONT_IMAGE_HOUSEOFTERROR28_ID)]]);
+    static_cast<int>(FrozenSaveResources::ResourceId::FONT_IMAGE_HOUSEOFTERROR28_ID)]]);
 }  // namespace LevelSaveRemap

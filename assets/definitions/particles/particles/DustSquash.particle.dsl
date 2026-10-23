@@ -2,7 +2,7 @@ export component DustSquash {
     kind: particle;
     source-name: "dust_squash";
     Emitter {
-        image: "IMAGE_DUST_PUFFS";
+        images: ["particles/frames/dust_puffs_r0_c0.png","particles/frames/dust_puffs_r0_c1.png","particles/frames/dust_puffs_r0_c2.png"];
         name: "SquashRight";
         imageFrames: 3;
         randomLaunchSpin: 1;
@@ -20,7 +20,7 @@ export component DustSquash {
         }
     }
     Emitter {
-        image: "IMAGE_DUST_PUFFS";
+        images: ["particles/frames/dust_puffs_r0_c0.png","particles/frames/dust_puffs_r0_c1.png","particles/frames/dust_puffs_r0_c2.png"];
         name: "SquashLeft";
         imageFrames: 3;
         randomLaunchSpin: 1;

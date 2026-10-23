@@ -8,6 +8,7 @@
 #include "Resources.h"
 #include "Sexy.TodLib/TodFoley.h"
 #include "Sexy.TodLib/TodStringFile.h"
+#include "Sexy.TodLib/generated/SceneAtlasData.h"
 
 //0x4330D0
 // GOTY @Patoke: 0x435E40
@@ -56,7 +57,9 @@ void ContinueDialog::Resize(int theX, int theY, int theWidth, int theHeight)
 {
     LawnDialog::Resize(theX, theY, theWidth, theHeight);
 
-    int aBtnWidth = IMAGE_BUTTON_LEFT->mWidth + IMAGE_BUTTON_MIDDLE->mWidth * 3 + IMAGE_BUTTON_RIGHT->mWidth;
+    int aBtnWidth = FixedUIAtlas::Images[size_t(FixedUIAtlas::Sprite::BUTTON_LEFT)].mWidth +
+        FixedUIAtlas::Images[size_t(FixedUIAtlas::Sprite::BUTTON_MIDDLE)].mWidth * 3 +
+        FixedUIAtlas::Images[size_t(FixedUIAtlas::Sprite::BUTTON_RIGHT)].mWidth;
     int aBtnHeight = mYesButton->mHeight;
 
     /*

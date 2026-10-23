@@ -60,10 +60,10 @@ public:
     void RenderFontAtlas(VulkanTexture* target,VulkanTexture* source,
         std::span<const VulkanFontGlyph> glyphs,uint32_t samplingFlags,bool forceWhite);
     VulkanTexture* CreateRawTexture(int width,int height,const void* bgra,int pitch);
-    VulkanTexture* ComposeAlphaRaw(VulkanTexture* base,VulkanTexture* alpha,int columns,int rows,
+    VulkanTexture* ComposeAlphaRaw(VulkanTexture* base,VulkanTexture* alpha,
         uint32_t color,bool colorOnly);
     VulkanTexture* AdoptComposedTexture(VulkanTexture* composed);
-    VulkanTexture* ComposeAlpha(VulkanTexture* base,VulkanTexture* alpha,int columns,int rows,
+    VulkanTexture* ComposeAlpha(VulkanTexture* base,VulkanTexture* alpha,
         uint32_t color,bool colorOnly);
     // Device-local immutable-pixel copy; source image edges are zero padded.
     VulkanTexture* CopyTextureRegion(VulkanTexture* source,int x,int y,int width,int height);

@@ -2,10 +2,8 @@ export component PoolSplash {
     kind: particle;
     source-name: "poolsplash";
     Emitter {
-        image: "IMAGE_WATERPARTICLE";
+        images: ["particles/frames/waterparticle_r0_c1.png","particles/frames/waterparticle_r0_c2.png","particles/frames/waterparticle_r0_c3.png","particles/frames/waterparticle_r0_c4.png","particles/frames/waterparticle_r0_c5.png"];
         name: "PoolSplash";
-        imageRow: 1;
-        imageCol: 1;
         dieIfOverloaded: 1;
         systemDuration: 60;
         spawnMinActive: track { 1,49 0,50; }

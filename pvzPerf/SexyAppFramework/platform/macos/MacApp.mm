@@ -375,7 +375,7 @@ void SexyAppBase::UpdateHdrDisplay()
     if (mScaleHDREnabled)
         throw std::logic_error("Cocoa HDR display policy is not implemented");
 }
-void SexyAppBase::SwitchScreenMode(bool windowed, bool, bool force)
+void SexyAppBase::SwitchScreenMode(bool windowed, bool force)
 {
     if (mSwitchingScreenMode) return;
     if (mForceWindowed) windowed = true;

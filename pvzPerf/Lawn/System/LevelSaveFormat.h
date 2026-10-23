@@ -22,7 +22,9 @@ inline constexpr std::array<std::uint8_t, 8> DAT64_MAGIC = {
 	'P', 'V', 'Z', 'D', 'A', 'T', '6', '4'
 };
 inline constexpr std::uint32_t DAT64_V1_VERSION = 1;
-inline constexpr std::uint32_t DAT64_VERSION = 2;
+inline constexpr std::uint32_t DAT64_V2_VERSION = 2;
+inline constexpr std::uint32_t DAT64_VERSION = 3;
+inline constexpr std::uint32_t DAT64_MINOR_VERSION = 2;
 inline constexpr std::uint32_t DAT64_HEADER_SIZE = 48;
 inline constexpr std::uint32_t DAT64_AUTHORITY_BUILD = 1073;
 inline constexpr std::uint32_t DAT64_FLAG_LITTLE_ENDIAN = 1U << 0;
@@ -30,7 +32,11 @@ inline constexpr std::uint32_t DAT64_FLAG_NANOSECONDS = 1U << 1;
 inline constexpr std::uint32_t DAT64_V1_FLAGS = DAT64_FLAG_LITTLE_ENDIAN;
 inline constexpr std::uint32_t DAT64_FLAGS = DAT64_FLAG_LITTLE_ENDIAN | DAT64_FLAG_NANOSECONDS;
 inline constexpr std::uint32_t DAT64_V1_SCHEMA_ID = 0x00010731U;
-inline constexpr std::uint32_t DAT64_SCHEMA_ID = 0x00010732U;
+inline constexpr std::uint32_t DAT64_V2_SCHEMA_ID = 0x00010732U;
+// Unpublished schemas are named only for explicit rejection tests.
+inline constexpr std::uint32_t DAT64_V3_SCHEMA_ID = 0x00010733U;
+inline constexpr std::uint32_t DAT64_V31_SCHEMA_ID = 0x00010734U;
+inline constexpr std::uint32_t DAT64_SCHEMA_ID = 0x00010735U;
 inline constexpr std::uint64_t DAT64_END_MARKER = 0xB4A9ABBEBBA5A9AFULL;
 
 // Header bytes, all little-endian except the literal magic:
@@ -40,11 +46,18 @@ inline constexpr std::uint64_t DAT64_END_MARKER = 0xB4A9ABBEBBA5A9AFULL;
 //   10 u32 authority build (1073)
 //   14 u32 flags
 //   18 u64 payload size
-//   20 u32 ignored former payload CRC32 (v2 writes zero; v1 exports retain CRC)
+//   20 u32 ignored former payload CRC32 (v2/v3 write zero; v1 exports retain CRC)
 //   24 u32 schema id
-//   28 u64 reserved (must be zero in v1 and v2)
+//   28 u32 minor version (zero in v1/v2, two in v3.2)
+//   2C u32 reserved (must be zero)
 // RECORD_LAYOUTS and size/offset constants below describe the fixed v1
-// canonical ABI. Dat64TimeSchema expands its time fields for the v2 wire ABI.
+// canonical ABI. Dat64TimeSchema expands its time fields for v2/v3.2.
+// V3.2 schema 10735 stores float Music tempos, Reanimation mVariant at 12,
+// removes track bytes 80..87 plus supplemental per-track image ResourceIds,
+// and stores ParticleSystem base effect (original 106 order) plus mVariant at 4.
+// Unpublished v3.0/v3.1 are unsupported by both game and converter.
+// Historical canonical layouts
+// below remain frozen for offline conversion.
 
 // Shared by the game reader and converter. Offset 0x20 deliberately has no
 // meaning here: valid field edits require no checksum or hash update.
@@ -59,21 +72,28 @@ constexpr bool IsSupportedDat64Header(const std::span<const std::uint8_t>& file)
 			value |= std::uint64_t(file[offset + i]) << (i * 8);
 		return value;
 	};
-	const bool current = read(8, 4) == DAT64_VERSION;
-	return (current || read(8, 4) == DAT64_V1_VERSION) &&
+	const bool v3 = read(8, 4) == DAT64_VERSION;
+	const bool v2 = read(8, 4) == DAT64_V2_VERSION;
+	const bool v32 = v3 && read(40, 4) == DAT64_MINOR_VERSION &&
+		read(36, 4) == DAT64_SCHEMA_ID;
+	return (v32 || v2 || read(8, 4) == DAT64_V1_VERSION) &&
 		read(12, 4) == DAT64_HEADER_SIZE &&
 		read(16, 4) == DAT64_AUTHORITY_BUILD &&
-		read(20, 4) == (current ? DAT64_FLAGS : DAT64_V1_FLAGS) &&
+		read(20, 4) == (v3 || v2 ? DAT64_FLAGS : DAT64_V1_FLAGS) &&
 		read(24, 8) == file.size() - DAT64_HEADER_SIZE &&
-		read(36, 4) == (current ? DAT64_SCHEMA_ID : DAT64_V1_SCHEMA_ID) &&
-		read(40, 8) == 0;
+		(v32 || (read(36, 4) == (v2 ? DAT64_V2_SCHEMA_ID : DAT64_V1_SCHEMA_ID) &&
+			read(40, 4) == 0)) &&
+		read(44, 4) == 0;
 }
 
 // The runtime accepts only the current nanosecond format. Historical formats
 // are inputs to the standalone converter, never alternate game load paths.
 constexpr bool IsCurrentDat64Header(const std::span<const std::uint8_t>& file)
 {
-	return IsSupportedDat64Header(file) && file[8] == DAT64_VERSION;
+	return IsSupportedDat64Header(file) && file[8] == DAT64_VERSION &&
+		file[40] == DAT64_MINOR_VERSION &&
+		std::uint32_t(file[36] | (std::uint32_t(file[37]) << 8) |
+			(std::uint32_t(file[38]) << 16) | (std::uint32_t(file[39]) << 24)) == DAT64_SCHEMA_ID;
 }
 
 struct CopySegment

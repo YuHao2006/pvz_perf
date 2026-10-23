@@ -44,11 +44,11 @@ class WidgetManager;
 class DDInterface;
 class VulkanHdrDisplayObserver;
 class Image;
-class DDImage;
+class Image;
 class Widget;
 class SoundManager;
 class MusicInterface;
-class MemoryImage;
+class Image;
 class Dialog;
 class _Font;
 
@@ -63,7 +63,7 @@ public:
 
 
 typedef std::list<WidgetSafeDeleteInfo> WidgetSafeDeleteList;
-typedef std::set<MemoryImage*> MemoryImageSet;
+typedef std::set<Image*> GpuImageSet;
 typedef std::map<int, Dialog*> DialogMap;
 typedef std::list<Dialog*> DialogList;
 #ifdef _WIN32
@@ -278,7 +278,7 @@ public:
 	int						mAutoMuteCount;
 	bool					mDemoMute;
 	bool					mMuteOnLostFocus;
-	MemoryImageSet			mMemoryImageSet;
+	GpuImageSet				mGpuImageSet;
 	SharedImageMap			mSharedImageMap;
 	std::atomic<bool>		mCleanupSharedImages;
 	
@@ -378,7 +378,6 @@ public:
 	DWORD					mVSyncBrokenTestUpdates;
 	bool					mWaitForVSync;
 	bool					mSoftVSyncWait;
-	bool					mAutoEnable3D;
 	bool					mTest3D;
 	DWORD					mMinVidMemory3D;
 	DWORD					mRecommendedVidMemory3D;
@@ -442,7 +441,7 @@ protected:
 	void					ClearKeysDown();
 	virtual void			SwitchScreenMode();
 	virtual void			SwitchScreenMode(bool wantWindowed);
-	virtual void			SwitchScreenMode(bool wantWindowed, bool is3d, bool force = false);
+	virtual void			SwitchScreenMode(bool wantWindowed, bool force);
 	void					ReconfigureScale(bool theUseCustomScale);
 	bool					ProcessDeferredMessages(bool singleMessage);
 #if defined(__APPLE__)
@@ -462,9 +461,6 @@ protected:
 	virtual void			DoUpdateFramesF(float theFrac);
 	virtual void			MakeWindow();
 	virtual void			EnforceCursor();
-	virtual void			ReInitImages();
-	virtual void			DeleteNativeImageData();	
-	virtual void			DeleteExtraImageData();
 	
 	// Loading thread methods	
 	std::exception_ptr		mLoadingThreadError;
@@ -559,27 +555,31 @@ public:
 
 	void					SetCursor(int theCursorNum);
 	void					EnableCustomCursors(bool enabled);	
-	virtual DDImage*		GetImage(const std::string& theFileName, bool commitBits = true,
+	[[nodiscard("caller owns the returned Image")]]
+	virtual Image*		GetImage(const std::string& theFileName, bool commitBits = true,
 		bool lookForAlphaImage = true);
-	virtual SharedImageRef	SetSharedImage(const std::string& theFileName, unsigned theVariant, DDImage* theImage, bool* isNew);
+	virtual SharedImageRef	SetSharedImage(const std::string& theFileName, unsigned theVariant, Image* theImage, bool* isNew);
 	virtual SharedImageRef	GetSharedImage(const std::string& theFileName, unsigned theVariant = 0, bool* isNew = NULL);
 	// The initializer runs only for a new image, before it becomes visible to
 	// cache hits. Existing callers retain their serial hit/reconfiguration rules.
 	SharedImageRef GetPreparedSharedImage(const std::string& file, unsigned variant,
-		bool* isNew, const std::function<void(DDImage*)>& prepare, bool lookForAlphaImage = true);
+		bool* isNew, const std::function<void(Image*)>& prepare, bool lookForAlphaImage = true);
 	SharedImageRef LoadSharedImage(const std::string& file, unsigned variant,
-		bool* isNew, const std::function<DDImage*()>& load);
+		bool* isNew, const std::function<Image*()>& load);
 
 	void					CleanSharedImages();
 	void					SetCursorImage(int theCursorNum, Image* theImage);
 
-	DDImage*				CreateColorizedImage(Image* theImage, const Color& theColor);
-	DDImage*				CopyImage(Image* theImage, const Rect& theRect);
-	DDImage*				CopyImage(Image* theImage);
+	[[nodiscard("caller owns the returned Image")]]
+	Image*				CreateColorizedImage(Image* theImage, const Color& theColor);
+	[[nodiscard("caller owns the returned Image")]]
+	Image*				CopyImage(Image* theImage, const Rect& theRect);
+	[[nodiscard("caller owns the returned Image")]]
+	Image*				CopyImage(Image* theImage);
 
-	void					AddMemoryImage(MemoryImage* theMemoryImage);
-		void					RemoveMemoryImage(MemoryImage* theMemoryImage);
-		void					Remove3DData(MemoryImage* theMemoryImage);
+	void					AddGpuImage(Image* image);
+	void					RemoveGpuImage(Image* image);
+		void					Remove3DData(Image* theMemoryImage);
 		// The sole user-facing display request. Input and UI callers provide only
 		// the desired logical mode and scale policy; transaction details remain
 		// internal so every source receives the same completion semantics.

@@ -6,6 +6,7 @@ import io
 import json
 import os
 from pathlib import Path
+import re
 import struct
 import unittest
 import zipfile
@@ -17,6 +18,7 @@ from PIL import Image
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "tools"))
 import build_numeric_runtime_pak64 as pak
+import resource_build_config
 PACKAGE = Path(os.environ.get(
     "PVZ_RESOURCE_PACKAGE", ROOT / "out/x64-win32-vulkan/cache/resources/main.pak64"))
 
@@ -25,41 +27,127 @@ class DefinitionAtlasCorpusTests(unittest.TestCase):
     def test_all_regions_preserve_source_pixels_and_grids(self):
         report = json.loads(PACKAGE.with_name("manifest.json").read_text(encoding="utf-8"))
         definitions = report["definition_atlases"]
-        self.assertEqual(len(definitions), 252)
+        self.assertEqual(report["format"], "pvz-resource-build-static-v1")
+        expected = {"reanim": 0, "particles": 0, "projectiles": 0, "fonts": 20, "resources": 1}
+        config = resource_build_config.load(ROOT / report["build_config"])
+        self.assertEqual(len(definitions), sum(len(config.definition_orders[kind])
+                                               for kind in ("reanim", "particle")) + 2)
         regions_checked = 0
         physical_atlases = set()
         bindings = pak.read_definition_image_bindings(ROOT)
+        variant_bindings = pak.read_definition_image_binding_rows(ROOT)
+        checked_regions = set()
+        generated = ROOT / "pvzPerf/Sexy.TodLib/generated"
+        source_rectangles = {}
+        for path in (generated / "definitions").glob("*Data*.cpp"):
+            text = path.read_text(encoding="utf-8")
+            for label, size, body in re.findall(
+                    r"constinit const Sexy::Rect (\w+)\[(\d+)\] = \{\n(.*?)\n\};", text, re.S):
+                rectangles = [tuple(map(int, row)) for row in
+                              re.findall(r"\{(-?\d+),\s*(-?\d+),\s*(-?\d+),\s*(-?\d+)\}", body)]
+                self.assertEqual(len(rectangles), int(size), label)
+                self.assertNotIn(label, source_rectangles)
+                source_rectangles[label] = rectangles
+        for kind, directory, prefix in (("reanim", "reanim", "Reanim"),
+                                          ("particle", "particles", "Particle")):
+            for index_, (_, name) in enumerate(config.definition_orders[kind]):
+                definition = definitions[f"compiled/{directory}/{name.casefold()}.compiled"]
+                rectangles = [tuple(rect) for row in definition["variants"]
+                              for rect in row["frame_rectangles"]]
+                self.assertEqual(source_rectangles.get(f"{prefix}{index_}Rects", []), rectangles)
+                self.assertTrue(all(len(row["frame_rectangles"]) == definition["slot_count"]
+                                    for row in definition["variants"]))
+        projectile_source = re.search(
+            r"constinit ProjectileAtlasDefinition Projectiles = \{\n(.*?)\n\};",
+            (generated / "GeneratedDefinitions.cpp").read_text(encoding="utf-8"), re.S)
+        self.assertIsNotNone(projectile_source)
+        projectile_lines = projectile_source[1].splitlines()
+        projectile_report = definitions["compiled/projectiles/projectiles.compiled"]
+        self.assertEqual(tuple(map(int, re.findall(r"\d+", projectile_lines[0]))),
+                         (projectile_report["atlas_width"], projectile_report["atlas_height"]))
+        visuals = re.findall(
+            r"\{\{(-?\d+),(-?\d+),(-?\d+),(-?\d+)\},([-+.\deE]+)f\}",
+            projectile_lines[1])
+        self.assertEqual(len(visuals), len(projectile_report["projectiles"]))
+        for actual, expected_visual in zip(visuals, projectile_report["projectiles"]):
+            self.assertEqual(tuple(map(int, actual[:4])), tuple(expected_visual["rect"]))
+            self.assertEqual(struct.pack("<f", float(actual[4])),
+                             struct.pack("<f", expected_visual["scale"]))
+        self.assertEqual([tuple(map(int, rect)) for rect in re.findall(
+            r"\{(-?\d+),(-?\d+),(-?\d+),(-?\d+)\}", projectile_lines[2])],
+            [tuple(row["rect"]) for row in projectile_report["shadows"]])
+        zombatar_report = definitions["compiled/zombatar/zombatar.compiled"]
+        self.assertEqual(zombatar_report["region_count"], 209)
+        zombatar_source = (generated / "ZombatarAtlasData.cpp").read_text("utf-8")
+        self.assertEqual([tuple(map(int, rect)) for rect in re.findall(
+            r"\{(-?\d+),\s*(-?\d+),\s*(-?\d+),\s*(-?\d+)\}", zombatar_source)],
+            [tuple(row["region"][:4]) for row in zombatar_report["images"]])
         atlas_images, owner_dimensions, shared_sources, source_metadata, owner_regions = {}, {}, {}, {}, {}
         with zipfile.ZipFile(PACKAGE) as archive:
             index = pak.archive_index(archive)
             available = {name for name, info in index.items() if not info.is_dir()}
             numeric = {name for name in available if pak.numeric_kind(name)}
             self.assertEqual({kind: sum(pak.numeric_kind(name) == kind for name in numeric)
-                              for kind in pak.COUNTS}, pak.COUNTS)
-            self.assertEqual(set(definitions), {name for name in numeric
-                                               if pak.numeric_kind(name) in ("reanim", "particles")})
+                              for kind in expected}, expected)
+            self.assertFalse({name for name in numeric
+                              if pak.numeric_kind(name) in ("reanim", "particles", "projectiles")})
             self.assertEqual(set(bindings), set(definitions))
             self.assertEqual(set(report["files"]), available)
-            for name, definition in definitions.items():
-                with self.subTest(definition=name):
-                    record = archive.read(name)
-                    magic, width, height = struct.unpack_from("<3I", record, 12)
-                    parsed = pak.parse_definition_atlas(name, record)
-                    count = parsed["count"]
-                    expected_magic = 0x35564152 if "/reanim/" in name else 0x35564150
-                    self.assertEqual(magic, expected_magic)
-                    self.assertEqual((width, height, count),
-                                     (definition["atlas_width"], definition["atlas_height"],
-                                      definition["region_count"]))
-                    self.assertEqual(count, len(definition["images"]))
-                    self.assertEqual(set(parsed["regions"]),
-                                     {tuple(image["region"]) for image in definition["images"]})
+            rows = [(name, variant, row) for name, definition in definitions.items()
+                    for variant, row in enumerate(definition.get("variants", [definition]))]
+            rows.extend((name, 0, row) for name, row in report["scene_atlases"].items())
+            for name, variant, definition in rows:
+                with self.subTest(definition=name, variant=variant):
+                    projectile = pak.numeric_kind(name) == "projectiles"
+                    zombatar = name == "compiled/zombatar/zombatar.compiled"
+                    scene = name in report["scene_atlases"]
+                    width, height = definition["atlas_width"], definition["atlas_height"]
+                    count = len(definition["images"])
+                    if not scene:
+                        self.assertEqual(definition["region_count"], len(definition["images"]))
+                    if projectile:
+                        self.assertNotIn("variants", definition)
+                        self.assertEqual(definition["region_count"], 13)
+                        self.assertEqual(len(definition["projectiles"]), 14)
+                        self.assertEqual(len(definition["shadows"]), 2)
+                        source_blocks = {image["source"]: tuple(image["region"][:4])
+                                         for image in definition["images"]}
+                        for slot, row in enumerate(definition["projectiles"]):
+                            self.assertGreater(row["scale"], 0)
+                            self.assertEqual(tuple(row["rect"]), source_blocks[row["image"]]
+                                             if row["image"] else (0, 0, 0, 0))
+                        for x, y, w, h in (row["rect"] for row in definition["shadows"]):
+                            self.assertTrue(any(x >= ox and y >= oy and x + w <= ox + sw and y + h <= oy + sh
+                                                for ox, oy, sw, sh in source_blocks.values()))
+                        self.assertEqual(set(definition["source_files"]),
+                                         {path for image in definition["images"] for path in image["files"]})
+                    elif not zombatar and not scene:
+                        regions = [image["region"][:4] for image in definition["images"]]
+                        for x, y, w, h in definition["frame_rectangles"]:
+                            if not w:
+                                self.assertEqual((x, y, w, h), (0, 0, 0, 0))
+                                continue
+                            self.assertTrue(any(x >= ox and y >= oy and x + w <= ox + sw and y + h <= oy + sh
+                                                for ox, oy, sw, sh in regions))
+                        source_blocks = {image["source"]: image["region"] for image in definition["images"]}
+                        for frame in definition["frames"]:
+                            ox, oy, sw, sh, _, _ = source_blocks[frame["source"]]
+                            sx, sy, fw, fh = frame["source_rect"]
+                            self.assertGreaterEqual(sx, 0)
+                            self.assertGreaterEqual(sy, 0)
+                            self.assertGreater(fw, 0)
+                            self.assertGreater(fh, 0)
+                            self.assertLessEqual(sx + fw, sw)
+                            self.assertLessEqual(sy + fh, sh)
+                            self.assertEqual(tuple(frame["atlas_rect"]), (ox + sx, oy + sy, fw, fh))
                     atlas_name = definition["atlas_path"]
-                    self.assertEqual(bindings[name], atlas_name)
+                    if not scene:
+                        self.assertEqual(variant_bindings[name][variant], atlas_name)
                     if count == 0:
                         self.assertEqual(atlas_name, "")
                         self.assertEqual((width, height), (0, 0))
-                        self.assertTrue(all(field == (0,) * 6 for field in parsed["image_fields"]))
+                        if not projectile and not zombatar and not scene:
+                            self.assertTrue(all(not any(rect) for rect in definition["frame_rectangles"]))
                         continue
                     physical_atlases.add(atlas_name)
                     self.assertEqual(owner_dimensions.setdefault(atlas_name, (width, height)), (width, height))
@@ -70,18 +158,11 @@ class DefinitionAtlasCorpusTests(unittest.TestCase):
                     atlas = atlas_images[atlas_name]
                     self.assertEqual(atlas.size, (width, height))
                     for image in definition["images"]:
-                        # New builds identify authored image sources by name.
-                        # Older cached reports used numeric fixture symbols.
-                        source = image.get("source", image.get("symbol"))
-                        self.assertIsNotNone(source)
-                        if "source" in image:
-                            self.assertIsInstance(source, str)
-                            self.assertTrue(source)
-                            self.assertNotIn("symbol", image)
-                        else:
-                            self.assertIsInstance(source, int)
-                        region = tuple(image["region"])
-                        self.assertIn(region, parsed["regions"])
+                        source = image["source"]
+                        self.assertIsInstance(source, str)
+                        self.assertTrue(source)
+                        self.assertNotIn("symbol", image)
+                        region = tuple(image["region"]) + ((1, 1) if scene else ())
                         x, y, w, h, rows, cols = region
                         self.assertEqual((w, h), (image["width"], image["height"]))
                         self.assertEqual((rows, cols), (image["rows"], image["cols"]))
@@ -98,6 +179,10 @@ class DefinitionAtlasCorpusTests(unittest.TestCase):
                         self.assertGreaterEqual(y, 2)
                         self.assertLessEqual(x + w + 2, width)
                         self.assertLessEqual(y + h + 2, height)
+                        identity = (atlas_name, geometry, source)
+                        if identity in checked_regions:
+                            continue
+                        checked_regions.add(identity)
                         pixels = atlas.crop((x, y, x + w, y + h))
                         self.assertEqual(hashlib.sha256(pixels.tobytes()).hexdigest(),
                                          image["rgba_sha256"])

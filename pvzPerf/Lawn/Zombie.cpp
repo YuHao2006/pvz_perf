@@ -17,8 +17,11 @@
 #include "Sexy.TodLib/TodDebug.h"
 #include "Sexy.TodLib/TodCommon.h"
 #include "Sexy.TodLib/Reanimator.h"
+#include "Sexy.TodLib/generated/ReanimVariantOptions.h"
+#include "Sexy.TodLib/generated/ParticleVariantId.h"
 #include "Sexy.TodLib/Attachment.h"
 #include "Sexy.TodLib/TodParticle.h"
+#include <array>
 
 static ZombieDefinition gZombieDefs[NUM_ZOMBIE_TYPES] = {  //0x69DA80
     { ZOMBIE_NORMAL,            REANIM_ZOMBIE,              1,      1,      1,      4000 },
@@ -195,16 +198,16 @@ void Zombie::ZombieInitialize(int theRow, ZombieType theType, bool theVariant, Z
     Reanimation* aBodyReanim = z.mApp->ReanimationGet(z.mBodyReanimID);
     if (aPoleVariant == 2)
     {
-    aBodyReanim->SetImageOverride(ReanimTrackId::Zombie_gargantuar_telephonepole, IMAGE_REANIM_ZOMBIE_GARGANTUAR_ZOMBIE);
+    aBodyReanim->SetVariantOption(ReanimTrackId::Zombie_gargantuar_telephonepole, ReanimOptions::Zombie_gargantuar::Zombie_gargantuar_telephonepole::ZOMBIE_GARGANTUAR_ZOMBIE);
     }
     else if (aPoleVariant == 1)
     {
-    aBodyReanim->SetImageOverride(ReanimTrackId::Zombie_gargantuar_telephonepole, IMAGE_REANIM_ZOMBIE_GARGANTUAR_DUCKXING);
+    aBodyReanim->SetVariantOption(ReanimTrackId::Zombie_gargantuar_telephonepole, ReanimOptions::Zombie_gargantuar::Zombie_gargantuar_telephonepole::ZOMBIE_GARGANTUAR_DUCKXING);
     }
 
     if (z.mZombieType == ZombieType::ZOMBIE_REDEYE_GARGANTUAR)
     {
-    aBodyReanim->SetImageOverride(ReanimTrackId::anim_head1, IMAGE_REANIM_ZOMBIE_GARGANTUAR_HEAD_REDEYE);
+    aBodyReanim->SetVariantOption(ReanimTrackId::anim_head1, ReanimOptions::Zombie_gargantuar::anim_head1::ZOMBIE_GARGANTUAR_HEAD_REDEYE);
     z.mBodyHealth = 6000;
     }
     ZombieInitializeTail(z, lc);
@@ -668,7 +671,7 @@ void Zombie::ZombieInitialize(int theRow, ZombieType theType, bool theVariant, Z
     }
 
     ReanimatorTrackInstance* aTrackInstance = aBodyReanim->GetTrackInstanceByName(ReanimTrackId::anim_head1);
-    aTrackInstance->mImageOverride = IMAGE_BLANK;
+    aBodyReanim->SetVariantOption(ReanimTrackId::anim_head1, ReanimOptions::Zombie::anim_head1::BLANK);
     Reanimation* aHeadReanim = z.mApp->AddReanimation(0.0f, 0.0f, 0, ReanimationType::REANIM_PEASHOOTER);
     aHeadReanim->PlayReanim(ReanimTrackId::anim_head_idle, ReanimLoopType::REANIM_LOOP, 0, 15.0f);
     z.mSpecialHeadReanimID = z.mApp->ReanimationGetID(aHeadReanim);
@@ -739,7 +742,7 @@ void Zombie::ZombieInitialize(int theRow, ZombieType theType, bool theVariant, Z
     }
 
     ReanimatorTrackInstance* aTrackInstance = aBodyReanim->GetTrackInstanceByName(ReanimTrackId::anim_head1);
-    aTrackInstance->mImageOverride = IMAGE_BLANK;
+    aBodyReanim->SetVariantOption(ReanimTrackId::anim_head1, ReanimOptions::Zombie::anim_head1::BLANK);
     Reanimation* aHeadReanim = z.mApp->AddReanimation(0.0f, 0.0f, 0, ReanimationType::REANIM_GATLINGPEA);
     aHeadReanim->PlayReanim(ReanimTrackId::anim_head_idle, ReanimLoopType::REANIM_LOOP, 0, 15.0f);
     z.mSpecialHeadReanimID = z.mApp->ReanimationGetID(aHeadReanim);
@@ -765,7 +768,7 @@ void Zombie::ZombieInitialize(int theRow, ZombieType theType, bool theVariant, Z
     }
 
     ReanimatorTrackInstance* aTrackInstance = aBodyReanim->GetTrackInstanceByName(ReanimTrackId::anim_head1);
-    aTrackInstance->mImageOverride = IMAGE_BLANK;
+    aBodyReanim->SetVariantOption(ReanimTrackId::anim_head1, ReanimOptions::Zombie::anim_head1::BLANK);
     Reanimation* aHeadReanim = z.mApp->AddReanimation(0.0f, 0.0f, 0, ReanimationType::REANIM_SQUASH);
     aHeadReanim->PlayReanim(ReanimTrackId::anim_idle, ReanimLoopType::REANIM_LOOP, 0, 15.0f);
     z.mSpecialHeadReanimID = z.mApp->ReanimationGetID(aHeadReanim);
@@ -826,7 +829,7 @@ void Zombie::ZombieInitialize(int theRow, ZombieType theType, bool theVariant, Z
     }
 
     ReanimatorTrackInstance* aHeadTrackInstance = aBodyReanim->GetTrackInstanceByName(ReanimTrackId::anim_head1);
-    aHeadTrackInstance->mImageOverride = IMAGE_BLANK;
+    aBodyReanim->SetVariantOption(ReanimTrackId::anim_head1, ReanimOptions::Zombie::anim_head1::BLANK);
 
     Reanimation* aHeadReanim = z.mApp->AddReanimation(0.0f, 0.0f, 0, ReanimationType::REANIM_ZOMBATAR_HEAD);
     // zombatar_zombie_head 无 anim_head_idle 轨道：原版此查询必 miss，
@@ -1871,7 +1874,7 @@ void Zombie::UpdateZombieNewspaper()
             }
 
             StartWalkAnim(20);
-            aBodyReanim->SetImageOverride(ReanimTrackId::anim_head1, IMAGE_REANIM_ZOMBIE_PAPER_MADHEAD);
+            aBodyReanim->SetVariantOption(ReanimTrackId::anim_head1, ReanimOptions::Zombie_paper::anim_head1::ZOMBIE_PAPER_MADHEAD);
         }
     }
 }
@@ -3787,6 +3790,54 @@ void Zombie::SetupReanimForLostHead()
     ReanimShowRange(ReanimTrackRanges::anim_tongue, RENDER_GROUP_HIDDEN);
 }
 
+namespace
+{
+struct ZombieHeadParticleVariant
+{
+    std::uint32_t mNormal;
+    std::uint32_t mMowered;
+    std::uint32_t mPool;
+};
+
+#define ZOMBIE_HEAD_PARTICLE_VARIANT(type, suffix) \
+    aVariants[ZombieType::ZOMBIE_##type] = { static_cast<std::uint32_t>(ParticleVariants::ZombieHead::ZombieHead##suffix), \
+      static_cast<std::uint32_t>(ParticleVariants::MoweredZombieHead::MoweredZombieHead##suffix), \
+      static_cast<std::uint32_t>(ParticleVariants::ZombieHeadPool::ZombieHeadPool##suffix) }
+constexpr auto kZombieHeadParticleVariants = [] {
+    std::array<ZombieHeadParticleVariant, ZombieType::NUM_ZOMBIE_TYPES> aVariants{};
+    ZOMBIE_HEAD_PARTICLE_VARIANT(POLEVAULTER, Polevaulter);
+    ZOMBIE_HEAD_PARTICLE_VARIANT(FOOTBALL, Football);
+    ZOMBIE_HEAD_PARTICLE_VARIANT(DANCER, Dancer);
+    ZOMBIE_HEAD_PARTICLE_VARIANT(BACKUP_DANCER, BackupDancer);
+    ZOMBIE_HEAD_PARTICLE_VARIANT(SNORKEL, Snorkel);
+    ZOMBIE_HEAD_PARTICLE_VARIANT(BOBSLED, Bobsled);
+    ZOMBIE_HEAD_PARTICLE_VARIANT(DOLPHIN_RIDER, DolphinRider);
+    ZOMBIE_HEAD_PARTICLE_VARIANT(DIGGER, Digger);
+    ZOMBIE_HEAD_PARTICLE_VARIANT(YETI, Yeti);
+    ZOMBIE_HEAD_PARTICLE_VARIANT(LADDER, Ladder);
+    ZOMBIE_HEAD_PARTICLE_VARIANT(IMP, Imp);
+    return aVariants;
+}();
+#undef ZOMBIE_HEAD_PARTICLE_VARIANT
+
+constexpr std::uint32_t GetZombieHeadParticleVariant(ParticleEffect theBase, ZombieType theType)
+{
+    const unsigned aTypeIndex = static_cast<unsigned>(theType);
+    if (aTypeIndex >= kZombieHeadParticleVariants.size())
+    {
+        return 0;
+    }
+    const ZombieHeadParticleVariant& aVariant = kZombieHeadParticleVariants[aTypeIndex];
+    switch (theBase)
+    {
+    case ParticleEffect::PARTICLE_ZOMBIE_HEAD: return aVariant.mNormal;
+    case ParticleEffect::PARTICLE_MOWERED_ZOMBIE_HEAD: return aVariant.mMowered;
+    case ParticleEffect::PARTICLE_ZOMBIE_HEAD_POOL: return aVariant.mPool;
+    default: return 0;
+    }
+}
+} // namespace
+
 //0x529A30
 // GOTY @Patoke: 0x53A1DB
 void Zombie::DropHead(unsigned int theDamageFlags)
@@ -3862,72 +3913,23 @@ void Zombie::DropHead(unsigned int theDamageFlags)
         DropFlag();
     }
 
-    TodParticleSystem* aParticle = mApp->AddTodParticle(aPosX, aPosY, aRenderOrder, aEffect);
+    const std::uint32_t aVariant = GetZombieHeadParticleVariant(aEffect, mZombieType);
+    TodParticleSystem* aParticle = mApp->AddTodParticle(aPosX, aPosY, aRenderOrder, aEffect, aVariant);
     OverrideParticleColor(aParticle);
     OverrideParticleScale(aParticle);
     if (aParticle)
     {
-        // B 形态 -> 常量表 kDropHeadParticleImage（仿 kLostArmParticleImage 范式，
-        // 原 11 支链合并）：行序 = ZombieType 枚举序 0..33；nullptr = 无 case 槽
-        //（default 无覆写）。DANCER/BACKUP_DANCER 两支除 OverrideImage 外还各带
-        // 两处 ReanimShowRange 藏轨道动作，异构特例表外保留（表前两 if）。
-        static constexpr Image* const* kDropHeadParticleImage[(int)ZombieType::NUM_ZOMBIE_TYPES] = {
-            nullptr,  // 0 ZOMBIE_NORMAL（无 case）
-            nullptr,  // 1 ZOMBIE_FLAG（无 case）
-            nullptr,  // 2 ZOMBIE_TRAFFIC_CONE（无 case）
-            &IMAGE_ZOMBIEPOLEVAULTERHEAD,  // 3 ZOMBIE_POLEVAULTER
-            nullptr,  // 4 ZOMBIE_PAIL（无 case）
-            nullptr,  // 5 ZOMBIE_NEWSPAPER（无 case）
-            nullptr,  // 6 ZOMBIE_DOOR（无 case）
-            &IMAGE_ZOMBIEFOOTBALLHEAD,  // 7 ZOMBIE_FOOTBALL
-            nullptr,  // 8 ZOMBIE_DANCER（特例表外，槽位不可达）
-            nullptr,  // 9 ZOMBIE_BACKUP_DANCER（特例表外，槽位不可达）
-            nullptr,  // 10 ZOMBIE_DUCKY_TUBE（无 case）
-            &IMAGE_REANIM_ZOMBIE_SNORKLE_HEAD,  // 11 ZOMBIE_SNORKEL
-            nullptr,  // 12 ZOMBIE_ZAMBONI（无 case）
-            &IMAGE_ZOMBIEBOBSLEDHEAD,  // 13 ZOMBIE_BOBSLED
-            &IMAGE_ZOMBIEDOLPHINRIDERHEAD,  // 14 ZOMBIE_DOLPHIN_RIDER
-            nullptr,  // 15 ZOMBIE_JACK_IN_THE_BOX（无 case）
-            nullptr,  // 16 ZOMBIE_BALLOON（无 case）
-            &IMAGE_ZOMBIEDIGGERHEAD,  // 17 ZOMBIE_DIGGER
-            nullptr,  // 18 ZOMBIE_POGO（无 case）
-            &IMAGE_ZOMBIEYETIHEAD,  // 19 ZOMBIE_YETI
-            nullptr,  // 20 ZOMBIE_BUNGEE（无 case）
-            &IMAGE_ZOMBIELADDERHEAD,  // 21 ZOMBIE_LADDER
-            nullptr,  // 22 ZOMBIE_CATAPULT（无 case）
-            nullptr,  // 23 ZOMBIE_GARGANTUAR（无 case）
-            &IMAGE_ZOMBIEIMPHEAD,  // 24 ZOMBIE_IMP
-            nullptr,  // 25 ZOMBIE_BOSS（无 case）
-            nullptr,  // 26 ZOMBIE_PEA_HEAD（无 case）
-            nullptr,  // 27 ZOMBIE_WALLNUT_HEAD（无 case）
-            nullptr,  // 28 ZOMBIE_JALAPENO_HEAD（无 case）
-            nullptr,  // 29 ZOMBIE_GATLING_HEAD（无 case）
-            nullptr,  // 30 ZOMBIE_SQUASH_HEAD（无 case）
-            nullptr,  // 31 ZOMBIE_TALLNUT_HEAD（无 case）
-            nullptr,  // 32 ZOMBIE_REDEYE_GARGANTUAR（无 case）
-            nullptr,  // 33 ZOMBIE_ZOMBATAR（无 case）
-        };
-        static_assert(sizeof(kDropHeadParticleImage) / sizeof(kDropHeadParticleImage[0]) ==
-            (int)ZombieType::NUM_ZOMBIE_TYPES, "kDropHeadParticleImage 槽位须与 ZombieType 枚举同步");
-
         if (mZombieType == ZombieType::ZOMBIE_DANCER)
         {
             // @Patoke: added new assets
             ReanimShowRange(ReanimTrackRanges::Zombie_disco_chops, RENDER_GROUP_HIDDEN);
             ReanimShowRange(ReanimTrackRanges::Zombie_disco_glasses, RENDER_GROUP_HIDDEN);
-            aParticle->OverrideImage(ParticleEmitterRanges::All, IMAGE_ZOMBIEDANCERHEAD);
         }
         else if (mZombieType == ZombieType::ZOMBIE_BACKUP_DANCER)
         {
             // @Patoke: added new assets
             ReanimShowRange(ReanimTrackRanges::Zombie_disco_chops, RENDER_GROUP_HIDDEN);
             ReanimShowRange(ReanimTrackRanges::Zombie_backup_stash, RENDER_GROUP_HIDDEN);
-            aParticle->OverrideImage(ParticleEmitterRanges::All, IMAGE_ZOMBIEBACKUPDANCERHEAD);
-        }
-        else if (static_cast<unsigned>(mZombieType) < static_cast<unsigned>(ZombieType::NUM_ZOMBIE_TYPES) &&
-            kDropHeadParticleImage[static_cast<unsigned>(mZombieType)] != nullptr)
-        {
-            aParticle->OverrideImage(ParticleEmitterRanges::All, *kDropHeadParticleImage[static_cast<unsigned>(mZombieType)]);
         }
     }
 
@@ -3936,38 +3938,29 @@ void Zombie::DropHead(unsigned int theDamageFlags)
     {
         ReanimShowRange(ReanimTrackRanges::Zombie_mustache, RENDER_GROUP_HIDDEN);
 
-        TodParticleSystem* aMustacheParticle = mApp->AddTodParticle(aPosX, aPosY, aRenderOrder, ParticleEffect::PARTICLE_ZOMBIE_MUSTACHE);
+        const std::uint32_t aMustacheOption = aBodyReanim->VariantOption(ReanimTrackId::Zombie_mustache);
+        auto aMustacheVariant = ParticleVariants::ZombieMustache::Default;
+        if (aMustacheOption == ReanimOptions::Zombie::Zombie_mustache::ZOMBIE_MUSTACHE2)
+        {
+            aMustacheVariant = ParticleVariants::ZombieMustache::ZombieMustache2;
+        }
+        else if (aMustacheOption == ReanimOptions::Zombie::Zombie_mustache::ZOMBIE_MUSTACHE3)
+        {
+            aMustacheVariant = ParticleVariants::ZombieMustache::ZombieMustache3;
+        }
+        TodParticleSystem* aMustacheParticle = mApp->AddTodParticle(aPosX, aPosY, aRenderOrder,
+            ParticleEffect::PARTICLE_ZOMBIE_MUSTACHE, static_cast<std::uint32_t>(aMustacheVariant));
         OverrideParticleColor(aMustacheParticle);
         OverrideParticleScale(aMustacheParticle);
-
-        Image* aMustacheImage = aBodyReanim->GetImageOverride(ReanimTrackId::Zombie_mustache);
-        if (aMustacheParticle && aMustacheImage)
-        {
-            aMustacheParticle->OverrideImage(ParticleEmitterRanges::All, aMustacheImage);
-        }
     }
-    if (mBoard->mFutureMode)
+    if (mBoard->mFutureMode && aBodyReanim->mReanimationType == ReanimationType::REANIM_ZOMBIE)
     {
-        Image* aHeadImage = aBodyReanim->GetImageOverride(ReanimTrackId::anim_head1);
+        const std::uint32_t aHeadOption = aBodyReanim->VariantOption(ReanimTrackId::anim_head1);
         int aFrame = -1;
-        if (aHeadImage)
+        if (aHeadOption >= ReanimOptions::Zombie::anim_head1::ZOMBIE_HEAD_SUNGLASSES1 &&
+            aHeadOption <= ReanimOptions::Zombie::anim_head1::ZOMBIE_HEAD_SUNGLASSES4)
         {
-            if (aHeadImage == IMAGE_REANIM_ZOMBIE_HEAD_SUNGLASSES1)
-            {
-                aFrame = 0;
-            }
-            else if (aHeadImage == IMAGE_REANIM_ZOMBIE_HEAD_SUNGLASSES2)
-            {
-                aFrame = 1;
-            }
-            else if (aHeadImage == IMAGE_REANIM_ZOMBIE_HEAD_SUNGLASSES3)
-            {
-                aFrame = 2;
-            }
-            else if (aHeadImage == IMAGE_REANIM_ZOMBIE_HEAD_SUNGLASSES4)
-            {
-                aFrame = 3;
-            }
+            aFrame = static_cast<int>(aHeadOption - ReanimOptions::Zombie::anim_head1::ZOMBIE_HEAD_SUNGLASSES1);
         }
 
         if (aFrame != -1)
@@ -3992,8 +3985,8 @@ void Zombie::DropHead(unsigned int theDamageFlags)
 }
 
 // GOTY @Patoke: 0x53A730
-// 断臂覆写表（B 形态双列）：{断口取位轨道, 覆写轨道, 断臂贴图}，按 ZombieType
-// 直下标。贴图为运行期装载全局——表存变量地址（Image* const*），用时一次解引用。
+// 断臂外观表：{断口取位轨道, 外观轨道, 编译期选项}，按 ZombieType 直下标。
+// 每个有断臂外观的 family 均将对应轨道的断臂选项编译为 1。
 // 默认行=普通外臂（等价原 switch default）；POGO 额外三处覆写与 FLAG 头部旗面
 // 为异构特例，表外保留（见函数体）。槽位脚本从枚举真值（剥块注释）生成。
 namespace
@@ -4002,43 +3995,43 @@ struct LostArmOverride
 {
     ReanimTrackId mPositionTrack;
     ReanimTrackId mOverrideTrack;
-    Image* const* mArmImage;
+    std::uint32_t mArmOption;
 };
 constexpr LostArmOverride kLostArmOverrides[ZombieType::NUM_ZOMBIE_TYPES] = {
-    /* [0]  ZOMBIE_NORMAL          */ { ReanimTrackId::Zombie_outerarm_lower, ReanimTrackId::Zombie_outerarm_upper, &IMAGE_REANIM_ZOMBIE_OUTERARM_UPPER2 },
-    /* [1]  ZOMBIE_FLAG            */ { ReanimTrackId::Zombie_outerarm_lower, ReanimTrackId::Zombie_outerarm_upper, &IMAGE_REANIM_ZOMBIE_OUTERARM_UPPER2 },
-    /* [2]  ZOMBIE_TRAFFIC_CONE    */ { ReanimTrackId::Zombie_outerarm_lower, ReanimTrackId::Zombie_outerarm_upper, &IMAGE_REANIM_ZOMBIE_OUTERARM_UPPER2 },
-    /* [3]  ZOMBIE_POLEVAULTER     */ { ReanimTrackId::Zombie_polevaulter_outerarm_lower, ReanimTrackId::Zombie_polevaulter_outerarm_upper, &IMAGE_REANIM_ZOMBIE_POLEVAULTER_OUTERARM_UPPER2 },
-    /* [4]  ZOMBIE_PAIL            */ { ReanimTrackId::Zombie_outerarm_lower, ReanimTrackId::Zombie_outerarm_upper, &IMAGE_REANIM_ZOMBIE_OUTERARM_UPPER2 },
-    /* [5]  ZOMBIE_NEWSPAPER       */ { ReanimTrackId::Zombie_paper_leftarm_lower, ReanimTrackId::Zombie_paper_leftarm_upper, &IMAGE_REANIM_ZOMBIE_PAPER_LEFTARM_UPPER2 },
-    /* [6]  ZOMBIE_DOOR            */ { ReanimTrackId::Zombie_outerarm_lower, ReanimTrackId::Zombie_outerarm_upper, &IMAGE_REANIM_ZOMBIE_OUTERARM_UPPER2 },
-    /* [7]  ZOMBIE_FOOTBALL        */ { ReanimTrackId::zombie_football_leftarm_hand, ReanimTrackId::zombie_football_leftarm_upper, &IMAGE_REANIM_ZOMBIE_FOOTBALL_LEFTARM_UPPER2 },
-    /* [8]  ZOMBIE_DANCER          */ { ReanimTrackId::Zombie_disco_outerarm_lower, ReanimTrackId::Zombie_disco_outerarm_upper, &IMAGE_REANIM_ZOMBIE_DISCO_OUTERARM_UPPER2 },
-    /* [9]  ZOMBIE_BACKUP_DANCER   */ { ReanimTrackId::Zombie_disco_outerarm_lower, ReanimTrackId::Zombie_disco_outerarm_upper, &IMAGE_REANIM_ZOMBIE_BACKUP_OUTERARM_UPPER2 },
-    /* [10] ZOMBIE_DUCKY_TUBE      */ { ReanimTrackId::Zombie_outerarm_lower, ReanimTrackId::Zombie_outerarm_upper, &IMAGE_REANIM_ZOMBIE_OUTERARM_UPPER2 },
-    /* [11] ZOMBIE_SNORKEL         */ { ReanimTrackId::Zombie_outerarm_lower, ReanimTrackId::Zombie_snorkle_outerarm_upper, &IMAGE_REANIM_ZOMBIE_SNORKLE_OUTERARM_UPPER2 },
-    /* [12] ZOMBIE_ZAMBONI         */ { ReanimTrackId::Zombie_outerarm_lower, ReanimTrackId::Zombie_outerarm_upper, &IMAGE_REANIM_ZOMBIE_OUTERARM_UPPER2 },
-    /* [13] ZOMBIE_BOBSLED         */ { ReanimTrackId::Zombie_outerarm_lower, ReanimTrackId::Zombie_dolphinrider_outerarm_upper, &IMAGE_REANIM_ZOMBIE_BOBSLED_OUTERARM_UPPER2 },
-    /* [14] ZOMBIE_DOLPHIN_RIDER   */ { ReanimTrackId::Zombie_outerarm_lower, ReanimTrackId::Zombie_dolphinrider_outerarm_upper, &IMAGE_REANIM_ZOMBIE_DOLPHINRIDER_OUTERARM_UPPER2 },
-    /* [15] ZOMBIE_JACK_IN_THE_BOX */ { ReanimTrackId::Zombie_jackbox_outerarm_lower, ReanimTrackId::Zombie_jackbox_outerarm_lower, &IMAGE_REANIM_ZOMBIE_JACKBOX_OUTERARM_LOWER2 },
-    /* [16] ZOMBIE_BALLOON         */ { ReanimTrackId::Zombie_outerarm_lower, ReanimTrackId::Zombie_outerarm_upper, &IMAGE_REANIM_ZOMBIE_BALLOON_OUTERARM_UPPER2 },
-    /* [17] ZOMBIE_DIGGER          */ { ReanimTrackId::Zombie_outerarm_lower, ReanimTrackId::Zombie_digger_outerarm_upper, &IMAGE_REANIM_ZOMBIE_DIGGER_OUTERARM_UPPER2 },
-    /* [18] ZOMBIE_POGO            */ { ReanimTrackId::Zombie_outerarm_lower, ReanimTrackId::Zombie_outerarm_upper, &IMAGE_REANIM_ZOMBIE_POGO_OUTERARM_UPPER2 },
-    /* [19] ZOMBIE_YETI            */ { ReanimTrackId::Zombie_outerarm_hand, ReanimTrackId::Zombie_yeti_outerarm_upper, &IMAGE_REANIM_ZOMBIE_YETI_OUTERARM_UPPER2 },
-    /* [20] ZOMBIE_BUNGEE          */ { ReanimTrackId::Zombie_outerarm_lower, ReanimTrackId::Zombie_outerarm_upper, &IMAGE_REANIM_ZOMBIE_OUTERARM_UPPER2 },
-    /* [21] ZOMBIE_LADDER          */ { ReanimTrackId::Zombie_outerarm_hand, ReanimTrackId::Zombie_ladder_outerarm_upper, &IMAGE_REANIM_ZOMBIE_LADDER_OUTERARM_UPPER2 },
-    /* [22] ZOMBIE_CATAPULT        */ { ReanimTrackId::Zombie_outerarm_lower, ReanimTrackId::Zombie_outerarm_upper, &IMAGE_REANIM_ZOMBIE_OUTERARM_UPPER2 },
-    /* [23] ZOMBIE_GARGANTUAR      */ { ReanimTrackId::Zombie_outerarm_lower, ReanimTrackId::Zombie_outerarm_upper, &IMAGE_REANIM_ZOMBIE_OUTERARM_UPPER2 },
-    /* [24] ZOMBIE_IMP             */ { ReanimTrackId::Zombie_outerarm_lower, ReanimTrackId::Zombie_imp_outerarm_upper, &IMAGE_REANIM_ZOMBIE_IMP_ARM1_BONE },
-    /* [25] ZOMBIE_BOSS            */ { ReanimTrackId::Zombie_outerarm_lower, ReanimTrackId::Zombie_outerarm_upper, &IMAGE_REANIM_ZOMBIE_OUTERARM_UPPER2 },
-    /* [26] ZOMBIE_PEA_HEAD        */ { ReanimTrackId::Zombie_outerarm_lower, ReanimTrackId::Zombie_outerarm_upper, &IMAGE_REANIM_ZOMBIE_OUTERARM_UPPER2 },
-    /* [27] ZOMBIE_WALLNUT_HEAD    */ { ReanimTrackId::Zombie_outerarm_lower, ReanimTrackId::Zombie_outerarm_upper, &IMAGE_REANIM_ZOMBIE_OUTERARM_UPPER2 },
-    /* [28] ZOMBIE_JALAPENO_HEAD   */ { ReanimTrackId::Zombie_outerarm_lower, ReanimTrackId::Zombie_outerarm_upper, &IMAGE_REANIM_ZOMBIE_OUTERARM_UPPER2 },
-    /* [29] ZOMBIE_GATLING_HEAD    */ { ReanimTrackId::Zombie_outerarm_lower, ReanimTrackId::Zombie_outerarm_upper, &IMAGE_REANIM_ZOMBIE_OUTERARM_UPPER2 },
-    /* [30] ZOMBIE_SQUASH_HEAD     */ { ReanimTrackId::Zombie_outerarm_lower, ReanimTrackId::Zombie_outerarm_upper, &IMAGE_REANIM_ZOMBIE_OUTERARM_UPPER2 },
-    /* [31] ZOMBIE_TALLNUT_HEAD    */ { ReanimTrackId::Zombie_outerarm_lower, ReanimTrackId::Zombie_outerarm_upper, &IMAGE_REANIM_ZOMBIE_OUTERARM_UPPER2 },
-    /* [32] ZOMBIE_REDEYE_GARGANTUAR */ { ReanimTrackId::Zombie_outerarm_lower, ReanimTrackId::Zombie_outerarm_upper, &IMAGE_REANIM_ZOMBIE_OUTERARM_UPPER2 },
-    /* [33] ZOMBIE_ZOMBATAR        */ { ReanimTrackId::Zombie_outerarm_lower, ReanimTrackId::Zombie_outerarm_upper, &IMAGE_REANIM_ZOMBIE_OUTERARM_UPPER2 },
+    /* [0]  ZOMBIE_NORMAL          */ { ReanimTrackId::Zombie_outerarm_lower, ReanimTrackId::Zombie_outerarm_upper, 1 },
+    /* [1]  ZOMBIE_FLAG            */ { ReanimTrackId::Zombie_outerarm_lower, ReanimTrackId::Zombie_outerarm_upper, 1 },
+    /* [2]  ZOMBIE_TRAFFIC_CONE    */ { ReanimTrackId::Zombie_outerarm_lower, ReanimTrackId::Zombie_outerarm_upper, 1 },
+    /* [3]  ZOMBIE_POLEVAULTER     */ { ReanimTrackId::Zombie_polevaulter_outerarm_lower, ReanimTrackId::Zombie_polevaulter_outerarm_upper, 1 },
+    /* [4]  ZOMBIE_PAIL            */ { ReanimTrackId::Zombie_outerarm_lower, ReanimTrackId::Zombie_outerarm_upper, 1 },
+    /* [5]  ZOMBIE_NEWSPAPER       */ { ReanimTrackId::Zombie_paper_leftarm_lower, ReanimTrackId::Zombie_paper_leftarm_upper, 1 },
+    /* [6]  ZOMBIE_DOOR            */ { ReanimTrackId::Zombie_outerarm_lower, ReanimTrackId::Zombie_outerarm_upper, 1 },
+    /* [7]  ZOMBIE_FOOTBALL        */ { ReanimTrackId::zombie_football_leftarm_hand, ReanimTrackId::zombie_football_leftarm_upper, 1 },
+    /* [8]  ZOMBIE_DANCER          */ { ReanimTrackId::Zombie_disco_outerarm_lower, ReanimTrackId::Zombie_disco_outerarm_upper, 1 },
+    /* [9]  ZOMBIE_BACKUP_DANCER   */ { ReanimTrackId::Zombie_disco_outerarm_lower, ReanimTrackId::Zombie_disco_outerarm_upper, 1 },
+    /* [10] ZOMBIE_DUCKY_TUBE      */ { ReanimTrackId::Zombie_outerarm_lower, ReanimTrackId::Zombie_outerarm_upper, 1 },
+    /* [11] ZOMBIE_SNORKEL         */ { ReanimTrackId::Zombie_outerarm_lower, ReanimTrackId::Zombie_snorkle_outerarm_upper, 1 },
+    /* [12] ZOMBIE_ZAMBONI         */ { ReanimTrackId::Zombie_outerarm_lower, ReanimTrackId::Zombie_outerarm_upper, 1 },
+    /* [13] ZOMBIE_BOBSLED         */ { ReanimTrackId::Zombie_outerarm_lower, ReanimTrackId::Zombie_dolphinrider_outerarm_upper, 1 },
+    /* [14] ZOMBIE_DOLPHIN_RIDER   */ { ReanimTrackId::Zombie_outerarm_lower, ReanimTrackId::Zombie_dolphinrider_outerarm_upper, 1 },
+    /* [15] ZOMBIE_JACK_IN_THE_BOX */ { ReanimTrackId::Zombie_jackbox_outerarm_lower, ReanimTrackId::Zombie_jackbox_outerarm_lower, 1 },
+    /* [16] ZOMBIE_BALLOON         */ { ReanimTrackId::Zombie_outerarm_lower, ReanimTrackId::Zombie_outerarm_upper, 1 },
+    /* [17] ZOMBIE_DIGGER          */ { ReanimTrackId::Zombie_outerarm_lower, ReanimTrackId::Zombie_digger_outerarm_upper, 1 },
+    /* [18] ZOMBIE_POGO            */ { ReanimTrackId::Zombie_outerarm_lower, ReanimTrackId::Zombie_outerarm_upper, 1 },
+    /* [19] ZOMBIE_YETI            */ { ReanimTrackId::Zombie_outerarm_hand, ReanimTrackId::Zombie_yeti_outerarm_upper, 1 },
+    /* [20] ZOMBIE_BUNGEE          */ { ReanimTrackId::Zombie_outerarm_lower, ReanimTrackId::Zombie_outerarm_upper, 1 },
+    /* [21] ZOMBIE_LADDER          */ { ReanimTrackId::Zombie_outerarm_hand, ReanimTrackId::Zombie_ladder_outerarm_upper, 1 },
+    /* [22] ZOMBIE_CATAPULT        */ { ReanimTrackId::Zombie_outerarm_lower, ReanimTrackId::Zombie_outerarm_upper, 1 },
+    /* [23] ZOMBIE_GARGANTUAR      */ { ReanimTrackId::Zombie_outerarm_lower, ReanimTrackId::Zombie_outerarm_upper, 1 },
+    /* [24] ZOMBIE_IMP             */ { ReanimTrackId::Zombie_outerarm_lower, ReanimTrackId::Zombie_imp_outerarm_upper, 1 },
+    /* [25] ZOMBIE_BOSS            */ { ReanimTrackId::Zombie_outerarm_lower, ReanimTrackId::Zombie_outerarm_upper, 1 },
+    /* [26] ZOMBIE_PEA_HEAD        */ { ReanimTrackId::Zombie_outerarm_lower, ReanimTrackId::Zombie_outerarm_upper, 1 },
+    /* [27] ZOMBIE_WALLNUT_HEAD    */ { ReanimTrackId::Zombie_outerarm_lower, ReanimTrackId::Zombie_outerarm_upper, 1 },
+    /* [28] ZOMBIE_JALAPENO_HEAD   */ { ReanimTrackId::Zombie_outerarm_lower, ReanimTrackId::Zombie_outerarm_upper, 1 },
+    /* [29] ZOMBIE_GATLING_HEAD    */ { ReanimTrackId::Zombie_outerarm_lower, ReanimTrackId::Zombie_outerarm_upper, 1 },
+    /* [30] ZOMBIE_SQUASH_HEAD     */ { ReanimTrackId::Zombie_outerarm_lower, ReanimTrackId::Zombie_outerarm_upper, 1 },
+    /* [31] ZOMBIE_TALLNUT_HEAD    */ { ReanimTrackId::Zombie_outerarm_lower, ReanimTrackId::Zombie_outerarm_upper, 1 },
+    /* [32] ZOMBIE_REDEYE_GARGANTUAR */ { ReanimTrackId::Zombie_outerarm_lower, ReanimTrackId::Zombie_outerarm_upper, 1 },
+    /* [33] ZOMBIE_ZOMBATAR        */ { ReanimTrackId::Zombie_outerarm_lower, ReanimTrackId::Zombie_outerarm_upper, 1 },
 };
 static_assert(sizeof(kLostArmOverrides) / sizeof(kLostArmOverrides[0]) == (int)ZombieType::NUM_ZOMBIE_TYPES,
     "断臂覆写槽位须与 ZombieType 枚举尾同步");
@@ -4128,46 +4121,50 @@ static_assert(sizeof(kLostArmHideCases) / sizeof(kLostArmHideCases[0]) ==
 
 namespace
 {
-// kLostArmParticleImage：生成器解析原 switch 生成（逐槽对拍 0 差异）；
-// 哨兵 nullptr = 无 case 槽（default 无操作）。
-constexpr Image* const* kLostArmParticleImage[(int)ZombieType::NUM_ZOMBIE_TYPES] = {
-        nullptr,  // 0 ZOMBIE_NORMAL（无 case）
-        nullptr,  // 1 ZOMBIE_FLAG（无 case）
-        nullptr,  // 2 ZOMBIE_TRAFFIC_CONE（无 case）
-        &IMAGE_REANIM_ZOMBIE_OUTERARM_HAND,  // 3 ZOMBIE_POLEVAULTER
-        nullptr,  // 4 ZOMBIE_PAIL（无 case）
-        &IMAGE_REANIM_ZOMBIE_PAPER_LEFTARM_LOWER,  // 5 ZOMBIE_NEWSPAPER
-        nullptr,  // 6 ZOMBIE_DOOR（无 case）
-        &IMAGE_REANIM_ZOMBIE_FOOTBALL_LEFTARM_HAND,  // 7 ZOMBIE_FOOTBALL
-        &IMAGE_REANIM_ZOMBIE_DISCO_OUTERARM_HAND,  // 8 ZOMBIE_DANCER
-        &IMAGE_REANIM_ZOMBIE_BACKUP_INNERARM_HAND,  // 9 ZOMBIE_BACKUP_DANCER
-        nullptr,  // 10 ZOMBIE_DUCKY_TUBE（无 case）
-        nullptr,  // 11 ZOMBIE_SNORKEL（无 case）
-        nullptr,  // 12 ZOMBIE_ZAMBONI（无 case）
-        &IMAGE_REANIM_ZOMBIE_BOBSLED_OUTERARM_HAND,  // 13 ZOMBIE_BOBSLED
-        &IMAGE_REANIM_ZOMBIE_OUTERARM_HAND,  // 14 ZOMBIE_DOLPHIN_RIDER
-        &IMAGE_ZOMBIEJACKBOXARM,  // 15 ZOMBIE_JACK_IN_THE_BOX
-        &IMAGE_REANIM_ZOMBIE_OUTERARM_HAND,  // 16 ZOMBIE_BALLOON
-        &IMAGE_ZOMBIEDIGGERARM,  // 17 ZOMBIE_DIGGER
-        &IMAGE_REANIM_ZOMBIE_OUTERARM_HAND,  // 18 ZOMBIE_POGO
-        &IMAGE_REANIM_ZOMBIE_YETI_OUTERARM_HAND,  // 19 ZOMBIE_YETI
-        nullptr,  // 20 ZOMBIE_BUNGEE（无 case）
-        &IMAGE_REANIM_ZOMBIE_OUTERARM_HAND,  // 21 ZOMBIE_LADDER
-        nullptr,  // 22 ZOMBIE_CATAPULT（无 case）
-        nullptr,  // 23 ZOMBIE_GARGANTUAR（无 case）
-        &IMAGE_REANIM_ZOMBIE_IMP_ARM2,  // 24 ZOMBIE_IMP
-        nullptr,  // 25 ZOMBIE_BOSS（无 case）
-        nullptr,  // 26 ZOMBIE_PEA_HEAD（无 case）
-        nullptr,  // 27 ZOMBIE_WALLNUT_HEAD（无 case）
-        nullptr,  // 28 ZOMBIE_JALAPENO_HEAD（无 case）
-        nullptr,  // 29 ZOMBIE_GATLING_HEAD（无 case）
-        nullptr,  // 30 ZOMBIE_SQUASH_HEAD（无 case）
-        nullptr,  // 31 ZOMBIE_TALLNUT_HEAD（无 case）
-        nullptr,  // 32 ZOMBIE_REDEYE_GARGANTUAR（无 case）
-        nullptr,  // 33 ZOMBIE_ZOMBATAR（无 case）
+struct ZombieArmParticleVariant
+{
+    std::uint32_t mNormal;
+    std::uint32_t mMowered;
 };
-static_assert(sizeof(kLostArmParticleImage) / sizeof(kLostArmParticleImage[0]) ==
-    (int)ZombieType::NUM_ZOMBIE_TYPES, "槽位须与 ZombieType 枚举同步");
+
+#define ZOMBIE_ARM_PARTICLE_VARIANT(type, suffix) \
+    aVariants[ZombieType::ZOMBIE_##type] = { static_cast<std::uint32_t>(ParticleVariants::ZombieArm::ZombieArm##suffix), \
+      static_cast<std::uint32_t>(ParticleVariants::MoweredZombieArm::MoweredZombieArm##suffix) }
+constexpr auto kZombieArmParticleVariants = [] {
+    std::array<ZombieArmParticleVariant, ZombieType::NUM_ZOMBIE_TYPES> aVariants{};
+    ZOMBIE_ARM_PARTICLE_VARIANT(POLEVAULTER, Hand);
+    ZOMBIE_ARM_PARTICLE_VARIANT(NEWSPAPER, Newspaper);
+    ZOMBIE_ARM_PARTICLE_VARIANT(FOOTBALL, Football);
+    ZOMBIE_ARM_PARTICLE_VARIANT(DANCER, Dancer);
+    ZOMBIE_ARM_PARTICLE_VARIANT(BACKUP_DANCER, BackupDancer);
+    ZOMBIE_ARM_PARTICLE_VARIANT(BOBSLED, Bobsled);
+    ZOMBIE_ARM_PARTICLE_VARIANT(DOLPHIN_RIDER, Hand);
+    ZOMBIE_ARM_PARTICLE_VARIANT(JACK_IN_THE_BOX, Jackbox);
+    ZOMBIE_ARM_PARTICLE_VARIANT(BALLOON, Hand);
+    ZOMBIE_ARM_PARTICLE_VARIANT(DIGGER, Digger);
+    ZOMBIE_ARM_PARTICLE_VARIANT(POGO, Hand);
+    ZOMBIE_ARM_PARTICLE_VARIANT(YETI, Yeti);
+    ZOMBIE_ARM_PARTICLE_VARIANT(LADDER, Hand);
+    ZOMBIE_ARM_PARTICLE_VARIANT(IMP, Imp);
+    return aVariants;
+}();
+#undef ZOMBIE_ARM_PARTICLE_VARIANT
+
+constexpr std::uint32_t GetZombieArmParticleVariant(ParticleEffect theBase, ZombieType theType)
+{
+    const unsigned aTypeIndex = static_cast<unsigned>(theType);
+    if (aTypeIndex >= kZombieArmParticleVariants.size())
+    {
+        return 0;
+    }
+    const ZombieArmParticleVariant& aVariant = kZombieArmParticleVariants[aTypeIndex];
+    switch (theBase)
+    {
+    case ParticleEffect::PARTICLE_ZOMBIE_ARM: return aVariant.mNormal;
+    case ParticleEffect::PARTICLE_MOWERED_ZOMBIE_ARM: return aVariant.mMowered;
+    default: return 0;
+    }
+}
 }  // namespace
 
 void Zombie::SetupReanimForLostArm(unsigned int theDamageFlags)
@@ -4203,26 +4200,26 @@ void Zombie::SetupReanimForLostArm(unsigned int theDamageFlags)
         {
             const LostArmOverride& aOverride = kLostArmOverrides[aType];
             GetTrackPosition(aOverride.mPositionTrack, aPosX, aPosY);
-            aBodyReanim->SetImageOverride(aOverride.mOverrideTrack, *aOverride.mArmImage);
+            aBodyReanim->SetVariantOption(aOverride.mOverrideTrack, aOverride.mArmOption);
             if (mZombieType == ZombieType::ZOMBIE_POGO)
             {
-                aBodyReanim->SetImageOverride(ReanimTrackId::Zombie_pogo_stickhands, IMAGE_REANIM_ZOMBIE_POGO_STICKHANDS2);
-                aBodyReanim->SetImageOverride(ReanimTrackId::Zombie_pogo_stick, IMAGE_REANIM_ZOMBIE_POGO_STICKDAMAGE2);
-                aBodyReanim->SetImageOverride(ReanimTrackId::Zombie_pogo_stick2, IMAGE_REANIM_ZOMBIE_POGO_STICK2DAMAGE2);
+                aBodyReanim->SetVariantOption(ReanimTrackId::Zombie_pogo_stickhands, ReanimOptions::Zombie_pogo::Zombie_pogo_stickhands::ZOMBIE_POGO_STICKHANDS2);
+                aBodyReanim->SetVariantOption(ReanimTrackId::Zombie_pogo_stick, ReanimOptions::Zombie_pogo::Zombie_pogo_stick::ZOMBIE_POGO_STICKDAMAGE2);
+                aBodyReanim->SetVariantOption(ReanimTrackId::Zombie_pogo_stick2, ReanimOptions::Zombie_pogo::Zombie_pogo_stick2::ZOMBIE_POGO_STICK2DAMAGE2);
             }
             else if (mZombieType == ZombieType::ZOMBIE_FLAG)
             {
                 Reanimation* aHeadReanim = mApp->ReanimationTryToGet(mSpecialHeadReanimID);
                 if (aHeadReanim)
                 {
-                    aHeadReanim->SetImageOverride(ReanimTrackId::Zombie_flag, IMAGE_REANIM_ZOMBIE_FLAG3);
+                    aHeadReanim->SetVariantOption(ReanimTrackId::Zombie_flag, ReanimOptions::Zombie_flagpole::Zombie_flag::ZOMBIE_FLAG3);
                 }
             }
         }
         else
         {
             GetTrackPosition(ReanimTrackId::Zombie_outerarm_lower, aPosX, aPosY);
-            aBodyReanim->SetImageOverride(ReanimTrackId::Zombie_outerarm_upper, IMAGE_REANIM_ZOMBIE_OUTERARM_UPPER2);
+            aBodyReanim->SetVariantOption(ReanimTrackId::Zombie_outerarm_upper, ReanimOptions::Zombie::Zombie_outerarm_upper::ZOMBIE_OUTERARM_UPPER2);
         }
     }
 
@@ -4234,20 +4231,10 @@ void Zombie::SetupReanimForLostArm(unsigned int theDamageFlags)
             aEffect = ParticleEffect::PARTICLE_MOWERED_ZOMBIE_ARM;
         }
 
-        TodParticleSystem* aParticle = mApp->AddTodParticle(aPosX, aPosY, mRenderOrder + 1, aEffect);
+        const std::uint32_t aVariant = GetZombieArmParticleVariant(aEffect, mZombieType);
+        TodParticleSystem* aParticle = mApp->AddTodParticle(aPosX, aPosY, mRenderOrder + 1, aEffect, aVariant);
         OverrideParticleColor(aParticle);
         OverrideParticleScale(aParticle);
-
-        if (aParticle)
-        {
-            // B 形态 -> 常量表（见上 kLostArmParticleImage）；无 case 槽 = nullptr
-            // 不覆写（=原 default 无操作）。
-            if (static_cast<unsigned>(mZombieType) < static_cast<unsigned>(ZombieType::NUM_ZOMBIE_TYPES) && kLostArmParticleImage[mZombieType] != nullptr)
-            {
-                aParticle->OverrideImage(ParticleEmitterRanges::All, *kLostArmParticleImage[mZombieType]);
-            }
-
-        }
     }
 }
 
@@ -5102,14 +5089,14 @@ void Zombie::ShowYuckyFace(bool theShow)
     {
         if (theShow)
         {
-            aBodyReanim->SetImageOverride(ReanimTrackId::anim_head1, IMAGE_REANIM_ZOMBIE_HEAD_GROSSOUT);
+            aBodyReanim->SetVariantOption(ReanimTrackId::anim_head1, ReanimOptions::Zombie::anim_head1::ZOMBIE_HEAD_GROSSOUT);
             aBodyReanim->AssignRenderGroupToTrack(ReanimTrackId::anim_head2, RENDER_GROUP_HIDDEN);
             aBodyReanim->AssignRenderGroupToTrack(ReanimTrackId::anim_head_jaw, RENDER_GROUP_HIDDEN);
             aBodyReanim->AssignRenderGroupToTrack(ReanimTrackId::anim_tongue, RENDER_GROUP_HIDDEN);
         }
         else if (mHasHead)
         {
-            aBodyReanim->SetImageOverride(ReanimTrackId::anim_head1, nullptr);
+            aBodyReanim->SetVariantOption(ReanimTrackId::anim_head1, 0);
             aBodyReanim->AssignRenderGroupToTrack(ReanimTrackId::anim_head2, RENDER_GROUP_NORMAL);
             aBodyReanim->AssignRenderGroupToTrack(ReanimTrackId::anim_head_jaw, RENDER_GROUP_NORMAL);
             if (mVariant)
@@ -5444,62 +5431,6 @@ void Zombie::Animate()
     }
 }
 
-/*
-//0x52BE80
-void Zombie::DrawZombie(Graphics* g, const ZombieDrawPosition& theDrawPos)
-{
-    // 此函数仅 0.1.1 内测版有效，0.9.9 内测版及正式版中正常不会调用
-
-    switch (mZombieType)
-    {
-    case ZombieType::ZOMBIE_NORMAL:
-    case ZombieType::ZOMBIE_FLAG:
-    case ZombieType::ZOMBIE_TRAFFIC_CONE:
-    case ZombieType::ZOMBIE_PAIL:
-    case ZombieType::ZOMBIE_NEWSPAPER:
-    case ZombieType::ZOMBIE_DOOR:
-    case ZombieType::ZOMBIE_FOOTBALL:
-    case ZombieType::ZOMBIE_DOLPHIN_RIDER:
-    case ZombieType::ZOMBIE_LADDER:
-    //case ZombieType::ZOMBIE_DOG_WALKER:
-    //  DrawZombieWithParts(g, theDrawPos);
-    //  break;
-
-    //case ZombieType::ZOMBIE_DOG:
-    //    DrawZombiePart(g, IMAGE_ZOMBIEDOG, mIsEating ? ZombieParts::PART_HEAD : ZombieParts::PARTS_BODY, mFrame, theDrawPos);
-    //    break;
-
-    //case ZombieType::ZOMBIE_PROPELLER:
-    //    DrawZombiePart(g, IMAGE_PROPELLERZOMBIE, ZombieParts::PARTS_BODY, mFrame, theDrawPos);
-    //    break;
-
-    //case ZombieType::ZOMBIE_POLEVAULTER:
-    //case ZombieType::ZOMBIE_DANCER:
-    //case ZombieType::ZOMBIE_BACKUP_DANCER:
-    //case ZombieType::ZOMBIE_DUCKY_TUBE:
-    //case ZombieType::ZOMBIE_SNORKEL:
-    //case ZombieType::ZOMBIE_ZAMBONI:
-    //case ZombieType::ZOMBIE_BOBSLED:
-    //case ZombieType::ZOMBIE_JACK_IN_THE_BOX:
-    //case ZombieType::ZOMBIE_BALLOON:
-    //case ZombieType::ZOMBIE_DIGGER:
-    //case ZombieType::ZOMBIE_POGO:
-    //case ZombieType::ZOMBIE_YETI:
-    //case ZombieType::ZOMBIE_BUNGEE:
-    //case ZombieType::ZOMBIE_CATAPULT:
-    //case ZombieType::ZOMBIE_GARGANTUAR:
-    //case ZombieType::ZOMBIE_IMP:
-    //case ZombieType::ZOMBIE_BOSS:
-    //    TOD_ASSERT(false);
-    //    break;
-
-    default:
-        TOD_ASSERT(false);
-        break;
-    }
-}
-*/
-
 //0x52BEE0
 bool Zombie::IsWalkingBackwards()
 {
@@ -5531,184 +5462,6 @@ bool Zombie::IsWalkingBackwards()
     return mZombieType == ZombieType::ZOMBIE_YETI && !mHasObject;
 }
 
-//0x52BF60
-void Zombie::DrawZombiePart(Graphics* g, Image* theImage, int theFrame, int theRow, const ZombieDrawPosition& theDrawPos)
-{
-    // 此函数仅 0.1.1 内测版有效，0.9.9 内测版及正式版中正常不会调用
-
-    int aCelWidth = theImage->GetCelWidth();
-    int aCelHeight = theImage->GetCelHeight();
-    float anOffsetX = theDrawPos.mImageOffsetX;
-    float anOffsetY = theDrawPos.mImageOffsetY + theDrawPos.mBodyY;
-    if (mZombiePhase == ZombiePhase::PHASE_POLEVAULTER_IN_VAULT)
-    {
-        anOffsetX -= 120.0f;
-        anOffsetY -= 120.0f;
-    }
-    if (mZombiePhase == ZombiePhase::PHASE_DIGGER_TUNNELING)
-    {
-        anOffsetY += 50.0f;
-    }
-    if (mZombieType == ZombieType::ZOMBIE_ZAMBONI)
-    {
-        anOffsetY -= 19.0f;
-    }
-
-    float aDrawHeight = aCelHeight;
-    if (theDrawPos.mClipHeight > CLIP_HEIGHT_LIMIT)
-    {
-        aDrawHeight = ClampFloat(aCelHeight - theDrawPos.mClipHeight, 0.0f, aCelHeight);
-    }
-
-    int anAlpha = 255;
-    if (mZombieFade >= 0)
-    {
-        anAlpha = ClampInt(255 * mZombieFade / 10, 0, 255);
-        g->mColorizeImages = true;
-        g->mColor = Color(255, 255, 255, anAlpha);
-    }
-
-    bool aMirror = false;
-    if (mZombiePhase == ZombiePhase::PHASE_DANCER_DANCING_IN || mZombiePhase == ZombiePhase::PHASE_DANCER_DANCING_LEFT)
-    {
-        int aFrame = GetDancerFrame();
-        if (!mIsEating && (aFrame == 12 || aFrame == 13 || aFrame == 14 || aFrame == 18 || aFrame == 19 || aFrame == 20))
-        {
-            aMirror = true;
-            anOffsetX -= 30.0f;
-        }
-    }
-    if (aMirror)
-    {
-        anOffsetX = -anOffsetX;
-    }
-
-    Rect aSrcRect(theFrame * aCelWidth, theRow * aCelHeight, aCelWidth, aDrawHeight);
-    Rect aDestRect(anOffsetX, anOffsetY, aCelWidth, aDrawHeight);
-    if (mZombiePhase == ZombiePhase::PHASE_ZOMBIE_BURNED)
-    {
-        if (mMindControlled)
-        {
-            aMirror = true;
-        }
-
-        g->mColorizeImages = true;
-        g->mColor = Color::Black;
-        g->DrawImageMirror(theImage, aDestRect, aSrcRect, aMirror);
-    }
-    else if (mMindControlled)
-    {
-        aMirror = true;
-        g->mColorizeImages = true;
-        Color aMincontrolledColor = ZOMBIE_MINDCONTROLLED_COLOR;
-        aMincontrolledColor.mAlpha = anAlpha;
-        g->mColor = aMincontrolledColor;
-        g->DrawImageMirror(theImage, aDestRect, aSrcRect, aMirror);
-
-        g->mDrawMode = Graphics::DRAWMODE_ADDITIVE;
-        g->DrawImageMirror(theImage, aDestRect, aSrcRect, aMirror);
-        g->mDrawMode = Graphics::DRAWMODE_NORMAL;
-    }
-    else if (mChilledCounter > 0 || mIceTrapCounter > 0)
-    {
-        g->mColorizeImages = true;
-        g->mColor = Color(75, 75, 255, anAlpha);
-        g->DrawImageMirror(theImage, aDestRect, aSrcRect, aMirror);
-
-        g->mDrawMode = Graphics::DRAWMODE_ADDITIVE;
-        g->DrawImageMirror(theImage, aDestRect, aSrcRect, aMirror);
-        g->mDrawMode = Graphics::DRAWMODE_NORMAL;
-    }
-    else
-    {
-        g->DrawImageMirror(theImage, aDestRect, aSrcRect, aMirror);
-    }
-
-    if (mJustGotShotCounter > 0)
-    {
-        g->mDrawMode = Graphics::DRAWMODE_ADDITIVE;
-        g->mColorizeImages = true;
-        int aGrayness = mJustGotShotCounter * 10;
-        g->mColor = Color(aGrayness, aGrayness, aGrayness, 255);
-        g->DrawImageMirror(theImage, aDestRect, aSrcRect, aMirror);
-        g->mDrawMode = Graphics::DRAWMODE_NORMAL;
-    }
-
-    g->mColorizeImages = false;
-}
-
-
-/*
-void Zombie::DrawZombieHead(Graphics* g, const ZombieDrawPosition& theDrawPos, int theFrame)
-{
-    // 此函数仅 0.1.1 内测版有效，0.9.9 内测版及正式版中正常不会调用
-
-    
-    if (mYuckyFace)
-    {
-        DrawZombiePart(g, IMAGE_ZOMBIE, mFrame, ZombieParts::PART_HEAD_YUCKY, theDrawPos);
-        return;
-    }
-
-    if (mIsEating)
-    {
-        DrawZombiePart(g, IMAGE_ZOMBIE, mFrame, ZombieParts::PART_HEAD_EATING, theDrawPos);
-
-        if (mHelmHealth == 0)
-        {
-            DrawZombiePart(g, IMAGE_ZOMBIE, 5, ZombieParts::PART_HAIR, theDrawPos);
-        }
-    }
-    else
-    {
-        DrawZombiePart(g, IMAGE_ZOMBIE, mFrame, ZombieParts::PART_HEAD, theDrawPos);
-
-        if (mVariant)
-        {
-            DrawZombiePart(g, IMAGE_ZOMBIE, theFrame, ZombieParts::PART_TONGUE, theDrawPos);
-        }
-
-        if (mHelmHealth == 0)
-        {
-            DrawZombiePart(g, IMAGE_ZOMBIE, theFrame, ZombieParts::PART_HAIR, theDrawPos);
-        }
-    }
-    
-}
-*/
-
-/*
-void Zombie::DrawZombieWithParts(Graphics* g, const ZombieDrawPosition& theDrawPos)
-{
-    // 此函数仅 0.1.1 内测版有效，0.9.9 内测版及正式版中正常不会调用
-
-    
-    int aFrame = mIsEating ? 0 : mFrame;
-    DrawZombiePart(g, IMAGE_ZOMBIE, aFrame, ZombieParts::PARTS_BODY, theDrawPos);
-
-    if (mHasArm && mBodyReanimID == ReanimationID::REANIMATIONID_NULL)
-    {
-        if (mZombiePhase == ZombiePhase::PHASE_WALKING_DOG && mHasHead)
-        {
-            ZombieDrawPosition theDrawPosLeash = theDrawPos;
-            theDrawPosLeash.mImageOffsetX -= 14.0f;
-            theDrawPosLeash.mImageOffsetY += 10.0f;
-            DrawZombiePart(g, IMAGE_ZOMBIE, aFrame, ZombieParts::PART_ARM_LEASH, theDrawPosLeash);
-        }
-        else
-        {
-            DrawZombiePart(g, IMAGE_ZOMBIE, aFrame, ZombieParts::PART_ARM, theDrawPos);
-        }
-    }
-
-    if (mHasHead && mBodyReanimID == ReanimationID::REANIMATIONID_NULL)
-    {
-        DrawZombieHead(g, theDrawPos, aFrame);
-    }
-    
-}
-*/
-
 //0x52C310
 void Zombie::UpdateReanim()
 {
@@ -5724,15 +5477,15 @@ void Zombie::UpdateReanim()
         const bool loaded = loadState == CatapultLoadState::Loaded;
         if (GetBodyDamageIndex() == 2 || mZombiePhase == ZombiePhase::PHASE_ZOMBIE_DYING)
         {
-            aBodyReanim->SetImageOverride(ReanimTrackId::Zombie_catapult_pole, loaded
-                ? IMAGE_REANIM_ZOMBIE_CATAPULT_POLE_DAMAGE_WITHBALL
-                : IMAGE_REANIM_ZOMBIE_CATAPULT_POLE_DAMAGE);
+            aBodyReanim->SetVariantOption(ReanimTrackId::Zombie_catapult_pole, loaded
+                ? ReanimOptions::Zombie_catapult::Zombie_catapult_pole::ZOMBIE_CATAPULT_POLE_DAMAGE_WITHBALL
+                : ReanimOptions::Zombie_catapult::Zombie_catapult_pole::ZOMBIE_CATAPULT_POLE_DAMAGE);
         }
         else
         {
-            aBodyReanim->SetImageOverride(ReanimTrackId::Zombie_catapult_pole, loaded
-                ? IMAGE_REANIM_ZOMBIE_CATAPULT_POLE_WITHBALL
-                : IMAGE_REANIM_ZOMBIE_CATAPULT_POLE);
+            aBodyReanim->SetVariantOption(ReanimTrackId::Zombie_catapult_pole, loaded
+                ? ReanimOptions::Zombie_catapult::Zombie_catapult_pole::ZOMBIE_CATAPULT_POLE_WITHBALL
+                : ReanimOptions::Zombie_catapult::Zombie_catapult_pole::ZOMBIE_CATAPULT_POLE);
         }
     }
 
@@ -6290,7 +6043,7 @@ int Zombie::GetBodyDamageIndex()
 //0x52D7C0
 void Zombie::DrawBungeeCord(Graphics* g, int theOffsetX)
 {
-    int aCordCelHeight = IMAGE_BUNGEECORD->GetCelHeight() * mScaleZombie;
+    int aCordHeight = IMAGE_BUNGEECORD->mHeight * mScaleZombie;
     float aPosX, aPosY;
     GetTrackPosition(ReanimTrackId::Zombie_bungi_body, aPosX, aPosY);
 
@@ -6313,7 +6066,7 @@ void Zombie::DrawBungeeCord(Graphics* g, int theOffsetX)
         }
     }
 
-    for (float y = aPosY - aCordCelHeight; y > -aCordCelHeight; y -= aCordCelHeight)
+    for (float y = aPosY - aCordHeight; y > -aCordHeight; y -= aCordHeight)
     {
         TodDrawImageScaledF(g, IMAGE_BUNGEECORD, theOffsetX + 61.0f - 4.0f / mScaleZombie, y - mPosY, mScaleZombie, mScaleZombie);
     }
@@ -8337,20 +8090,20 @@ int Zombie::TakeShieldDamage(int theDamage, unsigned int theDamageFlags)
         Reanimation* aBodyReanim = mApp->ReanimationTryToGet(mBodyReanimID);
         // B 形态 -> 常量二维表 kShieldDamageImages（原 6 支链合并）：行序 =
         // ShieldType 枚举序 0..3（count_last=SHIELDTYPE_LADDER 锚定，无 NUM
-        // 哨兵），列序 = 损伤档 1..2；mImage=nullptr = 无 case 槽（default 无
+        // 哨兵），列序 = 损伤档 1..2；mTrack=None = 无 case 槽（default 无
         // 操作）。六支原均带 TOD_ASSERT(aBodyReanim)，统一保留一处。
         static constexpr struct
         {
             ReanimTrackId mTrack;
-            Image* const* mImage;  // nullptr = 无 case 槽
+            std::uint32_t mOption;
         } kShieldDamageImages[(int)ShieldType::SHIELDTYPE_LADDER + 1][2] = {
-            /* [0] SHIELDTYPE_NONE      */ { { ReanimTrackId::None, nullptr }, { ReanimTrackId::None, nullptr } },
-            /* [1] SHIELDTYPE_DOOR  dmg1 */ { { ReanimTrackId::anim_screendoor, &IMAGE_REANIM_ZOMBIE_SCREENDOOR2 },
-                                              /*                     dmg2 */   { ReanimTrackId::anim_screendoor, &IMAGE_REANIM_ZOMBIE_SCREENDOOR3 } },
-            /* [2] SHIELDTYPE_NEWSPAPER  */ { { ReanimTrackId::Zombie_paper_paper, &IMAGE_REANIM_ZOMBIE_PAPER_PAPER2 },
-                                              /*                     dmg2 */   { ReanimTrackId::Zombie_paper_paper, &IMAGE_REANIM_ZOMBIE_PAPER_PAPER3 } },
-            /* [3] SHIELDTYPE_LADDER     */ { { ReanimTrackId::Zombie_ladder_1, &IMAGE_REANIM_ZOMBIE_LADDER_1_DAMAGE1 },
-                                              /*                     dmg2 */   { ReanimTrackId::Zombie_ladder_1, &IMAGE_REANIM_ZOMBIE_LADDER_1_DAMAGE2 } },
+            /* [0] SHIELDTYPE_NONE      */ { { ReanimTrackId::None, 0 }, { ReanimTrackId::None, 0 } },
+            /* [1] SHIELDTYPE_DOOR  dmg1 */ { { ReanimTrackId::anim_screendoor, ReanimOptions::Zombie::anim_screendoor::ZOMBIE_SCREENDOOR2 },
+                                              /*                     dmg2 */   { ReanimTrackId::anim_screendoor, ReanimOptions::Zombie::anim_screendoor::ZOMBIE_SCREENDOOR3 } },
+            /* [2] SHIELDTYPE_NEWSPAPER  */ { { ReanimTrackId::Zombie_paper_paper, ReanimOptions::Zombie_paper::Zombie_paper_paper::ZOMBIE_PAPER_PAPER2 },
+                                              /*                     dmg2 */   { ReanimTrackId::Zombie_paper_paper, ReanimOptions::Zombie_paper::Zombie_paper_paper::ZOMBIE_PAPER_PAPER3 } },
+            /* [3] SHIELDTYPE_LADDER     */ { { ReanimTrackId::Zombie_ladder_1, ReanimOptions::Zombie_ladder::Zombie_ladder_1::ZOMBIE_LADDER_1_DAMAGE1 },
+                                              /*                     dmg2 */   { ReanimTrackId::Zombie_ladder_1, ReanimOptions::Zombie_ladder::Zombie_ladder_1::ZOMBIE_LADDER_1_DAMAGE2 } },
         };
         static_assert(sizeof(kShieldDamageImages) / sizeof(kShieldDamageImages[0]) ==
             (int)ShieldType::SHIELDTYPE_LADDER + 1, "kShieldDamageImages 槽位须与 ShieldType 枚举尾同步");
@@ -8358,11 +8111,11 @@ int Zombie::TakeShieldDamage(int theDamage, unsigned int theDamageFlags)
         const unsigned aShieldIndex = static_cast<unsigned>(mShieldType);
         const unsigned aDamageSlot = static_cast<unsigned>(aDamageIndexAfterDamage) - 1;
         if (aShieldIndex < sizeof(kShieldDamageImages) / sizeof(kShieldDamageImages[0]) &&
-            aDamageSlot < 2 && kShieldDamageImages[aShieldIndex][aDamageSlot].mImage != nullptr)
+            aDamageSlot < 2 && kShieldDamageImages[aShieldIndex][aDamageSlot].mTrack != ReanimTrackId::None)
         {
             TOD_ASSERT(aBodyReanim);
-            aBodyReanim->SetImageOverride(kShieldDamageImages[aShieldIndex][aDamageSlot].mTrack,
-                *kShieldDamageImages[aShieldIndex][aDamageSlot].mImage);
+            aBodyReanim->SetVariantOption(kShieldDamageImages[aShieldIndex][aDamageSlot].mTrack,
+                kShieldDamageImages[aShieldIndex][aDamageSlot].mOption);
         }
     }
 
@@ -8493,35 +8246,34 @@ int Zombie::TakeHelmDamage(int theDamage, unsigned int theDamageFlags)
         Reanimation* aBodyReanim = mApp->ReanimationTryToGet(mBodyReanimID);
         // B 形态 -> 常量二维表 kHelmDamageImages（原 12 支链合并）：行序 =
         // HelmType 枚举序 0..9（count_last=HELMTYPE_TALLNUT 锚定，无 NUM 哨兵），
-        // 列序 = 损伤档 1..2；mImage=nullptr = 无 case 槽（default 无操作）。
-        // 贴图为运行期装载全局——表存变量地址（Image* const*，仿
-        // kLostArmOverrides）。WALLNUT/TALLNUT 四支目标为 mSpecialHeadReanimID
+        // 列序 = 损伤档 1..2；mTrack=None = 无 case 槽（与有效轨道的默认选项0分开）。
+        // WALLNUT/TALLNUT 四支目标为 mSpecialHeadReanimID
         // 头部 reanim（mUseHeadReanim 位）；TRAFFIC_CONE 两支原条件带
         // `&& aBodyReanim` 判空（mGuardNullBody 位，空时跳过 = 原落空）；
         // 其余支原 TOD_ASSERT 仅 debug 生效，统一保留一处。
         static constexpr struct
         {
             ReanimTrackId mTrack;
-            Image* const* mImage;      // nullptr = 无 case 槽
+            std::uint32_t mOption;
             bool mUseHeadReanim;       // WALLNUT/TALLNUT：作用于头部 reanim
             bool mGuardNullBody;       // TRAFFIC_CONE：原链带 && aBodyReanim 判空
         } kHelmDamageImages[(int)HelmType::HELMTYPE_TALLNUT + 1][2] = {
-            /* [0] HELMTYPE_NONE       */ { { ReanimTrackId::None, nullptr, false, false }, { ReanimTrackId::None, nullptr, false, false } },
-            /* [1] HELMTYPE_TRAFFIC_CONE */ { { ReanimTrackId::anim_cone, &IMAGE_REANIM_ZOMBIE_CONE2, false, true },
-                                              { ReanimTrackId::anim_cone, &IMAGE_REANIM_ZOMBIE_CONE3, false, true } },
-            /* [2] HELMTYPE_PAIL       */ { { ReanimTrackId::anim_bucket, &IMAGE_REANIM_ZOMBIE_BUCKET2, false, false },
-                                              { ReanimTrackId::anim_bucket, &IMAGE_REANIM_ZOMBIE_BUCKET3, false, false } },
-            /* [3] HELMTYPE_FOOTBALL   */ { { ReanimTrackId::zombie_football_helmet, &IMAGE_REANIM_ZOMBIE_FOOTBALL_HELMET2, false, false },
-                                              { ReanimTrackId::zombie_football_helmet, &IMAGE_REANIM_ZOMBIE_FOOTBALL_HELMET3, false, false } },
-            /* [4] HELMTYPE_DIGGER     */ { { ReanimTrackId::Zombie_digger_hardhat, &IMAGE_REANIM_ZOMBIE_DIGGER_HARDHAT2, false, false },
-                                              { ReanimTrackId::Zombie_digger_hardhat, &IMAGE_REANIM_ZOMBIE_DIGGER_HARDHAT3, false, false } },
-            /* [5] HELMTYPE_REDEYES    */ { { ReanimTrackId::None, nullptr, false, false }, { ReanimTrackId::None, nullptr, false, false } },
-            /* [6] HELMTYPE_HEADBAND   */ { { ReanimTrackId::None, nullptr, false, false }, { ReanimTrackId::None, nullptr, false, false } },
-            /* [7] HELMTYPE_BOBSLED    */ { { ReanimTrackId::None, nullptr, false, false }, { ReanimTrackId::None, nullptr, false, false } },
-            /* [8] HELMTYPE_WALLNUT    */ { { ReanimTrackId::anim_face, &IMAGE_REANIM_WALLNUT_CRACKED1, true, false },
-                                              { ReanimTrackId::anim_face, &IMAGE_REANIM_WALLNUT_CRACKED2, true, false } },
-            /* [9] HELMTYPE_TALLNUT    */ { { ReanimTrackId::anim_idle, &IMAGE_REANIM_TALLNUT_CRACKED1, true, false },
-                                              { ReanimTrackId::anim_idle, &IMAGE_REANIM_TALLNUT_CRACKED2, true, false } },
+            /* [0] HELMTYPE_NONE       */ { { ReanimTrackId::None, 0, false, false }, { ReanimTrackId::None, 0, false, false } },
+            /* [1] HELMTYPE_TRAFFIC_CONE */ { { ReanimTrackId::anim_cone, ReanimOptions::Zombie::anim_cone::ZOMBIE_CONE2, false, true },
+                                              { ReanimTrackId::anim_cone, ReanimOptions::Zombie::anim_cone::ZOMBIE_CONE3, false, true } },
+            /* [2] HELMTYPE_PAIL       */ { { ReanimTrackId::anim_bucket, ReanimOptions::Zombie::anim_bucket::ZOMBIE_BUCKET2, false, false },
+                                              { ReanimTrackId::anim_bucket, ReanimOptions::Zombie::anim_bucket::ZOMBIE_BUCKET3, false, false } },
+            /* [3] HELMTYPE_FOOTBALL   */ { { ReanimTrackId::zombie_football_helmet, ReanimOptions::Zombie_football::zombie_football_helmet::ZOMBIE_FOOTBALL_HELMET2, false, false },
+                                              { ReanimTrackId::zombie_football_helmet, ReanimOptions::Zombie_football::zombie_football_helmet::ZOMBIE_FOOTBALL_HELMET3, false, false } },
+            /* [4] HELMTYPE_DIGGER     */ { { ReanimTrackId::Zombie_digger_hardhat, ReanimOptions::Zombie_digger::Zombie_digger_hardhat::ZOMBIE_DIGGER_HARDHAT2, false, false },
+                                              { ReanimTrackId::Zombie_digger_hardhat, ReanimOptions::Zombie_digger::Zombie_digger_hardhat::ZOMBIE_DIGGER_HARDHAT3, false, false } },
+            /* [5] HELMTYPE_REDEYES    */ { { ReanimTrackId::None, 0, false, false }, { ReanimTrackId::None, 0, false, false } },
+            /* [6] HELMTYPE_HEADBAND   */ { { ReanimTrackId::None, 0, false, false }, { ReanimTrackId::None, 0, false, false } },
+            /* [7] HELMTYPE_BOBSLED    */ { { ReanimTrackId::None, 0, false, false }, { ReanimTrackId::None, 0, false, false } },
+            /* [8] HELMTYPE_WALLNUT    */ { { ReanimTrackId::anim_face, ReanimOptions::Wallnut::anim_face::WALLNUT_CRACKED1, true, false },
+                                              { ReanimTrackId::anim_face, ReanimOptions::Wallnut::anim_face::WALLNUT_CRACKED2, true, false } },
+            /* [9] HELMTYPE_TALLNUT    */ { { ReanimTrackId::anim_idle, ReanimOptions::Tallnut::anim_idle::TALLNUT_CRACKED1, true, false },
+                                              { ReanimTrackId::anim_idle, ReanimOptions::Tallnut::anim_idle::TALLNUT_CRACKED2, true, false } },
         };
         static_assert(sizeof(kHelmDamageImages) / sizeof(kHelmDamageImages[0]) ==
             (int)HelmType::HELMTYPE_TALLNUT + 1, "kHelmDamageImages 槽位须与 HelmType 枚举尾同步");
@@ -8529,20 +8281,20 @@ int Zombie::TakeHelmDamage(int theDamage, unsigned int theDamageFlags)
         const unsigned aHelmIndex = static_cast<unsigned>(mHelmType);
         const unsigned aDamageSlot = static_cast<unsigned>(aDamageIndexAfterDamage) - 1;
         if (aHelmIndex < sizeof(kHelmDamageImages) / sizeof(kHelmDamageImages[0]) &&
-            aDamageSlot < 2 && kHelmDamageImages[aHelmIndex][aDamageSlot].mImage != nullptr &&
+            aDamageSlot < 2 && kHelmDamageImages[aHelmIndex][aDamageSlot].mTrack != ReanimTrackId::None &&
             (!kHelmDamageImages[aHelmIndex][aDamageSlot].mGuardNullBody || aBodyReanim != nullptr))
         {
             if (kHelmDamageImages[aHelmIndex][aDamageSlot].mUseHeadReanim)
             {
                 Reanimation* aHeadReanim = mApp->ReanimationGet(mSpecialHeadReanimID);
-                aHeadReanim->SetImageOverride(kHelmDamageImages[aHelmIndex][aDamageSlot].mTrack,
-                    *kHelmDamageImages[aHelmIndex][aDamageSlot].mImage);
+                aHeadReanim->SetVariantOption(kHelmDamageImages[aHelmIndex][aDamageSlot].mTrack,
+                    kHelmDamageImages[aHelmIndex][aDamageSlot].mOption);
             }
             else
             {
                 TOD_ASSERT(aBodyReanim);
-                aBodyReanim->SetImageOverride(kHelmDamageImages[aHelmIndex][aDamageSlot].mTrack,
-                    *kHelmDamageImages[aHelmIndex][aDamageSlot].mImage);
+                aBodyReanim->SetVariantOption(kHelmDamageImages[aHelmIndex][aDamageSlot].mTrack,
+                    kHelmDamageImages[aHelmIndex][aDamageSlot].mOption);
             }
         }
     }
@@ -8604,21 +8356,21 @@ void Zombie::TakeBodyDamage(int theDamage, unsigned int theDamageFlags)
         {
             if (lc.mIndexAfterDamage == 1)
             {
-                aBodyReanim->SetImageOverride(ReanimTrackId::Zombie_gargantua_body1, IMAGE_REANIM_ZOMBIE_GARGANTUAR_BODY1_2);
-                aBodyReanim->SetImageOverride(ReanimTrackId::Zombie_gargantuar_outerarm_lower, IMAGE_REANIM_ZOMBIE_GARGANTUAR_OUTERARM_LOWER2);
+                aBodyReanim->SetVariantOption(ReanimTrackId::Zombie_gargantua_body1, ReanimOptions::Zombie_gargantuar::Zombie_gargantua_body1::ZOMBIE_GARGANTUAR_BODY1_2);
+                aBodyReanim->SetVariantOption(ReanimTrackId::Zombie_gargantuar_outerarm_lower, ReanimOptions::Zombie_gargantuar::Zombie_gargantuar_outerarm_lower::ZOMBIE_GARGANTUAR_OUTERARM_LOWER2);
             }
             else if (lc.mIndexAfterDamage == 2)
             {
-                aBodyReanim->SetImageOverride(ReanimTrackId::Zombie_gargantua_body1, IMAGE_REANIM_ZOMBIE_GARGANTUAR_BODY1_3);
-                aBodyReanim->SetImageOverride(ReanimTrackId::Zombie_gargantuar_outerleg_foot, IMAGE_REANIM_ZOMBIE_GARGANTUAR_FOOT2);
-                aBodyReanim->SetImageOverride(ReanimTrackId::Zombie_gargantuar_outerarm_lower, IMAGE_REANIM_ZOMBIE_GARGANTUAR_OUTERARM_LOWER2);
+                aBodyReanim->SetVariantOption(ReanimTrackId::Zombie_gargantua_body1, ReanimOptions::Zombie_gargantuar::Zombie_gargantua_body1::ZOMBIE_GARGANTUAR_BODY1_3);
+                aBodyReanim->SetVariantOption(ReanimTrackId::Zombie_gargantuar_outerleg_foot, ReanimOptions::Zombie_gargantuar::Zombie_gargantuar_outerleg_foot::ZOMBIE_GARGANTUAR_FOOT2);
+                aBodyReanim->SetVariantOption(ReanimTrackId::Zombie_gargantuar_outerarm_lower, ReanimOptions::Zombie_gargantuar::Zombie_gargantuar_outerarm_lower::ZOMBIE_GARGANTUAR_OUTERARM_LOWER2);
                 if (z.mZombieType == ZombieType::ZOMBIE_REDEYE_GARGANTUAR)
                 {
-                    aBodyReanim->SetImageOverride(ReanimTrackId::anim_head1, IMAGE_REANIM_ZOMBIE_GARGANTUAR_HEAD2_REDEYE);
+                    aBodyReanim->SetVariantOption(ReanimTrackId::anim_head1, ReanimOptions::Zombie_gargantuar::anim_head1::ZOMBIE_GARGANTUAR_HEAD2_REDEYE);
                 }
                 else
                 {
-                    aBodyReanim->SetImageOverride(ReanimTrackId::anim_head1, IMAGE_REANIM_ZOMBIE_GARGANTUAR_HEAD2);
+                    aBodyReanim->SetVariantOption(ReanimTrackId::anim_head1, ReanimOptions::Zombie_gargantuar::anim_head1::ZOMBIE_GARGANTUAR_HEAD2);
                 }
             }
         }
@@ -8647,8 +8399,8 @@ void Zombie::TakeBodyDamage(int theDamage, unsigned int theDamageFlags)
 
             if (TestBit(lc.mDamageFlags, (int)DamageFlags::DAMAGE_SPIKE))
             {
-                aBodyReanim->SetImageOverride(ReanimTrackId::Zombie_zamboni_1, IMAGE_REANIM_ZOMBIE_ZAMBONI_1_DAMAGE2);
-                aBodyReanim->SetImageOverride(ReanimTrackId::Zombie_zamboni_2, IMAGE_REANIM_ZOMBIE_ZAMBONI_2_DAMAGE2);
+                aBodyReanim->SetVariantOption(ReanimTrackId::Zombie_zamboni_1, ReanimOptions::Zombie_zamboni::Zombie_zamboni_1::ZOMBIE_ZAMBONI_1_DAMAGE2);
+                aBodyReanim->SetVariantOption(ReanimTrackId::Zombie_zamboni_2, ReanimOptions::Zombie_zamboni::Zombie_zamboni_2::ZOMBIE_ZAMBONI_2_DAMAGE2);
                 z.ZamboniDeath(lc.mDamageFlags);
             }
             else if (z.mBodyHealth <= 0)
@@ -8659,13 +8411,13 @@ void Zombie::TakeBodyDamage(int theDamage, unsigned int theDamageFlags)
             {
                 if (lc.mIndexAfterDamage == 1)
                 {
-                    aBodyReanim->SetImageOverride(ReanimTrackId::Zombie_zamboni_1, IMAGE_REANIM_ZOMBIE_ZAMBONI_1_DAMAGE1);
-                    aBodyReanim->SetImageOverride(ReanimTrackId::Zombie_zamboni_2, IMAGE_REANIM_ZOMBIE_ZAMBONI_2_DAMAGE1);
+                    aBodyReanim->SetVariantOption(ReanimTrackId::Zombie_zamboni_1, ReanimOptions::Zombie_zamboni::Zombie_zamboni_1::ZOMBIE_ZAMBONI_1_DAMAGE1);
+                    aBodyReanim->SetVariantOption(ReanimTrackId::Zombie_zamboni_2, ReanimOptions::Zombie_zamboni::Zombie_zamboni_2::ZOMBIE_ZAMBONI_2_DAMAGE1);
                 }
                 else if (lc.mIndexAfterDamage == 2)
                 {
-                    aBodyReanim->SetImageOverride(ReanimTrackId::Zombie_zamboni_1, IMAGE_REANIM_ZOMBIE_ZAMBONI_1_DAMAGE2);
-                    aBodyReanim->SetImageOverride(ReanimTrackId::Zombie_zamboni_2, IMAGE_REANIM_ZOMBIE_ZAMBONI_2_DAMAGE2);
+                    aBodyReanim->SetVariantOption(ReanimTrackId::Zombie_zamboni_1, ReanimOptions::Zombie_zamboni::Zombie_zamboni_1::ZOMBIE_ZAMBONI_1_DAMAGE2);
+                    aBodyReanim->SetVariantOption(ReanimTrackId::Zombie_zamboni_2, ReanimOptions::Zombie_zamboni::Zombie_zamboni_2::ZOMBIE_ZAMBONI_2_DAMAGE2);
                     z.AddAttachedParticle(27, 72, ParticleEffect::PARTICLE_ZAMBONI_SMOKE);
                 }
             }
@@ -8685,14 +8437,14 @@ void Zombie::TakeBodyDamage(int theDamage, unsigned int theDamageFlags)
             Reanimation* aBodyReanim = z.mApp->ReanimationGet(z.mBodyReanimID);
             if (TestBit(lc.mDamageFlags, (int)DamageFlags::DAMAGE_SPIKE) || z.mBodyHealth <= 0)
             {
-                aBodyReanim->SetImageOverride(ReanimTrackId::Zombie_catapult_siding, IMAGE_REANIM_ZOMBIE_CATAPULT_SIDING_DAMAGE);
+                aBodyReanim->SetVariantOption(ReanimTrackId::Zombie_catapult_siding, ReanimOptions::Zombie_catapult::Zombie_catapult_siding::ZOMBIE_CATAPULT_SIDING_DAMAGE);
                 z.CatapultDeath(lc.mDamageFlags);
             }
             else if (lc.mIndexBeforeDamage != lc.mIndexAfterDamage)
             {
                 if (lc.mIndexAfterDamage == 1)
                 {
-                    aBodyReanim->SetImageOverride(ReanimTrackId::Zombie_catapult_siding, IMAGE_REANIM_ZOMBIE_CATAPULT_SIDING_DAMAGE);
+                    aBodyReanim->SetVariantOption(ReanimTrackId::Zombie_catapult_siding, ReanimOptions::Zombie_catapult::Zombie_catapult_siding::ZOMBIE_CATAPULT_SIDING_DAMAGE);
                 }
                 else if (lc.mIndexAfterDamage == 2)
                 {
@@ -8715,19 +8467,19 @@ void Zombie::TakeBodyDamage(int theDamage, unsigned int theDamageFlags)
             {
                 if (lc.mIndexAfterDamage == 1)
                 {
-                    aBodyReanim->SetImageOverride(ReanimTrackId::Boss_head, IMAGE_REANIM_ZOMBIE_BOSS_HEAD_DAMAGE1);
-                    aBodyReanim->SetImageOverride(ReanimTrackId::Boss_jaw, IMAGE_REANIM_ZOMBIE_BOSS_JAW_DAMAGE1);
-                    aBodyReanim->SetImageOverride(ReanimTrackId::Boss_outerarm_hand, IMAGE_REANIM_ZOMBIE_BOSS_OUTERARM_HAND_DAMAGE1);
-                    aBodyReanim->SetImageOverride(ReanimTrackId::Boss_outerarm_thumb2, IMAGE_REANIM_ZOMBIE_BOSS_OUTERARM_THUMB_DAMAGE1);
-                    aBodyReanim->SetImageOverride(ReanimTrackId::Boss_innerleg_foot, IMAGE_REANIM_ZOMBIE_BOSS_FOOT_DAMAGE1);
+                    aBodyReanim->SetVariantOption(ReanimTrackId::Boss_head, ReanimOptions::Zombie_boss::Boss_head::ZOMBIE_BOSS_HEAD_DAMAGE1);
+                    aBodyReanim->SetVariantOption(ReanimTrackId::Boss_jaw, ReanimOptions::Zombie_boss::Boss_jaw::ZOMBIE_BOSS_JAW_DAMAGE1);
+                    aBodyReanim->SetVariantOption(ReanimTrackId::Boss_outerarm_hand, ReanimOptions::Zombie_boss::Boss_outerarm_hand::ZOMBIE_BOSS_OUTERARM_HAND_DAMAGE1);
+                    aBodyReanim->SetVariantOption(ReanimTrackId::Boss_outerarm_thumb2, ReanimOptions::Zombie_boss::Boss_outerarm_thumb2::ZOMBIE_BOSS_OUTERARM_THUMB_DAMAGE1);
+                    aBodyReanim->SetVariantOption(ReanimTrackId::Boss_innerleg_foot, ReanimOptions::Zombie_boss::Boss_innerleg_foot::ZOMBIE_BOSS_FOOT_DAMAGE1);
                 }
                 else if (lc.mIndexAfterDamage == 2)
                 {
-                    aBodyReanim->SetImageOverride(ReanimTrackId::Boss_head, IMAGE_REANIM_ZOMBIE_BOSS_HEAD_DAMAGE2);
-                    aBodyReanim->SetImageOverride(ReanimTrackId::Boss_jaw, IMAGE_REANIM_ZOMBIE_BOSS_JAW_DAMAGE2);
-                    aBodyReanim->SetImageOverride(ReanimTrackId::Boss_outerarm_hand, IMAGE_REANIM_ZOMBIE_BOSS_OUTERARM_HAND_DAMAGE2);
-                    aBodyReanim->SetImageOverride(ReanimTrackId::Boss_outerarm_thumb2, IMAGE_REANIM_ZOMBIE_BOSS_OUTERARM_THUMB_DAMAGE2);
-                    aBodyReanim->SetImageOverride(ReanimTrackId::Boss_outerleg_foot, IMAGE_REANIM_ZOMBIE_BOSS_FOOT_DAMAGE2);
+                    aBodyReanim->SetVariantOption(ReanimTrackId::Boss_head, ReanimOptions::Zombie_boss::Boss_head::ZOMBIE_BOSS_HEAD_DAMAGE2);
+                    aBodyReanim->SetVariantOption(ReanimTrackId::Boss_jaw, ReanimOptions::Zombie_boss::Boss_jaw::ZOMBIE_BOSS_JAW_DAMAGE2);
+                    aBodyReanim->SetVariantOption(ReanimTrackId::Boss_outerarm_hand, ReanimOptions::Zombie_boss::Boss_outerarm_hand::ZOMBIE_BOSS_OUTERARM_HAND_DAMAGE2);
+                    aBodyReanim->SetVariantOption(ReanimTrackId::Boss_outerarm_thumb2, ReanimOptions::Zombie_boss::Boss_outerarm_thumb2::ZOMBIE_BOSS_OUTERARM_THUMB_DAMAGE2);
+                    aBodyReanim->SetVariantOption(ReanimTrackId::Boss_outerleg_foot, ReanimOptions::Zombie_boss::Boss_outerleg_foot::ZOMBIE_BOSS_FOOT_DAMAGE2);
                     z.ApplyBossSmokeParticles(true);
                 }
             }
@@ -9659,8 +9411,8 @@ void Zombie::ApplyBurn()
         }
         else if ((mZombieType == ZombieType::ZOMBIE_GARGANTUAR || mZombieType == ZombieType::ZOMBIE_REDEYE_GARGANTUAR) && !mHasObject)
         {
-            aCharredReanim->SetImageOverride(ReanimTrackId::impblink, IMAGE_BLANK);
-            aCharredReanim->SetImageOverride(ReanimTrackId::imphead, IMAGE_BLANK);
+            aCharredReanim->SetVariantOption(ReanimTrackId::impblink, ReanimOptions::Zombie_charred_gargantuar::impblink::BLANK);
+            aCharredReanim->SetVariantOption(ReanimTrackId::imphead, ReanimOptions::Zombie_charred_gargantuar::imphead::BLANK);
         }
 
         // GOTY 1073 resets both dancer variants to the unscaled charred-body
@@ -10986,13 +10738,13 @@ void Zombie::BossHeadSpit()
     Reanimation* aBodyReanim = mApp->ReanimationGet(mBodyReanimID);
     if (mIsFireBall)
     {
-        aBodyReanim->SetImageOverride(ReanimTrackId::Boss_eyeglow_red, nullptr);
-        aBodyReanim->SetImageOverride(ReanimTrackId::Boss_mouthglow_red, nullptr);
+        aBodyReanim->SetVariantOption(ReanimTrackId::Boss_eyeglow_red, 0);
+        aBodyReanim->SetVariantOption(ReanimTrackId::Boss_mouthglow_red, 0);
     }
     else
     {
-        aBodyReanim->SetImageOverride(ReanimTrackId::Boss_eyeglow_red, IMAGE_REANIM_ZOMBIE_BOSS_EYEGLOW_BLUE);
-        aBodyReanim->SetImageOverride(ReanimTrackId::Boss_mouthglow_red, IMAGE_REANIM_ZOMBIE_BOSS_MOUTHGLOW_BLUE);
+        aBodyReanim->SetVariantOption(ReanimTrackId::Boss_eyeglow_red, ReanimOptions::Zombie_boss::Boss_eyeglow_red::ZOMBIE_BOSS_EYEGLOW_BLUE);
+        aBodyReanim->SetVariantOption(ReanimTrackId::Boss_mouthglow_red, ReanimOptions::Zombie_boss::Boss_mouthglow_red::ZOMBIE_BOSS_MOUTHGLOW_BLUE);
     }
 
     Reanimation* aHeadReanim = mApp->ReanimationTryToGet(mSpecialHeadReanimID);
@@ -11062,11 +10814,8 @@ void Zombie::BossHeadSpitEffect()
         aBodyReanim->GetCurrentTransform(aTrackIndex, &aTransform);
         float aFlamePosX = mPosX + aTransform.mTransX + 100.0f;
         float aFlamePosY = mPosY + aTransform.mTransY + 50.0f;
-        TodParticleSystem* aParticle = mApp->AddTodParticle(aFlamePosX, aFlamePosY, mRenderOrder + 2, ParticleEffect::PARTICLE_ZOMBIE_BOSS_FIREBALL);
-        if (aParticle)
-        {
-            aParticle->OverrideImage(ParticleEmitterRanges::All, IMAGE_ZOMBIE_BOSS_ICEBALL_PARTICLES);
-        }
+        mApp->AddTodParticle(aFlamePosX, aFlamePosY, mRenderOrder + 2, ParticleEffect::PARTICLE_ZOMBIE_BOSS_FIREBALL,
+            static_cast<std::uint32_t>(ParticleVariants::ZombieBossFireball::ZombieBossIceballBurst));
     }
 
     mApp->PlayFoley(FoleyType::FOLEY_BOSS_BOULDER_ATTACK);
@@ -11678,21 +11427,19 @@ void Zombie::ApplyBossSmokeParticles(bool theEnable)
 
 namespace
 {
-// 秘技贴图表（手工生成）：太阳镜 %4 直下标；胡子 RandRangeInt(0,2) 直下标。
-constexpr Image* const* kFutureSunglasses[4] = {
-    &IMAGE_REANIM_ZOMBIE_HEAD_SUNGLASSES1,
-    &IMAGE_REANIM_ZOMBIE_HEAD_SUNGLASSES2,
-    &IMAGE_REANIM_ZOMBIE_HEAD_SUNGLASSES3,
-    &IMAGE_REANIM_ZOMBIE_HEAD_SUNGLASSES4,
+// 秘技编译期外观选项：太阳镜 %4、胡子 RandRangeInt(0,2) 直下标。
+constexpr std::uint32_t kFutureSunglasses[4] = {
+    ReanimOptions::Zombie::anim_head1::ZOMBIE_HEAD_SUNGLASSES1,
+    ReanimOptions::Zombie::anim_head1::ZOMBIE_HEAD_SUNGLASSES2,
+    ReanimOptions::Zombie::anim_head1::ZOMBIE_HEAD_SUNGLASSES3,
+    ReanimOptions::Zombie::anim_head1::ZOMBIE_HEAD_SUNGLASSES4,
 };
-// Image* const* 形态（IMAGE_ 运行期装载，存变量地址）；槽 0 = nullptr（无样式）
-constexpr Image* const* kMustacheStyles[3] = {
-    nullptr,
-    &IMAGE_REANIM_ZOMBIE_MUSTACHE2,
-    &IMAGE_REANIM_ZOMBIE_MUSTACHE3,
+constexpr std::uint32_t kMustacheStyles[3] = {
+    ReanimOptions::Zombie::Zombie_mustache::Default,
+    ReanimOptions::Zombie::Zombie_mustache::ZOMBIE_MUSTACHE2,
+    ReanimOptions::Zombie::Zombie_mustache::ZOMBIE_MUSTACHE3,
 };
-// IMAGE_* 为运行期装载全局（非 constexpr），图片值锚定不能进 static_assert——
-// 槽位数断言 + 注释行锚（首尾值在上方行内注释）
+static_assert(kMustacheStyles[0] == 0 && kMustacheStyles[1] == 1 && kMustacheStyles[2] == 2);
 static_assert(sizeof(kFutureSunglasses) / sizeof(kFutureSunglasses[0]) == 4, "太阳镜表槽位");
 static_assert(sizeof(kMustacheStyles) / sizeof(kMustacheStyles[0]) == 3, "胡子表槽位");
 }  // namespace
@@ -11716,9 +11463,8 @@ void Zombie::EnableMustache(bool theEnableMustache)
 
         // 0 基随机下标直取（原 RandRangeInt(1,3) 改 0 基，消 -1 偏移；秘技路径
         // 一次性，RNG 流差异不可感知）
-        Image* const* aMustache = kMustacheStyles[RandRangeInt(0, 2)];
-        aBodyReanim->SetImageOverride(ReanimTrackId::Zombie_mustache,
-            aMustache != nullptr ? *aMustache : nullptr);
+        aBodyReanim->SetVariantOption(ReanimTrackId::Zombie_mustache,
+            kMustacheStyles[RandRangeInt(0, 2)]);
     }
     else
     {
@@ -11739,12 +11485,12 @@ void Zombie::EnableFuture(bool theEnableFuture)
     if (theEnableFuture)
     {
         // B 形态 -> 常量表（下方 kFutureSunglasses；%4 值域必在 0..3，default 断言废弃）
-        aBodyReanim->SetImageOverride(ReanimTrackId::anim_head1,
-            *kFutureSunglasses[(unsigned int)mBoard->ZombieGetID(this) % 4]);
+        aBodyReanim->SetVariantOption(ReanimTrackId::anim_head1,
+            kFutureSunglasses[(unsigned int)mBoard->ZombieGetID(this) % 4]);
     }
     else
     {
-        aBodyReanim->SetImageOverride(ReanimTrackId::anim_head1, nullptr);
+        aBodyReanim->SetVariantOption(ReanimTrackId::anim_head1, 0);
     }
 }
 

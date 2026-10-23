@@ -2461,7 +2461,7 @@ void Challenge::DrawBeghouled(Graphics* g)
 		{
 			if (mBeghouledEated[aGridX][aGridY])
 			{
-				g->DrawImageCel(Sexy::IMAGE_CRATER, mBoard->GridToPixelX(aGridX, aGridY) - 8, mBoard->GridToPixelY(aGridX, aGridY) + 40, 1, 0);
+				g->DrawImage(Sexy::IMAGE_CRATER, mBoard->GridToPixelX(aGridX, aGridY) - 8, mBoard->GridToPixelY(aGridX, aGridY) + 40, Rect(90, 0, 90, 61));
 			}
 		}
 	}
@@ -3146,7 +3146,7 @@ void Challenge::DrawWeather(Graphics* g)
 //0x426B90
 void Challenge::DrawRain(Graphics* g)
 {
-	if (mBoard->mCutScene->IsBeforePreloading() || !mApp->mDDInterface->mIs3D)
+	if (mBoard->mCutScene->IsBeforePreloading())
 		return;
 
 	// 1073 00429640: positive board X includes one extra tile to the left.
@@ -3400,7 +3400,10 @@ void Challenge::MoveAPortal()
 	{
 		for (int aGridY = 0; aGridY < 5; aGridY++)
 		{
-			if (GetPortalAt(aGridX, aGridY) == nullptr && aOtherPortal->mGridX != aGridX && aOtherPortal->mGridY != aGridY)
+			// 1073 0x429FC5/0x429FCE: exclude the partner's row and the
+			// relocating portal's old row; all columns 0..9 remain eligible.
+			if (GetPortalAt(aGridX, aGridY) == nullptr &&
+				aOtherPortal->mGridY != aGridY && aPortal->mGridY != aGridY)
 			{
 				TOD_ASSERT(aGridArrayCount < MAX_PICK_GRID_SIZE);
 				aGridArray[aGridArrayCount].mX = aGridX;

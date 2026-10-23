@@ -62,10 +62,10 @@ public:
         int x, int y, int width, int height);
     D3d12Texture* ProcessImage(D3d12Texture* source, const GpuImageProcessing& processing);
     D3d12Texture* ComposeAlphaRaw(D3d12Texture* base, D3d12Texture* alpha,
-        int columns, int rows, uint32_t color, bool colorOnly);
+        uint32_t color, bool colorOnly);
     D3d12Texture* AdoptComposedTexture(D3d12Texture* composed);
     D3d12Texture* ComposeAlpha(D3d12Texture* base, D3d12Texture* alpha,
-        int columns, int rows, uint32_t color, bool colorOnly);
+        uint32_t color, bool colorOnly);
     void RenderFontAtlas(D3d12Texture* target, D3d12Texture* source,
         std::span<const GpuFontGlyph> glyphs, uint32_t samplingFlags, bool forceWhite);
 

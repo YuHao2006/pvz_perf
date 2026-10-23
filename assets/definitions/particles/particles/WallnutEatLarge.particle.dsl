@@ -2,7 +2,7 @@ export component WallnutEatLarge {
     kind: particle;
     source-name: "wallnuteatlarge";
     Emitter {
-        image: "IMAGE_WALLNUTPARTICLESLARGE";
+        images: ["particles/frames/wallnutparticleslarge_r0_c0.png","particles/frames/wallnutparticleslarge_r0_c1.png","particles/frames/wallnutparticleslarge_r0_c2.png","particles/frames/wallnutparticleslarge_r0_c3.png","particles/frames/wallnutparticleslarge_r0_c4.png"];
         imageFrames: 5;
         randomLaunchSpin: 1;
         systemDuration: 200;

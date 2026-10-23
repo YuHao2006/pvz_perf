@@ -1,19 +1,35 @@
-import json, re, os
+"""Reproduce the converter-only historical remap; requires an explicit output."""
+import argparse
+import json
+from pathlib import Path
+import re
 
-final = json.load(open(os.path.join(os.path.dirname(__file__), '_exe_resid_final.json')))
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument("--output", type=Path, required=True,
+                    help="Review this candidate before replacing saveConverter/src/ResourceIdRemap.h")
+args = parser.parse_args()
+root = Path(__file__).resolve().parents[1]
+final = json.loads((root / "tools/_exe_resid_final.json").read_text(encoding="utf-8"))
 assert len(final) == 879, len(final)
 
 # 现代枚举序（= modern id）
-txt = open(os.path.join(os.path.dirname(__file__), '..', 'Resources.h'), encoding='utf-8', errors='replace').read()
-enum_text = open(os.path.join(os.path.dirname(__file__), '..', 'Sexy.TodLib', 'generated', 'ResourceId.h'), encoding='utf-8').read()
+enum_text = (root / "tools/saveConverter/src/FrozenResourceIds.h").read_text(encoding="utf-8")
 i = enum_text.index('enum class ResourceId')
 seg = enum_text[i:enum_text.index('RESOURCE_ID_MAX')]
 names = re.findall(r'\b([A-Z0-9_]+)_ID\s*=\s*\d+\s*,', seg)
 assert len(names) == 879
 
-# Use the actual C++ resource slot types, including the FONT_IMAGE glyph atlas.
-image_names = set(re.findall(r'\bextern\s+Image\s*\*\s*([A-Z0-9_]+)\s*;', txt))
-assert image_names and image_names <= set(names), 'Image* 声明与资源枚举不一致'
+# Read only the frozen historical kind predicate, including the FONT_IMAGE
+# atlas. Live Image* declarations no longer represent retired image slots.
+image_body = enum_text.split("constexpr bool IsImageResourceId", 1)[1].split(
+    "constexpr std::int32_t NormalizeImageAlias", 1)[0]
+image_ranges = re.findall(r"id >= (\w+)_ID && id <= (\w+)_ID", image_body)
+image_singles = re.findall(r"\bid == (\w+)_ID", image_body)
+assert len(image_ranges) == 4 and image_singles == ["FONT_IMAGE_HOUSEOFTERROR28"]
+image_names = set(image_singles)
+for first, last in image_ranges:
+    image_names.update(names[names.index(first):names.index(last) + 1])
+assert image_names <= set(names), 'Frozen image kinds differ from historical enum'
 
 exe_to_modern = [879] * 880
 modern_to_exe = [879] * 880
@@ -51,10 +67,10 @@ hdr = f'''#pragma once
 // 双向校验：6 个存档经验锚点（南瓜 232/手臂 248/梯子 307·308·310/玩偶匣 297）全中。
 // 空间定义：
 //   legacy(.dat)  = 1073 exe 的 ResourceId 序
-//   dat64(规范态) = 本工程 Resources.h 枚举序
+//   dat64 v1/v2(规范态) = 冻结的本工程历史枚举序
 // 879 = RESOURCE_ID_MAX 哨兵（两空间同值，直通不映射）。
 #include <cstdint>
-#include "../Resources.h"
+#include "FrozenResourceIds.h"
 
 namespace LevelSaveRemap {{
 inline constexpr int kResourceCount = 879;      // 0..878
@@ -71,7 +87,7 @@ inline constexpr std::int32_t kModernToExe[kResourceCount + 1] = {{
 }};
 
 // legacy(exe) 空间的"是图像"位图（0..878 资源 + 哨兵 0）。modern 空间沿用
-// Sexy::IsImageResourceId（有 static_assert 对 gResources 兜底）。
+// FrozenSaveResources::IsImageResourceId；不依赖运行时资源或公开图片符号。
 inline constexpr bool kExeIsImage[kResourceCount + 1] = {{
 {fmt_bools(exe_is_image)}
 }};
@@ -115,7 +131,7 @@ constexpr bool HasConsistentImageMask() noexcept
     for (int id = 0; id < kResourceCount; ++id)
     {{
         if (kExeIsImage[id] !=
-                Sexy::IsImageResourceId(static_cast<Sexy::ResourceId>(kExeToModern[id])))
+                FrozenSaveResources::IsImageResourceId(static_cast<FrozenSaveResources::ResourceId>(kExeToModern[id])))
         {{
             return false;
         }}
@@ -123,20 +139,21 @@ constexpr bool HasConsistentImageMask() noexcept
     return true;
 }}
 
-static_assert(kResourceCount == static_cast<int>(Sexy::ResourceId::RESOURCE_ID_MAX));
+static_assert(kResourceCount == static_cast<int>(FrozenSaveResources::ResourceId::RESOURCE_ID_MAX));
 static_assert(kResourceIdSentinel == kResourceCount);
 static_assert(kExeToModern[kResourceIdSentinel] == kResourceIdSentinel &&
     kModernToExe[kResourceIdSentinel] == kResourceIdSentinel);
 static_assert(!kExeIsImage[kResourceIdSentinel] &&
-    !Sexy::IsImageResourceId(Sexy::ResourceId::RESOURCE_ID_MAX));
+    !FrozenSaveResources::IsImageResourceId(FrozenSaveResources::ResourceId::RESOURCE_ID_MAX));
 static_assert(HasBoundedResourceMappings(), "Resource mappings must stay in bounds");
 static_assert(HasBijectiveResourceMappings(), "Resource mappings must be inverses");
-static_assert(HasConsistentImageMask(), "Legacy image mask must match Resources.h");
+static_assert(HasConsistentImageMask(), "Legacy image mask must match frozen historical slot kinds");
 static_assert(kExeIsImage[kModernToExe[
-    static_cast<int>(Sexy::ResourceId::FONT_IMAGE_HOUSEOFTERROR28_ID)]]);
+    static_cast<int>(FrozenSaveResources::ResourceId::FONT_IMAGE_HOUSEOFTERROR28_ID)]]);
 }}  // namespace LevelSaveRemap
 '''
-out = os.path.join(os.path.dirname(__file__), '..', 'dat64', 'ResourceIdRemap.h')
-open(out, 'w', encoding='utf-8', newline='\n').write(hdr)
+out = args.output
+with out.open('x', encoding='utf-8', newline='\n') as target:
+    target.write(hdr)
 print('written', out, len(hdr), 'bytes')
 print('一致项:', sum(1 for n in names if final[n] == names.index(n)), '/879')

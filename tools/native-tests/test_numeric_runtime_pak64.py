@@ -22,8 +22,11 @@ TOOL = Path(__file__).resolve().parents[1] / "build_numeric_runtime_pak64.py"
 SPEC = importlib.util.spec_from_file_location("numeric_pak64", TOOL)
 pak = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(pak)
+_production_source_audit = pak.source_audit
+pak.source_audit = lambda *args, **kwargs: _production_source_audit(
+    *args, **kwargs, legacy_fixture=True)
 COMPILER_SPEC = importlib.util.spec_from_file_location(
-    "numeric_resource_compiler", TOOL.with_name("compile_numeric_resources.py"))
+    "numeric_resource_compiler", Path(__file__).parent / "fixtures/legacy_numeric_resources.py")
 compiler = importlib.util.module_from_spec(COMPILER_SPEC)
 COMPILER_SPEC.loader.exec_module(compiler)
 STAGE_SPEC = importlib.util.spec_from_file_location(
@@ -31,7 +34,7 @@ STAGE_SPEC = importlib.util.spec_from_file_location(
 stager = importlib.util.module_from_spec(STAGE_SPEC)
 with mock.patch.dict(sys.modules, {"build_numeric_runtime_pak64": pak}):
     STAGE_SPEC.loader.exec_module(stager)
-REGISTRIES = {"track": 11, "image": 22, "font": 33, "emitter": 44, "slots": 880,
+REGISTRIES = {"legacy_fixture": True, "track": 11, "image": 22, "font": 33, "emitter": 44, "slots": 880,
               "track_max": 9, "track_capacity": 256, "image_max": 2, "emitter_count": 3,
               "groups": 1, "reanim_types": 146, "attacher_range": [8, 10],
               "resource_kinds": [2] * 20 + [0] + [1] * 858,
@@ -156,6 +159,9 @@ class NonSeekable(io.BytesIO):
 
 class NumericResourceAuthoringTests(unittest.TestCase):
     def setUp(self):
+        imports = mock.patch.dict(sys.modules, {"build_numeric_runtime_pak64": pak})
+        imports.start()
+        self.addCleanup(imports.stop)
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name)
@@ -271,6 +277,133 @@ class NumericResourceAuthoringTests(unittest.TestCase):
         record = pak.Reader(reader.take(reader.word()))
         self.assertEqual(record.unpack("<7I"), (1, 0, 2, 2, 0, compiler.NONE, 0))
         self.assertEqual(record.path(), "data/Font.txt")
+
+    def compact_symbols(self, names):
+        path = self.root / "pvzPerf/Sexy.TodLib/ProgramImageSymbols.h"
+        path.write_text(
+            "enum class ImageSymbolId : std::uint32_t {\n    None = 0,\n"
+            + "".join(f"    {name} = {symbol},\n" for symbol, name in enumerate(names, 1))
+            + "};\n", encoding="utf-8")
+        return path
+
+    def test_compact_symbols_keep_sparse_base_slots_and_dense_supplemental_slots(self):
+        symbols = self.compact_symbols(["IMAGE_ALIAS", "IMAGE_EXTRA"])
+        data, mapping, crc, names = compiler.compile_manifest(
+            self.root, self.encoded(), self.archive_paths, symbols, {"tag-a": 1})
+        self.assertEqual(names, self.names)
+        self.assertEqual(mapping, [compiler.NONE, 6, 879])
+        header = struct.unpack_from("<9I", data)
+        self.assertEqual(header[:7], (compiler.MAGIC, 1, 879, 3, 880, 879, crc))
+        reader = pak.Reader(data[36:])
+        records = [reader.take(reader.word()) for _ in range(header[5])]
+        reader.finish()
+        slots = [struct.unpack_from("<I", record)[0] for record in records]
+        self.assertEqual(slots, list(range(1, 880)))
+        # Old ResourceId 0 is retired; slots 1..878 retain their old identities.
+        # Historical slot 2 remains the explicitly allowed symbol-free image.
+        self.assertEqual(struct.unpack_from("<2I", records[1]), (2, 0))
+        self.assertEqual(struct.unpack_from("<2I", records[5]), (6, 1))
+        self.assertEqual(struct.unpack_from("<2I", records[-1]), (879, 2))
+        self.assertEqual(struct.unpack_from("<7I", records[3]), (4, 0, 1, 2, 4, 1, 0))
+
+        pruned, new_mapping, kinds, removed = compiler.prune_definition_images(data, mapping, set())
+        self.assertEqual(new_mapping, [compiler.NONE, 6, compiler.NONE])
+        self.assertEqual(removed, {2})
+        self.assertEqual(kinds[:7], [3, 2, 0, 1, 2, 2, 0])
+        self.assertEqual(struct.unpack_from("<9I", pruned)[4:6], (879, 878))
+        registries = {**REGISTRIES, "resource_kinds": kinds, "image_max": 2,
+                      "image_slots": new_mapping, "slots": 879, "image": crc, "groups": 29,
+                      "legacy_image_slots": [2]}
+        self.assertEqual(pak.validate_numeric(pak.RESOURCE_PATH, pruned, registries),
+                         {"compiled/fonts/font.compiled"})
+        kept, kept_mapping, _, removed = compiler.prune_definition_images(data, mapping, {2})
+        self.assertEqual(kept, data)
+        self.assertEqual(kept_mapping, mapping)
+        self.assertEqual(removed, set())
+
+        (self.root / "pvzPerf/Resources.h").write_text("#pragma once\n", encoding="utf-8")
+        compiler.emit_headers(self.root, new_mapping, crc, names, kinds)
+        stable = (self.root / "pvzPerf/Sexy.TodLib/generated/ResourceId.h").read_text()
+        for slot, name in enumerate(self.names):
+            self.assertIn(f"{name}_ID = {slot},", stable)
+        bindings = (self.root / "pvzPerf/Sexy.TodLib/generated/NumericResourceBindings.h").read_text()
+        self.assertIn("NUMERIC_RESOURCE_SLOT_COUNT = 879;", bindings)
+        self.assertIn("gImageSymbolResourceSlots[3]", bindings)
+        compiler.emit_headers(self.root, mapping, crc, names)
+        bindings = (self.root / "pvzPerf/Sexy.TodLib/generated/NumericResourceBindings.h").read_text()
+        self.assertIn("NUMERIC_RESOURCE_SLOT_COUNT = 880;", bindings)
+        self.assertIn("    3, 2, 0, 1, 2, 2, 0,", bindings)
+
+    def test_compact_registry_rejects_live_legacy_image_globals_and_resource_ids(self):
+        symbols = self.compact_symbols(["IMAGE_ALIAS", "IMAGE_EXTRA"])
+        source = self.root / "pvzPerf/Consumer.cpp"
+        for expression in ("IMAGE_PRIMARY", "ResourceId::IMAGE_PRIMARY_ID"):
+            with self.subTest(expression=expression):
+                source.write_text(f"auto image = {expression};\n", encoding="utf-8")
+                with self.assertRaisesRegex(ValueError, "Code image absent.*IMAGE_PRIMARY"):
+                    compiler.compile_manifest(
+                        self.root, self.encoded(), self.archive_paths, symbols, {"tag-a": 1})
+        source.write_text("// IMAGE_PRIMARY\n/* ResourceId::IMAGE_PRIMARY_ID */\n"
+                          "auto legacy = ResourceId::IMAGE_LEGACY_ID;\n", encoding="utf-8")
+        compiler.compile_manifest(self.root, self.encoded(), self.archive_paths, symbols, {"tag-a": 1})
+
+    def test_pruning_recompacts_supplemental_slots_without_filling_base_holes(self):
+        symbols = self.compact_symbols(["IMAGE_ALIAS", "IMAGE_PROJECTILE", "IMAGE_EXTRA"])
+        data, mapping, _, _ = compiler.compile_manifest(
+            self.root, self.encoded(), self.archive_paths, symbols, {"tag-a": 1})
+        self.assertEqual(mapping, [compiler.NONE, 6, 879, 880])
+        pruned, mapping, kinds, removed = compiler.prune_definition_images(data, mapping, {3})
+        self.assertEqual(mapping, [compiler.NONE, 6, compiler.NONE, 879])
+        self.assertEqual(removed, {2})
+        self.assertEqual(kinds[0], 3)
+        header = struct.unpack_from("<9I", pruned)
+        self.assertEqual(header[4:6], (880, 879))
+        self.assertEqual(header[7:], (zlib.crc32(pruned[36:]), len(pruned) - 36))
+        reader = pak.Reader(pruned[36:])
+        records = [reader.take(reader.word()) for _ in range(header[5])]
+        reader.finish()
+        self.assertEqual(struct.unpack_from("<2I", records[-1]), (879, 3))
+
+    def test_header_slot_count_handles_no_image_bindings(self):
+        (self.root / "pvzPerf/Resources.h").write_text("#pragma once\n", encoding="utf-8")
+        compiler.emit_headers(self.root, [compiler.NONE], 0, self.names)
+        bindings = (self.root / "pvzPerf/Sexy.TodLib/generated/NumericResourceBindings.h").read_text()
+        self.assertIn("NUMERIC_RESOURCE_SLOT_COUNT = 879;", bindings)
+
+    def test_definition_only_images_path_is_pruned_but_code_and_quickplay_roots_survive(self):
+        self.names[6] = "IMAGE_QUICKPLAY_BACK_BUTTON"
+        enum_path = self.root / "pvzPerf/Sexy.TodLib/generated/ResourceId.h"
+        enum_path.write_text(enum_path.read_text().replace("IMAGE_ALIAS", self.names[6]), encoding="utf-8")
+        for node in self.author["manifest"]["children"][0]["children"]:
+            if node["attrs"].get("id") == "ALIAS":
+                node["attrs"]["id"] = "QUICKPLAY_BACK_BUTTON"
+        symbols = self.compact_symbols(["IMAGE_PRIMARY", self.names[6], "IMAGE_EXTRA"])
+        data, mapping, _, _ = compiler.compile_manifest(
+            self.root, self.encoded(), self.archive_paths, symbols, {"tag-a": 1})
+        self.assertEqual(mapping, [compiler.NONE, 0, 6, 879])
+
+        # PRIMARY and QuickPlay even share the physical images/Actual path:
+        # declaration identity, rather than directory/physical alias, controls
+        # definition ownership. The independent QuickPlay root must survive.
+        pruned, result, kinds, removed = compiler.prune_definition_images(
+            data, mapping, set(), definition_image_symbols={1, 3})
+        self.assertEqual(result, [compiler.NONE, compiler.NONE, 6, compiler.NONE])
+        self.assertEqual(removed, {1, 3})
+        self.assertEqual(kinds[0], 3)
+        self.assertEqual(kinds[6], 0)
+        self.assertEqual(struct.unpack_from("<9I", pruned)[4:6], (879, 878))
+
+        _, result, kinds, removed = compiler.prune_definition_images(
+            data, mapping, {1, 3}, definition_image_symbols={1, 3})
+        self.assertEqual(result, mapping)
+        self.assertEqual(kinds[0], 0)
+        self.assertEqual(removed, set())
+
+        # Existing consumers without source metadata keep the old images/ UI
+        # protection, including the historical PRIMARY descriptor.
+        _, result, _, removed = compiler.prune_definition_images(data, mapping, set())
+        self.assertEqual(result, [compiler.NONE, 0, 6, compiler.NONE])
+        self.assertEqual(removed, {3})
 
     def test_json_rejects_xml_and_has_no_compatibility_parser(self):
         for data in (b"<ResourceManifest/>", b"<?xml version='1.0'?><ResourceManifest/>"):
@@ -467,13 +600,13 @@ class NumericRuntimePak64Tests(unittest.TestCase):
             "Sexy.TodLib/Reanimator.cpp":
                 'DefinitionCompiledPath(gReanimationParamArray[(int)theReanimType].mReanimFileName);\n'
                 'DefinitionOpenCompiledFile(aV5Path.c_str());\n'
-                '0x35544449u; ReanimationTryLoadDefinitionV5(theReanimType, aReanimDef);\n'
+                '0x36544449u; 0x37564152u; ReanimationTryLoadDefinitionV6(theReanimType, aReanimDef);\n'
                 + "".join(f'{{ ReanimationType::Fixture{i}, "reanim\\\\Asset{i:03}.reanim", 0 }},\n'
                           for i in range(146)),
             "Sexy.TodLib/TodParticle.cpp":
-                'DefinitionCompiledPath(theParticleFileName);\n'
+                'DefinitionCompiledPath(params[i].mParticleFileName);\n'
                 'DefinitionOpenCompiledFile(path.c_str());\n'
-                '0x35504449u; TodParticleTryLoadDefinitionV5(theParticleDef, theParticleFileName);\n'
+                '0x36524449u; 0x36564150u; TodParticleTryLoadDefinitionV6(&gParticleDefArray[index], paths[index]);\n'
                 + "".join(f'{{ ParticleEffect::Fixture{i}, "particles\\\\Asset{i:03}.xml" }},\n'
                           for i in range(106)),
             "Sexy.TodLib/TodCommon.cpp": "TodFontSymbolRegistryHash() { return 0x21u; }\n",
@@ -848,6 +981,18 @@ class NumericRuntimePak64Tests(unittest.TestCase):
         self.write(self.stage / "compiled/reanim/Unexpected.compiled", reanim())
         self.assert_rejected("corpus")
 
+    def test_source_audit_allows_particle_suffix_only_in_parent_path_validator(self):
+        path = self.root / "pvzPerf/Sexy.TodLib/TodParticle.cpp"
+        original = path.read_text()
+        self.write(path, original + '\nbool IsCanonicalParticlePath(std::string_view path) {\n'
+                   'constexpr std::string_view prefix = "compiled/particles/", suffix = ".compiled";\n'
+                   'return path.starts_with(prefix) && path.ends_with(suffix);\n}\n')
+        numeric = {name for name in pak.stage_inventory(self.stage) if pak.numeric_kind(name)}
+        pak.source_audit(self.root, {}, numeric)
+        self.write(path, path.read_text() + '\nconst char* legacy = ".compiled";\n')
+        with self.assertRaisesRegex(ValueError, "Legacy compiled suffix"):
+            pak.source_audit(self.root, {}, numeric)
+
     def test_source_audit_blocks_author_reference_and_fallback(self):
         path = self.root / "pvzPerf/Lawn/Fixture.cpp"
         for text in ('p_fopen("properties/resources.xml", "rb");\n',
@@ -890,8 +1035,8 @@ class NumericRuntimePak64Tests(unittest.TestCase):
     def test_old_particle_runtime_route_blocks_new_package(self):
         path = self.root / "pvzPerf/Sexy.TodLib/TodParticle.cpp"
         self.write(path, path.read_text().replace(
-            "DefinitionCompiledPath(theParticleFileName)",
-            'std::string(theParticleFileName) + ".v4.compiled"'))
+            "DefinitionCompiledPath(params[i].mParticleFileName)",
+            'std::string(params[i].mParticleFileName) + ".v4.compiled"'))
         self.assert_rejected("route")
 
     def test_offline_authoring_target_cannot_link_into_runtime(self):

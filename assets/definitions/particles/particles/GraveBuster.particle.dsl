@@ -2,7 +2,7 @@ export component GraveBuster {
     kind: particle;
     source-name: "gravebuster";
     Emitter {
-        image: "IMAGE_ROCKSMALL";
+        images: ["particles/frames/rocksmall_r0_c0.png","particles/frames/rocksmall_r0_c1.png","particles/frames/rocksmall_r0_c2.png","particles/frames/rocksmall_r0_c3.png","particles/frames/rocksmall_r0_c4.png","particles/frames/rocksmall_r0_c5.png","particles/frames/rocksmall_r0_c6.png","particles/frames/rocksmall_r0_c7.png"];
         imageFrames: 8;
         randomLaunchSpin: 1;
         systemDuration: 400;

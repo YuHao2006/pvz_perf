@@ -18,9 +18,14 @@
 #include "widget/Dialog.h"
 #include "widget/WidgetManager.h"
 #include <algorithm>
+#include "Sexy.TodLib/generated/SceneAtlasData.h"
+#include "graphics/AtlasDraw.h"
 
 namespace
 {
+using AchievementSprite = AchievementsAtlas::Sprite;
+static_assert(AchievementsAtlas::IconCount == MAX_ACHIEVEMENTS,
+	"Achievement icons need one authored rectangle per achievement");
 constexpr int kBackgroundExtension = 300;
 constexpr int kBackgroundWidth = BOARD_WIDTH + 2 * kBackgroundExtension;
 const Rect aBackButtonRect = { 120, 35, 130, 80 };
@@ -56,13 +61,15 @@ AchievementsWidget::AchievementsWidget(LawnApp* theApp) {
 	mClip = false;
 	mMouseInsets.mLeft = -kBackgroundExtension;
 	mMouseInsets.mRight = -kBackgroundExtension;
-	mHeight = IMAGE_ACHEESEMENTS_CHINA->mHeight + IMAGE_SELECTORSCREEN_ACHIEVEMENTS_BG->mHeight + 15700;
+	mHeight = AchievementsAtlas::Images[static_cast<unsigned>(AchievementSprite::ACHEESEMENTS_CHINA)].mHeight
+		+ AchievementsAtlas::Images[static_cast<unsigned>(AchievementSprite::SELECTORSCREEN_ACHIEVEMENTS_BG)].mHeight + 15700;
 	mScrollDirection = -1;
 	mScrollValue = 0;
 	mDefaultScrollValue = 30;
 	mScrollDecay = 1;
 	mDidPressMoreButton = false;
-	mMoreRockRect = Rect(710, 470, IMAGE_ACHEESEMENTS_MORE_ROCK->mWidth - 25, IMAGE_ACHEESEMENTS_MORE_ROCK->mHeight - 50);
+	const Rect& aRock=AchievementsAtlas::Images[static_cast<unsigned>(AchievementSprite::ACHEESEMENTS_MORE_ROCK)];
+	mMoreRockRect = Rect(710,470,aRock.mWidth-25,aRock.mHeight-50);
 }
 
 // GOTY @Patoke: 0x4010E0
@@ -92,6 +99,7 @@ void AchievementsWidget::Update() {
 
 // GOTY @Patoke: 0x401160
 void AchievementsWidget::Draw(Graphics* g) {
+	const TextureSource aTexture{AchievementsAtlas::Texture,AchievementsAtlas::Width,AchievementsAtlas::Height};
 	g->ClipRect(-kBackgroundExtension, 0, kBackgroundWidth, mHeight);
 	if (g->mClipRect.mWidth <= 0 || g->mClipRect.mHeight <= 0)
 		return;
@@ -104,23 +112,24 @@ void AchievementsWidget::Draw(Graphics* g) {
 	// Opaque underpaint also covers the original artwork's antialiased edges.
 	g->mColor = Color(55, 37, 19);
 	g->FillRect(-kBackgroundExtension, 0, kBackgroundWidth, mHeight);
-	g->DrawImage(IMAGE_SELECTORSCREEN_ACHIEVEMENTS_BG, -kBackgroundExtension, 0);
+	DrawAtlasImage(g,aTexture,AchievementsAtlas::Images[static_cast<unsigned>(AchievementSprite::SELECTORSCREEN_ACHIEVEMENTS_BG)],-kBackgroundExtension,0);
 
-	int aHeight = IMAGE_SELECTORSCREEN_ACHIEVEMENTS_BG->mHeight;
+	int aHeight = AchievementsAtlas::Images[static_cast<unsigned>(AchievementSprite::SELECTORSCREEN_ACHIEVEMENTS_BG)].mHeight;
 	for (int i = 1; i <= 70; i++)
-		g->DrawImage(IMAGE_ACHEESEMENTS_HOLE_TILE, -kBackgroundExtension, aHeight * i);
+		DrawAtlasImage(g,aTexture,AchievementsAtlas::Images[static_cast<unsigned>(AchievementSprite::ACHEESEMENTS_HOLE_TILE)],-kBackgroundExtension,aHeight*i);
 
-	g->DrawImage(IMAGE_ACHEESEMENTS_BOOKWORM, -kBackgroundExtension, 1125);
-	g->DrawImage(IMAGE_ACHEESEMENTS_BEJEWELED, -kBackgroundExtension, 2250);
-	g->DrawImage(IMAGE_ACHEESEMENTS_CHUZZLE, -kBackgroundExtension, 4500);
-	g->DrawImage(IMAGE_ACHEESEMENTS_PEGGLE, -kBackgroundExtension, 6750);
-	g->DrawImage(IMAGE_ACHEESEMENTS_PIPE, -kBackgroundExtension, 9000);
-	g->DrawImage(IMAGE_ACHEESEMENTS_ZUMA, -kBackgroundExtension, 11250);
+	DrawAtlasImage(g,aTexture,AchievementsAtlas::Images[static_cast<unsigned>(AchievementSprite::ACHEESEMENTS_BOOKWORM)],-kBackgroundExtension,1125);
+	DrawAtlasImage(g,aTexture,AchievementsAtlas::Images[static_cast<unsigned>(AchievementSprite::ACHEESEMENTS_BEJEWELED)],-kBackgroundExtension,2250);
+	DrawAtlasImage(g,aTexture,AchievementsAtlas::Images[static_cast<unsigned>(AchievementSprite::ACHEESEMENTS_CHUZZLE)],-kBackgroundExtension,4500);
+	DrawAtlasImage(g,aTexture,AchievementsAtlas::Images[static_cast<unsigned>(AchievementSprite::ACHEESEMENTS_PEGGLE)],-kBackgroundExtension,6750);
+	DrawAtlasImage(g,aTexture,AchievementsAtlas::Images[static_cast<unsigned>(AchievementSprite::ACHEESEMENTS_PIPE)],-kBackgroundExtension,9000);
+	DrawAtlasImage(g,aTexture,AchievementsAtlas::Images[static_cast<unsigned>(AchievementSprite::ACHEESEMENTS_ZUMA)],-kBackgroundExtension,11250);
 
-	g->DrawImage(IMAGE_ACHEESEMENTS_CHINA, -kBackgroundExtension, mHeight - IMAGE_ACHEESEMENTS_CHINA->mHeight - 50);
+	const Rect& aChina=AchievementsAtlas::Images[static_cast<unsigned>(AchievementSprite::ACHEESEMENTS_CHINA)];
+	DrawAtlasImage(g,aTexture,aChina,-kBackgroundExtension,mHeight-aChina.mHeight-50);
 	
 	if (aBackButtonRect.Contains(aMousePosition))
-		g->DrawImage(IMAGE_ACHEESEMENTS_BACK_HIGHLIGHT, 128, 55);
+		DrawAtlasImage(g,aTexture,AchievementsAtlas::Images[static_cast<unsigned>(AchievementSprite::ACHEESEMENTS_BACK_HIGHLIGHT)],128,55);
 
 	for (int i = 0; i < MAX_ACHIEVEMENTS; i++) {
 		bool aHasAchievement;
@@ -134,13 +143,14 @@ void AchievementsWidget::Draw(Graphics* g) {
 		int aTextYPos = aImageYPos + 16;
 
 		// Achievement images
-		Rect aSrcRect(70 * (i % 7), 70 * (i / 7), 70, 70);
+		const Rect& aIcon=AchievementsAtlas::Icons[i];
+		const Rect aSrcRect(0,0,aIcon.mWidth,aIcon.mHeight);
 		Rect aDestRect(aImageXPos, aImageYPos, 56, 56);
 		
 		g->mColorizeImages = true;
 		g->mColor = aHasAchievement ? Color(255, 255, 255) : Color(255, 255, 255, 32);
 
-		g->DrawImage(IMAGE_ACHEESEMENTS_ICONS, aDestRect, aSrcRect);
+		DrawAtlasImage(g,aTexture,aIcon,aDestRect,aSrcRect);
 		g->mColorizeImages = false;
 		
 		// Achievement titles
@@ -158,14 +168,16 @@ void AchievementsWidget::Draw(Graphics* g) {
 		g->WriteWordWrapped(aPos, gAchievementList[i].description, 12);
 	}
 
-	g->DrawImage(IMAGE_ACHEESEMENTS_MORE_ROCK, 700, 450);
+	DrawAtlasImage(g,aTexture,AchievementsAtlas::Images[static_cast<unsigned>(AchievementSprite::ACHEESEMENTS_MORE_ROCK)],700,450);
 
 	bool aIsHighlight = mMoreRockRect.Contains(aMousePosition);
 	if (mDidPressMoreButton) {
-		g->DrawImage(aIsHighlight ? IMAGE_ACHEESEMENTS_TOP_BUTTON_HIGHLIGHT : IMAGE_ACHEESEMENTS_TOP_BUTTON, 700, 450);
+		const auto aButton=aIsHighlight ? AchievementSprite::ACHEESEMENTS_TOP_BUTTON_HIGHLIGHT : AchievementSprite::ACHEESEMENTS_TOP_BUTTON;
+		DrawAtlasImage(g,aTexture,AchievementsAtlas::Images[static_cast<unsigned>(aButton)],700,450);
 	}
 	else {
-		g->DrawImage(aIsHighlight ? IMAGE_ACHEESEMENTS_MORE_BUTTON_HIGHLIGHT : IMAGE_ACHEESEMENTS_MORE_BUTTON, 700, 450);
+		const auto aButton=aIsHighlight ? AchievementSprite::ACHEESEMENTS_MORE_BUTTON_HIGHLIGHT : AchievementSprite::ACHEESEMENTS_MORE_BUTTON;
+		DrawAtlasImage(g,aTexture,AchievementsAtlas::Images[static_cast<unsigned>(aButton)],700,450);
 	}
 }
 

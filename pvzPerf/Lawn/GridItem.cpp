@@ -12,6 +12,8 @@
 #include "Sexy.TodLib/Reanimator.h"
 #include "Sexy.TodLib/TodParticle.h"
 #include "widget/WidgetManager.h"
+#include "graphics/AtlasDraw.h"
+#include "Sexy.TodLib/generated/SceneAtlasData.h"
 
 using namespace Sexy;
 
@@ -151,8 +153,8 @@ void GridItem::DrawGraveStone(Graphics* g)
     int aGridCelLook = mBoard->mGridCelLook[mGridX][mGridY];
     int aGridCelOffsetX = mBoard->mGridCelOffset[mGridX][mGridY][0];
     int aGridCelOffsetY = mBoard->mGridCelOffset[mGridX][mGridY][1];
-    int aCelWidth = IMAGE_TOMBSTONES->GetCelWidth();
-    int aCelHeight = IMAGE_TOMBSTONES->GetCelHeight();
+    constexpr int aCelWidth = 86;
+    constexpr int aCelHeight = 91;
     int aGraveCol = aGridCelLook % 5;
     int aGraveRow;
     if (mGridY == 0)
@@ -241,7 +243,7 @@ void GridItem::DrawCrater(Graphics* g)
 
     bool fading = mGridItemCounter < 9000;
     Image* aImage = IMAGE_CRATER;
-    int aCelCol = 0;
+    Rect aSource(0, 0, 90, 61);
 
     if (mBoard->IsPoolSquare(mGridX, mGridY))
     {
@@ -253,10 +255,11 @@ void GridItem::DrawCrater(Graphics* g)
         {
             aImage = IMAGE_CRATER_WATER_DAY;
         }
+        aSource = Rect(0, 0, 85, 53);
 
         if (fading)
         {
-            aCelCol = 1;
+            aSource.mX = 85;
         }
 
 		constexpr uint32_t CRATER_WAVE_PERIOD = 200;
@@ -270,24 +273,26 @@ void GridItem::DrawCrater(Graphics* g)
         if (mGridX < 5)
         {
             aImage = IMAGE_CRATER_ROOF_LEFT;
+            aSource = Rect(0, 0, 75, 87);
             aXPos += 16.0f;
             aYPos += -16.0f;
         }
         else
         {
             aImage = IMAGE_CRATER_ROOF_CENTER;
+            aSource = Rect(0, 0, 75, 77);
             aXPos += 18.0f;
             aYPos += -9.0f;
         }
 
         if (fading)
         {
-            aCelCol = 1;
+            aSource.mX = 75;
         }
     }
     else if (mBoard->StageIsNight())
     {
-        aCelCol = 1;
+        aSource.mX = 90;
         if (fading)
         {
             aImage = IMAGE_CRATER_FADING;
@@ -298,7 +303,7 @@ void GridItem::DrawCrater(Graphics* g)
         aImage = IMAGE_CRATER_FADING;
     }
 
-    TodDrawImageCelF(g, aImage, aXPos, aYPos, aCelCol, 0);
+    TodDrawImageRectF(g, aImage, aXPos, aYPos, aSource);
     g->mColorizeImages = false;
 }
 
@@ -310,11 +315,11 @@ void GridItem::DrawScaryPot(Graphics* g)
 
     int aXPos = mBoard->GridToPixelX(mGridX, mGridY) - 5;
     int aYPos = mBoard->GridToPixelY(mGridX, mGridY) - 15;
-    TodDrawImageCelCenterScaledF(g, IMAGE_PLANTSHADOW2, aXPos - 5.0f, aYPos + 72.0f, 0, 1.3f, 1.3f);
+    TodDrawImageRectCenterScaledF(g, IMAGE_PLANTSHADOW2, aXPos - 5.0f, aYPos + 72.0f, Rect(0, 0, IMAGE_PLANTSHADOW2->mWidth, IMAGE_PLANTSHADOW2->mHeight), 1.3f, 1.3f);
 
     if (mTransparentCounter > 0)
     {
-        g->DrawImageCel(IMAGE_SCARY_POT, aXPos, aYPos, aImageCol, 0);
+        g->DrawImage(IMAGE_SCARY_POT, aXPos, aYPos, Rect(aImageCol * 80, 0, 80, 101));
 
         Graphics aInsideGraphics(*g);
         if (mScaryPotType == ScaryPotType::SCARYPOT_SEED)
@@ -377,7 +382,7 @@ void GridItem::DrawScaryPot(Graphics* g)
         g->mColor = Color(255, 255, 255, aAlpha);
     }
 
-    g->DrawImageCel(IMAGE_SCARY_POT, aXPos, aYPos, aImageCol, 1);
+    g->DrawImage(IMAGE_SCARY_POT, aXPos, aYPos, Rect(aImageCol * 80, 101, 80, 101));
     if (mHighlighted)
     {
         g->mDrawMode = Graphics::DRAWMODE_ADDITIVE;
@@ -386,7 +391,7 @@ void GridItem::DrawScaryPot(Graphics* g)
         {
             g->mColor = Color(255, 255, 255, 196);
         }
-        g->DrawImageCel(IMAGE_SCARY_POT, aXPos, aYPos, aImageCol, 1);
+        g->DrawImage(IMAGE_SCARY_POT, aXPos, aYPos, Rect(aImageCol * 80, 101, 80, 101));
         g->mDrawMode = Graphics::DRAWMODE_NORMAL;
     }
 
@@ -398,7 +403,10 @@ void GridItem::DrawLadder(Graphics* g)
 {
     int aXPos = mBoard->GridToPixelX(mGridX, mGridY);
     int aYPos = mBoard->GridToPixelY(mGridX, mGridY);
-    TodDrawImageScaledF(g, IMAGE_REANIM_ZOMBIE_LADDER_5, aXPos + 25.0f, aYPos - 4.0f, 0.8f, 0.8f);
+    const Sexy::TextureSource texture{MagnetAtlas::Texture, MagnetAtlas::Width, MagnetAtlas::Height};
+    Sexy::DrawAtlasImageScaled(g, texture,
+        MagnetAtlas::Images[size_t(MagnetAtlas::Sprite::REANIM_ZOMBIE_LADDER_5)],
+        aXPos + 25.0f, aYPos - 4.0f, 0.8f, 0.8f);
 }
 
 /*

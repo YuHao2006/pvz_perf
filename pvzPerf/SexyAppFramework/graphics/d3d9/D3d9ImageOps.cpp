@@ -33,19 +33,19 @@ unsigned int DivideSigned(unsigned int value, int divisor)
 }
 void D3d9Renderer::Impl::ImagePass(D3d9Texture* target, D3d9Texture* source,
     D3d9Texture* alpha, int operation, const GpuImageProcessing* processing,
-    int columns, int rows, unsigned int color, bool colorOnly)
+    unsigned int color, bool colorOnly)
 {
     Flush();
     D3d9Texture sourceCopy, alphaCopy;
-    if (source->storage == target->storage) {
-        sourceCopy = *source; sourceCopy.storage = Snapshot(source);
+    if (source == target) {
+        Snapshot(sourceCopy, source);
         source = &sourceCopy;
     }
-    if (alpha && alpha->storage == target->storage) {
-        alphaCopy = *alpha; alphaCopy.storage = Snapshot(alpha);
+    if (alpha == target) {
+        Snapshot(alphaCopy, alpha);
         alpha = &alphaCopy;
     }
-    Target(target->storage->surface.value, target->width, target->height);
+    Target(target->surface.value, target->width, target->height);
     Check(device->SetVertexShader(imageVS.value), "Bind D3D9 image vertex shader");
     auto* program = operation == 0 ? copyPS.value : operation == 1 ? colorizePS.value :
         operation == 2 ? composePS.value : operation == 3 ? causticsPS.value : nullptr;
@@ -56,9 +56,8 @@ void D3d9Renderer::Impl::ImagePass(D3d9Texture* target, D3d9Texture* source,
         float(target->width), float(target->height)};
     const auto* mask = alpha ? alpha : source;
     c[S::AlphaRect] = {0, 0, float(mask->width), float(mask->height)};
-    c[S::AlphaTexture] = {1.0f / float(mask->storage->width), 1.0f / float(mask->storage->height), 0, 0};
+    c[S::AlphaTexture] = {1.0f / float(mask->width), 1.0f / float(mask->height), 0, 0};
     c[S::PackedColor] = ColorBytes(color);
-    c[S::Cells] = {float(columns), float(rows), float(target->width / columns), float(target->height / rows)};
     c[S::Modes].z = float(colorOnly);
     if (processing) {
         c[S::TintRed] = TintBytes(processing->red); c[S::TintGreen] = TintBytes(processing->green);
@@ -71,8 +70,8 @@ void D3d9Renderer::Impl::ImagePass(D3d9Texture* target, D3d9Texture* source,
     c[S::CausticOffset0] = CausticOffset(DivideSigned(p0, 10), 0);
     c[S::CausticOffset1] = CausticOffset(0U - DivideSigned(p1, 6), p0 >> 3);
     SetConstants(c);
-    Check(device->SetTexture(S::SourceImage, source->storage->image.value), "Bind D3D9 image source");
-    Check(device->SetTexture(S::AlphaImage, mask->storage->image.value), "Bind D3D9 alpha source");
+    Check(device->SetTexture(S::SourceImage, source->image.value), "Bind D3D9 image source");
+    Check(device->SetTexture(S::AlphaImage, mask->image.value), "Bind D3D9 alpha source");
     Quad(target->width, target->height);
 }
 D3d9Texture* D3d9Renderer::ProcessImage(D3d9Texture* source, const GpuImageProcessing& processing)
@@ -92,10 +91,10 @@ D3d9Texture* D3d9Renderer::CopyTextureRegion(D3d9Texture* source, int x, int y, 
     auto& s = *impl_;
     if (!source || !s.textures.contains(source)) throw std::invalid_argument("D3D9 region copy requires a live source");
     s.Flush();
-    auto* target = s.Allocate(w, h, source->storage->format, true);
+    auto* target = s.Allocate(w, h, source->format, true);
     target->flags = source->flags; target->render = source->render;
     try {
-        s.Target(target->storage->surface.value, w, h);
+        s.Target(target->surface.value, w, h);
         Check(s.device->Clear(0, nullptr, D3DCLEAR_TARGET, 0, 1, 0), "Clear D3D9 region copy");
         const int left = static_cast<int>(std::clamp<long long>(x, 0, source->width));
         const int top = static_cast<int>(std::clamp<long long>(y, 0, source->height));
@@ -104,22 +103,21 @@ D3d9Texture* D3d9Renderer::CopyTextureRegion(D3d9Texture* source, int x, int y, 
         if (right > left && bottom > top) {
             RECT from{left, top, right, bottom};
             RECT to{left - x, top - y, right - x, bottom - y};
-            Check(s.device->StretchRect(source->storage->surface.value, &from, target->storage->surface.value,
+            Check(s.device->StretchRect(source->surface.value, &from, target->surface.value,
                 &to, D3DTEXF_NONE), "Lossless D3D9 region copy");
         }
     } catch (...) { DestroyTexture(target); throw; }
     return target;
 }
 D3d9Texture* D3d9Renderer::ComposeAlphaRaw(D3d9Texture* base, D3d9Texture* alpha,
-    int columns, int rows, unsigned int color, bool colorOnly)
+    unsigned int color, bool colorOnly)
 {
     auto& s = *impl_;
     if (!base || !alpha || !s.textures.contains(base) || !s.textures.contains(alpha) ||
-        columns <= 0 || rows <= 0 || columns > base->width || rows > base->height ||
-        alpha->width < base->width / columns || alpha->height < base->height / rows)
+        alpha->width != base->width || alpha->height != base->height)
         throw std::invalid_argument("Invalid D3D9 alpha composition dimensions");
     auto* target = s.Allocate(base->width, base->height, D3DFMT_A8R8G8B8, false);
-    try { s.ImagePass(target, base, alpha, 2, nullptr, columns, rows, color, colorOnly); }
+    try { s.ImagePass(target, base, alpha, 2, nullptr, color, colorOnly); }
     catch (...) { DestroyTexture(target); throw; }
     return target;
 }
@@ -130,17 +128,16 @@ D3d9Texture* D3d9Renderer::AdoptComposedTexture(D3d9Texture* image)
         throw std::invalid_argument("Only raw D3D9 composition can be adopted");
     s.Register(image);
     for (auto it = s.textures.begin(); it != s.textures.end();) {
-        auto* candidate = it->first;
+        auto* candidate = *it++;
         if (candidate != s.scene && candidate != s.selected && candidate->slot == ~0U)
-            it = s.textures.erase(it);
-        else ++it;
+            s.Retire(candidate);
     }
     return image;
 }
 D3d9Texture* D3d9Renderer::ComposeAlpha(D3d9Texture* base, D3d9Texture* alpha,
-    int columns, int rows, unsigned int color, bool colorOnly)
+    unsigned int color, bool colorOnly)
 {
-    return AdoptComposedTexture(ComposeAlphaRaw(base, alpha, columns, rows, color, colorOnly));
+    return AdoptComposedTexture(ComposeAlphaRaw(base, alpha, color, colorOnly));
 }
 namespace {
 float ExactInteger(long long value)
@@ -219,8 +216,8 @@ void D3d9Renderer::RenderFontAtlas(D3d9Texture* target, D3d9Texture* source,
         throw std::invalid_argument("D3D9 font generation requires live source and float target");
     s.Flush();
     D3d9Texture sourceCopy;
-    if (source->storage == target->storage) {
-        sourceCopy = *source; sourceCopy.storage = s.Snapshot(source);
+    if (source == target) {
+        s.Snapshot(sourceCopy, source);
         source = &sourceCopy;
     }
     // Validate all rectangles before modifying the target.
@@ -232,7 +229,7 @@ void D3d9Renderer::RenderFontAtlas(D3d9Texture* target, D3d9Texture* source,
             static_cast<long long>(glyph.targetX) + glyph.targetWidth > target->width ||
             static_cast<long long>(glyph.targetY) + glyph.targetHeight > target->height)
             throw std::invalid_argument("D3D9 font glyph rectangle exceeds its image");
-    s.Target(target->storage->surface.value, target->width, target->height);
+    s.Target(target->surface.value, target->width, target->height);
     Check(s.device->SetVertexShader(s.imageVS.value), "Bind D3D9 font vertex shader");
     Check(s.device->SetPixelShader(s.fontPS.value), "Bind D3D9 font pixel shader");
     for (const auto& glyph : glyphs) {
@@ -254,7 +251,7 @@ void D3d9Renderer::RenderFontAtlas(D3d9Texture* target, D3d9Texture* source,
         c[S::XRangeTexture] = xr.Extent(); c[S::YRangeTexture] = yr.Extent();
         c[S::XTapTexture] = xt.Extent(); c[S::YTapTexture] = yt.Extent();
         s.SetConstants(c);
-        Check(s.device->SetTexture(S::SourceImage, source->storage->image.value), "Bind D3D9 font source");
+        Check(s.device->SetTexture(S::SourceImage, source->image.value), "Bind D3D9 font source");
         Check(s.device->SetTexture(S::XRanges, xr.image.value), "Bind D3D9 font X ranges");
         Check(s.device->SetTexture(S::YRanges, yr.image.value), "Bind D3D9 font Y ranges");
         Check(s.device->SetTexture(S::XTaps, xt.image.value), "Bind D3D9 font X taps");
@@ -274,7 +271,7 @@ D3d9Texture* D3d9Renderer::CreateCausticsTexture(int w, int h, D3d9Texture* sour
     s.Flush();
     auto* target = s.Allocate(w, h, D3DFMT_A8R8G8B8, true); target->caustic = true;
     try {
-        s.Target(target->storage->surface.value, w, h);
+        s.Target(target->surface.value, w, h);
         Check(s.device->Clear(0, nullptr, D3DCLEAR_TARGET, 0x00ffffff, 1, 0), "Clear D3D9 caustics");
         UseCausticsTexture(target, source);
     } catch (...) { DestroyTexture(target); throw; }
@@ -285,7 +282,7 @@ void D3d9Renderer::UseCausticsTexture(D3d9Texture* output, D3d9Texture* source)
     auto& s = *impl_;
     if (s.open || !output || !source || !s.textures.contains(output) || !s.textures.contains(source) ||
         !output->caustic || output->width != 128 || output->height != 64 ||
-        output->storage->format != D3DFMT_A8R8G8B8 || source->width != 256 || source->height != 256)
+        output->format != D3DFMT_A8R8G8B8 || source->width != 256 || source->height != 256)
         throw std::invalid_argument("Invalid D3D9 caustics source/output");
     s.causticTarget = output; s.causticSource = source; s.causticsQueued = true;
 }
@@ -299,11 +296,10 @@ std::vector<float> D3d9Renderer::ReadTextureFloats(D3d9Texture* image)
     auto& s = *impl_;
     if (s.open) throw std::logic_error("D3D9 diagnostic readback requires a closed scene");
     if (!image || !s.textures.contains(image)) throw std::invalid_argument("Cannot read destroyed D3D9 image");
-    const auto& storage = *image->storage;
     Com<IDirect3DSurface9> staging;
-    Check(s.device->CreateOffscreenPlainSurface(storage.width, storage.height, storage.format,
+    Check(s.device->CreateOffscreenPlainSurface(image->width, image->height, image->format,
         D3DPOOL_SYSTEMMEM, staging.put(), nullptr), "Allocate D3D9 diagnostic readback");
-    Check(s.device->GetRenderTargetData(storage.surface.value, staging.value), "Read D3D9 render texture");
+    Check(s.device->GetRenderTargetData(image->surface.value, staging.value), "Read D3D9 render texture");
     D3DLOCKED_RECT lock{};
     Check(staging->LockRect(&lock, nullptr, D3DLOCK_READONLY), "Lock D3D9 diagnostic readback");
     std::vector<float> result;
@@ -312,7 +308,7 @@ std::vector<float> D3d9Renderer::ReadTextureFloats(D3d9Texture* image)
         for (int y = 0; y < image->height; ++y) {
             const auto* row = static_cast<const unsigned char*>(lock.pBits) + size_t(y) * lock.Pitch;
             auto* destination = result.data() + size_t(y) * image->width * 4;
-            if (storage.format == D3DFMT_A32B32G32R32F)
+            if (image->format == D3DFMT_A32B32G32R32F)
                 std::memcpy(destination, row, size_t(image->width) * 16);
             else for (int x = 0; x < image->width; ++x) {
                 const auto* pixel = row + size_t(x) * 4;

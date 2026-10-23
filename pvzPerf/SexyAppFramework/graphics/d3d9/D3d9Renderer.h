@@ -32,9 +32,9 @@ public:
     void SetRenderImage(D3d9Texture*);
     D3d9Texture* CopyTextureRegion(D3d9Texture*, int, int, int, int);
     D3d9Texture* ProcessImage(D3d9Texture*, const GpuImageProcessing&);
-    D3d9Texture* ComposeAlphaRaw(D3d9Texture*, D3d9Texture*, int, int, unsigned int, bool);
+    D3d9Texture* ComposeAlphaRaw(D3d9Texture*, D3d9Texture*, unsigned int, bool);
     D3d9Texture* AdoptComposedTexture(D3d9Texture*);
-    D3d9Texture* ComposeAlpha(D3d9Texture*, D3d9Texture*, int, int, unsigned int, bool);
+    D3d9Texture* ComposeAlpha(D3d9Texture*, D3d9Texture*, unsigned int, bool);
     void RenderFontAtlas(D3d9Texture*, D3d9Texture*, std::span<const GpuFontGlyph>,
         unsigned int samplingFlags, bool forceWhite);
     void DestroyTexture(D3d9Texture*);

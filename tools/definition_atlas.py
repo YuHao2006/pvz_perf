@@ -75,6 +75,14 @@ def authoring_descriptors(authoring: bytes, files: dict[str, Path],
         if PurePosixPath(normalized).suffix.casefold() in (".png", ".jpg", ".jpeg", ".bmp", ".gif"):
             paths.setdefault(str(PurePosixPath(normalized).with_suffix("")).casefold(), normalized)
     for name in sorted(names - set(declared)):
+        normalized = name.replace("\\", "/")
+        if "/" in normalized:
+            pak.require(not PurePosixPath(normalized).is_absolute() and
+                        ":" not in normalized and
+                        all(part not in ("", ".", "..") for part in normalized.split("/")) and
+                        pak.file_key(normalized) in files, f"Invalid direct author image path: {name}")
+            declared[name] = ImageDescriptor(name, normalized, "", "", 0, 1, 1, 0xFFFFFF)
+            continue
         reanim = name.startswith("IMAGE_REANIM_")
         suffix = (name[len("IMAGE_REANIM_"):] if reanim else
                   name[len("IMAGE_"):] if name.upper().startswith("IMAGE_") else "")
@@ -91,17 +99,35 @@ def authoring_descriptors(authoring: bytes, files: dict[str, Path],
     return declared
 
 
-def descriptors(data: bytes) -> dict[int, ImageDescriptor]:
-    reader = pak.Reader(data[36:])
+def descriptors(data: bytes, image_names: list[str] | None = None, *,
+                legacy_fixture: bool = False) -> dict[int | str, ImageDescriptor]:
+    """Decode NRSC4 load metadata; source grids belong to authoring_descriptors.
+
+    Frozen NRSC2 fixtures require the explicit legacy flag and retain their old
+    offline grid semantics. NRSC3 is an unsupported intermediate format.
+    """
     result = {}
-    while reader.at < len(reader.data):
-        record = pak.Reader(reader.take(reader.word()))
-        _, symbol, _, kind, flags, _, _ = record.unpack("<7I")
-        path, alpha, grid, _ = (record.path() for _ in range(4))
+    if not legacy_fixture:
+        pak.require(image_names is not None, "NRSC4 descriptors require named image targets")
+    names = iter(image_names or ())
+    for _, _, fields, paths, tail in pak.resource_records(data, legacy_fixture=legacy_fixture):
+        if legacy_fixture:
+            kind, symbol, flags, _, _ = fields
+        else:
+            kind, flags, _, _ = fields
+            symbol = next(names, None) if kind == 0 else None
+            pak.require(kind != 0 or symbol is not None, "Incomplete named image targets")
+        path, alpha, grid, _ = paths
         if kind == 0 and symbol:
-            rows, cols, color = record.unpack("<iiI")
+            record = pak.Reader(tail)
+            if legacy_fixture:
+                rows, cols, color = record.unpack("<iiI")
+            else:
+                rows, cols, color = 1, 1, record.word()
+                record.finish()
             result[symbol] = ImageDescriptor(symbol, path, alpha, grid, flags,
                                              rows, cols, color)
+    pak.require(legacy_fixture or next(names, None) is None, "Extra named image targets")
     return result
 
 
@@ -126,16 +152,23 @@ def image_offsets(kind: str, payload: bytes) -> list[int]:
                     reader.take(reader.word())
     else:
         magic, _, _, count, body_bytes = reader.unpack("<5I")
-        pak.require(kind == "particles" and magic == 0x35504449,
-                    "Expected IDP5 compiler payload")
+        pak.require(kind == "particles" and magic in (0x35504449, 0x34524449),
+                    "Expected particle compiler payload")
         end = reader.at + body_bytes
 
         def track() -> None:
             reader.take(reader.word() * 20)
 
         for _ in range(count):
-            offsets.append(reader.at)
-            reader.take(28)
+            if magic == 0x34524449:
+                for _ in range(reader.count(4, 100000)):
+                    offsets.append(reader.at)
+                    pak.require(reader.word() != 0, "Null particle frame image handle")
+                reader.take(16)
+            else:
+                offsets.append(reader.at)
+                reader.take(4)
+                reader.take(24)
             for _ in range(22):
                 track()
             for _ in range(2):
@@ -313,6 +346,144 @@ def pack(images: list[Image.Image], padding: int = 2, *, compiler: Path | None =
     return atlas, positions
 
 
+def compile_reanim_variants(name: str, data: bytes, metadata: dict, variants: list[dict],
+                           source_names: dict[int, str], descriptors: dict,
+                           actions: dict | None = None) -> tuple[bytes, dict]:
+    """Share behavior once; appearance metadata owns only texture geometry."""
+    cookie, size, crc = struct.unpack_from("<3I", data)
+    pak.require(cookie == 0xDEADFED7 and size == len(data) - 12 and
+                zlib.crc32(data[12:]) == crc, "Invalid reanim source envelope")
+    reader = pak.Reader(data[12:])
+    magic, track_hash, image_hash, font_hash, fps, track_count = reader.unpack("<4IfI")
+    pak.require(magic == 0x35544449 and image_hash == 0 and
+                track_count == len(metadata["tracks"]), "Invalid reanim variant root")
+    tracks = []
+    for _ in range(track_count):
+        track_id, frames, stride, mode = reader.unpack("<4I")
+        pak.require(stride == 32 and mode <= 1, "Invalid reanim variant track")
+        values = reader.take(frames * 32)
+        tracks.append((track_id, frames, mode, values))
+    phase1_end = reader.at
+    body_parts = [struct.pack("<I", 0x36544449), data[16:12 + phase1_end]]
+    slot_keys, slot_map = [None], {}
+    for t, (_, frames, mode, values) in enumerate(tracks):
+        previous, previous_cel = "", 0.0
+        originals = metadata["variants"][0]["images"][t]
+        for f in range(frames):
+            handle = reader.word()
+            if handle:
+                pak.require(handle in source_names, "Unknown reanim source image")
+                previous = source_names[handle]
+            cel = struct.unpack_from("<f", values, f * 32 + 24)[0]
+            if cel == -10000.0:
+                cel = previous_cel
+            previous_cel = cel
+            slot = 0
+            if previous:
+                descriptor = descriptors[previous]
+                rounded = int(cel + 0.5 if cel > 0 else cel - 0.5)
+                # Reanimations wrap horizontal columns; rows affect cel height
+                # but do not change the selected row.
+                cell = 0 if rounded < 0 else rounded % descriptor.cols
+                key = (t, previous, cell)
+                if key not in slot_map:
+                    slot_map[key] = len(slot_keys)
+                    pak.require(previous in originals, "Root image missing from author slot table")
+                    slot_keys.append((t, originals.index(previous), previous, cell))
+                slot = slot_map[key]
+            body_parts.append(struct.pack("<I", slot))
+            body_parts.append(reader.take(4))  # Font ID is shared behavior.
+            if mode:
+                text = reader.take(reader.word())
+                body_parts.append(struct.pack("<I", len(text)) + text)
+    body_parts.append(reader.take(len(reader.data) - reader.at))
+    variant_names = [row["name"] for row in metadata["variants"]]
+    pak.require(len(variants) == len(variant_names) and
+                len(set(variant_names)) == len(variant_names), "Invalid reanim variant rows")
+    track_ids = {track: tracks[i][0] for i, track in enumerate(metadata["tracks"])}
+    action_rows, transitions = [], []
+    if actions:
+        author_actions = actions["actions"]
+        order = sorted(range(len(author_actions)),
+                       key=lambda i: (track_ids[author_actions[i]["track"]], author_actions[i]["option"]))
+        action_rows = [(track_ids[author_actions[i]["track"]], author_actions[i]["option"]) for i in order]
+        pak.require(set(actions["transitions"]) == set(variant_names), "Incomplete reanim transition rows")
+        indices = {value: index for index, value in enumerate(variant_names)}
+        for variant in variant_names:
+            targets = actions["transitions"][variant]
+            pak.require(len(targets) == len(order), "Incomplete reanim transition actions")
+            transitions.extend(indices[targets[i]] for i in order)
+    rectangles, dimensions = [], []
+    for v, row in enumerate(variants):
+        regions = dict(zip(row["symbols"], row["layout"]["regions"]))
+        images = metadata["variants"][v]["images"]
+        has_images = any(label is not None for track in images for label in track)
+        dimensions.append((row["layout"]["width"], row["layout"]["height"]) if has_images else (0, 0))
+        rectangles.append((0, 0, 0, 0))
+        for t, author_slot, original, cell in slot_keys[1:]:
+            replacement = images[t][author_slot]
+            if replacement is None:
+                rectangles.append((0, 0, 0, 0))
+                continue
+            x, y, w, h = regions[replacement]
+            if replacement == original:
+                descriptor = descriptors[original]
+                cw, ch = w // descriptor.cols, h // descriptor.rows
+                x, y = x + cell % descriptor.cols * cw, y + cell // descriptor.cols * ch
+                w, h = cw, ch
+            rectangles.append((x, y, w, h))
+    prefix = struct.pack("<3I", len(variants), len(slot_keys), len(action_rows))
+    prefix += b"".join(struct.pack("<2I", *value) for value in dimensions + action_rows)
+    prefix += b"".join(struct.pack("<I", target) for target in transitions)
+    prefix += b"".join(struct.pack("<4i", *rect) for rect in rectangles)
+    behavior = b"".join(body_parts)
+    payload = struct.pack("<2I", 0x37564152, len(behavior)) + behavior + prefix
+    output = struct.pack("<3I", 0xDEADFEDB, len(payload), zlib.crc32(payload)) + payload
+    return output, {"variant_count": len(variants), "slot_count": len(slot_keys),
+                    "action_count": len(action_rows), "variant_names": variant_names}
+
+
+def compile_particle_variants(name: str, data: bytes, rows: list[dict]) -> tuple[bytes, dict]:
+    """Retain one particle behavior followed by the complete appearance table."""
+    atlas = pak.parse_definition_atlas(name, data)
+    pak.require(atlas is not None and "frame_counts" in atlas and atlas.get("parent") is None,
+                "Particle appearance root requires expanded IDR5")
+    source = pak.Reader(data[24:])
+    magic, total, emitter_hash, count, body_size = source.unpack("<5I")
+    pak.require(magic == 0x35524449, "Particle appearance root requires IDR5")
+    end = source.at + body_size
+    parts, offset = [], 0
+    for frames in atlas["frame_counts"]:
+        pak.require(source.word() == frames, "Particle emitter frame count differs")
+        source.take(frames * 16)
+        start = source.at
+        source.take(16)
+        for _ in range(22):
+            source.take(source.count(20, 100000) * 20)
+        for _ in range(2):
+            for _ in range(source.count(12, 4)):
+                source.take(4)
+                for _ in range(2):
+                    source.take(source.count(20, 100000) * 20)
+        for _ in range(16):
+            source.take(source.count(20, 100000) * 20)
+        parts.append(struct.pack("<2I", offset, frames) + source.data[start:source.at])
+        offset += frames
+    pak.require(source.at == end and offset == total, "Particle root behavior size differs")
+    body = b"".join(parts)
+    behavior = (struct.pack("<5I", 0x36524449, total, emitter_hash, count, len(body)) + body
+                + source.take(len(source.data) - source.at))
+    appearance = struct.pack("<2I", len(rows), total)
+    appearance += b"".join(struct.pack("<2I", row["width"], row["height"]) for row in rows)
+    for row in rows:
+        pak.require(row["frame_counts"] == atlas["frame_counts"] and
+                    len(row["rectangles"]) == total, "Particle appearance frame counts differ")
+        appearance += b"".join(struct.pack("<4i", *rect) for rect in row["rectangles"])
+    payload = struct.pack("<2I", 0x36564150, len(behavior)) + behavior + appearance
+    return (struct.pack("<3I", 0xDEADFEDC, len(payload), zlib.crc32(payload)) + payload,
+            {"variant_count": len(rows), "slot_count": total})
+
+
 def compile_definition(name: str, data: bytes, source_images: dict[int | str, ImageDescriptor],
                        files: dict[str, Path], *, layout: dict | None = None,
                        atlas_symbols: list[int | str] | None = None, atlas_path: str = "",
@@ -354,7 +525,9 @@ def compile_definition(name: str, data: bytes, source_images: dict[int | str, Im
                        source_images[symbol].cols) for symbol in symbols}
     for row in image_rows:
         row["region"] = inline[row["source" if source_names is not None else "symbol"]]
-    if kind == "particles":
+    explicit_frames = kind == "particles" and struct.unpack_from("<I", body)[0] == 0x34524449
+    frame_rows = []
+    if kind == "particles" and not explicit_frames:
         original_body_size = struct.unpack_from("<I", body, 16)[0]
         struct.pack_into("<I", body, 16, original_body_size + 20 * len(offsets))
     # Copy the body once. Inserting 20 extra bytes into the bytearray for every
@@ -365,10 +538,24 @@ def compile_definition(name: str, data: bytes, source_images: dict[int | str, Im
     parts, previous = [], 0
     for offset in offsets:
         handle = struct.unpack_from("<I", body, offset)[0]
-        parts.extend((body[previous:offset], rectangles[handle]))
-        previous = offset + 4
+        if explicit_frames:
+            label = labels[handle]
+            final = region_by_symbol[label]
+            _, _, w, h = final
+            frame_rows.append({"source": label, "source_rect": (0, 0, w, h), "atlas_rect": final})
+            parts.extend((body[previous:offset], struct.pack("<4i", *final)))
+            previous = offset + 4
+        else:
+            parts.extend((body[previous:offset], rectangles[handle]))
+            previous = offset + 4
     parts.append(body[previous:])
     body = b"".join(parts)
+    if explicit_frames:
+        body = bytearray(body)
+        struct.pack_into("<I", body, 0, 0x35524449)
+        struct.pack_into("<I", body, 4, len(offsets))
+        struct.pack_into("<I", body, 16, struct.unpack_from("<I", body, 16)[0] + 12 * len(offsets))
+        body = bytes(body)
     atlas = None
     if emit_png and packed_symbols:
         packed_images = (images if packed_symbols == symbols else
@@ -394,4 +581,5 @@ def compile_definition(name: str, data: bytes, source_images: dict[int | str, Im
                                                         for image in images),
                          "source_rgba_bytes": sum(row["rgba_bytes"] for row in image_rows),
                          "region_count": len(regions), "images": image_rows,
+                         "frames": frame_rows,
                          "source_files": sorted(used)}

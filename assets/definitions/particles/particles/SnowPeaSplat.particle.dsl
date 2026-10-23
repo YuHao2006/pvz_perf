@@ -2,7 +2,7 @@ export component SnowPeaSplat {
     kind: particle;
     source-name: "snowpeasplat";
     Emitter {
-        image: "IMAGE_SNOWPEA_SPLATS";
+        images: ["particles/frames/snowpea_splats_r0_c0.png","particles/frames/snowpea_splats_r0_c1.png","particles/frames/snowpea_splats_r0_c2.png","particles/frames/snowpea_splats_r0_c3.png"];
         imageFrames: 4;
         emitterType: Circle;
         randomLaunchSpin: 1;
@@ -15,7 +15,7 @@ export component SnowPeaSplat {
         particleScale: track { [.4 .6] [.8 1.2]; }
     }
     Emitter {
-        image: "IMAGE_SNOWPEA_PARTICLES";
+        images: ["particles/frames/snowpea_particles_r0_c0.png","particles/frames/snowpea_particles_r0_c1.png","particles/frames/snowpea_particles_r0_c2.png"];
         imageFrames: 2;
         emitterType: Circle;
         randomLaunchSpin: 1;

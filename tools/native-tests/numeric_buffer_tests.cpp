@@ -1,12 +1,11 @@
 #include "SexyAppFramework/misc/Buffer.h"
-#include "Sexy.TodLib/DefinitionCacheReader.h"
 #include <array>
 #include <bit>
 #include <cstdio>
 #include <limits>
 
 namespace {
-unsigned checks=0,wires=0,blocks=0,utf8=0,views=0;
+unsigned checks=0,wires=0,blocks=0,utf8=0;
 class ProbeError final : public std::exception {};
 void Check(bool ok) {
     ++checks;
@@ -85,21 +84,10 @@ void Utf8Reads() {
         Check(buffer.UTF8ToWideString()==std::wstring(1,wchar_t(value)));++utf8;
     }
 }
-void BoundedViews() {
-    const std::array<std::uint8_t,64> payload{};
-    for(size_t size=0;size<=payload.size();++size)for(size_t prefix=0;prefix<=size;++prefix)for(size_t tail=0;tail<67;++tail) {
-        DefinitionCacheReader reader(payload.data(),size);
-        Check(reader.Take(prefix)==reinterpret_cast<const char*>(payload.data()));
-        const auto* result=reader.Take(tail);
-        if(tail<=size-prefix)Check(result&&reader.mPosition==prefix+tail&&reader.mError==DefinitionReadFailure::None);
-        else Check(!result&&reader.mPosition==prefix&&reader.mError==DefinitionReadFailure::PayloadBounds);
-        ++views;
-    }
-}
 }
 int main() {
-    try {BitWires();BlockReads();Utf8Reads();BoundedViews();}
+    try {BitWires();BlockReads();Utf8Reads();}
     catch(...) {std::fprintf(stderr,"%u\n",checks);return 1;}
-    std::printf("%u %u %u %u %u\n",wires,blocks,utf8,views,checks);
+    std::printf("%u %u %u %u\n",wires,blocks,utf8,checks);
     return 0;
 }

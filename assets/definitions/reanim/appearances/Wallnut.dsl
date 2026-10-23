@@ -1,0 +1,3 @@
+// Generated complete combinations. Edit generate_reanim_appearances.py and regenerate.
+export component Wallnut_V00000001 { variant-of: Wallnut; images: [[], [], ["IMAGE_REANIM_WALLNUT_CRACKED1"], ["IMAGE_REANIM_WALLNUT_TWITCH"], ["IMAGE_REANIM_WALLNUT_BLINK1", "IMAGE_REANIM_WALLNUT_BLINK2"], ["IMAGE_REANIM_WALLNUT_BLINK1", "IMAGE_REANIM_WALLNUT_BLINK2"]]; }
+export component Wallnut_V00000002 { variant-of: Wallnut; images: [[], [], ["IMAGE_REANIM_WALLNUT_CRACKED2"], ["IMAGE_REANIM_WALLNUT_TWITCH"], ["IMAGE_REANIM_WALLNUT_BLINK1", "IMAGE_REANIM_WALLNUT_BLINK2"], ["IMAGE_REANIM_WALLNUT_BLINK1", "IMAGE_REANIM_WALLNUT_BLINK2"]]; }

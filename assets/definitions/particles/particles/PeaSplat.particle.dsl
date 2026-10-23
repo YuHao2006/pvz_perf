@@ -2,7 +2,7 @@ export component PeaSplat {
     kind: particle;
     source-name: "peasplat";
     Emitter {
-        image: "IMAGE_PEA_SPLATS";
+        images: ["particles/frames/pea_splats_r0_c0.png","particles/frames/pea_splats_r0_c1.png","particles/frames/pea_splats_r0_c2.png","particles/frames/pea_splats_r0_c3.png"];
         name: "PeaSplat";
         imageFrames: 4;
         emitterType: Circle;
@@ -16,7 +16,7 @@ export component PeaSplat {
         particleScale: track { [.4 .6] [.8 1.2]; }
     }
     Emitter {
-        image: "IMAGE_PEA_PARTICLES";
+        images: ["particles/frames/pea_particles_r0_c0.png","particles/frames/pea_particles_r0_c1.png","particles/frames/pea_particles_r0_c2.png"];
         name: "PeaSplatBits";
         imageFrames: 3;
         emitterType: Circle;

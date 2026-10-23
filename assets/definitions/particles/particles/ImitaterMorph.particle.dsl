@@ -2,7 +2,7 @@ export component ImitaterMorph {
     kind: particle;
     source-name: "imitatermorph";
     Emitter {
-        image: "IMAGE_IMITATERCLOUDS";
+        images: ["particles/frames/imitaterclouds_r0_c0.png","particles/frames/imitaterclouds_r0_c1.png"];
         name: "ImitaterClouds";
         imageFrames: 2;
         animated: 1;
@@ -14,7 +14,7 @@ export component ImitaterMorph {
         particleScale: track { .3 1.2; }
     }
     Emitter {
-        image: "IMAGE_IMITATERPUFFS";
+        images: ["particles/frames/imitaterpuffs_r0_c0.png","particles/frames/imitaterpuffs_r0_c1.png","particles/frames/imitaterpuffs_r0_c2.png","particles/frames/imitaterpuffs_r0_c3.png","particles/frames/imitaterpuffs_r0_c4.png","particles/frames/imitaterpuffs_r0_c5.png","particles/frames/imitaterpuffs_r0_c6.png","particles/frames/imitaterpuffs_r0_c7.png"];
         name: "ImitaterPuffs";
         imageFrames: 8;
         emitterType: Circle;

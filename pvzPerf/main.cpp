@@ -73,7 +73,6 @@ int main(int argc, char** argv)
 	gTodStringFormats = gLawnStringFormats;
 	gTodStringFormatCount = gLawnStringFormatCount;
 	gAppCloseRequest = LawnGetCloseRequest;
-	gExtractResourcesByGroup = Sexy::ExtractResourcesByGroup;
 	gLawnApp = new LawnApp();
 	gLawnApp->mChangeDirTo = SelectRuntimeRoot(gLawnApp->mChangeDirTo);
 
@@ -97,8 +96,8 @@ int main(int argc, char** argv)
         return 0;
     } catch (const ResourceManagerException& exception) {
         const auto& error=exception.error;
-		const auto message=StrFormat("Resource loading failed.\nError code: %u\nResource slot: %u\nValue: %u\nByte offset: %zu",
-			static_cast<unsigned>(error.reason),error.slot,error.value,error.offset);
+		const auto message=StrFormat("Resource loading failed.\nError code: %u\nPlan record: %u\nValue: %u\nByte offset: %zu",
+			static_cast<unsigned>(error.reason),error.record,error.value,error.offset);
 		WriteFatalLog(message.c_str());
 #ifdef _WIN32
         MessageBoxA(nullptr,message.c_str(),"pvz_perf - Fatal error",MB_OK|MB_ICONERROR);

@@ -1,5 +1,6 @@
 """Pixel and reference invariants for the offline definition atlas conversion."""
 from pathlib import Path
+import importlib.util
 import io
 import json
 import os
@@ -16,8 +17,8 @@ from PIL import Image
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import definition_atlas as atlas
 import build_numeric_runtime_pak64 as pak
-import compile_numeric_resources as resources
 import test_numeric_runtime_pak64 as fixtures
+resources = fixtures.compiler  # Frozen NRSC1 pruning cases below are historical fixtures.
 
 
 def envelope(cookie, payload):
@@ -32,7 +33,125 @@ def reanim(images):
     return envelope(0xDEADFED7, body + struct.pack("<I", 0))
 
 
+def particle_images(emitters):
+    body = b""
+    for frames in emitters:
+        body += struct.pack("<I", len(frames))
+        body += b"".join(struct.pack("<I", handle) for handle in frames)
+        body += struct.pack("<4I", 1, 0, 0, 0) + bytes(40 * 4)
+    payload = struct.pack("<5I", 0x34524449, 0, 44, len(emitters), len(body)) + body
+    payload += struct.pack("<2I", 0x33544449, len(emitters))
+    payload += struct.pack(f"<{len(emitters)}I", *([0xFFFFFFFF] * len(emitters)))
+    payload += struct.pack("<2I", 0x35544449, len(emitters))
+    payload += bytes(4 * len(emitters))
+    return envelope(0xDEADFED8, payload)
+
+
 class DefinitionAtlasTests(unittest.TestCase):
+    def test_explicit_images_preserve_duplicate_order_mixed_sequences_and_source_pixels(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            files, descriptors, images = {}, {}, {}
+            for handle, size in ((2, (3, 7)), (3, (8, 3)), (4, (11, 5))):
+                path = Path(temporary) / f"{handle}.png"
+                images[handle] = Image.new("RGBA", size, (handle * 7, 19, 23, 97))
+                images[handle].save(path)
+                files[f"x/{handle}.png"] = path
+                descriptors[handle] = atlas.ImageDescriptor(handle, f"x/{handle}", "", "", 0, 1, 1, 0xFFFFFF)
+            sequence = [2, 3, 3, 2, 4]
+            original = particle_images([sequence[:4], sequence[4:], []])
+            offsets = atlas.image_offsets("particles", original[12:])
+            self.assertEqual([struct.unpack_from("<I", original, 12 + o)[0] for o in offsets], sequence)
+            data, png, report = atlas.compile_definition("compiled/particles/explicit.compiled", original,
+                                                        descriptors, files)
+            self.assertEqual(struct.unpack_from("<I", data, 24)[0], 0x35524449)
+            parsed = pak.parse_definition_atlas("compiled/particles/explicit.compiled", data)
+            self.assertEqual(parsed["regions"], [])
+            self.assertEqual(parsed["image_fields"], [])
+            blocks = {row["symbol"]: tuple(row["region"][:4]) for row in report["images"]}
+            self.assertEqual(parsed["frame_fields4I"],
+                             [blocks[handle] for handle in sequence])
+            self.assertEqual(len(report["images"]), 3)
+            self.assertEqual(len(report["frames"]), 5)
+            self.assertIsNotNone(png)
+            with Image.open(io.BytesIO(png)) as packed:
+                for handle, (x, y, w, h) in blocks.items():
+                    self.assertEqual(packed.crop((x, y, x + w, y + h)).tobytes(), images[handle].tobytes())
+            pak.validate_numeric("compiled/particles/explicit.compiled", data, fixtures.REGISTRIES)
+            root_name = "compiled/particles/explicit.compiled"
+            rows = [{"width": parsed["width"], "height": parsed["height"],
+                     "frame_counts": parsed["frame_counts"], "rectangles": parsed["frame_fields4I"]},
+                    {"width": 0, "height": 0, "frame_counts": parsed["frame_counts"],
+                     "rectangles": [(0, 0, 0, 0)] * 5}]
+            combined, summary = atlas.compile_particle_variants(root_name, data, rows)
+            appearance = pak.parse_definition_atlas(root_name, combined)
+            self.assertEqual(struct.unpack_from("<I", combined)[0], 0xDEADFEDC)
+            self.assertEqual(struct.unpack_from("<I", combined, 12)[0], 0x36564150)
+            self.assertEqual(struct.unpack_from("<I", combined, 20)[0], 0x36524449)
+            self.assertEqual(appearance["appearance_offset"], 20 + appearance["behavior_bytes"])
+            self.assertEqual(appearance["slot_offsets"], [0, 4, 5])
+            self.assertEqual(appearance["frame_counts"], [4, 1, 0])
+            self.assertEqual(appearance["variant_rectangles"][0], parsed["frame_fields4I"])
+            self.assertEqual(appearance["variant_rectangles"][1], [(0, 0, 0, 0)] * 5)
+            self.assertEqual(summary, {"variant_count": 2, "slot_count": 5})
+            pak.validate_numeric(root_name, combined, fixtures.REGISTRIES)
+            for offset, value in ((16, 1), (40, 1), (44, 3),
+                                  (appearance["appearance_offset"] + 4, 6),
+                                  (appearance["variant_rectangle_offsets"][0][0], -1)):
+                changed = bytearray(combined)
+                struct.pack_into("<i", changed, offset, value)
+                with self.subTest(v6_offset=offset), self.assertRaises(ValueError):
+                    pak.validate_numeric(root_name, envelope(0xDEADFEDC, changed[12:]), fixtures.REGISTRIES)
+            with self.assertRaisesRegex(ValueError, "v6 envelope"):
+                pak.parse_definition_atlas(root_name, envelope(0xDEADFEDA, combined[12:]))
+            collected = set()
+            pak.validate_numeric("compiled/particles/explicit.compiled", original, fixtures.REGISTRIES,
+                                 image_ids=collected)
+            self.assertEqual(collected, {2, 3, 4})
+            for offset, value in ((parsed["frame_offsets"][0], -1),
+                                  (parsed["frame_offsets"][0] + 8, 0),
+                                  (parsed["frame_offsets"][0] + 8, 0x7FFFFFFF),
+                                  (28, 6),
+                                  (44, 100000)):
+                changed = bytearray(data)
+                struct.pack_into("<i", changed, offset, value)
+                with self.subTest(offset=offset, value=value), self.assertRaises(ValueError):
+                    pak.validate_numeric("compiled/particles/explicit.compiled",
+                                         envelope(0xDEADFEDA, changed[12:]), fixtures.REGISTRIES)
+
+    def test_explicit_variable_image_table_truncation_and_null_handles_are_rejected(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "sheet.png"
+            Image.new("RGBA", (9, 5)).save(path)
+            descriptors = {2: atlas.ImageDescriptor(2, "x/sheet", "", "", 0, 1, 1, 0xFFFFFF)}
+            for frames in ([0], [2, 0]):
+                with self.subTest(frames=frames), self.assertRaisesRegex(ValueError, "Null"):
+                    atlas.compile_definition("compiled/particles/bad.compiled", particle_images([frames]),
+                                             descriptors, {"x/sheet.png": path})
+            payload = bytearray(particle_images([[2]])[12:])
+            struct.pack_into("<I", payload, 20, 100000)
+            with self.assertRaises(ValueError):
+                atlas.image_offsets("particles", payload)
+            with self.assertRaises(ValueError):
+                atlas.image_offsets("particles", particle_images([[2]])[12:35])
+
+    def test_direct_frame_image_paths_are_literal_rgba_and_reject_traversal(self):
+        author = json.dumps({"format": "pvz-resources-authoring-v1", "manifest": {
+            "tag": "ResourceManifest", "attrs": {}, "children": []}}).encode()
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "frame.png"
+            source = Image.new("RGBA", (3, 2), (1, 2, 3, 17))
+            source.save(path)
+            label = "particles/frames/IMAGE_FRAME0.png"
+            files = {label.lower(): path}
+            descriptor = atlas.authoring_descriptors(author, files, {label})[label]
+            self.assertEqual(descriptor.rows, 1)
+            self.assertEqual(descriptor.cols, 1)
+            self.assertEqual(atlas.logical_image(descriptor, files)[0].tobytes(), source.tobytes())
+            for invalid in ("../frame.png", "particles/../frame.png", "/frame.png",
+                            "C:/frame.png", "particles//frame.png", "particles/missing.png"):
+                with self.subTest(path=invalid), self.assertRaises(ValueError):
+                    atlas.authoring_descriptors(author, files, {invalid})
+
     def test_author_labels_resolve_and_compile_without_program_registry(self):
         def node(tag, **attrs):
             return {"tag": tag, "attrs": attrs, "children": []}
@@ -204,8 +323,17 @@ class DefinitionAtlasTests(unittest.TestCase):
             second, other_png, _ = atlas.compile_definition(
                 "compiled/particles/example.compiled", fixtures.particle(2), descriptors, files,
                 layout=layout, atlas_symbols=[2, 101], atlas_path=shared, emit_png=False)
+            explicit, explicit_png, explicit_report = atlas.compile_definition(
+                "compiled/particles/images.compiled", particle_images([[2, 101, 2]]), descriptors, files,
+                layout=layout, atlas_symbols=[2, 101], atlas_path=shared, emit_png=False)
             self.assertIsNotNone(png)
             self.assertIsNone(other_png)
+            self.assertIsNone(explicit_png)
+            parsed_explicit = pak.parse_definition_atlas("compiled/particles/images.compiled", explicit)
+            self.assertEqual(parsed_explicit["frame_fields4I"],
+                             [layout["regions"][index] for index in (0, 1, 0)])
+            self.assertEqual(len(explicit_report["images"]), 2)
+            self.assertEqual(len(explicit_report["frames"]), 3)
             with Image.open(io.BytesIO(png)) as packed:
                 for name, data, symbol in (("compiled/reanim/example.compiled", first, 101),
                                           ("compiled/particles/example.compiled", second, 2)):
@@ -221,6 +349,8 @@ class DefinitionAtlasTests(unittest.TestCase):
                                  {**fixtures.REGISTRIES, "track": 11, "font": 33}, references,
                                  atlas_path=shared)
             pak.validate_numeric("compiled/particles/example.compiled", second, fixtures.REGISTRIES,
+                                 references, atlas_path=shared)
+            pak.validate_numeric("compiled/particles/images.compiled", explicit, fixtures.REGISTRIES,
                                  references, atlas_path=shared)
             self.assertEqual(references, {("atlas", shared)})
 
@@ -246,6 +376,38 @@ class DefinitionAtlasTests(unittest.TestCase):
         self.assertEqual(retired, {2})  # Base images/Actual remains an authored UI root.
         self.assertEqual(mapping[1], 20)
         self.assertEqual(kinds[20], 0)
+
+    def test_split_frame_provenance_prunes_only_used_parent_and_code_roots_survive(self):
+        spec = importlib.util.spec_from_file_location(
+            "atlas_pipeline_pruning", Path(atlas.__file__).parent / "resourcePipeline/src/build_resources.py")
+        pipeline = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(pipeline)
+        provenance = {"format": "pvz-particle-frame-images-v1", "images": [
+            {"path": "particles/frames/used_r0_c0.png", "source": "IMAGE_PARENT_USED"},
+            {"path": "particles/frames/unused_r0_c0.png", "source": "IMAGE_PARENT_UNUSED"},
+        ]}
+        referenced = {"compiled/particles/example.compiled": [
+            "particles/frames/USED_r0_c0.png", "particles/frames/USED_r0_c0.png"]}
+        candidates = pipeline.definition_image_pruning_sources(referenced, provenance)
+        self.assertEqual(candidates, {"particles/frames/used_r0_c0.png", "image_parent_used"})
+        self.assertNotIn("image_parent_unused", candidates)
+        symbol_names = {1: "IMAGE_PARENT_USED", 2: "IMAGE_PARENT_UNUSED"}
+        symbols = {symbol for symbol, name in symbol_names.items() if name.casefold() in candidates}
+        original = fixtures.resources({20: {"path": "images/used-parent"},
+                                       879: {"path": "images/unused-parent"}})
+        output, mapping, kinds, retired = resources.prune_definition_images(
+            original, fixtures.REGISTRIES["image_slots"], {2}, symbols)
+        self.assertEqual(retired, {1})
+        self.assertEqual(mapping[1], resources.NONE)
+        self.assertEqual(mapping[2], 879)
+        self.assertNotIn(b"images/used-parent", output)
+        self.assertIn(b"images/unused-parent", output)
+        # A real C++ root of the same parent always takes precedence.
+        kept, mapping, _, retired = resources.prune_definition_images(
+            original, fixtures.REGISTRIES["image_slots"], {1, 2}, symbols)
+        self.assertEqual(retired, set())
+        self.assertIn(b"images/used-parent", kept)
+        self.assertEqual(mapping[1], 20)
 
     def test_v5_validator_requires_valid_inline_geometry_and_zero_registry_hash(self):
         with tempfile.TemporaryDirectory() as temporary:

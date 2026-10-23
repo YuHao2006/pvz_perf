@@ -346,21 +346,75 @@ if(BUILD_TESTING AND PVZ_BUILD_LEGACY_GAME)
         COMMAND "${Python3_EXECUTABLE}" -B "${CMAKE_SOURCE_DIR}/tools/native-tests/test_definition_atlas.py")
     add_test(NAME definition_compiler_sources
         COMMAND "${Python3_EXECUTABLE}" -B "${CMAKE_SOURCE_DIR}/tools/native-tests/test_definition_compiler_sources.py")
+    add_test(NAME particle_variants
+        COMMAND "${Python3_EXECUTABLE}" -B "${CMAKE_SOURCE_DIR}/tools/native-tests/test_particle_variants.py")
+    add_test(NAME reanim_variants
+        COMMAND "${Python3_EXECUTABLE}" -B "${CMAKE_SOURCE_DIR}/tools/native-tests/test_reanim_variants.py")
+    add_test(NAME particle_variant_sources
+        COMMAND "${Python3_EXECUTABLE}" -B "${CMAKE_SOURCE_DIR}/tools/native-tests/test_particle_variant_sources.py")
+    add_test(NAME particle_frame_images
+        COMMAND "${Python3_EXECUTABLE}" -B "${CMAKE_SOURCE_DIR}/Tests/native/test_particle_frame_images.py")
+    add_test(NAME atlas_overlap_sources
+        COMMAND "${Python3_EXECUTABLE}" -B "${CMAKE_SOURCE_DIR}/tools/native-tests/test_atlas_overlap_sources.py")
+    add_test(NAME music_burst
+        COMMAND "${Python3_EXECUTABLE}" -B "${CMAKE_SOURCE_DIR}/tools/native-tests/test_music_burst.py")
+    add_test(NAME program_image_rectangles
+        COMMAND "${Python3_EXECUTABLE}" -B "${CMAKE_SOURCE_DIR}/tools/native-tests/test_program_image_rectangles.py")
+    add_test(NAME runtime_asset_sources
+        COMMAND "${Python3_EXECUTABLE}" -B "${CMAKE_SOURCE_DIR}/tools/native-tests/test_runtime_asset_sources.py")
+    add_test(NAME runtime_image_retention
+        COMMAND "${Python3_EXECUTABLE}" -B "${CMAKE_SOURCE_DIR}/tools/native-tests/test_runtime_image_retention.py")
+    add_test(NAME particle_catalog
+        COMMAND "${Python3_EXECUTABLE}" -B "${CMAKE_SOURCE_DIR}/Tests/native/test_particle_catalog.py")
+    add_test(NAME zombie_particle_variants
+        COMMAND "${Python3_EXECUTABLE}" -B "${CMAKE_SOURCE_DIR}/tools/native-tests/test_zombie_particle_variants.py")
+    set_tests_properties(zombie_particle_variants PROPERTIES
+        ENVIRONMENT "PVZ_TEST_CXX=${CMAKE_CXX_COMPILER}")
+    add_test(NAME portal_relocation
+        COMMAND "${Python3_EXECUTABLE}" -B "${CMAKE_SOURCE_DIR}/tools/native-tests/test_portal_relocation.py")
+    set_tests_properties(portal_relocation PROPERTIES
+        ENVIRONMENT "PVZ_TEST_CXX=${CMAKE_CXX_COMPILER}")
+    add_test(NAME bowling_timing
+        COMMAND "${Python3_EXECUTABLE}" -B "${CMAKE_SOURCE_DIR}/tools/native-tests/test_bowling_timing.py")
+    set_tests_properties(bowling_timing PROPERTIES
+        ENVIRONMENT "PVZ_TEST_CXX=${CMAKE_CXX_COMPILER}")
     add_test(NAME resource_build_config
         COMMAND "${Python3_EXECUTABLE}" -B "${CMAKE_SOURCE_DIR}/tools/native-tests/test_resource_build_config.py")
-    add_test(NAME program_image_symbols
-        COMMAND "${Python3_EXECUTABLE}" -B "${CMAKE_SOURCE_DIR}/tools/native-tests/test_program_image_symbols.py")
+    add_test(NAME resource_load_plan
+        COMMAND "${Python3_EXECUTABLE}" -B "${CMAKE_SOURCE_DIR}/tools/native-tests/test_resource_load_plan.py")
+    add_test(NAME projectile_compiler
+        COMMAND "${Python3_EXECUTABLE}" -B "${CMAKE_SOURCE_DIR}/tools/native-tests/test_projectile_compiler.py")
+    set_tests_properties(projectile_compiler PROPERTIES
+        ENVIRONMENT "PVZ_RESOURCE_COMPILER=$<TARGET_FILE:reanimc>")
+    add_test(NAME projectile_atlas
+        COMMAND "${Python3_EXECUTABLE}" -B "${CMAKE_SOURCE_DIR}/tools/native-tests/test_projectile_atlas.py")
+    add_test(NAME projectile_records
+        COMMAND "${Python3_EXECUTABLE}" -B "${CMAKE_SOURCE_DIR}/tools/native-tests/test_projectile_records.py")
+    add_test(NAME zombatar_atlas
+        COMMAND "${Python3_EXECUTABLE}" -B "${CMAKE_SOURCE_DIR}/tools/native-tests/test_zombatar_atlas.py")
+    add_test(NAME scene_atlas
+        COMMAND "${Python3_EXECUTABLE}" -B "${CMAKE_SOURCE_DIR}/tools/native-tests/test_scene_atlas.py")
+    add_test(NAME scene_atlas_corpus
+        COMMAND "${Python3_EXECUTABLE}" -B "${CMAKE_SOURCE_DIR}/Tests/native/test_scene_atlas_corpus.py")
+    add_test(NAME static_reanim_codegen
+        COMMAND "${Python3_EXECUTABLE}" -B "${CMAKE_SOURCE_DIR}/tools/native-tests/test_static_reanim_codegen.py")
+    add_test(NAME static_particle_codegen
+        COMMAND "${Python3_EXECUTABLE}" -B "${CMAKE_SOURCE_DIR}/tools/native-tests/test_static_particle_codegen.py")
+    add_test(NAME program_images
+        COMMAND "${Python3_EXECUTABLE}" -B "${CMAKE_SOURCE_DIR}/tools/native-tests/test_program_images.py")
     add_test(NAME exact_atlas
         COMMAND "${Python3_EXECUTABLE}" -B "${CMAKE_SOURCE_DIR}/tools/native-tests/test_exact_atlas.py")
     add_test(NAME atlas_proof_publication
         COMMAND "${Python3_EXECUTABLE}" -B "${CMAKE_SOURCE_DIR}/tools/native-tests/test_atlas_proof_publication.py")
-    set_tests_properties(definition_atlas_pixels definition_compiler_sources PROPERTIES
+    set_tests_properties(definition_atlas_pixels definition_compiler_sources particle_variants reanim_variants PROPERTIES
         ENVIRONMENT "PVZ_ATLAS_COMPILER=$<TARGET_FILE:reanimc>")
     add_test(NAME definition_atlas_metadata
         COMMAND "${Python3_EXECUTABLE}" -B "${CMAKE_SOURCE_DIR}/Tests/native/test_atlas_group_metadata.py")
     add_test(NAME definition_atlas_corpus
         COMMAND "${Python3_EXECUTABLE}" -B "${CMAKE_SOURCE_DIR}/Tests/native/test_definition_atlas_corpus.py")
-    set_tests_properties(definition_atlas_metadata definition_atlas_corpus PROPERTIES
+    add_test(NAME particle_image_variants
+        COMMAND "${Python3_EXECUTABLE}" -B "${CMAKE_SOURCE_DIR}/Tests/native/test_particle_image_variants.py")
+    set_tests_properties(definition_atlas_metadata definition_atlas_corpus particle_image_variants PROPERTIES
         ENVIRONMENT "PVZ_RESOURCE_PACKAGE=${PVZ_RESOURCE_CACHE}/main.pak64")
 endif()
 
@@ -377,6 +431,12 @@ if(BUILD_TESTING)
     add_executable(pvz_atlas_image_region_tests EXCLUDE_FROM_ALL Tests/native/AtlasImageRegionTests.cpp)
     target_link_libraries(pvz_atlas_image_region_tests PRIVATE pvz_source_headers)
     target_compile_features(pvz_atlas_image_region_tests PRIVATE cxx_std_23)
+    if(PVZ_RENDER_BACKEND STREQUAL "VULKAN")
+        find_package(Vulkan REQUIRED)
+        target_link_libraries(pvz_atlas_image_region_tests PRIVATE Vulkan::Headers)
+    else()
+        target_compile_definitions(pvz_atlas_image_region_tests PRIVATE "PVZ_GPU_${PVZ_RENDER_BACKEND}=1")
+    endif()
     add_test(NAME pvz_atlas_image_region COMMAND pvz_atlas_image_region_tests)
     add_executable(pvz_game_viewport_tests EXCLUDE_FROM_ALL Tests/native/GameViewportTests.cpp)
     target_link_libraries(pvz_game_viewport_tests PRIVATE pvz_source_headers)

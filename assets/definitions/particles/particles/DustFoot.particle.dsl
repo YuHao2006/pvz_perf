@@ -2,7 +2,7 @@ export component DustFoot {
     kind: particle;
     source-name: "dust_foot";
     Emitter {
-        image: "IMAGE_DUST_PUFFS";
+        images: ["particles/frames/dust_puffs_r0_c0.png","particles/frames/dust_puffs_r0_c1.png","particles/frames/dust_puffs_r0_c2.png"];
         name: "DustFoot";
         imageFrames: 3;
         randomLaunchSpin: 1;

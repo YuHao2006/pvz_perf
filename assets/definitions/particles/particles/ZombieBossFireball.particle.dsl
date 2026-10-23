@@ -2,7 +2,7 @@ export component ZombieBossFireball {
     kind: particle;
     source-name: "zombie_boss_fireball";
     Emitter {
-        image: "IMAGE_ZOMBIE_BOSS_FIREBALL_PARTICLES";
+        images: ["particles/frames/zombie_boss_fireball_particles_r0_c0.png","particles/frames/zombie_boss_fireball_particles_r0_c1.png","particles/frames/zombie_boss_fireball_particles_r0_c2.png","particles/frames/zombie_boss_fireball_particles_r0_c3.png"];
         name: "BossFireball";
         imageFrames: 2;
         randomLaunchSpin: 1;
@@ -23,9 +23,8 @@ export component ZombieBossFireball {
         }
     }
     Emitter {
-        image: "IMAGE_ZOMBIE_BOSS_FIREBALL_PARTICLES";
+        images: ["particles/frames/zombie_boss_fireball_particles_r0_c2.png","particles/frames/zombie_boss_fireball_particles_r0_c3.png"];
         name: "BossFireball2";
-        imageCol: 2;
         imageFrames: 2;
         randomLaunchSpin: 1;
         systemDuration: 250;
@@ -45,3 +44,6 @@ export component ZombieBossFireball {
         }
     }
 }
+
+// Compile-time appearances share this definition's motion and atlas.
+export component ZombieBossIceballBurst { kind: particle; source-name: "zombiebossiceballburst"; variant-of: ZombieBossFireball; images: [["particles/frames/zombie_boss_iceball_particles_r0_c0.png","particles/frames/zombie_boss_iceball_particles_r0_c1.png","particles/frames/zombie_boss_iceball_particles_r0_c2.png","particles/frames/zombie_boss_iceball_particles_r0_c3.png"],["particles/frames/zombie_boss_iceball_particles_r0_c2.png","particles/frames/zombie_boss_iceball_particles_r0_c3.png"]]; }

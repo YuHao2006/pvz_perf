@@ -2,7 +2,7 @@ export component Pinata {
     kind: particle;
     source-name: "pinata";
     Emitter {
-        image: "IMAGE_PINATA";
+        images: ["particles/frames/pinata_r0_c0.png","particles/frames/pinata_r0_c1.png","particles/frames/pinata_r0_c2.png","particles/frames/pinata_r0_c3.png","particles/frames/pinata_r0_c4.png"];
         name: "pinata";
         imageFrames: 5;
         emitterType: Circle;

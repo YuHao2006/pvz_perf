@@ -3,18 +3,14 @@
 #include "D3d9Api.h"
 #include "D3d9Shaders.h"
 #include <array>
-#include <unordered_map>
+#include <unordered_set>
 
 namespace Sexy {
-struct D3d9Storage {
+struct D3d9Texture {
     DX9::Com<IDirect3DTexture9> image;
     DX9::Com<IDirect3DSurface9> surface;
     int width = 0, height = 0;
     D3DFORMAT format = D3DFMT_UNKNOWN;
-};
-struct D3d9Texture {
-    std::shared_ptr<D3d9Storage> storage;
-    int width = 0, height = 0;
     unsigned int slot = ~0U, staticSlot = ~0U, flags = 0;
     bool render = false, caustic = false;
 };
@@ -23,7 +19,8 @@ struct D3d9Renderer::Impl {
     static_assert(sizeof(Vertex) == 52 && offsetof(Vertex, rect) == 32 && offsetof(Vertex, flags) == 48);
     using Constants = std::array<D3d9Shaders::Float4, D3d9Shaders::PixelConstantCount>;
     struct Batch {
-        std::shared_ptr<D3d9Storage> storage;
+        IDirect3DTexture9* image = nullptr;
+        int width = 0, height = 0;
         size_t first = 0, count = 0;
         GpuBlend blend{};
         GpuClip clip{};
@@ -50,14 +47,18 @@ struct D3d9Renderer::Impl {
     D3d9Texture* causticTarget = nullptr;
     VulkanHdrParams hdr{80, 1000, 150, 1};
     std::array<D3d9Texture*, 4096> slots{};
-    std::unordered_map<D3d9Texture*, std::unique_ptr<D3d9Texture>> textures;
+    std::unordered_set<D3d9Texture*> textures;
+    // Batches borrow native textures. Destroyed versions and feedback copies
+    // remain owned here until every queued draw has been issued by Flush.
+    std::vector<D3d9Texture*> retiredTextures;
     std::vector<Vertex> vertices;
     std::vector<Batch> batches;
     Impl(D3d9Context&, int, int, const std::filesystem::path&);
     ~Impl();
     void Dimensions(int, int) const;
-    std::shared_ptr<D3d9Storage> Storage(int, int, D3DFORMAT);
+    void InitializeTexture(D3d9Texture&, int, int, D3DFORMAT);
     D3d9Texture* Allocate(int, int, D3DFORMAT, bool registerSlot);
+    void Retire(D3d9Texture*);
     void Register(D3d9Texture*);
     void Upload(D3d9Texture*, const void*, int);
     void BindTarget();
@@ -70,8 +71,8 @@ struct D3d9Renderer::Impl {
     void Projection(int, int);
     void Quad(int, int);
     void ImagePass(D3d9Texture*, D3d9Texture*, D3d9Texture*, int,
-        const GpuImageProcessing* = nullptr, int = 1, int = 1, unsigned int = 0, bool = false);
-    std::shared_ptr<D3d9Storage> Snapshot(D3d9Texture*);
+        const GpuImageProcessing* = nullptr, unsigned int = 0, bool = false);
+    void Snapshot(D3d9Texture&, D3d9Texture*);
     bool Present();
 };
 }

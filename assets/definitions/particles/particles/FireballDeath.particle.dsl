@@ -2,7 +2,7 @@ export component FireballDeath {
     kind: particle;
     source-name: "fireballdeath";
     Emitter {
-        image: "IMAGE_ZOMBIE_BOSS_FIREBALL_PARTICLES";
+        images: ["particles/frames/zombie_boss_fireball_particles_r0_c0.png","particles/frames/zombie_boss_fireball_particles_r0_c1.png","particles/frames/zombie_boss_fireball_particles_r0_c2.png","particles/frames/zombie_boss_fireball_particles_r0_c3.png"];
         imageFrames: 2;
         emitterType: Circle;
         alignLaunchSpin: 1;

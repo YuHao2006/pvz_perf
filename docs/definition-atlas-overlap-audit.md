@@ -62,7 +62,13 @@ The currently shared table is the source of truth for implemented consolidation.
 
 Shared author image bytes below count occurrences across current physical atlases, excluding duplicates already removed by implemented groups. Source-subset paths identify an atlas whose complete source set is contained in another candidate atlas; its definitions need no new source pixels in that larger atlas. Native layouts are still measured, since a different deterministic packing order can affect gaps.
 
-The ResidentImage filter-alias implementation reuses the owning GPU texture and applies the existing shader sampling flags. It avoids a separate whole-atlas filtered texture allocation, so TreeOfWisdom whitening only selected tracks does not multiply the atlas allocation by its filter variants. The table still measures base atlas bytes only, not alias object metadata or transient upload memory. This conclusion concerns ResidentImage atlases, not unrelated legacy MemoryImage filter render targets. Source evidence: pvzPerf/Sexy.TodLib/FilterEffect.cpp (FilterEffectCreateImage) routes ResidentImage to pvzPerf/SexyAppFramework/graphics/RenderInterface.cpp (CreateResidentFilterImage), which sets mTexture=original.mTexture, mOwnsTexture=false and filter mSamplingFlags without allocating a render target.
+Definition drawing reuses the definition's direct GPU texture pointer and applies
+shader sampling flags in a temporary TextureSource. It allocates no whole-atlas
+filtered texture, so TreeOfWisdom whitening only selected tracks does not multiply
+the atlas allocation by its filter variants. The table measures base atlas bytes
+only, excluding transient upload memory and renderer bookkeeping. Source evidence:
+pvzPerf/Sexy.TodLib/Reanimator.cpp (DrawTrack) selects filter flags while retaining
+the same mTexture pointer.
 
 ## Remaining candidate unions
 

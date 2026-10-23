@@ -60,13 +60,10 @@ float4 composeAlphaPS(float2 vpos : VPOS) : COLOR0
     float2 position = floor(vpos);
     clip(rectangle.zw - position - 0.5);
     float4 value = fetchSource(position);
-    if (all(position < cells.zw * cells.xy)) {
-        float2 cellPixel = float2(positiveMod(position.x, cells.z), positiveMod(position.y, cells.w));
-        float4 mask = tex2Dlod(alphaImage, float4((alphaRect.xy + cellPixel + 0.5) * alphaTexture.xy, 0, 0));
-        float alpha = floor(mask.b * 255.0 + 0.5);
-        if (modes.z != 0.0)
-            value = float4(packedColor.rgb, byteOr(packedColor.a, alpha)) / 255.0;
-        else value.a = alpha / 255.0;
-    }
+    float4 mask = tex2Dlod(alphaImage, float4((alphaRect.xy + position + 0.5) * alphaTexture.xy, 0, 0));
+    float alpha = floor(mask.b * 255.0 + 0.5);
+    if (modes.z != 0.0)
+        value = float4(packedColor.rgb, byteOr(packedColor.a, alpha)) / 255.0;
+    else value.a = alpha / 255.0;
     return value;
 }

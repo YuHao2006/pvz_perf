@@ -2,7 +2,7 @@ export component PopcornSplash {
     kind: particle;
     source-name: "popcornsplash";
     Emitter {
-        image: "IMAGE_COBCANNON_POPCORN";
+        images: ["particles/frames/cobcannon_popcorn_r0_c0.png","particles/frames/cobcannon_popcorn_r0_c1.png","particles/frames/cobcannon_popcorn_r0_c2.png","particles/frames/cobcannon_popcorn_r0_c3.png","particles/frames/cobcannon_popcorn_r0_c4.png"];
         imageFrames: 5;
         emitterType: Circle;
         randomLaunchSpin: 1;

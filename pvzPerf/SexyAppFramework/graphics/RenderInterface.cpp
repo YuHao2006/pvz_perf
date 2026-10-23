@@ -1,7 +1,5 @@
 #include "RenderInterface.h"
-#include "ResidentImage.h"
 #include "DDInterface.h"
-#include "DDImage.h"
 #include "Graphics.h"
 #include "misc/AutoCrit.h"
 #include "misc/SexyMatrix.h"
@@ -13,19 +11,12 @@
 #include <array>
 #include <cmath>
 #include <stdexcept>
+#include <utility>
 #include <vector>
 
 #pragma warning(disable:4244)
 
 using namespace Sexy;
-namespace {
-TextureData* NativeImageData(Image* image)
-{
-	if (auto* resident=AsResidentImage(image)) return resident->mTextureData.get();
-	if (auto* memory=AsMemoryImage(image)) return static_cast<TextureData*>(memory->mD3DData);
-	return nullptr;
-}
-}
 static uint32_t gGpuSourceSamplingFlags = 0;
 namespace {
 class TextureSamplingScope {
@@ -247,71 +238,30 @@ bool RenderInterface::PreDraw()
 	return true;
 }
 
-DDImage* RenderInterface::CreateRenderImage(int width, int height)
+Image* RenderInterface::CreateRenderImage(int width, int height)
 {
 	RequireImageDimensions(mRenderer, width, height);
-	auto image = std::make_unique<DDImage>(gSexyAppBase->mDDInterface);
+	auto* image = new Image(gSexyAppBase);
+	try
+	{
+	image->mRenderOwner=this;
 	image->mWidth = width;
 	image->mHeight = height;
 	image->mHasTrans = true;
 	image->mHasAlpha = true;
 	image->mForcedMode = true;
-	image->mPurgeBits = true;
-	auto data = std::make_unique<TextureData>();
-	data->mWidth = width;
-	data->mHeight = height;
-	data->mPixelFormat = PixelFormat_A8R8G8B8;
-	data->mBitsChangedCount = image->mBitsChangedCount;
-	data->mGPUOwned = true;
-	data->mRenderTarget = true;
-	data->mTexture = mRenderer->CreateRenderImage(width,height);
-	mImageSet.insert(image.get());
-	image->mD3DData = data.release();
-	return image.release();
+	image->mRenderTarget = true;
+	image->mTexture = mRenderer->CreateRenderImage(width,height);
+	if (!image->mTexture)
+		throw std::runtime_error("Render image allocation returned no GPU texture");
+	mImageSet.insert(image);
+	image->mRenderOwner = this;
+	return image;
+	}
+	catch (...) { delete image; throw; }
 }
 
-ResidentImage* RenderInterface::CreateResidentRenderImage(int width,int height)
-{
-	if (CurrentNativeThreadIdentity()!=gSexyAppBase->mPrimaryThreadId) throw GpuImageCpuAccess{};
-	RequireImageDimensions(mRenderer,width,height);
-	auto image=std::make_unique<ResidentImage>();
-	image->mWidth=width;image->mHeight=height;
-	auto data=std::make_unique<TextureData>();
-	data->mWidth=width;data->mHeight=height;
-	data->mPixelFormat=PixelFormat_A8R8G8B8;
-	data->mGPUOwned=true;data->mRenderTarget=true;
-	data->mTexture=mRenderer->CreateRenderImage(width,height);
-	mResidentImageSet.insert(image.get());
-	image->mRenderOwner=this;
-	image->mTextureData=std::move(data);
-	return image.release();
-}
-
-ResidentImage* RenderInterface::CreateResidentFilterImage(ResidentImage* source,GpuImageColorFilter filter)
-{
-	if (!source || !CreateImageTexture(source))
-		throw std::invalid_argument("Resident filter requires a source texture");
-	const auto& original=*source->mTextureData;
-	auto image=std::make_unique<ResidentImage>();
-	image->mWidth=source->mWidth;image->mHeight=source->mHeight;
-	image->mNumRows=source->mNumRows;image->mNumCols=source->mNumCols;
-	image->mFilePath=source->mFilePath;
-	auto data=std::make_unique<TextureData>();
-	data->mTexture=original.mTexture;
-	data->mWidth=original.mWidth;data->mHeight=original.mHeight;
-	data->mPixelFormat=original.mPixelFormat;
-	data->mGPUOwned=true;data->mOwnsTexture=false;
-	data->mSamplingFlags=(original.mSamplingFlags & ~0x30000000u) |
-		static_cast<uint32_t>(filter);
-	image->mGpuSamplingFlags=data->mSamplingFlags;
-	image->mFilterOwner=source;
-	mResidentImageSet.insert(image.get());
-	image->mRenderOwner=this;
-	image->mTextureData=std::move(data);
-	return image.release();
-}
-
-DDImage* RenderInterface::ProcessImage(MemoryImage* source,const GpuImageProcessing& processing)
+Image* RenderInterface::ProcessImage(Image* source,const GpuImageProcessing& processing)
 {
 	if(CurrentNativeThreadIdentity()!=gSexyAppBase->mPrimaryThreadId || !source)
 		throw GpuImageCpuAccess{};
@@ -320,33 +270,33 @@ DDImage* RenderInterface::ProcessImage(MemoryImage* source,const GpuImageProcess
 		processing.height>source->mHeight || processing.x>source->mWidth-processing.width ||
 		processing.y>source->mHeight-processing.height)
 		throw std::invalid_argument("Image processing rectangle exceeds logical image");
-	source->mPurgeBits=true;
-	if(!CreateImageTexture(source)) throw GpuImageCpuAccess{};
-	const auto& original=*static_cast<const TextureData*>(source->mD3DData);
-	auto image=std::make_unique<DDImage>(gSexyAppBase->mDDInterface);
+	auto* original=CreateImageTexture(source);
+	if(!original) throw GpuImageCpuAccess{};
+	auto* image=new Image(gSexyAppBase);
+	try
+	{
+	image->mRenderOwner=this;
 	image->mWidth=processing.width;image->mHeight=processing.height;
-	image->mHasTrans=true;image->mHasAlpha=true;image->mForcedMode=true;image->mPurgeBits=true;
-	auto data=std::make_unique<TextureData>();
-	data->mWidth=processing.width;
-	data->mHeight=processing.height;
-	data->mPixelFormat=PixelFormat_A8R8G8B8;
-	data->mBitsChangedCount=image->mBitsChangedCount;
-	data->mGPUOwned=true;data->mRenderTarget=false;
-	data->mTexture=mRenderer->ProcessImage(original.mTexture,processing);
-	mImageSet.insert(image.get());
-	image->mD3DData=data.release();
-	return image.release();
+	image->mHasTrans=true;image->mHasAlpha=true;image->mForcedMode=true;
+	image->mRenderTarget=false;
+	image->mTexture=mRenderer->ProcessImage(original,processing);
+	if (!image->mTexture)
+		throw std::runtime_error("Image processing returned no GPU texture");
+	mImageSet.insert(image);
+	image->mRenderOwner=this;
+	return image;
+	}
+	catch (...) { delete image; throw; }
 }
 
-void RenderInterface::RenderFontAtlas(DDImage* target,MemoryImage* source,
+void RenderInterface::RenderFontAtlas(Image* target,Image* source,
 	std::span<const GpuFontGlyph> glyphs,bool forceWhite)
 {
-	if(!CreateImageTexture(source)) throw GpuImageCpuAccess{};
-	auto& sourceData=*static_cast<TextureData*>(source->mD3DData);
-	auto& targetData=*static_cast<TextureData*>(target->mD3DData);
+	auto* sourceTexture=CreateImageTexture(source);
+	if(!sourceTexture || !target || !target->mTexture) throw GpuImageCpuAccess{};
 	GpuImageDrawScope drawing(*this,target);
 	if (!PreDraw()) throw std::exception{};
-	mRenderer->RenderFontAtlas(targetData.mTexture,sourceData.mTexture,
+	mRenderer->RenderFontAtlas(target->mTexture,sourceTexture,
 		glyphs,source->mGpuSamplingFlags,forceWhite);
 }
 
@@ -355,10 +305,9 @@ void RenderInterface::SelectDrawSurface(Image* image)
 	GpuTexture* target = nullptr;
 	if (image != nullptr && image != gSexyAppBase->mDDInterface->mScreenImage)
 	{
-		auto* data = NativeImageData(image);
-		if (data == nullptr || !data->mRenderTarget || !data->mTexture)
+		if (!image->mRenderTarget || !image->mTexture)
 			throw std::logic_error("Drawing requires a native GPU image target");
-		target = data->mTexture;
+		target = image->mTexture;
 	}
 	else image = nullptr;
 	mRenderer->SetRenderImage(target);
@@ -372,226 +321,97 @@ void RenderInterface::SelectDrawSurface(Image* image)
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-TextureData::TextureData()
+ImagePixels RenderInterface::ReadImagePixels(const Image& image)
 {
-	mTexture = nullptr;
-	mRenderTarget = false;
-	mWidth = 0;
-	mHeight = 0;
-	mBitsChangedCount = 0;
-	mStaticSlot = 0xFFFFFFFFu;
-	mPixelFormat = PixelFormat_Unknown;
-	mGPUOwned = false;
-}
-
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-TextureData::~TextureData()
-{
-	ReleaseTextures();
-}
-
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-void TextureData::ReleaseTextures()
-{
-	if (mTexture && mOwnsTexture)
-		gGpuRenderer->DestroyTexture(mTexture);
-	mTexture = nullptr;
-}
-
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-ImagePixels TextureData::ReadPixels() const
-{
-	if(mWidth<=0 || mHeight<=0 || !mTexture)
-		throw std::logic_error("Missing or invalid diagnostic texture");
-	if(!gGpuRenderer)throw std::logic_error("No renderer for texture readback");
-	auto result=gGpuRenderer->ReadTexturePixels(mTexture);
-	if(result.width!=mWidth || result.height!=mHeight)
+	if (CurrentNativeThreadIdentity()!=gSexyAppBase->mPrimaryThreadId) throw GpuImageCpuAccess{};
+	if (mSceneBegun) throw std::logic_error("Image readback requires Flush before snapshot");
+	if (&image==gSexyAppBase->mDDInterface->mScreenImage)
+	{
+		if (gSexyAppBase->mDDInterface->mRenderInterface!=this)
+			throw std::invalid_argument("Screen does not belong to this renderer");
+		ImagePixels result(image.mWidth,image.mHeight);
+		result.pixels=mRenderer->ReadScenePixels();
+		return result;
+	}
+	auto* texture=CreateImageTexture(const_cast<Image*>(&image));
+	if (!texture) throw std::logic_error("Image has no GPU texture");
+	auto result=mRenderer->ReadTexturePixels(texture);
+	if (result.width!=image.mWidth || result.height!=image.mHeight)
 		throw std::logic_error("GPU readback dimensions disagree with source image");
 	return result;
 }
 
-ImagePixels RenderInterface::ReadImagePixels(const MemoryImage& image)
-{
-	if(CurrentNativeThreadIdentity()!=image.mApp->mPrimaryThreadId) throw GpuImageCpuAccess{};
-	if(mSceneBegun)throw std::logic_error("Image readback requires Flush before snapshot");
-	if(image.mPendingDecoded) CreateImageTexture(const_cast<MemoryImage*>(&image));
-	const auto* screen=AsDDImage(&image);
-	if(screen && screen->mDDInterface && screen->mDDInterface->mScreenImage==screen)
-	{
-		if(screen->mDDInterface->mRenderInterface!=this)
-			throw std::invalid_argument("Screen does not belong to this renderer");
-		ImagePixels result(image.mWidth,image.mHeight);result.pixels=mRenderer->ReadScenePixels();return result;
-	}
-	if(image.mBits || image.mColorTable)
-	{
-		ImagePixels result(image.mWidth,image.mHeight);
-		if(image.mBits)
-			std::copy_n(image.mBits,result.pixels.size(),result.pixels.begin());
-		else
-		{
-			if(!image.mColorIndices)throw std::logic_error("Indexed image has no indices");
-			for(size_t i=0;i<result.pixels.size();++i)result.pixels[i]=image.mColorTable[image.mColorIndices[i]];
-		}
-		if(image.mForcedMode && !image.mHasAlpha && !image.mHasTrans)
-			for(auto& pixel:result.pixels)pixel|=0xff000000u;
-		return result;
-	}
-	if(image.mD3DData)
-	{
-		const auto& data=*static_cast<const TextureData*>(image.mD3DData);
-		if(data.mWidth!=image.mWidth || data.mHeight!=image.mHeight ||
-			data.mBitsChangedCount!=image.mBitsChangedCount)
-			throw std::logic_error("GPU image is stale and CPU pixels are unavailable: "+image.mFilePath);
-		return data.ReadPixels();
-	}
-	throw std::logic_error("Image has no exportable CPU pixels or resident GPU texture: "+image.mFilePath);
-}
-
-ImagePixels RenderInterface::ReadImagePixels(const Image& image)
-{
-	if (const auto* memory=AsMemoryImage(&image)) return ReadImagePixels(*memory);
-	const auto* resident=AsResidentImage(&image);
-	if (!resident) throw std::invalid_argument("Image has no native texture to read");
-	if (CurrentNativeThreadIdentity()!=gSexyAppBase->mPrimaryThreadId) throw GpuImageCpuAccess{};
-	if (mSceneBegun) throw std::logic_error("Image readback requires Flush before snapshot");
-	auto* source=const_cast<ResidentImage*>(resident);
-	if (!CreateImageTexture(source)) throw std::logic_error("Resident image has no texture");
-	if (source->mTextureData->mSamplingFlags & 0x30000000u)
-	{
-		// Filter aliases own no pixel copy. Materialize only for this explicit
-		// diagnostic request; gameplay uses the same source texture directly.
-		struct DiagnosticState
-		{
-			RenderInterface& render;
-			TransformStack transforms;
-			uint32_t flags;
-			bool wrap,linear;
-			explicit DiagnosticState(RenderInterface& value) :
-				render(value),transforms(std::move(value.mTransformStack)),
-				flags(sImageSamplingFlags),wrap(sSamplerAddressWrap),linear(gLinearFilter)
-			{
-				render.mTransformStack.clear();
-				sImageSamplingFlags=0;
-				sSamplerAddressWrap=false;
-			}
-			~DiagnosticState()
-			{
-				render.mTransformStack=std::move(transforms);
-				sImageSamplingFlags=flags;
-				sSamplerAddressWrap=wrap;
-				gLinearFilter=linear;
-			}
-		} diagnosticState(*this);
-		std::unique_ptr<ResidentImage> target(CreateResidentRenderImage(source->mWidth,source->mHeight));
-		{
-			GpuImageDrawScope drawing(*this,target.get());
-			Blt(source,0,0,Rect(0,0,source->mWidth,source->mHeight),Color(255,255,255,255),2,false);
-		}
-		Flush();
-		return target->mTextureData->ReadPixels();
-	}
-	return source->mTextureData->ReadPixels();
-}
-
 namespace {
+GpuTexture* TrackCompositionScratch(GpuRenderer& renderer,
+	std::vector<GpuTexture*>& scratch,GpuTexture* texture)
+{
+#if defined(PVZ_GPU_OPENGL) || defined(PVZ_GPU_D3D9)
+	// These adapters retain raw inputs until successful adoption. If recording
+	// the handle fails, it has not entered the caller's cleanup list yet.
+	try { scratch.push_back(texture); }
+	catch (...) { renderer.DestroyTexture(texture); throw; }
+#else
+	// Vulkan owns raw handles in its transfer-retirement queue. In particular,
+	// failed adoption may already have destroyed the final raw handle.
+	(void)renderer;
+	(void)scratch;
+#endif
+	return texture;
+}
+
 // 裸图展平：把该图自身的颜色合成与嵌套层全部应用，返回合成结果裸图
 // （与批量化前 UploadDecodedImage 递归语义逐位一致，只是不再全局登记）。
-GpuTexture* UploadDecodedRaw(GpuRenderer& renderer,const ImageLib::Image& image)
+GpuTexture* UploadDecodedRaw(GpuRenderer& renderer,const ImageLib::Image& image,
+	std::vector<GpuTexture*>& scratch)
 {
 	RequireImageDimensions(&renderer,image.mWidth,image.mHeight);
-	GpuTexture* base=renderer.CreateRawTexture(image.mWidth,image.mHeight,
-		image.mBits,image.mWidth*4);
+	GpuTexture* base=TrackCompositionScratch(renderer,scratch,
+		renderer.CreateRawTexture(image.mWidth,image.mHeight,image.mBits,image.mWidth*4));
 	if(image.mColorFromAlpha)
-		base=renderer.ComposeAlphaRaw(base,base,1,1,*image.mColorFromAlpha,true);
-	for(const auto& layer:image.mAlphaLayers) {
-		GpuTexture* alphaMask=UploadDecodedRaw(renderer,*layer.image);
-		base=renderer.ComposeAlphaRaw(base,alphaMask,layer.columns,layer.rows,0,false);
+		base=TrackCompositionScratch(renderer,scratch,
+			renderer.ComposeAlphaRaw(base,base,*image.mColorFromAlpha,true));
+	for(const auto* layer:image.mAlphaLayers) {
+		GpuTexture* alphaMask=UploadDecodedRaw(renderer,*layer,scratch);
+		base=TrackCompositionScratch(renderer,scratch,
+			renderer.ComposeAlphaRaw(base,alphaMask,0,false));
 	}
 	return base;
 }
 
-GpuTexture* UploadDecodedImage(GpuRenderer& renderer,const ImageLib::Image& image,
-	const unsigned int* primary=nullptr)
+GpuTexture* UploadDecodedImage(GpuRenderer& renderer,const ImageLib::Image& image,bool opaque)
 {
 	RequireImageDimensions(&renderer,image.mWidth,image.mHeight);
 	// 2026-10-11 用户裁决：只有最终可绘制结果进全局纹理表。合成链的底图/
 	// 掩码/中间结果一律裸图，调用链内传句柄，批次完成后由渲染器统一销毁。
-	const void* bits=primary?static_cast<const void*>(primary):image.mBits;
+	const void* bits=image.mBits;
 	if(!image.mColorFromAlpha && image.mAlphaLayers.empty())
-		return renderer.CreateTexture(image.mWidth,image.mHeight,bits,image.mWidth*4,false);
-	GpuTexture* base=renderer.CreateRawTexture(image.mWidth,image.mHeight,bits,image.mWidth*4);
-	if(image.mColorFromAlpha)
-		base=renderer.ComposeAlphaRaw(base,base,1,1,*image.mColorFromAlpha,true);
-	for(const auto& layer:image.mAlphaLayers) {
-		GpuTexture* alphaMask=UploadDecodedRaw(renderer,*layer.image);
-		base=renderer.ComposeAlphaRaw(base,alphaMask,layer.columns,layer.rows,0,false);
-	}
-	return renderer.AdoptComposedTexture(base);
-}
-}
-
-void TextureData::CreateTextures(MemoryImage *theImage)
-{
-	RequireImageDimensions(gGpuRenderer,theImage->mWidth,theImage->mHeight);
-	if(theImage->mPendingDecoded) {
-		const auto retire=[](GpuTexture* texture){gGpuRenderer->DestroyTexture(texture);};
-		std::unique_ptr<GpuTexture,decltype(retire)> texture(
-			UploadDecodedImage(*gGpuRenderer,*theImage->mPendingDecoded,theImage->mBits),retire);
-		ReleaseTextures();
-		if(mStaticSlot!=UINT32_MAX)
-			gGpuRenderer->BindStaticTexture(texture.get(),mStaticSlot);
-		mTexture=texture.release();
-		mWidth=theImage->mWidth;mHeight=theImage->mHeight;
-		mPixelFormat=PixelFormat_A8R8G8B8;
-		mBitsChangedCount=theImage->mBitsChangedCount;
-		mGPUOwned=false;mRenderTarget=false;
-		theImage->mPendingDecoded.reset();
-		return;
-	}
-	unsigned int* aSourceBits = theImage->mColorTable == NULL ? theImage->GetBits() : NULL;
-	theImage->DeleteSWBuffers();
-	theImage->CommitBits();
-
-	const int& aWidth = theImage->mWidth;
-	const int& aHeight = theImage->mHeight;
-	std::vector<uint32_t> aExpanded;
-	if(theImage->mColorTable)
+		return renderer.CreateTexture(image.mWidth,image.mHeight,bits,image.mWidth*4,opaque);
+	std::vector<GpuTexture*> scratch;
+	try
 	{
-		if(!theImage->mColorIndices)
-			throw std::logic_error("Indexed image has no indices");
-		aExpanded.resize(size_t(aWidth)*aHeight);
-		for(size_t i=0;i<aExpanded.size();++i)
-			aExpanded[i]=theImage->mColorTable[theImage->mColorIndices[i]];
+		GpuTexture* base=TrackCompositionScratch(renderer,scratch,
+			renderer.CreateRawTexture(image.mWidth,image.mHeight,bits,image.mWidth*4));
+		if(image.mColorFromAlpha)
+			base=TrackCompositionScratch(renderer,scratch,
+				renderer.ComposeAlphaRaw(base,base,*image.mColorFromAlpha,true));
+		for(const auto* layer:image.mAlphaLayers) {
+			GpuTexture* alphaMask=UploadDecodedRaw(renderer,*layer,scratch);
+			base=TrackCompositionScratch(renderer,scratch,
+				renderer.ComposeAlphaRaw(base,alphaMask,0,false));
+		}
+		// GL/DX9 adoption destroys the other raw handles on success; the
+		// non-owning list must never be visited again after this returns.
+		return renderer.AdoptComposedTexture(base);
 	}
-	// BGRA bytes remain unchanged; opaque input is a renderer view policy.
-	const void* pixels=theImage->mColorTable ? static_cast<const void*>(aExpanded.data()) : aSourceBits;
-	const bool aOpaque=!theImage->mHasAlpha && !theImage->mHasTrans;
-	mTexture=mStaticSlot!=UINT32_MAX && !mTexture
-		? gGpuRenderer->CreateTextureStatic(aWidth,aHeight,pixels,aWidth*4,aOpaque,mStaticSlot)
-		: gGpuRenderer->ReplaceTexture(mTexture,aWidth,aHeight,pixels,aWidth*4,aOpaque);
-	mWidth = theImage->mWidth;
-	mHeight = theImage->mHeight;
-	mBitsChangedCount = theImage->mBitsChangedCount;
-	mPixelFormat = PixelFormat_A8R8G8B8;
-}
-
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-void TextureData::CheckCreateTextures(MemoryImage *theImage)
-{
-	// GPU-owned（池水焦散）：compute 直写纹理，位图变化不再触发任何重传
-	if (mGPUOwned)
-		return;
-	const bool aFmt = mPixelFormat == PixelFormat_Unknown;
-	const bool aSize = !aFmt && (theImage->mWidth != mWidth || theImage->mHeight != mHeight);
-	const bool aBits = !aFmt && !aSize && theImage->mBitsChangedCount != mBitsChangedCount;
-	if (aFmt || aSize || aBits)
+	catch (...)
 	{
-		CreateTextures(theImage);
+#if defined(PVZ_GPU_OPENGL) || defined(PVZ_GPU_D3D9)
+		for (auto it=scratch.rbegin();it!=scratch.rend();++it)
+			renderer.DestroyTexture(*it);
+#endif
+		throw;
 	}
+}
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -609,7 +429,7 @@ static void SubmitNativeTriangles(std::span<const GpuVertex> vertices,
 
 template<class VertexAt>
 static void SubmitTextureTriangleBatch(size_t triangleCount,VertexAt vertexAt,
-	const TextureData& data,DWORD color,float tx,float ty)
+	const TextureSource& data,DWORD color,float tx,float ty)
 {
 	if(!triangleCount) return;
 	GpuTexture* texture=data.mTexture;
@@ -825,7 +645,7 @@ static void DrawPolyClipped(const Rect *theClipRect, const VertexList &theList, 
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-void TextureData::Blt(float theX, float theY, const Rect& theSrcRect, const Color& theColor)
+void TextureSource::Blt(float theX, float theY, const Rect& theSrcRect, const Color& theColor) const
 {
 	TextureSamplingScope sampling(mSamplingFlags);
 	if(theSrcRect.mWidth<=0 || theSrcRect.mHeight<=0)
@@ -849,7 +669,7 @@ void TextureData::Blt(float theX, float theY, const Rect& theSrcRect, const Colo
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-void TextureData::BltTransformed(const SexyMatrix3 &theTrans, const Rect& theSrcRect, const Color& theColor, const Rect *theClipRect, float theX, float theY, bool center)
+void TextureSource::BltTransformed(const SexyMatrix3 &theTrans, const Rect& theSrcRect, const Color& theColor, const Rect *theClipRect, float theX, float theY, bool center) const
 {
 	TextureSamplingScope sampling(mSamplingFlags);
 	if(theSrcRect.mWidth<=0 || theSrcRect.mHeight<=0)
@@ -896,7 +716,7 @@ void TextureData::BltTransformed(const SexyMatrix3 &theTrans, const Rect& theSrc
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-void TextureData::BltTriangles(const TriVertex theVertices[][3], int theNumTriangles, DWORD theColor, float tx, float ty)
+void TextureSource::BltTriangles(const TriVertex theVertices[][3], int theNumTriangles, DWORD theColor, float tx, float ty) const
 {
 	if(theNumTriangles<=0) return;
 	SubmitTextureTriangleBatch(size_t(theNumTriangles),
@@ -904,7 +724,7 @@ void TextureData::BltTriangles(const TriVertex theVertices[][3], int theNumTrian
 		*this,theColor,tx,ty);
 }
 
-void TextureData::BltTriangles(std::span<const std::array<TriVertex,3>> theTriangles, DWORD theColor, float tx, float ty)
+void TextureSource::BltTriangles(std::span<const std::array<TriVertex,3>> theTriangles, DWORD theColor, float tx, float ty) const
 {
 	SubmitTextureTriangleBatch(theTriangles.size(),
 		[&](size_t i)->const TriVertex& {return theTriangles[i/3][i%3];},
@@ -913,104 +733,128 @@ void TextureData::BltTriangles(std::span<const std::array<TriVertex,3>> theTrian
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-TextureData* RenderInterface::CreateImageTexture(Image *image)
+GpuTexture* RenderInterface::CreateImageTexture(Image *image)
 {
 	if(CurrentNativeThreadIdentity()!=gSexyAppBase->mPrimaryThreadId) throw GpuImageCpuAccess{};
-	if (auto* resident=AsResidentImage(image))
-	{
-		if (resident->mRenderOwner && resident->mRenderOwner!=this)
-			throw std::logic_error("Resident image belongs to another renderer");
-		if (resident->mTextureData) return resident->mTextureData.get();
-		RequireImageDimensions(mRenderer,resident->mWidth,resident->mHeight);
-		if (!resident->mPendingDecoded || !resident->mPendingDecoded->mBits)
-			throw std::logic_error("Resident image has no pending decode or GPU texture");
-		const auto& decoded=*resident->mPendingDecoded;
-		auto data=std::make_unique<TextureData>();
-		data->mWidth=resident->mWidth;data->mHeight=resident->mHeight;
-		data->mPixelFormat=PixelFormat_A8R8G8B8;
-		data->mGPUOwned=true;data->mRenderTarget=false;
-		data->mSamplingFlags=resident->mGpuSamplingFlags;
-		data->mTexture=mRenderer->CreateTexture(
-			decoded.mWidth,decoded.mHeight,decoded.mBits,decoded.mWidth*4,false);
-		mResidentImageSet.insert(resident);
-		resident->mRenderOwner=this;
-		resident->mTextureData=std::move(data);
-		resident->mPendingDecoded.reset();
-		return resident->mTextureData.get();
-	}
-	auto* theImage=AsMemoryImage(image);
-	if (image && !theImage) throw std::invalid_argument("Unsupported native image type");
 	// Empty images have no texture; oversized images throw without tiling.
-	if (theImage == nullptr || theImage->mWidth <= 0 || theImage->mHeight <= 0)
+	if (image == nullptr || image->mWidth <= 0 || image->mHeight <= 0)
 	{
 		return nullptr;
 	}
-	RequireImageDimensions(mRenderer,theImage->mWidth,theImage->mHeight);
-	if (theImage->mD3DData == NULL)
+	if (image->mRenderOwner && image->mRenderOwner!=this)
+		throw std::logic_error("Image belongs to another renderer");
+	if (image->mTexture)
+		return image->mTexture;
+	RequireImageDimensions(mRenderer,image->mWidth,image->mHeight);
+	if (!image->mPendingDecoded || !image->mPendingDecoded->mBits)
+		throw std::logic_error("Image has no loading payload for GPU upload");
+	image->CommitBits();
+	const auto& decoded=*image->mPendingDecoded;
+	if (decoded.mWidth!=image->mWidth || decoded.mHeight!=image->mHeight)
+		throw std::logic_error("Image loading payload dimensions differ");
+	auto* texture=UploadDecodedImage(*mRenderer,decoded,!image->mHasAlpha && !image->mHasTrans);
+	if (!texture)
+		throw std::runtime_error("Image upload returned no GPU texture");
+	try
 	{
-		theImage->mD3DData = new TextureData();
-
-		AutoCrit aCrit(gSexyAppBase->mDDInterface->mCritSect);
-		mImageSet.insert(theImage);
+		AutoCrit lock(gSexyAppBase->mDDInterface->mCritSect);
+		mImageSet.insert(image);
 	}
-
-	TextureData *aData = (TextureData*)theImage->mD3DData;
-	aData->mSamplingFlags=theImage->mGpuSamplingFlags;
-	aData->CheckCreateTextures(theImage);
-
-	// The upload snapshot owns the transfer bytes; images retain no CPU bitmap.
-	theImage->PurgeBits();
-	return aData;
+	catch (...) { mRenderer->DestroyTexture(texture); throw; }
+	image->mTexture=texture;
+	image->mRenderTarget=false;
+	image->mRenderOwner=this;
+	image->PurgeBits();
+	return texture;
 }
 
-void RenderInterface::CloneUploadedImage(MemoryImage* target,const MemoryImage& source)
+GpuTexture* RenderInterface::UploadAtlasTexture(ImageLib::Image*& decoded)
 {
-	if(!CreateImageTexture(const_cast<MemoryImage*>(&source))) throw GpuImageCpuAccess{};
-	const auto& original=*static_cast<const TextureData*>(source.mD3DData);
-	if(original.mRenderTarget || target->mD3DData)
+	if (CurrentNativeThreadIdentity()!=gSexyAppBase->mPrimaryThreadId)
 		throw GpuImageCpuAccess{};
-	auto copy=std::make_unique<TextureData>();
-	copy->mWidth=original.mWidth;copy->mHeight=original.mHeight;
-	copy->mPixelFormat=original.mPixelFormat;
-	copy->mSamplingFlags=original.mSamplingFlags;copy->mBitsChangedCount=target->mBitsChangedCount;
-	copy->mGPUOwned=original.mGPUOwned;
-	RequireImageDimensions(mRenderer,original.mWidth,original.mHeight);
-	copy->mTexture=mRenderer->CopyTextureRegion(original.mTexture,0,0,original.mWidth,original.mHeight);
-	mImageSet.insert(target);
-	target->mD3DData=copy.release();
-}
-
-bool RenderInterface::CreateImageTextureStatic(MemoryImage *theImage, uint32_t staticSlot)
-{
-	if(CurrentNativeThreadIdentity()!=gSexyAppBase->mPrimaryThreadId) throw GpuImageCpuAccess{};
-	// 0 尺寸防线同 CreateImageTexture（闪退案原语级拒绝）
-	if (theImage == nullptr || theImage->mWidth <= 0 || theImage->mHeight <= 0)
-		return false;
-	RequireImageDimensions(mRenderer,theImage->mWidth,theImage->mHeight);
-	if (theImage->mD3DData == NULL)
+	if (!decoded || !decoded->mBits || decoded->HasComposition())
+		throw std::logic_error("Atlas has no plain loading payload");
+	RequireImageDimensions(mRenderer,decoded->mWidth,decoded->mHeight);
+	auto* texture=mRenderer->CreateTexture(decoded->mWidth,decoded->mHeight,
+		decoded->mBits,decoded->mWidth*4,false);
+	if (!texture)
+		throw std::runtime_error("Atlas upload returned no GPU texture");
+	try
 	{
-		theImage->mD3DData = new TextureData();
-
-		AutoCrit aCrit(gSexyAppBase->mDDInterface->mCritSect);
-		mImageSet.insert(theImage);
+		mAtlasTextures.emplace(texture,std::array{decoded->mWidth,decoded->mHeight});
 	}
-
-	TextureData *aData = (TextureData*)theImage->mD3DData;
-	aData->mSamplingFlags=theImage->mGpuSamplingFlags;
-	if(aData->mStaticSlot!=UINT32_MAX && aData->mStaticSlot!=staticSlot)
-		throw std::logic_error("Image already owns a different static texture slot");
-	if(aData->mTexture && aData->mStaticSlot==UINT32_MAX)
-		mRenderer->BindStaticTexture(aData->mTexture,staticSlot);
-	aData->mStaticSlot = staticSlot;
-	aData->CheckCreateTextures(theImage);
-	theImage->PurgeBits();
-	return true;
+	catch (...) { mRenderer->DestroyTexture(texture); throw; }
+	delete std::exchange(decoded,nullptr);
+	return texture;
 }
 
-void RenderInterface::ReserveStaticTextureSlots(uint32_t count)
+void RenderInterface::FreeAtlasTextures()
 {
-	if (mRenderer != NULL)
-		mRenderer->ReserveStaticTextureSlots(count);
+	for (const auto& [texture,dimensions]:mAtlasTextures)
+		mRenderer->DestroyTexture(texture);
+	mAtlasTextures.clear();
+}
+
+void RenderInterface::CloneUploadedImage(Image* target,const Image& source)
+{
+	auto* original=CreateImageTexture(const_cast<Image*>(&source));
+	if(!original) throw GpuImageCpuAccess{};
+	if(!target || target->mTexture || target->mRenderOwner)
+		throw GpuImageCpuAccess{};
+	if (source.mRenderTarget)
+	{
+		// A copied font/render image must remain a writable GPU target. Use a
+		// temporary render target rather than a sampled-only texture copy.
+		auto* clone=CreateRenderImage(source.mWidth,source.mHeight);
+		try
+		{
+			{
+				GpuImageDrawScope drawing(*this,clone);
+				GpuImageSamplingScope sampling(*this,0);
+				struct RestoreCopyState
+				{
+					int mode=gGpuCurrentDrawMode;
+					bool linear=gLinearFilter;
+					bool wrap=RenderInterface::sSamplerAddressWrap;
+					~RestoreCopyState()
+					{
+						gGpuCurrentDrawMode=mode;
+						gLinearFilter=linear;
+						RenderInterface::sSamplerAddressWrap=wrap;
+					}
+				} restore;
+				if (!PreDraw()) throw GpuImageCpuAccess{};
+				gGpuCurrentDrawMode=Graphics::DRAWMODE_OPAQUE;
+				gLinearFilter=false;
+				sSamplerAddressWrap=false;
+				// Raw pixel copy: ignore the caller's transform and tint/filter
+				// state while retaining the source/target alpha convention.
+				TextureSource{original,source.mWidth,source.mHeight,0}.Blt(
+					0,0,Rect(0,0,source.mWidth,source.mHeight),Color::White);
+			}
+			// Registration may allocate. Publish no ownership until it succeeds.
+			mImageSet.insert(target);
+			target->mTexture=clone->mTexture;
+			target->mRenderTarget=true;
+			target->mRenderOwner=this;
+			clone->mTexture=nullptr;
+			delete clone;
+			return;
+		}
+		catch (...) { delete clone; throw; }
+	}
+	RequireImageDimensions(mRenderer,source.mWidth,source.mHeight);
+	auto* copy=mRenderer->CopyTextureRegion(original,0,0,source.mWidth,source.mHeight);
+	if (!copy)
+		throw std::runtime_error("Image copy returned no GPU texture");
+	try
+	{
+	mImageSet.insert(target);
+	target->mTexture=copy;
+	target->mRenderTarget=false;
+	target->mRenderOwner=this;
+	}
+	catch (...) { mRenderer->DestroyTexture(copy); throw; }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1020,35 +864,33 @@ bool RenderInterface::HasCausticsCompute() const
 	return mRenderer != NULL && mRenderer->HasCausticsCompute();
 }
 
-bool RenderInterface::InstallCausticsCompute(MemoryImage* theImage, MemoryImage* source)
+bool RenderInterface::InstallCausticsCompute(Image* theImage, Image* source)
 {
 	if (mRenderer == NULL || !mRenderer->HasCausticsCompute())
 		throw std::logic_error("Pool requires native GPU caustics");
-	if (theImage == NULL || theImage->mD3DData != NULL || source==nullptr)
+	if (theImage == NULL || theImage->mTexture != nullptr || source==nullptr)
 		throw std::logic_error("Invalid pool GPU image ownership");
-	if(!CreateImageTexture(source)) throw GpuImageCpuAccess{};
-	auto* sourceData=static_cast<TextureData*>(source->mD3DData);
-	if(!sourceData->mTexture)
+	auto* sourceTexture=CreateImageTexture(source);
+	if(!sourceTexture)
 		throw std::logic_error("Pool lookup requires one resident GPU texture");
 
 	const int& aWidth = theImage->mWidth;
 	const int& aHeight = theImage->mHeight;
 	RequireImageDimensions(mRenderer,aWidth,aHeight);
-	GpuTexture* aTexture = mRenderer->CreateCausticsTexture(aWidth, aHeight,sourceData->mTexture);
-
-	// GPU-owned caustics freeze the host upload revision.
-	auto* aData = new TextureData();
-	theImage->mD3DData = aData;
+	auto* texture=mRenderer->CreateCausticsTexture(aWidth,aHeight,sourceTexture);
+	if (!texture)
+		throw std::runtime_error("Caustics allocation returned no GPU texture");
+	try
+	{
 	AutoCrit aCrit(gSexyAppBase->mDDInterface->mCritSect);
 	mImageSet.insert(theImage);
-	aData->mGPUOwned = true;
-	aData->mPixelFormat = PixelFormat_A8R8G8B8;
-	aData->mWidth = aWidth;
-	aData->mHeight = aHeight;
-	aData->mBitsChangedCount = theImage->mBitsChangedCount;
-	aData->mTexture = aTexture;
+	theImage->mTexture=texture;
+	theImage->mRenderTarget=false;
+	theImage->mRenderOwner=this;
 	theImage->PurgeBits();
 	return true;
+	}
+	catch (...) { mRenderer->DestroyTexture(texture); throw; }
 }
 
 void RenderInterface::SetCausticsFrame(unsigned int theCounter)
@@ -1057,11 +899,9 @@ void RenderInterface::SetCausticsFrame(unsigned int theCounter)
 		mRenderer->SetCausticsFrame(theCounter);
 }
 
-void RenderInterface::UseCausticsImages(MemoryImage* output,MemoryImage* source)
+void RenderInterface::UseCausticsImages(Image* output,Image* source)
 {
-	auto* data=static_cast<TextureData*>(output->mD3DData);
-	auto* sourceData=static_cast<TextureData*>(source->mD3DData);
-	mRenderer->UseCausticsTexture(data->mTexture,sourceData->mTexture);
+	mRenderer->UseCausticsTexture(output->mTexture,source->mTexture);
 }
 
 GpuTexture* RenderInterface::GetCausticsTexture() const
@@ -1072,23 +912,17 @@ GpuTexture* RenderInterface::GetCausticsTexture() const
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-void RenderInterface::RemoveMemoryImage(MemoryImage *theImage)
+void RenderInterface::RemoveImage(Image* image)
 {
-	if (theImage->mD3DData != NULL)
+	if (mDrawSurface==image)
 	{
-		delete (TextureData*)theImage->mD3DData;
-		theImage->mD3DData = NULL;
-
-		AutoCrit aCrit(gSexyAppBase->mDDInterface->mCritSect);
-		mImageSet.erase(theImage);
+		if (mRenderer) SelectDrawSurface(nullptr);
+		else mDrawSurface=nullptr;
 	}
-}
-
-void RenderInterface::RemoveResidentImage(ResidentImage* image)
-{
-	if (mDrawSurface==image) SelectDrawSurface(nullptr);
-	mResidentImageSet.erase(image);
-	image->mTextureData.reset();
+	AutoCrit aCrit(gSexyAppBase->mDDInterface->mCritSect);
+	mImageSet.erase(image);
+	if (image->mTexture) mRenderer->DestroyTexture(image->mTexture);
+	image->mTexture=nullptr;
 	image->mRenderOwner=nullptr;
 }
 
@@ -1102,17 +936,13 @@ void RenderInterface::Cleanup()
 	ImageSet::iterator anItr;
 	for (anItr = mImageSet.begin(); anItr != mImageSet.end(); ++anItr)
 	{
-		MemoryImage *anImage = *anItr;
-		delete (TextureData*)anImage->mD3DData;
-		anImage->mD3DData = NULL;
+		Image *anImage = *anItr;
+		if (anImage->mTexture) mRenderer->DestroyTexture(anImage->mTexture);
+		anImage->mTexture = nullptr;
+		anImage->mRenderOwner=nullptr;
 	}
 	mImageSet.clear();
-	for (auto* image:mResidentImageSet)
-	{
-		image->mTextureData.reset();
-		image->mRenderOwner=nullptr;
-	}
-	mResidentImageSet.clear();
+	FreeAtlasTextures();
 
 	if (mRenderer != NULL)
 	{
@@ -1124,7 +954,7 @@ void RenderInterface::Cleanup()
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-void RenderInterface::SetCurTexture(MemoryImage *theImage)
+void RenderInterface::SetCurTexture(Image *theImage)
 {
 	CreateImageTexture(theImage);
 }
@@ -1160,14 +990,15 @@ void RenderInterface::Blt(Image* theImage, float theX, float theY, const Rect& t
 	if (!PreDraw())
 		return;
 
-	auto* aData = CreateImageTexture(theImage);
-	if (!aData)
+	auto* texture = CreateImageTexture(theImage);
+	if (!texture)
 		return;
 
 	gGpuCurrentDrawMode = theDrawMode;
 
 	gLinearFilter = linearFilter;
-	aData->Blt(theX, theY, theSrcRect, theColor);
+	TextureSource{texture,theImage->mWidth,theImage->mHeight,theImage->mGpuSamplingFlags}.Blt(
+		theX,theY,theSrcRect,theColor);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1223,18 +1054,13 @@ void RenderInterface::BltRotated(Image* theImage, float theX, float theY, const 
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-void RenderInterface::BltTransformed(Image* theImage, const Rect* theClipRect, const Color& theColor, int theDrawMode, const Rect &theSrcRect, const SexyMatrix3 &theTransform, bool linearFilter, float theX, float theY, bool center)
+static void BltPreparedSource(RenderInterface& render,const TextureSource& source,
+	const Rect* theClipRect,const Color& theColor,int theDrawMode,const Rect& theSrcRect,
+	const SexyMatrix3& theTransform,bool linearFilter,float theX,float theY,bool center)
 {
-	if (!PreDraw())
-		return;
-
-	auto* aData = CreateImageTexture(theImage);
-	if (!aData)
-		return;
-
 	gGpuCurrentDrawMode = theDrawMode;
 
-	if (!mTransformStack.empty())
+	if (!render.mTransformStack.empty())
 	{
 		gLinearFilter = true;
 		if (theX != 0 || theY != 0)
@@ -1244,20 +1070,39 @@ void RenderInterface::BltTransformed(Image* theImage, const Rect* theClipRect, c
 				aTransform.Translate(-theSrcRect.mWidth/2.0f, -theSrcRect.mHeight/2.0f);
 			aTransform = theTransform * aTransform;
 			aTransform.Translate(theX, theY);
-			aTransform = mTransformStack.back() * aTransform;
-			aData->BltTransformed(aTransform, theSrcRect, theColor, theClipRect);
+			aTransform = render.mTransformStack.back() * aTransform;
+			source.BltTransformed(aTransform, theSrcRect, theColor, theClipRect);
 		}
 		else
 		{
-			SexyTransform2D aTransform = mTransformStack.back() * theTransform;
-			aData->BltTransformed(aTransform, theSrcRect, theColor, theClipRect, theX, theY, center);
+			SexyTransform2D aTransform = render.mTransformStack.back() * theTransform;
+			source.BltTransformed(aTransform, theSrcRect, theColor, theClipRect, theX, theY, center);
 		}
 	}
 	else
 	{
 		gLinearFilter = linearFilter;
-		aData->BltTransformed(theTransform, theSrcRect, theColor, theClipRect, theX, theY, center);
+		source.BltTransformed(theTransform, theSrcRect, theColor, theClipRect, theX, theY, center);
 	}
+}
+
+void RenderInterface::BltTransformed(Image* image,const Rect* clip,const Color& color,
+	int drawMode,const Rect& sourceRect,const SexyMatrix3& transform,bool linearFilter,
+	float x,float y,bool center)
+{
+	if (!PreDraw()) return;
+	auto* texture=CreateImageTexture(image);
+	if (!texture) return;
+	BltPreparedSource(*this,TextureSource{texture,image->mWidth,image->mHeight,image->mGpuSamplingFlags},
+		clip,color,drawMode,sourceRect,transform,linearFilter,x,y,center);
+}
+
+void RenderInterface::BltTransformed(const TextureSource& source,const Rect* clip,
+	const Color& color,int drawMode,const Rect& sourceRect,const SexyMatrix3& transform,
+	bool linearFilter,float x,float y,bool center)
+{
+	if (!source.mTexture || !PreDraw()) return;
+	BltPreparedSource(*this,source,clip,color,drawMode,sourceRect,transform,linearFilter,x,y,center);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1382,8 +1227,8 @@ void RenderInterface::FillScanLinesWithCoverage(const Span* spans,int spanCount,
     const uint32_t maskSlot=GpuRenderer::SlotOf(mask);
     // Retire the mask on both success and propagated draw failure. This does
     // not wait or read pixels back; the renderer retains submitted references.
-    const auto retire=[this](GpuTexture* texture){mRenderer->DestroyTexture(texture);};
-    std::unique_ptr<GpuTexture,decltype(retire)> owner(mask,retire);
+    try
+    {
     std::vector<GpuVertex> vertices;
     vertices.reserve(size_t(spanCount)*6);
     const auto blend=drawMode==1?GpuBlend::Additive:drawMode==2?GpuBlend::Opaque:GpuBlend::Normal;
@@ -1401,6 +1246,9 @@ void RenderInterface::FillScanLinesWithCoverage(const Span* spans,int spanCount,
         for(const int n:{0,1,2,0,2,3}) vertices.push_back({points[n].x,points[n].y,r,g,b,a,u[n],v[n],maskSlot,0});
     }
     mRenderer->SubmitCoverageTriangles(vertices,mask,blend);
+    }
+    catch (...) { mRenderer->DestroyTexture(mask); throw; }
+    mRenderer->DestroyTexture(mask);
 }
 
 void RenderInterface::DrawTriangle(const TriVertex &p1, const TriVertex &p2, const TriVertex &p3, const Color &theColor, int theDrawMode)
@@ -1472,15 +1320,16 @@ void RenderInterface::DrawTrianglesTex(const TriVertex theVertices[][3], int the
 	if (!PreDraw())
 		return;
 
-	auto* aData = CreateImageTexture(theTexture);
-	if (!aData)
+	auto* texture = CreateImageTexture(theTexture);
+	if (!texture)
 		return;
 
 	gGpuCurrentDrawMode = theDrawMode;
 	DWORD aColor = RGBA_MAKE(theColor.mRed, theColor.mGreen, theColor.mBlue, theColor.mAlpha);
 
 	gLinearFilter = blend;
-	aData->BltTriangles(theVertices, theNumTriangles, aColor, tx, ty);
+	TextureSource{texture,theTexture->mWidth,theTexture->mHeight,theTexture->mGpuSamplingFlags}.BltTriangles(
+		theVertices,theNumTriangles,aColor,tx,ty);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1488,26 +1337,36 @@ void RenderInterface::DrawTrianglesTex(const TriVertex theVertices[][3], int the
 void RenderInterface::DrawTrianglesTexStrip(const TriVertex theVertices[], int theNumTriangles, const Color &theColor, int theDrawMode, Image *theTexture, float tx, float ty, bool blend)
 {
 	if(theNumTriangles<=0 || !PreDraw()) return;
-	auto* data=CreateImageTexture(theTexture);
-	if(!data) return;
+	auto* texture=CreateImageTexture(theTexture);
+	if(!texture) return;
 	gGpuCurrentDrawMode = theDrawMode;
 	gLinearFilter = blend;
 	const DWORD color=RGBA_MAKE(theColor.mRed,theColor.mGreen,theColor.mBlue,theColor.mAlpha);
 	SubmitTextureTriangleBatch(size_t(theNumTriangles),
 		[&](size_t i)->const TriVertex& {return theVertices[i/3+i%3];},
-		*data,color,tx,ty);
+		TextureSource{texture,theTexture->mWidth,theTexture->mHeight,theTexture->mGpuSamplingFlags},color,tx,ty);
 }
 
 void RenderInterface::DrawTrianglesTex(std::span<const std::array<TriVertex,3>> theTriangles,
 	const Color& theColor,int theDrawMode,Image* theTexture,float tx,float ty,bool blend)
 {
 	if(theTriangles.empty() || !PreDraw()) return;
-	auto* data=CreateImageTexture(theTexture);
-	if(!data) return;
+	auto* texture=CreateImageTexture(theTexture);
+	if(!texture) return;
 	gGpuCurrentDrawMode = theDrawMode;
 	gLinearFilter = blend;
-	data->BltTriangles(theTriangles,
+	TextureSource{texture,theTexture->mWidth,theTexture->mHeight,theTexture->mGpuSamplingFlags}.BltTriangles(theTriangles,
 		RGBA_MAKE(theColor.mRed,theColor.mGreen,theColor.mBlue,theColor.mAlpha),tx,ty);
+}
+
+void RenderInterface::DrawTrianglesTex(std::span<const std::array<TriVertex,3>> triangles,
+	const Color& color,int drawMode,const TextureSource& source,float tx,float ty,bool blend)
+{
+	if (triangles.empty() || !source.mTexture || !PreDraw()) return;
+	gGpuCurrentDrawMode=drawMode;
+	gLinearFilter=blend;
+	source.BltTriangles(triangles,
+		RGBA_MAKE(color.mRed,color.mGreen,color.mBlue,color.mAlpha),tx,ty);
 }
 
 ///////////////////////////////////////////////////////////////////////////////

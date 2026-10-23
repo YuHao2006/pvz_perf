@@ -143,7 +143,15 @@ struct RawReanim final {
     std::string name;
     float fps = 12.0f;
     std::vector<RawTrack> tracks;
+    std::string variantOf;
+    std::string variantRoot;
+    std::vector<std::vector<std::string>> variantImages;
 };
+
+// Resolve image-only variants after collecting the complete source corpus.
+void ResolveReanimVariants(std::vector<RawReanim>& corpus);
+[[nodiscard]] std::string MakeReanimVariantMetadata(const std::vector<RawReanim>& corpus);
+[[nodiscard]] std::string MakeReanimVariantHeader(const std::vector<RawReanim>& corpus);
 
 // Field order matches the ReanimatorTransform DefMap: x y kx ky sx sy f a.
 [[nodiscard]] bool ReadRawXml(const std::filesystem::path& input,

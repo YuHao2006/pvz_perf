@@ -2,7 +2,7 @@ export component ZamboniSmoke {
     kind: particle;
     source-name: "zambonismoke";
     Emitter {
-        image: "IMAGE_ZAMBONISMOKE";
+        images: ["particles/frames/zambonismoke_r0_c0.png","particles/frames/zambonismoke_r0_c1.png","particles/frames/zambonismoke_r0_c2.png"];
         imageFrames: 3;
         emitterType: Circle;
         randomLaunchSpin: 1;

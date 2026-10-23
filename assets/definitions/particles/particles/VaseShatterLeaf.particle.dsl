@@ -2,9 +2,8 @@ export component VaseShatterLeaf {
     kind: particle;
     source-name: "vaseshatterleaf";
     Emitter {
-        image: "IMAGE_VASE_CHUNKS";
+        images: ["particles/frames/vase_chunks_r1_c0.png","particles/frames/vase_chunks_r1_c1.png","particles/frames/vase_chunks_r1_c2.png","particles/frames/vase_chunks_r1_c3.png","particles/frames/vase_chunks_r1_c4.png","particles/frames/vase_chunks_r1_c5.png","particles/frames/vase_chunks_r1_c6.png","particles/frames/vase_chunks_r1_c7.png","particles/frames/vase_chunks_r1_c8.png"];
         name: "Vase";
-        imageRow: 1;
         imageFrames: 9;
         randomLaunchSpin: 1;
         spawnMinActive: 16;

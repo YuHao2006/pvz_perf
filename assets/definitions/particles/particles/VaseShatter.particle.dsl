@@ -2,7 +2,7 @@ export component VaseShatter {
     kind: particle;
     source-name: "vaseshatter";
     Emitter {
-        image: "IMAGE_VASE_CHUNKS";
+        images: ["particles/frames/vase_chunks_r0_c0.png","particles/frames/vase_chunks_r0_c1.png","particles/frames/vase_chunks_r0_c2.png","particles/frames/vase_chunks_r0_c3.png","particles/frames/vase_chunks_r0_c4.png","particles/frames/vase_chunks_r0_c5.png","particles/frames/vase_chunks_r0_c6.png","particles/frames/vase_chunks_r0_c7.png","particles/frames/vase_chunks_r0_c8.png"];
         name: "Vase";
         imageFrames: 9;
         randomLaunchSpin: 1;

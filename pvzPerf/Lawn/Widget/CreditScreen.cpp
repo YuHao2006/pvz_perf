@@ -1,4 +1,5 @@
 #include "Sexy.TodLib/generated/EntityStrings.h"  // 动态键实体表（阶段 3）
+#include "Sexy.TodLib/generated/ReanimVariantOptions.h"
 #include "GameButton.h"
 #include "CreditScreen.h"
 #include "LawnApp.h"
@@ -12,7 +13,7 @@
 #include "Sexy.TodLib/Reanimator.h"
 #include "Sexy.TodLib/TodParticle.h"
 #include "widget/Dialog.h"
-#include "graphics/DDImage.h"
+#include "graphics/Image.h"
 #include "widget/WidgetLifetimeHold.h"
 #include "Sexy.TodLib/EffectSystem.h"
 #include "Sexy.TodLib/TodStringFile.h"
@@ -627,9 +628,6 @@ Reanimation* CreditScreen::PlayReanim(int aIndex)
 //0x434F20
 static void DrawDisco(Graphics* g, float aCenterX, float aCenterY, float theTime)
 {
-    if (!gSexyAppBase->mDDInterface->mIs3D)
-        return;
-
     float x1 = cos(theTime) * 600.0f;
     float y1 = sin(theTime) * 200.0f;
     float x2 = cos(theTime + PI / 2) * 600.0f;
@@ -672,8 +670,8 @@ static void DrawDisco(Graphics* g, float aCenterX, float aCenterY, float theTime
     aVerts[1][2].v = 1.0;
     aVerts[1][2].color = aColor;
 
-    if (!g->mDDDestImage) throw NonScreenDrawError(DrawOperation::BltTrianglesTex);
-    g->mDDDestImage->BltTrianglesTex(
+    if (!g->mDestImage) throw NonScreenDrawError(DrawOperation::BltTrianglesTex);
+    g->mDestImage->BltTrianglesTex(
         IMAGE_REANIM_CREDITS_DISCOLIGHTS, 
         aVerts, 
         2, 
@@ -690,7 +688,8 @@ static void DrawDisco(Graphics* g, float aCenterX, float aCenterY, float theTime
 void CreditScreen::DrawFogEffect(Graphics* g, float theTime)
 {
     Reanimation* aCreditsReanim = mApp->ReanimationGet(mCreditsReanimID);
-    Image* aFogImage = mApp->mDDInterface->mIs3D ? IMAGE_FOG : IMAGE_FOG_SOFTWARE;
+    Image* aFogImage = IMAGE_FOG;
+    const Rect aFogFrame(0, 0, 210, 190);
     int aFadeAmount = theTime * 255.0f;
 
     for (int x = 0; x < 14; x++)
@@ -715,18 +714,10 @@ void CreditScreen::DrawFogEffect(Graphics* g, float theTime)
 
             int aColorVariant = 255 - (aCelLook % 20) * 1.5f - aMotion * 1.5f;
             int aLightnessVariant = 255 - (aCelLook % 20) - aMotion;
-            if (!mApp->mDDInterface->mIs3D)
-            {
-                aPosX += 10;
-                aPosY += 23;
-                aCelCol = aCelLook % Sexy::IMAGE_FOG_SOFTWARE->mNumCols;
-                aColorVariant = 255;
-                aLightnessVariant = 255;
-            }
-
             g->mColorizeImages = true;
             g->mColor = Color(aColorVariant, aColorVariant, aLightnessVariant, aFadeAmount);
-            g->DrawImageCel(aFogImage, aPosX, aPosY, aCelCol, 0);
+            const Rect aFogRect(aCelCol * aFogFrame.mWidth, 0, aFogFrame.mWidth, aFogFrame.mHeight);
+            g->DrawImage(aFogImage, aPosX, aPosY, aFogRect);
             g->mColorizeImages = false;
         }
     }
@@ -866,21 +857,24 @@ void CreditScreen::Draw(Graphics* g)
         
         if (aTransformBackground2.mFrame != -1.0f)
         {
-            aBackground2G.ClipRect(aTransformBackground2.mTransX, aTransformBackground2.mTransY, aTransformBackground2.mImageRegion.mWidth - 1, aTransformBackground2.mImageRegion.mHeight - 1);
+            const Rect& aRegion = aCreditsReanim->mDefinition->mImageRects[aTransformBackground2.mImageSlot];
+            aBackground2G.ClipRect(aTransformBackground2.mTransX, aTransformBackground2.mTransY, aRegion.mWidth - 1, aRegion.mHeight - 1);
             aBackground2G.DrawImageF(IMAGE_BACKGROUND1, aTransformBackground2.mTransX - BOARD_WIDTH / 2, aTransformBackground2.mTransY - BOARD_HEIGHT / 2);
             aBackground2G.ClearClipRect();
         }
         if (aTransformBackground3.mFrame != -1.0f)
         {
             Graphics aBackground3G(*g);
-            aBackground3G.ClipRect(aTransformBackground3.mTransX, aTransformBackground3.mTransY, aTransformBackground3.mImageRegion.mWidth - 1, aTransformBackground3.mImageRegion.mHeight - 1);
+            const Rect& aRegion = aCreditsReanim->mDefinition->mImageRects[aTransformBackground3.mImageSlot];
+            aBackground3G.ClipRect(aTransformBackground3.mTransX, aTransformBackground3.mTransY, aRegion.mWidth - 1, aRegion.mHeight - 1);
             // 1073 00438CE8: this window crops a different part of the same yard.
             aBackground3G.DrawImageF(IMAGE_BACKGROUND1, aTransformBackground3.mTransX - 600.0f, aTransformBackground3.mTransY - 300.0f);
         }
         if (aTransformBackground4.mFrame != -1.0f)
         {
             Graphics aBackground4G(*g);
-            aBackground4G.ClipRect(aTransformBackground4.mTransX, aTransformBackground4.mTransY, aTransformBackground4.mImageRegion.mWidth - 1, aTransformBackground4.mImageRegion.mHeight - 1);
+            const Rect& aRegion = aCreditsReanim->mDefinition->mImageRects[aTransformBackground4.mImageSlot];
+            aBackground4G.ClipRect(aTransformBackground4.mTransX, aTransformBackground4.mTransY, aRegion.mWidth - 1, aRegion.mHeight - 1);
             aBackground4G.DrawImageF(IMAGE_BACKGROUND2, aTransformBackground4.mTransX - BOARD_WIDTH / 2, aTransformBackground4.mTransY - BOARD_HEIGHT / 2);
         }
     }
@@ -899,7 +893,8 @@ void CreditScreen::Draw(Graphics* g)
         if (aTransformBackground1.mFrame != -1.0f)
         {
             Graphics aBackground1G(*g);
-            aBackground1G.ClipRect(aTransformBackground1.mTransX, aTransformBackground1.mTransY, aTransformBackground1.mImageRegion.mWidth - 1, aTransformBackground1.mImageRegion.mHeight - 1);
+            const Rect& aRegion = aCreditsReanim->mDefinition->mImageRects[aTransformBackground1.mImageSlot];
+            aBackground1G.ClipRect(aTransformBackground1.mTransX, aTransformBackground1.mTransY, aRegion.mWidth - 1, aRegion.mHeight - 1);
             // 1073 00438F42/00438F61: the tricycle scene uses (-80, -360).
             aBackground1G.DrawImageF(IMAGE_BACKGROUND1, aTransformBackground1.mTransX - 80.0f, aTransformBackground1.mTransY - 360.0f);
         }
@@ -908,14 +903,16 @@ void CreditScreen::Draw(Graphics* g)
             Graphics aBackground3G(*g);
             aBackground3G.mTransX += aTransformBackground3.mTransX - 20.0f;
             aBackground3G.mTransY += aTransformBackground3.mTransY - 260.0f;
-            aBackground3G.ClipRect(20, 260, aTransformBackground3.mImageRegion.mWidth - 1, aTransformBackground3.mImageRegion.mHeight - 1);
+            const Rect& aRegion = aCreditsReanim->mDefinition->mImageRects[aTransformBackground3.mImageSlot];
+            aBackground3G.ClipRect(20, 260, aRegion.mWidth - 1, aRegion.mHeight - 1);
             aBackground3G.DrawImageF(IMAGE_BACKGROUND3, -220.0f, 0.0f);
             aBackground3G.DrawImageF(IMAGE_POOL, 34.0f, 278.0f);
         }
         if (aTransformBackground4.mFrame != -1.0f)
         {
             Graphics aBackground4G(*g);
-            aBackground4G.ClipRect(aTransformBackground4.mTransX, aTransformBackground4.mTransY, aTransformBackground4.mImageRegion.mWidth - 1, aTransformBackground4.mImageRegion.mHeight - 1);
+            const Rect& aRegion = aCreditsReanim->mDefinition->mImageRects[aTransformBackground4.mImageSlot];
+            aBackground4G.ClipRect(aTransformBackground4.mTransX, aTransformBackground4.mTransY, aRegion.mWidth - 1, aRegion.mHeight - 1);
             aBackground4G.DrawImageF(IMAGE_BACKGROUND2, aTransformBackground4.mTransX - BOARD_WIDTH / 2, aTransformBackground4.mTransY - BOARD_HEIGHT / 2);
         }
     }
@@ -1178,15 +1175,15 @@ namespace
     // CreditScreen::UpdateMovie 向日葵唱歌头贴表（B 形态手工迁移）：aSunflowerFrame
     // 1..5 -> 头部贴图覆盖；0（初值）与越界 = 原 default 行（nullptr，无覆盖）。
     // 逐槽对照原 switch 0 差异（int 下标，非枚举驱动）。
-    constexpr Image* const* kSunflowerHeadOverride[6] = {
-        nullptr,                              // 0（原 default：无覆盖）
-        &IMAGE_REANIM_SUNFLOWER_HEAD_SING1,   // 1
-        &IMAGE_REANIM_SUNFLOWER_HEAD_SING2,   // 2
-        &IMAGE_REANIM_SUNFLOWER_HEAD_SING3,   // 3
-        &IMAGE_REANIM_SUNFLOWER_HEAD_SING4,   // 4
-        &IMAGE_REANIM_SUNFLOWER_HEAD_SING5,   // 5
+    constexpr std::uint32_t kSunflowerHeadAppearance[6] = {
+        ReanimOptions::SunFlower::anim_idle::Default,
+        ReanimOptions::SunFlower::anim_idle::SUNFLOWER_HEAD_SING1,
+        ReanimOptions::SunFlower::anim_idle::SUNFLOWER_HEAD_SING2,
+        ReanimOptions::SunFlower::anim_idle::SUNFLOWER_HEAD_SING3,
+        ReanimOptions::SunFlower::anim_idle::SUNFLOWER_HEAD_SING4,
+        ReanimOptions::SunFlower::anim_idle::SUNFLOWER_HEAD_SING5,
     };
-    static_assert(sizeof(kSunflowerHeadOverride) / sizeof(kSunflowerHeadOverride[0]) == 6,
+    static_assert(sizeof(kSunflowerHeadAppearance) / sizeof(kSunflowerHeadAppearance[0]) == 6,
         "kSunflowerHeadOverride 槽位须与 aSunflowerFrame 值域(0..5)同步");
 
     // CreditScreen::UpdateMovie 相位推进表：表内匿名 lambda = 原 case 体逐句
@@ -1558,20 +1555,16 @@ void CreditScreen::UpdateMovie()
     {
         if (mCreditsPhase == CreditsPhase::CREDITS_MAIN3 && aCreditsReanim->mAnimTime > aFrameFactor * 255.0f)
         {
-            aSunFlowerReanim->SetImageOverride(ReanimTrackId::anim_idle, IMAGE_REANIM_SUNFLOWER_HEAD_WINK);
+            aSunFlowerReanim->SetVariantOption(ReanimTrackId::anim_idle, ReanimOptions::SunFlower::anim_idle::SUNFLOWER_HEAD_WINK);
             Reanimation* aStageReanim = FindSubReanim(aCreditsReanim, ReanimationType::REANIM_CREDITS_STAGE);
             aSunFlowerReanim->mAnimTime -= aSunFlowerReanim->mAnimRate * SECONDS_PER_UPDATE * Sexy::gUpdateTicks / aSunFlowerReanim->mFrameCount;
             aStageReanim->mAnimTime -= aStageReanim->mAnimRate * SECONDS_PER_UPDATE * Sexy::gUpdateTicks / aStageReanim->mFrameCount;
         }
         else
         {
-            // B 形态 -> 常量表（见上 kSunflowerHeadOverride）：aSunflowerFrame 1..5
-            // -> 唱歌头像贴图；0 与越界 = 原 default（nullptr 覆盖）。
-            Image* aHeadOverride = static_cast<unsigned>(aSunflowerFrame) < static_cast<unsigned>(6) &&
-                    kSunflowerHeadOverride[aSunflowerFrame] != nullptr
-                ? *kSunflowerHeadOverride[aSunflowerFrame]
-                : nullptr;
-            aSunFlowerReanim->SetImageOverride(ReanimTrackId::anim_idle, aHeadOverride);
+            const auto aHeadAppearance = static_cast<unsigned>(aSunflowerFrame) < 6u
+                ? kSunflowerHeadAppearance[aSunflowerFrame] : 0u;
+            aSunFlowerReanim->SetVariantOption(ReanimTrackId::anim_idle, aHeadAppearance);
         }
     }
 }

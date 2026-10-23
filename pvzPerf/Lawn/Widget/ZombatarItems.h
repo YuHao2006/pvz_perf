@@ -3,7 +3,7 @@
 #include "ConstEnums.h"
 #include "Sexy.TodLib/ReanimTrackId.h"
 #include "Lawn/System/PlayerInfo.h"
-#include "GameButton.h"
+#include "ZombatarResources.h"
 #include "ZombatarColors.h"
 #include "widget/Widget.h"
 
@@ -13,11 +13,44 @@
 class LawnApp;
 class Reanimation;
 
+using Sexy::Color;
+using Sexy::Graphics;
+using Sexy::Rect;
+using Sexy::Widget;
+
+class ZombatarButton final
+{
+public:
+	LawnApp* mApp;
+	Widget* mParentWidget = nullptr;
+	int mX = 0;
+	int mY = 0;
+	int mWidth = 0;
+	int mHeight = 0;
+	int mId;
+	bool mIsOver = false;
+	bool mIsDown = false;
+	bool mDisabled = false;
+	bool mBtnNoDraw = false;
+	ZombatarImage mNormalImage;
+	ZombatarImage mHoverImage;
+	ZombatarImage mPressedImage;
+	ZombatarImage mInactiveImage;
+
+	ZombatarButton(int theId, ZombatarImage theNormal, ZombatarImage theHover,
+		ZombatarImage thePressed, ZombatarImage theInactive);
+	void Draw(Graphics* g);
+	void DrawNormal(Graphics* g);
+	bool IsButtonDown() const;
+	bool IsMouseOver() const;
+	void Update();
+};
+
 class ZombatarItem
 {
 public:
-	Image** mImage;
-	Image** mColorMask;
+	ZombatarImage mImage;
+	ZombatarImage mColorMask;
 	int mX;
 	int mY;
 	int mMaskX;
@@ -28,11 +61,11 @@ public:
 	ReanimTrackId mLineTrack;  // 描线变体轨道（None = 无此轨道）
 	int mRenderGroup;
 
-	ZombatarItem(Image*& theImage, Image*& theColorMask, int theX, int theY,
+	constexpr ZombatarItem(ZombatarImage theImage, ZombatarImage theColorMask, int theX, int theY,
 		int theMaskX, int theMaskY, ZombatarColorMode theColorMode,
 		int theAlignment, ReanimTrackId theTrack, ReanimTrackId theLineTrack, int theRenderGroup) :
-		mImage(&theImage),
-		mColorMask(&theColorMask),
+		mImage(theImage),
+		mColorMask(theColorMask),
 		mX(theX),
 		mY(theY),
 		mMaskX(theMaskX),
@@ -45,22 +78,6 @@ public:
 	{
 	}
 
-	ZombatarItem(Image*& theImage, std::nullptr_t, int theX, int theY,
-		int theMaskX, int theMaskY, ZombatarColorMode theColorMode,
-		int theAlignment, ReanimTrackId theTrack, ReanimTrackId theLineTrack, int theRenderGroup) :
-		mImage(&theImage),
-		mColorMask(nullptr),
-		mX(theX),
-		mY(theY),
-		mMaskX(theMaskX),
-		mMaskY(theMaskY),
-		mColorMode(theColorMode),
-		mAlignment(theAlignment),
-		mTrack(theTrack),
-		mLineTrack(theLineTrack),
-		mRenderGroup(theRenderGroup)
-	{
-	}
 };
 
 const Color& ZombatarGetColor(int theColorIndex);
@@ -117,24 +134,24 @@ public:
 	static constexpr int MAX_ITEM_CELLS = 128;
 
 	LawnApp* mApp;
-	GameButton* mPrevPageButton;
-	GameButton* mNextPageButton;
-	GameButton* mSkinButton;
-	GameButton* mHairButton;
-	GameButton* mFacialHairButton;
-	GameButton* mTidbitsButton;
-	GameButton* mEyeWearButton;
-	GameButton* mClothesButton;
-	GameButton* mAccessoryButton;
-	GameButton* mHatsButton;
-	GameButton* mBackdropsButton;
-	GameButton* mBackButton;
-	GameButton* mFinishedButton;
-	GameButton* mNewZombieButton;
-	GameButton* mNextZombieButton;
-	GameButton* mPrevZombieButton;
-	GameButton* mMainMenuButton;
-	GameButton* mViewButton;
+	ZombatarButton* mPrevPageButton;
+	ZombatarButton* mNextPageButton;
+	ZombatarButton* mSkinButton;
+	ZombatarButton* mHairButton;
+	ZombatarButton* mFacialHairButton;
+	ZombatarButton* mTidbitsButton;
+	ZombatarButton* mEyeWearButton;
+	ZombatarButton* mClothesButton;
+	ZombatarButton* mAccessoryButton;
+	ZombatarButton* mHatsButton;
+	ZombatarButton* mBackdropsButton;
+	ZombatarButton* mBackButton;
+	ZombatarButton* mFinishedButton;
+	ZombatarButton* mNewZombieButton;
+	ZombatarButton* mNextZombieButton;
+	ZombatarButton* mPrevZombieButton;
+	ZombatarButton* mMainMenuButton;
+	ZombatarButton* mViewButton;
 	ZombatarColors* mColors;
 
 	int mCurrentPage;
@@ -191,9 +208,9 @@ private:
 	void DrawSavedZombatars(Graphics* g);
 	void SaveCurrentZombatar();
 	void ReturnToMainMenu();
-	GameButton* FindPressedButton() const;
+	ZombatarButton* FindPressedButton() const;
 	void ResetTransientLayout();
 	void UpdateViewButtonLayout();
-	GameButton* HitTestButton(int x, int y) const;
+	ZombatarButton* HitTestButton(int x, int y) const;
 };
 

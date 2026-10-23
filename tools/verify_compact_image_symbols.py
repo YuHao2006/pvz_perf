@@ -16,6 +16,7 @@ import re
 import struct
 import sys
 import zlib
+import build_numeric_runtime_pak64 as pak
 
 
 REMOVED_ID = 165
@@ -137,6 +138,9 @@ def envelope(data: bytes, cookie: int, label: str) -> Reader:
 
 
 def parse_record(data: bytes, kind: str, label: str, image_max: int) -> dict:
+    require(kind in ("reanim", "particles"),
+            f"{label}: image-symbol compaction only accepts legacy reanim/particle records; "
+            f"{kind} has no image-symbol fields")
     images = []
     stats = Counter()
     reader = envelope(data, 0xDEADFED7 if kind == "reanim" else 0xDEADFED8, label)
@@ -284,7 +288,7 @@ def input_paths(root: Path, compiler_root: Path) -> list[Path]:
     files = [
         root / "pvzPerf/Sexy.TodLib/generated/image_symbol_ids.bin",
         root / "pvzPerf/Sexy.TodLib/generated/ImageSymbolId.h",
-        root / "pvzPerf/Sexy.TodLib/generated/ResourceId.h",
+        root / "tools/saveConverter/src/FrozenResourceIds.h",
         root / "tools/saveConverter/src/ResourceIdRemap.h",
         root / "tools/gen_image_symbol_registry.py",
         root / "tools/reanim_type_map.txt",
@@ -293,6 +297,8 @@ def input_paths(root: Path, compiler_root: Path) -> list[Path]:
         deployed / "main.pak64",
         compiler_root / "out/x64-win32-dx12/tools/resourceCompiler/build/reanimc.exe",
     ]
+    files.extend(base / pak.PARTICLE_VARIANTS for base in (root, compiler_root)
+                 if (base / pak.PARTICLE_VARIANTS).exists())
     for directory, pattern in (
         (deployed / "compiled", "*"),
         (compiler_root / "assets/definitions/reanim", "*.dsl"),
@@ -305,7 +311,8 @@ def input_paths(root: Path, compiler_root: Path) -> list[Path]:
     return sorted(set(files), key=lambda p: str(p).casefold())
 
 
-def record_paths(directory: Path, kind: str, extra: int = 0) -> dict[str, Path]:
+def record_paths(directory: Path, kind: str, extra: int = 0, *,
+                 root: Path | None = None) -> dict[str, Path]:
     require(directory.is_dir(), f"missing {kind} directory: {directory}")
     result = {}
     for path in directory.rglob("*.v4.compiled"):
@@ -314,9 +321,15 @@ def record_paths(directory: Path, kind: str, extra: int = 0) -> dict[str, Path]:
         require(name.casefold() not in {n.casefold() for n in result},
                 f"case-aliased record: {path}")
         result[name] = path
-    expected = EXPECTED_RECORDS[kind] + extra
+    expected = (pak.expected_counts(root)[kind] if root is not None
+                else EXPECTED_RECORDS[kind]) + extra
     require(len(result) == expected,
             f"{kind}: expected {expected} records, found {len(result)}")
+    if root is not None and kind == "particles":
+        variants = {entry["component"].casefold() + SUFFIXES[kind]
+                    for entry in pak.particle_image_variants(root)}
+        require(variants <= {name.casefold() for name in result},
+                "particles: missing declared image-variant records")
     return result
 
 
@@ -329,7 +342,9 @@ def input_category(path: Path, root: Path, compiler_root: Path) -> str:
         return "main_agent_generator_tool_code"
     if path.is_relative_to(root / "out/modern-game/Release"):
         return "production_compiled_assets_and_pak"
-    if path.is_relative_to(root / "pvzPerf/Sexy.TodLib/generated") or path == root / "tools/saveConverter/src/ResourceIdRemap.h":
+    if path.is_relative_to(root / "pvzPerf/Sexy.TodLib/generated") or path in {
+            root / "tools/saveConverter/src/FrozenResourceIds.h",
+            root / "tools/saveConverter/src/ResourceIdRemap.h"}:
         return "production_sidecar_headers_and_save_mapping"
     if path.is_relative_to(compiler_root / "assets/definitions/particle-reference"):
         return "native_particle_gold"
@@ -378,7 +393,7 @@ def capture(root: Path, compiler_root: Path, candidate: Path) -> dict:
     manifest = candidate / "input-fingerprints.json"
     require(not manifest.exists(), "refusing to overwrite input baseline")
     inventory = {str(p.resolve()): fingerprint(p) for p in input_paths(root, compiler_root)}
-    records = {kind: sorted(record_paths(root / "out/modern-game/Release/compiled" / kind, kind))
+    records = {kind: sorted(record_paths(root / "out/modern-game/Release/compiled" / kind, kind, root=root))
                for kind in EXPECTED_RECORDS}
     for name in ("image_symbol_ids.bin", "ImageSymbolId.h"):
         source = root / "pvzPerf/Sexy.TodLib/generated" / name
@@ -386,7 +401,7 @@ def capture(root: Path, compiler_root: Path, candidate: Path) -> dict:
                 (candidate / name).read_bytes(), f"initial candidate/oracle copy differs: {name}")
     result = {"root": str(root), "compiler_root": str(compiler_root),
               "files": inventory, "production_records": records,
-              "resource_id2": "deferred; stable ResourceId 879 and save remap are unchanged"}
+              "resource_id2": "converter-only frozen 879 historical IDs, slot kinds and save remap are protected"}
     write_json(manifest, result)
     return {"status": "captured", "protected_input_files": len(inventory),
             "records": {k: len(v) for k, v in records.items()}}
@@ -487,9 +502,9 @@ def verify(root: Path, compiler_root: Path, candidate: Path, report: dict,
     report["self_tests"] = []
     approved = {}
     for kind in EXPECTED_RECORDS:
-        production = record_paths(root / "out/modern-game/Release/compiled" / kind, kind)
+        production = record_paths(root / "out/modern-game/Release/compiled" / kind, kind, root=root)
         fixtures = PARTICLE_FIXTURES if kind == "particles" else set()
-        outputs = record_paths(candidate / kind, kind, extra=len(fixtures))
+        outputs = record_paths(candidate / kind, kind, extra=len(fixtures), root=root)
         require(sorted(production) == baseline["production_records"][kind] and
                 set(outputs) == set(production) | fixtures,
                 f"{kind}: full corpus has missing/unexpected records")
@@ -516,7 +531,7 @@ def verify(root: Path, compiler_root: Path, candidate: Path, report: dict,
         }
         approved[kind] = {name: outputs[name] for name in production}
         if fixtures:
-            oracle = record_paths(candidate / "oracle/particles", kind, extra=len(fixtures))
+            oracle = record_paths(candidate / "oracle/particles", kind, extra=len(fixtures), root=root)
             require(set(oracle) == set(outputs), "particle oracle/full corpus record sets differ")
             oracle_totals, fixture_rows = Counter(), []
             for name in sorted(outputs):
@@ -556,7 +571,7 @@ def verify(root: Path, compiler_root: Path, candidate: Path, report: dict,
             approved_rows.append({"name": f"compiled/{kind}/{name}",
                                   "bytes": len(data), "sha256": sha256(data)})
             approved_paths.add(target.resolve())
-        subset = record_paths(approved_root / kind, kind)
+        subset = record_paths(approved_root / kind, kind, root=root)
         require(set(subset) == set(paths), f"{kind}: isolated production subset record set differs")
     require({p.resolve() for p in approved_root.rglob("*") if p.is_file()} == approved_paths,
             "isolated production subset contains auxiliary files")
@@ -565,7 +580,8 @@ def verify(root: Path, compiler_root: Path, candidate: Path, report: dict,
     write_json(candidate / "production-candidate/manifest.json", approved_manifest)
     report["production_candidate"] = {
         "path": str(approved_root.parent), "records": len(approved_rows),
-        "counts": EXPECTED_RECORDS, "no_auxiliary_records_or_headers": True,
+        "counts": {kind: pak.expected_counts(root)[kind] for kind in EXPECTED_RECORDS},
+        "no_auxiliary_records_or_headers": True,
         "record_set_exact": True, "not_deployed": True,
     }
     report["scope"] = [
@@ -575,7 +591,7 @@ def verify(root: Path, compiler_root: Path, candidate: Path, report: dict,
         "Every original ID165 image reference is rejected; candidate ID165 denotes old ID166.",
         "Auxiliary v2 records and compiler-generated headers are isolated evidence only.",
         "The raw particle corpus contains six known compiler-only fixtures; the separately "
-        "materialized production-candidate has exactly the deployed 106 particle records.",
+        "materialized production-candidate exactly matches the deployed base and image-variant records.",
         "No game build, launch, performance measurement, packaging, or deployment.",
         "This report does not assert the main agent's runtime/schema/header work is complete.",
     ]

@@ -1,4 +1,5 @@
 #include "Sexy.TodLib/generated/EntityStrings.h"  // 动态键实体表（阶段 3）
+#include "Sexy.TodLib/generated/ReanimVariantOptions.h"
 #include "Coin.h"
 #include "Plant.h"
 #include "PlantFlags.h"
@@ -25,6 +26,8 @@
 #include "Sexy.TodLib/EffectSystem.h"
 #include "Sexy.TodLib/TodStringFile.h"
 #include "Widget/AchievementsWidget.h"
+#include "Sexy.TodLib/generated/SceneAtlasData.h"
+#include "graphics/AtlasDraw.h"
 
 static PlantDefinition gPlantDefs[SeedType::NUM_SEED_TYPES] = {  //0x69F2B0
     { SeedType::SEED_PEASHOOTER,         ReanimationType::REANIM_PEASHOOTER,    0,  100,    750,    PlantSubClass::SUBCLASS_SHOOTER,    150 },
@@ -2392,8 +2395,8 @@ void Plant::MagnetShroomAttactItem(Zombie* theZombie)
         theZombie->ReanimShowRange(ReanimTrackRanges::anim_bucket, RENDER_GROUP_HIDDEN);
         theZombie->ReanimShowRange(ReanimTrackRanges::anim_hair, RENDER_GROUP_NORMAL);
 
-        aMagnetItem->mPosX -= IMAGE_REANIM_ZOMBIE_BUCKET1->mWidth / 2;
-        aMagnetItem->mPosY -= IMAGE_REANIM_ZOMBIE_BUCKET1->mHeight / 2;
+        aMagnetItem->mPosX -= MagnetAtlas::Images[size_t(MagnetAtlas::Sprite::REANIM_ZOMBIE_BUCKET1)].mWidth / 2;
+        aMagnetItem->mPosY -= MagnetAtlas::Images[size_t(MagnetAtlas::Sprite::REANIM_ZOMBIE_BUCKET1)].mHeight / 2;
         aMagnetItem->mDestOffsetX = RandRangeFloat(-10.0f, 10.0f) + 25.0f;
         aMagnetItem->mDestOffsetY = RandRangeFloat(-10.0f, 10.0f) + 20.0f;
         aMagnetItem->mItemType = (MagnetItemType)((int)MagnetItemType::MAGNET_ITEM_PAIL_1 + aDamageIndex);
@@ -2427,8 +2430,8 @@ void Plant::MagnetShroomAttactItem(Zombie* theZombie)
         }
         theZombie->GetTrackPosition(ReanimTrackId::anim_screendoor, aMagnetItem->mPosX, aMagnetItem->mPosY);
 
-        aMagnetItem->mPosX -= IMAGE_REANIM_ZOMBIE_SCREENDOOR1->mWidth / 2;
-        aMagnetItem->mPosY -= IMAGE_REANIM_ZOMBIE_SCREENDOOR1->mHeight / 2;
+        aMagnetItem->mPosX -= MagnetAtlas::Images[size_t(MagnetAtlas::Sprite::REANIM_ZOMBIE_SCREENDOOR1)].mWidth / 2;
+        aMagnetItem->mPosY -= MagnetAtlas::Images[size_t(MagnetAtlas::Sprite::REANIM_ZOMBIE_SCREENDOOR1)].mHeight / 2;
         aMagnetItem->mDestOffsetX = RandRangeFloat(-10.0f, 10.0f) + 30.0f;
         aMagnetItem->mDestOffsetY = RandRangeFloat(-10.0f, 10.0f);
         aMagnetItem->mItemType = (MagnetItemType)((int)MagnetItemType::MAGNET_ITEM_DOOR_1 + aDamageIndex);
@@ -2441,8 +2444,8 @@ void Plant::MagnetShroomAttactItem(Zombie* theZombie)
 
         aMagnetItem->mPosX = theZombie->mPosX + 31.0f;
         aMagnetItem->mPosY = theZombie->mPosY + 20.0f;
-        aMagnetItem->mPosX -= IMAGE_REANIM_ZOMBIE_LADDER_5->mWidth / 2;
-        aMagnetItem->mPosY -= IMAGE_REANIM_ZOMBIE_LADDER_5->mHeight / 2;
+        aMagnetItem->mPosX -= MagnetAtlas::Images[size_t(MagnetAtlas::Sprite::REANIM_ZOMBIE_LADDER_5)].mWidth / 2;
+        aMagnetItem->mPosY -= MagnetAtlas::Images[size_t(MagnetAtlas::Sprite::REANIM_ZOMBIE_LADDER_5)].mHeight / 2;
         aMagnetItem->mDestOffsetX = RandRangeFloat(-10.0f, 10.0f) + 30.0f;
         aMagnetItem->mDestOffsetY = RandRangeFloat(-10.0f, 10.0f);
         aMagnetItem->mItemType = (MagnetItemType)((int)MagnetItemType::MAGNET_ITEM_LADDER_1 + aDamageIndex);
@@ -2454,8 +2457,8 @@ void Plant::MagnetShroomAttactItem(Zombie* theZombie)
         // theZombie->GetDrawPos(aDrawPos);
         theZombie->GetTrackPosition(ReanimTrackId::Zombie_pogo_stick, aMagnetItem->mPosX, aMagnetItem->mPosY);
 
-        aMagnetItem->mPosX += 40.0f - IMAGE_REANIM_ZOMBIE_LADDER_5->mWidth / 2;
-        aMagnetItem->mPosY += 84.0f - IMAGE_REANIM_ZOMBIE_LADDER_5->mHeight / 2;
+        aMagnetItem->mPosX += 40.0f - MagnetAtlas::Images[size_t(MagnetAtlas::Sprite::REANIM_ZOMBIE_LADDER_5)].mWidth / 2;
+        aMagnetItem->mPosY += 84.0f - MagnetAtlas::Images[size_t(MagnetAtlas::Sprite::REANIM_ZOMBIE_LADDER_5)].mHeight / 2;
         aMagnetItem->mDestOffsetX = RandRangeFloat(-10.0f, 10.0f) + 30.0f;
         aMagnetItem->mDestOffsetY = RandRangeFloat(-10.0f, 10.0f);
         aMagnetItem->mItemType = theZombie->mHasArm ? MagnetItemType::MAGNET_ITEM_POGO_1 : MagnetItemType::MAGNET_ITEM_POGO_3;
@@ -2469,8 +2472,8 @@ void Plant::MagnetShroomAttactItem(Zombie* theZombie)
         theZombie->ReanimShowRange(ReanimTrackRanges::Zombie_jackbox_handle, RENDER_GROUP_HIDDEN);
         theZombie->GetTrackPosition(ReanimTrackId::Zombie_jackbox_box, aMagnetItem->mPosX, aMagnetItem->mPosY);
 
-        aMagnetItem->mPosX -= IMAGE_REANIM_ZOMBIE_JACKBOX_BOX->mWidth / 2;
-        aMagnetItem->mPosY -= IMAGE_REANIM_ZOMBIE_JACKBOX_BOX->mHeight / 2;
+        aMagnetItem->mPosX -= MagnetAtlas::Images[size_t(MagnetAtlas::Sprite::REANIM_ZOMBIE_JACKBOX_BOX)].mWidth / 2;
+        aMagnetItem->mPosY -= MagnetAtlas::Images[size_t(MagnetAtlas::Sprite::REANIM_ZOMBIE_JACKBOX_BOX)].mHeight / 2;
         aMagnetItem->mDestOffsetX = RandRangeFloat(-10.0f, 10.0f) + 20.0f;
         aMagnetItem->mDestOffsetY = RandRangeFloat(-10.0f, 10.0f) + 15.0f;
         aMagnetItem->mItemType = MagnetItemType::MAGNET_ITEM_JACK_IN_THE_BOX;
@@ -2480,8 +2483,8 @@ void Plant::MagnetShroomAttactItem(Zombie* theZombie)
         theZombie->DiggerLoseAxe();
         theZombie->GetTrackPosition(ReanimTrackId::Zombie_digger_pickaxe, aMagnetItem->mPosX, aMagnetItem->mPosY);
 
-        aMagnetItem->mPosX -= IMAGE_REANIM_ZOMBIE_DIGGER_PICKAXE->mWidth / 2;
-        aMagnetItem->mPosY -= IMAGE_REANIM_ZOMBIE_DIGGER_PICKAXE->mHeight / 2;
+        aMagnetItem->mPosX -= MagnetAtlas::Images[size_t(MagnetAtlas::Sprite::REANIM_ZOMBIE_DIGGER_PICKAXE)].mWidth / 2;
+        aMagnetItem->mPosY -= MagnetAtlas::Images[size_t(MagnetAtlas::Sprite::REANIM_ZOMBIE_DIGGER_PICKAXE)].mHeight / 2;
         aMagnetItem->mDestOffsetX = RandRangeFloat(-10.0f, 10.0f) + 45.0f;
         aMagnetItem->mDestOffsetY = RandRangeFloat(-10.0f, 10.0f) + 15.0f;
         aMagnetItem->mItemType = MagnetItemType::MAGNET_ITEM_PICK_AXE;
@@ -2894,173 +2897,184 @@ void Plant::Squish()
 // GOTY @Patoke: 0x4666E0
 void Plant::UpdateBowling()
 {
-    Reanimation* aBodyReanim = mApp->ReanimationTryToGet(mBodyReanimID);
-    if (aBodyReanim && aBodyReanim->TrackExists(ReanimTrackId::_ground))
+    // Bowling stores integer pixels and resolves collisions at row centers.
+    // Advance the complete original step on the shared 100 Hz clock; scaling
+    // integer deltas per display update would lose fractional movement and
+    // change bounce/row-crossing events at different target frame rates.
+    for (int aTick=0; aTick<Sexy::gWholeLegacyTicks && !mDead; ++aTick)
     {
-        float aSpeed = aBodyReanim->GetTrackVelocity(ReanimTrackId::_ground);
-        if (mSeedType == SeedType::SEED_GIANT_WALLNUT)
+        Reanimation* aBodyReanim = mApp->ReanimationTryToGet(mBodyReanimID);
+        if (aBodyReanim && aBodyReanim->TrackExists(ReanimTrackId::_ground))
         {
-            aSpeed *= 2;
+            float aSpeed = aBodyReanim->GetTrackVelocity(ReanimTrackId::_ground);
+            if (mSeedType == SeedType::SEED_GIANT_WALLNUT)
+            {
+                aSpeed *= 2;
+            }
+
+            mX -= aSpeed;
+            if (mX > 800)
+            {
+                Die();
+                return;
+            }
         }
 
-        mX -= aSpeed;
-        if (mX > 800)
-            Die();
-    }
-
-    if (mState == PlantState::STATE_BOWLING_UP)
-    {
-        mY -= 2;
-    }
-    else if (mState == PlantState::STATE_BOWLING_DOWN)
-    {
-        mY += 2;
-    }
-    int aDistToGrid = mBoard->GridToPixelY(0, mRow) - mY;
-    if (aDistToGrid < -2 || aDistToGrid > 2)
-        return;
-
-    PlantState aNewState = mState;
-    if (mState == PlantState::STATE_BOWLING_UP && mRow <= 0)
-    {
-        aNewState = PlantState::STATE_BOWLING_DOWN;
-    }
-    else if (mState == PlantState::STATE_BOWLING_DOWN && mRow >= 4)
-    {
-        aNewState = PlantState::STATE_BOWLING_UP;
-    }
-
-    Zombie* aZombie = FindTargetZombie(mRow, PlantWeapon::WEAPON_PRIMARY);
-    if (aZombie)
-    {
-        int aPosX = mX + mWidth / 2;
-        int aPosY = mY + mHeight / 2;
-
-        if (mSeedType == SeedType::SEED_EXPLODE_O_NUT)
+        if (mState == PlantState::STATE_BOWLING_UP)
         {
-            mApp->PlayFoley(FoleyType::FOLEY_CHERRYBOMB);
-            mApp->PlaySample(SOUND_BOWLINGIMPACT2);
+            mY -= 2;
+        }
+        else if (mState == PlantState::STATE_BOWLING_DOWN)
+        {
+            mY += 2;
+        }
+        int aDistToGrid = mBoard->GridToPixelY(0, mRow) - mY;
+        if (aDistToGrid < -2 || aDistToGrid > 2)
+            continue;
 
-            int aDamageRangeFlags = GetDamageRangeFlags(PlantWeapon::WEAPON_PRIMARY) | 32U;
-            mBoard->KillAllZombiesInRadius(mRow, aPosX, aPosY, 90, 1, true, aDamageRangeFlags);
-            mApp->AddTodParticle(aPosX, aPosY, (int)RenderLayer::RENDER_LAYER_TOP, ParticleEffect::PARTICLE_POWIE);
+        PlantState aNewState = mState;
+        if (mState == PlantState::STATE_BOWLING_UP && mRow <= 0)
+        {
+            aNewState = PlantState::STATE_BOWLING_DOWN;
+        }
+        else if (mState == PlantState::STATE_BOWLING_DOWN && mRow >= 4)
+        {
+            aNewState = PlantState::STATE_BOWLING_UP;
+        }
+
+        Zombie* aZombie = FindTargetZombie(mRow, PlantWeapon::WEAPON_PRIMARY);
+        if (aZombie)
+        {
+            int aPosX = mX + mWidth / 2;
+            int aPosY = mY + mHeight / 2;
+
+            if (mSeedType == SeedType::SEED_EXPLODE_O_NUT)
+            {
+                mApp->PlayFoley(FoleyType::FOLEY_CHERRYBOMB);
+                mApp->PlaySample(SOUND_BOWLINGIMPACT2);
+
+                int aDamageRangeFlags = GetDamageRangeFlags(PlantWeapon::WEAPON_PRIMARY) | 32U;
+                mBoard->KillAllZombiesInRadius(mRow, aPosX, aPosY, 90, 1, true, aDamageRangeFlags);
+                mApp->AddTodParticle(aPosX, aPosY, (int)RenderLayer::RENDER_LAYER_TOP, ParticleEffect::PARTICLE_POWIE);
+                mBoard->mShakeCounter = 12;
+                mBoard->mShakeAmountX = 3;
+                mBoard->mShakeAmountY = -4;
+
+                Die();
+
+                return;
+            }
+
+            mApp->PlayFoley(FoleyType::FOLEY_BOWLINGIMPACT);
             mBoard->mShakeCounter = 12;
-            mBoard->mShakeAmountX = 3;
-            mBoard->mShakeAmountY = -4;
+            mBoard->mShakeAmountX = 1;
+            mBoard->mShakeAmountY = -2;
 
-            Die();
-
-            return;
-        }
-
-        mApp->PlayFoley(FoleyType::FOLEY_BOWLINGIMPACT);
-        mBoard->mShakeCounter = 12;
-        mBoard->mShakeAmountX = 1;
-        mBoard->mShakeAmountY = -2;
-
-        if (mSeedType == SeedType::SEED_GIANT_WALLNUT)
-        {
-            aZombie->TakeDamage(1800, 0U);
-        }
-        else if (aZombie->mShieldType == ShieldType::SHIELDTYPE_DOOR && mState != PlantState::STATE_NOTREADY)
-        {
-            aZombie->TakeDamage(1800, 0U);
-        }
-        else if (aZombie->mShieldType != ShieldType::SHIELDTYPE_NONE)
-        {
-            aZombie->TakeShieldDamage(400, 0U);
-        }
-        else if (aZombie->mHelmType != HelmType::HELMTYPE_NONE)
-        {
-            if (aZombie->mHelmType == HelmType::HELMTYPE_PAIL)
+            if (mSeedType == SeedType::SEED_GIANT_WALLNUT)
             {
-                mApp->PlayFoley(FoleyType::FOLEY_SHIELD_HIT);
+                aZombie->TakeDamage(1800, 0U);
             }
-            else if (aZombie->mHelmType == HelmType::HELMTYPE_TRAFFIC_CONE)
+            else if (aZombie->mShieldType == ShieldType::SHIELDTYPE_DOOR && mState != PlantState::STATE_NOTREADY)
             {
-                mApp->PlayFoley(FoleyType::FOLEY_PLASTIC_HIT);
+                aZombie->TakeDamage(1800, 0U);
             }
-            
-            aZombie->TakeHelmDamage(900, 0U);
-        }
-        else
-        {
-            aZombie->TakeDamage(1800, 0U);
-        }
-
-        if ((!mApp->IsFirstTimeAdventureMode() || mApp->mPlayerInfo->mLevel > 10) && mSeedType == SeedType::SEED_WALLNUT)
-        {
-            mLaunchCounter++;
-            // B 形态 -> 常量表 kBowlingBounceCoins（原 4 支链合并）：行序 =
-            // mLaunchCounter-2 直下标（==2/==3/==4 各一槽，>=5 收敛末槽）；
-            // 四支共有的 SPAWN_SUN 音效提至分发前；>=5 支的成就发放为唯一
-            // 动作差异，以 mAchv 位承载。多枚币按偏移升序逐枚投放在循环中
-            // 保持原调用次序。
-            static constexpr struct
+            else if (aZombie->mShieldType != ShieldType::SHIELDTYPE_NONE)
             {
-                int mCount;
-                CoinType mCoin;
-                int mOffsets[3];
-                bool mAchv;
-            } kBowlingBounceCoins[] = {
-                /* mLaunchCounter == 2 */ { 1, CoinType::COIN_SILVER, { 0, 0, 0 }, false },
-                /* mLaunchCounter == 3 */ { 2, CoinType::COIN_SILVER, { -5, 5, 0 }, false },
-                /* mLaunchCounter == 4 */ { 3, CoinType::COIN_SILVER, { -10, 0, 10 }, false },
-                /* mLaunchCounter >= 5  */ { 1, CoinType::COIN_GOLD, { 0, 0, 0 }, true },
-            };
-            static_assert(sizeof(kBowlingBounceCoins) / sizeof(kBowlingBounceCoins[0]) == 4, "kBowlingBounceCoins 槽位（2/3/4/>=5）");
-
-            if (mLaunchCounter >= 2)
+                aZombie->TakeShieldDamage(400, 0U);
+            }
+            else if (aZombie->mHelmType != HelmType::HELMTYPE_NONE)
             {
-                const unsigned aBounceSlot = mLaunchCounter >= 5 ? 3u : static_cast<unsigned>(mLaunchCounter) - 2u;
-                const auto& aRow = kBowlingBounceCoins[aBounceSlot];
-                mApp->PlayFoley(FoleyType::FOLEY_SPAWN_SUN);
-                for (int i = 0; i < aRow.mCount; i++)
+                if (aZombie->mHelmType == HelmType::HELMTYPE_PAIL)
                 {
-                    mBoard->AddCoin(aPosX + aRow.mOffsets[i], aPosY, aRow.mCoin, CoinMotion::COIN_MOTION_COIN);
+                    mApp->PlayFoley(FoleyType::FOLEY_SHIELD_HIT);
                 }
-                if (aRow.mAchv)
+                else if (aZombie->mHelmType == HelmType::HELMTYPE_TRAFFIC_CONE)
                 {
-                    ReportAchievement::GiveAchievement(mApp, RollSomeHeads, true); // @Patoke: add achievement
+                    mApp->PlayFoley(FoleyType::FOLEY_PLASTIC_HIT);
                 }
-            }
-        }
 
-        if (mSeedType != SeedType::SEED_GIANT_WALLNUT)
-        {
-            if (mRow == 4 || mState == PlantState::STATE_BOWLING_DOWN)
-            {
-                aNewState = PlantState::STATE_BOWLING_UP;
-            }
-            else if (mRow == 0 || mState == PlantState::STATE_BOWLING_UP)
-            {
-                aNewState = PlantState::STATE_BOWLING_DOWN;
+                aZombie->TakeHelmDamage(900, 0U);
             }
             else
             {
-                aNewState = Sexy::Rand(2) ? PlantState::STATE_BOWLING_UP : PlantState::STATE_BOWLING_DOWN;
+                aZombie->TakeDamage(1800, 0U);
+            }
+
+            if ((!mApp->IsFirstTimeAdventureMode() || mApp->mPlayerInfo->mLevel > 10) && mSeedType == SeedType::SEED_WALLNUT)
+            {
+                // This field counts impacts here, rather than elapsed time.
+                mLaunchCounter += 1;
+                // B 形态 -> 常量表 kBowlingBounceCoins（原 4 支链合并）：行序 =
+                // mLaunchCounter-2 直下标（==2/==3/==4 各一槽，>=5 收敛末槽）；
+                // 四支共有的 SPAWN_SUN 音效提至分发前；>=5 支的成就发放为唯一
+                // 动作差异，以 mAchv 位承载。多枚币按偏移升序逐枚投放在循环中
+                // 保持原调用次序。
+                static constexpr struct
+                {
+                    int mCount;
+                    CoinType mCoin;
+                    int mOffsets[3];
+                    bool mAchv;
+                } kBowlingBounceCoins[] = {
+                    /* mLaunchCounter == 2 */ { 1, CoinType::COIN_SILVER, { 0, 0, 0 }, false },
+                    /* mLaunchCounter == 3 */ { 2, CoinType::COIN_SILVER, { -5, 5, 0 }, false },
+                    /* mLaunchCounter == 4 */ { 3, CoinType::COIN_SILVER, { -10, 0, 10 }, false },
+                    /* mLaunchCounter >= 5  */ { 1, CoinType::COIN_GOLD, { 0, 0, 0 }, true },
+                };
+                static_assert(sizeof(kBowlingBounceCoins) / sizeof(kBowlingBounceCoins[0]) == 4, "kBowlingBounceCoins 槽位（2/3/4/>=5）");
+
+                if (mLaunchCounter >= 2)
+                {
+                    const unsigned aBounceSlot = mLaunchCounter >= 5 ? 3u : static_cast<unsigned>(mLaunchCounter) - 2u;
+                    const auto& aRow = kBowlingBounceCoins[aBounceSlot];
+                    mApp->PlayFoley(FoleyType::FOLEY_SPAWN_SUN);
+                    for (int i = 0; i < aRow.mCount; i++)
+                    {
+                        mBoard->AddCoin(aPosX + aRow.mOffsets[i], aPosY, aRow.mCoin, CoinMotion::COIN_MOTION_COIN);
+                    }
+                    if (aRow.mAchv)
+                    {
+                        ReportAchievement::GiveAchievement(mApp, RollSomeHeads, true); // @Patoke: add achievement
+                    }
+                }
+            }
+
+            if (mSeedType != SeedType::SEED_GIANT_WALLNUT)
+            {
+                if (mRow == 4 || mState == PlantState::STATE_BOWLING_DOWN)
+                {
+                    aNewState = PlantState::STATE_BOWLING_UP;
+                }
+                else if (mRow == 0 || mState == PlantState::STATE_BOWLING_UP)
+                {
+                    aNewState = PlantState::STATE_BOWLING_DOWN;
+                }
+                else
+                {
+                    aNewState = Sexy::Rand(2) ? PlantState::STATE_BOWLING_UP : PlantState::STATE_BOWLING_DOWN;
+                }
             }
         }
-    }
 
-    // 格桶同步（2026-10-04 B 树实机抓获保龄球卡死）：弹跳换行直写 mRow
-    // 曾不过桶——滚动坚果桶位置永留发射格，Die 按错误坐标摘链→桶链腐坏
-    // 可成环→链走死循环。mPlantCol 全程不变，仅行迁移
-    if (aNewState == PlantState::STATE_BOWLING_UP)
-    {
-        const int anOldRow = mRow;
-        mRow--;
-        mState = PlantState::STATE_BOWLING_UP;
-        mRenderOrder = CalcRenderOrder();
-        mBoard->MovePlantCellBucket(this, anOldRow, mPlantCol);
-    }
-    else if (aNewState == PlantState::STATE_BOWLING_DOWN)
-    {
-        mState = PlantState::STATE_BOWLING_DOWN;
-        mRenderOrder = CalcRenderOrder();
-        const int anOldRow = mRow;
-        mRow++;
-        mBoard->MovePlantCellBucket(this, anOldRow, mPlantCol);
+        // 格桶同步（2026-10-04 B 树实机抓获保龄球卡死）：弹跳换行直写 mRow
+        // 曾不过桶——滚动坚果桶位置永留发射格，Die 按错误坐标摘链→桶链腐坏
+        // 可成环→链走死循环。mPlantCol 全程不变，仅行迁移
+        if (aNewState == PlantState::STATE_BOWLING_UP)
+        {
+            const int anOldRow = mRow;
+            mRow--;
+            mState = PlantState::STATE_BOWLING_UP;
+            mRenderOrder = CalcRenderOrder();
+            mBoard->MovePlantCellBucket(this, anOldRow, mPlantCol);
+        }
+        else if (aNewState == PlantState::STATE_BOWLING_DOWN)
+        {
+            mState = PlantState::STATE_BOWLING_DOWN;
+            mRenderOrder = CalcRenderOrder();
+            const int anOldRow = mRow;
+            mRow++;
+            mBoard->MovePlantCellBucket(this, anOldRow, mPlantCol);
+        }
     }
 }
 
@@ -3734,8 +3748,8 @@ void Plant::DoBlink()
     if (aBodyReanim == nullptr)
         return;
 
-    if ((mSeedType == SeedType::SEED_TALLNUT && aBodyReanim->GetImageOverride(ReanimTrackId::anim_idle) == IMAGE_REANIM_TALLNUT_CRACKED2) || 
-        (mSeedType == SeedType::SEED_GARLIC && aBodyReanim->GetImageOverride(ReanimTrackId::anim_face) == IMAGE_REANIM_GARLIC_BODY3))
+    if ((mSeedType == SeedType::SEED_TALLNUT && aBodyReanim->VariantOption(ReanimTrackId::anim_idle) == ReanimOptions::Tallnut::anim_idle::TALLNUT_CRACKED2) ||
+        (mSeedType == SeedType::SEED_GARLIC && aBodyReanim->VariantOption(ReanimTrackId::anim_face) == ReanimOptions::Garlic::anim_face::GARLIC_BODY3))
         return;
 
     if (mSeedType == SeedType::SEED_WALLNUT || mSeedType == SeedType::SEED_TALLNUT || 
@@ -3800,19 +3814,19 @@ void Plant::AnimateNuts()
     if (aBodyReanim == nullptr)
         return;
 
-    Image* aCracked1;
-    Image* aCracked2;
+    std::uint32_t aCracked1;
+    std::uint32_t aCracked2;
     ReanimTrackId aTrackToOverride;
     if (mSeedType == SeedType::SEED_WALLNUT)
     {
-        aCracked1 = IMAGE_REANIM_WALLNUT_CRACKED1;
-        aCracked2 = IMAGE_REANIM_WALLNUT_CRACKED2;
+        aCracked1 = ReanimOptions::Wallnut::anim_face::WALLNUT_CRACKED1;
+        aCracked2 = ReanimOptions::Wallnut::anim_face::WALLNUT_CRACKED2;
         aTrackToOverride = ReanimTrackId::anim_face;
     }
     else if (mSeedType == SeedType::SEED_TALLNUT)
     {
-        aCracked1 = IMAGE_REANIM_TALLNUT_CRACKED1;
-        aCracked2 = IMAGE_REANIM_TALLNUT_CRACKED2;
+        aCracked1 = ReanimOptions::Tallnut::anim_idle::TALLNUT_CRACKED1;
+        aCracked2 = ReanimOptions::Tallnut::anim_idle::TALLNUT_CRACKED2;
         aTrackToOverride = ReanimTrackId::anim_idle;
     }
     else return;
@@ -3824,26 +3838,26 @@ void Plant::AnimateNuts()
         aPosY -= 32;
     }
 
-    Image* aImageOverride = aBodyReanim->GetImageOverride(aTrackToOverride);
+    const auto aAppearance = aBodyReanim->VariantOption(aTrackToOverride);
     if (mPlantHealth < mPlantMaxHealth / 3)
     {
-        if (aImageOverride != aCracked2)
+        if (aAppearance != aCracked2)
         {
-            aBodyReanim->SetImageOverride(aTrackToOverride, aCracked2);
+            aBodyReanim->SetVariantOption(aTrackToOverride, aCracked2);
             mApp->AddTodParticle(aPosX, aPosY, mRenderOrder + 4, ParticleEffect::PARTICLE_WALLNUT_EAT_LARGE);
         }
     }
     else if (mPlantHealth < mPlantMaxHealth * 2 / 3)
     {
-        if (aImageOverride != aCracked1)
+        if (aAppearance != aCracked1)
         {
-            aBodyReanim->SetImageOverride(aTrackToOverride, aCracked1);
+            aBodyReanim->SetVariantOption(aTrackToOverride, aCracked1);
             mApp->AddTodParticle(aPosX, aPosY, mRenderOrder + 4, ParticleEffect::PARTICLE_WALLNUT_EAT_LARGE);
         }
     }
     else
     {
-        aBodyReanim->SetImageOverride(aTrackToOverride, nullptr);
+        aBodyReanim->SetVariantOption(aTrackToOverride, 0);
     }
 
     if (IsInPlay() && !mApp->IsIZombieLevel())
@@ -3865,26 +3879,26 @@ void Plant::AnimateNuts()
 void Plant::AnimateGarlic()
 {
     Reanimation* aBodyReanim = mApp->ReanimationGet(mBodyReanimID);
-    Image* aImageOverride = aBodyReanim->GetImageOverride(ReanimTrackId::anim_face);
+    const auto aAppearance = aBodyReanim->VariantOption(ReanimTrackId::anim_face);
 
     if (mPlantHealth < mPlantMaxHealth / 3)
     {
-        if (aImageOverride != IMAGE_REANIM_GARLIC_BODY3)
+        if (aAppearance != ReanimOptions::Garlic::anim_face::GARLIC_BODY3)
         {
-            aBodyReanim->SetImageOverride(ReanimTrackId::anim_face, IMAGE_REANIM_GARLIC_BODY3);
+            aBodyReanim->SetVariantOption(ReanimTrackId::anim_face, ReanimOptions::Garlic::anim_face::GARLIC_BODY3);
             aBodyReanim->AssignRenderGroupToRange(ReanimTrackRanges::Garlic_stem, RENDER_GROUP_HIDDEN);
         }
     }
     else if (mPlantHealth < mPlantMaxHealth * 2 / 3)
     {
-        if (aImageOverride != IMAGE_REANIM_GARLIC_BODY2)
+        if (aAppearance != ReanimOptions::Garlic::anim_face::GARLIC_BODY2)
         {
-            aBodyReanim->SetImageOverride(ReanimTrackId::anim_face, IMAGE_REANIM_GARLIC_BODY2);
+            aBodyReanim->SetVariantOption(ReanimTrackId::anim_face, ReanimOptions::Garlic::anim_face::GARLIC_BODY2);
         }
     }
     else
     {
-        aBodyReanim->SetImageOverride(ReanimTrackId::anim_face, nullptr);
+        aBodyReanim->SetVariantOption(ReanimTrackId::anim_face, 0);
     }
 }
 
@@ -3892,21 +3906,21 @@ void Plant::AnimateGarlic()
 void Plant::AnimatePumpkin()
 {
     Reanimation* aBodyReanim = mApp->ReanimationGet(mBodyReanimID);
-    Image* aImageOverride = aBodyReanim->GetImageOverride(ReanimTrackId::Pumpkin_front);
+    const auto aAppearance = aBodyReanim->VariantOption(ReanimTrackId::Pumpkin_front);
 
     if (mPlantHealth < mPlantMaxHealth / 3)
     {
-        if (aImageOverride != IMAGE_REANIM_PUMPKIN_DAMAGE3)
-            aBodyReanim->SetImageOverride(ReanimTrackId::Pumpkin_front, IMAGE_REANIM_PUMPKIN_DAMAGE3);
+        if (aAppearance != ReanimOptions::Pumpkin::Pumpkin_front::PUMPKIN_DAMAGE3)
+            aBodyReanim->SetVariantOption(ReanimTrackId::Pumpkin_front, ReanimOptions::Pumpkin::Pumpkin_front::PUMPKIN_DAMAGE3);
     }
     else if (mPlantHealth < mPlantMaxHealth * 2 / 3)
     {
-        if (aImageOverride != IMAGE_REANIM_PUMPKIN_DAMAGE1)
-            aBodyReanim->SetImageOverride(ReanimTrackId::Pumpkin_front, IMAGE_REANIM_PUMPKIN_DAMAGE1);
+        if (aAppearance != ReanimOptions::Pumpkin::Pumpkin_front::PUMPKIN_DAMAGE1)
+            aBodyReanim->SetVariantOption(ReanimTrackId::Pumpkin_front, ReanimOptions::Pumpkin::Pumpkin_front::PUMPKIN_DAMAGE1);
     }
     else
     {
-        aBodyReanim->SetImageOverride(ReanimTrackId::Pumpkin_front, nullptr);
+        aBodyReanim->SetVariantOption(ReanimTrackId::Pumpkin_front, 0);
     }
 }
 
@@ -4451,11 +4465,39 @@ void Plant::GetPeaHeadOffset(int& theOffsetX, int& theOffsetY)
 
 //0x465460
 // GOTY @Patoke: 0x468EB0
-// 回退 kMagnetItems 表（2026-10-07 用户裁决）：LPE14 恒频复核 81.5ns vs
-// if 链 60.0ns（-35.9%，当时 P 核 -9~-11% 噪声带边缘保留）；MagnetItemType
-// 扩展概率不足以豁免（舞王案口径）。if 链自 998879a6~1 逐字恢复。
+// The gameplay enum selects an authored atlas sprite; rectangles and scales come
+// from Magnet.atlas.dsl. The old Image* table/if-chain measurements do not measure
+// this atlas path, so this change makes no CPU timing claim.
 void Plant::DrawMagnetItems(Graphics* g)
 {
+    using Sprite = MagnetAtlas::Sprite;
+    static constexpr Sprite aSprites[] = {
+        Sprite::Count,
+        Sprite::REANIM_ZOMBIE_BUCKET1,
+        Sprite::REANIM_ZOMBIE_BUCKET2,
+        Sprite::REANIM_ZOMBIE_BUCKET3,
+        Sprite::REANIM_ZOMBIE_FOOTBALL_HELMET,
+        Sprite::REANIM_ZOMBIE_FOOTBALL_HELMET2,
+        Sprite::REANIM_ZOMBIE_FOOTBALL_HELMET3,
+        Sprite::REANIM_ZOMBIE_SCREENDOOR1,
+        Sprite::REANIM_ZOMBIE_SCREENDOOR2,
+        Sprite::REANIM_ZOMBIE_SCREENDOOR3,
+        Sprite::ZOMBIEPOGO_1,
+        Sprite::ZOMBIEPOGO_2,
+        Sprite::ZOMBIEPOGO_3,
+        Sprite::REANIM_ZOMBIE_JACKBOX_BOX,
+        Sprite::REANIM_ZOMBIE_LADDER_1,
+        Sprite::REANIM_ZOMBIE_LADDER_1_DAMAGE1,
+        Sprite::REANIM_ZOMBIE_LADDER_1_DAMAGE2,
+        Sprite::REANIM_ZOMBIE_LADDER_5,
+        Sprite::REANIM_COIN_SILVER_DOLLAR,
+        Sprite::REANIM_COIN_GOLD_DOLLAR,
+        Sprite::REANIM_DIAMOND,
+        Sprite::REANIM_ZOMBIE_DIGGER_PICKAXE
+    };
+    static_assert(sizeof(aSprites) / sizeof(aSprites[0]) == MAGNET_ITEM_PICK_AXE + 1,
+        "MagnetItemType needs a matching atlas sprite");
+    const TextureSource aTexture{MagnetAtlas::Texture,MagnetAtlas::Width,MagnetAtlas::Height};
     float aOffsetX = 0.0f;
     float aOffsetY = PlantDrawHeightOffset(mBoard, this, mSeedType, mPlantCol, mRow);
 
@@ -4464,102 +4506,20 @@ void Plant::DrawMagnetItems(Graphics* g)
         MagnetItem* aMagnetItem = &mMagnetItems[i];
         if (aMagnetItem->mItemType != MagnetItemType::MAGNET_ITEM_NONE)
         {
-            int aCelRow = 0, aCelCol = 0;
-            Image* aImage = nullptr;
-            float aScale = 0.8f;
-
-            if (aMagnetItem->mItemType == MagnetItemType::MAGNET_ITEM_PAIL_1)
-            {
-                aImage = IMAGE_REANIM_ZOMBIE_BUCKET1;
-            }
-            else if (aMagnetItem->mItemType == MagnetItemType::MAGNET_ITEM_PAIL_2)
-            {
-                aImage = IMAGE_REANIM_ZOMBIE_BUCKET2;
-            }
-            else if (aMagnetItem->mItemType == MagnetItemType::MAGNET_ITEM_PAIL_3)
-            {
-                aImage = IMAGE_REANIM_ZOMBIE_BUCKET3;
-            }
-            else if (aMagnetItem->mItemType == MagnetItemType::MAGNET_ITEM_FOOTBALL_HELMET_1)
-            {
-                aImage = IMAGE_REANIM_ZOMBIE_FOOTBALL_HELMET;
-            }
-            else if (aMagnetItem->mItemType == MagnetItemType::MAGNET_ITEM_FOOTBALL_HELMET_2)
-            {
-                aImage = IMAGE_REANIM_ZOMBIE_FOOTBALL_HELMET2;
-            }
-            else if (aMagnetItem->mItemType == MagnetItemType::MAGNET_ITEM_FOOTBALL_HELMET_3)
-            {
-                aImage = IMAGE_REANIM_ZOMBIE_FOOTBALL_HELMET3;
-            }
-            else if (aMagnetItem->mItemType == MagnetItemType::MAGNET_ITEM_DOOR_1)
-            {
-                aImage = IMAGE_REANIM_ZOMBIE_SCREENDOOR1;
-            }
-            else if (aMagnetItem->mItemType == MagnetItemType::MAGNET_ITEM_DOOR_2)
-            {
-                aImage = IMAGE_REANIM_ZOMBIE_SCREENDOOR2;
-            }
-            else if (aMagnetItem->mItemType == MagnetItemType::MAGNET_ITEM_DOOR_3)
-            {
-                aImage = IMAGE_REANIM_ZOMBIE_SCREENDOOR3;
-            }
-            else if (aMagnetItem->mItemType >= MagnetItemType::MAGNET_ITEM_POGO_1 && aMagnetItem->mItemType <= MagnetItemType::MAGNET_ITEM_POGO_3)
-            {
-                aCelCol = (int)aMagnetItem->mItemType - (int)MagnetItemType::MAGNET_ITEM_POGO_1;
-                aImage = IMAGE_ZOMBIEPOGO;
-            }
-            else if (aMagnetItem->mItemType == MagnetItemType::MAGNET_ITEM_LADDER_1)
-            {
-                aImage = IMAGE_REANIM_ZOMBIE_LADDER_1;
-            }
-            else if (aMagnetItem->mItemType == MagnetItemType::MAGNET_ITEM_LADDER_2)
-            {
-                aImage = IMAGE_REANIM_ZOMBIE_LADDER_1_DAMAGE1;
-            }
-            else if (aMagnetItem->mItemType == MagnetItemType::MAGNET_ITEM_LADDER_3)
-            {
-                aImage = IMAGE_REANIM_ZOMBIE_LADDER_1_DAMAGE2;
-            }
-            else if (aMagnetItem->mItemType == MagnetItemType::MAGNET_ITEM_LADDER_PLACED)
-            {
-                aImage = IMAGE_REANIM_ZOMBIE_LADDER_5;
-            }
-            else if (aMagnetItem->mItemType == MagnetItemType::MAGNET_ITEM_JACK_IN_THE_BOX)
-            {
-                aImage = IMAGE_REANIM_ZOMBIE_JACKBOX_BOX;
-            }
-            else if (aMagnetItem->mItemType == MagnetItemType::MAGNET_ITEM_PICK_AXE)
-            {
-                aImage = IMAGE_REANIM_ZOMBIE_DIGGER_PICKAXE;
-            }
-            else if (aMagnetItem->mItemType == MagnetItemType::MAGNET_ITEM_SILVER_COIN)
-            {
-                aScale = 1.0f;
-                aImage = IMAGE_REANIM_COIN_SILVER_DOLLAR;
-            }
-            else if (aMagnetItem->mItemType == MagnetItemType::MAGNET_ITEM_GOLD_COIN)
-            {
-                aScale = 1.0f;
-                aImage = IMAGE_REANIM_COIN_GOLD_DOLLAR;
-            }
-            else if (aMagnetItem->mItemType == MagnetItemType::MAGNET_ITEM_DIAMOND)
-            {
-                aScale = 1.0f;
-                aImage = IMAGE_REANIM_DIAMOND;
-            }
-            else
-            {
-                TOD_ASSERT(false);
-            }
-
+            const int aType=static_cast<int>(aMagnetItem->mItemType);
+            TOD_ASSERT(aType > 0 && aType < static_cast<int>(sizeof(aSprites)/sizeof(aSprites[0])));
+            const auto aSprite=static_cast<unsigned>(aSprites[aType]);
+            const Rect& aSrcRect=MagnetAtlas::Images[aSprite];
+            const float aScale=MagnetAtlas::Scales[aSprite];
             if (aScale == 1.0f)
             {
-                g->DrawImageCel(aImage, aMagnetItem->mPosX - mX + aOffsetX, aMagnetItem->mPosY - mY + aOffsetY, aCelCol, aCelRow);
+                DrawAtlasImage(g,aTexture,aSrcRect,aMagnetItem->mPosX-mX+aOffsetX,
+                    aMagnetItem->mPosY-mY+aOffsetY);
             }
             else
             {
-                TodDrawImageCelScaledF(g, aImage, aMagnetItem->mPosX - mX + aOffsetX, aMagnetItem->mPosY - mY + aOffsetY, aCelCol, aCelRow, aScale, aScale);
+                DrawAtlasImageScaled(g,aTexture,aSrcRect,aMagnetItem->mPosX-mX+aOffsetX,
+                    aMagnetItem->mPosY-mY+aOffsetY,aScale,aScale);
             }
         }
     }
@@ -4685,11 +4645,13 @@ void Plant::DrawShadow(Sexy::Graphics* g, float theOffsetX, float theOffsetY)
 
     if (aShadowType == 0)
     {
-        TodDrawImageCelCenterScaledF(g, IMAGE_PLANTSHADOW, theOffsetX + aShadowOffsetX, theOffsetY + aShadowOffsetY, 0, aScale, aScale);
+        TodDrawImageRectCenterScaledF(g, IMAGE_PLANTSHADOW, theOffsetX + aShadowOffsetX, theOffsetY + aShadowOffsetY,
+            Rect(0, 0, IMAGE_PLANTSHADOW->mWidth, IMAGE_PLANTSHADOW->mHeight), aScale, aScale);
     }
     else
     {
-        TodDrawImageCelCenterScaledF(g, IMAGE_PLANTSHADOW2, theOffsetX + aShadowOffsetX, theOffsetY + aShadowOffsetY, 0, aScale, aScale);
+        TodDrawImageRectCenterScaledF(g, IMAGE_PLANTSHADOW2, theOffsetX + aShadowOffsetX, theOffsetY + aShadowOffsetY,
+            Rect(0, 0, IMAGE_PLANTSHADOW2->mWidth, IMAGE_PLANTSHADOW2->mHeight), aScale, aScale);
     }
 }
 
@@ -4802,20 +4764,10 @@ void Plant::Draw(Graphics* g)
             Reanimation* aBodyReanim = mApp->ReanimationTryToGet(mBodyReanimID);
             if (aBodyReanim)
             {
-                if (!mApp->mDDInterface->mIs3D && mSeedType == SeedType::SEED_FLOWERPOT && IsOnBoard() &&
-                    aBodyReanim->mAnimRate == 0.0f && aBodyReanim->IsAnimPlaying(ReanimTrackId::anim_idle))
-                {
-                    mApp->mReanimatorCache->DrawCachedPlant(g, aOffsetX, aOffsetY, mSeedType, DrawVariation::VARIATION_NORMAL);
-                }
-                else
-                {
-                    // GOTY 1073 Plant::Draw (0x00469500) draws only render
-                    // group 0 here.  Group 1 is Pumpkin_back and was already
-                    // drawn behind the contained plant above; using the GOTY
-                    // all-groups Reanimation::Draw would draw that back shell
-                    // again over Pumpkin_front.
-                    aBodyReanim->DrawRenderGroup(g, RENDER_GROUP_NORMAL);
-                }
+                // GOTY 1073 Plant::Draw (0x00469500) draws only render
+                // group 0 here. Group 1 is Pumpkin_back and was already
+                // drawn behind the contained plant above.
+                aBodyReanim->DrawRenderGroup(g, RENDER_GROUP_NORMAL);
             }
         }
 

@@ -1,0 +1,1051 @@
+{
+  "format": "pvz-zombatar-sources-v1",
+  "name": "Zombatar",
+  "images": [
+    {
+      "name": "ACCESSORY_1",
+      "image": "images/zombatar_accessory_1.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "ACCESSORY_10",
+      "image": "images/zombatar_accessory_10.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "ACCESSORY_11",
+      "image": "images/zombatar_accessory_11.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "ACCESSORY_12",
+      "image": "images/zombatar_accessory_12.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "ACCESSORY_13",
+      "image": "images/zombatar_accessory_13.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "ACCESSORY_14",
+      "image": "images/zombatar_accessory_14.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "ACCESSORY_15",
+      "image": "images/zombatar_accessory_15.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "ACCESSORY_16",
+      "image": "images/zombatar_accessory_16.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "ACCESSORY_2",
+      "image": "images/zombatar_accessory_2.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "ACCESSORY_3",
+      "image": "images/zombatar_accessory_3.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "ACCESSORY_4",
+      "image": "images/zombatar_accessory_4.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "ACCESSORY_5",
+      "image": "images/zombatar_accessory_5.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "ACCESSORY_6",
+      "image": "images/zombatar_accessory_6.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "ACCESSORY_8",
+      "image": "images/zombatar_accessory_8.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "ACCESSORY_9",
+      "image": "images/zombatar_accessory_9.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "ACCESSORY_BG",
+      "image": "images/zombatar_accessory_bg.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "ACCESSORY_BG_HIGHLIGHT",
+      "image": "images/zombatar_accessory_bg_highlight.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "ACCESSORY_BG_NONE",
+      "image": "images/zombatar_accessory_bg_none.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "ACCESSORY_BUTTON",
+      "image": "images/zombatar_accessory_button.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "ACCESSORY_BUTTON_HIGHLIGHT",
+      "image": "images/zombatar_accessory_button_highlight.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "ACCESSORY_BUTTON_OVER",
+      "image": "images/zombatar_accessory_button_over.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "BACK_BUTTON",
+      "image": "images/zombatar_back_button.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "BACK_BUTTON_HIGHLIGHT",
+      "image": "images/zombatar_back_button_highlight.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "BACKDROPS_BUTTON",
+      "image": "images/zombatar_backdrops_button.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "BACKDROPS_BUTTON_HIGHLIGHT",
+      "image": "images/zombatar_backdrops_button_highlight.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "BACKDROPS_BUTTON_OVER",
+      "image": "images/zombatar_backdrops_button_over.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "BACKGROUND_BLANK",
+      "image": "images/zombatar_background_blank.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "BACKGROUND_CRAZYDAVE",
+      "image": "images/zombatar_background_crazydave.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "BACKGROUND_MENU",
+      "image": "images/zombatar_background_menu.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "BACKGROUND_MENU_DOS",
+      "image": "images/zombatar_background_menu_dos.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "BACKGROUND_ROOF",
+      "image": "images/zombatar_background_roof.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "CLOTHES_1",
+      "image": "images/zombatar_clothes_1.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "CLOTHES_10",
+      "image": "images/zombatar_clothes_10.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "CLOTHES_11",
+      "image": "images/zombatar_clothes_11.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "CLOTHES_12",
+      "image": "images/zombatar_clothes_12.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "CLOTHES_2",
+      "image": "images/zombatar_clothes_2.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "CLOTHES_3",
+      "image": "images/zombatar_clothes_3.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "CLOTHES_4",
+      "image": "images/zombatar_clothes_4.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "CLOTHES_5",
+      "image": "images/zombatar_clothes_5.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "CLOTHES_6",
+      "image": "images/zombatar_clothes_6.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "CLOTHES_7",
+      "image": "images/zombatar_clothes_7.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "CLOTHES_8",
+      "image": "images/zombatar_clothes_8.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "CLOTHES_9",
+      "image": "images/zombatar_clothes_9.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "CLOTHES_BUTTON",
+      "image": "images/zombatar_clothes_button.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "CLOTHES_BUTTON_HIGHLIGHT",
+      "image": "images/zombatar_clothes_button_highlight.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "CLOTHES_BUTTON_OVER",
+      "image": "images/zombatar_clothes_button_over.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "COLORPICKER",
+      "image": "images/zombatar_colorpicker.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "COLORPICKER_NONE",
+      "image": "images/zombatar_colorpicker_none.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "COLORS_BG",
+      "image": "images/zombatar_colors_bg.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "DISPLAY_WINDOW",
+      "image": "images/zombatar_display_window.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "EYEWEAR_1",
+      "image": "images/zombatar_eyewear_1.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "EYEWEAR_10",
+      "image": "images/zombatar_eyewear_10.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "EYEWEAR_10_MASK",
+      "image": "images/zombatar_eyewear_10_mask.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "EYEWEAR_11",
+      "image": "images/zombatar_eyewear_11.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "EYEWEAR_11_MASK",
+      "image": "images/zombatar_eyewear_11_mask.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "EYEWEAR_12",
+      "image": "images/zombatar_eyewear_12.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "EYEWEAR_12_MASK",
+      "image": "images/zombatar_eyewear_12_mask.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "EYEWEAR_13",
+      "image": "images/zombatar_eyewear_13.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "EYEWEAR_14",
+      "image": "images/zombatar_eyewear_14.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "EYEWEAR_15",
+      "image": "images/zombatar_eyewear_15.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "EYEWEAR_16",
+      "image": "images/zombatar_eyewear_16.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "EYEWEAR_1_MASK",
+      "image": "images/zombatar_eyewear_1_mask.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "EYEWEAR_2",
+      "image": "images/zombatar_eyewear_2.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "EYEWEAR_2_MASK",
+      "image": "images/zombatar_eyewear_2_mask.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "EYEWEAR_3",
+      "image": "images/zombatar_eyewear_3.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "EYEWEAR_3_MASK",
+      "image": "images/zombatar_eyewear_3_mask.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "EYEWEAR_4",
+      "image": "images/zombatar_eyewear_4.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "EYEWEAR_4_MASK",
+      "image": "images/zombatar_eyewear_4_mask.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "EYEWEAR_5",
+      "image": "images/zombatar_eyewear_5.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "EYEWEAR_5_MASK",
+      "image": "images/zombatar_eyewear_5_mask.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "EYEWEAR_6",
+      "image": "images/zombatar_eyewear_6.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "EYEWEAR_6_MASK",
+      "image": "images/zombatar_eyewear_6_mask.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "EYEWEAR_7",
+      "image": "images/zombatar_eyewear_7.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "EYEWEAR_7_MASK",
+      "image": "images/zombatar_eyewear_7_mask.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "EYEWEAR_8",
+      "image": "images/zombatar_eyewear_8.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "EYEWEAR_8_MASK",
+      "image": "images/zombatar_eyewear_8_mask.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "EYEWEAR_9",
+      "image": "images/zombatar_eyewear_9.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "EYEWEAR_9_MASK",
+      "image": "images/zombatar_eyewear_9_mask.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "EYEWEAR_BUTTON",
+      "image": "images/zombatar_eyewear_button.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "EYEWEAR_BUTTON_HIGHLIGHT",
+      "image": "images/zombatar_eyewear_button_highlight.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "EYEWEAR_BUTTON_OVER",
+      "image": "images/zombatar_eyewear_button_over.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "FACIAL_HAIR_BUTTON",
+      "image": "images/zombatar_fhair_button.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "FACIAL_HAIR_BUTTON_HIGHLIGHT",
+      "image": "images/zombatar_fhair_button_highlight.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "FACIAL_HAIR_BUTTON_OVER",
+      "image": "images/zombatar_fhair_button_over.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "FACIALHAIR_1",
+      "image": "images/zombatar_facialhair_1.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "FACIALHAIR_10",
+      "image": "images/zombatar_facialhair_10.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "FACIALHAIR_10_MASK",
+      "image": "images/zombatar_facialhair_10_mask.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "FACIALHAIR_11",
+      "image": "images/zombatar_facialhair_11.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "FACIALHAIR_11_MASK",
+      "image": "images/zombatar_facialhair_11_mask.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "FACIALHAIR_12",
+      "image": "images/zombatar_facialhair_12.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "FACIALHAIR_12_MASK",
+      "image": "images/zombatar_facialhair_12_mask.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "FACIALHAIR_13",
+      "image": "images/zombatar_facialhair_13.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "FACIALHAIR_14",
+      "image": "images/zombatar_facialhair_14.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "FACIALHAIR_14_MASK",
+      "image": "images/zombatar_facialhair_14_mask.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "FACIALHAIR_15",
+      "image": "images/zombatar_facialhair_15.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "FACIALHAIR_15_MASK",
+      "image": "images/zombatar_facialhair_15_mask.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "FACIALHAIR_16",
+      "image": "images/zombatar_facialhair_16.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "FACIALHAIR_16_MASK",
+      "image": "images/zombatar_facialhair_16_mask.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "FACIALHAIR_17",
+      "image": "images/zombatar_facialhair_17.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "FACIALHAIR_18",
+      "image": "images/zombatar_facialhair_18.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "FACIALHAIR_18_MASK",
+      "image": "images/zombatar_facialhair_18_mask.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "FACIALHAIR_19",
+      "image": "images/zombatar_facialhair_19.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "FACIALHAIR_1_MASK",
+      "image": "images/zombatar_facialhair_1_mask.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "FACIALHAIR_2",
+      "image": "images/zombatar_facialhair_2.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "FACIALHAIR_20",
+      "image": "images/zombatar_facialhair_20.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "FACIALHAIR_21",
+      "image": "images/zombatar_facialhair_21.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "FACIALHAIR_21_MASK",
+      "image": "images/zombatar_facialhair_21_mask.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "FACIALHAIR_22",
+      "image": "images/zombatar_facialhair_22.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "FACIALHAIR_22_MASK",
+      "image": "images/zombatar_facialhair_22_mask.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "FACIALHAIR_23",
+      "image": "images/zombatar_facialhair_23.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "FACIALHAIR_23_MASK",
+      "image": "images/zombatar_facialhair_23_mask.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "FACIALHAIR_24",
+      "image": "images/zombatar_facialhair_24.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "FACIALHAIR_24_MASK",
+      "image": "images/zombatar_facialhair_24_mask.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "FACIALHAIR_3",
+      "image": "images/zombatar_facialhair_3.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "FACIALHAIR_4",
+      "image": "images/zombatar_facialhair_4.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "FACIALHAIR_4_MASK",
+      "image": "images/zombatar_facialhair_4_mask.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "FACIALHAIR_5",
+      "image": "images/zombatar_facialhair_5.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "FACIALHAIR_6",
+      "image": "images/zombatar_facialhair_6.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "FACIALHAIR_7",
+      "image": "images/zombatar_facialhair_7.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "FACIALHAIR_8",
+      "image": "images/zombatar_facialhair_8.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "FACIALHAIR_8_MASK",
+      "image": "images/zombatar_facialhair_8_mask.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "FACIALHAIR_9",
+      "image": "images/zombatar_facialhair_9.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "FACIALHAIR_9_MASK",
+      "image": "images/zombatar_facialhair_9_mask.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "FINISHED_BUTTON",
+      "image": "images/zombatar_finished_button.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "FINISHED_BUTTON_HIGHLIGHT",
+      "image": "images/zombatar_finished_button_highlight.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "HAIR_1",
+      "image": "images/zombatar_hair_1.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "HAIR_10",
+      "image": "images/zombatar_hair_10.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "HAIR_11",
+      "image": "images/zombatar_hair_11.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "HAIR_11_MASK",
+      "image": "images/zombatar_hair_11_mask.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "HAIR_12",
+      "image": "images/zombatar_hair_12.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "HAIR_12_MASK",
+      "image": "images/zombatar_hair_12_mask.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "HAIR_13",
+      "image": "images/zombatar_hair_13.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "HAIR_13_MASK",
+      "image": "images/zombatar_hair_13_mask.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "HAIR_14",
+      "image": "images/zombatar_hair_14.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "HAIR_14_MASK",
+      "image": "images/zombatar_hair_14_mask.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "HAIR_15",
+      "image": "images/zombatar_hair_15.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "HAIR_15_MASK",
+      "image": "images/zombatar_hair_15_mask.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "HAIR_16",
+      "image": "images/zombatar_hair_16.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "HAIR_1_MASK",
+      "image": "images/zombatar_hair_1_mask.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "HAIR_2",
+      "image": "images/zombatar_hair_2.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "HAIR_2_MASK",
+      "image": "images/zombatar_hair_2_mask.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "HAIR_3",
+      "image": "images/zombatar_hair_3.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "HAIR_4",
+      "image": "images/zombatar_hair_4.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "HAIR_5",
+      "image": "images/zombatar_hair_5.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "HAIR_6",
+      "image": "images/zombatar_hair_6.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "HAIR_7",
+      "image": "images/zombatar_hair_7.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "HAIR_8",
+      "image": "images/zombatar_hair_8.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "HAIR_9",
+      "image": "images/zombatar_hair_9.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "HAIR_BUTTON",
+      "image": "images/zombatar_hair_button.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "HAIR_BUTTON_HIGHLIGHT",
+      "image": "images/zombatar_hair_button_highlight.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "HAIR_BUTTON_OVER",
+      "image": "images/zombatar_hair_button_over.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "HATS_1",
+      "image": "images/zombatar_hats_1.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "HATS_10",
+      "image": "images/zombatar_hats_10.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "HATS_11",
+      "image": "images/zombatar_hats_11.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "HATS_11_MASK",
+      "image": "images/zombatar_hats_11_mask.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "HATS_12",
+      "image": "images/zombatar_hats_12.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "HATS_13",
+      "image": "images/zombatar_hats_13.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "HATS_14",
+      "image": "images/zombatar_hats_14.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "HATS_1_MASK",
+      "image": "images/zombatar_hats_1_mask.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "HATS_2",
+      "image": "images/zombatar_hats_2.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "HATS_3",
+      "image": "images/zombatar_hats_3.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "HATS_3_MASK",
+      "image": "images/zombatar_hats_3_mask.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "HATS_4",
+      "image": "images/zombatar_hats_4.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "HATS_5",
+      "image": "images/zombatar_hats_5.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "HATS_6",
+      "image": "images/zombatar_hats_6.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "HATS_6_MASK",
+      "image": "images/zombatar_hats_6_mask.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "HATS_7",
+      "image": "images/zombatar_hats_7.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "HATS_7_MASK",
+      "image": "images/zombatar_hats_7_mask.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "HATS_8",
+      "image": "images/zombatar_hats_8.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "HATS_8_MASK",
+      "image": "images/zombatar_hats_8_mask.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "HATS_9",
+      "image": "images/zombatar_hats_9.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "HATS_9_MASK",
+      "image": "images/zombatar_hats_9_mask.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "HATS_BUTTON",
+      "image": "images/zombatar_hats_button.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "HATS_BUTTON_HIGHLIGHT",
+      "image": "images/zombatar_hats_button_highlight.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "HATS_BUTTON_OVER",
+      "image": "images/zombatar_hats_button_over.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "LOGO",
+      "image": "images/zombatar_logo.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "MAIN_BG",
+      "image": "images/zombatar_main_bg.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "MAINMENUBACK_HIGHLIGHT",
+      "image": "images/zombatar_mainmenuback_highlight.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "NEWZOMBIE_BUTTON",
+      "image": "images/zombatar_newzombie_button.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "NEWZOMBIE_BUTTON_HIGHLIGHT",
+      "image": "images/zombatar_newzombie_button_highlight.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "NEXT_BUTTON",
+      "image": "images/zombatar_next_button.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "NEXT_BUTTON_HIGHLIGHT",
+      "image": "images/zombatar_next_button_highlight.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "PREV_BUTTON",
+      "image": "images/zombatar_prev_button.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "PREV_BUTTON_HIGHLIGHT",
+      "image": "images/zombatar_prev_button_highlight.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "SKIN_BUTTON",
+      "image": "images/zombatar_skin_button.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "SKIN_BUTTON_HIGHLIGHT",
+      "image": "images/zombatar_skin_button_highlight.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "TIDBITS_1",
+      "image": "images/zombatar_tidbits_1.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "TIDBITS_10",
+      "image": "images/zombatar_tidbits_10.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "TIDBITS_11",
+      "image": "images/zombatar_tidbits_11.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "TIDBITS_12",
+      "image": "images/zombatar_tidbits_12.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "TIDBITS_13",
+      "image": "images/zombatar_tidbits_13.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "TIDBITS_14",
+      "image": "images/zombatar_tidbits_14.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "TIDBITS_2",
+      "image": "images/zombatar_tidbits_2.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "TIDBITS_3",
+      "image": "images/zombatar_tidbits_3.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "TIDBITS_4",
+      "image": "images/zombatar_tidbits_4.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "TIDBITS_5",
+      "image": "images/zombatar_tidbits_5.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "TIDBITS_6",
+      "image": "images/zombatar_tidbits_6.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "TIDBITS_7",
+      "image": "images/zombatar_tidbits_7.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "TIDBITS_8",
+      "image": "images/zombatar_tidbits_8.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "TIDBITS_9",
+      "image": "images/zombatar_tidbits_9.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "TIDBITS_BUTTON",
+      "image": "images/zombatar_tidbits_button.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "TIDBITS_BUTTON_HIGHLIGHT",
+      "image": "images/zombatar_tidbits_button_highlight.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "TIDBITS_BUTTON_OVER",
+      "image": "images/zombatar_tidbits_button_over.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "VIEW_BUTTON",
+      "image": "images/zombatar_view_button.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "VIEW_BUTTON_HIGHLIGHT",
+      "image": "images/zombatar_view_button_highlight.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "WIDGET_BG",
+      "image": "images/zombatar_widget_bg.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "WIDGET_INNER_BG",
+      "image": "images/zombatar_widget_inner_bg.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "ZOMBIE_BLANK",
+      "image": "images/zombatar_zombie_blank.png",
+      "auto_alpha": true
+    },
+    {
+      "name": "ZOMBIE_BLANK_SKIN",
+      "image": "images/zombatar_zombie_blank_skin.png",
+      "auto_alpha": true
+    }
+  ]
+}

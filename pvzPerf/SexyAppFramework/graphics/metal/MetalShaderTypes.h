@@ -37,13 +37,11 @@ struct MetalColorConstants
 };
 
 // pvz_alpha_kernel: buffer(0), base texture(0), alpha texture(1), target texture(2).
-// Positive columns/rows required. The alpha mask stores coverage in blue.
+// Equal input dimensions required. The alpha mask stores coverage in blue.
 struct MetalAlphaConstants
 {
     int width;
     int height;
-    int columns;
-    int rows;
     unsigned int color;
     unsigned int colorOnly;
 };
@@ -84,7 +82,7 @@ static_assert(sizeof(float) == 4 && sizeof(int) == 4 &&
 static_assert(sizeof(MetalGpuVertex) == 40, "MetalGpuVertex stride");
 static_assert(sizeof(MetalSceneConstants) == 16, "Scene constants size");
 static_assert(sizeof(MetalColorConstants) == 48, "Color constants size");
-static_assert(sizeof(MetalAlphaConstants) == 24, "Alpha constants size");
+static_assert(sizeof(MetalAlphaConstants) == 16, "Alpha constants size");
 static_assert(sizeof(MetalFontConstants) == 52, "Font constants size");
 static_assert(sizeof(MetalCausticConstants) == 4, "Caustic constants size");
 static_assert(sizeof(MetalPresentConstants) == 32, "Presentation constants size");
@@ -104,10 +102,8 @@ static_assert(offsetof(MetalColorConstants, tint) == 16 &&
     offsetof(MetalColorConstants, sourceHeight) == 40 &&
     offsetof(MetalColorConstants, sourceSlot) == 44, "Color field offsets");
 static_assert(offsetof(MetalAlphaConstants, height) == 4 &&
-    offsetof(MetalAlphaConstants, columns) == 8 &&
-    offsetof(MetalAlphaConstants, rows) == 12 &&
-    offsetof(MetalAlphaConstants, color) == 16 &&
-    offsetof(MetalAlphaConstants, colorOnly) == 20, "Alpha field offsets");
+    offsetof(MetalAlphaConstants, color) == 8 &&
+    offsetof(MetalAlphaConstants, colorOnly) == 12, "Alpha field offsets");
 static_assert(offsetof(MetalFontConstants, dst) == 16 &&
     offsetof(MetalFontConstants, white) == 32 &&
     offsetof(MetalFontConstants, sourceWidth) == 36 &&

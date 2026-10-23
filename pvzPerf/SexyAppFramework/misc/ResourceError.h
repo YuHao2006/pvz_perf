@@ -1,5 +1,4 @@
 #pragma once
-#include "Sexy.TodLib/generated/ResourceId.h"
 #include <cstddef>
 #include <cstdint>
 #include <exception>
@@ -14,16 +13,12 @@ enum class ResourceFailure : std::uint8_t
     DescriptorTruncated,
     DescriptorIdentity,
     DescriptorPath,
-    ImageGrid,
     SoundVolume,
     SystemFont,
     FontTag,
     FontStyle,
     DescriptorLength,
     ManifestTrailing,
-    MissingSlot,
-    MissingSymbol,
-    FontReferenceType,
     AlphaGridMissing,
     AlphaGridSize,
     AlphaMissing,
@@ -35,19 +30,13 @@ enum class ResourceFailure : std::uint8_t
     FontDescriptorRequired,
     FontMissing,
     FontTagDuplicate,
-    FontReferenceCycle,
-    InvalidGroup,
-    ImageSymbolBinding,
-    ImageSymbolCount,
-    ImageNotLoaded,
-    SoundNotLoaded,
-    FontNotLoaded
+    InvalidGroup
 };
 
 struct ResourceError
 {
     ResourceFailure reason = ResourceFailure::None;
-    unsigned slot = RESOURCE_SLOT_NONE;
+    unsigned record = ~0u;
     unsigned value = 0;
     std::size_t offset = 0;
 

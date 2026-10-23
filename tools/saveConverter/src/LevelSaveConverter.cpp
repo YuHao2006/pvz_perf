@@ -4,8 +4,10 @@
 #include "ConstEnums.h"
 #include "Lawn/System/LevelSaveFormat.h"
 #include "Lawn/System/Dat64TimeSchema.h"
-#include "Resources.h"
+#include "FrozenResourceIds.h"
 #include "ResourceIdRemap.h"
+#include "Sexy.TodLib/generated/ReanimAppearanceSaveCatalog.h"
+#include "Sexy.TodLib/generated/ParticleAppearanceSaveCatalog.h"
 
 #include <algorithm>
 #include <array>
@@ -25,6 +27,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
@@ -43,6 +46,53 @@ namespace
 using Byte = std::uint8_t;
 using LevelSaveFormat::RecordKind;
 using LevelSaveFormat::RecordLayout;
+
+constexpr bool IsNanosecondFormat(Format format)
+{
+    return format == Format::Dat64V2 || format == Format::Dat64V32;
+}
+constexpr bool HasParticleVariants(Format format)
+{
+    return format == Format::Dat64V32;
+}
+constexpr bool HasReanimationVariants(Format format)
+{
+    return format == Format::Dat64V32;
+}
+
+constexpr std::string_view LEGACY_PARTICLE_NAMES[] = {
+#define LEGACY_PARTICLE_ID(name) #name,
+#include "LegacyParticleIds.inc"
+#undef LEGACY_PARTICLE_ID
+};
+constexpr std::int32_t FROZEN_PARTICLE_COUNT = 162;
+constexpr auto FROZEN_PARTICLE_NAMES = [] {
+    auto names = std::to_array(LEGACY_PARTICLE_NAMES);
+    std::sort(names.begin(), names.end());
+    return names;
+}();
+constexpr std::int32_t FrozenParticleId(std::string_view name)
+{
+    const auto found = std::lower_bound(FROZEN_PARTICLE_NAMES.begin(), FROZEN_PARTICLE_NAMES.end(), name);
+    if (found == FROZEN_PARTICLE_NAMES.end() || *found != name)
+        throw "unknown frozen particle name";
+    return static_cast<std::int32_t>(found - FROZEN_PARTICLE_NAMES.begin());
+}
+constexpr auto LEGACY_PARTICLE_IDS = [] {
+    std::array<std::int32_t, FROZEN_PARTICLE_COUNT> result{};
+    for (std::size_t i = 0; i < result.size(); ++i)
+        result[i] = FrozenParticleId(LEGACY_PARTICLE_NAMES[i]);
+    return result;
+}();
+static_assert([] {
+    std::array<bool, FROZEN_PARTICLE_COUNT> seen{};
+    for (const auto id : LEGACY_PARTICLE_IDS)
+    {
+        if (id < 0 || id >= FROZEN_PARTICLE_COUNT || seen[id]) return false;
+        seen[id] = true;
+    }
+    return true;
+}(), "Frozen particle mapping must name every v3 definition exactly once");
 
 constexpr std::uint32_t LEGACY_MAGIC = 0xFEEDDEADU;
 constexpr std::uint32_t LEGACY_VERSION = 2U;
@@ -166,6 +216,48 @@ enum class Dat64Grammar
 [[noreturn]] void Fail(const std::string& theReason)
 {
     throw std::runtime_error(theReason);
+}
+
+std::int32_t ParticleIdToCanonical(std::int32_t id, Format format)
+{
+    if (id == -1 || HasParticleVariants(format)) return id;
+    const auto count = format == Format::Dat64V2 ? std::size(LEGACY_PARTICLE_IDS) : 106U;
+    if (id < 0 || static_cast<std::size_t>(id) >= count)
+        Fail("旧格式粒子定义 ID 越界：" + std::to_string(id));
+    return LEGACY_PARTICLE_IDS[id];
+}
+
+std::int32_t ParticleIdFromCanonical(std::int32_t id, Format format)
+{
+    if (id == -1 || HasParticleVariants(format)) return id;
+    const auto found = std::find(std::begin(LEGACY_PARTICLE_IDS), std::end(LEGACY_PARTICLE_IDS), id);
+    const auto index = static_cast<std::size_t>(found - std::begin(LEGACY_PARTICLE_IDS));
+    const auto count = format == Format::Dat64V2 ? std::size(LEGACY_PARTICLE_IDS) : 106U;
+    if (index >= count) Fail("粒子定义无法导出到旧格式：" + std::to_string(id));
+    return static_cast<std::int32_t>(index);
+}
+
+const auto& ParticleAppearanceFromCanonical(std::int32_t oldEffect)
+{
+    const auto& entries = ParticleAppearanceSaveCatalog::Mappings;
+    const auto found = std::find_if(std::begin(entries), std::end(entries),
+        [&](const auto& entry) { return oldEffect >= 0 &&
+            entry.oldV3Effect == static_cast<std::uint32_t>(oldEffect); });
+    if (found == std::end(entries))
+        Fail("Unknown historical particle appearance ID " + std::to_string(oldEffect));
+    return *found;
+}
+
+std::int32_t ParticleAppearanceToCanonical(std::int32_t baseEffect, std::uint32_t variant)
+{
+    const auto& entries = ParticleAppearanceSaveCatalog::Mappings;
+    const auto found = std::find_if(std::begin(entries), std::end(entries),
+        [&](const auto& entry) { return baseEffect >= 0 &&
+            entry.baseEffect == static_cast<std::uint32_t>(baseEffect) && entry.variant == variant; });
+    if (found == std::end(entries))
+        Fail("Unknown particle base/variant pair: base=" + std::to_string(baseEffect) +
+            ", variant=" + std::to_string(variant));
+    return static_cast<std::int32_t>(found->oldV3Effect);
 }
 
 class Reader
@@ -304,11 +396,28 @@ std::uint32_t ReadU32At(std::span<const Byte> theData, std::size_t theOffset)
         (static_cast<std::uint32_t>(theData[theOffset + 3]) << 24);
 }
 
+Format Dat64Format(std::span<const Byte> file)
+{
+    if (file.size() < LevelSaveFormat::DAT64_HEADER_SIZE)
+        Fail(0, "dat64.header", "文件短于 48 字节头部");
+    switch (ReadU32At(file, 8))
+    {
+    case LevelSaveFormat::DAT64_V1_VERSION: return Format::Dat64V1;
+    case LevelSaveFormat::DAT64_V2_VERSION: return Format::Dat64V2;
+    case LevelSaveFormat::DAT64_VERSION:
+        if (ReadU32At(file, 40) == LevelSaveFormat::DAT64_MINOR_VERSION &&
+            ReadU32At(file, 36) == LevelSaveFormat::DAT64_SCHEMA_ID)
+            return Format::Dat64V32;
+        Fail(36, "dat64.schema", "不支持的存档版本；仅支持原版 DAT、DAT64 v1、v2、v3.2，未发布的 v3.0/v3.1 不受支持");
+    default: Fail(8, "dat64.version", "不支持的存档版本");
+    }
+}
+
 std::vector<Byte> ReadTimeRecord(
     Reader& reader, std::span<const Byte> bytes, Dat64TimeSchema::Fields fields,
     Format format)
 {
-    if (format != Format::Dat64V2)
+    if (!IsNanosecondFormat(format))
         return {bytes.begin(), bytes.end()};
     return Dat64TimeSchema::Collapse(bytes, fields,
         [&](const Dat64TimeSchema::Field& field, std::uint64_t ns)
@@ -325,7 +434,7 @@ std::vector<Byte> WriteTimeRecord(
     Writer& writer, std::span<const Byte> bytes, Dat64TimeSchema::Fields fields,
     Format format)
 {
-    if (format != Format::Dat64V2) return {bytes.begin(), bytes.end()};
+    if (!IsNanosecondFormat(format)) return {bytes.begin(), bytes.end()};
     return Dat64TimeSchema::Expand(bytes, fields,
         [&](const Dat64TimeSchema::Field&, std::uint32_t)
         {
@@ -542,7 +651,7 @@ void ValidateCanonicalRecord(
         boolList({40, 80});
         break;
     case RecordKind::ParticleSystem:
-        ValidateI32Range(theRecord, 0, 0, NUM_PARTICLES - 1, theFileOffset, theName + ".mEffectType");
+        ValidateI32Range(theRecord, 0, 0, FROZEN_PARTICLE_COUNT - 1, theFileOffset, theName + ".mEffectType");
         boolList({56, 57, 64});
         break;
     case RecordKind::ParticleEmitter:
@@ -616,8 +725,13 @@ void ValidateCanonicalRecord(
             ValidateI32Range(theRecord, anOffset, -1, 4, theFileOffset, theName + ".MusicFile");
         }
         ValidateI32Range(theRecord, 32, -1, 2, theFileOffset, theName + ".mBurstOverride");
-        ValidateI32Range(theRecord, 36, 1, 1000, theFileOffset, theName + ".mBaseBPM");
-        ValidateI32Range(theRecord, 40, 1, 100, theFileOffset, theName + ".mBaseModSpeed");
+        for (const auto [offset, maximum] :
+             {std::pair{36U, 1000.0f}, std::pair{40U, 100.0f}})
+        {
+            const float value = ReadFloatAt(theRecord, offset);
+            if (!std::isfinite(value) || value < 1.0f || value > maximum)
+                Fail(theFileOffset + offset, theName + ".tempo", "浮点速度超出有效范围");
+        }
         ValidateI32Range(theRecord, 44, 0, 3, theFileOffset, theName + ".mMusicBurstState");
         ValidateI32Range(theRecord, 52, 0, 4, theFileOffset, theName + ".mMusicDrumsState");
         boolList({72, 73});
@@ -653,7 +767,7 @@ std::vector<Byte> ToCanonicalRecord(
     }
 
     std::vector<Byte> aCanonical(aLayout.mDat64Size, 0);
-    if (theSourceFormat == Format::Dat64V1)
+    if (theSourceFormat != Format::Legacy1073Dat)
     {
         // The dat64 source uses canonical offsets; copy only schema segments.
         for (std::size_t i = 0; i < aLayout.mSegmentCount; ++i)
@@ -678,6 +792,31 @@ std::vector<Byte> ToCanonicalRecord(
         // legacy 非语义区同样不寄存：aCanonical 构造即零，段区外保持零。
     }
 
+    if (theKind == RecordKind::Music)
+    {
+        // Legacy/v1 stored integer tempos. Early v2 saves also used integers;
+        // their valid positive raw values are disjoint from valid float bits.
+        for (const auto [offset, maximum] :
+             {std::pair{36U, 1000U}, std::pair{40U, 100U}})
+        {
+            const auto raw = ReadU32At(aCanonical, offset);
+            if (!IsNanosecondFormat(theSourceFormat) ||
+                (theSourceFormat == Format::Dat64V2 && raw >= 1 && raw <= maximum))
+            {
+                ValidateI32Range(aCanonical, offset, 1, static_cast<int>(maximum),
+                    theFileOffset, theName + ".tempo");
+                WriteU32At(aCanonical, offset,
+                    std::bit_cast<std::uint32_t>(static_cast<float>(raw)));
+            }
+        }
+    }
+    if (theKind == RecordKind::ParticleSystem)
+        WriteU32At(aCanonical, 0, static_cast<std::uint32_t>(
+            theSourceFormat == Format::Dat64V32
+                ? ParticleAppearanceToCanonical(ReadI32At(theSource, 0), ReadU32At(theSource, 4))
+                : ParticleIdToCanonical(ReadI32At(aCanonical, 0), theSourceFormat)));
+    if (theKind == RecordKind::Reanimation && HasReanimationVariants(theSourceFormat))
+        WriteU32At(aCanonical, 12, ReadU32At(theSource, 12));
     ValidateCanonicalRecord(theKind, aCanonical, theFileOffset, theName);
     return aCanonical;
 }
@@ -688,7 +827,32 @@ std::vector<Byte> FromCanonicalRecord(
     RecordKind theKind)
 {
     const RecordLayout& aLayout = LevelSaveFormat::GetRecordLayout(theKind);
-    if (theTargetFormat == Format::Dat64V1)
+    std::vector<Byte> aIntegerMusic;
+    if (theKind == RecordKind::Music && !HasParticleVariants(theTargetFormat))
+    {
+        aIntegerMusic.assign(theCanonical.begin(), theCanonical.end());
+        for (const auto offset : {36U, 40U})
+            WriteU32At(aIntegerMusic, offset,
+                static_cast<std::uint32_t>(std::lround(ReadFloatAt(aIntegerMusic, offset))));
+        theCanonical = aIntegerMusic;
+    }
+    std::vector<Byte> aOldParticle;
+    if (theKind == RecordKind::ParticleSystem && theTargetFormat == Format::Dat64V32)
+    {
+        aOldParticle.assign(theCanonical.begin(), theCanonical.end());
+        const auto& appearance = ParticleAppearanceFromCanonical(ReadI32At(theCanonical, 0));
+        WriteU32At(aOldParticle, 0, appearance.baseEffect);
+        WriteU32At(aOldParticle, 4, appearance.variant);
+        theCanonical = aOldParticle;
+    }
+    if (theKind == RecordKind::ParticleSystem && !HasParticleVariants(theTargetFormat))
+    {
+        aOldParticle.assign(theCanonical.begin(), theCanonical.end());
+        WriteU32At(aOldParticle, 0, static_cast<std::uint32_t>(
+            ParticleIdFromCanonical(ReadI32At(theCanonical, 0), theTargetFormat)));
+        theCanonical = aOldParticle;
+    }
+    if (theTargetFormat != Format::Legacy1073Dat)
     {
         // Canonical records already have zeroed skipped bytes.
         return std::vector<Byte>(theCanonical.begin(), theCanonical.end());
@@ -1121,6 +1285,212 @@ struct Document
     bool operator==(const Document&) const = default;
 };
 
+const auto& AppearanceDefinition(std::int32_t type)
+{
+    const auto& entries = ReanimAppearanceSaveCatalog::Definitions;
+    const auto found = std::find_if(std::begin(entries), std::end(entries),
+        [&](const auto& entry) { return type >= 0 && entry.type == static_cast<std::uint32_t>(type); });
+    if (found == std::end(entries))
+        Fail("Reanimation appearance catalog has no root type " + std::to_string(type));
+    return *found;
+}
+
+constexpr std::int32_t NormalizeReanimationImageResourceID(std::int32_t resource)
+{
+    return FrozenSaveResources::NormalizeImageAlias(resource);
+}
+
+std::vector<std::int32_t> AppearanceImages(
+    std::int32_t type, std::uint32_t variant, std::size_t trackCount)
+{
+    const auto& definition = AppearanceDefinition(type);
+    if (trackCount != definition.trackCount || variant >= definition.variantCount)
+        Fail("Reanimation type " + std::to_string(type) +
+            ": track count or appearance variant index differs from the catalog");
+    std::vector<std::int32_t> images(trackCount, LevelSaveRemap::kResourceIdSentinel);
+    for (std::uint32_t i = 0; i < definition.axisCount; ++i)
+    {
+        const auto& axis = ReanimAppearanceSaveCatalog::Axes[definition.axisOffset + i];
+        const auto digit = (variant / axis.stride) % axis.radix;
+        bool found = false;
+        for (std::uint32_t choice = 0; choice < axis.radix; ++choice)
+        {
+            const auto& entry = ReanimAppearanceSaveCatalog::Choices[axis.choiceOffset + choice];
+            if (entry.digit == digit)
+            {
+                images.at(axis.trackIndex) = entry.canonicalModernResourceId;
+                found = true;
+                break;
+            }
+        }
+        if (!found) Fail("Reanimation appearance catalog is missing an export choice");
+    }
+    return images;
+}
+
+std::uint32_t AppearanceVariant(std::int32_t type, std::span<const std::int32_t> images)
+{
+    const auto& definition = AppearanceDefinition(type);
+    if (images.size() != definition.trackCount)
+        Fail("Reanimation type " + std::to_string(type) +
+            ": saved track count differs from the appearance catalog");
+    std::vector<bool> handled(images.size(), false);
+    std::uint64_t variant = 0;
+    const auto unknown = [&](std::size_t track, std::int32_t resource) {
+        Fail("Cannot migrate Reanimation appearance: root type=" + std::to_string(type) +
+            ", track index=" + std::to_string(track) + ", canonical ResourceId=" +
+            std::to_string(resource) + " is not a declared appearance choice; no output was written");
+    };
+    for (std::uint32_t i = 0; i < definition.axisCount; ++i)
+    {
+        const auto& axis = ReanimAppearanceSaveCatalog::Axes[definition.axisOffset + i];
+        const auto resource = NormalizeReanimationImageResourceID(images[axis.trackIndex]);
+        bool found = false;
+        for (std::uint32_t choice = 0; choice < axis.radix; ++choice)
+        {
+            const auto& entry = ReanimAppearanceSaveCatalog::Choices[axis.choiceOffset + choice];
+            if (resource >= 0 && entry.canonicalModernResourceId == static_cast<std::uint32_t>(resource))
+            {
+                variant += std::uint64_t(entry.digit) * axis.stride;
+                found = true;
+                break;
+            }
+        }
+        if (!found) unknown(axis.trackIndex, resource);
+        handled[axis.trackIndex] = true;
+    }
+    for (std::size_t track = 0; track < images.size(); ++track)
+        if (!handled[track] && images[track] != LevelSaveRemap::kResourceIdSentinel)
+            unknown(track, images[track]);
+    if (variant >= definition.variantCount)
+        Fail("Reanimation appearance mixed-radix index exceeds the catalog");
+    return static_cast<std::uint32_t>(variant);
+}
+
+template<class Fn> void VisitReanimationSupplements(Document& document, Fn visit)
+{
+    std::size_t index = 0;
+    for (auto& slot : document.mArrays[9].mSlots)
+    {
+        if (!(slot.mID & DATA_ARRAY_KEY_MASK)) continue;
+        auto& supplement = document.mReanimations.at(index++);
+        const auto type = ReadI32At(slot.mCanonicalRecord, 0);
+        if (type != supplement.mDefinitionID)
+            Fail("Reanimation fixed type and supplemental definition ID disagree");
+        visit(slot.mCanonicalRecord, supplement);
+    }
+    if (index != document.mReanimations.size())
+        Fail("Reanimation supplement count differs from the live pool");
+}
+
+void RestoreAppearanceImages(Document& document)
+{
+    VisitReanimationSupplements(document, [](auto& record, auto& supplement) {
+        supplement.mImageResourceIDs = AppearanceImages(supplement.mDefinitionID,
+            ReadU32At(record, 12), supplement.mCanonicalTracks.size());
+    });
+}
+
+void PrepareAppearanceOutput(Document& document, Format target)
+{
+    VisitReanimationSupplements(document, [&](auto& record, auto& supplement) {
+        if (HasReanimationVariants(target))
+        {
+            const auto variant = AppearanceVariant(supplement.mDefinitionID, supplement.mImageResourceIDs);
+            WriteU32At(record, 12, variant);
+            supplement.mImageResourceIDs = AppearanceImages(supplement.mDefinitionID,
+                variant, supplement.mCanonicalTracks.size());
+        }
+        else
+            WriteU32At(record, 12, 0);
+    });
+}
+
+struct ParticleImageVariant
+{
+    std::int32_t mVariant;
+    std::int32_t mBase;
+    std::int32_t mImage;
+};
+
+constexpr ParticleImageVariant PARTICLE_IMAGE_VARIANTS[] = {
+#define PARTICLE_IMAGE_VARIANT(VariantEnum, BaseEnum, ComponentName, ImageResourceToken) \
+    {FrozenParticleId(#VariantEnum), FrozenParticleId(#BaseEnum), static_cast<std::int32_t>(FrozenSaveResources::ResourceId::ImageResourceToken##_ID)},
+#include "Sexy.TodLib/ParticleImageVariants.inc"
+#undef PARTICLE_IMAGE_VARIANT
+};
+constexpr std::int32_t NO_PARTICLE_IMAGE =
+    static_cast<std::int32_t>(FrozenSaveResources::ResourceId::RESOURCE_ID_MAX);
+
+// Internally every appearance is a definition, regardless of input version.
+// This also lets ConvertFile compare old/new representations semantically.
+void NormalizeParticleImages(Document& document)
+{
+    auto& pool = document.mArrays[6];
+    std::size_t systemIndex = 0;
+    for (auto& slot : pool.mSlots)
+    {
+        if (!(slot.mID & DATA_ARRAY_KEY_MASK))
+            continue;
+        auto& system = document.mParticleSystems.at(systemIndex++);
+        const auto variant = std::find_if(std::begin(PARTICLE_IMAGE_VARIANTS),
+            std::end(PARTICLE_IMAGE_VARIANTS), [&](const auto& entry) {
+                return entry.mVariant == system.mDefinitionID;
+            });
+        if (!system.mEmitters.empty())
+        {
+            const auto image = system.mEmitters.front().mImageResourceID;
+            if (std::any_of(system.mEmitters.begin(), system.mEmitters.end(),
+                [&](const auto& emitter) { return emitter.mImageResourceID != image; }))
+                Fail("粒子图片覆写混合（包括部分 null）：无法无损转换为统一定义变体");
+            if (image != NO_PARTICLE_IMAGE)
+            {
+                if (variant != std::end(PARTICLE_IMAGE_VARIANTS))
+                    Fail("粒子定义已经是图片变体，却仍带图片覆写：无法确定原始外观");
+                const auto match = std::find_if(std::begin(PARTICLE_IMAGE_VARIANTS),
+                    std::end(PARTICLE_IMAGE_VARIANTS), [&](const auto& entry) {
+                        return entry.mBase == system.mDefinitionID && entry.mImage == image;
+                    });
+                if (match == std::end(PARTICLE_IMAGE_VARIANTS))
+                    Fail("粒子图片覆写没有对应定义变体，无法无损迁移（definition=" +
+                        std::to_string(system.mDefinitionID) + ", image=" + std::to_string(image) + "）");
+                system.mDefinitionID = match->mVariant;
+                for (auto& emitter : system.mEmitters)
+                    emitter.mImageResourceID = NO_PARTICLE_IMAGE;
+            }
+        }
+        WriteU32At(slot.mCanonicalRecord, 0, static_cast<std::uint32_t>(system.mDefinitionID));
+    }
+}
+
+Document ParticleImagesForOutput(const Document& source, Format format)
+{
+    Document output = source;
+    if (HasParticleVariants(format))
+        return output;
+    std::size_t systemIndex = 0;
+    for (auto& slot : output.mArrays[6].mSlots)
+    {
+        if (!(slot.mID & DATA_ARRAY_KEY_MASK))
+            continue;
+        auto& system = output.mParticleSystems.at(systemIndex++);
+        const auto variant = std::find_if(std::begin(PARTICLE_IMAGE_VARIANTS),
+            std::end(PARTICLE_IMAGE_VARIANTS), [&](const auto& entry) {
+                return entry.mVariant == system.mDefinitionID;
+            });
+        if (variant == std::end(PARTICLE_IMAGE_VARIANTS))
+            continue;
+        // With no emitter the legacy representation cannot carry the image.
+        if (system.mEmitters.empty())
+            Fail("没有发射器的粒子图片变体无法无损导出到 legacy/dat64-v1/v2");
+        system.mDefinitionID = variant->mBase;
+        for (auto& emitter : system.mEmitters)
+            emitter.mImageResourceID = variant->mImage;
+        WriteU32At(slot.mCanonicalRecord, 0, static_cast<std::uint32_t>(system.mDefinitionID));
+    }
+    return output;
+}
+
 template<class Callback>
 void VisitTimeRecords(Document& document, Callback callback)
 {
@@ -1165,6 +1535,14 @@ void QuantizeDocumentTimes(Document& document, bool round)
         }
     });
     if (index != document.mNanoseconds.size()) Fail("内部错误：时间字段多余");
+}
+
+void QuantizeMusicTempo(Document& document)
+{
+    // Integer-only exports round tempo numerically; v3 keeps fractional values.
+    for (const auto offset : {36U, 40U})
+        WriteU32At(document.mMusic, offset, std::bit_cast<std::uint32_t>(
+            static_cast<float>(std::lround(ReadFloatAt(document.mMusic, offset)))));
 }
 
 std::vector<std::uint32_t> LiveIDs(const ArraySnapshot& theArray)
@@ -1270,7 +1648,7 @@ ArraySnapshot ReadArray(
         ? aLayout.mLegacySize
         : aLayout.mDat64Size;
     const auto timeFields = Dat64TimeSchema::GetFields(theDescriptor.mKind);
-    if (theFormat == Format::Dat64V2)
+    if (IsNanosecondFormat(theFormat))
     {
         aSlotSize = static_cast<std::uint32_t>(Dat64TimeSchema::V2Size(aSlotSize, timeFields));
         anObjectSize = static_cast<std::uint32_t>(Dat64TimeSchema::V2Size(anObjectSize, timeFields));
@@ -1329,7 +1707,7 @@ ArraySnapshot ReadArray(
         const auto aWireSlot = aBlock.subspan(aSlotOffset, aSlotSize);
         const auto aCollapsed = ReadTimeRecord(theReader, aWireSlot, timeFields, theFormat);
         const std::span<const Byte> aSlotBytes(aCollapsed);
-        const std::size_t aV1ObjectSize = theFormat == Format::Dat64V2
+        const std::size_t aV1ObjectSize = IsNanosecondFormat(theFormat)
             ? aLayout.mDat64Size : anObjectSize;
         SlotSnapshot aSlot;
         aSlot.mID = ReadU32At(aSlotBytes, aV1ObjectSize);
@@ -1343,7 +1721,9 @@ ArraySnapshot ReadArray(
             }
             aSlot.mCanonicalRecord = ToCanonicalRecord(
                 aSlotBytes.first(aV1ObjectSize),
-                theFormat == Format::Dat64V2 ? Format::Dat64V1 : theFormat,
+                IsNanosecondFormat(theFormat) && theDescriptor.mKind != RecordKind::ParticleSystem &&
+                    theDescriptor.mKind != RecordKind::Reanimation
+                    ? Format::Dat64V1 : theFormat,
                 theDescriptor.mKind,
                 aBlockOffset + aSlotOffset,
                 std::string(theDescriptor.mName) + "[" + std::to_string(i) + "]");
@@ -1472,7 +1852,7 @@ std::vector<std::uint32_t> ReadIDList(
 }
 
 // 磁盘上的图像 ID 属于"写入方引擎"的 ResourceId 空间：legacy = 1073 exe 序，
-// dat64 = 本工程 Resources.h 枚举序（两序 99 号起分岔，仅 101/879 同位）。
+// dat64 v1/v2 = 冻结历史枚举序（两序 99 号起分岔，仅 101/879 同位）。
 // 校验用磁盘空间的"是图像"谓词，Document 规范态一律存 modern 空间 id。
 void ValidateResourceID(
     std::int32_t theResourceID,
@@ -1480,7 +1860,7 @@ void ValidateResourceID(
     const std::string& theField,
     Format theFileFormat)
 {
-    const int aMaximum = static_cast<int>(Sexy::ResourceId::RESOURCE_ID_MAX);
+    const int aMaximum = static_cast<int>(FrozenSaveResources::ResourceId::RESOURCE_ID_MAX);
     if (theResourceID < 0 || theResourceID > aMaximum)
     {
         Fail(theOffset, theField, "资源 ID 越界");
@@ -1491,7 +1871,7 @@ void ValidateResourceID(
     }
     const bool isImage = theFileFormat == Format::Legacy1073Dat
         ? LevelSaveRemap::kExeIsImage[theResourceID]
-        : Sexy::IsImageResourceId(static_cast<Sexy::ResourceId>(theResourceID));
+        : FrozenSaveResources::IsImageResourceId(static_cast<FrozenSaveResources::ResourceId>(theResourceID));
     if (!isImage)
     {
         Fail(theOffset, theField, "资源 ID 不是图片（字体或音效）");
@@ -1500,7 +1880,7 @@ void ValidateResourceID(
 
 std::int32_t RemapResourceToCanonical(std::int32_t theResourceID, Format theFileFormat)
 {
-    if (theResourceID == static_cast<std::int32_t>(Sexy::ResourceId::RESOURCE_ID_MAX))
+    if (theResourceID == static_cast<std::int32_t>(FrozenSaveResources::ResourceId::RESOURCE_ID_MAX))
     {
         return theResourceID;
     }
@@ -1511,7 +1891,7 @@ std::int32_t RemapResourceToCanonical(std::int32_t theResourceID, Format theFile
 
 std::int32_t RemapResourceFromCanonical(std::int32_t theResourceID, Format theTargetFormat)
 {
-    if (theResourceID == static_cast<std::int32_t>(Sexy::ResourceId::RESOURCE_ID_MAX))
+    if (theResourceID == static_cast<std::int32_t>(FrozenSaveResources::ResourceId::RESOURCE_ID_MAX))
     {
         return theResourceID;
     }
@@ -1547,14 +1927,17 @@ std::vector<ReanimationSupplement> ReadReanimations(
     const RecordLayout& aTrackLayout =
         LevelSaveFormat::GetRecordLayout(RecordKind::ReanimatorTrackInstance);
     const auto trackFields = Dat64TimeSchema::GetFields(RecordKind::ReanimatorTrackInstance);
+    const std::size_t aTrackBaseSize = aTrackLayout.mDat64Size -
+        (HasReanimationVariants(theFormat) ? 8 : 0);
     const std::size_t aTrackSize = theFormat == Format::Legacy1073Dat
         ? aTrackLayout.mLegacySize
-        : theFormat == Format::Dat64V2
-            ? Dat64TimeSchema::V2Size(aTrackLayout.mDat64Size, trackFields)
-            : aTrackLayout.mDat64Size;
+        : IsNanosecondFormat(theFormat)
+            ? Dat64TimeSchema::V2Size(aTrackBaseSize, trackFields)
+            : aTrackBaseSize;
     const std::size_t aTrackBoolOffset = theFormat == Format::Legacy1073Dat ? 92
-        : theFormat == Format::Dat64V2 ? Dat64TimeSchema::V2Offset(108, trackFields) : 108;
-    const int aResourceMaximum = static_cast<int>(Sexy::ResourceId::RESOURCE_ID_MAX);
+        : IsNanosecondFormat(theFormat) ? Dat64TimeSchema::V2Offset(
+            HasReanimationVariants(theFormat) ? 100 : 108, trackFields) : 108;
+    const int aResourceMaximum = static_cast<int>(FrozenSaveResources::ResourceId::RESOURCE_ID_MAX);
 
     std::unordered_map<ReanimationChoiceKey, int, ReanimationChoiceHash> aMemo;
     std::function<bool(std::uint32_t, std::size_t)> Solve =
@@ -1591,7 +1974,8 @@ std::vector<ReanimationSupplement> ReadReanimations(
                 const std::uint32_t aTrackCount = aByteCount / static_cast<std::uint32_t>(aTrackSize);
                 const std::size_t aTrackStart = thePosition + 8;
                 const std::size_t anImageStart = aTrackStart + aByteCount;
-                const std::size_t aNext = anImageStart + static_cast<std::size_t>(aTrackCount) * 4;
+                const std::size_t aNext = anImageStart + (HasReanimationVariants(theFormat)
+                    ? 0 : static_cast<std::size_t>(aTrackCount) * 4);
                 bool isPlausible = aTrackCount <= 4096 && aNext <= theEnd;
                 for (std::uint32_t i = 0; isPlausible && i < aTrackCount; ++i)
                 {
@@ -1604,12 +1988,13 @@ std::vector<ReanimationSupplement> ReadReanimations(
                             break;
                         }
                     }
+                    if (HasReanimationVariants(theFormat)) continue;
                     const std::int32_t aResource = ReadI32At(aData, anImageStart + i * 4);
                     const bool aResourceOk = aResource == aResourceMaximum ||
                         (aResource >= 0 && aResource < aResourceMaximum &&
                             (theFormat == Format::Legacy1073Dat
                                 ? LevelSaveRemap::kExeIsImage[aResource]
-                                : Sexy::IsImageResourceId(static_cast<Sexy::ResourceId>(aResource))));
+                                : FrozenSaveResources::IsImageResourceId(static_cast<FrozenSaveResources::ResourceId>(aResource))));
                     if (!aResourceOk)
                     {
                         isPlausible = false;
@@ -1660,17 +2045,19 @@ std::vector<ReanimationSupplement> ReadReanimations(
             aReanimation.mImageResourceIDs.reserve(aTrackCount);
             for (int track = 0; track < aTrackCount; ++track)
             {
-                const auto bytes = ReadTimeRecord(theReader,
+                auto bytes = ReadTimeRecord(theReader,
                     aTrackBlock.subspan(static_cast<std::size_t>(track) * aTrackSize, aTrackSize),
                     trackFields, theFormat);
+                if (HasReanimationVariants(theFormat))
+                    bytes.insert(bytes.begin() + 80, 8, 0);
                 aReanimation.mCanonicalTracks.push_back(ToCanonicalRecord(
                     bytes,
-                    theFormat == Format::Dat64V2 ? Format::Dat64V1 : theFormat,
+                    IsNanosecondFormat(theFormat) ? Format::Dat64V1 : theFormat,
                     RecordKind::ReanimatorTrackInstance,
                     aTrackBlockOffset + static_cast<std::size_t>(track) * aTrackSize,
                     "Reanimation.track[" + std::to_string(track) + "]"));
             }
-            for (int track = 0; track < aTrackCount; ++track)
+            for (int track = 0; !HasReanimationVariants(theFormat) && track < aTrackCount; ++track)
             {
                 const std::size_t anImageOffset = theReader.mPosition;
                 const std::int32_t anImage = theReader.I32("Reanimation.trackImage");
@@ -1749,7 +2136,7 @@ Document ParsePayload(
         BoardDialect anUnusedDialect = BoardDialect::Canonical;
         const auto fields = Dat64TimeSchema::BoardFields();
         const auto bytes = ReadTimeRecord(theReader,
-            theReader.SyncBytes(theFormat == Format::Dat64V2
+            theReader.SyncBytes(IsNanosecondFormat(theFormat)
                 ? Dat64TimeSchema::V2Size(aBoardSize, fields) : aBoardSize, "Board"),
             fields, theFormat);
         aDocument.mCanonicalBoard = BoardToCanonical(
@@ -1790,8 +2177,9 @@ Document ParsePayload(
         {
             ParticleSystemSupplement aSystem;
             const std::size_t aDefinitionOffset = theReader.mPosition;
-            aSystem.mDefinitionID = theReader.I32("ParticleSystem.definition");
-            if (aSystem.mDefinitionID < 0 || aSystem.mDefinitionID >= NUM_PARTICLES)
+            aSystem.mDefinitionID = ParticleIdToCanonical(
+                theReader.I32("ParticleSystem.definition"), theFormat);
+            if (aSystem.mDefinitionID < 0 || aSystem.mDefinitionID >= FROZEN_PARTICLE_COUNT)
             {
                 Fail(aDefinitionOffset, "ParticleSystem.definition", "定义 ID 越界");
             }
@@ -1875,8 +2263,12 @@ Document ParsePayload(
         {
             ParticleSystemSupplement aSystem;
             const std::size_t aDefinitionOffset = theReader.mPosition;
-            aSystem.mDefinitionID = theReader.I32("ParticleSystem.definition");
-            if (aSystem.mDefinitionID < 0 || aSystem.mDefinitionID >= NUM_PARTICLES)
+            // V3 has one authoritative definition ID, in the fixed system record.
+            aSystem.mDefinitionID = HasParticleVariants(theFormat)
+                ? ReadI32At(aDocument.mArrays[6].mSlots[
+                    aParticleSystemIDs[system] & DATA_ARRAY_INDEX_MASK].mCanonicalRecord, 0)
+                : ParticleIdToCanonical(theReader.I32("ParticleSystem.definition"), theFormat);
+            if (aSystem.mDefinitionID < 0 || aSystem.mDefinitionID >= FROZEN_PARTICLE_COUNT)
             {
                 Fail(aDefinitionOffset, "ParticleSystem.definition", "定义 ID 越界");
             }
@@ -1891,10 +2283,14 @@ Document ParsePayload(
                 {
                     Fail(anEmitterDefOffset, "ParticleEmitter.definitionIndex", "索引越界");
                 }
-                const std::size_t anImageOffset = theReader.mPosition;
-                anEmitter.mImageResourceID = theReader.I32("ParticleEmitter.imageOverride");
-                ValidateResourceID(anEmitter.mImageResourceID, anImageOffset, "ParticleEmitter.imageOverride", theFormat);
-                anEmitter.mImageResourceID = RemapResourceToCanonical(anEmitter.mImageResourceID, theFormat);
+                anEmitter.mImageResourceID = NO_PARTICLE_IMAGE;
+                if (!HasParticleVariants(theFormat))
+                {
+                    const std::size_t anImageOffset = theReader.mPosition;
+                    anEmitter.mImageResourceID = theReader.I32("ParticleEmitter.imageOverride");
+                    ValidateResourceID(anEmitter.mImageResourceID, anImageOffset, "ParticleEmitter.imageOverride", theFormat);
+                    anEmitter.mImageResourceID = RemapResourceToCanonical(anEmitter.mImageResourceID, theFormat);
+                }
                 anEmitter.mParticleIDs = ReadIDList(theReader, "ParticleEmitter.particles");
                 aSystem.mEmitters.push_back(std::move(anEmitter));
             }
@@ -1902,7 +2298,7 @@ Document ParsePayload(
         }
 
         std::size_t aFixedTailSize = DAT64_FIXED_TAIL_SIZE;
-        if (theFormat == Format::Dat64V2)
+        if (IsNanosecondFormat(theFormat))
         {
             aFixedTailSize += 4 * (
                 Dat64TimeSchema::GetFields(RecordKind::CursorObject).size() +
@@ -1937,12 +2333,12 @@ Document ParsePayload(
         const std::size_t anOffset = theReader.mPosition + 4;
         const auto fields = Dat64TimeSchema::GetFields(theKind);
         const auto bytes = ReadTimeRecord(theReader,
-            theReader.SyncBytes(theFormat == Format::Dat64V2
+            theReader.SyncBytes(IsNanosecondFormat(theFormat)
                 ? Dat64TimeSchema::V2Size(aSize, fields) : aSize, theName),
             fields, theFormat);
         return ToCanonicalRecord(
             bytes,
-            theFormat == Format::Dat64V2 ? Format::Dat64V1 : theFormat,
+            IsNanosecondFormat(theFormat) && theKind != RecordKind::Music ? Format::Dat64V1 : theFormat,
             theKind,
             anOffset,
             theName);
@@ -1958,12 +2354,12 @@ Document ParsePayload(
     const std::size_t aSeedBankOffset = theReader.mPosition + 4;
     const auto seedFields = Dat64TimeSchema::SeedBankFields();
     const auto seedBytes = ReadTimeRecord(theReader,
-        theReader.SyncBytes(theFormat == Format::Dat64V2
+        theReader.SyncBytes(IsNanosecondFormat(theFormat)
             ? Dat64TimeSchema::V2Size(aSeedBankSize, seedFields) : aSeedBankSize, "SeedBank"),
         seedFields, theFormat);
     aDocument.mSeedBank = SeedBankToCanonical(
         seedBytes,
-        theFormat == Format::Dat64V2 ? Format::Dat64V1 : theFormat,
+        IsNanosecondFormat(theFormat) ? Format::Dat64V1 : theFormat,
         aSeedBankOffset);
 
     aDocument.mChallenge = ReadFixed(RecordKind::Challenge, "Challenge");
@@ -1990,8 +2386,13 @@ Document ParsePayload(
         Fail(theReader.mPosition, "file", "结束标记后仍有多余字节");
     }
 
+    if (HasReanimationVariants(theFormat))
+        RestoreAppearanceImages(aDocument);
+    else
+        VisitReanimationSupplements(aDocument, [](auto&, auto&) {});
     ValidateReferences(aDocument);
-    if (theFormat == Format::Dat64V2)
+    NormalizeParticleImages(aDocument);
+    if (IsNanosecondFormat(theFormat))
         aDocument.mNanoseconds = std::move(theReader.mNanoseconds);
     else
         CaptureLegacyTimes(aDocument);
@@ -2030,7 +2431,7 @@ Document ParseDat64(std::span<const Byte> theFile, std::uint32_t& theDateEcho)
     {
         Fail(0, "dat64.magic", "不是 PVZDAT64");
     }
-    const bool isV2 = ReadU32At(theFile, 8) == Dat64TimeSchema::VERSION;
+    const Format format = Dat64Format(theFile);
     if (!LevelSaveFormat::IsSupportedDat64Header(theFile))
     {
         Fail(8, "dat64.header", "版本、权威版本、flags、schema 或保留字段错误");
@@ -2041,7 +2442,7 @@ Document ParseDat64(std::span<const Byte> theFile, std::uint32_t& theDateEcho)
         Fail(24, "dat64.payloadSize", "与实际文件长度不一致");
     }
     const auto aPayload = theFile.subspan(LevelSaveFormat::DAT64_HEADER_SIZE);
-    // The former payload CRC at 0x20 is ignored for both v1 and v2.
+    // The former payload CRC at 0x20 is ignored for v1/v2/v3.
     // 现行 11 池语法优先；失败则按“过渡 dat64”方言（2026-09-30 便携构建：
     // 12 池含退役 Trail 池，其余一致）重试一次。
     Reader aReader(aPayload);
@@ -2049,11 +2450,11 @@ Document ParseDat64(std::span<const Byte> theFile, std::uint32_t& theDateEcho)
     {
         try
         {
-            return ParsePayload(aReader, isV2 ? Format::Dat64V2 : Format::Dat64V1, Dat64Grammar::Current);
+            return ParsePayload(aReader, format, Dat64Grammar::Current);
         }
         catch (const std::exception& aCurrentError)
         {
-            if (isV2) throw;
+            if (IsNanosecondFormat(format)) throw;
             try
             {
                 Reader aRetry(aPayload);
@@ -2123,7 +2524,7 @@ void WriteArray(
     const std::size_t aV1SlotSize = theFormat == Format::Legacy1073Dat
         ? LegacySlotSizeFor(theDescriptor, theDialect)
         : aLayout.mDat64ArraySlotSize;
-    const std::size_t aSlotSize = theFormat == Format::Dat64V2
+    const std::size_t aSlotSize = IsNanosecondFormat(theFormat)
         ? Dat64TimeSchema::V2Size(aV1SlotSize, timeFields) : aV1SlotSize;
     // 记录长度/ID 偏移与 ReadArray 同规则（Coin 尾衬垫；旧方言 Zombie 344）。
     const std::size_t anObjectSize = theFormat == Format::Legacy1073Dat
@@ -2145,7 +2546,8 @@ void WriteArray(
         {
             const std::vector<Byte> aRecord = FromCanonicalRecord(
                 aSlot.mCanonicalRecord,
-                theFormat == Format::Dat64V2 ? Format::Dat64V1 : theFormat,
+                IsNanosecondFormat(theFormat) && theDescriptor.mKind != RecordKind::ParticleSystem
+                    ? Format::Dat64V1 : theFormat,
                 theArray.mKind);
             std::memcpy(aDestination, aRecord.data(), aRecord.size());
         }
@@ -2168,9 +2570,10 @@ void WriteArray(
 }
 
 std::vector<Byte> WritePayload(
-    const Document& theDocument,
+    const Document& theSourceDocument,
     Format theFormat)
 {
+    const Document theDocument = ParticleImagesForOutput(theSourceDocument, theFormat);
     BoardDialect aDialect = BoardDialect::Canonical;
     Writer aWriter;
     aWriter.mNanoseconds = &theDocument.mNanoseconds;
@@ -2178,7 +2581,7 @@ std::vector<Byte> WritePayload(
     // below when writing the legacy exe space.
     const std::vector<Byte> aBoard =
         BoardFromCanonical(theDocument.mCanonicalBoard,
-            theFormat == Format::Dat64V2 ? Format::Dat64V1 : theFormat, aDialect);
+            IsNanosecondFormat(theFormat) ? Format::Dat64V1 : theFormat, aDialect);
     aWriter.SyncBytes(WriteTimeRecord(aWriter, aBoard, Dat64TimeSchema::BoardFields(), theFormat));
 
     for (std::size_t i = 0; i + 1 < ARRAY_DESCRIPTORS.size(); ++i)
@@ -2202,12 +2605,14 @@ std::vector<Byte> WritePayload(
 
     for (const ParticleSystemSupplement& aSystem : theDocument.mParticleSystems)
     {
-        aWriter.I32(aSystem.mDefinitionID);
+        if (!HasParticleVariants(theFormat))
+            aWriter.I32(ParticleIdFromCanonical(aSystem.mDefinitionID, theFormat));
         WriteIDList(aWriter, aSystem.mEmitterIDs);
         for (const EmitterSupplement& anEmitter : aSystem.mEmitters)
         {
             aWriter.I32(anEmitter.mDefinitionIndex);
-            aWriter.I32(RemapResourceFromCanonical(anEmitter.mImageResourceID, theFormat));
+            if (!HasParticleVariants(theFormat))
+                aWriter.I32(RemapResourceFromCanonical(anEmitter.mImageResourceID, theFormat));
             WriteIDList(aWriter, anEmitter.mParticleIDs);
         }
     }
@@ -2220,19 +2625,23 @@ std::vector<Byte> WritePayload(
             const RecordLayout& aLayout =
                 LevelSaveFormat::GetRecordLayout(RecordKind::ReanimatorTrackInstance);
             const auto fields = Dat64TimeSchema::GetFields(RecordKind::ReanimatorTrackInstance);
+            const std::size_t aTrackBaseSize = aLayout.mDat64Size -
+                (HasReanimationVariants(theFormat) ? 8 : 0);
             const std::size_t aTrackSize = theFormat == Format::Legacy1073Dat
                 ? aLayout.mLegacySize
-                : theFormat == Format::Dat64V2
-                    ? Dat64TimeSchema::V2Size(aLayout.mDat64Size, fields) : aLayout.mDat64Size;
+                : IsNanosecondFormat(theFormat)
+                    ? Dat64TimeSchema::V2Size(aTrackBaseSize, fields) : aTrackBaseSize;
             std::vector<Byte> aTrackBlock(
                 aReanimation.mCanonicalTracks.size() * aTrackSize,
                 0);
             for (std::size_t track = 0; track < aReanimation.mCanonicalTracks.size(); ++track)
             {
-                const std::vector<Byte> aV1Track = FromCanonicalRecord(
+                std::vector<Byte> aV1Track = FromCanonicalRecord(
                     aReanimation.mCanonicalTracks[track],
-                    theFormat == Format::Dat64V2 ? Format::Dat64V1 : theFormat,
+                    IsNanosecondFormat(theFormat) ? Format::Dat64V1 : theFormat,
                     RecordKind::ReanimatorTrackInstance);
+                if (HasReanimationVariants(theFormat))
+                    aV1Track.erase(aV1Track.begin() + 80, aV1Track.begin() + 88);
                 const auto aTrack = WriteTimeRecord(aWriter, aV1Track, fields, theFormat);
                 std::memcpy(
                     aTrackBlock.data() + track * aTrackSize,
@@ -2240,6 +2649,7 @@ std::vector<Byte> WritePayload(
                     aTrack.size());
             }
             aWriter.SyncBytes(aTrackBlock);
+            if (!HasReanimationVariants(theFormat))
             for (const std::int32_t anImageID : aReanimation.mImageResourceIDs)
             {
                 aWriter.I32(RemapResourceFromCanonical(anImageID, theFormat));
@@ -2258,7 +2668,7 @@ std::vector<Byte> WritePayload(
     const auto WriteFixed = [&](RecordKind theKind, const std::vector<Byte>& theRecord)
     {
         const auto bytes = FromCanonicalRecord(theRecord,
-            theFormat == Format::Dat64V2 ? Format::Dat64V1 : theFormat, theKind);
+            IsNanosecondFormat(theFormat) && theKind != RecordKind::Music ? Format::Dat64V1 : theFormat, theKind);
         aWriter.SyncBytes(WriteTimeRecord(aWriter, bytes, Dat64TimeSchema::GetFields(theKind), theFormat));
     };
     WriteFixed(RecordKind::CursorObject, theDocument.mCursorObject);
@@ -2288,7 +2698,7 @@ std::vector<Byte> WritePayload(
         WriteU64At(anEnd, 0, LevelSaveFormat::DAT64_END_MARKER);
         aWriter.SyncBytes(anEnd);
     }
-    if (theFormat == Format::Dat64V2 && aWriter.mTimeIndex != theDocument.mNanoseconds.size())
+    if (IsNanosecondFormat(theFormat) && aWriter.mTimeIndex != theDocument.mNanoseconds.size())
         Fail("内部错误：写出时间字段多余");
     return aWriter.mData;
 }
@@ -2312,16 +2722,19 @@ std::vector<Byte> WriteFileImage(
     else
     {
         aFile.Bytes(LevelSaveFormat::DAT64_MAGIC);
-        aFile.U32(theFormat == Format::Dat64V2 ? Dat64TimeSchema::VERSION : LevelSaveFormat::DAT64_V1_VERSION);
+        aFile.U32(HasParticleVariants(theFormat) ? LevelSaveFormat::DAT64_VERSION :
+            theFormat == Format::Dat64V2 ? LevelSaveFormat::DAT64_V2_VERSION : LevelSaveFormat::DAT64_V1_VERSION);
         aFile.U32(LevelSaveFormat::DAT64_HEADER_SIZE);
         aFile.U32(LevelSaveFormat::DAT64_AUTHORITY_BUILD);
-        aFile.U32(theFormat == Format::Dat64V2 ? Dat64TimeSchema::FLAGS : LevelSaveFormat::DAT64_V1_FLAGS);
+        aFile.U32(IsNanosecondFormat(theFormat) ? Dat64TimeSchema::FLAGS : LevelSaveFormat::DAT64_V1_FLAGS);
         aFile.U64(aPayload.size());
-        // v1 exports retain a CRC for older v1 readers; current v2 reserves
-        // the slot as zero. Neither version requires a matching CRC on input.
+        // v1 exports retain a CRC for older readers; v2/v3 reserve the slot
+        // as zero. No version requires a matching CRC on input.
         aFile.U32(theFormat == Format::Dat64V1 ? Crc32(aPayload) : 0);
-        aFile.U32(theFormat == Format::Dat64V2 ? Dat64TimeSchema::SCHEMA_ID : LevelSaveFormat::DAT64_V1_SCHEMA_ID);
-        aFile.U64(0);
+        aFile.U32(theFormat == Format::Dat64V32 ? LevelSaveFormat::DAT64_SCHEMA_ID :
+            theFormat == Format::Dat64V2 ? LevelSaveFormat::DAT64_V2_SCHEMA_ID : LevelSaveFormat::DAT64_V1_SCHEMA_ID);
+        aFile.U32(theFormat == Format::Dat64V32 ? LevelSaveFormat::DAT64_MINOR_VERSION : 0);
+        aFile.U32(0);
         if (aFile.Position() != LevelSaveFormat::DAT64_HEADER_SIZE)
         {
             Fail("内部错误：dat64 头部不是 48 字节");
@@ -2751,6 +3164,7 @@ const char* FormatName(Format theFormat)
     case Format::Legacy1073Dat: return "PvZ 1.2.0.1073 game*.dat";
     case Format::Dat64V1: return "Legacy dat64 v1";
     case Format::Dat64V2: return "Nanosecond dat64 v2";
+    case Format::Dat64V32: return "Particle/reanimation internal-appearance dat64 v3.2";
     }
     return "Unknown";
 }
@@ -2766,8 +3180,7 @@ Format DetectFormat(const std::filesystem::path& thePath)
     {
         std::uint32_t aDateEcho = 0;
         ParseDat64(aData, aDateEcho);
-        return ReadU32At(aData, 8) == Dat64TimeSchema::VERSION
-            ? Format::Dat64V2 : Format::Dat64V1;
+        return Dat64Format(aData);
     }
     if (aData.size() >= 16 && ReadU32At(aData, 0) == 12 &&
         ReadU32At(aData, 4) == LEGACY_MAGIC)
@@ -2837,9 +3250,9 @@ ConversionResult ConvertFile(
             aSource.begin()))
     {
         // Parse below checks the complete header before any output is opened.
-        aSourceFormat = aSource.size() >= LevelSaveFormat::DAT64_HEADER_SIZE &&
-            ReadU32At(aSource, 8) == Dat64TimeSchema::VERSION
-            ? Format::Dat64V2 : Format::Dat64V1;
+        if (aSource.size() < LevelSaveFormat::DAT64_HEADER_SIZE)
+            Fail(0, "dat64.header", "文件短于 48 字节头部");
+        aSourceFormat = Dat64Format(aSource);
     }
     else if (aSource.size() >= 16 && ReadU32At(aSource, 0) == 12 &&
              ReadU32At(aSource, 4) == LEGACY_MAGIC)
@@ -2855,9 +3268,14 @@ ConversionResult ConvertFile(
     std::uint32_t aDateEcho = 0;
     Document aDocument = Parse(aSource, aSourceFormat, aDateEcho);
     const Format aTargetFormat = theOptions.mTargetFormat.value_or(
-        aSourceFormat == Format::Legacy1073Dat ? Format::Dat64V2 : Format::Legacy1073Dat);
-    if (aTargetFormat != Format::Dat64V2)
+        aSourceFormat == Format::Legacy1073Dat ? Format::Dat64V32 : Format::Legacy1073Dat);
+    PrepareAppearanceOutput(aDocument, aTargetFormat);
+    if (!IsNanosecondFormat(aTargetFormat))
+    {
         QuantizeDocumentTimes(aDocument, theOptions.mRoundTimeToNearestTick);
+    }
+    if (!HasParticleVariants(aTargetFormat))
+        QuantizeMusicTempo(aDocument);
     const std::vector<Byte> aTarget = WriteFileImage(aDocument, aTargetFormat, aDateEcho);
 
     // Parse the generated target with the opposite grammar and compare every

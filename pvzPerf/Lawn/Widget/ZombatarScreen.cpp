@@ -6,11 +6,13 @@
 #include "Lawn/Zombie.h"
 #include "ZombatarItems.h"
 #include "graphics/Graphics.h"
+#include "graphics/AtlasDraw.h"
+#include "Sexy.TodLib/generated/SceneAtlasData.h"
 #include "widget/WidgetManager.h"
 
 namespace
 {
-	// These are the transparent openings in IMAGE_ZOMBATAR_DISPLAY_WINDOW
+	// These are the transparent openings in ZombatarImage::DISPLAY_WINDOW
 	// (the image is drawn at 5,0).  Keeping the composition inside the actual
 	// openings prevents a portrait/reanimation from leaking through the frame
 	// when a source component has an oversized art rectangle.
@@ -37,11 +39,9 @@ ZombatarScreen::ZombatarScreen(LawnApp* theApp) :
 	mPreviewY(350),
 	mZombatarItems(nullptr)
 {
-	// Both groups are cached by ResourceManager and borrowed by other UI
-	// objects (AlmanacDialog / GameSelector). Loading is idempotent; this
-	// screen must not revoke the group's shared resources when it dies.
+	// Almanac ground art is shared with the zombie preview.
+	// The Zombatar atlas is already resident from application loading.
 	TodLoadResources(ResourceGroupId::DelayLoad_Almanac);
-	TodLoadResources(ResourceGroupId::DelayLoad_Zombatar);
 	mDrawStandardBack = false;
 	LawnDialog::Resize(0, 0, BOARD_WIDTH, BOARD_HEIGHT);
 
@@ -147,7 +147,7 @@ void ZombatarScreen::Update()
 void ZombatarScreen::DrawBackground(Graphics* g)
 {
     // The adjacent main-menu art overlaps this background and is painted above it.
-    g->DrawImage(IMAGE_ZOMBATAR_MAIN_BG, 0, 0);
+    DrawZombatarImage(g, ZombatarImage::MAIN_BG, 0, 0);
 }
 
 void ZombatarScreen::Draw(Graphics* g)
@@ -167,8 +167,12 @@ void ZombatarScreen::Draw(Graphics* g)
 			ZOMBATAR_AVATAR_INNER_Y,
 			ZOMBATAR_PORTRAIT_INNER_WIDTH,
 			ZOMBATAR_AVATAR_INNER_HEIGHT);
-		if (IMAGE_ALMANAC_GROUNDDAY)
-			g->DrawImage(IMAGE_ALMANAC_GROUNDDAY, 600, 300);
+		if (AlmanacAtlas::Texture)
+		{
+			const Sexy::TextureSource texture{AlmanacAtlas::Texture, AlmanacAtlas::Width, AlmanacAtlas::Height};
+			Sexy::DrawAtlasImage(g, texture,
+				AlmanacAtlas::Images[size_t(AlmanacAtlas::Sprite::ALMANAC_GROUNDDAY)], 600, 300);
+		}
 
 		// FUN_00531c50 constructs a child Graphics and draws the Zombie through
 		// its normal GameObject anchor path.  ZOMBIE_ZOMBATAR creates the
@@ -207,8 +211,7 @@ void ZombatarScreen::Draw(Graphics* g)
 
 	// The display window is drawn last in the original so its border remains
 	// above the portrait and preview contents.
-	if (IMAGE_ZOMBATAR_DISPLAY_WINDOW)
-		g->DrawImage(IMAGE_ZOMBATAR_DISPLAY_WINDOW, 5, 0);
+	DrawZombatarImage(g, ZombatarImage::DISPLAY_WINDOW, 5, 0);
 }
 
 // ZombatarScreen is a full-screen page, not a draggable popup dialog. Without

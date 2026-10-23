@@ -27,10 +27,7 @@ class Graphics;
 class GraphicsState
 {
 public:
-	static Image			mStaticImage;
-	Image*					mDestImage;
-	// Resolved with mDestImage at construction and state-copy boundaries.
-	DDImage*				mDDDestImage = nullptr;
+	Image*					mDestImage = nullptr;
 	float					mTransX;
 	float					mTransY;
 	float					mScaleX;
@@ -45,7 +42,6 @@ public:
 	bool					mFastStretch;
 	bool					mWriteColoredString;
 	bool					mLinearBlend;
-	bool					mIs3D;
 
 };
 
@@ -78,7 +74,7 @@ protected:
 
 public:
 	Graphics(const Graphics& theGraphics);
-	Graphics(DDImage* theDestImage = NULL);
+	Graphics(Image* theDestImage = NULL);
 	~Graphics();
 
 	void					PushState();
@@ -127,12 +123,6 @@ public:
 	void					DrawTriangleTex(Image *theTexture, const TriVertex &v1, const TriVertex &v2, const TriVertex &v3);
 	void					DrawTrianglesTex(Image *theTexture, const TriVertex theVertices[][3], int theNumTriangles);
 
-	void					DrawImageCel(Image* theImageStrip, int theX, int theY, int theCel);
-	void					DrawImageCel(Image* theImageStrip, const Rect& theDestRect, int theCel);
-	void					DrawImageCel(Image* theImageStrip, int theX, int theY, int theCelCol, int theCelRow);
-	void					DrawImageCel(Image* theImageStrip, const Rect& theDestRect, int theCelCol, int theCelRow);
-
-	void					DrawImageAnim(Image* theImageAnim, int theX, int theY, int theTime);
 
 	void					ClearClipRect();
 	void					SetClipRect(int theX, int theY, int theWidth, int theHeight);

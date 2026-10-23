@@ -2,7 +2,7 @@ export component TrophySparkle {
     kind: particle;
     source-name: "trophysparkle";
     Emitter {
-        image: "IMAGE_ICE_SPARKLES";
+        images: ["particles/frames/ice_sparkles_r0_c0.png","particles/frames/ice_sparkles_r0_c1.png","particles/frames/ice_sparkles_r0_c2.png"];
         name: "Sparkle";
         imageFrames: 3;
         emitterType: Circle;
@@ -15,7 +15,7 @@ export component TrophySparkle {
         particleScale: range { 1 1; }
     }
     Emitter {
-        image: "IMAGE_ICE_SPARKLES";
+        images: ["particles/frames/ice_sparkles_r0_c0.png","particles/frames/ice_sparkles_r0_c1.png","particles/frames/ice_sparkles_r0_c2.png"];
         name: "SparkleBottom";
         imageFrames: 3;
         emitterType: Circle;

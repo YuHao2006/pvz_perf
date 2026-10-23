@@ -2,7 +2,6 @@
 #include <string>
 #include <span>
 #include <cstdint>
-#include <memory>
 #include <optional>
 #include <vector>
 #include <exception>
@@ -12,10 +11,6 @@ namespace ImageLib
 
 class Image;
 class ImageAlphaSizeMismatch final : public std::exception {};
-struct AlphaLayer {
-	std::unique_ptr<Image> image;
-	int columns=1,rows=1;
-};
 
 class Image
 {
@@ -25,11 +20,15 @@ public:
 	unsigned int*			mBits;
 	size_t mPixelCapacity=0;
 	std::optional<uint32_t> mColorFromAlpha;
-	std::vector<AlphaLayer> mAlphaLayers;
+	std::vector<Image*> mAlphaLayers;
 	bool HasComposition() const noexcept { return mColorFromAlpha || !mAlphaLayers.empty(); }
 
 public:
 	Image();
+	Image(const Image&) = delete;
+	Image& operator=(const Image&) = delete;
+	Image(Image&&) = delete;
+	Image& operator=(Image&&) = delete;
 	~Image();
 
 };
@@ -50,6 +49,7 @@ public:
 };
 
 
+[[nodiscard("delete the returned decoded image or transfer it to an upload")]]
 Image* GetImage(const std::string& theFileName, bool lookForAlphaImage = true);
 
 //void InitJPEG2000();

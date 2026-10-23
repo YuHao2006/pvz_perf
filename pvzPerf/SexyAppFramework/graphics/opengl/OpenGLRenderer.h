@@ -37,10 +37,10 @@ public:
     OpenGLTexture* CopyTextureRegion(OpenGLTexture* source, int x, int y, int width, int height);
     OpenGLTexture* ProcessImage(OpenGLTexture* source, const GpuImageProcessing& processing);
     OpenGLTexture* ComposeAlphaRaw(OpenGLTexture* base, OpenGLTexture* alpha,
-        int columns, int rows, unsigned int color, bool colorOnly);
+        unsigned int color, bool colorOnly);
     OpenGLTexture* AdoptComposedTexture(OpenGLTexture* texture);
     OpenGLTexture* ComposeAlpha(OpenGLTexture* base, OpenGLTexture* alpha,
-        int columns, int rows, unsigned int color, bool colorOnly);
+        unsigned int color, bool colorOnly);
     void RenderFontAtlas(OpenGLTexture* target, OpenGLTexture* source,
         std::span<const GpuFontGlyph> glyphs, unsigned int samplingFlags, bool forceWhite);
     void DestroyTexture(OpenGLTexture* texture);

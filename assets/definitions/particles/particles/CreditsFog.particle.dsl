@@ -2,7 +2,7 @@ export component CreditsFog {
     kind: particle;
     source-name: "credits_fog";
     Emitter {
-        image: "IMAGE_FOG";
+        images: ["particles/frames/fog_r0_c0.png","particles/frames/fog_r0_c1.png","particles/frames/fog_r0_c2.png","particles/frames/fog_r0_c3.png","particles/frames/fog_r0_c4.png","particles/frames/fog_r0_c5.png","particles/frames/fog_r0_c6.png","particles/frames/fog_r0_c7.png"];
         imageFrames: 8;
         emitterType: Circle;
         randomLaunchSpin: 1;

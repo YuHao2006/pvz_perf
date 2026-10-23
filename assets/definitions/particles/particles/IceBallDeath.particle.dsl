@@ -2,7 +2,7 @@ export component IceBallDeath {
     kind: particle;
     source-name: "iceballdeath";
     Emitter {
-        image: "IMAGE_SNOWFLAKES";
+        images: ["particles/frames/snowflakes_r0_c0.png","particles/frames/snowflakes_r0_c1.png","particles/frames/snowflakes_r0_c2.png"];
         imageFrames: 3;
         emitterType: Circle;
         randomLaunchSpin: 1;

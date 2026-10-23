@@ -20,6 +20,12 @@ Attachment::~Attachment()
 void Attachment::Update()
 {
 	TOD_ASSERT(gEffectSystem);
+	UpdateAt(gEffectSystem->mReanimationHolder->mVisualTimeNs, ReanimTimeDomain::Visual);
+}
+
+void Attachment::UpdateAt(std::int64_t nowNs, ReanimTimeDomain domain)
+{
+	TOD_ASSERT(gEffectSystem);
 
 	for (int i = 0; i < mNumEffects; i++)
 	{
@@ -48,7 +54,8 @@ void Attachment::Update()
 			Reanimation* aReanimation = gEffectSystem->mReanimationHolder->mReanimations.DataArrayTryToGet(aAttachEffect->mEffectID);
 			if (aReanimation && !aReanimation->mDead)
 			{
-				aReanimation->Update();
+				aReanimation->BindTimeDomain(domain);
+				aReanimation->UpdateAt(nowNs);
 				isEmpty = false;
 			}
 			break;
@@ -412,6 +419,7 @@ void Attachment::Detach()
 			{
 				TOD_ASSERT(aReanimation->mIsAttachment);
 				aReanimation->mIsAttachment = false;
+				aReanimation->BindTimeDomain(ReanimTimeDomain::Visual);
 			}
 			break;
 		}
@@ -513,6 +521,14 @@ Attachment* AttachmentHolder::AllocAttachment()
 //0x4051B0
 void AttachmentUpdateAndSetMatrix(AttachmentID& theAttachmentID, SexyTransform2D& theMatrix)
 {
+	TOD_ASSERT(gEffectSystem);
+	AttachmentUpdateAndSetMatrixAt(theAttachmentID, theMatrix,
+		gEffectSystem->mReanimationHolder->mVisualTimeNs, ReanimTimeDomain::Visual);
+}
+
+void AttachmentUpdateAndSetMatrixAt(AttachmentID& theAttachmentID, SexyTransform2D& theMatrix,
+	std::int64_t nowNs, ReanimTimeDomain domain)
+{
 	if (theAttachmentID == AttachmentID::ATTACHMENTID_NULL)
 		return;
 
@@ -520,7 +536,7 @@ void AttachmentUpdateAndSetMatrix(AttachmentID& theAttachmentID, SexyTransform2D
 	Attachment* aAttachment = gEffectSystem->mAttachmentHolder->mAttachments.DataArrayTryToGet((unsigned int)theAttachmentID);
 	if (aAttachment)
 	{
-		aAttachment->Update();
+		aAttachment->UpdateAt(nowNs, domain);
 		aAttachment->SetMatrix(theMatrix);
 	}
 	else
@@ -532,6 +548,14 @@ void AttachmentUpdateAndSetMatrix(AttachmentID& theAttachmentID, SexyTransform2D
 //0x405200
 void AttachmentUpdateAndMove(AttachmentID& theAttachmentID, float theX, float theY)
 {
+	TOD_ASSERT(gEffectSystem);
+	AttachmentUpdateAndMoveAt(theAttachmentID, theX, theY,
+		gEffectSystem->mReanimationHolder->mVisualTimeNs, ReanimTimeDomain::Visual);
+}
+
+void AttachmentUpdateAndMoveAt(AttachmentID& theAttachmentID, float theX, float theY,
+	std::int64_t nowNs, ReanimTimeDomain domain)
+{
 	if (theAttachmentID == AttachmentID::ATTACHMENTID_NULL)
 		return;
 
@@ -539,7 +563,7 @@ void AttachmentUpdateAndMove(AttachmentID& theAttachmentID, float theX, float th
 	Attachment* aAttachment = gEffectSystem->mAttachmentHolder->mAttachments.DataArrayTryToGet((unsigned int)theAttachmentID);
 	if (aAttachment)
 	{
-		aAttachment->Update();
+		aAttachment->UpdateAt(nowNs, domain);
 		aAttachment->SetPosition(SexyVector2(theX, theY));
 	}
 	else

@@ -4,145 +4,384 @@ export component CreditsRaysWipe {
     Emitter {
         image: "IMAGE_AWARDRAYS2";
         name: "AwardRay8";
-        randomLaunchSpin: 1;
+        imageFrames: 1;
+        animated: 0;
+        emitterType: Box;
         additive: 1;
-        spawnMinActive: track { 1 5,90; }
-        particleDuration: 100;
-        particleAlpha: track { .7 .9,50 .9,70 0,80; }
-        particleBrightness: .4;
-        particleSpinAngle: 270;
-        particleSpinSpeed: -60;
-        particleScale: track { .4 EaseIn 20,100; }
+        spawnMinActive: nodes {
+            { time: 0; low: 1; high: 1; curve: Linear; distribution: Linear; }
+            { time: 0.9; low: 5; high: 5; curve: Linear; distribution: Linear; }
+        }
+        particleDuration: nodes {
+            { time: 0; low: 100; high: 100; curve: Linear; distribution: Linear; }
+        }
+        particleAlpha: nodes {
+            { time: 0; low: 0.7; high: 0.7; curve: Linear; distribution: Linear; }
+            { time: 0.5; low: 0.9; high: 0.9; curve: Linear; distribution: Linear; }
+            { time: 0.7; low: 0.9; high: 0.9; curve: Linear; distribution: Linear; }
+            { time: 0.8; low: 0; high: 0; curve: Linear; distribution: Linear; }
+        }
+        particleBrightness: nodes {
+            { time: 0; low: 0.4; high: 0.4; curve: Linear; distribution: Linear; }
+        }
+        particleSpinAngle: nodes {
+            { time: 0; low: 270; high: 270; curve: Linear; distribution: Linear; }
+        }
+        particleSpinSpeed: nodes {
+            { time: 0; low: -60; high: -60; curve: Linear; distribution: Linear; }
+        }
+        particleScale: nodes {
+            { time: 0; low: 0.4; high: 0.4; curve: EaseIn; distribution: Linear; }
+            { time: 1; low: 20; high: 20; curve: Linear; distribution: Linear; }
+        }
     }
     Emitter {
         image: "IMAGE_AWARDRAYS2";
         name: "AwardRay7";
-        randomLaunchSpin: 1;
+        imageFrames: 1;
+        animated: 0;
+        emitterType: Box;
         additive: 1;
-        spawnMinActive: track { 1 5,90; }
-        particleDuration: 100;
-        particleAlpha: track { .7 .9,50 .9,70 0,80; }
-        particleBrightness: .3;
-        particleSpinAngle: 90;
-        particleSpinSpeed: -60;
-        particleScale: track { .4 EaseIn 20,100; }
+        spawnMinActive: nodes {
+            { time: 0; low: 1; high: 1; curve: Linear; distribution: Linear; }
+            { time: 0.9; low: 5; high: 5; curve: Linear; distribution: Linear; }
+        }
+        particleDuration: nodes {
+            { time: 0; low: 100; high: 100; curve: Linear; distribution: Linear; }
+        }
+        particleAlpha: nodes {
+            { time: 0; low: 0.7; high: 0.7; curve: Linear; distribution: Linear; }
+            { time: 0.5; low: 0.9; high: 0.9; curve: Linear; distribution: Linear; }
+            { time: 0.7; low: 0.9; high: 0.9; curve: Linear; distribution: Linear; }
+            { time: 0.8; low: 0; high: 0; curve: Linear; distribution: Linear; }
+        }
+        particleBrightness: nodes {
+            { time: 0; low: 0.3; high: 0.3; curve: Linear; distribution: Linear; }
+        }
+        particleSpinAngle: nodes {
+            { time: 0; low: 90; high: 90; curve: Linear; distribution: Linear; }
+        }
+        particleSpinSpeed: nodes {
+            { time: 0; low: -60; high: -60; curve: Linear; distribution: Linear; }
+        }
+        particleScale: nodes {
+            { time: 0; low: 0.4; high: 0.4; curve: EaseIn; distribution: Linear; }
+            { time: 1; low: 20; high: 20; curve: Linear; distribution: Linear; }
+        }
     }
     Emitter {
         image: "IMAGE_AWARDRAYS1";
         name: "AwardRay6";
-        randomLaunchSpin: 1;
+        imageFrames: 1;
+        animated: 0;
+        emitterType: Box;
         additive: 1;
-        spawnMinActive: track { 1 5,90; }
-        particleDuration: 100;
-        particleAlpha: track { .7 .9,50 .9,70 0,80; }
-        particleBrightness: .2;
-        particleSpinAngle: 180;
-        particleSpinSpeed: -60;
-        particleScale: track { .4 EaseIn 20,100; }
+        spawnMinActive: nodes {
+            { time: 0; low: 1; high: 1; curve: Linear; distribution: Linear; }
+            { time: 0.9; low: 5; high: 5; curve: Linear; distribution: Linear; }
+        }
+        particleDuration: nodes {
+            { time: 0; low: 100; high: 100; curve: Linear; distribution: Linear; }
+        }
+        particleAlpha: nodes {
+            { time: 0; low: 0.7; high: 0.7; curve: Linear; distribution: Linear; }
+            { time: 0.5; low: 0.9; high: 0.9; curve: Linear; distribution: Linear; }
+            { time: 0.7; low: 0.9; high: 0.9; curve: Linear; distribution: Linear; }
+            { time: 0.8; low: 0; high: 0; curve: Linear; distribution: Linear; }
+        }
+        particleBrightness: nodes {
+            { time: 0; low: 0.2; high: 0.2; curve: Linear; distribution: Linear; }
+        }
+        particleSpinAngle: nodes {
+            { time: 0; low: 180; high: 180; curve: Linear; distribution: Linear; }
+        }
+        particleSpinSpeed: nodes {
+            { time: 0; low: -60; high: -60; curve: Linear; distribution: Linear; }
+        }
+        particleScale: nodes {
+            { time: 0; low: 0.4; high: 0.4; curve: EaseIn; distribution: Linear; }
+            { time: 1; low: 20; high: 20; curve: Linear; distribution: Linear; }
+        }
     }
     Emitter {
         image: "IMAGE_AWARDRAYS1";
         name: "AwardRay5";
-        randomLaunchSpin: 1;
+        imageFrames: 1;
+        animated: 0;
+        emitterType: Box;
         additive: 1;
-        spawnMinActive: track { 1 5,90; }
-        particleDuration: 100;
-        particleAlpha: track { .7 .9,50 .9,70 0,80; }
-        particleBrightness: .1;
-        particleSpinAngle: 0;
-        particleSpinSpeed: -60;
-        particleScale: track { .4 EaseIn 20,100; }
+        spawnMinActive: nodes {
+            { time: 0; low: 1; high: 1; curve: Linear; distribution: Linear; }
+            { time: 0.9; low: 5; high: 5; curve: Linear; distribution: Linear; }
+        }
+        particleDuration: nodes {
+            { time: 0; low: 100; high: 100; curve: Linear; distribution: Linear; }
+        }
+        particleAlpha: nodes {
+            { time: 0; low: 0.7; high: 0.7; curve: Linear; distribution: Linear; }
+            { time: 0.5; low: 0.9; high: 0.9; curve: Linear; distribution: Linear; }
+            { time: 0.7; low: 0.9; high: 0.9; curve: Linear; distribution: Linear; }
+            { time: 0.8; low: 0; high: 0; curve: Linear; distribution: Linear; }
+        }
+        particleBrightness: nodes {
+            { time: 0; low: 0.1; high: 0.1; curve: Linear; distribution: Linear; }
+        }
+        particleSpinAngle: nodes {
+            { time: 0; low: 0; high: 0; curve: Linear; distribution: Linear; }
+        }
+        particleSpinSpeed: nodes {
+            { time: 0; low: -60; high: -60; curve: Linear; distribution: Linear; }
+        }
+        particleScale: nodes {
+            { time: 0; low: 0.4; high: 0.4; curve: EaseIn; distribution: Linear; }
+            { time: 1; low: 20; high: 20; curve: Linear; distribution: Linear; }
+        }
     }
     Emitter {
         image: "IMAGE_AWARDRAYS2";
         name: "AwardRay4";
-        randomLaunchSpin: 1;
+        imageFrames: 1;
+        animated: 0;
+        emitterType: Box;
         additive: 1;
-        spawnMinActive: track { 0 5,70; }
-        particleDuration: 100;
-        particleAlpha: track { .7 .9,50 .9,70 0,80; }
-        particleBrightness: .4;
-        particleSpinAngle: 290;
-        particleSpinSpeed: -45;
-        particleScale: track { .4 EaseIn 30,100; }
+        spawnMinActive: nodes {
+            { time: 0; low: 0; high: 0; curve: Linear; distribution: Linear; }
+            { time: 0.7; low: 5; high: 5; curve: Linear; distribution: Linear; }
+        }
+        particleDuration: nodes {
+            { time: 0; low: 100; high: 100; curve: Linear; distribution: Linear; }
+        }
+        particleAlpha: nodes {
+            { time: 0; low: 0.7; high: 0.7; curve: Linear; distribution: Linear; }
+            { time: 0.5; low: 0.9; high: 0.9; curve: Linear; distribution: Linear; }
+            { time: 0.7; low: 0.9; high: 0.9; curve: Linear; distribution: Linear; }
+            { time: 0.8; low: 0; high: 0; curve: Linear; distribution: Linear; }
+        }
+        particleBrightness: nodes {
+            { time: 0; low: 0.4; high: 0.4; curve: Linear; distribution: Linear; }
+        }
+        particleSpinAngle: nodes {
+            { time: 0; low: 290; high: 290; curve: Linear; distribution: Linear; }
+        }
+        particleSpinSpeed: nodes {
+            { time: 0; low: -45; high: -45; curve: Linear; distribution: Linear; }
+        }
+        particleScale: nodes {
+            { time: 0; low: 0.4; high: 0.4; curve: EaseIn; distribution: Linear; }
+            { time: 1; low: 30; high: 30; curve: Linear; distribution: Linear; }
+        }
     }
     Emitter {
         image: "IMAGE_AWARDRAYS2";
         name: "AwardRay3";
-        randomLaunchSpin: 1;
+        imageFrames: 1;
+        animated: 0;
+        emitterType: Box;
         additive: 1;
-        spawnMinActive: track { 0 5,70; }
-        particleDuration: 100;
-        particleAlpha: track { .7 .9,50 .9,70 0,80; }
-        particleBrightness: .3;
-        particleSpinAngle: 110;
-        particleSpinSpeed: -45;
-        particleScale: track { .4 EaseIn 30,100; }
+        spawnMinActive: nodes {
+            { time: 0; low: 0; high: 0; curve: Linear; distribution: Linear; }
+            { time: 0.7; low: 5; high: 5; curve: Linear; distribution: Linear; }
+        }
+        particleDuration: nodes {
+            { time: 0; low: 100; high: 100; curve: Linear; distribution: Linear; }
+        }
+        particleAlpha: nodes {
+            { time: 0; low: 0.7; high: 0.7; curve: Linear; distribution: Linear; }
+            { time: 0.5; low: 0.9; high: 0.9; curve: Linear; distribution: Linear; }
+            { time: 0.7; low: 0.9; high: 0.9; curve: Linear; distribution: Linear; }
+            { time: 0.8; low: 0; high: 0; curve: Linear; distribution: Linear; }
+        }
+        particleBrightness: nodes {
+            { time: 0; low: 0.3; high: 0.3; curve: Linear; distribution: Linear; }
+        }
+        particleSpinAngle: nodes {
+            { time: 0; low: 110; high: 110; curve: Linear; distribution: Linear; }
+        }
+        particleSpinSpeed: nodes {
+            { time: 0; low: -45; high: -45; curve: Linear; distribution: Linear; }
+        }
+        particleScale: nodes {
+            { time: 0; low: 0.4; high: 0.4; curve: EaseIn; distribution: Linear; }
+            { time: 1; low: 30; high: 30; curve: Linear; distribution: Linear; }
+        }
     }
     Emitter {
         image: "IMAGE_AWARDRAYS1";
         name: "AwardRay2";
-        randomLaunchSpin: 1;
+        imageFrames: 1;
+        animated: 0;
+        emitterType: Box;
         additive: 1;
-        spawnMinActive: track { 0 5,70; }
-        particleDuration: 100;
-        particleAlpha: track { .7 .9,50 .9,70 0,80; }
-        particleBrightness: .2;
-        particleSpinAngle: 200;
-        particleSpinSpeed: -45;
-        particleScale: track { .4 EaseIn 30,100; }
+        spawnMinActive: nodes {
+            { time: 0; low: 0; high: 0; curve: Linear; distribution: Linear; }
+            { time: 0.7; low: 5; high: 5; curve: Linear; distribution: Linear; }
+        }
+        particleDuration: nodes {
+            { time: 0; low: 100; high: 100; curve: Linear; distribution: Linear; }
+        }
+        particleAlpha: nodes {
+            { time: 0; low: 0.7; high: 0.7; curve: Linear; distribution: Linear; }
+            { time: 0.5; low: 0.9; high: 0.9; curve: Linear; distribution: Linear; }
+            { time: 0.7; low: 0.9; high: 0.9; curve: Linear; distribution: Linear; }
+            { time: 0.8; low: 0; high: 0; curve: Linear; distribution: Linear; }
+        }
+        particleBrightness: nodes {
+            { time: 0; low: 0.2; high: 0.2; curve: Linear; distribution: Linear; }
+        }
+        particleSpinAngle: nodes {
+            { time: 0; low: 200; high: 200; curve: Linear; distribution: Linear; }
+        }
+        particleSpinSpeed: nodes {
+            { time: 0; low: -45; high: -45; curve: Linear; distribution: Linear; }
+        }
+        particleScale: nodes {
+            { time: 0; low: 0.4; high: 0.4; curve: EaseIn; distribution: Linear; }
+            { time: 1; low: 30; high: 30; curve: Linear; distribution: Linear; }
+        }
     }
     Emitter {
         image: "IMAGE_AWARDRAYS1";
         name: "AwardRay1";
-        randomLaunchSpin: 1;
+        imageFrames: 1;
+        animated: 0;
+        emitterType: Box;
         additive: 1;
-        spawnMinActive: track { 0 5,70; }
-        particleDuration: 100;
-        particleAlpha: track { .7 .9,50 .9,70 0,80; }
-        particleBrightness: .1;
-        particleSpinAngle: 20;
-        particleSpinSpeed: -45;
-        particleScale: track { .4 EaseIn 30,100; }
+        spawnMinActive: nodes {
+            { time: 0; low: 0; high: 0; curve: Linear; distribution: Linear; }
+            { time: 0.7; low: 5; high: 5; curve: Linear; distribution: Linear; }
+        }
+        particleDuration: nodes {
+            { time: 0; low: 100; high: 100; curve: Linear; distribution: Linear; }
+        }
+        particleAlpha: nodes {
+            { time: 0; low: 0.7; high: 0.7; curve: Linear; distribution: Linear; }
+            { time: 0.5; low: 0.9; high: 0.9; curve: Linear; distribution: Linear; }
+            { time: 0.7; low: 0.9; high: 0.9; curve: Linear; distribution: Linear; }
+            { time: 0.8; low: 0; high: 0; curve: Linear; distribution: Linear; }
+        }
+        particleBrightness: nodes {
+            { time: 0; low: 0.1; high: 0.1; curve: Linear; distribution: Linear; }
+        }
+        particleSpinAngle: nodes {
+            { time: 0; low: 20; high: 20; curve: Linear; distribution: Linear; }
+        }
+        particleSpinSpeed: nodes {
+            { time: 0; low: -45; high: -45; curve: Linear; distribution: Linear; }
+        }
+        particleScale: nodes {
+            { time: 0; low: 0.4; high: 0.4; curve: EaseIn; distribution: Linear; }
+            { time: 1; low: 30; high: 30; curve: Linear; distribution: Linear; }
+        }
     }
     Emitter {
         image: "IMAGE_AWARDGLOW";
         name: "AwardGlow";
-        spawnMinActive: track { 0,18 1,18; }
-        particleDuration: 120;
-        particleRed: 1;
-        particleGreen: 1;
-        particleBlue: 1;
-        particleAlpha: track { 0 1,60 1,75 0; }
-        particleScale: track { .1 100,80; }
+        imageFrames: 1;
+        animated: 0;
+        emitterType: Box;
+        spawnMinActive: nodes {
+            { time: 0.18; low: 0; high: 0; curve: Linear; distribution: Linear; }
+            { time: 0.18; low: 1; high: 1; curve: Linear; distribution: Linear; }
+        }
+        particleDuration: nodes {
+            { time: 0; low: 120; high: 120; curve: Linear; distribution: Linear; }
+        }
+        particleRed: nodes {
+            { time: 0; low: 1; high: 1; curve: Linear; distribution: Linear; }
+        }
+        particleGreen: nodes {
+            { time: 0; low: 1; high: 1; curve: Linear; distribution: Linear; }
+        }
+        particleBlue: nodes {
+            { time: 0; low: 1; high: 1; curve: Linear; distribution: Linear; }
+        }
+        particleAlpha: nodes {
+            { time: 0; low: 0; high: 0; curve: Linear; distribution: Linear; }
+            { time: 0.6; low: 1; high: 1; curve: Linear; distribution: Linear; }
+            { time: 0.75; low: 1; high: 1; curve: Linear; distribution: Linear; }
+            { time: 1; low: 0; high: 0; curve: Linear; distribution: Linear; }
+        }
+        particleScale: nodes {
+            { time: 0; low: 0.1; high: 0.1; curve: Linear; distribution: Linear; }
+            { time: 0.8; low: 100; high: 100; curve: Linear; distribution: Linear; }
+        }
     }
     Emitter {
         image: "IMAGE_AWARDGLOW";
         name: "AwardFlash2";
+        imageFrames: 1;
+        animated: 0;
+        emitterType: Box;
         additive: 1;
-        systemDuration: 100;
-        spawnMinActive: track { 0,20 1,20; }
-        spawnMaxLaunched: 1;
-        particleDuration: 40;
-        particleRed: 1;
-        particleGreen: 1;
-        particleBlue: .9;
-        particleAlpha: track { .2,50 0; }
-        particleBrightness: .4;
-        particleScale: track { 1 25; }
+        systemDuration: nodes {
+            { time: 0; low: 100; high: 100; curve: Linear; distribution: Linear; }
+        }
+        spawnMinActive: nodes {
+            { time: 0.2; low: 0; high: 0; curve: Linear; distribution: Linear; }
+            { time: 0.2; low: 1; high: 1; curve: Linear; distribution: Linear; }
+        }
+        spawnMaxLaunched: nodes {
+            { time: 0; low: 1; high: 1; curve: Linear; distribution: Linear; }
+        }
+        particleDuration: nodes {
+            { time: 0; low: 40; high: 40; curve: Linear; distribution: Linear; }
+        }
+        particleRed: nodes {
+            { time: 0; low: 1; high: 1; curve: Linear; distribution: Linear; }
+        }
+        particleGreen: nodes {
+            { time: 0; low: 1; high: 1; curve: Linear; distribution: Linear; }
+        }
+        particleBlue: nodes {
+            { time: 0; low: 0.9; high: 0.9; curve: Linear; distribution: Linear; }
+        }
+        particleAlpha: nodes {
+            { time: 0.5; low: 0.2; high: 0.2; curve: Linear; distribution: Linear; }
+            { time: 1; low: 0; high: 0; curve: Linear; distribution: Linear; }
+        }
+        particleBrightness: nodes {
+            { time: 0; low: 0.4; high: 0.4; curve: Linear; distribution: Linear; }
+        }
+        particleScale: nodes {
+            { time: 0; low: 1; high: 1; curve: Linear; distribution: Linear; }
+            { time: 1; low: 25; high: 25; curve: Linear; distribution: Linear; }
+        }
     }
     Emitter {
         image: "IMAGE_AWARDGLOW";
         name: "AwardFlash1";
+        imageFrames: 1;
+        animated: 0;
+        emitterType: Box;
         additive: 1;
-        spawnMinActive: 1;
-        spawnMaxLaunched: 1;
-        particleDuration: 30;
-        particleRed: 1;
-        particleGreen: 1;
-        particleBlue: .9;
-        particleAlpha: track { .6,50 0; }
-        particleBrightness: .4;
-        particleScale: track { 1 25; }
+        spawnMinActive: nodes {
+            { time: 0; low: 1; high: 1; curve: Linear; distribution: Linear; }
+        }
+        spawnMaxLaunched: nodes {
+            { time: 0; low: 1; high: 1; curve: Linear; distribution: Linear; }
+        }
+        particleDuration: nodes {
+            { time: 0; low: 30; high: 30; curve: Linear; distribution: Linear; }
+        }
+        particleRed: nodes {
+            { time: 0; low: 1; high: 1; curve: Linear; distribution: Linear; }
+        }
+        particleGreen: nodes {
+            { time: 0; low: 1; high: 1; curve: Linear; distribution: Linear; }
+        }
+        particleBlue: nodes {
+            { time: 0; low: 0.9; high: 0.9; curve: Linear; distribution: Linear; }
+        }
+        particleAlpha: nodes {
+            { time: 0.5; low: 0.6; high: 0.6; curve: Linear; distribution: Linear; }
+            { time: 1; low: 0; high: 0; curve: Linear; distribution: Linear; }
+        }
+        particleBrightness: nodes {
+            { time: 0; low: 0.4; high: 0.4; curve: Linear; distribution: Linear; }
+        }
+        particleScale: nodes {
+            { time: 0; low: 1; high: 1; curve: Linear; distribution: Linear; }
+            { time: 1; low: 25; high: 25; curve: Linear; distribution: Linear; }
+        }
     }
 }

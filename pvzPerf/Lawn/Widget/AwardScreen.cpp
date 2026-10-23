@@ -439,7 +439,7 @@ void AwardScreen::Draw(Graphics* g)
 	mMenuButton->DrawAtlas(g, fixedUI);
 	mContinueButton->DrawAtlas(g, fixedUI, &glow);
 
-	int aFadeInAlpha = TodAnimateCurve(180, 0, mFadeInCounter, 255, 0, Curves::Linear);
+	int aFadeInAlpha = TodAnimateCurveNs(1'800'000'000, 0, mFadeInCounter.mNanoseconds, 255, 0, Curves::Linear);
 	g->mColor = IsPaperNote() ? Color(0, 0, 0, aFadeInAlpha) : Color(255, 255, 255, aFadeInAlpha);
 	Rect aScreenRect = mApp->mScreenBounds;
 	aScreenRect.Offset(-mX, -mY);
@@ -458,7 +458,10 @@ void AwardScreen::Update()
 
 		for (size_t i = 0; i < mAchievementItems.size(); i++) {
 			if (mAchievementAnimTime >= mAchievementItems[i].mStartAnimTime) {
-				mAchievementItems[i].mY = TodAnimateCurve(mAchievementItems[i].mStartAnimTime, mAchievementItems[i].mEndAnimTime, mAchievementAnimTime, mAchievementItems[i].mStartY, mAchievementItems[i].mDestY, Curves::EaseInOut);
+				mAchievementItems[i].mY = TodAnimateCurveNs(
+					std::int64_t(mAchievementItems[i].mStartAnimTime) * 10'000'000,
+					std::int64_t(mAchievementItems[i].mEndAnimTime) * 10'000'000,
+					mAchievementAnimTime.mNanoseconds, mAchievementItems[i].mStartY, mAchievementItems[i].mDestY, Curves::EaseInOut);
 			}
 
 			if (!mAchievementItems.empty() && mAchievementItems[mAchievementItems.size() - 1].mY == mAchievementItems[mAchievementItems.size() - 1].mDestY) {

@@ -172,7 +172,7 @@ public:
 	int								mPrevMouseY;											//+0x555C
 	int								mSunMoney;												//+0x5560
 	int								mNumWaves;												//+0x5564
-	Sexy::UnsignedTimeCounter						mMainCounter;											//+0x5568
+	Sexy::MonotonicTimeCounter						mMainCounter;											//+0x5568
 	Sexy::UnsignedTimeCounter						mEffectCounter;											//+0x556C（存储 uint；DrawRain 按 1073 有符号取模读取，负分数钳回起点）
 	int								mDrawCount;												//+0x5570
 	Sexy::TimeCounter								mRiseFromGraveCounter;									//+0x5574
@@ -317,6 +317,7 @@ public:
 	/*inline*/ int					PixelToGridXKeepOnBoard(int theX, int theY);
 	/*inline*/ int					PixelToGridYKeepOnBoard(int theX, int theY);
 	void							UpdateGameObjects();
+	ReanimTimeDomain					AnimationTimeDomain() const;
 	bool							MouseHitTest(int x, int y, HitResult* theHitResult);
 	void							MouseDownWithPlant(int x, int y, int theClickCount);
 	void							MouseDownWithTool(int x, int y, int theClickCount, CursorType theCursorType);

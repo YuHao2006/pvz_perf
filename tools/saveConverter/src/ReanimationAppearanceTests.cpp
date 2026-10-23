@@ -66,7 +66,7 @@ Document SingleReanimation(Document document, std::int32_t type, std::uint32_t v
     const auto& definition = AppearanceDefinition(type);
     auto& pool = document.mArrays[9];
     pool.mFreeListHead = pool.mMaxUsedCount = pool.mSize = 1;
-    pool.mSlots = {{std::vector<Byte>(176, 0), 0x10000}};
+    pool.mSlots = {{std::vector<Byte>(176, 0), {}, {}, 0x10000}};
     WriteU32At(pool.mSlots[0].mCanonicalRecord, 0, static_cast<std::uint32_t>(type));
     ReanimationSupplement supplement;
     supplement.mDefinitionID = type;
@@ -100,7 +100,8 @@ void CheckWire(const Document& fixture)
     Require(ReadU32At(current, 8) == 3 && ReadU32At(current, 36) == 0x10735 &&
         ReadU32At(current, 40) == 2 && ReadU32At(current, 44) == 0,
         "v3.2 header does not identify the new grammar");
-    Require(LevelSaveFormat::IsCurrentDat64Header(current), "Runtime rejected its current header");
+    Require(LevelSaveFormat::IsSupportedDat64Header(current) &&
+        !LevelSaveFormat::IsCurrentDat64Header(current), "Historical v3.2 must require offline upgrade");
     auto old = expected;
     PrepareAppearanceOutput(old, Format::Dat64V2);
     const auto previous = WriteFileImage(old, Format::Dat64V2, LEGACY_DATE_OFFICIAL);

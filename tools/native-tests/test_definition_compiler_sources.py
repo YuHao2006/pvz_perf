@@ -46,13 +46,13 @@ def particle_gold(names: list[str]) -> bytes:
 def particle_source_emitters(payload: bytes):
     """Walk IDR4 without depending on the packer's layout implementation."""
     magic, registry, _, count, size = struct.unpack_from("<5I", payload)
-    assert magic == 0x34524449 and registry == 0
+    assert magic == 0x46524449 and registry == 0
     at = 20
     result = []
     def track():
         nonlocal at
         nodes = struct.unpack_from("<I", payload, at)[0]
-        at += 4 + 20 * nodes
+        at += 4 + 24 * nodes
     for _ in range(count):
         images = struct.unpack_from("<I", payload, at)[0]
         at += 4
@@ -176,6 +176,46 @@ class DefinitionCompilerSourceTests(unittest.TestCase):
                     capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=30)
                 self.assertEqual(completed.returncode, 2)
                 self.assertIn("unknown option --image-registry", completed.stderr)
+
+    def test_v7_reanim_float_precision_and_integer_cel(self):
+        source = self.directory / "exact.dsl"
+        source.write_text("export component Exact {\n fps: 13.3072289;\n Track {\n"
+                          'source-name: "layer"; frame-count: 2;\n'
+                          "frame 0 { x: -0.123456789; y: 2147483.647; "
+                          "skew-x: 1e-4; scale-x: 0.791999996; cel: 2147483647; alpha: 1.0000; }\n"
+                          "} }", encoding="utf-8")
+        types, fonts = self.directory / "types.txt", self.directory / "fonts.bin"
+        types.write_text("exact 0\n")
+        fonts.write_bytes(struct.pack("<2I", 0x4953594D, 0))
+        output = self.directory / "exact"
+        self.run_compiler("compile-v2", "--input", source, "--output", output,
+                          "--type-map", types, "--font-registry", fonts)
+        payload = (output / "Exact.source-record").read_bytes()[12:]
+        self.assertEqual(struct.unpack_from("<I", payload)[0], 0x46544449)
+        self.assertEqual(payload[16:20], struct.pack("<f", 13.3072289))
+        expected = struct.pack("<6fif", -.123456789, 2147483.647, 1e-4, -10000,
+                               .791999996, -10000, 2147483647, 1)
+        self.assertEqual(payload[40:72], expected)
+        self.assertEqual(payload[72:104], expected)
+        stale = bytearray(payload)
+        struct.pack_into("<I", stale, 0, 0x37544449)
+        with self.assertRaisesRegex(ValueError, "compiler payload"):
+            definition_atlas.image_offsets("reanim", stale)
+
+    def test_v7_rejects_nonfinite_overflow_nondecimal_with_line_field_and_text(self):
+        for field, literal in (("x", "3.5e38"), ("x", "-3.5e38"), ("x", "0x10"),
+                               ("x", "NaN"), ("x", "Inf"), ("cel", "1.2")):
+            with self.subTest(field=field, literal=literal):
+                source = self.directory / "bad.dsl"
+                source.write_text('export component Bad {\n Track { source-name: "layer";\n'
+                                  f"frame 0 {{ {field}: {literal}; }}\n }} }}")
+                result = subprocess.run([str(self.compiler), "compile", "--input", str(source),
+                                         "--output", str(self.directory / "bad.compiled")],
+                                        capture_output=True, text=True, timeout=30)
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn("line 3", result.stderr)
+                self.assertIn(field, result.stderr)
+                self.assertIn(literal, result.stderr)
 
 
 if __name__ == "__main__":

@@ -90,6 +90,13 @@ void EffectSystem::ProcessDeleteQueue()
 //0x445890
 void EffectSystem::Update()
 {
+	UpdateAt(mReanimationHolder->mVisualTimeNs, mReanimationHolder->mBattleTimeNs);
+}
+
+void EffectSystem::UpdateAt(std::int64_t visualNowNs, std::int64_t battleNowNs)
+{
+	mReanimationHolder->mVisualTimeNs = visualNowNs;
+	mReanimationHolder->mBattleTimeNs = battleNowNs;
 	TodParticleSystem* aParticle = nullptr;
 	while (mParticleHolder->mParticleSystems.IterateNext(aParticle))
 		if (!aParticle->mIsAttachment)
@@ -98,7 +105,7 @@ void EffectSystem::Update()
 	Reanimation* aReanim = nullptr;
 	while (mReanimationHolder->mReanimations.IterateNext(aReanim))
 		if (!aReanim->mIsAttachment)
-			aReanim->Update();
+			aReanim->UpdateAt(aReanim->mTimeDomain == ReanimTimeDomain::Battle ? battleNowNs : visualNowNs);
 }
 
 // #################################################################################################### //

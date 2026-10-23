@@ -325,7 +325,7 @@ Challenge::Challenge()
 		ReanimatorEnsureDefinitionLoaded(REANIM_SLOT_MACHINE_HANDLE, true);
 		Reanimation* aHandleReanim = mApp->AddReanimation(aHandleRect.mX - 377, aHandleRect.mY - 20, 0, REANIM_SLOT_MACHINE_HANDLE);
 		aHandleReanim->mIsAttachment = true;
-		aHandleReanim->mAnimRate = 0;
+		aHandleReanim->ApplyRate(0.0f);
 		mReanimChallenge = mApp->ReanimationGetID(aHandleReanim);
 	}
 }
@@ -668,10 +668,10 @@ void Challenge::BeghouledTwistMouseDown(int x, int y)
 		Plant* aPlant4 = mBoard->GetTopPlantAt(aGridX + 1, aGridY + 1, TOPPLANT_ANY);
 		if (!BeghouledTwistMoveCausesMatch(aGridX, aGridY, &aBoardState))
 		{
-			aPlant1->mX = mBoard->GridToPixelX(aPlant1->mPlantCol, aPlant1->mRow) + 20;
-			aPlant2->mY = mBoard->GridToPixelY(aPlant2->mPlantCol, aPlant2->mRow) + 20;
-			aPlant3->mY = mBoard->GridToPixelY(aPlant3->mPlantCol, aPlant3->mRow) - 20;
-			aPlant4->mX = mBoard->GridToPixelX(aPlant4->mPlantCol, aPlant4->mRow) - 20;
+			{ aPlant1->mX = (mBoard->GridToPixelX(aPlant1->mPlantCol, aPlant1->mRow) + 20); aPlant1->mRootBindingGeneration = 0; }
+			aPlant2->mY = (mBoard->GridToPixelY(aPlant2->mPlantCol, aPlant2->mRow) + 20);
+			aPlant3->mY = (mBoard->GridToPixelY(aPlant3->mPlantCol, aPlant3->mRow) - 20);
+			{ aPlant4->mX = (mBoard->GridToPixelX(aPlant4->mPlantCol, aPlant4->mRow) - 20); aPlant4->mRootBindingGeneration = 0; }
 			mApp->PlayFoley(FOLEY_FLOOP);
 		}
 		else
@@ -763,10 +763,10 @@ void Challenge::BeghouledDragUpdate(int x, int y)
 		{
 			if (aPlantFrom)
 			{
-				if (aGridXTo > aGridXFrom)			aPlantFrom->mX += 30;
-				else if (aGridXTo < aGridXFrom)		aPlantFrom->mX -= 30;
-				else if (aGridYTo > aGridYFrom)		aPlantFrom->mY += 30;
-				else if (aGridYTo < aGridYFrom)		aPlantFrom->mY -= 30;
+				if (aGridXTo > aGridXFrom)			{ aPlantFrom->mX += (30); aPlantFrom->mRootBindingGeneration = 0; }
+				else if (aGridXTo < aGridXFrom)		{ aPlantFrom->mX -= (30); aPlantFrom->mRootBindingGeneration = 0; }
+				else if (aGridYTo > aGridYFrom)		aPlantFrom->mY += (30);
+				else if (aGridYTo < aGridYFrom)		aPlantFrom->mY -= (30);
 
 				mApp->PlayFoley(FOLEY_FLOOP);
 			}
@@ -1273,7 +1273,7 @@ int Challenge::UpdateToolTip(int theX, int theY)
 //0x421B10
 void Challenge::MouseDownWhackAZombie(int theX, int theY)
 {
-	mApp->ReanimationTryToGet(mBoard->mCursorObject->mReanimCursorID)->mAnimTime = 0.2f;
+	mApp->ReanimationTryToGet(mBoard->mCursorObject->mReanimCursorID)->Seek(200);
 	mApp->PlayFoley(FOLEY_SWING);
 
 	Zombie* aZombie = nullptr;
@@ -1464,33 +1464,33 @@ void Challenge::ClearCursor()
 int Challenge::UpdateBeghouledPlant(Plant* thePlant)
 {
 	int aMoving = false;
-	int aDiffX = mBoard->GridToPixelX(thePlant->mPlantCol, thePlant->mRow) - thePlant->mX;
-	int aDiffY = mBoard->GridToPixelY(thePlant->mPlantCol, thePlant->mRow) - thePlant->mY;
+	int aDiffX = mBoard->GridToPixelX(thePlant->mPlantCol, thePlant->mRow) - (thePlant->mX);
+	int aDiffY = mBoard->GridToPixelY(thePlant->mPlantCol, thePlant->mRow) - (thePlant->mY);
 	int aDelta = (mChallengeState == STATECHALLENGE_BEGHOULED_MOVING ? 3 : TodAnimateCurve(90, 30, mChallengeStateCounter, 1, 20, Curves::EaseIn)) * Sexy::gWholeLegacyTicks;
 	int aDeltaX = 0, aDeltaY = 0;
 
 	if (aDiffX > 0)
 	{
 		aDeltaX = std::min(aDelta, aDiffX);
-		thePlant->mX += aDeltaX;
+		{ thePlant->mX += (aDeltaX); thePlant->mRootBindingGeneration = 0; }
 		aMoving = true;
 	}
 	else if (aDiffX < 0)
 	{
 		aDeltaX = -std::min(aDelta, -aDiffX);
-		thePlant->mX += aDeltaX;
+		{ thePlant->mX += (aDeltaX); thePlant->mRootBindingGeneration = 0; }
 		aMoving = true;
 	}
 	if (aDiffY > 0)
 	{
 		aDeltaY = std::min(aDelta, aDiffY);
-		thePlant->mY += aDeltaY;
+		thePlant->mY += (aDeltaY);
 		aMoving = true;
 	}
 	else if (aDiffY < 0)
 	{
 		aDeltaY = -std::min(aDelta, -aDiffY);
-		thePlant->mY += aDeltaY;
+		thePlant->mY += (aDeltaY);
 		aMoving = true;
 	}
 
@@ -2563,7 +2563,7 @@ void Challenge::PlantAdded(Plant* thePlant)
 		if (anArtSeed != SEED_NONE && anArtSeed == thePlant->mSeedType)
 		{
 			mApp->PlayFoley(FOLEY_ART_CHALLENGE);
-			mApp->AddTodParticle(thePlant->mX + 40, thePlant->mY + 40, RENDER_LAYER_TOP, PARTICLE_PRESENT_PICKUP);
+			mApp->AddTodParticle((thePlant->mX) + 40, (thePlant->mY) + 40, RENDER_LAYER_TOP, PARTICLE_PRESENT_PICKUP);
 			CheckForCompleteArtChallenge(thePlant->mPlantCol, thePlant->mRow);
 		}
 	}
@@ -3284,14 +3284,12 @@ void Challenge::UpdatePortal(GridItem* thePortal)
 			int aPortalX = thePortal->mGridX * 80 + 25;
 			if (abs(aZombieX - aPortalX) <= 45)
 			{
-				int aDiffX = aZombieX - aZombie->mX;
+				int aDiffX = aZombieX - (aZombie->mX);
 				if (aZombie->IsWalkingBackwards()) aDiffX -= 60;
-				aZombie->mX = anOtherPortal->mGridX * 80 - aDiffX;
-				aZombie->mPosX = aZombie->mX;
+				{ aZombie->mX = (anOtherPortal->mGridX * 80 - aDiffX); aZombie->mRootBindingGeneration = 0; }
 
 				aZombie->SetRow(anOtherPortal->mGridY);
-				aZombie->mY = aZombie->GetPosYBasedOnRow(anOtherPortal->mGridY);
-				aZombie->mPosY = aZombie->mY;
+				aZombie->mY = (aZombie->GetPosYBasedOnRow(anOtherPortal->mGridY));
 
 				aZombie->mLastPortalX = anOtherPortal->mGridX;
 			}
@@ -3309,13 +3307,20 @@ void Challenge::UpdatePortal(GridItem* thePortal)
 			if (abs(aProjectileX - aPortalX) <= 40)
 			{
 				int aDeltaY = (anOtherPortal->mGridY - thePortal->mGridY) * 100;
+				const auto oldX = aProjectile->mPosX;
+				const auto oldY = aProjectile->mPosY;
 				aProjectile->mX += anOtherPortal->mGridX * 80 - aProjectileX + 60;
 				aProjectile->mPosX = aProjectile->mX;
+				aProjectile->mOriginX += aProjectile->mPosX - oldX;
 
 				aProjectile->mRow = anOtherPortal->mGridY;
 				aProjectile->mY += aDeltaY;
 				aProjectile->mPosY = aProjectile->mY;
+				aProjectile->mOriginY += aProjectile->mPosY - oldY;
 				aProjectile->mShadowY += aDeltaY;
+				aProjectile->mOriginShadowY = aProjectile->mShadowY -
+					(mBoard->GetPosYBasedOnRow(aProjectile->mPosX, aProjectile->mRow) -
+					 mBoard->GetPosYBasedOnRow(aProjectile->mOriginX, aProjectile->mRow));
 
 				aProjectile->mLastPortalX = anOtherPortal->mGridX;
 				aProjectile->mRenderOrder = Board::MakeRenderOrder(RENDER_LAYER_PROJECTILE, aProjectile->mRow, 0);
@@ -3579,7 +3584,7 @@ int Challenge::CanTargetZombieWithPortals(Plant* thePlant, Zombie* theZombie)
 		{
 			int aRangeLeft = aGridX * 80;
 			int aRangeRight = aPortal ? aPortal->mGridX * 80 : 800;
-			if (theZombie->mX > aRangeLeft&& theZombie->mX < aRangeRight)
+			if ((theZombie->mX) > aRangeLeft&& (theZombie->mX) < aRangeRight)
 				return true;
 		}
 
@@ -3745,8 +3750,8 @@ int Challenge::BeghouledCanClearCrater()
 Zombie* Challenge::ZombiquariumSpawnSnorkle()
 {
 	Zombie* aZombie = mBoard->AddZombieInRow(ZOMBIE_SNORKEL, 0, 0);
-	aZombie->mPosX = RandRangeFloat(50, 650);
-	aZombie->mPosY = RandRangeFloat(100, 400);
+	{ aZombie->mX = (RandRangeFloat(50, 650)); aZombie->mRootBindingGeneration = 0; }
+	aZombie->mY = (RandRangeFloat(100, 400));
 	return aZombie;
 }
 
@@ -3770,7 +3775,7 @@ void Challenge::ZombiquariumPacketClicked(SeedPacket* theSeedPacket)
 
 			Zombie* aZombie = ZombiquariumSpawnSnorkle();
 			mApp->PlayFoley(FOLEY_ZOMBIESPLASH);
-			mApp->AddTodParticle(aZombie->mPosX + 60.0f, aZombie->mPosY + 20.0f, RENDER_LAYER_TOP, PARTICLE_PLANTING_POOL);
+			mApp->AddTodParticle((aZombie->mX) + 60.0f, (aZombie->mY) + 20.0f, RENDER_LAYER_TOP, PARTICLE_PLANTING_POOL);
 		}
 		else if (theSeedPacket->mPacketType == SEED_ZOMBIQUARIUM_TROPHY)
 		{
@@ -4343,7 +4348,11 @@ void Challenge::ScaryPotterOpenPot(GridItem* theScaryPot)
 		mBoard->AddCoin(aXPos + 20, aYPos, COIN_USABLE_SEED_PACKET, COIN_MOTION_FROM_PLANT)->mUsableSeedType = theScaryPot->mSeedType;
 		break;
 	case SCARYPOT_ZOMBIE:
-		mBoard->AddZombieInRow(theScaryPot->mZombieType, theScaryPot->mGridY, 0)->mPosX = aXPos;
+		{
+			auto* zombie = mBoard->AddZombieInRow(theScaryPot->mZombieType, theScaryPot->mGridY, 0);
+			zombie->mX = aXPos;
+			zombie->mRootBindingGeneration = 0;
+		}
 		break;
 	case SCARYPOT_SUN:
 	{
@@ -4501,13 +4510,13 @@ void Challenge::IZombiePlaceZombie(ZombieType theZombieType, int theGridX, int t
 	{
 		aZombie->mTargetCol = theGridX;
 		aZombie->SetRow(theGridY);
-		aZombie->mPosX = mBoard->GridToPixelX(theGridX, theGridY);
-		aZombie->mPosY = aZombie->GetPosYBasedOnRow(theGridY);
+		{ aZombie->mX = (mBoard->GridToPixelX(theGridX, theGridY)); aZombie->mRootBindingGeneration = 0; }
+		aZombie->mY = (aZombie->GetPosYBasedOnRow(theGridY));
 		aZombie->mRenderOrder = Board::MakeRenderOrder(RENDER_LAYER_GRAVE_STONE, theGridY, 7);
 	}
 	else
 	{
-		aZombie->mPosX = mBoard->GridToPixelX(theGridX, theGridY) - 30.0f;
+		{ aZombie->mX = (mBoard->GridToPixelX(theGridX, theGridY) - 30.0f); aZombie->mRootBindingGeneration = 0; }
 	}
 }
 
@@ -4563,10 +4572,10 @@ void Challenge::IZombieSetupPlant(Plant* thePlant)
 	Reanimation* aHeadReanim = mApp->ReanimationTryToGet(thePlant->mHeadReanimID);
 	Reanimation* aHeadReanim2 = mApp->ReanimationTryToGet(thePlant->mHeadReanimID2);
 	Reanimation* aHeadReanim3 = mApp->ReanimationTryToGet(thePlant->mHeadReanimID3);
-	if (aBodyReanim)	aBodyReanim->mAnimRate = 0;
-	if (aHeadReanim)	aHeadReanim->mAnimRate = 0;
-	if (aHeadReanim2)	aHeadReanim2->mAnimRate = 0;
-	if (aHeadReanim3)	aHeadReanim3->mAnimRate = 0;
+	if (aBodyReanim)	aBodyReanim->ApplyRate(0.0f);
+	if (aHeadReanim)	aHeadReanim->ApplyRate(0.0f);
+	if (aHeadReanim2)	aHeadReanim2->ApplyRate(0.0f);
+	if (aHeadReanim3)	aHeadReanim3->ApplyRate(0.0f);
 
 	if (thePlant->mSeedType == SEED_POTATOMINE)
 	{
@@ -5078,7 +5087,7 @@ GridItem* Challenge::IZombieGetBrainTarget(Zombie* theZombie)
 	Rect aZombieRect = theZombie->GetZombieAttackRect();
 	if (theZombie->mZombiePhase == PHASE_POLEVAULTER_PRE_VAULT)
 	{
-		aZombieRect = Rect(50 + theZombie->mX, 0, 20, 115);
+		aZombieRect = Rect(50 + (theZombie->mX), 0, 20, 115);
 	}
 	if (theZombie->mZombieType == ZOMBIE_BALLOON)
 	{
@@ -5142,7 +5151,7 @@ void Challenge::IZombiePlantDropRemainingSun(Plant* thePlant)
 		int aSunCount = thePlant->mPlantHealth / 40 + 1;
 		for (int i = 0; i < aSunCount; i++)
 		{
-			mBoard->AddCoin(thePlant->mX + 5 * i, thePlant->mY, COIN_SUN, COIN_MOTION_FROM_PLANT);
+			mBoard->AddCoin((thePlant->mX) + 5 * i, (thePlant->mY), COIN_SUN, COIN_MOTION_FROM_PLANT);
 		}
 	}
 }
@@ -5264,7 +5273,7 @@ void Challenge::SquirrelFound(GridItem* theSquirrel)
 	if (theSquirrel->mGridItemState == GRIDITEM_STATE_SQUIRREL_ZOMBIE)
 	{
 		Zombie* aZombie = mBoard->AddZombieInRow(ZOMBIE_NORMAL, theSquirrel->mGridY, 0);
-		aZombie->mPosX = mBoard->GridToPixelX(theSquirrel->mGridX, theSquirrel->mGridY);
+		{ aZombie->mX = (mBoard->GridToPixelX(theSquirrel->mGridX, theSquirrel->mGridY)); aZombie->mRootBindingGeneration = 0; }
 		theSquirrel->GridItemDie();
 		mBoard->DisplayAdvice(gStr.ADVICE_SQUIRREL_ZOMBIE, MESSAGE_STYLE_HINT_FAST, ADVICE_NONE);
 	}
@@ -5617,7 +5626,7 @@ void Challenge::TreeOfWisdomInit()
 	}
 	else
 	{
-		aReanimTree->mAnimTime = 0.99f;
+		aReanimTree->Seek(990);
 	}
 
 	for (int i = 0; i < 6; i++)
@@ -5634,13 +5643,13 @@ void Challenge::TreeOfWisdomInit()
 		mCloudsCounter[i] = aCloudCounter;
 		if (aCloudCounter < 0)
 		{
-			aReanimCloud->mAnimTime = -aCloudCounter / 6000.0f;
-			aReanimCloud->mAnimRate = 0.2f;
+			aReanimCloud->Seek(-aCloudCounter, 6000);
+			aReanimCloud->ApplyRate(0.2f);
 			mCloudsCounter[i] = 0;
 		}
 		else
 		{
-			aReanimCloud->mAnimRate = 0;
+			aReanimCloud->ApplyRate(0.0f);
 		}
 	}
 
@@ -5682,7 +5691,7 @@ void Challenge::TreeOfWisdomFertilize()
 	aTreeFood->mGridY = 0;
 	aTreeFood->mRenderOrder = Board::MakeRenderOrder(RENDER_LAYER_ABOVE_UI, 0, 0);
 	Reanimation* aReanim = mApp->AddReanimation(340.0f, 300.0f, 0, REANIM_TREEOFWISDOM_TREEFOOD);
-	aReanim->mLoopType = REANIM_PLAY_ONCE_AND_HOLD;
+	aReanim->ChangeLoopType(REANIM_PLAY_ONCE_AND_HOLD);
 	aTreeFood->mGridItemReanimID = mApp->ReanimationGetID(aReanim);
 	aTreeFood->mGridItemState = GRIDITEM_STATE_ZEN_TOOL_FERTILIZER;
 
@@ -5834,8 +5843,8 @@ void Challenge::TreeOfWisdomUpdate()
 			if (mCloudsCounter[i] == 0)
 			{
 				aReanimCloud->mLoopCount = 0;
-				aReanimCloud->mAnimTime = 0.0f;
-				aReanimCloud->mAnimRate = 0.2f;
+				aReanimCloud->Seek(0);
+				aReanimCloud->ApplyRate(0.2f);
 			}
 		}
 		else if (aReanimCloud->mLoopCount > 0)

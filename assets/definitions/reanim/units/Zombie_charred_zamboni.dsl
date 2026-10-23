@@ -20,7 +20,7 @@ export component Zombie_charred_zamboni {
         frame 0 { x: -89; y: 32; image: IMAGE_REANIM_ZOMBIE_CHARRED_ZAMBONI1; }
         frame 1 { x: -10000; y: -10000; image: none; }
         frame 24 { image: IMAGE_REANIM_ZOMBIE_CHARRED_ZAMBONI14; }
-        frame 25 { x: -88.1999969; y: 32.4000015; image: IMAGE_REANIM_ZOMBIE_CHARRED_ZAMBONI2; }
+        frame 25 { x: -88.2; y: 32.4; image: IMAGE_REANIM_ZOMBIE_CHARRED_ZAMBONI2; }
         frame 26 { x: -10000; y: -10000; image: IMAGE_REANIM_ZOMBIE_CHARRED_ZAMBONI3; }
         frame 27 { image: IMAGE_REANIM_ZOMBIE_CHARRED_ZAMBONI4; }
         frame 28 { image: IMAGE_REANIM_ZOMBIE_CHARRED_ZAMBONI5; }
@@ -39,16 +39,16 @@ export component Zombie_charred_zamboni {
         frame-count: 54;
         frame 0 { cel: -1; }
         frame 1 { cel: -10000; }
-        frame 26 { x: -69.0999985; y: 72; scale-x: 1.56900001; scale-y: 0.694000006; cel: 0; image: IMAGE_REANIM_ZOMBIE_CHARRED_ZAMBONITAIL; }
-        frame 27 { x: -59.5999985; y: 68.1999969; scale-x: -10000; scale-y: 0.751999974; cel: -10000; image: none; }
-        frame 28 { x: -50; y: 64.3000031; scale-y: 0.809000015; }
-        frame 29 { x: -40.2999992; y: 60.4000015; scale-y: 0.866999984; }
+        frame 26 { x: -69.1; y: 72; scale-x: 1.569; scale-y: 0.694; cel: 0; image: IMAGE_REANIM_ZOMBIE_CHARRED_ZAMBONITAIL; }
+        frame 27 { x: -59.6; y: 68.2; scale-x: -10000; scale-y: 0.752; cel: -10000; image: none; }
+        frame 28 { x: -50; y: 64.3; scale-y: 0.809; }
+        frame 29 { x: -40.3; y: 60.4; scale-y: 0.867; }
         frame 30 { x: -10.5; y: -10000; scale-x: 1.324; scale-y: -10000; }
-        frame 31 { x: 19.2000008; scale-x: 1.07799995; }
-        frame 32 { x: 49; scale-x: 0.833000004; }
-        frame 33 { x: 51.2999992; y: 75; scale-x: 0.606000006; scale-y: 0.714999974; }
-        frame 34 { x: 53.5; y: 89.5; scale-x: 0.379000008; scale-y: 0.563000023; }
-        frame 35 { x: 55.9000015; y: 104; scale-x: 0.151999995; scale-y: 0.411000013; }
+        frame 31 { x: 19.2; scale-x: 1.078; }
+        frame 32 { x: 49; scale-x: 0.833; }
+        frame 33 { x: 51.3; y: 75; scale-x: 0.606; scale-y: 0.715; }
+        frame 34 { x: 53.5; y: 89.5; scale-x: 0.379; scale-y: 0.563; }
+        frame 35 { x: 55.9; y: 104; scale-x: 0.152; scale-y: 0.411; }
         frame 36 { x: -10000; y: -10000; scale-x: -10000; scale-y: -10000; }
     }
     Track {
@@ -56,8 +56,8 @@ export component Zombie_charred_zamboni {
         frame-count: 54;
         frame 0 { cel: -1; }
         frame 1 { cel: -10000; }
-        frame 31 { x: 40.0999985; y: 147; scale-x: 0.686999977; scale-y: 0.540000021; cel: 0; image: IMAGE_REANIM_ZOMBIE_CHARRED_PILE1; }
-        frame 32 { x: -10000; y: -10000; scale-x: 1.12300003; scale-y: -10000; cel: -10000; image: none; }
+        frame 31 { x: 40.1; y: 147; scale-x: 0.687; scale-y: 0.54; cel: 0; image: IMAGE_REANIM_ZOMBIE_CHARRED_PILE1; }
+        frame 32 { x: -10000; y: -10000; scale-x: 1.123; scale-y: -10000; cel: -10000; image: none; }
         frame 33 { scale-x: -10000; }
     }
     Track {
@@ -65,13 +65,13 @@ export component Zombie_charred_zamboni {
         frame-count: 54;
         frame 0 { cel: -1; }
         frame 1 { cel: -10000; }
-        frame 26 { x: 29.5; y: 78.4000015; scale-x: 1.56900001; scale-y: 0.694000006; cel: 0; image: IMAGE_REANIM_ZOMBIE_CHARRED_ZAMBONITAIL; }
-        frame 27 { x: 31.2999992; y: -10000; scale-x: 1.39499998; scale-y: -10000; cel: -10000; image: none; }
+        frame 26 { x: 29.5; y: 78.4; scale-x: 1.569; scale-y: 0.694; cel: 0; image: IMAGE_REANIM_ZOMBIE_CHARRED_ZAMBONITAIL; }
+        frame 27 { x: 31.3; y: -10000; scale-x: 1.395; scale-y: -10000; cel: -10000; image: none; }
         frame 28 { x: 33; scale-x: 1.222; }
-        frame 29 { x: 34.7000008; scale-x: 1.04799998; }
-        frame 30 { x: 36.5; y: 93.8000031; scale-x: 0.861999989; scale-y: 0.565999985; }
-        frame 31 { x: 38.5; y: 109.300003; scale-x: 0.675000012; scale-y: 0.437999994; }
-        frame 32 { x: 40.2999992; y: 124.800003; scale-x: 0.488000005; scale-y: 0.308999985; }
+        frame 29 { x: 34.7; scale-x: 1.048; }
+        frame 30 { x: 36.5; y: 93.8; scale-x: 0.862; scale-y: 0.566; }
+        frame 31 { x: 38.5; y: 109.3; scale-x: 0.675; scale-y: 0.438; }
+        frame 32 { x: 40.3; y: 124.8; scale-x: 0.488; scale-y: 0.309; }
         frame 33 { x: -10000; y: -10000; scale-x: -10000; scale-y: -10000; }
     }
     Track {
@@ -79,17 +79,17 @@ export component Zombie_charred_zamboni {
         frame-count: 54;
         frame 0 { cel: -1; }
         frame 1 { cel: -10000; }
-        frame 25 { x: -80.3000031; y: 125; scale-x: 0.66900003; scale-y: 0.66900003; cel: 0; image: IMAGE_REANIM_ZOMBIE_CHARRED_PILE2; }
-        frame 26 { x: -84; y: 122.300003; scale-x: 0.815999985; scale-y: 0.739000022; cel: -10000; image: none; }
-        frame 27 { x: -87.8000031; y: 119.800003; scale-x: 0.963999987; scale-y: 0.809000015; }
-        frame 28 { x: -10000; y: 116; scale-x: 1.28699994; scale-y: 0.89200002; }
-        frame 29 { y: 112.199997; scale-x: 1.61099994; scale-y: 0.975000024; }
-        frame 30 { x: -70; y: 108.199997; scale-x: 1.88499999; scale-y: 1.07000005; }
-        frame 31 { x: -52.2000008; y: 104.199997; scale-x: 2.15899992; scale-y: 1.16600001; }
-        frame 32 { x: -34.2999992; y: 100.199997; scale-x: 2.43300009; scale-y: 1.26100004; }
-        frame 33 { x: -10000; y: 97.8000031; scale-x: -10000; scale-y: 1.30400002; }
-        frame 34 { y: 95.5; scale-y: 1.34800005; }
-        frame 35 { y: 93.0999985; scale-y: 1.39100003; }
+        frame 25 { x: -80.3; y: 125; scale-x: 0.669; scale-y: 0.669; cel: 0; image: IMAGE_REANIM_ZOMBIE_CHARRED_PILE2; }
+        frame 26 { x: -84; y: 122.3; scale-x: 0.816; scale-y: 0.739; cel: -10000; image: none; }
+        frame 27 { x: -87.8; y: 119.8; scale-x: 0.964; scale-y: 0.809; }
+        frame 28 { x: -10000; y: 116; scale-x: 1.287; scale-y: 0.892; }
+        frame 29 { y: 112.2; scale-x: 1.611; scale-y: 0.975; }
+        frame 30 { x: -70; y: 108.2; scale-x: 1.885; scale-y: 1.07; }
+        frame 31 { x: -52.2; y: 104.2; scale-x: 2.159; scale-y: 1.166; }
+        frame 32 { x: -34.3; y: 100.2; scale-x: 2.433; scale-y: 1.261; }
+        frame 33 { x: -10000; y: 97.8; scale-x: -10000; scale-y: 1.304; }
+        frame 34 { y: 95.5; scale-y: 1.348; }
+        frame 35 { y: 93.1; scale-y: 1.391; }
         frame 36 { y: -10000; scale-y: -10000; }
     }
     Track {
@@ -97,13 +97,13 @@ export component Zombie_charred_zamboni {
         frame-count: 54;
         frame 0 { cel: -1; }
         frame 1 { cel: -10000; }
-        frame 25 { x: -16.2999992; y: 129; scale-x: 0.616999984; scale-y: 0.616999984; cel: 0; image: IMAGE_REANIM_ZOMBIE_CHARRED_PILE2; }
-        frame 26 { x: -19.7000008; y: 126; scale-x: 0.709999979; scale-y: 0.677999973; cel: -10000; image: none; }
-        frame 27 { x: -23.1000004; y: 123; scale-x: 0.802999973; scale-y: 0.739000022; }
+        frame 25 { x: -16.3; y: 129; scale-x: 0.617; scale-y: 0.617; cel: 0; image: IMAGE_REANIM_ZOMBIE_CHARRED_PILE2; }
+        frame 26 { x: -19.7; y: 126; scale-x: 0.71; scale-y: 0.678; cel: -10000; image: none; }
+        frame 27 { x: -23.1; y: 123; scale-x: 0.803; scale-y: 0.739; }
         frame 28 { x: -10000; y: -10000; scale-x: -10000; scale-y: -10000; }
-        frame 30 { x: -30.7999992; scale-x: 1.03299999; }
-        frame 31 { x: -38.5; scale-x: 1.26300001; }
-        frame 32 { x: -46.2999992; scale-x: 1.49300003; }
+        frame 30 { x: -30.8; scale-x: 1.033; }
+        frame 31 { x: -38.5; scale-x: 1.263; }
+        frame 32 { x: -46.3; scale-x: 1.493; }
         frame 33 { x: -10000; scale-x: -10000; }
     }
     Track {
@@ -111,14 +111,14 @@ export component Zombie_charred_zamboni {
         frame-count: 54;
         frame 0 { cel: -1; }
         frame 1 { cel: -10000; }
-        frame 25 { x: 18.8999996; y: 134.600006; scale-x: 0.708000004; scale-y: 0.476999998; cel: 0; image: IMAGE_REANIM_ZOMBIE_CHARRED_PILE2; }
-        frame 26 { x: 17.1000004; y: 131.600006; scale-x: 0.758000016; scale-y: 0.541999996; cel: -10000; image: none; }
-        frame 27 { x: 15.3000002; y: 128.600006; scale-x: 0.806999981; scale-y: 0.60799998; }
-        frame 28 { x: 12.1000004; y: 126.599998; scale-x: 0.902999997; scale-y: 0.65200001; }
-        frame 29 { x: 8.89999962; y: 124.599998; scale-x: 0.999000013; scale-y: 0.694999993; }
-        frame 30 { x: 8.5; y: 122.099998; scale-x: 1.00999999; scale-y: 0.75; }
-        frame 31 { x: 8.10000038; y: 119.599998; scale-x: 1.02100003; scale-y: 0.805000007; }
-        frame 32 { x: 7.69999981; y: 117; scale-x: 1.03199995; scale-y: 0.860000014; }
+        frame 25 { x: 18.9; y: 134.6; scale-x: 0.708; scale-y: 0.477; cel: 0; image: IMAGE_REANIM_ZOMBIE_CHARRED_PILE2; }
+        frame 26 { x: 17.1; y: 131.6; scale-x: 0.758; scale-y: 0.542; cel: -10000; image: none; }
+        frame 27 { x: 15.3; y: 128.6; scale-x: 0.807; scale-y: 0.608; }
+        frame 28 { x: 12.1; y: 126.6; scale-x: 0.903; scale-y: 0.652; }
+        frame 29 { x: 8.9; y: 124.6; scale-x: 0.999; scale-y: 0.695; }
+        frame 30 { x: 8.5; y: 122.1; scale-x: 1.01; scale-y: 0.75; }
+        frame 31 { x: 8.1; y: 119.6; scale-x: 1.021; scale-y: 0.805; }
+        frame 32 { x: 7.7; y: 117; scale-x: 1.032; scale-y: 0.86; }
         frame 33 { x: -10000; y: -10000; scale-x: -10000; scale-y: -10000; }
     }
     Track {
@@ -126,41 +126,41 @@ export component Zombie_charred_zamboni {
         frame-count: 54;
         frame 0 { cel: -1; }
         frame 1 { cel: -10000; }
-        frame 25 { x: -40.5; y: 139.399994; scale-x: 0.510999978; scale-y: 0.337000012; cel: 0; image: IMAGE_REANIM_ZOMBIE_CHARRED_PILE2; }
+        frame 25 { x: -40.5; y: 139.4; scale-x: 0.511; scale-y: 0.337; cel: 0; image: IMAGE_REANIM_ZOMBIE_CHARRED_PILE2; }
         frame 26 { x: -10000; y: -10000; scale-x: -10000; scale-y: -10000; cel: -10000; image: none; }
-        frame 30 { x: -45.9000015; scale-x: 0.657000005; }
-        frame 31 { x: -51.2000008; scale-x: 0.802999973; }
-        frame 32 { x: -56.5; scale-x: 0.949000001; }
+        frame 30 { x: -45.9; scale-x: 0.657; }
+        frame 31 { x: -51.2; scale-x: 0.803; }
+        frame 32 { x: -56.5; scale-x: 0.949; }
         frame 33 { x: -10000; scale-x: -10000; }
     }
     Track {
         source-name: "head";
         frame-count: 54;
-        frame 0 { x: 22.8999996; y: -9.69999981; image: IMAGE_REANIM_ZOMBIE_CHARRED_ZAMBONIHEAD; }
+        frame 0 { x: 22.9; y: -9.7; image: IMAGE_REANIM_ZOMBIE_CHARRED_ZAMBONIHEAD; }
         frame 1 { x: -10000; y: -10000; image: none; }
-        frame 24 { y: -7.69999981; }
-        frame 25 { y: -4.9000001; }
+        frame 24 { y: -7.7; }
+        frame 25 { y: -4.9; }
         frame 26 { y: -10000; }
-        frame 41 { x: 28.6000004; y: 20.7000008; skew-x: 11; skew-y: 11; scale-x: 0.999000013; scale-y: 0.999000013; }
-        frame 42 { x: 35.2999992; y: 47.5999985; skew-x: 22; skew-y: 22; scale-x: 1; scale-y: 1; }
-        frame 43 { x: 31.5; y: 51.9000015; skew-x: 19; skew-y: 19; scale-x: 1.03499997; scale-y: 0.947000027; }
-        frame 44 { x: 27.7999992; y: 56.2999992; skew-x: 16.2000008; skew-y: 16.2000008; scale-x: 1.07299995; scale-y: 0.897000015; }
-        frame 45 { x: 17.6000004; y: 54.5999985; skew-x: 8; skew-y: 8; scale-x: 1.04799998; scale-y: 0.930999994; }
-        frame 46 { x: 7.80000019; y: 53.2000008; skew-x: 0; skew-y: 0; scale-x: 1.02400005; scale-y: 0.964999974; }
-        frame 47 { x: -1.70000005; y: 52; skew-x: -7.9000001; skew-y: -7.9000001; scale-x: 1; scale-y: 1; }
-        frame 48 { x: -12.8000002; y: 73.5; skew-x: -19.2000008; skew-y: -19.2000008; scale-x: 0.998000026; scale-y: 0.998000026; }
-        frame 49 { x: -22.5; y: 95.5999985; skew-x: -30.5; skew-y: -30.5; scale-x: 0.999000013; scale-y: 0.999000013; }
-        frame 50 { x: -22.3999996; y: 99; skew-x: -10000; skew-y: -10000; scale-x: 1.01999998; scale-y: 0.963; }
-        frame 51 { x: -22.6000004; y: 102.300003; scale-x: 1.04499996; scale-y: 0.930999994; }
-        frame 52 { x: -22.5; y: 98.8000031; scale-x: 1.01999998; scale-y: 0.963; }
-        frame 53 { x: -10000; y: 95.5999985; scale-x: 0.999000013; scale-y: 0.999000013; }
+        frame 41 { x: 28.6; y: 20.7; skew-x: 11; skew-y: 11; scale-x: 0.999; scale-y: 0.999; }
+        frame 42 { x: 35.3; y: 47.6; skew-x: 22; skew-y: 22; scale-x: 1; scale-y: 1; }
+        frame 43 { x: 31.5; y: 51.9; skew-x: 19; skew-y: 19; scale-x: 1.035; scale-y: 0.947; }
+        frame 44 { x: 27.8; y: 56.3; skew-x: 16.2; skew-y: 16.2; scale-x: 1.073; scale-y: 0.897; }
+        frame 45 { x: 17.6; y: 54.6; skew-x: 8; skew-y: 8; scale-x: 1.048; scale-y: 0.931; }
+        frame 46 { x: 7.8; y: 53.2; skew-x: 0; skew-y: 0; scale-x: 1.024; scale-y: 0.965; }
+        frame 47 { x: -1.7; y: 52; skew-x: -7.9; skew-y: -7.9; scale-x: 1; scale-y: 1; }
+        frame 48 { x: -12.8; y: 73.5; skew-x: -19.2; skew-y: -19.2; scale-x: 0.998; scale-y: 0.998; }
+        frame 49 { x: -22.5; y: 95.6; skew-x: -30.5; skew-y: -30.5; scale-x: 0.999; scale-y: 0.999; }
+        frame 50 { x: -22.4; y: 99; skew-x: -10000; skew-y: -10000; scale-x: 1.02; scale-y: 0.963; }
+        frame 51 { x: -22.6; y: 102.3; scale-x: 1.045; scale-y: 0.931; }
+        frame 52 { x: -22.5; y: 98.8; scale-x: 1.02; scale-y: 0.963; }
+        frame 53 { x: -10000; y: 95.6; scale-x: 0.999; scale-y: 0.999; }
     }
     Track {
         source-name: "blink";
         frame-count: 54;
         frame 0 { cel: -1; }
         frame 1 { cel: -10000; }
-        frame 11 { x: 23.8999996; y: 14; cel: 0; image: IMAGE_REANIM_ZOMBIE_CHARRED_ZAMBONIBLINK1; }
+        frame 11 { x: 23.9; y: 14; cel: 0; image: IMAGE_REANIM_ZOMBIE_CHARRED_ZAMBONIBLINK1; }
         frame 12 { x: -10000; y: -10000; cel: -10000; image: IMAGE_REANIM_ZOMBIE_CHARRED_ZAMBONIBLINK2; }
         frame 13 { image: IMAGE_REANIM_ZOMBIE_CHARRED_ZAMBONIBLINK1; }
         frame 14 { cel: -1; image: none; }

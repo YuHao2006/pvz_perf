@@ -32,7 +32,7 @@ def main():
     parser.add_argument("--archive", required=True, type=Path)
     parser.add_argument("--data", required=True, type=Path, action="append")
     parser.add_argument("--backup-root", required=True, type=Path)
-    parser.add_argument("--name", default="PerfectV32")
+    parser.add_argument("--name", default="PerfectV33")
     args = parser.parse_args()
     name = args.name.encode("utf-8")
     if not name or len(name) > 255:
@@ -42,8 +42,8 @@ def main():
         checkpoint = archive.read("data/game1_58.dat64")
     if (profile[:8] != b"PVZUSR64" or checkpoint[:8] != b"PVZDAT64"
             or struct.unpack_from("<I", checkpoint, 8)[0] != 3
-            or struct.unpack_from("<II", checkpoint, 36) != (0x10735, 2)):
-        raise ValueError("Expected a completed profile and a v3.2 checkpoint")
+            or struct.unpack_from("<II", checkpoint, 36) != (0x10739, 3)):
+        raise ValueError("Expected a completed profile and a v3.3 checkpoint")
     plans = []
     for directory in args.data:
         directory = directory.resolve(strict=True)

@@ -86,7 +86,7 @@ _Font*					TodLoadCreditsFont();
 // #################################################################################################### //
 
 // 全域求值函数（t, 起点, 终点）→ 值。装载期解析缓存的元素类型。
-using TodCurveEvalFn = float (*)(float theTime, float thePositionStart, float thePositionEnd);
+using TodCurveEvalFn = float (*)(double theProgress, float thePositionStart, float thePositionEnd);
 // 记录 int → 求值函数的一次性解析（装载期）；无效/未实现曲线硬错退出。
 TodCurveEvalFn TodCurveResolveEval(int theCurveIndex);
 // 反向解析（写档侧）：函数指针 → 记录 int；表外指针（数据损坏）硬错退出。
@@ -99,10 +99,10 @@ extern bool (*gAppCloseRequest)();       // 同批下放（原 LawnApp.h，0x69E
 
 namespace Curves  // 曲线扭曲原语：限定名访问（Curves::Quad），不污染命名池。
 {                 // 定义唯一定义于 TodCommon.cpp（原 1073 地址 0x5118C0/0x5118F0/0x511970/0x5119B0）
-float Identity(float theTime);
-float Quad(float theTime);
+double Identity(double theTime);
+double Quad(double theTime);
 //0x5118C0
-float S(float theTime);
+double S(double theTime);
 //0x5118F0
 //0x511970
 
@@ -125,37 +125,41 @@ float S(float theTime);
 namespace Curves
 {
 	// 恒定（任何时间返回起点，含 t≥1——装载记录恒 0 区间与端点无差异）
-	float Constant(float theTime, float thePositionStart, float thePositionEnd);
+	float Constant(double theTime, float thePositionStart, float thePositionEnd);
 	// 线性（非回摆）
-	float Linear(float theTime, float thePositionStart, float thePositionEnd);
+	float Linear(double theTime, float thePositionStart, float thePositionEnd);
 	// 二次缓入（非回摆）
-	float EaseIn(float theTime, float thePositionStart, float thePositionEnd);
+	float EaseIn(double theTime, float thePositionStart, float thePositionEnd);
 	// 二次缓出（非回摆）
-	float EaseOut(float theTime, float thePositionStart, float thePositionEnd);
+	float EaseOut(double theTime, float thePositionStart, float thePositionEnd);
 	// 三次缓入缓出（双重 smoothstep，非回摆）
-	float EaseInOut(float theTime, float thePositionStart, float thePositionEnd);
+	float EaseInOut(double theTime, float thePositionStart, float thePositionEnd);
 	// 三次缓入缓出（弱，非回摆）
-	float EaseInOutWeak(float theTime, float thePositionStart, float thePositionEnd);
+	float EaseInOutWeak(double theTime, float thePositionStart, float thePositionEnd);
 	// 快入快出（双重逆二次 S，非回摆）
-	float FastInOut(float theTime, float thePositionStart, float thePositionEnd);
+	float FastInOut(double theTime, float thePositionStart, float thePositionEnd);
 	// 快入快出（弱，非回摆）
-	float FastInOutWeak(float theTime, float thePositionStart, float thePositionEnd);
+	float FastInOutWeak(double theTime, float thePositionStart, float thePositionEnd);
 	// 弹跳（三角波，t=1 回到 0 → 回摆族）
-	float Bounce(float theTime, float thePositionStart, float thePositionEnd);
+	float Bounce(double theTime, float thePositionStart, float thePositionEnd);
 	// 弹跳（尖形中段，回摆族）
-	float BounceFastMiddle(float theTime, float thePositionStart, float thePositionEnd);
+	float BounceFastMiddle(double theTime, float thePositionStart, float thePositionEnd);
 	// 弹跳（罩形中段，回摆族）
-	float BounceSlowMiddle(float theTime, float thePositionStart, float thePositionEnd);
+	float BounceSlowMiddle(double theTime, float thePositionStart, float thePositionEnd);
 	// 正弦波（t=1 回到 0 → 回摆族）
-	float SinWave(float theTime, float thePositionStart, float thePositionEnd);
+	float SinWave(double theTime, float thePositionStart, float thePositionEnd);
 	// 缓入缓出正弦波（t=1 回到 0 → 回摆族）
-	float EaseSinWave(float theTime, float thePositionStart, float thePositionEnd);
+	float EaseSinWave(double theTime, float thePositionStart, float thePositionEnd);
 }
 
-float					TodCurveEvaluateClamped(float theTime, float thePositionStart, float thePositionEnd, float (*theCurve)(float, float, float));
-float					TodAnimateCurveFloatTime(float theTimeStart, float theTimeEnd, float theTimeAge, float thePositionStart, float thePositionEnd, float (*theCurve)(float, float, float));
-float					TodAnimateCurveFloat(int theTimeStart, int theTimeEnd, int theTimeAge, float thePositionStart, float thePositionEnd, float (*theCurve)(float, float, float));
-int						TodAnimateCurve(int theTimeStart, int theTimeEnd, int theTimeAge, int thePositionStart, int thePositionEnd, float (*theCurve)(float, float, float));
+float					TodCurveEvaluateClamped(double theProgress, float thePositionStart, float thePositionEnd, TodCurveEvalFn theCurve);
+// Generic numeric ranges: distance, position, counts or normalized progress.
+float					TodAnimateCurveFloat(double theRangeStart, double theRangeEnd, double theValue, float thePositionStart, float thePositionEnd, TodCurveEvalFn theCurve);
+int						TodAnimateCurve(double theRangeStart, double theRangeEnd, double theValue, int thePositionStart, int thePositionEnd, TodCurveEvalFn theCurve);
+// Time ranges use integer nanoseconds. Subtraction precedes conversion to a
+// local double ratio; absolute clock epochs never pass through floating point.
+float					TodAnimateCurveNs(std::int64_t theStartNs, std::int64_t theEndNs, std::int64_t theTimeNs, float thePositionStart, float thePositionEnd, TodCurveEvalFn theCurve);
+int						TodAnimateCurveNs(std::int64_t theStartNs, std::int64_t theEndNs, std::int64_t theTimeNs, int thePositionStart, int thePositionEnd, TodCurveEvalFn theCurve);
 
 /*inline*/ void			TodScaleTransformMatrix(SexyMatrix3& m, float x, float y, float theScaleX, float theScaleY);
 void					TodScaleRotateTransformMatrix(SexyMatrix3& m, float x, float y, float rad, float theScaleX, float theScaleY);

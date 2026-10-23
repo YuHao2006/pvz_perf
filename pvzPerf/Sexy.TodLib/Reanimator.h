@@ -6,6 +6,7 @@
 #include <map>
 #include "ReanimTrackId.h"
 #include "DefinitionImageRegion.h"
+#include "ReanimClock.h"
 //using namespace std;
 using namespace Sexy;
 
@@ -13,6 +14,7 @@ class Reanimation;
 class AttachEffect;
 class TodParticleSystem;
 class ReanimatorTransform;
+class ReanimatorSourceTransform;
 class ReanimatorDefinition;
 namespace Sexy
 {
@@ -35,7 +37,7 @@ namespace ReanimFlags
 }
 
 struct ReanimatorTransformArray {
-    ReanimatorTransform* mTransforms;
+    ReanimatorSourceTransform* mTransforms;
     int count;
 };
 
@@ -131,11 +133,19 @@ enum
 
 constexpr const int NO_BASE_POSE = -2;
 
+enum class ReanimTimeDomain : std::uint32_t
+{
+    Visual = 0,
+    Battle = 1
+};
 
 class ReanimationHolder
 {
 public:
     DataArray<Reanimation>          mReanimations;
+    std::int64_t                    mVisualTimeNs = 0;
+    std::int64_t                    mBattleTimeNs = 0;
+    ReanimTimeDomain                mDefaultTimeDomain = ReanimTimeDomain::Visual;
 
 public:
     ReanimationHolder() { ; }
@@ -157,6 +167,22 @@ public:
     float                           mFraction;                      //+0x0：两帧之间已经过的比例
     int                             mAnimFrameBeforeInt;            //+0x4：前一个整数帧
     int                             mAnimFrameAfterInt;             //+0x8：后一个整数帧
+};
+
+class ReanimatorSourceTransform
+{
+public:
+    float mTransX = 0;
+    float mTransY = 0;
+    float mSkewX = 0;
+    float mSkewY = 0;
+    float mScaleX = 1;
+    float mScaleY = 1;
+    std::int32_t mFrame = -1;
+    float mAlpha = 1;
+    std::uint32_t mImageSlot = 0;
+    _Font* mFont = nullptr;
+    const char* mText = nullptr;
 };
 
 class ReanimatorTransform
@@ -196,6 +222,13 @@ public:
     ReanimatorTrackInstance();
 };
 
+struct ReanimPlaybackPosition
+{
+    std::int64_t clock;
+    std::int64_t cycles;
+    std::int64_t phaseNs;
+};
+
 // P4 掩码联动（Attachment.cpp 漏斗调用）：按 AttachmentID 引用地址反查归属
 // reanim 轨道并置活动位——直挂写点散布（Zombie.cpp 头盔/旗帜/盾牌等 17 处经
 // AttachReanim/AttachParticle 传轨道字段引用），无法逐点挂钩，池=真值反查
@@ -214,8 +247,13 @@ class Reanimation
 public:
     ReanimationType                 mReanimationType;
     std::uint32_t                   mVariant;
-    float                           mAnimTime;
+    ReanimTimeDomain                mTimeDomain;
+    std::int64_t                    mStartTimeNs;
+    std::int64_t                    mPhaseOriginNs;
+    std::int64_t                    mPeriodNs;
+    std::int64_t                    mOriginCycleCount;
     float                           mAnimRate;
+    std::uint32_t                   mPlaybackGeneration;
     ReanimatorDefinition*           mDefinition;
     ReanimLoopType                  mLoopType;
     bool                            mDead;
@@ -233,7 +271,11 @@ public:
     bool                            mEnableExtraAdditiveDraw;
     Color                           mExtraOverlayColor;
     bool                            mEnableExtraOverlayDraw;
-    float                           mLastFrameTime;
+    std::int64_t                    mLastFrameNs;
+    std::int64_t                    mLastCycleCount;
+    std::int64_t                    mLastUpdateTimeNs;
+    bool                            mHasLastFrame;
+    bool                            mPendingTiming;
     FilterEffect                    mFilterEffect;
     // ── P4 派生活动/分组掩码（2026-10-02，bench_reanim_trackwalk 裁决：
     // 掩码跳过 11~22% vs 布局拆段 94~97%，故 112B 轨道结构体原样不拆）──
@@ -258,6 +300,20 @@ public:
     /*inline*/ void                 ReanimationInitializeType(float theX, float theY, ReanimationType theReanimType);
     void                            ReanimationDie();
     void                            Update();
+    void                            UpdateAt(std::int64_t nowNs);
+    void                            Advance(std::int64_t deltaNs);
+    ReanimPlaybackPosition          SamplePlayback(std::int64_t offsetNs = 0) const;
+    ReanimPlaybackPosition          SamplePlaybackAt(std::int64_t nowNs, std::int64_t offsetNs = 0) const;
+    void                            BindTimeDomain(ReanimTimeDomain domain);
+    void                            RebaseTime(std::int64_t nowNs);
+    void                            ApplyRate(float rate);
+    void                            ChangeLoopType(ReanimLoopType loop);
+    void                            Seek(std::int64_t numerator, std::int64_t denominator = 1000);
+    void                            SeekRatio(float phase);
+    void                            SynchronizePhase(const Reanimation& source);
+    double                          RootMotion(ReanimTrackId trackId, float scale = 1.0f, std::int64_t offsetNs = 0) const;
+    double                          RootMotionClamped(ReanimTrackId trackId, float scale, float minimumVelocityPixelsPerSecond, std::int64_t offsetNs = 0) const;
+    std::int64_t                    TimedEventCount(std::int64_t numerator, std::int64_t denominator = 1000) const;
     /*inline*/ void                 Draw(Graphics* g);
     void                            DrawRenderGroup(Graphics* g, int theRenderGroup);
     bool                            DrawTrack(Graphics* g, int theTrackIndex, int theRenderGroup, const ReanimatorFrameTime* theFrameTime = nullptr);
@@ -275,7 +331,6 @@ public:
     bool                            TrackExists(ReanimTrackId theTrackId);
     void                            StartBlend(int theBlendTime);
     /*inline*/ void                 SetShakeOverride(ReanimTrackId theTrackId, float theShakeAmount);
-    float                           GetTrackVelocity(ReanimTrackId theTrackId);
     void                            SelectVariant(std::uint32_t theVariant);
     void                            SetVariantOption(ReanimTrackId theTrackId, std::uint32_t theOption);
     std::uint32_t                   VariantOption(ReanimTrackId theTrackId);
@@ -304,6 +359,8 @@ public:
     /*inline*/ bool                 IsAnimPlaying(ReanimTrackId theTrackId);
     void                            SetBasePoseFromAnim(ReanimTrackId theTrackId);
     Reanimation*                    FindSubReanim(ReanimationType theReanimType);
+private:
+    void                            ConsumeTimeAt(std::int64_t nowNs);
 };
 
 void                                ReanimationPreload(ReanimationType theReanimationType);

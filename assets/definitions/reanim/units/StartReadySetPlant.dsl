@@ -5,7 +5,7 @@ export component StartReadySetPlant {
         frame-count: 22;
         frame 0 { cel: -1; }
         frame 1 { cel: -10000; }
-        frame 12 { x: -192.899994; y: -91.4000015; scale-x: 1.29999995; scale-y: 1.29999995; cel: 0; image: IMAGE_REANIM_STARTPLANT; }
+        frame 12 { x: -192.9; y: -91.4; scale-x: 1.3; scale-y: 1.3; cel: 0; image: IMAGE_REANIM_STARTPLANT; }
         frame 13 { x: -10000; y: -10000; scale-x: -10000; scale-y: -10000; cel: -10000; image: none; }
     }
     Track {
@@ -13,24 +13,24 @@ export component StartReadySetPlant {
         frame-count: 22;
         frame 0 { cel: -1; }
         frame 1 { cel: -10000; }
-        frame 6 { x: -150.300003; y: -63.2999992; cel: 0; image: IMAGE_REANIM_STARTSET; }
-        frame 7 { x: -153.300003; y: -64.9000015; scale-x: 1.01999998; scale-y: 1.01999998; cel: -10000; image: none; }
-        frame 8 { x: -156.300003; y: -66.5999985; scale-x: 1.03999996; scale-y: 1.03999996; }
-        frame 9 { x: -159.300003; y: -68.3000031; scale-x: 1.05999994; scale-y: 1.05999994; }
-        frame 10 { x: -162.300003; y: -70; scale-x: 1.08000004; scale-y: 1.08000004; }
-        frame 11 { x: -165.399994; y: -71.5999985; scale-x: 1.10000002; scale-y: 1.10000002; }
+        frame 6 { x: -150.3; y: -63.3; cel: 0; image: IMAGE_REANIM_STARTSET; }
+        frame 7 { x: -153.3; y: -64.9; scale-x: 1.02; scale-y: 1.02; cel: -10000; image: none; }
+        frame 8 { x: -156.3; y: -66.6; scale-x: 1.04; scale-y: 1.04; }
+        frame 9 { x: -159.3; y: -68.3; scale-x: 1.06; scale-y: 1.06; }
+        frame 10 { x: -162.3; y: -70; scale-x: 1.08; scale-y: 1.08; }
+        frame 11 { x: -165.4; y: -71.6; scale-x: 1.1; scale-y: 1.1; }
         frame 12 { x: -10000; y: -10000; scale-x: -10000; scale-y: -10000; cel: -1; }
         frame 13 { cel: -10000; }
     }
     Track {
         source-name: "Ready";
         frame-count: 22;
-        frame 0 { x: -147.199997; y: -63.7000008; image: IMAGE_REANIM_STARTREADY; }
-        frame 1 { x: -150.100006; y: -65.4000015; scale-x: 1.01999998; scale-y: 1.01999998; image: none; }
-        frame 2 { x: -153.100006; y: -67; scale-x: 1.03999996; scale-y: 1.03999996; }
-        frame 3 { x: -156; y: -68.6999969; scale-x: 1.05999994; scale-y: 1.05999994; }
-        frame 4 { x: -159; y: -70.4000015; scale-x: 1.08000004; scale-y: 1.08000004; }
-        frame 5 { x: -161.899994; y: -72.0999985; scale-x: 1.10000002; scale-y: 1.10000002; }
+        frame 0 { x: -147.2; y: -63.7; image: IMAGE_REANIM_STARTREADY; }
+        frame 1 { x: -150.1; y: -65.4; scale-x: 1.02; scale-y: 1.02; image: none; }
+        frame 2 { x: -153.1; y: -67; scale-x: 1.04; scale-y: 1.04; }
+        frame 3 { x: -156; y: -68.7; scale-x: 1.06; scale-y: 1.06; }
+        frame 4 { x: -159; y: -70.4; scale-x: 1.08; scale-y: 1.08; }
+        frame 5 { x: -161.9; y: -72.1; scale-x: 1.1; scale-y: 1.1; }
         frame 6 { x: -10000; y: -10000; scale-x: -10000; scale-y: -10000; cel: -1; }
         frame 7 { cel: -10000; }
     }

@@ -460,7 +460,7 @@ void ChallengeScreen::DrawButton(Graphics* g, int theChallengeIndex)
 				}
 				else if (mUnlockState == UNLOCK_FADING)
 				{
-					int aColor = TodAnimateCurve(50, 25, mUnlockStateCounter, 92, 255, Curves::Linear);
+					int aColor = TodAnimateCurveNs(500'000'000, 250'000'000, mUnlockStateCounter.mNanoseconds, 92, 255, Curves::Linear);
 					g->mColor = Color(aColor, aColor, aColor);
 				}
 				g->mColorizeImages = true;
@@ -535,7 +535,7 @@ void ChallengeScreen::DrawButton(Graphics* g, int theChallengeIndex)
 				if (mUnlockState == UNLOCK_FADING)
 				{
 					aLockImage = Sexy::IMAGE_LOCK_OPEN;
-					g->mColor = Color(255, 255, 255, TodAnimateCurve(25, 0, mUnlockStateCounter, 255, 0, Curves::Linear));
+					g->mColor = Color(255, 255, 255, TodAnimateCurveNs(250'000'000, 0, mUnlockStateCounter.mNanoseconds, 255, 0, Curves::Linear));
 					g->mColorizeImages = true;
 				}
 				TodDrawImageScaledF(g, aLockImage, aPosX + 24 + mLockShakeX, aPosY + 9 + mLockShakeY, 0.7f, 0.7f);

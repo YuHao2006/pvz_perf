@@ -81,16 +81,9 @@ void ZombatarScreen::SetupZombiePreview()
 	// Original 1073 (FUN_00531b50): the preview lives in the right-hand
 	// panel. items+0x48 is the panel width (560), so the zombie sits at
 	// (560+80, 350) = (640,350), next to the frame drawn at (600,300).
-	mZombiePreview->mPosX =
-		static_cast<float>(mZombatarItems->mWidth + mPreviewOffsetX);
-	mZombiePreview->mPosY = static_cast<float>(mPreviewY);
-	// GameObject::BeginDraw translates by the integer mX/mY anchor, while the
-	// simulation stores the precise position in mPosX/mPosY.  The first frame
-	// after creating the UI zombie is drawn before Update() has a chance to
-	// copy those fields; keep the original preview from jumping from the
-	// spawn coordinate into the panel.
-	mZombiePreview->mX = static_cast<int>(mZombiePreview->mPosX);
-	mZombiePreview->mY = static_cast<int>(mZombiePreview->mPosY);
+	mZombiePreview->mX = mZombatarItems->mWidth + mPreviewOffsetX;
+	mZombiePreview->mY = mPreviewY;
+	mZombiePreview->mRootBindingGeneration = 0;
 	ApplyCurrentZombatar();
 }
 

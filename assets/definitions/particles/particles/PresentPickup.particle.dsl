@@ -3,83 +3,185 @@ export component PresentPickup {
     source-name: "presentpickup";
     Emitter {
         image: "IMAGE_STAR40";
+        imageFrames: 1;
+        animated: 0;
         emitterType: Circle;
         randomLaunchSpin: 1;
         additive: 1;
-        systemDuration: 50;
-        spawnMinActive: 25;
-        spawnMaxLaunched: 50;
-        emitterRadius: range { 1 50; }
-        particleDuration: 50;
-        systemAlpha: track { 1,80 0; }
-        launchSpeed: range { 300 600; }
-        particleRed: 1;
-        particleGreen: .9;
-        particleBlue: range { 0 .4; }
-        particleSpinSpeed: track { [-720 720] [-90 90],80; }
-        particleScale: range { .2 .5; }
+        systemDuration: nodes {
+            { time: 0; low: 50; high: 50; curve: Linear; distribution: Linear; }
+        }
+        spawnMinActive: nodes {
+            { time: 0; low: 25; high: 25; curve: Linear; distribution: Linear; }
+        }
+        spawnMaxLaunched: nodes {
+            { time: 0; low: 50; high: 50; curve: Linear; distribution: Linear; }
+        }
+        emitterRadius: nodes {
+            { time: 0; low: 1; high: 50; curve: Linear; distribution: Linear; }
+        }
+        particleDuration: nodes {
+            { time: 0; low: 50; high: 50; curve: Linear; distribution: Linear; }
+        }
+        systemGreen: nodes {
+            { time: 0.8; low: 1; high: 1; curve: Linear; distribution: Linear; }
+            { time: 1; low: 0; high: 0; curve: Linear; distribution: Linear; }
+        }
+        systemAlpha: nodes {
+            { time: 0; low: 300; high: 600; curve: Linear; distribution: Linear; }
+        }
+        particleRed: nodes {
+            { time: 0; low: 1; high: 1; curve: Linear; distribution: Linear; }
+        }
+        particleGreen: nodes {
+            { time: 0; low: 0.9; high: 0.9; curve: Linear; distribution: Linear; }
+        }
+        particleBlue: nodes {
+            { time: 0; low: 0; high: 0.4; curve: Linear; distribution: Linear; }
+        }
+        particleSpinSpeed: nodes {
+            { time: 0; low: -720; high: 720; curve: Linear; distribution: Linear; }
+            { time: 0.8; low: -90; high: 90; curve: Linear; distribution: Linear; }
+        }
+        particleScale: nodes {
+            { time: 0; low: 0.2; high: 0.5; curve: Linear; distribution: Linear; }
+        }
         field {
             fieldType: Friction;
-            x: 0.05;
-            y: 0.05;
+            x: nodes {
+                { time: 0; low: 0.05; high: 0.05; curve: Linear; distribution: Linear; }
+            }
+            y: nodes {
+                { time: 0; low: 0.05; high: 0.05; curve: Linear; distribution: Linear; }
+            }
         }
         field {
             fieldType: Acceleration;
-            y: 5.0;
+            y: nodes {
+                { time: 0; low: 5; high: 5; curve: Linear; distribution: Linear; }
+            }
         }
     }
     Emitter {
         image: "IMAGE_STAR40";
+        imageFrames: 1;
+        animated: 0;
         emitterType: Circle;
         randomLaunchSpin: 1;
         additive: 1;
-        systemDuration: 50;
-        spawnMinActive: 20;
-        spawnMaxLaunched: 50;
-        emitterRadius: range { 1 50; }
-        particleDuration: 50;
-        systemAlpha: track { 1,80 0; }
-        launchSpeed: range { 300 600; }
-        particleRed: 1;
-        particleGreen: 1;
-        particleBlue: range { .6 .8; }
-        particleSpinSpeed: track { [-720 720] [-90 90],80; }
-        particleScale: range { .2 .5; }
+        systemDuration: nodes {
+            { time: 0; low: 50; high: 50; curve: Linear; distribution: Linear; }
+        }
+        spawnMinActive: nodes {
+            { time: 0; low: 20; high: 20; curve: Linear; distribution: Linear; }
+        }
+        spawnMaxLaunched: nodes {
+            { time: 0; low: 50; high: 50; curve: Linear; distribution: Linear; }
+        }
+        emitterRadius: nodes {
+            { time: 0; low: 1; high: 50; curve: Linear; distribution: Linear; }
+        }
+        particleDuration: nodes {
+            { time: 0; low: 50; high: 50; curve: Linear; distribution: Linear; }
+        }
+        systemGreen: nodes {
+            { time: 0.8; low: 1; high: 1; curve: Linear; distribution: Linear; }
+            { time: 1; low: 0; high: 0; curve: Linear; distribution: Linear; }
+        }
+        systemAlpha: nodes {
+            { time: 0; low: 300; high: 600; curve: Linear; distribution: Linear; }
+        }
+        particleRed: nodes {
+            { time: 0; low: 1; high: 1; curve: Linear; distribution: Linear; }
+        }
+        particleGreen: nodes {
+            { time: 0; low: 1; high: 1; curve: Linear; distribution: Linear; }
+        }
+        particleBlue: nodes {
+            { time: 0; low: 0.6; high: 0.8; curve: Linear; distribution: Linear; }
+        }
+        particleSpinSpeed: nodes {
+            { time: 0; low: -720; high: 720; curve: Linear; distribution: Linear; }
+            { time: 0.8; low: -90; high: 90; curve: Linear; distribution: Linear; }
+        }
+        particleScale: nodes {
+            { time: 0; low: 0.2; high: 0.5; curve: Linear; distribution: Linear; }
+        }
         field {
             fieldType: Friction;
-            x: 0.05;
-            y: 0.05;
+            x: nodes {
+                { time: 0; low: 0.05; high: 0.05; curve: Linear; distribution: Linear; }
+            }
+            y: nodes {
+                { time: 0; low: 0.05; high: 0.05; curve: Linear; distribution: Linear; }
+            }
         }
         field {
             fieldType: Acceleration;
-            y: 5.0;
+            y: nodes {
+                { time: 0; low: 5; high: 5; curve: Linear; distribution: Linear; }
+            }
         }
     }
     Emitter {
         image: "IMAGE_AWARDRAYS_STAR";
+        imageFrames: 1;
+        animated: 0;
         emitterType: Circle;
         randomLaunchSpin: 1;
         additive: 1;
-        systemDuration: 50;
-        spawnMinActive: 5;
-        spawnMaxLaunched: 50;
-        emitterRadius: range { 1 50; }
-        particleDuration: 50;
-        systemAlpha: track { 1,80 0; }
-        launchSpeed: range { 300 600; }
-        particleRed: 1;
-        particleGreen: range { .6 .7; }
-        particleBlue: 0;
-        particleSpinSpeed: track { [-720 720] [-90 90],80; }
-        particleScale: range { .2 .4; }
+        systemDuration: nodes {
+            { time: 0; low: 50; high: 50; curve: Linear; distribution: Linear; }
+        }
+        spawnMinActive: nodes {
+            { time: 0; low: 5; high: 5; curve: Linear; distribution: Linear; }
+        }
+        spawnMaxLaunched: nodes {
+            { time: 0; low: 50; high: 50; curve: Linear; distribution: Linear; }
+        }
+        emitterRadius: nodes {
+            { time: 0; low: 1; high: 50; curve: Linear; distribution: Linear; }
+        }
+        particleDuration: nodes {
+            { time: 0; low: 50; high: 50; curve: Linear; distribution: Linear; }
+        }
+        systemGreen: nodes {
+            { time: 0.8; low: 1; high: 1; curve: Linear; distribution: Linear; }
+            { time: 1; low: 0; high: 0; curve: Linear; distribution: Linear; }
+        }
+        systemAlpha: nodes {
+            { time: 0; low: 300; high: 600; curve: Linear; distribution: Linear; }
+        }
+        particleRed: nodes {
+            { time: 0; low: 1; high: 1; curve: Linear; distribution: Linear; }
+        }
+        particleGreen: nodes {
+            { time: 0; low: 0.6; high: 0.7; curve: Linear; distribution: Linear; }
+        }
+        particleBlue: nodes {
+            { time: 0; low: 0; high: 0; curve: Linear; distribution: Linear; }
+        }
+        particleSpinSpeed: nodes {
+            { time: 0; low: -720; high: 720; curve: Linear; distribution: Linear; }
+            { time: 0.8; low: -90; high: 90; curve: Linear; distribution: Linear; }
+        }
+        particleScale: nodes {
+            { time: 0; low: 0.2; high: 0.4; curve: Linear; distribution: Linear; }
+        }
         field {
             fieldType: Friction;
-            x: 0.05;
-            y: 0.05;
+            x: nodes {
+                { time: 0; low: 0.05; high: 0.05; curve: Linear; distribution: Linear; }
+            }
+            y: nodes {
+                { time: 0; low: 0.05; high: 0.05; curve: Linear; distribution: Linear; }
+            }
         }
         field {
             fieldType: Acceleration;
-            y: 5.0;
+            y: nodes {
+                { time: 0; low: 5; high: 5; curve: Linear; distribution: Linear; }
+            }
         }
     }
 }

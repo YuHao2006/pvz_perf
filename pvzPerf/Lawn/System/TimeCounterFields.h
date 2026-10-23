@@ -37,15 +37,14 @@ void VisitTimeCounterOffsets(Fn&& visit)
     else if constexpr (std::is_same_v<Type, Plant>)
     {
         TIMER(mAnimCounter); TIMER(mDisappearCountdown); TIMER(mDoSpecialCountdown);
-        TIMER(mStateCountdown); TIMER(mLaunchCounter); TIMER(mShootingCounter);
+        TIMER(mStateCountdown); TIMER(mZenProductionCountdown); TIMER(mShootingCounter);
         TIMER(mBlinkCountdown); TIMER(mRecentlyEatenCountdown); TIMER(mEatenFlashCountdown);
         TIMER(mBeghouledFlashCountdown); TIMER(mWakeUpCounter);
         TIMER(mFrameLength); TIMER(mLaunchRate);
     }
     else if constexpr (std::is_same_v<Type, Projectile>)
     {
-        TIMER(mAnimCounter); TIMER(mProjectileAge); TIMER(mClickBackoffCounter);
-        TIMER(mAnimTicksPerFrame);
+        // Frozen wire timers are projections; runtime owns absolute timestamps.
     }
     else if constexpr (std::is_same_v<Type, Coin>)
     {

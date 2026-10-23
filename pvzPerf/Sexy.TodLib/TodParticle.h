@@ -1,5 +1,6 @@
 #pragma once
 #include "misc/TimeCounter.h"
+#include "ParticleClock.h"
 
 #include "generated/ParticleEmitterName.h"
 #include <cstddef>
@@ -72,26 +73,19 @@ enum ParticleFieldType
 // ----------------------------------------------------------------------------------------------------
 // 每个节点描述属性数值随时间变化的一个阶段。
 // ====================================================================================================
-// 节点层只存函数指针：装载期由记录 int 一次解析、永驻（运行期求值零查表）；
-// 写档侧经 TodCurveIndexFromEval 反向查表还原 int。pack(4) 让指针恰好落在
-// 记录 int 的字节位（12/20）——20B 记录直拷进节点前缀后，偏移 12 的 8 字节
-// 低 32 位=曲线 int、高 32 位=分布 int，一次读出、查表覆写成真指针。
-#pragma pack(push, 4)
+// Authored decimal values use thousandths. Implicit node times retain their
+// exact reduced fraction rather than being rounded to authored precision.
 class FloatParameterTrackNode
 {
 public:
-    float                       mTime;                          // 阶段的起始时间
-    float                       mLowValue;                      // 阶段内数据允许的最小值
-    float                       mHighValue;                     // 阶段内数据允许的最大值
-    TodCurveEvalFn              mCurveTypeEval = nullptr;       // 从当前阶段过渡至下一阶段的缓动效果曲线
-    TodCurveEvalFn              mDistributionEval = nullptr;    // 阶段内数据在最小值和最大值之间的概率分布曲线
+    std::int32_t                mTimeNumerator;
+    std::int32_t                mTimeDenominator;
+    float                       mLow;
+    float                       mHigh;
+    std::int32_t                mCurveType;
+    std::int32_t                mDistribution;
 };
-#pragma pack(pop)
-
-// Preserve the runtime layout shared by live particle instances and saves.
-static_assert(sizeof(FloatParameterTrackNode) == 28);
-static_assert(offsetof(FloatParameterTrackNode, mCurveTypeEval) == 12);
-static_assert(offsetof(FloatParameterTrackNode, mDistributionEval) == 20, "分布指针槽位漂移");
+static_assert(sizeof(FloatParameterTrackNode) == 24);
 
 // ====================================================================================================
 // ★ 【浮点参数轨道】
@@ -351,9 +345,11 @@ public:
 	TodParticleEmitter*				mParticleEmitter;
 	Sexy::TimeCounter								mParticleDuration;
 	Sexy::TimeCounter								mParticleAge;
-	float							mParticleTimeValue;
-	float							mParticleLastTimeValue;
-	float							mAnimationTimeValue;
+	std::int64_t					mParticleSampleAgeNs;
+	std::int64_t					mParticleLastSampleAgeNs;
+	std::int64_t					mAnimationElapsedNs;
+	std::int64_t					mAnimationSampleIntegral; // fixed initial phase for constant rate; sampled integral otherwise
+	std::uint32_t					mRandomSeed;
 	SexyVector2						mVelocity;
 	SexyVector2						mPosition;
 	int								mImageFrame;
@@ -363,13 +359,22 @@ public:
 	Sexy::TimeCounter								mCrossFadeDuration;
 	float							mParticleInterp[ParticleTracks::NUM_PARTICLE_TRACKS];
 	float							mParticleFieldInterp[MAX_PARTICLE_FIELDS][2];
-	// 持续期倒数（=1/(mParticleDuration-1)）：mParticleTimeValue 由除改乘用。
-	// 必须置于结构**尾部**——dat64 粒子段自 &mParticleDuration 起到
-	// mParticleFieldInterp 结束共 152B 裸拷（Legacy1073Layout<TodParticle>），
-	// 倒数在段外不入盘，装载侧 Read 补算；写点仅 SpawnParticle/
-	// CrossFadeParticle/存档读回三处；其后 4B 为 8 对齐垫（sizeof 168）。
-	float							mParticleDurationInv;
 };
+
+inline bool TodParticleConstantAnimationRate(const FloatParameterTrack& track)
+{
+    return track.mCountNodes == 1 && track.mNodes[0].mLow == track.mNodes[0].mHigh;
+}
+
+// Shared by drawing and explicit legacy save projection. Units are 10^-12 cycles.
+inline std::int64_t TodParticleAnimationPhase(const TodParticle& particle, const FloatParameterTrack& track)
+{
+    if (!TodParticleConstantAnimationRate(track)) return particle.mAnimationSampleIntegral;
+    const auto phase = ParticleClock::ConstantRatePhase(particle.mAnimationElapsedNs, track.mNodes[0].mLow);
+    const auto anchored = (phase + particle.mAnimationSampleIntegral % ParticleClock::Cycle) %
+        ParticleClock::Cycle;
+    return anchored < 0 ? anchored + ParticleClock::Cycle : anchored;
+}
 
 class TodTriangleGroup;
 class TodParticleEmitter
@@ -383,13 +388,15 @@ public:
 	// 读写走下方 ParticleRoster* 方法（紧凑 uint16 槽位侧表，按发射器池槽
 	// 位键控）
 	uint8_t							mParticleListPad[32];											//+0x8
-	float							mSpawnAccum;													//+0x18
+	std::int64_t					mSpawnRemainder; // 10^12 units per particle
 	Sexy::SexyVector2				mSystemCenter;													//+0x1C
 	int								mParticlesSpawned;												//+0x24
 	Sexy::TimeCounter								mSystemAge;														//+0x28
 	Sexy::TimeCounter								mSystemDuration;												//+0x2C
-	float							mSystemTimeValue;												//+0x30
-	float							mSystemLastTimeValue;											//+0x34
+	std::int64_t					mSystemSampleAgeNs;
+	std::int64_t					mSystemLastSampleAgeNs;
+	Sexy::SexyVector2				mExternalTarget; // input held until the next SystemMove event
+	Sexy::SexyVector2				mExternalAppliedCenter; // last canonical input sample
 	bool							mDead;															//+0x38
 	Sexy::Color						mColorOverride;													//+0x3C
 	bool							mExtraAdditiveDrawOverride;										//+0x4C
@@ -417,6 +424,8 @@ public:
 
 	void							TodEmitterInitialize(float theX, float theY, TodParticleSystem* theSystem, TodEmitterDefinition* theEmitterDef);
 	void							Update();
+	float							RandomFloat(float theMaximum);
+	int								RandomInt(int theMaximum);
 	void							Draw(Graphics* g);
 	void							SystemMove(float theX, float theY);
 	static bool						GetRenderParams(TodParticle* theParticle, ParticleRenderParams* theParams);
@@ -463,6 +472,8 @@ public:
     bool							mIsAttachment;					//+0x1D
     int								mRenderOrder;					//+0x20
     bool							mDontUpdate;					//+0x24
+    std::uint64_t                   mSimulationRemainderNs;
+    std::uint32_t                   mRandomState;
 
 public:
     TodParticleSystem();
@@ -481,6 +492,7 @@ public:
     void							TodParticleInitializeFromDef(float theX, float theY, int theRenderOrder, TodParticleDefinition* theDefinition, ParticleEffect theEffectType, std::uint32_t theVariant = 0);
     void							ParticleSystemDie();
     void							Update();
+    void							Update(std::uint64_t theDeltaNs);
     void							Draw(Graphics* g);
     void							SystemMove(float theX, float theY);
     void							OverrideColor(ParticleEmitterName theName, const Color& theColor);

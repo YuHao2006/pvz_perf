@@ -9,74 +9,74 @@ export component LoadBar_Zombiehead {
         frame-count: 18;
         frame 0 { cel: -1; }
         frame 1 { cel: -10000; }
-        frame 9 { x: -1.70000005; y: 18.8999996; scale-x: 0.328000009; scale-y: 0.216000006; cel: 0; image: IMAGE_REANIM_ZOMBIE_HEAD; }
-        frame 10 { x: -4.4000001; y: 5.0999999; skew-x: 2.29999995; skew-y: 1.79999995; scale-x: 0.455000013; scale-y: 0.474000007; cel: -10000; image: none; }
-        frame 11 { x: -6.5; y: -9; skew-x: 4.5; skew-y: 3.5; scale-x: 0.582000017; scale-y: 0.731999993; }
-        frame 12 { x: -8.30000019; y: -23.3999996; skew-x: 7; skew-y: 5.30000019; scale-x: 0.708999991; scale-y: 0.99000001; }
-        frame 13 { x: -11.6999998; y: -17.5; skew-x: 4.0999999; skew-y: 3.29999995; scale-x: 0.754000008; scale-y: 0.893999994; }
-        frame 14 { x: -14.8000002; y: -11.8000002; skew-x: 1.5; skew-y: 1.5; scale-x: 0.799000025; scale-y: 0.799000025; }
-        frame 15 { x: -10000; y: -11.1999998; skew-x: 1.29999995; skew-y: -10000; scale-x: -10000; scale-y: 0.791999996; }
-        frame 16 { y: -10.6000004; skew-x: -10000; scale-y: 0.783999979; }
-        frame 17 { y: -10.1000004; skew-x: 1.5; skew-y: 1.60000002; scale-y: 0.776000023; }
+        frame 9 { x: -1.7; y: 18.9; scale-x: 0.328; scale-y: 0.216; cel: 0; image: IMAGE_REANIM_ZOMBIE_HEAD; }
+        frame 10 { x: -4.4; y: 5.1; skew-x: 2.3; skew-y: 1.8; scale-x: 0.455; scale-y: 0.474; cel: -10000; image: none; }
+        frame 11 { x: -6.5; y: -9; skew-x: 4.5; skew-y: 3.5; scale-x: 0.582; scale-y: 0.732; }
+        frame 12 { x: -8.3; y: -23.4; skew-x: 7; skew-y: 5.3; scale-x: 0.709; scale-y: 0.99; }
+        frame 13 { x: -11.7; y: -17.5; skew-x: 4.1; skew-y: 3.3; scale-x: 0.754; scale-y: 0.894; }
+        frame 14 { x: -14.8; y: -11.8; skew-x: 1.5; skew-y: 1.5; scale-x: 0.799; scale-y: 0.799; }
+        frame 15 { x: -10000; y: -11.2; skew-x: 1.3; skew-y: -10000; scale-x: -10000; scale-y: 0.792; }
+        frame 16 { y: -10.6; skew-x: -10000; scale-y: 0.784; }
+        frame 17 { y: -10.1; skew-x: 1.5; skew-y: 1.6; scale-y: 0.776; }
     }
     Track {
         source-name: "Zombie_hair";
         frame-count: 18;
         frame 0 { cel: -1; }
         frame 1 { cel: -10000; }
-        frame 9 { x: -2.4000001; y: 18.1000004; scale-x: 0.303000003; scale-y: 0.214000002; cel: 0; image: IMAGE_REANIM_ZOMBIE_HAIR; }
-        frame 10 { x: -5; y: 4.0999999; skew-x: 0.800000012; skew-y: 0.800000012; scale-x: 0.412999988; scale-y: 0.393999994; cel: -10000; image: none; }
-        frame 11 { x: -7.4000001; y: -9.89999962; skew-x: 1.79999995; skew-y: 1.79999995; scale-x: 0.523999989; scale-y: 0.574000001; }
-        frame 12 { x: -9.69999981; y: -24.1000004; skew-x: 2.79999995; skew-y: 2.79999995; scale-x: 0.63499999; scale-y: 0.754000008; }
-        frame 13 { x: -11.1000004; y: -21.1000004; skew-x: -10000; skew-y: -10000; scale-x: -10000; scale-y: 0.797999978; }
-        frame 14 { x: -18.3999996; y: -15; scale-x: 0.800000012; scale-y: 0.800000012; }
-        frame 15 { x: -10000; y: -14.1999998; scale-x: -10000; scale-y: 0.791000009; }
-        frame 16 { x: -18.5; y: -13.3999996; scale-y: 0.782000005; }
-        frame 17 { x: -10000; y: -12.6000004; scale-y: 0.773999989; }
+        frame 9 { x: -2.4; y: 18.1; scale-x: 0.303; scale-y: 0.214; cel: 0; image: IMAGE_REANIM_ZOMBIE_HAIR; }
+        frame 10 { x: -5; y: 4.1; skew-x: 0.8; skew-y: 0.8; scale-x: 0.413; scale-y: 0.394; cel: -10000; image: none; }
+        frame 11 { x: -7.4; y: -9.9; skew-x: 1.8; skew-y: 1.8; scale-x: 0.524; scale-y: 0.574; }
+        frame 12 { x: -9.7; y: -24.1; skew-x: 2.8; skew-y: 2.8; scale-x: 0.635; scale-y: 0.754; }
+        frame 13 { x: -11.1; y: -21.1; skew-x: -10000; skew-y: -10000; scale-x: -10000; scale-y: 0.798; }
+        frame 14 { x: -18.4; y: -15; scale-x: 0.8; scale-y: 0.8; }
+        frame 15 { x: -10000; y: -14.2; scale-x: -10000; scale-y: 0.791; }
+        frame 16 { x: -18.5; y: -13.4; scale-y: 0.782; }
+        frame 17 { x: -10000; y: -12.6; scale-y: 0.774; }
     }
     Track {
         source-name: "Zombie_jaw";
         frame-count: 18;
         frame 0 { cel: -1; }
         frame 1 { cel: -10000; }
-        frame 12 { x: -8.30000019; y: 19; scale-x: 0.768999994; scale-y: 0.723999977; cel: 0; image: IMAGE_REANIM_ZOMBIE_JAW; }
-        frame 13 { x: -9.10000038; y: 18.1000004; scale-x: 0.79400003; scale-y: 0.769999981; cel: -10000; image: none; }
-        frame 14 { x: -9.89999962; y: 17.1000004; scale-x: 0.819999993; scale-y: 0.814999998; }
-        frame 15 { x: -10.1999998; y: 17.2999992; scale-x: 0.845000029; scale-y: 0.749000013; }
-        frame 16 { x: -10; y: 17.7000008; scale-x: 0.833000004; scale-y: 0.771000028; }
-        frame 17 { x: -9.89999962; y: 18; scale-x: 0.819999993; scale-y: 0.791999996; }
+        frame 12 { x: -8.3; y: 19; scale-x: 0.769; scale-y: 0.724; cel: 0; image: IMAGE_REANIM_ZOMBIE_JAW; }
+        frame 13 { x: -9.1; y: 18.1; scale-x: 0.794; scale-y: 0.77; cel: -10000; image: none; }
+        frame 14 { x: -9.9; y: 17.1; scale-x: 0.82; scale-y: 0.815; }
+        frame 15 { x: -10.2; y: 17.3; scale-x: 0.845; scale-y: 0.749; }
+        frame 16 { x: -10; y: 17.7; scale-x: 0.833; scale-y: 0.771; }
+        frame 17 { x: -9.9; y: 18; scale-x: 0.82; scale-y: 0.792; }
     }
     Track {
         source-name: "rock";
         frame-count: 18;
         frame 0 { cel: -1; }
         frame 1 { cel: -10000; }
-        frame 6 { x: 10.5; y: 24.8999996; skew-x: 15; skew-y: 15; scale-x: 0.200000003; scale-y: 0.200000003; cel: 0; image: IMAGE_REANIM_POTATOMINE_ROCK3; }
-        frame 7 { x: 11.1000004; y: 24.2999992; skew-x: 19.7999992; skew-y: 19.7999992; scale-x: 0.232999995; scale-y: 0.232999995; cel: -10000; image: none; }
-        frame 8 { x: 11.8000002; y: 23.6000004; skew-x: 24.7999992; skew-y: 24.7999992; scale-x: 0.266000003; scale-y: 0.266000003; }
-        frame 9 { x: 12.5; y: 22.8999996; skew-x: 30; skew-y: 30; scale-x: 0.300000012; scale-y: 0.300000012; }
-        frame 10 { x: 15.3999996; y: 22; skew-x: 44.9000015; skew-y: 44.9000015; scale-x: 0.344999999; scale-y: 0.344999999; }
-        frame 11 { x: 18.6000004; y: 21.2999992; skew-x: 60; skew-y: 60; scale-x: 0.391000003; scale-y: 0.391000003; }
-        frame 12 { x: 22.2000008; y: 20.8999996; skew-x: 75; skew-y: 75; scale-x: 0.437000006; scale-y: 0.437000006; }
-        frame 13 { x: 23.8999996; y: 21.8999996; skew-x: 93.5; skew-y: 93.5; scale-x: 0.43599999; scale-y: 0.43599999; }
-        frame 14 { x: 25.2999992; y: 23.2999992; skew-x: 112.300003; skew-y: 112.300003; scale-x: -10000; scale-y: -10000; }
-        frame 15 { x: 25.8999996; y: 24.8999996; skew-x: 124.800003; skew-y: 124.800003; }
-        frame 16 { x: 26.2999992; y: 26.5; skew-x: 137.399994; skew-y: 137.399994; }
-        frame 17 { x: -10000; y: 28.1000004; skew-x: 150; skew-y: 150; scale-x: 0.437000006; scale-y: 0.437000006; }
+        frame 6 { x: 10.5; y: 24.9; skew-x: 15; skew-y: 15; scale-x: 0.2; scale-y: 0.2; cel: 0; image: IMAGE_REANIM_POTATOMINE_ROCK3; }
+        frame 7 { x: 11.1; y: 24.3; skew-x: 19.8; skew-y: 19.8; scale-x: 0.233; scale-y: 0.233; cel: -10000; image: none; }
+        frame 8 { x: 11.8; y: 23.6; skew-x: 24.8; skew-y: 24.8; scale-x: 0.266; scale-y: 0.266; }
+        frame 9 { x: 12.5; y: 22.9; skew-x: 30; skew-y: 30; scale-x: 0.3; scale-y: 0.3; }
+        frame 10 { x: 15.4; y: 22; skew-x: 44.9; skew-y: 44.9; scale-x: 0.345; scale-y: 0.345; }
+        frame 11 { x: 18.6; y: 21.3; skew-x: 60; skew-y: 60; scale-x: 0.391; scale-y: 0.391; }
+        frame 12 { x: 22.2; y: 20.9; skew-x: 75; skew-y: 75; scale-x: 0.437; scale-y: 0.437; }
+        frame 13 { x: 23.9; y: 21.9; skew-x: 93.5; skew-y: 93.5; scale-x: 0.436; scale-y: 0.436; }
+        frame 14 { x: 25.3; y: 23.3; skew-x: 112.3; skew-y: 112.3; scale-x: -10000; scale-y: -10000; }
+        frame 15 { x: 25.9; y: 24.9; skew-x: 124.8; skew-y: 124.8; }
+        frame 16 { x: 26.3; y: 26.5; skew-x: 137.4; skew-y: 137.4; }
+        frame 17 { x: -10000; y: 28.1; skew-x: 150; skew-y: 150; scale-x: 0.437; scale-y: 0.437; }
     }
     Track {
         source-name: "rock";
         frame-count: 18;
         frame 0 { cel: -1; }
         frame 1 { cel: -10000; }
-        frame 7 { x: 9.39999962; y: 29.2999992; skew-x: -89.9000015; skew-y: -89.9000015; scale-x: 0.200000003; scale-y: 0.200000003; cel: 0; image: IMAGE_REANIM_POTATOMINE_ROCK3; }
-        frame 8 { x: 9.19999981; y: 28.8999996; skew-x: -74.9000015; skew-y: -74.9000015; scale-x: 0.234999999; scale-y: 0.237000003; cel: -10000; image: none; }
-        frame 9 { x: 9.10000038; y: 28.2999992; skew-x: -59.9000015; skew-y: -59.9000015; scale-x: 0.270000011; scale-y: 0.273999989; }
-        frame 10 { x: 9.69999981; y: 27.2999992; skew-x: -39.7999992; skew-y: -39.7999992; scale-x: 0.312999994; scale-y: 0.314999998; }
-        frame 11 { x: 10.8999996; y: 25.8999996; skew-x: -19.7000008; skew-y: -19.7000008; scale-x: 0.356000006; scale-y: 0.35800001; }
-        frame 12 { x: 12.6000004; y: 24.2000008; skew-x: 0; skew-y: 0; scale-x: 0.400000006; scale-y: 0.400000006; }
-        frame 13 { x: -10000; y: 23.7999992; skew-x: -10000; skew-y: -10000; scale-x: -10000; scale-y: -10000; }
-        frame 14 { y: 23.3999996; }
+        frame 7 { x: 9.4; y: 29.3; skew-x: -89.9; skew-y: -89.9; scale-x: 0.2; scale-y: 0.2; cel: 0; image: IMAGE_REANIM_POTATOMINE_ROCK3; }
+        frame 8 { x: 9.2; y: 28.9; skew-x: -74.9; skew-y: -74.9; scale-x: 0.235; scale-y: 0.237; cel: -10000; image: none; }
+        frame 9 { x: 9.1; y: 28.3; skew-x: -59.9; skew-y: -59.9; scale-x: 0.27; scale-y: 0.274; }
+        frame 10 { x: 9.7; y: 27.3; skew-x: -39.8; skew-y: -39.8; scale-x: 0.313; scale-y: 0.315; }
+        frame 11 { x: 10.9; y: 25.9; skew-x: -19.7; skew-y: -19.7; scale-x: 0.356; scale-y: 0.358; }
+        frame 12 { x: 12.6; y: 24.2; skew-x: 0; skew-y: 0; scale-x: 0.4; scale-y: 0.4; }
+        frame 13 { x: -10000; y: 23.8; skew-x: -10000; skew-y: -10000; scale-x: -10000; scale-y: -10000; }
+        frame 14 { y: 23.4; }
         frame 15 { y: -10000; }
     }
     Track {
@@ -84,128 +84,128 @@ export component LoadBar_Zombiehead {
         frame-count: 18;
         frame 0 { cel: -1; }
         frame 1 { cel: -10000; }
-        frame 10 { x: 13.8000002; y: 27.5; skew-x: 135; skew-y: 135; scale-x: 0.699999988; scale-y: 0.699999988; cel: 0; image: IMAGE_REANIM_POTATOMINE_ROCK1; }
-        frame 11 { x: 14.3999996; y: 25.8999996; skew-x: -10000; skew-y: -10000; scale-x: -10000; scale-y: -10000; cel: -10000; image: none; }
-        frame 12 { x: 15; y: 24.2999992; }
-        frame 13 { x: 15.6999998; y: 22.7000008; }
-        frame 14 { x: 16.7999992; y: 24.5; skew-x: 142.600006; skew-y: 142.600006; scale-x: 0.699000001; scale-y: 0.699000001; }
-        frame 15 { x: 17.8999996; y: 26.3999996; skew-x: 150.100006; skew-y: 150.100006; scale-x: -10000; scale-y: -10000; }
-        frame 16 { x: 18.7000008; y: 28; skew-x: 157.699997; skew-y: 157.699997; }
-        frame 17 { x: 19.6000004; y: 29.7999992; skew-x: 165; skew-y: 165; scale-x: 0.699999988; scale-y: 0.699999988; }
+        frame 10 { x: 13.8; y: 27.5; skew-x: 135; skew-y: 135; scale-x: 0.7; scale-y: 0.7; cel: 0; image: IMAGE_REANIM_POTATOMINE_ROCK1; }
+        frame 11 { x: 14.4; y: 25.9; skew-x: -10000; skew-y: -10000; scale-x: -10000; scale-y: -10000; cel: -10000; image: none; }
+        frame 12 { x: 15; y: 24.3; }
+        frame 13 { x: 15.7; y: 22.7; }
+        frame 14 { x: 16.8; y: 24.5; skew-x: 142.6; skew-y: 142.6; scale-x: 0.699; scale-y: 0.699; }
+        frame 15 { x: 17.9; y: 26.4; skew-x: 150.1; skew-y: 150.1; scale-x: -10000; scale-y: -10000; }
+        frame 16 { x: 18.7; y: 28; skew-x: 157.7; skew-y: 157.7; }
+        frame 17 { x: 19.6; y: 29.8; skew-x: 165; skew-y: 165; scale-x: 0.7; scale-y: 0.7; }
     }
     Track {
         source-name: "rock";
         frame-count: 18;
         frame 0 { cel: -1; }
         frame 1 { cel: -10000; }
-        frame 10 { x: -0.300000012; y: 29.8999996; skew-x: -104.900002; skew-y: -104.900002; scale-x: 0.555000007; scale-y: 0.555000007; cel: 0; image: IMAGE_REANIM_POTATOMINE_ROCK1; }
-        frame 11 { x: -0.600000024; y: 28.6000004; skew-x: -114.900002; skew-y: -114.900002; scale-x: 0.55400002; scale-y: 0.55400002; cel: -10000; image: none; }
-        frame 12 { x: -0.699999988; y: 27.1000004; skew-x: -125; skew-y: -125; scale-x: -10000; scale-y: -10000; }
-        frame 13 { x: -0.899999976; y: 25.6000004; skew-x: -134.899994; skew-y: -134.899994; scale-x: 0.555000007; scale-y: 0.555000007; }
-        frame 14 { x: -0.5; y: 26.7999992; skew-x: -157.600006; skew-y: -157.600006; scale-x: 0.55400002; scale-y: 0.55400002; }
-        frame 15 { x: -0.300000012; y: 27.6000004; skew-x: -179.899994; skew-y: -179.899994; scale-x: 0.555000007; scale-y: 0.555000007; }
+        frame 10 { x: -0.3; y: 29.9; skew-x: -104.9; skew-y: -104.9; scale-x: 0.555; scale-y: 0.555; cel: 0; image: IMAGE_REANIM_POTATOMINE_ROCK1; }
+        frame 11 { x: -0.6; y: 28.6; skew-x: -114.9; skew-y: -114.9; scale-x: 0.554; scale-y: 0.554; cel: -10000; image: none; }
+        frame 12 { x: -0.7; y: 27.1; skew-x: -125; skew-y: -125; scale-x: -10000; scale-y: -10000; }
+        frame 13 { x: -0.9; y: 25.6; skew-x: -134.9; skew-y: -134.9; scale-x: 0.555; scale-y: 0.555; }
+        frame 14 { x: -0.5; y: 26.8; skew-x: -157.6; skew-y: -157.6; scale-x: 0.554; scale-y: 0.554; }
+        frame 15 { x: -0.3; y: 27.6; skew-x: -179.9; skew-y: -179.9; scale-x: 0.555; scale-y: 0.555; }
         frame 16 { x: -10000; y: -10000; skew-x: -10000; skew-y: -10000; scale-x: -10000; scale-y: -10000; }
     }
     Track {
         source-name: "rock";
         frame-count: 18;
         frame 0 { cel: -1; }
-        frame 1 { x: 4.0999999; y: 23.7999992; scale-x: 0.300000012; scale-y: 0.300000012; cel: 0; image: IMAGE_REANIM_POTATOMINE_ROCK1; }
-        frame 2 { x: 5.0999999; y: 23.5; skew-x: 4.80000019; skew-y: 4.80000019; scale-x: 0.367000014; scale-y: 0.367000014; cel: -10000; image: none; }
-        frame 3 { x: 6.0999999; y: 23.2000008; skew-x: 9.80000019; skew-y: 9.80000019; scale-x: 0.432999998; scale-y: 0.432999998; }
-        frame 4 { x: 7.30000019; y: 22.8999996; skew-x: 15; skew-y: 15; scale-x: 0.5; scale-y: 0.5; }
-        frame 5 { x: 8.5; y: 22.5; skew-x: 29.8999996; skew-y: 29.8999996; scale-x: 0.508000016; scale-y: 0.508000016; }
-        frame 6 { x: 9.69999981; y: -10000; skew-x: 44.9000015; skew-y: 44.9000015; scale-x: 0.51700002; scale-y: 0.51700002; }
-        frame 7 { x: 11; y: 22.7000008; skew-x: 60; skew-y: 60; scale-x: 0.52700001; scale-y: 0.52700001; }
+        frame 1 { x: 4.1; y: 23.8; scale-x: 0.3; scale-y: 0.3; cel: 0; image: IMAGE_REANIM_POTATOMINE_ROCK1; }
+        frame 2 { x: 5.1; y: 23.5; skew-x: 4.8; skew-y: 4.8; scale-x: 0.367; scale-y: 0.367; cel: -10000; image: none; }
+        frame 3 { x: 6.1; y: 23.2; skew-x: 9.8; skew-y: 9.8; scale-x: 0.433; scale-y: 0.433; }
+        frame 4 { x: 7.3; y: 22.9; skew-x: 15; skew-y: 15; scale-x: 0.5; scale-y: 0.5; }
+        frame 5 { x: 8.5; y: 22.5; skew-x: 29.9; skew-y: 29.9; scale-x: 0.508; scale-y: 0.508; }
+        frame 6 { x: 9.7; y: -10000; skew-x: 44.9; skew-y: 44.9; scale-x: 0.517; scale-y: 0.517; }
+        frame 7 { x: 11; y: 22.7; skew-x: 60; skew-y: 60; scale-x: 0.527; scale-y: 0.527; }
         frame 8 { x: -10000; y: -10000; skew-x: -10000; skew-y: -10000; scale-x: -10000; scale-y: -10000; }
-        frame 9 { x: 13.3000002; y: 24.3999996; skew-x: 90; skew-y: 90; }
-        frame 10 { x: 14.6000004; y: 25; skew-x: 104.800003; skew-y: 104.800003; scale-x: 0.583999991; scale-y: 0.583999991; }
-        frame 11 { x: 15.8000002; y: 26; skew-x: 119.900002; skew-y: 119.900002; scale-x: 0.640999973; scale-y: 0.640999973; }
-        frame 12 { x: 16.8999996; y: 27.2999992; skew-x: 135; skew-y: 135; scale-x: 0.699999988; scale-y: 0.699999988; }
+        frame 9 { x: 13.3; y: 24.4; skew-x: 90; skew-y: 90; }
+        frame 10 { x: 14.6; y: 25; skew-x: 104.8; skew-y: 104.8; scale-x: 0.584; scale-y: 0.584; }
+        frame 11 { x: 15.8; y: 26; skew-x: 119.9; skew-y: 119.9; scale-x: 0.641; scale-y: 0.641; }
+        frame 12 { x: 16.9; y: 27.3; skew-x: 135; skew-y: 135; scale-x: 0.7; scale-y: 0.7; }
         frame 13 { x: -10000; y: -10000; skew-x: -10000; skew-y: -10000; scale-x: -10000; scale-y: -10000; }
-        frame 14 { y: 26.8999996; }
-        frame 15 { y: 27.2999992; }
+        frame 14 { y: 26.9; }
+        frame 15 { y: 27.3; }
         frame 16 { y: -10000; }
     }
     Track {
         source-name: "rock";
         frame-count: 18;
         frame 0 { cel: -1; }
-        frame 1 { x: 3.29999995; y: 23.7000008; skew-x: 15; skew-y: 15; scale-x: 0.128000006; scale-y: 0.136999995; cel: 0; image: IMAGE_REANIM_POTATOMINE_ROCK3; }
-        frame 2 { x: 1.70000005; y: 23.2999992; skew-x: 0; skew-y: 0; scale-x: 0.185000002; scale-y: 0.191; cel: -10000; image: none; }
-        frame 3 { x: 0.200000003; y: -10000; skew-x: -14.6999998; skew-y: -14.6999998; scale-x: 0.243000001; scale-y: 0.245000005; }
-        frame 4 { x: -1.20000005; y: 23.7000008; skew-x: -29.8999996; skew-y: -29.8999996; scale-x: 0.300000012; scale-y: 0.300000012; }
-        frame 5 { x: -1.60000002; y: 24.3999996; skew-x: -39.7999992; skew-y: -39.7999992; scale-x: -10000; scale-y: -10000; }
-        frame 6 { x: -1.70000005; y: 25; skew-x: -50; skew-y: -50; }
-        frame 7 { x: -1.89999998; y: 25.6000004; skew-x: -59.9000015; skew-y: -59.9000015; }
-        frame 8 { x: -2.9000001; y: 27; skew-x: -75.0999985; skew-y: -75.0999985; }
-        frame 9 { x: -3.5999999; y: 28.1000004; skew-x: -89.9000015; skew-y: -89.9000015; }
-        frame 10 { x: -4.0999999; y: 29.5; skew-x: -114.699997; skew-y: -114.699997; scale-x: 0.356999993; scale-y: 0.34799999; }
-        frame 11 { x: -4; y: 30.2000008; skew-x: -140; skew-y: -139.800003; scale-x: 0.412999988; scale-y: 0.395999998; }
-        frame 12 { x: -3.4000001; y: 29.5; skew-x: -164.899994; skew-y: -164.899994; scale-x: 0.470999986; scale-y: 0.444999993; }
-        frame 13 { x: -10000; y: 29.2000008; skew-x: -165.100006; skew-y: -10000; scale-x: -10000; scale-y: -10000; }
-        frame 14 { y: 28.8999996; skew-x: -164.899994; }
-        frame 15 { x: -2.4000001; y: 29.2000008; skew-x: -179.899994; skew-y: -179.899994; }
+        frame 1 { x: 3.3; y: 23.7; skew-x: 15; skew-y: 15; scale-x: 0.128; scale-y: 0.137; cel: 0; image: IMAGE_REANIM_POTATOMINE_ROCK3; }
+        frame 2 { x: 1.7; y: 23.3; skew-x: 0; skew-y: 0; scale-x: 0.185; scale-y: 0.191; cel: -10000; image: none; }
+        frame 3 { x: 0.2; y: -10000; skew-x: -14.7; skew-y: -14.7; scale-x: 0.243; scale-y: 0.245; }
+        frame 4 { x: -1.2; y: 23.7; skew-x: -29.9; skew-y: -29.9; scale-x: 0.3; scale-y: 0.3; }
+        frame 5 { x: -1.6; y: 24.4; skew-x: -39.8; skew-y: -39.8; scale-x: -10000; scale-y: -10000; }
+        frame 6 { x: -1.7; y: 25; skew-x: -50; skew-y: -50; }
+        frame 7 { x: -1.9; y: 25.6; skew-x: -59.9; skew-y: -59.9; }
+        frame 8 { x: -2.9; y: 27; skew-x: -75.1; skew-y: -75.1; }
+        frame 9 { x: -3.6; y: 28.1; skew-x: -89.9; skew-y: -89.9; }
+        frame 10 { x: -4.1; y: 29.5; skew-x: -114.7; skew-y: -114.7; scale-x: 0.357; scale-y: 0.348; }
+        frame 11 { x: -4; y: 30.2; skew-x: -140; skew-y: -139.8; scale-x: 0.413; scale-y: 0.396; }
+        frame 12 { x: -3.4; y: 29.5; skew-x: -164.9; skew-y: -164.9; scale-x: 0.471; scale-y: 0.445; }
+        frame 13 { x: -10000; y: 29.2; skew-x: -165.1; skew-y: -10000; scale-x: -10000; scale-y: -10000; }
+        frame 14 { y: 28.9; skew-x: -164.9; }
+        frame 15 { x: -2.4; y: 29.2; skew-x: -179.9; skew-y: -179.9; }
         frame 16 { x: -10000; y: -10000; skew-x: -10000; skew-y: -10000; }
     }
     Track {
         source-name: "rock";
         frame-count: 18;
         frame 0 { cel: -1; }
-        frame 1 { x: 1.89999998; y: 23.3999996; skew-x: 15; skew-y: 15; scale-x: 0.200000003; scale-y: 0.200000003; cel: 0; image: IMAGE_REANIM_POTATOMINE_ROCK3; }
-        frame 2 { x: 1.70000005; y: 23.6000004; skew-x: 14.8000002; skew-y: 14.8000002; scale-x: -10000; scale-y: -10000; cel: -10000; image: none; }
-        frame 3 { x: 1.39999998; y: 23.8999996; skew-x: -10000; skew-y: -10000; }
-        frame 4 { x: 1.20000005; y: 24.1000004; skew-x: 15; skew-y: 15; }
-        frame 5 { x: 0.100000001; y: -10000; skew-x: 4.80000019; skew-y: 4.80000019; scale-x: 0.232999995; scale-y: 0.232999995; }
-        frame 6 { x: -0.800000012; y: 24.2000008; skew-x: -4.69999981; skew-y: -4.69999981; scale-x: 0.26699999; scale-y: 0.26699999; }
-        frame 7 { x: -1.89999998; y: 24.7000008; skew-x: -14.8999996; skew-y: -14.8999996; scale-x: 0.300000012; scale-y: 0.300000012; }
-        frame 8 { x: -2.70000005; y: 25.2999992; skew-x: -22.2000008; skew-y: -22.2000008; scale-x: -10000; scale-y: -10000; }
-        frame 9 { x: -3.29999995; y: 25.8999996; skew-x: -29.8999996; skew-y: -29.8999996; }
-        frame 10 { x: -5.4000001; y: 26.8999996; skew-x: -44.7999992; skew-y: -44.7999992; scale-x: 0.363999993; scale-y: 0.384000003; }
-        frame 11 { x: -7.19999981; y: 28.2000008; skew-x: -60; skew-y: -59.9000015; scale-x: 0.428000003; scale-y: 0.469000012; }
-        frame 12 { x: -8.5; y: 29.7999992; skew-x: -74.9000015; skew-y: -74.9000015; scale-x: 0.492000014; scale-y: 0.555000007; }
-        frame 13 { x: -10000; y: 29.5; skew-x: -75.0999985; skew-y: -10000; scale-x: -10000; scale-y: -10000; }
-        frame 14 { y: 29.2000008; skew-x: -74.9000015; }
-        frame 15 { x: -8.69999981; y: 29.1000004; skew-x: -70.0999985; skew-y: -69.9000015; }
-        frame 16 { x: -9.10000038; y: 28.8999996; skew-x: -65.0999985; skew-y: -65.0999985; scale-y: 0.55400002; }
-        frame 17 { x: -9.30000019; y: 28.7000008; skew-x: -59.9000015; skew-y: -59.9000015; scale-y: 0.555000007; }
+        frame 1 { x: 1.9; y: 23.4; skew-x: 15; skew-y: 15; scale-x: 0.2; scale-y: 0.2; cel: 0; image: IMAGE_REANIM_POTATOMINE_ROCK3; }
+        frame 2 { x: 1.7; y: 23.6; skew-x: 14.8; skew-y: 14.8; scale-x: -10000; scale-y: -10000; cel: -10000; image: none; }
+        frame 3 { x: 1.4; y: 23.9; skew-x: -10000; skew-y: -10000; }
+        frame 4 { x: 1.2; y: 24.1; skew-x: 15; skew-y: 15; }
+        frame 5 { x: 0.1; y: -10000; skew-x: 4.8; skew-y: 4.8; scale-x: 0.233; scale-y: 0.233; }
+        frame 6 { x: -0.8; y: 24.2; skew-x: -4.7; skew-y: -4.7; scale-x: 0.267; scale-y: 0.267; }
+        frame 7 { x: -1.9; y: 24.7; skew-x: -14.9; skew-y: -14.9; scale-x: 0.3; scale-y: 0.3; }
+        frame 8 { x: -2.7; y: 25.3; skew-x: -22.2; skew-y: -22.2; scale-x: -10000; scale-y: -10000; }
+        frame 9 { x: -3.3; y: 25.9; skew-x: -29.9; skew-y: -29.9; }
+        frame 10 { x: -5.4; y: 26.9; skew-x: -44.8; skew-y: -44.8; scale-x: 0.364; scale-y: 0.384; }
+        frame 11 { x: -7.2; y: 28.2; skew-x: -60; skew-y: -59.9; scale-x: 0.428; scale-y: 0.469; }
+        frame 12 { x: -8.5; y: 29.8; skew-x: -74.9; skew-y: -74.9; scale-x: 0.492; scale-y: 0.555; }
+        frame 13 { x: -10000; y: 29.5; skew-x: -75.1; skew-y: -10000; scale-x: -10000; scale-y: -10000; }
+        frame 14 { y: 29.2; skew-x: -74.9; }
+        frame 15 { x: -8.7; y: 29.1; skew-x: -70.1; skew-y: -69.9; }
+        frame 16 { x: -9.1; y: 28.9; skew-x: -65.1; skew-y: -65.1; scale-y: 0.554; }
+        frame 17 { x: -9.3; y: 28.7; skew-x: -59.9; skew-y: -59.9; scale-y: 0.555; }
     }
     Track {
         source-name: "rock";
         frame-count: 18;
         frame 0 { cel: -1; }
         frame 1 { cel: -10000; }
-        frame 3 { x: 6; y: 25.2999992; skew-x: 15; skew-y: 15; scale-x: 0.108999997; scale-y: 0.127000004; cel: 0; image: IMAGE_REANIM_POTATOMINE_ROCK3; }
-        frame 4 { x: 6.4000001; y: 24.8999996; skew-x: -10000; skew-y: -10000; scale-x: 0.200000003; scale-y: 0.200000003; cel: -10000; image: none; }
-        frame 5 { x: 6.30000019; y: 24.7000008; skew-x: 14.8000002; skew-y: 14.8000002; scale-x: 0.232999995; scale-y: 0.232999995; }
-        frame 6 { x: 6.0999999; y: 24.5; skew-x: -10000; skew-y: -10000; scale-x: 0.266000003; scale-y: 0.266000003; }
-        frame 7 { x: 6; y: 24.2999992; skew-x: 15; skew-y: 15; scale-x: 0.300000012; scale-y: 0.300000012; }
-        frame 8 { x: 5.30000019; y: 24.7999992; skew-x: 7.30000019; skew-y: 7.30000019; scale-x: -10000; scale-y: -10000; }
-        frame 9 { x: 4.80000019; y: 25.2000008; skew-x: 0; skew-y: 0; }
-        frame 10 { x: -10000; y: 24.7000008; skew-x: 5; skew-y: 5; scale-x: 0.333000004; scale-y: 0.333000004; }
-        frame 11 { y: 24.2999992; skew-x: 10; skew-y: 10; scale-x: 0.365999997; scale-y: 0.365999997; }
-        frame 12 { x: 5.0999999; y: 23.7999992; skew-x: 15; skew-y: 15; scale-x: 0.400000006; scale-y: 0.400000006; }
-        frame 13 { x: -10000; y: 23.7000008; skew-x: -10000; skew-y: -10000; scale-x: -10000; scale-y: -10000; }
-        frame 14 { y: 23.6000004; }
-        frame 15 { y: 23.7999992; }
+        frame 3 { x: 6; y: 25.3; skew-x: 15; skew-y: 15; scale-x: 0.109; scale-y: 0.127; cel: 0; image: IMAGE_REANIM_POTATOMINE_ROCK3; }
+        frame 4 { x: 6.4; y: 24.9; skew-x: -10000; skew-y: -10000; scale-x: 0.2; scale-y: 0.2; cel: -10000; image: none; }
+        frame 5 { x: 6.3; y: 24.7; skew-x: 14.8; skew-y: 14.8; scale-x: 0.233; scale-y: 0.233; }
+        frame 6 { x: 6.1; y: 24.5; skew-x: -10000; skew-y: -10000; scale-x: 0.266; scale-y: 0.266; }
+        frame 7 { x: 6; y: 24.3; skew-x: 15; skew-y: 15; scale-x: 0.3; scale-y: 0.3; }
+        frame 8 { x: 5.3; y: 24.8; skew-x: 7.3; skew-y: 7.3; scale-x: -10000; scale-y: -10000; }
+        frame 9 { x: 4.8; y: 25.2; skew-x: 0; skew-y: 0; }
+        frame 10 { x: -10000; y: 24.7; skew-x: 5; skew-y: 5; scale-x: 0.333; scale-y: 0.333; }
+        frame 11 { y: 24.3; skew-x: 10; skew-y: 10; scale-x: 0.366; scale-y: 0.366; }
+        frame 12 { x: 5.1; y: 23.8; skew-x: 15; skew-y: 15; scale-x: 0.4; scale-y: 0.4; }
+        frame 13 { x: -10000; y: 23.7; skew-x: -10000; skew-y: -10000; scale-x: -10000; scale-y: -10000; }
+        frame 14 { y: 23.6; }
+        frame 15 { y: 23.8; }
         frame 16 { y: -10000; }
     }
     Track {
         source-name: "rock";
         frame-count: 18;
         frame 0 { cel: -1; }
-        frame 1 { x: 4; y: 24.6000004; scale-x: 0.200000003; scale-y: 0.200000003; cel: 0; image: IMAGE_REANIM_POTATOMINE_ROCK1; }
-        frame 2 { x: 3.20000005; y: 24.7000008; skew-x: -18.7000008; skew-y: -18.7000008; scale-x: 0.287999988; scale-y: 0.287999988; cel: -10000; image: none; }
-        frame 3 { x: 2.4000001; y: 25.2999992; skew-x: -37.5; skew-y: -37.5; scale-x: 0.377000004; scale-y: 0.377000004; }
-        frame 4 { x: 1.79999995; y: 26.2999992; skew-x: -56.2999992; skew-y: -56.2999992; scale-x: 0.465999991; scale-y: 0.465999991; }
-        frame 5 { x: -10000; y: 27.6000004; skew-x: -74.9000015; skew-y: -74.9000015; scale-x: 0.555000007; scale-y: 0.555000007; }
-        frame 6 { x: 2.0999999; y: 28.7999992; skew-x: -89.9000015; skew-y: -89.9000015; scale-x: -10000; scale-y: -10000; }
-        frame 7 { x: 2.5999999; y: 29.7000008; skew-x: -104.900002; skew-y: -104.900002; }
-        frame 8 { x: 5.0999999; y: 30.8999996; skew-x: -150; skew-y: -150; scale-x: 0.551999986; scale-y: 0.551999986; }
-        frame 9 { x: 6.9000001; y: 29.8999996; skew-x: -194.899994; skew-y: -194.899994; scale-x: 0.550000012; scale-y: 0.550000012; }
-        frame 10 { x: 7.0999999; y: 29.2999992; skew-x: -204.899994; skew-y: -204.699997; scale-x: 0.582000017; scale-y: 0.582000017; }
-        frame 11 { x: 7.19999981; y: 28.3999996; skew-x: -215; skew-y: -214.800003; scale-x: 0.614000022; scale-y: 0.614000022; }
-        frame 12 { x: -10000; y: 27.5; skew-x: -224.899994; skew-y: -224.899994; scale-x: 0.648000002; scale-y: 0.648000002; }
+        frame 1 { x: 4; y: 24.6; scale-x: 0.2; scale-y: 0.2; cel: 0; image: IMAGE_REANIM_POTATOMINE_ROCK1; }
+        frame 2 { x: 3.2; y: 24.7; skew-x: -18.7; skew-y: -18.7; scale-x: 0.288; scale-y: 0.288; cel: -10000; image: none; }
+        frame 3 { x: 2.4; y: 25.3; skew-x: -37.5; skew-y: -37.5; scale-x: 0.377; scale-y: 0.377; }
+        frame 4 { x: 1.8; y: 26.3; skew-x: -56.3; skew-y: -56.3; scale-x: 0.466; scale-y: 0.466; }
+        frame 5 { x: -10000; y: 27.6; skew-x: -74.9; skew-y: -74.9; scale-x: 0.555; scale-y: 0.555; }
+        frame 6 { x: 2.1; y: 28.8; skew-x: -89.9; skew-y: -89.9; scale-x: -10000; scale-y: -10000; }
+        frame 7 { x: 2.6; y: 29.7; skew-x: -104.9; skew-y: -104.9; }
+        frame 8 { x: 5.1; y: 30.9; skew-x: -150; skew-y: -150; scale-x: 0.552; scale-y: 0.552; }
+        frame 9 { x: 6.9; y: 29.9; skew-x: -194.9; skew-y: -194.9; scale-x: 0.55; scale-y: 0.55; }
+        frame 10 { x: 7.1; y: 29.3; skew-x: -204.9; skew-y: -204.7; scale-x: 0.582; scale-y: 0.582; }
+        frame 11 { x: 7.2; y: 28.4; skew-x: -215; skew-y: -214.8; scale-x: 0.614; scale-y: 0.614; }
+        frame 12 { x: -10000; y: 27.5; skew-x: -224.9; skew-y: -224.9; scale-x: 0.648; scale-y: 0.648; }
         frame 13 { y: -10000; skew-x: -10000; skew-y: -10000; scale-x: -10000; scale-y: -10000; }
     }
 }

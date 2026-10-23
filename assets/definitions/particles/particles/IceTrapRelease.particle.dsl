@@ -4,18 +4,44 @@ export component IceTrapRelease {
     Emitter {
         images: ["particles/frames/icetrap_particles_r0_c0.png","particles/frames/icetrap_particles_r0_c1.png","particles/frames/icetrap_particles_r0_c2.png","particles/frames/icetrap_particles_r0_c3.png"];
         imageFrames: 4;
+        animated: 0;
+        emitterType: Box;
         randomLaunchSpin: 1;
-        spawnMinActive: range { 5 10; }
-        emitterBoxX: range { -20 0; }
-        emitterBoxY: range { -70 -10; }
-        particleDuration: 50;
-        launchSpeed: range { 100 150; }
-        particleAlpha: track { 1 [.4 .8],80 0; }
-        particleSpinSpeed: range { -600 600; }
-        particleScale: track { .3,0 [.4 1.5],10 [.4 1.5],70 0,100; }
+        spawnMinActive: nodes {
+            { time: 0; low: 5; high: 10; curve: Linear; distribution: Linear; }
+        }
+        emitterBoxX: nodes {
+            { time: 0; low: -20; high: 0; curve: Linear; distribution: Linear; }
+        }
+        emitterBoxY: nodes {
+            { time: 0; low: -70; high: -10; curve: Linear; distribution: Linear; }
+        }
+        particleDuration: nodes {
+            { time: 0; low: 50; high: 50; curve: Linear; distribution: Linear; }
+        }
+        systemAlpha: nodes {
+            { time: 0; low: 100; high: 150; curve: Linear; distribution: Linear; }
+        }
+        particleAlpha: nodes {
+            { time: 0; low: 1; high: 1; curve: Linear; distribution: Linear; }
+            { time: 0.8; low: 0.4; high: 0.8; curve: Linear; distribution: Linear; }
+            { time: 1; low: 0; high: 0; curve: Linear; distribution: Linear; }
+        }
+        particleSpinSpeed: nodes {
+            { time: 0; low: -600; high: 600; curve: Linear; distribution: Linear; }
+        }
+        particleScale: nodes {
+            { time: 0; low: 0.3; high: 0.3; curve: Linear; distribution: Linear; }
+            { time: 0.1; low: 0.4; high: 1.5; curve: Linear; distribution: Linear; }
+            { time: 0.7; low: 0.4; high: 1.5; curve: Linear; distribution: Linear; }
+            { time: 1; low: 0; high: 0; curve: Linear; distribution: Linear; }
+        }
         field {
             fieldType: Acceleration;
-            y: track { 0 15,40; }
+            y: nodes {
+                { time: 0; low: 0; high: 0; curve: Linear; distribution: Linear; }
+                { time: 0.4; low: 15; high: 15; curve: Linear; distribution: Linear; }
+            }
         }
     }
 }

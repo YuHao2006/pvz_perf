@@ -252,11 +252,19 @@ static_assert(kReanimAttacherMaskWords <= kReanimActiveMaskWords, "generated att
 
 Reanimation::Reanimation()
 {
-	mAnimTime = 0;
+	mTimeDomain = ReanimTimeDomain::Visual;
+	mStartTimeNs = 0;
+	mLastUpdateTimeNs = 0;
+	mPendingTiming = false;
+	mPhaseOriginNs = 0;
+	mPeriodNs = 1;
 	mAnimRate = 12.0f;
+	mPlaybackGeneration = 0;
 	mDefinition = nullptr;
 	mLoopType = ReanimLoopType::REANIM_PLAY_ONCE;
-	mLastFrameTime = -1.0f;
+	mLastFrameNs = 0;
+	mOriginCycleCount = mLastCycleCount = 0;
+	mHasLastFrame = false;
 	mDead = false;
 	mFrameStart = 0;
 	mFrameCount = 0;
@@ -323,7 +331,8 @@ void Reanimation::ReanimationInitialize(float theX, float theY, ReanimatorDefini
 	mDefinition = theDefinition;
 	mVariant = 0;
 	mAnimRate = theDefinition->mFPS;
-	mLastFrameTime = -1.0f;
+	mLastFrameNs = 0;
+	mHasLastFrame = false;
 
 	if (theDefinition->mTracks.count != 0)
 	{
@@ -339,6 +348,11 @@ void Reanimation::ReanimationInitialize(float theX, float theY, ReanimatorDefini
 	}
 	else
 		mFrameCount = 0;
+	mPeriodNs = ReanimClock::PeriodFromRate(mFrameCount, mAnimRate == 0 ? 12.0f : mAnimRate);
+	mStartTimeNs = mLastUpdateTimeNs = mReanimationHolder ?
+		(mTimeDomain == ReanimTimeDomain::Battle ? mReanimationHolder->mBattleTimeNs : mReanimationHolder->mVisualTimeNs) : mLastUpdateTimeNs;
+	mPhaseOriginNs = mOriginCycleCount = mLastCycleCount = 0;
+	mPendingTiming = false;
 
 	// P4 派生掩码：新实例全零活动；轨道 ctor 全 RENDER_GROUP_NORMAL → 组 0 占位。
 	// 超 256 轨（掩码字宽外）：全 1 高估——Update 自愈首帧收敛为精确位，
@@ -356,60 +370,285 @@ void Reanimation::ReanimationInitialize(float theX, float theY, ReanimatorDefini
 	mGroupOccMask = (theDefinition->mTracks.count != 0) ? (1u << 0) : 0u;
 }
 
+static bool ReanimFullLast(ReanimLoopType loop)
+{
+	return loop == ReanimLoopType::REANIM_LOOP_FULL_LAST_FRAME ||
+		loop == ReanimLoopType::REANIM_PLAY_ONCE_FULL_LAST_FRAME ||
+		loop == ReanimLoopType::REANIM_PLAY_ONCE_FULL_LAST_FRAME_AND_HOLD;
+}
+
+void Reanimation::Seek(std::int64_t numerator, std::int64_t denominator)
+{
+	++mPlaybackGeneration;
+	const auto phase = std::clamp<std::int64_t>(ReanimClock::SignedMulDiv(numerator, mPeriodNs, denominator), 0, mPeriodNs);
+	mLastUpdateTimeNs = mReanimationHolder ?
+		(mTimeDomain == ReanimTimeDomain::Battle ? mReanimationHolder->mBattleTimeNs : mReanimationHolder->mVisualTimeNs) : mLastUpdateTimeNs;
+	mStartTimeNs = ReanimClock::StartTimeAt(mLastUpdateTimeNs, phase, mPeriodNs,
+		mAnimRate == 0 ? 0 : (mAnimRate > 0 ? 1 : -1), mPhaseOriginNs);
+	mPendingTiming = false;
+	mOriginCycleCount = mLastCycleCount = 0;
+	mLastFrameNs = SamplePlayback().phaseNs;
+	mHasLastFrame = false;
+}
+
+void Reanimation::SeekRatio(float phase)
+{
+	if (!std::isfinite(phase)) throw std::out_of_range("nonfinite animation seek phase");
+	++mPlaybackGeneration;
+	const auto position = static_cast<double>(std::clamp(phase, 0.0f, 1.0f)) * mPeriodNs;
+	const auto targetPhase = position >= static_cast<double>(mPeriodNs) ? mPeriodNs :
+		static_cast<std::int64_t>(position);
+	mLastUpdateTimeNs = mReanimationHolder ?
+		(mTimeDomain == ReanimTimeDomain::Battle ? mReanimationHolder->mBattleTimeNs : mReanimationHolder->mVisualTimeNs) : mLastUpdateTimeNs;
+	mStartTimeNs = ReanimClock::StartTimeAt(mLastUpdateTimeNs, targetPhase, mPeriodNs,
+		mAnimRate == 0 ? 0 : (mAnimRate > 0 ? 1 : -1), mPhaseOriginNs);
+	mPendingTiming = false;
+	mOriginCycleCount = mLastCycleCount = 0;
+	mLastFrameNs = SamplePlayback().phaseNs;
+	mHasLastFrame = false;
+}
+
+void Reanimation::SynchronizePhase(const Reanimation& source)
+{
+	++mPlaybackGeneration;
+	const auto position = source.SamplePlayback();
+	const auto phase = source.mFrameCount > 0 ?
+		ReanimClock::SignedMulDiv(position.phaseNs, mPeriodNs, source.mPeriodNs) : 0;
+	mOriginCycleCount = position.cycles;
+	mLastUpdateTimeNs = mReanimationHolder ?
+		(mTimeDomain == ReanimTimeDomain::Battle ? mReanimationHolder->mBattleTimeNs : mReanimationHolder->mVisualTimeNs) : mLastUpdateTimeNs;
+	mStartTimeNs = ReanimClock::StartTimeAt(mLastUpdateTimeNs, phase, mPeriodNs,
+		mAnimRate == 0 ? 0 : (mAnimRate > 0 ? 1 : -1), mPhaseOriginNs);
+	mPendingTiming = true;
+	mLastFrameNs = source.mFrameCount > 0 ?
+		ReanimClock::SignedMulDiv(source.mLastFrameNs, mPeriodNs, source.mPeriodNs) : 0;
+	mLastCycleCount = source.mLastCycleCount;
+	mHasLastFrame = source.mHasLastFrame;
+}
+
+ReanimPlaybackPosition Reanimation::SamplePlayback(std::int64_t offsetNs) const
+{
+	const auto nowNs = mReanimationHolder ?
+		(mTimeDomain == ReanimTimeDomain::Battle ? mReanimationHolder->mBattleTimeNs : mReanimationHolder->mVisualTimeNs) : mLastUpdateTimeNs;
+	return SamplePlaybackAt(nowNs, offsetNs);
+}
+
+ReanimPlaybackPosition Reanimation::SamplePlaybackAt(std::int64_t nowNs, std::int64_t offsetNs) const
+{
+	ReanimPlaybackPosition position{0, mOriginCycleCount, mPhaseOriginNs};
+	if (mFrameCount <= 0) return position;
+	ReanimClock::SampleAt(ReanimClock::Add(nowNs, offsetNs), mStartTimeNs,
+		mPhaseOriginNs, mOriginCycleCount, mPeriodNs,
+		mAnimRate == 0 ? 0 : (mAnimRate > 0 ? 1 : -1), position.phaseNs, position.cycles);
+	if (mLoopType != ReanimLoopType::REANIM_LOOP && mLoopType != ReanimLoopType::REANIM_LOOP_FULL_LAST_FRAME &&
+		position.cycles != 0)
+	{
+		position.phaseNs = position.cycles > 0 ? mPeriodNs : 0;
+		position.cycles = 0;
+	}
+	position.clock = ReanimClock::SignedMulDiv(position.phaseNs,
+		ReanimClock::Product(mFrameCount, ReanimClock::Frame), mPeriodNs);
+	return position;
+}
+
+void Reanimation::RebaseTime(std::int64_t nowNs)
+{
+	mStartTimeNs = ReanimClock::Add(mStartTimeNs, ReanimClock::Subtract(nowNs, mLastUpdateTimeNs));
+	mLastUpdateTimeNs = nowNs;
+	mPendingTiming = false;
+}
+
+void Reanimation::BindTimeDomain(ReanimTimeDomain domain)
+{
+	if (domain == mTimeDomain) return;
+	const auto oldNow = mReanimationHolder ?
+		(mTimeDomain == ReanimTimeDomain::Battle ? mReanimationHolder->mBattleTimeNs : mReanimationHolder->mVisualTimeNs) : mLastUpdateTimeNs;
+	ConsumeTimeAt(oldNow);
+	mTimeDomain = domain;
+	const auto newNow = mReanimationHolder ?
+		(mTimeDomain == ReanimTimeDomain::Battle ? mReanimationHolder->mBattleTimeNs : mReanimationHolder->mVisualTimeNs) : mLastUpdateTimeNs;
+	mStartTimeNs = ReanimClock::Add(mStartTimeNs, ReanimClock::Subtract(newNow, oldNow));
+	mLastUpdateTimeNs = newNow;
+	mHasLastFrame = false;
+	mPendingTiming = false;
+}
+
+void Reanimation::ApplyRate(float rate)
+{
+	if (!std::isfinite(rate)) throw std::overflow_error("nonfinite animation rate");
+	if (rate == mAnimRate) return;
+	const auto nowNs = mReanimationHolder ?
+		(mTimeDomain == ReanimTimeDomain::Battle ? mReanimationHolder->mBattleTimeNs : mReanimationHolder->mVisualTimeNs) : mLastUpdateTimeNs;
+	if (nowNs != mLastUpdateTimeNs)
+	{
+		ConsumeTimeAt(nowNs);
+		mPendingTiming = true;
+	}
+	const auto position = SamplePlaybackAt(nowNs);
+	const auto newPeriod = rate == 0 || mFrameCount <= 0 ? mPeriodNs :
+		ReanimClock::PeriodFromRate(mFrameCount, rate);
+	if (newPeriod <= 0) throw std::overflow_error("animation period below one nanosecond");
+	const auto phase = ReanimClock::SignedMulDiv(position.phaseNs, newPeriod, mPeriodNs);
+	mLastFrameNs = ReanimClock::SignedMulDiv(mLastFrameNs, newPeriod, mPeriodNs);
+	mPeriodNs = newPeriod;
+	mOriginCycleCount = position.cycles;
+	mStartTimeNs = ReanimClock::StartTimeAt(nowNs, phase, mPeriodNs,
+		rate == 0 ? 0 : (rate > 0 ? 1 : -1), mPhaseOriginNs);
+	mAnimRate = rate;
+}
+
+void Reanimation::ChangeLoopType(ReanimLoopType loop)
+{
+	if (loop == mLoopType) return;
+	const auto position = SamplePlayback();
+	mLastUpdateTimeNs = mReanimationHolder ?
+		(mTimeDomain == ReanimTimeDomain::Battle ? mReanimationHolder->mBattleTimeNs : mReanimationHolder->mVisualTimeNs) : mLastUpdateTimeNs;
+	mStartTimeNs = ReanimClock::StartTimeAt(mLastUpdateTimeNs, position.phaseNs, mPeriodNs,
+		mAnimRate == 0 ? 0 : (mAnimRate > 0 ? 1 : -1), mPhaseOriginNs);
+	mPendingTiming = false;
+	mOriginCycleCount = mLastCycleCount = 0;
+	mLastFrameNs = position.phaseNs;
+	mHasLastFrame = false;
+	mLoopCount = 0;
+	mLoopType = loop;
+	++mPlaybackGeneration;
+}
+
+void Reanimation::Advance(std::int64_t deltaNs)
+{
+	// Independent fixtures can supply a relative interval. Production UpdateAt
+	// consumes the shared clock and never increments a per-animation age.
+	ConsumeTimeAt(ReanimClock::Add(mLastUpdateTimeNs, deltaNs));
+	mPendingTiming = false;
+}
+
+void Reanimation::ConsumeTimeAt(std::int64_t nowNs)
+{
+	if (mFrameCount <= 0 || mDead) return;
+	const auto previous = SamplePlaybackAt(mLastUpdateTimeNs);
+	mLastFrameNs = previous.phaseNs;
+	mLastCycleCount = previous.cycles;
+	mHasLastFrame = true;
+	const auto period = ReanimClock::Product(mFrameCount, ReanimClock::Frame);
+	const auto position = SamplePlaybackAt(nowNs);
+	mLastUpdateTimeNs = nowNs;
+	const bool looping = mLoopType == ReanimLoopType::REANIM_LOOP ||
+		mLoopType == ReanimLoopType::REANIM_LOOP_FULL_LAST_FRAME;
+	const auto crossed = ReanimClock::Subtract(position.cycles, mLastCycleCount);
+	if (looping)
+	{
+		if (crossed < -INT_MAX || crossed > INT_MAX) throw std::overflow_error("animation loop counter overflow");
+		const auto loops = ReanimClock::Add(mLoopCount, crossed < 0 ? -crossed : crossed);
+		if (loops > INT_MAX) throw std::overflow_error("animation loop counter overflow");
+		mLoopCount = static_cast<int>(loops);
+		if (mAnimRate != 0)
+		{
+			// Historical saves may start at an arbitrary phase. Shifting that
+			// anchor by whole cycles can move it beyond now after a wrap.
+			// Preserve the sampled phase/cycles with a phase-zero timestamp.
+			mStartTimeNs = ReanimClock::StartTimeAt(nowNs, position.phaseNs,
+				mPeriodNs, mAnimRate > 0 ? 1 : -1, mPhaseOriginNs);
+			mOriginCycleCount = position.cycles;
+		}
+	}
+	else if ((mAnimRate > 0 && position.clock == period) ||
+		(mAnimRate < 0 && position.clock == 0))
+	{
+		mLoopCount = 1;
+		mDead = mLoopType == ReanimLoopType::REANIM_PLAY_ONCE ||
+			mLoopType == ReanimLoopType::REANIM_PLAY_ONCE_FULL_LAST_FRAME;
+	}
+}
+
+double Reanimation::RootMotion(ReanimTrackId trackId, float scale,
+	std::int64_t offsetNs) const
+{
+	if (mFrameCount <= 1) return 0;
+	const auto& track = mDefinition->mTracks.tracks[const_cast<Reanimation*>(this)->FindTrackIndex(trackId)];
+	const auto position = SamplePlayback(offsetNs);
+	const auto phase = position.phaseNs;
+	const auto cycles = position.cycles;
+	const auto period = mPeriodNs;
+	std::uint64_t remainder;
+	const bool full = ReanimFullLast(mLoopType);
+	auto frame = ReanimClock::MulDiv(phase, full ? mFrameCount : mFrameCount - 1, period, &remainder);
+	const auto before = mFrameStart + static_cast<int>(std::min<std::uint64_t>(frame, mFrameCount - 1));
+	const auto after = std::min(before + 1, mFrameStart + mFrameCount - 1);
+	const auto* keys = track.mTransforms.mTransforms;
+	return ReanimClock::RootSampleFloat(mFrameCount, full, period, cycles, keys[mFrameStart].mTransX,
+		keys[before].mTransX, keys[after].mTransX, keys[mFrameStart + mFrameCount - 1].mTransX,
+		remainder, scale);
+}
+
+double Reanimation::RootMotionClamped(ReanimTrackId trackId, float scale,
+	float minimumVelocityPixelsPerSecond, std::int64_t offsetNs) const
+{
+	if (mFrameCount <= 1) return 0;
+	const auto& track = mDefinition->mTracks.tracks[const_cast<Reanimation*>(this)->FindTrackIndex(trackId)];
+	const auto* keys = track.mTransforms.mTransforms;
+	const bool full = ReanimFullLast(mLoopType);
+	const int intervals = full ? mFrameCount : mFrameCount - 1;
+	const auto position = SamplePlayback(offsetNs);
+	std::uint64_t fraction;
+	const auto frame = ReanimClock::MulDiv(position.phaseNs, intervals, mPeriodNs, &fraction);
+	const double minimum = static_cast<double>(minimumVelocityPixelsPerSecond) *
+		(static_cast<double>(mPeriodNs) / intervals / 1'000'000'000.0);
+	double cyclePixels = 0, prefixPixels = 0, selectedPixels = 0;
+	for (int i = 0; i < intervals; ++i)
+	{
+		const int after = std::min(i + 1, mFrameCount - 1);
+		const double delta = static_cast<double>(keys[mFrameStart + after].mTransX) -
+			static_cast<double>(keys[mFrameStart + i].mTransX);
+		const double authored = delta * mFrameCount / intervals * static_cast<double>(scale);
+		const double displacement = std::max(authored, minimum);
+		cyclePixels += displacement;
+		if (i < frame) prefixPixels += displacement;
+		else if (i == frame) selectedPixels = displacement;
+	}
+	return ReanimClock::ClippedRootSampleFloat(position.cycles, mPeriodNs,
+		fraction, cyclePixels, prefixPixels, selectedPixels);
+}
+
+// Half-open intervals: forward [previous,current), reverse (current,previous].
+// Return signed multiplicity; callers can dispatch each occurrence after a large step.
+std::int64_t Reanimation::TimedEventCount(std::int64_t numerator, std::int64_t denominator) const
+{
+	if (!mHasLastFrame || mFrameCount <= 0) return 0;
+	const auto nowNs = mReanimationHolder ?
+		(mTimeDomain == ReanimTimeDomain::Battle ? mReanimationHolder->mBattleTimeNs : mReanimationHolder->mVisualTimeNs) : mLastUpdateTimeNs;
+	const auto position = SamplePlaybackAt(nowNs);
+	if (numerator < 0 || denominator <= 0 || numerator > denominator)
+		throw std::out_of_range("animation event phase");
+	const auto threshold = ReanimClock::CeilMulDiv(numerator, mPeriodNs, denominator);
+	if (nowNs != mLastUpdateTimeNs)
+	{
+		// Actors can query after the shared clock is published but before their
+		// animation updates. Start at the last consumed sample, not the start
+		// of its previous interval. Same-time rate changes retain that interval.
+		const auto previous = SamplePlaybackAt(mLastUpdateTimeNs);
+		return ReanimClock::EventCount(previous.phaseNs, previous.cycles,
+			position.phaseNs, position.cycles, mPeriodNs, threshold);
+	}
+	return ReanimClock::EventCount(mLastFrameNs, mLastCycleCount, position.phaseNs, position.cycles, mPeriodNs, threshold);
+}
+
 //0x471BC0
 // GOTY @Patoke: 0x4761C0
 void Reanimation::Update()
 {
+	const auto nowNs = mReanimationHolder ?
+		(mTimeDomain == ReanimTimeDomain::Battle ? mReanimationHolder->mBattleTimeNs : mReanimationHolder->mVisualTimeNs) : mLastUpdateTimeNs;
+	UpdateAt(nowNs);
+}
+
+void Reanimation::UpdateAt(std::int64_t nowNs)
+{
 	if (mFrameCount == 0 || mDead)
 		return;
 
-	TOD_ASSERT(_finite(mAnimRate));
-	mLastFrameTime = mAnimTime;  // 更新上一帧的循环率
-	mAnimTime += SECONDS_PER_UPDATE * Sexy::gUpdateTicks * mAnimRate / mFrameCount;
-
-	// 循环推进：模式按 ReanimLoopType 槽位直查（行序 = 枚举序 0..5），
-	// 正放/倒放归一为边界方向参数——原两段镜像 switch 合并为单路径。
-	static constexpr uint8_t kLoopMode[] = {
-		0,  // REANIM_LOOP                               回卷循环
-		0,  // REANIM_LOOP_FULL_LAST_FRAME               回卷循环
-		1,  // REANIM_PLAY_ONCE                          截断置亡
-		2,  // REANIM_PLAY_ONCE_AND_HOLD                 截断保持
-		1,  // REANIM_PLAY_ONCE_FULL_LAST_FRAME          截断置亡
-		2,  // REANIM_PLAY_ONCE_FULL_LAST_FRAME_AND_HOLD 截断保持
-	};
-	static_assert(sizeof(kLoopMode) / sizeof(kLoopMode[0]) == (int)ReanimLoopType::REANIM_PLAY_ONCE_FULL_LAST_FRAME_AND_HOLD + 1,
-		"循环模式槽位须与 ReanimLoopType 枚举同步");
-	const bool aForward = mAnimRate > 0;
-	const float aBoundary = aForward ? 1.0f : 0.0f;
-	const bool aPast = aForward ? mAnimTime >= aBoundary : mAnimTime < aBoundary;
-	switch (kLoopMode[mLoopType])
-	{
-	case 0:  // 回卷循环
-		while (aForward ? mAnimTime >= aBoundary : mAnimTime < aBoundary)
-		{
-			mLoopCount++;
-			mAnimTime += aForward ? -1.0f : 1.0f;
-		}
-		break;
-	case 1:  // 截断置亡
-		if (aPast)
-		{
-			mLoopCount = 1;
-			mAnimTime = aBoundary;
-			mDead = true;
-		}
-		break;
-	case 2:  // 截断保持
-		if (aPast)
-		{
-			mLoopCount = 1;
-			mAnimTime = aBoundary;
-		}
-		break;
-	default:
-		TOD_ASSERT(false);
-		break;
-	}
+	if (!mPendingTiming || nowNs != mLastUpdateTimeNs)
+		ConsumeTimeAt(nowNs);
+	mPendingTiming = false;
 
 	// P4 掩码轨道环：活动位（blend/shake/attach）与 def 级 attacher 位求或
 	// 驱动；零即整实体跳过（bench_reanim_trackwalk：112B×N 步长全扫的
@@ -449,7 +688,7 @@ void Reanimation::Update()
 			{
 				SexyTransform2D aOverlayMatrix;
 				GetAttachmentOverlayMatrix(aTrackIndex, aOverlayMatrix);
-				AttachmentUpdateAndSetMatrix(aTrack->mAttachmentID, aOverlayMatrix);
+				AttachmentUpdateAndSetMatrixAt(aTrack->mAttachmentID, aOverlayMatrix, nowNs, mTimeDomain);
 				aAnyActive = true;
 			}
 
@@ -559,8 +798,8 @@ void Reanimation::GetTransformAtTime(int theTrackIndex, ReanimatorTransform* the
 	TOD_ASSERT(theTrackIndex >= 0 && theTrackIndex < mDefinition->mTracks.count);
 	ReanimatorTrack* aTrack = &mDefinition->mTracks.tracks[theTrackIndex];
 	TOD_ASSERT(aTrack->mTransforms.count == mDefinition->mTracks.tracks[0].mTransforms.count);
-	ReanimatorTransform& aTransBefore = aTrack->mTransforms.mTransforms[theFrameTime->mAnimFrameBeforeInt];  // 前一帧的变换定义
-	ReanimatorTransform& aTransAfter = aTrack->mTransforms.mTransforms[theFrameTime->mAnimFrameAfterInt];  // 后一帧的变换定义
+	const ReanimatorSourceTransform& aTransBefore = aTrack->mTransforms.mTransforms[theFrameTime->mAnimFrameBeforeInt];
+	const ReanimatorSourceTransform& aTransAfter = aTrack->mTransforms.mTransforms[theFrameTime->mAnimFrameAfterInt];
 
 	theTransform->mTransX = FloatLerp(aTransBefore.mTransX, aTransAfter.mTransX, theFrameTime->mFraction);
 	theTransform->mTransY = FloatLerp(aTransBefore.mTransY, aTransAfter.mTransY, theFrameTime->mFraction);
@@ -773,10 +1012,12 @@ void Reanimation::GetFrameTime(ReanimatorFrameTime* theFrameTime)
 		aFrameCount = mFrameCount;
 	else
 		aFrameCount = mFrameCount - 1;
-	float aAnimPosition = mFrameStart + mAnimTime * aFrameCount;
-	float aAnimFrameBefore = floor(aAnimPosition);
-	theFrameTime->mFraction = aAnimPosition - aAnimFrameBefore;
-	theFrameTime->mAnimFrameBeforeInt = FloatRoundToInt(aAnimFrameBefore);
+	std::uint64_t remainder = 0;
+	const auto frame = mFrameCount > 0 ? ReanimClock::MulDiv(SamplePlayback().phaseNs, aFrameCount,
+		mPeriodNs, &remainder) : 0;
+	theFrameTime->mFraction = mFrameCount > 0 ? static_cast<float>(static_cast<double>(remainder) /
+		mPeriodNs) : 0;
+	theFrameTime->mAnimFrameBeforeInt = mFrameStart + static_cast<int>(frame);
 	if (theFrameTime->mAnimFrameBeforeInt >= mFrameStart + mFrameCount - 1)  // 如果当前处于结束的一帧
 	{
 		theFrameTime->mAnimFrameBeforeInt = mFrameStart + mFrameCount - 1;
@@ -974,11 +1215,13 @@ void Reanimation::SetFramesForLayer(ReanimTrackId theTrackId)
 // index 直达版：时间复位逻辑自 SetFramesForLayer 原样抽出，id 版内部共用。
 void Reanimation::SetFramesForLayerIndex(int theTrackIndex)
 {
-	if (mAnimRate >= 0)
-		mAnimTime = 0.0f;
-	else
-		mAnimTime = 0.9999999f;
-	mLastFrameTime = -1.0f;
+	++mPlaybackGeneration;
+	mHasLastFrame = false;
+	mOriginCycleCount = mLastCycleCount = 0;
+	mLastUpdateTimeNs = mReanimationHolder ?
+		(mTimeDomain == ReanimTimeDomain::Battle ? mReanimationHolder->mBattleTimeNs : mReanimationHolder->mVisualTimeNs) : mLastUpdateTimeNs;
+	mStartTimeNs = mLastUpdateTimeNs;
+	mPendingTiming = false;
 	if (mDefinition->mTracks.count == 0)  // 如果动画没有轨道
 	{
 		mFrameStart = 0;
@@ -986,6 +1229,11 @@ void Reanimation::SetFramesForLayerIndex(int theTrackIndex)
 		return;
 	}
 	GetFramesForTrackIndex(theTrackIndex, mFrameStart, mFrameCount);
+	if (mAnimRate != 0)
+		mPeriodNs = ReanimClock::PeriodFromRate(mFrameCount, mAnimRate);
+	mStartTimeNs = ReanimClock::StartTimeAt(mLastUpdateTimeNs, mAnimRate >= 0 ? 0 : mPeriodNs - 1,
+		mPeriodNs, mAnimRate == 0 ? 0 : (mAnimRate > 0 ? 1 : -1), mPhaseOriginNs);
+	mLastFrameNs = SamplePlayback().phaseNs;
 }
 
 //0x4732C0
@@ -1103,6 +1351,7 @@ Reanimation* ReanimationHolder::AllocReanimation(float theX, float theY, int the
 	Reanimation* aReanim = mReanimations.DataArrayAlloc();
 	aReanim->mRenderOrder = theRenderOrder;
 	aReanim->mReanimationHolder = this;
+	aReanim->mTimeDomain = mDefaultTimeDomain;
 	aReanim->ReanimationInitializeType(theX, theY, theReanimationType);
 	return aReanim;
 }
@@ -1191,19 +1440,6 @@ void ReanimatorFreeDefinitions()
 	gReanimationParamArraySize = 0;
 }
 
-//0x4738D0
-float Reanimation::GetTrackVelocity(ReanimTrackId theTrackId)
-{
-	ReanimatorFrameTime aFrameTime;
-	GetFrameTime(&aFrameTime);
-	int aTrackIndex = FindTrackIndex(theTrackId);
-	TOD_ASSERT(aTrackIndex >= 0 && aTrackIndex < mDefinition->mTracks.count);
-
-	ReanimatorTrack* aTrack = &mDefinition->mTracks.tracks[aTrackIndex];
-	float aDis = aTrack->mTransforms.mTransforms[aFrameTime.mAnimFrameAfterInt].mTransX - aTrack->mTransforms.mTransforms[aFrameTime.mAnimFrameBeforeInt].mTransX;
-	return aDis * SECONDS_PER_UPDATE * mAnimRate;  // 瞬时速率 = 两帧间的横坐标之差 * 一帧的时长 * 动画速率
-}
-
 //0x473930
 bool Reanimation::IsTrackShowing(ReanimTrackId theTrackId)
 {
@@ -1260,13 +1496,7 @@ void Reanimation::PropogateColorToAttachments()
 bool Reanimation::ShouldTriggerTimedEvent(float theEventTime)
 {
 	TOD_ASSERT(theEventTime >= 0.0f && theEventTime <= 1.0f);
-	if (mFrameCount == 0 || mLastFrameTime <= 0.0f || mAnimRate <= 0.0f)  // 没有动画或倒放或未播放
-		return false;
-
-	if (mAnimTime >= mLastFrameTime)  // 一般情况下，可触发的范围为 [mLastFrameTime, mAnimTime]
-		return theEventTime >= mLastFrameTime && theEventTime < mAnimTime;
-	else  // 若动画正好完成一次循环而重新进入下一次循环，则可触发的范围为 [0, mAnimTime] ∪ [mLastFrameTime, 1]
-		return theEventTime >= mLastFrameTime || theEventTime < mAnimTime;
+	return TimedEventCount(static_cast<std::int64_t>(std::llround(theEventTime * 1'000'000.0)), 1'000'000) != 0;
 }
 //0x473BF0
 // GOTY @Patoke: 0x478310
@@ -1274,10 +1504,10 @@ void Reanimation::PlayReanim(ReanimTrackId theTrackId, ReanimLoopType theLoopTyp
 {
 	if (theBlendTime > 0)  // 当需要补间过渡时，开始混合
 		StartBlend(theBlendTime);
-	if (theAnimRate != 0.0f)  // 当指定的速率为 0 时，表示不改变原有动画速率
-		mAnimRate = theAnimRate;
+	if (theAnimRate != 0)
+		ApplyRate(theAnimRate);
 
-	mLoopType = theLoopType;
+	ChangeLoopType(theLoopType);
 	mLoopCount = 0;
 	SetFramesForLayer(theTrackId);
 }
@@ -1293,48 +1523,53 @@ void Reanimation::AttacherSynchWalkSpeed(int theTrackIndex, Reanimation* theAtta
 	if (aPlaceHolderFrameStart < 0 || aRunEnd <= aPlaceHolderFrameStart ||
 		aRunEnd > aTrack->mTransforms.count)
 	{
-		theAttachReanim->mAnimRate = 0.0f;
+		theAttachReanim->ApplyRate(0);
 		return;
 	}
 	const int aPlaceHolderFrameEnd = static_cast<int>(aRunEnd) - 1;
 	int aPlaceHolderFrameCount = aPlaceHolderFrameEnd - aPlaceHolderFrameStart;
-	ReanimatorTransform& aPlaceHolderStartTrans = aTrack->mTransforms.mTransforms[aPlaceHolderFrameStart];
-	ReanimatorTransform& aPlaceHolderEndTrans = aTrack->mTransforms.mTransforms[aPlaceHolderFrameEnd];
-	if (FloatApproxEqual(mAnimRate, 0.0f))  // 如果动画自身的速率为 0
+	const auto& aPlaceHolderStartTrans = aTrack->mTransforms.mTransforms[aPlaceHolderFrameStart];
+	const auto& aPlaceHolderEndTrans = aTrack->mTransforms.mTransforms[aPlaceHolderFrameEnd];
+	if (mAnimRate == 0)
 	{
-		theAttachReanim->mAnimRate = 0.0f;  // 附属动画的速率也为 0
+		theAttachReanim->ApplyRate(0);
 		return;
 	}
-	float aPlaceHolderDistance = -(aPlaceHolderEndTrans.mTransX - aPlaceHolderStartTrans.mTransX);  // 占位轨道在当前区间内的位移
-	float aPlaceHolderSeconds = aPlaceHolderFrameCount / mAnimRate;  // 占位轨道在当前区间内的时长
+	double aPlaceHolderDistance = static_cast<double>(aPlaceHolderStartTrans.mTransX) -
+		static_cast<double>(aPlaceHolderEndTrans.mTransX);
+	double aPlaceHolderSeconds = aPlaceHolderFrameCount / static_cast<double>(mAnimRate);
 	if (FloatApproxEqual(aPlaceHolderSeconds, 0.0f))  // 如果当前所在区间不存在任何帧
 	{
-		theAttachReanim->mAnimRate = 0.0f;  // 附属动画的速率为 0
+		theAttachReanim->ApplyRate(0);
 		return;
 	}
 
 	int aGroundTrackIndex = theAttachReanim->FindTrackIndex(ReanimTrackId::_ground);
 	ReanimatorTrack* aGroundTrack = &theAttachReanim->mDefinition->mTracks.tracks[aGroundTrackIndex];
-	ReanimatorTransform& aTransformGuyStart = aGroundTrack->mTransforms.mTransforms[theAttachReanim->mFrameStart];
-	ReanimatorTransform& aTransformGuyEnd = aGroundTrack->mTransforms.mTransforms[theAttachReanim->mFrameStart + theAttachReanim->mFrameCount - 1];
-	float aGuyDistance = aTransformGuyEnd.mTransX - aTransformGuyStart.mTransX;  // 实际动画在完整动作周期内的位移
+	const auto& aTransformGuyStart = aGroundTrack->mTransforms.mTransforms[theAttachReanim->mFrameStart];
+	const auto& aTransformGuyEnd = aGroundTrack->mTransforms.mTransforms[theAttachReanim->mFrameStart + theAttachReanim->mFrameCount - 1];
+	double aGuyDistance = static_cast<double>(aTransformGuyEnd.mTransX) -
+		static_cast<double>(aTransformGuyStart.mTransX);
 	if (aGuyDistance < FLT_EPSILON || aPlaceHolderDistance < FLT_EPSILON)  // 如果占位位移为 0 或实际动画周期位移为 0，则附属动画无法移动
 	{
-		theAttachReanim->mAnimRate = 0.0f;  // 附属动画的速率为 0
+		theAttachReanim->ApplyRate(0);
 		return;
 	}
 
-	float aLoops = aPlaceHolderDistance / aGuyDistance;  // 以附属动画目标位移（占位位移）除以其周期位移，得到附属动画需要循环的周期数
+	double aLoops = aPlaceHolderDistance / aGuyDistance;  // 以附属动画目标位移（占位位移）除以其周期位移，得到附属动画需要循环的周期数
 	ReanimatorTransform aTransformGuyCurrent;
 	theAttachReanim->GetCurrentTransform(aGroundTrackIndex, &aTransformGuyCurrent);
 	AttachEffect* aAttachEffect = FindFirstAttachment(mTrackInstances[theTrackIndex].mAttachmentID);
 	if (aAttachEffect != nullptr)
 	{
-		float aGuyCurrentDistance = aTransformGuyCurrent.mTransX - aTransformGuyStart.mTransX;  // 附属动画在其周期内当前已经过的位移
-		float aGuyExpectedDistance = aGuyDistance * theAttachReanim->mAnimTime;  // 以匀速运动的占位轨道计算的、附属动画当前的理论位移
-		aAttachEffect->mOffset.m02 = aGuyExpectedDistance - aGuyCurrentDistance;  // 调整附属效果的横向变换以使附属动画的位移保持与占位动画一致
+		double aGuyCurrentDistance = static_cast<double>(aTransformGuyCurrent.mTransX) -
+			static_cast<double>(aTransformGuyStart.mTransX);
+		double aGuyExpectedDistance = aGuyDistance *
+			static_cast<double>(theAttachReanim->SamplePlayback().phaseNs) /
+			static_cast<double>(theAttachReanim->mPeriodNs);
+		aAttachEffect->mOffset.m02 = static_cast<float>(aGuyExpectedDistance - aGuyCurrentDistance);
 	}
-	theAttachReanim->mAnimRate = aLoops * theAttachReanim->mFrameCount / aPlaceHolderSeconds;  // 速率 = 需要播放的帧数 ÷ 可以播放的时长
+	theAttachReanim->ApplyRate(static_cast<float>(aLoops * theAttachReanim->mFrameCount / aPlaceHolderSeconds));
 }
 
 //0x4740B0
@@ -1398,8 +1633,8 @@ void Reanimation::UpdateAttacherTrack(int theTrackIndex)
 	{
 		AttachmentDie(aTrackInstance->mAttachmentID);  // 清除原有附件
 		aAttachReanim = gEffectSystem->mReanimationHolder->AllocReanimation(0.0f, 0.0f, 0, aReanimationType);  // 重新创建一个指定的动画
-		aAttachReanim->mLoopType = aLoopType;
-		aAttachReanim->mAnimRate = aAnimRate;
+		aAttachReanim->ChangeLoopType(aLoopType);
+		aAttachReanim->ApplyRate(aAnimRate);
 		AttachReanim(aTrackInstance->mAttachmentID, aAttachReanim, 0.0f, 0.0f);
 		ReanimSetActiveBit(*this, theTrackIndex);  // P4：attacher 挂附件置位
 		mFrameBasePose = NO_BASE_POSE;  // 设定附属动画后，自身不再存在基准帧
@@ -1422,8 +1657,8 @@ void Reanimation::UpdateAttacherTrack(int theTrackIndex)
 				static_cast<int>(aSeg->textRunStart), static_cast<int>(aSeg->textRunEnd));
 		}
 		else
-			aAttachReanim->mAnimRate = aAnimRate;
-		aAttachReanim->mLoopType = aLoopType;
+			aAttachReanim->ApplyRate(aAnimRate);
+		aAttachReanim->ChangeLoopType(aLoopType);
 	}
 
 	Color aColor = ColorsMultiply(mColorOverride, aTrackInstance->mTrackColor);

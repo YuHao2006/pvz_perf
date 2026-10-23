@@ -3,26 +3,60 @@ export component ArtChallengePlant {
     source-name: "artchallengeplant";
     Emitter {
         image: "IMAGE_STAR40";
+        imageFrames: 1;
+        animated: 0;
+        emitterType: Box;
         randomLaunchSpin: 1;
-        systemDuration: 60;
-        spawnMinActive: 20;
-        emitterRadius: range { 40 80; }
-        particleDuration: 60;
-        systemAlpha: track { 1,80 0; }
-        launchSpeed: range { 50 200; }
-        particleRed: 1;
-        particleGreen: .9;
-        particleBlue: 0;
-        particleSpinSpeed: range { -800 800; }
-        particleScale: range { .3 .5; }
+        systemDuration: nodes {
+            { time: 0; low: 60; high: 60; curve: Linear; distribution: Linear; }
+        }
+        spawnMinActive: nodes {
+            { time: 0; low: 20; high: 20; curve: Linear; distribution: Linear; }
+        }
+        emitterRadius: nodes {
+            { time: 0; low: 40; high: 80; curve: Linear; distribution: Linear; }
+        }
+        particleDuration: nodes {
+            { time: 0; low: 60; high: 60; curve: Linear; distribution: Linear; }
+        }
+        systemGreen: nodes {
+            { time: 0.8; low: 1; high: 1; curve: Linear; distribution: Linear; }
+            { time: 1; low: 0; high: 0; curve: Linear; distribution: Linear; }
+        }
+        systemAlpha: nodes {
+            { time: 0; low: 50; high: 200; curve: Linear; distribution: Linear; }
+        }
+        particleRed: nodes {
+            { time: 0; low: 1; high: 1; curve: Linear; distribution: Linear; }
+        }
+        particleGreen: nodes {
+            { time: 0; low: 0.9; high: 0.9; curve: Linear; distribution: Linear; }
+        }
+        particleBlue: nodes {
+            { time: 0; low: 0; high: 0; curve: Linear; distribution: Linear; }
+        }
+        particleSpinSpeed: nodes {
+            { time: 0; low: -800; high: 800; curve: Linear; distribution: Linear; }
+        }
+        particleScale: nodes {
+            { time: 0; low: 0.3; high: 0.5; curve: Linear; distribution: Linear; }
+        }
         field {
             fieldType: Friction;
-            x: track { 0.0,40 0; }
-            y: track { 0.0,40 0; }
+            x: nodes {
+                { time: 0.4; low: 0; high: 0; curve: Linear; distribution: Linear; }
+                { time: 1; low: 0; high: 0; curve: Linear; distribution: Linear; }
+            }
+            y: nodes {
+                { time: 0.4; low: 0; high: 0; curve: Linear; distribution: Linear; }
+                { time: 1; low: 0; high: 0; curve: Linear; distribution: Linear; }
+            }
         }
         field {
             fieldType: Acceleration;
-            y: range { 2 3; }
+            y: nodes {
+                { time: 0; low: 2; high: 3; curve: Linear; distribution: Linear; }
+            }
         }
     }
 }

@@ -3,23 +3,51 @@ export component MoweredZombieHead {
     source-name: "moweredzombiehead";
     Emitter {
         image: "IMAGE_ZOMBIEHEAD";
-        randomLaunchSpin: 1;
-        systemDuration: 180;
-        spawnMinActive: 1;
-        particleDuration: 180;
-        systemAlpha: track { 1,95 0,100; }
-        launchSpeed: 330.0;
-        launchAngle: range { 190 220; }
-        particleSpinSpeed: track { [-720 720] 0,30; }
-        particleScale: .8;
-        collisionReflect: track { .3 .3,40 0,50; }
+        imageFrames: 1;
+        animated: 0;
+        emitterType: Box;
+        systemDuration: nodes {
+            { time: 0; low: 180; high: 180; curve: Linear; distribution: Linear; }
+        }
+        spawnMinActive: nodes {
+            { time: 0; low: 1; high: 1; curve: Linear; distribution: Linear; }
+        }
+        particleDuration: nodes {
+            { time: 0; low: 180; high: 180; curve: Linear; distribution: Linear; }
+        }
+        systemGreen: nodes {
+            { time: 0.95; low: 1; high: 1; curve: Linear; distribution: Linear; }
+            { time: 1; low: 0; high: 0; curve: Linear; distribution: Linear; }
+        }
+        systemAlpha: nodes {
+            { time: 0; low: 330; high: 330; curve: Linear; distribution: Linear; }
+        }
+        systemBrightness: nodes {
+            { time: 0; low: 190; high: 220; curve: Linear; distribution: Linear; }
+        }
+        particleSpinSpeed: nodes {
+            { time: 0; low: -720; high: 720; curve: Linear; distribution: Linear; }
+            { time: 0.3; low: 0; high: 0; curve: Linear; distribution: Linear; }
+        }
+        particleScale: nodes {
+            { time: 0; low: 0.8; high: 0.8; curve: Linear; distribution: Linear; }
+        }
+        collisionReflect: nodes {
+            { time: 0; low: 0.3; high: 0.3; curve: Linear; distribution: Linear; }
+            { time: 0.4; low: 0.3; high: 0.3; curve: Linear; distribution: Linear; }
+            { time: 0.5; low: 0; high: 0; curve: Linear; distribution: Linear; }
+        }
         field {
             fieldType: Acceleration;
-            y: 17.0;
+            y: nodes {
+                { time: 0; low: 17; high: 17; curve: Linear; distribution: Linear; }
+            }
         }
         field {
             fieldType: GroundConstraint;
-            y: 0.0;
+            y: nodes {
+                { time: 0; low: 0; high: 0; curve: Linear; distribution: Linear; }
+            }
         }
     }
 }

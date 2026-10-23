@@ -5,42 +5,100 @@ export component ZombieBossFireball {
         images: ["particles/frames/zombie_boss_fireball_particles_r0_c0.png","particles/frames/zombie_boss_fireball_particles_r0_c1.png","particles/frames/zombie_boss_fireball_particles_r0_c2.png","particles/frames/zombie_boss_fireball_particles_r0_c3.png"];
         name: "BossFireball";
         imageFrames: 2;
-        randomLaunchSpin: 1;
-        systemDuration: 250;
-        spawnRate: 40;
-        spawnMaxLaunched: 40;
-        emitterBoxX: range { -40 40; }
-        emitterBoxY: range { -10 40; }
-        particleDuration: 30;
-        particleAlpha: track { 1,80 0; }
-        particleSpinAngle: range { 0 10; }
-        particleSpinSpeed: range { -50 50; }
-        particleScale: track { .1 [0.8 1.2],50; }
+        animated: 0;
+        emitterType: Box;
+        systemDuration: nodes {
+            { time: 0; low: 250; high: 250; curve: Linear; distribution: Linear; }
+        }
+        spawnRate: nodes {
+            { time: 0; low: 40; high: 40; curve: Linear; distribution: Linear; }
+        }
+        spawnMaxLaunched: nodes {
+            { time: 0; low: 40; high: 40; curve: Linear; distribution: Linear; }
+        }
+        emitterBoxX: nodes {
+            { time: 0; low: -40; high: 40; curve: Linear; distribution: Linear; }
+        }
+        emitterBoxY: nodes {
+            { time: 0; low: -10; high: 40; curve: Linear; distribution: Linear; }
+        }
+        particleDuration: nodes {
+            { time: 0; low: 30; high: 30; curve: Linear; distribution: Linear; }
+        }
+        particleAlpha: nodes {
+            { time: 0.8; low: 1; high: 1; curve: Linear; distribution: Linear; }
+            { time: 1; low: 0; high: 0; curve: Linear; distribution: Linear; }
+        }
+        particleSpinAngle: nodes {
+            { time: 0; low: 0; high: 10; curve: Linear; distribution: Linear; }
+        }
+        particleSpinSpeed: nodes {
+            { time: 0; low: -50; high: 50; curve: Linear; distribution: Linear; }
+        }
+        particleScale: nodes {
+            { time: 0; low: 0.1; high: 0.1; curve: Linear; distribution: Linear; }
+            { time: 0.5; low: 0.8; high: 1.2; curve: Linear; distribution: Linear; }
+        }
         field {
             fieldType: Position;
-            x: track { 0 [-70 -100]; }
-            y: track { 0 [-10 30]; }
+            x: nodes {
+                { time: 0; low: 0; high: 0; curve: Linear; distribution: Linear; }
+                { time: 1; low: -70; high: -100; curve: Linear; distribution: Linear; }
+            }
+            y: nodes {
+                { time: 0; low: 0; high: 0; curve: Linear; distribution: Linear; }
+                { time: 1; low: -10; high: 30; curve: Linear; distribution: Linear; }
+            }
         }
     }
     Emitter {
         images: ["particles/frames/zombie_boss_fireball_particles_r0_c2.png","particles/frames/zombie_boss_fireball_particles_r0_c3.png"];
         name: "BossFireball2";
         imageFrames: 2;
-        randomLaunchSpin: 1;
-        systemDuration: 250;
-        spawnRate: 40;
-        spawnMaxLaunched: 40;
-        emitterBoxX: range { -40 40; }
-        emitterBoxY: range { -10 40; }
-        particleDuration: range { 15 25; }
-        particleAlpha: track { 1,80 0; }
-        particleSpinAngle: range { 0 10; }
-        particleSpinSpeed: range { -30 30; }
-        particleScale: track { .1 [0.8 1.2],50; }
+        animated: 0;
+        emitterType: Box;
+        systemDuration: nodes {
+            { time: 0; low: 250; high: 250; curve: Linear; distribution: Linear; }
+        }
+        spawnRate: nodes {
+            { time: 0; low: 40; high: 40; curve: Linear; distribution: Linear; }
+        }
+        spawnMaxLaunched: nodes {
+            { time: 0; low: 40; high: 40; curve: Linear; distribution: Linear; }
+        }
+        emitterBoxX: nodes {
+            { time: 0; low: -40; high: 40; curve: Linear; distribution: Linear; }
+        }
+        emitterBoxY: nodes {
+            { time: 0; low: -10; high: 40; curve: Linear; distribution: Linear; }
+        }
+        particleDuration: nodes {
+            { time: 0; low: 15; high: 25; curve: Linear; distribution: Linear; }
+        }
+        particleAlpha: nodes {
+            { time: 0.8; low: 1; high: 1; curve: Linear; distribution: Linear; }
+            { time: 1; low: 0; high: 0; curve: Linear; distribution: Linear; }
+        }
+        particleSpinAngle: nodes {
+            { time: 0; low: 0; high: 10; curve: Linear; distribution: Linear; }
+        }
+        particleSpinSpeed: nodes {
+            { time: 0; low: -30; high: 30; curve: Linear; distribution: Linear; }
+        }
+        particleScale: nodes {
+            { time: 0; low: 0.1; high: 0.1; curve: Linear; distribution: Linear; }
+            { time: 0.5; low: 0.8; high: 1.2; curve: Linear; distribution: Linear; }
+        }
         field {
             fieldType: Position;
-            x: track { 0 [-70 -100]; }
-            y: track { 0 [-10 30]; }
+            x: nodes {
+                { time: 0; low: 0; high: 0; curve: Linear; distribution: Linear; }
+                { time: 1; low: -70; high: -100; curve: Linear; distribution: Linear; }
+            }
+            y: nodes {
+                { time: 0; low: 0; high: 0; curve: Linear; distribution: Linear; }
+                { time: 1; low: -10; high: 30; curve: Linear; distribution: Linear; }
+            }
         }
     }
 }

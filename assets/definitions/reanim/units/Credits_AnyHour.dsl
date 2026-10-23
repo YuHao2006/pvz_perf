@@ -5,13 +5,13 @@ export component Credits_AnyHour {
         frame-count: 30;
         frame 0 { cel: -1; }
         frame 1 { cel: -10000; }
-        frame 15 { x: -219.800003; cel: 0; image: IMAGE_REANIM_BACKGROUND2; }
+        frame 15 { x: -219.8; cel: 0; image: IMAGE_REANIM_BACKGROUND2; }
         frame 16 { x: -10000; cel: -10000; image: none; }
     }
     Track {
         source-name: "Background1";
         frame-count: 30;
-        frame 0 { x: -219.800003; image: IMAGE_REANIM_BACKGROUND1; }
+        frame 0 { x: -219.8; image: IMAGE_REANIM_BACKGROUND1; }
         frame 1 { x: -10000; image: none; }
         frame 16 { alpha: 0.75; }
         frame 17 { alpha: 0.5; }
@@ -25,7 +25,7 @@ export component Credits_AnyHour {
         frame-count: 30;
         frame 0 { cel: -1; }
         frame 1 { cel: -10000; }
-        frame 15 { x: 434.299988; y: 130; cel: 0; image: IMAGE_REANIM_PLANTSHADOW2; }
+        frame 15 { x: 434.3; y: 130; cel: 0; image: IMAGE_REANIM_PLANTSHADOW2; }
         frame 16 { x: -10000; y: -10000; cel: -10000; image: none; }
     }
     Track {
@@ -33,7 +33,7 @@ export component Credits_AnyHour {
         frame-count: 30;
         frame 0 { cel: -1; }
         frame 1 { cel: -10000; }
-        frame 15 { x: 436.399994; y: 80; scale-x: 1.00100005; scale-y: 1.00100005; cel: 0; text: "attacher__Wallnut__anim_idle"; }
+        frame 15 { x: 436.4; y: 80; scale-x: 1.001; scale-y: 1.001; cel: 0; text: "attacher__Wallnut__anim_idle"; }
         frame 16 { x: -10000; y: -10000; scale-x: -10000; scale-y: -10000; cel: -10000; text: ""; }
     }
     Track {
@@ -41,7 +41,7 @@ export component Credits_AnyHour {
         frame-count: 30;
         frame 0 { cel: -1; }
         frame 1 { cel: -10000; }
-        frame 15 { x: 433.399994; y: 229.600006; cel: 0; image: IMAGE_REANIM_PLANTSHADOW2; }
+        frame 15 { x: 433.4; y: 229.6; cel: 0; image: IMAGE_REANIM_PLANTSHADOW2; }
         frame 16 { x: -10000; y: -10000; cel: -10000; image: none; }
     }
     Track {
@@ -49,7 +49,7 @@ export component Credits_AnyHour {
         frame-count: 30;
         frame 0 { cel: -1; }
         frame 1 { cel: -10000; }
-        frame 15 { x: 436.399994; y: 180; scale-x: 1.00100005; scale-y: 1.00100005; cel: 0; text: "attacher__Wallnut__anim_idle"; }
+        frame 15 { x: 436.4; y: 180; scale-x: 1.001; scale-y: 1.001; cel: 0; text: "attacher__Wallnut__anim_idle"; }
         frame 16 { x: -10000; y: -10000; scale-x: -10000; scale-y: -10000; cel: -10000; text: ""; }
     }
     Track {
@@ -57,7 +57,7 @@ export component Credits_AnyHour {
         frame-count: 30;
         frame 0 { cel: -1; }
         frame 1 { cel: -10000; }
-        frame 15 { x: 435.399994; y: 329.600006; cel: 0; image: IMAGE_REANIM_PLANTSHADOW2; }
+        frame 15 { x: 435.4; y: 329.6; cel: 0; image: IMAGE_REANIM_PLANTSHADOW2; }
         frame 16 { x: -10000; y: -10000; cel: -10000; image: none; }
     }
     Track {
@@ -65,7 +65,7 @@ export component Credits_AnyHour {
         frame-count: 30;
         frame 0 { cel: -1; }
         frame 1 { cel: -10000; }
-        frame 15 { x: 438.399994; y: 280; scale-x: 1.00100005; scale-y: 1.00100005; cel: 0; text: "attacher__Wallnut__anim_idle"; }
+        frame 15 { x: 438.4; y: 280; scale-x: 1.001; scale-y: 1.001; cel: 0; text: "attacher__Wallnut__anim_idle"; }
         frame 16 { x: -10000; y: -10000; scale-x: -10000; scale-y: -10000; cel: -10000; text: ""; }
     }
     Track {
@@ -73,7 +73,7 @@ export component Credits_AnyHour {
         frame-count: 30;
         frame 0 { cel: -1; }
         frame 1 { cel: -10000; }
-        frame 15 { x: 435.399994; y: 429.600006; cel: 0; image: IMAGE_REANIM_PLANTSHADOW2; }
+        frame 15 { x: 435.4; y: 429.6; cel: 0; image: IMAGE_REANIM_PLANTSHADOW2; }
         frame 16 { x: -10000; y: -10000; cel: -10000; image: none; }
     }
     Track {
@@ -81,7 +81,7 @@ export component Credits_AnyHour {
         frame-count: 30;
         frame 0 { cel: -1; }
         frame 1 { cel: -10000; }
-        frame 15 { x: 438.399994; y: 380; scale-x: 1.00100005; scale-y: 1.00100005; cel: 0; text: "attacher__Wallnut__anim_idle"; }
+        frame 15 { x: 438.4; y: 380; scale-x: 1.001; scale-y: 1.001; cel: 0; text: "attacher__Wallnut__anim_idle"; }
         frame 16 { x: -10000; y: -10000; scale-x: -10000; scale-y: -10000; cel: -10000; text: ""; }
     }
     Track {
@@ -89,7 +89,7 @@ export component Credits_AnyHour {
         frame-count: 30;
         frame 0 { cel: -1; }
         frame 1 { cel: -10000; }
-        frame 15 { x: 435.399994; y: 529.599976; cel: 0; image: IMAGE_REANIM_PLANTSHADOW2; }
+        frame 15 { x: 435.4; y: 529.6; cel: 0; image: IMAGE_REANIM_PLANTSHADOW2; }
         frame 16 { x: -10000; y: -10000; cel: -10000; image: none; }
     }
     Track {
@@ -97,7 +97,7 @@ export component Credits_AnyHour {
         frame-count: 30;
         frame 0 { cel: -1; }
         frame 1 { cel: -10000; }
-        frame 15 { x: 438.399994; y: 480; scale-x: 1.00100005; scale-y: 1.00100005; cel: 0; text: "attacher__Wallnut__anim_idle"; }
+        frame 15 { x: 438.4; y: 480; scale-x: 1.001; scale-y: 1.001; cel: 0; text: "attacher__Wallnut__anim_idle"; }
         frame 16 { x: -10000; y: -10000; scale-x: -10000; scale-y: -10000; cel: -10000; text: ""; }
     }
     Track {
@@ -105,7 +105,7 @@ export component Credits_AnyHour {
         frame-count: 30;
         frame 0 { cel: -1; }
         frame 1 { cel: -10000; }
-        frame 15 { x: 347; y: 129.199997; scale-x: 1.046; scale-y: 1.046; cel: 0; image: IMAGE_REANIM_PLANTSHADOW2; }
+        frame 15 { x: 347; y: 129.2; scale-x: 1.046; scale-y: 1.046; cel: 0; image: IMAGE_REANIM_PLANTSHADOW2; }
         frame 16 { x: -10000; y: -10000; scale-x: -10000; scale-y: -10000; cel: -10000; image: none; }
     }
     Track {
@@ -113,7 +113,7 @@ export component Credits_AnyHour {
         frame-count: 30;
         frame 0 { cel: -1; }
         frame 1 { cel: -10000; }
-        frame 15 { x: 290; y: 138.800003; scale-x: 0.512000024; scale-y: 0.512000024; cel: 0; image: IMAGE_REANIM_PLANTSHADOW2; }
+        frame 15 { x: 290; y: 138.8; scale-x: 0.512; scale-y: 0.512; cel: 0; image: IMAGE_REANIM_PLANTSHADOW2; }
         frame 16 { x: -10000; y: -10000; scale-x: -10000; scale-y: -10000; cel: -10000; image: none; }
     }
     Track {
@@ -121,7 +121,7 @@ export component Credits_AnyHour {
         frame-count: 30;
         frame 0 { cel: -1; }
         frame 1 { cel: -10000; }
-        frame 15 { x: 213; y: 140.100006; scale-x: 0.442000002; scale-y: 0.442000002; cel: 0; image: IMAGE_REANIM_PLANTSHADOW2; }
+        frame 15 { x: 213; y: 140.1; scale-x: 0.442; scale-y: 0.442; cel: 0; image: IMAGE_REANIM_PLANTSHADOW2; }
         frame 16 { x: -10000; y: -10000; scale-x: -10000; scale-y: -10000; cel: -10000; image: none; }
     }
     Track {
@@ -129,7 +129,7 @@ export component Credits_AnyHour {
         frame-count: 30;
         frame 0 { cel: -1; }
         frame 1 { cel: -10000; }
-        frame 15 { x: 130; y: 138.800003; scale-x: 0.512000024; scale-y: 0.512000024; cel: 0; image: IMAGE_REANIM_PLANTSHADOW2; }
+        frame 15 { x: 130; y: 138.8; scale-x: 0.512; scale-y: 0.512; cel: 0; image: IMAGE_REANIM_PLANTSHADOW2; }
         frame 16 { x: -10000; y: -10000; scale-x: -10000; scale-y: -10000; cel: -10000; image: none; }
     }
     Track {
@@ -145,7 +145,7 @@ export component Credits_AnyHour {
         frame-count: 30;
         frame 0 { cel: -1; }
         frame 1 { cel: -10000; }
-        frame 15 { x: 266; y: 228.800003; scale-x: 1.07000005; scale-y: 1.07000005; cel: 0; image: IMAGE_REANIM_PLANTSHADOW2; }
+        frame 15 { x: 266; y: 228.8; scale-x: 1.07; scale-y: 1.07; cel: 0; image: IMAGE_REANIM_PLANTSHADOW2; }
         frame 16 { x: -10000; y: -10000; scale-x: -10000; scale-y: -10000; cel: -10000; image: none; }
     }
     Track {
@@ -153,7 +153,7 @@ export component Credits_AnyHour {
         frame-count: 30;
         frame 0 { cel: -1; }
         frame 1 { cel: -10000; }
-        frame 15 { x: 211; y: 239.199997; scale-x: 0.488999993; scale-y: 0.488999993; cel: 0; image: IMAGE_REANIM_PLANTSHADOW2; }
+        frame 15 { x: 211; y: 239.2; scale-x: 0.489; scale-y: 0.489; cel: 0; image: IMAGE_REANIM_PLANTSHADOW2; }
         frame 16 { x: -10000; y: -10000; scale-x: -10000; scale-y: -10000; cel: -10000; image: none; }
     }
     Track {
@@ -177,7 +177,7 @@ export component Credits_AnyHour {
         frame-count: 30;
         frame 0 { cel: -1; }
         frame 1 { cel: -10000; }
-        frame 15 { x: 106; y: 328.799988; scale-x: 1.07000005; scale-y: 1.07000005; cel: 0; image: IMAGE_REANIM_PLANTSHADOW2; }
+        frame 15 { x: 106; y: 328.8; scale-x: 1.07; scale-y: 1.07; cel: 0; image: IMAGE_REANIM_PLANTSHADOW2; }
         frame 16 { x: -10000; y: -10000; scale-x: -10000; scale-y: -10000; cel: -10000; image: none; }
     }
     Track {
@@ -193,7 +193,7 @@ export component Credits_AnyHour {
         frame-count: 30;
         frame 0 { cel: -1; }
         frame 1 { cel: -10000; }
-        frame 15 { x: 291; y: 439.200012; scale-x: 0.488999993; scale-y: 0.488999993; cel: 0; image: IMAGE_REANIM_PLANTSHADOW2; }
+        frame 15 { x: 291; y: 439.2; scale-x: 0.489; scale-y: 0.489; cel: 0; image: IMAGE_REANIM_PLANTSHADOW2; }
         frame 16 { x: -10000; y: -10000; scale-x: -10000; scale-y: -10000; cel: -10000; image: none; }
     }
     Track {
@@ -201,7 +201,7 @@ export component Credits_AnyHour {
         frame-count: 30;
         frame 0 { cel: -1; }
         frame 1 { cel: -10000; }
-        frame 15 { x: 208.100006; y: 438; scale-x: 0.555999994; scale-y: 0.555999994; cel: 0; image: IMAGE_REANIM_PLANTSHADOW2; }
+        frame 15 { x: 208.1; y: 438; scale-x: 0.556; scale-y: 0.556; cel: 0; image: IMAGE_REANIM_PLANTSHADOW2; }
         frame 16 { x: -10000; y: -10000; scale-x: -10000; scale-y: -10000; cel: -10000; image: none; }
     }
     Track {
@@ -217,7 +217,7 @@ export component Credits_AnyHour {
         frame-count: 30;
         frame 0 { cel: -1; }
         frame 1 { cel: -10000; }
-        frame 15 { x: 265; y: 528.299988; scale-x: 1.09300005; scale-y: 1.09300005; cel: 0; image: IMAGE_REANIM_PLANTSHADOW2; }
+        frame 15 { x: 265; y: 528.3; scale-x: 1.093; scale-y: 1.093; cel: 0; image: IMAGE_REANIM_PLANTSHADOW2; }
         frame 16 { x: -10000; y: -10000; scale-x: -10000; scale-y: -10000; cel: -10000; image: none; }
     }
     Track {
@@ -241,7 +241,7 @@ export component Credits_AnyHour {
         frame-count: 30;
         frame 0 { cel: -1; }
         frame 1 { cel: -10000; }
-        frame 15 { x: 350.399994; y: 80; scale-x: 1.00100005; scale-y: 1.00100005; cel: 0; text: "attacher__Fumeshroom__anim_idle"; }
+        frame 15 { x: 350.4; y: 80; scale-x: 1.001; scale-y: 1.001; cel: 0; text: "attacher__Fumeshroom__anim_idle"; }
         frame 16 { x: -10000; y: -10000; scale-x: -10000; scale-y: -10000; cel: -10000; text: ""; }
     }
     Track {
@@ -249,7 +249,7 @@ export component Credits_AnyHour {
         frame-count: 30;
         frame 0 { cel: -1; }
         frame 1 { cel: -10000; }
-        frame 15 { x: 272; y: 180; scale-x: 1.00100005; scale-y: 1.00100005; cel: 0; text: "attacher__Fumeshroom__anim_idle"; }
+        frame 15 { x: 272; y: 180; scale-x: 1.001; scale-y: 1.001; cel: 0; text: "attacher__Fumeshroom__anim_idle"; }
         frame 16 { x: -10000; y: -10000; scale-x: -10000; scale-y: -10000; cel: -10000; text: ""; }
     }
     Track {
@@ -257,7 +257,7 @@ export component Credits_AnyHour {
         frame-count: 30;
         frame 0 { cel: -1; }
         frame 1 { cel: -10000; }
-        frame 15 { x: 112.400002; y: 279.700012; skew-x: 0.600000024; skew-y: 0.600000024; scale-x: 1.00100005; scale-y: 1.00100005; cel: 0; text: "attacher__Fumeshroom__anim_idle"; }
+        frame 15 { x: 112.4; y: 279.7; skew-x: 0.6; skew-y: 0.6; scale-x: 1.001; scale-y: 1.001; cel: 0; text: "attacher__Fumeshroom__anim_idle"; }
         frame 16 { x: -10000; y: -10000; skew-x: -10000; skew-y: -10000; scale-x: -10000; scale-y: -10000; cel: -10000; text: ""; }
     }
     Track {
@@ -265,7 +265,7 @@ export component Credits_AnyHour {
         frame-count: 30;
         frame 0 { cel: -1; }
         frame 1 { cel: -10000; }
-        frame 15 { x: 272; y: 480; scale-x: 1.00100005; scale-y: 1.00100005; cel: 0; text: "attacher__Fumeshroom__anim_idle"; }
+        frame 15 { x: 272; y: 480; scale-x: 1.001; scale-y: 1.001; cel: 0; text: "attacher__Fumeshroom__anim_idle"; }
         frame 16 { x: -10000; y: -10000; scale-x: -10000; scale-y: -10000; cel: -10000; text: ""; }
     }
     Track {
@@ -273,7 +273,7 @@ export component Credits_AnyHour {
         frame-count: 30;
         frame 0 { cel: -1; }
         frame 1 { cel: -10000; }
-        frame 15 { x: 274.399994; y: 89.4000015; cel: 0; text: "attacher__Puffshroom__anim_idle"; }
+        frame 15 { x: 274.4; y: 89.4; cel: 0; text: "attacher__Puffshroom__anim_idle"; }
         frame 16 { x: -10000; y: -10000; cel: -10000; text: ""; }
     }
     Track {
@@ -281,7 +281,7 @@ export component Credits_AnyHour {
         frame-count: 30;
         frame 0 { cel: -1; }
         frame 1 { cel: -10000; }
-        frame 15 { x: 192.399994; y: 89.4000015; cel: 0; text: "attacher__Puffshroom__anim_idle"; }
+        frame 15 { x: 192.4; y: 89.4; cel: 0; text: "attacher__Puffshroom__anim_idle"; }
         frame 16 { x: -10000; y: -10000; cel: -10000; text: ""; }
     }
     Track {
@@ -289,7 +289,7 @@ export component Credits_AnyHour {
         frame-count: 30;
         frame 0 { cel: -1; }
         frame 1 { cel: -10000; }
-        frame 15 { x: 272.399994; y: 289.399994; cel: 0; text: "attacher__Puffshroom__anim_idle"; }
+        frame 15 { x: 272.4; y: 289.4; cel: 0; text: "attacher__Puffshroom__anim_idle"; }
         frame 16 { x: -10000; y: -10000; cel: -10000; text: ""; }
     }
     Track {
@@ -297,7 +297,7 @@ export component Credits_AnyHour {
         frame-count: 30;
         frame 0 { cel: -1; }
         frame 1 { cel: -10000; }
-        frame 15 { x: 192.399994; y: 188.399994; cel: 0; text: "attacher__Puffshroom__anim_idle"; }
+        frame 15 { x: 192.4; y: 188.4; cel: 0; text: "attacher__Puffshroom__anim_idle"; }
         frame 16 { x: -10000; y: -10000; cel: -10000; text: ""; }
     }
     Track {
@@ -305,7 +305,7 @@ export component Credits_AnyHour {
         frame-count: 30;
         frame 0 { cel: -1; }
         frame 1 { cel: -10000; }
-        frame 15 { x: 112.300003; y: 89.4000015; cel: 0; text: "attacher__Puffshroom__anim_idle"; }
+        frame 15 { x: 112.3; y: 89.4; cel: 0; text: "attacher__Puffshroom__anim_idle"; }
         frame 16 { x: -10000; y: -10000; cel: -10000; text: ""; }
     }
     Track {
@@ -313,7 +313,7 @@ export component Credits_AnyHour {
         frame-count: 30;
         frame 0 { cel: -1; }
         frame 1 { cel: -10000; }
-        frame 15 { x: 192.300003; y: 389.399994; cel: 0; text: "attacher__Puffshroom__anim_idle"; }
+        frame 15 { x: 192.3; y: 389.4; cel: 0; text: "attacher__Puffshroom__anim_idle"; }
         frame 16 { x: -10000; y: -10000; cel: -10000; text: ""; }
     }
     Track {
@@ -321,7 +321,7 @@ export component Credits_AnyHour {
         frame-count: 30;
         frame 0 { cel: -1; }
         frame 1 { cel: -10000; }
-        frame 15 { x: 272.299988; y: 388.399994; cel: 0; text: "attacher__Puffshroom__anim_idle"; }
+        frame 15 { x: 272.3; y: 388.4; cel: 0; text: "attacher__Puffshroom__anim_idle"; }
         frame 16 { x: -10000; y: -10000; cel: -10000; text: ""; }
     }
     Track {
@@ -329,7 +329,7 @@ export component Credits_AnyHour {
         frame-count: 30;
         frame 0 { cel: -1; }
         frame 1 { cel: -10000; }
-        frame 15 { x: 112.300003; y: 488.399994; cel: 0; text: "attacher__Puffshroom__anim_idle"; }
+        frame 15 { x: 112.3; y: 488.4; cel: 0; text: "attacher__Puffshroom__anim_idle"; }
         frame 16 { x: -10000; y: -10000; cel: -10000; text: ""; }
     }
     Track {
@@ -337,7 +337,7 @@ export component Credits_AnyHour {
         frame-count: 30;
         frame 0 { cel: -1; }
         frame 1 { cel: -10000; }
-        frame 15 { x: 31.3999996; y: 87.4000015; cel: 0; text: "attacher__Sunshroom__anim_idle"; }
+        frame 15 { x: 31.4; y: 87.4; cel: 0; text: "attacher__Sunshroom__anim_idle"; }
         frame 16 { x: -10000; y: -10000; cel: -10000; text: ""; }
     }
     Track {
@@ -345,7 +345,7 @@ export component Credits_AnyHour {
         frame-count: 30;
         frame 0 { cel: -1; }
         frame 1 { cel: -10000; }
-        frame 15 { x: 31.3999996; y: 187.399994; cel: 0; text: "attacher__Sunshroom__anim_idle"; }
+        frame 15 { x: 31.4; y: 187.4; cel: 0; text: "attacher__Sunshroom__anim_idle"; }
         frame 16 { x: -10000; y: -10000; cel: -10000; text: ""; }
     }
     Track {
@@ -353,7 +353,7 @@ export component Credits_AnyHour {
         frame-count: 30;
         frame 0 { cel: -1; }
         frame 1 { cel: -10000; }
-        frame 15 { x: 31.3999996; y: 287.399994; cel: 0; text: "attacher__Sunshroom__anim_idle"; }
+        frame 15 { x: 31.4; y: 287.4; cel: 0; text: "attacher__Sunshroom__anim_idle"; }
         frame 16 { x: -10000; y: -10000; cel: -10000; text: ""; }
     }
     Track {
@@ -361,7 +361,7 @@ export component Credits_AnyHour {
         frame-count: 30;
         frame 0 { cel: -1; }
         frame 1 { cel: -10000; }
-        frame 15 { x: 31.3999996; y: 386.399994; cel: 0; text: "attacher__Sunshroom__anim_idle"; }
+        frame 15 { x: 31.4; y: 386.4; cel: 0; text: "attacher__Sunshroom__anim_idle"; }
         frame 16 { x: -10000; y: -10000; cel: -10000; text: ""; }
     }
     Track {
@@ -369,13 +369,13 @@ export component Credits_AnyHour {
         frame-count: 30;
         frame 0 { cel: -1; }
         frame 1 { cel: -10000; }
-        frame 15 { x: 30.3999996; y: 487.399994; cel: 0; text: "attacher__Sunshroom__anim_idle"; }
+        frame 15 { x: 30.4; y: 487.4; cel: 0; text: "attacher__Sunshroom__anim_idle"; }
         frame 16 { x: -10000; y: -10000; cel: -10000; text: ""; }
     }
     Track {
         source-name: "attacher__Plants1";
         frame-count: 30;
-        frame 0 { x: 425.700012; y: 130; scale-x: 1.20000005; scale-y: 1.20000005; image: IMAGE_REANIM_PLANTSHADOW; }
+        frame 0 { x: 425.7; y: 130; scale-x: 1.2; scale-y: 1.2; image: IMAGE_REANIM_PLANTSHADOW; }
         frame 1 { x: -10000; y: -10000; scale-x: -10000; scale-y: -10000; image: none; }
         frame 16 { alpha: 0.75; }
         frame 17 { alpha: 0.5; }
@@ -387,7 +387,7 @@ export component Credits_AnyHour {
     Track {
         source-name: "attacher__Plants12";
         frame-count: 30;
-        frame 0 { x: 436.399994; y: 80; scale-x: 1.00100005; scale-y: 1.00100005; text: "attacher__Tallnut__anim_idle"; }
+        frame 0 { x: 436.4; y: 80; scale-x: 1.001; scale-y: 1.001; text: "attacher__Tallnut__anim_idle"; }
         frame 1 { x: -10000; y: -10000; scale-x: -10000; scale-y: -10000; text: ""; }
         frame 16 { alpha: 0.75; }
         frame 17 { alpha: 0.5; }
@@ -399,7 +399,7 @@ export component Credits_AnyHour {
     Track {
         source-name: "attacher__Plants13";
         frame-count: 30;
-        frame 0 { x: 424.799988; y: 230; scale-x: 1.20000005; scale-y: 1.20000005; image: IMAGE_REANIM_PLANTSHADOW; }
+        frame 0 { x: 424.8; y: 230; scale-x: 1.2; scale-y: 1.2; image: IMAGE_REANIM_PLANTSHADOW; }
         frame 1 { x: -10000; y: -10000; scale-x: -10000; scale-y: -10000; image: none; }
         frame 16 { alpha: 0.75; }
         frame 17 { alpha: 0.5; }
@@ -411,7 +411,7 @@ export component Credits_AnyHour {
     Track {
         source-name: "attacher__Plants14";
         frame-count: 30;
-        frame 0 { x: 436.399994; y: 180; scale-x: 1.00100005; scale-y: 1.00100005; text: "attacher__Tallnut__anim_idle"; }
+        frame 0 { x: 436.4; y: 180; scale-x: 1.001; scale-y: 1.001; text: "attacher__Tallnut__anim_idle"; }
         frame 1 { x: -10000; y: -10000; scale-x: -10000; scale-y: -10000; text: ""; }
         frame 16 { alpha: 0.75; }
         frame 17 { alpha: 0.5; }
@@ -423,7 +423,7 @@ export component Credits_AnyHour {
     Track {
         source-name: "attacher__Plants15";
         frame-count: 30;
-        frame 0 { x: 426.799988; y: 330; scale-x: 1.20000005; scale-y: 1.20000005; image: IMAGE_REANIM_PLANTSHADOW; }
+        frame 0 { x: 426.8; y: 330; scale-x: 1.2; scale-y: 1.2; image: IMAGE_REANIM_PLANTSHADOW; }
         frame 1 { x: -10000; y: -10000; scale-x: -10000; scale-y: -10000; image: none; }
         frame 16 { alpha: 0.75; }
         frame 17 { alpha: 0.5; }
@@ -435,7 +435,7 @@ export component Credits_AnyHour {
     Track {
         source-name: "attacher__Plants16";
         frame-count: 30;
-        frame 0 { x: 438.399994; y: 280; scale-x: 1.00100005; scale-y: 1.00100005; text: "attacher__Tallnut__anim_idle"; }
+        frame 0 { x: 438.4; y: 280; scale-x: 1.001; scale-y: 1.001; text: "attacher__Tallnut__anim_idle"; }
         frame 1 { x: -10000; y: -10000; scale-x: -10000; scale-y: -10000; text: ""; }
         frame 16 { alpha: 0.75; }
         frame 17 { alpha: 0.5; }
@@ -447,7 +447,7 @@ export component Credits_AnyHour {
     Track {
         source-name: "attacher__Plants17";
         frame-count: 30;
-        frame 0 { x: 426.799988; y: 430; scale-x: 1.20000005; scale-y: 1.20000005; image: IMAGE_REANIM_PLANTSHADOW; }
+        frame 0 { x: 426.8; y: 430; scale-x: 1.2; scale-y: 1.2; image: IMAGE_REANIM_PLANTSHADOW; }
         frame 1 { x: -10000; y: -10000; scale-x: -10000; scale-y: -10000; image: none; }
         frame 16 { alpha: 0.75; }
         frame 17 { alpha: 0.5; }
@@ -459,7 +459,7 @@ export component Credits_AnyHour {
     Track {
         source-name: "attacher__Plants18";
         frame-count: 30;
-        frame 0 { x: 438.399994; y: 380; scale-x: 1.00100005; scale-y: 1.00100005; text: "attacher__Tallnut__anim_idle"; }
+        frame 0 { x: 438.4; y: 380; scale-x: 1.001; scale-y: 1.001; text: "attacher__Tallnut__anim_idle"; }
         frame 1 { x: -10000; y: -10000; scale-x: -10000; scale-y: -10000; text: ""; }
         frame 16 { alpha: 0.75; }
         frame 17 { alpha: 0.5; }
@@ -471,7 +471,7 @@ export component Credits_AnyHour {
     Track {
         source-name: "attacher__Plants19";
         frame-count: 30;
-        frame 0 { x: 426.799988; y: 530; scale-x: 1.20000005; scale-y: 1.20000005; image: IMAGE_REANIM_PLANTSHADOW; }
+        frame 0 { x: 426.8; y: 530; scale-x: 1.2; scale-y: 1.2; image: IMAGE_REANIM_PLANTSHADOW; }
         frame 1 { x: -10000; y: -10000; scale-x: -10000; scale-y: -10000; image: none; }
         frame 16 { alpha: 0.75; }
         frame 17 { alpha: 0.5; }
@@ -483,7 +483,7 @@ export component Credits_AnyHour {
     Track {
         source-name: "attacher__Plants110";
         frame-count: 30;
-        frame 0 { x: 438.399994; y: 480; scale-x: 1.00100005; scale-y: 1.00100005; text: "attacher__Tallnut__anim_idle"; }
+        frame 0 { x: 438.4; y: 480; scale-x: 1.001; scale-y: 1.001; text: "attacher__Tallnut__anim_idle"; }
         frame 1 { x: -10000; y: -10000; scale-x: -10000; scale-y: -10000; text: ""; }
         frame 16 { alpha: 0.75; }
         frame 17 { alpha: 0.5; }
@@ -699,7 +699,7 @@ export component Credits_AnyHour {
     Track {
         source-name: "attacher__Plants128";
         frame-count: 30;
-        frame 0 { x: 352; y: 80; scale-x: 1.00100005; scale-y: 1.00100005; text: "attacher__Snowpea__anim_full_idle"; }
+        frame 0 { x: 352; y: 80; scale-x: 1.001; scale-y: 1.001; text: "attacher__Snowpea__anim_full_idle"; }
         frame 1 { x: -10000; y: -10000; scale-x: -10000; scale-y: -10000; text: ""; }
         frame 16 { alpha: 0.75; }
         frame 17 { alpha: 0.5; }
@@ -711,7 +711,7 @@ export component Credits_AnyHour {
     Track {
         source-name: "attacher__Plants129";
         frame-count: 30;
-        frame 0 { x: 273; y: 180; scale-x: 1.00100005; scale-y: 1.00100005; text: "attacher__Snowpea__anim_full_idle"; }
+        frame 0 { x: 273; y: 180; scale-x: 1.001; scale-y: 1.001; text: "attacher__Snowpea__anim_full_idle"; }
         frame 1 { x: -10000; y: -10000; scale-x: -10000; scale-y: -10000; text: ""; }
         frame 16 { alpha: 0.75; }
         frame 17 { alpha: 0.5; }
@@ -723,7 +723,7 @@ export component Credits_AnyHour {
     Track {
         source-name: "attacher__Plants130";
         frame-count: 30;
-        frame 0 { x: 112; y: 280; scale-x: 1.00100005; scale-y: 1.00100005; text: "attacher__Snowpea__anim_full_idle"; }
+        frame 0 { x: 112; y: 280; scale-x: 1.001; scale-y: 1.001; text: "attacher__Snowpea__anim_full_idle"; }
         frame 1 { x: -10000; y: -10000; scale-x: -10000; scale-y: -10000; text: ""; }
         frame 16 { alpha: 0.75; }
         frame 17 { alpha: 0.5; }
@@ -735,7 +735,7 @@ export component Credits_AnyHour {
     Track {
         source-name: "attacher__Plants131";
         frame-count: 30;
-        frame 0 { x: 272; y: 480; scale-x: 1.00100005; scale-y: 1.00100005; text: "attacher__Snowpea__anim_full_idle"; }
+        frame 0 { x: 272; y: 480; scale-x: 1.001; scale-y: 1.001; text: "attacher__Snowpea__anim_full_idle"; }
         frame 1 { x: -10000; y: -10000; scale-x: -10000; scale-y: -10000; text: ""; }
         frame 16 { alpha: 0.75; }
         frame 17 { alpha: 0.5; }
@@ -747,7 +747,7 @@ export component Credits_AnyHour {
     Track {
         source-name: "attacher__Plants132";
         frame-count: 30;
-        frame 0 { x: 273.399994; y: 80; scale-x: 1.00100005; scale-y: 1.00100005; text: "attacher__Peashooter__anim_full_idle"; }
+        frame 0 { x: 273.4; y: 80; scale-x: 1.001; scale-y: 1.001; text: "attacher__Peashooter__anim_full_idle"; }
         frame 1 { x: -10000; y: -10000; scale-x: -10000; scale-y: -10000; text: ""; }
         frame 16 { alpha: 0.75; }
         frame 17 { alpha: 0.5; }
@@ -759,7 +759,7 @@ export component Credits_AnyHour {
     Track {
         source-name: "attacher__Plants133";
         frame-count: 30;
-        frame 0 { x: 193.399994; y: 80; scale-x: 1.00100005; scale-y: 1.00100005; text: "attacher__Peashooter__anim_full_idle"; }
+        frame 0 { x: 193.4; y: 80; scale-x: 1.001; scale-y: 1.001; text: "attacher__Peashooter__anim_full_idle"; }
         frame 1 { x: -10000; y: -10000; scale-x: -10000; scale-y: -10000; text: ""; }
         frame 16 { alpha: 0.75; }
         frame 17 { alpha: 0.5; }
@@ -771,7 +771,7 @@ export component Credits_AnyHour {
     Track {
         source-name: "attacher__Plants134";
         frame-count: 30;
-        frame 0 { x: 112.400002; y: 80; scale-x: 1.00100005; scale-y: 1.00100005; text: "attacher__Peashooter__anim_full_idle"; }
+        frame 0 { x: 112.4; y: 80; scale-x: 1.001; scale-y: 1.001; text: "attacher__Peashooter__anim_full_idle"; }
         frame 1 { x: -10000; y: -10000; scale-x: -10000; scale-y: -10000; text: ""; }
         frame 16 { alpha: 0.75; }
         frame 17 { alpha: 0.5; }
@@ -783,7 +783,7 @@ export component Credits_AnyHour {
     Track {
         source-name: "attacher__Plants135";
         frame-count: 30;
-        frame 0 { x: 192; y: 180; scale-x: 1.00100005; scale-y: 1.00100005; text: "attacher__Peashooter__anim_full_idle"; }
+        frame 0 { x: 192; y: 180; scale-x: 1.001; scale-y: 1.001; text: "attacher__Peashooter__anim_full_idle"; }
         frame 1 { x: -10000; y: -10000; scale-x: -10000; scale-y: -10000; text: ""; }
         frame 16 { alpha: 0.75; }
         frame 17 { alpha: 0.5; }
@@ -795,7 +795,7 @@ export component Credits_AnyHour {
     Track {
         source-name: "attacher__Plants136";
         frame-count: 30;
-        frame 0 { x: 272; y: 280; scale-x: 1.00100005; scale-y: 1.00100005; text: "attacher__Peashooter__anim_full_idle"; }
+        frame 0 { x: 272; y: 280; scale-x: 1.001; scale-y: 1.001; text: "attacher__Peashooter__anim_full_idle"; }
         frame 1 { x: -10000; y: -10000; scale-x: -10000; scale-y: -10000; text: ""; }
         frame 16 { alpha: 0.75; }
         frame 17 { alpha: 0.5; }
@@ -807,7 +807,7 @@ export component Credits_AnyHour {
     Track {
         source-name: "attacher__Plants137";
         frame-count: 30;
-        frame 0 { x: 274; y: 380; scale-x: 1.00100005; scale-y: 1.00100005; text: "attacher__Peashooter__anim_full_idle"; }
+        frame 0 { x: 274; y: 380; scale-x: 1.001; scale-y: 1.001; text: "attacher__Peashooter__anim_full_idle"; }
         frame 1 { x: -10000; y: -10000; scale-x: -10000; scale-y: -10000; text: ""; }
         frame 16 { alpha: 0.75; }
         frame 17 { alpha: 0.5; }
@@ -819,7 +819,7 @@ export component Credits_AnyHour {
     Track {
         source-name: "attacher__Plants138";
         frame-count: 30;
-        frame 0 { x: 192; y: 380; scale-x: 1.00100005; scale-y: 1.00100005; text: "attacher__Peashooter__anim_full_idle"; }
+        frame 0 { x: 192; y: 380; scale-x: 1.001; scale-y: 1.001; text: "attacher__Peashooter__anim_full_idle"; }
         frame 1 { x: -10000; y: -10000; scale-x: -10000; scale-y: -10000; text: ""; }
         frame 16 { alpha: 0.75; }
         frame 17 { alpha: 0.5; }
@@ -831,7 +831,7 @@ export component Credits_AnyHour {
     Track {
         source-name: "attacher__Plants139";
         frame-count: 30;
-        frame 0 { x: 113; y: 480; scale-x: 1.00100005; scale-y: 1.00100005; text: "attacher__Peashooter__anim_full_idle"; }
+        frame 0 { x: 113; y: 480; scale-x: 1.001; scale-y: 1.001; text: "attacher__Peashooter__anim_full_idle"; }
         frame 1 { x: -10000; y: -10000; scale-x: -10000; scale-y: -10000; text: ""; }
         frame 16 { alpha: 0.75; }
         frame 17 { alpha: 0.5; }
@@ -843,7 +843,7 @@ export component Credits_AnyHour {
     Track {
         source-name: "attacher__Plants140";
         frame-count: 30;
-        frame 0 { x: 30.3999996; y: 80; scale-x: 1.00100005; scale-y: 1.00100005; text: "attacher__Cornpult__anim_full_idle"; }
+        frame 0 { x: 30.4; y: 80; scale-x: 1.001; scale-y: 1.001; text: "attacher__Cornpult__anim_full_idle"; }
         frame 1 { x: -10000; y: -10000; scale-x: -10000; scale-y: -10000; text: ""; }
         frame 16 { alpha: 0.75; }
         frame 17 { alpha: 0.5; }
@@ -855,7 +855,7 @@ export component Credits_AnyHour {
     Track {
         source-name: "attacher__Plants141";
         frame-count: 30;
-        frame 0 { x: 32; y: 180; scale-x: 1.00100005; scale-y: 1.00100005; text: "attacher__Cornpult__anim_full_idle"; }
+        frame 0 { x: 32; y: 180; scale-x: 1.001; scale-y: 1.001; text: "attacher__Cornpult__anim_full_idle"; }
         frame 1 { x: -10000; y: -10000; scale-x: -10000; scale-y: -10000; text: ""; }
         frame 16 { alpha: 0.75; }
         frame 17 { alpha: 0.5; }
@@ -867,7 +867,7 @@ export component Credits_AnyHour {
     Track {
         source-name: "attacher__Plants142";
         frame-count: 30;
-        frame 0 { x: 32; y: 280; scale-x: 1.00100005; scale-y: 1.00100005; text: "attacher__Cornpult__anim_full_idle"; }
+        frame 0 { x: 32; y: 280; scale-x: 1.001; scale-y: 1.001; text: "attacher__Cornpult__anim_full_idle"; }
         frame 1 { x: -10000; y: -10000; scale-x: -10000; scale-y: -10000; text: ""; }
         frame 16 { alpha: 0.75; }
         frame 17 { alpha: 0.5; }
@@ -879,7 +879,7 @@ export component Credits_AnyHour {
     Track {
         source-name: "attacher__Plants143";
         frame-count: 30;
-        frame 0 { x: 32; y: 380; scale-x: 1.00100005; scale-y: 1.00100005; text: "attacher__Cornpult__anim_full_idle"; }
+        frame 0 { x: 32; y: 380; scale-x: 1.001; scale-y: 1.001; text: "attacher__Cornpult__anim_full_idle"; }
         frame 1 { x: -10000; y: -10000; scale-x: -10000; scale-y: -10000; text: ""; }
         frame 16 { alpha: 0.75; }
         frame 17 { alpha: 0.5; }
@@ -891,7 +891,7 @@ export component Credits_AnyHour {
     Track {
         source-name: "attacher__Plants144";
         frame-count: 30;
-        frame 0 { x: 32; y: 480; scale-x: 1.00100005; scale-y: 1.00100005; text: "attacher__Cornpult__anim_full_idle"; }
+        frame 0 { x: 32; y: 480; scale-x: 1.001; scale-y: 1.001; text: "attacher__Cornpult__anim_full_idle"; }
         frame 1 { x: -10000; y: -10000; scale-x: -10000; scale-y: -10000; text: ""; }
         frame 16 { alpha: 0.75; }
         frame 17 { alpha: 0.5; }

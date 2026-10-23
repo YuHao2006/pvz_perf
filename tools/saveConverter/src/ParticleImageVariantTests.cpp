@@ -28,7 +28,7 @@ void ReplacePool(Document& document, std::size_t index, std::size_t count)
     for (std::size_t i = 0; i < count; ++i)
         pool.mSlots.push_back({
             std::vector<Byte>(LevelSaveFormat::GetRecordLayout(pool.mKind).mDat64Size, 0),
-            0x10000U + static_cast<std::uint32_t>(i)});
+            {}, {}, 0x10000U + static_cast<std::uint32_t>(i)});
 }
 
 Document WithParticles(Document document, const ParticleImageVariant& entry)

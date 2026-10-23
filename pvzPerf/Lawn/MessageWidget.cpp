@@ -298,11 +298,13 @@ void MessageWidget::Update()
 		{
 			if (mReanimType == ReanimationType::REANIM_TEXT_FADE_ON)
 			{
-				aTextReanim->mAnimRate = 60.0f;
+				aTextReanim->ApplyRate(60.0f);
 			}
 			else
 			{
-				aTextReanim->mAnimRate = TodAnimateCurveFloat(0, 50, (mDisplayTime - mDuration) * aTextSpeed - aPos, 0.0f, 40.0f, Curves::Linear);
+				aTextReanim->ApplyRate(TodAnimateCurveNs(0, 500'000'000,
+					(mDisplayTime.mNanoseconds - mDuration.mNanoseconds) * aTextSpeed -
+						std::int64_t(aPos) * 10'000'000, 0.0f, 40.0f, Curves::Linear));
 			}
 		}
 		else
@@ -311,7 +313,9 @@ void MessageWidget::Update()
 			{
 				aTextReanim->PlayReanim(ReanimTrackId::anim_leave, ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD, 0, 0.0f);
 			}
-			aTextReanim->mAnimRate = TodAnimateCurveFloat(0, 50, (mSlideOffTime - mDuration) * aTextSpeed - aPos, 0.0f, 40.0f, Curves::Linear);
+			aTextReanim->ApplyRate(TodAnimateCurveNs(0, 500'000'000,
+				(mSlideOffTime.mNanoseconds - mDuration.mNanoseconds) * aTextSpeed -
+					std::int64_t(aPos) * 10'000'000, 0.0f, 40.0f, Curves::Linear));
 		}
 
 		aTextReanim->Update();  //更新动画
@@ -345,7 +349,7 @@ void MessageWidget::DrawReanimatedText(Graphics* g, _Font* theFont, const Color&
 		aTransform.mTransY += aTextReanim->mOverlayMatrix.m12 + thePosY - BOARD_HEIGHT / 2;
 		if (mReanimType == ReanimationType::REANIM_TEXT_FADE_ON && mDisplayTime - mDuration < mSlideOffTime)
 		{
-			float aStretch = 1.0f - aTextReanim->mAnimTime;
+			float aStretch = 1.0f - static_cast<float>(static_cast<double>(aTextReanim->SamplePlayback().clock) / (aTextReanim->mFrameCount * ReanimClock::Frame));
 			aTransform.mTransX += aStretch * aTextReanim->mOverlayMatrix.m02;
 		}
 
@@ -477,7 +481,9 @@ void MessageWidget::Draw(Graphics* g)
 
 		if (aMinAlpha != 255)
 		{
-			aColor.mAlpha = TodAnimateCurve(75, 0, mApp->mBoard->mMainCounter % 75, aMinAlpha, 255, Curves::BounceSlowMiddle);
+			aColor.mAlpha = TodAnimateCurveNs(750'000'000, 0,
+				static_cast<std::int64_t>(mApp->mBoard->mMainCounter.mNanoseconds % 750'000'000),
+				aMinAlpha, 255, Curves::BounceSlowMiddle);
 			aOutlineColor.mAlpha = aColor.mAlpha;
 		}
 		if (aFadeOut)

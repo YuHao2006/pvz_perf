@@ -676,6 +676,11 @@ void SyncBoard(SaveGameContext& theContext, Board* theBoard)
 
 	{
 		SyncDat64BoardState(theContext, *theBoard);
+		if (theContext.mFailed || theBoard->mMainCounter.mNanoseconds > std::uint64_t(INT64_MAX))
+		{
+			theContext.mFailed = true;
+			return;
+		}
 		SyncDat64DataArray(theContext, theBoard->mZombies);
 		SyncDat64DataArray(theContext, theBoard->mPlants);
 		SyncDat64DataArray(theContext, theBoard->mProjectiles);
@@ -803,6 +808,15 @@ void FixBoardAfterLoad(Board* theBoard)
 	theBoard->mChallenge->mBoard = theBoard;
 	theBoard->mApp->mMusic->mApp = theBoard->mApp;
 	theBoard->mApp->mMusic->mMusicInterface = theBoard->mApp->mMusicInterface;
+	if (theBoard->mMainCounter.mNanoseconds > std::uint64_t(INT64_MAX))
+		return; // A failed partial read must still leave owner pointers repaired.
+	auto& aHolder = *theBoard->mApp->mEffectSystem->mReanimationHolder;
+	aHolder.mBattleTimeNs = static_cast<std::int64_t>(theBoard->mMainCounter.mNanoseconds);
+	Reanimation* aReanimation = nullptr;
+	while (aHolder.mReanimations.IterateNext(aReanimation))
+		if (aReanimation->mDefinition && aReanimation->mReanimationHolder == &aHolder)
+			aReanimation->RebaseTime(aReanimation->mTimeDomain == ReanimTimeDomain::Battle
+				? aHolder.mBattleTimeNs : aHolder.mVisualTimeNs);
 }
 
 namespace

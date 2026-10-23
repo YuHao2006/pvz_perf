@@ -383,12 +383,12 @@ GameSelector::GameSelector(LawnApp* theApp)
 		mCloudCounter[i] = RandRangeInt(-6000, 2000);
 		if (mCloudCounter[i] < 0)
 		{
-			aCloudReanim->mAnimTime = -mCloudCounter[i] / 6000.0f;
-			aCloudReanim->mAnimRate = 0.5f;
+			aCloudReanim->Seek(-mCloudCounter[i], 6000);
+			aCloudReanim->ApplyRate(0.5f);
 			mCloudCounter[i] = 0;
 		}
 		else
-			aCloudReanim->mAnimRate = 0.0f;
+			aCloudReanim->ApplyRate(0.0f);
 	}
 
 	for (int i = 0; i < 3; i++)
@@ -397,7 +397,7 @@ GameSelector::GameSelector(LawnApp* theApp)
 		static constexpr ReanimTrackId aFlowerLayers[] = {
 			ReanimTrackId::anim_flower1, ReanimTrackId::anim_flower2, ReanimTrackId::anim_flower3};
 		aFlowerReanim->PlayReanim(aFlowerLayers[i], ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD, 0, 0.0f);
-		aFlowerReanim->mAnimRate = 0.0f;
+		aFlowerReanim->ApplyRate(0.0f);
 		aFlowerReanim->AttachToAnotherReanimation(aSelectorReanim, ReanimTrackId::SelectorScreen_BG_Right);
 		aFlowerReanim->mIsAttachment = false;
 		mFlowerReanimID[i] = mApp->ReanimationGetID(aFlowerReanim);
@@ -405,7 +405,7 @@ GameSelector::GameSelector(LawnApp* theApp)
 
 	Reanimation* aLeafReanim = mApp->AddReanimation(0.5f, 0.5f, 0, ReanimationType::REANIM_SELECTOR_SCREEN);
 	aLeafReanim->PlayReanim(ReanimTrackId::anim_grass, ReanimLoopType::REANIM_LOOP, 0, 6.0f);
-	aLeafReanim->mAnimRate = 0.0f;
+	aLeafReanim->ApplyRate(0.0f);
 	mLeafReanimID = mApp->ReanimationGetID(aLeafReanim);
 	mLeafCounter = 50;
 
@@ -946,8 +946,8 @@ void GameSelector::Update()
 	UpdateTooltip();
 
 	if (mSlideCounter > 0) {
-		int aNewX = TodAnimateCurve(75, 0, mSlideCounter, mStartX, mDestX, Curves::EaseInOut);
-		int aNewY = TodAnimateCurve(75, 0, mSlideCounter, mStartY, mDestY, Curves::EaseInOut);
+		int aNewX = TodAnimateCurveNs(750'000'000, 0, mSlideCounter.mNanoseconds, mStartX, mDestX, Curves::EaseInOut);
+		int aNewY = TodAnimateCurveNs(750'000'000, 0, mSlideCounter.mNanoseconds, mStartY, mDestY, Curves::EaseInOut);
 		Move(aNewX, aNewY);
 
 		mSlideCounter--;
@@ -1106,8 +1106,8 @@ void GameSelector::Update()
 			if (--mCloudCounter[i] == 0)
 			{
 				aCloudReanim->mLoopCount = 0;
-				aCloudReanim->mAnimTime = 0.0f;
-				aCloudReanim->mAnimRate = 0.5f;
+				aCloudReanim->Seek(0);
+				aCloudReanim->ApplyRate(0.5f);
 			}
 		}
 		else if (aCloudReanim->mLoopCount > 0)
@@ -1325,7 +1325,7 @@ void GameSelector::MouseDown(int x, int y, int theClickCount)
 		Reanimation* aFlowerReanim = mApp->ReanimationGet(mFlowerReanimID[i]);
 		if (aFlowerReanim->mAnimRate <= 0.0f && Distance2D(x, y, gFlowerCenter[i][0], gFlowerCenter[i][1]) < 20.0f)
 		{
-			aFlowerReanim->mAnimRate = 24.0f;
+			aFlowerReanim->ApplyRate(24.0f);
 			mApp->PlayFoley(FoleyType::FOLEY_LIMBS_POP);
 		}
 	}
@@ -1401,7 +1401,7 @@ void GameSelector::ClickedAdventure()
 	mAchievementsButton->SetDisabled(true);
 
 	Reanimation* aHandReanim = mApp->AddReanimation(-70.0f, 10.0f, 0, ReanimationType::REANIM_ZOMBIE_HAND);
-	aHandReanim->mLoopType = ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD;
+	aHandReanim->ChangeLoopType(ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD);
 	mHandReanimID = mApp->ReanimationGetID(aHandReanim);
 	mApp->PlayFoley(FoleyType::FOLEY_DIRT_RISE);
 	for (int i = 0; i < aHandReanim->mDefinition->mTracks.count; i++)

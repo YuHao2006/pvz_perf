@@ -4,73 +4,180 @@ export component ZombieRise {
     Emitter {
         image: "IMAGE_ZOMBIEARM";
         name: "ZombieArm";
+        imageFrames: 1;
+        animated: 0;
+        emitterType: Box;
         dieIfOverloaded: 1;
-        systemDuration: 200;
-        spawnMinActive: track { 1,1 0,40; }
-        emitterOffsetX: 10;
-        emitterOffsetY: -25;
-        particleDuration: range { 100 140; }
-        particleAlpha: track { 1,97 0; }
-        particleSpinAngle: 200;
-        clipTop: track { 1,20 0.3,22 0,80 1,85; }
+        systemDuration: nodes {
+            { time: 0; low: 200; high: 200; curve: Linear; distribution: Linear; }
+        }
+        spawnMinActive: nodes {
+            { time: 0.01; low: 1; high: 1; curve: Linear; distribution: Linear; }
+            { time: 0.4; low: 0; high: 0; curve: Linear; distribution: Linear; }
+        }
+        emitterOffsetX: nodes {
+            { time: 0; low: 10; high: 10; curve: Linear; distribution: Linear; }
+        }
+        emitterOffsetY: nodes {
+            { time: 0; low: -25; high: -25; curve: Linear; distribution: Linear; }
+        }
+        particleDuration: nodes {
+            { time: 0; low: 100; high: 140; curve: Linear; distribution: Linear; }
+        }
+        particleAlpha: nodes {
+            { time: 0.97; low: 1; high: 1; curve: Linear; distribution: Linear; }
+            { time: 1; low: 0; high: 0; curve: Linear; distribution: Linear; }
+        }
+        particleSpinAngle: nodes {
+            { time: 0; low: 200; high: 200; curve: Linear; distribution: Linear; }
+        }
+        clipTop: nodes {
+            { time: 0.2; low: 1; high: 1; curve: Linear; distribution: Linear; }
+            { time: 0.22; low: 0.3; high: 0.3; curve: Linear; distribution: Linear; }
+            { time: 0.8; low: 0; high: 0; curve: Linear; distribution: Linear; }
+            { time: 0.85; low: 1; high: 1; curve: Linear; distribution: Linear; }
+        }
         field {
             fieldType: Shake;
-            x: track { 2 0; }
-            y: track { 2 0; }
+            x: nodes {
+                { time: 0; low: 2; high: 2; curve: Linear; distribution: Linear; }
+                { time: 1; low: 0; high: 0; curve: Linear; distribution: Linear; }
+            }
+            y: nodes {
+                { time: 0; low: 2; high: 2; curve: Linear; distribution: Linear; }
+                { time: 1; low: 0; high: 0; curve: Linear; distribution: Linear; }
+            }
         }
         field {
             fieldType: Position;
-            x: 0;
-            y: track { -50,19 -10,22 -8,80 -30,90; }
+            x: nodes {
+                { time: 0; low: 0; high: 0; curve: Linear; distribution: Linear; }
+            }
+            y: nodes {
+                { time: 0.19; low: -50; high: -50; curve: Linear; distribution: Linear; }
+                { time: 0.22; low: -10; high: -10; curve: Linear; distribution: Linear; }
+                { time: 0.8; low: -8; high: -8; curve: Linear; distribution: Linear; }
+                { time: 0.9; low: -30; high: -30; curve: Linear; distribution: Linear; }
+            }
         }
     }
     Emitter {
         images: ["particles/frames/dirtsmall_r1_c0.png","particles/frames/dirtsmall_r1_c1.png","particles/frames/dirtsmall_r1_c2.png","particles/frames/dirtsmall_r1_c3.png","particles/frames/dirtsmall_r1_c4.png","particles/frames/dirtsmall_r1_c5.png","particles/frames/dirtsmall_r1_c6.png","particles/frames/dirtsmall_r1_c7.png"];
         name: "DirtSplash";
         imageFrames: 8;
+        animated: 0;
+        emitterType: Box;
         randomLaunchSpin: 1;
-        systemDuration: 200;
-        spawnRate: track { 50,70 0,90; }
-        spawnMaxActive: track { 0,0 10,40 100,50 0,90; }
-        emitterBoxX: range { -25 25; }
-        emitterBoxY: range { -30 0; }
-        particleDuration: range { 30 40; }
-        systemAlpha: track { 1,92 0; }
-        launchSpeed: track { [100 200] [100 200] [100 200]; }
-        launchAngle: range { 120 240; }
-        particleAlpha: track { 1,70 0; }
-        particleSpinSpeed: range { -1720 1720; }
-        particleScale: range { .7 .9; }
+        systemDuration: nodes {
+            { time: 0; low: 200; high: 200; curve: Linear; distribution: Linear; }
+        }
+        spawnRate: nodes {
+            { time: 0.7; low: 50; high: 50; curve: Linear; distribution: Linear; }
+            { time: 0.9; low: 0; high: 0; curve: Linear; distribution: Linear; }
+        }
+        spawnMaxActive: nodes {
+            { time: 0; low: 0; high: 0; curve: Linear; distribution: Linear; }
+            { time: 0.4; low: 10; high: 10; curve: Linear; distribution: Linear; }
+            { time: 0.5; low: 100; high: 100; curve: Linear; distribution: Linear; }
+            { time: 0.9; low: 0; high: 0; curve: Linear; distribution: Linear; }
+        }
+        emitterBoxX: nodes {
+            { time: 0; low: -25; high: 25; curve: Linear; distribution: Linear; }
+        }
+        emitterBoxY: nodes {
+            { time: 0; low: -30; high: 0; curve: Linear; distribution: Linear; }
+        }
+        particleDuration: nodes {
+            { time: 0; low: 30; high: 40; curve: Linear; distribution: Linear; }
+        }
+        systemGreen: nodes {
+            { time: 0.92; low: 1; high: 1; curve: Linear; distribution: Linear; }
+            { time: 1; low: 0; high: 0; curve: Linear; distribution: Linear; }
+        }
+        systemAlpha: nodes {
+            { time: 0; low: 100; high: 200; curve: Linear; distribution: Linear; }
+            { time: 0.5; low: 100; high: 200; curve: Linear; distribution: Linear; }
+            { time: 1; low: 100; high: 200; curve: Linear; distribution: Linear; }
+        }
+        systemBrightness: nodes {
+            { time: 0; low: 120; high: 240; curve: Linear; distribution: Linear; }
+        }
+        particleAlpha: nodes {
+            { time: 0.7; low: 1; high: 1; curve: Linear; distribution: Linear; }
+            { time: 1; low: 0; high: 0; curve: Linear; distribution: Linear; }
+        }
+        particleSpinSpeed: nodes {
+            { time: 0; low: -1720; high: 1720; curve: Linear; distribution: Linear; }
+        }
+        particleScale: nodes {
+            { time: 0; low: 0.7; high: 0.9; curve: Linear; distribution: Linear; }
+        }
         field {
             fieldType: Friction;
-            x: 0.02;
-            y: 0.02;
+            x: nodes {
+                { time: 0; low: 0.02; high: 0.02; curve: Linear; distribution: Linear; }
+            }
+            y: nodes {
+                { time: 0; low: 0.02; high: 0.02; curve: Linear; distribution: Linear; }
+            }
         }
         field {
             fieldType: Acceleration;
-            y: 5.0;
+            y: nodes {
+                { time: 0; low: 5; high: 5; curve: Linear; distribution: Linear; }
+            }
         }
     }
     Emitter {
         images: ["particles/frames/dirtbig_r1_c0.png","particles/frames/dirtbig_r1_c1.png","particles/frames/dirtbig_r1_c2.png","particles/frames/dirtbig_r1_c3.png"];
         name: "DirtClumps";
         imageFrames: 4;
-        systemDuration: 200;
-        spawnMinActive: 6;
-        emitterBoxX: range { 5 15; }
-        emitterBoxY: range { -18 -12; }
-        particleDuration: 200;
-        systemAlpha: track { 1,97 0; }
-        particleScale: track { 0,0 [.7 .9],10; }
+        animated: 0;
+        emitterType: Box;
+        systemDuration: nodes {
+            { time: 0; low: 200; high: 200; curve: Linear; distribution: Linear; }
+        }
+        spawnMinActive: nodes {
+            { time: 0; low: 6; high: 6; curve: Linear; distribution: Linear; }
+        }
+        emitterBoxX: nodes {
+            { time: 0; low: 5; high: 15; curve: Linear; distribution: Linear; }
+        }
+        emitterBoxY: nodes {
+            { time: 0; low: -18; high: -12; curve: Linear; distribution: Linear; }
+        }
+        particleDuration: nodes {
+            { time: 0; low: 200; high: 200; curve: Linear; distribution: Linear; }
+        }
+        systemGreen: nodes {
+            { time: 0.97; low: 1; high: 1; curve: Linear; distribution: Linear; }
+            { time: 1; low: 0; high: 0; curve: Linear; distribution: Linear; }
+        }
+        particleScale: nodes {
+            { time: 0; low: 0; high: 0; curve: Linear; distribution: Linear; }
+            { time: 0.1; low: 0.7; high: 0.9; curve: Linear; distribution: Linear; }
+        }
         field {
             fieldType: Position;
-            x: track { [-5 5] [-25 25],50; }
-            y: track { 0 [12 18],50; }
+            x: nodes {
+                { time: 0; low: -5; high: 5; curve: Linear; distribution: Linear; }
+                { time: 0.5; low: -25; high: 25; curve: Linear; distribution: Linear; }
+            }
+            y: nodes {
+                { time: 0; low: 0; high: 0; curve: Linear; distribution: Linear; }
+                { time: 0.5; low: 12; high: 18; curve: Linear; distribution: Linear; }
+            }
         }
         field {
             fieldType: Shake;
-            x: track { 2 0; }
-            y: track { 2 0; }
+            x: nodes {
+                { time: 0; low: 2; high: 2; curve: Linear; distribution: Linear; }
+                { time: 1; low: 0; high: 0; curve: Linear; distribution: Linear; }
+            }
+            y: nodes {
+                { time: 0; low: 2; high: 2; curve: Linear; distribution: Linear; }
+                { time: 1; low: 0; high: 0; curve: Linear; distribution: Linear; }
+            }
         }
     }
 }

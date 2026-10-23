@@ -134,8 +134,6 @@ visit(offsetof(Type, mChocolateCollected), 22640, 4, sizeof(Type::mChocolateColl
 if constexpr (std::is_same_v<Type, Zombie>) {
 visit(offsetof(Type, mZombieType), 48, 4, sizeof(Type::mZombieType));
 visit(offsetof(Type, mZombiePhase), 52, 4, sizeof(Type::mZombiePhase));
-visit(offsetof(Type, mPosX), 56, 4, sizeof(Type::mPosX));
-visit(offsetof(Type, mPosY), 60, 4, sizeof(Type::mPosY));
 visit(offsetof(Type, mVelX), 64, 4, sizeof(Type::mVelX));
 visit(offsetof(Type, mAnimCounter), 68, 4, sizeof(Type::mAnimCounter));
 visit(offsetof(Type, mGroanCounter), 72, 4, sizeof(Type::mGroanCounter));
@@ -225,7 +223,7 @@ visit(offsetof(Type, mSubclass), 84, 4, sizeof(Type::mSubclass));
 visit(offsetof(Type, mDisappearCountdown), 88, 4, sizeof(Type::mDisappearCountdown));
 visit(offsetof(Type, mDoSpecialCountdown), 92, 4, sizeof(Type::mDoSpecialCountdown));
 visit(offsetof(Type, mStateCountdown), 96, 4, sizeof(Type::mStateCountdown));
-visit(offsetof(Type, mLaunchCounter), 100, 4, sizeof(Type::mLaunchCounter));
+visit(offsetof(Type, mZenProductionCountdown), 100, 4, sizeof(Type::mZenProductionCountdown));
 visit(offsetof(Type, mLaunchRate), 104, 4, sizeof(Type::mLaunchRate));
 visit(offsetof(Type, mPlantRect), 108, 16, sizeof(Type::mPlantRect));
 visit(offsetof(Type, mPlantAttackRect), 124, 16, sizeof(Type::mPlantAttackRect));
@@ -261,9 +259,6 @@ visit(offsetof(Type, mIsOnBoard), 336, 1, sizeof(Type::mIsOnBoard));
 visit(offsetof(Type, mHighlighted), 337, 1, sizeof(Type::mHighlighted));
 }
 if constexpr (std::is_same_v<Type, Projectile>) {
-visit(offsetof(Type, mFrame), 48, 4, sizeof(Type::mFrame));
-visit(offsetof(Type, mNumFrames), 52, 4, sizeof(Type::mNumFrames));
-visit(offsetof(Type, mAnimCounter), 56, 4, sizeof(Type::mAnimCounter));
 visit(offsetof(Type, mPosX), 60, 4, sizeof(Type::mPosX));
 visit(offsetof(Type, mPosY), 64, 4, sizeof(Type::mPosY));
 visit(offsetof(Type, mPosZ), 68, 4, sizeof(Type::mPosZ));
@@ -273,11 +268,8 @@ visit(offsetof(Type, mVelZ), 80, 4, sizeof(Type::mVelZ));
 visit(offsetof(Type, mAccZ), 84, 4, sizeof(Type::mAccZ));
 visit(offsetof(Type, mShadowY), 88, 4, sizeof(Type::mShadowY));
 visit(offsetof(Type, mDead), 92, 1, sizeof(Type::mDead));
-visit(offsetof(Type, mAnimTicksPerFrame), 96, 4, sizeof(Type::mAnimTicksPerFrame));
 visit(offsetof(Type, mMotionType), 100, 4, sizeof(Type::mMotionType));
 visit(offsetof(Type, mProjectileType), 104, 4, sizeof(Type::mProjectileType));
-visit(offsetof(Type, mProjectileAge), 108, 4, sizeof(Type::mProjectileAge));
-visit(offsetof(Type, mClickBackoffCounter), 112, 4, sizeof(Type::mClickBackoffCounter));
 visit(offsetof(Type, mRotation), 116, 4, sizeof(Type::mRotation));
 visit(offsetof(Type, mRotationSpeed), 120, 4, sizeof(Type::mRotationSpeed));
 visit(offsetof(Type, mOnHighGround), 124, 1, sizeof(Type::mOnHighGround));
@@ -376,13 +368,10 @@ if constexpr (std::is_same_v<Type, TodParticleEmitter>) {
 visit(offsetof(Type, mEmitterDef), 0, 8, sizeof(Type::mEmitterDef));
 visit(offsetof(Type, mParticleSystem), 8, 8, sizeof(Type::mParticleSystem));
 visit(offsetof(Type, mParticleListPad), 16, 32, sizeof(Type::mParticleListPad));
-visit(offsetof(Type, mSpawnAccum), 48, 4, sizeof(Type::mSpawnAccum));
 visit(offsetof(Type, mSystemCenter), 52, 8, sizeof(Type::mSystemCenter));
 visit(offsetof(Type, mParticlesSpawned), 60, 4, sizeof(Type::mParticlesSpawned));
 visit(offsetof(Type, mSystemAge), 64, 4, sizeof(Type::mSystemAge));
 visit(offsetof(Type, mSystemDuration), 68, 4, sizeof(Type::mSystemDuration));
-visit(offsetof(Type, mSystemTimeValue), 72, 4, sizeof(Type::mSystemTimeValue));
-visit(offsetof(Type, mSystemLastTimeValue), 76, 4, sizeof(Type::mSystemLastTimeValue));
 visit(offsetof(Type, mDead), 80, 1, sizeof(Type::mDead));
 visit(offsetof(Type, mColorOverride), 84, 16, sizeof(Type::mColorOverride));
 visit(offsetof(Type, mExtraAdditiveDrawOverride), 100, 1, sizeof(Type::mExtraAdditiveDrawOverride));
@@ -398,9 +387,6 @@ if constexpr (std::is_same_v<Type, TodParticle>) {
 visit(offsetof(Type, mParticleEmitter), 0, 8, sizeof(Type::mParticleEmitter));
 visit(offsetof(Type, mParticleDuration), 8, 4, sizeof(Type::mParticleDuration));
 visit(offsetof(Type, mParticleAge), 12, 4, sizeof(Type::mParticleAge));
-visit(offsetof(Type, mParticleTimeValue), 16, 4, sizeof(Type::mParticleTimeValue));
-visit(offsetof(Type, mParticleLastTimeValue), 20, 4, sizeof(Type::mParticleLastTimeValue));
-visit(offsetof(Type, mAnimationTimeValue), 24, 4, sizeof(Type::mAnimationTimeValue));
 visit(offsetof(Type, mVelocity), 28, 8, sizeof(Type::mVelocity));
 visit(offsetof(Type, mPosition), 36, 8, sizeof(Type::mPosition));
 visit(offsetof(Type, mImageFrame), 44, 4, sizeof(Type::mImageFrame));
@@ -410,11 +396,9 @@ visit(offsetof(Type, mCrossFadeParticleID), 56, 4, sizeof(Type::mCrossFadePartic
 visit(offsetof(Type, mCrossFadeDuration), 60, 4, sizeof(Type::mCrossFadeDuration));
 visit(offsetof(Type, mParticleInterp), 64, 64, sizeof(Type::mParticleInterp));
 visit(offsetof(Type, mParticleFieldInterp), 128, 32, sizeof(Type::mParticleFieldInterp));
-visit(offsetof(Type, mParticleDurationInv), 160, 4, sizeof(Type::mParticleDurationInv));
 }
 if constexpr (std::is_same_v<Type, Reanimation>) {
 visit(offsetof(Type, mReanimationType), 0, 4, sizeof(Type::mReanimationType));
-visit(offsetof(Type, mAnimTime), 4, 4, sizeof(Type::mAnimTime));
 visit(offsetof(Type, mAnimRate), 8, 4, sizeof(Type::mAnimRate));
 visit(offsetof(Type, mVariant), 12, 4, sizeof(Type::mVariant));
 visit(offsetof(Type, mDefinition), 16, 8, sizeof(Type::mDefinition));
@@ -434,7 +418,6 @@ visit(offsetof(Type, mExtraAdditiveColor), 128, 16, sizeof(Type::mExtraAdditiveC
 visit(offsetof(Type, mEnableExtraAdditiveDraw), 144, 1, sizeof(Type::mEnableExtraAdditiveDraw));
 visit(offsetof(Type, mExtraOverlayColor), 148, 16, sizeof(Type::mExtraOverlayColor));
 visit(offsetof(Type, mEnableExtraOverlayDraw), 164, 1, sizeof(Type::mEnableExtraOverlayDraw));
-visit(offsetof(Type, mLastFrameTime), 168, 4, sizeof(Type::mLastFrameTime));
 visit(offsetof(Type, mFilterEffect), 172, 4, sizeof(Type::mFilterEffect));
 visit(offsetof(Type, mActiveMask), 176, 32, sizeof(Type::mActiveMask));
 visit(offsetof(Type, mGroupOccMask), 208, 4, sizeof(Type::mGroupOccMask));

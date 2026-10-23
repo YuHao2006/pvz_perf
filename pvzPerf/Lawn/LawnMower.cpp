@@ -42,8 +42,8 @@ void LawnMower::LawnMowerInitialize(int theRow)
     }
 
     Reanimation* aMowerReanim = mApp->AddReanimation(0.0f, 18.0f, mRenderOrder, aReanimType);
-    aMowerReanim->mAnimRate = 0.0f;
-    aMowerReanim->mLoopType = ReanimLoopType::REANIM_LOOP;
+    aMowerReanim->ApplyRate(0.0f);
+    aMowerReanim->ChangeLoopType(ReanimLoopType::REANIM_LOOP);
     aMowerReanim->mIsAttachment = true;
     aMowerReanim->mOverlayMatrix.m00 = 0.85f;
     aMowerReanim->mOverlayMatrix.m11 = 0.85f;
@@ -212,7 +212,7 @@ void LawnMower::Update()
     if (mMowerState == LawnMowerState::MOWER_ROLLING_IN)
     {
         mRollingInCounter++;
-        mPosX = TodAnimateCurveFloat(0, 100, mRollingInCounter, -160.0f, -21.0f, Curves::EaseInOut);
+        mPosX = TodAnimateCurveNs(0, 1'000'000'000, mRollingInCounter.mNanoseconds, -160.0f, -21.0f, Curves::EaseInOut);
         if (mRollingInCounter == 100)
         {
             mMowerState = LawnMowerState::MOWER_READY;
@@ -261,7 +261,7 @@ void LawnMower::Update()
     if (mChompCounter > 0)
     {
         mChompCounter--;
-        aSpeed = TodAnimateCurveFloat(50, 0, mChompCounter, aSpeed, 1.0f, Curves::BounceSlowMiddle);
+        aSpeed = TodAnimateCurveNs(500'000'000, 0, mChompCounter.mNanoseconds, aSpeed, 1.0f, Curves::BounceSlowMiddle);
     }
     mPosX += Sexy::UpdateDelta(aSpeed);
     mPosY = mBoard->GetPosYBasedOnRow(mPosX + 40.0f, mRow) + 23.0f;
@@ -408,12 +408,12 @@ void LawnMower::StartMower()
     Reanimation* aMowerReanim = mApp->ReanimationGet(mReanimID);
     if (mMowerType == LawnMowerType::LAWNMOWER_POOL)
     {
-        aMowerReanim->mAnimRate = 35.0f;
+        aMowerReanim->ApplyRate(35.0f);
         mApp->PlayFoley(FoleyType::FOLEY_POOL_CLEANER);
     }
     else
     {
-        aMowerReanim->mAnimRate = 70.0f;
+        aMowerReanim->ApplyRate(70.0f);
         mApp->PlayFoley(FoleyType::FOLEY_LAWNMOWER);
     }
 

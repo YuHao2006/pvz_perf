@@ -1,6 +1,7 @@
 #pragma once
 #include "misc/TimeCounter.h"
 #include "GameObject.h"
+#include "Motion.h"
 #include "GameConstants.h"
 #include "Sexy.TodLib/ReanimTrackId.h"
 
@@ -76,7 +77,7 @@ class Plant;
 class Zombatar;
 class Reanimation;
 class TodParticleSystem;
-class Zombie : public GameObject
+class Zombie : public FloatGameObject
 {
 public:
     enum
@@ -90,8 +91,6 @@ public:
 public:
 	ZombieType			            mZombieType;                                //+0x24
 	ZombiePhase			            mZombiePhase;                               //+0x28
-	float				            mPosX;                                      //+0x2C
-	float				            mPosY;                                      //+0x30
 	float				            mVelX;                                      //+0x34
     Sexy::TimeCounter                             mAnimCounter;                               //+0x38
     Sexy::TimeCounter                             mGroanCounter;                              //+0x3C
@@ -166,6 +165,12 @@ public:
     int                             mLastPortalX;                               //+0x154
     bool                            mHasZombatar;                               //+GOTY @Patoke: 0x15C
     int                             mZombatarIndex;                             //+GOTY @Patoke: 0x160
+    double                          mRootOriginX = 0;
+    std::uint32_t                   mRootBindingGeneration = 0;
+    float                           mRootScale = 0;
+    TimedLinearMotion               mVelocityX;
+    TimedLinearMotion               mVelocityY;
+    float                           mPendingAdditionalSpeedX = 0; // consumed within the current Update
 
 public:
     // Pool value-initialization must clear reused state before animation setup.

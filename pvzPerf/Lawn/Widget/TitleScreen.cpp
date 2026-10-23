@@ -85,11 +85,12 @@ void TitleScreen::Draw(Graphics* g)
 		int anAlpha = 255;
 		if (mTitleStateCounter < mTitleStateDuration - 50)
 		{
-			anAlpha = TodAnimateCurve(50, 0, mTitleStateCounter, 255, 0, Curves::Linear);
+			anAlpha = TodAnimateCurveNs(500'000'000, 0, mTitleStateCounter.mNanoseconds, 255, 0, Curves::Linear);
 		}
 		else
 		{
-			anAlpha = TodAnimateCurve(mTitleStateDuration, mTitleStateDuration - 50, mTitleStateCounter, 0, 255, Curves::Linear);
+			anAlpha = TodAnimateCurveNs(std::int64_t(mTitleStateDuration) * 10'000'000,
+				(std::int64_t(mTitleStateDuration) - 50) * 10'000'000, mTitleStateCounter.mNanoseconds, 0, 255, Curves::Linear);
 		}
 		g->mColorizeImages = true;
 		g->mColor = Color(255, 255, 255, anAlpha);
@@ -117,11 +118,11 @@ void TitleScreen::Draw(Graphics* g)
 	int aLogoY;
 	if (mTitleStateCounter > 60)
 	{
-		aLogoY = TodAnimateCurve(100, 60, mTitleStateCounter, -150, 10, Curves::EaseIn);
+		aLogoY = TodAnimateCurveNs(1'000'000'000, 600'000'000, mTitleStateCounter.mNanoseconds, -150, 10, Curves::EaseIn);
 	}
 	else
 	{
-		aLogoY = TodAnimateCurve(60, 50, mTitleStateCounter, 10, 15, Curves::Bounce);
+		aLogoY = TodAnimateCurveNs(600'000'000, 500'000'000, mTitleStateCounter.mNanoseconds, 10, 15, Curves::Bounce);
 	}
 	g->DrawImage(IMAGE_PVZ_LOGO, mWidth / 2 - IMAGE_PVZ_LOGO->mWidth / 2, aLogoY);
 
@@ -146,7 +147,7 @@ void TitleScreen::Draw(Graphics* g)
 
 		float aRollLen = mCurBarWidth * 0.94f;
 		float aRotation = -aRollLen / 180 * PI * 2;
-		float aScale = TodAnimateCurveFloatTime(0, mTotalBarWidth, mCurBarWidth, 1, 0.5f, Curves::Linear);
+		float aScale = TodAnimateCurveFloat(0, mTotalBarWidth, mCurBarWidth, 1, 0.5f, Curves::Linear);
 		SexyTransform2D aTransform;
 		TodScaleRotateTransformMatrix(aTransform, aGrassX + 11.0f + aRollLen, aGrassY - 3.0f - 35.0f * aScale + 35.0f, aRotation, aScale, aScale);
 		Rect aSrcRect(0, 0, IMAGE_REANIM_SODROLLCAP->mWidth, IMAGE_REANIM_SODROLLCAP->mHeight);
@@ -279,11 +280,11 @@ void TitleScreen::Update()
 	int aButtonY;
 	if (mTitleStateCounter > 10)
 	{
-		aButtonY = TodAnimateCurve(60, 10, mTitleStateCounter, 650, 534, Curves::EaseIn);
+		aButtonY = TodAnimateCurveNs(600'000'000, 100'000'000, mTitleStateCounter.mNanoseconds, 650, 534, Curves::EaseIn);
 	}
 	else
 	{
-		aButtonY = TodAnimateCurve(10, 0, mTitleStateCounter, 534, 529, Curves::Bounce);
+		aButtonY = TodAnimateCurveNs(100'000'000, 0, mTitleStateCounter.mNanoseconds, 534, 529, Curves::Bounce);
 	}
 	mStartButton->Resize(mStartButton->mX, aButtonY, mTotalBarWidth, mStartButton->mHeight);
 
@@ -311,16 +312,16 @@ void TitleScreen::Update()
 
 	if (aLoadingPercent > mPrevLoadingPercent + 0.01f || mLoadingThreadComplete)
 	{
-		float aBarWidth = TodAnimateCurveFloatTime(0, 1, aLoadingPercent, 0, mTotalBarWidth, Curves::EaseIn);
+		float aBarWidth = TodAnimateCurveFloat(0, 1, aLoadingPercent, 0, mTotalBarWidth, Curves::EaseIn);
 		float aDiff = aBarWidth - mCurBarWidth;
-		float aAcceleration = TodAnimateCurveFloatTime(0, 1, aLoadingPercent, 0.0001f, 0.00001f, Curves::Linear);
+		float aAcceleration = TodAnimateCurveFloat(0, 1, aLoadingPercent, 0.0001f, 0.00001f, Curves::Linear);
 		if (mLoadingThreadComplete)
 		{
 			aAcceleration = 0.0001f;
 		}
 		mBarVel += Sexy::UpdateDelta(aDiff * abs(aDiff) * aAcceleration);
 
-		float aMinVelocity = TodAnimateCurveFloatTime(0, 1, aLoadingPercent, 0.2f, 0.01f, Curves::Linear);
+		float aMinVelocity = TodAnimateCurveFloat(0, 1, aLoadingPercent, 0.2f, 0.01f, Curves::Linear);
 		float aMaxVelocity = 2;
 		if (mApp->mTodCheatKeys)
 		{
@@ -394,8 +395,8 @@ void TitleScreen::Update()
 			float aPosX = aTriggerPoint[i] + 225.0f;
 			float aPosY = 511.0f;
 			Reanimation* aSproutReanim = mApp->AddReanimation(aPosX, aPosY, 0, aReanimType);
-			aSproutReanim->mAnimRate = 18.0f;
-			aSproutReanim->mLoopType = ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD;
+			aSproutReanim->ApplyRate(18.0f);
+			aSproutReanim->ChangeLoopType(ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD);
 
 			if (i == 1 || i == 3)
 			{

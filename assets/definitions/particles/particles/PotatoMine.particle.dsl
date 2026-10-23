@@ -4,89 +4,205 @@ export component PotatoMine {
     Emitter {
         image: "IMAGE_REANIM_POTATOMINE_MASHED";
         name: "Mashed";
-        systemDuration: 200;
-        spawnMinActive: 1;
-        emitterOffsetY: 20;
-        particleDuration: 200;
-        particleAlpha: track { 1,95 0; }
-        particleScale: .9;
+        imageFrames: 1;
+        animated: 0;
+        emitterType: Box;
+        systemDuration: nodes {
+            { time: 0; low: 200; high: 200; curve: Linear; distribution: Linear; }
+        }
+        spawnMinActive: nodes {
+            { time: 0; low: 1; high: 1; curve: Linear; distribution: Linear; }
+        }
+        emitterOffsetY: nodes {
+            { time: 0; low: 20; high: 20; curve: Linear; distribution: Linear; }
+        }
+        particleDuration: nodes {
+            { time: 0; low: 200; high: 200; curve: Linear; distribution: Linear; }
+        }
+        particleAlpha: nodes {
+            { time: 0.95; low: 1; high: 1; curve: Linear; distribution: Linear; }
+            { time: 1; low: 0; high: 0; curve: Linear; distribution: Linear; }
+        }
+        particleScale: nodes {
+            { time: 0; low: 0.9; high: 0.9; curve: Linear; distribution: Linear; }
+        }
     }
     Emitter {
         images: ["particles/frames/potatomine_particles_r0_c0.png","particles/frames/potatomine_particles_r0_c1.png","particles/frames/potatomine_particles_r0_c2.png","particles/frames/potatomine_particles_r0_c3.png","particles/frames/potatomine_particles_r0_c4.png","particles/frames/potatomine_particles_r0_c5.png"];
         name: "LowParts";
         imageFrames: 6;
+        animated: 0;
         emitterType: Circle;
         randomLaunchSpin: 1;
-        systemDuration: 200;
-        spawnMinActive: 10;
-        spawnMaxLaunched: 10;
-        emitterRadius: range { 0 50; }
-        emitterOffsetY: 20;
-        particleDuration: 200;
-        launchSpeed: range { 200 300; }
-        particleAlpha: track { 1,95 0; }
-        particleSpinSpeed: track { [-100 100] 0,20; }
-        particleScale: range { 1 1.3; }
+        systemDuration: nodes {
+            { time: 0; low: 200; high: 200; curve: Linear; distribution: Linear; }
+        }
+        spawnMinActive: nodes {
+            { time: 0; low: 10; high: 10; curve: Linear; distribution: Linear; }
+        }
+        spawnMaxLaunched: nodes {
+            { time: 0; low: 10; high: 10; curve: Linear; distribution: Linear; }
+        }
+        emitterRadius: nodes {
+            { time: 0; low: 0; high: 50; curve: Linear; distribution: Linear; }
+        }
+        emitterOffsetY: nodes {
+            { time: 0; low: 20; high: 20; curve: Linear; distribution: Linear; }
+        }
+        particleDuration: nodes {
+            { time: 0; low: 200; high: 200; curve: Linear; distribution: Linear; }
+        }
+        systemAlpha: nodes {
+            { time: 0; low: 200; high: 300; curve: Linear; distribution: Linear; }
+        }
+        particleAlpha: nodes {
+            { time: 0.95; low: 1; high: 1; curve: Linear; distribution: Linear; }
+            { time: 1; low: 0; high: 0; curve: Linear; distribution: Linear; }
+        }
+        particleSpinSpeed: nodes {
+            { time: 0; low: -100; high: 100; curve: Linear; distribution: Linear; }
+            { time: 0.2; low: 0; high: 0; curve: Linear; distribution: Linear; }
+        }
+        particleScale: nodes {
+            { time: 0; low: 1; high: 1.3; curve: Linear; distribution: Linear; }
+        }
         field {
             fieldType: Acceleration;
-            y: 0;
+            y: nodes {
+                { time: 0; low: 0; high: 0; curve: Linear; distribution: Linear; }
+            }
         }
         field {
             fieldType: Friction;
-            x: track { .2 .1,30; }
-            y: track { .2 .1,30; }
+            x: nodes {
+                { time: 0; low: 0.2; high: 0.2; curve: Linear; distribution: Linear; }
+                { time: 0.3; low: 0.1; high: 0.1; curve: Linear; distribution: Linear; }
+            }
+            y: nodes {
+                { time: 0; low: 0.2; high: 0.2; curve: Linear; distribution: Linear; }
+                { time: 0.3; low: 0.1; high: 0.1; curve: Linear; distribution: Linear; }
+            }
         }
     }
     Emitter {
         images: ["particles/frames/potatomine_particles_r0_c0.png","particles/frames/potatomine_particles_r0_c1.png","particles/frames/potatomine_particles_r0_c2.png","particles/frames/potatomine_particles_r0_c3.png","particles/frames/potatomine_particles_r0_c4.png","particles/frames/potatomine_particles_r0_c5.png"];
         name: "HighParts";
         imageFrames: 6;
+        animated: 0;
         emitterType: Circle;
         randomLaunchSpin: 1;
-        systemDuration: 90;
-        spawnMinActive: 30;
-        spawnMaxLaunched: 30;
-        emitterRadius: range { 0 50; }
-        particleDuration: range { 70 80; }
-        launchSpeed: range { 1300 2000; }
-        launchAngle: range { 110 250; }
-        particleAlpha: track { 1,90 0; }
-        particleSpinSpeed: range { -600 600; }
-        particleScale: range { 1 1.3; }
+        systemDuration: nodes {
+            { time: 0; low: 90; high: 90; curve: Linear; distribution: Linear; }
+        }
+        spawnMinActive: nodes {
+            { time: 0; low: 30; high: 30; curve: Linear; distribution: Linear; }
+        }
+        spawnMaxLaunched: nodes {
+            { time: 0; low: 30; high: 30; curve: Linear; distribution: Linear; }
+        }
+        emitterRadius: nodes {
+            { time: 0; low: 0; high: 50; curve: Linear; distribution: Linear; }
+        }
+        particleDuration: nodes {
+            { time: 0; low: 70; high: 80; curve: Linear; distribution: Linear; }
+        }
+        systemAlpha: nodes {
+            { time: 0; low: 1300; high: 2000; curve: Linear; distribution: Linear; }
+        }
+        systemBrightness: nodes {
+            { time: 0; low: 110; high: 250; curve: Linear; distribution: Linear; }
+        }
+        particleAlpha: nodes {
+            { time: 0.9; low: 1; high: 1; curve: Linear; distribution: Linear; }
+            { time: 1; low: 0; high: 0; curve: Linear; distribution: Linear; }
+        }
+        particleSpinSpeed: nodes {
+            { time: 0; low: -600; high: 600; curve: Linear; distribution: Linear; }
+        }
+        particleScale: nodes {
+            { time: 0; low: 1; high: 1.3; curve: Linear; distribution: Linear; }
+        }
         field {
             fieldType: Acceleration;
-            y: 5;
+            y: nodes {
+                { time: 0; low: 5; high: 5; curve: Linear; distribution: Linear; }
+            }
         }
         field {
             fieldType: Friction;
-            x: track { .2 0,30; }
-            y: track { .2 0,30; }
+            x: nodes {
+                { time: 0; low: 0.2; high: 0.2; curve: Linear; distribution: Linear; }
+                { time: 0.3; low: 0; high: 0; curve: Linear; distribution: Linear; }
+            }
+            y: nodes {
+                { time: 0; low: 0.2; high: 0.2; curve: Linear; distribution: Linear; }
+                { time: 0.3; low: 0; high: 0; curve: Linear; distribution: Linear; }
+            }
         }
     }
     Emitter {
         image: "IMAGE_EXPLOSIONSPUDOW";
         name: "Word";
-        systemDuration: 70;
-        spawnMinActive: 1;
-        emitterOffsetY: -30;
-        particleAlpha: track { 1,90 0; }
+        imageFrames: 1;
+        animated: 0;
+        emitterType: Box;
+        systemDuration: nodes {
+            { time: 0; low: 70; high: 70; curve: Linear; distribution: Linear; }
+        }
+        spawnMinActive: nodes {
+            { time: 0; low: 1; high: 1; curve: Linear; distribution: Linear; }
+        }
+        emitterOffsetY: nodes {
+            { time: 0; low: -30; high: -30; curve: Linear; distribution: Linear; }
+        }
+        particleAlpha: nodes {
+            { time: 0.9; low: 1; high: 1; curve: Linear; distribution: Linear; }
+            { time: 1; low: 0; high: 0; curve: Linear; distribution: Linear; }
+        }
         field {
             fieldType: Shake;
-            x: 2;
-            y: 2;
+            x: nodes {
+                { time: 0; low: 2; high: 2; curve: Linear; distribution: Linear; }
+            }
+            y: nodes {
+                { time: 0; low: 2; high: 2; curve: Linear; distribution: Linear; }
+            }
         }
     }
     Emitter {
         image: "IMAGE_POTATOMINEFLASH";
         name: "Flash";
-        systemDuration: 40;
-        spawnMinActive: 1;
-        spawnMaxLaunched: 1;
-        particleDuration: 40;
-        particleRed: 1;
-        particleGreen: 1;
-        particleBlue: .5;
-        particleAlpha: track { .5 0; }
-        particleScale: track { 10 15; }
+        imageFrames: 1;
+        animated: 0;
+        emitterType: Box;
+        systemDuration: nodes {
+            { time: 0; low: 40; high: 40; curve: Linear; distribution: Linear; }
+        }
+        spawnMinActive: nodes {
+            { time: 0; low: 1; high: 1; curve: Linear; distribution: Linear; }
+        }
+        spawnMaxLaunched: nodes {
+            { time: 0; low: 1; high: 1; curve: Linear; distribution: Linear; }
+        }
+        particleDuration: nodes {
+            { time: 0; low: 40; high: 40; curve: Linear; distribution: Linear; }
+        }
+        particleRed: nodes {
+            { time: 0; low: 1; high: 1; curve: Linear; distribution: Linear; }
+        }
+        particleGreen: nodes {
+            { time: 0; low: 1; high: 1; curve: Linear; distribution: Linear; }
+        }
+        particleBlue: nodes {
+            { time: 0; low: 0.5; high: 0.5; curve: Linear; distribution: Linear; }
+        }
+        particleAlpha: nodes {
+            { time: 0; low: 0.5; high: 0.5; curve: Linear; distribution: Linear; }
+            { time: 1; low: 0; high: 0; curve: Linear; distribution: Linear; }
+        }
+        particleScale: nodes {
+            { time: 0; low: 10; high: 10; curve: Linear; distribution: Linear; }
+            { time: 1; low: 15; high: 15; curve: Linear; distribution: Linear; }
+        }
     }
 }

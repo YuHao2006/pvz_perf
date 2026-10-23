@@ -3,101 +3,101 @@ export component Coin_gold {
     Track {
         source-name: "glow";
         frame-count: 21;
-        frame 0 { x: -27.1000004; y: -26.6000004; scale-x: 1.18099999; scale-y: 1.18099999; image: IMAGE_REANIM_COINGLOW; }
+        frame 0 { x: -27.1; y: -26.6; scale-x: 1.181; scale-y: 1.181; image: IMAGE_REANIM_COINGLOW; }
         frame 1 { x: -10000; y: -10000; scale-x: -10000; scale-y: -10000; image: none; }
-        frame 2 { x: -26.7000008; scale-x: 1.17299998; }
-        frame 3 { x: -25.5; scale-x: 1.14600003; }
-        frame 4 { x: -23.6000004; scale-x: 1.102; }
-        frame 5 { x: -20.8999996; scale-x: 1.04100001; }
-        frame 6 { x: -17.5; scale-x: 0.962000012; }
-        frame 7 { x: -13.1999998; scale-x: 0.865999997; }
-        frame 8 { x: -8.19999981; scale-x: 0.753000021; }
-        frame 9 { x: -2.5; scale-x: 0.620999992; }
-        frame 10 { x: 3.9000001; scale-x: 0.472000003; }
-        frame 11 { x: -1.89999998; scale-x: 0.606999993; }
-        frame 12 { x: -7.19999981; scale-x: 0.727999985; }
-        frame 13 { x: -11.8000002; scale-x: 0.833999991; }
-        frame 14 { x: -15.8999996; scale-x: 0.925999999; }
-        frame 15 { x: -19.2999992; scale-x: 1.00399995; }
-        frame 16 { x: -22.1000004; scale-x: 1.06799996; }
-        frame 17 { x: -24.2999992; scale-x: 1.11699998; }
-        frame 18 { x: -25.7999992; scale-x: 1.153; }
-        frame 19 { x: -26.7000008; scale-x: 1.17400002; }
-        frame 20 { x: -27.1000004; scale-x: 1.18099999; }
+        frame 2 { x: -26.7; scale-x: 1.173; }
+        frame 3 { x: -25.5; scale-x: 1.146; }
+        frame 4 { x: -23.6; scale-x: 1.102; }
+        frame 5 { x: -20.9; scale-x: 1.041; }
+        frame 6 { x: -17.5; scale-x: 0.962; }
+        frame 7 { x: -13.2; scale-x: 0.866; }
+        frame 8 { x: -8.2; scale-x: 0.753; }
+        frame 9 { x: -2.5; scale-x: 0.621; }
+        frame 10 { x: 3.9; scale-x: 0.472; }
+        frame 11 { x: -1.9; scale-x: 0.607; }
+        frame 12 { x: -7.2; scale-x: 0.728; }
+        frame 13 { x: -11.8; scale-x: 0.834; }
+        frame 14 { x: -15.9; scale-x: 0.926; }
+        frame 15 { x: -19.3; scale-x: 1.004; }
+        frame 16 { x: -22.1; scale-x: 1.068; }
+        frame 17 { x: -24.3; scale-x: 1.117; }
+        frame 18 { x: -25.8; scale-x: 1.153; }
+        frame 19 { x: -26.7; scale-x: 1.174; }
+        frame 20 { x: -27.1; scale-x: 1.181; }
     }
     Track {
         source-name: "black";
         frame-count: 21;
-        frame 0 { x: 0.699999988; y: -3.70000005; scale-x: 1.00100005; scale-y: 1.32099998; image: IMAGE_REANIM_COIN_BLACK_GOLD; }
+        frame 0 { x: 0.7; y: -3.7; scale-x: 1.001; scale-y: 1.321; image: IMAGE_REANIM_COIN_BLACK_GOLD; }
         frame 1 { x: -10000; y: -10000; scale-x: -10000; scale-y: -10000; image: none; }
-        frame 2 { x: 0.899999976; scale-x: 0.973999977; }
-        frame 3 { x: -10000; y: -3.79999995; scale-x: 0.94599998; }
-        frame 4 { x: 1; y: -3.70000005; scale-x: 0.91900003; scale-y: 1.32000005; }
-        frame 5 { x: 3.4000001; y: -3.5999999; scale-x: 0.790000021; scale-y: -10000; }
-        frame 6 { x: 5.80000019; y: -3.70000005; scale-x: 0.661000013; }
-        frame 7 { x: 8.60000038; y: -10000; scale-x: 0.541000009; }
-        frame 8 { x: 11.1999998; scale-x: 0.421000004; }
-        frame 9 { x: 14; scale-x: 0.300999999; }
-        frame 10 { x: 17.1000004; scale-x: 0.225999996; scale-y: 1.32099998; }
-        frame 11 { x: 17.6000004; scale-x: 0.289000005; scale-y: 1.32000005; }
-        frame 12 { x: 15.1000004; scale-x: 0.40200001; scale-y: -10000; }
-        frame 13 { x: 12.5; scale-x: 0.515999973; }
-        frame 14 { x: 10.1000004; scale-x: 0.629000008; }
-        frame 15 { x: 7.4000001; y: -3.79999995; scale-x: 0.75; }
-        frame 16 { x: 4.5999999; y: -3.70000005; scale-x: 0.870999992; }
-        frame 17 { x: 3.4000001; y: -10000; scale-x: 0.913999975; scale-y: 1.32099998; }
-        frame 18 { x: 2; scale-x: 0.958000004; scale-y: -10000; }
-        frame 19 { x: 0.699999988; scale-x: 1.00100005; }
+        frame 2 { x: 0.9; scale-x: 0.974; }
+        frame 3 { x: -10000; y: -3.8; scale-x: 0.946; }
+        frame 4 { x: 1; y: -3.7; scale-x: 0.919; scale-y: 1.32; }
+        frame 5 { x: 3.4; y: -3.6; scale-x: 0.79; scale-y: -10000; }
+        frame 6 { x: 5.8; y: -3.7; scale-x: 0.661; }
+        frame 7 { x: 8.6; y: -10000; scale-x: 0.541; }
+        frame 8 { x: 11.2; scale-x: 0.421; }
+        frame 9 { x: 14; scale-x: 0.301; }
+        frame 10 { x: 17.1; scale-x: 0.226; scale-y: 1.321; }
+        frame 11 { x: 17.6; scale-x: 0.289; scale-y: 1.32; }
+        frame 12 { x: 15.1; scale-x: 0.402; scale-y: -10000; }
+        frame 13 { x: 12.5; scale-x: 0.516; }
+        frame 14 { x: 10.1; scale-x: 0.629; }
+        frame 15 { x: 7.4; y: -3.8; scale-x: 0.75; }
+        frame 16 { x: 4.6; y: -3.7; scale-x: 0.871; }
+        frame 17 { x: 3.4; y: -10000; scale-x: 0.914; scale-y: 1.321; }
+        frame 18 { x: 2; scale-x: 0.958; scale-y: -10000; }
+        frame 19 { x: 0.7; scale-x: 1.001; }
         frame 20 { x: -10000; scale-x: -10000; }
     }
     Track {
         source-name: "face";
         frame-count: 21;
-        frame 0 { x: 0.100000001; y: 0.100000001; image: IMAGE_REANIM_COIN_GOLD_DOLLAR; }
+        frame 0 { x: 0.1; y: 0.1; image: IMAGE_REANIM_COIN_GOLD_DOLLAR; }
         frame 1 { x: -10000; y: -10000; image: none; }
-        frame 2 { x: 2.5; scale-x: 0.889999986; }
-        frame 3 { x: 5; scale-x: 0.778999984; }
-        frame 4 { x: 7.4000001; scale-x: 0.66900003; }
-        frame 5 { x: 9.89999962; scale-x: 0.559000015; }
-        frame 6 { x: 12.3000002; scale-x: 0.448000014; }
-        frame 7 { x: 14.6999998; scale-x: 0.338; }
-        frame 8 { x: 17.2000008; scale-x: 0.228; }
-        frame 9 { x: 19.6000004; scale-x: 0.116999999; }
-        frame 10 { x: 22.1000004; scale-x: 0.00700000022; }
-        frame 11 { x: 19.8999996; scale-x: 0.105999999; }
-        frame 12 { x: 17.7000008; scale-x: 0.206; }
-        frame 13 { x: 15.6000004; scale-x: 0.305000007; }
-        frame 14 { x: 13.3999996; scale-x: 0.404000014; }
-        frame 15 { x: 11.1999998; scale-x: 0.503000021; }
-        frame 16 { x: 9; scale-x: 0.602999985; }
-        frame 17 { x: 6.80000019; scale-x: 0.702000022; }
-        frame 18 { x: 4.69999981; scale-x: 0.800999999; }
-        frame 19 { x: 2.5; scale-x: 0.901000023; }
-        frame 20 { x: 0.100000001; scale-x: 1; }
+        frame 2 { x: 2.5; scale-x: 0.89; }
+        frame 3 { x: 5; scale-x: 0.779; }
+        frame 4 { x: 7.4; scale-x: 0.669; }
+        frame 5 { x: 9.9; scale-x: 0.559; }
+        frame 6 { x: 12.3; scale-x: 0.448; }
+        frame 7 { x: 14.7; scale-x: 0.338; }
+        frame 8 { x: 17.2; scale-x: 0.228; }
+        frame 9 { x: 19.6; scale-x: 0.117; }
+        frame 10 { x: 22.1; scale-x: 0.007; }
+        frame 11 { x: 19.9; scale-x: 0.106; }
+        frame 12 { x: 17.7; scale-x: 0.206; }
+        frame 13 { x: 15.6; scale-x: 0.305; }
+        frame 14 { x: 13.4; scale-x: 0.404; }
+        frame 15 { x: 11.2; scale-x: 0.503; }
+        frame 16 { x: 9; scale-x: 0.603; }
+        frame 17 { x: 6.8; scale-x: 0.702; }
+        frame 18 { x: 4.7; scale-x: 0.801; }
+        frame 19 { x: 2.5; scale-x: 0.901; }
+        frame 20 { x: 0.1; scale-x: 1; }
     }
     Track {
         source-name: "shading";
         frame-count: 21;
-        frame 0 { x: 0.300000012; y: -3.70000005; scale-x: 1.03499997; scale-y: 1.32000005; alpha: 0; image: IMAGE_REANIM_COIN_SHADING; }
+        frame 0 { x: 0.3; y: -3.7; scale-x: 1.035; scale-y: 1.32; alpha: 0; image: IMAGE_REANIM_COIN_SHADING; }
         frame 1 { x: -10000; y: -10000; scale-x: -10000; scale-y: -10000; alpha: -10000; image: none; }
-        frame 2 { scale-x: 1.028; alpha: 0.00999999978; }
-        frame 3 { x: 0.100000001; scale-x: 1.00699997; alpha: 0.0299999993; }
-        frame 4 { x: -0; scale-x: 0.971000016; alpha: 0.0700000003; }
-        frame 5 { x: -0.400000006; scale-x: 0.921000004; alpha: 0.129999995; }
-        frame 6 { x: 3.5999999; scale-x: 0.75; alpha: 0.230000004; }
-        frame 7 { x: 7.80000019; scale-x: 0.578999996; scale-y: 1.32099998; alpha: 0.319999993; }
-        frame 8 { x: 12.1999998; scale-x: 0.407999992; scale-y: -10000; alpha: 0.419999987; }
-        frame 9 { x: 16.3999996; scale-x: 0.237000003; alpha: 0.50999999; }
-        frame 10 { x: 22.3999996; scale-x: 0.00999999978; scale-y: 1.35099995; alpha: 0.649999976; }
-        frame 11 { x: 26.8999996; skew-x: 180; scale-x: 0.188999996; scale-y: 1.32099998; alpha: -10000; }
-        frame 12 { x: 29.2999992; skew-x: -10000; scale-x: 0.300000012; scale-y: -10000; alpha: 0.579999983; }
-        frame 13 { x: 31.6000004; scale-x: 0.409999996; alpha: 0.5; }
-        frame 14 { x: 33.9000015; scale-x: 0.521000028; alpha: 0.430000007; }
-        frame 15 { x: 36.2999992; scale-x: 0.630999982; alpha: 0.360000014; }
-        frame 16 { x: 38; scale-x: 0.712000012; alpha: 0.289999992; }
-        frame 17 { x: 39.7999992; scale-x: 0.792999983; scale-y: 1.32000005; alpha: 0.209999993; }
-        frame 18 { x: 41.5; scale-x: 0.874000013; scale-y: -10000; alpha: 0.140000001; }
-        frame 19 { x: 43.2999992; scale-x: 0.953999996; alpha: 0.0700000003; }
-        frame 20 { x: 44.7999992; scale-x: 1.03499997; alpha: 0; }
+        frame 2 { scale-x: 1.028; alpha: 0.01; }
+        frame 3 { x: 0.1; scale-x: 1.007; alpha: 0.03; }
+        frame 4 { x: -0; scale-x: 0.971; alpha: 0.07; }
+        frame 5 { x: -0.4; scale-x: 0.921; alpha: 0.13; }
+        frame 6 { x: 3.6; scale-x: 0.75; alpha: 0.23; }
+        frame 7 { x: 7.8; scale-x: 0.579; scale-y: 1.321; alpha: 0.32; }
+        frame 8 { x: 12.2; scale-x: 0.408; scale-y: -10000; alpha: 0.42; }
+        frame 9 { x: 16.4; scale-x: 0.237; alpha: 0.51; }
+        frame 10 { x: 22.4; scale-x: 0.01; scale-y: 1.351; alpha: 0.65; }
+        frame 11 { x: 26.9; skew-x: 180; scale-x: 0.189; scale-y: 1.321; alpha: -10000; }
+        frame 12 { x: 29.3; skew-x: -10000; scale-x: 0.3; scale-y: -10000; alpha: 0.58; }
+        frame 13 { x: 31.6; scale-x: 0.41; alpha: 0.5; }
+        frame 14 { x: 33.9; scale-x: 0.521; alpha: 0.43; }
+        frame 15 { x: 36.3; scale-x: 0.631; alpha: 0.36; }
+        frame 16 { x: 38; scale-x: 0.712; alpha: 0.29; }
+        frame 17 { x: 39.8; scale-x: 0.793; scale-y: 1.32; alpha: 0.21; }
+        frame 18 { x: 41.5; scale-x: 0.874; scale-y: -10000; alpha: 0.14; }
+        frame 19 { x: 43.3; scale-x: 0.954; alpha: 0.07; }
+        frame 20 { x: 44.8; scale-x: 1.035; alpha: 0; }
     }
 }

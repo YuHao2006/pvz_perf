@@ -163,10 +163,12 @@ class ParticleVariantTests(unittest.TestCase):
                 self.assertEqual([e["frames"] for e in emitters], [4, 1])
                 self.assertEqual([e["animated"] for e in emitters], [1, 0])
                 self.assertEqual([e["flags"] for e in emitters], [256, 0])
-                self.assertIn(struct.pack("<I3f2i", 1, 0.25, 5.0, 10.0, 4, 1),
+                self.assertIn(struct.pack("<I2i2f2i", 1, 0, 1, 5, 10, 1, 1),
                               emitters[0]["motion"])
-                self.assertEqual(emitters[0]["motion"].count(
-                    struct.pack("<I3f2i", 1, 0.5, 12.0, 24.0, 3, 2)), 3)
+                self.assertNotIn(struct.pack("<I2i2f2i", 1, 1, 2, 12, 24, 3, 2),
+                                 emitters[0]["motion"])
+                self.assertIn(struct.pack("<I2i2f2i", 1, 0, 1, 6, 6, 1, 1),
+                              emitters[0]["motion"])
                 self.assertEqual(len(emitters[0]["handles"]), 3)
                 self.assertGreater(emitters[0]["frames"], len(emitters[0]["handles"]))
                 # Motion, gold scalars, fields, and prelinked metadata survive

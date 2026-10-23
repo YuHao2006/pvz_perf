@@ -406,7 +406,7 @@ void ReanimationWidget::AddReanimation(float x, float y, ReanimationType theRean
     mPosX = x;
     mPosY = y;
     mReanim = mApp->mEffectSystem->mReanimationHolder->AllocReanimation(x, y, 0, theReanimationType);
-    mReanim->mLoopType = ReanimLoopType::REANIM_LOOP;
+    mReanim->ChangeLoopType(ReanimLoopType::REANIM_LOOP);
     mReanim->mIsAttachment = true;
     if (mReanim->TrackExists(ReanimTrackId::anim_idle))
         mReanim->SetFramesForLayer(ReanimTrackId::anim_idle);

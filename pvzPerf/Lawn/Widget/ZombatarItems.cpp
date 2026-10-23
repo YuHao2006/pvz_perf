@@ -1197,8 +1197,8 @@ void ZombatarItems::Update()
 		const int anEndX = isEntering ? 130 : 420;
 		const int aStartY = isEntering ? 445 : 320;
 		const int anEndY = isEntering ? 320 : 445;
-		const int aX = TodAnimateCurve(180, 0, mTransitionCounter, aStartX, anEndX, Curves::Linear);
-		const int aY = TodAnimateCurve(180, 0, mTransitionCounter, aStartY, anEndY, Curves::Linear);
+		const int aX = TodAnimateCurveNs(1'800'000'000, 0, mTransitionCounter.mNanoseconds, aStartX, anEndX, Curves::Linear);
+		const int aY = TodAnimateCurveNs(1'800'000'000, 0, mTransitionCounter.mNanoseconds, aStartY, anEndY, Curves::Linear);
 		MoveButton(mFinishedButton, aX, aY);
 
 		if (mTransitionCounter <= 0)
@@ -1232,13 +1232,13 @@ void ZombatarItems::Draw(Graphics* g)
 		    nullptr,  // 0 EDITING（走下方分支）
 		    [](ZombatarItems& zi, Graphics* g) {   // 1 ENTERING_CONFIRMATION
 		        zi.DrawEditor(g);
-		        const int anAlpha = TodAnimateCurve(180, 0, zi.mTransitionCounter, 0, 255, Curves::Linear);
+		        const int anAlpha = TodAnimateCurveNs(1'800'000'000, 0, zi.mTransitionCounter.mNanoseconds, 0, 255, Curves::Linear);
 		        g->mColor = Color(0, 0, 0, anAlpha);
 		        g->FillRect(33, 100, zi.mWidth - 63, zi.mHeight - 269);
 		    },
 		    [](ZombatarItems& zi, Graphics* g) {   // 2 LEAVING_CONFIRMATION
 		        zi.DrawEditor(g);
-		        const int anAlpha = TodAnimateCurve(180, 0, zi.mTransitionCounter, 255, 0, Curves::Linear);
+		        const int anAlpha = TodAnimateCurveNs(1'800'000'000, 0, zi.mTransitionCounter.mNanoseconds, 255, 0, Curves::Linear);
 		        g->mColor = Color(0, 0, 0, anAlpha);
 		        g->FillRect(33, 100, zi.mWidth - 63, zi.mHeight - 269);
 		    },

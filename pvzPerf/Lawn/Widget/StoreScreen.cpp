@@ -608,7 +608,7 @@ void StoreScreen::Draw(Graphics* g)
     g->mLinearBlend = true;
     mDrawnOnce = true;
 
-    int aStoreSignPosY = TodAnimateCurve(50, 110, mStoreTime, -150, 0, Curves::EaseInOut);
+    int aStoreSignPosY = TodAnimateCurveNs(500'000'000, 1'100'000'000, mStoreTime.mNanoseconds, -150, 0, Curves::EaseInOut);
     if (mApp->IsNight())
     {
         g->DrawImage(Sexy::IMAGE_STORE_BACKGROUNDNIGHT,

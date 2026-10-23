@@ -4,6 +4,9 @@
 #include "Lawn/System/Music.h"
 #include "Lawn/System/PlayerInfo.h"
 #include "Lawn/Board.h"
+#include "Lawn/Plant.h"
+#include "Lawn/Projectile.h"
+#include "Lawn/Zombie.h"
 #include "Resources.h"
 #include "Sexy.TodLib/Attachment.h"
 #include "Sexy.TodLib/Reanimator.h"
@@ -17,6 +20,7 @@
 #include "SexyAppFramework/sound/DummyMusicInterface.h"
 #include <cstdio>
 #include <algorithm>
+#include <bit>
 #include <iostream>
 #include <fstream>
 #include <iterator>
@@ -153,7 +157,7 @@ void LoadCurrentWithResources(LawnApp& app, HiddenWindow& window, const char* sa
         std::cout << "PASS production loader rejects out-of-range variant before drawing\n";
         return;
     }
-    Require(LawnLoadGame(&board, save), "Full production v3.2 save load failed");
+    Require(LawnLoadGame(&board, save), "Full production v3.3 save load failed");
     Require(app.mGameScene == GameScenes::SCENE_PLAYING, "Save load did not publish the playing scene");
     auto& systems = app.mEffectSystem->mParticleHolder->mParticleSystems;
     TodParticleSystem* particle = nullptr;
@@ -190,17 +194,224 @@ void LoadCurrentWithResources(LawnApp& app, HiddenWindow& window, const char* sa
         }
         return snapshot;
     };
+    // Exercise nonzero exact-state tails rather than only zero-initialized
+    // migration state. Definition identity and existing world positions remain.
+    auto& holder = app.mEffectSystem->mReanimationHolder;
+    holder->mBattleTimeNs = static_cast<std::int64_t>(board.mMainCounter.mNanoseconds);
+    Reanimation* advanced = nullptr;
+    while (holder->mReanimations.IterateNext(advanced))
+        advanced->BindTimeDomain(ReanimTimeDomain::Battle);
+    advanced = nullptr;
+    while (holder->mReanimations.IterateNext(advanced))
+        if (advanced->mLoopType == ReanimLoopType::REANIM_LOOP && !advanced->mDead)
+        {
+            advanced->ApplyRate(13.3072289f);
+            break;
+        }
+    // Explicit forward, reverse and paused probes exercise real absolute-clock
+    // records; the visual probe also crosses a session clock rebase on reload.
+    Reanimation* visualProbe = nullptr;
+    for (float rate : {13.3072289f, -6.65361445f, 0.0f})
+    {
+        auto* probe = app.AddReanimation(0, 0, 0, ReanimationType::REANIM_WALLNUT);
+        probe->BindTimeDomain(ReanimTimeDomain::Battle);
+        probe->ChangeLoopType(ReanimLoopType::REANIM_LOOP);
+        probe->ApplyRate(rate);
+        probe->SeekRatio(0.3372819f);
+        if (!visualProbe)
+        {
+            visualProbe = probe;
+            visualProbe->BindTimeDomain(ReanimTimeDomain::Visual);
+        }
+    }
+    board.mMainCounter.AddNanoseconds(123'456'789);
+    holder->mBattleTimeNs = static_cast<std::int64_t>(board.mMainCounter.mNanoseconds);
+    holder->mVisualTimeNs += 123'456'789;
+    advanced = nullptr;
+    while (holder->mReanimations.IterateNext(advanced))
+        advanced->UpdateAt(advanced->mTimeDomain == ReanimTimeDomain::Battle
+            ? holder->mBattleTimeNs : holder->mVisualTimeNs);
+    particle = nullptr;
+    if (systems.IterateNext(particle))
+    {
+        particle->mSimulationRemainderNs = 7'654'321;
+        particle->mRandomState = 0x173ABC29U;
+    }
+    Plant* coordinateProbe = nullptr;
+    if (board.mPlants.IterateNext(coordinateProbe))
+    {
+        coordinateProbe->mX = 123.456789f;
+        coordinateProbe->mY = -0.000123456789f;
+        coordinateProbe->mRootOriginX = 123.456789012345;
+        coordinateProbe->mRootScale = 1.3372819f;
+        const auto now = static_cast<std::int64_t>(board.mMainCounter.mNanoseconds);
+        coordinateProbe->mNextLaunchTimeNs = now + 217'123'456;
+        coordinateProbe->mLaunchClockSampleNs = now;
+        coordinateProbe->mLaunchWindowStartNs = now - 4'567'888;
+    }
+    // Keep a real pool object with nonzero velocity-segment state so the
+    // production writer/reader checks its double origin and integer clock too.
+    auto* motionProbe = board.mZombies.DataArrayAlloc();
+    motionProbe->mZombieType = ZombieType::ZOMBIE_NORMAL;
+    motionProbe->mZombiePhase = ZombiePhase::PHASE_ZOMBIE_NORMAL;
+    motionProbe->mRow = 2;
+    motionProbe->mX = 432.123456f;
+    motionProbe->mY = 251.987654f;
+    motionProbe->mScaleZombie = 1.3372819f;
+    motionProbe->mRootOriginX = -0.000123456789;
+    AdvanceVelocity(motionProbe->mX, -0.123456789f, 123'456'789, motionProbe->mVelocityX);
+    AdvanceVelocity(motionProbe->mY, 0.000123456789f, 987'654'321, motionProbe->mVelocityY);
+    // Real live shots exercise both timestamp anchors and the original float
+    // trajectory parameters, rather than merely roundtripping an empty pool.
+    std::vector<unsigned int> projectileProbeIds;
+    for (const auto type : {ProjectileType::PROJECTILE_PEA, ProjectileType::PROJECTILE_KERNEL})
+    {
+        auto* shot = board.AddProjectile(121, 151, 0, 1, type);
+        const auto now = static_cast<std::int64_t>(board.mMainCounter.mNanoseconds);
+        shot->mCreationTimeNs = now - 217'123'456;
+        shot->mMotionOriginTimeNs = now - 123'456'789;
+        shot->mOriginX = 121.123456f;
+        shot->mOriginY = 151.987654f;
+        shot->mOriginZ = -0.000123456f;
+        shot->mOriginRotation = 0.123456789f;
+        shot->mOriginShadowY = 218.987654f;
+        shot->mRotationSpeed = 0.013372819f;
+        shot->mVelX = 2.7137289f;
+        shot->mVelY = 0.031372819f;
+        if (type == ProjectileType::PROJECTILE_KERNEL)
+        {
+            shot->mMotionType = ProjectileMotion::MOTION_LOBBED;
+            shot->mVelZ = -7.13372819f;
+            shot->mAccZ = 0.115f;
+        }
+        shot->mDamageRangeFlags = 1 << int(DamageRangeFlags::DAMAGES_GROUND);
+        shot->UpdateMotion();
+        Require(!shot->mDead, "Projectile save probe unexpectedly impacted during setup");
+        projectileProbeIds.push_back(board.mProjectiles.DataArrayGetID(shot));
+    }
+    const auto projectileState = [](const Projectile& shot) {
+        const auto bits = [](float value) { return std::int64_t(std::bit_cast<std::uint32_t>(value)); };
+        return std::vector<std::int64_t>{
+            shot.mCreationTimeNs, shot.mMotionOriginTimeNs,
+            bits(shot.mOriginX), bits(shot.mOriginY), bits(shot.mOriginZ),
+            bits(shot.mOriginRotation), bits(shot.mOriginShadowY),
+            bits(shot.mPosX), bits(shot.mPosY), bits(shot.mPosZ),
+            bits(shot.mVelX), bits(shot.mVelY), bits(shot.mVelZ), bits(shot.mAccZ),
+            bits(shot.mRotation), bits(shot.mRotationSpeed), bits(shot.mShadowY),
+            shot.mX, shot.mY, shot.mRow, shot.mDead};
+    };
+    const auto exactSnapshot = [&] {
+        std::vector<std::int64_t> state;
+        const auto append = [&](auto... values) {
+            const auto bits = [](auto value) -> std::int64_t {
+                using T = decltype(value);
+                if constexpr (std::is_same_v<T, float>)
+                    return std::bit_cast<std::uint32_t>(value);
+                else if constexpr (std::is_same_v<T, double>)
+                    return std::bit_cast<std::int64_t>(value);
+                else return static_cast<std::int64_t>(value);
+            };
+            (state.push_back(bits(values)), ...);
+        };
+        Reanimation* animation = nullptr;
+        while (app.mEffectSystem->mReanimationHolder->mReanimations.IterateNext(animation))
+        {
+            const auto position = animation->SamplePlayback();
+            const auto now = animation->mTimeDomain == ReanimTimeDomain::Battle
+                ? app.mEffectSystem->mReanimationHolder->mBattleTimeNs
+                : app.mEffectSystem->mReanimationHolder->mVisualTimeNs;
+            // Absolute Visual timestamps can change between sessions. Their
+            // offset from the current shared clock must preserve local progress.
+            append(animation->mTimeDomain,
+                animation->mStartTimeNs - now,
+                animation->mPhaseOriginNs, animation->mPeriodNs,
+                animation->mOriginCycleCount, std::bit_cast<std::uint32_t>(animation->mAnimRate),
+                position.phaseNs, position.cycles,
+                animation->mLastFrameNs, animation->mLastCycleCount, animation->mHasLastFrame,
+                animation->mPlaybackGeneration);
+        }
+        Plant* plant = nullptr;
+        while (board.mPlants.IterateNext(plant))
+            append(plant->mX, plant->mY, plant->mRootOriginX,
+                plant->mRootBindingGeneration, plant->mRootScale, plant->mBowlingRowArrivalTimeNs,
+                plant->mNextLaunchTimeNs, plant->mLaunchClockSampleNs,
+                plant->mLaunchWindowStartNs);
+        Projectile* shot = nullptr;
+        while (board.mProjectiles.IterateNext(shot))
+        {
+            const auto fields = projectileState(*shot);
+            state.insert(state.end(), fields.begin(), fields.end());
+        }
+        Zombie* zombie = nullptr;
+        while (board.mZombies.IterateNext(zombie))
+        {
+            append(zombie->mX, zombie->mY, zombie->mRootOriginX,
+                zombie->mRootBindingGeneration, zombie->mRootScale);
+            for (const auto* motion : {&zombie->mVelocityX, &zombie->mVelocityY})
+                append(motion->origin, motion->elapsedNs, motion->rate, motion->lastOutput, motion->bound);
+        }
+        TodParticleSystem* system = nullptr;
+        while (systems.IterateNext(system))
+        {
+            append(system->mSimulationRemainderNs, system->mRandomState);
+            for (int e = 0; e < system->EmitterRosterCount(); ++e)
+            {
+                auto* emitter = system->EmitterRosterEmitterAt(e);
+                append(emitter->mSpawnRemainder, emitter->mSystemSampleAgeNs, emitter->mSystemLastSampleAgeNs);
+                for (int p = 0; p < emitter->ParticleRosterCount(); ++p)
+                {
+                    auto* item = emitter->ParticleRosterParticleAt(p);
+                    append(item->mParticleSampleAgeNs, item->mParticleLastSampleAgeNs,
+                        item->mAnimationElapsedNs, item->mAnimationSampleIntegral, item->mRandomSeed);
+                }
+            }
+        }
+        return state;
+    };
+    const auto exactBefore = exactSnapshot();
     const auto beforeSave = appearanceSnapshot();
     const auto nondefault = std::count_if(beforeSave.begin(), beforeSave.end(),
         [](const auto& entry) { return entry.second != 0; });
     const std::string roundtrip = std::string(save) + ".runtime-roundtrip.dat64";
-    Require(LawnSaveGame(&board, roundtrip), "Production v3.2 save writer failed");
+    Require(LawnSaveGame(&board, roundtrip), "Production v3.3 save writer failed");
     std::ifstream saved(roundtrip, std::ios::binary);
     const std::vector<std::uint8_t> savedBytes{
         std::istreambuf_iterator<char>(saved), std::istreambuf_iterator<char>()};
-    Require(LevelSaveFormat::IsCurrentDat64Header(savedBytes), "Production writer did not emit v3.2");
+    Require(LevelSaveFormat::IsCurrentDat64Header(savedBytes), "Production writer did not emit v3.3");
     saved.close();
-    Require(LawnLoadGame(&board, roundtrip), "Production v3.2 roundtrip reload failed");
+    // Sample a future point on independent copies. Reloaded live objects must
+    // reach the identical float results, including rotation and roof/shadow
+    // correction, from the saved absolute time anchors.
+    constexpr std::int64_t continuationNs = 23'456'789;
+    const auto savedBoardTime = board.mMainCounter.mNanoseconds;
+    const auto savedInterval = Sexy::gUpdateIntervalNs;
+    const auto savedTicks = Sexy::gUpdateTicks;
+    std::vector<std::vector<std::int64_t>> continuedProjectiles;
+    board.mMainCounter.AddNanoseconds(continuationNs);
+    Sexy::gUpdateIntervalNs = continuationNs;
+    Sexy::gUpdateTicks = double(continuationNs) / 10'000'000;
+    for (const auto id : projectileProbeIds)
+    {
+        Projectile shot = *board.mProjectiles.DataArrayGet(id);
+        shot.mAttachmentID = AttachmentID::ATTACHMENTID_NULL;
+        shot.UpdateMotion();
+        Require(!shot.mDead, "Projectile continuation probe unexpectedly impacted");
+        continuedProjectiles.push_back(projectileState(shot));
+    }
+    board.mMainCounter.mNanoseconds = savedBoardTime;
+    Sexy::gUpdateIntervalNs = savedInterval;
+    Sexy::gUpdateTicks = savedTicks;
+    holder->mVisualTimeNs += 17'123'456'789;
+    Require(LawnLoadGame(&board, roundtrip), "Production v3.3 roundtrip reload failed");
+    Require(exactSnapshot() == exactBefore, "Native v3.3 reload changed exact time, motion or random state");
+    if (coordinateProbe)
+    {
+        Plant* restoredProbe = nullptr;
+        Require(board.mPlants.IterateNext(restoredProbe) && restoredProbe &&
+            restoredProbe->mNextLaunchTimeNs -
+                static_cast<std::int64_t>(board.mMainCounter.mNanoseconds) == 217'123'456,
+            "Native reload rounded the exact future launch deadline through legacy ticks");
+    }
     Require(appearanceSnapshot() == beforeSave, "Reanimation appearance changed through native save/reload");
     std::vector<std::pair<int, std::uint32_t>> particlesAfterReload;
     particle = nullptr;
@@ -208,6 +419,19 @@ void LoadCurrentWithResources(LawnApp& app, HiddenWindow& window, const char* sa
         particlesAfterReload.emplace_back(static_cast<int>(particle->mEffectType), particle->mVariant);
     Require(particlesAfterReload == particleAppearances,
         "Particle base/appearance changed through native save/reload");
+    board.mMainCounter.AddNanoseconds(continuationNs);
+    holder->mBattleTimeNs = static_cast<std::int64_t>(board.mMainCounter.mNanoseconds);
+    Sexy::gUpdateIntervalNs = continuationNs;
+    Sexy::gUpdateTicks = double(continuationNs) / 10'000'000;
+    for (std::size_t i = 0; i < projectileProbeIds.size(); ++i)
+    {
+        auto* shot = board.mProjectiles.DataArrayGet(projectileProbeIds[i]);
+        shot->UpdateMotion();
+        Require(projectileState(*shot) == continuedProjectiles[i],
+            "Native reload changed the continued projectile trajectory");
+    }
+    Sexy::gUpdateIntervalNs = savedInterval;
+    Sexy::gUpdateTicks = savedTicks;
     std::cout << "PASS complete production current-save load and write/reload with resident resources: level="
         << board.mLevel << " particleSystems=" << variants << " zombies=" << board.mZombies.mSize
         << " plants=" << board.mPlants.mSize << " reanimations=" << beforeSave.size()

@@ -1,6 +1,6 @@
 # 曲线调用点静态审计
 
-审计日期：2026-10-24。范围为当前工作区 `pvzPerf`，排除 `**/generated/**` 静态生成数据；不修改 C++，不编译、不提交。
+迁移前审计快照日期：2026-10-24。范围为当时工作区 `pvzPerf`，排除 `**/generated/**` 静态生成数据。173 处调用、原函数签名及下面的全量行号表记录的是**曲线接口迁移前**的状态；迁移后的分组状态另列在文末，不覆盖或混用这组基线数字。
 
 以下数字是**源码静态调用点数量**，不是运行时调用次数、对象数量、每帧执行次数或性能采样结果。包含适配函数内部调用；排除声明、定义和注释。多行调用按函数名所在行计数。行号随代码编辑可能变化。
 
@@ -380,3 +380,117 @@ rg -n 'TodCurveResolveEval\s*\([^;]*\)\s*\(' pvzPerf --glob '!**/generated/**'
 ```
 
 本快照内每个命中调用的函数名占一行，173 处调用也对应 173 行。声明/定义各四行及一行注释不计入调用；因此原始四 API 匹配为 182 行。后续编辑后应重新扫描，不应把本表数量当成固定代码不变量。
+
+## 迁移后分组状态：UI、MessageWidget、CutScene、Challenge
+
+这组拥有 11 个 `.cpp` 文件，迁移前共 71 处曲线调用。迁移后为 **45 处 `TodAnimateCurveNs` 时间调用 + 26 处实数范围映射**；它是本组状态，不是全仓库新总数。范围内 `TodAnimateCurveFloatTime` 已全部移除，也没有把真实 TimeCounter 直接传入实数范围映射接口。
+
+| 分组 | 整数 ns 曲线 | 实数范围/进度曲线 |
+| --- | ---: | ---: |
+| 八个 Widget 文件 | 23 | 15 |
+| MessageWidget.cpp | 3 | 0 |
+| CutScene.cpp | 11 | 0 |
+| Challenge.cpp | 8 | 11 |
+| 合计 | 45 | 26 |
+
+时间曲线从公开 `.mNanoseconds` 或整数 ns 差值取输入；不经过 legacy tick 投影，也不产生浮点时间。整数像素/颜色输出继续在最终接口舍入。MessageWidget 字符延迟在 ns 中算差和倍率，周期闪烁在 ns 中取模。
+
+`CutScene::CalcPosition` 和 `Challenge::DrawStormFlash` 的真实时间参数已改为 int64 ns，并同步调用方。CutScene 原场景阶段常量、Award 的作者动画边界、Title 的固定持续长度仍可保留作者配置单位，在调用边界显式乘 `10'000'000` 形成整数 ns；运行中的 TimeCounter 不先转回 tick。这些固定作者时长换算不依赖运行 FPS 或 `gUpdateTicks`。
+
+SeedChooser 飞行动画直接按现有 unsigned UI 时钟的 ns 做模差，保留其历史回卷周期；新飞行结束时刻由当前精确时间加 150ms/250ms 生成，避免 `mSeedChooserAge + 整数` 先触发 tick 投影。雨纹同样直接在 ns 中保留原有符号回卷区间，然后取各自周期的余数。
+
+Credit 的脑子移动/动画相位、Title 的加载比例和宽度，以及 Challenge 的得分/数量/波数映射均保留实数范围语义。这次接口迁移不修改存档 schema。
+
+## 迁移后全仓复核（2026-10-24）
+
+再次扫描整个 `pvzPerf`，排除 `**/generated/**`，沿用前文的静态调用计数规则。当前有 **170 处业务调用、21 个业务文件**；其中 **114 处整数 ns 时间调用、56 处非时间量或归一化进度映射**。另有 `TodCommon.cpp` 内 2 处整数输出包装器转发，因此具名公开 API 的总数为 **172 处、22 个文件**。历史 173 处快照保留不变；内部 Clamped 转发的移除和 Ns 包装器的加入使内部计数从 3 变为 2。
+
+| 当前接口 | 业务调用 | 核心内部转发 | 合计 |
+| --- | ---: | ---: | ---: |
+| `TodAnimateCurveNs`（float/int 重载合计） | 114 | 1 | 115 |
+| `TodAnimateCurve`（实数范围、整数输出） | 29 | 0 | 29 |
+| `TodAnimateCurveFloat`（实数范围、float 输出） | 27 | 1 | 28 |
+| 合计 | **170** | **2** | **172** |
+
+| 业务文件 | 整数 ns | generic int | generic float | 合计 |
+| --- | ---: | ---: | ---: | ---: |
+| `Lawn/Board.cpp` | 12 | 12 | 1 | 25 |
+| `Lawn/Challenge.cpp` | 8 | 11 | 0 | 19 |
+| `Lawn/Coin.cpp` | 4 | 0 | 0 | 4 |
+| `Lawn/CutScene.cpp` | 11 | 0 | 0 | 11 |
+| `Lawn/GridItem.cpp` | 9 | 4 | 0 | 13 |
+| `Lawn/LawnMower.cpp` | 2 | 0 | 0 | 2 |
+| `Lawn/MessageWidget.cpp` | 3 | 0 | 0 | 3 |
+| `Lawn/Plant.cpp` | 10 | 1 | 1 | 12 |
+| `Lawn/Projectile.cpp` | 1 | 0 | 0 | 1 |
+| `Lawn/SeedPacket.cpp` | 1 | 1 | 0 | 2 |
+| `Lawn/System/Music.cpp` | 7 | 0 | 0 | 7 |
+| `Lawn/Widget/AwardScreen.cpp` | 2 | 0 | 0 | 2 |
+| `Lawn/Widget/ChallengeScreen.cpp` | 2 | 0 | 0 | 2 |
+| `Lawn/Widget/CreditScreen.cpp` | 1 | 0 | 11 | 12 |
+| `Lawn/Widget/GameSelector.cpp` | 2 | 0 | 0 | 2 |
+| `Lawn/Widget/SeedChooserScreen.cpp` | 5 | 0 | 0 | 5 |
+| `Lawn/Widget/StoreScreen.cpp` | 1 | 0 | 0 | 1 |
+| `Lawn/Widget/TitleScreen.cpp` | 6 | 0 | 4 | 10 |
+| `Lawn/Widget/ZombatarItems.cpp` | 4 | 0 | 0 | 4 |
+| `Lawn/ZenGarden.cpp` | 3 | 0 | 1 | 4 |
+| `Lawn/Zombie.cpp` | 20 | 0 | 9 | 29 |
+| 合计 | **114** | **29** | **27** | **170** |
+
+### 剩余 generic 输入逐组核对
+
+56 处 generic 业务调用分为 **37 处非时间量、19 处归一化进度**。未发现将 `TimeCounter`、tick 投影或提前取整的经过时间直接传入 generic 接口的剩余调用。以下行号属于本次迁移后源码，不能套用到前文历史表。
+
+| 文件及行号 | 输入语义 | 数量 |
+| --- | --- | ---: |
+| `Board.cpp:3304,3323,3333,3340,3350,3354` | 旗帜/波次数量和权重 | 6 |
+| `Board.cpp:7015` | 雾的空间偏移 | 1 |
+| `Board.cpp:7289,7297,7305,7922,7981,8004` | 草皮位置、进度条宽度及波次位置 | 6 |
+| `Challenge.cpp:1637,1988,1992,2062,2135,2956,2984,2985,3844,5111,5390` | 得分、植物数量、阳光数及波数 | 11 |
+| `GridItem.cpp:173,174,175,207` | 已求出的高度及绘制索引；高度即使来自动画，也已是空间量 | 4 |
+| `Plant.cpp:1549,2851` | 与目标的距离 | 2 |
+| `SeedPacket.cpp:57` | 豌豆数量 | 1 |
+| `Zombie.cpp:4407,5831,5832,10206` | X 坐标或高度；5831/5832 的 `(int)mAltitude` 是空间精度截断 | 4 |
+| `ZenGarden.cpp:1760` | Y 方向距离绝对值 | 1 |
+| `TitleScreen.cpp:150` | 加载条宽度 | 1 |
+| `Zombie.cpp:2176,2989,2993,5538,6097` | double 动画相位比例；2989/2993 的局部 `aPhase` 也是 double | 5 |
+| `CreditScreen.cpp:1040,1253,1254,1261,1262,1270,1271,1278,1279,1518,1519` | 动画时钟归一化比例及文字/脑子移动比例 | 11 |
+| `TitleScreen.cpp:315,317,324` | 加载完成比例 | 3 |
+| 合计 | 非时间量 37 + 归一化进度 19 | **56** |
+
+ZenGarden 的两处历史分钟输入已改为 Ns 接口：直接比较 `mFrameTime` 与 `mLastNeedFulfilledTime`，正差以 unsigned 运算取得，先钳制到 `[0,1800]` 秒再乘 `1'000'000'000`；未来时间和巧克力状态对应 age 0。曲线范围为 300–1800 秒，输出仍分别为整数 `3000..15000` 和 `0..80`，最终由整数输出重载舍入。原时钟和存档时间本身仍为整数秒，此改动消除了曲线前的整分钟截断，不提高 wallclock 源时钟精度。仅供这两处使用的 `PlantGetMinutesSinceHappy` 声明和定义已移除。
+
+### 核心与间接求值
+
+`TodCommon.h` 的 generic 范围起点、终点、输入均为 double；`TodCurveEvalFn` 与命名曲线的进度参数也为 double。Ns 入口接受三个 `int64_t`，先判断端点并计算局部 unsigned 差，再把差转 double 求比例；支持反向区间和零跨度，避免绝对 ns 浮点化及 signed 极值相减溢出。float/int 是最终输出类型；整数包装器只在输出时 `FloatRoundToInt`。
+
+当前 2 处具名内部调用是 `TodCommon.cpp:401` 的 generic int→float 转发和 `:433` 的 Ns int→float 转发，不计入业务数。另有 4 处间接求值，单独列出且不重复计入 172：
+
+| 定位 | 当前作用 |
+| --- | --- |
+| `TodCommon.cpp:396` | generic 范围求得 double 比例后调用函数指针 |
+| `TodCommon.cpp:427` | Ns 局部整数差求得 double 比例后调用函数指针 |
+| `Definition.cpp:162` | `theInterp` 是 float 随机/分布插值因子，不是经过时间 |
+| `Definition.cpp:178` | `aTimeFraction` 为 double；输入 `theTimeValue`、rational 节点时间及区间 span 均按 double 求值 |
+
+`Definition.h/.cpp` 的 `FloatTrackEvaluate` 和 `FloatTrackEvaluateFromLastTime` 时间参数均为 double。保留 float 随机插值和最终属性输出符合其语义，不视为旧 tick 时间路径。
+
+全仓 `TodAnimateCurveFloatTime`、`TodCurveEvaluateClamped` 以及 `PlantGetMinutesSinceHappy` 均无剩余源码命中。`Curves::*` 限定名直接调用仍为 0；两处示例注释和 14 项函数指针表不计数。命名曲线内部进度运算为 double，`SinW` 最终调用既有 `FastSin(float)` 时仍会窄化角度；这是现有数学/渲染输出精度边界，不是旧整数 tick 输入。
+
+本次仍是文本调用点及数据来源审计，不是 AST 证明或运行时性能统计。最终复扫使用 `\b(TodAnimateCurveNs|TodAnimateCurveFloat|TodAnimateCurve)\s*\(`，排除注释及对应声明/定义，并将 `Sexy.TodLib/TodCommon.cpp` 的内部调用单独分组。
+
+### 仓库其他目录与验证边界
+
+额外扫描仓库其余源码目录，测试调用与生产调用分别计数：
+
+| 测试文件 | Ns 调用 | generic int | generic float | 合计 |
+| --- | ---: | ---: | ---: | ---: |
+| `Tests/native/StaticDefinitionRuntimeTests.cpp` | 22 | 1 | 2 | 25 |
+| `Tests/native/ImageRuntimeTests.cpp` | 1 | 0 | 0 | 1 |
+| 合计 | **23** | **1** | **2** | **26** |
+
+因此本次全仓源码调用为 **198 处、24 个文件**：生产业务 170 + 核心内部转发 2 + 测试 26；按接口为 Ns 138、generic int 30、generic float 30。该数不替代用于比较迁移前后的 `pvzPerf` 172 处。
+
+`ImageRuntimeTests.cpp` 的期望图计算也已改为 Ns，使用 `{0,123456789,300000000}` 纳秒样本，同时直接设置被测投射物的创建时间，覆盖非旧 tick 对齐的缩放。`MusicBurstTests.cpp` 的本地曲线 stub 已改为 Ns 签名，定义本身不计调用点；实际生产音乐控制器代码仍由测试脚本提取运行。工具脚本中的旧调用字符串也不是 C++ 调用点。测试中的直接 `Curves::*` 调用、测试 stub 和生产 API 业务计数不混合。
+
+本次对修改后的 `ZenGarden.cpp` 使用 `out/x64-win32-vulkan/compile_commands.json` 的现有编译参数，初始化 MSVC 环境后追加 `/Zs` 做独立语法检查，返回 0。此检查未运行共享 Ninja 构建或游戏运行时；全量构建与运行时 fixture 的结果由对应验证流程记录。

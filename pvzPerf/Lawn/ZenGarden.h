@@ -122,7 +122,6 @@ public:
     void                    UpdatePlantNeeds();
     void                    RefreshPlantNeeds(PottedPlant* thePottedPlant);
     void                    PlantSetLaunchCounter(Plant* thePlant);
-    int                     PlantGetMinutesSinceHappy(Plant* thePlant);
     /*inline*/ bool         IsStinkyHighOnChocolate();
     void                    StinkyAnimRateUpdate(GridItem* theStinky);
     /*inline*/ bool         PlantCanBeWatered(Plant* thePlant);

@@ -1218,9 +1218,9 @@ void CutScene::AddFlowerPots()
 	}
 }
 
-int CutScene::CalcPosition(int theTimeStart, int theTimeEnd, int thePositionStart, int thePositionEnd)
+int CutScene::CalcPosition(std::int64_t theStartNs, std::int64_t theEndNs, int thePositionStart, int thePositionEnd)
 {
-	return TodAnimateCurve(theTimeStart, theTimeEnd, mCutsceneTime, thePositionStart, thePositionEnd, Curves::EaseInOut);
+	return TodAnimateCurveNs(theStartNs, theEndNs, mCutsceneTime.mNanoseconds, thePositionStart, thePositionEnd, Curves::EaseInOut);
 }
 
 void CutScene::UpdateSeedChooserCamera()
@@ -1246,28 +1246,28 @@ void CutScene::UpdateSeedChooserCamera()
 	if (mSeedChoosing && aChooser && aChooser->mChooseState == CHOOSE_VIEW_LAWN)
 	{
 		if (aChooser->mViewLawnTime <= 100)
-			aCameraX = TodAnimateCurve(0, 100, aChooser->mViewLawnTime, aChooserX, 0, Curves::EaseInOut);
+			aCameraX = TodAnimateCurveNs(0, 1'000'000'000, aChooser->mViewLawnTime.mNanoseconds, aChooserX, 0, Curves::EaseInOut);
 		else if (aChooser->mViewLawnTime <= 250)
 			aCameraX = 0;
 		else
-			aCameraX = TodAnimateCurve(250, 350, aChooser->mViewLawnTime, 0, aChooserX, Curves::EaseInOut);
+			aCameraX = TodAnimateCurveNs(2'500'000'000, 3'500'000'000, aChooser->mViewLawnTime.mNanoseconds, 0, aChooserX, Curves::EaseInOut);
 	}
 	else if (mCutsceneTime <= TimePanRightStart + mCrazyDaveTime)
 		aCameraX = aStartX;
 	else if (mCutsceneTime <= TimePanRightEnd + mCrazyDaveTime)
-		aCameraX = CalcPosition(TimePanRightStart + mCrazyDaveTime,
-			TimePanRightEnd + mCrazyDaveTime, aStartX, aChooserX);
+		aCameraX = CalcPosition(std::int64_t(TimePanRightStart + mCrazyDaveTime) * 10'000'000,
+			std::int64_t(TimePanRightEnd + mCrazyDaveTime) * 10'000'000, aStartX, aChooserX);
 	else if (mCutsceneTime <= TimePanLeftStart + mCrazyDaveTime)
 		aCameraX = aChooserX;
 	else
-		aCameraX = CalcPosition(TimePanLeftStart + mCrazyDaveTime,
-			TimePanLeftEnd + mCrazyDaveTime, aChooserX, 0);
+		aCameraX = CalcPosition(std::int64_t(TimePanLeftStart + mCrazyDaveTime) * 10'000'000,
+			std::int64_t(TimePanLeftEnd + mCrazyDaveTime) * 10'000'000, aChooserX, 0);
 
 	// Board::Update applies shake after CutScene::Update. The chooser reapplies
 	// this camera afterwards, including the tick that resets shake to zero.
 	// The native backdrop is exactly 600 high, so vertical shake has no margin.
 	if (mBoard->mShakeCounter > 0)
-		aCameraX += TodAnimateCurve(12, 0, mBoard->mShakeCounter, 0, mBoard->mShakeAmountX, Curves::Bounce);
+		aCameraX += TodAnimateCurveNs(120'000'000, 0, mBoard->mShakeCounter.mNanoseconds, 0, mBoard->mShakeAmountX, Curves::Bounce);
 	mBoard->Move(ConstrainSeedChooserCameraX(aCameraX, aBounds.mX, aBounds.mWidth), 0);
 }
 
@@ -1318,8 +1318,8 @@ void CutScene::AnimateBoard()
 		// ====================================================================================================
 		if (mCutsceneTime > aTimeSeedChoserSlideOnStart && mCutsceneTime <= aTimeSeedChoserSlideOnEnd)
 		{
-			aSeedChoser->Move(mApp->mScreenBounds.mX, CalcPosition(aTimeSeedChoserSlideOnStart, aTimeSeedChoserSlideOnEnd, SEED_CHOOSER_OFFSET_Y, 0));
-			aSeedChoser->mMenuButton->mY = CalcPosition(aTimeSeedChoserSlideOnStart, aTimeSeedChoserSlideOnEnd, -50, -10);
+			aSeedChoser->Move(mApp->mScreenBounds.mX, CalcPosition(std::int64_t(aTimeSeedChoserSlideOnStart) * 10'000'000, std::int64_t(aTimeSeedChoserSlideOnEnd) * 10'000'000, SEED_CHOOSER_OFFSET_Y, 0));
+			aSeedChoser->mMenuButton->mY = CalcPosition(std::int64_t(aTimeSeedChoserSlideOnStart) * 10'000'000, std::int64_t(aTimeSeedChoserSlideOnEnd) * 10'000'000, -50, -10);
 			aSeedChoser->mMenuButton->mBtnNoDraw = false;
 		}
 		// ====================================================================================================
@@ -1329,7 +1329,7 @@ void CutScene::AnimateBoard()
 		int aTimeSeedChoserSlideOffEnd = TimeSeedChoserSlideOffEnd + mCrazyDaveTime;
 		if (mCutsceneTime > aTimeSeedChoserSlideOffStart && mCutsceneTime <= aTimeSeedChoserSlideOffEnd)
 		{
-			aSeedChoser->Move(mApp->mScreenBounds.mX, CalcPosition(aTimeSeedChoserSlideOffStart, aTimeSeedChoserSlideOffEnd, 0, SEED_CHOOSER_OFFSET_Y));
+			aSeedChoser->Move(mApp->mScreenBounds.mX, CalcPosition(std::int64_t(aTimeSeedChoserSlideOffStart) * 10'000'000, std::int64_t(aTimeSeedChoserSlideOffEnd) * 10'000'000, 0, SEED_CHOOSER_OFFSET_Y));
 			aSeedChoser->mMenuButton->mDisabled = true;
 		}
 	}
@@ -1346,7 +1346,7 @@ void CutScene::AnimateBoard()
 	int aTimeSeedBankOnEnd = TimeSeedBankOnEnd + aTimePrepareEnd + mCrazyDaveTime;
 	if (!mApp->IsChallengeWithoutSeedBank() && mCutsceneTime > aTimeSeedBankOnStart && mCutsceneTime <= aTimeSeedBankOnEnd)
 	{
-		int aSeedBankY = CalcPosition(aTimeSeedBankOnStart, aTimeSeedBankOnEnd, -IMAGE_SEEDBANK->mHeight, 0);
+		int aSeedBankY = CalcPosition(std::int64_t(aTimeSeedBankOnStart) * 10'000'000, std::int64_t(aTimeSeedBankOnEnd) * 10'000'000, -IMAGE_SEEDBANK->mHeight, 0);
 		mBoard->mSeedBank->mX = SEED_BANK_OFFSET_X;
 		mBoard->mSeedBank->mY = aSeedBankY;
 	}
@@ -1354,8 +1354,8 @@ void CutScene::AnimateBoard()
 	int aTimeSeedBankRightEnd = TimeSeedBankRightEnd + mCrazyDaveTime;
 	if (mCutsceneTime > aTimeSeedBankRightStart)
 	{
-		int aSeedBankX = CalcPosition(aTimeSeedBankRightStart, aTimeSeedBankRightEnd, SEED_BANK_OFFSET_X, SEED_BANK_OFFSET_X_END);
-		int aDarken = TodAnimateCurve(aTimeSeedBankRightStart, aTimeSeedBankRightEnd, mCutsceneTime, 255, 128, Curves::EaseOut);
+		int aSeedBankX = CalcPosition(std::int64_t(aTimeSeedBankRightStart) * 10'000'000, std::int64_t(aTimeSeedBankRightEnd) * 10'000'000, SEED_BANK_OFFSET_X, SEED_BANK_OFFSET_X_END);
+		int aDarken = TodAnimateCurveNs(std::int64_t(aTimeSeedBankRightStart) * 10'000'000, std::int64_t(aTimeSeedBankRightEnd) * 10'000'000, mCutsceneTime.mNanoseconds, 255, 128, Curves::EaseOut);
 		mBoard->mSeedBank->mCutSceneDarken = aDarken;
 		mBoard->mSeedBank->mX = aSeedBankX;
 	}
@@ -1367,7 +1367,7 @@ void CutScene::AnimateBoard()
 	{
 		int aTimeRollSodStart = TimeRollSodStart + mCrazyDaveTime;
 		int aTimeRollSodEnd = TimeRollSodEnd + mCrazyDaveTime;
-		mBoard->mSodPosition = TodAnimateCurve(aTimeRollSodStart, aTimeRollSodEnd, mCutsceneTime, 0, 1000, Curves::Linear);
+		mBoard->mSodPosition = TodAnimateCurveNs(std::int64_t(aTimeRollSodStart) * 10'000'000, std::int64_t(aTimeRollSodEnd) * 10'000'000, mCutsceneTime.mNanoseconds, 0, 1000, Curves::Linear);
 
 		if (mCutsceneTime == aTimeRollSodStart)
 		{
@@ -1434,7 +1434,7 @@ void CutScene::AnimateBoard()
 				if (aLawnMower)
 				{
 					aLawnMower->mVisible = true;
-					aLawnMower->mPosX = CalcPosition(aTimeLawnMowerStart, aTimeLawnMowerStart + TimeLawnMowerDuration, -80, -21);
+					aLawnMower->mPosX = CalcPosition(std::int64_t(aTimeLawnMowerStart) * 10'000'000, std::int64_t(aTimeLawnMowerStart + TimeLawnMowerDuration) * 10'000'000, -80, -21);
 				}
 			}
 		}
@@ -1660,7 +1660,7 @@ void CutScene::UpdateZombiesWon()
 	// Keep that curve, constrained by the backdrop visible at this width.
 	const Rect& aView = mApp->mScreenBounds;
 	mBoard->Move(ZombiesWonLayout::CameraX(
-		CalcPosition(LostTimePanRightStart, LostTimePanRightEnd, 0, BOARD_OFFSET),
+		CalcPosition(std::int64_t(LostTimePanRightStart) * 10'000'000, std::int64_t(LostTimePanRightEnd) * 10'000'000, 0, BOARD_OFFSET),
 		aView.mX, aView.mWidth), 0);
 	if (Reanimation* aWon = mApp->ReanimationTryToGet(mZombiesWonReanimID))
 	{
@@ -2328,7 +2328,7 @@ void CutScene::UpdateIntro()
 {
 	// Retain the authored intro pan. At the widest viewport the native backdrop
 	// has no spare pan margin, so uncovered sides intentionally remain black.
-	mBoard->Move(-TodAnimateCurve(TimeIntro_PanRightStart, TimeIntro_PanRightEnd, mCutsceneTime, -100, 100, Curves::Linear), 0);
+	mBoard->Move(-TodAnimateCurveNs(std::int64_t(TimeIntro_PanRightStart) * 10'000'000, std::int64_t(TimeIntro_PanRightEnd) * 10'000'000, mCutsceneTime.mNanoseconds, -100, 100, Curves::Linear), 0);
 
 	if (mCutsceneTime == 10)
 	{
@@ -2376,8 +2376,8 @@ void CutScene::DrawIntro(Graphics* g)
 	if (mCutsceneTime > TimeIntro_PresentsFadeIn && mCutsceneTime <= aTimePanRightStart)
 	{
 		int anAlpha = mCutsceneTime < aTimePanRightStart - 600 ?
-					  TodAnimateCurve(TimeIntro_PresentsFadeIn, TimeIntro_PresentsFadeIn + 300, mCutsceneTime, 0, 255, Curves::Linear) :
-					  TodAnimateCurve(aTimePanRightStart - 600, aTimePanRightStart - 300, mCutsceneTime, 255, 0, Curves::Linear);
+					  TodAnimateCurveNs(std::int64_t(TimeIntro_PresentsFadeIn) * 10'000'000, std::int64_t(TimeIntro_PresentsFadeIn + 300) * 10'000'000, mCutsceneTime.mNanoseconds, 0, 255, Curves::Linear) :
+					  TodAnimateCurveNs(std::int64_t(aTimePanRightStart - 600) * 10'000'000, std::int64_t(aTimePanRightStart - 300) * 10'000'000, mCutsceneTime.mNanoseconds, 255, 0, Curves::Linear);
 
 		TodDrawString(
 			g,
@@ -2393,7 +2393,7 @@ void CutScene::DrawIntro(Graphics* g)
 	// 绘制“Plants Vs Zombies”的 Logo
 	if (mCutsceneTime > TimeIntro_LogoStart && mCutsceneTime <= TimeIntro_PanRightEnd)
 	{
-		float aScale = TodAnimateCurveFloat(TimeIntro_LogoStart, TimeIntro_LogoEnd, mCutsceneTime, 5, 1, Curves::EaseOut);
+		float aScale = TodAnimateCurveNs(std::int64_t(TimeIntro_LogoStart) * 10'000'000, std::int64_t(TimeIntro_LogoEnd) * 10'000'000, mCutsceneTime.mNanoseconds, 5.0f, 1.0f, Curves::EaseOut);
 		float aCenter = aScale * 0.5;
 		int aOffsetX = BOARD_WIDTH / 2 - mBoard->mX, aOffsetY = BOARD_HEIGHT / 2 - mBoard->mY;
 		const Rect aRect(aScreenRect.mX, aOffsetY - 75 * aScale,
@@ -2406,7 +2406,7 @@ void CutScene::DrawIntro(Graphics* g)
 
 	if (mCutsceneTime > TimeIntro_FadeOut && mCutsceneTime <= TimeIntro_FadeOutEnd)
 	{
-		g->mColor = Color(0, 0, 0, TodAnimateCurve(TimeIntro_FadeOut, TimeIntro_FadeOutEnd, mCutsceneTime, 0, 255, Curves::Linear));
+		g->mColor = Color(0, 0, 0, TodAnimateCurveNs(std::int64_t(TimeIntro_FadeOut) * 10'000'000, std::int64_t(TimeIntro_FadeOutEnd) * 10'000'000, mCutsceneTime.mNanoseconds, 0, 255, Curves::Linear));
 		g->FillRect(aScreenRect);
 	}
 }

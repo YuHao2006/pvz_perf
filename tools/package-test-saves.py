@@ -76,7 +76,7 @@ def main():
         checkpoint_bytes = checkpoint.read_bytes()
         if (checkpoint_bytes[:8] != b"PVZDAT64"
                 or struct.unpack_from("<I", checkpoint_bytes, 8)[0] != 3
-                or struct.unpack_from("<II", checkpoint_bytes, 36) != (0x10739, 3)):
+                or struct.unpack_from("<II", checkpoint_bytes, 36) != (0x10740, 3)):
             raise ValueError("Modern checkpoint must use DAT64 v3.3")
         args.output.parent.mkdir(parents=True, exist_ok=True)
         with zipfile.ZipFile(args.output, "x", zipfile.ZIP_DEFLATED) as archive:

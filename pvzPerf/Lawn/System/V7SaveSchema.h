@@ -26,9 +26,9 @@ constexpr std::size_t Size(Kind kind)
     case Kind::Plant: return 56;
     case Kind::Projectile: return 36;
     case Kind::Reanimation: return 68;
-    case Kind::ParticleSystem: return 12;
+    case Kind::ParticleSystem: return 4;
     case Kind::ParticleEmitter: return 40;
-    case Kind::Particle: return 36;
+    case Kind::Particle: return 28;
     case Kind::GridItem: return 240;
     default: return 0;
     }
@@ -100,18 +100,17 @@ inline void Validate(Kind kind, std::span<const Byte> state)
             std::uint64_t(Signed(60)) - std::uint64_t(Signed(4)) <= std::uint64_t(INT64_MAX),
             "animation start is outside its clock range");
     }
-    else if (kind == Kind::ParticleSystem)
-        Require(Read(state, 0, 8) < 10'000'000, "particle simulation remainder exceeds its step");
     else if (kind == Kind::ParticleEmitter)
     {
         Require(Signed(0) > -Frame && Signed(0) < Frame, "particle spawn remainder exceeds its unit");
-        Require(Signed(8) >= -1 && Signed(16) >= -1, "particle system sample time is invalid");
+        Require(Signed(8) >= 0, "particle emission elapsed time is negative");
+        Require(Signed(16) >= -1, "particle system previous sample time is invalid");
     }
     else if (kind == Kind::Particle)
     {
-        Require(Signed(0) >= -1 && Signed(8) >= -1, "particle sample time is invalid");
-        Require(Signed(16) >= 0, "particle animation time is negative");
-        Require(Signed(24) >= 0 && Signed(24) < Frame, "particle animation anchor exceeds its period");
+        Require(Signed(0) >= -1, "particle previous sample time is invalid");
+        Require(Signed(8) >= 0, "particle animation time is negative");
+        Require(Signed(16) >= 0 && Signed(16) < Frame, "particle animation anchor exceeds its period");
     }
     else if (kind == Kind::Plant || kind == Kind::Zombie)
     {
@@ -211,7 +210,7 @@ inline std::vector<Byte> FromHistorical(Kind kind, std::span<const Byte> canonic
                 Rounded(phase * (duration > 10'000'000 ? double(duration - 10'000'000) : 0.0));
         };
         Put(0, Rounded(double(Float(canonical, 48)) * Frame));
-        Put(8, phaseAge(72));
+        Put(8, 0); // Effective emission integral starts at the migrated current state.
         Put(16, phaseAge(76));
         for (std::size_t vector = 0; vector < 2; ++vector)
             std::memcpy(state.data() + 24 + vector * 8, canonical.data() + 52, 8);
@@ -219,19 +218,18 @@ inline std::vector<Byte> FromHistorical(Kind kind, std::span<const Byte> canonic
     else if (kind == Kind::Particle)
     {
         const auto duration = Time(expanded, kind, 8);
-        for (std::size_t i = 0; i < 2; ++i)
-        {
-            const double phase = Float(canonical, 16 + i * 4);
-            Put(i * 8, phase < 0 ? -1 :
-                Rounded(phase * (duration > 10'000'000 ? double(duration - 10'000'000) : 0.0)));
-        }
-        Put(16, 0);
-        Put(24, Rounded(double(Float(canonical, 24)) * Frame));
-        Put(32, 0x9E3779B9U, 4);
+        const double lastPhase = Float(canonical, 20);
+        // Decode only the frozen historical previous-phase projection. Native
+        // current age/lifetime remain untouched and use the full new duration.
+        Put(0, lastPhase < 0 ? -1 :
+            Rounded(lastPhase * (duration > 10'000'000 ? double(duration - 10'000'000) : 0.0)));
+        Put(8, 0);
+        Put(16, Rounded(double(Float(canonical, 24)) * Frame));
+        Put(24, 0x9E3779B9U, 4);
     }
     else if (kind == Kind::ParticleSystem)
     {
-        Put(8, 0x6D2B79F5U, 4);
+        Put(0, 0x6D2B79F5U, 4);
     }
     else if (kind == Kind::GridItem)
     {

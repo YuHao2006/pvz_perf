@@ -1466,7 +1466,7 @@ int Challenge::UpdateBeghouledPlant(Plant* thePlant)
 	int aMoving = false;
 	int aDiffX = mBoard->GridToPixelX(thePlant->mPlantCol, thePlant->mRow) - (thePlant->mX);
 	int aDiffY = mBoard->GridToPixelY(thePlant->mPlantCol, thePlant->mRow) - (thePlant->mY);
-	int aDelta = (mChallengeState == STATECHALLENGE_BEGHOULED_MOVING ? 3 : TodAnimateCurve(90, 30, mChallengeStateCounter, 1, 20, Curves::EaseIn)) * Sexy::gWholeLegacyTicks;
+	int aDelta = (mChallengeState == STATECHALLENGE_BEGHOULED_MOVING ? 3 : TodAnimateCurveNs(900'000'000, 300'000'000, mChallengeStateCounter.mNanoseconds, 1, 20, Curves::EaseIn)) * Sexy::gWholeLegacyTicks;
 	int aDeltaX = 0, aDeltaY = 0;
 
 	if (aDiffX > 0)
@@ -3118,17 +3118,17 @@ void Challenge::SpawnZombieWave()
 }
 
 //0x426A20
-void Challenge::DrawStormFlash(Graphics* g, int theTime, int theMaxAmount)
+void Challenge::DrawStormFlash(Graphics* g, std::int64_t theTimeNs, int theMaxAmount)
 {
 	MTRand aDrawRand = MTRand(mBoard->mMainCounter / 6);
-	int aDarkness = TodAnimateCurve(150, 0, theTime, 255 - theMaxAmount, 255, Curves::Linear) + aDrawRand.NextNoAssert((unsigned int)64) - 32;
+	int aDarkness = TodAnimateCurveNs(1'500'000'000, 0, theTimeNs, 255 - theMaxAmount, 255, Curves::Linear) + aDrawRand.NextNoAssert((unsigned int)64) - 32;
 	// 设置暴风雨阴暗的颜色
 	g->mColor = Color(0, 0, 0, ClampInt(aDarkness, 0, 255));
 	// 绘制暴风雨阴暗的主色
 	g->FillRect(-1000, -1000, 2800, 2600);
 
 	// 设置闪电亮光的颜色
-	g->mColor = Color(255, 255, 255, TodAnimateCurve(150, 75, theTime, theMaxAmount, 0, Curves::Linear));
+	g->mColor = Color(255, 255, 255, TodAnimateCurveNs(1'500'000'000, 750'000'000, theTimeNs, theMaxAmount, 0, Curves::Linear));
 	// 绘制闪光
 	g->FillRect(-1000, -1000, 2800, 2600);
 }
@@ -3154,10 +3154,13 @@ void Challenge::DrawRain(Graphics* g)
 	// 1073 按有符号 int 取模（反汇编 00429640: `*(int*)(...) % 0xa1`），负计数器的
 	// 负分数经曲线钳制回起点。曾改 uint 读取取"模恒非负"——0x80000000 起的计数器
 	// 无符号取模为正、雨纹相位整体偏移全屏不符 1073（PortableRainCoffeeSmoke
-	// 对拍参照实证）；static_cast<int> 在 C++20 起即位保真。
-	const int aTime = static_cast<int>(mBoard->mEffectCounter);
-	int aTimeOffsetXEst = TodAnimateCurve(0, 100, aTime % 100, 0, -100, Curves::Linear);
-	int aTimeOffsetYEst = TodAnimateCurve(0, 20, aTime % 20, -100, 0, Curves::Linear);
+	// 对拍参照实证）。直接在 ns 中保留同一有符号回卷区间，不先舍入到 tick。
+	const auto aUnsignedTimeNs = mBoard->mEffectCounter.mNanoseconds;
+	const auto aTimeNs = static_cast<std::int64_t>(aUnsignedTimeNs) -
+		(aUnsignedTimeNs >= (std::uint64_t(1) << 31) * 10'000'000
+			? (std::int64_t(1) << 32) * 10'000'000 : 0);
+	int aTimeOffsetXEst = TodAnimateCurveNs(0, 1'000'000'000, aTimeNs % 1'000'000'000, 0, -100, Curves::Linear);
+	int aTimeOffsetYEst = TodAnimateCurveNs(0, 200'000'000, aTimeNs % 200'000'000, -100, 0, Curves::Linear);
 
 	// 绘制远景的雨
 	for (int aHorCnt = 0; aHorCnt < 9; aHorCnt++)
@@ -3170,8 +3173,8 @@ void Challenge::DrawRain(Graphics* g)
 		}
 	}
 
-	float aTimeOffsetXCls = TodAnimateCurve(0, 161, aTime % 161, 0, -100, Curves::Linear);
-	float aTimeOffsetYCls = TodAnimateCurve(0, 33, aTime % 33, -100, 0, Curves::Linear);
+	float aTimeOffsetXCls = TodAnimateCurveNs(0, 1'610'000'000, aTimeNs % 1'610'000'000, 0, -100, Curves::Linear);
+	float aTimeOffsetYCls = TodAnimateCurveNs(0, 330'000'000, aTimeNs % 330'000'000, -100, 0, Curves::Linear);
 	// 绘制近景的雨
 	for (int aHorCnt = 0; aHorCnt < 9; aHorCnt++)
 	{
@@ -3192,20 +3195,20 @@ void Challenge::DrawStormNight(Graphics* g)
 	{
 		if (mChallengeStateCounter > STORM_FLASH_TIME)
 		{
-			DrawStormFlash(g, mChallengeStateCounter - STORM_FLASH_TIME, 255);
+			DrawStormFlash(g, mChallengeStateCounter.mNanoseconds - std::int64_t(STORM_FLASH_TIME) * 10'000'000, 255);
 		}
 		else
 		{
-			DrawStormFlash(g, mChallengeStateCounter, 92);
+			DrawStormFlash(g, mChallengeStateCounter.mNanoseconds, 92);
 		}
 	}
 	else if (mChallengeState == STATECHALLENGE_STORM_FLASH_2 && mChallengeStateCounter < 300)
 	{
-		DrawStormFlash(g, mChallengeStateCounter / 2, 255);
+		DrawStormFlash(g, mChallengeStateCounter.mNanoseconds / 2, 255);
 	}
 	else if (mChallengeState == STATECHALLENGE_STORM_FLASH_3 && mChallengeStateCounter < 150)
 	{
-		DrawStormFlash(g, mChallengeStateCounter, 255);
+		DrawStormFlash(g, mChallengeStateCounter.mNanoseconds, 255);
 	}
 	else
 	{
@@ -5586,7 +5589,7 @@ void Challenge::TreeOfWisdomDraw(Graphics* g)
 		{
 			aCurSize--;
 		}
-		aScale = TodAnimateCurveFloat(55, 20, mChallengeStateCounter, 1.0f, 1.2f, Curves::Bounce);
+		aScale = TodAnimateCurveNs(550'000'000, 200'000'000, mChallengeStateCounter.mNanoseconds, 1.0f, 1.2f, Curves::Bounce);
 	}
 	if (aCurSize >= 50)
 	{

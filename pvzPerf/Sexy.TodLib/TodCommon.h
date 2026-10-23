@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <cmath>
 #include <cfloat>
+#include <cstdint>
 #include "TodArray.h"
 #include "SexyAppFramework/Common.h"
 #include "misc/ResourceManager.h"
@@ -107,7 +108,7 @@ double S(double theTime);
 //0x511970
 
 // 全域求值（含钳制）：t≤0 → 起点；t≥1 → 回摆族回起点/其余到终点；中段 warp 插值。
-// 钳制不可省略：原版所有曲线调用经 TodCurveEvaluateClamped 钳制端点。2026-10-02
+// 钳制不可省略：命名曲线本身统一处理端点。2026-10-02
 // 命名曲线曾退化为裸插值 (b-a)*warp(t)+a，t>1 线性外推——无尽深处旗帜数使
 // PickZombieType 的 t=(flags-10)/40 超过 1，普僵权重外推成负值，加权挑选负总和
 // → TodPickArrayItemFromWeightedArray 返回 nullptr → 解引用崩溃。端点行为在
@@ -152,7 +153,6 @@ namespace Curves
 	float EaseSinWave(double theTime, float thePositionStart, float thePositionEnd);
 }
 
-float					TodCurveEvaluateClamped(double theProgress, float thePositionStart, float thePositionEnd, TodCurveEvalFn theCurve);
 // Generic numeric ranges: distance, position, counts or normalized progress.
 float					TodAnimateCurveFloat(double theRangeStart, double theRangeEnd, double theValue, float thePositionStart, float thePositionEnd, TodCurveEvalFn theCurve);
 int						TodAnimateCurve(double theRangeStart, double theRangeEnd, double theValue, int thePositionStart, int thePositionEnd, TodCurveEvalFn theCurve);

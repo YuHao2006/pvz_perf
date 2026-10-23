@@ -132,7 +132,7 @@ public:
     void                    GraveDangerSpawnGraveAt(int theGridX, int theGridY);
     void                    SpawnLevelAward(int theGridX, int theGridY);
     void                    BeghouledScore(int theGridX, int theGridY, int theNumPlants, int theIsHorizontal);
-    void                    DrawStormFlash(Graphics* g, int theTime, int theMaxAmount);
+    void                    DrawStormFlash(Graphics* g, std::int64_t theTimeNs, int theMaxAmount);
     void                    UpdateRainingSeeds();
     /*inline*/ void         PlayBossEnter();
     void                    UpdateConveyorBelt();

@@ -54,10 +54,13 @@ int ChosenSeedPresentationX(const SeedChooserScreen& theChooser, const ChosenSee
 	// Apply the current viewport offset to the appropriate curve endpoints.
 	const bool aToBank = theSeed.mSeedState == SEED_FLYING_TO_BANK;
 	const bool aFromBank = !aToBank || theSeed.mStartY == theSeed.mEndY;
-	const std::uint32_t aDuration = theSeed.mTimeEndMotion - theSeed.mTimeStartMotion;
-	const std::uint32_t aElapsed = theChooser.mSeedChooserAge - theSeed.mTimeStartMotion;
-	return TodAnimateCurve(0, static_cast<int>(aDuration),
-		static_cast<int>(std::min(aElapsed, aDuration)),
+	constexpr std::uint64_t aClockPeriodNs = (std::uint64_t(1) << 32) * 10'000'000;
+	const auto aDurationNs = (theSeed.mTimeEndMotion.mNanoseconds + aClockPeriodNs -
+		theSeed.mTimeStartMotion.mNanoseconds) % aClockPeriodNs;
+	const auto aElapsedNs = (theChooser.mSeedChooserAge.mNanoseconds + aClockPeriodNs -
+		theSeed.mTimeStartMotion.mNanoseconds) % aClockPeriodNs;
+	return TodAnimateCurveNs(0, static_cast<std::int64_t>(aDurationNs),
+		static_cast<std::int64_t>(std::min(aElapsedNs, aDurationNs)),
 		theSeed.mStartX + (aFromBank ? aLeft : 0),
 		theSeed.mEndX + (aToBank ? aLeft : 0), Curves::EaseInOut);
 }
@@ -558,7 +561,7 @@ void SeedChooserScreen::UpdateViewLawn()
 	int aSeedChooserY = SEED_CHOOSER_OFFSET_Y - Sexy::IMAGE_SEEDCHOOSER_BACKGROUND->mHeight;
 	if (mViewLawnTime <= 100)
 	{
-		Move(mApp->mScreenBounds.mX, TodAnimateCurve(0, 40, mViewLawnTime, aSeedChooserY, SEED_CHOOSER_OFFSET_Y, Curves::EaseInOut));
+		Move(mApp->mScreenBounds.mX, TodAnimateCurveNs(0, 400'000'000, mViewLawnTime.mNanoseconds, aSeedChooserY, SEED_CHOOSER_OFFSET_Y, Curves::EaseInOut));
 	}
 	else if (mViewLawnTime <= 250)
 	{
@@ -567,7 +570,7 @@ void SeedChooserScreen::UpdateViewLawn()
 	else if (mViewLawnTime <= 350)
 	{
 		mBoard->ClearAdvice(ADVICE_CLICK_TO_CONTINUE);
-		Move(mApp->mScreenBounds.mX, TodAnimateCurve(310, 350, mViewLawnTime, SEED_CHOOSER_OFFSET_Y, aSeedChooserY, Curves::EaseInOut));
+		Move(mApp->mScreenBounds.mX, TodAnimateCurveNs(3'100'000'000, 3'500'000'000, mViewLawnTime.mNanoseconds, SEED_CHOOSER_OFFSET_Y, aSeedChooserY, Curves::EaseInOut));
 	}
 	else
 	{
@@ -646,14 +649,16 @@ void SeedChooserScreen::Update()
 			ChosenSeed& aChosenSeed = mChosenSeeds[aSeedType];
 			if (aChosenSeed.mSeedState == SEED_FLYING_TO_BANK || aChosenSeed.mSeedState == SEED_FLYING_TO_CHOOSER)
 			{
-				const std::uint32_t aDuration = aChosenSeed.mTimeEndMotion - aChosenSeed.mTimeStartMotion;
-				const std::uint32_t aElapsed = mSeedChooserAge - aChosenSeed.mTimeStartMotion;
-				// Modulo subtraction keeps a short flight continuous across UINT32_MAX.
-				// Clamp only the curve input, as TodAnimateCurve already saturates at its end.
-				const int aCurveTime = static_cast<int>(std::min(aElapsed, aDuration));
-				aChosenSeed.mX = TodAnimateCurve(0, static_cast<int>(aDuration), aCurveTime, aChosenSeed.mStartX, aChosenSeed.mEndX, Curves::EaseInOut);
-				aChosenSeed.mY = TodAnimateCurve(0, static_cast<int>(aDuration), aCurveTime, aChosenSeed.mStartY, aChosenSeed.mEndY, Curves::EaseInOut);
-				if (aElapsed >= aDuration)
+				constexpr std::uint64_t aClockPeriodNs = (std::uint64_t(1) << 32) * 10'000'000;
+				const auto aDurationNs = (aChosenSeed.mTimeEndMotion.mNanoseconds + aClockPeriodNs -
+					aChosenSeed.mTimeStartMotion.mNanoseconds) % aClockPeriodNs;
+				const auto aElapsedNs = (mSeedChooserAge.mNanoseconds + aClockPeriodNs -
+					aChosenSeed.mTimeStartMotion.mNanoseconds) % aClockPeriodNs;
+				// Preserve the UI clock's wrap while evaluating the flight in exact ns.
+				const auto aCurveTimeNs = static_cast<std::int64_t>(std::min(aElapsedNs, aDurationNs));
+				aChosenSeed.mX = TodAnimateCurveNs(0, static_cast<std::int64_t>(aDurationNs), aCurveTimeNs, aChosenSeed.mStartX, aChosenSeed.mEndX, Curves::EaseInOut);
+				aChosenSeed.mY = TodAnimateCurveNs(0, static_cast<std::int64_t>(aDurationNs), aCurveTimeNs, aChosenSeed.mStartY, aChosenSeed.mEndY, Curves::EaseInOut);
+				if (aElapsedNs >= aDurationNs)
 				{
 					LandFlyingSeed(aChosenSeed);
 				}
@@ -978,7 +983,8 @@ void SeedChooserScreen::ClickedSeedInBank(ChosenSeed& theChosenSeed)
 		{
 			ChosenSeed& aChosenSeed = mChosenSeeds[aSeedType];
 			aChosenSeed.mTimeStartMotion = mSeedChooserAge;
-			aChosenSeed.mTimeEndMotion = mSeedChooserAge + 15;
+			aChosenSeed.mTimeEndMotion = mSeedChooserAge;
+			aChosenSeed.mTimeEndMotion.AddNanoseconds(150'000'000);
 			aChosenSeed.mStartX = aChosenSeed.mX;
 			aChosenSeed.mStartY = aChosenSeed.mY;
 			GetSeedPositionInBank(anIndex - 1, aChosenSeed.mEndX, aChosenSeed.mEndY);
@@ -988,7 +994,8 @@ void SeedChooserScreen::ClickedSeedInBank(ChosenSeed& theChosenSeed)
 		}
 	}
 	theChosenSeed.mTimeStartMotion = mSeedChooserAge;
-	theChosenSeed.mTimeEndMotion = mSeedChooserAge + 25;
+	theChosenSeed.mTimeEndMotion = mSeedChooserAge;
+	theChosenSeed.mTimeEndMotion.AddNanoseconds(250'000'000);
 	theChosenSeed.mStartX = theChosenSeed.mX;
 	theChosenSeed.mStartY = theChosenSeed.mY;
 	GetSeedPositionInChooser(theChosenSeed.mSeedType, theChosenSeed.mEndX, theChosenSeed.mEndY);
@@ -1009,7 +1016,8 @@ void SeedChooserScreen::ClickedSeedInChooser(ChosenSeed& theChosenSeed)
 		return;
 
 	theChosenSeed.mTimeStartMotion = mSeedChooserAge;
-	theChosenSeed.mTimeEndMotion = mSeedChooserAge + 25;
+	theChosenSeed.mTimeEndMotion = mSeedChooserAge;
+	theChosenSeed.mTimeEndMotion.AddNanoseconds(250'000'000);
 	theChosenSeed.mStartX = theChosenSeed.mX;
 	theChosenSeed.mStartY = theChosenSeed.mY;
 	GetSeedPositionInBank(mSeedsInBank, theChosenSeed.mEndX, theChosenSeed.mEndY);

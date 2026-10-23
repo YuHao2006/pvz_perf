@@ -234,8 +234,9 @@ void LoadCurrentWithResources(LawnApp& app, HiddenWindow& window, const char* sa
     particle = nullptr;
     if (systems.IterateNext(particle))
     {
-        particle->mSimulationRemainderNs = 7'654'321;
         particle->mRandomState = 0x173ABC29U;
+        if (particle->EmitterRosterCount())
+            particle->EmitterRosterEmitterAt(0)->mEmissionElapsedNs = 217'123'456;
     }
     Plant* coordinateProbe = nullptr;
     if (board.mPlants.IterateNext(coordinateProbe))
@@ -353,15 +354,15 @@ void LoadCurrentWithResources(LawnApp& app, HiddenWindow& window, const char* sa
         TodParticleSystem* system = nullptr;
         while (systems.IterateNext(system))
         {
-            append(system->mSimulationRemainderNs, system->mRandomState);
+            append(system->mRandomState);
             for (int e = 0; e < system->EmitterRosterCount(); ++e)
             {
                 auto* emitter = system->EmitterRosterEmitterAt(e);
-                append(emitter->mSpawnRemainder, emitter->mSystemSampleAgeNs, emitter->mSystemLastSampleAgeNs);
+                append(emitter->mSpawnRemainder, emitter->mEmissionElapsedNs, emitter->mSystemLastSampleAgeNs);
                 for (int p = 0; p < emitter->ParticleRosterCount(); ++p)
                 {
                     auto* item = emitter->ParticleRosterParticleAt(p);
-                    append(item->mParticleSampleAgeNs, item->mParticleLastSampleAgeNs,
+                    append(item->mParticleAge.mNanoseconds, item->mParticleLastSampleAgeNs,
                         item->mAnimationElapsedNs, item->mAnimationSampleIntegral, item->mRandomSeed);
                 }
             }
@@ -379,6 +380,13 @@ void LoadCurrentWithResources(LawnApp& app, HiddenWindow& window, const char* sa
         std::istreambuf_iterator<char>(saved), std::istreambuf_iterator<char>()};
     Require(LevelSaveFormat::IsCurrentDat64Header(savedBytes), "Production writer did not emit v3.3");
     saved.close();
+    const auto continueParticles = [&] {
+        TodParticleSystem* system = nullptr;
+        while (systems.IterateNext(system))
+            system->Update(17'123'457);
+        return exactSnapshot();
+    };
+    const auto continuedParticleState = continueParticles();
     // Sample a future point on independent copies. Reloaded live objects must
     // reach the identical float results, including rotation and roof/shadow
     // correction, from the saved absolute time anchors.
@@ -419,6 +427,8 @@ void LoadCurrentWithResources(LawnApp& app, HiddenWindow& window, const char* sa
         particlesAfterReload.emplace_back(static_cast<int>(particle->mEffectType), particle->mVariant);
     Require(particlesAfterReload == particleAppearances,
         "Particle base/appearance changed through native save/reload");
+    Require(continueParticles() == continuedParticleState,
+        "Native reload changed the continued variable-step particle state");
     board.mMainCounter.AddNanoseconds(continuationNs);
     holder->mBattleTimeNs = static_cast<std::int64_t>(board.mMainCounter.mNanoseconds);
     Sexy::gUpdateIntervalNs = continuationNs;

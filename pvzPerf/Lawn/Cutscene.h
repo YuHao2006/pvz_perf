@@ -44,7 +44,7 @@ public:
     void                        UpdateSeedChooserCamera();
     /*inline*/ void             StartSeedChooser();
     /*inline*/ void             EndSeedChooser();
-    /*inline*/ int              CalcPosition(int theTimeStart, int theTimeEnd, int thePositionStart, int thePositionEnd);
+    /*inline*/ int              CalcPosition(std::int64_t theStartNs, std::int64_t theEndNs, int thePositionStart, int thePositionEnd);
     void                        PlaceStreetZombies();
     void                        AddGraveStoneParticles();
     void                        PlaceAZombie(ZombieType theZombieType, int theGridX, int theGridY);

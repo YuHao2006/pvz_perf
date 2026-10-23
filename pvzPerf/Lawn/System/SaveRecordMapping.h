@@ -188,24 +188,22 @@ template<class T, class Fn> void VisitV7Members(Fn&& visit)
     }
     else if constexpr (std::is_same_v<T, TodParticleSystem>)
     {
-        visit(offsetof(T, mSimulationRemainderNs), 0, 8);
-        visit(offsetof(T, mRandomState), 8, 4);
+        visit(offsetof(T, mRandomState), 0, 4);
     }
     else if constexpr (std::is_same_v<T, TodParticleEmitter>)
     {
         visit(offsetof(T, mSpawnRemainder), 0, 8);
-        visit(offsetof(T, mSystemSampleAgeNs), 8, 8);
+        visit(offsetof(T, mEmissionElapsedNs), 8, 8);
         visit(offsetof(T, mSystemLastSampleAgeNs), 16, 8);
         visit(offsetof(T, mExternalTarget), 24, 8);
         visit(offsetof(T, mExternalAppliedCenter), 32, 8);
     }
     else if constexpr (std::is_same_v<T, TodParticle>)
     {
-        visit(offsetof(T, mParticleSampleAgeNs), 0, 8);
-        visit(offsetof(T, mParticleLastSampleAgeNs), 8, 8);
-        visit(offsetof(T, mAnimationElapsedNs), 16, 8);
-        visit(offsetof(T, mAnimationSampleIntegral), 24, 8);
-        visit(offsetof(T, mRandomSeed), 32, 4);
+        visit(offsetof(T, mParticleLastSampleAgeNs), 0, 8);
+        visit(offsetof(T, mAnimationElapsedNs), 8, 8);
+        visit(offsetof(T, mAnimationSampleIntegral), 16, 8);
+        visit(offsetof(T, mRandomSeed), 24, 4);
     }
     else if constexpr (std::is_same_v<T, GridItem>)
     {
@@ -258,11 +256,13 @@ template<class T> void WriteHistoricalProjection(const T& value, std::span<Legac
     {
         const auto duration = value.mSystemDuration.mNanoseconds;
         const auto phase = [&](std::int64_t age) {
+            // Frozen legacy phase projection only; current runtime evaluates
+            // its actual age against the full duration without this endpoint.
             return age < 0 ? -1.0f : duration > 10'000'000
                 ? float(double(age) / (duration - 10'000'000)) : 0.0f;
         };
         PutFloat(bytes, 48, float(double(value.mSpawnRemainder) / V7SaveSchema::Frame));
-        PutFloat(bytes, 72, phase(value.mSystemSampleAgeNs));
+        PutFloat(bytes, 72, phase(value.mSystemAge.mNanoseconds));
         PutFloat(bytes, 76, phase(value.mSystemLastSampleAgeNs));
     }
     else if constexpr (std::is_same_v<T, TodParticle>)
@@ -272,7 +272,7 @@ template<class T> void WriteHistoricalProjection(const T& value, std::span<Legac
             return age < 0 ? -1.0f : duration > 10'000'000
                 ? float(double(age) / (duration - 10'000'000)) : 0.0f;
         };
-        PutFloat(bytes, 16, phase(value.mParticleSampleAgeNs));
+        PutFloat(bytes, 16, phase(value.mParticleAge.mNanoseconds));
         PutFloat(bytes, 20, phase(value.mParticleLastSampleAgeNs));
         // Preserve the sampled legacy image phase for explicit downgrades.
         // The current format still restores its exact elapsed time and anchor.

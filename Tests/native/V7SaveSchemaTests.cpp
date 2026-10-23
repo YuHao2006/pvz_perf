@@ -172,7 +172,7 @@ void ParticleMigration()
             "Independent emitter fixture expansion differs");
     auto state = V7SaveSchema::FromHistorical(Kind::ParticleEmitter, emitter, expanded);
     Require(state.size() == 40 && Signed(state, 0) == 125'000'000'000LL &&
-            Signed(state, 8) == 445'000'002 && Signed(state, 16) == -1,
+            Signed(state, 8) == 0 && Signed(state, 16) == -1,
             "Emitter migration discarded nanosecond duration or sentinel age");
     Require(Get(state, 24) == Get(emitter, 52) && Get(state, 32) == Get(emitter, 52),
             "Emitter pending/applied external centers differ at migration");
@@ -188,15 +188,15 @@ void ParticleMigration()
     Require(expanded.size() == 172 && Get(expanded, 8) == 110'000'004 &&
             Get(expanded, 16) == 50'000'002, "Independent particle time fixture differs");
     state = V7SaveSchema::FromHistorical(Kind::Particle, particle, expanded);
-    Require(state.size() == 36 && Signed(state, 0) == 50'000'002 &&
-            Signed(state, 8) == -1 && Signed(state, 16) == 0 &&
-            Signed(state, 24) == 375'000'000'000LL && Get(state, 32, 4) == 0x9E3779B9U,
+    Require(state.size() == 28 && Signed(state, 0) == -1 &&
+            Signed(state, 8) == 0 && Signed(state, 16) == 375'000'000'000LL &&
+            Get(state, 24, 4) == 0x9E3779B9U,
             "Particle migration changed phase, sentinel or deterministic seed");
     V7SaveSchema::Validate(Kind::Particle, state);
     Bytes system(72);
     state = V7SaveSchema::FromHistorical(Kind::ParticleSystem, system, system);
-    Require(state.size() == 12 && Signed(state, 0) == 0 && Get(state, 8, 4) == 0x6D2B79F5U,
-            "Historical system RNG/remainder initialization differs");
+    Require(state.size() == 4 && Get(state, 0, 4) == 0x6D2B79F5U,
+            "Historical system RNG initialization differs");
     V7SaveSchema::Validate(Kind::ParticleSystem, state);
 }
 
@@ -251,7 +251,7 @@ void ExactStateValidation()
         Set(bad, offset, value, width);
         Reject([&] { V7SaveSchema::Validate(kind, bad); }, message);
     };
-    static_assert(LevelSaveFormat::DAT64_SCHEMA_ID == 0x10739);
+    static_assert(LevelSaveFormat::DAT64_SCHEMA_ID == 0x10740);
     Bytes animation(68);
     Set(animation, 0, 1, 4);
     Set(animation, 4, static_cast<std::uint64_t>(-987'654'321LL));
@@ -278,10 +278,10 @@ void ExactStateValidation()
     Reject([&] { V7SaveSchema::Validate(Kind::Reanimation, Bytes(60)); },
         "Old relative-clock animation tail was accepted as current");
 
-    Bytes system(12), plant(56), zombie(80), emitter(40), particle(36), grid(240);
-    Set(system, 0, 9'999'999); V7SaveSchema::Validate(Kind::ParticleSystem, system);
-    rejectField(Kind::ParticleSystem, system, 0, 10'000'000, "Full simulation step accepted as remainder");
-    rejectField(Kind::ParticleSystem, system, 0, UINT64_MAX, "Negative simulation remainder accepted");
+    Bytes system(4), plant(56), zombie(80), emitter(40), particle(28), grid(240);
+    Set(system, 0, 0xfedcba98U, 4); V7SaveSchema::Validate(Kind::ParticleSystem, system);
+    Reject([&] { V7SaveSchema::Validate(Kind::ParticleSystem, Bytes(12)); },
+        "Old particle system pending-step state accepted as current");
     Set(plant, 24, 91'234'567'891LL); V7SaveSchema::Validate(Kind::Plant, plant);
     Set(plant, 32, 91'451'691'347LL);
     Set(plant, 40, 91'234'567'891LL);
@@ -303,21 +303,22 @@ void ExactStateValidation()
     rejectField(Kind::Zombie, zombie, 40, 0x7f800000U, "Nonfinite velocity accepted", 4);
     rejectField(Kind::Zombie, zombie, 8, 0x7ff0000000000000ULL, "Nonfinite root origin accepted");
     rejectField(Kind::Plant, plant, 0, 0x7fc00000U, "NaN actor coordinate accepted", 4);
-    Set(emitter, 0, 999'999'999'999LL); Set(emitter, 8, UINT64_MAX); Set(emitter, 16, 0);
+    Set(emitter, 0, 999'999'999'999LL); Set(emitter, 8, 123'456'789); Set(emitter, 16, UINT64_MAX);
     V7SaveSchema::Validate(Kind::ParticleEmitter, emitter);
     rejectField(Kind::ParticleEmitter, emitter, 0, 1'000'000'000'000LL, "Spawn remainder at unit accepted");
-    rejectField(Kind::ParticleEmitter, emitter, 8, static_cast<std::uint64_t>(-2LL),
-                "Invalid emitter sample sentinel accepted");
-    Set(particle, 0, UINT64_MAX); Set(particle, 8, 0); Set(particle, 24, 999'999'999'999LL);
+    rejectField(Kind::ParticleEmitter, emitter, 8, UINT64_MAX, "Negative emission elapsed time accepted");
+    rejectField(Kind::ParticleEmitter, emitter, 16, static_cast<std::uint64_t>(-2LL),
+                "Invalid emitter previous sample sentinel accepted");
+    Set(particle, 0, UINT64_MAX); Set(particle, 8, 0); Set(particle, 16, 999'999'999'999LL);
     V7SaveSchema::Validate(Kind::Particle, particle);
     rejectField(Kind::Particle, particle, 0, static_cast<std::uint64_t>(-2LL), "Invalid particle sentinel accepted");
-    rejectField(Kind::Particle, particle, 16, UINT64_MAX, "Negative particle animation elapsed accepted");
-    rejectField(Kind::Particle, particle, 24, 1'000'000'000'000LL, "Animation anchor at period accepted");
-    rejectField(Kind::Particle, particle, 24, UINT64_MAX, "Negative animation anchor accepted");
+    rejectField(Kind::Particle, particle, 8, UINT64_MAX, "Negative particle animation elapsed accepted");
+    rejectField(Kind::Particle, particle, 16, 1'000'000'000'000LL, "Animation anchor at period accepted");
+    rejectField(Kind::Particle, particle, 16, UINT64_MAX, "Negative animation anchor accepted");
     V7SaveSchema::Validate(Kind::GridItem, grid);
     rejectField(Kind::GridItem, grid, 232, 2, "Invalid root chocolate bool accepted", 1);
-    Reject([&] { V7SaveSchema::Validate(Kind::Particle, Bytes(35)); }, "Short exact tail accepted");
-    Reject([&] { V7SaveSchema::Validate(Kind::Particle, Bytes(37)); }, "Long exact tail accepted");
+    Reject([&] { V7SaveSchema::Validate(Kind::Particle, Bytes(27)); }, "Short exact tail accepted");
+    Reject([&] { V7SaveSchema::Validate(Kind::Particle, Bytes(29)); }, "Long exact tail accepted");
     Bytes projectile(36);
     Set(projectile, 0, static_cast<std::uint64_t>(-123'456'789LL));
     Set(projectile, 8, 91'234'567'891LL);

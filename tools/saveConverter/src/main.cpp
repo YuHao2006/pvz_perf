@@ -51,7 +51,7 @@ void PrintUsage(const std::filesystem::path& theProgram)
         << " <输入 game*.dat|game*.dat64|user*.dat|user*.dat64> [输出文件]\n\n"
         << "选项：--target legacy|dat64-v1|dat64-v2|dat64-v3.2|dat64-v3.3；--round-time nearest。\n"
         << "关卡 .dat 默认生成 dat64 v3.3；DAT64 默认导出 .dat。\n"
-        << "dat64 v3.3 schema 10739 使用绝对动画/发射/弹射物时间锚；10736 千分、10737 相对时间及 10738 角色时间戳布局仅支持输入升级。\n"
+        << "dat64 v3.3 schema 10740 使用绝对时间锚与主步进粒子状态；旧 10736/10737/10738/10739 布局仅支持输入升级。\n"
         << "导出旧格式要求时间精确可表示；只有明确指定 nearest 才允许舍入。\n\n"
         << "dat64 v3.2 保存基础粒子定义 ID、内部外观和浮点 BPM/速度；旧值导入时自动转换，"
            "导出旧格式时速度四舍五入。\n"

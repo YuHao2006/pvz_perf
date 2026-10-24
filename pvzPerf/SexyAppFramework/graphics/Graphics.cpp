@@ -1039,21 +1039,23 @@ void Graphics::DrawImageBox(const TextureRegion& theSrc, const Rect &theDest, Im
 			aMidClip.DrawImage(theComponentImage, theDest.mX + cw + aCol*cmw, theDest.mY + ch + aRow*cmh, crop(cw,ch,cmw,cmh));
 }
 
-int Graphics::WriteString(const SexyString& theString, int theX, int theY, int theWidth, int theJustification, bool drawString, int theOffset, int theLength, int theOldColor)
+static int WriteStringLayout(Graphics* graphics, _Font& font, bool colored,
+	const SexyString& theString, int theX, int theY, int theWidth, int theJustification,
+	int theOffset, int theLength, int theOldColor)
 {
-	// _Font* aFont = mFont; // unused
+	const bool drawString = graphics != nullptr;
 	if (theOldColor==-1)
-		theOldColor = mColor.ToInt();
+		theOldColor = drawString ? graphics->mColor.ToInt() : Color::White.ToInt();
 	
 	if (drawString)
 	{
 		switch (theJustification)
 		{	
 		case 0:
-			theX += (theWidth - WriteString(theString, theX, theY, theWidth, -1, false, theOffset, theLength, theOldColor))/2;
+			theX += (theWidth - WriteStringLayout(nullptr,font,colored,theString, theX, theY, theWidth, -1, theOffset, theLength, theOldColor))/2;
 			break;
 		case 1:
-			theX += theWidth - WriteString(theString, theX, theY, theWidth, -1, false, theOffset, theLength, theOldColor);
+			theX += theWidth - WriteStringLayout(nullptr,font,colored,theString, theX, theY, theWidth, -1, theOffset, theLength, theOldColor);
 			break;
 		}
 	}
@@ -1069,7 +1071,7 @@ int Graphics::WriteString(const SexyString& theString, int theX, int theY, int t
 
 	for (int i = theOffset; i < theLength; i++)
 	{
-		if ((theString[i] == '^') && mWriteColoredString)
+		if ((theString[i] == '^') && colored)
 		{
 			if (i+1<theLength && theString[i+1] == '^') // literal '^'
 			{
@@ -1106,13 +1108,13 @@ int Graphics::WriteString(const SexyString& theString, int theX, int theY, int t
 
 				if (drawString)
 				{
-					DrawString(aString, theX + aXOffset, theY);
-					mColor = Color((aColor >> 16) & 0xFF, (aColor >> 8) & 0xFF, (aColor) & 0xFF, mColor.mAlpha);					
+					graphics->DrawString(aString, theX + aXOffset, theY);
+					graphics->mColor = Color((aColor >> 16) & 0xFF, (aColor >> 8) & 0xFF, (aColor) & 0xFF, graphics->mColor.mAlpha);
 				}
 
 				i += 7;
 
-				aXOffset += mFont->StringWidth(aString);
+				aXOffset += font.StringWidth(aString);
 
 				aString = ("");
 			}
@@ -1123,15 +1125,25 @@ int Graphics::WriteString(const SexyString& theString, int theX, int theY, int t
 
 	if (drawString)
 	{
-		DrawString(aString, theX + aXOffset, theY);
+		graphics->DrawString(aString, theX + aXOffset, theY);
 	}
 
-	aXOffset += mFont->StringWidth(aString);
+	aXOffset += font.StringWidth(aString);
 
 	return aXOffset;
 }
 
-static int WriteWordWrappedHelper(Graphics *g, const SexyString& theString, int theX, int theY, int theWidth, int theJustification, bool drawString, int theOffset, int theLength, int theOldColor, int theMaxChars)
+int Graphics::WriteString(const SexyString& text,int x,int y,int width,int justification,
+	bool drawString,int offset,int length,int oldColor)
+{
+	if (!mFont) throw FontNotConfigured{};
+	return WriteStringLayout(drawString ? this : nullptr,*mFont,mWriteColoredString,
+		text,x,y,width,justification,offset,length,oldColor == -1 ? mColor.ToInt() : oldColor);
+}
+
+static int WriteWordWrappedHelper(Graphics *g, _Font& font, bool colored,
+	const SexyString& theString, int theX, int theY, int theWidth, int theJustification,
+	bool drawString, int theOffset, int theLength, int theOldColor, int theMaxChars)
 {
 	if (theOffset+theLength>theMaxChars)
 	{
@@ -1140,25 +1152,24 @@ static int WriteWordWrappedHelper(Graphics *g, const SexyString& theString, int 
 			return -1;
 	}
 
-	return g->WriteString(theString,theX,theY,theWidth,theJustification,drawString,theOffset,theLength,theOldColor);
+	return WriteStringLayout(drawString ? g : nullptr,font,colored,theString,
+		theX,theY,theWidth,theJustification,theOffset,theLength,theOldColor);
 }
 
 template<bool DrawText>
-static int WriteWordWrappedLayout(Graphics& graphics,const Rect& theRect,
+static int WriteWordWrappedLayout(Graphics* graphics,_Font& font,bool colored,const Rect& theRect,
 	const SexyString& theLine,int theLineSpacing,int theJustification,
 	int* theMaxWidth,int theMaxChars,int* theLastWidth)
 {
-	auto& mColor=graphics.mColor;
-	auto* const mFont=graphics.mFont;
-	const auto& mClipRect=graphics.mClipRect;
-	const float mTransY=graphics.mTransY;
-	const bool mWriteColoredString=graphics.mWriteColoredString;
+	const Rect mClipRect=DrawText ? graphics->mClipRect : Rect();
+	const float mTransY=DrawText ? graphics->mTransY : 0;
+	const bool mWriteColoredString=colored;
 	/*
 	正式版中，删去了 *theLastWidth、theMaxChars 和 *theMaxWidth 参数，此函数形式可以简化为：
 	Graphics::自动换行的文字绘制(const Rect& 绘制区域矩形, const SexyString& 文字内容, int 行距 = -1, int 对齐方式 = -1)
 	当行距 = -1 时，默认使用 Graphics 字体的行距；对齐方式：左对齐 = -1；居中对齐 = 0；右对齐 = 1。
 	*/
-	Color anOrigColor = mColor;
+	Color anOrigColor = DrawText ? graphics->mColor : Color::White;
 	int anOrigColorInt = anOrigColor.ToInt();  //颜色数组转化为 ARGB 颜色
 	if ((anOrigColorInt&0xFF000000)==0xFF000000)
 		anOrigColorInt &= ~0xFF000000;
@@ -1166,7 +1177,7 @@ static int WriteWordWrappedLayout(Graphics& graphics,const Rect& theRect,
 	if (theMaxChars<0)
 		theMaxChars = (int)theLine.length();
 
-	_Font* aFont = mFont;						
+	_Font* aFont = &font;
 
 	//纵向偏移值 = 字体主要部分高度 - 字体内边距
 	int aYOffset = aFont->mAscent - aFont->mAscentPadding;
@@ -1174,7 +1185,6 @@ static int WriteWordWrappedLayout(Graphics& graphics,const Rect& theRect,
 	if (theLineSpacing == -1)
 		theLineSpacing = aFont->GetLineSpacing();
 
-	SexyString aCurString;
 	unsigned int aCurPos = 0;
 	int aLineStartPos = 0;
 	int aCurWidth = 0;
@@ -1229,7 +1239,7 @@ static int WriteWordWrappedLayout(Graphics& graphics,const Rect& theRect,
 				int aPhysPos = theRect.mY + aYOffset + mTransY;
 				if (DrawText && (aPhysPos >= mClipRect.mY) && (aPhysPos < mClipRect.mY + mClipRect.mHeight + theLineSpacing))
 				{
-					WriteWordWrappedHelper(&graphics, theLine, theRect.mX + anIndentX, theRect.mY + aYOffset, theRect.mWidth,
+					WriteWordWrappedHelper(graphics,font,colored, theLine, theRect.mX + anIndentX, theRect.mY + aYOffset, theRect.mWidth,
 						theJustification, true, aLineStartPos, aSpacePos-aLineStartPos, anOrigColorInt, theMaxChars);
 
 					/*WriteString(theLine, theRect.mX + anIndentX, theRect.mY + aYOffset, theRect.mWidth, 
@@ -1254,7 +1264,7 @@ static int WriteWordWrappedLayout(Graphics& graphics,const Rect& theRect,
 				if((int)aCurPos<aLineStartPos+1)
 					aCurPos++; // ensure at least one character gets written
 
-				aWrittenWidth = WriteWordWrappedHelper(&graphics, theLine, theRect.mX + anIndentX, theRect.mY + aYOffset, theRect.mWidth,
+				aWrittenWidth = WriteWordWrappedHelper(graphics,font,colored, theLine, theRect.mX + anIndentX, theRect.mY + aYOffset, theRect.mWidth,
 					theJustification, DrawText, aLineStartPos, aCurPos-aLineStartPos, anOrigColorInt, theMaxChars);
 
 				if (aWrittenWidth<0)
@@ -1282,7 +1292,7 @@ static int WriteWordWrappedLayout(Graphics& graphics,const Rect& theRect,
 
 	if(aLineStartPos<(int)theLine.length()) // write the last piece
 	{
-		int aWrittenWidth = WriteWordWrappedHelper(&graphics, theLine, theRect.mX + anIndentX, theRect.mY + aYOffset, theRect.mWidth,
+		int aWrittenWidth = WriteWordWrappedHelper(graphics,font,colored, theLine, theRect.mX + anIndentX, theRect.mY + aYOffset, theRect.mWidth,
 			theJustification, DrawText, aLineStartPos, theLine.length()-aLineStartPos, anOrigColorInt, theMaxChars);
 
 		if (aWrittenWidth>=0)
@@ -1305,7 +1315,7 @@ static int WriteWordWrappedLayout(Graphics& graphics,const Rect& theRect,
 			*theLastWidth = 0;
 	}
 
-	mColor = anOrigColor;
+	if constexpr (DrawText) graphics->mColor = anOrigColor;
 
 	if (theMaxWidth!=NULL)
 		*theMaxWidth = aMaxWidth;
@@ -1317,7 +1327,8 @@ static int WriteWordWrappedLayout(Graphics& graphics,const Rect& theRect,
 int Graphics::WriteWordWrapped(const Rect& rect,const SexyString& line,int lineSpacing,
 	int justification,int* maxWidth,int maxChars,int* lastWidth)
 {
-	return WriteWordWrappedLayout<true>(*this,rect,line,lineSpacing,justification,
+	if (!mFont) throw FontNotConfigured{};
+	return WriteWordWrappedLayout<true>(this,*mFont,mWriteColoredString,rect,line,lineSpacing,justification,
 		maxWidth,maxChars,lastWidth);
 }
 
@@ -1338,6 +1349,14 @@ int	Graphics::DrawStringWordWrapped(const SexyString& theLine, int theX, int the
 int	Graphics::GetWordWrappedHeight(int theWidth, const SexyString& theLine, int theLineSpacing, int *theMaxWidth)
 {
 	// Share line breaking, but instantiate a path with no glyph drawing.
-	return WriteWordWrappedLayout<false>(*this,Rect(0,0,theWidth,0),theLine,
-		theLineSpacing,-1,theMaxWidth,-1,nullptr);
+	if (!mFont) throw FontNotConfigured{};
+	return MeasureWordWrappedHeight(*mFont,theWidth,theLine,theLineSpacing,theMaxWidth,mWriteColoredString);
+}
+
+int Graphics::MeasureWordWrappedHeight(_Font& font,int width,const SexyString& text,
+	int lineSpacing,int* maxWidth,bool colored)
+{
+	// Font metrics may prepare their cache; no Graphics or draw target is created.
+	return WriteWordWrappedLayout<false>(nullptr,font,colored,Rect(0,0,width,0),text,
+		lineSpacing,-1,maxWidth,-1,nullptr);
 }

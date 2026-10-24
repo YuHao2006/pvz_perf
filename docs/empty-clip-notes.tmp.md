@@ -8,9 +8,9 @@
 | 位置／入口 | 原用途 | 当前处理 |
 | --- | --- | --- |
 | `Graphics::GetWordWrappedHeight` | 构造无目标 `Graphics aTestG`，调用折行绘制，以空 clip 丢弃字形，仅返回高度和最大行宽 | 已删除内部空 Graphics；与实际绘制共用 `WriteWordWrappedLayout`，测量用 `<false>` 实例，不调用字形 draw |
-| `LawnDialog::CalcSize` → `Widget::GetWordWrappedHeight` | 创建 Quit 等对话框时，以只有字体、没有绘制目标的 Graphics 取得正文高度 | 布局调用必须保留；目前已进入纯测量路径，不依赖空裁剪抑制绘制 |
-| `Dialog::GetPreferredHeight` → `GetWordWrappedHeight` | 通用对话框按字体、正文和可用宽度确定高度 | 同上，不能直接删除计高调用 |
-| `LawnDialog::Draw` 的正文计高 | 正文居中和排版需要先测高度 | 继续使用同一纯测量入口 |
+| `LawnDialog::CalcSize` → `Graphics::MeasureWordWrappedHeight` | 创建 Quit 等对话框时，以只有字体、没有绘制目标的 Graphics 取得正文高度 | 已删除空 Graphics，直接传入字体、正文和可用宽度；布局计算保留 |
+| `Dialog::GetPreferredHeight` → `Graphics::MeasureWordWrappedHeight` | 通用对话框按字体、正文和可用宽度确定高度 | 已删除空 Graphics，直接使用纯测量入口 |
+| `LawnDialog::Draw` 的正文计高 | 正文居中和排版需要先测高度 | 直接使用纯测量入口；不再经过 Widget 的虚函数转发 |
 | `CreditScreen` 构造 → `DrawCreditsContent(..., false)` | 计算动态 role/name 段落总高度；heading 在 `theDraw == false` 时不绘制，正文 helper 传 `drawString=false` | 已删除 `Graphics aMeasure(nullptr)`，直接传 `nullptr`；TodStringFile 的测量分支不读取 clip/translation，也不绘制 |
 | 原生测试中的 `Graphics(nullptr)` | 证明无目标文字测量不绘制、不因 UV 入口要求目标而异常；另有只验证 BeginDraw/EndDraw 状态的测试 | 保留测试，不作为生产死代码删除 |
 

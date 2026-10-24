@@ -3,6 +3,7 @@
 #include "Cutscene.h"
 #include "LawnMower.h"
 #include "LawnApp.h"
+#include "Motion.h"
 #include "System/ReanimationLawn.h"
 #include "Sexy.TodLib/TodFoley.h"
 #include "Sexy.TodLib/Reanimator.h"
@@ -23,6 +24,10 @@ void LawnMower::LawnMowerInitialize(int theRow)
     mRollingInCounter = 0;
     mSquishedCounter = 0;
     mLastPortalX = -1;
+    mAltitude = 0;
+    mMowerHeight = MowerHeight::MOWER_HEIGHT_LAND;
+    mMotionElapsedNs = UINT64_MAX;
+    mAltitudeElapsedNs = 0;
 
     ReanimationType aReanimType;
     if (mBoard->StageHasRoof())
@@ -69,6 +74,78 @@ void LawnMower::LawnMowerInitialize(int theRow)
 
 namespace
 {
+// Integrate the original 100 Hz right-endpoint speed samples, not a speed
+// evaluated once at the outer update's end. Each source interval holds its
+// right-endpoint speed, including partial outer updates, so equal elapsed
+// nanoseconds give the same position.
+// Only the 500 ms bounce window needs summing; arbitrarily long constant runs
+// remain O(1), and the loop is bounded to at most 50 source samples.
+double MowerTravel(float baseSpeed, std::int64_t chompStartNs, std::uint64_t elapsedNs)
+{
+    constexpr std::uint64_t tick = 10'000'000;
+    constexpr std::int64_t bounce = 500'000'000;
+    double result = double(baseSpeed) * double(elapsedNs) / double(tick);
+    if (chompStartNs <= 0) return result;
+    const auto cells = elapsedNs / tick;
+    const auto first = chompStartNs > bounce ?
+        std::uint64_t((chompStartNs - bounce) / std::int64_t(tick)) + 1 : 1;
+    const auto last = std::min(cells, std::uint64_t((chompStartNs - 1) / std::int64_t(tick)));
+    for (auto sample = first; sample <= last; ++sample)
+    {
+        const auto remaining = chompStartNs - std::int64_t(sample * tick);
+        result += double(TodAnimateCurveNs(bounce, 0, remaining, baseSpeed, 1.0f,
+            Curves::BounceSlowMiddle)) - baseSpeed;
+    }
+    // After the countdown ends the original speed is exactly baseSpeed.
+    if (elapsedNs % tick && cells < std::uint64_t(chompStartNs / std::int64_t(tick)))
+    {
+        const auto remaining = chompStartNs - std::int64_t((cells + 1) * tick);
+        result += (double(TodAnimateCurveNs(bounce, 0, remaining, baseSpeed, 1.0f,
+            Curves::BounceSlowMiddle)) - baseSpeed) * double(elapsedNs % tick) / double(tick);
+    }
+    return result;
+}
+
+void AdvanceMower(LawnMower& mower, float baseSpeed)
+{
+    const auto chomp = std::max<std::int64_t>(0, mower.mChompCounter.mNanoseconds);
+    const bool bound = mower.mMotionElapsedNs != UINT64_MAX;
+    const auto expected = bound && mower.mMotionElapsedNs < std::uint64_t(mower.mMotionChompStartNs) ?
+        mower.mMotionChompStartNs - std::int64_t(mower.mMotionElapsedNs) : 0;
+    if (!bound || mower.mMotionBaseSpeed != baseSpeed || expected != chomp)
+    {
+        const double previous = bound && mower.mPosX == mower.mMotionLastOutputX ?
+            mower.mMotionOriginX + MowerTravel(mower.mMotionBaseSpeed,
+                mower.mMotionChompStartNs, mower.mMotionElapsedNs) : mower.mPosX;
+        mower.mMotionOriginX = previous;
+        mower.mMotionElapsedNs = 0;
+        mower.mMotionChompStartNs = chomp;
+        mower.mMotionBaseSpeed = baseSpeed;
+    }
+    else if (mower.mPosX != mower.mMotionLastOutputX)
+    {
+        // Portal/cutscene/external reposition: replace only the coordinate
+        // origin, retaining the current chomp source-sample phase.
+        mower.mMotionOriginX = double(mower.mPosX) -
+            MowerTravel(baseSpeed, mower.mMotionChompStartNs, mower.mMotionElapsedNs);
+    }
+    if (Sexy::gUpdateIntervalNs >= UINT64_MAX - mower.mMotionElapsedNs)
+        throw std::overflow_error("mower movement clock overflow");
+    mower.mMotionElapsedNs += Sexy::gUpdateIntervalNs;
+    mower.mPosX = CheckedPosition(mower.mMotionOriginX +
+        MowerTravel(baseSpeed, mower.mMotionChompStartNs, mower.mMotionElapsedNs));
+    mower.mMotionLastOutputX = mower.mPosX;
+}
+
+void AdvanceMowerAltitude(LawnMower& mower, bool rising)
+{
+    if (Sexy::gUpdateIntervalNs > UINT64_MAX - mower.mAltitudeElapsedNs)
+        throw std::overflow_error("mower altitude clock overflow");
+    mower.mAltitudeElapsedNs += Sexy::gUpdateIntervalNs;
+    const double distance = 2.0 * double(mower.mAltitudeElapsedNs) / 10'000'000.0;
+    mower.mAltitude = CheckedPosition(rising ? -28.0 + distance : -distance);
+}
+
 // LawnMower::UpdatePool 分发表：表内匿名 lambda = 原 case 体逐句迁移；
 // isPoolRange 与 aMowerReanim 经参传入（原 LAND 支内联 isPoolRange 前置，
 // 不满足时原链各支均不命中 = 空操作）。
@@ -88,14 +165,15 @@ constexpr MowerPoolFn kMowerPoolCases[(int)MowerHeight::MOWER_HEIGHT_UP_TO_LAND 
             m.mApp->AddTodParticle(m.mPosX + 0.0f + 50.0f, m.mPosY + 0.0f + 42.0f, m.mRenderOrder + 1, ParticleEffect::PARTICLE_PLANTING_POOL);
             m.mApp->PlayFoley(FoleyType::FOLEY_ZOMBIESPLASH);
             m.mMowerHeight = MowerHeight::MOWER_HEIGHT_DOWN_TO_POOL;
+            m.mAltitudeElapsedNs = 0;
         }
     },  // 0 MOWER_HEIGHT_LAND
     // 原 case MOWER_HEIGHT_DOWN_TO_POOL
     [](LawnMower& m, bool isPoolRange, Reanimation* aMowerReanim)
     {
         (void)isPoolRange;
-        m.mAltitude -= Sexy::UpdateDelta(2.0f);
-        if (m.mAltitude <= -28.0f)
+        AdvanceMowerAltitude(m, false);
+        if (m.mAltitudeElapsedNs >= 140'000'000)
         {
             m.mAltitude = 0.0f;
             m.mMowerHeight = MowerHeight::MOWER_HEIGHT_IN_POOL;
@@ -109,6 +187,7 @@ constexpr MowerPoolFn kMowerPoolCases[(int)MowerHeight::MOWER_HEIGHT_UP_TO_LAND 
         {
             m.mAltitude = -28.0f;
             m.mMowerHeight = MowerHeight::MOWER_HEIGHT_UP_TO_LAND;
+            m.mAltitudeElapsedNs = 0;
             Reanimation* aSplashReanim = m.mApp->AddReanimation(m.mPosX + 0.0f, m.mPosY + 25.0f, m.mRenderOrder + 1, ReanimationType::REANIM_SPLASH);
             aSplashReanim->mOverlayMatrix.m00 = 1.2f;
             aSplashReanim->mOverlayMatrix.m11 = 0.8f;
@@ -122,8 +201,8 @@ constexpr MowerPoolFn kMowerPoolCases[(int)MowerHeight::MOWER_HEIGHT_UP_TO_LAND 
     {
         (void)isPoolRange;
         (void)aMowerReanim;
-        m.mAltitude += Sexy::UpdateDelta(2.0f);
-        if (m.mAltitude >= 0.0f)
+        AdvanceMowerAltitude(m, true);
+        if (m.mAltitudeElapsedNs >= 140'000'000)
         {
             m.mAltitude = 0.0f;
             m.mMowerHeight = MowerHeight::MOWER_HEIGHT_LAND;
@@ -258,12 +337,9 @@ void LawnMower::Update()
     {
         aSpeed = 2.5f;
     }
+    AdvanceMower(*this, aSpeed);
     if (mChompCounter > 0)
-    {
         mChompCounter--;
-        aSpeed = TodAnimateCurveNs(500'000'000, 0, mChompCounter.mNanoseconds, aSpeed, 1.0f, Curves::BounceSlowMiddle);
-    }
-    mPosX += Sexy::UpdateDelta(aSpeed);
     mPosY = mBoard->GetPosYBasedOnRow(mPosX + 40.0f, mRow) + 23.0f;
 
     if (mMowerType == LawnMowerType::LAWNMOWER_POOL)

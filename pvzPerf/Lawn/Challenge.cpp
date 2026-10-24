@@ -3805,6 +3805,7 @@ void Challenge::ZombiquariumDropBrain(int x, int y)
 	aBrain->mGridItemCounter = 0;
 	aBrain->mPosX = x - 15.0f;
 	aBrain->mPosY = y - 15.0f;
+	aBrain->mRootGeneration = 0;
 	mApp->PlaySample(Sexy::SOUND_TAP);
 }
 
@@ -3884,8 +3885,23 @@ void Challenge::ZombiquariumUpdate()
 	{
 		if (aGridItem->mGridItemType == GRIDITEM_BRAIN)
 		{
+			// GRIDITEM_BRAIN and Stinky are mutually exclusive types. Reuse the
+			// saved root-motion fields as stable Y origin / integer fall time /
+			// last published Y / binding flag; never integrate rounded mPosY.
+			if (!aGridItem->mRootGeneration ||
+				aGridItem->mPosY != aGridItem->mRootLastOutputX)
+			{
+				aGridItem->mRootWorldX = aGridItem->mPosY;
+				aGridItem->mRootPeriodNs = 0;
+				aGridItem->mRootGeneration = 1;
+			}
+			if (Sexy::gUpdateIntervalNs > std::uint64_t(INT64_MAX - aGridItem->mRootPeriodNs))
+				throw std::overflow_error("zombiquarium brain fall clock overflow");
+			aGridItem->mRootPeriodNs += Sexy::gUpdateIntervalNs;
 			aGridItem->mGridItemCounter++;
-			aGridItem->mPosY += Sexy::UpdateDelta(0.15f);
+			aGridItem->mPosY = static_cast<float>(aGridItem->mRootWorldX +
+				double(0.15f) * double(aGridItem->mRootPeriodNs) / 10'000'000.0);
+			aGridItem->mRootLastOutputX = aGridItem->mPosY;
 			if (aGridItem->mPosY >= 500.0f)
 			{
 				aGridItem->GridItemDie();

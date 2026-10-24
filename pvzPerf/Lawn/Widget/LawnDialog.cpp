@@ -104,10 +104,9 @@ void LawnDialog::CalcSize(int theExtraX, int theExtraY)
     if (mDialogLines.size() > 0)
     {
         aWidth += aTopMidWidth;
-        Graphics g;
-        g.mFont = mLinesFont;
         int aBasicWidth = aWidth - mBackgroundInsets.mLeft - mBackgroundInsets.mRight - mContentInsets.mLeft - mContentInsets.mRight - 4;
-        aHeight += GetWordWrappedHeight(&g, aBasicWidth, mDialogLines, mLinesFont->GetLineSpacing() + mLineSpacingOffset) + 30;
+        aHeight += Graphics::MeasureWordWrappedHeight(*mLinesFont,aBasicWidth,mDialogLines,
+            mLinesFont->GetLineSpacing()+mLineSpacingOffset)+30;
     }
     aHeight += mButtonHeight;
     // 对话框贴图的最小高度
@@ -359,7 +358,8 @@ void LawnDialog::Draw(Graphics* g)
     Rect aRect(mBackgroundInsets.mLeft + mContentInsets.mLeft + 2, aFontY, aLinesAreaWidth, 0);
     if (mVerticalCenterText)
     {
-        int aLinesHeight = GetWordWrappedHeight(g, aLinesAreaWidth, mDialogLines, mLinesFont->GetLineSpacing() + mLineSpacingOffset);
+        int aLinesHeight = Graphics::MeasureWordWrappedHeight(*mLinesFont, aLinesAreaWidth,
+            mDialogLines, mLinesFont->GetLineSpacing() + mLineSpacingOffset, nullptr, mWriteColoredString);
         int aLinesAreaHeight = mHeight - mContentInsets.mBottom - mBackgroundInsets.mBottom - mButtonHeight - aFontY - 55;
         if (mTallBottom)
         {

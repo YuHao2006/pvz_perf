@@ -1,4 +1,6 @@
 #pragma once
+#include "CoinFallRuntimeChecks.h"
+#include "MowerMotionRuntimeChecks.h"
 // Included by the game-linked static-definition fixture. These checks execute
 // real Plant/Zombie methods, real Board pools/buckets and real source animation.
 #include "Lawn/Board.h"
@@ -32,6 +34,46 @@
 #include <random>
 #include <stdexcept>
 #include <vector>
+
+namespace MowerMotionRuntime
+{
+inline void SaveContinuation(LawnApp& app, Board& board)
+{
+    const auto scene = app.mGameScene;
+    app.mGameScene = GameScenes::SCENE_PLAYING;
+    for (const bool poolTransition : {false, true})
+    {
+        MowerFixture fixture(app, board, LawnMowerType::LAWNMOWER_POOL, 50);
+        auto& mower = fixture.mower;
+        if (poolTransition)
+        {
+            mower.mMowerHeight = MowerHeight::MOWER_HEIGHT_DOWN_TO_POOL;
+            mower.mPosX = 100;
+        }
+        const auto update = [&] {
+            if (poolTransition) mower.UpdatePool();
+            else mower.Update();
+        };
+        Schedule(144, 73'456'789, update);
+        const auto record = SaveRecordMapping::WriteSaveRecord(mower);
+        const auto sample = [&] {
+            Schedule(1000, 23'456'789, update);
+            return std::array<std::uint64_t, 6>{
+                Bits(mower.mPosX), Bits(mower.mAltitude),
+                std::bit_cast<std::uint64_t>(mower.mMotionOriginX),
+                mower.mMotionElapsedNs, mower.mAltitudeElapsedNs,
+                static_cast<std::uint64_t>(mower.mChompCounter.mNanoseconds)};
+        };
+        const auto uninterrupted = sample();
+        SaveRecordMapping::ReadSaveRecord(mower, record.data());
+        mower.mApp = &app;
+        mower.mBoard = &board;
+        Require(sample() == uninterrupted,
+            "Mower flight/chomp/pool phase changed after actual native save/reload");
+    }
+    app.mGameScene = scene;
+}
+}
 
 namespace ActorFloatRuntime
 {
@@ -1006,6 +1048,11 @@ inline void Check(LawnApp& app)
     Board board(&app);
     std::cerr << "PASS actor fixture real Board construction\n";
     SharedClockConsumers(board);
+    CoinFallRuntime::Check(app,board);
+    std::cerr << "PASS actual analytic Coin/Sun falling and wall events\n";
+    MowerMotionRuntime::Run(app,board);
+    MowerMotionRuntime::SaveContinuation(app,board);
+    std::cerr << "PASS actual analytic mower motion, pool height and brain falling\n";
     LaunchDeadlines(app, board);
     SlotMachine(app, board);
     PickupMotion(app, board);

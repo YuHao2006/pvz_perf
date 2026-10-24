@@ -182,6 +182,22 @@ template<class T, class Fn> void VisitV7Members(Fn&& visit)
         visit(offsetof(T, mOriginRotation), 28, 4);
         visit(offsetof(T, mOriginShadowY), 32, 4);
     }
+    else if constexpr (std::is_same_v<T, Coin>)
+    {
+        visit(offsetof(T, mFallVelocityX), 0, 4);
+        visit(offsetof(T, mFallVelocityY), 4, 4);
+        visit(offsetof(T, mFallScaleOrigin), 8, 4);
+        visit(offsetof(T, mFallScaleElapsedNs), 12, 8);
+    }
+    else if constexpr (std::is_same_v<T, LawnMower>)
+    {
+        visit(offsetof(T, mMotionOriginX), 0, 8);
+        visit(offsetof(T, mMotionElapsedNs), 8, 8);
+        visit(offsetof(T, mMotionChompStartNs), 16, 8);
+        visit(offsetof(T, mMotionBaseSpeed), 24, 4);
+        visit(offsetof(T, mMotionLastOutputX), 28, 4);
+        visit(offsetof(T, mAltitudeElapsedNs), 32, 8);
+    }
     else if constexpr (std::is_same_v<T, Reanimation>)
     {
         visit(offsetof(T, mTimeDomain), 0, 4);

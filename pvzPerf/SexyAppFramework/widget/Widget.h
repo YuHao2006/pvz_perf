@@ -85,7 +85,6 @@ public:
 
 	virtual int				WriteString(Graphics* g, const SexyString& theString, int theX, int theY, int theWidth = -1, int theJustification = -1, bool drawString = true, int theOffset = 0, int theLength = -1);
 	virtual int				WriteWordWrapped(Graphics* g, const Rect& theRect, const SexyString& theLine, int theLineSpacing, int theJustification);
-	virtual int				GetWordWrappedHeight(Graphics* g, int theWidth, const SexyString& theLine, int aLineSpacing);
 	virtual int				GetNumDigits(int theNumber);
 	virtual void			WriteNumberFromStrip(Graphics* g, int theNumber, int theX, int theY, Image* theNumberStrip, int aSpacing);
 	virtual bool			Contains(int theX, int theY);

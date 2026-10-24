@@ -33,6 +33,15 @@ public:
     float               mAltitude;              //+0x38
     MowerHeight         mMowerHeight;           //+0x3C
     int                 mLastPortalX;           //+0x40
+    double              mMotionOriginX = 0;
+    // UINT64_MAX means unbound. Otherwise this is integer time in the current
+    // constant-base-speed/chomp segment, never a rounded coordinate accumulator.
+    std::uint64_t       mMotionElapsedNs = UINT64_MAX;
+    std::int64_t        mMotionChompStartNs = 0;
+    float               mMotionBaseSpeed = 0;
+    float               mMotionLastOutputX = 0;
+    // Pool entry/exit always starts at 0/-28; only these transitions write altitude.
+    std::uint64_t       mAltitudeElapsedNs = 0;
 
 public:
     void                LawnMowerInitialize(int theRow);

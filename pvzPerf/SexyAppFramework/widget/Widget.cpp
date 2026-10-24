@@ -351,11 +351,6 @@ int	Widget::WriteWordWrapped(Graphics* g, const Rect& theRect, const SexyString&
 	return aReturn;
 }
 
-int Widget::GetWordWrappedHeight(Graphics* g, int theWidth, const SexyString& theLine, int aLineSpacing)
-{
-	return g->GetWordWrappedHeight(theWidth,theLine,aLineSpacing);
-}
-
 int Widget::GetNumDigits(int theNumber)
 {		
 	int64_t aDivisor = 10;

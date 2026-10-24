@@ -182,9 +182,9 @@ int	Dialog::GetPreferredHeight(int theWidth)
 	{
 		if (needSpace)
 			aHeight += mSpaceAfterHeader;
-		Graphics g;
-		g.mFont = mLinesFont;	
-		aHeight += GetWordWrappedHeight(&g, theWidth-mContentInsets.mLeft-mContentInsets.mRight-mBackgroundInsets.mLeft-mBackgroundInsets.mRight-4, mDialogLines, mLinesFont->GetLineSpacing() + mLineSpacingOffset);
+		aHeight += Graphics::MeasureWordWrappedHeight(*mLinesFont,
+			theWidth-mContentInsets.mLeft-mContentInsets.mRight-mBackgroundInsets.mLeft-mBackgroundInsets.mRight-4,
+			mDialogLines,mLinesFont->GetLineSpacing()+mLineSpacingOffset);
 		needSpace = true;
 	}
 

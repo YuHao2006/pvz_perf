@@ -92,6 +92,32 @@ void main(){
 }
 )GLSL";
 namespace {
+#if !defined(PVZ_OPENGL_REANIM_COMPUTE_EXPERIMENT)
+constexpr const char* ReanimGeometrySource = R"GLSL(#version 150
+layout(triangles)in;layout(triangle_strip,max_vertices=4)out;
+flat in vec4 point0[],point1[],point2[],point3[],trackColor[];
+flat in uvec4 trackInfo[];
+uniform vec2 targetExtent;
+out vec4 color;out vec2 uv;flat out uint slot,samplerIndex;
+void emitPoint(vec4 point,vec4 tint,uvec2 metadata){
+ gl_Position=vec4(point.xy/targetExtent*2.0-1.0,0,1);
+ color=tint;uv=point.zw;slot=metadata.x;samplerIndex=metadata.y;EmitVertex();
+}
+void trackPoint(vec4 point){emitPoint(point,trackColor[0],trackInfo[0].xy);}
+void main(){
+ if(trackInfo[0].z==0u){
+  for(int i=0;i<3;++i)emitPoint(point0[i],trackColor[i],trackInfo[i].xy);
+  EndPrimitive();return;
+ }
+ if(trackInfo[0].w==0u)return;
+ // SubmitReanimTrack already selects the effective integer clip for this
+ // painter batch. Flush applies it with glScissor for every target.
+ trackPoint(point0[0]);trackPoint(point1[0]);trackPoint(point3[0]);trackPoint(point2[0]);
+ EndPrimitive();
+}
+)GLSL";
+#else
+// Keep the compute experiment's original GS fallback unchanged as a control.
 constexpr const char* ReanimGeometrySource = R"GLSL(#version 150
 layout(triangles)in;layout(triangle_strip,max_vertices=18)out;
 flat in vec4 point0[],point1[],point2[],point3[],trackColor[],trackClip[];
@@ -135,6 +161,7 @@ void main(){
  for(int i=1;i+1<count;++i){trackPoint(polygon[0]);trackPoint(polygon[i]);trackPoint(polygon[i+1]);EndPrimitive();}
 }
 )GLSL";
+#endif
 unsigned int Compile(unsigned int kind,std::string_view source)
 {
     const auto object=glCreateShader(kind);const char* text=source.data();const int length=int(source.size());

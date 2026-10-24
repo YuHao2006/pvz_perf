@@ -49,6 +49,8 @@ Vulkan／OpenGL／DX12／Metal 常驻动画接口由 `PVZ_EXPERIMENTAL_GPU_REANI
 纯文字分组和稀疏帧的可选 CPU 回退不创建实例包。
 Vulkan／OpenGL 的普通三角形与轨道 marker 保持原顺序；较长的连续普通三角形段使用原顶点管线，
 避免少数动画使整帧普通图片承担 geometry shader 成本。
+OpenGL 常规 GS 路径直接输出四角，使用批次已有的 scissor 执行有效整数裁剪，
+不再重复执行 shader 多边形裁剪；独立 compute 试验保留原 GS 回退作为对照。
 Vulkan／DX12 使用 precise 多项式，OpenGL 使用自身 native sin/cos 路径。
 Vulkan／OpenGL／DX12 的常驻定义缓冲区支持扩容及释放区间复用；
 扩容在 GPU 内复制已有数据，释放区间等待对应提交完成后才能重新分配，

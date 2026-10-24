@@ -2066,13 +2066,11 @@ void VulkanRenderer::Impl::AppendRun(Buffer* stream, VkDeviceSize offset, uint32
             0,sizeof(extent),extent);
         drawState.width=vw;drawState.height=vh;
     }
-    const auto& previous=drawState.scissor;
-    if (!drawState.hasScissor || previous.offset.x!=scissor.offset.x || previous.offset.y!=scissor.offset.y ||
-        previous.extent.width!=scissor.extent.width || previous.extent.height!=scissor.extent.height) {
+    if (aScChange) {
         vkCmdSetScissor(cmd,0,1,&scissor);
         drawState.scissor=scissor;drawState.hasScissor=true;
     }
-    if (drawState.pipeline!=pipeline) {
+    if (aPlChange) {
         vkCmdBindPipeline(cmd,VK_PIPELINE_BIND_POINT_GRAPHICS,pipeline);
         drawState.pipeline=pipeline;
     }
@@ -2081,6 +2079,9 @@ void VulkanRenderer::Impl::AppendRun(Buffer* stream, VkDeviceSize offset, uint32
         if (useUnified) {
             const VkDescriptorSet unifiedSets[]={textureArray,samplerSet,unifiedSet};
             vkCmdBindDescriptorSets(cmd,VK_PIPELINE_BIND_POINT_GRAPHICS,reanimGeometryLayout,0,3,unifiedSets,0,nullptr);
+            // This index buffer is shared by all resident runs. State resets
+            // after pool/target changes also restore its buffer and uint32 type.
+            vkCmdBindIndexBuffer(cmd,unifiedIndices->buffer,0,VK_INDEX_TYPE_UINT32);
         } else
 #endif
         vkCmdBindDescriptorSets(cmd,VK_PIPELINE_BIND_POINT_GRAPHICS,pipelineLayout,0,2,sets.data(),0,nullptr);
@@ -2109,7 +2110,6 @@ void VulkanRenderer::Impl::FlushPendingRun(VkCommandBuffer cmd) {
     }
 #if defined(PVZ_REANIM_UNIFIED)
     if (drawState.unified) {
-        vkCmdBindIndexBuffer(cmd,unifiedIndices->buffer,0,VK_INDEX_TYPE_UINT32);
         vkCmdDrawIndexed(cmd,pendingRun.count,1,uint32_t(pendingRun.offset/sizeof(uint32_t)),0,0);
     } else
 #endif

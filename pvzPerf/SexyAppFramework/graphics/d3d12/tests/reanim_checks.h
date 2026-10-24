@@ -249,5 +249,102 @@ inline void Run(D3d12Renderer& renderer) {
     renderer.DestroyReanimDefinition(cpuOnly);
     std::cout << "d3d12-resident-reference-cases=" << cases << " logical-indices-lifetime=PASS\n";
 }
+inline void ArenaStress(D3d12Renderer& renderer) {
+    // Each definition exceeds 24 MiB. Three live definitions force growth
+    // beyond the original 64 MiB arena; 192 replacements exceed its 4 GiB
+    // address space unless retired interior ranges are actually reused.
+    std::vector<GpuReanimKey> keys(512 * 1024);
+    constexpr uint32_t selected = 12345;
+    const std::array<GpuReanimTrack, 3> tracks{{
+        {selected, 2}, {GpuReanimNoKeys, 0}, {selected, 2}}};
+    const std::array<GpuReanimGeometry, 2> geometry{{{}, {32, 24, 0, 0, 1, 1}}};
+    struct Live { D3d12Reanim* handle; GpuReanimKey key; };
+    const auto upload = [&](unsigned seed) {
+        const GpuReanimKey key{float(5 + seed % 19), 20, 0, 0, 1, 1, 1, 0, 1};
+        keys[selected] = keys[selected + 1] = key;
+        return Live{renderer.UploadReanimDefinition({tracks, keys, geometry, 2, 1}), key};
+    };
+    const uint32_t texels[]{0xffff0000, 0xff00ff00, 0xff0000ff, 0xffffff00};
+    auto* texture = renderer.CreateTexture(2, 2, texels, 8);
+    const auto clear = [&] {
+        const auto slot = D3d12Renderer::SlotOf(renderer.whiteTexture);
+        const GpuVertex quad[]{
+            {0,0,0,0,0,1,0,0,slot,0},{800,0,0,0,0,1,1,0,slot,0},{800,600,0,0,0,1,1,1,slot,0},
+            {0,0,0,0,0,1,0,0,slot,0},{800,600,0,0,0,1,1,1,slot,0},{0,600,0,0,0,1,0,1,slot,0}};
+        renderer.SubmitTriangles(quad, renderer.whiteTexture, false, false, GpuBlend::Opaque);
+    };
+    const auto render = [&](std::span<const Live> live, bool resident, int retire) {
+        Check(renderer.BeginScene(), "Cannot begin D3D12 arena stress scene");
+        clear();
+        for (size_t i = 0; i < live.size(); ++i) {
+            GpuReanimInstance instance{};
+            instance.after = 1; instance.fraction = .375f;
+            instance.overlay00 = instance.overlay11 = 1;
+            instance.translateX = float(40 + i * 90);
+            GpuReanimTrackDraw draw{2, 0xffffffff};
+            if (resident) {
+                const auto token = renderer.BeginReanimInstance(live[i].handle, texture,
+                    instance, false, false, nullptr, true);
+                Check(token != UINT32_MAX, "D3D12 arena stress instance rejected");
+                auto sentinel = draw; sentinel.track = 1;
+                Check(!renderer.SubmitReanimTrack(token, sentinel, GpuBlend::Normal),
+                    "D3D12 arena growth changed logical track indices");
+                Check(renderer.SubmitReanimTrack(token, draw, GpuBlend::Normal),
+                    "D3D12 arena stress track rejected");
+            } else {
+                const auto reference = Reference(live[i].key, live[i].key, geometry[1], geometry[1],
+                    instance, draw, D3d12Renderer::SlotOf(texture), 0, nullptr);
+                renderer.SubmitTriangles(reference, texture, false, false, GpuBlend::Normal);
+            }
+        }
+        if (retire >= 0) renderer.DestroyReanimDefinition(live[size_t(retire)].handle);
+        renderer.EndSceneAndPresent();
+    };
+    const auto compare = [&](const std::vector<uint32_t>& expected) {
+        const auto actual = renderer.ReadScenePixels();
+        Check(actual.size() == expected.size(), "D3D12 arena stress dimensions changed");
+        for (size_t i = 0; i < actual.size(); ++i)
+            for (unsigned shift : {0u, 8u, 16u, 24u})
+                Check(std::abs(int((actual[i] >> shift) & 255) -
+                    int((expected[i] >> shift) & 255)) <= 3,
+                    "D3D12 arena growth/reclamation changed resident pixels");
+    };
+    std::array<Live, 3> live{{upload(0), upload(1), {}}};
+    render({live.data(), 2}, false, -1);
+    const auto beforeGrowth = renderer.ReadScenePixels();
+    live[2] = upload(2);
+    render({live.data(), 2}, true, -1);
+    compare(beforeGrowth);
+    for (unsigned cycle = 0; cycle < 192; ++cycle) {
+        if (cycle % 32 == 0) {
+            render(live, false, -1);
+            const auto expected = renderer.ReadScenePixels();
+            // Retire after recording a real draw, before its submission fence.
+            render(live, true, 1);
+            live[1] = upload(cycle + 3);
+            compare(expected);
+        } else {
+            renderer.DestroyReanimDefinition(live[1].handle);
+            live[1] = upload(cycle + 3);
+        }
+    }
+    render(live, false, -1);
+    auto expected = renderer.ReadScenePixels();
+    render(live, true, -1);
+    compare(expected);
+    for (auto entry : live) renderer.DestroyReanimDefinition(entry.handle);
+    // Adjacent ranges coalesce and the high-water tail can return to zero.
+    for (unsigned cycle = 0; cycle < 4; ++cycle) {
+        live = {upload(cycle + 200), upload(cycle + 201), upload(cycle + 202)};
+        render(live, false, -1);
+        expected = renderer.ReadScenePixels();
+        render(live, true, -1);
+        compare(expected);
+        for (auto entry : live) renderer.DestroyReanimDefinition(entry.handle);
+    }
+    renderer.DestroyTexture(texture);
+    std::cout << "d3d12-resident-arena-growth-old-pixels-interior-reuse-release-reload=PASS"
+        " replacements=192 uploaded-bytes>4GiB\n";
+}
 }
 #endif

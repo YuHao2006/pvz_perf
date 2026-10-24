@@ -78,6 +78,7 @@ struct D3d12Texture {
 struct D3d12Reanim {
     void* owner = nullptr;
     std::vector<GpuReanimTrack> tracks;
+    UINT64 blobBytes = 0;
     uint32_t header = 0, imageSlotCount = 0, variantCount = 0;
 };
 
@@ -173,8 +174,12 @@ struct D3d12Renderer::Impl {
     };
     ComPtr<ID3D12Resource> reanimStatic;
     Page reanimInstances, reanimTracks;
-    UINT64 reanimStaticUsed = 0;
-    static constexpr UINT64 ReanimStaticCapacity = 64 * 1024 * 1024;
+    UINT64 reanimStaticUsed = 0, reanimStaticCapacity = 0;
+    static constexpr UINT64 ReanimStaticInitialCapacity = 64 * 1024 * 1024;
+    // ByteAddressBuffer.Load takes a uint byte address, despite DWORD headers.
+    static constexpr UINT64 ReanimStaticMaximum = UINT64{1} << 32;
+    struct ReanimRange { UINT64 offset, size; };
+    std::vector<ReanimRange> reanimFreeRanges;
     std::vector<D3d12Reanim*> reanimDefinitions, reanimRetired;
     std::vector<ReanimControl> reanimControls;
     ComPtr<ID3D12RootSignature> reanimRoot;
@@ -597,7 +602,7 @@ struct D3d12Renderer::Impl {
             reanimImagePipelines[i] = Graphics(root.Get(), vs, ps,
                 DXGI_FORMAT_R32G32B32A32_FLOAT, GpuBlend(i), true, false, &gs);
         }
-        auto arena = Buffer(ReanimStaticCapacity, D3D12_HEAP_TYPE_DEFAULT);
+        auto arena = Buffer(ReanimStaticInitialCapacity, D3D12_HEAP_TYPE_DEFAULT);
         for (Page* page : {&reanimInstances, &reanimTracks}) {
             page->size = 4 * 1024 * 1024;
             page->resource = Buffer(page->size, D3D12_HEAP_TYPE_UPLOAD);
@@ -606,7 +611,97 @@ struct D3d12Renderer::Impl {
                 "Map(reanimation packets)", device);
         }
         reanimStatic = std::move(arena);
+        reanimStaticCapacity = ReanimStaticInitialCapacity;
         reanimRoot = std::move(root);
+    }
+    void MergeReanimRanges() {
+        std::sort(reanimFreeRanges.begin(), reanimFreeRanges.end(),
+            [](const ReanimRange& a, const ReanimRange& b) { return a.offset < b.offset; });
+        size_t merged = 0;
+        for (const auto range : reanimFreeRanges) {
+            if (merged && reanimFreeRanges[merged - 1].offset +
+                    reanimFreeRanges[merged - 1].size == range.offset)
+                reanimFreeRanges[merged - 1].size += range.size;
+            else reanimFreeRanges[merged++] = range;
+        }
+        reanimFreeRanges.resize(merged);
+        while (!reanimFreeRanges.empty() && reanimFreeRanges.back().offset +
+                reanimFreeRanges.back().size == reanimStaticUsed) {
+            reanimStaticUsed = reanimFreeRanges.back().offset;
+            reanimFreeRanges.pop_back();
+        }
+    }
+    void ReclaimReanimRanges() {
+        if (reanimRetired.empty()) return;
+        // Only call after the submission fence completes. Destroy reserves
+        // metadata capacity so this completion path cannot allocate.
+        for (auto* definition : reanimRetired) {
+            reanimFreeRanges.push_back({UINT64(definition->header) * 4, definition->blobBytes});
+            delete definition;
+        }
+        reanimRetired.clear();
+        MergeReanimRanges();
+    }
+    void WaitReanimLoading() {
+        if (commands) Finish(false, true);
+        else {
+            context.WaitIdle();
+            if (inFlight) { Completed(true); inFlight = false; }
+            else ReclaimReanimRanges();
+        }
+    }
+    void GrowReanimStatic(UINT64 required) {
+        if (required <= reanimStaticCapacity) return;
+        if (required > ReanimStaticMaximum)
+            throw std::runtime_error("Resident D3D12 arena exceeds 32-bit byte addressing");
+        const auto capacity = std::min(ReanimStaticMaximum,
+            std::max(required, reanimStaticCapacity * 2));
+        auto replacement = Buffer(capacity, D3D12_HEAP_TYPE_DEFAULT);
+        WaitReanimLoading();
+        if (reanimStaticUsed) {
+            Begin();
+            D3D12_RESOURCE_BARRIER barriers[2]{};
+            for (auto& barrier : barriers) {
+                barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+                barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+                barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_GENERIC_READ;
+            }
+            barriers[0].Transition.pResource = reanimStatic.Get();
+            barriers[0].Transition.StateAfter = D3D12_RESOURCE_STATE_COPY_SOURCE;
+            barriers[1].Transition.pResource = replacement.Get();
+            barriers[1].Transition.StateAfter = D3D12_RESOURCE_STATE_COPY_DEST;
+            commands->ResourceBarrier(2, barriers);
+            commands->CopyBufferRegion(replacement.Get(), 0, reanimStatic.Get(), 0, reanimStaticUsed);
+            for (auto& barrier : barriers)
+                std::swap(barrier.Transition.StateBefore, barrier.Transition.StateAfter);
+            commands->ResourceBarrier(2, barriers);
+            try {
+                Finish(false, true);
+            } catch (...) {
+                // Submit can fail after queue execution. Keep both buffers
+                // alive through a final wait before unwinding the replacement.
+                try { context.WaitIdle(); } catch (...) {}
+                throw;
+            }
+        }
+        reanimStatic = std::move(replacement);
+        reanimStaticCapacity = capacity;
+        InvalidateDrawState();
+    }
+    UINT64 AllocateReanimStatic(UINT64 bytes) {
+        for (auto it = reanimFreeRanges.begin(); it != reanimFreeRanges.end(); ++it)
+            if (it->size >= bytes) {
+                const auto offset = it->offset;
+                it->offset += bytes; it->size -= bytes;
+                if (!it->size) reanimFreeRanges.erase(it);
+                return offset;
+            }
+        if (bytes > ReanimStaticMaximum - reanimStaticUsed)
+            throw std::runtime_error("Resident D3D12 arena exceeds 32-bit byte addressing");
+        GrowReanimStatic(reanimStaticUsed + bytes);
+        const auto offset = reanimStaticUsed;
+        reanimStaticUsed += bytes;
+        return offset;
     }
 #endif
 
@@ -676,8 +771,7 @@ struct D3d12Renderer::Impl {
         for (auto& page : staging) page->used = 0;
         for (auto& page : vertices) page->used = 0;
 #if defined(PVZ_D3D12_REANIM_RESIDENT)
-        for (auto* definition : reanimRetired) delete definition;
-        reanimRetired.clear();
+        ReclaimReanimRanges();
         reanimControls.clear();
         reanimInstances.used = reanimTracks.used = 0;
         reanimActive = false;
@@ -1498,9 +1592,19 @@ void D3d12Renderer::SubmitCoverageTriangles(std::span<const GpuVertex> vertices,
 D3d12Reanim* D3d12Renderer::UploadReanimDefinition(const GpuReanimDefinition& source) {
 #if defined(PVZ_D3D12_REANIM_RESIDENT)
     auto& s = *impl_;
+    if (s.sceneOpen) throw std::logic_error("Upload resident D3D12 definitions between scenes");
     if (source.tracks.empty() || !source.imageSlotCount || !source.variantCount ||
         uint64_t(source.imageSlotCount) * source.variantCount != source.geometry.size())
         throw std::invalid_argument("Invalid resident D3D12 reanimation definition");
+    uint64_t bytes = 16;
+    const auto addBytes = [&](size_t count, size_t stride) {
+        if (count > (Impl::ReanimStaticMaximum - bytes) / stride)
+            throw std::runtime_error("Resident D3D12 definition exceeds 32-bit byte addressing");
+        bytes += uint64_t(count) * stride;
+    };
+    addBytes(source.tracks.size(), sizeof(GpuReanimTrack));
+    addBytes(source.keys.size(), sizeof(GpuReanimKey));
+    addBytes(source.geometry.size(), sizeof(GpuReanimGeometry));
     for (const auto& track : source.tracks)
         if (track.keyOffset != GpuReanimNoKeys &&
             (!track.keyCount || uint64_t(track.keyOffset) + track.keyCount > source.keys.size()))
@@ -1508,20 +1612,23 @@ D3d12Reanim* D3d12Renderer::UploadReanimDefinition(const GpuReanimDefinition& so
     for (const auto& key : source.keys)
         if (key.imageSlot >= source.imageSlotCount)
             throw std::invalid_argument("Invalid resident D3D12 reanimation image");
-    const uint64_t bytes = 16 + source.tracks.size_bytes() +
-        source.keys.size_bytes() + source.geometry.size_bytes();
-    if (bytes > Impl::ReanimStaticCapacity - s.reanimStaticUsed)
-        throw std::runtime_error("Experimental D3D12 reanimation static arena exceeded");
     s.InitReanim();
     auto* result = new D3d12Reanim;
+    uint64_t origin = 0;
+    bool allocated = false;
     try {
         result->owner = &s;
         result->tracks.assign(source.tracks.begin(), source.tracks.end());
         result->imageSlotCount = source.imageSlotCount; result->variantCount = source.variantCount;
         s.reanimDefinitions.reserve(s.reanimDefinitions.size() + 1);
+        // Includes an allocation rollback span and all fence-retired spans.
+        s.reanimFreeRanges.reserve(s.reanimFreeRanges.size() + s.reanimRetired.size() + 1);
+        if (!s.reanimRetired.empty()) s.WaitReanimLoading();
+        // Growth can submit and reset staging pages; allocate the static range first.
+        origin = s.AllocateReanimStatic(bytes);
+        allocated = true;
         s.Begin(); s.Flush();
         auto* page = s.Allocate(s.staging, bytes, 16, true);
-        const uint64_t origin = s.reanimStaticUsed;
         const uint32_t header[]{uint32_t((origin + 16) / 4),
             uint32_t((origin + 16 + source.tracks.size_bytes()) / 4),
             uint32_t((origin + 16 + source.tracks.size_bytes() + source.keys.size_bytes()) / 4),
@@ -1546,10 +1653,17 @@ D3d12Reanim* D3d12Renderer::UploadReanimDefinition(const GpuReanimDefinition& so
         s.commands->ResourceBarrier(1, &barrier);
         page->used += bytes;
         result->header = uint32_t(origin / 4);
-        s.reanimStaticUsed += bytes;
+        result->blobBytes = bytes;
         s.reanimDefinitions.push_back(result);
         return result;
-    } catch (...) { delete result; throw; }
+    } catch (...) {
+        if (allocated) {
+            s.reanimFreeRanges.push_back({origin, bytes});
+            s.MergeReanimRanges();
+        }
+        delete result;
+        throw;
+    }
 #else
     (void)source;
     return nullptr;
@@ -1562,6 +1676,7 @@ void D3d12Renderer::DestroyReanimDefinition(D3d12Reanim* definition) {
     const auto found = std::find(s.reanimDefinitions.begin(), s.reanimDefinitions.end(), definition);
     if (found == s.reanimDefinitions.end())
         throw std::invalid_argument("Unknown resident D3D12 reanimation");
+    s.reanimFreeRanges.reserve(s.reanimFreeRanges.size() + s.reanimRetired.size() + 1);
     s.reanimRetired.push_back(definition);
     definition->owner = nullptr;
     s.reanimDefinitions.erase(found);

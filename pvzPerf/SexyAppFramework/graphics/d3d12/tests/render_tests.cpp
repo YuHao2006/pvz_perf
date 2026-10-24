@@ -366,8 +366,16 @@ void ResizeCanvas(D3d12Renderer& renderer, ScaleEffectRuntimeDesc& effect) {
     std::cout << "canvas-resize-800-through-1400-resident-textures-and-scale=PASS\n";
 }
 }
-int main() {
+int main(int argc, char** argv) {
     try {
+        bool arenaStress = false;
+        for (int i = 1; i < argc; ++i) {
+            if (std::string_view(argv[i]) == "--arena-stress") arenaStress = true;
+            else throw std::invalid_argument("Unknown D3D12 render-test argument");
+        }
+#if !defined(PVZ_D3D12_REANIM_RESIDENT)
+        if (arenaStress) throw std::invalid_argument("--arena-stress requires resident reanimation");
+#endif
         TestWindow window;
         Sexy::D3d12Context context(window.hwnd, true);
         std::cout << "adapter=" << context.adapterDescription << '\n';
@@ -384,6 +392,7 @@ int main() {
             ResizeCanvas(renderer, scaleEffect);
 #if defined(PVZ_D3D12_REANIM_RESIDENT)
             D3d12ReanimTest::Run(renderer);
+            if (arenaStress) D3d12ReanimTest::ArenaStress(renderer);
 #endif
         } catch (...) {
             Validation(context.device);

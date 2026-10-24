@@ -357,6 +357,13 @@ public:
 	Sexy::TimeCounter								mCrossFadeDuration;
 	float							mParticleInterp[ParticleTracks::NUM_PARTICLE_TRACKS];
 	float							mParticleFieldInterp[MAX_PARTICLE_FIELDS][2];
+	// Field-free motion samples one linear segment, never the last rounded
+	// position. -1 elapsed means unbound (including births and field handoffs).
+	double                          mLinearOriginX;
+	double                          mLinearOriginY;
+	std::int64_t                    mLinearElapsedNs;
+	SexyVector2                     mLinearVelocity; // Segment rate; public mVelocity may select a new rate next update.
+	SexyVector2                     mLinearLastPosition; // Detect public position edits without recomputing the old sample.
 };
 
 inline bool TodParticleConstantAnimationRate(const FloatParameterTrack& track)

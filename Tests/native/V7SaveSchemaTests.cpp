@@ -122,7 +122,7 @@ void ActorMigration()
     Float(zombie, 56, 12.345f);
     Float(zombie, 60, -9.876f);
     auto state = V7SaveSchema::FromHistorical(Kind::Zombie, zombie, zombie);
-    Require(state.size() == 80 && Get(state, 0, 4) == Get(zombie, 56, 4) &&
+    Require(state.size() == 105 && Get(state, 0, 4) == Get(zombie, 56, 4) &&
             Get(state, 4, 4) == Get(zombie, 60, 4),
             "Zombie float coordinate migration changed its bits");
     Require(std::all_of(state.begin() + 8, state.end(), [](Byte v) { return v == 0; }),
@@ -188,10 +188,14 @@ void ParticleMigration()
     Require(expanded.size() == 172 && Get(expanded, 8) == 110'000'004 &&
             Get(expanded, 16) == 50'000'002, "Independent particle time fixture differs");
     state = V7SaveSchema::FromHistorical(Kind::Particle, particle, expanded);
-    Require(state.size() == 28 && Signed(state, 0) == -1 &&
+    Require(state.size() == 68 && Signed(state, 0) == -1 &&
             Signed(state, 8) == 0 && Signed(state, 16) == 375'000'000'000LL &&
             Get(state, 24, 4) == 0x9E3779B9U,
             "Particle migration changed phase, sentinel or deterministic seed");
+    Require(Signed(state,44)==-1 &&
+        std::all_of(state.begin()+28,state.begin()+44,[](Byte value){return value==0;}) &&
+        std::all_of(state.begin()+52,state.end(),[](Byte value){return value==0;}),
+        "Historical particle invented a bound linear segment");
     V7SaveSchema::Validate(Kind::Particle, state);
     Bytes system(72);
     state = V7SaveSchema::FromHistorical(Kind::ParticleSystem, system, system);
@@ -278,7 +282,7 @@ void ExactStateValidation()
     Reject([&] { V7SaveSchema::Validate(Kind::Reanimation, Bytes(60)); },
         "Old relative-clock animation tail was accepted as current");
 
-    Bytes system(4), plant(156), zombie(80), emitter(40), particle(28), grid(240);
+    Bytes system(4), plant(156), zombie(105), emitter(40), particle(68), grid(240);
     Set(system, 0, 0xfedcba98U, 4); V7SaveSchema::Validate(Kind::ParticleSystem, system);
     Reject([&] { V7SaveSchema::Validate(Kind::ParticleSystem, Bytes(12)); },
         "Old particle system pending-step state accepted as current");
@@ -315,8 +319,8 @@ void ExactStateValidation()
     rejectField(Kind::Particle, particle, 16, UINT64_MAX, "Negative animation anchor accepted");
     V7SaveSchema::Validate(Kind::GridItem, grid);
     rejectField(Kind::GridItem, grid, 232, 2, "Invalid root chocolate bool accepted", 1);
-    Reject([&] { V7SaveSchema::Validate(Kind::Particle, Bytes(27)); }, "Short exact tail accepted");
-    Reject([&] { V7SaveSchema::Validate(Kind::Particle, Bytes(29)); }, "Long exact tail accepted");
+    Reject([&] { V7SaveSchema::Validate(Kind::Particle, Bytes(67)); }, "Short exact tail accepted");
+    Reject([&] { V7SaveSchema::Validate(Kind::Particle, Bytes(69)); }, "Long exact tail accepted");
     Bytes projectile(36);
     Set(projectile, 0, static_cast<std::uint64_t>(-123'456'789LL));
     Set(projectile, 8, 91'234'567'891LL);

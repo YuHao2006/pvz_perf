@@ -21,10 +21,9 @@ struct OpenGLTexture {
     OpenGLTexture& operator=(const OpenGLTexture&) = delete;
 };
 struct OpenGLReanim {
-    unsigned int tracks = 0, keys = 0, geometry = 0;
+    unsigned int firstTexel = 0, texelCount = 0;
     unsigned int imageSlotCount = 0, variantCount = 0;
     std::vector<GpuReanimTrack> trackInfo;
-    ~OpenGLReanim();
 };
 struct OpenGLRenderer::Impl {
     enum Uniform : unsigned int {
@@ -44,10 +43,6 @@ struct OpenGLRenderer::Impl {
         GpuBlend blend;
         GpuClip clip;
         bool coverage;
-        OpenGLReanim* reanim = nullptr;
-        unsigned int textureFlags = 0;
-        bool polygonClip = false;
-        GpuClip polygonBounds{};
     };
     OpenGLContext& context;
     int width, height, maximum = 0;
@@ -55,12 +50,40 @@ struct OpenGLRenderer::Impl {
     unsigned int sceneProgram = 0, imageProgram = 0, fontProgram = 0, presentProgram = 0;
     unsigned int poolProgram = 0, poolVao = 0, poolVertices = 0, poolIndices = 0;
     std::array<int, 12> poolUniforms{};
-    unsigned int reanimProgram = 0, reanimVao = 0, reanimStream = 0;
-    std::array<int, 11> reanimUniforms{};
+    unsigned int reanimProgram = 0, reanimVao = 0, reanimIndexBuffer = 0;
+    unsigned int reanimBlob = 0, reanimBlobTexture = 0, reanimInstanceBuffer = 0, reanimInstanceTexture = 0;
+    size_t reanimBlobUsed = 0, reanimBlobCapacity = 0, reanimBlobMaximum = 0;
+    struct ReanimRange { size_t first, count; };
+    std::vector<ReanimRange> reanimFreeRanges;
+    using TexBufferFn = void(APIENTRY*)(GLenum, GLenum, GLuint);
+    using CopyBufferFn = void(APIENTRY*)(GLenum, GLenum, GLintptr, GLintptr, GLsizeiptr);
+    using BeginQueryFn = void(APIENTRY*)(GLenum, GLuint);
+    using EndQueryFn = void(APIENTRY*)(GLenum);
+    TexBufferFn texBuffer = nullptr;
+    CopyBufferFn copyBuffer = nullptr;
+    BeginQueryFn beginFrameQuery = nullptr;
+    EndQueryFn endFrameQuery = nullptr;
+    FrameTiming* frameTiming = nullptr;
+    std::array<int, 6> reanimUniforms{};
     bool reanimChecked = false;
     std::unordered_set<OpenGLReanim*> reanimDefinitions;
     std::vector<OpenGLReanim*> retiredReanims;
-    std::vector<GpuReanimDraw> reanimDraws;
+    struct ReanimInstanceState {
+        OpenGLReanim* definition;
+        OpenGLTexture* texture;
+        unsigned int image;
+        GpuClip clip;
+    };
+    std::vector<ReanimInstanceState> reanimInstances;
+    std::vector<std::array<float,24>> reanimInstanceData;
+    std::vector<unsigned int> reanimIndices;
+    std::vector<size_t> reanimMarkerOffsets;
+    std::vector<ReanimRange> reanimOrdinarySpans;
+    bool hasReanimDraws = false;
+    unsigned int reanimFrameGeneration = 0;
+    uint32_t reanimPictureCandidates = 0;
+    uint64_t reanimOrdinaryTriangles = 0;
+    bool reanimFrameEligible = false;
     UniformLocations sceneUniforms{}, imageUniforms{}, fontUniforms{}, presentUniforms{};
     bool open = false, mainFrame = false, initialized = false, sceneInitialized = false;
     OpenGLTexture* white = nullptr;
@@ -88,6 +111,8 @@ struct OpenGLRenderer::Impl {
     void BindTarget();
     void Flush();
     bool InitReanim();
+    size_t AllocateReanimRange(size_t count);
+    void CollectReanims();
     void Submit(std::span<const GpuVertex> input, OpenGLTexture* source,
         GpuBlend blend, const GpuClip* clip, bool coverage);
     unsigned int Program(std::string_view vertex, std::string_view fragment);

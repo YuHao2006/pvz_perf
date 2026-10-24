@@ -2,6 +2,7 @@
 
 #include "SexyAppFramework/graphics/GpuTypes.h"
 #include "SexyAppFramework/graphics/GpuPool.h"
+#include "SexyAppFramework/graphics/GpuReanim.h"
 #include "SexyAppFramework/graphics/ImageReadback.h"
 #include "SexyAppFramework/graphics/vulkan/VulkanHdr.h"
 #include <cstddef>
@@ -14,6 +15,7 @@
 namespace Sexy {
 class D3d12Context;
 struct D3d12Texture;
+struct D3d12Reanim;
 struct D3d12ScaleImage;
 struct D3d12ScaleStep;
 using GpuHdrParams = VulkanHdrParams;
@@ -89,6 +91,16 @@ public:
     void SubmitCoverageTriangles(std::span<const GpuVertex> vertices,
         D3d12Texture* mask, GpuBlend blend, const GpuClip* clip = nullptr);
     void SubmitPool(D3d12Texture* texture, const GpuPoolParams& params);
+    D3d12Reanim* UploadReanimDefinition(const GpuReanimDefinition& definition);
+    void DestroyReanimDefinition(D3d12Reanim* definition);
+    uint32_t& reanimPictureCandidates;
+    const bool& reanimFrameEligible;
+    uint32_t BeginReanimInstance(D3d12Reanim* definition, D3d12Texture* texture,
+        const GpuReanimInstance& instance, bool linear, bool repeat, const GpuClip* clip = nullptr,
+        bool forceGpu = false);
+    bool SubmitReanim(D3d12Reanim* definition, D3d12Texture* texture, const GpuReanimDraw& draw,
+        bool linear, bool repeat, GpuBlend blend, const GpuClip* clip = nullptr, bool forceGpu = false);
+    bool SubmitReanimTrack(uint32_t instance, const GpuReanimTrackDraw& draw, GpuBlend blend);
     // Main scenes queue presentation asynchronously. The next recording waits
     // their fence before reusing mapped pages, descriptors, or retired images.
     // Image-only scenes remain synchronous.

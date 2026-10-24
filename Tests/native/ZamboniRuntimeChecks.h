@@ -3,6 +3,7 @@
 #include "LawnApp.h"
 #include "Lawn/Board.h"
 #include "Lawn/Zombie.h"
+#include "Lawn/ZamboniMotion.h"
 #include "Lawn/SeedPacket.h"
 #include "Lawn/SlotMachineMotion.h"
 #include "Sexy.TodLib/TodParticle.h"
@@ -165,6 +166,15 @@ inline void Check(LawnApp& app, Board& board)
                 Schedule(1000, 137'192'835, [&] { Step(resumed); });
                 Require(State(resumed) == State(original), "Zamboni flat-tire/velocity edit failed to rebind");
             }
+    for (const auto elapsed : {0ULL, 10'000'000ULL, 9'007'199'254'740'993ULL,
+            std::numeric_limits<std::uint64_t>::max()})
+    {
+        const auto forward = ZamboniMotion::Sample<1>(700, .19f, elapsed, false, true, -.25f);
+        const auto backward = ZamboniMotion::Sample<-1>(700, .19f, elapsed, false, true, .25f);
+        Require(forward.position == 700 && backward.position == 700 &&
+                forward.speed == .25 && backward.speed == .25,
+            "Zamboni exact equilibrium overflowed or changed over a long interval");
+    }
     const auto additional = [&](int frequency)
     {
         Zombie zombie{};

@@ -23,6 +23,9 @@ struct VulkanInitConfig {
     bool enableValidation = false;
     VulkanGpuFilter gpuFilter = [](VkPhysicalDevice) { return true; };
     VkPhysicalDeviceFeatures features{};
+    // The packed reanimation backend may enable this optional feature only
+    // after normal GPU selection. Unsupported devices retain the CPU route.
+    bool allowOptionalGeometryShader = true;
     PFN_vkDebugUtilsMessengerCallbackEXT debugCallback = &DefaultDebugCallback;
     static VkBool32 VKAPI_CALL DefaultDebugCallback(
         VkDebugUtilsMessageSeverityFlagBitsEXT severity,

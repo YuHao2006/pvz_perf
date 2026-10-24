@@ -17,6 +17,7 @@
 #include <fstream>
 #include <stdexcept>
 #include <string_view>
+#include "reanim_checks.h"
 
 namespace Sexy {
 const char* GetLogFilePathC(const char* name) {
@@ -381,6 +382,9 @@ int main() {
             SourceScale(renderer, scaleEffect);
             StaticSlots(renderer);
             ResizeCanvas(renderer, scaleEffect);
+#if defined(PVZ_D3D12_REANIM_RESIDENT)
+            D3d12ReanimTest::Run(renderer);
+#endif
         } catch (...) {
             Validation(context.device);
             throw;

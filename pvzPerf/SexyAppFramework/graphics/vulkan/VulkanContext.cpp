@@ -581,6 +581,13 @@ void VulkanContext::CreateSurfaceAssets() {
         physicalDevice = PickPhysicalDevice(instance, surface, gpuFilter,
                                             requiredExtensions, deviceFeatures,
                                             graphicsFamily, presentFamily);
+#if defined(PVZ_REANIM_UNIFIED)
+        if (initConfigSnapshot.allowOptionalGeometryShader) {
+            VkPhysicalDeviceFeatures supported{};
+            vkGetPhysicalDeviceFeatures(physicalDevice,&supported);
+            deviceFeatures.geometryShader=supported.geometryShader;
+        }
+#endif
         device = CreateLogicalDevice(physicalDevice, graphicsFamily,
                                      presentFamily, deviceFeatures,
                                      requiredExtensions,

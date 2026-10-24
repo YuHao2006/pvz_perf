@@ -6106,9 +6106,12 @@ void Zombie::DrawReanim(Graphics* g, const ZombieDrawPosition& theDrawPos, int t
             aShieldHitOffset = TodAnimateCurveNs(120'000'000, 0, mShieldRecoilCounter.mNanoseconds, 3.0f, 0.0f, Curves::Linear);
         }
 
-        g->mTransX += aShieldHitOffset;
+        const float aOriginalTransX = g->mTransX;
+        g->mTransX = aOriginalTransX + aShieldHitOffset;
         aBodyReanim->DrawRenderGroup(g, RENDER_GROUP_SHIELD);
-        g->mTransX -= aShieldHitOffset;
+        // Restore the parent's exact translation rather than subtracting a
+        // rounded offset and leaking the error into later render groups.
+        g->mTransX = aOriginalTransX;
     }
 
     if (mShieldType == ShieldType::SHIELDTYPE_NEWSPAPER || mShieldType == ShieldType::SHIELDTYPE_DOOR || mShieldType == ShieldType::SHIELDTYPE_LADDER)

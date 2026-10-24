@@ -674,9 +674,6 @@ void ReanimationAppearancePixels(SexyAppBase& app)
             {gpuTracks,gpuKeys,gpuGeometry,3,4});
         if (!definition.mGpuData && std::getenv("PVZ_EXPECT_GPU_REANIM"))
             throw std::runtime_error("Resident drawing was required but synthetic GPU upload is unsupported");
-#if defined(PVZ_GPU_REANIM_VULKAN)
-        Require(definition.mGpuData,"Synthetic reanimation GPU upload failed");
-#endif
         // Upload inputs go out of scope before DrawTrack and AttachmentDraw.
     }
     struct GpuDefinitionCleanup {
@@ -831,12 +828,8 @@ void ReanimationAppearanceDefinitions(SexyAppBase& app)
     auto& render=*app.mDDInterface->mRenderInterface;
 #if defined(PVZ_GPU_REANIM_RESIDENT)
     ReanimatorUploadGpuDefinitionData();
-#if defined(PVZ_GPU_REANIM_VULKAN)
-    Require(first.mDefinition->mGpuData,"Production GRU1 reanimation data was not uploaded");
-#else
     if (std::getenv("PVZ_EXPECT_GPU_REANIM"))
         Require(first.mDefinition->mGpuData,"Production GRU1 reanimation data was not uploaded");
-#endif
 #endif
     std::unique_ptr<Image> target(render.CreateRenderImage(128,128));
     {

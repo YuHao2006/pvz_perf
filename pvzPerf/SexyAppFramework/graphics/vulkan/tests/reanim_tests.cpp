@@ -26,6 +26,7 @@ using namespace Sexy;
 std::atomic<unsigned> errors=0;
 #if defined(PVZ_REANIM_GEOMETRY)
 bool requestGeometry=true;
+bool stressArena=false;
 #endif
 VkBool32 VKAPI_CALL Validate(VkDebugUtilsMessageSeverityFlagBitsEXT severity,
     VkDebugUtilsMessageTypeFlagsEXT types,const VkDebugUtilsMessengerCallbackDataEXT* data,void* user) {
@@ -141,6 +142,7 @@ void Run() {
 #if defined(PVZ_REANIM_UNIFIED)
     if (!requestGeometry) {
         Require(!window.geometryShaderEnabled,"Disabled optional geometry feature was enabled");
+        Require(definition==nullptr,"Unsupported geometry allocated a resident definition");
         GpuReanimDraw draw{};draw.track=2;draw.after=1;draw.fraction=0.375f;
         draw.overlay00=draw.overlay11=1;draw.overlay02=12;draw.overlay12=8;draw.color=0xffffffff;
         const auto vertices=Reference(keys[0],keys[1],geometry[1],geometry[1],draw,
@@ -161,6 +163,39 @@ void Run() {
         Require(errors.load()==0,"Vulkan validation errors in unsupported-feature fallback");
         std::cout<<"PASS optional geometry disabled: forced/legacy rejected, actual CPU fallback pixels, no compute fallback\n";
         return;
+    }
+#endif
+#if defined(PVZ_REANIM_UNIFIED)
+    if (stressArena) {
+        // Two immutable blobs exceed the initial 64 MiB arena. Replacing the
+        // first one then exercises fence-safe interior-range reuse while the
+        // original small definition and the second large blob stay live.
+        std::vector<GpuReanimKey> largeKeys(800000);
+        largeKeys[0]=keys[0];largeKeys[1]=keys[1];
+        auto* first=renderer.UploadReanimDefinition({tracks,largeKeys,geometry,2,2});
+        auto* secondLarge=renderer.UploadReanimDefinition({tracks,largeKeys,geometry,2,2});
+        renderer.DestroyReanimDefinition(first);
+        largeKeys[0].transX+=6;largeKeys[1].transY+=4;
+        auto* replacement=renderer.UploadReanimDefinition({tracks,largeKeys,geometry,2,2});
+        for (bool useReplacement:{false,true}) {
+            GpuReanimDraw job{};job.track=2;job.after=1;job.fraction=0.375f;
+            job.overlay00=job.overlay11=1;job.overlay02=12;job.overlay12=8;job.color=0xffffffff;
+            const auto& a=useReplacement?largeKeys[0]:keys[0];
+            const auto& b=useReplacement?largeKeys[1]:keys[1];
+            Require(renderer.BeginScene(),"Cannot begin arena reference");Clear(renderer);
+            renderer.SubmitTriangles(Reference(a,b,geometry[1],geometry[1],job,
+                VulkanRenderer::SlotOf(texture),nullptr),texture,false,false,GpuBlend::Normal);
+            renderer.EndSceneAndPresent();const auto expected=renderer.ReadScenePixels();
+            Require(renderer.BeginScene(),"Cannot begin arena resident draw");Clear(renderer);
+            Require(renderer.SubmitReanim(useReplacement?replacement:secondLarge,texture,job,
+                false,false,GpuBlend::Normal,nullptr,true),"Arena growth/reuse lost resident definition");
+            renderer.EndSceneAndPresent();const auto actual=renderer.ReadScenePixels();
+            for (size_t i=0;i<actual.size();++i) for (unsigned shift:{0u,8u,16u,24u})
+                Require(std::abs(int((actual[i]>>shift)&255)-int((expected[i]>>shift)&255))<=3,
+                    "Arena growth/reused-range resident pixels changed");
+        }
+        renderer.DestroyReanimDefinition(secondLarge);renderer.DestroyReanimDefinition(replacement);
+        std::cout<<"PASS >64MiB GPU-only arena growth, live-definition preservation and retired interior-range reuse\n";
     }
 #endif
     unsigned cases=0;
@@ -425,6 +460,7 @@ bool sparseBenchmark=false;
 unsigned sparseVisible=0;
 bool policyBenchmark=false;
 bool transitionBenchmark=false;
+uint32_t transitionDenseCount=0,transitionOrdinaryCount=0;
 Timing BenchmarkBurst(VulkanRenderer& renderer,VulkanContext& window,std::span<VulkanReanim* const> definitions,
     VulkanTexture* texture,const std::vector<GpuReanimKey>& keys,std::vector<GpuReanimDraw>& draws,
     const GpuReanimGeometry& geometry,bool resident,bool clipped,
@@ -445,7 +481,9 @@ Timing BenchmarkBurst(VulkanRenderer& renderer,VulkanContext& window,std::span<V
         Clear(renderer);
         const float fraction=float((phase+unsigned(frame))%31)/31.0f;
         const unsigned visible=transitionBenchmark?
-            (((phase+unsigned(frame))/8)%2?16u:0u):sparseVisible;
+            (((phase+unsigned(frame))/8)%2?sparseVisible:0u):sparseVisible;
+        const size_t frameCount=transitionBenchmark?
+            (visible?transitionOrdinaryCount:transitionDenseCount):draws.size();
         if (resident && packetBenchmark) {
             GpuReanimInstance instance{};
             instance.after=1;instance.fraction=fraction;instance.overlay00=instance.overlay11=1;
@@ -493,10 +531,10 @@ Timing BenchmarkBurst(VulkanRenderer& renderer,VulkanContext& window,std::span<V
             }
         };
         unsigned sparseEmitted=0;
-        for (size_t i=0;i<draws.size();++i) {
+        for (size_t i=0;i<frameCount;++i) {
             if (visible) {
                 if (sparseEmitted<visible &&
-                    i==size_t(sparseEmitted)*draws.size()/visible) {
+                    i==size_t(sparseEmitted)*frameCount/visible) {
                     emitReanim(i);++sparseEmitted;
                 }
                 emitSprite(i);
@@ -560,16 +598,21 @@ void Benchmark() {
     for (auto& query:queries)
         Require(vkCreateQueryPool(window.device,&pool,nullptr,&query)==VK_SUCCESS,"Cannot create benchmark queries");
     unsigned gates=0,meanGates=0,total=0,rejected=0;
-    for (unsigned visible: sparseBenchmark?std::vector<unsigned>{1,4,16}:std::vector<unsigned>{0}) {
+    for (unsigned visible: (sparseBenchmark||transitionBenchmark)?
+        std::vector<unsigned>{1,4,16}:std::vector<unsigned>{0}) {
     sparseVisible=visible;
-    for (uint32_t count: transitionBenchmark?std::vector<uint32_t>{8192}:
-        sparseBenchmark?std::vector<uint32_t>{2048,8192}:
+    for (uint32_t ordinaryCount: transitionBenchmark?std::vector<uint32_t>{2048,8192}:
+        std::vector<uint32_t>{0}) {
+    transitionOrdinaryCount=ordinaryCount;
+    for (uint32_t count: sparseBenchmark?std::vector<uint32_t>{2048,8192}:
         std::vector<uint32_t>{256,512,2048,8192}) {
-        std::vector<GpuReanimTrack> tracks(count);
-        std::vector<GpuReanimKey> keys(count*2);
-        std::vector<GpuReanimDraw> draws(count);
+        transitionDenseCount=count;
+        const uint32_t allocationCount=std::max(count,ordinaryCount);
+        std::vector<GpuReanimTrack> tracks(allocationCount);
+        std::vector<GpuReanimKey> keys(allocationCount*2);
+        std::vector<GpuReanimDraw> draws(allocationCount);
         const std::array<GpuReanimGeometry,2> geometry{{{},{10,12,0,0,1,1}}};
-        for (uint32_t i=0;i<count;++i) {
+        for (uint32_t i=0;i<allocationCount;++i) {
             tracks[i]={2*i,2};
             keys[2*i]={0.25f,0.125f,-15,23,1.15f,0.9f,0.8f,0,1};
             keys[2*i+1]={1.5f,1.25f,37,-18,0.75f,1.1f,0.35f,0,1};
@@ -605,8 +648,9 @@ void Benchmark() {
                 accepted+=gpu.accepted;fallback+=gpu.fallback;
                 std::cout<<"sample tracks="<<count<<" clipped="<<clipped<<" round="<<round
                     <<" sparseVisible="<<sparseVisible
-                    <<" ordinarySprites="<<((sparseVisible||spriteOnlyBenchmark||transitionBenchmark)?count:0)
-                    <<" transitionSparseVisible="<<(transitionBenchmark?16:0)
+                    <<" ordinarySprites="<<(transitionBenchmark?ordinaryCount:
+                        (sparseVisible||spriteOnlyBenchmark)?count:0)
+                    <<" transitionSparseVisible="<<(transitionBenchmark?sparseVisible:0)
                     <<" accepted="<<gpu.accepted<<" fallback="<<gpu.fallback
                     <<" cpu="<<cpu.cpu<<" residentCpu="<<gpu.cpu<<" gpu="<<cpu.gpu
                     <<" residentGpu="<<gpu.gpu<<'\n';
@@ -624,8 +668,9 @@ void Benchmark() {
             else {gates+=passed;++total;meanGates+=meanPassed;}
             std::cout<<"tracks="<<count<<" clipped="<<clipped
                 <<" sparseVisible="<<sparseVisible
-                <<" ordinarySprites="<<((sparseVisible||spriteOnlyBenchmark||transitionBenchmark)?count:0)
-                <<" transitionSparseVisible="<<(transitionBenchmark?16:0)
+                <<" ordinarySprites="<<(transitionBenchmark?ordinaryCount:
+                    (sparseVisible||spriteOnlyBenchmark)?count:0)
+                <<" transitionSparseVisible="<<(transitionBenchmark?sparseVisible:0)
                 <<" CPU_us="<<cpu<<"->"<<residentCpu
                 <<" jobs_us="<<Median(values[4])<<"->"<<Median(values[5])
                 <<" GPU_us="<<gpu<<"->"<<residentGpu
@@ -638,6 +683,7 @@ void Benchmark() {
                 <<" meanGate="<<(cpuFallback?"CPU_FALLBACK":meanPassed?"PASS":"FAIL")<<std::endl;
         }
         for (auto* definition:definitions) renderer.DestroyReanimDefinition(definition);
+    }
     }
     }
     renderer.frameTimestampQueries=VK_NULL_HANDLE;
@@ -655,6 +701,7 @@ int main(int argc,char** argv) {
     try {
 #if defined(PVZ_REANIM_GEOMETRY)
         if (argc>1 && std::string(argv[1])=="--no-geometry") requestGeometry=false;
+        if (argc>1 && std::string(argv[1])=="--arena-stress") stressArena=true;
 #endif
 #if defined(PVZ_REANIM_BENCHMARK)
         if (argc>1 && std::string(argv[1])=="--benchmark-mixed") {

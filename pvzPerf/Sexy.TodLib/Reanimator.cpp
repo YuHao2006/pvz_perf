@@ -1007,11 +1007,6 @@ bool Reanimation::DrawTrack(Graphics* g, int theTrackIndex, int theRenderGroup,
 						return true;
 				}
 				if (!texture) throw std::logic_error("reanimation appearance atlas is not uploaded");
-				const Rect clip = instance.mIgnoreClipRect
-					? Rect(0, 0, BOARD_WIDTH, BOARD_HEIGHT) : g->mClipRect;
-				GpuClip gpuClip{clip.mX, clip.mY, clip.mWidth, clip.mHeight};
-				const bool fullClip = clip.mX == 0 && clip.mY == 0 &&
-					clip.mWidth == BOARD_WIDTH && clip.mHeight == BOARD_HEIGHT;
 				const auto blend = g->mDrawMode == Graphics::DRAWMODE_ADDITIVE
 					? GpuBlend::Additive : g->mDrawMode == 2 ? GpuBlend::Opaque : GpuBlend::Normal;
 				render.SelectDrawSurface(g->mDestImage);
@@ -1068,6 +1063,14 @@ bool Reanimation::DrawTrack(Graphics* g, int theTrackIndex, int theRenderGroup,
 					}
 				}
 #endif
+				// A shared instance already owns the group clip, and its track
+				// flag selects the default clip. Only legacy submission needs
+				// this separately materialized per-track rectangle.
+				const Rect clip = instance.mIgnoreClipRect
+					? Rect(0, 0, BOARD_WIDTH, BOARD_HEIGHT) : g->mClipRect;
+				const GpuClip gpuClip{clip.mX, clip.mY, clip.mWidth, clip.mHeight};
+				const bool fullClip = clip.mX == 0 && clip.mY == 0 &&
+					clip.mWidth == BOARD_WIDTH && clip.mHeight == BOARD_HEIGHT;
 				GpuReanimDraw draw{};
 				draw.track = unsigned(theTrackIndex);
 				draw.before = unsigned(theFrameTime->mAnimFrameBeforeInt);

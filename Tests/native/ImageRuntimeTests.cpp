@@ -832,6 +832,65 @@ void ReanimationAppearancePixels(SexyAppBase& app)
         Pixel(sparseResident,5*20+11,0xff0000ffu);
         std::cout<<"PASS sparse GPU-only DrawTrack: group draws without CPU keys and "
             "successive tracks reuse a forced shared instance\n";
+        // Compare the real DrawTrack entry with CPU, legacy GPU and shared GPU
+        // submission. Only the legacy route needs a per-track clip rectangle.
+        const auto uploadedDefinition=definition.mGpuData;
+        const auto oldIgnoreClip=animation.mTrackInstances[stem].mIgnoreClipRect;
+        {
+            GpuImageDrawScope destination(render,target.get());
+            Graphics graphics(target.get());
+            graphics.mColor=Color::Black;
+            graphics.FillRect(Rect(0,0,20,12));
+            render.mRenderer->reanimPictureCandidates=256;
+        }
+        render.Flush();
+        for (bool ignoreClip:{false,true})
+            for (const Rect clip:{Rect(0,0,20,12),Rect(11,4,1,1),Rect(5,5,0,0)})
+            {
+                std::vector<std::uint32_t> expected;
+                animation.mTrackInstances[stem].mIgnoreClipRect=ignoreClip;
+                for (int route=0;route<3;++route)
+                {
+                    {
+                        GpuImageDrawScope destination(render,target.get());
+                        Graphics graphics(target.get());
+                        graphics.mColor=Color::Black;
+                        graphics.FillRect(Rect(0,0,20,12));
+                        graphics.mLinearBlend=false;
+                        graphics.mClipRect=clip;
+                        Require(render.mRenderer->reanimFrameEligible,
+                            "DrawTrack clip comparison did not enter an eligible GPU frame");
+                        ReanimatorFrameTime time;
+                        animation.GetFrameTime(&time);
+                        std::uint32_t token=UINT32_MAX;
+                        definition.mGpuData=route?uploadedDefinition:nullptr;
+                        try {
+                            Require(animation.DrawTrack(&graphics,stem,0,&time,route==2?&token:nullptr),
+                                "DrawTrack clip comparison lost visible-track semantics");
+                        } catch (...) {
+                            definition.mGpuData=uploadedDefinition;
+                            throw;
+                        }
+                        definition.mGpuData=uploadedDefinition;
+                        Require(render.mRenderer->reanimPictureCandidates==(route?1u:0u),
+                            "DrawTrack clip comparison used an unexpected CPU/GPU route");
+                        if (route==2) Require(token!=UINT32_MAX,
+                            "DrawTrack clip comparison silently used legacy or CPU submission");
+                        render.mRenderer->reanimPictureCandidates=256;
+                    }
+                    render.Flush();
+                    const auto pixels=render.ReadImagePixels(*target);
+                    if (!route) {
+                        expected=pixels.pixels;
+                        const bool visible=ignoreClip || clip.mWidth>0;
+                        Pixel(pixels,4*20+11,visible?0xff0000ffu:0xff000000u);
+                    } else Require(pixels.pixels==expected,
+                        "CPU, legacy GPU and shared GPU DrawTrack clip pixels differ");
+                }
+            }
+        animation.mTrackInstances[stem].mIgnoreClipRect=oldIgnoreClip;
+        std::cout<<"PASS actual DrawTrack clipping: CPU/legacy GPU/shared GPU, full/partial/empty "
+            "group clips and IgnoreDefaultClip\n";
         animation.SelectVariant(3);
     }
 #endif

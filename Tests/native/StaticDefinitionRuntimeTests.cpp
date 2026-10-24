@@ -912,7 +912,7 @@ int main(int argc, char** argv)
         app.mReadFromRegistry = false;
         app.mWidth = 800;
         app.mHeight = 600;
-#if defined(PVZ_GPU_OPENGL) || defined(PVZ_GPU_D3D9)
+#if defined(PVZ_GPU_OPENGL) || defined(PVZ_GPU_D3D9) || defined(PVZ_GPU_D3D12)
         app.mGpuContext = std::make_unique<GpuContext>(window.handle, false, false);
 #else
         VulkanInitConfig init{};

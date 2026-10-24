@@ -40,20 +40,27 @@ Reanim DSL 支持 `cpu:`、`gpu:`、`both:` 区域，未声明时默认 `both`�
 为空，CPU-only 的 GPU 描述符保留槽位并标记无关键帧。
 CPU 业务仍直接读取生成的 C++ 数组；GPU 的 GRU1 上传文件单独生成。
 
-Vulkan／OpenGL 常驻动画路径由 `PVZ_EXPERIMENTAL_GPU_REANIM=ON` 显式启用，
+Vulkan／OpenGL／DX12／Metal 常驻动画接口由 `PVZ_EXPERIMENTAL_GPU_REANIM=ON` 显式启用，
 默认关闭，普通 Release 不加载 GPU 动画关键帧，也不切换绘制路径。
 共享实例输入为 64 字节，后端附加图集及裁剪信息后为 96 字节；
 每条图片轨道另交 32 字节差异输入。GPU 每轨一次计算插值、三角函数、
 矩阵及裁剪，直接输出绘制顶点，不将变换结果读回 CPU。
-普通三角形与轨道 marker 保持原顺序；较长的连续普通三角形段使用原顶点管线，
+共享实例延迟到首条符合条件的图片轨道才创建；同组 GPU-only 轨道也共享强制实例，
+纯文字分组和稀疏帧的可选 CPU 回退不创建实例包。
+Vulkan／OpenGL 的普通三角形与轨道 marker 保持原顺序；较长的连续普通三角形段使用原顶点管线，
 避免少数动画使整帧普通图片承担 geometry shader 成本。
-Vulkan 使用 precise 多项式，OpenGL 使用自身 native sin/cos 路径。
+Vulkan／DX12 使用 precise 多项式，OpenGL 使用自身 native sin/cos 路径。
+Metal 使用相同多项式，针对该 shader 关闭 fast-math 与浮点乘加收缩，
+不使用 MSL 不支持的 HLSL `precise` 关键字。Metal 每批连续兼容轨道先 compute，
+再直接使用 private GPU 顶点缓冲绘制；当前上限每批 4096 条，较大序列分批保持顺序。
+Metal 的实现和 Apple 专用夹具已加入源码，尚未在 macOS 编译或执行。
 开启实验时，首帧仍走 CPU。后续依据上一完整批次的真实图片轨道候选数及普通
 三角形总数选择路径，内部目标切换不重置统计；当前门槛为至少 256 条候选，
 且普通三角形不超过候选数的 32 倍。`gpu:` 轨道强制 GPU，
 不受稀疏策略降级影响；不支持该 GPU 路径的硬件会在加载这类定义时明确报错。
 文本、运行时 blend、额外高亮/overlay 和变换栈继续走现有路径。
-密集及均匀混合的独立实验已通过各自门槛；冷热切换成本和完整游戏接入继续单独验收，
+Vulkan／OpenGL 密集及均匀混合的独立实验已通过各自门槛；冷热切换成本和
+DX12 性能继续单独验收，
 不能将 CPU 回退的稀疏帧伪称为一次 GPU 性能收益。
 测量时钟未锁频，具体数字只保留在系统临时目录，不作为性能报告数据。
 

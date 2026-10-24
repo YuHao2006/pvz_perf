@@ -16,16 +16,24 @@ Reanim residency 编译测试覆盖 `cpu:`／`gpu:`／`both:`、缺省与跨组�
 
 Vulkan 实验路径通过 24 组独立 CPU/GPU 图片对拍，覆盖变体、倾斜、镜像、
 alpha、截断帧、矩形裁剪、普通与 GPU 顶点交错，以及离屏提交和延迟释放。
-完整游戏开启实验开关后，实际 DrawTrack／附件与资源生命周期测试也通过。
+Vulkan 与 OpenGL 完整游戏开启实验开关后，实际 DrawTrack／附件与资源生命周期测试也通过。
 `PVZ_EXPECT_GPU_REANIM=1` 为图像夹具的额外验收：测试故意让可变 CPU
 轨道平移与已上传 GPU 关键帧不同，实际 `DrawRenderGroup` 必须画在 GPU 数据的位置，
 从而排除“CPU 回退也画对了”的假阳性。该开关仅存在于测试入口，不进入游戏运行逻辑。
+稀疏 GPU-only 夹具移除对应 CPU 关键帧，检查实际分组绘制仍正确，
+并检查连续 DrawTrack 使用同一个强制实例 token；Vulkan 与 OpenGL 均通过。
 Vulkan 的共享实例包、逐轨差异包及索引绘制已通过独立像素检查，
 密集轨道和频繁插入普通图片的混合批次也通过各自性能门槛。
 少量 reanim 混入大量普通图片时仍需避免整帧承担 geometry shader 成本，
 因此 `PVZ_EXPERIMENTAL_GPU_REANIM` 继续默认关闭，不能将实验验收称为生产路径完成。
 GPU 计时钩子只编入单独的 opt-in benchmark 后端，不进入普通生产二进制。
 未锁频实验的数字保留在系统临时目录，不写入性能结果表。
+
+DX12 原生 resident 夹具已通过 CPU 参考像素、逻辑轨道空槽、共享实例、
+纹理／目标切换与延迟释放检查；完整游戏接入和性能仍需独立验证。
+Metal 的 `sexy_metal_reanim_tests` 仅在 Apple 主机构建，包含独立 CPU 参考、
+多定义交错、跨批次 private 顶点缓冲复用、反馈与生命周期检查；
+当前 Windows 主机没有执行该目标，源码存在不能作为原生编译、像素或性能通过的证据。
 
 Vulkan 与 Win7/OpenGL Release 曾完成完整资源加载、重复释放与重载，
 并分别覆盖完整资源、缺失 PNG、损坏 PNG、尺寸错误 PNG 四种场景。

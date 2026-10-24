@@ -85,15 +85,21 @@ void Clear(OpenGLRenderer&r){
 }
 struct Error {
  unsigned maximum=0;uint64_t sum=0,components=0;
- void Compare(const std::vector<uint32_t>&a,const std::vector<uint32_t>&b){
+ bool Compare(const std::vector<uint32_t>&a,const std::vector<uint32_t>&b){
   Require(a.size()==b.size(),"Pixel count mismatch");
+  size_t differingComponents=0,firstPixel=0;unsigned firstShift=0;
   for(size_t i=0;i<a.size();++i)for(unsigned shift:{0u,8u,16u,24u}){
    const auto d=unsigned(std::abs(int((a[i]>>shift)&255)-int((b[i]>>shift)&255)));
+   if(d){if(!differingComponents){firstPixel=i;firstShift=shift;}++differingComponents;}
    if(d>3)std::cerr<<"pixel mismatch index="<<i<<" componentShift="<<shift
     <<" expected="<<((a[i]>>shift)&255)<<" actual="<<((b[i]>>shift)&255)<<'\n';
    maximum=std::max(maximum,d);sum+=d;++components;
   }
+  if(differingComponents)std::cout<<"PIXEL_DIFFERENCE components="<<differingComponents
+   <<" first_index="<<firstPixel<<" component_shift="<<firstShift
+   <<" expected="<<((a[firstPixel]>>firstShift)&255)<<" actual="<<((b[firstPixel]>>firstShift)&255)<<'\n';
   Require(maximum<=3,"OpenGL native-trig reanimation pixel maximum exceeds3");
+  return differingComponents!=0;
  }
 };
 void Correct(OpenGLContext&context){
@@ -150,7 +156,11 @@ void Correct(OpenGLContext&context){
    if(previousToken!=~0u)Require(!r.SubmitReanimTrack(previousToken,track,GpuBlend::Normal),"Stale frame token accepted");
    Require(r.SubmitReanimTrack(token,track,GpuBlend::Normal),"Shared track rejected");
    previousToken=token;
-   r.EndSceneAndPresent();error.Compare(expected,r.ReadScenePixels());++cases;
+   r.EndSceneAndPresent();
+   if(error.Compare(expected,r.ReadScenePixels()))
+    std::cout<<"DIFFERENCE_CASE variant="<<variant<<" fraction="<<t<<" clipping="<<clipping
+     <<" truncate="<<truncate<<" sampling="<<sampling<<" blends=Normal/Additive/Normal\n";
+   ++cases;
   }
  auto secondKeys=keys;secondKeys[0].transX+=4;secondKeys[1].transY-=3;
  auto blank=geo;blank[3]={};
@@ -242,6 +252,27 @@ void Correct(OpenGLContext&context){
    else r.SubmitTriangles(cpu,texture,false,false,GpuBlend::Additive);
    r.EndSceneAndPresent();r.SetRenderImage(nullptr);const auto actual=r.ReadTexturePixels(target).pixels;
    if(!gpu)expected=actual;else error.Compare(expected,actual);
+  }
+  for(const auto&clip:clips)for(bool ignore:{false,true}){
+   const auto clippedCpu=Reference(keys[0],keys[1],geo[1],geo[1],job,
+    OpenGLRenderer::SlotOf(texture),ignore?nullptr:&clip);
+   for(bool gpu:{false,true}){
+    r.SetRenderImage(target);Require(r.BeginScene(),"Clipped image-target scene");Clear(r);
+    if(gpu){
+     const GpuReanimInstance packet{job.before,job.after,job.variant,0,job.fraction,
+      job.translateX+.5f,job.translateY+.5f,0,
+      job.overlay00,job.overlay01,job.overlay02,0,job.overlay10,job.overlay11,job.overlay12,0};
+     const auto token=r.BeginReanimInstance(definition,texture,packet,false,false,&clip,true);
+     Require(token!=~0u,"Clipped image-target instance rejected");
+     const GpuReanimTrackDraw track{job.track,job.color,0,
+      ignore?GpuReanimTrackDraw::IgnoreDefaultClip:0u};
+     Require(r.SubmitReanimTrack(token,track,GpuBlend::Normal),"Clipped image-target track rejected");
+    }else r.SubmitTriangles(clippedCpu,texture,false,false,GpuBlend::Normal);
+    r.EndSceneAndPresent();r.SetRenderImage(nullptr);const auto actual=r.ReadTexturePixels(target).pixels;
+    if(!gpu)expected=actual;else if(error.Compare(expected,actual))
+     std::cout<<"DIFFERENCE_CASE image_target clip="<<clip.x<<','<<clip.y<<','<<clip.width<<','<<clip.height
+      <<" ignore_default_clip="<<ignore<<" blend=Normal\n";
+   }
   }
   r.DestroyTexture(target);
  }

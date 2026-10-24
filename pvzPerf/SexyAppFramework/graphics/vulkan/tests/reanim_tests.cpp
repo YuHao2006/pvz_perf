@@ -469,6 +469,68 @@ void Run() {
         }
     }
     std::cout<<"PASS adaptive short/long ordinary spans, blend/scissor changes and same-frame target-restored tokens\n";
+    // Fonts use R8 coverage, including when a resident marker has activated
+    // deferred ordinary spans. Exercise all four pipeline families on both
+    // sides of the span threshold against the ordinary rendering path.
+    const std::array<uint8_t,4> coverageBytes{0,64,128,255};
+    auto* coverageMask=renderer.CreateCoverageMask(2,2,coverageBytes,2);
+    for (bool imageTarget:{false,true}) for (unsigned ordinaryCount:{64u,2048u}) {
+        std::vector<uint32_t> expected;
+        for (bool resident:{false,true}) {
+            if (imageTarget) renderer.SetRenderImage(adaptiveImage);
+            Require(renderer.BeginScene(),"Cannot begin mixed coverage-family scene");Clear(renderer);
+            GpuReanimInstance instance{};
+            instance.after=1;instance.fraction=0.375f;instance.overlay00=instance.overlay11=1;
+            instance.overlay02=12;instance.overlay12=8;
+            const auto token=resident?renderer.BeginReanimInstance(definition,texture,instance,
+                false,false,nullptr,true):UINT32_MAX;
+            GpuReanimTrackDraw track{};track.track=2;track.color=0xb0e08040;
+            GpuReanimDraw legacy{};
+            legacy.track=2;legacy.after=1;legacy.fraction=instance.fraction;
+            legacy.overlay00=legacy.overlay11=1;legacy.overlay02=12;legacy.overlay12=8;
+            legacy.translateX=legacy.translateY=-0.5f;legacy.color=track.color;
+            const auto emit=[&](GpuBlend blend) {
+                if (resident) Require(token!=UINT32_MAX &&
+                    renderer.SubmitReanimTrack(token,track,blend),"Coverage-family resident marker rejected");
+                else renderer.SubmitTriangles(Reference(keys[0],keys[1],geometry[1],geometry[1],
+                    legacy,VulkanRenderer::SlotOf(texture),nullptr),texture,false,false,blend);
+            };
+            emit(GpuBlend::Normal);
+            const auto ordinary=[&](unsigned i,bool coverage) {
+                const float x=float((i*13)%56),y=float((i*7)%56);
+                auto* source=coverage?coverageMask:renderer.whiteTexture;
+                const auto slot=VulkanRenderer::SlotOf(source);
+                const GpuVertex triangle[]{
+                    {x,y,0.1f,0.7f,0.3f,0.375f,0,0,slot,0},
+                    {x+7,y,0.1f,0.7f,0.3f,0.375f,1,0,slot,0},
+                    {x,y+7,0.1f,0.7f,0.3f,0.375f,0,1,slot,0}};
+                const auto blend=static_cast<GpuBlend>(i%3);
+                const auto* scissor=i%5==0?&clip:nullptr;
+                if (coverage) renderer.SubmitCoverageTriangles(triangle,source,blend,scissor);
+                else renderer.SubmitTriangles(triangle,source,false,false,blend,scissor);
+            };
+            for (unsigned i=0;i<ordinaryCount;++i) ordinary(i,i%2!=0);
+            emit(GpuBlend::Additive);
+            ordinary(ordinaryCount,true); // A trailing coverage span flushes at EndTargetPass.
+            renderer.EndSceneAndPresent();
+            if (imageTarget) renderer.SetRenderImage(nullptr);
+            const auto actual=imageTarget?renderer.ReadTexturePixels(adaptiveImage).pixels:
+                renderer.ReadScenePixels();
+            if (!resident) {
+                expected=actual;
+                Require(std::any_of(expected.begin(),expected.end(),
+                    [](uint32_t pixel){return pixel!=0xff000000u;}),"Coverage-family reference was empty");
+            } else {
+                Require(actual.size()==expected.size(),"Coverage-family target dimensions changed");
+                for (size_t i=0;i<actual.size();++i) for (unsigned shift:{0u,8u,16u,24u})
+                    Require(std::abs(int((actual[i]>>shift)&255)-int((expected[i]>>shift)&255))<=3,
+                        "Scene/image coverage family changed short/long mixed-span pixels");
+            }
+        }
+    }
+    renderer.DestroyTexture(coverageMask);
+    std::cout<<"PASS scene/image mixed ordinary and font-coverage families: short/long spans, "
+        "three blends, scissor changes, trailing coverage and actual pixels\n";
     GpuReanimDraw policyLegacy{};policyLegacy.track=2;policyLegacy.after=1;policyLegacy.fraction=0.375f;
     policyLegacy.overlay00=policyLegacy.overlay11=1;policyLegacy.overlay02=12;policyLegacy.overlay12=8;
     policyLegacy.translateX=policyLegacy.translateY=-0.5f;policyLegacy.color=0xb0e08040;

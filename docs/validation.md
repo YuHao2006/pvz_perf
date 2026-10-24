@@ -16,12 +16,12 @@ Reanim residency 编译测试覆盖 `cpu:`／`gpu:`／`both:`、缺省与跨组�
 
 Vulkan 实验路径通过 24 组独立 CPU/GPU 图片对拍，覆盖变体、倾斜、镜像、
 alpha、截断帧、矩形裁剪、普通与 GPU 顶点交错，以及离屏提交和延迟释放。
-Vulkan 与 OpenGL 完整游戏开启实验开关后，实际 DrawTrack／附件与资源生命周期测试也通过。
+Vulkan、OpenGL 与 DX12 完整游戏开启实验开关后，实际 DrawTrack／附件与资源生命周期测试也通过。
 `PVZ_EXPECT_GPU_REANIM=1` 为图像夹具的额外验收：测试故意让可变 CPU
 轨道平移与已上传 GPU 关键帧不同，实际 `DrawRenderGroup` 必须画在 GPU 数据的位置，
 从而排除“CPU 回退也画对了”的假阳性。该开关仅存在于测试入口，不进入游戏运行逻辑。
 稀疏 GPU-only 夹具移除对应 CPU 关键帧，检查实际分组绘制仍正确，
-并检查连续 DrawTrack 使用同一个强制实例 token；Vulkan 与 OpenGL 均通过。
+并检查连续 DrawTrack 使用同一个强制实例 token；Vulkan、OpenGL 与 DX12 均通过。
 Vulkan 的共享实例包、逐轨差异包及索引绘制已通过独立像素检查，
 密集轨道和频繁插入普通图片的混合批次也通过各自性能门槛。
 少量 reanim 混入大量普通图片时仍需避免整帧承担 geometry shader 成本，
@@ -30,7 +30,12 @@ GPU 计时钩子只编入单独的 opt-in benchmark 后端，不进入普通生�
 未锁频实验的数字保留在系统临时目录，不写入性能结果表。
 
 DX12 原生 resident 夹具已通过 CPU 参考像素、逻辑轨道空槽、共享实例、
-纹理／目标切换与延迟释放检查；完整游戏接入和性能仍需独立验证。
+纹理／目标切换与延迟释放检查；Temp 完整游戏构建的 image 与四项 static 恢复测试也通过。
+上传内存的链式赋值曾生成目的地址读取，改为 CPU 栈数组加一次复制后，
+当前独立夹具的 dense、mixed 与 transition 实际 GPU cases 均通过 median／mean 门槛。
+六项强制 sparse GPU cases 仍失败；正常 policy 对应六项均为 CPU_FALLBACK，单独计数，
+性能总 gate 继续报告 FAIL，不将强制路径的代价或 CPU 回退伪称为 GPU 收益。
+未锁频耗时仅保留在 Temp，不作为正式性能结果。
 Metal 的 `sexy_metal_reanim_tests` 仅在 Apple 主机构建，包含独立 CPU 参考、
 多定义交错、跨批次 private 顶点缓冲复用、反馈与生命周期检查；
 当前 Windows 主机没有执行该目标，源码存在不能作为原生编译、像素或性能通过的证据。
@@ -111,6 +116,8 @@ Windows 音乐回归入口为 `tools/test-music-runtime.ps1 -BuildDirectory <bui
 音量、播放位置和暂停恢复。Linux 增益测试检查实际 OpenAL gain、
 后台加载交错、退出与 sanitizer；无声测试不等于扬声器听音验收。
 Win7 硬导入检查只证明未发现已知 Win8+ 硬依赖。
+`test-image-runtime.ps1` 在运行前检查实际声音解码所需的 `bass.dll`；
+临时构建应配置 `PVZ_BASS_DLL` 或提供同名环境变量，缺失时直接报错，避免无人值守错误框。
 
 ## 性能
 

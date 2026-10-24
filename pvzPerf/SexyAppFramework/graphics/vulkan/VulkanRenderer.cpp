@@ -151,6 +151,19 @@ struct ReanimJob {
     float clip[4];
 };
 static_assert(sizeof(ReanimJob) == 112);
+#if defined(PVZ_REANIM_UNIFIED)
+struct ReanimInstanceData {
+    GpuReanimInstance draw;
+    uint32_t header,imageSlotCount,textureSlot,flags;
+    float clip[4];
+};
+struct ReanimTrackData {
+    uint32_t track,instance,color,flags;
+    float shakeX,shakeY;
+    uint32_t padding[2]{};
+};
+static_assert(sizeof(ReanimInstanceData)==96 && sizeof(ReanimTrackData)==32);
+#endif
 
 struct VulkanRenderer::Impl {
     VulkanContext& window;
@@ -267,6 +280,11 @@ struct VulkanRenderer::Impl {
     Buffer* unifiedStatic=nullptr;
     VkDeviceSize unifiedStaticUsed=0;
     Buffer* unifiedJobs=nullptr;
+    Buffer* unifiedInstances=nullptr;
+    Buffer* unifiedPackets=nullptr;
+    Buffer* unifiedIndices=nullptr;
+    struct InstanceControl {VulkanReanim* definition;VulkanTexture* texture;uint32_t before,after;};
+    std::vector<InstanceControl> unifiedInstanceControls;
     VkDescriptorPool unifiedPool=VK_NULL_HANDLE;
     VkDescriptorSet unifiedSet=VK_NULL_HANDLE;
     bool unifiedFrame=false;
@@ -376,6 +394,7 @@ struct VulkanRenderer::Impl {
         if (reanimGeometry) vkDestroyShaderModule(device,reanimGeometry,nullptr);
 #if defined(PVZ_REANIM_UNIFIED)
         delete unifiedStatic;delete unifiedJobs;
+        delete unifiedInstances;delete unifiedPackets;delete unifiedIndices;
         if (unifiedPool) vkDestroyDescriptorPool(device,unifiedPool,nullptr);
         for (auto pipeline:unifiedCoverage) if (pipeline) vkDestroyPipeline(device,pipeline,nullptr);
         for (auto pipeline:unifiedImageCoverage) if (pipeline) vkDestroyPipeline(device,pipeline,nullptr);
@@ -884,13 +903,20 @@ struct VulkanRenderer::Impl {
     void Draw(std::span<const VulkanVertex>, VulkanTexture*,
               VkPipeline, const VulkanClip*, int viewportWidth, int viewportHeight);
     void AppendRun(Buffer*, VkDeviceSize, uint32_t, VkPipeline,
-        VkRect2D, int, int);
+        VkRect2D, int, int
+#if defined(PVZ_REANIM_UNIFIED)
+        ,bool marker=false,bool unified=false
+#endif
+    );
     void InitReanim();
     VkCommandBuffer RecordReanim();
 #if defined(PVZ_REANIM_GEOMETRY)
     void InitReanimGeometry();
     bool SubmitReanimGeometry(VulkanReanim*,VulkanTexture*,const GpuReanimDraw&,
         bool,bool,VulkanBlend,const VulkanClip*);
+#if defined(PVZ_REANIM_UNIFIED)
+    bool SubmitUnifiedMarker(uint32_t,VulkanTexture*,VulkanBlend);
+#endif
 #endif
     Buffer* ReanimStream(Buffer* host) {
         for (auto& output:reanimOutputs)
@@ -1919,6 +1945,10 @@ bool VulkanRenderer::BeginScene() {
 #if defined(PVZ_REANIM_UNIFIED)
     s.unifiedFrame=false;
     if (s.unifiedJobs) s.unifiedJobs->used=0;
+    if (s.unifiedInstances) s.unifiedInstances->used=0;
+    if (s.unifiedPackets) s.unifiedPackets->used=0;
+    if (s.unifiedIndices) s.unifiedIndices->used=0;
+    s.unifiedInstanceControls.clear();
 #endif
 #endif
     s.RecordCaustics(s.frame.cmd);
@@ -1932,12 +1962,13 @@ void VulkanRenderer::Impl::Draw(std::span<const VulkanVertex> vertices, VulkanTe
     if (geometryRun.count) FlushPendingRun(frame.cmd);
 #endif
 #if defined(PVZ_REANIM_UNIFIED)
+    bool useUnified=false;
     if (unifiedFrame) {
         for (size_t i=0;i<3;++i) {
-            if (pipeline==pipelines[i]) pipeline=reanimGeometryPipelines[i];
-            else if (pipeline==imagePipelines[i]) pipeline=reanimGeometryImagePipelines[i];
-            else if (pipeline==coveragePipelines[i]) pipeline=unifiedCoverage[i];
-            else if (pipeline==imageCoveragePipelines[i]) pipeline=unifiedImageCoverage[i];
+            if (pipeline==pipelines[i]) {pipeline=reanimGeometryPipelines[i];useUnified=true;}
+            else if (pipeline==imagePipelines[i]) {pipeline=reanimGeometryImagePipelines[i];useUnified=true;}
+            else if (pipeline==coveragePipelines[i]) {pipeline=unifiedCoverage[i];useUnified=true;}
+            else if (pipeline==imageCoveragePipelines[i]) {pipeline=unifiedImageCoverage[i];useUnified=true;}
         }
     }
 #endif
@@ -2002,24 +2033,40 @@ void VulkanRenderer::Impl::Draw(std::span<const VulkanVertex> vertices, VulkanTe
     stream->used += bytes;
     VkRect2D scissor{{static_cast<int32_t>(left), static_cast<int32_t>(top)},
         {static_cast<uint32_t>(right-left), static_cast<uint32_t>(bottom-top)}};
-    AppendRun(ReanimStream(stream),offset,static_cast<uint32_t>(vertices.size()),pipeline,scissor,vw,vh);
+    AppendRun(ReanimStream(stream),offset,static_cast<uint32_t>(vertices.size()),pipeline,scissor,vw,vh
+#if defined(PVZ_REANIM_UNIFIED)
+        ,false,useUnified
+#endif
+    );
 }
 
 void VulkanRenderer::Impl::AppendRun(Buffer* stream, VkDeviceSize offset, uint32_t count,
-    VkPipeline pipeline, VkRect2D scissor, int vw, int vh) {
+    VkPipeline pipeline, VkRect2D scissor, int vw, int vh
+#if defined(PVZ_REANIM_UNIFIED)
+    ,bool marker,bool useUnified
+#endif
+) {
     auto cmd = frame.cmd;
     // P5 游程：状态变化检测前置（先判后绑）。bindless+采样器数组后描述符
     // 对恒为 {纹理数组, 采样器数组}——首绘绑定一次，帧内不再变化；断点
     // 只剩 管线/剪刀/视口/换流
     const std::array sets{textureArray,samplerSet};
 #if defined(PVZ_REANIM_UNIFIED)
-    bool useUnified=false;
-    for (size_t i=0;i<3;++i)
-        if (pipeline==reanimGeometryPipelines[i] || pipeline==reanimGeometryImagePipelines[i] ||
-            pipeline==unifiedCoverage[i] || pipeline==unifiedImageCoverage[i]) useUnified=true;
     const bool layoutChange=drawState.unified!=useUnified;
+    VkDeviceSize runOffset=offset;
+    if (useUnified) {
+        const auto indexBytes=VkDeviceSize(count)*sizeof(uint32_t);
+        if (unifiedIndices->size-unifiedIndices->used<indexBytes)
+            throw std::runtime_error("Unified reanimation prototype index capacity exceeded");
+        runOffset=unifiedIndices->used;
+        auto* indices=reinterpret_cast<uint32_t*>(static_cast<std::byte*>(unifiedIndices->mapped)+runOffset);
+        const auto first=uint32_t(offset/sizeof(GpuVertex));
+        for (uint32_t i=0;i<count;++i) indices[i]=first+(marker?0u:i);
+        unifiedIndices->used+=indexBytes;
+    }
 #else
     const bool layoutChange=false;
+    const auto runOffset=offset;
 #endif
     const bool aVpChange = drawState.width!=vw || drawState.height!=vh || layoutChange;
     const bool aScChange = !drawState.hasScissor || drawState.scissor.offset.x!=scissor.offset.x ||
@@ -2070,7 +2117,7 @@ void VulkanRenderer::Impl::AppendRun(Buffer* stream, VkDeviceSize offset, uint32
 #endif
     // P5：并入待决游程（流连续追加），bind+draw 延迟到冲刷点
     if (pendingRun.count == 0)
-        pendingRun = PendingRun{stream, offset, 0};
+        pendingRun = PendingRun{stream, runOffset, 0};
     pendingRun.count += count;
 }
 
@@ -2090,6 +2137,12 @@ void VulkanRenderer::Impl::FlushPendingRun(VkCommandBuffer cmd) {
         vkCmdBindVertexBuffers(cmd, 0, 1, &pendingRun.stream->buffer, &zero);
         drawState.vertexBuffer = pendingRun.stream->buffer;
     }
+#if defined(PVZ_REANIM_UNIFIED)
+    if (drawState.unified) {
+        vkCmdBindIndexBuffer(cmd,unifiedIndices->buffer,0,VK_INDEX_TYPE_UINT32);
+        vkCmdDrawIndexed(cmd,pendingRun.count,1,uint32_t(pendingRun.offset/sizeof(uint32_t)),0,0);
+    } else
+#endif
     vkCmdDraw(cmd, pendingRun.count, 1,
         static_cast<uint32_t>(pendingRun.offset / sizeof(VulkanVertex)), 0);
     pendingRun.count = 0;
@@ -2140,15 +2193,15 @@ void VulkanRenderer::Impl::InitReanimGeometry() {
 #else
     module("game_reanim_vs.spv",reanimVertex);module("game_reanim_gs.spv",reanimGeometry);
 #endif
-    std::array<VkDescriptorSetLayoutBinding,3> bindings{};
+    std::array<VkDescriptorSetLayoutBinding,4> bindings{};
     for (uint32_t i=0;i<3;++i) bindings[i]={i,VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,1,VK_SHADER_STAGE_VERTEX_BIT,nullptr};
 #if defined(PVZ_REANIM_UNIFIED)
-    for (auto& binding:bindings) binding.stageFlags=VK_SHADER_STAGE_GEOMETRY_BIT;
+    for (uint32_t i=0;i<4;++i) bindings[i]={i,VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,1,VK_SHADER_STAGE_GEOMETRY_BIT,nullptr};
 #endif
     VkDescriptorSetLayoutCreateInfo set{VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO};
     set.bindingCount=3;set.pBindings=bindings.data();
 #if defined(PVZ_REANIM_UNIFIED)
-    set.bindingCount=2;
+    set.bindingCount=4;
 #endif
     VK_REQUIRE(vkCreateDescriptorSetLayout(device,&set,nullptr,&reanimGeometrySetLayout));
     const VkDescriptorSetLayout sets[]={imageLayout,samplerLayout,reanimGeometrySetLayout};
@@ -2166,10 +2219,14 @@ void VulkanRenderer::Impl::InitReanimGeometry() {
 #endif
     }
 #if defined(PVZ_REANIM_UNIFIED)
-    unifiedStatic=new Buffer;unifiedJobs=new Buffer;
+    unifiedStatic=new Buffer;unifiedJobs=new Buffer;unifiedInstances=new Buffer;
+    unifiedPackets=new Buffer;unifiedIndices=new Buffer;
     unifiedStatic->Create(64*1024*1024,VK_BUFFER_USAGE_STORAGE_BUFFER_BIT|VK_BUFFER_USAGE_TRANSFER_DST_BIT,false);
     unifiedJobs->Create(8*1024*1024,VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
-    const VkDescriptorPoolSize size{VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,2};
+    unifiedInstances->Create(1024*1024,VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
+    unifiedPackets->Create(8*1024*1024,VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
+    unifiedIndices->Create(8*1024*1024,VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
+    const VkDescriptorPoolSize size{VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,4};
     VkDescriptorPoolCreateInfo pool{VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO};
     pool.maxSets=1;pool.poolSizeCount=1;pool.pPoolSizes=&size;
     VK_REQUIRE(vkCreateDescriptorPool(device,&pool,nullptr,&unifiedPool));
@@ -2177,16 +2234,38 @@ void VulkanRenderer::Impl::InitReanimGeometry() {
     alloc.descriptorPool=unifiedPool;alloc.descriptorSetCount=1;alloc.pSetLayouts=&reanimGeometrySetLayout;
     VK_REQUIRE(vkAllocateDescriptorSets(device,&alloc,&unifiedSet));
     const VkDescriptorBufferInfo infos[]={{unifiedStatic->buffer,0,unifiedStatic->size},
-        {unifiedJobs->buffer,0,unifiedJobs->size}};
-    VkWriteDescriptorSet writes[2]{};
-    for (uint32_t i=0;i<2;++i) {
+        {unifiedJobs->buffer,0,unifiedJobs->size},{unifiedInstances->buffer,0,unifiedInstances->size},
+        {unifiedPackets->buffer,0,unifiedPackets->size}};
+    VkWriteDescriptorSet writes[4]{};
+    for (uint32_t i=0;i<4;++i) {
         writes[i]={VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET};
         writes[i].dstSet=unifiedSet;writes[i].dstBinding=i;writes[i].descriptorCount=1;
         writes[i].descriptorType=VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;writes[i].pBufferInfo=&infos[i];
     }
-    vkUpdateDescriptorSets(device,2,writes,0,nullptr);
+    vkUpdateDescriptorSets(device,4,writes,0,nullptr);
 #endif
 }
+#if defined(PVZ_REANIM_UNIFIED)
+bool VulkanRenderer::Impl::SubmitUnifiedMarker(uint32_t encoded,VulkanTexture* texture,VulkanBlend blend) {
+    constexpr VkDeviceSize bytes=sizeof(GpuVertex);
+    Buffer* stream=nullptr;
+    for (auto& candidate:streams) if (candidate->size-candidate->used>=bytes) {stream=candidate.get();break;}
+    if (!stream) {
+        auto allocation=std::make_unique<Buffer>();
+        allocation->Create(8*1024*1024,VK_BUFFER_USAGE_VERTEX_BUFFER_BIT|VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
+        stream=allocation.get();streams.push_back(std::move(allocation));
+    }
+    GpuVertex marker{};marker.slot=VulkanRenderer::SlotOf(texture);marker.sampler=encoded;
+    std::memcpy(static_cast<std::byte*>(stream->mapped)+stream->used,&marker,sizeof(marker));
+    const auto offset=stream->used;stream->used+=bytes;
+    unifiedFrame=true;texture->lastDraw=frameSerial;
+    auto* target=renderImage?renderImage:scene.get();
+    const auto pipeline=(renderImage?reanimGeometryImagePipelines:reanimGeometryPipelines).at(size_t(blend));
+    AppendRun(stream,offset,3,pipeline,{{0,0},{uint32_t(target->width),uint32_t(target->height)}},
+        target->width,target->height,true,true);
+    return true;
+}
+#endif
 bool VulkanRenderer::Impl::SubmitReanimGeometry(VulkanReanim* definition,VulkanTexture* texture,
     const GpuReanimDraw& draw,bool linear,bool repeat,VulkanBlend blend,const VulkanClip* clip) {
     if (!frame.valid) throw std::logic_error("Reanimation draw outside frame");
@@ -2221,24 +2300,7 @@ bool VulkanRenderer::Impl::SubmitReanimGeometry(VulkanReanim* definition,VulkanT
     const auto jobIndex=uint32_t(unifiedJobs->used/sizeof(ReanimJob));
     std::memcpy(static_cast<std::byte*>(unifiedJobs->mapped)+unifiedJobs->used,&job,sizeof(job));
     unifiedJobs->used+=sizeof(job);
-    constexpr VkDeviceSize bytes=3*sizeof(GpuVertex);
-    Buffer* stream=nullptr;
-    for (auto& candidate:streams) if (candidate->size-candidate->used>=bytes) {stream=candidate.get();break;}
-    if (!stream) {
-        auto allocation=std::make_unique<Buffer>();
-        allocation->Create(8*1024*1024,VK_BUFFER_USAGE_VERTEX_BUFFER_BIT|VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
-        stream=allocation.get();streams.push_back(std::move(allocation));
-    }
-    GpuVertex marker{};marker.slot=job.textureSlot;marker.sampler=0x80000000u|jobIndex;
-    auto* vertices=reinterpret_cast<GpuVertex*>(static_cast<std::byte*>(stream->mapped)+stream->used);
-    // Do not chain assignments: their lvalue results would read back from
-    // write-combined mapped vertex memory before the next assignment.
-    vertices[0]=marker;vertices[1]=marker;vertices[2]=marker;
-    const auto offset=stream->used;stream->used+=bytes;
-    unifiedFrame=true;texture->lastDraw=frameSerial;
-    AppendRun(stream,offset,3,pipeline,{{0,0},{uint32_t(target->width),uint32_t(target->height)}},
-        target->width,target->height);
-    return true;
+    return SubmitUnifiedMarker(0x80000000u|jobIndex,texture,blend);
 #else
     Buffer* stream=nullptr;
     for (auto& candidate:reanimPointStreams)
@@ -2452,6 +2514,65 @@ bool VulkanRenderer::SubmitReanim(VulkanReanim* definition,VulkanTexture* textur
     s.AppendRun(output,offset,capacity,pipelines.at(size_t(blend)),
         {{0,0},{uint32_t(target->width),uint32_t(target->height)}},target->width,target->height);
     return true;
+}
+
+uint32_t VulkanRenderer::BeginReanimInstance(VulkanReanim* definition,VulkanTexture* texture,
+    const GpuReanimInstance& instance,bool linear,bool repeat,const VulkanClip* clip) {
+#if defined(PVZ_REANIM_UNIFIED)
+    auto& s=*impl_;
+    if (!s.frame.valid) throw std::logic_error("Reanimation instance outside frame");
+    if (!s.window.geometryShaderEnabled || !definition || definition->owner!=&s ||
+        definition->blobHeader==UINT32_MAX || !texture || !s.textures.contains(texture) ||
+        texture==s.renderImage || instance.variant>=definition->variantCount ||
+        !std::isfinite(instance.fraction) || instance.fraction<0 || instance.fraction>1 ||
+        s.unifiedInstances->size-s.unifiedInstances->used<sizeof(ReanimInstanceData) ||
+        s.unifiedInstanceControls.size()>=65535) return UINT32_MAX;
+    ReanimInstanceData packet{};
+    packet.draw=instance;packet.header=definition->blobHeader;
+    packet.imageSlotCount=definition->imageSlotCount;packet.textureSlot=SlotOf(texture);
+    packet.flags=(linear?1u:0u)|(repeat?2u:0u)|(clip?4u:0u);
+    if (clip) {
+        packet.clip[0]=float(clip->x);packet.clip[1]=float(clip->y);
+        packet.clip[2]=float(int64_t(clip->x)+clip->width);packet.clip[3]=float(int64_t(clip->y)+clip->height);
+    }
+    const auto index=uint32_t(s.unifiedInstanceControls.size());
+    s.unifiedInstanceControls.push_back({definition,texture,instance.before,instance.after});
+    std::memcpy(static_cast<std::byte*>(s.unifiedInstances->mapped)+s.unifiedInstances->used,&packet,sizeof(packet));
+    s.unifiedInstances->used+=sizeof(packet);
+    // A begin-only group never activates the geometry path. The generation
+    // also rejects tokens surviving a real frame boundary/target batch close.
+    return (uint32_t(s.frameSerial&0xffffu)<<16)|index;
+#else
+    (void)definition;(void)texture;(void)instance;(void)linear;(void)repeat;(void)clip;
+    return UINT32_MAX;
+#endif
+}
+bool VulkanRenderer::SubmitReanimTrack(uint32_t instance,const GpuReanimTrackDraw& draw,VulkanBlend blend) {
+#if defined(PVZ_REANIM_UNIFIED)
+    auto& s=*impl_;
+    if (!s.frame.valid || (instance>>16)!=(s.frameSerial&0xffffu)) return false;
+    const auto index=instance&0xffffu;
+    if (index>=s.unifiedInstanceControls.size() || (draw.flags&~3u) ||
+        (draw.samplingFlags & ~(GpuVertex::kIndependentColorFilter|GpuVertex::kColorFilterMask|
+            GpuVertex::kAlphaEdgeFilter))) return false;
+    const auto& control=s.unifiedInstanceControls[index];
+    auto* definition=control.definition;
+    auto* texture=control.texture;
+    if (definition->owner!=&s || !s.textures.contains(texture) || texture==s.renderImage ||
+        draw.track>=definition->trackInfo.size()) return false;
+    const auto& track=definition->trackInfo[draw.track];
+    if (track.keyOffset==GpuReanimNoKeys || track.flags || control.before>=track.keyCount ||
+        control.after>=track.keyCount) return false;
+    // No mapped GPU memory is read during validation.
+    if (s.unifiedPackets->size-s.unifiedPackets->used<sizeof(ReanimTrackData)) return false;
+    const ReanimTrackData packet{draw.track,index,draw.color,draw.samplingFlags|draw.flags,draw.shakeX,draw.shakeY};
+    const auto packetIndex=uint32_t(s.unifiedPackets->used/sizeof(ReanimTrackData));
+    std::memcpy(static_cast<std::byte*>(s.unifiedPackets->mapped)+s.unifiedPackets->used,&packet,sizeof(packet));
+    s.unifiedPackets->used+=sizeof(packet);
+    return s.SubmitUnifiedMarker(0xc0000000u|packetIndex,texture,blend);
+#else
+    (void)instance;(void)draw;(void)blend;return false;
+#endif
 }
 
 VkCommandBuffer VulkanRenderer::Impl::RecordReanim() {

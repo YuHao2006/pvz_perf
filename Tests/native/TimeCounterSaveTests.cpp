@@ -217,6 +217,11 @@ void CheckLiveSave()
         source.mAnimationElapsedNs = 123'456'789'012;
         source.mAnimationSampleIntegral = 987'654'321;
         source.mRandomSeed = 0x71234567U;
+        source.mLinearOriginX = 1'048'576.015625;
+        source.mLinearOriginY = -1'048'576.03125;
+        source.mLinearElapsedNs = 1'250'001;
+        source.mLinearVelocity = {.125f,-.25f};
+        source.mLinearLastPosition = {1'048'576.f,-1'048'576.f};
     }
     else if constexpr (std::is_same_v<T, TodParticleEmitter>)
     {
@@ -238,10 +243,17 @@ void CheckLiveSave()
     const auto original = WriteSaveRecord(source);
     const auto tail = std::span(original).subspan(SaveV2Size<T>());
     if constexpr (std::is_same_v<T, TodParticle>)
-        Require(tail.size() == 28 && V7SaveSchema::Read(tail, 0, 8) == 21'234'567 &&
+        Require(tail.size() == 68 && V7SaveSchema::Read(tail, 0, 8) == 21'234'567 &&
             V7SaveSchema::Read(tail, 8, 8) == 123'456'789'012LL &&
             V7SaveSchema::Read(tail, 16, 8) == 987'654'321 &&
-            V7SaveSchema::Read(tail, 24, 4) == 0x71234567U,
+            V7SaveSchema::Read(tail, 24, 4) == 0x71234567U &&
+            V7SaveSchema::Double(tail,28)==1'048'576.015625 &&
+            V7SaveSchema::Double(tail,36)==-1'048'576.03125 &&
+            V7SaveSchema::Read(tail,44,8)==1'250'001 &&
+            V7SaveSchema::Float(tail,52)==.125f &&
+            V7SaveSchema::Float(tail,56)==-.25f &&
+            V7SaveSchema::Float(tail,60)==1'048'576.f &&
+            V7SaveSchema::Float(tail,64)==-1'048'576.f,
             "Native particle main-step tail retained a removed current sample or shifted its exact fields");
     else if constexpr (std::is_same_v<T, TodParticleEmitter>)
         Require(tail.size() == 40 && V7SaveSchema::Read(tail, 0, 8) == 123'456'789'012LL &&

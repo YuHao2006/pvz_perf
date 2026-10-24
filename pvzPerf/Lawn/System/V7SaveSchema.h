@@ -30,7 +30,7 @@ constexpr std::size_t Size(Kind kind)
     case Kind::Reanimation: return 68;
     case Kind::ParticleSystem: return 4;
     case Kind::ParticleEmitter: return 40;
-    case Kind::Particle: return 28;
+    case Kind::Particle: return 68;
     case Kind::GridItem: return 240;
     default: return 0;
     }
@@ -227,6 +227,9 @@ inline std::vector<Byte> FromHistorical(Kind kind, std::span<const Byte> canonic
         Put(8, 0);
         Put(16, Rounded(double(Float(canonical, 24)) * Frame));
         Put(24, 0x9E3779B9U, 4);
+        // No historical motion anchor exists: bind lazily to the migrated
+        // public position on its first positive step.
+        Put(44, -1);
     }
     else if (kind == Kind::ParticleSystem)
     {

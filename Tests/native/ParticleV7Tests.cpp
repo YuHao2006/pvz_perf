@@ -51,7 +51,7 @@ void TodScaleRotateTransformMatrix(Sexy::SexyMatrix3&, float, float, float, floa
 TodTriangleGroup::TodTriangleGroup() {}
 void TodTriangleGroup::DrawGroup(Sexy::Graphics*) { throw std::runtime_error("unexpected rendering"); }
 void TodTriangleGroup::AddTriangle(Sexy::Graphics*, const Sexy::TextureSource&,
-    const Sexy::SexyMatrix3&, const Sexy::Rect&, const Sexy::Color&, int, const Sexy::Rect&)
+    const Sexy::SexyMatrix3&, const Sexy::Rect&, const Sexy::Color&, int, const Sexy::TextureRegion&)
 {
     throw std::runtime_error("unexpected rendering");
 }
@@ -190,6 +190,11 @@ std::vector<std::uint64_t> Snapshot(const Scene& scene)
             vector(particle.mVelocity);
             number(particle.mSpinPosition);
             number(particle.mSpinVelocity);
+            integer(std::bit_cast<std::uint64_t>(particle.mLinearOriginX));
+            integer(std::bit_cast<std::uint64_t>(particle.mLinearOriginY));
+            integer(particle.mLinearElapsedNs);
+            vector(particle.mLinearVelocity);
+            vector(particle.mLinearLastPosition);
             for (float n : particle.mParticleInterp) number(n);
             for (auto& field : particle.mParticleFieldInterp)
                 for (float n : field) number(n);
@@ -315,6 +320,81 @@ void TestActualDelta()
     spin.system->Update(50'000'000);
     Near(s->mSpinPosition, 2 + 0.15f * 3.14159265358979323846f / 180,
         "spin speed or collision spin did not scale with dt");
+}
+
+void TestConstantMotionPrecision()
+{
+    for (int frequency : {30, 60, 100, 144, 200, 240, 1000, 0})
+    {
+        Scene scene(-1,true);
+        scene.emitter.mAnimationRate={}; // Motion time must not depend on image animation.
+        auto* particle=scene.Spawn();
+        particle->mParticleDuration.mNanoseconds=37'000'003; // Exercise lifetime wraps.
+        particle->mPosition={1'048'576.f,-1'048'576.f};
+        particle->mVelocity={0.125f,-0.5f};
+        std::uint32_t random=1771;
+        Advance(scene,1'000'000'000,frequency,random);
+        Require(particle->mPosition.x==1'048'588.5f &&
+            particle->mPosition.y==-1'048'626.f,
+            "constant particle motion lost sub-ULP steps or depended on ns partition");
+    }
+    Scene changing(-1,true);
+    auto* p=changing.Spawn();
+    p->mPosition={1'048'576.f,-1'048'576.f};
+    constexpr int units[]{1,2,-1,0};
+    std::int64_t sum=0;
+    for (int i=0;i<4096;++i)
+    {
+        p->mVelocity={units[i%4]/8.f,-units[i%4]/8.f};
+        changing.system->Update(1'250'000);
+        sum+=units[i%4];
+        Require(p->mPosition.x==static_cast<float>(1'048'576.0+sum/64.0) &&
+            p->mPosition.y==static_cast<float>(-1'048'576.0-sum/64.0),
+            "particle velocity changes discarded unrounded segment endpoints");
+    }
+    p->mPosition={1'048'576.f,-1'048'576.f}; // Explicit teleport starts a new segment.
+    p->mVelocity={.125f,-.125f};
+    changing.system->Update(5'000'000);
+    changing.system->SystemMove(100.25f,199.5f);
+    changing.system->Update(5'000'000);
+    Require(p->mPosition.x==1'048'576.375f && p->mPosition.y==-1'048'576.625f,
+        "held emitter move lost sub-ULP motion or reset the integer motion phase");
+    const auto afterMove=Snapshot(changing);
+    changing.system->Update(0);
+    Require(Snapshot(changing)==afterMove,"zero step changed a bound particle linear segment");
+    changing.fields[0].mFieldType=FIELD_INVALID;
+    changing.emitter.mParticleFields={changing.fields,1};
+    changing.system->Update(1'000'000);
+    Require(p->mLinearElapsedNs==-1,"discrete field motion kept an old analytic segment");
+    const auto fieldPosition=p->mPosition;
+    changing.emitter.mParticleFields.count=0;
+    changing.system->Update(10'000'000);
+    Require(p->mLinearElapsedNs==10'000'000 &&
+        p->mPosition.x==fieldPosition.x+.125f && p->mPosition.y==fieldPosition.y-.125f,
+        "field-free handoff revived a stale origin");
+    Scene singleAxis(-1,true);
+    auto* edited=singleAxis.Spawn();
+    edited->mPosition={1'048'576.f,-1'048'576.f};
+    edited->mVelocity={.125f,-.125f};
+    singleAxis.system->Update(5'000'000);
+    edited->mPosition.x=10.f;
+    singleAxis.system->Update(5'000'000);
+    Require(edited->mPosition.x==10.0625f && edited->mPosition.y==-1'048'576.125f,
+        "editing one particle coordinate discarded the other axis precision");
+    edited->mPosition={1'048'576.f,-1'048'576.f};
+    singleAxis.system->Update(5'000'000);
+    edited->mPosition.x=10.f;
+    singleAxis.system->SystemMove(100.25f,199.5f);
+    singleAxis.system->Update(5'000'000);
+    Require(edited->mPosition.x==10.3125f && edited->mPosition.y==-1'048'576.625f,
+        "held move plus one-axis edit discarded the other axis precision");
+    edited->mLinearElapsedNs=INT64_MAX;
+    bool rejected=false;
+    try {singleAxis.system->Update(1);}
+    catch (const std::overflow_error&) {rejected=true;}
+    Require(rejected,"particle linear segment overflow was not rejected");
+    std::cout<<"PASS particle field-free linear motion: eight ns partitions, lifetime loops, "
+        "4096 exact rate segments, per-axis teleport, held move, zero step, field handoff and overflow\n";
 }
 
 void TestLifetimesAndTracks()
@@ -527,6 +607,7 @@ int main()
                 (test.phase + 17) % 1'000'000'000'000LL,
                 "constant float animation rate lost precision in total elapsed phase");
         }
+        TestConstantMotionPrecision();
         TestActualDelta();
         TestLifetimesAndTracks();
         TestEmission();

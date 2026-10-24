@@ -483,6 +483,9 @@ TodParticle* TodParticleEmitter::SpawnParticle(int theIndex, int theSpawnCount)
 	
 	aParticle->mAnimationElapsedNs = 0;
 	aParticle->mAnimationSampleIntegral = 0;
+	aParticle->mLinearOriginX = aParticle->mLinearOriginY = 0;
+	aParticle->mLinearElapsedNs = -1;
+	aParticle->mLinearVelocity = aParticle->mLinearLastPosition = SexyVector2(0, 0);
 	if (mEmitterDef->mAnimated || FloatTrackIsSet(mEmitterDef->mAnimationRate))
 		aParticle->mImageFrame = 0;  // 如果定义了粒子动态或动画速率，则粒子的当前帧将在后续根据粒子时间值或动画循环率实时计算，此处先初始化为 0
 	else
@@ -747,7 +750,47 @@ bool TodParticleEmitter::UpdateParticle(TodParticle* theParticle, std::uint64_t 
 	const int aParticleFieldCount = mEmitterDef->mParticleFields.count;  // 装载后 def 只读，场数外提免逐场重载
 	for (int i = 0; i < aParticleFieldCount; i++)  // 更新粒子受到每个粒子场的作用
 		UpdateParticleField(theParticle, &mEmitterDef->mParticleFields.Fields[i], aParticleTime, i, deltaTicks);
-	theParticle->mPosition += theParticle->mVelocity * static_cast<float>(deltaTicks);
+	if (aParticleFieldCount == 0 && deltaNs > 0)
+	{
+		// A velocity change keeps the old segment's double endpoint. Position
+		// edits instead start from the explicit public float value.
+		auto& p = *theParticle;
+		if (p.mLinearElapsedNs < 0)
+		{
+			p.mLinearOriginX = p.mPosition.x;
+			p.mLinearOriginY = p.mPosition.y;
+			p.mLinearElapsedNs = 0;
+		}
+		else if (p.mPosition.x != p.mLinearLastPosition.x || p.mPosition.y != p.mLinearLastPosition.y ||
+			p.mVelocity.x != p.mLinearVelocity.x || p.mVelocity.y != p.mLinearVelocity.y)
+		{
+			const double oldTicks = static_cast<double>(p.mLinearElapsedNs) / ParticleSourceTickNs;
+			p.mLinearOriginX = p.mPosition.x != p.mLinearLastPosition.x ? p.mPosition.x :
+				p.mLinearOriginX + p.mLinearVelocity.x * oldTicks;
+			p.mLinearOriginY = p.mPosition.y != p.mLinearLastPosition.y ? p.mPosition.y :
+				p.mLinearOriginY + p.mLinearVelocity.y * oldTicks;
+			p.mLinearElapsedNs = 0;
+		}
+		if (static_cast<std::uint64_t>(p.mLinearElapsedNs) > std::uint64_t(INT64_MAX) - deltaNs)
+			throw std::overflow_error("particle linear segment exceeds clock range");
+		p.mLinearElapsedNs += static_cast<std::int64_t>(deltaNs);
+		p.mLinearVelocity = p.mVelocity;
+		const double ticks = static_cast<double>(p.mLinearElapsedNs) / ParticleSourceTickNs;
+		const double x = p.mLinearOriginX + p.mVelocity.x * ticks;
+		const double y = p.mLinearOriginY + p.mVelocity.y * ticks;
+		if (!std::isfinite(x) || !std::isfinite(y) ||
+			std::fabs(x) > std::numeric_limits<float>::max() || std::fabs(y) > std::numeric_limits<float>::max())
+			throw std::overflow_error("particle linear position exceeds float range");
+		p.mPosition = SexyVector2(static_cast<float>(x), static_cast<float>(y));
+		p.mLinearLastPosition = p.mPosition;
+	}
+	else if (aParticleFieldCount != 0)
+	{
+		// Forces/collisions remain discrete. A later field-free segment must
+		// start from their result rather than revive an old analytic origin.
+		theParticle->mLinearElapsedNs = -1;
+		theParticle->mPosition += theParticle->mVelocity * static_cast<float>(deltaTicks);
+	}
 	float aSpinSpeed = FloatTrackEvaluate(mEmitterDef->mParticleSpinSpeed, aParticleTime,
 		theParticle->mParticleInterp[ParticleTracks::TRACK_PARTICLE_SPIN_SPEED]) * 0.01;
 	float aSpinAngle = FloatTrackEvaluate(mEmitterDef->mParticleSpinAngle, aParticleTime,
@@ -894,9 +937,29 @@ void TodParticleSystem::Update(std::uint64_t deltaNs)
 		const SexyVector2 change = e->mExternalTarget - e->mExternalAppliedCenter;
 		e->mExternalAppliedCenter = e->mExternalTarget;
 		e->mSystemCenter += change;
-		if (!TestBit(e->mEmitterDef->mParticleFlags, (int)ParticleFlags::PARTICLE_PARTICLES_DONT_FOLLOW))
+		if ((change.x != 0 || change.y != 0) &&
+			!TestBit(e->mEmitterDef->mParticleFlags, (int)ParticleFlags::PARTICLE_PARTICLES_DONT_FOLLOW))
 			for (int p = e->ParticleRosterCount() - 1; p >= 0; --p)
-				e->ParticleRosterParticleAt(p)->mPosition += change;
+			{
+				auto& particle = *e->ParticleRosterParticleAt(p);
+				if (particle.mLinearElapsedNs >= 0)
+				{
+					if (particle.mPosition.x != particle.mLinearLastPosition.x ||
+						particle.mPosition.y != particle.mLinearLastPosition.y)
+					{
+						const double ticks = static_cast<double>(particle.mLinearElapsedNs) / ParticleSourceTickNs;
+						particle.mLinearOriginX = particle.mPosition.x != particle.mLinearLastPosition.x ?
+							particle.mPosition.x : particle.mLinearOriginX + particle.mLinearVelocity.x * ticks;
+						particle.mLinearOriginY = particle.mPosition.y != particle.mLinearLastPosition.y ?
+							particle.mPosition.y : particle.mLinearOriginY + particle.mLinearVelocity.y * ticks;
+						particle.mLinearElapsedNs = 0;
+					}
+					particle.mLinearOriginX += change.x;
+					particle.mLinearOriginY += change.y;
+				}
+				particle.mPosition += change;
+				particle.mLinearLastPosition = particle.mPosition;
+			}
 	}
 	for (int i = 0; i < aEmitterCount; i++)
 	{

@@ -300,6 +300,34 @@ void LoadCurrentWithResources(LawnApp& app, HiddenWindow& window, const char* sa
             bits(shot.mRotation), bits(shot.mRotationSpeed), bits(shot.mShadowY),
             bits(shot.mX), bits(shot.mY), shot.mRow, shot.mDead};
     };
+    // A real rooted definition keeps this probe saveable by the normal loader.
+    // Its rounded public position differs from its exact segment endpoint.
+    TodParticle* linearParticle=nullptr;
+    for (int effect=0;effect<gParticleDefCount && !linearParticle;++effect)
+    {
+        auto& definition=gParticleDefArray[effect];
+        if (!definition.mEmitterDefCount || definition.mEmitterDefs[0].mParticleFields.count)
+            continue;
+        auto* system=app.mEffectSystem->mParticleHolder->AllocParticleSystemFromDef(
+            100,200,0,&definition,static_cast<ParticleEffect>(effect));
+        Require(system && system->EmitterRosterCount(),"Cannot allocate linear particle save probe");
+        auto* emitter=system->EmitterRosterEmitterAt(0);
+        emitter->mSystemDuration.mNanoseconds=60'000'000'000;
+        linearParticle=emitter->SpawnParticle(0,1);
+        Require(linearParticle!=nullptr,"Cannot spawn linear particle save probe");
+        linearParticle->mParticleDuration.mNanoseconds=60'000'000'000;
+        linearParticle->mPosition={1'048'576.f,-1'048'576.f};
+        linearParticle->mVelocity={.125f,-.125f};
+        Require(emitter->UpdateParticle(linearParticle,16'000'000) &&
+            linearParticle->mLinearElapsedNs==16'000'000,
+            "Linear particle save probe did not establish an integer-time segment");
+    }
+    Require(linearParticle!=nullptr,"No field-free production particle definition for save probe");
+    particleAppearances.clear();
+    particle=nullptr;
+    while (systems.IterateNext(particle))
+        particleAppearances.emplace_back(static_cast<int>(particle->mEffectType),particle->mVariant);
+    variants=static_cast<unsigned>(particleAppearances.size());
     const auto exactSnapshot = [&] {
         std::vector<std::int64_t> state;
         const auto append = [&](auto... values) {
@@ -362,7 +390,10 @@ void LoadCurrentWithResources(LawnApp& app, HiddenWindow& window, const char* sa
                 {
                     auto* item = emitter->ParticleRosterParticleAt(p);
                     append(item->mParticleAge.mNanoseconds, item->mParticleLastSampleAgeNs,
-                        item->mAnimationElapsedNs, item->mAnimationSampleIntegral, item->mRandomSeed);
+                        item->mAnimationElapsedNs, item->mAnimationSampleIntegral, item->mRandomSeed,
+                        item->mLinearOriginX, item->mLinearOriginY, item->mLinearElapsedNs,
+                        item->mLinearVelocity.x, item->mLinearVelocity.y,
+                        item->mLinearLastPosition.x, item->mLinearLastPosition.y);
                 }
             }
         }

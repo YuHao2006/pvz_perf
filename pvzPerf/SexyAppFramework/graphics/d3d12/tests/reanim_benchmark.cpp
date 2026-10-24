@@ -5,6 +5,7 @@
 #define WIN32_LEAN_AND_MEAN
 #endif
 #include <windows.h>
+#include <tlhelp32.h>
 #include <d3d12.h>
 #include <wrl/client.h>
 #include "D3d12Context.h"
@@ -37,6 +38,25 @@ constexpr unsigned Frames = 16, Warmup = 8, Rounds = 5;
 void Require(bool condition, const char* message) {
     if (!condition) throw std::runtime_error(message);
 }
+void CheckExternalCompilers() {
+    HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+    Require(snapshot != INVALID_HANDLE_VALUE, "Cannot inspect compiler contamination");
+    PROCESSENTRY32W entry{};
+    entry.dwSize = sizeof(entry);
+    bool contaminated = false;
+    if (Process32FirstW(snapshot, &entry))
+        do {
+            for (const wchar_t* name : {L"cl.exe", L"link.exe", L"ninja.exe", L"MSBuild.exe",
+                    L"dxc.exe", L"clang.exe", L"clang-cl.exe", L"cmake.exe", L"csc.exe",
+                    L"gcc.exe", L"g++.exe", L"rustc.exe"})
+                if (_wcsicmp(entry.szExeFile, name) == 0) {
+                    std::cerr << "INVALID compiler/build contamination pid=" << entry.th32ProcessID << '\n';
+                    contaminated = true;
+                }
+        } while (Process32NextW(snapshot, &entry));
+    CloseHandle(snapshot);
+    Require(!contaminated, "INVALID benchmark timing: observed external compiler/build process");
+}
 struct Window {
     HWND handle{};
     Window() {
@@ -68,6 +88,9 @@ double Median(std::vector<double> samples) {
     std::sort(samples.begin(), samples.end());
     return samples[samples.size() / 2];
 }
+double Mean(const std::vector<double>& samples) {
+    return std::accumulate(samples.begin(), samples.end(), 0.0) / double(samples.size());
+}
 void Compare(const std::vector<uint32_t>& a, const std::vector<uint32_t>& b) {
     Require(a.size() == b.size(), "Benchmark reference dimensions differ");
     for (size_t i = 0; i < a.size(); ++i)
@@ -75,7 +98,7 @@ void Compare(const std::vector<uint32_t>& a, const std::vector<uint32_t>& b) {
             Require(std::abs(int((a[i] >> shift) & 255) - int((b[i] >> shift) & 255)) <= 3,
                 "Benchmark CPU/GPU reference pixels differ");
 }
-void Run() {
+bool Run() {
     Window native;
     D3d12Context context(native.handle, false);
     UINT64 frequency{};
@@ -133,6 +156,11 @@ void Run() {
         std::vector<uint32_t> tokens((maximum + 31) / 32);
         std::vector<GpuReanimInstance> instances(tokens.size());
         for (unsigned frame = 0; frame < Frames + Warmup; ++frame) {
+            // Drain first so the snapshot is outside both CPU record samples
+            // and any executing GPU timestamp interval. Sampling cannot detect
+            // a process that starts and exits entirely between snapshots.
+            context.WaitIdle();
+            CheckExternalCompilers();
             renderer.frameTimestampPair = frame;
             Require(renderer.BeginScene(), "Cannot begin D3D12 benchmark frame");
             const auto start = Clock::now(); // Begin's previous-fence wait excluded.
@@ -201,6 +229,7 @@ void Run() {
                 captured->push_back(renderer.ReadScenePixels());
         }
         context.WaitIdle();
+        CheckExternalCompilers();
         // Scalar query collection and correctness pixels are outside CPU samples.
         uint64_t* ticks{};
         const D3D12_RANGE range{0, size_t(resource.Width)};
@@ -222,7 +251,8 @@ void Run() {
         << " frames=" << Frames << " warmup=" << Warmup << " rounds=" << Rounds << '\n'
         << "CPU us=actual transform/classification/API record through final Flush+present-quad, excludes Begin fence/WSI Present; "
         << "GPU us=scene+present-quad command timestamps, excludes CPU classification and WSI Present wait; "
-        << "no vertex/image readback in timed burst; correctness image readback follows each route.\n";
+        << "no vertex/image readback in timed burst; correctness image readback follows each route; "
+        << "compiler monitoring=frame-boundary snapshots after GPU drain, short processes may be missed.\n";
     std::vector<Scenario> scenarios;
     for (unsigned count : {512u, 2048u, 8192u})
         for (bool clipped : {false, true}) {
@@ -234,6 +264,7 @@ void Run() {
             scenarios.push_back({"sparse", 0, sprites, visible, false, false, false});
             scenarios.push_back({"transitions", 2048, sprites, visible, false, false, true});
         }
+    unsigned actualCases = 0, medianPassed = 0, meanPassed = 0, fallbackCases = 0;
     for (const auto& scenario : scenarios)
         for (bool policy : {false, true}) {
             std::vector<double> cpuRecord, gpuRecord, cpuGpu, gpuGpu;
@@ -266,6 +297,19 @@ void Run() {
                 Require(expected.size() == 4 && actual.size() == 4, "Transition oracle frames missing");
                 for (size_t frame = 0; frame < expected.size(); ++frame) Compare(expected[frame], actual[frame]);
             }
+            const bool cpuFallback = accepted == 0 && fallback > 0;
+            const double saved = Median(cpuRecord) - Median(gpuRecord);
+            const double added = Median(gpuGpu) - Median(cpuGpu);
+            const double savedMean = Mean(cpuRecord) - Mean(gpuRecord);
+            const double addedMean = Mean(gpuGpu) - Mean(cpuGpu);
+            const bool gate = saved > std::max(0.0, added);
+            const bool meanGate = savedMean > std::max(0.0, addedMean);
+            if (cpuFallback) ++fallbackCases;
+            else {
+                ++actualCases;
+                if (gate) ++medianPassed;
+                if (meanGate) ++meanPassed;
+            }
             std::cout << std::fixed << std::setprecision(3)
                 << "mode=" << scenario.name << " dense=" << scenario.dense << " ordinary=" << scenario.ordinary
                 << " sparse=" << scenario.sparse << " clip=" << scenario.clipped << " policy=" << policy
@@ -273,16 +317,27 @@ void Run() {
                 << " cpuGpuUs=" << Median(cpuGpu) << " residentGpuUs=" << Median(gpuGpu)
                 << " recordRatio=" << Median(gpuRecord) / Median(cpuRecord)
                 << " gpuRatio=" << Median(gpuGpu) / Median(cpuGpu)
+                << " cpuSavedUs=" << saved << " gpuAddedUs=" << added
+                << " meanCpuRecordUs=" << Mean(cpuRecord) << " meanResidentRecordUs=" << Mean(gpuRecord)
+                << " meanCpuGpuUs=" << Mean(cpuGpu) << " meanResidentGpuUs=" << Mean(gpuGpu)
+                << " meanCpuSavedUs=" << savedMean << " meanGpuAddedUs=" << addedMean
+                << " gate=" << (cpuFallback ? "CPU_FALLBACK" : gate ? "PASS" : "FAIL")
+                << " meanGate=" << (cpuFallback ? "CPU_FALLBACK" : meanGate ? "PASS" : "FAIL")
                 << " accepted=" << accepted << " fallback=" << fallback << " pixels=PASS\n";
         }
     renderer.frameTimestampQueries = nullptr;
     renderer.frameTimestampReadback = nullptr;
     for (auto* definition : definitions) renderer.DestroyReanimDefinition(definition);
     for (auto* texture : textures) renderer.DestroyTexture(texture);
-    std::cout << "d3d12-benchmark=PASS\n";
+    const bool performance = actualCases > 0 && medianPassed == actualCases && meanPassed == actualCases;
+    std::cout << "d3d12-benchmark functional=PASS actualCases=" << actualCases
+        << " medianPassed=" << medianPassed << " medianFailed=" << actualCases - medianPassed
+        << " meanPassed=" << meanPassed << " meanFailed=" << actualCases - meanPassed
+        << " cpuFallbackCases=" << fallbackCases << " performance=" << (performance ? "PASS" : "FAIL") << '\n';
+    return performance;
 }
 }
 int main() {
-    try { Run(); return 0; }
+    try { return Run() ? 0 : 2; }
     catch (const std::exception& error) { std::cerr << "D3D12 benchmark failed: " << error.what() << '\n'; return 1; }
 }

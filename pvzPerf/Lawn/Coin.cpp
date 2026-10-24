@@ -20,6 +20,10 @@
 #include "Sexy.TodLib/EffectSystem.h"
 #include "Sexy.TodLib/ExponentialCurve.h"
 #include "Widget/AchievementsWidget.h"
+#include <array>
+#include <cmath>
+#include <limits>
+#include <stdexcept>
 
 // 礼物植物候选表：各背景礼盒开出的盆栽种子（原版五连 else-if 各内联一张数组）。
 // 未列背景（Boss/蘑菇园/温室/水族箱/树智慧）为 nullptr 行——走禅意花园随机
@@ -362,6 +366,8 @@ void Coin::CoinInitialize(int theX, int theY, CoinType theCoinType, CoinMotion t
         aScale = 1.0f;
     }
     mScale *= aScale;
+    mFallScaleOrigin = mScale;
+    mFallScaleElapsedNs = 0;
 
     if (CoinGetsBouncyArrow())
     {
@@ -371,6 +377,13 @@ void Coin::CoinInitialize(int theX, int theY, CoinType theCoinType, CoinMotion t
     if (mCoinMotion != CoinMotion::COIN_MOTION_FROM_PRESENT)
     {
         PlayLaunchSound();
+    }
+    if (!mIsBeingCollected)
+    {
+        mCollectX = mPosX;
+        mCollectY = mPosY;
+        mFallVelocityX = mVelX;
+        mFallVelocityY = mVelY;
     }
 }
 
@@ -447,42 +460,143 @@ void Coin::UpdateFade()
 //0x430AC0
 void Coin::UpdateFall()
 {
-    if (mCoinMotion == CoinMotion::COIN_MOTION_FROM_PRESENT)
+    constexpr std::uint64_t tickNs = 10'000'000;
+    const auto deltaNs = std::min<std::uint64_t>(Sexy::gUpdateIntervalNs, INT64_MAX);
+    const bool present = mCoinMotion == CoinMotion::COIN_MOTION_FROM_PRESENT;
+    const double acceleration = mCoinMotion == CoinMotion::COIN_MOTION_FROM_PLANT ? double(0.09f) :
+        mCoinMotion == CoinMotion::COIN_MOTION_COIN ||
+        mCoinMotion == CoinMotion::COIN_MOTION_FROM_BOSS ? double(0.15f) : 0.0;
+    const auto checked = [](double value)
     {
-        mPosX += Sexy::UpdateDelta(mVelX);
-        mPosY += Sexy::UpdateDelta(mVelY);
-        mVelX *= Sexy::UpdateDecay(0.95f);
-        mVelY *= Sexy::UpdateDecay(0.95f);
+        if (!std::isfinite(value) || std::fabs(value) > std::numeric_limits<float>::max())
+            throw std::overflow_error("Coin falling sample exceeds float range");
+        return static_cast<float>(value);
+    };
+    const auto sample = [&](std::uint64_t elapsed)
+    {
+        const double ticks = double(elapsed) / tickNs;
+        if (present)
+        {
+            constexpr double decay = double(0.95f);
+            const double factor = TodExponentialCurve<decay>(elapsed);
+            const double distance = (1.0 - factor) / (1.0 - decay);
+            return std::array<float, 4>{checked(mCollectX + double(mFallVelocityX) * distance),
+                checked(mCollectY + double(mFallVelocityY) * distance),
+                checked(double(mFallVelocityX) * factor), checked(double(mFallVelocityY) * factor)};
+        }
+        return std::array<float, 4>{checked(mCollectX + double(mFallVelocityX) * ticks),
+            checked(mCollectY + double(mFallVelocityY) * ticks + acceleration * ticks * (ticks - 1.0) * 0.5),
+            mFallVelocityX, checked(mFallVelocityY + acceleration * ticks)};
+    };
+    const auto rebind = [&]
+    {
+        mCollectX = mPosX;
+        mCollectY = mPosY;
+        mFallVelocityX = mVelX;
+        mFallVelocityY = mVelY;
+        mDisappearCounter = 0;
+    };
+    bool onGround = !present && mHitGround && mPosY == mGroundY && mVelY >= 0;
+    std::uint64_t groundAdvanceNs = deltaNs;
+    if (!onGround)
+    {
+        auto elapsed = static_cast<std::uint64_t>(std::max<std::int64_t>(0, mDisappearCounter.mNanoseconds));
+        if (mDisappearCounter.mNanoseconds < 0 ||
+            sample(elapsed) != std::array<float, 4>{mPosX, mPosY, mVelX, mVelY})
+        {
+            // Relocation, velocity edits, a different motion branch or a save
+            // without this segment's origin starts a new, explicit trajectory.
+            rebind();
+            elapsed = 0;
+        }
+        if (deltaNs > std::uint64_t(INT64_MAX) - elapsed)
+            throw std::overflow_error("Coin falling interval exceeds clock range");
+        auto end = elapsed + deltaNs;
+        for (;;)
+        {
+            // Events use the original 10ms recurrence. At integer n:
+            // y(n)=y0+n*v0+a*n*(n-1)/2; velocity is updated after movement.
+            // Landing skips that tick's x movement, exactly as in 1073.
+            const auto eventTime = [](double ticks)
+            {
+                if (!std::isfinite(ticks) || ticks > double(INT64_MAX / tickNs))
+                    return UINT64_MAX;
+                return static_cast<std::uint64_t>(std::max(1.0, ticks)) * tickNs;
+            };
+            const auto yAt = [&](double ticks)
+            {
+                return mCollectY + double(mFallVelocityY) * ticks +
+                    acceleration * ticks * (ticks - 1.0) * 0.5;
+            };
+            auto landing = UINT64_MAX;
+            if (!present)
+            {
+                double ticks = std::numeric_limits<double>::infinity();
+                if (yAt(1) >= mGroundY) ticks = 1;
+                else if (acceleration > 0)
+                {
+                    const double linear = double(mFallVelocityY) - acceleration * 0.5;
+                    const double root = (-linear + std::sqrt(linear * linear +
+                        2.0 * acceleration * (double(mGroundY) - mCollectY))) / acceleration;
+                    ticks = std::max(1.0, std::ceil(root));
+                }
+                else if (mFallVelocityY > 0)
+                    ticks = std::max(1.0, std::ceil((double(mGroundY) - mCollectY) / mFallVelocityY));
+                if (std::isfinite(ticks))
+                {
+                    if (ticks > 1 && yAt(ticks - 1) >= mGroundY) --ticks;
+                    if (yAt(ticks) < mGroundY) ++ticks;
+                    landing = eventTime(ticks);
+                }
+            }
+            auto wall = UINT64_MAX;
+            bool right = false;
+            if (!present && mFallVelocityX > 0 && mCoinMotion != CoinMotion::COIN_MOTION_FROM_BOSS)
+            {
+                wall = eventTime(std::floor((double(BOARD_WIDTH - mWidth) - mCollectX) / mFallVelocityX) + 1);
+                right = true;
+            }
+            else if (!present && mFallVelocityX < 0)
+                wall = eventTime(std::floor(-double(mCollectX) / mFallVelocityX) + 1);
+            if (landing <= end && landing <= wall)
+            {
+                const auto before = sample(landing - tickNs);
+                mPosX = before[0];
+                mPosY = mGroundY;
+                mVelX = before[2];
+                mVelY = before[3];
+                groundAdvanceNs = end - landing + tickNs;
+                mDisappearCounter = 0;
+                onGround = true;
+                break;
+            }
+            if (wall <= end)
+            {
+                const auto atWall = sample(wall);
+                mPosX = right ? BOARD_WIDTH - mWidth : 0.0f;
+                mPosY = atWall[1];
+                mVelX = right ? -0.4f - RandRangeFloat(0.0f, 0.4f) : 0.4f + RandRangeFloat(0.0f, 0.4f);
+                mVelY = atWall[3];
+                rebind();
+                end -= wall;
+                continue;
+            }
+            const auto current = sample(end);
+            mPosX = current[0]; mPosY = current[1];
+            mVelX = current[2]; mVelY = current[3];
+            mDisappearCounter.AddNanoseconds(static_cast<std::int64_t>(end) -
+                mDisappearCounter.mNanoseconds);
+            break;
+        }
+    }
+    if (present)
+    {
         if (mCoinAge >= 80)
         {
             Collect();
         }
     }
-    else if (mPosY + mVelY < mGroundY)
-    {
-        mPosY += Sexy::UpdateDelta(mVelY);
-        if (mCoinMotion == CoinMotion::COIN_MOTION_FROM_PLANT)
-        {
-            mVelY += Sexy::UpdateDelta(0.09f);
-        }
-        else if (mCoinMotion == CoinMotion::COIN_MOTION_COIN || mCoinMotion == CoinMotion::COIN_MOTION_FROM_BOSS)
-        {
-            mVelY += Sexy::UpdateDelta(0.15f);
-        }
-
-        mPosX += Sexy::UpdateDelta(mVelX);
-        if (mPosX > BOARD_WIDTH - mWidth && mCoinMotion != CoinMotion::COIN_MOTION_FROM_BOSS)
-        {
-            mPosX = BOARD_WIDTH - mWidth;
-            mVelX = -0.4f - RandRangeFloat(0.0f, 0.4f);
-        }
-        else if (mPosX < 0.0f)
-        {
-            mPosX = 0.0f;
-            mVelX = 0.4f + RandRangeFloat(0.0f, 0.4f);
-        }
-    }
-    else
+    else if (onGround)
     {
         if (mNeedsBouncyArrow && !mHasBouncyArrow)
         {
@@ -566,7 +680,7 @@ void Coin::UpdateFall()
         {
             if (!IsLevelAward() && !IsPresentWithAdvice())
             {
-                mDisappearCounter++;
+                mDisappearCounter.AddNanoseconds(static_cast<std::int64_t>(groundAdvanceNs));
                 if (mDisappearCounter >= GetDisappearTime())
                 {
                     mFadeCount = 15;
@@ -577,10 +691,28 @@ void Coin::UpdateFall()
 
     if (mCoinMotion == CoinMotion::COIN_MOTION_FROM_PLANT)
     {
-        float aFinalScale = GetSunScale();
-        if (mScale < aFinalScale)
+        const float aFinalScale = GetSunScale();
+        const auto scaleAt = [&](std::uint64_t elapsed)
         {
-            mScale += Sexy::UpdateDelta(0.02f);
+            return std::min(aFinalScale, checked(double(mFallScaleOrigin) +
+                double(0.02f) * (double(elapsed) / tickNs)));
+        };
+        if (mScale != scaleAt(mFallScaleElapsedNs))
+        {
+            mFallScaleOrigin = mScale;
+            mFallScaleElapsedNs = 0;
+        }
+        if (mFallScaleOrigin < aFinalScale)
+        {
+            // Save the same endpoint time even if an outer update spans the
+            // cap, or float rounding displays the final scale just before it.
+            const double endNs = std::ceil((double(aFinalScale) - mFallScaleOrigin) *
+                tickNs / double(0.02f));
+            const auto limit = endNs >= double(UINT64_MAX) ? UINT64_MAX :
+                static_cast<std::uint64_t>(endNs);
+            const auto remaining = limit - std::min(limit, mFallScaleElapsedNs);
+            mFallScaleElapsedNs = std::min(limit, mFallScaleElapsedNs) + std::min(deltaNs, remaining);
+            mScale = scaleAt(mFallScaleElapsedNs);
         }
         else
         {

@@ -148,6 +148,8 @@ public:
 	int						DrawStringColor(const SexyString& theString, int theX, int theY, int theOldColor = -1); //works like DrawString but can have color tags like ^ff0000^.
 	int						DrawStringWordWrapped(const SexyString& theLine, int theX, int theY, int theWrapWidth = 10000000, int theLineSpacing = -1, int theJustification = -1, int *theMaxWidth = NULL); //works like DrawString but also word wraps
 	int						GetWordWrappedHeight(int theWidth, const SexyString& theLine, int theLineSpacing = -1, int *theMaxWidth = NULL);
+	static int MeasureWordWrappedHeight(_Font& font,int width,const SexyString& text,
+		int lineSpacing=-1,int* maxWidth=nullptr,bool colored=true);
 
 };
 

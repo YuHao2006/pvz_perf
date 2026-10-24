@@ -410,10 +410,15 @@ void WrappedTextMeasurements()
                 drawing.mClipRect=Rect(0,0,10000,10000);
                 int measuredWidth=0,drawnWidth=0;
                 font.draws=0;
+                int standaloneWidth=0;
+                const int standaloneHeight=Graphics::MeasureWordWrappedHeight(
+                    font,width,text,-1,&standaloneWidth,colored);
+                Require(font.draws==0,"Standalone text measurement invoked glyph drawing");
                 const int height=measure.GetWordWrappedHeight(width,text,-1,&measuredWidth);
                 Require(font.draws==0,"Wrapped text measurement invoked glyph drawing");
                 const int reference=drawing.WriteWordWrapped(Rect(0,0,width,0),text,-1,-1,&drawnWidth);
-                Require(height==reference && measuredWidth==drawnWidth &&
+                Require(height==reference && standaloneHeight==reference &&
+                    standaloneWidth==drawnWidth && measuredWidth==drawnWidth &&
                     measure.mColor==Color(17,31,47,191),
                     "Pure wrapped measurement changed line breaking, width or color state");
             }

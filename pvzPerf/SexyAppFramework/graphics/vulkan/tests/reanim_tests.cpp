@@ -658,7 +658,7 @@ double Median(std::vector<double> values) {
 double Mean(const std::vector<double>& values) {
     return std::accumulate(values.begin(),values.end(),0.0)/double(values.size());
 }
-void Benchmark() {
+int Benchmark() {
     VulkanTest::Window native(800,600);
     VulkanInitConfig config;
 #if defined(PVZ_REANIM_GEOMETRY)
@@ -804,6 +804,7 @@ void Benchmark() {
         <<"; policy CPU fallback cases="<<rejected
         <<"; scalar query collection outside timed CPU samples; "
         "no full-game speedup claim\n";
+    return gates==total && meanGates==total && wallGates==total && meanWallGates==total ? 0 : 2;
 }
 #endif
 }
@@ -815,36 +816,36 @@ int main(int argc,char** argv) {
 #endif
 #if defined(PVZ_REANIM_BENCHMARK)
         if (argc>1 && std::string(argv[1])=="--benchmark-mixed") {
-            mixedBenchmark=true;Benchmark();return 0;
+            mixedBenchmark=true;return Benchmark();
         }
         if (argc>1 && std::string(argv[1])=="--benchmark-sprites") {
-            spriteOnlyBenchmark=true;Benchmark();return 0;
+            spriteOnlyBenchmark=true;return Benchmark();
         }
         if (argc>1 && std::string(argv[1])=="--benchmark-packets") {
-            packetBenchmark=true;Benchmark();return 0;
+            packetBenchmark=true;return Benchmark();
         }
         if (argc>1 && std::string(argv[1])=="--benchmark-packets-mixed") {
-            packetBenchmark=true;mixedBenchmark=true;Benchmark();return 0;
+            packetBenchmark=true;mixedBenchmark=true;return Benchmark();
         }
         if (argc>1 && std::string(argv[1])=="--benchmark-packets-sprites") {
-            packetBenchmark=true;spriteOnlyBenchmark=true;Benchmark();return 0;
+            packetBenchmark=true;spriteOnlyBenchmark=true;return Benchmark();
         }
         if (argc>1 && std::string(argv[1])=="--benchmark-packets-sparse") {
-            packetBenchmark=true;sparseBenchmark=true;Benchmark();return 0;
+            packetBenchmark=true;sparseBenchmark=true;return Benchmark();
         }
         if (argc>1 && std::string(argv[1])=="--benchmark-policy") {
-            packetBenchmark=true;policyBenchmark=true;Benchmark();return 0;
+            packetBenchmark=true;policyBenchmark=true;return Benchmark();
         }
         if (argc>1 && std::string(argv[1])=="--benchmark-policy-mixed") {
-            packetBenchmark=true;policyBenchmark=true;mixedBenchmark=true;Benchmark();return 0;
+            packetBenchmark=true;policyBenchmark=true;mixedBenchmark=true;return Benchmark();
         }
         if (argc>1 && std::string(argv[1])=="--benchmark-policy-sparse") {
-            packetBenchmark=true;policyBenchmark=true;sparseBenchmark=true;Benchmark();return 0;
+            packetBenchmark=true;policyBenchmark=true;sparseBenchmark=true;return Benchmark();
         }
         if (argc>1 && std::string(argv[1])=="--benchmark-policy-transitions") {
-            packetBenchmark=true;policyBenchmark=true;transitionBenchmark=true;Benchmark();return 0;
+            packetBenchmark=true;policyBenchmark=true;transitionBenchmark=true;return Benchmark();
         }
-        if (argc>1 && std::string(argv[1])=="--benchmark") {Benchmark();return 0;}
+        if (argc>1 && std::string(argv[1])=="--benchmark") return Benchmark();
 #else
         (void)argc;(void)argv;
 #endif

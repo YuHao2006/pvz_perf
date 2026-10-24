@@ -79,7 +79,7 @@ public:
     FrameContext BeginCommands();
     void BeginPresentPass(VkClearColorValue clearColor);
     void WaitForFrame();
-    void EndFrame(VkCommandBuffer computePrelude = VK_NULL_HANDLE);
+    void EndFrame();
     uint64_t swapchainGeneration = 0;
 
 private:

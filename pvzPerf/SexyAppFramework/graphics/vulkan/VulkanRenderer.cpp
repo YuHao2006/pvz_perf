@@ -129,29 +129,14 @@ struct VulkanTexture {
 
 struct VulkanReanim {
     const void* owner=nullptr;
-    Buffer tracks, keys, geometry;
     // Validation metadata only; no CPU keyframes or geometry are retained.
     std::vector<GpuReanimTrack> trackInfo;
     uint32_t imageSlotCount = 0, variantCount = 0;
-#if defined(PVZ_REANIM_GEOMETRY)
-    VkDescriptorPool geometryPool=VK_NULL_HANDLE;
-    VkDescriptorSet geometrySet=VK_NULL_HANDLE;
 #if defined(PVZ_REANIM_UNIFIED)
     uint32_t blobHeader=UINT32_MAX;
     VkDeviceSize blobBytes=0;
 #endif
-    ~VulkanReanim() {
-        if (geometryPool) vkDestroyDescriptorPool(VulkanContext::device,geometryPool,nullptr);
-    }
-#endif
 };
-
-struct ReanimJob {
-    GpuReanimDraw draw;
-    uint32_t outputVertex, capacity, imageSlotCount, textureSlot;
-    float clip[4];
-};
-static_assert(sizeof(ReanimJob) == 112);
 #if defined(PVZ_REANIM_UNIFIED)
 struct ReanimInstanceData {
     GpuReanimInstance draw;
@@ -175,7 +160,9 @@ struct VulkanRenderer::Impl {
     VulkanContext::FrameContext frame{};
     bool imageOnly = false, targetPassOpen = false;
     uint32_t reanimPictureCandidates=0;
+#if defined(PVZ_REANIM_UNIFIED)
     uint64_t reanimOrdinaryTriangles=0;
+#endif
     bool reanimFrameEligible=false;
     VulkanTexture* renderImage = nullptr;
     VkRenderPass scenePass = VK_NULL_HANDLE;
@@ -252,40 +239,18 @@ struct VulkanRenderer::Impl {
     VkCommandBuffer imageCommand = VK_NULL_HANDLE;
     VkFence imageFence = VK_NULL_HANDLE;
     std::vector<std::unique_ptr<Buffer>> streams;
-    struct ReanimWork { ReanimJob job; VulkanReanim* definition; Buffer* stream; };
-    VkShaderModule reanimShader = VK_NULL_HANDLE;
-    VkPipeline reanimPipeline = VK_NULL_HANDLE;
-    VkPipelineLayout reanimLayout = VK_NULL_HANDLE;
-    VkDescriptorSetLayout reanimSetLayout = VK_NULL_HANDLE;
-    VkDescriptorPool reanimPool = VK_NULL_HANDLE;
-    uint32_t reanimPoolCapacity = 0;
-    VkCommandPool reanimCommandPool = VK_NULL_HANDLE;
-    VkCommandBuffer reanimCommand = VK_NULL_HANDLE;
-    Buffer* reanimJobs = nullptr;
-    std::string reanimShaderPath;
-    std::vector<ReanimWork> reanimWork;
-    struct ReanimOutput { Buffer* host; Buffer* device; bool active; };
-    std::vector<ReanimOutput> reanimOutputs;
+#if defined(PVZ_REANIM_UNIFIED)
     std::vector<VulkanReanim*> reanimDefinitions, reanimRetired;
     std::vector<Buffer*> reanimStaging;
-#if defined(PVZ_REANIM_GEOMETRY)
+    std::string reanimShaderFolder;
     VkShaderModule reanimVertex=VK_NULL_HANDLE,reanimGeometry=VK_NULL_HANDLE;
     VkDescriptorSetLayout reanimGeometrySetLayout=VK_NULL_HANDLE;
     VkPipelineLayout reanimGeometryLayout=VK_NULL_HANDLE;
     std::array<VkPipeline,3> reanimGeometryPipelines{},reanimGeometryImagePipelines{};
-    std::vector<std::unique_ptr<Buffer>> reanimPointStreams;
-    struct GeometryRun {
-        VulkanReanim* definition=nullptr;
-        Buffer* stream=nullptr;
-        VkPipeline pipeline=VK_NULL_HANDLE;
-        uint32_t first=0,count=0,width=0,height=0;
-    } geometryRun;
-#if defined(PVZ_REANIM_UNIFIED)
     Buffer* unifiedStatic=nullptr;
     VkDeviceSize unifiedStaticUsed=0;
     struct ArenaRange {VkDeviceSize offset,size;};
     std::vector<ArenaRange> unifiedFreeRanges;
-    Buffer* unifiedJobs=nullptr;
     Buffer* unifiedInstances=nullptr;
     Buffer* unifiedPackets=nullptr;
     Buffer* unifiedIndices=nullptr;
@@ -302,7 +267,6 @@ struct VulkanRenderer::Impl {
     VkDescriptorSet unifiedSet=VK_NULL_HANDLE;
     bool unifiedFrame=false;
     std::array<VkPipeline,3> unifiedCoverage{},unifiedImageCoverage{};
-#endif
 #endif
 #if defined(PVZ_REANIM_BENCHMARK)
     VkQueryPool frameTimestampQueries = VK_NULL_HANDLE;
@@ -393,33 +357,22 @@ struct VulkanRenderer::Impl {
         if (sceneFramebuffer) vkDestroyFramebuffer(device, sceneFramebuffer, nullptr);
         scene.reset();
         streams.clear();
+#if defined(PVZ_REANIM_UNIFIED)
         for (auto* definition : reanimDefinitions) delete definition;
         for (auto* definition : reanimRetired) delete definition;
         for (auto* staging : reanimStaging) delete staging;
-        for (auto& output : reanimOutputs) delete output.device;
-#if defined(PVZ_REANIM_GEOMETRY)
-        reanimPointStreams.clear();
         for (auto pipeline:reanimGeometryPipelines) if (pipeline) vkDestroyPipeline(device,pipeline,nullptr);
         for (auto pipeline:reanimGeometryImagePipelines) if (pipeline) vkDestroyPipeline(device,pipeline,nullptr);
         if (reanimGeometryLayout) vkDestroyPipelineLayout(device,reanimGeometryLayout,nullptr);
         if (reanimGeometrySetLayout) vkDestroyDescriptorSetLayout(device,reanimGeometrySetLayout,nullptr);
         if (reanimVertex) vkDestroyShaderModule(device,reanimVertex,nullptr);
         if (reanimGeometry) vkDestroyShaderModule(device,reanimGeometry,nullptr);
-#if defined(PVZ_REANIM_UNIFIED)
-        delete unifiedStatic;delete unifiedJobs;
+        delete unifiedStatic;
         delete unifiedInstances;delete unifiedPackets;delete unifiedIndices;
         if (unifiedPool) vkDestroyDescriptorPool(device,unifiedPool,nullptr);
         for (auto pipeline:unifiedCoverage) if (pipeline) vkDestroyPipeline(device,pipeline,nullptr);
         for (auto pipeline:unifiedImageCoverage) if (pipeline) vkDestroyPipeline(device,pipeline,nullptr);
 #endif
-#endif
-        delete reanimJobs;
-        if (reanimPipeline) vkDestroyPipeline(device,reanimPipeline,nullptr);
-        if (reanimLayout) vkDestroyPipelineLayout(device,reanimLayout,nullptr);
-        if (reanimPool) vkDestroyDescriptorPool(device,reanimPool,nullptr);
-        if (reanimSetLayout) vkDestroyDescriptorSetLayout(device,reanimSetLayout,nullptr);
-        if (reanimShader) vkDestroyShaderModule(device,reanimShader,nullptr);
-        if (reanimCommandPool) vkDestroyCommandPool(device,reanimCommandPool,nullptr);
         for (auto pipeline : pipelines) if (pipeline) vkDestroyPipeline(device, pipeline, nullptr);
         for (auto pipeline : coveragePipelines) if (pipeline) vkDestroyPipeline(device, pipeline, nullptr);
         for (auto pipeline : imagePipelines) if (pipeline) vkDestroyPipeline(device, pipeline, nullptr);
@@ -705,10 +658,12 @@ struct VulkanRenderer::Impl {
                 static_cast<unsigned int>(pendingComposeSets.size()), pendingComposeSets.data()));
             pendingComposeSets.clear();
         }
+#if defined(PVZ_REANIM_UNIFIED)
         if (!transferOpen) {
             for (auto* staging : reanimStaging) delete staging;
             reanimStaging.clear();
         }
+#endif
     }
 
     void RecordTextureUploads(VkCommandBuffer cmd) {
@@ -823,34 +778,19 @@ struct VulkanRenderer::Impl {
         input.pVertexBindingDescriptions = &binding;
         input.vertexAttributeDescriptionCount = pool ? 2 : 5;
         input.pVertexAttributeDescriptions = pool ? poolAttributes : attributes;
-#if defined(PVZ_REANIM_GEOMETRY)
-        const VkVertexInputAttributeDescription reanimAttributes[]={
-            {0,0,VK_FORMAT_R32G32B32A32_UINT,0},{1,0,VK_FORMAT_R32G32B32A32_SFLOAT,16},
-            {2,0,VK_FORMAT_R32G32B32A32_SFLOAT,32},{3,0,VK_FORMAT_R32G32B32A32_SFLOAT,48},
-            {4,0,VK_FORMAT_R32G32B32A32_UINT,64},{5,0,VK_FORMAT_R32G32B32A32_UINT,80},
-            {6,0,VK_FORMAT_R32G32B32A32_SFLOAT,96}};
+#if defined(PVZ_REANIM_UNIFIED)
         if (reanim) {
             shaders[2]=shaders[1]; shaders[1]={VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO};
             shaders[0].module=reanimVertex;
             shaders[1].stage=VK_SHADER_STAGE_GEOMETRY_BIT;shaders[1].module=reanimGeometry;shaders[1].pName="main";
-            binding.stride=sizeof(ReanimJob);
-            input.vertexAttributeDescriptionCount=7;input.pVertexAttributeDescriptions=reanimAttributes;
-#if defined(PVZ_REANIM_UNIFIED)
             binding.stride=sizeof(GpuVertex);
             input.vertexAttributeDescriptionCount=5;input.pVertexAttributeDescriptions=attributes;
-#endif
         }
 #else
         (void)reanim;
 #endif
         VkPipelineInputAssemblyStateCreateInfo assembly{VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO};
         assembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-#if defined(PVZ_REANIM_GEOMETRY)
-        if (reanim) assembly.topology=VK_PRIMITIVE_TOPOLOGY_POINT_LIST;
-#if defined(PVZ_REANIM_UNIFIED)
-        if (reanim) assembly.topology=VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-#endif
-#endif
         VkPipelineRasterizationStateCreateInfo raster{VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO};
         raster.polygonMode = VK_POLYGON_MODE_FILL;
         raster.cullMode = VK_CULL_MODE_NONE;
@@ -877,7 +817,7 @@ struct VulkanRenderer::Impl {
         blending.pAttachments = &attachment;
         VkGraphicsPipelineCreateInfo info{VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO};
         info.stageCount = 2;
-#if defined(PVZ_REANIM_GEOMETRY)
+#if defined(PVZ_REANIM_UNIFIED)
         if (reanim) info.stageCount=3;
 #endif
         info.pStages = shaders;
@@ -889,7 +829,7 @@ struct VulkanRenderer::Impl {
         info.pColorBlendState = &blending;
         info.pDynamicState = &dynamic;
         info.layout = pool ? poolLayout : pipelineLayout;
-#if defined(PVZ_REANIM_GEOMETRY)
+#if defined(PVZ_REANIM_UNIFIED)
         if (reanim) info.layout=reanimGeometryLayout;
 #endif
         info.renderPass = pass;
@@ -921,13 +861,8 @@ struct VulkanRenderer::Impl {
         ,bool marker=false,bool unified=false
 #endif
     );
-    void InitReanim();
-    VkCommandBuffer RecordReanim();
-#if defined(PVZ_REANIM_GEOMETRY)
-    void InitReanimGeometry();
-    bool SubmitReanimGeometry(VulkanReanim*,VulkanTexture*,const GpuReanimDraw&,
-        bool,bool,VulkanBlend,const VulkanClip*);
 #if defined(PVZ_REANIM_UNIFIED)
+    void InitReanimGeometry();
     bool SubmitUnifiedMarker(uint32_t,VulkanTexture*,VulkanBlend);
     void QueueOrdinary(Buffer*,VkDeviceSize,uint32_t,VkPipeline,VkRect2D,int,int);
     void FlushOrdinary();
@@ -935,12 +870,6 @@ struct VulkanRenderer::Impl {
     void GrowUnifiedStatic(VkDeviceSize required);
     VkDeviceSize AllocateUnifiedStatic(VkDeviceSize bytes);
 #endif
-#endif
-    Buffer* ReanimStream(Buffer* host) {
-        for (auto& output:reanimOutputs)
-            if (output.host==host && output.active) return output.device;
-        return host;
-    }
     // P5 游程合并（2026-10-05）：连续同状态（流连续+管线/描述符/剪刀/视口未变）
     // 的提交延迟 BindVertexBuffers+Draw 合一——图元顺序逐字保持（三角列表同序
     // 合批=帧缓冲混合序列等价），任何状态变化/换流/帧尾先冲刷旧游程
@@ -952,7 +881,9 @@ struct VulkanRenderer::Impl {
 void VulkanRenderer::Impl::Initialize(const std::string& vsPath, const std::string& psPath) {
     if (width <= 0 || height <= 0) throw std::invalid_argument("Invalid game scene extent");
     poolShaderPath = (std::filesystem::path(vsPath).parent_path()/"game_pool_vs.spv").string();
-    reanimShaderPath = (std::filesystem::path(vsPath).parent_path()/"game_reanim_cs.spv").string();
+#if defined(PVZ_REANIM_UNIFIED)
+    reanimShaderFolder=std::filesystem::path(vsPath).parent_path().string();
+#endif
     CheckPresentEncoding();
     // 采样器数组（4 元素）：与纹理数组同法消除采样器切换断点——
     // bit0=线性过滤 bit1=重复寻址，索引由顶点携带
@@ -1264,10 +1195,8 @@ void VulkanRenderer::Impl::FinishImageBatch() {
     VK_REQUIRE(vkEndCommandBuffer(imageCommand));
     VK_REQUIRE(vkResetFences(device, 1, &imageFence));
     VkSubmitInfo submit{VK_STRUCTURE_TYPE_SUBMIT_INFO};
-    const auto prelude = RecordReanim();
-    const VkCommandBuffer commands[] = {prelude, imageCommand};
-    submit.commandBufferCount = prelude ? 2u : 1u;
-    submit.pCommandBuffers = prelude ? commands : &imageCommand;
+    submit.commandBufferCount = 1;
+    submit.pCommandBuffers = &imageCommand;
     VK_REQUIRE(vkQueueSubmit(window.graphicsQueue, 1, &submit, imageFence));
     VK_REQUIRE(vkWaitForFences(device, 1, &imageFence, VK_TRUE, UINT64_MAX));
     frame = {};
@@ -1355,7 +1284,7 @@ uint32_t VulkanRenderer::MaxImageDimension2D() const {
 VulkanRenderer::ResourceCounts VulkanRenderer::GetResourceCounts() const {
     const auto& s = *impl_;
     return {s.textures.size(),s.retired.size(),s.pools.size(),
-        s.streams.size()+s.reanimOutputs.size()+(s.poolVertexBuffer ? 1u : 0u)};
+        s.streams.size()+(s.poolVertexBuffer ? 1u : 0u)};
 }
 
 VulkanTexture* VulkanRenderer::CreateRenderImage(int width, int height) {
@@ -1947,13 +1876,19 @@ bool VulkanRenderer::BeginScene() {
         s.RefreshPresentPipeline();
     }
     ++s.frameSerial;
+#if defined(PVZ_REANIM_UNIFIED)
     // Counts belong to completed main or image-only batches. Internal target
     // switches preserve them. A failed acquire does not consume the evidence.
     s.reanimFrameEligible=s.reanimPictureCandidates>=256 &&
         s.reanimOrdinaryTriangles<=uint64_t(s.reanimPictureCandidates)*32;
     s.reanimPictureCandidates=0;s.reanimOrdinaryTriangles=0;
+#endif
 #if defined(PVZ_REANIM_BENCHMARK)
     s.frameTimestampQueries=frameTimestampQueries;
+    if (s.frameTimestampQueries) {
+        vkCmdResetQueryPool(s.frame.cmd,s.frameTimestampQueries,0,2);
+        vkCmdWriteTimestamp(s.frame.cmd,VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,s.frameTimestampQueries,0);
+    }
 #endif
     // Complete uploads before reclaiming retired textures: a texture may have
     // been queued and destroyed outside a frame, including while minimized.
@@ -1961,24 +1896,15 @@ bool VulkanRenderer::BeginScene() {
     s.ReapRetired();
 #if defined(PVZ_REANIM_UNIFIED)
     s.ReclaimUnifiedRanges();
-#else
-    for (auto* definition : s.reanimRetired) delete definition;
-    s.reanimRetired.clear();
 #endif
-    s.reanimWork.clear();
-    for (auto& output:s.reanimOutputs) output.active=false;
     for (auto& stream : s.streams) stream->used = 0;
-#if defined(PVZ_REANIM_GEOMETRY)
-    for (auto& stream:s.reanimPointStreams) stream->used=0;
 #if defined(PVZ_REANIM_UNIFIED)
     s.unifiedFrame=false;
-    if (s.unifiedJobs) s.unifiedJobs->used=0;
     if (s.unifiedInstances) s.unifiedInstances->used=0;
     if (s.unifiedPackets) s.unifiedPackets->used=0;
     if (s.unifiedIndices) s.unifiedIndices->used=0;
     s.unifiedInstanceControls.clear();
     s.unifiedOrdinary.clear();s.unifiedOrdinaryTriangles=0;s.flushingOrdinary=false;
-#endif
 #endif
     s.RecordCaustics(s.frame.cmd);
     s.BeginTargetPass();
@@ -1987,9 +1913,6 @@ bool VulkanRenderer::BeginScene() {
 
 void VulkanRenderer::Impl::Draw(std::span<const VulkanVertex> vertices, VulkanTexture* texture,
     VkPipeline pipeline, const VulkanClip* clip, int vw, int vh) {
-#if defined(PVZ_REANIM_GEOMETRY) && !defined(PVZ_REANIM_UNIFIED)
-    if (geometryRun.count) FlushPendingRun(frame.cmd);
-#endif
     if (!frame.valid) throw std::logic_error("Draw outside a frame");
     if (!texture) throw std::invalid_argument("Missing draw texture");
     if (vertices.empty()) { return; }
@@ -2049,7 +1972,9 @@ void VulkanRenderer::Impl::Draw(std::span<const VulkanVertex> vertices, VulkanTe
         copiedVertices[i].slot = ownerSlotBits | (vertex.slot & kVertexSlotKeep);
     }
     stream->used += bytes;
+#if defined(PVZ_REANIM_UNIFIED)
     if (pipeline!=presentPipeline) reanimOrdinaryTriangles+=vertices.size()/3;
+#endif
     VkRect2D scissor{{static_cast<int32_t>(left), static_cast<int32_t>(top)},
         {static_cast<uint32_t>(right-left), static_cast<uint32_t>(bottom-top)}};
 #if defined(PVZ_REANIM_UNIFIED)
@@ -2058,7 +1983,7 @@ void VulkanRenderer::Impl::Draw(std::span<const VulkanVertex> vertices, VulkanTe
         return;
     }
 #endif
-    AppendRun(ReanimStream(stream),offset,static_cast<uint32_t>(vertices.size()),pipeline,scissor,vw,vh
+    AppendRun(stream,offset,static_cast<uint32_t>(vertices.size()),pipeline,scissor,vw,vh
 #if defined(PVZ_REANIM_UNIFIED)
         ,false,false
 #endif
@@ -2150,13 +2075,6 @@ void VulkanRenderer::Impl::FlushPendingRun(VkCommandBuffer cmd) {
 #if defined(PVZ_REANIM_UNIFIED)
     if (!flushingOrdinary && !unifiedOrdinary.empty()) FlushOrdinary();
 #endif
-#if defined(PVZ_REANIM_GEOMETRY)
-    if (geometryRun.count) {
-        vkCmdDraw(cmd,geometryRun.count,1,geometryRun.first,0);
-        geometryRun={};
-        drawState={};
-    }
-#endif
     if (pendingRun.count == 0) return;
     // 游程顶点总在流缓冲内连续追加：整个缓冲绑定一次，游程用 firstVertex
     // 偏移取址（绑 22 次/帧纯属结构浪费）；仅换流缓冲时重绑
@@ -2176,61 +2094,21 @@ void VulkanRenderer::Impl::FlushPendingRun(VkCommandBuffer cmd) {
     pendingRun.count = 0;
 }
 
-void VulkanRenderer::Impl::InitReanim() {
-    if (reanimPipeline) return;
-    const auto words = ReadShader(reanimShaderPath);
-    VkShaderModuleCreateInfo shader{VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO};
-    shader.codeSize=words.size()*sizeof(uint32_t); shader.pCode=words.data();
-    VK_REQUIRE(vkCreateShaderModule(device,&shader,nullptr,&reanimShader));
-    std::array<VkDescriptorSetLayoutBinding,5> bindings{};
-    for (uint32_t i=0;i<bindings.size();++i)
-        bindings[i]={i,VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,1,VK_SHADER_STAGE_COMPUTE_BIT,nullptr};
-    VkDescriptorSetLayoutCreateInfo set{VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO};
-    set.bindingCount=uint32_t(bindings.size()); set.pBindings=bindings.data();
-    VK_REQUIRE(vkCreateDescriptorSetLayout(device,&set,nullptr,&reanimSetLayout));
-    const VkPushConstantRange push{VK_SHADER_STAGE_COMPUTE_BIT,0,8};
-    VkPipelineLayoutCreateInfo layout{VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO};
-    layout.setLayoutCount=1; layout.pSetLayouts=&reanimSetLayout;
-    layout.pushConstantRangeCount=1; layout.pPushConstantRanges=&push;
-    VK_REQUIRE(vkCreatePipelineLayout(device,&layout,nullptr,&reanimLayout));
-    VkComputePipelineCreateInfo pipeline{VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO};
-    pipeline.stage={VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO};
-    pipeline.stage.stage=VK_SHADER_STAGE_COMPUTE_BIT;
-    pipeline.stage.module=reanimShader; pipeline.stage.pName="main"; pipeline.layout=reanimLayout;
-    VK_REQUIRE(vkCreateComputePipelines(device,VK_NULL_HANDLE,1,&pipeline,nullptr,&reanimPipeline));
-    VkCommandPoolCreateInfo commandPool{VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO};
-    commandPool.flags=VK_COMMAND_POOL_CREATE_TRANSIENT_BIT; commandPool.queueFamilyIndex=window.graphicsFamily;
-    VK_REQUIRE(vkCreateCommandPool(device,&commandPool,nullptr,&reanimCommandPool));
-    VkCommandBufferAllocateInfo command{VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO};
-    command.commandPool=reanimCommandPool; command.level=VK_COMMAND_BUFFER_LEVEL_PRIMARY; command.commandBufferCount=1;
-    VK_REQUIRE(vkAllocateCommandBuffers(device,&command,&reanimCommand));
-}
-
-#if defined(PVZ_REANIM_GEOMETRY)
+#if defined(PVZ_REANIM_UNIFIED)
 void VulkanRenderer::Impl::InitReanimGeometry() {
     if (reanimVertex || !window.geometryShaderEnabled) return;
-    const auto folder=std::filesystem::path(reanimShaderPath).parent_path();
+    const auto folder=std::filesystem::path(reanimShaderFolder);
     const auto module=[&](const char* name,VkShaderModule& target) {
         const auto words=ReadShader((folder/name).string());
         VkShaderModuleCreateInfo info{VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO};
         info.codeSize=words.size()*sizeof(uint32_t);info.pCode=words.data();
         VK_REQUIRE(vkCreateShaderModule(device,&info,nullptr,&target));
     };
-#if defined(PVZ_REANIM_UNIFIED)
     module("game_reanim_unified_vs.spv",reanimVertex);module("game_reanim_unified_gs.spv",reanimGeometry);
-#else
-    module("game_reanim_vs.spv",reanimVertex);module("game_reanim_gs.spv",reanimGeometry);
-#endif
-    std::array<VkDescriptorSetLayoutBinding,4> bindings{};
-    for (uint32_t i=0;i<3;++i) bindings[i]={i,VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,1,VK_SHADER_STAGE_VERTEX_BIT,nullptr};
-#if defined(PVZ_REANIM_UNIFIED)
-    for (uint32_t i=0;i<4;++i) bindings[i]={i,VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,1,VK_SHADER_STAGE_GEOMETRY_BIT,nullptr};
-#endif
+    std::array<VkDescriptorSetLayoutBinding,3> bindings{};
+    for (uint32_t i=0;i<3;++i) bindings[i]={i,VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,1,VK_SHADER_STAGE_GEOMETRY_BIT,nullptr};
     VkDescriptorSetLayoutCreateInfo set{VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO};
     set.bindingCount=3;set.pBindings=bindings.data();
-#if defined(PVZ_REANIM_UNIFIED)
-    set.bindingCount=4;
-#endif
     VK_REQUIRE(vkCreateDescriptorSetLayout(device,&set,nullptr,&reanimGeometrySetLayout));
     const VkDescriptorSetLayout sets[]={imageLayout,samplerLayout,reanimGeometrySetLayout};
     const VkPushConstantRange push{VK_SHADER_STAGE_GEOMETRY_BIT,0,8};
@@ -2241,21 +2119,17 @@ void VulkanRenderer::Impl::InitReanimGeometry() {
     for (unsigned i=0;i<3;++i) {
         reanimGeometryPipelines[i]=Pipeline(scenePass,VulkanBlend(i),fragmentShader,false,false,false,true);
         reanimGeometryImagePipelines[i]=Pipeline(imagePass,VulkanBlend(i),fragmentShader,true,false,false,true);
-#if defined(PVZ_REANIM_UNIFIED)
         unifiedCoverage[i]=Pipeline(scenePass,VulkanBlend(i),fragmentShader,false,true,false,true);
         unifiedImageCoverage[i]=Pipeline(imagePass,VulkanBlend(i),fragmentShader,true,true,false,true);
-#endif
     }
-#if defined(PVZ_REANIM_UNIFIED)
-    unifiedStatic=new Buffer;unifiedJobs=new Buffer;unifiedInstances=new Buffer;
+    unifiedStatic=new Buffer;unifiedInstances=new Buffer;
     unifiedPackets=new Buffer;unifiedIndices=new Buffer;
     unifiedStatic->Create(64*1024*1024,VK_BUFFER_USAGE_STORAGE_BUFFER_BIT|
         VK_BUFFER_USAGE_TRANSFER_DST_BIT|VK_BUFFER_USAGE_TRANSFER_SRC_BIT,false);
-    unifiedJobs->Create(8*1024*1024,VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
     unifiedInstances->Create(1024*1024,VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
     unifiedPackets->Create(8*1024*1024,VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
     unifiedIndices->Create(8*1024*1024,VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
-    const VkDescriptorPoolSize size{VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,4};
+    const VkDescriptorPoolSize size{VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,3};
     VkDescriptorPoolCreateInfo pool{VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO};
     pool.maxSets=1;pool.poolSizeCount=1;pool.pPoolSizes=&size;
     VK_REQUIRE(vkCreateDescriptorPool(device,&pool,nullptr,&unifiedPool));
@@ -2263,18 +2137,16 @@ void VulkanRenderer::Impl::InitReanimGeometry() {
     alloc.descriptorPool=unifiedPool;alloc.descriptorSetCount=1;alloc.pSetLayouts=&reanimGeometrySetLayout;
     VK_REQUIRE(vkAllocateDescriptorSets(device,&alloc,&unifiedSet));
     const VkDescriptorBufferInfo infos[]={{unifiedStatic->buffer,0,unifiedStatic->size},
-        {unifiedJobs->buffer,0,unifiedJobs->size},{unifiedInstances->buffer,0,unifiedInstances->size},
+        {unifiedInstances->buffer,0,unifiedInstances->size},
         {unifiedPackets->buffer,0,unifiedPackets->size}};
-    VkWriteDescriptorSet writes[4]{};
-    for (uint32_t i=0;i<4;++i) {
+    VkWriteDescriptorSet writes[3]{};
+    for (uint32_t i=0;i<3;++i) {
         writes[i]={VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET};
         writes[i].dstSet=unifiedSet;writes[i].dstBinding=i;writes[i].descriptorCount=1;
         writes[i].descriptorType=VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;writes[i].pBufferInfo=&infos[i];
     }
-    vkUpdateDescriptorSets(device,4,writes,0,nullptr);
-#endif
+    vkUpdateDescriptorSets(device,3,writes,0,nullptr);
 }
-#if defined(PVZ_REANIM_UNIFIED)
 void VulkanRenderer::Impl::ReclaimUnifiedRanges() {
     // Caller has completed both frame and transfer fences. Only range metadata
     // survives retirement; immutable keyframes remain exclusively on the GPU.
@@ -2397,92 +2269,15 @@ bool VulkanRenderer::Impl::SubmitUnifiedMarker(uint32_t encoded,VulkanTexture* t
     return true;
 }
 #endif
-bool VulkanRenderer::Impl::SubmitReanimGeometry(VulkanReanim* definition,VulkanTexture* texture,
-    const GpuReanimDraw& draw,bool linear,bool repeat,VulkanBlend blend,const VulkanClip* clip) {
-    if (!frame.valid) throw std::logic_error("Reanimation draw outside frame");
-    if (!definition || !texture ||
-#if defined(PVZ_REANIM_UNIFIED)
-        definition->blobHeader==UINT32_MAX ||
-#else
-        !definition->geometrySet ||
-#endif
-        texture==renderImage ||
-        definition->owner!=this ||
-        !textures.contains(texture) || draw.track>=definition->trackInfo.size() ||
-        draw.variant>=definition->variantCount || !std::isfinite(draw.fraction) ||
-        draw.fraction<0 || draw.fraction>1 || (draw.samplingFlags &
-            ~(GpuVertex::kIndependentColorFilter|GpuVertex::kColorFilterMask|GpuVertex::kAlphaEdgeFilter))) return false;
-    const auto& track=definition->trackInfo[draw.track];
-    if (track.keyOffset==GpuReanimNoKeys || track.flags || draw.before>=track.keyCount || draw.after>=track.keyCount)
-        return false;
-    if (clip && (clip->width<=0 || clip->height<=0)) return true;
-#if defined(PVZ_REANIM_UNIFIED)
-    if (unifiedJobs->size-unifiedJobs->used<sizeof(ReanimJob))
-        throw std::runtime_error("Unified reanimation prototype job capacity exceeded");
-    ReanimJob job{};job.draw=draw;job.draw.sampler=(linear?1u:0u)|(repeat?2u:0u);
-    job.outputVertex=definition->blobHeader;job.capacity=clip?18u:6u;
-    job.imageSlotCount=definition->imageSlotCount;job.textureSlot=VulkanRenderer::SlotOf(texture);
-    if (clip) {
-        job.clip[0]=float(clip->x);job.clip[1]=float(clip->y);
-        job.clip[2]=float(int64_t(clip->x)+clip->width);job.clip[3]=float(int64_t(clip->y)+clip->height);
-    }
-    const auto jobIndex=uint32_t(unifiedJobs->used/sizeof(ReanimJob));
-    std::memcpy(static_cast<std::byte*>(unifiedJobs->mapped)+unifiedJobs->used,&job,sizeof(job));
-    unifiedJobs->used+=sizeof(job);
-    return SubmitUnifiedMarker(0x80000000u|jobIndex,texture,blend);
-#else
-    auto* target=renderImage?renderImage:scene.get();
-    const auto pipeline=(renderImage?reanimGeometryImagePipelines:reanimGeometryPipelines).at(size_t(blend));
-    Buffer* stream=nullptr;
-    for (auto& candidate:reanimPointStreams)
-        if (candidate->size-candidate->used>=sizeof(ReanimJob)) {stream=candidate.get();break;}
-    if (!stream) {
-        auto allocation=std::make_unique<Buffer>();
-        allocation->Create(1024*1024,VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
-        stream=allocation.get();reanimPointStreams.push_back(std::move(allocation));
-    }
-    ReanimJob job{};job.draw=draw;job.draw.sampler=(linear?1u:0u)|(repeat?2u:0u);
-    job.capacity=clip?18u:6u;job.imageSlotCount=definition->imageSlotCount;job.textureSlot=VulkanRenderer::SlotOf(texture);
-    if (clip) {
-        job.clip[0]=float(clip->x);job.clip[1]=float(clip->y);
-        job.clip[2]=float(int64_t(clip->x)+clip->width);job.clip[3]=float(int64_t(clip->y)+clip->height);
-    }
-    const auto first=uint32_t(stream->used/sizeof(ReanimJob));
-    std::memcpy(static_cast<std::byte*>(stream->mapped)+stream->used,&job,sizeof(job));
-    stream->used+=sizeof(job);texture->lastDraw=frameSerial;
-    if (geometryRun.count && (geometryRun.definition!=definition || geometryRun.pipeline!=pipeline ||
-        geometryRun.stream!=stream || geometryRun.width!=uint32_t(target->width) ||
-        geometryRun.height!=uint32_t(target->height))) FlushPendingRun(frame.cmd);
-    if (!geometryRun.count) {
-        FlushPendingRun(frame.cmd);
-        vkCmdBindPipeline(frame.cmd,VK_PIPELINE_BIND_POINT_GRAPHICS,pipeline);
-        const VkDescriptorSet sets[]={textureArray,samplerSet,definition->geometrySet};
-        vkCmdBindDescriptorSets(frame.cmd,VK_PIPELINE_BIND_POINT_GRAPHICS,reanimGeometryLayout,0,3,sets,0,nullptr);
-        const VkDeviceSize zero=0;
-        vkCmdBindVertexBuffers(frame.cmd,0,1,&stream->buffer,&zero);
-        const VkViewport viewport{0,0,float(target->width),float(target->height),0,1};
-        const VkRect2D scissor{{0,0},{uint32_t(target->width),uint32_t(target->height)}};
-        vkCmdSetViewport(frame.cmd,0,1,&viewport);vkCmdSetScissor(frame.cmd,0,1,&scissor);
-        const float extent[]={float(target->width),float(target->height)};
-        vkCmdPushConstants(frame.cmd,reanimGeometryLayout,VK_SHADER_STAGE_GEOMETRY_BIT,0,sizeof(extent),extent);
-        geometryRun={definition,stream,pipeline,first,0,uint32_t(target->width),uint32_t(target->height)};
-        drawState={};
-    }
-    ++geometryRun.count;
-    return true;
-#endif
-}
-#endif
 
 VulkanReanim* VulkanRenderer::UploadReanimDefinition(const GpuReanimDefinition& source) {
+#if defined(PVZ_REANIM_UNIFIED)
     auto& s=*impl_;
     if (s.frame.valid) throw std::logic_error("Upload reanimation definitions between frames");
-#if defined(PVZ_REANIM_UNIFIED)
     if (!s.window.geometryShaderEnabled) return nullptr;
     if (!s.reanimRetired.empty()) {
         s.window.WaitForFrame();s.FinishTransfer();s.CompleteTransfers();s.ReclaimUnifiedRanges();
     }
-#endif
     if (source.tracks.empty() || source.keys.empty() || !source.imageSlotCount || !source.variantCount ||
         uint64_t(source.imageSlotCount)*source.variantCount!=source.geometry.size())
         throw std::invalid_argument("Invalid resident reanimation definition");
@@ -2493,10 +2288,7 @@ VulkanReanim* VulkanRenderer::UploadReanimDefinition(const GpuReanimDefinition& 
     for (const auto& key:source.keys)
         if (key.imageSlot>=source.imageSlotCount)
             throw std::invalid_argument("Invalid resident reanimation image slot");
-    s.InitReanim();
-#if defined(PVZ_REANIM_GEOMETRY)
     s.InitReanimGeometry();
-#endif
     auto* result=new VulkanReanim;
     result->owner=&s;
     Buffer* staging=nullptr;
@@ -2505,161 +2297,85 @@ VulkanReanim* VulkanRenderer::UploadReanimDefinition(const GpuReanimDefinition& 
         result->imageSlotCount=source.imageSlotCount; result->variantCount=source.variantCount;
         const VkDeviceSize sizes[]={source.tracks.size_bytes(),source.keys.size_bytes(),source.geometry.size_bytes()};
         const void* data[]={source.tracks.data(),source.keys.data(),source.geometry.data()};
-        Buffer* buffers[]={&result->tracks,&result->keys,&result->geometry};
         staging=new Buffer;
-        constexpr VkDeviceSize headerBytes=
-#if defined(PVZ_REANIM_UNIFIED)
-            16;
-#else
-            0;
-#endif
+        constexpr VkDeviceSize headerBytes=16;
         staging->Create(sizes[0]+sizes[1]+sizes[2]+headerBytes,VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
         VkDeviceSize offset=headerBytes;
         for (unsigned i=0;i<3;++i) {
-            buffers[i]->Create(sizes[i],VK_BUFFER_USAGE_TRANSFER_DST_BIT|VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,false);
             std::memcpy(static_cast<std::byte*>(staging->mapped)+offset,data[i],size_t(sizes[i]));
             offset+=sizes[i];
         }
-#if defined(PVZ_REANIM_GEOMETRY) && !defined(PVZ_REANIM_UNIFIED)
-        if (s.reanimGeometrySetLayout) {
-            const VkDescriptorPoolSize size{VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,3};
-            VkDescriptorPoolCreateInfo pool{VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO};
-            pool.maxSets=1;pool.poolSizeCount=1;pool.pPoolSizes=&size;
-            VK_REQUIRE(vkCreateDescriptorPool(s.device,&pool,nullptr,&result->geometryPool));
-            VkDescriptorSetAllocateInfo alloc{VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO};
-            alloc.descriptorPool=result->geometryPool;alloc.descriptorSetCount=1;alloc.pSetLayouts=&s.reanimGeometrySetLayout;
-            VK_REQUIRE(vkAllocateDescriptorSets(s.device,&alloc,&result->geometrySet));
-            std::array<VkDescriptorBufferInfo,3> infos{};
-            std::array<VkWriteDescriptorSet,3> writes{};
-            for (uint32_t i=0;i<3;++i) {
-                infos[i]={buffers[i]->buffer,0,buffers[i]->size};
-                writes[i]={VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET};writes[i].dstSet=result->geometrySet;
-                writes[i].dstBinding=i;writes[i].descriptorCount=1;writes[i].descriptorType=VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-                writes[i].pBufferInfo=&infos[i];
-            }
-            vkUpdateDescriptorSets(s.device,3,writes.data(),0,nullptr);
-        }
-#endif
         // Reserve before command recording so allocation failure cannot leave a
         // recorded upload referring to an object released by this catch block.
         s.reanimDefinitions.reserve(s.reanimDefinitions.size()+1);
         s.reanimStaging.reserve(s.reanimStaging.size()+1);
-#if defined(PVZ_REANIM_UNIFIED)
-        const VkDeviceSize arenaOffset=s.unifiedStatic?s.AllocateUnifiedStatic(staging->size):0;
-#endif
+        const VkDeviceSize origin=s.AllocateUnifiedStatic(staging->size);
         const auto cmd=s.BeginTransfer();
-        offset=headerBytes;
-        for (unsigned i=0;i<3;++i) {
-            const VkBufferCopy copy{offset,0,sizes[i]};
-            vkCmdCopyBuffer(cmd,staging->buffer,buffers[i]->buffer,1,&copy);
-            offset+=sizes[i];
-        }
-#if defined(PVZ_REANIM_UNIFIED)
-        if (s.unifiedStatic) {
-            const VkDeviceSize origin=arenaOffset;
-            const uint32_t header[]={uint32_t((origin+16)/4),uint32_t((origin+16+sizes[0])/4),
-                uint32_t((origin+16+sizes[0]+sizes[1])/4),source.imageSlotCount};
-            std::memcpy(staging->mapped,header,sizeof(header));
-            const VkBufferCopy copy{0,origin,staging->size};
-            vkCmdCopyBuffer(cmd,staging->buffer,s.unifiedStatic->buffer,1,&copy);
-            result->blobHeader=uint32_t(origin/4);result->blobBytes=staging->size;
-        }
-#endif
+        const uint32_t header[]={uint32_t((origin+16)/4),uint32_t((origin+16+sizes[0])/4),
+            uint32_t((origin+16+sizes[0]+sizes[1])/4),source.imageSlotCount};
+        std::memcpy(staging->mapped,header,sizeof(header));
+        const VkBufferCopy copy{0,origin,staging->size};
+        vkCmdCopyBuffer(cmd,staging->buffer,s.unifiedStatic->buffer,1,&copy);
+        result->blobHeader=uint32_t(origin/4);result->blobBytes=staging->size;
         VkMemoryBarrier barrier{VK_STRUCTURE_TYPE_MEMORY_BARRIER};
         barrier.srcAccessMask=VK_ACCESS_TRANSFER_WRITE_BIT; barrier.dstAccessMask=VK_ACCESS_SHADER_READ_BIT;
         vkCmdPipelineBarrier(cmd,VK_PIPELINE_STAGE_TRANSFER_BIT,
-            VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT|VK_PIPELINE_STAGE_VERTEX_SHADER_BIT|
-                (s.window.geometryShaderEnabled?VK_PIPELINE_STAGE_GEOMETRY_SHADER_BIT:0),
+            VK_PIPELINE_STAGE_GEOMETRY_SHADER_BIT,
             0,1,&barrier,0,nullptr,0,nullptr);
         s.reanimDefinitions.push_back(result); s.reanimStaging.push_back(staging);
         return result;
     } catch (...) { delete staging; delete result; throw; }
+#else
+    (void)source;return nullptr;
+#endif
 }
 
 void VulkanRenderer::DestroyReanimDefinition(VulkanReanim* definition) {
     if (!definition) return;
+#if defined(PVZ_REANIM_UNIFIED)
     auto& s=*impl_;
     const auto found=std::find(s.reanimDefinitions.begin(),s.reanimDefinitions.end(),definition);
     if (found==s.reanimDefinitions.end()) throw std::invalid_argument("Unknown reanimation definition");
     s.reanimRetired.push_back(definition);
     definition->owner=nullptr;
     s.reanimDefinitions.erase(found);
+#else
+    throw std::invalid_argument("Resident reanimation is disabled in this renderer");
+#endif
 }
 
 bool VulkanRenderer::SubmitReanim(VulkanReanim* definition,VulkanTexture* texture,
     const GpuReanimDraw& draw,bool linear,bool repeat,VulkanBlend blend,const VulkanClip* clip,bool forceGpu) {
 #if defined(PVZ_REANIM_UNIFIED)
-    if (!impl_->reanimFrameEligible && !forceGpu) return false;
-#else
-    (void)forceGpu;
-#endif
-#if defined(PVZ_REANIM_GEOMETRY)
-    if (impl_->window.geometryShaderEnabled)
-        return impl_->SubmitReanimGeometry(definition,texture,draw,linear,repeat,blend,clip);
-#endif
-#if defined(PVZ_REANIM_UNIFIED)
-    // Optional geometry support never silently selects the failed compute
-    // prototype; callers retain their normal CPU drawing route.
-    return false;
-#else
     auto& s=*impl_;
     if (!s.frame.valid) throw std::logic_error("Reanimation draw outside frame");
-    if (!definition || !texture ||
-        definition->owner!=&s ||
-        !s.textures.contains(texture) || texture==s.renderImage) return false;
-    if (draw.track>=definition->trackInfo.size() || draw.variant>=definition->variantCount ||
-        !std::isfinite(draw.fraction) || draw.fraction<0 || draw.fraction>1 ||
+    if ((!s.reanimFrameEligible && !forceGpu) || !s.window.geometryShaderEnabled ||
+        !definition || definition->owner!=&s || draw.track>=definition->trackInfo.size() ||
         (draw.samplingFlags & ~(GpuVertex::kIndependentColorFilter|GpuVertex::kColorFilterMask|
             GpuVertex::kAlphaEdgeFilter))!=0) return false;
     const auto& track=definition->trackInfo[draw.track];
     if (track.keyOffset==GpuReanimNoKeys || track.flags || draw.before>=track.keyCount ||
         draw.after>=track.keyCount) return false;
-    auto* target=s.renderImage?s.renderImage:s.scene.get();
-    if (clip && (clip->width<=0 || clip->height<=0)) return true;
-    const uint32_t capacity=clip?18u:6u;
-    const VkDeviceSize bytes=capacity*sizeof(GpuVertex);
-    Buffer* stream=nullptr;
-    for (auto& candidate:s.streams)
-        if (candidate->size-candidate->used>=bytes) { stream=candidate.get(); break; }
-    if (!stream) {
-        auto allocation=std::make_unique<Buffer>();
-        allocation->Create(8*1024*1024,VK_BUFFER_USAGE_VERTEX_BUFFER_BIT|VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
-        stream=allocation.get(); s.streams.push_back(std::move(allocation));
-    }
-    // Shader stores to coherent system memory can serialize PCIe transactions
-    // on discrete GPUs. Promote just participating streams to device-local
-    // output; host vertices and GPU holes share one batched transfer/prelude.
-    auto found=std::find_if(s.reanimOutputs.begin(),s.reanimOutputs.end(),
-        [=](const auto& output) {return output.host==stream;});
-    Buffer* output=nullptr;
-    if (found==s.reanimOutputs.end()) {
-        output=new Buffer;
-        try {
-            output->Create(stream->size,VK_BUFFER_USAGE_VERTEX_BUFFER_BIT|
-                VK_BUFFER_USAGE_STORAGE_BUFFER_BIT|VK_BUFFER_USAGE_TRANSFER_DST_BIT,false);
-            s.reanimOutputs.push_back({stream,output,true});
-        } catch (...) {delete output;throw;}
-    } else {
-        found->active=true; output=found->device;
-    }
-    ReanimJob job{};
-    job.draw=draw; job.draw.sampler=(linear?1u:0u)|(repeat?2u:0u);
-    job.outputVertex=uint32_t(stream->used/sizeof(GpuVertex));
-    job.capacity=capacity; job.imageSlotCount=definition->imageSlotCount;
-    job.textureSlot=SlotOf(texture);
-    if (clip) {
-        job.clip[0]=float(clip->x); job.clip[1]=float(clip->y);
-        job.clip[2]=float(int64_t(clip->x)+clip->width); job.clip[3]=float(int64_t(clip->y)+clip->height);
-    }
-    s.reanimWork.push_back({job,definition,output});
-    texture->lastDraw=s.frameSerial;
-    const auto offset=stream->used; stream->used+=bytes;
-    const auto& pipelines=s.renderImage?s.imagePipelines:s.pipelines;
-    // Polygon clipping is evaluated in compute. The ordinary full-target
-    // scissor remains identical to the CPU polygon-clipped submission.
-    s.AppendRun(output,offset,capacity,pipelines.at(size_t(blend)),
-        {{0,0},{uint32_t(target->width),uint32_t(target->height)}},target->width,target->height);
-    return true;
+    GpuReanimInstance instance{};
+    instance.before=draw.before;instance.after=draw.after;instance.variant=draw.variant;
+    instance.fraction=draw.fraction;instance.translateX=draw.translateX;instance.translateY=draw.translateY;
+    instance.overlay00=draw.overlay00;instance.overlay01=draw.overlay01;instance.overlay02=draw.overlay02;
+    instance.overlay10=draw.overlay10;instance.overlay11=draw.overlay11;instance.overlay12=draw.overlay12;
+    const auto token=BeginReanimInstance(definition,texture,instance,linear,repeat,clip,forceGpu);
+    if (token==UINT32_MAX) return false;
+    // Legacy translation already includes the half-pixel adjustment. Write the
+    // known flag value without reading write-combined mapped instance memory.
+    const uint32_t flags=(linear?1u:0u)|(repeat?2u:0u)|(clip?4u:0u)|8u;
+    std::memcpy(static_cast<std::byte*>(s.unifiedInstances->mapped)+
+        VkDeviceSize(token&0xffffu)*sizeof(ReanimInstanceData)+offsetof(ReanimInstanceData,flags),
+        &flags,sizeof(flags));
+    GpuReanimTrackDraw packet{};packet.track=draw.track;packet.color=draw.color;
+    packet.samplingFlags=draw.samplingFlags;
+    packet.flags=draw.truncate?GpuReanimTrackDraw::Truncate:0;
+    return SubmitReanimTrack(token,packet,blend);
+#else
+    (void)definition;(void)texture;(void)draw;(void)linear;(void)repeat;(void)blend;(void)clip;(void)forceGpu;
+    return false;
 #endif
 }
 
@@ -2717,109 +2433,10 @@ bool VulkanRenderer::SubmitReanimTrack(uint32_t instance,const GpuReanimTrackDra
     const auto packetIndex=uint32_t(s.unifiedPackets->used/sizeof(ReanimTrackData));
     std::memcpy(static_cast<std::byte*>(s.unifiedPackets->mapped)+s.unifiedPackets->used,&packet,sizeof(packet));
     s.unifiedPackets->used+=sizeof(packet);
-    return s.SubmitUnifiedMarker(0xc0000000u|packetIndex,texture,blend);
+    return s.SubmitUnifiedMarker(0x80000000u|packetIndex,texture,blend);
 #else
     (void)instance;(void)draw;(void)blend;return false;
 #endif
-}
-
-VkCommandBuffer VulkanRenderer::Impl::RecordReanim() {
-    if (reanimWork.empty()) {
-#if defined(PVZ_REANIM_BENCHMARK)
-        if (!frameTimestampQueries) return VK_NULL_HANDLE;
-        InitReanim();
-        VK_REQUIRE(vkResetCommandPool(device,reanimCommandPool,0));
-        VkCommandBufferBeginInfo begin{VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO};
-        begin.flags=VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-        VK_REQUIRE(vkBeginCommandBuffer(reanimCommand,&begin));
-        vkCmdResetQueryPool(reanimCommand,frameTimestampQueries,0,2);
-        vkCmdWriteTimestamp(reanimCommand,VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,frameTimestampQueries,0);
-        VK_REQUIRE(vkEndCommandBuffer(reanimCommand));
-        return reanimCommand;
-#else
-        return VK_NULL_HANDLE;
-#endif
-    }
-    const VkDeviceSize bytes=reanimWork.size()*sizeof(ReanimJob);
-    if (!reanimJobs || reanimJobs->size<bytes) {
-        delete reanimJobs; reanimJobs=nullptr;
-        reanimJobs=new Buffer;
-        reanimJobs->Create(std::max<VkDeviceSize>(bytes,65536),VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
-    }
-    auto* jobs=static_cast<ReanimJob*>(reanimJobs->mapped);
-    for (size_t i=0;i<reanimWork.size();++i) jobs[i]=reanimWork[i].job;
-    uint32_t groups=0;
-    VulkanReanim* previousDefinition=nullptr;
-    Buffer* previousStream=nullptr;
-    for (const auto& work:reanimWork) {
-        if (work.definition!=previousDefinition || work.stream!=previousStream) ++groups;
-        previousDefinition=work.definition; previousStream=work.stream;
-    }
-    if (groups>reanimPoolCapacity) {
-        if (reanimPool) vkDestroyDescriptorPool(device,reanimPool,nullptr);
-        reanimPool=VK_NULL_HANDLE; reanimPoolCapacity=0;
-        const VkDescriptorPoolSize poolSize{VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,groups*5};
-        VkDescriptorPoolCreateInfo pool{VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO};
-        pool.maxSets=groups; pool.poolSizeCount=1; pool.pPoolSizes=&poolSize;
-        VK_REQUIRE(vkCreateDescriptorPool(device,&pool,nullptr,&reanimPool));
-        reanimPoolCapacity=groups;
-    } else {
-        // BeginScene has already waited the previous main/image frame fence.
-        VK_REQUIRE(vkResetDescriptorPool(device,reanimPool,0));
-    }
-    VK_REQUIRE(vkResetCommandPool(device,reanimCommandPool,0));
-    VkCommandBufferBeginInfo begin{VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO};
-    begin.flags=VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-    VK_REQUIRE(vkBeginCommandBuffer(reanimCommand,&begin));
-#if defined(PVZ_REANIM_BENCHMARK)
-    if (frameTimestampQueries) {
-        vkCmdResetQueryPool(reanimCommand,frameTimestampQueries,0,2);
-        vkCmdWriteTimestamp(reanimCommand,VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,frameTimestampQueries,0);
-    }
-#endif
-    for (const auto& output:reanimOutputs) if (output.active) {
-        const VkBufferCopy copy{0,0,output.host->used};
-        vkCmdCopyBuffer(reanimCommand,output.host->buffer,output.device->buffer,1,&copy);
-    }
-    VkMemoryBarrier upload{VK_STRUCTURE_TYPE_MEMORY_BARRIER};
-    upload.srcAccessMask=VK_ACCESS_TRANSFER_WRITE_BIT;
-    upload.dstAccessMask=VK_ACCESS_SHADER_WRITE_BIT|VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
-    vkCmdPipelineBarrier(reanimCommand,VK_PIPELINE_STAGE_TRANSFER_BIT,
-        VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT|VK_PIPELINE_STAGE_VERTEX_INPUT_BIT,
-        0,1,&upload,0,nullptr,0,nullptr);
-    vkCmdBindPipeline(reanimCommand,VK_PIPELINE_BIND_POINT_COMPUTE,reanimPipeline);
-    for (size_t first=0;first<reanimWork.size();) {
-        const auto& work=reanimWork[first];
-        size_t end=first+1;
-        while (end<reanimWork.size() && reanimWork[end].definition==work.definition &&
-            reanimWork[end].stream==work.stream) ++end;
-        VkDescriptorSet set{};
-        VkDescriptorSetAllocateInfo alloc{VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO};
-        alloc.descriptorPool=reanimPool; alloc.descriptorSetCount=1; alloc.pSetLayouts=&reanimSetLayout;
-        VK_REQUIRE(vkAllocateDescriptorSets(device,&alloc,&set));
-        Buffer* buffers[]={&work.definition->tracks,&work.definition->keys,&work.definition->geometry,
-            reanimJobs,work.stream};
-        std::array<VkDescriptorBufferInfo,5> infos{};
-        std::array<VkWriteDescriptorSet,5> writes{};
-        for (uint32_t i=0;i<5;++i) {
-            infos[i]={buffers[i]->buffer,0,buffers[i]->size};
-            writes[i]={VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET};
-            writes[i].dstSet=set; writes[i].dstBinding=i; writes[i].descriptorCount=1;
-            writes[i].descriptorType=VK_DESCRIPTOR_TYPE_STORAGE_BUFFER; writes[i].pBufferInfo=&infos[i];
-        }
-        vkUpdateDescriptorSets(device,5,writes.data(),0,nullptr);
-        vkCmdBindDescriptorSets(reanimCommand,VK_PIPELINE_BIND_POINT_COMPUTE,reanimLayout,0,1,&set,0,nullptr);
-        const uint32_t push[]={uint32_t(first),uint32_t(end-first)};
-        vkCmdPushConstants(reanimCommand,reanimLayout,VK_SHADER_STAGE_COMPUTE_BIT,0,sizeof(push),push);
-        vkCmdDispatch(reanimCommand,(push[1]+63)/64,1,1);
-        first=end;
-    }
-    VkMemoryBarrier barrier{VK_STRUCTURE_TYPE_MEMORY_BARRIER};
-    barrier.srcAccessMask=VK_ACCESS_SHADER_WRITE_BIT; barrier.dstAccessMask=VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
-    vkCmdPipelineBarrier(reanimCommand,VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,VK_PIPELINE_STAGE_VERTEX_INPUT_BIT,
-        0,1,&barrier,0,nullptr,0,nullptr);
-    VK_REQUIRE(vkEndCommandBuffer(reanimCommand));
-    return reanimCommand;
 }
 
 void VulkanRenderer::SubmitTriangles(std::span<const VulkanVertex> vertices, VulkanTexture* texture,
@@ -2941,7 +2558,7 @@ void VulkanRenderer::EndSceneAndPresent() {
     if (s.frameTimestampQueries)
         vkCmdWriteTimestamp(s.frame.cmd,VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,s.frameTimestampQueries,1);
 #endif
-    s.window.EndFrame(s.RecordReanim());
+    s.window.EndFrame();
     s.frame = {};
     s.sceneInitialized = true;
 }

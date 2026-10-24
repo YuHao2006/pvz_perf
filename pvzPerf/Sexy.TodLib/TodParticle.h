@@ -364,6 +364,10 @@ public:
 	std::int64_t                    mLinearElapsedNs;
 	SexyVector2                     mLinearVelocity; // Segment rate; public mVelocity may select a new rate next update.
 	SexyVector2                     mLinearLastPosition; // Detect public position edits without recomputing the old sample.
+	double                          mLinearSpinOrigin; // Radians, excluding the authored absolute angle curve.
+	double                          mLinearSpinRate; // Radians per source tick; shares mLinearElapsedNs.
+	float                           mLinearLastSpin;
+	std::uint32_t                   mLinearSpinActive; // 0 for sampled-rate/field motion, 1 for an anchored spin segment.
 };
 
 inline bool TodParticleConstantAnimationRate(const FloatParameterTrack& track)

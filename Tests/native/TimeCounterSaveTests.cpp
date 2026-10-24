@@ -222,6 +222,10 @@ void CheckLiveSave()
         source.mLinearElapsedNs = 1'250'001;
         source.mLinearVelocity = {.125f,-.25f};
         source.mLinearLastPosition = {1'048'576.f,-1'048'576.f};
+        source.mLinearSpinOrigin = 1'048'576.015625;
+        source.mLinearSpinRate = .125;
+        source.mLinearLastSpin = 1'048'576.f;
+        source.mLinearSpinActive = 1;
     }
     else if constexpr (std::is_same_v<T, TodParticleEmitter>)
     {
@@ -243,7 +247,7 @@ void CheckLiveSave()
     const auto original = WriteSaveRecord(source);
     const auto tail = std::span(original).subspan(SaveV2Size<T>());
     if constexpr (std::is_same_v<T, TodParticle>)
-        Require(tail.size() == 68 && V7SaveSchema::Read(tail, 0, 8) == 21'234'567 &&
+        Require(tail.size() == 92 && V7SaveSchema::Read(tail, 0, 8) == 21'234'567 &&
             V7SaveSchema::Read(tail, 8, 8) == 123'456'789'012LL &&
             V7SaveSchema::Read(tail, 16, 8) == 987'654'321 &&
             V7SaveSchema::Read(tail, 24, 4) == 0x71234567U &&
@@ -253,7 +257,11 @@ void CheckLiveSave()
             V7SaveSchema::Float(tail,52)==.125f &&
             V7SaveSchema::Float(tail,56)==-.25f &&
             V7SaveSchema::Float(tail,60)==1'048'576.f &&
-            V7SaveSchema::Float(tail,64)==-1'048'576.f,
+            V7SaveSchema::Float(tail,64)==-1'048'576.f &&
+            V7SaveSchema::Double(tail,68)==1'048'576.015625 &&
+            V7SaveSchema::Double(tail,76)==.125 &&
+            V7SaveSchema::Float(tail,84)==1'048'576.f &&
+            V7SaveSchema::Read(tail,88,4)==1,
             "Native particle main-step tail retained a removed current sample or shifted its exact fields");
     else if constexpr (std::is_same_v<T, TodParticleEmitter>)
         Require(tail.size() == 40 && V7SaveSchema::Read(tail, 0, 8) == 123'456'789'012LL &&

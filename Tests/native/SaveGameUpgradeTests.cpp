@@ -306,7 +306,8 @@ void LoadCurrentWithResources(LawnApp& app, HiddenWindow& window, const char* sa
     for (int effect=0;effect<gParticleDefCount && !linearParticle;++effect)
     {
         auto& definition=gParticleDefArray[effect];
-        if (!definition.mEmitterDefCount || definition.mEmitterDefs[0].mParticleFields.count)
+        if (!definition.mEmitterDefCount || definition.mEmitterDefs[0].mParticleFields.count ||
+            definition.mEmitterDefs[0].mParticleSpinSpeed.mCountNodes>1)
             continue;
         auto* system=app.mEffectSystem->mParticleHolder->AllocParticleSystemFromDef(
             100,200,0,&definition,static_cast<ParticleEffect>(effect));
@@ -318,8 +319,10 @@ void LoadCurrentWithResources(LawnApp& app, HiddenWindow& window, const char* sa
         linearParticle->mParticleDuration.mNanoseconds=60'000'000'000;
         linearParticle->mPosition={1'048'576.f,-1'048'576.f};
         linearParticle->mVelocity={.125f,-.125f};
+        linearParticle->mSpinPosition=1'048'576.f;
+        linearParticle->mSpinVelocity=.125f;
         Require(emitter->UpdateParticle(linearParticle,16'000'000) &&
-            linearParticle->mLinearElapsedNs==16'000'000,
+            linearParticle->mLinearElapsedNs==16'000'000 && linearParticle->mLinearSpinActive==1,
             "Linear particle save probe did not establish an integer-time segment");
     }
     Require(linearParticle!=nullptr,"No field-free production particle definition for save probe");
@@ -393,7 +396,9 @@ void LoadCurrentWithResources(LawnApp& app, HiddenWindow& window, const char* sa
                         item->mAnimationElapsedNs, item->mAnimationSampleIntegral, item->mRandomSeed,
                         item->mLinearOriginX, item->mLinearOriginY, item->mLinearElapsedNs,
                         item->mLinearVelocity.x, item->mLinearVelocity.y,
-                        item->mLinearLastPosition.x, item->mLinearLastPosition.y);
+                        item->mLinearLastPosition.x, item->mLinearLastPosition.y,
+                        item->mLinearSpinOrigin,item->mLinearSpinRate,
+                        item->mLinearLastSpin,item->mLinearSpinActive);
                 }
             }
         }

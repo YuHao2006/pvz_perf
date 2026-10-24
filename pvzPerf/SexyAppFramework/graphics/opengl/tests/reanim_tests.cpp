@@ -126,6 +126,9 @@ void Correct(OpenGLContext&context){
   std::cout<<"PASS baseline CPU renderer; SKIP optional resident GS on GL<3.2\n";return;
  }
  Require(definition!=nullptr,"GL3.2 resident shader unavailable on capable test context");
+#if defined(PVZ_OPENGL_REANIM_VERTEX_EXPERIMENT)
+ std::cout<<"EXPERIMENT actual_path=vertex/SceneFS no_geometry_stage four_markers_six_indices_per_track\n";
+#endif
  upload={};geometry={};
  const uint32_t texels[]{0xffff0000,0xff00ff00,0xff0000ff,0xffffff00};
  auto*texture=r.CreateTexture(2,2,texels,8);
@@ -289,11 +292,17 @@ void Correct(OpenGLContext&context){
   for(int i=0;i<256;++i)Require(r.SubmitReanimTrack(token,track,GpuBlend::Normal),"Invocation-count track rejected");
   r.EndSceneAndPresent();unsigned long long invocations=0;get(query,0x8866,&invocations);r.frameTiming=nullptr;
   unsigned long long expectedInvocations=262;
-#if defined(PVZ_OPENGL_REANIM_COMPUTE_EXPERIMENT)
+#if defined(PVZ_OPENGL_REANIM_VERTEX_EXPERIMENT)
+  expectedInvocations=256*4+6;
+#elif defined(PVZ_OPENGL_REANIM_COMPUTE_EXPERIMENT)
   if(computeActive)expectedInvocations=256*4+6;
 #endif
   std::cout<<"PIPELINE_STATISTICS GPUtracks=256 clear_vertices=6 actual_VS_invocations="<<invocations
    <<" expected_unique_vertices="<<expectedInvocations<<" (GL4.6 diagnostic only)\n";
+#if defined(PVZ_OPENGL_REANIM_VERTEX_EXPERIMENT)
+  Require(invocations>=expectedInvocations&&invocations<=256*6+6,
+   "Vertex experiment work outside the emitted index bounds");
+#else
 #if defined(PVZ_OPENGL_REANIM_COMPUTE_EXPERIMENT)
   // Indexed draws may invoke a vertex again after a post-transform cache miss.
   // Compute emits eighteen indices per track, including degenerate padding;
@@ -303,6 +312,7 @@ void Correct(OpenGLContext&context){
   else
 #endif
    Require(invocations==expectedInvocations,"Unexpected indexed vertex work for the selected resident path");
+#endif
   r.frameTiming=&statistics;Require(r.BeginScene(),"Ordinary-only invocation-count scene");Clear(r);
   Require(r.BeginReanimInstance(definition,texture,packet,false,false,nullptr,true)!=~0u,"Unused shared instance rejected");
   r.EndSceneAndPresent();get(query,0x8866,&invocations);r.frameTiming=nullptr;
@@ -417,13 +427,21 @@ void Benchmark(OpenGLContext&context,bool mixed,bool transitions=false,bool diag
  std::cout<<"OpenGL actual renderer native-trig "
 #if defined(PVZ_OPENGL_REANIM_COMPUTE_EXPERIMENT)
   <<"compute/SceneVS"
+#elif defined(PVZ_OPENGL_REANIM_VERTEX_EXPERIMENT)
+  <<"vertex/SceneFS"
 #else
   <<"GS"
 #endif
   <<" benchmark mixed="<<mixed
   <<" transitions="<<transitions
   <<" diagnostic_timestamps="<<diagnostic
-  <<" unlocked clocks; CPU includes interpolation/clip or64Binstance+32Btrack preparation,batching,upload,flush,presentcall;"
+  <<" unlocked clocks; CPU includes interpolation/clip or64Binstance+"
+#if defined(PVZ_OPENGL_REANIM_VERTEX_EXPERIMENT)
+  <<"4x40Bmarker/6indices"
+#else
+  <<"32Btrack"
+#endif
+  <<" preparation,batching,upload,flush,presentcall;"
   <<" GPU query brackets actual Flush upload+draw, excludes presentquad/WSI;"
   <<" CPU subtracts separately measured Present call; no vertex/pixel readback\n";
  for(unsigned count:{256u,512u,2048u,8192u}){

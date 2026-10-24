@@ -254,17 +254,26 @@ void Correct(OpenGLContext&context){
    if(gpu)Require(r.SubmitReanim(definition,texture,job,false,false,GpuBlend::Additive,nullptr,true),"Post-feedback resident rejected");
    else r.SubmitTriangles(cpu,texture,false,false,GpuBlend::Additive);
    r.EndSceneAndPresent();
-   if(gpu
-#if defined(PVZ_OPENGL_REANIM_COMPUTE_EXPERIMENT)
-      &&!computeActive
-#endif
-   ){
-    // Image-only End does not present/rebind the scene VAO. The final
-    // resident segment leaves its EBO bound, so inspect the actual upload.
+   if(gpu){
+    // Image-only End does not present/rebind buffers. Query the actual
+    // instance upload across two Flushes and two independently indexed jobs.
     using BufferSize=void(APIENTRY*)(GLenum,GLenum,GLint*);
     const auto bufferSize=reinterpret_cast<BufferSize>(GL3::GetProcAddress("glGetBufferParameteriv"));
     Require(bufferSize!=nullptr,"Buffer-size query unavailable");
-    GLint bytes=0;bufferSize(GL_ELEMENT_ARRAY_BUFFER,0x8764,&bytes); // GL_BUFFER_SIZE.
+    GLint bytes=0;bufferSize(0x8C2A,0x8764,&bytes); // GL_TEXTURE_BUFFER / GL_BUFFER_SIZE.
+#if defined(PVZ_OPENGL_REANIM_COMPUTE_EXPERIMENT)
+    constexpr int instanceBytes=96;
+#else
+    constexpr int instanceBytes=80;
+#endif
+    Require(bytes==2*instanceBytes,"Resident instance upload contains unused clip data or has a wrong stride");
+    std::cout<<"PASS two resident instances across feedback Flushes bytes="<<bytes<<'\n';
+#if defined(PVZ_OPENGL_REANIM_COMPUTE_EXPERIMENT)
+    if(!computeActive)
+#endif
+    {
+    // The last resident segment also leaves its EBO bound.
+    bufferSize(GL_ELEMENT_ARRAY_BUFFER,0x8764,&bytes);
 #if defined(PVZ_OPENGL_REANIM_VERTEX_EXPERIMENT)
     constexpr int markerIndices=6;
 #else
@@ -273,6 +282,7 @@ void Correct(OpenGLContext&context){
     Require(bytes==markerIndices*int(sizeof(unsigned int)),
      "Long ordinary prefix still uploaded unused EBO indices");
     std::cout<<"PASS resident EBO excludes512 ordinary triangles bytes="<<bytes<<'\n';
+    }
    }
    r.SetRenderImage(nullptr);const auto actual=r.ReadTexturePixels(target).pixels;
    if(!gpu)expected=actual;else error.Compare(expected,actual);
@@ -526,7 +536,13 @@ int Benchmark(OpenGLContext&context,bool mixed,bool transitions=false,bool diagn
   <<" transitions="<<transitions
   <<" diagnostic_timestamps="<<diagnostic
   <<" unlocked clocks; CPU includes interpolation/clip or API_payload64Binstance+32Btrack;"
-  <<" GPU_upload96Binstance+"
+  <<" GPU_upload"
+#if defined(PVZ_OPENGL_REANIM_COMPUTE_EXPERIMENT)
+  <<"96"
+#else
+  <<"80"
+#endif
+  <<"Binstance+"
 #if defined(PVZ_OPENGL_REANIM_VERTEX_EXPERIMENT)
   <<"4x40Bmarker+24Bindices"
 #elif defined(PVZ_OPENGL_REANIM_COMPUTE_EXPERIMENT)

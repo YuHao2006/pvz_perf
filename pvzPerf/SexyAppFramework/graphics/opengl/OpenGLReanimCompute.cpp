@@ -98,7 +98,8 @@ void OpenGLRenderer::Impl::InitReanimCompute()
     reanimComputeMaximumBytes=size_t(maximumBytes);reanimComputeMaximumGroups=unsigned(maximumGroups);
     unsigned int shader=0;
     try{
-        const std::string source=std::string("#version 430\n#define PVZ_REANIM_COMPUTE_SHADER 1\n")+
+        const std::string source=std::string("#version 430\n#define PVZ_REANIM_COMPUTE_SHADER 1\n"
+            "#define PVZ_REANIM_SHADER_CLIP 1\n")+
             OpenGLReanimEvaluationShader+ComputeExpansion;
         const char* text=source.data();const int length=int(source.size());
         shader=glCreateShader(0x91B9);glShaderSource(shader,1,&text,&length);glCompileShader(shader);

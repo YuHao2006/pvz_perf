@@ -270,6 +270,7 @@ struct VulkanRenderer::Impl {
 #endif
 #if defined(PVZ_REANIM_BENCHMARK)
     VkQueryPool frameTimestampQueries = VK_NULL_HANDLE;
+    std::chrono::steady_clock::time_point frameRecordEnd{};
 #endif
     std::unique_ptr<Buffer> textureStaging;
     struct TextureUpload { VulkanTexture* texture; VkDeviceSize offset; };
@@ -1193,6 +1194,9 @@ void VulkanRenderer::Impl::FinishImageBatch() {
         vkCmdWriteTimestamp(imageCommand,VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,frameTimestampQueries,1);
 #endif
     VK_REQUIRE(vkEndCommandBuffer(imageCommand));
+#if defined(PVZ_REANIM_BENCHMARK)
+    frameRecordEnd=std::chrono::steady_clock::now();
+#endif
     VK_REQUIRE(vkResetFences(device, 1, &imageFence));
     VkSubmitInfo submit{VK_STRUCTURE_TYPE_SUBMIT_INFO};
     submit.commandBufferCount = 1;
@@ -1206,6 +1210,9 @@ void VulkanRenderer::Impl::FinishImageBatch() {
 VulkanRenderer::VulkanRenderer(VulkanContext& window, int width, int height,
     const std::string& vs, const std::string& ps,const VulkanHdrParams* hdr)
     : impl_(std::make_unique<Impl>(window, width, height)),
+#if defined(PVZ_REANIM_BENCHMARK)
+      frameRecordEnd(impl_->frameRecordEnd),
+#endif
       sceneOpen(impl_->frame.valid), reanimPictureCandidates(impl_->reanimPictureCandidates),
       reanimFrameEligible(impl_->reanimFrameEligible), whiteTexture(impl_->white),
       causticsTexture(impl_->caustics.target), sceneWidth(impl_->width),
@@ -1885,6 +1892,7 @@ bool VulkanRenderer::BeginScene() {
 #endif
 #if defined(PVZ_REANIM_BENCHMARK)
     s.frameTimestampQueries=frameTimestampQueries;
+    s.frameRecordEnd={};
     if (s.frameTimestampQueries) {
         vkCmdResetQueryPool(s.frame.cmd,s.frameTimestampQueries,0,2);
         vkCmdWriteTimestamp(s.frame.cmd,VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,s.frameTimestampQueries,0);
@@ -2557,6 +2565,7 @@ void VulkanRenderer::EndSceneAndPresent() {
 #if defined(PVZ_REANIM_BENCHMARK)
     if (s.frameTimestampQueries)
         vkCmdWriteTimestamp(s.frame.cmd,VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,s.frameTimestampQueries,1);
+    s.frameRecordEnd=std::chrono::steady_clock::now();
 #endif
     s.window.EndFrame();
     s.frame = {};

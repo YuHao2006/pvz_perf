@@ -13,6 +13,9 @@
 #include <span>
 #include <string>
 #include <vector>
+#if defined(PVZ_REANIM_BENCHMARK)
+#include <chrono>
+#endif
 
 namespace Sexy {
 
@@ -38,6 +41,8 @@ public:
 #if defined(PVZ_REANIM_BENCHMARK)
     // Only the opt-in benchmark backend contains this borrowed query-pool hook.
     VkQueryPool frameTimestampQueries = VK_NULL_HANDLE;
+    // Renderer preparation/recording endpoint, before queue submission or WSI.
+    const std::chrono::steady_clock::time_point& frameRecordEnd;
 #endif
     VulkanRenderer(VulkanContext& window, int sceneWidth, int sceneHeight,
                    const std::string& vertexShader, const std::string& fragmentShader,

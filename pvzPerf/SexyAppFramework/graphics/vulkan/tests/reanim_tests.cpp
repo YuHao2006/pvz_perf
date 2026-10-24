@@ -452,7 +452,7 @@ void Run() {
         "24 mixed definition/texture/filter/blend/clip jobs and ordinary sprites, image-only lifetime\n";
 }
 #if defined(PVZ_REANIM_BENCHMARK)
-struct Timing { double cpu=0, jobs=0, gpu=0; uint64_t accepted=0,fallback=0; };
+struct Timing { double cpu=0, wall=0, jobs=0, gpu=0; uint64_t accepted=0,fallback=0; };
 bool mixedBenchmark=false;
 bool spriteOnlyBenchmark=false;
 bool packetBenchmark=false;
@@ -546,8 +546,11 @@ Timing BenchmarkBurst(VulkanRenderer& renderer,VulkanContext& window,std::span<V
         const auto jobsEnd=Clock::now();
         renderer.EndSceneAndPresent();
         const auto end=Clock::now();
+        const auto recordEnd=renderer.frameRecordEnd;
+        Require(recordEnd>=jobsEnd && recordEnd<=end,"Invalid renderer recording endpoint");
         result.jobs+=std::chrono::duration<double,std::micro>(jobsEnd-start).count();
-        result.cpu+=std::chrono::duration<double,std::micro>(end-start).count();
+        result.cpu+=std::chrono::duration<double,std::micro>(recordEnd-start).count();
+        result.wall+=std::chrono::duration<double,std::micro>(end-start).count();
     }
     window.WaitForFrame();
     // Only scalar timer results are read, after the complete burst and outside
@@ -558,7 +561,8 @@ Timing BenchmarkBurst(VulkanRenderer& renderer,VulkanContext& window,std::span<V
             VK_QUERY_RESULT_64_BIT)==VK_SUCCESS,"Benchmark timestamps unavailable");
         result.gpu+=double(ticks[1]-ticks[0])*timestampPeriod/1000.0;
     }
-    result.cpu/=queries.size(); result.jobs/=queries.size();result.gpu/=queries.size();
+    result.cpu/=queries.size();result.wall/=queries.size();
+    result.jobs/=queries.size();result.gpu/=queries.size();
     return result;
 }
 double Median(std::vector<double> values) {
@@ -585,8 +589,12 @@ void Benchmark() {
         <<" sparse="<<sparseBenchmark
         <<" policy="<<policyBenchmark<<" transitions="<<transitionBenchmark
         <<" timestampPeriodNs="<<properties.limits.timestampPeriod
-        <<" unlocked clocks; CPU excludes BeginScene acquire/prior-frame wait; CPU includes "
-          "clear, track work, upload, submit and present call. "
+        <<" unlocked clocks; CPU_us is complete renderer preparation/recording after BeginScene "
+          "through final Flush/texture upload/present-quad recording, before window.EndFrame; "
+          "includes clear, per-frame fixture preparation, transforms or packet creation and uploads; "
+          "excludes BeginScene waits/bookkeeping and QueueSubmit/WSI. CPU_wall_us preserves "
+          "the previous interval through EndSceneAndPresent return, including QueueSubmit/WSI. "
+          "jobs_us is diagnostic only. "
           "GPU timestamps bracket scene+present-quad commands, exclude WSI present wait.\n";
     const std::string shaders=PVZ_NATIVE_SHADER_DIR;
     VulkanRenderer renderer(window,800,600,shaders+"/game_vs.spv",shaders+"/game_ps.spv");
@@ -597,7 +605,7 @@ void Benchmark() {
     pool.queryType=VK_QUERY_TYPE_TIMESTAMP;pool.queryCount=2;
     for (auto& query:queries)
         Require(vkCreateQueryPool(window.device,&pool,nullptr,&query)==VK_SUCCESS,"Cannot create benchmark queries");
-    unsigned gates=0,meanGates=0,total=0,rejected=0;
+    unsigned gates=0,meanGates=0,wallGates=0,meanWallGates=0,total=0,rejected=0;
     for (unsigned visible: (sparseBenchmark||transitionBenchmark)?
         std::vector<unsigned>{1,4,16}:std::vector<unsigned>{0}) {
     sparseVisible=visible;
@@ -629,7 +637,7 @@ void Benchmark() {
         for (unsigned index=0;index<(mixedBenchmark?4u:1u);++index)
             definitions.push_back(renderer.UploadReanimDefinition({tracks,keys,geometry,2,1}));
         for (bool clipped:{false,true}) {
-            std::array<std::vector<double>,6> values;
+            std::array<std::vector<double>,8> values;
             uint64_t accepted=0,fallback=0;
             for (unsigned round=0;round<12;++round) {
                 Timing cpu,gpu;
@@ -653,34 +661,48 @@ void Benchmark() {
                     <<" transitionSparseVisible="<<(transitionBenchmark?sparseVisible:0)
                     <<" accepted="<<gpu.accepted<<" fallback="<<gpu.fallback
                     <<" cpu="<<cpu.cpu<<" residentCpu="<<gpu.cpu<<" gpu="<<cpu.gpu
+                    <<" cpuWall="<<cpu.wall<<" residentCpuWall="<<gpu.wall
                     <<" residentGpu="<<gpu.gpu<<'\n';
                 values[0].push_back(cpu.cpu);values[1].push_back(gpu.cpu);
                 values[2].push_back(cpu.gpu);values[3].push_back(gpu.gpu);
                 values[4].push_back(cpu.jobs);values[5].push_back(gpu.jobs);
+                values[6].push_back(cpu.wall);values[7].push_back(gpu.wall);
             }
             const double cpu=Median(values[0]),residentCpu=Median(values[1]);
             const double gpu=Median(values[2]),residentGpu=Median(values[3]);
             const bool passed=cpu-residentCpu>std::max(0.0,residentGpu-gpu);
             const bool meanPassed=Mean(values[0])-Mean(values[1])>
                 std::max(0.0,Mean(values[3])-Mean(values[2]));
+            const double cpuWall=Median(values[6]),residentCpuWall=Median(values[7]);
+            const bool wallPassed=cpuWall-residentCpuWall>std::max(0.0,residentGpu-gpu);
+            const bool meanWallPassed=Mean(values[6])-Mean(values[7])>
+                std::max(0.0,Mean(values[3])-Mean(values[2]));
             const bool cpuFallback=policyBenchmark && accepted==0 && fallback>0;
             if (cpuFallback) ++rejected;
-            else {gates+=passed;++total;meanGates+=meanPassed;}
+            else {
+                gates+=passed;++total;meanGates+=meanPassed;
+                wallGates+=wallPassed;meanWallGates+=meanWallPassed;
+            }
             std::cout<<"tracks="<<count<<" clipped="<<clipped
                 <<" sparseVisible="<<sparseVisible
                 <<" ordinarySprites="<<(transitionBenchmark?ordinaryCount:
                     (sparseVisible||spriteOnlyBenchmark)?count:0)
                 <<" transitionSparseVisible="<<(transitionBenchmark?sparseVisible:0)
                 <<" CPU_us="<<cpu<<"->"<<residentCpu
+                <<" CPU_wall_us="<<cpuWall<<"->"<<residentCpuWall
                 <<" jobs_us="<<Median(values[4])<<"->"<<Median(values[5])
                 <<" GPU_us="<<gpu<<"->"<<residentGpu
                 <<" CPU_saved="<<cpu-residentCpu
+                <<" CPU_wall_saved="<<cpuWall-residentCpuWall
                 <<" GPU_added="<<residentGpu-gpu
                 <<" accepted="<<accepted<<" fallback="<<fallback
                 <<" gate="<<(cpuFallback?"CPU_FALLBACK":passed?"PASS":"FAIL")
+                <<" wallGate="<<(cpuFallback?"CPU_FALLBACK":wallPassed?"PASS":"FAIL")
                 <<" meanCPU_us="<<Mean(values[0])<<"->"<<Mean(values[1])
+                <<" meanCPU_wall_us="<<Mean(values[6])<<"->"<<Mean(values[7])
                 <<" meanGPU_us="<<Mean(values[2])<<"->"<<Mean(values[3])
-                <<" meanGate="<<(cpuFallback?"CPU_FALLBACK":meanPassed?"PASS":"FAIL")<<std::endl;
+                <<" meanGate="<<(cpuFallback?"CPU_FALLBACK":meanPassed?"PASS":"FAIL")
+                <<" meanWallGate="<<(cpuFallback?"CPU_FALLBACK":meanWallPassed?"PASS":"FAIL")<<std::endl;
         }
         for (auto* definition:definitions) renderer.DestroyReanimDefinition(definition);
     }
@@ -691,7 +713,8 @@ void Benchmark() {
     for (auto query:queries) vkDestroyQueryPool(window.device,query,nullptr);
     renderer.DestroyTexture(texture);
     std::cout<<"GATES median "<<gates<<"/"<<total<<" mean "<<meanGates<<"/"<<total
-        <<" pass; policy CPU fallback cases="<<rejected
+        <<" pass; wall median "<<wallGates<<"/"<<total<<" mean "<<meanWallGates<<"/"<<total
+        <<"; policy CPU fallback cases="<<rejected
         <<"; scalar query collection outside timed CPU samples; "
         "no full-game speedup claim\n";
 }

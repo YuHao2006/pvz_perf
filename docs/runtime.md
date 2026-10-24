@@ -50,10 +50,14 @@ Vulkan／OpenGL／DX12／Metal 常驻动画接口由 `PVZ_EXPERIMENTAL_GPU_REANI
 Vulkan／OpenGL 的普通三角形与轨道 marker 保持原顺序；较长的连续普通三角形段使用原顶点管线，
 避免少数动画使整帧普通图片承担 geometry shader 成本。
 Vulkan／DX12 使用 precise 多项式，OpenGL 使用自身 native sin/cos 路径。
+Vulkan／OpenGL／DX12 的常驻定义缓冲区支持扩容及释放区间复用；
+扩容在 GPU 内复制已有数据，释放区间等待对应提交完成后才能重新分配，
+存活定义的偏移保持不变。DX12 使用 32 位字节寻址，单个缓冲区上限为 4GiB。
 Metal 使用相同多项式，针对该 shader 关闭 fast-math 与浮点乘加收缩，
 不使用 MSL 不支持的 HLSL `precise` 关键字。Metal 每批连续兼容轨道先 compute，
 再直接使用 private GPU 顶点缓冲绘制；当前上限每批 4096 条，较大序列分批保持顺序。
 Metal 的实现和 Apple 专用夹具已加入源码，尚未在 macOS 编译或执行。
+Metal 当前实验分配器仍是固定容量追加分配，尚未具备上述扩容和区间复用机制。
 开启实验时，首帧仍走 CPU。后续依据上一完整批次的真实图片轨道候选数及普通
 三角形总数选择路径，内部目标切换不重置统计；当前门槛为至少 256 条候选，
 且普通三角形不超过候选数的 32 倍。`gpu:` 轨道强制 GPU，

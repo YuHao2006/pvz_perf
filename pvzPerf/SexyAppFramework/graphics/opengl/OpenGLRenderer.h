@@ -72,13 +72,15 @@ public:
         const GpuReanimInstance& instance, bool linear, bool repeat,
         const GpuClip* defaultClip = nullptr, bool forceGpu = false);
     bool SubmitReanimTrack(unsigned int instance, const GpuReanimTrackDraw& draw, GpuBlend blend);
-    // Optional diagnostics. Normal rendering leaves this null and does not
-    // query timestamps or read a CPU clock around presentation.
+#if defined(PVZ_OPENGL_REANIM_DIAGNOSTICS)
+    // Available only in the standalone correctness/benchmark library.
     struct FrameTiming {
         unsigned int elapsedQuery = 0, vertexInvocationsQuery = 0;
+        unsigned int uploadBeginTimestamp = 0, drawBeginTimestamp = 0, drawEndTimestamp = 0;
         double presentCpuUs = 0;
     };
     FrameTiming*& frameTiming;
+#endif
     void SubmitCoverageTriangles(std::span<const GpuVertex> vertices, OpenGLTexture* texture,
         GpuBlend blend, const GpuClip* clip = nullptr);
     void EndSceneAndPresent();

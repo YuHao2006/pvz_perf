@@ -146,6 +146,14 @@ void Correct(OpenGLContext&context){
  auto secondKeys=keys;secondKeys[0].transX+=4;secondKeys[1].transY-=3;
  auto blank=geo;blank[3]={};
  auto*second=r.UploadReanimDefinition({tracks,secondKeys,blank,2,2});
+ // Surpass the initial4096-texel arena while the two definitions used below
+ // remain live, then reclaim/reuse alternating ranges. Their later pixels
+ // verify that growth copied resident bytes on the GPU without a key mirror.
+ std::vector<OpenGLReanim*>arena;
+ for(unsigned i=0;i<320;++i)arena.push_back(r.UploadReanimDefinition({tracks,keys,geo,2,2}));
+ for(size_t i=0;i<arena.size();i+=2){Require(arena[i]!=nullptr,"Arena growth upload rejected");r.DestroyReanimDefinition(arena[i]);}
+ for(size_t i=0;i<arena.size();i+=2)arena[i]=r.UploadReanimDefinition({tracks,keys,geo,2,2});
+ for(auto*entry:arena){Require(entry!=nullptr,"Arena reuse upload rejected");r.DestroyReanimDefinition(entry);}
  const uint32_t otherTexels[]{0xff20c040,0xffe02060,0xff8060f0,0xffe0a020};
  auto*other=r.CreateTexture(2,2,otherTexels,8);std::vector<uint32_t> mixed;
  for(bool gpu:{false,true}){
@@ -204,6 +212,30 @@ void Correct(OpenGLContext&context){
    if(!gpu)expected=actual;else error.Compare(expected,actual);
   }
  }
+ {
+  auto*target=r.CreateRenderImage(64,64);std::vector<uint32_t>expected;
+  GpuReanimDraw job{};job.track=2;job.after=1;job.fraction=.375f;
+  job.overlay00=job.overlay11=1;job.overlay02=8;job.overlay12=5;job.color=0x9070c0e0;
+  const auto cpu=Reference(keys[0],keys[1],geo[1],geo[1],job,OpenGLRenderer::SlotOf(texture),nullptr);
+  const auto feedbackSlot=OpenGLRenderer::SlotOf(target);
+  const GpuVertex triangle[]{{2,2,1,1,1,.1f,0,0,feedbackSlot,0},
+   {50,2,1,1,1,.1f,1,0,feedbackSlot,0},{2,50,1,1,1,.1f,0,1,feedbackSlot,0}};
+  std::vector<GpuVertex>ordinary;
+  for(int i=0;i<512;++i)ordinary.insert(ordinary.end(),std::begin(triangle),std::end(triangle));
+  for(bool gpu:{false,true}){
+   r.SetRenderImage(target);Require(r.BeginScene(),"Long-span image-target scene");Clear(r);
+   if(gpu)Require(r.SubmitReanim(definition,texture,job,false,false,GpuBlend::Normal,nullptr,true),"Image-target resident rejected");
+   else r.SubmitTriangles(cpu,texture,false,false,GpuBlend::Normal);
+   // Reading the current target forces a snapshot/Flush boundary. The long
+   // ordinary prefix after it must retain that snapshot through the next GS.
+   r.SubmitTriangles(ordinary,target,false,false,GpuBlend::Normal,&clips[0]);
+   if(gpu)Require(r.SubmitReanim(definition,texture,job,false,false,GpuBlend::Additive,nullptr,true),"Post-feedback resident rejected");
+   else r.SubmitTriangles(cpu,texture,false,false,GpuBlend::Additive);
+   r.EndSceneAndPresent();r.SetRenderImage(nullptr);const auto actual=r.ReadTexturePixels(target).pixels;
+   if(!gpu)expected=actual;else error.Compare(expected,actual);
+  }
+  r.DestroyTexture(target);
+ }
  if(context.majorVersion>4||(context.majorVersion==4&&context.minorVersion>=6)){
   using Gen=void(APIENTRY*)(GLsizei,GLuint*);using Result=void(APIENTRY*)(GLuint,GLenum,unsigned long long*);
   const auto gen=reinterpret_cast<Gen>(GL3::GetProcAddress("glGenQueries"));
@@ -239,7 +271,8 @@ void Correct(OpenGLContext&context){
  const auto mean=double(error.sum)/double(error.components);
  Require(mean<=.001,"Native-trig resident mean pixel error exceeds .001 byte");
  std::cout<<"PASS OpenGL native sin/cos no-precise resident cases="<<cases
-  <<" mixed_jobs=48 ordinary_spans511/512/2048 same_batch/material_boundary full_int32_frame logical_CPU_sentinel upload_staging_release lifetime"
+  <<" mixed_jobs=48 arena_growth/reclaim ordinary_spans511/512/2048 same_batch/material_boundary target_feedback"
+  <<" full_int32_frame logical_CPU_sentinel upload_staging_release lifetime"
   <<" max_RGBA8="<<error.maximum<<" mean_RGBA8="<<mean<<'\n';
  // Exercise the explicit version fallback policy on the same real context.
  const auto major=context.majorVersion,minor=context.minorVersion;context.majorVersion=3;context.minorVersion=0;
@@ -302,10 +335,12 @@ using Query64=void(APIENTRY*)(GLuint,GLenum,unsigned long long*);
 template<class T>T Proc(const char*n){auto p=reinterpret_cast<T>(GL3::GetProcAddress(n));Require(p!=nullptr,n);return p;}
 double Median(std::vector<double>v){std::sort(v.begin(),v.end());return v[v.size()/2];}
 double Mean(const std::vector<double>&v){return std::accumulate(v.begin(),v.end(),0.)/v.size();}
-void Benchmark(OpenGLContext&context,bool mixed,bool transitions=false){
+void Benchmark(OpenGLContext&context,bool mixed,bool transitions=false,bool diagnostic=false){
  OpenGLRenderer r(context,800,600,{});const uint32_t pixels[]{0xffff8020,0xff20ff80,0xff8020ff,0xffe0e020};
  auto*texture=r.CreateTexture(2,2,pixels,8);constexpr int Burst=16;
  std::array<GLuint,Burst>queries{};auto gen=Proc<GenQuery>("glGenQueries");gen(Burst,queries.data());
+ std::array<GLuint,Burst*3>timestampQueries{};
+ if(diagnostic){Proc<void(APIENTRY*)(GLuint,GLenum)>("glQueryCounter");gen(Burst*3,timestampQueries.data());}
  auto get=Proc<Query64>("glGetQueryObjectui64v");
  OpenGLRenderer::FrameTiming timing;r.frameTiming=&timing;
  std::vector<GpuVertex>ordinary;
@@ -321,6 +356,7 @@ void Benchmark(OpenGLContext&context,bool mixed,bool transitions=false){
  unsigned gates=0,meanGates=0,total=0;
  std::cout<<"OpenGL actual renderer native-trig GS benchmark mixed="<<mixed
   <<" transitions="<<transitions
+  <<" diagnostic_timestamps="<<diagnostic
   <<" unlocked clocks; CPU includes interpolation/clip or64Binstance+32Btrack preparation,batching,upload,flush,presentcall;"
   <<" GPU query brackets actual Flush upload+draw, excludes presentquad/WSI;"
   <<" CPU subtracts separately measured Present call; no vertex/pixel readback\n";
@@ -341,11 +377,14 @@ void Benchmark(OpenGLContext&context,bool mixed,bool transitions=false){
    for(int round=-3;round<12;++round)for(int order=0;order<2;++order){
     const int path=(order+round+4)%2;
     double burstCpu=0;
+    std::array<double,Burst>frameCpu{};
+    std::array<bool,Burst>frameEligible{};
     for(int frame=0;frame<Burst;++frame){
      Require(r.BeginScene(),"Benchmark scene");
      const auto start=std::chrono::steady_clock::now();Clear(r);
      const bool sparse=transitions&&frame%4>=2;
      const unsigned activeCount=sparse?8:count;
+     frameEligible[frame]=r.reanimFrameEligible;
      r.reanimPictureCandidates=activeCount;
      if(round>=0&&path){if(r.reanimFrameEligible)accepted+=activeCount;else fallback+=activeCount;}
      unsigned packet=~0u;
@@ -368,13 +407,32 @@ void Benchmark(OpenGLContext&context,bool mixed,bool transitions=false){
       }
      }
      if(sparse)r.SubmitTriangles(ordinary,r.whiteTexture,false,false,GpuBlend::Normal);
-     timing.elapsedQuery=queries[frame];r.EndSceneAndPresent();
+     timing.elapsedQuery=queries[frame];
+     if(diagnostic){
+      timing.uploadBeginTimestamp=timestampQueries[frame*3];
+      timing.drawBeginTimestamp=timestampQueries[frame*3+1];
+      timing.drawEndTimestamp=timestampQueries[frame*3+2];
+     }
+     r.EndSceneAndPresent();
      const double cpu=std::chrono::duration<double,std::micro>(std::chrono::steady_clock::now()-start).count()-timing.presentCpuUs;
+     frameCpu[frame]=cpu;
      burstCpu+=cpu;
      if(round>=0&&!transitions)samples[path].push_back(cpu);
     }
     glFinish();double burstGpu=0;
+    unsigned queryFrame=0;
     for(auto q:queries){unsigned long long ns;get(q,0x8866,&ns);burstGpu+=ns*.001;
+     if(diagnostic&&round==0&&!clipped&&(count==256||count==8192)){
+      unsigned long long uploadBegin,drawBegin,drawEnd;
+      get(timestampQueries[queryFrame*3],0x8866,&uploadBegin);
+      get(timestampQueries[queryFrame*3+1],0x8866,&drawBegin);
+      get(timestampQueries[queryFrame*3+2],0x8866,&drawEnd);
+      std::cout<<"DIAGNOSTIC tracks="<<count<<" frame="<<queryFrame<<" path="<<path
+       <<" eligible="<<frameEligible[queryFrame]<<" CPU_us="<<frameCpu[queryFrame]
+       <<" query_us="<<ns*.001<<" upload_interval_us="<<(drawBegin-uploadBegin)*.001
+       <<" draw_interval_us="<<(drawEnd-drawBegin)*.001<<'\n';
+     }
+     ++queryFrame;
      if(round>=0&&!transitions)samples[2+path].push_back(ns*.001);}
     if(round>=0&&transitions){samples[path].push_back(burstCpu/Burst);samples[2+path].push_back(burstGpu/Burst);}
    }
@@ -402,6 +460,7 @@ int main(int argc,char**argv)try{
  if(argc>1&&std::string(argv[1])=="--benchmark")Benchmark(context,false);
  else if(argc>1&&std::string(argv[1])=="--benchmark-mixed")Benchmark(context,true);
  else if(argc>1&&std::string(argv[1])=="--benchmark-transitions")Benchmark(context,true,true);
+ else if(argc>1&&std::string(argv[1])=="--diagnose-transitions")Benchmark(context,true,true,true);
  else {Correct(context);Policy(context);}
  return 0;
 }catch(const std::exception&e){std::cerr<<"FAIL "<<e.what()<<'\n';return 1;}

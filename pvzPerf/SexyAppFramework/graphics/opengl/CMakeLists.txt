@@ -1,27 +1,41 @@
 if(NOT WIN32)
     message(FATAL_ERROR "OpenGL currently requires the Win32 WGL window backend")
 endif()
-add_library(sexy_opengl STATIC
+option(PVZ_OPENGL_REANIM_RESIDENT "Experimental resident OpenGL reanimation geometry path" ${PVZ_EXPERIMENTAL_GPU_REANIM})
+if(PVZ_EXPERIMENTAL_GPU_REANIM)
+    set(PVZ_OPENGL_REANIM_RESIDENT ON)
+endif()
+set(SEXY_OPENGL_SOURCES
     OpenGLApi.cpp OpenGLContext.cpp OpenGLRenderer.cpp OpenGLShaders.cpp OpenGLImageOps.cpp OpenGLReanim.cpp
     ../../effect/ScaleEffectSizing.cpp)
-set_property(TARGET sexy_opengl PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE)
-target_compile_features(sexy_opengl PUBLIC cxx_std_23)
-target_compile_definitions(sexy_opengl PUBLIC PVZ_GPU_OPENGL=1)
-target_include_directories(sexy_opengl PUBLIC
+function(add_sexy_opengl_library target)
+add_library(${target} STATIC ${SEXY_OPENGL_SOURCES})
+set_property(TARGET ${target} PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE)
+target_compile_features(${target} PUBLIC cxx_std_23)
+target_compile_definitions(${target} PUBLIC PVZ_GPU_OPENGL=1)
+target_include_directories(${target} PUBLIC
     "${CMAKE_SOURCE_DIR}"
     "${CMAKE_SOURCE_DIR}/pvzPerf"
     "${CMAKE_SOURCE_DIR}/pvzPerf/SexyAppFramework"
     "${CMAKE_CURRENT_SOURCE_DIR}")
-target_link_libraries(sexy_opengl PUBLIC opengl32 user32 gdi32)
+target_link_libraries(${target} PUBLIC opengl32 user32 gdi32)
 if(TARGET pvz_resources)
-    add_dependencies(sexy_opengl pvz_resources)
+    add_dependencies(${target} pvz_resources)
 endif()
 if(MSVC)
-    target_compile_options(sexy_opengl PRIVATE /W4 /utf-8 /permissive- /fp:strict)
+    target_compile_options(${target} PRIVATE /W4 /utf-8 /permissive- /fp:strict)
+endif()
+endfunction()
+add_sexy_opengl_library(sexy_opengl)
+if(PVZ_OPENGL_REANIM_RESIDENT)
+    target_compile_definitions(sexy_opengl PUBLIC PVZ_OPENGL_REANIM_RESIDENT=1)
 endif()
 if(BUILD_TESTING)
+    add_sexy_opengl_library(sexy_opengl_reanim_diagnostics)
+    target_compile_definitions(sexy_opengl_reanim_diagnostics PUBLIC
+        PVZ_OPENGL_REANIM_RESIDENT=1 PVZ_OPENGL_REANIM_DIAGNOSTICS=1)
     add_executable(sexy_opengl_reanim_tests tests/reanim_tests.cpp ../../misc/FastMath.cpp)
-    target_link_libraries(sexy_opengl_reanim_tests PRIVATE sexy_opengl)
+    target_link_libraries(sexy_opengl_reanim_tests PRIVATE sexy_opengl_reanim_diagnostics)
     add_test(NAME sexy_opengl_reanim COMMAND sexy_opengl_reanim_tests)
     set_tests_properties(sexy_opengl_reanim PROPERTIES TIMEOUT 120 RUN_SERIAL TRUE)
     add_executable(sexy_opengl_compare_tests EXCLUDE_FROM_ALL

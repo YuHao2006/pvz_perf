@@ -10,6 +10,7 @@
 #include <string>
 
 namespace Sexy {
+#if defined(PVZ_OPENGL_REANIM_RESIDENT)
 using namespace GL3;
 namespace {
 constexpr unsigned int GeometryShader = 0x8DD9, TextureBuffer = 0x8C2A;
@@ -393,4 +394,28 @@ bool OpenGLRenderer::SubmitReanim(OpenGLReanim* definition,OpenGLTexture* textur
         draw.truncate?GpuReanimTrackDraw::Truncate:0u};
     return SubmitReanimTrack(index,track,blend);
 }
+#else
+OpenGLReanim* OpenGLRenderer::UploadReanimDefinition(const GpuReanimDefinition&)
+{
+    return nullptr;
+}
+void OpenGLRenderer::DestroyReanimDefinition(OpenGLReanim* definition)
+{
+    if(definition)throw std::invalid_argument("OpenGL resident reanimation is disabled");
+}
+unsigned int OpenGLRenderer::BeginReanimInstance(OpenGLReanim*,OpenGLTexture*,
+    const GpuReanimInstance&,bool,bool,const GpuClip*,bool)
+{
+    return ~0u;
+}
+bool OpenGLRenderer::SubmitReanimTrack(unsigned int,const GpuReanimTrackDraw&,GpuBlend)
+{
+    return false;
+}
+bool OpenGLRenderer::SubmitReanim(OpenGLReanim*,OpenGLTexture*,const GpuReanimDraw&,
+    bool,bool,GpuBlend,const GpuClip*,bool)
+{
+    return false;
+}
+#endif
 }

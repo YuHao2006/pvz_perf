@@ -1194,6 +1194,28 @@ int main(int argc, char** argv)
                 test(renderer);
             });
         };
+#if !defined(PVZ_TEST_D3D9) && !defined(PVZ_OPENGL_REANIM_RESIDENT)
+        rendererTest("resident-disabled-native-stubs-no-policy-writes",[](OpenGLRenderer& renderer) {
+            Require(renderer.reanimPictureCandidates==0&&!renderer.reanimFrameEligible,
+                "Disabled resident policy defaults differ");
+            Require(!renderer.UploadReanimDefinition({}),"Disabled resident upload returned a resource");
+            Require(renderer.BeginReanimInstance(nullptr,nullptr,{},false,false)==~0u,
+                "Disabled resident instance returned a token");
+            Require(!renderer.SubmitReanimTrack(0,{},GpuBlend::Normal),"Disabled resident track was accepted");
+            Require(!renderer.SubmitReanim(nullptr,nullptr,{},false,false,GpuBlend::Normal),
+                "Disabled resident draw was accepted");
+            renderer.DestroyReanimDefinition(nullptr);
+            bool rejected=false;
+            try {renderer.DestroyReanimDefinition(reinterpret_cast<OpenGLReanim*>(uintptr_t(1)));}
+            catch(const std::invalid_argument&) {rejected=true;}
+            Require(rejected,"Disabled resident destroy accepted a nonnull handle");
+            renderer.reanimPictureCandidates=17;
+            Require(renderer.BeginScene(),"Disabled resident ordinary frame failed");
+            renderer.EndSceneAndPresent();
+            Require(renderer.reanimPictureCandidates==17&&!renderer.reanimFrameEligible,
+                "Disabled resident frame updated policy state");
+        });
+#endif
         rendererTest("production-pool-gpu-direct-UV",[](OpenGLRenderer& renderer) {
             PoolGpuChecks::Run(renderer);
         });

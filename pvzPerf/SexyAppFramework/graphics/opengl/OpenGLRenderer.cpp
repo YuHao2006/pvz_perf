@@ -3,7 +3,9 @@
 #include "graphics/vulkan/VulkanViewport.h"
 #include <algorithm>
 #include <cmath>
+#if defined(PVZ_OPENGL_REANIM_DIAGNOSTICS)
 #include <chrono>
+#endif
 #include <cstdlib>
 #include <cstring>
 #include <limits>
@@ -151,20 +153,26 @@ OpenGLRenderer::Impl::Impl(OpenGLContext& window, int w, int h)
     glEnableVertexAttribArray(4); glVertexAttribIPointer(4, 1, GL_UNSIGNED_INT, sizeof(Vertex),
         reinterpret_cast<const void*>(offsetof(Vertex, draw) + offsetof(GpuVertex, sampler)));
     vertices.reserve(16384); batches.reserve(1024);
+#if defined(PVZ_OPENGL_REANIM_DIAGNOSTICS)
     beginFrameQuery = reinterpret_cast<BeginQueryFn>(GL3::GetProcAddress("glBeginQuery"));
     endFrameQuery = reinterpret_cast<EndQueryFn>(GL3::GetProcAddress("glEndQuery"));
+    queryCounter = reinterpret_cast<QueryCounterFn>(GL3::GetProcAddress("glQueryCounter"));
+#endif
 }
 OpenGLRenderer::Impl::~Impl()
 {
     context.MakeCurrent();
     batches.clear();
+#if defined(PVZ_OPENGL_REANIM_RESIDENT)
     for (auto* definition : reanimDefinitions) delete definition;
     for (auto* definition : retiredReanims) delete definition;
+#endif
     for (auto* texture : textures) delete texture;
     for (auto* texture : retired) delete texture;
     for (const auto program : {sceneProgram, imageProgram, fontProgram, presentProgram})
         if (program) glDeleteProgram(program);
     if (poolProgram) glDeleteProgram(poolProgram);
+#if defined(PVZ_OPENGL_REANIM_RESIDENT)
     if (reanimProgram) glDeleteProgram(reanimProgram);
     if (reanimVao) glDeleteVertexArrays(1, &reanimVao);
     if (reanimIndexBuffer) glDeleteBuffers(1, &reanimIndexBuffer);
@@ -172,6 +180,7 @@ OpenGLRenderer::Impl::~Impl()
     if (reanimInstanceTexture) glDeleteTextures(1, &reanimInstanceTexture);
     if (reanimBlob) glDeleteBuffers(1, &reanimBlob);
     if (reanimInstanceBuffer) glDeleteBuffers(1, &reanimInstanceBuffer);
+#endif
     if (poolVao) glDeleteVertexArrays(1, &poolVao);
     if (poolVertices) glDeleteBuffers(1, &poolVertices);
     if (poolIndices) glDeleteBuffers(1, &poolIndices);
@@ -196,30 +205,19 @@ void OpenGLRenderer::Impl::Flush()
     if (vertices.empty()) {
         for (auto* texture : retired) delete texture;
         retired.clear();
+#if defined(PVZ_OPENGL_REANIM_RESIDENT)
         CollectReanims();
+#endif
         return;
     }
     BindTarget();
     const auto* target = selected ? selected : scene;
-    const bool timing = frameTiming && frameTiming->elapsedQuery && beginFrameQuery && endFrameQuery;
-    const bool invocations = frameTiming && frameTiming->vertexInvocationsQuery && beginFrameQuery && endFrameQuery;
-    if (timing) beginFrameQuery(0x88BF, frameTiming->elapsedQuery);
-    if (invocations) beginFrameQuery(0x82F0, frameTiming->vertexInvocationsQuery);
-    glBindVertexArray(hasReanimDraws ? reanimVao : vao); glBindBuffer(GL_ARRAY_BUFFER, stream);
-    glBufferData(GL_ARRAY_BUFFER, static_cast<GLsizeiptr>(vertices.size() * sizeof(Vertex)),
-        vertices.data(), GL_STREAM_DRAW);
-    if (hasReanimDraws) {
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, reanimIndexBuffer);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, reanimIndices.size() * sizeof(unsigned int),
-            reanimIndices.data(), GL_STREAM_DRAW);
-        glBindBuffer(0x8C2A, reanimInstanceBuffer); // GL_TEXTURE_BUFFER, core 3.1.
-        glBufferData(0x8C2A, reanimInstanceData.size() * sizeof(reanimInstanceData[0]),
-            reanimInstanceData.data(), GL_STREAM_DRAW);
-        glActiveTexture(GL_TEXTURE1); glBindTexture(0x8C2A, reanimBlobTexture);
-        glActiveTexture(GL_TEXTURE2); glBindTexture(0x8C2A, reanimInstanceTexture);
+#if defined(PVZ_OPENGL_REANIM_RESIDENT)
+    if(hasReanimDraws){
         // Classify complete ordinary spans after all submissions are known.
         // A long span may cross material batches, or share one with resident
         // markers. Only the marker boundaries matter for choosing its VS.
+        // This is CPU preparation, before the optional upload/draw GPU query.
         reanimOrdinarySpans.clear();
         reanimOrdinarySpans.reserve(reanimMarkerOffsets.size()+1);
         size_t ordinaryFirst=0;
@@ -230,7 +228,67 @@ void OpenGLRenderer::Impl::Flush()
         if(reanimIndices.size()-ordinaryFirst>=512*3)
             reanimOrdinarySpans.push_back({ordinaryFirst,reanimIndices.size()-ordinaryFirst});
     }
+    reanimDrawSegments.clear();
+    const size_t requiredSegments=batches.size()+reanimOrdinarySpans.size()*2;
+    if(requiredSegments>reanimDrawSegments.capacity())
+        reanimDrawSegments.reserve(std::max(requiredSegments,
+            reanimDrawSegments.capacity()+reanimDrawSegments.capacity()/2+16));
+    size_t ordinarySpan=0;
+    for(auto& batch:batches){
+        batch.segmentFirst=reanimDrawSegments.size();
+        size_t cursor=batch.first;
+        const size_t end=batch.first+batch.count;
+        while(cursor<end){
+            while(ordinarySpan<reanimOrdinarySpans.size()&&
+                reanimOrdinarySpans[ordinarySpan].first+reanimOrdinarySpans[ordinarySpan].count<=cursor)++ordinarySpan;
+            bool resident=hasReanimDraws;
+            size_t next=end;
+            if(hasReanimDraws&&ordinarySpan<reanimOrdinarySpans.size()){
+                const auto span=reanimOrdinarySpans[ordinarySpan];
+                if(cursor>=span.first){resident=false;next=std::min(end,span.first+span.count);}
+                else next=std::min(end,span.first);
+            }
+            const size_t first=resident?cursor:hasReanimDraws?reanimIndices[cursor]:cursor;
+            reanimDrawSegments.push_back({first,next-cursor,resident});
+            cursor=next;
+        }
+        batch.segmentCount=reanimDrawSegments.size()-batch.segmentFirst;
+    }
+#endif
+#if defined(PVZ_OPENGL_REANIM_DIAGNOSTICS)
+    const bool timing = frameTiming && frameTiming->elapsedQuery && beginFrameQuery && endFrameQuery;
+    const bool invocations = frameTiming && frameTiming->vertexInvocationsQuery && beginFrameQuery && endFrameQuery;
+    if (timing) beginFrameQuery(0x88BF, frameTiming->elapsedQuery);
+    if (invocations) beginFrameQuery(0x82F0, frameTiming->vertexInvocationsQuery);
+    const bool timestamps=frameTiming&&frameTiming->uploadBeginTimestamp&&frameTiming->drawBeginTimestamp&&
+        frameTiming->drawEndTimestamp&&queryCounter;
+    if(timestamps)queryCounter(frameTiming->uploadBeginTimestamp,0x8E28);
+#endif
+#if defined(PVZ_OPENGL_REANIM_RESIDENT)
+    glBindVertexArray(hasReanimDraws ? reanimVao : vao);
+#else
+    glBindVertexArray(vao);
+#endif
+    glBindBuffer(GL_ARRAY_BUFFER, stream);
+    glBufferData(GL_ARRAY_BUFFER, static_cast<GLsizeiptr>(vertices.size() * sizeof(Vertex)),
+        vertices.data(), GL_STREAM_DRAW);
+#if defined(PVZ_OPENGL_REANIM_RESIDENT)
+    if (hasReanimDraws) {
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, reanimIndexBuffer);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, reanimIndices.size() * sizeof(unsigned int),
+            reanimIndices.data(), GL_STREAM_DRAW);
+        glBindBuffer(0x8C2A, reanimInstanceBuffer); // GL_TEXTURE_BUFFER, core 3.1.
+        glBufferData(0x8C2A, reanimInstanceData.size() * sizeof(reanimInstanceData[0]),
+            reanimInstanceData.data(), GL_STREAM_DRAW);
+        glActiveTexture(GL_TEXTURE1); glBindTexture(0x8C2A, reanimBlobTexture);
+        glActiveTexture(GL_TEXTURE2); glBindTexture(0x8C2A, reanimInstanceTexture);
+    }
+#endif
     glActiveTexture(GL_TEXTURE0);
+#if defined(PVZ_OPENGL_REANIM_DIAGNOSTICS)
+    if(timestamps)queryCounter(frameTiming->drawBeginTimestamp,0x8E28);
+#endif
+#if defined(PVZ_OPENGL_REANIM_RESIDENT)
     int activePipeline=-1;
     const auto bindPipeline=[&](bool resident){
         if(activePipeline==int(resident))return;
@@ -246,7 +304,12 @@ void OpenGLRenderer::Impl::Flush()
             glUniform1i(sceneUniforms[uImage],0);glUniform1i(sceneUniforms[uPremultipliedOutput],target->render);
         }
     };
-    size_t ordinarySpan=0;
+#else
+    glUseProgram(sceneProgram);
+    glUniform2f(sceneUniforms[uTargetExtent],float(target->width),float(target->height));
+    glUniform1i(sceneUniforms[uImage],0);
+    glUniform1i(sceneUniforms[uPremultipliedOutput],target->render);
+#endif
     for (const auto& batch : batches) {
         glBindTexture(GL_TEXTURE_2D, batch.image);
         glEnable(GL_SCISSOR_TEST);
@@ -258,34 +321,36 @@ void OpenGLRenderer::Impl::Flush()
                 batch.blend == GpuBlend::Additive ? GL_ONE : GL_ONE_MINUS_SRC_ALPHA,
                 GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
         }
-        size_t cursor=batch.first;
-        const size_t end=batch.first+batch.count;
-        while(cursor<end){
-            while(ordinarySpan<reanimOrdinarySpans.size()&&
-                reanimOrdinarySpans[ordinarySpan].first+reanimOrdinarySpans[ordinarySpan].count<=cursor)++ordinarySpan;
-            bool resident=hasReanimDraws;
-            size_t next=end;
-            if(hasReanimDraws&&ordinarySpan<reanimOrdinarySpans.size()){
-                const auto span=reanimOrdinarySpans[ordinarySpan];
-                if(cursor>=span.first){resident=false;next=std::min(end,span.first+span.count);}
-                else next=std::min(end,span.first);
-            }
-            bindPipeline(resident);
-            glUniform1i(resident?reanimUniforms[3]:sceneUniforms[uCoverageInput],batch.coverage);
-            if(resident)glDrawElements(GL_TRIANGLES,static_cast<int>(next-cursor),GL_UNSIGNED_INT,
-                reinterpret_cast<const void*>(cursor*sizeof(unsigned int)));
-            else glDrawArrays(GL_TRIANGLES,static_cast<int>(hasReanimDraws?reanimIndices[cursor]:cursor),
-                static_cast<int>(next-cursor));
-            cursor=next;
+#if defined(PVZ_OPENGL_REANIM_RESIDENT)
+        for(size_t i=batch.segmentFirst;i<batch.segmentFirst+batch.segmentCount;++i){
+            const auto& draw=reanimDrawSegments[i];
+            bindPipeline(draw.resident);
+            glUniform1i(draw.resident?reanimUniforms[3]:sceneUniforms[uCoverageInput],batch.coverage);
+            if(draw.resident)glDrawElements(GL_TRIANGLES,static_cast<int>(draw.count),GL_UNSIGNED_INT,
+                reinterpret_cast<const void*>(draw.first*sizeof(unsigned int)));
+            else glDrawArrays(GL_TRIANGLES,static_cast<int>(draw.first),static_cast<int>(draw.count));
         }
+#else
+        glUniform1i(sceneUniforms[uCoverageInput],batch.coverage);
+        glDrawArrays(GL_TRIANGLES,static_cast<int>(batch.first),static_cast<int>(batch.count));
+#endif
     }
+#if defined(PVZ_OPENGL_REANIM_DIAGNOSTICS)
+    if(timestamps)queryCounter(frameTiming->drawEndTimestamp,0x8E28);
     if (invocations) endFrameQuery(0x82F0);
     if (timing) endFrameQuery(0x88BF);
-    vertices.clear(); reanimIndices.clear(); reanimMarkerOffsets.clear(); reanimOrdinarySpans.clear();
-    hasReanimDraws = false; batches.clear();
+#endif
+    vertices.clear(); batches.clear();
+#if defined(PVZ_OPENGL_REANIM_RESIDENT)
+    reanimIndices.clear(); reanimMarkerOffsets.clear(); reanimOrdinarySpans.clear();
+    reanimDrawSegments.clear();
+    hasReanimDraws = false;
+#endif
     for (auto* texture : retired) delete texture;
     retired.clear();
+#if defined(PVZ_OPENGL_REANIM_RESIDENT)
     CollectReanims();
+#endif
     Check("Draw OpenGL triangles");
 }
 void OpenGLRenderer::Impl::Snapshot(const OpenGLTexture& original, OpenGLTexture& result)
@@ -323,7 +388,9 @@ void OpenGLRenderer::Impl::Submit(std::span<const GpuVertex> input, OpenGLTextur
     clip.x = std::max(0, clip.x); clip.y = std::max(0, clip.y);
     clip.width = std::max(0, right - clip.x); clip.height = std::max(0, top - clip.y);
     if (!clip.width || !clip.height) return;
+#if defined(PVZ_OPENGL_REANIM_RESIDENT)
     reanimOrdinaryTriangles += input.size() / 3;
+#endif
     OpenGLTexture* feedback = nullptr;
     for (size_t index = 0; index < input.size(); index += 3) {
         auto* image = slots[input[index].slot & 4095U];
@@ -340,14 +407,22 @@ void OpenGLRenderer::Impl::Submit(std::span<const GpuVertex> input, OpenGLTextur
             }
             native = feedback->image;
         }
+#if defined(PVZ_OPENGL_REANIM_RESIDENT)
         const size_t first = hasReanimDraws ? reanimIndices.size() : vertices.size();
+#else
+        const size_t first = vertices.size();
+#endif
         for (size_t corner = 0; corner < 3; ++corner) {
             auto draw = input[index + corner];
             // Vulkan's default provoking vertex is the first vertex. GL 3.0
             // fixes it to the last; duplicate only flat metadata, never UV/color.
             draw.slot = input[index].slot;
+#if defined(PVZ_OPENGL_REANIM_RESIDENT)
             draw.sampler = coverage ? 0 : input[index].sampler & 3u;
             if (hasReanimDraws) reanimIndices.push_back(static_cast<unsigned int>(vertices.size()));
+#else
+            draw.sampler = coverage ? 0 : input[index].sampler;
+#endif
             vertices.push_back({draw});
         }
         const auto sameClip = [](const GpuClip& a, const GpuClip& b) {
@@ -365,7 +440,10 @@ OpenGLRenderer::OpenGLRenderer(OpenGLContext& context, int w, int h,
     : impl_(std::make_unique<Impl>(context, w, h)), whiteTexture(impl_->white),
       causticsTexture(impl_->causticTarget), sceneOpen(impl_->open),
       reanimPictureCandidates(impl_->reanimPictureCandidates), reanimFrameEligible(impl_->reanimFrameEligible),
-      frameTiming(impl_->frameTiming), sceneWidth(impl_->width), sceneHeight(impl_->height)
+#if defined(PVZ_OPENGL_REANIM_DIAGNOSTICS)
+      frameTiming(impl_->frameTiming),
+#endif
+      sceneWidth(impl_->width), sceneHeight(impl_->height)
 {
     if (context.hdr) throw std::runtime_error("OpenGL 3.0 backend supports SDR output only");
     if (hdr) impl_->hdr = *hdr;
@@ -543,14 +621,18 @@ bool OpenGLRenderer::BeginScene()
     auto& s = *impl_;
     if (s.open) throw std::logic_error("OpenGL scene already open");
     if (!s.selected && !s.context.BeginPresent()) return false;
+#if defined(PVZ_OPENGL_REANIM_RESIDENT)
     s.reanimFrameEligible = s.reanimPictureCandidates >= 256 &&
         s.reanimOrdinaryTriangles <= uint64_t(s.reanimPictureCandidates) * 32;
     s.reanimPictureCandidates = 0; s.reanimOrdinaryTriangles = 0;
-    s.open = true; s.mainFrame = !s.selected;
     s.reanimInstances.clear(); s.reanimInstanceData.clear();
     s.reanimFrameGeneration = (s.reanimFrameGeneration + 1) & 65535u;
     if (!s.reanimFrameGeneration) s.reanimFrameGeneration = 1;
+#endif
+    s.open = true; s.mainFrame = !s.selected;
+#if defined(PVZ_OPENGL_REANIM_DIAGNOSTICS)
     if (s.frameTiming) s.frameTiming->presentCpuUs = 0;
+#endif
     if (s.causticsQueued && s.causticTarget && s.causticSource) {
         s.ImagePass(s.causticTarget, s.causticSource, nullptr, 3);
         s.causticsQueued = false;
@@ -634,12 +716,15 @@ void OpenGLRenderer::EndSceneAndPresent()
     if (!s.open) throw std::logic_error("No OpenGL scene to end");
     s.Flush();
     if (s.mainFrame) {
+#if defined(PVZ_OPENGL_REANIM_DIAGNOSTICS)
         if (s.frameTiming) {
             const auto start = std::chrono::steady_clock::now();
             s.Present();
             s.frameTiming->presentCpuUs =
                 std::chrono::duration<double,std::micro>(std::chrono::steady_clock::now()-start).count();
-        } else s.Present();
+        } else
+#endif
+        s.Present();
         s.sceneInitialized = true;
     }
     else {

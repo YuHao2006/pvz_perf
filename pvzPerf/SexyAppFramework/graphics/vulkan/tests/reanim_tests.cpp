@@ -120,6 +120,7 @@ void Clear(VulkanRenderer& renderer) {
 void Run() {
     VulkanTest::Window native(64,64);
     VulkanInitConfig config; config.enableValidation=true; config.debugCallback=Validate;
+    config.features.shaderFloat64=VK_TRUE; // Loading/pool shaders match the game device features.
 #if defined(PVZ_REANIM_GEOMETRY)
     config.features.geometryShader=requestGeometry?VK_TRUE:VK_FALSE;
     config.allowOptionalGeometryShader=requestGeometry;
@@ -474,7 +475,9 @@ void Run() {
     // sides of the span threshold against the ordinary rendering path.
     const std::array<uint8_t,4> coverageBytes{0,64,128,255};
     auto* coverageMask=renderer.CreateCoverageMask(2,2,coverageBytes,2);
-    for (bool imageTarget:{false,true}) for (unsigned ordinaryCount:{64u,2048u}) {
+    renderer.PrepareLoadingPipelines();
+    for (bool imageTarget:{false,true}) for (unsigned ordinaryCount:{64u,2048u})
+        for (bool interruptWithPool:{false,true}) {
         std::vector<uint32_t> expected;
         for (bool resident:{false,true}) {
             if (imageTarget) renderer.SetRenderImage(adaptiveImage);
@@ -511,6 +514,15 @@ void Run() {
             };
             for (unsigned i=0;i<ordinaryCount;++i) ordinary(i,i%2!=0);
             emit(GpuBlend::Additive);
+            if (interruptWithPool) {
+                // Pool binds a separate uint16 index buffer. The next resident
+                // marker must restore its uint32 indices on both target kinds.
+                GpuPoolParams pool{};
+                pool.width=64;pool.height=64;pool.clip={0,0,64,64};
+                pool.time1=0.37f;pool.time2=0.53f;pool.time3=0.79f;pool.time5=1.13f;
+                renderer.SubmitPool(texture,pool);
+                emit(GpuBlend::Opaque);
+            }
             ordinary(ordinaryCount,true); // A trailing coverage span flushes at EndTargetPass.
             renderer.EndSceneAndPresent();
             if (imageTarget) renderer.SetRenderImage(nullptr);
@@ -530,7 +542,7 @@ void Run() {
     }
     renderer.DestroyTexture(coverageMask);
     std::cout<<"PASS scene/image mixed ordinary and font-coverage families: short/long spans, "
-        "three blends, scissor changes, trailing coverage and actual pixels\n";
+        "three blends, scissor changes, pool index restoration, trailing coverage and actual pixels\n";
     GpuReanimDraw policyLegacy{};policyLegacy.track=2;policyLegacy.after=1;policyLegacy.fraction=0.375f;
     policyLegacy.overlay00=policyLegacy.overlay11=1;policyLegacy.overlay02=12;policyLegacy.overlay12=8;
     policyLegacy.translateX=policyLegacy.translateY=-0.5f;policyLegacy.color=0xb0e08040;

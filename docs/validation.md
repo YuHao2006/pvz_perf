@@ -24,6 +24,11 @@ Vulkan、OpenGL 与 DX12 完整游戏开启实验开关后，实际 DrawTrack／
 并检查连续 DrawTrack 使用同一个强制实例 token；Vulkan、OpenGL 与 DX12 均通过。
 Vulkan 的共享实例包、逐轨差异包及索引绘制已通过独立像素检查，
 密集轨道和频繁插入普通图片的混合批次也通过各自性能门槛。
+销毁事件失效改动后，新增定义／纹理各自 begin-only 与 queued 四组场景通过，
+确认旧 token 拒绝、替代实例正常、已排队像素保留及失败白纹理销毁不损坏实例。
+原生 arena／无 geometry 回退、普通 render、production OFF 编译与 render、
+恢复 ON 后的 Release、Image 强 probe 与四项 static 恢复场景均重新通过。
+逐轨路径去掉了纹理集合查询及重复 owner 检查，没有修改 GPU packet 或 shader。
 少量 reanim 混入大量普通图片时仍需避免整帧承担 geometry shader 成本，
 因此 `PVZ_EXPERIMENTAL_GPU_REANIM` 继续默认关闭，不能将实验验收称为生产路径完成。
 GPU 计时钩子只编入单独的 opt-in benchmark 后端，不进入普通生产二进制。

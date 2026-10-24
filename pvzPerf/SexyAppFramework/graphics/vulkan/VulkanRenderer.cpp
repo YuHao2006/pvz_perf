@@ -1792,16 +1792,23 @@ void VulkanRenderer::DestroyTexture(VulkanTexture* texture) {
     if (texture == s.white) throw std::invalid_argument("Cannot destroy renderer white texture");
     if (texture == s.renderImage)
         throw std::logic_error("Select another render target before destroying the selected GPU image");
-    auto node = s.textures.extract(texture);
-    if (node.empty()) throw std::invalid_argument("Texture does not belong to this renderer");
+    const auto found = s.textures.find(texture);
+    if (found == s.textures.end()) throw std::invalid_argument("Texture does not belong to this renderer");
+    // unique_ptr's noexcept move keeps push_back's strong guarantee: failed
+    // growth leaves live ownership/tokens intact, with amortized capacity growth.
+    s.retired.push_back(std::move(found->second));
+#if defined(PVZ_REANIM_UNIFIED)
+    for (auto& control : s.unifiedInstanceControls)
+        if (control.texture == texture) control.texture = nullptr;
+#endif
+    s.textures.erase(found);
     // 池水焦散目标被销毁（重开关卡）时先解关联，描述集等换代纹理改写。
     if (texture == s.caustics.target) {
         s.caustics.target = nullptr;
         s.caustics.frameQueued = false;
     }
     // The current command buffer may still reference this texture even before
-    // queue submission. Retire it only after the next BeginCommands fence wait.
-    s.retired.push_back(std::move(node.mapped()));
+    // queue submission. ReapRetired preserves it until the frame fence wait.
 }
 
 VulkanTexture* VulkanRenderer::CreateCausticsTexture(int width, int height, VulkanTexture* source) {
@@ -2345,6 +2352,8 @@ void VulkanRenderer::DestroyReanimDefinition(VulkanReanim* definition) {
     const auto found=std::find(s.reanimDefinitions.begin(),s.reanimDefinitions.end(),definition);
     if (found==s.reanimDefinitions.end()) throw std::invalid_argument("Unknown reanimation definition");
     s.reanimRetired.push_back(definition);
+    for (auto& control:s.unifiedInstanceControls)
+        if (control.definition==definition) control.definition=nullptr;
     definition->owner=nullptr;
     s.reanimDefinitions.erase(found);
 #else
@@ -2430,7 +2439,9 @@ bool VulkanRenderer::SubmitReanimTrack(uint32_t instance,const GpuReanimTrackDra
     const auto& control=s.unifiedInstanceControls[index];
     auto* definition=control.definition;
     auto* texture=control.texture;
-    if (definition->owner!=&s || !s.textures.contains(texture) || texture==s.renderImage ||
+    // Begin validates ownership; successful destruction invalidates controls
+    // before releasing either resource, including begin-only instances.
+    if (!definition || !texture || texture==s.renderImage ||
         draw.track>=definition->trackInfo.size()) return false;
     const auto& track=definition->trackInfo[draw.track];
     if (track.keyOffset==GpuReanimNoKeys || track.flags || control.before>=track.keyCount ||

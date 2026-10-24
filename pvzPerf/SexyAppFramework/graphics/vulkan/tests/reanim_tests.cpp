@@ -279,6 +279,93 @@ void Run() {
     }
     renderer.DestroyReanimDefinition(second);renderer.DestroyTexture(other);
 #if defined(PVZ_REANIM_UNIFIED)
+    // Destruction must reject both begin-only and already-submitted tokens
+    // without changing queued draws, unrelated instances or fresh resources.
+    {
+        const std::array<GpuReanimTrack,1> lifetimeTracks{{{0,1}}};
+        const std::array<GpuReanimKey,1> lifetimeKeys{{{0,0,0,0,1,1,1,0,1}}};
+        const std::array<GpuReanimGeometry,2> lifetimeGeometry{{{},{10,12,0,0,1,1}}};
+        const uint32_t blue=0xff0000ffu,green=0xff00ff00u;
+        const GpuReanimTrackDraw lifetimeTrack{0,0xffffffffu};
+        for (bool destroyDefinition:{false,true}) for (bool queued:{false,true}) {
+            auto* oldDefinition=renderer.UploadReanimDefinition(
+                {lifetimeTracks,lifetimeKeys,lifetimeGeometry,2,1});
+            auto* replacementDefinition=renderer.UploadReanimDefinition(
+                {lifetimeTracks,lifetimeKeys,lifetimeGeometry,2,1});
+            Require(oldDefinition && replacementDefinition,"Cannot upload lifetime definitions");
+            auto* oldTexture=renderer.CreateTexture(1,1,&blue,4);
+            auto* expectedTexture=renderer.CreateTexture(1,1,&green,4);
+            GpuReanimInstance oldInstance{};
+            oldInstance.overlay00=oldInstance.overlay11=1;
+            oldInstance.overlay02=8;oldInstance.overlay12=8;
+            oldInstance.translateX=oldInstance.translateY=0.5f;
+            auto replacementInstance=oldInstance;replacementInstance.overlay02=28;
+            auto whiteInstance=oldInstance;whiteInstance.overlay02=48;
+            const auto reference=[&](VulkanTexture* source,const GpuReanimInstance& pose) {
+                GpuReanimDraw legacy{};
+                legacy.overlay00=pose.overlay00;legacy.overlay11=pose.overlay11;
+                legacy.overlay02=pose.overlay02;legacy.overlay12=pose.overlay12;
+                legacy.translateX=pose.translateX-0.5f;legacy.translateY=pose.translateY-0.5f;
+                legacy.color=lifetimeTrack.color;
+                renderer.SubmitTriangles(Reference(lifetimeKeys[0],lifetimeKeys[0],
+                    lifetimeGeometry[1],lifetimeGeometry[1],legacy,VulkanRenderer::SlotOf(source),nullptr),
+                    source,false,false,GpuBlend::Normal);
+            };
+            Require(renderer.BeginScene(),"Cannot begin lifetime CPU reference");Clear(renderer);
+            if (queued) reference(oldTexture,oldInstance);
+            reference(expectedTexture,replacementInstance);
+            reference(renderer.whiteTexture,whiteInstance);
+            renderer.EndSceneAndPresent();
+            const auto expected=renderer.ReadScenePixels();
+            renderer.DestroyTexture(expectedTexture);
+            Require(renderer.BeginScene(),"Cannot begin lifetime resident scene");Clear(renderer);
+            const auto oldToken=renderer.BeginReanimInstance(oldDefinition,oldTexture,oldInstance,
+                false,false,nullptr,true);
+            Require(oldToken!=UINT32_MAX,"Cannot create lifetime original instance");
+            if (queued) Require(renderer.SubmitReanimTrack(oldToken,lifetimeTrack,GpuBlend::Normal),
+                "Cannot queue lifetime original track");
+            if (destroyDefinition) {
+                renderer.DestroyReanimDefinition(oldDefinition);
+                oldDefinition=nullptr;
+            } else {
+                renderer.DestroyTexture(oldTexture);
+                oldTexture=nullptr;
+            }
+            Require(!renderer.SubmitReanimTrack(oldToken,lifetimeTrack,GpuBlend::Normal),
+                "Destroyed resource retained a usable instance token");
+            auto* replacementTexture=renderer.CreateTexture(1,1,&green,4);
+            const auto replacementToken=renderer.BeginReanimInstance(replacementDefinition,
+                replacementTexture,replacementInstance,false,false,nullptr,true);
+            Require(replacementToken!=UINT32_MAX &&
+                renderer.SubmitReanimTrack(replacementToken,lifetimeTrack,GpuBlend::Normal),
+                "Same-frame replacement instance rejected");
+            Require(!renderer.SubmitReanimTrack(oldToken,lifetimeTrack,GpuBlend::Normal),
+                "Same-frame replacement revived a destroyed-resource token");
+            const auto whiteToken=renderer.BeginReanimInstance(replacementDefinition,
+                renderer.whiteTexture,whiteInstance,false,false,nullptr,true);
+            Require(whiteToken!=UINT32_MAX,"Cannot create protected white-texture instance");
+            bool whiteRejected=false;
+            try {renderer.DestroyTexture(renderer.whiteTexture);}
+            catch (const std::invalid_argument&) {whiteRejected=true;}
+            Require(whiteRejected &&
+                renderer.SubmitReanimTrack(whiteToken,lifetimeTrack,GpuBlend::Normal),
+                "Failed white-texture destruction invalidated a live token");
+            Require(!renderer.SubmitReanimTrack(oldToken,lifetimeTrack,GpuBlend::Normal),
+                "Unrelated instance revived a destroyed-resource token");
+            renderer.EndSceneAndPresent();
+            const auto actual=renderer.ReadScenePixels();
+            Require(actual.size()==expected.size(),"Lifetime scene dimensions changed");
+            for (size_t i=0;i<actual.size();++i) for (unsigned shift:{0u,8u,16u,24u})
+                Require(std::abs(int((actual[i]>>shift)&255)-int((expected[i]>>shift)&255))<=3,
+                    "Resource destruction lost queued pixels or changed replacement pixels");
+            renderer.DestroyReanimDefinition(oldDefinition);
+            renderer.DestroyReanimDefinition(replacementDefinition);
+            renderer.DestroyTexture(oldTexture);
+            renderer.DestroyTexture(replacementTexture);
+        }
+        std::cout<<"PASS 4 begin-only/queued definition/texture destruction cases, old-token rejection, "
+            "queued pixels, same-frame replacements and failed white-destroy preservation\n";
+    }
     unsigned packetCases=0;
     uint32_t staleToken=UINT32_MAX;
     for (uint32_t variant:{0u,1u}) for (float fraction:{0.0f,0.375f,1.0f})

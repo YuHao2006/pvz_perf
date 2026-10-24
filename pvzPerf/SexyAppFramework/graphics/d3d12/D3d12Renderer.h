@@ -11,6 +11,11 @@
 #include <memory>
 #include <span>
 #include <vector>
+#if defined(PVZ_D3D12_REANIM_BENCHMARK)
+#include <chrono>
+struct ID3D12QueryHeap;
+struct ID3D12Resource;
+#endif
 
 namespace Sexy {
 class D3d12Context;
@@ -26,6 +31,13 @@ class D3d12Renderer final {
     struct Impl;
     std::unique_ptr<Impl> impl_;
 public:
+#if defined(PVZ_D3D12_REANIM_BENCHMARK)
+    // Borrowed diagnostics only in the separate benchmark backend.
+    ID3D12QueryHeap* frameTimestampQueries = nullptr;
+    ID3D12Resource* frameTimestampReadback = nullptr;
+    uint32_t frameTimestampPair = 0;
+    std::chrono::steady_clock::time_point frameRecordEnd{};
+#endif
     D3d12Renderer(D3d12Context& context, int sceneWidth, int sceneHeight,
         const std::filesystem::path& shaderDirectory, const GpuHdrParams* hdr = nullptr);
     ~D3d12Renderer();

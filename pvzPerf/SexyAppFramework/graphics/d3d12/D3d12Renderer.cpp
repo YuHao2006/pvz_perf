@@ -150,9 +150,10 @@ struct D3d12Renderer::Impl {
     D3D12_RECT boundScissor{};
     bool hasScissor = false;
     uint32_t reanimPictureCandidates = 0;
-    uint64_t reanimOrdinaryTriangles = 0;
-    bool reanimFrameEligible = false, reanimBatchStarted = false;
+    bool reanimFrameEligible = false;
 #if defined(PVZ_D3D12_REANIM_RESIDENT)
+    uint64_t reanimOrdinaryTriangles = 0;
+    bool reanimBatchStarted = false;
     struct ReanimInstance {
         GpuReanimInstance draw;
         uint32_t header, imageSlotCount, textureSlot, flags;
@@ -681,8 +682,8 @@ struct D3d12Renderer::Impl {
         reanimInstances.used = reanimTracks.used = 0;
         reanimActive = false;
         ++reanimGeneration;
-#endif
         reanimBatchStarted = false;
+#endif
         temporary = TextureSlots;
         InvalidateDrawState();
     }
@@ -852,7 +853,9 @@ struct D3d12Renderer::Impl {
             input.size_bytes() > UINT_MAX - sizeof(GpuVertex))
             throw std::invalid_argument("Invalid D3D12 triangle list/blend");
         if (input.empty()) return;
+#if defined(PVZ_D3D12_REANIM_RESIDENT)
         reanimOrdinaryTriangles += input.size() / 3;
+#endif
         auto* target = Output();
         D3D12_RECT scissor{0, 0, target->width, target->height};
         if (clip) {
@@ -1457,17 +1460,19 @@ bool D3d12Renderer::BeginScene() {
     s.Begin();
     if (!s.renderImage && !s.context.BackBuffer()) return false;
     s.sceneOpen = true;
-    if (!s.reanimBatchStarted) {
 #if defined(PVZ_D3D12_REANIM_RESIDENT)
+    if (!s.reanimBatchStarted) {
         s.reanimFrameEligible = s.reanimPictureCandidates >= 256 &&
             s.reanimOrdinaryTriangles <= uint64_t(s.reanimPictureCandidates) * 32;
-#endif
         s.reanimPictureCandidates = 0;
         s.reanimOrdinaryTriangles = 0;
         s.reanimBatchStarted = true;
     }
-#if defined(PVZ_D3D12_REANIM_RESIDENT)
     ++s.reanimGeneration;
+#endif
+#if defined(PVZ_D3D12_REANIM_BENCHMARK)
+    if (frameTimestampQueries && frameTimestampReadback)
+        s.commands->EndQuery(frameTimestampQueries, D3D12_QUERY_TYPE_TIMESTAMP, frameTimestampPair * 2);
 #endif
     s.imageOnly = s.renderImage != nullptr;
     s.InvalidateDrawState();
@@ -1736,9 +1741,25 @@ void D3d12Renderer::EndSceneAndPresent() {
     s.Flush();
     if (s.imageOnly) {
         s.Transition(s.renderImage, SampleState);
+#if defined(PVZ_D3D12_REANIM_BENCHMARK)
+        if (frameTimestampQueries && frameTimestampReadback) {
+            s.commands->EndQuery(frameTimestampQueries, D3D12_QUERY_TYPE_TIMESTAMP, frameTimestampPair * 2 + 1);
+            s.commands->ResolveQueryData(frameTimestampQueries, D3D12_QUERY_TYPE_TIMESTAMP,
+                frameTimestampPair * 2, 2, frameTimestampReadback, UINT64(frameTimestampPair) * 16);
+        }
+        frameRecordEnd = std::chrono::steady_clock::now();
+#endif
         s.Finish(false);
     } else {
         s.Present();
+#if defined(PVZ_D3D12_REANIM_BENCHMARK)
+        if (frameTimestampQueries && frameTimestampReadback) {
+            s.commands->EndQuery(frameTimestampQueries, D3D12_QUERY_TYPE_TIMESTAMP, frameTimestampPair * 2 + 1);
+            s.commands->ResolveQueryData(frameTimestampQueries, D3D12_QUERY_TYPE_TIMESTAMP,
+                frameTimestampPair * 2, 2, frameTimestampReadback, UINT64(frameTimestampPair) * 16);
+        }
+        frameRecordEnd = std::chrono::steady_clock::now();
+#endif
         s.Finish(true);
     }
     s.sceneOpen = false;

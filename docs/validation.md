@@ -22,6 +22,11 @@ Vulkan、OpenGL 与 DX12 完整游戏开启实验开关后，实际 DrawTrack／
 从而排除“CPU 回退也画对了”的假阳性。该开关仅存在于测试入口，不进入游戏运行逻辑。
 稀疏 GPU-only 夹具移除对应 CPU 关键帧，检查实际分组绘制仍正确，
 并检查连续 DrawTrack 使用同一个强制实例 token；Vulkan、OpenGL 与 DX12 均通过。
+逐轨裁剪准备延迟到旧 GPU 回退入口后，Vulkan／OpenGL Release 和 Temp DX12 游戏构建
+均重新通过实际 Image 夹具。新增 CPU／旧逐轨 GPU／共享 GPU 三路对拍覆盖完整、
+部分及空分组裁剪和 IgnoreDefaultClip，像素一致；同时检查实际 GPU 提交计数，
+避免 CPU 回退造成假阳性。字体纯测量、Quit、附件和资源释放检查也通过，PAK 字节不变。
+此项没有新增运行期字段，也没有单独测量速度收益。
 Vulkan 的共享实例包、逐轨差异包及索引绘制已通过独立像素检查，
 密集轨道和频繁插入普通图片的混合批次也通过各自性能门槛。
 销毁事件失效改动后，新增定义／纹理各自 begin-only 与 queued 四组场景通过，

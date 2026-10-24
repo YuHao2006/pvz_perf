@@ -672,8 +672,8 @@ void Graphics::DrawImage(Image* theImage, int theX, int theY, const Rect& theSrc
 
 void Graphics::DrawImage(Image* image, int x, int y, const TextureRegion& source)
 {
-	// Text layout uses Graphics(nullptr) with an empty clip to measure glyphs.
-	// Match the pixel-source overload: invisible draws never require a target.
+	// Match the pixel-source overload: empty sources and fully clipped draws
+	// emit no pixels and do not require a destination.
 	if (source.mWidth<=0 || source.mHeight<=0 ||
 		mClipRect.mWidth<=0 || mClipRect.mHeight<=0) return;
 	auto* destination=RequireDrawDestination(mDestImage,DrawOperation::Blt);

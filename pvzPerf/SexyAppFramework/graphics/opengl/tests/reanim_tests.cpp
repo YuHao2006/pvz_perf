@@ -204,7 +204,7 @@ void Correct(OpenGLContext&context){
   }
   r.EndSceneAndPresent();const auto actual=r.ReadScenePixels();if(!gpu)mixed=actual;else error.Compare(mixed,actual);
  }
- for(unsigned gap:{511u,512u,2048u})for(bool clipped:{false,true}){
+ for(unsigned gap:{0u,1u,511u,512u,2048u})for(bool clipped:{false,true}){
   GpuReanimDraw job{};job.track=2;job.after=1;job.fraction=.375f;
   job.overlay00=job.overlay11=1;job.overlay02=8;job.overlay12=5;job.color=0x8070c0e0;
   const auto*clip=clipped?&clips[0]:nullptr;
@@ -230,6 +230,8 @@ void Correct(OpenGLContext&context){
      }
     }
    }
+   // A trailing span has no following marker to delimit it.
+   r.SubmitTriangles(ordinary,texture,false,false,GpuBlend::Normal,clip);
    r.EndSceneAndPresent();const auto actual=r.ReadScenePixels();
    if(!gpu)expected=actual;else error.Compare(expected,actual);
   }
@@ -364,7 +366,7 @@ void Correct(OpenGLContext&context){
  const auto mean=double(error.sum)/double(error.components);
  Require(mean<=.001,"Native-trig resident mean pixel error exceeds .001 byte");
  std::cout<<"PASS OpenGL native sin/cos no-precise resident cases="<<cases
-  <<" mixed_jobs=48 arena_growth/reclaim ordinary_spans511/512/2048 same_batch/material_boundary target_feedback"
+  <<" mixed_jobs=48 arena_growth/reclaim ordinary_spans0/1/511/512/2048 same_batch/material_boundary target_feedback"
   <<" full_int32_frame logical_CPU_sentinel upload_staging_release lifetime"
   <<" max_RGBA8="<<error.maximum<<" mean_RGBA8="<<mean<<'\n';
  // Exercise the explicit version fallback policy on the same real context.

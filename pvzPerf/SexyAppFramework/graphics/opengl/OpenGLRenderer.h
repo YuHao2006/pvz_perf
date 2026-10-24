@@ -77,6 +77,10 @@ public:
     struct FrameTiming {
         unsigned int elapsedQuery = 0, vertexInvocationsQuery = 0;
         unsigned int uploadBeginTimestamp = 0, drawBeginTimestamp = 0, drawEndTimestamp = 0;
+#if defined(PVZ_OPENGL_REANIM_COMPUTE_EXPERIMENT)
+        unsigned int computeBeginTimestamp = 0;
+        bool computeAvailable = false;
+#endif
         double presentCpuUs = 0;
     };
     FrameTiming*& frameTiming;

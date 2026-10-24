@@ -38,6 +38,17 @@ if(BUILD_TESTING)
     target_link_libraries(sexy_opengl_reanim_tests PRIVATE sexy_opengl_reanim_diagnostics)
     add_test(NAME sexy_opengl_reanim COMMAND sexy_opengl_reanim_tests)
     set_tests_properties(sexy_opengl_reanim PROPERTIES TIMEOUT 120 RUN_SERIAL TRUE)
+    # Explicit experiment only. Reuses the backend and exact CPU/GS parity suite;
+    # production and ordinary correctness targets never compile this helper.
+    add_sexy_opengl_library(sexy_opengl_reanim_compute_experiment)
+    set_property(TARGET sexy_opengl_reanim_compute_experiment PROPERTY EXCLUDE_FROM_ALL TRUE)
+    target_sources(sexy_opengl_reanim_compute_experiment PRIVATE OpenGLReanimCompute.cpp)
+    target_compile_definitions(sexy_opengl_reanim_compute_experiment PUBLIC
+        PVZ_OPENGL_REANIM_RESIDENT=1 PVZ_OPENGL_REANIM_DIAGNOSTICS=1
+        PVZ_OPENGL_REANIM_COMPUTE_EXPERIMENT=1)
+    add_executable(sexy_opengl_reanim_compute_tests EXCLUDE_FROM_ALL
+        tests/reanim_tests.cpp ../../misc/FastMath.cpp)
+    target_link_libraries(sexy_opengl_reanim_compute_tests PRIVATE sexy_opengl_reanim_compute_experiment)
     add_executable(sexy_opengl_compare_tests EXCLUDE_FROM_ALL
         "${CMAKE_SOURCE_DIR}/Tests/native/BackendPixelCases.cpp")
     target_compile_definitions(sexy_opengl_compare_tests PRIVATE PVZ_COMPARE_GL=1)
@@ -54,6 +65,7 @@ if(BUILD_TESTING)
     set_tests_properties(sexy_opengl_render PROPERTIES TIMEOUT 120 RUN_SERIAL TRUE)
     if(MSVC)
         target_compile_options(sexy_opengl_reanim_tests PRIVATE /fp:strict /utf-8 /W4)
+        target_compile_options(sexy_opengl_reanim_compute_tests PRIVATE /fp:strict /utf-8 /W4)
         target_compile_options(sexy_opengl_font_weights_tests PRIVATE /fp:strict)
         target_compile_options(sexy_opengl_render_tests PRIVATE /fp:strict)
     endif()

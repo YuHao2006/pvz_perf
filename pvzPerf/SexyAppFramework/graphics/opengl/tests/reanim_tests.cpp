@@ -104,7 +104,16 @@ void Correct(OpenGLContext&context){
  const std::array<GpuReanimTrack,3> tracks{{{0,2},{GpuReanimNoKeys,0},{0,2}}};
  const std::array<GpuReanimGeometry,4> geo{{{},{20,24,0,0,1,1},{},{28,12,1,0,0,1}}};
  auto upload=keys;auto geometry=geo;
+#if defined(PVZ_OPENGL_REANIM_COMPUTE_EXPERIMENT)
+ OpenGLRenderer::FrameTiming pathProof;r.frameTiming=&pathProof;
+#endif
  auto*definition=r.UploadReanimDefinition({tracks,upload,geometry,2,2});
+#if defined(PVZ_OPENGL_REANIM_COMPUTE_EXPERIMENT)
+ const bool computeActive=pathProof.computeAvailable;r.frameTiming=nullptr;
+ const bool computeCapable=context.majorVersion>4||(context.majorVersion==4&&context.minorVersion>=3);
+ if(computeCapable)Require(computeActive,"Compute experiment did not activate on GL4.3-capable context");
+ std::cout<<"EXPERIMENT actual_path="<<(computeActive?"compute/SceneVS":"GS/CPU fallback")<<'\n';
+#endif
  if(context.majorVersion<3||(context.majorVersion==3&&context.minorVersion<2)){
   Require(!definition,"GL3.0 unexpectedly enabled optional geometry backend");
   Require(r.BeginScene(),"CPU fallback scene");Clear(r);r.EndSceneAndPresent();
@@ -248,9 +257,21 @@ void Correct(OpenGLContext&context){
   const GpuReanimTrackDraw track{2,0xc0e0d0ff};
   for(int i=0;i<256;++i)Require(r.SubmitReanimTrack(token,track,GpuBlend::Normal),"Invocation-count track rejected");
   r.EndSceneAndPresent();unsigned long long invocations=0;get(query,0x8866,&invocations);r.frameTiming=nullptr;
+  unsigned long long expectedInvocations=262;
+#if defined(PVZ_OPENGL_REANIM_COMPUTE_EXPERIMENT)
+  if(computeActive)expectedInvocations=256*4+6;
+#endif
   std::cout<<"PIPELINE_STATISTICS GPUtracks=256 clear_vertices=6 actual_VS_invocations="<<invocations
-   <<" expected_unique_vertices=262 (GL4.6 diagnostic only)\n";
-  Require(invocations==262,"Indexed repeated markers did not evaluate one VS invocation per track");
+   <<" expected_unique_vertices="<<expectedInvocations<<" (GL4.6 diagnostic only)\n";
+#if defined(PVZ_OPENGL_REANIM_COMPUTE_EXPERIMENT)
+  // Indexed draws may invoke a vertex again after a post-transform cache miss.
+  // Compute emits eighteen indices per track, including degenerate padding;
+  // the query counts invocations, not unique output vertices.
+  if(computeActive)Require(invocations>=expectedInvocations&&invocations<=256*18+6,
+   "Compute vertex work outside the emitted index bounds");
+  else
+#endif
+   Require(invocations==expectedInvocations,"Unexpected indexed vertex work for the selected resident path");
   r.frameTiming=&statistics;Require(r.BeginScene(),"Ordinary-only invocation-count scene");Clear(r);
   Require(r.BeginReanimInstance(definition,texture,packet,false,false,nullptr,true)!=~0u,"Unused shared instance rejected");
   r.EndSceneAndPresent();get(query,0x8866,&invocations);r.frameTiming=nullptr;
@@ -336,11 +357,19 @@ template<class T>T Proc(const char*n){auto p=reinterpret_cast<T>(GL3::GetProcAdd
 double Median(std::vector<double>v){std::sort(v.begin(),v.end());return v[v.size()/2];}
 double Mean(const std::vector<double>&v){return std::accumulate(v.begin(),v.end(),0.)/v.size();}
 void Benchmark(OpenGLContext&context,bool mixed,bool transitions=false,bool diagnostic=false){
+#if defined(PVZ_OPENGL_REANIM_COMPUTE_EXPERIMENT)
+ if(context.majorVersion<4||(context.majorVersion==4&&context.minorVersion<3)){
+  std::cout<<"SKIP compute benchmark on GL<4.3; use correctness entry for GS fallback\n";return;
+ }
+ constexpr int TimestampStride=4;
+#else
+ constexpr int TimestampStride=3;
+#endif
  OpenGLRenderer r(context,800,600,{});const uint32_t pixels[]{0xffff8020,0xff20ff80,0xff8020ff,0xffe0e020};
  auto*texture=r.CreateTexture(2,2,pixels,8);constexpr int Burst=16;
  std::array<GLuint,Burst>queries{};auto gen=Proc<GenQuery>("glGenQueries");gen(Burst,queries.data());
- std::array<GLuint,Burst*3>timestampQueries{};
- if(diagnostic){Proc<void(APIENTRY*)(GLuint,GLenum)>("glQueryCounter");gen(Burst*3,timestampQueries.data());}
+ std::array<GLuint,Burst*TimestampStride>timestampQueries{};
+ if(diagnostic){Proc<void(APIENTRY*)(GLuint,GLenum)>("glQueryCounter");gen(Burst*TimestampStride,timestampQueries.data());}
  auto get=Proc<Query64>("glGetQueryObjectui64v");
  OpenGLRenderer::FrameTiming timing;r.frameTiming=&timing;
  std::vector<GpuVertex>ordinary;
@@ -354,7 +383,13 @@ void Benchmark(OpenGLContext&context,bool mixed,bool transitions=false,bool diag
   }
  }
  unsigned gates=0,meanGates=0,total=0;
- std::cout<<"OpenGL actual renderer native-trig GS benchmark mixed="<<mixed
+ std::cout<<"OpenGL actual renderer native-trig "
+#if defined(PVZ_OPENGL_REANIM_COMPUTE_EXPERIMENT)
+  <<"compute/SceneVS"
+#else
+  <<"GS"
+#endif
+  <<" benchmark mixed="<<mixed
   <<" transitions="<<transitions
   <<" diagnostic_timestamps="<<diagnostic
   <<" unlocked clocks; CPU includes interpolation/clip or64Binstance+32Btrack preparation,batching,upload,flush,presentcall;"
@@ -371,6 +406,9 @@ void Benchmark(OpenGLContext&context,bool mixed,bool transitions=false,bool diag
   }
   std::vector<OpenGLReanim*>definitions;
   for(unsigned i=0;i<(mixed?4u:1u);++i){auto*d=r.UploadReanimDefinition({tracks,keys,geo,2,1});Require(d!=nullptr,"Benchmark GPU unavailable");definitions.push_back(d);}
+#if defined(PVZ_OPENGL_REANIM_COMPUTE_EXPERIMENT)
+  Require(timing.computeAvailable,"Compute benchmark unexpectedly selected GS fallback");
+#endif
   for(bool clipped:{false,true}){
    std::array<std::vector<double>,4>samples;const GpuClip clip{6,6,782,582};
    uint64_t accepted=0,fallback=0;
@@ -409,9 +447,12 @@ void Benchmark(OpenGLContext&context,bool mixed,bool transitions=false,bool diag
      if(sparse)r.SubmitTriangles(ordinary,r.whiteTexture,false,false,GpuBlend::Normal);
      timing.elapsedQuery=queries[frame];
      if(diagnostic){
-      timing.uploadBeginTimestamp=timestampQueries[frame*3];
-      timing.drawBeginTimestamp=timestampQueries[frame*3+1];
-      timing.drawEndTimestamp=timestampQueries[frame*3+2];
+      timing.uploadBeginTimestamp=timestampQueries[frame*TimestampStride];
+#if defined(PVZ_OPENGL_REANIM_COMPUTE_EXPERIMENT)
+      timing.computeBeginTimestamp=timestampQueries[frame*TimestampStride+1];
+#endif
+      timing.drawBeginTimestamp=timestampQueries[frame*TimestampStride+TimestampStride-2];
+      timing.drawEndTimestamp=timestampQueries[frame*TimestampStride+TimestampStride-1];
      }
      r.EndSceneAndPresent();
      const double cpu=std::chrono::duration<double,std::micro>(std::chrono::steady_clock::now()-start).count()-timing.presentCpuUs;
@@ -424,12 +465,20 @@ void Benchmark(OpenGLContext&context,bool mixed,bool transitions=false,bool diag
     for(auto q:queries){unsigned long long ns;get(q,0x8866,&ns);burstGpu+=ns*.001;
      if(diagnostic&&round==0&&!clipped&&(count==256||count==8192)){
       unsigned long long uploadBegin,drawBegin,drawEnd;
-      get(timestampQueries[queryFrame*3],0x8866,&uploadBegin);
-      get(timestampQueries[queryFrame*3+1],0x8866,&drawBegin);
-      get(timestampQueries[queryFrame*3+2],0x8866,&drawEnd);
+      get(timestampQueries[queryFrame*TimestampStride],0x8866,&uploadBegin);
+      get(timestampQueries[queryFrame*TimestampStride+TimestampStride-2],0x8866,&drawBegin);
+      get(timestampQueries[queryFrame*TimestampStride+TimestampStride-1],0x8866,&drawEnd);
+      auto uploadEnd=drawBegin;
+#if defined(PVZ_OPENGL_REANIM_COMPUTE_EXPERIMENT)
+      unsigned long long computeBegin;get(timestampQueries[queryFrame*TimestampStride+1],0x8866,&computeBegin);
+      uploadEnd=computeBegin;
+#endif
       std::cout<<"DIAGNOSTIC tracks="<<count<<" frame="<<queryFrame<<" path="<<path
        <<" eligible="<<frameEligible[queryFrame]<<" CPU_us="<<frameCpu[queryFrame]
-       <<" query_us="<<ns*.001<<" upload_interval_us="<<(drawBegin-uploadBegin)*.001
+       <<" query_us="<<ns*.001<<" upload_interval_us="<<(uploadEnd-uploadBegin)*.001
+#if defined(PVZ_OPENGL_REANIM_COMPUTE_EXPERIMENT)
+       <<" compute_copy_barrier_interval_us="<<(drawBegin-computeBegin)*.001
+#endif
        <<" draw_interval_us="<<(drawEnd-drawBegin)*.001<<'\n';
      }
      ++queryFrame;
@@ -457,6 +506,12 @@ void Benchmark(OpenGLContext&context,bool mixed,bool transitions=false,bool diag
 int main(int argc,char**argv)try{
  Window native;OpenGLContext context(native.hwnd,true);
  std::cout<<"adapter="<<context.adapterDescription<<" GL="<<context.majorVersion<<'.'<<context.minorVersion<<'\n';
+#if defined(PVZ_OPENGL_REANIM_COMPUTE_EXPERIMENT)
+ if(argc>1&&std::string(argv[1])=="--gs-fallback"){
+  std::cout<<"Compute capability policy simulation GL3.2; actual context remains the driver version above\n";
+  context.majorVersion=3;context.minorVersion=2;Correct(context);Policy(context);return 0;
+ }
+#endif
  if(argc>1&&std::string(argv[1])=="--benchmark")Benchmark(context,false);
  else if(argc>1&&std::string(argv[1])=="--benchmark-mixed")Benchmark(context,true);
  else if(argc>1&&std::string(argv[1])=="--benchmark-transitions")Benchmark(context,true,true);

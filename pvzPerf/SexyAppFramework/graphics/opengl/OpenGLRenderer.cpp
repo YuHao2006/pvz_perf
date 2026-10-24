@@ -173,6 +173,9 @@ OpenGLRenderer::Impl::~Impl()
         if (program) glDeleteProgram(program);
     if (poolProgram) glDeleteProgram(poolProgram);
 #if defined(PVZ_OPENGL_REANIM_RESIDENT)
+#if defined(PVZ_OPENGL_REANIM_COMPUTE_EXPERIMENT)
+    DestroyReanimCompute();
+#endif
     if (reanimProgram) glDeleteProgram(reanimProgram);
     if (reanimVao) glDeleteVertexArrays(1, &reanimVao);
     if (reanimIndexBuffer) glDeleteBuffers(1, &reanimIndexBuffer);
@@ -212,8 +215,23 @@ void OpenGLRenderer::Impl::Flush()
     }
     BindTarget();
     const auto* target = selected ? selected : scene;
+#if defined(PVZ_OPENGL_REANIM_COMPUTE_EXPERIMENT)
+    const bool computeFrame=hasReanimDraws&&reanimComputeProgram!=0;
+    if(computeFrame){
+        const auto jobs=reanimComputeJobs.size();
+        const auto verticesNeeded=vertices.size()+jobs*8;
+        if(verticesNeeded>UINT32_MAX/10||verticesNeeded>reanimComputeMaximumBytes/sizeof(GpuVertex)||
+            reanimIndices.size()>reanimComputeMaximumBytes/sizeof(unsigned int)||
+            jobs>size_t(reanimComputeMaximumGroups)*64)
+            throw std::length_error("OpenGL compute experiment exceeds SSBO/dispatch capacity");
+    }
+#endif
 #if defined(PVZ_OPENGL_REANIM_RESIDENT)
-    if(hasReanimDraws){
+    if(hasReanimDraws
+#if defined(PVZ_OPENGL_REANIM_COMPUTE_EXPERIMENT)
+        &&!computeFrame
+#endif
+    ){
         // Classify complete ordinary spans after all submissions are known.
         // A long span may cross material batches, or share one with resident
         // markers. Only the marker boundaries matter for choosing its VS.
@@ -227,32 +245,32 @@ void OpenGLRenderer::Impl::Flush()
         }
         if(reanimIndices.size()-ordinaryFirst>=512*3)
             reanimOrdinarySpans.push_back({ordinaryFirst,reanimIndices.size()-ordinaryFirst});
-    }
-    reanimDrawSegments.clear();
-    const size_t requiredSegments=batches.size()+reanimOrdinarySpans.size()*2;
-    if(requiredSegments>reanimDrawSegments.capacity())
-        reanimDrawSegments.reserve(std::max(requiredSegments,
-            reanimDrawSegments.capacity()+reanimDrawSegments.capacity()/2+16));
-    size_t ordinarySpan=0;
-    for(auto& batch:batches){
-        batch.segmentFirst=reanimDrawSegments.size();
-        size_t cursor=batch.first;
-        const size_t end=batch.first+batch.count;
-        while(cursor<end){
-            while(ordinarySpan<reanimOrdinarySpans.size()&&
-                reanimOrdinarySpans[ordinarySpan].first+reanimOrdinarySpans[ordinarySpan].count<=cursor)++ordinarySpan;
-            bool resident=hasReanimDraws;
-            size_t next=end;
-            if(hasReanimDraws&&ordinarySpan<reanimOrdinarySpans.size()){
-                const auto span=reanimOrdinarySpans[ordinarySpan];
-                if(cursor>=span.first){resident=false;next=std::min(end,span.first+span.count);}
-                else next=std::min(end,span.first);
+        reanimDrawSegments.clear();
+        const size_t requiredSegments=batches.size()+reanimOrdinarySpans.size()*2;
+        if(requiredSegments>reanimDrawSegments.capacity())
+            reanimDrawSegments.reserve(std::max(requiredSegments,
+                reanimDrawSegments.capacity()+reanimDrawSegments.capacity()/2+16));
+        size_t ordinarySpan=0;
+        for(auto& batch:batches){
+            batch.segmentFirst=reanimDrawSegments.size();
+            size_t cursor=batch.first;
+            const size_t end=batch.first+batch.count;
+            while(cursor<end){
+                while(ordinarySpan<reanimOrdinarySpans.size()&&
+                    reanimOrdinarySpans[ordinarySpan].first+reanimOrdinarySpans[ordinarySpan].count<=cursor)++ordinarySpan;
+                bool resident=true;
+                size_t next=end;
+                if(ordinarySpan<reanimOrdinarySpans.size()){
+                    const auto span=reanimOrdinarySpans[ordinarySpan];
+                    if(cursor>=span.first){resident=false;next=std::min(end,span.first+span.count);}
+                    else next=std::min(end,span.first);
+                }
+                const size_t first=resident?cursor:reanimIndices[cursor];
+                reanimDrawSegments.push_back({first,next-cursor,resident});
+                cursor=next;
             }
-            const size_t first=resident?cursor:hasReanimDraws?reanimIndices[cursor]:cursor;
-            reanimDrawSegments.push_back({first,next-cursor,resident});
-            cursor=next;
+            batch.segmentCount=reanimDrawSegments.size()-batch.segmentFirst;
         }
-        batch.segmentCount=reanimDrawSegments.size()-batch.segmentFirst;
     }
 #endif
 #if defined(PVZ_OPENGL_REANIM_DIAGNOSTICS)
@@ -284,8 +302,15 @@ void OpenGLRenderer::Impl::Flush()
         glActiveTexture(GL_TEXTURE2); glBindTexture(0x8C2A, reanimInstanceTexture);
     }
 #endif
+#if defined(PVZ_OPENGL_REANIM_COMPUTE_EXPERIMENT)
+    if(computeFrame)ExpandReanimCompute();
+#endif
     glActiveTexture(GL_TEXTURE0);
 #if defined(PVZ_OPENGL_REANIM_DIAGNOSTICS)
+#if defined(PVZ_OPENGL_REANIM_COMPUTE_EXPERIMENT)
+    if(!computeFrame&&frameTiming&&frameTiming->computeBeginTimestamp&&queryCounter)
+        queryCounter(frameTiming->computeBeginTimestamp,0x8E28);
+#endif
     if(timestamps)queryCounter(frameTiming->drawBeginTimestamp,0x8E28);
 #endif
 #if defined(PVZ_OPENGL_REANIM_RESIDENT)
@@ -293,7 +318,11 @@ void OpenGLRenderer::Impl::Flush()
     const auto bindPipeline=[&](bool resident){
         if(activePipeline==int(resident))return;
         activePipeline=int(resident);
-        glBindVertexArray(resident?reanimVao:vao);
+        glBindVertexArray(resident?reanimVao:
+#if defined(PVZ_OPENGL_REANIM_COMPUTE_EXPERIMENT)
+            computeFrame?reanimComputeVao:
+#endif
+            vao);
         if(resident){
             glUseProgram(reanimProgram);
             glUniform2f(reanimUniforms[0],float(target->width),float(target->height));
@@ -322,13 +351,27 @@ void OpenGLRenderer::Impl::Flush()
                 GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
         }
 #if defined(PVZ_OPENGL_REANIM_RESIDENT)
-        for(size_t i=batch.segmentFirst;i<batch.segmentFirst+batch.segmentCount;++i){
-            const auto& draw=reanimDrawSegments[i];
-            bindPipeline(draw.resident);
-            glUniform1i(draw.resident?reanimUniforms[3]:sceneUniforms[uCoverageInput],batch.coverage);
-            if(draw.resident)glDrawElements(GL_TRIANGLES,static_cast<int>(draw.count),GL_UNSIGNED_INT,
-                reinterpret_cast<const void*>(draw.first*sizeof(unsigned int)));
-            else glDrawArrays(GL_TRIANGLES,static_cast<int>(draw.first),static_cast<int>(draw.count));
+#if defined(PVZ_OPENGL_REANIM_COMPUTE_EXPERIMENT)
+        if(computeFrame){
+            bindPipeline(false);
+            glUniform1i(sceneUniforms[uCoverageInput],batch.coverage);
+            glDrawElements(GL_TRIANGLES,static_cast<int>(batch.count),GL_UNSIGNED_INT,
+                reinterpret_cast<const void*>(batch.first*sizeof(unsigned int)));
+        }else
+#endif
+        if(hasReanimDraws){
+            for(size_t i=batch.segmentFirst;i<batch.segmentFirst+batch.segmentCount;++i){
+                const auto& draw=reanimDrawSegments[i];
+                bindPipeline(draw.resident);
+                glUniform1i(draw.resident?reanimUniforms[3]:sceneUniforms[uCoverageInput],batch.coverage);
+                if(draw.resident)glDrawElements(GL_TRIANGLES,static_cast<int>(draw.count),GL_UNSIGNED_INT,
+                    reinterpret_cast<const void*>(draw.first*sizeof(unsigned int)));
+                else glDrawArrays(GL_TRIANGLES,static_cast<int>(draw.first),static_cast<int>(draw.count));
+            }
+        }else{
+            bindPipeline(false);
+            glUniform1i(sceneUniforms[uCoverageInput],batch.coverage);
+            glDrawArrays(GL_TRIANGLES,static_cast<int>(batch.first),static_cast<int>(batch.count));
         }
 #else
         glUniform1i(sceneUniforms[uCoverageInput],batch.coverage);
@@ -344,6 +387,9 @@ void OpenGLRenderer::Impl::Flush()
 #if defined(PVZ_OPENGL_REANIM_RESIDENT)
     reanimIndices.clear(); reanimMarkerOffsets.clear(); reanimOrdinarySpans.clear();
     reanimDrawSegments.clear();
+#if defined(PVZ_OPENGL_REANIM_COMPUTE_EXPERIMENT)
+    reanimComputeJobs.clear();
+#endif
     hasReanimDraws = false;
 #endif
     for (auto* texture : retired) delete texture;

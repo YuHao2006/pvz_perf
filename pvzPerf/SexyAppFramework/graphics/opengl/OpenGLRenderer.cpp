@@ -241,7 +241,11 @@ void OpenGLRenderer::Impl::Flush()
         size_t ordinaryFirst=0;
         for(const auto marker:reanimMarkerOffsets){
             if(marker-ordinaryFirst>=512*3)reanimOrdinarySpans.push_back({ordinaryFirst,marker-ordinaryFirst});
+#if defined(PVZ_OPENGL_REANIM_VERTEX_EXPERIMENT)
+            ordinaryFirst=marker+6;
+#else
             ordinaryFirst=marker+3;
+#endif
         }
         if(reanimIndices.size()-ordinaryFirst>=512*3)
             reanimOrdinarySpans.push_back({ordinaryFirst,reanimIndices.size()-ordinaryFirst});

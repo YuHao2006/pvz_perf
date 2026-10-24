@@ -49,6 +49,14 @@ if(BUILD_TESTING)
     add_executable(sexy_opengl_reanim_compute_tests EXCLUDE_FROM_ALL
         tests/reanim_tests.cpp ../../misc/FastMath.cpp)
     target_link_libraries(sexy_opengl_reanim_compute_tests PRIVATE sexy_opengl_reanim_compute_experiment)
+    add_sexy_opengl_library(sexy_opengl_reanim_vertex_experiment)
+    set_property(TARGET sexy_opengl_reanim_vertex_experiment PROPERTY EXCLUDE_FROM_ALL TRUE)
+    target_compile_definitions(sexy_opengl_reanim_vertex_experiment PUBLIC
+        PVZ_OPENGL_REANIM_RESIDENT=1 PVZ_OPENGL_REANIM_DIAGNOSTICS=1
+        PVZ_OPENGL_REANIM_VERTEX_EXPERIMENT=1)
+    add_executable(sexy_opengl_reanim_vertex_tests EXCLUDE_FROM_ALL
+        tests/reanim_tests.cpp ../../misc/FastMath.cpp)
+    target_link_libraries(sexy_opengl_reanim_vertex_tests PRIVATE sexy_opengl_reanim_vertex_experiment)
     add_executable(sexy_opengl_compare_tests EXCLUDE_FROM_ALL
         "${CMAKE_SOURCE_DIR}/Tests/native/BackendPixelCases.cpp")
     target_compile_definitions(sexy_opengl_compare_tests PRIVATE PVZ_COMPARE_GL=1)
@@ -66,6 +74,7 @@ if(BUILD_TESTING)
     if(MSVC)
         target_compile_options(sexy_opengl_reanim_tests PRIVATE /fp:strict /utf-8 /W4)
         target_compile_options(sexy_opengl_reanim_compute_tests PRIVATE /fp:strict /utf-8 /W4)
+        target_compile_options(sexy_opengl_reanim_vertex_tests PRIVATE /fp:strict /utf-8 /W4)
         target_compile_options(sexy_opengl_font_weights_tests PRIVATE /fp:strict)
         target_compile_options(sexy_opengl_render_tests PRIVATE /fp:strict)
     endif()

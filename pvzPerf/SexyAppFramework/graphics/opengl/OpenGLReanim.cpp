@@ -92,7 +92,29 @@ void main(){
 }
 )GLSL";
 namespace {
-#if !defined(PVZ_OPENGL_REANIM_COMPUTE_EXPERIMENT)
+#if defined(PVZ_OPENGL_REANIM_VERTEX_EXPERIMENT)
+constexpr const char* ReanimVertexExpansionSource = R"GLSL(
+in vec2 inPosition;in vec4 inColor;in vec2 inUV;in uint inSlot,inSampler;
+in uvec4 markerInfo;in vec2 markerShake;
+uniform vec2 targetExtent;
+out vec4 color;out vec2 uv;flat out uint slot,samplerIndex;
+void main(){
+ if(inSampler!=0xffffffffu){
+  gl_Position=vec4(inPosition/targetExtent*2.0-1.0,0,1);
+  color=inColor;uv=inUV;slot=inSlot;samplerIndex=inSampler;return;
+ }
+ evaluateTrack(markerInfo,markerShake);
+ // Invisible evaluation can return before initializing its corner outputs.
+ // All four vertices must instead coincide, including for opaque batches.
+ if(trackInfo.w==0u){
+  gl_Position=vec4(0,0,0,1);color=vec4(0);uv=vec2(0);slot=0u;samplerIndex=0u;return;
+ }
+ vec4 point=inSlot==0u?point0:inSlot==1u?point1:inSlot==2u?point2:point3;
+ gl_Position=vec4(point.xy/targetExtent*2.0-1.0,0,1);
+ color=trackColor;uv=point.zw;slot=trackInfo.x;samplerIndex=trackInfo.y;
+}
+)GLSL";
+#elif !defined(PVZ_OPENGL_REANIM_COMPUTE_EXPERIMENT)
 constexpr const char* ReanimGeometrySource = R"GLSL(#version 150
 layout(triangles)in;layout(triangle_strip,max_vertices=4)out;
 flat in vec4 point0[],point1[],point2[],point3[],trackColor[];
@@ -195,10 +217,17 @@ bool OpenGLRenderer::Impl::InitReanim()
         int bufferMaximum=0;glGetIntegerv(0x8C2B,&bufferMaximum); // GL_MAX_TEXTURE_BUFFER_SIZE.
         reanimBlobMaximum=std::min(size_t(std::max(0,bufferMaximum)),ExactFloatIndexLimit);
         if(!reanimBlobMaximum)return false;
+#if defined(PVZ_OPENGL_REANIM_VERTEX_EXPERIMENT)
+        // This shared branch contains only private temporaries and evaluateTrack,
+        // so it also compiles as GLSL 1.50 without a compute or geometry stage.
+        vertex=Compile(GL_VERTEX_SHADER,std::string("#version 150\n#define PVZ_REANIM_COMPUTE_SHADER 1\n")+
+            OpenGLReanimEvaluationShader+ReanimVertexExpansionSource);
+#else
         vertex=Compile(GL_VERTEX_SHADER,std::string("#version 150\n")+OpenGLReanimEvaluationShader);
         geometry=Compile(GeometryShader,ReanimGeometrySource);
+#endif
         fragment=Compile(GL_FRAGMENT_SHADER,SceneFragmentShader());program=glCreateProgram();
-        glAttachShader(program,vertex);glAttachShader(program,geometry);glAttachShader(program,fragment);
+        glAttachShader(program,vertex);if(geometry)glAttachShader(program,geometry);glAttachShader(program,fragment);
         constexpr const char* attributes[]{"inPosition","inColor","inUV","inSlot","inSampler","markerInfo","markerShake"};
         for(unsigned int i=0;i<std::size(attributes);++i)glBindAttribLocation(program,i,attributes[i]);
         glBindFragDataLocation(program,0,"outColor");glLinkProgram(program);
@@ -393,11 +422,17 @@ bool OpenGLRenderer::SubmitReanimTrack(unsigned int instance,const GpuReanimTrac
     const auto clip=Clamped(draw.flags&GpuReanimTrackDraw::IgnoreDefaultClip?
         GpuClip{0,0,target->width,target->height}:state.clip,target->width,target->height);
     if(!clip.width||!clip.height)return true;
+#if defined(PVZ_OPENGL_REANIM_VERTEX_EXPERIMENT)
+    constexpr unsigned int vertexCount=4,indexCount=6;
+#else
+    constexpr unsigned int vertexCount=1;
     unsigned int indexCount=3;
 #if defined(PVZ_OPENGL_REANIM_COMPUTE_EXPERIMENT)
     if(s.reanimComputeProgram)indexCount=18;
 #endif
-    if(s.vertices.size()>=UINT32_MAX||s.reanimIndices.size()>size_t(INT32_MAX)-indexCount)
+#endif
+    const auto firstIndexCount=s.hasReanimDraws?s.reanimIndices.size():s.vertices.size();
+    if(s.vertices.size()>size_t(UINT32_MAX)-vertexCount||firstIndexCount>size_t(INT32_MAX)-indexCount)
         throw std::length_error("OpenGL indexed reanimation stream exhausted");
     // The native32byte track payload aliases the first32bytes of an ordinary
     // GpuVertex. Typed integer attributes preserve all color/flag/index bits.
@@ -406,8 +441,8 @@ bool OpenGLRenderer::SubmitReanimTrack(unsigned int instance,const GpuReanimTrac
         draw.track,instance,draw.color,draw.samplingFlags|draw.flags,
         std::bit_cast<uint32_t>(draw.shakeX),std::bit_cast<uint32_t>(draw.shakeY),0,0};
     std::memcpy(&marker,payload.data(),32);marker.sampler=MarkerSampler;
-    EnsureSpace(s.vertices,s.vertices.size()+1);
-    EnsureSpace(s.reanimIndices,(s.hasReanimDraws?s.reanimIndices.size():s.vertices.size())+indexCount);
+    EnsureSpace(s.vertices,s.vertices.size()+vertexCount);
+    EnsureSpace(s.reanimIndices,firstIndexCount+indexCount);
     EnsureSpace(s.batches,s.batches.size()+1);
 #if defined(PVZ_OPENGL_REANIM_COMPUTE_EXPERIMENT)
     if(s.reanimComputeProgram)EnsureSpace(s.reanimComputeJobs,s.reanimComputeJobs.size()+1);
@@ -427,9 +462,18 @@ bool OpenGLRenderer::SubmitReanimTrack(unsigned int instance,const GpuReanimTrac
 #endif
     {
         s.reanimMarkerOffsets.push_back(first);
+#if defined(PVZ_OPENGL_REANIM_VERTEX_EXPERIMENT)
+        s.reanimIndices.insert(s.reanimIndices.end(),{vertex,vertex+1,vertex+3,vertex+3,vertex+1,vertex+2});
+        for(unsigned int corner=0;corner<4;++corner){
+            marker.slot=corner;s.vertices.push_back({marker});
+        }
+#else
         s.reanimIndices.insert(s.reanimIndices.end(),{vertex,vertex,vertex});
+#endif
     }
+#if !defined(PVZ_OPENGL_REANIM_VERTEX_EXPERIMENT)
     s.vertices.push_back({marker});
+#endif
     s.hasReanimDraws=true;
     const auto sameClip=[&](const Impl::Batch& b){
         return b.clip.x==clip.x&&b.clip.y==clip.y&&b.clip.width==clip.width&&b.clip.height==clip.height;};

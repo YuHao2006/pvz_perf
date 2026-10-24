@@ -23,9 +23,11 @@ bool GameObject::BeginDraw(Graphics* g)
 	return true;
 }
 
-void GameObject::EndDraw(Graphics* g)
+void GameObject::EndDraw(Graphics* g, float parentTransX, float parentTransY)
 {
-	g->TranslateF(-mX, -mY);
+	// Subtracting mX/mY cannot undo rounding in BeginDraw's float addition.
+	g->mTransX = parentTransX;
+	g->mTransY = parentTransY;
 }
 
 void GameObject::MakeParentGraphicsFrame(Graphics* g)

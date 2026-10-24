@@ -1565,7 +1565,10 @@ void ZenGarden::UpdateStinkyMotionTrail(GridItem* theStinky, bool theStinkyHighO
 
     theStinky->mMotionTrailFrames[0].mPosX = theStinky->mPosX;
     theStinky->mMotionTrailFrames[0].mPosY = theStinky->mPosY;
-    theStinky->mMotionTrailFrames[0].mAnimClock = aStinkyReanim->SamplePlayback().clock;
+    // Only the persisted trail representation needs the old source-frame scale.
+    theStinky->mMotionTrailFrames[0].mAnimClock = ReanimClock::SignedMulDiv(
+        aStinkyReanim->SamplePlayback().phaseNs,
+        std::int64_t(aStinkyReanim->mFrameCount) * ReanimClock::Frame, aStinkyReanim->mPeriodNs);
     theStinky->mMotionTrailCount++;
 }
 

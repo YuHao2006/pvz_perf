@@ -1,6 +1,7 @@
 #pragma once
 
 #include "SexyAppFramework/graphics/GpuTypes.h"
+#include "SexyAppFramework/graphics/GpuPool.h"
 #include "SexyAppFramework/graphics/ImageReadback.h"
 #include "SexyAppFramework/graphics/vulkan/VulkanHdr.h"
 #include <cstddef>
@@ -87,6 +88,7 @@ public:
         bool linear, bool wrap, GpuBlend blend, const GpuClip* clip = nullptr);
     void SubmitCoverageTriangles(std::span<const GpuVertex> vertices,
         D3d12Texture* mask, GpuBlend blend, const GpuClip* clip = nullptr);
+    void SubmitPool(D3d12Texture* texture, const GpuPoolParams& params);
     // Main scenes queue presentation asynchronously. The next recording waits
     // their fence before reusing mapped pages, descriptors, or retired images.
     // Image-only scenes remain synchronous.

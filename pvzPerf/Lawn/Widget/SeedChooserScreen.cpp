@@ -115,10 +115,10 @@ SeedChooserScreen::SeedChooserScreen()
 
 	mStartButton = new GameButton(SeedChooserScreen::SeedChooserScreen_Start);
 	mStartButton->mLabel = gStr.LETS_ROCK_BUTTON; // @Patoke: wrong local name
-	mStartButton->mNormalRect = FixedUIAtlas::Images[size_t(FixedUIAtlas::Sprite::SEEDCHOOSER_BUTTON)];
+	mStartButton->mNormalRegion = FixedUIAtlas::Images[size_t(FixedUIAtlas::Sprite::SEEDCHOOSER_BUTTON)];
 	mStartButton->mOverImage = nullptr;
 	mStartButton->mDownImage = nullptr;
-	mStartButton->mDisabledRect = FixedUIAtlas::Images[size_t(FixedUIAtlas::Sprite::SEEDCHOOSER_BUTTON_DISABLED)];
+	mStartButton->mDisabledRegion = FixedUIAtlas::Images[size_t(FixedUIAtlas::Sprite::SEEDCHOOSER_BUTTON_DISABLED)];
 	mStartButton->SetFont(Sexy::FONT_DWARVENTODCRAFT18YELLOW);
 	mStartButton->mColors[GameButton::COLOR_LABEL_HILITE] = Color::White;
 	mStartButton->mX = 154;
@@ -157,15 +157,15 @@ SeedChooserScreen::SeedChooserScreen()
 	}
 
 	Color aBtnColor = Color(42, 42, 90);
-	const Rect& button = FixedUIAtlas::Images[size_t(FixedUIAtlas::Sprite::SEEDCHOOSER_BUTTON2)];
-	const Rect& over = FixedUIAtlas::Images[size_t(FixedUIAtlas::Sprite::SEEDCHOOSER_BUTTON2_GLOW)];
+	const TextureRegion& button = FixedUIAtlas::Images[size_t(FixedUIAtlas::Sprite::SEEDCHOOSER_BUTTON2)];
+	const TextureRegion& over = FixedUIAtlas::Images[size_t(FixedUIAtlas::Sprite::SEEDCHOOSER_BUTTON2_GLOW)];
 	int aImageWidth = button.mWidth;
 	int aImageHeight = over.mHeight;
 
 	mViewLawnButton = new GameButton(SeedChooserScreen::SeedChooserScreen_ViewLawn);
 	mViewLawnButton->mLabel = gStr.VIEW_LAWN;
-	mViewLawnButton->mNormalRect = button;
-	mViewLawnButton->mOverRect = over;
+	mViewLawnButton->mNormalRegion = button;
+	mViewLawnButton->mOverRegion = over;
 	mViewLawnButton->mDownImage = nullptr;
 	mViewLawnButton->SetFont(Sexy::FONT_BRIANNETOD12);
 	mViewLawnButton->mColors[0] = aBtnColor;
@@ -184,8 +184,8 @@ SeedChooserScreen::SeedChooserScreen()
 
 	mAlmanacButton = new GameButton(SeedChooserScreen::SeedChooserScreen_Almanac);
 	mAlmanacButton->mLabel = gStr.ALMANAC_BUTTON;
-	mAlmanacButton->mNormalRect = button;
-	mAlmanacButton->mOverRect = over;
+	mAlmanacButton->mNormalRegion = button;
+	mAlmanacButton->mOverRegion = over;
 	mAlmanacButton->mDownImage = nullptr;
 	mAlmanacButton->SetFont(Sexy::FONT_BRIANNETOD12);
 	mAlmanacButton->mColors[0] = aBtnColor;
@@ -199,8 +199,8 @@ SeedChooserScreen::SeedChooserScreen()
 
 	mStoreButton = new GameButton(SeedChooserScreen::SeedChooserScreen_Store);
 	mStoreButton->mLabel = gStr.SHOP_BUTTON;
-	mStoreButton->mNormalRect = button;
-	mStoreButton->mOverRect = over;
+	mStoreButton->mNormalRegion = button;
+	mStoreButton->mOverRegion = over;
 	mStoreButton->mDownImage = nullptr;
 	mStoreButton->SetFont(Sexy::FONT_BRIANNETOD12);
 	mStoreButton->mColors[0] = aBtnColor;
@@ -522,7 +522,7 @@ void SeedChooserScreen::Draw(Graphics* g)
 		}
 	}
 
-	const Sexy::TextureSource fixedUI{FixedUIAtlas::Texture, FixedUIAtlas::Width, FixedUIAtlas::Height};
+	const Sexy::TextureSource fixedUI{FixedUIAtlas::Texture, 0};
 	mStartButton->DrawAtlas(g, fixedUI,
 		&FixedUIAtlas::Images[size_t(FixedUIAtlas::Sprite::SEEDCHOOSER_BUTTON_GLOW)]);
 	mRandomButton->Draw(g);

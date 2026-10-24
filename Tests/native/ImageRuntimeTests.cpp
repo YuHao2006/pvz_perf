@@ -13,6 +13,7 @@
 #include "Sexy.TodLib/Definition.h"
 #include "Sexy.TodLib/generated/GeneratedDefinitions.h"
 #include "Sexy.TodLib/generated/NumericResourceBindings.h"
+#include "Sexy.TodLib/generated/SceneAtlasData.h"
 #include "Resources.h"
 #include "LawnApp.h"
 #include "Lawn/Board.h"
@@ -24,8 +25,12 @@
 #include "SexyAppFramework/imagelib/ImageLib.h"
 #include "SexyAppFramework/sound/SoundManager.h"
 #include "SexyAppFramework/sound/SoundDecode.h"
+#include "PoolGpuChecks.h"
+#include "Lawn/System/PoolEffect.h"
+#include "QuitDialogRuntimeChecks.h"
 #include <array>
 #include <algorithm>
+#include <cmath>
 #include <iostream>
 #include <stdexcept>
 #include <vector>
@@ -56,6 +61,7 @@ LONG CALLBACK SuppressFixtureCrashDialogs(EXCEPTION_POINTERS* exception)
 class TestApp final : public LawnApp
 {
 public:
+    using SexyAppBase::ProcessSafeDeleteList;
     void ButtonPress(int) override {}
     void ButtonDepress(int) override {}
     void ButtonDownTick(int) override {}
@@ -189,8 +195,9 @@ void SourceRectangleDraws(SexyAppBase& app)
     }
     render.Flush();
     Require(packed.mTexture!=nullptr,"Atlas test sheet was not uploaded");
-    TextureSource packedTexture{packed.mTexture,10,9,0};
-    const Rect packedSheet(1,2,6,5),packedView(3,3,2,2);
+    TextureSource packedTexture{packed.mTexture,0};
+    const TextureRegion packedSheet{1.f/10,2.f/9,7.f/10,7.f/9,6,5};
+    const TextureRegion packedView{3.f/10,3.f/9,5.f/10,5.f/9,2,2};
     std::unique_ptr<Image> expectedTarget(render.CreateRenderImage(targetWidth,targetHeight));
     for (int method=0;method<4;++method)
         for (int style=0;style<4;++style)
@@ -272,12 +279,14 @@ void AtlasButtonStates(SexyAppBase& app)
     std::array<unsigned,132> packedPixels;
     packedPixels.fill(0xffff00ffu);
     std::array<Rect,5> rectangles;
+    std::array<TextureRegion,5> regions;
     for (int state=0;state<5;++state)
     {
         unsigned pixels[]{colors[state],colors[state]^0x00101010u,
             colors[state]^0x00080808u,colors[state]};
         original[state].SetBits(pixels,2,2);
         rectangles[state]=Rect(2+state*4,2,2,2);
+        regions[state]=PixelSourceToUv(rectangles[state],22,6);
         for (int y=0;y<2;++y)
             for (int x=0;x<2;++x)
                 packedPixels[(2+y)*22+2+state*4+x]=pixels[y*2+x];
@@ -292,7 +301,7 @@ void AtlasButtonStates(SexyAppBase& app)
         graphics.DrawImage(&packed,0,0);
     }
     render.Flush();
-    TextureSource texture{packed.mTexture,22,6,0};
+    TextureSource texture{packed.mTexture,0};
     struct MouseRestore {
         WidgetManager& manager;
         int x,y;
@@ -324,19 +333,19 @@ void AtlasButtonStates(SexyAppBase& app)
         oldButton.mOverImage=&original[1];
         oldButton.mDownImage=&original[2];
         oldButton.mDisabledImage=&original[3];
-        atlasButton.mNormalRect=rectangles[0];
-        atlasButton.mOverRect=rectangles[1];
-        atlasButton.mDownRect=rectangles[2];
-        atlasButton.mDisabledRect=rectangles[3];
+        atlasButton.mNormalRegion=PixelSourceToUv(rectangles[0],22,6);
+        atlasButton.mOverRegion=PixelSourceToUv(rectangles[1],22,6);
+        atlasButton.mDownRegion=PixelSourceToUv(rectangles[2],22,6);
+        atlasButton.mDisabledRegion=PixelSourceToUv(rectangles[3],22,6);
         if (state==7 || state==8)
         {
             oldButton.mDownImage=nullptr;
-            atlasButton.mDownRect=Rect();
+            atlasButton.mDownRegion=TextureRegion{};
         }
         if (state==8)
         {
             oldButton.mOverImage=nullptr;
-            atlasButton.mOverRect=Rect();
+            atlasButton.mOverRegion=TextureRegion{};
         }
         const bool glow=state==5 || state==6;
         oldButton.mOverOverlayImage=glow ? &original[4] : nullptr;
@@ -348,7 +357,7 @@ void AtlasButtonStates(SexyAppBase& app)
             graphics.Translate(1,2);
             graphics.mFastStretch=true;
             if (useAtlas)
-                atlasButton.DrawAtlas(&graphics,texture,glow ? &rectangles[4] : nullptr);
+                atlasButton.DrawAtlas(&graphics,texture,glow ? &regions[4] : nullptr);
             else oldButton.Draw(&graphics);
             Require(graphics.mTransX==1 && graphics.mTransY==2,
                 "Button drawing failed to restore the caller's translation");
@@ -375,6 +384,45 @@ void AtlasButtonStates(SexyAppBase& app)
         "overAlpha, additive glow, translation/offsets and hidden state match independent images\n";
 }
 
+void WrappedTextMeasurements()
+{
+    struct CountingFont final : _Font {
+        int draws=0;
+        CountingFont() { mAscent=7;mHeight=10;mLineSpacingOffset=2; }
+        int CharWidth(SexyChar ch) override { return ch=='\n' ? 0 : ch==' ' ? 3 : 5; }
+        int StringWidth(const SexyString& text) override {
+            int width=0;
+            for (auto ch:text) width+=CharWidth(ch);
+            return width;
+        }
+        void DrawString(Graphics*,int,int,const SexyString&,const Color&,const Rect&) override { ++draws; }
+        _Font* Duplicate() override { return new CountingFont(*this); }
+    } font;
+    for (bool colored:{false,true})
+        for (int width:{5,20,60})
+            for (const SexyString text:{"","word","word word word","longunbrokenword",
+                "first\nsecond\n","^ff0000^colored words","many   spaces"})
+            {
+                Graphics measure(nullptr),drawing(nullptr);
+                measure.mFont=drawing.mFont=&font;
+                measure.mWriteColoredString=drawing.mWriteColoredString=colored;
+                measure.mColor=drawing.mColor=Color(17,31,47,191);
+                drawing.mClipRect=Rect(0,0,10000,10000);
+                int measuredWidth=0,drawnWidth=0;
+                font.draws=0;
+                const int height=measure.GetWordWrappedHeight(width,text,-1,&measuredWidth);
+                Require(font.draws==0,"Wrapped text measurement invoked glyph drawing");
+                const int reference=drawing.WriteWordWrapped(Rect(0,0,width,0),text,-1,-1,&drawnWidth);
+                Require(height==reference && measuredWidth==drawnWidth &&
+                    measure.mColor==Color(17,31,47,191),
+                    "Pure wrapped measurement changed line breaking, width or color state");
+            }
+    Graphics invisible(nullptr);
+    invisible.mColor=Color::White;
+    invisible.FillRect(0,0,20,20);
+    std::cout<<"PASS pure wrapped text measurement: wrapping, newlines, color tags, no glyph draws and empty fill\n";
+}
+
 void FontUploadAndCopies(SexyAppBase& app)
 {
     auto& render=*app.mDDInterface->mRenderInterface;
@@ -389,8 +437,15 @@ void FontUploadAndCopies(SexyAppBase& app)
     layer.mAscent=1;
     layer.mHeight=1;
     auto& glyph=layer.mCharData['A'];
-    glyph.mImageRect=Rect(0,0,3,1);
+    glyph.mImageRect={0,0,1,1,3,1};
     glyph.mWidth=3;
+    {
+        Graphics measuring(nullptr);
+        int measuredWidth=0;
+        font.DrawStringEx(&measuring,0,1,"A",Color::White,nullptr,&measuredWidth);
+        Require(measuredWidth==3 && !source.mTexture,
+            "Text measurement required a GPU draw target or uploaded glyphs");
+    }
 
     Image* target=render.CreateRenderImage(3,1);
     try
@@ -446,6 +501,45 @@ void FontUploadAndCopies(SexyAppBase& app)
     }
     catch (...) { delete target; throw; }
     delete target;
+    // A nonzero glyph origin exercises the UV-only persistent source through
+    // the loading-time pixel-exact resampler. Its oracle supplies the original
+    // integer texel coordinates directly, independently of glyph UV storage.
+    {
+        Image glyphSheet(&app);
+        std::array<unsigned,15> sheetPixels;
+        sheetPixels.fill(0xffff00ffu);
+        std::copy(std::begin(pixels),std::end(pixels),sheetPixels.begin()+6);
+        glyphSheet.SetBits(sheetPixels.data(),5,3,false);
+        ImageFont scaledFont(&glyphSheet);
+        auto& scaledLayer=scaledFont.mFontData->mFontLayerList.front();
+        scaledLayer.mPointSize=0;
+        scaledLayer.mAscent=1;
+        scaledLayer.mHeight=1;
+        auto& scaledGlyph=scaledLayer.mCharData['A'];
+        scaledGlyph.mImageRect={1.f/5,1.f/3,4.f/5,2.f/3,3,1};
+        scaledGlyph.mWidth=3;
+        scaledFont.SetScale(2);
+        scaledFont.GenerateActiveFontLayers();
+        Require(scaledFont.mActiveLayerList.size()==1,"Missing scaled font UV layer");
+        const auto& active=scaledFont.mActiveLayerList.front();
+        Require(active.mOwnsImage && active.mScaledImage->mWidth==6 &&
+            active.mScaledImage->mHeight==2,"Scaled font UV geometry changed");
+        Image* expected=render.CreateRenderImage(6,2);
+        try
+        {
+            const GpuFontGlyph oldPixelGlyph{1,1,3,1,0,0,6,2};
+            render.RenderFontAtlas(expected,&glyphSheet,std::span(&oldPixelGlyph,1),false);
+            render.Flush();
+            Require(render.ReadImagePixels(*expected).pixels==
+                render.ReadImagePixels(*active.mScaledImage).pixels,
+                "Scaled font UV origin changed pixel-exact resampling");
+            const auto& region=active.mScaledCharImageRects['A'];
+            Require(region.mU0==0 && region.mV0==0 && region.mU1==1 && region.mV1==1 &&
+                region.mWidth==6 && region.mHeight==2,"Scaled font kept pixel source coordinates");
+        }
+        catch (...) { delete expected; throw; }
+        delete expected;
+    }
     std::cout<<"PASS public font upload: deferred alpha, upload-and-discard, texture reuse, independent copies\n";
 }
 
@@ -526,12 +620,11 @@ void ReanimationAppearancePixels(SexyAppBase& app)
     render.CreateImageTexture(&base);
     render.CreateImageTexture(&alternate);
     GpuTexture* textures[]{base.mTexture,base.mTexture,alternate.mTexture,alternate.mTexture};
-    int widths[]{12,12,16,16},heights[]{8,8,10,10};
-    Rect rectangles[]{
-        {},{2,2,2,2},{6,2,2,2},
-        {},{},       {6,2,2,2},
-        {},{2,2,2,2},{7,5,4,2},
-        {},{},       {7,5,4,2}};
+    TextureRegion rectangles[]{
+        {},{2.f/12,2.f/8,4.f/12,4.f/8,2,2},{6.f/12,2.f/8,8.f/12,4.f/8,2,2},
+        {},{},                                  {6.f/12,2.f/8,8.f/12,4.f/8,2,2},
+        {},{2.f/16,2.f/10,4.f/16,4.f/10,2,2},{7.f/16,5.f/10,11.f/16,7.f/10,4,2},
+        {},{},                                  {7.f/16,5.f/10,11.f/16,7.f/10,4,2}};
     std::array<std::uint32_t,16> transitions;
     std::vector<std::uint32_t> starts(trackCount),counts(trackCount),options(4*trackCount);
     starts[face]=0;counts[face]=2;
@@ -551,13 +644,40 @@ void ReanimationAppearancePixels(SexyAppBase& app)
     definition.mImageSlotCount=3;
     definition.mVariantActionCount=4;
     definition.mTextures=textures;
-    definition.mTextureWidths=widths;
-    definition.mTextureHeights=heights;
     definition.mImageRects=rectangles;
     definition.mVariantTransitions=transitions.data();
     definition.mVariantActionStarts=starts.data();
     definition.mVariantActionCounts=counts.data();
     definition.mVariantOptions=options.data();
+#if defined(PVZ_GPU_REANIM_VULKAN)
+    {
+        std::vector<GpuReanimTrack> gpuTracks;
+        std::vector<GpuReanimKey> gpuKeys;
+        std::vector<GpuReanimGeometry> gpuGeometry;
+        for (const auto& transform:transforms)
+        {
+            gpuTracks.push_back({unsigned(gpuKeys.size()),1});
+            gpuKeys.push_back({transform.mTransX,transform.mTransY,transform.mSkewX,
+                transform.mSkewY,transform.mScaleX,transform.mScaleY,transform.mAlpha,
+                transform.mFrame,transform.mImageSlot});
+        }
+        for (const auto& region:rectangles)
+            gpuGeometry.push_back({float(region.mWidth),float(region.mHeight),
+                region.mU0,region.mV0,region.mU1,region.mV1});
+        definition.mGpuData=render.mRenderer->UploadReanimDefinition(
+            {gpuTracks,gpuKeys,gpuGeometry,3,4});
+        Require(definition.mGpuData,"Synthetic reanimation GPU upload failed");
+        // Upload inputs go out of scope before DrawTrack and AttachmentDraw.
+    }
+    struct GpuDefinitionCleanup {
+        GpuRenderer* renderer;
+        ReanimatorDefinition& definition;
+        ~GpuDefinitionCleanup() {
+            renderer->DestroyReanimDefinition(definition.mGpuData);
+            definition.mGpuData=nullptr;
+        }
+    } gpuDefinitionCleanup{render.mRenderer,definition};
+#endif
     EffectSystem effects;
     effects.EffectSystemInitialize();
     Reanimation animation;
@@ -661,6 +781,10 @@ void ReanimationAppearanceDefinitions(SexyAppBase& app)
         blinkFrames[2].mFrame==0 && blinkFrames[4].mFrame==-1 && blinkFrames[5].mFrame==-1,
         "Cel inheritance changed Garlic's explicit or inherited hidden frames");
     auto& render=*app.mDDInterface->mRenderInterface;
+#if defined(PVZ_GPU_REANIM_VULKAN)
+    ReanimatorUploadGpuDefinitionData();
+    Require(first.mDefinition->mGpuData,"Production GRU1 reanimation data was not uploaded");
+#endif
     std::unique_ptr<Image> target(render.CreateRenderImage(128,128));
     {
         GpuImageDrawScope destination(render,target.get());
@@ -680,8 +804,7 @@ void ReanimationAppearanceDefinitions(SexyAppBase& app)
     for (unsigned v=0;v<first.mDefinition->mVariantCount;++v)
     {
         first.SelectVariant(v);
-        Require(first.mDefinition->mTextures[v] && first.mDefinition->mTextureWidths[v]>0 &&
-            first.mDefinition->mTextureHeights[v]>0,"Appearance atlas binding was not uploaded");
+        Require(first.mDefinition->mTextures[v],"Appearance atlas binding was not uploaded");
         for (int track=0;track<first.mDefinition->mTracks.count;++track)
         {
             const auto count=first.mDefinition->mVariantActionCounts[track];
@@ -797,8 +920,16 @@ void ProjectileAtlasPixels(LawnApp& app)
         ~FreeResources() { ProjectileFreeResources(); DefinitionFreeAtlasImages(); }
     } freeResources;
     ImageLib::Image* decoded=ImageLib::GetImage("compiled/atlases/projectiles.atlas.png",false);
-    Require(decoded && decoded->mBits && decoded->mWidth==definition.mWidth &&
-        decoded->mHeight==definition.mHeight,"Cannot decode projectile atlas oracle");
+    // Independent pre-migration packed pixel layout. The new program data must
+    // normalize these exact regions, not redefine its own pixel oracle.
+    constexpr Rect bodyRegions[]{
+        {156,102,28,28},{168,44,28,28},{210,2,30,27},{38,84,55,48},
+        {2,104,32,27},{97,84,55,48},{0,0,0,0},{168,2,38,38},
+        {2,84,30,16},{210,33,31,31},{168,76,21,22},{2,2,162,78},
+        {193,81,49,50},{156,102,28,28}};
+    constexpr Rect shadowRegions[]{{200,68,21,9},{221,68,21,9}};
+    Require(decoded && decoded->mBits && decoded->mWidth==244 &&
+        decoded->mHeight==134,"Cannot decode projectile atlas oracle");
     struct FreeDecoded { ImageLib::Image* image; ~FreeDecoded() { delete image; } } freeDecoded{decoded};
     EffectSystem effects;
     effects.EffectSystemInitialize();
@@ -938,14 +1069,22 @@ void ProjectileAtlasPixels(LawnApp& app)
     {
         projectile.mProjectileType=static_cast<ProjectileType>(type);
         const auto& visual=definition.mProjectiles[type];
+        const auto& oldRegion=bodyRegions[type];
+        Require(visual.mSource.mWidth==oldRegion.mWidth &&
+            visual.mSource.mHeight==oldRegion.mHeight &&
+            visual.mSource.mU0==float(oldRegion.mX)/244 &&
+            visual.mSource.mV0==float(oldRegion.mY)/134 &&
+            visual.mSource.mU1==float(oldRegion.mX+oldRegion.mWidth)/244 &&
+            visual.mSource.mV1==float(oldRegion.mY+oldRegion.mHeight)/134,
+            "Generated projectile UV differs from the preserved pixel layout");
         Image body(&app);
-        sourceImage(body,visual.mSource);
+        sourceImage(body,oldRegion);
         for (const std::int64_t ageNs:{0LL,123'456'789LL,300'000'000LL})
             for (const bool rotated:{false,true})
                 for (const bool mirror:{false,true})
                 {
                     projectile.mCreationTimeNs=
-                        static_cast<std::int64_t>(board.mMainCounter.mNanoseconds)-ageNs;
+                        static_cast<std::int64_t>(board.mLevelTimeNs)-ageNs;
                     projectile.mRotation=rotated ? 0.37f : 0.0f;
                     projectile.mMotionType=mirror ? ProjectileMotion::MOTION_BEE_BACKWARDS :
                         ProjectileMotion::MOTION_STRAIGHT;
@@ -972,7 +1111,7 @@ void ProjectileAtlasPixels(LawnApp& app)
                             TodBltMatrix(&g,&body,transform,g.mClipRect,Color::White,g.mDrawMode,source);
                         }
                     },"Projectile body atlas differs from standalone legacy draw",
-                        nearest ? &nearestTransform : nullptr,&visual.mSource,Color::White);
+                        nearest ? &nearestTransform : nullptr,&oldRegion,Color::White);
                 }
         static constexpr struct { float x,y,scale,stretch; bool skip; } shadows[]{
             {3,0,1,1,false},{-1,0,1.3f,1,false},{3,10,1.6f,1,false},
@@ -988,7 +1127,7 @@ void ProjectileAtlasPixels(LawnApp& app)
                 projectile.mMotionType=lobbed ? ProjectileMotion::MOTION_LOBBED :
                     ProjectileMotion::MOTION_STRAIGHT;
                 Image shadow(&app);
-                sourceImage(shadow,definition.mShadows[night]);
+                sourceImage(shadow,shadowRegions[night]);
                 const auto& params=shadows[type];
                 const float scale=params.scale*(lobbed ? 200.0f/203.25f : 1.0f);
                 SexyTransform2D nearestTransform;
@@ -1004,11 +1143,81 @@ void ProjectileAtlasPixels(LawnApp& app)
                         Rect(0,0,shadow.mWidth,shadow.mHeight),scale*params.stretch,scale);
                 },"Projectile shadow atlas differs from standalone legacy draw",
                     (scale*params.stretch!=1 || scale!=1) ? &nearestTransform : nullptr,
-                    &definition.mShadows[night],Color(160,210,120,230));
+                    &shadowRegions[night],Color(160,210,120,230));
             }
     }
     std::cout<<"PASS actual projectile body/shadow atlas pixels: all14 types, both shadow cels, "
         "source offsets, scale, rotation, mirrors, puff ages, lobbed shadows and collision dimensions\n";
+}
+
+void PoolScenePixels(SexyAppBase& app)
+{
+    auto& render=*app.mDDInterface->mRenderInterface;
+    PoolEffect pool;
+    pool.PoolEffectInitialize();
+    pool.mPoolCounter=97;
+    render.SetCausticsFrame(97);
+    for (int width:{800,1400})
+    {
+        Image* target=render.CreateRenderImage(width,600);
+        struct Cleanup { Image* image; ~Cleanup() { delete image; } } cleanup{target};
+        for (bool night:{false,true})
+        {
+            const auto draw=[&](bool legacy) {
+                {
+                    GpuImageDrawScope destination(render,target);
+                    Graphics g(target);
+                    g.mColor=Color::Black;
+                    g.FillRect(0,0,width,600);
+                    g.mTransX=width==1400 ? 230.f : 0.f;
+                    g.mLinearBlend=true;
+                    g.DrawImage(night ? IMAGE_BACKGROUND4 : IMAGE_BACKGROUND3,-220,0);
+                    if (!legacy) pool.PoolEffectDraw(&g,night);
+                    else
+                    {
+                        Image* layers[]{night ? IMAGE_POOL_BASE_NIGHT : IMAGE_POOL_BASE,
+                            night ? IMAGE_POOL_SHADING_NIGHT : IMAGE_POOL_SHADING,
+                            pool.mCausticImage};
+                        for (unsigned layer=0;layer<3;++layer)
+                        {
+                            auto p=PoolGpuChecks::Parameters(97,layer,night,GpuBlend::Normal,false,false);
+                            p.width=float(IMAGE_POOL->mWidth);
+                            p.height=float(IMAGE_POOL->mHeight);
+                            p.transX=p.transY=0;
+                            p.clip={g.mClipRect.mX,g.mClipRect.mY,g.mClipRect.mWidth,g.mClipRect.mHeight};
+                            const auto vertices=PoolGpuChecks::LegacyVertices(p,0);
+                            TriVertex triangles[150][3]{};
+                            for (unsigned i=0;i<vertices.size();++i)
+                            {
+                                const auto& v=vertices[i];
+                                auto& out=triangles[i/3][i%3];
+                                out.x=v.x;out.y=v.y;out.u=v.u;out.v=v.v;
+                                out.color=(unsigned(std::lround(v.a*255))<<24)|0xffffffu;
+                            }
+                            render.sSamplerAddressWrap=layer==2;
+                            g.DrawTrianglesTex(layers[layer],triangles,150);
+                        }
+                        render.sSamplerAddressWrap=false;
+                    }
+                }
+                render.Flush();
+                return render.ReadImagePixels(*target);
+            };
+            const auto expected=draw(true);
+            const auto actual=draw(false);
+            unsigned maxDelta=0;
+            for (std::size_t i=0;i<actual.pixels.size();++i)
+                for (unsigned shift:{0,8,16,24})
+                    maxDelta=std::max(maxDelta,unsigned(std::abs(
+                        int((actual.pixels[i]>>shift)&255)-int((expected.pixels[i]>>shift)&255))));
+            std::cout<<"pool scene width="<<width<<" night="<<night<<" max="<<maxDelta<<'\n';
+            const auto name="pool-scene-"+std::to_string(width)+(night ? "-night" : "-day");
+            Require(ImageLib::WritePNGImage(name+"-legacy.png",width,600,expected.pixels) &&
+                ImageLib::WritePNGImage(name+"-gpu.png",width,600,actual.pixels),
+                "Cannot write pool scene diagnostic");
+            Require(maxDelta<=3,"Actual PoolEffectDraw differs from legacy Graphics triangle path");
+        }
+    }
 }
 
 void AllResourceGroups(SexyAppBase& app)
@@ -1118,6 +1327,24 @@ void AllResourceGroups(SexyAppBase& app)
     }
     Require(loadedImages==RESOURCE_LOAD_IMAGE_COUNT,"Full loading skipped an image recipe");
     ProjectileAtlasPixels(static_cast<LawnApp&>(app));
+    PoolScenePixels(app);
+    FixedUIAtlas::Load();
+    {
+        auto& render=*app.mDDInterface->mRenderInterface;
+        Image* target=render.CreateRenderImage(800,600);
+        try
+        {
+            GpuImageDrawScope destination(render,target);
+            Graphics graphics(target);
+            CheckQuitDialogRuntime(static_cast<LawnApp&>(app),graphics);
+            static_cast<TestApp&>(app).ProcessSafeDeleteList();
+        }
+        catch (...) { delete target; FixedUIAtlas::Free(); throw; }
+        delete target;
+    }
+    FixedUIAtlas::Free();
+    DefinitionFreeAtlasImages();
+    std::cout<<"PASS actual Quit confirmation: target-free layout, body, yes/no buttons and clean dialog release\n";
     TodWarmDispose();
     manager.DeleteResources();
     manager.DeleteResources();
@@ -1239,10 +1466,13 @@ void ParticleDefinitionsAndFrames(SexyAppBase& app, const char* pakPath)
                 (definition.mEmitterDefCount==0 || definition.mEmitterDefs),
                 "Static particle catalog has incomplete behavior data");
             for (unsigned v=0;v<definition.mVariantCount;++v)
-                Require((definition.mTextureWidths[v]==0 && definition.mTextureHeights[v]==0) ||
-                    (definition.mTextures[v] && definition.mTextureWidths[v]>0 &&
-                     definition.mTextureHeights[v]>0),
+            {
+                bool hasImage=false;
+                for (unsigned f=0;f<definition.mImageRectCount;++f)
+                    hasImage|=definition.mImageRects[v*definition.mImageRectCount+f].mWidth>0;
+                Require(!hasImage || definition.mTextures[v],
                     "Static particle catalog has an unbound atlas");
+            }
         }
         constexpr int expectedCounts[]{2,1,2};
         for (int d=0;d<3;++d)
@@ -1261,14 +1491,12 @@ void ParticleDefinitionsAndFrames(SexyAppBase& app, const char* pakPath)
             Require(next==definition.mImageRectCount,"Particle rectangle row length changed");
             for (unsigned v=0;v<definition.mVariantCount;++v)
             {
-                Require(definition.mTextures[v] && definition.mTextureWidths[v]>0 &&
-                    definition.mTextureHeights[v]>0,"Loaded appearance has no resident atlas");
+                Require(definition.mTextures[v],"Loaded appearance has no resident atlas");
                 for (unsigned f=0;f<definition.mImageRectCount;++f)
                 {
                     const auto& r=definition.mImageRects[v*definition.mImageRectCount+f];
-                    Require(r.mX>=2 && r.mY>=2 && r.mWidth>0 && r.mHeight>0 &&
-                        r.mX+r.mWidth+2<=definition.mTextureWidths[v] &&
-                        r.mY+r.mHeight+2<=definition.mTextureHeights[v],
+                    Require(r.mU0>0 && r.mV0>0 && r.mWidth>0 && r.mHeight>0 &&
+                        r.mU0<r.mU1 && r.mV0<r.mV1 && r.mU1<1 && r.mV1<1,
                         "Loaded particle frame is outside its resident atlas");
                 }
             }
@@ -1299,6 +1527,51 @@ void ParticleDefinitionsAndFrames(SexyAppBase& app, const char* pakPath)
         const auto& noImage=gParticleDefArray[trailEffect].mEmitterDefs[1];
         Require(noImage.mImageRectCount==0 && noImage.mImageFrames==1,
             "No-image emitter lost its logical frame count");
+
+        // Preserve the pixel rectangles from the pre-UV fixture as an independent
+        // oracle. Reference rendering below decodes the packed PNGs and uses the
+        // ordinary Image pixel-rectangle path, never the generated UV endpoints.
+        const Rect fireRectangles[]{
+            {2,2,112,74},{118,2,112,74},{2,80,112,74},{118,80,112,74},
+            {2,80,112,74},{118,80,112,74}};
+        const Rect iceRectangles[]{
+            {2,2,87,46},{2,52,87,46},{2,102,87,46},{2,152,87,46},
+            {2,102,87,46},{2,152,87,46}};
+        const Rect glassesRectangles[]{
+            {2,2,61,48},{67,2,61,48},{2,54,61,48},{67,54,61,48}};
+        const Rect snowRectangles[]{{2,202,20,20},{26,202,20,20},{50,202,20,20}};
+        Image fireAtlas(&app),iceAtlas(&app),glassesAtlas(&app);
+        Image* referenceAtlases[]{&fireAtlas,&iceAtlas,&glassesAtlas};
+        const char* referencePaths[]{"compiled/atlases/fireball_burst.atlas.png",
+            "compiled/atlases/ice_trail.atlas.png",
+            "compiled/particles/zombiefutureglasses.atlas.png"};
+        const int referenceWidths[]{232,91,130},referenceHeights[]{156,224,104};
+        for (int atlas=0;atlas<3;++atlas)
+        {
+            ImageLib::Image* decoded=ImageLib::GetImage(referencePaths[atlas],false);
+            struct FreeDecoded { ImageLib::Image* image; ~FreeDecoded() { delete image; } } cleanup{decoded};
+            Require(decoded && decoded->mBits && decoded->mWidth==referenceWidths[atlas] &&
+                decoded->mHeight==referenceHeights[atlas],"Particle pixel oracle PNG dimensions changed");
+            referenceAtlases[atlas]->SetBits(decoded->mBits,decoded->mWidth,decoded->mHeight);
+        }
+        const auto checkUV=[](const TextureRegion& actual,const Rect& pixel,int width,int height) {
+            const auto closeUV=[](float left,float right) { return std::abs(left-right)<0.000001f; };
+            Require(actual.mWidth==pixel.mWidth && actual.mHeight==pixel.mHeight &&
+                closeUV(actual.mU0,float(pixel.mX)/width) &&
+                closeUV(actual.mV0,float(pixel.mY)/height) &&
+                closeUV(actual.mU1,float(pixel.mX+pixel.mWidth)/width) &&
+                closeUV(actual.mV1,float(pixel.mY+pixel.mHeight)/height),
+                "Generated particle UVs disagree with the original pixel rectangles");
+        };
+        for (unsigned f=0;f<6;++f)
+        {
+            checkUV(fire.mImageRects[f],fireRectangles[f],232,156);
+            checkUV(fire.mImageRects[6+f],iceRectangles[f],91,224);
+        }
+        for (unsigned f=0;f<4;++f)
+            checkUV(gParticleDefArray[glassesEffect].mImageRects[f],glassesRectangles[f],130,104);
+        for (unsigned f=0;f<3;++f)
+            checkUV(gParticleDefArray[trailEffect].mImageRects[f],snowRectangles[f],91,224);
 
         {
             TodParticleDefinition emptyDefinition;
@@ -1345,18 +1618,14 @@ void ParticleDefinitionsAndFrames(SexyAppBase& app, const char* pakPath)
                     auto* selectedEmitter=selected->EmitterRosterEmitterAt(0);
                     if (reference)
                     {
-                        const auto& definition=*selected->mParticleDef;
                         const auto v=selected->mVariant;
-                        TextureSource texture{definition.mTextures[v],definition.mTextureWidths[v],
-                            definition.mTextureHeights[v],0};
                         SexyMatrix3 transform;
                         TodScaleRotateTransformMatrix(transform,128,128,0,1,1);
                         const int mode=TestBit(selectedEmitter->mEmitterDef->mParticleFlags,
                             ParticleFlags::PARTICLE_ADDITIVE) ? Graphics::DRAWMODE_ADDITIVE :
                             Graphics::DRAWMODE_NORMAL;
-                        triangles.AddTriangle(&graphics,texture,transform,graphics.mClipRect,
-                            Color::White,mode,definition.mImageRects[v*definition.mImageRectCount+
-                            selectedEmitter->mEmitterDef->mImageRectOffset]);
+                        triangles.AddTriangle(&graphics,referenceAtlases[v],transform,graphics.mClipRect,
+                            Color::White,mode,v==0 ? fireRectangles[0] : iceRectangles[0]);
                     }
                     else
                     {
@@ -1401,23 +1670,22 @@ void ParticleDefinitionsAndFrames(SexyAppBase& app, const char* pakPath)
             TodParticle particle{};
             particle.mParticleEmitter=emitter;
             particle.mImageFrame=0;
-            const auto draw=[&](bool reference, int frame) {
+            const auto draw=[&](bool reference, int frame, bool clipped=false) {
                 {
                     GpuImageDrawScope destination(render,target.get());
                     Graphics graphics(target.get());
+                    if (clipped) graphics.mLinearBlend=false;
                     graphics.mColor=Color::Black;
                     graphics.FillRect(Rect(0,0,256,256));
                     TodTriangleGroup triangles;
                     if (reference)
                     {
-                        const auto& definition=*system->mParticleDef;
-                        TextureSource texture{definition.mTextures[0],definition.mTextureWidths[0],
-                            definition.mTextureHeights[0],0};
                         SexyMatrix3 transform;
-                        TodScaleRotateTransformMatrix(transform,128,128,0,1,1);
-                        triangles.AddTriangle(&graphics,texture,transform,graphics.mClipRect,
+                        TodScaleRotateTransformMatrix(transform,
+                            clipped ? 143.25f : 128.f,clipped ? 134.f : 128.f,0,1,1);
+                        triangles.AddTriangle(&graphics,&glassesAtlas,transform,graphics.mClipRect,
                             Color::White,Graphics::DRAWMODE_NORMAL,
-                            definition.mImageRects[glasses.mImageRectOffset+frame]);
+                            clipped ? Rect(82,60,38,30) : glassesRectangles[frame]);
                     }
                     else
                     {
@@ -1453,6 +1721,27 @@ void ParticleDefinitionsAndFrames(SexyAppBase& app, const char* pakPath)
             particle.mParticleAge.mNanoseconds=0;
             Require(draw(false,0)==first,"Particle lifetime animation did not return to frame zero");
             glasses.mAnimated=animated;
+            // 61x48 logical geometry: left=.25 rounds to 15 source pixels,
+            // left+right=.375 removes 23; top=.125 removes 6, and
+            // top+bottom=.375 removes 18. Position keeps the original float
+            // shifts (15.25,6), independently of rounded source coordinates.
+            TodEmitterDefinition cropped=glasses;
+            FloatParameterTrackNode clipNodes[]{
+                {0,.25f,.25f,1,1},{0,.125f,.125f,1,1},
+                {0,.125f,.125f,1,1},{0,.25f,.25f,1,1}};
+            cropped.mClipLeft={&clipNodes[0],1};
+            cropped.mClipRight={&clipNodes[1],1};
+            cropped.mClipTop={&clipNodes[2],1};
+            cropped.mClipBottom={&clipNodes[3],1};
+            struct RestoreEmitterDefinition {
+                TodParticleEmitter* emitter;
+                TodEmitterDefinition* original;
+                ~RestoreEmitterDefinition() { emitter->mEmitterDef=original; }
+            } restoreEmitter{emitter,emitter->mEmitterDef};
+            emitter->mEmitterDef=&cropped;
+            particle.mImageFrame=3;
+            Require(draw(false,0,true)==draw(true,3,true),
+                "Particle UV crop changed rounded pixels or logical center shifts");
         }
         TodParticleFreeDefinitions();
         Require(!gParticleDefArray && !gParticleDefCount && !gParticleAllDefinitionDataLoaded.load(),
@@ -1515,6 +1804,8 @@ int main(int argc, char** argv)
         app.mDDInterface=new DDInterface(&app);
         Require(app.mDDInterface->Init(window.handle,true)==DDInterface::RESULT_OK,
             "Cannot initialize public image runtime");
+        WrappedTextMeasurements();
+        PoolGpuChecks::Run(*app.mDDInterface->mRenderInterface->mRenderer);
         FontUploadAndCopies(app);
         SourceRectangleDraws(app);
         AtlasButtonStates(app);

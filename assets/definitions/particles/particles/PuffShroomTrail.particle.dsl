@@ -21,7 +21,7 @@ export component PuffShroomTrail {
         particleDuration: nodes {
             { time: 0; low: 20; high: 20; curve: Linear; distribution: Linear; }
         }
-        systemAlpha: nodes {
+        launchSpeed: nodes {
             { time: 0; low: 10; high: 10; curve: Linear; distribution: Linear; }
         }
         particleAlpha: nodes {

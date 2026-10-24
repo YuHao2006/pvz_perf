@@ -47,7 +47,12 @@ void CheckRecord()
 {
     std::vector<std::pair<size_t, bool>> nativeFields;
     VisitTimeCounterOffsets<T>([&](size_t offset, bool isUnsigned) {
-        Require(offset + sizeof(Sexy::TimeCounter) <= sizeof(T), "Native time member extends beyond object");
+        const size_t width = [&] {
+            if constexpr (std::is_same_v<T, Board>)
+                if (offset == offsetof(Board, mLevelTimeNs)) return sizeof(std::uint64_t);
+            return sizeof(Sexy::TimeCounter);
+        }();
+        Require(offset + width <= sizeof(T), "Native time member extends beyond object");
         nativeFields.emplace_back(offset, isUnsigned);
     });
     const auto fields = SaveTimeFields<T>();
@@ -76,7 +81,9 @@ void CheckRuntime()
     static_assert(sizeof(Sexy::UnsignedTimeCounter::Nanoseconds) == 8);
     static_assert(sizeof(Sexy::MillisecondCounter::Nanoseconds) == 8);
     static_assert(sizeof(Sexy::SecondCounter::Nanoseconds) == 8);
-    static_assert(std::is_same_v<decltype(Board::mMainCounter), Sexy::MonotonicTimeCounter>);
+    static_assert(std::is_same_v<decltype(Board::mLevelTimeNs), std::uint64_t>);
+    static_assert(std::is_same_v<decltype(GameObject::mX), float>);
+    static_assert(std::is_same_v<decltype(GameObject::mY), float>);
     static_assert(std::is_same_v<decltype(Plant::mZenProductionCountdown), Sexy::TimeCounter>);
     for (const unsigned fps : {60u, 100u, 144u, 240u, 250u, 1000u})
     {
@@ -177,16 +184,10 @@ void CheckRuntime()
             "Unsigned counter lost its legacy wrap period");
         ++wrapped;
         Require(wrapped.mNanoseconds == 0, "Unsigned counter failed to wrap to zero");
-        Sexy::MonotonicTimeCounter battle = 0;
-        battle.mNanoseconds = modulus - 1;
-        battle.mPreviousNanoseconds = battle.mNanoseconds;
-        ++battle;
-        Require(battle.mNanoseconds == modulus - 1 + Sexy::gUpdateIntervalNs,
+        std::uint64_t battle = modulus - 1;
+        battle += Sexy::gUpdateIntervalNs;
+        Require(battle == modulus - 1 + Sexy::gUpdateIntervalNs,
             "Battle clock wrapped at the legacy unsigned 32-bit tick boundary");
-        Sexy::MonotonicTimeCounter fromLongTicks = 4'294'967'297ULL;
-        Require(fromLongTicks.mNanoseconds == modulus + 10'000'000 &&
-            static_cast<std::uint64_t>(fromLongTicks) == 4'294'967'297ULL,
-            "Battle clock constructor or legacy-unit projection truncated its high tick bits");
         Sexy::SecondCounter seconds = 3;
         Sexy::MillisecondCounter milliseconds = 3;
         Require(seconds.mNanoseconds == 3'000'000'000LL &&
@@ -269,31 +270,82 @@ void CheckLiveSave()
 
 namespace
 {
+template<class T>
+void CheckObjectCoordinateSave()
+{
+    static_assert(std::is_trivially_copyable_v<T>);
+    auto source = std::bit_cast<T>(std::array<std::byte, sizeof(T)>{});
+    source.mX = 123.75f;
+    source.mY = -45.25f;
+    if constexpr (std::is_same_v<T, SeedPacket>)
+        source.mSlotMachineCountDown.mNanoseconds = 1'234'567'891;
+    if constexpr (std::is_same_v<T, SeedBank>)
+        for (int i = 0; i < 10; ++i)
+        {
+            source.mSeedPackets[i].mX = 20.0f + i;
+            source.mSeedPackets[i].mY = -10.0f - i;
+            source.mSeedPackets[i].mSlotMachineCountDown.mNanoseconds = 123'456'789 + i;
+        }
+    const auto bytes = WriteSaveRecord(source);
+    const auto canonical = Dat64TimeSchema::Collapse(bytes, SaveTimeFields<T>(),
+        [](const auto&, std::uint64_t) { return std::uint32_t(0); });
+    Require(V7SaveSchema::Read(canonical, 16, 4) == 123 &&
+        V7SaveSchema::Read(canonical, 20, 4) == std::uint32_t(-45),
+        "Float GameObject coordinates were copied as raw bits into historical integer slots");
+    auto restored = std::bit_cast<T>(std::array<std::byte, sizeof(T)>{});
+    ReadSaveRecord(restored, bytes.data());
+    constexpr bool exactActor = std::is_same_v<T, Plant> || std::is_same_v<T, Zombie>;
+    Require(restored.mX == (exactActor ? 123.75f : 123.0f) &&
+        restored.mY == (exactActor ? -45.25f : -45.0f),
+        "GameObject integer projection or exact actor coordinate restoration failed");
+    if constexpr (std::is_same_v<T, SeedBank>)
+        for (int i = 0; i < 10; ++i)
+            Require(restored.mSeedPackets[i].mX == source.mSeedPackets[i].mX &&
+                restored.mSeedPackets[i].mY == source.mSeedPackets[i].mY &&
+                restored.mSeedPackets[i].mSlotMachineCountDown.mNanoseconds ==
+                    source.mSeedPackets[i].mSlotMachineCountDown.mNanoseconds,
+                "Nested SeedPacket coordinates or slot phase did not survive SeedBank serialization");
+    if constexpr (std::is_same_v<T, SeedPacket>)
+        Require(restored.mSlotMachineCountDown.mNanoseconds == source.mSlotMachineCountDown.mNanoseconds,
+            "Slot-machine integer nanosecond phase did not survive serialization");
+    Require(WriteSaveRecord(restored) == bytes, "GameObject coordinate save was not stable after reload");
+}
+
 void CheckPlantDeadlineSave()
 {
     static_assert(std::is_trivially_copyable_v<Plant>);
     auto source = std::bit_cast<Plant>(std::array<std::byte, sizeof(Plant)>{});
     source.mSeedType = SeedType::SEED_PEASHOOTER;
     source.mState = PlantState::STATE_READY;
-    source.mLaunchClockSampleNs = 91'234'567'891;
-    source.mLaunchWindowStartNs = 91'230'000'003;
-    source.mNextLaunchTimeNs = source.mLaunchClockSampleNs + 217'123'456;
+    source.mLaunchWindowStartNs = 91'234'567'891;
+    source.mNextLaunchTimeNs = source.mLaunchWindowStartNs + 217'123'456;
     source.mZenProductionCountdown.mNanoseconds = 333'333'333;
+    source.mMagnetElapsedNs = 31'234'567;
+    for (auto& item : source.mMagnetItems)
+    {
+        item.mPosX = 321.25f;
+        item.mPosY = -12.125f;
+        item.mOriginDeltaX = 512.75f;
+        item.mOriginDeltaY = -125.5f;
+        item.mCaptureFactor = 0.0375f;
+        item.mCenterDurationNs = 812'345'678;
+    }
     const auto wire = WriteSaveRecord(source);
-    Require(wire.size() == SaveV2Size<Plant>() + 56 &&
+    Require(wire.size() == SaveV2Size<Plant>() + 156 &&
         V7SaveSchema::Time(wire, LevelSaveFormat::RecordKind::Plant, 100) == 217'123'456,
         "Battle launch compatibility projection lost exact remaining nanoseconds");
     const auto tail = std::span(wire).subspan(SaveV2Size<Plant>());
     Require(V7SaveSchema::Read(tail, 32, 8) == std::uint64_t(source.mNextLaunchTimeNs) &&
-        V7SaveSchema::Read(tail, 40, 8) == std::uint64_t(source.mLaunchClockSampleNs) &&
-        V7SaveSchema::Read(tail, 48, 8) == std::uint64_t(source.mLaunchWindowStartNs) &&
-        tail.size() == 56,
+        V7SaveSchema::Read(tail, 40, 8) == std::uint64_t(source.mLaunchWindowStartNs) &&
+        tail.size() == 156,
         "Native Plant deadline/cursor fields or compact tail differ from the frozen wire");
     auto restored = std::bit_cast<Plant>(std::array<std::byte, sizeof(Plant)>{});
     ReadSaveRecord(restored, wire.data());
     Require(restored.mNextLaunchTimeNs == source.mNextLaunchTimeNs &&
-        restored.mLaunchClockSampleNs == source.mLaunchClockSampleNs &&
         restored.mLaunchWindowStartNs == source.mLaunchWindowStartNs &&
+        restored.mMagnetElapsedNs == source.mMagnetElapsedNs &&
+        restored.mMagnetItems[4].mPosX == source.mMagnetItems[4].mPosX &&
+        restored.mMagnetItems[4].mCenterDurationNs == source.mMagnetItems[4].mCenterDurationNs &&
         WriteSaveRecord(restored) == wire,
         "Real Plant record save/load changed absolute deadline or event cursor");
     source.mState = PlantState::STATE_BOWLING_UP;
@@ -305,7 +357,7 @@ void CheckPlantDeadlineSave()
     Require(static_cast<int>(restored.mZenProductionCountdown) == 7,
         "Bowling auxiliary count did not survive native save/load");
     source.mState = PlantState::STATE_READY;
-    source.mNextLaunchTimeNs = source.mLaunchClockSampleNs - 123'456'789;
+    source.mNextLaunchTimeNs = source.mLaunchWindowStartNs - 123'456'789;
     const auto overdue = WriteSaveRecord(source);
     ReadSaveRecord(restored, overdue.data());
     Require(restored.mNextLaunchTimeNs == source.mNextLaunchTimeNs &&
@@ -424,6 +476,11 @@ int main()
         CheckRecord<Reanimation>();
         CheckRecord<Attachment>();
         CheckRuntime();
+        CheckObjectCoordinateSave<Plant>();
+        CheckObjectCoordinateSave<CursorObject>();
+        CheckObjectCoordinateSave<CursorPreview>();
+        CheckObjectCoordinateSave<SeedPacket>();
+        CheckObjectCoordinateSave<SeedBank>();
         CheckPlantDeadlineSave();
         CheckMusicFloatSave();
         CheckBlendRegionSave();

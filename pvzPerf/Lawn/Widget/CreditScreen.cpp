@@ -365,8 +365,7 @@ CreditScreen::CreditScreen(LawnApp* theApp)
 		if (aEntry.mNames == "-") aEntry.mNames = " ";
 		mCreditSections.push_back(std::move(aEntry));
 	}
-	Graphics aMeasure(nullptr);
-	mCreditsContentHeight = DrawCreditsContent(&aMeasure, 0, false);
+	mCreditsContentHeight = DrawCreditsContent(nullptr, 0, false);
 	mCreditsScrollPosition = static_cast<float>(mMainMenuButton->mY - 50);
 }
 
@@ -481,6 +480,7 @@ void CreditScreen::PreLoadCredits()
     for (int aTrackIndex = 0; aTrackIndex < aMain2Def->mTracks.count; aTrackIndex++)
     {
         ReanimatorTrack* aTrack = &aMain2Def->mTracks.tracks[aTrackIndex];
+        if (!aTrack->mTransforms.mTransforms) continue; // GPU-only image tracks have no CPU font data.
         for (int aTransIndex = 0; aTransIndex < aTrack->mTransforms.count; aTransIndex++)
         {
             ReanimatorSourceTransform& aTrans = aTrack->mTransforms.mTransforms[aTransIndex];
@@ -495,6 +495,7 @@ void CreditScreen::PreLoadCredits()
     for (int aTrackIndex = 0; aTrackIndex < aMain3Def->mTracks.count; aTrackIndex++)
     {
         ReanimatorTrack* aTrack = &aMain3Def->mTracks.tracks[aTrackIndex];
+        if (!aTrack->mTransforms.mTransforms) continue;
         for (int aTransIndex = 0; aTransIndex < aTrack->mTransforms.count; aTransIndex++)
         {
             ReanimatorSourceTransform& aTrans = aTrack->mTransforms.mTransforms[aTransIndex];
@@ -511,6 +512,7 @@ void CreditScreen::PreLoadCredits()
     for (int aTrackIndex = 0; aTrackIndex < aUndeadDef->mTracks.count; aTrackIndex++)
     {
         ReanimatorTrack* aTrack = &aUndeadDef->mTracks.tracks[aTrackIndex];
+        if (!aTrack->mTransforms.mTransforms) continue;
         for (int aTransIndex = 0; aTransIndex < aTrack->mTransforms.count; aTransIndex++)
         {
             ReanimatorSourceTransform& aTrans = aTrack->mTransforms.mTransforms[aTransIndex];
@@ -526,7 +528,7 @@ void CreditScreen::PreLoadCredits()
 void CreditScreen::GetTiming(CreditsTiming** theBeforeTiming, CreditsTiming** theAfterTiming, float* theFraction)
 {
     Reanimation* aCreditsReanim = mApp->ReanimationGet(mCreditsReanimID);
-    float aFrameCount = aCreditsReanim->mDefinition->mTracks.tracks->mTransforms.count * (static_cast<double>(aCreditsReanim->SamplePlayback().clock) / (aCreditsReanim->mFrameCount * ReanimClock::Frame)) - 1.0f;
+    float aFrameCount = aCreditsReanim->mDefinition->mTracks.tracks->mTransforms.count * (static_cast<double>(aCreditsReanim->SamplePlayback().phaseNs) / aCreditsReanim->mPeriodNs) - 1.0f;
     if (mCreditsPhase == CreditsPhase::CREDITS_MAIN1)
     {
         aFrameCount += 2.0f;
@@ -704,7 +706,7 @@ void CreditScreen::DrawFogEffect(Graphics* g, float theTime)
             // 本格浓雾纵坐标 = 行 * 85 + 200
             float aPosY = y * 85 + 200.0f;
             // 开始计算周期变化的颜色，aAnimTime 为 MV 动画播放至当前时刻需要的时间（秒数）
-            float aAnimTime = aCreditsReanim->mDefinition->mTracks.tracks->mTransforms.count * (static_cast<double>(aCreditsReanim->SamplePlayback().clock) / (aCreditsReanim->mFrameCount * ReanimClock::Frame)) / (aCreditsReanim->mAnimRate * SECONDS_PER_UPDATE);
+            float aAnimTime = aCreditsReanim->mDefinition->mTracks.tracks->mTransforms.count * (static_cast<double>(aCreditsReanim->SamplePlayback().phaseNs) / aCreditsReanim->mPeriodNs) / (aCreditsReanim->mAnimRate * SECONDS_PER_UPDATE);
             float aTime = aAnimTime * PI * 2;
             // 与行、列有关的初始相位
             float aPhaseX = 6 * PI * x / 14;
@@ -821,6 +823,8 @@ void CreditScreen::Draw(Graphics* g)
     g->FillRect(0, 0, mWidth, mHeight);
 
     Reanimation* aCreditsReanim = mApp->ReanimationGet(mCreditsReanimID);
+    const double aPlaybackPhase = static_cast<double>(aCreditsReanim->SamplePlayback().phaseNs) /
+        aCreditsReanim->mPeriodNs;
     int aFrameCount = aCreditsReanim->mDefinition->mTracks.tracks->mTransforms.count - 1;
     float aFrameFactor = 1.0f / aFrameCount;
     int aBackground1Index = aCreditsReanim->FindTrackIndex(ReanimTrackId::Background);
@@ -833,11 +837,11 @@ void CreditScreen::Draw(Graphics* g)
 
     bool aDrawClippedBackgrounds1 = false;
     bool aDrawClippedBackgrounds2 = false;
-    if (mCreditsPhase == CreditsPhase::CREDITS_MAIN2 && aFrameFactor * 125.0f > (static_cast<double>(aCreditsReanim->SamplePlayback().clock) / (aCreditsReanim->mFrameCount * ReanimClock::Frame)))
+    if (mCreditsPhase == CreditsPhase::CREDITS_MAIN2 && aFrameFactor * 125.0f > aPlaybackPhase)
     {
         aDrawClippedBackgrounds1 = true;
     }
-    if (mCreditsPhase == CreditsPhase::CREDITS_MAIN3 && aFrameFactor * 125.0f > (static_cast<double>(aCreditsReanim->SamplePlayback().clock) / (aCreditsReanim->mFrameCount * ReanimClock::Frame)))
+    if (mCreditsPhase == CreditsPhase::CREDITS_MAIN3 && aFrameFactor * 125.0f > aPlaybackPhase)
     {
         aDrawClippedBackgrounds2 = true;
     }
@@ -857,7 +861,7 @@ void CreditScreen::Draw(Graphics* g)
         
         if (aTransformBackground2.mFrame != -1.0f)
         {
-            const Rect& aRegion = aCreditsReanim->mDefinition->mImageRects[aTransformBackground2.mImageSlot];
+            const TextureRegion& aRegion = aCreditsReanim->mDefinition->mImageRects[aTransformBackground2.mImageSlot];
             aBackground2G.ClipRect(aTransformBackground2.mTransX, aTransformBackground2.mTransY, aRegion.mWidth - 1, aRegion.mHeight - 1);
             aBackground2G.DrawImageF(IMAGE_BACKGROUND1, aTransformBackground2.mTransX - BOARD_WIDTH / 2, aTransformBackground2.mTransY - BOARD_HEIGHT / 2);
             aBackground2G.ClearClipRect();
@@ -865,7 +869,7 @@ void CreditScreen::Draw(Graphics* g)
         if (aTransformBackground3.mFrame != -1.0f)
         {
             Graphics aBackground3G(*g);
-            const Rect& aRegion = aCreditsReanim->mDefinition->mImageRects[aTransformBackground3.mImageSlot];
+            const TextureRegion& aRegion = aCreditsReanim->mDefinition->mImageRects[aTransformBackground3.mImageSlot];
             aBackground3G.ClipRect(aTransformBackground3.mTransX, aTransformBackground3.mTransY, aRegion.mWidth - 1, aRegion.mHeight - 1);
             // 1073 00438CE8: this window crops a different part of the same yard.
             aBackground3G.DrawImageF(IMAGE_BACKGROUND1, aTransformBackground3.mTransX - 600.0f, aTransformBackground3.mTransY - 300.0f);
@@ -873,7 +877,7 @@ void CreditScreen::Draw(Graphics* g)
         if (aTransformBackground4.mFrame != -1.0f)
         {
             Graphics aBackground4G(*g);
-            const Rect& aRegion = aCreditsReanim->mDefinition->mImageRects[aTransformBackground4.mImageSlot];
+            const TextureRegion& aRegion = aCreditsReanim->mDefinition->mImageRects[aTransformBackground4.mImageSlot];
             aBackground4G.ClipRect(aTransformBackground4.mTransX, aTransformBackground4.mTransY, aRegion.mWidth - 1, aRegion.mHeight - 1);
             aBackground4G.DrawImageF(IMAGE_BACKGROUND2, aTransformBackground4.mTransX - BOARD_WIDTH / 2, aTransformBackground4.mTransY - BOARD_HEIGHT / 2);
         }
@@ -893,7 +897,7 @@ void CreditScreen::Draw(Graphics* g)
         if (aTransformBackground1.mFrame != -1.0f)
         {
             Graphics aBackground1G(*g);
-            const Rect& aRegion = aCreditsReanim->mDefinition->mImageRects[aTransformBackground1.mImageSlot];
+            const TextureRegion& aRegion = aCreditsReanim->mDefinition->mImageRects[aTransformBackground1.mImageSlot];
             aBackground1G.ClipRect(aTransformBackground1.mTransX, aTransformBackground1.mTransY, aRegion.mWidth - 1, aRegion.mHeight - 1);
             // 1073 00438F42/00438F61: the tricycle scene uses (-80, -360).
             aBackground1G.DrawImageF(IMAGE_BACKGROUND1, aTransformBackground1.mTransX - 80.0f, aTransformBackground1.mTransY - 360.0f);
@@ -903,7 +907,7 @@ void CreditScreen::Draw(Graphics* g)
             Graphics aBackground3G(*g);
             aBackground3G.mTransX += aTransformBackground3.mTransX - 20.0f;
             aBackground3G.mTransY += aTransformBackground3.mTransY - 260.0f;
-            const Rect& aRegion = aCreditsReanim->mDefinition->mImageRects[aTransformBackground3.mImageSlot];
+            const TextureRegion& aRegion = aCreditsReanim->mDefinition->mImageRects[aTransformBackground3.mImageSlot];
             aBackground3G.ClipRect(20, 260, aRegion.mWidth - 1, aRegion.mHeight - 1);
             aBackground3G.DrawImageF(IMAGE_BACKGROUND3, -220.0f, 0.0f);
             aBackground3G.DrawImageF(IMAGE_POOL, 34.0f, 278.0f);
@@ -911,7 +915,7 @@ void CreditScreen::Draw(Graphics* g)
         if (aTransformBackground4.mFrame != -1.0f)
         {
             Graphics aBackground4G(*g);
-            const Rect& aRegion = aCreditsReanim->mDefinition->mImageRects[aTransformBackground4.mImageSlot];
+            const TextureRegion& aRegion = aCreditsReanim->mDefinition->mImageRects[aTransformBackground4.mImageSlot];
             aBackground4G.ClipRect(aTransformBackground4.mTransX, aTransformBackground4.mTransY, aRegion.mWidth - 1, aRegion.mHeight - 1);
             aBackground4G.DrawImageF(IMAGE_BACKGROUND2, aTransformBackground4.mTransX - BOARD_WIDTH / 2, aTransformBackground4.mTransY - BOARD_HEIGHT / 2);
         }
@@ -926,11 +930,11 @@ void CreditScreen::Draw(Graphics* g)
     bool aDrawFog = false;
     if (mCreditsPhase == CreditsPhase::CREDITS_MAIN1)
     {
-        if ((static_cast<double>(aCreditsReanim->SamplePlayback().clock) / (aCreditsReanim->mFrameCount * ReanimClock::Frame)) > aFrameFactor * 203.0f && (static_cast<double>(aCreditsReanim->SamplePlayback().clock) / (aCreditsReanim->mFrameCount * ReanimClock::Frame)) < aFrameFactor * 268.0f)
+        if (aPlaybackPhase > aFrameFactor * 203.0f && aPlaybackPhase < aFrameFactor * 268.0f)
         {
             aDrawPool = true;
         }
-        if ((static_cast<double>(aCreditsReanim->SamplePlayback().clock) / (aCreditsReanim->mFrameCount * ReanimClock::Frame)) > aFrameFactor * 305.0f && (static_cast<double>(aCreditsReanim->SamplePlayback().clock) / (aCreditsReanim->mFrameCount * ReanimClock::Frame)) < aFrameFactor * 339.0f)
+        if (aPlaybackPhase > aFrameFactor * 305.0f && aPlaybackPhase < aFrameFactor * 339.0f)
         {
             aDrawPool = true;
             aDrawDoorBottom = true;
@@ -938,7 +942,7 @@ void CreditScreen::Draw(Graphics* g)
     }
     if (mCreditsPhase == CreditsPhase::CREDITS_MAIN2)
     {
-        if ((static_cast<double>(aCreditsReanim->SamplePlayback().clock) / (aCreditsReanim->mFrameCount * ReanimClock::Frame)) > aFrameFactor * 187.0f && (static_cast<double>(aCreditsReanim->SamplePlayback().clock) / (aCreditsReanim->mFrameCount * ReanimClock::Frame)) < aFrameFactor * 249.0f)
+        if (aPlaybackPhase > aFrameFactor * 187.0f && aPlaybackPhase < aFrameFactor * 249.0f)
         {
             aDrawPool = true;
             aDrawNightPool = true;
@@ -947,14 +951,14 @@ void CreditScreen::Draw(Graphics* g)
                 aDrawDiscoLights = true;
             }
         }
-        if ((static_cast<double>(aCreditsReanim->SamplePlayback().clock) / (aCreditsReanim->mFrameCount * ReanimClock::Frame)) > aFrameFactor * 123.0f && (static_cast<double>(aCreditsReanim->SamplePlayback().clock) / (aCreditsReanim->mFrameCount * ReanimClock::Frame)) < aFrameFactor * 189.0f)
+        if (aPlaybackPhase > aFrameFactor * 123.0f && aPlaybackPhase < aFrameFactor * 189.0f)
         {
             if (aTransformBackground1.mFrame != -1.0f)
             {
                 aDrawDiscoLights = true;
             }
         }
-        if ((static_cast<double>(aCreditsReanim->SamplePlayback().clock) / (aCreditsReanim->mFrameCount * ReanimClock::Frame)) > aFrameFactor * 189.0f && (static_cast<double>(aCreditsReanim->SamplePlayback().clock) / (aCreditsReanim->mFrameCount * ReanimClock::Frame)) < aFrameFactor * 249.0f)
+        if (aPlaybackPhase > aFrameFactor * 189.0f && aPlaybackPhase < aFrameFactor * 249.0f)
         {
             if (aTransformBackground2.mFrame != -1.0f)
             {
@@ -965,11 +969,11 @@ void CreditScreen::Draw(Graphics* g)
     }
     if (mCreditsPhase == CreditsPhase::CREDITS_MAIN3)
     {
-        if ((static_cast<double>(aCreditsReanim->SamplePlayback().clock) / (aCreditsReanim->mFrameCount * ReanimClock::Frame)) > aFrameFactor * 123.0f && (static_cast<double>(aCreditsReanim->SamplePlayback().clock) / (aCreditsReanim->mFrameCount * ReanimClock::Frame)) < aFrameFactor * 218.0f)
+        if (aPlaybackPhase > aFrameFactor * 123.0f && aPlaybackPhase < aFrameFactor * 218.0f)
         {
             aDrawChimney = true;
         }
-        if ((static_cast<double>(aCreditsReanim->SamplePlayback().clock) / (aCreditsReanim->mFrameCount * ReanimClock::Frame)) > aFrameFactor * 217.0f)
+        if (aPlaybackPhase > aFrameFactor * 217.0f)
         {
             if (aTransformBackground1.mFrame != -1.0f)
             {
@@ -1005,7 +1009,7 @@ void CreditScreen::Draw(Graphics* g)
     }
     if (aDrawDiscoLights)
     {
-        float aDiscoTime = aCreditsReanim->mDefinition->mTracks.tracks->mTransforms.count * (static_cast<double>(aCreditsReanim->SamplePlayback().clock) / (aCreditsReanim->mFrameCount * ReanimClock::Frame)) / (aCreditsReanim->mAnimRate);
+        float aDiscoTime = aCreditsReanim->mDefinition->mTracks.tracks->mTransforms.count * aPlaybackPhase / (aCreditsReanim->mAnimRate);
         DrawDisco(g, 600.0f, 450.0f, aDiscoTime);
         DrawDisco(g, 200.0f, 450.0f, aDiscoTime);
     }
@@ -1037,7 +1041,7 @@ void CreditScreen::Draw(Graphics* g)
 
     if (aDrawFog)
     {
-        float aPercent = TodAnimateCurveFloat(aFrameFactor * 189.0f, aFrameFactor * 249.0f, (static_cast<double>(aCreditsReanim->SamplePlayback().clock) / (aCreditsReanim->mFrameCount * ReanimClock::Frame)), 0.0f, 1.0f, Curves::Linear);
+        float aPercent = TodAnimateCurveFloat(aFrameFactor * 189.0f, aFrameFactor * 249.0f, aPlaybackPhase, 0.0f, 1.0f, Curves::Linear);
         DrawFogEffect(&aBackground2G, aPercent);
     }
     aCreditsReanim->DrawRenderGroup(g, 3);
@@ -1087,7 +1091,7 @@ void CreditScreen::UpdateBlink()
         {
             int aFrameCount = aCreditsReanim->mDefinition->mTracks.tracks->mTransforms.count - 1;
             float aFrameFactor = 1.0f / aFrameCount;
-            if ((static_cast<double>(aCreditsReanim->SamplePlayback().clock) / (aCreditsReanim->mFrameCount * ReanimClock::Frame)) > aFrameFactor * 200.0f)
+            if ((static_cast<double>(aCreditsReanim->SamplePlayback().phaseNs) / aCreditsReanim->mPeriodNs) > aFrameFactor * 200.0f)
             {
                 return;
             }
@@ -1141,7 +1145,7 @@ void CreditScreen::Update()
     {
         Reanimation* aCreditsReanim = mApp->ReanimationGet(mCreditsReanimID);
         int aDurationSinceStart = mTimerSinceStart.GetDuration();
-        int aDurationReanimation = (aCreditsReanim->mDefinition->mTracks.tracks->mTransforms.count * (static_cast<double>(aCreditsReanim->SamplePlayback().clock) / (aCreditsReanim->mFrameCount * ReanimClock::Frame)) / (aCreditsReanim->mAnimRate)) * 1000.0f;
+        int aDurationReanimation = (aCreditsReanim->mDefinition->mTracks.tracks->mTransforms.count * (static_cast<double>(aCreditsReanim->SamplePlayback().phaseNs) / aCreditsReanim->mPeriodNs) / (aCreditsReanim->mAnimRate)) * 1000.0f;
         if (mCreditsPhase == CreditsPhase::CREDITS_MAIN2)
         {
             aDurationReanimation += 57142;
@@ -1342,7 +1346,7 @@ void CreditScreen::UpdateMovie()
     {
         ReanimatorTrackInstance* aTrackWords1 = aCreditsReanim->GetTrackInstanceByName(ReanimTrackId::Words);
         ReanimatorTrackInstance* aTrackWords2 = aCreditsReanim->GetTrackInstanceByName(ReanimTrackId::Words2);
-        if ((static_cast<double>(aCreditsReanim->SamplePlayback().clock) / (aCreditsReanim->mFrameCount * ReanimClock::Frame)) < aFrameFactor * 124.0f)
+        if ((static_cast<double>(aCreditsReanim->SamplePlayback().phaseNs) / aCreditsReanim->mPeriodNs) < aFrameFactor * 124.0f)
         {
             aTrackWords1->mTrackColor = Color::Black;
             aTrackWords2->mTrackColor = Color::Black;
@@ -1364,7 +1368,7 @@ void CreditScreen::UpdateMovie()
             aTrackWordsUndead3->mTrackColor = Color::Black;
 
             ReanimatorTrackInstance* aTrackWordsShake = aUndeadReanim->GetTrackInstanceByName(ReanimTrackId::ShakyText);
-            if ((static_cast<double>(aCreditsReanim->SamplePlayback().clock) / (aCreditsReanim->mFrameCount * ReanimClock::Frame)) > aFrameFactor * 112.0f)
+            if ((static_cast<double>(aCreditsReanim->SamplePlayback().phaseNs) / aCreditsReanim->mPeriodNs) > aFrameFactor * 112.0f)
             {
                 aTrackWordsShake->mShakeOverride = 2.0f;
             }
@@ -1554,7 +1558,7 @@ void CreditScreen::UpdateMovie()
     Reanimation* aSunFlowerReanim = FindSubReanim(aCreditsReanim, ReanimationType::REANIM_SUNFLOWER);
     if (aSunFlowerReanim)
     {
-        if (mCreditsPhase == CreditsPhase::CREDITS_MAIN3 && (static_cast<double>(aCreditsReanim->SamplePlayback().clock) / (aCreditsReanim->mFrameCount * ReanimClock::Frame)) > aFrameFactor * 255.0f)
+        if (mCreditsPhase == CreditsPhase::CREDITS_MAIN3 && (static_cast<double>(aCreditsReanim->SamplePlayback().phaseNs) / aCreditsReanim->mPeriodNs) > aFrameFactor * 255.0f)
         {
             aSunFlowerReanim->SetVariantOption(ReanimTrackId::anim_idle, ReanimOptions::SunFlower::anim_idle::SUNFLOWER_HEAD_WINK);
             Reanimation* aStageReanim = FindSubReanim(aCreditsReanim, ReanimationType::REANIM_CREDITS_STAGE);

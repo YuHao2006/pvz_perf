@@ -133,10 +133,10 @@ AwardScreen::AwardScreen(LawnApp* theApp, AwardType theAwardType, bool theShowin
 	}
 
 	mStartButton = new GameButton(AwardScreen::AwardScreen_Start);
-	mStartButton->mNormalRect = FixedUIAtlas::Images[size_t(FixedUIAtlas::Sprite::SEEDCHOOSER_BUTTON)];
+	mStartButton->mNormalRegion = FixedUIAtlas::Images[size_t(FixedUIAtlas::Sprite::SEEDCHOOSER_BUTTON)];
 	mStartButton->mOverImage = nullptr;
 	mStartButton->mDownImage = nullptr;
-	mStartButton->mDisabledRect = FixedUIAtlas::Images[size_t(FixedUIAtlas::Sprite::SEEDCHOOSER_BUTTON_DISABLED)];
+	mStartButton->mDisabledRegion = FixedUIAtlas::Images[size_t(FixedUIAtlas::Sprite::SEEDCHOOSER_BUTTON_DISABLED)];
 	mStartButton->SetFont(Sexy::FONT_DWARVENTODCRAFT15);
 	mStartButton->mColors[ButtonWidget::COLOR_LABEL] = Color(213, 159, 43);
 	mStartButton->mColors[ButtonWidget::COLOR_LABEL_HILITE] = Color(213, 159, 43);
@@ -149,10 +149,10 @@ AwardScreen::AwardScreen(LawnApp* theApp, AwardType theAwardType, bool theShowin
 
 	// @Patoke: implemented
 	mContinueButton = new GameButton(AwardScreen::AwardScreen_Start);
-	mContinueButton->mNormalRect = FixedUIAtlas::Images[size_t(FixedUIAtlas::Sprite::SEEDCHOOSER_BUTTON)];
+	mContinueButton->mNormalRegion = FixedUIAtlas::Images[size_t(FixedUIAtlas::Sprite::SEEDCHOOSER_BUTTON)];
 	mContinueButton->mOverImage = nullptr;
 	mContinueButton->mDownImage = nullptr;
-	mContinueButton->mDisabledRect = FixedUIAtlas::Images[size_t(FixedUIAtlas::Sprite::SEEDCHOOSER_BUTTON_DISABLED)];
+	mContinueButton->mDisabledRegion = FixedUIAtlas::Images[size_t(FixedUIAtlas::Sprite::SEEDCHOOSER_BUTTON_DISABLED)];
 	mContinueButton->SetFont(Sexy::FONT_DWARVENTODCRAFT15);
 	mContinueButton->mColors[ButtonWidget::COLOR_LABEL] = Color(213, 159, 43);
 	mContinueButton->mColors[ButtonWidget::COLOR_LABEL_HILITE] = Color(213, 159, 43);
@@ -167,8 +167,8 @@ AwardScreen::AwardScreen(LawnApp* theApp, AwardType theAwardType, bool theShowin
 
 	mMenuButton = new GameButton(AwardScreen::AwardScreen_Menu);
 	mMenuButton->mLabel = gStr.AWARD_MAIN_MENU_BUTTON;
-	mMenuButton->mNormalRect = FixedUIAtlas::Images[size_t(FixedUIAtlas::Sprite::SEEDCHOOSER_BUTTON2)];
-	mMenuButton->mOverRect = FixedUIAtlas::Images[size_t(FixedUIAtlas::Sprite::SEEDCHOOSER_BUTTON2_GLOW)];
+	mMenuButton->mNormalRegion = FixedUIAtlas::Images[size_t(FixedUIAtlas::Sprite::SEEDCHOOSER_BUTTON2)];
+	mMenuButton->mOverRegion = FixedUIAtlas::Images[size_t(FixedUIAtlas::Sprite::SEEDCHOOSER_BUTTON2_GLOW)];
 	mMenuButton->mDownImage = nullptr;
 	mMenuButton->SetFont(Sexy::FONT_BRIANNETOD12);
 	mMenuButton->mColors[ButtonWidget::COLOR_LABEL] = Color(42, 42, 90);
@@ -433,8 +433,8 @@ void AwardScreen::Draw(Graphics* g)
 		}
 	}
 
-	const Sexy::TextureSource fixedUI{FixedUIAtlas::Texture, FixedUIAtlas::Width, FixedUIAtlas::Height};
-	const Rect& glow = FixedUIAtlas::Images[size_t(FixedUIAtlas::Sprite::SEEDCHOOSER_BUTTON_GLOW)];
+	const Sexy::TextureSource fixedUI{FixedUIAtlas::Texture, 0};
+	const TextureRegion& glow = FixedUIAtlas::Images[size_t(FixedUIAtlas::Sprite::SEEDCHOOSER_BUTTON_GLOW)];
 	mStartButton->DrawAtlas(g, fixedUI, &glow);
 	mMenuButton->DrawAtlas(g, fixedUI);
 	mContinueButton->DrawAtlas(g, fixedUI, &glow);
@@ -621,7 +621,7 @@ void AwardScreen::MouseUp(int x, int y, int theClickCount)
 // @Patoke: implement functions
 // GOTY @Patoke: 0x407C20
 void AwardScreen::DrawAchievements(Graphics* g) {
-	const TextureSource aTexture{AchievementsAtlas::Texture,AchievementsAtlas::Width,AchievementsAtlas::Height};
+	const TextureSource aTexture{AchievementsAtlas::Texture, 0};
 	g->mColorizeImages = true;
 	// Rect aTextWrap = Rect(0, 0, 0, 77); // unused
 	g->mColor = Color(255, 255, 255);
@@ -639,7 +639,7 @@ void AwardScreen::DrawAchievements(Graphics* g) {
 		std::string aAchievementDesc = gAchievementList[mAchievementItems[i].mId].description;
 		aAchievementName.append(" Earned!");
 
-		const Rect& aIcon=AchievementsAtlas::Icons[mAchievementItems[i].mId];
+		const TextureRegion& aIcon=AchievementsAtlas::Icons[mAchievementItems[i].mId];
 		const Rect aSrcRect(0,0,aIcon.mWidth,aIcon.mHeight);
 		Rect aDestRect = Rect(220, mAchievementItems[i].mY + 10, 70, 70);
 		Rect aTextRect = Rect(300, mAchievementItems[i].mY + 20, 300, 60);

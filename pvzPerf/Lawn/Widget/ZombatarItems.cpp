@@ -37,7 +37,7 @@ ZombatarButton::ZombatarButton(int theId, ZombatarImage theNormal,
 		(theHover != ZombatarImage::None ? theHover : thePressed);
 	if (aSizeImage != ZombatarImage::None)
 	{
-		const Rect& aSize = gZombatarAtlas.mImages[static_cast<size_t>(aSizeImage)];
+		const TextureRegion& aSize = gZombatarAtlas.mImages[static_cast<size_t>(aSizeImage)];
 		mWidth = aSize.mWidth;
 		mHeight = aSize.mHeight;
 	}
@@ -693,7 +693,7 @@ void DrawZombatarPortrait(Graphics* g, const Zombatar& theZombatar, int theX, in
 	// Zombatar renderer establishes the portrait canvas before composing those
 	// images; without that state adjacent saved portraits can bleed into one
 	// another and through the stone display frame.
-	const Rect& aCanvas = gZombatarAtlas.mImages[static_cast<size_t>(ZombatarImage::BACKGROUND_BLANK)];
+	const TextureRegion& aCanvas = gZombatarAtlas.mImages[static_cast<size_t>(ZombatarImage::BACKGROUND_BLANK)];
 	const int aPortraitWidth = aCanvas.mWidth;
 	const int aPortraitHeight = aCanvas.mHeight;
 	g->ClipRect(theX, theY, aPortraitWidth, aPortraitHeight);
@@ -726,8 +726,8 @@ void DrawZombatarPortrait(Graphics* g, const Zombatar& theZombatar, int theX, in
 		// 19 pixels left and 20 pixels up in the 180x180 display window.
 		// 1073 anchors the two base images to the blank-background canvas,
 		// rather than to whichever backdrop happens to be selected.
-		const Rect& aSkinRect = gZombatarAtlas.mImages[static_cast<size_t>(aSkin)];
-		const Rect& aBlankRect = gZombatarAtlas.mImages[static_cast<size_t>(aBlank)];
+		const TextureRegion& aSkinRect = gZombatarAtlas.mImages[static_cast<size_t>(aSkin)];
+		const TextureRegion& aBlankRect = gZombatarAtlas.mImages[static_cast<size_t>(aBlank)];
 		const int aSkinX = theX + aCanvas.mWidth - aSkinRect.mWidth;
 		const int aSkinY = theY + aCanvas.mHeight - aSkinRect.mHeight;
 		g->mColor = ZombatarGetColor(aNormalized.mColors[ZOMBATAR_CUSTOM_SKIN]);
@@ -1089,15 +1089,6 @@ void ZombatarItems::LayoutCategoryItems()
 		aCell.mX = aStartX + aColumn * (aTileWidth + mItemGap);
 		aCell.mY = aStartY + aRow * (aTileHeight + mItemGap + 3);
 
-		if (!aCell.mItem || aCell.mItem->mImage == ZombatarImage::None)
-			continue;
-
-		// Keep the complete source image.  1073 fits the icon into the cell
-		// (preserving aspect ratio) and applies the alignment bits to the
-		// destination rectangle; cropping the source changes the visible part
-		// of large hats/facial hair.
-		const Rect& anImage = gZombatarAtlas.mImages[static_cast<size_t>(aCell.mItem->mImage)];
-		aCell.mSourceRect = Rect(0, 0, anImage.mWidth, anImage.mHeight);
 	}
 
 	mPrevPageButton->mDisabled = mCurrentPage <= 1;
@@ -1388,7 +1379,7 @@ void ZombatarItems::DrawItemGrid(Graphics* g)
 		}
 
 		const ZombatarImage anImage = aCell.mItem->mImage;
-		const Rect& anImageRect = gZombatarAtlas.mImages[static_cast<size_t>(anImage)];
+		const TextureRegion& anImageRect = gZombatarAtlas.mImages[static_cast<size_t>(anImage)];
 		const Rect aIconRect = FitZombatarIconRect(
 			Rect(aCell.mX, aCell.mY, aTileWidth, aTileHeight),
 			anImage,
@@ -1399,7 +1390,7 @@ void ZombatarItems::DrawItemGrid(Graphics* g)
 		{
 			const ZombatarImage aMask = aCell.mItem->mColorMask;
 			{
-				const Rect& aMaskSource = gZombatarAtlas.mImages[static_cast<size_t>(aMask)];
+				const TextureRegion& aMaskSource = gZombatarAtlas.mImages[static_cast<size_t>(aMask)];
 				const float aScaleX = static_cast<float>(aIconRect.mWidth) / anImageRect.mWidth;
 				const float aScaleY = static_cast<float>(aIconRect.mHeight) / anImageRect.mHeight;
 				const Rect aMaskRect(

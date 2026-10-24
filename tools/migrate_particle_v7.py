@@ -7,10 +7,12 @@ import argparse
 import json
 
 ROOT = Path(__file__).resolve().parents[1]
+# Native Definition.cpp serialization order, not TodEmitterDefinition member
+# order. Path precedes skew; system colors precede launch speed and angle.
 SYSTEM = ("SystemDuration CrossFadeDuration SpawnRate SpawnMinActive SpawnMaxActive "
           "SpawnMaxLaunched EmitterRadius EmitterOffsetX EmitterOffsetY EmitterBoxX EmitterBoxY "
-          "EmitterSkewX EmitterSkewY EmitterPath ParticleDuration LaunchSpeed LaunchAngle "
-          "SystemRed SystemGreen SystemBlue SystemAlpha SystemBrightness").split()
+          "EmitterPath EmitterSkewX EmitterSkewY ParticleDuration "
+          "SystemRed SystemGreen SystemBlue SystemAlpha SystemBrightness LaunchSpeed LaunchAngle").split()
 PARTICLE = ("ParticleRed ParticleGreen ParticleBlue ParticleAlpha ParticleBrightness "
             "ParticleSpinAngle ParticleSpinSpeed ParticleScale ParticleStretch CollisionReflect "
             "CollisionSpin ClipTop ClipBottom ClipLeft ClipRight AnimationRate").split()

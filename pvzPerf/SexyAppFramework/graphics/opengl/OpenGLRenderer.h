@@ -1,5 +1,6 @@
 #pragma once
 #include "graphics/GpuTypes.h"
+#include "graphics/GpuPool.h"
 #include "graphics/ImageReadback.h"
 #include "graphics/vulkan/VulkanHdr.h"
 #include "OpenGLScaleTypes.h"
@@ -55,6 +56,7 @@ public:
     const bool& sceneOpen;
     void SubmitTriangles(std::span<const GpuVertex> vertices, OpenGLTexture* texture,
         bool linear, bool wrap, GpuBlend blend, const GpuClip* clip = nullptr);
+    void SubmitPool(OpenGLTexture* texture, const GpuPoolParams& params);
     void SubmitCoverageTriangles(std::span<const GpuVertex> vertices, OpenGLTexture* texture,
         GpuBlend blend, const GpuClip* clip = nullptr);
     void EndSceneAndPresent();

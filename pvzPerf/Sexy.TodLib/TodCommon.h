@@ -19,6 +19,7 @@ namespace Sexy
 	class SexyMatrix3;
 	class SexyVector2;
 	struct TextureSource;
+	struct TextureRegion;
 };
 //using namespace std;
 using namespace Sexy;
@@ -86,12 +87,9 @@ _Font*					TodLoadCreditsFont();
 
 // #################################################################################################### //
 
-// 全域求值函数（t, 起点, 终点）→ 值。装载期解析缓存的元素类型。
+// Curve dispatch is validated offline; runtime reads the public constant table.
 using TodCurveEvalFn = float (*)(double theProgress, float thePositionStart, float thePositionEnd);
-// 记录 int → 求值函数的一次性解析（装载期）；无效/未实现曲线硬错退出。
-TodCurveEvalFn TodCurveResolveEval(int theCurveIndex);
-// 反向解析（写档侧）：函数指针 → 记录 int；表外指针（数据损坏）硬错退出。
-int TodCurveIndexFromEval(TodCurveEvalFn theEval);
+extern const TodCurveEvalFn kCurveEvals[14];
 
 // P5-⑥ 快速三角（见 TodCommon.cpp 实现注释）；域 [-π,π]
 #include "SexyAppFramework/misc/FastMath.h"
@@ -177,7 +175,7 @@ void					TodDrawImageRectScaled(Graphics* g, Image* theImage, int thePosX, int t
 void					TodDrawImageRectScaledF(Graphics* g, Image* theImage, float thePosX, float thePosY, const Rect& theSrcRect, float theScaleX, float theScaleY);
 void					TodDrawImageRectCenterScaledF(Graphics* g, Image* theImage, float thePosX, float thePosY, const Rect& theSrcRect, float theScaleX, float theScaleY);
 void					TodBltMatrix(Graphics* g, Image* theImage, const SexyMatrix3& theTransform, const Rect& theClipRect, const Color& theColor, int theDrawMode, const Rect& theSrcRect);
-void					TodBltMatrix(Graphics* g, const TextureSource& texture, const SexyMatrix3& transform, const Rect& clip, const Color& color, int drawMode, const Rect& source);
+void					TodBltMatrix(Graphics* g, const TextureSource& texture, const SexyMatrix3& transform, const Rect& clip, const Color& color, int drawMode, const TextureRegion& source);
 void					TodMarkImageForSanding(Image* theImage);
 void					FixPixelsOnAlphaEdgeForBlending(Image* theImage);
 void					Tod_SWTri_AddAllDrawTriFuncs();
@@ -203,6 +201,7 @@ inline int				FloatRoundToInt(float theFloatValue)						{ return theFloatValue >
 inline bool				FloatApproxEqual(float theFloatVal1, float theFloatVal2)	{ return fabs(theFloatVal1 - theFloatVal2) < FLT_EPSILON; }
 
 Color					GetFlashingColor(uint32_t theCounter, int theFlashTime);
+Color					GetFlashingColorNs(std::uint64_t theTimeNs, std::uint64_t thePeriodNs);
 /*inline*/ int			ColorComponentMultiply(int theColor1, int theColor2);
 Color					ColorsMultiply(const Color& theColor1, const Color& theColor2);
 Color					ColorAdd(const Color& theColor1, const Color& theColor2);

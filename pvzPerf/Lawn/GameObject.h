@@ -16,8 +16,8 @@ class GameObject
 public:
 	LawnApp*                        mApp;
 	Board*                          mBoard;
-    int                             mX;
-    int                             mY;
+    float                           mX;
+    float                           mY;
     int                             mWidth;
     int                             mHeight;
     bool                            mVisible;
@@ -34,27 +34,5 @@ public:
     /*inline*/ void                 MakeParentGraphicsFrame(Graphics* g);
 };
 
-// Actors own one ordinary floating-point pixel position. Other game objects
-// retain their existing integer-coordinate GameObject layout.
-class FloatGameObject
-{
-public:
-    LawnApp*                        mApp;
-    Board*                          mBoard;
-    float                           mX;
-    float                           mY;
-    int                             mWidth;
-    int                             mHeight;
-    bool                            mVisible;
-    int                             mRow;
-    int                             mRenderOrder;
-    unsigned int                    mSaveLayoutPadding = 0;
-
-    FloatGameObject();
-    bool BeginDraw(Graphics* g);
-    void EndDraw(Graphics* g);
-    void MakeParentGraphicsFrame(Graphics* g);
-};
-static_assert(sizeof(FloatGameObject) == sizeof(GameObject));
-static_assert(offsetof(FloatGameObject, mX) == offsetof(GameObject, mX));
-static_assert(offsetof(FloatGameObject, mY) == offsetof(GameObject, mY));
+static_assert(sizeof(GameObject::mX) == sizeof(std::int32_t));
+static_assert(sizeof(GameObject::mY) == sizeof(std::int32_t));

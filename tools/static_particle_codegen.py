@@ -7,7 +7,7 @@ import re
 from fractions import Fraction
 
 import build_numeric_runtime_pak64 as pak
-from static_definition_codegen import array, cpp_float
+from static_definition_codegen import array, cpp_float, texture_region
 
 SHARD_COUNT = 8
 CURVES = ("Constant", "Linear", "EaseIn", "EaseOut", "EaseInOut",
@@ -145,8 +145,9 @@ def generate(config, records: dict[str, bytes]) -> dict:
 
         def emit_track(nodes: list[tuple]) -> str:
             nonlocal node_number
-            values = ["{" + ", ".join(cpp_float(value) if i in (2, 3) else str(value)
-                                     for i, value in enumerate(node)) + "}"
+            values = ["{" + f"double{{{node[0]}}} / {node[1]}, " +
+                      ", ".join(cpp_float(value) if i in (0, 1) else str(value)
+                                for i, value in enumerate(node[2:])) + "}"
                       for node in nodes]
             pointer = array(declarations, code, "FloatParameterTrackNode",
                             f"{prefix}Nodes{node_number}", values)
@@ -180,22 +181,19 @@ def generate(config, records: dict[str, bytes]) -> dict:
         variants, slots = atlas["variant_count"], atlas["slot_count"]
         texture_pointer = array(declarations, code, "Sexy::GpuTexture*",
                                 prefix + "Textures", ["nullptr"] * variants)
-        width_pointer = array(declarations, code, "int", prefix + "TextureWidths",
-                              [str(dim[0]) for dim in atlas["variant_dimensions"]])
-        height_pointer = array(declarations, code, "int", prefix + "TextureHeights",
-                               [str(dim[1]) for dim in atlas["variant_dimensions"]])
-        rectangles = ["{" + ", ".join(map(str, rect)) + "}"
-                      for row in atlas["variant_rectangles"] for rect in row]
-        rectangle_pointer = array(declarations, code, "Sexy::Rect", prefix + "Rects",
+        rectangles = [texture_region(rect, *dimensions)
+                      for row, dimensions in zip(atlas["variant_rectangles"], atlas["variant_dimensions"])
+                      for rect in row]
+        rectangle_pointer = array(declarations, code, "Sexy::TextureRegion", prefix + "Rects",
                                   rectangles, readonly=True)
         initializers.append("{" + ", ".join((
-            texture_pointer, width_pointer, height_pointer, f"{variants}u", f"{slots}u",
+            texture_pointer, f"{variants}u", f"{slots}u",
             rectangle_pointer, emitter_pointer, str(len(emitters)),
             "{{" + ", ".join(map(str, definition["lookup"])) + "}}")) + "}")
         summary["emitters"] += len(emitters)
         summary["variants"] += variants
         summary["rectangles"] += len(rectangles)
-    summary["rectangle_bytes"] = summary["rectangles"] * 16
+    summary["rectangle_bytes"] = summary["rectangles"] * 24
     summary["unindexed_records"] = sorted(path for path in records
                                          if pak.numeric_kind(path) == "particles"
                                          and path not in expected)

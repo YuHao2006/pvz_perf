@@ -43,6 +43,8 @@ struct OpenGLRenderer::Impl {
     int width, height, maximum = 0;
     unsigned int staticBase = 4096, vao = 0, stream = 0;
     unsigned int sceneProgram = 0, imageProgram = 0, fontProgram = 0, presentProgram = 0;
+    unsigned int poolProgram = 0, poolVao = 0, poolVertices = 0, poolIndices = 0;
+    std::array<int, 12> poolUniforms{};
     UniformLocations sceneUniforms{}, imageUniforms{}, fontUniforms{}, presentUniforms{};
     bool open = false, mainFrame = false, initialized = false, sceneInitialized = false;
     OpenGLTexture* white = nullptr;

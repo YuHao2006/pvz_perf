@@ -11,6 +11,8 @@
 #include "paklib/PakInterface.h"
 #include "Sexy.TodLib/TodCommon.h"
 #include <cassert>
+#include <array>
+#include <cmath>
 #include <memory>
 #include <utility>
 
@@ -883,8 +885,11 @@ bool FontData::HandleCommand(const ListDataElement& theParams)
 									return false;
 								}
 
-								//aLayer->mCharData[(uchar) aCharsVector[i][0]].mImageRect = aRect;;									
-								aLayer->GetCharData(aWString[0])->mImageRect = aRect;
+								aLayer->GetCharData(aWString[0])->mImageRect = {
+									float(aRect.mX) / anImageWidth, float(aRect.mY) / anImageHeight,
+									float(aRect.mX + aRect.mWidth) / anImageWidth,
+									float(aRect.mY + aRect.mHeight) / anImageHeight,
+									aRect.mWidth, aRect.mHeight};
 							}
 							else
 								invalidParamFormat = true;
@@ -1136,9 +1141,10 @@ bool FontData::LoadLegacy(Image* theFontImage, const std::string& theFontDescFil
 			return false;
 		const char aChar = aBuf[0];
 
-		//aFontLayer->mCharData[(uchar) aChar].mImageRect = Rect(aCharPos, 0, aWidth, aFontLayer->mImage->mHeight);
-		//aFontLayer->mCharData[(uchar) aChar].mWidth = aWidth;
-		aFontLayer->GetCharData(aChar)->mImageRect = Rect(aCharPos, 0, aWidth, aFontLayer->mImage->mHeight);
+		aFontLayer->GetCharData(aChar)->mImageRect = {
+			float(aCharPos) / aFontLayer->mImage->mWidth, 0.0f,
+			float(aCharPos + aWidth) / aFontLayer->mImage->mWidth, 1.0f,
+			aWidth, aFontLayer->mImage->mHeight};
 		aFontLayer->GetCharData(aChar)->mWidth = aWidth;
 
 		aCharPos += aWidth;
@@ -1277,10 +1283,12 @@ bool FontData::Load(SexyAppBase* theSexyApp, const std::string& theFontDescFileN
 	}
 	FontLayerList layers;
 	std::vector<std::string> imagePaths;
+	std::vector<std::array<Rect,FontLayer::kCharSlots>> glyphPixelRectangles;
 	std::vector<unsigned> layerIds;
 	for (unsigned i = 0; i < layerCount; ++i)
 	{
 		layers.emplace_back(this);
+		glyphPixelRectangles.emplace_back();
 		auto& layer = layers.back();
 		layer.mLayerId = reader.UInt();
 		if (layer.mLayerId >= layerCount
@@ -1311,8 +1319,9 @@ bool FontData::Load(SexyAppBase* theSexyApp, const std::string& theFontDescFileN
 			if (ch >= FontLayer::kCharSlots || seen[ch]) return false;
 			seen[ch] = true;
 			auto& glyph = layer.mCharData[ch];
-			glyph.mImageRect.mX = reader.Int(); glyph.mImageRect.mY = reader.Int();
-			glyph.mImageRect.mWidth = reader.Int(); glyph.mImageRect.mHeight = reader.Int();
+			auto& rectangle=glyphPixelRectangles.back()[ch];
+			rectangle.mX = reader.Int(); rectangle.mY = reader.Int();
+			rectangle.mWidth = reader.Int(); rectangle.mHeight = reader.Int();
 			glyph.mOffset.mX = reader.Int(); glyph.mOffset.mY = reader.Int();
 			glyph.mWidth = reader.Int(); glyph.mOrder = reader.Int();
 			const unsigned kernCount = reader.UInt();
@@ -1333,16 +1342,23 @@ bool FontData::Load(SexyAppBase* theSexyApp, const std::string& theFontDescFileN
 	size_t index = 0;
 	for (auto& layer : layers)
 	{
-		const auto& imagePath = imagePaths[index++];
+		const auto& imagePath = imagePaths[index];
 		layer.mImage = theSexyApp->GetPreparedSharedImage(imagePath, 0, nullptr, {});
-		if (static_cast<Image*>(layer.mImage) == nullptr) return false;
-		for (const auto& glyph : layer.mCharData)
+		if (static_cast<Image*>(layer.mImage) == nullptr ||
+			layer.mImage->mWidth<=0 || layer.mImage->mHeight<=0) return false;
+		for (int ch=0;ch<FontLayer::kCharSlots;++ch)
 		{
-			const auto& rect = glyph.mImageRect;
+			const auto& rect = glyphPixelRectangles[index][ch];
 			if (rect.mX < 0 || rect.mY < 0 || rect.mWidth < 0 || rect.mHeight < 0
 				|| static_cast<long long>(rect.mX) + rect.mWidth > layer.mImage->mWidth
 				|| static_cast<long long>(rect.mY) + rect.mHeight > layer.mImage->mHeight) return false;
+			layer.mCharData[ch].mImageRect = {
+				float(rect.mX) / layer.mImage->mWidth, float(rect.mY) / layer.mImage->mHeight,
+				float(rect.mX + rect.mWidth) / layer.mImage->mWidth,
+				float(rect.mY + rect.mHeight) / layer.mImage->mHeight,
+				rect.mWidth, rect.mHeight};
 		}
+		++index;
 	}
 	for (auto& layer : layers) TodQueueTextureWarm(layer.mImage);
 	mFontLayerList.swap(layers);
@@ -1551,33 +1567,18 @@ void ImageFont::GenerateActiveFontLayers()
 
 					int aCurX = 0;
 					int aMaxHeight = 0;
-
-					//for (aCharNum = 0; aCharNum < 256; aCharNum++)
-					//{
-					//	Rect* anOrigRect = &aFontLayer->mCharData[aCharNum].mImageRect;
-					//
-					//	Rect aScaledRect(aCurX, 0,  
-					//		(int) ((anOrigRect->mWidth * aPointSize) / aLayerPointSize),
-					//		(int) ((anOrigRect->mHeight * aPointSize) / aLayerPointSize));
-					//
-					//	anActiveFontLayer->mScaledCharImageRects[aCharNum] = aScaledRect;
-					//
-					//	if (aScaledRect.mHeight > aMaxHeight)
-					//		aMaxHeight = aScaledRect.mHeight;
-					//
-					//	aCurX += aScaledRect.mWidth;
-					//}
+					std::array<Rect,FontLayer::kCharSlots> aScaledRectangles{};
 					for (int aCharNum = 0; aCharNum < aFontLayer->kCharSlots; aCharNum++)
 					{
 						if (aFontLayer->mCharData[aCharNum].mWidth == 0)
 							continue;
-						Rect* anOrigRect = &aFontLayer->mCharData[aCharNum].mImageRect;
+						const auto& anOrigRect = aFontLayer->mCharData[aCharNum].mImageRect;
 
 						Rect aScaledRect(aCurX, 0,
-							(int)((anOrigRect->mWidth * aPointSize) / aLayerPointSize),
-							(int)((anOrigRect->mHeight * aPointSize) / aLayerPointSize));
+							(int)((anOrigRect.mWidth * aPointSize) / aLayerPointSize),
+							(int)((anOrigRect.mHeight * aPointSize) / aLayerPointSize));
 
-						anActiveFontLayer->mScaledCharImageRects[aCharNum] = aScaledRect;
+						aScaledRectangles[aCharNum] = aScaledRect;
 
 						if (aScaledRect.mHeight > aMaxHeight)
 							aMaxHeight = aScaledRect.mHeight;
@@ -1598,10 +1599,21 @@ void ImageFont::GenerateActiveFontLayers()
 						if (aFontLayer->mCharData[aCharNum].mWidth == 0)
 							continue;
 						const auto& source=aFontLayer->mCharData[aCharNum].mImageRect;
-						const auto& target=anActiveFontLayer->mScaledCharImageRects[aCharNum];
+						const auto& target=aScaledRectangles[aCharNum];
+						anActiveFontLayer->mScaledCharImageRects[aCharNum] = {
+							float(target.mX) / aCurX, float(target.mY) / aMaxHeight,
+							float(target.mX + target.mWidth) / aCurX,
+							float(target.mY + target.mHeight) / aMaxHeight,
+							target.mWidth,target.mHeight};
 						if (source.mWidth==0 || source.mHeight==0 || target.mWidth==0 || target.mHeight==0)
 							continue;
-						glyphs.push_back({source.mX,source.mY,source.mWidth,source.mHeight,
+						// Font atlas generation is a pixel-exact resampling operation.
+						// Reconstruct its transient texel origin once while preparing
+						// the scaled layer; glyph drawing keeps the stored UV region.
+						glyphs.push_back({
+							static_cast<int>(std::lround(source.mU0 * aFontLayer->mImage->mWidth)),
+							static_cast<int>(std::lround(source.mV0 * aFontLayer->mImage->mHeight)),
+							source.mWidth,source.mHeight,
 							target.mX,target.mY,target.mWidth,target.mHeight});
 					}
 					render.RenderFontAtlas(aMemoryImage,static_cast<Image*>(aFontLayer->mImage),
@@ -1853,14 +1865,7 @@ void ImageFont::DrawStringEx(Graphics* g, int theX, int theY, const SexyString& 
 			aRenderCommand->mColor = aColor;
 			aRenderCommand->mDest[0] = anImageX;
 			aRenderCommand->mDest[1] = anImageY;
-			//aRenderCommand->mSrc[0] = anActiveFontLayer->mScaledCharImageRects[(uchar) aChar].mX;
-			//aRenderCommand->mSrc[1] = anActiveFontLayer->mScaledCharImageRects[(uchar) aChar].mY;
-			//aRenderCommand->mSrc[2] = anActiveFontLayer->mScaledCharImageRects[(uchar) aChar].mWidth;
-			//aRenderCommand->mSrc[3] = anActiveFontLayer->mScaledCharImageRects[(uchar) aChar].mHeight;
-			aRenderCommand->mSrc[0] = anActiveFontLayer->mScaledCharImageRects[aChar].mX;
-			aRenderCommand->mSrc[1] = anActiveFontLayer->mScaledCharImageRects[aChar].mY;
-			aRenderCommand->mSrc[2] = anActiveFontLayer->mScaledCharImageRects[aChar].mWidth;
-			aRenderCommand->mSrc[3] = anActiveFontLayer->mScaledCharImageRects[aChar].mHeight;
+			aRenderCommand->mSourceRegion = anActiveFontLayer->mScaledCharImageRects[aChar];
 			aRenderCommand->mMode = anActiveFontLayer->mBaseFontLayer->mDrawMode;
 			aRenderCommand->mNext = NULL;
 
@@ -1953,7 +1958,7 @@ void ImageFont::DrawStringEx(Graphics* g, int theX, int theY, const SexyString& 
 				g->mDrawMode = aRenderCommand->mMode;
 			g->mColor = Color(aRenderCommand->mColor);
 			if (aRenderCommand->mImage != NULL)
-				g->DrawImage(aRenderCommand->mImage, aRenderCommand->mDest[0], aRenderCommand->mDest[1], Rect(aRenderCommand->mSrc[0], aRenderCommand->mSrc[1], aRenderCommand->mSrc[2], aRenderCommand->mSrc[3]));
+				g->DrawImage(aRenderCommand->mImage, aRenderCommand->mDest[0], aRenderCommand->mDest[1], aRenderCommand->mSourceRegion);
 			g->mDrawMode = anOldDrawMode;
 
 			aRenderCommand = aRenderCommand->mNext;

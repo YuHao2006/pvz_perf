@@ -25,6 +25,22 @@ def cpp_string(value: str) -> str:
     return json.dumps(value, ensure_ascii=True)
 
 
+def texture_region(rect, atlas_width: int, atlas_height: int) -> str:
+    """Bake normalized sample endpoints while retaining exact logical extents."""
+    x, y, width, height = rect
+    if atlas_width == 0 or atlas_height == 0:
+        pak.require((x, y, width, height) == (0, 0, 0, 0),
+                    "Nonempty texture region requires atlas dimensions")
+        endpoints = (0.0, 0.0, 0.0, 0.0)
+    else:
+        pak.require(atlas_width > 0 and atlas_height > 0,
+                    "Invalid texture region atlas dimensions")
+        endpoints = (x / atlas_width, y / atlas_height,
+                     (x + width) / atlas_width, (y + height) / atlas_height)
+    return "{" + ", ".join([*(cpp_float(value) for value in endpoints),
+                            str(width), str(height)]) + "}"
+
+
 def array(declarations: list[str], code: list[str], type_name: str, name: str,
           values: list[str], *, readonly: bool = False) -> str:
     if not values:

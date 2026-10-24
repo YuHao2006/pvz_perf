@@ -25,14 +25,14 @@ export component SodRoll {
         particleDuration: nodes {
             { time: 0; low: 10; high: 25; curve: Linear; distribution: Linear; }
         }
-        systemGreen: nodes {
+        systemAlpha: nodes {
             { time: 0.8; low: 1; high: 1; curve: Linear; distribution: Linear; }
             { time: 1; low: 0; high: 0; curve: Linear; distribution: Linear; }
         }
-        systemAlpha: nodes {
+        launchSpeed: nodes {
             { time: 0; low: 100; high: 100; curve: Linear; distribution: Linear; }
         }
-        systemBrightness: nodes {
+        launchAngle: nodes {
             { time: 0; low: 90; high: 180; curve: Linear; distribution: Linear; }
         }
         particleAlpha: nodes {

@@ -4,6 +4,7 @@
 #include "Color.h"
 #include "TriVertex.h"
 #include "misc/Rect.h"
+#include "TextureRegion.h"
 #include <array>
 #include <cstdint>
 #include <span>
@@ -16,12 +17,10 @@ class SexyMatrix3;
 struct TextureSource
 {
 	GpuTexture* mTexture = nullptr;
-	int mWidth = 0;
-	int mHeight = 0;
 	std::uint32_t mSamplingFlags = 0;
 
-	void Blt(float x, float y, const Rect& source, const Color& color) const;
-	void BltTransformed(const SexyMatrix3& transform, const Rect& source, const Color& color,
+	void Blt(float x, float y, const TextureRegion& source, const Color& color) const;
+	void BltTransformed(const SexyMatrix3& transform, const TextureRegion& source, const Color& color,
 		const Rect* clip = nullptr, float x = 0, float y = 0, bool center = false) const;
 	void BltTriangles(const TriVertex vertices[][3], int count, DWORD color,
 		float tx = 0, float ty = 0) const;

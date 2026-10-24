@@ -510,11 +510,6 @@ TodParticle* TodParticleEmitter::SpawnParticle(int theIndex, int theSpawnCount)
 	return aParticle;
 }
 
-float TodParticleEmitter::ParticleTrackEvaluate(FloatParameterTrack& theTrack, TodParticle* theParticle, ParticleTracks theParticleTrack)
-{
-	return FloatTrackEvaluate(theTrack, ParticleTime(theParticle), theParticle->mParticleInterp[(int)theParticleTrack]);
-}
-
 namespace
 {
 // TodParticleEmitter::UpdateParticleField 物理场分发表：表内匿名 lambda =
@@ -662,7 +657,7 @@ void TodParticleEmitter::UpdateParticleField(TodParticle* theParticle, ParticleF
 
 }
 
-float TodParticleEmitter::SystemTrackEvaluate(FloatParameterTrack& theTrack, ParticleSystemTracks theSystemTrack)
+float TodParticleEmitter::SystemTrackEvaluate(const FloatParameterTrack& theTrack, ParticleSystemTracks theSystemTrack) const
 {
 	return FloatTrackEvaluate(theTrack, SystemTime(*this), mTrackInterp[(int)theSystemTrack]);
 }
@@ -748,12 +743,15 @@ bool TodParticleEmitter::UpdateParticle(TodParticle* theParticle, std::uint64_t 
 		return false;  // 当粒子不存在交叉混合时，可以删除粒子
 
 	const auto deltaTicks = static_cast<double>(deltaNs) / ParticleSourceTickNs;
+	const auto aParticleTime = ParticleTime(theParticle);
 	const int aParticleFieldCount = mEmitterDef->mParticleFields.count;  // 装载后 def 只读，场数外提免逐场重载
 	for (int i = 0; i < aParticleFieldCount; i++)  // 更新粒子受到每个粒子场的作用
-		UpdateParticleField(theParticle, &mEmitterDef->mParticleFields.Fields[i], ParticleTime(theParticle), i, deltaTicks);
+		UpdateParticleField(theParticle, &mEmitterDef->mParticleFields.Fields[i], aParticleTime, i, deltaTicks);
 	theParticle->mPosition += theParticle->mVelocity * static_cast<float>(deltaTicks);
-	float aSpinSpeed = ParticleTrackEvaluate(mEmitterDef->mParticleSpinSpeed, theParticle, ParticleTracks::TRACK_PARTICLE_SPIN_SPEED) * 0.01;
-	float aSpinAngle = ParticleTrackEvaluate(mEmitterDef->mParticleSpinAngle, theParticle, ParticleTracks::TRACK_PARTICLE_SPIN_ANGLE);
+	float aSpinSpeed = FloatTrackEvaluate(mEmitterDef->mParticleSpinSpeed, aParticleTime,
+		theParticle->mParticleInterp[ParticleTracks::TRACK_PARTICLE_SPIN_SPEED]) * 0.01;
+	float aSpinAngle = FloatTrackEvaluate(mEmitterDef->mParticleSpinAngle, aParticleTime,
+		theParticle->mParticleInterp[ParticleTracks::TRACK_PARTICLE_SPIN_ANGLE]);
 	float aLastSpinAngle = FloatTrackEvaluateFromLastTime(
 		mEmitterDef->mParticleSpinAngle, LastParticleTime(theParticle), theParticle->mParticleInterp[ParticleTracks::TRACK_PARTICLE_SPIN_ANGLE]);
 	theParticle->mSpinPosition += static_cast<float>(DEG_TO_RAD(aSpinSpeed * deltaTicks +
@@ -766,8 +764,9 @@ bool TodParticleEmitter::UpdateParticle(TodParticle* theParticle, std::uint64_t 
 		theParticle->mAnimationElapsedNs += static_cast<std::int64_t>(deltaNs);
 		if (!TodParticleConstantAnimationRate(mEmitterDef->mAnimationRate))
 		{
-			const auto increment = SampleClockIncrement(ParticleTrackEvaluate(mEmitterDef->mAnimationRate,
-				theParticle, ParticleTracks::TRACK_PARTICLE_ANIMATION_RATE), deltaNs) % ParticleCycle;
+			const auto increment = SampleClockIncrement(FloatTrackEvaluate(mEmitterDef->mAnimationRate,
+				aParticleTime, theParticle->mParticleInterp[ParticleTracks::TRACK_PARTICLE_ANIMATION_RATE]),
+				deltaNs) % ParticleCycle;
 			theParticle->mAnimationSampleIntegral = (theParticle->mAnimationSampleIntegral + increment) % ParticleCycle;
 			if (theParticle->mAnimationSampleIntegral < 0) theParticle->mAnimationSampleIntegral += ParticleCycle;
 		}
@@ -1024,8 +1023,9 @@ void TodParticleEmitter::Update(std::uint64_t deltaNs, std::span<const ParticleI
 			aDie = true;
 	}
 
+	const auto aSystemTime = mEmitterDef->mSystemFields.count ? SystemTime(*this) : 0.0;
 	for (int i = 0; i < mEmitterDef->mSystemFields.count; i++)
-		UpdateSystemField(&mEmitterDef->mSystemFields.Fields[i], SystemTime(*this), i);  // 更新发射器受到每个系统场的作用
+		UpdateSystemField(&mEmitterDef->mSystemFields.Fields[i], aSystemTime, i);  // 更新发射器受到每个系统场的作用
 	// 尾存倒序遍历（=原头→尾序）；下标直传 DeleteParticleAt（免逐粒 Find 扫）；
 	// DeleteParticle 递归删交叉源可能改本行更低（更旧）下标——memmove 后
 	// i-- 恰落到下一个更旧粒子，语义与原"预存 next"逐字一致
@@ -1081,7 +1081,9 @@ bool TodParticleEmitter::GetRenderParams(TodParticle* theParticle, ParticleRende
 			FloatTrackIsSet(aDef->mEmitterBoxY);
 		theParams->mRed = theParams->mGreen = theParams->mBlue = theParams->mAlpha = 255.0f;
 		theParams->mParticleScale = 1.0f;
-		theParams->mParticleStretch = 0.0f;
+		// Omitted stretch tracks evaluate to one; RenderParticle multiplies
+		// this by scale for its vertical basis (zero collapses PowieWord).
+		theParams->mParticleStretch = 1.0f;
 		theParams->mSpinPosition = theParticle->mSpinPosition;
 		theParams->mPosX = theParticle->mPosition.x;
 		theParams->mPosY = theParticle->mPosition.y;
@@ -1126,16 +1128,24 @@ bool TodParticleEmitter::GetRenderParams(TodParticle* theParticle, ParticleRende
 	theParams->mPositionIsSet |= FloatTrackIsSet(aDef->mEmitterBoxX);
 	theParams->mPositionIsSet |= FloatTrackIsSet(aDef->mEmitterBoxY);
 
-	float aSystemRed = aEmitter->SystemTrackEvaluate(aDef->mSystemRed, ParticleSystemTracks::TRACK_SYSTEM_RED);
-	float aSystemGreen = aEmitter->SystemTrackEvaluate(aDef->mSystemGreen, ParticleSystemTracks::TRACK_SYSTEM_GREEN);
-	float aSystemBlue = aEmitter->SystemTrackEvaluate(aDef->mSystemBlue, ParticleSystemTracks::TRACK_SYSTEM_BLUE);
-	float aSystemAlpha = aEmitter->SystemTrackEvaluate(aDef->mSystemAlpha, ParticleSystemTracks::TRACK_SYSTEM_ALPHA);
-	float aSystemBrightness = aEmitter->SystemTrackEvaluate(aDef->mSystemBrightness, ParticleSystemTracks::TRACK_SYSTEM_BRIGHTNESS);
-	float aParticleRed = aEmitter->ParticleTrackEvaluate(aDef->mParticleRed, theParticle, ParticleTracks::TRACK_PARTICLE_RED);
-	float aParticleGreen = aEmitter->ParticleTrackEvaluate(aDef->mParticleGreen, theParticle, ParticleTracks::TRACK_PARTICLE_GREEN);
-	float aParticleBlue = aEmitter->ParticleTrackEvaluate(aDef->mParticleBlue, theParticle, ParticleTracks::TRACK_PARTICLE_BLUE);
-	float aParticleAlpha = aEmitter->ParticleTrackEvaluate(aDef->mParticleAlpha, theParticle, ParticleTracks::TRACK_PARTICLE_ALPHA);
-	float aParticleBrightness = aEmitter->ParticleTrackEvaluate(aDef->mParticleBrightness, theParticle, ParticleTracks::TRACK_PARTICLE_BRIGHTNESS);
+	const auto aSystemTime = SystemTime(*aEmitter);
+	const auto aParticleTime = ParticleTime(theParticle);
+	const auto evaluateSystem = [&](const FloatParameterTrack& track, ParticleSystemTracks slot) {
+		return FloatTrackEvaluate(track, aSystemTime, aEmitter->mTrackInterp[static_cast<int>(slot)]);
+	};
+	const auto evaluateParticle = [&](const FloatParameterTrack& track, ParticleTracks slot) {
+		return FloatTrackEvaluate(track, aParticleTime, theParticle->mParticleInterp[static_cast<int>(slot)]);
+	};
+	float aSystemRed = evaluateSystem(aDef->mSystemRed, ParticleSystemTracks::TRACK_SYSTEM_RED);
+	float aSystemGreen = evaluateSystem(aDef->mSystemGreen, ParticleSystemTracks::TRACK_SYSTEM_GREEN);
+	float aSystemBlue = evaluateSystem(aDef->mSystemBlue, ParticleSystemTracks::TRACK_SYSTEM_BLUE);
+	float aSystemAlpha = evaluateSystem(aDef->mSystemAlpha, ParticleSystemTracks::TRACK_SYSTEM_ALPHA);
+	float aSystemBrightness = evaluateSystem(aDef->mSystemBrightness, ParticleSystemTracks::TRACK_SYSTEM_BRIGHTNESS);
+	float aParticleRed = evaluateParticle(aDef->mParticleRed, ParticleTracks::TRACK_PARTICLE_RED);
+	float aParticleGreen = evaluateParticle(aDef->mParticleGreen, ParticleTracks::TRACK_PARTICLE_GREEN);
+	float aParticleBlue = evaluateParticle(aDef->mParticleBlue, ParticleTracks::TRACK_PARTICLE_BLUE);
+	float aParticleAlpha = evaluateParticle(aDef->mParticleAlpha, ParticleTracks::TRACK_PARTICLE_ALPHA);
+	float aParticleBrightness = evaluateParticle(aDef->mParticleBrightness, ParticleTracks::TRACK_PARTICLE_BRIGHTNESS);
 	float aBrightness = aParticleBrightness * aSystemBrightness;
 	// 实际颜色 = 粒子颜色 * 系统颜色 * 覆写颜色 * 亮度
 	theParams->mRed = aParticleRed * aSystemRed * aEmitter->mColorOverride.mRed * aBrightness;
@@ -1144,8 +1154,8 @@ bool TodParticleEmitter::GetRenderParams(TodParticle* theParticle, ParticleRende
 	theParams->mAlpha = aParticleAlpha * aSystemAlpha * aEmitter->mColorOverride.mAlpha * aBrightness;
 	theParams->mPosX = theParticle->mPosition.x;
 	theParams->mPosY = theParticle->mPosition.y;
-	float aParticleScale = aEmitter->ParticleTrackEvaluate(aDef->mParticleScale, theParticle, ParticleTracks::TRACK_PARTICLE_SCALE);
-	theParams->mParticleStretch = aEmitter->ParticleTrackEvaluate(aDef->mParticleStretch, theParticle, ParticleTracks::TRACK_PARTICLE_STRETCH);
+	float aParticleScale = evaluateParticle(aDef->mParticleScale, ParticleTracks::TRACK_PARTICLE_SCALE);
+	theParams->mParticleStretch = evaluateParticle(aDef->mParticleStretch, ParticleTracks::TRACK_PARTICLE_STRETCH);
 	theParams->mParticleScale = aParticleScale * aEmitter->mScaleOverride;
 	theParams->mSpinPosition = theParticle->mSpinPosition;
 
@@ -1213,15 +1223,18 @@ void RenderParticle(Graphics* g, TodParticle* theParticle, const Color& theColor
 		return;
 	if (!definition.mTextures[variant])
 		throw std::logic_error("particle appearance atlas is not uploaded");
-	TextureSource source{definition.mTextures[variant],definition.mTextureWidths[variant],
-		definition.mTextureHeights[variant],0};
-	const int aSourceX = aRegion.mX, aSourceY = aRegion.mY;
+	TextureSource source{definition.mTextures[variant],0};
 	const int aCelWidth = aRegion.mWidth, aCelHeight = aRegion.mHeight;
 	Rect aSrcRect(0, 0, aCelWidth, aCelHeight);
-	float aClipTop = TodParticleEmitter::ParticleTrackEvaluate(aEmitterDef->mClipTop, theParticle, ParticleTracks::TRACK_PARTICLE_CLIP_TOP);
-	float aClipBottom = TodParticleEmitter::ParticleTrackEvaluate(aEmitterDef->mClipBottom, theParticle, ParticleTracks::TRACK_PARTICLE_CLIP_BOTTOM);
-	float aClipLeft = TodParticleEmitter::ParticleTrackEvaluate(aEmitterDef->mClipLeft, theParticle, ParticleTracks::TRACK_PARTICLE_CLIP_LEFT);
-	float aClipRight = TodParticleEmitter::ParticleTrackEvaluate(aEmitterDef->mClipRight, theParticle, ParticleTracks::TRACK_PARTICLE_CLIP_RIGHT);
+	const auto aParticleTime = ParticleTime(theParticle);
+	float aClipTop = FloatTrackEvaluate(aEmitterDef->mClipTop, aParticleTime,
+		theParticle->mParticleInterp[ParticleTracks::TRACK_PARTICLE_CLIP_TOP]);
+	float aClipBottom = FloatTrackEvaluate(aEmitterDef->mClipBottom, aParticleTime,
+		theParticle->mParticleInterp[ParticleTracks::TRACK_PARTICLE_CLIP_BOTTOM]);
+	float aClipLeft = FloatTrackEvaluate(aEmitterDef->mClipLeft, aParticleTime,
+		theParticle->mParticleInterp[ParticleTracks::TRACK_PARTICLE_CLIP_LEFT]);
+	float aClipRight = FloatTrackEvaluate(aEmitterDef->mClipRight, aParticleTime,
+		theParticle->mParticleInterp[ParticleTracks::TRACK_PARTICLE_CLIP_RIGHT]);
 	TOD_ASSERT(aClipTop >= 0.0f && aClipTop <= 1.0f);
 	TOD_ASSERT(aClipBottom >= 0.0f && aClipBottom <= 1.0f);
 	TOD_ASSERT(aClipLeft >= 0.0f && aClipLeft <= 1.0f);
@@ -1236,8 +1249,14 @@ void RenderParticle(Graphics* g, TodParticle* theParticle, const Color& theColor
 	TOD_ASSERT(aSrcRect.mY == FloatRoundToInt(aClipTop * aCelHeight));
 	TOD_ASSERT(aSrcRect.mX >= 0 && aSrcRect.mX < 10000);
 	TOD_ASSERT(aSrcRect.mY >= 0 && aSrcRect.mY < 10000);
-	aSrcRect.mX += aSourceX;
-	aSrcRect.mY += aSourceY;
+	const float aUSpan = aRegion.mU1 - aRegion.mU0;
+	const float aVSpan = aRegion.mV1 - aRegion.mV0;
+	const TextureRegion aSourceRegion{
+		aRegion.mU0 + aUSpan * (float(aSrcRect.mX) / aCelWidth),
+		aRegion.mV0 + aVSpan * (float(aSrcRect.mY) / aCelHeight),
+		aRegion.mU0 + aUSpan * (float(aSrcRect.mX + aSrcRect.mWidth) / aCelWidth),
+		aRegion.mV0 + aVSpan * (float(aSrcRect.mY + aSrcRect.mHeight) / aCelHeight),
+		aSrcRect.mWidth, aSrcRect.mHeight};
 
 	if (TestBit(aEmitterDef->mParticleFlags, (int)ParticleFlags::PARTICLE_ALIGN_TO_PIXELS))  // 坐标对齐至整数像素点
 	{
@@ -1269,9 +1288,9 @@ void RenderParticle(Graphics* g, TodParticle* theParticle, const Color& theColor
 			theParams->mParticleScale, 
 			theParams->mParticleStretch * theParams->mParticleScale
 		);
-		theTriangleGroup->AddTriangle(g, source, aTransform, g->mClipRect, theColor, aDrawMode, aSrcRect);
+		theTriangleGroup->AddTriangle(g, source, aTransform, g->mClipRect, theColor, aDrawMode, aSourceRegion);
 		if (aEmitter->mExtraAdditiveDrawOverride)
-			theTriangleGroup->AddTriangle(g, source, aTransform, g->mClipRect, theColor, Graphics::DRAWMODE_ADDITIVE, aSrcRect);
+			theTriangleGroup->AddTriangle(g, source, aTransform, g->mClipRect, theColor, Graphics::DRAWMODE_ADDITIVE, aSourceRegion);
 	}
 }
 

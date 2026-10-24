@@ -69,6 +69,7 @@ public:
 	void UseCausticsImages(Image* output, Image* source);
 	void SetCausticsFrame(unsigned int theCounter);
 	GpuTexture* GetCausticsTexture() const;
+    void DrawPool(Image* texture, const GpuPoolParams& params);
 
 protected:
 	bool					InitGPU();	
@@ -118,7 +119,7 @@ public:
 	void					BltRotated(Image* theImage, float theX, float theY, const Rect* theClipRect, const Color& theColor, int theDrawMode, double theRot, float theRotCenterX, float theRotCenterY, const Rect& theSrcRect);
 	void					BltTransformed(Image* theImage, const Rect* theClipRect, const Color& theColor, int theDrawMode, const Rect &theSrcRect, const SexyMatrix3 &theTransform, bool linearFilter, float theX = 0, float theY = 0, bool center = false);
 	void BltTransformed(const TextureSource& source, const Rect* clip, const Color& color,
-		int drawMode, const Rect& sourceRect, const SexyMatrix3& transform, bool linearFilter,
+		int drawMode, const TextureRegion& sourceRect, const SexyMatrix3& transform, bool linearFilter,
 		float x = 0, float y = 0, bool center = false);
 	void					DrawLine(double theStartX, double theStartY, double theEndX, double theEndY, const Color& theColor, int theDrawMode);
 	void					FillRect(const Rect& theRect, const Color& theColor, int theDrawMode);

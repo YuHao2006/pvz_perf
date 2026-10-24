@@ -44,18 +44,18 @@ inline void AdvanceVelocity(float& position, float rate, std::uint64_t deltaNs,
 }
 
 template<class Actor>
-inline void AdvanceRoot(Actor& actor, Reanimation& animation,
+inline void AdvanceRoot(Actor& actor, const Reanimation& animation,
     float signedScale, std::int64_t offsetNs)
 {
+    const auto root = animation.RootMotion(ReanimTrackId::_ground, signedScale, offsetNs);
     if (!actor.mRootBindingGeneration ||
         actor.mRootBindingGeneration != animation.mPlaybackGeneration ||
         actor.mRootScale != signedScale)
     {
-        actor.mRootOriginX = actor.mX -
-            animation.RootMotion(ReanimTrackId::_ground, signedScale);
+        actor.mRootOriginX = actor.mX - (offsetNs == 0 ? root :
+            animation.RootMotion(ReanimTrackId::_ground, signedScale));
         actor.mRootBindingGeneration = animation.mPlaybackGeneration;
         actor.mRootScale = signedScale;
     }
-    actor.mX = CheckedPosition(actor.mRootOriginX +
-        animation.RootMotion(ReanimTrackId::_ground, signedScale, offsetNs));
+    actor.mX = CheckedPosition(actor.mRootOriginX + root);
 }

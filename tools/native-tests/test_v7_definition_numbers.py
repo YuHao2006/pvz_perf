@@ -15,6 +15,14 @@ from test_definition_compiler_sources import particle_gold
 
 COMPILER = os.environ.get("PVZ_RESOURCE_COMPILER") or os.environ.get("PVZ_ATLAS_COMPILER")
 
+# The new source record follows its own field order. It must not reuse the
+# retired native-reference order: that made the old migration bug self-verify.
+SOURCE_SYSTEM_TRACKS = (
+    "SystemDuration CrossFadeDuration SpawnRate SpawnMinActive SpawnMaxActive "
+    "SpawnMaxLaunched EmitterRadius EmitterOffsetX EmitterOffsetY EmitterBoxX EmitterBoxY "
+    "EmitterSkewX EmitterSkewY EmitterPath ParticleDuration LaunchSpeed LaunchAngle "
+    "SystemRed SystemGreen SystemBlue SystemAlpha SystemBrightness").split()
+
 
 def particle_source(data):
     at = 12
@@ -33,7 +41,7 @@ def particle_source(data):
         images = take("<I")[0]
         at += 4 * images
         header = take("<4i")
-        tracks = {key: track() for key in migration.SYSTEM}
+        tracks = {key: track() for key in SOURCE_SYSTEM_TRACKS}
         fields = []
         for _ in range(2):
             fields.append([(take("<I")[0], track(), track()) for _ in range(take("<I")[0])])

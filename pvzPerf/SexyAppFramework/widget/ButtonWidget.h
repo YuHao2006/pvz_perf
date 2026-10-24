@@ -1,5 +1,6 @@
 #pragma once
 #include "Widget.h"
+#include "graphics/TextureRegion.h"
 
 namespace Sexy
 {
@@ -34,10 +35,10 @@ public:
 	Image*					mOverImage;
 	Image*					mDownImage;	
 	Image*					mDisabledImage;
-	Rect					mNormalRect;
-	Rect					mOverRect;
-	Rect					mDownRect;
-	Rect					mDisabledRect;
+	TextureRegion			mNormalRegion{};
+	TextureRegion			mOverRegion{};
+	TextureRegion			mDownRegion{};
+	TextureRegion			mDisabledRegion{};
 
 	bool					mInverted;
 	bool					mBtnNoDraw;
@@ -48,8 +49,8 @@ public:
 	double					mOverAlphaSpeed;
 	double					mOverAlphaFadeInSpeed;
 
-	bool					HaveButtonImage(Image *theImage, const Rect &theRect);
-	virtual void			DrawButtonImage(Graphics *g, Image *theImage, const Rect &theRect, int x, int y);
+	bool					HaveButtonImage(Image *theImage, const TextureRegion& theRegion);
+	virtual void			DrawButtonImage(Graphics *g, Image *theImage, const TextureRegion& theRegion, int x, int y);
 	
 
 public:

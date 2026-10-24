@@ -23,11 +23,11 @@ export component ZamboniExplosion {
         particleDuration: nodes {
             { time: 0; low: 40; high: 60; curve: Linear; distribution: Linear; }
         }
-        systemGreen: nodes {
+        systemAlpha: nodes {
             { time: 0.8; low: 1; high: 1; curve: Linear; distribution: Linear; }
             { time: 1; low: 0; high: 0; curve: Linear; distribution: Linear; }
         }
-        systemAlpha: nodes {
+        launchSpeed: nodes {
             { time: 0; low: 2000; high: 2500; curve: Linear; distribution: Linear; }
         }
         particleRed: nodes {
@@ -80,14 +80,14 @@ export component ZamboniExplosion {
         particleDuration: nodes {
             { time: 0; low: 80; high: 80; curve: Linear; distribution: Linear; }
         }
-        systemGreen: nodes {
+        systemAlpha: nodes {
             { time: 0.9; low: 1; high: 1; curve: Linear; distribution: Linear; }
             { time: 1; low: 0; high: 0; curve: Linear; distribution: Linear; }
         }
-        systemAlpha: nodes {
+        launchSpeed: nodes {
             { time: 0; low: 600; high: 600; curve: Linear; distribution: Linear; }
         }
-        systemBrightness: nodes {
+        launchAngle: nodes {
             { time: 0; low: 150; high: 170; curve: Linear; distribution: Linear; }
         }
         particleSpinSpeed: nodes {
@@ -123,14 +123,14 @@ export component ZamboniExplosion {
         particleDuration: nodes {
             { time: 0; low: 80; high: 80; curve: Linear; distribution: Linear; }
         }
-        systemGreen: nodes {
+        systemAlpha: nodes {
             { time: 0.9; low: 1; high: 1; curve: Linear; distribution: Linear; }
             { time: 1; low: 0; high: 0; curve: Linear; distribution: Linear; }
         }
-        systemAlpha: nodes {
+        launchSpeed: nodes {
             { time: 0; low: 600; high: 800; curve: Linear; distribution: Linear; }
         }
-        systemBrightness: nodes {
+        launchAngle: nodes {
             { time: 0; low: 130; high: 200; curve: Linear; distribution: Linear; }
         }
         particleSpinSpeed: nodes {
@@ -166,14 +166,14 @@ export component ZamboniExplosion {
         particleDuration: nodes {
             { time: 0; low: 80; high: 80; curve: Linear; distribution: Linear; }
         }
-        systemGreen: nodes {
+        systemAlpha: nodes {
             { time: 0.9; low: 1; high: 1; curve: Linear; distribution: Linear; }
             { time: 1; low: 0; high: 0; curve: Linear; distribution: Linear; }
         }
-        systemAlpha: nodes {
+        launchSpeed: nodes {
             { time: 0; low: 800; high: 800; curve: Linear; distribution: Linear; }
         }
-        systemBrightness: nodes {
+        launchAngle: nodes {
             { time: 0; low: 130; high: 200; curve: Linear; distribution: Linear; }
         }
         particleSpinSpeed: nodes {
@@ -203,14 +203,14 @@ export component ZamboniExplosion {
         particleDuration: nodes {
             { time: 0; low: 80; high: 80; curve: Linear; distribution: Linear; }
         }
-        systemGreen: nodes {
+        systemAlpha: nodes {
             { time: 0.9; low: 1; high: 1; curve: Linear; distribution: Linear; }
             { time: 1; low: 0; high: 0; curve: Linear; distribution: Linear; }
         }
-        systemAlpha: nodes {
+        launchSpeed: nodes {
             { time: 0; low: 800; high: 800; curve: Linear; distribution: Linear; }
         }
-        systemBrightness: nodes {
+        launchAngle: nodes {
             { time: 0; low: 130; high: 200; curve: Linear; distribution: Linear; }
         }
         particleSpinSpeed: nodes {
@@ -249,11 +249,11 @@ export component ZamboniExplosion {
         particleDuration: nodes {
             { time: 0; low: 40; high: 60; curve: Linear; distribution: Linear; }
         }
-        systemGreen: nodes {
+        systemAlpha: nodes {
             { time: 0.8; low: 1; high: 1; curve: Linear; distribution: Linear; }
             { time: 1; low: 0; high: 0; curve: Linear; distribution: Linear; }
         }
-        systemAlpha: nodes {
+        launchSpeed: nodes {
             { time: 0; low: 500; high: 1200; curve: Linear; distribution: Linear; }
         }
         particleRed: nodes {

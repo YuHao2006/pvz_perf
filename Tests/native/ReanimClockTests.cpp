@@ -22,6 +22,33 @@ static void CheckFloatingAnalytic(double actual, long double expected, const cha
 }
 
 struct Position { I phase; I cycles; };
+// Independent bit-by-bit oracle for the native wide arithmetic path.
+static std::uint64_t PortableMulDiv(std::uint64_t a, std::uint64_t b,
+    std::uint64_t divisor, std::uint64_t& remainder)
+{
+    const std::uint64_t al = static_cast<std::uint32_t>(a), ah = a >> 32;
+    const std::uint64_t bl = static_cast<std::uint32_t>(b), bh = b >> 32;
+    const auto lowProduct = al * bl;
+    const auto middle = ah * bl + (lowProduct >> 32);
+    const auto middle2 = al * bh + static_cast<std::uint32_t>(middle);
+    const auto high = ah * bh + (middle >> 32) + (middle2 >> 32);
+    const auto low = (middle2 << 32) | static_cast<std::uint32_t>(lowProduct);
+    Check(high < divisor, "oracle quotient overflow");
+    remainder = high;
+    std::uint64_t quotient = 0;
+    for (int bit = 63; bit >= 0; --bit)
+    {
+        const bool carry = (remainder >> 63) != 0;
+        remainder = (remainder << 1) | ((low >> bit) & 1);
+        if (carry || remainder >= divisor)
+        {
+            remainder -= divisor;
+            quotient |= UINT64_C(1) << bit;
+        }
+    }
+    return quotient;
+}
+
 static Position Sample(I origin, I originCycles, I elapsed, float rate, I period)
 {
     Position result{origin, originCycles};
@@ -135,9 +162,9 @@ int main()
         std::uint64_t high, expectedRemainder;
         const auto low = _umul128(a, b, &high);
         const auto divisor = high + 1 + wideRandom() % (UINT64_MAX - high);
-        const auto expected = _udiv128(high, low, divisor, &expectedRemainder);
+        const auto expected = PortableMulDiv(a, b, divisor, expectedRemainder);
         Check(ReanimClock::MulDiv(a, b, divisor, &rem) == expected && rem == expectedRemainder,
-            "portable wide arithmetic disagrees with independent native intrinsics");
+            "native wide arithmetic disagrees with independent bit-by-bit oracle");
     }
 #endif
     Check(ReanimClock::SignedMulDiv(-9, 5, 7) == -6, "signed output must truncate toward zero");

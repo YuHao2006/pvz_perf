@@ -52,15 +52,15 @@ bool ButtonWidget::IsButtonDown()
 	return mIsDown && mIsOver && !mDisabled;
 }
 
-bool ButtonWidget::HaveButtonImage(Image *theImage, const Rect &theRect)
+bool ButtonWidget::HaveButtonImage(Image *theImage, const TextureRegion& theRegion)
 {
-	return (theImage!=NULL || theRect.mWidth!=0);
+	return (theImage!=NULL || theRegion.mWidth!=0);
 }
 	
-void ButtonWidget::DrawButtonImage(Graphics *g, Image *theImage, const Rect &theRect, int x, int y)
+void ButtonWidget::DrawButtonImage(Graphics *g, Image *theImage, const TextureRegion& theRegion, int x, int y)
 {
-	if (theRect.mWidth != 0)
-		g->DrawImage(mButtonImage,x,y,theRect);
+	if (theRegion.mWidth != 0)
+		g->DrawImage(mButtonImage,x,y,theRegion);
 	else
 		g->DrawImage(theImage,x,y);
 }
@@ -154,24 +154,24 @@ void ButtonWidget::Draw(Graphics* g)
 	{
 		if (!isDown)
 		{
-			if (mDisabled && HaveButtonImage(mDisabledImage,mDisabledRect))
-				DrawButtonImage(g,mDisabledImage,mDisabledRect,0,0);
-			else if ((mOverAlpha > 0) && HaveButtonImage(mOverImage,mOverRect))
+			if (mDisabled && HaveButtonImage(mDisabledImage,mDisabledRegion))
+				DrawButtonImage(g,mDisabledImage,mDisabledRegion,0,0);
+			else if ((mOverAlpha > 0) && HaveButtonImage(mOverImage,mOverRegion))
 			{
-				if (HaveButtonImage(mButtonImage, mNormalRect)  && mOverAlpha<1)
-					DrawButtonImage(g,mButtonImage,mNormalRect,0,0);
+				if (HaveButtonImage(mButtonImage, mNormalRegion)  && mOverAlpha<1)
+					DrawButtonImage(g,mButtonImage,mNormalRegion,0,0);
 
 				g->mColorizeImages = true;
 				g->mColor = Color(255,255,255,(int)(mOverAlpha * 255));
-				DrawButtonImage(g,mOverImage,mOverRect,0,0);
+				DrawButtonImage(g,mOverImage,mOverRegion,0,0);
 				g->mColorizeImages = false;
 			}
-			else if ((mIsOver || mIsDown) && HaveButtonImage(mOverImage,mOverRect))
+			else if ((mIsOver || mIsDown) && HaveButtonImage(mOverImage,mOverRegion))
 			{
-				DrawButtonImage(g,mOverImage,mOverRect,0,0);
+				DrawButtonImage(g,mOverImage,mOverRegion,0,0);
 			}
-			else if (HaveButtonImage(mButtonImage,mNormalRect))
-				DrawButtonImage(g,mButtonImage,mNormalRect,0,0);
+			else if (HaveButtonImage(mButtonImage,mNormalRegion))
+				DrawButtonImage(g,mButtonImage,mNormalRegion,0,0);
 
 			if (mIsOver)
 				g->mColor = mColors[COLOR_LABEL_HILITE];
@@ -181,12 +181,12 @@ void ButtonWidget::Draw(Graphics* g)
 		}
 		else
 		{
-			if (HaveButtonImage(mDownImage, mDownRect))
-				DrawButtonImage(g, mDownImage, mDownRect, 0, 0);
-			else if (HaveButtonImage(mOverImage,mOverRect))
-				DrawButtonImage(g, mOverImage, mOverRect, 1, 1);
+			if (HaveButtonImage(mDownImage, mDownRegion))
+				DrawButtonImage(g, mDownImage, mDownRegion, 0, 0);
+			else if (HaveButtonImage(mOverImage,mOverRegion))
+				DrawButtonImage(g, mOverImage, mOverRegion, 1, 1);
 			else
-				DrawButtonImage(g, mButtonImage, mNormalRect, 1, 1);
+				DrawButtonImage(g, mButtonImage, mNormalRegion, 1, 1);
 
 			g->mColor = mColors[COLOR_LABEL_HILITE];
 			g->DrawString(mLabel, aFontX+1, aFontY+1);
@@ -198,7 +198,7 @@ void ButtonWidget::SetDisabled(bool isDisabled)
 {
 	Widget::SetDisabled(isDisabled);
 	
-	if (HaveButtonImage(mDisabledImage,mDisabledRect))
+	if (HaveButtonImage(mDisabledImage,mDisabledRegion))
 		MarkDirty();
 }
 

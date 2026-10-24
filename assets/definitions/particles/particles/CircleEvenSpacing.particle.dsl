@@ -19,14 +19,14 @@ export component CircleEvenSpacing {
         particleDuration: nodes {
             { time: 0; low: 220; high: 220; curve: Linear; distribution: Linear; }
         }
-        systemGreen: nodes {
+        systemAlpha: nodes {
             { time: 0.85; low: 1; high: 1; curve: Linear; distribution: Linear; }
             { time: 1; low: 0; high: 0; curve: Linear; distribution: Linear; }
         }
-        systemAlpha: nodes {
+        launchSpeed: nodes {
             { time: 0; low: 100; high: 110; curve: Linear; distribution: Linear; }
         }
-        systemBrightness: nodes {
+        launchAngle: nodes {
             { time: 0; low: -5; high: 5; curve: Linear; distribution: Linear; }
         }
         particleSpinSpeed: nodes {

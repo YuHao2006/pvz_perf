@@ -21,6 +21,7 @@ namespace
 unsigned globalRandomCalls;
 float Linear(double t, float a, float b) { return static_cast<float>(a + (b - a) * t); }
 float Constant(double, float a, float) { return a; }
+float UnsupportedCurve(double, float, float) { throw std::runtime_error("fixture contains unsupported curve"); }
 void Require(bool value, const char* message)
 {
     if (!value) throw std::runtime_error(message);
@@ -67,30 +68,27 @@ Image::~Image() {}
 Image* GetImage(const std::string&, bool) { throw std::runtime_error("unexpected image load"); }
 }
 void ZombatarFreeResources() { throw std::runtime_error("unexpected resource release"); }
-TodCurveEvalFn TodCurveResolveEval(int curve)
-{
-    if (curve == 0 || curve == 8) return Constant;
-    if (curve == 1) return Linear;
-    throw std::runtime_error("fixture contains unsupported curve");
-}
+const TodCurveEvalFn kCurveEvals[14]{
+    Constant, Linear, UnsupportedCurve, UnsupportedCurve, UnsupportedCurve, UnsupportedCurve, UnsupportedCurve,
+    UnsupportedCurve, Constant, UnsupportedCurve, UnsupportedCurve, UnsupportedCurve, UnsupportedCurve, UnsupportedCurve};
 
 namespace
 {
 struct Scene
 {
     FloatParameterTrackNode values[12]{
-        {0, 1, 300.0f, 300.0f, 1, 1}, // system 300 ticks
-        {0, 1, 130.125f, 130.125f, 1, 1}, // particle 130.125 ticks
-        {0, 1, 31.125f, 31.125f, 1, 1},
-        {1, 3, 127.5f, 127.5f, 1, 1},
-        {1, 1, 17.75f, 17.75f, 1, 1},
-        {0, 1, -1.0f, -1.0f, 1, 1}, // unconstrained active count
-        {0, 1, 100.0f, 250.0f, 1, 1}, // launch speed
-        {0, 1, -180.0f, 180.0f, 1, 1},
-        {0, 1, 1.7537289f, 1.7537289f, 1, 1}, // image cycles / sec
-        {0, 1, 0.8f, 0.8f, 1, 1},
-        {0, 1, 0.02f, 0.02f, 1, 1},
-        {0, 1, 3.0f, 3.0f, 1, 1}
+        {0.0, 300.0f, 300.0f, 1, 1}, // system 300 ticks
+        {0.0, 130.125f, 130.125f, 1, 1}, // particle 130.125 ticks
+        {0.0, 31.125f, 31.125f, 1, 1},
+        {1.0 / 3.0, 127.5f, 127.5f, 1, 1},
+        {1.0, 17.75f, 17.75f, 1, 1},
+        {0.0, -1.0f, -1.0f, 1, 1}, // unconstrained active count
+        {0.0, 100.0f, 250.0f, 1, 1}, // launch speed
+        {0.0, -180.0f, 180.0f, 1, 1},
+        {0.0, 1.7537289f, 1.7537289f, 1, 1}, // image cycles / sec
+        {0.0, 0.8f, 0.8f, 1, 1},
+        {0.0, 0.02f, 0.02f, 1, 1},
+        {0.0, 3.0f, 3.0f, 1, 1}
     };
     ParticleField fields[4]{};
     ParticleField systemField{};
@@ -344,7 +342,7 @@ void TestLifetimesAndTracks()
         "emitter loop reset emission clock");
 
     Scene position;
-    FloatParameterTrackNode offsets[]{{0, 1, 3, 3, 1, 1}, {1, 1, 13, 13, 1, 1}};
+    FloatParameterTrackNode offsets[]{{0.0, 3, 3, 1, 1}, {1.0, 13, 13, 1, 1}};
     Field(position, FIELD_POSITION, 0, 0);
     position.fields[0].mX = {offsets, 2};
     auto* q = position.Spawn();
@@ -352,7 +350,7 @@ void TestLifetimesAndTracks()
     q->mParticleDuration.mNanoseconds = 100'000'000;
     position.system->Update(25'000'000);
     Near(q->mPosition.x, 105.5f, "lifetime fraction did not use full duration");
-    FloatParameterTrackNode rates[]{{0, 1, 1, 1, 1, 1}, {1, 1, 3, 3, 1, 1}};
+    FloatParameterTrackNode rates[]{{0.0, 1, 1, 1, 1}, {1.0, 3, 3, 1, 1}};
     position.emitter.mAnimationRate = {rates, 2};
     position.system->Update(25'000'000);
     Require(q->mAnimationSampleIntegral == 50'000'000'000,
@@ -414,7 +412,7 @@ void TestCrossfade()
 {
     Scene scene;
     TodEmitterDefinition definitions[2]{scene.emitter, scene.emitter};
-    FloatParameterTrackNode fade{0, 1, 10, 10, 1, 1};
+    FloatParameterTrackNode fade{0.0, 10, 10, 1, 1};
     definitions[1].mCrossFadeDuration = {&fade, 1};
     definitions[0].mOnDurationEmitterIndex = 1;
     scene.definition.mEmitterDefs = definitions;
@@ -497,14 +495,14 @@ int main()
     try
     {
         FloatParameterTrackNode rationalNodes[]{
-            {0, 1, 0, 0, 1, 1}, {1, 3, 1, 1, 1, 1},
-            {1, 1, 2, 2, 1, 1}};
+            {0.0, 0, 0, 1, 1}, {1.0 / 3.0, 1, 1, 1, 1},
+            {1.0, 2, 2, 1, 1}};
         FloatParameterTrack rational{rationalNodes, 3};
         Require(FloatTrackEvaluate(rational, 1.0 / 3.0, 0.0f) == 1.0f,
             "implicit third was rounded to thousandths");
         Require(FloatTrackEvaluate(rational, 2.0 / 3.0, 0.0f) == 1.5f,
             "rational-node interpolation changed");
-        FloatParameterTrackNode preciseNode[]{ {0, 1, 0.123456789f, 0.123456789f, 1, 1} };
+        FloatParameterTrackNode preciseNode[]{ {0.0, 0.123456789f, 0.123456789f, 1, 1} };
         FloatParameterTrack precise{preciseNode, 1};
         Require(FloatTrackEvaluate(precise, 0.5, 0.0f) == 0.123456789f,
             "ordinary authored float was quantized to thousandths");

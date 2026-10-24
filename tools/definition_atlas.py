@@ -141,7 +141,8 @@ def image_offsets(kind: str, payload: bytes) -> list[int]:
         tracks = []
         for _ in range(count):
             _, frames, stride, mode = reader.unpack("<4I")
-            pak.require(stride == 32 and mode <= 1, "Invalid compiler track")
+            mode, _ = pak.reanim_track_flags(mode, authored=magic == 0x46544449)
+            pak.require(stride == 32, "Invalid compiler track")
             reader.take(frames * stride)
             tracks.append((frames, mode))
         for frames, mode in tracks:
@@ -360,7 +361,8 @@ def compile_reanim_variants(name: str, data: bytes, metadata: dict, variants: li
     tracks = []
     for _ in range(track_count):
         track_id, frames, stride, mode = reader.unpack("<4I")
-        pak.require(stride == 32 and mode <= 1, "Invalid reanim variant track")
+        pak.reanim_track_flags(mode, authored=magic == 0x46544449)
+        pak.require(stride == 32, "Invalid reanim variant track")
         values = reader.take(frames * 32)
         tracks.append((track_id, frames, mode, values))
     phase1_end = reader.at
@@ -394,7 +396,7 @@ def compile_reanim_variants(name: str, data: bytes, metadata: dict, variants: li
                 slot = slot_map[key]
             body_parts.append(struct.pack("<I", slot))
             body_parts.append(reader.take(4))  # Font ID is shared behavior.
-            if mode:
+            if mode & 1:
                 text = reader.take(reader.word())
                 body_parts.append(struct.pack("<I", len(text)) + text)
     body_parts.append(reader.take(len(reader.data) - reader.at))

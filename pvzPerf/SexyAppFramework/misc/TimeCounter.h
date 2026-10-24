@@ -217,7 +217,6 @@ struct BasicTimeCounter
 };
 using TimeCounter = BasicTimeCounter<int>;
 using UnsignedTimeCounter = BasicTimeCounter<unsigned int>;
-using MonotonicTimeCounter = BasicTimeCounter<std::uint64_t>;
 using MillisecondCounter = BasicTimeCounter<int, 1'000'000>;
 using UnsignedMillisecondCounter = BasicTimeCounter<unsigned int, 1'000'000>;
 using SecondCounter = BasicTimeCounter<int, 1'000'000'000>;

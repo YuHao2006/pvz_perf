@@ -1,6 +1,8 @@
 #include "Graphics.h"
 #include "Image.h"
 #include "Font.h"
+#include "AtlasDraw.h"
+#include "RenderInterface.h"
 #include "misc/Rect.h"
 #include "misc/Debug.h"
 #include "misc/SexyMatrix.h"
@@ -127,6 +129,8 @@ void Graphics::FillRect(int theX, int theY, int theWidth, int theHeight)
 		return;
 
 	Rect aDestRect = Rect(theX + mTransX, theY + mTransY, theWidth, theHeight).Intersection(mClipRect);
+	if (aDestRect.mWidth<=0 || aDestRect.mHeight<=0)
+		return;
 	RequireDrawDestination(mDestImage, DrawOperation::FillRect)->FillRect(aDestRect, mColor, mDrawMode);
 }
 
@@ -666,6 +670,30 @@ void Graphics::DrawImage(Image* theImage, int theX, int theY, const Rect& theSrc
 		RequireDrawDestination(mDestImage, DrawOperation::Blt)->Blt(theImage, aDestRect.mX, aDestRect.mY, aSrcRect, mColorizeImages ? mColor : Color::White, mDrawMode);
 }
 
+void Graphics::DrawImage(Image* image, int x, int y, const TextureRegion& source)
+{
+	// Text layout uses Graphics(nullptr) with an empty clip to measure glyphs.
+	// Match the pixel-source overload: invisible draws never require a target.
+	if (source.mWidth<=0 || source.mHeight<=0 ||
+		mClipRect.mWidth<=0 || mClipRect.mHeight<=0) return;
+	auto* destination=RequireDrawDestination(mDestImage,DrawOperation::Blt);
+	if (!destination->IsGpuDrawTarget()) throw NonScreenDrawError(DrawOperation::Blt);
+	auto& render=*destination->mRenderOwner;
+	const TextureSource texture{render.CreateImageTexture(image),image->mGpuSamplingFlags};
+	DrawAtlasImage(this,texture,source,float(x),float(y));
+}
+
+void Graphics::DrawImage(Image* image, const Rect& destination, const TextureRegion& source)
+{
+	if (source.mWidth<=0 || source.mHeight<=0 ||
+		mClipRect.mWidth<=0 || mClipRect.mHeight<=0) return;
+	auto* target=RequireDrawDestination(mDestImage,DrawOperation::StretchBlt);
+	if (!target->IsGpuDrawTarget()) throw NonScreenDrawError(DrawOperation::StretchBlt);
+	auto& render=*target->mRenderOwner;
+	const TextureSource texture{render.CreateImageTexture(image),image->mGpuSamplingFlags};
+	DrawAtlasImage(this,texture,source,destination,Rect(0,0,source.mWidth,source.mHeight));
+}
+
 void Graphics::DrawImageMirror(Image* theImage, int theX, int theY, bool mirror)
 {
 	DrawImageMirror(theImage,theX,theY,Rect(0,0,theImage->mWidth,theImage->mHeight),mirror);
@@ -960,22 +988,29 @@ void Graphics::DrawImageBox(const Rect& theDest, Image* theComponentImage)
 }
 
 void Graphics::DrawImageBox(const Rect& theSrc, const Rect &theDest, Image* theComponentImage)
+{
+	DrawImageBox(PixelSourceToUv(theSrc,theComponentImage->mWidth,theComponentImage->mHeight),
+		theDest,theComponentImage);
+}
+
+void Graphics::DrawImageBox(const TextureRegion& theSrc, const Rect &theDest, Image* theComponentImage)
 {	
 	if (theSrc.mWidth<=0 || theSrc.mHeight<=0)
 		return;
 
 	int cw = theSrc.mWidth/3;
 	int ch = theSrc.mHeight/3;
-	int cx = theSrc.mX;
-	int cy = theSrc.mY;
+	const auto crop=[&](int x,int y,int width,int height) {
+		return CropTextureRegion(theSrc,Rect(x,y,width,height));
+	};
 	int cmw = theSrc.mWidth - cw*2;
 	int cmh = theSrc.mHeight - ch*2;
 		
 	// Draw 4 corners
-	DrawImage(theComponentImage, theDest.mX, theDest.mY, Rect(cx,cy, cw, ch));
-	DrawImage(theComponentImage, theDest.mX + theDest.mWidth-cw, theDest.mY, Rect(cx + cw + cmw, cy, cw, ch));
-	DrawImage(theComponentImage, theDest.mX, theDest.mY + theDest.mHeight-ch, Rect(cx, cy + ch + cmh, cw, ch));
-	DrawImage(theComponentImage, theDest.mX + theDest.mWidth-cw, theDest.mY + theDest.mHeight-ch, Rect(cx + cw + cmw, cy + ch + cmh, cw, ch));
+	DrawImage(theComponentImage, theDest.mX, theDest.mY, crop(0,0,cw,ch));
+	DrawImage(theComponentImage, theDest.mX + theDest.mWidth-cw, theDest.mY, crop(cw+cmw,0,cw,ch));
+	DrawImage(theComponentImage, theDest.mX, theDest.mY + theDest.mHeight-ch, crop(0,ch+cmh,cw,ch));
+	DrawImage(theComponentImage, theDest.mX + theDest.mWidth-cw, theDest.mY + theDest.mHeight-ch, crop(cw+cmw,ch+cmh,cw,ch));
 
 	// Draw top and bottom
 	Graphics aVertClip(*this);
@@ -983,8 +1018,8 @@ void Graphics::DrawImageBox(const Rect& theSrc, const Rect &theDest, Image* theC
 	int aCol, aRow;
 	for (aCol = 0; aCol < (theDest.mWidth-cw*2+cmw-1)/cmw; aCol++)
 	{
-		aVertClip.DrawImage(theComponentImage, theDest.mX + cw + aCol*cmw, theDest.mY, Rect(cx + cw, cy, cmw, ch));
-		aVertClip.DrawImage(theComponentImage, theDest.mX + cw + aCol*cmw, theDest.mY + theDest.mHeight-ch, Rect(cx + cw, cy + ch + cmh, cmw, ch));
+		aVertClip.DrawImage(theComponentImage, theDest.mX + cw + aCol*cmw, theDest.mY, crop(cw,0,cmw,ch));
+		aVertClip.DrawImage(theComponentImage, theDest.mX + cw + aCol*cmw, theDest.mY + theDest.mHeight-ch, crop(cw,ch+cmh,cmw,ch));
 	}
 
 	// Draw sides
@@ -992,8 +1027,8 @@ void Graphics::DrawImageBox(const Rect& theSrc, const Rect &theDest, Image* theC
 	aHorzClip.ClipRect(theDest.mX, theDest.mY + ch, theDest.mWidth, theDest.mHeight-ch*2);
 	for (aRow = 0; aRow < (theDest.mHeight-ch*2+cmh-1)/cmh; aRow++)
 	{
-		aHorzClip.DrawImage(theComponentImage, theDest.mX, theDest.mY + ch + aRow*cmh, Rect(cx, cy + ch, cw, cmh));
-		aHorzClip.DrawImage(theComponentImage, theDest.mX + theDest.mWidth-cw, theDest.mY + ch + aRow*cmh, Rect(cx + cw + cmw, cy + ch, cw, cmh));
+		aHorzClip.DrawImage(theComponentImage, theDest.mX, theDest.mY + ch + aRow*cmh, crop(0,ch,cw,cmh));
+		aHorzClip.DrawImage(theComponentImage, theDest.mX + theDest.mWidth-cw, theDest.mY + ch + aRow*cmh, crop(cw+cmw,ch,cw,cmh));
 	}
 
 	// Draw middle
@@ -1001,7 +1036,7 @@ void Graphics::DrawImageBox(const Rect& theSrc, const Rect &theDest, Image* theC
 	aMidClip.ClipRect(theDest.mX + cw, theDest.mY + ch, theDest.mWidth-cw*2, theDest.mHeight-ch*2);
 	for (aCol = 0; aCol < (theDest.mWidth-cw*2+cmw-1)/cmw; aCol++)
 		for (aRow = 0; aRow < (theDest.mHeight-ch*2+cmh-1)/cmh; aRow++)
-			aMidClip.DrawImage(theComponentImage, theDest.mX + cw + aCol*cmw, theDest.mY + ch + aRow*cmh, Rect(cx + cw, cy + ch, cmw, cmh));
+			aMidClip.DrawImage(theComponentImage, theDest.mX + cw + aCol*cmw, theDest.mY + ch + aRow*cmh, crop(cw,ch,cmw,cmh));
 }
 
 int Graphics::WriteString(const SexyString& theString, int theX, int theY, int theWidth, int theJustification, bool drawString, int theOffset, int theLength, int theOldColor)
@@ -1108,8 +1143,16 @@ static int WriteWordWrappedHelper(Graphics *g, const SexyString& theString, int 
 	return g->WriteString(theString,theX,theY,theWidth,theJustification,drawString,theOffset,theLength,theOldColor);
 }
 
-int	Graphics::WriteWordWrapped(const Rect& theRect, const SexyString& theLine, int theLineSpacing, int theJustification, int *theMaxWidth, int theMaxChars, int *theLastWidth)
+template<bool DrawText>
+static int WriteWordWrappedLayout(Graphics& graphics,const Rect& theRect,
+	const SexyString& theLine,int theLineSpacing,int theJustification,
+	int* theMaxWidth,int theMaxChars,int* theLastWidth)
 {
+	auto& mColor=graphics.mColor;
+	auto* const mFont=graphics.mFont;
+	const auto& mClipRect=graphics.mClipRect;
+	const float mTransY=graphics.mTransY;
+	const bool mWriteColoredString=graphics.mWriteColoredString;
 	/*
 	正式版中，删去了 *theLastWidth、theMaxChars 和 *theMaxWidth 参数，此函数形式可以简化为：
 	Graphics::自动换行的文字绘制(const Rect& 绘制区域矩形, const SexyString& 文字内容, int 行距 = -1, int 对齐方式 = -1)
@@ -1184,9 +1227,9 @@ int	Graphics::WriteWordWrapped(const Rect& theRect, const SexyString& theLine, i
 				//	theJustification, true, aLineStartPos, aSpacePos-aLineStartPos, anOrigColorInt, theMaxChars);
 
 				int aPhysPos = theRect.mY + aYOffset + mTransY;
-				if ((aPhysPos >= mClipRect.mY) && (aPhysPos < mClipRect.mY + mClipRect.mHeight + theLineSpacing))
+				if (DrawText && (aPhysPos >= mClipRect.mY) && (aPhysPos < mClipRect.mY + mClipRect.mHeight + theLineSpacing))
 				{
-					WriteWordWrappedHelper(this, theLine, theRect.mX + anIndentX, theRect.mY + aYOffset, theRect.mWidth, 
+					WriteWordWrappedHelper(&graphics, theLine, theRect.mX + anIndentX, theRect.mY + aYOffset, theRect.mWidth,
 						theJustification, true, aLineStartPos, aSpacePos-aLineStartPos, anOrigColorInt, theMaxChars);
 
 					/*WriteString(theLine, theRect.mX + anIndentX, theRect.mY + aYOffset, theRect.mWidth, 
@@ -1211,8 +1254,8 @@ int	Graphics::WriteWordWrapped(const Rect& theRect, const SexyString& theLine, i
 				if((int)aCurPos<aLineStartPos+1)
 					aCurPos++; // ensure at least one character gets written
 
-				aWrittenWidth = WriteWordWrappedHelper(this, theLine, theRect.mX + anIndentX, theRect.mY + aYOffset, theRect.mWidth, 
-					theJustification, true, aLineStartPos, aCurPos-aLineStartPos, anOrigColorInt, theMaxChars);
+				aWrittenWidth = WriteWordWrappedHelper(&graphics, theLine, theRect.mX + anIndentX, theRect.mY + aYOffset, theRect.mWidth,
+					theJustification, DrawText, aLineStartPos, aCurPos-aLineStartPos, anOrigColorInt, theMaxChars);
 
 				if (aWrittenWidth<0)
 					break;
@@ -1239,8 +1282,8 @@ int	Graphics::WriteWordWrapped(const Rect& theRect, const SexyString& theLine, i
 
 	if(aLineStartPos<(int)theLine.length()) // write the last piece
 	{
-		int aWrittenWidth = WriteWordWrappedHelper(this, theLine, theRect.mX + anIndentX, theRect.mY + aYOffset, theRect.mWidth, 
-			theJustification, true, aLineStartPos, theLine.length()-aLineStartPos, anOrigColorInt, theMaxChars);
+		int aWrittenWidth = WriteWordWrappedHelper(&graphics, theLine, theRect.mX + anIndentX, theRect.mY + aYOffset, theRect.mWidth,
+			theJustification, DrawText, aLineStartPos, theLine.length()-aLineStartPos, anOrigColorInt, theMaxChars);
 
 		if (aWrittenWidth>=0)
 		{
@@ -1271,6 +1314,13 @@ int	Graphics::WriteWordWrapped(const Rect& theRect, const SexyString& theLine, i
 	return aYOffset + aFont->GetDescent() - theLineSpacing;
 }
 
+int Graphics::WriteWordWrapped(const Rect& rect,const SexyString& line,int lineSpacing,
+	int justification,int* maxWidth,int maxChars,int* lastWidth)
+{
+	return WriteWordWrappedLayout<true>(*this,rect,line,lineSpacing,justification,
+		maxWidth,maxChars,lastWidth);
+}
+
 int	Graphics::DrawStringColor(const SexyString& theLine, int theX, int theY, int theOldColor)
 {
 	return WriteString(theLine, theX, theY, -1, -1,true,0,-1,theOldColor);
@@ -1287,9 +1337,7 @@ int	Graphics::DrawStringWordWrapped(const SexyString& theLine, int theX, int the
 
 int	Graphics::GetWordWrappedHeight(int theWidth, const SexyString& theLine, int theLineSpacing, int *theMaxWidth)
 {
-	Graphics aTestG;
-	aTestG.mFont = mFont;
-	int aHeight = aTestG.WriteWordWrapped(Rect(0, 0, theWidth, 0), theLine, theLineSpacing, -1, theMaxWidth);	
-
-	return aHeight;	
+	// Share line breaking, but instantiate a path with no glyph drawing.
+	return WriteWordWrappedLayout<false>(*this,Rect(0,0,theWidth,0),theLine,
+		theLineSpacing,-1,theMaxWidth,-1,nullptr);
 }

@@ -645,15 +645,13 @@ static void DrawPolyClipped(const Rect *theClipRect, const VertexList &theList, 
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-void TextureSource::Blt(float theX, float theY, const Rect& theSrcRect, const Color& theColor) const
+void TextureSource::Blt(float theX, float theY, const TextureRegion& theSrcRect, const Color& theColor) const
 {
 	TextureSamplingScope sampling(mSamplingFlags);
 	if(theSrcRect.mWidth<=0 || theSrcRect.mHeight<=0)
 		return;
-	const float u1=float(theSrcRect.mX)/mWidth;
-	const float v1=float(theSrcRect.mY)/mHeight;
-	const float u2=(float(theSrcRect.mX)+theSrcRect.mWidth)/mWidth;
-	const float v2=(float(theSrcRect.mY)+theSrcRect.mHeight)/mHeight;
+	const float u1=theSrcRect.mU0, v1=theSrcRect.mV0;
+	const float u2=theSrcRect.mU1, v2=theSrcRect.mV1;
 	const float right=theX+theSrcRect.mWidth;
 	const float bottom=theY+theSrcRect.mHeight;
 	DWORD aColor = RGBA_MAKE(theColor.mRed, theColor.mGreen, theColor.mBlue, theColor.mAlpha);
@@ -669,17 +667,15 @@ void TextureSource::Blt(float theX, float theY, const Rect& theSrcRect, const Co
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-void TextureSource::BltTransformed(const SexyMatrix3 &theTrans, const Rect& theSrcRect, const Color& theColor, const Rect *theClipRect, float theX, float theY, bool center) const
+void TextureSource::BltTransformed(const SexyMatrix3 &theTrans, const TextureRegion& theSrcRect, const Color& theColor, const Rect *theClipRect, float theX, float theY, bool center) const
 {
 	TextureSamplingScope sampling(mSamplingFlags);
 	if(theSrcRect.mWidth<=0 || theSrcRect.mHeight<=0)
 		return;
 	const float x=center ? -theSrcRect.mWidth/2.0f : 0.0f;
 	const float y=center ? -theSrcRect.mHeight/2.0f : 0.0f;
-	const float u1=float(theSrcRect.mX)/mWidth;
-	const float v1=float(theSrcRect.mY)/mHeight;
-	const float u2=(float(theSrcRect.mX)+theSrcRect.mWidth)/mWidth;
-	const float v2=(float(theSrcRect.mY)+theSrcRect.mHeight)/mHeight;
+	const float u1=theSrcRect.mU0, v1=theSrcRect.mV0;
+	const float u2=theSrcRect.mU1, v2=theSrcRect.mV1;
 	SexyVector2 p[4] = {
 		SexyVector2(x,y), SexyVector2(x,y+theSrcRect.mHeight),
 		SexyVector2(x+theSrcRect.mWidth,y), SexyVector2(x+theSrcRect.mWidth,y+theSrcRect.mHeight)
@@ -829,8 +825,8 @@ void RenderInterface::CloneUploadedImage(Image* target,const Image& source)
 				sSamplerAddressWrap=false;
 				// Raw pixel copy: ignore the caller's transform and tint/filter
 				// state while retaining the source/target alpha convention.
-				TextureSource{original,source.mWidth,source.mHeight,0}.Blt(
-					0,0,Rect(0,0,source.mWidth,source.mHeight),Color::White);
+				TextureSource{original,0}.Blt(
+					0,0,TextureRegion{0,0,1,1,source.mWidth,source.mHeight},Color::White);
 			}
 			// Registration may allocate. Publish no ownership until it succeeds.
 			mImageSet.insert(target);
@@ -997,8 +993,8 @@ void RenderInterface::Blt(Image* theImage, float theX, float theY, const Rect& t
 	gGpuCurrentDrawMode = theDrawMode;
 
 	gLinearFilter = linearFilter;
-	TextureSource{texture,theImage->mWidth,theImage->mHeight,theImage->mGpuSamplingFlags}.Blt(
-		theX,theY,theSrcRect,theColor);
+	TextureSource{texture,theImage->mGpuSamplingFlags}.Blt(
+		theX,theY,PixelSourceToUv(theSrcRect,theImage->mWidth,theImage->mHeight),theColor);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1055,7 +1051,7 @@ void RenderInterface::BltRotated(Image* theImage, float theX, float theY, const 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 static void BltPreparedSource(RenderInterface& render,const TextureSource& source,
-	const Rect* theClipRect,const Color& theColor,int theDrawMode,const Rect& theSrcRect,
+	const Rect* theClipRect,const Color& theColor,int theDrawMode,const TextureRegion& theSrcRect,
 	const SexyMatrix3& theTransform,bool linearFilter,float theX,float theY,bool center)
 {
 	gGpuCurrentDrawMode = theDrawMode;
@@ -1093,12 +1089,13 @@ void RenderInterface::BltTransformed(Image* image,const Rect* clip,const Color& 
 	if (!PreDraw()) return;
 	auto* texture=CreateImageTexture(image);
 	if (!texture) return;
-	BltPreparedSource(*this,TextureSource{texture,image->mWidth,image->mHeight,image->mGpuSamplingFlags},
-		clip,color,drawMode,sourceRect,transform,linearFilter,x,y,center);
+	BltPreparedSource(*this,TextureSource{texture,image->mGpuSamplingFlags},
+		clip,color,drawMode,PixelSourceToUv(sourceRect,image->mWidth,image->mHeight),
+		transform,linearFilter,x,y,center);
 }
 
 void RenderInterface::BltTransformed(const TextureSource& source,const Rect* clip,
-	const Color& color,int drawMode,const Rect& sourceRect,const SexyMatrix3& transform,
+	const Color& color,int drawMode,const TextureRegion& sourceRect,const SexyMatrix3& transform,
 	bool linearFilter,float x,float y,bool center)
 {
 	if (!source.mTexture || !PreDraw()) return;
@@ -1328,8 +1325,19 @@ void RenderInterface::DrawTrianglesTex(const TriVertex theVertices[][3], int the
 	DWORD aColor = RGBA_MAKE(theColor.mRed, theColor.mGreen, theColor.mBlue, theColor.mAlpha);
 
 	gLinearFilter = blend;
-	TextureSource{texture,theTexture->mWidth,theTexture->mHeight,theTexture->mGpuSamplingFlags}.BltTriangles(
+	TextureSource{texture,theTexture->mGpuSamplingFlags}.BltTriangles(
 		theVertices,theNumTriangles,aColor,tx,ty);
+}
+
+void RenderInterface::DrawPool(Image* image,const GpuPoolParams& params)
+{
+    if (!PreDraw()) return;
+    auto* texture=CreateImageTexture(image);
+    if (!texture) return;
+    TextureSamplingScope sampling(image->mGpuSamplingFlags);
+    auto state=params;
+    state.samplingFlags|=CombinedImageSamplingFlags();
+    mRenderer->SubmitPool(texture,state);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1344,7 +1352,7 @@ void RenderInterface::DrawTrianglesTexStrip(const TriVertex theVertices[], int t
 	const DWORD color=RGBA_MAKE(theColor.mRed,theColor.mGreen,theColor.mBlue,theColor.mAlpha);
 	SubmitTextureTriangleBatch(size_t(theNumTriangles),
 		[&](size_t i)->const TriVertex& {return theVertices[i/3+i%3];},
-		TextureSource{texture,theTexture->mWidth,theTexture->mHeight,theTexture->mGpuSamplingFlags},color,tx,ty);
+		TextureSource{texture,theTexture->mGpuSamplingFlags},color,tx,ty);
 }
 
 void RenderInterface::DrawTrianglesTex(std::span<const std::array<TriVertex,3>> theTriangles,
@@ -1355,7 +1363,7 @@ void RenderInterface::DrawTrianglesTex(std::span<const std::array<TriVertex,3>> 
 	if(!texture) return;
 	gGpuCurrentDrawMode = theDrawMode;
 	gLinearFilter = blend;
-	TextureSource{texture,theTexture->mWidth,theTexture->mHeight,theTexture->mGpuSamplingFlags}.BltTriangles(theTriangles,
+	TextureSource{texture,theTexture->mGpuSamplingFlags}.BltTriangles(theTriangles,
 		RGBA_MAKE(theColor.mRed,theColor.mGreen,theColor.mBlue,theColor.mAlpha),tx,ty);
 }
 

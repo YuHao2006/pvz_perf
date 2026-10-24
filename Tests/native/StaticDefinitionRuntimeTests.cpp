@@ -136,6 +136,13 @@ struct StaticSnapshot
                     offset += sizeof(ReanimatorTransform))
                     std::memset(result.data() + offset + offsetof(ReanimatorTransform, mFont),
                         0, sizeof(ReanimatorTransform::mFont));
+            // This binding is a mutable GPU allocation, not static behavior.
+            // Its release and idempotency are checked separately below.
+            if (label == "reanimation roots")
+                for (std::size_t offset = 0; offset < result.size();
+                    offset += sizeof(ReanimatorDefinition))
+                    std::memset(result.data() + offset + offsetof(ReanimatorDefinition, mGpuData),
+                        0, sizeof(ReanimatorDefinition::mGpuData));
             return result;
         }
     };
@@ -175,8 +182,6 @@ struct StaticSnapshot
             Add(definition.mTracks.tracks, definition.mTracks.count, "reanimation tracks");
             Add(definition.mImageRects, definition.mVariantCount * definition.mImageSlotCount,
                 "reanimation rectangles");
-            Add(definition.mTextureWidths, definition.mVariantCount, "reanimation widths");
-            Add(definition.mTextureHeights, definition.mVariantCount, "reanimation heights");
             Add(definition.mVariantTransitions, definition.mVariantCount * definition.mVariantActionCount,
                 "variant transitions");
             Add(definition.mVariantActionStarts, definition.mTracks.count,
@@ -199,8 +204,6 @@ struct StaticSnapshot
             Add(definition.mEmitterDefs, definition.mEmitterDefCount, "particle emitter aggregates");
             Add(definition.mImageRects, definition.mVariantCount * definition.mImageRectCount,
                 "particle rectangles");
-            Add(definition.mTextureWidths, definition.mVariantCount, "particle widths");
-            Add(definition.mTextureHeights, definition.mVariantCount, "particle heights");
             for (int index = 0; index < definition.mEmitterDefCount; ++index)
             {
                 const auto& emitter = definition.mEmitterDefs[index];
@@ -217,7 +220,10 @@ struct StaticSnapshot
                 }
             }
         }
-        Require(nodeCount == 5158 && fieldCount == 260 && frameCount > 10000,
+        // Correct native track names restore omitted color/launch defaults;
+        // the published corpus now contains 5,328 nodes (manifest + independent
+        // native/source node audits), rather than the old mislabelled 5,158.
+        Require(nodeCount == 5328 && fieldCount == 260 && frameCount > 10000,
             "Snapshot did not cover the full production catalogs");
     }
     void Check() const
@@ -231,9 +237,18 @@ template<class Definition>
 void CheckTextures(const Definition& definition, bool loaded)
 {
     for (unsigned variant = 0; variant < definition.mVariantCount; ++variant)
-        Require((definition.mTextures[variant] != nullptr) ==
-            (loaded && definition.mTextureWidths[variant] > 0),
+    {
+        const auto count=[](const auto& value) {
+            if constexpr (requires { value.mImageSlotCount; }) return value.mImageSlotCount;
+            else return value.mImageRectCount;
+        }(definition);
+        bool hasImage=false;
+        for (unsigned slot=0;slot<count;++slot)
+            hasImage|=definition.mImageRects[variant*count+slot].mWidth>0;
+        Require(loaded ? (!hasImage || definition.mTextures[variant]) :
+            !definition.mTextures[variant],
             "Definition GPU slots disagree with their loading state");
+    }
 }
 
 void CheckParticleTextures(bool loaded)
@@ -243,23 +258,25 @@ void CheckParticleTextures(bool loaded)
 
 void CheckReanimationTextures(bool loaded)
 {
-    for (const auto& definition : Definitions::Reanimations) CheckTextures(definition, loaded);
+    for (const auto& definition : Definitions::Reanimations)
+    {
+        CheckTextures(definition, loaded);
+        Require(loaded || !definition.mGpuData,"Released reanimation retained GPU keyframes");
+    }
 }
 
 void CheckSceneTextures(TestApp& app,bool loaded)
 {
     struct Scene {
         GpuTexture* texture;
-        int width,height;
-        const Rect* rectangles;
+        const TextureRegion* rectangles;
         std::size_t count;
     };
     const Scene scenes[]{
-        {MagnetAtlas::Texture,MagnetAtlas::Width,MagnetAtlas::Height,MagnetAtlas::Images,MagnetAtlas::Count},
-        {AlmanacAtlas::Texture,AlmanacAtlas::Width,AlmanacAtlas::Height,AlmanacAtlas::Images,AlmanacAtlas::Count},
-        {AchievementsAtlas::Texture,AchievementsAtlas::Width,AchievementsAtlas::Height,
-            AchievementsAtlas::Images,AchievementsAtlas::Count},
-        {FixedUIAtlas::Texture,FixedUIAtlas::Width,FixedUIAtlas::Height,FixedUIAtlas::Images,FixedUIAtlas::Count}};
+        {MagnetAtlas::Texture,MagnetAtlas::Images,MagnetAtlas::Count},
+        {AlmanacAtlas::Texture,AlmanacAtlas::Images,AlmanacAtlas::Count},
+        {AchievementsAtlas::Texture,AchievementsAtlas::Images,AchievementsAtlas::Count},
+        {FixedUIAtlas::Texture,FixedUIAtlas::Images,FixedUIAtlas::Count}};
     std::set<GpuTexture*> textures;
     std::size_t rectangles=0;
     for (const auto& scene:scenes)
@@ -268,9 +285,13 @@ void CheckSceneTextures(TestApp& app,bool loaded)
         for (std::size_t index=0;index<scene.count;++index)
         {
             const auto& rectangle=scene.rectangles[index];
-            Require(rectangle.mX>=0 && rectangle.mY>=0 && rectangle.mWidth>0 && rectangle.mHeight>0 &&
-                rectangle.mX+rectangle.mWidth<=scene.width &&
-                rectangle.mY+rectangle.mHeight<=scene.height,"Scene view exceeds its packed sheet atlas");
+            Require(std::isfinite(rectangle.mU0) && std::isfinite(rectangle.mV0) &&
+                std::isfinite(rectangle.mU1) && std::isfinite(rectangle.mV1) &&
+                rectangle.mU0>=0 && rectangle.mV0>=0 &&
+                rectangle.mU0<rectangle.mU1 && rectangle.mV0<rectangle.mV1 &&
+                rectangle.mU1<=1 && rectangle.mV1<=1 &&
+                rectangle.mWidth>0 && rectangle.mHeight>0,
+                "Scene UV view exceeds its packed sheet atlas or lost its logical size");
             ++rectangles;
         }
         if (!loaded) continue;
@@ -373,6 +394,13 @@ void LoadAll(TestApp& app)
     Require(projectile && FontBindingCount() > 0, "Bulk load omitted projectile/font bindings");
     Require(DefinitionUploadAtlasImages() == 0 && ReanimatorUploadAllTexturesToGPU() == 0,
         "Primary-thread repeated bulk load queued duplicate uploads");
+    std::vector<GpuReanimResource*> gpuDefinitions;
+    for (const auto& definition:Definitions::Reanimations)
+        gpuDefinitions.push_back(definition.mGpuData);
+    Require(ReanimatorUploadAllTexturesToGPU()==0,"Repeated definition upload changed atlas progress");
+    for (int i=0;i<Definitions::ReanimationCount;++i)
+        Require(Definitions::Reanimations[i].mGpuData==gpuDefinitions[i],
+            "Repeated loading replaced a live GPU reanimation allocation");
     std::set<GpuTexture*> unique(textures.begin(), textures.end());
     unique.insert(projectile);
     unique.insert(gZombatarAtlas.mTexture);
@@ -385,18 +413,17 @@ void LoadAll(TestApp& app)
         Graphics graphics(sceneTarget.get());
         graphics.mColor=Color::Black;
         graphics.FillRect(Rect(0,0,120,120));
-        const auto draw=[&](GpuTexture* texture,int width,int height,const Rect* regions,std::size_t count) {
-            TextureSource source{texture,width,height,0};
+        const auto draw=[&](GpuTexture* texture,const TextureRegion* regions,std::size_t count) {
+            TextureSource source{texture,0};
             for (std::size_t index=0;index<count;++index,++drawn)
                 DrawAtlasImage(&graphics,source,regions[index],
                     Rect(int(drawn%10)*12,int(drawn/10)*12,10,10),
                     Rect(0,0,regions[index].mWidth,regions[index].mHeight));
         };
-        draw(MagnetAtlas::Texture,MagnetAtlas::Width,MagnetAtlas::Height,MagnetAtlas::Images,MagnetAtlas::Count);
-        draw(AlmanacAtlas::Texture,AlmanacAtlas::Width,AlmanacAtlas::Height,AlmanacAtlas::Images,AlmanacAtlas::Count);
-        draw(AchievementsAtlas::Texture,AchievementsAtlas::Width,AchievementsAtlas::Height,
-            AchievementsAtlas::Images,AchievementsAtlas::Count);
-        draw(FixedUIAtlas::Texture,FixedUIAtlas::Width,FixedUIAtlas::Height,FixedUIAtlas::Images,FixedUIAtlas::Count);
+        draw(MagnetAtlas::Texture,MagnetAtlas::Images,MagnetAtlas::Count);
+        draw(AlmanacAtlas::Texture,AlmanacAtlas::Images,AlmanacAtlas::Count);
+        draw(AchievementsAtlas::Texture,AchievementsAtlas::Images,AchievementsAtlas::Count);
+        draw(FixedUIAtlas::Texture,FixedUIAtlas::Images,FixedUIAtlas::Count);
     }
     render.Flush();
     const auto scenePixels=render.ReadImagePixels(*sceneTarget);
@@ -416,7 +443,7 @@ std::vector<unsigned> Sample(TestApp& app, GpuTexture* texture, const TodParticl
         Graphics graphics(target.get());
         graphics.mColor = Color::Black;
         graphics.FillRect(Rect(0, 0, 64, 64));
-        TextureSource source{texture, definition.mTextureWidths[0], definition.mTextureHeights[0], 0};
+        TextureSource source{texture, 0};
         SexyMatrix3 transform;
         const float scale = 48.0f / std::max(rectangle.mWidth, rectangle.mHeight);
         TodScaleRotateTransformMatrix(transform, 32, 32, 0, scale, scale);

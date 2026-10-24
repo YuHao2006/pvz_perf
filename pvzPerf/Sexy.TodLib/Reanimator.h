@@ -6,6 +6,7 @@
 #include <map>
 #include "ReanimTrackId.h"
 #include "DefinitionImageRegion.h"
+#include "graphics/TextureRegion.h"
 #include "ReanimClock.h"
 //using namespace std;
 using namespace Sexy;
@@ -36,9 +37,18 @@ namespace ReanimFlags
     constexpr int FastDrawInSwModeBit = 1;
 }
 
+enum class ReanimTrackStorage : std::uint32_t {
+    Both = 0,
+    Cpu = 1,
+    Gpu = 2
+};
+
 struct ReanimatorTransformArray {
     ReanimatorSourceTransform* mTransforms;
     int count;
+    // DSL regions control keyframe residency, never the logical track index.
+    // GPU-only tracks retain their slot/count but have no CPU keyframe array.
+    ReanimTrackStorage mStorage = ReanimTrackStorage::Both;
 };
 
 class ReanimatorTrack
@@ -64,18 +74,17 @@ public:
     ReanimatorTrackArray            mTracks{nullptr, 0};
     float                           mFPS = 12.0f;
     Sexy::GpuTexture**              mTextures = nullptr;
-    int*                            mTextureWidths = nullptr;
-    int*                            mTextureHeights = nullptr;
     std::uint32_t                   mVariantCount = 0;
     std::uint32_t                   mImageSlotCount = 0;
     std::uint32_t                   mVariantActionCount = 0;
     // Static definition data [variant][image slot]. Row zero supplies geometry.
-    const Sexy::Rect*               mImageRects = nullptr;
+    const Sexy::TextureRegion*      mImageRects = nullptr;
     std::uint32_t*                  mVariantTransitions = nullptr;
     // Generated data indexed by the existing MPHF track index.
     std::uint32_t*                  mVariantActionStarts = nullptr;
     std::uint32_t*                  mVariantActionCounts = nullptr;
     std::uint32_t*                  mVariantOptions = nullptr;
+    Sexy::GpuReanimResource*         mGpuData = nullptr;
 
 };
 extern ReanimatorDefinition* gReanimatorDefArray;   //[0x6A9EE8]
@@ -118,6 +127,9 @@ void                                ReanimatorFreeDefinitions();
 void                                ReanimatorPreloadAll();
 // 全量源图上传【仅主线程】，上传成功后释放 CPU 位图。
 int                                 ReanimatorUploadAllTexturesToGPU();
+// Main-thread loading only. Upload binary keyframes/UV once; keep CPU Both data.
+void                                ReanimatorUploadGpuDefinitionData();
+void                                ReanimatorFreeGpuDefinitionData();
 
 extern ReanimationParams gLawnReanimationArray[(int)ReanimationType::NUM_REANIMS];  //0x6A1340
 
@@ -224,7 +236,6 @@ public:
 
 struct ReanimPlaybackPosition
 {
-    std::int64_t clock;
     std::int64_t cycles;
     std::int64_t phaseNs;
 };

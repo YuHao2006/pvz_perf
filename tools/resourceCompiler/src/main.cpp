@@ -50,6 +50,8 @@ void PrintUsage()
         << "    image handles in sorted order (line 1 = handle 1; 0 = no image).\n"
         << "    These handles never use the game's image symbol registry.\n"
         << "    Offline v2 gold remains <Module>.reanim.v2.compiled, plus ReanimTrackId.h\n"
+        << "    cpu:/gpu:/both: select storage for following tracks (default both).\n"
+        << "    Non-both storage requires --font-registry and omits legacy v2 gold.\n"
         << "    (the string<->int enum) and reanim_track_ids.bin (sidecar id table).\n"
         << "    The header, table and every record come from the same build.\n"
         << "    With --type-map also emits ReanimTrackMphfGlobal.h (single global\n"
@@ -443,6 +445,12 @@ int RunCompileV2(const std::vector<std::string>& args)
     pak64::FontIdRegistry fontSymbols;
     std::uint32_t fontRegistryHash = 0;
     const bool emitSourceRecords = !fontRegistryPath.empty();
+    for (const RawReanim& raw : roots)
+        for (const auto& track : raw.tracks)
+            if (track.storage != pak64::TrackStorage::both && !emitSourceRecords) {
+                std::cerr << "reanimc: track storage requires compile-v2 with --font-registry\n";
+                return 1;
+            }
     if (!fontRegistryPath.empty() &&
         !pak64::LoadFontIdRegistry(fontRegistryPath, fontSymbols, &fontRegistryHash, &error)) {
         std::cerr << "reanimc: " << error << '\n';
@@ -451,13 +459,18 @@ int RunCompileV2(const std::vector<std::string>& args)
 
     std::uint64_t v2Bytes = 0, v4Bytes = 0, v1Bytes = 0, trackSlots = 0;
     for (const RawReanim& raw : roots) {
+        const bool legacyStorage = std::all_of(raw.tracks.begin(), raw.tracks.end(),
+            [](const auto& track) { return track.storage == pak64::TrackStorage::both; });
         const fs::path record = output / (raw.name + ".reanim.v2.compiled");
-        if (OutputMissing(record)) return 2;
-        if (!pak64::WriteCompiledV2(raw, table, typeMap, record, &error)) {
-            std::cerr << "reanimc: " << error << '\n';
-            return 1;
+        if (legacyStorage) {
+            if (OutputMissing(record)) return 2;
+            if (!pak64::WriteCompiledV2(raw, table, typeMap, record, &error)) {
+                std::cerr << "reanimc: " << error << '\n';
+                return 1;
+            }
+            v2Bytes += fs::file_size(record);
+            v1Bytes += pak64::Serialize(raw).size();
         }
-        v2Bytes += fs::file_size(record);
         if (emitSourceRecords) {
             const fs::path v4record = output / (raw.name + ".source-record");
             if (OutputMissing(v4record)) return 2;
@@ -470,10 +483,10 @@ int RunCompileV2(const std::vector<std::string>& args)
             std::cout << raw.name << " -> " << v4record.string()
                       << " (offline source handles, bytes=" << fs::file_size(v4record) << ")\n";
         }
-        v1Bytes += pak64::Serialize(raw).size();
         trackSlots += raw.tracks.size();
-        std::cout << raw.name << " -> " << record.string() << " (tracks="
-                  << raw.tracks.size() << ", bytes=" << fs::file_size(record) << ")\n";
+        if (legacyStorage)
+            std::cout << raw.name << " -> " << record.string() << " (tracks="
+                      << raw.tracks.size() << ", bytes=" << fs::file_size(record) << ")\n";
     }
     std::cout << "corpus: modules=" << corpus.size() << " trackSlots=" << trackSlots
               << " trackIds=" << table.size() << " (ids 1.." << table.size() << ", 0=not-found)"

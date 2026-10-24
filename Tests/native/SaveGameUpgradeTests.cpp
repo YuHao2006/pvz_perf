@@ -197,7 +197,7 @@ void LoadCurrentWithResources(LawnApp& app, HiddenWindow& window, const char* sa
     // Exercise nonzero exact-state tails rather than only zero-initialized
     // migration state. Definition identity and existing world positions remain.
     auto& holder = app.mEffectSystem->mReanimationHolder;
-    holder->mBattleTimeNs = static_cast<std::int64_t>(board.mMainCounter.mNanoseconds);
+    holder->mBattleTimeNs = static_cast<std::int64_t>(board.mLevelTimeNs);
     Reanimation* advanced = nullptr;
     while (holder->mReanimations.IterateNext(advanced))
         advanced->BindTimeDomain(ReanimTimeDomain::Battle);
@@ -224,8 +224,8 @@ void LoadCurrentWithResources(LawnApp& app, HiddenWindow& window, const char* sa
             visualProbe->BindTimeDomain(ReanimTimeDomain::Visual);
         }
     }
-    board.mMainCounter.AddNanoseconds(123'456'789);
-    holder->mBattleTimeNs = static_cast<std::int64_t>(board.mMainCounter.mNanoseconds);
+    board.mLevelTimeNs += 123'456'789;
+    holder->mBattleTimeNs = static_cast<std::int64_t>(board.mLevelTimeNs);
     holder->mVisualTimeNs += 123'456'789;
     advanced = nullptr;
     while (holder->mReanimations.IterateNext(advanced))
@@ -245,9 +245,8 @@ void LoadCurrentWithResources(LawnApp& app, HiddenWindow& window, const char* sa
         coordinateProbe->mY = -0.000123456789f;
         coordinateProbe->mRootOriginX = 123.456789012345;
         coordinateProbe->mRootScale = 1.3372819f;
-        const auto now = static_cast<std::int64_t>(board.mMainCounter.mNanoseconds);
+        const auto now = static_cast<std::int64_t>(board.mLevelTimeNs);
         coordinateProbe->mNextLaunchTimeNs = now + 217'123'456;
-        coordinateProbe->mLaunchClockSampleNs = now;
         coordinateProbe->mLaunchWindowStartNs = now - 4'567'888;
     }
     // Keep a real pool object with nonzero velocity-segment state so the
@@ -268,7 +267,7 @@ void LoadCurrentWithResources(LawnApp& app, HiddenWindow& window, const char* sa
     for (const auto type : {ProjectileType::PROJECTILE_PEA, ProjectileType::PROJECTILE_KERNEL})
     {
         auto* shot = board.AddProjectile(121, 151, 0, 1, type);
-        const auto now = static_cast<std::int64_t>(board.mMainCounter.mNanoseconds);
+        const auto now = static_cast<std::int64_t>(board.mLevelTimeNs);
         shot->mCreationTimeNs = now - 217'123'456;
         shot->mMotionOriginTimeNs = now - 123'456'789;
         shot->mOriginX = 121.123456f;
@@ -299,7 +298,7 @@ void LoadCurrentWithResources(LawnApp& app, HiddenWindow& window, const char* sa
             bits(shot.mPosX), bits(shot.mPosY), bits(shot.mPosZ),
             bits(shot.mVelX), bits(shot.mVelY), bits(shot.mVelZ), bits(shot.mAccZ),
             bits(shot.mRotation), bits(shot.mRotationSpeed), bits(shot.mShadowY),
-            shot.mX, shot.mY, shot.mRow, shot.mDead};
+            bits(shot.mX), bits(shot.mY), shot.mRow, shot.mDead};
     };
     const auto exactSnapshot = [&] {
         std::vector<std::int64_t> state;
@@ -335,7 +334,7 @@ void LoadCurrentWithResources(LawnApp& app, HiddenWindow& window, const char* sa
         while (board.mPlants.IterateNext(plant))
             append(plant->mX, plant->mY, plant->mRootOriginX,
                 plant->mRootBindingGeneration, plant->mRootScale, plant->mBowlingRowArrivalTimeNs,
-                plant->mNextLaunchTimeNs, plant->mLaunchClockSampleNs,
+                plant->mNextLaunchTimeNs,
                 plant->mLaunchWindowStartNs);
         Projectile* shot = nullptr;
         while (board.mProjectiles.IterateNext(shot))
@@ -369,6 +368,8 @@ void LoadCurrentWithResources(LawnApp& app, HiddenWindow& window, const char* sa
         }
         return state;
     };
+    board.mEffectCounter.mNanoseconds = 9'876'543'210;
+    board.mEffectCounter.mPreviousNanoseconds = board.mEffectCounter.mNanoseconds;
     const auto exactBefore = exactSnapshot();
     const auto beforeSave = appearanceSnapshot();
     const auto nondefault = std::count_if(beforeSave.begin(), beforeSave.end(),
@@ -391,11 +392,11 @@ void LoadCurrentWithResources(LawnApp& app, HiddenWindow& window, const char* sa
     // reach the identical float results, including rotation and roof/shadow
     // correction, from the saved absolute time anchors.
     constexpr std::int64_t continuationNs = 23'456'789;
-    const auto savedBoardTime = board.mMainCounter.mNanoseconds;
+    const auto savedBoardTime = board.mLevelTimeNs;
     const auto savedInterval = Sexy::gUpdateIntervalNs;
     const auto savedTicks = Sexy::gUpdateTicks;
     std::vector<std::vector<std::int64_t>> continuedProjectiles;
-    board.mMainCounter.AddNanoseconds(continuationNs);
+    board.mLevelTimeNs += continuationNs;
     Sexy::gUpdateIntervalNs = continuationNs;
     Sexy::gUpdateTicks = double(continuationNs) / 10'000'000;
     for (const auto id : projectileProbeIds)
@@ -406,18 +407,21 @@ void LoadCurrentWithResources(LawnApp& app, HiddenWindow& window, const char* sa
         Require(!shot.mDead, "Projectile continuation probe unexpectedly impacted");
         continuedProjectiles.push_back(projectileState(shot));
     }
-    board.mMainCounter.mNanoseconds = savedBoardTime;
+    board.mLevelTimeNs = savedBoardTime;
     Sexy::gUpdateIntervalNs = savedInterval;
     Sexy::gUpdateTicks = savedTicks;
     holder->mVisualTimeNs += 17'123'456'789;
     Require(LawnLoadGame(&board, roundtrip), "Production v3.3 roundtrip reload failed");
+    Require(board.mLevelTimeNs == savedBoardTime &&
+        board.mEffectCounter.mNanoseconds == 9'876'543'210,
+        "Raw level-clock load overwrote its adjacent effect counter with a removed previous sample");
     Require(exactSnapshot() == exactBefore, "Native v3.3 reload changed exact time, motion or random state");
     if (coordinateProbe)
     {
         Plant* restoredProbe = nullptr;
         Require(board.mPlants.IterateNext(restoredProbe) && restoredProbe &&
             restoredProbe->mNextLaunchTimeNs -
-                static_cast<std::int64_t>(board.mMainCounter.mNanoseconds) == 217'123'456,
+                static_cast<std::int64_t>(board.mLevelTimeNs) == 217'123'456,
             "Native reload rounded the exact future launch deadline through legacy ticks");
     }
     Require(appearanceSnapshot() == beforeSave, "Reanimation appearance changed through native save/reload");
@@ -429,8 +433,8 @@ void LoadCurrentWithResources(LawnApp& app, HiddenWindow& window, const char* sa
         "Particle base/appearance changed through native save/reload");
     Require(continueParticles() == continuedParticleState,
         "Native reload changed the continued variable-step particle state");
-    board.mMainCounter.AddNanoseconds(continuationNs);
-    holder->mBattleTimeNs = static_cast<std::int64_t>(board.mMainCounter.mNanoseconds);
+    board.mLevelTimeNs += continuationNs;
+    holder->mBattleTimeNs = static_cast<std::int64_t>(board.mLevelTimeNs);
     Sexy::gUpdateIntervalNs = continuationNs;
     Sexy::gUpdateTicks = double(continuationNs) / 10'000'000;
     for (std::size_t i = 0; i < projectileProbeIds.size(); ++i)

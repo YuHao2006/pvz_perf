@@ -136,7 +136,12 @@ void EditWidget::Draw(Graphics* g) // Already translated
 			
 			aCursorX = std::min(std::max(0, aCursorX), mWidth-8);
 			aHiliteX = std::min(std::max(0, aHiliteX), mWidth-8);
-			
+			if (aCursorX == aHiliteX)
+			{
+				delete aClipG;
+				continue;
+			}
+
 			aClipG->ClipRect(4 + std::min(aCursorX, aHiliteX), (mHeight - mFont->mHeight)/2, abs(aHiliteX - aCursorX), mFont->mHeight);
 		}
 		else

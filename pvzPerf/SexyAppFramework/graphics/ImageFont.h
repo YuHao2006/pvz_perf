@@ -6,6 +6,7 @@
 #endif
 #include "SexyAppBase.h"
 #include "SharedImage.h"
+#include "TextureRegion.h"
 #include <atomic>
 
 namespace Sexy
@@ -22,7 +23,7 @@ std::string ResolveCompiledFontPath(const std::string& theSourcePath);
 class CharData
 {
 public:
-	Rect					mImageRect;
+	TextureRegion			mImageRect;
 	Point					mOffset;
 	// 字距对表（本字形 → 后继字符修正）。每字形通常 0~几对，线性扫；
 	// map 版已删（ASCII 直取阵列改造，2026-10-01）。
@@ -128,8 +129,8 @@ public:
 
 	Image*					mScaledImage;
 	bool					mOwnsImage;
-	// Scaled rectangles use the same ASCII slot domain as FontLayer.
-	Rect					mScaledCharImageRects[128];
+	// Scaled UV regions use the same ASCII slot domain as FontLayer.
+	TextureRegion			mScaledCharImageRects[128];
 
 public:
 	ActiveFontLayer();
@@ -145,7 +146,7 @@ class RenderCommand
 public:
 	Image*					mImage;
 	int						mDest[2];
-	int						mSrc[4];
+	TextureRegion			mSourceRegion;
 	int						mMode;
 	Color					mColor;
 	bool					mUseAlphaCorrection;

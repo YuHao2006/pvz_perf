@@ -121,7 +121,7 @@ export component Doom {
         particleDuration: nodes {
             { time: 0; low: 150; high: 150; curve: Linear; distribution: Linear; }
         }
-        systemAlpha: nodes {
+        launchSpeed: nodes {
             { time: 0; low: 0; high: 0; curve: Linear; distribution: Linear; }
         }
         particleAlpha: nodes {
@@ -179,7 +179,7 @@ export component Doom {
         particleDuration: nodes {
             { time: 0; low: 150; high: 150; curve: Linear; distribution: Linear; }
         }
-        systemAlpha: nodes {
+        launchSpeed: nodes {
             { time: 0; low: 0; high: 0; curve: Linear; distribution: Linear; }
         }
         particleAlpha: nodes {
@@ -237,7 +237,7 @@ export component Doom {
         particleDuration: nodes {
             { time: 0; low: 150; high: 150; curve: Linear; distribution: Linear; }
         }
-        systemAlpha: nodes {
+        launchSpeed: nodes {
             { time: 0; low: 0; high: 0; curve: Linear; distribution: Linear; }
         }
         particleAlpha: nodes {
@@ -295,7 +295,7 @@ export component Doom {
         particleDuration: nodes {
             { time: 0; low: 150; high: 150; curve: Linear; distribution: Linear; }
         }
-        systemAlpha: nodes {
+        launchSpeed: nodes {
             { time: 0; low: 0; high: 0; curve: Linear; distribution: Linear; }
         }
         particleAlpha: nodes {
@@ -353,7 +353,7 @@ export component Doom {
         particleDuration: nodes {
             { time: 0; low: 150; high: 150; curve: Linear; distribution: Linear; }
         }
-        systemAlpha: nodes {
+        launchSpeed: nodes {
             { time: 0; low: 0; high: 0; curve: Linear; distribution: Linear; }
         }
         particleAlpha: nodes {
@@ -411,7 +411,7 @@ export component Doom {
         particleDuration: nodes {
             { time: 0; low: 150; high: 150; curve: Linear; distribution: Linear; }
         }
-        systemAlpha: nodes {
+        launchSpeed: nodes {
             { time: 0; low: 0; high: 0; curve: Linear; distribution: Linear; }
         }
         particleAlpha: nodes {
@@ -469,7 +469,7 @@ export component Doom {
         particleDuration: nodes {
             { time: 0; low: 150; high: 150; curve: Linear; distribution: Linear; }
         }
-        systemAlpha: nodes {
+        launchSpeed: nodes {
             { time: 0; low: 0; high: 0; curve: Linear; distribution: Linear; }
         }
         particleAlpha: nodes {

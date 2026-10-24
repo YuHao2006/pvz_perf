@@ -20,7 +20,7 @@ export component CreditsFog {
         particleDuration: nodes {
             { time: 0; low: 100; high: 100; curve: Linear; distribution: Linear; }
         }
-        systemAlpha: nodes {
+        launchSpeed: nodes {
             { time: 0; low: 10; high: 10; curve: Linear; distribution: Linear; }
         }
         particleAlpha: nodes {

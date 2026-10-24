@@ -16,10 +16,10 @@ static Color gGameButtonColors[6] = { Color(0, 0, 0), Color(0, 0, 0), Color(0, 0
 static void DrawStoneButton(Graphics* g, int x, int y, int theWidth, int theHeight, bool isDown, bool isHighLighted, const SexyString& theLabel)
 {
 	using enum FixedUIAtlas::Sprite;
-	const Rect& left = FixedUIAtlas::Images[static_cast<size_t>(isDown ? BUTTON_DOWN_LEFT : BUTTON_LEFT)];
-	const Rect& middle = FixedUIAtlas::Images[static_cast<size_t>(isDown ? BUTTON_DOWN_MIDDLE : BUTTON_MIDDLE)];
-	const Rect& right = FixedUIAtlas::Images[static_cast<size_t>(isDown ? BUTTON_DOWN_RIGHT : BUTTON_RIGHT)];
-	const Sexy::TextureSource texture{FixedUIAtlas::Texture, FixedUIAtlas::Width, FixedUIAtlas::Height};
+	const TextureRegion& left = FixedUIAtlas::Images[static_cast<size_t>(isDown ? BUTTON_DOWN_LEFT : BUTTON_LEFT)];
+	const TextureRegion& middle = FixedUIAtlas::Images[static_cast<size_t>(isDown ? BUTTON_DOWN_MIDDLE : BUTTON_MIDDLE)];
+	const TextureRegion& right = FixedUIAtlas::Images[static_cast<size_t>(isDown ? BUTTON_DOWN_RIGHT : BUTTON_RIGHT)];
+	const Sexy::TextureSource texture{FixedUIAtlas::Texture, 0};
 	int aFontX = x;
 	int aFontY = y;
 	int aImageX = x;
@@ -52,7 +52,6 @@ static void DrawStoneButton(Graphics* g, int x, int y, int theWidth, int theHeig
 GameButton::GameButton(int theId)
 {
 	mLabel = "";
-	mNormalRect = mOverRect = mDownRect = mDisabledRect = Rect();
 	mOverAlpha = mOverAlphaSpeed = mOverAlphaFadeInSpeed = 0;
 	mApp = (LawnApp*)gSexyAppBase;
 	mId = theId;
@@ -75,18 +74,18 @@ GameButton::~GameButton()
 		delete mFont;
 }
 
-bool GameButton::HaveButtonImage(Image* theImage, Rect& theRect)
+bool GameButton::HaveButtonImage(Image* theImage, const TextureRegion& theRegion)
 { 
-	return theImage != nullptr || theRect.mWidth != 0;
+	return theImage != nullptr || theRegion.mWidth != 0;
 }
 
 //0x447E60
-void GameButton::DrawButtonImage(Graphics* g, Image* theImage, Rect& theRect, int theX, int theY)
+void GameButton::DrawButtonImage(Graphics* g, Image* theImage, const TextureRegion& theRegion, int theX, int theY)
 {
 	int aPosX = theX + mButtonOffsetX;
 	int aPosY = theY + mButtonOffsetY;
-	if (theRect.mWidth != 0)
-		g->DrawImage(mButtonImage, aPosX, aPosY, theRect);
+	if (theRegion.mWidth != 0)
+		g->DrawImage(mButtonImage, aPosX, aPosY, theRegion);
 	else
 		g->DrawImage(theImage, aPosX, aPosY);
 }
@@ -139,22 +138,22 @@ void GameButton::Draw(Graphics* g)
 
 	if (!isDown)
 	{
-		if (mDisabled && HaveButtonImage(mDisabledImage, mDisabledRect))
-			DrawButtonImage(g, mDisabledImage, mDisabledRect, 0, 0);
-		else if (mOverAlpha > 0.0f && HaveButtonImage(mOverImage, mOverRect))
+		if (mDisabled && HaveButtonImage(mDisabledImage, mDisabledRegion))
+			DrawButtonImage(g, mDisabledImage, mDisabledRegion, 0, 0);
+		else if (mOverAlpha > 0.0f && HaveButtonImage(mOverImage, mOverRegion))
 		{
-			if (HaveButtonImage(mButtonImage, mNormalRect) && mOverAlpha < 1.0f)  // 未完全过渡结束
-				DrawButtonImage(g, mButtonImage, mNormalRect, 0, 0);
+			if (HaveButtonImage(mButtonImage, mNormalRegion) && mOverAlpha < 1.0f)  // 未完全过渡结束
+				DrawButtonImage(g, mButtonImage, mNormalRegion, 0, 0);
 
 			g->mColorizeImages = true;
 			g->mColor = Color(255, 255, 255, mOverAlpha * 255);
-			DrawButtonImage(g, mOverImage, mOverRect, 0, 0);
+			DrawButtonImage(g, mOverImage, mOverRegion, 0, 0);
 			g->mColorizeImages = false;
 		}
-		else if (isHighLighted && HaveButtonImage(mOverImage, mOverRect))
-			DrawButtonImage(g, mOverImage, mOverRect, 0, 0);
-		else if (HaveButtonImage(mButtonImage, mNormalRect))
-			DrawButtonImage(g, mButtonImage, mNormalRect, 0, 0);
+		else if (isHighLighted && HaveButtonImage(mOverImage, mOverRegion))
+			DrawButtonImage(g, mOverImage, mOverRegion, 0, 0);
+		else if (HaveButtonImage(mButtonImage, mNormalRegion))
+			DrawButtonImage(g, mButtonImage, mNormalRegion, 0, 0);
 
 		g->mColor = mColors[isHighLighted ? GameButton::COLOR_LABEL_HILITE : GameButton::COLOR_LABEL];
 		g->DrawString(StringToSexyStringFast(mLabel), aFontX, aFontY);
@@ -162,18 +161,18 @@ void GameButton::Draw(Graphics* g)
 		if (isHighLighted && mOverOverlayImage)
 		{
 			g->mDrawMode = Graphics::DRAWMODE_ADDITIVE;
-			DrawButtonImage(g, mOverOverlayImage, mNormalRect, 0, 0);
+			DrawButtonImage(g, mOverOverlayImage, mNormalRegion, 0, 0);
 			g->mDrawMode = Graphics::DRAWMODE_NORMAL;
 		}
 	}
 	else
 	{
-		if (HaveButtonImage(mDownImage, mDownRect))
-			DrawButtonImage(g, mDownImage, mDownRect, 0, 0);
-		else if (HaveButtonImage(mOverImage, mOverRect))
-			DrawButtonImage(g, mOverImage, mOverRect, 1, 1);
+		if (HaveButtonImage(mDownImage, mDownRegion))
+			DrawButtonImage(g, mDownImage, mDownRegion, 0, 0);
+		else if (HaveButtonImage(mOverImage, mOverRegion))
+			DrawButtonImage(g, mOverImage, mOverRegion, 1, 1);
 		else
-			DrawButtonImage(g, mButtonImage, mNormalRect, 1, 1);
+			DrawButtonImage(g, mButtonImage, mNormalRegion, 1, 1);
 		
 		g->mColor = mColors[GameButton::COLOR_LABEL_HILITE];
 		g->DrawString(StringToSexyStringFast(mLabel), aFontX + 1, aFontY + 1);
@@ -181,7 +180,7 @@ void GameButton::Draw(Graphics* g)
 		if (isHighLighted && mOverOverlayImage)
 		{
 			g->mDrawMode = Graphics::DRAWMODE_ADDITIVE;
-			DrawButtonImage(g, mOverOverlayImage, mNormalRect, 0, 0);
+			DrawButtonImage(g, mOverOverlayImage, mNormalRegion, 0, 0);
 			g->mDrawMode = Graphics::DRAWMODE_NORMAL;
 		}
 	}
@@ -189,7 +188,7 @@ void GameButton::Draw(Graphics* g)
 	g->Translate(-mX, -mY);
 }
 
-void GameButton::DrawAtlas(Graphics* g, const Sexy::TextureSource& texture, const Rect* overlay)
+void GameButton::DrawAtlas(Graphics* g, const Sexy::TextureSource& texture, const TextureRegion* overlay)
 {
 	if (mBtnNoDraw)
 		return;
@@ -209,38 +208,38 @@ void GameButton::DrawAtlas(Graphics* g, const Sexy::TextureSource& texture, cons
 	}
 	g->Translate(mX, mY);
 	g->mFont = mFont;
-	const auto draw = [&](const Rect& rectangle, int x = 0, int y = 0) {
+	const auto draw = [&](const TextureRegion& rectangle, int x = 0, int y = 0) {
 		Sexy::DrawAtlasImage(g, texture, rectangle,
 			x + mButtonOffsetX, y + mButtonOffsetY);
 	};
 	if (!down)
 	{
-		if (mDisabled && mDisabledRect.mWidth)
-			draw(mDisabledRect);
-		else if (mOverAlpha > 0 && mOverRect.mWidth)
+		if (mDisabled && mDisabledRegion.mWidth)
+			draw(mDisabledRegion);
+		else if (mOverAlpha > 0 && mOverRegion.mWidth)
 		{
-			if (mNormalRect.mWidth && mOverAlpha < 1)
-				draw(mNormalRect);
+			if (mNormalRegion.mWidth && mOverAlpha < 1)
+				draw(mNormalRegion);
 			g->mColorizeImages = true;
 			g->mColor = Color(255, 255, 255, mOverAlpha * 255);
-			draw(mOverRect);
+			draw(mOverRegion);
 			g->mColorizeImages = false;
 		}
-		else if (highlighted && mOverRect.mWidth)
-			draw(mOverRect);
+		else if (highlighted && mOverRegion.mWidth)
+			draw(mOverRegion);
 		else
-			draw(mNormalRect);
+			draw(mNormalRegion);
 		g->mColor = mColors[highlighted ? COLOR_LABEL_HILITE : COLOR_LABEL];
 		g->DrawString(mLabel, fontX, fontY);
 	}
 	else
 	{
-		if (mDownRect.mWidth)
-			draw(mDownRect);
-		else if (mOverRect.mWidth)
-			draw(mOverRect, 1, 1);
+		if (mDownRegion.mWidth)
+			draw(mDownRegion);
+		else if (mOverRegion.mWidth)
+			draw(mOverRegion, 1, 1);
 		else
-			draw(mNormalRect, 1, 1);
+			draw(mNormalRegion, 1, 1);
 		g->mColor = mColors[COLOR_LABEL_HILITE];
 		g->DrawString(mLabel, fontX + 1, fontY + 1);
 	}
@@ -391,20 +390,20 @@ void NewLawnButton::Draw(Graphics* g)
 	if (!isDown)
 	{
 		g->mColor = mColors[ButtonWidget::COLOR_BKG];
-		if (mDisabled && HaveButtonImage(mDisabledImage, mDisabledRect))
-			DrawButtonImage(g, mDisabledImage, mDisabledRect, mButtonOffsetX, mButtonOffsetY);
-		else if (mOverAlpha > 0.0f && HaveButtonImage(mOverImage, mOverRect))
+		if (mDisabled && HaveButtonImage(mDisabledImage, mDisabledRegion))
+			DrawButtonImage(g, mDisabledImage, mDisabledRegion, mButtonOffsetX, mButtonOffsetY);
+		else if (mOverAlpha > 0.0f && HaveButtonImage(mOverImage, mOverRegion))
 		{
-			if (HaveButtonImage(mButtonImage, mNormalRect) && mOverAlpha < 1.0f)  // 未完全过渡结束
-				DrawButtonImage(g, mButtonImage, mNormalRect, mButtonOffsetX, mButtonOffsetY);
+			if (HaveButtonImage(mButtonImage, mNormalRegion) && mOverAlpha < 1.0f)  // 未完全过渡结束
+				DrawButtonImage(g, mButtonImage, mNormalRegion, mButtonOffsetX, mButtonOffsetY);
 
 			g->mColor.mAlpha = mOverAlpha * 255;
-			DrawButtonImage(g, mOverImage, mOverRect, mButtonOffsetX, mButtonOffsetY);
+			DrawButtonImage(g, mOverImage, mOverRegion, mButtonOffsetX, mButtonOffsetY);
 		}
-		else if ((mIsOver || mIsDown) && HaveButtonImage(mOverImage, mOverRect))
-			DrawButtonImage(g, mOverImage, mOverRect, mButtonOffsetX, mButtonOffsetY);
-		else if (HaveButtonImage(mButtonImage, mNormalRect))
-			DrawButtonImage(g, mButtonImage, mNormalRect, mButtonOffsetX, mButtonOffsetY);
+		else if ((mIsOver || mIsDown) && HaveButtonImage(mOverImage, mOverRegion))
+			DrawButtonImage(g, mOverImage, mOverRegion, mButtonOffsetX, mButtonOffsetY);
+		else if (HaveButtonImage(mButtonImage, mNormalRegion))
+			DrawButtonImage(g, mButtonImage, mNormalRegion, mButtonOffsetX, mButtonOffsetY);
 
 		g->mColorizeImages = false;
 		if (mIsOver)
@@ -422,12 +421,12 @@ void NewLawnButton::Draw(Graphics* g)
 	else
 	{
 		g->mColor = mColors[ButtonWidget::COLOR_BKG];
-		if (HaveButtonImage(mDownImage, mDownRect))
-			DrawButtonImage(g, mDownImage, mDownRect, mButtonOffsetX + mTranslateX, mButtonOffsetY + mTranslateY);
-		else if (HaveButtonImage(mOverImage, mOverRect))
-			DrawButtonImage(g, mOverImage, mOverRect, mButtonOffsetX + mTranslateX, mButtonOffsetY + mTranslateY);
+		if (HaveButtonImage(mDownImage, mDownRegion))
+			DrawButtonImage(g, mDownImage, mDownRegion, mButtonOffsetX + mTranslateX, mButtonOffsetY + mTranslateY);
+		else if (HaveButtonImage(mOverImage, mOverRegion))
+			DrawButtonImage(g, mOverImage, mOverRegion, mButtonOffsetX + mTranslateX, mButtonOffsetY + mTranslateY);
 		else
-			DrawButtonImage(g, mButtonImage, mNormalRect, mButtonOffsetX + mTranslateX, mButtonOffsetY + mTranslateY);
+			DrawButtonImage(g, mButtonImage, mNormalRegion, mButtonOffsetX + mTranslateX, mButtonOffsetY + mTranslateY);
 
 		g->mColorizeImages = false;
 		g->mFont = mHiliteFont ? mHiliteFont : mFont;
@@ -475,12 +474,12 @@ public:
 		: NewLawnButton(nullptr, id, listener)
 	{
 		using enum FixedUIAtlas::Sprite;
-		mNormalRect = FixedUIAtlas::Images[static_cast<size_t>(SEEDCHOOSER_BUTTON2)];
-		mOverRect = mDownRect = FixedUIAtlas::Images[static_cast<size_t>(SEEDCHOOSER_BUTTON2_GLOW)];
+		mNormalRegion = FixedUIAtlas::Images[static_cast<size_t>(SEEDCHOOSER_BUTTON2)];
+		mOverRegion = FixedUIAtlas::Images[static_cast<size_t>(SEEDCHOOSER_BUTTON2_GLOW)];
 		mLabel = text;
 		SetFont(Sexy::FONT_BRIANNETOD12);
-		mWidth = mNormalRect.mWidth;
-		mHeight = mNormalRect.mHeight;
+		mWidth = mNormalRegion.mWidth;
+		mHeight = mNormalRegion.mHeight;
 		mHasAlpha = mHasTransparencies = true;
 		mTranslateX = mTranslateY = 1;
 	}
@@ -490,7 +489,7 @@ public:
 		if (mBtnNoDraw)
 			return;
 		const Sexy::TextureSource texture{
-			FixedUIAtlas::Texture, FixedUIAtlas::Width, FixedUIAtlas::Height};
+			FixedUIAtlas::Texture, 0};
 		const bool down = (mIsDown && mIsOver && !mDisabled) ^ mInverted;
 		int fontX = mTextOffsetX + mTranslateX;
 		int fontY = mTextOffsetY + mTranslateY;
@@ -502,7 +501,7 @@ public:
 				fontX += mWidth - mFont->StringWidth(mLabel);
 			fontY += (mHeight - mFont->mAscent / 6 + mFont->mAscent - 1) / 2;
 		}
-		const auto draw = [&](const Rect& rectangle, bool pressed) {
+		const auto draw = [&](const TextureRegion& rectangle, bool pressed) {
 			Sexy::DrawAtlasImage(g, texture, rectangle,
 				mButtonOffsetX + (pressed ? mTranslateX : 0),
 				mButtonOffsetY + (pressed ? mTranslateY : 0));
@@ -510,18 +509,16 @@ public:
 		g->mColorizeImages = true;
 		g->mColor = mColors[ButtonWidget::COLOR_BKG];
 		if (down)
-			draw(mDownRect, true);
-		else if (mDisabled && mDisabledRect.mWidth)
-			draw(mDisabledRect, false);
+			draw(mOverRegion, true);
 		else if (mOverAlpha > 0)
 		{
 			if (mOverAlpha < 1)
-				draw(mNormalRect, false);
+				draw(mNormalRegion, false);
 			g->mColor.mAlpha = mOverAlpha * 255;
-			draw(mOverRect, false);
+			draw(mOverRegion, false);
 		}
 		else
-			draw(mIsOver || mIsDown ? mOverRect : mNormalRect, false);
+			draw(mIsOver || mIsDown ? mOverRegion : mNormalRegion, false);
 		g->mColorizeImages = false;
 		g->mFont = down || mIsOver ? (mHiliteFont ? mHiliteFont : mFont) : mFont;
 		g->mColor = mColors[down || mIsOver

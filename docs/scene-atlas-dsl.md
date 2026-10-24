@@ -1,7 +1,7 @@
 # 场景图集 DSL
 
-`scene_atlas.py` 离线解析场景图片和局部 view，生成 atlas PNG 与 C++ 静态矩形。
-游戏只持有最终 GPU 指针和矩形，不解析 DSL，不读取场景行为 compiled，
+`scene_atlas.py` 离线解析场景图片和局部 view，生成 atlas PNG 与 C++ 静态 UV 区域。
+游戏只持有最终 GPU 指针和 `TextureRegion`，不解析 DSL，不读取场景行为 compiled，
 不通过资源 SymbolId 查图。
 
 当前作者文件是 `assets/definitions/ui/Magnet.atlas.dsl`、
@@ -25,12 +25,17 @@ Python 直接列出六张石质按钮状态、十三张对话框部件、五张�
 完整逻辑 RGBA 为准。
 
 同一 sheet 在一个装箱单元中只放一次。不同 view 可以重叠、引用相同区域，
-或覆盖不同区域；它们只增加静态矩形，不增加源 sheet 的副本。
-原局部矩形 `[x,y,w,h]` 的最终值为：
+或覆盖不同区域；它们只增加静态采样区域，不增加源 sheet 的副本。
+原局部矩形 `[x,y,w,h]` 先在离线装箱坐标中变为：
 
 ```text
 [sheet_origin_x + x, sheet_origin_y + y, w, h]
 ```
+
+生成 C++ 时再使用已知图集宽高，编译期换算成
+`{u0,v0,u1,v1,w,h}`。前四项是 float 归一化采样边界，后两项是 int
+逻辑绘制宽高，不是图集宽高。运行期不再对这份静态数据按图集尺寸做除法。
+局部裁剪在已有 UV 区域内插值，目标矩形与屏幕 clip 仍使用像素单位。
 
 宽高和局部像素排列保持不变。两像素扩边位于完整 sheet 的外侧，
 不会插入原 sheet 内部的帧之间。Pogo 的三种状态仍共享整张 132×86 sheet，
@@ -86,7 +91,7 @@ sprite NEW_MAGNET_ITEM {
 这里的路径是资源虚拟路径，不包含 `assets/runtime/` 前缀。
 省略 `rect` 表示完整原图；如果新文件本身是 sheet，可用多个 sprite 的局部
 `rect` 引用它，仍只装箱整张原 sheet 一次。生成后业务可使用
-`MagnetAtlas::Sprite::NEW_MAGNET_ITEM` 对应的静态矩形。
+`MagnetAtlas::Sprite::NEW_MAGNET_ITEM` 对应的静态 `TextureRegion`。
 新增业务种类是否需要行为代码取决于调用方，DSL 本身只描述图片几何和缩放。
 
 直接路径会尝试恢复匹配的旧作者图片解码与 alpha 策略；没有旧作者项时沿用
@@ -99,9 +104,9 @@ sprite NEW_MAGNET_ITEM {
 ## 成就图标顺序
 
 成就图标使用 `ICON_0`、`ICON_1`……命名。生成器按数字后缀建立独立的
-`AchievementsAtlas::Icons[IconCount]` 矩形数组，校验编号唯一且从零连续，
+`AchievementsAtlas::Icons[IconCount]` UV 区域数组，校验编号唯一且从零连续，
 拒绝 gap。DSL 的声明可以乱序，不能依靠 `ICON_0` 的枚举值加成就 ID 访问图片。
-普通场景图片继续位于 `Images[Count]` 中；`Icons` 明确承担成就 ID 到矩形的映射。
+普通场景图片继续位于 `Images[Count]` 中；`Icons` 明确承担成就 ID 到采样区域的映射。
 调用方用 `static_assert` 将 `IconCount` 与业务的 `MAX_ACHIEVEMENTS` 对齐。
 
 ## 配置与生成输出
@@ -124,17 +129,21 @@ FixedUI 自动建立 `fixed_ui` 装箱单元，不新增作者文件。
 `SceneAtlasData.h/.cpp` 在 `Sexy.TodLib/generated/` 下生成，提供
 `MagnetAtlas`、`AlmanacAtlas`、`AchievementsAtlas`、`FixedUIAtlas` 四个全局 namespace：
 
-- 每模块一个 `Sexy::GpuTexture* Texture` 和 `Width`、`Height`。
-- 模块内 `Sprite`、`Count` 和 `extern const Sexy::Rect Images[Count]`。
+- 每模块一个 `Sexy::GpuTexture* Texture`，不再公开图集 `Width`、`Height`。
+- 模块内 `Sprite`、`Count` 和 `extern const Sexy::TextureRegion Images[Count]`。
 - 只有包含非 1 缩放的模块生成 `Scales`，当前为 Magnet。
 - Achievements 另外生成按数字顺序排列的 `IconCount` 和 `Icons`。
 - `Load()` 通过 `DefinitionBindAtlasPath` 绑定最终指针；`Free()` 解绑。
   `LoadSceneAtlases()` 与逆序 `FreeSceneAtlases()` 聚合四模块。
 
+`TextureSource` 仅借用 GPU 指针和采样 flags，不保存图集尺寸。
+生成的 loader 仍传入预期 PNG 宽高字面量以验证资源，没有新增常驻采样尺寸。
 GPU 对象的公共所有权和释放边界沿用现有加载器；view 不创建 Image 包装、
 独立 GPU 纹理或运行时查询表。`SceneAtlasBindings.h` 仅供离线验证，
 记录 atlas 尺寸、整张源 sheet 的区域和 RGBA SHA256，不由游戏包含。
 验证器逐张检查装入 atlas 的完整 sheet 像素；原 sheet 的未引用区域同样参与摘要。
+离线装箱与像素复制继续使用整数坐标；UV 存储不改变 PNG、PAK 或存档布局。
+碰撞框、目标布局和浮点绘制偏移不在本次变更范围。
 
 本页记录作者接口和已经实现的生成结构，不预记最终图集尺寸、包摘要、
 构建验证结论、显存节省或 FPS 收益。

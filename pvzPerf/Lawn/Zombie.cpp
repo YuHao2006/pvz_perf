@@ -24,6 +24,7 @@
 #include "Sexy.TodLib/TodParticle.h"
 #include "Sexy.TodLib/EffectSystem.h"
 #include <array>
+#include <stdexcept>
 
 static ZombieDefinition gZombieDefs[NUM_ZOMBIE_TYPES] = {  //0x69DA80
     { ZOMBIE_NORMAL,            REANIM_ZOMBIE,              1,      1,      1,      4000 },
@@ -4537,18 +4538,19 @@ void Zombie::UpdateZombieWalking()
             // Root and additional linear movement have independent anchors.
             // A root rebind absorbs the complete current world position.
             const float aScale = aDirection * mScaleZombie;
+            const auto aRoot = aBodyReanim->RootMotion(ReanimTrackId::_ground, aScale);
             if (!mRootBindingGeneration || mRootBindingGeneration != aBodyReanim->mPlaybackGeneration ||
                 mRootScale != aScale)
             {
                 mVelocityX = {};
-                mRootOriginX = mX - aBodyReanim->RootMotion(ReanimTrackId::_ground, aScale);
+                mRootOriginX = mX - aRoot;
                 mRootBindingGeneration = aBodyReanim->mPlaybackGeneration;
                 mRootScale = aScale;
             }
             float aAdditionalOffset = mVelocityX.bound ? mVelocityX.lastOutput : 0.0f;
             AdvanceVelocity(aAdditionalOffset, aAdditionalSpeed, Sexy::gUpdateIntervalNs, mVelocityX);
             mX = CheckedPosition(mRootOriginX +
-                aBodyReanim->RootMotion(ReanimTrackId::_ground, aScale) +
+                aRoot +
                 mVelocityX.origin + double(mVelocityX.rate) * mVelocityX.elapsedNs / 10'000'000.0);
         }
         else
@@ -5919,10 +5921,10 @@ void Zombie::DrawReanim(Graphics* g, const ZombieDrawPosition& theDrawPos, int t
     }
     else if (((ZombieFlagsOf(mZombieType) & ZombieFlags::Boss) != 0) && mZombiePhase != ZombiePhase::PHASE_ZOMBIE_DYING && mBodyHealth < mBodyMaxHealth / BOSS_FLASH_HEALTH_FRACTION)
     {
-        int aGrayness = TodAnimateCurveNs(0, 390'000'000, mBoard->mMainCounter.mNanoseconds % 400'000'000, 155, 255, Curves::Bounce);
+        int aGrayness = TodAnimateCurveNs(0, 390'000'000, mBoard->mLevelTimeNs % 400'000'000, 155, 255, Curves::Bounce);
         if (mChilledCounter > 0 || mIceTrapCounter > 0)
         {
-            int aColdColor = TodAnimateCurveNs(0, 390'000'000, mBoard->mMainCounter.mNanoseconds % 400'000'000, 65, 75, Curves::Bounce);
+            int aColdColor = TodAnimateCurveNs(0, 390'000'000, mBoard->mLevelTimeNs % 400'000'000, 65, 75, Curves::Bounce);
             aColorOverride = Color(aColdColor, aColdColor, aGrayness, aFadeAlpha);
         }
         else
@@ -6380,7 +6382,8 @@ int Zombie::GetDancerFrame()
 #ifdef DO_FIX_BUGS
     if (mBoard)
     {
-        return (mBoard->mMainCounter % (aFrameLength * aFramesCount)) / aFrameLength;  // 修复“女仆秘籍”
+        return static_cast<int>((mBoard->mLevelTimeNs /
+            (std::uint64_t(aFrameLength) * 10'000'000)) % aFramesCount);  // 修复“女仆秘籍”
     }
     else
     {
@@ -7101,6 +7104,8 @@ void Zombie::UpdateAnimSpeed()
         else if (aBodyReanim->TrackExists(ReanimTrackId::_ground))
         {
             ReanimatorTrack* aTrack = &aBodyReanim->mDefinition->mTracks.tracks[aBodyReanim->FindTrackIndex(ReanimTrackId::_ground)];
+            if (!aTrack->mTransforms.mTransforms)
+                throw std::logic_error("Zombie::UpdateAnimSpeed requires CPU _ground keyframes");
             const double aDistance = static_cast<double>(
                 aTrack->mTransforms.mTransforms[aBodyReanim->mFrameStart + aBodyReanim->mFrameCount - 1].mTransX) -
                 static_cast<double>(aTrack->mTransforms.mTransforms[aBodyReanim->mFrameStart].mTransX);

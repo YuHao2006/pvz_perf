@@ -13,6 +13,7 @@ from collections import defaultdict
 import hashlib
 import json
 from pathlib import Path
+import tempfile
 
 import definition_atlas
 import resource_build_config
@@ -469,8 +470,8 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--manifest", type=Path, default=ROOT / "out/x64-win32-vulkan/cache/resources/manifest.json")
     parser.add_argument("--compiler", type=Path, default=ROOT / "out/x64-win32-vulkan/tools/resourceCompiler/build/reanimc.exe")
-    parser.add_argument("--output", type=Path, default=ROOT / "docs/definition-atlas-overlap-audit.json")
-    parser.add_argument("--report", type=Path, default=ROOT / "docs/definition-atlas-overlap-audit.md")
+    parser.add_argument("--output", type=Path, default=Path(tempfile.gettempdir()) / "definition-atlas-overlap-audit.json")
+    parser.add_argument("--report", type=Path, default=Path(tempfile.gettempdir()) / "definition-atlas-overlap-audit.md")
     parser.add_argument("--top", type=int, default=20)
     args = parser.parse_args()
     data = audit(ROOT, args.manifest.resolve(), args.compiler.resolve(), args.top)

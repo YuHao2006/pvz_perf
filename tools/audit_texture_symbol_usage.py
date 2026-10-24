@@ -174,7 +174,8 @@ def markdown(report: dict) -> str:
     lines = ["# v4 纹理符号三方使用审计", "", f"基线：`{report['commit']}`。数据直接读取 Git blobs，"
              "不依赖工作区 DSL 入口、当前 v5 包或当前生成资源表。", "",
              "复现：", "", "```powershell", "python -B tools/audit_texture_symbol_usage.py --ref 0c1c987 "
-             "--output out/v4-texture-symbol-usage.json --markdown docs/v4-texture-symbol-usage.md", "```", "",
+             '--output "$env:TEMP/v4-texture-symbol-usage.json" '
+             '--markdown "$env:TEMP/v4-texture-symbol-usage.md"', "```", "",
              "R 为发布 reanim 作者定义引用；P 为发布 particle 作者定义引用；C 为真实 C++ 标识符引用。"
              "排除 Resources.cpp/h 自动绑定、generated/unused/tests、注释和字符串。"
              "资源 manifest 声明或字体页保护不构成 C，manifest 声明本身也不等于 UI 实际使用。"

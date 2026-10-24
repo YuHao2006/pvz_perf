@@ -155,29 +155,27 @@ float FloatTrackEvaluate(const FloatParameterTrack& theTrack, double theTimeValu
     if (theTrack.mCountNodes == 1 && theTrack.mNodes[0].mLow == theTrack.mNodes[0].mHigh)
         return theTrack.mNodes[0].mLow;
 
-    const auto time = [](const FloatParameterTrackNode& node) {
-        return static_cast<double>(node.mTimeNumerator) / node.mTimeDenominator;
-    };
     const auto value = [theInterp](const FloatParameterTrackNode& node) {
-        return TodCurveResolveEval(node.mDistribution)(theInterp,
+        return kCurveEvals[node.mDistribution](theInterp,
             node.mLow, node.mHigh);
     };
-    if (theTimeValue < time(theTrack.mNodes[0]))
+    if (theTimeValue < theTrack.mNodes[0].mTime)
         return value(theTrack.mNodes[0]);
 
+    const FloatParameterTrackNode* aNodeCur = &theTrack.mNodes[0];
     for (int i = 1; i < theTrack.mCountNodes; i++)
     {
         const FloatParameterTrackNode* aNodeNxt = &theTrack.mNodes[i];
-        if (theTimeValue <= time(*aNodeNxt))
+        if (theTimeValue <= aNodeNxt->mTime)
         {
-            const FloatParameterTrackNode* aNodeCur = &theTrack.mNodes[i - 1];
             // 计算当前时间在〔当前节点至下一节点〕的过程中的进度
-            const double span = time(*aNodeNxt) - time(*aNodeCur);
+            const double span = aNodeNxt->mTime - aNodeCur->mTime;
             const double aTimeFraction = span > 0.0
-                ? (theTimeValue - time(*aNodeCur)) / span : 1.0;
-            return TodCurveResolveEval(aNodeCur->mCurveType)(aTimeFraction,
+                ? (theTimeValue - aNodeCur->mTime) / span : 1.0;
+            return kCurveEvals[aNodeCur->mCurveType](aTimeFraction,
                 value(*aNodeCur), value(*aNodeNxt));
         }
+        aNodeCur = aNodeNxt;
     }
 
     return value(theTrack.mNodes[theTrack.mCountNodes - 1]);
@@ -191,7 +189,7 @@ bool FloatTrackIsSet(const FloatParameterTrack& theTrack)
         theTrack.mNodes[0].mCurveType != 8;
 }
 
-bool FloatTrackIsConstantZero(FloatParameterTrack& theTrack)
+bool FloatTrackIsConstantZero(const FloatParameterTrack& theTrack)
 {
     // 当轨道无节点，或仅存在一个节点且该节点的最大、最小值均为 0 时，认为该轨道上的值恒为零
     return theTrack.mCountNodes == 0 || (theTrack.mCountNodes == 1 && theTrack.mNodes[0].mLow == 0 && theTrack.mNodes[0].mHigh == 0);

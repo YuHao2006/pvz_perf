@@ -82,6 +82,11 @@ else()
 endif()
 set(PVZ_RENDER_BACKEND "${_PVZ_DEFAULT_RENDER_BACKEND}" CACHE STRING "Native graphics backend")
 set_property(CACHE PVZ_RENDER_BACKEND PROPERTY STRINGS VULKAN D3D12 METAL OPENGL D3D9)
+option(PVZ_EXPERIMENTAL_GPU_REANIM
+    "Enable the Vulkan resident reanimation route (experimental; performance gate not met)" OFF)
+if(PVZ_EXPERIMENTAL_GPU_REANIM AND NOT PVZ_RENDER_BACKEND STREQUAL "VULKAN")
+    message(FATAL_ERROR "PVZ_EXPERIMENTAL_GPU_REANIM currently requires Vulkan")
+endif()
 set(PVZ_CONFIG_WINDOWS_API NotApplicable)
 if(WIN32)
     set(PVZ_WINDOWS_PLATFORM "WIN10" CACHE STRING "Windows API baseline")
@@ -396,6 +401,8 @@ if(BUILD_TESTING AND PVZ_BUILD_LEGACY_GAME)
         COMMAND "${Python3_EXECUTABLE}" -B "${CMAKE_SOURCE_DIR}/tools/native-tests/test_static_reanim_codegen.py")
     add_test(NAME static_particle_codegen
         COMMAND "${Python3_EXECUTABLE}" -B "${CMAKE_SOURCE_DIR}/tools/native-tests/test_static_particle_codegen.py")
+    add_test(NAME particle_native_track_names
+        COMMAND "${Python3_EXECUTABLE}" -B "${CMAKE_SOURCE_DIR}/tools/native-tests/test_particle_native_track_names.py")
     add_test(NAME v7_definition_numbers
         COMMAND "${Python3_EXECUTABLE}" -B "${CMAKE_SOURCE_DIR}/tools/native-tests/test_v7_definition_numbers.py")
     set_tests_properties(v7_definition_numbers PROPERTIES
@@ -456,6 +463,14 @@ if(BUILD_TESTING)
     target_include_directories(pvz_projectile_motion_tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/pvzPerf")
     target_compile_features(pvz_projectile_motion_tests PRIVATE cxx_std_23)
     add_test(NAME pvz_projectile_motion COMMAND pvz_projectile_motion_tests)
+    add_executable(pvz_exponential_curve_tests EXCLUDE_FROM_ALL Tests/native/ExponentialCurveTests.cpp)
+    target_include_directories(pvz_exponential_curve_tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/pvzPerf")
+    target_compile_features(pvz_exponential_curve_tests PRIVATE cxx_std_23)
+    add_test(NAME pvz_exponential_curve COMMAND pvz_exponential_curve_tests)
+    add_executable(pvz_magnet_motion_tests EXCLUDE_FROM_ALL Tests/native/MagnetMotionTests.cpp)
+    target_include_directories(pvz_magnet_motion_tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/pvzPerf")
+    target_compile_features(pvz_magnet_motion_tests PRIVATE cxx_std_23)
+    add_test(NAME pvz_magnet_motion COMMAND pvz_magnet_motion_tests)
     add_executable(pvz_particle_v7_tests EXCLUDE_FROM_ALL
         Tests/native/ParticleV7Tests.cpp
         pvzPerf/Sexy.TodLib/TodParticle.cpp

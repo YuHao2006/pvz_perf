@@ -340,7 +340,7 @@ namespace Curves
 // 索引 8：枚举与曲线函数均不存在。部署记录中的 int 8 是原版工具链的内存残渣
 // （Field 未写 <X> 时未清零分配，XML 源确证），全部 12 处携带节点的 low=high=0
 // → 输出恒 0。别名到 CONSTANT（同数学结果），装载期不再硬错——残渣键消解为常量。
-inline constexpr TodCurveEvalFn kCurveEvals[] = {
+constinit const TodCurveEvalFn kCurveEvals[] = {
 	/* [0]  CONSTANT           */ Curves::Constant,
 	/* [1]  LINEAR             */ Curves::Linear,
 	/* [2]  EASE_IN            */ Curves::EaseIn,
@@ -358,35 +358,6 @@ inline constexpr TodCurveEvalFn kCurveEvals[] = {
 };
 static_assert(sizeof(kCurveEvals) / sizeof(kCurveEvals[0]) == 14, "曲线增删须同步求值表");
 
-
-TodCurveEvalFn TodCurveResolveEval(int theCurveIndex)
-{
-	if (theCurveIndex < 0 || theCurveIndex >= (int)(sizeof(kCurveEvals) / sizeof(kCurveEvals[0])) ||
-		kCurveEvals[theCurveIndex] == nullptr)
-	{
-		TodErrorMessageBox(StrFormat(
-			"particle track curve index %d is invalid",
-			theCurveIndex).c_str(), "Error");
-		exit(0);
-	}
-	return kCurveEvals[theCurveIndex];
-}
-
-int TodCurveIndexFromEval(TodCurveEvalFn theEval)
-{
-	for (int i = 0; i < (int)(sizeof(kCurveEvals) / sizeof(kCurveEvals[0])); i++)
-	{
-		if (kCurveEvals[i] == theEval)
-		{
-			// 槽 0 与 8 同指 Constant：首个命中即 0，残渣键就此规范化为 0。
-			return i;
-		}
-	}
-	TodErrorMessageBox(StrFormat(
-		"particle track curve pointer %p is not in the table",
-		(void*)theEval).c_str(), "Error");
-	exit(0);
-}
 
 float TodAnimateCurveFloat(double theRangeStart, double theRangeEnd, double theValue, float thePositionStart, float thePositionEnd, TodCurveEvalFn theCurve)
 {
@@ -565,13 +536,9 @@ void TodDrawStringMatrix(Graphics* g, const _Font* theFont, const SexyMatrix3& t
 			aRenderCommand->mColor = aColor;
 			aRenderCommand->mDest[0] = anImageX;
 			aRenderCommand->mDest[1] = anImageY;
-			// 1073 0051DC50 caches an empty Rect for a missing glyph, without
-			// skipping its metrics/spacing. Reuse one lookup for all four fields.
-			const Rect& aGlyphRect = aKernItr->mScaledCharImageRects[aChar];
-			aRenderCommand->mSrc[0] = aGlyphRect.mX;
-			aRenderCommand->mSrc[1] = aGlyphRect.mY;
-			aRenderCommand->mSrc[2] = aGlyphRect.mWidth;
-			aRenderCommand->mSrc[3] = aGlyphRect.mHeight;
+			// 1073 0051DC50 caches an empty region for a missing glyph,
+			// without skipping its metrics/spacing.
+			aRenderCommand->mSourceRegion = aKernItr->mScaledCharImageRects[aChar];
 			aRenderCommand->mMode = aLayer->mDrawMode;
 			aRenderCommand->mUseAlphaCorrection = aLayer->mUseAlphaCorrection;
 			aRenderCommand->mNext = nullptr;
@@ -616,13 +583,19 @@ void TodDrawStringMatrix(Graphics* g, const _Font* theFont, const SexyMatrix3& t
 
 			if (aRenderCommand->mImage)
 			{
-				Rect aSrcRect(aRenderCommand->mSrc[0], aRenderCommand->mSrc[1], aRenderCommand->mSrc[2], aRenderCommand->mSrc[3]);
+				const auto& aSrcRect=aRenderCommand->mSourceRegion;
 				SexyTransform2D aTransform;
 				float aPosX = aSrcRect.mWidth * 0.5f + aRenderCommand->mDest[0];
 				float aPosY = aSrcRect.mHeight * 0.5f + aRenderCommand->mDest[1];
 				SexyMatrix3Translation(aTransform, aPosX, aPosY);
 				SexyMatrix3Multiply(aTransform, theMatrix, aTransform);
-				TodBltMatrix(g, aRenderCommand->mImage, aTransform, g->mClipRect, aRenderCommand->mColor, aDrawMode, aSrcRect);
+				if (!g->mDestImage || !g->mDestImage->IsGpuDrawTarget())
+					throw NonScreenDrawError(DrawOperation::BltMatrix);
+				auto& render=*g->mDestImage->mRenderOwner;
+				auto* image=aRenderCommand->mImage;
+				if (auto* texture=render.CreateImageTexture(image))
+					TodBltMatrix(g, TextureSource{texture,image->mGpuSamplingFlags}, aTransform,
+						g->mClipRect, aRenderCommand->mColor, aDrawMode, aSrcRect);
 			}
 			
 			aRenderCommand = aRenderCommand->mNext;
@@ -720,7 +693,7 @@ void TodBltMatrix(Graphics* g, Image* theImage, const SexyMatrix3& theTransform,
 }
 
 void TodBltMatrix(Graphics* g, const TextureSource& texture, const SexyMatrix3& transform,
-	const Rect& clip, const Color& color, int drawMode, const Rect& source)
+	const Rect& clip, const Color& color, int drawMode, const TextureRegion& source)
 {
 	if (!g->mDestImage || !g->mDestImage->IsGpuDrawTarget())
 		throw NonScreenDrawError(DrawOperation::BltMatrix);
@@ -939,6 +912,14 @@ Color GetFlashingColor(uint32_t theCounter, int theFlashTime)
 	int aGrayness = ClampInt(200 * abs(aTimeInf - aTimeAge) / aTimeInf + 55, 0, 255);
 	//int aGrayness = ClampInt(55 + 200 * abs(aTimeInf - aTimeAge)/ aTimeInf, 0, 255);
 	return Color(aGrayness, aGrayness, aGrayness, 255);
+}
+
+Color GetFlashingColorNs(std::uint64_t theTimeNs, std::uint64_t thePeriodNs)
+{
+	if (thePeriodNs == 0) return Color(255, 255, 255, 255);
+	const double phase = double(theTimeNs % thePeriodNs) / double(thePeriodNs);
+	const int grayness = ClampInt(static_cast<int>(200.0 * std::abs(1.0 - 2.0 * phase) + 55.0), 0, 255);
+	return Color(grayness, grayness, grayness, 255);
 }
 
 //0x512F80

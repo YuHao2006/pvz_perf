@@ -29,24 +29,12 @@ void Checkbox::Draw(Graphics* g)
 {
 	Widget::Draw(g);
 
-	/*if (mChecked)
-		g->DrawImage(mApp->mImages[IMAGE_CHECKBOX], 0, 0, Rect(0, 0, 31, 32));
-	else
-		g->DrawImage(mApp->mImages[IMAGE_CHECKBOX], 0, 0, Rect(31, 0, 31, 32));*/
-	
-	if ((mCheckedRect.mWidth == 0) && (mCheckedImage != NULL) && (mUncheckedImage != NULL))
+	if ((mCheckedImage != NULL) && (mUncheckedImage != NULL))
 	{
 		if (mChecked)
 			g->DrawImage(mCheckedImage, 0, 0);
 		else
 			g->DrawImage(mUncheckedImage, 0, 0);
-	}
-	else if ((mCheckedRect.mWidth != 0) && (mUncheckedImage != NULL))
-	{
-		if (mChecked)
-			g->DrawImage(mUncheckedImage, 0, 0, mCheckedRect);
-		else
-			g->DrawImage(mUncheckedImage, 0, 0, mUncheckedRect);
 	}
 	else if ((mUncheckedImage == NULL) && (mCheckedImage == NULL))
 	{

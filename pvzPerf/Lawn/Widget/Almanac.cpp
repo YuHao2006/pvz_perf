@@ -37,7 +37,7 @@ void RefreshAlmanacLayout(AlmanacDialog& theDialog)
 }
 
 void DrawAlmanacBackground(Graphics* g, const TextureSource& theTexture,
-	const Rect& theImage, const Rect& theBounds, int theOriginX)
+	const TextureRegion& theImage, const Rect& theBounds, int theOriginX)
 {
 	const int aArtPadding = (theImage.mWidth - BOARD_WIDTH) / 2;
 	const int aBorderWidth = 16;
@@ -125,8 +125,8 @@ AlmanacDialog::AlmanacDialog(LawnApp* theApp) : LawnDialog(theApp, DIALOG_ALMANA
 
 	mCloseButton = new GameButton(AlmanacDialog::ALMANAC_BUTTON_CLOSE);
 	mCloseButton->mLabel = gStr.CLOSE_BUTTON;
-	mCloseButton->mNormalRect = AlmanacAtlas::Images[static_cast<unsigned>(AlmanacSprite::ALMANAC_CLOSEBUTTON)];
-	mCloseButton->mOverRect = AlmanacAtlas::Images[static_cast<unsigned>(AlmanacSprite::ALMANAC_CLOSEBUTTONHIGHLIGHT)];
+	mCloseButton->mNormalRegion = AlmanacAtlas::Images[static_cast<unsigned>(AlmanacSprite::ALMANAC_CLOSEBUTTON)];
+	mCloseButton->mOverRegion = AlmanacAtlas::Images[static_cast<unsigned>(AlmanacSprite::ALMANAC_CLOSEBUTTONHIGHLIGHT)];
 	mCloseButton->mDownImage = nullptr;
 	mCloseButton->SetFont(Sexy::FONT_BRIANNETOD12);
 	Color aColor = Color(42, 42, 90);
@@ -142,8 +142,8 @@ AlmanacDialog::AlmanacDialog(LawnApp* theApp) : LawnDialog(theApp, DIALOG_ALMANA
 
 	mIndexButton = new GameButton(AlmanacDialog::ALMANAC_BUTTON_INDEX);
 	mIndexButton->mLabel = gStr.ALMANAC_INDEX;
-	mIndexButton->mNormalRect = AlmanacAtlas::Images[static_cast<unsigned>(AlmanacSprite::ALMANAC_INDEXBUTTON)];
-	mIndexButton->mOverRect = AlmanacAtlas::Images[static_cast<unsigned>(AlmanacSprite::ALMANAC_INDEXBUTTONHIGHLIGHT)];
+	mIndexButton->mNormalRegion = AlmanacAtlas::Images[static_cast<unsigned>(AlmanacSprite::ALMANAC_INDEXBUTTON)];
+	mIndexButton->mOverRegion = AlmanacAtlas::Images[static_cast<unsigned>(AlmanacSprite::ALMANAC_INDEXBUTTONHIGHLIGHT)];
 	mIndexButton->mDownImage = nullptr;
 	mIndexButton->SetFont(Sexy::FONT_BRIANNETOD12);
 	mIndexButton->mColors[ButtonWidget::COLOR_LABEL] = aColor;
@@ -158,10 +158,10 @@ AlmanacDialog::AlmanacDialog(LawnApp* theApp) : LawnDialog(theApp, DIALOG_ALMANA
 
 	mPlantButton = new GameButton(AlmanacDialog::ALMANAC_BUTTON_PLANT);
 	mPlantButton->mLabel = gStr.VIEW_PLANTS;
-	mPlantButton->mNormalRect = FixedUIAtlas::Images[size_t(FixedUIAtlas::Sprite::SEEDCHOOSER_BUTTON)];
+	mPlantButton->mNormalRegion = FixedUIAtlas::Images[size_t(FixedUIAtlas::Sprite::SEEDCHOOSER_BUTTON)];
 	mPlantButton->mOverImage = nullptr;
 	mPlantButton->mDownImage = nullptr;
-	mPlantButton->mDisabledRect = FixedUIAtlas::Images[size_t(FixedUIAtlas::Sprite::SEEDCHOOSER_BUTTON_DISABLED)];
+	mPlantButton->mDisabledRegion = FixedUIAtlas::Images[size_t(FixedUIAtlas::Sprite::SEEDCHOOSER_BUTTON_DISABLED)];
 	mPlantButton->SetFont(Sexy::FONT_DWARVENTODCRAFT18YELLOW);
 	mPlantButton->mColors[ButtonWidget::COLOR_LABEL] = Color::White;
 	mPlantButton->mColors[ButtonWidget::COLOR_LABEL_HILITE] = Color::White;
@@ -318,7 +318,7 @@ void AlmanacDialog::Update()
 	mIndexButton->Update();
 	mPlantButton->Update();
 	mZombieButton->Update();
-	if (mPlant) mPlant->Update();
+	if (mPlant) mPlant->Update(0);
 	if (mZombie) mZombie->Update();
 
 	int aMouseX = mApp->mWidgetManager->mLastMouseX - mX;
@@ -340,7 +340,7 @@ void AlmanacDialog::Update()
 //0x401E70
 void AlmanacDialog::DrawIndex(Graphics* g)
 {
-	const TextureSource aTexture{AlmanacAtlas::Texture,AlmanacAtlas::Width,AlmanacAtlas::Height};
+	const TextureSource aTexture{AlmanacAtlas::Texture, 0};
 	DrawAlmanacBackground(g,aTexture,AlmanacAtlas::Images[static_cast<unsigned>(AlmanacSprite::ALMANAC_INDEXBACK)],
 		mApp->mScreenBounds,mX);
 	Graphics aContentGraphics(*g);
@@ -365,7 +365,7 @@ void AlmanacDialog::DrawIndex(Graphics* g)
 //0x402060
 void AlmanacDialog::DrawPlants(Graphics* g)
 {
-	const TextureSource aTexture{AlmanacAtlas::Texture,AlmanacAtlas::Width,AlmanacAtlas::Height};
+	const TextureSource aTexture{AlmanacAtlas::Texture, 0};
 	DrawAlmanacBackground(g,aTexture,AlmanacAtlas::Images[static_cast<unsigned>(AlmanacSprite::ALMANAC_PLANTBACK)],
 		mApp->mScreenBounds,mX);
 	Graphics aContentGraphics(*g);
@@ -551,7 +551,7 @@ static_assert(sizeof(kAlmanacPortraitOffset) / sizeof(kAlmanacPortraitOffset[0])
 // GOTY @Patoke: 0x403DE0
 void AlmanacDialog::DrawZombies(Graphics* g)
 {
-	const TextureSource aTexture{AlmanacAtlas::Texture,AlmanacAtlas::Width,AlmanacAtlas::Height};
+	const TextureSource aTexture{AlmanacAtlas::Texture, 0};
 	DrawAlmanacBackground(g,aTexture,AlmanacAtlas::Images[static_cast<unsigned>(AlmanacSprite::ALMANAC_ZOMBIEBACK)],
 		mApp->mScreenBounds,mX);
 	Graphics aContentGraphics(*g);
@@ -709,10 +709,10 @@ void AlmanacDialog::Draw(Graphics* g)
 	case AlmanacPage::ALMANAC_PAGE_ZOMBIES:	DrawZombies(g);	break;
 	}
 
-	const TextureSource aTexture{AlmanacAtlas::Texture,AlmanacAtlas::Width,AlmanacAtlas::Height};
+	const TextureSource aTexture{AlmanacAtlas::Texture, 0};
 	mCloseButton->DrawAtlas(g,aTexture);
 	mIndexButton->DrawAtlas(g,aTexture);
-	const Sexy::TextureSource fixedUI{FixedUIAtlas::Texture, FixedUIAtlas::Width, FixedUIAtlas::Height};
+	const Sexy::TextureSource fixedUI{FixedUIAtlas::Texture, 0};
 	mPlantButton->DrawAtlas(g, fixedUI,
 		&FixedUIAtlas::Images[size_t(FixedUIAtlas::Sprite::SEEDCHOOSER_BUTTON_GLOW)]);
 	mZombieButton->Draw(g);

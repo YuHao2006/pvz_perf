@@ -27,6 +27,7 @@ pvz_d3d9_shader(image_ps composeAlphaPS ps_3_0 compose_alpha_ps)
 pvz_d3d9_shader(caustics_ps causticsPS ps_3_0 caustics_ps)
 pvz_d3d9_shader(font_ps fontPS ps_3_0 font_ps)
 pvz_d3d9_shader(present_ps presentPS ps_3_0 present_ps)
+pvz_d3d9_shader(pool_vs poolVS vs_3_0 pool_vs)
 add_custom_target(sexy_d3d9_shaders DEPENDS ${shaderOutputs})
 add_library(sexy_d3d9 STATIC D3d9Context.cpp D3d9Renderer.cpp
     D3d9ImageOps.cpp ../../effect/ScaleEffectSizing.cpp)

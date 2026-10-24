@@ -16,14 +16,14 @@ export component MoweredZombieArm {
         emitterOffsetX: nodes {
             { time: 0; low: 30; high: 30; curve: Linear; distribution: Linear; }
         }
-        systemGreen: nodes {
+        systemAlpha: nodes {
             { time: 0.9; low: 1; high: 1; curve: Linear; distribution: Linear; }
             { time: 1; low: 0; high: 0; curve: Linear; distribution: Linear; }
         }
-        systemAlpha: nodes {
+        launchSpeed: nodes {
             { time: 0; low: 340; high: 340; curve: Linear; distribution: Linear; }
         }
-        systemBrightness: nodes {
+        launchAngle: nodes {
             { time: 0; low: 190; high: 220; curve: Linear; distribution: Linear; }
         }
         particleSpinAngle: nodes {

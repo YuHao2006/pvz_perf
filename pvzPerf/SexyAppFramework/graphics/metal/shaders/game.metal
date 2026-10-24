@@ -36,6 +36,55 @@ vertex MetalGameVaryings pvz_game_vertex(
     return result;
 }
 
+vertex MetalGameVaryings pvz_pool_vertex(
+    unsigned int id [[vertex_id]],
+    const device MetalPoolVertex* vertices [[buffer(0)]],
+    constant MetalSceneConstants& scene [[buffer(1)]],
+    constant MetalPoolConstants& p [[buffer(3)]])
+{
+    const device MetalPoolVertex& grid = vertices[id];
+    const float x = grid.x, y = grid.y, px = grid.phaseX, py = grid.phaseY;
+    const float2 base = float2(x / 15.0f, y / 5.0f);
+    float2 wave = 0.0f;
+    if (x != 0.0f && x != 15.0f && y != 0.0f && y != 5.0f)
+    {
+        if (p.layer == 0u)
+            wave = float2(
+                sin(py + p.time2) * 0.002f + sin(py + p.time1) * 0.005f,
+                sin(px + p.time5) * 0.01f + sin(px + p.time3) * 0.015f + sin(px + p.time1) * 0.005f);
+        else if (p.layer == 1u)
+            wave = float2(
+                sin(py * 0.2f + p.time2) * 0.015f + sin(py * 0.2f + p.time1) * 0.012f,
+                sin(px * 0.2f + p.time5) * 0.005f + sin(px * 0.2f + p.time3) * 0.015f + sin(px * 0.2f + p.time1) * 0.02f);
+        else
+            wave = float2(
+                sin(py + p.time1 * 1.5f) * 0.004f + sin(py + p.time2 * 1.5f) * 0.005f,
+                sin(px * 4.0f + p.time5 * 2.5f) * 0.005f + sin(px * 2.0f + p.time3 * 2.5f) * 0.04f + sin(px * 3.0f + p.time1 * 2.5f) * 0.02f);
+    }
+    const float2 position = p.layer == 2u ?
+        float2((704.0f / 15.0f) * x + 45.0f, 30.0f * y + 288.0f) :
+        float2((p.width / 15.0f) * x + 35.0f, (p.height / 5.0f) * y + 279.0f);
+    float alpha = 255.0f;
+    const int2 clipPosition = int2(position); // Rect::Contains truncates toward zero.
+    const int2 clipOrigin = int2(p.clipX, p.clipY);
+    if (any(clipPosition < clipOrigin) ||
+        any(clipPosition >= clipOrigin + int2(p.clipWidth, p.clipHeight)))
+        alpha = 0.0f;
+    else if (p.layer == 2u)
+        alpha = (x == 0.0f || x == 15.0f || y == 0.0f) ? 32.0f :
+            (p.night != 0u ? 48.0f : (x <= 7.0f ? 192.0f : 128.0f));
+    const float2 ndc = (position + float2(p.transX, p.transY)) /
+        float2(scene.sceneWidth, scene.sceneHeight) * 2.0f - 1.0f;
+    MetalGameVaryings result;
+    result.position = float4(ndc.x, -ndc.y, 0.0f, 1.0f);
+    result.color = float4(1.0f, 1.0f, 1.0f, alpha / 255.0f);
+    result.uv = base + wave;
+    if (p.layer == 2u) result.uv += base;
+    result.slot = p.slot;
+    result.samplerIndex = p.samplerIndex;
+    return result;
+}
+
 static float3 pvz_rgb_to_hsl(float3 rgb)
 {
     float maxval = max(rgb.r, rgb.g);

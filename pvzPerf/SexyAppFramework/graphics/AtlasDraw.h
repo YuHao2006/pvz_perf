@@ -5,9 +5,9 @@ namespace Sexy {
 class Graphics;
 
 void DrawAtlasImage(Graphics* graphics, const TextureSource& texture,
-    const Rect& region, float x, float y);
+    const TextureRegion& region, float x, float y);
 void DrawAtlasImage(Graphics* graphics, const TextureSource& texture,
-    const Rect& region, const Rect& destination, const Rect& localSource);
+    const TextureRegion& region, const Rect& destination, const Rect& localSource);
 void DrawAtlasImageScaled(Graphics* graphics, const TextureSource& texture,
-    const Rect& region, float x, float y, float scaleX, float scaleY);
+    const TextureRegion& region, float x, float y, float scaleX, float scaleY);
 }

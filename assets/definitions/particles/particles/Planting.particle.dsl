@@ -20,14 +20,14 @@ export component Planting {
         particleDuration: nodes {
             { time: 0; low: 30; high: 30; curve: Linear; distribution: Linear; }
         }
-        systemGreen: nodes {
+        systemAlpha: nodes {
             { time: 0.85; low: 1; high: 1; curve: Linear; distribution: Linear; }
             { time: 1; low: 0; high: 0; curve: Linear; distribution: Linear; }
         }
-        systemAlpha: nodes {
+        launchSpeed: nodes {
             { time: 0; low: 300; high: 500; curve: Linear; distribution: Linear; }
         }
-        systemBrightness: nodes {
+        launchAngle: nodes {
             { time: 0; low: 110; high: 250; curve: Linear; distribution: Linear; }
         }
         particleSpinSpeed: nodes {

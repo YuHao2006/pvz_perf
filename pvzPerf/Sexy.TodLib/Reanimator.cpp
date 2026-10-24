@@ -25,10 +25,99 @@
 #include <cstring>
 #include <utility>
 #include <vector>
+#include <string>
+#include <stdexcept>
+#include "paklib/PakInterface.h"
 
 static unsigned int gReanimatorDefCount;                     //[0x6A9EE4]
 ReanimatorDefinition* gReanimatorDefArray;   //[0x6A9EE8]
 static unsigned int gReanimationParamArraySize;              //[0x6A9EEC]
+
+void ReanimatorUploadGpuDefinitionData()
+{
+#if defined(PVZ_GPU_REANIM_VULKAN)
+	if (!gSexyAppBase || CurrentNativeThreadIdentity() != gSexyAppBase->mPrimaryThreadId ||
+		!gSexyAppBase->mDDInterface || !gSexyAppBase->mDDInterface->mRenderInterface)
+		throw std::logic_error("Reanimation GPU upload requires the primary renderer thread");
+	auto* renderer = gSexyAppBase->mDDInterface->mRenderInterface->mRenderer;
+	if (!renderer) throw std::logic_error("Reanimation GPU upload requires a renderer");
+	std::vector<ReanimatorDefinition*> uploaded;
+	uploaded.reserve(GeneratedDefinitions::ReanimationCount);
+	try
+	{
+		for (int type = 0; type < GeneratedDefinitions::ReanimationCount; ++type)
+		{
+			auto& definition = GeneratedDefinitions::Reanimations[type];
+			if (definition.mGpuData) continue;
+			if (std::all_of(definition.mTracks.tracks,
+				definition.mTracks.tracks + definition.mTracks.count,
+				[](const auto& track) { return track.mTransforms.mStorage == ReanimTrackStorage::Cpu; }))
+				continue;
+			const char* path = GeneratedDefinitions::ReanimationGpuPaths[type];
+			PFILE* file = p_fopen(path, "rb");
+			if (!file) throw std::runtime_error(std::string("Missing GPU reanimation data: ") + path);
+			try
+			{
+				std::uint32_t header[8]{};
+				if (p_fread(header, sizeof(header), 1, file) != 1 ||
+					header[0] != 0x31555247u || header[1] != unsigned(definition.mTracks.count) ||
+					header[3] != definition.mImageSlotCount || header[4] != definition.mVariantCount ||
+					header[5] != sizeof(GpuReanimTrack) || header[6] != sizeof(GpuReanimKey) ||
+					header[7] != sizeof(GpuReanimGeometry) || header[2] > (1u << 24))
+					throw std::runtime_error(std::string("Invalid GPU reanimation header: ") + path);
+				std::vector<GpuReanimTrack> tracks(header[1]);
+				std::vector<GpuReanimKey> keys(header[2]);
+				std::vector<GpuReanimGeometry> geometry(
+					std::size_t(header[3]) * header[4]);
+				const auto read = [&](auto& values)
+				{
+					if (!values.empty() && p_fread(values.data(), sizeof(values[0]),
+						int(values.size()), file) != values.size())
+						throw std::runtime_error(std::string("Truncated GPU reanimation data: ") + path);
+				};
+				read(tracks); read(keys); read(geometry);
+				if (p_fgetc(file) != EOF)
+					throw std::runtime_error(std::string("Trailing GPU reanimation data: ") + path);
+				for (std::size_t i = 0; i < tracks.size(); ++i)
+				{
+					if (tracks[i].keyCount != unsigned(definition.mTracks.tracks[i].mTransforms.count))
+						throw std::runtime_error(std::string("GPU reanimation track mismatch: ") + path);
+				}
+				definition.mGpuData = renderer->UploadReanimDefinition(
+					{tracks, keys, geometry, header[3], header[4]});
+				uploaded.push_back(&definition);
+				// Only the GPU resource survives this scope; upload staging is discarded.
+			}
+			catch (...) { p_fclose(file); throw; }
+			p_fclose(file);
+		}
+	}
+	catch (...)
+	{
+		for (auto* definition : uploaded)
+		{
+			renderer->DestroyReanimDefinition(definition->mGpuData);
+			definition->mGpuData = nullptr;
+		}
+		throw;
+	}
+#endif
+}
+
+void ReanimatorFreeGpuDefinitionData()
+{
+#if defined(PVZ_GPU_REANIM_VULKAN)
+	auto* renderer = gSexyAppBase && gSexyAppBase->mDDInterface &&
+		gSexyAppBase->mDDInterface->mRenderInterface
+		? gSexyAppBase->mDDInterface->mRenderInterface->mRenderer : nullptr;
+	for (auto& definition : GeneratedDefinitions::Reanimations)
+	{
+		if (definition.mGpuData && renderer)
+			renderer->DestroyReanimDefinition(definition.mGpuData);
+		definition.mGpuData = nullptr;
+	}
+#endif
+}
 static ReanimationParams* gReanimationParamArray;   //[0x6A9EF0]
 
 std::uint32_t ReanimatorTrackIdAt(ReanimationType theReanimType, int theTrackIndex)
@@ -435,7 +524,7 @@ ReanimPlaybackPosition Reanimation::SamplePlayback(std::int64_t offsetNs) const
 
 ReanimPlaybackPosition Reanimation::SamplePlaybackAt(std::int64_t nowNs, std::int64_t offsetNs) const
 {
-	ReanimPlaybackPosition position{0, mOriginCycleCount, mPhaseOriginNs};
+	ReanimPlaybackPosition position{mOriginCycleCount, mPhaseOriginNs};
 	if (mFrameCount <= 0) return position;
 	ReanimClock::SampleAt(ReanimClock::Add(nowNs, offsetNs), mStartTimeNs,
 		mPhaseOriginNs, mOriginCycleCount, mPeriodNs,
@@ -446,8 +535,6 @@ ReanimPlaybackPosition Reanimation::SamplePlaybackAt(std::int64_t nowNs, std::in
 		position.phaseNs = position.cycles > 0 ? mPeriodNs : 0;
 		position.cycles = 0;
 	}
-	position.clock = ReanimClock::SignedMulDiv(position.phaseNs,
-		ReanimClock::Product(mFrameCount, ReanimClock::Frame), mPeriodNs);
 	return position;
 }
 
@@ -529,7 +616,6 @@ void Reanimation::ConsumeTimeAt(std::int64_t nowNs)
 	mLastFrameNs = previous.phaseNs;
 	mLastCycleCount = previous.cycles;
 	mHasLastFrame = true;
-	const auto period = ReanimClock::Product(mFrameCount, ReanimClock::Frame);
 	const auto position = SamplePlaybackAt(nowNs);
 	mLastUpdateTimeNs = nowNs;
 	const bool looping = mLoopType == ReanimLoopType::REANIM_LOOP ||
@@ -551,8 +637,8 @@ void Reanimation::ConsumeTimeAt(std::int64_t nowNs)
 			mOriginCycleCount = position.cycles;
 		}
 	}
-	else if ((mAnimRate > 0 && position.clock == period) ||
-		(mAnimRate < 0 && position.clock == 0))
+	else if ((mAnimRate > 0 && position.phaseNs == mPeriodNs) ||
+		(mAnimRate < 0 && position.phaseNs == 0))
 	{
 		mLoopCount = 1;
 		mDead = mLoopType == ReanimLoopType::REANIM_PLAY_ONCE ||
@@ -564,7 +650,11 @@ double Reanimation::RootMotion(ReanimTrackId trackId, float scale,
 	std::int64_t offsetNs) const
 {
 	if (mFrameCount <= 1) return 0;
-	const auto& track = mDefinition->mTracks.tracks[const_cast<Reanimation*>(this)->FindTrackIndex(trackId)];
+	const int trackIndex = const_cast<Reanimation*>(this)->FindTrackIndex(trackId);
+	const auto& track = mDefinition->mTracks.tracks[trackIndex];
+	if (track.mTransforms.mTransforms == nullptr)
+		throw std::logic_error("RootMotion requires CPU keyframes for track index " +
+			std::to_string(trackIndex) + " (id " + std::to_string(static_cast<std::uint32_t>(track.mTrackId)) + ")");
 	const auto position = SamplePlayback(offsetNs);
 	const auto phase = position.phaseNs;
 	const auto cycles = position.cycles;
@@ -584,7 +674,11 @@ double Reanimation::RootMotionClamped(ReanimTrackId trackId, float scale,
 	float minimumVelocityPixelsPerSecond, std::int64_t offsetNs) const
 {
 	if (mFrameCount <= 1) return 0;
-	const auto& track = mDefinition->mTracks.tracks[const_cast<Reanimation*>(this)->FindTrackIndex(trackId)];
+	const int trackIndex = const_cast<Reanimation*>(this)->FindTrackIndex(trackId);
+	const auto& track = mDefinition->mTracks.tracks[trackIndex];
+	if (track.mTransforms.mTransforms == nullptr)
+		throw std::logic_error("RootMotionClamped requires CPU keyframes for track index " +
+			std::to_string(trackIndex) + " (id " + std::to_string(static_cast<std::uint32_t>(track.mTrackId)) + ")");
 	const auto* keys = track.mTransforms.mTransforms;
 	const bool full = ReanimFullLast(mLoopType);
 	const int intervals = full ? mFrameCount : mFrameCount - 1;
@@ -797,6 +891,9 @@ void Reanimation::GetTransformAtTime(int theTrackIndex, ReanimatorTransform* the
 {
 	TOD_ASSERT(theTrackIndex >= 0 && theTrackIndex < mDefinition->mTracks.count);
 	ReanimatorTrack* aTrack = &mDefinition->mTracks.tracks[theTrackIndex];
+	if (aTrack->mTransforms.mTransforms == nullptr)
+		throw std::logic_error("GetTransformAtTime requires CPU keyframes for track index " +
+			std::to_string(theTrackIndex) + " (id " + std::to_string(static_cast<std::uint32_t>(aTrack->mTrackId)) + ")");
 	TOD_ASSERT(aTrack->mTransforms.count == mDefinition->mTracks.tracks[0].mTransforms.count);
 	const ReanimatorSourceTransform& aTransBefore = aTrack->mTransforms.mTransforms[theFrameTime->mAnimFrameBeforeInt];
 	const ReanimatorSourceTransform& aTransAfter = aTrack->mTransforms.mTransforms[theFrameTime->mAnimFrameAfterInt];
@@ -844,6 +941,104 @@ void Reanimation::MatrixFromTransform(const ReanimatorTransform& theTransform, S
 bool Reanimation::DrawTrack(Graphics* g, int theTrackIndex, int theRenderGroup, const ReanimatorFrameTime* theFrameTime)
 {
 	(void)theRenderGroup;
+	const auto& trackData = mDefinition->mTracks.tracks[theTrackIndex].mTransforms;
+	if (trackData.mStorage == ReanimTrackStorage::Cpu)
+		return false;
+#if defined(PVZ_GPU_REANIM_VULKAN) && defined(PVZ_EXPERIMENTAL_GPU_REANIM)
+	// Picture jobs evaluate one track once on the GPU. CPU samples only the
+	// visibility/alpha required by AttachmentDraw's synchronous return contract.
+	if (mDefinition->mGpuData && mTrackInstances[theTrackIndex].mBlendCounter <= 0 &&
+		!mEnableExtraAdditiveDraw && !mEnableExtraOverlayDraw &&
+		g->mDestImage && g->mDestImage->IsGpuDrawTarget())
+	{
+		auto& render = *g->mDestImage->mRenderOwner;
+		if (render.mTransformStack.empty())
+		{
+			const auto& instance = mTrackInstances[theTrackIndex];
+			ReanimatorFrameTime frameTime;
+			if (!theFrameTime) { GetFrameTime(&frameTime); theFrameTime = &frameTime; }
+			const auto* keys = trackData.mTransforms;
+			bool picture = !keys;
+			Color color = instance.mTrackColor;
+			if (!instance.mIgnoreColorOverride) color = ColorsMultiply(color, mColorOverride);
+			if (g->mColorizeImages) color = ColorsMultiply(color, g->mColor);
+			if (keys)
+			{
+				const auto& before = keys[theFrameTime->mAnimFrameBeforeInt];
+				const auto& after = keys[theFrameTime->mAnimFrameAfterInt];
+				if (before.mFrame < 0 || (before.mFrame != -1 && after.mFrame == -1 &&
+					theFrameTime->mFraction > 0 && instance.mTruncateDisappearingFrames))
+					return false;
+				const float alpha = FloatLerp(before.mAlpha, after.mAlpha, theFrameTime->mFraction);
+				if (ClampInt(FloatRoundToInt(alpha * color.mAlpha), 0, 255) == 0) return false;
+				picture = before.mImageSlot != 0;
+				if (picture)
+				{
+					const auto& region = mDefinition->mImageRects[
+						std::size_t(mVariant) * mDefinition->mImageSlotCount + before.mImageSlot];
+					if (!region.mWidth || !region.mHeight) return true;
+				}
+			}
+			else
+			{
+				if (instance.mAttachmentID != AttachmentID::ATTACHMENTID_NULL)
+					throw std::logic_error("GPU-only reanimation track cannot supply CPU attachment visibility");
+				if (ReanimRenderSemantics::IsFullscreenTrack(
+					static_cast<ReanimTrackId>(ReanimatorTrackIdAt(mReanimationType, theTrackIndex))))
+					throw std::logic_error("Fullscreen reanimation tracks require CPU keyframes");
+			}
+			if (picture)
+			{
+				auto* texture = mDefinition->mTextures[mVariant];
+				if (!texture && !keys)
+				{
+					const auto* regions = mDefinition->mImageRects +
+						std::size_t(mVariant) * mDefinition->mImageSlotCount;
+					if (std::none_of(regions, regions + mDefinition->mImageSlotCount,
+						[](const auto& region) { return region.mWidth > 0 && region.mHeight > 0; }))
+						return true;
+				}
+				if (!texture) throw std::logic_error("reanimation appearance atlas is not uploaded");
+				GpuReanimDraw draw{};
+				draw.track = unsigned(theTrackIndex);
+				draw.before = unsigned(theFrameTime->mAnimFrameBeforeInt);
+				draw.after = unsigned(theFrameTime->mAnimFrameAfterInt);
+				draw.variant = mVariant;
+				draw.fraction = theFrameTime->mFraction;
+				draw.translateX = instance.mShakeX + g->mTransX - 0.5f;
+				draw.translateY = instance.mShakeY + g->mTransY - 0.5f;
+				draw.overlay00 = mOverlayMatrix.m00; draw.overlay01 = mOverlayMatrix.m01;
+				draw.overlay02 = mOverlayMatrix.m02; draw.overlay10 = mOverlayMatrix.m10;
+				draw.overlay11 = mOverlayMatrix.m11; draw.overlay12 = mOverlayMatrix.m12;
+				draw.color = (std::uint32_t(color.mAlpha) << 24) |
+					(std::uint32_t(color.mRed) << 16) | (std::uint32_t(color.mGreen) << 8) |
+					std::uint32_t(color.mBlue);
+				static constexpr std::uint32_t filters[] = {
+					0, std::uint32_t(GpuImageColorFilter::WashedOut),
+					std::uint32_t(GpuImageColorFilter::LessWashedOut),
+					std::uint32_t(GpuImageColorFilter::White)};
+				if (mFilterEffect != FilterEffect::FILTER_EFFECT_NONE)
+					draw.samplingFlags = filters[static_cast<int>(mFilterEffect) + 1];
+				draw.truncate = instance.mTruncateDisappearingFrames;
+				const Rect clip = instance.mIgnoreClipRect
+					? Rect(0, 0, BOARD_WIDTH, BOARD_HEIGHT) : g->mClipRect;
+				GpuClip gpuClip{clip.mX, clip.mY, clip.mWidth, clip.mHeight};
+				const bool fullClip = clip.mX == 0 && clip.mY == 0 &&
+					clip.mWidth == BOARD_WIDTH && clip.mHeight == BOARD_HEIGHT;
+				const auto blend = g->mDrawMode == Graphics::DRAWMODE_ADDITIVE
+					? GpuBlend::Additive : g->mDrawMode == 2 ? GpuBlend::Opaque : GpuBlend::Normal;
+				render.SelectDrawSurface(g->mDestImage);
+				if (!render.PreDraw()) return true;
+				if (render.mRenderer->SubmitReanim(mDefinition->mGpuData, texture, draw,
+					g->mLinearBlend, RenderInterface::sSamplerAddressWrap, blend,
+					fullClip ? nullptr : &gpuClip))
+					return true;
+			}
+		}
+	}
+#endif
+	if (!trackData.mTransforms)
+		throw std::logic_error("GPU-only reanimation track requires a supported GPU picture draw");
 	ReanimatorTransform aTransform;
 	ReanimatorTrackInstance* aTrackInstance = &mTrackInstances[theTrackIndex];  // 目标轨道的指针
 	GetCurrentTransform(theTrackIndex, &aTransform, theFrameTime);  // 取得当前动画变换
@@ -921,7 +1116,7 @@ bool Reanimation::DrawTrack(Graphics* g, int theTrackIndex, int theRenderGroup, 
 
 	if (aHasImage)
 	{
-		const Rect& aSrcRect = mDefinition->mImageRects[std::size_t(mVariant) * mDefinition->mImageSlotCount + aSlot];
+		const TextureRegion& aSrcRect = mDefinition->mImageRects[std::size_t(mVariant) * mDefinition->mImageSlotCount + aSlot];
 		// A blank appearance suppresses only the image, not the track's original
 		// geometry or its attachment visibility.
 		if (aSrcRect.mWidth == 0 || aSrcRect.mHeight == 0)
@@ -929,7 +1124,7 @@ bool Reanimation::DrawTrack(Graphics* g, int theTrackIndex, int theRenderGroup, 
 		auto* const aTexture = mDefinition->mTextures[mVariant];
 		if (!aTexture)
 			throw std::logic_error("reanimation appearance atlas is not uploaded");
-		TextureSource source{aTexture,mDefinition->mTextureWidths[mVariant],mDefinition->mTextureHeights[mVariant],0};
+		TextureSource source{aTexture,0};
 		static constexpr std::uint32_t filterFlags[] = {
 			0, std::uint32_t(GpuImageColorFilter::WashedOut),
 			std::uint32_t(GpuImageColorFilter::LessWashedOut),
@@ -1191,6 +1386,9 @@ void Reanimation::GetFramesForTrackIndex(int theTrackIndex, int& theFrameStart, 
 {
 	TOD_ASSERT(theTrackIndex >= 0 && theTrackIndex < mDefinition->mTracks.count);
 	ReanimatorTrack* aTrack = &mDefinition->mTracks.tracks[theTrackIndex];
+	if (aTrack->mTransforms.mTransforms == nullptr)
+		throw std::logic_error("GetFramesForTrackIndex requires CPU keyframes for track index " +
+			std::to_string(theTrackIndex) + " (id " + std::to_string(static_cast<std::uint32_t>(aTrack->mTrackId)) + ")");
 	theFrameStart = 0;
 	theFrameCount = 1;
 	for (int i = 0; i < aTrack->mTransforms.count; i++)
@@ -1426,7 +1624,11 @@ int ReanimatorUploadAllTexturesToGPU()
 		!gParticleAllDefinitionDataLoaded.load(std::memory_order_acquire))
 		return -1;
 
-	return DefinitionUploadAtlasImages();
+	const int uploaded = DefinitionUploadAtlasImages();
+#if defined(PVZ_EXPERIMENTAL_GPU_REANIM)
+	ReanimatorUploadGpuDefinitionData();
+#endif
+	return uploaded;
 }
 
 //0x473870
@@ -1447,8 +1649,11 @@ bool Reanimation::IsTrackShowing(ReanimTrackId theTrackId)
 	GetFrameTime(&aFrameTime);
 	int aTrackIndex = FindTrackIndex(theTrackId);
 	TOD_ASSERT(aTrackIndex >= 0 && aTrackIndex < mDefinition->mTracks.count);
-
-	return mDefinition->mTracks.tracks[aTrackIndex].mTransforms.mTransforms[aFrameTime.mAnimFrameAfterInt].mFrame >= 0.0f;  // 返回下一整数帧是否存在图像
+	const auto& aTrack = mDefinition->mTracks.tracks[aTrackIndex];
+	if (aTrack.mTransforms.mTransforms == nullptr)
+		throw std::logic_error("IsTrackShowing requires CPU keyframes for track index " +
+			std::to_string(aTrackIndex) + " (id " + std::to_string(static_cast<std::uint32_t>(aTrack.mTrackId)) + ")");
+	return aTrack.mTransforms.mTransforms[aFrameTime.mAnimFrameAfterInt].mFrame >= 0.0f;  // 返回下一整数帧是否存在图像
 }
 
 //0x473980
@@ -1517,6 +1722,9 @@ void Reanimation::PlayReanim(ReanimTrackId theTrackId, ReanimLoopType theLoopTyp
 void Reanimation::AttacherSynchWalkSpeed(int theTrackIndex, Reanimation* theAttachReanim, int theTextRunStart, int theTextRunEnd)
 {
 	ReanimatorTrack* aTrack = &mDefinition->mTracks.tracks[theTrackIndex];
+	if (aTrack->mTransforms.mTransforms == nullptr)
+		throw std::logic_error("AttacherSynchWalkSpeed requires CPU keyframes for parent track index " +
+			std::to_string(theTrackIndex) + " (id " + std::to_string(static_cast<std::uint32_t>(aTrack->mTrackId)) + ")");
 	const std::int64_t aParentEnd = static_cast<std::int64_t>(mFrameStart) + mFrameCount;
 	const int aPlaceHolderFrameStart = std::max(theTextRunStart, mFrameStart);
 	const std::int64_t aRunEnd = std::min<std::int64_t>(theTextRunEnd, aParentEnd);
@@ -1546,6 +1754,9 @@ void Reanimation::AttacherSynchWalkSpeed(int theTrackIndex, Reanimation* theAtta
 
 	int aGroundTrackIndex = theAttachReanim->FindTrackIndex(ReanimTrackId::_ground);
 	ReanimatorTrack* aGroundTrack = &theAttachReanim->mDefinition->mTracks.tracks[aGroundTrackIndex];
+	if (aGroundTrack->mTransforms.mTransforms == nullptr)
+		throw std::logic_error("AttacherSynchWalkSpeed requires CPU keyframes for attached ground track index " +
+			std::to_string(aGroundTrackIndex) + " (id " + std::to_string(static_cast<std::uint32_t>(aGroundTrack->mTrackId)) + ")");
 	const auto& aTransformGuyStart = aGroundTrack->mTransforms.mTransforms[theAttachReanim->mFrameStart];
 	const auto& aTransformGuyEnd = aGroundTrack->mTransforms.mTransforms[theAttachReanim->mFrameStart + theAttachReanim->mFrameCount - 1];
 	double aGuyDistance = static_cast<double>(aTransformGuyEnd.mTransX) -

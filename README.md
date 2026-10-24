@@ -22,7 +22,10 @@ Linux 使用通用 x86-64 构建基线，实际 glibc、GLIBCXX、窗口及音�
 Linux 依赖与外部效果许可随包提供，系统图形、窗口、音频运行库由用户安装。
 贡献通过 fork 和 Pull Request 提交，由维护者审查，见 [参与开发](CONTRIBUTING.md)。
 
-- [性能总账](docs/perf-fix-ledger.md)：机制、同口径数据、收益范围。
+- [文档索引](docs/README.md)：当前架构、验证、原版调查与历史发布说明。
+- [运行时](docs/runtime.md)：时间、运动、曲线、粒子及静态定义。
+- [验证说明](docs/validation.md)：验收入口、实际覆盖及平台限制。
+- [性能总账](docs/perf-fix-ledger.md)：受控测量、落地机制与收益范围。
 - [修复总账](docs/fix-ledger.md)：触发条件、根因、修复和验证。
 - [存档转换](docs/DAT-DAT64-CONVERSION.md)：DAT/DAT64、模式编号和图像 ID。
 - [无尽性能基准](Tests/README.md)：原版 DAT 与项目 DAT64 的同状态存档、校验值及测试使用规则。

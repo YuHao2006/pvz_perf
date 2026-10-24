@@ -5,13 +5,16 @@ import hashlib
 
 import build_numeric_runtime_pak64 as pak
 import projectile_atlas
-from static_definition_codegen import cpp_float, cpp_string
+from static_definition_codegen import cpp_float, cpp_string, texture_region
 
 
-def generate(config, records: dict[str, bytes], reports: dict) -> tuple[dict[str, bytes], dict]:
+def generate(config, records: dict[str, bytes], reports: dict, *,
+             runtime_records: dict[str, bytes] | None = None) -> tuple[dict[str, bytes], dict]:
     import static_reanim_codegen
     import static_particle_codegen
     reanim = static_reanim_codegen.generate(config, records)
+    if runtime_records is not None:
+        runtime_records.update(reanim["gpu_records"])
     particle = static_particle_codegen.generate(config, records)
     rc = len(config.definition_orders["reanim"])
     pc = len(config.definition_orders["particle"])
@@ -25,6 +28,7 @@ def generate(config, records: dict[str, bytes], reports: dict) -> tuple[dict[str
         "namespace GeneratedDefinitions {\n"
         f"inline constexpr int ReanimationCount={rc}, ParticleCount={pc};\n"
         "extern ReanimatorDefinition Reanimations[ReanimationCount];\n"
+        "extern const char* const ReanimationGpuPaths[ReanimationCount];\n"
         "extern TodParticleDefinition Particles[ParticleCount];\n"
         "extern ProjectileAtlasDefinition Projectiles;\n"
         "extern std::span<AttacherSegmentRT> AttacherSegments[ReanimationCount];\n"
@@ -48,6 +52,10 @@ def generate(config, records: dict[str, bytes], reports: dict) -> tuple[dict[str
     objects = [
         "// Generated complete static definitions.",
         '#include "GeneratedDefinitionStorage.h"', "namespace GeneratedDefinitions {",
+        "constinit const char* const ReanimationGpuPaths[ReanimationCount] = {",
+        *("    " + cpp_string(f"compiled/gpu-reanim/{name.casefold()}.compiled") + ","
+          for _, name in config.definition_orders["reanim"]),
+        "};",
         "constinit ReanimatorDefinition Reanimations[ReanimationCount] = {",
         *("    " + row + "," for row in reanim["initializers"]), "};",
         "constinit TodParticleDefinition Particles[ParticleCount] = {",
@@ -57,13 +65,13 @@ def generate(config, records: dict[str, bytes], reports: dict) -> tuple[dict[str
     ]
     projectile = pak.parse_projectiles(projectile_atlas.PATH, records[projectile_atlas.PATH])
     visuals = [
-        "{" + "{" + ",".join(map(str, rect)) + "}," + cpp_float(scale) + "}"
+        "{" + texture_region(rect, projectile["width"], projectile["height"]) + "," + cpp_float(scale) + "}"
         for rect, scale in zip(projectile["regions"], projectile["scales"])
     ]
-    shadows = ["{" + ",".join(map(str, rect)) + "}" for rect in projectile["shadows"]]
+    shadows = [texture_region(rect, projectile["width"], projectile["height"])
+               for rect in projectile["shadows"]]
     objects.extend([
         "constinit ProjectileAtlasDefinition Projectiles = {",
-        f"    {projectile['width']}, {projectile['height']},",
         "    {{" + ",".join(visuals) + "}},",
         "    {{" + ",".join(shadows) + "}}, nullptr", "};",
     ])
@@ -128,6 +136,7 @@ def generate(config, records: dict[str, bytes], reports: dict) -> tuple[dict[str
         "    for(int i=0;i<ReanimationCount;++i) LoadReanimationImages(i);",
         "    LoadParticleImages();", "    LoadProjectileImages();", "}",
         "void ReleaseReanimationImages() {",
+        "    ReanimatorFreeGpuDefinitionData();",
         "    for(auto& definition:Reanimations)",
         "        for(unsigned v=0;v<definition.mVariantCount;++v) DefinitionUnbindAtlas(definition.mTextures[v]);",
         *("    " + line for line in reanim["font_resets"]),

@@ -468,8 +468,10 @@ def build(args: argparse.Namespace, work: Path) -> None:
         for variant in metadata["variants"][1:]:
             del records[variant["path"]]
             del atlas_report[variant["path"]]
-    # The compiled records are an offline intermediate, never runtime inputs.
-    native_files, native_summary = static_definitions.generate(config, records, atlas_report)
+    # CPU definitions stay generated C++; GPU transport is uploaded then discarded.
+    gpu_records = {}
+    native_files, native_summary = static_definitions.generate(
+        config, records, atlas_report, runtime_records=gpu_records)
     zombatar_report = atlas_report[zombatar_atlas.PATH]
     zombatar_files = zombatar_atlas.generate(zombatar_sources, zombatar_report)
     native_files.update(zombatar_files)
@@ -515,6 +517,7 @@ def build(args: argparse.Namespace, work: Path) -> None:
                        if pak.numeric_kind(name) in ("reanim", "particles", "projectiles")}
     for name in offline_records:
         del records[name]
+    records.update(gpu_records)
     runtime_atlases = set(native_summary["atlases"])
     for name in list(records):
         if name.endswith(".atlas.png") and name not in runtime_atlases:

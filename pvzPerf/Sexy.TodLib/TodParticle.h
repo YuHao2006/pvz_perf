@@ -10,6 +10,7 @@
 #include <span>
 #include "DataArray.h"
 #include "DefinitionImageRegion.h"
+#include "graphics/TextureRegion.h"
 #include "misc/SexyVector.h"
 namespace Sexy
 {
@@ -74,13 +75,12 @@ enum ParticleFieldType
 // ----------------------------------------------------------------------------------------------------
 // 每个节点描述属性数值随时间变化的一个阶段。
 // ====================================================================================================
-// Authored decimal values use thousandths. Implicit node times retain their
-// exact reduced fraction rather than being rounded to authored precision.
+// Node times are evaluated from exact source fractions at compile time.
+// Runtime keeps the same double values without repeating invariant division.
 class FloatParameterTrackNode
 {
 public:
-    std::int32_t                mTimeNumerator;
-    std::int32_t                mTimeDenominator;
+    double                      mTime;
     float                       mLow;
     float                       mHigh;
     std::int32_t                mCurveType;
@@ -196,11 +196,9 @@ class TodParticleDefinition
 {
 public:
     Sexy::GpuTexture**          mTextures = nullptr;
-    int*                        mTextureWidths = nullptr;
-    int*                        mTextureHeights = nullptr;
     std::uint32_t               mVariantCount = 0;
     std::uint32_t               mImageRectCount = 0;
-    const Sexy::Rect*           mImageRects = nullptr;
+    const Sexy::TextureRegion*  mImageRects = nullptr;
     TodEmitterDefinition*       mEmitterDefs = nullptr;
     int                         mEmitterDefCount = 0;
     std::array<int, static_cast<std::size_t>(ParticleEmitterName::top)> mEmitterIndexByName = [] {
@@ -444,8 +442,7 @@ public:
 	void							DeleteAll();
 	void							UpdateParticleField(TodParticle* theParticle, ParticleField* theParticleField, double theParticleTimeValue, int theFieldIndex, double theDeltaTicks);
 	void							UpdateSystemField(ParticleField* theParticleField, double theParticleTimeValue, int theFieldIndex);
-    /*inline*/ float				SystemTrackEvaluate(FloatParameterTrack& theTrack, ParticleSystemTracks theSystemTrack);
-	static /*inline*/ float			ParticleTrackEvaluate(FloatParameterTrack& theTrack, TodParticle* theParticle, ParticleTracks theParticleTrack);
+    /*inline*/ float				SystemTrackEvaluate(const FloatParameterTrack& theTrack, ParticleSystemTracks theSystemTrack) const;
 	void							DeleteParticle(TodParticle* theParticle);
 	// 下标化删除：更新循环/DeleteNonCrossFading 已知名册下标直入，省掉
 	// Find 的 uint16 槽位线性探测与一次寻址（Find 本是流式比对、量级很小；

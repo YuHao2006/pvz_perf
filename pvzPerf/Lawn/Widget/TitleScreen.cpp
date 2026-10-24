@@ -141,9 +141,12 @@ void TitleScreen::Draw(Graphics* g)
 	}
 	else
 	{
-		Graphics aClipG(*g);
-		aClipG.ClipRect(240, aGrassY, mCurBarWidth, IMAGE_LOADBAR_GRASS->mHeight);
-		aClipG.DrawImage(IMAGE_LOADBAR_GRASS, aGrassX, aGrassY);
+		if (static_cast<int>(mCurBarWidth) > 0)
+		{
+			Graphics aClipG(*g);
+			aClipG.ClipRect(240, aGrassY, mCurBarWidth, IMAGE_LOADBAR_GRASS->mHeight);
+			aClipG.DrawImage(IMAGE_LOADBAR_GRASS, aGrassX, aGrassY);
+		}
 
 		float aRollLen = mCurBarWidth * 0.94f;
 		float aRotation = -aRollLen / 180 * PI * 2;

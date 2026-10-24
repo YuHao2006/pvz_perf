@@ -24,6 +24,7 @@ inline constexpr Program Programs[] = {
     {"caustics_ps.hlsl", "causticsPS", "ps_3_0", "caustics_ps.cso"},
     {"font_ps.hlsl", "fontPS", "ps_3_0", "font_ps.cso"},
     {"present_ps.hlsl", "presentPS", "ps_3_0", "present_ps.cso"},
+    {"pool_vs.hlsl", "poolVS", "vs_3_0", "pool_vs.cso"},
 };
 
 enum VertexConstant : unsigned {

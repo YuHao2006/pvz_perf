@@ -4,6 +4,7 @@
 #include "SexyAppFramework/graphics/MemoryImage.h"
 #include "SexyAppFramework/graphics/RenderInterface.h"
 #include "SexyAppFramework/graphics/TextureSource.h"
+#include "SexyAppFramework/graphics/ImageFont.h"
 #include "Sexy.TodLib/Reanimator.h"
 #include "Sexy.TodLib/TodParticle.h"
 #include <cmath>
@@ -84,6 +85,17 @@ concept HasImageFilters = requires(T& image) { image.mFilterImages; }
 template<class T>
 concept HasAtlasWrapper = requires(T& definition) { definition.mAtlas; };
 template<class T>
+concept HasDefinitionAtlasDimensions = requires(T& definition) { definition.mTextureWidths; }
+    || requires(T& definition) { definition.mTextureHeights; };
+template<class T>
+concept HasPixelSourceOrigin = requires(T& region) { region.mX; }
+    || requires(T& region) { region.mY; };
+template<class T>
+concept HasTextureSourceDimensions = requires(T& source) { source.mWidth; }
+    || requires(T& source) { source.mHeight; };
+template<class T>
+concept HasPixelSourceArray = requires(T& command) { command.mSrc; };
+template<class T>
 concept HasTrackImageOverride = requires(T& track) { track.mImageOverride; };
 template<class T>
 concept HasImageOverrideApi =
@@ -116,7 +128,21 @@ static_assert(std::is_same_v<decltype(ReanimatorDefinition::mTextures),Sexy::Gpu
 static_assert(std::is_same_v<decltype(TodParticleDefinition::mTextures),Sexy::GpuTexture**>);
 static_assert(!HasAtlasWrapper<ReanimatorDefinition>);
 static_assert(!HasAtlasWrapper<TodParticleDefinition>);
-static_assert(sizeof(DefinitionImageRegion)==6*sizeof(int));
+static_assert(!HasDefinitionAtlasDimensions<ReanimatorDefinition>);
+static_assert(!HasDefinitionAtlasDimensions<TodParticleDefinition>);
+static_assert(!HasPixelSourceOrigin<Sexy::TextureRegion>);
+static_assert(!HasTextureSourceDimensions<Sexy::TextureSource>);
+static_assert(std::is_same_v<decltype(Sexy::TextureRegion::mU0),float>);
+static_assert(std::is_same_v<decltype(Sexy::TextureRegion::mV0),float>);
+static_assert(std::is_same_v<decltype(Sexy::TextureRegion::mU1),float>);
+static_assert(std::is_same_v<decltype(Sexy::TextureRegion::mV1),float>);
+static_assert(std::is_same_v<decltype(Sexy::TextureRegion::mWidth),int>);
+static_assert(std::is_same_v<decltype(Sexy::TextureRegion::mHeight),int>);
+static_assert(std::is_same_v<decltype(Sexy::CharData::mImageRect),Sexy::TextureRegion>);
+static_assert(std::is_same_v<std::remove_extent_t<decltype(Sexy::ActiveFontLayer::mScaledCharImageRects)>,
+    Sexy::TextureRegion>);
+static_assert(std::is_same_v<decltype(Sexy::RenderCommand::mSourceRegion),Sexy::TextureRegion>);
+static_assert(!HasPixelSourceArray<Sexy::RenderCommand>);
 static_assert(std::is_same_v<decltype(ReanimatorTransform::mImageSlot), std::uint32_t>);
 static_assert(sizeof(decltype(ReanimatorTransform::mImageSlot)) == sizeof(std::uint32_t));
 static_assert(!HasTrackImageOverride<ReanimatorTrackInstance>);
@@ -124,10 +150,10 @@ static_assert(!HasImageOverrideApi<Reanimation>);
 static_assert(!HasImageOverrideApi<TodParticleSystem>);
 static_assert(!HasImageOverrideApi<TodParticleEmitter>);
 static_assert(std::is_same_v<decltype(Reanimation::mVariant), std::uint32_t>);
-static_assert(std::is_same_v<decltype(ReanimatorDefinition::mImageRects), Sexy::Rect*>);
+static_assert(std::is_same_v<decltype(ReanimatorDefinition::mImageRects), const Sexy::TextureRegion*>);
 static_assert(std::is_same_v<decltype(TodEmitterDefinition::mImageRectOffset), std::uint32_t>);
 static_assert(std::is_same_v<decltype(TodParticleSystem::mVariant), std::uint32_t>);
-static_assert(std::is_same_v<decltype(TodParticleDefinition::mImageRects), Sexy::Rect*>);
+static_assert(std::is_same_v<decltype(TodParticleDefinition::mImageRects), const Sexy::TextureRegion*>);
 
 // These are API/ownership boundaries, not a mirrored GPU field layout.
 // Positive draw controls also ensure a missing/renamed API cannot make the
@@ -203,30 +229,6 @@ void Near(float actual, float expected, const char* message)
 int main()
 {
     using namespace Sexy;
-    // Match the original horizontal selection, including floor-divided sheets,
-    // frame wrapping, and hidden frames retaining their single-cel geometry.
-    const DefinitionImageRegion reanimSheet{14, 22, 109, 71, 2, 3};
-    const auto requireReanimRect = [&](int frame, int expectedX) {
-        const auto rect = DefinitionReanimCelRect(reanimSheet, frame);
-        Require(rect.mX == expectedX && rect.mY == 22 &&
-            rect.mWidth == 36 && rect.mHeight == 35,
-            "Precomputed reanimation cel changed horizontal strip semantics");
-    };
-    requireReanimRect(0, 14);
-    requireReanimRect(2, 86);
-    requireReanimRect(3, 14);
-    requireReanimRect(7, 50);
-    requireReanimRect(std::numeric_limits<int>::max(),
-        14 + (std::numeric_limits<int>::max() % 3) * 36);
-    requireReanimRect(-1, 14);
-    const auto emptyReanim = DefinitionReanimCelRect({}, 7);
-    Require(emptyReanim.mX == 0 && emptyReanim.mY == 0 &&
-        emptyReanim.mWidth == 0 && emptyReanim.mHeight == 0,
-        "Imageless reanimation acquired a source rectangle");
-    const auto oneCel = DefinitionReanimCelRect({3, 5, 67, 19, 1, 1}, 19);
-    Require(oneCel.mX == 3 && oneCel.mY == 5 &&
-        oneCel.mWidth == 67 && oneCel.mHeight == 19,
-        "Single-cel reanimation changed its source rectangle");
     const AtlasImageRegion sheet{14, 22, 108, 70, 256, 128};
     Require(IsValidAtlasImageRegion(sheet), "Valid particle strip rejected");
     // The last particle cel is 36x35. Its corners must stay inside this region,

@@ -40,7 +40,7 @@ void DialogButton::Draw(Graphics* g)
 
 	bool doTranslate = IsButtonDown();
 
-	if (mNormalRect.mWidth==0)
+	if (mNormalRegion.mWidth==0)
 	{
 		if (doTranslate)
 			g->Translate(mTranslateX, mTranslateY);
@@ -49,24 +49,24 @@ void DialogButton::Draw(Graphics* g)
 	}
 	else
 	{
-		if (mDisabled && (mDisabledRect.mWidth > 0) && (mDisabledRect.mHeight > 0))
-			g->DrawImageBox(mDisabledRect, Rect(0, 0, mWidth, mHeight), mComponentImage);
+		if (mDisabled && (mDisabledRegion.mWidth > 0) && (mDisabledRegion.mHeight > 0))
+			g->DrawImageBox(mDisabledRegion, Rect(0, 0, mWidth, mHeight), mComponentImage);
 		else if (IsButtonDown())	
-			g->DrawImageBox(mDownRect, Rect(0, 0, mWidth, mHeight), mComponentImage);
+			g->DrawImageBox(mDownRegion, Rect(0, 0, mWidth, mHeight), mComponentImage);
 		else if ((mOverAlpha > 0))
 		{
 			if (mOverAlpha<1)
-				g->DrawImageBox(mNormalRect, Rect(0, 0, mWidth, mHeight), mComponentImage);
+				g->DrawImageBox(mNormalRegion, Rect(0, 0, mWidth, mHeight), mComponentImage);
 
 			g->mColorizeImages = true;
 			g->mColor = Color(255,255,255,(int)(mOverAlpha * 255));
-			g->DrawImageBox(mOverRect, Rect(0, 0, mWidth, mHeight), mComponentImage);
+			g->DrawImageBox(mOverRegion, Rect(0, 0, mWidth, mHeight), mComponentImage);
 			g->mColorizeImages = false;
 		}
 		else if(mIsOver)
-			g->DrawImageBox(mOverRect, Rect(0, 0, mWidth, mHeight), mComponentImage);
+			g->DrawImageBox(mOverRegion, Rect(0, 0, mWidth, mHeight), mComponentImage);
 		else
-			g->DrawImageBox(mNormalRect, Rect(0, 0, mWidth, mHeight), mComponentImage);
+			g->DrawImageBox(mNormalRegion, Rect(0, 0, mWidth, mHeight), mComponentImage);
 		
 		if (doTranslate)
 			g->Translate(mTranslateX, mTranslateY);

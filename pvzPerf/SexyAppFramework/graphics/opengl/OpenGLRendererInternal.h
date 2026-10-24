@@ -20,11 +20,13 @@ struct OpenGLTexture {
     OpenGLTexture(const OpenGLTexture&) = delete;
     OpenGLTexture& operator=(const OpenGLTexture&) = delete;
 };
+#if defined(PVZ_OPENGL_REANIM_RESIDENT)
 struct OpenGLReanim {
     unsigned int firstTexel = 0, texelCount = 0;
     unsigned int imageSlotCount = 0, variantCount = 0;
     std::vector<GpuReanimTrack> trackInfo;
 };
+#endif
 struct OpenGLRenderer::Impl {
     enum Uniform : unsigned int {
         uTargetExtent, uImage, uPremultipliedOutput, uCoverageInput,
@@ -43,6 +45,9 @@ struct OpenGLRenderer::Impl {
         GpuBlend blend;
         GpuClip clip;
         bool coverage;
+#if defined(PVZ_OPENGL_REANIM_RESIDENT)
+        size_t segmentFirst = 0, segmentCount = 0;
+#endif
     };
     OpenGLContext& context;
     int width, height, maximum = 0;
@@ -50,20 +55,29 @@ struct OpenGLRenderer::Impl {
     unsigned int sceneProgram = 0, imageProgram = 0, fontProgram = 0, presentProgram = 0;
     unsigned int poolProgram = 0, poolVao = 0, poolVertices = 0, poolIndices = 0;
     std::array<int, 12> poolUniforms{};
+    uint32_t reanimPictureCandidates = 0;
+    bool reanimFrameEligible = false;
+#if defined(PVZ_OPENGL_REANIM_RESIDENT)
     unsigned int reanimProgram = 0, reanimVao = 0, reanimIndexBuffer = 0;
     unsigned int reanimBlob = 0, reanimBlobTexture = 0, reanimInstanceBuffer = 0, reanimInstanceTexture = 0;
     size_t reanimBlobUsed = 0, reanimBlobCapacity = 0, reanimBlobMaximum = 0;
     struct ReanimRange { size_t first, count; };
+    struct ReanimDrawSegment { size_t first, count; bool resident; };
     std::vector<ReanimRange> reanimFreeRanges;
+    std::vector<ReanimDrawSegment> reanimDrawSegments;
     using TexBufferFn = void(APIENTRY*)(GLenum, GLenum, GLuint);
     using CopyBufferFn = void(APIENTRY*)(GLenum, GLenum, GLintptr, GLintptr, GLsizeiptr);
-    using BeginQueryFn = void(APIENTRY*)(GLenum, GLuint);
-    using EndQueryFn = void(APIENTRY*)(GLenum);
     TexBufferFn texBuffer = nullptr;
     CopyBufferFn copyBuffer = nullptr;
+#if defined(PVZ_OPENGL_REANIM_DIAGNOSTICS)
+    using BeginQueryFn = void(APIENTRY*)(GLenum, GLuint);
+    using EndQueryFn = void(APIENTRY*)(GLenum);
+    using QueryCounterFn = void(APIENTRY*)(GLuint, GLenum);
     BeginQueryFn beginFrameQuery = nullptr;
     EndQueryFn endFrameQuery = nullptr;
+    QueryCounterFn queryCounter = nullptr;
     FrameTiming* frameTiming = nullptr;
+#endif
     std::array<int, 6> reanimUniforms{};
     bool reanimChecked = false;
     std::unordered_set<OpenGLReanim*> reanimDefinitions;
@@ -81,9 +95,8 @@ struct OpenGLRenderer::Impl {
     std::vector<ReanimRange> reanimOrdinarySpans;
     bool hasReanimDraws = false;
     unsigned int reanimFrameGeneration = 0;
-    uint32_t reanimPictureCandidates = 0;
     uint64_t reanimOrdinaryTriangles = 0;
-    bool reanimFrameEligible = false;
+#endif
     UniformLocations sceneUniforms{}, imageUniforms{}, fontUniforms{}, presentUniforms{};
     bool open = false, mainFrame = false, initialized = false, sceneInitialized = false;
     OpenGLTexture* white = nullptr;
@@ -110,9 +123,11 @@ struct OpenGLRenderer::Impl {
     void Upload(OpenGLTexture* texture, const void* data, int pitch, unsigned int format);
     void BindTarget();
     void Flush();
+#if defined(PVZ_OPENGL_REANIM_RESIDENT)
     bool InitReanim();
     size_t AllocateReanimRange(size_t count);
     void CollectReanims();
+#endif
     void Submit(std::span<const GpuVertex> input, OpenGLTexture* source,
         GpuBlend blend, const GpuClip* clip, bool coverage);
     unsigned int Program(std::string_view vertex, std::string_view fragment);

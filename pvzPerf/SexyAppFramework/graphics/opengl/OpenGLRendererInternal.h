@@ -89,7 +89,13 @@ struct OpenGLRenderer::Impl {
         GpuClip clip;
     };
     std::vector<ReanimInstanceState> reanimInstances;
-    std::vector<std::array<float,24>> reanimInstanceData;
+#if defined(PVZ_OPENGL_REANIM_COMPUTE_EXPERIMENT)
+    static constexpr size_t ReanimInstanceTexels = 6;
+#else
+    // Scissor supplies the effective clip in the regular GS/VS paths.
+    static constexpr size_t ReanimInstanceTexels = 5;
+#endif
+    std::vector<std::array<float,ReanimInstanceTexels*4>> reanimInstanceData;
     std::vector<unsigned int> reanimIndices;
     std::vector<size_t> reanimMarkerOffsets;
     std::vector<ReanimRange> reanimOrdinarySpans;

@@ -42,7 +42,8 @@ CPU 业务仍直接读取生成的 C++ 数组；GPU 的 GRU1 上传文件单独�
 
 Vulkan／OpenGL／DX12／Metal 常驻动画接口由 `PVZ_EXPERIMENTAL_GPU_REANIM=ON` 显式启用，
 默认关闭，普通 Release 不加载 GPU 动画关键帧，也不切换绘制路径。
-共享实例输入为 64 字节，后端附加图集及裁剪信息后为 96 字节；
+共享实例输入为 64 字节；OpenGL 常规 GS／独立 VS 附加图集信息后为 80 字节，
+其余后端及 OpenGL compute 试验／旧 GS 回退附加裁剪信息后为 96 字节；
 每条图片轨道另交 32 字节差异输入。GPU 每轨一次计算插值、三角函数、
 矩阵及裁剪，直接输出绘制顶点，不将变换结果读回 CPU。
 共享实例延迟到首条符合条件的图片轨道才创建；同组 GPU-only 轨道也共享强制实例，
@@ -62,7 +63,7 @@ OpenGL 每次 Flush 从未知状态开始，在批次循环内复用未改变的
 scissor、blend 和各 program 的 coverage uniform；不跨 Flush 缓存这些状态，
 也不增加 renderer 的持久成员。
 OpenGL 常规 GS 路径直接输出四角，使用批次已有的 scissor 执行有效整数裁剪，
-不再重复执行 shader 多边形裁剪；独立 compute 试验保留原 GS 回退作为对照。
+不再上传实例裁剪矩形或执行 shader 多边形裁剪；独立 compute 试验保留原 GS 回退作为对照。
 Vulkan／DX12 使用 precise 多项式，OpenGL 使用自身 native sin/cos 路径。
 Vulkan／OpenGL／DX12 的常驻定义缓冲区支持扩容及释放区间复用；
 扩容在 GPU 内复制已有数据，释放区间等待对应提交完成后才能重新分配，

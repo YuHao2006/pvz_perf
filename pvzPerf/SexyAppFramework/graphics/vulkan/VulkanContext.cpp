@@ -725,7 +725,7 @@ void VulkanContext::BeginPresentPass(VkClearColorValue clearColor) {
     presentPassActive_ = true;
 }
 
-void VulkanContext::EndFrame(VkCommandBuffer computePrelude) {
+void VulkanContext::EndFrame() {
     if (!frameActive_)
         return;                   // 交换链过期那帧没活可干；重复调用也安全
     if (!presentPassActive_)
@@ -742,9 +742,8 @@ void VulkanContext::EndFrame(VkCommandBuffer computePrelude) {
     submit.waitSemaphoreCount = 1;
     submit.pWaitSemaphores = &imageAvailable_;
     submit.pWaitDstStageMask = &waitStage;
-    const VkCommandBuffer commands[] = {computePrelude, commandBuffer_};
-    submit.commandBufferCount = computePrelude ? 2u : 1u;
-    submit.pCommandBuffers = computePrelude ? commands : &commandBuffer_;
+    submit.commandBufferCount = 1;
+    submit.pCommandBuffers = &commandBuffer_;
     submit.signalSemaphoreCount = 1;
     submit.pSignalSemaphores = &renderFinished_[currentImageIndex_];
     VK_CHECK(vkResetFences(device, 1, &inFlight_));

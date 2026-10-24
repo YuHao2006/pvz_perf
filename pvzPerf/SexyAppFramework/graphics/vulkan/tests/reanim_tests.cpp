@@ -223,7 +223,7 @@ void Run() {
             Require(renderer.SubmitReanim(definition,texture,draw,false,false,GpuBlend::Normal,requested,true),
                 "Resident draw rejected valid track");
             // Ordinary triangles between GPU jobs exercise shared-stream
-            // painter order and prelude writes to noncontiguous reservations.
+            // painter order and noncontiguous resident markers.
             renderer.SubmitTriangles(vertices,texture,false,false,GpuBlend::Additive);
             Require(renderer.SubmitReanim(definition,texture,draw,false,false,GpuBlend::Normal,requested,true),
                 "Resident draw rejected a later reservation in the mixed stream");
@@ -235,7 +235,7 @@ void Run() {
             ++cases;
         }
     // Definitions, texture slots, clips, filters and draw modes can change
-    // inside painter order. Ordinary sprites can appear between point jobs.
+    // inside painter order. Ordinary sprites can appear between resident jobs.
     auto secondKeys=keys;secondKeys[0].transX+=4;secondKeys[1].transY-=3;
     auto blankGeometry=geometry;blankGeometry[3]={};
     auto* second=renderer.UploadReanimDefinition({tracks,secondKeys,blankGeometry,2,2});
@@ -436,7 +436,7 @@ void Run() {
     std::cout<<"PASS prior-batch eligibility/count/density/reset, rejected no-slot allocation, "
         "forced override and image-only explicit boundary\n";
 #endif
-    // Image-only submission also runs the prelude and protects deferred deletion.
+    // Image-only submission protects resident resources through deferred deletion.
     auto* image=renderer.CreateRenderImage(64,64);
     renderer.SetRenderImage(image);
     Require(renderer.BeginScene(),"Cannot start image-only reanimation batch");
@@ -586,8 +586,8 @@ void Benchmark() {
         <<" policy="<<policyBenchmark<<" transitions="<<transitionBenchmark
         <<" timestampPeriodNs="<<properties.limits.timestampPeriod
         <<" unlocked clocks; CPU excludes BeginScene acquire/prior-frame wait; CPU includes "
-          "clear, track work, upload, prelude recording, submit and present call. "
-          "GPU timestamps bracket prelude+scene+present-quad commands, exclude WSI present wait.\n";
+          "clear, track work, upload, submit and present call. "
+          "GPU timestamps bracket scene+present-quad commands, exclude WSI present wait.\n";
     const std::string shaders=PVZ_NATIVE_SHADER_DIR;
     VulkanRenderer renderer(window,800,600,shaders+"/game_vs.spv",shaders+"/game_ps.spv");
     const uint32_t texels[]={0xffff8020,0xff20ff80,0xff8020ff,0xffe0e020};

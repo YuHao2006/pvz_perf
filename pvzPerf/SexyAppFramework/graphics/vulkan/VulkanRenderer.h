@@ -137,7 +137,8 @@ public:
     VulkanReanim* UploadReanimDefinition(const GpuReanimDefinition& definition);
     void DestroyReanimDefinition(VulkanReanim* definition);
     // false means the track/job requires the CPU path; no drawing was queued.
-    // Each accepted job evaluates one track once and writes the ordinary stream.
+    // Each accepted track is evaluated once per marker primitive in the GPU
+    // geometry stage; ordinary sprites retain painter order around markers.
     bool SubmitReanim(VulkanReanim* definition, VulkanTexture* texture,
         const GpuReanimDraw& draw, bool linear, bool repeat, VulkanBlend blend,
         const VulkanClip* clip = nullptr,bool forceGpu = false);

@@ -232,29 +232,44 @@ void OpenGLRenderer::Impl::Flush()
         &&!computeFrame
 #endif
     ){
+        // Keep the old expanded-index limit even though the submission stream
+        // now contains one/four vertices rather than three/six indices per marker.
+        const uint64_t virtualIndices=uint64_t(vertices.size())+uint64_t(reanimMarkerOffsets.size())*2;
+        if(virtualIndices>uint64_t(INT32_MAX))
+            throw std::length_error("OpenGL indexed reanimation stream exhausted");
+#if defined(PVZ_OPENGL_REANIM_VERTEX_EXPERIMENT)
+        constexpr size_t markerVertices=4;
+#else
+        constexpr size_t markerVertices=1;
+#endif
         // Classify complete ordinary spans after all submissions are known.
         // A long span may cross material batches, or share one with resident
         // markers. Only the marker boundaries matter for choosing its VS.
         // This is CPU preparation, before the optional upload/draw GPU query.
         reanimOrdinarySpans.clear();
         reanimOrdinarySpans.reserve(reanimMarkerOffsets.size()+1);
-        size_t ordinaryFirst=0;
+        size_t ordinaryFirst=0,indicesNeeded=size_t(virtualIndices);
         for(const auto marker:reanimMarkerOffsets){
-            if(marker-ordinaryFirst>=512*3)reanimOrdinarySpans.push_back({ordinaryFirst,marker-ordinaryFirst});
-#if defined(PVZ_OPENGL_REANIM_VERTEX_EXPERIMENT)
-            ordinaryFirst=marker+6;
-#else
-            ordinaryFirst=marker+3;
-#endif
+            if(marker-ordinaryFirst>=512*3){
+                reanimOrdinarySpans.push_back({ordinaryFirst,marker-ordinaryFirst});
+                indicesNeeded-=marker-ordinaryFirst;
+            }
+            ordinaryFirst=marker+markerVertices;
         }
-        if(reanimIndices.size()-ordinaryFirst>=512*3)
-            reanimOrdinarySpans.push_back({ordinaryFirst,reanimIndices.size()-ordinaryFirst});
+        if(vertices.size()-ordinaryFirst>=512*3){
+            reanimOrdinarySpans.push_back({ordinaryFirst,vertices.size()-ordinaryFirst});
+            indicesNeeded-=vertices.size()-ordinaryFirst;
+        }
         reanimDrawSegments.clear();
         const size_t requiredSegments=batches.size()+reanimOrdinarySpans.size()*2;
         if(requiredSegments>reanimDrawSegments.capacity())
             reanimDrawSegments.reserve(std::max(requiredSegments,
                 reanimDrawSegments.capacity()+reanimDrawSegments.capacity()/2+16));
-        size_t ordinarySpan=0,indicesWritten=0;
+        reanimIndices.clear();
+        if(indicesNeeded>reanimIndices.capacity())
+            reanimIndices.reserve(std::max(indicesNeeded,
+                reanimIndices.capacity()+reanimIndices.capacity()/2+64));
+        size_t ordinarySpan=0,marker=0;
         for(auto& batch:batches){
             batch.segmentFirst=reanimDrawSegments.size();
             size_t cursor=batch.first;
@@ -269,22 +284,35 @@ void OpenGLRenderer::Impl::Flush()
                     if(cursor>=span.first){resident=false;next=std::min(end,span.first+span.count);}
                     else next=std::min(end,span.first);
                 }
-                const size_t first=resident?indicesWritten:reanimIndices[cursor];
+                const size_t first=resident?reanimIndices.size():cursor;
+                size_t count=next-cursor;
                 if(resident){
-                    // Ordinary spans use DrawArrays and need no EBO entries.
-                    // Compact only the retained ranges; writes never reach
-                    // unread indices or change the original vertex numbers.
-                    if(indicesWritten!=cursor)
-                        std::memmove(reanimIndices.data()+indicesWritten,reanimIndices.data()+cursor,
-                            (next-cursor)*sizeof(reanimIndices[0]));
-                    indicesWritten+=next-cursor;
+                    // Merge this retained vertex range with the sorted markers.
+                    // Long ordinary spans are skipped entirely; each marker and
+                    // each retained ordinary vertex produces indices only once.
+                    size_t vertex=cursor;
+                    while(vertex<next){
+                        if(marker<reanimMarkerOffsets.size()&&reanimMarkerOffsets[marker]==vertex){
+                            const auto at=unsigned(vertex);
+#if defined(PVZ_OPENGL_REANIM_VERTEX_EXPERIMENT)
+                            reanimIndices.insert(reanimIndices.end(),{at,at+1,at+3,at+3,at+1,at+2});
+#else
+                            reanimIndices.insert(reanimIndices.end(),{at,at,at});
+#endif
+                            vertex+=markerVertices;++marker;
+                        }else{
+                            const size_t ordinaryEnd=marker<reanimMarkerOffsets.size()?
+                                std::min(next,reanimMarkerOffsets[marker]):next;
+                            for(;vertex<ordinaryEnd;++vertex)reanimIndices.push_back(unsigned(vertex));
+                        }
+                    }
+                    count=reanimIndices.size()-first;
                 }
-                reanimDrawSegments.push_back({first,next-cursor,resident});
+                reanimDrawSegments.push_back({first,count,resident});
                 cursor=next;
             }
             batch.segmentCount=reanimDrawSegments.size()-batch.segmentFirst;
         }
-        reanimIndices.resize(indicesWritten);
     }
 #endif
 #if defined(PVZ_OPENGL_REANIM_DIAGNOSTICS)
@@ -484,8 +512,8 @@ void OpenGLRenderer::Impl::Submit(std::span<const GpuVertex> input, OpenGLTextur
             }
             native = feedback->image;
         }
-#if defined(PVZ_OPENGL_REANIM_RESIDENT)
-        const size_t first = hasReanimDraws ? reanimIndices.size() : vertices.size();
+#if defined(PVZ_OPENGL_REANIM_COMPUTE_EXPERIMENT)
+        const size_t first = reanimComputeProgram&&hasReanimDraws ? reanimIndices.size() : vertices.size();
 #else
         const size_t first = vertices.size();
 #endif
@@ -496,7 +524,9 @@ void OpenGLRenderer::Impl::Submit(std::span<const GpuVertex> input, OpenGLTextur
             draw.slot = input[index].slot;
 #if defined(PVZ_OPENGL_REANIM_RESIDENT)
             draw.sampler = coverage ? 0 : input[index].sampler & 3u;
-            if (hasReanimDraws) reanimIndices.push_back(static_cast<unsigned int>(vertices.size()));
+#if defined(PVZ_OPENGL_REANIM_COMPUTE_EXPERIMENT)
+            if (reanimComputeProgram&&hasReanimDraws) reanimIndices.push_back(static_cast<unsigned int>(vertices.size()));
+#endif
 #else
             draw.sampler = coverage ? 0 : input[index].sampler;
 #endif

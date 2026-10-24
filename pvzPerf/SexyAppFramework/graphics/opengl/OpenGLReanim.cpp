@@ -455,7 +455,11 @@ bool OpenGLRenderer::SubmitReanimTrack(unsigned int instance,const GpuReanimTrac
     if(s.reanimComputeProgram)indexCount=18;
 #endif
 #endif
-    const auto firstIndexCount=s.hasReanimDraws?s.reanimIndices.size():s.vertices.size();
+    const uint64_t firstIndexCount=
+#if defined(PVZ_OPENGL_REANIM_COMPUTE_EXPERIMENT)
+        s.reanimComputeProgram?(s.hasReanimDraws?s.reanimIndices.size():s.vertices.size()):
+#endif
+        uint64_t(s.vertices.size())+uint64_t(s.reanimMarkerOffsets.size())*2;
     if(s.vertices.size()>size_t(UINT32_MAX)-vertexCount||firstIndexCount>size_t(INT32_MAX)-indexCount)
         throw std::length_error("OpenGL indexed reanimation stream exhausted");
     // The native32byte track payload aliases the first32bytes of an ordinary
@@ -466,44 +470,42 @@ bool OpenGLRenderer::SubmitReanimTrack(unsigned int instance,const GpuReanimTrac
         std::bit_cast<uint32_t>(draw.shakeX),std::bit_cast<uint32_t>(draw.shakeY),0,0};
     std::memcpy(&marker,payload.data(),32);marker.sampler=MarkerSampler;
     EnsureSpace(s.vertices,s.vertices.size()+vertexCount);
-    EnsureSpace(s.reanimIndices,firstIndexCount+indexCount);
     EnsureSpace(s.batches,s.batches.size()+1);
 #if defined(PVZ_OPENGL_REANIM_COMPUTE_EXPERIMENT)
-    if(s.reanimComputeProgram)EnsureSpace(s.reanimComputeJobs,s.reanimComputeJobs.size()+1);
+    if(s.reanimComputeProgram){
+        EnsureSpace(s.reanimComputeJobs,s.reanimComputeJobs.size()+1);
+        EnsureSpace(s.reanimIndices,size_t(firstIndexCount)+indexCount);
+    }
     else
 #endif
     EnsureSpace(s.reanimMarkerOffsets,s.reanimMarkerOffsets.size()+1);
-    if(!s.hasReanimDraws){
-        s.reanimIndices.resize(s.vertices.size());
-        std::iota(s.reanimIndices.begin(),s.reanimIndices.end(),0u);
-    }
-    const auto first=s.reanimIndices.size();const auto vertex=unsigned(s.vertices.size());
+    size_t first=s.vertices.size(),streamCount=vertexCount;
+    const auto vertex=unsigned(s.vertices.size());
 #if defined(PVZ_OPENGL_REANIM_COMPUTE_EXPERIMENT)
     if(s.reanimComputeProgram){
+        if(!s.hasReanimDraws){
+            s.reanimIndices.resize(s.vertices.size());
+            std::iota(s.reanimIndices.begin(),s.reanimIndices.end(),0u);
+        }
+        first=s.reanimIndices.size();streamCount=indexCount;
         s.reanimComputeJobs.push_back({vertex,unsigned(first)});
         s.reanimIndices.insert(s.reanimIndices.end(),18,0u);
     }else
 #endif
-    {
-        s.reanimMarkerOffsets.push_back(first);
+    s.reanimMarkerOffsets.push_back(vertex);
 #if defined(PVZ_OPENGL_REANIM_VERTEX_EXPERIMENT)
-        s.reanimIndices.insert(s.reanimIndices.end(),{vertex,vertex+1,vertex+3,vertex+3,vertex+1,vertex+2});
-        for(unsigned int corner=0;corner<4;++corner){
-            marker.slot=corner;s.vertices.push_back({marker});
-        }
-#else
-        s.reanimIndices.insert(s.reanimIndices.end(),{vertex,vertex,vertex});
-#endif
+    for(unsigned int corner=0;corner<4;++corner){
+        marker.slot=corner;s.vertices.push_back({marker});
     }
-#if !defined(PVZ_OPENGL_REANIM_VERTEX_EXPERIMENT)
+#else
     s.vertices.push_back({marker});
 #endif
     s.hasReanimDraws=true;
     const auto sameClip=[&](const Impl::Batch& b){
         return b.clip.x==clip.x&&b.clip.y==clip.y&&b.clip.width==clip.width&&b.clip.height==clip.height;};
     if(!s.batches.empty()&&s.batches.back().image==state.image&&s.batches.back().blend==blend&&
-        !s.batches.back().coverage&&sameClip(s.batches.back()))s.batches.back().count+=indexCount;
-    else s.batches.push_back({state.image,first,indexCount,blend,clip,false});
+        !s.batches.back().coverage&&sameClip(s.batches.back()))s.batches.back().count+=streamCount;
+    else s.batches.push_back({state.image,first,streamCount,blend,clip,false});
     return true;
 }
 bool OpenGLRenderer::SubmitReanim(OpenGLReanim* definition,OpenGLTexture* texture,

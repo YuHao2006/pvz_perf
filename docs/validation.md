@@ -74,11 +74,12 @@ OpenGL 常规 GS 改为四角输出并复用批次 scissor 后，原生渲染与
 无裁剪与最近邻用例没有差异，因此不将此修改称为全套逐字节一致。
 OpenGL Flush 内状态去重及普通段 EBO 过滤后，常规 GS／独立 VS／compute／显式 GS 回退、
 普通 render 的 coverage／字体／alpha／pool／反馈／目标切换，以及 OFF／恢复 ON
-均在状态去重版本通过；EBO 过滤与 80 字节实例版本重新通过上述四条 ON 路径、普通 render、
+均在状态去重版本通过；直接生成 resident EBO 与 80 字节实例版本重新通过上述四条 ON 路径、普通 render、
 Win7/OpenGL Release 构建、实际游戏 Image 强 probe 和 static 四场景。
 反馈目标测试直接查询 GPU 缓冲区大小，确认 512 个普通三角形后的单轨常规 GS
 仅保留三个索引，独立 VS 保留六个索引；compute 的 GS 回退也执行该检查，
-实际 compute 不使用这项过滤。长段阈值两侧、同批和跨材质边界像素检查均通过。
+实际 compute 保留原索引机制。相邻 marker、单个普通三角形间隔、
+长段阈值两侧、末尾无后继 marker、同批和跨材质边界像素检查均通过。
 常规 GS／独立 VS 移除实例裁剪矩形后，原生实例上传为 80 字节；
 compute 及其旧 GS 回退仍为 96 字节。两次反馈 Flush 的 GPU 缓冲区查询
 分别确认两个实例共 160／192 字节，像素检查覆盖非零实例编号及裁剪行为。

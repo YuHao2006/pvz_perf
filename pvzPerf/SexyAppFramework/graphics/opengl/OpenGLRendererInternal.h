@@ -41,6 +41,7 @@ struct OpenGLRenderer::Impl {
     };
     struct Batch {
         unsigned int image;
+        // VBO vertex range, except actual compute frames use their original EBO range.
         size_t first, count;
         GpuBlend blend;
         GpuClip clip;
@@ -97,7 +98,7 @@ struct OpenGLRenderer::Impl {
 #endif
     std::vector<std::array<float,ReanimInstanceTexels*4>> reanimInstanceData;
     std::vector<unsigned int> reanimIndices;
-    std::vector<size_t> reanimMarkerOffsets;
+    std::vector<size_t> reanimMarkerOffsets; // VBO starts for noncompute GS/VS/fallback markers.
     std::vector<ReanimRange> reanimOrdinarySpans;
     bool hasReanimDraws = false;
     unsigned int reanimFrameGeneration = 0;

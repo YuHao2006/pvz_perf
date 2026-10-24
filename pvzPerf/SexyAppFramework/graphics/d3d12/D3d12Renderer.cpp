@@ -1673,8 +1673,8 @@ bool D3d12Renderer::SubmitReanimTrack(uint32_t instance, const GpuReanimTrackDra
     GpuVertex marker{};
     marker.sampler = 0xc0000000u | packetIndex;
     // UPLOAD memory can be write-combined: chained assignment returns the
-    // destination lvalue and can force reads back across PCIe. Build the
-    // repeated triangle in CPU memory, then perform only streaming writes.
+    // destination lvalue and can force slow reads from mapped memory. Build
+    // the repeated triangle in CPU memory and copy from that CPU array.
     const GpuVertex markers[]{marker, marker, marker};
     std::memcpy(page->mapped + page->used, markers, sizeof(markers));
     page->used += 3 * sizeof(GpuVertex);

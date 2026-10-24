@@ -934,6 +934,7 @@ void Zombie::ZombieInitialize(int theRow, ZombieType theType, bool theVariant, Z
     mShieldHealth = 0;
     mHelmHealth = 0;
     mAltitude = 0.0f;
+    mAltitudeMotion = {};
     mFlyingHealth = 0;
     mOriginalAnimRate = 0.0f;
     mAttachmentID = AttachmentID::ATTACHMENTID_NULL;
@@ -1497,7 +1498,7 @@ void Zombie::UpdateZombieBungee()
     static constexpr BungeePhaseFn kBungeeDiving = [](Zombie& z)
     {
         float aOldAltitude = z.mAltitude;
-        z.mAltitude -= Sexy::UpdateDelta(8.0f);
+        AdvanceVelocity(z.mAltitude, -8.0f, Sexy::gUpdateIntervalNs, z.mAltitudeMotion);
         if (z.mAltitude <= BUNGEE_ZOMBIE_HEIGHT - 404.0f && aOldAltitude > BUNGEE_ZOMBIE_HEIGHT - 404.0f && z.mRelatedZombieID == ZombieID::ZOMBIEID_NULL)
         {
             z.mApp->PlayFoley(FoleyType::FOLEY_GRASSSTEP);  // 靶子扎地的音效
@@ -1530,7 +1531,7 @@ void Zombie::UpdateZombieBungee()
         // 原 else-if PHASE_BUNGEE_RISING
         [](Zombie& z)
         {
-            z.mAltitude += Sexy::UpdateDelta(8.0f);
+            AdvanceVelocity(z.mAltitude, 8.0f, Sexy::gUpdateIntervalNs, z.mAltitudeMotion);
             if (z.mAltitude >= 600.0f)
             {
                 z.DieNoLoot();
@@ -1842,11 +1843,12 @@ void Zombie::LandFlyer(unsigned int theDamageFlags)
 }
 
 //0x525BE0
-void Zombie::UpdateZombieFlyer()
+void Zombie::UpdateZombieFlyer(bool theAltitudeAlreadyAdvanced)
 {
     if (mApp->mGameMode == GameMode::GAMEMODE_LIMBO_HIGH_GRAVITY && (mX) < 720.0f)
     {
-        mAltitude -= Sexy::UpdateDelta(0.1f);
+        if (!theAltitudeAlreadyAdvanced)
+            AdvanceVelocity(mAltitude, -0.1f, Sexy::gUpdateIntervalNs, mAltitudeMotion);
         if (mAltitude < -35.0f)
         {
             LandFlyer(0U);
@@ -2474,6 +2476,7 @@ void Zombie::UpdateZombieGargantuar()
             aZombieImp->SetRow(mRow);
             aZombieImp->mVariant = false;
             aZombieImp->mAltitude = 88.0f;
+            aZombieImp->mAltitudeMotion = {};
             aZombieImp->mRenderOrder = mRenderOrder + 1;
             aZombieImp->mZombiePhase = ZombiePhase::PHASE_IMP_GETTING_THROWN;
 #ifdef DO_FIX_BUGS
@@ -2558,18 +2561,43 @@ void Zombie::UpdateZombieImp()
 {
     if (mZombiePhase == ZombiePhase::PHASE_IMP_GETTING_THROWN)
     {
-        mVelZ -= Sexy::UpdateDelta(THOWN_ZOMBIE_GRAVITY);
-        mAltitude += Sexy::UpdateDelta(mVelZ);
+        // Gravity is applied before movement in 1073:
+        // z(n)=z0+n*v0-g*n*(n+1)/2, vz(n)=v0-g*n.
+        auto& motion = mAltitudeMotion;
+        const double previousTicks = double(motion.elapsedNs) / 10'000'000.0;
+        const float previousVelocity = CheckedPosition(double(motion.rate) -
+            double(THOWN_ZOMBIE_GRAVITY) * previousTicks);
+        const float previousAltitude = CheckedPosition(motion.origin + double(mY) +
+            double(motion.rate) * previousTicks -
+            double(THOWN_ZOMBIE_GRAVITY) * previousTicks * (previousTicks + 1.0) * 0.5);
+        if (!motion.bound || motion.lastOutput != mAltitude || previousVelocity != mVelZ ||
+            previousAltitude != mAltitude)
+        {
+            // Store altitude relative to row Y. Roof motion changes row Y
+            // continuously; summing its rounded per-update differences would
+            // reintroduce feedback even in a double accumulator.
+            motion.origin = double(mAltitude) - mY;
+            motion.elapsedNs = 0;
+            motion.rate = mVelZ;
+            motion.bound = true;
+        }
+        if (Sexy::gUpdateIntervalNs > UINT64_MAX - motion.elapsedNs)
+            throw std::overflow_error("imp altitude interval exceeds clock range");
+        motion.elapsedNs += Sexy::gUpdateIntervalNs;
+        const double ticks = double(motion.elapsedNs) / 10'000'000.0;
+        mVelZ = CheckedPosition(double(motion.rate) - double(THOWN_ZOMBIE_GRAVITY) * ticks);
         mRootBindingGeneration = 0;
         AdvanceVelocity(mX, -mVelX,
             Sexy::gUpdateIntervalNs, mVelocityX);
 
-        float aDiffY = GetPosYBasedOnRow(mRow) - (mY);
-        mY += (aDiffY);
-        mAltitude += aDiffY;
+        mY = GetPosYBasedOnRow(mRow);
+        mAltitude = CheckedPosition(motion.origin + double(mY) + double(motion.rate) * ticks -
+            double(THOWN_ZOMBIE_GRAVITY) * ticks * (ticks + 1.0) * 0.5);
+        motion.lastOutput = mAltitude;
         if (mAltitude <= 0.0f)
         {
             mAltitude = 0.0f;
+            mAltitudeMotion = {};
             mZombiePhase = ZombiePhase::PHASE_IMP_LANDING;
             PlayZombieReanim(ReanimTrackId::anim_land, ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD, 0, 24.0f);
         }
@@ -3640,33 +3668,32 @@ void Zombie::UpdateZombiePool()
 {
     if (mZombieHeight == ZombieHeight::HEIGHT_OUT_OF_POOL)
     {
-        mAltitude += Sexy::UpdateDelta(1.0f);
-        if (mZombieType == ZombieType::ZOMBIE_SNORKEL)
-        {
-            mAltitude += Sexy::UpdateDelta(1.0f);
-        }
+        AdvanceVelocity(mAltitude, mZombieType == ZombieType::ZOMBIE_SNORKEL ? 2.0f : 1.0f,
+            Sexy::gUpdateIntervalNs, mAltitudeMotion);
 
         if (mAltitude >= 0.0f)
         {
             mAltitude = 0.0f;
+            mAltitudeMotion = {};
             mZombieHeight = ZombieHeight::HEIGHT_ZOMBIE_NORMAL;
             mInPool = false;
         }
     }
     else if (mZombieHeight == ZombieHeight::HEIGHT_IN_TO_POOL)
     {
-        mAltitude -= Sexy::UpdateDelta(1.0f);
+        AdvanceVelocity(mAltitude, -1.0f, Sexy::gUpdateIntervalNs, mAltitudeMotion);
         int aDepth = -40 * mScaleZombie;
         if (mAltitude <= aDepth)
         {
             mAltitude = aDepth;
+            mAltitudeMotion = {};
             mZombieHeight = ZombieHeight::HEIGHT_ZOMBIE_NORMAL;
             StartWalkAnim(0);
         }
     }
     else if (mZombieHeight == ZombieHeight::HEIGHT_DRAGGED_UNDER)
     {
-        mAltitude -= Sexy::UpdateDelta(1.0f);
+        AdvanceVelocity(mAltitude, -1.0f, Sexy::gUpdateIntervalNs, mAltitudeMotion);
     }
 }
 
@@ -3678,19 +3705,21 @@ void Zombie::UpdateZombieHighGround()
 
     if (mZombieHeight == ZombieHeight::HEIGHT_UP_TO_HIGH_GROUND)
     {
-        mAltitude += Sexy::UpdateDelta(1.0f);
+        AdvanceVelocity(mAltitude, 1.0f, Sexy::gUpdateIntervalNs, mAltitudeMotion);
         if (mAltitude >= HIGH_GROUND_HEIGHT)
         {
             mAltitude = HIGH_GROUND_HEIGHT;
+            mAltitudeMotion = {};
             mZombieHeight = ZombieHeight::HEIGHT_ZOMBIE_NORMAL;
         }
     }
     else if (mZombieHeight == ZombieHeight::HEIGHT_DOWN_OFF_HIGH_GROUND)
     {
-        mAltitude -= Sexy::UpdateDelta(1.0f);
+        AdvanceVelocity(mAltitude, -1.0f, Sexy::gUpdateIntervalNs, mAltitudeMotion);
         if (mAltitude <= 0.0f)
         {
             mAltitude = 0.0f;
+            mAltitudeMotion = {};
             mZombieHeight = ZombieHeight::HEIGHT_ZOMBIE_NORMAL;
             mOnHighGround = false;
         }
@@ -3698,22 +3727,43 @@ void Zombie::UpdateZombieHighGround()
 }
 
 //0x529770
-void Zombie::UpdateZombieFalling()
+void Zombie::UpdateZombieFalling(float theAdditionalRate)
 {
-    mAltitude -= Sexy::UpdateDelta(1.0f);
-    if (mZombiePhase == ZombiePhase::PHASE_POLEVAULTER_PRE_VAULT)
-    {
-        mAltitude -= Sexy::UpdateDelta(1.0f);
-    }
+    const float fallingRate = mZombiePhase == ZombiePhase::PHASE_POLEVAULTER_PRE_VAULT ? -2.0f : -1.0f;
+    const float rate = fallingRate + theAdditionalRate;
+    AdvanceVelocity(mAltitude, rate, Sexy::gUpdateIntervalNs, mAltitudeMotion);
 
     int aGroundHeight = 0;
     if (IsOnHighGround())
     {
         aGroundHeight = HIGH_GROUND_HEIGHT;
     }
-    if (mAltitude <= aGroundHeight)
+    if (theAdditionalRate != 0)
+    {
+        // Falling runs before the flyer's additional gravity. Find the first
+        // 10ms tick whose intermediate falling sample reaches the ground.
+        // At that tick the legacy result is ground + additionalRate; carry
+        // the remaining time on this new linear segment rather than clamping
+        // to ground + additionalRate * the outer update's duration.
+        const double eventTicks = std::max(1.0, std::ceil(1.0 +
+            (mAltitudeMotion.origin + fallingRate - aGroundHeight) / -double(rate)));
+        const double eventNs = eventTicks * 10'000'000.0;
+        if (eventNs <= double(mAltitudeMotion.elapsedNs))
+        {
+            const auto remaining = mAltitudeMotion.elapsedNs - static_cast<std::uint64_t>(eventNs);
+            mAltitudeMotion.origin = static_cast<float>(aGroundHeight + theAdditionalRate);
+            mAltitudeMotion.elapsedNs = remaining;
+            mAltitudeMotion.rate = theAdditionalRate;
+            mAltitude = CheckedPosition(mAltitudeMotion.origin +
+                double(theAdditionalRate) * double(remaining) / 10'000'000.0);
+            mAltitudeMotion.lastOutput = mAltitude;
+            mZombieHeight = ZombieHeight::HEIGHT_ZOMBIE_NORMAL;
+        }
+    }
+    else if (mAltitude <= aGroundHeight)
     {
         mAltitude = aGroundHeight;
+        mAltitudeMotion = {};
         mZombieHeight = ZombieHeight::HEIGHT_ZOMBIE_NORMAL;
     }
 }
@@ -4843,7 +4893,7 @@ void Zombie::UpdateClimbingLadder()
         return;
     }
 
-    mAltitude += Sexy::UpdateDelta(0.8f);
+    AdvanceVelocity(mAltitude, 0.8f, Sexy::gUpdateIntervalNs, mAltitudeMotion);
     if (mVelX < 0.5f)
     {
         mPendingAdditionalSpeedX = -0.5f;
@@ -4864,6 +4914,10 @@ void Zombie::UpdateClimbingLadder()
 // GOTY @Patoke: 0x53B9F1
 void Zombie::UpdateActions()
 {
+    // High-gravity balloons have two altitude writers in this method. Sample
+    // their combined rate once, then keep the original type-action table and
+    // its post-falling threshold checks without advancing the clock twice.
+    bool aFlyerAltitudeAdvanced = false;
     if (mZombieHeight == ZombieHeight::HEIGHT_UP_LADDER)
     {
         UpdateClimbingLadder();
@@ -4882,7 +4936,9 @@ void Zombie::UpdateActions()
     }
     if (mZombieHeight == ZombieHeight::HEIGHT_FALLING)
     {
-        UpdateZombieFalling();
+        aFlyerAltitudeAdvanced = mZombieType == ZombieType::ZOMBIE_BALLOON &&
+            mApp->mGameMode == GameMode::GAMEMODE_LIMBO_HIGH_GRAVITY && mX < 720.0f;
+        UpdateZombieFalling(aFlyerAltitudeAdvanced ? -0.1f : 0);
     }
     if (mZombieHeight == ZombieHeight::HEIGHT_IN_TO_CHIMNEY)
     {
@@ -4941,7 +4997,10 @@ void Zombie::UpdateActions()
     {
         if (void (*aAction)(Zombie*) = kZombieTypeActions[mZombieType])
         {
-            aAction(this);
+            if (aFlyerAltitudeAdvanced)
+                UpdateZombieFlyer(true);
+            else
+                aAction(this);
         }
     }}
 

@@ -2,6 +2,7 @@
 #include "Sexy.TodLib/generated/ReanimVariantOptions.h"
 #include "GameButton.h"
 #include "CreditScreen.h"
+#include "CreditsScroll.h"
 #include "LawnApp.h"
 #include "graphics/DDInterface.h"
 #include "Resources.h"
@@ -1137,9 +1138,8 @@ void CreditScreen::Update()
         UpdateMovie();
         // 1073 004396F0: 0.25 logical pixels per 100 Hz update, then wrap
         // after the whole roll and a further 120 pixels have passed.
-        mCreditsScrollPosition -= Sexy::UpdateDelta(0.25f);
-        if (mCreditsScrollPosition < -static_cast<float>(mCreditsContentHeight + 120))
-            mCreditsScrollPosition = static_cast<float>(mMainMenuButton->mY - 50);
+        mCreditsScrollPosition = AdvanceCreditsScroll(mCreditsScrollPhaseNs,
+            mMainMenuButton->mY - 50, mCreditsContentHeight, Sexy::gUpdateIntervalNs);
     }
     else if (mUpdateCount > 1)
     {

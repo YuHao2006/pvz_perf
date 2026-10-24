@@ -170,6 +170,9 @@ public:
     float                           mRootScale = 0;
     TimedLinearMotion               mVelocityX;
     TimedLinearMotion               mVelocityY;
+    // Shared by mutually exclusive linear altitude and thrown-imp segments.
+    // For an imp, rate is its initial vertical velocity; elapsedNs remains ns.
+    TimedLinearMotion               mAltitudeMotion;
     float                           mPendingAdditionalSpeedX = 0; // consumed within the current Update
 
 public:
@@ -227,7 +230,7 @@ public:
     /*inline*/ void                 OverrideParticleColor(TodParticleSystem* aParticle);
     /*inline*/ void                 OverrideParticleScale(TodParticleSystem* aParticle);
     void                            PoolSplash(bool theInToPoolSound);
-    void                            UpdateZombieFlyer();
+    void                            UpdateZombieFlyer(bool theAltitudeAlreadyAdvanced = false);
     void                            UpdateZombiePogo();
     void                            UpdateZombieNewspaper();
     void                            LandFlyer(unsigned int theDamageFlags);
@@ -235,7 +238,7 @@ public:
     bool                            IsWalkingBackwards();
     TodParticleSystem*              AddAttachedParticle(int thePosX, int thePosY, ParticleEffect theEffect);
     void                            PogoBreak(unsigned int theDamageFlags);
-    void                            UpdateZombieFalling();
+    void                            UpdateZombieFalling(float theAdditionalRate = 0);
     void                            UpdateZombieDancer();
     ZombieID                        SummonBackupDancer(int theRow, int thePosX);
     void                            SummonBackupDancers();

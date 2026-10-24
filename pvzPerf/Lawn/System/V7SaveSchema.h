@@ -22,7 +22,7 @@ constexpr std::size_t Size(Kind kind)
 {
     switch (kind)
     {
-    case Kind::Zombie: return 80;
+    case Kind::Zombie: return 105;
     case Kind::Plant: return 156;
     case Kind::Projectile: return 36;
     case Kind::Coin: return 20;

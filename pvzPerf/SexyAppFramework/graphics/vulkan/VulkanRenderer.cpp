@@ -257,7 +257,8 @@ struct VulkanRenderer::Impl {
     struct InstanceControl {VulkanReanim* definition;VulkanTexture* texture;uint32_t before,after;};
     std::vector<InstanceControl> unifiedInstanceControls;
     struct OrdinaryRun {
-        Buffer* stream;VkDeviceSize offset;uint32_t count;VkPipeline pipeline;
+        // Low two bits: blend; family: scene/image/coverage/imageCoverage (0..3).
+        Buffer* stream;VkDeviceSize offset;uint32_t count,pipelineSlot;
         VkRect2D scissor;int width,height;
     };
     std::vector<OrdinaryRun> unifiedOrdinary;
@@ -855,7 +856,11 @@ struct VulkanRenderer::Impl {
     void InitAlphaKernel(LoadingPipelines);
     void FinishImageBatch();
     void Draw(std::span<const VulkanVertex>, VulkanTexture*,
-              VkPipeline, const VulkanClip*, int viewportWidth, int viewportHeight);
+              VkPipeline, const VulkanClip*, int viewportWidth, int viewportHeight
+#if defined(PVZ_REANIM_UNIFIED)
+              ,uint32_t pipelineSlot
+#endif
+    );
     void AppendRun(Buffer*, VkDeviceSize, uint32_t, VkPipeline,
         VkRect2D, int, int
 #if defined(PVZ_REANIM_UNIFIED)
@@ -865,7 +870,7 @@ struct VulkanRenderer::Impl {
 #if defined(PVZ_REANIM_UNIFIED)
     void InitReanimGeometry();
     bool SubmitUnifiedMarker(uint32_t,VulkanTexture*,VulkanBlend);
-    void QueueOrdinary(Buffer*,VkDeviceSize,uint32_t,VkPipeline,VkRect2D,int,int);
+    void QueueOrdinary(Buffer*,VkDeviceSize,uint32_t,uint32_t,VkRect2D,int,int);
     void FlushOrdinary();
     void ReclaimUnifiedRanges();
     void GrowUnifiedStatic(VkDeviceSize required);
@@ -1927,7 +1932,11 @@ bool VulkanRenderer::BeginScene() {
 }
 
 void VulkanRenderer::Impl::Draw(std::span<const VulkanVertex> vertices, VulkanTexture* texture,
-    VkPipeline pipeline, const VulkanClip* clip, int vw, int vh) {
+    VkPipeline pipeline, const VulkanClip* clip, int vw, int vh
+#if defined(PVZ_REANIM_UNIFIED)
+    ,uint32_t pipelineSlot
+#endif
+) {
     if (!frame.valid) throw std::logic_error("Draw outside a frame");
     if (!texture) throw std::invalid_argument("Missing draw texture");
     if (vertices.empty()) { return; }
@@ -1994,7 +2003,7 @@ void VulkanRenderer::Impl::Draw(std::span<const VulkanVertex> vertices, VulkanTe
         {static_cast<uint32_t>(right-left), static_cast<uint32_t>(bottom-top)}};
 #if defined(PVZ_REANIM_UNIFIED)
     if (unifiedFrame && pipeline!=presentPipeline) {
-        QueueOrdinary(stream,offset,static_cast<uint32_t>(vertices.size()),pipeline,scissor,vw,vh);
+        QueueOrdinary(stream,offset,static_cast<uint32_t>(vertices.size()),pipelineSlot,scissor,vw,vh);
         return;
     }
 #endif
@@ -2232,16 +2241,16 @@ VkDeviceSize VulkanRenderer::Impl::AllocateUnifiedStatic(VkDeviceSize bytes) {
     const auto offset=unifiedStaticUsed;unifiedStaticUsed+=bytes;return offset;
 }
 void VulkanRenderer::Impl::QueueOrdinary(Buffer* stream,VkDeviceSize offset,uint32_t count,
-    VkPipeline pipeline,VkRect2D scissor,int targetWidth,int targetHeight) {
+    uint32_t pipelineSlot,VkRect2D scissor,int targetWidth,int targetHeight) {
     if (!unifiedOrdinary.empty()) {
         auto& last=unifiedOrdinary.back();
         if (last.stream==stream && last.offset+VkDeviceSize(last.count)*sizeof(GpuVertex)==offset &&
-            last.pipeline==pipeline && last.width==targetWidth && last.height==targetHeight &&
+            last.pipelineSlot==pipelineSlot && last.width==targetWidth && last.height==targetHeight &&
             std::memcmp(&last.scissor,&scissor,sizeof(scissor))==0) {
             last.count+=count;unifiedOrdinaryTriangles+=count/3;return;
         }
     }
-    unifiedOrdinary.push_back({stream,offset,count,pipeline,scissor,targetWidth,targetHeight});
+    unifiedOrdinary.push_back({stream,offset,count,pipelineSlot,scissor,targetWidth,targetHeight});
     unifiedOrdinaryTriangles+=count/3;
 }
 void VulkanRenderer::Impl::FlushOrdinary() {
@@ -2250,15 +2259,14 @@ void VulkanRenderer::Impl::FlushOrdinary() {
     // share the resident batch; long gaps amortize returning to the normal VS.
     constexpr size_t directThreshold=512;
     const bool useUnified=unifiedOrdinaryTriangles<=directThreshold;
+    // Slots encode family in the high bits and blend in the low two bits.
+    // These pipeline families remain fixed while ordinary runs are pending.
+    const std::array<VkPipeline,3>* const families[2][4]{
+        {&pipelines,&imagePipelines,&coveragePipelines,&imageCoveragePipelines},
+        {&reanimGeometryPipelines,&reanimGeometryImagePipelines,&unifiedCoverage,&unifiedImageCoverage}};
     flushingOrdinary=true;
     for (const auto& run:unifiedOrdinary) {
-        auto pipeline=run.pipeline;
-        if (useUnified) for (size_t i=0;i<3;++i) {
-            if (pipeline==pipelines[i]) pipeline=reanimGeometryPipelines[i];
-            else if (pipeline==imagePipelines[i]) pipeline=reanimGeometryImagePipelines[i];
-            else if (pipeline==coveragePipelines[i]) pipeline=unifiedCoverage[i];
-            else if (pipeline==imageCoveragePipelines[i]) pipeline=unifiedImageCoverage[i];
-        }
+        const auto pipeline=(*families[useUnified][run.pipelineSlot>>2])[run.pipelineSlot&3u];
         AppendRun(run.stream,run.offset,run.count,pipeline,run.scissor,run.width,run.height,false,useUnified);
     }
     unifiedOrdinary.clear();unifiedOrdinaryTriangles=0;flushingOrdinary=false;
@@ -2464,7 +2472,11 @@ void VulkanRenderer::SubmitTriangles(std::span<const VulkanVertex> vertices, Vul
     auto& s = *impl_;
     auto* output = s.renderImage ? s.renderImage : s.scene.get();
     const auto& pipelines = s.renderImage ? s.imagePipelines : s.pipelines;
-    s.Draw(vertices, texture, pipelines.at(static_cast<size_t>(blend)), clip, output->width, output->height);
+    s.Draw(vertices, texture, pipelines.at(static_cast<size_t>(blend)), clip, output->width, output->height
+#if defined(PVZ_REANIM_UNIFIED)
+        ,(s.renderImage?4u:0u)|static_cast<uint32_t>(blend)
+#endif
+    );
 }
 
 void VulkanRenderer::SubmitPool(VulkanTexture* texture,const GpuPoolParams& p) {
@@ -2520,7 +2532,11 @@ void VulkanRenderer::SubmitCoverageTriangles(std::span<const VulkanVertex> verti
         throw std::invalid_argument("Coverage drawing requires a live R8 mask");
     auto* output = s.renderImage ? s.renderImage : s.scene.get();
     const auto& pipelines = s.renderImage ? s.imageCoveragePipelines : s.coveragePipelines;
-    s.Draw(vertices,mask,pipelines.at(static_cast<size_t>(blend)),clip,output->width,output->height);
+    s.Draw(vertices,mask,pipelines.at(static_cast<size_t>(blend)),clip,output->width,output->height
+#if defined(PVZ_REANIM_UNIFIED)
+        ,(s.renderImage?12u:8u)|static_cast<uint32_t>(blend)
+#endif
+    );
 }
 
 void VulkanRenderer::EndSceneAndPresent() {
@@ -2570,7 +2586,11 @@ void VulkanRenderer::EndSceneAndPresent() {
             s.hdr->paperWhiteNits,s.hdr->peakNits,s.hdr->reinhardPaperNits,s.hdr->strength};
         vkCmdPushConstants(s.frame.cmd,s.pipelineLayout,VK_SHADER_STAGE_VERTEX_BIT|VK_SHADER_STAGE_FRAGMENT_BIT,0,sizeof(push),push);
     }
-    s.Draw(vertices, presentImage, s.presentPipeline, nullptr, s.frame.extent.width, s.frame.extent.height);
+    s.Draw(vertices, presentImage, s.presentPipeline, nullptr, s.frame.extent.width, s.frame.extent.height
+#if defined(PVZ_REANIM_UNIFIED)
+        ,0 // Present bypasses the ordinary queue and does not use a family slot.
+#endif
+    );
     s.FlushPendingRun(s.frame.cmd);  // P5：present 四边形入令后冲刷
     s.FlushTextureUploads(); // Includes textures first encountered during this scene.
 #if defined(PVZ_REANIM_BENCHMARK)

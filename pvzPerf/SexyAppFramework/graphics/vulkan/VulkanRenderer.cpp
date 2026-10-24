@@ -138,6 +138,7 @@ struct VulkanReanim {
     VkDescriptorSet geometrySet=VK_NULL_HANDLE;
 #if defined(PVZ_REANIM_UNIFIED)
     uint32_t blobHeader=UINT32_MAX;
+    VkDeviceSize blobBytes=0;
 #endif
     ~VulkanReanim() {
         if (geometryPool) vkDestroyDescriptorPool(VulkanContext::device,geometryPool,nullptr);
@@ -282,6 +283,8 @@ struct VulkanRenderer::Impl {
 #if defined(PVZ_REANIM_UNIFIED)
     Buffer* unifiedStatic=nullptr;
     VkDeviceSize unifiedStaticUsed=0;
+    struct ArenaRange {VkDeviceSize offset,size;};
+    std::vector<ArenaRange> unifiedFreeRanges;
     Buffer* unifiedJobs=nullptr;
     Buffer* unifiedInstances=nullptr;
     Buffer* unifiedPackets=nullptr;
@@ -928,6 +931,9 @@ struct VulkanRenderer::Impl {
     bool SubmitUnifiedMarker(uint32_t,VulkanTexture*,VulkanBlend);
     void QueueOrdinary(Buffer*,VkDeviceSize,uint32_t,VkPipeline,VkRect2D,int,int);
     void FlushOrdinary();
+    void ReclaimUnifiedRanges();
+    void GrowUnifiedStatic(VkDeviceSize required);
+    VkDeviceSize AllocateUnifiedStatic(VkDeviceSize bytes);
 #endif
 #endif
     Buffer* ReanimStream(Buffer* host) {
@@ -1953,8 +1959,12 @@ bool VulkanRenderer::BeginScene() {
     // been queued and destroyed outside a frame, including while minimized.
     s.drawState = {}; // Vulkan command buffers do not inherit last frame's state.
     s.ReapRetired();
+#if defined(PVZ_REANIM_UNIFIED)
+    s.ReclaimUnifiedRanges();
+#else
     for (auto* definition : s.reanimRetired) delete definition;
     s.reanimRetired.clear();
+#endif
     s.reanimWork.clear();
     for (auto& output:s.reanimOutputs) output.active=false;
     for (auto& stream : s.streams) stream->used = 0;
@@ -2239,7 +2249,8 @@ void VulkanRenderer::Impl::InitReanimGeometry() {
 #if defined(PVZ_REANIM_UNIFIED)
     unifiedStatic=new Buffer;unifiedJobs=new Buffer;unifiedInstances=new Buffer;
     unifiedPackets=new Buffer;unifiedIndices=new Buffer;
-    unifiedStatic->Create(64*1024*1024,VK_BUFFER_USAGE_STORAGE_BUFFER_BIT|VK_BUFFER_USAGE_TRANSFER_DST_BIT,false);
+    unifiedStatic->Create(64*1024*1024,VK_BUFFER_USAGE_STORAGE_BUFFER_BIT|
+        VK_BUFFER_USAGE_TRANSFER_DST_BIT|VK_BUFFER_USAGE_TRANSFER_SRC_BIT,false);
     unifiedJobs->Create(8*1024*1024,VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
     unifiedInstances->Create(1024*1024,VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
     unifiedPackets->Create(8*1024*1024,VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
@@ -2264,6 +2275,75 @@ void VulkanRenderer::Impl::InitReanimGeometry() {
 #endif
 }
 #if defined(PVZ_REANIM_UNIFIED)
+void VulkanRenderer::Impl::ReclaimUnifiedRanges() {
+    // Caller has completed both frame and transfer fences. Only range metadata
+    // survives retirement; immutable keyframes remain exclusively on the GPU.
+    if (reanimRetired.empty()) return;
+    unifiedFreeRanges.reserve(unifiedFreeRanges.size()+reanimRetired.size());
+    for (auto* definition:reanimRetired) {
+        if (definition->blobHeader!=UINT32_MAX && definition->blobBytes)
+            unifiedFreeRanges.push_back({VkDeviceSize(definition->blobHeader)*4,definition->blobBytes});
+        delete definition;
+    }
+    reanimRetired.clear();
+    std::sort(unifiedFreeRanges.begin(),unifiedFreeRanges.end(),
+        [](const ArenaRange& a,const ArenaRange& b) {return a.offset<b.offset;});
+    size_t merged=0;
+    for (const auto range:unifiedFreeRanges) {
+        if (merged && unifiedFreeRanges[merged-1].offset+unifiedFreeRanges[merged-1].size==range.offset)
+            unifiedFreeRanges[merged-1].size+=range.size;
+        else unifiedFreeRanges[merged++]=range;
+    }
+    unifiedFreeRanges.resize(merged);
+    while (!unifiedFreeRanges.empty() &&
+        unifiedFreeRanges.back().offset+unifiedFreeRanges.back().size==unifiedStaticUsed) {
+        unifiedStaticUsed=unifiedFreeRanges.back().offset;unifiedFreeRanges.pop_back();
+    }
+}
+void VulkanRenderer::Impl::GrowUnifiedStatic(VkDeviceSize required) {
+    if (required<=unifiedStatic->size) return;
+    if (frame.valid) throw std::logic_error("Grow resident arena between frames");
+    VkPhysicalDeviceProperties limits{};vkGetPhysicalDeviceProperties(window.physicalDevice,&limits);
+    const VkDeviceSize maximum=limits.limits.maxStorageBufferRange;
+    if (required>maximum) throw std::runtime_error("Resident reanimation arena exceeds device storage-buffer limit");
+    const VkDeviceSize capacity=std::min(maximum,std::max(required,unifiedStatic->size*2));
+    auto replacement=std::make_unique<Buffer>();
+    replacement->Create(capacity,VK_BUFFER_USAGE_STORAGE_BUFFER_BIT|
+        VK_BUFFER_USAGE_TRANSFER_DST_BIT|VK_BUFFER_USAGE_TRANSFER_SRC_BIT,false);
+    // Descriptor set binding zero can change only after every old reader has
+    // completed. This is a loading action, never a frame submission stall.
+    window.WaitForFrame();FinishTransfer();CompleteTransfers();
+    if (unifiedStaticUsed) {
+        const auto cmd=BeginTransfer();
+        VkMemoryBarrier before{VK_STRUCTURE_TYPE_MEMORY_BARRIER};
+        before.srcAccessMask=VK_ACCESS_TRANSFER_WRITE_BIT|VK_ACCESS_SHADER_READ_BIT;
+        before.dstAccessMask=VK_ACCESS_TRANSFER_READ_BIT;
+        vkCmdPipelineBarrier(cmd,VK_PIPELINE_STAGE_TRANSFER_BIT|VK_PIPELINE_STAGE_GEOMETRY_SHADER_BIT,
+            VK_PIPELINE_STAGE_TRANSFER_BIT,0,1,&before,0,nullptr,0,nullptr);
+        const VkBufferCopy copy{0,0,unifiedStaticUsed};
+        vkCmdCopyBuffer(cmd,unifiedStatic->buffer,replacement->buffer,1,&copy);
+        VkMemoryBarrier after{VK_STRUCTURE_TYPE_MEMORY_BARRIER};
+        after.srcAccessMask=VK_ACCESS_TRANSFER_WRITE_BIT;after.dstAccessMask=VK_ACCESS_SHADER_READ_BIT;
+        vkCmdPipelineBarrier(cmd,VK_PIPELINE_STAGE_TRANSFER_BIT,VK_PIPELINE_STAGE_GEOMETRY_SHADER_BIT,
+            0,1,&after,0,nullptr,0,nullptr);
+        FinishTransfer();CompleteTransfers();
+    }
+    const VkDescriptorBufferInfo info{replacement->buffer,0,replacement->size};
+    VkWriteDescriptorSet write{VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET};
+    write.dstSet=unifiedSet;write.dstBinding=0;write.descriptorCount=1;
+    write.descriptorType=VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;write.pBufferInfo=&info;
+    vkUpdateDescriptorSets(device,1,&write,0,nullptr);
+    delete unifiedStatic;unifiedStatic=replacement.release();
+}
+VkDeviceSize VulkanRenderer::Impl::AllocateUnifiedStatic(VkDeviceSize bytes) {
+    for (auto it=unifiedFreeRanges.begin();it!=unifiedFreeRanges.end();++it) if (it->size>=bytes) {
+        const auto offset=it->offset;it->offset+=bytes;it->size-=bytes;
+        if (!it->size) unifiedFreeRanges.erase(it);
+        return offset;
+    }
+    GrowUnifiedStatic(unifiedStaticUsed+bytes);
+    const auto offset=unifiedStaticUsed;unifiedStaticUsed+=bytes;return offset;
+}
 void VulkanRenderer::Impl::QueueOrdinary(Buffer* stream,VkDeviceSize offset,uint32_t count,
     VkPipeline pipeline,VkRect2D scissor,int targetWidth,int targetHeight) {
     if (!unifiedOrdinary.empty()) {
@@ -2397,6 +2477,12 @@ bool VulkanRenderer::Impl::SubmitReanimGeometry(VulkanReanim* definition,VulkanT
 VulkanReanim* VulkanRenderer::UploadReanimDefinition(const GpuReanimDefinition& source) {
     auto& s=*impl_;
     if (s.frame.valid) throw std::logic_error("Upload reanimation definitions between frames");
+#if defined(PVZ_REANIM_UNIFIED)
+    if (!s.window.geometryShaderEnabled) return nullptr;
+    if (!s.reanimRetired.empty()) {
+        s.window.WaitForFrame();s.FinishTransfer();s.CompleteTransfers();s.ReclaimUnifiedRanges();
+    }
+#endif
     if (source.tracks.empty() || source.keys.empty() || !source.imageSlotCount || !source.variantCount ||
         uint64_t(source.imageSlotCount)*source.variantCount!=source.geometry.size())
         throw std::invalid_argument("Invalid resident reanimation definition");
@@ -2459,8 +2545,7 @@ VulkanReanim* VulkanRenderer::UploadReanimDefinition(const GpuReanimDefinition& 
         s.reanimDefinitions.reserve(s.reanimDefinitions.size()+1);
         s.reanimStaging.reserve(s.reanimStaging.size()+1);
 #if defined(PVZ_REANIM_UNIFIED)
-        if (s.unifiedStatic && staging->size>s.unifiedStatic->size-s.unifiedStaticUsed)
-            throw std::runtime_error("Unified reanimation prototype static arena exceeded");
+        const VkDeviceSize arenaOffset=s.unifiedStatic?s.AllocateUnifiedStatic(staging->size):0;
 #endif
         const auto cmd=s.BeginTransfer();
         offset=headerBytes;
@@ -2471,13 +2556,13 @@ VulkanReanim* VulkanRenderer::UploadReanimDefinition(const GpuReanimDefinition& 
         }
 #if defined(PVZ_REANIM_UNIFIED)
         if (s.unifiedStatic) {
-            const VkDeviceSize origin=s.unifiedStaticUsed;
+            const VkDeviceSize origin=arenaOffset;
             const uint32_t header[]={uint32_t((origin+16)/4),uint32_t((origin+16+sizes[0])/4),
                 uint32_t((origin+16+sizes[0]+sizes[1])/4),source.imageSlotCount};
             std::memcpy(staging->mapped,header,sizeof(header));
             const VkBufferCopy copy{0,origin,staging->size};
             vkCmdCopyBuffer(cmd,staging->buffer,s.unifiedStatic->buffer,1,&copy);
-            result->blobHeader=uint32_t(origin/4);s.unifiedStaticUsed+=staging->size;
+            result->blobHeader=uint32_t(origin/4);result->blobBytes=staging->size;
         }
 #endif
         VkMemoryBarrier barrier{VK_STRUCTURE_TYPE_MEMORY_BARRIER};

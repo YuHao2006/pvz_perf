@@ -11,7 +11,14 @@ find_library(PVZ_METAL_FRAMEWORK Metal REQUIRED)
 find_library(PVZ_QUARTZCORE_FRAMEWORK QuartzCore REQUIRED)
 find_library(PVZ_FOUNDATION_FRAMEWORK Foundation REQUIRED)
 set(shaderDirectory "${CMAKE_CURRENT_BINARY_DIR}/shaders")
+option(PVZ_METAL_REANIM_RESIDENT "Experimental resident Metal reanimation compute path" OFF)
+if(PVZ_EXPERIMENTAL_GPU_REANIM)
+    set(PVZ_METAL_REANIM_RESIDENT ON)
+endif()
 file(GLOB metalSources CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/shaders/*.metal")
+if(NOT PVZ_METAL_REANIM_RESIDENT)
+    list(FILTER metalSources EXCLUDE REGEX "/game_reanim\\.metal$")
+endif()
 if(NOT metalSources)
     message(FATAL_ERROR "Hand-written Metal shader sources are required")
 endif()
@@ -19,9 +26,16 @@ set(metalObjects)
 foreach(source IN LISTS metalSources)
     get_filename_component(name "${source}" NAME_WE)
     set(object "${shaderDirectory}/${name}.air")
+    set(reanimMathOptions)
+    if(name STREQUAL "game_reanim")
+        # MSL specification 1.6: safe math prevents reassociation; contraction
+        # needs a separate switch even with -fno-fast-math.
+        set(reanimMathOptions -ffp-contract=off)
+    endif()
     add_custom_command(OUTPUT "${object}"
         COMMAND "${CMAKE_COMMAND}" -E make_directory "${shaderDirectory}"
         COMMAND "${PVZ_XCRUN}" -sdk macosx metal -std=metal3.0 -fno-fast-math
+            ${reanimMathOptions}
             -c "${source}" -o "${object}"
         DEPENDS "${source}" "${CMAKE_CURRENT_SOURCE_DIR}/MetalShaderTypes.h"
         VERBATIM)
@@ -35,6 +49,9 @@ add_custom_command(OUTPUT "${shaderDirectory}/game.metallib"
 add_custom_target(sexy_metal_shaders DEPENDS "${shaderDirectory}/game.metallib")
 add_library(sexy_metal STATIC MetalContext.mm MetalRenderer.mm)
 target_compile_features(sexy_metal PUBLIC cxx_std_23)
+if(PVZ_METAL_REANIM_RESIDENT)
+    target_compile_definitions(sexy_metal PUBLIC PVZ_METAL_REANIM_RESIDENT=1)
+endif()
 set_target_properties(sexy_metal PROPERTIES
     OBJCXX_STANDARD 23 OBJCXX_STANDARD_REQUIRED YES OBJCXX_EXTENSIONS NO)
 target_compile_options(sexy_metal PRIVATE -fobjc-arc -Wall -Wextra)
@@ -59,3 +76,20 @@ target_include_directories(sexy_metal_effects PUBLIC
 set_target_properties(sexy_metal sexy_metal_effects PROPERTIES
     OBJCXX_STANDARD 23 OBJCXX_STANDARD_REQUIRED YES OBJCXX_EXTENSIONS NO
     INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE)
+if(BUILD_TESTING AND PVZ_METAL_REANIM_RESIDENT)
+    find_library(PVZ_APPKIT_FRAMEWORK AppKit REQUIRED)
+    add_executable(sexy_metal_reanim_tests EXCLUDE_FROM_ALL tests/reanim_tests.mm
+        ../../misc/FastMath.cpp ../../platform/macos/MacWindow.mm)
+    target_compile_features(sexy_metal_reanim_tests PRIVATE cxx_std_23)
+    target_compile_options(sexy_metal_reanim_tests PRIVATE
+        "$<$<COMPILE_LANGUAGE:OBJCXX>:-fobjc-arc>" -fno-fast-math -ffp-contract=off)
+    target_compile_definitions(sexy_metal_reanim_tests PRIVATE PVZ_METAL_SHADER_DIRECTORY="${shaderDirectory}")
+    target_link_libraries(sexy_metal_reanim_tests PRIVATE sexy_metal
+        "${PVZ_APPKIT_FRAMEWORK}" "${PVZ_QUARTZCORE_FRAMEWORK}" "${PVZ_FOUNDATION_FRAMEWORK}")
+    set_target_properties(sexy_metal_reanim_tests PROPERTIES
+        OBJCXX_STANDARD 23 OBJCXX_STANDARD_REQUIRED YES OBJCXX_EXTENSIONS NO)
+    # Explicit opt-in run on an Apple host with Metal API validation enabled.
+    add_test(NAME sexy_metal_reanim COMMAND sexy_metal_reanim_tests)
+    set_tests_properties(sexy_metal_reanim PROPERTIES TIMEOUT 180 RUN_SERIAL TRUE
+        ENVIRONMENT "MTL_DEBUG_LAYER=1;MTL_SHADER_VALIDATION=1")
+endif()

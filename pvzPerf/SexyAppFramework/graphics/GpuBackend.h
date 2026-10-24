@@ -66,6 +66,12 @@ using GpuReanimResource = VulkanReanim;
 #elif defined(PVZ_GPU_OPENGL)
 #define PVZ_GPU_REANIM_RESIDENT 1
 using GpuReanimResource = OpenGLReanim;
+#elif defined(PVZ_GPU_D3D12)
+#define PVZ_GPU_REANIM_RESIDENT 1
+using GpuReanimResource = D3d12Reanim;
+#elif defined(PVZ_GPU_METAL)
+#define PVZ_GPU_REANIM_RESIDENT 1
+using GpuReanimResource = MetalReanim;
 #else
 struct GpuReanimResource;
 #endif

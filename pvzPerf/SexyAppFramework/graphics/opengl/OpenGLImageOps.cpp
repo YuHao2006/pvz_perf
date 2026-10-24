@@ -124,13 +124,19 @@ OpenGLTexture* OpenGLRenderer::AdoptComposedTexture(OpenGLTexture* texture)
     if (!texture || !s.textures.contains(texture) || texture->slot != ~0U)
         throw std::invalid_argument("Only a raw OpenGL composition can be adopted");
     s.Register(texture);
-    // Composition scratch is scoped to this serialized upload chain. GL retains
-    // already issued command references; no host wait or CPU pixel copy is needed.
+    // With resident rendering enabled, scratch can also be referenced by an
+    // instance or a pending CPU batch: use the normal retirement path below.
+    // GL retains references for commands that have already been issued.
     for (auto it = s.textures.begin(); it != s.textures.end();) {
         auto* candidate = *it;
         if (candidate != s.scene && candidate != s.selected && candidate->slot == ~0U) {
+#if defined(PVZ_OPENGL_REANIM_RESIDENT)
+            ++it;
+            DestroyTexture(candidate);
+#else
             delete candidate;
             it = s.textures.erase(it);
+#endif
         } else ++it;
     }
     return texture;

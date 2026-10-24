@@ -392,6 +392,75 @@ void Policy(OpenGLContext&context){
  std::cout<<"PASS prior-frame policy initial_CPU sparse0/1/8/32 long_ordinary_CPU zero_rejected_packets"
   <<" actual_CPU_pixels dense_accepted force_GPU internal_target_preserves_counters\n";
 }
+void Lifecycle(OpenGLContext&context){
+ if(context.majorVersion<3||(context.majorVersion==3&&context.minorVersion<2))return;
+ OpenGLRenderer r(context,64,64,{});
+ const std::array<GpuReanimTrack,1>tracks{{{0,1}}};
+ const std::array<GpuReanimKey,1>keys{{{8,8,0,0,1,1,1,0,1}}};
+ const std::array<GpuReanimGeometry,2>geometry{{{},{20,20,0,0,1,1}}};
+ const uint32_t blue=0xff0000ffu,green=0xff00ff00u;
+ auto*referenceTexture=r.CreateTexture(1,1,&blue,4);
+ GpuReanimDraw job{};job.overlay00=job.overlay11=1;job.overlay02=6;job.overlay12=4;job.color=0xffffffffu;
+ const auto cpu=Reference(keys[0],keys[0],geometry[1],geometry[1],job,
+  OpenGLRenderer::SlotOf(referenceTexture),nullptr);
+ const GpuReanimInstance packet{0,0,0,0,0,.5f,.5f,0,1,0,6,0,0,1,4,0};
+ const GpuReanimTrackDraw track{0,0xffffffffu};
+ Require(r.BeginScene(),"Lifecycle empty reference");Clear(r);r.EndSceneAndPresent();
+ const auto empty=r.ReadScenePixels();
+ Require(r.BeginScene(),"Lifecycle picture reference");Clear(r);
+ r.SubmitTriangles(cpu,referenceTexture,false,false,GpuBlend::Normal);r.EndSceneAndPresent();
+ const auto picture=r.ReadScenePixels();
+ // Test before and after a real same-generation Flush, then create replacement
+ // handles. Rejection must not depend on whether the allocator reuses an address.
+ for(unsigned mode=0;mode<4;++mode)for(bool queued:{false,true}){
+  auto*definition=r.UploadReanimDefinition({tracks,keys,geometry,2,1});
+  Require(definition!=nullptr,"Lifecycle resident definition unavailable");
+  auto*texture=mode==2?r.CreateRawTexture(1,1,&blue,4):r.CreateTexture(1,1,&blue,4);
+  auto*adopted=mode==2?r.CreateRawTexture(1,1,&green,4):nullptr;
+  Require(r.BeginScene(),"Lifecycle instance scene");
+  const auto token=r.BeginReanimInstance(definition,texture,packet,false,false,nullptr,true);
+  Require(token!=~0u,"Lifecycle instance rejected");
+  if(queued){Clear(r);Require(r.SubmitReanimTrack(token,track,GpuBlend::Normal),"Lifecycle initial track rejected");}
+  if(mode==0){r.DestroyReanimDefinition(definition);definition=nullptr;}
+  else if(mode==1){r.DestroyTexture(texture);texture=nullptr;}
+  else if(mode==2){
+   // Direct adoption intentionally bypasses ComposeAlphaRaw/ImagePass's Flush.
+   Require(r.AdoptComposedTexture(adopted)==adopted,"Direct raw adoption failed");texture=nullptr;
+  }else texture=r.ReplaceTexture(texture,1,1,&blue,4,false);
+  Require(!r.SubmitReanimTrack(token,track,GpuBlend::Normal),"Destroyed resource token accepted before Flush");
+  auto*scratch=r.CreateRenderImage(1,1); // Flush and delete all retired objects without changing the token generation.
+  r.DestroyTexture(scratch);
+  Require(!r.SubmitReanimTrack(token,track,GpuBlend::Normal),"Destroyed resource token accepted after retirement");
+  if(!texture)texture=r.CreateTexture(1,1,&blue,4);
+  if(definition)Require(r.BeginReanimInstance(definition,texture,packet,false,false,nullptr,true)!=~0u,
+   "Replacement live resource instance rejected");
+  Require(!r.SubmitReanimTrack(token,track,GpuBlend::Normal),"Replacement resource revived an old token");
+  if(!queued)Clear(r);
+  r.EndSceneAndPresent();
+  Require(r.ReadScenePixels()==(queued?picture:empty),"Resource destruction changed already queued pixels");
+  if(!definition)definition=r.UploadReanimDefinition({tracks,keys,geometry,2,1});
+  Require(definition!=nullptr,"Rebuilt lifecycle definition unavailable");
+  Require(r.BeginScene(),"Lifecycle replacement scene");Clear(r);
+  Require(!r.SubmitReanimTrack(token,track,GpuBlend::Normal),"Rebuilt resource revived an old frame token");
+  const auto fresh=r.BeginReanimInstance(definition,texture,packet,false,false,nullptr,true);
+  Require(fresh!=~0u&&r.SubmitReanimTrack(fresh,track,GpuBlend::Normal),"Fresh replacement token failed");
+  r.EndSceneAndPresent();Require(r.ReadScenePixels()==picture,"Fresh replacement resource pixels changed");
+  r.DestroyReanimDefinition(definition);r.DestroyTexture(texture);r.DestroyTexture(adopted);
+ }
+ auto*definition=r.UploadReanimDefinition({tracks,keys,geometry,2,1});
+ Require(definition!=nullptr,"Protected texture lifecycle definition unavailable");
+ Require(r.BeginScene(),"Protected texture lifecycle scene");Clear(r);
+ const auto token=r.BeginReanimInstance(definition,r.whiteTexture,packet,false,false,nullptr,true);
+ Require(token!=~0u,"Protected texture instance rejected");
+ bool rejected=false;
+ try{r.DestroyTexture(r.whiteTexture);}catch(const std::invalid_argument&){rejected=true;}
+ Require(rejected&&r.SubmitReanimTrack(token,track,GpuBlend::Normal),
+  "Failed texture destruction invalidated a live token");
+ r.EndSceneAndPresent();r.DestroyReanimDefinition(definition);r.DestroyTexture(referenceTexture);
+ GL3::CheckError("resident explicit instance invalidation lifecycle");
+ std::cout<<"PASS resident lifecycle: begin-only/queued definition/texture/direct-raw-adoption/replacement,"
+  <<" same-generation retirement, no old-token resurrection, fresh-token pixels, failed-destroy preservation\n";
+}
 using GenQuery=void(APIENTRY*)(GLsizei,GLuint*);
 using Query64=void(APIENTRY*)(GLuint,GLenum,unsigned long long*);
 template<class T>T Proc(const char*n){auto p=reinterpret_cast<T>(GL3::GetProcAddress(n));Require(p!=nullptr,n);return p;}
@@ -435,11 +504,14 @@ void Benchmark(OpenGLContext&context,bool mixed,bool transitions=false,bool diag
   <<" benchmark mixed="<<mixed
   <<" transitions="<<transitions
   <<" diagnostic_timestamps="<<diagnostic
-  <<" unlocked clocks; CPU includes interpolation/clip or64Binstance+"
+  <<" unlocked clocks; CPU includes interpolation/clip or API_payload64Binstance+32Btrack;"
+  <<" GPU_upload96Binstance+"
 #if defined(PVZ_OPENGL_REANIM_VERTEX_EXPERIMENT)
-  <<"4x40Bmarker/6indices"
+  <<"4x40Bmarker+24Bindices"
+#elif defined(PVZ_OPENGL_REANIM_COMPUTE_EXPERIMENT)
+  <<"40Bmarker+72Bindices+8Bjob; GPU_copy_and_expansion"
 #else
-  <<"32Btrack"
+  <<"40Bmarker+12Bindices"
 #endif
   <<" preparation,batching,upload,flush,presentcall;"
   <<" GPU query brackets actual Flush upload+draw, excludes presentquad/WSI;"
@@ -558,13 +630,13 @@ int main(int argc,char**argv)try{
 #if defined(PVZ_OPENGL_REANIM_COMPUTE_EXPERIMENT)
  if(argc>1&&std::string(argv[1])=="--gs-fallback"){
   std::cout<<"Compute capability policy simulation GL3.2; actual context remains the driver version above\n";
-  context.majorVersion=3;context.minorVersion=2;Correct(context);Policy(context);return 0;
+  context.majorVersion=3;context.minorVersion=2;Correct(context);Lifecycle(context);Policy(context);return 0;
  }
 #endif
  if(argc>1&&std::string(argv[1])=="--benchmark")Benchmark(context,false);
  else if(argc>1&&std::string(argv[1])=="--benchmark-mixed")Benchmark(context,true);
  else if(argc>1&&std::string(argv[1])=="--benchmark-transitions")Benchmark(context,true,true);
  else if(argc>1&&std::string(argv[1])=="--diagnose-transitions")Benchmark(context,true,true,true);
- else {Correct(context);Policy(context);}
+ else {Correct(context);Lifecycle(context);Policy(context);}
  return 0;
 }catch(const std::exception&e){std::cerr<<"FAIL "<<e.what()<<'\n';return 1;}

@@ -188,7 +188,7 @@ void ParticleMigration()
     Require(expanded.size() == 172 && Get(expanded, 8) == 110'000'004 &&
             Get(expanded, 16) == 50'000'002, "Independent particle time fixture differs");
     state = V7SaveSchema::FromHistorical(Kind::Particle, particle, expanded);
-    Require(state.size() == 68 && Signed(state, 0) == -1 &&
+    Require(state.size() == 92 && Signed(state, 0) == -1 &&
             Signed(state, 8) == 0 && Signed(state, 16) == 375'000'000'000LL &&
             Get(state, 24, 4) == 0x9E3779B9U,
             "Particle migration changed phase, sentinel or deterministic seed");
@@ -282,7 +282,7 @@ void ExactStateValidation()
     Reject([&] { V7SaveSchema::Validate(Kind::Reanimation, Bytes(60)); },
         "Old relative-clock animation tail was accepted as current");
 
-    Bytes system(4), plant(156), zombie(105), emitter(40), particle(68), grid(240);
+    Bytes system(4), plant(156), zombie(105), emitter(40), particle(92), grid(240);
     Set(system, 0, 0xfedcba98U, 4); V7SaveSchema::Validate(Kind::ParticleSystem, system);
     Reject([&] { V7SaveSchema::Validate(Kind::ParticleSystem, Bytes(12)); },
         "Old particle system pending-step state accepted as current");
@@ -319,8 +319,8 @@ void ExactStateValidation()
     rejectField(Kind::Particle, particle, 16, UINT64_MAX, "Negative animation anchor accepted");
     V7SaveSchema::Validate(Kind::GridItem, grid);
     rejectField(Kind::GridItem, grid, 232, 2, "Invalid root chocolate bool accepted", 1);
-    Reject([&] { V7SaveSchema::Validate(Kind::Particle, Bytes(67)); }, "Short exact tail accepted");
-    Reject([&] { V7SaveSchema::Validate(Kind::Particle, Bytes(69)); }, "Long exact tail accepted");
+    Reject([&] { V7SaveSchema::Validate(Kind::Particle, Bytes(91)); }, "Short exact tail accepted");
+    Reject([&] { V7SaveSchema::Validate(Kind::Particle, Bytes(93)); }, "Long exact tail accepted");
     Bytes projectile(36);
     Set(projectile, 0, static_cast<std::uint64_t>(-123'456'789LL));
     Set(projectile, 8, 91'234'567'891LL);

@@ -195,6 +195,10 @@ std::vector<std::uint64_t> Snapshot(const Scene& scene)
             integer(particle.mLinearElapsedNs);
             vector(particle.mLinearVelocity);
             vector(particle.mLinearLastPosition);
+            integer(std::bit_cast<std::uint64_t>(particle.mLinearSpinOrigin));
+            integer(std::bit_cast<std::uint64_t>(particle.mLinearSpinRate));
+            number(particle.mLinearLastSpin);
+            integer(particle.mLinearSpinActive);
             for (float n : particle.mParticleInterp) number(n);
             for (auto& field : particle.mParticleFieldInterp)
                 for (float n : field) number(n);
@@ -395,6 +399,142 @@ void TestConstantMotionPrecision()
     Require(rejected,"particle linear segment overflow was not rejected");
     std::cout<<"PASS particle field-free linear motion: eight ns partitions, lifetime loops, "
         "4096 exact rate segments, per-axis teleport, held move, zero step, field handoff and overflow\n";
+}
+
+void TestConstantSpinPrecision()
+{
+    for (int frequency : {30,60,100,144,200,240,1000,0})
+        for (bool angleCurve:{false,true}) for (bool randomSpeedRange:{false,true})
+    {
+        Scene scene(-1,true);
+        scene.emitter.mAnimationRate={};
+        FloatParameterTrackNode angleNodes[]{
+            {0.0,0,0,1,1},{1.0,180,180,1,1}};
+        FloatParameterTrackNode speedNode{0.0,8,40,1,1};
+        if (angleCurve) scene.emitter.mParticleSpinAngle={angleNodes,2};
+        if (randomSpeedRange) scene.emitter.mParticleSpinSpeed={&speedNode,1};
+        auto* particle=scene.Spawn();
+        particle->mParticleDuration.mNanoseconds=37'000'003;
+        particle->mSpinPosition=1'048'576.f;
+        particle->mSpinVelocity=.125f;
+        particle->mParticleInterp[TRACK_PARTICLE_SPIN_SPEED]=.5f;
+        std::uint32_t random=2719;
+        Advance(scene,1'000'000'000,frequency,random);
+        const double conversion=0.017453292f; // Frozen source degree conversion.
+        const double rate=.125+(randomSpeedRange ? double(.24f)*conversion : 0);
+        const double angle=angleCurve ? double(static_cast<float>(
+            180.0*(1'000'000'000%37'000'003)/37'000'003.0))*conversion : 0;
+        Require(particle->mSpinPosition==static_cast<float>(1'048'576.0+rate*100+angle) &&
+            particle->mLinearSpinActive==1,
+            "constant particle spin lost sub-ULP steps or depended on ns partition");
+    }
+    Scene changing(-1,true);
+    auto* p=changing.Spawn();
+    p->mPosition={1'048'576.f,-1'048'576.f};
+    p->mVelocity={.125f,-.125f};
+    p->mSpinPosition=1'048'576.f;
+    constexpr int units[]{1,2,-1,0};
+    std::int64_t sum=0;
+    for (int i=0;i<4096;++i)
+    {
+        p->mSpinVelocity=units[i%4]/8.f;
+        changing.system->Update(1'250'000);
+        sum+=units[i%4];
+        Require(p->mSpinPosition==static_cast<float>(1'048'576.0+sum/64.0) &&
+            p->mPosition.x==static_cast<float>(1'048'576.0+(i+1)/64.0) &&
+            p->mPosition.y==static_cast<float>(-1'048'576.0-(i+1)/64.0),
+            "spin rate changes lost spin or translation endpoint precision");
+    }
+    {
+        Scene curved(-1,true);
+        FloatParameterTrackNode angleNodes[]{
+            {0.0,0,0,1,1},{1.0,180,180,1,1}};
+        curved.emitter.mParticleSpinAngle={angleNodes,2};
+        auto* particle=curved.Spawn();
+        particle->mParticleDuration.mNanoseconds=37'000'003;
+        particle->mPosition={1'048'576.f,-1'048'576.f};
+        particle->mVelocity={.125f,-.125f};
+        particle->mSpinPosition=1'048'576.f;
+        std::int64_t accumulated=0;
+        for (int i=0;i<4096;++i)
+        {
+            particle->mSpinVelocity=units[i%4]/8.f;
+            curved.system->Update(1'250'000);
+            accumulated+=units[i%4];
+            const std::int64_t elapsed=1'250'000LL*(i+1);
+            const float degrees=static_cast<float>(
+                180.0*(elapsed%37'000'003)/37'000'003.0);
+            Require(particle->mSpinPosition==static_cast<float>(
+                1'048'576.0+accumulated/64.0+double(degrees)*double(0.017453292f)) &&
+                particle->mPosition.x==static_cast<float>(1'048'576.0+(i+1)/64.0),
+                "spin rebase accumulated the absolute angle curve or reset translation");
+        }
+    }
+    for (bool editSpin:{false,true})
+    {
+        Scene curvedEdit(-1,true);
+        FloatParameterTrackNode angleNodes[]{
+            {0.0,0,0,1,1},{1.0,180,180,1,1}};
+        curvedEdit.emitter.mParticleSpinAngle={angleNodes,2};
+        auto* particle=curvedEdit.Spawn();
+        particle->mParticleDuration.mNanoseconds=1'000'000'000;
+        particle->mPosition={1'048'576.f,-1'048'576.f};
+        particle->mVelocity={.125f,-.125f};
+        particle->mSpinPosition=7.25f;
+        particle->mSpinVelocity=.125f;
+        curvedEdit.system->Update(5'000'000);
+        if (editSpin) particle->mSpinPosition=10.f;
+        else
+        {
+            particle->mPosition.x=10.f;
+            curvedEdit.system->SystemMove(100.25f,199.5f);
+        }
+        curvedEdit.system->Update(5'000'000);
+        const double conversion=0.017453292f;
+        const double expected=editSpin ?
+            10.0-double(.9f)*conversion+.0625+double(1.8f)*conversion :
+            7.25+.125+double(1.8f)*conversion;
+        Require(particle->mSpinPosition==static_cast<float>(expected) &&
+            particle->mPosition.x==(editSpin?1'048'576.125f:10.3125f),
+            "nonzero angle curve was counted twice during a public edit or held move");
+    }
+    p->mPosition={1'048'576.f,-1'048'576.f};
+    p->mSpinPosition=1'048'576.f;
+    p->mSpinVelocity=.125f;
+    changing.system->Update(5'000'000);
+    p->mSpinPosition=10.f;
+    changing.system->Update(5'000'000);
+    Require(p->mSpinPosition==10.0625f && p->mPosition.x==1'048'576.125f,
+        "public spin edit discarded translation precision");
+    p->mPosition={1'048'576.f,-1'048'576.f};
+    p->mSpinPosition=1'048'576.f;
+    changing.system->Update(5'000'000);
+    p->mPosition.x=10.f;
+    changing.system->SystemMove(100.25f,199.5f);
+    changing.system->Update(5'000'000);
+    Require(p->mPosition.x==10.3125f && p->mPosition.y==-1'048'576.625f &&
+        p->mSpinPosition==1'048'576.125f,
+        "held move plus a position edit reset the shared spin phase");
+    FloatParameterTrackNode variableSpeed[]{
+        {0.0,0,0,1,1},{1.0,16,16,1,1}};
+    changing.emitter.mParticleSpinSpeed={variableSpeed,2};
+    const float oldSpin=p->mSpinPosition;
+    changing.system->Update(1'250'000);
+    const float sampledRate=static_cast<float>(16.0*p->mParticleAge.mNanoseconds/
+        p->mParticleDuration.mNanoseconds)*.01;
+    const float legacySpin=oldSpin+static_cast<float>(
+        sampledRate*.125*double(0.017453292f)+.125*.125);
+    Require(!p->mLinearSpinActive && p->mSpinPosition==legacySpin,
+        "variable spin speed stopped using the sampled main-step rule");
+    changing.emitter.mParticleSpinSpeed={};
+    const float beforeConstant=p->mSpinPosition;
+    changing.system->Update(1'250'000);
+    Require(p->mLinearSpinActive==1 && p->mLinearElapsedNs==1'250'000 &&
+        p->mSpinPosition==static_cast<float>(double(beforeConstant)+.125*.125) &&
+        p->mPosition.x==10.34375f,
+        "sampled-to-constant spin handoff reused a stale anchor or lost translation");
+    std::cout<<"PASS field-free anchored spin: eight ns partitions, random speed range, looping angle "
+        "curve, 4096 rates, public edits, held moves and sampled-rate handoffs\n";
 }
 
 void TestLifetimesAndTracks()
@@ -608,6 +748,7 @@ int main()
                 "constant float animation rate lost precision in total elapsed phase");
         }
         TestConstantMotionPrecision();
+        TestConstantSpinPrecision();
         TestActualDelta();
         TestLifetimesAndTracks();
         TestEmission();

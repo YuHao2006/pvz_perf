@@ -355,12 +355,12 @@ void AtlasButtonStates(SexyAppBase& app)
             Graphics graphics(target);
             graphics.mColor=Color(11,17,23);
             graphics.FillRect(Rect(0,0,12,10));
-            graphics.Translate(1,2);
+            graphics.TranslateF(1.1f,2.3f);
             graphics.mFastStretch=true;
             if (useAtlas)
                 atlasButton.DrawAtlas(&graphics,texture,glow ? &regions[4] : nullptr);
             else oldButton.Draw(&graphics);
-            Require(graphics.mTransX==1 && graphics.mTransY==2,
+            Require(graphics.mTransX==1.1f && graphics.mTransY==2.3f,
                 "Button drawing failed to restore the caller's translation");
         };
         draw(expectedTarget.get(),false);

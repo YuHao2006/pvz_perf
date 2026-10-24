@@ -39,6 +39,7 @@ void DialogButton::Draw(Graphics* g)
 		throw FontNotConfigured{};
 
 	bool doTranslate = IsButtonDown();
+	const float parentTransX = g->mTransX, parentTransY = g->mTransY;
 
 	if (mNormalRegion.mWidth==0)
 	{
@@ -87,6 +88,6 @@ void DialogButton::Draw(Graphics* g)
 		g->DrawString(mLabel, aFontX + mTextOffsetX, aFontY + mTextOffsetY);
 	}
 
-	if (doTranslate)
-		g->Translate(-mTranslateX, -mTranslateY);
+	g->mTransX = parentTransX;
+	g->mTransY = parentTransY;
 }

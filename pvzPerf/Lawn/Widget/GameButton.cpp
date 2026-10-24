@@ -118,10 +118,11 @@ void GameButton::Draw(Graphics* g)
 		return;
 	}
 
-	g->mTransX += mX;
-	g->mTransY += mY;
 	if (!mFont && mLabel.size() > 0)
 		throw FontNotConfigured{};
+	const float parentTransX = g->mTransX, parentTransY = g->mTransY;
+	g->mTransX = parentTransX + mX;
+	g->mTransY = parentTransY + mY;
 	
 	int aFontX = mTextOffsetX;
 	int aFontY = mTextOffsetY;
@@ -185,7 +186,8 @@ void GameButton::Draw(Graphics* g)
 		}
 	}
 
-	g->Translate(-mX, -mY);
+	g->mTransX = parentTransX;
+	g->mTransY = parentTransY;
 }
 
 void GameButton::DrawAtlas(Graphics* g, const Sexy::TextureSource& texture, const TextureRegion* overlay)
@@ -206,7 +208,9 @@ void GameButton::DrawAtlas(Graphics* g, const Sexy::TextureSource& texture, cons
 			fontX += mWidth - mFont->StringWidth(mLabel);
 		fontY += (mHeight - mFont->mAscent / 6 + mFont->mAscent - 1) / 2;
 	}
-	g->Translate(mX, mY);
+	const float parentTransX = g->mTransX, parentTransY = g->mTransY;
+	g->mTransX = parentTransX + mX;
+	g->mTransY = parentTransY + mY;
 	g->mFont = mFont;
 	const auto draw = [&](const TextureRegion& rectangle, int x = 0, int y = 0) {
 		Sexy::DrawAtlasImage(g, texture, rectangle,
@@ -249,7 +253,8 @@ void GameButton::DrawAtlas(Graphics* g, const Sexy::TextureSource& texture, cons
 		draw(*overlay);
 		g->mDrawMode = Graphics::DRAWMODE_NORMAL;
 	}
-	g->Translate(-mX, -mY);
+	g->mTransX = parentTransX;
+	g->mTransY = parentTransY;
 }
 
 //0x448130

@@ -101,8 +101,9 @@ void ZombatarButton::Draw(Graphics* g)
 		return;
 	const bool isDown = IsButtonDown();
 	const bool isHighlighted = IsMouseOver();
-	g->mTransX += mX;
-	g->mTransY += mY;
+	const float parentTransX = g->mTransX, parentTransY = g->mTransY;
+	g->mTransX = parentTransX + mX;
+	g->mTransY = parentTransY + mY;
 	const int aX = 0;
 	const int aY = 0;
 	if (isDown)
@@ -119,7 +120,8 @@ void ZombatarButton::Draw(Graphics* g)
 	// Match the image-only GameButton's final text state.
 	g->mColor = Color::Black;
 	g->mFont = nullptr;
-	g->Translate(-mX, -mY);
+	g->mTransX = parentTransX;
+	g->mTransY = parentTransY;
 }
 
 namespace

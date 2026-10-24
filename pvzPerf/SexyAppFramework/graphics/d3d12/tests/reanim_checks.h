@@ -5,10 +5,15 @@
 namespace D3d12ReanimTest {
 using namespace Sexy;
 using Point = std::array<float, 4>;
+struct CpuTriangles {
+    std::array<GpuVertex, 18> vertices;
+    size_t count = 0;
+    operator std::span<const GpuVertex>() const { return {vertices.data(), count}; }
+};
 inline void Check(bool condition, const char* message) {
     if (!condition) throw std::runtime_error(message);
 }
-inline std::vector<GpuVertex> Reference(const GpuReanimKey& a, const GpuReanimKey& b,
+inline CpuTriangles Reference(const GpuReanimKey& a, const GpuReanimKey& b,
     const GpuReanimGeometry& base, const GpuReanimGeometry& source,
     const GpuReanimInstance& instance, const GpuReanimTrackDraw& draw, uint32_t slot,
     uint32_t sampler, const GpuClip* clip) {
@@ -64,11 +69,11 @@ inline std::vector<GpuVertex> Reference(const GpuReanimKey& a, const GpuReanimKe
             count = written; polygon = output;
         }
     }
-    std::vector<GpuVertex> result;
+    CpuTriangles result;
     const auto emit = [&](const Point& p) {
-        result.push_back({p[0], p[1], float((draw.color >> 16) & 255) / 255,
+        result.vertices[result.count++] = {p[0], p[1], float((draw.color >> 16) & 255) / 255,
             float((draw.color >> 8) & 255) / 255, float(draw.color & 255) / 255,
-            float(alpha) / 255, p[2], p[3], slot | draw.samplingFlags, sampler});
+            float(alpha) / 255, p[2], p[3], slot | draw.samplingFlags, sampler};
     };
     if (clip && !(draw.flags & 2)) {
         for (size_t i = 1; i + 1 < count; ++i) { emit(polygon[0]); emit(polygon[i]); emit(polygon[i + 1]); }

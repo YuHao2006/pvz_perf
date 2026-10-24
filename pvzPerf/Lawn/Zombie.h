@@ -168,6 +168,8 @@ public:
     double                          mRootOriginX = 0;
     std::uint32_t                   mRootBindingGeneration = 0;
     float                           mRootScale = 0;
+    // Zamboni uses this same origin/clock for its coupled curve; rate is its
+    // initial positive speed, while other types retain signed linear rate.
     TimedLinearMotion               mVelocityX;
     TimedLinearMotion               mVelocityY;
     // Shared by mutually exclusive linear altitude and thrown-imp segments.

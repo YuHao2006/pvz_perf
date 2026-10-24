@@ -1,6 +1,8 @@
 #pragma once
 #include "CoinFallRuntimeChecks.h"
 #include "MowerMotionRuntimeChecks.h"
+#include "ZombieAltitudeRuntimeChecks.h"
+#include "CreditsScrollRuntimeChecks.h"
 // Included by the game-linked static-definition fixture. These checks execute
 // real Plant/Zombie methods, real Board pools/buckets and real source animation.
 #include "Lawn/Board.h"
@@ -1048,11 +1050,14 @@ inline void Check(LawnApp& app)
     Board board(&app);
     std::cerr << "PASS actor fixture real Board construction\n";
     SharedClockConsumers(board);
+    CreditsScrollRuntime::Check();
     CoinFallRuntime::Check(app,board);
     std::cerr << "PASS actual analytic Coin/Sun falling and wall events\n";
     MowerMotionRuntime::Run(app,board);
     MowerMotionRuntime::SaveContinuation(app,board);
     std::cerr << "PASS actual analytic mower motion, pool height and brain falling\n";
+    ZombieAltitudeRuntime::Check(app,board);
+    std::cerr << "PASS actual Zombie altitude: 14 paths, roof Imp, combined Balloon, save continuation\n";
     LaunchDeadlines(app, board);
     SlotMachine(app, board);
     PickupMotion(app, board);

@@ -170,6 +170,7 @@ template<class T, class Fn> void VisitV7Members(Fn&& visit)
             };
             segment(offsetof(T, mVelocityX), 24);
             segment(offsetof(T, mVelocityY), 52);
+            segment(offsetof(T, mAltitudeMotion), 80);
         }
     }
     else if constexpr (std::is_same_v<T, Projectile>)

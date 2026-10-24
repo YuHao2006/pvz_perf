@@ -93,6 +93,9 @@ public:
 	};
 	std::vector<CreditSection> mCreditSections;
 	float                   mCreditsScrollPosition;
+	// Finite roll phase, advanced only by the existing END scrolling branch.
+	// Movie/debug counters can advance or reset while this roll is frozen.
+	std::uint64_t           mCreditsScrollPhaseNs = 0;
 	int                     mCreditsContentHeight;
 	int                     DrawCreditsContent(Graphics* g, int theY, bool theDraw);
 

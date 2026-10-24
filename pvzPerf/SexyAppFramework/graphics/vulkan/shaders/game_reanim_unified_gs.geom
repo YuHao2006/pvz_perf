@@ -15,12 +15,19 @@ struct Job {
     uvec4 sampleInfo;vec4 timeTranslation;vec4 overlayX;vec4 overlayY;
     uvec4 colorFlags;uvec4 outputInfo;vec4 clip;
 };
+struct Instance {
+    uvec4 sampleInfo;vec4 timeTranslation;vec4 overlayX;vec4 overlayY;
+    uvec4 metadata;vec4 clip;
+};
+struct TrackPacket {uvec4 metadata;vec4 shake;};
 struct Key {
     float transX,transY,skewX,skewY,scaleX,scaleY,alpha;int frame;uint imageSlot;
 };
 struct Geometry {float width,height,u0,v0,u1,v1;};
 layout(set=2,binding=0,std430) readonly buffer Static {uint blob[];};
 layout(set=2,binding=1,std430) readonly buffer Jobs {Job jobs[];};
+layout(set=2,binding=2,std430) readonly buffer Instances {Instance instances[];};
+layout(set=2,binding=3,std430) readonly buffer Packets {TrackPacket packets[];};
 float value(uint index) {return uintBitsToFloat(blob[index]);}
 Key readKey(uint offset) {
     return Key(value(offset),value(offset+1u),value(offset+2u),value(offset+3u),
@@ -73,7 +80,23 @@ void main() {
         }
         EndPrimitive();return;
     }
-    Job job=jobs[vertexSampler[0]&0x7fffffffu];
+    Job job;
+    if ((vertexSampler[0]&0x40000000u)!=0u) {
+        TrackPacket packet=packets[vertexSampler[0]&0x3fffffffu];
+        Instance instance=instances[packet.metadata.y];
+        precise float translationX=(packet.shake.x+instance.timeTranslation.y)-0.5;
+        precise float translationY=(packet.shake.y+instance.timeTranslation.z)-0.5;
+        bool clipped=(instance.metadata.w&4u)!=0u && (packet.metadata.w&2u)==0u;
+        job.sampleInfo=uvec4(packet.metadata.x,instance.sampleInfo.xyz);
+        job.timeTranslation=vec4(instance.timeTranslation.x,translationX,translationY,0.0);
+        job.overlayX=instance.overlayX;job.overlayY=instance.overlayY;
+        job.colorFlags=uvec4(packet.metadata.z,packet.metadata.w&0x78000000u,
+            instance.metadata.w&3u,packet.metadata.w&1u);
+        job.outputInfo=uvec4(instance.metadata.x,clipped?18u:6u,instance.metadata.y,instance.metadata.z);
+        job.clip=instance.clip;
+    } else {
+        job=jobs[vertexSampler[0]&0x3fffffffu];
+    }
     uint header=job.outputInfo.x;
     uint track=blob[header]+job.sampleInfo.x*4u;
     uint keyBase=blob[header+1u]+blob[track]*12u;

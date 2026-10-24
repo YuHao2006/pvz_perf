@@ -137,6 +137,11 @@ public:
     bool SubmitReanim(VulkanReanim* definition, VulkanTexture* texture,
         const GpuReanimDraw& draw, bool linear, bool repeat, VulkanBlend blend,
         const VulkanClip* clip = nullptr);
+    // Frame-scoped append index, without a pointer-to-index map. UINT32_MAX
+    // means unsupported; the caller retains its ordinary CPU draw route.
+    uint32_t BeginReanimInstance(VulkanReanim* definition,VulkanTexture* texture,
+        const GpuReanimInstance& instance,bool linear,bool repeat,const VulkanClip* clip=nullptr);
+    bool SubmitReanimTrack(uint32_t instance,const GpuReanimTrackDraw& track,VulkanBlend blend);
     // Nearest/clamp mask sampling, integer byte coverage -> alpha in the GPU,
     // with the same native blending and clipping as ordinary primitives.
     void SubmitCoverageTriangles(std::span<const VulkanVertex> vertices, VulkanTexture* mask,

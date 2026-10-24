@@ -4,6 +4,7 @@
 #include "FilterEffect.h"
 #include "misc/SexyMatrix.h"
 #include <map>
+#include <cstdint>
 #include "ReanimTrackId.h"
 #include "DefinitionImageRegion.h"
 #include "graphics/TextureRegion.h"
@@ -327,7 +328,8 @@ public:
     std::int64_t                    TimedEventCount(std::int64_t numerator, std::int64_t denominator = 1000) const;
     /*inline*/ void                 Draw(Graphics* g);
     void                            DrawRenderGroup(Graphics* g, int theRenderGroup);
-    bool                            DrawTrack(Graphics* g, int theTrackIndex, int theRenderGroup, const ReanimatorFrameTime* theFrameTime = nullptr);
+    bool                            DrawTrack(Graphics* g, int theTrackIndex, int theRenderGroup,
+        const ReanimatorFrameTime* theFrameTime = nullptr, std::uint32_t theGpuInstance = UINT32_MAX);
     void                            GetCurrentTransform(int theTrackIndex, ReanimatorTransform* theTransformCurrent, const ReanimatorFrameTime* theFrameTime = nullptr);
     void                            GetTransformAtTime(int theTrackIndex, ReanimatorTransform* theTransform, const ReanimatorFrameTime* theFrameTime);
     void                            GetFrameTime(ReanimatorFrameTime* theFrameTime);

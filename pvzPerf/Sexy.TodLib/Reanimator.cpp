@@ -85,6 +85,11 @@ void ReanimatorUploadGpuDefinitionData()
 				}
 				definition.mGpuData = renderer->UploadReanimDefinition(
 					{tracks, keys, geometry, header[3], header[4]});
+				if (!definition.mGpuData && std::any_of(definition.mTracks.tracks,
+					definition.mTracks.tracks + definition.mTracks.count,
+					[](const auto& track) { return track.mTransforms.mStorage == ReanimTrackStorage::Gpu; }))
+					throw std::runtime_error(std::string(
+						"The renderer cannot draw GPU-only reanimation tracks: ") + path);
 				uploaded.push_back(&definition);
 				// Only the GPU resource survives this scope; upload staging is discarded.
 			}
@@ -938,9 +943,11 @@ void Reanimation::MatrixFromTransform(const ReanimatorTransform& theTransform, S
 
 //0x4723B0
 // GOTY @Patoke: 0x4769B0
-bool Reanimation::DrawTrack(Graphics* g, int theTrackIndex, int theRenderGroup, const ReanimatorFrameTime* theFrameTime)
+bool Reanimation::DrawTrack(Graphics* g, int theTrackIndex, int theRenderGroup,
+	const ReanimatorFrameTime* theFrameTime, std::uint32_t theGpuInstance)
 {
 	(void)theRenderGroup;
+	(void)theGpuInstance;
 	const auto& trackData = mDefinition->mTracks.tracks[theTrackIndex].mTransforms;
 	if (trackData.mStorage == ReanimTrackStorage::Cpu)
 		return false;
@@ -999,6 +1006,39 @@ bool Reanimation::DrawTrack(Graphics* g, int theTrackIndex, int theRenderGroup, 
 						return true;
 				}
 				if (!texture) throw std::logic_error("reanimation appearance atlas is not uploaded");
+				const Rect clip = instance.mIgnoreClipRect
+					? Rect(0, 0, BOARD_WIDTH, BOARD_HEIGHT) : g->mClipRect;
+				GpuClip gpuClip{clip.mX, clip.mY, clip.mWidth, clip.mHeight};
+				const bool fullClip = clip.mX == 0 && clip.mY == 0 &&
+					clip.mWidth == BOARD_WIDTH && clip.mHeight == BOARD_HEIGHT;
+				const auto blend = g->mDrawMode == Graphics::DRAWMODE_ADDITIVE
+					? GpuBlend::Additive : g->mDrawMode == 2 ? GpuBlend::Opaque : GpuBlend::Normal;
+				render.SelectDrawSurface(g->mDestImage);
+				if (!render.PreDraw()) return true;
+				const auto packedColor = (std::uint32_t(color.mAlpha) << 24) |
+					(std::uint32_t(color.mRed) << 16) | (std::uint32_t(color.mGreen) << 8) |
+					std::uint32_t(color.mBlue);
+				static constexpr std::uint32_t filters[] = {
+					0, std::uint32_t(GpuImageColorFilter::WashedOut),
+					std::uint32_t(GpuImageColorFilter::LessWashedOut),
+					std::uint32_t(GpuImageColorFilter::White)};
+				const auto samplingFlags = mFilterEffect == FilterEffect::FILTER_EFFECT_NONE
+					? 0u : filters[static_cast<int>(mFilterEffect) + 1];
+#if defined(PVZ_GPU_REANIM_VULKAN)
+				if (theGpuInstance != UINT32_MAX)
+				{
+					GpuReanimTrackDraw track{};
+					track.track = unsigned(theTrackIndex);
+					track.color = packedColor;
+					track.samplingFlags = samplingFlags;
+					track.flags = (instance.mTruncateDisappearingFrames ? GpuReanimTrackDraw::Truncate : 0u) |
+						(instance.mIgnoreClipRect ? GpuReanimTrackDraw::IgnoreDefaultClip : 0u);
+					track.shakeX = instance.mShakeX;
+					track.shakeY = instance.mShakeY;
+					if (render.mRenderer->SubmitReanimTrack(theGpuInstance, track, blend))
+						return true;
+				}
+#endif
 				GpuReanimDraw draw{};
 				draw.track = unsigned(theTrackIndex);
 				draw.before = unsigned(theFrameTime->mAnimFrameBeforeInt);
@@ -1010,25 +1050,9 @@ bool Reanimation::DrawTrack(Graphics* g, int theTrackIndex, int theRenderGroup, 
 				draw.overlay00 = mOverlayMatrix.m00; draw.overlay01 = mOverlayMatrix.m01;
 				draw.overlay02 = mOverlayMatrix.m02; draw.overlay10 = mOverlayMatrix.m10;
 				draw.overlay11 = mOverlayMatrix.m11; draw.overlay12 = mOverlayMatrix.m12;
-				draw.color = (std::uint32_t(color.mAlpha) << 24) |
-					(std::uint32_t(color.mRed) << 16) | (std::uint32_t(color.mGreen) << 8) |
-					std::uint32_t(color.mBlue);
-				static constexpr std::uint32_t filters[] = {
-					0, std::uint32_t(GpuImageColorFilter::WashedOut),
-					std::uint32_t(GpuImageColorFilter::LessWashedOut),
-					std::uint32_t(GpuImageColorFilter::White)};
-				if (mFilterEffect != FilterEffect::FILTER_EFFECT_NONE)
-					draw.samplingFlags = filters[static_cast<int>(mFilterEffect) + 1];
+				draw.color = packedColor;
+				draw.samplingFlags = samplingFlags;
 				draw.truncate = instance.mTruncateDisappearingFrames;
-				const Rect clip = instance.mIgnoreClipRect
-					? Rect(0, 0, BOARD_WIDTH, BOARD_HEIGHT) : g->mClipRect;
-				GpuClip gpuClip{clip.mX, clip.mY, clip.mWidth, clip.mHeight};
-				const bool fullClip = clip.mX == 0 && clip.mY == 0 &&
-					clip.mWidth == BOARD_WIDTH && clip.mHeight == BOARD_HEIGHT;
-				const auto blend = g->mDrawMode == Graphics::DRAWMODE_ADDITIVE
-					? GpuBlend::Additive : g->mDrawMode == 2 ? GpuBlend::Opaque : GpuBlend::Normal;
-				render.SelectDrawSurface(g->mDestImage);
-				if (!render.PreDraw()) return true;
 				if (render.mRenderer->SubmitReanim(mDefinition->mGpuData, texture, draw,
 					g->mLinearBlend, RenderInterface::sSamplerAddressWrap, blend,
 					fullClip ? nullptr : &gpuClip))
@@ -1232,6 +1256,7 @@ void Reanimation::DrawRenderGroup(Graphics* g, int theRenderGroup)
 
 	ReanimatorFrameTime aFrameTime;
 	bool aHasFrameTime = false;
+	std::uint32_t gpuInstance = UINT32_MAX;
 	for (int aTrackIndex = 0; aTrackIndex < mDefinition->mTracks.count; aTrackIndex++)
 	{
 		ReanimatorTrackInstance* aTrackInstance = &mTrackInstances[aTrackIndex];
@@ -1244,8 +1269,38 @@ void Reanimation::DrawRenderGroup(Graphics* g, int theRenderGroup)
 			{
 				GetFrameTime(&aFrameTime);
 				aHasFrameTime = true;
+#if defined(PVZ_GPU_REANIM_VULKAN) && defined(PVZ_EXPERIMENTAL_GPU_REANIM)
+				if (mDefinition->mGpuData && !mEnableExtraAdditiveDraw && !mEnableExtraOverlayDraw &&
+					g->mDestImage && g->mDestImage->IsGpuDrawTarget() && mDefinition->mTextures[mVariant])
+				{
+					auto& render = *g->mDestImage->mRenderOwner;
+					if (render.mTransformStack.empty())
+					{
+						render.SelectDrawSurface(g->mDestImage);
+						if (render.PreDraw())
+						{
+							GpuReanimInstance packet{};
+							packet.before = unsigned(aFrameTime.mAnimFrameBeforeInt);
+							packet.after = unsigned(aFrameTime.mAnimFrameAfterInt);
+							packet.variant = mVariant;
+							packet.fraction = aFrameTime.mFraction;
+							packet.translateX = g->mTransX; packet.translateY = g->mTransY;
+							packet.overlay00 = mOverlayMatrix.m00; packet.overlay01 = mOverlayMatrix.m01;
+							packet.overlay02 = mOverlayMatrix.m02; packet.overlay10 = mOverlayMatrix.m10;
+							packet.overlay11 = mOverlayMatrix.m11; packet.overlay12 = mOverlayMatrix.m12;
+							const auto& clip = g->mClipRect;
+							const GpuClip gpuClip{clip.mX, clip.mY, clip.mWidth, clip.mHeight};
+							const bool fullClip = clip.mX == 0 && clip.mY == 0 &&
+								clip.mWidth == BOARD_WIDTH && clip.mHeight == BOARD_HEIGHT;
+							gpuInstance = render.mRenderer->BeginReanimInstance(mDefinition->mGpuData,
+								mDefinition->mTextures[mVariant], packet, g->mLinearBlend,
+								RenderInterface::sSamplerAddressWrap, fullClip ? nullptr : &gpuClip);
+						}
+					}
+				}
+#endif
 			}
-			bool aTrackDrawn = DrawTrack(g, aTrackIndex, theRenderGroup, &aFrameTime);
+			bool aTrackDrawn = DrawTrack(g, aTrackIndex, theRenderGroup, &aFrameTime, gpuInstance);
 			if (aTrackInstance->mAttachmentID != AttachmentID::ATTACHMENTID_NULL)
 			{
 				AttachmentDraw(aTrackInstance->mAttachmentID, g, !aTrackDrawn);

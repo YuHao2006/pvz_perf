@@ -217,6 +217,57 @@ void Run() {
                 "Mixed definitions/textures/filters/blends/clips/sprite-order mismatch");
     }
     renderer.DestroyReanimDefinition(second);renderer.DestroyTexture(other);
+#if defined(PVZ_REANIM_UNIFIED)
+    unsigned packetCases=0;
+    uint32_t staleToken=UINT32_MAX;
+    for (uint32_t variant:{0u,1u}) for (float fraction:{0.0f,0.375f,1.0f})
+        for (bool clipped:{false,true}) for (bool truncate:{false,true}) for (bool ignore:{false,true}) {
+            GpuReanimInstance instance{};
+            instance.after=1;instance.variant=variant;instance.fraction=fraction;
+            instance.translateX=0.375f;instance.translateY=-0.125f;
+            instance.overlay00=1;instance.overlay01=0.15f;instance.overlay02=8;
+            instance.overlay10=-0.1f;instance.overlay11=1;instance.overlay12=5;
+            GpuReanimTrackDraw track{};track.track=2;track.color=0xc0e0d0ff;
+            track.shakeX=-1.125f;track.shakeY=0.75f;
+            track.flags=(truncate?GpuReanimTrackDraw::Truncate:0u)|
+                (ignore?GpuReanimTrackDraw::IgnoreDefaultClip:0u);
+            GpuReanimDraw legacy{};
+            legacy.track=track.track;legacy.after=1;legacy.variant=variant;legacy.fraction=fraction;
+            legacy.overlay00=instance.overlay00;legacy.overlay01=instance.overlay01;legacy.overlay02=instance.overlay02;
+            legacy.overlay10=instance.overlay10;legacy.overlay11=instance.overlay11;legacy.overlay12=instance.overlay12;
+            legacy.translateX=(track.shakeX+instance.translateX)-0.5f;
+            legacy.translateY=(track.shakeY+instance.translateY)-0.5f;
+            legacy.color=track.color;legacy.truncate=truncate;
+            const auto* effective=clipped&&!ignore?&clip:nullptr;
+            const auto vertices=Reference(keys[0],keys[1],geometry[1],geometry[variant*2+1],legacy,
+                VulkanRenderer::SlotOf(texture),effective);
+            Require(renderer.BeginScene(),"Cannot begin packet reference");Clear(renderer);
+            renderer.SubmitTriangles(vertices,texture,false,false,GpuBlend::Normal);
+            renderer.EndSceneAndPresent();const auto expected=renderer.ReadScenePixels();
+            Require(renderer.BeginScene(),"Cannot begin packet resident frame");Clear(renderer);
+            const auto token=renderer.BeginReanimInstance(definition,texture,instance,false,false,clipped?&clip:nullptr);
+            Require(token!=UINT32_MAX,"Cannot begin shared reanimation instance");
+            auto unsupported=track;unsupported.track=1;
+            Require(!renderer.SubmitReanimTrack(token,unsupported,GpuBlend::Normal),"Packet accepted CPU-only logical track");
+            Require(renderer.SubmitReanimTrack(token,track,GpuBlend::Normal),"Packet rejected image track");
+            staleToken=token;
+            renderer.EndSceneAndPresent();const auto actual=renderer.ReadScenePixels();
+            for (size_t i=0;i<actual.size();++i) for (unsigned shift:{0u,8u,16u,24u})
+                Require(std::abs(int((actual[i]>>shift)&255)-int((expected[i]>>shift)&255))<=3,
+                    "Shared instance/shake/clip/variant/disappearing-frame pixel mismatch");
+            ++packetCases;
+        }
+    Require(renderer.BeginScene(),"Cannot test expired instance token");Clear(renderer);
+    GpuReanimTrackDraw unusedTrack{};unusedTrack.track=2;unusedTrack.color=0xffffffff;
+    Require(!renderer.SubmitReanimTrack(staleToken,unusedTrack,GpuBlend::Normal),
+        "An instance token survived a frame boundary");
+    GpuReanimInstance unusedInstance{};unusedInstance.after=1;unusedInstance.overlay00=unusedInstance.overlay11=1;
+    Require(renderer.BeginReanimInstance(definition,texture,unusedInstance,false,false)!=UINT32_MAX,
+        "Cannot create begin-only packet");
+    renderer.EndSceneAndPresent();
+    std::cout<<"PASS "<<packetCases<<" shared-instance pixel cases, raw translation/shake ordering, "
+        "ignore clip, CPU-only indexes, begin-only group and expired frame token\n";
+#endif
     // Image-only submission also runs the prelude and protects deferred deletion.
     auto* image=renderer.CreateRenderImage(64,64);
     renderer.SetRenderImage(image);
@@ -236,6 +287,7 @@ void Run() {
 struct Timing { double cpu=0, jobs=0, gpu=0; };
 bool mixedBenchmark=false;
 bool spriteOnlyBenchmark=false;
+bool packetBenchmark=false;
 Timing BenchmarkBurst(VulkanRenderer& renderer,VulkanContext& window,std::span<VulkanReanim* const> definitions,
     VulkanTexture* texture,const std::vector<GpuReanimKey>& keys,std::vector<GpuReanimDraw>& draws,
     const GpuReanimGeometry& geometry,bool resident,bool clipped,
@@ -248,26 +300,44 @@ Timing BenchmarkBurst(VulkanRenderer& renderer,VulkanContext& window,std::span<V
     const GpuVertex marker[]={
         {795,595,1,1,1,0.1f,0,0,white,0},{797,595,1,1,1,0.1f,1,0,white,0},
         {795,597,1,1,1,0.1f,0,1,white,0}};
+    std::vector<uint32_t> instanceTokens(definitions.size());
     for (size_t frame=0;frame<queries.size();++frame) {
         renderer.frameTimestampQueries=queries[frame];
         Require(renderer.BeginScene(),"Cannot start benchmark frame");
         const auto start=Clock::now();
         Clear(renderer);
         const float fraction=float((phase+unsigned(frame))%31)/31.0f;
+        if (resident && packetBenchmark) {
+            GpuReanimInstance instance{};
+            instance.after=1;instance.fraction=fraction;instance.overlay00=instance.overlay11=1;
+            for (size_t i=0;i<definitions.size();++i) {
+                instanceTokens[i]=renderer.BeginReanimInstance(definitions[i],texture,instance,false,false,clipped?&clip:nullptr);
+                Require(instanceTokens[i]!=UINT32_MAX,"Cannot begin benchmark instance");
+            }
+        }
         if (spriteOnlyBenchmark && resident) {
             auto trigger=draws[0];trigger.color=0;
-            Require(renderer.SubmitReanim(definitions[0],texture,trigger,false,false,GpuBlend::Normal),
-                "Cannot activate resident pipeline for ordinary-sprite control");
+            if (packetBenchmark) {
+                GpuReanimTrackDraw track{};track.track=0;
+                Require(renderer.SubmitReanimTrack(instanceTokens[0],track,GpuBlend::Normal),
+                    "Cannot activate packet pipeline for ordinary-sprite control");
+            } else Require(renderer.SubmitReanim(definitions[0],texture,trigger,false,false,GpuBlend::Normal),
+                    "Cannot activate resident pipeline for ordinary-sprite control");
         }
         for (size_t i=0;i<draws.size();++i) {
             auto& draw=draws[i]; draw.fraction=fraction;
             if (spriteOnlyBenchmark) {
-                const float x=draw.overlay02,y=draw.overlay12;
+                const float x=float(i%64)*12+4,y=float((i/64)%48)*12+4;
                 const GpuVertex sprite[]={
                     {x,y,1,1,1,0.5f,0,0,slot,0},{x,y+12,1,1,1,0.5f,0,1,slot,0},
                     {x+10,y,1,1,1,0.5f,1,0,slot,0},{x,y+12,1,1,1,0.5f,0,1,slot,0},
                     {x+10,y,1,1,1,0.5f,1,0,slot,0},{x+10,y+12,1,1,1,0.5f,1,1,slot,0}};
                 renderer.SubmitTriangles(sprite,texture,false,false,GpuBlend::Normal);
+            } else if (resident && packetBenchmark) {
+                GpuReanimTrackDraw track{};track.track=draw.track;track.color=draw.color;
+                track.shakeX=draw.translateX+0.5f;track.shakeY=draw.translateY+0.5f;
+                Require(renderer.SubmitReanimTrack(instanceTokens[(i/32)%definitions.size()],track,GpuBlend::Normal),
+                    "Benchmark packet submission rejected");
             } else if (resident) {
                 Require(renderer.SubmitReanim(definitions[(i/32)%definitions.size()],texture,draw,false,false,GpuBlend::Normal,
                     clipped?&clip:nullptr),"Benchmark resident submission rejected");
@@ -316,6 +386,7 @@ void Benchmark() {
         <<" geometryShader="<<window.geometryShaderEnabled
         <<" mixed="<<mixedBenchmark
         <<" ordinaryOnly="<<spriteOnlyBenchmark
+        <<" packets="<<packetBenchmark
         <<" timestampPeriodNs="<<properties.limits.timestampPeriod
         <<" unlocked clocks; CPU excludes BeginScene acquire/prior-frame wait; CPU includes "
           "clear, track work, upload, prelude recording, submit and present call. "
@@ -339,11 +410,13 @@ void Benchmark() {
             tracks[i]={2*i,2};
             keys[2*i]={0.25f,0.125f,-15,23,1.15f,0.9f,0.8f,0,1};
             keys[2*i+1]={1.5f,1.25f,37,-18,0.75f,1.1f,0.35f,0,1};
+            const float x=float(i%64)*12+4,y=float((i/64)%48)*12+4;
+            keys[2*i].transX+=x;keys[2*i+1].transX+=x;
+            keys[2*i].transY+=y;keys[2*i+1].transY+=y;
             auto& draw=draws[i];
             draw.track=i;draw.before=0;draw.after=1;
             draw.translateX=draw.translateY=-0.5f;
             draw.overlay00=draw.overlay11=1;
-            draw.overlay02=float(i%64)*12+4;draw.overlay12=float((i/64)%48)*12+4;
             draw.color=0xc0e0d0ff;
         }
         std::vector<VulkanReanim*> definitions;
@@ -412,6 +485,15 @@ int main(int argc,char** argv) {
         }
         if (argc>1 && std::string(argv[1])=="--benchmark-sprites") {
             spriteOnlyBenchmark=true;Benchmark();return 0;
+        }
+        if (argc>1 && std::string(argv[1])=="--benchmark-packets") {
+            packetBenchmark=true;Benchmark();return 0;
+        }
+        if (argc>1 && std::string(argv[1])=="--benchmark-packets-mixed") {
+            packetBenchmark=true;mixedBenchmark=true;Benchmark();return 0;
+        }
+        if (argc>1 && std::string(argv[1])=="--benchmark-packets-sprites") {
+            packetBenchmark=true;spriteOnlyBenchmark=true;Benchmark();return 0;
         }
         if (argc>1 && std::string(argv[1])=="--benchmark") {Benchmark();return 0;}
 #else

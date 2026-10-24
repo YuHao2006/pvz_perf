@@ -19,6 +19,7 @@
 #include "Lawn/Board.h"
 #include "Lawn/Projectile.h"
 #include "Lawn/ProjectileResources.h"
+#include "Lawn/Zombie.h"
 #include "Lawn/Widget/GameButton.h"
 #include "SexyAppFramework/widget/WidgetManager.h"
 #include "Lawn/System/PlayerInfo.h"
@@ -834,6 +835,86 @@ void ReanimationAppearancePixels(SexyAppBase& app)
         animation.SelectVariant(3);
     }
 #endif
+    {
+        auto& lawn=static_cast<LawnApp&>(app);
+        auto* previousEffects=lawn.mEffectSystem;
+        lawn.mEffectSystem=&effects;
+        struct RestoreEffects {
+            LawnApp& app;
+            EffectSystem* previous;
+            ~RestoreEffects() { app.mEffectSystem=previous; }
+        } restoreEffects{lawn,previousEffects};
+        Zombie boss{};
+        boss.mZombieType=ZombieType::ZOMBIE_BOSS;
+        boss.mZombieFade=-1;
+        boss.mBodyHealth=boss.mBodyMaxHealth=1000;
+        boss.mShieldType=ShieldType::SHIELDTYPE_NONE;
+        boss.mBodyReanimID=static_cast<ReanimationID>(
+            effects.mReanimationHolder->mReanimations.DataArrayGetID(child));
+        for (int t=0;t<trackCount;++t)
+            child->mTrackInstances[t].mRenderGroup=RENDER_GROUP_BOSS_BACK_ARM;
+        child->mOverlayMatrix.m02=0.1f;
+        child->mOverlayMatrix.m12=-0.3f;
+        const auto original=child->mOverlayMatrix;
+        ZombieDrawPosition drawPosition{};
+        drawPosition.mClipHeight=CLIP_HEIGHT_OFF;
+        std::unique_ptr<Image> bossTarget(render.CreateRenderImage(256,128));
+        const ZombiePhase phases[]{PHASE_BOSS_DROP_RV,PHASE_BOSS_BUNGEES_ENTER,
+            PHASE_BOSS_BUNGEES_DROP,PHASE_BOSS_BUNGEES_LEAVE};
+        for (const auto phase:phases)
+        {
+            boss.mZombiePhase=phase;
+            boss.mTargetCol=1;
+            boss.mTargetRow=2;
+            // Independent expected draw: apply the intended attack offset,
+            // then restore by assignment before exercising the Zombie method.
+            child->mOverlayMatrix.m02=original.m02+(phase==PHASE_BOSS_DROP_RV?80.f:57.f);
+            child->mOverlayMatrix.m12=original.m12+(phase==PHASE_BOSS_DROP_RV?65.f:0.f);
+            {
+                GpuImageDrawScope destination(render,bossTarget.get());
+                Graphics graphics(bossTarget.get());
+                graphics.mColor=Color::Black;
+                graphics.FillRect(Rect(0,0,256,128));
+                child->DrawRenderGroup(&graphics,RENDER_GROUP_BOSS_BACK_ARM);
+            }
+            render.Flush();
+            const auto expected=render.ReadImagePixels(*bossTarget);
+            Require(std::any_of(expected.pixels.begin(),expected.pixels.end(),
+                [](unsigned pixel) { return pixel!=0xff000000u; }),
+                "Boss back-arm reference did not draw a visible track");
+            child->mOverlayMatrix=original;
+            {
+                GpuImageDrawScope destination(render,bossTarget.get());
+                Graphics graphics(bossTarget.get());
+                graphics.mColor=Color::Black;
+                graphics.FillRect(Rect(0,0,256,128));
+                boss.DrawBossBackArm(&graphics,drawPosition);
+                Require(child->mOverlayMatrix.m02==original.m02 &&
+                    child->mOverlayMatrix.m12==original.m12,
+                    "Boss back-arm drawing changed the shared animation's fractional translation");
+            }
+            render.Flush();
+            Require(render.ReadImagePixels(*bossTarget).pixels==expected.pixels,
+                "Boss back-arm drawing changed its attack offset pixels");
+        }
+        {
+            GpuImageDrawScope destination(render,bossTarget.get());
+            Graphics graphics(bossTarget.get());
+            for (int i=0;i<1024;++i)
+            {
+                boss.mZombiePhase=phases[i%4];
+                boss.mTargetCol=i%3;
+                boss.mTargetRow=i%4;
+                boss.DrawBossBackArm(&graphics,drawPosition);
+                Require(child->mOverlayMatrix.m02==original.m02 &&
+                    child->mOverlayMatrix.m12==original.m12,
+                    "Repeated boss back-arm drawing accumulated animation translation rounding");
+            }
+        }
+        render.Flush();
+        std::cout<<"PASS actual boss back-arm drawing: four attack offsets, reference pixels, "
+            "1024 exact shared-animation translation restorations\n";
+    }
     bool rejected=false;
     try { animation.SelectVariant(4); } catch (const std::out_of_range&) { rejected=true; }
     Require(rejected && animation.mVariant==3,"Invalid appearance selection damaged the current row");

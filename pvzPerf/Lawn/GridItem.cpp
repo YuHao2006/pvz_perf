@@ -194,6 +194,8 @@ void GridItem::DrawStinky(Graphics* g)
     Reanimation* aStinkyReanim = mApp->ReanimationGet(mGridItemReanimID);
     const auto aOriginalClock = aStinkyReanim->mPhaseOriginNs;
     const auto aOriginalStart = aStinkyReanim->mStartTimeNs;
+    const float aOriginalTransX = g->mTransX;
+    const float aOriginalTransY = g->mTransY;
 
     TOD_ASSERT(mMotionTrailCount <= NUM_MOTION_TRAIL_FRAMES);
     for (int i = mMotionTrailCount - 1; i >= 0; i--)
@@ -213,13 +215,14 @@ void GridItem::DrawStinky(Graphics* g)
                 aStinkyReanim->mReanimationHolder->mBattleTimeNs :
                 aStinkyReanim->mReanimationHolder->mVisualTimeNs;
 
-            g->mTransX += aDiffX;
-            g->mTransY += aDiffY;
+            g->mTransX = aOriginalTransX + aDiffX;
+            g->mTransY = aOriginalTransY + aDiffY;
             aStinkyReanim->Draw(g);
 
             g->mColorizeImages = false;
-            g->mTransX -= aDiffX;
-            g->mTransY -= aDiffY;
+            // Floating-point addition/subtraction need not restore the input.
+            g->mTransX = aOriginalTransX;
+            g->mTransY = aOriginalTransY;
         }
     }
     aStinkyReanim->mPhaseOriginNs = aOriginalClock;

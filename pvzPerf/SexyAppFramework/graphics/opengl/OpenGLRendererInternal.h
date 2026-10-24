@@ -96,6 +96,20 @@ struct OpenGLRenderer::Impl {
     bool hasReanimDraws = false;
     unsigned int reanimFrameGeneration = 0;
     uint64_t reanimOrdinaryTriangles = 0;
+#if defined(PVZ_OPENGL_REANIM_COMPUTE_EXPERIMENT)
+    struct ReanimComputeJob { unsigned int vertex, firstIndex; };
+    std::vector<ReanimComputeJob> reanimComputeJobs;
+    unsigned int reanimComputeProgram = 0, reanimComputeOutput = 0, reanimComputeVao = 0, reanimComputeJobBuffer = 0;
+    size_t reanimComputeMaximumBytes = 0;
+    unsigned int reanimComputeMaximumGroups = 0;
+    std::array<int,4> reanimComputeUniforms{};
+    using BindBufferBaseFn = void(APIENTRY*)(GLenum,GLuint,GLuint);
+    using DispatchComputeFn = void(APIENTRY*)(GLuint,GLuint,GLuint);
+    using MemoryBarrierFn = void(APIENTRY*)(GLbitfield);
+    BindBufferBaseFn bindComputeBuffer = nullptr;
+    DispatchComputeFn dispatchCompute = nullptr;
+    MemoryBarrierFn computeBarrier = nullptr;
+#endif
 #endif
     UniformLocations sceneUniforms{}, imageUniforms{}, fontUniforms{}, presentUniforms{};
     bool open = false, mainFrame = false, initialized = false, sceneInitialized = false;
@@ -127,6 +141,11 @@ struct OpenGLRenderer::Impl {
     bool InitReanim();
     size_t AllocateReanimRange(size_t count);
     void CollectReanims();
+#if defined(PVZ_OPENGL_REANIM_COMPUTE_EXPERIMENT)
+    void InitReanimCompute();
+    void DestroyReanimCompute();
+    void ExpandReanimCompute();
+#endif
 #endif
     void Submit(std::span<const GpuVertex> input, OpenGLTexture* source,
         GpuBlend blend, const GpuClip* clip, bool coverage);
@@ -144,4 +163,7 @@ struct OpenGLRenderer::Impl {
 #endif
     }
 };
+#if defined(PVZ_OPENGL_REANIM_RESIDENT)
+extern const char OpenGLReanimEvaluationShader[];
+#endif
 }

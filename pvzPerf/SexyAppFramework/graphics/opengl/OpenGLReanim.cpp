@@ -23,21 +23,31 @@ template<class T> void EnsureSpace(std::vector<T>& values,size_t required)
 }
 // No contraction-control extension is required: this is an independently
 // verified OpenGL native-sin/cos implementation, not the Vulkan polynomial.
-constexpr const char* ReanimVertexSource = R"GLSL(#version 150
+}
+const char OpenGLReanimEvaluationShader[] = R"GLSL(
+#if defined(PVZ_REANIM_COMPUTE_SHADER)
+vec4 point0,point1,point2,point3,trackColor,trackClip;
+uvec4 trackInfo;
+#else
 in vec2 inPosition;in vec4 inColor;in vec2 inUV;in uint inSlot,inSampler;
 in uvec4 markerInfo;in vec2 markerShake;
-uniform samplerBuffer residentData,instances;
 flat out vec4 point0,point1,point2,point3,trackColor,trackClip;
 flat out uvec4 trackInfo;
+#endif
+uniform samplerBuffer residentData,instances;
 vec4 dataAt(int index){return texelFetch(residentData,index);}
 vec4 corner(vec2 p,vec2 uv,vec4 m,vec2 origin){
  return vec4(m.x*p.x+m.y*p.y+origin.x,m.z*p.x+m.w*p.y+origin.y,uv);
 }
+#if defined(PVZ_REANIM_COMPUTE_SHADER)
+void evaluateTrack(uvec4 markerInfo,vec2 markerShake){
+#else
 void main(){
  gl_Position=vec4(0,0,0,1);
  if(inSampler!=0xffffffffu){
   point0=vec4(inPosition,inUV);trackColor=inColor;trackInfo=uvec4(inSlot,inSampler,0u,1u);return;
  }
+#endif
  int index=int(markerInfo.y)*6;
  vec4 frameSample=texelFetch(instances,index),time=texelFetch(instances,index+1);
  vec4 overlayX=texelFetch(instances,index+2),overlayY=texelFetch(instances,index+3);
@@ -81,6 +91,7 @@ void main(){
  point3=corner(vec2(shape.x*.5,-shape.y*.5),vec2(uvEnd.x,shape.w),matrix,origin);
 }
 )GLSL";
+namespace {
 constexpr const char* ReanimGeometrySource = R"GLSL(#version 150
 layout(triangles)in;layout(triangle_strip,max_vertices=18)out;
 flat in vec4 point0[],point1[],point2[],point3[],trackColor[],trackClip[];
@@ -157,7 +168,7 @@ bool OpenGLRenderer::Impl::InitReanim()
         int bufferMaximum=0;glGetIntegerv(0x8C2B,&bufferMaximum); // GL_MAX_TEXTURE_BUFFER_SIZE.
         reanimBlobMaximum=std::min(size_t(std::max(0,bufferMaximum)),ExactFloatIndexLimit);
         if(!reanimBlobMaximum)return false;
-        vertex=Compile(GL_VERTEX_SHADER,ReanimVertexSource);
+        vertex=Compile(GL_VERTEX_SHADER,std::string("#version 150\n")+OpenGLReanimEvaluationShader);
         geometry=Compile(GeometryShader,ReanimGeometrySource);
         fragment=Compile(GL_FRAGMENT_SHADER,SceneFragmentShader());program=glCreateProgram();
         glAttachShader(program,vertex);glAttachShader(program,geometry);glAttachShader(program,fragment);
@@ -198,6 +209,9 @@ bool OpenGLRenderer::Impl::InitReanim()
         reanimVao=reanimIndexBuffer=reanimInstanceBuffer=reanimInstanceTexture=reanimBlobTexture=0;
     }
     if(vertex)glDeleteShader(vertex);if(geometry)glDeleteShader(geometry);if(fragment)glDeleteShader(fragment);
+#if defined(PVZ_OPENGL_REANIM_COMPUTE_EXPERIMENT)
+    if(reanimProgram)InitReanimCompute();
+#endif
     glBindVertexArray(vao);glActiveTexture(GL_TEXTURE0);return reanimProgram!=0;
 }
 
@@ -352,7 +366,11 @@ bool OpenGLRenderer::SubmitReanimTrack(unsigned int instance,const GpuReanimTrac
     const auto clip=Clamped(draw.flags&GpuReanimTrackDraw::IgnoreDefaultClip?
         GpuClip{0,0,target->width,target->height}:state.clip,target->width,target->height);
     if(!clip.width||!clip.height)return true;
-    if(s.vertices.size()>=UINT32_MAX||s.reanimIndices.size()>size_t(INT32_MAX)-3)
+    unsigned int indexCount=3;
+#if defined(PVZ_OPENGL_REANIM_COMPUTE_EXPERIMENT)
+    if(s.reanimComputeProgram)indexCount=18;
+#endif
+    if(s.vertices.size()>=UINT32_MAX||s.reanimIndices.size()>size_t(INT32_MAX)-indexCount)
         throw std::length_error("OpenGL indexed reanimation stream exhausted");
     // The native32byte track payload aliases the first32bytes of an ordinary
     // GpuVertex. Typed integer attributes preserve all color/flag/index bits.
@@ -362,22 +380,35 @@ bool OpenGLRenderer::SubmitReanimTrack(unsigned int instance,const GpuReanimTrac
         std::bit_cast<uint32_t>(draw.shakeX),std::bit_cast<uint32_t>(draw.shakeY),0,0};
     std::memcpy(&marker,payload.data(),32);marker.sampler=MarkerSampler;
     EnsureSpace(s.vertices,s.vertices.size()+1);
-    EnsureSpace(s.reanimIndices,(s.hasReanimDraws?s.reanimIndices.size():s.vertices.size())+3);
+    EnsureSpace(s.reanimIndices,(s.hasReanimDraws?s.reanimIndices.size():s.vertices.size())+indexCount);
     EnsureSpace(s.batches,s.batches.size()+1);
+#if defined(PVZ_OPENGL_REANIM_COMPUTE_EXPERIMENT)
+    if(s.reanimComputeProgram)EnsureSpace(s.reanimComputeJobs,s.reanimComputeJobs.size()+1);
+    else
+#endif
     EnsureSpace(s.reanimMarkerOffsets,s.reanimMarkerOffsets.size()+1);
     if(!s.hasReanimDraws){
         s.reanimIndices.resize(s.vertices.size());
         std::iota(s.reanimIndices.begin(),s.reanimIndices.end(),0u);
     }
     const auto first=s.reanimIndices.size();const auto vertex=unsigned(s.vertices.size());
-    s.reanimMarkerOffsets.push_back(first);
-    s.vertices.push_back({marker});s.reanimIndices.insert(s.reanimIndices.end(),{vertex,vertex,vertex});
+#if defined(PVZ_OPENGL_REANIM_COMPUTE_EXPERIMENT)
+    if(s.reanimComputeProgram){
+        s.reanimComputeJobs.push_back({vertex,unsigned(first)});
+        s.reanimIndices.insert(s.reanimIndices.end(),18,0u);
+    }else
+#endif
+    {
+        s.reanimMarkerOffsets.push_back(first);
+        s.reanimIndices.insert(s.reanimIndices.end(),{vertex,vertex,vertex});
+    }
+    s.vertices.push_back({marker});
     s.hasReanimDraws=true;
     const auto sameClip=[&](const Impl::Batch& b){
         return b.clip.x==clip.x&&b.clip.y==clip.y&&b.clip.width==clip.width&&b.clip.height==clip.height;};
     if(!s.batches.empty()&&s.batches.back().image==state.image&&s.batches.back().blend==blend&&
-        !s.batches.back().coverage&&sameClip(s.batches.back()))s.batches.back().count+=3;
-    else s.batches.push_back({state.image,first,3,blend,clip,false});
+        !s.batches.back().coverage&&sameClip(s.batches.back()))s.batches.back().count+=indexCount;
+    else s.batches.push_back({state.image,first,indexCount,blend,clip,false});
     return true;
 }
 bool OpenGLRenderer::SubmitReanim(OpenGLReanim* definition,OpenGLTexture* texture,

@@ -12,6 +12,9 @@ find_program(PVZ_SPIRV_VAL NAMES spirv-val HINTS "$ENV{VULKAN_SDK}/Bin"
     "C:/UserProgram/VulkanSDK/1.4.350.0/Bin" REQUIRED)
 
 add_library(sexy_vulkan STATIC VulkanContext.cpp VulkanRenderer.cpp)
+if(PVZ_EXPERIMENTAL_GPU_REANIM)
+    target_compile_definitions(sexy_vulkan PRIVATE PVZ_REANIM_GEOMETRY=1 PVZ_REANIM_UNIFIED=1)
+endif()
 if(NOT WIN32 OR NOT PVZ_WINDOWS_PLATFORM STREQUAL "WIN7")
     target_sources(sexy_vulkan PRIVATE VulkanHdrDisplay.cpp VulkanHdrObserver.cpp)
 endif()

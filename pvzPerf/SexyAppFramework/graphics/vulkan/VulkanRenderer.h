@@ -84,6 +84,10 @@ public:
     // All renderer calls are serialized on the render thread, not worker jobs.
     void SetRenderImage(VulkanTexture* image);
     const bool& sceneOpen;
+    // Common drawing counts eligible picture candidates even on CPU fallback.
+    // The next completed-batch decision uses their aggregate frame density.
+    uint32_t& reanimPictureCandidates;
+    const bool& reanimFrameEligible;
     // reanim-v4 静态槽位：纹理落在槽位区恒等位 staticBase+staticSlot——
     // 编译记录烘焙的最终下标，运行时零翻译。静态槽永不回收（启动语料
     // 终身常驻）；重复放置同槽（变体重建）原地覆盖描述符。
@@ -136,11 +140,12 @@ public:
     // Each accepted job evaluates one track once and writes the ordinary stream.
     bool SubmitReanim(VulkanReanim* definition, VulkanTexture* texture,
         const GpuReanimDraw& draw, bool linear, bool repeat, VulkanBlend blend,
-        const VulkanClip* clip = nullptr);
+        const VulkanClip* clip = nullptr,bool forceGpu = false);
     // Frame-scoped append index, without a pointer-to-index map. UINT32_MAX
     // means unsupported; the caller retains its ordinary CPU draw route.
     uint32_t BeginReanimInstance(VulkanReanim* definition,VulkanTexture* texture,
-        const GpuReanimInstance& instance,bool linear,bool repeat,const VulkanClip* clip=nullptr);
+        const GpuReanimInstance& instance,bool linear,bool repeat,const VulkanClip* clip=nullptr,
+        bool forceGpu=false);
     bool SubmitReanimTrack(uint32_t instance,const GpuReanimTrackDraw& track,VulkanBlend blend);
     // Nearest/clamp mask sampling, integer byte coverage -> alpha in the GPU,
     // with the same native blending and clipping as ordinary primitives.

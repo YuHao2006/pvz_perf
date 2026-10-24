@@ -56,6 +56,8 @@ public:
     bool HasCausticsCompute() const;
     bool BeginScene();
     const bool& sceneOpen;
+    uint32_t& reanimPictureCandidates;
+    const bool& reanimFrameEligible;
     void SubmitTriangles(std::span<const GpuVertex> vertices, OpenGLTexture* texture,
         bool linear, bool wrap, GpuBlend blend, const GpuClip* clip = nullptr);
     void SubmitPool(OpenGLTexture* texture, const GpuPoolParams& params);
@@ -65,7 +67,18 @@ public:
     void DestroyReanimDefinition(OpenGLReanim* definition);
     bool SubmitReanim(OpenGLReanim* definition, OpenGLTexture* texture,
         const GpuReanimDraw& draw, bool linear, bool repeat, GpuBlend blend,
-        const GpuClip* clip = nullptr);
+        const GpuClip* clip = nullptr, bool forceGpu = false);
+    unsigned int BeginReanimInstance(OpenGLReanim* definition, OpenGLTexture* texture,
+        const GpuReanimInstance& instance, bool linear, bool repeat,
+        const GpuClip* defaultClip = nullptr, bool forceGpu = false);
+    bool SubmitReanimTrack(unsigned int instance, const GpuReanimTrackDraw& draw, GpuBlend blend);
+    // Optional diagnostics. Normal rendering leaves this null and does not
+    // query timestamps or read a CPU clock around presentation.
+    struct FrameTiming {
+        unsigned int elapsedQuery = 0, vertexInvocationsQuery = 0;
+        double presentCpuUs = 0;
+    };
+    FrameTiming*& frameTiming;
     void SubmitCoverageTriangles(std::span<const GpuVertex> vertices, OpenGLTexture* texture,
         GpuBlend blend, const GpuClip* clip = nullptr);
     void EndSceneAndPresent();

@@ -91,6 +91,10 @@ inline ZamboniMotionSample Sample(double origin, float initialSpeed, std::uint64
             return equilibrium + (x - equilibrium) * TodExponentialCurve<q>(ns);
         };
         const double rate = Direction * Speed(x) + additional;
+        // At equilibrium the recurrence is exactly stationary. In particular,
+        // avoid multiplying its zero amplitude by an overflowing exponential.
+        if (rate == 0)
+            return {x, Speed(x)};
         const double boundary = rate < 0 ? 400 : 700;
         double crossing = std::numeric_limits<double>::infinity();
         if (rate != 0)

@@ -31,6 +31,7 @@
 #include <array>
 #include <algorithm>
 #include <cmath>
+#include <cstdlib>
 #include <iostream>
 #include <stdexcept>
 #include <vector>
@@ -654,7 +655,7 @@ void ReanimationAppearancePixels(SexyAppBase& app)
     definition.mVariantActionStarts=starts.data();
     definition.mVariantActionCounts=counts.data();
     definition.mVariantOptions=options.data();
-#if defined(PVZ_GPU_REANIM_VULKAN)
+#if defined(PVZ_GPU_REANIM_RESIDENT)
     {
         std::vector<GpuReanimTrack> gpuTracks;
         std::vector<GpuReanimKey> gpuKeys;
@@ -671,7 +672,11 @@ void ReanimationAppearancePixels(SexyAppBase& app)
                 region.mU0,region.mV0,region.mU1,region.mV1});
         definition.mGpuData=render.mRenderer->UploadReanimDefinition(
             {gpuTracks,gpuKeys,gpuGeometry,3,4});
+        if (!definition.mGpuData && std::getenv("PVZ_EXPECT_GPU_REANIM"))
+            throw std::runtime_error("Resident drawing was required but synthetic GPU upload is unsupported");
+#if defined(PVZ_GPU_REANIM_VULKAN)
         Require(definition.mGpuData,"Synthetic reanimation GPU upload failed");
+#endif
         // Upload inputs go out of scope before DrawTrack and AttachmentDraw.
     }
     struct GpuDefinitionCleanup {
@@ -755,6 +760,44 @@ void ReanimationAppearancePixels(SexyAppBase& app)
     Pixel(hidden,8*20+4,0xff000000u);
     Pixel(hidden,8*20+10,0xff000000u);
     transforms[face].mAlpha=1;
+#if defined(PVZ_GPU_REANIM_RESIDENT)
+    if (std::getenv("PVZ_EXPECT_GPU_REANIM"))
+    {
+        // Seed the previous frame's real policy input, then begin a new image
+        // frame. A different CPU translation proves DrawTrack consumes the
+        // already uploaded GPU keys rather than silently passing on CPU pixels.
+        {
+            GpuImageDrawScope destination(render,target.get());
+            Graphics graphics(target.get());
+            graphics.mColor=Color::Black;
+            graphics.FillRect(Rect(0,0,20,12));
+            render.mRenderer->reanimPictureCandidates=256;
+        }
+        render.Flush();
+        animation.SelectVariant(0);
+        const float originalX=transforms[stem].mTransX;
+        transforms[stem].mTransX=50.5f;
+        {
+            GpuImageDrawScope destination(render,target.get());
+            Graphics graphics(target.get());
+            graphics.mColor=Color::Black;
+            graphics.FillRect(Rect(0,0,20,12));
+            Require(render.mRenderer->reanimFrameEligible,
+                "Resident DrawTrack proof failed to enter an eligible image frame");
+            graphics.mLinearBlend=false;
+            animation.DrawRenderGroup(&graphics,0);
+        }
+        render.Flush();
+        transforms[stem].mTransX=originalX;
+        const auto resident=render.ReadImagePixels(*target);
+        Pixel(resident,5*20+11,0xff0000ffu);
+        Require(render.mRenderer->reanimPictureCandidates>0,
+            "Resident DrawTrack failed to record picture candidates");
+        std::cout<<"PASS actual resident DrawTrack: uploaded keys differ from CPU transforms, "
+            "shared instance and attachment rendering use GPU pixels\n";
+        animation.SelectVariant(3);
+    }
+#endif
     bool rejected=false;
     try { animation.SelectVariant(4); } catch (const std::out_of_range&) { rejected=true; }
     Require(rejected && animation.mVariant==3,"Invalid appearance selection damaged the current row");
@@ -786,9 +829,14 @@ void ReanimationAppearanceDefinitions(SexyAppBase& app)
         blinkFrames[2].mFrame==0 && blinkFrames[4].mFrame==-1 && blinkFrames[5].mFrame==-1,
         "Cel inheritance changed Garlic's explicit or inherited hidden frames");
     auto& render=*app.mDDInterface->mRenderInterface;
-#if defined(PVZ_GPU_REANIM_VULKAN)
+#if defined(PVZ_GPU_REANIM_RESIDENT)
     ReanimatorUploadGpuDefinitionData();
+#if defined(PVZ_GPU_REANIM_VULKAN)
     Require(first.mDefinition->mGpuData,"Production GRU1 reanimation data was not uploaded");
+#else
+    if (std::getenv("PVZ_EXPECT_GPU_REANIM"))
+        Require(first.mDefinition->mGpuData,"Production GRU1 reanimation data was not uploaded");
+#endif
 #endif
     std::unique_ptr<Image> target(render.CreateRenderImage(128,128));
     {

@@ -956,7 +956,8 @@ bool Reanimation::DrawTrack(Graphics* g, int theTrackIndex, int theRenderGroup,
 	// visibility/alpha required by AttachmentDraw's synchronous return contract.
 	if (mDefinition->mGpuData && mTrackInstances[theTrackIndex].mBlendCounter <= 0 &&
 		!mEnableExtraAdditiveDraw && !mEnableExtraOverlayDraw &&
-		g->mDestImage && g->mDestImage->IsGpuDrawTarget())
+		g->mDestImage && g->mDestImage->IsGpuDrawTarget() &&
+		(!trackData.mTransforms || g->mDestImage->mRenderOwner->mRenderer->reanimFrameEligible))
 	{
 		auto& render = *g->mDestImage->mRenderOwner;
 		if (render.mTransformStack.empty())
@@ -1024,7 +1025,7 @@ bool Reanimation::DrawTrack(Graphics* g, int theTrackIndex, int theRenderGroup,
 					std::uint32_t(GpuImageColorFilter::White)};
 				const auto samplingFlags = mFilterEffect == FilterEffect::FILTER_EFFECT_NONE
 					? 0u : filters[static_cast<int>(mFilterEffect) + 1];
-#if defined(PVZ_GPU_REANIM_VULKAN)
+#if defined(PVZ_GPU_REANIM_RESIDENT)
 				if (theGpuInstance != UINT32_MAX)
 				{
 					GpuReanimTrackDraw track{};
@@ -1036,7 +1037,10 @@ bool Reanimation::DrawTrack(Graphics* g, int theTrackIndex, int theRenderGroup,
 					track.shakeX = instance.mShakeX;
 					track.shakeY = instance.mShakeY;
 					if (render.mRenderer->SubmitReanimTrack(theGpuInstance, track, blend))
+					{
+						++render.mRenderer->reanimPictureCandidates;
 						return true;
+					}
 				}
 #endif
 				GpuReanimDraw draw{};
@@ -1055,8 +1059,11 @@ bool Reanimation::DrawTrack(Graphics* g, int theTrackIndex, int theRenderGroup,
 				draw.truncate = instance.mTruncateDisappearingFrames;
 				if (render.mRenderer->SubmitReanim(mDefinition->mGpuData, texture, draw,
 					g->mLinearBlend, RenderInterface::sSamplerAddressWrap, blend,
-					fullClip ? nullptr : &gpuClip))
+					fullClip ? nullptr : &gpuClip, !keys))
+				{
+					++render.mRenderer->reanimPictureCandidates;
 					return true;
+				}
 			}
 		}
 	}
@@ -1160,6 +1167,19 @@ bool Reanimation::DrawTrack(Graphics* g, int theTrackIndex, int theRenderGroup,
 				filterFlags[static_cast<int>(mFilterEffect) + 1];
 		}
 		TodBltMatrix(g, source, aMatrix, aClipRect, aColor, g->mDrawMode, aSrcRect);
+#if defined(PVZ_GPU_REANIM_RESIDENT) && defined(PVZ_EXPERIMENTAL_GPU_REANIM)
+		// Sparse frames use the original CPU route. Count candidates here so
+		// the next frame can choose GPU drawing without a second track walk
+		// or duplicate visibility/alpha sampling on this CPU route.
+		if (mDefinition->mGpuData && aTrackInstance->mBlendCounter <= 0 &&
+			!mEnableExtraAdditiveDraw && !mEnableExtraOverlayDraw &&
+			g->mDestImage && g->mDestImage->IsGpuDrawTarget())
+		{
+			auto& render = *g->mDestImage->mRenderOwner;
+			if (render.mTransformStack.empty())
+				++render.mRenderer->reanimPictureCandidates;
+		}
+#endif
 		if (mEnableExtraAdditiveDraw)
 		{
 			TodBltMatrix(g, source, aMatrix, aClipRect, aExtraAdditiveColor, Graphics::DRAWMODE_ADDITIVE, aSrcRect);
@@ -1269,7 +1289,7 @@ void Reanimation::DrawRenderGroup(Graphics* g, int theRenderGroup)
 			{
 				GetFrameTime(&aFrameTime);
 				aHasFrameTime = true;
-#if defined(PVZ_GPU_REANIM_VULKAN) && defined(PVZ_EXPERIMENTAL_GPU_REANIM)
+#if defined(PVZ_GPU_REANIM_RESIDENT) && defined(PVZ_EXPERIMENTAL_GPU_REANIM)
 				if (mDefinition->mGpuData && !mEnableExtraAdditiveDraw && !mEnableExtraOverlayDraw &&
 					g->mDestImage && g->mDestImage->IsGpuDrawTarget() && mDefinition->mTextures[mVariant])
 				{

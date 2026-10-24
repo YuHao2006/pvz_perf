@@ -75,6 +75,12 @@ struct D3d12Texture {
     bool opaque = false, generated = false, sampled = false;
 };
 
+struct D3d12Reanim {
+    void* owner = nullptr;
+    std::vector<GpuReanimTrack> tracks;
+    uint32_t header = 0, imageSlotCount = 0, variantCount = 0;
+};
+
 struct D3d12Renderer::Impl {
     struct Page {
         ComPtr<ID3D12Resource> resource;
@@ -143,6 +149,38 @@ struct D3d12Renderer::Impl {
     bool gameBound = false;
     D3D12_RECT boundScissor{};
     bool hasScissor = false;
+    uint32_t reanimPictureCandidates = 0;
+    uint64_t reanimOrdinaryTriangles = 0;
+    bool reanimFrameEligible = false, reanimBatchStarted = false;
+#if defined(PVZ_D3D12_REANIM_RESIDENT)
+    struct ReanimInstance {
+        GpuReanimInstance draw;
+        uint32_t header, imageSlotCount, textureSlot, flags;
+        float clip[4];
+    };
+    struct ReanimTrack {
+        uint32_t track, instance, color, flags;
+        float shakeX, shakeY;
+        uint32_t padding[2]{};
+    };
+    static_assert(sizeof(ReanimInstance) == 96 && sizeof(ReanimTrack) == 32);
+    struct ReanimControl {
+        D3d12Reanim* definition;
+        D3d12Texture* texture;
+        uint32_t before, after;
+        uint32_t textureSlot = UINT32_MAX;
+    };
+    ComPtr<ID3D12Resource> reanimStatic;
+    Page reanimInstances, reanimTracks;
+    UINT64 reanimStaticUsed = 0;
+    static constexpr UINT64 ReanimStaticCapacity = 64 * 1024 * 1024;
+    std::vector<D3d12Reanim*> reanimDefinitions, reanimRetired;
+    std::vector<ReanimControl> reanimControls;
+    ComPtr<ID3D12RootSignature> reanimRoot;
+    std::array<ComPtr<ID3D12PipelineState>, 3> reanimScenePipelines, reanimImagePipelines;
+    uint32_t reanimGeneration = 0;
+    bool reanimActive = false;
+#endif
 
     Impl(D3d12Context& ctx, int w, int h,
         const std::filesystem::path& shaders)
@@ -208,6 +246,10 @@ struct D3d12Renderer::Impl {
         } catch (...) {
             // Preserve the original failure while attempting the final queue wait.
         }
+#if defined(PVZ_D3D12_REANIM_RESIDENT)
+        for (auto* definition : reanimDefinitions) delete definition;
+        for (auto* definition : reanimRetired) delete definition;
+#endif
     }
 
     void Dimensions(int w, int h) const {
@@ -233,12 +275,12 @@ struct D3d12Renderer::Impl {
     }
 
     ComPtr<ID3D12RootSignature> Root(UINT constants, UINT inputs, bool game,
-        bool sampler, bool compute, bool pool = false) {
+        bool sampler, bool compute, bool pool = false, bool reanim = false) {
         std::array<D3D12_DESCRIPTOR_RANGE, 2> ranges{};
         ranges[0] = {D3D12_DESCRIPTOR_RANGE_TYPE_SRV, inputs, 0, 0, 0};
         ranges[1] = {game ? D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER :
             D3D12_DESCRIPTOR_RANGE_TYPE_UAV, game ? 4u : 1u, 0, 0, 0};
-        std::array<D3D12_ROOT_PARAMETER, 4> params{};
+        std::array<D3D12_ROOT_PARAMETER, 6> params{};
         params[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
         params[0].Constants = {0, 0, constants};
         params[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
@@ -253,6 +295,12 @@ struct D3d12Renderer::Impl {
         params[3].ParameterType = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
         params[3].Constants = {1, 0, 16};
         params[3].ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
+        if (reanim)
+            for (UINT i = 0; i < 3; ++i) {
+                params[3 + i].ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV;
+                params[3 + i].Descriptor = {i, 1};
+                params[3 + i].ShaderVisibility = D3D12_SHADER_VISIBILITY_GEOMETRY;
+            }
         std::array<D3D12_STATIC_SAMPLER_DESC, 4> samplers{};
         for (UINT i = 0; i < samplers.size(); ++i) {
             auto& s = samplers[i];
@@ -267,7 +315,7 @@ struct D3d12Renderer::Impl {
             s.ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
         }
         D3D12_ROOT_SIGNATURE_DESC desc{};
-        desc.NumParameters = pool ? 4 : (compute || game ? 3 : 2);
+        desc.NumParameters = reanim ? 6 : (pool ? 4 : (compute || game ? 3 : 2));
         desc.pParameters = params.data();
         desc.NumStaticSamplers = sampler && !game ? 1 : 0;
         desc.pStaticSamplers = samplers.data();
@@ -288,11 +336,13 @@ struct D3d12Renderer::Impl {
 
     ComPtr<ID3D12PipelineState> Graphics(ID3D12RootSignature* root,
         const std::vector<char>& vs, const std::vector<char>& ps,
-        DXGI_FORMAT format, GpuBlend blend, bool premultiplied, bool pool = false) {
+        DXGI_FORMAT format, GpuBlend blend, bool premultiplied, bool pool = false,
+        const std::vector<char>* gs = nullptr) {
         D3D12_GRAPHICS_PIPELINE_STATE_DESC desc{};
         desc.pRootSignature = root;
         desc.VS = {vs.data(), vs.size()};
         desc.PS = {ps.data(), ps.size()};
+        if (gs) desc.GS = {gs->data(), gs->size()};
         desc.InputLayout = {VertexLayout.data(), UINT(VertexLayout.size())};
         const D3D12_INPUT_ELEMENT_DESC poolLayout{
             "POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 0,
@@ -533,6 +583,31 @@ struct D3d12Renderer::Impl {
         pages.push_back(std::move(page));
         return result;
     }
+#if defined(PVZ_D3D12_REANIM_RESIDENT)
+    void InitReanim() {
+        if (reanimRoot) return;
+        auto root = Root(4, TextureSlots, true, true, false, false, true);
+        const auto vs = Shader(directory, "game_reanim_vs");
+        const auto gs = Shader(directory, "game_reanim_gs");
+        const auto ps = Shader(directory, "game_ps");
+        for (UINT i = 0; i < 3; ++i) {
+            reanimScenePipelines[i] = Graphics(root.Get(), vs, ps,
+                DXGI_FORMAT_B8G8R8A8_UNORM, GpuBlend(i), false, false, &gs);
+            reanimImagePipelines[i] = Graphics(root.Get(), vs, ps,
+                DXGI_FORMAT_R32G32B32A32_FLOAT, GpuBlend(i), true, false, &gs);
+        }
+        auto arena = Buffer(ReanimStaticCapacity, D3D12_HEAP_TYPE_DEFAULT);
+        for (Page* page : {&reanimInstances, &reanimTracks}) {
+            page->size = 4 * 1024 * 1024;
+            page->resource = Buffer(page->size, D3D12_HEAP_TYPE_UPLOAD);
+            D3D12_RANGE read{0, 0};
+            Check(page->resource->Map(0, &read, reinterpret_cast<void**>(&page->mapped)),
+                "Map(reanimation packets)", device);
+        }
+        reanimStatic = std::move(arena);
+        reanimRoot = std::move(root);
+    }
+#endif
 
     void Upload(D3d12Texture* texture, const void* source, int pitch, UINT pixelBytes) {
         if (!source || pitch < int64_t(texture->width) * pixelBytes)
@@ -599,6 +674,15 @@ struct D3d12Renderer::Impl {
             if (mode) mode->sampledOutput->sampled = false;
         for (auto& page : staging) page->used = 0;
         for (auto& page : vertices) page->used = 0;
+#if defined(PVZ_D3D12_REANIM_RESIDENT)
+        for (auto* definition : reanimRetired) delete definition;
+        reanimRetired.clear();
+        reanimControls.clear();
+        reanimInstances.used = reanimTracks.used = 0;
+        reanimActive = false;
+        ++reanimGeneration;
+#endif
+        reanimBatchStarted = false;
         temporary = TextureSlots;
         InvalidateDrawState();
     }
@@ -711,11 +795,22 @@ struct D3d12Renderer::Impl {
         auto* target = Output();
         BindTarget(target);
         if (!gameBound) {
-            commands->SetGraphicsRootSignature(gameRoot.Get());
+            auto* root = gameRoot.Get();
+#if defined(PVZ_D3D12_REANIM_RESIDENT)
+            if (reanimActive) root = reanimRoot.Get();
+#endif
+            commands->SetGraphicsRootSignature(root);
             commands->SetGraphicsRootDescriptorTable(1, Gpu(0));
             commands->SetGraphicsRootDescriptorTable(2,
                 samplerHeap->GetGPUDescriptorHandleForHeapStart());
             commands->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+#if defined(PVZ_D3D12_REANIM_RESIDENT)
+            if (reanimActive) {
+                commands->SetGraphicsRootShaderResourceView(3, reanimStatic->GetGPUVirtualAddress());
+                commands->SetGraphicsRootShaderResourceView(4, reanimInstances.resource->GetGPUVirtualAddress());
+                commands->SetGraphicsRootShaderResourceView(5, reanimTracks.resource->GetGPUVirtualAddress());
+            }
+#endif
             gameBound = true;
         }
         const std::array<UINT, 4> constants{
@@ -725,6 +820,11 @@ struct D3d12Renderer::Impl {
         commands->SetGraphicsRoot32BitConstants(0, 4, constants.data(), 0);
         auto* pipeline = (target->generated ? imagePipelines : scenePipelines)
             .at(size_t(run.blend)).Get();
+#if defined(PVZ_D3D12_REANIM_RESIDENT)
+        if (reanimActive)
+            pipeline = (target->generated ? reanimImagePipelines : reanimScenePipelines)
+                .at(size_t(run.blend)).Get();
+#endif
         if (boundPipeline != pipeline) {
             commands->SetPipelineState(pipeline);
             boundPipeline = pipeline;
@@ -752,6 +852,7 @@ struct D3d12Renderer::Impl {
             input.size_bytes() > UINT_MAX - sizeof(GpuVertex))
             throw std::invalid_argument("Invalid D3D12 triangle list/blend");
         if (input.empty()) return;
+        reanimOrdinaryTriangles += input.size() / 3;
         auto* target = Output();
         D3D12_RECT scissor{0, 0, target->width, target->height};
         if (clip) {
@@ -1012,7 +1113,10 @@ D3d12Renderer::D3d12Renderer(D3d12Context& context, int width, int height,
     const std::filesystem::path& directory, const GpuHdrParams* hdr)
     : impl_(std::make_unique<Impl>(context, width, height, directory)),
       whiteTexture(impl_->white), causticsTexture(impl_->causticTarget),
-      sceneOpen(impl_->sceneOpen), sceneWidth(impl_->width), sceneHeight(impl_->height) {
+      sceneOpen(impl_->sceneOpen),
+      reanimPictureCandidates(impl_->reanimPictureCandidates),
+      reanimFrameEligible(impl_->reanimFrameEligible),
+      sceneWidth(impl_->width), sceneHeight(impl_->height) {
     if (hdr) {
         hdr->Validate();
         if (!context.hdr)
@@ -1175,6 +1279,9 @@ void D3d12Renderer::SetRenderImage(D3d12Texture* image) {
         }
     }
     s.renderImage = image;
+#if defined(PVZ_D3D12_REANIM_RESIDENT)
+    ++s.reanimGeneration;
+#endif
     s.InvalidateDrawState();
     if (s.sceneOpen && image) s.Snapshot(image);
 }
@@ -1350,6 +1457,18 @@ bool D3d12Renderer::BeginScene() {
     s.Begin();
     if (!s.renderImage && !s.context.BackBuffer()) return false;
     s.sceneOpen = true;
+    if (!s.reanimBatchStarted) {
+#if defined(PVZ_D3D12_REANIM_RESIDENT)
+        s.reanimFrameEligible = s.reanimPictureCandidates >= 256 &&
+            s.reanimOrdinaryTriangles <= uint64_t(s.reanimPictureCandidates) * 32;
+#endif
+        s.reanimPictureCandidates = 0;
+        s.reanimOrdinaryTriangles = 0;
+        s.reanimBatchStarted = true;
+    }
+#if defined(PVZ_D3D12_REANIM_RESIDENT)
+    ++s.reanimGeneration;
+#endif
     s.imageOnly = s.renderImage != nullptr;
     s.InvalidateDrawState();
     s.RecordCaustics();
@@ -1370,6 +1489,194 @@ void D3d12Renderer::SubmitCoverageTriangles(std::span<const GpuVertex> vertices,
     if (mask->format != DXGI_FORMAT_R8_UNORM)
         throw std::invalid_argument("D3D12 coverage draw requires an R8 mask");
     impl_->Draw(vertices, mask, blend, clip, true);
+}
+D3d12Reanim* D3d12Renderer::UploadReanimDefinition(const GpuReanimDefinition& source) {
+#if defined(PVZ_D3D12_REANIM_RESIDENT)
+    auto& s = *impl_;
+    if (source.tracks.empty() || !source.imageSlotCount || !source.variantCount ||
+        uint64_t(source.imageSlotCount) * source.variantCount != source.geometry.size())
+        throw std::invalid_argument("Invalid resident D3D12 reanimation definition");
+    for (const auto& track : source.tracks)
+        if (track.keyOffset != GpuReanimNoKeys &&
+            (!track.keyCount || uint64_t(track.keyOffset) + track.keyCount > source.keys.size()))
+            throw std::invalid_argument("Invalid resident D3D12 reanimation track");
+    for (const auto& key : source.keys)
+        if (key.imageSlot >= source.imageSlotCount)
+            throw std::invalid_argument("Invalid resident D3D12 reanimation image");
+    const uint64_t bytes = 16 + source.tracks.size_bytes() +
+        source.keys.size_bytes() + source.geometry.size_bytes();
+    if (bytes > Impl::ReanimStaticCapacity - s.reanimStaticUsed)
+        throw std::runtime_error("Experimental D3D12 reanimation static arena exceeded");
+    s.InitReanim();
+    auto* result = new D3d12Reanim;
+    try {
+        result->owner = &s;
+        result->tracks.assign(source.tracks.begin(), source.tracks.end());
+        result->imageSlotCount = source.imageSlotCount; result->variantCount = source.variantCount;
+        s.reanimDefinitions.reserve(s.reanimDefinitions.size() + 1);
+        s.Begin(); s.Flush();
+        auto* page = s.Allocate(s.staging, bytes, 16, true);
+        const uint64_t origin = s.reanimStaticUsed;
+        const uint32_t header[]{uint32_t((origin + 16) / 4),
+            uint32_t((origin + 16 + source.tracks.size_bytes()) / 4),
+            uint32_t((origin + 16 + source.tracks.size_bytes() + source.keys.size_bytes()) / 4),
+            source.imageSlotCount};
+        auto* output = page->mapped + page->used;
+        std::memcpy(output, header, 16); output += 16;
+        if (!source.tracks.empty()) std::memcpy(output, source.tracks.data(), source.tracks.size_bytes());
+        output += source.tracks.size_bytes();
+        if (!source.keys.empty()) std::memcpy(output, source.keys.data(), source.keys.size_bytes());
+        output += source.keys.size_bytes();
+        std::memcpy(output, source.geometry.data(), source.geometry.size_bytes());
+        D3D12_RESOURCE_BARRIER barrier{};
+        barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+        barrier.Transition.pResource = s.reanimStatic.Get();
+        barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+        barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_GENERIC_READ;
+        barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_COPY_DEST;
+        s.commands->ResourceBarrier(1, &barrier);
+        s.commands->CopyBufferRegion(s.reanimStatic.Get(), origin,
+            page->resource.Get(), page->used, bytes);
+        std::swap(barrier.Transition.StateBefore, barrier.Transition.StateAfter);
+        s.commands->ResourceBarrier(1, &barrier);
+        page->used += bytes;
+        result->header = uint32_t(origin / 4);
+        s.reanimStaticUsed += bytes;
+        s.reanimDefinitions.push_back(result);
+        return result;
+    } catch (...) { delete result; throw; }
+#else
+    (void)source;
+    return nullptr;
+#endif
+}
+void D3d12Renderer::DestroyReanimDefinition(D3d12Reanim* definition) {
+    if (!definition) return;
+#if defined(PVZ_D3D12_REANIM_RESIDENT)
+    auto& s = *impl_;
+    const auto found = std::find(s.reanimDefinitions.begin(), s.reanimDefinitions.end(), definition);
+    if (found == s.reanimDefinitions.end())
+        throw std::invalid_argument("Unknown resident D3D12 reanimation");
+    s.reanimRetired.push_back(definition);
+    definition->owner = nullptr;
+    s.reanimDefinitions.erase(found);
+#else
+    throw std::invalid_argument("Resident D3D12 reanimation is disabled");
+#endif
+}
+uint32_t D3d12Renderer::BeginReanimInstance(D3d12Reanim* definition, D3d12Texture* texture,
+    const GpuReanimInstance& instance, bool linear, bool repeat, const GpuClip* clip, bool forceGpu) {
+#if defined(PVZ_D3D12_REANIM_RESIDENT)
+    auto& s = *impl_;
+    if (!s.sceneOpen) throw std::logic_error("D3D12 reanimation instance outside scene");
+    if (!forceGpu && !s.reanimFrameEligible) return UINT32_MAX;
+    if (!definition || definition->owner != &s ||
+        !texture || !s.textures.contains(texture) || texture == s.renderImage ||
+        instance.variant >= definition->variantCount || !std::isfinite(instance.fraction) ||
+        instance.fraction < 0 || instance.fraction > 1 || s.reanimControls.size() >= 65535 ||
+        s.reanimInstances.size - s.reanimInstances.used < sizeof(Impl::ReanimInstance)) return UINT32_MAX;
+    Impl::ReanimInstance packet{};
+    packet.draw = instance; packet.header = definition->header;
+    packet.imageSlotCount = definition->imageSlotCount;
+    packet.textureSlot = SlotOf(texture);
+    packet.flags = (linear ? 1u : 0u) | (repeat ? 2u : 0u) | (clip ? 4u : 0u);
+    if (clip) {
+        packet.clip[0] = float(clip->x); packet.clip[1] = float(clip->y);
+        packet.clip[2] = float(int64_t(clip->x) + clip->width);
+        packet.clip[3] = float(int64_t(clip->y) + clip->height);
+    }
+    const auto index = uint32_t(s.reanimControls.size());
+    s.reanimControls.push_back({definition, texture, instance.before, instance.after});
+    std::memcpy(s.reanimInstances.mapped + s.reanimInstances.used, &packet, sizeof(packet));
+    s.reanimInstances.used += sizeof(packet);
+    return ((s.reanimGeneration & 0xffffu) << 16) | index;
+#else
+    (void)definition; (void)texture; (void)instance; (void)linear; (void)repeat; (void)clip; (void)forceGpu;
+    return UINT32_MAX;
+#endif
+}
+bool D3d12Renderer::SubmitReanim(D3d12Reanim* definition, D3d12Texture* texture,
+    const GpuReanimDraw& draw, bool linear, bool repeat, GpuBlend blend, const GpuClip* clip, bool forceGpu) {
+    GpuReanimInstance instance{draw.before, draw.after, draw.variant, 0,
+        draw.fraction, draw.translateX, draw.translateY, 0,
+        draw.overlay00, draw.overlay01, draw.overlay02, 0,
+        draw.overlay10, draw.overlay11, draw.overlay12, 0};
+    const auto token = BeginReanimInstance(definition, texture, instance, linear, repeat, clip, forceGpu);
+    if (token == UINT32_MAX) return false;
+#if defined(PVZ_D3D12_REANIM_RESIDENT)
+    // Legacy draws already contain the half-pixel adjustment. Mark this new,
+    // unsubmitted packet without undoing and repeating rounded float additions.
+    const uint32_t flags = (linear ? 1u : 0u) | (repeat ? 2u : 0u) | (clip ? 4u : 0u) | 8u;
+    std::memcpy(impl_->reanimInstances.mapped + (token & 0xffffu) * sizeof(Impl::ReanimInstance) +
+        offsetof(Impl::ReanimInstance, flags), &flags, sizeof(flags));
+#endif
+    const GpuReanimTrackDraw track{draw.track, draw.color, draw.samplingFlags,
+        draw.truncate ? GpuReanimTrackDraw::Truncate : 0u};
+    return SubmitReanimTrack(token, track, blend);
+}
+bool D3d12Renderer::SubmitReanimTrack(uint32_t instance, const GpuReanimTrackDraw& draw, GpuBlend blend) {
+#if defined(PVZ_D3D12_REANIM_RESIDENT)
+    auto& s = *impl_;
+    if (!s.sceneOpen || (instance >> 16) != (s.reanimGeneration & 0xffffu) ||
+        (instance & 0xffffu) >= s.reanimControls.size() || size_t(blend) >= 3 ||
+        (draw.flags & ~3u) || (draw.samplingFlags & ~(GpuVertex::kIndependentColorFilter |
+            GpuVertex::kColorFilterMask | GpuVertex::kAlphaEdgeFilter))) return false;
+    const auto index = instance & 0xffffu;
+    auto& control = s.reanimControls[index];
+    auto* definition = control.definition;
+    auto* texture = control.texture;
+    if (definition->owner != &s || !s.textures.contains(texture) || texture == s.renderImage ||
+        draw.track >= definition->tracks.size()) return false;
+    const auto& track = definition->tracks[draw.track];
+    if (track.keyOffset == GpuReanimNoKeys || track.flags || control.before >= track.keyCount ||
+        control.after >= track.keyCount ||
+        s.reanimTracks.size - s.reanimTracks.used < sizeof(Impl::ReanimTrack)) return false;
+    const auto textureSlot = SlotOf(texture);
+    if (control.textureSlot != UINT32_MAX && control.textureSlot != textureSlot) return false;
+    if (control.textureSlot == UINT32_MAX) {
+        // Resolve the slot on first submission, then leave the packet immutable.
+        // A begin-only instance never marks its texture sampled.
+        std::memcpy(s.reanimInstances.mapped + index * sizeof(Impl::ReanimInstance) +
+            offsetof(Impl::ReanimInstance, textureSlot), &textureSlot, sizeof(textureSlot));
+        control.textureSlot = textureSlot;
+    }
+    auto* target = s.Output();
+    // Resolve source mutations exactly as ordinary draws do. Its descriptor
+    // remains resident until the command fence; instance bytes stay immutable.
+    if (target->sampled) s.Snapshot(target);
+    if (texture->state != SampleState) {
+        s.Flush(); s.Transition(texture, SampleState);
+    }
+    texture->sampled = true;
+    if (!s.reanimActive) {
+        s.Flush();
+        s.reanimActive = true;
+        s.InvalidateDrawState();
+    }
+    const Impl::ReanimTrack packet{draw.track, index, draw.color,
+        draw.samplingFlags | draw.flags, draw.shakeX, draw.shakeY};
+    const auto packetIndex = uint32_t(s.reanimTracks.used / sizeof(packet));
+    std::memcpy(s.reanimTracks.mapped + s.reanimTracks.used, &packet, sizeof(packet));
+    s.reanimTracks.used += sizeof(packet);
+    // Marker and ordinary triangles share the existing painter-order stream.
+    auto* page = s.Allocate(s.vertices, 3 * sizeof(GpuVertex), sizeof(float), false);
+    const auto first = UINT(page->used / sizeof(GpuVertex));
+    const D3D12_RECT scissor{0, 0, target->width, target->height};
+    if (s.run.count && (s.run.page != page || s.run.first + s.run.count != first ||
+        s.run.blend != blend || s.run.coverage ||
+        std::memcmp(&s.run.scissor, &scissor, sizeof(scissor)))) s.Flush();
+    GpuVertex marker{};
+    marker.sampler = 0xc0000000u | packetIndex;
+    auto* output = reinterpret_cast<GpuVertex*>(page->mapped + page->used);
+    output[0] = output[1] = output[2] = marker;
+    page->used += 3 * sizeof(GpuVertex);
+    if (!s.run.count) s.run = {page, first, 0, blend, scissor, false};
+    s.run.count += 3;
+    return true;
+#else
+    (void)instance; (void)draw; (void)blend;
+    return false;
+#endif
 }
 void D3d12Renderer::SubmitPool(D3d12Texture* texture, const GpuPoolParams& p) {
     auto& s = *impl_;

@@ -115,7 +115,7 @@ void Correct(OpenGLContext&context){
  const uint32_t texels[]{0xffff0000,0xff00ff00,0xff0000ff,0xffffff00};
  auto*texture=r.CreateTexture(2,2,texels,8);
  const GpuClip clips[]{{10,10,22,25},{-20,-10,110,100},{100,100,4,4}};
- Error error;unsigned cases=0;
+ Error error;unsigned cases=0;unsigned previousToken=~0u;
  for(unsigned variant:{0u,1u})for(float t:{0.f,.375f,1.f})for(int clipping:{-1,0,1,2})
   for(bool truncate:{false,true})for(unsigned sampling:{0u,1u,2u,3u}){
    GpuReanimDraw job{};job.track=2;job.after=1;job.variant=variant;job.fraction=t;
@@ -128,10 +128,19 @@ void Correct(OpenGLContext&context){
     r.SubmitTriangles(cpu,texture,sampling&1,sampling&2,blend);
    r.EndSceneAndPresent();const auto expected=r.ReadScenePixels();
    Require(r.BeginScene(),"GPU scene");Clear(r);auto unsupported=job;unsupported.track=1;
-   Require(!r.SubmitReanim(definition,texture,unsupported,false,false,GpuBlend::Normal),"CPU-only track was densified");
-   Require(r.SubmitReanim(definition,texture,job,sampling&1,sampling&2,GpuBlend::Normal,clip),"Valid resident job rejected");
+   Require(!r.SubmitReanim(definition,texture,unsupported,false,false,GpuBlend::Normal,nullptr,true),"CPU-only track was densified");
+   Require(r.SubmitReanim(definition,texture,job,sampling&1,sampling&2,GpuBlend::Normal,clip,true),"Valid resident job rejected");
    r.SubmitTriangles(cpu,texture,sampling&1,sampling&2,GpuBlend::Additive);
-   Require(r.SubmitReanim(definition,texture,job,sampling&1,sampling&2,GpuBlend::Normal,clip),"Later resident job rejected");
+   const GpuReanimInstance packet{job.before,job.after,job.variant,0,
+    job.fraction,job.translateX+.5f,job.translateY+.5f,0,
+    job.overlay00,job.overlay01,job.overlay02,0,job.overlay10,job.overlay11,job.overlay12,0};
+   const auto token=r.BeginReanimInstance(definition,texture,packet,sampling&1,sampling&2,clip,true);
+   const GpuReanimTrackDraw track{job.track,job.color,job.samplingFlags,
+    truncate?GpuReanimTrackDraw::Truncate:0u};
+   Require(token!=~0u,"Shared instance rejected");
+   if(previousToken!=~0u)Require(!r.SubmitReanimTrack(previousToken,track,GpuBlend::Normal),"Stale frame token accepted");
+   Require(r.SubmitReanimTrack(token,track,GpuBlend::Normal),"Shared track rejected");
+   previousToken=token;
    r.EndSceneAndPresent();error.Compare(expected,r.ReadScenePixels());++cases;
   }
  auto secondKeys=keys;secondKeys[0].transX+=4;secondKeys[1].transY-=3;
@@ -148,18 +157,81 @@ void Correct(OpenGLContext&context){
    job.overlay02=float(i%5)*3+8;job.overlay12=float(i%3)*4+4;job.translateX=-.5f;job.translateY=.25f;
    job.color=0x9070c0e0;job.samplingFlags=(i%4)*0x10000000u;job.sampler=i%4;
    const auto*clip=i%4==0?nullptr:&clips[i%3];const auto blend=GpuBlend(i%3);
+   const bool ignore=i%5==0;const auto*effectiveClip=ignore?nullptr:clip;
    const auto&k=useSecond?secondKeys:keys;const auto&g=useSecond?blank:geo;
-   const auto cpu=Reference(k[0],k[1],g[1],g[job.variant*2+1],job,OpenGLRenderer::SlotOf(image),clip);
-   if(gpu)Require(r.SubmitReanim(useSecond?second:definition,image,job,i%2,(i/2)%2,blend,clip),"Mixed job rejected");
+   const auto cpu=Reference(k[0],k[1],g[1],g[job.variant*2+1],job,OpenGLRenderer::SlotOf(image),effectiveClip);
+   if(gpu){
+    const GpuReanimInstance packet{job.before,job.after,job.variant,0,
+     job.fraction,job.translateX+.5f,job.translateY+.5f,0,
+     job.overlay00,job.overlay01,job.overlay02,0,job.overlay10,job.overlay11,job.overlay12,0};
+    const auto token=r.BeginReanimInstance(useSecond?second:definition,image,packet,i%2,(i/2)%2,clip,true);
+    const GpuReanimTrackDraw track{job.track,job.color,job.samplingFlags,
+     ignore?GpuReanimTrackDraw::IgnoreDefaultClip:0u};
+    Require(r.SubmitReanimTrack(token,track,blend),"Mixed shared job rejected");
+   }
    else r.SubmitTriangles(cpu,image,i%2,(i/2)%2,blend);
    if(i%3==2)r.SubmitTriangles(cpu,image,i%2,(i/2)%2,GpuBlend::Normal);
   }
   r.EndSceneAndPresent();const auto actual=r.ReadScenePixels();if(!gpu)mixed=actual;else error.Compare(mixed,actual);
  }
+ for(unsigned gap:{511u,512u,2048u})for(bool clipped:{false,true}){
+  GpuReanimDraw job{};job.track=2;job.after=1;job.fraction=.375f;
+  job.overlay00=job.overlay11=1;job.overlay02=8;job.overlay12=5;job.color=0x8070c0e0;
+  const auto*clip=clipped?&clips[0]:nullptr;
+  const auto cpu=Reference(keys[0],keys[1],geo[1],geo[1],job,OpenGLRenderer::SlotOf(texture),clip);
+  Require(cpu.count>=3,"Long-span reference unexpectedly empty");
+  std::vector<GpuVertex>ordinary;ordinary.reserve(gap*3);
+  for(unsigned i=0;i<gap;++i)ordinary.insert(ordinary.end(),cpu.vertices.begin(),cpu.vertices.begin()+3);
+  std::vector<uint32_t>expected;
+  for(bool gpu:{false,true}){
+   Require(r.BeginScene(),"Long ordinary span scene");Clear(r);
+   for(unsigned section=0;section<3;++section){
+    if(gpu)Require(r.SubmitReanim(definition,texture,job,false,false,GpuBlend::Normal,clip,true),
+     "Long-span resident rejected");
+    else r.SubmitTriangles(cpu,texture,false,false,GpuBlend::Normal,clip);
+    // The complete ordinary span shares the same texture/blend/clip batch
+    // with both surrounding markers. Material boundaries also split it.
+    if(section<2){
+     if(section==0)r.SubmitTriangles(ordinary,texture,false,false,GpuBlend::Normal,clip);
+     else {
+      const auto split=ordinary.size()/6*3;
+      r.SubmitTriangles(std::span(ordinary).first(split),texture,false,false,GpuBlend::Additive,clip);
+      r.SubmitTriangles(std::span(ordinary).subspan(split),texture,false,false,GpuBlend::Normal,clip);
+     }
+    }
+   }
+   r.EndSceneAndPresent();const auto actual=r.ReadScenePixels();
+   if(!gpu)expected=actual;else error.Compare(expected,actual);
+  }
+ }
+ if(context.majorVersion>4||(context.majorVersion==4&&context.minorVersion>=6)){
+  using Gen=void(APIENTRY*)(GLsizei,GLuint*);using Result=void(APIENTRY*)(GLuint,GLenum,unsigned long long*);
+  const auto gen=reinterpret_cast<Gen>(GL3::GetProcAddress("glGenQueries"));
+  const auto get=reinterpret_cast<Result>(GL3::GetProcAddress("glGetQueryObjectui64v"));
+  Require(gen&&get,"Pipeline-statistics query functions unavailable");
+  GLuint query=0;gen(1,&query);OpenGLRenderer::FrameTiming statistics;statistics.vertexInvocationsQuery=query;
+  r.frameTiming=&statistics;Require(r.BeginScene(),"Invocation-count scene");Clear(r);
+  const GpuReanimInstance packet{0,1,0,0,.375f,0,0,0,1,0,8,0,0,1,5,0};
+  const auto token=r.BeginReanimInstance(definition,texture,packet,false,false,nullptr,true);
+  const GpuReanimTrackDraw track{2,0xc0e0d0ff};
+  for(int i=0;i<256;++i)Require(r.SubmitReanimTrack(token,track,GpuBlend::Normal),"Invocation-count track rejected");
+  r.EndSceneAndPresent();unsigned long long invocations=0;get(query,0x8866,&invocations);r.frameTiming=nullptr;
+  std::cout<<"PIPELINE_STATISTICS GPUtracks=256 clear_vertices=6 actual_VS_invocations="<<invocations
+   <<" expected_unique_vertices=262 (GL4.6 diagnostic only)\n";
+  Require(invocations==262,"Indexed repeated markers did not evaluate one VS invocation per track");
+  r.frameTiming=&statistics;Require(r.BeginScene(),"Ordinary-only invocation-count scene");Clear(r);
+  Require(r.BeginReanimInstance(definition,texture,packet,false,false,nullptr,true)!=~0u,"Unused shared instance rejected");
+  r.EndSceneAndPresent();get(query,0x8866,&invocations);r.frameTiming=nullptr;
+  Require(invocations==6,"Unused resident instance changed ordinary-only vertex work");
+  using Delete=void(APIENTRY*)(GLsizei,const GLuint*);
+  const auto remove=reinterpret_cast<Delete>(GL3::GetProcAddress("glDeleteQueries"));
+  Require(remove!=nullptr,"Pipeline-statistics query deletion unavailable");remove(1,&query);
+  std::cout<<"PASS ordinary-only frame with unused resident instance uses6 vertex invocations\n";
+ }
  r.DestroyReanimDefinition(second);r.DestroyTexture(other);
  auto*target=r.CreateRenderImage(64,64);r.SetRenderImage(target);Require(r.BeginScene(),"Image-only scene");
  GpuReanimDraw job{};job.track=0;job.overlay00=job.overlay11=1;job.color=0xffffffff;
- Require(r.SubmitReanim(definition,texture,job,false,false,GpuBlend::Normal,&clips[0]),"Image-only resident rejected");
+ Require(r.SubmitReanim(definition,texture,job,false,false,GpuBlend::Normal,&clips[0],true),"Image-only resident rejected");
  r.DestroyReanimDefinition(definition);r.DestroyTexture(texture);
  r.EndSceneAndPresent();r.SetRenderImage(nullptr);r.DestroyTexture(target);
  Require(r.BeginScene(),"Retirement scene");r.EndSceneAndPresent();
@@ -167,7 +239,7 @@ void Correct(OpenGLContext&context){
  const auto mean=double(error.sum)/double(error.components);
  Require(mean<=.001,"Native-trig resident mean pixel error exceeds .001 byte");
  std::cout<<"PASS OpenGL native sin/cos no-precise resident cases="<<cases
-  <<" mixed_jobs=48 full_int32_frame logical_CPU_sentinel upload_staging_release lifetime"
+  <<" mixed_jobs=48 ordinary_spans511/512/2048 same_batch/material_boundary full_int32_frame logical_CPU_sentinel upload_staging_release lifetime"
   <<" max_RGBA8="<<error.maximum<<" mean_RGBA8="<<mean<<'\n';
  // Exercise the explicit version fallback policy on the same real context.
  const auto major=context.majorVersion,minor=context.minorVersion;context.majorVersion=3;context.minorVersion=0;
@@ -176,23 +248,82 @@ void Correct(OpenGLContext&context){
  context.majorVersion=major;context.minorVersion=minor;
  std::cout<<"PASS GL3.0 capability policy keeps CPU fallback (version simulation, not old-driver execution)\n";
 }
+void Policy(OpenGLContext&context){
+ if(context.majorVersion<3||(context.majorVersion==3&&context.minorVersion<2))return;
+ OpenGLRenderer r(context,64,64,{});
+ const std::array<GpuReanimKey,2>keys{{{5,8,-15,23,1,1,1,0,1},{8,9,20,10,1,1,1,0,1}}};
+ const std::array<GpuReanimTrack,1>tracks{{{0,2}}};
+ const std::array<GpuReanimGeometry,2>geo{{{},{20,24,0,0,1,1}}};
+ auto*definition=r.UploadReanimDefinition({tracks,keys,geo,2,1});
+ const uint32_t pixel=0xff80c040;auto*texture=r.CreateTexture(1,1,&pixel,4);
+ const GpuReanimInstance packet{0,1,0,0,.375f,0,0,0,1,0,8,0,0,1,5,0};
+ GpuReanimDraw job{};job.after=1;job.fraction=.375f;job.overlay00=job.overlay11=1;
+ job.overlay02=8;job.overlay12=5;job.translateX=job.translateY=-.5f;job.color=0xffffffff;
+ const auto cpu=Reference(keys[0],keys[1],geo[1],geo[1],job,OpenGLRenderer::SlotOf(texture),nullptr);
+ Require(r.BeginScene(),"Initial policy scene");Require(!r.reanimFrameEligible,"Initial policy must select CPU");
+ Require(r.BeginReanimInstance(definition,texture,packet,false,false)==~0u,"Initial policy allocated instance");
+ Require((r.BeginReanimInstance(definition,texture,packet,false,false,nullptr,true)&65535u)==0,
+  "Rejected initial frame retained packet");
+ Clear(r);r.reanimPictureCandidates=256;r.EndSceneAndPresent();
+ Require(r.BeginScene(),"Dense policy scene");Require(r.reanimFrameEligible,"Dense completed frame not accepted");
+ auto token=r.BeginReanimInstance(definition,texture,packet,false,false);
+ Require(token!=~0u,"Dense policy instance rejected");
+ Require(r.SubmitReanimTrack(token,{0,0xffffffff},GpuBlend::Normal),"Dense policy track rejected");
+ r.reanimPictureCandidates=1;r.EndSceneAndPresent();
+ for(unsigned candidates:{0u,1u,8u,32u,256u}){
+  Require(r.BeginScene(),"Sparse preparation");Clear(r);r.reanimPictureCandidates=candidates;
+  // Dense candidate count with a very long ordinary span must also reject.
+  if(candidates==256)for(int i=0;i<4200;++i)Clear(r);
+  r.EndSceneAndPresent();
+  Require(r.BeginScene(),"Sparse policy scene");Require(!r.reanimFrameEligible,"Sparse frame unexpectedly accepted");
+  Require(r.BeginReanimInstance(definition,texture,packet,false,false)==~0u,"Sparse policy allocated instance");
+  Require((r.BeginReanimInstance(definition,texture,packet,false,false,nullptr,true)&65535u)==0,
+   "Rejected sparse frame retained packet");
+  Clear(r);r.SubmitTriangles(cpu,texture,false,false,GpuBlend::Normal);
+  r.EndSceneAndPresent();const auto actual=r.ReadScenePixels();
+  Require(r.BeginScene(),"Sparse CPU reference");Clear(r);
+  r.SubmitTriangles(cpu,texture,false,false,GpuBlend::Normal);r.EndSceneAndPresent();
+  Require(actual==r.ReadScenePixels(),"Sparse fallback differs from actual CPU pixels");
+ }
+ Require(r.BeginScene(),"GPU-only forced policy scene");Require(!r.reanimFrameEligible,"Sparse history unexpectedly eligible");
+ token=r.BeginReanimInstance(definition,texture,packet,false,false,nullptr,true);
+ Require(token!=~0u,"GPU-only forced route rejected supported backend");
+ Require(r.SubmitReanimTrack(token,{0,0xffffffff},GpuBlend::Normal),"GPU-only forced track rejected");
+ r.reanimPictureCandidates=333;
+ auto*target=r.CreateRenderImage(64,64);r.SetRenderImage(target);r.SetRenderImage(nullptr);
+ Require(r.reanimPictureCandidates==333&&!r.reanimFrameEligible,"Internal target switch reset frame policy");
+ r.EndSceneAndPresent();r.DestroyTexture(target);r.DestroyTexture(texture);r.DestroyReanimDefinition(definition);
+ GL3::CheckError("resident prior-frame policy");
+ std::cout<<"PASS prior-frame policy initial_CPU sparse0/1/8/32 long_ordinary_CPU zero_rejected_packets"
+  <<" actual_CPU_pixels dense_accepted force_GPU internal_target_preserves_counters\n";
+}
 using GenQuery=void(APIENTRY*)(GLsizei,GLuint*);
-using BeginQuery=void(APIENTRY*)(GLenum,GLuint);
-using EndQuery=void(APIENTRY*)(GLenum);
 using Query64=void(APIENTRY*)(GLuint,GLenum,unsigned long long*);
 template<class T>T Proc(const char*n){auto p=reinterpret_cast<T>(GL3::GetProcAddress(n));Require(p!=nullptr,n);return p;}
 double Median(std::vector<double>v){std::sort(v.begin(),v.end());return v[v.size()/2];}
 double Mean(const std::vector<double>&v){return std::accumulate(v.begin(),v.end(),0.)/v.size();}
-void Benchmark(OpenGLContext&context,bool mixed){
+void Benchmark(OpenGLContext&context,bool mixed,bool transitions=false){
  OpenGLRenderer r(context,800,600,{});const uint32_t pixels[]{0xffff8020,0xff20ff80,0xff8020ff,0xffe0e020};
  auto*texture=r.CreateTexture(2,2,pixels,8);constexpr int Burst=16;
  std::array<GLuint,Burst>queries{};auto gen=Proc<GenQuery>("glGenQueries");gen(Burst,queries.data());
- auto begin=Proc<BeginQuery>("glBeginQuery");auto end=Proc<EndQuery>("glEndQuery");
  auto get=Proc<Query64>("glGetQueryObjectui64v");
+ OpenGLRenderer::FrameTiming timing;r.frameTiming=&timing;
+ std::vector<GpuVertex>ordinary;
+ if(transitions){
+  const auto white=OpenGLRenderer::SlotOf(r.whiteTexture);ordinary.reserve(4096*3);
+  for(unsigned i=0;i<4096;++i){
+   const float x=float(i%128)*6,y=float(i/128)*16;
+   ordinary.push_back({x,y,1,1,1,.1f,0,0,white,0});
+   ordinary.push_back({x+3,y,1,1,1,.1f,1,0,white,0});
+   ordinary.push_back({x,y+3,1,1,1,.1f,0,1,white,0});
+  }
+ }
  unsigned gates=0,meanGates=0,total=0;
  std::cout<<"OpenGL actual renderer native-trig GS benchmark mixed="<<mixed
-  <<" unlocked clocks; CPU includes interpolation/clip or80Bjob preparation,batching,upload,flush,presentcall;"
-  <<" GPU query starts after CPU queues jobs and includes actual upload+draw+presentquad; no vertex/pixel readback\n";
+  <<" transitions="<<transitions
+  <<" unlocked clocks; CPU includes interpolation/clip or64Binstance+32Btrack preparation,batching,upload,flush,presentcall;"
+  <<" GPU query brackets actual Flush upload+draw, excludes presentquad/WSI;"
+  <<" CPU subtracts separately measured Present call; no vertex/pixel readback\n";
  for(unsigned count:{256u,512u,2048u,8192u}){
   std::vector<GpuReanimTrack>tracks(count);std::vector<GpuReanimKey>keys(count*2);
   std::vector<GpuReanimDraw>jobs(count);const std::array<GpuReanimGeometry,2>geo{{{},{10,12,0,0,1,1}}};
@@ -206,14 +337,28 @@ void Benchmark(OpenGLContext&context,bool mixed){
   for(unsigned i=0;i<(mixed?4u:1u);++i){auto*d=r.UploadReanimDefinition({tracks,keys,geo,2,1});Require(d!=nullptr,"Benchmark GPU unavailable");definitions.push_back(d);}
   for(bool clipped:{false,true}){
    std::array<std::vector<double>,4>samples;const GpuClip clip{6,6,782,582};
+   uint64_t accepted=0,fallback=0;
    for(int round=-3;round<12;++round)for(int order=0;order<2;++order){
     const int path=(order+round+4)%2;
+    double burstCpu=0;
     for(int frame=0;frame<Burst;++frame){
      Require(r.BeginScene(),"Benchmark scene");
      const auto start=std::chrono::steady_clock::now();Clear(r);
-     for(unsigned i=0;i<count;++i){
+     const bool sparse=transitions&&frame%4>=2;
+     const unsigned activeCount=sparse?8:count;
+     r.reanimPictureCandidates=activeCount;
+     if(round>=0&&path){if(r.reanimFrameEligible)accepted+=activeCount;else fallback+=activeCount;}
+     unsigned packet=~0u;
+     for(unsigned i=0;i<activeCount;++i){
       auto&j=jobs[i];j.fraction=float((round+3+frame)%31)/31;
-      if(path)Require(r.SubmitReanim(definitions[(i/32)%definitions.size()],texture,j,false,false,GpuBlend::Normal,clipped?&clip:nullptr),"Benchmark resident rejected");
+      if(path&&r.reanimFrameEligible){
+       if(i==0||(mixed&&i%32==0)){
+        const GpuReanimInstance source{0,1,0,0,j.fraction,0,0,0,1,0,0,0,0,1,0,0};
+        packet=r.BeginReanimInstance(definitions[(i/32)%definitions.size()],texture,source,false,false,clipped?&clip:nullptr);
+       }
+       const GpuReanimTrackDraw track{i,j.color,0,0,j.overlay02,j.overlay12};
+       Require(r.SubmitReanimTrack(packet,track,GpuBlend::Normal),"Benchmark shared resident rejected");
+      }
       else r.SubmitTriangles(Reference(keys[i*2],keys[i*2+1],geo[1],geo[1],j,OpenGLRenderer::SlotOf(texture),clipped?&clip:nullptr),
        texture,false,false,GpuBlend::Normal);
       if(mixed&&i%32==31){
@@ -222,11 +367,16 @@ void Benchmark(OpenGLContext&context,bool mixed){
        r.SubmitTriangles(marker,r.whiteTexture,false,false,GpuBlend::Normal);
       }
      }
-     begin(0x88BF,queries[frame]);r.EndSceneAndPresent();
-     const double cpu=std::chrono::duration<double,std::micro>(std::chrono::steady_clock::now()-start).count();end(0x88BF);
-     if(round>=0)samples[path].push_back(cpu);
+     if(sparse)r.SubmitTriangles(ordinary,r.whiteTexture,false,false,GpuBlend::Normal);
+     timing.elapsedQuery=queries[frame];r.EndSceneAndPresent();
+     const double cpu=std::chrono::duration<double,std::micro>(std::chrono::steady_clock::now()-start).count()-timing.presentCpuUs;
+     burstCpu+=cpu;
+     if(round>=0&&!transitions)samples[path].push_back(cpu);
     }
-    glFinish();for(auto q:queries){unsigned long long ns;get(q,0x8866,&ns);if(round>=0)samples[2+path].push_back(ns*.001);}
+    glFinish();double burstGpu=0;
+    for(auto q:queries){unsigned long long ns;get(q,0x8866,&ns);burstGpu+=ns*.001;
+     if(round>=0&&!transitions)samples[2+path].push_back(ns*.001);}
+    if(round>=0&&transitions){samples[path].push_back(burstCpu/Burst);samples[2+path].push_back(burstGpu/Burst);}
    }
    const auto saved=Median(samples[0])-Median(samples[1]),added=Median(samples[3])-Median(samples[2]);
    const bool pass=saved>std::max(0.,added);const bool meanPass=Mean(samples[0])-Mean(samples[1])>std::max(0.,Mean(samples[3])-Mean(samples[2]));
@@ -235,11 +385,14 @@ void Benchmark(OpenGLContext&context,bool mixed){
     <<" CPU_us="<<Median(samples[0])<<"->"<<Median(samples[1])
     <<" GPU_us="<<Median(samples[2])<<"->"<<Median(samples[3])
     <<" CPU_saved="<<saved<<" GPU_added="<<added<<" gate="<<(pass?"PASS":"FAIL")
+    <<" transitions="<<transitions
+    <<" actual_GPU_tracks="<<accepted<<" actual_CPU_fallback_tracks="<<fallback
     <<" meanGate="<<(meanPass?"PASS":"FAIL")<<'\n';
   }
   for(auto*d:definitions)r.DestroyReanimDefinition(d);
  }
  r.DestroyTexture(texture);GL3::CheckError("resident benchmark");
+ r.frameTiming=nullptr;
  std::cout<<"GATES median="<<gates<<"/"<<total<<" mean="<<meanGates<<"/"<<total<<'\n';
 }
 }
@@ -248,6 +401,7 @@ int main(int argc,char**argv)try{
  std::cout<<"adapter="<<context.adapterDescription<<" GL="<<context.majorVersion<<'.'<<context.minorVersion<<'\n';
  if(argc>1&&std::string(argv[1])=="--benchmark")Benchmark(context,false);
  else if(argc>1&&std::string(argv[1])=="--benchmark-mixed")Benchmark(context,true);
- else Correct(context);
+ else if(argc>1&&std::string(argv[1])=="--benchmark-transitions")Benchmark(context,true,true);
+ else {Correct(context);Policy(context);}
  return 0;
 }catch(const std::exception&e){std::cerr<<"FAIL "<<e.what()<<'\n';return 1;}

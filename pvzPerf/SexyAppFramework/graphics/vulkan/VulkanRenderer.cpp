@@ -173,6 +173,9 @@ struct VulkanRenderer::Impl {
     uint64_t frameSerial = 0;
     VulkanContext::FrameContext frame{};
     bool imageOnly = false, targetPassOpen = false;
+    uint32_t reanimPictureCandidates=0;
+    uint64_t reanimOrdinaryTriangles=0;
+    bool reanimFrameEligible=false;
     VulkanTexture* renderImage = nullptr;
     VkRenderPass scenePass = VK_NULL_HANDLE;
     VkRenderPass imagePass = VK_NULL_HANDLE;
@@ -285,6 +288,13 @@ struct VulkanRenderer::Impl {
     Buffer* unifiedIndices=nullptr;
     struct InstanceControl {VulkanReanim* definition;VulkanTexture* texture;uint32_t before,after;};
     std::vector<InstanceControl> unifiedInstanceControls;
+    struct OrdinaryRun {
+        Buffer* stream;VkDeviceSize offset;uint32_t count;VkPipeline pipeline;
+        VkRect2D scissor;int width,height;
+    };
+    std::vector<OrdinaryRun> unifiedOrdinary;
+    size_t unifiedOrdinaryTriangles=0;
+    bool flushingOrdinary=false;
     VkDescriptorPool unifiedPool=VK_NULL_HANDLE;
     VkDescriptorSet unifiedSet=VK_NULL_HANDLE;
     bool unifiedFrame=false;
@@ -916,6 +926,8 @@ struct VulkanRenderer::Impl {
         bool,bool,VulkanBlend,const VulkanClip*);
 #if defined(PVZ_REANIM_UNIFIED)
     bool SubmitUnifiedMarker(uint32_t,VulkanTexture*,VulkanBlend);
+    void QueueOrdinary(Buffer*,VkDeviceSize,uint32_t,VkPipeline,VkRect2D,int,int);
+    void FlushOrdinary();
 #endif
 #endif
     Buffer* ReanimStream(Buffer* host) {
@@ -1259,7 +1271,8 @@ void VulkanRenderer::Impl::FinishImageBatch() {
 VulkanRenderer::VulkanRenderer(VulkanContext& window, int width, int height,
     const std::string& vs, const std::string& ps,const VulkanHdrParams* hdr)
     : impl_(std::make_unique<Impl>(window, width, height)),
-      sceneOpen(impl_->frame.valid), whiteTexture(impl_->white),
+      sceneOpen(impl_->frame.valid), reanimPictureCandidates(impl_->reanimPictureCandidates),
+      reanimFrameEligible(impl_->reanimFrameEligible), whiteTexture(impl_->white),
       causticsTexture(impl_->caustics.target), sceneWidth(impl_->width),
       sceneHeight(impl_->height) {
     if (hdr) { hdr->Validate(); impl_->hdr=*hdr; }
@@ -1928,6 +1941,11 @@ bool VulkanRenderer::BeginScene() {
         s.RefreshPresentPipeline();
     }
     ++s.frameSerial;
+    // Counts belong to completed main or image-only batches. Internal target
+    // switches preserve them. A failed acquire does not consume the evidence.
+    s.reanimFrameEligible=s.reanimPictureCandidates>=256 &&
+        s.reanimOrdinaryTriangles<=uint64_t(s.reanimPictureCandidates)*32;
+    s.reanimPictureCandidates=0;s.reanimOrdinaryTriangles=0;
 #if defined(PVZ_REANIM_BENCHMARK)
     s.frameTimestampQueries=frameTimestampQueries;
 #endif
@@ -1949,6 +1967,7 @@ bool VulkanRenderer::BeginScene() {
     if (s.unifiedPackets) s.unifiedPackets->used=0;
     if (s.unifiedIndices) s.unifiedIndices->used=0;
     s.unifiedInstanceControls.clear();
+    s.unifiedOrdinary.clear();s.unifiedOrdinaryTriangles=0;s.flushingOrdinary=false;
 #endif
 #endif
     s.RecordCaustics(s.frame.cmd);
@@ -1958,19 +1977,8 @@ bool VulkanRenderer::BeginScene() {
 
 void VulkanRenderer::Impl::Draw(std::span<const VulkanVertex> vertices, VulkanTexture* texture,
     VkPipeline pipeline, const VulkanClip* clip, int vw, int vh) {
-#if defined(PVZ_REANIM_GEOMETRY)
+#if defined(PVZ_REANIM_GEOMETRY) && !defined(PVZ_REANIM_UNIFIED)
     if (geometryRun.count) FlushPendingRun(frame.cmd);
-#endif
-#if defined(PVZ_REANIM_UNIFIED)
-    bool useUnified=false;
-    if (unifiedFrame) {
-        for (size_t i=0;i<3;++i) {
-            if (pipeline==pipelines[i]) {pipeline=reanimGeometryPipelines[i];useUnified=true;}
-            else if (pipeline==imagePipelines[i]) {pipeline=reanimGeometryImagePipelines[i];useUnified=true;}
-            else if (pipeline==coveragePipelines[i]) {pipeline=unifiedCoverage[i];useUnified=true;}
-            else if (pipeline==imageCoveragePipelines[i]) {pipeline=unifiedImageCoverage[i];useUnified=true;}
-        }
-    }
 #endif
     if (!frame.valid) throw std::logic_error("Draw outside a frame");
     if (!texture) throw std::invalid_argument("Missing draw texture");
@@ -2031,11 +2039,18 @@ void VulkanRenderer::Impl::Draw(std::span<const VulkanVertex> vertices, VulkanTe
         copiedVertices[i].slot = ownerSlotBits | (vertex.slot & kVertexSlotKeep);
     }
     stream->used += bytes;
+    if (pipeline!=presentPipeline) reanimOrdinaryTriangles+=vertices.size()/3;
     VkRect2D scissor{{static_cast<int32_t>(left), static_cast<int32_t>(top)},
         {static_cast<uint32_t>(right-left), static_cast<uint32_t>(bottom-top)}};
+#if defined(PVZ_REANIM_UNIFIED)
+    if (unifiedFrame && pipeline!=presentPipeline) {
+        QueueOrdinary(stream,offset,static_cast<uint32_t>(vertices.size()),pipeline,scissor,vw,vh);
+        return;
+    }
+#endif
     AppendRun(ReanimStream(stream),offset,static_cast<uint32_t>(vertices.size()),pipeline,scissor,vw,vh
 #if defined(PVZ_REANIM_UNIFIED)
-        ,false,useUnified
+        ,false,false
 #endif
     );
 }
@@ -2122,6 +2137,9 @@ void VulkanRenderer::Impl::AppendRun(Buffer* stream, VkDeviceSize offset, uint32
 }
 
 void VulkanRenderer::Impl::FlushPendingRun(VkCommandBuffer cmd) {
+#if defined(PVZ_REANIM_UNIFIED)
+    if (!flushingOrdinary && !unifiedOrdinary.empty()) FlushOrdinary();
+#endif
 #if defined(PVZ_REANIM_GEOMETRY)
     if (geometryRun.count) {
         vkCmdDraw(cmd,geometryRun.count,1,geometryRun.first,0);
@@ -2246,7 +2264,40 @@ void VulkanRenderer::Impl::InitReanimGeometry() {
 #endif
 }
 #if defined(PVZ_REANIM_UNIFIED)
+void VulkanRenderer::Impl::QueueOrdinary(Buffer* stream,VkDeviceSize offset,uint32_t count,
+    VkPipeline pipeline,VkRect2D scissor,int targetWidth,int targetHeight) {
+    if (!unifiedOrdinary.empty()) {
+        auto& last=unifiedOrdinary.back();
+        if (last.stream==stream && last.offset+VkDeviceSize(last.count)*sizeof(GpuVertex)==offset &&
+            last.pipeline==pipeline && last.width==targetWidth && last.height==targetHeight &&
+            std::memcmp(&last.scissor,&scissor,sizeof(scissor))==0) {
+            last.count+=count;unifiedOrdinaryTriangles+=count/3;return;
+        }
+    }
+    unifiedOrdinary.push_back({stream,offset,count,pipeline,scissor,targetWidth,targetHeight});
+    unifiedOrdinaryTriangles+=count/3;
+}
+void VulkanRenderer::Impl::FlushOrdinary() {
+    if (unifiedOrdinary.empty()) return;
+    // Decide only when the complete ordinary span is known. Short gaps can
+    // share the resident batch; long gaps amortize returning to the normal VS.
+    constexpr size_t directThreshold=512;
+    const bool useUnified=unifiedOrdinaryTriangles<=directThreshold;
+    flushingOrdinary=true;
+    for (const auto& run:unifiedOrdinary) {
+        auto pipeline=run.pipeline;
+        if (useUnified) for (size_t i=0;i<3;++i) {
+            if (pipeline==pipelines[i]) pipeline=reanimGeometryPipelines[i];
+            else if (pipeline==imagePipelines[i]) pipeline=reanimGeometryImagePipelines[i];
+            else if (pipeline==coveragePipelines[i]) pipeline=unifiedCoverage[i];
+            else if (pipeline==imageCoveragePipelines[i]) pipeline=unifiedImageCoverage[i];
+        }
+        AppendRun(run.stream,run.offset,run.count,pipeline,run.scissor,run.width,run.height,false,useUnified);
+    }
+    unifiedOrdinary.clear();unifiedOrdinaryTriangles=0;flushingOrdinary=false;
+}
 bool VulkanRenderer::Impl::SubmitUnifiedMarker(uint32_t encoded,VulkanTexture* texture,VulkanBlend blend) {
+    FlushOrdinary();
     constexpr VkDeviceSize bytes=sizeof(GpuVertex);
     Buffer* stream=nullptr;
     for (auto& candidate:streams) if (candidate->size-candidate->used>=bytes) {stream=candidate.get();break;}
@@ -2285,8 +2336,6 @@ bool VulkanRenderer::Impl::SubmitReanimGeometry(VulkanReanim* definition,VulkanT
     if (track.keyOffset==GpuReanimNoKeys || track.flags || draw.before>=track.keyCount || draw.after>=track.keyCount)
         return false;
     if (clip && (clip->width<=0 || clip->height<=0)) return true;
-    auto* target=renderImage?renderImage:scene.get();
-    const auto pipeline=(renderImage?reanimGeometryImagePipelines:reanimGeometryPipelines).at(size_t(blend));
 #if defined(PVZ_REANIM_UNIFIED)
     if (unifiedJobs->size-unifiedJobs->used<sizeof(ReanimJob))
         throw std::runtime_error("Unified reanimation prototype job capacity exceeded");
@@ -2302,6 +2351,8 @@ bool VulkanRenderer::Impl::SubmitReanimGeometry(VulkanReanim* definition,VulkanT
     unifiedJobs->used+=sizeof(job);
     return SubmitUnifiedMarker(0x80000000u|jobIndex,texture,blend);
 #else
+    auto* target=renderImage?renderImage:scene.get();
+    const auto pipeline=(renderImage?reanimGeometryImagePipelines:reanimGeometryPipelines).at(size_t(blend));
     Buffer* stream=nullptr;
     for (auto& candidate:reanimPointStreams)
         if (candidate->size-candidate->used>=sizeof(ReanimJob)) {stream=candidate.get();break;}
@@ -2451,11 +2502,21 @@ void VulkanRenderer::DestroyReanimDefinition(VulkanReanim* definition) {
 }
 
 bool VulkanRenderer::SubmitReanim(VulkanReanim* definition,VulkanTexture* texture,
-    const GpuReanimDraw& draw,bool linear,bool repeat,VulkanBlend blend,const VulkanClip* clip) {
+    const GpuReanimDraw& draw,bool linear,bool repeat,VulkanBlend blend,const VulkanClip* clip,bool forceGpu) {
+#if defined(PVZ_REANIM_UNIFIED)
+    if (!impl_->reanimFrameEligible && !forceGpu) return false;
+#else
+    (void)forceGpu;
+#endif
 #if defined(PVZ_REANIM_GEOMETRY)
     if (impl_->window.geometryShaderEnabled)
         return impl_->SubmitReanimGeometry(definition,texture,draw,linear,repeat,blend,clip);
 #endif
+#if defined(PVZ_REANIM_UNIFIED)
+    // Optional geometry support never silently selects the failed compute
+    // prototype; callers retain their normal CPU drawing route.
+    return false;
+#else
     auto& s=*impl_;
     if (!s.frame.valid) throw std::logic_error("Reanimation draw outside frame");
     if (!definition || !texture ||
@@ -2514,13 +2575,15 @@ bool VulkanRenderer::SubmitReanim(VulkanReanim* definition,VulkanTexture* textur
     s.AppendRun(output,offset,capacity,pipelines.at(size_t(blend)),
         {{0,0},{uint32_t(target->width),uint32_t(target->height)}},target->width,target->height);
     return true;
+#endif
 }
 
 uint32_t VulkanRenderer::BeginReanimInstance(VulkanReanim* definition,VulkanTexture* texture,
-    const GpuReanimInstance& instance,bool linear,bool repeat,const VulkanClip* clip) {
+    const GpuReanimInstance& instance,bool linear,bool repeat,const VulkanClip* clip,bool forceGpu) {
 #if defined(PVZ_REANIM_UNIFIED)
     auto& s=*impl_;
     if (!s.frame.valid) throw std::logic_error("Reanimation instance outside frame");
+    if (!s.reanimFrameEligible && !forceGpu) return UINT32_MAX;
     if (!s.window.geometryShaderEnabled || !definition || definition->owner!=&s ||
         definition->blobHeader==UINT32_MAX || !texture || !s.textures.contains(texture) ||
         texture==s.renderImage || instance.variant>=definition->variantCount ||
@@ -2543,7 +2606,7 @@ uint32_t VulkanRenderer::BeginReanimInstance(VulkanReanim* definition,VulkanText
     // also rejects tokens surviving a real frame boundary/target batch close.
     return (uint32_t(s.frameSerial&0xffffu)<<16)|index;
 #else
-    (void)definition;(void)texture;(void)instance;(void)linear;(void)repeat;(void)clip;
+    (void)definition;(void)texture;(void)instance;(void)linear;(void)repeat;(void)clip;(void)forceGpu;
     return UINT32_MAX;
 #endif
 }

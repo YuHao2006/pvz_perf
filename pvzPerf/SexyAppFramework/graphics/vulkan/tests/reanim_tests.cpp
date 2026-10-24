@@ -121,6 +121,7 @@ void Run() {
     VulkanInitConfig config; config.enableValidation=true; config.debugCallback=Validate;
 #if defined(PVZ_REANIM_GEOMETRY)
     config.features.geometryShader=requestGeometry?VK_TRUE:VK_FALSE;
+    config.allowOptionalGeometryShader=requestGeometry;
 #endif
     VulkanContext window(config,native.hwnd,VulkanTest::SwapchainConfig());
     const std::string shaders=PVZ_NATIVE_SHADER_DIR;
@@ -137,6 +138,31 @@ void Run() {
     const uint32_t texels[]={0xffff0000,0xff00ff00,0xff0000ff,0xffffff00};
     auto* texture=renderer.CreateTexture(2,2,texels,8);
     const GpuClip clip{10,10,22,25};
+#if defined(PVZ_REANIM_UNIFIED)
+    if (!requestGeometry) {
+        Require(!window.geometryShaderEnabled,"Disabled optional geometry feature was enabled");
+        GpuReanimDraw draw{};draw.track=2;draw.after=1;draw.fraction=0.375f;
+        draw.overlay00=draw.overlay11=1;draw.overlay02=12;draw.overlay12=8;draw.color=0xffffffff;
+        const auto vertices=Reference(keys[0],keys[1],geometry[1],geometry[1],draw,
+            VulkanRenderer::SlotOf(texture),&clip);
+        Require(renderer.BeginScene(),"Cannot begin unsupported-feature CPU reference");Clear(renderer);
+        renderer.SubmitTriangles(vertices,texture,false,false,GpuBlend::Normal);
+        renderer.EndSceneAndPresent();const auto expected=renderer.ReadScenePixels();
+        Require(renderer.BeginScene(),"Cannot begin unsupported-feature fallback");Clear(renderer);
+        GpuReanimInstance instance{};instance.after=1;instance.overlay00=instance.overlay11=1;
+        Require(renderer.BeginReanimInstance(definition,texture,instance,false,false,nullptr,true)==UINT32_MAX,
+            "Forced packet bypassed unsupported hardware");
+        Require(!renderer.SubmitReanim(definition,texture,draw,false,false,GpuBlend::Normal,&clip,true),
+            "Unsupported geometry silently selected compute prototype");
+        renderer.SubmitTriangles(vertices,texture,false,false,GpuBlend::Normal);
+        renderer.EndSceneAndPresent();
+        Require(renderer.ReadScenePixels()==expected,"Unsupported-feature CPU fallback changed pixels");
+        renderer.DestroyReanimDefinition(definition);renderer.DestroyTexture(texture);
+        Require(errors.load()==0,"Vulkan validation errors in unsupported-feature fallback");
+        std::cout<<"PASS optional geometry disabled: forced/legacy rejected, actual CPU fallback pixels, no compute fallback\n";
+        return;
+    }
+#endif
     unsigned cases=0;
     for (uint32_t variant:{0u,1u}) for (float fraction:{0.0f,0.375f,1.0f})
         for (bool clipped:{false,true}) for (bool truncate:{false,true}) {
@@ -157,14 +183,14 @@ void Run() {
             const auto expected=renderer.ReadScenePixels();
             Require(renderer.BeginScene(),"Cannot start resident scene"); Clear(renderer);
             auto unsupported=draw; unsupported.track=1;
-            Require(!renderer.SubmitReanim(definition,texture,unsupported,false,false,GpuBlend::Normal),
+            Require(!renderer.SubmitReanim(definition,texture,unsupported,false,false,GpuBlend::Normal,nullptr,true),
                 "CPU-only logical track unexpectedly became a GPU track");
-            Require(renderer.SubmitReanim(definition,texture,draw,false,false,GpuBlend::Normal,requested),
+            Require(renderer.SubmitReanim(definition,texture,draw,false,false,GpuBlend::Normal,requested,true),
                 "Resident draw rejected valid track");
             // Ordinary triangles between GPU jobs exercise shared-stream
             // painter order and prelude writes to noncontiguous reservations.
             renderer.SubmitTriangles(vertices,texture,false,false,GpuBlend::Additive);
-            Require(renderer.SubmitReanim(definition,texture,draw,false,false,GpuBlend::Normal,requested),
+            Require(renderer.SubmitReanim(definition,texture,draw,false,false,GpuBlend::Normal,requested,true),
                 "Resident draw rejected a later reservation in the mixed stream");
             renderer.EndSceneAndPresent();
             const auto actual=renderer.ReadScenePixels();
@@ -199,7 +225,7 @@ void Run() {
             const auto blend=GpuBlend(i%3);
             const auto* requested=i%4==0?nullptr:&clips[i%3];
             if (resident) Require(renderer.SubmitReanim(useSecond?second:definition,image,job,
-                false,false,blend,requested),"Mixed-state resident job rejected");
+                false,false,blend,requested,true),"Mixed-state resident job rejected");
             else renderer.SubmitTriangles(Reference(sourceKeys[0],sourceKeys[1],sourceGeometry[1],
                 sourceGeometry[job.variant*2+1],job,VulkanRenderer::SlotOf(image),requested),
                 image,false,false,blend);
@@ -245,7 +271,7 @@ void Run() {
             renderer.SubmitTriangles(vertices,texture,false,false,GpuBlend::Normal);
             renderer.EndSceneAndPresent();const auto expected=renderer.ReadScenePixels();
             Require(renderer.BeginScene(),"Cannot begin packet resident frame");Clear(renderer);
-            const auto token=renderer.BeginReanimInstance(definition,texture,instance,false,false,clipped?&clip:nullptr);
+            const auto token=renderer.BeginReanimInstance(definition,texture,instance,false,false,clipped?&clip:nullptr,true);
             Require(token!=UINT32_MAX,"Cannot begin shared reanimation instance");
             auto unsupported=track;unsupported.track=1;
             Require(!renderer.SubmitReanimTrack(token,unsupported,GpuBlend::Normal),"Packet accepted CPU-only logical track");
@@ -262,18 +288,125 @@ void Run() {
     Require(!renderer.SubmitReanimTrack(staleToken,unusedTrack,GpuBlend::Normal),
         "An instance token survived a frame boundary");
     GpuReanimInstance unusedInstance{};unusedInstance.after=1;unusedInstance.overlay00=unusedInstance.overlay11=1;
-    Require(renderer.BeginReanimInstance(definition,texture,unusedInstance,false,false)!=UINT32_MAX,
+    Require(renderer.BeginReanimInstance(definition,texture,unusedInstance,false,false,nullptr,true)!=UINT32_MAX,
         "Cannot create begin-only packet");
     renderer.EndSceneAndPresent();
     std::cout<<"PASS "<<packetCases<<" shared-instance pixel cases, raw translation/shake ordering, "
         "ignore clip, CPU-only indexes, begin-only group and expired frame token\n";
+    // Both sides of the adaptive threshold must preserve painter order across
+    // state changes and target switches; a token stays valid within the frame.
+    auto* adaptiveImage=renderer.CreateRenderImage(64,64);
+    for (unsigned ordinaryCount:{64u,2048u}) for (bool clipped:{false,true}) {
+        std::vector<uint32_t> expected;
+        for (bool resident:{false,true}) {
+            Require(renderer.BeginScene(),"Cannot begin adaptive mixed-stream scene");Clear(renderer);
+            GpuReanimInstance instance{};
+            instance.after=1;instance.fraction=0.375f;instance.overlay00=instance.overlay11=1;
+            instance.overlay02=12;instance.overlay12=8;
+            uint32_t token=UINT32_MAX;
+            if (resident) token=renderer.BeginReanimInstance(definition,texture,instance,false,false,clipped?&clip:nullptr,true);
+            GpuReanimTrackDraw track{};track.track=2;track.color=0xb0e08040;
+            GpuReanimDraw legacy{};
+            legacy.track=2;legacy.after=1;legacy.fraction=instance.fraction;
+            legacy.overlay00=legacy.overlay11=1;legacy.overlay02=12;legacy.overlay12=8;
+            legacy.translateX=legacy.translateY=-0.5f;legacy.color=track.color;
+            const auto emit=[&](GpuBlend blend) {
+                if (resident) Require(renderer.SubmitReanimTrack(token,track,blend),
+                    "Adaptive resident marker/token rejected");
+                else renderer.SubmitTriangles(Reference(keys[0],keys[1],geometry[1],geometry[1],
+                    legacy,VulkanRenderer::SlotOf(texture),clipped?&clip:nullptr),texture,false,false,blend);
+            };
+            emit(GpuBlend::Normal);
+            for (unsigned i=0;i<ordinaryCount;++i) {
+                const float x=float((i*13)%60),y=float((i*7)%60);
+                const auto slot=VulkanRenderer::SlotOf(renderer.whiteTexture);
+                const GpuVertex triangle[]={
+                    {x,y,0.1f,0.3f,0.7f,0.125f,0,0,slot,0},
+                    {x+4,y,0.1f,0.3f,0.7f,0.125f,1,0,slot,0},
+                    {x,y+4,0.1f,0.3f,0.7f,0.125f,0,1,slot,0}};
+                renderer.SubmitTriangles(triangle,renderer.whiteTexture,false,false,
+                    i%11==0?GpuBlend::Additive:GpuBlend::Normal,i%17==0?&clip:nullptr);
+            }
+            emit(GpuBlend::Additive);
+            // Force queued ordinary work to flush at a target boundary, then
+            // reuse the shared token after restoring the main scene.
+            const auto whiteSlot=VulkanRenderer::SlotOf(renderer.whiteTexture);
+            const GpuVertex boundaryTriangle[]={
+                {8,8,0.2f,0.8f,0.1f,0.25f,0,0,whiteSlot,0},
+                {40,8,0.2f,0.8f,0.1f,0.25f,1,0,whiteSlot,0},
+                {8,40,0.2f,0.8f,0.1f,0.25f,0,1,whiteSlot,0}};
+            renderer.SubmitTriangles(boundaryTriangle,renderer.whiteTexture,false,false,GpuBlend::Normal);
+            renderer.SetRenderImage(adaptiveImage);Clear(renderer);emit(GpuBlend::Normal);
+            renderer.SetRenderImage(nullptr);emit(GpuBlend::Normal);
+            renderer.EndSceneAndPresent();
+            const auto actual=renderer.ReadScenePixels();
+            if (!resident) expected=actual;
+            else for (size_t i=0;i<actual.size();++i) for (unsigned shift:{0u,8u,16u,24u})
+                Require(std::abs(int((actual[i]>>shift)&255)-int((expected[i]>>shift)&255))<=3,
+                    "Adaptive ordinary-span/painter-order/target-restore mismatch");
+        }
+    }
+    std::cout<<"PASS adaptive short/long ordinary spans, blend/scissor changes and same-frame target-restored tokens\n";
+    GpuReanimDraw policyLegacy{};policyLegacy.track=2;policyLegacy.after=1;policyLegacy.fraction=0.375f;
+    policyLegacy.overlay00=policyLegacy.overlay11=1;policyLegacy.overlay02=12;policyLegacy.overlay12=8;
+    policyLegacy.translateX=policyLegacy.translateY=-0.5f;policyLegacy.color=0xb0e08040;
+    const auto policyCpu=Reference(keys[0],keys[1],geometry[1],geometry[1],policyLegacy,
+        VulkanRenderer::SlotOf(texture),nullptr);
+    Require(renderer.BeginScene(),"Cannot begin policy cold batch");Clear(renderer);
+    Require(!renderer.reanimFrameEligible,"Cold batch unexpectedly enabled resident policy");
+    renderer.SubmitTriangles(policyCpu,texture,false,false,GpuBlend::Normal);
+    renderer.reanimPictureCandidates=255;
+    renderer.EndSceneAndPresent();
+    const auto policyExpected=renderer.ReadScenePixels();
+    Require(renderer.BeginScene(),"Cannot begin policy low-count batch");Clear(renderer);
+    Require(!renderer.reanimFrameEligible,"Low-count batch enabled resident policy");
+    Require(renderer.BeginReanimInstance(definition,texture,unusedInstance,false,false)==UINT32_MAX,
+        "Rejected policy allocated an instance");
+    Require(!renderer.SubmitReanim(definition,texture,policyLegacy,false,false,GpuBlend::Normal),
+        "Legacy submission bypassed rejected policy");
+    renderer.SubmitTriangles(policyCpu,texture,false,false,GpuBlend::Normal);
+    const auto forced=renderer.BeginReanimInstance(definition,texture,unusedInstance,false,false,nullptr,true);
+    Require(forced!=UINT32_MAX && (forced&0xffffu)==0,"Rejected begin consumed an instance slot");
+    renderer.reanimPictureCandidates=256;renderer.EndSceneAndPresent();
+    Require(renderer.ReadScenePixels()==policyExpected,"Policy rejection changed actual CPU fallback pixels");
+    Require(renderer.BeginScene(),"Cannot begin policy dense batch");Clear(renderer);
+    Require(renderer.reanimFrameEligible && renderer.reanimPictureCandidates==0,
+        "Dense prior batch failed policy/reset");
+    renderer.SetRenderImage(adaptiveImage);Clear(renderer);
+    Require(renderer.reanimFrameEligible,"Internal target switch reset policy");
+    renderer.SetRenderImage(nullptr);
+    const auto whiteSlot=VulkanRenderer::SlotOf(renderer.whiteTexture);
+    std::vector<GpuVertex> densityTriangles(8193*3);
+    for (auto& vertex:densityTriangles) {vertex.slot=whiteSlot;vertex.x=vertex.y=-10;}
+    renderer.SubmitTriangles(densityTriangles,renderer.whiteTexture,false,false,GpuBlend::Normal);
+    renderer.reanimPictureCandidates=256;renderer.EndSceneAndPresent();
+    Require(renderer.BeginScene(),"Cannot begin policy low-density batch");Clear(renderer);
+    Require(!renderer.reanimFrameEligible,"Low-density prior batch enabled resident policy");
+    renderer.reanimPictureCandidates=256;renderer.EndSceneAndPresent();
+    Require(renderer.BeginScene(),"Cannot begin policy recovery batch");Clear(renderer);
+    Require(renderer.reanimFrameEligible,"Policy failed to recover from sparse batch");
+    renderer.EndSceneAndPresent();
+    renderer.SetRenderImage(adaptiveImage);
+    Require(renderer.BeginScene(),"Cannot begin policy image-only batch");Clear(renderer);
+    Require(!renderer.reanimFrameEligible,"Empty completed batch left policy enabled");
+    const auto imageToken=renderer.BeginReanimInstance(definition,texture,unusedInstance,false,false,nullptr,true);
+    renderer.reanimPictureCandidates=256;renderer.EndSceneAndPresent();
+    renderer.SetRenderImage(nullptr);
+    Require(renderer.BeginScene(),"Cannot begin policy after image-only batch");Clear(renderer);
+    Require(renderer.reanimFrameEligible,"Image-only completed batch lost policy evidence");
+    Require(!renderer.SubmitReanimTrack(imageToken,unusedTrack,GpuBlend::Normal),
+        "Image-only token survived explicit batch boundary");
+    renderer.EndSceneAndPresent();
+    renderer.DestroyTexture(adaptiveImage);
+    std::cout<<"PASS prior-batch eligibility/count/density/reset, rejected no-slot allocation, "
+        "forced override and image-only explicit boundary\n";
 #endif
     // Image-only submission also runs the prelude and protects deferred deletion.
     auto* image=renderer.CreateRenderImage(64,64);
     renderer.SetRenderImage(image);
     Require(renderer.BeginScene(),"Cannot start image-only reanimation batch");
     GpuReanimDraw draw{};draw.track=0;draw.overlay00=draw.overlay11=1;draw.color=0xffffffff;
-    Require(renderer.SubmitReanim(definition,texture,draw,false,false,GpuBlend::Normal,&clip),
+    Require(renderer.SubmitReanim(definition,texture,draw,false,false,GpuBlend::Normal,&clip,true),
         "Cannot draw resident reanimation into render image");
     renderer.DestroyReanimDefinition(definition); renderer.DestroyTexture(texture);
     renderer.EndSceneAndPresent(); renderer.SetRenderImage(nullptr);
@@ -284,10 +417,14 @@ void Run() {
         "24 mixed definition/texture/filter/blend/clip jobs and ordinary sprites, image-only lifetime\n";
 }
 #if defined(PVZ_REANIM_BENCHMARK)
-struct Timing { double cpu=0, jobs=0, gpu=0; };
+struct Timing { double cpu=0, jobs=0, gpu=0; uint64_t accepted=0,fallback=0; };
 bool mixedBenchmark=false;
 bool spriteOnlyBenchmark=false;
 bool packetBenchmark=false;
+bool sparseBenchmark=false;
+unsigned sparseVisible=0;
+bool policyBenchmark=false;
+bool transitionBenchmark=false;
 Timing BenchmarkBurst(VulkanRenderer& renderer,VulkanContext& window,std::span<VulkanReanim* const> definitions,
     VulkanTexture* texture,const std::vector<GpuReanimKey>& keys,std::vector<GpuReanimDraw>& draws,
     const GpuReanimGeometry& geometry,bool resident,bool clipped,
@@ -307,12 +444,15 @@ Timing BenchmarkBurst(VulkanRenderer& renderer,VulkanContext& window,std::span<V
         const auto start=Clock::now();
         Clear(renderer);
         const float fraction=float((phase+unsigned(frame))%31)/31.0f;
+        const unsigned visible=transitionBenchmark?
+            (((phase+unsigned(frame))/8)%2?16u:0u):sparseVisible;
         if (resident && packetBenchmark) {
             GpuReanimInstance instance{};
             instance.after=1;instance.fraction=fraction;instance.overlay00=instance.overlay11=1;
             for (size_t i=0;i<definitions.size();++i) {
-                instanceTokens[i]=renderer.BeginReanimInstance(definitions[i],texture,instance,false,false,clipped?&clip:nullptr);
-                Require(instanceTokens[i]!=UINT32_MAX,"Cannot begin benchmark instance");
+                instanceTokens[i]=renderer.BeginReanimInstance(definitions[i],texture,instance,false,false,
+                    clipped?&clip:nullptr,!policyBenchmark);
+                Require(policyBenchmark || instanceTokens[i]!=UINT32_MAX,"Cannot begin benchmark instance");
             }
         }
         if (spriteOnlyBenchmark && resident) {
@@ -321,31 +461,47 @@ Timing BenchmarkBurst(VulkanRenderer& renderer,VulkanContext& window,std::span<V
                 GpuReanimTrackDraw track{};track.track=0;
                 Require(renderer.SubmitReanimTrack(instanceTokens[0],track,GpuBlend::Normal),
                     "Cannot activate packet pipeline for ordinary-sprite control");
-            } else Require(renderer.SubmitReanim(definitions[0],texture,trigger,false,false,GpuBlend::Normal),
+            } else Require(renderer.SubmitReanim(definitions[0],texture,trigger,false,false,GpuBlend::Normal,nullptr,true),
                     "Cannot activate resident pipeline for ordinary-sprite control");
         }
-        for (size_t i=0;i<draws.size();++i) {
+        const auto emitSprite=[&](size_t i) {
+            const float x=float(i%64)*12+4,y=float((i/64)%48)*12+4;
+            const GpuVertex sprite[]={
+                {x,y,1,1,1,0.5f,0,0,slot,0},{x,y+12,1,1,1,0.5f,0,1,slot,0},
+                {x+10,y,1,1,1,0.5f,1,0,slot,0},{x,y+12,1,1,1,0.5f,0,1,slot,0},
+                {x+10,y,1,1,1,0.5f,1,0,slot,0},{x+10,y+12,1,1,1,0.5f,1,1,slot,0}};
+            renderer.SubmitTriangles(sprite,texture,false,false,GpuBlend::Normal);
+        };
+        const auto emitReanim=[&](size_t i) {
             auto& draw=draws[i]; draw.fraction=fraction;
-            if (spriteOnlyBenchmark) {
-                const float x=float(i%64)*12+4,y=float((i/64)%48)*12+4;
-                const GpuVertex sprite[]={
-                    {x,y,1,1,1,0.5f,0,0,slot,0},{x,y+12,1,1,1,0.5f,0,1,slot,0},
-                    {x+10,y,1,1,1,0.5f,1,0,slot,0},{x,y+12,1,1,1,0.5f,0,1,slot,0},
-                    {x+10,y,1,1,1,0.5f,1,0,slot,0},{x+10,y+12,1,1,1,0.5f,1,1,slot,0}};
-                renderer.SubmitTriangles(sprite,texture,false,false,GpuBlend::Normal);
-            } else if (resident && packetBenchmark) {
+            ++renderer.reanimPictureCandidates;
+            if (resident && packetBenchmark && instanceTokens[(i/32)%definitions.size()]!=UINT32_MAX) {
                 GpuReanimTrackDraw track{};track.track=draw.track;track.color=draw.color;
                 track.shakeX=draw.translateX+0.5f;track.shakeY=draw.translateY+0.5f;
                 Require(renderer.SubmitReanimTrack(instanceTokens[(i/32)%definitions.size()],track,GpuBlend::Normal),
                     "Benchmark packet submission rejected");
-            } else if (resident) {
+                ++result.accepted;
+            } else if (resident && !packetBenchmark) {
                 Require(renderer.SubmitReanim(definitions[(i/32)%definitions.size()],texture,draw,false,false,GpuBlend::Normal,
-                    clipped?&clip:nullptr),"Benchmark resident submission rejected");
+                    clipped?&clip:nullptr,!policyBenchmark),"Benchmark resident submission rejected");
+                ++result.accepted;
             } else {
+                if (resident) ++result.fallback;
                 const auto vertices=Reference(keys[2*i],keys[2*i+1],geometry,geometry,draw,slot,
                     clipped?&clip:nullptr);
                 renderer.SubmitTriangles(vertices,texture,false,false,GpuBlend::Normal);
             }
+        };
+        unsigned sparseEmitted=0;
+        for (size_t i=0;i<draws.size();++i) {
+            if (visible) {
+                if (sparseEmitted<visible &&
+                    i==size_t(sparseEmitted)*draws.size()/visible) {
+                    emitReanim(i);++sparseEmitted;
+                }
+                emitSprite(i);
+            } else if (spriteOnlyBenchmark) emitSprite(i);
+            else emitReanim(i);
             if (mixedBenchmark && i%32==31)
                 renderer.SubmitTriangles(marker,renderer.whiteTexture,false,false,GpuBlend::Normal);
         }
@@ -378,6 +534,7 @@ void Benchmark() {
     VulkanInitConfig config;
 #if defined(PVZ_REANIM_GEOMETRY)
     config.features.geometryShader=requestGeometry?VK_TRUE:VK_FALSE;
+    config.allowOptionalGeometryShader=requestGeometry;
 #endif
     VulkanContext window(config,native.hwnd,VulkanTest::SwapchainConfig());
     VkPhysicalDeviceProperties properties{};
@@ -387,6 +544,8 @@ void Benchmark() {
         <<" mixed="<<mixedBenchmark
         <<" ordinaryOnly="<<spriteOnlyBenchmark
         <<" packets="<<packetBenchmark
+        <<" sparse="<<sparseBenchmark
+        <<" policy="<<policyBenchmark<<" transitions="<<transitionBenchmark
         <<" timestampPeriodNs="<<properties.limits.timestampPeriod
         <<" unlocked clocks; CPU excludes BeginScene acquire/prior-frame wait; CPU includes "
           "clear, track work, upload, prelude recording, submit and present call. "
@@ -400,8 +559,12 @@ void Benchmark() {
     pool.queryType=VK_QUERY_TYPE_TIMESTAMP;pool.queryCount=2;
     for (auto& query:queries)
         Require(vkCreateQueryPool(window.device,&pool,nullptr,&query)==VK_SUCCESS,"Cannot create benchmark queries");
-    unsigned gates=0,meanGates=0,total=0;
-    for (uint32_t count:{256u,512u,2048u,8192u}) {
+    unsigned gates=0,meanGates=0,total=0,rejected=0;
+    for (unsigned visible: sparseBenchmark?std::vector<unsigned>{1,4,16}:std::vector<unsigned>{0}) {
+    sparseVisible=visible;
+    for (uint32_t count: transitionBenchmark?std::vector<uint32_t>{8192}:
+        sparseBenchmark?std::vector<uint32_t>{2048,8192}:
+        std::vector<uint32_t>{256,512,2048,8192}) {
         std::vector<GpuReanimTrack> tracks(count);
         std::vector<GpuReanimKey> keys(count*2);
         std::vector<GpuReanimDraw> draws(count);
@@ -424,6 +587,7 @@ void Benchmark() {
             definitions.push_back(renderer.UploadReanimDefinition({tracks,keys,geometry,2,1}));
         for (bool clipped:{false,true}) {
             std::array<std::vector<double>,6> values;
+            uint64_t accepted=0,fallback=0;
             for (unsigned round=0;round<12;++round) {
                 Timing cpu,gpu;
                 if (round%2==0) {
@@ -438,7 +602,12 @@ void Benchmark() {
                         clipped,queries,properties.limits.timestampPeriod,round*16);
                 }
                 if (round<3) continue;
+                accepted+=gpu.accepted;fallback+=gpu.fallback;
                 std::cout<<"sample tracks="<<count<<" clipped="<<clipped<<" round="<<round
+                    <<" sparseVisible="<<sparseVisible
+                    <<" ordinarySprites="<<((sparseVisible||spriteOnlyBenchmark||transitionBenchmark)?count:0)
+                    <<" transitionSparseVisible="<<(transitionBenchmark?16:0)
+                    <<" accepted="<<gpu.accepted<<" fallback="<<gpu.fallback
                     <<" cpu="<<cpu.cpu<<" residentCpu="<<gpu.cpu<<" gpu="<<cpu.gpu
                     <<" residentGpu="<<gpu.gpu<<'\n';
                 values[0].push_back(cpu.cpu);values[1].push_back(gpu.cpu);
@@ -450,26 +619,34 @@ void Benchmark() {
             const bool passed=cpu-residentCpu>std::max(0.0,residentGpu-gpu);
             const bool meanPassed=Mean(values[0])-Mean(values[1])>
                 std::max(0.0,Mean(values[3])-Mean(values[2]));
-            gates+=passed; ++total;
-            meanGates+=meanPassed;
+            const bool cpuFallback=policyBenchmark && accepted==0 && fallback>0;
+            if (cpuFallback) ++rejected;
+            else {gates+=passed;++total;meanGates+=meanPassed;}
             std::cout<<"tracks="<<count<<" clipped="<<clipped
+                <<" sparseVisible="<<sparseVisible
+                <<" ordinarySprites="<<((sparseVisible||spriteOnlyBenchmark||transitionBenchmark)?count:0)
+                <<" transitionSparseVisible="<<(transitionBenchmark?16:0)
                 <<" CPU_us="<<cpu<<"->"<<residentCpu
                 <<" jobs_us="<<Median(values[4])<<"->"<<Median(values[5])
                 <<" GPU_us="<<gpu<<"->"<<residentGpu
                 <<" CPU_saved="<<cpu-residentCpu
-                <<" GPU_added="<<residentGpu-gpu<<" gate="<<(passed?"PASS":"FAIL")
+                <<" GPU_added="<<residentGpu-gpu
+                <<" accepted="<<accepted<<" fallback="<<fallback
+                <<" gate="<<(cpuFallback?"CPU_FALLBACK":passed?"PASS":"FAIL")
                 <<" meanCPU_us="<<Mean(values[0])<<"->"<<Mean(values[1])
                 <<" meanGPU_us="<<Mean(values[2])<<"->"<<Mean(values[3])
-                <<" meanGate="<<(meanPassed?"PASS":"FAIL")<<std::endl;
+                <<" meanGate="<<(cpuFallback?"CPU_FALLBACK":meanPassed?"PASS":"FAIL")<<std::endl;
         }
         for (auto* definition:definitions) renderer.DestroyReanimDefinition(definition);
+    }
     }
     renderer.frameTimestampQueries=VK_NULL_HANDLE;
     window.WaitForFrame();
     for (auto query:queries) vkDestroyQueryPool(window.device,query,nullptr);
     renderer.DestroyTexture(texture);
     std::cout<<"GATES median "<<gates<<"/"<<total<<" mean "<<meanGates<<"/"<<total
-        <<" pass; scalar query collection outside timed CPU samples; "
+        <<" pass; policy CPU fallback cases="<<rejected
+        <<"; scalar query collection outside timed CPU samples; "
         "no full-game speedup claim\n";
 }
 #endif
@@ -494,6 +671,21 @@ int main(int argc,char** argv) {
         }
         if (argc>1 && std::string(argv[1])=="--benchmark-packets-sprites") {
             packetBenchmark=true;spriteOnlyBenchmark=true;Benchmark();return 0;
+        }
+        if (argc>1 && std::string(argv[1])=="--benchmark-packets-sparse") {
+            packetBenchmark=true;sparseBenchmark=true;Benchmark();return 0;
+        }
+        if (argc>1 && std::string(argv[1])=="--benchmark-policy") {
+            packetBenchmark=true;policyBenchmark=true;Benchmark();return 0;
+        }
+        if (argc>1 && std::string(argv[1])=="--benchmark-policy-mixed") {
+            packetBenchmark=true;policyBenchmark=true;mixedBenchmark=true;Benchmark();return 0;
+        }
+        if (argc>1 && std::string(argv[1])=="--benchmark-policy-sparse") {
+            packetBenchmark=true;policyBenchmark=true;sparseBenchmark=true;Benchmark();return 0;
+        }
+        if (argc>1 && std::string(argv[1])=="--benchmark-policy-transitions") {
+            packetBenchmark=true;policyBenchmark=true;transitionBenchmark=true;Benchmark();return 0;
         }
         if (argc>1 && std::string(argv[1])=="--benchmark") {Benchmark();return 0;}
 #else

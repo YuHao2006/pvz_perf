@@ -1,56 +1,68 @@
 #include "OpenGLRendererInternal.h"
 #include "OpenGLShaders.h"
 #include <algorithm>
+#include <bit>
 #include <cmath>
 #include <cstdio>
 #include <cstring>
-#include <limits>
+#include <numeric>
 #include <stdexcept>
 #include <string>
 
 namespace Sexy {
 using namespace GL3;
 namespace {
-constexpr int TableWidth = 1024;
-constexpr unsigned int GeometryShader = 0x8DD9, Rgba32ui = 0x8D70, RgbaInteger = 0x8D99;
-// This backend deliberately uses native GLSL sin/cos. No contraction-control
-// extension or Vulkan polynomial/precise dependency is imposed on OpenGL.
+constexpr unsigned int GeometryShader = 0x8DD9, TextureBuffer = 0x8C2A;
+constexpr unsigned int CopyReadBuffer = 0x8F36, CopyWriteBuffer = 0x8F37;
+constexpr size_t ExactFloatIndexLimit = 1u << 24;
+constexpr unsigned int MarkerSampler = ~0u;
+template<class T> void EnsureSpace(std::vector<T>& values,size_t required)
+{
+    if(required>values.capacity())values.reserve(std::max(required,values.capacity()+values.capacity()/2+64));
+}
+// No contraction-control extension is required: this is an independently
+// verified OpenGL native-sin/cos implementation, not the Vulkan polynomial.
 constexpr const char* ReanimVertexSource = R"GLSL(#version 150
-in uvec4 sampleInfo;
-in vec4 timeTranslation,overlayX,overlayY;
-in uvec4 colorFlags;
-uniform usampler2D tracks;
-uniform sampler2D keys,geometry;
-uniform uint imageSlotCount,textureFlags;
-uniform vec4 reanimClip;
-uniform bool polygonClip;
+in vec2 inPosition;in vec4 inColor;in vec2 inUV;in uint inSlot,inSampler;
+in uvec4 markerInfo;in vec2 markerShake;
+uniform samplerBuffer residentData,instances;
 flat out vec4 point0,point1,point2,point3,trackColor,trackClip;
 flat out uvec4 trackInfo;
-ivec2 address(uint index){return ivec2(int(index%1024u),int(index/1024u));}
-vec4 keyAt(uint index){return texelFetch(keys,address(index),0);}
-vec4 geoAt(uint index){return texelFetch(geometry,address(index),0);}
+vec4 dataAt(int index){return texelFetch(residentData,index);}
 vec4 corner(vec2 p,vec2 uv,vec4 m,vec2 origin){
  return vec4(m.x*p.x+m.y*p.y+origin.x,m.z*p.x+m.w*p.y+origin.y,uv);
 }
 void main(){
- uvec4 track=texelFetch(tracks,address(sampleInfo.x),0);
- uint before=(track.x+sampleInfo.y)*3u,after=(track.x+sampleInfo.z)*3u;
- vec4 a0=keyAt(before),a1=keyAt(before+1u),a2=keyAt(before+2u);
- vec4 b0=keyAt(after),b1=keyAt(after+1u);
- float t=timeTranslation.x;
- vec4 p=a0+(b0-a0)*t,s=a1+(b1-a1)*t;
- float alpha=clamp(floor(s.z*float(colorFlags.x>>24u)+0.5),0.0,255.0);
- uint image=uint(a2.x);
- vec4 base=geoAt(image*2u);
- uint appearance=(sampleInfo.w*imageSlotCount+image)*2u;
- vec4 shape=geoAt(appearance),uvEnd=geoAt(appearance+1u);
- bool visible=a1.w>=0.0 && image!=0u && alpha>0.0 && shape.x>0.0 && shape.y>0.0;
- if(colorFlags.w!=0u && a1.w!=-1.0 && b1.w==-1.0 && t>0.0)visible=false;
- trackColor=vec4(float((colorFlags.x>>16u)&255u),float((colorFlags.x>>8u)&255u),
-  float(colorFlags.x&255u),alpha)/255.0;
- trackClip=reanimClip;
- trackInfo=uvec4(textureFlags|colorFlags.y,colorFlags.z,polygonClip?1u:0u,visible?1u:0u);
  gl_Position=vec4(0,0,0,1);
+ if(inSampler!=0xffffffffu){
+  point0=vec4(inPosition,inUV);trackColor=inColor;trackInfo=uvec4(inSlot,inSampler,0u,1u);return;
+ }
+ int index=int(markerInfo.y)*6;
+ vec4 frameSample=texelFetch(instances,index),time=texelFetch(instances,index+1);
+ vec4 overlayX=texelFetch(instances,index+2),overlayY=texelFetch(instances,index+3);
+ vec4 outputInfo=texelFetch(instances,index+4);
+ vec4 header=dataAt(int(outputInfo.x));
+ vec4 track=dataAt(int(header.x)+int(markerInfo.x));
+ int before=int(header.y)+(int(track.x)+int(frameSample.x))*3;
+ int after=int(header.y)+(int(track.x)+int(frameSample.y))*3;
+ vec4 a0=dataAt(before),a1=dataAt(before+1),a2=dataAt(before+2);
+ vec4 b0=dataAt(after),b1=dataAt(after+1);
+ vec4 p=a0+(b0-a0)*time.x,s=a1+(b1-a1)*time.x;
+ float alpha=clamp(floor(s.z*float(markerInfo.z>>24u)+0.5),0.0,255.0);
+ int image=int(a2.x),geometry=int(header.z),slots=int(header.w);
+ vec4 base=dataAt(geometry+image*2);
+ int appearance=geometry+(int(frameSample.z)*slots+image)*2;
+ vec4 shape=dataAt(appearance),uvEnd=dataAt(appearance+1);
+ bool visible=a1.w>=0.0&&image!=0&&alpha>0.0&&shape.x>0.0&&shape.y>0.0;
+ if((markerInfo.w&1u)!=0u&&a1.w!=-1.0&&b1.w==-1.0&&time.x>0.0)visible=false;
+ uint outputFlags=uint(outputInfo.y);
+ bool clipping=(outputFlags&4u)!=0u&&(markerInfo.w&2u)==0u;
+ uint textureFlags=uint(outputInfo.z)|(uint(outputInfo.w)<<16u);
+ trackColor=vec4(float((markerInfo.z>>16u)&255u),float((markerInfo.z>>8u)&255u),
+  float(markerInfo.z&255u),alpha)/255.0;
+ trackClip=texelFetch(instances,index+5);
+ trackInfo=uvec4(textureFlags|(markerInfo.w&0xffffff00u),outputFlags&3u,
+  clipping?2u:1u,visible?1u:0u);
  if(!visible)return;
  vec2 radians=-p.zw*0.017453292;
  float m00=cos(radians.x)*s.x,m10=-sin(radians.x)*s.x;
@@ -59,8 +71,9 @@ void main(){
  float cy=m10*(base.x*.5)+m11*(base.y*.5)+p.y;
  vec4 matrix=vec4(overlayX.x*m00+overlayX.y*m10,overlayX.x*m01+overlayX.y*m11,
   overlayY.x*m00+overlayY.y*m10,overlayY.x*m01+overlayY.y*m11);
- vec2 origin=vec2((overlayX.x*cx+overlayX.y*cy+overlayX.z)+timeTranslation.y,
-  (overlayY.x*cx+overlayY.y*cy+overlayY.z)+timeTranslation.z);
+ vec2 translation=(outputFlags&8u)!=0u?time.yz:(markerShake+time.yz)-vec2(.5);
+ vec2 origin=vec2((overlayX.x*cx+overlayX.y*cy+overlayX.z)+translation.x,
+  (overlayY.x*cx+overlayY.y*cy+overlayY.z)+translation.y);
  point0=corner(vec2(-shape.x*.5,-shape.y*.5),shape.zw,matrix,origin);
  point1=corner(vec2(-shape.x*.5,shape.y*.5),vec2(shape.z,uvEnd.y),matrix,origin);
  point2=corner(vec2(shape.x*.5,shape.y*.5),uvEnd.xy,matrix,origin);
@@ -68,28 +81,30 @@ void main(){
 }
 )GLSL";
 constexpr const char* ReanimGeometrySource = R"GLSL(#version 150
-layout(points)in;
-layout(triangle_strip,max_vertices=18)out;
+layout(triangles)in;layout(triangle_strip,max_vertices=18)out;
 flat in vec4 point0[],point1[],point2[],point3[],trackColor[],trackClip[];
 flat in uvec4 trackInfo[];
 uniform vec2 targetExtent;
-out vec4 color;out vec2 uv;
-flat out uint slot,samplerIndex;
-void emit(vec4 point){
+out vec4 color;out vec2 uv;flat out uint slot,samplerIndex;
+void emitPoint(vec4 point,vec4 tint,uvec2 metadata){
  gl_Position=vec4(point.xy/targetExtent*2.0-1.0,0,1);
- color=trackColor[0];uv=point.zw;slot=trackInfo[0].x;samplerIndex=trackInfo[0].y;
- EmitVertex();
+ color=tint;uv=point.zw;slot=metadata.x;samplerIndex=metadata.y;EmitVertex();
 }
+void trackPoint(vec4 point){emitPoint(point,trackColor[0],trackInfo[0].xy);}
 bool insideClip(vec4 p,int edge,float boundary){
- float value=(edge%2==0)?p.x:p.y;return edge<2?value>=boundary:value<boundary;
+ float value=edge%2==0?p.x:p.y;return edge<2?value>=boundary:value<boundary;
 }
 void main(){
- if(trackInfo[0].w==0u)return;
  if(trackInfo[0].z==0u){
-  emit(point0[0]);emit(point1[0]);emit(point3[0]);emit(point2[0]);EndPrimitive();return;
+  for(int i=0;i<3;++i)emitPoint(point0[i],trackColor[i],trackInfo[i].xy);
+  EndPrimitive();return;
  }
- vec4 polygon[8];
- polygon[0]=point0[0];polygon[1]=point1[0];polygon[2]=point2[0];polygon[3]=point3[0];
+ if(trackInfo[0].w==0u)return;
+ if(trackInfo[0].z==1u){
+  trackPoint(point0[0]);trackPoint(point1[0]);trackPoint(point3[0]);trackPoint(point2[0]);
+  EndPrimitive();return;
+ }
+ vec4 polygon[8];polygon[0]=point0[0];polygon[1]=point1[0];polygon[2]=point2[0];polygon[3]=point3[0];
  int count=4;
  for(int edge=0;edge<4;++edge){
   if(count<2)return;
@@ -98,201 +113,284 @@ void main(){
    vec4 p=polygon[(i+count-1)%count],q=polygon[i];
    bool pin=insideClip(p,edge,trackClip[0][edge]),qin=insideClip(q,edge,trackClip[0][edge]);
    if(pin!=qin){
-    float av=(edge%2==0)?p.x:p.y,bv=(edge%2==0)?q.x:q.y;
-    float t=(trackClip[0][edge]-av)/(bv-av);
-    clipped[written++]=p+(q-p)*t;
+    float av=edge%2==0?p.x:p.y,bv=edge%2==0?q.x:q.y;
+    float t=(trackClip[0][edge]-av)/(bv-av);clipped[written++]=p+(q-p)*t;
    }
    if(qin)clipped[written++]=q;
   }
   count=written;for(int i=0;i<count;++i)polygon[i]=clipped[i];
  }
- for(int i=1;i+1<count;++i){emit(polygon[0]);emit(polygon[i]);emit(polygon[i+1]);EndPrimitive();}
+ for(int i=1;i+1<count;++i){trackPoint(polygon[0]);trackPoint(polygon[i]);trackPoint(polygon[i+1]);EndPrimitive();}
 }
 )GLSL";
-
-unsigned int Compile(unsigned int kind, std::string_view source)
+unsigned int Compile(unsigned int kind,std::string_view source)
 {
-    const auto shader = glCreateShader(kind);
-    const char* text = source.data(); const auto length = int(source.size());
-    glShaderSource(shader, 1, &text, &length); glCompileShader(shader);
-    int ok = 0; glGetShaderiv(shader, GL_COMPILE_STATUS, &ok);
-    if (!ok) {
-        std::string log(8192, '\0'); int used = 0;
-        glGetShaderInfoLog(shader, int(log.size()), &used, log.data());
-        glDeleteShader(shader); log.resize(used);
-        throw std::runtime_error("OpenGL optional reanimation shader failed: " + log);
+    const auto object=glCreateShader(kind);const char* text=source.data();const int length=int(source.size());
+    glShaderSource(object,1,&text,&length);glCompileShader(object);
+    int ok=0;glGetShaderiv(object,GL_COMPILE_STATUS,&ok);
+    if(!ok){
+        std::string log(8192,'\0');int used=0;glGetShaderInfoLog(object,int(log.size()),&used,log.data());
+        glDeleteShader(object);log.resize(used);throw std::runtime_error("OpenGL optional reanimation shader: "+log);
     }
-    return shader;
+    return object;
 }
-unsigned int Table(int maximum, size_t texels, const void* source, bool integer)
+GpuClip Clamped(const GpuClip& clip,int width,int height)
 {
-    const auto rows = (texels + TableWidth - 1) / TableWidth;
-    if (maximum < TableWidth || !rows || rows > size_t(maximum))
-        throw std::invalid_argument("OpenGL resident reanimation table exceeds texture capacity");
-    std::vector<std::uint32_t> packed(rows * TableWidth * 4);
-    std::memcpy(packed.data(), source, texels * 16);
-    unsigned int texture = 0; glGenTextures(1, &texture);
-    glBindTexture(GL_TEXTURE_2D, texture);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 4); glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
-    glTexImage2D(GL_TEXTURE_2D, 0, integer ? Rgba32ui : GL_RGBA32F, TableWidth, int(rows), 0,
-        integer ? RgbaInteger : GL_RGBA, integer ? GL_UNSIGNED_INT : GL_FLOAT, packed.data());
-    try { GL3::CheckError("Upload OpenGL resident reanimation table"); }
-    catch (...) { glDeleteTextures(1, &texture); throw; }
-    return texture;
+    const auto right=std::min<std::int64_t>(width,std::int64_t(clip.x)+std::max(0,clip.width));
+    const auto top=std::min<std::int64_t>(height,std::int64_t(clip.y)+std::max(0,clip.height));
+    const int x=std::max(0,clip.x),y=std::max(0,clip.y);
+    return {x,y,int(std::max<std::int64_t>(0,right-x)),int(std::max<std::int64_t>(0,top-y))};
 }
 }
 
-OpenGLReanim::~OpenGLReanim()
-{
-    const unsigned int objects[]{tracks, keys, geometry}; glDeleteTextures(3, objects);
-}
 bool OpenGLRenderer::Impl::InitReanim()
 {
-    if (reanimChecked) return reanimProgram != 0;
-    reanimChecked = true;
-    if (context.majorVersion < 3 || (context.majorVersion == 3 && context.minorVersion < 2))
-        return false;
-    unsigned int vertex = 0, geometry = 0, fragment = 0, program = 0;
-    try {
-        vertex = Compile(GL_VERTEX_SHADER, ReanimVertexSource);
-        geometry = Compile(GeometryShader, ReanimGeometrySource);
-        fragment = Compile(GL_FRAGMENT_SHADER, SceneFragmentShader()); program = glCreateProgram();
-        glAttachShader(program, vertex); glAttachShader(program, geometry); glAttachShader(program, fragment);
-        constexpr const char* attributes[]{"sampleInfo","timeTranslation","overlayX","overlayY","colorFlags"};
-        for (unsigned int i = 0; i < std::size(attributes); ++i)
-            glBindAttribLocation(program, i, attributes[i]);
-        glBindFragDataLocation(program, 0, "outColor"); glLinkProgram(program);
-        int ok = 0; glGetProgramiv(program, GL_LINK_STATUS, &ok);
-        if (!ok) {
-            std::string log(8192, '\0'); int used = 0;
-            glGetProgramInfoLog(program, int(log.size()), &used, log.data()); log.resize(used);
-            throw std::runtime_error("OpenGL optional reanimation pipeline link failed: " + log);
+    if(reanimChecked)return reanimProgram!=0;
+    reanimChecked=true;
+    if(context.majorVersion<3||(context.majorVersion==3&&context.minorVersion<2))return false;
+    unsigned int vertex=0,geometry=0,fragment=0,program=0;
+    try{
+        texBuffer=reinterpret_cast<TexBufferFn>(GL3::GetProcAddress("glTexBuffer"));
+        copyBuffer=reinterpret_cast<CopyBufferFn>(GL3::GetProcAddress("glCopyBufferSubData"));
+        if(!texBuffer||!copyBuffer)return false;
+        int bufferMaximum=0;glGetIntegerv(0x8C2B,&bufferMaximum); // GL_MAX_TEXTURE_BUFFER_SIZE.
+        reanimBlobMaximum=std::min(size_t(std::max(0,bufferMaximum)),ExactFloatIndexLimit);
+        if(!reanimBlobMaximum)return false;
+        vertex=Compile(GL_VERTEX_SHADER,ReanimVertexSource);
+        geometry=Compile(GeometryShader,ReanimGeometrySource);
+        fragment=Compile(GL_FRAGMENT_SHADER,SceneFragmentShader());program=glCreateProgram();
+        glAttachShader(program,vertex);glAttachShader(program,geometry);glAttachShader(program,fragment);
+        constexpr const char* attributes[]{"inPosition","inColor","inUV","inSlot","inSampler","markerInfo","markerShake"};
+        for(unsigned int i=0;i<std::size(attributes);++i)glBindAttribLocation(program,i,attributes[i]);
+        glBindFragDataLocation(program,0,"outColor");glLinkProgram(program);
+        int ok=0;glGetProgramiv(program,GL_LINK_STATUS,&ok);
+        if(!ok){
+            std::string log(8192,'\0');int used=0;glGetProgramInfoLog(program,int(log.size()),&used,log.data());
+            log.resize(used);throw std::runtime_error("OpenGL optional reanimation link: "+log);
         }
-        constexpr const char* names[]{"targetExtent","image","premultipliedOutput","coverageInput",
-            "tracks","keys","geometry","imageSlotCount","textureFlags","reanimClip","polygonClip"};
-        for (unsigned int i = 0; i < std::size(names); ++i)
-            reanimUniforms[i] = glGetUniformLocation(program, names[i]);
-        glUseProgram(program);
-        for (int i = 4; i <= 6; ++i) glUniform1i(reanimUniforms[i], i - 3);
-        glGenVertexArrays(1, &reanimVao); glBindVertexArray(reanimVao);
-        glGenBuffers(1, &reanimStream); glBindBuffer(GL_ARRAY_BUFFER, reanimStream);
-        for (unsigned int i = 0; i < 5; ++i) {
-            glEnableVertexAttribArray(i);
-            const auto offset = reinterpret_cast<const void*>(size_t(i) * 16);
-            if (i == 0 || i == 4)
-                glVertexAttribIPointer(i, 4, GL_UNSIGNED_INT, sizeof(GpuReanimDraw), offset);
-            else glVertexAttribPointer(i, 4, GL_FLOAT, GL_FALSE, sizeof(GpuReanimDraw), offset);
-        }
-        GL3::CheckError("Initialize optional OpenGL reanimation pipeline");
-        reanimProgram = program;
-    } catch (const std::exception& error) {
-        std::fprintf(stderr, "Optional OpenGL reanimation uses CPU fallback: %s\n", error.what());
-        if (program) glDeleteProgram(program);
-        if (reanimVao) glDeleteVertexArrays(1, &reanimVao);
-        if (reanimStream) glDeleteBuffers(1, &reanimStream);
-        reanimVao = reanimStream = 0;
+        constexpr const char* names[]{"targetExtent","image","premultipliedOutput","coverageInput","residentData","instances"};
+        for(unsigned int i=0;i<std::size(names);++i)reanimUniforms[i]=glGetUniformLocation(program,names[i]);
+        glUseProgram(program);glUniform1i(reanimUniforms[4],1);glUniform1i(reanimUniforms[5],2);
+        glGenVertexArrays(1,&reanimVao);glBindVertexArray(reanimVao);glBindBuffer(GL_ARRAY_BUFFER,stream);
+        glEnableVertexAttribArray(0);glVertexAttribPointer(0,2,GL_FLOAT,GL_FALSE,sizeof(Vertex),nullptr);
+        glEnableVertexAttribArray(1);glVertexAttribPointer(1,4,GL_FLOAT,GL_FALSE,sizeof(Vertex),reinterpret_cast<void*>(8));
+        glEnableVertexAttribArray(2);glVertexAttribPointer(2,2,GL_FLOAT,GL_FALSE,sizeof(Vertex),reinterpret_cast<void*>(24));
+        glEnableVertexAttribArray(3);glVertexAttribIPointer(3,1,GL_UNSIGNED_INT,sizeof(Vertex),reinterpret_cast<void*>(32));
+        glEnableVertexAttribArray(4);glVertexAttribIPointer(4,1,GL_UNSIGNED_INT,sizeof(Vertex),reinterpret_cast<void*>(36));
+        glEnableVertexAttribArray(5);glVertexAttribIPointer(5,4,GL_UNSIGNED_INT,sizeof(Vertex),nullptr);
+        glEnableVertexAttribArray(6);glVertexAttribPointer(6,2,GL_FLOAT,GL_FALSE,sizeof(Vertex),reinterpret_cast<void*>(16));
+        glGenBuffers(1,&reanimIndexBuffer);glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,reanimIndexBuffer);
+        glGenBuffers(1,&reanimInstanceBuffer);glBindBuffer(TextureBuffer,reanimInstanceBuffer);
+        glBufferData(TextureBuffer,96,nullptr,GL_STREAM_DRAW);
+        glGenTextures(1,&reanimInstanceTexture);glBindTexture(TextureBuffer,reanimInstanceTexture);
+        texBuffer(TextureBuffer,GL_RGBA32F,reanimInstanceBuffer);
+        glGenTextures(1,&reanimBlobTexture);
+        GL3::CheckError("Initialize indexed OpenGL reanimation");reanimProgram=program;
+    }catch(const std::exception& error){
+        std::fprintf(stderr,"Optional OpenGL reanimation uses CPU fallback: %s\n",error.what());
+        if(program)glDeleteProgram(program);
+        if(reanimVao)glDeleteVertexArrays(1,&reanimVao);
+        if(reanimIndexBuffer)glDeleteBuffers(1,&reanimIndexBuffer);
+        if(reanimInstanceBuffer)glDeleteBuffers(1,&reanimInstanceBuffer);
+        if(reanimInstanceTexture)glDeleteTextures(1,&reanimInstanceTexture);
+        if(reanimBlobTexture)glDeleteTextures(1,&reanimBlobTexture);
+        reanimVao=reanimIndexBuffer=reanimInstanceBuffer=reanimInstanceTexture=reanimBlobTexture=0;
     }
-    if (vertex) glDeleteShader(vertex);
-    if (geometry) glDeleteShader(geometry);
-    if (fragment) glDeleteShader(fragment);
-    glBindVertexArray(vao); glActiveTexture(GL_TEXTURE0);
-    return reanimProgram != 0;
+    if(vertex)glDeleteShader(vertex);if(geometry)glDeleteShader(geometry);if(fragment)glDeleteShader(fragment);
+    glBindVertexArray(vao);glActiveTexture(GL_TEXTURE0);return reanimProgram!=0;
+}
+
+size_t OpenGLRenderer::Impl::AllocateReanimRange(size_t count)
+{
+    for(auto& range:reanimFreeRanges)if(range.count>=count){
+        const auto result=range.first;range.first+=count;range.count-=count;return result;
+    }
+    if(count>reanimBlobMaximum-reanimBlobUsed)throw std::length_error("OpenGL reanimation arena exceeds exact index capacity");
+    const size_t required=reanimBlobUsed+count;
+    if(required>reanimBlobCapacity){
+        const auto capacity=std::min(reanimBlobMaximum,std::bit_ceil(std::max(size_t(4096),required)));
+        unsigned int replacement=0;glGenBuffers(1,&replacement);
+        try{
+            glBindBuffer(CopyWriteBuffer,replacement);glBufferData(CopyWriteBuffer,capacity*16,nullptr,GL_STATIC_DRAW);
+            if(reanimBlob){
+                glBindBuffer(CopyReadBuffer,reanimBlob);
+                copyBuffer(CopyReadBuffer,CopyWriteBuffer,0,0,reanimBlobUsed*16);
+            }
+            glActiveTexture(GL_TEXTURE1);glBindTexture(TextureBuffer,reanimBlobTexture);
+            texBuffer(TextureBuffer,GL_RGBA32F,replacement);
+            GL3::CheckError("Grow GPU-only OpenGL resident arena");
+        }catch(...){glDeleteBuffers(1,&replacement);glActiveTexture(GL_TEXTURE0);throw;}
+        if(reanimBlob)glDeleteBuffers(1,&reanimBlob);
+        reanimBlob=replacement;reanimBlobCapacity=capacity;glActiveTexture(GL_TEXTURE0);
+    }
+    const auto result=reanimBlobUsed;reanimBlobUsed=required;return result;
+}
+void OpenGLRenderer::Impl::CollectReanims()
+{
+    if(retiredReanims.empty())return;
+    reanimFreeRanges.reserve(reanimFreeRanges.size()+retiredReanims.size());
+    for(auto* definition:retiredReanims){
+        reanimFreeRanges.push_back({definition->firstTexel,definition->texelCount});delete definition;
+    }
+    retiredReanims.clear();
+    std::sort(reanimFreeRanges.begin(),reanimFreeRanges.end(),[](auto a,auto b){return a.first<b.first;});
+    size_t written=0;
+    for(const auto range:reanimFreeRanges){
+        if(!range.count)continue;
+        if(written&&reanimFreeRanges[written-1].first+reanimFreeRanges[written-1].count==range.first)
+            reanimFreeRanges[written-1].count+=range.count;
+        else reanimFreeRanges[written++]=range;
+    }
+    reanimFreeRanges.resize(written);
 }
 
 OpenGLReanim* OpenGLRenderer::UploadReanimDefinition(const GpuReanimDefinition& source)
 {
-    auto& s = *impl_;
-    if (s.open) throw std::logic_error("Upload reanimation definitions between OpenGL scenes");
-    if (source.tracks.empty() || source.keys.empty() || !source.imageSlotCount ||
-        source.imageSlotCount > (1u << 20) || !source.variantCount ||
-        std::uint64_t(source.imageSlotCount) * source.variantCount != source.geometry.size())
+    auto& s=*impl_;
+    if(s.open)throw std::logic_error("Upload OpenGL reanimation definitions between scenes");
+    if(source.tracks.empty()||source.keys.empty()||!source.imageSlotCount||
+        source.imageSlotCount>(1u<<20)||!source.variantCount||
+        uint64_t(source.imageSlotCount)*source.variantCount!=source.geometry.size())
         throw std::invalid_argument("Invalid OpenGL resident reanimation definition");
-    for (const auto& track : source.tracks)
-        if (track.keyOffset != GpuReanimNoKeys &&
-            (!track.keyCount || std::uint64_t(track.keyOffset) + track.keyCount > source.keys.size()))
-            throw std::invalid_argument("Invalid OpenGL resident reanimation track range");
-    std::vector<std::array<float, 12>> keys;
-    keys.reserve(source.keys.size());
-    for (const auto& key : source.keys) {
-        if (key.imageSlot >= source.imageSlotCount)
-            throw std::invalid_argument("Invalid OpenGL resident reanimation image slot");
-        // Frame participates only in visible/exact-minus-one disappearance
-        // tests, so retain that full int32 contract without float truncation.
-        const float frame = key.frame >= 0 ? 0.f : key.frame == -1 ? -1.f : -2.f;
-        keys.push_back({key.transX,key.transY,key.skewX,key.skewY,key.scaleX,key.scaleY,key.alpha,
-            frame,float(key.imageSlot),0,0,0});
+    for(const auto& track:source.tracks)
+        if(track.keyOffset!=GpuReanimNoKeys&&(!track.keyCount||uint64_t(track.keyOffset)+track.keyCount>source.keys.size()))
+            throw std::invalid_argument("Invalid OpenGL resident logical track range");
+    for(const auto& key:source.keys)if(key.imageSlot>=source.imageSlotCount)
+        throw std::invalid_argument("Invalid OpenGL resident image slot");
+    if(!s.InitReanim())return nullptr;
+    const auto count=uint64_t(1)+source.tracks.size()+source.keys.size()*3+source.geometry.size()*2;
+    if(count>s.reanimBlobMaximum)return nullptr;
+    s.CollectReanims();
+    auto result=std::make_unique<OpenGLReanim>();
+    result->trackInfo.assign(source.tracks.begin(),source.tracks.end());
+    result->imageSlotCount=source.imageSlotCount;result->variantCount=source.variantCount;
+    std::vector<std::array<float,4>> staging;staging.reserve(size_t(count));
+    s.reanimFreeRanges.reserve(s.reanimFreeRanges.size()+1);
+    result->texelCount=unsigned(count);
+    try{result->firstTexel=unsigned(s.AllocateReanimRange(size_t(count)));}
+    catch(const std::length_error&){return nullptr;}
+    const auto tracks=result->firstTexel+1,keys=tracks+unsigned(source.tracks.size());
+    const auto geometry=keys+unsigned(source.keys.size()*3);
+    staging.push_back({float(tracks),float(keys),float(geometry),float(source.imageSlotCount)});
+    for(const auto& track:source.tracks)
+        staging.push_back({track.keyOffset==GpuReanimNoKeys?-1.f:float(track.keyOffset),
+            float(track.keyCount),track.flags?1.f:0.f,0});
+    for(const auto& key:source.keys){
+        const float frame=key.frame>=0?0.f:key.frame==-1?-1.f:-2.f;
+        staging.push_back({key.transX,key.transY,key.skewX,key.skewY});
+        staging.push_back({key.scaleX,key.scaleY,key.alpha,frame});
+        staging.push_back({float(key.imageSlot),0,0,0});
     }
-    if (!s.InitReanim()) return nullptr;
-    auto result = std::make_unique<OpenGLReanim>();
-    result->trackInfo.assign(source.tracks.begin(), source.tracks.end());
-    result->imageSlotCount = source.imageSlotCount; result->variantCount = source.variantCount;
-    glActiveTexture(GL_TEXTURE0);
-    result->tracks = Table(s.maximum, source.tracks.size(), source.tracks.data(), true);
-    result->keys = Table(s.maximum, keys.size() * 3, keys.data(), false);
-    result->geometry = Table(s.maximum, source.geometry.size() * 2, source.geometry.data(), false);
-    s.reanimDefinitions.insert(result.get());
+    for(const auto& region:source.geometry){
+        staging.push_back({region.width,region.height,region.u0,region.v0});
+        staging.push_back({region.u1,region.v1,0,0});
+    }
+    try{
+        s.reanimDefinitions.insert(result.get());
+        glBindBuffer(TextureBuffer,s.reanimBlob);
+        glBufferSubData(TextureBuffer,result->firstTexel*16,staging.size()*16,staging.data());
+        GL3::CheckError("Upload immutable OpenGL reanimation definition");
+    }catch(...){
+        s.reanimDefinitions.erase(result.get());
+        s.reanimFreeRanges.push_back({result->firstTexel,result->texelCount});throw;
+    }
     return result.release();
 }
-
 void OpenGLRenderer::DestroyReanimDefinition(OpenGLReanim* definition)
 {
-    if (!definition) return;
-    auto& s = *impl_;
-    const auto found = s.reanimDefinitions.find(definition);
-    if (found == s.reanimDefinitions.end()) throw std::invalid_argument("Unknown OpenGL reanimation definition");
-    // Retain native textures for already queued batches. GL deletion after the
-    // queued draw commands also retains storage until the GPU finishes using it.
-    s.retiredReanims.push_back(definition); s.reanimDefinitions.erase(found);
+    if(!definition)return;auto& s=*impl_;
+    const auto found=s.reanimDefinitions.find(definition);
+    if(found==s.reanimDefinitions.end())throw std::invalid_argument("Unknown OpenGL resident definition");
+    s.retiredReanims.push_back(definition);s.reanimDefinitions.erase(found);
 }
-
-bool OpenGLRenderer::SubmitReanim(OpenGLReanim* definition, OpenGLTexture* texture,
-    const GpuReanimDraw& draw, bool linear, bool repeat, GpuBlend blend, const GpuClip* requested)
+unsigned int OpenGLRenderer::BeginReanimInstance(OpenGLReanim* definition,OpenGLTexture* texture,
+    const GpuReanimInstance& source,bool linear,bool repeat,const GpuClip* defaultClip,bool forceGpu)
 {
-    auto& s = *impl_;
-    if (!s.open) throw std::logic_error("OpenGL reanimation submission requires an open scene");
-    auto* target = s.selected ? s.selected : s.scene;
-    if (!definition || !s.reanimDefinitions.contains(definition) || !texture ||
-        !s.textures.contains(texture) || texture == target || !s.reanimProgram ||
-        static_cast<unsigned>(blend) > static_cast<unsigned>(GpuBlend::Opaque) ||
-        draw.track >= definition->trackInfo.size() || draw.variant >= definition->variantCount ||
-        !std::isfinite(draw.fraction) || draw.fraction < 0 || draw.fraction > 1 ||
-        (draw.samplingFlags & ~(GpuVertex::kIndependentColorFilter | GpuVertex::kColorFilterMask |
-            GpuVertex::kAlphaEdgeFilter))) return false;
-    const auto& track = definition->trackInfo[draw.track];
-    if (track.keyOffset == GpuReanimNoKeys || track.flags ||
-        draw.before >= track.keyCount || draw.after >= track.keyCount) return false;
-    GpuClip clip = requested ? *requested : GpuClip{0,0,target->width,target->height};
-    const auto polygonBounds = clip;
-    const auto right = std::min<std::int64_t>(target->width, std::int64_t(clip.x) + std::max(0,clip.width));
-    const auto top = std::min<std::int64_t>(target->height, std::int64_t(clip.y) + std::max(0,clip.height));
-    clip.x = std::max(0,clip.x); clip.y = std::max(0,clip.y);
-    clip.width = int(std::max<std::int64_t>(0,right-clip.x));
-    clip.height = int(std::max<std::int64_t>(0,top-clip.y));
-    if (!clip.width || !clip.height) return true;
-    auto job = draw; job.sampler = (linear ? 1u : 0u) | (repeat ? 2u : 0u);
-    const auto first = s.reanimDraws.size();
-    const auto flags = texture->flags | (texture->render ? 0x80000000u : 0u);
-    const auto sameClip = [&](const Impl::Batch& batch) {
-        return batch.clip.x == clip.x && batch.clip.y == clip.y &&
-            batch.clip.width == clip.width && batch.clip.height == clip.height &&
-            (!requested || (batch.polygonBounds.x == polygonBounds.x &&
-                batch.polygonBounds.y == polygonBounds.y && batch.polygonBounds.width == polygonBounds.width &&
-                batch.polygonBounds.height == polygonBounds.height));
-    };
-    if (!s.batches.empty() && s.batches.back().reanim == definition &&
-        s.batches.back().image == texture->image && s.batches.back().textureFlags == flags &&
-        s.batches.back().blend == blend && s.batches.back().polygonClip == bool(requested) &&
-        sameClip(s.batches.back())) {
-        s.reanimDraws.push_back(job); ++s.batches.back().count;
-    } else {
-        // Reserve first so allocation failure cannot leave only half a queued job.
-        s.batches.reserve(s.batches.size()+1); s.reanimDraws.push_back(job);
-        s.batches.push_back({texture->image,first,1,blend,clip,false,definition,flags,bool(requested),polygonBounds});
+    auto& s=*impl_;
+    if(!s.open)throw std::logic_error("OpenGL reanimation instance requires an open scene");
+    if(!forceGpu&&!s.reanimFrameEligible)return ~0u;
+    auto* target=s.selected?s.selected:s.scene;
+    if(!s.reanimProgram||!definition||!s.reanimDefinitions.contains(definition)||!texture||
+        !s.textures.contains(texture)||texture==target||source.variant>=definition->variantCount||
+        source.before>=ExactFloatIndexLimit||source.after>=ExactFloatIndexLimit||
+        !std::isfinite(source.fraction)||source.fraction<0||source.fraction>1||
+        s.reanimInstances.size()>=std::min(size_t(65535),s.reanimBlobMaximum/6))return ~0u;
+    const GpuClip bounds=defaultClip?*defaultClip:GpuClip{0,0,target->width,target->height};
+    const auto flags=texture->flags|(texture->render?0x80000000u:0u);
+    std::array<float,24> data{
+        float(source.before),float(source.after),float(source.variant),0,
+        source.fraction,source.translateX,source.translateY,0,
+        source.overlay00,source.overlay01,source.overlay02,0,
+        source.overlay10,source.overlay11,source.overlay12,0,
+        float(definition->firstTexel),float((linear?1:0)|(repeat?2:0)|(defaultClip?4:0)),
+        float(flags&65535u),float(flags>>16),
+        float(bounds.x),float(bounds.y),float(int64_t(bounds.x)+bounds.width),float(int64_t(bounds.y)+bounds.height)};
+    const auto index=unsigned(s.reanimInstances.size());
+    EnsureSpace(s.reanimInstances,index+1);EnsureSpace(s.reanimInstanceData,index+1);
+    s.reanimInstances.push_back({definition,texture,texture->image,bounds});s.reanimInstanceData.push_back(data);
+    return (s.reanimFrameGeneration<<16)|index;
+}
+bool OpenGLRenderer::SubmitReanimTrack(unsigned int instance,const GpuReanimTrackDraw& draw,GpuBlend blend)
+{
+    auto& s=*impl_;
+    if(!s.open)throw std::logic_error("OpenGL reanimation track requires an open scene");
+    if((instance>>16)!=s.reanimFrameGeneration)return false;
+    instance&=65535u;
+    if(instance>=s.reanimInstances.size()||static_cast<unsigned>(blend)>static_cast<unsigned>(GpuBlend::Opaque)||
+        (draw.flags&~(GpuReanimTrackDraw::Truncate|GpuReanimTrackDraw::IgnoreDefaultClip))||
+        (draw.samplingFlags&~(GpuVertex::kIndependentColorFilter|GpuVertex::kColorFilterMask|GpuVertex::kAlphaEdgeFilter)))
+        return false;
+    const auto& state=s.reanimInstances[instance];
+    if(!s.reanimDefinitions.contains(state.definition)||!s.textures.contains(state.texture)||
+        state.texture->image!=state.image||draw.track>=state.definition->trackInfo.size())return false;
+    const auto& track=state.definition->trackInfo[draw.track];const auto& data=s.reanimInstanceData[instance];
+    if(track.keyOffset==GpuReanimNoKeys||track.flags||unsigned(data[0])>=track.keyCount||unsigned(data[1])>=track.keyCount)
+        return false;
+    auto* target=s.selected?s.selected:s.scene;
+    if(state.texture==target)return false;
+    const auto clip=Clamped(draw.flags&GpuReanimTrackDraw::IgnoreDefaultClip?
+        GpuClip{0,0,target->width,target->height}:state.clip,target->width,target->height);
+    if(!clip.width||!clip.height)return true;
+    if(s.vertices.size()>=UINT32_MAX||s.reanimIndices.size()>size_t(INT32_MAX)-3)
+        throw std::length_error("OpenGL indexed reanimation stream exhausted");
+    // The native32byte track payload aliases the first32bytes of an ordinary
+    // GpuVertex. Typed integer attributes preserve all color/flag/index bits.
+    GpuVertex marker{};
+    const std::array<uint32_t,8> payload{
+        draw.track,instance,draw.color,draw.samplingFlags|draw.flags,
+        std::bit_cast<uint32_t>(draw.shakeX),std::bit_cast<uint32_t>(draw.shakeY),0,0};
+    std::memcpy(&marker,payload.data(),32);marker.sampler=MarkerSampler;
+    EnsureSpace(s.vertices,s.vertices.size()+1);
+    EnsureSpace(s.reanimIndices,(s.hasReanimDraws?s.reanimIndices.size():s.vertices.size())+3);
+    EnsureSpace(s.batches,s.batches.size()+1);
+    EnsureSpace(s.reanimMarkerOffsets,s.reanimMarkerOffsets.size()+1);
+    if(!s.hasReanimDraws){
+        s.reanimIndices.resize(s.vertices.size());
+        std::iota(s.reanimIndices.begin(),s.reanimIndices.end(),0u);
     }
+    const auto first=s.reanimIndices.size();const auto vertex=unsigned(s.vertices.size());
+    s.reanimMarkerOffsets.push_back(first);
+    s.vertices.push_back({marker});s.reanimIndices.insert(s.reanimIndices.end(),{vertex,vertex,vertex});
+    s.hasReanimDraws=true;
+    const auto sameClip=[&](const Impl::Batch& b){
+        return b.clip.x==clip.x&&b.clip.y==clip.y&&b.clip.width==clip.width&&b.clip.height==clip.height;};
+    if(!s.batches.empty()&&s.batches.back().image==state.image&&s.batches.back().blend==blend&&
+        !s.batches.back().coverage&&sameClip(s.batches.back()))s.batches.back().count+=3;
+    else s.batches.push_back({state.image,first,3,blend,clip,false});
     return true;
+}
+bool OpenGLRenderer::SubmitReanim(OpenGLReanim* definition,OpenGLTexture* texture,
+    const GpuReanimDraw& draw,bool linear,bool repeat,GpuBlend blend,const GpuClip* clip,bool forceGpu)
+{
+    GpuReanimInstance instance{draw.before,draw.after,draw.variant,0,draw.fraction,draw.translateX,draw.translateY,0,
+        draw.overlay00,draw.overlay01,draw.overlay02,0,draw.overlay10,draw.overlay11,draw.overlay12,0};
+    const auto index=BeginReanimInstance(definition,texture,instance,linear,repeat,clip,forceGpu);
+    if(index==~0u)return false;
+    // The legacy80byte API already contains the final shake/half-pixel offset.
+    auto& flags=impl_->reanimInstanceData[index&65535u][17];
+    flags=float(unsigned(flags)|8u);
+    const GpuReanimTrackDraw track{draw.track,draw.color,draw.samplingFlags,
+        draw.truncate?GpuReanimTrackDraw::Truncate:0u};
+    return SubmitReanimTrack(index,track,blend);
 }
 }

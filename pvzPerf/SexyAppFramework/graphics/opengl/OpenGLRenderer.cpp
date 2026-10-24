@@ -645,6 +645,9 @@ void OpenGLRenderer::DestroyTexture(OpenGLTexture* image)
         throw std::invalid_argument("Cannot destroy the OpenGL white image or a foreign handle");
     if (image == s.selected) throw std::logic_error("Deselect OpenGL render image before destruction");
     if (!s.batches.empty()) s.retired.push_back(image);
+#if defined(PVZ_OPENGL_REANIM_RESIDENT)
+    for(auto& state:s.reanimInstances)if(state.texture==image)state.texture=nullptr;
+#endif
     if (image == s.causticTarget) s.causticTarget = nullptr;
     if (image == s.causticSource) s.causticSource = nullptr;
     if (image->slot != ~0U && s.slots[image->slot] == image) s.slots[image->slot] = nullptr;

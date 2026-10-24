@@ -372,7 +372,9 @@ void OpenGLRenderer::DestroyReanimDefinition(OpenGLReanim* definition)
     if(!definition)return;auto& s=*impl_;
     const auto found=s.reanimDefinitions.find(definition);
     if(found==s.reanimDefinitions.end())throw std::invalid_argument("Unknown OpenGL resident definition");
-    s.retiredReanims.push_back(definition);s.reanimDefinitions.erase(found);
+    s.retiredReanims.push_back(definition);
+    for(auto& state:s.reanimInstances)if(state.definition==definition)state.definition=nullptr;
+    s.reanimDefinitions.erase(found);
 }
 unsigned int OpenGLRenderer::BeginReanimInstance(OpenGLReanim* definition,OpenGLTexture* texture,
     const GpuReanimInstance& source,bool linear,bool repeat,const GpuClip* defaultClip,bool forceGpu)
@@ -412,7 +414,7 @@ bool OpenGLRenderer::SubmitReanimTrack(unsigned int instance,const GpuReanimTrac
         (draw.samplingFlags&~(GpuVertex::kIndependentColorFilter|GpuVertex::kColorFilterMask|GpuVertex::kAlphaEdgeFilter)))
         return false;
     const auto& state=s.reanimInstances[instance];
-    if(!s.reanimDefinitions.contains(state.definition)||!s.textures.contains(state.texture)||
+    if(!state.definition||!state.texture||
         state.texture->image!=state.image||draw.track>=state.definition->trackInfo.size())return false;
     const auto& track=state.definition->trackInfo[draw.track];const auto& data=s.reanimInstanceData[instance];
     if(track.keyOffset==GpuReanimNoKeys||track.flags||unsigned(data[0])>=track.keyCount||unsigned(data[1])>=track.keyCount)

@@ -28,6 +28,12 @@ Vulkan 的共享实例包、逐轨差异包及索引绘制已通过独立像素�
 因此 `PVZ_EXPERIMENTAL_GPU_REANIM` 继续默认关闭，不能将实验验收称为生产路径完成。
 GPU 计时钩子只编入单独的 opt-in benchmark 后端，不进入普通生产二进制。
 未锁频实验的数字保留在系统临时目录，不写入性能结果表。
+OpenGL 独立夹具每帧只有一次非空 Flush；elapsed query 覆盖该 Flush 的
+上传与绘制区间，不能解释为纯 shader 活跃时间。CPU 样本包含准备及这些
+GL API 调用，并扣除独立测量的 Present 调用耗时；BeginScene 位于样本外。
+Present 仍实际执行，不能宣称驱动排队和呈现节奏对样本完全没有影响。
+诊断 FrameTiming 使用单个 query ID，不累计同一真实帧中的多个 Flush，
+因此不能直接用它宣称复杂游戏帧的 GPU 总耗时。
 Vulkan 基准分别保留完整 CPU 准备／命令录制时间和包含提交／呈现等待的 wall 时间，
 两者独立报告 median／mean 门槛，不用局部 jobs 时间替代完整录制时间。
 录制终点在最终 flush、纹理上传和呈现四边形录制之后、队列提交之前；
@@ -57,6 +63,12 @@ OpenGL 常规 GS 改为四角输出并复用批次 scissor 后，原生渲染与
 原场景的带裁剪线性采样用例出现最大 1 个 RGBA8 通道值差异，未扩大原有容差；
 无裁剪与最近邻用例没有差异，因此不将此修改称为全套逐字节一致。
 此候选的性能收益尚未验证，不能用功能通过替代性能门槛。
+OpenGL 的销毁事件失效覆盖定义、纹理、直接 raw adoption 和纹理替换，
+分别验证 begin-only／queued、同帧 Flush 后旧 token 拒绝、替代资源的新 token
+正常及已排队像素保留；失败销毁白纹理不会破坏仍有效的实例。
+常规 GS、独立 VS、compute、compute 的显式 GS 回退，以及 OFF／恢复 ON
+普通 render 均通过。Win7/OpenGL 实际游戏 Image 强 probe 与四种静态资源恢复
+场景也通过，移除逐轨集合查询没有改变生产 shader、政策或计时门槛。
 独立纯 VS 试验每轨提交四个 marker 顶点和六个索引，复用 native sin/cos
 求值后直接进入 SceneFS，不附加 GS；其构建目标同样为 EXCLUDE_FROM_ALL。
 完整原生正确性套件通过，与上述四角 GS 的差异用例和通道值一致。

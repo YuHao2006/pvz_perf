@@ -24,6 +24,9 @@ const char* GetLogFilePathC(const char* name) {
 namespace {
 using namespace Sexy;
 std::atomic<unsigned> errors=0;
+#if defined(PVZ_REANIM_GEOMETRY)
+bool requestGeometry=true;
+#endif
 VkBool32 VKAPI_CALL Validate(VkDebugUtilsMessageSeverityFlagBitsEXT severity,
     VkDebugUtilsMessageTypeFlagsEXT types,const VkDebugUtilsMessengerCallbackDataEXT* data,void* user) {
     if (severity>=VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT) ++errors;
@@ -116,6 +119,9 @@ void Clear(VulkanRenderer& renderer) {
 void Run() {
     VulkanTest::Window native(64,64);
     VulkanInitConfig config; config.enableValidation=true; config.debugCallback=Validate;
+#if defined(PVZ_REANIM_GEOMETRY)
+    config.features.geometryShader=requestGeometry?VK_TRUE:VK_FALSE;
+#endif
     VulkanContext window(config,native.hwnd,VulkanTest::SwapchainConfig());
     const std::string shaders=PVZ_NATIVE_SHADER_DIR;
     VulkanRenderer renderer(window,64,64,shaders+"/game_vs.spv",shaders+"/game_ps.spv");
@@ -167,6 +173,50 @@ void Run() {
                     "Resident interpolation/geometry/clipping/painter-order pixel mismatch");
             ++cases;
         }
+    // Definitions, texture slots, clips, filters and draw modes can change
+    // inside painter order. Ordinary sprites can appear between point jobs.
+    auto secondKeys=keys;secondKeys[0].transX+=4;secondKeys[1].transY-=3;
+    auto blankGeometry=geometry;blankGeometry[3]={};
+    auto* second=renderer.UploadReanimDefinition({tracks,secondKeys,blankGeometry,2,2});
+    const uint32_t otherTexels[]={0xff20c040,0xffe02060,0xff8060f0,0xffe0a020};
+    auto* other=renderer.CreateTexture(2,2,otherTexels,8);
+    const GpuClip clips[]={{3,8,32,36},{12,3,19,40},{100,100,10,10}};
+    std::vector<uint32_t> mixedExpected;
+    for (bool resident:{false,true}) {
+        Require(renderer.BeginScene(),"Cannot start mixed-state scene");Clear(renderer);
+        for (unsigned i=0;i<24;++i) {
+            const bool useSecond=i%3==1;
+            GpuReanimDraw job{};job.track=2;job.after=1;job.fraction=float(i%7)/7;
+            job.overlay00=(i%4==0)?-0.75f:1;job.overlay11=0.8f;
+            job.overlay01=0.125f;job.overlay10=-0.25f;
+            job.overlay02=float(i%5)*3+8;job.overlay12=float(i%3)*4+4;
+            job.translateX=-0.5f;job.translateY=0.25f;
+            job.color=0x9070c0e0;job.variant=i%2;
+            job.samplingFlags=(i%4)*0x10000000u;
+            auto* image=useSecond?other:texture;
+            const auto& sourceKeys=useSecond?secondKeys:keys;
+            const auto& sourceGeometry=useSecond?blankGeometry:geometry;
+            const auto blend=GpuBlend(i%3);
+            const auto* requested=i%4==0?nullptr:&clips[i%3];
+            if (resident) Require(renderer.SubmitReanim(useSecond?second:definition,image,job,
+                false,false,blend,requested),"Mixed-state resident job rejected");
+            else renderer.SubmitTriangles(Reference(sourceKeys[0],sourceKeys[1],sourceGeometry[1],
+                sourceGeometry[job.variant*2+1],job,VulkanRenderer::SlotOf(image),requested),
+                image,false,false,blend);
+            if (i%3==2) {
+                auto marker=job;marker.color=0x407f7f7f;marker.samplingFlags=0;marker.variant=0;
+                renderer.SubmitTriangles(Reference(keys[0],keys[1],geometry[1],geometry[1],
+                    marker,VulkanRenderer::SlotOf(texture),nullptr),texture,false,false,GpuBlend::Normal);
+            }
+        }
+        renderer.EndSceneAndPresent();
+        const auto actual=renderer.ReadScenePixels();
+        if (!resident) mixedExpected=actual;
+        else for (size_t i=0;i<actual.size();++i) for (unsigned shift:{0u,8u,16u,24u})
+            Require(std::abs(int((actual[i]>>shift)&255)-int((mixedExpected[i]>>shift)&255))<=3,
+                "Mixed definitions/textures/filters/blends/clips/sprite-order mismatch");
+    }
+    renderer.DestroyReanimDefinition(second);renderer.DestroyTexture(other);
     // Image-only submission also runs the prelude and protects deferred deletion.
     auto* image=renderer.CreateRenderImage(64,64);
     renderer.SetRenderImage(image);
@@ -179,11 +229,14 @@ void Run() {
     renderer.DestroyTexture(image);
     Require(renderer.BeginScene(),"Cannot retire resident resources"); renderer.EndSceneAndPresent();
     Require(errors.load()==0,"Vulkan validation errors");
-    std::cout<<"PASS "<<cases<<" resident CPU/GPU pixel cases, CPU-only indexes, mixed stream, image-only lifetime\n";
+    std::cout<<"PASS "<<cases<<" resident CPU/GPU pixel cases, CPU-only indexes, mixed stream, "
+        "24 mixed definition/texture/filter/blend/clip jobs and ordinary sprites, image-only lifetime\n";
 }
 #if defined(PVZ_REANIM_BENCHMARK)
 struct Timing { double cpu=0, jobs=0, gpu=0; };
-Timing BenchmarkBurst(VulkanRenderer& renderer,VulkanContext& window,VulkanReanim* definition,
+bool mixedBenchmark=false;
+bool spriteOnlyBenchmark=false;
+Timing BenchmarkBurst(VulkanRenderer& renderer,VulkanContext& window,std::span<VulkanReanim* const> definitions,
     VulkanTexture* texture,const std::vector<GpuReanimKey>& keys,std::vector<GpuReanimDraw>& draws,
     const GpuReanimGeometry& geometry,bool resident,bool clipped,
     const std::array<VkQueryPool,16>& queries,double timestampPeriod,unsigned phase) {
@@ -191,22 +244,40 @@ Timing BenchmarkBurst(VulkanRenderer& renderer,VulkanContext& window,VulkanReani
     Timing result;
     const GpuClip clip{6,6,782,582};
     const auto slot=VulkanRenderer::SlotOf(texture);
+    const uint32_t white=VulkanRenderer::SlotOf(renderer.whiteTexture);
+    const GpuVertex marker[]={
+        {795,595,1,1,1,0.1f,0,0,white,0},{797,595,1,1,1,0.1f,1,0,white,0},
+        {795,597,1,1,1,0.1f,0,1,white,0}};
     for (size_t frame=0;frame<queries.size();++frame) {
         renderer.frameTimestampQueries=queries[frame];
         Require(renderer.BeginScene(),"Cannot start benchmark frame");
         const auto start=Clock::now();
         Clear(renderer);
         const float fraction=float((phase+unsigned(frame))%31)/31.0f;
+        if (spriteOnlyBenchmark && resident) {
+            auto trigger=draws[0];trigger.color=0;
+            Require(renderer.SubmitReanim(definitions[0],texture,trigger,false,false,GpuBlend::Normal),
+                "Cannot activate resident pipeline for ordinary-sprite control");
+        }
         for (size_t i=0;i<draws.size();++i) {
             auto& draw=draws[i]; draw.fraction=fraction;
-            if (resident) {
-                Require(renderer.SubmitReanim(definition,texture,draw,false,false,GpuBlend::Normal,
+            if (spriteOnlyBenchmark) {
+                const float x=draw.overlay02,y=draw.overlay12;
+                const GpuVertex sprite[]={
+                    {x,y,1,1,1,0.5f,0,0,slot,0},{x,y+12,1,1,1,0.5f,0,1,slot,0},
+                    {x+10,y,1,1,1,0.5f,1,0,slot,0},{x,y+12,1,1,1,0.5f,0,1,slot,0},
+                    {x+10,y,1,1,1,0.5f,1,0,slot,0},{x+10,y+12,1,1,1,0.5f,1,1,slot,0}};
+                renderer.SubmitTriangles(sprite,texture,false,false,GpuBlend::Normal);
+            } else if (resident) {
+                Require(renderer.SubmitReanim(definitions[(i/32)%definitions.size()],texture,draw,false,false,GpuBlend::Normal,
                     clipped?&clip:nullptr),"Benchmark resident submission rejected");
             } else {
                 const auto vertices=Reference(keys[2*i],keys[2*i+1],geometry,geometry,draw,slot,
                     clipped?&clip:nullptr);
                 renderer.SubmitTriangles(vertices,texture,false,false,GpuBlend::Normal);
             }
+            if (mixedBenchmark && i%32==31)
+                renderer.SubmitTriangles(marker,renderer.whiteTexture,false,false,GpuBlend::Normal);
         }
         const auto jobsEnd=Clock::now();
         renderer.EndSceneAndPresent();
@@ -235,10 +306,16 @@ double Mean(const std::vector<double>& values) {
 void Benchmark() {
     VulkanTest::Window native(800,600);
     VulkanInitConfig config;
+#if defined(PVZ_REANIM_GEOMETRY)
+    config.features.geometryShader=requestGeometry?VK_TRUE:VK_FALSE;
+#endif
     VulkanContext window(config,native.hwnd,VulkanTest::SwapchainConfig());
     VkPhysicalDeviceProperties properties{};
     vkGetPhysicalDeviceProperties(window.physicalDevice,&properties);
     std::cout<<"Vulkan resident benchmark adapter="<<properties.deviceName
+        <<" geometryShader="<<window.geometryShaderEnabled
+        <<" mixed="<<mixedBenchmark
+        <<" ordinaryOnly="<<spriteOnlyBenchmark
         <<" timestampPeriodNs="<<properties.limits.timestampPeriod
         <<" unlocked clocks; CPU excludes BeginScene acquire/prior-frame wait; CPU includes "
           "clear, track work, upload, prelude recording, submit and present call. "
@@ -269,20 +346,22 @@ void Benchmark() {
             draw.overlay02=float(i%64)*12+4;draw.overlay12=float((i/64)%48)*12+4;
             draw.color=0xc0e0d0ff;
         }
-        auto* definition=renderer.UploadReanimDefinition({tracks,keys,geometry,2,1});
+        std::vector<VulkanReanim*> definitions;
+        for (unsigned index=0;index<(mixedBenchmark?4u:1u);++index)
+            definitions.push_back(renderer.UploadReanimDefinition({tracks,keys,geometry,2,1}));
         for (bool clipped:{false,true}) {
             std::array<std::vector<double>,6> values;
             for (unsigned round=0;round<12;++round) {
                 Timing cpu,gpu;
                 if (round%2==0) {
-                    cpu=BenchmarkBurst(renderer,window,definition,texture,keys,draws,geometry[1],false,
+                    cpu=BenchmarkBurst(renderer,window,definitions,texture,keys,draws,geometry[1],false,
                         clipped,queries,properties.limits.timestampPeriod,round*16);
-                    gpu=BenchmarkBurst(renderer,window,definition,texture,keys,draws,geometry[1],true,
+                    gpu=BenchmarkBurst(renderer,window,definitions,texture,keys,draws,geometry[1],true,
                         clipped,queries,properties.limits.timestampPeriod,round*16);
                 } else {
-                    gpu=BenchmarkBurst(renderer,window,definition,texture,keys,draws,geometry[1],true,
+                    gpu=BenchmarkBurst(renderer,window,definitions,texture,keys,draws,geometry[1],true,
                         clipped,queries,properties.limits.timestampPeriod,round*16);
-                    cpu=BenchmarkBurst(renderer,window,definition,texture,keys,draws,geometry[1],false,
+                    cpu=BenchmarkBurst(renderer,window,definitions,texture,keys,draws,geometry[1],false,
                         clipped,queries,properties.limits.timestampPeriod,round*16);
                 }
                 if (round<3) continue;
@@ -310,7 +389,7 @@ void Benchmark() {
                 <<" meanGPU_us="<<Mean(values[2])<<"->"<<Mean(values[3])
                 <<" meanGate="<<(meanPassed?"PASS":"FAIL")<<std::endl;
         }
-        renderer.DestroyReanimDefinition(definition);
+        for (auto* definition:definitions) renderer.DestroyReanimDefinition(definition);
     }
     renderer.frameTimestampQueries=VK_NULL_HANDLE;
     window.WaitForFrame();
@@ -324,7 +403,16 @@ void Benchmark() {
 }
 int main(int argc,char** argv) {
     try {
+#if defined(PVZ_REANIM_GEOMETRY)
+        if (argc>1 && std::string(argv[1])=="--no-geometry") requestGeometry=false;
+#endif
 #if defined(PVZ_REANIM_BENCHMARK)
+        if (argc>1 && std::string(argv[1])=="--benchmark-mixed") {
+            mixedBenchmark=true;Benchmark();return 0;
+        }
+        if (argc>1 && std::string(argv[1])=="--benchmark-sprites") {
+            spriteOnlyBenchmark=true;Benchmark();return 0;
+        }
         if (argc>1 && std::string(argv[1])=="--benchmark") {Benchmark();return 0;}
 #else
         (void)argc;(void)argv;

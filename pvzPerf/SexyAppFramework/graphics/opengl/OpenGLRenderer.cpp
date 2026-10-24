@@ -155,11 +155,16 @@ OpenGLRenderer::Impl::~Impl()
 {
     context.MakeCurrent();
     batches.clear();
+    for (auto* definition : reanimDefinitions) delete definition;
+    for (auto* definition : retiredReanims) delete definition;
     for (auto* texture : textures) delete texture;
     for (auto* texture : retired) delete texture;
     for (const auto program : {sceneProgram, imageProgram, fontProgram, presentProgram})
         if (program) glDeleteProgram(program);
     if (poolProgram) glDeleteProgram(poolProgram);
+    if (reanimProgram) glDeleteProgram(reanimProgram);
+    if (reanimVao) glDeleteVertexArrays(1, &reanimVao);
+    if (reanimStream) glDeleteBuffers(1, &reanimStream);
     if (poolVao) glDeleteVertexArrays(1, &poolVao);
     if (poolVertices) glDeleteBuffers(1, &poolVertices);
     if (poolIndices) glDeleteBuffers(1, &poolIndices);
@@ -181,25 +186,64 @@ void OpenGLRenderer::Impl::BindTarget()
 }
 void OpenGLRenderer::Impl::Flush()
 {
-    if (vertices.empty()) {
+    if (vertices.empty() && reanimDraws.empty()) {
         for (auto* texture : retired) delete texture;
         retired.clear();
+        for (auto* definition : retiredReanims) delete definition;
+        retiredReanims.clear();
         return;
     }
     BindTarget();
     const auto* target = selected ? selected : scene;
-    glBindVertexArray(vao); glBindBuffer(GL_ARRAY_BUFFER, stream);
-    glBufferData(GL_ARRAY_BUFFER, static_cast<GLsizeiptr>(vertices.size() * sizeof(Vertex)),
-        vertices.data(), GL_STREAM_DRAW);
-    glUseProgram(sceneProgram);
-    glUniform2f(sceneUniforms[uTargetExtent],
-        static_cast<float>(target->width), static_cast<float>(target->height));
-    glUniform1i(sceneUniforms[uImage], 0);
-    glUniform1i(sceneUniforms[uPremultipliedOutput], target->render);
+    if (!vertices.empty()) {
+        glBindVertexArray(vao); glBindBuffer(GL_ARRAY_BUFFER, stream);
+        glBufferData(GL_ARRAY_BUFFER, static_cast<GLsizeiptr>(vertices.size() * sizeof(Vertex)),
+            vertices.data(), GL_STREAM_DRAW);
+    }
+    if (!reanimDraws.empty()) {
+        glBindVertexArray(reanimVao); glBindBuffer(GL_ARRAY_BUFFER, reanimStream);
+        glBufferData(GL_ARRAY_BUFFER, static_cast<GLsizeiptr>(reanimDraws.size() * sizeof(GpuReanimDraw)),
+            reanimDraws.data(), GL_STREAM_DRAW);
+    }
     glActiveTexture(GL_TEXTURE0);
+    int streamKind = -1;
+    OpenGLReanim* boundDefinition = nullptr;
+    unsigned int boundFlags = ~0u;
     for (const auto& batch : batches) {
+        if (batch.reanim) {
+            const auto& u = reanimUniforms;
+            if (streamKind != 1) {
+                glBindVertexArray(reanimVao); glUseProgram(reanimProgram);
+                glUniform2f(u[0], float(target->width), float(target->height));
+                glUniform1i(u[1], 0); glUniform1i(u[2], target->render); glUniform1i(u[3], 0);
+                streamKind = 1;
+            }
+            if (boundFlags != batch.textureFlags) {
+                glUniform1ui(u[8], batch.textureFlags); boundFlags = batch.textureFlags;
+            }
+            const float bounds[]{float(batch.polygonBounds.x), float(batch.polygonBounds.y),
+                float(std::int64_t(batch.polygonBounds.x) + batch.polygonBounds.width),
+                float(std::int64_t(batch.polygonBounds.y) + batch.polygonBounds.height)};
+            glUniform4fv(u[9], 1, bounds); glUniform1i(u[10], batch.polygonClip);
+            if (boundDefinition != batch.reanim) {
+                glUniform1ui(u[7], batch.reanim->imageSlotCount);
+                const unsigned int data[]{batch.reanim->tracks, batch.reanim->keys, batch.reanim->geometry};
+                for (unsigned i = 0; i < 3; ++i) {
+                    glActiveTexture(GL_TEXTURE1 + i); glBindTexture(GL_TEXTURE_2D, data[i]);
+                }
+                glActiveTexture(GL_TEXTURE0); boundDefinition = batch.reanim;
+            }
+        } else {
+            if (streamKind != 0) {
+                glBindVertexArray(vao); glUseProgram(sceneProgram);
+                glUniform2f(sceneUniforms[uTargetExtent], float(target->width), float(target->height));
+                glUniform1i(sceneUniforms[uImage], 0);
+                glUniform1i(sceneUniforms[uPremultipliedOutput], target->render);
+                streamKind = 0;
+            }
+            glUniform1i(sceneUniforms[uCoverageInput], batch.coverage);
+        }
         glBindTexture(GL_TEXTURE_2D, batch.image);
-        glUniform1i(sceneUniforms[uCoverageInput], batch.coverage);
         glEnable(GL_SCISSOR_TEST);
         glScissor(batch.clip.x, batch.clip.y, batch.clip.width, batch.clip.height);
         if (batch.blend == GpuBlend::Opaque) glDisable(GL_BLEND);
@@ -209,11 +253,14 @@ void OpenGLRenderer::Impl::Flush()
                 batch.blend == GpuBlend::Additive ? GL_ONE : GL_ONE_MINUS_SRC_ALPHA,
                 GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
         }
-        glDrawArrays(GL_TRIANGLES, static_cast<int>(batch.first), static_cast<int>(batch.count));
+        glDrawArrays(batch.reanim ? GL_POINTS : GL_TRIANGLES,
+            static_cast<int>(batch.first), static_cast<int>(batch.count));
     }
-    vertices.clear(); batches.clear();
+    vertices.clear(); reanimDraws.clear(); batches.clear();
     for (auto* texture : retired) delete texture;
     retired.clear();
+    for (auto* definition : retiredReanims) delete definition;
+    retiredReanims.clear();
     Check("Draw OpenGL triangles");
 }
 void OpenGLRenderer::Impl::Snapshot(const OpenGLTexture& original, OpenGLTexture& result)
@@ -279,7 +326,7 @@ void OpenGLRenderer::Impl::Submit(std::span<const GpuVertex> input, OpenGLTextur
         const auto sameClip = [](const GpuClip& a, const GpuClip& b) {
             return a.x == b.x && a.y == b.y && a.width == b.width && a.height == b.height;
         };
-        if (!batches.empty() && batches.back().image == native &&
+        if (!batches.empty() && !batches.back().reanim && batches.back().image == native &&
             batches.back().blend == blend && batches.back().coverage == coverage &&
             sameClip(batches.back().clip, clip))
             batches.back().count += 3;
@@ -611,6 +658,7 @@ unsigned int OpenGLRenderer::MaxImageDimension2D() const { return impl_->maximum
 OpenGLRenderer::ResourceCounts OpenGLRenderer::GetResourceCounts() const
 {
     return {impl_->textures.size(),impl_->retired.size(),0,
-        size_t(bool(impl_->stream))+size_t(bool(impl_->poolVertices)),impl_->batches.size()};
+        size_t(bool(impl_->stream))+size_t(bool(impl_->poolVertices))+
+            size_t(bool(impl_->reanimStream)),impl_->batches.size()};
 }
 }

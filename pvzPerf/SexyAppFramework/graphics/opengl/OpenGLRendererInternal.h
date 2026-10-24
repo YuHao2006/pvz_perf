@@ -20,6 +20,12 @@ struct OpenGLTexture {
     OpenGLTexture(const OpenGLTexture&) = delete;
     OpenGLTexture& operator=(const OpenGLTexture&) = delete;
 };
+struct OpenGLReanim {
+    unsigned int tracks = 0, keys = 0, geometry = 0;
+    unsigned int imageSlotCount = 0, variantCount = 0;
+    std::vector<GpuReanimTrack> trackInfo;
+    ~OpenGLReanim();
+};
 struct OpenGLRenderer::Impl {
     enum Uniform : unsigned int {
         uTargetExtent, uImage, uPremultipliedOutput, uCoverageInput,
@@ -38,6 +44,10 @@ struct OpenGLRenderer::Impl {
         GpuBlend blend;
         GpuClip clip;
         bool coverage;
+        OpenGLReanim* reanim = nullptr;
+        unsigned int textureFlags = 0;
+        bool polygonClip = false;
+        GpuClip polygonBounds{};
     };
     OpenGLContext& context;
     int width, height, maximum = 0;
@@ -45,6 +55,12 @@ struct OpenGLRenderer::Impl {
     unsigned int sceneProgram = 0, imageProgram = 0, fontProgram = 0, presentProgram = 0;
     unsigned int poolProgram = 0, poolVao = 0, poolVertices = 0, poolIndices = 0;
     std::array<int, 12> poolUniforms{};
+    unsigned int reanimProgram = 0, reanimVao = 0, reanimStream = 0;
+    std::array<int, 11> reanimUniforms{};
+    bool reanimChecked = false;
+    std::unordered_set<OpenGLReanim*> reanimDefinitions;
+    std::vector<OpenGLReanim*> retiredReanims;
+    std::vector<GpuReanimDraw> reanimDraws;
     UniformLocations sceneUniforms{}, imageUniforms{}, fontUniforms{}, presentUniforms{};
     bool open = false, mainFrame = false, initialized = false, sceneInitialized = false;
     OpenGLTexture* white = nullptr;
@@ -71,6 +87,7 @@ struct OpenGLRenderer::Impl {
     void Upload(OpenGLTexture* texture, const void* data, int pitch, unsigned int format);
     void BindTarget();
     void Flush();
+    bool InitReanim();
     void Submit(std::span<const GpuVertex> input, OpenGLTexture* source,
         GpuBlend blend, const GpuClip* clip, bool coverage);
     unsigned int Program(std::string_view vertex, std::string_view fragment);

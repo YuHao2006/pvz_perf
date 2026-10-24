@@ -35,7 +35,7 @@ static unsigned int gReanimationParamArraySize;              //[0x6A9EEC]
 
 void ReanimatorUploadGpuDefinitionData()
 {
-#if defined(PVZ_GPU_REANIM_VULKAN)
+#if defined(PVZ_GPU_REANIM_RESIDENT)
 	if (!gSexyAppBase || CurrentNativeThreadIdentity() != gSexyAppBase->mPrimaryThreadId ||
 		!gSexyAppBase->mDDInterface || !gSexyAppBase->mDDInterface->mRenderInterface)
 		throw std::logic_error("Reanimation GPU upload requires the primary renderer thread");
@@ -106,7 +106,7 @@ void ReanimatorUploadGpuDefinitionData()
 
 void ReanimatorFreeGpuDefinitionData()
 {
-#if defined(PVZ_GPU_REANIM_VULKAN)
+#if defined(PVZ_GPU_REANIM_RESIDENT)
 	auto* renderer = gSexyAppBase && gSexyAppBase->mDDInterface &&
 		gSexyAppBase->mDDInterface->mRenderInterface
 		? gSexyAppBase->mDDInterface->mRenderInterface->mRenderer : nullptr;
@@ -944,7 +944,7 @@ bool Reanimation::DrawTrack(Graphics* g, int theTrackIndex, int theRenderGroup, 
 	const auto& trackData = mDefinition->mTracks.tracks[theTrackIndex].mTransforms;
 	if (trackData.mStorage == ReanimTrackStorage::Cpu)
 		return false;
-#if defined(PVZ_GPU_REANIM_VULKAN) && defined(PVZ_EXPERIMENTAL_GPU_REANIM)
+#if defined(PVZ_GPU_REANIM_RESIDENT) && defined(PVZ_EXPERIMENTAL_GPU_REANIM)
 	// Picture jobs evaluate one track once on the GPU. CPU samples only the
 	// visibility/alpha required by AttachmentDraw's synchronous return contract.
 	if (mDefinition->mGpuData && mTrackInstances[theTrackIndex].mBlendCounter <= 0 &&

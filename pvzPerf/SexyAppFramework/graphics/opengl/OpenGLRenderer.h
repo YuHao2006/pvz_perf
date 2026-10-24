@@ -1,6 +1,7 @@
 #pragma once
 #include "graphics/GpuTypes.h"
 #include "graphics/GpuPool.h"
+#include "graphics/GpuReanim.h"
 #include "graphics/ImageReadback.h"
 #include "graphics/vulkan/VulkanHdr.h"
 #include "OpenGLScaleTypes.h"
@@ -13,6 +14,7 @@
 namespace Sexy {
 class OpenGLContext;
 struct OpenGLTexture;
+struct OpenGLReanim;
 class OpenGLRenderer final {
     struct Impl;
     std::unique_ptr<Impl> impl_;
@@ -57,6 +59,13 @@ public:
     void SubmitTriangles(std::span<const GpuVertex> vertices, OpenGLTexture* texture,
         bool linear, bool wrap, GpuBlend blend, const GpuClip* clip = nullptr);
     void SubmitPool(OpenGLTexture* texture, const GpuPoolParams& params);
+    // Optional GL 3.2 fused track evaluation/geometry expansion. Null/false
+    // means the caller must retain its CPU path on unsupported contexts/jobs.
+    OpenGLReanim* UploadReanimDefinition(const GpuReanimDefinition& definition);
+    void DestroyReanimDefinition(OpenGLReanim* definition);
+    bool SubmitReanim(OpenGLReanim* definition, OpenGLTexture* texture,
+        const GpuReanimDraw& draw, bool linear, bool repeat, GpuBlend blend,
+        const GpuClip* clip = nullptr);
     void SubmitCoverageTriangles(std::span<const GpuVertex> vertices, OpenGLTexture* texture,
         GpuBlend blend, const GpuClip* clip = nullptr);
     void EndSceneAndPresent();

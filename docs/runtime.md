@@ -56,6 +56,8 @@ Begin 接收仍存活的原始句柄，调用方在销毁后清空自己的句�
 resident 开启时，合成图片的 raw 清理也使用这个销毁入口。
 Vulkan／OpenGL 的普通三角形与轨道 marker 保持原顺序；较长的连续普通三角形段使用原顶点管线，
 避免少数动画使整帧普通图片承担 geometry shader 成本。
+OpenGL 在已有分段遍历中仅保留索引绘制使用的 EBO 区间，普通 DrawArrays 段不再上传索引；
+原地移动不改变顶点编号、轨道编号、绘制顺序或批次数。独立 compute 路径仍保留其展开需要的完整索引。
 OpenGL 每次 Flush 从未知状态开始，在批次循环内复用未改变的纹理绑定、
 scissor、blend 和各 program 的 coverage uniform；不跨 Flush 缓存这些状态，
 也不增加 renderer 的持久成员。

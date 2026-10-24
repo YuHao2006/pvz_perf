@@ -254,7 +254,7 @@ void OpenGLRenderer::Impl::Flush()
         if(requiredSegments>reanimDrawSegments.capacity())
             reanimDrawSegments.reserve(std::max(requiredSegments,
                 reanimDrawSegments.capacity()+reanimDrawSegments.capacity()/2+16));
-        size_t ordinarySpan=0;
+        size_t ordinarySpan=0,indicesWritten=0;
         for(auto& batch:batches){
             batch.segmentFirst=reanimDrawSegments.size();
             size_t cursor=batch.first;
@@ -269,12 +269,22 @@ void OpenGLRenderer::Impl::Flush()
                     if(cursor>=span.first){resident=false;next=std::min(end,span.first+span.count);}
                     else next=std::min(end,span.first);
                 }
-                const size_t first=resident?cursor:reanimIndices[cursor];
+                const size_t first=resident?indicesWritten:reanimIndices[cursor];
+                if(resident){
+                    // Ordinary spans use DrawArrays and need no EBO entries.
+                    // Compact only the retained ranges; writes never reach
+                    // unread indices or change the original vertex numbers.
+                    if(indicesWritten!=cursor)
+                        std::memmove(reanimIndices.data()+indicesWritten,reanimIndices.data()+cursor,
+                            (next-cursor)*sizeof(reanimIndices[0]));
+                    indicesWritten+=next-cursor;
+                }
                 reanimDrawSegments.push_back({first,next-cursor,resident});
                 cursor=next;
             }
             batch.segmentCount=reanimDrawSegments.size()-batch.segmentFirst;
         }
+        reanimIndices.resize(indicesWritten);
     }
 #endif
 #if defined(PVZ_OPENGL_REANIM_DIAGNOSTICS)

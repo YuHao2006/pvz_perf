@@ -253,7 +253,28 @@ void Correct(OpenGLContext&context){
    r.SubmitTriangles(ordinary,target,false,false,GpuBlend::Normal,&clips[0]);
    if(gpu)Require(r.SubmitReanim(definition,texture,job,false,false,GpuBlend::Additive,nullptr,true),"Post-feedback resident rejected");
    else r.SubmitTriangles(cpu,texture,false,false,GpuBlend::Additive);
-   r.EndSceneAndPresent();r.SetRenderImage(nullptr);const auto actual=r.ReadTexturePixels(target).pixels;
+   r.EndSceneAndPresent();
+   if(gpu
+#if defined(PVZ_OPENGL_REANIM_COMPUTE_EXPERIMENT)
+      &&!computeActive
+#endif
+   ){
+    // Image-only End does not present/rebind the scene VAO. The final
+    // resident segment leaves its EBO bound, so inspect the actual upload.
+    using BufferSize=void(APIENTRY*)(GLenum,GLenum,GLint*);
+    const auto bufferSize=reinterpret_cast<BufferSize>(GL3::GetProcAddress("glGetBufferParameteriv"));
+    Require(bufferSize!=nullptr,"Buffer-size query unavailable");
+    GLint bytes=0;bufferSize(GL_ELEMENT_ARRAY_BUFFER,0x8764,&bytes); // GL_BUFFER_SIZE.
+#if defined(PVZ_OPENGL_REANIM_VERTEX_EXPERIMENT)
+    constexpr int markerIndices=6;
+#else
+    constexpr int markerIndices=3;
+#endif
+    Require(bytes==markerIndices*int(sizeof(unsigned int)),
+     "Long ordinary prefix still uploaded unused EBO indices");
+    std::cout<<"PASS resident EBO excludes512 ordinary triangles bytes="<<bytes<<'\n';
+   }
+   r.SetRenderImage(nullptr);const auto actual=r.ReadTexturePixels(target).pixels;
    if(!gpu)expected=actual;else error.Compare(expected,actual);
   }
   for(const auto&clip:clips)for(bool ignore:{false,true}){

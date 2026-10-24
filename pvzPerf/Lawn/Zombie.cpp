@@ -10533,11 +10533,15 @@ void Zombie::DrawBossBackArm(Graphics* g, const ZombieDrawPosition& theDrawPos)
     }
 
     Reanimation* aBodyReanim = mApp->ReanimationGet(mBodyReanimID);
-    aBodyReanim->mOverlayMatrix.m02 += aImageOffsetX;
-    aBodyReanim->mOverlayMatrix.m12 += aImageOffsetY;
+    const float aOriginalX = aBodyReanim->mOverlayMatrix.m02;
+    const float aOriginalY = aBodyReanim->mOverlayMatrix.m12;
+    aBodyReanim->mOverlayMatrix.m02 = aOriginalX + aImageOffsetX;
+    aBodyReanim->mOverlayMatrix.m12 = aOriginalY + aImageOffsetY;
     DrawReanim(g, theDrawPos, RENDER_GROUP_BOSS_BACK_ARM);
-    aBodyReanim->mOverlayMatrix.m02 -= aImageOffsetX;
-    aBodyReanim->mOverlayMatrix.m12 -= aImageOffsetY;
+    // Other render groups share this matrix. Subtraction cannot recover the
+    // fractional translation lost while adding an attack offset.
+    aBodyReanim->mOverlayMatrix.m02 = aOriginalX;
+    aBodyReanim->mOverlayMatrix.m12 = aOriginalY;
 }
 
 //0x534AC0

@@ -990,8 +990,111 @@ inline void SlotMachine(LawnApp& app, Board& board)
     std::cerr << "PASS actual slot-machine nanosecond phase / seed sequence / final activation\n";
 }
 
+inline void ChangingVelocity()
+{
+    constexpr std::array<float, 4> rates{.125f, -.0625f, .25f, -.125f};
+    constexpr std::array<std::int64_t, 4> increments{2, -1, 4, -2};
+    constexpr std::uint64_t deltaNs = 1'250'000; // Exactly 1/8 legacy tick.
+    float position = 1'048'576;
+    TimedLinearMotion motion;
+    std::int64_t units = 1'048'576LL * 128;
+    for (size_t i = 0; i < 4096; ++i)
+    {
+        // The integer oracle is in exact 1/128 pixel units. Each increment is
+        // smaller than the starting float ULP, so float rebasing loses motion.
+        AdvanceVelocity(position, rates[i % rates.size()], deltaNs, motion);
+        units += increments[i % increments.size()];
+        Require(position == static_cast<float>(double(units) / 128),
+            "Changing velocity fed a rounded position into its next segment");
+        if (i % 17 == 0)
+        {
+            const auto before = Bits(position);
+            AdvanceVelocity(position, -.5f, 0, motion);
+            Require(Bits(position) == before,
+                "A zero-length rate change moved the actor");
+        }
+    }
+    position = 53.375f;
+    AdvanceVelocity(position, .25f, deltaNs, motion);
+    Require(position == 53.40625f && motion.origin == 53.375,
+        "External teleport retained the previous segment's fractional endpoint");
+    position = 1'048'576;
+    motion = {};
+    AdvanceVelocity(position, .125f, deltaNs, motion);
+    // Explicit invalidation discards even a valid sub-ULP old endpoint.
+    const float resetOrigin = position;
+    motion.bound = false;
+    AdvanceVelocity(position, -.125f, deltaNs, motion);
+    Require(motion.origin == double(resetOrigin) && position == resetOrigin - .015625f,
+        "Explicit motion invalidation failed to bind the public position");
+    const auto still = std::array<std::uint64_t, 5>{Bits(position), Bits(motion.origin),
+        motion.elapsedNs, Bits(motion.rate), Bits(motion.lastOutput)};
+    AdvanceVelocity(position, motion.rate, 0, motion);
+    Require(still == std::array<std::uint64_t, 5>{Bits(position), Bits(motion.origin),
+        motion.elapsedNs, Bits(motion.rate), Bits(motion.lastOutput)},
+        "A zero-length constant-rate step changed its segment");
+
+    // Mirror the actual hand-written Zamboni and thrown-imp model layouts.
+    // Their published position does not match origin + rate * elapsed, so a
+    // transition to a new linear rate must retain the previous float rebase.
+    for (bool imp : {false, true})
+    {
+        TimedLinearMotion reused{imp ? 200.125 : 600.125,
+            137'192'835, imp ? 2.375f : .2317289f, 0, true};
+        const double ticks = double(reused.elapsedNs) / 10'000'000.0;
+        position = imp ? static_cast<float>(reused.origin + 240 +
+            double(reused.rate) * ticks - double(THOWN_ZOMBIE_GRAVITY) * ticks * (ticks + 1) * .5) :
+            static_cast<float>(ZamboniMotion::Sample<-1>(reused.origin, reused.rate,
+                reused.elapsedNs, false, true, 0).position);
+        reused.lastOutput = position;
+        Require(static_cast<float>(reused.origin + double(reused.rate) * ticks) != position,
+            "Hand-written motion fixture did not distinguish its nonlinear model");
+        const double origin = position;
+        AdvanceVelocity(position, -.125f, deltaNs, reused);
+        Require(reused.origin == origin &&
+            position == static_cast<float>(origin - .015625),
+            "Nonlinear model handoff reused an unrelated linear endpoint");
+    }
+}
+
+inline void ChangingVelocitySave(LawnApp& app, Board& board)
+{
+    Zombie original{};
+    original.mApp = &app; original.mBoard = &board;
+    original.mZombieType = ZombieType::ZOMBIE_NORMAL;
+    original.mX = 1'048'576;
+    // The public float still rounds to the initial value, while the saved
+    // double origin/clock encode the sub-ULP position needed by the next rate.
+    AdvanceVelocity(original.mX, .125f, 1'250'000, original.mVelocityX);
+    const auto record = SaveRecordMapping::WriteSaveRecord(original);
+    Zombie resumed{};
+    SaveRecordMapping::ReadSaveRecord(resumed, record.data());
+    resumed.mApp = &app; resumed.mBoard = &board;
+    const auto state = [](const Zombie& zombie) {
+        const auto& motion = zombie.mVelocityX;
+        return std::array<std::uint64_t, 6>{Bits(zombie.mX), Bits(motion.origin),
+            motion.elapsedNs, Bits(motion.rate), Bits(motion.lastOutput),
+            std::uint64_t(motion.bound)};
+    };
+    Require(state(original) == state(resumed), "Save lost a sub-ULP linear segment");
+    constexpr std::array<float, 4> rates{.25f, -.125f, .125f, -.0625f};
+    constexpr std::array<std::int64_t, 4> increments{4, -2, 2, -1};
+    std::int64_t units = 1'048'576LL * 128 + 2;
+    for (size_t i = 0; i < 4096; ++i)
+    {
+        const auto rate = rates[i % rates.size()];
+        AdvanceVelocity(original.mX, rate, 1'250'000, original.mVelocityX);
+        AdvanceVelocity(resumed.mX, rate, 1'250'000, resumed.mVelocityX);
+        units += increments[i % increments.size()];
+        Require(state(original) == state(resumed) &&
+            resumed.mX == static_cast<float>(double(units) / 128),
+            "Changing-rate continuation diverged after actual native save/reload");
+    }
+}
+
 inline void Check(LawnApp& app)
 {
+    ChangingVelocity();
     for (int frequency : {30, 60, 100, 144, 200, 240, 1000, 0})
     {
         float position = 91.123413f;
@@ -1064,6 +1167,9 @@ inline void Check(LawnApp& app)
     app.mGameMode = GameMode::GAMEMODE_MINIGAME_WALLNUT_BOWLING;
     Board board(&app);
     std::cerr << "PASS actor fixture real Board construction\n";
+    ChangingVelocitySave(app, board);
+    std::cerr << "PASS changing-rate linear segments: exact binary oracle, zero steps, "
+        "teleport, invalidation, nonlinear handoff and native save continuation\n";
     SharedClockConsumers(board);
     CreditsScrollRuntime::Check();
     CoinFallRuntime::Check(app,board);

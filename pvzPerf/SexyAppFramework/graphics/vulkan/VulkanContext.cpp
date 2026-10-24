@@ -585,6 +585,7 @@ void VulkanContext::CreateSurfaceAssets() {
                                      presentFamily, deviceFeatures,
                                      requiredExtensions,
                                      &graphicsQueue, &presentQueue);
+        geometryShaderEnabled = deviceFeatures.geometryShader == VK_TRUE;
     }
 
     // present 守门员：后续窗口可能落在另一块显卡驱动的显示器上（混合显卡
@@ -782,6 +783,7 @@ void VulkanContext::DestroyAssets() noexcept {
     if (contextCount == 0) {
         if (device) vkDestroyDevice(device, nullptr);
         device = VK_NULL_HANDLE;
+        geometryShaderEnabled = false;
         physicalDevice = VK_NULL_HANDLE;
         graphicsQueue = presentQueue = VK_NULL_HANDLE;
         if (debugMessenger) {

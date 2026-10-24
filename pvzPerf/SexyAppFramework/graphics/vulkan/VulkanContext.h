@@ -47,6 +47,7 @@ public:
     // Shared GPU lifetime is retained for the renderer's existing resources.
     static inline VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
     static inline VkDevice device = VK_NULL_HANDLE;
+    static inline bool geometryShaderEnabled = false;
     static inline uint32_t graphicsFamily = 0;
     static inline uint32_t presentFamily = 0;
     static inline VkQueue graphicsQueue = VK_NULL_HANDLE;

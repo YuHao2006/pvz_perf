@@ -61,7 +61,11 @@ using GpuScaleImage = VulkanScaleImage;
 #endif
 #if !defined(PVZ_GPU_D3D9) && !defined(PVZ_GPU_OPENGL) && !defined(PVZ_GPU_D3D12) && !defined(PVZ_GPU_METAL)
 #define PVZ_GPU_REANIM_VULKAN 1
+#define PVZ_GPU_REANIM_RESIDENT 1
 using GpuReanimResource = VulkanReanim;
+#elif defined(PVZ_GPU_OPENGL)
+#define PVZ_GPU_REANIM_RESIDENT 1
+using GpuReanimResource = OpenGLReanim;
 #else
 struct GpuReanimResource;
 #endif

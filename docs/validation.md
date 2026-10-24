@@ -45,6 +45,11 @@ Vulkan 基准分别保留完整 CPU 准备／命令录制时间和包含提交�
 
 DX12 原生 resident 夹具已通过 CPU 参考像素、逻辑轨道空槽、共享实例、
 纹理／目标切换与延迟释放检查；Temp 完整游戏构建的 image 与四项 static 恢复测试也通过。
+销毁事件失效后，逐轨提交省去纹理集合查询和重复 owner 检查；
+新增定义／纹理各自 begin-only 与 queued 四组场景验证旧 token 拒绝、
+同帧新实例正常、已排队像素保留及失败白纹理销毁不影响有效实例。
+修改后 native ON／OFF、arena stress、实际游戏 Image 强 probe 和四项 static
+恢复场景均通过，debug 错误为零，没有新增成员或线性 Begin 查找。
 上传内存的链式赋值曾生成目的地址读取，改为 CPU 栈数组加一次复制后，
 当前独立夹具的 dense、mixed 与 transition 实际 GPU cases 均通过 median／mean 门槛。
 六项强制 sparse GPU cases 仍失败；正常 policy 对应六项均为 CPU_FALLBACK，单独计数，

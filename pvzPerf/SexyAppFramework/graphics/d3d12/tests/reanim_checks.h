@@ -242,6 +242,86 @@ inline void Run(D3d12Renderer& renderer) {
     const auto retiredPixels = renderer.ReadScenePixels();
     Check(std::any_of(retiredPixels.begin(), retiredPixels.end(), [](auto p) { return p != 0xff000000; }),
         "Destroy-before-fence discarded the resident draw");
+    // Cover each resource independently, both before its first track and with
+    // queued GPU work. Definitions load between scenes; replacement instances
+    // and a newly created replacement texture are usable in the same scene.
+    const uint32_t replacementTexels[]{0xff00ffff, 0xffff00ff, 0xffffffff, 0xff0080ff};
+    for (bool destroyDefinition : {false, true})
+        for (bool queued : {false, true}) {
+            auto* oldDefinition = renderer.UploadReanimDefinition({tracks, keys, geometry, 2, 3});
+            auto* replacementDefinition = renderer.UploadReanimDefinition({tracks, keys, geometry, 2, 3});
+            auto* oldTexture = renderer.CreateTexture(2, 2, texels, 8);
+            auto* expectedTexture = renderer.CreateTexture(2, 2, replacementTexels, 8);
+            GpuReanimInstance oldInstance{};
+            oldInstance.overlay00 = oldInstance.overlay11 = 1;
+            oldInstance.translateX = 40; oldInstance.translateY = 60;
+            auto replacementInstance = oldInstance; replacementInstance.translateX = 140;
+            auto whiteInstance = oldInstance; whiteInstance.translateX = 240;
+            const GpuReanimTrackDraw draw{2, 0xffffffff};
+            const auto reference = [&](D3d12Texture* source, const GpuReanimInstance& pose) {
+                const auto triangles = Reference(keys[0], keys[0], geometry[1], geometry[1],
+                    pose, draw, D3d12Renderer::SlotOf(source), 0, nullptr);
+                renderer.SubmitTriangles(triangles, source, false, false, GpuBlend::Normal);
+            };
+            Check(renderer.BeginScene(), "Cannot begin destroy-token CPU reference");
+            clear();
+            if (queued) reference(oldTexture, oldInstance);
+            reference(expectedTexture, replacementInstance);
+            reference(renderer.whiteTexture, whiteInstance);
+            renderer.EndSceneAndPresent();
+            const auto expected = renderer.ReadScenePixels();
+            renderer.DestroyTexture(expectedTexture);
+            expectedTexture = nullptr;
+            Check(renderer.BeginScene(), "Cannot begin destroy-token resident scene");
+            clear();
+            const auto oldToken = renderer.BeginReanimInstance(oldDefinition, oldTexture,
+                oldInstance, false, false, nullptr, true);
+            Check(oldToken != UINT32_MAX, "Destroy-token original instance rejected");
+            if (queued)
+                Check(renderer.SubmitReanimTrack(oldToken, draw, GpuBlend::Normal),
+                    "Destroy-token queued original track rejected");
+            if (destroyDefinition) {
+                renderer.DestroyReanimDefinition(oldDefinition);
+                oldDefinition = nullptr;
+            } else {
+                renderer.DestroyTexture(oldTexture);
+                oldTexture = nullptr;
+            }
+            Check(!renderer.SubmitReanimTrack(oldToken, draw, GpuBlend::Normal),
+                "Destroyed resource retained a usable instance token");
+            auto* replacementTexture = renderer.CreateTexture(2, 2, replacementTexels, 8);
+            const auto replacementToken = renderer.BeginReanimInstance(replacementDefinition,
+                replacementTexture, replacementInstance, false, false, nullptr, true);
+            Check(replacementToken != UINT32_MAX &&
+                renderer.SubmitReanimTrack(replacementToken, draw, GpuBlend::Normal),
+                "Same-scene replacement instance rejected");
+            Check(!renderer.SubmitReanimTrack(oldToken, draw, GpuBlend::Normal),
+                "Same-scene replacement resurrected a destroyed-resource token");
+            const auto whiteToken = renderer.BeginReanimInstance(replacementDefinition,
+                renderer.whiteTexture, whiteInstance, false, false, nullptr, true);
+            Check(whiteToken != UINT32_MAX, "White-texture lifetime instance rejected");
+            bool whiteRejected = false;
+            try { renderer.DestroyTexture(renderer.whiteTexture); }
+            catch (const std::invalid_argument&) { whiteRejected = true; }
+            Check(whiteRejected, "White texture destruction unexpectedly succeeded");
+            Check(renderer.SubmitReanimTrack(whiteToken, draw, GpuBlend::Normal),
+                "Failed white-texture destruction invalidated a live instance");
+            Check(!renderer.SubmitReanimTrack(oldToken, draw, GpuBlend::Normal),
+                "Unrelated valid instance resurrected a destroyed-resource token");
+            renderer.EndSceneAndPresent();
+            const auto actual = renderer.ReadScenePixels();
+            Check(actual.size() == expected.size(), "Destroy-token scene dimensions changed");
+            for (size_t i = 0; i < actual.size(); ++i)
+                for (unsigned shift : {0u, 8u, 16u, 24u})
+                    Check(std::abs(int((actual[i] >> shift) & 255) -
+                        int((expected[i] >> shift) & 255)) <= 3,
+                        "Resource destruction lost queued pixels or changed replacement pixels");
+            renderer.DestroyReanimDefinition(oldDefinition);
+            renderer.DestroyReanimDefinition(replacementDefinition);
+            renderer.DestroyTexture(oldTexture);
+            renderer.DestroyTexture(replacementTexture);
+        }
+    std::cout << "d3d12-resident-destroy-token-cases=4 queued-pixels-replacement-white-rejection=PASS\n";
     // A CPU-only definition needs no GPU keys and retains its original table.
     const GpuReanimTrack cpu{GpuReanimNoKeys, 0};
     const GpuReanimGeometry empty{};

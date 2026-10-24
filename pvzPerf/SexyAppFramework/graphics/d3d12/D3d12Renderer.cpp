@@ -1505,6 +1505,10 @@ void D3d12Renderer::DestroyTexture(D3d12Texture* texture) {
     }
     if (s.commands || s.inFlight) s.retired.push_back(std::move(found->second));
     else s.ReleaseSlots(texture);
+#if defined(PVZ_D3D12_REANIM_RESIDENT)
+    for (auto& control : s.reanimControls)
+        if (control.texture == texture) control.texture = nullptr;
+#endif
     container->erase(found);
 }
 uint32_t D3d12Renderer::SlotOf(const D3d12Texture* texture) {
@@ -1678,6 +1682,8 @@ void D3d12Renderer::DestroyReanimDefinition(D3d12Reanim* definition) {
         throw std::invalid_argument("Unknown resident D3D12 reanimation");
     s.reanimFreeRanges.reserve(s.reanimFreeRanges.size() + s.reanimRetired.size() + 1);
     s.reanimRetired.push_back(definition);
+    for (auto& control : s.reanimControls)
+        if (control.definition == definition) control.definition = nullptr;
     definition->owner = nullptr;
     s.reanimDefinitions.erase(found);
 #else
@@ -1690,6 +1696,8 @@ uint32_t D3d12Renderer::BeginReanimInstance(D3d12Reanim* definition, D3d12Textur
     auto& s = *impl_;
     if (!s.sceneOpen) throw std::logic_error("D3D12 reanimation instance outside scene");
     if (!forceGpu && !s.reanimFrameEligible) return UINT32_MAX;
+    // Raw definition handles must remain live; destruction invalidates tokens,
+    // and callers clear their original handle rather than beginning with it again.
     if (!definition || definition->owner != &s ||
         !texture || !s.textures.contains(texture) || texture == s.renderImage ||
         instance.variant >= definition->variantCount || !std::isfinite(instance.fraction) ||
@@ -1745,7 +1753,8 @@ bool D3d12Renderer::SubmitReanimTrack(uint32_t instance, const GpuReanimTrackDra
     auto& control = s.reanimControls[index];
     auto* definition = control.definition;
     auto* texture = control.texture;
-    if (definition->owner != &s || !s.textures.contains(texture) || texture == s.renderImage ||
+    // Begin validates ownership; successful destruction nulls matching controls.
+    if (!definition || !texture || texture == s.renderImage ||
         draw.track >= definition->tracks.size()) return false;
     const auto& track = definition->tracks[draw.track];
     if (track.keyOffset == GpuReanimNoKeys || track.flags || control.before >= track.keyCount ||

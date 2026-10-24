@@ -466,10 +466,10 @@ using Query64=void(APIENTRY*)(GLuint,GLenum,unsigned long long*);
 template<class T>T Proc(const char*n){auto p=reinterpret_cast<T>(GL3::GetProcAddress(n));Require(p!=nullptr,n);return p;}
 double Median(std::vector<double>v){std::sort(v.begin(),v.end());return v[v.size()/2];}
 double Mean(const std::vector<double>&v){return std::accumulate(v.begin(),v.end(),0.)/v.size();}
-void Benchmark(OpenGLContext&context,bool mixed,bool transitions=false,bool diagnostic=false){
+int Benchmark(OpenGLContext&context,bool mixed,bool transitions=false,bool diagnostic=false){
 #if defined(PVZ_OPENGL_REANIM_COMPUTE_EXPERIMENT)
  if(context.majorVersion<4||(context.majorVersion==4&&context.minorVersion<3)){
-  std::cout<<"SKIP compute benchmark on GL<4.3; use correctness entry for GS fallback\n";return;
+  std::cout<<"SKIP compute benchmark on GL<4.3; use correctness entry for GS fallback\n";return 0;
  }
  constexpr int TimestampStride=4;
 #else
@@ -622,6 +622,7 @@ void Benchmark(OpenGLContext&context,bool mixed,bool transitions=false,bool diag
  r.DestroyTexture(texture);GL3::CheckError("resident benchmark");
  r.frameTiming=nullptr;
  std::cout<<"GATES median="<<gates<<"/"<<total<<" mean="<<meanGates<<"/"<<total<<'\n';
+ return gates==total&&meanGates==total?0:2;
 }
 }
 int main(int argc,char**argv)try{
@@ -633,10 +634,10 @@ int main(int argc,char**argv)try{
   context.majorVersion=3;context.minorVersion=2;Correct(context);Lifecycle(context);Policy(context);return 0;
  }
 #endif
- if(argc>1&&std::string(argv[1])=="--benchmark")Benchmark(context,false);
- else if(argc>1&&std::string(argv[1])=="--benchmark-mixed")Benchmark(context,true);
- else if(argc>1&&std::string(argv[1])=="--benchmark-transitions")Benchmark(context,true,true);
- else if(argc>1&&std::string(argv[1])=="--diagnose-transitions")Benchmark(context,true,true,true);
+ if(argc>1&&std::string(argv[1])=="--benchmark")return Benchmark(context,false);
+ else if(argc>1&&std::string(argv[1])=="--benchmark-mixed")return Benchmark(context,true);
+ else if(argc>1&&std::string(argv[1])=="--benchmark-transitions")return Benchmark(context,true,true);
+ else if(argc>1&&std::string(argv[1])=="--diagnose-transitions")return Benchmark(context,true,true,true);
  else {Correct(context);Lifecycle(context);Policy(context);}
  return 0;
 }catch(const std::exception&e){std::cerr<<"FAIL "<<e.what()<<'\n';return 1;}

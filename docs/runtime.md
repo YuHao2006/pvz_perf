@@ -56,6 +56,9 @@ Begin 接收仍存活的原始句柄，调用方在销毁后清空自己的句�
 resident 开启时，合成图片的 raw 清理也使用这个销毁入口。
 Vulkan／OpenGL 的普通三角形与轨道 marker 保持原顺序；较长的连续普通三角形段使用原顶点管线，
 避免少数动画使整帧普通图片承担 geometry shader 成本。
+OpenGL 每次 Flush 从未知状态开始，在批次循环内复用未改变的纹理绑定、
+scissor、blend 和各 program 的 coverage uniform；不跨 Flush 缓存这些状态，
+也不增加 renderer 的持久成员。
 OpenGL 常规 GS 路径直接输出四角，使用批次已有的 scissor 执行有效整数裁剪，
 不再重复执行 shader 多边形裁剪；独立 compute 试验保留原 GS 回退作为对照。
 Vulkan／DX12 使用 precise 多项式，OpenGL 使用自身 native sin/cos 路径。

@@ -317,24 +317,32 @@ void OpenGLRenderer::Impl::Flush()
 #endif
     if(timestamps)queryCounter(frameTiming->drawBeginTimestamp,0x8E28);
 #endif
+    int sceneCoverage=-1;
 #if defined(PVZ_OPENGL_REANIM_RESIDENT)
+    int residentCoverage=-1;
     int activePipeline=-1;
-    const auto bindPipeline=[&](bool resident){
-        if(activePipeline==int(resident))return;
-        activePipeline=int(resident);
-        glBindVertexArray(resident?reanimVao:
+    const auto bindPipeline=[&](bool resident,bool coverage){
+        if(activePipeline!=int(resident)){
+            activePipeline=int(resident);
+            glBindVertexArray(resident?reanimVao:
 #if defined(PVZ_OPENGL_REANIM_COMPUTE_EXPERIMENT)
-            computeFrame?reanimComputeVao:
+                computeFrame?reanimComputeVao:
 #endif
-            vao);
-        if(resident){
-            glUseProgram(reanimProgram);
-            glUniform2f(reanimUniforms[0],float(target->width),float(target->height));
-            glUniform1i(reanimUniforms[1],0);glUniform1i(reanimUniforms[2],target->render);
-        }else{
-            glUseProgram(sceneProgram);
-            glUniform2f(sceneUniforms[uTargetExtent],float(target->width),float(target->height));
-            glUniform1i(sceneUniforms[uImage],0);glUniform1i(sceneUniforms[uPremultipliedOutput],target->render);
+                vao);
+            if(resident){
+                glUseProgram(reanimProgram);
+                glUniform2f(reanimUniforms[0],float(target->width),float(target->height));
+                glUniform1i(reanimUniforms[1],0);glUniform1i(reanimUniforms[2],target->render);
+            }else{
+                glUseProgram(sceneProgram);
+                glUniform2f(sceneUniforms[uTargetExtent],float(target->width),float(target->height));
+                glUniform1i(sceneUniforms[uImage],0);glUniform1i(sceneUniforms[uPremultipliedOutput],target->render);
+            }
+        }
+        auto& cachedCoverage=resident?residentCoverage:sceneCoverage;
+        if(cachedCoverage!=int(coverage)){
+            glUniform1i(resident?reanimUniforms[3]:sceneUniforms[uCoverageInput],coverage);
+            cachedCoverage=int(coverage);
         }
     };
 #else
@@ -343,22 +351,29 @@ void OpenGLRenderer::Impl::Flush()
     glUniform1i(sceneUniforms[uImage],0);
     glUniform1i(sceneUniforms[uPremultipliedOutput],target->render);
 #endif
+    // These caches start unknown on every Flush: other passes may have changed
+    // all GL state. The draw loop keeps its target and batch storage fixed.
+    const Batch* previousBatch=nullptr;
+    glEnable(GL_SCISSOR_TEST);
     for (const auto& batch : batches) {
-        glBindTexture(GL_TEXTURE_2D, batch.image);
-        glEnable(GL_SCISSOR_TEST);
-        glScissor(batch.clip.x, batch.clip.y, batch.clip.width, batch.clip.height);
-        if (batch.blend == GpuBlend::Opaque) glDisable(GL_BLEND);
-        else {
-            glEnable(GL_BLEND);
-            glBlendFuncSeparate(target->render ? GL_ONE : GL_SRC_ALPHA,
-                batch.blend == GpuBlend::Additive ? GL_ONE : GL_ONE_MINUS_SRC_ALPHA,
-                GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+        if(!previousBatch||batch.image!=previousBatch->image)
+            glBindTexture(GL_TEXTURE_2D,batch.image);
+        if(!previousBatch||batch.clip.x!=previousBatch->clip.x||batch.clip.y!=previousBatch->clip.y||
+            batch.clip.width!=previousBatch->clip.width||batch.clip.height!=previousBatch->clip.height)
+            glScissor(batch.clip.x,batch.clip.y,batch.clip.width,batch.clip.height);
+        if(!previousBatch||batch.blend!=previousBatch->blend){
+            if (batch.blend == GpuBlend::Opaque) glDisable(GL_BLEND);
+            else {
+                glEnable(GL_BLEND);
+                glBlendFuncSeparate(target->render ? GL_ONE : GL_SRC_ALPHA,
+                    batch.blend == GpuBlend::Additive ? GL_ONE : GL_ONE_MINUS_SRC_ALPHA,
+                    GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+            }
         }
 #if defined(PVZ_OPENGL_REANIM_RESIDENT)
 #if defined(PVZ_OPENGL_REANIM_COMPUTE_EXPERIMENT)
         if(computeFrame){
-            bindPipeline(false);
-            glUniform1i(sceneUniforms[uCoverageInput],batch.coverage);
+            bindPipeline(false,batch.coverage);
             glDrawElements(GL_TRIANGLES,static_cast<int>(batch.count),GL_UNSIGNED_INT,
                 reinterpret_cast<const void*>(batch.first*sizeof(unsigned int)));
         }else
@@ -366,21 +381,23 @@ void OpenGLRenderer::Impl::Flush()
         if(hasReanimDraws){
             for(size_t i=batch.segmentFirst;i<batch.segmentFirst+batch.segmentCount;++i){
                 const auto& draw=reanimDrawSegments[i];
-                bindPipeline(draw.resident);
-                glUniform1i(draw.resident?reanimUniforms[3]:sceneUniforms[uCoverageInput],batch.coverage);
+                bindPipeline(draw.resident,batch.coverage);
                 if(draw.resident)glDrawElements(GL_TRIANGLES,static_cast<int>(draw.count),GL_UNSIGNED_INT,
                     reinterpret_cast<const void*>(draw.first*sizeof(unsigned int)));
                 else glDrawArrays(GL_TRIANGLES,static_cast<int>(draw.first),static_cast<int>(draw.count));
             }
         }else{
-            bindPipeline(false);
-            glUniform1i(sceneUniforms[uCoverageInput],batch.coverage);
+            bindPipeline(false,batch.coverage);
             glDrawArrays(GL_TRIANGLES,static_cast<int>(batch.first),static_cast<int>(batch.count));
         }
 #else
-        glUniform1i(sceneUniforms[uCoverageInput],batch.coverage);
+        if(sceneCoverage!=int(batch.coverage)){
+            glUniform1i(sceneUniforms[uCoverageInput],batch.coverage);
+            sceneCoverage=int(batch.coverage);
+        }
         glDrawArrays(GL_TRIANGLES,static_cast<int>(batch.first),static_cast<int>(batch.count));
 #endif
+        previousBatch=&batch;
     }
 #if defined(PVZ_OPENGL_REANIM_DIAGNOSTICS)
     if(timestamps)queryCounter(frameTiming->drawEndTimestamp,0x8E28);

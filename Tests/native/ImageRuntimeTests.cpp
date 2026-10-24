@@ -792,6 +792,45 @@ void ReanimationAppearancePixels(SexyAppBase& app)
             "Resident DrawTrack failed to record picture candidates");
         std::cout<<"PASS actual resident DrawTrack: uploaded keys differ from CPU transforms, "
             "shared instance and attachment rendering use GPU pixels\n";
+        // A sparse frame must still render GPU-only tracks, and successive
+        // tracks in one group must reuse its forced instance packet.
+        {
+            GpuImageDrawScope destination(render,target.get());
+            Graphics graphics(target.get());
+            graphics.mColor=Color::Black;
+            graphics.FillRect(Rect(0,0,20,12));
+            render.mRenderer->reanimPictureCandidates=0;
+        }
+        render.Flush();
+        const auto originalTransforms=tracks[stem].mTransforms;
+        tracks[stem].mTransforms.mTransforms=nullptr;
+        tracks[stem].mTransforms.mStorage=ReanimTrackStorage::Gpu;
+        {
+            GpuImageDrawScope destination(render,target.get());
+            Graphics graphics(target.get());
+            graphics.mColor=Color::Black;
+            graphics.FillRect(Rect(0,0,20,12));
+            graphics.mLinearBlend=false;
+            Require(!render.mRenderer->reanimFrameEligible,
+                "GPU-only group proof failed to enter a sparse image frame");
+            animation.DrawRenderGroup(&graphics,0);
+            ReanimatorFrameTime time;
+            animation.GetFrameTime(&time);
+            std::uint32_t sharedInstance=UINT32_MAX;
+            Require(animation.DrawTrack(&graphics,stem,0,&time,&sharedInstance) &&
+                sharedInstance!=UINT32_MAX,
+                "Sparse GPU-only DrawTrack failed to create a shared forced instance");
+            const auto firstInstance=sharedInstance;
+            Require(animation.DrawTrack(&graphics,stem,0,&time,&sharedInstance) &&
+                sharedInstance==firstInstance,
+                "GPU-only DrawTrack replaced an already shared instance");
+        }
+        render.Flush();
+        tracks[stem].mTransforms=originalTransforms;
+        const auto sparseResident=render.ReadImagePixels(*target);
+        Pixel(sparseResident,5*20+11,0xff0000ffu);
+        std::cout<<"PASS sparse GPU-only DrawTrack: group draws without CPU keys and "
+            "successive tracks reuse a forced shared instance\n";
         animation.SelectVariant(3);
     }
 #endif

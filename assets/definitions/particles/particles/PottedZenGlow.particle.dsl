@@ -23,10 +23,10 @@ export component PottedZenGlow {
         particleDuration: nodes {
             { time: 0; low: 30; high: 60; curve: Linear; distribution: Linear; }
         }
-        systemAlpha: nodes {
+        launchSpeed: nodes {
             { time: 0; low: 40; high: 70; curve: Linear; distribution: Linear; }
         }
-        systemBrightness: nodes {
+        launchAngle: nodes {
             { time: 0; low: 90; high: 270; curve: Linear; distribution: Linear; }
         }
         particleAlpha: nodes {

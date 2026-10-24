@@ -125,6 +125,12 @@ public:
     float                   mDestOffsetX;                   //+0x8
     float                   mDestOffsetY;                   //+0xC
     MagnetItemType          mItemType;                      //+0x10
+    // Fixed start vector relative to the magnet's destination. Position is
+    // sampled from the shared batch time, never integrated from mPosX/Y.
+    float                   mOriginDeltaX = 0;
+    float                   mOriginDeltaY = 0;
+    float                   mCaptureFactor = 0;
+    std::uint64_t           mCenterDurationNs = 0;
 };
 
 class Coin;
@@ -132,7 +138,7 @@ class Zombie;
 class Reanimation;
 class TodParticleSystem;
 
-class Plant : public FloatGameObject
+class Plant : public GameObject
 {
 public:
     double                 mRootOriginX = 0;
@@ -156,8 +162,10 @@ public:
     // in legacy units in this same historical auxiliary slot.
     Sexy::TimeCounter                     mZenProductionCountdown;       //+0x58
     std::int64_t            mNextLaunchTimeNs = 0;
-    std::int64_t            mLaunchClockSampleNs = 0;
     std::int64_t            mLaunchWindowStartNs = 0;
+    // All items in one magnet suction start together. Integer elapsed time is
+    // shared across the batch and pauses when this plant's abilities stop.
+    std::uint64_t           mMagnetElapsedNs = 0;
     bool                    mLaunchClockActive = false;
     Sexy::TimeCounter                     mLaunchRate;                    //+0x5C
     Rect                    mPlantRect;                     //+0x60
@@ -197,7 +205,7 @@ public:
     Plant();
 
     void                    PlantInitialize(int theGridX, int theGridY, SeedType theSeedType, SeedType theImitaterType);
-    void                    Update();
+    void                    Update(std::uint64_t theLevelDeltaNs);
     void                    Animate();
     void                    Draw(Graphics* g);
     void                    MouseDown(int x, int y, int theClickCount);
@@ -295,7 +303,6 @@ public:
     void                    UpdateCobCannon();
     void                    CobCannonFire(int theTargetX, int theTargetY);
     void                    UpdateGoldMagnetShroom();
-    /*inline*/ bool         IsOnBoard();
     void                    RemoveEffects();
     void                    UpdateCoffeeBean();
     void                    UpdateUmbrella();

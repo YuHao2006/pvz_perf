@@ -38,7 +38,7 @@ struct Buffer {
         if (buffer) vkDestroyBuffer(VulkanContext::device, buffer, nullptr);
         if (memory) vkFreeMemory(VulkanContext::device, memory, nullptr);
     }
-    void Create(VkDeviceSize bytes, VkBufferUsageFlags usage) {
+    void Create(VkDeviceSize bytes, VkBufferUsageFlags usage, bool host = true) {
         size = bytes;
         VkBufferCreateInfo info{VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO};
         info.size = size;
@@ -48,11 +48,12 @@ struct Buffer {
         vkGetBufferMemoryRequirements(VulkanContext::device, buffer, &req);
         VkMemoryAllocateInfo alloc{VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO};
         alloc.allocationSize = req.size;
-        alloc.memoryTypeIndex = MemoryType(req.memoryTypeBits,
-            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+        alloc.memoryTypeIndex = MemoryType(req.memoryTypeBits, host ?
+            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT :
+            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
         VK_REQUIRE(vkAllocateMemory(VulkanContext::device, &alloc, nullptr, &memory));
         VK_REQUIRE(vkBindBufferMemory(VulkanContext::device, buffer, memory, 0));
-        VK_REQUIRE(vkMapMemory(VulkanContext::device, memory, 0, size, 0, &mapped));
+        if (host) VK_REQUIRE(vkMapMemory(VulkanContext::device, memory, 0, size, 0, &mapped));
     }
 };
 
@@ -126,6 +127,20 @@ struct VulkanTexture {
     }
 };
 
+struct VulkanReanim {
+    Buffer tracks, keys, geometry;
+    // Validation metadata only; no CPU keyframes or geometry are retained.
+    std::vector<GpuReanimTrack> trackInfo;
+    uint32_t imageSlotCount = 0, variantCount = 0;
+};
+
+struct ReanimJob {
+    GpuReanimDraw draw;
+    uint32_t outputVertex, capacity, imageSlotCount, textureSlot;
+    float clip[4];
+};
+static_assert(sizeof(ReanimJob) == 112);
+
 struct VulkanRenderer::Impl {
     VulkanContext& window;
     VkDevice device;
@@ -146,6 +161,12 @@ struct VulkanRenderer::Impl {
     VkPipeline presentPipeline = VK_NULL_HANDLE;
     VkShaderModule vertexShader = VK_NULL_HANDLE, fragmentShader = VK_NULL_HANDLE;
     VkShaderModule hdrFragmentShader = VK_NULL_HANDLE;
+    VkShaderModule poolVertexShader = VK_NULL_HANDLE;
+    VkPipelineLayout poolLayout = VK_NULL_HANDLE;
+    std::array<VkPipeline,3> poolPipelines{}, poolImagePipelines{};
+    VkBuffer poolVertexBuffer = VK_NULL_HANDLE, poolIndexBuffer = VK_NULL_HANDLE;
+    VkDeviceMemory poolVertexMemory = VK_NULL_HANDLE, poolIndexMemory = VK_NULL_HANDLE;
+    std::string poolShaderPath;
     std::optional<VulkanHdrParams> hdr;
     std::array<VkSampler, 4> samplers{};
     VkDescriptorSet samplerSet = VK_NULL_HANDLE;  // 4 采样器一数组，逐顶点声明
@@ -203,6 +224,25 @@ struct VulkanRenderer::Impl {
     VkCommandBuffer imageCommand = VK_NULL_HANDLE;
     VkFence imageFence = VK_NULL_HANDLE;
     std::vector<std::unique_ptr<Buffer>> streams;
+    struct ReanimWork { ReanimJob job; VulkanReanim* definition; Buffer* stream; };
+    VkShaderModule reanimShader = VK_NULL_HANDLE;
+    VkPipeline reanimPipeline = VK_NULL_HANDLE;
+    VkPipelineLayout reanimLayout = VK_NULL_HANDLE;
+    VkDescriptorSetLayout reanimSetLayout = VK_NULL_HANDLE;
+    VkDescriptorPool reanimPool = VK_NULL_HANDLE;
+    uint32_t reanimPoolCapacity = 0;
+    VkCommandPool reanimCommandPool = VK_NULL_HANDLE;
+    VkCommandBuffer reanimCommand = VK_NULL_HANDLE;
+    Buffer* reanimJobs = nullptr;
+    std::string reanimShaderPath;
+    std::vector<ReanimWork> reanimWork;
+    struct ReanimOutput { Buffer* host; Buffer* device; bool active; };
+    std::vector<ReanimOutput> reanimOutputs;
+    std::vector<VulkanReanim*> reanimDefinitions, reanimRetired;
+    std::vector<Buffer*> reanimStaging;
+#if defined(PVZ_REANIM_BENCHMARK)
+    VkQueryPool frameTimestampQueries = VK_NULL_HANDLE;
+#endif
     std::unique_ptr<Buffer> textureStaging;
     struct TextureUpload { VulkanTexture* texture; VkDeviceSize offset; };
     std::vector<TextureUpload> pendingUploads;
@@ -286,10 +326,22 @@ struct VulkanRenderer::Impl {
         if (sceneFramebuffer) vkDestroyFramebuffer(device, sceneFramebuffer, nullptr);
         scene.reset();
         streams.clear();
+        for (auto* definition : reanimDefinitions) delete definition;
+        for (auto* definition : reanimRetired) delete definition;
+        for (auto* staging : reanimStaging) delete staging;
+        for (auto& output : reanimOutputs) delete output.device;
+        delete reanimJobs;
+        if (reanimPipeline) vkDestroyPipeline(device,reanimPipeline,nullptr);
+        if (reanimLayout) vkDestroyPipelineLayout(device,reanimLayout,nullptr);
+        if (reanimPool) vkDestroyDescriptorPool(device,reanimPool,nullptr);
+        if (reanimSetLayout) vkDestroyDescriptorSetLayout(device,reanimSetLayout,nullptr);
+        if (reanimShader) vkDestroyShaderModule(device,reanimShader,nullptr);
+        if (reanimCommandPool) vkDestroyCommandPool(device,reanimCommandPool,nullptr);
         for (auto pipeline : pipelines) if (pipeline) vkDestroyPipeline(device, pipeline, nullptr);
         for (auto pipeline : coveragePipelines) if (pipeline) vkDestroyPipeline(device, pipeline, nullptr);
         for (auto pipeline : imagePipelines) if (pipeline) vkDestroyPipeline(device, pipeline, nullptr);
         for (auto pipeline : imageCoveragePipelines) if (pipeline) vkDestroyPipeline(device, pipeline, nullptr);
+        ReleasePool();
         if (presentPipeline) vkDestroyPipeline(device, presentPipeline, nullptr);
         if (pipelineLayout) vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
         if (scenePass) vkDestroyRenderPass(device, scenePass, nullptr);
@@ -570,6 +622,10 @@ struct VulkanRenderer::Impl {
                 static_cast<unsigned int>(pendingComposeSets.size()), pendingComposeSets.data()));
             pendingComposeSets.clear();
         }
+        if (!transferOpen) {
+            for (auto* staging : reanimStaging) delete staging;
+            reanimStaging.clear();
+        }
     }
 
     void RecordTextureUploads(VkCommandBuffer cmd) {
@@ -656,7 +712,7 @@ struct VulkanRenderer::Impl {
     }
 
     VkPipeline Pipeline(VkRenderPass pass, VulkanBlend blend, VkShaderModule pixelShader = VK_NULL_HANDLE,
-        bool premultiplied = false, bool coverage = false) {
+        bool premultiplied = false, bool coverage = false, bool pool = false) {
         const VkBool32 specializations[] = {premultiplied ? VK_TRUE : VK_FALSE,
             coverage ? VK_TRUE : VK_FALSE};
         const VkSpecializationMapEntry entries[] = {
@@ -664,22 +720,26 @@ struct VulkanRenderer::Impl {
         const VkSpecializationInfo specialization{2, entries, sizeof(specializations), specializations};
         const VkPipelineShaderStageCreateInfo shaders[] = {
             {VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO, nullptr, 0,
-                VK_SHADER_STAGE_VERTEX_BIT, vertexShader, "main", nullptr},
+                VK_SHADER_STAGE_VERTEX_BIT, pool ? poolVertexShader : vertexShader, "main", nullptr},
             {VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO, nullptr, 0,
                 VK_SHADER_STAGE_FRAGMENT_BIT, pixelShader ? pixelShader : fragmentShader, "main",
                 premultiplied || coverage ? &specialization : nullptr}};
-        const VkVertexInputBindingDescription binding{0, sizeof(VulkanVertex), VK_VERTEX_INPUT_RATE_VERTEX};
+        const VkVertexInputBindingDescription binding{0,
+            pool ? uint32_t(sizeof(GpuPoolVertex)) : uint32_t(sizeof(VulkanVertex)), VK_VERTEX_INPUT_RATE_VERTEX};
         const VkVertexInputAttributeDescription attributes[] = {
             {0, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(VulkanVertex, x)},
             {1, 0, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(VulkanVertex, r)},
             {2, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(VulkanVertex, u)},
             {3, 0, VK_FORMAT_R32_UINT, offsetof(VulkanVertex, slot)},
             {4, 0, VK_FORMAT_R32_UINT, offsetof(VulkanVertex, sampler)}};
+        const VkVertexInputAttributeDescription poolAttributes[] = {
+            {0,0,VK_FORMAT_R32G32_SFLOAT,offsetof(GpuPoolVertex,x)},
+            {1,0,VK_FORMAT_R32G32_SFLOAT,offsetof(GpuPoolVertex,phaseX)}};
         VkPipelineVertexInputStateCreateInfo input{VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO};
         input.vertexBindingDescriptionCount = 1;
         input.pVertexBindingDescriptions = &binding;
-        input.vertexAttributeDescriptionCount = 5;
-        input.pVertexAttributeDescriptions = attributes;
+        input.vertexAttributeDescriptionCount = pool ? 2 : 5;
+        input.pVertexAttributeDescriptions = pool ? poolAttributes : attributes;
         VkPipelineInputAssemblyStateCreateInfo assembly{VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO};
         assembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
         VkPipelineRasterizationStateCreateInfo raster{VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO};
@@ -716,7 +776,7 @@ struct VulkanRenderer::Impl {
         info.pMultisampleState = &msaa;
         info.pColorBlendState = &blending;
         info.pDynamicState = &dynamic;
-        info.layout = pipelineLayout;
+        info.layout = pool ? poolLayout : pipelineLayout;
         info.renderPass = pass;
         VkPipeline pipeline{};
         VK_REQUIRE(vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &info, nullptr, &pipeline));
@@ -724,6 +784,8 @@ struct VulkanRenderer::Impl {
     }
 
     void Initialize(const std::string& vsPath, const std::string& psPath);
+    void InitPool();
+    void ReleasePool();
     void InitImagePass();
     std::unique_ptr<VulkanTexture> RenderImage(int w, int h);
     void SnapshotRenderImage(VulkanTexture* image, bool force = false);
@@ -738,6 +800,15 @@ struct VulkanRenderer::Impl {
     void FinishImageBatch();
     void Draw(std::span<const VulkanVertex>, VulkanTexture*,
               VkPipeline, const VulkanClip*, int viewportWidth, int viewportHeight);
+    void AppendRun(Buffer*, VkDeviceSize, uint32_t, VkPipeline,
+        VkRect2D, int, int);
+    void InitReanim();
+    VkCommandBuffer RecordReanim();
+    Buffer* ReanimStream(Buffer* host) {
+        for (auto& output:reanimOutputs)
+            if (output.host==host && output.active) return output.device;
+        return host;
+    }
     // P5 游程合并（2026-10-05）：连续同状态（流连续+管线/描述符/剪刀/视口未变）
     // 的提交延迟 BindVertexBuffers+Draw 合一——图元顺序逐字保持（三角列表同序
     // 合批=帧缓冲混合序列等价），任何状态变化/换流/帧尾先冲刷旧游程
@@ -748,6 +819,8 @@ struct VulkanRenderer::Impl {
 
 void VulkanRenderer::Impl::Initialize(const std::string& vsPath, const std::string& psPath) {
     if (width <= 0 || height <= 0) throw std::invalid_argument("Invalid game scene extent");
+    poolShaderPath = (std::filesystem::path(vsPath).parent_path()/"game_pool_vs.spv").string();
+    reanimShaderPath = (std::filesystem::path(vsPath).parent_path()/"game_reanim_cs.spv").string();
     CheckPresentEncoding();
     // 采样器数组（4 元素）：与纹理数组同法消除采样器切换断点——
     // bit0=线性过滤 bit1=重复寻址，索引由顶点携带
@@ -1052,11 +1125,17 @@ void VulkanRenderer::Impl::FinishImageBatch() {
     // 帧批引用的合成/上传必须先于帧批提交（队列同序）。
     if (transferOpen) FinishTransfer();
     FlushTextureUploads();
+#if defined(PVZ_REANIM_BENCHMARK)
+    if (frameTimestampQueries)
+        vkCmdWriteTimestamp(imageCommand,VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,frameTimestampQueries,1);
+#endif
     VK_REQUIRE(vkEndCommandBuffer(imageCommand));
     VK_REQUIRE(vkResetFences(device, 1, &imageFence));
     VkSubmitInfo submit{VK_STRUCTURE_TYPE_SUBMIT_INFO};
-    submit.commandBufferCount = 1;
-    submit.pCommandBuffers = &imageCommand;
+    const auto prelude = RecordReanim();
+    const VkCommandBuffer commands[] = {prelude, imageCommand};
+    submit.commandBufferCount = prelude ? 2u : 1u;
+    submit.pCommandBuffers = prelude ? commands : &imageCommand;
     VK_REQUIRE(vkQueueSubmit(window.graphicsQueue, 1, &submit, imageFence));
     VK_REQUIRE(vkWaitForFences(device, 1, &imageFence, VK_TRUE, UINT64_MAX));
     frame = {};
@@ -1075,6 +1154,53 @@ VulkanRenderer::VulkanRenderer(VulkanContext& window, int width, int height,
     impl_->white = CreateTexture(1, 1, &pixel, 4, true);
 }
 VulkanRenderer::~VulkanRenderer() = default;
+void VulkanRenderer::Impl::ReleasePool() {
+    for (auto& pipeline : poolPipelines)
+        if (pipeline) vkDestroyPipeline(device,std::exchange(pipeline,VK_NULL_HANDLE),nullptr);
+    for (auto& pipeline : poolImagePipelines)
+        if (pipeline) vkDestroyPipeline(device,std::exchange(pipeline,VK_NULL_HANDLE),nullptr);
+    if (poolLayout) vkDestroyPipelineLayout(device,std::exchange(poolLayout,VK_NULL_HANDLE),nullptr);
+    if (poolVertexShader) vkDestroyShaderModule(device,std::exchange(poolVertexShader,VK_NULL_HANDLE),nullptr);
+    if (poolVertexBuffer) vkDestroyBuffer(device,std::exchange(poolVertexBuffer,VK_NULL_HANDLE),nullptr);
+    if (poolIndexBuffer) vkDestroyBuffer(device,std::exchange(poolIndexBuffer,VK_NULL_HANDLE),nullptr);
+    if (poolVertexMemory) vkFreeMemory(device,std::exchange(poolVertexMemory,VK_NULL_HANDLE),nullptr);
+    if (poolIndexMemory) vkFreeMemory(device,std::exchange(poolIndexMemory,VK_NULL_HANDLE),nullptr);
+}
+void VulkanRenderer::Impl::InitPool() {
+    if (poolIndexBuffer) return;
+    try {
+        const auto words = ReadShader(poolShaderPath);
+        VkShaderModuleCreateInfo shader{VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO};
+        shader.codeSize=words.size()*sizeof(uint32_t); shader.pCode=words.data();
+        VK_REQUIRE(vkCreateShaderModule(device,&shader,nullptr,&poolVertexShader));
+        const VkPushConstantRange push{VK_SHADER_STAGE_VERTEX_BIT,0,80};
+        const VkDescriptorSetLayout sets[]{imageLayout,samplerLayout};
+        VkPipelineLayoutCreateInfo layout{VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO};
+        layout.setLayoutCount=2; layout.pSetLayouts=sets;
+        layout.pushConstantRangeCount=1; layout.pPushConstantRanges=&push;
+        VK_REQUIRE(vkCreatePipelineLayout(device,&layout,nullptr,&poolLayout));
+        InitImagePass();
+        for (unsigned i=0;i<3;++i) {
+            poolPipelines[i]=Pipeline(scenePass,static_cast<VulkanBlend>(i),fragmentShader,false,false,true);
+            poolImagePipelines[i]=Pipeline(imagePass,static_cast<VulkanBlend>(i),fragmentShader,true,false,true);
+        }
+        const auto upload=[&](const auto& data,VkBufferUsageFlags usage,
+                              VkBuffer& buffer,VkDeviceMemory& memory) {
+            Buffer staging;
+            staging.Create(sizeof(data),usage);
+            std::memcpy(staging.mapped,data.data(),sizeof(data));
+            vkUnmapMemory(device,staging.memory);
+            staging.mapped=nullptr;
+            buffer=std::exchange(staging.buffer,VK_NULL_HANDLE);
+            memory=std::exchange(staging.memory,VK_NULL_HANDLE);
+        };
+        upload(GpuPoolVertices,VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,poolVertexBuffer,poolVertexMemory);
+        upload(GpuPoolIndices,VK_BUFFER_USAGE_INDEX_BUFFER_BIT,poolIndexBuffer,poolIndexMemory);
+    } catch (...) {
+        ReleasePool();
+        throw;
+    }
+}
 void VulkanRenderer::PrepareLoadingPipelines() {
     auto& s = *impl_;
     if (s.frame.valid)
@@ -1082,6 +1208,7 @@ void VulkanRenderer::PrepareLoadingPipelines() {
     s.InitImageKernel(s.fontKernel, Impl::LoadingPipelines{});
     s.InitImageKernel(s.colorKernel, Impl::LoadingPipelines{});
     s.InitAlphaKernel(Impl::LoadingPipelines{});
+    s.InitPool();
 }
 uint32_t VulkanRenderer::SlotOf(const VulkanTexture* texture) {
     return texture ? texture->slot | (texture->generated ? Impl::kGeneratedPremult : 0u) |
@@ -1094,7 +1221,8 @@ uint32_t VulkanRenderer::MaxImageDimension2D() const {
 }
 VulkanRenderer::ResourceCounts VulkanRenderer::GetResourceCounts() const {
     const auto& s = *impl_;
-    return {s.textures.size(),s.retired.size(),s.pools.size(),s.streams.size()};
+    return {s.textures.size(),s.retired.size(),s.pools.size(),
+        s.streams.size()+s.reanimOutputs.size()+(s.poolVertexBuffer ? 1u : 0u)};
 }
 
 VulkanTexture* VulkanRenderer::CreateRenderImage(int width, int height) {
@@ -1686,10 +1814,17 @@ bool VulkanRenderer::BeginScene() {
         s.RefreshPresentPipeline();
     }
     ++s.frameSerial;
+#if defined(PVZ_REANIM_BENCHMARK)
+    s.frameTimestampQueries=frameTimestampQueries;
+#endif
     // Complete uploads before reclaiming retired textures: a texture may have
     // been queued and destroyed outside a frame, including while minimized.
     s.drawState = {}; // Vulkan command buffers do not inherit last frame's state.
     s.ReapRetired();
+    for (auto* definition : s.reanimRetired) delete definition;
+    s.reanimRetired.clear();
+    s.reanimWork.clear();
+    for (auto& output:s.reanimOutputs) output.active=false;
     for (auto& stream : s.streams) stream->used = 0;
     s.RecordCaustics(s.frame.cmd);
     s.BeginTargetPass();
@@ -1728,7 +1863,8 @@ void VulkanRenderer::Impl::Draw(std::span<const VulkanVertex> vertices, VulkanTe
         if (candidate->size - candidate->used >= bytes) { stream = candidate.get(); break; }
     if (!stream) {
         auto allocation = std::make_unique<Buffer>();
-        allocation->Create(std::max<VkDeviceSize>(8 * 1024 * 1024, bytes), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
+        allocation->Create(std::max<VkDeviceSize>(8 * 1024 * 1024, bytes),
+            VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
         stream = allocation.get();
         streams.push_back(std::move(allocation));
     }
@@ -1758,6 +1894,11 @@ void VulkanRenderer::Impl::Draw(std::span<const VulkanVertex> vertices, VulkanTe
     stream->used += bytes;
     VkRect2D scissor{{static_cast<int32_t>(left), static_cast<int32_t>(top)},
         {static_cast<uint32_t>(right-left), static_cast<uint32_t>(bottom-top)}};
+    AppendRun(ReanimStream(stream),offset,static_cast<uint32_t>(vertices.size()),pipeline,scissor,vw,vh);
+}
+
+void VulkanRenderer::Impl::AppendRun(Buffer* stream, VkDeviceSize offset, uint32_t count,
+    VkPipeline pipeline, VkRect2D scissor, int vw, int vh) {
     auto cmd = frame.cmd;
     // P5 游程：状态变化检测前置（先判后绑）。bindless+采样器数组后描述符
     // 对恒为 {纹理数组, 采样器数组}——首绘绑定一次，帧内不再变化；断点
@@ -1797,7 +1938,7 @@ void VulkanRenderer::Impl::Draw(std::span<const VulkanVertex> vertices, VulkanTe
     // P5：并入待决游程（流连续追加），bind+draw 延迟到冲刷点
     if (pendingRun.count == 0)
         pendingRun = PendingRun{stream, offset, 0};
-    pendingRun.count += static_cast<uint32_t>(vertices.size());
+    pendingRun.count += count;
 }
 
 void VulkanRenderer::Impl::FlushPendingRun(VkCommandBuffer cmd) {
@@ -1814,6 +1955,256 @@ void VulkanRenderer::Impl::FlushPendingRun(VkCommandBuffer cmd) {
     pendingRun.count = 0;
 }
 
+void VulkanRenderer::Impl::InitReanim() {
+    if (reanimPipeline) return;
+    const auto words = ReadShader(reanimShaderPath);
+    VkShaderModuleCreateInfo shader{VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO};
+    shader.codeSize=words.size()*sizeof(uint32_t); shader.pCode=words.data();
+    VK_REQUIRE(vkCreateShaderModule(device,&shader,nullptr,&reanimShader));
+    std::array<VkDescriptorSetLayoutBinding,5> bindings{};
+    for (uint32_t i=0;i<bindings.size();++i)
+        bindings[i]={i,VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,1,VK_SHADER_STAGE_COMPUTE_BIT,nullptr};
+    VkDescriptorSetLayoutCreateInfo set{VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO};
+    set.bindingCount=uint32_t(bindings.size()); set.pBindings=bindings.data();
+    VK_REQUIRE(vkCreateDescriptorSetLayout(device,&set,nullptr,&reanimSetLayout));
+    const VkPushConstantRange push{VK_SHADER_STAGE_COMPUTE_BIT,0,8};
+    VkPipelineLayoutCreateInfo layout{VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO};
+    layout.setLayoutCount=1; layout.pSetLayouts=&reanimSetLayout;
+    layout.pushConstantRangeCount=1; layout.pPushConstantRanges=&push;
+    VK_REQUIRE(vkCreatePipelineLayout(device,&layout,nullptr,&reanimLayout));
+    VkComputePipelineCreateInfo pipeline{VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO};
+    pipeline.stage={VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO};
+    pipeline.stage.stage=VK_SHADER_STAGE_COMPUTE_BIT;
+    pipeline.stage.module=reanimShader; pipeline.stage.pName="main"; pipeline.layout=reanimLayout;
+    VK_REQUIRE(vkCreateComputePipelines(device,VK_NULL_HANDLE,1,&pipeline,nullptr,&reanimPipeline));
+    VkCommandPoolCreateInfo commandPool{VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO};
+    commandPool.flags=VK_COMMAND_POOL_CREATE_TRANSIENT_BIT; commandPool.queueFamilyIndex=window.graphicsFamily;
+    VK_REQUIRE(vkCreateCommandPool(device,&commandPool,nullptr,&reanimCommandPool));
+    VkCommandBufferAllocateInfo command{VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO};
+    command.commandPool=reanimCommandPool; command.level=VK_COMMAND_BUFFER_LEVEL_PRIMARY; command.commandBufferCount=1;
+    VK_REQUIRE(vkAllocateCommandBuffers(device,&command,&reanimCommand));
+}
+
+VulkanReanim* VulkanRenderer::UploadReanimDefinition(const GpuReanimDefinition& source) {
+    auto& s=*impl_;
+    if (s.frame.valid) throw std::logic_error("Upload reanimation definitions between frames");
+    if (source.tracks.empty() || source.keys.empty() || !source.imageSlotCount || !source.variantCount ||
+        uint64_t(source.imageSlotCount)*source.variantCount!=source.geometry.size())
+        throw std::invalid_argument("Invalid resident reanimation definition");
+    for (const auto& track:source.tracks)
+        if (track.keyOffset!=GpuReanimNoKeys &&
+            (!track.keyCount || uint64_t(track.keyOffset)+track.keyCount>source.keys.size()))
+            throw std::invalid_argument("Invalid resident reanimation track range");
+    for (const auto& key:source.keys)
+        if (key.imageSlot>=source.imageSlotCount)
+            throw std::invalid_argument("Invalid resident reanimation image slot");
+    s.InitReanim();
+    auto* result=new VulkanReanim;
+    Buffer* staging=nullptr;
+    try {
+        result->trackInfo.assign(source.tracks.begin(),source.tracks.end());
+        result->imageSlotCount=source.imageSlotCount; result->variantCount=source.variantCount;
+        const VkDeviceSize sizes[]={source.tracks.size_bytes(),source.keys.size_bytes(),source.geometry.size_bytes()};
+        const void* data[]={source.tracks.data(),source.keys.data(),source.geometry.data()};
+        Buffer* buffers[]={&result->tracks,&result->keys,&result->geometry};
+        staging=new Buffer;
+        staging->Create(sizes[0]+sizes[1]+sizes[2],VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
+        VkDeviceSize offset=0;
+        for (unsigned i=0;i<3;++i) {
+            buffers[i]->Create(sizes[i],VK_BUFFER_USAGE_TRANSFER_DST_BIT|VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,false);
+            std::memcpy(static_cast<std::byte*>(staging->mapped)+offset,data[i],size_t(sizes[i]));
+            offset+=sizes[i];
+        }
+        // Reserve before command recording so allocation failure cannot leave a
+        // recorded upload referring to an object released by this catch block.
+        s.reanimDefinitions.reserve(s.reanimDefinitions.size()+1);
+        s.reanimStaging.reserve(s.reanimStaging.size()+1);
+        const auto cmd=s.BeginTransfer();
+        offset=0;
+        for (unsigned i=0;i<3;++i) {
+            const VkBufferCopy copy{offset,0,sizes[i]};
+            vkCmdCopyBuffer(cmd,staging->buffer,buffers[i]->buffer,1,&copy);
+            offset+=sizes[i];
+        }
+        VkMemoryBarrier barrier{VK_STRUCTURE_TYPE_MEMORY_BARRIER};
+        barrier.srcAccessMask=VK_ACCESS_TRANSFER_WRITE_BIT; barrier.dstAccessMask=VK_ACCESS_SHADER_READ_BIT;
+        vkCmdPipelineBarrier(cmd,VK_PIPELINE_STAGE_TRANSFER_BIT,VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+            0,1,&barrier,0,nullptr,0,nullptr);
+        s.reanimDefinitions.push_back(result); s.reanimStaging.push_back(staging);
+        return result;
+    } catch (...) { delete staging; delete result; throw; }
+}
+
+void VulkanRenderer::DestroyReanimDefinition(VulkanReanim* definition) {
+    if (!definition) return;
+    auto& s=*impl_;
+    const auto found=std::find(s.reanimDefinitions.begin(),s.reanimDefinitions.end(),definition);
+    if (found==s.reanimDefinitions.end()) throw std::invalid_argument("Unknown reanimation definition");
+    s.reanimRetired.push_back(definition);
+    s.reanimDefinitions.erase(found);
+}
+
+bool VulkanRenderer::SubmitReanim(VulkanReanim* definition,VulkanTexture* texture,
+    const GpuReanimDraw& draw,bool linear,bool repeat,VulkanBlend blend,const VulkanClip* clip) {
+    auto& s=*impl_;
+    if (!s.frame.valid) throw std::logic_error("Reanimation draw outside frame");
+    if (!definition || !texture ||
+        std::find(s.reanimDefinitions.begin(),s.reanimDefinitions.end(),definition)==s.reanimDefinitions.end() ||
+        !s.textures.contains(texture) || texture==s.renderImage) return false;
+    if (draw.track>=definition->trackInfo.size() || draw.variant>=definition->variantCount ||
+        !std::isfinite(draw.fraction) || draw.fraction<0 || draw.fraction>1 ||
+        (draw.samplingFlags & ~(GpuVertex::kIndependentColorFilter|GpuVertex::kColorFilterMask|
+            GpuVertex::kAlphaEdgeFilter))!=0) return false;
+    const auto& track=definition->trackInfo[draw.track];
+    if (track.keyOffset==GpuReanimNoKeys || track.flags || draw.before>=track.keyCount ||
+        draw.after>=track.keyCount) return false;
+    auto* target=s.renderImage?s.renderImage:s.scene.get();
+    if (clip && (clip->width<=0 || clip->height<=0)) return true;
+    const uint32_t capacity=clip?18u:6u;
+    const VkDeviceSize bytes=capacity*sizeof(GpuVertex);
+    Buffer* stream=nullptr;
+    for (auto& candidate:s.streams)
+        if (candidate->size-candidate->used>=bytes) { stream=candidate.get(); break; }
+    if (!stream) {
+        auto allocation=std::make_unique<Buffer>();
+        allocation->Create(8*1024*1024,VK_BUFFER_USAGE_VERTEX_BUFFER_BIT|VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
+        stream=allocation.get(); s.streams.push_back(std::move(allocation));
+    }
+    // Shader stores to coherent system memory can serialize PCIe transactions
+    // on discrete GPUs. Promote just participating streams to device-local
+    // output; host vertices and GPU holes share one batched transfer/prelude.
+    auto found=std::find_if(s.reanimOutputs.begin(),s.reanimOutputs.end(),
+        [=](const auto& output) {return output.host==stream;});
+    Buffer* output=nullptr;
+    if (found==s.reanimOutputs.end()) {
+        output=new Buffer;
+        try {
+            output->Create(stream->size,VK_BUFFER_USAGE_VERTEX_BUFFER_BIT|
+                VK_BUFFER_USAGE_STORAGE_BUFFER_BIT|VK_BUFFER_USAGE_TRANSFER_DST_BIT,false);
+            s.reanimOutputs.push_back({stream,output,true});
+        } catch (...) {delete output;throw;}
+    } else {
+        found->active=true; output=found->device;
+    }
+    ReanimJob job{};
+    job.draw=draw; job.draw.sampler=(linear?1u:0u)|(repeat?2u:0u);
+    job.outputVertex=uint32_t(stream->used/sizeof(GpuVertex));
+    job.capacity=capacity; job.imageSlotCount=definition->imageSlotCount;
+    job.textureSlot=SlotOf(texture);
+    if (clip) {
+        job.clip[0]=float(clip->x); job.clip[1]=float(clip->y);
+        job.clip[2]=float(int64_t(clip->x)+clip->width); job.clip[3]=float(int64_t(clip->y)+clip->height);
+    }
+    s.reanimWork.push_back({job,definition,output});
+    texture->lastDraw=s.frameSerial;
+    const auto offset=stream->used; stream->used+=bytes;
+    const auto& pipelines=s.renderImage?s.imagePipelines:s.pipelines;
+    // Polygon clipping is evaluated in compute. The ordinary full-target
+    // scissor remains identical to the CPU polygon-clipped submission.
+    s.AppendRun(output,offset,capacity,pipelines.at(size_t(blend)),
+        {{0,0},{uint32_t(target->width),uint32_t(target->height)}},target->width,target->height);
+    return true;
+}
+
+VkCommandBuffer VulkanRenderer::Impl::RecordReanim() {
+    if (reanimWork.empty()) {
+#if defined(PVZ_REANIM_BENCHMARK)
+        if (!frameTimestampQueries) return VK_NULL_HANDLE;
+        InitReanim();
+        VK_REQUIRE(vkResetCommandPool(device,reanimCommandPool,0));
+        VkCommandBufferBeginInfo begin{VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO};
+        begin.flags=VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+        VK_REQUIRE(vkBeginCommandBuffer(reanimCommand,&begin));
+        vkCmdResetQueryPool(reanimCommand,frameTimestampQueries,0,2);
+        vkCmdWriteTimestamp(reanimCommand,VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,frameTimestampQueries,0);
+        VK_REQUIRE(vkEndCommandBuffer(reanimCommand));
+        return reanimCommand;
+#else
+        return VK_NULL_HANDLE;
+#endif
+    }
+    const VkDeviceSize bytes=reanimWork.size()*sizeof(ReanimJob);
+    if (!reanimJobs || reanimJobs->size<bytes) {
+        delete reanimJobs; reanimJobs=nullptr;
+        reanimJobs=new Buffer;
+        reanimJobs->Create(std::max<VkDeviceSize>(bytes,65536),VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
+    }
+    auto* jobs=static_cast<ReanimJob*>(reanimJobs->mapped);
+    for (size_t i=0;i<reanimWork.size();++i) jobs[i]=reanimWork[i].job;
+    uint32_t groups=0;
+    VulkanReanim* previousDefinition=nullptr;
+    Buffer* previousStream=nullptr;
+    for (const auto& work:reanimWork) {
+        if (work.definition!=previousDefinition || work.stream!=previousStream) ++groups;
+        previousDefinition=work.definition; previousStream=work.stream;
+    }
+    if (groups>reanimPoolCapacity) {
+        if (reanimPool) vkDestroyDescriptorPool(device,reanimPool,nullptr);
+        reanimPool=VK_NULL_HANDLE; reanimPoolCapacity=0;
+        const VkDescriptorPoolSize poolSize{VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,groups*5};
+        VkDescriptorPoolCreateInfo pool{VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO};
+        pool.maxSets=groups; pool.poolSizeCount=1; pool.pPoolSizes=&poolSize;
+        VK_REQUIRE(vkCreateDescriptorPool(device,&pool,nullptr,&reanimPool));
+        reanimPoolCapacity=groups;
+    } else {
+        // BeginScene has already waited the previous main/image frame fence.
+        VK_REQUIRE(vkResetDescriptorPool(device,reanimPool,0));
+    }
+    VK_REQUIRE(vkResetCommandPool(device,reanimCommandPool,0));
+    VkCommandBufferBeginInfo begin{VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO};
+    begin.flags=VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+    VK_REQUIRE(vkBeginCommandBuffer(reanimCommand,&begin));
+#if defined(PVZ_REANIM_BENCHMARK)
+    if (frameTimestampQueries) {
+        vkCmdResetQueryPool(reanimCommand,frameTimestampQueries,0,2);
+        vkCmdWriteTimestamp(reanimCommand,VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,frameTimestampQueries,0);
+    }
+#endif
+    for (const auto& output:reanimOutputs) if (output.active) {
+        const VkBufferCopy copy{0,0,output.host->used};
+        vkCmdCopyBuffer(reanimCommand,output.host->buffer,output.device->buffer,1,&copy);
+    }
+    VkMemoryBarrier upload{VK_STRUCTURE_TYPE_MEMORY_BARRIER};
+    upload.srcAccessMask=VK_ACCESS_TRANSFER_WRITE_BIT;
+    upload.dstAccessMask=VK_ACCESS_SHADER_WRITE_BIT|VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
+    vkCmdPipelineBarrier(reanimCommand,VK_PIPELINE_STAGE_TRANSFER_BIT,
+        VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT|VK_PIPELINE_STAGE_VERTEX_INPUT_BIT,
+        0,1,&upload,0,nullptr,0,nullptr);
+    vkCmdBindPipeline(reanimCommand,VK_PIPELINE_BIND_POINT_COMPUTE,reanimPipeline);
+    for (size_t first=0;first<reanimWork.size();) {
+        const auto& work=reanimWork[first];
+        size_t end=first+1;
+        while (end<reanimWork.size() && reanimWork[end].definition==work.definition &&
+            reanimWork[end].stream==work.stream) ++end;
+        VkDescriptorSet set{};
+        VkDescriptorSetAllocateInfo alloc{VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO};
+        alloc.descriptorPool=reanimPool; alloc.descriptorSetCount=1; alloc.pSetLayouts=&reanimSetLayout;
+        VK_REQUIRE(vkAllocateDescriptorSets(device,&alloc,&set));
+        Buffer* buffers[]={&work.definition->tracks,&work.definition->keys,&work.definition->geometry,
+            reanimJobs,work.stream};
+        std::array<VkDescriptorBufferInfo,5> infos{};
+        std::array<VkWriteDescriptorSet,5> writes{};
+        for (uint32_t i=0;i<5;++i) {
+            infos[i]={buffers[i]->buffer,0,buffers[i]->size};
+            writes[i]={VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET};
+            writes[i].dstSet=set; writes[i].dstBinding=i; writes[i].descriptorCount=1;
+            writes[i].descriptorType=VK_DESCRIPTOR_TYPE_STORAGE_BUFFER; writes[i].pBufferInfo=&infos[i];
+        }
+        vkUpdateDescriptorSets(device,5,writes.data(),0,nullptr);
+        vkCmdBindDescriptorSets(reanimCommand,VK_PIPELINE_BIND_POINT_COMPUTE,reanimLayout,0,1,&set,0,nullptr);
+        const uint32_t push[]={uint32_t(first),uint32_t(end-first)};
+        vkCmdPushConstants(reanimCommand,reanimLayout,VK_SHADER_STAGE_COMPUTE_BIT,0,sizeof(push),push);
+        vkCmdDispatch(reanimCommand,(push[1]+63)/64,1,1);
+        first=end;
+    }
+    VkMemoryBarrier barrier{VK_STRUCTURE_TYPE_MEMORY_BARRIER};
+    barrier.srcAccessMask=VK_ACCESS_SHADER_WRITE_BIT; barrier.dstAccessMask=VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
+    vkCmdPipelineBarrier(reanimCommand,VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,VK_PIPELINE_STAGE_VERTEX_INPUT_BIT,
+        0,1,&barrier,0,nullptr,0,nullptr);
+    VK_REQUIRE(vkEndCommandBuffer(reanimCommand));
+    return reanimCommand;
+}
+
 void VulkanRenderer::SubmitTriangles(std::span<const VulkanVertex> vertices, VulkanTexture* texture,
     bool linear, bool wrap, VulkanBlend blend, const VulkanClip* clip) {
     (void)linear; (void)wrap;  // 采样器随顶点携带（RenderInterface 填充），不再是绑定状态
@@ -1821,6 +2212,52 @@ void VulkanRenderer::SubmitTriangles(std::span<const VulkanVertex> vertices, Vul
     auto* output = s.renderImage ? s.renderImage : s.scene.get();
     const auto& pipelines = s.renderImage ? s.imagePipelines : s.pipelines;
     s.Draw(vertices, texture, pipelines.at(static_cast<size_t>(blend)), clip, output->width, output->height);
+}
+
+void VulkanRenderer::SubmitPool(VulkanTexture* texture,const GpuPoolParams& p) {
+    auto& s=*impl_;
+    if (!s.frame.valid) throw std::logic_error("Pool drawing requires an open scene");
+    if (!s.poolIndexBuffer) throw std::logic_error("Prepare pool pipelines while loading");
+    if (!texture || !s.textures.contains(texture) || p.layer>=3 || p.sampler>=4)
+        throw std::invalid_argument("Invalid pool texture, layer or sampler");
+    if (texture==s.renderImage) {
+        const uint32_t sourceSlot=texture->slot;
+        s.EndTargetPass();
+        s.SnapshotRenderImage(s.renderImage,true);
+        s.BeginTargetPass();
+        texture=s.slotOwners[sourceSlot];
+    }
+    s.FlushPendingRun(s.frame.cmd);
+    texture->lastDraw=s.frameSerial;
+    const auto* output=s.renderImage ? s.renderImage : s.scene.get();
+    const auto& pipelines=s.renderImage ? s.poolImagePipelines : s.poolPipelines;
+    const VkViewport viewport{0,0,float(output->width),float(output->height),0,1};
+    const VkRect2D scissor{{0,0},{uint32_t(output->width),uint32_t(output->height)}};
+    vkCmdSetViewport(s.frame.cmd,0,1,&viewport);
+    vkCmdSetScissor(s.frame.cmd,0,1,&scissor);
+    vkCmdBindPipeline(s.frame.cmd,VK_PIPELINE_BIND_POINT_GRAPHICS,pipelines.at(size_t(p.blend)));
+    const VkDescriptorSet sets[]{s.textureArray,s.samplerSet};
+    vkCmdBindDescriptorSets(s.frame.cmd,VK_PIPELINE_BIND_POINT_GRAPHICS,s.poolLayout,0,2,sets,0,nullptr);
+    const VkDeviceSize offset=0;
+    vkCmdBindVertexBuffers(s.frame.cmd,0,1,&s.poolVertexBuffer,&offset);
+    vkCmdBindIndexBuffer(s.frame.cmd,s.poolIndexBuffer,0,VK_INDEX_TYPE_UINT16);
+    struct PoolPush {
+        float extent[2], geometry[2], translation[2], padding[2];
+        float time[4], clip[4];
+        uint32_t meta[4];
+    };
+    static_assert(sizeof(PoolPush)==80);
+    const PoolPush push{
+        {float(output->width),float(output->height)}, {p.width,p.height}, {p.transX,p.transY}, {},
+        {p.time1,p.time2,p.time3,p.time5},
+        {float(p.clip.x),float(p.clip.y),float(int64_t(p.clip.x)+p.clip.width),
+            float(int64_t(p.clip.y)+p.clip.height)},
+        {p.layer,p.night,SlotOf(texture)|p.samplingFlags,p.sampler}};
+    vkCmdPushConstants(s.frame.cmd,s.poolLayout,VK_SHADER_STAGE_VERTEX_BIT,0,sizeof(push),&push);
+    vkCmdDrawIndexed(s.frame.cmd,uint32_t(GpuPoolIndices.size()),1,0,0,0);
+    // A dedicated layout/vertex format was bound; ordinary draws restore their
+    // own state without adding a branch to their vertex processing.
+    s.drawState={};
 }
 
 void VulkanRenderer::SubmitCoverageTriangles(std::span<const VulkanVertex> vertices,VulkanTexture* mask,
@@ -1883,7 +2320,11 @@ void VulkanRenderer::EndSceneAndPresent() {
     s.Draw(vertices, presentImage, s.presentPipeline, nullptr, s.frame.extent.width, s.frame.extent.height);
     s.FlushPendingRun(s.frame.cmd);  // P5：present 四边形入令后冲刷
     s.FlushTextureUploads(); // Includes textures first encountered during this scene.
-    s.window.EndFrame();
+#if defined(PVZ_REANIM_BENCHMARK)
+    if (s.frameTimestampQueries)
+        vkCmdWriteTimestamp(s.frame.cmd,VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,s.frameTimestampQueries,1);
+#endif
+    s.window.EndFrame(s.RecordReanim());
     s.frame = {};
     s.sceneInitialized = true;
 }

@@ -1,12 +1,11 @@
 // Generated scene atlas geometry and direct texture bindings.
 #pragma once
 #include "SexyAppFramework/graphics/GpuBackend.h"
-#include "SexyAppFramework/misc/Rect.h"
+#include "SexyAppFramework/graphics/TextureRegion.h"
 #include <cstddef>
 #include <cstdint>
 namespace MagnetAtlas {
 extern Sexy::GpuTexture* Texture;
-inline constexpr int Width = 151, Height = 862;
 enum class Sprite : std::uint16_t {
     REANIM_ZOMBIE_BUCKET1 = 0,
     REANIM_ZOMBIE_BUCKET2 = 1,
@@ -32,14 +31,13 @@ enum class Sprite : std::uint16_t {
     Count = 21,
 };
 inline constexpr std::size_t Count = 21;
-extern const Sexy::Rect Images[Count];
+extern const Sexy::TextureRegion Images[Count];
 extern const float Scales[Count];
 void Load();
 void Free();
 }
 namespace AlmanacAtlas {
 extern Sexy::GpuTexture* Texture;
-inline constexpr int Width = 5276, Height = 612;
 enum class Sprite : std::uint16_t {
     ALMANAC_INDEXBACK = 0,
     ALMANAC_PLANTBACK = 1,
@@ -63,13 +61,12 @@ enum class Sprite : std::uint16_t {
     Count = 19,
 };
 inline constexpr std::size_t Count = 19;
-extern const Sexy::Rect Images[Count];
+extern const Sexy::TextureRegion Images[Count];
 void Load();
 void Free();
 }
 namespace AchievementsAtlas {
 extern Sexy::GpuTexture* Texture;
-inline constexpr int Width = 4728, Height = 687;
 enum class Sprite : std::uint16_t {
     SELECTORSCREEN_ACHIEVEMENTS_BG = 0,
     ACHEESEMENTS_BEJEWELED = 1,
@@ -109,15 +106,14 @@ enum class Sprite : std::uint16_t {
     Count = 35,
 };
 inline constexpr std::size_t Count = 35;
-extern const Sexy::Rect Images[Count];
+extern const Sexy::TextureRegion Images[Count];
 inline constexpr std::size_t IconCount = 20;
-extern const Sexy::Rect Icons[IconCount];
+extern const Sexy::TextureRegion Icons[IconCount];
 void Load();
 void Free();
 }
 namespace FixedUIAtlas {
 extern Sexy::GpuTexture* Texture;
-inline constexpr int Width = 939, Height = 219;
 enum class Sprite : std::uint16_t {
     BUTTON_LEFT = 0,
     BUTTON_MIDDLE = 1,
@@ -146,7 +142,7 @@ enum class Sprite : std::uint16_t {
     Count = 24,
 };
 inline constexpr std::size_t Count = 24;
-extern const Sexy::Rect Images[Count];
+extern const Sexy::TextureRegion Images[Count];
 void Load();
 void Free();
 }

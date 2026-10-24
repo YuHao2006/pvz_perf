@@ -174,7 +174,7 @@ Board::Board(LawnApp* theApp)
 	mDebugFont = mApp->GetDebugFont()->Duplicate();
 	mAdvice = new MessageWidget(mApp);
 	mBackground = BackgroundType::BACKGROUND_1_DAY;
-	mMainCounter = 0;
+	mLevelTimeNs = 0;
 	mTutorialState = TutorialState::TUTORIAL_OFF;
 	mTutorialTimer = -1;
 	mTutorialParticleID = ParticleSystemID::PARTICLESYSTEMID_NULL;
@@ -1710,7 +1710,7 @@ static_assert(sizeof(kInitLevelSeeds) / sizeof(kInitLevelSeeds[0]) == 62,
 // GOTY @Patoke: 0x40D840
 void Board::InitLevel()
 {
-	mMainCounter = 0;
+	mLevelTimeNs = 0;
 	mEnableGraveStones = false;
 	mSodPosition = 0;
 	mPrevBoardResult = mApp->mBoardResult;
@@ -6138,12 +6138,12 @@ ReanimTimeDomain Board::AnimationTimeDomain() const
 		? ReanimTimeDomain::Battle : ReanimTimeDomain::Visual;
 }
 
-void Board::UpdateGameObjects()
+void Board::UpdateGameObjects(std::uint64_t theLevelDeltaNs)
 {
 	Plant* aPlant = nullptr;
 	while (IteratePlants(aPlant))
 	{
-		aPlant->Update();
+		aPlant->Update(theLevelDeltaNs);
 	}
 
 	Zombie* aZombie = nullptr;
@@ -6719,7 +6719,7 @@ void Board::UpdateIce()
 }
 
 //0x414270
-void Board::UpdateProgressMeter()
+void Board::UpdateProgressMeter(std::uint64_t theDeltaNs)
 {
 	if (mApp->IsFinalBossLevel())
 	{
@@ -6781,7 +6781,9 @@ void Board::UpdateProgressMeter()
 		// 取得当前实际与理论的进度条长度之差
 		int aDelta = aLength - mProgressMeterWidth;
 		// 当差值不超过一波的长度时，每 20cs 调整一次长度；否则，每 5cs 调整一次长度
-		if ((aDelta > aWaveLength && (mMainCounter % 5 == 0)) || (aDelta > 0 && (mMainCounter % 20 == 0)))
+		const auto aPreviousTimeNs = mLevelTimeNs - theDeltaNs;
+		if ((aDelta > aWaveLength && aPreviousTimeNs / 50'000'000 != mLevelTimeNs / 50'000'000) ||
+			(aDelta > 0 && aPreviousTimeNs / 200'000'000 != mLevelTimeNs / 200'000'000))
 		{
 			mProgressMeterWidth++;
 		}
@@ -6996,9 +6998,9 @@ void Board::SetTutorialState(TutorialState theTutorialState)
 }
 
 //0x415920
-void Board::UpdateGame()
+void Board::UpdateGame(std::uint64_t theDeltaNs)
 {
-	UpdateGameObjects();
+	UpdateGameObjects(theDeltaNs);
 	if (StageHasFog() && mFogBlownCountDown > 0)
 	{
 		float aMaxFogOffset = 1065.0f - LeftFogColumn() * 80.0f;
@@ -7040,7 +7042,10 @@ void Board::UpdateGame()
 		mFogBlownCountDown--;
 	}
 
-	if (mMainCounter == 1 && mApp->IsFirstTimeAdventureMode())
+	// Start on the first positive battle time, independent of update length.
+	// The existing tutorial state consumes this one-shot trigger, including across saves.
+	if (mLevelTimeNs > 0 && mTutorialState == TutorialState::TUTORIAL_OFF &&
+		mApp->IsFirstTimeAdventureMode())
 	{
 		if (mLevel == 1)
 		{
@@ -7054,7 +7059,7 @@ void Board::UpdateGame()
 		}
 	}
 
-	UpdateProgressMeter();
+	UpdateProgressMeter(theDeltaNs);
 }
 
 //0x415D40
@@ -7079,7 +7084,7 @@ void Board::Update()
 
 	if (mPaused)
 	{
-		mChallenge->Update();
+		mChallenge->Update(0);
 		mCursorPreview->mVisible = false;
 		mCursorObject->mVisible = false;
 		return;
@@ -7087,12 +7092,15 @@ void Board::Update()
 
 	// Publish the current action timestamp before effects, grid items and
 	// actors sample it. Visual effects have their separately published clock.
-	if (mTimeStopCounter == 0 && AnimationTimeDomain() == ReanimTimeDomain::Battle)
-		++mMainCounter;
-	if (mMainCounter.mNanoseconds > INT64_MAX)
+	const std::uint64_t aLevelDeltaNs =
+		mTimeStopCounter == 0 && AnimationTimeDomain() == ReanimTimeDomain::Battle
+		? Sexy::gUpdateIntervalNs : 0;
+	if (mLevelTimeNs > std::uint64_t(INT64_MAX) ||
+		aLevelDeltaNs > std::uint64_t(INT64_MAX) - mLevelTimeNs)
 		throw std::overflow_error("battle animation timestamp exceeds clock range");
+	mLevelTimeNs += aLevelDeltaNs;
 	mApp->mEffectSystem->mReanimationHolder->mBattleTimeNs =
-		static_cast<std::int64_t>(mMainCounter.mNanoseconds);
+		static_cast<std::int64_t>(mLevelTimeNs);
 
 	bool aDisabled = !CanInteractWithBoardButtons() || mIgnoreMouseUp;
 	if (!mMenuButton->mBtnNoDraw)
@@ -7160,9 +7168,9 @@ void Board::Update()
 
 	UpdateGridItems();
 	UpdateFwoosh();
-	UpdateGame();
+	UpdateGame(aLevelDeltaNs);
 	UpdateFog();
-	mChallenge->Update();
+	mChallenge->Update(aLevelDeltaNs);
 	UpdateLevelEndSequence();
 	mPrevMouseX = mApp->mWidgetManager->mLastMouseX;
 	mPrevMouseY = mApp->mWidgetManager->mLastMouseY;
@@ -7331,7 +7339,7 @@ void Board::DrawBackdrop(Graphics* g)
 	{
 		Graphics aClipG(*g);
 		aClipG.mColorizeImages = true;
-		aClipG.mColor = GetFlashingColor(mMainCounter, 75);
+		aClipG.mColor = GetFlashingColorNs(mLevelTimeNs, 750'000'000);
 		aClipG.DrawImage(Sexy::IMAGE_SOD1ROW, 239 - BOARD_OFFSET, 265);
 		aClipG.mColorizeImages = false;
 	}
@@ -7367,8 +7375,9 @@ void Board::AddBossRenderItem(RenderItem* theRenderList, int& theCurRenderItem, 
 	else if (theBossZombie->mZombiePhase == ZombiePhase::PHASE_BOSS_STOMPING)
 	{
 		Reanimation* aBossReanim = mApp->ReanimationTryToGet(theBossZombie->mBodyReanimID);
-		if (aBossReanim->SamplePlayback().clock > aBossReanim->mFrameCount * ReanimClock::Frame / 4 &&
-            aBossReanim->SamplePlayback().clock < aBossReanim->mFrameCount * ReanimClock::Frame * 3 / 4)
+		const auto aPhaseNs = aBossReanim->SamplePlayback().phaseNs;
+		if (aPhaseNs > aBossReanim->mPeriodNs / 4 &&
+			aPhaseNs < aBossReanim->mPeriodNs - aBossReanim->mPeriodNs / 4)
 		{
 			if (theBossZombie->mTargetRow == 1)
 			{
@@ -8219,7 +8228,7 @@ constexpr ZenToolDrawFn kZenToolDraw[GameObjectType::OBJECT_TYPE_TREE_FOOD - Gam
 			else if (aBoard.mTutorialState == TutorialState::TUTORIAL_ZEN_GARDEN_FERTILIZE_PLANTS)
 			{
 				g->mColorizeImages = true;
-				g->mColor = GetFlashingColor(aBoard.mMainCounter, 75);
+				g->mColor = GetFlashingColorNs(aBoard.mLevelTimeNs, 750'000'000);
 			}
 			g->DrawImage(Sexy::IMAGE_FERTILIZER, aButtonRect.mX - 6, aButtonRect.mY + aOffsetY - 7);
 			g->mColorizeImages = false;
@@ -8375,7 +8384,7 @@ void Board::DrawShovel(Graphics* g)
 				if (mChallenge->mChallengeState == (ChallengeState)15)
 				{
 					g->mColorizeImages = true;
-					g->mColor = GetFlashingColor(mMainCounter, 75);
+					g->mColor = GetFlashingColorNs(mLevelTimeNs, 750'000'000);
 				}
 				g->DrawImage(Sexy::IMAGE_SHOVEL, aShovelRect.mX - 7, aShovelRect.mY - 3);
 				g->mColorizeImages = false;
@@ -8757,7 +8766,7 @@ void Board::DrawTopRightUI(Graphics* g)
 	if (mTutorialState == TutorialState::TUTORIAL_ZEN_GARDEN_COMPLETED)
 	{
 		g->mColorizeImages = true;
-		g->mColor = GetFlashingColor(mMainCounter, 75);
+		g->mColor = GetFlashingColorNs(mLevelTimeNs, 750'000'000);
 	}
 	mMenuButton->Draw(g);
 	g->mColorizeImages = false;
@@ -8767,7 +8776,7 @@ void Board::DrawTopRightUI(Graphics* g)
 		if (mTutorialState == TutorialState::TUTORIAL_ZEN_GARDEN_VISIT_STORE)
 		{
 			g->mColorizeImages = true;
-			g->mColor = GetFlashingColor(mMainCounter, 75);
+			g->mColor = GetFlashingColorNs(mLevelTimeNs, 750'000'000);
 		}
 		mStoreButton->Draw(g);
 		g->mColorizeImages = false;
@@ -8779,7 +8788,7 @@ void Board::DrawUIBottom(Graphics* g)
 {
 	if (mBackground == BackgroundType::BACKGROUND_ZOMBIQUARIUM)
 	{
-		int aWaveTime = std::abs(static_cast<int>((mMainCounter / 8) % 22) - 11);
+		int aWaveTime = std::abs(static_cast<int>((mLevelTimeNs / 80'000'000) % 22) - 11);
 		const Rect aWaveSource(0, aWaveTime * 27, 160, 27);
 		g->mDrawMode = Graphics::DRAWMODE_ADDITIVE;
 		g->DrawImage(Sexy::IMAGE_WAVESIDE, 0, 40, aWaveSource);
@@ -8821,14 +8830,20 @@ void Board::DrawUIBottom(Graphics* g)
 				mApp->mScreenBounds.mX + mApp->mScreenBounds.mWidth - mX);
 			const Rect aSource(0, 0, IMAGE_BACKGROUND_GREENHOUSE_OVERLAY->mWidth,
 				IMAGE_BACKGROUND_GREENHOUSE_OVERLAY->mHeight);
-			Graphics aLeftLight(*g);
-			aLeftLight.ClipRect(left, 0, -left, BOARD_HEIGHT);
-			aLeftLight.DrawImageMirror(IMAGE_BACKGROUND_GREENHOUSE_OVERLAY,
-				Rect(-BOARD_WIDTH, 0, BOARD_WIDTH, BOARD_HEIGHT), aSource);
-			Graphics aRightLight(*g);
-			aRightLight.ClipRect(BOARD_WIDTH, 0, right - BOARD_WIDTH, BOARD_HEIGHT);
-			aRightLight.DrawImageMirror(IMAGE_BACKGROUND_GREENHOUSE_OVERLAY,
-				Rect(BOARD_WIDTH, 0, BOARD_WIDTH, BOARD_HEIGHT), aSource);
+			if (left < 0)
+			{
+				Graphics aLeftLight(*g);
+				aLeftLight.ClipRect(left, 0, -left, BOARD_HEIGHT);
+				aLeftLight.DrawImageMirror(IMAGE_BACKGROUND_GREENHOUSE_OVERLAY,
+					Rect(-BOARD_WIDTH, 0, BOARD_WIDTH, BOARD_HEIGHT), aSource);
+			}
+			if (right > BOARD_WIDTH)
+			{
+				Graphics aRightLight(*g);
+				aRightLight.ClipRect(BOARD_WIDTH, 0, right - BOARD_WIDTH, BOARD_HEIGHT);
+				aRightLight.DrawImageMirror(IMAGE_BACKGROUND_GREENHOUSE_OVERLAY,
+					Rect(BOARD_WIDTH, 0, BOARD_WIDTH, BOARD_HEIGHT), aSource);
+			}
 		}
 		g->mDrawMode = Graphics::DRAWMODE_NORMAL;
 	}
@@ -9000,8 +9015,9 @@ void Board::DrawFog(Graphics* g)
 			float aPosX = x * 80 + mFogOffset - 15;
 			float aPosY = y * 85 + 20;
 			// 900 帧和 500 帧两个周期的最小公倍数为 4500；先取模可避免长时间运行后 float 丢失相位精度。
-			constexpr uint32_t FOG_ANIMATION_PERIOD = 4500;
-			float aTime = static_cast<float>(mMainCounter % FOG_ANIMATION_PERIOD) * PI * 2;
+			constexpr std::uint64_t FOG_ANIMATION_PERIOD_NS = 45'000'000'000;
+			float aTime = static_cast<float>(double(mLevelTimeNs % FOG_ANIMATION_PERIOD_NS) /
+				10'000'000.0) * PI * 2;
 			// 与行、列有关的初始相位
 			float aPhaseX = 6 * PI * x / MAX_GRID_SIZE_X;
 			float aPhaseY = 6 * PI * y / (MAX_GRID_SIZE_Y + 1);

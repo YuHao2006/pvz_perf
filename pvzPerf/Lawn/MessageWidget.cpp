@@ -349,7 +349,8 @@ void MessageWidget::DrawReanimatedText(Graphics* g, _Font* theFont, const Color&
 		aTransform.mTransY += aTextReanim->mOverlayMatrix.m12 + thePosY - BOARD_HEIGHT / 2;
 		if (mReanimType == ReanimationType::REANIM_TEXT_FADE_ON && mDisplayTime - mDuration < mSlideOffTime)
 		{
-			float aStretch = 1.0f - static_cast<float>(static_cast<double>(aTextReanim->SamplePlayback().clock) / (aTextReanim->mFrameCount * ReanimClock::Frame));
+			float aStretch = 1.0f - static_cast<float>(static_cast<double>(
+				aTextReanim->SamplePlayback().phaseNs) / aTextReanim->mPeriodNs);
 			aTransform.mTransX += aStretch * aTextReanim->mOverlayMatrix.m02;
 		}
 
@@ -482,7 +483,7 @@ void MessageWidget::Draw(Graphics* g)
 		if (aMinAlpha != 255)
 		{
 			aColor.mAlpha = TodAnimateCurveNs(750'000'000, 0,
-				static_cast<std::int64_t>(mApp->mBoard->mMainCounter.mNanoseconds % 750'000'000),
+				static_cast<std::int64_t>(mApp->mBoard->mLevelTimeNs % 750'000'000),
 				aMinAlpha, 255, Curves::BounceSlowMiddle);
 			aOutlineColor.mAlpha = aColor.mAlpha;
 		}

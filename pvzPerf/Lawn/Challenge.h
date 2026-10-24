@@ -97,7 +97,7 @@ public:
     void                    BeghouledRemoveHorizontalMatch(int theGridX, int theGridY, BeghouledBoardState* theBoardState);
     void                    BeghouledRemoveVerticalMatch(int theGridX, int theGridY, BeghouledBoardState* theBoardState);
     void                    BeghouledRemoveMatches(BeghouledBoardState* theBoardState);
-    void                    Update();
+    void                    Update(std::uint64_t theLevelDeltaNs);
     void                    UpdateBeghouled();
     int                    UpdateBeghouledPlant(Plant* thePlant);
     void                    BeghouledFallIntoSquare(int theGridX, int theGridY, BeghouledBoardState* theBoardState);

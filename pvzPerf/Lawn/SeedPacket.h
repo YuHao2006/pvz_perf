@@ -2,8 +2,8 @@
 #include "misc/TimeCounter.h"
 #include "GameObject.h"
 #include "GameConstants.h"
+#include "SlotMachineMotion.h"
 
-constexpr const int SLOT_MACHINE_TIME = 400;
 constexpr const int CONVEYOR_SPEED = 4;
 
 class HitResult;
@@ -18,7 +18,6 @@ public:
     SeedType            mImitaterType;                              //+0x38
     Sexy::TimeCounter                 mSlotMachineCountDown;                      //+0x3C
     SeedType            mSlotMachiningNextSeed;                     //+0x40
-    float               mSlotMachiningPosition;                     //+0x44
     bool                mActive;                                    //+0x48
     bool                mRefreshing;                                //+0x49
     int                 mTimesUsed;                                 //+0x4C

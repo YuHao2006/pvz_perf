@@ -17,7 +17,7 @@ export component ButterSplat {
         particleDuration: nodes {
             { time: 0; low: 30; high: 30; curve: Linear; distribution: Linear; }
         }
-        systemAlpha: nodes {
+        launchSpeed: nodes {
             { time: 0; low: 150; high: 150; curve: Linear; distribution: Linear; }
         }
         particleAlpha: nodes {

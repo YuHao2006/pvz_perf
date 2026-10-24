@@ -49,7 +49,7 @@ export component ImitaterMorph {
         particleDuration: nodes {
             { time: 0; low: 60; high: 60; curve: Linear; distribution: Linear; }
         }
-        systemGreen: nodes {
+        systemAlpha: nodes {
             { time: 0.6; low: 1; high: 1; curve: Linear; distribution: Linear; }
             { time: 1; low: 0; high: 0; curve: Linear; distribution: Linear; }
         }

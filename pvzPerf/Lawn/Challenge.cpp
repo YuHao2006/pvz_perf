@@ -2250,7 +2250,7 @@ void Challenge::ZombieAtePlant(/*Zombie* theZombie,*/ Plant* thePlant)
 }
 
 //0x4246B0
-void Challenge::Update()
+void Challenge::Update(std::uint64_t theLevelDeltaNs)
 {
 	if (mApp->IsStormyNightLevel())
 		UpdateStormyNight();
@@ -2311,7 +2311,8 @@ void Challenge::Update()
 	}
 	if (mApp->mGameMode == GAMEMODE_MINIGAME_SPEED)
 	{
-		mBoard->UpdateGame();
+		// The speed mode repeats object logic without advancing the level clock.
+		mBoard->UpdateGame(0);
 	}
 	if (mApp->mGameMode == GAMEMODE_MINIGAME_RAINING_SEEDS)
 	{
@@ -2333,7 +2334,9 @@ void Challenge::Update()
 	{
 		TreeOfWisdomUpdate();
 	}
-	if (mApp->mGameMode == GAMEMODE_LIMBO_ICE && mBoard->mMainCounter == 3000)
+	if (mApp->mGameMode == GAMEMODE_LIMBO_ICE &&
+		mBoard->mLevelTimeNs - theLevelDeltaNs < 30'000'000'000 &&
+		mBoard->mLevelTimeNs >= 30'000'000'000)
 	{
 		mApp->PlayFoley(FOLEY_FLOOP);
 		mApp->PlaySample(Sexy::SOUND_LOSEMUSIC);
@@ -2476,10 +2479,10 @@ void Challenge::DrawBeghouled(Graphics* g)
 			float aPixelY = mBoard->GridToPixelY(mChallengeGridX, mChallengeGridY) + 100;
 
 			// 1073 uses 0.001 here: one full turn every 1000 updates.
-			constexpr uint32_t BEGHOULED_ROTATION_PERIOD = 1000;
+			constexpr std::uint64_t BEGHOULED_ROTATION_PERIOD_NS = 10'000'000'000;
 			const float aRotation =
-				-static_cast<float>(mBoard->mMainCounter % BEGHOULED_ROTATION_PERIOD) *
-				2 * PI * 0.001f;
+				-static_cast<float>(double(mBoard->mLevelTimeNs % BEGHOULED_ROTATION_PERIOD_NS) /
+					BEGHOULED_ROTATION_PERIOD_NS) * 2 * PI;
 			SexyTransform2D aTransform;
 			TodScaleRotateTransformMatrix(aTransform, aPixelX, aPixelY, aRotation, 1, 1);
 
@@ -2500,7 +2503,7 @@ void Challenge::DrawSlotMachine(Graphics* g)
 	if (mSlotMachineRollCount < 3 && mBoard->mCursorObject->mCursorType == CURSOR_TYPE_NORMAL &&
 		mChallengeState != STATECHALLENGE_SLOT_MACHINE_ROLLING && !mBoard->HasLevelAwardDropped())
 	{
-		gBoardParent.mColor = GetFlashingColor(mBoard->mMainCounter, 75);
+		gBoardParent.mColor = GetFlashingColorNs(mBoard->mLevelTimeNs, 750'000'000);
 		gBoardParent.mColorizeImages = true;
 	}
 	gBoardParent.mTransX = mBoard->mSeedBank->mX - mBoard->mX;
@@ -3120,7 +3123,7 @@ void Challenge::SpawnZombieWave()
 //0x426A20
 void Challenge::DrawStormFlash(Graphics* g, std::int64_t theTimeNs, int theMaxAmount)
 {
-	MTRand aDrawRand = MTRand(mBoard->mMainCounter / 6);
+	MTRand aDrawRand = MTRand(static_cast<unsigned long>(mBoard->mLevelTimeNs / 60'000'000));
 	int aDarkness = TodAnimateCurveNs(1'500'000'000, 0, theTimeNs, 255 - theMaxAmount, 255, Curves::Linear) + aDrawRand.NextNoAssert((unsigned int)64) - 32;
 	// 设置暴风雨阴暗的颜色
 	g->mColor = Color(0, 0, 0, ClampInt(aDarkness, 0, 255));
@@ -4436,7 +4439,7 @@ void Challenge::PuzzleNextStageClear()
 		Plant* aPlant = nullptr;
 		while (mBoard->IteratePlants(aPlant))
 		{
-			if (aPlant->IsOnBoard())
+			if (aPlant->mIsOnBoard)
 			{
 				aPlant->Die();
 			}

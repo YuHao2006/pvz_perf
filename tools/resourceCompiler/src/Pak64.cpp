@@ -411,9 +411,20 @@ private:
             ConsumeIdentifier();
         }
         ExpectBrace("{");
-        bool hasImages = false, hasFps = false;
+        bool hasImages = false, hasFps = false, hasStorageRegion = false;
+        TrackStorage storage = TrackStorage::both;
         while (lexer_.current().kind == TokenKind::identifier) {
-            if (lexer_.current().text == "variant-of") {
+            if (lexer_.current().text == "cpu" || lexer_.current().text == "gpu" ||
+                lexer_.current().text == "both") {
+                const std::string region = lexer_.current().text;
+                lexer_.Advance();
+                if (lexer_.current().kind != TokenKind::colon)
+                    Fail(error_, "expected ':' after storage region <" + region + ">");
+                lexer_.Advance();
+                storage = region == "cpu" ? TrackStorage::cpu :
+                    region == "gpu" ? TrackStorage::gpu : TrackStorage::both;
+                hasStorageRegion = true;
+            } else if (lexer_.current().text == "variant-of") {
                 if (!module.variantOf.empty()) Fail(error_, "duplicate variant-of");
                 lexer_.Advance();
                 if (lexer_.current().kind != TokenKind::colon) Fail(error_, "expected ':'");
@@ -468,11 +479,12 @@ private:
             else if (lexer_.current().text == "texture")
                 Fail(error_, "texture declarations were removed; write image: <resource-name> directly");
             else
-                ReadTrack(module);
+                ReadTrack(module, storage);
         }
         ExpectBrace("}");
         if (!module.variantOf.empty()) {
             if (!hasImages) Fail(error_, "reanim variant requires images");
+            if (hasStorageRegion) Fail(error_, "reanim variant cannot override storage");
             if (hasFps || !module.tracks.empty()) Fail(error_, "reanim variant cannot override behavior");
         } else if (hasImages) Fail(error_, "variant images requires variant-of");
         for (const RawReanim& existing : outputs_)
@@ -526,19 +538,23 @@ private:
         if (lexer_.current().kind != TokenKind::semicolon) Fail(error_, "expected ';'");
         lexer_.Advance();
     }
-    void ReadTrack(RawReanim& module)
+    void ReadTrack(RawReanim& module, const TrackStorage storage)
     {
         // `Track { ... }` directly, or `name := Track { ... }`; the instance
         // name is cosmetic because source-name carries the real track name.
         if (lexer_.current().kind != TokenKind::identifier)
             Fail(error_, "expected identifier");
+        const std::string declaration = lexer_.current().text;
         lexer_.Advance();
+        if (lexer_.current().kind == TokenKind::colon)
+            Fail(error_, "unknown storage region <" + declaration + ">");
         if (lexer_.current().kind == TokenKind::assign) {
             lexer_.Advance();
             ConsumeIdentifier();
         }
         ExpectBrace("{");
         RawTrack track;
+        track.storage = storage;
         struct Declared final {
             std::uint64_t index;
             RawTransform value;
@@ -1011,6 +1027,24 @@ bool IsBareIdentifierName(const std::string& text)
     return true;
 }
 
+void RequireLegacyStorage(const RawReanim& source)
+{
+    for (const RawTrack& track : source.tracks)
+        if (track.storage != TrackStorage::both)
+            Fail(nullptr, "legacy reanim records cannot represent track storage; use compile-v2 with --font-registry");
+}
+
+std::uint32_t StorageBits(const TrackStorage storage)
+{
+    switch (storage) {
+    case TrackStorage::both:
+    case TrackStorage::cpu:
+    case TrackStorage::gpu:
+        return static_cast<std::uint32_t>(storage) << kTrackStorageShift;
+    }
+    Fail(nullptr, "invalid reanim track storage");
+}
+
 } // namespace
 
 std::string ToDsl(const RawReanim& source)
@@ -1021,7 +1055,14 @@ std::string ToDsl(const RawReanim& source)
         << (source.name.empty() ? std::string("Reanim") : source.name)
         << " {\n";
     out << "    fps: " << FloatText(source.fps) << ";\n";
+    TrackStorage storage = TrackStorage::both;
     for (const RawTrack& track : source.tracks) {
+        if (track.storage != storage) {
+            (void)StorageBits(track.storage);
+            out << "    " << (track.storage == TrackStorage::cpu ? "cpu" :
+                track.storage == TrackStorage::gpu ? "gpu" : "both") << ":\n";
+            storage = track.storage;
+        }
         out << "    Track {\n        source-name: ";
         WriteEscaped(out, track.name);
         out << ";\n        frame-count: " << track.frames.size() << ";\n";
@@ -1069,6 +1110,7 @@ std::string ToDsl(const RawReanim& source)
 
 std::vector<std::uint8_t> Serialize(const RawReanim& source)
 {
+    RequireLegacyStorage(source);
     std::vector<std::uint8_t> payload;
     PutU32(payload, kReanimSchemaHash);
 
@@ -1981,6 +2023,7 @@ std::vector<std::uint8_t> SerializeV2(const RawReanim& source,
                                       const std::vector<TrackIdEntry>& table,
                                       const std::vector<ReanimTypeMapEntry>& typeMap)
 {
+    RequireLegacyStorage(source);
     // 编译期 attacher 链接：text 编码 → 整数段表（局部，不改入参模型）
     std::vector<std::vector<TrackAttacherSegment>> localSegs(source.tracks.size());
     {
@@ -2139,7 +2182,7 @@ std::vector<std::uint8_t> SerializeV4(const RawReanim& source,
         PutU32(payload, TrackIdOf(table, track.name));
         PutU32(payload, static_cast<std::uint32_t>(track.frames.size()));
         PutU32(payload, 32);  // 8 x f32; no native pointers or padding
-        PutU32(payload, hasUiText[ti] ? 1u : 0u);
+        PutU32(payload, (hasUiText[ti] ? kTrackUiTextMask : 0u) | StorageBits(track.storage));
         for (const RawTransform& frame : track.frames)
             for (int i = 0; i < 8; ++i) {
                 if (i == 6) PutU32(payload, static_cast<std::uint32_t>(frame.cel));

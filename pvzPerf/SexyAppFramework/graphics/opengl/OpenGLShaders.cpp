@@ -2,6 +2,54 @@
 
 namespace Sexy::GL3 {
 
+std::string_view PoolVertexShader()
+{
+    return R"GLSL(#version 130
+in vec2 inPosition;
+in vec2 inColor;
+uniform vec2 targetExtent, poolSize, poolTranslation;
+uniform vec4 waveTime, poolClip;
+uniform uint poolLayer, poolNight, poolSlot, poolSampler;
+out vec4 color;
+out vec2 uv;
+flat out uint slot;
+flat out uint samplerIndex;
+void main()
+{
+    float x=inPosition.x, y=inPosition.y;
+    float xp=inColor.x, yp=inColor.y;
+    float t1=waveTime.x, t2=waveTime.y, t3=waveTime.z, t5=waveTime.w;
+    vec2 base=vec2(x/15.0,y/5.0), delta=vec2(0.0);
+    if (x!=0.0 && x!=15.0 && y!=0.0 && y!=5.0) {
+        if (poolLayer==0u) {
+            delta.x=sin(yp+t2)*0.002+sin(yp+t1)*0.005;
+            delta.y=sin(xp+t5)*0.01+sin(xp+t3)*0.015+sin(xp+t1)*0.005;
+        } else if (poolLayer==1u) {
+            delta.x=sin(yp*0.2+t2)*0.015+sin(yp*0.2+t1)*0.012;
+            delta.y=sin(xp*0.2+t5)*0.005+sin(xp*0.2+t3)*0.015+sin(xp*0.2+t1)*0.02;
+        } else {
+            delta.x=sin(yp+t1*1.5)*0.004+sin(yp+t2*1.5)*0.005;
+            delta.y=sin(xp*4.0+t5*2.5)*0.005+sin(xp*2.0+t3*2.5)*0.04+
+                sin(xp*3.0+t1*2.5)*0.02;
+        }
+    }
+    uv=poolLayer==2u ? (base+delta)+base : delta+base;
+    vec2 position=poolLayer==2u ? vec2((704.0/15.0)*x+45.0,30.0*y+288.0) :
+        inPosition*(poolSize/vec2(15.0,5.0))+vec2(35.0,279.0);
+    float alpha=1.0;
+    if (poolLayer==2u)
+        alpha=(x==0.0 || x==15.0 || y==0.0) ? 32.0/255.0 :
+            poolNight!=0u ? 48.0/255.0 : x<=7.0 ? 192.0/255.0 : 128.0/255.0;
+    ivec2 clippedPosition=ivec2(position);
+    if (clippedPosition.x<int(poolClip.x) || clippedPosition.y<int(poolClip.y) ||
+        clippedPosition.x>=int(poolClip.z) || clippedPosition.y>=int(poolClip.w)) alpha=0.0;
+    color=vec4(1.0,1.0,1.0,alpha);
+    slot=poolSlot; samplerIndex=poolSampler;
+    gl_Position=vec4((position+poolTranslation)/targetExtent*2.0-1.0,0.0,1.0);
+}
+)GLSL";
+}
+
 std::string_view SceneVertexShader()
 {
     return R"GLSL(#version 130

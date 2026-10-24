@@ -2,9 +2,10 @@
 from __future__ import annotations
 
 import math
+import struct
 
 import build_numeric_runtime_pak64 as pak
-from static_definition_codegen import array, cpp_float, cpp_string
+from static_definition_codegen import array, cpp_float, cpp_string, texture_region
 
 SHARD_COUNT = 8
 _DEFAULTS = (0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0)
@@ -21,8 +22,9 @@ def _parse(path: str, data: bytes, type_count: int) -> dict:
                 and 0 < count <= 1 << 20, "Invalid static IDT6 header")
     tracks = []
     for _ in range(count):
-        track, frames, stride, mode = reader.unpack("<4I")
-        pak.require(stride == 32 and mode <= 1 and 0 < frames <= 1 << 20,
+        track, frames, stride, flags = reader.unpack("<4I")
+        mode, storage = pak.reanim_track_flags(flags, authored=authored)
+        pak.require(stride == 32 and 0 < frames <= 1 << 20,
                     "Invalid static IDT6 track")
         previous = _DEFAULTS
         transforms = []
@@ -33,7 +35,7 @@ def _parse(path: str, data: bytes, type_count: int) -> dict:
                              for i, (old, value) in enumerate(zip(previous, values)))
             pak.require(previous[6] == int(previous[6]), "Noninteger reanim cel")
             transforms.append({"values": (*previous[:6], int(previous[6]), previous[7])})
-        tracks.append({"id": track, "mode": mode, "frames": transforms})
+        tracks.append({"id": track, "mode": mode, "storage": storage, "frames": transforms})
     for track in tracks:
         previous_font, previous_text = 0, None
         for frame in track["frames"]:
@@ -81,11 +83,40 @@ def _frame_range(definition: dict, action: int) -> tuple[int, int]:
     return (visible[0], visible[-1] - visible[0] + 1) if visible else (0, 1)
 
 
+def gpu_record(definition: dict) -> bytes:
+    """GPU-only transport; original logical track slots are never renumbered."""
+    tracks, keys = bytearray(), bytearray()
+    for track in definition["tracks"]:
+        count = len(track["frames"])
+        offset = 0xFFFFFFFF if track["storage"] == 1 else len(keys) // 48
+        tracks.extend(struct.pack("<4I", offset, count, 0, 0))
+        if track["storage"] == 1:
+            continue
+        for frame in track["frames"]:
+            x, y, kx, ky, sx, sy, cel, alpha = frame["values"]
+            keys.extend(struct.pack("<7fi4I", x, y, kx, ky, sx, sy, alpha,
+                                    cel, frame["slot"], 0, 0, 0))
+    atlas = definition["atlas"]
+    geometry = bytearray()
+    for row, (width, height) in zip(atlas["variant_rectangles"], atlas["variant_dimensions"]):
+        for x, y, w, h in row:
+            pak.require(width > 0 and height > 0 or (x, y, w, h) == (0, 0, 0, 0),
+                        "GPU region requires atlas dimensions")
+            geometry.extend(struct.pack("<6f2I", w, h,
+                                        x / width if width else 0, y / height if height else 0,
+                                        (x + w) / width if width else 0,
+                                        (y + h) / height if height else 0, 0, 0))
+    # Fixed little-endian header; the payload mirrors GpuReanim.h aggregates.
+    return (struct.pack("<8I", 0x31555247, len(definition["tracks"]), len(keys) // 48,
+                        atlas["slot_count"], atlas["variant_count"], 16, 48, 32)
+            + tracks + keys + geometry)
+
+
 def generate(config, records: dict[str, bytes]) -> dict:
     """Return eight deterministic source shards and central-table fragments."""
     order = config.definition_orders.get("reanim")
     pak.require(bool(order), "Static reanimations require definition_order(reanim ...)")
-    definitions = []
+    definitions, gpu_records = [], {}
     expected = []
     for _, name in order:
         path = f"compiled/reanim/{name.casefold()}.compiled"
@@ -101,40 +132,48 @@ def generate(config, records: dict[str, bytes]) -> dict:
     declarations, initializers, font_bindings, font_resets, attacher_initializers = [], [], [], [], []
     summary = {"definitions": len(order), "tracks": 0, "frames": 0, "variants": 0,
                "rectangles": 0, "attacher_segments": 0, "font_frames": 0,
+               "storage_tracks": {"both": 0, "cpu": 0, "gpu": 0},
                "unindexed_records": sorted(name for name in records
                                             if pak.numeric_kind(name) == "reanim" and name not in expected)}
     for index, definition in enumerate(definitions):
         code = shards[index % SHARD_COUNT]
         prefix = f"Reanim{index}"
         atlas, tracks = definition["atlas"], definition["tracks"]
+        gpu_records[f"compiled/gpu-reanim/{order[index][1].casefold()}.compiled"] = gpu_record(definition)
 
         def emit(type_name, suffix, values, *, readonly=False):
             return array(declarations, code, type_name, prefix + suffix, values, readonly=readonly)
 
         track_values = []
         for t, track in enumerate(tracks):
+            storage = track["storage"]
+            summary["storage_tracks"][("both", "cpu", "gpu")[storage]] += 1
             values = []
             for f, frame in enumerate(track["frames"]):
                 text = "nullptr" if frame["text"] is None else cpp_string(frame["text"])
                 values.append("{" + ", ".join([*(str(v) if i == 6 else cpp_float(v)
                                                 for i, v in enumerate(frame["values"])),
                                               f'{frame["slot"]}u', "nullptr", text]) + "}")
-                if frame["font"]:
+                pak.require(storage != 2 or not (frame["font"] or frame["text"]),
+                            "GPU-only reanimation tracks cannot contain CPU font/text data")
+                if frame["font"] and storage != 2:
                     target = f"{prefix}Frames{t}[{f}].mFont"
                     font_bindings.append(f"{target} = font;")
                     font_resets.append(f"{target} = nullptr;")
-            frames_name = emit("ReanimatorSourceTransform", f"Frames{t}", values)
+            frames_name = (emit("ReanimatorSourceTransform", f"Frames{t}", values)
+                           if storage != 2 else "nullptr")
+            storage_field = (", ReanimTrackStorage::" + ("Both", "Cpu", "Gpu")[storage]
+                             if storage else "")
             track_values.append(f'{{static_cast<ReanimTrackId>({track["id"]}u), '
-                                f'{{{frames_name}, {len(values)}}}}}')
+                                f'{{{frames_name}, {len(values)}{storage_field}}}}}')
             summary["frames"] += len(values)
         tracks_name = emit("ReanimatorTrack", "Tracks", track_values)
         variants, slots, actions = atlas["variant_count"], atlas["slot_count"], atlas["action_count"]
         textures = emit("Sexy::GpuTexture*", "Textures", ["nullptr"] * variants)
-        widths = emit("int", "Widths", [str(w) for w, _ in atlas["variant_dimensions"]])
-        heights = emit("int", "Heights", [str(h) for _, h in atlas["variant_dimensions"]])
-        rects = emit("Sexy::Rect", "Rects", [
-            "{" + ", ".join(map(str, rect)) + "}"
-            for row in atlas["variant_rectangles"] for rect in row], readonly=True)
+        rects = emit("Sexy::TextureRegion", "Rects", [
+            texture_region(rect, *dimensions)
+            for row, dimensions in zip(atlas["variant_rectangles"], atlas["variant_dimensions"])
+            for rect in row], readonly=True)
         transitions = emit("std::uint32_t", "Transitions", [f"{v}u" for v in atlas["transitions"]])
         starts, counts = [0] * len(tracks), [0] * len(tracks)
         options = [0] * (variants * len(tracks))
@@ -154,7 +193,7 @@ def generate(config, records: dict[str, bytes]) -> dict:
         options_name = emit("std::uint32_t", "Options", [f"{v}u" for v in options])
         initializers.append(
             "{" + ", ".join([f"{{{tracks_name}, {len(tracks)}}}", cpp_float(definition["fps"]),
-                             textures, widths, heights, f"{variants}u", f"{slots}u", f"{actions}u",
+                             textures, f"{variants}u", f"{slots}u", f"{actions}u",
                              rects, transitions, starts_name, counts_name, options_name]) + "}")
         segment_values = []
         for segment in definition["segments"]:
@@ -169,11 +208,13 @@ def generate(config, records: dict[str, bytes]) -> dict:
         summary["rectangles"] += variants * slots
         summary["attacher_segments"] += len(segment_values)
     summary["font_frames"] = len(font_bindings)
-    summary["rectangle_bytes"] = summary["rectangles"] * 16
+    summary["rectangle_bytes"] = summary["rectangles"] * 24
+    summary["gpu_record_bytes"] = sum(map(len, gpu_records.values()))
     files = {}
     for index, code in enumerate(shards):
         code.append("}")
         files[f"ReanimData{index:02d}.cpp"] = ("\n".join(code) + "\n").encode("utf-8")
     return {"files": files, "declarations": declarations, "initializers": initializers,
             "font_bindings": font_bindings, "font_resets": font_resets,
-            "attacher_initializers": attacher_initializers, "summary": summary}
+            "attacher_initializers": attacher_initializers, "summary": summary,
+            "gpu_records": gpu_records}

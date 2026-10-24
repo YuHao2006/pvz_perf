@@ -52,7 +52,7 @@ export component PotatoMine {
         particleDuration: nodes {
             { time: 0; low: 200; high: 200; curve: Linear; distribution: Linear; }
         }
-        systemAlpha: nodes {
+        launchSpeed: nodes {
             { time: 0; low: 200; high: 300; curve: Linear; distribution: Linear; }
         }
         particleAlpha: nodes {
@@ -106,10 +106,10 @@ export component PotatoMine {
         particleDuration: nodes {
             { time: 0; low: 70; high: 80; curve: Linear; distribution: Linear; }
         }
-        systemAlpha: nodes {
+        launchSpeed: nodes {
             { time: 0; low: 1300; high: 2000; curve: Linear; distribution: Linear; }
         }
-        systemBrightness: nodes {
+        launchAngle: nodes {
             { time: 0; low: 110; high: 250; curve: Linear; distribution: Linear; }
         }
         particleAlpha: nodes {

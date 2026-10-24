@@ -56,7 +56,7 @@ export component IceTrap {
         particleDuration: nodes {
             { time: 0; low: 40; high: 40; curve: Linear; distribution: Linear; }
         }
-        systemAlpha: nodes {
+        launchSpeed: nodes {
             { time: 0; low: 200; high: 200; curve: Linear; distribution: Linear; }
         }
         particleAlpha: nodes {

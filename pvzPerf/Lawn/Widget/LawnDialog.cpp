@@ -288,17 +288,17 @@ void LawnDialog::Draw(Graphics* g)
     if (!mDrawStandardBack)
         return;
 
-    const Rect& bottomLeft = FixedUIAtlas::Images[size_t(mTallBottom ? DIALOG_BIGBOTTOMLEFT : DIALOG_BOTTOMLEFT)];
-    const Rect& bottomMiddle = FixedUIAtlas::Images[size_t(mTallBottom ? DIALOG_BIGBOTTOMMIDDLE : DIALOG_BOTTOMMIDDLE)];
-    const Rect& bottomRight = FixedUIAtlas::Images[size_t(mTallBottom ? DIALOG_BIGBOTTOMRIGHT : DIALOG_BOTTOMRIGHT)];
-    const Rect& topLeft = FixedUIAtlas::Images[size_t(DIALOG_TOPLEFT)];
-    const Rect& topMiddle = FixedUIAtlas::Images[size_t(DIALOG_TOPMIDDLE)];
-    const Rect& topRight = FixedUIAtlas::Images[size_t(DIALOG_TOPRIGHT)];
-    const Rect& centerLeft = FixedUIAtlas::Images[size_t(DIALOG_CENTERLEFT)];
-    const Rect& centerMiddle = FixedUIAtlas::Images[size_t(DIALOG_CENTERMIDDLE)];
-    const Rect& centerRight = FixedUIAtlas::Images[size_t(DIALOG_CENTERRIGHT)];
-    const Rect& header = FixedUIAtlas::Images[size_t(DIALOG_HEADER)];
-    const Sexy::TextureSource texture{FixedUIAtlas::Texture, FixedUIAtlas::Width, FixedUIAtlas::Height};
+    const TextureRegion& bottomLeft = FixedUIAtlas::Images[size_t(mTallBottom ? DIALOG_BIGBOTTOMLEFT : DIALOG_BOTTOMLEFT)];
+    const TextureRegion& bottomMiddle = FixedUIAtlas::Images[size_t(mTallBottom ? DIALOG_BIGBOTTOMMIDDLE : DIALOG_BOTTOMMIDDLE)];
+    const TextureRegion& bottomRight = FixedUIAtlas::Images[size_t(mTallBottom ? DIALOG_BIGBOTTOMRIGHT : DIALOG_BOTTOMRIGHT)];
+    const TextureRegion& topLeft = FixedUIAtlas::Images[size_t(DIALOG_TOPLEFT)];
+    const TextureRegion& topMiddle = FixedUIAtlas::Images[size_t(DIALOG_TOPMIDDLE)];
+    const TextureRegion& topRight = FixedUIAtlas::Images[size_t(DIALOG_TOPRIGHT)];
+    const TextureRegion& centerLeft = FixedUIAtlas::Images[size_t(DIALOG_CENTERLEFT)];
+    const TextureRegion& centerMiddle = FixedUIAtlas::Images[size_t(DIALOG_CENTERMIDDLE)];
+    const TextureRegion& centerRight = FixedUIAtlas::Images[size_t(DIALOG_CENTERRIGHT)];
+    const TextureRegion& header = FixedUIAtlas::Images[size_t(DIALOG_HEADER)];
+    const Sexy::TextureSource texture{FixedUIAtlas::Texture, 0};
 
     int aRepeatX = (mWidth - topRight.mWidth - topLeft.mWidth) / topMiddle.mWidth;
     int aRepeatY = (mHeight - topLeft.mHeight - bottomLeft.mHeight - DIALOG_HEADER_OFFSET) / centerLeft.mHeight;

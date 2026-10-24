@@ -395,17 +395,22 @@ void TodTriangleGroup::AddTriangle(Graphics* g, Image* theImage, const SexyMatri
 	auto& render=*g->mDestImage->mRenderOwner;
 	auto* gpuTexture=render.CreateImageTexture(theImage);
 	if (!gpuTexture) return;
-	const TextureSource texture{gpuTexture, theImage->mWidth, theImage->mHeight, theImage->mGpuSamplingFlags};
-	AddTriangle(g, texture, theMatrix, theClipRect, theColor, theDrawMode, theSrcRect);
+	const TextureSource texture{gpuTexture, theImage->mGpuSamplingFlags};
+	const TextureRegion source{
+		float(theSrcRect.mX) / theImage->mWidth,
+		float(theSrcRect.mY) / theImage->mHeight,
+		float(theSrcRect.mX + theSrcRect.mWidth) / theImage->mWidth,
+		float(theSrcRect.mY + theSrcRect.mHeight) / theImage->mHeight,
+		theSrcRect.mWidth, theSrcRect.mHeight};
+	AddTriangle(g, texture, theMatrix, theClipRect, theColor, theDrawMode, source);
 }
 
-void TodTriangleGroup::AddTriangle(Graphics* g, const TextureSource& texture, const SexyMatrix3& theMatrix, const Rect& theClipRect, const Color& theColor, int theDrawMode, const Rect& theSrcRect)
+void TodTriangleGroup::AddTriangle(Graphics* g, const TextureSource& texture, const SexyMatrix3& theMatrix, const Rect& theClipRect, const Color& theColor, int theDrawMode, const TextureRegion& theSrcRect)
 {
 	TOD_ASSERT(texture.mTexture != nullptr);
 
 	if (!mVertArray.empty() && (mDrawMode != theDrawMode ||
-		mTexture.mTexture != texture.mTexture || mTexture.mSamplingFlags != texture.mSamplingFlags ||
-		mTexture.mWidth != texture.mWidth || mTexture.mHeight != texture.mHeight))
+		mTexture.mTexture != texture.mTexture || mTexture.mSamplingFlags != texture.mSamplingFlags))
 		DrawGroup(g);
 	mTexture = texture;
 	mDrawMode = theDrawMode;
@@ -428,15 +433,14 @@ void TodTriangleGroup::AddTriangle(Graphics* g, const TextureSource& texture, co
 		tp[i] = theMatrix * p[i];
 	}
 
-	TOD_ASSERT(theSrcRect.mX >= 0 && theSrcRect.mWidth >= 0 && theSrcRect.mX + theSrcRect.mWidth <= mTexture.mWidth);
-	TOD_ASSERT(theSrcRect.mY >= 0 && theSrcRect.mHeight >= 0 && theSrcRect.mY + theSrcRect.mHeight <= mTexture.mHeight);
+	TOD_ASSERT(theSrcRect.mWidth >= 0 && theSrcRect.mHeight >= 0);
+	TOD_ASSERT(theSrcRect.mU0 >= 0.0f && theSrcRect.mU0 <= theSrcRect.mU1 && theSrcRect.mU1 <= 1.0f);
+	TOD_ASSERT(theSrcRect.mV0 >= 0.0f && theSrcRect.mV0 <= theSrcRect.mV1 && theSrcRect.mV1 <= 1.0f);
 
-	float aOneOverWidth = 1.0f / mTexture.mWidth;
-	float aOneOverHeight = 1.0f / mTexture.mHeight;
-	float aTexX1 = aOneOverWidth * theSrcRect.mX;
-	float aTexY1 = aOneOverHeight * theSrcRect.mY;
-	float aTexX2 = aOneOverWidth * (theSrcRect.mX + theSrcRect.mWidth);
-	float aTexY2 = aOneOverHeight * (theSrcRect.mY + theSrcRect.mHeight);
+	float aTexX1 = theSrcRect.mU0;
+	float aTexY1 = theSrcRect.mV0;
+	float aTexX2 = theSrcRect.mU1;
+	float aTexY2 = theSrcRect.mV1;
 	unsigned int aTexColor = theColor.ToInt();
 
 	bool aNoClipping = false;

@@ -5,11 +5,47 @@ particle or reanimation root definition contains
 all of its appearance rows, each with an atlas binding and final image
 rectangles. Current records use behavior-first `PAV6` particles and `RAV7`
 reanimations in v6 envelopes. These wire records are offline intermediates:
-the final build emits complete statically initialized C++ definitions and
-does not ship reanimation, particle or projectile `.compiled` records.
+the final build emits statically initialized CPU definitions. Particle and
+projectile behavior records remain offline-only. Reanimation GPU keyframes
+have a separate `GRU1` transport under `compiled/gpu-reanim/`; this is not a
+return of the behavior/default-filling loader.
 Explicit build groups may share an atlas across definitions and appearances.
-Definitions obtain their atlas pointers and rectangles directly from generated
-loading functions and static definition storage.
+Definitions obtain their atlas pointers and normalized sampling regions directly
+from generated loading functions and static definition storage.
+
+## Runtime sampling contract
+
+`Sexy::TextureRegion` is a public aggregate:
+
+```cpp
+struct TextureRegion {
+    float mU0, mV0, mU1, mV1;
+    int mWidth, mHeight;
+};
+```
+
+The four floats are normalized source UV bounds. Width and height are independent
+logical drawing dimensions, not atlas dimensions. The offline generator divides
+packed pixel coordinates by the atlas extent when producing C++ initializers;
+runtime atlas draws submit those UVs directly. `TextureSource` contains only a
+borrowed `GpuTexture* mTexture` and sampling flags. It contains neither dimensions
+nor an owning image pointer.
+
+Reanimation/particle appearance rows, projectile/shadow visuals, scene views and
+Zombatar entries use this same region aggregate. Definition appearance dimension
+arrays, projectile/Zombatar atlas-size members and public scene Width/Height
+constants are removed. Generated loaders pass expected PNG dimensions as literals
+for validation, without storing another sampling extent in runtime definitions.
+Backend textures and ordinary `Image` retain dimensions needed for allocation,
+render targets, clone, pixel operations and dynamic crops.
+
+Font base glyphs, scaled glyph regions and queued glyph commands also store UV
+regions with logical dimensions. Loading/resize operations temporarily reconstruct
+pixel regions for exact integer-weight GPU font resampling. Button image states
+and the Coin draw table store UV regions; unused checkbox source fields are removed.
+Screen destinations, clipping and collision rectangles remain pixel geometry.
+Floating drawing-offset changes are deferred. This representation change does
+not alter PNG pixels, pak/offline interchange or save layouts.
 
 The program has 210 named `Image*` bindings declared in `Resources.h`; scene atlas
 migration removed 76 declaration/definition pairs with no remaining C++ consumer.
@@ -49,10 +85,12 @@ record, not an animation envelope:
 
 It contains neither paths nor image symbol IDs. Generated image bindings select
 the atlas; the projectile resource object retains one borrowed GPU pointer and
-fixed inline arrays in static storage. Default puff scale 0.3 preserves its
+fixed inline `TextureRegion` arrays in static storage; no atlas width/height
+members remain. The PRJ1 pixel coordinates above are only offline interchange.
+Default puff scale 0.3 preserves its
 original 0.3-to-1 age curve; authored changes multiply that curve by
 `scale / 0.3`. Other authored scales replace the old draw table values.
-Cob collision size uses its raw source rectangle; the other object sizes remain
+Cob collision size uses its logical source dimensions; the other object sizes remain
 40 by 40. Projectile type IDs, motion algorithms and save fields do not change.
 
 ## Complete static definitions
@@ -65,17 +103,54 @@ There are 144 runtime reanimation IDs and 106 particle IDs. The two additional
 authored reanimation roots `Zombie_dancer` and `Zombie_Jackson` have no runtime slots
 and their exclusive atlases are omitted from the runtime package.
 
-Each definition's rectangle rows are one dense static constant `Rect[]`, indexed as
+Each definition's sampling rows are one dense static constant `TextureRegion[]`, indexed as
 `variant * slots + imageSlot`. Root definitions use mutable `constinit`, without
 padding every root to the largest variant/slot dimensions. Definitions retain
-their direct `const Rect*` member pointing at this static storage.
+their direct `const TextureRegion*` member pointing at this static storage.
 The same generation step emits complete tracks, transforms, particle curves,
 fields, defaults, option transitions and precomputed attacher action ranges.
 Sixteen data shards contain backing arrays declared by
-`GeneratedDefinitionStorage.h`; there are no runtime definition readers,
-default filling, nested definition allocations or nested frees.
-The current corpus contains 398381 reanimation frames, 5158 particle curve
+`GeneratedDefinitionStorage.h`. CPU behavior has no runtime definition reader,
+default filling or nested definition allocation. GPU upload uses temporary
+typed arrays which are discarded after upload.
+The current corpus contains 398381 reanimation frames, 5328 particle curve
 nodes and 689 precomputed attacher segments.
+
+## Reanimation CPU/GPU residency
+
+Within a reanimation component, `cpu:`, `gpu:` and `both:` select the residency
+of subsequent tracks until another selector or the component end. Each
+component starts in `both:`; existing sources need no edits. Variants inherit
+their root policy and cannot declare selectors. Track IDs, declaration order,
+visibility bits and attachment indices do not change.
+
+`cpu:` emits C++ keys and a no-keys GPU descriptor. `gpu:` emits GPU keys and
+retains a null CPU transform pointer plus the original frame count. `both:`
+emits both. CPU sampling of a GPU-only track reports an explicit error;
+GPU-only tracks cannot carry CPU font/text data. The shipping authored corpus
+currently uses the default `both:` throughout.
+
+In authored `IDTF` intermediates the fourth track-header word uses bit 0 for
+UI text and bits 1–2 for residency (`both=0`, `cpu=1`, `gpu=2`).
+Other values are rejected. Legacy IDT records accept only their old text bit.
+
+Each `compiled/gpu-reanim/<definition>.compiled` contains:
+
+| Section | Little-endian layout |
+| --- | --- |
+| Header | eight u32: `GRU1` (`0x31555247`), track count, key count, image-slot count, variant count, strides 16/48/32 |
+| Logical tracks | `{u32 keyOffset,keyCount,flags,padding}` per original logical slot; CPU-only offset is `0xffffffff` |
+| GPU keys | seven f32: translation XY, skew XY, scale XY, alpha; i32 frame; u32 image slot; three padding words |
+| Geometry | variant-major slots: six f32 width,height,U0,V0,U1,V1; two padding words |
+
+Offsets address key records, not bytes. There is no dense GPU track renumbering:
+even CPU-only tracks keep their original descriptor slot. Missing keys allocate
+no frame array. Variant zero supplies the original geometry pivot. CPU `both`
+arrays remain generated C++; GPU source arrays are loading-only.
+The Vulkan runtime route is opt-in through `PVZ_EXPERIMENTAL_GPU_REANIM`;
+default builds retain the existing CPU transform path and do not upload these
+GPU keyframe records. CPU-only and GPU-only selectors are authoring support;
+all current assets remain `both`, and CPU queries require CPU-resident keys.
 
 `GeneratedDefinitionLoading.cpp` binds image fields through
 `DefinitionBindAtlasPath`, plus caption fonts, with idempotent per-kind release
@@ -99,10 +174,10 @@ that image. The default row uses the root name, and generated reanimation appear
 `compiled/atlases/<group>.atlas.png`. These paths are literal calls generated
 in `GeneratedDefinitionLoading.cpp`, not numbered image resources.
 Loading code assigns the definition's texture bindings directly.
-An image-free row has no PNG and stores zero atlas dimensions
-and empty rectangles. Particle and reanimation roots own parallel `mTextures`,
-`mTextureWidths` and `mTextureHeights` arrays, indexed by appearance, plus a flat
-`mImageRects` table indexed by appearance and image slot. A particle emitter
+An image-free row has no PNG and uses empty UV regions. Particle and reanimation
+roots retain `mTextures`, indexed by appearance, plus a flat `mImageRects`
+table of `TextureRegion` values indexed by appearance and image slot. They do not
+retain per-appearance atlas dimensions. A particle emitter
 stores an offset/count into each appearance row, while a shared reanimation
 transform stores one slot index. No image or atlas
 wrapper lies on the drawing path. A path-indexed loading registry
@@ -152,7 +227,7 @@ an extra Flush. Other backend resource representations are unchanged.
 
 Reanimation transforms contain a `u32 mImageSlot`, rather than a rectangle or
 image pointer. The definition's flat table resolves `(instance.mVariant,
-transform.mImageSlot)` to a final 16-byte pixel rectangle. The offline packer
+transform.mImageSlot)` to a final 24-byte UV/logical-size region. The offline packer
 resolves inherited source sheets and discrete cells into those slots; runtime
 transforms carry no rows or columns. The original frame value remains for
 visibility and animation behavior. Particle source definitions instead contain
@@ -200,12 +275,12 @@ Compilation further distinguishes runtime slots by
 `(track, original image, original cell)` so the shared transform behavior
 contains only one numeric slot per frame. Reusing the original source image
 retains its original cell; replacing it uses the full replacement image.
-`none` produces an all-zero rectangle. It skips that sprite without hiding
+`none` produces an all-zero sampling region. It skips that sprite without hiding
 attachments on the same track.
 
 Row zero is the ordinary appearance. Slot zero is all zero in every row; every
 other slot in row zero is valid geometry. Other rows may blank individual slots.
-The definition references a flat static `[variant][slot]` rectangle array and one texture
+The definition references a flat static `[variant][slot]` UV-region array and one texture
 binding per row. Related rows share textures only when the build configuration
 explicitly groups them, for example with a `Root_V*` member pattern. Authoring
 appearance identities do not create extra runtime types or independent compiled
@@ -263,9 +338,10 @@ rows in the same root file. Parent paths and separate child compiled records
 are not shipped. The source image name is an offline label, not a runtime
 image identity.
 
-The runtime loads each root's emitters, fields and tracks once, owns their
-allocations once, and owns flat rectangle rows plus texture bindings for all
-appearances. Each system stores only `mEffectType` and `mVariant`. An emitter's
+The runtime uses each root's statically generated emitters, fields and tracks,
+and flat UV-region rows plus texture bindings for all appearances; no nested
+behavior allocations are created at load time. Each system stores only
+`mEffectType` and `mVariant`. An emitter's
 offset/count selects the same range within every row. Loading does not recurse
 through parent definitions, and update/drawing do not follow an inheritance
 chain. The former IDV1 runtime dependency format has been removed.
@@ -580,22 +656,20 @@ save files, whose former content CRC slot is ignored to permit manual editing.
 
 ## Ownership and rendering
 
-Particle and reanimation definitions own arrays of borrowed GPU texture pointers and atlas
-dimensions; their shared transforms contain only image-slot indices.
-Reanimation rectangle rows are owned by the root definition, and instances own
-only a variant index. Particle definitions own a contiguous `[variant][rectangle]`
-array; each emitter stores an offset/count into every row. Individual particles
-have no texture pointer or rectangle allocation. Every root owns its emitter,
-track, field and name-routing allocations exactly once. There are no separately
-loaded child definitions, runtime dependency graphs or borrowed behavior arrays
-between roots. Failed loads free partial root allocations and clear published
-state before rethrowing, allowing a clean retry; repeated global cleanup is safe.
-Rendering selects the final rectangle by frame number and applies dynamic
-clipping within that rectangle. No row/column division, source-sheet lookup,
-fixed frame stride or runtime packing is required. GPU pointers and atlas
-dimensions remain definition-owned. Temporary draw sources and triangle batches
-borrow the texture. There is no behavior wrapper, per-frame inheritance lookup
-or parent-chain traversal in update or drawing.
+Particle and reanimation definitions retain arrays of borrowed GPU texture
+pointers; their shared transforms contain only image-slot indices. Reanimation
+sampling rows are static `TextureRegion` arrays, and instances own only a variant
+index. Particle definitions use a contiguous `[variant][region]` array; each
+emitter stores an offset/count into every row. Individual particles have no
+texture pointer or sampling-region allocation. Emitters, tracks, fields and
+name-routing data are generated once per root and live with the program.
+There are no separately loaded child definitions or runtime parent chains.
+Failed texture binding clears partial published bindings and temporary payloads
+before rethrowing, allowing a clean retry; repeated cleanup is safe.
+Rendering selects a UV region by frame number and applies any dynamic local crop
+within it, retaining logical size. No atlas-extent division, source-sheet lookup,
+fixed frame stride or runtime packing is required. Definitions do not own atlas
+dimension arrays; temporary draw sources and batches borrow the texture only.
 
 Definition atlases must bypass the older runtime atlas packing path. Source
 PNG decoding may run on the loading worker; GPU upload remains on the primary
@@ -606,7 +680,7 @@ the incomplete definition.
 
 ## Global image resources
 
-Definition image fields use static rectangles and direct GPU texture pointers.
+Definition image fields use static UV regions and direct GPU texture pointers.
 Named image globals retain the 210 images needed directly by game code and UI;
 font glyph paths retain their own image closure. `Resources.h/.cpp` declare and
 define those ordinary `Image*` variables. Reanimation and particle compilers
@@ -643,8 +717,9 @@ The existing author's alpha composition policy is preserved before packing.
 
 Generated `SceneAtlasData.h/.cpp` defines the global namespaces `MagnetAtlas`,
 `AlmanacAtlas`, `AchievementsAtlas` and `FixedUIAtlas`. Each has one
-`Sexy::GpuTexture* Texture`, constant atlas dimensions, a module-local `Sprite`
-enum, static `Images` rectangles and `Load()` / `Free()` functions. The load
+`Sexy::GpuTexture* Texture`, a module-local `Sprite` enum, static `TextureRegion`
+`Images` arrays and `Load()` / `Free()` functions. Public atlas Width/Height
+constants are removed. The load
 functions bind the final GPU field through `DefinitionBindAtlasPath`; freeing
 unbinds it. `LoadSceneAtlases()` and reverse-order `FreeSceneAtlases()` aggregate
 the four modules. There is no per-view `Image` object, texture wrapper or
@@ -662,7 +737,9 @@ packing unit. These use the existing exact solver, native incumbent, geometry
 cache, no-rotation rule, two-pixel padding and 60-second budget per unit. Reports
 retain proof status and gap; a bounded feasible result is not a proof of optimality.
 `SceneAtlasBindings.h` stores offline extent and full-sheet RGBA verification
-metadata. Scene geometry is static C++ data, with no runtime scene `.compiled`.
+metadata. The offline generator normalizes view coordinates using that extent
+and writes UV bounds plus logical dimensions into static C++ data. Loaders use
+expected PNG dimensions as validation literals only. There is no runtime scene `.compiled`.
 
 An `image` may be a direct source path, including a newly added file with no
 `resources.json` entry. Existing `IMAGE_*` labels are optional offline authoring

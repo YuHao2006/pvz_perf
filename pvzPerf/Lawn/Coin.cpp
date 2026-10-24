@@ -5,6 +5,8 @@
 #include "Challenge.h"
 #include "LawnApp.h"
 #include "graphics/DDInterface.h"
+#include "graphics/AtlasDraw.h"
+#include "graphics/RenderInterface.h"
 #include "SeedPacket.h"
 #include "CursorObject.h"
 #include "Resources.h"
@@ -16,6 +18,7 @@
 #include "Sexy.TodLib/Reanimator.h"
 #include "Sexy.TodLib/Attachment.h"
 #include "Sexy.TodLib/EffectSystem.h"
+#include "Sexy.TodLib/ExponentialCurve.h"
 #include "Widget/AchievementsWidget.h"
 
 // 礼物植物候选表：各背景礼盒开出的盆栽种子（原版五连 else-if 各内联一张数组）。
@@ -653,26 +656,37 @@ void Coin::UpdateCollected()
         return;
     }
 
-    float aDeltaX = abs(mPosX - aDestX);
-    float aDeltaY = abs(mPosY - aDestY);
-    if (mPosX > aDestX)
+    // Reuse the ground-disappearance counter in this mutually exclusive state.
+    // Retain the public origin and current position; no extra per-coin cache.
+    auto aElapsedNs = static_cast<std::uint64_t>(
+        std::max<std::int64_t>(0, mDisappearCounter.mNanoseconds));
+    const double aPreviousFactor = TodExponentialCurve<20.0 / 21.0>(aElapsedNs);
+    const auto aPreviousX = static_cast<float>(
+        aDestX + (double(mCollectX) - aDestX) * aPreviousFactor);
+    const auto aPreviousY = static_cast<float>(
+        aDestY + (double(mCollectY) - aDestY) * aPreviousFactor);
+    if (mDisappearCounter.mNanoseconds < 0 || mPosX != aPreviousX || mPosY != aPreviousY)
     {
-        mPosX -= Sexy::UpdateDelta(aDeltaX / 21.0f);
+        // A destination change (store/Zen Garden/Dave), external relocation or
+        // a historical save starts a fresh segment from the current position.
+        mCollectX = mPosX;
+        mCollectY = mPosY;
+        mDisappearCounter = 0;
     }
-    else if (mPosX < aDestX)
-    {
-        mPosX += Sexy::UpdateDelta(aDeltaX / 21.0f);
-    }
-    if (mPosY > aDestY)
-    {
-        mPosY -= Sexy::UpdateDelta(aDeltaY / 21.0f);
-    }
-    else if (mPosY < aDestY)
-    {
-        mPosY += Sexy::UpdateDelta(aDeltaY / 21.0f);
-    }
-
-    mCollectionDistance = sqrt(aDeltaY * aDeltaY + aDeltaX * aDeltaX);
+    mDisappearCounter.AddNanoseconds(static_cast<std::int64_t>(
+        std::min<std::uint64_t>(Sexy::gUpdateIntervalNs, INT64_MAX)));
+    aElapsedNs = static_cast<std::uint64_t>(mDisappearCounter.mNanoseconds);
+    const double aFactor = TodExponentialCurve<20.0 / 21.0>(aElapsedNs);
+    const double aOriginX = double(mCollectX) - aDestX;
+    const double aOriginY = double(mCollectY) - aDestY;
+    mPosX = static_cast<float>(aDestX + aOriginX * aFactor);
+    mPosY = static_cast<float>(aDestY + aOriginY * aFactor);
+    // 1073 scores, scales and fades from the distance before its 10ms move.
+    // Preserve that delay as time, rather than as a previous-update sample.
+    const double aDistanceFactor = TodExponentialCurve<20.0 / 21.0>(
+        aElapsedNs > 10'000'000 ? aElapsedNs - 10'000'000 : 0);
+    mCollectionDistance = static_cast<float>(
+        std::sqrt(aOriginX * aOriginX + aOriginY * aOriginY) * aDistanceFactor);
 
     if (IsPresentWithAdvice())
     {
@@ -927,41 +941,43 @@ void Coin::Draw(Graphics* g)
     // 0..27，count_last=末值 PRESENT_SURVIVAL_MODE 锚定）。mCentered = 原链
     // "-= mWidth/2、-= mHeight/2"（整数除法保留在应用处）；nullptr 槽 = 表外
     // 预检（Sun 族/两种卡包）或原 default（NONE/DIAMOND 不在此绘制）。
-    static constexpr struct { Image* const* mImage; Rect mSource; float mOffX; float mOffY; float mScaleMul; bool mCentered; } kCoinDrawRows[] = {
-        { nullptr,                         Rect(),                0.0f,   0.0f, 1.0f, false },  // 0 COIN_NONE（原 default）
-        { &IMAGE_REANIM_COIN_SILVER_DOLLAR, Rect(0, 0, 43, 40),     8.0f,  10.0f, 1.0f, false },  // 1 COIN_SILVER
-        { &IMAGE_REANIM_COIN_GOLD_DOLLAR,   Rect(0, 0, 45, 45),     8.0f,  10.0f, 1.0f, false },  // 2 COIN_GOLD
-        { nullptr,                         Rect(),                0.0f,   0.0f, 1.0f, false },  // 3 COIN_DIAMOND（原 default，走 reanim 特效）
-        { nullptr,                         Rect(),                0.0f,   0.0f, 1.0f, false },  // 4 COIN_SUN（表外预检）
-        { nullptr,                         Rect(),                0.0f,   0.0f, 1.0f, false },  // 5 COIN_SMALLSUN（表外预检）
-        { nullptr,                         Rect(),                0.0f,   0.0f, 1.0f, false },  // 6 COIN_LARGESUN（表外预检）
-        { nullptr,                         Rect(),                0.0f,   0.0f, 1.0f, false },  // 7 COIN_FINAL_SEED_PACKET（表外预检）
-        { &IMAGE_TROPHY_HI_RES,             Rect(0, 0, 166, 136),   0.0f,   0.0f, 0.5f, true  },  // 8 COIN_TROPHY
-        { &IMAGE_SHOVEL_HI_RES,             Rect(0, 0, 116, 125), -20.0f, -20.0f, 0.5f, false },  // 9 COIN_SHOVEL
-        { &IMAGE_ALMANAC,                   Rect(0, 0, 80, 80),     0.0f,   0.0f, 1.0f, false },  // 10 COIN_ALMANAC
-        { &IMAGE_CARKEYS,                   Rect(0, 0, 80, 80),     0.0f,   0.0f, 1.0f, false },  // 11 COIN_CARKEYS
-        { &IMAGE_SCARY_POT,                 Rect(0, 0, 80, 101),    0.0f,   0.0f, 1.0f, false },  // 12 COIN_VASE
-        { &IMAGE_WATERINGCAN,               Rect(0, 0, 80, 80),     0.0f,   0.0f, 1.0f, false },  // 13 COIN_WATERING_CAN
-        { &IMAGE_TACO,                      Rect(0, 0, 80, 80),     0.0f,   0.0f, 1.0f, false },  // 14 COIN_TACO
-        { &IMAGE_ZOMBIE_NOTE_SMALL,         Rect(0, 0, 78, 52),     0.0f,   0.0f, 1.0f, false },  // 15 COIN_NOTE
-        { nullptr,                         Rect(),                0.0f,   0.0f, 1.0f, false },  // 16 COIN_USABLE_SEED_PACKET（表外预检）
-        { &IMAGE_PRESENT,                   Rect(0, 0, 80, 80),     0.0f, -20.0f, 1.0f, false },  // 17 COIN_PRESENT_PLANT
-        { &IMAGE_MONEYBAG_HI_RES,           Rect(0, 0, 182, 171),   0.0f,   0.0f, 0.5f, true  },  // 18 COIN_AWARD_MONEY_BAG
-        { &IMAGE_PRESENT,                   Rect(0, 0, 80, 80),     0.0f, -20.0f, 1.0f, false },  // 19 COIN_AWARD_PRESENT
-        { &IMAGE_MONEYBAG_HI_RES,           Rect(0, 0, 182, 171),   0.0f,   0.0f, 0.5f, true  },  // 20 COIN_AWARD_BAG_DIAMOND
-        { &IMAGE_SUNFLOWER_TROPHY,          Rect(0, 0, 157, 269),  -5.0f,   0.0f, 0.6f, false },  // 21 COIN_AWARD_SILVER_SUNFLOWER
-        { &IMAGE_SUNFLOWER_TROPHY,          Rect(157, 0, 157, 269),-5.0f,   0.0f, 0.6f, false },  // 22 COIN_AWARD_GOLD_SUNFLOWER
-        { &IMAGE_CHOCOLATE,                 Rect(0, 0, 57, 66),     0.0f,   0.0f, 1.0f, false },  // 23 COIN_CHOCOLATE
-        { &IMAGE_CHOCOLATE,                 Rect(0, 0, 57, 66),     0.0f,   0.0f, 1.0f, false },  // 24 COIN_AWARD_CHOCOLATE（共体）
-        { &IMAGE_PRESENT,                   Rect(0, 0, 80, 80),     0.0f, -20.0f, 1.0f, false },  // 25 COIN_PRESENT_MINIGAMES（共体）
-        { &IMAGE_PRESENT,                   Rect(0, 0, 80, 80),     0.0f, -20.0f, 1.0f, false },  // 26 COIN_PRESENT_PUZZLE_MODE（共体）
-        { &IMAGE_PRESENT,                   Rect(0, 0, 80, 80),     0.0f, -20.0f, 1.0f, false },  // 27 COIN_PRESENT_SURVIVAL_MODE（共体）
+    // Source PNG dimensions are resolved offline: Scary_Pot is 240x202 and
+    // Sunflower_trophy is 314x269; other entries use their complete image.
+    static constexpr struct { Image* const* mImage; TextureRegion mSource; float mOffX; float mOffY; float mScaleMul; bool mCentered; } kCoinDrawRows[] = {
+        { nullptr,                         {},                           0.0f,   0.0f, 1.0f, false },  // 0 COIN_NONE
+        { &IMAGE_REANIM_COIN_SILVER_DOLLAR, {0, 0, 1, 1, 43, 40},         8.0f,  10.0f, 1.0f, false },  // 1 COIN_SILVER
+        { &IMAGE_REANIM_COIN_GOLD_DOLLAR,   {0, 0, 1, 1, 45, 45},         8.0f,  10.0f, 1.0f, false },  // 2 COIN_GOLD
+        { nullptr,                         {},                           0.0f,   0.0f, 1.0f, false },  // 3 COIN_DIAMOND
+        { nullptr,                         {},                           0.0f,   0.0f, 1.0f, false },  // 4 COIN_SUN
+        { nullptr,                         {},                           0.0f,   0.0f, 1.0f, false },  // 5 COIN_SMALLSUN
+        { nullptr,                         {},                           0.0f,   0.0f, 1.0f, false },  // 6 COIN_LARGESUN
+        { nullptr,                         {},                           0.0f,   0.0f, 1.0f, false },  // 7 COIN_FINAL_SEED_PACKET
+        { &IMAGE_TROPHY_HI_RES,             {0, 0, 1, 1, 166, 136},       0.0f,   0.0f, 0.5f, true  },  // 8 COIN_TROPHY
+        { &IMAGE_SHOVEL_HI_RES,             {0, 0, 1, 1, 116, 125},     -20.0f, -20.0f, 0.5f, false },  // 9 COIN_SHOVEL
+        { &IMAGE_ALMANAC,                   {0, 0, 1, 1, 80, 80},         0.0f,   0.0f, 1.0f, false },  // 10 COIN_ALMANAC
+        { &IMAGE_CARKEYS,                   {0, 0, 1, 1, 80, 80},         0.0f,   0.0f, 1.0f, false },  // 11 COIN_CARKEYS
+        { &IMAGE_SCARY_POT,                 {0, 0, 1.0f/3.0f, .5f, 80, 101}, 0.0f, 0.0f, 1.0f, false },  // 12 COIN_VASE
+        { &IMAGE_WATERINGCAN,               {0, 0, 1, 1, 80, 80},         0.0f,   0.0f, 1.0f, false },  // 13 COIN_WATERING_CAN
+        { &IMAGE_TACO,                      {0, 0, 1, 1, 80, 80},         0.0f,   0.0f, 1.0f, false },  // 14 COIN_TACO
+        { &IMAGE_ZOMBIE_NOTE_SMALL,         {0, 0, 1, 1, 78, 52},         0.0f,   0.0f, 1.0f, false },  // 15 COIN_NOTE
+        { nullptr,                         {},                           0.0f,   0.0f, 1.0f, false },  // 16 COIN_USABLE_SEED_PACKET
+        { &IMAGE_PRESENT,                   {0, 0, 1, 1, 80, 80},         0.0f, -20.0f, 1.0f, false },  // 17 COIN_PRESENT_PLANT
+        { &IMAGE_MONEYBAG_HI_RES,           {0, 0, 1, 1, 182, 171},       0.0f,   0.0f, 0.5f, true  },  // 18 COIN_AWARD_MONEY_BAG
+        { &IMAGE_PRESENT,                   {0, 0, 1, 1, 80, 80},         0.0f, -20.0f, 1.0f, false },  // 19 COIN_AWARD_PRESENT
+        { &IMAGE_MONEYBAG_HI_RES,           {0, 0, 1, 1, 182, 171},       0.0f,   0.0f, 0.5f, true  },  // 20 COIN_AWARD_BAG_DIAMOND
+        { &IMAGE_SUNFLOWER_TROPHY,          {0, 0, .5f, 1, 157, 269},    -5.0f,   0.0f, 0.6f, false },  // 21 COIN_AWARD_SILVER_SUNFLOWER
+        { &IMAGE_SUNFLOWER_TROPHY,          {.5f, 0, 1, 1, 157, 269},    -5.0f,   0.0f, 0.6f, false },  // 22 COIN_AWARD_GOLD_SUNFLOWER
+        { &IMAGE_CHOCOLATE,                 {0, 0, 1, 1, 57, 66},         0.0f,   0.0f, 1.0f, false },  // 23 COIN_CHOCOLATE
+        { &IMAGE_CHOCOLATE,                 {0, 0, 1, 1, 57, 66},         0.0f,   0.0f, 1.0f, false },  // 24 COIN_AWARD_CHOCOLATE
+        { &IMAGE_PRESENT,                   {0, 0, 1, 1, 80, 80},         0.0f, -20.0f, 1.0f, false },  // 25 COIN_PRESENT_MINIGAMES
+        { &IMAGE_PRESENT,                   {0, 0, 1, 1, 80, 80},         0.0f, -20.0f, 1.0f, false },  // 26 COIN_PRESENT_PUZZLE_MODE
+        { &IMAGE_PRESENT,                   {0, 0, 1, 1, 80, 80},         0.0f, -20.0f, 1.0f, false },  // 27 COIN_PRESENT_SURVIVAL_MODE
     };
     static_assert(sizeof(kCoinDrawRows) / sizeof(kCoinDrawRows[0]) == (int)CoinType::COIN_PRESENT_SURVIVAL_MODE + 1,
         "kCoinDrawRows 槽位须与 CoinType 枚举同步");
 
     Image* aImage = nullptr;
-    Rect aSourceRect;
+    TextureRegion aSourceRegion;
     float aDrawScale = mScale;
     float aOffsetX = 0.0f;
     float aOffsetY = 0.0f;
@@ -969,7 +985,7 @@ void Coin::Draw(Graphics* g)
     {
         const auto& aRow = kCoinDrawRows[(int)mType];
         aImage = *aRow.mImage;
-        aSourceRect = aRow.mSource;
+        aSourceRegion = aRow.mSource;
         aDrawScale = mScale * aRow.mScaleMul;
         aOffsetX = aRow.mOffX;
         aOffsetY = aRow.mOffY;
@@ -988,13 +1004,28 @@ void Coin::Draw(Graphics* g)
     if (IsPresentWithAdvice() && mIsBeingCollected)
     {
         aImage = IMAGE_PRESENTOPEN;
-        aSourceRect = Rect(0, 0, 100, 100);
+        aSourceRegion = {0, 0, 1, 1, 100, 100};
         aOffsetX = -10.0f;
         aOffsetY = -10.0f;
     }
 
     g->mColorizeImages = true;
-    TodDrawImageRectCenterScaledF(g, aImage, mPosX + aOffsetX, mPosY + aOffsetY, aSourceRect, aDrawScale, aDrawScale);
+    if (!g->mDestImage || !g->mDestImage->IsGpuDrawTarget())
+        throw NonScreenDrawError(DrawOperation::BltMatrix);
+    auto& render = *g->mDestImage->mRenderOwner;
+    const TextureSource texture{render.CreateImageTexture(aImage), aImage->mGpuSamplingFlags};
+    const float aDrawX = mPosX + aOffsetX;
+    const float aDrawY = mPosY + aOffsetY;
+    if (aDrawScale == 1.0f)
+        DrawAtlasImageScaled(g, texture, aSourceRegion, aDrawX, aDrawY, 1.0f, 1.0f);
+    else
+    {
+        SexyTransform2D transform;
+        transform.Scale(aDrawScale, aDrawScale);
+        transform.m02 = aSourceRegion.mWidth * 0.5f + aDrawX + g->mTransX;
+        transform.m12 = aSourceRegion.mHeight * 0.5f + aDrawY + g->mTransY;
+        TodBltMatrix(g, texture, transform, g->mClipRect, g->mColor, g->mDrawMode, aSourceRegion);
+    }
     g->mColorizeImages = false;
 }
 
@@ -1262,6 +1293,9 @@ void Coin::Collect()
         mBoard->mCoinBankFadeCount = 1000;
     }
 
+    // 普通拾取复用落地消失计时字段：从这里开始保存当前吸附段经过的 ns。
+    // 奖品、特殊礼物和可用种子包已在上方各自的状态分支处理并返回。
+    mDisappearCounter = 0;
     mFadeCount = 0;
 
     if (IsSun() && mBoard && !mBoard->HasConveyorBeltSeedBank())

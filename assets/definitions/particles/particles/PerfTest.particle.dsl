@@ -24,12 +24,12 @@ export component PerfTest {
         particleDuration: nodes {
             { time: 0; low: 60; high: 60; curve: Linear; distribution: Linear; }
         }
-        systemAlpha: nodes {
+        launchSpeed: nodes {
             { time: 0; low: 100; high: 200; curve: Linear; distribution: Linear; }
             { time: 0.5; low: 100; high: 200; curve: Linear; distribution: Linear; }
             { time: 1; low: 100; high: 200; curve: Linear; distribution: Linear; }
         }
-        systemBrightness: nodes {
+        launchAngle: nodes {
             { time: 0; low: 120; high: 240; curve: Linear; distribution: Linear; }
         }
         particleAlpha: nodes {
@@ -134,12 +134,12 @@ export component PerfTest {
         particleDuration: nodes {
             { time: 0; low: 60; high: 60; curve: Linear; distribution: Linear; }
         }
-        systemAlpha: nodes {
+        launchSpeed: nodes {
             { time: 0; low: 100; high: 200; curve: Linear; distribution: Linear; }
             { time: 0.5; low: 100; high: 200; curve: Linear; distribution: Linear; }
             { time: 1; low: 100; high: 200; curve: Linear; distribution: Linear; }
         }
-        systemBrightness: nodes {
+        launchAngle: nodes {
             { time: 0; low: 120; high: 240; curve: Linear; distribution: Linear; }
         }
         particleAlpha: nodes {
@@ -191,12 +191,12 @@ export component PerfTest {
         particleDuration: nodes {
             { time: 0; low: 60; high: 60; curve: Linear; distribution: Linear; }
         }
-        systemAlpha: nodes {
+        launchSpeed: nodes {
             { time: 0; low: 100; high: 200; curve: Linear; distribution: Linear; }
             { time: 0.5; low: 100; high: 200; curve: Linear; distribution: Linear; }
             { time: 1; low: 100; high: 200; curve: Linear; distribution: Linear; }
         }
-        systemBrightness: nodes {
+        launchAngle: nodes {
             { time: 0; low: 120; high: 240; curve: Linear; distribution: Linear; }
         }
         particleAlpha: nodes {

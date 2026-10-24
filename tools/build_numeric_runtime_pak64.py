@@ -56,6 +56,13 @@ def require(condition: bool, message: str) -> None:
         raise ValueError(message)
 
 
+def reanim_track_flags(flags: int, *, authored: bool) -> tuple[int, int]:
+    """IDTF keeps text in bit 0 and storage (both/cpu/gpu) in bits 1..2."""
+    require(flags >= 0 and flags & ~7 == 0 and flags >> 1 <= 2
+            and (authored or flags <= 1), "Invalid reanimation track flags")
+    return flags & 1, flags >> 1
+
+
 def key(name: str) -> str:
     path = name.replace("\\", "/")
     parts = (path[:-1] if path.endswith("/") else path).split("/")
@@ -690,7 +697,8 @@ def validate_reanim(reader: Reader, count: int, registries: dict,
     lo, hi = registries["attacher_range"]
     for _ in range(count):
         track, frames, stride, mode = reader.unpack("<4I")
-        require(track <= registries["track_max"] and stride == 32 and mode <= 1
+        mode, storage = reanim_track_flags(mode, authored=authored)
+        require(track <= registries["track_max"] and stride == 32
                 and not (lo <= track < hi and mode != 0) and 0 < frames <= 1 << 20,
                 "Invalid IDT5 track header")
         values = reader.take(frames * 32)
@@ -909,7 +917,8 @@ def parse_reanim_variants(name: str, data: bytes) -> dict:
     tracks = []
     for _ in range(track_count):
         track, frames, stride, mode = reader.unpack("<4I")
-        require(stride == 32 and mode <= 1 and frames <= 1 << 20, "Invalid IDT6 track")
+        mode, _ = reanim_track_flags(mode, authored=authored)
+        require(stride == 32 and frames <= 1 << 20, "Invalid IDT6 track")
         reader.take(frames * 32)
         tracks.append((track, frames, mode))
     require(set(options) <= {track for track, _, _ in tracks}, "Unknown RAV6 action track")
@@ -1036,7 +1045,8 @@ def parse_definition_atlas(name: str, data: bytes) -> dict | None:
         tracks = []
         for _ in range(count):
             _, frames, stride, mode = reader.unpack("<4I")
-            require(stride == 32 and mode <= 1 and frames <= 1 << 20, "Invalid inline IDT5 track")
+            mode, _ = reanim_track_flags(mode, authored=inner == 0x46544449)
+            require(stride == 32 and frames <= 1 << 20, "Invalid inline IDT5 track")
             reader.take(frames * 32)
             tracks.append((frames, mode))
         for frames, mode in tracks:

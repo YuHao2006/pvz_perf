@@ -21,6 +21,7 @@ using OpenGLScaleStep = D3d9ScaleStep;
 #include "graphics/opengl/OpenGLRenderer.h"
 #include "graphics/opengl/OpenGLShaders.h"
 #endif
+#include "PoolGpuChecks.h"
 #include <algorithm>
 #include <array>
 #include <cmath>
@@ -1193,6 +1194,9 @@ int main(int argc, char** argv)
                 test(renderer);
             });
         };
+        rendererTest("production-pool-gpu-direct-UV",[](OpenGLRenderer& renderer) {
+            PoolGpuChecks::Run(renderer);
+        });
         rendererTest("precompiled-atlas-direct-upload-regions-filters-storage-batches",PrecompiledAtlasRegions);
         rendererTest("precompiled-atlas-replace-destroy-static-slot-reuse",PrecompiledAtlasVersions);
         rendererTest("independent-NPOT-negative-UV-CPU-taps",IndependentTextureSampling);

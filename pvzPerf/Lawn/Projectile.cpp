@@ -28,7 +28,7 @@ static_assert((int)ProjectileType::NUM_PROJECTILES == 14);
 
 std::int64_t ProjectileNow(const Projectile& projectile)
 {
-	const auto now = projectile.mBoard->mMainCounter.mNanoseconds;
+	const auto now = projectile.mBoard->mLevelTimeNs;
 	if (now > INT64_MAX) throw std::overflow_error("projectile timestamp exceeds clock range");
 	return static_cast<std::int64_t>(now);
 }
@@ -1132,9 +1132,8 @@ void Projectile::Draw(Graphics* g)
 
 	if (aVisual.mSource.mWidth != 0)
 	{
-		const Rect& aSrcRect = aVisual.mSource;
-		const TextureSource aTexture{gProjectileResources.mTexture,
-			gProjectileResources.mWidth, gProjectileResources.mHeight};
+		const TextureRegion& aSrcRect = aVisual.mSource;
+		const TextureSource aTexture{gProjectileResources.mTexture, 0};
 		if (FloatApproxEqual(mRotation, 0.0f) && FloatApproxEqual(aScale, 1.0f))
 		{
 			SexyTransform2D aTransform;
@@ -1234,9 +1233,8 @@ void Projectile::DrawShadow(Graphics* g)
 		aScale *= 200.0f / (aHeight + 200.0f);
 	}
 
-	const Rect& aSource = gProjectileResources.mShadows[aShadowFrame];
-	const TextureSource aTexture{gProjectileResources.mTexture,
-		gProjectileResources.mWidth, gProjectileResources.mHeight};
+	const TextureRegion& aSource = gProjectileResources.mShadows[aShadowFrame];
+	const TextureSource aTexture{gProjectileResources.mTexture, 0};
 	SexyTransform2D aTransform;
 	TodScaleRotateTransformMatrix(aTransform,
 		aOffsetX + g->mTransX + aSource.mWidth * 0.5f * aScale * aStretch,

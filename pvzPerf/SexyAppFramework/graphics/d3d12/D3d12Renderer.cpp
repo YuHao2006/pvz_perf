@@ -125,6 +125,9 @@ struct D3d12Renderer::Impl {
     ComPtr<ID3D12RootSignature> gameRoot, presentRoot;
     std::array<ComPtr<ID3D12PipelineState>, 3> scenePipelines, imagePipelines;
     ComPtr<ID3D12PipelineState> presentPipeline;
+    ComPtr<ID3D12RootSignature> poolRoot;
+    std::array<ComPtr<ID3D12PipelineState>, 3> poolScenePipelines, poolImagePipelines;
+    ComPtr<ID3D12Resource> poolVertices, poolIndices;
     Kernel colorKernel, alphaKernel, fontKernel, causticKernel;
     GpuHdrParams hdr{200, 1000, 200, 1};
     std::unique_ptr<D3d12ScaleLibrary> scaleLibrary;
@@ -230,12 +233,12 @@ struct D3d12Renderer::Impl {
     }
 
     ComPtr<ID3D12RootSignature> Root(UINT constants, UINT inputs, bool game,
-        bool sampler, bool compute) {
+        bool sampler, bool compute, bool pool = false) {
         std::array<D3D12_DESCRIPTOR_RANGE, 2> ranges{};
         ranges[0] = {D3D12_DESCRIPTOR_RANGE_TYPE_SRV, inputs, 0, 0, 0};
         ranges[1] = {game ? D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER :
             D3D12_DESCRIPTOR_RANGE_TYPE_UAV, game ? 4u : 1u, 0, 0, 0};
-        std::array<D3D12_ROOT_PARAMETER, 3> params{};
+        std::array<D3D12_ROOT_PARAMETER, 4> params{};
         params[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
         params[0].Constants = {0, 0, constants};
         params[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
@@ -247,6 +250,9 @@ struct D3d12Renderer::Impl {
         params[2].DescriptorTable = {1, &ranges[1]};
         params[2].ShaderVisibility = game ? D3D12_SHADER_VISIBILITY_PIXEL :
             D3D12_SHADER_VISIBILITY_ALL;
+        params[3].ParameterType = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
+        params[3].Constants = {1, 0, 16};
+        params[3].ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
         std::array<D3D12_STATIC_SAMPLER_DESC, 4> samplers{};
         for (UINT i = 0; i < samplers.size(); ++i) {
             auto& s = samplers[i];
@@ -261,7 +267,7 @@ struct D3d12Renderer::Impl {
             s.ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
         }
         D3D12_ROOT_SIGNATURE_DESC desc{};
-        desc.NumParameters = compute || game ? 3 : 2;
+        desc.NumParameters = pool ? 4 : (compute || game ? 3 : 2);
         desc.pParameters = params.data();
         desc.NumStaticSamplers = sampler && !game ? 1 : 0;
         desc.pStaticSamplers = samplers.data();
@@ -282,12 +288,16 @@ struct D3d12Renderer::Impl {
 
     ComPtr<ID3D12PipelineState> Graphics(ID3D12RootSignature* root,
         const std::vector<char>& vs, const std::vector<char>& ps,
-        DXGI_FORMAT format, GpuBlend blend, bool premultiplied) {
+        DXGI_FORMAT format, GpuBlend blend, bool premultiplied, bool pool = false) {
         D3D12_GRAPHICS_PIPELINE_STATE_DESC desc{};
         desc.pRootSignature = root;
         desc.VS = {vs.data(), vs.size()};
         desc.PS = {ps.data(), ps.size()};
         desc.InputLayout = {VertexLayout.data(), UINT(VertexLayout.size())};
+        const D3D12_INPUT_ELEMENT_DESC poolLayout{
+            "POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 0,
+            D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0};
+        if (pool) desc.InputLayout = {&poolLayout, 1};
         desc.SampleMask = UINT_MAX;
         desc.RasterizerState.FillMode = D3D12_FILL_MODE_SOLID;
         desc.RasterizerState.CullMode = D3D12_CULL_MODE_NONE;
@@ -335,6 +345,29 @@ struct D3d12Renderer::Impl {
                 Shader(directory, "game_present_ps"), DXGI_FORMAT_R10G10B10A2_UNORM,
                 GpuBlend::Opaque, false);
         }
+    }
+
+    void InitPool() {
+        if (poolVertices) return;
+        poolRoot = Root(4, TextureSlots, true, true, false, true);
+        const auto vs = Shader(directory, "game_pool_vs"), ps = Shader(directory, "game_ps");
+        for (UINT i = 0; i < 3; ++i) {
+            poolScenePipelines[i] = Graphics(poolRoot.Get(), vs, ps,
+                DXGI_FORMAT_B8G8R8A8_UNORM, GpuBlend(i), false, true);
+            poolImagePipelines[i] = Graphics(poolRoot.Get(), vs, ps,
+                DXGI_FORMAT_R32G32B32A32_FLOAT, GpuBlend(i), true, true);
+        }
+        auto upload = [&](const void* data, size_t size) {
+            auto buffer = Buffer(size, D3D12_HEAP_TYPE_UPLOAD);
+            void* mapped = nullptr;
+            const D3D12_RANGE readRange{0, 0};
+            Check(buffer->Map(0, &readRange, &mapped), "Map immutable pool mesh", device);
+            std::memcpy(mapped, data, size);
+            buffer->Unmap(0, nullptr);
+            return buffer;
+        };
+        poolIndices = upload(GpuPoolIndices.data(), sizeof(GpuPoolIndices));
+        poolVertices = upload(GpuPoolVertices.data(), sizeof(GpuPoolVertices));
     }
 
     UINT Slot() {
@@ -996,6 +1029,7 @@ void D3d12Renderer::PrepareLoadingPipelines() {
     auto& s = *impl_;
     if (s.sceneOpen)
         throw std::logic_error("Prepare D3D12 loading pipelines before opening a scene");
+    s.InitPool();
     if (!s.fontKernel.pipeline) {
         D3D12_FEATURE_DATA_D3D12_OPTIONS options{};
         Check(s.device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS,
@@ -1336,6 +1370,58 @@ void D3d12Renderer::SubmitCoverageTriangles(std::span<const GpuVertex> vertices,
     if (mask->format != DXGI_FORMAT_R8_UNORM)
         throw std::invalid_argument("D3D12 coverage draw requires an R8 mask");
     impl_->Draw(vertices, mask, blend, clip, true);
+}
+void D3d12Renderer::SubmitPool(D3d12Texture* texture, const GpuPoolParams& p) {
+    auto& s = *impl_;
+    if (!s.sceneOpen) throw std::logic_error("D3D12 pool draw outside a scene");
+    s.Require(texture);
+    if (!s.poolVertices) throw std::logic_error("Prepare D3D12 pool pipelines during loading");
+    if (p.layer > 2 || p.sampler > 3 || size_t(p.blend) >= 3)
+        throw std::invalid_argument("Invalid D3D12 pool draw parameters");
+    s.Flush();
+    auto* target = s.Output();
+    auto* source = texture;
+    if (source == target) {
+        s.Snapshot(target, true);
+        source = s.retired.back().get();
+    } else if (target->sampled) s.Snapshot(target);
+    s.Transition(source, SampleState);
+    source->sampled = true;
+    s.BindTarget(target);
+    s.commands->SetGraphicsRootSignature(s.poolRoot.Get());
+    s.commands->SetGraphicsRootDescriptorTable(1, s.Gpu(0));
+    s.commands->SetGraphicsRootDescriptorTable(2,
+        s.samplerHeap->GetGPUDescriptorHandleForHeapStart());
+    const std::array<UINT, 4> scene{
+        std::bit_cast<UINT>(float(target->width)), std::bit_cast<UINT>(float(target->height)),
+        target->generated ? 1u : 0u, 0u};
+    s.commands->SetGraphicsRoot32BitConstants(0, 4, scene.data(), 0);
+    constexpr UINT filters = GpuVertex::kIndependentColorFilter |
+        GpuVertex::kColorFilterMask | GpuVertex::kAlphaEdgeFilter;
+    const std::array<UINT, 16> constants{
+        std::bit_cast<UINT>(p.width), std::bit_cast<UINT>(p.height),
+        std::bit_cast<UINT>(p.transX), std::bit_cast<UINT>(p.transY),
+        std::bit_cast<UINT>(p.time1), std::bit_cast<UINT>(p.time2),
+        std::bit_cast<UINT>(p.time3), std::bit_cast<UINT>(p.time5),
+        std::bit_cast<UINT>(float(p.clip.x)), std::bit_cast<UINT>(float(p.clip.y)),
+        std::bit_cast<UINT>(float(p.clip.width)), std::bit_cast<UINT>(float(p.clip.height)),
+        p.layer, p.night, source->slot | (p.samplingFlags & filters) |
+            (source->generated ? 0x80000000u : 0u) |
+            (source->opaque ? GpuVertex::kOpaqueInput : 0u), p.sampler};
+    s.commands->SetGraphicsRoot32BitConstants(3, 16, constants.data(), 0);
+    s.commands->SetPipelineState((target->generated ? s.poolImagePipelines :
+        s.poolScenePipelines).at(size_t(p.blend)).Get());
+    const D3D12_VERTEX_BUFFER_VIEW vertices{s.poolVertices->GetGPUVirtualAddress(),
+        UINT(sizeof(GpuPoolVertices)), sizeof(GpuPoolVertex)};
+    const D3D12_INDEX_BUFFER_VIEW indices{s.poolIndices->GetGPUVirtualAddress(),
+        UINT(sizeof(GpuPoolIndices)), DXGI_FORMAT_R16_UINT};
+    s.commands->IASetVertexBuffers(0, 1, &vertices);
+    s.commands->IASetIndexBuffer(&indices);
+    s.commands->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    const D3D12_RECT scissor{0, 0, target->width, target->height};
+    s.commands->RSSetScissorRects(1, &scissor);
+    s.commands->DrawIndexedInstanced(UINT(GpuPoolIndices.size()), 1, 0, 0, 0);
+    s.InvalidateDrawState();
 }
 void D3d12Renderer::EndSceneAndPresent() {
     auto& s = *impl_;

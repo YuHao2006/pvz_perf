@@ -25,7 +25,7 @@ export component CreditsZombieHeadWipe {
         particleDuration: nodes {
             { time: 0; low: 80; high: 80; curve: Linear; distribution: Linear; }
         }
-        systemGreen: nodes {
+        systemAlpha: nodes {
             { time: 0; low: 0; high: 0; curve: Linear; distribution: Linear; }
             { time: 0.1; low: 1; high: 1; curve: Linear; distribution: Linear; }
             { time: 0.45; low: 1; high: 1; curve: Linear; distribution: Linear; }
@@ -80,7 +80,7 @@ export component CreditsZombieHeadWipe {
         particleDuration: nodes {
             { time: 0; low: 80; high: 80; curve: Linear; distribution: Linear; }
         }
-        systemGreen: nodes {
+        systemAlpha: nodes {
             { time: 0; low: 0; high: 0; curve: Linear; distribution: Linear; }
             { time: 0.1; low: 1; high: 1; curve: Linear; distribution: Linear; }
             { time: 0.45; low: 1; high: 1; curve: Linear; distribution: Linear; }

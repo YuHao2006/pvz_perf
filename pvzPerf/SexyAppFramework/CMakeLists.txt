@@ -1,4 +1,9 @@
 set(PROJECT_NAME LawnProject)
+if(PVZ_EXPERIMENTAL_GPU_REANIM)
+    # Only this implementation changes; no public layout or per-draw switch.
+    set_property(SOURCE "../Sexy.TodLib/Reanimator.cpp" APPEND PROPERTY
+        COMPILE_DEFINITIONS PVZ_EXPERIMENTAL_GPU_REANIM=1)
+endif()
 
 ################################################################################
 # Source groups

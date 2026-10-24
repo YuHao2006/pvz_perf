@@ -20,9 +20,6 @@ public:
 	Image*					mUncheckedImage;
 	Image*					mCheckedImage;
 
-	Rect					mCheckedRect;
-	Rect					mUncheckedRect;
-
 	Color					mOutlineColor;	// These are only used if no image is specified
 	Color					mBkgColor;
 	Color					mCheckColor;

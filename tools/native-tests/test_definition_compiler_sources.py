@@ -217,6 +217,99 @@ class DefinitionCompilerSourceTests(unittest.TestCase):
                 self.assertIn(field, result.stderr)
                 self.assertIn(literal, result.stderr)
 
+    def compile_storage(self, source_text, output_name="storage", fonts=True, success=True):
+        source = self.directory / "storage.dsl"
+        source.write_text(source_text, encoding="utf-8")
+        types, registry = self.directory / "types.txt", self.directory / "fonts.bin"
+        types.write_text("root 0\nother 1\n", encoding="utf-8")
+        registry.write_bytes(struct.pack("<3I", 0x4953594D, 1, 1) + string("CAPTION_FONT"))
+        output = self.directory / output_name
+        arguments = [str(self.compiler), "compile-v2", "--input", str(source),
+                     "--output", str(output), "--type-map", str(types)]
+        if fonts:
+            arguments += ["--font-registry", str(registry)]
+        result = subprocess.run(arguments, capture_output=True, text=True,
+                                encoding="utf-8", errors="replace", timeout=30)
+        self.assertEqual(result.returncode == 0, success, result.stdout + result.stderr)
+        return output, result
+
+    @staticmethod
+    def storage_track(name, text=False):
+        return ('Track { source-name: "' + name + '"; frame-count: 1; frame 0 {'
+                ' x: 7; cel: 0;' + (' font: CAPTION_FONT; text: "caption";' if text else '') + '} }')
+
+    @staticmethod
+    def source_track_headers(path):
+        payload = path.read_bytes()[12:]
+        count = struct.unpack_from("<I", payload, 20)[0]
+        at, tracks = 24, []
+        for _ in range(count):
+            track_id, frames, stride, flags = struct.unpack_from("<4I", payload, at)
+            tracks.append((track_id, frames, stride, flags))
+            at += 16 + frames * stride
+        return tracks
+
+    def test_storage_defaults_and_explicit_both_preserve_all_outputs_bytewise(self):
+        tracks = self.storage_track("z") + self.storage_track("a", text=True)
+        implicit, _ = self.compile_storage("export component Root {" + tracks + "}", "implicit")
+        explicit, _ = self.compile_storage("export component Root {both:" + tracks + "}", "explicit")
+        for name in ("Root.source-record", "Root.reanim.v2.compiled",
+                     "reanim_track_ids.bin", "ReanimTrackId.h", "ReanimTrackMphfGlobal.h"):
+            self.assertEqual((implicit / name).read_bytes(), (explicit / name).read_bytes(), name)
+        self.assertEqual([t[3] for t in self.source_track_headers(implicit / "Root.source-record")],
+                         [0, 1])
+
+    def test_storage_regions_preserve_logical_order_text_flag_and_component_scope(self):
+        source = ("export component Root {" + self.storage_track("z")
+                  + "cpu:" + self.storage_track("a", text=True)
+                  + "gpu:gpu:" + self.storage_track("m")
+                  + "both:" + self.storage_track("b") + "}"
+                  + "export component Other {" + self.storage_track("q") + "}")
+        output, _ = self.compile_storage(source)
+        tracks = self.source_track_headers(output / "Root.source-record")
+        # IDs remain sorted by track name, while descriptor order stays authored.
+        self.assertEqual([t[0] for t in tracks], [5, 1, 3, 2])
+        self.assertEqual([t[3] for t in tracks], [0, 3, 4, 0])
+        self.assertEqual([(t[1], t[2]) for t in tracks], [(1, 32)] * 4)
+        self.assertEqual(self.source_track_headers(output / "Other.source-record")[0][3], 0)
+        self.assertFalse((output / "Root.reanim.v2.compiled").exists())
+        self.assertTrue((output / "Other.reanim.v2.compiled").is_file())
+
+    def test_storage_regions_reject_malformed_nested_unknown_and_variant_annotations(self):
+        cases = [
+            ("export component Root { cpu " + self.storage_track("a") + "}", "expected ':'"),
+            ("export component Root { gpu:; }", "expected '}'"),
+            ("export component Root { gpu: { } }", "expected '}'"),
+            ("export component Root { cpu: both; }", "expected ':'"),
+            ("export component Root { cpus: }", "unknown storage region"),
+            ('export component Root { Track {source-name:"a"; cpu:} }', "unknown track property"),
+            ('export component Root { variant-of:Other; images:[]; both: }', "cannot override storage"),
+            ('export component Root { gpu: variant-of:Other; images:[]; }', "cannot override storage"),
+        ]
+        for i, (source, diagnostic) in enumerate(cases):
+            with self.subTest(source=source):
+                _, result = self.compile_storage(source, f"bad-{i}", success=False)
+                self.assertIn(diagnostic, result.stderr)
+
+    def test_storage_requires_source_records_and_legacy_compile_rejects_loss(self):
+        source = "export component Root {gpu:" + self.storage_track("layer") + "}"
+        _, result = self.compile_storage(source, fonts=False, success=False)
+        self.assertIn("track storage requires", result.stderr)
+        legacy = subprocess.run(
+            [str(self.compiler), "compile", "--input", str(self.directory / "storage.dsl"),
+             "--output", str(self.directory / "legacy.compiled")],
+            capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=30)
+        self.assertNotEqual(legacy.returncode, 0)
+        self.assertIn("cannot represent track storage", legacy.stderr)
+        self.assertFalse((self.directory / "legacy.compiled").exists())
+
+    def test_storage_variant_inherits_root_record_without_extra_behavior(self):
+        source = ("export component Root {gpu:" + self.storage_track("layer") + "}"
+                  "export component Variant {variant-of:Root; images:[[]];}")
+        output, _ = self.compile_storage(source)
+        self.assertEqual([p.name for p in output.glob("*.source-record")], ["Root.source-record"])
+        self.assertEqual(self.source_track_headers(output / "Root.source-record")[0][3], 4)
+
 
 if __name__ == "__main__":
     unittest.main()

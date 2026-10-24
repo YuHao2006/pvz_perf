@@ -23,7 +23,7 @@ constexpr std::size_t Size(Kind kind)
     switch (kind)
     {
     case Kind::Zombie: return 80;
-    case Kind::Plant: return 56;
+    case Kind::Plant: return 156;
     case Kind::Projectile: return 36;
     case Kind::Reanimation: return 68;
     case Kind::ParticleSystem: return 4;
@@ -120,7 +120,6 @@ inline void Validate(Kind kind, std::span<const Byte> state)
         if (kind == Kind::Plant)
         {
             Require(Signed(24) >= 0, "bowling row arrival time is negative");
-            Require(Signed(40) >= 0, "plant launch clock sample is negative");
         }
         else
             for (const std::size_t at : {24U, 52U})

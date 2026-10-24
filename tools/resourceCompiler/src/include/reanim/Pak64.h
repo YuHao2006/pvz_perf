@@ -131,10 +131,18 @@ struct TrackMphfGlobal final {
     [[nodiscard]] bool operator==(const TrackMphfGlobal&) const = default;
 };
 
+// IDTF track flags reserve bit 0 for UI text and bits 1-2 for storage.
+// Both is zero so existing sources retain their exact compiled bytes.
+enum class TrackStorage : std::uint32_t { both = 0, cpu = 1, gpu = 2 };
+inline constexpr std::uint32_t kTrackUiTextMask = 1u;
+inline constexpr unsigned kTrackStorageShift = 1;
+inline constexpr std::uint32_t kTrackStorageMask = 6u;
+
 struct RawTrack final {
     std::string name;  // raw between tags
     std::vector<RawTransform> frames;
     std::vector<TrackAttacherSegment> attacherSegments;  // 仅 attacher 轨道非空
+    TrackStorage storage = TrackStorage::both;
 };
 
 struct RawReanim final {
@@ -316,10 +324,11 @@ struct TrackIdEntry final {
 // Payload (all u32/f32 little-endian):
 //   magic=0x35544449, trackTableHash, imageHash=0, fontRegistryHash,
 //   fpsBits, trackCount;
-//   per track: trackId, frameCount, elementSize=32, textMode (0/1),
+//   per track: trackId, frameCount, elementSize=32, flags
+//              (bit 0: UI text, bits 1-2: storage: 0=both, 1=cpu, 2=gpu),
 //              frameCount * {x,y,kx,ky,sx,sy,cel,alpha} f32;
 //   per track, per frame: sourceImageHandle, fontId;
-//              ONLY textMode=1: UI text byte length + bytes (sparse/inherited).
+//              ONLY flags bit 0: UI text byte length + bytes (sparse/inherited).
 //   segmentTrackCount; per segment track: trackIndex, segmentCount;
 //              per segment: start,end,targetType,actionTrackId,rateBits,loop,
 //                           runStart,runEnd (both bounds pairs end-exclusive).

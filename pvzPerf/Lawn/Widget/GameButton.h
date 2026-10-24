@@ -1,5 +1,6 @@
 #pragma once
 #include "misc/SexyVector.h"
+#include "graphics/TextureRegion.h"
 #include "widget/DialogButton.h"
 
 //using namespace std;
@@ -47,10 +48,10 @@ public:
 	Image*					mDownImage;						//+0xAC
 	Image*					mDisabledImage;					//+0xB0
 	Image*					mOverOverlayImage;				//+0xB4
-	Rect					mNormalRect;					//+0xB8
-	Rect					mOverRect;						//+0xC8
-	Rect					mDownRect;						//+0xD8
-	Rect					mDisabledRect;					//+0xE8
+	TextureRegion			mNormalRegion{};
+	TextureRegion			mOverRegion{};
+	TextureRegion			mDownRegion{};
+	TextureRegion			mDisabledRegion{};
 	bool					mInverted;						//+0xF8
 	bool					mBtnNoDraw;						//+0xF9
 	bool					mFrameNoDraw;					//+0xFA
@@ -67,13 +68,13 @@ public:
 	GameButton(int theId);
 	~GameButton();
 
-	static /*inline*/ bool	HaveButtonImage(Image* theImage, Rect& theRect);
-	void					DrawButtonImage(Graphics* g, Image* theImage, Rect& theRect, int theX, int theY);
+	static /*inline*/ bool	HaveButtonImage(Image* theImage, const TextureRegion& theRegion);
+	void					DrawButtonImage(Graphics* g, Image* theImage, const TextureRegion& theRegion, int theX, int theY);
 	/*inline*/ void			SetFont(_Font* theFont);
 	/*inline*/ bool			IsButtonDown();
 	void					Draw(Graphics* g);
 	void                    DrawAtlas(Graphics* g, const Sexy::TextureSource& texture,
-                                const Rect* overlay = nullptr);
+                                const TextureRegion* overlay = nullptr);
 	/*inline*/ bool			IsMouseOver();
 	void					Update();
 };

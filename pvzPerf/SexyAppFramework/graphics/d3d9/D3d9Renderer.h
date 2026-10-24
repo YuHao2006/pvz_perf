@@ -1,5 +1,6 @@
 #pragma once
 #include "graphics/GpuTypes.h"
+#include "graphics/GpuPool.h"
 #include "graphics/ImageReadback.h"
 #include "graphics/vulkan/VulkanHdr.h"
 #include "D3d9ScaleTypes.h"
@@ -49,6 +50,7 @@ public:
     const bool& sceneOpen;
     void SubmitTriangles(std::span<const GpuVertex>, D3d9Texture*, bool, bool,
         GpuBlend, const GpuClip* clip = nullptr);
+    void SubmitPool(D3d9Texture*, const GpuPoolParams&);
     void SubmitCoverageTriangles(std::span<const GpuVertex>, D3d9Texture*,
         GpuBlend, const GpuClip* clip = nullptr);
     void EndSceneAndPresent();

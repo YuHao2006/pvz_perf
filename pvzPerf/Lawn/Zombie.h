@@ -77,7 +77,7 @@ class Plant;
 class Zombatar;
 class Reanimation;
 class TodParticleSystem;
-class Zombie : public FloatGameObject
+class Zombie : public GameObject
 {
 public:
     enum

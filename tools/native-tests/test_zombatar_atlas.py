@@ -14,6 +14,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "tools"))
 import definition_atlas
 import zombatar_atlas as zombatar
+from static_definition_codegen import texture_region
 
 
 def independently_decode(row, files):
@@ -104,11 +105,14 @@ class ZombatarAtlasTests(unittest.TestCase):
         native = generated["ZombatarAtlasData.cpp"].decode()
         for index, row in enumerate(self.document["images"]):
             self.assertIn(f'{row["name"]} = {index},', enum)
-            self.assertIn("{" + ", ".join(map(str, self.report["images"][index]["region"][:4]))
-                          + "},", native)
+            self.assertIn(texture_region(self.report["images"][index]["region"][:4],
+                                         self.report["atlas_width"], self.report["atlas_height"])
+                          + ",", native)
         self.assertIn("Count = 209", enum)
         self.assertIn("None = Count", enum)
         self.assertIn("compiled/atlases/zombatar.atlas.png", native)
+        self.assertIn(f'DefinitionBindAtlasPath(gZombatarAtlas.mTexture, '
+                      f'{self.report["atlas_width"]}, {self.report["atlas_height"]},', native)
         self.assertNotIn(zombatar.PATH, native)
         self.assertEqual(set(generated), {"ZombatarImage.h", "ZombatarAtlasData.cpp"})
 

@@ -4,6 +4,7 @@
 #include "graphics/SWTri.h"
 #include "graphics/Graphics.h"
 #include "graphics/TextureSource.h"
+#include "graphics/TextureRegion.h"
 #include <memory>
 #include <array>
 #include <vector>
@@ -29,7 +30,7 @@ public:
     TodTriangleGroup();
     void                        DrawGroup(Graphics* g);
     void                        AddTriangle(Graphics* g, Image* theImage, const SexyMatrix3& theMatrix, const Rect& theClipRect, const Color& theColor, int theDrawMode, const Rect& theSrcRect);
-    void                        AddTriangle(Graphics* g, const TextureSource& texture, const SexyMatrix3& theMatrix, const Rect& theClipRect, const Color& theColor, int theDrawMode, const Rect& theSrcRect);
+    void                        AddTriangle(Graphics* g, const TextureSource& texture, const SexyMatrix3& theMatrix, const Rect& theClipRect, const Color& theColor, int theDrawMode, const TextureRegion& theSrcRect);
 };
 
 extern bool gTodTriangleDrawAdditive;  //0x6A9EF5

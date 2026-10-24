@@ -17,7 +17,8 @@ int main()
     FIELD(mBackground);
     FIELD(mSunMoney);
     FIELD(mNumWaves);
-    FIELD(mMainCounter);
+    // Keep the historical inspector's key while using the current native field.
+    std::printf(",\"mMainCounter\":%zu", offsetof(Board, mLevelTimeNs) - state);
     FIELD(mCurrentWave);
     FIELD(mTotalSpawnedWaves);
     FIELD(mTutorialState);

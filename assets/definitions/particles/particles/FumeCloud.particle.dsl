@@ -25,7 +25,7 @@ export component FumeCloud {
         particleDuration: nodes {
             { time: 0; low: 50; high: 60; curve: Linear; distribution: Linear; }
         }
-        systemGreen: nodes {
+        systemAlpha: nodes {
             { time: 0.8; low: 0.9; high: 0.9; curve: Linear; distribution: Linear; }
             { time: 1; low: 0; high: 0; curve: Linear; distribution: Linear; }
         }

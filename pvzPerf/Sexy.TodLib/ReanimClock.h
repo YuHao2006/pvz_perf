@@ -4,17 +4,41 @@
 #include <stdexcept>
 #include <numeric>
 #include <cmath>
+#if defined(_MSC_VER) && defined(_M_X64)
+#include <intrin.h>
+#endif
 
 namespace ReanimClock
 {
 // Original-speed phase: each authored frame spans one second in nanoseconds.
 constexpr std::int64_t Frame = 1'000'000'000LL;
 
-// Exact unsigned 64 x 64 / 64, with a fast native path for normal updates.
+// Exact unsigned 64 x 64 / 64. Native wide arithmetic avoids both a separate
+// overflow-test division and the bit-by-bit fallback for ordinary phase samples.
 inline std::uint64_t MulDiv(std::uint64_t a, std::uint64_t b, std::uint64_t d,
                             std::uint64_t* remainder = nullptr)
 {
     if (!d) throw std::overflow_error("zero animation divisor");
+#if defined(_MSC_VER) && defined(_M_X64)
+    std::uint64_t high, rem;
+    const auto low = _umul128(a, b, &high);
+    if (high >= d) throw std::overflow_error("animation quotient overflow");
+    const auto quotient = _udiv128(high, low, d, &rem);
+    if (remainder) *remainder = rem;
+    return quotient;
+#elif defined(__SIZEOF_INT128__)
+    const auto product = static_cast<unsigned __int128>(a) * b;
+    const auto high = static_cast<std::uint64_t>(product >> 64);
+    if (high >= d) throw std::overflow_error("animation quotient overflow");
+    if (high == 0)
+    {
+        const auto low = static_cast<std::uint64_t>(product);
+        if (remainder) *remainder = low % d;
+        return low / d;
+    }
+    if (remainder) *remainder = static_cast<std::uint64_t>(product % d);
+    return static_cast<std::uint64_t>(product / d);
+#else
     if (!b || a <= UINT64_MAX / b)
     {
         const auto product = a * b;
@@ -38,6 +62,7 @@ inline std::uint64_t MulDiv(std::uint64_t a, std::uint64_t b, std::uint64_t d,
     }
     if (remainder) *remainder = rem;
     return quotient;
+#endif
 }
 
 inline std::int64_t SignedMulDiv(std::int64_t a, std::int64_t b, std::int64_t d)
@@ -92,18 +117,6 @@ inline std::int64_t CeilMulDiv(std::int64_t a, std::int64_t b, std::int64_t deno
     if (result > std::uint64_t(INT64_MAX) - (remainder != 0))
         throw std::overflow_error("animation event ratio overflow");
     return static_cast<std::int64_t>(result + (remainder != 0));
-}
-
-inline std::int64_t DivideRemainder(std::int64_t a, std::int64_t b,
-                                  std::int64_t d, std::int64_t& remainder)
-{
-    const auto magnitude = [](std::int64_t value) {
-        return value < 0 ? std::uint64_t(-(value + 1)) + 1 : std::uint64_t(value);
-    };
-    std::uint64_t rem;
-    MulDiv(magnitude(a), magnitude(b), d, &rem);
-    remainder = (a < 0) != (b < 0) ? -std::int64_t(rem) : std::int64_t(rem);
-    return SignedMulDiv(a, b, d);
 }
 
 // Source endpoints remain floats in pixels. This absolute sample never rounds

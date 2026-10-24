@@ -68,7 +68,7 @@ AchievementsWidget::AchievementsWidget(LawnApp* theApp) {
 	mDefaultScrollValue = 30;
 	mScrollDecay = 1;
 	mDidPressMoreButton = false;
-	const Rect& aRock=AchievementsAtlas::Images[static_cast<unsigned>(AchievementSprite::ACHEESEMENTS_MORE_ROCK)];
+	const TextureRegion& aRock=AchievementsAtlas::Images[static_cast<unsigned>(AchievementSprite::ACHEESEMENTS_MORE_ROCK)];
 	mMoreRockRect = Rect(710,470,aRock.mWidth-25,aRock.mHeight-50);
 }
 
@@ -99,7 +99,7 @@ void AchievementsWidget::Update() {
 
 // GOTY @Patoke: 0x401160
 void AchievementsWidget::Draw(Graphics* g) {
-	const TextureSource aTexture{AchievementsAtlas::Texture,AchievementsAtlas::Width,AchievementsAtlas::Height};
+	const TextureSource aTexture{AchievementsAtlas::Texture, 0};
 	g->ClipRect(-kBackgroundExtension, 0, kBackgroundWidth, mHeight);
 	if (g->mClipRect.mWidth <= 0 || g->mClipRect.mHeight <= 0)
 		return;
@@ -125,7 +125,7 @@ void AchievementsWidget::Draw(Graphics* g) {
 	DrawAtlasImage(g,aTexture,AchievementsAtlas::Images[static_cast<unsigned>(AchievementSprite::ACHEESEMENTS_PIPE)],-kBackgroundExtension,9000);
 	DrawAtlasImage(g,aTexture,AchievementsAtlas::Images[static_cast<unsigned>(AchievementSprite::ACHEESEMENTS_ZUMA)],-kBackgroundExtension,11250);
 
-	const Rect& aChina=AchievementsAtlas::Images[static_cast<unsigned>(AchievementSprite::ACHEESEMENTS_CHINA)];
+	const TextureRegion& aChina=AchievementsAtlas::Images[static_cast<unsigned>(AchievementSprite::ACHEESEMENTS_CHINA)];
 	DrawAtlasImage(g,aTexture,aChina,-kBackgroundExtension,mHeight-aChina.mHeight-50);
 	
 	if (aBackButtonRect.Contains(aMousePosition))
@@ -143,7 +143,7 @@ void AchievementsWidget::Draw(Graphics* g) {
 		int aTextYPos = aImageYPos + 16;
 
 		// Achievement images
-		const Rect& aIcon=AchievementsAtlas::Icons[i];
+		const TextureRegion& aIcon=AchievementsAtlas::Icons[i];
 		const Rect aSrcRect(0,0,aIcon.mWidth,aIcon.mHeight);
 		Rect aDestRect(aImageXPos, aImageYPos, 56, 56);
 		

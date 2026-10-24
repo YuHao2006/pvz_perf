@@ -8,7 +8,7 @@
 namespace Sexy {
 namespace {
 void DrawRegion(Graphics& graphics, const TextureSource& texture,
-    const Rect& source, const SexyMatrix3& transform, bool linear)
+    const TextureRegion& source, const SexyMatrix3& transform, bool linear)
 {
     if (source.mWidth <= 0 || source.mHeight <= 0)
         return;
@@ -23,7 +23,7 @@ void DrawRegion(Graphics& graphics, const TextureSource& texture,
 }
 
 void DrawAtlasImage(Graphics* graphics, const TextureSource& texture,
-    const Rect& region, float x, float y)
+    const TextureRegion& region, float x, float y)
 {
     const int translatedX = int(int(x) + graphics->mTransX);
     const int translatedY = int(int(y) + graphics->mTransY);
@@ -47,13 +47,12 @@ void DrawAtlasImage(Graphics* graphics, const TextureSource& texture,
 }
 
 void DrawAtlasImage(Graphics* graphics, const TextureSource& texture,
-    const Rect& region, const Rect& destination, const Rect& localSource)
+    const TextureRegion& region, const Rect& destination, const Rect& localSource)
 {
     if (destination.mWidth <= 0 || destination.mHeight <= 0 ||
         localSource.mWidth <= 0 || localSource.mHeight <= 0)
         return;
-    const Rect source(region.mX + localSource.mX, region.mY + localSource.mY,
-        localSource.mWidth, localSource.mHeight);
+    const auto source=CropTextureRegion(region,localSource);
     SexyTransform2D transform;
     transform.Scale(float(destination.mWidth) / source.mWidth,
         float(destination.mHeight) / source.mHeight);
@@ -63,7 +62,7 @@ void DrawAtlasImage(Graphics* graphics, const TextureSource& texture,
 }
 
 void DrawAtlasImageScaled(Graphics* graphics, const TextureSource& texture,
-    const Rect& region, float x, float y, float scaleX, float scaleY)
+    const TextureRegion& region, float x, float y, float scaleX, float scaleY)
 {
     SexyTransform2D transform;
     transform.Scale(scaleX, scaleY);

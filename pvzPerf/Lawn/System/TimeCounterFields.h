@@ -14,7 +14,8 @@ void VisitTimeCounterOffsets(Fn&& visit)
     if constexpr (std::is_same_v<Type, Board>)
     {
         TIMER(mFogBlownCountDown); TIMER(mSunCountDown); TIMER(mShakeCounter);
-        TIMER(mMainCounter); TIMER(mEffectCounter); TIMER(mRiseFromGraveCounter);
+        visit(offsetof(Type, mLevelTimeNs), true);
+        TIMER(mEffectCounter); TIMER(mRiseFromGraveCounter);
         TIMER(mOutOfMoneyCounter); TIMER(mTutorialTimer); TIMER(mZombieCountDown);
         TIMER(mHugeWaveCountDown); TIMER(mCoinBankFadeCount); TIMER(mBoardFadeOutCounter);
         TIMER(mNextSurvivalStageCounter); TIMER(mScoreNextMowerCounter);

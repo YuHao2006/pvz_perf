@@ -35,7 +35,7 @@ int main()
                 "\"survival\":%zu},\"widget\":{\"x\":%zu,\"y\":%zu,"
                 "\"width\":%zu,\"height\":%zu,\"parent\":%zu},"
                 "\"continueButton\":%zu,\"creditsButton\":%zu,\"awardStart\":%zu}\n",
-        offsetof(Board, mPaused), offsetof(Board, mMainCounter),
+        offsetof(Board, mPaused), offsetof(Board, mLevelTimeNs),
         offsetof(Board, mCurrentWave), offsetof(Board, mNumWaves),
         offsetof(Board, mSunMoney), offsetof(GameSelector, mOptionsButton),
         offsetof(GameSelector, mSurvivalButton), offsetof(Sexy::Widget, mX),

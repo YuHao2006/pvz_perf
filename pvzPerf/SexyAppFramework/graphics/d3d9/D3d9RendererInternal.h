@@ -36,6 +36,10 @@ struct D3d9Renderer::Impl {
     DX9::Com<IDirect3DVertexDeclaration9> declaration;
     DX9::Com<IDirect3DVertexBuffer9> stream;
     DX9::Com<IDirect3DVertexShader9> sceneVS, imageVS;
+    DX9::Com<IDirect3DVertexShader9> poolVS;
+    DX9::Com<IDirect3DVertexDeclaration9> poolDeclaration;
+    DX9::Com<IDirect3DVertexBuffer9> poolVertices;
+    DX9::Com<IDirect3DIndexBuffer9> poolIndices;
     DX9::Com<IDirect3DPixelShader9> scenePS, copyPS, colorizePS, composePS, causticsPS, fontPS, presentPS;
     bool open = false, mainFrame = false, initialized = false, sceneInitialized = false;
     D3d9Texture* white = nullptr;

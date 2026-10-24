@@ -22,11 +22,13 @@ function(d3d12_shader source entry profile output)
         COMMAND "${PVZ_DXC}" -WX -Ges -HV 2021 -O3 -T "${profile}" -E "${entry}"
             "${CMAKE_CURRENT_SOURCE_DIR}/shaders/${source}.hlsl" -Fo "${binary}"
         DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/shaders/${source}.hlsl"
+            "${CMAKE_CURRENT_SOURCE_DIR}/shaders/game.hlsl"
         VERBATIM)
     set(d3d12Shaders ${d3d12Shaders} "${binary}" PARENT_SCOPE)
 endfunction()
 d3d12_shader(game VSMain vs_6_0 game_vs)
 d3d12_shader(game PSMain ps_6_0 game_ps)
+d3d12_shader(game_pool PoolVS vs_6_0 game_pool_vs)
 foreach(stage IN ITEMS alpha color font caustic)
     d3d12_shader("game_${stage}_cs" CSMain cs_6_0 "game_${stage}_cs")
 endforeach()

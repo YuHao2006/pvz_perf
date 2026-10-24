@@ -37,6 +37,8 @@ struct MetalRenderer::Impl {
     id<MTLFunction> vertexFunction, fragmentFunction;
     id<MTLArgumentEncoder> argumentEncoder;
     id<MTLRenderPipelineState> pipelines[2][3];
+    id<MTLRenderPipelineState> poolPipelines[2][3];
+    id<MTLBuffer> poolVertices, poolIndices;
     id<MTLSamplerState> samplers[4];
     id<MTLComputePipelineState> colorKernel, alphaKernel, fontKernel, causticKernel;
     id<MTLCommandBuffer> commands, inFlight;
@@ -98,6 +100,10 @@ struct MetalRenderer::Impl {
                     MTLBlendFactorOne : MTLBlendFactorOneMinusSourceAlpha;
                 pipelines[generated][blend] = [device newRenderPipelineStateWithDescriptor:desc error:&error];
                 if (!pipelines[generated][blend]) MetalError(error, "Create Metal draw pipeline");
+                desc.vertexFunction = Function(@"pvz_pool_vertex");
+                poolPipelines[generated][blend] =
+                    [device newRenderPipelineStateWithDescriptor:desc error:&error];
+                if (!poolPipelines[generated][blend]) MetalError(error, "Create Metal pool pipeline");
             }
         }
         for (unsigned i = 0; i < 4; ++i) {
@@ -107,6 +113,12 @@ struct MetalRenderer::Impl {
             samplers[i] = [device newSamplerStateWithDescriptor:desc];
             if (!samplers[i]) MetalError(nil, "Create Metal sampler");
         }
+        static_assert(sizeof(GpuPoolVertex) == sizeof(MetalPoolVertex));
+        poolVertices = [device newBufferWithBytes:GpuPoolVertices.data()
+            length:sizeof(GpuPoolVertices) options:MTLResourceStorageModeShared];
+        poolIndices = [device newBufferWithBytes:GpuPoolIndices.data()
+            length:sizeof(GpuPoolIndices) options:MTLResourceStorageModeShared];
+        if (!poolVertices || !poolIndices) MetalError(nil, "Allocate immutable Metal pool mesh");
         scene = Image(w, h, MTLPixelFormatBGRA8Unorm, false, true);
         scene->slot = 0;
         owners[0] = scene.get();
@@ -797,6 +809,61 @@ void MetalRenderer::SubmitCoverageTriangles(std::span<const GpuVertex> vertices,
     if (mask->resource.pixelFormat != MTLPixelFormatR8Unorm)
         throw std::invalid_argument("Metal coverage draw requires an R8 mask");
     impl_->Draw(vertices, mask, blend, clip, true);
+}
+void MetalRenderer::SubmitPool(MetalTexture* texture, const GpuPoolParams& p) {
+    auto& s = *impl_;
+    if (!s.sceneOpen) throw std::logic_error("Metal pool draw outside a scene");
+    s.Require(texture);
+    if (p.layer > 2 || p.sampler > 3 || size_t(p.blend) >= 3)
+        throw std::invalid_argument("Invalid Metal pool draw parameters");
+    s.Begin();
+    auto* target = s.Output();
+    auto* source = texture;
+    if (source == target) {
+        s.Snapshot(target, true);
+        source = s.retired.back().get();
+    } else if (target->sampled) s.Snapshot(target);
+    id<MTLBuffer> arguments = [s.device newBufferWithLength:s.argumentEncoder.encodedLength
+        options:MTLResourceStorageModeShared];
+    if (!arguments) MetalError(nil, "Allocate Metal pool arguments");
+    std::memset(arguments.contents, 0, arguments.length);
+    [s.argumentEncoder setArgumentBuffer:arguments offset:0];
+    [s.argumentEncoder setTexture:source->resource atIndex:source->slot];
+    MTLRenderPassDescriptor* desc = [MTLRenderPassDescriptor renderPassDescriptor];
+    desc.colorAttachments[0].texture = target->resource;
+    desc.colorAttachments[0].loadAction = MTLLoadActionLoad;
+    desc.colorAttachments[0].storeAction = MTLStoreActionStore;
+    id<MTLRenderCommandEncoder> encoder = [s.commands renderCommandEncoderWithDescriptor:desc];
+    if (!encoder) MetalError(nil, "Create Metal pool encoder");
+    const MetalSceneConstants scene{float(target->width), float(target->height),
+        target->generated ? 1u : 0u, 0u};
+    constexpr uint32_t filters = GpuVertex::kIndependentColorFilter |
+        GpuVertex::kColorFilterMask | GpuVertex::kAlphaEdgeFilter;
+    const MetalPoolConstants constants{
+        p.width, p.height, p.transX, p.transY, p.time1, p.time2, p.time3, p.time5,
+        float(p.clip.x), float(p.clip.y), float(p.clip.width), float(p.clip.height),
+        p.layer, p.night, source->slot | (p.samplingFlags & filters) |
+            (source->generated ? Generated : 0u) |
+            (source->opaque ? GpuVertex::kOpaqueInput : 0u), p.sampler};
+    [encoder setRenderPipelineState:s.poolPipelines[target->generated ? 1 : 0][size_t(p.blend)]];
+    [encoder setVertexBuffer:s.poolVertices offset:0 atIndex:0];
+    [encoder setVertexBytes:&scene length:sizeof(scene) atIndex:1];
+    [encoder setVertexBytes:&constants length:sizeof(constants) atIndex:3];
+    [encoder setFragmentBytes:&scene length:sizeof(scene) atIndex:1];
+    [encoder setFragmentBuffer:arguments offset:0 atIndex:2];
+    for (unsigned i = 0; i < 4; ++i)
+        [encoder setFragmentSamplerState:s.samplers[i] atIndex:i];
+    [encoder useResource:source->resource usage:MTLResourceUsageRead stages:MTLRenderStageFragment];
+    const MTLViewport viewport{0, 0, double(target->width), double(target->height), 0, 1};
+    const MTLScissorRect scissor{0, 0, NSUInteger(target->width), NSUInteger(target->height)};
+    [encoder setViewport:viewport];
+    [encoder setScissorRect:scissor];
+    [encoder drawIndexedPrimitives:MTLPrimitiveTypeTriangle indexCount:GpuPoolIndices.size()
+        indexType:MTLIndexTypeUInt16 indexBuffer:s.poolIndices indexBufferOffset:0];
+    [encoder endEncoding];
+    source->sampled = true;
+    s.Keep(source->resource); s.Keep(target->resource); s.Keep(arguments);
+    s.Keep(s.poolVertices); s.Keep(s.poolIndices);
 }
 void MetalRenderer::EndSceneAndPresent() {
     auto& s = *impl_;

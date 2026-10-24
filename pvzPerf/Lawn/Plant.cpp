@@ -4,6 +4,7 @@
 #include "Plant.h"
 #include "PlantLaunchClock.h"
 #include "Motion.h"
+#include "MagnetMotion.h"
 #include "PlantFlags.h"
 #include "Board.h"
 #include "Zombie.h"
@@ -30,6 +31,36 @@
 #include "Widget/AchievementsWidget.h"
 #include "Sexy.TodLib/generated/SceneAtlasData.h"
 #include "graphics/AtlasDraw.h"
+
+namespace
+{
+constexpr MagnetAtlas::Sprite kMagnetSprites[] = {
+    MagnetAtlas::Sprite::Count,
+    MagnetAtlas::Sprite::REANIM_ZOMBIE_BUCKET1,
+    MagnetAtlas::Sprite::REANIM_ZOMBIE_BUCKET2,
+    MagnetAtlas::Sprite::REANIM_ZOMBIE_BUCKET3,
+    MagnetAtlas::Sprite::REANIM_ZOMBIE_FOOTBALL_HELMET,
+    MagnetAtlas::Sprite::REANIM_ZOMBIE_FOOTBALL_HELMET2,
+    MagnetAtlas::Sprite::REANIM_ZOMBIE_FOOTBALL_HELMET3,
+    MagnetAtlas::Sprite::REANIM_ZOMBIE_SCREENDOOR1,
+    MagnetAtlas::Sprite::REANIM_ZOMBIE_SCREENDOOR2,
+    MagnetAtlas::Sprite::REANIM_ZOMBIE_SCREENDOOR3,
+    MagnetAtlas::Sprite::ZOMBIEPOGO_1,
+    MagnetAtlas::Sprite::ZOMBIEPOGO_2,
+    MagnetAtlas::Sprite::ZOMBIEPOGO_3,
+    MagnetAtlas::Sprite::REANIM_ZOMBIE_JACKBOX_BOX,
+    MagnetAtlas::Sprite::REANIM_ZOMBIE_LADDER_1,
+    MagnetAtlas::Sprite::REANIM_ZOMBIE_LADDER_1_DAMAGE1,
+    MagnetAtlas::Sprite::REANIM_ZOMBIE_LADDER_1_DAMAGE2,
+    MagnetAtlas::Sprite::REANIM_ZOMBIE_LADDER_5,
+    MagnetAtlas::Sprite::REANIM_COIN_SILVER_DOLLAR,
+    MagnetAtlas::Sprite::REANIM_COIN_GOLD_DOLLAR,
+    MagnetAtlas::Sprite::REANIM_DIAMOND,
+    MagnetAtlas::Sprite::REANIM_ZOMBIE_DIGGER_PICKAXE
+};
+static_assert(std::size(kMagnetSprites) == MAGNET_ITEM_PICK_AXE + 1,
+    "MagnetItemType needs a matching atlas sprite");
+}
 
 static PlantDefinition gPlantDefs[SeedType::NUM_SEED_TYPES] = {  //0x69F2B0
     { SeedType::SEED_PEASHOOTER,         ReanimationType::REANIM_PEASHOOTER,    0,  100,    750,    PlantSubClass::SUBCLASS_SHOOTER,    150 },
@@ -304,7 +335,7 @@ void Plant::PlantInitialize(int theGridX, int theGridY, SeedType theSeedType, Se
     {
     p.mStateCountdown = 50;
 
-    if (!p.IsOnBoard() || p.mApp->mGameMode != GameMode::GAMEMODE_LIMBO_ZEN_GARDEN)
+    if (!p.mIsOnBoard || p.mApp->mGameMode != GameMode::GAMEMODE_LIMBO_ZEN_GARDEN)
     {
     p.AddAttachedParticle((p.mX) + 40, (p.mY) + 40, (int)RenderLayer::RENDER_LAYER_FOG + 1, ParticleEffect::PARTICLE_LANTERN_SHINE);
     }
@@ -509,6 +540,7 @@ void Plant::PlantInitialize(int theGridX, int theGridY, SeedType theSeedType, Se
     mWidth = 80;
     mHeight = 80;
     memset(mMagnetItems, 0, sizeof(mMagnetItems));
+    mMagnetElapsedNs = 0;
     const PlantDefinition& aPlantDef = GetPlantDefinition(theSeedType);
     mIsAsleep = false;
     mWakeUpCounter = 0;
@@ -539,10 +571,10 @@ void Plant::PlantInitialize(int theGridX, int theGridY, SeedType theSeedType, Se
         }
 
         aBodyReanim->mIsAttachment = true;
-        const bool aVisualActor = !IsOnBoard() ||
+        const bool aVisualActor = !mIsOnBoard ||
             (mApp->mGameScene == GameScenes::SCENE_LEVEL_INTRO && mApp->IsWallnutBowlingLevel()) ||
             mApp->mGameMode == GameMode::GAMEMODE_LIMBO_ZEN_GARDEN;
-        aBodyReanim->BindTimeDomain(!IsOnBoard() ? ReanimTimeDomain::Visual :
+        aBodyReanim->BindTimeDomain(!mIsOnBoard ? ReanimTimeDomain::Visual :
             (aVisualActor && mBoard ? mBoard->AnimationTimeDomain() : ReanimTimeDomain::Battle));
         mBodyReanimID = mApp->ReanimationGetID(aBodyReanim); mRootBindingGeneration = 0;
         if (mApp->IsWallnutBowlingLevel() && aBodyReanim->TrackExists(ReanimTrackId::_ground))
@@ -554,8 +586,8 @@ void Plant::PlantInitialize(int theGridX, int theGridY, SeedType theSeedType, Se
     if (IsNocturnal(mSeedType) && mBoard && !mBoard->StageIsNight())
         SetSleeping(true);
 
-    mLaunchClockSampleNs = mBoard ? mBoard->mMainCounter.mNanoseconds : 0;
-    mLaunchWindowStartNs = mLaunchClockSampleNs;
+    const auto aLaunchStartNs = mBoard ? static_cast<std::int64_t>(mBoard->mLevelTimeNs) : 0;
+    mLaunchWindowStartNs = aLaunchStartNs;
     mLaunchClockActive = false;
     mZenProductionCountdown = 0;
     std::int64_t aInitialLaunchDelay = 0;
@@ -568,7 +600,7 @@ void Plant::PlantInitialize(int theGridX, int theGridY, SeedType theSeedType, Se
             aInitialLaunchDelay = PlantLaunchClock::Uniform(0, mLaunchRate.mNanoseconds,
                 [] { return Sexy::Rand(); });
     }
-    mNextLaunchTimeNs = PlantLaunchClock::Add(mLaunchClockSampleNs, aInitialLaunchDelay);
+    mNextLaunchTimeNs = PlantLaunchClock::Add(aLaunchStartNs, aInitialLaunchDelay);
 
     // C 形态 -> 匿名 lambda 函数指针表：行序 = SeedType 枚举序（0..52），
     // 越界（BEGHOULED 按钮等哨兵）落表外守卫 = 原 default 无操作。
@@ -587,7 +619,7 @@ void Plant::PlantInitialize(int theGridX, int theGridY, SeedType theSeedType, Se
     }
     mPlantMaxHealth = mPlantHealth;
 
-    if (mSeedType != SeedType::SEED_FLOWERPOT && IsOnBoard())
+    if (mSeedType != SeedType::SEED_FLOWERPOT && mIsOnBoard)
     {
         TOD_ASSERT(mBoard);
         Plant* aFlowerPot = mBoard->GetFlowerPotAt(mPlantCol, mRow);
@@ -1124,7 +1156,7 @@ void Plant::StarFruitFire()
 void Plant::UpdateShooter()
 {
     mLaunchClockActive = true;
-    const auto aNow = mBoard->mMainCounter.mNanoseconds;
+    const auto aNow = mBoard->mLevelTimeNs;
     auto aWindowStart = mLaunchWindowStartNs;
     const auto aSecondaryFire = [&](std::int64_t aWindowEnd)
     {
@@ -1296,7 +1328,7 @@ void Plant::UpdateProductionPlant()
         return;
 
     mLaunchClockActive = true;
-    const auto aNow = mBoard->mMainCounter.mNanoseconds;
+    const auto aNow = mBoard->mLevelTimeNs;
     const auto aRemaining = mNextLaunchTimeNs - aNow;
     if (aRemaining <= 100 * PlantLaunchClock::Tick)
     {
@@ -1800,7 +1832,7 @@ void Plant::UpdateScaredyShroom()
 
     if (mState != PlantState::STATE_READY)
     {
-        mNextLaunchTimeNs = PlantLaunchClock::Add(mBoard->mMainCounter.mNanoseconds,
+        mNextLaunchTimeNs = PlantLaunchClock::Add(mBoard->mLevelTimeNs,
             mLaunchRate.mNanoseconds);
     }
 }
@@ -2151,7 +2183,7 @@ void Plant::UpdateCobCannon()
         {
             Reanimation* aBodyReanim = p.mApp->ReanimationGet(p.mBodyReanimID);
             ReanimatorTrackInstance* aCobTrack = aBodyReanim->GetTrackInstanceByName(ReanimTrackId::CobCannon_cob);
-            aCobTrack->mTrackColor = GetFlashingColor(p.mBoard->mMainCounter, 75);
+            aCobTrack->mTrackColor = GetFlashingColorNs(p.mBoard->mLevelTimeNs, 750'000'000);
         },  // STATE_COBCANNON_READY
         // 原 else-if STATE_COBCANNON_FIRING
         [](Plant& p)
@@ -2210,7 +2242,7 @@ void Plant::UpdateCactus()
                 }
 
                 p.mNextLaunchTimeNs = PlantLaunchClock::Add(
-                    p.mBoard->mMainCounter.mNanoseconds, PlantLaunchClock::Tick);
+                    p.mBoard->mLevelTimeNs, PlantLaunchClock::Tick);
             }
         },  // STATE_CACTUS_RISING
         // 原 else-if STATE_CACTUS_HIGH
@@ -2426,6 +2458,8 @@ MagnetItem* Plant::GetFreeMagnetItem()
 }
 
 //0x460610
+// GOTY 1073: 0x464FC0. Original offsets and reconstruction differences:
+// docs/research/1073-magnet-coordinates.md.
 void Plant::MagnetShroomAttactItem(Zombie* theZombie)
 {
     mState = PlantState::STATE_MAGNETSHROOM_SUCKING;
@@ -2434,41 +2468,53 @@ void Plant::MagnetShroomAttactItem(Zombie* theZombie)
     mApp->PlayFoley(FoleyType::FOLEY_MAGNETSHROOM);
 
     MagnetItem* aMagnetItem = GetFreeMagnetItem();
+    const float aDrawHeight = PlantDrawHeightOffset(mBoard, this, mSeedType, mPlantCol, mRow);
+    const auto aTakeTrack = [&](ReanimTrackId track, MagnetItemType type)
+    {
+        // Capture the visible track center before removing equipment or changing
+        // animation. Magnet items draw from their scaled top-left, with the
+        // receiving plant's height applied again by DrawMagnetItems.
+        theZombie->GetTrackPosition(track, aMagnetItem->mPosX, aMagnetItem->mPosY);
+        const auto sprite = static_cast<size_t>(kMagnetSprites[static_cast<size_t>(type)]);
+        const TextureRegion& rect = MagnetAtlas::Images[sprite];
+        const float scale = MagnetAtlas::Scales[sprite];
+        aMagnetItem->mPosX -= rect.mWidth * scale * 0.5f;
+        aMagnetItem->mPosY -= rect.mHeight * scale * 0.5f + aDrawHeight;
+        aMagnetItem->mItemType = type;
+    };
     if (theZombie->mHelmType == HelmType::HELMTYPE_PAIL)
     {
         int aDamageIndex = theZombie->GetHelmDamageIndex();
+        aTakeTrack(ReanimTrackId::anim_bucket,
+            (MagnetItemType)((int)MagnetItemType::MAGNET_ITEM_PAIL_1 + aDamageIndex));
 
         theZombie->mHelmHealth = 0;
         theZombie->mHelmType = HelmType::HELMTYPE_NONE;
-        theZombie->GetTrackPosition(ReanimTrackId::anim_bucket, aMagnetItem->mPosX, aMagnetItem->mPosY);
         theZombie->ReanimShowRange(ReanimTrackRanges::anim_bucket, RENDER_GROUP_HIDDEN);
         theZombie->ReanimShowRange(ReanimTrackRanges::anim_hair, RENDER_GROUP_NORMAL);
 
-        aMagnetItem->mPosX -= MagnetAtlas::Images[size_t(MagnetAtlas::Sprite::REANIM_ZOMBIE_BUCKET1)].mWidth / 2;
-        aMagnetItem->mPosY -= MagnetAtlas::Images[size_t(MagnetAtlas::Sprite::REANIM_ZOMBIE_BUCKET1)].mHeight / 2;
         aMagnetItem->mDestOffsetX = RandRangeFloat(-10.0f, 10.0f) + 25.0f;
         aMagnetItem->mDestOffsetY = RandRangeFloat(-10.0f, 10.0f) + 20.0f;
-        aMagnetItem->mItemType = (MagnetItemType)((int)MagnetItemType::MAGNET_ITEM_PAIL_1 + aDamageIndex);
     }
     else if (theZombie->mHelmType == HelmType::HELMTYPE_FOOTBALL)
     {
         int aDamageIndex = theZombie->GetHelmDamageIndex();
+        aTakeTrack(ReanimTrackId::zombie_football_helmet,
+            (MagnetItemType)((int)MagnetItemType::MAGNET_ITEM_FOOTBALL_HELMET_1 + aDamageIndex));
 
         theZombie->mHelmHealth = 0;
         theZombie->mHelmType = HelmType::HELMTYPE_NONE;
-        theZombie->GetTrackPosition(ReanimTrackId::zombie_football_helmet, aMagnetItem->mPosX, aMagnetItem->mPosY);
         theZombie->ReanimShowRange(ReanimTrackRanges::zombie_football_helmet, RENDER_GROUP_HIDDEN);
         theZombie->ReanimShowRange(ReanimTrackRanges::anim_hair, RENDER_GROUP_NORMAL);
 
-        aMagnetItem->mPosX += 37.0f;
-        aMagnetItem->mPosY -= 60.0f;
         aMagnetItem->mDestOffsetX = RandRangeFloat(-10.0f, 10.0f) + 20.0f;
         aMagnetItem->mDestOffsetY = RandRangeFloat(-10.0f, 10.0f) + 20.0f;
-        aMagnetItem->mItemType = (MagnetItemType)((int)MagnetItemType::MAGNET_ITEM_FOOTBALL_HELMET_1 + aDamageIndex);
     }
     else if (theZombie->mShieldType == ShieldType::SHIELDTYPE_DOOR)
     {
         int aDamageIndex = theZombie->GetShieldDamageIndex();
+        aTakeTrack(ReanimTrackId::anim_screendoor,
+            (MagnetItemType)((int)MagnetItemType::MAGNET_ITEM_DOOR_1 + aDamageIndex));
 
         theZombie->DetachShield();
         theZombie->mZombiePhase = ZombiePhase::PHASE_ZOMBIE_NORMAL;
@@ -2477,67 +2523,48 @@ void Plant::MagnetShroomAttactItem(Zombie* theZombie)
             TOD_ASSERT(theZombie->mZombieHeight == ZombieHeight::HEIGHT_ZOMBIE_NORMAL);
             theZombie->StartWalkAnim(0);
         }
-        theZombie->GetTrackPosition(ReanimTrackId::anim_screendoor, aMagnetItem->mPosX, aMagnetItem->mPosY);
-
-        aMagnetItem->mPosX -= MagnetAtlas::Images[size_t(MagnetAtlas::Sprite::REANIM_ZOMBIE_SCREENDOOR1)].mWidth / 2;
-        aMagnetItem->mPosY -= MagnetAtlas::Images[size_t(MagnetAtlas::Sprite::REANIM_ZOMBIE_SCREENDOOR1)].mHeight / 2;
         aMagnetItem->mDestOffsetX = RandRangeFloat(-10.0f, 10.0f) + 30.0f;
         aMagnetItem->mDestOffsetY = RandRangeFloat(-10.0f, 10.0f);
-        aMagnetItem->mItemType = (MagnetItemType)((int)MagnetItemType::MAGNET_ITEM_DOOR_1 + aDamageIndex);
     }
     else if (theZombie->mShieldType == ShieldType::SHIELDTYPE_LADDER)
     {
         int aDamageIndex = theZombie->GetShieldDamageIndex();
+        aTakeTrack(ReanimTrackId::Zombie_ladder_1,
+            (MagnetItemType)((int)MagnetItemType::MAGNET_ITEM_LADDER_1 + aDamageIndex));
 
         theZombie->DetachShield();
 
-        aMagnetItem->mPosX = (theZombie->mX) + 31.0f;
-        aMagnetItem->mPosY = (theZombie->mY) + 20.0f;
-        aMagnetItem->mPosX -= MagnetAtlas::Images[size_t(MagnetAtlas::Sprite::REANIM_ZOMBIE_LADDER_5)].mWidth / 2;
-        aMagnetItem->mPosY -= MagnetAtlas::Images[size_t(MagnetAtlas::Sprite::REANIM_ZOMBIE_LADDER_5)].mHeight / 2;
         aMagnetItem->mDestOffsetX = RandRangeFloat(-10.0f, 10.0f) + 30.0f;
         aMagnetItem->mDestOffsetY = RandRangeFloat(-10.0f, 10.0f);
-        aMagnetItem->mItemType = (MagnetItemType)((int)MagnetItemType::MAGNET_ITEM_LADDER_1 + aDamageIndex);
     }
     else if (theZombie->mZombieType == ZombieType::ZOMBIE_POGO)
     {
+        aTakeTrack(ReanimTrackId::Zombie_pogo_stick,
+            theZombie->mHasArm ? MagnetItemType::MAGNET_ITEM_POGO_1 : MagnetItemType::MAGNET_ITEM_POGO_3);
         theZombie->PogoBreak(16U);
-        // ZombieDrawPosition aDrawPos;
-        // theZombie->GetDrawPos(aDrawPos);
-        theZombie->GetTrackPosition(ReanimTrackId::Zombie_pogo_stick, aMagnetItem->mPosX, aMagnetItem->mPosY);
-
-        aMagnetItem->mPosX += 40.0f - MagnetAtlas::Images[size_t(MagnetAtlas::Sprite::REANIM_ZOMBIE_LADDER_5)].mWidth / 2;
-        aMagnetItem->mPosY += 84.0f - MagnetAtlas::Images[size_t(MagnetAtlas::Sprite::REANIM_ZOMBIE_LADDER_5)].mHeight / 2;
         aMagnetItem->mDestOffsetX = RandRangeFloat(-10.0f, 10.0f) + 30.0f;
         aMagnetItem->mDestOffsetY = RandRangeFloat(-10.0f, 10.0f);
-        aMagnetItem->mItemType = theZombie->mHasArm ? MagnetItemType::MAGNET_ITEM_POGO_1 : MagnetItemType::MAGNET_ITEM_POGO_3;
     }
     else if (theZombie->mZombiePhase == ZombiePhase::PHASE_JACK_IN_THE_BOX_RUNNING)
     {
+        aTakeTrack(ReanimTrackId::Zombie_jackbox_box, MagnetItemType::MAGNET_ITEM_JACK_IN_THE_BOX);
         theZombie->StopZombieSound();
         theZombie->PickRandomSpeed();
         theZombie->mZombiePhase = ZombiePhase::PHASE_ZOMBIE_NORMAL;
         theZombie->ReanimShowRange(ReanimTrackRanges::Zombie_jackbox_box, RENDER_GROUP_HIDDEN);
         theZombie->ReanimShowRange(ReanimTrackRanges::Zombie_jackbox_handle, RENDER_GROUP_HIDDEN);
-        theZombie->GetTrackPosition(ReanimTrackId::Zombie_jackbox_box, aMagnetItem->mPosX, aMagnetItem->mPosY);
-
-        aMagnetItem->mPosX -= MagnetAtlas::Images[size_t(MagnetAtlas::Sprite::REANIM_ZOMBIE_JACKBOX_BOX)].mWidth / 2;
-        aMagnetItem->mPosY -= MagnetAtlas::Images[size_t(MagnetAtlas::Sprite::REANIM_ZOMBIE_JACKBOX_BOX)].mHeight / 2;
         aMagnetItem->mDestOffsetX = RandRangeFloat(-10.0f, 10.0f) + 20.0f;
         aMagnetItem->mDestOffsetY = RandRangeFloat(-10.0f, 10.0f) + 15.0f;
-        aMagnetItem->mItemType = MagnetItemType::MAGNET_ITEM_JACK_IN_THE_BOX;
     }
     else if (theZombie->mZombieType == ZombieType::ZOMBIE_DIGGER)
     {
+        aTakeTrack(ReanimTrackId::Zombie_digger_pickaxe, MagnetItemType::MAGNET_ITEM_PICK_AXE);
         theZombie->DiggerLoseAxe();
-        theZombie->GetTrackPosition(ReanimTrackId::Zombie_digger_pickaxe, aMagnetItem->mPosX, aMagnetItem->mPosY);
-
-        aMagnetItem->mPosX -= MagnetAtlas::Images[size_t(MagnetAtlas::Sprite::REANIM_ZOMBIE_DIGGER_PICKAXE)].mWidth / 2;
-        aMagnetItem->mPosY -= MagnetAtlas::Images[size_t(MagnetAtlas::Sprite::REANIM_ZOMBIE_DIGGER_PICKAXE)].mHeight / 2;
         aMagnetItem->mDestOffsetX = RandRangeFloat(-10.0f, 10.0f) + 45.0f;
         aMagnetItem->mDestOffsetY = RandRangeFloat(-10.0f, 10.0f) + 15.0f;
-        aMagnetItem->mItemType = MagnetItemType::MAGNET_ITEM_PICK_AXE;
     }
+    MagnetMotion::Bind(*aMagnetItem, mX + aMagnetItem->mDestOffsetX, mY + aMagnetItem->mDestOffsetY);
+    mMagnetElapsedNs = 0;
 }
 
 //0x461CD0
@@ -2581,17 +2608,14 @@ bool Plant::DrawMagnetItemsOnTop()
 //0x461D90
 void Plant::UpdateMagnetShroom()
 {
+    mMagnetElapsedNs = MagnetMotion::Advance(mMagnetElapsedNs, Sexy::gUpdateIntervalNs);
     for (int i = 0; i < MAX_MAGNET_ITEMS; i++)
     {
         MagnetItem* aMagnetItem = &mMagnetItems[i];
         if (aMagnetItem->mItemType != MagnetItemType::MAGNET_ITEM_NONE)
         {
-            SexyVector2 aVectorToPlant((mX) + aMagnetItem->mDestOffsetX - aMagnetItem->mPosX, (mY) + aMagnetItem->mDestOffsetY - aMagnetItem->mPosY);
-            if (aVectorToPlant.Magnitude() > 20.0f)
-            {
-                aMagnetItem->mPosX += Sexy::UpdateDelta(aVectorToPlant.x * 0.05f);
-                aMagnetItem->mPosY += Sexy::UpdateDelta(aVectorToPlant.y * 0.05f);
-            }
+            MagnetMotion::Sample(*aMagnetItem, mX + aMagnetItem->mDestOffsetX,
+                mY + aMagnetItem->mDestOffsetY, mMagnetElapsedNs);
         }
     }
 
@@ -2728,11 +2752,15 @@ void Plant::UpdateMagnetShroom()
             aClosestLadder->GridItemDie();
 
             MagnetItem* aMagnetItem = GetFreeMagnetItem();
-            aMagnetItem->mPosX = mBoard->GridToPixelX(aClosestLadder->mGridX, aClosestLadder->mGridY) + 40;
-            aMagnetItem->mPosY = mBoard->GridToPixelY(aClosestLadder->mGridX, aClosestLadder->mGridY);
+            // Match GridItem::DrawLadder's actual top-left before transfer.
+            aMagnetItem->mPosX = mBoard->GridToPixelX(aClosestLadder->mGridX, aClosestLadder->mGridY) + 25.0f;
+            aMagnetItem->mPosY = mBoard->GridToPixelY(aClosestLadder->mGridX, aClosestLadder->mGridY) - 4.0f -
+                PlantDrawHeightOffset(mBoard, this, mSeedType, mPlantCol, mRow);
             aMagnetItem->mDestOffsetX = RandRangeFloat(-10.0f, 10.0f) + 10.0f;
             aMagnetItem->mDestOffsetY = RandRangeFloat(-10.0f, 10.0f);
             aMagnetItem->mItemType = MagnetItemType::MAGNET_ITEM_LADDER_PLACED;
+            MagnetMotion::Bind(*aMagnetItem, mX + aMagnetItem->mDestOffsetX, mY + aMagnetItem->mDestOffsetY);
+            mMagnetElapsedNs = 0;
         }
     }
 }
@@ -2792,6 +2820,8 @@ void Plant::GoldMagnetFindTargets()
         default:                        TOD_ASSERT(false);                                                       return;
         }
 
+        MagnetMotion::Bind(*aMagnetItem, mX + aMagnetItem->mDestOffsetX, mY + aMagnetItem->mDestOffsetY);
+        mMagnetElapsedNs = 0;
         aCoin->Die();
     }
 }
@@ -2818,6 +2848,7 @@ bool Plant::IsAGoldMagnetAboutToSuck()
 //0x462680
 void Plant::UpdateGoldMagnetShroom()
 {
+    mMagnetElapsedNs = MagnetMotion::Advance(mMagnetElapsedNs, Sexy::gUpdateIntervalNs);
     Reanimation* aBodyReanim = mApp->ReanimationGet(mBodyReanimID);
 
     bool aIsSuckingCoin = false;
@@ -2826,9 +2857,8 @@ void Plant::UpdateGoldMagnetShroom()
         MagnetItem* aMagnetItem = &mMagnetItems[i];
         if (aMagnetItem->mItemType != MagnetItemType::MAGNET_ITEM_NONE)
         {
-            SexyVector2 aVectorToPlant((mX) + aMagnetItem->mDestOffsetX - aMagnetItem->mPosX, (mY) + aMagnetItem->mDestOffsetY - aMagnetItem->mPosY);
-            float aDistance = aVectorToPlant.Magnitude();
-            if (aDistance < 20.0f)
+            if (MagnetMotion::Sample(*aMagnetItem, mX + aMagnetItem->mDestOffsetX,
+                mY + aMagnetItem->mDestOffsetY, mMagnetElapsedNs))
             {
                 CoinType aCoinType;
                 switch (aMagnetItem->mItemType)
@@ -2848,10 +2878,6 @@ void Plant::UpdateGoldMagnetShroom()
             }
             else
             {
-                float aSpeed = TodAnimateCurveFloat(30.0, 0.0, aDistance, 0.02f, 0.05f, Curves::Linear);
-                aMagnetItem->mPosX += Sexy::UpdateDelta(aVectorToPlant.x * aSpeed);
-                aMagnetItem->mPosY += Sexy::UpdateDelta(aVectorToPlant.y * aSpeed);
-
                 aIsSuckingCoin = true;
             }
         }
@@ -3337,7 +3363,7 @@ bool Plant::IsUpgradableTo(SeedType theUpgradedType)
 // GOTY @Patoke: 0x466FD0
 void Plant::UpdateReanimColor()
 {
-    if (!IsOnBoard())
+    if (!mIsOnBoard)
         return;
 
     Reanimation* aBodyReanim = mApp->ReanimationTryToGet(mBodyReanimID);
@@ -3363,11 +3389,11 @@ void Plant::UpdateReanimColor()
     }
     else if (IsPartOfUpgradableTo(aSeedType) && mBoard->CanPlantAt(mPlantCol, mRow, aSeedType) == PLANTING_OK)
     {
-        aColorOverride = GetFlashingColor(mBoard->mMainCounter, 90);
+        aColorOverride = GetFlashingColorNs(mBoard->mLevelTimeNs, 900'000'000);
     }
     else if (aSeedType == SeedType::SEED_COBCANNON && mSeedType == SeedType::SEED_KERNELPULT && mBoard->CanPlantAt(mPlantCol - 1, mRow, aSeedType) == PLANTING_OK)
     {
-        aColorOverride = GetFlashingColor(mBoard->mMainCounter, 90);
+        aColorOverride = GetFlashingColorNs(mBoard->mLevelTimeNs, 900'000'000);
     }
     else if (mSeedType == SeedType::SEED_EXPLODE_O_NUT)
     {
@@ -3420,20 +3446,10 @@ void Plant::UpdateReanimColor()
     aBodyReanim->PropogateColorToAttachments();
 }
 
-// GOTY @Patoke: 0x469649
-bool Plant::IsOnBoard()
-{
-    if (!mIsOnBoard)
-        return false;
-
-    TOD_ASSERT(mBoard);
-    return true;
-}
-
 //0x4638F0
 bool Plant::IsInPlay()
 {
-    return IsOnBoard() && mApp->mGameMode != GameMode::GAMEMODE_LIMBO_ZEN_GARDEN && mApp->mGameMode != GameMode::GAMEMODE_TREE_OF_WISDOM;
+    return mIsOnBoard && mApp->mGameMode != GameMode::GAMEMODE_LIMBO_ZEN_GARDEN && mApp->mGameMode != GameMode::GAMEMODE_TREE_OF_WISDOM;
 }
 
 //0x463920
@@ -3563,22 +3579,20 @@ void Plant::UpdateReanim()
 }
 
 //0x463E40
-void Plant::Update()
+void Plant::Update(std::uint64_t theLevelDeltaNs)
 {
-    const auto aNow = mBoard ? mBoard->mMainCounter.mNanoseconds : mLaunchClockSampleNs;
-    const auto aElapsed = aNow - mLaunchClockSampleNs;
     mLaunchClockActive = false;
     bool doUpdate = false;
-    if (IsOnBoard() && mApp->mGameScene == GameScenes::SCENE_LEVEL_INTRO && mApp->IsWallnutBowlingLevel())
+    if (mIsOnBoard && mApp->mGameScene == GameScenes::SCENE_LEVEL_INTRO && mApp->IsWallnutBowlingLevel())
         doUpdate = true;
-    else if (IsOnBoard() && mApp->mGameMode == GameMode::GAMEMODE_LIMBO_ZEN_GARDEN)
+    else if (mIsOnBoard && mApp->mGameMode == GameMode::GAMEMODE_LIMBO_ZEN_GARDEN)
         doUpdate = true;
-    else if (IsOnBoard() && mBoard->mCutScene->ShouldRunUpsellBoard())
+    else if (mIsOnBoard && mBoard->mCutScene->ShouldRunUpsellBoard())
         doUpdate = true;
-    else if (!IsOnBoard() || mApp->mGameScene == GameScenes::SCENE_PLAYING)
+    else if (!mIsOnBoard || mApp->mGameScene == GameScenes::SCENE_PLAYING)
         doUpdate = true;
 
-    const auto domain = !IsOnBoard() ? ReanimTimeDomain::Visual :
+    const auto domain = !mIsOnBoard ? ReanimTimeDomain::Visual :
         (doUpdate && mBoard ? mBoard->AnimationTimeDomain() : ReanimTimeDomain::Battle);
     for (const auto id : {mBodyReanimID, mHeadReanimID, mHeadReanimID2, mHeadReanimID3,
         mBlinkReanimID, mLightReanimID, mSleepingReanimID})
@@ -3596,10 +3610,13 @@ void Plant::Update()
     }
     if (!mLaunchClockActive)
     {
-        mNextLaunchTimeNs = PlantLaunchClock::Add(mNextLaunchTimeNs, aElapsed);
-        mLaunchWindowStartNs = PlantLaunchClock::Add(mLaunchWindowStartNs, aElapsed);
+        // A plant born during this step already starts at now, not at step begin.
+        const auto aNow = mBoard ? static_cast<std::int64_t>(mBoard->mLevelTimeNs) : mLaunchWindowStartNs;
+        const auto aFreezeNs = std::min<std::uint64_t>(theLevelDeltaNs,
+            aNow > mLaunchWindowStartNs ? aNow - mLaunchWindowStartNs : 0);
+        mNextLaunchTimeNs = PlantLaunchClock::Add(mNextLaunchTimeNs, aFreezeNs);
+        mLaunchWindowStartNs = PlantLaunchClock::Add(mLaunchWindowStartNs, aFreezeNs);
     }
-    mLaunchClockSampleNs = aNow;
 }
 
 //0x463EF0
@@ -4401,20 +4418,12 @@ float PlantDrawHeightOffset(Board* theBoard, Plant* thePlant, SeedType theSeedTy
 
     if (doFloating)
     {
-		uint32_t aCounter;
-        if (theBoard)
-        {
-            aCounter = theBoard->mMainCounter;
-        }
-        else
-        {
-            aCounter = gLawnApp->mAppCounter;
-        }
-
-		constexpr uint32_t FLOATING_PLANT_PERIOD = 200;
+		const std::uint64_t aTimeNs = theBoard ? theBoard->mLevelTimeNs :
+			gLawnApp->mAppCounter.mNanoseconds;
+		constexpr std::uint64_t FLOATING_PLANT_PERIOD_NS = 2'000'000'000;
         float aPos = theRow * PI + theCol * 0.25f * PI;
-		float aTime = static_cast<float>(aCounter % FLOATING_PLANT_PERIOD) *
-			2.0f * PI / static_cast<float>(FLOATING_PLANT_PERIOD);
+		float aTime = static_cast<float>(double(aTimeNs % FLOATING_PLANT_PERIOD_NS) /
+			FLOATING_PLANT_PERIOD_NS) * 2.0f * PI;
         float aFloatingHeight = sin(aPos + aTime) * 2.0f;
         aHeightOffset += aFloatingHeight;
     }
@@ -4560,34 +4569,7 @@ void Plant::GetPeaHeadOffset(int& theOffsetX, int& theOffsetY)
 // this atlas path, so this change makes no CPU timing claim.
 void Plant::DrawMagnetItems(Graphics* g)
 {
-    using Sprite = MagnetAtlas::Sprite;
-    static constexpr Sprite aSprites[] = {
-        Sprite::Count,
-        Sprite::REANIM_ZOMBIE_BUCKET1,
-        Sprite::REANIM_ZOMBIE_BUCKET2,
-        Sprite::REANIM_ZOMBIE_BUCKET3,
-        Sprite::REANIM_ZOMBIE_FOOTBALL_HELMET,
-        Sprite::REANIM_ZOMBIE_FOOTBALL_HELMET2,
-        Sprite::REANIM_ZOMBIE_FOOTBALL_HELMET3,
-        Sprite::REANIM_ZOMBIE_SCREENDOOR1,
-        Sprite::REANIM_ZOMBIE_SCREENDOOR2,
-        Sprite::REANIM_ZOMBIE_SCREENDOOR3,
-        Sprite::ZOMBIEPOGO_1,
-        Sprite::ZOMBIEPOGO_2,
-        Sprite::ZOMBIEPOGO_3,
-        Sprite::REANIM_ZOMBIE_JACKBOX_BOX,
-        Sprite::REANIM_ZOMBIE_LADDER_1,
-        Sprite::REANIM_ZOMBIE_LADDER_1_DAMAGE1,
-        Sprite::REANIM_ZOMBIE_LADDER_1_DAMAGE2,
-        Sprite::REANIM_ZOMBIE_LADDER_5,
-        Sprite::REANIM_COIN_SILVER_DOLLAR,
-        Sprite::REANIM_COIN_GOLD_DOLLAR,
-        Sprite::REANIM_DIAMOND,
-        Sprite::REANIM_ZOMBIE_DIGGER_PICKAXE
-    };
-    static_assert(sizeof(aSprites) / sizeof(aSprites[0]) == MAGNET_ITEM_PICK_AXE + 1,
-        "MagnetItemType needs a matching atlas sprite");
-    const TextureSource aTexture{MagnetAtlas::Texture,MagnetAtlas::Width,MagnetAtlas::Height};
+    const TextureSource aTexture{MagnetAtlas::Texture, 0};
     float aOffsetX = 0.0f;
     float aOffsetY = PlantDrawHeightOffset(mBoard, this, mSeedType, mPlantCol, mRow);
 
@@ -4597,9 +4579,9 @@ void Plant::DrawMagnetItems(Graphics* g)
         if (aMagnetItem->mItemType != MagnetItemType::MAGNET_ITEM_NONE)
         {
             const int aType=static_cast<int>(aMagnetItem->mItemType);
-            TOD_ASSERT(aType > 0 && aType < static_cast<int>(sizeof(aSprites)/sizeof(aSprites[0])));
-            const auto aSprite=static_cast<unsigned>(aSprites[aType]);
-            const Rect& aSrcRect=MagnetAtlas::Images[aSprite];
+            TOD_ASSERT(aType > 0 && aType < static_cast<int>(std::size(kMagnetSprites)));
+            const auto aSprite=static_cast<unsigned>(kMagnetSprites[aType]);
+            const TextureRegion& aSrcRect=MagnetAtlas::Images[aSprite];
             const float aScale=MagnetAtlas::Scales[aSprite];
             if (aScale == 1.0f)
             {
@@ -4624,7 +4606,7 @@ void Plant::DrawShadow(Sexy::Graphics* g, float theOffsetX, float theOffsetY)
         mOnBungeeState == PlantOnBungeeState::RISING_WITH_BUNGEE)
         return;
 
-    if (IsOnBoard() && mApp->mGameMode == GameMode::GAMEMODE_LIMBO_ZEN_GARDEN && mApp->mZenGarden->mGardenType == GardenType::GARDEN_MAIN)
+    if (mIsOnBoard && mApp->mGameMode == GameMode::GAMEMODE_LIMBO_ZEN_GARDEN && mApp->mZenGarden->mGardenType == GardenType::GARDEN_MAIN)
         return;
 
     int aShadowType = 0;
@@ -4777,7 +4759,7 @@ void Plant::Draw(Graphics* g)
         bool aDrawPumpkinBack = false;
         Plant* aPumpkin = nullptr;
 
-        if (IsOnBoard())
+        if (mIsOnBoard)
         {
             aPumpkin = mBoard->GetPumpkinAt(mPlantCol, mRow);
             if (aPumpkin)
@@ -4816,20 +4798,12 @@ void Plant::Draw(Graphics* g)
 
         if (Plant::IsFlying(mSeedType))
         {
-			uint32_t aCounter;
-            if (IsOnBoard())
-            {
-                aCounter = mBoard->mMainCounter;
-            }
-            else
-            {
-                aCounter = mApp->mAppCounter;
-            }
-
-            // 计数器无上限增长，float 相位在 ~2^24 后步长下溢（漂浮动画冻结）——
-            // 双精度累加并按 2π 回卷（与 3638 行 FLOATING_PLANT_PERIOD 修复同源）
+			const std::uint64_t aTimeNs = mIsOnBoard ? mBoard->mLevelTimeNs :
+				mApp->mAppCounter.mNanoseconds;
+            // Reduce in double before converting the bounded drawing phase to float.
             const double aPhase = fmod(
-                (mRow * 97.0 + mPlantCol * 61.0 + static_cast<double>(aCounter)) * 0.03, 2.0 * PI);
+                (mRow * 97.0 + mPlantCol * 61.0) * 0.03 +
+				static_cast<double>(aTimeNs) * 3e-9, 2.0 * PI);
             float aWave = sin(static_cast<float>(aPhase)) * 2.0f;
             aOffsetY += aWave;
         }
@@ -5838,13 +5812,13 @@ void Plant::Die()
     // DataArray 槽位回收复用后 mCobCannonPlantID 悬空（1073 原版：模仿者
     // 土豆雷复用同 ID 会被 CobCannonFire 强改状态卡出无敌土豆，且土豆
     // reanim 无 CobCannon_cob 轨道导致越界写）。
-    if (IsOnBoard() && mBoard->mCursorObject->mCursorType == CursorType::CURSOR_TYPE_COBCANNON_TARGET &&
+    if (mIsOnBoard && mBoard->mCursorObject->mCursorType == CursorType::CURSOR_TYPE_COBCANNON_TARGET &&
         mBoard->mCursorObject->mCobCannonPlantID == (PlantID)mBoard->mPlants.DataArrayGetID(this))
     {
         mBoard->ClearCursor();
     }
 
-    if (IsOnBoard() && mSeedType == SeedType::SEED_TANGLEKELP)
+    if (mIsOnBoard && mSeedType == SeedType::SEED_TANGLEKELP)
     {
         Zombie* aZombie = mBoard->ZombieTryToGet(mTargetZombieID);
         if (aZombie)
@@ -5856,7 +5830,7 @@ void Plant::Die()
     mDead = true;
     RemoveEffects();
 
-    if (!Plant::IsFlying(mSeedType) && IsOnBoard())
+    if (!Plant::IsFlying(mSeedType) && mIsOnBoard)
     {
         GridItem* aLadder = mBoard->GetLadderAt(mPlantCol, mRow);
         if (aLadder)
@@ -5865,7 +5839,7 @@ void Plant::Die()
         }
     }
 
-    if (IsOnBoard())
+    if (mIsOnBoard)
     {
         Plant* aTopPlant = mBoard->GetTopPlantAt(mPlantCol, mRow, PlantPriority::TOPPLANT_BUNGEE_ORDER);
         Plant* aFlowerPot = mBoard->GetFlowerPotAt(mPlantCol, mRow);

@@ -159,6 +159,10 @@ OpenGLRenderer::Impl::~Impl()
     for (auto* texture : retired) delete texture;
     for (const auto program : {sceneProgram, imageProgram, fontProgram, presentProgram})
         if (program) glDeleteProgram(program);
+    if (poolProgram) glDeleteProgram(poolProgram);
+    if (poolVao) glDeleteVertexArrays(1, &poolVao);
+    if (poolVertices) glDeleteBuffers(1, &poolVertices);
+    if (poolIndices) glDeleteBuffers(1, &poolIndices);
     if (stream) glDeleteBuffers(1, &stream);
     if (vao) glDeleteVertexArrays(1, &vao);
 }
@@ -320,6 +324,20 @@ void OpenGLRenderer::PrepareLoadingPipelines()
     };
     cache(s.sceneProgram,s.sceneUniforms);cache(s.imageProgram,s.imageUniforms);
     cache(s.fontProgram,s.fontUniforms);cache(s.presentProgram,s.presentUniforms);
+    s.poolProgram = s.Program(PoolVertexShader(), SceneFragmentShader());
+    constexpr std::array poolNames{"targetExtent","image","premultipliedOutput","coverageInput",
+        "poolSize","poolTranslation","waveTime","poolClip","poolLayer","poolNight","poolSlot","poolSampler"};
+    for (size_t i=0;i<poolNames.size();++i)
+        s.poolUniforms[i]=glGetUniformLocation(s.poolProgram,poolNames[i]);
+    glGenVertexArrays(1,&s.poolVao); glBindVertexArray(s.poolVao);
+    glGenBuffers(1,&s.poolVertices); glBindBuffer(GL_ARRAY_BUFFER,s.poolVertices);
+    glBufferData(GL_ARRAY_BUFFER,sizeof(GpuPoolVertices),GpuPoolVertices.data(),GL_STATIC_DRAW);
+    glEnableVertexAttribArray(0); glVertexAttribPointer(0,2,GL_FLOAT,GL_FALSE,sizeof(GpuPoolVertex),nullptr);
+    glEnableVertexAttribArray(1); glVertexAttribPointer(1,2,GL_FLOAT,GL_FALSE,sizeof(GpuPoolVertex),
+        reinterpret_cast<const void*>(offsetof(GpuPoolVertex,phaseX)));
+    glGenBuffers(1,&s.poolIndices); glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,s.poolIndices);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER,sizeof(GpuPoolIndices),GpuPoolIndices.data(),GL_STATIC_DRAW);
+    glBindVertexArray(s.vao);
     s.initialized = true;
 }
 OpenGLTexture* OpenGLRenderer::CreateTexture(int w, int h, const void* pixels, int pitch, bool opaque)
@@ -463,6 +481,46 @@ void OpenGLRenderer::SubmitTriangles(std::span<const GpuVertex> vertices,
 {
     impl_->Submit(vertices, texture, blend, clip, false);
 }
+void OpenGLRenderer::SubmitPool(OpenGLTexture* texture,const GpuPoolParams& params)
+{
+    auto& s=*impl_;
+    if (!s.open || !texture || !s.textures.contains(texture))
+        throw std::logic_error("OpenGL pool requires an open scene and live source texture");
+    if (params.layer>2 || params.sampler>3 ||
+        static_cast<unsigned>(params.blend)>static_cast<unsigned>(GpuBlend::Opaque))
+        throw std::invalid_argument("Invalid OpenGL pool layer/sampler/blend");
+    s.Flush();
+    auto* target=s.selected ? s.selected : s.scene;
+    OpenGLTexture feedback;
+    if (texture==target) {
+        s.Snapshot(*texture,feedback);
+    }
+    s.BindTarget();
+    glBindVertexArray(s.poolVao); glUseProgram(s.poolProgram);
+    const auto& u=s.poolUniforms;
+    glUniform2f(u[0],float(target->width),float(target->height));
+    glUniform1i(u[1],0); glUniform1i(u[2],target->render); glUniform1i(u[3],0);
+    glUniform2f(u[4],params.width,params.height);
+    glUniform2f(u[5],params.transX,params.transY);
+    glUniform4f(u[6],params.time1,params.time2,params.time3,params.time5);
+    glUniform4f(u[7],float(params.clip.x),float(params.clip.y),
+        float(double(params.clip.x)+params.clip.width),float(double(params.clip.y)+params.clip.height));
+    glUniform1ui(u[8],params.layer); glUniform1ui(u[9],params.night);
+    glUniform1ui(u[10],texture->slot|texture->flags|params.samplingFlags);
+    glUniform1ui(u[11],params.sampler);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D,feedback.image ? feedback.image : texture->image);
+    glDisable(GL_SCISSOR_TEST);
+    if (params.blend==GpuBlend::Opaque) glDisable(GL_BLEND);
+    else {
+        glEnable(GL_BLEND);
+        glBlendFuncSeparate(target->render ? GL_ONE : GL_SRC_ALPHA,
+            params.blend==GpuBlend::Additive ? GL_ONE : GL_ONE_MINUS_SRC_ALPHA,GL_ONE,GL_ONE_MINUS_SRC_ALPHA);
+    }
+    glDrawElements(GL_TRIANGLES,450,GL_UNSIGNED_SHORT,nullptr);
+    // Every regular flush/image pass rebinds its own VAO, program and target.
+    s.Check("Draw OpenGL pool");
+}
 void OpenGLRenderer::SubmitCoverageTriangles(std::span<const GpuVertex> vertices,
     OpenGLTexture* texture, GpuBlend blend, const GpuClip* clip)
 {
@@ -552,6 +610,7 @@ GpuClip OpenGLRenderer::PresentRect(int w, int h) const
 unsigned int OpenGLRenderer::MaxImageDimension2D() const { return impl_->maximum; }
 OpenGLRenderer::ResourceCounts OpenGLRenderer::GetResourceCounts() const
 {
-    return {impl_->textures.size(),impl_->retired.size(),0,1,impl_->batches.size()};
+    return {impl_->textures.size(),impl_->retired.size(),0,
+        size_t(bool(impl_->stream))+size_t(bool(impl_->poolVertices)),impl_->batches.size()};
 }
 }

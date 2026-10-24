@@ -14,7 +14,6 @@
 
 SeedPacket::SeedPacket()
 {
-	mSlotMachiningPosition = 0.0f;
 	mPacketType = SeedType::SEED_NONE;
 	mImitaterType = SeedType::SEED_NONE;
 	mIndex = -1;
@@ -79,8 +78,8 @@ void SeedPacket::PickNextSlotMachineSeed()
 
 void SeedPacket::SlotMachineStart()
 {
-	mSlotMachineCountDown = 300;
-	mSlotMachiningPosition = 0.0f;
+	mSlotMachineCountDown.mNanoseconds = SlotMachineMotion::DurationNs;
+	mSlotMachineCountDown.mPreviousNanoseconds = SlotMachineMotion::DurationNs;
 	PickNextSlotMachineSeed();
 }
 
@@ -139,7 +138,7 @@ void SeedPacket::Update()
 		return;
 	}
 
-	if (mBoard->mMainCounter == 0)
+	if (mBoard->mLevelTimeNs == 0)
 	{
 		FlashIfReady();
 	}
@@ -158,27 +157,24 @@ void SeedPacket::Update()
 
 	if (mSlotMachineCountDown > 0)
 	{
-		mSlotMachineCountDown--;
-		float aFlipsPerSecont = TodAnimateCurveNs(SLOT_MACHINE_TIME * 10'000'000LL, 0, mSlotMachineCountDown.mNanoseconds, 6.0f, 2.0f, Curves::Linear);
-		mSlotMachiningPosition += Sexy::UpdateDelta(aFlipsPerSecont * 0.01f);
-
-		if (mSlotMachiningPosition >= 1.0f)
+		const auto aBeforeNs = mSlotMachineCountDown.mNanoseconds;
+		const int aBeforeTurn = static_cast<int>(SlotMachineMotion::Turns(aBeforeNs));
+		const auto aDeltaNs = std::min<std::uint64_t>(Sexy::gUpdateIntervalNs, aBeforeNs);
+		mSlotMachineCountDown.mPreviousNanoseconds = aBeforeNs;
+		mSlotMachineCountDown.mNanoseconds -= static_cast<std::int64_t>(aDeltaNs);
+		const int aAfterTurn = static_cast<int>(
+			SlotMachineMotion::Turns(mSlotMachineCountDown.mNanoseconds));
+		for (int aTurn = aBeforeTurn; aTurn < aAfterTurn; ++aTurn)
 		{
 			mPacketType = mSlotMachiningNextSeed;
-			if (mSlotMachineCountDown == 0)
+			if (mSlotMachineCountDown.mNanoseconds == 0 && aTurn + 1 == aAfterTurn)
 			{
 				Activate();
-				mSlotMachiningPosition = 0.0f;
 			}
 			else
 			{
-				mSlotMachiningPosition -= 1.0f;
 				PickNextSlotMachineSeed();
 			}
-		}
-		else if (mSlotMachineCountDown == 0)
-		{
-			mSlotMachineCountDown = 1;
 		}
 	}
 }
@@ -567,7 +563,8 @@ void SeedPacket::Draw(Graphics* g)
 
 	if (mSlotMachineCountDown > 0)
 	{
-		int aOffsetY = FloatRoundToInt(-mHeight * mSlotMachiningPosition);
+		int aOffsetY = FloatRoundToInt(-mHeight *
+			SlotMachineMotion::Fraction(mSlotMachineCountDown.mNanoseconds));
 
 		Graphics aClipG(*g);
 		aClipG.ClipRect(0, 0, mWidth, mHeight);
@@ -603,19 +600,19 @@ void SeedPacket::Draw(Graphics* g)
 		}
 		else if (mBoard->mTutorialState == TutorialState::TUTORIAL_LEVEL_1_PICK_UP_PEASHOOTER && mBoard->mTutorialTimer == -1 && mPacketType == SeedType::SEED_PEASHOOTER)
 		{
-			aGrayness = GetFlashingColor(mBoard->mMainCounter, 75).mRed;
+			aGrayness = GetFlashingColorNs(mBoard->mLevelTimeNs, 750'000'000).mRed;
 		}
 		else if (mBoard->mTutorialState == TutorialState::TUTORIAL_LEVEL_2_PICK_UP_SUNFLOWER && mPacketType == SeedType::SEED_SUNFLOWER)
 		{
-			aGrayness = GetFlashingColor(mBoard->mMainCounter, 75).mRed;
+			aGrayness = GetFlashingColorNs(mBoard->mLevelTimeNs, 750'000'000).mRed;
 		}
 		else if (mBoard->mTutorialState == TutorialState::TUTORIAL_MORESUN_PICK_UP_SUNFLOWER && mPacketType == SeedType::SEED_SUNFLOWER)
 		{
-			aGrayness = GetFlashingColor(mBoard->mMainCounter, 75).mRed;
+			aGrayness = GetFlashingColorNs(mBoard->mLevelTimeNs, 750'000'000).mRed;
 		}
 		else if (mBoard->mTutorialState == TutorialState::TUTORIAL_WHACK_A_ZOMBIE_PICK_SEED)
 		{
-			aGrayness = GetFlashingColor(mBoard->mMainCounter, 75).mRed;
+			aGrayness = GetFlashingColorNs(mBoard->mLevelTimeNs, 750'000'000).mRed;
 		}
 		else if (mApp->mEasyPlantingCheat)
 		{

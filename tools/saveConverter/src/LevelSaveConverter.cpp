@@ -1304,6 +1304,11 @@ std::vector<Byte> UpgradeParticleStepV33State(RecordKind kind, std::span<const B
         std::copy_n(source.begin() + 8, 4, result.begin());
     else if (kind == RecordKind::Particle)
         std::copy_n(source.begin() + 8, 28, result.begin());
+    else if (kind == RecordKind::Plant)
+    {
+        std::copy_n(source.begin(), 40, result.begin());
+        std::copy_n(source.begin() + 48, 8, result.begin() + 40);
+    }
     else
     {
         std::copy(source.begin(), source.end(), result.begin());
@@ -1496,7 +1501,6 @@ void BindHistoricalClock(SlotSnapshot& slot, RecordKind kind, std::int64_t now,
         WriteU64At(state, 32, static_cast<std::uint64_t>(
             CheckedClockAdd(now, slot.mHistoricalLaunchRemainingNs)));
         WriteU64At(state, 40, static_cast<std::uint64_t>(now));
-        WriteU64At(state, 48, static_cast<std::uint64_t>(now));
         MigrateBowlingClock(slot, now, board);
         // The historical auxiliary slot already retains ZenGarden duration or
         // bowling count in its original unit; no additional tail field is used.

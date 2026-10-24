@@ -21,10 +21,10 @@ export component DiggerTunnel {
         particleDuration: nodes {
             { time: 0; low: 40; high: 50; curve: Linear; distribution: Linear; }
         }
-        systemAlpha: nodes {
+        launchSpeed: nodes {
             { time: 0; low: 150; high: 300; curve: Linear; distribution: Linear; }
         }
-        systemBrightness: nodes {
+        launchAngle: nodes {
             { time: 0; low: 140; high: 175; curve: Linear; distribution: Linear; }
         }
         particleAlpha: nodes {

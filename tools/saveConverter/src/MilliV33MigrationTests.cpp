@@ -122,8 +122,7 @@ void CheckClockBindings()
     BindHistoricalClock(plant, RecordKind::Plant, now);
     Require(ReadU64At(plant.mV7State, 32) == now + remaining &&
         ReadU64At(plant.mV7State, 40) == now &&
-        ReadU64At(plant.mV7State, 48) == now &&
-        plant.mV7State.size() == 56,
+        plant.mV7State.size() == 156,
         "Plant deadline lost exact nanoseconds or confused launch time with bowling count");
     const auto descriptor = std::find_if(ARRAY_DESCRIPTORS.begin(), ARRAY_DESCRIPTORS.end(),
         [](const auto& value) { return value.mKind == RecordKind::Plant; });
@@ -154,12 +153,12 @@ void CheckClockBindings()
         "Old relative wire launch duration did not reach its absolute deadline exactly");
     Reader wrongDialect(pool.mData);
     Reject([&] { ReadArray(wrongDialect, Format::Dat64V33, *descriptor, BoardDialect::Canonical); },
-        "Old relative Plant32 tail was parsed as the new Plant56 tail");
+        "Old relative Plant32 tail was parsed as the current compact Plant tail");
     WriteU32At(plant.mCanonicalRecord, 48, int(SeedType::SEED_WALLNUT));
     plant.mHistoricalLaunchRemainingNs = 7 * 10'000'000;
     plant.mNeedsClockBinding = true;
     BindHistoricalClock(plant, RecordKind::Plant, now);
-    Require(plant.mV7State.size() == 56,
+    Require(plant.mV7State.size() == 156,
         "Bowling migration invented an additional count field");
     std::vector<Byte> board(LevelSaveFormat::DAT64_BOARD_STATE_SIZE);
     plant.mID = DATA_ARRAY_KEY_MASK;
@@ -499,8 +498,7 @@ void CheckWire(const std::filesystem::path& fixture, std::uint32_t schema)
                     if (array.mKind == RecordKind::Plant)
                         Require(std::bit_cast<std::int64_t>(ReadU64At(slot.mV7State, 32)) ==
                             CheckedClockAdd(now, slot.mHistoricalLaunchRemainingNs) &&
-                            ReadU64At(slot.mV7State, 40) == std::uint64_t(now) &&
-                            ReadU64At(slot.mV7State, 48) == std::uint64_t(now),
+                            ReadU64At(slot.mV7State, 40) == std::uint64_t(now),
                             "Historical Plant draft was not bound to its saved Board clock");
                     else if (array.mKind == RecordKind::Reanimation)
                         Require(ReadU32At(slot.mV7State, 0) == 1 &&

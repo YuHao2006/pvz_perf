@@ -20,7 +20,7 @@ export component PuffSplat {
         particleDuration: nodes {
             { time: 0; low: 20; high: 20; curve: Linear; distribution: Linear; }
         }
-        systemAlpha: nodes {
+        launchSpeed: nodes {
             { time: 0; low: 50; high: 100; curve: Linear; distribution: Linear; }
         }
         particleAlpha: nodes {

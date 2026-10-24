@@ -21,7 +21,7 @@ export component BossIceBallTrail {
         particleDuration: nodes {
             { time: 0; low: 40; high: 40; curve: Linear; distribution: Linear; }
         }
-        systemAlpha: nodes {
+        launchSpeed: nodes {
             { time: 0; low: 10; high: 10; curve: Linear; distribution: Linear; }
         }
         particleAlpha: nodes {

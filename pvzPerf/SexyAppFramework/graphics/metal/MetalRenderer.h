@@ -1,5 +1,6 @@
 #pragma once
 #include "SexyAppFramework/graphics/GpuTypes.h"
+#include "SexyAppFramework/graphics/GpuPool.h"
 #include "SexyAppFramework/graphics/ImageReadback.h"
 #include "SexyAppFramework/graphics/vulkan/VulkanHdr.h"
 #include "MetalScaleTypes.h"
@@ -60,6 +61,7 @@ public:
         bool linear, bool wrap, GpuBlend blend, const GpuClip* clip = nullptr);
     void SubmitCoverageTriangles(std::span<const GpuVertex> vertices,
         MetalTexture* mask, GpuBlend blend, const GpuClip* clip = nullptr);
+    void SubmitPool(MetalTexture* texture, const GpuPoolParams& params);
     void EndSceneAndPresent();
     bool PresentRetainedScene();
     bool ResizePresent();

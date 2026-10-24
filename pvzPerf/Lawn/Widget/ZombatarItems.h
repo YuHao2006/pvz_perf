@@ -103,7 +103,6 @@ struct ZombatarItemCell
 	int mRawIndex = -1; // historical name; this is the logical cell index
 	int mX = 0;
 	int mY = 0;
-	Rect mSourceRect;
 };
 
 class ZombatarItems : public Widget

@@ -1,5 +1,6 @@
 #pragma once
 #include "graphics/GpuBackend.h"
+#include "graphics/TextureRegion.h"
 #include "misc/Rect.h"
 #include "Sexy.TodLib/generated/ZombatarImage.h"
 #include <array>
@@ -9,9 +10,7 @@ namespace Sexy { class Graphics; }
 
 struct ZombatarAtlasDefinition
 {
-    int mWidth = 0;
-    int mHeight = 0;
-    std::array<Sexy::Rect, static_cast<std::size_t>(ZombatarImage::Count)> mImages{};
+    std::array<Sexy::TextureRegion, static_cast<std::size_t>(ZombatarImage::Count)> mImages{};
     Sexy::GpuTexture* mTexture = nullptr;
 };
 

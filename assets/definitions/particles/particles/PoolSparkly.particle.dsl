@@ -16,7 +16,7 @@ export component PoolSparkly {
         emitterBoxY: nodes {
             { time: 0; low: 0; high: 135; curve: Linear; distribution: Linear; }
         }
-        emitterSkewY: nodes {
+        emitterSkewX: nodes {
             { time: 0; low: -0.3; high: -0.3; curve: Linear; distribution: Linear; }
         }
         particleDuration: nodes {

@@ -59,6 +59,12 @@ using GpuTexture = VulkanTexture;
 using GpuScaleStep = VulkanScaleStep;
 using GpuScaleImage = VulkanScaleImage;
 #endif
+#if !defined(PVZ_GPU_D3D9) && !defined(PVZ_GPU_OPENGL) && !defined(PVZ_GPU_D3D12) && !defined(PVZ_GPU_METAL)
+#define PVZ_GPU_REANIM_VULKAN 1
+using GpuReanimResource = VulkanReanim;
+#else
+struct GpuReanimResource;
+#endif
 using GpuHdrParams = VulkanHdrParams;
 #ifdef _WIN32
 using GpuHdrDisplayObserver = VulkanHdrDisplayObserver;

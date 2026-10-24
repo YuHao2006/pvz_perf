@@ -162,7 +162,7 @@ void ZombatarScreen::Draw(Graphics* g)
 			ZOMBATAR_AVATAR_INNER_HEIGHT);
 		if (AlmanacAtlas::Texture)
 		{
-			const Sexy::TextureSource texture{AlmanacAtlas::Texture, AlmanacAtlas::Width, AlmanacAtlas::Height};
+			const Sexy::TextureSource texture{AlmanacAtlas::Texture, 0};
 			Sexy::DrawAtlasImage(g, texture,
 				AlmanacAtlas::Images[size_t(AlmanacAtlas::Sprite::ALMANAC_GROUNDDAY)], 600, 300);
 		}

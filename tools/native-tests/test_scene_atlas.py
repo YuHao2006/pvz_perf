@@ -16,6 +16,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "tools"))
 import definition_atlas
 import scene_atlas as scene
+from static_definition_codegen import texture_region
 
 
 SOURCE = '''
@@ -213,11 +214,15 @@ class SceneAtlasTests(unittest.TestCase):
             self.assertIn("namespace " + module + "Atlas", header)
             for index, row in enumerate(report["sprites"]):
                 self.assertIn(f'{row["name"]} = {index},', header)
-                self.assertIn("{" + ", ".join(map(str, row["region"])) + "}", native)
+                self.assertIn(texture_region(row["region"], report["atlas_width"],
+                                             report["atlas_height"]), native)
             self.assertIn(report["atlas_path"], native)
         self.assertIn("extern Sexy::GpuTexture* Texture", header)
-        self.assertIn("extern const Sexy::Rect Images[Count]", header)
-        self.assertIn("DefinitionBindAtlasPath(Texture, Width, Height", native)
+        self.assertIn("extern const Sexy::TextureRegion Images[Count]", header)
+        self.assertNotIn("inline constexpr int Width", header)
+        for report in reports.values():
+            self.assertIn(f'DefinitionBindAtlasPath(Texture, {report["atlas_width"]}, '
+                          f'{report["atlas_height"]},', native)
         self.assertIn("DefinitionUnbindAtlas(Texture)", native)
         free_body = native.split("void FreeSceneAtlases() {", 1)[1].split("}", 1)[0]
         self.assertEqual(re.findall(r"(\w+)Atlas::Free\(\)", free_body), list(reversed(scene.MODULES)))

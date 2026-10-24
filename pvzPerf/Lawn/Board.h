@@ -172,7 +172,7 @@ public:
 	int								mPrevMouseY;											//+0x555C
 	int								mSunMoney;												//+0x5560
 	int								mNumWaves;												//+0x5564
-	Sexy::MonotonicTimeCounter						mMainCounter;											//+0x5568
+	std::uint64_t					mLevelTimeNs;
 	Sexy::UnsignedTimeCounter						mEffectCounter;											//+0x556C（存储 uint；DrawRain 按 1073 有符号取模读取，负分数钳回起点）
 	int								mDrawCount;												//+0x5570
 	Sexy::TimeCounter								mRiseFromGraveCounter;									//+0x5574
@@ -316,7 +316,7 @@ public:
 	int								GridToPixelY(int theGridX, int theGridY);
 	/*inline*/ int					PixelToGridXKeepOnBoard(int theX, int theY);
 	/*inline*/ int					PixelToGridYKeepOnBoard(int theX, int theY);
-	void							UpdateGameObjects();
+	void							UpdateGameObjects(std::uint64_t theLevelDeltaNs);
 	ReanimTimeDomain					AnimationTimeDomain() const;
 	bool							MouseHitTest(int x, int y, HitResult* theHitResult);
 	void							MouseDownWithPlant(int x, int y, int theClickCount);
@@ -404,7 +404,7 @@ public:
 	void							PickZombieWaves();
 	void							StopAllZombieSounds();
 	/*inline*/ bool					HasLevelAwardDropped();
-	void							UpdateProgressMeter();
+	void							UpdateProgressMeter(std::uint64_t theDeltaNs);
 	void							DrawUIBottom(Graphics* g);
 	void							DrawUITop(Graphics* g);
 	Zombie*							ZombieHitTest(int theMouseX, int theMouseY);
@@ -417,7 +417,7 @@ public:
 	void							InitZombieWaves();
 	void							InitSurvivalStage();
 	static /*inline*/ int			MakeRenderOrder(RenderLayer theRenderLayer, int theRow, int theLayerOffset);
-	void							UpdateGame();
+	void							UpdateGame(std::uint64_t theDeltaNs);
 	void							InitZombieWavesForLevel(int theForLevel);
 	unsigned int					SeedNotRecommendedForLevel(SeedType theSeedType);
 	void							DrawTopRightUI(Graphics* g);

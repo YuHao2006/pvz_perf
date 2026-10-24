@@ -123,7 +123,7 @@ void GridItem::DrawIZombieBrain(Graphics* g)
 
     if (mBoard->mAdvice->mDuration > 0 && mBoard->mHelpIndex == AdviceType::ADVICE_I_ZOMBIE_EAT_ALL_BRAINS)
     {
-        Color aFlashingColor = GetFlashingColor(mBoard->mMainCounter, 75);
+        Color aFlashingColor = GetFlashingColorNs(mBoard->mLevelTimeNs, 750'000'000);
         g->mColorizeImages = true;
         g->mColor = aFlashingColor;
     }
@@ -268,10 +268,10 @@ void GridItem::DrawCrater(Graphics* g)
             aSource.mX = 85;
         }
 
-		constexpr uint32_t CRATER_WAVE_PERIOD = 200;
+		constexpr std::uint64_t CRATER_WAVE_PERIOD_NS = 2'000'000'000;
         float aPos = mGridY * PI + mGridX * PI * 0.25f;
-		float aTime = static_cast<float>(mBoard->mMainCounter % CRATER_WAVE_PERIOD) *
-			PI * 2.0f / static_cast<float>(CRATER_WAVE_PERIOD);
+		float aTime = static_cast<float>(double(mBoard->mLevelTimeNs % CRATER_WAVE_PERIOD_NS) /
+			CRATER_WAVE_PERIOD_NS) * PI * 2.0f;
         aYPos += sin(aPos + aTime) * 2.0f;
     }
     else if (mBoard->StageHasRoof())
@@ -409,7 +409,7 @@ void GridItem::DrawLadder(Graphics* g)
 {
     int aXPos = mBoard->GridToPixelX(mGridX, mGridY);
     int aYPos = mBoard->GridToPixelY(mGridX, mGridY);
-    const Sexy::TextureSource texture{MagnetAtlas::Texture, MagnetAtlas::Width, MagnetAtlas::Height};
+    const Sexy::TextureSource texture{MagnetAtlas::Texture, 0};
     Sexy::DrawAtlasImageScaled(g, texture,
         MagnetAtlas::Images[size_t(MagnetAtlas::Sprite::REANIM_ZOMBIE_LADDER_5)],
         aXPos + 25.0f, aYPos - 4.0f, 0.8f, 0.8f);

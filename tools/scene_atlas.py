@@ -10,7 +10,7 @@ import re
 
 import build_numeric_runtime_pak64 as pak
 import definition_atlas
-from static_definition_codegen import cpp_float, cpp_string
+from static_definition_codegen import cpp_float, cpp_string, texture_region
 
 MODULES = ("Magnet", "Almanac", "Achievements", "FixedUI")
 FIXED_UI_NAMES = (
@@ -195,23 +195,23 @@ def compile_definition(document: dict, sources: dict, files: dict, layout: dict,
 def generate(reports: dict) -> dict[str, bytes]:
     header = ["// Generated scene atlas geometry and direct texture bindings.", "#pragma once",
               '#include "SexyAppFramework/graphics/GpuBackend.h"',
-              '#include "SexyAppFramework/misc/Rect.h"', "#include <cstddef>", "#include <cstdint>"]
+              '#include "SexyAppFramework/graphics/TextureRegion.h"', "#include <cstddef>", "#include <cstdint>"]
     cpp = ['#include "SceneAtlasData.h"', '#include "Sexy.TodLib/DefinitionImageRegion.h"']
     extents, sheets = [], []
     for module in MODULES:
         report = reports[record_path(module)]
         rows = report["sprites"]
+        width, height = report["atlas_width"], report["atlas_height"]
         namespace = module + "Atlas"
         header += [f"namespace {namespace} {{", "extern Sexy::GpuTexture* Texture;",
-                   f'inline constexpr int Width = {report["atlas_width"]}, Height = {report["atlas_height"]};',
                    "enum class Sprite : std::uint16_t {",
                    *(f'    {row["name"]} = {i},' for i, row in enumerate(rows)),
                    f"    Count = {len(rows)},", "};",
                    f"inline constexpr std::size_t Count = {len(rows)};",
-                   "extern const Sexy::Rect Images[Count];"]
+                   "extern const Sexy::TextureRegion Images[Count];"]
         cpp += [f"namespace {namespace} {{", "Sexy::GpuTexture* Texture = nullptr;",
-                "const Sexy::Rect Images[Count] = {",
-                *("    {" + ", ".join(map(str, row["region"])) + "}," for row in rows), "};"]
+                "const Sexy::TextureRegion Images[Count] = {",
+                *("    " + texture_region(row["region"], width, height) + "," for row in rows), "};"]
         if module == "Achievements":
             indexed = [(int(match[1]), row) for row in rows
                        if (match := re.fullmatch(r"ICON_(\d+)", row["name"]))]
@@ -220,9 +220,9 @@ def generate(reports: dict) -> dict[str, bytes]:
                         "Achievement ICON indices must be unique and contiguous from zero")
             header.append(f"inline constexpr std::size_t IconCount = {len(icons)};")
             if icons:
-                header.append("extern const Sexy::Rect Icons[IconCount];")
-                cpp += ["const Sexy::Rect Icons[IconCount] = {",
-                        *("    {" + ", ".join(map(str, icons[index]["region"])) + "},"
+                header.append("extern const Sexy::TextureRegion Icons[IconCount];")
+                cpp += ["const Sexy::TextureRegion Icons[IconCount] = {",
+                        *("    " + texture_region(icons[index]["region"], width, height) + ","
                           for index in range(len(icons))), "};"]
         if any(row["scale"] != 1.0 for row in rows):
             header.append("extern const float Scales[Count];")
@@ -230,7 +230,7 @@ def generate(reports: dict) -> dict[str, bytes]:
                     "    " + ", ".join(cpp_float(row["scale"]) for row in rows), "};"]
         header += ["void Load();", "void Free();", "}"]
         cpp += ["void Load() {",
-                f'    DefinitionBindAtlasPath(Texture, Width, Height, {cpp_string(report["atlas_path"])});',
+                f'    DefinitionBindAtlasPath(Texture, {width}, {height}, {cpp_string(report["atlas_path"])});',
                 "}", "void Free() { DefinitionUnbindAtlas(Texture); }", "}"]
         extents.append(f'    {{{cpp_string(report["atlas_path"])}, {report["atlas_width"]}u, {report["atlas_height"]}u}},')
         for image in report["images"]:

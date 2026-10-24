@@ -1,5 +1,9 @@
 # DAT64 v2 时间字段审计
 
+本页是原版／v1 到 v2 的字段与单位证据，表格不表示当前运行时仍拥有所有旧字段，
+也不表示后续游戏只支持 v2。最新本地机制见[运行时](runtime.md)，
+历史格式映射见[存档协议](DAT-DAT64-CONVERSION.md)。
+
 审计日期：2026-10-21。范围为 `LevelSaveFormat::RECORD_LAYOUTS` 的全部 18 类记录、
 Board 状态块和含十个 SeedPacket 的 SeedBank。字段定义与实际更新、比较、比例求值用途
 共同确定时间语义，不按 `Counter`、`Frame` 等名字机械转换。

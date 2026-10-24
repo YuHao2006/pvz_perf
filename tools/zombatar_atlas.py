@@ -8,7 +8,7 @@ import build_numeric_runtime_pak64 as pak
 import compile_numeric_resources as resources
 import definition_atlas
 from projectile_atlas import image_path
-from static_definition_codegen import cpp_string
+from static_definition_codegen import cpp_string, texture_region
 
 FORMAT = "pvz-zombatar-sources-v1"
 # A build-graph identity only: no compiled metadata record is published.
@@ -90,17 +90,17 @@ def generate(document: dict, report: dict) -> dict[str, bytes]:
         *(f"    {name} = {index}," for index, name in enumerate(names)),
         f"    Count = {len(names)},", "    None = Count", "};",
     ]
+    width, height = report["atlas_width"], report["atlas_height"]
     rectangles = [
-        "        {" + ", ".join(map(str, row["region"][:4])) + "},"
+        "        " + texture_region(row["region"][:4], width, height) + ","
         for row in report["images"]
     ]
-    width, height = report["atlas_width"], report["atlas_height"]
     cpp = [
         "// Generated static Zombatar atlas and image ownership bindings. Do not edit.",
         '#include "Lawn/Widget/ZombatarResources.h"',
         '#include "Sexy.TodLib/DefinitionImageRegion.h"',
         "constinit ZombatarAtlasDefinition gZombatarAtlas {",
-        f"    {width}, {height},", "    {{", *rectangles, "    }}, nullptr", "};",
+        "    {{", *rectangles, "    }}, nullptr", "};",
         f"static_assert(static_cast<std::size_t>(ZombatarImage::Count) == {len(names)});",
         "void ZombatarLoadResources() {",
         f"    DefinitionBindAtlasPath(gZombatarAtlas.mTexture, {width}, {height}, "

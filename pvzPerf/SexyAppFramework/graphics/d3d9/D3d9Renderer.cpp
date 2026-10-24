@@ -175,6 +175,7 @@ D3d9Renderer::Impl::~Impl()
 {
     for (unsigned int i = 0; i < 5; ++i) device->SetTexture(i, nullptr);
     device->SetStreamSource(0, nullptr, 0, 0);
+    device->SetIndices(nullptr);
     device->SetVertexShader(nullptr); device->SetPixelShader(nullptr);
     device->SetVertexDeclaration(nullptr);
     if (context.backBuffer) device->SetRenderTarget(0, context.backBuffer);
@@ -415,6 +416,22 @@ void D3d9Renderer::PrepareLoadingPipelines()
     vs(0, s.sceneVS); vs(1, s.imageVS);
     ps(2, s.scenePS); ps(3, s.copyPS); ps(4, s.colorizePS); ps(5, s.composePS);
     ps(6, s.causticsPS); ps(7, s.fontPS); ps(8, s.presentPS);
+    vs(9, s.poolVS);
+    const D3DVERTEXELEMENT9 elements[]{
+        {0,0,D3DDECLTYPE_FLOAT2,D3DDECLMETHOD_DEFAULT,D3DDECLUSAGE_POSITION,0},
+        {0,8,D3DDECLTYPE_FLOAT2,D3DDECLMETHOD_DEFAULT,D3DDECLUSAGE_TEXCOORD,0},D3DDECL_END()};
+    Check(s.device->CreateVertexDeclaration(elements,s.poolDeclaration.put()),"Create D3D9 pool declaration");
+    Check(s.device->CreateVertexBuffer(sizeof(GpuPoolVertices),D3DUSAGE_WRITEONLY,0,
+        D3DPOOL_DEFAULT,s.poolVertices.put(),nullptr),"Create static D3D9 pool vertices");
+    Check(s.device->CreateIndexBuffer(sizeof(GpuPoolIndices),D3DUSAGE_WRITEONLY,D3DFMT_INDEX16,
+        D3DPOOL_DEFAULT,s.poolIndices.put(),nullptr),"Create static D3D9 pool indices");
+    void* data=nullptr;
+    Check(s.poolVertices->Lock(0,sizeof(GpuPoolVertices),&data,0),"Lock static D3D9 pool vertices");
+    std::memcpy(data,GpuPoolVertices.data(),sizeof(GpuPoolVertices));
+    Check(s.poolVertices->Unlock(),"Unlock static D3D9 pool vertices");
+    Check(s.poolIndices->Lock(0,sizeof(GpuPoolIndices),&data,0),"Lock static D3D9 pool indices");
+    std::memcpy(data,GpuPoolIndices.data(),sizeof(GpuPoolIndices));
+    Check(s.poolIndices->Unlock(),"Unlock static D3D9 pool indices");
     s.initialized = true;
 }
 D3d9Texture* D3d9Renderer::CreateTexture(int w, int h, const void* pixels, int pitch, bool opaque)
@@ -547,6 +564,62 @@ bool D3d9Renderer::BeginScene()
 }
 void D3d9Renderer::SubmitTriangles(std::span<const GpuVertex> input, D3d9Texture* source,
     bool, bool, GpuBlend blend, const GpuClip* clip) { impl_->Submit(input, source, blend, clip, false); }
+void D3d9Renderer::SubmitPool(D3d9Texture* texture,const GpuPoolParams& params)
+{
+    auto& s=*impl_;
+    if (!s.open || !texture || !s.textures.contains(texture))
+        throw std::logic_error("D3D9 pool requires an open scene and live source texture");
+    if (params.layer>2 || params.sampler>3 ||
+        static_cast<unsigned>(params.blend)>static_cast<unsigned>(GpuBlend::Opaque))
+        throw std::invalid_argument("Invalid D3D9 pool layer/sampler/blend");
+    s.Flush();
+    auto* target=s.selected ? s.selected : s.scene;
+    D3d9Texture feedback;
+    if (texture==target) {
+        s.Snapshot(feedback,texture);
+    }
+    s.BindTarget();
+    auto* d=s.device;
+    Check(d->SetVertexDeclaration(s.poolDeclaration.value),"Bind D3D9 pool declaration");
+    Check(d->SetStreamSource(0,s.poolVertices.value,0,sizeof(GpuPoolVertex)),"Bind static D3D9 pool grid");
+    Check(d->SetIndices(s.poolIndices.value),"Bind static D3D9 pool indices");
+    Check(d->SetVertexShader(s.poolVS.value),"Bind D3D9 pool vertex shader");
+    Check(d->SetPixelShader(s.scenePS.value),"Bind D3D9 pool scene pixel shader");
+    s.Projection(target->width,target->height);
+    const auto flags=texture->flags|params.samplingFlags;
+    const unsigned packed=
+        unsigned(bool(flags&0x80000000U))*S::Generated+
+        unsigned(bool(flags&GpuVertex::kOpaqueInput))*S::Opaque+
+        unsigned(bool(flags&GpuVertex::kAlphaEdgeFilter))*S::AlphaEdge+
+        ((flags>>28)&3)*S::FilterKindUnit+
+        unsigned(bool(flags&GpuVertex::kIndependentColorFilter))*S::Independent+
+        (params.sampler&1)*S::Linear+((params.sampler>>1)&1)*S::Repeat;
+    const S::Float4 constants[]{
+        {params.width,params.height,params.transX,params.transY},
+        {params.time1,params.time2,params.time3,params.time5},
+        {float(params.clip.x),float(params.clip.y),float(double(params.clip.x)+params.clip.width),
+            float(double(params.clip.y)+params.clip.height)},
+        {float(params.layer),float(params.night),float(texture->width),float(texture->height)},
+        {float(packed),0,0,0}};
+    Check(d->SetVertexShaderConstantF(1,&constants[0].x,5),"Set D3D9 pool constants");
+    std::array<S::Float4,4> pixel{};
+    pixel[0]={1.0f/texture->width,1.0f/texture->height,0,0};
+    pixel[S::Sampling-S::SourceTexture].w=float(target->render);
+    Check(d->SetPixelShaderConstantF(S::SourceTexture,&pixel[0].x,UINT(pixel.size())),
+        "Set D3D9 pool pixel constants");
+    Check(d->SetTexture(0,feedback.image ? feedback.image.value : texture->image.value),"Bind D3D9 pool texture");
+    Check(d->SetRenderState(D3DRS_SCISSORTESTENABLE,FALSE),"Use pool vertex clip alpha");
+    Check(d->SetRenderState(D3DRS_ALPHABLENDENABLE,params.blend!=GpuBlend::Opaque),"Set D3D9 pool blending");
+    Check(d->SetRenderState(D3DRS_SRCBLEND,target->render ? D3DBLEND_ONE : D3DBLEND_SRCALPHA),
+        "Set D3D9 pool source blend");
+    Check(d->SetRenderState(D3DRS_DESTBLEND,params.blend==GpuBlend::Additive ? D3DBLEND_ONE : D3DBLEND_INVSRCALPHA),
+        "Set D3D9 pool destination blend");
+    Check(d->BeginScene(),"Begin D3D9 pool draw");
+    const HRESULT drawn=d->DrawIndexedPrimitive(D3DPT_TRIANGLELIST,0,0,96,0,150);
+    const HRESULT ended=d->EndScene();
+    Check(drawn,"Draw D3D9 indexed pool"); Check(ended,"End D3D9 pool draw");
+    // BindTarget/Flush and image passes restore their declaration/stream/shaders.
+}
 void D3d9Renderer::SubmitCoverageTriangles(std::span<const GpuVertex> input, D3d9Texture* source,
     GpuBlend blend, const GpuClip* clip) { impl_->Submit(input, source, blend, clip, true); }
 void D3d9Renderer::Impl::Quad(int w, int h)
@@ -634,6 +707,6 @@ unsigned int D3d9Renderer::MaxImageDimension2D() const { return impl_->maximum; 
 D3d9Renderer::ResourceCounts D3d9Renderer::GetResourceCounts() const
 {
     return {impl_->textures.size(), impl_->retiredTextures.size(), 0,
-        size_t(bool(impl_->stream)), impl_->batches.size()};
+        size_t(bool(impl_->stream))+size_t(bool(impl_->poolVertices)), impl_->batches.size()};
 }
 }

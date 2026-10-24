@@ -258,8 +258,8 @@ int TodDrawStringWrappedHelper(Graphics* g, const SexyString& theText, const Rec
 			int aLineWidth;
 			if (aSpacePos != -1)  // 如果本行前面的字符中存在空格字符
 			{
-				int aCurY = (int)g->mTransY + theRect.mY + aYOffset;
-				if (aCurY >= g->mClipRect.mY && aCurY <= g->mClipRect.mY + g->mClipRect.mHeight + aLineSpacing)  // 确保当前绘制位置纵坐标在裁剪范围内
+				if (drawString && (int)g->mTransY + theRect.mY + aYOffset >= g->mClipRect.mY &&
+					(int)g->mTransY + theRect.mY + aYOffset <= g->mClipRect.mY + g->mClipRect.mHeight + aLineSpacing)
 				{
 					TodWriteWordWrappedHelper(
 						g,

@@ -64,8 +64,6 @@ template<class T, class Fn> void VisitSaveMembers(Fn&& visit)
     });
     if constexpr (std::is_base_of_v<GameObject, T>)
         visit(offsetof(T, mX), 16, 28, 28);
-    if constexpr (std::is_base_of_v<FloatGameObject, T>)
-        visit(offsetof(T, mX), 16, 28, 28);
     if constexpr (std::is_same_v<T, SeedBank>)
         for (size_t i = 0; i < 10; ++i)
             VisitSaveMembers<SeedPacket>([&](size_t native, size_t wire, size_t oldSize, size_t newSize) {
@@ -122,6 +120,8 @@ template<class T> size_t SaveV2Size()
 
 template<class T> size_t NativeTimeOffset(const Dat64TimeSchema::Field& field)
 {
+    if constexpr (std::is_same_v<T, Board>)
+        if (field.mOffset == 22036 - 528) return offsetof(Board, mLevelTimeNs);
     size_t result = SIZE_MAX;
     VisitSaveMembers<T>([&](size_t native, size_t wire, size_t oldSize, size_t newSize) {
         if (field.mOffset >= wire && field.mOffset + 4 <= wire + oldSize)
@@ -136,7 +136,7 @@ template<class T> size_t NativeTimeOffset(const Dat64TimeSchema::Field& field)
 }
 template<class T, class Fn> void VisitV7Members(Fn&& visit)
 {
-    if constexpr (std::is_base_of_v<FloatGameObject, T>)
+    if constexpr (std::is_same_v<T, Plant> || std::is_same_v<T, Zombie>)
     {
         visit(offsetof(T, mX), 0, 4);
         visit(offsetof(T, mY), 4, 4);
@@ -147,8 +147,17 @@ template<class T, class Fn> void VisitV7Members(Fn&& visit)
         {
             visit(offsetof(T, mBowlingRowArrivalTimeNs), 24, 8);
             visit(offsetof(T, mNextLaunchTimeNs), 32, 8);
-            visit(offsetof(T, mLaunchClockSampleNs), 40, 8);
-            visit(offsetof(T, mLaunchWindowStartNs), 48, 8);
+            visit(offsetof(T, mLaunchWindowStartNs), 40, 8);
+            visit(offsetof(T, mMagnetElapsedNs), 48, 8);
+            for (size_t i = 0; i < MAX_MAGNET_ITEMS; ++i)
+            {
+                const size_t native = offsetof(T, mMagnetItems) + i * sizeof(MagnetItem);
+                const size_t wire = 56 + i * 20;
+                visit(native + offsetof(MagnetItem, mOriginDeltaX), wire, 4);
+                visit(native + offsetof(MagnetItem, mOriginDeltaY), wire + 4, 4);
+                visit(native + offsetof(MagnetItem, mCaptureFactor), wire + 8, 4);
+                visit(native + offsetof(MagnetItem, mCenterDurationNs), wire + 12, 8);
+            }
         }
         else
         {
@@ -227,7 +236,7 @@ template<class T, class Fn> void VisitV7Members(Fn&& visit)
 template<class T> void WriteHistoricalProjection(const T& value, std::span<LegacyByte> bytes)
 {
     using V7SaveSchema::PutFloat;
-    if constexpr (std::is_base_of_v<FloatGameObject, T>)
+    if constexpr (std::is_base_of_v<GameObject, T>)
     {
         const auto pixel = [](float position) {
             if (!std::isfinite(position) || double(position) < INT32_MIN ||
@@ -237,6 +246,17 @@ template<class T> void WriteHistoricalProjection(const T& value, std::span<Legac
         };
         V7SaveSchema::Write(bytes, 16, pixel(value.mX), 4);
         V7SaveSchema::Write(bytes, 20, pixel(value.mY), 4);
+        if constexpr (std::is_same_v<T, SeedBank>)
+            for (size_t i = 0; i < 10; ++i)
+            {
+                V7SaveSchema::Write(bytes, 56 + i * 96 + 16, pixel(value.mSeedPackets[i].mX), 4);
+                V7SaveSchema::Write(bytes, 56 + i * 96 + 20, pixel(value.mSeedPackets[i].mY), 4);
+                PutFloat(bytes, 56 + i * 96 + 80, static_cast<float>(
+                    SlotMachineMotion::Fraction(value.mSeedPackets[i].mSlotMachineCountDown.mNanoseconds)));
+            }
+        if constexpr (std::is_same_v<T, SeedPacket>)
+            PutFloat(bytes, 80, static_cast<float>(
+                SlotMachineMotion::Fraction(value.mSlotMachineCountDown.mNanoseconds)));
         if constexpr (std::is_same_v<T, Zombie>)
         {
             PutFloat(bytes, 56, value.mX);
@@ -246,8 +266,8 @@ template<class T> void WriteHistoricalProjection(const T& value, std::span<Legac
     if constexpr (std::is_same_v<T, Reanimation>)
     {
         const auto position = value.SamplePlayback();
-        const double period = double(value.mFrameCount) * V7SaveSchema::SourceFrame;
-        PutFloat(bytes, 4, period > 0 ? float(position.clock / period) : 0.0f);
+        PutFloat(bytes, 4, value.mFrameCount > 0
+            ? float(double(position.phaseNs) / value.mPeriodNs) : 0.0f);
         PutFloat(bytes, 8, value.mAnimRate);
         PutFloat(bytes, 168, value.mHasLastFrame && value.mPeriodNs > 0
             ? float(double(value.mLastFrameNs) / value.mPeriodNs) : -1.0f);
@@ -316,7 +336,7 @@ template<class T> std::vector<LegacyByte> WriteSaveRecord(const T& value)
         if constexpr (std::is_same_v<T, Projectile>)
         {
             if (field.mOffset != 108) return std::uint64_t(0);
-            const auto now = value.mBoard ? static_cast<std::int64_t>(value.mBoard->mMainCounter.mNanoseconds)
+            const auto now = value.mBoard ? static_cast<std::int64_t>(value.mBoard->mLevelTimeNs)
                 : value.mMotionOriginTimeNs;
             return static_cast<std::uint64_t>(ReanimClock::Subtract(now, value.mCreationTimeNs));
         }
@@ -330,8 +350,10 @@ template<class T> std::vector<LegacyByte> WriteSaveRecord(const T& value)
                     if (value.mState == PlantState::STATE_BOWLING_UP ||
                         value.mState == PlantState::STATE_BOWLING_DOWN)
                         return static_cast<std::uint64_t>(value.mZenProductionCountdown.mNanoseconds);
+                    const auto now = value.mBoard ? static_cast<std::int64_t>(value.mBoard->mLevelTimeNs)
+                        : value.mLaunchWindowStartNs;
                     return static_cast<std::uint64_t>(
-                        ReanimClock::Subtract(value.mNextLaunchTimeNs, value.mLaunchClockSampleNs));
+                        ReanimClock::Subtract(value.mNextLaunchTimeNs, now));
                 }
             std::uint64_t result;
             std::memcpy(&result, ObjectBytes(value) + NativeTimeOffset<T>(field), 8);
@@ -389,7 +411,27 @@ template<class T> void ReadSaveRecord(T& value, const LegacyByte* source)
     for (const auto& [offset, ns] : times)
     {
         std::memcpy(ObjectBytes(value) + offset, &ns, 8);
-        std::memcpy(ObjectBytes(value) + offset + 8, &ns, 8);
+        if constexpr (std::is_same_v<T, Board>)
+        {
+            if (offset != offsetof(Board, mLevelTimeNs))
+                std::memcpy(ObjectBytes(value) + offset + 8, &ns, 8);
+        }
+        else std::memcpy(ObjectBytes(value) + offset + 8, &ns, 8);
+    }
+    if constexpr (std::is_base_of_v<GameObject, T>)
+    {
+        const auto pixel = [&](size_t offset) {
+            return static_cast<float>(std::bit_cast<std::int32_t>(
+                static_cast<std::uint32_t>(V7SaveSchema::Read(bytes, offset, 4))));
+        };
+        value.mX = pixel(16);
+        value.mY = pixel(20);
+        if constexpr (std::is_same_v<T, SeedBank>)
+            for (size_t i = 0; i < 10; ++i)
+            {
+                value.mSeedPackets[i].mX = pixel(56 + i * 96 + 16);
+                value.mSeedPackets[i].mY = pixel(56 + i * 96 + 20);
+            }
     }
     if constexpr (!std::is_same_v<T, Board> && !std::is_same_v<T, SeedBank>)
         VisitV7Members<T>([&](size_t native, size_t wire, size_t width) {

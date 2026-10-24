@@ -4,6 +4,7 @@
 #include "Color.h"
 #include "Image.h"
 #include "TriVertex.h"
+#include "TextureRegion.h"
 
 namespace Sexy
 {
@@ -100,7 +101,9 @@ public:
 
 	void					DrawImage(Image* theImage, int theX, int theY);
 	void					DrawImage(Image* theImage, int theX, int theY, const Rect& theSrcRect);
+	void DrawImage(Image* image, int x, int y, const TextureRegion& source);
 	void					DrawImage(Image* theImage, const Rect& theDestRect, const Rect& theSrcRect);
+	void DrawImage(Image* image, const Rect& destination, const TextureRegion& source);
 	void					DrawImage(Image* theImage, int theX, int theY, int theStretchedWidth, int theStretchedHeight);
 	void					DrawImageF(Image* theImage, float theX, float theY);
 	void					DrawImageF(Image* theImage, float theX, float theY, const Rect& theSrcRect);
@@ -138,6 +141,7 @@ public:
 	int						StringWidth(const SexyString& theString);
 	void					DrawImageBox(const Rect& theDest, Image* theComponentImage);
 	void					DrawImageBox(const Rect& theSrc, const Rect& theDest, Image* theComponentImage);
+	void DrawImageBox(const TextureRegion& source, const Rect& destination, Image* image);
 
 	int						WriteString(const SexyString& theString, int theX, int theY, int theWidth = -1, int theJustification = 0, bool drawString = true, int theOffset = 0, int theLength = -1, int theOldColor = -1);
 	int						WriteWordWrapped(const Rect& theRect, const SexyString& theLine, int theLineSpacing = -1, int theJustification = -1, int *theMaxWidth = NULL, int theMaxChars = -1, int* theLastWidth = NULL);

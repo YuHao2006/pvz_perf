@@ -58,7 +58,7 @@ visit(offsetof(Type, mPrevMouseX), 22020, 4, sizeof(Type::mPrevMouseX));
 visit(offsetof(Type, mPrevMouseY), 22024, 4, sizeof(Type::mPrevMouseY));
 visit(offsetof(Type, mSunMoney), 22028, 4, sizeof(Type::mSunMoney));
 visit(offsetof(Type, mNumWaves), 22032, 4, sizeof(Type::mNumWaves));
-visit(offsetof(Type, mMainCounter), 22036, 4, sizeof(Type::mMainCounter));
+visit(offsetof(Type, mLevelTimeNs), 22036, 4, sizeof(Type::mLevelTimeNs));
 visit(offsetof(Type, mEffectCounter), 22040, 4, sizeof(Type::mEffectCounter));
 visit(offsetof(Type, mDrawCount), 22044, 4, sizeof(Type::mDrawCount));
 visit(offsetof(Type, mRiseFromGraveCounter), 22048, 4, sizeof(Type::mRiseFromGraveCounter));
@@ -245,7 +245,8 @@ visit(offsetof(Type, mEatenFlashCountdown), 196, 4, sizeof(Type::mEatenFlashCoun
 visit(offsetof(Type, mBeghouledFlashCountdown), 200, 4, sizeof(Type::mBeghouledFlashCountdown));
 visit(offsetof(Type, mShakeOffsetX), 204, 4, sizeof(Type::mShakeOffsetX));
 visit(offsetof(Type, mShakeOffsetY), 208, 4, sizeof(Type::mShakeOffsetY));
-visit(offsetof(Type, mMagnetItems), 212, 100, sizeof(Type::mMagnetItems));
+for (size_t i = 0; i < 5; ++i)
+    visit(offsetof(Type, mMagnetItems) + i * sizeof(MagnetItem), 212 + i * 20, 20, 20);
 visit(offsetof(Type, mTargetZombieID), 312, 4, sizeof(Type::mTargetZombieID));
 visit(offsetof(Type, mWakeUpCounter), 316, 4, sizeof(Type::mWakeUpCounter));
 visit(offsetof(Type, mOnBungeeState), 320, 4, sizeof(Type::mOnBungeeState));
@@ -464,7 +465,6 @@ visit(offsetof(Type, mPacketType), 64, 4, sizeof(Type::mPacketType));
 visit(offsetof(Type, mImitaterType), 68, 4, sizeof(Type::mImitaterType));
 visit(offsetof(Type, mSlotMachineCountDown), 72, 4, sizeof(Type::mSlotMachineCountDown));
 visit(offsetof(Type, mSlotMachiningNextSeed), 76, 4, sizeof(Type::mSlotMachiningNextSeed));
-visit(offsetof(Type, mSlotMachiningPosition), 80, 4, sizeof(Type::mSlotMachiningPosition));
 visit(offsetof(Type, mActive), 84, 1, sizeof(Type::mActive));
 visit(offsetof(Type, mRefreshing), 85, 1, sizeof(Type::mRefreshing));
 visit(offsetof(Type, mTimesUsed), 88, 4, sizeof(Type::mTimesUsed));

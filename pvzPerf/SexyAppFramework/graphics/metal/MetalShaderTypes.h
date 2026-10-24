@@ -24,6 +24,21 @@ struct MetalSceneConstants
     unsigned int coverageInput;
 };
 
+struct MetalPoolVertex
+{
+    float x, y, phaseX, phaseY;
+};
+// Vertex-only buffer(3); scene/fragment bindings stay unchanged.
+struct MetalPoolConstants
+{
+    float width, height, transX, transY;
+    float time1, time2, time3, time5;
+    float clipX, clipY, clipWidth, clipHeight;
+    unsigned int layer, night, slot, samplerIndex;
+};
+static_assert(sizeof(MetalPoolVertex) == 16, "Pool vertex stride");
+static_assert(sizeof(MetalPoolConstants) == 64, "Pool constants size");
+
 // pvz_color_kernel: buffer(0), source texture(0), RGBA8Unorm target texture(1).
 // operation == 0 copies; otherwise tint. Low sourceSlot bits are ignored.
 struct MetalColorConstants

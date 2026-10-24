@@ -1,5 +1,10 @@
 # 资产与发行边界
 
+本文维护资产来源、加载和发行边界。下文 v3.2 存档叙述属于该格式落地时的
+协议基线；本地后续时间／运动改造见[运行时](runtime.md)，开发中的最终版本拟统一为 v4。
+不以本页旧存档编号推断当前本地 EXE 的输入兼容范围。资源采样结构由
+[资源格式](RESOURCE-V5-FORMAT.md)维护。
+
 ## 需要保存的输入
 
 | 类别 | 内容与现状 |
@@ -52,10 +57,14 @@ C++ 静态定义，不进入运行包。旧 `image_symbol_ids.bin`
 仅保留给历史对照工具，不是生产构建输入。
 
 普通运行期图片接口只接受 GPU `Image`；particle/reanim 根定义都保存
-按外观索引的 GPU 指针及尺寸数组，不经过图片或图集包装。
+按外观索引的 GPU 指针及静态 `TextureRegion` 数组，不经过图片或图集包装，
+不再保存图集尺寸数组。
 共用图集的 reanim/particle 定义在加载期获得相同 GPU 指针；
-reanim 共享关键帧只保存图片 slot，particle 发射器保存每行矩形 offset/count；
-绘制使用临时 `TextureSource`。
+reanim 共享关键帧只保存图片 slot，particle 发射器保存每行区域 offset/count；
+绘制使用只含 GPU 指针和采样 flags 的临时 `TextureSource`。
+`TextureRegion` 为公共 aggregate，保存 float `mU0/mV0/mU1/mV1` 和
+int 逻辑 `mWidth/mHeight`；生成器在编译期按图集尺寸归一化，运行期直接采样。
+loader 的预期 PNG 尺寸仅以字面量验证，不常驻在采样结构中。
 旧图片及图集包装类型已删除；公共加载 registry 只记录解码和共享绑定，
 renderer 直接登记 GPU 指针并负责释放，定义不指向 registry 条目。
 加载线程只解码，主线程上传后统一给等待中的定义赋值，并释放临时绑定记录。
@@ -67,10 +76,15 @@ renderer 直接登记 GPU 指针并负责释放，定义不指向 registry 条�
 普通 `Image` 也直接保存 `GpuTexture*`，已合并绘制图片子类并删除独立
 texture-data 包装、重复尺寸/采样状态及旧上传版本比较。需要图片加载语义
 的程序图片使用 `Image`；纯纹理绑定直接使用 GPU 指针。
-普通图片不保存总行数、总列数、动画元数据或帧矩形表，也不新增离线
-矩形编译步骤。UI、投掷物和场景等业务调用点直接保存或构造源像素矩形，
-通过 `const Rect&` 交给绘制接口；动态帧在调用点按固定像素尺寸计算偏移。
-原有业务分发表直接携带所需矩形或尺寸，不通过纹理访问器选格。
+普通图片不保存总行数、总列数、动画元数据或帧矩形表。
+UI、投掷物、场景、大头贴和定义的长期采样表保存 UV 与逻辑尺寸，
+不从 UV 反推绘制宽高。通用按钮四态和 Coin 静态表同样保存 `TextureRegion`；
+复选框未使用的切片字段与分支已删除，继续使用两张整图。
+字体的基础字形、缩放字形和排序命令也保存 UV 区域；
+加载／缩放时供 GPU 整数权重重采样使用的像素 Rect 为临时算子参数。
+普通 `Image` 及后端纹理仍保留创建、离屏目标、复制和动态像素裁剪所需的尺寸。
+动态 source crop 可在调用边界构造像素 Rect 并转换，不将所有 Rect 都解释为采样状态；
+屏幕布局、clip、碰撞框和业务尺寸保持各自语义，浮点绘制偏移任务暂缓。
 离线 JSON 资源清单保留原素材的行列布局，供作者工具识别和裁切；
 NRSC4 加载计划不写入行列或图片动画参数，C++ 加载器也不读取它们。
 CPU alpha 合成层和各 GPU 后端的 alpha 合成接口只接受同尺寸图片，不携带行列。
@@ -84,7 +98,7 @@ OpenGL/DX9 的纹理对象已直接包含原生纹理，不再间接持有 Stora
 
 reanim 离线中间记录使用 v6 外层 DEADFEDB、RAV7/IDT6：每个根类型只保存一次轨道、关键帧、字体、文本和
 附件行为，实例只保存 `u32 mVariant`。外观是根定义中的纹理绑定数组、
-`[variant][slot]` 四整数矩形表和预计算切换表，不增加 ReanimationType
+`[variant][slot]` 的 UV／逻辑尺寸表和预计算切换表，不增加 ReanimationType
 或独立 compiled 定义。图片 slot 离线按轨道、原图、原 cell 细分，保留
 原图时沿用原 cell，替换图使用全图；`none` 只跳过 sprite，不隐藏附件。
 运行期关键帧不再保存行列、矩形或 Image 覆写指针。
@@ -121,7 +135,8 @@ particle 已删除图片覆写接口和实例中的 Image 指针，掉头、断�
 都必须与父定义相等，不能声明 emitter 或覆盖行为。编译期可临时展开
 继承内容做校验与装箱。父链只在编译期解析；运行时没有独立子定义、
 递归加载或行为指针在根之间借用。一个根唯一拥有 emitter/轨道/fields
-静态数组以及 `[variant][rect]` 表，各外观只有 GPU 绑定、尺寸和矩形行。
+静态数组以及 `[variant][region]` 表，各外观只有 GPU 绑定和 UV／逻辑尺寸行，
+不保存图集宽高数组。离线中间记录的整数矩形继续供装箱与像素验证使用。
 程序静态定义包含 144 个 reanim 根和 106 个 particle 根，分别承载 2,830 和
 162 行外观；不再为各外观重复编译行为。包含投掷物和 Zombatar 编辑器在内的
 193 张运行期图集由配置明确控制。
@@ -231,8 +246,9 @@ view 新建源 PNG。局部 view 的最终矩形仅为源 `rect` 加整张 sheet
 二十个成就图标仍共用完整 512×256 sheet。
 
 `SceneAtlasData.h/.cpp` 为 `MagnetAtlas`、`AlmanacAtlas`、
-`AchievementsAtlas` 和 `FixedUIAtlas` 各生成一个直接 GPU 指针、尺寸、
-静态 `Images` 矩形、局部 `Sprite` 枚举及 `Load()` / `Free()`。
+`AchievementsAtlas` 和 `FixedUIAtlas` 各生成一个直接 GPU 指针、
+静态 `TextureRegion Images`、局部 `Sprite` 枚举及 `Load()` / `Free()`，
+不公开图集 Width/Height 常量。`Load()` 使用预期尺寸字面量校验 PNG。
 没有每个 view 的 `Image` 对象或运行时 ID 查找。磁铁模块另外生成实际使用的
 `Scales`；成就模块按 `ICON_n` 的数字顺序生成独立 `Icons` 数组，
 不依赖 DSL 声明顺序或枚举相邻。聚合函数负责四模块加载和逆序解绑。
@@ -251,8 +267,9 @@ view 新建源 PNG。局部 view 的最终矩形仅为源 `rect` 加整张 sheet
 明确给出 PNG 路径和缩放；昼夜阴影记录源裁剪矩形。C++ DSL 前端不读取
 程序图片编号。公共流水线使用相同的非旋转装箱器和两像素扩边，写出
 PRJ1 离线中间记录和投掷物图集。
-程序保留一份 GPU 指针，以及静态存储的十四项矩形/缩放和两个阴影矩形。
-矩形和缩放由编译器写进 C++ 初始化值，加载期只绑定 GPU 指针，上传后立即释放 CPU 像素。
+程序保留一份 GPU 指针，以及静态存储的十四项 UV 区域/缩放和两个阴影 UV 区域；
+投掷物图集结构不再保存 atlas width/height。采样边界与逻辑尺寸由编译器写入
+C++ 初始化值，加载期按字面量验证 PNG 尺寸并绑定 GPU 指针，上传后立即释放 CPU 像素。
 弹种、运动、碰撞和存档字段不变。
 孢子的 DSL 缩放以原来的 0.3 为基准乘上年龄曲线，换大图时同样能调整显示大小。
 
@@ -260,7 +277,7 @@ PRJ1 离线中间记录和投掷物图集。
 `definition_order(particle ...)` 显式保存现有枚举与定义名的对应顺序。
 144 个运行时 reanim、106 个 particle 以及十四项投掷物外观完整生成到
 `GeneratedDefinitions.h/.cpp`、`GeneratedDefinitionStorage.h` 和十六份数据分片。
-根对象与可修改数组使用 `constinit`，只读矩形等数组使用静态常量；
+根对象与可修改数组使用 `constinit`，只读 UV 区域等数组使用静态常量；
 每个定义只保存实际的变体×图片槽位，不按全局最大尺寸补零。
 生成代码逐项 `static_assert` 验证枚举值，离线构建还会核对 C++ 注册表的定义路径。
 全部轨道、398381 个关键帧、5158 个粒子曲线节点、力场、外观选项和
@@ -281,15 +298,17 @@ PNG/renderer 接口给 GPU 字段及少量字幕字体字段赋值。静态 back
 FEASIBLE，面积下界 2944583，gap 0.994998%，未证明最优；完成缓存保留在源树。
 
 生成的 `ZombatarImage.h` 是模块内部的 16 位图片枚举，
-`ZombatarAtlasData.cpp` 保存 constinit 图集对象、209 个矩形及加载/解绑函数。
+`ZombatarAtlasData.cpp` 保存 constinit 图集对象、209 个 `TextureRegion`
+及加载/解绑函数，图集对象不再保存 atlas width/height。
 整个模块只持有一份 GPU 指针，子图不创建 Image、视图或独立纹理。
 `ZombatarLoadResources()` 在 LawnApp 加载期调用，主线程屏障完成上传并释放 CPU 数据；
 `ZombatarFreeResources()` 在共享图集销毁前解绑。页面隐藏不释放图集。
 编辑器按钮使用只含实际布局、输入状态和图片枚举的专用数据类。
-部件表、着色遮罩、静态头像与无损 PNG 导出均直接使用图集矩形。
+部件表、着色遮罩、静态头像与无损 PNG 导出均直接使用图集 UV 区域与逻辑尺寸。
 战斗头部继续使用已有的 `REANIM_ZOMBATAR_HEAD` 定义图集；
 预览地面借用 `IMAGE_ALMANAC_GROUNDDAY`，不由模块释放。
 存档中的逻辑部件编号与颜色编号保持不变。
+采样区域从像素矩形改为 UV 不改变离线装箱、PNG 像素、PAK 格式或存档布局。
 
 ## 已核实机制
 

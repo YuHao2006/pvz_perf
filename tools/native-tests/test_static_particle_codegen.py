@@ -103,7 +103,7 @@ class StaticParticleTests(unittest.TestCase):
         self.assertEqual(node, expected)
         output = static.generate(SimpleNamespace(
             definition_orders={"particle": [("PARTICLE_TEST", "Test")]}), {path: data})
-        self.assertIn("1, 3, 0.00012345679f, 13.307229f, 8, 13",
+        self.assertIn("double{1} / 3, 0.00012345679f, 13.307229f, 8, 13",
                       output["files"]["ParticleData00.cpp"].decode())
 
     def test_defaults_alias_mask_lookup_and_static_addresses(self):
@@ -126,7 +126,7 @@ class StaticParticleTests(unittest.TestCase):
         self.assertEqual(set(output["files"]),
                          {f"ParticleData{i:02d}.cpp" for i in range(8)})
         text = b"\n".join(output["files"].values()).decode()
-        self.assertIn("0, 1, 0.125f, 0.25f, 8, 13", text)
+        self.assertIn("double{0} / 1, 0.125f, 0.25f, 8, 13", text)
         self.assertIn("constinit TodEmitterDefinition Particle0Emitters[2]", text)
         self.assertIn("constinit Sexy::GpuTexture* Particle0Textures[1]", text)
         self.assertNotRegex(text, r"\b(?:new|memcpy|TodCurveResolveEval|FloatTrackSetDefault)\b")
@@ -185,8 +185,8 @@ class StaticParticleTests(unittest.TestCase):
         for key, count in counts.items():
             self.assertEqual(output["summary"][key], count)
         self.assertEqual(output["summary"]["nodes"], len(expected_nodes))
-        # Inspect every emitted exact rational/milli node and function address.
-        pattern = r"\{(-?\d+), (-?\d+), ([-+.\deE]+)f, ([-+.\deE]+)f, (\d+), (\d+)\}"
+        # Fractions remain exact source expressions, evaluated by the C++ compiler.
+        pattern = r"\{double\{(-?\d+)\} / (-?\d+), ([-+.\deE]+)f, ([-+.\deE]+)f, (\d+), (\d+)\}"
         actual_nodes = []
         for source in output["files"].values():
             for match in re.finditer(pattern, source.decode()):
@@ -219,7 +219,7 @@ class StaticParticleTests(unittest.TestCase):
                 ("FloatParameterTrackNode", r"Particle\d+Nodes\d+", "nodes"),
                 ("ParticleField", r"Particle\d+Emitter\d+Fields\d+", "fields"),
                 ("TodEmitterDefinition", r"Particle\d+Emitters", "emitters"),
-                ("const Sexy::Rect", r"Particle\d+Rects", "rectangles"),
+                ("const Sexy::TextureRegion", r"Particle\d+Rects", "rectangles"),
                 (r"Sexy::GpuTexture\*", r"Particle\d+Textures", "variants")):
             sizes = re.findall(r"constinit " + type_ + " " + label + r"\[(\d+)\]", source)
             self.assertEqual(sum(map(int, sizes)), summary[summary_key], summary_key)

@@ -145,7 +145,7 @@ void ActorMigration()
     Set(plant, 16, static_cast<std::uint32_t>(-23), 4);
     Set(plant, 20, 2'147'483, 4);
     state = V7SaveSchema::FromHistorical(Kind::Plant, plant, plant);
-    Require(state.size() == 56 &&
+    Require(state.size() == 156 &&
             std::bit_cast<float>(std::uint32_t(Get(state, 0, 4))) == -23.0f &&
             std::bit_cast<float>(std::uint32_t(Get(state, 4, 4))) == 2'147'483.0f,
             "Plant integer coordinate was not converted to normal float units");
@@ -278,20 +278,18 @@ void ExactStateValidation()
     Reject([&] { V7SaveSchema::Validate(Kind::Reanimation, Bytes(60)); },
         "Old relative-clock animation tail was accepted as current");
 
-    Bytes system(4), plant(56), zombie(80), emitter(40), particle(28), grid(240);
+    Bytes system(4), plant(156), zombie(80), emitter(40), particle(28), grid(240);
     Set(system, 0, 0xfedcba98U, 4); V7SaveSchema::Validate(Kind::ParticleSystem, system);
     Reject([&] { V7SaveSchema::Validate(Kind::ParticleSystem, Bytes(12)); },
         "Old particle system pending-step state accepted as current");
     Set(plant, 24, 91'234'567'891LL); V7SaveSchema::Validate(Kind::Plant, plant);
     Set(plant, 32, 91'451'691'347LL);
-    Set(plant, 40, 91'234'567'891LL);
-    Set(plant, 48, 91'230'000'003LL);
+    Set(plant, 40, 91'230'000'003LL);
     V7SaveSchema::Validate(Kind::Plant, plant);
-    Require(V7SaveSchema::Read(plant, 32, 8) - V7SaveSchema::Read(plant, 40, 8) == 217'123'456 &&
-        V7SaveSchema::Read(plant, 48, 8) == 91'230'000'003LL &&
-        plant.size() == 56,
+    Require(V7SaveSchema::Read(plant, 32, 8) == 91'451'691'347LL &&
+        V7SaveSchema::Read(plant, 40, 8) == 91'230'000'003LL &&
+        plant.size() == 156,
         "Plant deadline, event cursor or compact tail changed");
-    rejectField(Kind::Plant, plant, 40, UINT64_MAX, "Negative plant clock snapshot accepted");
     Reject([&] { V7SaveSchema::Validate(Kind::Plant, Bytes(32)); },
         "Old relative-clock Plant tail was accepted as current");
     rejectField(Kind::Plant, plant, 24, UINT64_MAX, "Negative bowling row arrival time accepted");

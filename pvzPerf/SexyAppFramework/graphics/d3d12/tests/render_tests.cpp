@@ -249,6 +249,50 @@ void StaticSlots(D3d12Renderer& renderer) {
     Pixel(renderer.ReadScenePixels(),700,500,color);
     std::cout << "static-symbols-2000-no-dynamic-duplicates=PASS\n";
 }
+void PoolDraw(D3d12Renderer& renderer) {
+    const uint32_t white = 0xffffffffu, red = 0xffff0000u, blue = 0xff0000ffu;
+    auto* source = renderer.CreateTexture(1, 1, &white, 4);
+    auto* before = renderer.CreateTexture(1, 1, &red, 4);
+    auto* after = renderer.CreateTexture(1, 1, &blue, 4);
+    auto* output = renderer.CreateRenderImage(800, 600);
+    for (const bool offscreen : {false, true}) {
+        if (offscreen) renderer.SetRenderImage(output);
+        for (uint32_t layer = 0; layer < 3; ++layer) {
+            for (uint32_t night = 0; night < 2; ++night) {
+                Require(renderer.BeginScene(), "Cannot begin pool scene");
+                renderer.SubmitTriangles(Quad(2, 2, 5, 5, D3d12Renderer::SlotOf(before)),
+                    before, false, false, GpuBlend::Opaque);
+                const GpuPoolParams p{720, 150, -10, -20, 0.2f, 1.1f, 0.3f, 1.7f,
+                    {0, 0, 800, 600}, layer, night, 0, layer == 2 ? 3u : 1u, GpuBlend::Opaque};
+                renderer.SubmitPool(source, p);
+                renderer.SubmitTriangles(Quad(12, 2, 5, 5, D3d12Renderer::SlotOf(after)),
+                    after, false, false, GpuBlend::Opaque);
+                renderer.EndSceneAndPresent();
+                if (offscreen) {
+                    renderer.SetRenderImage(nullptr);
+                    Require(renderer.BeginScene(), "Cannot present pool image");
+                    renderer.SubmitTriangles(Quad(0, 0, 800, 600, D3d12Renderer::SlotOf(output)),
+                        output, false, false, GpuBlend::Opaque);
+                    renderer.EndSceneAndPresent();
+                    renderer.SetRenderImage(output);
+                }
+                const auto pixels = renderer.ReadScenePixels();
+                Pixel(pixels, 3, 3, red);
+                Pixel(pixels, 13, 3, blue);
+                const uint32_t alpha = layer == 2 ? (night ? 48u : 192u) : 255u;
+                Pixel(pixels, 200, 350, (alpha << 24) | 0xffffffu);
+                if (layer == 2)
+                    Pixel(pixels, 600, 350, ((night ? 48u : 128u) << 24) | 0xffffffu);
+            }
+        }
+        renderer.SetRenderImage(nullptr);
+    }
+    renderer.DestroyTexture(output);
+    renderer.DestroyTexture(after);
+    renderer.DestroyTexture(before);
+    renderer.DestroyTexture(source);
+    std::cout << "pool-three-layers-day-night-translated-offscreen-state-restore=PASS\n";
+}
 void Validation(ID3D12Device* device) {
     Microsoft::WRL::ComPtr<ID3D12InfoQueue> messages;
     Require(SUCCEEDED(device->QueryInterface(IID_PPV_ARGS(&messages))),
@@ -333,6 +377,7 @@ int main() {
             UploadAndBindless(renderer);
             Coverage(renderer);
             ImageFactories(renderer);
+            PoolDraw(renderer);
             SourceScale(renderer, scaleEffect);
             StaticSlots(renderer);
             ResizeCanvas(renderer, scaleEffect);

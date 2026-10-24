@@ -6,6 +6,8 @@
 #include "VulkanScalePipeline.h"
 #include "SexyAppFramework/graphics/ImageReadback.h"
 #include "SexyAppFramework/graphics/GpuTypes.h"
+#include "SexyAppFramework/graphics/GpuPool.h"
+#include "SexyAppFramework/graphics/GpuReanim.h"
 #include <cstdint>
 #include <memory>
 #include <span>
@@ -19,6 +21,7 @@ namespace Sexy {
 using VulkanVertex = GpuVertex;
 using VulkanBlend = GpuBlend;
 struct VulkanTexture;
+struct VulkanReanim;
 using VulkanFontGlyph = GpuFontGlyph;
 using VulkanImageOperation = GpuImageOperation;
 using VulkanImageProcessing = GpuImageProcessing;
@@ -32,6 +35,10 @@ class VulkanRenderer final {
     struct Impl;
     std::unique_ptr<Impl> impl_;
 public:
+#if defined(PVZ_REANIM_BENCHMARK)
+    // Only the opt-in benchmark backend contains this borrowed query-pool hook.
+    VkQueryPool frameTimestampQueries = VK_NULL_HANDLE;
+#endif
     VulkanRenderer(VulkanContext& window, int sceneWidth, int sceneHeight,
                    const std::string& vertexShader, const std::string& fragmentShader,
                    const VulkanHdrParams* hdr = nullptr);
@@ -120,6 +127,16 @@ public:
     void SubmitTriangles(std::span<const VulkanVertex> vertices, VulkanTexture* texture,
                          bool linear, bool wrap, VulkanBlend blend,
                          const VulkanClip* clip = nullptr);
+    void SubmitPool(VulkanTexture* texture, const GpuPoolParams& params);
+    // Loading-time immutable resident data. The renderer retains GPU resources;
+    // source spans can be released after upload. Destruction retires at a fence.
+    VulkanReanim* UploadReanimDefinition(const GpuReanimDefinition& definition);
+    void DestroyReanimDefinition(VulkanReanim* definition);
+    // false means the track/job requires the CPU path; no drawing was queued.
+    // Each accepted job evaluates one track once and writes the ordinary stream.
+    bool SubmitReanim(VulkanReanim* definition, VulkanTexture* texture,
+        const GpuReanimDraw& draw, bool linear, bool repeat, VulkanBlend blend,
+        const VulkanClip* clip = nullptr);
     // Nearest/clamp mask sampling, integer byte coverage -> alpha in the GPU,
     // with the same native blending and clipping as ordinary primitives.
     void SubmitCoverageTriangles(std::span<const VulkanVertex> vertices, VulkanTexture* mask,

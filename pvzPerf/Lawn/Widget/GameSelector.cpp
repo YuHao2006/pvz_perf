@@ -714,14 +714,15 @@ void GameSelector::Draw(Graphics* g)
 	// @Patoke: decided to manually inline these methods as i cannot be arsed to figure out what the name of the 2 functions called in here are
 	// GOTY @Patoke: 0x44FD20
 	g->mLinearBlend = true;
-	g->Translate(800, 0);
+	const float aMenuTransX = g->mTransX;
+	g->mTransX = aMenuTransX + 800;
 
 	aSelectorReanim->DrawRenderGroup(g, 1);  // "SelectorScreen_BG"
 	for (int i = 0; i < 6; i++)
 		mApp->ReanimationGet(mCloudReanimID[i])->Draw(g);
 	aSelectorReanim->DrawRenderGroup(g, RENDER_GROUP_NORMAL);
 
-	g->Translate(-800, 0);
+	g->mTransX = aMenuTransX;
 	if (mSelectorState == SelectorAnimState::SELECTOR_OPEN)
 	{
 		int aBGIdx = aSelectorReanim->FindTrackIndex(ReanimTrackId::SelectorScreen_BG_Right);

@@ -3,6 +3,7 @@
 #include "MowerMotionRuntimeChecks.h"
 #include "ZombieAltitudeRuntimeChecks.h"
 #include "CreditsScrollRuntimeChecks.h"
+#include "ZamboniRuntimeChecks.h"
 // Included by the game-linked static-definition fixture. These checks execute
 // real Plant/Zombie methods, real Board pools/buckets and real source animation.
 #include "Lawn/Board.h"
@@ -1058,6 +1059,8 @@ inline void Check(LawnApp& app)
     std::cerr << "PASS actual analytic mower motion, pool height and brain falling\n";
     ZombieAltitudeRuntime::Check(app,board);
     std::cerr << "PASS actual Zombie altitude: 14 paths, roof Imp, combined Balloon, save continuation\n";
+    ZamboniRuntime::Check(app,board);
+    std::cerr << "PASS actual Zamboni coupled speed and position, canonical boundaries and save continuation\n";
     LaunchDeadlines(app, board);
     SlotMachine(app, board);
     PickupMotion(app, board);

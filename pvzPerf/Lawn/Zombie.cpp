@@ -2,6 +2,7 @@
 #include "Board.h"
 #include "Zombie.h"
 #include "Motion.h"
+#include "ZamboniMotion.h"
 #include "CatapultState.h"
 #include "ZombieFlags.h"
 #include "Cutscene.h"
@@ -4453,14 +4454,8 @@ bool Zombie::ZombieNotWalking()
 //0x52A7B0
 void Zombie::UpdateZamboni()
 {
-    if ((mX) > 400.0f && !mFlatTires)
-    {
-        mVelX = TodAnimateCurveFloat(700, 300, (mX), 0.25f, 0.05f, Curves::Linear);
-    }
-    else if (mFlatTires && mVelX > 0.0005f)
-    {
-        mVelX -= Sexy::UpdateDelta(0.0005f);
-    }
+    // Speed and position are sampled together by UpdateZombieWalking below.
+    // Ice still observes the original pre-move position in this type action.
 
     int anIceX = (mX) + 118;
     if (mBoard->StageHasRoof())
@@ -4542,7 +4537,47 @@ void Zombie::UpdateZombieWalking()
 {
     const float aAdditionalSpeed = mPendingAdditionalSpeedX + (mBlowingAway ? 10.0f : 0.0f);
     mPendingAdditionalSpeedX = 0;
-    if (ZombieNotWalking())
+    const bool aNotWalking = ZombieNotWalking();
+    if (mZombieType == ZombieType::ZOMBIE_ZAMBONI)
+    {
+        // UpdateZamboni runs first, but its speed depends on X. Rebinding a
+        // constant-velocity anchor to that new speed every update would still
+        // feed rounded X back into integration. Keep one coupled trajectory.
+        auto& motion = mVelocityX;
+        const bool backwards = IsWalkingBackwards();
+        const auto sample = [&](std::uint64_t elapsed)
+        {
+            return backwards ?
+                ZamboniMotion::Sample<1>(motion.origin, motion.rate, elapsed,
+                    mFlatTires, !aNotWalking, aAdditionalSpeed) :
+                ZamboniMotion::Sample<-1>(motion.origin, motion.rate, elapsed,
+                    mFlatTires, !aNotWalking, aAdditionalSpeed);
+        };
+        bool rebind = !motion.bound || motion.lastOutput != mX;
+        if (!rebind)
+        {
+            const auto previous = sample(motion.elapsedNs);
+            rebind = CheckedPosition(previous.position) != mX ||
+                CheckedPosition(previous.speed) != mVelX;
+        }
+        if (rebind)
+        {
+            motion.origin = mX;
+            motion.elapsedNs = 0;
+            motion.rate = mVelX;  // Initial speed, not a mode flag.
+            motion.bound = true;
+        }
+        if (Sexy::gUpdateIntervalNs > UINT64_MAX - motion.elapsedNs)
+            throw std::overflow_error("zamboni movement interval exceeds clock range");
+        motion.elapsedNs += Sexy::gUpdateIntervalNs;
+        const auto current = sample(motion.elapsedNs);
+        mX = CheckedPosition(current.position);
+        mVelX = CheckedPosition(current.speed);
+        motion.lastOutput = mX;
+        mRootBindingGeneration = 0;
+        return;
+    }
+    if (aNotWalking)
     {
         mRootBindingGeneration = 0;
         if (aAdditionalSpeed != 0)
@@ -4564,7 +4599,7 @@ void Zombie::UpdateZombieWalking()
                 aSpeed *= CHILLED_SPEED_FACTOR;
             }
         }
-        else if (mZombieType == ZombieType::ZOMBIE_ZAMBONI || mZombiePhase == ZombiePhase::PHASE_DIGGER_TUNNELING || mZombiePhase == ZombiePhase::PHASE_DOLPHIN_IN_JUMP ||
+        else if (mZombiePhase == ZombiePhase::PHASE_DIGGER_TUNNELING || mZombiePhase == ZombiePhase::PHASE_DOLPHIN_IN_JUMP ||
             IsBobsledTeamWithSled() || mZombiePhase == ZombiePhase::PHASE_POLEVAULTER_IN_VAULT || mZombiePhase == ZombiePhase::PHASE_SNORKEL_INTO_POOL)
         {
             aSpeed = mVelX;
@@ -6953,6 +6988,7 @@ void Zombie::ZamboniDeath(unsigned int theDamageFlags)
     if (TestBit(theDamageFlags, DamageFlags::DAMAGE_SPIKE))
     {
         mFlatTires = true;
+        mVelocityX = {};
         mApp->PlayFoley(FoleyType::FOLEY_TIRE_POP);
         mZombiePhase = ZombiePhase::PHASE_ZOMBIE_DYING;
         mApp->AddTodParticle((mX) + 29.0f, (mY) + 114.0f, mRenderOrder + 1, ParticleEffect::PARTICLE_ZAMBONI_TIRE);
@@ -7481,6 +7517,8 @@ void Zombie::StartMindControlled()
 {
     mApp->PlaySample(SOUND_MINDCONTROLLED);
     mMindControlled = true;
+    if (mZombieType == ZombieType::ZOMBIE_ZAMBONI)
+        mVelocityX = {};
     mLastPortalX = -1;
 
     if (mZombieType == ZombieType::ZOMBIE_DANCER)

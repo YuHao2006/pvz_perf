@@ -975,10 +975,11 @@ void SeedBank::Draw(Graphics* g)
 	for (int i = 0; i < mNumPackets; i++)
 	{
 		SeedPacket* aSeedPacket = &mSeedPackets[i];
+		const float aParentTransX = g->mTransX, aParentTransY = g->mTransY;
 		if (aSeedPacket->mPacketType != SeedType::SEED_NONE && aSeedPacket->BeginDraw(g))
 		{
 			aSeedPacket->Draw(g);
-			aSeedPacket->EndDraw(g);
+			aSeedPacket->EndDraw(g, aParentTransX, aParentTransY);
 		}
 	}
 

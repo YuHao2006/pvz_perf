@@ -30,7 +30,7 @@ public:
 public:
     /*inline*/                      GameObject();
     /*inline*/ bool                 BeginDraw(Graphics* g);
-    /*inline*/ void                 EndDraw(Graphics* g);
+    /*inline*/ void                 EndDraw(Graphics* g, float parentTransX, float parentTransY);
     /*inline*/ void                 MakeParentGraphicsFrame(Graphics* g);
 };
 

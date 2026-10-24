@@ -155,9 +155,23 @@ inline void SharedClockConsumers(Board& board)
     const auto x = graphics.mTransX, y = graphics.mTransY;
     Require(object.BeginDraw(&graphics) && graphics.mTransX == x + object.mX &&
         graphics.mTransY == y + object.mY, "GameObject drawing discarded fractional coordinates");
-    object.EndDraw(&graphics);
+    object.EndDraw(&graphics, x, y);
     Require(graphics.mTransX == x && graphics.mTransY == y,
         "GameObject drawing did not restore its floating-point translation");
+    // A fractional parent translation is lost by (parent + large offset) -
+    // large offset. Later objects must still see the original float bits.
+    graphics.mTransX = 0.1f;
+    graphics.mTransY = -0.3f;
+    const float parentX = graphics.mTransX, parentY = graphics.mTransY;
+    for (int i = 0; i < 1024; ++i)
+    {
+        object.mX = i % 2 ? 8192.25f : -16384.5f;
+        object.mY = i % 2 ? -32768.25f : 4096.125f;
+        Require(object.BeginDraw(&graphics), "Visible object failed to begin drawing");
+        object.EndDraw(&graphics, parentX, parentY);
+        Require(graphics.mTransX == parentX && graphics.mTransY == parentY,
+            "Repeated object drawing accumulated parent translation rounding");
+    }
     std::cout << "PASS raw level-clock consumers: variable-step boundary events, zero-step stability, float drawing\n";
 }
 

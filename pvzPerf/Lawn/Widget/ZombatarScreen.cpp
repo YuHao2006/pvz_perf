@@ -174,7 +174,6 @@ void ZombatarScreen::Draw(Graphics* g)
 		if (mZombiePreview->BeginDraw(&aZombieGraphics))
 		{
 			mZombiePreview->Draw(&aZombieGraphics);
-			mZombiePreview->EndDraw(&aZombieGraphics);
 		}
 	}
 

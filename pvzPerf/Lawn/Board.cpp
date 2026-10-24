@@ -7713,15 +7713,15 @@ void Board::DrawGameObjects(Graphics* g)
 	// default 断言语义（Release 下安全跳过不绘制）。
 	static_assert(RENDER_ITEM_COIN == 0, "渲染项表以枚举首项为基 0");
 	static constexpr void (*kRenderItemDraws[])(Board*, Graphics*, RenderItem&) = {
-		/* [0]  RENDER_ITEM_COIN                 */ [](Board*, Graphics* g, RenderItem& aRenderItem) { Coin* aCoin = aRenderItem.mCoin; if (aCoin->BeginDraw(g)) { aCoin->Draw(g); aCoin->EndDraw(g); } },
-		/* [1]  RENDER_ITEM_PROJECTILE           */ [](Board*, Graphics* g, RenderItem& aRenderItem) { Projectile* aProjectile = aRenderItem.mProjectile; if (aProjectile->BeginDraw(g)) { aProjectile->Draw(g); aProjectile->EndDraw(g); } },
-		/* [2]  RENDER_ITEM_ZOMBIE               */ [](Board*, Graphics* g, RenderItem& aRenderItem) { Zombie* aZombie = aRenderItem.mZombie; if (aZombie->BeginDraw(g)) { aZombie->Draw(g); aZombie->EndDraw(g); } },
-		/* [3]  RENDER_ITEM_ZOMBIE_SHADOW        */ [](Board*, Graphics* g, RenderItem& aRenderItem) { Zombie* aZombie = aRenderItem.mZombie; if (aZombie->BeginDraw(g)) { aZombie->DrawShadow(g); aZombie->EndDraw(g); } },
+		/* [0]  RENDER_ITEM_COIN                 */ [](Board*, Graphics* g, RenderItem& aRenderItem) { Coin* aCoin = aRenderItem.mCoin; const float x = g->mTransX, y = g->mTransY; if (aCoin->BeginDraw(g)) { aCoin->Draw(g); aCoin->EndDraw(g, x, y); } },
+		/* [1]  RENDER_ITEM_PROJECTILE           */ [](Board*, Graphics* g, RenderItem& aRenderItem) { Projectile* aProjectile = aRenderItem.mProjectile; const float x = g->mTransX, y = g->mTransY; if (aProjectile->BeginDraw(g)) { aProjectile->Draw(g); aProjectile->EndDraw(g, x, y); } },
+		/* [2]  RENDER_ITEM_ZOMBIE               */ [](Board*, Graphics* g, RenderItem& aRenderItem) { Zombie* aZombie = aRenderItem.mZombie; const float x = g->mTransX, y = g->mTransY; if (aZombie->BeginDraw(g)) { aZombie->Draw(g); aZombie->EndDraw(g, x, y); } },
+		/* [3]  RENDER_ITEM_ZOMBIE_SHADOW        */ [](Board*, Graphics* g, RenderItem& aRenderItem) { Zombie* aZombie = aRenderItem.mZombie; const float x = g->mTransX, y = g->mTransY; if (aZombie->BeginDraw(g)) { aZombie->DrawShadow(g); aZombie->EndDraw(g, x, y); } },
 		/* [4]  RENDER_ITEM_ZOMBIE_BUNGEE_TARGET */ [](Board*, Graphics* g, RenderItem& aRenderItem) { aRenderItem.mZombie->DrawBungeeTarget(g); },
-		/* [5]  RENDER_ITEM_PLANT                */ [](Board*, Graphics* g, RenderItem& aRenderItem) { Plant* aPlant = aRenderItem.mPlant; if (aPlant->BeginDraw(g)) { aPlant->Draw(g); aPlant->EndDraw(g); } },
-		/* [6]  RENDER_ITEM_PLANT_OVERLAY        */ [](Board* aBoard, Graphics* g, RenderItem& aRenderItem) { Plant* aPlant = aRenderItem.mPlant; if (aPlant->BeginDraw(g)) { aBoard->mApp->mZenGarden->DrawPlantOverlay(g, aPlant); aPlant->EndDraw(g); } },
-		/* [7]  RENDER_ITEM_PLANT_MAGNET_ITEMS   */ [](Board*, Graphics* g, RenderItem& aRenderItem) { Plant* aPlant = aRenderItem.mPlant; if (aPlant->BeginDraw(g)) { aPlant->DrawMagnetItems(g); aPlant->EndDraw(g); } },
-		/* [8]  RENDER_ITEM_CURSOR_PREVIEW       */ [](Board*, Graphics* g, RenderItem& aRenderItem) { CursorPreview* aCursorPreview = aRenderItem.mCursorPreview; if (aCursorPreview->BeginDraw(g)) { aCursorPreview->Draw(g); aCursorPreview->EndDraw(g); } },
+		/* [5]  RENDER_ITEM_PLANT                */ [](Board*, Graphics* g, RenderItem& aRenderItem) { Plant* aPlant = aRenderItem.mPlant; const float x = g->mTransX, y = g->mTransY; if (aPlant->BeginDraw(g)) { aPlant->Draw(g); aPlant->EndDraw(g, x, y); } },
+		/* [6]  RENDER_ITEM_PLANT_OVERLAY        */ [](Board* aBoard, Graphics* g, RenderItem& aRenderItem) { Plant* aPlant = aRenderItem.mPlant; const float x = g->mTransX, y = g->mTransY; if (aPlant->BeginDraw(g)) { aBoard->mApp->mZenGarden->DrawPlantOverlay(g, aPlant); aPlant->EndDraw(g, x, y); } },
+		/* [7]  RENDER_ITEM_PLANT_MAGNET_ITEMS   */ [](Board*, Graphics* g, RenderItem& aRenderItem) { Plant* aPlant = aRenderItem.mPlant; const float x = g->mTransX, y = g->mTransY; if (aPlant->BeginDraw(g)) { aPlant->DrawMagnetItems(g); aPlant->EndDraw(g, x, y); } },
+		/* [8]  RENDER_ITEM_CURSOR_PREVIEW       */ [](Board*, Graphics* g, RenderItem& aRenderItem) { CursorPreview* aCursorPreview = aRenderItem.mCursorPreview; const float x = g->mTransX, y = g->mTransY; if (aCursorPreview->BeginDraw(g)) { aCursorPreview->Draw(g); aCursorPreview->EndDraw(g, x, y); } },
 		/* [9]  RENDER_ITEM_PARTICLE             */ [](Board* aBoard, Graphics* g, RenderItem& aRenderItem) {
 			const ParticleEffect aEffect = aRenderItem.mParticleSytem->mEffectType;
 			const bool aBankArrow = aEffect == ParticleEffect::PARTICLE_SEED_PACKET_PICK &&
@@ -7745,10 +7745,10 @@ void Board::DrawGameObjects(Graphics* g)
 		/* [16] RENDER_ITEM_BACKDROP             */ [](Board* aBoard, Graphics* g, RenderItem&) { aBoard->DrawBackdrop(g); },
 		/* [17] RENDER_ITEM_DOOR_MASK            */ [](Board* aBoard, Graphics* g, RenderItem&) { aBoard->DrawHouseDoorTop(g); },
 		/* [18] RENDER_ITEM_COIN_BANK            */ [](Board* aBoard, Graphics* g, RenderItem&) { aBoard->DrawUICoinBank(g); },
-		/* [19] RENDER_ITEM_PROJECTILE_SHADOW    */ [](Board*, Graphics* g, RenderItem& aRenderItem) { Projectile* aProjectile = aRenderItem.mProjectile; if (aProjectile->BeginDraw(g)) { aProjectile->DrawShadow(g); aProjectile->EndDraw(g); } },
+		/* [19] RENDER_ITEM_PROJECTILE_SHADOW    */ [](Board*, Graphics* g, RenderItem& aRenderItem) { Projectile* aProjectile = aRenderItem.mProjectile; const float x = g->mTransX, y = g->mTransY; if (aProjectile->BeginDraw(g)) { aProjectile->DrawShadow(g); aProjectile->EndDraw(g, x, y); } },
 		/* [20] RENDER_ITEM_MOWER                */ [](Board*, Graphics* g, RenderItem& aRenderItem) { aRenderItem.mMower->Draw(g); },
 		/* [21] RENDER_ITEM_SCREEN_FADE          */ [](Board* aBoard, Graphics* g, RenderItem&) { aBoard->DrawFadeOut(g); },
-		/* [22] RENDER_ITEM_BOSS_PART            */ [](Board* aBoard, Graphics* g, RenderItem& aRenderItem) { Zombie* aBossZombie = aBoard->GetBossZombie(); if (aBossZombie && aBossZombie->BeginDraw(g)) { aBossZombie->DrawBossPart(g, aRenderItem.mBossPart); aBossZombie->EndDraw(g); } },
+		/* [22] RENDER_ITEM_BOSS_PART            */ [](Board* aBoard, Graphics* g, RenderItem& aRenderItem) { Zombie* aBossZombie = aBoard->GetBossZombie(); const float x = g->mTransX, y = g->mTransY; if (aBossZombie && aBossZombie->BeginDraw(g)) { aBossZombie->DrawBossPart(g, aRenderItem.mBossPart); aBossZombie->EndDraw(g, x, y); } },
 		/* [23] RENDER_ITEM_GRID_ITEM            */ [](Board*, Graphics* g, RenderItem& aRenderItem) { aRenderItem.mGridItem->DrawGridItem(g); },
 		/* [24] RENDER_ITEM_GRID_ITEM_OVERLAY    */ [](Board*, Graphics* g, RenderItem& aRenderItem) { aRenderItem.mGridItem->DrawGridItemOverlay(g); },
 	};
@@ -8850,10 +8850,11 @@ void Board::DrawUIBottom(Graphics* g)
 
 	if (mApp->mGameScene != GameScenes::SCENE_ZOMBIES_WON)
 	{
+		const float aBeforeSeedBankX = g->mTransX, aBeforeSeedBankY = g->mTransY;
 		if (mSeedBank->BeginDraw(g))
 		{
 			mSeedBank->Draw(g);
-			mSeedBank->EndDraw(g);
+			mSeedBank->EndDraw(g, aBeforeSeedBankX, aBeforeSeedBankY);
 		}
 
 		if (mAdvice->mMessageStyle == MessageStyle::MESSAGE_STYLE_SLOT_MACHINE)
@@ -9100,10 +9101,11 @@ void Board::DrawUITop(Graphics* g)
 		mAdvice->Draw(g);
 	}
 
+	const float aBeforeCursorX = g->mTransX, aBeforeCursorY = g->mTransY;
 	if (mTimeStopCounter == 0 && mCursorObject->BeginDraw(g))
 	{
 		mCursorObject->Draw(g);
-		mCursorObject->EndDraw(g);
+		mCursorObject->EndDraw(g, aBeforeCursorX, aBeforeCursorY);
 	}
 
 	if (mApp->mGameScene == GameScenes::SCENE_LEVEL_INTRO && mApp->mSeedChooserScreen &&

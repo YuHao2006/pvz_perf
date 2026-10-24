@@ -73,6 +73,14 @@ OpenGL 常规 GS 改为四角输出并复用批次 scissor 后，原生渲染与
 原场景的带裁剪线性采样用例出现最大 1 个 RGBA8 通道值差异，未扩大原有容差；
 无裁剪与最近邻用例没有差异，因此不将此修改称为全套逐字节一致。
 此候选的性能收益尚未验证，不能用功能通过替代性能门槛。
+OpenGL Flush 内状态去重后，常规 GS／独立 VS／compute／显式 GS 回退、
+普通 render 的 coverage／字体／alpha／pool／反馈／目标切换，以及 OFF／恢复 ON
+均通过；更新后的 Win7/OpenGL 游戏 Image 强 probe 和 static 四场景亦通过。
+单轮未观察到外部负载的 regular GS 测试，密集及混合各通过八项 median／mean，
+DDSS 切换只通过三项 median、四项 mean，低轨道数仍失败。
+基准 CLI 现在在任一 median／mean 门槛失败时返回 2，全通过返回 0，
+运行异常仍返回 1；真实 DDSS 负例及密集／混合正例已验证该行为，
+计时范围、门槛和政策未变。
 OpenGL 的销毁事件失效覆盖定义、纹理、直接 raw adoption 和纹理替换，
 分别验证 begin-only／queued、同帧 Flush 后旧 token 拒绝、替代资源的新 token
 正常及已排队像素保留；失败销毁白纹理不会破坏仍有效的实例。

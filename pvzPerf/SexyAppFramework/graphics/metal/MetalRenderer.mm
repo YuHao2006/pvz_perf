@@ -28,6 +28,11 @@ struct MetalTexture {
     uint32_t slot = InvalidSlot, staticSlot = InvalidSlot;
     bool generated = false, opaque = false, sampled = false, renderable = false;
 };
+struct MetalReanim {
+    void* owner = nullptr;
+    std::vector<GpuReanimTrack> tracks;
+    uint32_t header = 0, imageSlotCount = 0, variantCount = 0;
+};
 
 struct MetalRenderer::Impl {
     MetalContext& context;
@@ -65,6 +70,41 @@ struct MetalRenderer::Impl {
     bool causticQueued = false;
     uint32_t causticCounter = 0;
     MetalTexture* causticTarget = nullptr;
+    uint32_t reanimPictureCandidates = 0;
+    uint64_t reanimOrdinaryTriangles = 0;
+    bool reanimFrameEligible = false, reanimBatchStarted = false;
+#if defined(PVZ_METAL_REANIM_RESIDENT)
+    struct ReanimInstance {
+        GpuReanimInstance draw;
+        uint32_t header, imageSlotCount, textureSlot, flags;
+        float clip[4];
+    };
+    struct ReanimTrack {
+        uint32_t track, instance, color, flags;
+        float shakeX, shakeY;
+        uint32_t padding[2]{};
+    };
+    static_assert(sizeof(ReanimInstance) == 96 && sizeof(ReanimTrack) == 32);
+    struct ReanimControl {
+        MetalReanim* definition;
+        MetalTexture* texture;
+        uint32_t before, after, textureSlot = UINT32_MAX;
+    };
+    static constexpr NSUInteger ReanimStaticCapacity = 64 * 1024 * 1024;
+    static constexpr NSUInteger ReanimPacketCapacity = 4 * 1024 * 1024;
+    static constexpr uint32_t ReanimBatchCapacity = 4096;
+    id<MTLBuffer> reanimStatic, reanimInstances, reanimTracks, reanimOutput;
+    id<MTLComputePipelineState> reanimKernel;
+    NSUInteger reanimStaticUsed = 0, reanimInstanceUsed = 0, reanimTrackUsed = 0;
+    std::vector<MetalReanim*> reanimDefinitions, reanimRetired;
+    std::vector<ReanimControl> reanimControls;
+    std::vector<id<MTLBuffer>> reanimArgumentBuffers;
+    size_t reanimArgumentUsed = 0;
+    std::array<MetalTexture*, SlotCount> reanimSources{};
+    MetalTexture* reanimTarget = nullptr;
+    GpuBlend reanimBlend = GpuBlend::Normal;
+    uint32_t reanimQueued = 0, reanimFirst = 0, reanimGeneration = 0;
+#endif
 
     Impl(MetalContext& c, int w, int h, const std::filesystem::path& directory)
         : context(c), device((__bridge id<MTLDevice>)c.device),
@@ -124,12 +164,19 @@ struct MetalRenderer::Impl {
         owners[0] = scene.get();
     }
     ~Impl() {
+#if defined(PVZ_METAL_REANIM_RESIDENT)
+        try { FlushReanim(); } catch (...) {}
+#endif
         // Submit already encoded work, including out-of-scene loading operations.
         if (commands) {
             [commands commit];
             [commands waitUntilCompleted];
         }
         if (inFlight) [inFlight waitUntilCompleted];
+#if defined(PVZ_METAL_REANIM_RESIDENT)
+        for (auto* definition : reanimDefinitions) delete definition;
+        for (auto* definition : reanimRetired) delete definition;
+#endif
     }
     id<MTLFunction> Function(NSString* name) {
         id<MTLFunction> result = [library newFunctionWithName:name];
@@ -197,6 +244,15 @@ struct MetalRenderer::Impl {
         for (auto& entry : raw) entry.first->sampled = false;
         scene->sampled = false;
         submittedResources = nil;
+#if defined(PVZ_METAL_REANIM_RESIDENT)
+        reanimBatchStarted = false;
+        for (auto* definition : reanimRetired) delete definition;
+        reanimRetired.clear();
+        reanimControls.clear();
+        reanimInstanceUsed = reanimTrackUsed = 0;
+        reanimArgumentUsed = 0;
+        ++reanimGeneration;
+#endif
     }
     void Wait() {
         if (!inFlight) return;
@@ -220,7 +276,96 @@ struct MetalRenderer::Impl {
     void Keep(id object) {
         if (object) [recordingResources addObject:object];
     }
+#if defined(PVZ_METAL_REANIM_RESIDENT)
+    bool InitReanim() {
+        if (reanimKernel) return true;
+        // A library built without the optional kernel is an unsupported
+        // resident backend; the loader can retain both tracks on the CPU.
+        id<MTLFunction> function = [library newFunctionWithName:@"pvz_reanim_kernel"];
+        if (!function) return false;
+        NSError* error = nil;
+        id<MTLComputePipelineState> kernel =
+            [device newComputePipelineStateWithFunction:function error:&error];
+        if (!kernel) return false;
+        reanimStatic = [device newBufferWithLength:ReanimStaticCapacity
+            options:MTLResourceStorageModePrivate | MTLResourceHazardTrackingModeTracked];
+        reanimInstances = [device newBufferWithLength:ReanimPacketCapacity options:MTLResourceStorageModeShared];
+        reanimTracks = [device newBufferWithLength:ReanimPacketCapacity options:MTLResourceStorageModeShared];
+        reanimOutput = [device newBufferWithLength:NSUInteger(ReanimBatchCapacity) * 18 * sizeof(GpuVertex)
+            options:MTLResourceStorageModePrivate | MTLResourceHazardTrackingModeTracked];
+        if (!reanimStatic || !reanimInstances || !reanimTracks || !reanimOutput)
+            MetalError(nil, "Allocate resident Metal reanimation arenas");
+        reanimKernel = kernel;
+        return true;
+    }
+#endif
+    void FlushReanim() {
+#if defined(PVZ_METAL_REANIM_RESIDENT)
+        if (!reanimQueued) return;
+        if (!commands) throw std::logic_error("Queued Metal reanimation without a command buffer");
+        id<MTLBuffer> arguments = nil;
+        if (reanimArgumentUsed == reanimArgumentBuffers.size()) {
+            arguments = [device newBufferWithLength:argumentEncoder.encodedLength
+                options:MTLResourceStorageModeShared];
+            if (!arguments) MetalError(nil, "Allocate Metal reanimation batch arguments");
+            reanimArgumentBuffers.push_back(arguments);
+        } else arguments = reanimArgumentBuffers[reanimArgumentUsed];
+        ++reanimArgumentUsed;
+        std::memset(arguments.contents, 0, arguments.length);
+        [argumentEncoder setArgumentBuffer:arguments offset:0];
+        for (uint32_t slot = 0; slot < SlotCount; ++slot)
+            if (reanimSources[slot])
+                [argumentEncoder setTexture:reanimSources[slot]->resource atIndex:slot];
+        id<MTLComputeCommandEncoder> compute = [commands computeCommandEncoder];
+        if (!compute) MetalError(nil, "Create batched Metal reanimation compute encoder");
+        [compute setComputePipelineState:reanimKernel];
+        [compute setBuffer:reanimStatic offset:0 atIndex:0];
+        [compute setBuffer:reanimInstances offset:0 atIndex:1];
+        [compute setBuffer:reanimTracks offset:0 atIndex:2];
+        [compute setBuffer:reanimOutput offset:0 atIndex:3];
+        const uint32_t batch[]{reanimFirst, reanimQueued};
+        [compute setBytes:batch length:sizeof(batch) atIndex:4];
+        const NSUInteger threads = std::min<NSUInteger>(64, reanimKernel.maxTotalThreadsPerThreadgroup);
+        [compute dispatchThreads:MTLSizeMake(reanimQueued, 1, 1)
+            threadsPerThreadgroup:MTLSizeMake(threads, 1, 1)];
+        [compute endEncoding];
+        // Directly bound, tracked buffers on this command buffer synchronize
+        // compute writes -> vertex reads and the next batch's overwrite.
+        // The private output never becomes CPU-visible.
+        auto* target = reanimTarget;
+        MTLRenderPassDescriptor* pass = [MTLRenderPassDescriptor renderPassDescriptor];
+        pass.colorAttachments[0].texture = target->resource;
+        pass.colorAttachments[0].loadAction = MTLLoadActionLoad;
+        pass.colorAttachments[0].storeAction = MTLStoreActionStore;
+        id<MTLRenderCommandEncoder> render = [commands renderCommandEncoderWithDescriptor:pass];
+        if (!render) MetalError(nil, "Create batched Metal reanimation render encoder");
+        const MetalSceneConstants constants{float(target->width), float(target->height),
+            target->generated ? 1u : 0u, 0u};
+        [render setRenderPipelineState:pipelines[target->generated ? 1 : 0][size_t(reanimBlend)]];
+        [render setVertexBuffer:reanimOutput offset:0 atIndex:0];
+        [render setVertexBytes:&constants length:sizeof(constants) atIndex:1];
+        [render setFragmentBytes:&constants length:sizeof(constants) atIndex:1];
+        [render setFragmentBuffer:arguments offset:0 atIndex:2];
+        for (unsigned i = 0; i < 4; ++i) [render setFragmentSamplerState:samplers[i] atIndex:i];
+        for (auto* source : reanimSources) if (source) {
+            [render useResource:source->resource usage:MTLResourceUsageRead stages:MTLRenderStageFragment];
+            Keep(source->resource);
+        }
+        const MTLViewport viewport{0, 0, double(target->width), double(target->height), 0, 1};
+        const MTLScissorRect scissor{0, 0, NSUInteger(target->width), NSUInteger(target->height)};
+        [render setViewport:viewport];
+        [render setScissorRect:scissor];
+        [render drawPrimitives:MTLPrimitiveTypeTriangle vertexStart:0 vertexCount:NSUInteger(reanimQueued) * 18];
+        [render endEncoding];
+        Keep(arguments); Keep(reanimStatic); Keep(reanimInstances); Keep(reanimTracks);
+        Keep(reanimOutput); Keep(target->resource);
+        reanimQueued = 0;
+        reanimSources.fill(nullptr);
+        reanimTarget = nullptr;
+#endif
+    }
     void Finish(bool wait) {
+        FlushReanim();
         if (!commands) { if (wait) Wait(); return; }
         inFlight = commands;
         commands = nil;
@@ -230,12 +375,14 @@ struct MetalRenderer::Impl {
         if (wait) Wait();
     }
     id<MTLBlitCommandEncoder> Blit() {
+        FlushReanim();
         Begin();
         id<MTLBlitCommandEncoder> encoder = [commands blitCommandEncoder];
         if (!encoder) MetalError(nil, "Create Metal blit encoder");
         return encoder;
     }
     void Clear(MetalTexture* target, MTLClearColor color = MTLClearColorMake(0, 0, 0, 0)) {
+        FlushReanim();
         Begin();
         MTLRenderPassDescriptor* desc = [MTLRenderPassDescriptor renderPassDescriptor];
         desc.colorAttachments[0].texture = target->resource;
@@ -251,6 +398,7 @@ struct MetalRenderer::Impl {
     // continue to address their immutable version until the command fence.
     void Snapshot(MetalTexture* image, bool force = false) {
         if (!force && !image->sampled) return;
+        FlushReanim();
         auto next = Image(image->width, image->height, image->resource.pixelFormat,
             image->generated, image->renderable);
         Register(next.get());
@@ -298,6 +446,7 @@ struct MetalRenderer::Impl {
     void Compute(id<MTLComputePipelineState> pipeline, MetalTexture* target,
         std::span<MetalTexture* const> inputs, const void* constants, size_t size,
         int w, int h, unsigned groupHeight = 8) {
+        FlushReanim();
         if (!pipeline) throw std::logic_error("Call PrepareLoadingPipelines before Metal image processing");
         Begin();
         id<MTLComputeCommandEncoder> encoder = [commands computeCommandEncoder];
@@ -338,6 +487,10 @@ struct MetalRenderer::Impl {
         if (vertices.size() % 3 || size_t(blend) >= 3)
             throw std::invalid_argument("Invalid Metal triangle list or blend");
         if (vertices.empty()) return;
+#if defined(PVZ_METAL_REANIM_RESIDENT)
+        FlushReanim();
+        reanimOrdinaryTriangles += vertices.size() / 3;
+#endif
         auto* target = Output();
         int64_t left = 0, top = 0, right = target->width, bottom = target->height;
         if (clip) {
@@ -414,6 +567,7 @@ struct MetalRenderer::Impl {
         Keep(target->resource);
     }
     bool Present() {
+        FlushReanim();
         context.RecreateSwapchain();
         if (context.surfaceSuspended) return false;
         CAMetalLayer* layer = (__bridge CAMetalLayer*)context.layer;
@@ -521,6 +675,8 @@ MetalRenderer::MetalRenderer(MetalContext& context, int w, int h,
     const std::filesystem::path& shaders, const GpuHdrParams* hdr)
     : impl_(std::make_unique<Impl>(context, w, h, shaders)), whiteTexture(impl_->white),
       causticsTexture(impl_->causticTarget), sceneOpen(impl_->sceneOpen),
+      reanimPictureCandidates(impl_->reanimPictureCandidates),
+      reanimFrameEligible(impl_->reanimFrameEligible),
       sceneWidth(impl_->width), sceneHeight(impl_->height) {
     if (hdr || context.hdr) throw std::runtime_error("Metal HDR is not supported in this milestone");
     const uint32_t white = 0xffffffffu;
@@ -594,6 +750,7 @@ void MetalRenderer::BindStaticTexture(MetalTexture* texture, uint32_t symbol) {
     if (texture->sampled) throw std::logic_error("Cannot migrate a recorded Metal texture");
     if (s.owners[slot] && s.owners[slot] != texture)
         throw std::logic_error("Metal static symbol already occupied");
+    s.FlushReanim();
     s.ReleaseSlots(texture);
     texture->slot = texture->staticSlot = slot;
     s.owners[slot] = texture;
@@ -636,6 +793,10 @@ void MetalRenderer::SetRenderImage(MetalTexture* image) {
         image->resource.pixelFormat != MTLPixelFormatRGBA32Float))
         throw std::invalid_argument("Metal render target must be a live RGBA32F render image");
     if (image == s.renderImage) return;
+    s.FlushReanim();
+#if defined(PVZ_METAL_REANIM_RESIDENT)
+    ++s.reanimGeneration;
+#endif
     if (s.sceneOpen && s.imageOnly && !image) {
         s.Finish(true);
         s.sceneOpen = false;
@@ -733,6 +894,7 @@ void MetalRenderer::DestroyTexture(MetalTexture* texture) {
     s.Require(texture);
     if (texture == s.white || texture == s.scene.get())
         throw std::invalid_argument("Cannot destroy an internal Metal texture");
+    s.FlushReanim();
     if (texture == s.renderImage) {
         if (s.sceneOpen) throw std::logic_error("Cannot destroy active Metal render image");
         s.renderImage = nullptr;
@@ -784,6 +946,16 @@ bool MetalRenderer::BeginScene() {
     s.context.RecreateSwapchain();
     if (!s.renderImage && s.context.surfaceSuspended) return false;
     s.Begin();
+#if defined(PVZ_METAL_REANIM_RESIDENT)
+    if (!s.reanimBatchStarted) {
+        s.reanimFrameEligible = s.reanimPictureCandidates >= 256 &&
+            s.reanimOrdinaryTriangles <= uint64_t(s.reanimPictureCandidates) * 32;
+        ++s.reanimGeneration;
+        s.reanimPictureCandidates = 0;
+        s.reanimOrdinaryTriangles = 0;
+        s.reanimBatchStarted = true;
+    }
+#endif
     if (s.causticQueued && s.causticTarget) {
         s.Snapshot(s.causticTarget);
         const MetalCausticConstants constants{s.causticCounter};
@@ -810,12 +982,165 @@ void MetalRenderer::SubmitCoverageTriangles(std::span<const GpuVertex> vertices,
         throw std::invalid_argument("Metal coverage draw requires an R8 mask");
     impl_->Draw(vertices, mask, blend, clip, true);
 }
+MetalReanim* MetalRenderer::UploadReanimDefinition(const GpuReanimDefinition& source) {
+#if defined(PVZ_METAL_REANIM_RESIDENT)
+    auto& s = *impl_;
+    if (source.tracks.empty() || !source.imageSlotCount || !source.variantCount ||
+        uint64_t(source.imageSlotCount) * source.variantCount != source.geometry.size())
+        throw std::invalid_argument("Invalid resident Metal reanimation definition");
+    for (const auto& track : source.tracks)
+        if (track.keyOffset != GpuReanimNoKeys &&
+            (!track.keyCount || uint64_t(track.keyOffset) + track.keyCount > source.keys.size()))
+            throw std::invalid_argument("Invalid resident Metal reanimation track");
+    for (const auto& key : source.keys)
+        if (key.imageSlot >= source.imageSlotCount)
+            throw std::invalid_argument("Invalid resident Metal reanimation image");
+    if (!s.InitReanim()) return nullptr;
+    const uint64_t bytes = 16 + source.tracks.size_bytes() + source.keys.size_bytes() + source.geometry.size_bytes();
+    if (bytes > Impl::ReanimStaticCapacity - s.reanimStaticUsed)
+        throw std::runtime_error("Experimental Metal reanimation static arena exceeded");
+    auto* result = new MetalReanim;
+    try {
+        result->owner = &s;
+        result->tracks.assign(source.tracks.begin(), source.tracks.end());
+        result->imageSlotCount = source.imageSlotCount; result->variantCount = source.variantCount;
+        s.reanimDefinitions.reserve(s.reanimDefinitions.size() + 1);
+        id<MTLBuffer> staging = [s.device newBufferWithLength:NSUInteger(bytes) options:MTLResourceStorageModeShared];
+        if (!staging) MetalError(nil, "Allocate resident Metal reanimation staging");
+        const auto origin = s.reanimStaticUsed;
+        const uint32_t header[]{uint32_t((origin + 16) / 4),
+            uint32_t((origin + 16 + source.tracks.size_bytes()) / 4),
+            uint32_t((origin + 16 + source.tracks.size_bytes() + source.keys.size_bytes()) / 4), source.imageSlotCount};
+        auto* output = static_cast<std::byte*>(staging.contents);
+        std::memcpy(output, header, 16); output += 16;
+        std::memcpy(output, source.tracks.data(), source.tracks.size_bytes()); output += source.tracks.size_bytes();
+        if (!source.keys.empty()) std::memcpy(output, source.keys.data(), source.keys.size_bytes());
+        output += source.keys.size_bytes();
+        std::memcpy(output, source.geometry.data(), source.geometry.size_bytes());
+        auto encoder = s.Blit(); // Flushes earlier tracks before modifying the arena.
+        [encoder copyFromBuffer:staging sourceOffset:0 toBuffer:s.reanimStatic
+            destinationOffset:origin size:NSUInteger(bytes)];
+        [encoder endEncoding];
+        s.Keep(staging); s.Keep(s.reanimStatic);
+        result->header = uint32_t(origin / 4); s.reanimStaticUsed += NSUInteger(bytes);
+        s.reanimDefinitions.push_back(result);
+        return result;
+    } catch (...) { delete result; throw; }
+#else
+    (void)source; return nullptr;
+#endif
+}
+void MetalRenderer::DestroyReanimDefinition(MetalReanim* definition) {
+    if (!definition) return;
+#if defined(PVZ_METAL_REANIM_RESIDENT)
+    auto& s = *impl_;
+    const auto found = std::find(s.reanimDefinitions.begin(), s.reanimDefinitions.end(), definition);
+    if (found == s.reanimDefinitions.end()) throw std::invalid_argument("Unknown resident Metal reanimation");
+    s.reanimRetired.reserve(s.reanimRetired.size() + 1);
+    s.FlushReanim();
+    definition->owner = nullptr;
+    s.reanimRetired.push_back(definition); s.reanimDefinitions.erase(found);
+#else
+    throw std::invalid_argument("Resident Metal reanimation is disabled");
+#endif
+}
+uint32_t MetalRenderer::BeginReanimInstance(MetalReanim* definition, MetalTexture* texture,
+    const GpuReanimInstance& instance, bool linear, bool repeat, const GpuClip* clip, bool forceGpu) {
+#if defined(PVZ_METAL_REANIM_RESIDENT)
+    auto& s = *impl_;
+    if (!s.sceneOpen) throw std::logic_error("Metal reanimation instance outside scene");
+    if (!forceGpu && !s.reanimFrameEligible) return UINT32_MAX;
+    if (!definition || definition->owner != &s || !texture || !s.textures.contains(texture) ||
+        texture == s.renderImage || instance.variant >= definition->variantCount ||
+        !std::isfinite(instance.fraction) || instance.fraction < 0 || instance.fraction > 1 ||
+        s.reanimControls.size() >= 65535 ||
+        Impl::ReanimPacketCapacity - s.reanimInstanceUsed < sizeof(Impl::ReanimInstance)) return UINT32_MAX;
+    Impl::ReanimInstance packet{};
+    packet.draw = instance; packet.header = definition->header;
+    packet.imageSlotCount = definition->imageSlotCount; packet.textureSlot = SlotOf(texture);
+    packet.flags = (linear ? 1u : 0u) | (repeat ? 2u : 0u) | (clip ? 4u : 0u);
+    if (clip) {
+        packet.clip[0] = float(clip->x); packet.clip[1] = float(clip->y);
+        packet.clip[2] = float(int64_t(clip->x) + clip->width);
+        packet.clip[3] = float(int64_t(clip->y) + clip->height);
+    }
+    const auto index = uint32_t(s.reanimControls.size());
+    s.reanimControls.push_back({definition, texture, instance.before, instance.after});
+    std::memcpy(static_cast<std::byte*>(s.reanimInstances.contents) + s.reanimInstanceUsed, &packet, sizeof(packet));
+    s.reanimInstanceUsed += sizeof(packet);
+    return ((s.reanimGeneration & 0xffffu) << 16) | index;
+#else
+    (void)definition; (void)texture; (void)instance; (void)linear; (void)repeat; (void)clip; (void)forceGpu;
+    return UINT32_MAX;
+#endif
+}
+bool MetalRenderer::SubmitReanimTrack(uint32_t instance, const GpuReanimTrackDraw& draw, GpuBlend blend) {
+#if defined(PVZ_METAL_REANIM_RESIDENT)
+    auto& s = *impl_;
+    if (!s.sceneOpen || (instance >> 16) != (s.reanimGeneration & 0xffffu) ||
+        (instance & 0xffffu) >= s.reanimControls.size() || size_t(blend) >= 3 || (draw.flags & ~3u) ||
+        (draw.samplingFlags & ~(GpuVertex::kIndependentColorFilter | GpuVertex::kColorFilterMask |
+            GpuVertex::kAlphaEdgeFilter))) return false;
+    const auto index = instance & 0xffffu;
+    auto& control = s.reanimControls[index];
+    auto* definition = control.definition;
+    auto* texture = control.texture;
+    if (definition->owner != &s || !s.textures.contains(texture) || texture == s.renderImage ||
+        draw.track >= definition->tracks.size()) return false;
+    const auto& track = definition->tracks[draw.track];
+    if (track.keyOffset == GpuReanimNoKeys || track.flags || control.before >= track.keyCount ||
+        control.after >= track.keyCount ||
+        Impl::ReanimPacketCapacity - s.reanimTrackUsed < sizeof(Impl::ReanimTrack)) return false;
+    const auto slot = SlotOf(texture);
+    if (control.textureSlot != UINT32_MAX && control.textureSlot != slot) return false;
+    auto* target = s.Output();
+    if (target->sampled) s.Snapshot(target);
+    if (s.reanimQueued && (s.reanimTarget != target || s.reanimBlend != blend ||
+        s.reanimQueued == Impl::ReanimBatchCapacity)) s.FlushReanim();
+    if (control.textureSlot == UINT32_MAX) {
+        std::memcpy(static_cast<std::byte*>(s.reanimInstances.contents) + index * sizeof(Impl::ReanimInstance) +
+            offsetof(Impl::ReanimInstance, textureSlot), &slot, sizeof(slot));
+        control.textureSlot = slot;
+    }
+    if (!s.reanimQueued) {
+        s.reanimTarget = target; s.reanimBlend = blend;
+        s.reanimFirst = uint32_t(s.reanimTrackUsed / sizeof(Impl::ReanimTrack));
+    }
+    const Impl::ReanimTrack packet{draw.track, index, draw.color, draw.samplingFlags | draw.flags,
+        draw.shakeX, draw.shakeY};
+    std::memcpy(static_cast<std::byte*>(s.reanimTracks.contents) + s.reanimTrackUsed, &packet, sizeof(packet));
+    s.reanimTrackUsed += sizeof(packet);
+    s.reanimSources[texture->slot] = texture;
+    texture->sampled = true;
+    ++s.reanimQueued;
+    return true;
+#else
+    (void)instance; (void)draw; (void)blend; return false;
+#endif
+}
+bool MetalRenderer::SubmitReanim(MetalReanim* definition, MetalTexture* texture, const GpuReanimDraw& draw,
+    bool linear, bool repeat, GpuBlend blend, const GpuClip* clip, bool forceGpu) {
+    GpuReanimInstance instance{draw.before, draw.after, draw.variant, 0,
+        draw.fraction, draw.translateX, draw.translateY, 0,
+        draw.overlay00, draw.overlay01, draw.overlay02, 0, draw.overlay10, draw.overlay11, draw.overlay12, 0};
+    const auto token = BeginReanimInstance(definition, texture, instance, linear, repeat, clip, forceGpu);
+    if (token == UINT32_MAX) return false;
+#if defined(PVZ_METAL_REANIM_RESIDENT)
+    const uint32_t flags = (linear ? 1u : 0u) | (repeat ? 2u : 0u) | (clip ? 4u : 0u) | 8u;
+    std::memcpy(static_cast<std::byte*>(impl_->reanimInstances.contents) +
+        (token & 0xffffu) * sizeof(Impl::ReanimInstance) + offsetof(Impl::ReanimInstance, flags), &flags, sizeof(flags));
+#endif
+    const GpuReanimTrackDraw track{draw.track, draw.color, draw.samplingFlags,
+        draw.truncate ? GpuReanimTrackDraw::Truncate : 0u};
+    return SubmitReanimTrack(token, track, blend);
+}
 void MetalRenderer::SubmitPool(MetalTexture* texture, const GpuPoolParams& p) {
     auto& s = *impl_;
     if (!s.sceneOpen) throw std::logic_error("Metal pool draw outside a scene");
     s.Require(texture);
     if (p.layer > 2 || p.sampler > 3 || size_t(p.blend) >= 3)
         throw std::invalid_argument("Invalid Metal pool draw parameters");
+    s.FlushReanim();
     s.Begin();
     auto* target = s.Output();
     auto* source = texture;

@@ -10,6 +10,19 @@ $taskRuntime=Join-Path $taskBuild 'Release'
 if (!$PakFile) { $PakFile=Join-Path $taskRuntime 'main.pak64' }
 $taskPak=(Resolve-Path -LiteralPath $PakFile).Path
 $taskOutput=if($OutputDirectory){[IO.Path]::GetFullPath($OutputDirectory)}else{Join-Path $taskBuild 'image-runtime-tests'}
+# This fixture decodes the real sound catalog. Catch a missing decoder before
+# the native loader can open a modal error box in an unattended test process.
+$taskBassCandidates=@(
+    $env:PVZ_BASS_DLL
+    (Join-Path $taskRuntime 'bass.dll')
+    (Join-Path $taskOutput 'bass.dll')
+    (Join-Path (Split-Path -Parent $taskOutput) 'bass.dll')
+)
+if (!@($taskBassCandidates | Where-Object {
+    $_ -and (Test-Path -LiteralPath $_ -PathType Leaf)
+}).Count) {
+    throw 'Image runtime tests require bass.dll for sound decoding. Configure PVZ_BASS_DLL to stage it beside the game, or set the PVZ_BASS_DLL environment variable to its absolute path.'
+}
 $taskNinja='C:\Users\Administrator\AppData\Local\Programs\CLion\bin\ninja\win\x64\ninja.exe'
 $taskVcvars='C:\UserProgram\Visual Studuio\2026\Community\VC\Auxiliary\Build\vcvars64.bat'
 $taskCommands=@(& $taskNinja -C $taskBuild -t commands LawnProject)

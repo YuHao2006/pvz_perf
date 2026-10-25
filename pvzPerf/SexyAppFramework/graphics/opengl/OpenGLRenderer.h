@@ -69,8 +69,8 @@ public:
         std::span<const GpuParticleState>, bool linear, bool repeat, GpuBlend,
         const GpuClip* clip = nullptr);
     bool SubmitFormulaParticles(OpenGLReanim* d, OpenGLTexture* t, const GpuParticleDraw& p,
-        std::span<const GpuParticleState> s, bool l, bool r, GpuBlend b, const GpuClip* c = nullptr)
-    { return SubmitParticle(d,t,p,s,l,r,b,c); }
+        std::span<const GpuParticleFormulaState> s, bool l, bool r, GpuBlend b, const GpuClip* c = nullptr)
+    { return SubmitParticle(d,t,p,{reinterpret_cast<const GpuParticleState*>(s.data()),s.size()},l,r,b,c); }
     bool SubmitDiscreteParticles(OpenGLReanim* d, OpenGLTexture* t, const GpuParticleDraw& p,
         std::span<const GpuParticleState> s, bool l, bool r, GpuBlend b, const GpuClip* c = nullptr)
     { return SubmitParticle(d,t,p,s,l,r,b,c); }

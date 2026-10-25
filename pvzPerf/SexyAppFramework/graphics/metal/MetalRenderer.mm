@@ -994,7 +994,8 @@ bool MetalRenderer::SubmitParticle(MetalReanim* definition, MetalTexture* textur
     if (!definition || definition->owner != &s || draw.variant >= definition->particleVariantCount ||
         chain.empty() || draw.frameSource >= chain.size() || chain.size() > 32766)
         return false;
-    const size_t slots = 1 + chain.size() * 2;
+    const auto stateWords = draw.stateWords ? draw.stateWords : uint32_t(sizeof(GpuParticleState) / sizeof(float));
+    const size_t slots = (24 + chain.size() * stateWords + 23) / 24;
     if (s.reanimControls.size() + slots + 1 > 65535 ||
         (slots + 1) * sizeof(Impl::ReanimInstance) > Impl::ReanimPacketCapacity - s.reanimInstanceUsed)
         return false;
@@ -1016,7 +1017,8 @@ bool MetalRenderer::SubmitParticle(MetalReanim* definition, MetalTexture* textur
     const auto start = s.reanimInstanceUsed;
     std::memset(bytes + start, 0, sizeof(Impl::ReanimInstance));
     std::memcpy(bytes + start, &draw, sizeof(draw));
-    std::memcpy(bytes + start + sizeof(Impl::ReanimInstance), chain.data(), chain.size_bytes());
+    std::memcpy(bytes + start + sizeof(Impl::ReanimInstance), chain.data(),
+        chain.size() * size_t(stateWords) * sizeof(float));
     s.reanimInstanceUsed += slots * sizeof(Impl::ReanimInstance);
     s.reanimControls.resize(s.reanimControls.size() + slots);
     const GpuReanimTrackDraw packet{0, 0xffffffffu, draw.samplingFlags};

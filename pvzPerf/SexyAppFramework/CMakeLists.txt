@@ -266,6 +266,23 @@ target_sources(${PROJECT_NAME} PRIVATE
     "LawnProject.rc"
 )
 
+if(ANDROID OR CMAKE_SYSTEM_NAME STREQUAL "Android")
+    get_target_property(_PVZ_GAME_SOURCES ${PROJECT_NAME} SOURCES)
+    list(FILTER _PVZ_GAME_SOURCES EXCLUDE REGEX "(^|/)main\\.cpp$")
+    set_property(TARGET ${PROJECT_NAME} PROPERTY SOURCES "${_PVZ_GAME_SOURCES}")
+    target_sources(${PROJECT_NAME} PRIVATE
+        "platform/android/AndroidMain.cpp"
+        "platform/android/AndroidWindow.h")
+    set(_PVZ_ANDROID_GLUE "${ANDROID_NDK}/sources/android/native_app_glue/android_native_app_glue.c")
+    if(NOT EXISTS "${_PVZ_ANDROID_GLUE}")
+        message(FATAL_ERROR "Android NDK native_app_glue.c not found: ${_PVZ_ANDROID_GLUE}")
+    endif()
+    target_sources(${PROJECT_NAME} PRIVATE "${_PVZ_ANDROID_GLUE}")
+    target_include_directories(${PROJECT_NAME} PRIVATE
+        "${ANDROID_NDK}/sources/android/native_app_glue")
+    target_link_libraries(${PROJECT_NAME} PRIVATE android log)
+endif()
+
 if(APPLE)
     get_target_property(_PVZ_GAME_SOURCES ${PROJECT_NAME} SOURCES)
     list(FILTER _PVZ_GAME_SOURCES EXCLUDE REGEX "Smoke\\.cpp$")
@@ -294,7 +311,21 @@ if(APPLE)
     message(STATUS "Experimental macOS: native MSL rendering and loading-time HLSL scale conversion")
 endif()
 
-if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+if(ANDROID OR CMAKE_SYSTEM_NAME STREQUAL "Android")
+    get_target_property(_PVZ_GAME_SOURCES ${PROJECT_NAME} SOURCES)
+    list(FILTER _PVZ_GAME_SOURCES EXCLUDE REGEX
+        "/(ModernVulkan[^/]*Smoke|Portable[^/]*Smoke|LoadingCloseSmoke|AttachmentLifetimeSmoke)\\.cpp$")
+    list(FILTER _PVZ_GAME_SOURCES EXCLUDE REGEX "\\.(rc|cur)$")
+    set_property(TARGET ${PROJECT_NAME} PROPERTY SOURCES "${_PVZ_GAME_SOURCES}")
+    target_sources(${PROJECT_NAME} PRIVATE
+        "platform/linux/LinuxApp.cpp"
+        "platform/linux/WindowGeometry.cpp"
+        "platform/linux/CalendarTime.cpp"
+        "platform/linux/UserDirectories.cpp"
+        "platform/linux/TabletCaret.cpp")
+    target_compile_definitions(${PROJECT_NAME} PRIVATE SEXY_RENDER_GPU=1 SEXY_WINDOW_ANDROID=1)
+    target_link_libraries(${PROJECT_NAME} PRIVATE sexy_native_window android log)
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     get_target_property(_PVZ_GAME_SOURCES ${PROJECT_NAME} SOURCES)
     list(FILTER _PVZ_GAME_SOURCES EXCLUDE REGEX
         "/(ModernVulkan[^/]*Smoke|Portable[^/]*Smoke|LoadingCloseSmoke|AttachmentLifetimeSmoke)\\.cpp$")

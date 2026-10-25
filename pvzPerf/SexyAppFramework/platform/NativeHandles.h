@@ -9,6 +9,10 @@ struct MacMonitor;
 }
 using NativeWindowHandle = Sexy::MacWindow*;
 using NativeMonitorHandle = Sexy::MacMonitor*;
+#elif defined(__ANDROID__)
+#include <android/native_window.h>
+using NativeWindowHandle = ANativeWindow*;
+using NativeMonitorHandle = void*;
 #elif defined(__linux__)
 namespace Sexy {
 class NativeWindow;

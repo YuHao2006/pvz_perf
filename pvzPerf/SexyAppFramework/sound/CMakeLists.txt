@@ -20,6 +20,10 @@ elseif(APPLE)
         "../platform/macos/audio/AudioUnitDevice.mm"
         "../platform/macos/audio/AudioUnitSoundManager.mm"
         "../platform/macos/audio/AudioUnitMusicPlayback.mm")
+elseif(ANDROID OR CMAKE_SYSTEM_NAME STREQUAL "Android")
+    # Android builds use the BASS Android binary supplied by the app package.
+    # OpenAL is a desktop dependency and is not pulled into the APK.
+    target_link_libraries(${PROJECT_NAME} PRIVATE android log)
 else()
     find_package(OpenAL REQUIRED)
     target_sources(${PROJECT_NAME} PRIVATE

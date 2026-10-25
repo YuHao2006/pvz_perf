@@ -5,7 +5,7 @@
 namespace Sexy {
 static_assert(sizeof(unsigned int) == 4);
 static_assert(sizeof(unsigned long long) == 8);
-enum class NativeWindowBackend { X11, Wayland };
+enum class NativeWindowBackend { X11, Wayland, Android };
 enum class NativeCursor {
     Arrow, Hand, Text, Move, Forbidden, ResizeHorizontal, ResizeVertical,
     ResizeNorthEast, ResizeNorthWest, Wait, Hidden, Count

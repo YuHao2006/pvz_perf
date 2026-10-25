@@ -11,6 +11,10 @@ namespace MagnetMotion
 inline constexpr double Strength = 1'000'000'000.0;
 inline constexpr std::uint64_t MaxFlightNs = 900'000'000;
 inline constexpr float CaptureRadius = 20.0f;
+// The sampled endpoint is stored as float. Allow the final rounded point to
+// cross the mathematical radius by a few thousandths without keeping the
+// item in the top render layer forever.
+inline constexpr float CaptureRadiusEpsilon = 0.01f;
 inline constexpr double Curve[] = {
 #include "MagnetMotionCurve.inc"
 };

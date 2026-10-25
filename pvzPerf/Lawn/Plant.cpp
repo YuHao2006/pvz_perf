@@ -2590,7 +2590,8 @@ bool Plant::DrawMagnetItemsOnTop()
             if (aMagnetItem->mItemType != MagnetItemType::MAGNET_ITEM_NONE)
             {
                 SexyVector2 aVectorToPlant((mX) + aMagnetItem->mDestOffsetX - aMagnetItem->mPosX, (mY) + aMagnetItem->mDestOffsetY - aMagnetItem->mPosY);
-                if (aVectorToPlant.Magnitude() > 20.0f)
+                if (aVectorToPlant.Magnitude() >
+                    MagnetMotion::CaptureRadius + MagnetMotion::CaptureRadiusEpsilon)
                 {
                     return true;
                 }

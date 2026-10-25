@@ -124,6 +124,11 @@ component starts in `both:`; existing sources need no edits. Variants inherit
 their root policy and cannot declare selectors. Track IDs, declaration order,
 visibility bits and attachment indices do not change.
 
+The prefixes `cpu Track {...}`, `gpu Track {...}` and `both Track {...}`
+override only that declaration, including named declarations such as
+`cpu ground := Track {...}`. They do not change the enclosing default:
+after `gpu: cpu Track {...} Track {...}`, the second track is GPU-only.
+
 `cpu:` emits C++ keys and a no-keys GPU descriptor. `gpu:` emits GPU keys and
 retains a null CPU transform pointer plus the original frame count. `both:`
 emits both. CPU sampling of a GPU-only track reports an explicit error;

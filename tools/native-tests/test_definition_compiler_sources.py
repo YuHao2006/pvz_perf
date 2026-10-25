@@ -277,19 +277,36 @@ class DefinitionCompilerSourceTests(unittest.TestCase):
 
     def test_storage_regions_reject_malformed_nested_unknown_and_variant_annotations(self):
         cases = [
-            ("export component Root { cpu " + self.storage_track("a") + "}", "expected ':'"),
+            ("export component Root { cpu fps: 12; }", "unknown storage region"),
             ("export component Root { gpu:; }", "expected '}'"),
             ("export component Root { gpu: { } }", "expected '}'"),
-            ("export component Root { cpu: both; }", "expected ':'"),
+            ("export component Root { cpu: both; }", "expected ':' or track declaration"),
             ("export component Root { cpus: }", "unknown storage region"),
             ('export component Root { Track {source-name:"a"; cpu:} }', "unknown track property"),
             ('export component Root { variant-of:Other; images:[]; both: }', "cannot override storage"),
             ('export component Root { gpu: variant-of:Other; images:[]; }', "cannot override storage"),
+            ('export component Root { variant-of:Other; images:[]; cpu ' +
+             self.storage_track("a") + '}', "cannot override storage"),
+            ('export component Root { gpu NotATrack {} }', "expected track declaration"),
         ]
         for i, (source, diagnostic) in enumerate(cases):
             with self.subTest(source=source):
                 _, result = self.compile_storage(source, f"bad-{i}", success=False)
                 self.assertIn(diagnostic, result.stderr)
+
+    def test_storage_single_track_prefix_does_not_change_region_default(self):
+        source = ("export component Root {"
+                  + "cpu " + self.storage_track("_ground") + self.storage_track("body")
+                  + "gpu:" + self.storage_track("shadow")
+                  + "both " + self.storage_track("caption", text=True)
+                  + "cpu named := " + self.storage_track("root")
+                  + self.storage_track("leaf")
+                  + "both:gpu " + self.storage_track("glow") + self.storage_track("attachment") + "}"
+                  + "export component Other {" + self.storage_track("other") + "}")
+        output, _ = self.compile_storage(source)
+        tracks = self.source_track_headers(output / "Root.source-record")
+        self.assertEqual([t[3] for t in tracks], [2, 0, 4, 1, 2, 4, 4, 0])
+        self.assertEqual(len({t[0] for t in tracks}), 8)
 
     def test_storage_requires_source_records_and_legacy_compile_rejects_loss(self):
         source = "export component Root {gpu:" + self.storage_track("layer") + "}"

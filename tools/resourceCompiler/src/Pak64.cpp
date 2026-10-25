@@ -418,11 +418,18 @@ private:
                 lexer_.current().text == "both") {
                 const std::string region = lexer_.current().text;
                 lexer_.Advance();
-                if (lexer_.current().kind != TokenKind::colon)
-                    Fail(error_, "expected ':' after storage region <" + region + ">");
-                lexer_.Advance();
-                storage = region == "cpu" ? TrackStorage::cpu :
+                const TrackStorage selected = region == "cpu" ? TrackStorage::cpu :
                     region == "gpu" ? TrackStorage::gpu : TrackStorage::both;
+                if (lexer_.current().kind == TokenKind::colon) {
+                    lexer_.Advance();
+                    storage = selected;
+                } else {
+                    // A declaration prefix applies only to this track. Keep
+                    // the enclosing region's default for the next declaration.
+                    if (lexer_.current().kind != TokenKind::identifier)
+                        Fail(error_, "expected ':' or track declaration after storage <" + region + ">");
+                    ReadTrack(module, selected);
+                }
                 hasStorageRegion = true;
             } else if (lexer_.current().text == "variant-of") {
                 if (!module.variantOf.empty()) Fail(error_, "duplicate variant-of");
@@ -550,8 +557,9 @@ private:
             Fail(error_, "unknown storage region <" + declaration + ">");
         if (lexer_.current().kind == TokenKind::assign) {
             lexer_.Advance();
-            ConsumeIdentifier();
-        }
+            Expect("Track");
+        } else if (declaration != "Track")
+            Fail(error_, "expected track declaration");
         ExpectBrace("{");
         RawTrack track;
         track.storage = storage;

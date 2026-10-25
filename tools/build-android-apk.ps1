@@ -23,7 +23,19 @@ if (!(Test-Path -LiteralPath $nativeLibrary)) { throw "Android native library no
 Copy-Item -LiteralPath $nativeLibrary -Destination (Join-Path $jniDir 'libpvz_perf.so') -Force
 $gradle = Get-Command gradlew.bat -ErrorAction SilentlyContinue
 if (!$gradle) { $gradle = Get-Command gradle -ErrorAction SilentlyContinue }
-if (!$gradle) { throw 'Gradle is required. Install the Android command-line tools or Android Studio.' }
+if (!$gradle) {
+    $cachedGradle = Get-ChildItem "$env:USERPROFILE\.gradle\wrapper\dists" -Recurse -Filter gradle.bat -ErrorAction SilentlyContinue |
+        Sort-Object FullName -Descending | Select-Object -First 1
+    if ($cachedGradle) { $gradle = $cachedGradle }
+}
+if (!$gradle) { throw 'Gradle is required. The cached Gradle distribution was not found.' }
+if (!$env:JAVA_HOME) {
+    $jdk = Get-ChildItem 'C:\Program Files\Java' -Directory -ErrorAction SilentlyContinue |
+        Where-Object { Test-Path (Join-Path $_.FullName 'bin\java.exe') } |
+        Sort-Object Name -Descending | Select-Object -First 1
+    if ($jdk) { $env:JAVA_HOME = $jdk.FullName }
+}
+if (!$env:JAVA_HOME) { throw 'A complete JDK is required; JAVA_HOME is not set.' }
 Push-Location $project
 try {
     & $gradle.Source ':app:assemble' + $Configuration

@@ -1115,7 +1115,7 @@ inline void ChangingVelocity()
     position = 53.375f;
     AdvanceVelocity(position, .25f, deltaNs, motion);
     Require(position == 53.40625f && motion.origin == 53.375,
-        "External teleport retained the previous segment's fractional endpoint");
+        "A zero-length rate change moved the actor");
     position = 1'048'576;
     motion = {};
     AdvanceVelocity(position, .125f, deltaNs, motion);
@@ -1125,11 +1125,11 @@ inline void ChangingVelocity()
     AdvanceVelocity(position, -.125f, deltaNs, motion);
     Require(motion.origin == double(resetOrigin) && position == resetOrigin - .015625f,
         "Explicit motion invalidation failed to bind the public position");
-    const auto still = std::array<std::uint64_t, 5>{Bits(position), Bits(motion.origin),
-        motion.elapsedNs, Bits(motion.rate), Bits(motion.lastOutput)};
+    const auto still = std::array<std::uint64_t, 4>{Bits(position), Bits(motion.origin),
+        motion.elapsedNs, Bits(motion.rate)};
     AdvanceVelocity(position, motion.rate, 0, motion);
-    Require(still == std::array<std::uint64_t, 5>{Bits(position), Bits(motion.origin),
-        motion.elapsedNs, Bits(motion.rate), Bits(motion.lastOutput)},
+    Require(still == std::array<std::uint64_t, 4>{Bits(position), Bits(motion.origin),
+        motion.elapsedNs, Bits(motion.rate)},
         "A zero-length constant-rate step changed its segment");
 
     // Mirror the actual hand-written Zamboni and thrown-imp model layouts.
@@ -1138,20 +1138,18 @@ inline void ChangingVelocity()
     for (bool imp : {false, true})
     {
         TimedLinearMotion reused{imp ? 200.125 : 600.125,
-            137'192'835, imp ? 2.375f : .2317289f, 0, true};
+            137'192'835, imp ? 2.375f : .2317289f, true};
         const double ticks = double(reused.elapsedNs) / 10'000'000.0;
         position = imp ? static_cast<float>(reused.origin + 240 +
             double(reused.rate) * ticks - double(THOWN_ZOMBIE_GRAVITY) * ticks * (ticks + 1) * .5) :
             static_cast<float>(ZamboniMotion::Sample<-1>(reused.origin, reused.rate,
                 reused.elapsedNs, false, true, 0).position);
-        reused.lastOutput = position;
         Require(static_cast<float>(reused.origin + double(reused.rate) * ticks) != position,
             "Hand-written motion fixture did not distinguish its nonlinear model");
-        const double origin = position;
         AdvanceVelocity(position, -.125f, deltaNs, reused);
-        Require(reused.origin == origin &&
-            position == static_cast<float>(origin - .015625),
-            "Nonlinear model handoff reused an unrelated linear endpoint");
+        Require(reused.origin == position - (-.125 * deltaNs / 10'000'000.0) &&
+            position == static_cast<float>(reused.origin - .015625),
+            "Explicit linear motion rebinding failed");
     }
 }
 
@@ -1170,8 +1168,8 @@ inline void ChangingVelocitySave(LawnApp& app, Board& board)
     resumed.mApp = &app; resumed.mBoard = &board;
     const auto state = [](const Zombie& zombie) {
         const auto& motion = zombie.mVelocityX;
-        return std::array<std::uint64_t, 6>{Bits(zombie.mX), Bits(motion.origin),
-            motion.elapsedNs, Bits(motion.rate), Bits(motion.lastOutput),
+        return std::array<std::uint64_t, 5>{Bits(zombie.mX), Bits(motion.origin),
+            motion.elapsedNs, Bits(motion.rate),
             std::uint64_t(motion.bound)};
     };
     Require(state(original) == state(resumed), "Save lost a sub-ULP linear segment");

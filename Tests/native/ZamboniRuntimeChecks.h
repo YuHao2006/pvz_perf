@@ -47,11 +47,10 @@ inline void Step(Zombie& zombie)
 
 inline auto State(const Zombie& zombie)
 {
-    return std::array<std::uint64_t, 8>{
+    return std::array<std::uint64_t, 7>{
         std::bit_cast<std::uint32_t>(zombie.mX), std::bit_cast<std::uint32_t>(zombie.mVelX),
         std::bit_cast<std::uint64_t>(zombie.mVelocityX.origin), zombie.mVelocityX.elapsedNs,
         std::bit_cast<std::uint32_t>(zombie.mVelocityX.rate),
-        std::bit_cast<std::uint32_t>(zombie.mVelocityX.lastOutput),
         std::uint64_t(zombie.mVelocityX.bound), std::uint64_t(zombie.mMindControlled)};
 }
 

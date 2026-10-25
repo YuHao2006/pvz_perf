@@ -1160,7 +1160,6 @@ void Plant::UpdateShooter()
     auto aWindowStart = mLaunchWindowStartNs;
     const auto aSecondaryFire = [&](std::int64_t aWindowEnd)
     {
-        if (mShootingCounter > 0) return;
         if (mSeedType == SeedType::SEED_CATTAIL &&
             PlantLaunchClock::Crossed(aWindowStart, aWindowEnd,
                 mNextLaunchTimeNs - 50 * PlantLaunchClock::Tick))
@@ -1182,10 +1181,9 @@ void Plant::UpdateShooter()
     {
         const auto aDue = mNextLaunchTimeNs;
         aSecondaryFire(aDue);
-        // A large update cannot replay attack animations that have not yet
-        // completed. Consume their scheduling opportunities without restarting
-        // the current attack; ordinary target acquisition remains in dispatch.
-        const bool aCanStartAttack = mShootingCounter <= 0;
+        // The launch deadline is independent of the shooting animation timer.
+        // In particular, Gloom's next volley starts before its 200-tick timer
+        // finishes. Gating on that timer silently discards every other volley.
         mNextLaunchTimeNs = PlantLaunchClock::Add(aDue,
             PlantLaunchClock::Uniform(mLaunchRate.mNanoseconds - 14 * PlantLaunchClock::Tick,
                 mLaunchRate.mNanoseconds, [] { return Sexy::Rand(); }));
@@ -1278,11 +1276,11 @@ void Plant::UpdateShooter()
         static_assert(sizeof(kShooterFireCases) / sizeof(kShooterFireCases[0]) == (int)SeedType::NUM_SEED_TYPES,
             "射手开火槽位须与 SeedType 枚举同步");
 
-        if (aCanStartAttack && (unsigned)mSeedType < sizeof(kShooterFireCases) / sizeof(kShooterFireCases[0]))
+        if ((unsigned)mSeedType < sizeof(kShooterFireCases) / sizeof(kShooterFireCases[0]))
         {
             kShooterFireCases[mSeedType](this);
         }
-        else if (aCanStartAttack)
+        else
         {
             kShooterDefaultFire(this);  // 原 else 支（哨兵越界等价）
         }

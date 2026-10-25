@@ -388,7 +388,9 @@ void LoadCurrentWithResources(LawnApp& app, HiddenWindow& window, const char* sa
             for (int e = 0; e < system->EmitterRosterCount(); ++e)
             {
                 auto* emitter = system->EmitterRosterEmitterAt(e);
-                append(emitter->mSpawnRemainder, emitter->mEmissionElapsedNs, emitter->mSystemLastSampleAgeNs);
+                append(emitter->mSpawnRemainder, emitter->mEmissionElapsedNs,
+                    emitter->mSystemPositionOriginX, emitter->mSystemPositionOriginY,
+                    emitter->mSystemPositionBound);
                 for (int p = 0; p < emitter->ParticleRosterCount(); ++p)
                 {
                     auto* item = emitter->ParticleRosterParticleAt(p);

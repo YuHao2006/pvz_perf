@@ -57,7 +57,7 @@ enum ParticleFieldType
     FIELD_CIRCLE,                       // 引力场：该场内粒子围绕发射器中心做圆周运动（考虑误差，实为螺线运动）
     FIELD_AWAY,                         // 斥力场：该场内粒子沿径向不断远离发射器中心
     PARTICLE_FIELD_COUNT
-};  // 粒子场相关内容详见 TodParticleEmitter::UpdateParticleField() 函数（系统定位场为 TodParticleEmitter::UpdateSystemField() 函数）
+};  // 粒子场见 UpdateParticleField；系统定位场由 SampleSystemPosition 按当前相位求值。
 
 // ################################################################################
 // ▲ 以下粒子系统定义相关的各类型的实例与 XML 中的格式的对应关系示例简图
@@ -403,9 +403,11 @@ public:
 	Sexy::TimeCounter								mSystemAge;														//+0x28
 	Sexy::TimeCounter								mSystemDuration;												//+0x2C
 	std::int64_t					mEmissionElapsedNs; // total active emission time, independent of lifetime loops
-	std::int64_t					mSystemLastSampleAgeNs;
 	Sexy::SexyVector2				mExternalTarget; // input held until the next SystemMove event
 	Sexy::SexyVector2				mExternalAppliedCenter; // last main-step input sample
+	double							mSystemPositionOriginX; // Offset from external input, excluding authored system-position curves.
+	double							mSystemPositionOriginY;
+	std::uint32_t					mSystemPositionBound; // Historical saves bind from their saved center before advancing.
 	bool							mDead;															//+0x38
 	Sexy::Color						mColorOverride;													//+0x3C
 	bool							mExtraAdditiveDrawOverride;										//+0x4C
@@ -452,7 +454,7 @@ public:
 	bool							CrossFadeParticleToDef(TodParticle* theParticle, TodEmitterDefinition* theToEmitterDef);
 	void							DeleteAll();
 	void							UpdateParticleField(TodParticle* theParticle, ParticleField* theParticleField, double theParticleTimeValue, int theFieldIndex, double theDeltaTicks);
-	void							UpdateSystemField(ParticleField* theParticleField, double theParticleTimeValue, int theFieldIndex);
+	void							SampleSystemPosition(double theTimeValue);
     /*inline*/ float				SystemTrackEvaluate(const FloatParameterTrack& theTrack, ParticleSystemTracks theSystemTrack) const;
 	void							DeleteParticle(TodParticle* theParticle);
 	// 下标化删除：更新循环/DeleteNonCrossFading 已知名册下标直入，省掉

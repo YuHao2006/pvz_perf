@@ -25,7 +25,6 @@ double LifeFraction(std::int64_t age, const Sexy::TimeCounter& duration)
 double ParticleTime(const TodParticle* p) { return LifeFraction(p->mParticleAge.mNanoseconds, p->mParticleDuration); }
 double LastParticleTime(const TodParticle* p) { return LifeFraction(p->mParticleLastSampleAgeNs, p->mParticleDuration); }
 double SystemTime(const TodParticleEmitter& e) { return LifeFraction(e.mSystemAge.mNanoseconds, e.mSystemDuration); }
-double LastSystemTime(const TodParticleEmitter& e) { return LifeFraction(e.mSystemLastSampleAgeNs, e.mSystemDuration); }
 std::uint32_t NextParticleRandom(std::uint32_t& state)
 {
 	// Explicit state belongs to the effect and is saved with it. No global
@@ -272,7 +271,6 @@ void TodParticleEmitter::TodEmitterInitialize(float theX, float theY, TodParticl
 	mSpawnRemainder = 0;
 	mParticlesSpawned = 0;
 	mEmissionElapsedNs = 0;
-	mSystemLastSampleAgeNs = -1;
 	mSystemAge = 0;
 	mDead = false;
 	mColorOverride = Sexy::Color::White;
@@ -280,6 +278,8 @@ void TodParticleEmitter::TodEmitterInitialize(float theX, float theY, TodParticl
 	mSystemCenter.y = theY;
 	mExternalTarget = mSystemCenter;
 	mExternalAppliedCenter = mSystemCenter;
+	mSystemPositionOriginX = mSystemPositionOriginY = 0;
+	mSystemPositionBound = 1;
 	mCrossFadeEmitterID = ParticleEmitterID::PARTICLEEMITTERID_NULL;
 	mEmitterCrossFadeCountDown = 0;
 	mFrameOverride = -1;
@@ -305,9 +305,7 @@ void TodParticleEmitter::TodEmitterInitialize(float theX, float theY, TodParticl
 		mTrackInterp[j] = RandomFloat(1.0f);
 
 	// Birth samples offsets and minimum-active births without advancing time.
-	for (int i = 0; i < mEmitterDef->mSystemFields.count; ++i)
-		UpdateSystemField(&mEmitterDef->mSystemFields.Fields[i], 0.0, i);
-	mSystemLastSampleAgeNs = 0;
+	SampleSystemPosition(0.0);
 	UpdateSpawning(0);
 }
 
@@ -648,7 +646,7 @@ void TodParticleEmitter::UpdateParticleField(TodParticle* theParticle, ParticleF
 	float y = FloatTrackEvaluate(theParticleField->mY, theParticleTimeValue, aInterpY);
 
 	// C 形态 -> 匿名 lambda 函数指针表：行序 = ParticleFieldType 枚举序
-	// （0..11；SYSTEM_POSITION 为 UpdateSystemField 专属 → 缺槽走 default）。
+	// （0..11；SYSTEM_POSITION 为 SampleSystemPosition 专属 → 缺槽走 default）。
 	// 场值 x/y 与双插值经值参传入（体只读）；发射器成员经 e 直写。
 	// default（TOD_ASSERT）具名并被缺槽与越界分支复用。
 	const unsigned aFieldTypeIndex = static_cast<unsigned>(theParticleField->mFieldType);
@@ -669,28 +667,33 @@ float TodParticleEmitter::SystemTrackEvaluate(const FloatParameterTrack& theTrac
 }
 
 //0x516D70
-void TodParticleEmitter::UpdateSystemField(ParticleField* theParticleField, double theParticleTimeValue, int theFieldIndex)
+void TodParticleEmitter::SampleSystemPosition(double theTimeValue)
 {
-	TOD_ASSERT(theFieldIndex < MAX_PARTICLE_FIELDS);
-	float aInterpX = mSystemFieldInterp[theFieldIndex][0];
-	float aInterpY = mSystemFieldInterp[theFieldIndex][1];
-	float x = FloatTrackEvaluate(theParticleField->mX, theParticleTimeValue, aInterpX);
-	float y = FloatTrackEvaluate(theParticleField->mY, theParticleTimeValue, aInterpY);
-
-	switch (theParticleField->mFieldType)
+	if (mEmitterDef->mSystemFields.count == 0)
 	{
-	case ParticleFieldType::FIELD_SYSTEM_POSITION:
+		mSystemCenter = mExternalAppliedCenter;
+		mSystemPositionBound = 1;
+		return;
+	}
+	double x = 0, y = 0;
+	for (int i = 0; i < mEmitterDef->mSystemFields.count; ++i)
 	{
-		float aLastX = FloatTrackEvaluateFromLastTime(theParticleField->mX, LastSystemTime(*this), aInterpX);
-		float aLastY = FloatTrackEvaluateFromLastTime(theParticleField->mY, LastSystemTime(*this), aInterpY);
-		mSystemCenter.x += x - aLastX;
-		mSystemCenter.y += y - aLastY;
-		break;
+		TOD_ASSERT(i < MAX_PARTICLE_FIELDS);
+		const auto& field = mEmitterDef->mSystemFields.Fields[i];
+		TOD_ASSERT(field.mFieldType == ParticleFieldType::FIELD_SYSTEM_POSITION);
+		x += FloatTrackEvaluate(field.mX, theTimeValue, mSystemFieldInterp[i][0]);
+		y += FloatTrackEvaluate(field.mY, theTimeValue, mSystemFieldInterp[i][1]);
 	}
-	default:
-		TOD_ASSERT(0);
-		break;
+	if (!mSystemPositionBound)
+	{
+		// Historical records retain the visible center, not the original
+		// external input. Bind once at the saved age, before the next step.
+		mSystemPositionOriginX = double(mSystemCenter.x) - mExternalAppliedCenter.x - x;
+		mSystemPositionOriginY = double(mSystemCenter.y) - mExternalAppliedCenter.y - y;
+		mSystemPositionBound = 1;
 	}
+	mSystemCenter.x = static_cast<float>(mExternalAppliedCenter.x + mSystemPositionOriginX + x);
+	mSystemCenter.y = static_cast<float>(mExternalAppliedCenter.y + mSystemPositionOriginY + y);
 }
 
 
@@ -1078,6 +1081,8 @@ void TodParticleEmitter::Update(std::uint64_t deltaNs, std::span<const ParticleI
 	if (mDead || deltaNs == 0)
 		return;
 
+	if (!mSystemPositionBound)
+		SampleSystemPosition(SystemTime(*this));
 	if (deltaNs > INT64_MAX || mSystemAge.mNanoseconds > INT64_MAX - static_cast<std::int64_t>(deltaNs))
 		throw std::overflow_error("particle emitter lifetime exceeds clock range");
 	const bool loops = TestBit(mEmitterDef->mParticleFlags, (unsigned int)ParticleFlags::PARTICLE_SYSTEM_LOOPS);
@@ -1116,9 +1121,7 @@ void TodParticleEmitter::Update(std::uint64_t deltaNs, std::span<const ParticleI
 			aDie = true;
 	}
 
-	const auto aSystemTime = mEmitterDef->mSystemFields.count ? SystemTime(*this) : 0.0;
-	for (int i = 0; i < mEmitterDef->mSystemFields.count; i++)
-		UpdateSystemField(&mEmitterDef->mSystemFields.Fields[i], aSystemTime, i);  // 更新发射器受到每个系统场的作用
+	SampleSystemPosition(mEmitterDef->mSystemFields.count ? SystemTime(*this) : 0.0);
 	// 尾存倒序遍历（=原头→尾序）；下标直传 DeleteParticleAt（免逐粒 Find 扫）；
 	// DeleteParticle 递归删交叉源可能改本行更低（更旧）下标——memmove 后
 	// i-- 恰落到下一个更旧粒子，语义与原"预存 next"逐字一致
@@ -1141,7 +1144,6 @@ void TodParticleEmitter::Update(std::uint64_t deltaNs, std::span<const ParticleI
 			return;
 		}
 	}
-	mSystemLastSampleAgeNs = mSystemAge.mNanoseconds;
 }
 
 float CrossFadeLerp(float theFrom, float theTo, bool theFromIsSet, bool theToIsSet, float theFraction)

@@ -1304,6 +1304,13 @@ std::vector<Byte> UpgradeParticleStepV33State(RecordKind kind, std::span<const B
         std::copy_n(source.begin() + 8, 4, result.begin());
     else if (kind == RecordKind::Particle)
         std::copy_n(source.begin() + 8, 28, result.begin());
+    else if (kind == RecordKind::ParticleEmitter)
+    {
+        std::copy_n(source.begin(), 8, result.begin());
+        std::copy_n(source.begin() + 24, 16, result.begin() + 16);
+        // Discard the previous sampled phase; bind the authored position
+        // origin from the saved center after resolving its definition.
+    }
     else if (kind == RecordKind::Plant)
     {
         std::copy_n(source.begin(), 40, result.begin());
@@ -1312,8 +1319,6 @@ std::vector<Byte> UpgradeParticleStepV33State(RecordKind kind, std::span<const B
     else
     {
         std::copy(source.begin(), source.end(), result.begin());
-        if (kind == RecordKind::ParticleEmitter)
-            WriteU64At(result, 8, 0); // New active-emission integral starts at migration.
     }
     return result;
 }

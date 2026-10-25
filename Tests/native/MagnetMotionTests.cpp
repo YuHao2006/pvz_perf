@@ -47,6 +47,11 @@ int main()
             Require(MagnetMotion::Sample(item, 0, 0, duration) &&
                 std::abs(item.mPosX - std::min(radius, 20.0f)) < 0.001f,
                 "Magnet item did not stop at its capture radius");
+            const double endpointDistance = std::sqrt(
+                double(item.mPosX) * item.mPosX + double(item.mPosY) * item.mPosY);
+            Require(endpointDistance <= MagnetMotion::CaptureRadius +
+                MagnetMotion::CaptureRadiusEpsilon,
+                "Float-rounded magnet endpoint would remain in the top render layer");
         }
         Require(MagnetMotion::Advance(123, UINT64_MAX) == MagnetMotion::MaxFlightNs,
             "Large step wrapped magnet batch time");

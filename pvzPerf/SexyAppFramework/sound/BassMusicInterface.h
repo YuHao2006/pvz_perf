@@ -20,6 +20,10 @@ public:
 	double					mVolume;
 	double					mVolumeAdd;
 	double					mVolumeCap;
+	double					mFadeOrigin;
+	double					mFadeTarget;
+	std::uint64_t			mFadeElapsedNs;
+	std::uint64_t			mFadeDurationNs;
 	bool					mStopOnFade;
 	std::unique_ptr<char[]> mStreamData;
 	NativeMusicPlayback mPlayback;

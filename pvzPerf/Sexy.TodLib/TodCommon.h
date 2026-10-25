@@ -47,8 +47,8 @@ class TodSmoothArray
 public:
 	int			mItem;
 	float		mWeight;
-	float		mLastPicked;
-	float		mSecondLastPicked;
+	std::uint32_t	mLastPicked;
+	std::uint32_t	mSecondLastPicked;
 };
 
 intptr_t				TodPickFromWeightedArray(const TodWeightedArray* theArray, int theCount);

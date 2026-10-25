@@ -32,6 +32,9 @@ ButtonWidget::ButtonWidget(int theId, ButtonListener* theButtonListener)
 	mOverAlpha = 0;
 	mOverAlphaSpeed = 0;
 	mOverAlphaFadeInSpeed = 0;
+	mOverAlphaOrigin = 0;
+	mOverAlphaElapsedNs = 0;
+	mOverAlphaTargetOver = false;
 
 	SetColors(gButtonWidgetColors, NUM_COLORS);
 }
@@ -260,13 +263,21 @@ void ButtonWidget::Update()
 	if (mIsDown && mIsOver)
 		mButtonListener->ButtonDownTick(mId);
 
+	if (mOverAlphaTargetOver != mIsOver)
+	{
+		mOverAlphaTargetOver = mIsOver;
+		mOverAlphaOrigin = mOverAlpha;
+		mOverAlphaElapsedNs = 0;
+	}
+
 	if (!mIsDown && !mIsOver && (mOverAlpha > 0))
 	{
 		if (mOverAlphaSpeed>0)
 		{
-			mOverAlpha -= Sexy::UpdateDelta(mOverAlphaSpeed);
-			if (mOverAlpha < 0)
-				mOverAlpha = 0;
+			mOverAlphaElapsedNs = std::min<std::uint64_t>(
+				UINT64_MAX, mOverAlphaElapsedNs + Sexy::gUpdateIntervalNs);
+			mOverAlpha = std::max(0.0, mOverAlphaOrigin -
+				mOverAlphaSpeed * (double(mOverAlphaElapsedNs) / 10'000'000.0));
 		}
 		else
 			mOverAlpha = 0;
@@ -275,9 +286,10 @@ void ButtonWidget::Update()
 	}
 	else if (mIsOver && mOverAlphaFadeInSpeed>0 && mOverAlpha<1)
 	{
-		mOverAlpha += Sexy::UpdateDelta(mOverAlphaFadeInSpeed);
-		if (mOverAlpha > 1)
-			mOverAlpha = 1;
+		mOverAlphaElapsedNs = std::min<std::uint64_t>(
+			UINT64_MAX, mOverAlphaElapsedNs + Sexy::gUpdateIntervalNs);
+		mOverAlpha = std::min(1.0, mOverAlphaOrigin +
+			mOverAlphaFadeInSpeed * (double(mOverAlphaElapsedNs) / 10'000'000.0));
 		MarkDirty();
 	}
 }

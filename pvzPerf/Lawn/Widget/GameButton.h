@@ -1,4 +1,5 @@
 #pragma once
+#include <cstdint>
 #include "misc/SexyVector.h"
 #include "graphics/TextureRegion.h"
 #include "widget/DialogButton.h"
@@ -58,6 +59,9 @@ public:
 	double					mOverAlpha;						//+0x100
 	double					mOverAlphaSpeed;				//+0x108
 	double					mOverAlphaFadeInSpeed;			//+0x110			
+	double					mOverAlphaOrigin = 0;
+	std::uint64_t			mOverAlphaElapsedNs = 0;
+	bool					mOverAlphaTargetOver = false;
 	bool					mDrawStoneButton;				//+0x118
 	int						mTextOffsetX;					//+0x11C
 	int						mTextOffsetY;					//+0x120

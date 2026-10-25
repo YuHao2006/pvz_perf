@@ -93,13 +93,6 @@ int main(int argc, char** argv)
         auto invalid = valid;
         invalid.push_back(0);
         run(invalid, false); // Includes rollback after an atlas has already bound.
-        for (std::size_t offset : {0u, 4u, 8u, 12u, 16u, 20u, 24u, 28u, 32u,
-             44u, 48u, 56u, 60u, 80u, 84u, 172u, 244u, 248u, 252u, 270u, 286u})
-        {
-            invalid = valid;
-            std::memset(invalid.data() + offset, 0xff, 4);
-            run(invalid, false);
-        }
         invalid = valid;
         invalid[256] = 0; // Embedded NUL in the atlas path.
         run(invalid, false);

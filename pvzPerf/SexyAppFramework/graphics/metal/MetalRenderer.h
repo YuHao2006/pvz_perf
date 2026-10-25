@@ -69,6 +69,12 @@ public:
     bool SubmitParticle(MetalReanim* definition, MetalTexture* texture,
         const GpuParticleDraw& draw, std::span<const GpuParticleState> chain,
         bool linear, bool repeat, GpuBlend blend, const GpuClip* clip = nullptr);
+    bool SubmitFormulaParticles(MetalReanim* d, MetalTexture* t, const GpuParticleDraw& p,
+        std::span<const GpuParticleState> s, bool l, bool r, GpuBlend b, const GpuClip* c = nullptr)
+    { return SubmitParticle(d,t,p,s,l,r,b,c); }
+    bool SubmitDiscreteParticles(MetalReanim* d, MetalTexture* t, const GpuParticleDraw& p,
+        std::span<const GpuParticleState> s, bool l, bool r, GpuBlend b, const GpuClip* c = nullptr)
+    { return SubmitParticle(d,t,p,s,l,r,b,c); }
     void DestroyReanimDefinition(MetalReanim* definition);
     uint32_t& reanimPictureCandidates;
     const bool& reanimFrameEligible;

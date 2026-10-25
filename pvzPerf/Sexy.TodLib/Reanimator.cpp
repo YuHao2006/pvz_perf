@@ -33,19 +33,20 @@ static unsigned int gReanimatorDefCount;                     //[0x6A9EE4]
 ReanimatorDefinition* gReanimatorDefArray;   //[0x6A9EE8]
 static unsigned int gReanimationParamArraySize;              //[0x6A9EEC]
 
-void ReanimatorUploadGpuDefinitionData()
+static void UploadGpuDefinitionRange(int firstType, int endType)
 {
 #if defined(PVZ_GPU_REANIM_RESIDENT)
 	if (!gSexyAppBase || CurrentNativeThreadIdentity() != gSexyAppBase->mPrimaryThreadId ||
 		!gSexyAppBase->mDDInterface || !gSexyAppBase->mDDInterface->mRenderInterface)
 		throw std::logic_error("Reanimation GPU upload requires the primary renderer thread");
-	auto* renderer = gSexyAppBase->mDDInterface->mRenderInterface->mRenderer;
+	auto& render = *gSexyAppBase->mDDInterface->mRenderInterface;
+	auto* renderer = render.mRenderer;
 	if (!renderer) throw std::logic_error("Reanimation GPU upload requires a renderer");
 	std::vector<ReanimatorDefinition*> uploaded;
-	uploaded.reserve(GeneratedDefinitions::ReanimationCount);
+	uploaded.reserve(endType - firstType);
 	try
 	{
-		for (int type = 0; type < GeneratedDefinitions::ReanimationCount; ++type)
+		for (int type = firstType; type < endType; ++type)
 		{
 			auto& definition = GeneratedDefinitions::Reanimations[type];
 			if (definition.mGpuData) continue;
@@ -83,6 +84,10 @@ void ReanimatorUploadGpuDefinitionData()
 					if (tracks[i].keyCount != unsigned(definition.mTracks.tracks[i].mTransforms.count))
 						throw std::runtime_error(std::string("GPU reanimation track mismatch: ") + path);
 				}
+				// Loading-screen/cache draws can leave a scene open when the
+				// worker becomes ready. Finish it once before the first upload;
+				// an already resident range never interrupts another frame.
+				if (uploaded.empty()) render.Flush();
 				definition.mGpuData = renderer->UploadReanimDefinition(
 					{tracks, keys, geometry, header[3], header[4]});
 				if (!definition.mGpuData && std::any_of(definition.mTracks.tracks,
@@ -106,7 +111,23 @@ void ReanimatorUploadGpuDefinitionData()
 		}
 		throw;
 	}
+#else
+	(void)firstType;
+	(void)endType;
 #endif
+}
+
+void ReanimatorUploadGpuDefinitionData()
+{
+	UploadGpuDefinitionRange(0, GeneratedDefinitions::ReanimationCount);
+}
+
+void ReanimatorUploadGpuDefinitionData(ReanimationType type)
+{
+	const auto index = static_cast<unsigned>(type);
+	if (index >= GeneratedDefinitions::ReanimationCount)
+		throw std::out_of_range("Invalid early GPU reanimation type");
+	UploadGpuDefinitionRange(int(index), int(index) + 1);
 }
 
 void ReanimatorFreeGpuDefinitionData()

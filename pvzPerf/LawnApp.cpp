@@ -1402,6 +1402,12 @@ void LawnApp::Init()
 	// Preload the loader-bar definitions before the loading thread starts.
 	ReanimatorEnsureDefinitionLoaded(ReanimationType::REANIM_LOADBAR_SPROUT, true);
 	ReanimatorEnsureDefinitionLoaded(ReanimationType::REANIM_LOADBAR_ZOMBIEHEAD, true);
+#if defined(PVZ_EXPERIMENTAL_GPU_REANIM)
+	// Init finishes before Start shows the native window. Only the loader-bar
+	// definitions belong here; bulk resident data follows the loading barrier.
+	ReanimatorUploadGpuDefinitionData(ReanimationType::REANIM_LOADBAR_SPROUT);
+	ReanimatorUploadGpuDefinitionData(ReanimationType::REANIM_LOADBAR_ZOMBIEHEAD);
+#endif
 }
 
 //0x4522A0

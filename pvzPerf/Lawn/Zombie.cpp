@@ -2571,7 +2571,7 @@ void Zombie::UpdateZombieImp()
         const float previousAltitude = CheckedPosition(motion.origin + double(mY) +
             double(motion.rate) * previousTicks -
             double(THOWN_ZOMBIE_GRAVITY) * previousTicks * (previousTicks + 1.0) * 0.5);
-        if (!motion.bound || motion.lastOutput != mAltitude || previousVelocity != mVelZ ||
+        if (!motion.bound || previousVelocity != mVelZ ||
             previousAltitude != mAltitude)
         {
             // Store altitude relative to row Y. Roof motion changes row Y
@@ -2594,7 +2594,6 @@ void Zombie::UpdateZombieImp()
         mY = GetPosYBasedOnRow(mRow);
         mAltitude = CheckedPosition(motion.origin + double(mY) + double(motion.rate) * ticks -
             double(THOWN_ZOMBIE_GRAVITY) * ticks * (ticks + 1.0) * 0.5);
-        motion.lastOutput = mAltitude;
         if (mAltitude <= 0.0f)
         {
             mAltitude = 0.0f;
@@ -3757,7 +3756,6 @@ void Zombie::UpdateZombieFalling(float theAdditionalRate)
             mAltitudeMotion.rate = theAdditionalRate;
             mAltitude = CheckedPosition(mAltitudeMotion.origin +
                 double(theAdditionalRate) * double(remaining) / 10'000'000.0);
-            mAltitudeMotion.lastOutput = mAltitude;
             mZombieHeight = ZombieHeight::HEIGHT_ZOMBIE_NORMAL;
         }
     }
@@ -4553,13 +4551,7 @@ void Zombie::UpdateZombieWalking()
                 ZamboniMotion::Sample<-1>(motion.origin, motion.rate, elapsed,
                     mFlatTires, !aNotWalking, aAdditionalSpeed);
         };
-        bool rebind = !motion.bound || motion.lastOutput != mX;
-        if (!rebind)
-        {
-            const auto previous = sample(motion.elapsedNs);
-            rebind = CheckedPosition(previous.position) != mX ||
-                CheckedPosition(previous.speed) != mVelX;
-        }
+        bool rebind = !motion.bound;
         if (rebind)
         {
             motion.origin = mX;
@@ -4573,7 +4565,6 @@ void Zombie::UpdateZombieWalking()
         const auto current = sample(motion.elapsedNs);
         mX = CheckedPosition(current.position);
         mVelX = CheckedPosition(current.speed);
-        motion.lastOutput = mX;
         mRootBindingGeneration = 0;
         return;
     }
@@ -4632,7 +4623,9 @@ void Zombie::UpdateZombieWalking()
                 mRootBindingGeneration = aBodyReanim->mPlaybackGeneration;
                 mRootScale = aScale;
             }
-            float aAdditionalOffset = mVelocityX.bound ? mVelocityX.lastOutput : 0.0f;
+            float aAdditionalOffset = mVelocityX.bound ?
+                CheckedPosition(mVelocityX.origin +
+                    double(mVelocityX.rate) * double(mVelocityX.elapsedNs) / 10'000'000.0) : 0.0f;
             AdvanceVelocity(aAdditionalOffset, aAdditionalSpeed, Sexy::gUpdateIntervalNs, mVelocityX);
             mX = CheckedPosition(mRootOriginX +
                 aRoot +

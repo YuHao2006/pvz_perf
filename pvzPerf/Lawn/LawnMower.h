@@ -39,7 +39,6 @@ public:
     std::uint64_t       mMotionElapsedNs = UINT64_MAX;
     std::int64_t        mMotionChompStartNs = 0;
     float               mMotionBaseSpeed = 0;
-    float               mMotionLastOutputX = 0;
     // Pool entry/exit always starts at 0/-28; only these transitions write altitude.
     std::uint64_t       mAltitudeElapsedNs = 0;
 

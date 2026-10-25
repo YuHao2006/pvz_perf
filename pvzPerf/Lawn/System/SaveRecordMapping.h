@@ -165,8 +165,7 @@ template<class T, class Fn> void VisitV7Members(Fn&& visit)
                 visit(native + offsetof(TimedLinearMotion, origin), wire, 8);
                 visit(native + offsetof(TimedLinearMotion, elapsedNs), wire + 8, 8);
                 visit(native + offsetof(TimedLinearMotion, rate), wire + 16, 4);
-                visit(native + offsetof(TimedLinearMotion, lastOutput), wire + 20, 4);
-                visit(native + offsetof(TimedLinearMotion, bound), wire + 24, 1);
+                visit(native + offsetof(TimedLinearMotion, bound), wire + 20, 1);
             };
             segment(offsetof(T, mVelocityX), 24);
             segment(offsetof(T, mVelocityY), 52);
@@ -196,7 +195,6 @@ template<class T, class Fn> void VisitV7Members(Fn&& visit)
         visit(offsetof(T, mMotionElapsedNs), 8, 8);
         visit(offsetof(T, mMotionChompStartNs), 16, 8);
         visit(offsetof(T, mMotionBaseSpeed), 24, 4);
-        visit(offsetof(T, mMotionLastOutputX), 28, 4);
         visit(offsetof(T, mAltitudeElapsedNs), 32, 8);
     }
     else if constexpr (std::is_same_v<T, Reanimation>)

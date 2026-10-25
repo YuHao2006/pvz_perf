@@ -72,7 +72,7 @@ inline std::array<std::uint32_t, 3> Travel(LawnApp& app, Board& board,
     mower.mChompCounter = 50; // Real collision writes this same public countdown.
     Schedule(frequency, 423'456'789, [&] { mower.Update(); });
     const auto second = Bits(mower.mPosX);
-    mower.mPosX = -1500.125f; // Actual portal path writes the public position.
+    mower.mPosX = -1500.125f; // Explicit movement reset starts a new segment.
     Schedule(frequency, 864'197'532, [&] { mower.Update(); });
     Require(!mower.mDead, "Mower fixture unexpectedly died");
     return {first, second, Bits(mower.mPosX)};
@@ -94,6 +94,15 @@ inline void Source100Hz(LawnApp& app, Board& board, LawnMowerType type, int chom
         Schedule(100, 10'000'000, [&] { fixture.mower.Update(); });
         Require(std::fabs(double(fixture.mower.mPosX) - expected) < .0002,
             "Production mower changed the 100Hz source chomp speed sequence");
+    }
+    if (chomp == 50)
+    {
+        const double loss = double(fixture.mower.mPosX) -
+            (-2000.25 + 100.0 * base);
+        const double expectedLoss = type == LawnMowerType::LAWNMOWER_POOL ?
+            -49.98 : -77.6356;
+        Require(std::fabs(loss - expectedLoss) < .002,
+            "Mower slowdown distance no longer matches the original 0.5 second curve");
     }
 }
 
@@ -185,7 +194,7 @@ inline void Run(LawnApp& app, Board& board)
     PoolAltitude(app, board);
     Brain(app, board);
     app.mGameScene = scene;
-    std::cout << "PASS actual mower/brain motion: 100Hz speed samples, chomp resets, portal rebase, "
+    std::cout << "PASS actual mower/brain motion: 100Hz speed samples, chomp resets, explicit segment reset, "
         "pool integer endpoints, brain fall/reposition/death; 1/30/60/100/144/200/240/1000Hz/random\n";
 }
 }

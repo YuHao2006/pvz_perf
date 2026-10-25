@@ -80,6 +80,10 @@ namespace
 // nanoseconds give the same position.
 // Only the 500 ms bounce window needs summing; arbitrarily long constant runs
 // remain O(1), and the loop is bounded to at most 50 source samples.
+// The source sequence deliberately uses samples 49..1: a collision writes
+// 50, the update consumes one count before sampling, and count 0 is already
+// back at base speed. This preserves the original 0.25 s minimum-speed point,
+// the 0.25 s recovery, and repeated-collision behavior.
 double MowerTravel(float baseSpeed, std::int64_t chompStartNs, std::uint64_t elapsedNs)
 {
     constexpr std::uint64_t tick = 10'000'000;
@@ -114,27 +118,16 @@ void AdvanceMower(LawnMower& mower, float baseSpeed)
         mower.mMotionChompStartNs - std::int64_t(mower.mMotionElapsedNs) : 0;
     if (!bound || mower.mMotionBaseSpeed != baseSpeed || expected != chomp)
     {
-        const double previous = bound && mower.mPosX == mower.mMotionLastOutputX ?
-            mower.mMotionOriginX + MowerTravel(mower.mMotionBaseSpeed,
-                mower.mMotionChompStartNs, mower.mMotionElapsedNs) : mower.mPosX;
-        mower.mMotionOriginX = previous;
+        mower.mMotionOriginX = mower.mPosX;
         mower.mMotionElapsedNs = 0;
         mower.mMotionChompStartNs = chomp;
         mower.mMotionBaseSpeed = baseSpeed;
-    }
-    else if (mower.mPosX != mower.mMotionLastOutputX)
-    {
-        // Portal/cutscene/external reposition: replace only the coordinate
-        // origin, retaining the current chomp source-sample phase.
-        mower.mMotionOriginX = double(mower.mPosX) -
-            MowerTravel(baseSpeed, mower.mMotionChompStartNs, mower.mMotionElapsedNs);
     }
     if (Sexy::gUpdateIntervalNs >= UINT64_MAX - mower.mMotionElapsedNs)
         throw std::overflow_error("mower movement clock overflow");
     mower.mMotionElapsedNs += Sexy::gUpdateIntervalNs;
     mower.mPosX = CheckedPosition(mower.mMotionOriginX +
         MowerTravel(baseSpeed, mower.mMotionChompStartNs, mower.mMotionElapsedNs));
-    mower.mMotionLastOutputX = mower.mPosX;
 }
 
 void AdvanceMowerAltitude(LawnMower& mower, bool rising)

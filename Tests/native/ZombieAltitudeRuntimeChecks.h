@@ -141,13 +141,12 @@ inline void Step(Zombie& zombie, Path path)
 
 inline auto State(const Zombie& zombie)
 {
-    return std::array<std::uint64_t, 11>{
+    return std::array<std::uint64_t, 10>{
         std::bit_cast<std::uint32_t>(zombie.mAltitude), std::bit_cast<std::uint32_t>(zombie.mVelZ),
         std::bit_cast<std::uint32_t>(zombie.mX), std::bit_cast<std::uint32_t>(zombie.mY),
         std::uint64_t(zombie.mZombieHeight), std::uint64_t(zombie.mZombiePhase),
         std::bit_cast<std::uint64_t>(zombie.mAltitudeMotion.origin),
         zombie.mAltitudeMotion.elapsedNs, std::bit_cast<std::uint32_t>(zombie.mAltitudeMotion.rate),
-        std::bit_cast<std::uint32_t>(zombie.mAltitudeMotion.lastOutput),
         std::uint64_t(zombie.mAltitudeMotion.bound)};
 }
 
@@ -292,8 +291,8 @@ inline void Check(LawnApp& app, Board& board)
     }
     Zombie longClock{};
     Initialize(longClock, app, board, Path::Flyer);
-    longClock.mAltitudeMotion = {1'000'000'000.0, 9'007'199'254'740'993ULL, -.1f, 0, true};
-    longClock.mAltitude = longClock.mAltitudeMotion.lastOutput = CheckedPosition(
+    longClock.mAltitudeMotion = {1'000'000'000.0, 9'007'199'254'740'993ULL, -.1f, true};
+    longClock.mAltitude = CheckedPosition(
         longClock.mAltitudeMotion.origin + double(longClock.mAltitudeMotion.rate) *
         double(longClock.mAltitudeMotion.elapsedNs) / 10'000'000);
     const auto longSave = SaveRecordMapping::WriteSaveRecord(longClock);

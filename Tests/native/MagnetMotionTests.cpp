@@ -45,13 +45,12 @@ int main()
                     "Inverse-square attraction did not accelerate toward its target");
             }
             Require(MagnetMotion::Sample(item, 0, 0, duration) &&
-                std::abs(item.mPosX - std::min(radius, 20.0f)) < 0.001f,
-                "Magnet item did not stop at its capture radius");
+                std::abs(item.mPosX) < 0.001f && std::abs(item.mPosY) < 0.001f,
+                "Magnet item did not snap to its receiving plant");
             const double endpointDistance = std::sqrt(
                 double(item.mPosX) * item.mPosX + double(item.mPosY) * item.mPosY);
-            Require(endpointDistance <= MagnetMotion::CaptureRadius +
-                MagnetMotion::CaptureRadiusEpsilon,
-                "Float-rounded magnet endpoint would remain in the top render layer");
+            Require(endpointDistance == 0.0,
+                "Snapped magnet endpoint is not exact");
         }
         Require(MagnetMotion::Advance(123, UINT64_MAX) == MagnetMotion::MaxFlightNs,
             "Large step wrapped magnet batch time");

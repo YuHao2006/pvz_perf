@@ -11,10 +11,6 @@ namespace MagnetMotion
 inline constexpr double Strength = 1'000'000'000.0;
 inline constexpr std::uint64_t MaxFlightNs = 900'000'000;
 inline constexpr float CaptureRadius = 20.0f;
-// The sampled endpoint is stored as float. Allow the final rounded point to
-// cross the mathematical radius by a few thousandths without keeping the
-// item in the top render layer forever.
-inline constexpr float CaptureRadiusEpsilon = 0.01f;
 inline constexpr double Curve[] = {
 #include "MagnetMotionCurve.inc"
 };
@@ -45,11 +41,20 @@ inline void Bind(Item& item, float targetX, float targetY)
 template<class Item>
 inline bool Sample(Item& item, float targetX, float targetY, std::uint64_t elapsedNs)
 {
+    if (elapsedNs >= item.mCenterDurationNs)
+    {
+        // End the flight at the receiving plant. This makes the layer
+        // transition exact instead of depending on float rounding at the
+        // nominal 20px capture radius.
+        item.mPosX = targetX;
+        item.mPosY = targetY;
+        return true;
+    }
     const double factor = std::max<double>(item.mCaptureFactor,
         Fraction(elapsedNs, item.mCenterDurationNs));
     item.mPosX = static_cast<float>(targetX + item.mOriginDeltaX * factor);
     item.mPosY = static_cast<float>(targetY + item.mOriginDeltaY * factor);
-    return factor <= item.mCaptureFactor;
+    return false;
 }
 
 inline std::uint64_t Advance(std::uint64_t elapsedNs, std::uint64_t deltaNs)

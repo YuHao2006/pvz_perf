@@ -265,8 +265,8 @@ void TodUpdateSmoothArrayPick(TodSmoothArray* theArray, int theCount, int thePic
 	{
 		if (theArray[i].mWeight > 0.0f)
 		{
-			theArray[i].mLastPicked += 1.0f;
-			theArray[i].mSecondLastPicked += 1.0f;
+			++theArray[i].mLastPicked;
+			++theArray[i].mSecondLastPicked;
 		}
 	}
 

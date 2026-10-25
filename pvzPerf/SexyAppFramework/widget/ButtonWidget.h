@@ -1,4 +1,5 @@
 #pragma once
+#include <cstdint>
 #include "Widget.h"
 #include "graphics/TextureRegion.h"
 
@@ -48,6 +49,9 @@ public:
 	double					mOverAlpha;
 	double					mOverAlphaSpeed;
 	double					mOverAlphaFadeInSpeed;
+	double					mOverAlphaOrigin = 0;
+	std::uint64_t			mOverAlphaElapsedNs = 0;
+	bool					mOverAlphaTargetOver = false;
 
 	bool					HaveButtonImage(Image *theImage, const TextureRegion& theRegion);
 	virtual void			DrawButtonImage(Graphics *g, Image *theImage, const TextureRegion& theRegion, int x, int y);

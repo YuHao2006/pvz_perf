@@ -19,11 +19,11 @@ using namespace Sexy;
 namespace
 {
 
-// Per-tick fade math for every loaded song. Only entries with an active
-// fade (mVolumeAdd != 0) touch the channel.
+// Direct time evaluation for every loaded song. Only entries with an active
+// fade (non-zero duration) touch the channel.
 void ApplyVolumeFade(BassMusicInfo* aMusicInfo)
 {
-	if (aMusicInfo->mVolumeAdd == 0.0)
+	if (aMusicInfo->mFadeDurationNs == 0)
 		return;
 
 	aMusicInfo->mFadeElapsedNs = std::min<std::uint64_t>(
@@ -37,7 +37,7 @@ void ApplyVolumeFade(BassMusicInfo* aMusicInfo)
 	if (fraction >= 1.0)
 	{
 		aMusicInfo->mVolume = aMusicInfo->mFadeTarget;
-		aMusicInfo->mVolumeAdd = 0.0;
+		aMusicInfo->mFadeDurationNs = 0;
 		if (aMusicInfo->mVolume <= 0.0 && aMusicInfo->mStopOnFade)
 			aMusicInfo->mPlayback.Stop();
 	}
@@ -45,13 +45,13 @@ void ApplyVolumeFade(BassMusicInfo* aMusicInfo)
 		aMusicInfo->mVolume >= aMusicInfo->mVolumeCap)
 	{
 		aMusicInfo->mVolume = aMusicInfo->mVolumeCap;
-		aMusicInfo->mVolumeAdd = 0.0;
+		aMusicInfo->mFadeDurationNs = 0;
 	}
 	else if (aMusicInfo->mFadeTarget < aMusicInfo->mFadeOrigin &&
 		aMusicInfo->mVolume <= 0.0)
 	{
 		aMusicInfo->mVolume = 0.0;
-		aMusicInfo->mVolumeAdd = 0.0;
+		aMusicInfo->mFadeDurationNs = 0;
 
 		if (aMusicInfo->mStopOnFade)
 			aMusicInfo->mPlayback.Stop();
@@ -65,7 +65,6 @@ void ApplyVolumeFade(BassMusicInfo* aMusicInfo)
 BassMusicInfo::BassMusicInfo()
 {	
 	mVolume = 0.0;
-	mVolumeAdd = 0.0;
 	mVolumeCap = 1.0;
 	mFadeOrigin = 0.0;
 	mFadeTarget = 0.0;
@@ -220,7 +219,6 @@ void BassMusicInterface::PlayMusic(int theSongId, int theOffset, bool noLoop)
 	if (aMusicInfo != nullptr)
 	{
 		aMusicInfo->mVolume = aMusicInfo->mVolumeCap;
-		aMusicInfo->mVolumeAdd = 0.0;
 		aMusicInfo->mFadeElapsedNs = 0;
 		aMusicInfo->mFadeDurationNs = 0;
 		aMusicInfo->mStopOnFade = noLoop;
@@ -256,7 +254,6 @@ void BassMusicInterface::StopMusic(int theSongId)
 	if (aMusicInfo != nullptr)
 	{
 		aMusicInfo->mVolume = 0.0;
-		aMusicInfo->mVolumeAdd = 0.0;
 		aMusicInfo->mFadeElapsedNs = 0;
 		aMusicInfo->mFadeDurationNs = 0;
 		aMusicInfo->mPlayback.Stop();
@@ -378,7 +375,6 @@ void BassMusicInterface::FadeIn(int theSongId, int theOffset, double theSpeed, b
 				std::max(0.0, aMusicInfo->mFadeTarget - aMusicInfo->mFadeOrigin) /
 				theSpeed * 10'000'000.0))
 			: 0;
-		aMusicInfo->mVolumeAdd = theSpeed > 0.0 ? theSpeed : 0.0;
 		aMusicInfo->mStopOnFade = noLoop;
 
 		aMusicInfo->mPlayback.Stop();
@@ -427,7 +423,6 @@ void BassMusicInterface::FadeOut(int theSongId, bool stopSong, double theSpeed)
 				? static_cast<std::uint64_t>(std::ceil(
 					aMusicInfo->mFadeOrigin / theSpeed * 10'000'000.0))
 				: 0;
-			aMusicInfo->mVolumeAdd = theSpeed > 0.0 ? -theSpeed : 0.0;
 		}
 
 		aMusicInfo->mStopOnFade = stopSong;
@@ -452,7 +447,6 @@ void BassMusicInterface::FadeOutAll(bool stopSong, double theSpeed)
 			? static_cast<std::uint64_t>(std::ceil(
 				aMusicInfo->mFadeOrigin / theSpeed * 10'000'000.0))
 			: 0;
-		aMusicInfo->mVolumeAdd = theSpeed > 0.0 ? -theSpeed : 0.0;
 		aMusicInfo->mStopOnFade = stopSong;
 	}
 }

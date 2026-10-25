@@ -294,7 +294,7 @@ void Music::PlayFromOffset(MusicFile theMusicFile, int theOffset, double theVolu
 		SetupMusicFileForTune(theMusicFile, mCurMusicTune);  // 调整每条轨道的静音与否
 		aMusicInfo->mStopOnFade = false;
 		aMusicInfo->mVolume = aMusicInfo->mVolumeCap * theVolume;
-		aMusicInfo->mVolumeAdd = 0.0;
+		aMusicInfo->mFadeDurationNs = 0;
 		//gBass->BASS_ChannelSetAttribute(aMusicInfo->mHMusic, -1, aMusicInfo->mVolume * 100.0, -101);  // 调整音乐音量
 		aMusicInfo->mPlayback.SetGain(aMusicInfo->mVolume);
 		gBass->BASS_ChannelFlags(aMusicInfo->mHMusic,

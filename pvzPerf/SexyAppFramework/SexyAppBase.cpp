@@ -361,8 +361,8 @@ SexyAppBase::SexyAppBase()
 	mUpdateCount = 0;	
 	mUpdateAppState = 0;
 	mUpdateAppDepth = 0;
-	mPendingUpdatesAcc = 0.0;
-	mUpdateFTimeAcc = 0.0;
+	mPendingUpdatesAccNs = 0;
+	mUpdateFTimeAccNs = 0;
 	mHasPendingDraw = true;
 	mIsDrawing = false;
 	mRedrawInProgress = false;
@@ -607,7 +607,7 @@ void SexyAppBase::ClearUpdateBacklog(bool relaxForASecond)
 {
 	mLastTimeCheck = std::chrono::time_point_cast<std::chrono::nanoseconds>(
 		FrameDeadline::Clock::now());
-	mUpdateFTimeAcc = 0.0;
+	mUpdateFTimeAccNs = 0;
 
 	if (relaxForASecond)
 		mRelaxUpdateBacklogCount = 1000;
@@ -3292,10 +3292,17 @@ void SexyAppBase::UpdateFTimeAcc()
 		FrameDeadline::Clock::now());
 	if (mLastTimeCheck != FrameDeadline::TimePoint{})
 	{
-		const double aDeltaTime =
-			std::chrono::duration<double, std::milli>(aCurTime - mLastTimeCheck).count();
-		const double aBacklogLimit = std::max(200.0, mFrameTiming.mIntervalNs / 500'000.0);
-		mUpdateFTimeAcc = std::min(mUpdateFTimeAcc + aDeltaTime, aBacklogLimit);
+		const auto aDeltaTimeNs = static_cast<unsigned long long>(
+			std::max<std::int64_t>(0,
+				std::chrono::duration_cast<std::chrono::nanoseconds>(
+					aCurTime - mLastTimeCheck).count()));
+		const auto aBacklogLimitNs = std::max<unsigned long long>(
+			200'000'000ULL, mFrameTiming.mIntervalNs * 2ULL);
+		mUpdateFTimeAccNs = std::min(
+			mUpdateFTimeAccNs > UINT64_MAX - aDeltaTimeNs
+				? UINT64_MAX : mUpdateFTimeAccNs + aDeltaTimeNs,
+			aBacklogLimitNs);
+		const double aDeltaTime = double(aDeltaTimeNs) / 1'000'000.0;
 
 		if (mRelaxUpdateBacklogCount > 0)
 			mRelaxUpdateBacklogCount = std::max(mRelaxUpdateBacklogCount - aDeltaTime, 0.0);
@@ -3315,19 +3322,23 @@ bool SexyAppBase::Process(bool allowSleep)
 	
 	bool isVSynched = (!mPlayingDemoBuffer) && (mVSyncUpdates) && (!mLastDrawWasEmpty) && (!mVSyncBroken) &&
 		((!mIsPhysWindowed) || (mIsPhysWindowed && mWaitForVSync && !mSoftVSyncWait));
-	double aFrameFTime;
+	unsigned long long aFrameIntervalNs;
 	double anUpdatesPerUpdateF;
 
 	if (mVSyncUpdates)
 	{
-		aFrameFTime = (1000.0 / mSyncRefreshRate) / mUpdateMultiplier;
+		aFrameIntervalNs = static_cast<unsigned long long>(std::max(
+			1.0, std::round(1'000'000'000.0 / mSyncRefreshRate / mUpdateMultiplier)));
 		anUpdatesPerUpdateF = 1'000'000'000.0 / (mFrameTiming.mIntervalNs * mSyncRefreshRate);
 	}
 	else
 	{
-		aFrameFTime = (mFrameTiming.mIntervalNs / 1'000'000.0) / mUpdateMultiplier;
+		aFrameIntervalNs = static_cast<unsigned long long>(std::max(
+			1.0, std::round(double(mFrameTiming.mIntervalNs) / mUpdateMultiplier)));
 		anUpdatesPerUpdateF = 1.0;
 	}
+	const auto pendingAdvanceNs = static_cast<unsigned long long>(std::min(
+		double(UINT64_MAX), std::round(anUpdatesPerUpdateF * double(gUpdateIntervalNs))));
 
 	// Do we need to fast forward?
 	if (mPlayingDemoBuffer)
@@ -3353,12 +3364,14 @@ bool SexyAppBase::Process(bool allowSleep)
 
 				if (hadRealUpdate)
 				{					
-					mPendingUpdatesAcc += anUpdatesPerUpdateF;
-					mPendingUpdatesAcc -= 1.0;
+					mPendingUpdatesAccNs = mPendingUpdatesAccNs > UINT64_MAX - pendingAdvanceNs
+						? UINT64_MAX : mPendingUpdatesAccNs + pendingAdvanceNs;
+					mPendingUpdatesAccNs = mPendingUpdatesAccNs >= gUpdateIntervalNs
+						? mPendingUpdatesAccNs - gUpdateIntervalNs : 0;
 					ProcessSafeDeleteList();
 
 					// Process any extra updates
-					while (mPendingUpdatesAcc >= 1.0)
+					while (mPendingUpdatesAccNs >= gUpdateIntervalNs)
 					{						
 						// These should just be IDLE commands we have to clear out
 						ProcessDemo();												
@@ -3370,7 +3383,7 @@ bool SexyAppBase::Process(bool allowSleep)
 							break;
 												
 						ProcessSafeDeleteList();
-						mPendingUpdatesAcc -= 1.0;
+						mPendingUpdatesAccNs -= gUpdateIntervalNs;
 					}
 										
 					DoUpdateFramesF((float) anUpdatesPerUpdateF);					
@@ -3434,9 +3447,9 @@ bool SexyAppBase::Process(bool allowSleep)
 					// 阈值精确 = aFrameFTime（原 0.75× 造成 99~100Hz 波动）；
 					// acc 由 QPC 实时累加、每 update 精确扣 10ms（见 PROCESS_2），
 					// 守恒式节拍让速率恒定 100.00Hz 且零漂移。
-					doUpdate = (!mHasPendingDraw) || (mUpdateFTimeAcc >= aFrameFTime);
+					doUpdate = (!mHasPendingDraw) || (mUpdateFTimeAccNs >= aFrameIntervalNs);
 				}
-				else if (mUpdateFTimeAcc >= aFrameFTime)
+				else if (mUpdateFTimeAccNs >= aFrameIntervalNs)
 				{
 					doUpdate = true;
 				}
@@ -3490,12 +3503,14 @@ bool SexyAppBase::Process(bool allowSleep)
 		{
 			mUpdateAppState = UPDATESTATE_PROCESS_DONE;
 			
-			mPendingUpdatesAcc += anUpdatesPerUpdateF;
-			mPendingUpdatesAcc -= 1.0;
+			mPendingUpdatesAccNs = mPendingUpdatesAccNs > UINT64_MAX - pendingAdvanceNs
+				? UINT64_MAX : mPendingUpdatesAccNs + pendingAdvanceNs;
+			mPendingUpdatesAccNs = mPendingUpdatesAccNs >= gUpdateIntervalNs
+				? mPendingUpdatesAccNs - gUpdateIntervalNs : 0;
 			ProcessSafeDeleteList();
 
 			// Process any extra updates
-			while (mPendingUpdatesAcc >= 1.0)
+			while (mPendingUpdatesAccNs >= gUpdateIntervalNs)
 			{	
 				// These should just be IDLE commands we have to clear out
 				ProcessDemo();												
@@ -3508,7 +3523,7 @@ bool SexyAppBase::Process(bool allowSleep)
 					break;
 										
 				ProcessSafeDeleteList();
-				mPendingUpdatesAcc -= 1.0;
+				mPendingUpdatesAccNs -= gUpdateIntervalNs;
 			}					
 
 			//aNumCalls++;
@@ -3519,12 +3534,14 @@ bool SexyAppBase::Process(bool allowSleep)
 			// 每次更新精确消耗 mFrameTime（原多扣 0.2ms 的偏置会让平均速率
 			// 偏离 100Hz）：acc 增长来自真实时间、消耗恒定 10ms，长期零漂移。
 			if (isVSynched)
-				mUpdateFTimeAcc = std::max(mUpdateFTimeAcc - aFrameFTime, 0.0);
+				mUpdateFTimeAccNs = mUpdateFTimeAccNs >= aFrameIntervalNs
+					? mUpdateFTimeAccNs - aFrameIntervalNs : 0;
 			else
-				mUpdateFTimeAcc -= aFrameFTime;
+				mUpdateFTimeAccNs = mUpdateFTimeAccNs >= aFrameIntervalNs
+					? mUpdateFTimeAccNs - aFrameIntervalNs : 0;
 
 			if (mRelaxUpdateBacklogCount > 0)
-				mUpdateFTimeAcc = 0;
+				mUpdateFTimeAccNs = 0;
 
 			didUpdate = true;
 		}
@@ -3549,7 +3566,9 @@ bool SexyAppBase::Process(bool allowSleep)
 			else
 			{
 				// Let us take into account the time it took to draw dirty stuff
-				double aTimeToNextFrame = aFrameFTime - mUpdateFTimeAcc;
+				const auto aTimeToNextFrameNs = mUpdateFTimeAccNs >= aFrameIntervalNs
+					? 0ULL : aFrameIntervalNs - mUpdateFTimeAccNs;
+				double aTimeToNextFrame = double(aTimeToNextFrameNs) / 1'000'000.0;
 				auto aWaitOrigin = mLastTimeCheck;
 				if (aTimeToNextFrame <= 0)
 				{
@@ -3557,7 +3576,7 @@ bool SexyAppBase::Process(bool allowSleep)
 					// already at/above the frame time. This shows up as high CPU
 					// and an unresponsive window before the first frame.
 					aTimeToNextFrame = 1;
-					mUpdateFTimeAcc = 0;
+					mUpdateFTimeAccNs = 0;
 					aWaitOrigin = std::chrono::time_point_cast<std::chrono::nanoseconds>(
 						FrameDeadline::Clock::now());
 				}

@@ -254,17 +254,115 @@ inline void LaunchDeadlines(LawnApp& app, Board& board)
     paused.Update(237'192'835);
     Require(paused.mNextLaunchTimeNs == frozenDeadline,
         "Plant newly anchored at this step's endpoint was frozen for time before its creation");
-    paused.mIsAsleep = paused.mSquished = false;
-    paused.mShootingCounter = 100;
-    paused.mLaunchRate = 150;
-    board.mLevelTimeNs += 9'000'000'001;
-    const auto shooting = paused.mShootingCounter.mNanoseconds;
-    paused.UpdateShooter();
-    Require(paused.mNextLaunchTimeNs > board.mLevelTimeNs &&
-        paused.mShootingCounter.mNanoseconds == shooting,
-        "Large update restarted an unfinished shooting action");
     std::cout << "PASS actual Plant launch deadlines: ns randomness, exact partitions, "
-        "paused remaining time and unfinished attack gating\n";
+        "paused remaining time\n";
+
+    // The 1073 shooter starts on its launch deadline even while the previous
+    // shooting timer is positive. Gloom's 200-tick timer deliberately overlaps
+    // its next 186..200-tick period; waiting for zero drops every other volley.
+    const bool oldMute = app.mMuteSoundsForCutscene;
+    app.mMuteSoundsForCutscene = true;
+    struct RestoreMute
+    {
+        LawnApp& app;
+        bool mute;
+        ~RestoreMute() { app.mMuteSoundsForCutscene = mute; }
+    } restoreMute{app, oldMute};
+    auto* target = board.mZombies.DataArrayAlloc();
+    target->mZombieType = ZombieType::ZOMBIE_NORMAL;
+    target->mZombiePhase = ZombiePhase::PHASE_ZOMBIE_NORMAL;
+    target->mZombieHeight = ZombieHeight::HEIGHT_ZOMBIE_NORMAL;
+    target->mScaleZombie = 1;
+    target->mRow = 2;
+    target->mX = 340;
+    target->mY = static_cast<float>(board.GridToPixelY(0, 2));
+    target->mZombieRect = Rect(0, 0, 40, 100);
+    target->mWidth = 40;
+    target->mHeight = 100;
+    target->mBodyHealth = target->mBodyMaxHealth = 10'000'000;
+    target->mHasHead = true;
+    board.RebuildZombieRowBucket();
+    for (const auto seed : {SeedType::SEED_GLOOMSHROOM, SeedType::SEED_GATLINGPEA})
+    for (const int frequency : {100, 30, 144, 200, 1000, 0})
+    {
+        app.mEffectSystem->EffectSystemFreeAll();
+        board.mLevelTimeNs = 0;
+        Sexy::SRand(0x601982);
+        Plant gloom;
+        gloom.PlantInitialize(3, 2, seed, SeedType::SEED_NONE);
+        gloom.mIsAsleep = false;
+        gloom.mNextLaunchTimeNs = 100'000'000;
+        gloom.mLaunchWindowStartNs = 0;
+        Require(gloom.FindTargetZombie(2, PlantWeapon::WEAPON_PRIMARY) == target,
+            "Gloom cadence fixture did not acquire its real target");
+        const bool isGloom = seed == SeedType::SEED_GLOOMSHROOM;
+        const auto pulseTicks = isGloom ? std::array{74, 102, 130, 158} :
+            std::array{32, 49, 65, 82};
+        std::int64_t volleyStart = 0;
+        int volleys = 0, hits = 0, completedVolleys = 0;
+        Schedule(frequency, 12'000'000'000, [&](std::int64_t delta) {
+            board.mLevelTimeNs += delta;
+            const int health = target->mBodyHealth;
+            const auto projectiles = board.mProjectiles.mSize;
+            gloom.UpdateShooting();
+            if (isGloom ? target->mBodyHealth != health : board.mProjectiles.mSize != projectiles)
+            {
+                Require(isGloom ? target->mBodyHealth == health - 20 :
+                    board.mProjectiles.mSize == projectiles + 1,
+                    "Volley pulse changed its original damage or projectile count");
+                const auto age = board.mLevelTimeNs - volleyStart;
+                Require(hits < 4 && age >= pulseTicks[hits] * PlantLaunchClock::Tick &&
+                    age - delta < pulseTicks[hits] * PlantLaunchClock::Tick,
+                    "Gloom/Gatling pulse did not cross its original firing instant");
+                ++hits;
+            }
+            const auto due = gloom.mNextLaunchTimeNs;
+            gloom.UpdateShooter();
+            if (due <= board.mLevelTimeNs)
+            {
+                if (volleys)
+                {
+                    Require(hits == 4, "Gloom/Gatling volley lost one of its four pulses");
+                    ++completedVolleys;
+                }
+                Require(gloom.mShootingCounter.mNanoseconds ==
+                    (isGloom ? 200 : 100) * PlantLaunchClock::Tick,
+                    "Gloom/Gatling skipped a launch deadline while its previous shooting timer was positive");
+                const auto period = gloom.mNextLaunchTimeNs - due;
+                const auto rate = isGloom ? 200 : 150;
+                Require(period >= (rate - 14) * PlantLaunchClock::Tick &&
+                    period <= rate * PlantLaunchClock::Tick,
+                    "Gloom/Gatling changed its original launch period");
+                ++volleys;
+                hits = 0;
+                volleyStart = board.mLevelTimeNs;
+            }
+        });
+        Require((isGloom ? volleys == 7 : volleys >= 8) && completedVolleys == volleys - 1,
+            "Gloom/Gatling firing cadence dropped below its original rate");
+        board.mProjectiles.DataArrayFreeAll();
+    }
+    for (const auto seed : {SeedType::SEED_REPEATER, SeedType::SEED_CATTAIL})
+    {
+        app.mEffectSystem->EffectSystemFreeAll();
+        board.mLevelTimeNs = 0;
+        Plant plant;
+        plant.PlantInitialize(3, 2, seed, SeedType::SEED_NONE);
+        plant.mNextLaunchTimeNs = 1'000'000'000;
+        plant.mLaunchWindowStartNs = 0;
+        plant.mShootingCounter = 10;
+        board.mLevelTimeNs = seed == SeedType::SEED_CATTAIL ? 500'000'000 : 750'000'000;
+        plant.UpdateShooter();
+        Require(plant.mShootingCounter.mNanoseconds ==
+            (seed == SeedType::SEED_CATTAIL ? 50 : 26) * PlantLaunchClock::Tick,
+            "Secondary launch was suppressed by an unfinished shooting timer");
+    }
+    app.mEffectSystem->EffectSystemFreeAll();
+    board.mZombies.DataArrayFreeAll();
+    board.RebuildZombieRowBucket();
+    std::cout << "PASS actual Gloom/Gatling cadence: original deadlines and four pulse instants, "
+        "Gloom seven volleys in 12s, at 30/100/144/200/1000Hz and irregular steps; "
+        "Repeater/Cattail secondary deadlines preserve 1073 overlap\n";
 }
 
 inline std::array<std::uint64_t, 8> Bowling(LawnApp& app, Board& board,

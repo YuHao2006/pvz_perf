@@ -144,6 +144,12 @@ public:
     bool SubmitParticle(VulkanReanim*, VulkanTexture*, const GpuParticleDraw&,
         std::span<const GpuParticleState>, bool linear, bool repeat, VulkanBlend,
         const VulkanClip* clip = nullptr);
+    bool SubmitFormulaParticles(VulkanReanim* d, VulkanTexture* t, const GpuParticleDraw& p,
+        std::span<const GpuParticleState> s, bool l, bool r, VulkanBlend b, const VulkanClip* c = nullptr)
+    { return SubmitParticle(d,t,p,s,l,r,b,c); }
+    bool SubmitDiscreteParticles(VulkanReanim* d, VulkanTexture* t, const GpuParticleDraw& p,
+        std::span<const GpuParticleState> s, bool l, bool r, VulkanBlend b, const VulkanClip* c = nullptr)
+    { return SubmitParticle(d,t,p,s,l,r,b,c); }
     void DestroyReanimDefinition(VulkanReanim* definition);
     // false means the track/job requires the CPU path; no drawing was queued.
     // Each accepted track is evaluated once per marker primitive in the GPU

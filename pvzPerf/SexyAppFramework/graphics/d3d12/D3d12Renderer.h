@@ -108,6 +108,12 @@ public:
     bool SubmitParticle(D3d12Reanim*, D3d12Texture*, const GpuParticleDraw&,
         std::span<const GpuParticleState>, bool linear, bool repeat, GpuBlend,
         const GpuClip* clip = nullptr);
+    bool SubmitFormulaParticles(D3d12Reanim* d, D3d12Texture* t, const GpuParticleDraw& p,
+        std::span<const GpuParticleState> s, bool l, bool r, GpuBlend b, const GpuClip* c = nullptr)
+    { return SubmitParticle(d,t,p,s,l,r,b,c); }
+    bool SubmitDiscreteParticles(D3d12Reanim* d, D3d12Texture* t, const GpuParticleDraw& p,
+        std::span<const GpuParticleState> s, bool l, bool r, GpuBlend b, const GpuClip* c = nullptr)
+    { return SubmitParticle(d,t,p,s,l,r,b,c); }
     void DestroyReanimDefinition(D3d12Reanim* definition);
     uint32_t& reanimPictureCandidates;
     const bool& reanimFrameEligible;

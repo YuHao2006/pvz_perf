@@ -115,7 +115,7 @@ void TodParticleDrawGpu(Sexy::Graphics& graphics, TodParticle& particle)
         TodParticleDrawDiscreteGpu(graphics, particle);
 }
 
-static void SubmitParticleStateGpu(Sexy::Graphics& graphics, TodParticle& particle)
+static void SubmitParticleStateGpu(Sexy::Graphics& graphics, TodParticle& particle, bool formula)
 {
     if (particle.mCrossFadeDurationNs > 0) return;
     auto& system = *particle.mParticleEmitter->mParticleSystem;
@@ -188,8 +188,12 @@ static void SubmitParticleStateGpu(Sexy::Graphics& graphics, TodParticle& partic
     const bool clipped = fullscreen ||
         rectangle.mX || rectangle.mY || rectangle.mWidth != 800 || rectangle.mHeight != 600;
     const auto submit = [&](Sexy::GpuBlend mode) {
-        if (!render.mRenderer->SubmitParticle(definition.mGpuDefinition, texture, draw, chain,
-            graphics.mLinearBlend, render.sSamplerAddressWrap, mode, clipped ? &clip : nullptr))
+        const bool accepted = formula
+            ? render.mRenderer->SubmitFormulaParticles(definition.mGpuDefinition, texture, draw, chain,
+                graphics.mLinearBlend, render.sSamplerAddressWrap, mode, clipped ? &clip : nullptr)
+            : render.mRenderer->SubmitDiscreteParticles(definition.mGpuDefinition, texture, draw, chain,
+                graphics.mLinearBlend, render.sSamplerAddressWrap, mode, clipped ? &clip : nullptr);
+        if (!accepted)
             throw std::runtime_error("GPU particle submission failed");
     };
     submit(blend);
@@ -205,10 +209,10 @@ void TodParticleDrawFormulaGpu(Sexy::Graphics& graphics, TodParticle& particle)
 {
     // The first split keeps the submission ABI shared while the formula-state
     // packet is introduced. No motion kind is uploaded to the shader.
-    SubmitParticleStateGpu(graphics, particle);
+    SubmitParticleStateGpu(graphics, particle, true);
 }
 
 void TodParticleDrawDiscreteGpu(Sexy::Graphics& graphics, TodParticle& particle)
 {
-    SubmitParticleStateGpu(graphics, particle);
+    SubmitParticleStateGpu(graphics, particle, false);
 }

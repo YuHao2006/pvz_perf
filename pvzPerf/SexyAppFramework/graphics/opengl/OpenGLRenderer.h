@@ -68,6 +68,12 @@ public:
     bool SubmitParticle(OpenGLReanim*, OpenGLTexture*, const GpuParticleDraw&,
         std::span<const GpuParticleState>, bool linear, bool repeat, GpuBlend,
         const GpuClip* clip = nullptr);
+    bool SubmitFormulaParticles(OpenGLReanim* d, OpenGLTexture* t, const GpuParticleDraw& p,
+        std::span<const GpuParticleState> s, bool l, bool r, GpuBlend b, const GpuClip* c = nullptr)
+    { return SubmitParticle(d,t,p,s,l,r,b,c); }
+    bool SubmitDiscreteParticles(OpenGLReanim* d, OpenGLTexture* t, const GpuParticleDraw& p,
+        std::span<const GpuParticleState> s, bool l, bool r, GpuBlend b, const GpuClip* c = nullptr)
+    { return SubmitParticle(d,t,p,s,l,r,b,c); }
     void DestroyReanimDefinition(OpenGLReanim* definition);
     bool SubmitReanim(OpenGLReanim* definition, OpenGLTexture* texture,
         const GpuReanimDraw& draw, bool linear, bool repeat, GpuBlend blend,

@@ -8,3 +8,5 @@ namespace Sexy { class Graphics; }
 void TodParticleUploadGpuDefinitionData();
 void TodParticleFreeGpuDefinition(TodParticleDefinition& definition);
 void TodParticleDrawGpu(Sexy::Graphics& graphics, TodParticle& particle);
+void TodParticleDrawFormulaGpu(Sexy::Graphics& graphics, TodParticle& particle);
+void TodParticleDrawDiscreteGpu(Sexy::Graphics& graphics, TodParticle& particle);

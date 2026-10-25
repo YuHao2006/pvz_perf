@@ -18,7 +18,6 @@ public:
 	HMUSIC					mHMusic;
 	HSTREAM					mHStream;
 	double					mVolume;
-	double					mVolumeAdd;
 	double					mVolumeCap;
 	double					mFadeOrigin;
 	double					mFadeTarget;

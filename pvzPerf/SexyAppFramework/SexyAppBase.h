@@ -291,8 +291,8 @@ public:
 		bool					mLastDrawWasEmpty;
 
 	bool					mHasPendingDraw;
-	double					mPendingUpdatesAcc;
-	double					mUpdateFTimeAcc;
+	unsigned long long		mPendingUpdatesAccNs;
+	unsigned long long		mUpdateFTimeAccNs;
 	FrameDeadline::TimePoint	mLastTimeCheck{};
 	DWORD					mLastTime;
 	DWORD					mLastUserInputTick;

@@ -3637,8 +3637,8 @@ void Zombie::UpdateZombiquarium()
     aVelX *= mVelX;
     aVelY *= mVelX;
     mRootBindingGeneration = 0;
-    AdvanceVelocity(mX, aVelX, Sexy::gUpdateIntervalNs, mVelocityX);
-    AdvanceVelocity(mY, aVelY, Sexy::gUpdateIntervalNs, mVelocityY);
+    mX += Sexy::UpdateDelta(aVelX);
+    mY += Sexy::UpdateDelta(aVelY);
 
     if (!mBoard->HasLevelAwardDropped())
     {

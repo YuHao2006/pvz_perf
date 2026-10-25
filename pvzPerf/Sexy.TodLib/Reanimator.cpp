@@ -611,35 +611,6 @@ void Reanimation::ApplyRate(float rate)
 	mAnimRate = rate;
 }
 
-void Reanimation::SetFrameCount(int frameCount)
-{
-	if (frameCount <= 0)
-		throw std::invalid_argument("animation frame count must be positive");
-	if (frameCount == mFrameCount)
-		return;
-	const auto nowNs = mReanimationHolder ?
-		(mTimeDomain == ReanimTimeDomain::Battle ? mReanimationHolder->mBattleTimeNs : mReanimationHolder->mVisualTimeNs) :
-		mLastUpdateTimeNs;
-	const auto oldPeriod = mPeriodNs;
-	const auto position = SamplePlaybackAt(nowNs);
-	mFrameCount = frameCount;
-	const auto newPeriod = ReanimClock::PeriodFromRate(mFrameCount, mAnimRate);
-	if (newPeriod <= 0)
-		throw std::overflow_error("animation period below one nanosecond");
-	const auto phase = oldPeriod > 0
-		? ReanimClock::SignedMulDiv(position.phaseNs, newPeriod, oldPeriod)
-		: 0;
-	mPeriodNs = newPeriod;
-	mStartTimeNs = ReanimClock::StartTimeAt(nowNs,
-		std::clamp<std::int64_t>(phase, 0, mPeriodNs), mPeriodNs,
-		mAnimRate == 0 ? 0 : (mAnimRate > 0 ? 1 : -1), mPhaseOriginNs);
-	mLastFrameNs = oldPeriod > 0
-		? ReanimClock::SignedMulDiv(mLastFrameNs, newPeriod, oldPeriod) : 0;
-	mLastUpdateTimeNs = nowNs;
-	mHasLastFrame = false;
-	mPendingTiming = false;
-}
-
 void Reanimation::ChangeLoopType(ReanimLoopType loop)
 {
 	if (loop == mLoopType) return;

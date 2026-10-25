@@ -106,20 +106,12 @@ constexpr TrackMember Tracks[]{
     &TodEmitterDefinition::mEmitterBoxY, &TodEmitterDefinition::mEmitterSkewX,
     &TodEmitterDefinition::mEmitterSkewY, &TodEmitterDefinition::mEmitterPath,
     &TodEmitterDefinition::mParticleDuration, &TodEmitterDefinition::mLaunchSpeed,
-    &TodEmitterDefinition::mLaunchAngle, &TodEmitterDefinition::mSystemRed,
-    &TodEmitterDefinition::mSystemGreen, &TodEmitterDefinition::mSystemBlue,
-    &TodEmitterDefinition::mSystemAlpha, &TodEmitterDefinition::mSystemBrightness,
-    &TodEmitterDefinition::mParticleRed, &TodEmitterDefinition::mParticleGreen,
-    &TodEmitterDefinition::mParticleBlue, &TodEmitterDefinition::mParticleAlpha,
-    &TodEmitterDefinition::mParticleBrightness, &TodEmitterDefinition::mParticleSpinAngle,
-    &TodEmitterDefinition::mParticleSpinSpeed, &TodEmitterDefinition::mParticleScale,
-    &TodEmitterDefinition::mParticleStretch, &TodEmitterDefinition::mCollisionReflect,
-    &TodEmitterDefinition::mCollisionSpin, &TodEmitterDefinition::mClipTop,
-    &TodEmitterDefinition::mClipBottom, &TodEmitterDefinition::mClipLeft,
-    &TodEmitterDefinition::mClipRight, &TodEmitterDefinition::mAnimationRate};
+    &TodEmitterDefinition::mLaunchAngle, &TodEmitterDefinition::mParticleSpinAngle,
+    &TodEmitterDefinition::mParticleSpinSpeed, &TodEmitterDefinition::mCollisionReflect,
+    &TodEmitterDefinition::mCollisionSpin, &TodEmitterDefinition::mAnimationRate};
 
-// Capture every static root and nested array. Font bindings and GPU slots are
-// the only mutable borrowed fields; strip font pointers from transform copies.
+// Static reanimation storage retains its addresses. Compiled particle records
+// retain their authored values across allocation, release and reload.
 struct StaticSnapshot
 {
     struct Block
@@ -148,6 +140,7 @@ struct StaticSnapshot
     };
     std::vector<Block> blocks;
     std::size_t nodeCount = 0, frameCount = 0, fieldCount = 0;
+    mutable std::vector<unsigned char> particleValues;
 
     template<class T>
     void Add(const T* pointer, std::size_t count, const std::string& label, bool transforms = false)
@@ -169,7 +162,6 @@ struct StaticSnapshot
     {
         static_assert(sizeof(FloatParameterTrackNode) == 24);
         Add(Definitions::Reanimations, Definitions::ReanimationCount, "reanimation roots");
-        Add(Definitions::Particles, Definitions::ParticleCount, "particle roots and name lookup");
         Add(Definitions::Projectiles.mProjectiles.data(), 14, "projectile visuals");
         Add(Definitions::Projectiles.mShadows.data(), 2, "projectile shadows");
         Add(MagnetAtlas::Images,MagnetAtlas::Count,"magnet scene rectangles");
@@ -199,37 +191,62 @@ struct StaticSnapshot
         }
         for (const auto segments : Definitions::AttacherSegments)
             Add(segments.data(), segments.size(), "prelinked attacher segments");
+        Require(frameCount > 10000, "Snapshot did not cover the reanimation catalog");
+    }
+    std::vector<unsigned char> ReadParticles() const
+    {
+        std::vector<unsigned char> result;
+        std::size_t nodes = 0, fieldsCount = 0;
+        const auto append = [&](const auto& value) {
+            const auto* bytes = reinterpret_cast<const unsigned char*>(&value);
+            result.insert(result.end(), bytes, bytes + sizeof(value));
+        };
+        const auto track = [&](const FloatParameterTrack& value) {
+            append(value.mCountNodes);
+            for (int i = 0; i < value.mCountNodes; ++i) append(value.mNodes[i]);
+            nodes += value.mCountNodes;
+        };
         for (const auto& definition : Definitions::Particles)
         {
-            Add(definition.mEmitterDefs, definition.mEmitterDefCount, "particle emitter aggregates");
-            Add(definition.mImageRects, definition.mVariantCount * definition.mImageRectCount,
-                "particle rectangles");
+            append(definition.mVariantCount); append(definition.mImageRectCount);
+            append(definition.mEmitterDefCount); append(definition.mEmitterIndexByName);
+            for (std::size_t i = 0; i < std::size_t(definition.mVariantCount) * definition.mImageRectCount; ++i)
+                append(definition.mImageRects[i]);
             for (int index = 0; index < definition.mEmitterDefCount; ++index)
             {
                 const auto& emitter = definition.mEmitterDefs[index];
-                for (const auto member : Tracks) Track(emitter.*member);
+                append(emitter.mImageRectOffset); append(emitter.mImageRectCount);
+                append(emitter.mImageFrames); append(emitter.mAnimated);
+                append(emitter.mParticleFlags); append(emitter.mEmitterType);
+                append(emitter.mNameId); append(emitter.mOnDurationEmitterIndex);
+                for (const auto member : Tracks) track(emitter.*member);
                 for (const auto& fields : {emitter.mParticleFields, emitter.mSystemFields})
                 {
-                    Add(fields.Fields, fields.count, "particle field aggregates");
-                    fieldCount += fields.count;
+                    append(fields.count);
+                    fieldsCount += fields.count;
                     for (int f = 0; f < fields.count; ++f)
                     {
-                        Track(fields.Fields[f].mX);
-                        Track(fields.Fields[f].mY);
+                        append(fields.Fields[f].mFieldType);
+                        track(fields.Fields[f].mX);
+                        track(fields.Fields[f].mY);
                     }
                 }
             }
         }
-        // Correct native track names restore omitted color/launch defaults;
-        // the published corpus now contains 5,328 nodes (manifest + independent
-        // native/source node audits), rather than the old mislabelled 5,158.
-        Require(nodeCount == 5328 && fieldCount == 260 && frameCount > 10000,
-            "Snapshot did not cover the full production catalogs");
+        Require(nodes == 5328 && fieldsCount == 260,
+            "Snapshot did not cover the compiled particle catalog");
+        return result;
     }
     void Check() const
     {
         for (const auto& block : blocks)
             Require(block.Read() == block.bytes, "Static backing changed: " + block.label);
+        if (gParticleAllDefinitionDataLoaded.load())
+        {
+            auto values = ReadParticles();
+            if (particleValues.empty()) particleValues = std::move(values);
+            else Require(values == particleValues, "Reloaded compiled particle values changed");
+        }
     }
 };
 
@@ -432,11 +449,10 @@ void LoadAll(TestApp& app)
         "Real scene consumers failed to draw the complete 99-view catalog");
 }
 
-std::vector<unsigned> Sample(TestApp& app, GpuTexture* texture, const TodParticleDefinition& definition)
+std::vector<unsigned> Sample(TestApp& app, GpuTexture* texture, const TextureRegion& rectangle)
 {
     auto& render = *app.mDDInterface->mRenderInterface;
-    Require(texture && definition.mImageRectCount > 0, "Missing shared atlas sample");
-    const auto& rectangle = definition.mImageRects[0];
+    Require(texture && rectangle.mWidth > 0 && rectangle.mHeight > 0, "Missing shared atlas sample");
     std::unique_ptr<Image> target(render.CreateRenderImage(64, 64));
     {
         GpuImageDrawScope destination(render, target.get());
@@ -454,6 +470,12 @@ std::vector<unsigned> Sample(TestApp& app, GpuTexture* texture, const TodParticl
     Require(std::any_of(pixels.begin(), pixels.end(),
         [](auto pixel) { return (pixel & 0xFFFFFFu) != 0; }), "Shared atlas GPU draw was empty");
     return pixels;
+}
+
+std::vector<unsigned> Sample(TestApp& app, GpuTexture* texture, const TodParticleDefinition& definition)
+{
+    Require(definition.mImageRectCount > 0, "Missing shared atlas definition");
+    return Sample(app, texture, definition.mImageRects[0]);
 }
 
 void RealConsumers(int reanimationIndex, int particleIndex)
@@ -756,6 +778,7 @@ void Lifecycle(TestApp& app, const StaticSnapshot& snapshot, int reanimationInde
 {
     PrepareResources(app);
     std::cerr << "PASS lifecycle resource plans\n";
+    TextureRegion sharedSample;
     for (int repeat = 0; repeat < 2; ++repeat)
     {
         LoadAll(app);
@@ -780,12 +803,14 @@ void Lifecycle(TestApp& app, const StaticSnapshot& snapshot, int reanimationInde
         Require(reanimation.mTextures[0] == particle.mTextures[0],
             "Configured cross-kind atlas was not shared");
         const auto pixels = Sample(app, particle.mTextures[0], particle);
+        const auto sampleRectangle = particle.mImageRects[0];
+        sharedSample = sampleRectangle;
         const auto projectile = Definitions::Projectiles.mTexture;
         TodParticleFreeDefinitions();
         CheckParticleTextures(false);
         CheckReanimationTextures(true);
         Require(Definitions::Projectiles.mTexture == projectile &&
-            Sample(app, reanimation.mTextures[0], particle) == pixels,
+            Sample(app, reanimation.mTextures[0], sampleRectangle) == pixels,
             "Particle-only release invalidated another definition kind");
         TodParticleLoadDefinitions(gLawnParticleArray, ParticleEffect::NUM_PARTICLES);
         Require(particle.mTextures[0] == reanimation.mTextures[0],
@@ -837,7 +862,7 @@ void Lifecycle(TestApp& app, const StaticSnapshot& snapshot, int reanimationInde
     Require(!Definitions::Projectiles.mTexture, "Cancelled projectile assignment was republished");
     auto& reanimation = Definitions::Reanimations[reanimationIndex];
     CheckTextures(reanimation, true);
-    Sample(app, reanimation.mTextures[0], Definitions::Particles[particleIndex]);
+    Sample(app, reanimation.mTextures[0], sharedSample);
     TodParticleLoadDefinitions(gLawnParticleArray, ParticleEffect::NUM_PARTICLES);
     CheckParticleTextures(true);
     Require(Definitions::Particles[particleIndex].mTextures[0] == reanimation.mTextures[0],

@@ -50,6 +50,8 @@ void CheckRecord()
         const size_t width = [&] {
             if constexpr (std::is_same_v<T, Board>)
                 if (offset == offsetof(Board, mLevelTimeNs)) return sizeof(std::uint64_t);
+            if constexpr (std::is_same_v<T, TodParticle> || std::is_same_v<T, TodParticleEmitter>)
+                return sizeof(std::int64_t);
             return sizeof(Sexy::TimeCounter);
         }();
         Require(offset + width <= sizeof(T), "Native time member extends beyond object");
@@ -213,7 +215,6 @@ void CheckLiveSave()
     T source{};
     if constexpr (std::is_same_v<T, TodParticle>)
     {
-        source.mParticleLastSampleAgeNs = 21'234'567;
         source.mAnimationElapsedNs = 123'456'789'012;
         source.mAnimationSampleIntegral = 987'654'321;
         source.mRandomSeed = 0x71234567U;
@@ -222,10 +223,8 @@ void CheckLiveSave()
         source.mLinearElapsedNs = 1'250'001;
         source.mLinearVelocity = {.125f,-.25f};
         source.mLinearAcceleration = {.08f,-.04f};
-        source.mLinearLastPosition = {1'048'576.f,-1'048'576.f};
         source.mLinearSpinOrigin = 1'048'576.015625;
         source.mLinearSpinRate = .125;
-        source.mLinearLastSpin = 1'048'576.f;
         source.mLinearSpinActive = 1;
     }
     else if constexpr (std::is_same_v<T, TodParticleEmitter>)
@@ -245,10 +244,13 @@ void CheckLiveSave()
         const std::uint64_t ns = 123'456'789 + ordinal++ * 987'654'321;
         const auto offset = NativeTimeOffset<T>(field);
         std::memcpy(ObjectBytes(source) + offset, &ns, 8);
-        std::memcpy(ObjectBytes(source) + offset + 8, &ns, 8);
     }
     const auto original = WriteSaveRecord(source);
     const auto tail = std::span(original).subspan(SaveV2Size<T>());
+    if constexpr (std::is_same_v<T, TodParticleEmitter>)
+        Require(std::all_of(original.begin() + 16, original.begin() + 48,
+            [](unsigned char byte) { return byte == 0; }),
+            "Retired particle roster bytes were written to the historical reserved slot");
     if constexpr (std::is_same_v<T, TodParticleEmitter>)
         Require(tail.size() == 52 && V7SaveSchema::Read(tail,0,8) == 123'456'789'012LL &&
             V7SaveSchema::Read(tail,8,8) == 34'567'891 &&
@@ -259,7 +261,7 @@ void CheckLiveSave()
             V7SaveSchema::Read(tail,48,4) == 1,
             "Emitter exact curve origin/external input fields differ from their frozen wire offsets");
     if constexpr (std::is_same_v<T, TodParticle>)
-        Require(tail.size() == 100 && V7SaveSchema::Read(tail, 0, 8) == 21'234'567 &&
+        Require(tail.size() == 100 && V7SaveSchema::Read(tail, 0, 8) == 0 &&
             V7SaveSchema::Read(tail, 8, 8) == 123'456'789'012LL &&
             V7SaveSchema::Read(tail, 16, 8) == 987'654'321 &&
             V7SaveSchema::Read(tail, 24, 4) == 0x71234567U &&
@@ -268,30 +270,40 @@ void CheckLiveSave()
             V7SaveSchema::Read(tail,44,8)==1'250'001 &&
             V7SaveSchema::Float(tail,52)==.125f &&
             V7SaveSchema::Float(tail,56)==-.25f &&
-            V7SaveSchema::Float(tail,60)==1'048'576.f &&
-            V7SaveSchema::Float(tail,64)==-1'048'576.f &&
+            V7SaveSchema::Read(tail,60,8)==0 &&
             V7SaveSchema::Double(tail,68)==1'048'576.015625 &&
             V7SaveSchema::Double(tail,76)==.125 &&
-            V7SaveSchema::Float(tail,84)==1'048'576.f &&
+            V7SaveSchema::Read(tail,84,4)==0 &&
             V7SaveSchema::Read(tail,88,4)==1 &&
             V7SaveSchema::Float(tail,92)==.08f &&
             V7SaveSchema::Float(tail,96)==-.04f,
             "Native particle main-step tail retained a removed current sample or shifted its exact fields");
+    // Older current-format records may still contain the retired caches.
+    // Ignore them while loading and write canonical zeros without reviving state.
+    auto oldRecord = original;
+    if constexpr (std::is_same_v<T, TodParticleEmitter>)
+        std::fill(oldRecord.begin() + 16, oldRecord.begin() + 48, 0xa5);
+    if constexpr (std::is_same_v<T, TodParticle>)
+    {
+        const auto offset = SaveV2Size<T>();
+        for (const auto [first, last] : {std::pair{0, 8}, {60, 68}, {84, 88}})
+            std::fill(oldRecord.begin() + offset + first, oldRecord.begin() + offset + last, 0xa5);
+    }
     for (const unsigned fps : {60u, 100u, 144u, 240u, 250u, 1000u})
     {
         Configure(fps);
         T restored{};
-        ReadSaveRecord(restored, original.data());
+        ReadSaveRecord(restored, oldRecord.data());
         Require(WriteSaveRecord(restored) == original,
             "Real native v2 save/load lost sub-tick nanoseconds across FPS");
         for (const auto& field : fields)
         {
             const auto offset = NativeTimeOffset<T>(field);
             std::uint64_t current;
-            std::uint64_t previous;
+            std::uint64_t expected;
             std::memcpy(&current, ObjectBytes(restored) + offset, 8);
-            std::memcpy(&previous, ObjectBytes(restored) + offset + 8, 8);
-            Require(current == previous, "Load retained stale threshold history");
+            std::memcpy(&expected, ObjectBytes(source) + offset, 8);
+            Require(current == expected, "Load changed a bare nanosecond timer");
         }
     }
 }

@@ -10,6 +10,7 @@
 #include "generated/GeneratedDefinitions.h"
 #include "Attachment.h"
 #include "EffectSystem.h"
+#include "ParticleGpu.h"
 #include "GameConstants.h"
 #include "graphics/Font.h"
 #include <bit>
@@ -1716,6 +1717,7 @@ int ReanimatorUploadAllTexturesToGPU()
 		return -1;
 
 	const int uploaded = DefinitionUploadAtlasImages();
+	TodParticleUploadGpuDefinitionData();
 #if defined(PVZ_EXPERIMENTAL_GPU_REANIM)
 	ReanimatorUploadGpuDefinitionData();
 #endif

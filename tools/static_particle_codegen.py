@@ -1,15 +1,14 @@
-"""Turn final offline PAV6 records into native, constant-initialized particles."""
+"""Compile final offline PAV6 records into runtime particle binaries."""
 from __future__ import annotations
 
 import math
 from pathlib import Path
 import re
+import struct
 from fractions import Fraction
 
 import build_numeric_runtime_pak64 as pak
-from static_definition_codegen import array, cpp_float, texture_region
-
-SHARD_COUNT = 8
+from particle_gpu_codegen import gpu_record
 CURVES = ("Constant", "Linear", "EaseIn", "EaseOut", "EaseInOut",
           "EaseInOutWeak", "FastInOut", "FastInOutWeak", "Constant",
           "Bounce", "BounceFastMiddle", "BounceSlowMiddle", "SinWave", "EaseSinWave")
@@ -116,89 +115,74 @@ def _parse(path: str, data: bytes, name_count: int, name_hash: int) -> dict:
     return {"atlas": atlas, "emitters": emitters, "lookup": lookup}
 
 
-def generate(config, records: dict[str, bytes]) -> dict:
-    """Return fixed eight source shards and central root-table fragments."""
+def compiled_record(definition: dict, variants: list[dict]) -> bytes:
+    """PTC1 is an explicit little-endian stream, independent of C++ layout."""
+    atlas, emitters = definition["atlas"], definition["emitters"]
+    output = bytearray(struct.pack("<6I", 0x31435450, *_registry(),
+                                   len(emitters), atlas["variant_count"], atlas["slot_count"]))
+
+    def track(nodes):
+        output.extend(struct.pack("<I", len(nodes)))
+        for numerator, denominator, low, high, curve, distribution in nodes:
+            output.extend(struct.pack("<dffII", numerator / denominator,
+                                      low, high, curve, distribution))
+
+    for emitter in emitters:
+        output.extend(struct.pack("<2I3i4I", emitter["offset"], emitter["frames"],
+                                  emitter["image_frames"], emitter["animated"], emitter["flags"],
+                                  emitter["type"], emitter["name"],
+                                  emitter["duration"] & 0xFFFFFFFF, emitter["mask"]))
+        for name in SYSTEM_TRACKS:
+            track(emitter["tracks"][name])
+        for fields in emitter["fields"]:
+            output.extend(struct.pack("<I", len(fields)))
+            for type_, x, y in fields:
+                output.extend(struct.pack("<I", type_))
+                track(x)
+                track(y)
+        for name in PARTICLE_TRACKS:
+            track(emitter["tracks"][name])
+    pak.require(len(variants) == atlas["variant_count"], "Particle atlas metadata mismatch")
+    for metadata, dimensions, rectangles in zip(
+            variants, atlas["variant_dimensions"], atlas["variant_rectangles"]):
+        width, height = dimensions
+        path = metadata["atlas_path"].encode("utf-8")
+        pak.require(b"\0" not in path and len(path) <= 4096, "Invalid particle atlas path")
+        output.extend(struct.pack("<3I", width, height, len(path)))
+        output.extend(path)
+        for x, y, w, h in rectangles:
+            uv = (x / width, y / height, (x + w) / width, (y + h) / height) if width and height else (0.,) * 4
+            output.extend(struct.pack("<4f2i", *uv, w, h))
+    return bytes(output)
+
+
+def generate(config, records: dict[str, bytes], reports: dict | None = None) -> dict:
     order = config.definition_orders.get("particle")
-    pak.require(bool(order), "Static particles require definition_order(particle ...)")
-    name_count, name_hash = _registry()
-    shards = [[
-        '#include "../GeneratedDefinitions.h"',
-        '#include "../GeneratedDefinitionStorage.h"',
-        "namespace GeneratedDefinitions {",
-        f"static_assert(static_cast<unsigned>(ParticleEmitterName::top) == {name_count}u);",
-        f"static_assert(kParticleEmitterNameTableHash == {name_hash}u);",
-    ] for _ in range(SHARD_COUNT)]
-    declarations, initializers = [], []
+    pak.require(bool(order), "Compiled particles require definition_order(particle ...)")
+    runtime = {}
     summary = dict(definitions=len(order), emitters=0, nodes=0, fields=0,
-                   variants=0, rectangles=0, rectangle_bytes=0, shards=SHARD_COUNT)
+                   variants=0, rectangles=0, rectangle_bytes=0, shards=0)
     expected = set()
-    for index, (_, name) in enumerate(order):
+    for _, name in order:
         path = f"compiled/particles/{name.casefold()}.compiled"
-        pak.require(path not in expected, f"Duplicate static particle root: {path}")
+        pak.require(path not in expected, f"Duplicate compiled particle root: {path}")
         expected.add(path)
-        pak.require(path in records, f"Missing static particle record: {path}")
-        definition = _parse(path, records[path], name_count, name_hash)
-        atlas, emitters = definition["atlas"], definition["emitters"]
-        code = shards[index % SHARD_COUNT]
-        prefix = f"Particle{index}"
-        node_number = 0
-
-        def emit_track(nodes: list[tuple]) -> str:
-            nonlocal node_number
-            values = ["{" + f"double{{{node[0]}}} / {node[1]}, " +
-                      ", ".join(cpp_float(value) if i in (0, 1) else str(value)
-                                for i, value in enumerate(node[2:])) + "}"
-                      for node in nodes]
-            pointer = array(declarations, code, "FloatParameterTrackNode",
-                            f"{prefix}Nodes{node_number}", values)
-            node_number += 1
-            summary["nodes"] += len(nodes)
-            return "{" + pointer + f", {len(nodes)}" + "}"
-
-        emitter_values = []
-        for emitter_index, emitter in enumerate(emitters):
-            tracks = {name: emit_track(emitter["tracks"][name])
-                      for name in (*SYSTEM_TRACKS, *PARTICLE_TRACKS)}
-            fields = []
-            for field_index, row in enumerate(emitter["fields"]):
-                values = ["{static_cast<ParticleFieldType>(" + str(type_) + "), "
-                          + emit_track(x) + ", " + emit_track(y) + "}"
-                          for type_, x, y in row]
-                pointer = array(declarations, code, "ParticleField",
-                                f"{prefix}Emitter{emitter_index}Fields{field_index}", values)
-                fields.append("{" + pointer + f", {len(row)}" + "}")
-                summary["fields"] += len(row)
-            values = [str(emitter["offset"]) + "u", str(emitter["frames"]),
-                      str(emitter["image_frames"]), str(emitter["animated"]), str(emitter["flags"]),
-                      f"static_cast<EmitterType>({emitter['type']})",
-                      f"static_cast<ParticleEmitterName>({emitter['name']})",
-                      *(tracks[name] for name in SYSTEM_TRACKS), *fields,
-                      *(tracks[name] for name in PARTICLE_TRACKS),
-                      str(emitter["duration"]), str(emitter["mask"]) + "u"]
-            emitter_values.append("{" + ", ".join(values) + "}")
-        emitter_pointer = array(declarations, code, "TodEmitterDefinition",
-                                prefix + "Emitters", emitter_values)
-        variants, slots = atlas["variant_count"], atlas["slot_count"]
-        texture_pointer = array(declarations, code, "Sexy::GpuTexture*",
-                                prefix + "Textures", ["nullptr"] * variants)
-        rectangles = [texture_region(rect, *dimensions)
-                      for row, dimensions in zip(atlas["variant_rectangles"], atlas["variant_dimensions"])
-                      for rect in row]
-        rectangle_pointer = array(declarations, code, "Sexy::TextureRegion", prefix + "Rects",
-                                  rectangles, readonly=True)
-        initializers.append("{" + ", ".join((
-            texture_pointer, f"{variants}u", f"{slots}u",
-            rectangle_pointer, emitter_pointer, str(len(emitters)),
-            "{{" + ", ".join(map(str, definition["lookup"])) + "}}")) + "}")
-        summary["emitters"] += len(emitters)
-        summary["variants"] += variants
-        summary["rectangles"] += len(rectangles)
+        pak.require(path in records, f"Missing compiled particle record: {path}")
+        definition = _parse(path, records[path], *_registry())
+        atlas = definition["atlas"]
+        variants = reports[path].get("variants", [reports[path]]) if reports else [
+            {"atlas_path": ""} for _ in range(atlas["variant_count"])]
+        runtime[f"compiled/particle-runtime/{name.casefold()}.compiled"] = compiled_record(definition, variants)
+        runtime[f"compiled/gpu-particle/{name.casefold()}.compiled"] = gpu_record(definition)
+        summary["emitters"] += len(definition["emitters"])
+        summary["variants"] += atlas["variant_count"]
+        summary["rectangles"] += atlas["variant_count"] * atlas["slot_count"]
+        for emitter in definition["emitters"]:
+            summary["nodes"] += sum(map(len, emitter["tracks"].values()))
+            for fields in emitter["fields"]:
+                summary["fields"] += len(fields)
+                summary["nodes"] += sum(len(x) + len(y) for _, x, y in fields)
     summary["rectangle_bytes"] = summary["rectangles"] * 24
     summary["unindexed_records"] = sorted(path for path in records
-                                         if pak.numeric_kind(path) == "particles"
-                                         and path not in expected)
-    return {
-        "files": {f"ParticleData{index:02d}.cpp": ("\n".join(code + ["}"]) + "\n").encode()
-                  for index, code in enumerate(shards)},
-        "declarations": declarations, "initializers": initializers, "summary": summary,
-    }
+                                         if pak.numeric_kind(path) == "particles" and path not in expected)
+    return dict(files={}, declarations=[], initializers=[], runtime_records=runtime, summary=summary)

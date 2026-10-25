@@ -7,6 +7,7 @@
 #include "SexyAppFramework/paklib/PakInterface.h"
 #include "Sexy.TodLib/TodCommon.h"
 #include "Sexy.TodLib/TodParticle.h"
+#include "ParticleDrawReference.h"
 #include "Sexy.TodLib/EffectSystem.h"
 #include "Sexy.TodLib/Reanimator.h"
 #include "Sexy.TodLib/Attachment.h"
@@ -27,6 +28,7 @@
 #include "SexyAppFramework/sound/SoundManager.h"
 #include "SexyAppFramework/sound/SoundDecode.h"
 #include "PoolGpuChecks.h"
+#include "ParticleGpuRuntimeChecks.h"
 #include "Lawn/System/PoolEffect.h"
 #include "QuitDialogRuntimeChecks.h"
 #include <array>
@@ -1801,6 +1803,8 @@ void ParticleDefinitionsAndFrames(SexyAppBase& app, const char* pakPath)
             !gParticleAllDefinitionDataLoaded.load(),
             "Invalid particle catalog published definition state");
         TodParticleLoadDefinitions(gLawnParticleArray,ParticleEffect::NUM_PARTICLES);
+        ParticleDrawReference::LoadGpuDefinitions();
+        ParticleGpuRuntimeChecks(*app.mDDInterface->mRenderInterface);
         Require(gParticleAllDefinitionDataLoaded.load() &&
             gParticleDefCount==ParticleEffect::NUM_PARTICLES &&
             gParticleDefArray==GeneratedDefinitions::Particles,
@@ -1849,9 +1853,13 @@ void ParticleDefinitionsAndFrames(SexyAppBase& app, const char* pakPath)
             }
         }
         auto& fire=gParticleDefArray[fireEffect];
-        const auto* staticEmitters=fire.mEmitterDefs;
-        const auto* staticRectangles=fire.mImageRects;
-        const auto* staticDurationNodes=fire.mEmitterDefs[0].mParticleDuration.mNodes;
+        const auto emitterCount=fire.mEmitterDefCount;
+        const auto rectangleCount=fire.mImageRectCount;
+        const std::vector<TextureRegion> originalRectangles(fire.mImageRects,
+            fire.mImageRects+fire.mVariantCount*fire.mImageRectCount);
+        const auto& duration=fire.mEmitterDefs[0].mParticleDuration;
+        const std::vector<FloatParameterTrackNode> originalDurationNodes(duration.mNodes,
+            duration.mNodes+duration.mCountNodes);
         Require(fire.mVariantCount==2,"Fire/ice appearances were published as separate effects");
         for (unsigned v=0;v<2;++v)
         {
@@ -1979,10 +1987,10 @@ void ParticleDefinitionsAndFrames(SexyAppBase& app, const char* pakPath)
                         TodParticle particle{};
                         particle.mParticleEmitter=selectedEmitter;
                         selectedEmitter->mFrameOverride=0;
-                        ParticleRenderParams values{};
+                        ParticleDrawReference::ParticleRenderParams values{};
                         values.mParticleScale=values.mParticleStretch=1;
                         values.mPosX=values.mPosY=128;
-                        RenderParticle(&graphics,&particle,Color::White,&values,&triangles);
+                        ParticleDrawReference::RenderParticle(&graphics,&particle,Color::White,&values,&triangles);
                     }
                     triangles.DrawGroup(&graphics);
                 }
@@ -2003,9 +2011,9 @@ void ParticleDefinitionsAndFrames(SexyAppBase& app, const char* pakPath)
                 noImageEmitter.mEmitterDef=const_cast<TodEmitterDefinition*>(&noImage);
                 TodParticle noImageParticle{};
                 noImageParticle.mParticleEmitter=&noImageEmitter;
-                ParticleRenderParams values{};
+                ParticleDrawReference::ParticleRenderParams values{};
                 TodTriangleGroup triangles;
-                RenderParticle(&graphics,&noImageParticle,Color::White,&values,&triangles);
+                ParticleDrawReference::RenderParticle(&graphics,&noImageParticle,Color::White,&values,&triangles);
                 empty->Draw(&graphics);
                 triangles.DrawGroup(&graphics);
             }
@@ -2036,10 +2044,10 @@ void ParticleDefinitionsAndFrames(SexyAppBase& app, const char* pakPath)
                     }
                     else
                     {
-                        ParticleRenderParams values{};
+                        ParticleDrawReference::ParticleRenderParams values{};
                         values.mParticleScale=values.mParticleStretch=1;
                         values.mPosX=values.mPosY=128;
-                        RenderParticle(&graphics,&particle,Color::White,&values,&triangles);
+                        ParticleDrawReference::RenderParticle(&graphics,&particle,Color::White,&values,&triangles);
                     }
                     triangles.DrawGroup(&graphics);
                 }
@@ -2062,10 +2070,10 @@ void ParticleDefinitionsAndFrames(SexyAppBase& app, const char* pakPath)
             Require(draw(false,0)==last,"Particle fixed random frame was not retained");
             const int animated=glasses.mAnimated;
             glasses.mAnimated=1;
-            particle.mParticleDuration=101;
-            particle.mParticleAge.mNanoseconds=990'000'000;
+            particle.mParticleDurationNs = std::int64_t(101) * 10'000'000;
+            particle.mParticleAgeNs=990'000'000;
             Require(draw(false,0)==last,"Particle lifetime animation selected the wrong frame");
-            particle.mParticleAge.mNanoseconds=0;
+            particle.mParticleAgeNs=0;
             Require(draw(false,0)==first,"Particle lifetime animation did not return to frame zero");
             glasses.mAnimated=animated;
             // 61x48 logical geometry: left=.25 rounds to 15 source pixels,
@@ -2073,23 +2081,26 @@ void ParticleDefinitionsAndFrames(SexyAppBase& app, const char* pakPath)
             // top+bottom=.375 removes 18. Position keeps the original float
             // shifts (15.25,6), independently of rounded source coordinates.
             TodEmitterDefinition cropped=glasses;
+            auto croppedRender = ParticleDrawReference::RenderData(glasses);
             FloatParameterTrackNode clipNodes[]{
                 {0,.25f,.25f,1,1},{0,.125f,.125f,1,1},
                 {0,.125f,.125f,1,1},{0,.25f,.25f,1,1}};
-            cropped.mClipLeft={&clipNodes[0],1};
-            cropped.mClipRight={&clipNodes[1],1};
-            cropped.mClipTop={&clipNodes[2],1};
-            cropped.mClipBottom={&clipNodes[3],1};
+            croppedRender.mClipLeft={&clipNodes[0],1};
+            croppedRender.mClipRight={&clipNodes[1],1};
+            croppedRender.mClipTop={&clipNodes[2],1};
+            croppedRender.mClipBottom={&clipNodes[3],1};
             struct RestoreEmitterDefinition {
                 TodParticleEmitter* emitter;
                 TodEmitterDefinition* original;
                 ~RestoreEmitterDefinition() { emitter->mEmitterDef=original; }
             } restoreEmitter{emitter,emitter->mEmitterDef};
+            ParticleDrawReference::BindRenderData(cropped,croppedRender);
             emitter->mEmitterDef=&cropped;
             particle.mImageFrame=3;
             Require(draw(false,0,true)==draw(true,3,true),
                 "Particle UV crop changed rounded pixels or logical center shifts");
         }
+        ParticleDrawReference::ClearGpuDefinitions();
         TodParticleFreeDefinitions();
         Require(!gParticleDefArray && !gParticleDefCount && !gParticleAllDefinitionDataLoaded.load(),
             "Public particle free left published definition state");
@@ -2098,15 +2109,28 @@ void ParticleDefinitionsAndFrames(SexyAppBase& app, const char* pakPath)
         Require(gParticleDefArray[fireEffect].mVariantCount==2 &&
             gParticleDefArray[fireEffect].mTextures[1],
             "Repeated particle load lost a root appearance atlas");
-        Require(gParticleDefArray[fireEffect].mEmitterDefs==staticEmitters &&
-            gParticleDefArray[fireEffect].mImageRects==staticRectangles &&
-            gParticleDefArray[fireEffect].mEmitterDefs[0].mParticleDuration.mNodes==staticDurationNodes,
-            "Repeated particle load replaced program-resident definition storage");
+        const auto& reloaded=gParticleDefArray[fireEffect];
+        Require(reloaded.mEmitterDefCount==emitterCount && reloaded.mImageRectCount==rectangleCount &&
+            std::equal(originalRectangles.begin(),originalRectangles.end(),reloaded.mImageRects,
+                [](const TextureRegion& a,const TextureRegion& b) {
+                    return a.mU0==b.mU0 && a.mV0==b.mV0 && a.mU1==b.mU1 && a.mV1==b.mV1 &&
+                        a.mWidth==b.mWidth && a.mHeight==b.mHeight;
+                }) &&
+            reloaded.mEmitterDefs[0].mParticleDuration.mCountNodes==int(originalDurationNodes.size()) &&
+            std::equal(originalDurationNodes.begin(),originalDurationNodes.end(),
+                reloaded.mEmitterDefs[0].mParticleDuration.mNodes,
+                [](const FloatParameterTrackNode& a,const FloatParameterTrackNode& b) {
+                    return a.mTime==b.mTime && a.mLow==b.mLow && a.mHigh==b.mHigh &&
+                        a.mCurveType==b.mCurveType && a.mDistribution==b.mDistribution;
+                }),
+            "Repeated compiled particle load changed emitter, geometry or track values");
+        ParticleDrawReference::ClearGpuDefinitions();
         TodParticleFreeDefinitions();
         DefinitionFreeAtlasImages();
     }
     catch (...)
     {
+        ParticleDrawReference::ClearGpuDefinitions();
         TodParticleFreeDefinitions();
         DefinitionFreeAtlasImages();
         throw;

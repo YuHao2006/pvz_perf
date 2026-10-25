@@ -109,7 +109,7 @@ inline void Validate(Kind kind, std::span<const Byte> state)
     }
     else if (kind == Kind::Particle)
     {
-        Require(Signed(0) >= -1, "particle previous sample time is invalid");
+        // Retired previous-age/position/spin slots are ignored on input.
         Require(Signed(8) >= 0, "particle animation time is negative");
         Require(Signed(16) >= 0 && Signed(16) < Frame, "particle animation anchor exceeds its period");
     }
@@ -212,12 +212,7 @@ inline std::vector<Byte> FromHistorical(Kind kind, std::span<const Byte> canonic
     }
     else if (kind == Kind::Particle)
     {
-        const auto duration = Time(expanded, kind, 8);
-        const double lastPhase = Float(canonical, 20);
-        // Decode only the frozen historical previous-phase projection. Native
-        // current age/lifetime remain untouched and use the full new duration.
-        Put(0, lastPhase < 0 ? -1 :
-            Rounded(lastPhase * (duration > 10'000'000 ? double(duration - 10'000'000) : 0.0)));
+        // The historical previous phase is retired; its reserved slot stays zero.
         Put(8, 0);
         Put(16, Rounded(double(Float(canonical, 24)) * Frame));
         Put(24, 0x9E3779B9U, 4);

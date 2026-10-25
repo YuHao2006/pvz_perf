@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <span>
 #include <limits>
+#include "GpuParticle.h"
 
 namespace Sexy {
 // Logical track indexes are identical in CPU and GPU tables. CPU-only tracks

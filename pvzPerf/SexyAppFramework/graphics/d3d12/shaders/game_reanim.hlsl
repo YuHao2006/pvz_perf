@@ -4,6 +4,20 @@
 ByteAddressBuffer arena : register(t0, space1);
 ByteAddressBuffer instances : register(t1, space1);
 ByteAddressBuffer packets : register(t2, space1);
+static uint particleGeometry;
+float pStatic(uint index) { return asfloat(arena.Load((particleGeometry+(index/6u)*8u+index%6u)*4u)); }
+float pDynamic(uint index) { return asfloat(instances.Load(index*4u)); }
+#define vec2 float2
+#define vec4 float4
+#define uvec2 uint2
+#define floatBitsToUint asuint
+#define equal(a,b) ((a)==(b))
+#include "../../GpuParticleShader.glsl"
+#undef vec2
+#undef vec4
+#undef uvec2
+#undef floatBitsToUint
+#undef equal
 struct UnifiedVertex
 {
     float4 position : SV_Position;
@@ -84,6 +98,36 @@ void UnifiedGS(triangle UnifiedVertex input[3], inout TriangleStream<VertexOut> 
     float4 overlayY = asfloat(instances.Load4(instanceOffset + 48));
     uint4 metadata = instances.Load4(instanceOffset + 64);
     float4 clip = asfloat(instances.Load4(instanceOffset + 80));
+    if((metadata.w&16u)!=0u) {
+        particleGeometry=arena.Load((metadata.x+2u)*4u);
+        ParticleResult result=pParticle(uint(overlayX.x),uint(overlayX.y));
+        if(!result.visible)return;
+        float4 particleColor=result.color;
+        uint particleSlot=metadata.z|(packet.w&0x78000000u),particleSampler=metadata.w&3u;
+        float4 polygon[8];polygon[0]=result.point0;polygon[1]=result.point1;
+        polygon[2]=result.point2;polygon[3]=result.point3;
+        int count=4;
+        if((metadata.w&4u)!=0u) {
+            for(int edge=0;edge<4;++edge) {
+                if(count<2)return;float4 clipped[8];int written=0;
+                for(int i=0;i<count;++i) {
+                    float4 p=polygon[(i+count-1)%count],q=polygon[i];
+                    bool pin=insideClip(p,edge,clip[edge]),qin=insideClip(q,edge,clip[edge]);
+                    if(pin!=qin)clipped[written++]=intersection(p,q,edge,clip[edge]);
+                    if(qin)clipped[written++]=q;
+                }
+                count=written;for(int i=0;i<count;++i)polygon[i]=clipped[i];
+            }
+        }
+        for(int i=1;i+1<count;++i) {
+            uint draw=uint(overlayX.x);
+            stream.Append(outputVertex(pOverlay(polygon[0],draw),particleColor,particleSlot,particleSampler));
+            stream.Append(outputVertex(pOverlay(polygon[i],draw),particleColor,particleSlot,particleSampler));
+            stream.Append(outputVertex(pOverlay(polygon[i+1],draw),particleColor,particleSlot,particleSampler));
+            stream.RestartStrip();
+        }
+        return;
+    }
     uint header = metadata.x;
     uint track = arena.Load(header * 4) + packet.x * 4;
     uint keyBase = arena.Load((header + 1) * 4) + arena.Load(track * 4) * 12;

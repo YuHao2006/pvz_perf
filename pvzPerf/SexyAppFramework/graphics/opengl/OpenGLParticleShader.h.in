@@ -1,0 +1,4 @@
+#pragma once
+inline constexpr const char OpenGLParticleShader[] = R"PVZPARTICLE(
+@PVZ_PARTICLE_SHADER_SOURCE@
+)PVZPARTICLE";

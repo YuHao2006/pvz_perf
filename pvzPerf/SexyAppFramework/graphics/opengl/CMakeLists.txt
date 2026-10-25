@@ -1,13 +1,13 @@
 if(NOT WIN32)
     message(FATAL_ERROR "OpenGL currently requires the Win32 WGL window backend")
 endif()
-option(PVZ_OPENGL_REANIM_RESIDENT "Experimental resident OpenGL reanimation geometry path" ${PVZ_EXPERIMENTAL_GPU_REANIM})
-if(PVZ_EXPERIMENTAL_GPU_REANIM)
-    set(PVZ_OPENGL_REANIM_RESIDENT ON)
-endif()
+set(PVZ_OPENGL_REANIM_RESIDENT ON) # Shared resident arena is required by particles.
 set(SEXY_OPENGL_SOURCES
     OpenGLApi.cpp OpenGLContext.cpp OpenGLRenderer.cpp OpenGLShaders.cpp OpenGLImageOps.cpp OpenGLReanim.cpp
     ../../effect/ScaleEffectSizing.cpp)
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/../GpuParticleShader.glsl")
+file(READ "${CMAKE_CURRENT_SOURCE_DIR}/../GpuParticleShader.glsl" PVZ_PARTICLE_SHADER_SOURCE)
+configure_file(OpenGLParticleShader.h.in "${CMAKE_CURRENT_BINARY_DIR}/OpenGLParticleShader.h" @ONLY)
 function(add_sexy_opengl_library target)
 add_library(${target} STATIC ${SEXY_OPENGL_SOURCES})
 set_property(TARGET ${target} PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE)
@@ -18,6 +18,7 @@ target_include_directories(${target} PUBLIC
     "${CMAKE_SOURCE_DIR}/pvzPerf"
     "${CMAKE_SOURCE_DIR}/pvzPerf/SexyAppFramework"
     "${CMAKE_CURRENT_SOURCE_DIR}")
+target_include_directories(${target} PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
 target_link_libraries(${target} PUBLIC opengl32 user32 gdi32)
 if(TARGET pvz_resources)
     add_dependencies(${target} pvz_resources)

@@ -12,9 +12,9 @@ find_program(PVZ_SPIRV_VAL NAMES spirv-val HINTS "$ENV{VULKAN_SDK}/Bin"
     "C:/UserProgram/VulkanSDK/1.4.350.0/Bin" REQUIRED)
 
 add_library(sexy_vulkan STATIC VulkanContext.cpp VulkanRenderer.cpp)
-if(PVZ_EXPERIMENTAL_GPU_REANIM)
-    target_compile_definitions(sexy_vulkan PRIVATE PVZ_REANIM_GEOMETRY=1 PVZ_REANIM_UNIFIED=1)
-endif()
+# Particle rendering uses the resident arena in every build. The reanimation
+# draw policy can still be selected independently by its experimental option.
+target_compile_definitions(sexy_vulkan PRIVATE PVZ_REANIM_GEOMETRY=1 PVZ_REANIM_UNIFIED=1)
 if(NOT WIN32 OR NOT PVZ_WINDOWS_PLATFORM STREQUAL "WIN7")
     target_sources(sexy_vulkan PRIVATE VulkanHdrDisplay.cpp VulkanHdrObserver.cpp)
 endif()
@@ -86,7 +86,7 @@ foreach(stage IN ITEMS vs pool_vs ps hdr_ps coverage_ps caustic_cs font_cs alpha
             --target-env=vulkan1.2 -O "${shaderSource}"
             -o "${output}"
         COMMAND "${PVZ_SPIRV_VAL}" --target-env vulkan1.2 "${output}"
-        DEPENDS "${shaderSource}" VERBATIM)
+        DEPENDS "${shaderSource}" "${CMAKE_CURRENT_SOURCE_DIR}/../GpuParticleShader.glsl" VERBATIM)
     list(APPEND nativeShaders "${output}")
 endforeach()
 add_custom_target(sexy_vulkan_shaders DEPENDS ${nativeShaders})

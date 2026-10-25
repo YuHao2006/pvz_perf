@@ -468,7 +468,7 @@ def build(args: argparse.Namespace, work: Path) -> None:
         for variant in metadata["variants"][1:]:
             del records[variant["path"]]
             del atlas_report[variant["path"]]
-    # CPU definitions stay generated C++; GPU transport is uploaded then discarded.
+    # Particle behavior/appearance and GPU reanimation transport are runtime binaries.
     gpu_records = {}
     native_files, native_summary = static_definitions.generate(
         config, records, atlas_report, runtime_records=gpu_records)
@@ -486,6 +486,10 @@ def build(args: argparse.Namespace, work: Path) -> None:
     })
     for filename, data in native_files.items():
         publish(generated / filename, data)
+    # Retire obsolete generated particle sources so source discovery cannot keep
+    # embedding the previous corpus alongside the runtime records.
+    for obsolete in (generated / "definitions").glob("ParticleData*.cpp"):
+        obsolete.unlink()
     runtime_roots = {
         f"compiled/{'reanim' if kind == 'reanim' else 'particles'}/{name.casefold()}.compiled"
         for kind in ("reanim", "particle") for _, name in config.definition_orders[kind]

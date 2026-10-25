@@ -5,6 +5,7 @@
 #include <array>
 #include <memory>
 #include <string_view>
+#include <string>
 #include <unordered_set>
 #include <vector>
 
@@ -24,6 +25,7 @@ struct OpenGLTexture {
 struct OpenGLReanim {
     unsigned int firstTexel = 0, texelCount = 0;
     unsigned int imageSlotCount = 0, variantCount = 0;
+    uint32_t particleEmitterCount = 0, particleVariantCount = 0;
     std::vector<GpuReanimTrack> trackInfo;
 };
 #endif
@@ -90,12 +92,7 @@ struct OpenGLRenderer::Impl {
         GpuClip clip;
     };
     std::vector<ReanimInstanceState> reanimInstances;
-#if defined(PVZ_OPENGL_REANIM_COMPUTE_EXPERIMENT)
     static constexpr size_t ReanimInstanceTexels = 6;
-#else
-    // Scissor supplies the effective clip in the regular GS/VS paths.
-    static constexpr size_t ReanimInstanceTexels = 5;
-#endif
     std::vector<std::array<float,ReanimInstanceTexels*4>> reanimInstanceData;
     std::vector<unsigned int> reanimIndices;
     std::vector<size_t> reanimMarkerOffsets; // VBO starts for noncompute GS/VS/fallback markers.
@@ -171,6 +168,6 @@ struct OpenGLRenderer::Impl {
     }
 };
 #if defined(PVZ_OPENGL_REANIM_RESIDENT)
-extern const char OpenGLReanimEvaluationShader[];
+extern const std::string OpenGLReanimEvaluationShader;
 #endif
 }

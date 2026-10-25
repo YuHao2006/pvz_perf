@@ -189,10 +189,10 @@ void ParticleMigration()
     Require(expanded.size() == 172 && Get(expanded, 8) == 110'000'004 &&
             Get(expanded, 16) == 50'000'002, "Independent particle time fixture differs");
     state = V7SaveSchema::FromHistorical(Kind::Particle, particle, expanded);
-    Require(state.size() == 100 && Signed(state, 0) == -1 &&
+    Require(state.size() == 100 && Signed(state, 0) == 0 &&
             Signed(state, 8) == 0 && Signed(state, 16) == 375'000'000'000LL &&
             Get(state, 24, 4) == 0x9E3779B9U,
-            "Particle migration changed phase, sentinel or deterministic seed");
+            "Particle migration changed animation phase, reserved slot or deterministic seed");
     Require(Signed(state,44)==-1 &&
         std::all_of(state.begin()+28,state.begin()+44,[](Byte value){return value==0;}) &&
         std::all_of(state.begin()+52,state.end(),[](Byte value){return value==0;}),
@@ -312,7 +312,8 @@ void ExactStateValidation()
     rejectField(Kind::ParticleEmitter, emitter, 8, UINT64_MAX, "Negative emission elapsed time accepted");
     Set(particle, 0, UINT64_MAX); Set(particle, 8, 0); Set(particle, 16, 999'999'999'999LL);
     V7SaveSchema::Validate(Kind::Particle, particle);
-    rejectField(Kind::Particle, particle, 0, static_cast<std::uint64_t>(-2LL), "Invalid particle sentinel accepted");
+    Set(particle, 0, static_cast<std::uint64_t>(-2LL));
+    V7SaveSchema::Validate(Kind::Particle, particle); // Retired previous-age bytes are ignored.
     rejectField(Kind::Particle, particle, 8, UINT64_MAX, "Negative particle animation elapsed accepted");
     rejectField(Kind::Particle, particle, 16, 1'000'000'000'000LL, "Animation anchor at period accepted");
     rejectField(Kind::Particle, particle, 16, UINT64_MAX, "Negative animation anchor accepted");

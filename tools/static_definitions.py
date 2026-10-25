@@ -15,7 +15,9 @@ def generate(config, records: dict[str, bytes], reports: dict, *,
     reanim = static_reanim_codegen.generate(config, records)
     if runtime_records is not None:
         runtime_records.update(reanim["gpu_records"])
-    particle = static_particle_codegen.generate(config, records)
+    particle = static_particle_codegen.generate(config, records, reports)
+    if runtime_records is not None:
+        runtime_records.update(particle["runtime_records"])
     rc = len(config.definition_orders["reanim"])
     pc = len(config.definition_orders["particle"])
     header = (
@@ -30,6 +32,8 @@ def generate(config, records: dict[str, bytes], reports: dict, *,
         "extern ReanimatorDefinition Reanimations[ReanimationCount];\n"
         "extern const char* const ReanimationGpuPaths[ReanimationCount];\n"
         "extern TodParticleDefinition Particles[ParticleCount];\n"
+        "extern const char* const ParticlePaths[ParticleCount];\n"
+        "extern const char* const ParticleGpuPaths[ParticleCount];\n"
         "extern ProjectileAtlasDefinition Projectiles;\n"
         "extern std::span<AttacherSegmentRT> AttacherSegments[ReanimationCount];\n"
         "void LoadReanimationImages(int type);\n"
@@ -58,8 +62,13 @@ def generate(config, records: dict[str, bytes], reports: dict, *,
         "};",
         "constinit ReanimatorDefinition Reanimations[ReanimationCount] = {",
         *("    " + row + "," for row in reanim["initializers"]), "};",
-        "constinit TodParticleDefinition Particles[ParticleCount] = {",
-        *("    " + row + "," for row in particle["initializers"]), "};",
+        "TodParticleDefinition Particles[ParticleCount]{};",
+        "constinit const char* const ParticlePaths[ParticleCount] = {",
+        *("    " + cpp_string(f"compiled/particle-runtime/{name.casefold()}.compiled") + ","
+          for _, name in config.definition_orders["particle"]), "};",
+        "constinit const char* const ParticleGpuPaths[ParticleCount] = {",
+        *("    " + cpp_string(f"compiled/gpu-particle/{name.casefold()}.compiled") + ","
+          for _, name in config.definition_orders["particle"]), "};",
         "constinit std::span<AttacherSegmentRT> AttacherSegments[ReanimationCount] = {",
         *("    " + row + "," for row in reanim["attacher_initializers"]), "};",
     ]
@@ -86,6 +95,7 @@ def generate(config, records: dict[str, bytes], reports: dict, *,
         "// Generated image ownership bindings; behavior is already static.",
         '#include "GeneratedDefinitionStorage.h"',
         '#include "Sexy.TodLib/DefinitionImageRegion.h"',
+        '#include "Sexy.TodLib/ParticleDefinitionCompiled.h"',
         '#include "Sexy.TodLib/TodCommon.h"',
         "#include <algorithm>", "#include <stdexcept>",
         "namespace GeneratedDefinitions {", "namespace {",
@@ -121,9 +131,14 @@ def generate(config, records: dict[str, bytes], reports: dict, *,
         for v, row in enumerate(reports[path].get("variants", [reports[path]])):
             if row["atlas_path"]:
                 atlas_paths.add(row["atlas_path"])
-                load.append(
-                    f"    DefinitionBindAtlasPath(Particles[{index}].mTextures[{v}], "
-                    f"{row['atlas_width']}, {row['atlas_height']}, {cpp_string(row['atlas_path'])});")
+    load.extend([
+        "    try {",
+        "        for(int i=0;i<ParticleCount;++i) TodParticleLoadCompiledDefinition(Particles[i],ParticlePaths[i]);",
+        "    } catch (...) {",
+        "        for(auto& definition:Particles) TodParticleFreeCompiledDefinition(definition);",
+        "        throw;",
+        "    }",
+    ])
     projectile_report = reports[projectile_atlas.PATH]
     atlas_paths.add(projectile_report["atlas_path"])
     load.extend([
@@ -143,8 +158,7 @@ def generate(config, records: dict[str, bytes], reports: dict, *,
         "    std::fill(std::begin(reanimationImages),std::end(reanimationImages),false);",
         "    fonts=false;", "}",
         "void ReleaseParticleImages() {",
-        "    for(auto& definition:Particles)",
-        "        for(unsigned v=0;v<definition.mVariantCount;++v) DefinitionUnbindAtlas(definition.mTextures[v]);",
+        "    for(auto& definition:Particles) TodParticleFreeCompiledDefinition(definition);",
         "    particleImages=false;", "}",
         "void ReleaseProjectileImages() {",
         "    DefinitionUnbindAtlas(Projectiles.mTexture);",

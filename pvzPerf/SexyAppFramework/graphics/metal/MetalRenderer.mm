@@ -2,6 +2,7 @@
 #include "MetalContext.h"
 #include "MetalShaderTypes.h"
 #include "MetalScalePipeline.h"
+#include "SexyAppFramework/graphics/GpuParticleUpload.h"
 #import <Metal/Metal.h>
 #import <QuartzCore/CAMetalLayer.h>
 #include <algorithm>
@@ -32,6 +33,7 @@ struct MetalReanim {
     void* owner = nullptr;
     std::vector<GpuReanimTrack> tracks;
     uint32_t header = 0, imageSlotCount = 0, variantCount = 0;
+    uint32_t particleEmitterCount = 0, particleVariantCount = 0;
 };
 
 struct MetalRenderer::Impl {
@@ -981,6 +983,44 @@ void MetalRenderer::SubmitCoverageTriangles(std::span<const GpuVertex> vertices,
     if (mask->resource.pixelFormat != MTLPixelFormatR8Unorm)
         throw std::invalid_argument("Metal coverage draw requires an R8 mask");
     impl_->Draw(vertices, mask, blend, clip, true);
+}
+MetalReanim* MetalRenderer::UploadParticleDefinition(std::span<const float> words, uint32_t variants) {
+    return UploadParticleResident(*this, words, variants);
+}
+bool MetalRenderer::SubmitParticle(MetalReanim* definition, MetalTexture* texture,
+    const GpuParticleDraw& draw, std::span<const GpuParticleState> chain,
+    bool linear, bool repeat, GpuBlend blend, const GpuClip* clip) {
+    auto& s = *impl_;
+    if (!definition || definition->owner != &s || draw.variant >= definition->particleVariantCount ||
+        chain.empty() || draw.frameSource >= chain.size() || chain.size() > 32766)
+        return false;
+    const size_t slots = 1 + chain.size() * 2;
+    if (s.reanimControls.size() + slots + 1 > 65535 ||
+        (slots + 1) * sizeof(Impl::ReanimInstance) > Impl::ReanimPacketCapacity - s.reanimInstanceUsed)
+        return false;
+    for (const auto& state : chain)
+        if (state.emitter >= definition->particleEmitterCount) return false;
+    // The control packet is followed by a padded raw draw and its verbatim
+    // 192-byte state chain. The compute shader performs every render sample.
+    s.reanimControls.reserve(s.reanimControls.size() + slots + 1);
+    GpuReanimInstance instance{};
+    instance.translateX = draw.translateX; instance.translateY = draw.translateY;
+    instance.overlay00 = float((s.reanimControls.size() + 1) * 24);
+    instance.overlay01 = float(chain.size());
+    const auto token = BeginReanimInstance(definition, texture, instance, linear, repeat, clip, true);
+    if (token == UINT32_MAX) return false;
+    const uint32_t flags = (linear ? 1u : 0u) | (repeat ? 2u : 0u) | (clip ? 4u : 0u) | 16u;
+    auto* bytes = static_cast<std::byte*>(s.reanimInstances.contents);
+    std::memcpy(bytes + size_t(token & 65535u) * sizeof(Impl::ReanimInstance) +
+        offsetof(Impl::ReanimInstance, flags), &flags, sizeof(flags));
+    const auto start = s.reanimInstanceUsed;
+    std::memset(bytes + start, 0, sizeof(Impl::ReanimInstance));
+    std::memcpy(bytes + start, &draw, sizeof(draw));
+    std::memcpy(bytes + start + sizeof(Impl::ReanimInstance), chain.data(), chain.size_bytes());
+    s.reanimInstanceUsed += slots * sizeof(Impl::ReanimInstance);
+    s.reanimControls.resize(s.reanimControls.size() + slots);
+    const GpuReanimTrackDraw packet{0, 0xffffffffu, draw.samplingFlags};
+    return SubmitReanimTrack(token, packet, blend);
 }
 MetalReanim* MetalRenderer::UploadReanimDefinition(const GpuReanimDefinition& source) {
 #if defined(PVZ_METAL_REANIM_RESIDENT)

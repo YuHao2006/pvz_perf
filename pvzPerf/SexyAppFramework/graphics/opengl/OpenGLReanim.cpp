@@ -1,5 +1,7 @@
 #include "OpenGLRendererInternal.h"
 #include "OpenGLShaders.h"
+#include "../GpuParticleUpload.h"
+#include "OpenGLParticleShader.h"
 #include <algorithm>
 #include <bit>
 #include <cmath>
@@ -10,6 +12,41 @@
 #include <string>
 
 namespace Sexy {
+OpenGLReanim* OpenGLRenderer::UploadParticleDefinition(std::span<const float> words,uint32_t variants) {
+    return UploadParticleResident(*this,words,variants);
+}
+bool OpenGLRenderer::SubmitParticle(OpenGLReanim* definition,OpenGLTexture* texture,
+    const GpuParticleDraw& draw,std::span<const GpuParticleState> chain,
+    bool linear,bool repeat,GpuBlend blend,const GpuClip* clip) {
+#if defined(PVZ_OPENGL_REANIM_RESIDENT)
+    auto& s=*impl_;
+    constexpr auto stride=Impl::ReanimInstanceTexels*4;
+    const auto wordCount=24+chain.size()*48;
+    const auto slots=(wordCount+stride-1)/stride;
+    if(!definition||!s.reanimDefinitions.contains(definition)||draw.variant>=definition->particleVariantCount||
+        chain.empty()||draw.frameSource>=chain.size()||slots+1>65535-s.reanimInstances.size())return false;
+    for(const auto& state:chain)if(state.emitter>=definition->particleEmitterCount)return false;
+    GpuReanimInstance instance{};
+    instance.translateX=draw.translateX;instance.translateY=draw.translateY;
+    instance.overlay00=float((s.reanimInstances.size()+1)*stride);
+    instance.overlay01=float(chain.size());
+    const auto token=BeginReanimInstance(definition,texture,instance,linear,repeat,clip,true);
+    if(token==UINT32_MAX)return false;
+    const auto index=token&65535u;
+    s.reanimInstanceData[index][17]=float((linear?1u:0u)|(repeat?2u:0u)|(clip?4u:0u)|16u);
+    const auto old=s.reanimInstanceData.size();
+    s.reanimInstanceData.resize(old+slots);
+    s.reanimInstances.resize(old+slots);
+    auto* target=s.reanimInstanceData[old].data();
+    std::memcpy(target,&draw,sizeof(draw));
+    std::memcpy(reinterpret_cast<std::byte*>(target)+96,chain.data(),chain.size_bytes());
+    const GpuReanimTrackDraw packet{0,0xffffffff,draw.samplingFlags};
+    return SubmitReanimTrack(token,packet,blend);
+#else
+    (void)definition;(void)texture;(void)draw;(void)chain;(void)linear;(void)repeat;(void)blend;(void)clip;
+    return false;
+#endif
+}
 #if defined(PVZ_OPENGL_REANIM_RESIDENT)
 using namespace GL3;
 namespace {
@@ -24,14 +61,15 @@ template<class T> void EnsureSpace(std::vector<T>& values,size_t required)
 // No contraction-control extension is required: this is an independently
 // verified OpenGL native-sin/cos implementation, not the Vulkan polynomial.
 }
-const char OpenGLReanimEvaluationShader[] = R"GLSL(
+const std::string OpenGLReanimEvaluationShader = R"GLSL(
+#define PVZ_REANIM_SHADER_CLIP 1
 #if defined(PVZ_REANIM_COMPUTE_SHADER)
-vec4 point0,point1,point2,point3,trackColor;
+vec4 point0,point1,point2,point3,trackColor,trackOverlayX,trackOverlayY;
 uvec4 trackInfo;
 #else
 in vec2 inPosition;in vec4 inColor;in vec2 inUV;in uint inSlot,inSampler;
 in uvec4 markerInfo;in vec2 markerShake;
-flat out vec4 point0,point1,point2,point3,trackColor;
+flat out vec4 point0,point1,point2,point3,trackColor,trackOverlayX,trackOverlayY;
 flat out uvec4 trackInfo;
 #endif
 #if defined(PVZ_REANIM_SHADER_CLIP)
@@ -41,16 +79,27 @@ vec4 trackClip;
 flat out vec4 trackClip;
 #endif
 #endif
-uniform samplerBuffer residentData,instances;
+uniform samplerBuffer residentData;
+uniform usamplerBuffer instances;
+vec4 instanceAt(int index){return uintBitsToFloat(texelFetch(instances,index));}
 vec4 dataAt(int index){return texelFetch(residentData,index);}
+int particleGeometry;
+float pStatic(uint index){
+ int at=particleGeometry+int(index/6u)*8+int(index%6u);
+ return dataAt(at/4)[at%4];
+}
+float pDynamic(uint index){return instanceAt(int(index/4u))[int(index%4u)];}
+)GLSL"+std::string(OpenGLParticleShader)+R"GLSL(
 vec4 corner(vec2 p,vec2 uv,vec4 m,vec2 origin){
  return vec4(m.x*p.x+m.y*p.y+origin.x,m.z*p.x+m.w*p.y+origin.y,uv);
 }
 #if defined(PVZ_REANIM_COMPUTE_SHADER)
 void evaluateTrack(uvec4 markerInfo,vec2 markerShake){
+ trackOverlayX=vec4(1,0,0,0);trackOverlayY=vec4(0,1,0,0);
 #else
 void main(){
  gl_Position=vec4(0,0,0,1);
+ trackOverlayX=vec4(1,0,0,0);trackOverlayY=vec4(0,1,0,0);
  if(inSampler!=0xffffffffu){
   point0=vec4(inPosition,inUV);trackColor=inColor;trackInfo=uvec4(inSlot,inSampler,0u,1u);return;
  }
@@ -60,10 +109,26 @@ void main(){
 #else
  int index=int(markerInfo.y)*5;
 #endif
- vec4 frameSample=texelFetch(instances,index),time=texelFetch(instances,index+1);
- vec4 overlayX=texelFetch(instances,index+2),overlayY=texelFetch(instances,index+3);
- vec4 outputInfo=texelFetch(instances,index+4);
+ vec4 frameSample=instanceAt(index),time=instanceAt(index+1);
+ vec4 overlayX=instanceAt(index+2),overlayY=instanceAt(index+3);
+ vec4 outputInfo=instanceAt(index+4);
  vec4 header=dataAt(int(outputInfo.x));
+ if((uint(outputInfo.y)&16u)!=0u){
+  particleGeometry=int(header.z)*4;
+  ParticleResult result=pParticle(uint(overlayX.x),uint(overlayX.y));
+  point0=result.point0;point1=result.point1;point2=result.point2;point3=result.point3;
+  trackColor=result.color;
+  uint draw=uint(overlayX.x);
+  trackOverlayX=vec4(pDynamic(draw+7u),pDynamic(draw+8u),pDynamic(draw+9u),0);
+  trackOverlayY=vec4(pDynamic(draw+10u),pDynamic(draw+11u),pDynamic(draw+12u),0);
+  uint flags=uint(outputInfo.z)|(uint(outputInfo.w)<<16u);
+  trackInfo=uvec4(flags|(markerInfo.w&0xffffff00u),uint(outputInfo.y)&3u,1u,result.visible?1u:0u);
+#if defined(PVZ_REANIM_SHADER_CLIP)
+  bool clipping=(uint(outputInfo.y)&4u)!=0u;
+  trackClip=instanceAt(index+5);trackInfo.z=clipping?2u:1u;
+#endif
+  return;
+ }
  vec4 track=dataAt(int(header.x)+int(markerInfo.x));
  int before=int(header.y)+(int(track.x)+int(frameSample.x))*3;
  int after=int(header.y)+(int(track.x)+int(frameSample.y))*3;
@@ -83,7 +148,7 @@ void main(){
   float(markerInfo.z&255u),alpha)/255.0;
 #if defined(PVZ_REANIM_SHADER_CLIP)
  bool clipping=(outputFlags&4u)!=0u&&(markerInfo.w&2u)==0u;
- trackClip=texelFetch(instances,index+5);
+ trackClip=instanceAt(index+5);
  trackInfo=uvec4(textureFlags|(markerInfo.w&0xffffff00u),outputFlags&3u,
   clipping?2u:1u,visible?1u:0u);
 #else
@@ -125,39 +190,15 @@ void main(){
   gl_Position=vec4(0,0,0,1);color=vec4(0);uv=vec2(0);slot=0u;samplerIndex=0u;return;
  }
  vec4 point=inSlot==0u?point0:inSlot==1u?point1:inSlot==2u?point2:point3;
+ point.xy=vec2(dot(trackOverlayX.xy,point.xy)+trackOverlayX.z,dot(trackOverlayY.xy,point.xy)+trackOverlayY.z);
  gl_Position=vec4(point.xy/targetExtent*2.0-1.0,0,1);
  color=trackColor;uv=point.zw;slot=trackInfo.x;samplerIndex=trackInfo.y;
 }
 )GLSL";
-#elif !defined(PVZ_OPENGL_REANIM_COMPUTE_EXPERIMENT)
-constexpr const char* ReanimGeometrySource = R"GLSL(#version 150
-layout(triangles)in;layout(triangle_strip,max_vertices=4)out;
-flat in vec4 point0[],point1[],point2[],point3[],trackColor[];
-flat in uvec4 trackInfo[];
-uniform vec2 targetExtent;
-out vec4 color;out vec2 uv;flat out uint slot,samplerIndex;
-void emitPoint(vec4 point,vec4 tint,uvec2 metadata){
- gl_Position=vec4(point.xy/targetExtent*2.0-1.0,0,1);
- color=tint;uv=point.zw;slot=metadata.x;samplerIndex=metadata.y;EmitVertex();
-}
-void trackPoint(vec4 point){emitPoint(point,trackColor[0],trackInfo[0].xy);}
-void main(){
- if(trackInfo[0].z==0u){
-  for(int i=0;i<3;++i)emitPoint(point0[i],trackColor[i],trackInfo[i].xy);
-  EndPrimitive();return;
- }
- if(trackInfo[0].w==0u)return;
- // SubmitReanimTrack already selects the effective integer clip for this
- // painter batch. Flush applies it with glScissor for every target.
- trackPoint(point0[0]);trackPoint(point1[0]);trackPoint(point3[0]);trackPoint(point2[0]);
- EndPrimitive();
-}
-)GLSL";
 #else
-// Keep the compute experiment's original GS fallback unchanged as a control.
 constexpr const char* ReanimGeometrySource = R"GLSL(#version 150
 layout(triangles)in;layout(triangle_strip,max_vertices=18)out;
-flat in vec4 point0[],point1[],point2[],point3[],trackColor[],trackClip[];
+flat in vec4 point0[],point1[],point2[],point3[],trackColor[],trackClip[],trackOverlayX[],trackOverlayY[];
 flat in uvec4 trackInfo[];
 uniform vec2 targetExtent;
 out vec4 color;out vec2 uv;flat out uint slot,samplerIndex;
@@ -165,7 +206,11 @@ void emitPoint(vec4 point,vec4 tint,uvec2 metadata){
  gl_Position=vec4(point.xy/targetExtent*2.0-1.0,0,1);
  color=tint;uv=point.zw;slot=metadata.x;samplerIndex=metadata.y;EmitVertex();
 }
-void trackPoint(vec4 point){emitPoint(point,trackColor[0],trackInfo[0].xy);}
+void trackPoint(vec4 point){
+ point.xy=vec2(dot(trackOverlayX[0].xy,point.xy)+trackOverlayX[0].z,
+  dot(trackOverlayY[0].xy,point.xy)+trackOverlayY[0].z);
+ emitPoint(point,trackColor[0],trackInfo[0].xy);
+}
 bool insideClip(vec4 p,int edge,float boundary){
  float value=edge%2==0?p.x:p.y;return edge<2?value>=boundary:value<boundary;
 }
@@ -235,10 +280,10 @@ bool OpenGLRenderer::Impl::InitReanim()
 #if defined(PVZ_OPENGL_REANIM_VERTEX_EXPERIMENT)
         // This shared branch contains only private temporaries and evaluateTrack,
         // so it also compiles as GLSL 1.50 without a compute or geometry stage.
-        vertex=Compile(GL_VERTEX_SHADER,std::string("#version 150\n#define PVZ_REANIM_COMPUTE_SHADER 1\n")+
+        vertex=Compile(GL_VERTEX_SHADER,std::string("#version 150\n#extension GL_ARB_shader_bit_encoding : require\n#define PVZ_REANIM_COMPUTE_SHADER 1\n")+
             OpenGLReanimEvaluationShader+ReanimVertexExpansionSource);
 #else
-        vertex=Compile(GL_VERTEX_SHADER,std::string("#version 150\n"
+        vertex=Compile(GL_VERTEX_SHADER,std::string("#version 150\n#extension GL_ARB_shader_bit_encoding : require\n"
 #if defined(PVZ_OPENGL_REANIM_COMPUTE_EXPERIMENT)
             "#define PVZ_REANIM_SHADER_CLIP 1\n"
 #endif
@@ -270,7 +315,7 @@ bool OpenGLRenderer::Impl::InitReanim()
         glGenBuffers(1,&reanimInstanceBuffer);glBindBuffer(TextureBuffer,reanimInstanceBuffer);
         glBufferData(TextureBuffer,ReanimInstanceTexels*16,nullptr,GL_STREAM_DRAW);
         glGenTextures(1,&reanimInstanceTexture);glBindTexture(TextureBuffer,reanimInstanceTexture);
-        texBuffer(TextureBuffer,GL_RGBA32F,reanimInstanceBuffer);
+        texBuffer(TextureBuffer,0x8D70,reanimInstanceBuffer); // GL_RGBA32UI preserves int64 payload bits.
         glGenTextures(1,&reanimBlobTexture);
         GL3::CheckError("Initialize indexed OpenGL reanimation");reanimProgram=program;
     }catch(const std::exception& error){
@@ -416,9 +461,7 @@ unsigned int OpenGLRenderer::BeginReanimInstance(OpenGLReanim* definition,OpenGL
         source.overlay10,source.overlay11,source.overlay12,0,
         float(definition->firstTexel),float((linear?1:0)|(repeat?2:0)|(defaultClip?4:0)),
         float(flags&65535u),float(flags>>16)
-#if defined(PVZ_OPENGL_REANIM_COMPUTE_EXPERIMENT)
         ,float(bounds.x),float(bounds.y),float(int64_t(bounds.x)+bounds.width),float(int64_t(bounds.y)+bounds.height)
-#endif
     };
     const auto index=unsigned(s.reanimInstances.size());
     EnsureSpace(s.reanimInstances,index+1);EnsureSpace(s.reanimInstanceData,index+1);
@@ -443,7 +486,8 @@ bool OpenGLRenderer::SubmitReanimTrack(unsigned int instance,const GpuReanimTrac
         return false;
     auto* target=s.selected?s.selected:s.scene;
     if(state.texture==target)return false;
-    const auto clip=Clamped(draw.flags&GpuReanimTrackDraw::IgnoreDefaultClip?
+    const bool particle=(unsigned(data[17])&16u)!=0u;
+    const auto clip=Clamped(particle||(draw.flags&GpuReanimTrackDraw::IgnoreDefaultClip)?
         GpuClip{0,0,target->width,target->height}:state.clip,target->width,target->height);
     if(!clip.width||!clip.height)return true;
 #if defined(PVZ_OPENGL_REANIM_VERTEX_EXPERIMENT)

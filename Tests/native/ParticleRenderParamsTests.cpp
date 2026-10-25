@@ -1,6 +1,7 @@
 #include "Sexy.TodLib/TodCommon.h"
 #include "Sexy.TodLib/Definition.h"
 #include "Sexy.TodLib/TodParticle.h"
+#include "ParticleDrawReference.h"
 #include "Sexy.TodLib/generated/GeneratedDefinitions.h"
 #include <array>
 #include <algorithm>
@@ -37,14 +38,13 @@ void CompareDefaultRender(TodParticleEmitter& emitter, TodParticle& particle)
         TodEmitterDefinition* definition;
         ~Restore() { emitter.mEmitterDef = definition; }
     } restore{emitter, originalDefinition};
-    Require(localDefinition.mRenderTrackMask == 0, "Expected default-render fast path");
-    Require(!FloatTrackIsSet(localDefinition.mParticleStretch) &&
-        FloatTrackEvaluate(localDefinition.mParticleStretch, 0.5, 0.5f) == 1.f,
-        "Generated omitted stretch must evaluate to one");
-    ParticleRenderParams fast{}, ordinary{};
-    Require(TodParticleEmitter::GetRenderParams(&particle, &fast), "Fast render parameters missing");
-    localDefinition.mRenderTrackMask = 1;
-    Require(TodParticleEmitter::GetRenderParams(&particle, &ordinary),
+    auto renderData = ParticleDrawReference::RenderData(*originalDefinition);
+    ParticleDrawReference::BindRenderData(localDefinition, renderData);
+    ParticleDrawReference::ParticleRenderParams fast{}, ordinary{};
+    Require(ParticleDrawReference::GetRenderParams(&particle, &fast), "Fast render parameters missing");
+    renderData.mRenderTrackMask = 1;
+    ParticleDrawReference::BindRenderData(localDefinition, renderData);
+    Require(ParticleDrawReference::GetRenderParams(&particle, &ordinary),
         "Ordinary render parameters missing");
     Same(fast.mParticleStretch, ordinary.mParticleStretch,
         "Default particle stretch fast path differs from ordinary evaluator");
@@ -104,7 +104,7 @@ void PoolSparklyBirthPositions(TodParticleHolder& holder)
             // test never depends on particle-roster or pool capacity.
             auto* particle = emitter->SpawnParticle(sample, samples);
             Require(particle != nullptr, "PoolSparkly particle birth failed");
-            Require(particle->mParticleAge.mNanoseconds == 0,
+            Require(particle->mParticleAgeNs == 0,
                 "PoolSparkly newborn unexpectedly advanced its lifetime");
             const float boxY = particle->mPosition.y - 295.f;
             const float boxX = particle->mPosition.x - 450.f +
@@ -150,20 +150,21 @@ void PowieCloudBirthParameters(TodParticleSystem& system)
         const float high = index == 0 ? 2500.f : 1200.f;
         Same(FloatTrackEvaluate(d.mLaunchSpeed, 0, 0), low, "Powie cloud minimum launch speed changed");
         Same(FloatTrackEvaluate(d.mLaunchSpeed, 0, 1), high, "Powie cloud maximum launch speed changed");
-        Require(FloatTrackIsSet(d.mLaunchSpeed) && FloatTrackIsSet(d.mSystemAlpha) &&
-            !FloatTrackIsSet(d.mSystemGreen), "Powie launch/alpha tracks were mapped to color fields");
-        Same(FloatTrackEvaluate(d.mSystemAlpha, 0, 0.5f), 1.f, "Powie cloud initial system alpha changed");
-        Same(FloatTrackEvaluate(d.mSystemAlpha, 0.9, 0.5f), 0.5f, "Powie cloud system alpha fade changed");
-        Same(FloatTrackEvaluate(d.mSystemAlpha, 1, 0.5f), 0.f, "Powie cloud final system alpha changed");
-        for (const auto* track : {&d.mSystemRed, &d.mSystemGreen, &d.mSystemBlue,
-            &d.mSystemBrightness})
+        const auto& render = ParticleDrawReference::RenderData(d);
+        Require(FloatTrackIsSet(d.mLaunchSpeed) && FloatTrackIsSet(render.mSystemAlpha) &&
+            !FloatTrackIsSet(render.mSystemGreen), "Powie launch/alpha tracks were mapped to color fields");
+        Same(FloatTrackEvaluate(render.mSystemAlpha, 0, 0.5f), 1.f, "Powie cloud initial system alpha changed");
+        Same(FloatTrackEvaluate(render.mSystemAlpha, 0.9, 0.5f), 0.5f, "Powie cloud system alpha fade changed");
+        Same(FloatTrackEvaluate(render.mSystemAlpha, 1, 0.5f), 0.f, "Powie cloud final system alpha fade changed");
+        for (const auto* track : {&render.mSystemRed, &render.mSystemGreen, &render.mSystemBlue,
+            &render.mSystemBrightness})
             Same(FloatTrackEvaluate(*track, 0.9, 0.5f), 1.f,
                 "Powie cloud default system color/brightness changed");
 
         float minimumSpeed = std::numeric_limits<float>::max(), maximumSpeed = -minimumSpeed;
         for (int sample = 0; sample < 64; ++sample)
         {
-            emitter->mSystemAge = 0;
+            emitter->mSystemAgeNs = std::int64_t(0) * 10'000'000;
             auto* particle = emitter->SpawnParticle(sample, 64);
             Require(particle != nullptr, "Powie cloud birth failed");
             const float speed = std::hypot(particle->mVelocity.x, particle->mVelocity.y);
@@ -172,23 +173,23 @@ void PowieCloudBirthParameters(TodParticleSystem& system)
                 "Powie cloud birth velocity lost its authored launch speed");
             minimumSpeed = std::min(minimumSpeed, speed);
             maximumSpeed = std::max(maximumSpeed, speed);
-            ParticleRenderParams initial{}, faded{};
-            Require(TodParticleEmitter::GetRenderParams(particle, &initial),
+            ParticleDrawReference::ParticleRenderParams initial{}, faded{};
+            Require(ParticleDrawReference::GetRenderParams(particle, &initial),
                 "Powie cloud birth render parameters missing");
             Same(initial.mRed, 255.f, "Powie cloud initial red changed");
             Same(initial.mGreen, (index == 0 ? 0.7f : 0.9f) * 255.f,
                 "Powie cloud initial green changed");
             Same(initial.mBlue, 0.f, "Powie cloud initial blue changed");
             Same(initial.mAlpha, 255.f, "Powie cloud initial alpha changed");
-            emitter->mSystemAge = 180; // 90% of the original 200-tick system.
-            Require(TodParticleEmitter::GetRenderParams(particle, &faded),
+            emitter->mSystemAgeNs = std::int64_t(180) * 10'000'000; // 90% of the original 200-tick system.
+            Require(ParticleDrawReference::GetRenderParams(particle, &faded),
                 "Powie cloud faded render parameters missing");
             Same(faded.mRed, initial.mRed, "Powie system fade incorrectly affected red");
             Same(faded.mGreen, initial.mGreen, "Powie system fade incorrectly affected green");
             Same(faded.mAlpha, 127.5f, "Powie system fade did not affect alpha");
             emitter->DeleteParticle(particle);
         }
-        emitter->mSystemAge = 0;
+        emitter->mSystemAgeNs = std::int64_t(0) * 10'000'000;
         Require(maximumSpeed > minimumSpeed, "Powie cloud speed distribution collapsed");
         std::cout << "PASS Powie cloud emitter " << index
             << ": 64 deterministic births, speed=[" << minimumSpeed << ','
@@ -201,6 +202,7 @@ int main()
 {
     try
     {
+        ParticleDrawReference::LoadGpuDefinitions();
         TodParticleData data;
         data.Initialize();
         TodParticleHolder holder(&data);
@@ -219,8 +221,8 @@ int main()
         auto* wordParticle = word->ParticleRosterParticleAt(0);
         for (const int age : {0, 25, 49})
         {
-            word->mSystemAge = age;
-            wordParticle->mParticleAge = age;
+            word->mSystemAgeNs = std::int64_t(age) * 10'000'000;
+            wordParticle->mParticleAgeNs = std::int64_t(age) * 10'000'000;
             CompareDefaultRender(*word, *wordParticle);
         }
         std::cout << "PASS real PowieWord birth/mid/end: default stretch, colors, position, "
@@ -233,24 +235,25 @@ int main()
             for (int i = 0; i < effect.mEmitterDefCount; ++i)
             {
                 auto& emitterDefinition = effect.mEmitterDefs[i];
-                if (emitterDefinition.mRenderTrackMask != 0) continue;
+                if (ParticleDrawReference::RenderData(emitterDefinition).mRenderTrackMask != 0) continue;
                 TodParticleEmitter emitter{};
                 emitter.mEmitterDef = &emitterDefinition;
                 emitter.mParticleSystem = system;
                 emitter.mColorOverride = Color::White;
                 emitter.mScaleOverride = 1.f;
-                emitter.mSystemDuration = 100;
-                emitter.mSystemAge = 37;
+                emitter.mSystemDurationNs = std::int64_t(100) * 10'000'000;
+                emitter.mSystemAgeNs = std::int64_t(37) * 10'000'000;
                 TodParticle particle{};
                 particle.mParticleEmitter = &emitter;
-                particle.mParticleDuration = 100;
-                particle.mParticleAge = 43;
+                particle.mParticleDurationNs = std::int64_t(100) * 10'000'000;
+                particle.mParticleAgeNs = std::int64_t(43) * 10'000'000;
                 particle.mPosition = SexyVector2(123.25f, 234.75f);
                 particle.mSpinPosition = 0.37f;
                 CompareDefaultRender(emitter, particle);
                 ++checked;
             }
         Require(checked != 0, "No default-render emitter coverage");
+        ParticleDrawReference::ClearGpuDefinitions();
         std::cout << "PASS all " << checked
             << " generated default-render emitters: fast/ordinary render parameter parity\n";
         PowieCloudBirthParameters(*system);

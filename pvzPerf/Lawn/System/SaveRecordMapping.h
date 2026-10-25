@@ -126,9 +126,9 @@ template<class T> size_t NativeTimeOffset(const Dat64TimeSchema::Field& field)
     VisitSaveMembers<T>([&](size_t native, size_t wire, size_t oldSize, size_t newSize) {
         if (field.mOffset >= wire && field.mOffset + 4 <= wire + oldSize)
         {
-            if (newSize != oldSize * 4)
+            if (newSize != oldSize * 4 && newSize != oldSize * 2)
                 throw std::runtime_error(std::string(field.mName) + ": native time member is not 64 bit");
-            result = native + (field.mOffset - wire) * 4;
+            result = native + (field.mOffset - wire) * (newSize / oldSize);
         }
     });
     if (result == SIZE_MAX) throw std::runtime_error("time field is missing its native mapping");
@@ -228,7 +228,7 @@ template<class T, class Fn> void VisitV7Members(Fn&& visit)
     }
     else if constexpr (std::is_same_v<T, TodParticle>)
     {
-        visit(offsetof(T, mParticleLastSampleAgeNs), 0, 8);
+        // [0,8) is the retired previous-age slot, kept zero on the wire.
         visit(offsetof(T, mAnimationElapsedNs), 8, 8);
         visit(offsetof(T, mAnimationSampleIntegral), 16, 8);
         visit(offsetof(T, mRandomSeed), 24, 4);
@@ -236,10 +236,10 @@ template<class T, class Fn> void VisitV7Members(Fn&& visit)
         visit(offsetof(T, mLinearOriginY), 36, 8);
         visit(offsetof(T, mLinearElapsedNs), 44, 8);
         visit(offsetof(T, mLinearVelocity), 52, 8);
-        visit(offsetof(T, mLinearLastPosition), 60, 8);
+        // [60,68) is the retired previous-position slot.
         visit(offsetof(T, mLinearSpinOrigin), 68, 8);
         visit(offsetof(T, mLinearSpinRate), 76, 8);
-        visit(offsetof(T, mLinearLastSpin), 84, 4);
+        // [84,88) is the retired previous-spin slot.
         visit(offsetof(T, mLinearSpinActive), 88, 4);
         visit(offsetof(T, mLinearAcceleration), 92, 8);
     }
@@ -303,7 +303,7 @@ template<class T> void WriteHistoricalProjection(const T& value, std::span<Legac
     }
     else if constexpr (std::is_same_v<T, TodParticleEmitter>)
     {
-        const auto duration = value.mSystemDuration.mNanoseconds;
+        const auto duration = value.mSystemDurationNs;
         const auto phase = [&](std::int64_t age) {
             // Frozen legacy phase projection only; current runtime evaluates
             // its actual age against the full duration without this endpoint.
@@ -311,18 +311,18 @@ template<class T> void WriteHistoricalProjection(const T& value, std::span<Legac
                 ? float(double(age) / (duration - 10'000'000)) : 0.0f;
         };
         PutFloat(bytes, 48, float(double(value.mSpawnRemainder) / V7SaveSchema::Frame));
-        PutFloat(bytes, 72, phase(value.mSystemAge.mNanoseconds));
-        PutFloat(bytes, 76, phase(value.mSystemAge.mNanoseconds));
+        PutFloat(bytes, 72, phase(value.mSystemAgeNs));
+        PutFloat(bytes, 76, phase(value.mSystemAgeNs));
     }
     else if constexpr (std::is_same_v<T, TodParticle>)
     {
-        const auto duration = value.mParticleDuration.mNanoseconds;
+        const auto duration = value.mParticleDurationNs;
         const auto phase = [&](std::int64_t age) {
             return age < 0 ? -1.0f : duration > 10'000'000
                 ? float(double(age) / (duration - 10'000'000)) : 0.0f;
         };
-        PutFloat(bytes, 16, phase(value.mParticleAge.mNanoseconds));
-        PutFloat(bytes, 20, phase(value.mParticleLastSampleAgeNs));
+        PutFloat(bytes, 16, phase(value.mParticleAgeNs));
+        PutFloat(bytes, 20, phase(value.mParticleAgeNs));
         // Preserve the sampled legacy image phase for explicit downgrades.
         // The current format still restores its exact elapsed time and anchor.
         auto animationPhase = value.mAnimationSampleIntegral;
@@ -445,7 +445,8 @@ template<class T> void ReadSaveRecord(T& value, const LegacyByte* source)
             if (offset != offsetof(Board, mLevelTimeNs))
                 std::memcpy(ObjectBytes(value) + offset + 8, &ns, 8);
         }
-        else std::memcpy(ObjectBytes(value) + offset + 8, &ns, 8);
+        else if constexpr (!std::is_same_v<T, TodParticle> && !std::is_same_v<T, TodParticleEmitter>)
+            std::memcpy(ObjectBytes(value) + offset + 8, &ns, 8);
     }
     if constexpr (std::is_base_of_v<GameObject, T>)
     {

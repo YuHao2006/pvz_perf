@@ -257,8 +257,34 @@ class ParticleVariantPackageTests(unittest.TestCase):
         cls.bindings = pak.read_definition_image_bindings(ROOT)
         cls.variant_bindings = pak.read_definition_image_binding_rows(ROOT)
         cls.generated = ROOT / "pvzPerf/Sexy.TodLib/generated"
-        cls.source = "\n".join(path.read_text(encoding="utf-8")
-                               for path in (cls.generated / "definitions").glob("ParticleData*.cpp"))
+        cls.runtime = {}
+        for path in cls.index:
+            if not path.startswith("compiled/particle-runtime/"):
+                continue
+            reader = pak.Reader(cls.archive.read(path))
+            magic, names, name_hash, emitters, variants, slots = reader.unpack("<6I")
+            if magic != 0x31435450:
+                raise AssertionError(f"Unexpected particle runtime format: {path}")
+            headers = []
+            for _ in range(emitters):
+                headers.append(reader.unpack("<2I3i4I"))
+                for _ in range(22):
+                    reader.take(reader.count(24, 100000) * 24)
+                for _ in range(2):
+                    for _ in range(reader.count(12, 4)):
+                        reader.word()
+                        for _ in range(2):
+                            reader.take(reader.count(24, 100000) * 24)
+                for _ in range(16):
+                    reader.take(reader.count(24, 100000) * 24)
+            rows = []
+            for _ in range(variants):
+                width, height, length = reader.unpack("<3I")
+                atlas_path = reader.take(length).decode("utf-8")
+                regions = [reader.unpack("<4f2i") for _ in range(slots)]
+                rows.append((width, height, atlas_path, regions))
+            reader.finish()
+            cls.runtime[path] = (headers, rows)
 
     def appearance(self, row):
         root = self.original[row["base"]]
@@ -266,18 +292,22 @@ class ParticleVariantPackageTests(unittest.TestCase):
         index = next(index for index, report in enumerate(reports) if report["name"] == row["component"])
         definition = self.report["definition_atlases"][root]
         metadata = reports[index]
-        match = re.search(
-            rf"constinit TodEmitterDefinition Particle{definition['definition_id']}Emitters"
-            r"\[(\d+)\] = \{\n(.*?)\n\};", self.source, re.S)
-        self.assertIsNotNone(match)
-        headers = re.findall(r"^\s+\{(\d+)u,\s*(\d+),", match[2], re.M)
-        self.assertEqual(len(headers), int(match[1]))
+        runtime_path = root.replace("compiled/particles/", "compiled/particle-runtime/")
+        headers, rows = self.runtime[runtime_path]
+        width, height, atlas_path, regions = rows[index]
+        self.assertEqual((width, height, atlas_path),
+                         (metadata["atlas_width"], metadata["atlas_height"], metadata["atlas_path"]))
+        expected = []
+        for x, y, w, h in metadata["frame_rectangles"]:
+            values = (x / width, y / height, (x + w) / width, (y + h) / height) if width and height else (0.,) * 4
+            expected.append(struct.unpack("<4f2i", struct.pack("<4f2i", *values, w, h)))
+        self.assertEqual(regions, expected)
         return root, index, metadata, {
             "regions": [], "frame_fields4I": [tuple(rect) for rect in metadata["frame_rectangles"]],
             "width": metadata["atlas_width"], "height": metadata["atlas_height"],
             "total_frame_count": definition["slot_count"],
-            "frame_counts": [int(count) for _, count in headers],
-            "slot_offsets": [int(offset) for offset, _ in headers]}
+            "frame_counts": [header[1] for header in headers],
+            "slot_offsets": [header[0] for header in headers]}
 
     def test_all_56_variants_and_original_106_defaults_are_present(self):
         self.assertEqual(len(self.variants), 56)
@@ -291,7 +321,7 @@ class ParticleVariantPackageTests(unittest.TestCase):
         self.assertFalse({row["path"] for row in self.variants} & set(self.records))
         self.assertEqual(sum(len(self.report["definition_atlases"][name]["variants"]) for name in expected), 162)
 
-    def test_every_root_has_one_static_behavior_and_complete_appearance_array(self):
+    def test_every_root_has_one_compiled_behavior_and_complete_appearance_array(self):
         for row in self.variants:
             with self.subTest(component=row["component"]):
                 name, index, metadata, variant = self.appearance(row)
@@ -301,9 +331,15 @@ class ParticleVariantPackageTests(unittest.TestCase):
                 self.assertEqual(variant["slot_offsets"], list(
                     itertools.accumulate([0] + variant["frame_counts"][:-1])))
                 self.assertGreater(len(variant["frame_fields4I"]), 0)
-        # The 56 appearances never allocate another emitter-definition array.
-        self.assertEqual(len(re.findall(r"constinit TodEmitterDefinition Particle\d+Emitters\[",
-                                       self.source)), 106)
+        # Every appearance borrows its root's behavior record.
+        expected_runtime = {name.replace("compiled/particles/", "compiled/particle-runtime/")
+                            for name in self.original.values()}
+        self.assertEqual(set(self.runtime), expected_runtime)
+        self.assertEqual(len(self.runtime), 106)
+        self.assertEqual(list((self.generated / "definitions").glob("ParticleData*.cpp")), [])
+        self.assertEqual({name.replace("compiled/particle-runtime/", "compiled/gpu-particle/")
+                          for name in self.runtime},
+                         {name for name in self.index if name.startswith("compiled/gpu-particle/")})
 
     def test_every_variant_region_matches_the_declared_source_image_pixels(self):
         files = runtime_asset_sources.inventory(ROOT)

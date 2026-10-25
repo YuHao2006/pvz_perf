@@ -1,6 +1,7 @@
 #include "VulkanRenderer.h"
 #include "TestWin32Window.h"
 #include "SexyAppFramework/misc/FastMath.h"
+#include "Tests/native/ParticleGpuChecks.h"
 #include <algorithm>
 #include <array>
 #include <atomic>
@@ -128,6 +129,7 @@ void Run() {
     VulkanContext window(config,native.hwnd,VulkanTest::SwapchainConfig());
     const std::string shaders=PVZ_NATIVE_SHADER_DIR;
     VulkanRenderer renderer(window,64,64,shaders+"/game_vs.spv",shaders+"/game_ps.spv");
+    ParticleGpuTest::Run(renderer);
     const std::array<GpuReanimKey,2> keys{{
         {5.25f,8.125f,-15,23,1.15f,0.9f,0.8f,0,1},
         {13.5f,11.25f,37,-18,-0.75f,1.1f,0.35f,-1,1}}};

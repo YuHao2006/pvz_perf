@@ -104,6 +104,10 @@ public:
         D3d12Texture* mask, GpuBlend blend, const GpuClip* clip = nullptr);
     void SubmitPool(D3d12Texture* texture, const GpuPoolParams& params);
     D3d12Reanim* UploadReanimDefinition(const GpuReanimDefinition& definition);
+    D3d12Reanim* UploadParticleDefinition(std::span<const float> words, uint32_t variants);
+    bool SubmitParticle(D3d12Reanim*, D3d12Texture*, const GpuParticleDraw&,
+        std::span<const GpuParticleState>, bool linear, bool repeat, GpuBlend,
+        const GpuClip* clip = nullptr);
     void DestroyReanimDefinition(D3d12Reanim* definition);
     uint32_t& reanimPictureCandidates;
     const bool& reanimFrameEligible;

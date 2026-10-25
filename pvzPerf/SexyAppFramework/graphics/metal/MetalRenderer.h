@@ -65,6 +65,10 @@ public:
         MetalTexture* mask, GpuBlend blend, const GpuClip* clip = nullptr);
     void SubmitPool(MetalTexture* texture, const GpuPoolParams& params);
     MetalReanim* UploadReanimDefinition(const GpuReanimDefinition& definition);
+    MetalReanim* UploadParticleDefinition(std::span<const float> words, uint32_t variants);
+    bool SubmitParticle(MetalReanim* definition, MetalTexture* texture,
+        const GpuParticleDraw& draw, std::span<const GpuParticleState> chain,
+        bool linear, bool repeat, GpuBlend blend, const GpuClip* clip = nullptr);
     void DestroyReanimDefinition(MetalReanim* definition);
     uint32_t& reanimPictureCandidates;
     const bool& reanimFrameEligible;

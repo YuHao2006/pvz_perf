@@ -256,6 +256,7 @@ class TodParticleSystem;
 class TodParticleEmitter;
 class TodParticle;
 struct TodParticleRosterStorage;
+
 class TodParticleData
 {
 public:
@@ -303,6 +304,33 @@ public:
 class TodParticle
 {
 public:
+	TodParticle() noexcept
+		: mParticleEmitter(nullptr),
+		  mParticleDurationNs(0),
+		  mParticleAgeNs(0),
+		  mAnimationElapsedNs(0),
+		  mAnimationSampleIntegral(0),
+		  mRandomSeed(0),
+		  mVelocity(0, 0),
+		  mPosition(0, 0),
+		  mImageFrame(0),
+		  mSpinPosition(0),
+		  mSpinVelocity(0),
+		  mCrossFadeParticleID(ParticleID::PARTICLEID_NULL),
+		  mCrossFadeDurationNs(0),
+		  mParticleInterp{},
+		  mParticleFieldInterp{},
+		  mLinearOriginX(0),
+		  mLinearOriginY(0),
+		  mLinearElapsedNs(-1),
+		  mLinearVelocity(0, 0),
+		  mLinearAcceleration(0, 0),
+		  mLinearSpinOrigin(0),
+		  mLinearSpinRate(0),
+		  mLinearSpinActive(0)
+	{
+	}
+
 	TodParticleEmitter*				mParticleEmitter;
 	std::int64_t					mParticleDurationNs;
 	std::int64_t					mParticleAgeNs;
@@ -318,16 +346,26 @@ public:
 	std::int64_t					mCrossFadeDurationNs;
 	float							mParticleInterp[ParticleTracks::NUM_PARTICLE_TRACKS];
 	float							mParticleFieldInterp[MAX_PARTICLE_FIELDS][2];
-	// Constant velocity/acceleration samples one segment, never the last rounded
-	// position. -1 elapsed means unbound (including births and field handoffs).
-	double                          mLinearOriginX;
-	double                          mLinearOriginY;
-	std::int64_t                    mLinearElapsedNs;
-	SexyVector2                     mLinearVelocity; // Velocity at segment origin; public mVelocity is the current sample.
-	SexyVector2                     mLinearAcceleration; // Constant velocity increment per original 10ms, fixed random draw at birth.
-	double                          mLinearSpinOrigin; // Radians, excluding the authored absolute angle curve.
-	double                          mLinearSpinRate; // Radians per source tick; shares mLinearElapsedNs.
-	std::uint32_t                   mLinearSpinActive; // 0 for sampled-rate/feedback motion, 1 for an anchored spin segment.
+	// Motion-specific state shares one slot in every particle. The emitter
+	// definition determines which arm is active; no per-particle discriminator
+	// is stored. Discrete motion has no cached previous-tick state.
+	union
+	{
+		struct
+		{
+			// Constant velocity/acceleration samples one segment, never the
+			// last rounded position. -1 elapsed means unbound.
+			double                          mLinearOriginX;
+			double                          mLinearOriginY;
+			std::int64_t                    mLinearElapsedNs;
+			SexyVector2                     mLinearVelocity;
+			SexyVector2                     mLinearAcceleration;
+			double                          mLinearSpinOrigin;
+			double                          mLinearSpinRate;
+			std::uint32_t                   mLinearSpinActive;
+		};
+		std::uint64_t mDiscreteMotionStorage[7];
+	};
 };
 
 inline bool TodParticleConstantAnimationRate(const FloatParameterTrack& track)

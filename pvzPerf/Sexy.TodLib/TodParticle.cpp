@@ -760,8 +760,13 @@ bool TodParticleEmitter::UpdateParticle(TodParticle* theParticle, std::uint64_t 
 		theParticle->mParticleInterp[ParticleTracks::TRACK_PARTICLE_SPIN_SPEED]) * 0.01;
 	const float aSpinAngle = FloatTrackEvaluate(mEmitterDef->mParticleSpinAngle, aParticleTime,
 		theParticle->mParticleInterp[ParticleTracks::TRACK_PARTICLE_SPIN_ANGLE]);
-	const float aLastSpinAngle = FloatTrackEvaluateFromLastTime(
-		mEmitterDef->mParticleSpinAngle, LastParticleTime(theParticle), theParticle->mParticleInterp[ParticleTracks::TRACK_PARTICLE_SPIN_ANGLE]);
+	// Anchored spin samples the current absolute angle directly. Its previous
+	// angle is needed only when binding/editing the origin or using discrete
+	// integration; avoid evaluating that same curve again on every stable step.
+	const auto previousSpinAngle = [&] {
+		return FloatTrackEvaluateFromLastTime(mEmitterDef->mParticleSpinAngle,
+			LastParticleTime(theParticle), theParticle->mParticleInterp[ParticleTracks::TRACK_PARTICLE_SPIN_ANGLE]);
+	};
 	bool sampledSpin = true;
 	if (aParticleFieldCount == 0 && deltaNs > 0)
 	{
@@ -772,13 +777,12 @@ bool TodParticleEmitter::UpdateParticle(TodParticle* theParticle, std::uint64_t 
 		// each particle's interpolation value is chosen once at birth.
 		const bool anchoredSpin = mEmitterDef->mParticleSpinSpeed.mCountNodes <= 1;
 		const double spinRate = anchoredSpin ? DEG_TO_RAD(double(aSpinSpeed)) + p.mSpinVelocity : 0;
-		const double previousAngle = anchoredSpin ? DEG_TO_RAD(double(aLastSpinAngle)) : 0;
 		if (p.mLinearElapsedNs < 0)
 		{
 			p.mLinearOriginX = p.mPosition.x;
 			p.mLinearOriginY = p.mPosition.y;
 			p.mLinearElapsedNs = 0;
-			if (anchoredSpin) p.mLinearSpinOrigin = double(p.mSpinPosition) - previousAngle;
+			if (anchoredSpin) p.mLinearSpinOrigin = double(p.mSpinPosition) - DEG_TO_RAD(double(previousSpinAngle()));
 		}
 		else if (p.mPosition.x != p.mLinearLastPosition.x || p.mPosition.y != p.mLinearLastPosition.y ||
 			p.mVelocity.x != p.mLinearVelocity.x || p.mVelocity.y != p.mLinearVelocity.y ||
@@ -792,7 +796,8 @@ bool TodParticleEmitter::UpdateParticle(TodParticle* theParticle, std::uint64_t 
 				p.mLinearOriginY + p.mLinearVelocity.y * oldTicks;
 			if (anchoredSpin)
 				p.mLinearSpinOrigin = p.mLinearSpinActive && p.mSpinPosition == p.mLinearLastSpin ?
-					p.mLinearSpinOrigin + p.mLinearSpinRate * oldTicks : double(p.mSpinPosition) - previousAngle;
+					p.mLinearSpinOrigin + p.mLinearSpinRate * oldTicks :
+					double(p.mSpinPosition) - DEG_TO_RAD(double(previousSpinAngle()));
 			p.mLinearElapsedNs = 0;
 		}
 		if (static_cast<std::uint64_t>(p.mLinearElapsedNs) > std::uint64_t(INT64_MAX) - deltaNs)
@@ -829,7 +834,7 @@ bool TodParticleEmitter::UpdateParticle(TodParticle* theParticle, std::uint64_t 
 	}
 	if (sampledSpin)
 		theParticle->mSpinPosition += static_cast<float>(DEG_TO_RAD(aSpinSpeed * deltaTicks +
-			aSpinAngle - aLastSpinAngle) + theParticle->mSpinVelocity * deltaTicks);
+			aSpinAngle - previousSpinAngle()) + theParticle->mSpinVelocity * deltaTicks);
 
 	if (FloatTrackIsSet(mEmitterDef->mAnimationRate))  // 如果定义了动画速率
 	{

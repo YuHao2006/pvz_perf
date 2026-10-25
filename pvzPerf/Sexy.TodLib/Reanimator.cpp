@@ -1166,7 +1166,6 @@ bool Reanimation::DrawTrack(Graphics* g, int theTrackIndex, int theRenderGroup,
 	const auto& aGeometry = mDefinition->mImageRects[aSlot];
 	int aCelWidth = 0, aCelHeight = 0;
 	SexyMatrix3 aMatrix;
-	bool aFullScreen = false;
 	if (aHasImage)
 	{
 		aCelWidth = aGeometry.mWidth;
@@ -1185,7 +1184,15 @@ bool Reanimation::DrawTrack(Graphics* g, int theTrackIndex, int theRenderGroup,
 		if (!ReanimRenderSemantics::IsFullscreenTrack(
 		        static_cast<ReanimTrackId>(ReanimatorTrackIdAt(mReanimationType, theTrackIndex))))  // 原版为完整名称比较，不匹配 fullscreen2
 			return false;  // 无需绘制
-		aFullScreen = true;  // 标记全屏轨道，后续会填充一个屏幕大小的矩形
+		// Fullscreen fills destination space. Its authored rotation, scale and
+		// position never participate, so skip their interpolation-to-matrix
+		// conversion and trigonometry entirely.
+		Color aOldColor = g->mColor;
+		g->mColor = aColor;
+		g->FillRect(-g->mTransX, -g->mTransY,
+			g->mDestImage->mWidth, g->mDestImage->mHeight);
+		g->mColor = aOldColor;
+		return true;
 	}
 
 	SexyMatrix3 aTransformMatrix;
@@ -1250,16 +1257,6 @@ bool Reanimation::DrawTrack(Graphics* g, int theTrackIndex, int theRenderGroup,
 			TodDrawStringMatrix(g, aTransform.mFont, aMatrix, aTransform.mText, aExtraAdditiveColor);
 			g->mDrawMode = aOldMode;  // 还原绘制模式
 		}
-	}
-	else if (aFullScreen)  // 不存在图像和文本，但是全屏
-	{
-		Color aOldColor = g->mColor;  // 备份颜色
-		g->mColor = aColor;
-		// Fullscreen is a destination-space fill, like fullscreen particles.
-		// FillRect applies translation and the effective clip itself.
-		g->FillRect(-g->mTransX, -g->mTransY,
-			g->mDestImage->mWidth, g->mDestImage->mHeight);
-		g->mColor = aOldColor;  // 还原颜色
 	}
 	return true;
 }

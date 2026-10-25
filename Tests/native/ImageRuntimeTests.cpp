@@ -981,6 +981,88 @@ void ReanimationAppearancePixels(SexyAppBase& app)
         "original centers and actual AttachmentDraw visibility pixels\n";
 }
 
+void ReanimationFullscreenPixels(SexyAppBase& app)
+{
+    auto& render=*app.mDDInterface->mRenderInterface;
+    ReanimatorLoadDefinitions(gLawnReanimationArray,static_cast<int>(ReanimationType::NUM_REANIMS));
+    struct CatalogCleanup { ~CatalogCleanup() { ReanimatorFreeDefinitions(); } } cleanup;
+    Reanimation lookup;
+    lookup.mReanimationType=ReanimationType::REANIM_ZOMBIES_WON;
+    const int fullscreen=lookup.FindTrackIndex(ReanimTrackId::fullscreen);
+    std::vector<ReanimatorTrack> tracks(fullscreen+1);
+    std::vector<ReanimatorSourceTransform> transforms(fullscreen+1);
+    for (int t=0;t<=fullscreen;++t)
+    {
+        transforms[t].mScaleX=transforms[t].mScaleY=1;
+        transforms[t].mAlpha=0.5f;
+        transforms[t].mFrame=-1;
+        tracks[t].mTransforms={&transforms[t],1};
+    }
+    auto& transform=transforms[fullscreen];
+    transform.mFrame=0;
+    transform.mTransX=12345; transform.mTransY=-7654;
+    transform.mSkewX=37; transform.mSkewY=-91;
+    transform.mScaleX=-17; transform.mScaleY=23;
+    TextureRegion empty{};
+    ReanimatorDefinition definition;
+    definition.mTracks={tracks.data(),int(tracks.size())};
+    definition.mImageRects=&empty;
+    Reanimation animation;
+    animation.mReanimationType=lookup.mReanimationType;
+    animation.ReanimationInitialize(0,0,&definition);
+    animation.mColorOverride=Color(200,120,220,200);
+    auto& instance=animation.mTrackInstances[fullscreen];
+    instance.mTrackColor=Color(90,160,210,180);
+    ReanimatorFrameTime time{0,0,0};
+    std::unique_ptr<Image> target(render.CreateRenderImage(20,12));
+    for (bool hidden:{false,true})
+    for (bool transparent:{false,true})
+    for (int mode:{Graphics::DRAWMODE_NORMAL,Graphics::DRAWMODE_ADDITIVE})
+    for (bool ignoreClip:{false,true})
+    {
+        transform.mFrame=hidden ? -1 : 0;
+        transform.mAlpha=transparent ? 0 : 0.5f;
+        instance.mIgnoreClipRect=ignoreClip;
+        std::vector<unsigned> expected;
+        for (bool reference:{true,false})
+        {
+            {
+                GpuImageDrawScope destination(render,target.get());
+                Graphics graphics(target.get());
+                graphics.mColor=Color::White;
+                graphics.FillRect(Rect(0,0,20,12));
+                graphics.mTransX=2.25f; graphics.mTransY=-1.5f;
+                graphics.mClipRect=Rect(3,2,11,7);
+                graphics.mDrawMode=mode;
+                graphics.mColorizeImages=true;
+                const Color original(140,220,160,128);
+                graphics.mColor=original;
+                if (reference && !hidden && !transparent)
+                {
+                    Color color=ColorsMultiply(ColorsMultiply(instance.mTrackColor,
+                        animation.mColorOverride),original);
+                    color.mAlpha=FloatRoundToInt(color.mAlpha*0.5f);
+                    graphics.mColor=color;
+                    graphics.FillRect(-graphics.mTransX,-graphics.mTransY,20,12);
+                }
+                if (!reference)
+                {
+                    Require(animation.DrawTrack(&graphics,fullscreen,0,&time)==(!hidden && !transparent),
+                        "Fullscreen track changed synchronous visibility");
+                    Require(graphics.mColor==original,"Fullscreen track did not restore Graphics color");
+                }
+            }
+            render.Flush();
+            const auto pixels=render.ReadImagePixels(*target);
+            if (reference) expected=pixels.pixels;
+            else Require(pixels.pixels==expected,
+                "Fullscreen reanimation differs from destination fill after matrix bypass");
+        }
+    }
+    std::cout<<"PASS fullscreen reanimation: destination fill pixels, hidden/zero alpha, "
+        "color modulation, both blend modes, translation and effective clip without track matrices\n";
+}
+
 void ReanimationAppearanceDefinitions(SexyAppBase& app)
 {
     ReanimatorLoadDefinitions(gLawnReanimationArray,static_cast<int>(ReanimationType::NUM_REANIMS));
@@ -2076,6 +2158,7 @@ int main(int argc, char** argv)
         AtlasButtonStates(app);
         SharedReferences(app);
         ReanimationAppearancePixels(app);
+        ReanimationFullscreenPixels(app);
         Require(argc==2,"Pass the production main.pak64 path to the image runtime test");
         ParticleDefinitionsAndFrames(app,argv[1]);
     }

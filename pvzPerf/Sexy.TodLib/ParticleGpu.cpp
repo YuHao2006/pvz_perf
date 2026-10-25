@@ -88,7 +88,34 @@ void TodParticleUploadGpuDefinitionData()
 #endif
 }
 
+namespace
+{
+bool FormulaMotion(const TodParticle& particle)
+{
+    const auto& fields = particle.mParticleEmitter->mEmitterDef->mParticleFields;
+    if (fields.count == 0) return true;
+    for (int i = 0; i < fields.count; ++i)
+    {
+        const auto& field = fields.Fields[i];
+        if (field.mFieldType != ParticleFieldType::FIELD_ACCELERATION ||
+            field.mX.mCountNodes > 1 || field.mY.mCountNodes > 1)
+            return false;
+    }
+    return true;
+}
+}
+
+// The public dispatcher selects the CPU-side submission entry point. The
+// selected GPU pipeline carries no per-particle motion-kind field.
 void TodParticleDrawGpu(Sexy::Graphics& graphics, TodParticle& particle)
+{
+    if (FormulaMotion(particle))
+        TodParticleDrawFormulaGpu(graphics, particle);
+    else
+        TodParticleDrawDiscreteGpu(graphics, particle);
+}
+
+static void SubmitParticleStateGpu(Sexy::Graphics& graphics, TodParticle& particle)
 {
     if (particle.mCrossFadeDurationNs > 0) return;
     auto& system = *particle.mParticleEmitter->mParticleSystem;
@@ -172,4 +199,16 @@ void TodParticleDrawGpu(Sexy::Graphics& graphics, TodParticle& particle)
 #else
     throw std::runtime_error("This renderer does not implement GPU particle drawing");
 #endif
+}
+
+void TodParticleDrawFormulaGpu(Sexy::Graphics& graphics, TodParticle& particle)
+{
+    // The first split keeps the submission ABI shared while the formula-state
+    // packet is introduced. No motion kind is uploaded to the shader.
+    SubmitParticleStateGpu(graphics, particle);
+}
+
+void TodParticleDrawDiscreteGpu(Sexy::Graphics& graphics, TodParticle& particle)
+{
+    SubmitParticleStateGpu(graphics, particle);
 }

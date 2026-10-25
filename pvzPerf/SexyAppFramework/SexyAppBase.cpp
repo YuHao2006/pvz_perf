@@ -3120,11 +3120,6 @@ bool SexyAppBase::ResizeAppWindowForMode(bool wantWindowed)
 	if (mHWnd == NULL)
 		return false;
 
-	auto LogWin32Failure = [](const char* theOperation, DWORD theError)
-	{
-		TodLog("window operation failed op=%s error=%lu", theOperation, (unsigned long)theError);
-	};
-
 	// Preserve visibility. GWL_STYLE is replaced wholesale below, and dropping
 	// WS_VISIBLE makes the window disappear (clicks then fall through to the
 	// desktop while DWM keeps compositing the last frame).
@@ -3132,7 +3127,6 @@ bool SexyAppBase::ResizeAppWindowForMode(bool wantWindowed)
 	const DWORD aCurrentStyle = (DWORD)::GetWindowLongPtr(mHWnd, GWL_STYLE);
 	if (aCurrentStyle == 0 && ::GetLastError() != ERROR_SUCCESS)
 	{
-		LogWin32Failure("GetWindowLongPtr(GWL_STYLE)", ::GetLastError());
 		return false;
 	}
 	const bool aWasVisible = (aCurrentStyle & WS_VISIBLE) != 0;
@@ -3160,7 +3154,6 @@ bool SexyAppBase::ResizeAppWindowForMode(bool wantWindowed)
 		aRect.bottom = aClientH;
 		if (!AdjustWindowRect(&aRect, aWindowStyle, FALSE))
 		{
-			LogWin32Failure("AdjustWindowRect", ::GetLastError());
 			return false;
 		}
 		aWidth = aRect.right - aRect.left;
@@ -3169,7 +3162,6 @@ bool SexyAppBase::ResizeAppWindowForMode(bool wantWindowed)
 		RECT aDesktopRect;
 		if (!::SystemParametersInfo(SPI_GETWORKAREA, 0, &aDesktopRect, 0))
 		{
-			LogWin32Failure("SystemParametersInfo(SPI_GETWORKAREA)", ::GetLastError());
 			return false;
 		}
 
@@ -3202,7 +3194,6 @@ bool SexyAppBase::ResizeAppWindowForMode(bool wantWindowed)
 			RECT aMonitorRect;
 			if (!GetFullscreenMonitorRect(mHWnd, aMonitorRect))
 			{
-				LogWin32Failure("GetFullscreenMonitorRect", ERROR_INVALID_DATA);
 				return false;
 			}
 			aPlaceX = aMonitorRect.left;
@@ -3218,7 +3209,6 @@ bool SexyAppBase::ResizeAppWindowForMode(bool wantWindowed)
 	const LONG_PTR aPreviousStyle = ::SetWindowLongPtr(mHWnd, GWL_STYLE, aWindowStyle);
 	if (aPreviousStyle == 0 && ::GetLastError() != ERROR_SUCCESS)
 	{
-		LogWin32Failure("SetWindowLongPtr(GWL_STYLE)", ::GetLastError());
 		return false;
 	}
 	if (!::SetWindowPos(
@@ -3231,7 +3221,6 @@ bool SexyAppBase::ResizeAppWindowForMode(bool wantWindowed)
 		SWP_FRAMECHANGED | SWP_NOZORDER | SWP_NOACTIVATE |
 		(aWasVisible ? SWP_SHOWWINDOW : 0)))
 	{
-		LogWin32Failure("SetWindowPos", ::GetLastError());
 		return false;
 	}
 	return true;

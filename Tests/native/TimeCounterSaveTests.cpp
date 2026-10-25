@@ -230,7 +230,9 @@ void CheckLiveSave()
     else if constexpr (std::is_same_v<T, TodParticleEmitter>)
     {
         source.mEmissionElapsedNs = 34'567'891;
-        source.mSystemLastSampleAgeNs = 24'567'891;
+        source.mSystemPositionOriginX = 1'048'576.015625;
+        source.mSystemPositionOriginY = -1'048'576.03125;
+        source.mSystemPositionBound = 1;
         source.mSpawnRemainder = 123'456'789'012;
         source.mExternalTarget = {12.25f, -31.5f};
         source.mExternalAppliedCenter = {-21.5f, 43.25f};
@@ -246,6 +248,15 @@ void CheckLiveSave()
     }
     const auto original = WriteSaveRecord(source);
     const auto tail = std::span(original).subspan(SaveV2Size<T>());
+    if constexpr (std::is_same_v<T, TodParticleEmitter>)
+        Require(tail.size() == 52 && V7SaveSchema::Read(tail,0,8) == 123'456'789'012LL &&
+            V7SaveSchema::Read(tail,8,8) == 34'567'891 &&
+            V7SaveSchema::Float(tail,16) == 12.25f && V7SaveSchema::Float(tail,20) == -31.5f &&
+            V7SaveSchema::Float(tail,24) == -21.5f && V7SaveSchema::Float(tail,28) == 43.25f &&
+            V7SaveSchema::Double(tail,32) == 1'048'576.015625 &&
+            V7SaveSchema::Double(tail,40) == -1'048'576.03125 &&
+            V7SaveSchema::Read(tail,48,4) == 1,
+            "Emitter exact curve origin/external input fields differ from their frozen wire offsets");
     if constexpr (std::is_same_v<T, TodParticle>)
         Require(tail.size() == 92 && V7SaveSchema::Read(tail, 0, 8) == 21'234'567 &&
             V7SaveSchema::Read(tail, 8, 8) == 123'456'789'012LL &&
@@ -263,11 +274,6 @@ void CheckLiveSave()
             V7SaveSchema::Float(tail,84)==1'048'576.f &&
             V7SaveSchema::Read(tail,88,4)==1,
             "Native particle main-step tail retained a removed current sample or shifted its exact fields");
-    else if constexpr (std::is_same_v<T, TodParticleEmitter>)
-        Require(tail.size() == 40 && V7SaveSchema::Read(tail, 0, 8) == 123'456'789'012LL &&
-            V7SaveSchema::Read(tail, 8, 8) == 34'567'891 &&
-            V7SaveSchema::Read(tail, 16, 8) == 24'567'891,
-            "Native emitter did not retain its active-emission integral independently of system age");
     for (const unsigned fps : {60u, 100u, 144u, 240u, 250u, 1000u})
     {
         Configure(fps);

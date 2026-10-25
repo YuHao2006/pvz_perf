@@ -167,7 +167,9 @@ std::vector<std::uint64_t> Snapshot(const Scene& scene)
         integer(emitter.mSystemAge.mNanoseconds);
         integer(emitter.mSystemDuration.mNanoseconds);
         integer(emitter.mEmissionElapsedNs);
-        integer(emitter.mSystemLastSampleAgeNs);
+        integer(std::bit_cast<std::uint64_t>(emitter.mSystemPositionOriginX));
+        integer(std::bit_cast<std::uint64_t>(emitter.mSystemPositionOriginY));
+        integer(emitter.mSystemPositionBound);
         integer(emitter.mSpawnRemainder);
         integer(emitter.mParticlesSpawned);
         integer(emitter.mDead);
@@ -677,6 +679,68 @@ void TestCrossfade()
         "completed crossfade source resumed emission");
 }
 
+void TestSystemPositionPrecision()
+{
+    constexpr std::int64_t duration = 2'000'000'003;
+    constexpr std::uint64_t elapsed = 5'123'456'789;
+    constexpr float origin = 1'048'576.f;
+    FloatParameterTrackNode xNodes[]{{0.0, 3, 3, 1, 1}, {1.0, 13, 13, 1, 1}};
+    FloatParameterTrackNode yNodes[]{{0.0, -5, -5, 1, 1}, {1.0, -17, -17, 1, 1}};
+    FloatParameterTrackNode second[]{{0.0, .25f, .25f, 1, 1}, {1.0, 2.75f, 2.75f, 1, 1}};
+    for (int frequency : {30, 60, 100, 144, 200, 240, 1000, 0})
+    {
+        Scene scene;
+        ParticleField fields[2]{};
+        fields[0].mFieldType = fields[1].mFieldType = FIELD_SYSTEM_POSITION;
+        fields[0].mX = {xNodes, 2};
+        fields[0].mY = {yNodes, 2};
+        fields[1].mX = fields[1].mY = {second, 2};
+        scene.emitter.mSystemFields = {fields, 2};
+        auto* emitter = scene.Emitter();
+        emitter->TodEmitterInitialize(origin, -origin, scene.system, &scene.emitter);
+        emitter->mSystemDuration.mNanoseconds = duration;
+        std::uint32_t random = 711;
+        Advance(scene, elapsed, frequency, random);
+        const double phase = double(elapsed % duration) / duration;
+        const double extra = Linear(phase, .25f, 2.75f);
+        Require(emitter->mSystemCenter.x == float(double(origin) + Linear(phase, 3, 13) + extra) &&
+            emitter->mSystemCenter.y == float(-double(origin) + Linear(phase, -5, -17) + extra),
+            "system-position curve accumulated rounded deltas instead of sampling its origin");
+        scene.system->SystemMove(origin + 64, -origin - 32);
+        const auto beforeZero = Snapshot(scene);
+        scene.system->Update(0);
+        scene.system->mDontUpdate = true;
+        scene.system->Update(17'123'457);
+        Require(Snapshot(scene) == beforeZero, "paused/zero system-position update sampled held input");
+        scene.system->mDontUpdate = false;
+        scene.system->Update(17'123'457);
+        const double heldPhase = double((elapsed + 17'123'457) % duration) / duration;
+        const double heldExtra = Linear(heldPhase, .25f, 2.75f);
+        Require(emitter->mSystemCenter.x == float(double(origin + 64) + Linear(heldPhase, 3, 13) + heldExtra) &&
+            emitter->mSystemCenter.y == float(double(-origin - 32) + Linear(heldPhase, -5, -17) + heldExtra),
+            "system-position curve lost its origin through a held move");
+
+        // A historical save knows the current center, not the external origin.
+        // The pending input must be applied once before lazy binding at its
+        // saved age; it must not replay the already displayed curve offset.
+        const double savedX = emitter->mSystemCenter.x, savedY = emitter->mSystemCenter.y;
+        emitter->mExternalAppliedCenter = emitter->mSystemCenter;
+        emitter->mExternalTarget = {float(savedX + 64), float(savedY - 32)};
+        emitter->mSystemPositionOriginX = emitter->mSystemPositionOriginY = 0;
+        emitter->mSystemPositionBound = 0;
+        scene.system->Update(17'123'457);
+        const double migratedPhase = double((elapsed + 2 * 17'123'457) % duration) / duration;
+        const double migratedExtra = Linear(migratedPhase, .25f, 2.75f);
+        Require(emitter->mSystemPositionBound == 1 &&
+            emitter->mSystemCenter.x == float(savedX + 64 - Linear(heldPhase, 3, 13) - heldExtra +
+                Linear(migratedPhase, 3, 13) + migratedExtra) &&
+            emitter->mSystemCenter.y == float(savedY - 32 - Linear(heldPhase, -5, -17) - heldExtra +
+                Linear(migratedPhase, -5, -17) + migratedExtra),
+            "historical system-position binding replayed offsets or lost pending input");
+    }
+    std::cout << "PASS system-position curves: eight ns partitions, large origin, multiple fields and lifetime wraps\n";
+}
+
 void TestContinuation()
 {
     Scene original(0, true), resumed(0, true);
@@ -692,7 +756,9 @@ void TestContinuation()
         copy->mParticleEmitter = to;
     }
     to->mSystemAge = from->mSystemAge;
-    to->mSystemLastSampleAgeNs = from->mSystemLastSampleAgeNs;
+    to->mSystemPositionOriginX = from->mSystemPositionOriginX;
+    to->mSystemPositionOriginY = from->mSystemPositionOriginY;
+    to->mSystemPositionBound = from->mSystemPositionBound;
     to->mEmissionElapsedNs = from->mEmissionElapsedNs;
     to->mSpawnRemainder = from->mSpawnRemainder;
     to->mParticlesSpawned = from->mParticlesSpawned;
@@ -753,6 +819,7 @@ int main()
         TestLifetimesAndTracks();
         TestEmission();
         TestCrossfade();
+        TestSystemPositionPrecision();
         TestContinuation();
         std::cout << "Particle v7 production runtime: actual-delta fields, ns lifetimes, "
             "8-schedule exact constant emission, zero/pause/input behavior, endpoint "

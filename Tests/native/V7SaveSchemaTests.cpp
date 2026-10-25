@@ -171,10 +171,11 @@ void ParticleMigration()
     Require(expanded.size() == 220 && Get(expanded, 72) == 900'000'004,
             "Independent emitter fixture expansion differs");
     auto state = V7SaveSchema::FromHistorical(Kind::ParticleEmitter, emitter, expanded);
-    Require(state.size() == 40 && Signed(state, 0) == 125'000'000'000LL &&
-            Signed(state, 8) == 0 && Signed(state, 16) == -1,
-            "Emitter migration discarded nanosecond duration or sentinel age");
-    Require(Get(state, 24) == Get(emitter, 52) && Get(state, 32) == Get(emitter, 52),
+    Require(state.size() == 52 && Signed(state, 0) == 125'000'000'000LL &&
+            Signed(state, 8) == 0 &&
+            std::all_of(state.begin()+32, state.end(), [](Byte value) { return value == 0; }),
+            "Emitter migration invented a bound curve origin or lost its spawn remainder");
+    Require(Get(state, 16) == Get(emitter, 52) && Get(state, 24) == Get(emitter, 52),
             "Emitter pending/applied external centers differ at migration");
     V7SaveSchema::Validate(Kind::ParticleEmitter, state);
 
@@ -282,7 +283,7 @@ void ExactStateValidation()
     Reject([&] { V7SaveSchema::Validate(Kind::Reanimation, Bytes(60)); },
         "Old relative-clock animation tail was accepted as current");
 
-    Bytes system(4), plant(156), zombie(105), emitter(40), particle(92), grid(240);
+    Bytes system(4), plant(156), zombie(105), emitter(52), particle(92), grid(240);
     Set(system, 0, 0xfedcba98U, 4); V7SaveSchema::Validate(Kind::ParticleSystem, system);
     Reject([&] { V7SaveSchema::Validate(Kind::ParticleSystem, Bytes(12)); },
         "Old particle system pending-step state accepted as current");
@@ -305,12 +306,10 @@ void ExactStateValidation()
     rejectField(Kind::Zombie, zombie, 40, 0x7f800000U, "Nonfinite velocity accepted", 4);
     rejectField(Kind::Zombie, zombie, 8, 0x7ff0000000000000ULL, "Nonfinite root origin accepted");
     rejectField(Kind::Plant, plant, 0, 0x7fc00000U, "NaN actor coordinate accepted", 4);
-    Set(emitter, 0, 999'999'999'999LL); Set(emitter, 8, 123'456'789); Set(emitter, 16, UINT64_MAX);
+    Set(emitter, 0, 999'999'999'999LL); Set(emitter, 8, 123'456'789);
     V7SaveSchema::Validate(Kind::ParticleEmitter, emitter);
     rejectField(Kind::ParticleEmitter, emitter, 0, 1'000'000'000'000LL, "Spawn remainder at unit accepted");
     rejectField(Kind::ParticleEmitter, emitter, 8, UINT64_MAX, "Negative emission elapsed time accepted");
-    rejectField(Kind::ParticleEmitter, emitter, 16, static_cast<std::uint64_t>(-2LL),
-                "Invalid emitter previous sample sentinel accepted");
     Set(particle, 0, UINT64_MAX); Set(particle, 8, 0); Set(particle, 16, 999'999'999'999LL);
     V7SaveSchema::Validate(Kind::Particle, particle);
     rejectField(Kind::Particle, particle, 0, static_cast<std::uint64_t>(-2LL), "Invalid particle sentinel accepted");

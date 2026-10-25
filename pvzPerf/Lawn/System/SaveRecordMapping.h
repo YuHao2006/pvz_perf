@@ -220,9 +220,11 @@ template<class T, class Fn> void VisitV7Members(Fn&& visit)
     {
         visit(offsetof(T, mSpawnRemainder), 0, 8);
         visit(offsetof(T, mEmissionElapsedNs), 8, 8);
-        visit(offsetof(T, mSystemLastSampleAgeNs), 16, 8);
-        visit(offsetof(T, mExternalTarget), 24, 8);
-        visit(offsetof(T, mExternalAppliedCenter), 32, 8);
+        visit(offsetof(T, mExternalTarget), 16, 8);
+        visit(offsetof(T, mExternalAppliedCenter), 24, 8);
+        visit(offsetof(T, mSystemPositionOriginX), 32, 8);
+        visit(offsetof(T, mSystemPositionOriginY), 40, 8);
+        visit(offsetof(T, mSystemPositionBound), 48, 4);
     }
     else if constexpr (std::is_same_v<T, TodParticle>)
     {
@@ -309,7 +311,7 @@ template<class T> void WriteHistoricalProjection(const T& value, std::span<Legac
         };
         PutFloat(bytes, 48, float(double(value.mSpawnRemainder) / V7SaveSchema::Frame));
         PutFloat(bytes, 72, phase(value.mSystemAge.mNanoseconds));
-        PutFloat(bytes, 76, phase(value.mSystemLastSampleAgeNs));
+        PutFloat(bytes, 76, phase(value.mSystemAge.mNanoseconds));
     }
     else if constexpr (std::is_same_v<T, TodParticle>)
     {

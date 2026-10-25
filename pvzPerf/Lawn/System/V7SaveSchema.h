@@ -29,7 +29,7 @@ constexpr std::size_t Size(Kind kind)
     case Kind::LawnMower: return 40;
     case Kind::Reanimation: return 68;
     case Kind::ParticleSystem: return 4;
-    case Kind::ParticleEmitter: return 40;
+    case Kind::ParticleEmitter: return 52;
     case Kind::Particle: return 92;
     case Kind::GridItem: return 240;
     default: return 0;
@@ -106,7 +106,6 @@ inline void Validate(Kind kind, std::span<const Byte> state)
     {
         Require(Signed(0) > -Frame && Signed(0) < Frame, "particle spawn remainder exceeds its unit");
         Require(Signed(8) >= 0, "particle emission elapsed time is negative");
-        Require(Signed(16) >= -1, "particle system previous sample time is invalid");
     }
     else if (kind == Kind::Particle)
     {
@@ -204,17 +203,12 @@ inline std::vector<Byte> FromHistorical(Kind kind, std::span<const Byte> canonic
     }
     else if (kind == Kind::ParticleEmitter)
     {
-        const auto duration = Time(expanded, kind, 68);
-        const auto phaseAge = [&](std::size_t offset) {
-            const double phase = Float(canonical, offset);
-            return phase < 0 ? std::int64_t(-1) :
-                Rounded(phase * (duration > 10'000'000 ? double(duration - 10'000'000) : 0.0));
-        };
         Put(0, Rounded(double(Float(canonical, 48)) * Frame));
         Put(8, 0); // Effective emission integral starts at the migrated current state.
-        Put(16, phaseAge(76));
         for (std::size_t vector = 0; vector < 2; ++vector)
-            std::memcpy(state.data() + 24 + vector * 8, canonical.data() + 52, 8);
+            std::memcpy(state.data() + 16 + vector * 8, canonical.data() + 52, 8);
+        // No authored curve origin exists in historical records. The runtime
+        // binds it from the saved center and age after resolving the definition.
     }
     else if (kind == Kind::Particle)
     {

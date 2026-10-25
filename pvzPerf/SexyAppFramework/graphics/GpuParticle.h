@@ -36,6 +36,17 @@ struct GpuParticleState {
     float systemWeights[5]{};
     uint32_t reserved = 0;
 };
+// Formula particles use the same common prefix as GpuParticleState, followed
+// by an analytic motion segment. Keeping the prefix identical lets the
+// renderer validate emitter/visual state without introducing a per-particle
+// motion-kind field.
+struct GpuParticleFormulaState : GpuParticleState {
+    int64_t segmentElapsedNs = 0;
+    float originX = 0, originY = 0;
+    float velocityX = 0, velocityY = 0;
+    float accelerationX = 0, accelerationY = 0;
+    float spinOrigin = 0, spinRate = 0;
+};
 struct GpuParticleDraw {
     uint32_t variant = 0, frameSource = 0;
     float translateX = 0, translateY = 0;
@@ -43,9 +54,15 @@ struct GpuParticleDraw {
     float targetWidth = 0, targetHeight = 0;
     float overlay00 = 1, overlay01 = 0, overlay02 = 0;
     float overlay10 = 0, overlay11 = 1, overlay12 = 0;
-    uint32_t reserved[3]{};
+    // Words 13 and 14 are consumed by the resident particle shader.
+    // stateWords is the stride of one state in 32-bit words (48 or 56).
+    uint32_t stateWords = 48;
+    uint32_t motionModel = 0; // 0 discrete, 1 formula; one value per draw.
+    uint32_t reserved = 0;
 };
 static_assert(sizeof(GpuParticleState) == 192);
+static_assert(sizeof(GpuParticleFormulaState) == 232);
+static_assert(offsetof(GpuParticleFormulaState, segmentElapsedNs) == sizeof(GpuParticleState));
 static_assert(offsetof(GpuParticleState, ageNs) == 48);
 static_assert(offsetof(GpuParticleState, particleWeights) == 104);
 static_assert(sizeof(GpuParticleDraw) == 64);

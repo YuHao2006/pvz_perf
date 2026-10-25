@@ -1603,7 +1603,8 @@ bool D3d12Renderer::SubmitParticle(D3d12Reanim* definition,D3d12Texture* texture
     bool linear,bool repeat,GpuBlend blend,const GpuClip* clip) {
 #if defined(PVZ_D3D12_REANIM_RESIDENT)
     auto& s=*impl_;
-    const auto slots=1+chain.size()*2;
+    const auto stateWords = draw.stateWords ? draw.stateWords : uint32_t(sizeof(GpuParticleState)/sizeof(float));
+    const auto slots=(24+chain.size()*stateWords+23)/24;
     if(!definition||definition->owner!=&s||draw.variant>=definition->particleVariantCount||
         chain.empty()||draw.frameSource>=chain.size()||slots+1>65535-s.reanimControls.size()||
         (slots+1)*96>s.reanimInstances.size-s.reanimInstances.used)return false;
@@ -1619,7 +1620,7 @@ bool D3d12Renderer::SubmitParticle(D3d12Reanim* definition,D3d12Texture* texture
     const auto start=s.reanimInstances.used;
     std::memset(s.reanimInstances.mapped+start,0,96);
     std::memcpy(s.reanimInstances.mapped+start,&draw,sizeof(draw));
-    std::memcpy(s.reanimInstances.mapped+start+96,chain.data(),chain.size_bytes());
+    std::memcpy(s.reanimInstances.mapped+start+96,chain.data(),chain.size()*size_t(stateWords)*sizeof(float));
     s.reanimInstances.used+=slots*96;
     s.reanimControls.resize(s.reanimControls.size()+slots);
     const GpuReanimTrackDraw packet{0,0xffffffff,draw.samplingFlags};

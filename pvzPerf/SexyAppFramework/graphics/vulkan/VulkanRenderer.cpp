@@ -2303,7 +2303,8 @@ bool VulkanRenderer::SubmitParticle(VulkanReanim* definition,VulkanTexture* text
     bool linear,bool repeat,VulkanBlend blend,const VulkanClip* clip) {
 #if defined(PVZ_REANIM_UNIFIED)
     auto& s=*impl_;
-    const auto slots=1+chain.size()*2;
+    const auto stateWords = draw.stateWords ? draw.stateWords : uint32_t(sizeof(GpuParticleState)/sizeof(float));
+    const auto slots=(24+chain.size()*stateWords+23)/24;
     if(!definition||definition->owner!=&s||draw.variant>=definition->particleVariantCount||
         chain.empty()||draw.frameSource>=chain.size()||slots+1>65535-s.unifiedInstanceControls.size()||
         (slots+1)*96>s.unifiedInstances->size-s.unifiedInstances->used)return false;
@@ -2320,7 +2321,7 @@ bool VulkanRenderer::SubmitParticle(VulkanReanim* definition,VulkanTexture* text
     const auto start=s.unifiedInstances->used;
     std::memset(bytes+start,0,96);
     std::memcpy(bytes+start,&draw,sizeof(draw));
-    std::memcpy(bytes+start+96,chain.data(),chain.size_bytes());
+    std::memcpy(bytes+start+96,chain.data(),chain.size()*size_t(stateWords)*sizeof(float));
     s.unifiedInstances->used+=slots*96;
     s.unifiedInstanceControls.resize(s.unifiedInstanceControls.size()+slots);
     const GpuReanimTrackDraw packet{0,0xffffffff,draw.samplingFlags};

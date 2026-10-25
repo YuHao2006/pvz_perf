@@ -160,7 +160,7 @@ ParticleResult pParticle(uint draw,uint count) {
     float red=255.0,green=255.0,blue=255.0,alpha=255.0,scale=1.0,stretch=1.0,spin=0.0,px=0.0,py=0.0;
     uint mask=0u;
     for(int index=int(count)-1;index>=0;--index) {
-        uint state=draw+24u+uint(index)*48u,emitter=pEmitter(state);
+        uint state=draw+24u+uint(index)*uint(max(48.0,pDynamic(draw+13u))),emitter=pEmitter(state);
         float time=pLife(state+12u,state+14u),systemTime=pLife(state+16u,state+18u);
         vec4 overrideColor=vec4(pDynamic(state+8u),pDynamic(state+9u),pDynamic(state+10u),pDynamic(state+11u));
         float overrideScale=pDynamic(state+7u);
@@ -196,7 +196,8 @@ ParticleResult pParticle(uint draw,uint count) {
     }
     result.color=clamp(vec4(pRound(red),pRound(green),pRound(blue),pRound(alpha)),0.0,255.0)/255.0;
     if(result.color.w<=0.0)return result;
-    uint source=draw+24u+pBits(draw+1u)*48u,emitter=pEmitter(source);
+    uint stateWords=uint(max(48.0,pDynamic(draw+13u)));
+    uint source=draw+24u+pBits(draw+1u)*stateWords,emitter=pEmitter(source);
     uint rectCount=uint(pStatic(emitter+3u));if(rectCount==0u)return result;
     float time=pLife(source+12u,source+14u);
     int frame=int(pBits(source+2u));uint frames=uint(pStatic(emitter+4u));
@@ -222,6 +223,18 @@ ParticleResult pParticle(uint draw,uint count) {
     float bottom=pEvaluate(emitter,13u,time,pDynamic(source+38u));
     float left=pEvaluate(emitter,14u,time,pDynamic(source+39u));
     float right=pEvaluate(emitter,15u,time,pDynamic(source+40u));
+    if (pDynamic(draw+14u)>0.5) {
+        // Formula packets carry an immutable segment after the common visual
+        // state. The GPU evaluates position from elapsed nanoseconds; no
+        // per-tick position is uploaded and no GPU result is read back.
+        float ticks=max(0.0,pIntegerFloat(source+12u)-pIntegerFloat(source+48u))/10000000.0;
+        uint extra=source+50u;
+        px=pDynamic(extra+0u)+pDynamic(extra+2u)*ticks+
+            pDynamic(extra+4u)*ticks*(ticks+1.0)*0.5;
+        py=pDynamic(extra+1u)+pDynamic(extra+3u)*ticks+
+            pDynamic(extra+5u)*ticks*(ticks+1.0)*0.5;
+        spin=pDynamic(extra+6u)+pDynamic(extra+7u)*ticks;
+    }
     px+=pDynamic(draw+2u);py+=pDynamic(draw+3u);
     px+=left*width;py+=top*height;
     uint flags=uint(pStatic(emitter));

@@ -145,8 +145,8 @@ public:
         std::span<const GpuParticleState>, bool linear, bool repeat, VulkanBlend,
         const VulkanClip* clip = nullptr);
     bool SubmitFormulaParticles(VulkanReanim* d, VulkanTexture* t, const GpuParticleDraw& p,
-        std::span<const GpuParticleState> s, bool l, bool r, VulkanBlend b, const VulkanClip* c = nullptr)
-    { return SubmitParticle(d,t,p,s,l,r,b,c); }
+        std::span<const GpuParticleFormulaState> s, bool l, bool r, VulkanBlend b, const VulkanClip* c = nullptr)
+    { return SubmitParticle(d,t,p,{reinterpret_cast<const GpuParticleState*>(s.data()),s.size()},l,r,b,c); }
     bool SubmitDiscreteParticles(VulkanReanim* d, VulkanTexture* t, const GpuParticleDraw& p,
         std::span<const GpuParticleState> s, bool l, bool r, VulkanBlend b, const VulkanClip* c = nullptr)
     { return SubmitParticle(d,t,p,s,l,r,b,c); }

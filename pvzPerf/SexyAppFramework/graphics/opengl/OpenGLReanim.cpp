@@ -21,7 +21,8 @@ bool OpenGLRenderer::SubmitParticle(OpenGLReanim* definition,OpenGLTexture* text
 #if defined(PVZ_OPENGL_REANIM_RESIDENT)
     auto& s=*impl_;
     constexpr auto stride=Impl::ReanimInstanceTexels*4;
-    const auto wordCount=24+chain.size()*48;
+    const auto stateWords = draw.stateWords ? draw.stateWords : uint32_t(sizeof(GpuParticleState)/sizeof(float));
+    const auto wordCount=24+chain.size()*stateWords;
     const auto slots=(wordCount+stride-1)/stride;
     if(!definition||!s.reanimDefinitions.contains(definition)||draw.variant>=definition->particleVariantCount||
         chain.empty()||draw.frameSource>=chain.size()||slots+1>65535-s.reanimInstances.size())return false;
@@ -39,7 +40,7 @@ bool OpenGLRenderer::SubmitParticle(OpenGLReanim* definition,OpenGLTexture* text
     s.reanimInstances.resize(old+slots);
     auto* target=s.reanimInstanceData[old].data();
     std::memcpy(target,&draw,sizeof(draw));
-    std::memcpy(reinterpret_cast<std::byte*>(target)+96,chain.data(),chain.size_bytes());
+    std::memcpy(reinterpret_cast<std::byte*>(target)+96,chain.data(),chain.size()*size_t(stateWords)*sizeof(float));
     const GpuReanimTrackDraw packet{0,0xffffffff,draw.samplingFlags};
     return SubmitReanimTrack(token,packet,blend);
 #else

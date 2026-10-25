@@ -103,13 +103,26 @@ bool FormulaMotion(const TodParticle& particle)
     }
     return true;
 }
+
+bool FormulaChain(const TodParticle& particle)
+{
+    auto* current = &particle;
+    auto& system = *particle.mParticleEmitter->mParticleSystem;
+    while (current)
+    {
+        if (!FormulaMotion(*current))
+            return false;
+        current = system.mParticleHolder->mParticles.DataArrayTryToGet(current->mCrossFadeParticleID);
+    }
+    return true;
+}
 }
 
 // The public dispatcher selects the CPU-side submission entry point. The
 // selected GPU pipeline carries no per-particle motion-kind field.
 void TodParticleDrawGpu(Sexy::Graphics& graphics, TodParticle& particle)
 {
-    if (FormulaMotion(particle))
+    if (FormulaChain(particle))
         TodParticleDrawFormulaGpu(graphics, particle);
     else
         TodParticleDrawDiscreteGpu(graphics, particle);
@@ -139,39 +152,79 @@ static void SubmitParticleStateGpu(Sexy::Graphics& graphics, TodParticle& partic
     auto* texture = definition.mTextures[system.mVariant];
     if (!texture) throw std::logic_error("Particle atlas was not uploaded");
     // Reused staging holds only raw state, never evaluated colors/transforms.
-    static thread_local std::vector<Sexy::GpuParticleState> chain;
-    chain.clear();
+    static thread_local std::vector<Sexy::GpuParticleState> discreteChain;
+    static thread_local std::vector<Sexy::GpuParticleFormulaState> formulaChain;
+    formulaChain.clear();
+    discreteChain.clear();
     auto* current = &particle;
     while (current)
     {
-        if (chain.size() >= unsigned(system.mParticleHolder->mParticles.mMaxSize))
+        if ((formula ? formulaChain.size() : discreteChain.size()) >=
+            unsigned(system.mParticleHolder->mParticles.mMaxSize))
             throw std::logic_error("Particle crossfade chain contains a cycle");
         const auto& emitter = *current->mParticleEmitter;
         if (emitter.mParticleSystem != &system)
             throw std::logic_error("Particle crossfade crosses system ownership");
-        auto& state = chain.emplace_back();
-        state.emitter = unsigned(emitter.mEmitterDef - definition.mEmitterDefs);
-        state.flags = unsigned(emitter.mEmitterDef->mParticleFlags);
-        state.imageFrame = current->mImageFrame;
-        state.frameOverride = emitter.mFrameOverride;
-        state.positionX = current->mPosition.x; state.positionY = current->mPosition.y;
-        state.spin = current->mSpinPosition; state.scaleOverride = emitter.mScaleOverride;
-        state.colorOverride[0] = float(emitter.mColorOverride.mRed);
-        state.colorOverride[1] = float(emitter.mColorOverride.mGreen);
-        state.colorOverride[2] = float(emitter.mColorOverride.mBlue);
-        state.colorOverride[3] = float(emitter.mColorOverride.mAlpha);
-        state.ageNs = current->mParticleAgeNs; state.durationNs = current->mParticleDurationNs;
-        state.systemAgeNs = emitter.mSystemAgeNs; state.systemDurationNs = emitter.mSystemDurationNs;
-        state.crossFadeDurationNs = current->mCrossFadeDurationNs;
-        state.animationElapsedNs = current->mAnimationElapsedNs;
-        state.animationIntegral = current->mAnimationSampleIntegral;
-        static_assert(ParticleTracks::NUM_PARTICLE_TRACKS == 16);
-        std::copy_n(current->mParticleInterp, 16, state.particleWeights);
-        std::copy_n(emitter.mTrackInterp + ParticleSystemTracks::TRACK_SYSTEM_RED, 5, state.systemWeights);
+        if (formula)
+        {
+            auto& state = formulaChain.emplace_back();
+            state.emitter = unsigned(emitter.mEmitterDef - definition.mEmitterDefs);
+            state.flags = unsigned(emitter.mEmitterDef->mParticleFlags);
+            state.imageFrame = current->mImageFrame;
+            state.frameOverride = emitter.mFrameOverride;
+            state.positionX = current->mPosition.x; state.positionY = current->mPosition.y;
+            state.spin = current->mSpinPosition; state.scaleOverride = emitter.mScaleOverride;
+            state.colorOverride[0] = float(emitter.mColorOverride.mRed);
+            state.colorOverride[1] = float(emitter.mColorOverride.mGreen);
+            state.colorOverride[2] = float(emitter.mColorOverride.mBlue);
+            state.colorOverride[3] = float(emitter.mColorOverride.mAlpha);
+            state.ageNs = current->mParticleAgeNs; state.durationNs = current->mParticleDurationNs;
+            state.systemAgeNs = emitter.mSystemAgeNs; state.systemDurationNs = emitter.mSystemDurationNs;
+            state.crossFadeDurationNs = current->mCrossFadeDurationNs;
+            state.animationElapsedNs = current->mAnimationElapsedNs;
+            state.animationIntegral = current->mAnimationSampleIntegral;
+            state.segmentElapsedNs = current->mLinearElapsedNs < 0 ? 0 : current->mLinearElapsedNs;
+            state.originX = float(current->mLinearOriginX);
+            state.originY = float(current->mLinearOriginY);
+            state.velocityX = current->mLinearVelocity.x;
+            state.velocityY = current->mLinearVelocity.y;
+            state.accelerationX = current->mLinearAcceleration.x;
+            state.accelerationY = current->mLinearAcceleration.y;
+            state.spinOrigin = float(current->mLinearSpinOrigin);
+            state.spinRate = float(current->mLinearSpinRate);
+            static_assert(ParticleTracks::NUM_PARTICLE_TRACKS == 16);
+            std::copy_n(current->mParticleInterp, 16, state.particleWeights);
+            std::copy_n(emitter.mTrackInterp + ParticleSystemTracks::TRACK_SYSTEM_RED, 5, state.systemWeights);
+        }
+        else
+        {
+            auto& state = discreteChain.emplace_back();
+            state.emitter = unsigned(emitter.mEmitterDef - definition.mEmitterDefs);
+            state.flags = unsigned(emitter.mEmitterDef->mParticleFlags);
+            state.imageFrame = current->mImageFrame;
+            state.frameOverride = emitter.mFrameOverride;
+            state.positionX = current->mPosition.x; state.positionY = current->mPosition.y;
+            state.spin = current->mSpinPosition; state.scaleOverride = emitter.mScaleOverride;
+            state.colorOverride[0] = float(emitter.mColorOverride.mRed);
+            state.colorOverride[1] = float(emitter.mColorOverride.mGreen);
+            state.colorOverride[2] = float(emitter.mColorOverride.mBlue);
+            state.colorOverride[3] = float(emitter.mColorOverride.mAlpha);
+            state.ageNs = current->mParticleAgeNs; state.durationNs = current->mParticleDurationNs;
+            state.systemAgeNs = emitter.mSystemAgeNs; state.systemDurationNs = emitter.mSystemDurationNs;
+            state.crossFadeDurationNs = current->mCrossFadeDurationNs;
+            state.animationElapsedNs = current->mAnimationElapsedNs;
+            state.animationIntegral = current->mAnimationSampleIntegral;
+            static_assert(ParticleTracks::NUM_PARTICLE_TRACKS == 16);
+            std::copy_n(current->mParticleInterp, 16, state.particleWeights);
+            std::copy_n(emitter.mTrackInterp + ParticleSystemTracks::TRACK_SYSTEM_RED, 5, state.systemWeights);
+        }
         current = system.mParticleHolder->mParticles.DataArrayTryToGet(current->mCrossFadeParticleID);
     }
     Sexy::GpuParticleDraw draw;
     draw.variant = system.mVariant; draw.frameSource = frameSource;
+    draw.stateWords = formula ? sizeof(Sexy::GpuParticleFormulaState) / sizeof(float)
+                              : sizeof(Sexy::GpuParticleState) / sizeof(float);
+    draw.motionModel = formula ? 1u : 0u;
     draw.translateX = graphics.mTransX; draw.translateY = graphics.mTransY;
     draw.targetWidth = float(graphics.mDestImage->mWidth);
     draw.targetHeight = float(graphics.mDestImage->mHeight);
@@ -188,10 +241,14 @@ static void SubmitParticleStateGpu(Sexy::Graphics& graphics, TodParticle& partic
     const bool clipped = fullscreen ||
         rectangle.mX || rectangle.mY || rectangle.mWidth != 800 || rectangle.mHeight != 600;
     const auto submit = [&](Sexy::GpuBlend mode) {
-        const bool accepted = formula
-            ? render.mRenderer->SubmitFormulaParticles(definition.mGpuDefinition, texture, draw, chain,
-                graphics.mLinearBlend, render.sSamplerAddressWrap, mode, clipped ? &clip : nullptr)
-            : render.mRenderer->SubmitDiscreteParticles(definition.mGpuDefinition, texture, draw, chain,
+        bool accepted = false;
+        if (formula)
+            accepted = render.mRenderer->SubmitFormulaParticles(definition.mGpuDefinition, texture, draw,
+                std::span<const Sexy::GpuParticleFormulaState>(formulaChain.data(), formulaChain.size()),
+                graphics.mLinearBlend, render.sSamplerAddressWrap, mode, clipped ? &clip : nullptr);
+        else
+            accepted = render.mRenderer->SubmitDiscreteParticles(definition.mGpuDefinition, texture, draw,
+                std::span<const Sexy::GpuParticleState>(discreteChain.data(), discreteChain.size()),
                 graphics.mLinearBlend, render.sSamplerAddressWrap, mode, clipped ? &clip : nullptr);
         if (!accepted)
             throw std::runtime_error("GPU particle submission failed");

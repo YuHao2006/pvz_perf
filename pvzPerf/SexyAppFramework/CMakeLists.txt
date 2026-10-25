@@ -37,6 +37,7 @@ set(Lawn__Board__Board_Source
     "../Lawn/GameObject.cpp"
     "../Lawn/GridItem.cpp"
     "../Lawn/LawnMower.cpp"
+    "../Lawn/Motion.cpp"
     "../Lawn/MessageWidget.cpp"
     "../Lawn/Plant.cpp"
     "../Lawn/Projectile.cpp"

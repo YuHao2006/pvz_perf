@@ -16,6 +16,7 @@ layout(std430,binding=2)writeonly buffer Elements{uint elementWords[];};
 layout(std430,binding=3)readonly buffer Jobs{uvec2 jobs[];};
 uniform uint jobCount,firstOutputVertex;
 void storeVertex(uint index,vec4 p,vec4 tint,uvec2 metadata){
+ p.xy=vec2(dot(trackOverlayX.xy,p.xy)+trackOverlayX.z,dot(trackOverlayY.xy,p.xy)+trackOverlayY.z);
  uint at=index*10u;
  vertexWords[at]=floatBitsToUint(p.x);vertexWords[at+1u]=floatBitsToUint(p.y);
  vertexWords[at+2u]=floatBitsToUint(tint.r);vertexWords[at+3u]=floatBitsToUint(tint.g);

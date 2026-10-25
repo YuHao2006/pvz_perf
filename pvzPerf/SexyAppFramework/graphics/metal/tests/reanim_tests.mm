@@ -132,6 +132,55 @@ void Run() {
         renderer.EndSceneAndPresent();
         return renderer.ReadTexturePixels(target).pixels;
     };
+    // Particle definitions share only the resident allocation and output path;
+    // their shader reads raw clocks, track weights and geometry from this blob.
+    std::vector<float> particleWords(36, 0.0f);
+    particleWords[0] = 4; particleWords[1] = 1; particleWords[3] = 1;
+    particleWords[5] = 255; particleWords[7] = 1; particleWords[8] = 1;
+    particleWords[11] = 1;
+    for (unsigned track = 0; track < 17; ++track) {
+        particleWords[12 + track] = float(particleWords.size());
+        const float value = track < 12 ? 1.0f : 0.0f;
+        particleWords.insert(particleWords.end(), {1, 0, value, value, 1, 1, 0, 0, 0});
+    }
+    particleWords[2] = float(particleWords.size());
+    particleWords.insert(particleWords.end(), {16, 16, 0, 0, 1, 1, 0, 0,
+        24, 12, 0, 0, 1, 1, 0, 0});
+    auto* particleDefinition = renderer.UploadParticleDefinition(particleWords, 2);
+    Require(particleDefinition != nullptr, "Metal particle definition upload failed");
+    GpuParticleState particle;
+    particle.positionX = particle.positionY = 24;
+    particle.ageNs = 37'000'001; particle.durationNs = 100'000'003;
+    particle.systemAgeNs = 51'000'001; particle.systemDurationNs = 200'000'003;
+    GpuParticleDraw particleDraw;
+    particleDraw.translateX = 2; particleDraw.translateY = 3;
+    particleDraw.targetWidth = particleDraw.targetHeight = 64;
+    const GpuClip particleClip{20, 20, 15, 15};
+    for (uint32_t variant : {0u, 1u}) for (float alpha : {255.f, 127.f})
+        for (bool clipped : {false, true}) {
+            particleDraw.variant = variant; particle.colorOverride[3] = alpha;
+            const float width = variant ? 24.f : 16.f, height = variant ? 12.f : 16.f;
+            const float x = 26 - width / 2, y = 27 - height / 2;
+            const uint32_t slot = MetalRenderer::SlotOf(texture);
+            const GpuVertex expected[]{
+                {x,y,1,1,1,alpha/255,0,0,slot,0},
+                {x,y+height,1,1,1,alpha/255,0,1,slot,0},
+                {x+width,y,1,1,1,alpha/255,1,0,slot,0},
+                {x,y+height,1,1,1,alpha/255,0,1,slot,0},
+                {x+width,y,1,1,1,alpha/255,1,0,slot,0},
+                {x+width,y+height,1,1,1,alpha/255,1,1,slot,0}};
+            const auto* clip = clipped ? &particleClip : nullptr;
+            begin();
+            renderer.SubmitTriangles(expected, texture, false, false, GpuBlend::Normal, clip);
+            const auto reference = finish();
+            begin();
+            Require(!renderer.SubmitParticle(particleDefinition, texture, particleDraw, {},
+                false, false, GpuBlend::Normal, clip), "Metal accepted an empty particle chain");
+            Require(renderer.SubmitParticle(particleDefinition, texture, particleDraw, {&particle, 1},
+                false, false, GpuBlend::Normal, clip), "Metal particle state rejected");
+            Compare(reference, finish());
+        }
+    renderer.DestroyReanimDefinition(particleDefinition);
     const GpuClip clips[]{{10, 10, 22, 25}, {100, 100, 4, 5}, {10, 10, 0, 8}};
     unsigned cases = 0;
     uint32_t stale = UINT32_MAX;
@@ -304,7 +353,7 @@ void Run() {
     renderer.SetRenderImage(nullptr);
     renderer.DestroyTexture(target);
     std::cout << "Metal resident cases=" << cases
-        << " batch5000/sentinel/variant/clip/alpha/truncate/mixed/feedback/mutation/legacy/policy/target/lifetime=PASS\n";
+        << " particle8/batch5000/sentinel/variant/clip/alpha/truncate/mixed/feedback/mutation/legacy/policy/target/lifetime=PASS\n";
 }
 }
 int main() {

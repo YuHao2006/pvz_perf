@@ -359,7 +359,7 @@ visit(offsetof(Type, mEffectType), 0, 4, sizeof(Type::mEffectType));
 visit(offsetof(Type, mVariant), 4, 4, sizeof(Type::mVariant));
 visit(offsetof(Type, mParticleDef), 8, 8, sizeof(Type::mParticleDef));
 visit(offsetof(Type, mParticleHolder), 16, 8, sizeof(Type::mParticleHolder));
-visit(offsetof(Type, mEmitterListPad), 24, 32, sizeof(Type::mEmitterListPad));
+// [24,56) remains reserved and zero after the retired emitter-list storage.
 visit(offsetof(Type, mDead), 56, 1, sizeof(Type::mDead));
 visit(offsetof(Type, mIsAttachment), 57, 1, sizeof(Type::mIsAttachment));
 visit(offsetof(Type, mRenderOrder), 60, 4, sizeof(Type::mRenderOrder));
@@ -368,33 +368,33 @@ visit(offsetof(Type, mDontUpdate), 64, 1, sizeof(Type::mDontUpdate));
 if constexpr (std::is_same_v<Type, TodParticleEmitter>) {
 visit(offsetof(Type, mEmitterDef), 0, 8, sizeof(Type::mEmitterDef));
 visit(offsetof(Type, mParticleSystem), 8, 8, sizeof(Type::mParticleSystem));
-visit(offsetof(Type, mParticleListPad), 16, 32, sizeof(Type::mParticleListPad));
+// [16,48) remains reserved and zero after the retired particle-list storage.
 visit(offsetof(Type, mSystemCenter), 52, 8, sizeof(Type::mSystemCenter));
 visit(offsetof(Type, mParticlesSpawned), 60, 4, sizeof(Type::mParticlesSpawned));
-visit(offsetof(Type, mSystemAge), 64, 4, sizeof(Type::mSystemAge));
-visit(offsetof(Type, mSystemDuration), 68, 4, sizeof(Type::mSystemDuration));
+visit(offsetof(Type, mSystemAgeNs), 64, 4, sizeof(Type::mSystemAgeNs));
+visit(offsetof(Type, mSystemDurationNs), 68, 4, sizeof(Type::mSystemDurationNs));
 visit(offsetof(Type, mDead), 80, 1, sizeof(Type::mDead));
 visit(offsetof(Type, mColorOverride), 84, 16, sizeof(Type::mColorOverride));
 visit(offsetof(Type, mExtraAdditiveDrawOverride), 100, 1, sizeof(Type::mExtraAdditiveDrawOverride));
 visit(offsetof(Type, mScaleOverride), 104, 4, sizeof(Type::mScaleOverride));
 // [112,120) remains a zeroed reserved wire slot after image overrides retired.
 visit(offsetof(Type, mCrossFadeEmitterID), 120, 4, sizeof(Type::mCrossFadeEmitterID));
-visit(offsetof(Type, mEmitterCrossFadeCountDown), 124, 4, sizeof(Type::mEmitterCrossFadeCountDown));
+visit(offsetof(Type, mEmitterCrossFadeCountDownNs), 124, 4, sizeof(Type::mEmitterCrossFadeCountDownNs));
 visit(offsetof(Type, mFrameOverride), 128, 4, sizeof(Type::mFrameOverride));
 visit(offsetof(Type, mTrackInterp), 132, 40, sizeof(Type::mTrackInterp));
 visit(offsetof(Type, mSystemFieldInterp), 172, 32, sizeof(Type::mSystemFieldInterp));
 }
 if constexpr (std::is_same_v<Type, TodParticle>) {
 visit(offsetof(Type, mParticleEmitter), 0, 8, sizeof(Type::mParticleEmitter));
-visit(offsetof(Type, mParticleDuration), 8, 4, sizeof(Type::mParticleDuration));
-visit(offsetof(Type, mParticleAge), 12, 4, sizeof(Type::mParticleAge));
+visit(offsetof(Type, mParticleDurationNs), 8, 4, sizeof(Type::mParticleDurationNs));
+visit(offsetof(Type, mParticleAgeNs), 12, 4, sizeof(Type::mParticleAgeNs));
 visit(offsetof(Type, mVelocity), 28, 8, sizeof(Type::mVelocity));
 visit(offsetof(Type, mPosition), 36, 8, sizeof(Type::mPosition));
 visit(offsetof(Type, mImageFrame), 44, 4, sizeof(Type::mImageFrame));
 visit(offsetof(Type, mSpinPosition), 48, 4, sizeof(Type::mSpinPosition));
 visit(offsetof(Type, mSpinVelocity), 52, 4, sizeof(Type::mSpinVelocity));
 visit(offsetof(Type, mCrossFadeParticleID), 56, 4, sizeof(Type::mCrossFadeParticleID));
-visit(offsetof(Type, mCrossFadeDuration), 60, 4, sizeof(Type::mCrossFadeDuration));
+visit(offsetof(Type, mCrossFadeDurationNs), 60, 4, sizeof(Type::mCrossFadeDurationNs));
 visit(offsetof(Type, mParticleInterp), 64, 64, sizeof(Type::mParticleInterp));
 visit(offsetof(Type, mParticleFieldInterp), 128, 32, sizeof(Type::mParticleFieldInterp));
 }

@@ -1,4 +1,5 @@
 #version 450
+#extension GL_GOOGLE_include_directive : require
 layout(triangles) in;
 layout(triangle_strip,max_vertices=18) out;
 layout(location=0) in vec2 position[];
@@ -25,9 +26,20 @@ struct Key {
 };
 struct Geometry {float width,height,u0,v0,u1,v1;};
 layout(set=2,binding=0,std430) readonly buffer Static {uint blob[];};
-layout(set=2,binding=1,std430) readonly buffer Instances {Instance instances[];};
+layout(set=2,binding=1,std430) readonly buffer Instances {uint instanceWords[];};
 layout(set=2,binding=2,std430) readonly buffer Packets {TrackPacket packets[];};
 float value(uint index) {return uintBitsToFloat(blob[index]);}
+uvec4 instanceUint4(uint at) {return uvec4(instanceWords[at],instanceWords[at+1u],instanceWords[at+2u],instanceWords[at+3u]);}
+Instance readInstance(uint index) {
+    uint at=index*24u;Instance result;
+    result.sampleInfo=instanceUint4(at);result.timeTranslation=uintBitsToFloat(instanceUint4(at+4u));
+    result.overlayX=uintBitsToFloat(instanceUint4(at+8u));result.overlayY=uintBitsToFloat(instanceUint4(at+12u));
+    result.metadata=instanceUint4(at+16u);result.clip=uintBitsToFloat(instanceUint4(at+20u));return result;
+}
+uint particleGeometry;
+float pStatic(uint index) {return value(particleGeometry+(index/6u)*8u+index%6u);}
+float pDynamic(uint index) {return uintBitsToFloat(instanceWords[index]);}
+#include "../../GpuParticleShader.glsl"
 Key readKey(uint offset) {
     return Key(value(offset),value(offset+1u),value(offset+2u),value(offset+3u),
         value(offset+4u),value(offset+5u),value(offset+6u),int(blob[offset+7u]),blob[offset+8u]);
@@ -81,7 +93,35 @@ void main() {
     }
     Job job;
     TrackPacket packet=packets[vertexSampler[0]&0x7fffffffu];
-    Instance instance=instances[packet.metadata.y];
+    Instance instance=readInstance(packet.metadata.y);
+    if((instance.metadata.w&16u)!=0u) {
+        particleGeometry=blob[instance.metadata.x+2u];
+        ParticleResult result=pParticle(uint(instance.overlayX.x),uint(instance.overlayX.y));
+        if(!result.visible)return;
+        residentColor=result.color;residentSlot=instance.metadata.z|packet.metadata.w;
+        residentSampler=instance.metadata.w&3u;
+        vec4 polygon[8];polygon[0]=result.point0;polygon[1]=result.point1;
+        polygon[2]=result.point2;polygon[3]=result.point3;
+        int count=4;
+        if((instance.metadata.w&4u)!=0u) {
+            for(int edge=0;edge<4;++edge) {
+                if(count<2)return;vec4 clipped[8];int written=0;
+                for(int i=0;i<count;++i) {
+                    vec4 p=polygon[(i+count-1)%count],q=polygon[i];
+                    bool pin=insideClip(p,edge,instance.clip[edge]),qin=insideClip(q,edge,instance.clip[edge]);
+                    if(pin!=qin)clipped[written++]=intersection(p,q,edge,instance.clip[edge]);
+                    if(qin)clipped[written++]=q;
+                }
+                count=written;for(int i=0;i<count;++i)polygon[i]=clipped[i];
+            }
+        }
+        for(int i=1;i+1<count;++i) {
+            uint draw=uint(instance.overlayX.x);
+            emitResident(pOverlay(polygon[0],draw));emitResident(pOverlay(polygon[i],draw));
+            emitResident(pOverlay(polygon[i+1],draw));EndPrimitive();
+        }
+        return;
+    }
     precise float translationX=instance.timeTranslation.y;
     precise float translationY=instance.timeTranslation.z;
     if ((instance.metadata.w&8u)==0u) {

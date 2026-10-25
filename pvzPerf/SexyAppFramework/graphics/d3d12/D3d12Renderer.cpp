@@ -1,4 +1,5 @@
 #include "D3d12Renderer.h"
+#include "../GpuParticleUpload.h"
 #include "D3d12Context.h"
 #include "D3d12Check.h"
 #include "D3d12ScalePipeline.h"
@@ -80,6 +81,7 @@ struct D3d12Reanim {
     std::vector<GpuReanimTrack> tracks;
     UINT64 blobBytes = 0;
     uint32_t header = 0, imageSlotCount = 0, variantCount = 0;
+    uint32_t particleEmitterCount = 0, particleVariantCount = 0;
 };
 
 struct D3d12Renderer::Impl {
@@ -1592,6 +1594,40 @@ void D3d12Renderer::SubmitCoverageTriangles(std::span<const GpuVertex> vertices,
     if (mask->format != DXGI_FORMAT_R8_UNORM)
         throw std::invalid_argument("D3D12 coverage draw requires an R8 mask");
     impl_->Draw(vertices, mask, blend, clip, true);
+}
+D3d12Reanim* D3d12Renderer::UploadParticleDefinition(std::span<const float> words,uint32_t variants) {
+    return UploadParticleResident(*this,words,variants);
+}
+bool D3d12Renderer::SubmitParticle(D3d12Reanim* definition,D3d12Texture* texture,
+    const GpuParticleDraw& draw,std::span<const GpuParticleState> chain,
+    bool linear,bool repeat,GpuBlend blend,const GpuClip* clip) {
+#if defined(PVZ_D3D12_REANIM_RESIDENT)
+    auto& s=*impl_;
+    const auto slots=1+chain.size()*2;
+    if(!definition||definition->owner!=&s||draw.variant>=definition->particleVariantCount||
+        chain.empty()||draw.frameSource>=chain.size()||slots+1>65535-s.reanimControls.size()||
+        (slots+1)*96>s.reanimInstances.size-s.reanimInstances.used)return false;
+    for(const auto& state:chain)if(state.emitter>=definition->particleEmitterCount)return false;
+    GpuReanimInstance instance{};
+    instance.translateX=draw.translateX;instance.translateY=draw.translateY;
+    instance.overlay00=float((s.reanimControls.size()+1)*24);
+    instance.overlay01=float(chain.size());
+    const auto token=BeginReanimInstance(definition,texture,instance,linear,repeat,clip,true);
+    if(token==UINT32_MAX)return false;
+    const uint32_t flags=(linear?1u:0u)|(repeat?2u:0u)|(clip?4u:0u)|16u;
+    std::memcpy(s.reanimInstances.mapped+size_t(token&65535u)*96+offsetof(Impl::ReanimInstance,flags),&flags,4);
+    const auto start=s.reanimInstances.used;
+    std::memset(s.reanimInstances.mapped+start,0,96);
+    std::memcpy(s.reanimInstances.mapped+start,&draw,sizeof(draw));
+    std::memcpy(s.reanimInstances.mapped+start+96,chain.data(),chain.size_bytes());
+    s.reanimInstances.used+=slots*96;
+    s.reanimControls.resize(s.reanimControls.size()+slots);
+    const GpuReanimTrackDraw packet{0,0xffffffff,draw.samplingFlags};
+    return SubmitReanimTrack(token,packet,blend);
+#else
+    (void)definition;(void)texture;(void)draw;(void)chain;(void)linear;(void)repeat;(void)blend;(void)clip;
+    return false;
+#endif
 }
 D3d12Reanim* D3d12Renderer::UploadReanimDefinition(const GpuReanimDefinition& source) {
 #if defined(PVZ_D3D12_REANIM_RESIDENT)

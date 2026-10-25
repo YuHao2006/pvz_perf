@@ -62,12 +62,15 @@ void VisitTimeCounterOffsets(Fn&& visit)
     }
     else if constexpr (std::is_same_v<Type, TodParticle>)
     {
-        TIMER(mParticleAge); TIMER(mParticleDuration); TIMER(mCrossFadeDuration);
+        visit(offsetof(Type, mParticleAgeNs), false);
+        visit(offsetof(Type, mParticleDurationNs), false);
+        visit(offsetof(Type, mCrossFadeDurationNs), false);
     }
     else if constexpr (std::is_same_v<Type, TodParticleEmitter>)
     {
-        TIMER(mSystemAge); TIMER(mEmitterCrossFadeCountDown);
-        TIMER(mSystemDuration);
+        visit(offsetof(Type, mSystemAgeNs), false);
+        visit(offsetof(Type, mEmitterCrossFadeCountDownNs), false);
+        visit(offsetof(Type, mSystemDurationNs), false);
     }
     else if constexpr (std::is_same_v<Type, ReanimatorTrackInstance>)
     {

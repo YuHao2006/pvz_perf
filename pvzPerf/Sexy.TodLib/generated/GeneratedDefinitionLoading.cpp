@@ -1,6 +1,7 @@
 // Generated image ownership bindings; behavior is already static.
 #include "GeneratedDefinitionStorage.h"
 #include "Sexy.TodLib/DefinitionImageRegion.h"
+#include "Sexy.TodLib/ParticleDefinitionCompiled.h"
 #include "Sexy.TodLib/TodCommon.h"
 #include <algorithm>
 #include <stdexcept>
@@ -5452,168 +5453,12 @@ void LoadReanimationImages(int type) {
 }
 void LoadParticleImages() {
     if (particleImages) return;
-    DefinitionBindAtlasPath(Particles[0].mTextures[0], 123, 123, "compiled/particles/melonimpact.atlas.png");
-    DefinitionBindAtlasPath(Particles[1].mTextures[0], 123, 123, "compiled/particles/wintermelonimpact.atlas.png");
-    DefinitionBindAtlasPath(Particles[2].mTextures[0], 36, 31, "compiled/atlases/fume_cloud.atlas.png");
-    DefinitionBindAtlasPath(Particles[3].mTextures[0], 160, 34, "compiled/particles/popcornsplash.atlas.png");
-    DefinitionBindAtlasPath(Particles[4].mTextures[0], 204, 288, "compiled/particles/powie.atlas.png");
-    DefinitionBindAtlasPath(Particles[5].mTextures[0], 292, 288, "compiled/particles/jackexplode.atlas.png");
-    DefinitionBindAtlasPath(Particles[6].mTextures[0], 302, 189, "compiled/atlases/zombie_heads.atlas.png");
-    DefinitionBindAtlasPath(Particles[6].mTextures[1], 302, 189, "compiled/atlases/zombie_heads.atlas.png");
-    DefinitionBindAtlasPath(Particles[6].mTextures[2], 302, 189, "compiled/atlases/zombie_heads.atlas.png");
-    DefinitionBindAtlasPath(Particles[6].mTextures[3], 302, 189, "compiled/atlases/zombie_heads.atlas.png");
-    DefinitionBindAtlasPath(Particles[6].mTextures[4], 302, 189, "compiled/atlases/zombie_heads.atlas.png");
-    DefinitionBindAtlasPath(Particles[6].mTextures[5], 302, 189, "compiled/atlases/zombie_heads.atlas.png");
-    DefinitionBindAtlasPath(Particles[6].mTextures[6], 302, 189, "compiled/atlases/zombie_heads.atlas.png");
-    DefinitionBindAtlasPath(Particles[6].mTextures[7], 302, 189, "compiled/atlases/zombie_heads.atlas.png");
-    DefinitionBindAtlasPath(Particles[6].mTextures[8], 302, 189, "compiled/atlases/zombie_heads.atlas.png");
-    DefinitionBindAtlasPath(Particles[6].mTextures[9], 302, 189, "compiled/atlases/zombie_heads.atlas.png");
-    DefinitionBindAtlasPath(Particles[6].mTextures[10], 302, 189, "compiled/atlases/zombie_heads.atlas.png");
-    DefinitionBindAtlasPath(Particles[6].mTextures[11], 302, 189, "compiled/atlases/zombie_heads.atlas.png");
-    DefinitionBindAtlasPath(Particles[7].mTextures[0], 129, 143, "compiled/atlases/zombie_arms.atlas.png");
-    DefinitionBindAtlasPath(Particles[7].mTextures[1], 129, 143, "compiled/atlases/zombie_arms.atlas.png");
-    DefinitionBindAtlasPath(Particles[7].mTextures[2], 129, 143, "compiled/atlases/zombie_arms.atlas.png");
-    DefinitionBindAtlasPath(Particles[7].mTextures[3], 129, 143, "compiled/atlases/zombie_arms.atlas.png");
-    DefinitionBindAtlasPath(Particles[7].mTextures[4], 129, 143, "compiled/atlases/zombie_arms.atlas.png");
-    DefinitionBindAtlasPath(Particles[7].mTextures[5], 129, 143, "compiled/atlases/zombie_arms.atlas.png");
-    DefinitionBindAtlasPath(Particles[7].mTextures[6], 129, 143, "compiled/atlases/zombie_arms.atlas.png");
-    DefinitionBindAtlasPath(Particles[7].mTextures[7], 129, 143, "compiled/atlases/zombie_arms.atlas.png");
-    DefinitionBindAtlasPath(Particles[7].mTextures[8], 129, 143, "compiled/atlases/zombie_arms.atlas.png");
-    DefinitionBindAtlasPath(Particles[7].mTextures[9], 129, 143, "compiled/atlases/zombie_arms.atlas.png");
-    DefinitionBindAtlasPath(Particles[7].mTextures[10], 129, 143, "compiled/atlases/zombie_arms.atlas.png");
-    DefinitionBindAtlasPath(Particles[8].mTextures[0], 63, 61, "compiled/particles/zombietrafficcone.atlas.png");
-    DefinitionBindAtlasPath(Particles[9].mTextures[0], 66, 71, "compiled/particles/zombiepail.atlas.png");
-    DefinitionBindAtlasPath(Particles[10].mTextures[0], 70, 77, "compiled/particles/zombiehelmet.atlas.png");
-    DefinitionBindAtlasPath(Particles[11].mTextures[0], 66, 71, "compiled/particles/zombieflag.atlas.png");
-    DefinitionBindAtlasPath(Particles[12].mTextures[0], 70, 127, "compiled/particles/zombiedoor.atlas.png");
-    DefinitionBindAtlasPath(Particles[13].mTextures[0], 90, 86, "compiled/particles/zombienewspaper.atlas.png");
-    DefinitionBindAtlasPath(Particles[14].mTextures[0], 81, 51, "compiled/particles/zombieheadlight.atlas.png");
-    DefinitionBindAtlasPath(Particles[15].mTextures[0], 140, 127, "compiled/particles/pow.atlas.png");
-    DefinitionBindAtlasPath(Particles[16].mTextures[0], 48, 90, "compiled/particles/zombiepogo.atlas.png");
-    DefinitionBindAtlasPath(Particles[17].mTextures[0], 68, 88, "compiled/particles/zombienewspaperhead.atlas.png");
-    DefinitionBindAtlasPath(Particles[18].mTextures[0], 55, 103, "compiled/particles/zombieballoonhead.atlas.png");
-    DefinitionBindAtlasPath(Particles[19].mTextures[0], 704, 128, "compiled/atlases/rising_dirt.atlas.png");
-    DefinitionBindAtlasPath(Particles[20].mTextures[0], 704, 128, "compiled/atlases/rising_dirt.atlas.png");
-    DefinitionBindAtlasPath(Particles[21].mTextures[0], 704, 128, "compiled/atlases/rising_dirt.atlas.png");
-    DefinitionBindAtlasPath(Particles[22].mTextures[0], 88, 132, "compiled/atlases/pool_splash.atlas.png");
-    DefinitionBindAtlasPath(Particles[23].mTextures[0], 704, 128, "compiled/atlases/rising_dirt.atlas.png");
-    DefinitionBindAtlasPath(Particles[24].mTextures[0], 88, 176, "compiled/particles/gravebuster.atlas.png");
-    DefinitionBindAtlasPath(Particles[25].mTextures[0], 704, 128, "compiled/atlases/rising_dirt.atlas.png");
-    DefinitionBindAtlasPath(Particles[26].mTextures[0], 88, 132, "compiled/atlases/pool_splash.atlas.png");
-    DefinitionBindAtlasPath(Particles[27].mTextures[0], 24, 72, "compiled/atlases/sparkles.atlas.png");
-    DefinitionBindAtlasPath(Particles[28].mTextures[0], 124, 179, "compiled/particles/seedpacket.atlas.png");
-    DefinitionBindAtlasPath(Particles[29].mTextures[0], 44, 42, "compiled/particles/tallnutblock.atlas.png");
-    DefinitionBindAtlasPath(Particles[30].mTextures[0], 344, 454, "compiled/particles/doom.atlas.png");
-    DefinitionBindAtlasPath(Particles[31].mTextures[0], 704, 128, "compiled/atlases/rising_dirt.atlas.png");
-    DefinitionBindAtlasPath(Particles[32].mTextures[0], 704, 128, "compiled/atlases/rising_dirt.atlas.png");
-    DefinitionBindAtlasPath(Particles[33].mTextures[0], 704, 128, "compiled/atlases/rising_dirt.atlas.png");
-    DefinitionBindAtlasPath(Particles[34].mTextures[0], 42, 33, "compiled/particles/poolsparkly.atlas.png");
-    DefinitionBindAtlasPath(Particles[35].mTextures[0], 12, 60, "compiled/particles/wallnuteatsmall.atlas.png");
-    DefinitionBindAtlasPath(Particles[36].mTextures[0], 22, 110, "compiled/particles/wallnuteatlarge.atlas.png");
-    DefinitionBindAtlasPath(Particles[37].mTextures[0], 56, 71, "compiled/atlases/projectile_splat.atlas.png");
-    DefinitionBindAtlasPath(Particles[38].mTextures[0], 15, 45, "compiled/particles/buttersplat.atlas.png");
-    DefinitionBindAtlasPath(Particles[39].mTextures[0], 56, 71, "compiled/atlases/projectile_splat.atlas.png");
-    DefinitionBindAtlasPath(Particles[40].mTextures[0], 25, 25, "compiled/atlases/puff_spores.atlas.png");
-    DefinitionBindAtlasPath(Particles[41].mTextures[0], 56, 71, "compiled/particles/starsplat.atlas.png");
-    DefinitionBindAtlasPath(Particles[42].mTextures[0], 24, 77, "compiled/particles/icetrap.atlas.png");
-    DefinitionBindAtlasPath(Particles[43].mTextures[0], 56, 71, "compiled/particles/snowpeasplat.atlas.png");
-    DefinitionBindAtlasPath(Particles[44].mTextures[0], 237, 69, "compiled/particles/snowpeapuff.atlas.png");
-    DefinitionBindAtlasPath(Particles[45].mTextures[0], 91, 224, "compiled/atlases/ice_trail.atlas.png");
-    DefinitionBindAtlasPath(Particles[46].mTextures[0], 204, 204, "compiled/particles/lanternshine.atlas.png");
-    DefinitionBindAtlasPath(Particles[47].mTextures[0], 154, 335, "compiled/atlases/award_rays.atlas.png");
-    DefinitionBindAtlasPath(Particles[48].mTextures[0], 204, 401, "compiled/atlases/potato_mine.atlas.png");
-    DefinitionBindAtlasPath(Particles[49].mTextures[0], 704, 128, "compiled/atlases/rising_dirt.atlas.png");
-    DefinitionBindAtlasPath(Particles[50].mTextures[0], 25, 25, "compiled/atlases/puff_spores.atlas.png");
-    DefinitionBindAtlasPath(Particles[51].mTextures[0], 25, 25, "compiled/atlases/puff_spores.atlas.png");
-    DefinitionBindAtlasPath(Particles[52].mTextures[0], 54, 74, "compiled/particles/seedpacketflash.atlas.png");
-    DefinitionBindAtlasPath(Particles[53].mTextures[0], 704, 128, "compiled/atlases/rising_dirt.atlas.png");
-    DefinitionBindAtlasPath(Particles[54].mTextures[0], 81, 125, "compiled/particles/zombieladder.atlas.png");
-    DefinitionBindAtlasPath(Particles[55].mTextures[0], 35, 35, "compiled/particles/umbrellareflect.atlas.png");
-    DefinitionBindAtlasPath(Particles[56].mTextures[0], 36, 30, "compiled/atlases/pickup_arrows.atlas.png");
-    DefinitionBindAtlasPath(Particles[57].mTextures[0], 40, 42, "compiled/atlases/ice_trap_burst.atlas.png");
-    DefinitionBindAtlasPath(Particles[58].mTextures[0], 40, 42, "compiled/atlases/ice_trap_burst.atlas.png");
-    DefinitionBindAtlasPath(Particles[59].mTextures[0], 1144, 233, "compiled/atlases/zamboni_family.atlas.png");
-    DefinitionBindAtlasPath(Particles[60].mTextures[0], 36, 31, "compiled/atlases/fume_cloud.atlas.png");
-    DefinitionBindAtlasPath(Particles[61].mTextures[0], 61, 93, "compiled/particles/zombiepogohead.atlas.png");
-    DefinitionBindAtlasPath(Particles[62].mTextures[0], 1144, 233, "compiled/atlases/zamboni_family.atlas.png");
-    DefinitionBindAtlasPath(Particles[63].mTextures[0], 1144, 233, "compiled/atlases/zamboni_family.atlas.png");
-    DefinitionBindAtlasPath(Particles[64].mTextures[0], 1144, 233, "compiled/atlases/zamboni_family.atlas.png");
-    DefinitionBindAtlasPath(Particles[65].mTextures[0], 350, 175, "compiled/particles/catapultexplosion.atlas.png");
-    DefinitionBindAtlasPath(Particles[66].mTextures[0], 84, 84, "compiled/particles/mowercloud.atlas.png");
-    DefinitionBindAtlasPath(Particles[67].mTextures[0], 91, 224, "compiled/atlases/ice_trail.atlas.png");
-    DefinitionBindAtlasPath(Particles[68].mTextures[0], 204, 204, "compiled/particles/blastmark.atlas.png");
-    DefinitionBindAtlasPath(Particles[69].mTextures[0], 36, 30, "compiled/atlases/pickup_arrows.atlas.png");
-    DefinitionBindAtlasPath(Particles[70].mTextures[0], 58, 100, "compiled/atlases/pickup_starburst.atlas.png");
-    DefinitionBindAtlasPath(Particles[71].mTextures[0], 232, 248, "compiled/particles/imitatermorph.atlas.png");
-    DefinitionBindAtlasPath(Particles[72].mTextures[0], 302, 189, "compiled/atlases/zombie_heads.atlas.png");
-    DefinitionBindAtlasPath(Particles[72].mTextures[1], 302, 189, "compiled/atlases/zombie_heads.atlas.png");
-    DefinitionBindAtlasPath(Particles[72].mTextures[2], 302, 189, "compiled/atlases/zombie_heads.atlas.png");
-    DefinitionBindAtlasPath(Particles[72].mTextures[3], 302, 189, "compiled/atlases/zombie_heads.atlas.png");
-    DefinitionBindAtlasPath(Particles[72].mTextures[4], 302, 189, "compiled/atlases/zombie_heads.atlas.png");
-    DefinitionBindAtlasPath(Particles[72].mTextures[5], 302, 189, "compiled/atlases/zombie_heads.atlas.png");
-    DefinitionBindAtlasPath(Particles[72].mTextures[6], 302, 189, "compiled/atlases/zombie_heads.atlas.png");
-    DefinitionBindAtlasPath(Particles[72].mTextures[7], 302, 189, "compiled/atlases/zombie_heads.atlas.png");
-    DefinitionBindAtlasPath(Particles[72].mTextures[8], 302, 189, "compiled/atlases/zombie_heads.atlas.png");
-    DefinitionBindAtlasPath(Particles[72].mTextures[9], 302, 189, "compiled/atlases/zombie_heads.atlas.png");
-    DefinitionBindAtlasPath(Particles[72].mTextures[10], 302, 189, "compiled/atlases/zombie_heads.atlas.png");
-    DefinitionBindAtlasPath(Particles[72].mTextures[11], 302, 189, "compiled/atlases/zombie_heads.atlas.png");
-    DefinitionBindAtlasPath(Particles[73].mTextures[0], 129, 143, "compiled/atlases/zombie_arms.atlas.png");
-    DefinitionBindAtlasPath(Particles[73].mTextures[1], 129, 143, "compiled/atlases/zombie_arms.atlas.png");
-    DefinitionBindAtlasPath(Particles[73].mTextures[2], 129, 143, "compiled/atlases/zombie_arms.atlas.png");
-    DefinitionBindAtlasPath(Particles[73].mTextures[3], 129, 143, "compiled/atlases/zombie_arms.atlas.png");
-    DefinitionBindAtlasPath(Particles[73].mTextures[4], 129, 143, "compiled/atlases/zombie_arms.atlas.png");
-    DefinitionBindAtlasPath(Particles[73].mTextures[5], 129, 143, "compiled/atlases/zombie_arms.atlas.png");
-    DefinitionBindAtlasPath(Particles[73].mTextures[6], 129, 143, "compiled/atlases/zombie_arms.atlas.png");
-    DefinitionBindAtlasPath(Particles[73].mTextures[7], 129, 143, "compiled/atlases/zombie_arms.atlas.png");
-    DefinitionBindAtlasPath(Particles[73].mTextures[8], 129, 143, "compiled/atlases/zombie_arms.atlas.png");
-    DefinitionBindAtlasPath(Particles[73].mTextures[9], 129, 143, "compiled/atlases/zombie_arms.atlas.png");
-    DefinitionBindAtlasPath(Particles[73].mTextures[10], 129, 143, "compiled/atlases/zombie_arms.atlas.png");
-    DefinitionBindAtlasPath(Particles[74].mTextures[0], 302, 189, "compiled/atlases/zombie_heads.atlas.png");
-    DefinitionBindAtlasPath(Particles[74].mTextures[1], 302, 189, "compiled/atlases/zombie_heads.atlas.png");
-    DefinitionBindAtlasPath(Particles[74].mTextures[2], 302, 189, "compiled/atlases/zombie_heads.atlas.png");
-    DefinitionBindAtlasPath(Particles[74].mTextures[3], 302, 189, "compiled/atlases/zombie_heads.atlas.png");
-    DefinitionBindAtlasPath(Particles[74].mTextures[4], 302, 189, "compiled/atlases/zombie_heads.atlas.png");
-    DefinitionBindAtlasPath(Particles[74].mTextures[5], 302, 189, "compiled/atlases/zombie_heads.atlas.png");
-    DefinitionBindAtlasPath(Particles[74].mTextures[6], 302, 189, "compiled/atlases/zombie_heads.atlas.png");
-    DefinitionBindAtlasPath(Particles[74].mTextures[7], 302, 189, "compiled/atlases/zombie_heads.atlas.png");
-    DefinitionBindAtlasPath(Particles[74].mTextures[8], 302, 189, "compiled/atlases/zombie_heads.atlas.png");
-    DefinitionBindAtlasPath(Particles[74].mTextures[9], 302, 189, "compiled/atlases/zombie_heads.atlas.png");
-    DefinitionBindAtlasPath(Particles[74].mTextures[10], 302, 189, "compiled/atlases/zombie_heads.atlas.png");
-    DefinitionBindAtlasPath(Particles[74].mTextures[11], 302, 189, "compiled/atlases/zombie_heads.atlas.png");
-    DefinitionBindAtlasPath(Particles[75].mTextures[0], 232, 156, "compiled/atlases/fireball_burst.atlas.png");
-    DefinitionBindAtlasPath(Particles[75].mTextures[1], 91, 224, "compiled/atlases/ice_trail.atlas.png");
-    DefinitionBindAtlasPath(Particles[76].mTextures[0], 232, 156, "compiled/atlases/fireball_burst.atlas.png");
-    DefinitionBindAtlasPath(Particles[77].mTextures[0], 91, 224, "compiled/atlases/ice_trail.atlas.png");
-    DefinitionBindAtlasPath(Particles[78].mTextures[0], 84, 54, "compiled/particles/iceball_trail.atlas.png");
-    DefinitionBindAtlasPath(Particles[79].mTextures[0], 234, 21, "compiled/particles/fireball_trail.atlas.png");
-    DefinitionBindAtlasPath(Particles[80].mTextures[0], 372, 208, "compiled/particles/bossexplosion.atlas.png");
-    DefinitionBindAtlasPath(Particles[81].mTextures[0], 5, 5, "compiled/atlases/screen_flash.atlas.png");
-    DefinitionBindAtlasPath(Particles[82].mTextures[0], 24, 72, "compiled/atlases/sparkles.atlas.png");
-    DefinitionBindAtlasPath(Particles[83].mTextures[0], 20, 20, "compiled/atlases/portal_particles.atlas.png");
-    DefinitionBindAtlasPath(Particles[84].mTextures[0], 20, 20, "compiled/atlases/portal_particles.atlas.png");
-    DefinitionBindAtlasPath(Particles[85].mTextures[0], 124, 107, "compiled/particles/pottedplantglow.atlas.png");
-    DefinitionBindAtlasPath(Particles[86].mTextures[0], 157, 120, "compiled/particles/pottedwaterplantglow.atlas.png");
-    DefinitionBindAtlasPath(Particles[87].mTextures[0], 8, 9, "compiled/particles/pottedzenglow.atlas.png");
-    DefinitionBindAtlasPath(Particles[88].mTextures[0], 17, 54, "compiled/particles/mindcontrol.atlas.png");
-    DefinitionBindAtlasPath(Particles[89].mTextures[0], 108, 324, "compiled/atlases/vase_shards.atlas.png");
-    DefinitionBindAtlasPath(Particles[90].mTextures[0], 108, 324, "compiled/atlases/vase_shards.atlas.png");
-    DefinitionBindAtlasPath(Particles[91].mTextures[0], 108, 324, "compiled/atlases/vase_shards.atlas.png");
-    DefinitionBindAtlasPath(Particles[92].mTextures[0], 180, 210, "compiled/particles/awardpickuparrow.atlas.png");
-    DefinitionBindAtlasPath(Particles[93].mTextures[0], 124, 124, "compiled/particles/zombie_seaweed.atlas.png");
-    DefinitionBindAtlasPath(Particles[94].mTextures[0], 54, 78, "compiled/atlases/zombie_mustaches.atlas.png");
-    DefinitionBindAtlasPath(Particles[94].mTextures[1], 54, 78, "compiled/atlases/zombie_mustaches.atlas.png");
-    DefinitionBindAtlasPath(Particles[94].mTextures[2], 54, 78, "compiled/atlases/zombie_mustaches.atlas.png");
-    DefinitionBindAtlasPath(Particles[95].mTextures[0], 130, 104, "compiled/particles/zombiefutureglasses.atlas.png");
-    DefinitionBindAtlasPath(Particles[96].mTextures[0], 42, 165, "compiled/particles/pinata.atlas.png");
-    DefinitionBindAtlasPath(Particles[97].mTextures[0], 36, 93, "compiled/atlases/dust.atlas.png");
-    DefinitionBindAtlasPath(Particles[98].mTextures[0], 36, 93, "compiled/atlases/dust.atlas.png");
-    DefinitionBindAtlasPath(Particles[99].mTextures[0], 22, 18, "compiled/particles/daisy.atlas.png");
-    DefinitionBindAtlasPath(Particles[100].mTextures[0], 5, 5, "compiled/atlases/screen_flash.atlas.png");
-    DefinitionBindAtlasPath(Particles[101].mTextures[0], 154, 335, "compiled/atlases/award_rays.atlas.png");
-    DefinitionBindAtlasPath(Particles[102].mTextures[0], 68, 65, "compiled/particles/credits_zombieheadwipe.atlas.png");
-    DefinitionBindAtlasPath(Particles[103].mTextures[0], 58, 100, "compiled/atlases/pickup_starburst.atlas.png");
-    DefinitionBindAtlasPath(Particles[104].mTextures[0], 428, 776, "compiled/particles/credits_fog.atlas.png");
-    DefinitionBindAtlasPath(Particles[105].mTextures[0], 36, 30, "compiled/atlases/pickup_arrows.atlas.png");
+    try {
+        for(int i=0;i<ParticleCount;++i) TodParticleLoadCompiledDefinition(Particles[i],ParticlePaths[i]);
+    } catch (...) {
+        for(auto& definition:Particles) TodParticleFreeCompiledDefinition(definition);
+        throw;
+    }
     particleImages=true;
 }
 void LoadProjectileImages() {
@@ -7952,8 +7797,7 @@ void ReleaseReanimationImages() {
     fonts=false;
 }
 void ReleaseParticleImages() {
-    for(auto& definition:Particles)
-        for(unsigned v=0;v<definition.mVariantCount;++v) DefinitionUnbindAtlas(definition.mTextures[v]);
+    for(auto& definition:Particles) TodParticleFreeCompiledDefinition(definition);
     particleImages=false;
 }
 void ReleaseProjectileImages() {

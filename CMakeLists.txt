@@ -476,6 +476,18 @@ if(BUILD_TESTING)
         pvzPerf/Sexy.TodLib/TodParticle.cpp
         pvzPerf/Sexy.TodLib/Definition.cpp
         pvzPerf/SexyAppFramework/graphics/Color.cpp)
+    add_executable(pvz_particle_compiled_tests EXCLUDE_FROM_ALL
+        Tests/native/ParticleCompiledTests.cpp
+        pvzPerf/Sexy.TodLib/ParticleDefinitionCompiled.cpp)
+    target_link_libraries(pvz_particle_compiled_tests PRIVATE pvz_source_headers)
+    target_compile_features(pvz_particle_compiled_tests PRIVATE cxx_std_23)
+    if(PVZ_RENDER_BACKEND STREQUAL "VULKAN")
+        find_package(Vulkan REQUIRED)
+        target_link_libraries(pvz_particle_compiled_tests PRIVATE Vulkan::Headers)
+    else()
+        target_compile_definitions(pvz_particle_compiled_tests PRIVATE "PVZ_GPU_${PVZ_RENDER_BACKEND}=1")
+    endif()
+    add_test(NAME pvz_particle_compiled COMMAND pvz_particle_compiled_tests)
     target_link_libraries(pvz_particle_v7_tests PRIVATE pvz_source_headers)
     target_compile_features(pvz_particle_v7_tests PRIVATE cxx_std_23)
     if(PVZ_RENDER_BACKEND STREQUAL "VULKAN")

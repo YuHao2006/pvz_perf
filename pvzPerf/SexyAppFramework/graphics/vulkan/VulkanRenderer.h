@@ -140,6 +140,10 @@ public:
     // Loading-time immutable resident data. The renderer retains GPU resources;
     // source spans can be released after upload. Destruction retires at a fence.
     VulkanReanim* UploadReanimDefinition(const GpuReanimDefinition& definition);
+    VulkanReanim* UploadParticleDefinition(std::span<const float> words, uint32_t variants);
+    bool SubmitParticle(VulkanReanim*, VulkanTexture*, const GpuParticleDraw&,
+        std::span<const GpuParticleState>, bool linear, bool repeat, VulkanBlend,
+        const VulkanClip* clip = nullptr);
     void DestroyReanimDefinition(VulkanReanim* definition);
     // false means the track/job requires the CPU path; no drawing was queued.
     // Each accepted track is evaluated once per marker primitive in the GPU

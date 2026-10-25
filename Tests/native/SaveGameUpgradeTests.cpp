@@ -313,13 +313,13 @@ void LoadCurrentWithResources(LawnApp& app, HiddenWindow& window, const char* sa
             100,200,0,&definition,static_cast<ParticleEffect>(effect));
         Require(system && system->EmitterRosterCount(),"Cannot allocate linear particle save probe");
         auto* emitter=system->EmitterRosterEmitterAt(0);
-        emitter->mSystemDuration.mNanoseconds=60'000'000'000;
+        emitter->mSystemDurationNs=60'000'000'000;
         linearParticle=emitter->SpawnParticle(0,1);
         Require(linearParticle!=nullptr,"Cannot spawn linear particle save probe");
-        linearParticle->mParticleDuration.mNanoseconds=60'000'000'000;
-        linearParticle->mPosition={1'048'576.f,-1'048'576.f};
+        linearParticle->mParticleDurationNs=60'000'000'000;
+        linearParticle->mParticleEmitter->RebaseParticlePosition(linearParticle, {1'048'576.f,-1'048'576.f});
         linearParticle->mVelocity={.125f,-.125f};
-        linearParticle->mSpinPosition=1'048'576.f;
+        linearParticle->mParticleEmitter->RebaseParticleSpin(linearParticle, 1'048'576.f);
         linearParticle->mSpinVelocity=.125f;
         Require(emitter->UpdateParticle(linearParticle,16'000'000) &&
             linearParticle->mLinearElapsedNs==16'000'000 && linearParticle->mLinearSpinActive==1,
@@ -342,11 +342,11 @@ void LoadCurrentWithResources(LawnApp& app, HiddenWindow& window, const char* sa
             100,200,0,&definition,static_cast<ParticleEffect>(effect));
         Require(system && system->EmitterRosterCount(),"Cannot allocate acceleration save probe");
         auto* emitter=system->EmitterRosterEmitterAt(0);
-        emitter->mSystemDuration.mNanoseconds=60'000'000'000;
+        emitter->mSystemDurationNs=60'000'000'000;
         accelerationParticle=emitter->SpawnParticle(0,1);
         Require(accelerationParticle!=nullptr,"Cannot spawn acceleration save probe");
-        accelerationParticle->mParticleDuration.mNanoseconds=60'000'000'000;
-        accelerationParticle->mPosition={1'048'576.f,-1'048'576.f};
+        accelerationParticle->mParticleDurationNs=60'000'000'000;
+        accelerationParticle->mParticleEmitter->RebaseParticlePosition(accelerationParticle, {1'048'576.f,-1'048'576.f});
         accelerationParticle->mVelocity={.125f,-.25f};
         Require(emitter->UpdateParticle(accelerationParticle,16'000'003) &&
             accelerationParticle->mLinearElapsedNs==16'000'003 &&
@@ -376,7 +376,7 @@ void LoadCurrentWithResources(LawnApp& app, HiddenWindow& window, const char* sa
     {
         auto* emitter=positionSystem->EmitterRosterEmitterAt(i);
         if (!emitter->mEmitterDef->mSystemFields.count) continue;
-        emitter->mSystemDuration.mNanoseconds=60'000'000'000;
+        emitter->mSystemDurationNs=60'000'000'000;
         emitter->mSystemPositionOriginX=.015625;
         emitter->mSystemPositionOriginY=-.03125;
         emitter->Update(16'000'000);
@@ -455,14 +455,13 @@ void LoadCurrentWithResources(LawnApp& app, HiddenWindow& window, const char* sa
                 for (int p = 0; p < emitter->ParticleRosterCount(); ++p)
                 {
                     auto* item = emitter->ParticleRosterParticleAt(p);
-                    append(item->mParticleAge.mNanoseconds, item->mParticleLastSampleAgeNs,
+                    append(item->mParticleAgeNs,
                         item->mAnimationElapsedNs, item->mAnimationSampleIntegral, item->mRandomSeed,
                         item->mLinearOriginX, item->mLinearOriginY, item->mLinearElapsedNs,
                         item->mLinearVelocity.x, item->mLinearVelocity.y,
                         item->mLinearAcceleration.x, item->mLinearAcceleration.y,
-                        item->mLinearLastPosition.x, item->mLinearLastPosition.y,
                         item->mLinearSpinOrigin,item->mLinearSpinRate,
-                        item->mLinearLastSpin,item->mLinearSpinActive);
+                        item->mLinearSpinActive);
                 }
             }
         }

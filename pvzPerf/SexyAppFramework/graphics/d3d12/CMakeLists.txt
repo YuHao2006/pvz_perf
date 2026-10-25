@@ -23,16 +23,14 @@ function(d3d12_shader source entry profile output)
             "${CMAKE_CURRENT_SOURCE_DIR}/shaders/${source}.hlsl" -Fo "${binary}"
         DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/shaders/${source}.hlsl"
             "${CMAKE_CURRENT_SOURCE_DIR}/shaders/game.hlsl"
+            "${CMAKE_CURRENT_SOURCE_DIR}/../GpuParticleShader.glsl"
         VERBATIM)
     set(d3d12Shaders ${d3d12Shaders} "${binary}" PARENT_SCOPE)
 endfunction()
 d3d12_shader(game VSMain vs_6_0 game_vs)
 d3d12_shader(game PSMain ps_6_0 game_ps)
 d3d12_shader(game_pool PoolVS vs_6_0 game_pool_vs)
-option(PVZ_D3D12_REANIM_RESIDENT "Experimental resident D3D12 reanimation geometry path" OFF)
-if(PVZ_EXPERIMENTAL_GPU_REANIM)
-    set(PVZ_D3D12_REANIM_RESIDENT ON)
-endif()
+set(PVZ_D3D12_REANIM_RESIDENT ON) # Shared resident arena is required by particles.
 if(PVZ_D3D12_REANIM_RESIDENT)
     d3d12_shader(game_reanim UnifiedVS vs_6_0 game_reanim_vs)
     d3d12_shader(game_reanim UnifiedGS gs_6_0 game_reanim_gs)

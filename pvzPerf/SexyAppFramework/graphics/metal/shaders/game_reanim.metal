@@ -7,6 +7,29 @@ using namespace metal;
 // also compiles with -ffp-contract=off; do not use HLSL's precise qualifier.
 #pragma STDC FP_CONTRACT OFF
 
+// MSL has no mutable global device-buffer bindings. Keep the shared particle
+// evaluator in a thread-local object whose methods read the resident arenas.
+struct MetalParticleEvaluator {
+    const device uint* arena;
+    const device uint* dynamic;
+    uint geometry;
+    float pStatic(uint index) {
+        return as_type<float>(arena[geometry + (index / 6u) * 8u + index % 6u]);
+    }
+    float pDynamic(uint index) { return as_type<float>(dynamic[index]); }
+#define vec2 float2
+#define vec4 float4
+#define uvec2 uint2
+#define floatBitsToUint(value) as_type<uint>(value)
+#define equal(a,b) ((a)==(b))
+#include "../../GpuParticleShader.glsl"
+#undef vec2
+#undef vec4
+#undef uvec2
+#undef floatBitsToUint
+#undef equal
+};
+
 float reanimValue(const device uint* blob, uint offset) { return as_type<float>(blob[offset]); }
 float reanimLerp(float a, float b, float t) { return a + (b - a) * t; }
 float reanimSin(float radians) {
@@ -54,6 +77,47 @@ kernel void pvz_reanim_kernel(
     const device uint* packet = packets + (batch.x + id) * 8;
     const device uint* instance = instances + packet[1] * 24;
     uint header = instance[16];
+    if ((instance[19] & 16u) != 0u) {
+        MetalParticleEvaluator evaluator{blob, instances, blob[header + 2]};
+        const auto result = evaluator.pParticle(uint(reanimValue(instance, 8)),
+            uint(reanimValue(instance, 9)));
+        if (!result.visible) return;
+        float4 polygon[8];
+        polygon[0] = result.point0; polygon[1] = result.point1;
+        polygon[2] = result.point2; polygon[3] = result.point3;
+        int count = 4;
+        if ((instance[19] & 4u) != 0u) {
+            const float4 clip = float4(reanimValue(instance, 20), reanimValue(instance, 21),
+                reanimValue(instance, 22), reanimValue(instance, 23));
+            for (int edge = 0; edge < 4; ++edge) {
+                if (count < 2) return;
+                float4 clipped[8]; int written = 0;
+                for (int i = 0; i < count; ++i) {
+                    const float4 p = polygon[(i + count - 1) % count], q = polygon[i];
+                    const bool pIn = reanimInside(p, edge, clip[edge]);
+                    const bool qIn = reanimInside(q, edge, clip[edge]);
+                    if (pIn != qIn)
+                        clipped[written++] = reanimIntersection(p, q, edge, clip[edge]);
+                    if (qIn) clipped[written++] = q;
+                }
+                count = written;
+                for (int i = 0; i < count; ++i) polygon[i] = clipped[i];
+            }
+        }
+        const uint slot = instance[18] | (packet[3] & 0x78000000u);
+        const uint samplerIndex = instance[19] & 3u;
+        const uint drawOffset = uint(reanimValue(instance, 8));
+        uint written = 0;
+        for (int i = 1; i + 1 < count; ++i) {
+            reanimEmit(output, written++, evaluator.pOverlay(polygon[0], drawOffset),
+                result.color, slot, samplerIndex);
+            reanimEmit(output, written++, evaluator.pOverlay(polygon[i], drawOffset),
+                result.color, slot, samplerIndex);
+            reanimEmit(output, written++, evaluator.pOverlay(polygon[i + 1], drawOffset),
+                result.color, slot, samplerIndex);
+        }
+        return;
+    }
     uint track = blob[header] + packet[0] * 4;
     uint keyBase = blob[header + 1] + blob[track] * 12;
     uint a = keyBase + instance[0] * 12, b = keyBase + instance[1] * 12;

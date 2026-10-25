@@ -59,12 +59,11 @@ class StaticTextureRegionTests(unittest.TestCase):
         config = SimpleNamespace(definition_orders={"particle": [("ROOT", "Root")]})
         with patch.object(particles, "_parse", return_value=definition):
             result = particles.generate(config, {"compiled/particles/root.compiled": b""})
-        source = result["files"]["ParticleData00.cpp"].decode()
-        self.assertIn("{0.25f, 0.25f, 0.75f, 0.75f, 4, 8}", source)
-        self.assertIn("{0.125f, 0.5f, 0.375f, 0.75f, 4, 2}", source)
+        source = result["runtime_records"]["compiled/particle-runtime/root.compiled"]
+        self.assertIn(struct.pack("<4f2i", .25, .25, .75, .75, 4, 8), source)
+        self.assertIn(struct.pack("<4f2i", .125, .5, .375, .75, 4, 2), source)
         self.assertEqual(result["summary"]["rectangle_bytes"], 48)
-        self.assertNotIn("TextureWidths", source)
-        self.assertNotIn("TextureHeights", source)
+        self.assertEqual(result["files"], {})
 
     def test_projectile_static_storage_has_uv_regions_and_loader_retains_size_check(self):
         config = SimpleNamespace(definition_orders={"reanim": [], "particle": []})

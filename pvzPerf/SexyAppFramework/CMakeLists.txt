@@ -181,6 +181,8 @@ set(TodLib__Effect__Effect_Source
     "../Sexy.TodLib/FilterEffect.cpp"
     "../Sexy.TodLib/Reanimator.cpp"
     "../Sexy.TodLib/TodParticle.cpp"
+    "../Sexy.TodLib/ParticleDefinitionCompiled.cpp"
+    "../Sexy.TodLib/ParticleGpu.cpp"
 )
 source_group("TodLib\\Effect\\Effect Source" FILES ${TodLib__Effect__Effect_Source})
 

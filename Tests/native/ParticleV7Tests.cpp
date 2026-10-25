@@ -44,6 +44,10 @@ int Rand(int range)
 void TodTrace(const char*, ...) {}
 void TodTraceAndLog(const char*, ...) {}
 void TodTraceWithoutSpamming(const char*, ...) {}
+void TodParticleDrawGpu(Sexy::Graphics&, TodParticle&)
+{
+    throw std::runtime_error("unexpected rendering");
+}
 void TodScaleRotateTransformMatrix(Sexy::SexyMatrix3&, float, float, float, float, float)
 {
     throw std::runtime_error("unexpected rendering");
@@ -164,8 +168,8 @@ std::vector<std::uint64_t> Snapshot(const Scene& scene)
     for (int e = 0; e < scene.system->EmitterRosterCount(); ++e)
     {
         const auto& emitter = *scene.system->EmitterRosterEmitterAt(e);
-        integer(emitter.mSystemAge.mNanoseconds);
-        integer(emitter.mSystemDuration.mNanoseconds);
+        integer(emitter.mSystemAgeNs);
+        integer(emitter.mSystemDurationNs);
         integer(emitter.mEmissionElapsedNs);
         integer(std::bit_cast<std::uint64_t>(emitter.mSystemPositionOriginX));
         integer(std::bit_cast<std::uint64_t>(emitter.mSystemPositionOriginY));
@@ -180,9 +184,8 @@ std::vector<std::uint64_t> Snapshot(const Scene& scene)
         for (int p = 0; p < emitter.ParticleRosterCount(); ++p)
         {
             const auto& particle = *emitter.ParticleRosterParticleAt(p);
-            integer(particle.mParticleDuration.mNanoseconds);
-            integer(particle.mParticleAge.mNanoseconds);
-            integer(particle.mParticleLastSampleAgeNs);
+            integer(particle.mParticleDurationNs);
+            integer(particle.mParticleAgeNs);
             integer(particle.mAnimationElapsedNs);
             integer(particle.mAnimationSampleIntegral);
             integer(TodParticleAnimationPhase(particle, emitter.mEmitterDef->mAnimationRate));
@@ -197,10 +200,8 @@ std::vector<std::uint64_t> Snapshot(const Scene& scene)
             integer(particle.mLinearElapsedNs);
             vector(particle.mLinearVelocity);
             vector(particle.mLinearAcceleration);
-            vector(particle.mLinearLastPosition);
             integer(std::bit_cast<std::uint64_t>(particle.mLinearSpinOrigin));
             integer(std::bit_cast<std::uint64_t>(particle.mLinearSpinRate));
-            number(particle.mLinearLastSpin);
             integer(particle.mLinearSpinActive);
             for (float n : particle.mParticleInterp) number(n);
             for (auto& field : particle.mParticleFieldInterp)
@@ -246,12 +247,12 @@ void TestActualDelta()
 {
     Scene scene;
     auto* p = scene.Spawn();
-    Require(p->mParticleAge.mNanoseconds == 0 && p->mAnimationElapsedNs == 0,
+    Require(p->mParticleAgeNs == 0 && p->mAnimationElapsedNs == 0,
         "birth received hidden time");
-    p->mPosition = {0, 0};
+    p->mParticleEmitter->RebaseParticlePosition(p, {0, 0});
     p->mVelocity = {2, -4};
     scene.system->Update(1'250'000);
-    Require(p->mParticleAge.mNanoseconds == 1'250'000, "sub-10ms lifetime did not advance");
+    Require(p->mParticleAgeNs == 1'250'000, "sub-10ms lifetime did not advance");
     Near(p->mPosition.x, 0.25f, "sub-10ms velocity displacement");
     Near(p->mPosition.y, -0.5f, "sub-10ms vertical displacement");
     Require(p->mAnimationElapsedNs == 1'250'000, "sub-10ms animation did not advance");
@@ -270,13 +271,13 @@ void TestActualDelta()
     Near(p->mPosition.y, 74.1f, "held move vertical displacement");
     scene.system->Update(1'000'000);
     Near(p->mPosition.x, 50.65f, "held move was applied twice");
-    Require(scene.Emitter()->mSystemAge.mNanoseconds == 3'250'000,
+    Require(scene.Emitter()->mSystemAgeNs == 3'250'000,
         "emitter age used ambient step settings");
     for (int frequency : {30, 60, 100, 144, 200, 240, 1000, 0})
     {
         Scene motion;
         auto* moving = motion.Spawn();
-        moving->mPosition = {0, 0};
+        moving->mParticleEmitter->RebaseParticlePosition(moving, {0, 0});
         moving->mVelocity = {2, -4};
         std::uint32_t random = 711;
         Advance(motion, 1'000'000'000, frequency, random);
@@ -297,7 +298,7 @@ void TestActualDelta()
     Scene attractor;
     Field(attractor, FIELD_ATTRACTOR, 3, 0);
     auto* b = attractor.Spawn();
-    b->mPosition = {110, 200};
+    b->mParticleEmitter->RebaseParticlePosition(b, {110, 200});
     b->mVelocity = {0, 0};
     attractor.system->Update(50'000'000);
     Near(b->mVelocity.x, -0.35f, "main step was split into private force steps");
@@ -336,8 +337,8 @@ void TestConstantMotionPrecision()
         Scene scene(-1,true);
         scene.emitter.mAnimationRate={}; // Motion time must not depend on image animation.
         auto* particle=scene.Spawn();
-        particle->mParticleDuration.mNanoseconds=37'000'003; // Exercise lifetime wraps.
-        particle->mPosition={1'048'576.f,-1'048'576.f};
+        particle->mParticleDurationNs=37'000'003; // Exercise lifetime wraps.
+        particle->mParticleEmitter->RebaseParticlePosition(particle, {1'048'576.f,-1'048'576.f});
         particle->mVelocity={0.125f,-0.5f};
         std::uint32_t random=1771;
         Advance(scene,1'000'000'000,frequency,random);
@@ -347,7 +348,7 @@ void TestConstantMotionPrecision()
     }
     Scene changing(-1,true);
     auto* p=changing.Spawn();
-    p->mPosition={1'048'576.f,-1'048'576.f};
+    p->mParticleEmitter->RebaseParticlePosition(p, {1'048'576.f,-1'048'576.f});
     constexpr int units[]{1,2,-1,0};
     std::int64_t sum=0;
     for (int i=0;i<4096;++i)
@@ -359,7 +360,7 @@ void TestConstantMotionPrecision()
             p->mPosition.y==static_cast<float>(-1'048'576.0-sum/64.0),
             "particle velocity changes discarded unrounded segment endpoints");
     }
-    p->mPosition={1'048'576.f,-1'048'576.f}; // Explicit teleport starts a new segment.
+    p->mParticleEmitter->RebaseParticlePosition(p, {1'048'576.f,-1'048'576.f}); // Explicit teleport starts a new segment.
     p->mVelocity={.125f,-.125f};
     changing.system->Update(5'000'000);
     changing.system->SystemMove(100.25f,199.5f);
@@ -381,16 +382,16 @@ void TestConstantMotionPrecision()
         "field-free handoff revived a stale origin");
     Scene singleAxis(-1,true);
     auto* edited=singleAxis.Spawn();
-    edited->mPosition={1'048'576.f,-1'048'576.f};
+    edited->mParticleEmitter->RebaseParticlePosition(edited, {1'048'576.f,-1'048'576.f});
     edited->mVelocity={.125f,-.125f};
     singleAxis.system->Update(5'000'000);
-    edited->mPosition.x=10.f;
+    edited->mParticleEmitter->RebaseParticlePosition(edited, {10.f, edited->mPosition.y});
     singleAxis.system->Update(5'000'000);
     Require(edited->mPosition.x==10.0625f && edited->mPosition.y==-1'048'576.125f,
         "editing one particle coordinate discarded the other axis precision");
-    edited->mPosition={1'048'576.f,-1'048'576.f};
+    edited->mParticleEmitter->RebaseParticlePosition(edited, {1'048'576.f,-1'048'576.f});
     singleAxis.system->Update(5'000'000);
-    edited->mPosition.x=10.f;
+    edited->mParticleEmitter->RebaseParticlePosition(edited, {10.f, edited->mPosition.y});
     singleAxis.system->SystemMove(100.25f,199.5f);
     singleAxis.system->Update(5'000'000);
     Require(edited->mPosition.x==10.3125f && edited->mPosition.y==-1'048'576.625f,
@@ -414,8 +415,8 @@ void TestConstantAccelerationPrecision()
         // A random range still selects one constant acceleration at birth.
         scene.values[10].mHigh = 16;
         auto* p = scene.Spawn();
-        p->mParticleDuration.mNanoseconds = 37'000'003;
-        p->mPosition = {1'048'576.f,-1'048'576.f};
+        p->mParticleDurationNs = 37'000'003;
+        p->mParticleEmitter->RebaseParticlePosition(p, {1'048'576.f,-1'048'576.f});
         p->mVelocity = {.125f,-.5f};
         const float ax = .01f * FloatTrackEvaluate(scene.fields[0].mX,0,p->mParticleFieldInterp[0][0]);
         const float ay = .01f * FloatTrackEvaluate(scene.fields[0].mY,0,p->mParticleFieldInterp[0][1]);
@@ -435,7 +436,7 @@ void TestConstantAccelerationPrecision()
     Scene edited(-1,true);
     Field(edited, FIELD_ACCELERATION, 8, -4);
     auto* p=edited.Spawn();
-    p->mPosition={10,20};
+    p->mParticleEmitter->RebaseParticlePosition(p, {10,20});
     p->mVelocity={2,-1};
     edited.system->Update(5'000'000);
     const double ax=.01f*8, ay=.01f*-4;
@@ -456,7 +457,7 @@ void TestConstantAccelerationPrecision()
         p->mVelocity.x==copy->mVelocity.x && p->mVelocity.y==copy->mVelocity.y,
         "acceleration continuation lost its segment");
     // External movement translates the anchor, including per-axis edits.
-    p->mPosition.x=100;
+    p->mParticleEmitter->RebaseParticlePosition(p, {100, p->mPosition.y});
     const double oldTicks=p->mLinearElapsedNs/10'000'000.0;
     edited.system->SystemMove(100.25f,199.5f); // Initial center is (100,200).
     edited.system->Update(1'000'000);
@@ -476,7 +477,7 @@ void TestConstantAccelerationPrecision()
     combined.fields[1]=combined.fields[0];
     combined.emitter.mParticleFields.count=2;
     auto* both=combined.Spawn();
-    both->mPosition={0,0}; both->mVelocity={0,0};
+    both->mParticleEmitter->RebaseParticlePosition(both, {0,0}); both->mVelocity={0,0};
     combined.system->Update(20'000'000);
     Near(both->mPosition.x,.48f,"constant acceleration fields did not combine");
     Near(both->mPosition.y,-.24f,"constant vertical acceleration fields did not combine");
@@ -502,8 +503,8 @@ void TestConstantSpinPrecision()
         if (angleCurve) scene.emitter.mParticleSpinAngle={angleNodes,2};
         if (randomSpeedRange) scene.emitter.mParticleSpinSpeed={&speedNode,1};
         auto* particle=scene.Spawn();
-        particle->mParticleDuration.mNanoseconds=37'000'003;
-        particle->mSpinPosition=1'048'576.f;
+        particle->mParticleDurationNs=37'000'003;
+        particle->mParticleEmitter->RebaseParticleSpin(particle, 1'048'576.f);
         particle->mSpinVelocity=.125f;
         particle->mParticleInterp[TRACK_PARTICLE_SPIN_SPEED]=.5f;
         std::uint32_t random=2719;
@@ -518,9 +519,9 @@ void TestConstantSpinPrecision()
     }
     Scene changing(-1,true);
     auto* p=changing.Spawn();
-    p->mPosition={1'048'576.f,-1'048'576.f};
+    p->mParticleEmitter->RebaseParticlePosition(p, {1'048'576.f,-1'048'576.f});
     p->mVelocity={.125f,-.125f};
-    p->mSpinPosition=1'048'576.f;
+    p->mParticleEmitter->RebaseParticleSpin(p, 1'048'576.f);
     constexpr int units[]{1,2,-1,0};
     std::int64_t sum=0;
     for (int i=0;i<4096;++i)
@@ -539,10 +540,10 @@ void TestConstantSpinPrecision()
             {0.0,0,0,1,1},{1.0,180,180,1,1}};
         curved.emitter.mParticleSpinAngle={angleNodes,2};
         auto* particle=curved.Spawn();
-        particle->mParticleDuration.mNanoseconds=37'000'003;
-        particle->mPosition={1'048'576.f,-1'048'576.f};
+        particle->mParticleDurationNs=37'000'003;
+        particle->mParticleEmitter->RebaseParticlePosition(particle, {1'048'576.f,-1'048'576.f});
         particle->mVelocity={.125f,-.125f};
-        particle->mSpinPosition=1'048'576.f;
+        particle->mParticleEmitter->RebaseParticleSpin(particle, 1'048'576.f);
         std::int64_t accumulated=0;
         for (int i=0;i<4096;++i)
         {
@@ -565,16 +566,16 @@ void TestConstantSpinPrecision()
             {0.0,0,0,1,1},{1.0,180,180,1,1}};
         curvedEdit.emitter.mParticleSpinAngle={angleNodes,2};
         auto* particle=curvedEdit.Spawn();
-        particle->mParticleDuration.mNanoseconds=1'000'000'000;
-        particle->mPosition={1'048'576.f,-1'048'576.f};
+        particle->mParticleDurationNs=1'000'000'000;
+        particle->mParticleEmitter->RebaseParticlePosition(particle, {1'048'576.f,-1'048'576.f});
         particle->mVelocity={.125f,-.125f};
-        particle->mSpinPosition=7.25f;
+        particle->mParticleEmitter->RebaseParticleSpin(particle, 7.25f);
         particle->mSpinVelocity=.125f;
         curvedEdit.system->Update(5'000'000);
-        if (editSpin) particle->mSpinPosition=10.f;
+        if (editSpin) particle->mParticleEmitter->RebaseParticleSpin(particle, 10.f);
         else
         {
-            particle->mPosition.x=10.f;
+            particle->mParticleEmitter->RebaseParticlePosition(particle, {10.f, particle->mPosition.y});
             curvedEdit.system->SystemMove(100.25f,199.5f);
         }
         curvedEdit.system->Update(5'000'000);
@@ -586,18 +587,18 @@ void TestConstantSpinPrecision()
             particle->mPosition.x==(editSpin?1'048'576.125f:10.3125f),
             "nonzero angle curve was counted twice during a public edit or held move");
     }
-    p->mPosition={1'048'576.f,-1'048'576.f};
-    p->mSpinPosition=1'048'576.f;
+    p->mParticleEmitter->RebaseParticlePosition(p, {1'048'576.f,-1'048'576.f});
+    p->mParticleEmitter->RebaseParticleSpin(p, 1'048'576.f);
     p->mSpinVelocity=.125f;
     changing.system->Update(5'000'000);
-    p->mSpinPosition=10.f;
+    p->mParticleEmitter->RebaseParticleSpin(p, 10.f);
     changing.system->Update(5'000'000);
     Require(p->mSpinPosition==10.0625f && p->mPosition.x==1'048'576.125f,
         "public spin edit discarded translation precision");
-    p->mPosition={1'048'576.f,-1'048'576.f};
-    p->mSpinPosition=1'048'576.f;
+    p->mParticleEmitter->RebaseParticlePosition(p, {1'048'576.f,-1'048'576.f});
+    p->mParticleEmitter->RebaseParticleSpin(p, 1'048'576.f);
     changing.system->Update(5'000'000);
-    p->mPosition.x=10.f;
+    p->mParticleEmitter->RebaseParticlePosition(p, {10.f, p->mPosition.y});
     changing.system->SystemMove(100.25f,199.5f);
     changing.system->Update(5'000'000);
     Require(p->mPosition.x==10.3125f && p->mPosition.y==-1'048'576.625f &&
@@ -608,8 +609,8 @@ void TestConstantSpinPrecision()
     changing.emitter.mParticleSpinSpeed={variableSpeed,2};
     const float oldSpin=p->mSpinPosition;
     changing.system->Update(1'250'000);
-    const float sampledRate=static_cast<float>(16.0*p->mParticleAge.mNanoseconds/
-        p->mParticleDuration.mNanoseconds)*.01;
+    const float sampledRate=static_cast<float>(16.0*p->mParticleAgeNs/
+        p->mParticleDurationNs)*.01;
     const float legacySpin=oldSpin+static_cast<float>(
         sampledRate*.125*double(0.017453292f)+.125*.125);
     Require(!p->mLinearSpinActive && p->mSpinPosition==legacySpin,
@@ -629,7 +630,7 @@ void TestLifetimesAndTracks()
 {
     Scene scene;
     auto* p = scene.Spawn();
-    Require(p->mParticleDuration.mNanoseconds == 1'301'250'000,
+    Require(p->mParticleDurationNs == 1'301'250'000,
         "fractional authored duration was truncated");
     scene.system->Update(1'301'249'999);
     Require(scene.Emitter()->ParticleRosterCount() == 1, "particle died before ns boundary");
@@ -638,13 +639,13 @@ void TestLifetimesAndTracks()
 
     Scene looping(-1, true);
     auto* loop = looping.Spawn();
-    loop->mParticleDuration.mNanoseconds = 12'345'679;
+    loop->mParticleDurationNs = 12'345'679;
     looping.system->Update(40'000'000);
-    Require(loop->mParticleAge.mNanoseconds == 2'962'963, "particle loop lost ns overshoot");
+    Require(loop->mParticleAgeNs == 2'962'963, "particle loop lost ns overshoot");
     Require(loop->mAnimationElapsedNs == 40'000'000, "loop reset animation elapsed");
-    looping.Emitter()->mSystemDuration.mNanoseconds = 17'000'003;
+    looping.Emitter()->mSystemDurationNs = 17'000'003;
     looping.system->Update(50'000'000);
-    Require(looping.Emitter()->mSystemAge.mNanoseconds == 4'999'985,
+    Require(looping.Emitter()->mSystemAgeNs == 4'999'985,
         "emitter loop lost ns overshoot");
     Require(looping.Emitter()->mEmissionElapsedNs == 90'000'000,
         "emitter loop reset emission clock");
@@ -655,7 +656,7 @@ void TestLifetimesAndTracks()
     position.fields[0].mX = {offsets, 2};
     auto* q = position.Spawn();
     Near(q->mPosition.x, 103, "birth offset was not sampled at zero age");
-    q->mParticleDuration.mNanoseconds = 100'000'000;
+    q->mParticleDurationNs = 100'000'000;
     position.system->Update(25'000'000);
     Near(q->mPosition.x, 105.5f, "lifetime fraction did not use full duration");
     FloatParameterTrackNode rates[]{{0.0, 1, 1, 1, 1}, {1.0, 3, 3, 1, 1}};
@@ -667,9 +668,9 @@ void TestLifetimesAndTracks()
     Scene random;
     random.emitter.mParticleFlags |= 1 << static_cast<int>(ParticleFlags::PARTICLE_RANDOM_START_TIME);
     auto* r = random.Spawn();
-    Require(r->mParticleAge.mNanoseconds >= 0 &&
-        r->mParticleAge < r->mParticleDuration &&
-        r->mParticleAge.mNanoseconds % 10'000'000 != 0,
+    Require(r->mParticleAgeNs >= 0 &&
+        r->mParticleAgeNs < r->mParticleDurationNs &&
+        r->mParticleAgeNs % 10'000'000 != 0,
         "random initial age retained legacy tick grid");
 }
 
@@ -712,7 +713,7 @@ void TestEmission()
     wrap.system->Update(200'000'000);
     Require(wrap.Emitter()->mParticlesSpawned == 1 &&
         wrap.Emitter()->mSpawnRemainder == 100'000'000'000, "constant emission phase wrap");
-    Require(wrap.Emitter()->ParticleRosterParticleAt(0)->mParticleAge.mNanoseconds == 0,
+    Require(wrap.Emitter()->ParticleRosterParticleAt(0)->mParticleAgeNs == 0,
         "endpoint emission birth received full outer dt");
 }
 
@@ -727,18 +728,18 @@ void TestCrossfade()
     scene.definition.mEmitterDefCount = 2;
     scene.Emitter()->mEmitterDef = definitions;
     auto* source = scene.Spawn();
-    source->mParticleDuration.mNanoseconds = 100'000'000;
-    source->mParticleAge.mNanoseconds = 90'000'000;
+    source->mParticleDurationNs = 100'000'000;
+    source->mParticleAgeNs = 90'000'000;
     scene.system->Update(50'000'000);
     Require(scene.system->EmitterRosterCount() == 2, "OnDuration did not create target emitter");
     auto* target = scene.system->EmitterRosterEmitterAt(1);
     Require(target->ParticleRosterCount() == 1 &&
-        target->ParticleRosterParticleAt(0)->mParticleAge.mNanoseconds == 0 &&
-        target->mSystemAge.mNanoseconds == 0, "duration target received hidden residual/full step");
-    Require(source->mParticleAge.mNanoseconds == 100'000'000,
+        target->ParticleRosterParticleAt(0)->mParticleAgeNs == 0 &&
+        target->mSystemAgeNs == 0, "duration target received hidden residual/full step");
+    Require(source->mParticleAgeNs == 100'000'000,
         "nonloop crossfade source age did not clamp at duration");
     scene.system->Update(5'000'000);
-    Require(target->ParticleRosterParticleAt(0)->mParticleAge.mNanoseconds == 5'000'000,
+    Require(target->ParticleRosterParticleAt(0)->mParticleAgeNs == 5'000'000,
         "crossfade target failed next actual delta");
 
     Scene existing(-1, false, 100);
@@ -749,11 +750,11 @@ void TestCrossfade()
     Require(existing.system->EmitterRosterAdd(targetEmitter), "target emitter roster full");
     existing.Emitter()->CrossFadeEmitter(targetEmitter);
     existing.system->Update(20'000'000);
-    Require(existing.Emitter()->mEmitterCrossFadeCountDown.mNanoseconds == 80'000'000,
+    Require(existing.Emitter()->mEmitterCrossFadeCountDownNs == 80'000'000,
         "crossfade countdown did not use actual ns");
     Require(targetEmitter->ParticleRosterCount() >= 2, "crossfade source emitted no targets");
     for (int i = 0; i < targetEmitter->ParticleRosterCount(); ++i)
-        Require(targetEmitter->ParticleRosterParticleAt(i)->mParticleAge.mNanoseconds == 0,
+        Require(targetEmitter->ParticleRosterParticleAt(i)->mParticleAgeNs == 0,
             "birth into existing later emitter was updated twice in main step");
     existing.system->Update(100'000'000);
     Require(existing.Emitter()->mEmissionElapsedNs == 100'000'000 &&
@@ -784,7 +785,7 @@ void TestSystemPositionPrecision()
         scene.emitter.mSystemFields = {fields, 2};
         auto* emitter = scene.Emitter();
         emitter->TodEmitterInitialize(origin, -origin, scene.system, &scene.emitter);
-        emitter->mSystemDuration.mNanoseconds = duration;
+        emitter->mSystemDurationNs = duration;
         std::uint32_t random = 711;
         Advance(scene, elapsed, frequency, random);
         const double phase = double(elapsed % duration) / duration;
@@ -841,7 +842,7 @@ void TestContinuation()
         *copy = *from->ParticleRosterParticleAt(i);
         copy->mParticleEmitter = to;
     }
-    to->mSystemAge = from->mSystemAge;
+    to->mSystemAgeNs = from->mSystemAgeNs;
     to->mSystemPositionOriginX = from->mSystemPositionOriginX;
     to->mSystemPositionOriginY = from->mSystemPositionOriginY;
     to->mSystemPositionBound = from->mSystemPositionBound;

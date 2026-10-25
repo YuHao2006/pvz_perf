@@ -10,8 +10,7 @@ set(PVZ_STATIC_DEFINITION_SOURCES
     "${PVZ_GAME_SOURCE_DIR}/Sexy.TodLib/generated/SceneAtlasData.cpp")
 foreach(index RANGE 0 7)
     list(APPEND PVZ_STATIC_DEFINITION_SOURCES
-        "${PVZ_GAME_SOURCE_DIR}/Sexy.TodLib/generated/definitions/ReanimData0${index}.cpp"
-        "${PVZ_GAME_SOURCE_DIR}/Sexy.TodLib/generated/definitions/ParticleData0${index}.cpp")
+        "${PVZ_GAME_SOURCE_DIR}/Sexy.TodLib/generated/definitions/ReanimData0${index}.cpp")
 endforeach()
 file(GLOB_RECURSE PVZ_RESOURCE_INPUTS CONFIGURE_DEPENDS
     "${CMAKE_SOURCE_DIR}/assets/definitions/*"
@@ -59,6 +58,7 @@ add_custom_command(
         "${CMAKE_SOURCE_DIR}/tools/static_definition_codegen.py"
         "${CMAKE_SOURCE_DIR}/tools/static_reanim_codegen.py"
         "${CMAKE_SOURCE_DIR}/tools/static_particle_codegen.py"
+        "${CMAKE_SOURCE_DIR}/tools/particle_gpu_codegen.py"
         "${CMAKE_SOURCE_DIR}/tools/resource_build_config.py"
         "${CMAKE_SOURCE_DIR}/tools/exact_atlas.py"
         "${CMAKE_SOURCE_DIR}/tools/compile_numeric_resources.py"

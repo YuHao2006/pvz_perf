@@ -2,6 +2,7 @@
 #if defined(PVZ_D3D12_REANIM_RESIDENT)
 #include "../../../misc/FastMath.h"
 #include <cmath>
+#include "Tests/native/ParticleGpuChecks.h"
 namespace D3d12ReanimTest {
 using namespace Sexy;
 using Point = std::array<float, 4>;
@@ -81,6 +82,7 @@ inline CpuTriangles Reference(const GpuReanimKey& a, const GpuReanimKey& b,
     return result;
 }
 inline void Run(D3d12Renderer& renderer) {
+    ParticleGpuTest::Run(renderer);
     const std::array<GpuReanimKey, 2> keys{{
         {5.25f, 8.125f, -15, 23, 1.15f, .9f, .8f, 0, 1},
         {13.5f, 11.25f, 37, -18, -.75f, 1.1f, .35f, -1, 1}}};

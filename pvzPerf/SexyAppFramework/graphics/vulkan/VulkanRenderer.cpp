@@ -1,4 +1,5 @@
 #include "VulkanRenderer.h"
+#include "../GpuParticleUpload.h"
 #include <algorithm>
 #include <array>
 #include <cmath>
@@ -132,6 +133,7 @@ struct VulkanReanim {
     // Validation metadata only; no CPU keyframes or geometry are retained.
     std::vector<GpuReanimTrack> trackInfo;
     uint32_t imageSlotCount = 0, variantCount = 0;
+    uint32_t particleEmitterCount = 0, particleVariantCount = 0;
 #if defined(PVZ_REANIM_UNIFIED)
     uint32_t blobHeader=UINT32_MAX;
     VkDeviceSize blobBytes=0;
@@ -2293,6 +2295,41 @@ bool VulkanRenderer::Impl::SubmitUnifiedMarker(uint32_t encoded,VulkanTexture* t
 }
 #endif
 
+VulkanReanim* VulkanRenderer::UploadParticleDefinition(std::span<const float> words,uint32_t variants) {
+    return UploadParticleResident(*this,words,variants);
+}
+bool VulkanRenderer::SubmitParticle(VulkanReanim* definition,VulkanTexture* texture,
+    const GpuParticleDraw& draw,std::span<const GpuParticleState> chain,
+    bool linear,bool repeat,VulkanBlend blend,const VulkanClip* clip) {
+#if defined(PVZ_REANIM_UNIFIED)
+    auto& s=*impl_;
+    const auto slots=1+chain.size()*2;
+    if(!definition||definition->owner!=&s||draw.variant>=definition->particleVariantCount||
+        chain.empty()||draw.frameSource>=chain.size()||slots+1>65535-s.unifiedInstanceControls.size()||
+        (slots+1)*96>s.unifiedInstances->size-s.unifiedInstances->used)return false;
+    for(const auto& state:chain)if(state.emitter>=definition->particleEmitterCount)return false;
+    GpuReanimInstance instance{};
+    instance.translateX=draw.translateX;instance.translateY=draw.translateY;
+    instance.overlay00=float((s.unifiedInstanceControls.size()+1)*24);
+    instance.overlay01=float(chain.size());
+    const auto token=BeginReanimInstance(definition,texture,instance,linear,repeat,clip,true);
+    if(token==UINT32_MAX)return false;
+    const uint32_t flags=(linear?1u:0u)|(repeat?2u:0u)|(clip?4u:0u)|16u;
+    auto* bytes=static_cast<std::byte*>(s.unifiedInstances->mapped);
+    std::memcpy(bytes+size_t(token&65535u)*96+offsetof(ReanimInstanceData,flags),&flags,4);
+    const auto start=s.unifiedInstances->used;
+    std::memset(bytes+start,0,96);
+    std::memcpy(bytes+start,&draw,sizeof(draw));
+    std::memcpy(bytes+start+96,chain.data(),chain.size_bytes());
+    s.unifiedInstances->used+=slots*96;
+    s.unifiedInstanceControls.resize(s.unifiedInstanceControls.size()+slots);
+    const GpuReanimTrackDraw packet{0,0xffffffff,draw.samplingFlags};
+    return SubmitReanimTrack(token,packet,blend);
+#else
+    (void)definition;(void)texture;(void)draw;(void)chain;(void)linear;(void)repeat;(void)blend;(void)clip;
+    return false;
+#endif
+}
 VulkanReanim* VulkanRenderer::UploadReanimDefinition(const GpuReanimDefinition& source) {
 #if defined(PVZ_REANIM_UNIFIED)
     auto& s=*impl_;

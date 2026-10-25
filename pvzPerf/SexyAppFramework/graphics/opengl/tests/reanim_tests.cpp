@@ -2,6 +2,7 @@
 #include "OpenGLContext.h"
 #include "OpenGLRenderer.h"
 #include "misc/FastMath.h"
+#include "Tests/native/ParticleGpuChecks.h"
 #include <algorithm>
 #include <array>
 #include <chrono>
@@ -263,12 +264,8 @@ void Correct(OpenGLContext&context){
     const auto bufferSize=reinterpret_cast<BufferSize>(GL3::GetProcAddress("glGetBufferParameteriv"));
     Require(bufferSize!=nullptr,"Buffer-size query unavailable");
     GLint bytes=0;bufferSize(0x8C2A,0x8764,&bytes); // GL_TEXTURE_BUFFER / GL_BUFFER_SIZE.
-#if defined(PVZ_OPENGL_REANIM_COMPUTE_EXPERIMENT)
     constexpr int instanceBytes=96;
-#else
-    constexpr int instanceBytes=80;
-#endif
-    Require(bytes==2*instanceBytes,"Resident instance upload contains unused clip data or has a wrong stride");
+    Require(bytes==2*instanceBytes,"Resident instance upload has a wrong stride");
     std::cout<<"PASS two resident instances across feedback Flushes bytes="<<bytes<<'\n';
 #if defined(PVZ_OPENGL_REANIM_COMPUTE_EXPERIMENT)
     if(!computeActive)
@@ -539,11 +536,7 @@ int Benchmark(OpenGLContext&context,bool mixed,bool transitions=false,bool diagn
   <<" diagnostic_timestamps="<<diagnostic
   <<" unlocked clocks; CPU includes interpolation/clip or API_payload64Binstance+32Btrack;"
   <<" GPU_upload"
-#if defined(PVZ_OPENGL_REANIM_COMPUTE_EXPERIMENT)
   <<"96"
-#else
-  <<"80"
-#endif
   <<"Binstance+"
 #if defined(PVZ_OPENGL_REANIM_VERTEX_EXPERIMENT)
   <<"4x40Bmarker+24Bindices"
@@ -677,6 +670,9 @@ int main(int argc,char**argv)try{
  else if(argc>1&&std::string(argv[1])=="--benchmark-mixed")return Benchmark(context,true);
  else if(argc>1&&std::string(argv[1])=="--benchmark-transitions")return Benchmark(context,true,true);
  else if(argc>1&&std::string(argv[1])=="--diagnose-transitions")return Benchmark(context,true,true,true);
- else {Correct(context);Lifecycle(context);Policy(context);}
+ else {
+  { OpenGLRenderer particleRenderer(context,64,64,{});ParticleGpuTest::Run(particleRenderer); }
+  Correct(context);Lifecycle(context);Policy(context);
+ }
  return 0;
 }catch(const std::exception&e){std::cerr<<"FAIL "<<e.what()<<'\n';return 1;}

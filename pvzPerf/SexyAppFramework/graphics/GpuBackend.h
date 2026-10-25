@@ -75,6 +75,8 @@ using GpuReanimResource = MetalReanim;
 #else
 struct GpuReanimResource;
 #endif
+// Both immutable animation formats use the backend's resident arena.
+using GpuParticleResource = GpuReanimResource;
 using GpuHdrParams = VulkanHdrParams;
 #ifdef _WIN32
 using GpuHdrDisplayObserver = VulkanHdrDisplayObserver;

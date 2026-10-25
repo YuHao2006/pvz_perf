@@ -64,6 +64,10 @@ public:
     // Optional GL 3.2 fused track evaluation/geometry expansion. Null/false
     // means the caller must retain its CPU path on unsupported contexts/jobs.
     OpenGLReanim* UploadReanimDefinition(const GpuReanimDefinition& definition);
+    OpenGLReanim* UploadParticleDefinition(std::span<const float> words, uint32_t variants);
+    bool SubmitParticle(OpenGLReanim*, OpenGLTexture*, const GpuParticleDraw&,
+        std::span<const GpuParticleState>, bool linear, bool repeat, GpuBlend,
+        const GpuClip* clip = nullptr);
     void DestroyReanimDefinition(OpenGLReanim* definition);
     bool SubmitReanim(OpenGLReanim* definition, OpenGLTexture* texture,
         const GpuReanimDraw& draw, bool linear, bool repeat, GpuBlend blend,

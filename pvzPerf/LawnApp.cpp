@@ -1338,7 +1338,6 @@ void LawnApp::Init()
 //#ifdef _DEBUG
 	TodAssertInitForApp();
 
-	TodLog("session id: %lld", static_cast<long long>(mSessionID));
 //#endif
 
 	if (!mResourceManager->ParseResourcesFile("compiled/resources.compiled"))

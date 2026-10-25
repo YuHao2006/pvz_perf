@@ -19,9 +19,12 @@ cmake --build out/android-arm64
 ```
 
 The current host does not have an NDK or `adb`, so an APK build and device run
-cannot be verified here. The first device integration still needs an APK
-manifest/package target and the asset deployment step; the native game target
-already has the Android entry point and platform/Vulkan sources.
+cannot be verified here. After the NDK build produces
+`out/android-arm64/Release/libpvz_perf.so`, run
+`tools/build-android-apk.ps1 -BuildDirectory out/android-arm64 -Install`; the
+script stages the native library and the generated `main.pak64` into the APK,
+and the native entry point extracts the archive into the app's private data
+directory on first launch. No manual data-package copy is required.
 
 ## GPU concurrency measurement
 

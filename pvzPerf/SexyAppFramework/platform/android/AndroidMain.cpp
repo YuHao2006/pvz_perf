@@ -6,12 +6,35 @@
 #include <android_native_app_glue.h>
 #include <android/log.h>
 #include <exception>
+#include <android/asset_manager.h>
+#include <filesystem>
+#include <fstream>
+#include <stdexcept>
 
 using namespace Sexy;
 
 namespace {
 LawnApp* app = nullptr;
 bool started = false;
+
+void ExtractAsset(AAssetManager* manager, const char* name, const std::filesystem::path& destination) {
+    if (!manager) throw std::runtime_error("Android asset manager is unavailable");
+    AAsset* asset = AAssetManager_open(manager, name, AASSET_MODE_STREAMING);
+    if (!asset) throw std::runtime_error(std::string("Android asset is missing: ") + name);
+    const auto closeAsset = [&] { AAsset_close(asset); };
+    std::filesystem::create_directories(destination.parent_path());
+    std::ofstream output(destination, std::ios::binary | std::ios::trunc);
+    if (!output) { closeAsset(); throw std::runtime_error("Cannot create extracted Android asset"); }
+    char buffer[1024 * 1024];
+    while (true) {
+        const int count = AAsset_read(asset, buffer, sizeof(buffer));
+        if (count < 0) { closeAsset(); throw std::runtime_error("Cannot read Android asset"); }
+        if (count == 0) break;
+        output.write(buffer, count);
+        if (!output) { closeAsset(); throw std::runtime_error("Cannot write extracted Android asset"); }
+    }
+    closeAsset();
+}
 
 void HandleCommand(android_app* state, int32_t command) {
     switch (command) {
@@ -42,6 +65,9 @@ void android_main(android_app* state) {
         gTodStringFormatCount = gLawnStringFormatCount;
         gAppCloseRequest = LawnGetCloseRequest;
         app = new LawnApp();
+        const std::filesystem::path runtimeRoot(state->activity->internalDataPath);
+        ExtractAsset(state->activity->assetManager, "main.pak64", runtimeRoot / "main.pak64");
+        app->mChangeDirTo = runtimeRoot.string();
         app->Init();
         started = true;
         app->Start();

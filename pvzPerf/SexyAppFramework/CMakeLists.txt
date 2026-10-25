@@ -219,7 +219,9 @@ endif()
 # 仅 Reanimator.cpp 包含 → 改版只重编一个 obj）。恒跑目标 + 生成器内容比对：
 # 无变化零写盘，ninja 不重编任何 obj
 set_source_files_properties(${PVZ_STATIC_DEFINITION_SOURCES} PROPERTIES GENERATED TRUE)
-if(MSVC)
+if(ANDROID OR CMAKE_SYSTEM_NAME STREQUAL "Android")
+add_library(${PROJECT_NAME} SHARED ${ALL_FILES})
+elseif(MSVC)
     add_executable(${PROJECT_NAME} WIN32 ${ALL_FILES})
     target_compile_options(${PROJECT_NAME} PRIVATE /we4834)
 else()
@@ -273,13 +275,17 @@ if(ANDROID OR CMAKE_SYSTEM_NAME STREQUAL "Android")
     target_sources(${PROJECT_NAME} PRIVATE
         "platform/android/AndroidMain.cpp"
         "platform/android/AndroidWindow.h")
-    set(_PVZ_ANDROID_GLUE "${ANDROID_NDK}/sources/android/native_app_glue/android_native_app_glue.c")
+    set(_PVZ_ANDROID_NDK "${CMAKE_ANDROID_NDK}")
+    if(NOT _PVZ_ANDROID_NDK)
+        set(_PVZ_ANDROID_NDK "$ENV{ANDROID_NDK_HOME}")
+    endif()
+    set(_PVZ_ANDROID_GLUE "${_PVZ_ANDROID_NDK}/sources/android/native_app_glue/android_native_app_glue.c")
     if(NOT EXISTS "${_PVZ_ANDROID_GLUE}")
         message(FATAL_ERROR "Android NDK native_app_glue.c not found: ${_PVZ_ANDROID_GLUE}")
     endif()
     target_sources(${PROJECT_NAME} PRIVATE "${_PVZ_ANDROID_GLUE}")
     target_include_directories(${PROJECT_NAME} PRIVATE
-        "${ANDROID_NDK}/sources/android/native_app_glue")
+        "${_PVZ_ANDROID_NDK}/sources/android/native_app_glue")
     target_link_libraries(${PROJECT_NAME} PRIVATE android log)
 endif()
 

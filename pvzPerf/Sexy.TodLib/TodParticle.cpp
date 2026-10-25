@@ -17,6 +17,12 @@ namespace
 constexpr unsigned int PARTICLE_POOL_CAPACITY = 1024U;
 constexpr std::int64_t ParticleSourceTickNs = 10'000'000;
 constexpr std::int64_t ParticleCycle = ParticleClock::Cycle;
+double MotionDisplacement(double velocity, double acceleration, double ticks)
+{
+	// Interpolate the original recurrence v[n+1]=v[n]+a; p[n+1]=p[n]+v[n+1].
+	// The +1 preserves its 10ms checkpoints without iterating those checkpoints.
+	return ticks * (velocity + acceleration * (ticks + 1) * 0.5);
+}
 double LifeFraction(std::int64_t age, const Sexy::TimeCounter& duration)
 {
 	return age < 0 ? -1.0 : static_cast<double>(age) /
@@ -483,6 +489,7 @@ TodParticle* TodParticleEmitter::SpawnParticle(int theIndex, int theSpawnCount)
 	aParticle->mAnimationSampleIntegral = 0;
 	aParticle->mLinearOriginX = aParticle->mLinearOriginY = 0;
 	aParticle->mLinearElapsedNs = -1;
+	aParticle->mLinearAcceleration = SexyVector2(0, 0);
 	aParticle->mLinearVelocity = aParticle->mLinearLastPosition = SexyVector2(0, 0);
 	aParticle->mLinearSpinOrigin = aParticle->mLinearSpinRate = 0;
 	aParticle->mLinearLastSpin = 0;
@@ -754,8 +761,29 @@ bool TodParticleEmitter::UpdateParticle(TodParticle* theParticle, std::uint64_t 
 	const auto deltaTicks = static_cast<double>(deltaNs) / ParticleSourceTickNs;
 	const auto aParticleTime = ParticleTime(theParticle);
 	const int aParticleFieldCount = mEmitterDef->mParticleFields.count;  // 装载后 def 只读，场数外提免逐场重载
-	for (int i = 0; i < aParticleFieldCount; i++)  // 更新粒子受到每个粒子场的作用
-		UpdateParticleField(theParticle, &mEmitterDef->mParticleFields.Fields[i], aParticleTime, i, deltaTicks);
+	bool anchoredMotion = true;
+	SexyVector2 acceleration(0, 0);
+	for (int i = 0; i < aParticleFieldCount; ++i)
+	{
+		const auto& field = mEmitterDef->mParticleFields.Fields[i];
+		if (field.mFieldType != ParticleFieldType::FIELD_ACCELERATION ||
+			field.mX.mCountNodes > 1 || field.mY.mCountNodes > 1)
+		{
+			anchoredMotion = false;
+			break;
+		}
+	}
+	if (anchoredMotion)
+		for (int i = 0; i < aParticleFieldCount; ++i)
+		{
+			// Random ranges are constant per particle, not resampled per step.
+			const auto& field = mEmitterDef->mParticleFields.Fields[i];
+			acceleration.x += .01f * FloatTrackEvaluate(field.mX, aParticleTime, theParticle->mParticleFieldInterp[i][0]);
+			acceleration.y += .01f * FloatTrackEvaluate(field.mY, aParticleTime, theParticle->mParticleFieldInterp[i][1]);
+		}
+	else
+		for (int i = 0; i < aParticleFieldCount; ++i)
+			UpdateParticleField(theParticle, &mEmitterDef->mParticleFields.Fields[i], aParticleTime, i, deltaTicks);
 	const float aSpinSpeed = FloatTrackEvaluate(mEmitterDef->mParticleSpinSpeed, aParticleTime,
 		theParticle->mParticleInterp[ParticleTracks::TRACK_PARTICLE_SPIN_SPEED]) * 0.01;
 	const float aSpinAngle = FloatTrackEvaluate(mEmitterDef->mParticleSpinAngle, aParticleTime,
@@ -768,7 +796,7 @@ bool TodParticleEmitter::UpdateParticle(TodParticle* theParticle, std::uint64_t 
 			LastParticleTime(theParticle), theParticle->mParticleInterp[ParticleTracks::TRACK_PARTICLE_SPIN_ANGLE]);
 	};
 	bool sampledSpin = true;
-	if (aParticleFieldCount == 0 && deltaNs > 0)
+	if (anchoredMotion && deltaNs > 0)
 	{
 		// A velocity change keeps the old segment's double endpoint. Position
 		// edits instead start from the explicit public float value.
@@ -777,40 +805,52 @@ bool TodParticleEmitter::UpdateParticle(TodParticle* theParticle, std::uint64_t 
 		// each particle's interpolation value is chosen once at birth.
 		const bool anchoredSpin = mEmitterDef->mParticleSpinSpeed.mCountNodes <= 1;
 		const double spinRate = anchoredSpin ? DEG_TO_RAD(double(aSpinSpeed)) + p.mSpinVelocity : 0;
+		const double oldTicks = p.mLinearElapsedNs < 0 ? 0 :
+			static_cast<double>(p.mLinearElapsedNs) / ParticleSourceTickNs;
+		const SexyVector2 oldVelocity(
+			static_cast<float>(p.mLinearVelocity.x + p.mLinearAcceleration.x * oldTicks),
+			static_cast<float>(p.mLinearVelocity.y + p.mLinearAcceleration.y * oldTicks));
 		if (p.mLinearElapsedNs < 0)
 		{
 			p.mLinearOriginX = p.mPosition.x;
 			p.mLinearOriginY = p.mPosition.y;
 			p.mLinearElapsedNs = 0;
+			p.mLinearVelocity = p.mVelocity;
 			if (anchoredSpin) p.mLinearSpinOrigin = double(p.mSpinPosition) - DEG_TO_RAD(double(previousSpinAngle()));
 		}
 		else if (p.mPosition.x != p.mLinearLastPosition.x || p.mPosition.y != p.mLinearLastPosition.y ||
-			p.mVelocity.x != p.mLinearVelocity.x || p.mVelocity.y != p.mLinearVelocity.y ||
+			p.mVelocity.x != oldVelocity.x || p.mVelocity.y != oldVelocity.y ||
+			acceleration.x != p.mLinearAcceleration.x || acceleration.y != p.mLinearAcceleration.y ||
 			(anchoredSpin && (!p.mLinearSpinActive || p.mSpinPosition != p.mLinearLastSpin ||
 				spinRate != p.mLinearSpinRate)))
 		{
-			const double oldTicks = static_cast<double>(p.mLinearElapsedNs) / ParticleSourceTickNs;
 			p.mLinearOriginX = p.mPosition.x != p.mLinearLastPosition.x ? p.mPosition.x :
-				p.mLinearOriginX + p.mLinearVelocity.x * oldTicks;
+				p.mLinearOriginX + MotionDisplacement(p.mLinearVelocity.x, p.mLinearAcceleration.x, oldTicks);
 			p.mLinearOriginY = p.mPosition.y != p.mLinearLastPosition.y ? p.mPosition.y :
-				p.mLinearOriginY + p.mLinearVelocity.y * oldTicks;
+				p.mLinearOriginY + MotionDisplacement(p.mLinearVelocity.y, p.mLinearAcceleration.y, oldTicks);
 			if (anchoredSpin)
 				p.mLinearSpinOrigin = p.mLinearSpinActive && p.mSpinPosition == p.mLinearLastSpin ?
 					p.mLinearSpinOrigin + p.mLinearSpinRate * oldTicks :
 					double(p.mSpinPosition) - DEG_TO_RAD(double(previousSpinAngle()));
 			p.mLinearElapsedNs = 0;
+			p.mLinearVelocity = p.mVelocity;
 		}
 		if (static_cast<std::uint64_t>(p.mLinearElapsedNs) > std::uint64_t(INT64_MAX) - deltaNs)
 			throw std::overflow_error("particle linear segment exceeds clock range");
 		p.mLinearElapsedNs += static_cast<std::int64_t>(deltaNs);
-		p.mLinearVelocity = p.mVelocity;
+		p.mLinearAcceleration = acceleration;
 		const double ticks = static_cast<double>(p.mLinearElapsedNs) / ParticleSourceTickNs;
-		const double x = p.mLinearOriginX + p.mVelocity.x * ticks;
-		const double y = p.mLinearOriginY + p.mVelocity.y * ticks;
+		const double x = p.mLinearOriginX + MotionDisplacement(p.mLinearVelocity.x, acceleration.x, ticks);
+		const double y = p.mLinearOriginY + MotionDisplacement(p.mLinearVelocity.y, acceleration.y, ticks);
+		const double vx = p.mLinearVelocity.x + acceleration.x * ticks;
+		const double vy = p.mLinearVelocity.y + acceleration.y * ticks;
 		if (!std::isfinite(x) || !std::isfinite(y) ||
+			!std::isfinite(vx) || !std::isfinite(vy) ||
+			std::fabs(vx) > std::numeric_limits<float>::max() || std::fabs(vy) > std::numeric_limits<float>::max() ||
 			std::fabs(x) > std::numeric_limits<float>::max() || std::fabs(y) > std::numeric_limits<float>::max())
 			throw std::overflow_error("particle linear position exceeds float range");
 		p.mPosition = SexyVector2(static_cast<float>(x), static_cast<float>(y));
+		p.mVelocity = SexyVector2(static_cast<float>(vx), static_cast<float>(vy));
 		p.mLinearLastPosition = p.mPosition;
 		p.mLinearSpinActive = anchoredSpin ? 1u : 0u;
 		if (anchoredSpin)
@@ -824,9 +864,9 @@ bool TodParticleEmitter::UpdateParticle(TodParticle* theParticle, std::uint64_t 
 			sampledSpin = false;
 		}
 	}
-	else if (aParticleFieldCount != 0)
+	else if (!anchoredMotion)
 	{
-		// Forces/collisions remain discrete. A later field-free segment must
+		// Feedback/variable fields remain discrete. A later constant segment must
 		// start from their result rather than revive an old analytic origin.
 		theParticle->mLinearElapsedNs = -1;
 		theParticle->mLinearSpinActive = 0;
@@ -984,13 +1024,12 @@ void TodParticleSystem::Update(std::uint64_t deltaNs)
 						particle.mPosition.y != particle.mLinearLastPosition.y)
 					{
 						const double ticks = static_cast<double>(particle.mLinearElapsedNs) / ParticleSourceTickNs;
-						particle.mLinearOriginX = particle.mPosition.x != particle.mLinearLastPosition.x ?
-							particle.mPosition.x : particle.mLinearOriginX + particle.mLinearVelocity.x * ticks;
-						particle.mLinearOriginY = particle.mPosition.y != particle.mLinearLastPosition.y ?
-							particle.mPosition.y : particle.mLinearOriginY + particle.mLinearVelocity.y * ticks;
-						if (particle.mLinearSpinActive)
-							particle.mLinearSpinOrigin += particle.mLinearSpinRate * ticks;
-						particle.mLinearElapsedNs = 0;
+						if (particle.mPosition.x != particle.mLinearLastPosition.x)
+							particle.mLinearOriginX = particle.mPosition.x -
+								MotionDisplacement(particle.mLinearVelocity.x, particle.mLinearAcceleration.x, ticks);
+						if (particle.mPosition.y != particle.mLinearLastPosition.y)
+							particle.mLinearOriginY = particle.mPosition.y -
+								MotionDisplacement(particle.mLinearVelocity.y, particle.mLinearAcceleration.y, ticks);
 					}
 					particle.mLinearOriginX += change.x;
 					particle.mLinearOriginY += change.y;

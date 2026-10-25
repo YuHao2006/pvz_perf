@@ -221,6 +221,7 @@ void CheckLiveSave()
         source.mLinearOriginY = -1'048'576.03125;
         source.mLinearElapsedNs = 1'250'001;
         source.mLinearVelocity = {.125f,-.25f};
+        source.mLinearAcceleration = {.08f,-.04f};
         source.mLinearLastPosition = {1'048'576.f,-1'048'576.f};
         source.mLinearSpinOrigin = 1'048'576.015625;
         source.mLinearSpinRate = .125;
@@ -258,7 +259,7 @@ void CheckLiveSave()
             V7SaveSchema::Read(tail,48,4) == 1,
             "Emitter exact curve origin/external input fields differ from their frozen wire offsets");
     if constexpr (std::is_same_v<T, TodParticle>)
-        Require(tail.size() == 92 && V7SaveSchema::Read(tail, 0, 8) == 21'234'567 &&
+        Require(tail.size() == 100 && V7SaveSchema::Read(tail, 0, 8) == 21'234'567 &&
             V7SaveSchema::Read(tail, 8, 8) == 123'456'789'012LL &&
             V7SaveSchema::Read(tail, 16, 8) == 987'654'321 &&
             V7SaveSchema::Read(tail, 24, 4) == 0x71234567U &&
@@ -272,7 +273,9 @@ void CheckLiveSave()
             V7SaveSchema::Double(tail,68)==1'048'576.015625 &&
             V7SaveSchema::Double(tail,76)==.125 &&
             V7SaveSchema::Float(tail,84)==1'048'576.f &&
-            V7SaveSchema::Read(tail,88,4)==1,
+            V7SaveSchema::Read(tail,88,4)==1 &&
+            V7SaveSchema::Float(tail,92)==.08f &&
+            V7SaveSchema::Float(tail,96)==-.04f,
             "Native particle main-step tail retained a removed current sample or shifted its exact fields");
     for (const unsigned fps : {60u, 100u, 144u, 240u, 250u, 1000u})
     {

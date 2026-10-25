@@ -241,6 +241,7 @@ template<class T, class Fn> void VisitV7Members(Fn&& visit)
         visit(offsetof(T, mLinearSpinRate), 76, 8);
         visit(offsetof(T, mLinearLastSpin), 84, 4);
         visit(offsetof(T, mLinearSpinActive), 88, 4);
+        visit(offsetof(T, mLinearAcceleration), 92, 8);
     }
     else if constexpr (std::is_same_v<T, GridItem>)
     {

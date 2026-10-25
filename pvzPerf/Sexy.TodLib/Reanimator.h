@@ -321,9 +321,6 @@ public:
     void                            BindTimeDomain(ReanimTimeDomain domain);
     void                            RebaseTime(std::int64_t nowNs);
     void                            ApplyRate(float rate);
-    // Rebind the active frame window while preserving the current phase.
-    // Potato Mine uses this for its distance-dependent blink window.
-    void                            SetFrameCount(int frameCount);
     void                            ChangeLoopType(ReanimLoopType loop);
     void                            Seek(std::int64_t numerator, std::int64_t denominator = 1000);
     void                            SeekRatio(float phase);

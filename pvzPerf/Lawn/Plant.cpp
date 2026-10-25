@@ -1533,6 +1533,40 @@ void Plant::PlayBodyReanim(ReanimTrackId theTrackId, ReanimLoopType theLoopType,
 void Plant::UpdatePotato()
 {
     Reanimation* aBodyReanim = mApp->ReanimationGet(mBodyReanimID);
+    const auto setLightFrameCount = [](Reanimation& reanimation, int frameCount)
+    {
+        if (frameCount <= 0)
+            throw std::invalid_argument("animation frame count must be positive");
+        if (frameCount == reanimation.mFrameCount)
+            return;
+        const auto nowNs = reanimation.mReanimationHolder ?
+            (reanimation.mTimeDomain == ReanimTimeDomain::Battle ?
+                reanimation.mReanimationHolder->mBattleTimeNs :
+                reanimation.mReanimationHolder->mVisualTimeNs) :
+            reanimation.mLastUpdateTimeNs;
+        const auto oldPeriod = reanimation.mPeriodNs;
+        const auto position = reanimation.SamplePlaybackAt(nowNs);
+        reanimation.mFrameCount = frameCount;
+        const auto newPeriod = ReanimClock::PeriodFromRate(
+            reanimation.mFrameCount, reanimation.mAnimRate);
+        if (newPeriod <= 0)
+            throw std::overflow_error("animation period below one nanosecond");
+        const auto phase = oldPeriod > 0 ?
+            ReanimClock::SignedMulDiv(position.phaseNs, newPeriod, oldPeriod) : 0;
+        reanimation.mPeriodNs = newPeriod;
+        reanimation.mStartTimeNs = ReanimClock::StartTimeAt(nowNs,
+            std::clamp<std::int64_t>(phase, 0, reanimation.mPeriodNs),
+            reanimation.mPeriodNs,
+            reanimation.mAnimRate == 0 ? 0 :
+                (reanimation.mAnimRate > 0 ? 1 : -1),
+            reanimation.mPhaseOriginNs);
+        reanimation.mLastFrameNs = oldPeriod > 0 ?
+            ReanimClock::SignedMulDiv(reanimation.mLastFrameNs,
+                newPeriod, oldPeriod) : 0;
+        reanimation.mLastUpdateTimeNs = nowNs;
+        reanimation.mHasLastFrame = false;
+        reanimation.mPendingTiming = false;
+    };
 
     if (mState == PlantState::STATE_NOTREADY)
     {
@@ -1555,7 +1589,7 @@ void Plant::UpdatePotato()
             aLightReanim->ChangeLoopType(ReanimLoopType::REANIM_LOOP);
             aLightReanim->ApplyRate(aRate - 2.0f);
             aLightReanim->SetFramesForLayer(ReanimTrackId::anim_glow);
-            aLightReanim->SetFrameCount(10);
+            setLightFrameCount(*aLightReanim, 10);
             aLightReanim->ShowOnlyTrack(ReanimTrackId::anim_glow);
             aLightReanim->SetTruncateDisappearingFrames(ReanimTrackId::anim_glow, false);
             mLightReanimID = mApp->ReanimationGetID(aLightReanim);
@@ -1576,7 +1610,7 @@ void Plant::UpdatePotato()
             Reanimation* aLightReanim = mApp->ReanimationTryToGet(mLightReanimID);
             if (aLightReanim)
             {
-                aLightReanim->SetFrameCount(
+                setLightFrameCount(*aLightReanim,
                     TodAnimateCurve(200, 50, DistanceToClosestZombie(), 10, 3, Curves::Linear));
             }
         }

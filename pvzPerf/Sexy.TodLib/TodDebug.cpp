@@ -4,6 +4,7 @@
 #include <csignal>
 #include <cstdio>
 #include <string>
+#define TOD_DEBUG_IMPLEMENTATION
 #include "TodDebug.h"
 #include "TodCommon.h"
 #include "misc/Debug.h"
@@ -335,19 +336,6 @@ void TodAssertInitForApp()
 	// executable-local data tree; keep that behavior separate from remake
 	// diagnostics, which use ./log.
 	gLogFileName = Sexy::GetDataFilePath("log.txt");
-
-	const std::time_t aclock = std::time(nullptr);
-	std::tm aLocalTime{};
-#ifdef _WIN32
-	const bool aTimeReady = localtime_s(&aLocalTime, &aclock) == 0;
-#else
-	const bool aTimeReady = localtime_r(&aclock, &aLocalTime) != nullptr;
-#endif
-	char aTimeText[64]{};
-	if (aTimeReady && std::strftime(aTimeText, sizeof(aTimeText), "%a %b %d %H:%M:%S %Y", &aLocalTime))
-		TodLog("Started %s\n", aTimeText);
-	else
-		TodLog("Started (local time unavailable)");
 
 #ifdef _WIN32
 	SetUnhandledExceptionFilter(TodUnhandledExceptionFilter);

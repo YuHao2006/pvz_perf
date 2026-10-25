@@ -209,7 +209,6 @@ void ReanimatorCache::PrebuildCacheFrames()
 		if (GetZombieDefinition(definitionType).mReanimationType == ReanimationType::REANIM_NONE) continue;
 		mZombieImages[i] = MakeCachedZombieFrame(static_cast<ZombieType>(i));
 	}
-	TodLog("cache prebuild: plant-variations=%d", mImageVariations.mCount);
 }
 
 

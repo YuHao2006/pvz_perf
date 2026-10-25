@@ -147,7 +147,6 @@ bool BassMusicInterface::LoadMusic(int theSongId, const std::string& theFileName
 	// 标题曲先由主线程加载，其余槽由加载线程独占；全表发布后禁止装载。
 	if (mSlotsPublished.load(std::memory_order_acquire))
 	{
-		TodLog("BassMusicInterface::LoadMusic after PublishSlots: the music table is immutable once published.");
 		std::abort();
 	}
 	if (!SlotIndexValid(theSongId) || mMusicSlots[theSongId])

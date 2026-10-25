@@ -169,7 +169,9 @@ class Game:
         board = result["mBoard"]
         if board:
             result["board"] = {
-                name: self.read(board + offset, "<?" if name == "paused" else "<I")
+                name: self.read(board + offset, "<?" if name == "paused" else
+                                "<Q" if name == "counter" and
+                                self.layout.get("boardCounterBytes", 4) == 8 else "<I")
                 for name, offset in self.layout["board"].items()
             }
         return result
@@ -204,6 +206,7 @@ def measure(game, seconds, scene, multiplier, output, preroll=0, interactive=Fal
         "clock": time.get_clock_info("perf_counter").implementation,
         "frame_metric": "existing application mDrawCount, produced draw frames per second",
         "cpu_basis": "process user+kernel time / actual QPC interval; one core = 100%",
+        "clock_policy": "Observer does not change CPU/GPU clocks or power policy.",
         "preroll_seconds": preroll,
         "status": "running",
     }
@@ -280,8 +283,10 @@ def measure(game, seconds, scene, multiplier, output, preroll=0, interactive=Fal
                 previous_foreground = focused
                 next_deadline = min(begin + int(time.perf_counter() - begin) + 1, end)
                 if interactive:
+                    cost = row["cpu_ms_per_draw_frame"]
+                    cost_text = f"{cost:.3f} ms" if cost != "" else "n/a"
                     print(f"t={now-begin:7.1f}s | FPS={row['draw_fps']:6.1f} "
-                          f"| CPU={row['cpu_percent']:6.1f}% | {segment} "
+                          f"| CPU={row['cpu_percent']:6.1f}% | CPU/frame={cost_text} | {segment} "
                           "| Enter / game exit = stop", flush=True)
         valid_rows = [r for r in rows if r["valid"]]
         total = sum(r["interval_s"] for r in valid_rows)

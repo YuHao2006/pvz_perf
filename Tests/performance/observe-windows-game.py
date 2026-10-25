@@ -36,7 +36,10 @@ def plot_samples(directory, label):
                              gridspec_kw={"height_ratios": [2, 1]})
     axes[0].plot(times, values("draw_fps"), color="#13834b", label="FPS")
     axes[0].plot(times, values("cpu_percent"), color="#bd4a2a", label="CPU % (one core)")
-    axes[0].set_ylim(0, 100)
+    maximum = max((float(row[field]) for row in rows
+                   if row["segment"] == "game"
+                   for field in ("draw_fps", "cpu_percent") if row[field]), default=100)
+    axes[0].set_ylim(0, max(100, maximum * 1.05))
     axes[0].set_ylabel("FPS / CPU %")
     axes[0].set_title(f"{label} | LP14 | active gameplay only")
     axes[0].legend(loc="lower right")
@@ -61,10 +64,13 @@ def main():
     parser.add_argument("--label", default="pvz_perf / Win7 OpenGL")
     parser.add_argument("--window-events", action="store_true",
                         help="Record foreground, focus and capture events outside the game")
+    parser.add_argument("--appdata", type=Path, help="Use an isolated game profile/save directory")
+    parser.add_argument("--settings-file", type=Path, help="Use an isolated game settings file")
+    parser.add_argument("--no-open-chart", action="store_true", help="Save charts without opening a viewer")
     args = parser.parse_args()
     executable = args.executable.resolve()
     directory = args.output.resolve() if args.output else Path(
-        tempfile.mkdtemp(prefix="pvz-opengl-observation-"))
+        tempfile.mkdtemp(prefix="pvz-game-observation-"))
     directory.mkdir(parents=True, exist_ok=True)
     layout = directory / "layout.json"
     offsets = json.loads(subprocess.check_output([str(args.layout_tool.resolve())], text=True))
@@ -72,6 +78,16 @@ def main():
     layout.write_text(json.dumps(offsets), encoding="utf-8")
     environment = {key: value for key, value in os.environ.items()
                    if not key.startswith(("PVZ_", "VK_"))}
+    if args.appdata:
+        appdata = args.appdata.resolve()
+        if not appdata.is_dir():
+            raise ValueError(f"Game profile directory does not exist: {appdata}")
+        environment["PVZ_APPDATA_DIR"] = str(appdata)
+    if args.settings_file:
+        settings = args.settings_file.resolve()
+        if not settings.is_file():
+            raise ValueError(f"Game settings file does not exist: {settings}")
+        environment["PVZ_SETTINGS_FILE"] = str(settings)
     process = subprocess.Popen([str(executable)], cwd=executable.parent, env=environment)
     window_events = None
     if args.window_events:
@@ -95,7 +111,8 @@ def main():
         image = plot_samples(directory / "measurement", args.label)
         if image:
             print(f"Chart: {image}", flush=True)
-            os.startfile(image)
+            if not args.no_open_chart:
+                os.startfile(image)
         print(f"Temporary samples: {directory}", flush=True)
     finally:
         game.close()

@@ -11,7 +11,8 @@
 
 int main()
 {
-    std::printf("{\"pointerBytes\":%zu", sizeof(void*));
+    std::printf("{\"pointerBytes\":%zu,\"boardCounterBytes\":%zu", sizeof(void*),
+        sizeof(Board::mLevelTimeNs));
 #define APP(field) std::printf(",\"" #field "\":%zu", offsetof(LawnApp, field))
     APP(mDrawCount);
     APP(mUpdateCount);

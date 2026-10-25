@@ -1555,7 +1555,7 @@ void Plant::UpdatePotato()
             aLightReanim->ChangeLoopType(ReanimLoopType::REANIM_LOOP);
             aLightReanim->ApplyRate(aRate - 2.0f);
             aLightReanim->SetFramesForLayer(ReanimTrackId::anim_glow);
-            aLightReanim->mFrameCount = 10;
+            aLightReanim->SetFrameCount(10);
             aLightReanim->ShowOnlyTrack(ReanimTrackId::anim_glow);
             aLightReanim->SetTruncateDisappearingFrames(ReanimTrackId::anim_glow, false);
             mLightReanimID = mApp->ReanimationGetID(aLightReanim);
@@ -1576,7 +1576,8 @@ void Plant::UpdatePotato()
             Reanimation* aLightReanim = mApp->ReanimationTryToGet(mLightReanimID);
             if (aLightReanim)
             {
-                aLightReanim->mFrameCount = TodAnimateCurve(200, 50, DistanceToClosestZombie(), 10, 3, Curves::Linear);
+                aLightReanim->SetFrameCount(
+                    TodAnimateCurve(200, 50, DistanceToClosestZombie(), 10, 3, Curves::Linear));
             }
         }
     }

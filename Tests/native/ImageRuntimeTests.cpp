@@ -1006,7 +1006,47 @@ void ReanimationAppearanceDefinitions(SexyAppBase& app)
         "Cel inheritance changed Garlic's explicit or inherited hidden frames");
     auto& render=*app.mDDInterface->mRenderInterface;
 #if defined(PVZ_GPU_REANIM_RESIDENT)
-    ReanimatorUploadGpuDefinitionData();
+    Require(!app.mNativeWindowShown && !first.mDefinition->mGpuData,
+        "Early upload fixture did not start with a hidden window and deferred bulk definitions");
+    for (const auto type : {ReanimationType::REANIM_LOADBAR_SPROUT,
+        ReanimationType::REANIM_LOADBAR_ZOMBIEHEAD})
+    {
+        ReanimatorEnsureDefinitionLoaded(type,true);
+        ReanimatorUploadGpuDefinitionData(type);
+        if (std::getenv("PVZ_EXPECT_GPU_REANIM"))
+            Require(GeneratedDefinitions::Reanimations[int(type)].mGpuData,
+                "Loading-screen reanimation was not uploaded before the window became visible");
+    }
+    Require(!app.mNativeWindowShown && !first.mDefinition->mGpuData,
+        "Early upload exposed the window or loaded unrelated bulk keyframes");
+    // Startup can leave a loading-screen/cache draw open when the worker's
+    // ready flag becomes visible. Upload through the production boundary in
+    // that state, preserving pending pixels and allowing the next draw.
+    std::unique_ptr<Image> uploadTarget(render.CreateRenderImage(4,1));
+    {
+        GpuImageDrawScope destination(render,uploadTarget.get());
+        Graphics graphics(uploadTarget.get());
+        graphics.mColor=Color::Black;
+        graphics.FillRect(0,0,4,1);
+        graphics.mColor=Color(255,0,0);
+        graphics.FillRect(0,0,1,1);
+        Require(render.mSceneBegun,"Upload regression did not leave a pending draw");
+        ReanimatorUploadGpuDefinitionData();
+        Require(!render.mSceneBegun,"First definition upload did not finish the pending frame");
+        graphics.mColor=Color(0,255,0);
+        graphics.FillRect(1,0,1,1);
+        ReanimatorUploadGpuDefinitionData();
+        Require(render.mSceneBegun,"Repeated definition upload needlessly finished another frame");
+        graphics.mColor=Color(0,0,255);
+        graphics.FillRect(2,0,1,1);
+    }
+    render.Flush();
+    const auto uploadPixels=render.ReadImagePixels(*uploadTarget);
+    Pixel(uploadPixels,0,0xffff0000u,0);
+    Pixel(uploadPixels,1,0xff00ff00u,0);
+    Pixel(uploadPixels,2,0xff0000ffu,0);
+    std::cout<<"PASS startup GPU definition upload: pending frame completed, pixels preserved, "
+        "subsequent drawing and repeated upload remain valid\n";
     if (std::getenv("PVZ_EXPECT_GPU_REANIM"))
         Require(first.mDefinition->mGpuData,"Production GRU1 reanimation data was not uploaded");
 #endif

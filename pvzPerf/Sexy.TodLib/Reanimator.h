@@ -130,6 +130,8 @@ void                                ReanimatorPreloadAll();
 int                                 ReanimatorUploadAllTexturesToGPU();
 // Main-thread loading only. Upload binary keyframes/UV once; keep CPU Both data.
 void                                ReanimatorUploadGpuDefinitionData();
+// Startup definitions can be uploaded while the native window is still hidden.
+void                                ReanimatorUploadGpuDefinitionData(ReanimationType theType);
 void                                ReanimatorFreeGpuDefinitionData();
 
 extern ReanimationParams gLawnReanimationArray[(int)ReanimationType::NUM_REANIMS];  //0x6A1340

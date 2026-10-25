@@ -326,6 +326,39 @@ void LoadCurrentWithResources(LawnApp& app, HiddenWindow& window, const char* sa
             "Linear particle save probe did not establish an integer-time segment");
     }
     Require(linearParticle!=nullptr,"No field-free production particle definition for save probe");
+    int positionType=-1;
+    for (int effect=0;effect<gParticleDefCount;++effect)
+    {
+        const auto& definition=gParticleDefArray[effect];
+        if (positionType>=0 && definition.mEmitterDefCount>=gParticleDefArray[positionType].mEmitterDefCount)
+            continue;
+        for (int emitter=0;emitter<definition.mEmitterDefCount;++emitter)
+            if (definition.mEmitterDefs[emitter].mSystemFields.count)
+            {
+                positionType=effect;
+                break;
+            }
+    }
+    Require(positionType>=0,"No production system-position definition for save probe");
+    auto* positionSystem=app.mEffectSystem->mParticleHolder->AllocParticleSystemFromDef(
+        100,200,0,&gParticleDefArray[positionType],static_cast<ParticleEffect>(positionType));
+    Require(positionSystem!=nullptr,"Cannot allocate system-position save probe");
+    bool positionBound=false;
+    for (int i=0;i<positionSystem->EmitterRosterCount();++i)
+    {
+        auto* emitter=positionSystem->EmitterRosterEmitterAt(i);
+        if (!emitter->mEmitterDef->mSystemFields.count) continue;
+        emitter->mSystemDuration.mNanoseconds=60'000'000'000;
+        emitter->mSystemPositionOriginX=.015625;
+        emitter->mSystemPositionOriginY=-.03125;
+        emitter->Update(16'000'000);
+        Require(emitter->mSystemPositionBound==1 &&
+            emitter->mSystemPositionOriginX==.015625 && emitter->mSystemPositionOriginY==-.03125,
+            "System-position save probe lost its exact authored origin");
+        positionBound=true;
+        break;
+    }
+    Require(positionBound,"System-position save probe had no live emitter");
     particleAppearances.clear();
     particle=nullptr;
     while (systems.IterateNext(particle))

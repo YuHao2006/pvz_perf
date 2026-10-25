@@ -1411,6 +1411,7 @@ int Challenge::MouseDown(int x, int y, int theClickCount, HitResult* theHitResul
 	if (mApp->mGameMode == GAMEMODE_MINIGAME_ZOMBIQUARIUM && theClickCount <= 0)
 	{
 		mApp->PlaySample(Sexy::SOUND_TAPGLASS);
+		ZombiquariumMouseDown(x, y);
 		return true;
 	}
 

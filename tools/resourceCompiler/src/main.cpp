@@ -51,6 +51,7 @@ void PrintUsage()
         << "    These handles never use the game's image symbol registry.\n"
         << "    Offline v2 gold remains <Module>.reanim.v2.compiled, plus ReanimTrackId.h\n"
         << "    cpu:/gpu:/both: select storage for following tracks (default both).\n"
+        << "    cpu/gpu/both before a Track selects storage for that declaration only.\n"
         << "    Non-both storage requires --font-registry and omits legacy v2 gold.\n"
         << "    (the string<->int enum) and reanim_track_ids.bin (sidecar id table).\n"
         << "    The header, table and every record come from the same build.\n"

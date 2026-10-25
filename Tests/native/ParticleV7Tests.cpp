@@ -196,6 +196,7 @@ std::vector<std::uint64_t> Snapshot(const Scene& scene)
             integer(std::bit_cast<std::uint64_t>(particle.mLinearOriginY));
             integer(particle.mLinearElapsedNs);
             vector(particle.mLinearVelocity);
+            vector(particle.mLinearAcceleration);
             vector(particle.mLinearLastPosition);
             integer(std::bit_cast<std::uint64_t>(particle.mLinearSpinOrigin));
             integer(std::bit_cast<std::uint64_t>(particle.mLinearSpinRate));
@@ -401,6 +402,91 @@ void TestConstantMotionPrecision()
     Require(rejected,"particle linear segment overflow was not rejected");
     std::cout<<"PASS particle field-free linear motion: eight ns partitions, lifetime loops, "
         "4096 exact rate segments, per-axis teleport, held move, zero step, field handoff and overflow\n";
+}
+
+void TestConstantAccelerationPrecision()
+{
+    SexyVector2 referencePosition, referenceVelocity;
+    for (int frequency : {100, 30, 60, 144, 200, 240, 1000, 0})
+    {
+        Scene scene(-1,true);
+        Field(scene, FIELD_ACCELERATION, 8, -4);
+        // A random range still selects one constant acceleration at birth.
+        scene.values[10].mHigh = 16;
+        auto* p = scene.Spawn();
+        p->mParticleDuration.mNanoseconds = 37'000'003;
+        p->mPosition = {1'048'576.f,-1'048'576.f};
+        p->mVelocity = {.125f,-.5f};
+        const float ax = .01f * FloatTrackEvaluate(scene.fields[0].mX,0,p->mParticleFieldInterp[0][0]);
+        const float ay = .01f * FloatTrackEvaluate(scene.fields[0].mY,0,p->mParticleFieldInterp[0][1]);
+        std::uint32_t random=1871;
+        Advance(scene,1'000'000'000,frequency,random);
+        // Independent original 100Hz recurrence using unrounded arithmetic.
+        double x=1'048'576, y=-1'048'576, vx=.125, vy=-.5;
+        for (int i=0;i<100;++i) { vx+=ax; vy+=ay; x+=vx; y+=vy; }
+        Require(p->mPosition.x==static_cast<float>(x) && p->mPosition.y==static_cast<float>(y) &&
+            p->mVelocity.x==static_cast<float>(vx) && p->mVelocity.y==static_cast<float>(vy),
+            "constant acceleration changed original 10ms checkpoints");
+        if (frequency==100) {referencePosition=p->mPosition; referenceVelocity=p->mVelocity;}
+        Require(p->mPosition.x==referencePosition.x && p->mPosition.y==referencePosition.y &&
+            p->mVelocity.x==referenceVelocity.x && p->mVelocity.y==referenceVelocity.y,
+            "constant acceleration depended on main-step partition or lifetime wraps");
+    }
+    Scene edited(-1,true);
+    Field(edited, FIELD_ACCELERATION, 8, -4);
+    auto* p=edited.Spawn();
+    p->mPosition={10,20};
+    p->mVelocity={2,-1};
+    edited.system->Update(5'000'000);
+    const double ax=.01f*8, ay=.01f*-4;
+    const double x=10+.5*(2+ax*.75), y=20+.5*(-1+ay*.75);
+    Near(p->mPosition.x,static_cast<float>(x),"sub-tick acceleration interpolation");
+    const auto before=Snapshot(edited);
+    edited.system->Update(0);
+    Require(before==Snapshot(edited),"zero step changed acceleration anchor");
+    // A saved complete state resumes without re-integrating rounded outputs.
+    Scene resumed(-1,true);
+    Field(resumed, FIELD_ACCELERATION, 8, -4);
+    auto* copy=resumed.Spawn();
+    auto* emitter=copy->mParticleEmitter;
+    *copy=*p; copy->mParticleEmitter=emitter;
+    edited.system->Update(7'654'321);
+    resumed.system->Update(7'654'321);
+    Require(p->mPosition.x==copy->mPosition.x && p->mPosition.y==copy->mPosition.y &&
+        p->mVelocity.x==copy->mVelocity.x && p->mVelocity.y==copy->mVelocity.y,
+        "acceleration continuation lost its segment");
+    // External movement translates the anchor, including per-axis edits.
+    p->mPosition.x=100;
+    const double oldTicks=p->mLinearElapsedNs/10'000'000.0;
+    edited.system->SystemMove(100.25f,199.5f); // Initial center is (100,200).
+    edited.system->Update(1'000'000);
+    const double newTicks=oldTicks+.1;
+    Near(p->mPosition.x,static_cast<float>(100.25+
+        .1*2+ax*(newTicks*(newTicks+1)-oldTicks*(oldTicks+1))*.5),
+        "held acceleration plus one-axis edit lost its origin");
+    Near(p->mPosition.y,static_cast<float>(20-.5-newTicks+ay*newTicks*(newTicks+1)*.5),
+        "one-axis acceleration edit reset the other axis");
+    const auto previous=p->mPosition;
+    const auto velocity=p->mVelocity;
+    edited.values[10].mLow=edited.values[10].mHigh=4;
+    edited.system->Update(10'000'000);
+    Near(p->mPosition.x,previous.x+velocity.x+.04f,"acceleration change did not rebase");
+    Scene combined(-1,true);
+    Field(combined, FIELD_ACCELERATION, 8, -4);
+    combined.fields[1]=combined.fields[0];
+    combined.emitter.mParticleFields.count=2;
+    auto* both=combined.Spawn();
+    both->mPosition={0,0}; both->mVelocity={0,0};
+    combined.system->Update(20'000'000);
+    Near(both->mPosition.x,.48f,"constant acceleration fields did not combine");
+    Near(both->mPosition.y,-.24f,"constant vertical acceleration fields did not combine");
+    // A varying acceleration must retain the single-pass field semantics.
+    combined.values[11]={1,16,16,1,1};
+    combined.fields[0].mX={combined.values+10,2};
+    combined.system->Update(1'000'000);
+    Require(both->mLinearElapsedNs==-1,"varying acceleration used a constant coefficient");
+    std::cout<<"PASS constant acceleration: eight ns partitions, original recurrence, "
+        "random birth coefficients, lifetime wraps, continuation, held move and edits\n";
 }
 
 void TestConstantSpinPrecision()
@@ -814,6 +900,7 @@ int main()
                 "constant float animation rate lost precision in total elapsed phase");
         }
         TestConstantMotionPrecision();
+        TestConstantAccelerationPrecision();
         TestConstantSpinPrecision();
         TestActualDelta();
         TestLifetimesAndTracks();

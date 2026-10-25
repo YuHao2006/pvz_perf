@@ -30,7 +30,7 @@ constexpr std::size_t Size(Kind kind)
     case Kind::Reanimation: return 68;
     case Kind::ParticleSystem: return 4;
     case Kind::ParticleEmitter: return 52;
-    case Kind::Particle: return 92;
+    case Kind::Particle: return 100;
     case Kind::GridItem: return 240;
     default: return 0;
     }

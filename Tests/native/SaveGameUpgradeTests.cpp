@@ -326,6 +326,34 @@ void LoadCurrentWithResources(LawnApp& app, HiddenWindow& window, const char* sa
             "Linear particle save probe did not establish an integer-time segment");
     }
     Require(linearParticle!=nullptr,"No field-free production particle definition for save probe");
+    TodParticle* accelerationParticle=nullptr;
+    for (int effect=0;effect<gParticleDefCount && !accelerationParticle;++effect)
+    {
+        auto& definition=gParticleDefArray[effect];
+        if (!definition.mEmitterDefCount) continue;
+        const auto& fields=definition.mEmitterDefs[0].mParticleFields;
+        if (!fields.count) continue;
+        bool constant=true;
+        for (int i=0;i<fields.count;++i)
+            constant &= fields.Fields[i].mFieldType==FIELD_ACCELERATION &&
+                fields.Fields[i].mX.mCountNodes<=1 && fields.Fields[i].mY.mCountNodes<=1;
+        if (!constant) continue;
+        auto* system=app.mEffectSystem->mParticleHolder->AllocParticleSystemFromDef(
+            100,200,0,&definition,static_cast<ParticleEffect>(effect));
+        Require(system && system->EmitterRosterCount(),"Cannot allocate acceleration save probe");
+        auto* emitter=system->EmitterRosterEmitterAt(0);
+        emitter->mSystemDuration.mNanoseconds=60'000'000'000;
+        accelerationParticle=emitter->SpawnParticle(0,1);
+        Require(accelerationParticle!=nullptr,"Cannot spawn acceleration save probe");
+        accelerationParticle->mParticleDuration.mNanoseconds=60'000'000'000;
+        accelerationParticle->mPosition={1'048'576.f,-1'048'576.f};
+        accelerationParticle->mVelocity={.125f,-.25f};
+        Require(emitter->UpdateParticle(accelerationParticle,16'000'003) &&
+            accelerationParticle->mLinearElapsedNs==16'000'003 &&
+            (accelerationParticle->mLinearAcceleration.x!=0 || accelerationParticle->mLinearAcceleration.y!=0),
+            "Acceleration save probe did not retain nonzero segment coefficients");
+    }
+    Require(accelerationParticle!=nullptr,"No constant acceleration production definition for save probe");
     int positionType=-1;
     for (int effect=0;effect<gParticleDefCount;++effect)
     {
@@ -431,6 +459,7 @@ void LoadCurrentWithResources(LawnApp& app, HiddenWindow& window, const char* sa
                         item->mAnimationElapsedNs, item->mAnimationSampleIntegral, item->mRandomSeed,
                         item->mLinearOriginX, item->mLinearOriginY, item->mLinearElapsedNs,
                         item->mLinearVelocity.x, item->mLinearVelocity.y,
+                        item->mLinearAcceleration.x, item->mLinearAcceleration.y,
                         item->mLinearLastPosition.x, item->mLinearLastPosition.y,
                         item->mLinearSpinOrigin,item->mLinearSpinRate,
                         item->mLinearLastSpin,item->mLinearSpinActive);

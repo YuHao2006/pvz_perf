@@ -1,0 +1,88 @@
+{
+  "retail_exe_sha256": "5f650f52d12751e08b63e590edb0d9b9f09d087cea900baa0eb39e4af8eda251",
+  "pak_sha256": "5bdd71c632d945304ae3752bfed61941bb8c7e4351e616e1ff6fbceab1431545",
+  "affinity": "LP14/0x4000",
+  "frequency": "11x user-controlled, not independently sampled",
+  "serial": true,
+  "leaf_process_order": [
+    "retail",
+    "current",
+    "current",
+    "retail"
+  ],
+  "scope": "Actual original x86 machine code versus actual current x64 Release/LTO. Includes ABI wrapper, input decoding and checksum. ISA/ABI differ; not a same-ISA isolated algorithm claim.",
+  "binary_sha256": {
+    "retail": "f10b5a6f33ac88b6bffd985e6abf16ea82e516d41f7c2b2aed043e355c3f6894",
+    "current": "8c360aa90f3a44fead769e04afe13e485679074fd7718eb8586e7bd264399a2e",
+    "structure": "eb3990325fefdb9b700d62eebeac8901c0c43165e379ac7f423d35c5d8696f16"
+  },
+  "source_sha256": {
+    "production_leaf_benchmark.cpp": "3757ef603b5fc8b52b7d23ad3029c35cec518b4d10ef50ba6e154686278d0481",
+    "production_structure_benchmark.cpp": "856821deff355e0e7a19e30c0d807a7c31aa69b36d54800975b87d9092396161"
+  },
+  "runs": [
+    {
+      "kind": "retail",
+      "number": 1,
+      "exit": 0,
+      "seconds": 19.834573999978602,
+      "command": [
+        "C:\\Users\\Administrator\\AppData\\Local\\Temp\\pvz-production-leaf-20261029\\retail.exe",
+        "C:\\UserProgram\\Plants_Vs_Zombies_V1.2.0.1073_EN\\PlantsVsZombies.exe",
+        "C:\\Users\\Administrator\\AppData\\Local\\Temp\\pvz-v3-final-20261029-358182a0\\production\\retail-1\\validation.csv"
+      ]
+    },
+    {
+      "kind": "current",
+      "number": 1,
+      "exit": 0,
+      "seconds": 0.6660132000106387,
+      "command": [
+        "C:\\Users\\Administrator\\AppData\\Local\\Temp\\pvz-v3-final-20261029-358182a0\\build-production_leaf_benchmark\\benchmark.exe",
+        "C:\\Users\\Administrator\\CLionProjects\\codex\\PlantsVsZombiesModern\\out\\x64-win32-vulkan\\Release\\main.pak64",
+        "C:\\Users\\Administrator\\AppData\\Local\\Temp\\pvz-v3-final-20261029-358182a0\\production\\current-1\\validation.csv"
+      ]
+    },
+    {
+      "kind": "current",
+      "number": 2,
+      "exit": 0,
+      "seconds": 0.6296373000077438,
+      "command": [
+        "C:\\Users\\Administrator\\AppData\\Local\\Temp\\pvz-v3-final-20261029-358182a0\\build-production_leaf_benchmark\\benchmark.exe",
+        "C:\\Users\\Administrator\\CLionProjects\\codex\\PlantsVsZombiesModern\\out\\x64-win32-vulkan\\Release\\main.pak64",
+        "C:\\Users\\Administrator\\AppData\\Local\\Temp\\pvz-v3-final-20261029-358182a0\\production\\current-2\\validation.csv"
+      ]
+    },
+    {
+      "kind": "retail",
+      "number": 2,
+      "exit": 0,
+      "seconds": 19.811396500008414,
+      "command": [
+        "C:\\Users\\Administrator\\AppData\\Local\\Temp\\pvz-production-leaf-20261029\\retail.exe",
+        "C:\\UserProgram\\Plants_Vs_Zombies_V1.2.0.1073_EN\\PlantsVsZombies.exe",
+        "C:\\Users\\Administrator\\AppData\\Local\\Temp\\pvz-v3-final-20261029-358182a0\\production\\retail-2\\validation.csv"
+      ]
+    },
+    {
+      "kind": "structure",
+      "number": 1,
+      "exit": 0,
+      "seconds": 18.242003399995156,
+      "command": [
+        "C:\\Users\\Administrator\\AppData\\Local\\Temp\\pvz-v3-final-20261029-358182a0\\build-production_structure_benchmark\\benchmark.exe"
+      ]
+    },
+    {
+      "kind": "structure",
+      "number": 2,
+      "exit": 0,
+      "seconds": 18.240886999992654,
+      "command": [
+        "C:\\Users\\Administrator\\AppData\\Local\\Temp\\pvz-v3-final-20261029-358182a0\\build-production_structure_benchmark\\benchmark.exe"
+      ]
+    }
+  ],
+  "validation": "PASS shared leaf vectors and world-query checksums; retail file unchanged"
+}

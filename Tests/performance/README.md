@@ -1,9 +1,9 @@
 # 性能测试工具
 
 性能观测、微基准、性能夹具生成器和结果分析工具统一放在本目录。
-tools 仅放生产构建、资源编译、转换和打包工具。
+tools保留生产构建／资源／转换工具及便捷的Release启动、采样入口；实际采样实现和独立基准在本目录。
 本目录 build 下的可执行文件、DLL 和中间产物可重新生成，不进入 Git。
-运行结果写入对应 out 构建组合的 measurements 目录，入账证据保存在 Tests/evidence。
+新采样输出默认写系统Temp，入账证据保存在Tests/evidence；游戏本身直接在Release运行。
 统一无尽输入使用 Tests 根目录的 DAT/DAT64。
 
 主要入口：
@@ -23,12 +23,32 @@ tools 仅放生产构建、资源编译、转换和打包工具。
 - fps_probe.cpp：窗口变化帧和呈现采样，不作为游戏精确帧计数。
 - monitor_cpu_native.c：按 QPC 实际采样间隔计算进程 CPU 占用。
 - bench_*.cpp、对应运行及夹具生成脚本：独立微基准。
+- refresh-small-benchmarks.py：串行重测历史小基准，并提取当前生产表声明到相同夹具；
+  历史模型和当前表声明分开登记，不把模型结果称为当前完整函数性能。
+- run-pinned-benchmark.cpp：原生创建子进程，恢复执行前固定LP14；不通过cmd start拼接命令。
+- retail_machine_code_probe.cpp：x86独立进程映射英文1073 EXE，验证纯叶函数的直接机器码调用。
+- production_leaf_benchmark.cpp：同源编译x86原版机器码调用器和x64实际游戏查询，保留输入／返回值向量；原版地址只支持已校验英文1073 EXE。
+- production_structure_benchmark.cpp：用当前真实对象类型核对轨道选择、行查询和四层格桶；选择算法桩与完整业务更新成本分别标记。
+- build-production-benchmark.py：复用现有Release对象和LTO链接独立夹具，输出到Temp；预检并复制x64 BASS，缺失时可显式传入`--bass-dll`，不改游戏EXE。
+- run-production-small-benchmarks.py：原版—当前—当前—原版串行采样，再测两个真实结构进程，核对每项五轮checksum和完整结果向量；不会将x86／x64差值当成纯算法提速。
+- production_frozen_draw.cpp：恢复归档固定DrawScreen场景，128次预热、640次CPU绘制采样；flush／fence／readback在计时区间之外。
+- zombie_frame_cursor_benchmark.cpp：历史独立候选实验，包含已经否决的倒数缓存和旧模拟布局；不登记为当前生产路径，原始证据保留。
+- reanim_frame_cache_benchmark.cpp：v4实际RootMotion／GetFrameTime查询与时钟推进分开计时；冻结v3.6算术模型独立标记，包含真实Zombie根位移基准及无界面异常退出。当前Reanimation在回绕时累加基础位移；采样返回的cycles仅为相对缓存帧的临时回绕量，不能当作累计周期。
+- zombie_root_motion_benchmark.cpp：共享帧缓存之前的原速度累加算术与RootMotion对照，保留为历史诊断；其手动修改lastUpdate的查询不代表当前逐步推进的生产热路径，预解析轨道也不替代实际API。完整证据见`Tests/evidence/zombie-root-motion-20261029`。
+
+机器码调用器须用MSVC x86编译`production_leaf_benchmark.cpp`，定义`PVZ_RETAIL_MACHINE_CODE`，
+链接`/BASE:0x10000000 /DYNAMICBASE:NO`；可执行样例命令见
+[原版构建记录](../evidence/production-small-benchmarks-20261029/build-retail.cmd)。
+当前两个夹具通过`build-production-benchmark.py --build out/x64-win32-vulkan --source <源码> --output <Temp目录>`生成，
+随后把两个当前EXE、原版调用器、已核验原版EXE及同树PAK传给`run-production-small-benchmarks.py`的
+`--current-probe`、`--structure-probe`、`--retail-probe`、`--retail`、`--pak`和新的`--output`目录。
+正式采样期间不并行构建／运行其他基准，不恢复已退役运行路径以填充指标。
 
 正式性能测量仍由主对话串行执行，Windows 使用 LP14。
 Windows 观测器直接执行构建目录已有的 pvz_game_perf_layout，从其输出生成字段偏移；
 准备和启动测量不会触发 CMake。布局工具须与被测程序对应，源码布局改变时在测量前更新。
 游戏界面由用户操作：第一次 Enter 开始观测，第 3 秒启动或恢复场景，
-再次 Enter 或游戏退出结束观测；按 Enter 停止后，正常退出游戏再进入下一轮。
+默认持续到游戏 Quit／进程退出才结束观测，再次 Enter 不会停止；只有显式设置时长上限才提前结束。
 旧夹具的存档哈希若与 Tests 的当前基准不同会直接拒绝。
 正式采样必须显式指定 --multiplier 11x 或 25x；工具不修改倍频，
 也不将构建期间的解禁频率自动记成锁频测量。prepare-only 不要求倍频标签。
@@ -105,3 +125,76 @@ python3 Tests/performance/report-linux-game-perf.py \
 不得用它们倒推整轮频率、音量或缩放开关状态。
 --max-ratio 仅登记用户已确认的最高倍频限制，允许降频，不等于全程恒定频率，
 也不改写采集器原始元数据。本轮用户确认的上限为 25x。
+
+
+## 桌面 Vulkan 精灵 GPU 实验（显式运行）
+
+`sexy_vulkan_sprite_benchmark` 是 Windows 的 `EXCLUDE_FROM_ALL` 目标，
+链接带专用实验宏的独立 renderer 库，不替换正式库或游戏。
+用匹配编译器的 VsDevCmd 环境构建，避免只找到 cl 而缺少配套标准库头文件：
+
+```powershell
+cmake --build out/x64-win32-vulkan --config Release --target sexy_vulkan_sprite_benchmark
+$bench = 'out/x64-win32-vulkan/SexyAppFramework/graphics/vulkan/sexy_vulkan_sprite_benchmark.exe'
+& $bench --vendor=0x10de --validate "--output=$env:TEMP/pvz-sprite-validation"
+& $bench --vendor=0x10de --samples=128 --rounds=8 "--output=$env:TEMP/pvz-sprite-timing"
+& $bench --vendor=0x8086 --indexed-quads --validate "--output=$env:TEMP/pvz-quads-intel-validation"
+& $bench --vendor=0x8086 --indexed-quads --samples=128 --rounds=8 "--output=$env:TEMP/pvz-quads-intel-timing"
+```
+
+默认实验 B 使用精简生成图像 shader；`--indexed-quads` 则让 B 保留原 shader，
+改用四顶点和静态索引。A 始终使用原路径。`--validate` 只做像素／同步校验，
+计时运行不启用 validation。CSV 的 `gpu_scene_us` 是 GPU timestamp 区间；
+`host_submit_calls_us` 只是主机录制调用的 wall time，不是进程 CPU 时间，
+不含 BeginScene／EndScene，不能相加成完整帧时间。
+输入为固定合成精灵，不能替代完整无尽关卡或手机实测。
+原始输出写系统 Temp，未锁频结果不写入正式性能总账。
+实现、当前实验边界和正确性记录见
+[GPU 专项](../../docs/android-gpu-submission.md)。
+
+额外互斥实验选项：`--compare-index-widths` 比较 16／32 位索引；
+`--baked-filters` 配合 `--bake-format=rgba16f|rgba8|rgba8-manual` 比较派生滤镜；
+`--trim-input=PATH` 读取损失无关的 BGRA 裁切夹具；`--packed-color`／
+`--packed-color16` 比较顶点 RGBA8／RGBA16_UNORM；`--discard-scene` 仅用于
+开头完整不透明覆盖的合成场景，比较 LOAD／DONT_CARE。
+这些都不是正式游戏的运行时回退路径。先运行 `--validate`，不通过像素门槛的候选不计时。
+
+`--instanced-quads` 比较四顶点与 88 字节矩形实例，额外检查 CPU 旋转和五万实例，
+保持原绘制次序、混合及 16 位索引拆分；四角染色／采样元数据须相同。
+`--tight-scene-barriers` 只比较场景入口屏障的源等待范围，不删除同步。
+两者同样互斥于其他实验，正式库和 Android 不编译这些开关或实验 shader。
+
+`--native-instances` 与 `--instanced-quads` 使用相同 shader／数据格式，但调用端
+直接生成 88 字节矩形，避免四顶点临时整理，仅绘制主场景。
+`--present-copy` 比较多一道最终同尺寸 SDR 采样 pass 与直接输出场景，
+对比最终目标像素，包含背景独立场景；它不运行 WSI，不是完整直接呈现验收。
+
+`--solid-fill` 在普通精灵场景末尾覆盖五档透明度的全屏白色矩形，比较现有纹理／
+dual-source 混合与不采纹理的独立预乘 normal 混合；候选多一次 draw。
+它只验证纯色路径，未接入手机。Vulkan 的未消费顶点输出 warning 保留在原始日志中。
+
+`--separate-blend` 比较双源 normal/additive 合批与单输出预乘、按混合状态分批。
+双方保留相同采样和预乘算术，Opaque 与通用图片路径不变，均使用四顶点／16 位索引。
+六个场景覆盖小图／大面积重叠、每 1／16／256 张切换混合状态，记录实际 draw、
+triangle、host Submit calls 和 GPU timestamp。先做像素和同步验证，再运行计时。
+桌面计时若同时存在其他游戏进程，必须标记潜在干扰，不作为正式性能收益。
+
+Android 可用默认关闭的 `PVZ_VULKAN_SEPARATE_BLEND_TEST` 编译开关生成独立测试 APK，
+只改变 sprite 混合路径，不启用整个桌面实验库。打包需保留该次构建的 .so、PAK 和
+`game_sprite_single_output_ps.spv`；随后关闭开关并重建正常输出。
+换 shader 包须清除设备管线缓存；同场景对照还须记录性能模式、悬浮监控状态，
+不能把监控引起的调度升频归因于代码改动。
+
+
+## 当前Windows Vulkan Release复测
+
+启动`tools/run-endless-modern.cmd`，然后运行`pwsh -File tools/measure-release-vulkan.ps1`。
+不指定PID时自动匹配唯一的Vulkan Release进程，并核对亲和性0x4000。
+在控制台按Enter开始，3秒后恢复战斗；默认没有180秒上限，也不会因再次Enter停止。
+直到游戏Quit／进程退出才结束并写入汇总，采样器不会主动关闭游戏。
+如需短诊断，必须显式传入`-Seconds`；这类记录不能当作完整一轮。
+历史算法／固定Draw小指标继续保留用于3.0对照，整局新结果见docs/perf-fix-ledger.md。
+
+
+单组当前记录复用`report-windows-game-perf.py <measurement目录> <证据目录> --single --label <图标题>`。
+旧双组入口和新单组入口共用同一绘图函数；上图叠加FPS与CPU不同颜色曲线，下图CPU毫秒／绘制帧，非game样本留空。

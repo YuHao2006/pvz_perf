@@ -617,7 +617,7 @@ PakFindHandle PakInterface::FindFirstFile(const char* lpFileName, PakFindResultP
 
 	aFindData->mFindCriteria = anUpperName;
 	aFindData->mWHandle = INVALID_HANDLE_VALUE;
-#ifndef _WIN32
+#if !defined(_WIN32) && !defined(__ANDROID__)
 	std::string pattern(lpFileName);
 	std::replace(pattern.begin(), pattern.end(), '\\', '/');
 	if (pattern.ends_with("*.*")) pattern.resize(pattern.size() - 2);

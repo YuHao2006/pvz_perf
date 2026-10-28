@@ -1,0 +1,528 @@
+{
+  "timings": [
+    {
+      "run": 1,
+      "definition": "normal",
+      "kernel": "legacy_velocity_accumulate",
+      "min_ns": 18.02045,
+      "rounds": [
+        18.1294,
+        18.07145,
+        18.02045,
+        18.04955,
+        18.0237
+      ]
+    },
+    {
+      "run": 1,
+      "definition": "normal",
+      "kernel": "actual_root_long_span",
+      "min_ns": 79.2755,
+      "rounds": [
+        79.42175,
+        79.2975,
+        79.5464,
+        79.281,
+        79.2755
+      ]
+    },
+    {
+      "run": 1,
+      "definition": "normal",
+      "kernel": "actual_root_period_local",
+      "min_ns": 60.16505,
+      "rounds": [
+        60.19045,
+        60.17775,
+        60.1757,
+        60.39515,
+        60.16505
+      ]
+    },
+    {
+      "run": 1,
+      "definition": "normal",
+      "kernel": "cursor_basic",
+      "min_ns": 17.58295,
+      "rounds": [
+        17.6215,
+        17.60255,
+        17.58295,
+        17.60215,
+        17.5897
+      ]
+    },
+    {
+      "run": 1,
+      "definition": "normal",
+      "kernel": "cursor_cached",
+      "min_ns": 15.9098,
+      "rounds": [
+        15.9098,
+        15.92645,
+        15.91735,
+        15.92655,
+        15.92235
+      ]
+    },
+    {
+      "run": 1,
+      "definition": "football",
+      "kernel": "legacy_velocity_accumulate",
+      "min_ns": 18.1741,
+      "rounds": [
+        18.18695,
+        18.1741,
+        18.2248,
+        18.1766,
+        18.18955
+      ]
+    },
+    {
+      "run": 1,
+      "definition": "football",
+      "kernel": "actual_root_long_span",
+      "min_ns": 79.1028,
+      "rounds": [
+        79.1133,
+        79.2154,
+        79.2239,
+        79.1045,
+        79.1028
+      ]
+    },
+    {
+      "run": 1,
+      "definition": "football",
+      "kernel": "actual_root_period_local",
+      "min_ns": 61.01615,
+      "rounds": [
+        61.01615,
+        61.0385,
+        61.04295,
+        61.0879,
+        61.0635
+      ]
+    },
+    {
+      "run": 1,
+      "definition": "football",
+      "kernel": "cursor_basic",
+      "min_ns": 17.6953,
+      "rounds": [
+        17.7069,
+        17.7415,
+        17.6953,
+        17.70535,
+        17.77535
+      ]
+    },
+    {
+      "run": 1,
+      "definition": "football",
+      "kernel": "cursor_cached",
+      "min_ns": 16.00115,
+      "rounds": [
+        16.0201,
+        16.023,
+        16.03565,
+        16.00115,
+        16.06985
+      ]
+    },
+    {
+      "run": 1,
+      "definition": "newspaper",
+      "kernel": "legacy_velocity_accumulate",
+      "min_ns": 17.92935,
+      "rounds": [
+        18.0486,
+        18.05665,
+        17.9801,
+        17.92935,
+        17.93005
+      ]
+    },
+    {
+      "run": 1,
+      "definition": "newspaper",
+      "kernel": "actual_root_long_span",
+      "min_ns": 79.2367,
+      "rounds": [
+        79.3504,
+        79.2367,
+        79.25635,
+        79.2949,
+        79.33485
+      ]
+    },
+    {
+      "run": 1,
+      "definition": "newspaper",
+      "kernel": "actual_root_period_local",
+      "min_ns": 61.1205,
+      "rounds": [
+        61.2623,
+        61.2011,
+        61.1205,
+        61.16065,
+        61.2024
+      ]
+    },
+    {
+      "run": 1,
+      "definition": "newspaper",
+      "kernel": "cursor_basic",
+      "min_ns": 17.4938,
+      "rounds": [
+        17.5644,
+        17.5245,
+        17.503,
+        17.4938,
+        17.53165
+      ]
+    },
+    {
+      "run": 1,
+      "definition": "newspaper",
+      "kernel": "cursor_cached",
+      "min_ns": 15.91735,
+      "rounds": [
+        15.91735,
+        15.9431,
+        15.9189,
+        15.95695,
+        15.9312
+      ]
+    },
+    {
+      "run": 1,
+      "definition": "polevaulter",
+      "kernel": "legacy_velocity_accumulate",
+      "min_ns": 18.0059,
+      "rounds": [
+        18.0524,
+        18.0375,
+        18.09675,
+        18.03055,
+        18.0059
+      ]
+    },
+    {
+      "run": 1,
+      "definition": "polevaulter",
+      "kernel": "actual_root_long_span",
+      "min_ns": 78.474,
+      "rounds": [
+        78.57515,
+        78.52975,
+        78.474,
+        78.5631,
+        78.5937
+      ]
+    },
+    {
+      "run": 1,
+      "definition": "polevaulter",
+      "kernel": "actual_root_period_local",
+      "min_ns": 60.0422,
+      "rounds": [
+        60.0422,
+        60.1176,
+        60.25855,
+        60.0952,
+        60.05375
+      ]
+    },
+    {
+      "run": 1,
+      "definition": "polevaulter",
+      "kernel": "cursor_basic",
+      "min_ns": 17.52745,
+      "rounds": [
+        17.55555,
+        17.52745,
+        17.5292,
+        17.54295,
+        17.69895
+      ]
+    },
+    {
+      "run": 1,
+      "definition": "polevaulter",
+      "kernel": "cursor_cached",
+      "min_ns": 15.92125,
+      "rounds": [
+        15.9288,
+        15.93365,
+        15.92425,
+        15.92125,
+        15.92295
+      ]
+    },
+    {
+      "run": 2,
+      "definition": "normal",
+      "kernel": "legacy_velocity_accumulate",
+      "min_ns": 18.01305,
+      "rounds": [
+        18.07205,
+        18.01305,
+        18.1224,
+        18.0303,
+        18.0336
+      ]
+    },
+    {
+      "run": 2,
+      "definition": "normal",
+      "kernel": "actual_root_long_span",
+      "min_ns": 78.5502,
+      "rounds": [
+        78.5502,
+        78.6107,
+        78.63915,
+        78.55245,
+        78.70295
+      ]
+    },
+    {
+      "run": 2,
+      "definition": "normal",
+      "kernel": "actual_root_period_local",
+      "min_ns": 60.06385,
+      "rounds": [
+        60.14315,
+        60.366,
+        60.06385,
+        60.17805,
+        60.14725
+      ]
+    },
+    {
+      "run": 2,
+      "definition": "normal",
+      "kernel": "cursor_basic",
+      "min_ns": 17.5429,
+      "rounds": [
+        17.5429,
+        17.5778,
+        17.59135,
+        17.5857,
+        17.6222
+      ]
+    },
+    {
+      "run": 2,
+      "definition": "normal",
+      "kernel": "cursor_cached",
+      "min_ns": 15.89345,
+      "rounds": [
+        15.89785,
+        15.89345,
+        15.9563,
+        15.91135,
+        15.93255
+      ]
+    },
+    {
+      "run": 2,
+      "definition": "football",
+      "kernel": "legacy_velocity_accumulate",
+      "min_ns": 18.1838,
+      "rounds": [
+        18.2559,
+        18.21875,
+        18.1838,
+        18.1862,
+        18.22285
+      ]
+    },
+    {
+      "run": 2,
+      "definition": "football",
+      "kernel": "actual_root_long_span",
+      "min_ns": 78.5881,
+      "rounds": [
+        78.7134,
+        78.71275,
+        78.7871,
+        78.85745,
+        78.5881
+      ]
+    },
+    {
+      "run": 2,
+      "definition": "football",
+      "kernel": "actual_root_period_local",
+      "min_ns": 59.83005,
+      "rounds": [
+        59.8692,
+        59.90985,
+        59.83005,
+        59.93155,
+        60.0402
+      ]
+    },
+    {
+      "run": 2,
+      "definition": "football",
+      "kernel": "cursor_basic",
+      "min_ns": 17.6791,
+      "rounds": [
+        17.7266,
+        17.77665,
+        17.6791,
+        17.7085,
+        17.68335
+      ]
+    },
+    {
+      "run": 2,
+      "definition": "football",
+      "kernel": "cursor_cached",
+      "min_ns": 16.03815,
+      "rounds": [
+        16.0849,
+        16.0777,
+        16.0599,
+        16.0576,
+        16.03815
+      ]
+    },
+    {
+      "run": 2,
+      "definition": "newspaper",
+      "kernel": "legacy_velocity_accumulate",
+      "min_ns": 17.93385,
+      "rounds": [
+        18.01925,
+        17.93385,
+        17.9653,
+        18.038,
+        18.0188
+      ]
+    },
+    {
+      "run": 2,
+      "definition": "newspaper",
+      "kernel": "actual_root_long_span",
+      "min_ns": 78.4985,
+      "rounds": [
+        78.5226,
+        78.76935,
+        78.57035,
+        78.5553,
+        78.4985
+      ]
+    },
+    {
+      "run": 2,
+      "definition": "newspaper",
+      "kernel": "actual_root_period_local",
+      "min_ns": 59.99075,
+      "rounds": [
+        59.99075,
+        60.07785,
+        60.0398,
+        60.0295,
+        60.0339
+      ]
+    },
+    {
+      "run": 2,
+      "definition": "newspaper",
+      "kernel": "cursor_basic",
+      "min_ns": 17.5045,
+      "rounds": [
+        17.5045,
+        17.53585,
+        17.5537,
+        17.52725,
+        17.53525
+      ]
+    },
+    {
+      "run": 2,
+      "definition": "newspaper",
+      "kernel": "cursor_cached",
+      "min_ns": 15.92155,
+      "rounds": [
+        15.92995,
+        15.952,
+        15.9296,
+        15.9228,
+        15.92155
+      ]
+    },
+    {
+      "run": 2,
+      "definition": "polevaulter",
+      "kernel": "legacy_velocity_accumulate",
+      "min_ns": 17.91765,
+      "rounds": [
+        17.94685,
+        17.91765,
+        17.942,
+        17.95235,
+        17.9363
+      ]
+    },
+    {
+      "run": 2,
+      "definition": "polevaulter",
+      "kernel": "actual_root_long_span",
+      "min_ns": 79.2206,
+      "rounds": [
+        79.35705,
+        79.2297,
+        79.2825,
+        79.34495,
+        79.2206
+      ]
+    },
+    {
+      "run": 2,
+      "definition": "polevaulter",
+      "kernel": "actual_root_period_local",
+      "min_ns": 61.0955,
+      "rounds": [
+        61.13065,
+        61.1524,
+        61.09885,
+        61.1403,
+        61.0955
+      ]
+    },
+    {
+      "run": 2,
+      "definition": "polevaulter",
+      "kernel": "cursor_basic",
+      "min_ns": 17.54605,
+      "rounds": [
+        17.58395,
+        17.5874,
+        17.5853,
+        17.58135,
+        17.54605
+      ]
+    },
+    {
+      "run": 2,
+      "definition": "polevaulter",
+      "kernel": "cursor_cached",
+      "min_ns": 15.91595,
+      "rounds": [
+        15.92155,
+        15.9252,
+        15.92175,
+        15.91595,
+        15.92885
+      ]
+    }
+  ],
+  "max_difference_from_current_root": {
+    "basic": 6.103515625e-05,
+    "cached": 6.103515625e-05
+  }
+}

@@ -1,0 +1,27 @@
+PASS actual Process: 30/60/100/240/10000 FPS, elapsed-time conservation, <=10ms steps and per-batch drawing
+PASS real PowieWord birth/mid/end: default stretch, colors, position, scale and nondegenerate production transform match ordinary evaluation
+PASS all 2 generated default-render emitters: fast/ordinary render parameter parity
+PASS Powie cloud emitter 0: 64 deterministic births, speed=[20.1225,24.8808], original launch/color/alpha tracks and alpha-only fade
+PASS Powie cloud emitter 1: 64 deterministic births, speed=[5.10814,11.6914], original launch/color/alpha tracks and alpha-only fade
+PASS PoolSparkly emitter 0: 512 deterministic production births, y=[295.284,429.934] recoveredBoxX=[0.110332,289.121]
+PASS PoolSparkly emitter 1: 512 deterministic production births, y=[295.077,429.767] recoveredBoxX=[-327.063,257.643]
+PASS production curves: nanoseconds, extreme epochs, signed and reversed ranges, zero-duration steps, 13 endpoint contracts, integer rounding and double progress
+PASS paused shared-clock frame cursor save/rebase without age change
+PASS production reanimation integer playback, original-speed roots, clipped roots, rate continuity, hold, synchronization, and partition-independent events
+PASS raw level-clock consumers: variable-step boundary events, zero-step stability, float drawing
+PASS actual mower/brain motion: original 100Hz chomp samples, actual-step accumulation, repeated-collision resets, direct reposition, pool altitude boundaries and brain behavior; 1/30/60/100/144/200/240/1000Hz/random
+PASS actual Plant launch deadlines: ns randomness, exact partitions, paused remaining time
+PASS actual Gloom/Gatling cadence: original deadlines and four pulse instants, Gloom seven volleys in 12s, at 30/100/144/200/1000Hz and irregular steps; Repeater/Cattail secondary deadlines preserve 1073 overlap
+PASS actual giant bowling collision: one million damage per outer step, including a one-nanosecond step, without a cooldown
+PASS actual projectile: 9 discrete modes, roofs/high gravity, 8 schedules, cob transition, portal motion, homing steering/hits, Snowpea/Kernel damage and chill
+PASS actual Plant bowling / Zombie walking: float coordinates, source roots, canonical bounce / row bucket, teleport rebinding and exact partition states
+PASS real PowieWord birth/mid/end: default stretch, colors, position, scale and nondegenerate production transform match ordinary evaluation
+PASS all 2 generated default-render emitters: fast/ordinary render parameter parity
+PASS Powie cloud emitter 0: 64 deterministic births, speed=[20.1225,24.8808], original launch/color/alpha tracks and alpha-only fade
+PASS Powie cloud emitter 1: 64 deterministic births, speed=[5.10814,11.6914], original launch/color/alpha tracks and alpha-only fade
+PASS PoolSparkly emitter 0: 512 deterministic production births, y=[295.284,429.934] recoveredBoxX=[0.110332,289.121]
+PASS PoolSparkly emitter 1: 512 deterministic production births, y=[295.077,429.767] recoveredBoxX=[-327.063,257.643]
+PASS production curves: nanoseconds, extreme epochs, signed and reversed ranges, zero-duration steps, 13 endpoint contracts, integer rounding and double progress
+PASS paused shared-clock frame cursor save/rebase without age change
+PASS production reanimation integer playback, original-speed roots, clipped roots, rate continuity, hold, synchronization, and partition-independent events
+PASS full 144/106 catalogs: stable roots/tracks/fields/nodes/rectangles/actions, two release/reload cycles, repeated bulk loads, 193 shared GPU atlases, real consumers, independent kind release and pixels, pending worker assignment cancellation

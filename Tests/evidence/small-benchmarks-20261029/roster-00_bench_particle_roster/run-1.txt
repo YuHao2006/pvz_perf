@@ -1,0 +1,14 @@
+particle roster bench: 60 emitters x 15 particles = 900 total, per-pass:
+  linked (node->id->slot) : 131283.1 ns/pass
+  roster (u16->slot)       :  2402.1 ns/pass  (2%)
+update shape (per pass, 900 particles):
+  timevalue div            :  4135.1 ns/pass
+  timevalue mul (recip)    :  2456.7 ns/pass  (59%)
+  2 const + 3 unset tracks : old 12441.4  new 12385.2 ns/pass  (100%)
+churn delete (1 death/emitter/pass):
+  Find-scan + memmove      :   801.2 ns/pass
+  index-pass + memmove     :   550.1 ns/pass  (69%)
+ring+tombstone (user proposal; steady 1368 live + 36 tombs = 3% tomb density):
+  walk (rev + tomb skip)   :  6002.8 ns/pass vs dense  2402.1 (250%)
+  churn (tomb + head/tail) :  1098.2 ns/pass vs memmove   550.1 (200%)
+sink=3254031990528

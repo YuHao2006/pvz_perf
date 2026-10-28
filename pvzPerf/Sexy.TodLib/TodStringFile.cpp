@@ -42,7 +42,7 @@ TodStringListFormat::TodStringListFormat(StringFormatId theFormatId, _Font** the
 //0x518E40
 
 //0x518F60
-static void TodStringRemoveReturnChars(std::string& theString)
+[[maybe_unused]] static void TodStringRemoveReturnChars(std::string& theString)
 {
 	for (size_t i = 0; i < theString.size(); )
 	{
@@ -111,7 +111,7 @@ int TodWriteString(Graphics* g, const SexyString& theString, int theX, int theY,
 		};
 		// B 形态 -> 除数表：6 枚举值三对（LEFT=0 不测量、RIGHT=1 全宽、CENTER=2 半宽）。
 		// aMeasureSpareX 按引用捕获局部，保留在原位不动——数据表消分支，lambda 零改动。
-		constexpr uint8_t aJustifyDivisor[6] = {
+		static constexpr uint8_t aJustifyDivisor[6] = {
 		    0,  // DS_ALIGN_LEFT
 		    1,  // DS_ALIGN_RIGHT
 		    2,  // DS_ALIGN_CENTER

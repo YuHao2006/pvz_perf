@@ -1,0 +1,1 @@
+bench1 SeedPacketDrawSeed | before 32.93 ns | after 35.20 ns | diff -6.9% | C(static) 30.02 ns | checksum=OK (A=EDF85AC17DC122BB B=EDF85AC17DC122BB C=EDF85AC17DC122BB)

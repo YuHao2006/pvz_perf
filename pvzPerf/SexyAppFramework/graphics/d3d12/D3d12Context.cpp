@@ -103,8 +103,8 @@ D3D_SHADER_MODEL CheckCapabilities(ID3D12Device* device, bool hdr) {
     RequireFormat(device, DXGI_FORMAT_R8G8B8A8_UNORM,
         renderTarget | uav, typedUav, "RGBA8 UNORM");
     RequireFormat(device, DXGI_FORMAT_R8_UNORM, sampled, 0, "R8 UNORM");
-    RequireFormat(device, DXGI_FORMAT_R32G32B32A32_FLOAT,
-        renderTarget | uav, typedUav, "RGBA32F");
+    RequireFormat(device, DXGI_FORMAT_R16G16B16A16_FLOAT,
+        renderTarget | uav, typedUav, "RGBA16F");
     if (hdr)
         RequireFormat(device, DXGI_FORMAT_R10G10B10A2_UNORM,
             renderTarget, 0, "RGB10A2 HDR10");

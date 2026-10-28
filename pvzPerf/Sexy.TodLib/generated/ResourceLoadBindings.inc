@@ -61,7 +61,6 @@ Sexy::SharedImageRef owner_IMAGE_STORE_MUSHROOMGARDENICON;
 Sexy::SharedImageRef owner_IMAGE_STORE_AQUARIUMGARDENICON;
 Sexy::SharedImageRef owner_IMAGE_STORE_TREEOFWISDOMICON;
 Sexy::SharedImageRef owner_IMAGE_STORE_FIRSTAIDWALLNUTICON;
-Sexy::SharedImageRef owner_IMAGE_STORE_PVZICON;
 Sexy::SharedImageRef owner_IMAGE_ZOMBIE_FINAL_NOTE;
 Sexy::SharedImageRef owner_IMAGE_ZOMBIE_NOTE;
 Sexy::SharedImageRef owner_IMAGE_ZOMBIE_NOTE1;
@@ -352,7 +351,6 @@ bool LoadStep(Sexy::ResourceManager& manager, Sexy::ResourceManager::LoadPlan& p
         case 20: return manager.LoadImage(plan.mImages[plan.mNextImage++], Sexy::IMAGE_STORE_AQUARIUMGARDENICON, owner_IMAGE_STORE_AQUARIUMGARDENICON);
         case 21: return manager.LoadImage(plan.mImages[plan.mNextImage++], Sexy::IMAGE_STORE_TREEOFWISDOMICON, owner_IMAGE_STORE_TREEOFWISDOMICON);
         case 22: return manager.LoadImage(plan.mImages[plan.mNextImage++], Sexy::IMAGE_STORE_FIRSTAIDWALLNUTICON, owner_IMAGE_STORE_FIRSTAIDWALLNUTICON);
-        case 23: return manager.LoadImage(plan.mImages[plan.mNextImage++], Sexy::IMAGE_STORE_PVZICON, owner_IMAGE_STORE_PVZICON);
         default: return false;
         }
     case ResourceGroupId::DelayLoad_Zombatar:
@@ -835,7 +833,6 @@ void ReleaseGroup(Sexy::ResourceManager& manager, ResourceGroupId group)
         manager.ReleaseImage(Sexy::IMAGE_BACKGROUND_MUSHROOMGARDEN, owner_IMAGE_BACKGROUND_MUSHROOMGARDEN);
         break;
     case ResourceGroupId::DelayLoad_Store:
-        manager.ReleaseImage(Sexy::IMAGE_STORE_PVZICON, owner_IMAGE_STORE_PVZICON);
         manager.ReleaseImage(Sexy::IMAGE_STORE_FIRSTAIDWALLNUTICON, owner_IMAGE_STORE_FIRSTAIDWALLNUTICON);
         manager.ReleaseImage(Sexy::IMAGE_STORE_TREEOFWISDOMICON, owner_IMAGE_STORE_TREEOFWISDOMICON);
         manager.ReleaseImage(Sexy::IMAGE_STORE_AQUARIUMGARDENICON, owner_IMAGE_STORE_AQUARIUMGARDENICON);

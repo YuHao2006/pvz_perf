@@ -18,6 +18,7 @@
 
 namespace ZombieAltitudeRuntime
 {
+inline Board* scheduleBoard = nullptr;
 inline void Require(bool value, const char* message)
 {
     if (!value) throw std::runtime_error(message);
@@ -33,6 +34,7 @@ void Schedule(int frequency, std::int64_t total, Step step)
             std::min(total, elapsed + static_cast<std::int64_t>(random() % 71'000'003 + 1));
         Sexy::gUpdateIntervalNs = end - elapsed;
         Sexy::gUpdateTicks = double(end - elapsed) / 10'000'000;
+        scheduleBoard->mLevelTimeNs += end-elapsed;
         step();
         elapsed = end;
     }
@@ -146,12 +148,15 @@ inline auto State(const Zombie& zombie)
         std::bit_cast<std::uint32_t>(zombie.mX), std::bit_cast<std::uint32_t>(zombie.mY),
         std::uint64_t(zombie.mZombieHeight), std::uint64_t(zombie.mZombiePhase),
         std::bit_cast<std::uint64_t>(zombie.mAltitudeMotion.origin),
-        zombie.mAltitudeMotion.elapsedNs, std::bit_cast<std::uint32_t>(zombie.mAltitudeMotion.rate),
+        static_cast<std::uint64_t>(zombie.mAltitudeMotion.startTimeNs), std::bit_cast<std::uint32_t>(zombie.mAltitudeMotion.rate),
         std::uint64_t(zombie.mAltitudeMotion.bound)};
 }
 
 inline void Check(LawnApp& app, Board& board)
 {
+    const auto oldTime = board.mLevelTimeNs;
+    struct RestoreClock { Board& board; std::uint64_t time; ~RestoreClock(){board.mLevelTimeNs=time;scheduleBoard=nullptr;} } restoreClock{board,oldTime};
+    scheduleBoard=&board;
     const auto oldMode = app.mGameMode;
     const auto oldDelta = Sexy::gUpdateIntervalNs;
     const auto oldTicks = Sexy::gUpdateTicks;
@@ -178,6 +183,7 @@ inline void Check(LawnApp& app, Board& board)
     {
         const auto sample = [&](int frequency, std::int64_t duration)
         {
+            board.mLevelTimeNs=0;
             Zombie zombie{};
             Initialize(zombie, app, board, path);
             Schedule(frequency, duration, [&] { Step(zombie, path); });
@@ -217,14 +223,19 @@ inline void Check(LawnApp& app, Board& board)
         Initialize(resumed, app, board, path);
         SaveRecordMapping::ReadSaveRecord(resumed, saved.data());
         resumed.mApp = &app; resumed.mBoard = &board;
+        SaveClockProjection::Bind(resumed);
         Require(State(resumed) == State(original), "Zombie save mapping lost its altitude segment");
+        const auto resumeTime=board.mLevelTimeNs;
         Schedule(100, 413'192'835, [&] { Step(original, path); });
+        board.mLevelTimeNs=resumeTime;
         Schedule(1000, 413'192'835, [&] { Step(resumed, path); });
         Require(State(original) == State(resumed), "Restored Zombie altitude continuation diverged");
         original.mAltitude += 31.123413f;
         resumed.mAltitude = original.mAltitude;
         if (path == Path::Imp) original.mVelZ = resumed.mVelZ = 1.173289f;
+        const auto externalEditTime=board.mLevelTimeNs;
         Schedule(200, 37'192'835, [&] { Step(original, path); });
+        board.mLevelTimeNs=externalEditTime;
         Schedule(1000, 37'192'835, [&] { Step(resumed, path); });
         Require(State(original) == State(resumed), "External Zombie altitude/velocity edit failed to rebind");
         const auto paused = State(original);
@@ -234,6 +245,7 @@ inline void Check(LawnApp& app, Board& board)
     }
     // Independent recurrence oracle: thrown-imp gravity changes velocity
     // before position. This exposes the opposite half-acceleration formula.
+    board.mLevelTimeNs=0;
     Zombie imp{};
     Initialize(imp, app, board, Path::Imp);
     const auto initialAltitude = imp.mAltitude;
@@ -253,6 +265,7 @@ inline void Check(LawnApp& app, Board& board)
     // start at 5, rates -1 then -.1 => landing on tick 5 gives -.1.
     const auto landedFlyer = [&](int frequency)
     {
+        board.mLevelTimeNs=0;
         Zombie zombie{};
         Initialize(zombie, app, board, Path::CombinedFlyer);
         zombie.mAltitude = 5;
@@ -274,6 +287,7 @@ inline void Check(LawnApp& app, Board& board)
     {
         const auto clamped = [&](int frequency)
         {
+            board.mLevelTimeNs=0;
             Zombie zombie{};
             Initialize(zombie, app, board, path);
             if (path == Path::PoolOut || path == Path::SnorkelOut) zombie.mAltitude = -3.123413f;
@@ -291,19 +305,21 @@ inline void Check(LawnApp& app, Board& board)
     }
     Zombie longClock{};
     Initialize(longClock, app, board, Path::Flyer);
-    longClock.mAltitudeMotion = {1'000'000'000.0, 9'007'199'254'740'993ULL, -.1f, true};
+    longClock.mAltitudeMotion = {1'000'000'000.0, static_cast<std::int64_t>(board.mLevelTimeNs)-9'007'199'254'740'993LL, -.1f, true};
     longClock.mAltitude = CheckedPosition(
         longClock.mAltitudeMotion.origin + double(longClock.mAltitudeMotion.rate) *
-        double(longClock.mAltitudeMotion.elapsedNs) / 10'000'000);
+        double(ReanimClock::Subtract(static_cast<std::int64_t>(board.mLevelTimeNs), longClock.mAltitudeMotion.startTimeNs)) / 10'000'000);
     const auto longSave = SaveRecordMapping::WriteSaveRecord(longClock);
     Zombie restoredClock{};
     Initialize(restoredClock, app, board, Path::Flyer);
     SaveRecordMapping::ReadSaveRecord(restoredClock, longSave.data());
     restoredClock.mApp = &app; restoredClock.mBoard = &board;
+    SaveClockProjection::Bind(restoredClock);
     Sexy::gUpdateIntervalNs = 1; Sexy::gUpdateTicks = 1e-7;
+    board.mLevelTimeNs+=1;
     longClock.UpdateZombieFlyer(); restoredClock.UpdateZombieFlyer();
     Require(State(longClock) == State(restoredClock) &&
-            longClock.mAltitudeMotion.elapsedNs == 9'007'199'254'740'994ULL,
+            ReanimClock::Subtract(static_cast<std::int64_t>(board.mLevelTimeNs), longClock.mAltitudeMotion.startTimeNs) == 9'007'199'254'740'994LL,
         "Saved Zombie altitude lost a nanosecond beyond double's consecutive integer range");
     // The roof's row Y changes continuously as the imp flies horizontally.
     // Integrating rounded differences of row Y would still drift even if
@@ -312,6 +328,7 @@ inline void Check(LawnApp& app, Board& board)
     board.mBackground = BackgroundType::BACKGROUND_5_ROOF;
     const auto roof = [&](int frequency)
     {
+        board.mLevelTimeNs=0;
         Zombie zombie{};
         Initialize(zombie, app, board, Path::Imp);
         zombie.mFromWave = 0;
@@ -331,7 +348,10 @@ inline void Check(LawnApp& app, Board& board)
         Initialize(resumed, app, board, Path::Imp);
         SaveRecordMapping::ReadSaveRecord(resumed, saved.data());
         resumed.mApp = &app; resumed.mBoard = &board;
+        SaveClockProjection::Bind(resumed);
+        const auto roofResumeTime=board.mLevelTimeNs;
         Schedule(200, 37'192'835, [&] { zombie.UpdateZombieImp(); });
+        board.mLevelTimeNs=roofResumeTime;
         Schedule(1000, 37'192'835, [&] { resumed.UpdateZombieImp(); });
         Require(State(zombie) == State(resumed), "Saved roof imp lost its relative-row ballistic origin");
         return State(zombie);

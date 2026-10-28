@@ -1,0 +1,20 @@
+{
+  "date": "2026-10-27",
+  "production_changes": "None from these candidates. Existing uint16 path and buffer allocation/reuse remain in production. CPU animation/trigonometry preserved.",
+  "instancing_scope": "Uniform color and sampling per explicit quad. Eight position floats, eight UV floats, four color floats, two unsigned integers: 88 bytes. No affine reconstruction, quantization, trig, or behavior evaluation. Explicit rejection of triangles/nonuniform quad metadata in this experiment.",
+  "correctness": "Both GPUs: five instancing scenarios including CPU rotation and 50000 instances; pixel-identical; synchronization validation errors 0. Three tight-entry-barrier scenarios pixel-identical/errors 0. Existing uint16 boundaries rechecked on both GPUs.",
+  "barriers_scope": "Only scene entry source stage/access narrowed for known layouts; exit/transfer/feedback paths and all waits retained. Not a general barrier rewrite.",
+  "timing_scope": "Offscreen main BGRA8 image; no WSI. GPU timestamps and partial host recording wall time; clocks uncontrolled. Timing CSV in Temp, not official ledger. Instancing first run predates the disabled barrier hook; current source snapshot/executable correspond to second instancing run and barrier run.",
+  "snapshot": "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\pvz-instancing-barriers-source-20261027",
+  "sources_sha256": {
+    "pvzPerf/SexyAppFramework/graphics/vulkan/VulkanRenderer.cpp": "3f6771929f011f9fbc10b7ce40f3e0c7687c7636c25e15493803f029830b5ee7",
+    "pvzPerf/SexyAppFramework/graphics/vulkan/VulkanRenderer.h": "d4351b2ab8d625c478f65e588947f683276e7d37a207c24da62c09e6111fbf47",
+    "pvzPerf/SexyAppFramework/graphics/vulkan/CMakeLists.txt": "60fe9314b4c07cb7a3acacfde83fa86ffb55b6abd1bdfd02089fda4dd6557d2f",
+    "Tests/performance/vulkan_sprite_benchmark.cpp": "0a59bbb5777c7a187dc2beda2a3061836dcdf306bee0fdb7a97ba07fe08d013b",
+    "Tests/performance/sprite_instance_experiment.vert": "83465af5d93b0a3765fe0df6ed7487948bbc89b44e5be18e024f9aa887a93b23"
+  },
+  "benchmark_exe_sha256": "1b4257a18afb85bd1db75b2358f86305431d54139b6dd9678cb7f03633ee38d7",
+  "instance_spv_sha256": "7a8987b9772bd4009f05763a04d9e41958f691d5a5b94af23d6359498516c0f5",
+  "build_checks": "Windows Release sexy_vulkan and Android arm64 sexy_vulkan library compiled; full app/APK not rebuilt or installed this turn.",
+  "decision": "No promotion yet. Dense tiny sprites show GPU savings on both devices, but current packing raises host time. Entry barrier narrowing shows no stable overall saving. Buffer ring experiment deferred by user."
+}

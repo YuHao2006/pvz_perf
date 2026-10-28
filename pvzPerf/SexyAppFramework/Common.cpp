@@ -1,4 +1,5 @@
 #include "Common.h"
+
 #include "misc/MTRand.h"
 #include "misc/Debug.h"
 #ifdef _WIN32
@@ -19,6 +20,10 @@
 #include <cstring>
 #include <cwchar>
 #include <stdexcept>
+#if defined(__ANDROID__)
+#include <android/log.h>
+#include <fstream>
+#endif
 
 #ifdef __APPLE__
 #include "platform/macos/MacSystem.h"
@@ -28,13 +33,13 @@ HINSTANCE Sexy::gHInstance;
 namespace Sexy
 {
 // 命名污染审计：仅本 TU 使用，声明自对应头文件下沉（内部链接）。
-static int StrFindNoCase(const char* theStr, const char* theFind);
-static bool StrPrefixNoCase(const char* theStr, const char* thePrefix, int maxLength = 10000000);
-static SexyString CommaSeperate(int theValue);
-static bool Deltree(const std::string& thePath);
+[[maybe_unused]] static int StrFindNoCase(const char* theStr, const char* theFind);
+[[maybe_unused]] static bool StrPrefixNoCase(const char* theStr, const char* thePrefix, int maxLength = 10000000);
+[[maybe_unused]] static SexyString CommaSeperate(int theValue);
+[[maybe_unused]] static bool Deltree(const std::string& thePath);
 static void SMemR(void*& _Src, void* _Dst, size_t _Size);
-static void SMemRStr(void*& _Src, std::string& theString);
-static void SMemWStr(void*& _Dst, const std::string& theString);
+[[maybe_unused]] static void SMemRStr(void*& _Src, std::string& theString);
+[[maybe_unused]] static void SMemWStr(void*& _Dst, const std::string& theString);
 }
 
 bool Sexy::gDebug = false;
@@ -152,7 +157,15 @@ std::string Sexy::GetAppDataFolder()
 			root = std::string(xdg) + "/PlantsVsZombiesModern";
 		else if (home && *home && std::filesystem::path(home).is_absolute())
 			root = std::string(home) + "/.local/share/PlantsVsZombiesModern";
+#if defined(__ANDROID__)
+		// 存档/日志放应用专属外部存储（文件管理器与 USB 可见）；
+		// 运行目录（pak/shaders/缓存）仍在 internalDataPath。属主应用
+		// 对自身 Android/data 子目录的裸路径 I/O 在所有版本均免权限。
+		else
+			root = "/storage/emulated/0/Android/data/com.openpvz.modern/files";
+#else
 		else throw std::runtime_error("Set PVZ_APPDATA_DIR or an absolute HOME/XDG_DATA_HOME");
+#endif
 		SetAppDataFolder(std::filesystem::absolute(root).lexically_normal().string());
 	}
 #endif
@@ -599,6 +612,30 @@ std::string Sexy::GetFullPath(const std::string& theRelPath)
 	return GetPathFrom(theRelPath, GetCurDir());
 }
 
+#if defined(__ANDROID__)
+namespace
+{
+std::string gAndroidRuntimeDirectory;
+}
+void Sexy::SetAndroidRuntimeDirectory(const std::string& thePath)
+{
+	gAndroidRuntimeDirectory = thePath;
+}
+void Sexy::AndroidDiag(const char* theFormat, ...)
+{
+    char message[512];
+    va_list arguments;
+    va_start(arguments, theFormat);
+    std::vsnprintf(message, sizeof(message), theFormat, arguments);
+    va_end(arguments);
+    __android_log_print(ANDROID_LOG_DEBUG, "pvz_perf", "%s", message);
+    std::ofstream out(gAndroidRuntimeDirectory + "/diag.txt", std::ios::app);
+    if (out) out << message << std::endl;
+}
+
+
+#endif
+
 std::string Sexy::GetExecutableDirectory()
 {
 #if defined(__APPLE__)
@@ -624,7 +661,12 @@ std::string Sexy::GetExecutableDirectory()
 		if (aPath.size() > 32768)
 			return GetCurDir();
 	}
-#else
+	#else
+	#if defined(__ANDROID__)
+	// /proc/self/exe 是 /system/bin/app_process64；注入目录优先。
+	if (!gAndroidRuntimeDirectory.empty())
+		return AddTrailingSlash(gAndroidRuntimeDirectory, true);
+	#endif
 	std::vector<char> path(1024);
 	for (;;)
 	{
@@ -1270,6 +1312,24 @@ std::wstring Sexy::UTF8StringToWString(const std::string& theString)
 	std::wstring aResult(aSize, L'\0');
 	MultiByteToWideChar(CP_UTF8, 0, theString.c_str(), static_cast<int>(theString.length()) + 1, aResult.data(), aSize);
 	aResult.resize(wcslen(aResult.c_str()));
+	return aResult;
+#elif defined(__ANDROID__)
+	// NDK libc++ 已移除 <codecvt>；手写 UTF-8 → UTF-32(wchar_t=4B on android)
+	std::wstring aResult;
+	aResult.reserve(theString.size());
+	for (size_t i = 0; i < theString.size();)
+	{
+		const unsigned char c = static_cast<unsigned char>(theString[i]);
+		unsigned codepoint = 0; int extra = 0;
+		if (c < 0x80) { codepoint = c; }
+		else if ((c & 0xE0) == 0xC0) { codepoint = c & 0x1Fu; extra = 1; }
+		else if ((c & 0xF0) == 0xE0) { codepoint = c & 0x0Fu; extra = 2; }
+		else { codepoint = c & 0x07u; extra = 3; }
+		i += 1;
+		for (int k = 0; k < extra && i < theString.size(); ++k, ++i)
+			codepoint = (codepoint << 6) | (static_cast<unsigned char>(theString[i]) & 0x3Fu);
+		aResult.push_back(static_cast<wchar_t>(codepoint));
+	}
 	return aResult;
 #else
 	std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;

@@ -1,0 +1,269 @@
+EXE: C:\UserProgram\Plants_Vs_Zombies_V1.2.0.1073_EN\PlantsVsZombies.exe
+SHA256: 5f650f52d12751e08b63e590edb0d9b9f09d087cea900baa0eb39e4af8eda251
+Addresses resolved from this retail binary; 0x512C60 from other-source comments is NOT this binary address.
+
+AverageNearByPixels @ 0x0051ce20
+0051ce20: push     ecx
+0051ce21: push     ebx
+0051ce22: mov      ebx, dword ptr [esp + 0x18]
+0051ce26: push     ebp
+0051ce27: mov      ebp, dword ptr [esp + 0x10]
+0051ce2b: push     esi
+0051ce2c: xor      esi, esi
+0051ce2e: push     edi
+0051ce2f: xor      eax, eax
+0051ce31: xor      edi, edi
+0051ce33: mov      dword ptr [esp + 0x10], esi
+0051ce37: or       edx, 0xffffffff
+0051ce3a: jmp      0x51ce44
+0051ce3c: lea      esp, [esp]
+0051ce40: mov      ebp, dword ptr [esp + 0x18]
+0051ce44: test     edx, edx
+0051ce46: je       0x51cf64
+0051ce4c: cmp      dword ptr [esp + 0x20], 0
+0051ce51: je       0x51cea8
+0051ce53: test     ebx, ebx
+0051ce55: jne      0x51ce60
+0051ce57: cmp      edx, -1
+0051ce5a: je       0x51cf02
+0051ce60: mov      ecx, dword ptr [ebp + 0x28]
+0051ce63: dec      ecx
+0051ce64: cmp      ebx, ecx
+0051ce66: jne      0x51ce6d
+0051ce68: cmp      edx, 1
+0051ce6b: je       0x51cea8
+0051ce6d: mov      ecx, dword ptr [ebp + 0x24]
+0051ce70: mov      ebp, dword ptr [esp + 0x1c]
+0051ce74: imul     ecx, edx
+0051ce77: mov      ecx, dword ptr [ebp + ecx*4 - 4]
+0051ce7b: test     ecx, 0xff000000
+0051ce81: je       0x51cea8
+0051ce83: mov      ebp, ecx
+0051ce85: shr      ebp, 0x10
+0051ce88: and      ebp, 0xff
+0051ce8e: add      eax, ebp
+0051ce90: mov      ebp, ecx
+0051ce92: shr      ebp, 8
+0051ce95: and      ebp, 0xff
+0051ce9b: and      ecx, 0xff
+0051cea1: add      dword ptr [esp + 0x10], ecx
+0051cea5: add      edi, ebp
+0051cea7: inc      esi
+0051cea8: test     ebx, ebx
+0051ceaa: jne      0x51ceb1
+0051ceac: cmp      edx, -1
+0051ceaf: je       0x51cefe
+0051ceb1: mov      ebp, dword ptr [esp + 0x18]
+0051ceb5: mov      ecx, dword ptr [ebp + 0x28]
+0051ceb8: dec      ecx
+0051ceb9: cmp      ebx, ecx
+0051cebb: jne      0x51cec2
+0051cebd: cmp      edx, 1
+0051cec0: je       0x51cf02
+0051cec2: mov      ecx, dword ptr [ebp + 0x24]
+0051cec5: mov      ebx, dword ptr [esp + 0x1c]
+0051cec9: imul     ecx, edx
+0051cecc: mov      ecx, dword ptr [ebx + ecx*4]
+0051cecf: test     ecx, 0xff000000
+0051ced5: je       0x51cf02
+0051ced7: mov      ebx, ecx
+0051ced9: shr      ebx, 0x10
+0051cedc: and      ebx, 0xff
+0051cee2: add      eax, ebx
+0051cee4: mov      ebx, ecx
+0051cee6: shr      ebx, 8
+0051cee9: and      ebx, 0xff
+0051ceef: and      ecx, 0xff
+0051cef5: add      dword ptr [esp + 0x10], ecx
+0051cef9: add      edi, ebx
+0051cefb: inc      esi
+0051cefc: jmp      0x51cf02
+0051cefe: mov      ebp, dword ptr [esp + 0x18]
+0051cf02: mov      ecx, dword ptr [ebp + 0x24]
+0051cf05: lea      ebx, [ecx - 1]
+0051cf08: cmp      dword ptr [esp + 0x20], ebx
+0051cf0c: mov      ebx, dword ptr [esp + 0x24]
+0051cf10: je       0x51cf64
+0051cf12: test     ebx, ebx
+0051cf14: jne      0x51cf1b
+0051cf16: cmp      edx, -1
+0051cf19: je       0x51cf64
+0051cf1b: mov      ebp, dword ptr [esp + 0x18]
+0051cf1f: mov      ebp, dword ptr [ebp + 0x28]
+0051cf22: dec      ebp
+0051cf23: cmp      ebx, ebp
+0051cf25: jne      0x51cf2c
+0051cf27: cmp      edx, 1
+0051cf2a: je       0x51cf64
+0051cf2c: mov      ebp, dword ptr [esp + 0x1c]
+0051cf30: imul     ecx, edx
+0051cf33: mov      ecx, dword ptr [ebp + ecx*4 + 4]
+0051cf37: test     ecx, 0xff000000
+0051cf3d: je       0x51cf64
+0051cf3f: mov      ebp, ecx
+0051cf41: shr      ebp, 0x10
+0051cf44: and      ebp, 0xff
+0051cf4a: add      eax, ebp
+0051cf4c: mov      ebp, ecx
+0051cf4e: shr      ebp, 8
+0051cf51: and      ebp, 0xff
+0051cf57: and      ecx, 0xff
+0051cf5d: add      dword ptr [esp + 0x10], ecx
+0051cf61: add      edi, ebp
+0051cf63: inc      esi
+0051cf64: inc      edx
+0051cf65: cmp      edx, 1
+0051cf68: jle      0x51ce40
+0051cf6e: test     esi, esi
+0051cf70: jne      0x51cf7a
+0051cf72: pop      edi
+0051cf73: pop      esi
+0051cf74: pop      ebp
+0051cf75: xor      eax, eax
+0051cf77: pop      ebx
+0051cf78: pop      ecx
+0051cf79: ret      
+0051cf7a: cdq      
+0051cf7b: idiv     esi
+0051cf7d: cmp      eax, 0xff
+0051cf82: mov      ebx, eax
+0051cf84: jl       0x51cf8b
+0051cf86: mov      ebx, 0xff
+0051cf8b: mov      eax, edi
+0051cf8d: cdq      
+0051cf8e: idiv     esi
+0051cf90: cmp      eax, 0xff
+0051cf95: mov      edi, eax
+0051cf97: jl       0x51cf9e
+0051cf99: mov      edi, 0xff
+0051cf9e: mov      eax, dword ptr [esp + 0x10]
+0051cfa2: cdq      
+0051cfa3: idiv     esi
+0051cfa5: cmp      eax, 0xff
+0051cfaa: mov      ecx, eax
+0051cfac: jl       0x51cfb3
+0051cfae: mov      ecx, 0xff
+0051cfb3: mov      eax, ebx
+0051cfb5: shl      eax, 8
+0051cfb8: or       eax, edi
+0051cfba: pop      edi
+0051cfbb: pop      esi
+0051cfbc: shl      eax, 8
+0051cfbf: pop      ebp
+0051cfc0: or       eax, ecx
+0051cfc2: pop      ebx
+0051cfc3: pop      ecx
+0051cfc4: ret      
+
+FixPixelsOnAlphaEdgeForBlending @ 0x0051cfd0
+0051cfd0: sub      esp, 0x20
+0051cfd3: cmp      dword ptr [edi + 0x38], 0
+0051cfd7: push     ebx
+0051cfd8: push     ebp
+0051cfd9: push     esi
+0051cfda: je       0x51d06f
+0051cfe0: mov      eax, dword ptr [edi]
+0051cfe2: mov      edx, dword ptr [eax + 0x68]
+0051cfe5: mov      ecx, edi
+0051cfe7: call     edx
+0051cfe9: cmp      byte ptr [edi + 0x51], 0
+0051cfed: je       0x51d06f
+0051cff3: lea      ecx, [esp + 0x10]
+0051cff7: call     0x5f6c20
+0051cffc: lea      ecx, [esp + 0x10]
+0051d000: call     0x5f6cb0
+0051d005: mov      ebp, dword ptr [edi + 0x38]
+0051d008: xor      eax, eax
+0051d00a: cmp      dword ptr [edi + 0x28], eax
+0051d00d: mov      dword ptr [esp + 0xc], eax
+0051d011: jle      0x51d04f
+0051d013: xor      ebx, ebx
+0051d015: cmp      dword ptr [edi + 0x24], ebx
+0051d018: jle      0x51d045
+0051d01a: lea      ebx, [ebx]
+0051d020: mov      esi, ebp
+0051d022: add      ebp, 4
+0051d025: test     dword ptr [esi], 0xff000000
+0051d02b: jne      0x51d03f
+0051d02d: push     eax
+0051d02e: push     ebx
+0051d02f: push     esi
+0051d030: push     edi
+0051d031: call     0x51ce20
+0051d036: mov      dword ptr [esi], eax
+0051d038: mov      eax, dword ptr [esp + 0x1c]
+0051d03c: add      esp, 0x10
+0051d03f: inc      ebx
+0051d040: cmp      ebx, dword ptr [edi + 0x24]
+0051d043: jl       0x51d020
+0051d045: inc      eax
+0051d046: cmp      eax, dword ptr [edi + 0x28]
+0051d049: mov      dword ptr [esp + 0xc], eax
+0051d04d: jl       0x51d013
+0051d04f: inc      dword ptr [edi + 0x3c]
+0051d052: lea      ecx, [esp + 0x10]
+0051d056: call     0x5f6d00
+0051d05b: call     0x6ba960
+0051d060: test     eax, eax
+0051d062: jle      0x51d06f
+0051d064: lea      ecx, [esp + 0x10]
+0051d068: call     0x5f6d00
+0051d06d: fstp     st(0)
+0051d06f: pop      esi
+0051d070: pop      ebp
+0051d071: pop      ebx
+0051d072: add      esp, 0x20
+0051d075: ret      
+CALL XREF: 0x00437289 -> 0x0051cfd0
+CALL XREF: 0x004372cf -> 0x0051cfd0
+CALL XREF: 0x00437315 -> 0x0051cfd0
+CALL XREF: 0x0043735b -> 0x0051cfd0
+CALL XREF: 0x004373a1 -> 0x0051cfd0
+CALL XREF: 0x004373e7 -> 0x0051cfd0
+CALL XREF: 0x0043742d -> 0x0051cfd0
+CALL XREF: 0x00437473 -> 0x0051cfd0
+CALL XREF: 0x004374bc -> 0x0051cfd0
+CALL XREF: 0x004374ff -> 0x0051cfd0
+CALL XREF: 0x00437545 -> 0x0051cfd0
+CALL XREF: 0x0043758e -> 0x0051cfd0
+CALL XREF: 0x004375d4 -> 0x0051cfd0
+CALL XREF: 0x0043761a -> 0x0051cfd0
+CALL XREF: 0x00437660 -> 0x0051cfd0
+CALL XREF: 0x004376a9 -> 0x0051cfd0
+CALL XREF: 0x004376f2 -> 0x0051cfd0
+CALL XREF: 0x0043773b -> 0x0051cfd0
+CALL XREF: 0x00437784 -> 0x0051cfd0
+CALL XREF: 0x004377cd -> 0x0051cfd0
+CALL XREF: 0x00437816 -> 0x0051cfd0
+CALL XREF: 0x0043785f -> 0x0051cfd0
+CALL XREF: 0x004378a8 -> 0x0051cfd0
+CALL XREF: 0x004378f1 -> 0x0051cfd0
+CALL XREF: 0x0043793a -> 0x0051cfd0
+CALL XREF: 0x00437980 -> 0x0051cfd0
+CALL XREF: 0x004379c6 -> 0x0051cfd0
+CALL XREF: 0x00437a09 -> 0x0051cfd0
+CALL XREF: 0x00437a4f -> 0x0051cfd0
+CALL XREF: 0x00437a95 -> 0x0051cfd0
+CALL XREF: 0x00437ad8 -> 0x0051cfd0
+CALL XREF: 0x00437b1e -> 0x0051cfd0
+CALL XREF: 0x00437b64 -> 0x0051cfd0
+CALL XREF: 0x00437baa -> 0x0051cfd0
+CALL XREF: 0x00448e59 -> 0x0051cfd0
+CALL XREF: 0x00449f7a -> 0x0051cfd0
+CALL XREF: 0x00474e76 -> 0x0051cfd0
+CALL XREF: 0x0051c98c -> 0x0051cfd0
+CALL XREF: 0x0051d031 -> 0x0051ce20
+
+Draw-side lazy sanding and flag clear
+0051c983: test     dword ptr [edi + 0x44], 0x1000
+0051c98a: je       0x51c998
+0051c98c: call     0x51cfd0
+0051c991: and      dword ptr [edi + 0x44], 0xffffefff
+
+One preloading call-site flag guard and clear
+00437278: mov      esi, dword ptr [esi + 0x504]
+0043727e: test     dword ptr [esi + 0x44], 0x1000
+00437285: je       0x437295
+00437287: mov      edi, esi
+00437289: call     0x51cfd0
+0043728e: and      dword ptr [esi + 0x44], 0xffffefff

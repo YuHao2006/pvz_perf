@@ -1,0 +1,45 @@
+[
+  {
+    "kind": "reanim_frame_cache_benchmark",
+    "run": 1,
+    "exit": 0,
+    "seconds": 13.620817699993495,
+    "command": [
+      "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\pvz-v3-final-20261029-358182a0\\build-reanim_frame_cache_benchmark\\benchmark.exe",
+      "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\pvz-v3-final-20261029-358182a0\\reanim_frame_cache_benchmark\\run-1"
+    ],
+    "exe_sha256": "faad48fe2c985846fa7874558a61fdce6e9dbc5f1d78327b9c7ab0271c5bc7ec"
+  },
+  {
+    "kind": "reanim_frame_cache_benchmark",
+    "run": 2,
+    "exit": 0,
+    "seconds": 13.629182900011074,
+    "command": [
+      "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\pvz-v3-final-20261029-358182a0\\build-reanim_frame_cache_benchmark\\benchmark.exe",
+      "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\pvz-v3-final-20261029-358182a0\\reanim_frame_cache_benchmark\\run-2",
+      "reverse"
+    ],
+    "exe_sha256": "faad48fe2c985846fa7874558a61fdce6e9dbc5f1d78327b9c7ab0271c5bc7ec"
+  },
+  {
+    "kind": "particle_life_side_cache_benchmark",
+    "run": 1,
+    "exit": 0,
+    "seconds": 6.408071500016376,
+    "command": [
+      "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\pvz-v3-final-20261029-358182a0\\build-particle_life_side_cache_benchmark\\benchmark.exe"
+    ],
+    "exe_sha256": "b664ac450acf20a2c4b1dd70bcac50be2a9c246923bb8a25773bb6e7485484e0"
+  },
+  {
+    "kind": "particle_life_side_cache_benchmark",
+    "run": 2,
+    "exit": 0,
+    "seconds": 6.41656100002001,
+    "command": [
+      "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\pvz-v3-final-20261029-358182a0\\build-particle_life_side_cache_benchmark\\benchmark.exe"
+    ],
+    "exe_sha256": "b664ac450acf20a2c4b1dd70bcac50be2a9c246923bb8a25773bb6e7485484e0"
+  }
+]

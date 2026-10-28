@@ -1,0 +1,18 @@
+fixture_profile,C:\Users\ADMINI~1\AppData\Local\Temp\pvz-scale-residency-36564-191011468
+memory,before_init,working_set_mib=10.074,private_commit_mib=24.988
+scale,startup_disabled,prepared=0,enabled=0,windowed=1,programs=0,lookups=0,writable_images=0
+memory,startup_disabled,working_set_mib=100.723,private_commit_mib=177.879
+scale,first_enable,prepared=1,enabled=1,windowed=1,programs=2,lookups=0,writable_images=71
+memory,first_enable,working_set_mib=112.996,private_commit_mib=985.871
+scale,first_disable,prepared=0,enabled=0,windowed=1,programs=2,lookups=0,writable_images=0
+memory,first_disable,working_set_mib=113.184,private_commit_mib=430.262
+scale,second_enable,prepared=1,enabled=1,windowed=1,programs=2,lookups=0,writable_images=71
+memory,second_enable,working_set_mib=113.215,private_commit_mib=1060.652
+scale,second_disable,prepared=0,enabled=0,windowed=1,programs=2,lookups=0,writable_images=0
+memory,second_disable,working_set_mib=113.199,private_commit_mib=430.285
+scale,fullscreen_and_enable,prepared=1,enabled=1,windowed=0,programs=2,lookups=0,writable_images=71
+memory,fullscreen_and_enable,working_set_mib=117.270,private_commit_mib=1060.953
+scale,windowed_and_disable,prepared=0,enabled=0,windowed=1,programs=2,lookups=0,writable_images=0
+memory,windowed_and_disable,working_set_mib=117.254,private_commit_mib=430.578
+memory,after_destroy,working_set_mib=98.293,private_commit_mib=340.414
+PASS scale residency: disabled startup, enable/release/re-enable, combined mode transactions

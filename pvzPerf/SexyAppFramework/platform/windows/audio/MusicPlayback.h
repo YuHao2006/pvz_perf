@@ -21,9 +21,7 @@ public:
     inline void Pause() { gBass->BASS_ChannelPause(mHandle); }
     inline void Resume() { gBass->BASS_ChannelResume(mHandle); }
     inline unsigned int State() const { return gBass->BASS_ChannelIsActive(mHandle); }
-    inline void SetGain(double value) {
-        gBass->BASS_ChannelSetAttribute(mHandle, BASS_ATTRIB_VOL, static_cast<float>(value));
-    }
+    void SetGain(float value);
     inline bool Seek(unsigned long long position, unsigned int mode) {
         return gBass->BASS_ChannelSetPosition(mHandle, position, mode) != FALSE;
     }
@@ -31,9 +29,6 @@ public:
         return gBass->BASS_ChannelGetPosition(mHandle, mode);
     }
     inline void Check() const {}
-    static inline void SetMasterGain(double value) {
-        gBass->BASS_SetConfig(BASS_CONFIG_GVOL_MUSIC, static_cast<unsigned int>(value * 10000));
-        gBass->BASS_SetConfig(BASS_CONFIG_GVOL_STREAM, static_cast<unsigned int>(value * 10000));
-    }
+    static void SetMasterGain(float value);
 };
 }

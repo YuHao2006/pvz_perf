@@ -28,6 +28,7 @@
 #include "misc/SexyMatrix.h"
 #include "graphics/DDInterface.h"
 #include "graphics/RenderInterface.h"
+#include "imagelib/ImageLib.h"
 
 //0x510BC0
 void Tod_SWTri_AddAllDrawTriFuncs()
@@ -106,18 +107,18 @@ void Tod_SWTri_AddAllDrawTriFuncs()
 }
 
 //0x5114E0
-static SexyString TodGetCurrentLevelName()
+[[maybe_unused]] static SexyString TodGetCurrentLevelName()
 {
 	return ("Unknown level");
 }
 
 //0x511510
-static bool TodHasUsedCheatKeys()
+[[maybe_unused]] static bool TodHasUsedCheatKeys()
 {
 	return false;
 }
 
-static bool TodAppCloseRequest()
+[[maybe_unused]] static bool TodAppCloseRequest()
 {
 	return false;
 }
@@ -538,7 +539,7 @@ void TodDrawStringMatrix(Graphics* g, const _Font* theFont, const SexyMatrix3& t
 			aRenderCommand->mDest[1] = anImageY;
 			// 1073 0051DC50 caches an empty region for a missing glyph,
 			// without skipping its metrics/spacing.
-			aRenderCommand->mSourceRegion = aKernItr->mScaledCharImageRects[aChar];
+			aRenderCommand->mSourceRegion = aKernItr->mScaledCharImageRects[static_cast<std::size_t>(static_cast<unsigned char>(aChar))];
 			aRenderCommand->mMode = aLayer->mDrawMode;
 			aRenderCommand->mUseAlphaCorrection = aLayer->mUseAlphaCorrection;
 			aRenderCommand->mNext = nullptr;
@@ -643,7 +644,7 @@ void TodScaleRotateTransformMatrix(SexyMatrix3& m, float x, float y, float rad, 
 	m.m22 = 1.0f;
 }
 
-static void SexyMatrix3ExtractScale(const SexyMatrix3& m, float& theScaleX, float& theScaleY)
+[[maybe_unused]] static void SexyMatrix3ExtractScale(const SexyMatrix3& m, float& theScaleX, float& theScaleY)
 {
 	float kx = atan2(m.m00, m.m10);
 	if (abs(kx) < PI / 4 || abs(kx) > 4 * PI / 3)
@@ -674,10 +675,12 @@ void TodMarkImageForSanding(Image* theImage)
 //0x512650
 void TodBltMatrix(Graphics* g, Image* theImage, const SexyMatrix3& theTransform, const Rect& theClipRect, const Color& theColor, int theDrawMode, const Rect& theSrcRect)
 {
+	if (theClipRect.mWidth <= 0 || theClipRect.mHeight <= 0) return;
 	if (!g->mDestImage || !g->mDestImage->IsGpuDrawTarget())
 		throw NonScreenDrawError(DrawOperation::BltMatrix);
 	auto& render=*g->mDestImage->mRenderOwner;
 	render.SelectDrawSurface(g->mDestImage);
+	// Preserve the historical triangle diagonal; local bounds use GPU scissor.
 	const Rect* effectiveClip=(theClipRect.mX == 0 && theClipRect.mY == 0 &&
 		theClipRect.mWidth == BOARD_WIDTH && theClipRect.mHeight == BOARD_HEIGHT) ? nullptr : &theClipRect;
 	// Native GPU coordinates use pixel corners, with no DX7 half-pixel offset.
@@ -695,10 +698,12 @@ void TodBltMatrix(Graphics* g, Image* theImage, const SexyMatrix3& theTransform,
 void TodBltMatrix(Graphics* g, const TextureSource& texture, const SexyMatrix3& transform,
 	const Rect& clip, const Color& color, int drawMode, const TextureRegion& source)
 {
+	if (clip.mWidth <= 0 || clip.mHeight <= 0) return;
 	if (!g->mDestImage || !g->mDestImage->IsGpuDrawTarget())
 		throw NonScreenDrawError(DrawOperation::BltMatrix);
 	auto& render=*g->mDestImage->mRenderOwner;
 	render.SelectDrawSurface(g->mDestImage);
+	// Keep the historical fan/strip choice, without geometric clipping or scissor.
 	const Rect* effectiveClip=(clip.mX == 0 && clip.mY == 0 &&
 		clip.mWidth == BOARD_WIDTH && clip.mHeight == BOARD_HEIGHT) ? nullptr : &clip;
 	gTodTriangleDrawAdditive = drawMode == Graphics::DRAWMODE_ADDITIVE;
@@ -826,10 +831,20 @@ void TodDrawImageCenterScaledF(Graphics* g, Image* theImage, float thePosX, floa
 //0x512C60
 void FixPixelsOnAlphaEdgeForBlending(Image* theImage)
 {
-	static_cast<Image*>(theImage)->mGpuSamplingFlags |= GpuVertex::kAlphaEdgeFilter;
+	// Plain decoded resources can be repaired once while their loading pixels
+	// exist. Upload still discards those pixels; subsequent draws need one sample.
+	// Deferred alpha compositions have not produced their final pixels yet and
+	// retain their existing sampling semantics.
+	if (theImage->mPendingDecoded && !theImage->mPendingDecoded->HasComposition())
+	{
+		ImageLib::FixTransparentEdges(*theImage->mPendingDecoded);
+		theImage->mGpuSamplingFlags &= ~GpuVertex::kAlphaEdgeFilter;
+	}
+	else
+		theImage->mGpuSamplingFlags |= GpuVertex::kAlphaEdgeFilter;
 }
 
-static void SexyMatrix3Transpose(const SexyMatrix3& m, SexyMatrix3 &r)
+[[maybe_unused]] static void SexyMatrix3Transpose(const SexyMatrix3& m, SexyMatrix3 &r)
 {
 	SexyMatrix3 temp;
 	temp.m00 = m.m00;

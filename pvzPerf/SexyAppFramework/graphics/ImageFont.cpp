@@ -1865,7 +1865,7 @@ void ImageFont::DrawStringEx(Graphics* g, int theX, int theY, const SexyString& 
 			aRenderCommand->mColor = aColor;
 			aRenderCommand->mDest[0] = anImageX;
 			aRenderCommand->mDest[1] = anImageY;
-			aRenderCommand->mSourceRegion = anActiveFontLayer->mScaledCharImageRects[aChar];
+			aRenderCommand->mSourceRegion = anActiveFontLayer->mScaledCharImageRects[static_cast<std::size_t>(static_cast<unsigned char>(aChar))];
 			aRenderCommand->mMode = anActiveFontLayer->mBaseFontLayer->mDrawMode;
 			aRenderCommand->mNext = NULL;
 
@@ -1890,14 +1890,14 @@ void ImageFont::DrawStringEx(Graphics* g, int theX, int theY, const SexyString& 
 			Color anOrigColor = g->mColor;
 			g->mColor = aColor;
 			if (anActiveFontLayer->mScaledImage != NULL)
-				g->DrawImage(anActiveFontLayer->mScaledImage, anImageX, anImageY, anActiveFontLayer->mScaledCharImageRects[aChar]);
+				g->DrawImage(anActiveFontLayer->mScaledImage, anImageX, anImageY, anActiveFontLayer->mScaledCharImageRects[static_cast<std::size_t>(static_cast<unsigned char>(aChar))]);
 			g->mColor = anOrigColor;
 			g->mDrawMode = anOldDrawMode;*/
 
 			if (theDrawnAreas != NULL)
 			{
 				//Rect aDestRect = Rect(anImageX, anImageY, anActiveFontLayer->mScaledCharImageRects[(uchar) aChar].mWidth, anActiveFontLayer->mScaledCharImageRects[(uchar) aChar].mHeight);
-				Rect aDestRect(anImageX, anImageY, anActiveFontLayer->mScaledCharImageRects[aChar].mWidth, anActiveFontLayer->mScaledCharImageRects[aChar].mHeight);
+				Rect aDestRect(anImageX, anImageY, anActiveFontLayer->mScaledCharImageRects[static_cast<std::size_t>(static_cast<unsigned char>(aChar))].mWidth, anActiveFontLayer->mScaledCharImageRects[static_cast<std::size_t>(static_cast<unsigned char>(aChar))].mHeight);
 
 				theDrawnAreas->push_back(aDestRect);
 

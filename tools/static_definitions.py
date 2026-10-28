@@ -13,8 +13,6 @@ def generate(config, records: dict[str, bytes], reports: dict, *,
     import static_reanim_codegen
     import static_particle_codegen
     reanim = static_reanim_codegen.generate(config, records)
-    if runtime_records is not None:
-        runtime_records.update(reanim["gpu_records"])
     particle = static_particle_codegen.generate(config, records, reports)
     if runtime_records is not None:
         runtime_records.update(particle["runtime_records"])
@@ -30,10 +28,8 @@ def generate(config, records: dict[str, bytes], reports: dict, *,
         "namespace GeneratedDefinitions {\n"
         f"inline constexpr int ReanimationCount={rc}, ParticleCount={pc};\n"
         "extern ReanimatorDefinition Reanimations[ReanimationCount];\n"
-        "extern const char* const ReanimationGpuPaths[ReanimationCount];\n"
         "extern TodParticleDefinition Particles[ParticleCount];\n"
         "extern const char* const ParticlePaths[ParticleCount];\n"
-        "extern const char* const ParticleGpuPaths[ParticleCount];\n"
         "extern ProjectileAtlasDefinition Projectiles;\n"
         "extern std::span<AttacherSegmentRT> AttacherSegments[ReanimationCount];\n"
         "void LoadReanimationImages(int type);\n"
@@ -56,18 +52,11 @@ def generate(config, records: dict[str, bytes], reports: dict, *,
     objects = [
         "// Generated complete static definitions.",
         '#include "GeneratedDefinitionStorage.h"', "namespace GeneratedDefinitions {",
-        "constinit const char* const ReanimationGpuPaths[ReanimationCount] = {",
-        *("    " + cpp_string(f"compiled/gpu-reanim/{name.casefold()}.compiled") + ","
-          for _, name in config.definition_orders["reanim"]),
-        "};",
         "constinit ReanimatorDefinition Reanimations[ReanimationCount] = {",
         *("    " + row + "," for row in reanim["initializers"]), "};",
         "TodParticleDefinition Particles[ParticleCount]{};",
         "constinit const char* const ParticlePaths[ParticleCount] = {",
         *("    " + cpp_string(f"compiled/particle-runtime/{name.casefold()}.compiled") + ","
-          for _, name in config.definition_orders["particle"]), "};",
-        "constinit const char* const ParticleGpuPaths[ParticleCount] = {",
-        *("    " + cpp_string(f"compiled/gpu-particle/{name.casefold()}.compiled") + ","
           for _, name in config.definition_orders["particle"]), "};",
         "constinit std::span<AttacherSegmentRT> AttacherSegments[ReanimationCount] = {",
         *("    " + row + "," for row in reanim["attacher_initializers"]), "};",
@@ -151,7 +140,6 @@ def generate(config, records: dict[str, bytes], reports: dict, *,
         "    for(int i=0;i<ReanimationCount;++i) LoadReanimationImages(i);",
         "    LoadParticleImages();", "    LoadProjectileImages();", "}",
         "void ReleaseReanimationImages() {",
-        "    ReanimatorFreeGpuDefinitionData();",
         "    for(auto& definition:Reanimations)",
         "        for(unsigned v=0;v<definition.mVariantCount;++v) DefinitionUnbindAtlas(definition.mTextures[v]);",
         *("    " + line for line in reanim["font_resets"]),

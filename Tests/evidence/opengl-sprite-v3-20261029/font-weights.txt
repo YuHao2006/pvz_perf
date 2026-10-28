@@ -1,0 +1,1 @@
+OpenGLFontWeightsTests passed (double reference, endpoints, tap order, signed indices)

@@ -4,7 +4,6 @@
 #include "ZombieFlags.h"
 #include "Cutscene.h"
 #include "Projectile.h"
-#include "ProjectileMotion.h"
 #include "PlantFlags.h"
 #include "LawnApp.h"
 #include "Resources.h"
@@ -34,20 +33,8 @@ std::int64_t ProjectileNow(const Projectile& projectile)
 }
 double ProjectileAge(const Projectile& projectile)
 {
-	return ProjectileMotionMath::Ticks(ProjectileNow(projectile), projectile.mCreationTimeNs);
-}
-double MotionTime(const Projectile& projectile)
-{
-	return ProjectileMotionMath::Ticks(ProjectileNow(projectile), projectile.mMotionOriginTimeNs);
-}
-double LobAcceleration(const Projectile& projectile)
-{
-	return projectile.mAccZ * (projectile.mApp->mGameMode == GameMode::GAMEMODE_LIMBO_HIGH_GRAVITY ? 2.0 : 1.0);
-}
-double RoofOffset(const Projectile& projectile)
-{
-	return projectile.mBoard->GetPosYBasedOnRow(projectile.mPosX, projectile.mRow) -
-		projectile.mBoard->GetPosYBasedOnRow(projectile.mOriginX, projectile.mRow);
+	return static_cast<double>(ReanimClock::Subtract(ProjectileNow(projectile), projectile.mCreationTimeNs)) /
+		10'000'000.0;
 }
 }
 
@@ -185,12 +172,7 @@ void Projectile::ProjectileInitialize(int theX, int theY, int theRenderOrder, in
 		TOD_ASSERT(false);
 	}
 
-	mCreationTimeNs = mMotionOriginTimeNs = ProjectileNow(*this);
-	mOriginX = mPosX;
-	mOriginY = mPosY;
-	mOriginZ = mPosZ;
-	mOriginRotation = mRotation;
-	mOriginShadowY = mShadowY;
+	mCreationTimeNs = ProjectileNow(*this);
 	mX = (int)mPosX;
 	mY = (int)mPosY;
 }
@@ -369,7 +351,7 @@ void Projectile::CheckForCollision()
 		{
 			const ProjectileDefinition& aProjectileDef = GetProjectileDef();
 			aPlant->mPlantHealth -= aProjectileDef.mDamage;
-			aPlant->mEatenFlashCountdown = std::max<Sexy::TimeCounter>(aPlant->mEatenFlashCountdown, 25);
+			aPlant->mEatenFlashEndTimeNs = std::max(aPlant->mEatenFlashEndTimeNs, static_cast<std::int64_t>(aPlant->mBoard->mLevelTimeNs) + 250'000'000);
 
 			mApp->PlayFoley(FoleyType::FOLEY_SPLAT);
 			mApp->AddTodParticle(mPosX - 3.0f, mPosY + 17.0f, mRenderOrder + 1, ParticleEffect::PARTICLE_PEA_SPLAT);
@@ -572,40 +554,25 @@ void Projectile::DoSplashDamage(Zombie* theZombie)
 // GOTY @Patoke: 0x471B41
 void Projectile::UpdateLobMotion()
 {
-	const auto now = ProjectileNow(*this);
-	auto ticks = MotionTime(*this);
-	if (mProjectileType == ProjectileType::PROJECTILE_COBBIG && mVelZ < 0.0f)
+	if (mProjectileType == ProjectileType::PROJECTILE_COBBIG && mVelZ < 0.0f && mPosZ < -700.0f)
 	{
-		// The old threshold is tested before movement. At birth z=0,vz=-8,
-		// step 88 ends at -704; step 89 teleports and ends at -696.
-		const auto ascentSteps = std::max(0.0, std::floor((mOriginZ + 700.0) / -mVelZ) + 1.0);
-		const auto transition = ascentSteps + 1.0;
-		if (ticks >= transition)
-		{
-			const auto eventNs = static_cast<std::int64_t>(transition * ProjectileMotionMath::TickNs);
-			mMotionOriginTimeNs = ReanimClock::Add(mMotionOriginTimeNs, eventNs);
-			mOriginX = mCobTargetX + mVelX;
-			mRow = mCobTargetRow;
-			const auto column = mBoard->PixelToGridXKeepOnBoard(mCobTargetX, 0);
-			mOriginY = static_cast<float>(mBoard->GridToPixelY(column, mRow));
-			mOriginZ += static_cast<float>(mVelZ * ascentSteps + 8.0);
-			mOriginShadowY = mOriginY + 67.0f;
-			mOriginRotation = -PI / 2;
-			mVelZ = 8.0f;
-			ticks = ProjectileMotionMath::Ticks(now, mMotionOriginTimeNs);
-		}
+		mVelZ = 8.0f;
+		mRow = mCobTargetRow;
+		mPosX = mCobTargetX;
+		const int column = mBoard->PixelToGridXKeepOnBoard(mCobTargetX, 0);
+		mPosY = mBoard->GridToPixelY(column, mCobTargetRow);
+		mShadowY = mPosY + 67.0f;
+		mRotation = -PI / 2;
 	}
 
-	mPosX = static_cast<float>(mOriginX + mVelX * ticks);
-	mPosY = static_cast<float>(mOriginY + mVelY * ticks);
-	mPosZ = static_cast<float>(mOriginZ + ProjectileMotionMath::LobOffset(mVelZ, LobAcceleration(*this), ticks));
-	const auto roof = mProjectileType == ProjectileType::PROJECTILE_COBBIG ? 0.0 : RoofOffset(*this);
-	mPosY += static_cast<float>(roof);
-	mPosZ -= static_cast<float>(roof);
-	mShadowY = static_cast<float>(mOriginShadowY + roof);
-	mRotation = static_cast<float>(mOriginRotation + mRotationSpeed * ticks);
+	mVelZ += Sexy::UpdateDelta(mAccZ);
+	if (mApp->mGameMode == GameMode::GAMEMODE_LIMBO_HIGH_GRAVITY)
+		mVelZ += Sexy::UpdateDelta(mAccZ);
+	mPosX += Sexy::UpdateDelta(mVelX);
+	mPosY += Sexy::UpdateDelta(mVelY);
+	mPosZ += Sexy::UpdateDelta(mVelZ);
 
-	bool isRising = ProjectileMotionMath::LobVelocity(mVelZ, LobAcceleration(*this), ticks) < 0.0;
+	const bool isRising = mVelZ < 0.0f;
 	if (isRising && (mProjectileType == ProjectileType::PROJECTILE_BASKETBALL || mProjectileType == ProjectileType::PROJECTILE_COBBIG))
 	{
 		return;
@@ -698,7 +665,7 @@ void Projectile::UpdateLobMotion()
 		else
 		{
 			aPlant->mPlantHealth -= GetProjectileDef().mDamage;
-			aPlant->mEatenFlashCountdown = std::max<Sexy::TimeCounter>(aPlant->mEatenFlashCountdown, 25);
+			aPlant->mEatenFlashEndTimeNs = std::max(aPlant->mEatenFlashEndTimeNs, static_cast<std::int64_t>(aPlant->mBoard->mLevelTimeNs) + 250'000'000);
 			mApp->PlayFoley(FoleyType::FOLEY_SPLAT);
 			Die();
 		}
@@ -730,7 +697,7 @@ using ProjMotionFn = void (*)(Projectile&);
 // 原 else（无 case 的 0/1/5 型与表外值共用）
 void ProjMotionDefault(Projectile& p)
 {
-	p.mPosX = static_cast<float>(p.mOriginX + p.mVelX * MotionTime(p));
+	p.mPosX += Sexy::UpdateDelta(p.mVelX);
 }
 
 // 匿名 lambda 函数指针表，行序 = ProjectileMotion 枚举值序（0..9）。
@@ -740,41 +707,37 @@ constexpr ProjMotionFn kProjMotionCases[(int)ProjectileMotion::MOTION_HOMING + 1
     // 原 case MOTION_THREEPEATER
     [](Projectile& p)
     {
-        const auto ticks = MotionTime(p);
-        p.mPosX = static_cast<float>(p.mOriginX + p.mVelX * ticks);
-        const auto drift = ProjectileMotionMath::DampedOffset(p.mVelY, 0.97f, ticks);
-        p.mPosY = static_cast<float>(p.mOriginY + drift);
-        p.mShadowY = static_cast<float>(p.mOriginShadowY + 0.97f * drift);
+        p.mPosX += Sexy::UpdateDelta(p.mVelX);
+        p.mPosY += Sexy::UpdateDelta(p.mVelY);
+        p.mVelY *= std::max(0.0f, 1.0f - Sexy::UpdateDelta(0.03f));
+        p.mShadowY += Sexy::UpdateDelta(p.mVelY);
     },  // 2 MOTION_THREEPEATER
     // 原 case MOTION_BEE
     [](Projectile& p)
     {
-        const auto ticks = MotionTime(p);
-        const auto ageAtOrigin = ProjectileMotionMath::Ticks(p.mMotionOriginTimeNs, p.mCreationTimeNs);
-        p.mPosY = static_cast<float>(p.mOriginY - 0.5 * std::min(ticks, std::max(0.0, 59.0 - ageAtOrigin)));
-        p.mPosX = static_cast<float>(p.mOriginX + p.mVelX * ticks);
+        if (ProjectileAge(p) < 60)
+            p.mPosY -= Sexy::UpdateDelta(0.5f);
+        p.mPosX += Sexy::UpdateDelta(p.mVelX);
     },  // 3 MOTION_BEE
     // 原 case MOTION_BEE_BACKWARDS
     [](Projectile& p)
     {
-        const auto ticks = MotionTime(p);
-        const auto ageAtOrigin = ProjectileMotionMath::Ticks(p.mMotionOriginTimeNs, p.mCreationTimeNs);
-        p.mPosY = static_cast<float>(p.mOriginY - 0.5 * std::min(ticks, std::max(0.0, 59.0 - ageAtOrigin)));
-        p.mPosX = static_cast<float>(p.mOriginX - std::fabs(p.mVelX) * ticks);
+        if (ProjectileAge(p) < 60)
+            p.mPosY -= Sexy::UpdateDelta(0.5f);
+        p.mPosX -= Sexy::UpdateDelta(std::fabs(p.mVelX));
     },  // 4 MOTION_BEE_BACKWARDS
     &ProjMotionDefault,  // 5 MOTION_PUFF（原 else）
     // 原 case MOTION_BACKWARDS
     [](Projectile& p)
     {
-        p.mPosX = static_cast<float>(p.mOriginX - std::fabs(p.mVelX) * MotionTime(p));
+        p.mPosX -= Sexy::UpdateDelta(std::fabs(p.mVelX));
     },  // 6 MOTION_BACKWARDS
     // 原 case MOTION_STAR
     [](Projectile& p)
     {
-        const auto ticks = MotionTime(p);
-        p.mPosY = static_cast<float>(p.mOriginY + p.mVelY * ticks);
-        p.mPosX = static_cast<float>(p.mOriginX + p.mVelX * ticks);
-        p.mShadowY = static_cast<float>(p.mOriginShadowY + p.mVelY * ticks);
+        p.mPosY += Sexy::UpdateDelta(p.mVelY);
+        p.mPosX += Sexy::UpdateDelta(p.mVelX);
+        p.mShadowY += Sexy::UpdateDelta(p.mVelY);
 
         if (p.mVelY != 0.0f)
         {
@@ -784,15 +747,14 @@ constexpr ProjMotionFn kProjMotionCases[(int)ProjectileMotion::MOTION_HOMING + 1
     // 原 case MOTION_FLOAT_OVER
     [](Projectile& p)
     {
-        const auto ticks = MotionTime(p);
-        const auto sample = ProjectileMotionMath::FloatSample(p.mVelZ, ticks,
-            p.mApp->mGameMode == GameMode::GAMEMODE_LIMBO_HIGH_GRAVITY);
-        p.mPosY = static_cast<float>(p.mOriginY + sample.offset);
-        if (p.mVelZ < 0.0f && ticks > 0)
+        if (p.mVelZ < 0.0f)
         {
-            p.mRotation = static_cast<float>(0.3f - 0.7f * sample.rotationVelocity * PI * 0.25f);
+            p.mVelZ += Sexy::UpdateDelta(0.002f);
+            p.mVelZ = std::min(p.mVelZ, 0.0f);
+            p.mPosY += Sexy::UpdateDelta(p.mVelZ);
+            p.mRotation = 0.3f - 0.7f * p.mVelZ * PI * 0.25f;
         }
-        p.mPosX = static_cast<float>(p.mOriginX + 0.4f * ticks);
+        p.mPosX += Sexy::UpdateDelta(0.4f);
     },  // 8 MOTION_FLOAT_OVER
     // 原 case MOTION_HOMING
     [](Projectile& p)
@@ -803,9 +765,10 @@ constexpr ProjMotionFn kProjMotionCases[(int)ProjectileMotion::MOTION_HOMING + 1
             Rect aZombieRect = aZombie->GetZombieRect();
             SexyVector2 aTargetCenter(aZombie->ZombieTargetLeadX(0.0f), aZombieRect.mY + aZombieRect.mHeight / 2);
             SexyVector2 aProjectileCenter(p.mPosX + p.mWidth / 2, p.mPosY + p.mHeight / 2);
-            const auto motion = ProjectileMotionMath::HomingVelocity(p.mVelX, p.mVelY,
-                aTargetCenter.x - aProjectileCenter.x, aTargetCenter.y - aProjectileCenter.y,
-                ProjectileAge(p), Sexy::gUpdateTicks);
+            const SexyVector2 toTarget = (aTargetCenter - aProjectileCenter).Normalize();
+            SexyVector2 motion(p.mVelX, p.mVelY);
+            motion += toTarget * Sexy::UpdateDelta(0.001f * static_cast<float>(ProjectileAge(p)));
+            motion = motion.Normalize() * 2.0f;
             p.mVelX = motion.x;
             p.mVelY = motion.y;
             p.mRotation = -atan2(p.mVelY, p.mVelX);
@@ -824,16 +787,6 @@ static_assert(sizeof(kProjMotionCases) / sizeof(kProjMotionCases[0]) ==
 //0x46D890
 void Projectile::UpdateNormalMotion()
 {
-	const bool homing = mMotionType == ProjectileMotion::MOTION_HOMING;
-	const auto oldX = mPosX;
-	const auto oldRow = mRow;
-	if (!homing)
-	{
-		mPosY = mOriginY;
-		mPosZ = mOriginZ;
-		mShadowY = mOriginShadowY;
-		mRotation = static_cast<float>(mOriginRotation + mRotationSpeed * MotionTime(*this));
-	}
     // C 形态 -> 匿名 lambda 表（上方 kProjMotionCases）：行序 = ProjectileMotion
     // 枚举序（0..9，无 NUM 哨兵=末值 MOTION_HOMING 锚定）；default 具名并被
     // 缺槽/越界复用。
@@ -849,21 +802,9 @@ void Projectile::UpdateNormalMotion()
 
 	if (mApp->mGameMode == GameMode::GAMEMODE_LIMBO_HIGH_GRAVITY)
 	{
-		if (homing)
-		{
-			mVelZ += Sexy::UpdateDelta(0.2f);
-			mPosY += Sexy::UpdateDelta(mVelZ);
-		}
-		else if (mMotionType != ProjectileMotion::MOTION_FLOAT_OVER)
-		{
-			mPosY += static_cast<float>(ProjectileMotionMath::LobOffset(mVelZ, 0.2f, MotionTime(*this)));
-		}
+		mVelZ += Sexy::UpdateDelta(mMotionType == ProjectileMotion::MOTION_FLOAT_OVER ? 0.004f : 0.2f);
+		mPosY += Sexy::UpdateDelta(mVelZ);
 	}
-	const auto roof = homing ? mBoard->GetPosYBasedOnRow(mPosX, oldRow) -
-		mBoard->GetPosYBasedOnRow(oldX, oldRow) : RoofOffset(*this);
-	if (mMotionType == ProjectileMotion::MOTION_FLOAT_OVER)
-		mPosY += static_cast<float>(roof);
-	mShadowY += static_cast<float>(roof);
 
 	CheckForCollision();
 	CheckForHighGround();
@@ -872,6 +813,8 @@ void Projectile::UpdateNormalMotion()
 //0x46DC70
 void Projectile::UpdateMotion()
 {
+	const int oldRow = mRow;
+	const float oldRoofY = mBoard->GetPosYBasedOnRow(mPosX, oldRow);
 	if (mMotionType == ProjectileMotion::MOTION_LOBBED)
 	{
 		UpdateLobMotion();
@@ -880,6 +823,17 @@ void Projectile::UpdateMotion()
 	{
 		UpdateNormalMotion();
 	}
+
+	const float roofDelta = mProjectileType == ProjectileType::PROJECTILE_COBBIG ? 0.0f :
+		mBoard->GetPosYBasedOnRow(mPosX, oldRow) - oldRoofY;
+	if (mMotionType == ProjectileMotion::MOTION_FLOAT_OVER)
+		mPosY += roofDelta;
+	if (mMotionType == ProjectileMotion::MOTION_LOBBED)
+	{
+		mPosY += roofDelta;
+		mPosZ -= roofDelta;
+	}
+	mShadowY += roofDelta;
 
 	mX = (int)mPosX;
 	mY = (int)(mPosY + mPosZ);
@@ -952,11 +906,10 @@ void Projectile::DoImpact(Zombie* theZombie)
 		theZombie->TakeDamage(GetProjectileDef().mDamage, aDamageFlags);
 	}
 
-	float aLastPosX = mPosX - mVelX;
-	const auto verticalVelocity = mMotionType == ProjectileMotion::MOTION_LOBBED ?
-		ProjectileMotionMath::LobVelocity(mVelZ, LobAcceleration(*this), MotionTime(*this)) : mVelZ;
-	float aLastPosY = static_cast<float>(mPosY + mPosZ - mVelY - verticalVelocity);
+	float aLastPosX = mPosX - Sexy::UpdateDelta(mVelX);
+	float aLastPosY = mPosY + mPosZ - Sexy::UpdateDelta(mVelY + mVelZ);
 	ParticleEffect aEffect = ParticleEffect::PARTICLE_NONE;
+
 	float aSplatPosX = mPosX + 12.0f;
 	float aSplatPosY = mPosY + 12.0f;
 
@@ -1102,8 +1055,7 @@ void Projectile::Update()
 		mRenderOrder = Board::MakeRenderOrder(RenderLayer::RENDER_LAYER_PROJECTILE, mRow, 0);
 	}
 
-	if (mMotionType == ProjectileMotion::MOTION_HOMING)
-		mRotation += Sexy::UpdateDelta(mRotationSpeed);
+	mRotation += Sexy::UpdateDelta(mRotationSpeed);
 
 	UpdateMotion();
 	const auto domain = mBoard ? mBoard->AnimationTimeDomain() : ReanimTimeDomain::Visual;

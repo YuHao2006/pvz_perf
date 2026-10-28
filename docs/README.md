@@ -1,33 +1,31 @@
 # 文档索引
 
-维护当前机制、使用边界与最终验证。原版证据和已发布版本独立保存；
-本地进行中的存档改造不等于已发布。开发中的最终协议以实现完成后的版本说明为准，
-不从旧发布包或历史协议页推断当前可执行文件支持范围。
+顶层维护当前接口、机制、构建使用与最终验证。原版行为、源素材和旧协议的调查证据集中在[research](research/README.md)；已发布版本说明放在releases。本地开发格式不等于已经发布，当前支持范围以存档协议和实现为准。
+
+## 当前机制与使用
 
 | 文档 | 内容 |
 | --- | --- |
-| [v2.0 发布说明](releases/v2.0.md) | 存档/PAK64 不兼容升级、离线图集和发行使用方法 |
-| [运行时](runtime.md) | 共享时钟、根运动、发射、弹道、曲线、粒子及静态定义 |
-| [验证说明](validation.md) | 实际验收覆盖、复现入口与平台限制 |
-| [性能总账](perf-fix-ledger.md) | 受控测量的最终结果、落地机制及证据边界 |
-| [修复总账](fix-ledger.md) | bug 的触发条件、根因、修复与验证数据 |
-| [存档转换](DAT-DAT64-CONVERSION.md) | DAT/DAT64 协议、模式和图像编号、转换器行为 |
-| [资产边界](ASSETS.md) | 编译输入、发行资源、外部效果和 shader 对应关系 |
-| [资源格式](RESOURCE-V5-FORMAT.md) | 静态定义、NRSC4、图集生成与纹理所有权 |
-| [场景 DSL](scene-atlas-dsl.md) | 完整源 sheet、局部 view、作者语法和生成接口 |
-| [GPU 泳池](gpu-pool-production.md) | 静态网格、专用顶点路径、五后端契约及绘制回归 |
-| [粒子轨道修复](particle-track-migration-regression.md) | 原版 wire 顺序、独立 decoder 与实际出生验证 |
-| [历史时间协议](DAT64-TIME-SCHEMA.md) | 原版时间字段及 DAT64 v2 映射，不是当前对象字段清单 |
-| [原有拼图调查](original-atlas-audit.md) | 原始 sheet 布局与完整保存边界 |
-| [1073 传送门](portal-relocation-1073.md) | 原版二进制地址、候选行规则与回归 |
-| [1073 首次教学](research/1073-first-tutorial.md) | 原版启动与持续规则、纳秒时钟适配 |
-| [1073 磁铁起点](research/1073-magnet-coordinates.md) | 原版轨道坐标、偏移证据及当前中心连续约定 |
-| [运动时间求值](research/coin-magnet-time-motion.md) | 钱币、阳光、磁铁、老虎机公式与验证 |
-| [v1.3 发布说明](releases/v1.3.md) | 该发布版本的使用、资源与验收边界 |
-| [空裁剪临时清单](empty-clip-notes.tmp.md) | 用户指定保留的测量用途、已删无效绘制及不可整树跳过的边界 |
+| [运行时](runtime.md) | 时钟域、根运动、发射、弹道、粒子与静态定义 |
+| [存档转换](DAT-DAT64-CONVERSION.md) | 当前支持格式、历史转换边界和转换器行为 |
+| [资源格式](RESOURCE-V5-FORMAT.md) | 静态定义、粒子记录、NRSC4、图集与纹理所有权 |
+| [场景DSL](scene-atlas-dsl.md) | 完整sheet、局部view、作者语法和生成接口 |
+| [资产与发行边界](ASSETS.md) | 编译输入、发行资源、素材来源和shader对应关系 |
+| [Android适配](android-port.md) | 开发环境、构建打包、窗口和设备存储 |
+| [GPU泳池](gpu-pool-production.md) | 静态网格、专用顶点路径和后端契约 |
+| [GPU提交专项](android-gpu-submission.md) | 混合合批、边缘处理、索引与设备测量边界 |
+| [裁剪与文字布局](clipping-and-text-layout.md) | 必要业务裁剪、纯文字测量和Widget遍历职责 |
 
-构建、运行、缩放配置、Linux 打包和采样入口见[项目说明](../README.md)。
-性能以同场景、同核、明确频率条件和被测构建哈希登记；未锁 CPU/GPU
-的临时耗时与倍率不写入文档。历史条件不同的数据不能混成当前提速。
-总账实际引用的精选原始记录保存在 `Tests/evidence/`；
-历史对照夹具位于 `Tests/reference/`。根目录 `log/` 只用于可清理的临时输出。
+## 修复、性能与验证
+
+| 文档 | 内容 |
+| --- | --- |
+| [性能优化原理与基准](perf-fix-ledger.md) | 按原理聚类列出相关基准、精度成本和整局结果 |
+| [修复总账](fix-ledger.md) | 本项目缺陷的根因、修复与证据；包括只读表存储期问题 |
+| [验证说明](validation.md) | 当前检查覆盖、复现入口和平台限制 |
+| [调查索引](research/README.md) | 值得保留的原版、源素材和冻结协议证据 |
+| [v3.0发布说明](releases/v3.0.md) | 当前破坏性更新、v4存档和整包使用方法 |
+| [v2.0发布说明](releases/v2.0.md) | 该发行的存档／PAK不兼容边界和使用方法 |
+| [v1.3发布说明](releases/v1.3.md) | 该发行的资源、使用和验收边界 |
+
+构建、运行、配置与打包入口见[项目说明](../README.md)。性能原始证据放在Tests/evidence，历史夹具放在Tests/reference；系统Temp中的诊断日志不作为长期文档依赖。不同后端、频率与测量范围不能混算收益。已撤销的实施方案不保留为当前指南。

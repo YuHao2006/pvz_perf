@@ -60,6 +60,74 @@ class MusicBurstTests(unittest.TestCase):
         finally:
             bass.BASS_Free()
 
+    def test_production_gain_fade(self):
+        production = (ROOT / "pvzPerf/SexyAppFramework/sound/BassMusicInterface.cpp").read_text(encoding="utf-8")
+        start = production.index("void ApplyVolumeFade(")
+        opening = production.index("{", start)
+        depth, end = 1, opening + 1
+        while depth:
+            depth += (production[end] == "{") - (production[end] == "}")
+            end += 1
+        source = r'''
+#include <algorithm>
+#include <cstdint>
+#include <stdexcept>
+struct Playback {
+    float gain = -1;
+    int stops = 0;
+    void SetGain(float value) { gain = value; }
+    void Stop() { ++stops; }
+};
+struct BassMusicInfo {
+    float mVolume = 0, mVolumeCap = 1, mFadeOrigin = 0, mFadeTarget = 1;
+    std::int64_t mFadeStartTimeNs = 0;
+    std::uint64_t mFadeDurationNs = 1'000'000'000;
+    bool mStopOnFade = false;
+    Playback mPlayback;
+};
+'''
+        source += production[start:end]
+        source += r'''
+int main() {
+    BassMusicInfo first, second;
+    first.mFadeStartTimeNs = second.mFadeStartTimeNs = 9'000'000'000;
+    ApplyVolumeFade(&first, 9'250'000'000);
+    for (auto now : {9'000'000'001LL, 9'100'000'000LL, 9'250'000'000LL})
+        ApplyVolumeFade(&second, now);
+    if (first.mVolume != .25f || first.mVolume != second.mVolume)
+        throw std::runtime_error("gain depends on number of updates");
+    first.mFadeOrigin = first.mVolume;
+    first.mFadeTarget = 0;
+    first.mStopOnFade = true;
+    first.mFadeStartTimeNs = 9'250'000'000;
+    ApplyVolumeFade(&first, 9'750'000'000);
+    if (first.mVolume != .125f || first.mPlayback.stops)
+        throw std::runtime_error("interrupted float fade lost its origin");
+    ApplyVolumeFade(&first, 11'000'000'000);
+    ApplyVolumeFade(&first, 12'000'000'000);
+    if (first.mVolume != 0 || first.mPlayback.stops != 1 || first.mFadeDurationNs != 0)
+        throw std::runtime_error("fade completion did not clamp/stop once");
+}
+'''
+        compiler = shutil.which("c++") or shutil.which("g++") or shutil.which("clang++")
+        vcvars = Path("C:/UserProgram/Visual Studuio/2026/Community/VC/Auxiliary/Build/vcvars64.bat")
+        with tempfile.TemporaryDirectory(prefix="pvz-music-gain-") as temp:
+            source_path = Path(temp) / "music_gain.cpp"
+            executable = Path(temp) / ("music_gain.exe" if os.name == "nt" else "music_gain")
+            source_path.write_text(source, encoding="utf-8")
+            if compiler:
+                command = [compiler, "-std=c++20", str(source_path), "-o", str(executable)]
+            elif vcvars.exists():
+                toolset = Path('C:/UserProgram/Visual Studuio/2026/Community/VC/Tools/MSVC/14.51.36231')
+                build = (f'call "{vcvars}" >nul && set "INCLUDE={toolset}/include;!INCLUDE!" && '
+                         f'set "LIB={toolset}/lib/x64;!LIB!" && "{toolset}/bin/Hostx64/x64/cl.exe" '
+                         f'/nologo /EHsc /std:c++20 "{source_path}" /Fo"{temp}/music_gain.obj" /Fe"{executable}"')
+                command = f'"{os.environ.get("COMSPEC", "cmd.exe")}" /d /v:on /s /c "{build}"'
+            else:
+                self.skipTest("A C++20 compiler is required")
+            subprocess.run(command, cwd=temp, check=True)
+            subprocess.run([str(executable)], cwd=temp, check=True)
+
     def test_production_controller(self):
         compiler = shutil.which("c++") or shutil.which("g++") or shutil.which("clang++")
         vcvars = Path("C:/UserProgram/Visual Studuio/2026/Community/VC/Auxiliary/Build/vcvars64.bat")
@@ -79,7 +147,7 @@ class MusicBurstTests(unittest.TestCase):
 
         source = (ROOT / "Tests/native/MusicBurstTests.cpp").read_text(encoding="utf-8")
         source += "\nusing namespace Sexy;\n"
-        source += definition("StartBurst") + "\n" + definition("UpdateMusicBurst") + "\n"
+        source += definition("StartBurst") + "\n" + definition("UpdateMusicBurst") + "\n" + definition("MusicUpdate") + "\n"
         source += r'''
 void Require(bool value, const char* message)
 {
@@ -97,36 +165,69 @@ int main()
         Music music;
         music.mApp = &app;
         music.mMusicInterface = &playback;
+        const auto step = [&] {
+            app.mApplicationTimeNs += static_cast<std::int64_t>(Sexy::gUpdateIntervalNs);
+            music.UpdateMusicBurst(app.mApplicationTimeNs);
+        };
         currentOrder = MAKELONG(48, 80);
-        music.UpdateMusicBurst();
+        step();
         Require(music.mMusicBurstState == MUSIC_BURST_STARTING, "Crowd did not trigger night burst");
-        music.UpdateMusicBurst();
+        step();
         Require(music.mMusicDrumsState == MUSIC_DRUMS_ON_QUEUED, "Night layer was not queued");
-        for (unsigned i = 0; i < fps * 2; ++i) music.UpdateMusicBurst();
-        Require(music.mBurstStateCounter == 400, "Queue wait consumed night crossfade");
+        for (unsigned i = 0; i < fps * 2; ++i) step();
+        Require(music.mBurstEndTimeNs - app.mApplicationTimeNs == 4'000'000'000LL, "Queue wait consumed night crossfade");
         Require(playback.mMusicSlots[2]->mPlayback.seeks == 0, "Night layer jumped before bar boundary");
         currentOrder = MAKELONG(49, 0);
-        music.UpdateMusicBurst();
+        step();
         Require(music.mMusicDrumsState == MUSIC_DRUMS_ON, "Night layer did not start at boundary");
         Require(playback.mMusicSlots[2]->mPlayback.order == 77, "Odd night bar selected wrong climax");
         Require(playback.volume[2] == 1.0, "Night climax remained muted");
-        for (unsigned i = 0; i < fps * 5; ++i) music.UpdateMusicBurst();
+        for (unsigned i = 0; i < fps * 5; ++i) step();
         Require(music.mMusicBurstState == MUSIC_BURST_ON, "Night crossfade never finished");
         Require(playback.volume[1] == 0.0 && playback.volume[2] == 1.0,
             "Night climax gains are incorrect");
         board.zombies = 0;
-        for (unsigned i = 0; i < fps * 22; ++i) music.UpdateMusicBurst();
+        for (unsigned i = 0; i < fps * 22; ++i) step();
         Require(music.mMusicBurstState == MUSIC_BURST_OFF &&
             music.mMusicDrumsState == MUSIC_DRUMS_OFF, "Night climax never returned to calm");
         Require(playback.volume[1] == 1.0 && playback.volume[2] == 0.0,
             "Night calm gains are incorrect");
         music.StartBurst();
-        music.UpdateMusicBurst();
+        step();
         currentOrder = MAKELONG(50, 0);
-        music.UpdateMusicBurst();
+        step();
         Require(playback.mMusicSlots[2]->mPlayback.order == 76, "Even night bar selected wrong climax");
         Require(playback.mMusicSlots[2]->mPlayback.seeks == 2, "Climax did not retrigger exactly once");
         std::cout << "PASS night music burst/crossfade/release/retrigger at " << fps << " FPS\n";
+        // Advance the application clock through a board pause. Generic fade
+        // completes; controller deadlines retain their remaining durations.
+        music.mMusicBurstState = MUSIC_BURST_OFF;
+        music.StartBurst();
+        music.mLastUpdateTimeNs = app.mApplicationTimeNs;
+        music.mFadeOutDurationNs = 1'000'000'000;
+        music.mFadeOutEndTimeNs = app.mApplicationTimeNs + music.mFadeOutDurationNs;
+        const auto burstRemaining = music.mBurstEndTimeNs - app.mApplicationTimeNs;
+        board.mPaused = true;
+        app.mApplicationTimeNs += 2'000'000'000;
+        music.MusicUpdate(app.mApplicationTimeNs);
+        Require(music.mFadeOutEndTimeNs == 0, "Board pause stalled ordinary music fade");
+        Require(music.mBurstEndTimeNs - app.mApplicationTimeNs == burstRemaining,
+            "Board pause consumed burst controller time");
+        board.mPaused = false;
+        music.mMusicBurstState = MUSIC_BURST_OFF;
+        music.mMusicDrumsState = MUSIC_DRUMS_OFF;
+        music.mCurMusicTune = MUSIC_TUNE_DAY_GRASSWALK;
+        board.zombies = 10;
+        step();
+        // Skip directly over the one-second-remaining boundary. Queue once.
+        app.mApplicationTimeNs = music.mBurstEndTimeNs - 999'999'999;
+        music.UpdateMusicBurst(app.mApplicationTimeNs);
+        Require(music.mMusicDrumsState == MUSIC_DRUMS_ON_QUEUED,
+            "Day burst missed threshold under an uneven step");
+        const auto queuedOrder = music.mQueuedDrumTrackPackedOrder;
+        music.UpdateMusicBurst(app.mApplicationTimeNs);
+        Require(music.mQueuedDrumTrackPackedOrder == queuedOrder,
+            "Day burst repeatedly reset queued drum order");
     }
 }
 '''
@@ -139,10 +240,11 @@ int main()
                 command = [compiler, "-std=c++20", *[f"-I{path}" for path in includes],
                            str(source_path), "-o", str(executable)]
             else:
-                build = (f'call "{vcvars}" >nul && cl /nologo /EHsc /std:c++20 '
+                toolset = Path('C:/UserProgram/Visual Studuio/2026/Community/VC/Tools/MSVC/14.51.36231')
+                build = (f'call "{vcvars}" >nul && set "INCLUDE={toolset}/include;!INCLUDE!" && set "LIB={toolset}/lib/x64;!LIB!" && "{toolset}/bin/Hostx64/x64/cl.exe" /nologo /EHsc /std:c++20 '
                          + " ".join(f'/I"{path}"' for path in includes)
                          + f' "{source_path}" /Fo"{temp}/music_burst.obj" /Fe"{executable}"')
-                command = f'"{os.environ.get("COMSPEC", "cmd.exe")}" /d /s /c "{build}"'
+                command = f'"{os.environ.get("COMSPEC", "cmd.exe")}" /d /v:on /s /c "{build}"'
             subprocess.run(command, cwd=temp, check=True)
             subprocess.run([str(executable)], cwd=temp, check=True)
 

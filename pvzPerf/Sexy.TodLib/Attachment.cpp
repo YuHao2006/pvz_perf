@@ -38,7 +38,7 @@ void Attachment::UpdateAt(std::int64_t nowNs, ReanimTimeDomain domain)
 			TodParticleSystem* aParticleSystem = gEffectSystem->mParticleHolder->mParticleSystems.DataArrayTryToGet(aAttachEffect->mEffectID);
 			if (aParticleSystem && !aParticleSystem->mDead)
 			{
-				aParticleSystem->Update();
+				aParticleSystem->Update(Sexy::gUpdateIntervalNs, gEffectSystem->mReanimationHolder->mVisualTimeNs);
 				isEmpty = false;
 			}
 			break;
@@ -125,7 +125,10 @@ void Attachment::SetPosition(const SexyVector2& thePosition)
 
 		case EffectType::EFFECT_OTHER:
 			break;
-		}
+
+		default:
+			break;
+	}
 	}
 }
 
@@ -162,7 +165,10 @@ void Attachment::OverrideColor(const Color& theColor)
 		case EffectType::EFFECT_TRAIL:
 		case EffectType::EFFECT_OTHER:
 			break;
-		}
+
+		default:
+			break;
+	}
 	}
 }
 
@@ -210,7 +216,10 @@ void Attachment::PropogateColor(const Color& theColor, bool theEnableAdditiveCol
 		case EffectType::EFFECT_TRAIL:
 		case EffectType::EFFECT_OTHER:
 			break;
-		}
+
+		default:
+			break;
+	}
 	}
 }
 
@@ -248,7 +257,10 @@ void Attachment::OverrideScale(float theScale)
 		case EffectType::EFFECT_TRAIL:
 		case EffectType::EFFECT_OTHER:
 			break;
-		}
+
+		default:
+			break;
+	}
 	}
 }
 
@@ -329,7 +341,10 @@ void Attachment::SetMatrix(const SexyTransform2D& theMatrix)
 
 		case EffectType::EFFECT_OTHER:
 			break;
-		}
+
+		default:
+			break;
+	}
 	}
 }
 
@@ -379,7 +394,10 @@ void Attachment::Draw(Graphics* g, bool theParentHidden)
 
 		case EffectType::EFFECT_OTHER:
 			break;
-		}
+
+		default:
+			break;
+	}
 	}
 }
 
@@ -427,7 +445,10 @@ void Attachment::Detach()
 
 		case EffectType::EFFECT_OTHER:
 			break;
-		}
+
+		default:
+			break;
+	}
 
 		aAttachEffect->mEffectID = 0U;
 	}
@@ -446,7 +467,7 @@ void Attachment::AttachmentDie()
 	// TODO: put todo here so I know to come here when I break everything. !FIXME! !ACHTUNG!
 	DataArray<TodParticleSystem> *aParticleSystems = nullptr;
 	DataArray<Reanimation> *aReanimations = nullptr;
-	DataArray<Attachment> *aAttachments = nullptr;
+	[[maybe_unused]] DataArray<Attachment>* aAttachments = nullptr;
 	if (gEffectSystem->mParticleHolder) aParticleSystems = &gEffectSystem->mParticleHolder->mParticleSystems;
 	if (gEffectSystem->mReanimationHolder) aReanimations = &gEffectSystem->mReanimationHolder->mReanimations;
 	if (gEffectSystem->mAttachmentHolder) aAttachments = &gEffectSystem->mAttachmentHolder->mAttachments;
@@ -483,7 +504,10 @@ void Attachment::AttachmentDie()
 
 		case EffectType::EFFECT_OTHER:
 			break;
-		}
+
+		default:
+			break;
+	}
 
 		aAttachEffect->mEffectID = 0U;
 	}

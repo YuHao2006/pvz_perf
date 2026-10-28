@@ -1,0 +1,1167 @@
+[0/2] Re-checking globbed directories...
+[1/111] Deploying the native dat/dat64 converter to data/
+[2/111] Building CXX object SexyAppFramework\graphics\vulkan\CMakeFiles\sexy_vulkan.dir\VulkanContext.cpp.obj
+C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\pvzPerf\SexyAppFramework\graphics\vulkan\VulkanContext.cpp(62): warning C4459: “instance”的声明隐藏了全局声明
+C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\pvzPerf\SexyAppFramework\graphics\vulkan\VulkanContext.cpp(36): note: 参见“`anonymous-namespace'::instance”的声明
+C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\pvzPerf\SexyAppFramework\graphics\vulkan\VulkanContext.cpp(94): warning C4459: “instance”的声明隐藏了全局声明
+C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\pvzPerf\SexyAppFramework\graphics\vulkan\VulkanContext.cpp(36): note: 参见“`anonymous-namespace'::instance”的声明
+C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\pvzPerf\SexyAppFramework\graphics\vulkan\VulkanContext.cpp(176): warning C4459: “instance”的声明隐藏了全局声明
+C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\pvzPerf\SexyAppFramework\graphics\vulkan\VulkanContext.cpp(36): note: 参见“`anonymous-namespace'::instance”的声明
+C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\pvzPerf\SexyAppFramework\graphics\vulkan\VulkanContext.cpp(177): warning C4459: “gpuFilter”的声明隐藏了全局声明
+C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\pvzPerf\SexyAppFramework\graphics\vulkan\VulkanContext.cpp(38): note: 参见“`anonymous-namespace'::gpuFilter”的声明
+[3/111] Building CXX object SexyAppFramework\graphics\vulkan\CMakeFiles\sexy_vulkan.dir\VulkanRenderer.cpp.obj
+[4/111] Linking CXX static library SexyAppFramework\graphics\vulkan\sexy_vulkan.lib
+[5/111] Compiling definitions, generated C++ and runtime PAK64
+Blover -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Blover.source-record (offline source handles, bytes=27496)
+Blover -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Blover.reanim.v2.compiled (tracks=11, bytes=46773)
+Cabbagepult -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Cabbagepult.source-record (offline source handles, bytes=59560)
+Cabbagepult -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Cabbagepult.reanim.v2.compiled (tracks=20, bytes=101614)
+Cactus -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Cactus.source-record (offline source handles, bytes=83992)
+Cactus -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Cactus.reanim.v2.compiled (tracks=22, bytes=143039)
+Caltrop -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Caltrop.source-record (offline source handles, bytes=11368)
+Caltrop -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Caltrop.reanim.v2.compiled (tracks=8, bytes=19378)
+Cattail -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Cattail.source-record (offline source handles, bytes=24280)
+Cattail -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Cattail.reanim.v2.compiled (tracks=15, bytes=41413)
+CherryBomb -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\CherryBomb.source-record (offline source handles, bytes=20864)
+CherryBomb -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\CherryBomb.reanim.v2.compiled (tracks=19, bytes=35681)
+Chomper -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Chomper.source-record (offline source handles, bytes=113320)
+Chomper -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Chomper.reanim.v2.compiled (tracks=30, bytes=192919)
+CobCannon -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\CobCannon.source-record (offline source handles, bytes=80360)
+CobCannon -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\CobCannon.reanim.v2.compiled (tracks=20, bytes=136802)
+Coffeebean -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Coffeebean.source-record (offline source handles, bytes=5920)
+Coffeebean -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Coffeebean.reanim.v2.compiled (tracks=5, bytes=10331)
+Coin_gold -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Coin_gold.source-record (offline source handles, bytes=3464)
+Coin_gold -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Coin_gold.reanim.v2.compiled (tracks=4, bytes=5895)
+Coin_silver -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Coin_silver.source-record (offline source handles, bytes=3464)
+Coin_silver -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Coin_silver.reanim.v2.compiled (tracks=4, bytes=5892)
+Cornpult -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Cornpult.source-record (offline source handles, bytes=80536)
+Cornpult -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Cornpult.reanim.v2.compiled (tracks=26, bytes=137233)
+CrazyDave -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\CrazyDave.source-record (offline source handles, bytes=596776)
+CrazyDave -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\CrazyDave.reanim.v2.compiled (tracks=56, bytes=1017205)
+Credits_AnyHour -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Credits_AnyHour.source-record (offline source handles, bytes=115816)
+Credits_AnyHour -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Credits_AnyHour.reanim.v2.compiled (tracks=90, bytes=192158)
+Credits_BigBrain -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Credits_BigBrain.source-record (offline source handles, bytes=536)
+Credits_BigBrain -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Credits_BigBrain.reanim.v2.compiled (tracks=1, bytes=889)
+Credits_Bossdance -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Credits_Bossdance.source-record (offline source handles, bytes=14600)
+Credits_Bossdance -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Credits_Bossdance.reanim.v2.compiled (tracks=10, bytes=24934)
+Credits_CrazyDave -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Credits_CrazyDave.source-record (offline source handles, bytes=53912)
+Credits_CrazyDave -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Credits_CrazyDave.reanim.v2.compiled (tracks=37, bytes=92278)
+Credits_DiscoLights -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Credits_DiscoLights.source-record (offline source handles, bytes=4168)
+Credits_DiscoLights -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Credits_DiscoLights.reanim.v2.compiled (tracks=3, bytes=7070)
+Credits_Flower_petals -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Credits_Flower_petals.source-record (offline source handles, bytes=6248)
+Credits_Flower_petals -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Credits_Flower_petals.reanim.v2.compiled (tracks=8, bytes=10736)
+Credits_Football -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Credits_Football.source-record (offline source handles, bytes=24360)
+Credits_Football -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Credits_Football.reanim.v2.compiled (tracks=4, bytes=41109)
+Credits_Infantry -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Credits_Infantry.source-record (offline source handles, bytes=9368)
+Credits_Infantry -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Credits_Infantry.reanim.v2.compiled (tracks=7, bytes=15520)
+Credits_Jackbox -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Credits_Jackbox.source-record (offline source handles, bytes=5712)
+Credits_Jackbox -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Credits_Jackbox.reanim.v2.compiled (tracks=1, bytes=9642)
+Credits_Main -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Credits_Main.source-record (offline source handles, bytes=357817)
+Credits_Main -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Credits_Main.reanim.v2.compiled (tracks=22, bytes=601304)
+Credits_Main2 -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Credits_Main2.source-record (offline source handles, bytes=390056)
+Credits_Main2 -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Credits_Main2.reanim.v2.compiled (tracks=25, bytes=656321)
+Credits_Main3 -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Credits_Main3.source-record (offline source handles, bytes=841210)
+Credits_Main3 -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Credits_Main3.reanim.v2.compiled (tracks=63, bytes=1421890)
+Credits_SolarPower -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Credits_SolarPower.source-record (offline source handles, bytes=36536)
+Credits_SolarPower -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Credits_SolarPower.reanim.v2.compiled (tracks=40, bytes=60225)
+Credits_stage -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Credits_stage.source-record (offline source handles, bytes=11912)
+Credits_stage -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Credits_stage.reanim.v2.compiled (tracks=7, bytes=20383)
+Credits_Throat -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Credits_Throat.source-record (offline source handles, bytes=29000)
+Credits_Throat -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Credits_Throat.reanim.v2.compiled (tracks=10, bytes=49401)
+Credits_Tombstones -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Credits_Tombstones.source-record (offline source handles, bytes=2912)
+Credits_Tombstones -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Credits_Tombstones.reanim.v2.compiled (tracks=4, bytes=4793)
+Credits_WeAreTheUndead -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Credits_WeAreTheUndead.source-record (offline source handles, bytes=76959)
+Credits_WeAreTheUndead -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Credits_WeAreTheUndead.reanim.v2.compiled (tracks=21, bytes=127927)
+Credits_ZombieArmy1 -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Credits_ZombieArmy1.source-record (offline source handles, bytes=6160)
+Credits_ZombieArmy1 -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Credits_ZombieArmy1.reanim.v2.compiled (tracks=45, bytes=10337)
+Credits_ZombieArmy2 -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Credits_ZombieArmy2.source-record (offline source handles, bytes=3208)
+Credits_ZombieArmy2 -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Credits_ZombieArmy2.reanim.v2.compiled (tracks=33, bytes=5348)
+Diamond -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Diamond.source-record (offline source handles, bytes=12616)
+Diamond -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Diamond.reanim.v2.compiled (tracks=6, bytes=21475)
+Digger_rising_dirt -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Digger_rising_dirt.source-record (offline source handles, bytes=1056)
+Digger_rising_dirt -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Digger_rising_dirt.reanim.v2.compiled (tracks=1, bytes=1999)
+DoomShroom -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\DoomShroom.source-record (offline source handles, bytes=24808)
+DoomShroom -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\DoomShroom.reanim.v2.compiled (tracks=8, bytes=42167)
+FinalWave -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\FinalWave.source-record (offline source handles, bytes=976)
+FinalWave -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\FinalWave.reanim.v2.compiled (tracks=1, bytes=1630)
+fire -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\fire.source-record (offline source handles, bytes=1648)
+fire -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\fire.reanim.v2.compiled (tracks=3, bytes=2940)
+FirePea -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\FirePea.source-record (offline source handles, bytes=5120)
+FirePea -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\FirePea.reanim.v2.compiled (tracks=5, bytes=9041)
+FumeShroom -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\FumeShroom.source-record (offline source handles, bytes=24664)
+FumeShroom -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\FumeShroom.reanim.v2.compiled (tracks=9, bytes=41988)
+Garlic -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Garlic.source-record (offline source handles, bytes=6248)
+Garlic -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Garlic.reanim.v2.compiled (tracks=8, bytes=10746)
+GatlingPea -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\GatlingPea.source-record (offline source handles, bytes=82232)
+GatlingPea -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\GatlingPea.reanim.v2.compiled (tracks=22, bytes=140357)
+GloomShroom -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\GloomShroom.source-record (offline source handles, bytes=60016)
+GloomShroom -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\GloomShroom.reanim.v2.compiled (tracks=21, bytes=102358)
+GoldMagnet -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\GoldMagnet.source-record (offline source handles, bytes=50080)
+GoldMagnet -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\GoldMagnet.reanim.v2.compiled (tracks=15, bytes=86030)
+Gravebuster -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Gravebuster.source-record (offline source handles, bytes=25256)
+Gravebuster -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Gravebuster.reanim.v2.compiled (tracks=16, bytes=43084)
+Hammer -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Hammer.source-record (offline source handles, bytes=3520)
+Hammer -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Hammer.reanim.v2.compiled (tracks=5, bytes=5935)
+HypnoShroom -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\HypnoShroom.source-record (offline source handles, bytes=9736)
+HypnoShroom -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\HypnoShroom.reanim.v2.compiled (tracks=6, bytes=16606)
+IceShroom -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\IceShroom.source-record (offline source handles, bytes=10792)
+IceShroom -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\IceShroom.reanim.v2.compiled (tracks=7, bytes=18401)
+Imitater -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Imitater.source-record (offline source handles, bytes=40552)
+Imitater -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Imitater.reanim.v2.compiled (tracks=12, bytes=69800)
+Jalapeno -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Jalapeno.source-record (offline source handles, bytes=11216)
+Jalapeno -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Jalapeno.reanim.v2.compiled (tracks=11, bytes=19082)
+LawnMower -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\LawnMower.source-record (offline source handles, bytes=26184)
+LawnMower -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\LawnMower.reanim.v2.compiled (tracks=19, bytes=44826)
+LawnMoweredZombie -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\LawnMoweredZombie.source-record (offline source handles, bytes=376)
+LawnMoweredZombie -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\LawnMoweredZombie.reanim.v2.compiled (tracks=1, bytes=588)
+LilyPad -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\LilyPad.source-record (offline source handles, bytes=392)
+LilyPad -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\LilyPad.reanim.v2.compiled (tracks=2, bytes=706)
+LoadBar_sprout -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\LoadBar_sprout.source-record (offline source handles, bytes=8136)
+LoadBar_sprout -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\LoadBar_sprout.reanim.v2.compiled (tracks=11, bytes=13901)
+LoadBar_Zombiehead -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\LoadBar_Zombiehead.source-record (offline source handles, bytes=9608)
+LoadBar_Zombiehead -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\LoadBar_Zombiehead.reanim.v2.compiled (tracks=13, bytes=16432)
+Magnetshroom -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Magnetshroom.source-record (offline source handles, bytes=105160)
+Magnetshroom -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Magnetshroom.reanim.v2.compiled (tracks=20, bytes=181007)
+Marigold -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Marigold.source-record (offline source handles, bytes=19496)
+Marigold -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Marigold.reanim.v2.compiled (tracks=16, bytes=33387)
+Melonpult -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Melonpult.source-record (offline source handles, bytes=47656)
+Melonpult -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Melonpult.reanim.v2.compiled (tracks=16, bytes=81293)
+PeaShooter -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\PeaShooter.source-record (offline source handles, bytes=100264)
+PeaShooter -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\PeaShooter.reanim.v2.compiled (tracks=24, bytes=170866)
+PeaShooterSingle -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\PeaShooterSingle.source-record (offline source handles, bytes=75208)
+PeaShooterSingle -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\PeaShooterSingle.reanim.v2.compiled (tracks=18, bytes=128103)
+Plantern -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Plantern.source-record (offline source handles, bytes=14264)
+Plantern -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Plantern.reanim.v2.compiled (tracks=14, bytes=24374)
+PoolCleaner -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\PoolCleaner.source-record (offline source handles, bytes=50728)
+PoolCleaner -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\PoolCleaner.reanim.v2.compiled (tracks=18, bytes=86378)
+Portal_Circle -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Portal_Circle.source-record (offline source handles, bytes=17232)
+Portal_Circle -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Portal_Circle.reanim.v2.compiled (tracks=7, bytes=29248)
+Portal_Square -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Portal_Square.source-record (offline source handles, bytes=14536)
+Portal_Square -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Portal_Square.reanim.v2.compiled (tracks=6, bytes=24648)
+Pot -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Pot.source-record (offline source handles, bytes=12648)
+Pot -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Pot.reanim.v2.compiled (tracks=8, bytes=21529)
+PotatoMine -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\PotatoMine.source-record (offline source handles, bytes=32952)
+PotatoMine -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\PotatoMine.reanim.v2.compiled (tracks=22, bytes=56231)
+Puff -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Puff.source-record (offline source handles, bytes=1272)
+Puff -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Puff.reanim.v2.compiled (tracks=2, bytes=2191)
+PuffShroom -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\PuffShroom.source-record (offline source handles, bytes=18544)
+PuffShroom -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\PuffShroom.reanim.v2.compiled (tracks=9, bytes=31613)
+Pumpkin -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Pumpkin.source-record (offline source handles, bytes=2608)
+Pumpkin -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Pumpkin.reanim.v2.compiled (tracks=3, bytes=4403)
+Rain_circle -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Rain_circle.source-record (offline source handles, bytes=2368)
+Rain_circle -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Rain_circle.reanim.v2.compiled (tracks=3, bytes=4016)
+Rain_splash -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Rain_splash.source-record (offline source handles, bytes=376)
+Rain_splash -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Rain_splash.reanim.v2.compiled (tracks=1, bytes=688)
+Rake -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Rake.source-record (offline source handles, bytes=712)
+Rake -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Rake.reanim.v2.compiled (tracks=2, bytes=1204)
+RoofCleaner -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\RoofCleaner.source-record (offline source handles, bytes=4176)
+RoofCleaner -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\RoofCleaner.reanim.v2.compiled (tracks=11, bytes=7477)
+ScaredyShroom -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\ScaredyShroom.source-record (offline source handles, bytes=72616)
+ScaredyShroom -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\ScaredyShroom.reanim.v2.compiled (tracks=21, bytes=123550)
+SeaShroom -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\SeaShroom.source-record (offline source handles, bytes=48608)
+SeaShroom -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\SeaShroom.reanim.v2.compiled (tracks=13, bytes=82971)
+SelectorScreen -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\SelectorScreen.source-record (offline source handles, bytes=1356328)
+SelectorScreen -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\SelectorScreen.reanim.v2.compiled (tracks=48, bytes=2306291)
+SlotMachine -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\SlotMachine.source-record (offline source handles, bytes=1920)
+SlotMachine -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\SlotMachine.reanim.v2.compiled (tracks=5, bytes=3240)
+SnowPea -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\SnowPea.source-record (offline source handles, bytes=83560)
+SnowPea -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\SnowPea.reanim.v2.compiled (tracks=20, bytes=142313)
+SodRoll -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\SodRoll.source-record (offline source handles, bytes=3912)
+SodRoll -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\SodRoll.reanim.v2.compiled (tracks=2, bytes=6627)
+SpikeRock -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\SpikeRock.source-record (offline source handles, bytes=25424)
+SpikeRock -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\SpikeRock.reanim.v2.compiled (tracks=19, bytes=43359)
+splash -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\splash.source-record (offline source handles, bytes=3496)
+splash -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\splash.reanim.v2.compiled (tracks=6, bytes=5948)
+SplitPea -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\SplitPea.source-record (offline source handles, bytes=116552)
+SplitPea -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\SplitPea.reanim.v2.compiled (tracks=22, bytes=198569)
+Squash -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Squash.source-record (offline source handles, bytes=29400)
+Squash -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Squash.reanim.v2.compiled (tracks=10, bytes=49892)
+Starfruit -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Starfruit.source-record (offline source handles, bytes=14224)
+Starfruit -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Starfruit.reanim.v2.compiled (tracks=9, bytes=24285)
+StartReadySetPlant -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\StartReadySetPlant.source-record (offline source handles, bytes=2728)
+StartReadySetPlant -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\StartReadySetPlant.reanim.v2.compiled (tracks=3, bytes=4623)
+Stinky -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Stinky.source-record (offline source handles, bytes=31456)
+Stinky -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Stinky.reanim.v2.compiled (tracks=11, bytes=53572)
+Sun -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Sun.source-record (offline source handles, bytes=1648)
+Sun -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Sun.reanim.v2.compiled (tracks=3, bytes=2771)
+SunFlower -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\SunFlower.source-record (offline source handles, bytes=34144)
+SunFlower -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\SunFlower.reanim.v2.compiled (tracks=29, bytes=58617)
+SunShroom -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\SunShroom.source-record (offline source handles, bytes=22864)
+SunShroom -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\SunShroom.reanim.v2.compiled (tracks=9, bytes=38865)
+Tallnut -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Tallnut.source-record (offline source handles, bytes=4528)
+Tallnut -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Tallnut.reanim.v2.compiled (tracks=3, bytes=7965)
+Tanglekelp -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Tanglekelp.source-record (offline source handles, bytes=37032)
+Tanglekelp -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Tanglekelp.reanim.v2.compiled (tracks=17, bytes=64122)
+TextFadeOn -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\TextFadeOn.source-record (offline source handles, bytes=4888)
+TextFadeOn -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\TextFadeOn.reanim.v2.compiled (tracks=3, bytes=8228)
+ThreePeater -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\ThreePeater.source-record (offline source handles, bytes=215176)
+ThreePeater -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\ThreePeater.reanim.v2.compiled (tracks=36, bytes=366381)
+Torchwood -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Torchwood.source-record (offline source handles, bytes=9184)
+Torchwood -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Torchwood.reanim.v2.compiled (tracks=9, bytes=16272)
+TreeFood -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\TreeFood.source-record (offline source handles, bytes=2552)
+TreeFood -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\TreeFood.reanim.v2.compiled (tracks=2, bytes=4827)
+treeofWisdom -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\treeofWisdom.source-record (offline source handles, bytes=1545224)
+treeofWisdom -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\treeofWisdom.reanim.v2.compiled (tracks=109, bytes=2626945)
+TreeOfWisdomClouds -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\TreeOfWisdomClouds.source-record (offline source handles, bytes=150136)
+TreeOfWisdomClouds -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\TreeOfWisdomClouds.reanim.v2.compiled (tracks=6, bytes=255308)
+TwinSunflower -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\TwinSunflower.source-record (offline source handles, bytes=27560)
+TwinSunflower -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\TwinSunflower.reanim.v2.compiled (tracks=20, bytes=47198)
+Umbrellaleaf -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Umbrellaleaf.source-record (offline source handles, bytes=15592)
+Umbrellaleaf -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Umbrellaleaf.reanim.v2.compiled (tracks=12, bytes=26631)
+Wallnut -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Wallnut.source-record (offline source handles, bytes=13576)
+Wallnut -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Wallnut.reanim.v2.compiled (tracks=6, bytes=23328)
+WinterMelon -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\WinterMelon.source-record (offline source handles, bytes=47656)
+WinterMelon -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\WinterMelon.reanim.v2.compiled (tracks=16, bytes=81319)
+Z -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Z.source-record (offline source handles, bytes=2128)
+Z -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Z.reanim.v2.compiled (tracks=3, bytes=3578)
+ZenGarden_bugspray -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\ZenGarden_bugspray.source-record (offline source handles, bytes=3208)
+ZenGarden_bugspray -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\ZenGarden_bugspray.reanim.v2.compiled (tracks=3, bytes=5753)
+ZenGarden_fertilizer -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\ZenGarden_fertilizer.source-record (offline source handles, bytes=2552)
+ZenGarden_fertilizer -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\ZenGarden_fertilizer.reanim.v2.compiled (tracks=2, bytes=4891)
+ZenGarden_phonograph -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\ZenGarden_phonograph.source-record (offline source handles, bytes=7520)
+ZenGarden_phonograph -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\ZenGarden_phonograph.reanim.v2.compiled (tracks=5, bytes=12870)
+ZenGarden_sprout -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\ZenGarden_sprout.source-record (offline source handles, bytes=38696)
+ZenGarden_sprout -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\ZenGarden_sprout.reanim.v2.compiled (tracks=16, bytes=65827)
+ZenGarden_wateringcan -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\ZenGarden_wateringcan.source-record (offline source handles, bytes=5544)
+ZenGarden_wateringcan -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\ZenGarden_wateringcan.reanim.v2.compiled (tracks=4, bytes=10279)
+zombatar_zombie_head -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\zombatar_zombie_head.source-record (offline source handles, bytes=16456)
+zombatar_zombie_head -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\zombatar_zombie_head.reanim.v2.compiled (tracks=171, bytes=29660)
+Zombie -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Zombie.source-record (offline source handles, bytes=847432)
+Zombie -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Zombie.reanim.v2.compiled (tracks=42, bytes=1443201)
+Zombie_backup -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Zombie_backup.source-record (offline source handles, bytes=137384)
+Zombie_backup -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Zombie_backup.reanim.v2.compiled (tracks=29, bytes=233984)
+Zombie_balloon -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Zombie_balloon.source-record (offline source handles, bytes=180304)
+Zombie_balloon -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Zombie_balloon.reanim.v2.compiled (tracks=29, bytes=306965)
+Zombie_bobsled -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Zombie_bobsled.source-record (offline source handles, bytes=183496)
+Zombie_bobsled -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Zombie_bobsled.reanim.v2.compiled (tracks=26, bytes=312428)
+Zombie_boss -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Zombie_boss.source-record (offline source handles, bytes=2282152)
+Zombie_boss -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Zombie_boss.reanim.v2.compiled (tracks=72, bytes=3881516)
+Zombie_Boss_driver -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Zombie_Boss_driver.source-record (offline source handles, bytes=164952)
+Zombie_Boss_driver -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Zombie_Boss_driver.reanim.v2.compiled (tracks=22, bytes=280777)
+Zombie_boss_fireball -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Zombie_boss_fireball.source-record (offline source handles, bytes=26464)
+Zombie_boss_fireball -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Zombie_boss_fireball.reanim.v2.compiled (tracks=9, bytes=45055)
+Zombie_boss_iceball -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Zombie_boss_iceball.source-record (offline source handles, bytes=36712)
+Zombie_boss_iceball -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Zombie_boss_iceball.reanim.v2.compiled (tracks=12, bytes=62550)
+Zombie_bungi -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Zombie_bungi.source-record (offline source handles, bytes=89008)
+Zombie_bungi -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Zombie_bungi.reanim.v2.compiled (tracks=33, bytes=151773)
+Zombie_catapult -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Zombie_catapult.source-record (offline source handles, bytes=143512)
+Zombie_catapult -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Zombie_catapult.reanim.v2.compiled (tracks=42, bytes=244932)
+Zombie_charred -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Zombie_charred.source-record (offline source handles, bytes=20872)
+Zombie_charred -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Zombie_charred.reanim.v2.compiled (tracks=12, bytes=35963)
+Zombie_charred_catapult -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Zombie_charred_catapult.source-record (offline source handles, bytes=14632)
+Zombie_charred_catapult -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Zombie_charred_catapult.reanim.v2.compiled (tracks=12, bytes=25539)
+Zombie_charred_digger -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Zombie_charred_digger.source-record (offline source handles, bytes=35752)
+Zombie_charred_digger -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Zombie_charred_digger.reanim.v2.compiled (tracks=12, bytes=61918)
+Zombie_charred_gargantuar -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Zombie_charred_gargantuar.source-record (offline source handles, bytes=15664)
+Zombie_charred_gargantuar -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Zombie_charred_gargantuar.reanim.v2.compiled (tracks=9, bytes=27581)
+Zombie_charred_imp -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Zombie_charred_imp.source-record (offline source handles, bytes=14200)
+Zombie_charred_imp -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Zombie_charred_imp.reanim.v2.compiled (tracks=10, bytes=24618)
+Zombie_charred_zamboni -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Zombie_charred_zamboni.source-record (offline source handles, bytes=26152)
+Zombie_charred_zamboni -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Zombie_charred_zamboni.reanim.v2.compiled (tracks=12, bytes=45236)
+Zombie_credits_conehead -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Zombie_credits_conehead.source-record (offline source handles, bytes=23560)
+Zombie_credits_conehead -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Zombie_credits_conehead.reanim.v2.compiled (tracks=20, bytes=40285)
+Zombie_credits_dance -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Zombie_credits_dance.source-record (offline source handles, bytes=753192)
+Zombie_credits_dance -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Zombie_credits_dance.reanim.v2.compiled (tracks=32, bytes=1280537)
+Zombie_credits_screendoor -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Zombie_credits_screendoor.source-record (offline source handles, bytes=23560)
+Zombie_credits_screendoor -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Zombie_credits_screendoor.reanim.v2.compiled (tracks=20, bytes=40310)
+Zombie_dancer -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Zombie_dancer.source-record (offline source handles, bytes=104456)
+Zombie_dancer -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Zombie_dancer.reanim.v2.compiled (tracks=26, bytes=177917)
+Zombie_digger -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Zombie_digger.source-record (offline source handles, bytes=248536)
+Zombie_digger -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Zombie_digger.reanim.v2.compiled (tracks=31, bytes=423906)
+Zombie_disco -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Zombie_disco.source-record (offline source handles, bytes=230200)
+Zombie_disco -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Zombie_disco.reanim.v2.compiled (tracks=35, bytes=391888)
+Zombie_dolphinrider -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Zombie_dolphinrider.source-record (offline source handles, bytes=463080)
+Zombie_dolphinrider -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Zombie_dolphinrider.reanim.v2.compiled (tracks=40, bytes=793650)
+Zombie_flagpole -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Zombie_flagpole.source-record (offline source handles, bytes=1112)
+Zombie_flagpole -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Zombie_flagpole.reanim.v2.compiled (tracks=2, bytes=1877)
+Zombie_football -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Zombie_football.source-record (offline source handles, bytes=105440)
+Zombie_football -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Zombie_football.reanim.v2.compiled (tracks=25, bytes=179792)
+Zombie_gargantuar -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Zombie_gargantuar.source-record (offline source handles, bytes=331672)
+Zombie_gargantuar -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Zombie_gargantuar.reanim.v2.compiled (tracks=42, bytes=564522)
+Zombie_hand -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Zombie_hand.source-record (offline source handles, bytes=24424)
+Zombie_hand -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Zombie_hand.reanim.v2.compiled (tracks=24, bytes=41869)
+Zombie_imp -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Zombie_imp.source-record (offline source handles, bytes=83560)
+Zombie_imp -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Zombie_imp.reanim.v2.compiled (tracks=20, bytes=142224)
+Zombie_jackbox -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Zombie_jackbox.source-record (offline source handles, bytes=111712)
+Zombie_jackbox -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Zombie_jackbox.reanim.v2.compiled (tracks=27, bytes=190332)
+Zombie_Jackson -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Zombie_Jackson.source-record (offline source handles, bytes=159232)
+Zombie_Jackson -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Zombie_Jackson.reanim.v2.compiled (tracks=27, bytes=271097)
+Zombie_ladder -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Zombie_ladder.source-record (offline source handles, bytes=241288)
+Zombie_ladder -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Zombie_ladder.reanim.v2.compiled (tracks=28, bytes=410730)
+Zombie_paper -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Zombie_paper.source-record (offline source handles, bytes=268376)
+Zombie_paper -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Zombie_paper.reanim.v2.compiled (tracks=31, bytes=456625)
+Zombie_pogo -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Zombie_pogo.source-record (offline source handles, bytes=179752)
+Zombie_pogo -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Zombie_pogo.reanim.v2.compiled (tracks=27, bytes=306005)
+Zombie_polevaulter -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Zombie_polevaulter.source-record (offline source handles, bytes=216648)
+Zombie_polevaulter -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Zombie_polevaulter.reanim.v2.compiled (tracks=28, bytes=368862)
+Zombie_snorkle -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Zombie_snorkle.source-record (offline source handles, bytes=309296)
+Zombie_snorkle -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Zombie_snorkle.reanim.v2.compiled (tracks=31, bytes=529497)
+Zombie_surprise -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Zombie_surprise.source-record (offline source handles, bytes=656)
+Zombie_surprise -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Zombie_surprise.reanim.v2.compiled (tracks=1, bytes=1096)
+Zombie_yeti -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Zombie_yeti.source-record (offline source handles, bytes=84360)
+Zombie_yeti -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Zombie_yeti.reanim.v2.compiled (tracks=20, bytes=143662)
+Zombie_zamboni -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Zombie_zamboni.source-record (offline source handles, bytes=59944)
+Zombie_zamboni -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\Zombie_zamboni.reanim.v2.compiled (tracks=24, bytes=102262)
+ZombiesWon -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\ZombiesWon.source-record (offline source handles, bytes=4104)
+ZombiesWon -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\ZombiesWon.reanim.v2.compiled (tracks=4, bytes=6903)
+corpus: modules=2832 trackSlots=2694 trackIds=1829 (ids 1..1829, 0=not-found) v2=27701947B vs v1=27794670B
+generated: C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\ReanimTrackId.h, C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\reanim_track_ids.bin, C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\reanim\ReanimTrackMphfGlobal.h (101594B)
+emitter name table: entries=112 hash=0x998aed
+ArtChallengePlant -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\ArtChallengePlant.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1356)
+ArtChallengePlant -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\ArtChallengePlant.source-record (offline source image handles=1, bytes=672)
+Award -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\Award.xml.v2.compiled (emitters=13, onDuration links=0, bytes=14464)
+Award -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\Award.source-record (offline source image handles=13, bytes=5976)
+AwardPickupArrow -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\AwardPickupArrow.xml.v2.compiled (emitters=2, onDuration links=0, bytes=2165)
+AwardPickupArrow -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\AwardPickupArrow.source-record (offline source image handles=2, bytes=804)
+BlastMark -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\BlastMark.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1003)
+BlastMark -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\BlastMark.source-record (offline source image handles=1, bytes=336)
+BossExplosion -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\BossExplosion.xml.v2.compiled (emitters=5, onDuration links=0, bytes=5543)
+BossExplosion -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\BossExplosion.source-record (offline source image handles=5, bytes=2212)
+BossIceBallTrail -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\BossIceBallTrail.xml.v2.compiled (emitters=2, onDuration links=0, bytes=2271)
+BossIceBallTrail -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\BossIceBallTrail.source-record (offline source image handles=2, bytes=916)
+ButterSplat -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\ButterSplat.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1297)
+ButterSplat -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\ButterSplat.source-record (offline source image handles=1, bytes=584)
+CabbageSplat -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\CabbageSplat.xml.v2.compiled (emitters=2, onDuration links=0, bytes=2383)
+CabbageSplat -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\CabbageSplat.source-record (offline source image handles=2, bytes=1028)
+CatapultExplosion -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\CatapultExplosion.xml.v2.compiled (emitters=6, onDuration links=0, bytes=7655)
+CatapultExplosion -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\CatapultExplosion.source-record (offline source image handles=6, bytes=3568)
+CircleEvenSpacing -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\CircleEvenSpacing.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1192)
+CircleEvenSpacing -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\CircleEvenSpacing.source-record (offline source image handles=1, bytes=516)
+CoinPickupArrow -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\CoinPickupArrow.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1171)
+CoinPickupArrow -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\CoinPickupArrow.source-record (offline source image handles=1, bytes=492)
+CreditsFog -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\Credits_fog.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1325)
+CreditsFog -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\Credits_fog.source-record (offline source image handles=1, bytes=712)
+CreditsRaysWipe -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\Credits_RaysWipe.xml.v2.compiled (emitters=11, onDuration links=0, bytes=12464)
+CreditsRaysWipe -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\Credits_RaysWipe.source-record (offline source image handles=11, bytes=5328)
+CreditsStrobe -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\Credits_Strobe.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1097)
+CreditsStrobe -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\Credits_Strobe.source-record (offline source image handles=1, bytes=432)
+CreditsZombieHeadWipe -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\Credits_ZombieHeadWipe.xml.v2.compiled (emitters=2, onDuration links=0, bytes=2896)
+CreditsZombieHeadWipe -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\Credits_ZombieHeadWipe.source-record (offline source image handles=2, bytes=1560)
+Daisy -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\Daisy.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1252)
+Daisy -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\Daisy.source-record (offline source image handles=1, bytes=588)
+DancerRise -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\DancerRise.xml.v2.compiled (emitters=2, onDuration links=0, bytes=2824)
+DancerRise -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\DancerRise.source-record (offline source image handles=2, bytes=1480)
+DiggerRise -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\DiggerRise.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1364)
+DiggerRise -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\DiggerRise.source-record (offline source image handles=1, bytes=700)
+DiggerTunnel -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\DiggerTunnel.xml.v2.compiled (emitters=2, onDuration links=0, bytes=2864)
+DiggerTunnel -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\DiggerTunnel.source-record (offline source image handles=2, bytes=1492)
+Doom -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\Doom.xml.v2.compiled (emitters=11, onDuration links=0, bytes=14186)
+Doom -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\Doom.source-record (offline source image handles=11, bytes=6344)
+DustFoot -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\Dust_Foot.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1300)
+DustFoot -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\Dust_Foot.source-record (offline source image handles=1, bytes=644)
+DustSquash -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\Dust_Squash.xml.v2.compiled (emitters=2, onDuration links=0, bytes=2441)
+DustSquash -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\Dust_Squash.source-record (offline source image handles=2, bytes=1096)
+FireballDeath -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\FireBallDeath.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1380)
+FireballDeath -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\FireBallDeath.source-record (offline source image handles=1, bytes=684)
+FireballTrail -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\Fireball_Trail.xml.v2.compiled (emitters=2, onDuration links=0, bytes=2427)
+FireballTrail -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\Fireball_Trail.source-record (offline source image handles=2, bytes=1032)
+FumeCloud -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\FumeCloud.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1446)
+FumeCloud -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\FumeCloud.source-record (offline source image handles=1, bytes=768)
+GloomCloud -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\GloomCloud.xml.v2.compiled (emitters=8, onDuration links=0, bytes=11266)
+GloomCloud -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\GloomCloud.source-record (offline source image handles=8, bytes=5328)
+GraveBuster -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\GraveBuster.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1427)
+GraveBuster -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\GraveBuster.source-record (offline source image handles=1, bytes=736)
+GraveBusterDie -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\GraveBusterDie.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1359)
+GraveBusterDie -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\GraveBusterDie.source-record (offline source image handles=1, bytes=700)
+GraveStoneRise -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\GraveStoneRise.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1479)
+GraveStoneRise -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\GraveStoneRise.source-record (offline source image handles=1, bytes=844)
+IceBallDeath -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\IceBallDeath.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1320)
+IceBallDeath -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\IceBallDeath.source-record (offline source image handles=1, bytes=632)
+IceSparkle -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\IceSparkle.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1106)
+IceSparkle -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\IceSparkle.source-record (offline source image handles=1, bytes=464)
+IceTrap -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\IceTrap.xml.v2.compiled (emitters=2, onDuration links=0, bytes=2415)
+IceTrap -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\IceTrap.source-record (offline source image handles=2, bytes=1064)
+IceTrapRelease -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\IceTrapRelease.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1279)
+IceTrapRelease -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\IceTrapRelease.source-record (offline source image handles=1, bytes=624)
+IceTrapZombie -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\IceTrapZombie.xml.v2.compiled (emitters=2, onDuration links=0, bytes=1978)
+IceTrapZombie -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\IceTrapZombie.source-record (offline source image handles=2, bytes=632)
+IceballTrail -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\Iceball_Trail.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1129)
+IceballTrail -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\Iceball_Trail.source-record (offline source image handles=1, bytes=468)
+ImitaterMorph -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\ImitaterMorph.xml.v2.compiled (emitters=2, onDuration links=0, bytes=2374)
+ImitaterMorph -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\ImitaterMorph.source-record (offline source image handles=2, bytes=1016)
+JackExplode -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\JackExplode.xml.v2.compiled (emitters=4, onDuration links=0, bytes=4897)
+JackExplode -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\JackExplode.source-record (offline source image handles=4, bytes=2212)
+KernelSplat -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\KernelSplat.xml.v2.compiled (emitters=2, onDuration links=0, bytes=2387)
+KernelSplat -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\KernelSplat.source-record (offline source image handles=2, bytes=1028)
+LanternShine -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\LanternShine.xml.v2.compiled (emitters=2, onDuration links=0, bytes=2088)
+LanternShine -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\LanternShine.source-record (offline source image handles=2, bytes=768)
+MelonImpact -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\melonimpact.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1417)
+MelonImpact -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\melonimpact.source-record (offline source image handles=1, bytes=716)
+MindControl -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\MindControl.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1293)
+MindControl -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\MindControl.source-record (offline source image handles=1, bytes=636)
+MowerCloud -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\MowerCloud.xml.v2.compiled (emitters=2, onDuration links=0, bytes=2738)
+MowerCloud -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\MowerCloud.source-record (offline source image handles=2, bytes=1416)
+MoweredZombieArm -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\MoweredZombieArm.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1329)
+MoweredZombieArm -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\MoweredZombieArm.source-record (offline source image handles=1, bytes=624)
+MoweredZombieArmBackupDancer -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\moweredzombiearmbackupdancer.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1329)
+MoweredZombieArmBackupDancer -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\moweredzombiearmbackupdancer.source-record (offline source image handles=1, bytes=624)
+MoweredZombieArmBobsled -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\moweredzombiearmbobsled.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1329)
+MoweredZombieArmBobsled -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\moweredzombiearmbobsled.source-record (offline source image handles=1, bytes=624)
+MoweredZombieArmDancer -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\moweredzombiearmdancer.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1329)
+MoweredZombieArmDancer -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\moweredzombiearmdancer.source-record (offline source image handles=1, bytes=624)
+MoweredZombieArmDigger -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\moweredzombiearmdigger.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1329)
+MoweredZombieArmDigger -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\moweredzombiearmdigger.source-record (offline source image handles=1, bytes=624)
+MoweredZombieArmFootball -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\moweredzombiearmfootball.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1329)
+MoweredZombieArmFootball -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\moweredzombiearmfootball.source-record (offline source image handles=1, bytes=624)
+MoweredZombieArmHand -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\moweredzombiearmhand.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1329)
+MoweredZombieArmHand -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\moweredzombiearmhand.source-record (offline source image handles=1, bytes=624)
+MoweredZombieArmImp -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\moweredzombiearmimp.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1329)
+MoweredZombieArmImp -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\moweredzombiearmimp.source-record (offline source image handles=1, bytes=624)
+MoweredZombieArmJackbox -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\moweredzombiearmjackbox.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1329)
+MoweredZombieArmJackbox -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\moweredzombiearmjackbox.source-record (offline source image handles=1, bytes=624)
+MoweredZombieArmNewspaper -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\moweredzombiearmnewspaper.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1329)
+MoweredZombieArmNewspaper -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\moweredzombiearmnewspaper.source-record (offline source image handles=1, bytes=624)
+MoweredZombieArmYeti -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\moweredzombiearmyeti.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1329)
+MoweredZombieArmYeti -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\moweredzombiearmyeti.source-record (offline source image handles=1, bytes=624)
+MoweredZombieHead -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\MoweredZombieHead.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1320)
+MoweredZombieHead -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\MoweredZombieHead.source-record (offline source image handles=1, bytes=624)
+MoweredZombieHeadBackupDancer -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\moweredzombieheadbackupdancer.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1320)
+MoweredZombieHeadBackupDancer -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\moweredzombieheadbackupdancer.source-record (offline source image handles=1, bytes=624)
+MoweredZombieHeadBobsled -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\moweredzombieheadbobsled.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1320)
+MoweredZombieHeadBobsled -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\moweredzombieheadbobsled.source-record (offline source image handles=1, bytes=624)
+MoweredZombieHeadDancer -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\moweredzombieheaddancer.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1320)
+MoweredZombieHeadDancer -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\moweredzombieheaddancer.source-record (offline source image handles=1, bytes=624)
+MoweredZombieHeadDigger -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\moweredzombieheaddigger.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1320)
+MoweredZombieHeadDigger -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\moweredzombieheaddigger.source-record (offline source image handles=1, bytes=624)
+MoweredZombieHeadDolphinRider -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\moweredzombieheaddolphinrider.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1320)
+MoweredZombieHeadDolphinRider -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\moweredzombieheaddolphinrider.source-record (offline source image handles=1, bytes=624)
+MoweredZombieHeadFootball -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\moweredzombieheadfootball.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1320)
+MoweredZombieHeadFootball -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\moweredzombieheadfootball.source-record (offline source image handles=1, bytes=624)
+MoweredZombieHeadImp -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\moweredzombieheadimp.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1320)
+MoweredZombieHeadImp -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\moweredzombieheadimp.source-record (offline source image handles=1, bytes=624)
+MoweredZombieHeadLadder -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\moweredzombieheadladder.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1320)
+MoweredZombieHeadLadder -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\moweredzombieheadladder.source-record (offline source image handles=1, bytes=624)
+MoweredZombieHeadPolevaulter -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\moweredzombieheadpolevaulter.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1320)
+MoweredZombieHeadPolevaulter -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\moweredzombieheadpolevaulter.source-record (offline source image handles=1, bytes=624)
+MoweredZombieHeadSnorkel -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\moweredzombieheadsnorkel.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1320)
+MoweredZombieHeadSnorkel -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\moweredzombieheadsnorkel.source-record (offline source image handles=1, bytes=624)
+MoweredZombieHeadYeti -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\moweredzombieheadyeti.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1320)
+MoweredZombieHeadYeti -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\moweredzombieheadyeti.source-record (offline source image handles=1, bytes=624)
+PeaSplat -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\PeaSplat.xml.v2.compiled (emitters=2, onDuration links=0, bytes=2383)
+PeaSplat -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\PeaSplat.source-record (offline source image handles=2, bytes=1028)
+PerfTest -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\PerfTest.xml.v2.compiled (emitters=4, onDuration links=0, bytes=5280)
+PerfTest -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\PerfTest.source-record (offline source image handles=4, bytes=2512)
+Pinata -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\Pinata.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1362)
+Pinata -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\Pinata.source-record (offline source image handles=1, bytes=688)
+Planting -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\Planting.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1287)
+Planting -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\Planting.source-record (offline source image handles=1, bytes=604)
+PlantingPool -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\PlantingPool.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1295)
+PlantingPool -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\PlantingPool.source-record (offline source image handles=1, bytes=596)
+PoolSparkly -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\PoolSparkly.xml.v2.compiled (emitters=2, onDuration links=0, bytes=2402)
+PoolSparkly -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\PoolSparkly.source-record (offline source image handles=2, bytes=1056)
+PoolSplash -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\PoolSplash.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1285)
+PoolSplash -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\PoolSplash.source-record (offline source image handles=1, bytes=628)
+PopcornSplash -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\PopcornSplash.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1287)
+PopcornSplash -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\PopcornSplash.source-record (offline source image handles=1, bytes=592)
+PortalCircle -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\PortalCircle.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1286)
+PortalCircle -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\PortalCircle.source-record (offline source image handles=1, bytes=612)
+PortalSquare -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\PortalSquare.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1266)
+PortalSquare -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\PortalSquare.source-record (offline source image handles=1, bytes=588)
+PotatoMine -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\PotatoMine.xml.v2.compiled (emitters=5, onDuration links=0, bytes=5920)
+PotatoMine -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\PotatoMine.source-record (offline source image handles=5, bytes=2500)
+PotatoMineRise -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\PotatoMineRise.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1479)
+PotatoMineRise -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\PotatoMineRise.source-record (offline source image handles=1, bytes=844)
+PottedPlantGlow -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\PottedPlantGlow.xml.v2.compiled (emitters=2, onDuration links=0, bytes=2359)
+PottedPlantGlow -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\PottedPlantGlow.source-record (offline source image handles=2, bytes=984)
+PottedWaterPlantGlow -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\PottedWaterPlantGlow.xml.v2.compiled (emitters=2, onDuration links=0, bytes=2369)
+PottedWaterPlantGlow -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\PottedWaterPlantGlow.source-record (offline source image handles=2, bytes=984)
+PottedZenGlow -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\PottedZenGlow.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1330)
+PottedZenGlow -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\PottedZenGlow.source-record (offline source image handles=1, bytes=624)
+Pow -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\Pow.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1228)
+Pow -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\Pow.source-record (offline source image handles=1, bytes=564)
+Powie -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\Powie.xml.v2.compiled (emitters=3, onDuration links=0, bytes=3711)
+Powie -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\Powie.source-record (offline source image handles=3, bytes=1704)
+PresentPickup -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\PresentPickup.xml.v2.compiled (emitters=3, onDuration links=0, bytes=3988)
+PresentPickup -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\PresentPickup.source-record (offline source image handles=3, bytes=1920)
+PuffShroomMuzzle -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\PuffShroomMuzzle.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1474)
+PuffShroomMuzzle -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\PuffShroomMuzzle.source-record (offline source image handles=1, bytes=756)
+PuffShroomTrail -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\PuffShroomTrail.xml.v2.compiled (emitters=2, onDuration links=0, bytes=2277)
+PuffShroomTrail -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\PuffShroomTrail.source-record (offline source image handles=2, bytes=908)
+PuffSplat -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\PuffSplat.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1319)
+PuffSplat -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\PuffSplat.source-record (offline source image handles=1, bytes=600)
+ScreenFlash -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\ScreenFlash.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1135)
+ScreenFlash -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\ScreenFlash.source-record (offline source image handles=1, bytes=480)
+SeedPacket -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\SeedPacket.xml.v2.compiled (emitters=2, onDuration links=0, bytes=2169)
+SeedPacket -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\SeedPacket.source-record (offline source image handles=2, bytes=804)
+SeedPacketFlash -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\SeedPacketFlash.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1069)
+SeedPacketFlash -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\SeedPacketFlash.source-record (offline source image handles=1, bytes=408)
+SeedPacketPick -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\SeedPacketPick.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1216)
+SeedPacketPick -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\SeedPacketPick.source-record (offline source image handles=1, bytes=540)
+SeedPacketPickup -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\SeedPacketPickup.xml.v2.compiled (emitters=2, onDuration links=0, bytes=2908)
+SeedPacketPickup -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\SeedPacketPickup.source-record (offline source image handles=2, bytes=1620)
+SimpleParticle -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\SimpleParticle.xml.v2.compiled (emitters=1, onDuration links=0, bytes=997)
+SimpleParticle -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\SimpleParticle.source-record (offline source image handles=1, bytes=336)
+SnowPeaPuff -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\SnowPeaPuff.xml.v2.compiled (emitters=2, onDuration links=0, bytes=2705)
+SnowPeaPuff -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\SnowPeaPuff.source-record (offline source image handles=2, bytes=1336)
+SnowPeaSplat -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\SnowPeaSplat.xml.v2.compiled (emitters=2, onDuration links=0, bytes=2431)
+SnowPeaSplat -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\SnowPeaSplat.source-record (offline source image handles=2, bytes=1100)
+SnowPeaTrail -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\SnowPeaTrail.xml.v2.compiled (emitters=2, onDuration links=0, bytes=2271)
+SnowPeaTrail -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\SnowPeaTrail.source-record (offline source image handles=2, bytes=916)
+SodRoll -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\SodRoll.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1527)
+SodRoll -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\SodRoll.source-record (offline source image handles=1, bytes=856)
+StarSplat -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\StarSplat.xml.v2.compiled (emitters=2, onDuration links=0, bytes=2387)
+StarSplat -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\StarSplat.source-record (offline source image handles=2, bytes=1028)
+Starburst -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\Starburst.xml.v2.compiled (emitters=3, onDuration links=0, bytes=3988)
+Starburst -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\Starburst.source-record (offline source image handles=3, bytes=1920)
+TallNutBlock -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\TallNutBlock.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1416)
+TallNutBlock -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\TallNutBlock.source-record (offline source image handles=1, bytes=744)
+TrophySparkle -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\TrophySparkle.xml.v2.compiled (emitters=2, onDuration links=0, bytes=2288)
+TrophySparkle -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\TrophySparkle.source-record (offline source image handles=2, bytes=1000)
+UmbrellaReflect -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\UmbrellaReflect.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1175)
+UmbrellaReflect -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\UmbrellaReflect.source-record (offline source image handles=1, bytes=468)
+UpsellArrow -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\UpsellArrow.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1216)
+UpsellArrow -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\UpsellArrow.source-record (offline source image handles=1, bytes=540)
+VaseShatter -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\VaseShatter.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1345)
+VaseShatter -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\VaseShatter.source-record (offline source image handles=1, bytes=680)
+VaseShatterLeaf -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\VaseShatterLeaf.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1345)
+VaseShatterLeaf -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\VaseShatterLeaf.source-record (offline source image handles=1, bytes=680)
+VaseShatterZombie -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\VaseShatterZombie.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1345)
+VaseShatterZombie -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\VaseShatterZombie.source-record (offline source image handles=1, bytes=680)
+WallnutEatLarge -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\WallnutEatLarge.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1391)
+WallnutEatLarge -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\WallnutEatLarge.source-record (offline source image handles=1, bytes=712)
+WallnutEatSmall -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\WallnutEatSmall.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1371)
+WallnutEatSmall -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\WallnutEatSmall.source-record (offline source image handles=1, bytes=688)
+WhackAZombieRise -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\WhackAZombieRise.xml.v2.compiled (emitters=2, onDuration links=0, bytes=2812)
+WhackAZombieRise -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\WhackAZombieRise.source-record (offline source image handles=2, bytes=1480)
+WinterMelonImpact -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\WinterMelonImpact.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1419)
+WinterMelonImpact -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\WinterMelonImpact.source-record (offline source image handles=1, bytes=716)
+ZamboniExplosion -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\ZamboniExplosion.xml.v2.compiled (emitters=6, onDuration links=0, bytes=7717)
+ZamboniExplosion -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\ZamboniExplosion.source-record (offline source image handles=6, bytes=3664)
+ZamboniExplosion2 -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\ZamboniExplosion2.xml.v2.compiled (emitters=6, onDuration links=0, bytes=7836)
+ZamboniExplosion2 -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\ZamboniExplosion2.source-record (offline source image handles=6, bytes=3808)
+ZamboniSmoke -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\ZamboniSmoke.xml.v2.compiled (emitters=2, onDuration links=0, bytes=2333)
+ZamboniSmoke -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\ZamboniSmoke.source-record (offline source image handles=2, bytes=988)
+ZamboniTire -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\ZamboniTire.xml.v2.compiled (emitters=2, onDuration links=0, bytes=2466)
+ZamboniTire -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\ZamboniTire.source-record (offline source image handles=2, bytes=1164)
+ZombieArm -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\ZombieArm.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1279)
+ZombieArm -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\ZombieArm.source-record (offline source image handles=1, bytes=576)
+ZombieArmBackupDancer -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\zombiearmbackupdancer.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1279)
+ZombieArmBackupDancer -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\zombiearmbackupdancer.source-record (offline source image handles=1, bytes=576)
+ZombieArmBobsled -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\zombiearmbobsled.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1279)
+ZombieArmBobsled -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\zombiearmbobsled.source-record (offline source image handles=1, bytes=576)
+ZombieArmDancer -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\zombiearmdancer.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1279)
+ZombieArmDancer -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\zombiearmdancer.source-record (offline source image handles=1, bytes=576)
+ZombieArmDigger -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\zombiearmdigger.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1279)
+ZombieArmDigger -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\zombiearmdigger.source-record (offline source image handles=1, bytes=576)
+ZombieArmFootball -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\zombiearmfootball.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1279)
+ZombieArmFootball -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\zombiearmfootball.source-record (offline source image handles=1, bytes=576)
+ZombieArmHand -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\zombiearmhand.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1279)
+ZombieArmHand -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\zombiearmhand.source-record (offline source image handles=1, bytes=576)
+ZombieArmImp -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\zombiearmimp.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1279)
+ZombieArmImp -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\zombiearmimp.source-record (offline source image handles=1, bytes=576)
+ZombieArmJackbox -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\zombiearmjackbox.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1279)
+ZombieArmJackbox -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\zombiearmjackbox.source-record (offline source image handles=1, bytes=576)
+ZombieArmNewspaper -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\zombiearmnewspaper.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1279)
+ZombieArmNewspaper -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\zombiearmnewspaper.source-record (offline source image handles=1, bytes=576)
+ZombieArmYeti -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\zombiearmyeti.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1279)
+ZombieArmYeti -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\zombiearmyeti.source-record (offline source image handles=1, bytes=576)
+ZombieBalloonHead -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\ZombieBalloonHead.xml.v2.compiled (emitters=3, onDuration links=0, bytes=3998)
+ZombieBalloonHead -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\ZombieBalloonHead.source-record (offline source image handles=3, bytes=1848)
+ZombieBossFireball -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\Zombie_boss_fireball.xml.v2.compiled (emitters=2, onDuration links=0, bytes=2605)
+ZombieBossFireball -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\Zombie_boss_fireball.source-record (offline source image handles=2, bytes=1240)
+ZombieBossIceballBurst -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\zombiebossiceballburst.xml.v2.compiled (emitters=2, onDuration links=0, bytes=2605)
+ZombieBossIceballBurst -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\zombiebossiceballburst.source-record (offline source image handles=2, bytes=1240)
+ZombieDoor -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\ZombieDoor.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1295)
+ZombieDoor -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\ZombieDoor.source-record (offline source image handles=1, bytes=576)
+ZombieFlag -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\ZombieFlag.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1377)
+ZombieFlag -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\ZombieFlag.source-record (offline source image handles=1, bytes=636)
+ZombieFutureGlasses -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\ZombieFutureGlasses.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1362)
+ZombieFutureGlasses -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\ZombieFutureGlasses.source-record (offline source image handles=1, bytes=660)
+ZombieHead -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\ZombieHead.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1360)
+ZombieHead -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\ZombieHead.source-record (offline source image handles=1, bytes=672)
+ZombieHeadBackupDancer -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\zombieheadbackupdancer.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1360)
+ZombieHeadBackupDancer -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\zombieheadbackupdancer.source-record (offline source image handles=1, bytes=672)
+ZombieHeadBobsled -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\zombieheadbobsled.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1360)
+ZombieHeadBobsled -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\zombieheadbobsled.source-record (offline source image handles=1, bytes=672)
+ZombieHeadDancer -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\zombieheaddancer.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1360)
+ZombieHeadDancer -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\zombieheaddancer.source-record (offline source image handles=1, bytes=672)
+ZombieHeadDigger -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\zombieheaddigger.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1360)
+ZombieHeadDigger -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\zombieheaddigger.source-record (offline source image handles=1, bytes=672)
+ZombieHeadDolphinRider -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\zombieheaddolphinrider.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1360)
+ZombieHeadDolphinRider -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\zombieheaddolphinrider.source-record (offline source image handles=1, bytes=672)
+ZombieHeadFootball -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\zombieheadfootball.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1360)
+ZombieHeadFootball -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\zombieheadfootball.source-record (offline source image handles=1, bytes=672)
+ZombieHeadImp -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\zombieheadimp.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1360)
+ZombieHeadImp -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\zombieheadimp.source-record (offline source image handles=1, bytes=672)
+ZombieHeadLadder -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\zombieheadladder.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1360)
+ZombieHeadLadder -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\zombieheadladder.source-record (offline source image handles=1, bytes=672)
+ZombieHeadLight -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\ZombieHeadLight.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1319)
+ZombieHeadLight -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\ZombieHeadLight.source-record (offline source image handles=1, bytes=600)
+ZombieHeadPolevaulter -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\zombieheadpolevaulter.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1360)
+ZombieHeadPolevaulter -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\zombieheadpolevaulter.source-record (offline source image handles=1, bytes=672)
+ZombieHeadPool -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\ZombieHeadPool.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1200)
+ZombieHeadPool -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\ZombieHeadPool.source-record (offline source image handles=1, bytes=516)
+ZombieHeadPoolBackupDancer -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\zombieheadpoolbackupdancer.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1200)
+ZombieHeadPoolBackupDancer -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\zombieheadpoolbackupdancer.source-record (offline source image handles=1, bytes=516)
+ZombieHeadPoolBobsled -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\zombieheadpoolbobsled.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1200)
+ZombieHeadPoolBobsled -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\zombieheadpoolbobsled.source-record (offline source image handles=1, bytes=516)
+ZombieHeadPoolDancer -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\zombieheadpooldancer.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1200)
+ZombieHeadPoolDancer -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\zombieheadpooldancer.source-record (offline source image handles=1, bytes=516)
+ZombieHeadPoolDigger -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\zombieheadpooldigger.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1200)
+ZombieHeadPoolDigger -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\zombieheadpooldigger.source-record (offline source image handles=1, bytes=516)
+ZombieHeadPoolDolphinRider -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\zombieheadpooldolphinrider.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1200)
+ZombieHeadPoolDolphinRider -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\zombieheadpooldolphinrider.source-record (offline source image handles=1, bytes=516)
+ZombieHeadPoolFootball -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\zombieheadpoolfootball.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1200)
+ZombieHeadPoolFootball -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\zombieheadpoolfootball.source-record (offline source image handles=1, bytes=516)
+ZombieHeadPoolImp -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\zombieheadpoolimp.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1200)
+ZombieHeadPoolImp -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\zombieheadpoolimp.source-record (offline source image handles=1, bytes=516)
+ZombieHeadPoolLadder -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\zombieheadpoolladder.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1200)
+ZombieHeadPoolLadder -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\zombieheadpoolladder.source-record (offline source image handles=1, bytes=516)
+ZombieHeadPoolPolevaulter -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\zombieheadpoolpolevaulter.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1200)
+ZombieHeadPoolPolevaulter -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\zombieheadpoolpolevaulter.source-record (offline source image handles=1, bytes=516)
+ZombieHeadPoolSnorkel -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\zombieheadpoolsnorkel.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1200)
+ZombieHeadPoolSnorkel -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\zombieheadpoolsnorkel.source-record (offline source image handles=1, bytes=516)
+ZombieHeadPoolYeti -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\zombieheadpoolyeti.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1200)
+ZombieHeadPoolYeti -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\zombieheadpoolyeti.source-record (offline source image handles=1, bytes=516)
+ZombieHeadSnorkel -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\zombieheadsnorkel.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1360)
+ZombieHeadSnorkel -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\zombieheadsnorkel.source-record (offline source image handles=1, bytes=672)
+ZombieHeadYeti -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\zombieheadyeti.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1360)
+ZombieHeadYeti -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\zombieheadyeti.source-record (offline source image handles=1, bytes=672)
+ZombieHelmet -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\ZombieHelmet.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1300)
+ZombieHelmet -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\ZombieHelmet.source-record (offline source image handles=1, bytes=576)
+ZombieLadder -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\ZombieLadder.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1300)
+ZombieLadder -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\ZombieLadder.source-record (offline source image handles=1, bytes=576)
+ZombieMustache -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\ZombieMustache.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1361)
+ZombieMustache -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\ZombieMustache.source-record (offline source image handles=1, bytes=648)
+ZombieMustache2 -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\zombiemustache2.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1361)
+ZombieMustache2 -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\zombiemustache2.source-record (offline source image handles=1, bytes=648)
+ZombieMustache3 -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\zombiemustache3.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1361)
+ZombieMustache3 -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\zombiemustache3.source-record (offline source image handles=1, bytes=648)
+ZombieNewspaper -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\ZombieNewspaper.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1263)
+ZombieNewspaper -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\ZombieNewspaper.source-record (offline source image handles=1, bytes=564)
+ZombieNewspaperHead -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\ZombieNewspaperHead.xml.v2.compiled (emitters=2, onDuration links=0, bytes=2664)
+ZombieNewspaperHead -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\ZombieNewspaperHead.source-record (offline source image handles=2, bytes=1248)
+ZombiePail -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\ZombiePail.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1291)
+ZombiePail -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\ZombiePail.source-record (offline source image handles=1, bytes=576)
+ZombiePogo -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\ZombiePogo.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1300)
+ZombiePogo -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\ZombiePogo.source-record (offline source image handles=1, bytes=600)
+ZombiePogoHead -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\ZombiePogoHead.xml.v2.compiled (emitters=2, onDuration links=0, bytes=2668)
+ZombiePogoHead -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\ZombiePogoHead.source-record (offline source image handles=2, bytes=1248)
+ZombieRise -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\ZombieRise.xml.v2.compiled (emitters=3, onDuration links=0, bytes=4236)
+ZombieRise -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\ZombieRise.source-record (offline source image handles=3, bytes=2224)
+ZombieSeaweed -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\Zombie_seaweed.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1039)
+ZombieSeaweed -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\Zombie_seaweed.source-record (offline source image handles=1, bytes=372)
+ZombieTrafficCone -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\ZombieTrafficCone.xml.v2.compiled (emitters=1, onDuration links=0, bytes=1289)
+ZombieTrafficCone -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\particles\ZombieTrafficCone.source-record (offline source image handles=1, bytes=576)
+compile-particle-v2: 168 records, onDuration links=0
+C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\assets\definitions\projectiles\Projectiles.projectile.dsl -> C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\projectiles.json (projectiles=14, shadows=2)
+corpus: C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\assets\definitions\LawnStrings.txt keys=911
+generated: C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\strings\LawnStrings.h, C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\compile-dw52blav\strings\LawnStrings.cpp
+Solving atlas 1/206: projectiles (13 images, time limit=60.0, proof required=False)
+Atlas result projectiles: FEASIBLE, area=32696, bound=31746, gap=2.905554%, optimal=False
+Solving atlas 2/206: zombatar (209 images, time limit=60.0, proof required=False)
+Atlas result zombatar: FEASIBLE, area=2974176, bound=2944583, gap=0.994998%, optimal=False
+Solving atlas 3/206: magnet_items (19 images, time limit=60.0, proof required=False)
+Atlas result magnet_items: FEASIBLE, area=130162, bound=124573, gap=4.293880%, optimal=False
+Solving atlas 4/206: almanac_ui (19 images, time limit=60.0, proof required=False)
+Atlas result almanac_ui: FEASIBLE, area=3228912, bound=3154782, gap=2.295820%, optimal=False
+Solving atlas 5/206: achievements_ui (16 images, time limit=60.0, proof required=False)
+Atlas result achievements_ui: FEASIBLE, area=3248136, bound=3091497, gap=4.822427%, optimal=False
+Solving atlas 6/206: pea_family (45 images, time limit=60.0, proof required=False)
+Atlas result pea_family: FEASIBLE, area=73117, bound=71302, gap=2.482323%, optimal=False
+Solving atlas 7/206: credits_stage (20 images, time limit=60.0, proof required=False)
+Atlas result credits_stage: FEASIBLE, area=5613192, bound=5548270, gap=1.156597%, optimal=False
+Solving atlas 8/206: dave_family (49 images, time limit=60.0, proof required=False)
+Atlas result dave_family: FEASIBLE, area=774200, bound=756611, gap=2.271894%, optimal=False
+Solving atlas 9/206: credits_brain (7 images, time limit=60.0, proof required=False)
+Atlas result credits_brain: OPTIMAL, area=709779, bound=709779, gap=0.000000%, optimal=True
+Solving atlas 10/206: boss_family (48 images, time limit=60.0, proof required=False)
+Atlas result boss_family: FEASIBLE, area=1976375, bound=1920347, gap=2.834887%, optimal=False
+Solving atlas 11/206: selector_clouds (35 images, time limit=60.0, proof required=False)
+Atlas result selector_clouds: FEASIBLE, area=3041304, bound=2967523, gap=2.425966%, optimal=False
+Solving atlas 12/206: sunflower_family (40 images, time limit=60.0, proof required=False)
+Atlas result sunflower_family: FEASIBLE, area=43688, bound=42500, gap=2.719282%, optimal=False
+Solving atlas 13/206: melon_family (19 images, time limit=60.0, proof required=False)
+Atlas result melon_family: FEASIBLE, area=37206, bound=35964, gap=3.338171%, optimal=False
+Solving atlas 14/206: potato_mine (22 images, time limit=60.0, proof required=False)
+Atlas result potato_mine: FEASIBLE, area=81804, bound=80215, gap=1.942448%, optimal=False
+Solving atlas 15/206: zamboni_family (41 images, time limit=60.0, proof required=False)
+Atlas result zamboni_family: FEASIBLE, area=266552, bound=260208, gap=2.380023%, optimal=False
+Solving atlas 16/206: appearance_garlic (12 images, time limit=60.0, proof required=False)
+Atlas result appearance_garlic: OPTIMAL, area=21357, bound=21357, gap=0.000000%, optimal=True
+Solving atlas 17/206: appearance_pot (9 images, time limit=60.0, proof required=False)
+Atlas result appearance_pot: OPTIMAL, area=30765, bound=30765, gap=0.000000%, optimal=True
+Solving atlas 18/206: appearance_pumpkin (4 images, time limit=60.0, proof required=False)
+Atlas result appearance_pumpkin: LOWER_BOUND_PROVEN, area=41664, bound=41664, gap=0.000000%, optimal=True
+Solving atlas 19/206: appearance_tallnut (5 images, time limit=60.0, proof required=False)
+Atlas result appearance_tallnut: OPTIMAL, area=53766, bound=53766, gap=0.000000%, optimal=True
+Solving atlas 20/206: appearance_wallnut (6 images, time limit=60.0, proof required=False)
+Atlas result appearance_wallnut: OPTIMAL, area=38688, bound=38688, gap=0.000000%, optimal=True
+Solving atlas 21/206: appearance_fertilizer (11 images, time limit=60.0, proof required=False)
+Atlas result appearance_fertilizer: OPTIMAL, area=40090, bound=40090, gap=0.000000%, optimal=True
+Solving atlas 22/206: appearance_zombie (50 images, time limit=60.0, proof required=False)
+Atlas result appearance_zombie: FEASIBLE, area=131000, bound=127120, gap=2.961832%, optimal=False
+Solving atlas 23/206: appearance_backup (24 images, time limit=60.0, proof required=False)
+Atlas result appearance_backup: FEASIBLE, area=44654, bound=42545, gap=4.722981%, optimal=False
+Solving atlas 24/206: appearance_balloon (25 images, time limit=60.0, proof required=False)
+Atlas result appearance_balloon: FEASIBLE, area=67116, bound=64998, gap=3.155730%, optimal=False
+Solving atlas 25/206: appearance_bobsled (20 images, time limit=60.0, proof required=False)
+Atlas result appearance_bobsled: FEASIBLE, area=22145, bound=21328, gap=3.689320%, optimal=False
+Solving atlas 26/206: appearance_catapult (37 images, time limit=60.0, proof required=False)
+Atlas result appearance_catapult: FEASIBLE, area=149768, bound=146448, gap=2.216762%, optimal=False
+Solving atlas 27/206: appearance_charred_gargantuar (21 images, time limit=60.0, proof required=False)
+Atlas result appearance_charred_gargantuar: FEASIBLE, area=272613, bound=269959, gap=0.973541%, optimal=False
+Solving atlas 28/206: appearance_digger (34 images, time limit=60.0, proof required=False)
+Atlas result appearance_digger: FEASIBLE, area=203712, bound=200284, gap=1.682768%, optimal=False
+Solving atlas 29/206: appearance_disco (30 images, time limit=60.0, proof required=False)
+Atlas result appearance_disco: FEASIBLE, area=56908, bound=54741, gap=3.807900%, optimal=False
+Solving atlas 30/206: appearance_dolphin (28 images, time limit=60.0, proof required=False)
+Atlas result appearance_dolphin: FEASIBLE, area=49032, bound=47336, gap=3.458966%, optimal=False
+Solving atlas 31/206: appearance_flag (3 images, time limit=60.0, proof required=False)
+Atlas result appearance_flag: OPTIMAL, area=22152, bound=22152, gap=0.000000%, optimal=True
+Solving atlas 32/206: appearance_football (26 images, time limit=60.0, proof required=False)
+Atlas result appearance_football: FEASIBLE, area=77140, bound=74560, gap=3.344568%, optimal=False
+Solving atlas 33/206: appearance_gargantuar (42 images, time limit=60.0, proof required=False)
+Atlas result appearance_gargantuar: FEASIBLE, area=167979, bound=163989, gap=2.375297%, optimal=False
+Solving atlas 34/206: appearance_imp (13 images, time limit=60.0, proof required=False)
+Atlas result appearance_imp: FEASIBLE, area=7930, bound=7575, gap=4.476671%, optimal=False
+Solving atlas 35/206: appearance_jackbox (21 images, time limit=60.0, proof required=False)
+Atlas result appearance_jackbox: FEASIBLE, area=55154, bound=52693, gap=4.462052%, optimal=False
+Solving atlas 36/206: appearance_ladder (27 images, time limit=60.0, proof required=False)
+Atlas result appearance_ladder: FEASIBLE, area=97362, bound=95018, gap=2.407510%, optimal=False
+Solving atlas 37/206: appearance_paper (29 images, time limit=60.0, proof required=False)
+Atlas result appearance_paper: FEASIBLE, area=90472, bound=87792, gap=2.962242%, optimal=False
+Solving atlas 38/206: appearance_pogo (26 images, time limit=60.0, proof required=False)
+Atlas result appearance_pogo: FEASIBLE, area=39432, bound=37268, gap=5.487929%, optimal=False
+Solving atlas 39/206: appearance_polevaulter (24 images, time limit=60.0, proof required=False)
+Atlas result appearance_polevaulter: FEASIBLE, area=34230, bound=33005, gap=3.578732%, optimal=False
+Solving atlas 40/206: appearance_snorkle (25 images, time limit=60.0, proof required=False)
+Atlas result appearance_snorkle: FEASIBLE, area=51027, bound=49389, gap=3.210065%, optimal=False
+Solving atlas 41/206: appearance_yeti (16 images, time limit=60.0, proof required=False)
+Atlas result appearance_yeti: FEASIBLE, area=61773, bound=59875, gap=3.072540%, optimal=False
+Solving atlas 42/206: rising_dirt (25 images, time limit=60.0, proof required=False)
+Atlas result rising_dirt: FEASIBLE, area=90112, bound=89044, gap=1.185192%, optimal=False
+Solving atlas 43/206: vase_shards (27 images, time limit=60.0, proof required=False)
+Atlas result vase_shards: LOWER_BOUND_PROVEN, area=34992, bound=34992, gap=0.000000%, optimal=True
+Solving atlas 44/206: award_rays (3 images, time limit=60.0, proof required=False)
+Atlas result award_rays: OPTIMAL, area=51590, bound=51590, gap=0.000000%, optimal=True
+Solving atlas 45/206: fireball_burst (4 images, time limit=60.0, proof required=False)
+Atlas result fireball_burst: LOWER_BOUND_PROVEN, area=36192, bound=36192, gap=0.000000%, optimal=True
+Solving atlas 46/206: pool_splash (6 images, time limit=60.0, proof required=False)
+Atlas result pool_splash: LOWER_BOUND_PROVEN, area=11616, bound=11616, gap=0.000000%, optimal=True
+Solving atlas 47/206: zombie_heads (12 images, time limit=60.0, proof required=False)
+Atlas result zombie_heads: FEASIBLE, area=57078, bound=55029, gap=3.589824%, optimal=False
+Solving atlas 48/206: pickup_starburst (2 images, time limit=60.0, proof required=False)
+Atlas result pickup_starburst: OPTIMAL, area=5800, bound=5800, gap=0.000000%, optimal=True
+Solving atlas 49/206: projectile_splat (7 images, time limit=60.0, proof required=False)
+Atlas result projectile_splat: OPTIMAL, area=3976, bound=3976, gap=0.000000%, optimal=True
+Solving atlas 50/206: dust (3 images, time limit=60.0, proof required=False)
+Atlas result dust: LOWER_BOUND_PROVEN, area=3348, bound=3348, gap=0.000000%, optimal=True
+Solving atlas 51/206: ice_trail (7 images, time limit=60.0, proof required=False)
+Atlas result ice_trail: OPTIMAL, area=20384, bound=20384, gap=0.000000%, optimal=True
+Solving atlas 52/206: pickup_arrows (1 images, time limit=60.0, proof required=False)
+Atlas result pickup_arrows: LOWER_BOUND_PROVEN, area=1080, bound=1080, gap=0.000000%, optimal=True
+Solving atlas 53/206: zombie_arms (11 images, time limit=60.0, proof required=False)
+Atlas result zombie_arms: FEASIBLE, area=18447, bound=17589, gap=4.651163%, optimal=False
+Solving atlas 54/206: zombie_mustaches (3 images, time limit=60.0, proof required=False)
+Atlas result zombie_mustaches: LOWER_BOUND_PROVEN, area=4212, bound=4212, gap=0.000000%, optimal=True
+Solving atlas 55/206: sparkles (3 images, time limit=60.0, proof required=False)
+Atlas result sparkles: LOWER_BOUND_PROVEN, area=1728, bound=1728, gap=0.000000%, optimal=True
+Solving atlas 56/206: ice_trap_burst (4 images, time limit=60.0, proof required=False)
+Atlas result ice_trap_burst: LOWER_BOUND_PROVEN, area=1680, bound=1680, gap=0.000000%, optimal=True
+Solving atlas 57/206: puff_spores (1 images, time limit=60.0, proof required=False)
+Atlas result puff_spores: LOWER_BOUND_PROVEN, area=625, bound=625, gap=0.000000%, optimal=True
+Solving atlas 58/206: fume_cloud (1 images, time limit=60.0, proof required=False)
+Atlas result fume_cloud: LOWER_BOUND_PROVEN, area=1116, bound=1116, gap=0.000000%, optimal=True
+Solving atlas 59/206: portal_particles (1 images, time limit=60.0, proof required=False)
+Atlas result portal_particles: LOWER_BOUND_PROVEN, area=400, bound=400, gap=0.000000%, optimal=True
+Solving atlas 60/206: screen_flash (1 images, time limit=60.0, proof required=False)
+Atlas result screen_flash: LOWER_BOUND_PROVEN, area=25, bound=25, gap=0.000000%, optimal=True
+Solving atlas 61/206: fixed_ui (24 images, time limit=60.0, proof required=False)
+Atlas result fixed_ui: FEASIBLE, area=205641, bound=197342, gap=4.035674%, optimal=False
+Solving atlas 62/206: compiled/particles/awardpickuparrow.compiled (2 images, time limit=60.0, proof required=False)
+Atlas result compiled/particles/awardpickuparrow.compiled: OPTIMAL, area=37800, bound=37800, gap=0.000000%, optimal=True
+Solving atlas 63/206: compiled/particles/blastmark.compiled (1 images, time limit=60.0, proof required=False)
+Atlas result compiled/particles/blastmark.compiled: LOWER_BOUND_PROVEN, area=41616, bound=41616, gap=0.000000%, optimal=True
+Solving atlas 64/206: compiled/particles/bossexplosion.compiled (9 images, time limit=60.0, proof required=False)
+Atlas result compiled/particles/bossexplosion.compiled: OPTIMAL, area=77376, bound=77376, gap=0.000000%, optimal=True
+Solving atlas 65/206: compiled/particles/buttersplat.compiled (3 images, time limit=60.0, proof required=False)
+Atlas result compiled/particles/buttersplat.compiled: LOWER_BOUND_PROVEN, area=675, bound=675, gap=0.000000%, optimal=True
+Solving atlas 66/206: compiled/particles/catapultexplosion.compiled (9 images, time limit=60.0, proof required=False)
+Atlas result compiled/particles/catapultexplosion.compiled: OPTIMAL, area=61250, bound=61250, gap=0.000000%, optimal=True
+Solving atlas 67/206: compiled/particles/credits_fog.compiled (8 images, time limit=60.0, proof required=False)
+Atlas result compiled/particles/credits_fog.compiled: LOWER_BOUND_PROVEN, area=332128, bound=332128, gap=0.000000%, optimal=True
+Solving atlas 68/206: compiled/particles/credits_zombieheadwipe.compiled (1 images, time limit=60.0, proof required=False)
+Atlas result compiled/particles/credits_zombieheadwipe.compiled: LOWER_BOUND_PROVEN, area=4420, bound=4420, gap=0.000000%, optimal=True
+Solving atlas 69/206: compiled/particles/daisy.compiled (1 images, time limit=60.0, proof required=False)
+Atlas result compiled/particles/daisy.compiled: LOWER_BOUND_PROVEN, area=396, bound=396, gap=0.000000%, optimal=True
+Solving atlas 70/206: compiled/particles/doom.compiled (7 images, time limit=60.0, proof required=False)
+Atlas result compiled/particles/doom.compiled: OPTIMAL, area=156176, bound=156176, gap=0.000000%, optimal=True
+Solving atlas 71/206: compiled/particles/fireball_trail.compiled (5 images, time limit=60.0, proof required=False)
+Atlas result compiled/particles/fireball_trail.compiled: OPTIMAL, area=4914, bound=4914, gap=0.000000%, optimal=True
+Solving atlas 72/206: compiled/particles/gravebuster.compiled (8 images, time limit=60.0, proof required=False)
+Atlas result compiled/particles/gravebuster.compiled: LOWER_BOUND_PROVEN, area=15488, bound=15488, gap=0.000000%, optimal=True
+Solving atlas 73/206: compiled/particles/iceball_trail.compiled (4 images, time limit=60.0, proof required=False)
+Atlas result compiled/particles/iceball_trail.compiled: LOWER_BOUND_PROVEN, area=4536, bound=4536, gap=0.000000%, optimal=True
+Solving atlas 74/206: compiled/particles/icetrap.compiled (4 images, time limit=60.0, proof required=False)
+Atlas result compiled/particles/icetrap.compiled: OPTIMAL, area=1848, bound=1848, gap=0.000000%, optimal=True
+Solving atlas 75/206: compiled/particles/imitatermorph.compiled (10 images, time limit=60.0, proof required=False)
+Atlas result compiled/particles/imitatermorph.compiled: OPTIMAL, area=57536, bound=57536, gap=0.000000%, optimal=True
+Solving atlas 76/206: compiled/particles/jackexplode.compiled (7 images, time limit=60.0, proof required=False)
+Atlas result compiled/particles/jackexplode.compiled: OPTIMAL, area=84096, bound=84096, gap=0.000000%, optimal=True
+Solving atlas 77/206: compiled/particles/lanternshine.compiled (1 images, time limit=60.0, proof required=False)
+Atlas result compiled/particles/lanternshine.compiled: LOWER_BOUND_PROVEN, area=41616, bound=41616, gap=0.000000%, optimal=True
+Solving atlas 78/206: compiled/particles/melonimpact.compiled (9 images, time limit=60.0, proof required=False)
+Atlas result compiled/particles/melonimpact.compiled: LOWER_BOUND_PROVEN, area=15129, bound=15129, gap=0.000000%, optimal=True
+Solving atlas 79/206: compiled/particles/mindcontrol.compiled (1 images, time limit=60.0, proof required=False)
+Atlas result compiled/particles/mindcontrol.compiled: LOWER_BOUND_PROVEN, area=918, bound=918, gap=0.000000%, optimal=True
+Solving atlas 80/206: compiled/particles/mowercloud.compiled (1 images, time limit=60.0, proof required=False)
+Atlas result compiled/particles/mowercloud.compiled: LOWER_BOUND_PROVEN, area=7056, bound=7056, gap=0.000000%, optimal=True
+Solving atlas 81/206: compiled/particles/pinata.compiled (5 images, time limit=60.0, proof required=False)
+Atlas result compiled/particles/pinata.compiled: LOWER_BOUND_PROVEN, area=6930, bound=6930, gap=0.000000%, optimal=True
+Solving atlas 82/206: compiled/particles/poolsparkly.compiled (1 images, time limit=60.0, proof required=False)
+Atlas result compiled/particles/poolsparkly.compiled: LOWER_BOUND_PROVEN, area=1386, bound=1386, gap=0.000000%, optimal=True
+Solving atlas 83/206: compiled/particles/popcornsplash.compiled (5 images, time limit=60.0, proof required=False)
+Atlas result compiled/particles/popcornsplash.compiled: LOWER_BOUND_PROVEN, area=5440, bound=5440, gap=0.000000%, optimal=True
+Solving atlas 84/206: compiled/particles/pottedplantglow.compiled (2 images, time limit=60.0, proof required=False)
+Atlas result compiled/particles/pottedplantglow.compiled: OPTIMAL, area=13268, bound=13268, gap=0.000000%, optimal=True
+Solving atlas 85/206: compiled/particles/pottedwaterplantglow.compiled (2 images, time limit=60.0, proof required=False)
+Atlas result compiled/particles/pottedwaterplantglow.compiled: OPTIMAL, area=18840, bound=18840, gap=0.000000%, optimal=True
+Solving atlas 86/206: compiled/particles/pottedzenglow.compiled (1 images, time limit=60.0, proof required=False)
+Atlas result compiled/particles/pottedzenglow.compiled: LOWER_BOUND_PROVEN, area=72, bound=72, gap=0.000000%, optimal=True
+Solving atlas 87/206: compiled/particles/pow.compiled (1 images, time limit=60.0, proof required=False)
+Atlas result compiled/particles/pow.compiled: LOWER_BOUND_PROVEN, area=17780, bound=17780, gap=0.000000%, optimal=True
+Solving atlas 88/206: compiled/particles/powie.compiled (2 images, time limit=60.0, proof required=False)
+Atlas result compiled/particles/powie.compiled: OPTIMAL, area=58752, bound=58752, gap=0.000000%, optimal=True
+Solving atlas 89/206: compiled/particles/seedpacket.compiled (2 images, time limit=60.0, proof required=False)
+Atlas result compiled/particles/seedpacket.compiled: OPTIMAL, area=22196, bound=22196, gap=0.000000%, optimal=True
+Solving atlas 90/206: compiled/particles/seedpacketflash.compiled (1 images, time limit=60.0, proof required=False)
+Atlas result compiled/particles/seedpacketflash.compiled: LOWER_BOUND_PROVEN, area=3996, bound=3996, gap=0.000000%, optimal=True
+Solving atlas 91/206: compiled/particles/snowpeapuff.compiled (6 images, time limit=60.0, proof required=False)
+Atlas result compiled/particles/snowpeapuff.compiled: OPTIMAL, area=16353, bound=16353, gap=0.000000%, optimal=True
+Solving atlas 92/206: compiled/particles/snowpeasplat.compiled (7 images, time limit=60.0, proof required=False)
+Atlas result compiled/particles/snowpeasplat.compiled: OPTIMAL, area=3976, bound=3976, gap=0.000000%, optimal=True
+Solving atlas 93/206: compiled/particles/starsplat.compiled (7 images, time limit=60.0, proof required=False)
+Atlas result compiled/particles/starsplat.compiled: OPTIMAL, area=3976, bound=3976, gap=0.000000%, optimal=True
+Solving atlas 94/206: compiled/particles/tallnutblock.compiled (1 images, time limit=60.0, proof required=False)
+Atlas result compiled/particles/tallnutblock.compiled: LOWER_BOUND_PROVEN, area=1848, bound=1848, gap=0.000000%, optimal=True
+Solving atlas 95/206: compiled/particles/umbrellareflect.compiled (1 images, time limit=60.0, proof required=False)
+Atlas result compiled/particles/umbrellareflect.compiled: LOWER_BOUND_PROVEN, area=1225, bound=1225, gap=0.000000%, optimal=True
+Solving atlas 96/206: compiled/particles/wallnuteatlarge.compiled (5 images, time limit=60.0, proof required=False)
+Atlas result compiled/particles/wallnuteatlarge.compiled: LOWER_BOUND_PROVEN, area=2420, bound=2420, gap=0.000000%, optimal=True
+Solving atlas 97/206: compiled/particles/wallnuteatsmall.compiled (5 images, time limit=60.0, proof required=False)
+Atlas result compiled/particles/wallnuteatsmall.compiled: LOWER_BOUND_PROVEN, area=720, bound=720, gap=0.000000%, optimal=True
+Solving atlas 98/206: compiled/particles/wintermelonimpact.compiled (9 images, time limit=60.0, proof required=False)
+Atlas result compiled/particles/wintermelonimpact.compiled: LOWER_BOUND_PROVEN, area=15129, bound=15129, gap=0.000000%, optimal=True
+Solving atlas 99/206: compiled/particles/zombie_seaweed.compiled (4 images, time limit=60.0, proof required=False)
+Atlas result compiled/particles/zombie_seaweed.compiled: LOWER_BOUND_PROVEN, area=15376, bound=15376, gap=0.000000%, optimal=True
+Solving atlas 100/206: compiled/particles/zombieballoonhead.compiled (3 images, time limit=60.0, proof required=False)
+Atlas result compiled/particles/zombieballoonhead.compiled: OPTIMAL, area=5665, bound=5665, gap=0.000000%, optimal=True
+Solving atlas 101/206: compiled/particles/zombiedoor.compiled (1 images, time limit=60.0, proof required=False)
+Atlas result compiled/particles/zombiedoor.compiled: LOWER_BOUND_PROVEN, area=8890, bound=8890, gap=0.000000%, optimal=True
+Solving atlas 102/206: compiled/particles/zombieflag.compiled (1 images, time limit=60.0, proof required=False)
+Atlas result compiled/particles/zombieflag.compiled: LOWER_BOUND_PROVEN, area=4686, bound=4686, gap=0.000000%, optimal=True
+Solving atlas 103/206: compiled/particles/zombiefutureglasses.compiled (4 images, time limit=60.0, proof required=False)
+Atlas result compiled/particles/zombiefutureglasses.compiled: LOWER_BOUND_PROVEN, area=13520, bound=13520, gap=0.000000%, optimal=True
+Solving atlas 104/206: compiled/particles/zombieheadlight.compiled (1 images, time limit=60.0, proof required=False)
+Atlas result compiled/particles/zombieheadlight.compiled: LOWER_BOUND_PROVEN, area=4131, bound=4131, gap=0.000000%, optimal=True
+Solving atlas 105/206: compiled/particles/zombiehelmet.compiled (1 images, time limit=60.0, proof required=False)
+Atlas result compiled/particles/zombiehelmet.compiled: LOWER_BOUND_PROVEN, area=5390, bound=5390, gap=0.000000%, optimal=True
+Solving atlas 106/206: compiled/particles/zombieladder.compiled (1 images, time limit=60.0, proof required=False)
+Atlas result compiled/particles/zombieladder.compiled: LOWER_BOUND_PROVEN, area=10125, bound=10125, gap=0.000000%, optimal=True
+Solving atlas 107/206: compiled/particles/zombienewspaper.compiled (1 images, time limit=60.0, proof required=False)
+Atlas result compiled/particles/zombienewspaper.compiled: LOWER_BOUND_PROVEN, area=7740, bound=7740, gap=0.000000%, optimal=True
+Solving atlas 108/206: compiled/particles/zombienewspaperhead.compiled (2 images, time limit=60.0, proof required=False)
+Atlas result compiled/particles/zombienewspaperhead.compiled: OPTIMAL, area=5984, bound=5984, gap=0.000000%, optimal=True
+Solving atlas 109/206: compiled/particles/zombiepail.compiled (1 images, time limit=60.0, proof required=False)
+Atlas result compiled/particles/zombiepail.compiled: LOWER_BOUND_PROVEN, area=4686, bound=4686, gap=0.000000%, optimal=True
+Solving atlas 110/206: compiled/particles/zombiepogo.compiled (1 images, time limit=60.0, proof required=False)
+Atlas result compiled/particles/zombiepogo.compiled: LOWER_BOUND_PROVEN, area=4320, bound=4320, gap=0.000000%, optimal=True
+Solving atlas 111/206: compiled/particles/zombiepogohead.compiled (2 images, time limit=60.0, proof required=False)
+Atlas result compiled/particles/zombiepogohead.compiled: OPTIMAL, area=5673, bound=5673, gap=0.000000%, optimal=True
+Solving atlas 112/206: compiled/particles/zombietrafficcone.compiled (1 images, time limit=60.0, proof required=False)
+Atlas result compiled/particles/zombietrafficcone.compiled: LOWER_BOUND_PROVEN, area=3843, bound=3843, gap=0.000000%, optimal=True
+Solving atlas 113/206: compiled/reanim/blover.compiled (7 images, time limit=60.0, proof required=False)
+Atlas result compiled/reanim/blover.compiled: OPTIMAL, area=7040, bound=7040, gap=0.000000%, optimal=True
+Solving atlas 114/206: compiled/reanim/cabbagepult.compiled (15 images, time limit=60.0, proof required=False)
+Atlas result compiled/reanim/cabbagepult.compiled: FEASIBLE, area=18204, bound=17500, gap=3.867282%, optimal=False
+Solving atlas 115/206: compiled/reanim/cactus.compiled (15 images, time limit=60.0, proof required=False)
+Atlas result compiled/reanim/cactus.compiled: FEASIBLE, area=21735, bound=21112, gap=2.866345%, optimal=False
+Solving atlas 116/206: compiled/reanim/caltrop.compiled (7 images, time limit=60.0, proof required=False)
+Atlas result compiled/reanim/caltrop.compiled: OPTIMAL, area=8176, bound=8176, gap=0.000000%, optimal=True
+Solving atlas 117/206: compiled/reanim/cattail.compiled (13 images, time limit=60.0, proof required=False)
+Atlas result compiled/reanim/cattail.compiled: FEASIBLE, area=19440, bound=19050, gap=2.006173%, optimal=False
+Solving atlas 118/206: compiled/reanim/cherrybomb.compiled (17 images, time limit=60.0, proof required=False)
+Atlas result compiled/reanim/cherrybomb.compiled: FEASIBLE, area=20336, bound=19865, gap=2.316090%, optimal=False
+Solving atlas 119/206: compiled/reanim/chomper.compiled (22 images, time limit=60.0, proof required=False)
+Atlas result compiled/reanim/chomper.compiled: FEASIBLE, area=29988, bound=29016, gap=3.241297%, optimal=False
+Solving atlas 120/206: compiled/reanim/cobcannon.compiled (10 images, time limit=60.0, proof required=False)
+Atlas result compiled/reanim/cobcannon.compiled: OPTIMAL, area=71781, bound=71781, gap=0.000000%, optimal=True
+Solving atlas 121/206: compiled/reanim/coffeebean.compiled (13 images, time limit=60.0, proof required=False)
+Atlas result compiled/reanim/coffeebean.compiled: OPTIMAL, area=119011, bound=119011, gap=0.000000%, optimal=True
+Solving atlas 122/206: compiled/reanim/coin_gold.compiled (4 images, time limit=60.0, proof required=False)
+Atlas result compiled/reanim/coin_gold.compiled: OPTIMAL, area=15840, bound=15840, gap=0.000000%, optimal=True
+Solving atlas 123/206: compiled/reanim/coin_silver.compiled (4 images, time limit=60.0, proof required=False)
+Atlas result compiled/reanim/coin_silver.compiled: OPTIMAL, area=15664, bound=15664, gap=0.000000%, optimal=True
+Solving atlas 124/206: compiled/reanim/cornpult.compiled (21 images, time limit=60.0, proof required=False)
+Atlas result compiled/reanim/cornpult.compiled: FEASIBLE, area=20184, bound=19519, gap=3.294689%, optimal=False
+Solving atlas 125/206: compiled/reanim/credits_discolights.compiled (1 images, time limit=60.0, proof required=False)
+Atlas result compiled/reanim/credits_discolights.compiled: LOWER_BOUND_PROVEN, area=8586, bound=8586, gap=0.000000%, optimal=True
+Solving atlas 126/206: compiled/reanim/credits_flower_petals.compiled (8 images, time limit=60.0, proof required=False)
+Atlas result compiled/reanim/credits_flower_petals.compiled: OPTIMAL, area=47538, bound=47538, gap=0.000000%, optimal=True
+Solving atlas 127/206: compiled/reanim/credits_football.compiled (0 images, time limit=60.0, proof required=False)
+Atlas result compiled/reanim/credits_football.compiled: LOWER_BOUND_PROVEN, area=0, bound=0, gap=0.000000%, optimal=True
+Solving atlas 128/206: compiled/reanim/credits_infantry.compiled (0 images, time limit=60.0, proof required=False)
+Atlas result compiled/reanim/credits_infantry.compiled: LOWER_BOUND_PROVEN, area=0, bound=0, gap=0.000000%, optimal=True
+Solving atlas 129/206: compiled/reanim/credits_jackbox.compiled (0 images, time limit=60.0, proof required=False)
+Atlas result compiled/reanim/credits_jackbox.compiled: LOWER_BOUND_PROVEN, area=0, bound=0, gap=0.000000%, optimal=True
+Solving atlas 130/206: compiled/reanim/credits_solarpower.compiled (1 images, time limit=60.0, proof required=False)
+Atlas result compiled/reanim/credits_solarpower.compiled: LOWER_BOUND_PROVEN, area=9888, bound=9888, gap=0.000000%, optimal=True
+Solving atlas 131/206: compiled/reanim/credits_stage.compiled (7 images, time limit=60.0, proof required=False)
+Atlas result compiled/reanim/credits_stage.compiled: OPTIMAL, area=174840, bound=174840, gap=0.000000%, optimal=True
+Solving atlas 132/206: compiled/reanim/credits_tombstones.compiled (1 images, time limit=60.0, proof required=False)
+Atlas result compiled/reanim/credits_tombstones.compiled: LOWER_BOUND_PROVEN, area=3068, bound=3068, gap=0.000000%, optimal=True
+Solving atlas 133/206: compiled/reanim/credits_zombiearmy1.compiled (0 images, time limit=60.0, proof required=False)
+Atlas result compiled/reanim/credits_zombiearmy1.compiled: LOWER_BOUND_PROVEN, area=0, bound=0, gap=0.000000%, optimal=True
+Solving atlas 134/206: compiled/reanim/credits_zombiearmy2.compiled (0 images, time limit=60.0, proof required=False)
+Atlas result compiled/reanim/credits_zombiearmy2.compiled: LOWER_BOUND_PROVEN, area=0, bound=0, gap=0.000000%, optimal=True
+Solving atlas 135/206: compiled/reanim/diamond.compiled (6 images, time limit=60.0, proof required=False)
+Atlas result compiled/reanim/diamond.compiled: LOWER_BOUND_PROVEN, area=24192, bound=24192, gap=0.000000%, optimal=True
+Solving atlas 136/206: compiled/reanim/digger_rising_dirt.compiled (8 images, time limit=60.0, proof required=False)
+Atlas result compiled/reanim/digger_rising_dirt.compiled: LOWER_BOUND_PROVEN, area=37720, bound=37720, gap=0.000000%, optimal=True
+Solving atlas 137/206: compiled/reanim/doomshroom.compiled (5 images, time limit=60.0, proof required=False)
+Atlas result compiled/reanim/doomshroom.compiled: OPTIMAL, area=38056, bound=38056, gap=0.000000%, optimal=True
+Solving atlas 138/206: compiled/reanim/finalwave.compiled (1 images, time limit=60.0, proof required=False)
+Atlas result compiled/reanim/finalwave.compiled: LOWER_BOUND_PROVEN, area=28980, bound=28980, gap=0.000000%, optimal=True
+Solving atlas 139/206: compiled/reanim/fire.compiled (12 images, time limit=60.0, proof required=False)
+Atlas result compiled/reanim/fire.compiled: LOWER_BOUND_PROVEN, area=127764, bound=127764, gap=0.000000%, optimal=True
+Solving atlas 140/206: compiled/reanim/firepea.compiled (5 images, time limit=60.0, proof required=False)
+Atlas result compiled/reanim/firepea.compiled: OPTIMAL, area=10750, bound=10750, gap=0.000000%, optimal=True
+Solving atlas 141/206: compiled/reanim/fumeshroom.compiled (6 images, time limit=60.0, proof required=False)
+Atlas result compiled/reanim/fumeshroom.compiled: OPTIMAL, area=14896, bound=14896, gap=0.000000%, optimal=True
+Solving atlas 142/206: compiled/reanim/gloomshroom.compiled (14 images, time limit=60.0, proof required=False)
+Atlas result compiled/reanim/gloomshroom.compiled: FEASIBLE, area=28050, bound=27122, gap=3.308378%, optimal=False
+Solving atlas 143/206: compiled/reanim/goldmagnet.compiled (17 images, time limit=60.0, proof required=False)
+Atlas result compiled/reanim/goldmagnet.compiled: FEASIBLE, area=77760, bound=76041, gap=2.210648%, optimal=False
+Solving atlas 144/206: compiled/reanim/gravebuster.compiled (11 images, time limit=60.0, proof required=False)
+Atlas result compiled/reanim/gravebuster.compiled: FEASIBLE, area=12360, bound=11786, gap=4.644013%, optimal=False
+Solving atlas 145/206: compiled/reanim/hammer.compiled (3 images, time limit=60.0, proof required=False)
+Atlas result compiled/reanim/hammer.compiled: OPTIMAL, area=5568, bound=5568, gap=0.000000%, optimal=True
+Solving atlas 146/206: compiled/reanim/hypnoshroom.compiled (5 images, time limit=60.0, proof required=False)
+Atlas result compiled/reanim/hypnoshroom.compiled: OPTIMAL, area=9563, bound=9563, gap=0.000000%, optimal=True
+Solving atlas 147/206: compiled/reanim/iceshroom.compiled (5 images, time limit=60.0, proof required=False)
+Atlas result compiled/reanim/iceshroom.compiled: OPTIMAL, area=13764, bound=13764, gap=0.000000%, optimal=True
+Solving atlas 148/206: compiled/reanim/imitater.compiled (13 images, time limit=60.0, proof required=False)
+Atlas result compiled/reanim/imitater.compiled: OPTIMAL, area=53429, bound=53429, gap=0.000000%, optimal=True
+Solving atlas 149/206: compiled/reanim/jalapeno.compiled (8 images, time limit=60.0, proof required=False)
+Atlas result compiled/reanim/jalapeno.compiled: OPTIMAL, area=9024, bound=9024, gap=0.000000%, optimal=True
+Solving atlas 150/206: compiled/reanim/lawnmower.compiled (12 images, time limit=60.0, proof required=False)
+Atlas result compiled/reanim/lawnmower.compiled: FEASIBLE, area=33075, bound=31815, gap=3.809524%, optimal=False
+Solving atlas 151/206: compiled/reanim/lawnmoweredzombie.compiled (0 images, time limit=60.0, proof required=False)
+Atlas result compiled/reanim/lawnmoweredzombie.compiled: LOWER_BOUND_PROVEN, area=0, bound=0, gap=0.000000%, optimal=True
+Solving atlas 152/206: compiled/reanim/lilypad.compiled (3 images, time limit=60.0, proof required=False)
+Atlas result compiled/reanim/lilypad.compiled: OPTIMAL, area=13624, bound=13624, gap=0.000000%, optimal=True
+Solving atlas 153/206: compiled/reanim/loadbar_sprout.compiled (4 images, time limit=60.0, proof required=False)
+Atlas result compiled/reanim/loadbar_sprout.compiled: OPTIMAL, area=2016, bound=2016, gap=0.000000%, optimal=True
+Solving atlas 154/206: compiled/reanim/loadbar_zombiehead.compiled (5 images, time limit=60.0, proof required=False)
+Atlas result compiled/reanim/loadbar_zombiehead.compiled: OPTIMAL, area=7074, bound=7074, gap=0.000000%, optimal=True
+Solving atlas 155/206: compiled/reanim/magnetshroom.compiled (19 images, time limit=60.0, proof required=False)
+Atlas result compiled/reanim/magnetshroom.compiled: FEASIBLE, area=66470, bound=65508, gap=1.447269%, optimal=False
+Solving atlas 156/206: compiled/reanim/marigold.compiled (15 images, time limit=60.0, proof required=False)
+Atlas result compiled/reanim/marigold.compiled: FEASIBLE, area=18396, bound=17967, gap=2.332029%, optimal=False
+Solving atlas 157/206: compiled/reanim/plantern.compiled (9 images, time limit=60.0, proof required=False)
+Atlas result compiled/reanim/plantern.compiled: OPTIMAL, area=13394, bound=13394, gap=0.000000%, optimal=True
+Solving atlas 158/206: compiled/reanim/poolcleaner.compiled (11 images, time limit=60.0, proof required=False)
+Atlas result compiled/reanim/poolcleaner.compiled: FEASIBLE, area=16956, bound=16235, gap=4.252182%, optimal=False
+Solving atlas 159/206: compiled/reanim/portal_circle.compiled (3 images, time limit=60.0, proof required=False)
+Atlas result compiled/reanim/portal_circle.compiled: OPTIMAL, area=36848, bound=36848, gap=0.000000%, optimal=True
+Solving atlas 160/206: compiled/reanim/portal_square.compiled (2 images, time limit=60.0, proof required=False)
+Atlas result compiled/reanim/portal_square.compiled: OPTIMAL, area=18850, bound=18850, gap=0.000000%, optimal=True
+Solving atlas 161/206: compiled/reanim/puff.compiled (5 images, time limit=60.0, proof required=False)
+Atlas result compiled/reanim/puff.compiled: LOWER_BOUND_PROVEN, area=16530, bound=16530, gap=0.000000%, optimal=True
+Solving atlas 162/206: compiled/reanim/puffshroom.compiled (6 images, time limit=60.0, proof required=False)
+Atlas result compiled/reanim/puffshroom.compiled: OPTIMAL, area=8874, bound=8874, gap=0.000000%, optimal=True
+Solving atlas 163/206: compiled/reanim/rain_circle.compiled (1 images, time limit=60.0, proof required=False)
+Atlas result compiled/reanim/rain_circle.compiled: LOWER_BOUND_PROVEN, area=896, bound=896, gap=0.000000%, optimal=True
+Solving atlas 164/206: compiled/reanim/rain_splash.compiled (4 images, time limit=60.0, proof required=False)
+Atlas result compiled/reanim/rain_splash.compiled: LOWER_BOUND_PROVEN, area=4736, bound=4736, gap=0.000000%, optimal=True
+Solving atlas 165/206: compiled/reanim/rake.compiled (3 images, time limit=60.0, proof required=False)
+Atlas result compiled/reanim/rake.compiled: OPTIMAL, area=3654, bound=3654, gap=0.000000%, optimal=True
+Solving atlas 166/206: compiled/reanim/roofcleaner.compiled (11 images, time limit=60.0, proof required=False)
+Atlas result compiled/reanim/roofcleaner.compiled: FEASIBLE, area=34222, bound=33705, gap=1.510724%, optimal=False
+Solving atlas 167/206: compiled/reanim/scaredyshroom.compiled (12 images, time limit=60.0, proof required=False)
+Atlas result compiled/reanim/scaredyshroom.compiled: OPTIMAL, area=12198, bound=12198, gap=0.000000%, optimal=True
+Solving atlas 168/206: compiled/reanim/seashroom.compiled (9 images, time limit=60.0, proof required=False)
+Atlas result compiled/reanim/seashroom.compiled: OPTIMAL, area=9576, bound=9576, gap=0.000000%, optimal=True
+Solving atlas 169/206: compiled/reanim/slotmachine.compiled (3 images, time limit=60.0, proof required=False)
+Atlas result compiled/reanim/slotmachine.compiled: OPTIMAL, area=19838, bound=19838, gap=0.000000%, optimal=True
+Solving atlas 170/206: compiled/reanim/sodroll.compiled (2 images, time limit=60.0, proof required=False)
+Atlas result compiled/reanim/sodroll.compiled: OPTIMAL, area=16940, bound=16940, gap=0.000000%, optimal=True
+Solving atlas 171/206: compiled/reanim/spikerock.compiled (7 images, time limit=60.0, proof required=False)
+Atlas result compiled/reanim/spikerock.compiled: OPTIMAL, area=10062, bound=10062, gap=0.000000%, optimal=True
+Solving atlas 172/206: compiled/reanim/splash.compiled (5 images, time limit=60.0, proof required=False)
+Atlas result compiled/reanim/splash.compiled: OPTIMAL, area=13575, bound=13575, gap=0.000000%, optimal=True
+Solving atlas 173/206: compiled/reanim/squash.compiled (4 images, time limit=60.0, proof required=False)
+Atlas result compiled/reanim/squash.compiled: OPTIMAL, area=11340, bound=11340, gap=0.000000%, optimal=True
+Solving atlas 174/206: compiled/reanim/starfruit.compiled (7 images, time limit=60.0, proof required=False)
+Atlas result compiled/reanim/starfruit.compiled: OPTIMAL, area=14006, bound=14006, gap=0.000000%, optimal=True
+Solving atlas 175/206: compiled/reanim/startreadysetplant.compiled (3 images, time limit=60.0, proof required=False)
+Atlas result compiled/reanim/startreadysetplant.compiled: LOWER_BOUND_PROVEN, area=124944, bound=124944, gap=0.000000%, optimal=True
+Solving atlas 176/206: compiled/reanim/stinky.compiled (12 images, time limit=60.0, proof required=False)
+Atlas result compiled/reanim/stinky.compiled: OPTIMAL, area=51282, bound=51282, gap=0.000000%, optimal=True
+Solving atlas 177/206: compiled/reanim/sun.compiled (3 images, time limit=60.0, proof required=False)
+Atlas result compiled/reanim/sun.compiled: OPTIMAL, area=24563, bound=24563, gap=0.000000%, optimal=True
+Solving atlas 178/206: compiled/reanim/sunshroom.compiled (5 images, time limit=60.0, proof required=False)
+Atlas result compiled/reanim/sunshroom.compiled: OPTIMAL, area=14300, bound=14300, gap=0.000000%, optimal=True
+Solving atlas 179/206: compiled/reanim/tanglekelp.compiled (24 images, time limit=60.0, proof required=False)
+Atlas result compiled/reanim/tanglekelp.compiled: FEASIBLE, area=103255, bound=98986, gap=4.134424%, optimal=False
+Solving atlas 180/206: compiled/reanim/textfadeon.compiled (0 images, time limit=60.0, proof required=False)
+Atlas result compiled/reanim/textfadeon.compiled: LOWER_BOUND_PROVEN, area=0, bound=0, gap=0.000000%, optimal=True
+Solving atlas 181/206: compiled/reanim/torchwood.compiled (8 images, time limit=60.0, proof required=False)
+Atlas result compiled/reanim/torchwood.compiled: OPTIMAL, area=25718, bound=25718, gap=0.000000%, optimal=True
+Solving atlas 182/206: compiled/reanim/treefood.compiled (10 images, time limit=60.0, proof required=False)
+Atlas result compiled/reanim/treefood.compiled: OPTIMAL, area=35098, bound=35098, gap=0.000000%, optimal=True
+Solving atlas 183/206: compiled/reanim/treeofwisdom.compiled (25 images, time limit=60.0, proof required=False)
+Atlas result compiled/reanim/treeofwisdom.compiled: FEASIBLE, area=2632515, bound=2536825, gap=3.634927%, optimal=False
+Solving atlas 184/206: compiled/reanim/umbrellaleaf.compiled (10 images, time limit=60.0, proof required=False)
+Atlas result compiled/reanim/umbrellaleaf.compiled: FEASIBLE, area=26019, bound=24605, gap=5.434490%, optimal=False
+Solving atlas 185/206: compiled/reanim/z.compiled (1 images, time limit=60.0, proof required=False)
+Atlas result compiled/reanim/z.compiled: LOWER_BOUND_PROVEN, area=1292, bound=1292, gap=0.000000%, optimal=True
+Solving atlas 186/206: compiled/reanim/zengarden_bugspray.compiled (6 images, time limit=60.0, proof required=False)
+Atlas result compiled/reanim/zengarden_bugspray.compiled: OPTIMAL, area=16640, bound=16640, gap=0.000000%, optimal=True
+Solving atlas 187/206: compiled/reanim/zengarden_phonograph.compiled (5 images, time limit=60.0, proof required=False)
+Atlas result compiled/reanim/zengarden_phonograph.compiled: OPTIMAL, area=5546, bound=5546, gap=0.000000%, optimal=True
+Solving atlas 188/206: compiled/reanim/zengarden_sprout.compiled (6 images, time limit=60.0, proof required=False)
+Atlas result compiled/reanim/zengarden_sprout.compiled: OPTIMAL, area=2880, bound=2880, gap=0.000000%, optimal=True
+Solving atlas 189/206: compiled/reanim/zengarden_wateringcan.compiled (15 images, time limit=60.0, proof required=False)
+Atlas result compiled/reanim/zengarden_wateringcan.compiled: OPTIMAL, area=54978, bound=54978, gap=0.000000%, optimal=True
+Solving atlas 190/206: compiled/reanim/zombatar_zombie_head.compiled (171 images, time limit=60.0, proof required=False)
+Atlas result compiled/reanim/zombatar_zombie_head.compiled: FEASIBLE, area=232960, bound=229905, gap=1.311384%, optimal=False
+Solving atlas 191/206: compiled/reanim/zombie_boss_driver.compiled (13 images, time limit=60.0, proof required=False)
+Atlas result compiled/reanim/zombie_boss_driver.compiled: FEASIBLE, area=26676, bound=25248, gap=5.353126%, optimal=False
+Solving atlas 192/206: compiled/reanim/zombie_boss_fireball.compiled (6 images, time limit=60.0, proof required=False)
+Atlas result compiled/reanim/zombie_boss_fireball.compiled: OPTIMAL, area=230318, bound=230318, gap=0.000000%, optimal=True
+Solving atlas 193/206: compiled/reanim/zombie_boss_iceball.compiled (8 images, time limit=60.0, proof required=False)
+Atlas result compiled/reanim/zombie_boss_iceball.compiled: OPTIMAL, area=151613, bound=151613, gap=0.000000%, optimal=True
+Solving atlas 194/206: compiled/reanim/zombie_bungi.compiled (25 images, time limit=60.0, proof required=False)
+Atlas result compiled/reanim/zombie_bungi.compiled: FEASIBLE, area=52089, bound=49640, gap=4.701568%, optimal=False
+Solving atlas 195/206: compiled/reanim/zombie_charred.compiled (17 images, time limit=60.0, proof required=False)
+Atlas result compiled/reanim/zombie_charred.compiled: FEASIBLE, area=78591, bound=74947, gap=4.636663%, optimal=False
+Solving atlas 196/206: compiled/reanim/zombie_charred_catapult.compiled (15 images, time limit=60.0, proof required=False)
+Atlas result compiled/reanim/zombie_charred_catapult.compiled: FEASIBLE, area=288960, bound=284138, gap=1.668743%, optimal=False
+Solving atlas 197/206: compiled/reanim/zombie_charred_digger.compiled (20 images, time limit=60.0, proof required=False)
+Atlas result compiled/reanim/zombie_charred_digger.compiled: FEASIBLE, area=126767, bound=123600, gap=2.498284%, optimal=False
+Solving atlas 198/206: compiled/reanim/zombie_charred_imp.compiled (12 images, time limit=60.0, proof required=False)
+Atlas result compiled/reanim/zombie_charred_imp.compiled: OPTIMAL, area=34740, bound=34740, gap=0.000000%, optimal=True
+Solving atlas 199/206: compiled/reanim/zombie_charred_zamboni.compiled (20 images, time limit=60.0, proof required=False)
+Atlas result compiled/reanim/zombie_charred_zamboni.compiled: FEASIBLE, area=362112, bound=357149, gap=1.370570%, optimal=False
+Solving atlas 200/206: compiled/reanim/zombie_credits_conehead.compiled (19 images, time limit=60.0, proof required=False)
+Atlas result compiled/reanim/zombie_credits_conehead.compiled: FEASIBLE, area=24240, bound=23055, gap=4.888614%, optimal=False
+Solving atlas 201/206: compiled/reanim/zombie_credits_dance.compiled (21 images, time limit=60.0, proof required=False)
+Atlas result compiled/reanim/zombie_credits_dance.compiled: FEASIBLE, area=35370, bound=34383, gap=2.790500%, optimal=False
+Solving atlas 202/206: compiled/reanim/zombie_credits_screendoor.compiled (19 images, time limit=60.0, proof required=False)
+Atlas result compiled/reanim/zombie_credits_screendoor.compiled: FEASIBLE, area=33524, bound=32116, gap=4.199976%, optimal=False
+Solving atlas 203/206: compiled/reanim/zombie_dancer.compiled (21 images, time limit=60.0, proof required=False)
+Atlas result compiled/reanim/zombie_dancer.compiled: FEASIBLE, area=28884, bound=27334, gap=5.366293%, optimal=False
+Solving atlas 204/206: compiled/reanim/zombie_hand.compiled (16 images, time limit=60.0, proof required=False)
+Atlas result compiled/reanim/zombie_hand.compiled: FEASIBLE, area=74464, bound=70563, gap=5.238773%, optimal=False
+Solving atlas 205/206: compiled/reanim/zombie_jackson.compiled (21 images, time limit=60.0, proof required=False)
+Atlas result compiled/reanim/zombie_jackson.compiled: FEASIBLE, area=28050, bound=27040, gap=3.600713%, optimal=False
+Solving atlas 206/206: compiled/reanim/zombie_surprise.compiled (1 images, time limit=60.0, proof required=False)
+Atlas result compiled/reanim/zombie_surprise.compiled: LOWER_BOUND_PROVEN, area=1288, bound=1288, gap=0.000000%, optimal=True
+gen: 144 types, max 171 tracks, 3 words, 12 attacher types -> pvzPerf\Sexy.TodLib\generated\ReanimAttacherMasks.h
+Resource package: C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan\cache\resources\main.pak64; 748 entries; omitted 2414 inputs
+[6/110] C:\Windows\system32\cmd.exe /C "cd /D C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\out\x64-win32-vulkan && C:\UserProgram\DevTools\cmake\bin\cmake.exe -E make_directory C:/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/out/x64-win32-vulkan/Release && C:\UserProgram\DevTools\cmake\bin\cmake.exe -E copy_if_different C:/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/out/x64-win32-vulkan/cache/resources/main.pak64 C:/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/out/x64-win32-vulkan/Release/main.pak64"
+[7/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\__\Lawn\GameObject.cpp.obj
+[8/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\__\Lawn\CursorObject.cpp.obj
+[9/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\__\Lawn\Coin.cpp.obj
+[10/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\__\Lawn\CutScene.cpp.obj
+[11/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\__\Lawn\Challenge.cpp.obj
+[12/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\__\Lawn\Board.cpp.obj
+[13/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\__\Lawn\GridItem.cpp.obj
+[14/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\__\Lawn\LawnMower.cpp.obj
+[15/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\__\Lawn\Motion.cpp.obj
+[16/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\__\Lawn\MessageWidget.cpp.obj
+[17/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\__\Lawn\Plant.cpp.obj
+[18/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\__\Lawn\Projectile.cpp.obj
+[19/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\__\Lawn\ToolTipWidget.cpp.obj
+[20/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\__\Lawn\SeedPacket.cpp.obj
+[21/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\__\Lawn\ZenGarden.cpp.obj
+[22/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\__\Lawn\LawnCommon.cpp.obj
+[23/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\__\Resources.cpp.obj
+[24/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\__\Lawn\Zombie.cpp.obj
+[25/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\__\Lawn\System\PlayerInfo.cpp.obj
+[26/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\__\Lawn\System\PoolEffect.cpp.obj
+[27/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\__\Lawn\System\ProfileMgr.cpp.obj
+[28/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\__\Lawn\System\Music.cpp.obj
+[29/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\__\Lawn\System\ReanimationLawn.cpp.obj
+[30/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\__\Lawn\System\SaveGame.cpp.obj
+[31/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\__\Lawn\Widget\AchievementsWidget.cpp.obj
+[32/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\__\Lawn\Widget\Almanac.cpp.obj
+[33/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\__\Lawn\Widget\ChallengeScreen.cpp.obj
+[34/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\__\Lawn\Widget\CheatDialog.cpp.obj
+[35/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\__\Lawn\Widget\AwardScreen.cpp.obj
+[36/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\__\Lawn\Widget\ContinueDialog.cpp.obj
+[37/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\__\Lawn\Widget\GameButton.cpp.obj
+[38/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\__\Lawn\Widget\ImitaterDialog.cpp.obj
+[39/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\__\Lawn\Widget\CreditScreen.cpp.obj
+[40/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\__\Lawn\Widget\LawnDialog.cpp.obj
+[41/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\__\Lawn\Widget\GameSelector.cpp.obj
+[42/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\__\Lawn\Widget\NewOptionsDialog.cpp.obj
+[43/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\__\Lawn\Widget\NewUserDialog.cpp.obj
+[44/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\__\Lawn\Widget\SeedChooserScreen.cpp.obj
+[45/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\__\Lawn\Widget\TitleScreen.cpp.obj
+[46/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\__\Lawn\Widget\UserDialog.cpp.obj
+[47/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\__\Lawn\Widget\StoreScreen.cpp.obj
+[48/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\__\Lawn\Widget\ZombatarColors.cpp.obj
+[49/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\__\Lawn\Widget\ZombatarResources.cpp.obj
+[50/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\__\Lawn\Widget\ZombatarScreen.cpp.obj
+[51/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\__\Lawn\Widget\ZombatarItems.cpp.obj
+[52/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\__\Sexy.TodLib\Definition.cpp.obj
+[53/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\__\Sexy.TodLib\TodCommon.cpp.obj
+[54/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\__\Sexy.TodLib\TodDebug.cpp.obj
+[55/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\__\Sexy.TodLib\TodFoley.cpp.obj
+[56/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\__\Sexy.TodLib\TodAllocator.cpp.obj
+[57/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\__\Sexy.TodLib\TodStringFile.cpp.obj
+[58/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\__\Sexy.TodLib\generated\GeneratedDefinitions.cpp.obj
+[59/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\__\Sexy.TodLib\generated\GeneratedDefinitionLoading.cpp.obj
+[60/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\__\Sexy.TodLib\generated\ZombatarAtlasData.cpp.obj
+[61/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\__\Sexy.TodLib\generated\SceneAtlasData.cpp.obj
+[62/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\__\Sexy.TodLib\generated\definitions\ReanimData01.cpp.obj
+[63/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\__\Sexy.TodLib\generated\definitions\ReanimData04.cpp.obj
+[64/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\__\Sexy.TodLib\generated\definitions\ReanimData03.cpp.obj
+[65/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\__\Sexy.TodLib\generated\definitions\ReanimData02.cpp.obj
+[66/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\__\Sexy.TodLib\Attachment.cpp.obj
+[67/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\__\Sexy.TodLib\generated\definitions\ReanimData06.cpp.obj
+[68/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\__\Sexy.TodLib\generated\definitions\ReanimData00.cpp.obj
+[69/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\__\Sexy.TodLib\EffectSystem.cpp.obj
+[70/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\__\Sexy.TodLib\generated\definitions\ReanimData07.cpp.obj
+[71/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\__\Sexy.TodLib\Reanimator.cpp.obj
+[72/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\graphics\AtlasDraw.cpp.obj
+[73/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\__\Sexy.TodLib\TodParticle.cpp.obj
+[74/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\__\Sexy.TodLib\ParticleDefinitionCompiled.cpp.obj
+[75/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\__\Sexy.TodLib\generated\definitions\ReanimData05.cpp.obj
+[76/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\graphics\ImageDiagnostics.cpp.obj
+[77/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\graphics\Font.cpp.obj
+[78/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\graphics\Graphics.cpp.obj
+[79/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\graphics\ImageDrawing.cpp.obj
+[80/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\graphics\DDInterface.cpp.obj
+[81/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\graphics\RenderInterface.cpp.obj
+[82/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\graphics\Image.cpp.obj
+[83/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\graphics\MemoryImage.cpp.obj
+[84/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\widget\ButtonWidget.cpp.obj
+[85/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\graphics\SharedImage.cpp.obj
+[86/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\graphics\ImageFont.cpp.obj
+[87/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\graphics\SWTri.cpp.obj
+[88/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\platform\windows\audio\DSoundManager.cpp.obj
+[89/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\widget\Checkbox.cpp.obj
+[90/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\widget\DialogButton.cpp.obj
+[91/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\widget\Dialog.cpp.obj
+[92/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\widget\EditWidget.cpp.obj
+[93/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\widget\HyperlinkWidget.cpp.obj
+[94/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\widget\ListWidget.cpp.obj
+[95/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\widget\ScrollbarWidget.cpp.obj
+[96/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\widget\ScrollbuttonWidget.cpp.obj
+[97/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\widget\TextWidget.cpp.obj
+[98/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\widget\Slider.cpp.obj
+[99/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\widget\WidgetContainer.cpp.obj
+[100/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\widget\Widget.cpp.obj
+[101/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\widget\WidgetManager.cpp.obj
+[102/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\misc\ResourceManager.cpp.obj
+[103/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\SexyApp.cpp.obj
+[104/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\misc\SEHCatcher.cpp.obj
+[105/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\__\LawnApp.cpp.obj
+[106/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\SexyAppBase.cpp.obj
+[107/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\__\main.cpp.obj
+[108/110] Building CXX object SexyAppFramework\CMakeFiles\LawnProject.dir\platform\windows\Win32App.cpp.obj
+[109/110] Linking CXX executable Release\pvz_perf.exe

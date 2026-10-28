@@ -1421,11 +1421,10 @@ enum StoreItem
     STORE_ITEM_ROOF_CLEANER,
     STORE_ITEM_RAKE,
     STORE_ITEM_AQUARIUM_GARDEN,
-    STORE_ITEM_CHOCOLATE,
+    STORE_ITEM_CHOCOLATE, // Inventory only: fixed saved purchase slot 26; never sold in the shop.
     STORE_ITEM_TREE_OF_WISDOM,
     STORE_ITEM_TREE_FOOD,
     STORE_ITEM_FIRSTAID,
-    STORE_ITEM_PVZ,
     STORE_ITEM_INVALID = -1
 };
 enum StorePages : int

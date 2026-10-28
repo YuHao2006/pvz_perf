@@ -5609,14 +5609,6 @@
               "path": "Store_FirstAidWallnutIcon"
             },
             "children": []
-          },
-          {
-            "tag": "Image",
-            "attrs": {
-              "id": "STORE_PVZICON",
-              "path": "Store_PvZIcon"
-            },
-            "children": []
           }
         ]
       },

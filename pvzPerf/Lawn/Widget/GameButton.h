@@ -58,10 +58,10 @@ public:
 	bool					mFrameNoDraw;					//+0xFA
 	double					mOverAlpha;						//+0x100
 	double					mOverAlphaSpeed;				//+0x108
-	double					mOverAlphaFadeInSpeed;			//+0x110			
-	double					mOverAlphaOrigin = 0;
-	std::uint64_t			mOverAlphaElapsedNs = 0;
-	bool					mOverAlphaTargetOver = false;
+	double					mOverAlphaFadeInSpeed;
+    double mOverAlphaOrigin = 0;
+    double mOverAlphaRate = 0;
+    std::int64_t mOverAlphaStartTimeNs = 0;
 	bool					mDrawStoneButton;				//+0x118
 	int						mTextOffsetX;					//+0x11C
 	int						mTextOffsetY;					//+0x120

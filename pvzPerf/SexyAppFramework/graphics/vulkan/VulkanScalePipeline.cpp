@@ -212,7 +212,11 @@ struct VulkanScalePipeline::Impl {
         if (!scene.image || !scene.view || !scene.width || !scene.height || steps.empty() ||
             !targetW || !targetH || scene.width>INT32_MAX || scene.height>INT32_MAX ||
             targetW>INT32_MAX || targetH>INT32_MAX)
-            throw std::invalid_argument("Invalid scale pipeline input, target or steps");
+            throw std::invalid_argument("Invalid scale pipeline input, target or steps"
+                " (image="+std::to_string(uintptr_t(scene.image))+" view="+std::to_string(uintptr_t(scene.view))+
+                " scene="+std::to_string(scene.width)+"x"+std::to_string(scene.height)+
+                " target="+std::to_string(targetW)+"x"+std::to_string(targetH)+
+                " steps="+std::to_string(steps.size())+")");
         input.native=scene; output=&input;
         VkPhysicalDeviceProperties deviceProps{};
         vkGetPhysicalDeviceProperties(context.physical,&deviceProps);
@@ -226,7 +230,7 @@ struct VulkanScalePipeline::Impl {
                 counts[2]+=uint32_t(pass.mOutputs.size()); counts[3]+=uint32_t(step.effect->mSamplers.size());
             }
         }
-        const VkDescriptorType types[]={VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
+        static constexpr VkDescriptorType types[]={VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
             VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,VK_DESCRIPTOR_TYPE_SAMPLER};
         std::vector<VkDescriptorPoolSize> sizes;
         for (size_t i=0;i<4;++i) if (counts[i]) sizes.push_back({types[i],counts[i]});

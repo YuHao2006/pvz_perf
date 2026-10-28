@@ -1,0 +1,34 @@
+{
+  "comparison.json": {
+    "bytes": 1985,
+    "sha256": "cb86f358abcba468c4b33dddbe9c75d66fcaf8ed922f795adf2137bd4d908e13"
+  },
+  "conditions.json": {
+    "bytes": 1100,
+    "sha256": "6887b0272e2b692f24f2f30be6243a6955ee87fa2a00f754038a0f19d197dcc8"
+  },
+  "measurement.json": {
+    "bytes": 1887,
+    "sha256": "f2b2a369dd7e3ff79fa81b86170197315d068ab22ba6b893be5e32ddab072433"
+  },
+  "original-timeline.png": {
+    "bytes": 261192,
+    "sha256": "b9436e4ade80a626e56cbce6f5aa5be962ca5fffc4e5aca4cd0c1d445b8eae84"
+  },
+  "original-timeline.svg": {
+    "bytes": 134854,
+    "sha256": "313e98d454bf17e9ed134bb24d0005730d01fac0fdba18cabf5a5debf71b2030"
+  },
+  "preparation.json": {
+    "bytes": 627,
+    "sha256": "9dc2dfcabf5a746c4428a81f6d4c537a18aae15b06fcea8b50550e9c5df4ffbf"
+  },
+  "samples.csv": {
+    "bytes": 56921,
+    "sha256": "2bdb105e06d40e4ab70424d16ac20fc2a45ad6aaf927ef563e7134ad3d2b8745"
+  },
+  "summary.json": {
+    "bytes": 771,
+    "sha256": "1ca34e6c4f46198927479fddba26e56b53cf8e03e6385af9c56f6e77bdeb96d1"
+  }
+}

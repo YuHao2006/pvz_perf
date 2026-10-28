@@ -1,0 +1,14 @@
+{
+  "model_basis": "Tests\\evidence\\root-motion-optimization-20261029\\source\\Reanimator.cpp",
+  "model_basis_sha256": "7b8a15a1a4f47834768ede451fe10995012051466515f12a5ffd2d8fc566c928",
+  "benchmark_source_sha256": "b6dc8c23c944645635f589a7321f319d0037e0201e0d4049cda94b050e6fe6d3",
+  "final_game_sha256": "525b3f3c5f20b0ca04695e51db901964eff1bacf09fd6f1fb8f54e037bfcf31f",
+  "before_hot_split_game_sha256": "9d09d5f6ba459d6d379c34fe25643c3a28e8b5f83477e414442a144c9a19b725",
+  "parallel_measurements": false,
+  "process_order": [
+    "final normal kernel order",
+    "final reverse kernel order"
+  ],
+  "affinity": "LP14/0x4000",
+  "cpu_frequency": "11x inherited user control; not independently read"
+}

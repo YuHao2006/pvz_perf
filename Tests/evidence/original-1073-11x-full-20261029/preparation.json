@@ -1,0 +1,13 @@
+{
+  "profile": 1000003,
+  "source_save": "Tests/game3_13.dat",
+  "source_sha256": "a1bbc2f43a129b655f0068de8f28a731f1ef6814170419d3f4ec406436437cf1",
+  "installed_save": "C:\\ProgramData\\PopCap Games\\PlantsVsZombies\\userdata\\game1000003_13.dat",
+  "installed_sha256": "a1bbc2f43a129b655f0068de8f28a731f1ef6814170419d3f4ec406436437cf1",
+  "backup": "C:\\Users\\Administrator\\CLionProjects\\codex\\GpuBenchmarks\\original-11x-20261028-before",
+  "music_volume": 100,
+  "sfx_volume": 65,
+  "muted": false,
+  "wait_for_vsync": false,
+  "stop_policy": "Enter starts after paused-checkpoint validation; Quit stops"
+}

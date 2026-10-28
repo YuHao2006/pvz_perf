@@ -1,0 +1,36 @@
+{
+  "software_version": "3.0 development final microbenchmark round",
+  "save_format": "DAT64 4.0 / schema 0x10745",
+  "affinity": "LP14 / 0x4000",
+  "frequency": "11x user-controlled, not independently sampled",
+  "serial": true,
+  "vulkan_exe_sha256": "4c2ed515e61b58c3d0d4945306d7359e835d37c76cfa4f0418a8fb899b6d6b7c",
+  "dx12_exe_sha256": "a9a64ffd9b4ca2ef5b3449115b9bec2b0cf3ba8c08a251d048b8c91e0360e46d",
+  "pak_sha256": "5bdd71c632d945304ae3752bfed61941bb8c7e4351e616e1ff6fbceab1431545",
+  "source_save_sha256": "a1bbc2f43a129b655f0068de8f28a731f1ef6814170419d3f4ec406436437cf1",
+  "converted_save_sha256": "cb18bdbe8a5104ac16a7aa923bbd350b7780e48f4c26a78c8e690b47adc86541",
+  "sizeof": {
+    "Zombie": 608,
+    "Reanimation": 296,
+    "Plant": 568,
+    "Track": 128,
+    "TodParticle": 184
+  },
+  "side_cache_bytes_per_data": 16384,
+  "source_sha256": {
+    "pvzPerf/Sexy.TodLib/Reanimator.h": "bc48c51824607622ce2d4e5901d90b24912b49b5f9f777be8e26f36c5cc3ab8a",
+    "pvzPerf/Sexy.TodLib/Reanimator.cpp": "161fddb8d341a9e1ed281712558aca805d64ccd2a33e0c225c244bf1dea90a84",
+    "pvzPerf/Lawn/Zombie.h": "8ad840e9f0eaa6c8bab156c119ff566196011cccbf582b2f28d724e405f8a510",
+    "pvzPerf/Lawn/Zombie.cpp": "f0e21005f313eb893dc02bc789f70f0419b9ba00c7618d19b3178d274e6635bd",
+    "pvzPerf/Sexy.TodLib/TodParticle.h": "d68092b0e86d74d36070d5d81fbeae278574e3c00b54ebf6e034c91e06340ff3",
+    "pvzPerf/Sexy.TodLib/TodParticle.cpp": "282399882b2e3bcbb571129ec1613e2c0db3463d2b3518631693cbc66ea95421",
+    "pvzPerf/Sexy.TodLib/ParticleLifetime.cpp": "dca78e43d5fd66ee213f75f1d5ba0022c06cc953ead45ceaf66e344a3b985ce5",
+    "pvzPerf/Lawn/Board.cpp": "13e20d665441941dcbc21601dee3a7dc43906192752ca418a6d84c6f69757b08",
+    "pvzPerf/Lawn/System/SaveGame.cpp": "86b91667daac10fd4fbb11f5f62af9949680087af53446877ce5f6743eccc050",
+    "pvzPerf/Lawn/System/SaveRecordMapping.h": "205805b934c3527d6f349341cdce013b97bfba6883ef74381435ea03cf0cbeb6",
+    "pvzPerf/Lawn/System/V7SaveSchema.h": "93a749767d7d2e3107f735a6dc335a77a9a32c566bfc2cbfe40934e457da9d4b",
+    "pvzPerf/Lawn/Plant.cpp": "0f53b6157630a2b5ef9acd3953364fbf4c1c6784796afc8d8670e64b6fb453eb",
+    "pvzPerf/SexyAppFramework/SexyAppBase.cpp": "77188532bab3e376c969b3f4211b3a9bb8035d527185345dadb5f7bd119913a5"
+  },
+  "endless_status": "prepared after microbenchmarks; not measured yet"
+}

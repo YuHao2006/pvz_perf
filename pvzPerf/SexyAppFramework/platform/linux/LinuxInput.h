@@ -2,6 +2,7 @@
 
 namespace Sexy::NativeInput {
 static_assert(sizeof(unsigned int) == 4);
+
 static_assert(sizeof(unsigned long long) == 8);
 
 // XKB keysyms to the framework's stable KeyCode numbers. Character input stays
@@ -96,4 +97,13 @@ struct InputClock {
     }
 };
 
+// 平台原生键码 → 引擎 KeyCode 的唯一转换点；Linux 原生键 = XKB keysym。
+// GameKeyFromXkb 本身 constexpr，此处零运行时开销直通。
+// Android 包含本头文件（LinuxApp.cpp 共用），其映射在 AndroidWindow.h。
+#if !defined(__ANDROID__)
+constexpr unsigned EngineKeyFromNative(unsigned symbol)
+{
+    return GameKeyFromXkb(symbol);
+}
+#endif
 } // namespace Sexy::NativeInput

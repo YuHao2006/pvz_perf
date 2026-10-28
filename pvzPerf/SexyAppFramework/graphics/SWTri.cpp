@@ -507,7 +507,7 @@ namespace Sexy
 static void SWTri_AddAllDrawTriFuncs();
 }
 
-void Sexy::SWTri_AddAllDrawTriFuncs()
+[[maybe_unused]] void Sexy::SWTri_AddAllDrawTriFuncs()
 {
 	gDrawTriFunc[0] = DrawTriangle_8888_TEX0_TALPHA0_MOD0_GLOB0_BLEND0;
 	gDrawTriFunc[1] = DrawTriangle_8888_TEX0_TALPHA0_MOD0_GLOB0_BLEND1;

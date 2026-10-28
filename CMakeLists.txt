@@ -34,6 +34,17 @@ if(CMAKE_HOST_APPLE AND NOT DEFINED CMAKE_OSX_ARCHITECTURES)
     set(CMAKE_OSX_ARCHITECTURES arm64 CACHE STRING "macOS target architecture")
 endif()
 project(PlantsVsZombies C CXX)
+if(ANDROID OR CMAKE_SYSTEM_NAME STREQUAL "Android")
+    # Use full LTO for Android Release IPO targets, including the final link.
+    # Clang's CMake defaults otherwise select ThinLTO.
+    foreach(PVZ_LTO_LANGUAGE IN ITEMS C CXX)
+        set(CMAKE_${PVZ_LTO_LANGUAGE}_COMPILE_OPTIONS_IPO "-flto=full")
+        set(CMAKE_${PVZ_LTO_LANGUAGE}_LINK_OPTIONS_IPO "-flto=full")
+    endforeach()
+    add_compile_options(-Wno-invalid-offsetof -Wno-inconsistent-missing-override
+        -Wno-missing-field-initializers -Wno-unused-parameter
+        -Wno-misleading-indentation -Wno-sign-compare -Wno-unused-variable)
+endif()
 if(APPLE)
     enable_language(OBJCXX)
     # AppleClang accepts C++23 in .mm files; older CMake tables omit the flags.
@@ -86,11 +97,6 @@ else()
 endif()
 set(PVZ_RENDER_BACKEND "${_PVZ_DEFAULT_RENDER_BACKEND}" CACHE STRING "Native graphics backend")
 set_property(CACHE PVZ_RENDER_BACKEND PROPERTY STRINGS VULKAN D3D12 METAL OPENGL D3D9)
-option(PVZ_EXPERIMENTAL_GPU_REANIM
-    "Enable resident reanimation drawing (experimental; performance gate not met)" OFF)
-if(PVZ_EXPERIMENTAL_GPU_REANIM AND NOT PVZ_RENDER_BACKEND MATCHES "^(VULKAN|OPENGL|D3D12|METAL)$")
-    message(FATAL_ERROR "PVZ_EXPERIMENTAL_GPU_REANIM currently requires Vulkan, OpenGL, D3D12 or Metal")
-endif()
 set(PVZ_CONFIG_WINDOWS_API NotApplicable)
 if(WIN32)
     set(PVZ_WINDOWS_PLATFORM "WIN10" CACHE STRING "Windows API baseline")
@@ -321,7 +327,17 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 # Sub-projects
 ################################################################################
 if(PVZ_BUILD_DAT64_CONVERTER)
-    add_subdirectory(tools/saveConverter/src tools/saveConverter/build)
+    if(ANDROID OR CMAKE_SYSTEM_NAME STREQUAL "Android")
+        set(PVZ_DAT64_CONVERTER_HOST "${CMAKE_SOURCE_DIR}/out/x64-win32-vulkan/tools/saveConverter/build/pvz_dat64_converter.exe"
+            CACHE FILEPATH "Host dat64 converter used while cross-compiling Android")
+        if(NOT EXISTS "${PVZ_DAT64_CONVERTER_HOST}")
+            message(FATAL_ERROR "Android builds need a host pvz_dat64_converter.exe: ${PVZ_DAT64_CONVERTER_HOST}")
+        endif()
+        add_executable(pvz_dat64_converter IMPORTED GLOBAL)
+        set_target_properties(pvz_dat64_converter PROPERTIES IMPORTED_LOCATION "${PVZ_DAT64_CONVERTER_HOST}")
+    else()
+        add_subdirectory(tools/saveConverter/src tools/saveConverter/build)
+    endif()
 endif()
 
 if(PVZ_BUILD_LEGACY_GAME)
@@ -462,31 +478,31 @@ if(BUILD_TESTING)
     target_link_libraries(pvz_game_viewport_tests PRIVATE pvz_source_headers)
     target_compile_features(pvz_game_viewport_tests PRIVATE cxx_std_23)
     add_test(NAME pvz_game_viewport COMMAND pvz_game_viewport_tests)
-    add_executable(pvz_frame_timing_tests EXCLUDE_FROM_ALL Tests/native/FrameTimingTests.cpp)
+    add_executable(pvz_frame_timing_tests EXCLUDE_FROM_ALL Tests/native/FrameTimingTests.cpp
+        pvzPerf/SexyAppFramework/misc/FrameTiming.cpp)
     target_link_libraries(pvz_frame_timing_tests PRIVATE pvz_source_headers)
     target_compile_features(pvz_frame_timing_tests PRIVATE cxx_std_23)
     add_test(NAME pvz_frame_timing COMMAND pvz_frame_timing_tests)
+    add_executable(pvz_slot_machine_clock_tests EXCLUDE_FROM_ALL
+        Tests/native/SlotMachineClockTests.cpp pvzPerf/Lawn/SlotMachineMotion.cpp)
+    target_link_libraries(pvz_slot_machine_clock_tests PRIVATE pvz_source_headers)
+    target_compile_features(pvz_slot_machine_clock_tests PRIVATE cxx_std_23)
+    add_test(NAME pvz_slot_machine_clock COMMAND pvz_slot_machine_clock_tests)
     add_executable(pvz_reanim_clock_tests EXCLUDE_FROM_ALL Tests/native/ReanimClockTests.cpp)
     target_compile_features(pvz_reanim_clock_tests PRIVATE cxx_std_23)
     add_test(NAME pvz_reanim_clock COMMAND pvz_reanim_clock_tests)
     add_executable(pvz_plant_launch_clock_tests EXCLUDE_FROM_ALL Tests/native/PlantLaunchClockTests.cpp)
     target_compile_features(pvz_plant_launch_clock_tests PRIVATE cxx_std_23)
     add_test(NAME pvz_plant_launch_clock COMMAND pvz_plant_launch_clock_tests)
-    add_executable(pvz_projectile_motion_tests EXCLUDE_FROM_ALL Tests/native/ProjectileMotionTests.cpp)
-    target_include_directories(pvz_projectile_motion_tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/pvzPerf")
-    target_compile_features(pvz_projectile_motion_tests PRIVATE cxx_std_23)
-    add_test(NAME pvz_projectile_motion COMMAND pvz_projectile_motion_tests)
-    add_executable(pvz_exponential_curve_tests EXCLUDE_FROM_ALL Tests/native/ExponentialCurveTests.cpp)
-    target_include_directories(pvz_exponential_curve_tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/pvzPerf")
-    target_compile_features(pvz_exponential_curve_tests PRIVATE cxx_std_23)
-    add_test(NAME pvz_exponential_curve COMMAND pvz_exponential_curve_tests)
-    add_executable(pvz_magnet_motion_tests EXCLUDE_FROM_ALL Tests/native/MagnetMotionTests.cpp)
+    add_executable(pvz_magnet_motion_tests EXCLUDE_FROM_ALL Tests/native/MagnetMotionTests.cpp
+        pvzPerf/Lawn/MagnetMotion.cpp)
     target_include_directories(pvz_magnet_motion_tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/pvzPerf")
     target_compile_features(pvz_magnet_motion_tests PRIVATE cxx_std_23)
     add_test(NAME pvz_magnet_motion COMMAND pvz_magnet_motion_tests)
     add_executable(pvz_particle_v7_tests EXCLUDE_FROM_ALL
         Tests/native/ParticleV7Tests.cpp
         pvzPerf/Sexy.TodLib/TodParticle.cpp
+        pvzPerf/Sexy.TodLib/ParticleLifetime.cpp
         pvzPerf/Sexy.TodLib/Definition.cpp
         pvzPerf/SexyAppFramework/graphics/Color.cpp)
     add_executable(pvz_particle_compiled_tests EXCLUDE_FROM_ALL
@@ -511,6 +527,9 @@ if(BUILD_TESTING)
     endif()
     add_test(NAME pvz_particle_v7 COMMAND pvz_particle_v7_tests)
     add_executable(pvz_time_counter_save_tests EXCLUDE_FROM_ALL Tests/native/TimeCounterSaveTests.cpp
+        pvzPerf/Lawn/System/SaveClockProjection.cpp
+        pvzPerf/Lawn/SlotMachineMotion.cpp
+        pvzPerf/Sexy.TodLib/ParticleLifetime.cpp
         pvzPerf/SexyAppFramework/graphics/Color.cpp)
     target_link_libraries(pvz_time_counter_save_tests PRIVATE pvz_source_headers)
     target_compile_features(pvz_time_counter_save_tests PRIVATE cxx_std_23)

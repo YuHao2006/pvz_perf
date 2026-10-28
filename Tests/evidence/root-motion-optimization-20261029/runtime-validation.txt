@@ -1,0 +1,65 @@
+StaticDefinitionRuntimeTests.cpp
+正在生成代码
+已完成代码的生成
+PASS actual Process: 30/60/100/240/10000 FPS, elapsed-time conservation, <=10ms steps and per-batch drawing
+PASS production curves: nanoseconds, extreme epochs, signed and reversed ranges, zero-duration steps, 13 endpoint contracts, integer rounding and double progress
+PASS production reanimation integer playback, original-speed roots, clipped roots, rate continuity, hold, synchronization, and partition-independent events
+PASS raw level-clock consumers: variable-step boundary events, zero-step stability, float drawing
+PASS actual mower/brain motion: original 100Hz chomp samples, actual-step accumulation, repeated-collision resets, direct reposition, pool altitude boundaries and brain behavior; 1/30/60/100/144/200/240/1000Hz/random
+PASS actual Plant launch deadlines: ns randomness, exact partitions, paused remaining time
+PASS actual Gloom/Gatling cadence: original deadlines and four pulse instants, Gloom seven volleys in 12s, at 30/100/144/200/1000Hz and irregular steps; Repeater/Cattail secondary deadlines preserve 1073 overlap
+PASS actual giant bowling collision: one million damage per outer step, including a one-nanosecond step, without a cooldown
+PASS actual projectile: 9 discrete modes, roofs/high gravity, 8 schedules, cob transition, portal motion, homing steering/hits, Snowpea/Kernel damage and chill
+PASS actual Plant bowling / Zombie walking: float coordinates, source roots, canonical bounce / row bucket, teleport rebinding and exact partition states
+PASS production curves: nanoseconds, extreme epochs, signed and reversed ranges, zero-duration steps, 13 endpoint contracts, integer rounding and double progress
+PASS production reanimation integer playback, original-speed roots, clipped roots, rate continuity, hold, synchronization, and partition-independent events
+PASS full 144/106 catalogs: stable roots/tracks/fields/nodes/rectangles/actions, two release/reload cycles, repeated bulk loads, 193 shared GPU atlases, real consumers, independent kind release and pixels, pending worker assignment cancellation
+
+PASS lifecycle resource plans
+PASS lifecycle definitions loaded: repeat 0
+PASS lifecycle curve timing
+PASS lifecycle reanimation playback
+PASS actor fixture production fonts
+PASS actor fixture production Board images
+PASS actor fixture real effect pools
+PASS actor fixture real Board construction
+PASS changing-rate linear segments: exact binary oracle, zero steps, teleport, invalidation, nonlinear handoff and native save continuation
+PASS actual analytic Coin/Sun falling and wall events
+PASS actual analytic mower motion, pool height and brain falling
+PASS actual Zombie altitude: 14 paths, roof Imp, combined Balloon, save continuation
+PASS fresh/moving zero-travel vault and full roof Imp position updates at 100/240/480Hz
+PASS actual Zamboni discrete movement, timestamp tire speed and save continuation
+PASS discrete slot100Hz original phase/RNG and other-frequency legal completion
+PASS actual pickup discrete nanosecond steps / 1073 thresholds / native save continuation / destination changes
+PASS actual magnet equipment transfer: seven source tracks, scaled/mirrored poses, placed ladder
+PASS actual discrete inverse-square magnet / sub-second capture / save continuation
+PASS actor bowling reference: seed 3
+PASS actor bowling reference: seed 50
+PASS actor walking reference
+PASS lifecycle actor coordinates
+PASS lifecycle real consumers
+PASS lifecycle definitions loaded: repeat 1
+PASS lifecycle curve timing
+PASS lifecycle reanimation playback
+PASS lifecycle real consumers
+
+PASS actual Process: 30/60/100/240/10000 FPS, elapsed-time conservation, <=10ms steps and per-batch drawing
+Expected missing rejection: definition atlas PNG dimensions mismatch: compiled/atlases/potato_mine.atlas.png
+Expected missing rejection: definition atlas PNG dimensions mismatch: compiled/atlases/potato_mine.atlas.png
+Expected missing rejection: definition atlas PNG dimensions mismatch: compiled/atlases/potato_mine.atlas.png
+PASS missing: repeated particle rollback, lazy reanimation rejection, clean release, same-process intact-PNG recovery and full catalog reload
+
+PASS actual Process: 30/60/100/240/10000 FPS, elapsed-time conservation, <=10ms steps and per-batch drawing
+Expected corrupt rejection: definition atlas PNG dimensions mismatch: compiled/atlases/potato_mine.atlas.png
+Expected corrupt rejection: definition atlas PNG dimensions mismatch: compiled/atlases/potato_mine.atlas.png
+Expected corrupt rejection: definition atlas PNG dimensions mismatch: compiled/atlases/potato_mine.atlas.png
+PASS corrupt: repeated particle rollback, lazy reanimation rejection, clean release, same-process intact-PNG recovery and full catalog reload
+
+PASS actual Process: 30/60/100/240/10000 FPS, elapsed-time conservation, <=10ms steps and per-batch drawing
+Expected wrong-dimension rejection: definition atlas PNG dimensions mismatch: compiled/atlases/potato_mine.atlas.png
+Expected wrong-dimension rejection: definition atlas PNG dimensions mismatch: compiled/atlases/potato_mine.atlas.png
+Expected wrong-dimension rejection: definition atlas PNG dimensions mismatch: compiled/atlases/potato_mine.atlas.png
+PASS wrong-dimension: repeated particle rollback, lazy reanimation rejection, clean release, same-process intact-PNG recovery and full catalog reload
+
+PASS all four static definition runtime cases. Evidence: C:\Users\Administrator\AppData\Local\Temp\pvz-root-optimization-20261029\runtime
+Original package SHA256 unchanged: 5BDD71C632D945304AE3752BFED61941BB8C7E4351E616E1FF6FBCEAB1431545

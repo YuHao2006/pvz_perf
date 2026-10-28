@@ -1,0 +1,24 @@
+{
+  "scope": "CPU preparation before Vulkan drawing; shader, draw order, buffer capacity/index width, simulation and save format unchanged",
+  "changes": [
+    "Whole-inside transformed quads bypass polygon clipping; common-outside quads reject; partial quads preserve original clipping and fan order",
+    "DrawTrack rejects nondrawing metadata before interpolation and blank variants before matrices, preserving alpha/attachment return semantics"
+  ],
+  "verification": {
+    "clip_readbacks": 126,
+    "clip_bytes_compared": 1311696,
+    "reanim_readbacks": 137,
+    "reanim_bytes_compared": 1322344,
+    "result": "bitwise-equal GPU readbacks; complete before/after image runtime suites pass",
+    "arm_dense_screenshot": "Experimental center-fold only, not production; excluded from this change proof"
+  },
+  "files": {
+    "baseline-full.txt": "80730ee7fffec96525ccc486096b9f078bc1953c335b756f851400b443ab6a71",
+    "fast-full-corrected.txt": "3e4f8b8347b977a2e64dc0c1090827f707f8f6b140630ac138ec1e709a15e86e",
+    "focused-pixel-comparison.json": "1092273a701de0802810396e0d2c1d02d0c7c2e48baaa4705ac21e10f02bff17",
+    "reanim-before-full.txt": "3e4f8b8347b977a2e64dc0c1090827f707f8f6b140630ac138ec1e709a15e86e",
+    "reanim-after-full.txt": "df1eccc1a3a7bb17506400fae4003d106ff1bec3f5e9501c10ea158f8d1c2af6",
+    "reanim-focused-pixel-comparison.json": "7b8a84e1135d34a83a05cb6d465454797de57c37385c5ec027dfbace3a6893f6"
+  },
+  "performance": "Unlocked-clock observations remain in external interim benchmark data, not formal performance totals."
+}

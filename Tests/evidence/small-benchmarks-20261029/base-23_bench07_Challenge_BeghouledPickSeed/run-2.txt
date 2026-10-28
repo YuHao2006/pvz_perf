@@ -1,0 +1,1 @@
+Challenge::BeghouledPickSeed | before 120.09 ns | after 57.82 ns | diff -51.9% | csA=7e024e7a32b13c00 csB=7e024e7a32b13c00 checksum=OK

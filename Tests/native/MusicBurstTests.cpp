@@ -2,6 +2,7 @@
 // definitions by tools/native-tests/test_music_burst.py. Playback and the board
 // are deterministic doubles; timer storage and all controller code are real.
 #include "Lawn/System/Music.h"
+#include "Sexy.TodLib/ReanimClock.h"
 #include <algorithm>
 #include <array>
 #include <iostream>
@@ -17,12 +18,14 @@ class Board
 {
 public:
     int zombies = 10;
+    bool mPaused = false;
     int CountZombiesOnScreen() const { return zombies; }
 };
 class LawnApp
 {
 public:
     Board* mBoard = nullptr;
+    std::int64_t mApplicationTimeNs = 0;
     GameMode mGameMode = GameMode::GAMEMODE_ADVENTURE;
 };
 namespace Sexy
@@ -30,8 +33,8 @@ namespace Sexy
 class MusicInterface
 {
 public:
-    std::array<double, 6> volume{};
-    void SetSongVolume(int file, double gain) { volume.at(file) = gain; }
+    std::array<float, 6> volume{};
+    void SetSongVolume(int file, float gain) { volume.at(file) = gain; }
 };
 struct TestPlayback
 {
@@ -72,9 +75,16 @@ Music::Music()
     mBurstOverride = -1;
     mMusicBurstState = MUSIC_BURST_OFF;
     mMusicDrumsState = MUSIC_DRUMS_OFF;
-    mBurstStateCounter = 0;
-    mDrumsStateCounter = 0;
+    mBurstEndTimeNs = 0;
+    mDrumsEndTimeNs = 0;
     mQueuedDrumTrackPackedOrder = -1;
+    mMusicDisabled = false;
+    mLastUpdateTimeNs = 0;
+    mFadeOutEndTimeNs = 0;
+    mFadeOutDurationNs = 0;
 }
 
 // The runner appends production controller definitions here.
+
+void Music::MusicResync() {}
+void Music::StopAllMusic() { mFadeOutEndTimeNs = 0; }

@@ -1,4 +1,5 @@
 #include "Coin.h"
+#include "Sexy.TodLib/ReanimClock.h"
 #include "Board.h"
 #include "Cutscene.h"
 #include "ZenGarden.h"
@@ -18,12 +19,9 @@
 #include "Sexy.TodLib/Reanimator.h"
 #include "Sexy.TodLib/Attachment.h"
 #include "Sexy.TodLib/EffectSystem.h"
-#include "Sexy.TodLib/ExponentialCurve.h"
 #include "Widget/AchievementsWidget.h"
 #include <array>
 #include <cmath>
-#include <limits>
-#include <stdexcept>
 
 // 礼物植物候选表：各背景礼盒开出的盆栽种子（原版五连 else-if 各内联一张数组）。
 // 未列背景（Boss/蘑菇园/温室/水族箱/树智慧）为 nullptr 行——走禅意花园随机
@@ -186,11 +184,11 @@ void Coin::CoinInitialize(int theX, int theY, CoinType theCoinType, CoinMotion t
 	mDead = false;
 	mWidth = 60;
 	mHeight = 60;
-	mDisappearCounter = 0;
+	mDisappearStartTimeNs = INT64_MAX;
 	mIsBeingCollected = false;
-	mFadeCount = 0;
+	mFadeEndTimeNs = 0;
 	mCoinMotion = theCoinMotion;
-	mCoinAge = 0;
+	mBirthTimeNs = mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs;
 	mAttachmentID = AttachmentID::ATTACHMENTID_NULL;
 	mRenderOrder = Board::MakeRenderOrder(RenderLayer::RENDER_LAYER_COIN_BANK, 0, 1);
     mScale = 1.0f;
@@ -366,8 +364,6 @@ void Coin::CoinInitialize(int theX, int theY, CoinType theCoinType, CoinMotion t
         aScale = 1.0f;
     }
     mScale *= aScale;
-    mFallScaleOrigin = mScale;
-    mFallScaleElapsedNs = 0;
 
     if (CoinGetsBouncyArrow())
     {
@@ -377,13 +373,6 @@ void Coin::CoinInitialize(int theX, int theY, CoinType theCoinType, CoinMotion t
     if (mCoinMotion != CoinMotion::COIN_MOTION_FROM_PRESENT)
     {
         PlayLaunchSound();
-    }
-    if (!mIsBeingCollected)
-    {
-        mCollectX = mPosX;
-        mCollectY = mPosY;
-        mFallVelocityX = mVelX;
-        mFallVelocityY = mVelY;
     }
 }
 
@@ -447,156 +436,61 @@ void Coin::ScoreCoin()
 
 void Coin::UpdateFade()
 {
+    const auto nowNs=mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs;
     if (mApp->IsEndlessIZombie(mApp->mGameMode) || mApp->IsEndlessScaryPotter(mApp->mGameMode) || mType == CoinType::COIN_NOTE || !IsLevelAward())
     {
-        mFadeCount--;
-        if (mFadeCount == 0)
+        if (nowNs >= mFadeEndTimeNs)
         {
             Die();
         }
     }
+    else if(mFadeEndTimeNs!=0)
+        mFadeEndTimeNs=ReanimClock::Add(mFadeEndTimeNs,static_cast<std::int64_t>(Sexy::gUpdateIntervalNs));
 }
 
 //0x430AC0
 void Coin::UpdateFall()
 {
-    constexpr std::uint64_t tickNs = 10'000'000;
-    const auto deltaNs = std::min<std::uint64_t>(Sexy::gUpdateIntervalNs, INT64_MAX);
-    const bool present = mCoinMotion == CoinMotion::COIN_MOTION_FROM_PRESENT;
-    const double acceleration = mCoinMotion == CoinMotion::COIN_MOTION_FROM_PLANT ? double(0.09f) :
-        mCoinMotion == CoinMotion::COIN_MOTION_COIN ||
-        mCoinMotion == CoinMotion::COIN_MOTION_FROM_BOSS ? double(0.15f) : 0.0;
-    const auto checked = [](double value)
+    const auto nowNs=mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs;
+    if (Sexy::gUpdateIntervalNs == 0) return;
+    bool disappearActive=false;
+    if (mCoinMotion == CoinMotion::COIN_MOTION_FROM_PRESENT)
     {
-        if (!std::isfinite(value) || std::fabs(value) > std::numeric_limits<float>::max())
-            throw std::overflow_error("Coin falling sample exceeds float range");
-        return static_cast<float>(value);
-    };
-    const auto sample = [&](std::uint64_t elapsed)
-    {
-        const double ticks = double(elapsed) / tickNs;
-        if (present)
-        {
-            constexpr double decay = double(0.95f);
-            const double factor = TodExponentialCurve<decay>(elapsed);
-            const double distance = (1.0 - factor) / (1.0 - decay);
-            return std::array<float, 4>{checked(mCollectX + double(mFallVelocityX) * distance),
-                checked(mCollectY + double(mFallVelocityY) * distance),
-                checked(double(mFallVelocityX) * factor), checked(double(mFallVelocityY) * factor)};
-        }
-        return std::array<float, 4>{checked(mCollectX + double(mFallVelocityX) * ticks),
-            checked(mCollectY + double(mFallVelocityY) * ticks + acceleration * ticks * (ticks - 1.0) * 0.5),
-            mFallVelocityX, checked(mFallVelocityY + acceleration * ticks)};
-    };
-    const auto rebind = [&]
-    {
-        mCollectX = mPosX;
-        mCollectY = mPosY;
-        mFallVelocityX = mVelX;
-        mFallVelocityY = mVelY;
-        mDisappearCounter = 0;
-    };
-    bool onGround = !present && mHitGround && mPosY == mGroundY && mVelY >= 0;
-    std::uint64_t groundAdvanceNs = deltaNs;
-    if (!onGround)
-    {
-        auto elapsed = static_cast<std::uint64_t>(std::max<std::int64_t>(0, mDisappearCounter.mNanoseconds));
-        if (mDisappearCounter.mNanoseconds < 0 ||
-            sample(elapsed) != std::array<float, 4>{mPosX, mPosY, mVelX, mVelY})
-        {
-            // Relocation, velocity edits, a different motion branch or a save
-            // without this segment's origin starts a new, explicit trajectory.
-            rebind();
-            elapsed = 0;
-        }
-        if (deltaNs > std::uint64_t(INT64_MAX) - elapsed)
-            throw std::overflow_error("Coin falling interval exceeds clock range");
-        auto end = elapsed + deltaNs;
-        for (;;)
-        {
-            // Events use the original 10ms recurrence. At integer n:
-            // y(n)=y0+n*v0+a*n*(n-1)/2; velocity is updated after movement.
-            // Landing skips that tick's x movement, exactly as in 1073.
-            const auto eventTime = [](double ticks)
-            {
-                if (!std::isfinite(ticks) || ticks > double(INT64_MAX / tickNs))
-                    return UINT64_MAX;
-                return static_cast<std::uint64_t>(std::max(1.0, ticks)) * tickNs;
-            };
-            const auto yAt = [&](double ticks)
-            {
-                return mCollectY + double(mFallVelocityY) * ticks +
-                    acceleration * ticks * (ticks - 1.0) * 0.5;
-            };
-            auto landing = UINT64_MAX;
-            if (!present)
-            {
-                double ticks = std::numeric_limits<double>::infinity();
-                if (yAt(1) >= mGroundY) ticks = 1;
-                else if (acceleration > 0)
-                {
-                    const double linear = double(mFallVelocityY) - acceleration * 0.5;
-                    const double root = (-linear + std::sqrt(linear * linear +
-                        2.0 * acceleration * (double(mGroundY) - mCollectY))) / acceleration;
-                    ticks = std::max(1.0, std::ceil(root));
-                }
-                else if (mFallVelocityY > 0)
-                    ticks = std::max(1.0, std::ceil((double(mGroundY) - mCollectY) / mFallVelocityY));
-                if (std::isfinite(ticks))
-                {
-                    if (ticks > 1 && yAt(ticks - 1) >= mGroundY) --ticks;
-                    if (yAt(ticks) < mGroundY) ++ticks;
-                    landing = eventTime(ticks);
-                }
-            }
-            auto wall = UINT64_MAX;
-            bool right = false;
-            if (!present && mFallVelocityX > 0 && mCoinMotion != CoinMotion::COIN_MOTION_FROM_BOSS)
-            {
-                wall = eventTime(std::floor((double(BOARD_WIDTH - mWidth) - mCollectX) / mFallVelocityX) + 1);
-                right = true;
-            }
-            else if (!present && mFallVelocityX < 0)
-                wall = eventTime(std::floor(-double(mCollectX) / mFallVelocityX) + 1);
-            if (landing <= end && landing <= wall)
-            {
-                const auto before = sample(landing - tickNs);
-                mPosX = before[0];
-                mPosY = mGroundY;
-                mVelX = before[2];
-                mVelY = before[3];
-                groundAdvanceNs = end - landing + tickNs;
-                mDisappearCounter = 0;
-                onGround = true;
-                break;
-            }
-            if (wall <= end)
-            {
-                const auto atWall = sample(wall);
-                mPosX = right ? BOARD_WIDTH - mWidth : 0.0f;
-                mPosY = atWall[1];
-                mVelX = right ? -0.4f - RandRangeFloat(0.0f, 0.4f) : 0.4f + RandRangeFloat(0.0f, 0.4f);
-                mVelY = atWall[3];
-                rebind();
-                end -= wall;
-                continue;
-            }
-            const auto current = sample(end);
-            mPosX = current[0]; mPosY = current[1];
-            mVelX = current[2]; mVelY = current[3];
-            mDisappearCounter.AddNanoseconds(static_cast<std::int64_t>(end) -
-                mDisappearCounter.mNanoseconds);
-            break;
-        }
-    }
-    if (present)
-    {
-        if (mCoinAge >= 80)
+        mPosX += Sexy::UpdateDelta(mVelX);
+        mPosY += Sexy::UpdateDelta(mVelY);
+        const float decay = std::max(0.0f, 1.0f - Sexy::UpdateDelta(0.05f));
+        mVelX *= decay;
+        mVelY *= decay;
+        if (ReanimClock::Subtract(nowNs,mBirthTimeNs) >= 800'000'000)
         {
             Collect();
         }
     }
-    else if (onGround)
+    else if (mPosY + Sexy::UpdateDelta(mVelY) < mGroundY)
+    {
+        mPosY += Sexy::UpdateDelta(mVelY);
+        if (mCoinMotion == CoinMotion::COIN_MOTION_FROM_PLANT)
+        {
+            mVelY += Sexy::UpdateDelta(0.09f);
+        }
+        else if (mCoinMotion == CoinMotion::COIN_MOTION_COIN || mCoinMotion == CoinMotion::COIN_MOTION_FROM_BOSS)
+        {
+            mVelY += Sexy::UpdateDelta(0.15f);
+        }
+
+        mPosX += Sexy::UpdateDelta(mVelX);
+        if (mPosX > BOARD_WIDTH - mWidth && mCoinMotion != CoinMotion::COIN_MOTION_FROM_BOSS)
+        {
+            mPosX = BOARD_WIDTH - mWidth;
+            mVelX = -0.4f - RandRangeFloat(0.0f, 0.4f);
+        }
+        else if (mPosX < 0.0f)
+        {
+            mPosX = 0.0f;
+            mVelX = 0.4f + RandRangeFloat(0.0f, 0.4f);
+        }
+    }
+    else
     {
         if (mNeedsBouncyArrow && !mHasBouncyArrow)
         {
@@ -680,10 +574,12 @@ void Coin::UpdateFall()
         {
             if (!IsLevelAward() && !IsPresentWithAdvice())
             {
-                mDisappearCounter.AddNanoseconds(static_cast<std::int64_t>(groundAdvanceNs));
-                if (mDisappearCounter >= GetDisappearTime())
+                disappearActive=true;
+                if(mDisappearStartTimeNs==INT64_MAX)
+                    mDisappearStartTimeNs=ReanimClock::Subtract(nowNs,static_cast<std::int64_t>(Sexy::gUpdateIntervalNs));
+                if (ReanimClock::Subtract(nowNs,mDisappearStartTimeNs) >= static_cast<std::int64_t>(GetDisappearTime())*10'000'000)
                 {
-                    mFadeCount = 15;
+                    mFadeEndTimeNs = ReanimClock::Add(nowNs,150'000'000);
                 }
             }
         }
@@ -691,40 +587,31 @@ void Coin::UpdateFall()
 
     if (mCoinMotion == CoinMotion::COIN_MOTION_FROM_PLANT)
     {
-        const float aFinalScale = GetSunScale();
-        const auto scaleAt = [&](std::uint64_t elapsed)
+        float aFinalScale = GetSunScale();
+        if (mScale < aFinalScale)
         {
-            return std::min(aFinalScale, checked(double(mFallScaleOrigin) +
-                double(0.02f) * (double(elapsed) / tickNs)));
-        };
-        if (mScale != scaleAt(mFallScaleElapsedNs))
-        {
-            mFallScaleOrigin = mScale;
-            mFallScaleElapsedNs = 0;
-        }
-        if (mFallScaleOrigin < aFinalScale)
-        {
-            // Save the same endpoint time even if an outer update spans the
-            // cap, or float rounding displays the final scale just before it.
-            const double endNs = std::ceil((double(aFinalScale) - mFallScaleOrigin) *
-                tickNs / double(0.02f));
-            const auto limit = endNs >= double(UINT64_MAX) ? UINT64_MAX :
-                static_cast<std::uint64_t>(endNs);
-            const auto remaining = limit - std::min(limit, mFallScaleElapsedNs);
-            mFallScaleElapsedNs = std::min(limit, mFallScaleElapsedNs) + std::min(deltaNs, remaining);
-            mScale = scaleAt(mFallScaleElapsedNs);
+            mScale = std::min(aFinalScale, mScale + Sexy::UpdateDelta(0.02f));
         }
         else
         {
             mScale = aFinalScale;
         }
     }
+    if(!disappearActive && mDisappearStartTimeNs!=INT64_MAX)
+        mDisappearStartTimeNs=ReanimClock::Add(mDisappearStartTimeNs,static_cast<std::int64_t>(Sexy::gUpdateIntervalNs));
+
 }
 
 //0x430E40
 // GOTY @Patoke: 0x433BD0
 void Coin::UpdateCollected()
 {
+    const auto nowNs=mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs;
+    if (Sexy::gUpdateIntervalNs == 0) return;
+    const bool disappearActive=mType==CoinType::COIN_AWARD_PRESENT || mType==CoinType::COIN_PRESENT_PLANT ||
+        mType==CoinType::COIN_USABLE_SEED_PACKET || IsLevelAward();
+    if(!disappearActive && mDisappearStartTimeNs!=INT64_MAX)
+        mDisappearStartTimeNs=ReanimClock::Add(mDisappearStartTimeNs,static_cast<std::int64_t>(Sexy::gUpdateIntervalNs));
     int aDestX, aDestY;
     if (IsSun())
     {
@@ -753,10 +640,11 @@ void Coin::UpdateCollected()
     }
     else if(mType == CoinType::COIN_AWARD_PRESENT || mType == CoinType::COIN_PRESENT_PLANT)
     {
-        mDisappearCounter++;
-        if (mDisappearCounter >= 200)
+        if(mDisappearStartTimeNs==INT64_MAX)
+            mDisappearStartTimeNs=ReanimClock::Subtract(nowNs,static_cast<std::int64_t>(Sexy::gUpdateIntervalNs));
+        if (ReanimClock::Subtract(nowNs,mDisappearStartTimeNs) >= 2'000'000'000)
         {
-            mFadeCount = 15;
+            mFadeEndTimeNs = ReanimClock::Add(nowNs,150'000'000);
         }
 
         return;
@@ -765,7 +653,8 @@ void Coin::UpdateCollected()
     {
         if (mType == CoinType::COIN_USABLE_SEED_PACKET)
         {
-            mDisappearCounter++;
+            if(mDisappearStartTimeNs==INT64_MAX)
+            mDisappearStartTimeNs=ReanimClock::Subtract(nowNs,static_cast<std::int64_t>(Sexy::gUpdateIntervalNs));
         }
 
         return;
@@ -774,51 +663,26 @@ void Coin::UpdateCollected()
     {
         aDestX = 400 - mWidth / 2;
         aDestY = 200 - mHeight / 2;
-        mDisappearCounter++;
+        if(mDisappearStartTimeNs==INT64_MAX)
+            mDisappearStartTimeNs=ReanimClock::Subtract(nowNs,static_cast<std::int64_t>(Sexy::gUpdateIntervalNs));
     }
 
     if (IsLevelAward())
     {
-        mScale = TodAnimateCurveNs(0, 4'000'000'000LL, mDisappearCounter.mNanoseconds,
+        mScale = TodAnimateCurveNs(0, 4'000'000'000LL, ReanimClock::Subtract(nowNs,mDisappearStartTimeNs),
             1.01f, 2.0f, Curves::EaseInOut);
-        mPosX = TodAnimateCurveNs(0, 3'500'000'000LL, mDisappearCounter.mNanoseconds,
+        mPosX = TodAnimateCurveNs(0, 3'500'000'000LL, ReanimClock::Subtract(nowNs,mDisappearStartTimeNs),
             mCollectX, static_cast<float>(aDestX), Curves::EaseOut);
-        mPosY = TodAnimateCurveNs(0, 3'500'000'000LL, mDisappearCounter.mNanoseconds,
+        mPosY = TodAnimateCurveNs(0, 3'500'000'000LL, ReanimClock::Subtract(nowNs,mDisappearStartTimeNs),
             mCollectY, static_cast<float>(aDestY), Curves::EaseOut);
         return;
     }
 
-    // Reuse the ground-disappearance counter in this mutually exclusive state.
-    // Retain the public origin and current position; no extra per-coin cache.
-    auto aElapsedNs = static_cast<std::uint64_t>(
-        std::max<std::int64_t>(0, mDisappearCounter.mNanoseconds));
-    const double aPreviousFactor = TodExponentialCurve<20.0 / 21.0>(aElapsedNs);
-    const auto aPreviousX = static_cast<float>(
-        aDestX + (double(mCollectX) - aDestX) * aPreviousFactor);
-    const auto aPreviousY = static_cast<float>(
-        aDestY + (double(mCollectY) - aDestY) * aPreviousFactor);
-    if (mDisappearCounter.mNanoseconds < 0 || mPosX != aPreviousX || mPosY != aPreviousY)
-    {
-        // A destination change (store/Zen Garden/Dave), external relocation or
-        // a historical save starts a fresh segment from the current position.
-        mCollectX = mPosX;
-        mCollectY = mPosY;
-        mDisappearCounter = 0;
-    }
-    mDisappearCounter.AddNanoseconds(static_cast<std::int64_t>(
-        std::min<std::uint64_t>(Sexy::gUpdateIntervalNs, INT64_MAX)));
-    aElapsedNs = static_cast<std::uint64_t>(mDisappearCounter.mNanoseconds);
-    const double aFactor = TodExponentialCurve<20.0 / 21.0>(aElapsedNs);
-    const double aOriginX = double(mCollectX) - aDestX;
-    const double aOriginY = double(mCollectY) - aDestY;
-    mPosX = static_cast<float>(aDestX + aOriginX * aFactor);
-    mPosY = static_cast<float>(aDestY + aOriginY * aFactor);
-    // 1073 scores, scales and fades from the distance before its 10ms move.
-    // Preserve that delay as time, rather than as a previous-update sample.
-    const double aDistanceFactor = TodExponentialCurve<20.0 / 21.0>(
-        aElapsedNs > 10'000'000 ? aElapsedNs - 10'000'000 : 0);
-    mCollectionDistance = static_cast<float>(
-        std::sqrt(aOriginX * aOriginX + aOriginY * aOriginY) * aDistanceFactor);
+    const float deltaX = static_cast<float>(aDestX) - mPosX;
+    const float deltaY = static_cast<float>(aDestY) - mPosY;
+    mCollectionDistance = std::sqrt(deltaX * deltaX + deltaY * deltaY);
+    mPosX += Sexy::UpdateDelta(deltaX / 21.0f);
+    mPosY += Sexy::UpdateDelta(deltaY / 21.0f);
 
     if (IsPresentWithAdvice())
     {
@@ -866,14 +730,17 @@ void Coin::UpdateCollected()
 //0x431500
 void Coin::Update()
 {
-    mCoinAge++;
+    const auto nowNs=mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs;
     if (mApp->mGameScene != GameScenes::SCENE_PLAYING && mApp->mGameScene != GameScenes::SCENE_AWARD && mBoard && !mBoard->mCutScene->ShouldRunUpsellBoard())
     {
+        if(mFadeEndTimeNs!=0) mFadeEndTimeNs=ReanimClock::Add(mFadeEndTimeNs,static_cast<std::int64_t>(Sexy::gUpdateIntervalNs));
+        if(mDisappearStartTimeNs!=INT64_MAX) mDisappearStartTimeNs=ReanimClock::Add(mDisappearStartTimeNs,static_cast<std::int64_t>(Sexy::gUpdateIntervalNs));
         return;
     }
 
-    if (mFadeCount != 0)
+    if (mFadeEndTimeNs != 0)
     {
+        if(mDisappearStartTimeNs!=INT64_MAX) mDisappearStartTimeNs=ReanimClock::Add(mDisappearStartTimeNs,static_cast<std::int64_t>(Sexy::gUpdateIntervalNs));
         UpdateFade();
     }
     else if (!mIsBeingCollected)
@@ -912,15 +779,16 @@ void Coin::Update()
 //0x4316F0
 Color Coin::GetColor()
 {
+    const auto nowNs=mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs;
     if ((IsSun() || IsMoney()) && mIsBeingCollected)
     {
         float aAlpha = ClampFloat(mCollectionDistance * 0.035f, 0.35f, 1.0f) * 255.0f;
         return Color(255, 255, 255, aAlpha);
     }
 
-    if (mFadeCount > 0)
+    if (mFadeEndTimeNs != 0)
     {
-        int aAlpha = TodAnimateCurveNs(150'000'000, 0, mFadeCount.mNanoseconds, 255, 0, Curves::Linear);
+        int aAlpha = TodAnimateCurveNs(150'000'000, 0, std::max<std::int64_t>(0,ReanimClock::Subtract(mFadeEndTimeNs,nowNs)), 255, 0, Curves::Linear);
         return Color(255, 255, 255, aAlpha);
     }
 
@@ -941,6 +809,7 @@ SeedType Coin::GetFinalSeedPacketType()
 //0x431810
 void Coin::Draw(Graphics* g)
 {
+    const auto nowNs=mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs;
     struct RestoreTranslation
     {
         Graphics* mGraphics;
@@ -1013,7 +882,7 @@ void Coin::Draw(Graphics* g)
 
     if (IsLevelAward() && !mIsBeingCollected)
     {
-        Color aFlashingColor = GetFlashingColor(mCoinAge, 75);
+        Color aFlashingColor = GetFlashingColorNs(ReanimClock::Subtract(nowNs,mBirthTimeNs),750'000'000);
         g->mColor = aFlashingColor;
     }
 
@@ -1056,7 +925,7 @@ void Coin::Draw(Graphics* g)
         else
         {
             int aDisappearTime = GetDisappearTime();
-            if (mDisappearCounter > aDisappearTime - 300 && mDisappearCounter % 60 < 30)
+            if (mDisappearStartTimeNs!=INT64_MAX && ReanimClock::Subtract(nowNs,mDisappearStartTimeNs) > static_cast<std::int64_t>(aDisappearTime-300)*10'000'000 && ReanimClock::Subtract(nowNs,mDisappearStartTimeNs)%600'000'000 < 300'000'000)
             {
                 aGrayness = 192;
             }
@@ -1205,6 +1074,7 @@ void Coin::TryAutoCollectAfterLevelAward()
 // GOTY @Patoke: 0x434DC0
 void Coin::Collect()
 {
+    const auto nowNs=mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs;
     if (mDead)
         return;
 
@@ -1234,8 +1104,8 @@ void Coin::Collect()
             mApp->mZenGarden->AddPottedPlant(&mPottedPlantSpec);
         }
 
-        mDisappearCounter = 0;
-        mFadeCount = 0;
+        mDisappearStartTimeNs = INT64_MAX;
+        mFadeEndTimeNs = 0;
         if (aIsEndlessAward)
         {
             AttachmentDetachCrossFadeParticleType(mAttachmentID, ParticleEffect::PARTICLE_AWARD_PICKUP_ARROW);
@@ -1251,8 +1121,8 @@ void Coin::Collect()
 
         mApp->AddTodParticle(mPosX + 30.0f, mPosY + 30.0f, mRenderOrder + 1, ParticleEffect::PARTICLE_PRESENT_PICKUP);
 
-        mDisappearCounter = 0;
-        mFadeCount = 0;
+        mDisappearStartTimeNs = INT64_MAX;
+        mFadeEndTimeNs = 0;
 
         AttachmentDetachCrossFadeParticleType(mAttachmentID, ParticleEffect::PARTICLE_AWARD_PICKUP_ARROW);
         mApp->mPlayerInfo->mHasUnlockedMinigames = 1;
@@ -1265,8 +1135,8 @@ void Coin::Collect()
 
         mApp->AddTodParticle(mPosX + 30.0f, mPosY + 30.0f, mRenderOrder + 1, ParticleEffect::PARTICLE_PRESENT_PICKUP);
 
-        mDisappearCounter = 0;
-        mFadeCount = 0;
+        mDisappearStartTimeNs = INT64_MAX;
+        mFadeEndTimeNs = 0;
 
         AttachmentDetachCrossFadeParticleType(mAttachmentID, ParticleEffect::PARTICLE_AWARD_PICKUP_ARROW);
         mApp->mPlayerInfo->mHasUnlockedPuzzleMode = 1;
@@ -1279,8 +1149,8 @@ void Coin::Collect()
 
         mApp->AddTodParticle(mPosX + 30.0f, mPosY + 30.0f, mRenderOrder + 1, ParticleEffect::PARTICLE_PRESENT_PICKUP);
 
-        mDisappearCounter = 0;
-        mFadeCount = 0;
+        mDisappearStartTimeNs = INT64_MAX;
+        mFadeEndTimeNs = 0;
 
         AttachmentDetachCrossFadeParticleType(mAttachmentID, ParticleEffect::PARTICLE_AWARD_PICKUP_ARROW);
         mApp->mPlayerInfo->mHasUnlockedSurvivalMode = 1;
@@ -1305,8 +1175,8 @@ void Coin::Collect()
             mApp->mPlayerInfo->mPurchases[(int)StoreItem::STORE_ITEM_CHOCOLATE]++;
         }
 
-        mDisappearCounter = 0;
-        mFadeCount = 15;
+        mDisappearStartTimeNs = INT64_MAX;
+        mFadeEndTimeNs = ReanimClock::Add(nowNs,150'000'000);
 
         if (aIsEndlessAward)
         {
@@ -1325,13 +1195,13 @@ void Coin::Collect()
             {
                 mApp->PlaySample(SOUND_DIAMOND);
                 FanOutCoins(CoinType::COIN_DIAMOND, 1);
-                mFadeCount = 15;
+                mFadeEndTimeNs = ReanimClock::Add(nowNs,150'000'000);
             }
             else if (mType == CoinType::COIN_AWARD_MONEY_BAG)
             {
                 mApp->PlayFoley(FoleyType::FOLEY_COIN);
                 FanOutCoins(CoinType::COIN_GOLD, 5);
-                mFadeCount = 15;
+                mFadeEndTimeNs = ReanimClock::Add(nowNs,150'000'000);
             }
         }
         else if (mApp->IsScaryPotterLevel())
@@ -1393,7 +1263,7 @@ void Coin::Collect()
         if (mType == CoinType::COIN_NOTE)
         {
             mApp->AddTodParticle(mPosX + 30.0f, mPosY + 30.0f, mRenderOrder + 1, ParticleEffect::PARTICLE_PRESENT_PICKUP);
-            mFadeCount = 15;
+            mFadeEndTimeNs = ReanimClock::Add(nowNs,150'000'000);
         }
         else if (!aIsEndlessAward)
         {
@@ -1403,7 +1273,7 @@ void Coin::Collect()
             AttachParticle(mAttachmentID, aParticle, aParticleOffsetX, aParticleOffsetY);
         }
 
-        mDisappearCounter = 0;
+        mDisappearStartTimeNs = INT64_MAX;
         return;
     }
 
@@ -1416,7 +1286,7 @@ void Coin::Collect()
         mBoard->mCursorObject->mCoinID = (CoinID)mBoard->mCoins.DataArrayGetID(this);
 
         mGroundY = (int)mPosY;
-        mFadeCount = 0;
+        mFadeEndTimeNs = 0;
         return;
     }
 
@@ -1425,10 +1295,9 @@ void Coin::Collect()
         mBoard->mCoinBankFadeCount = 1000;
     }
 
-    // 普通拾取复用落地消失计时字段：从这里开始保存当前吸附段经过的 ns。
-    // 奖品、特殊礼物和可用种子包已在上方各自的状态分支处理并返回。
-    mDisappearCounter = 0;
-    mFadeCount = 0;
+    // Collection stops ground-disappearance counting; movement uses current coordinates.
+    mDisappearStartTimeNs = INT64_MAX;
+    mFadeEndTimeNs = 0;
 
     if (IsSun() && mBoard && !mBoard->HasConveyorBeltSeedBank())
     {
@@ -1527,11 +1396,13 @@ void Coin::PlayCollectSound()
 
 void Coin::DroppedUsableSeed()
 {
+    const auto nowNs=mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs;
     mIsBeingCollected = false;
 
     if (mTimesDropped == 0)
     {
-        mDisappearCounter = std::min<Sexy::TimeCounter>(mDisappearCounter, 1200);
+        if(mDisappearStartTimeNs!=INT64_MAX)
+            mDisappearStartTimeNs=std::max(mDisappearStartTimeNs,ReanimClock::Subtract(nowNs,12'000'000'000));
     }
 
     mTimesDropped++;

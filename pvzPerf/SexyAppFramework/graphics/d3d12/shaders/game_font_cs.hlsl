@@ -5,7 +5,7 @@
 // DWORD 8 (byte 32): uint white; DWORD 9,10 (bytes 36,40): int sourceWidth, sourceHeight.
 // DWORD 11 (byte 44): uint samplingFlags (bit 27 = edge RGB sanding).
 // DWORD 12 (byte 48): uint sourceSlot (bit 26 = opaque; bit 31 = premultiplied).
-// t0: source RGBA image; u0: RGBA32 FLOAT. No samplers or descriptor arrays.
+// t0: source RGBA image; u0: RGBA16 FLOAT. No samplers or descriptor arrays.
 // Bind the source itself at t0; sourceSlot's low descriptor bits are ignored.
 // Dispatch ceil(dst.z/8), ceil(dst.w/8), 1. Requires shader double precision.
 cbuffer FontConstants : register(b0, space0)

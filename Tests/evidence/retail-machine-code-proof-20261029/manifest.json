@@ -1,0 +1,14 @@
+{
+  "executable": "C:/UserProgram/Plants_Vs_Zombies_V1.2.0.1073_EN/PlantsVsZombies.exe",
+  "executableSha256": "5f650f52d12751e08b63e590edb0d9b9f09d087cea900baa0eb39e4af8eda251",
+  "source": "Tests/performance/retail_machine_code_probe.cpp",
+  "sourceSha256": "0c5f7861cdc2c26b62cfda2154d3243f27dfedc5018a16b186563ea3d5f4496d",
+  "function": "Plant::GetDamageRangeFlags",
+  "preferredVa": "0x462440",
+  "rva": "0x62440",
+  "abi": "EAX=Plant*, stack weapon, RET 4",
+  "seedOffset": "0x24",
+  "cases": 106,
+  "architecture": "x86",
+  "scope": "Feasibility proof; timing includes ABI adapter, input generation and checksum. No paired optimization claim."
+}

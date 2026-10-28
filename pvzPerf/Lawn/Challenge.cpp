@@ -1519,8 +1519,8 @@ void Challenge::BeghouledFlashPlant(int theFlashX, int theFlashY, int theFromX, 
 	}
 
 	Plant* aFlashPlant = mBoard->GetTopPlantAt(theFlashX, theFlashY, PlantPriority::TOPPLANT_ONLY_NORMAL_POSITION);
-	if (aFlashPlant && aFlashPlant->mBeghouledFlashCountdown <= 300)
-		aFlashPlant->mBeghouledFlashCountdown = 300;
+	if (aFlashPlant && std::max<std::int64_t>(0, aFlashPlant->mBeghouledFlashEndTimeNs - static_cast<std::int64_t>(aFlashPlant->mBoard->mLevelTimeNs)) <= 3000000000LL)
+		aFlashPlant->mBeghouledFlashEndTimeNs = static_cast<std::int64_t>(aFlashPlant->mBoard->mLevelTimeNs) + 3000000000LL;
 }
 
 //0x422510
@@ -1532,9 +1532,9 @@ int Challenge::BeghouledTwistFlashMatch(BeghouledBoardState* theBoardState, int 
 	for (int i = 0; i < 4; i++)
 	{
 		Plant* aPlant = mBoard->GetTopPlantAt(theGridX + (i % 2), theGridY + (i / 2), PlantPriority::TOPPLANT_ANY);
-		if (aPlant && aPlant->mBeghouledFlashCountdown <= 300)
+		if (aPlant && std::max<std::int64_t>(0, aPlant->mBeghouledFlashEndTimeNs - static_cast<std::int64_t>(aPlant->mBoard->mLevelTimeNs)) <= 3000000000LL)
 		{
-			aPlant->mBeghouledFlashCountdown = 300;
+			aPlant->mBeghouledFlashEndTimeNs = static_cast<std::int64_t>(aPlant->mBoard->mLevelTimeNs) + 3000000000LL;
 		}
 	}
 	return true;
@@ -1595,8 +1595,8 @@ void Challenge::BeghouledCancelMatchFlashing()
 	Plant* aPlant = nullptr;
 	while (mBoard->IteratePlants(aPlant))
 	{
-		if (aPlant->mBeghouledFlashCountdown >= 25)
-			aPlant->mBeghouledFlashCountdown = 25;
+		if (std::max<std::int64_t>(0, aPlant->mBeghouledFlashEndTimeNs - static_cast<std::int64_t>(aPlant->mBoard->mLevelTimeNs)) >= 250000000LL)
+			aPlant->mBeghouledFlashEndTimeNs = static_cast<std::int64_t>(aPlant->mBoard->mLevelTimeNs) + 250000000LL;
 	}
 }
 
@@ -2148,7 +2148,7 @@ void Challenge::UpdateSlotMachine()
 			mBoard->DisplayAdviceAgain(gStr.ADVICE_SLOT_MACHINE_SPIN_AGAIN, MESSAGE_STYLE_SLOT_MACHINE, ADVICE_SLOT_MACHINE_SPIN_AGAIN);
 		}
 	}
-	else if (mBoard->mSeedBank->mSeedPackets[0].mSlotMachineCountDown <= 0)
+	else if (mBoard->mSeedBank->mSeedPackets[0].mSlotMachineEndTimeNs == 0)
 	{
 		mApp->ReanimationGet(mReanimChallenge)->PlayReanim(ReanimTrackId::anim_return, REANIM_PLAY_ONCE_AND_HOLD, 0, 24.0f);
 		mChallengeState = STATECHALLENGE_NORMAL;
@@ -2902,10 +2902,10 @@ void Challenge::WhackAZombieSpawning()
 		// 根据当前波数计算当前处于的阶段
 		int aPhase = ClampInt((mBoard->mCurrentWave - 1) * 6 / 12, 0, 5);
 		// 在不同阶段下出现路障、铁桶僵尸及出现二、三只僵尸的权重
-		const int aDoubleChance[6] = { 0, 30, 10, 10, 15, 18 };
-		const int aTripleChance[6] = { 0, 0, 0, 0, 10, 13 };
-		const int aPailChance[6] = { 0, 0, 0, 10, 15, 15 };
-		const int aConeChance[6] = { 0, 0, 30, 30, 30, 30 };
+        static constexpr int aDoubleChance[6] = { 0, 30, 10, 10, 15, 18 };
+		static constexpr int aTripleChance[6] = { 0, 0, 0, 0, 10, 13 };
+		static constexpr int aPailChance[6] = { 0, 0, 0, 10, 15, 15 };
+		static constexpr int aConeChance[6] = { 0, 0, 30, 30, 30, 30 };
 		// 默认的僵尸数量为 1 只
 		int aZombieCount = 1;
 		// 默认的僵尸类型为普通僵尸
@@ -3314,20 +3314,13 @@ void Challenge::UpdatePortal(GridItem* thePortal)
 			if (abs(aProjectileX - aPortalX) <= 40)
 			{
 				int aDeltaY = (anOtherPortal->mGridY - thePortal->mGridY) * 100;
-				const auto oldX = aProjectile->mPosX;
-				const auto oldY = aProjectile->mPosY;
 				aProjectile->mX += anOtherPortal->mGridX * 80 - aProjectileX + 60;
 				aProjectile->mPosX = aProjectile->mX;
-				aProjectile->mOriginX += aProjectile->mPosX - oldX;
 
 				aProjectile->mRow = anOtherPortal->mGridY;
 				aProjectile->mY += aDeltaY;
 				aProjectile->mPosY = aProjectile->mY;
-				aProjectile->mOriginY += aProjectile->mPosY - oldY;
 				aProjectile->mShadowY += aDeltaY;
-				aProjectile->mOriginShadowY = aProjectile->mShadowY -
-					(mBoard->GetPosYBasedOnRow(aProjectile->mPosX, aProjectile->mRow) -
-					 mBoard->GetPosYBasedOnRow(aProjectile->mOriginX, aProjectile->mRow));
 
 				aProjectile->mLastPortalX = anOtherPortal->mGridX;
 				aProjectile->mRenderOrder = Board::MakeRenderOrder(RENDER_LAYER_PROJECTILE, aProjectile->mRow, 0);
@@ -3656,7 +3649,7 @@ void Challenge::BeghouledPacketClicked(SeedPacket* theSeedPacket)
 	else if (aUpgrade != -1 && !mBeghouledPurcasedUpgrade[aUpgrade])
 	{
 		mBeghouledPurcasedUpgrade[aUpgrade] = true;
-		const SeedType gUpgradableSeedTypes[3] = { SEED_PEASHOOTER, SEED_PUFFSHROOM, SEED_WALLNUT };
+		static constexpr SeedType gUpgradableSeedTypes[3] = { SEED_PEASHOOTER, SEED_PUFFSHROOM, SEED_WALLNUT };
 		SeedType aSeedPrimary = gUpgradableSeedTypes[aUpgrade];
 
 		Plant* aPlant = nullptr;
@@ -3803,7 +3796,7 @@ void Challenge::ZombiquariumDropBrain(int x, int y)
 	aBrain->mRenderOrder = 400000;
 	aBrain->mGridX = 0;
 	aBrain->mGridY = 0;
-	aBrain->mGridItemCounter = 0;
+	aBrain->mStateStartTimeNs = static_cast<std::int64_t>(mBoard->mLevelTimeNs);
 	aBrain->mPosX = x - 15.0f;
 	aBrain->mPosY = y - 15.0f;
 	aBrain->mRootGeneration = 0;
@@ -3893,15 +3886,11 @@ void Challenge::ZombiquariumUpdate()
 				aGridItem->mPosY != aGridItem->mRootLastOutputX)
 			{
 				aGridItem->mRootWorldX = aGridItem->mPosY;
-				aGridItem->mRootPeriodNs = 0;
+				aGridItem->mRootPeriodNs = static_cast<std::int64_t>(mBoard->mLevelTimeNs)-static_cast<std::int64_t>(Sexy::gUpdateIntervalNs);
 				aGridItem->mRootGeneration = 1;
 			}
-			if (Sexy::gUpdateIntervalNs > std::uint64_t(INT64_MAX - aGridItem->mRootPeriodNs))
-				throw std::overflow_error("zombiquarium brain fall clock overflow");
-			aGridItem->mRootPeriodNs += Sexy::gUpdateIntervalNs;
-			aGridItem->mGridItemCounter++;
 			aGridItem->mPosY = static_cast<float>(aGridItem->mRootWorldX +
-				double(0.15f) * double(aGridItem->mRootPeriodNs) / 10'000'000.0);
+				double(0.15f) * double(static_cast<std::int64_t>(mBoard->mLevelTimeNs)-aGridItem->mRootPeriodNs) / 10'000'000.0);
 			aGridItem->mRootLastOutputX = aGridItem->mPosY;
 			if (aGridItem->mPosY >= 500.0f)
 			{
@@ -4833,7 +4822,7 @@ void Challenge::IZombieInitLevel()
 		aBrain->mGridX = 0;
 		aBrain->mGridY = aRow;
 		aBrain->mRenderOrder = Board::MakeRenderOrder(RENDER_LAYER_PLANT, aRow, 0);
-		aBrain->mGridItemCounter = 70;
+		aBrain->mBrainHealth = 70;
 		aBrain->mPosX = mBoard->GridToPixelX(0, aRow) - 40;
 		aBrain->mPosY = mBoard->GridToPixelY(0, aRow) + 40;
 	}
@@ -4987,7 +4976,7 @@ void Challenge::IZombieUpdate()
 	Zombie* aZombie = nullptr;
 	while (mBoard->IterateZombies(aZombie))
 	{
-		if (!aZombie->IsDeadOrDying() && aZombie->mZombiePhase != PHASE_POLEVAULTER_IN_VAULT && !aZombie->mIsEating && aZombie->mJustGotShotCounter < -500)
+		if (!aZombie->IsDeadOrDying() && aZombie->mZombiePhase != PHASE_POLEVAULTER_IN_VAULT && !aZombie->mIsEating && static_cast<std::int64_t>(mBoard->mLevelTimeNs) - aZombie->mShotFlashEndTimeNs > 5'000'000'000LL)
 		{
 			aZombie->PickRandomSpeed();
 		}
@@ -5156,8 +5145,8 @@ int Challenge::IZombieEatBrain(Zombie* theZombie)
 		return false;
 
 	theZombie->StartEating();
-	aBrain->mGridItemCounter--;
-	if (aBrain->mGridItemCounter <= 0)
+	--aBrain->mBrainHealth;
+	if (aBrain->mBrainHealth <= 0)
 	{
 		mApp->PlaySample(Sexy::SOUND_GULP);
 		aBrain->GridItemDie();
@@ -5184,7 +5173,7 @@ void Challenge::IZombieSquishBrain(GridItem* theBrain)
 {
 	theBrain->mRenderOrder = Board::MakeRenderOrder(RENDER_LAYER_GRAVE_STONE, theBrain->mGridY, 0);
 	theBrain->mGridItemState = GRIDITEM_STATE_BRAIN_SQUISHED;
-	theBrain->mGridItemCounter = 500;
+	theBrain->mStateEndTimeNs = static_cast<std::int64_t>(mBoard->mLevelTimeNs)+5'000'000'000;
 	theBrain->mApp->PlayFoley(FOLEY_SQUISH);
 	IZombieScoreBrain(theBrain);
 }
@@ -5236,7 +5225,7 @@ void Challenge::SquirrelStart()
 		aSquirrel->mGridItemState = GRIDITEM_STATE_SQUIRREL_WAITING;
 		aSquirrel->mGridX = aGrid->mX;
 		aSquirrel->mGridY = aGrid->mY;
-		aSquirrel->mGridItemCounter = RandRangeInt(100, 500);
+		aSquirrel->mStateEndTimeNs = static_cast<std::int64_t>(mBoard->mLevelTimeNs)+static_cast<std::int64_t>(RandRangeInt(100, 500))*10'000'000;
 		aSquirrel->mRenderOrder = mBoard->MakeRenderOrder(RENDER_LAYER_GRAVE_STONE, aSquirrel->mGridY, 1);
 	}
 
@@ -5261,7 +5250,7 @@ void Challenge::SquirrelStart()
 // GOTY 1073: 0042E9B0
 void Challenge::SquirrelChew(GridItem* theSquirrel)
 {
-	theSquirrel->mGridItemCounter = RandRangeInt(100, 500);
+	theSquirrel->mStateEndTimeNs = static_cast<std::int64_t>(mBoard->mLevelTimeNs)+static_cast<std::int64_t>(RandRangeInt(100, 500))*10'000'000;
 
 	Plant* aPlant = mBoard->GetTopPlantAt(theSquirrel->mGridX, theSquirrel->mGridY, TOPPLANT_EATING_ORDER);
 	if (aPlant)
@@ -5270,8 +5259,8 @@ void Challenge::SquirrelChew(GridItem* theSquirrel)
 		float aPosY = mBoard->GridToPixelY(theSquirrel->mGridX, theSquirrel->mGridY);
 		mApp->AddTodParticle(aPosX + 40, aPosY + 40, aPlant->mRenderOrder + 1, PARTICLE_WALLNUT_EAT_SMALL);
 
-		if (aPlant->mEatenFlashCountdown <= 25)
-			aPlant->mEatenFlashCountdown = 25;
+		if (std::max<std::int64_t>(0, aPlant->mEatenFlashEndTimeNs - static_cast<std::int64_t>(aPlant->mBoard->mLevelTimeNs)) <= 250000000LL)
+			aPlant->mEatenFlashEndTimeNs = static_cast<std::int64_t>(aPlant->mBoard->mLevelTimeNs) + 250000000LL;
 	}
 }
 
@@ -5330,7 +5319,7 @@ void Challenge::SquirrelFound(GridItem* theSquirrel)
 				aGrid->mX > theSquirrel->mGridX ? GRIDITEM_STATE_SQUIRREL_RUNNING_RIGHT :
 				aGrid->mY < theSquirrel->mGridY ? GRIDITEM_STATE_SQUIRREL_RUNNING_UP : GRIDITEM_STATE_SQUIRREL_RUNNING_DOWN;
 
-			theSquirrel->mGridItemCounter = 50;
+			theSquirrel->mStateEndTimeNs = static_cast<std::int64_t>(mBoard->mLevelTimeNs)+500'000'000;
 			theSquirrel->mGridX = aGrid->mX;
 			theSquirrel->mGridY = aGrid->mY;
 			theSquirrel->mRenderOrder = Board::MakeRenderOrder(RENDER_LAYER_GRAVE_STONE, aGrid->mY, 1);
@@ -5338,7 +5327,7 @@ void Challenge::SquirrelFound(GridItem* theSquirrel)
 		else
 		{
 			theSquirrel->mGridItemState = GRIDITEM_STATE_SQUIRREL_CAUGHT;
-			theSquirrel->mGridItemCounter = 100;
+			theSquirrel->mStateEndTimeNs = static_cast<std::int64_t>(mBoard->mLevelTimeNs)+1'000'000'000;
 
 			int aSquirrelsRemaining = SquirrelCountUncaught();
 			if (aSquirrelsRemaining)
@@ -5358,9 +5347,8 @@ void Challenge::SquirrelFound(GridItem* theSquirrel)
 //0x42C1B0
 void Challenge::SquirrelUpdateOne(GridItem* theSquirrel)
 {
-	auto& aCounter = theSquirrel->mGridItemCounter;
-	if (aCounter > 0)
-		aCounter--;
+	auto& aCounter = theSquirrel->mStateEndTimeNs;
+    const auto nowNs=static_cast<std::int64_t>(mBoard->mLevelTimeNs);
 
 	GridItemState& aState = theSquirrel->mGridItemState;
 	if (aState == GRIDITEM_STATE_SQUIRREL_WAITING || aState == GRIDITEM_STATE_SQUIRREL_ZOMBIE)
@@ -5369,11 +5357,11 @@ void Challenge::SquirrelUpdateOne(GridItem* theSquirrel)
 		{
 			SquirrelFound(theSquirrel);
 		}
-		if (aCounter == 0)
+		if (aCounter <= nowNs)
 		{
 			if (Rand(2) && aState != GRIDITEM_STATE_SQUIRREL_ZOMBIE)
 			{
-				theSquirrel->mGridItemCounter = 50;
+				theSquirrel->mStateEndTimeNs = static_cast<std::int64_t>(mBoard->mLevelTimeNs)+500'000'000;
 				theSquirrel->mGridItemState = GRIDITEM_STATE_SQUIRREL_PEEKING;
 			}
 			else
@@ -5383,12 +5371,12 @@ void Challenge::SquirrelUpdateOne(GridItem* theSquirrel)
 		}
 	}
 
-	if (aState >= GRIDITEM_STATE_SQUIRREL_PEEKING && aState <= GRIDITEM_STATE_SQUIRREL_RUNNING_RIGHT && aCounter == 0)
+	if (aState >= GRIDITEM_STATE_SQUIRREL_PEEKING && aState <= GRIDITEM_STATE_SQUIRREL_RUNNING_RIGHT && aCounter <= nowNs)
 	{
 		aState = GRIDITEM_STATE_SQUIRREL_WAITING;
-		aCounter = RandRangeInt(100, 500);
+		aCounter = nowNs+static_cast<std::int64_t>(RandRangeInt(100, 500))*10'000'000;
 	}
-	if (aState == GRIDITEM_STATE_SQUIRREL_CAUGHT && aCounter == 0)
+	if (aState == GRIDITEM_STATE_SQUIRREL_CAUGHT && aCounter <= nowNs)
 	{
 		theSquirrel->GridItemDie();
 	}

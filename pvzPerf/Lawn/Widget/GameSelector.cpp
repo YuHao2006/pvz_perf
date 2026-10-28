@@ -1,3 +1,4 @@
+#include "EffectSystem.h"
 #include "Sexy.TodLib/generated/EntityStrings.h"
 #include "Sexy.TodLib/generated/ReanimVariantOptions.h"
 #include "Lawn/LawnCommon.h"
@@ -963,7 +964,7 @@ void GameSelector::Update()
 
 	TodParticleSystem* aParticle = mApp->ParticleTryToGet(mTrophyParticleID);
 	if (aParticle)
-		aParticle->Update();
+		aParticle->Update(Sexy::gUpdateIntervalNs, mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs);
 
 	if (mStartingGame && !mWaitingDialog)
 	{

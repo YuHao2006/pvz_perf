@@ -140,9 +140,9 @@ unsigned int NativeMusicPlayback::State() const
     return state == AudioUnitVoiceState::Playing ? BASS_ACTIVE_PLAYING :
         state == AudioUnitVoiceState::Paused ? BASS_ACTIVE_PAUSED : BASS_ACTIVE_STOPPED;
 }
-void NativeMusicPlayback::SetGain(double value)
+void NativeMusicPlayback::SetGain(float value)
 {
-    const float gain = static_cast<float>(value) * sMasterGain.load(std::memory_order_relaxed);
+    const float gain = value * sMasterGain.load(std::memory_order_relaxed);
     mVoice->leftGain.store(gain, std::memory_order_relaxed);
     mVoice->rightGain.store(gain, std::memory_order_relaxed);
 }
@@ -170,4 +170,9 @@ void NativeMusicPlayback::Check() const
     const int error = mDecodeError.load(std::memory_order_acquire);
     if (error) throw std::runtime_error("Music decoder failed: " + std::to_string(error));
 }
+}
+
+void Sexy::NativeMusicPlayback::SetMasterGain(float value)
+{
+    sMasterGain.store(value, std::memory_order_relaxed);
 }

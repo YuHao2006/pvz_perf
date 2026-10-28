@@ -2,6 +2,7 @@
 #include "LevelSaveFormat.h"
 #include "Dat64TimeSchema.h"
 #include <bit>
+#include <algorithm>
 #include <cmath>
 #include <cstring>
 #include <limits>
@@ -10,7 +11,7 @@
 #include <utility>
 #include <vector>
 
-// v3.3 retains the frozen canonical records for offline conversion, followed by
+// v4 retains the frozen canonical records for offline conversion, followed by
 // these exact v7 state fields before the DataArray ID. Never copy native padding.
 namespace V7SaveSchema
 {
@@ -24,13 +25,13 @@ constexpr std::size_t Size(Kind kind)
     {
     case Kind::Zombie: return 105;
     case Kind::Plant: return 156;
-    case Kind::Projectile: return 36;
-    case Kind::Coin: return 20;
-    case Kind::LawnMower: return 40;
-    case Kind::Reanimation: return 68;
+    case Kind::Projectile: return 8;
+    case Kind::Coin: return 0;
+    case Kind::LawnMower: return 0;
+    case Kind::Reanimation: return 72;
     case Kind::ParticleSystem: return 4;
-    case Kind::ParticleEmitter: return 52;
-    case Kind::Particle: return 100;
+    case Kind::ParticleEmitter: return 44;
+    case Kind::Particle: return 20;
     case Kind::GridItem: return 240;
     default: return 0;
     }
@@ -79,39 +80,31 @@ inline void Validate(Kind kind, std::span<const Byte> state)
     const auto Require = [](bool valid, const char* message) {
         if (!valid) throw std::runtime_error(message);
     };
-    if (kind == Kind::Projectile)
-    {
-        Require(Signed(8) >= 0, "projectile motion origin time is negative");
-        Require(Signed(0) <= Signed(8), "projectile creation time follows its motion origin");
-        Require(std::uint64_t(Signed(8)) - std::uint64_t(Signed(0)) <= std::uint64_t(INT64_MAX),
-            "projectile age exceeds signed nanosecond range");
-        for (const std::size_t at : {16U, 20U, 24U, 28U, 32U})
-            Require(std::isfinite(Float(state, at)), "projectile motion origin is not finite");
-    }
-    else if (kind == Kind::Reanimation)
+    if (kind == Kind::Reanimation)
     {
         Require(Read(state, 0, 4) <= 1, "animation time domain is invalid");
-        const auto period = Signed(20);
-        Require(period > 0, "animation period must be positive");
-        Require(Signed(12) >= 0 && Signed(12) <= period, "animation origin is outside its period");
-        Require(Read(state, 52, 1) <= 1, "animation history flag is not boolean");
-        if (Read(state, 52, 1))
-            Require(Signed(36) >= 0 && Signed(36) <= period, "previous animation time is outside its period");
-        Require(Signed(60) >= 0, "animation clock sample is negative");
-        Require(Signed(4) <= Signed(60) &&
-            std::uint64_t(Signed(60)) - std::uint64_t(Signed(4)) <= std::uint64_t(INT64_MAX),
-            "animation start is outside its clock range");
+        const auto period = Signed(24), framePeriod = Signed(16);
+        Require(period > 0 && framePeriod > 0 && period % framePeriod == 0,
+            "animation periods are invalid");
+        const auto frame = std::int32_t(Read(state, 12, 4));
+        Require(frame >= 0 && frame <= period / framePeriod, "animation frame outside action");
+        Require(std::isfinite(Double(state, 48)), "animation root displacement is not finite");
+        Require(Read(state, 56, 1) <= 1, "animation history flag is not boolean");
+        if (Read(state, 56, 1)) Require(Signed(40) >= 0 && Signed(40) <= period,
+            "previous animation phase is outside period");
+        Require(Signed(64) >= 0 && Signed(4) <= Signed(64) &&
+            std::uint64_t(Signed(64)) - std::uint64_t(Signed(4)) <= std::uint64_t(INT64_MAX),
+            "animation frame time is invalid");
+
     }
     else if (kind == Kind::ParticleEmitter)
     {
         Require(Signed(0) > -Frame && Signed(0) < Frame, "particle spawn remainder exceeds its unit");
-        Require(Signed(8) >= 0, "particle emission elapsed time is negative");
     }
     else if (kind == Kind::Particle)
     {
-        // Retired previous-age/position/spin slots are ignored on input.
-        Require(Signed(8) >= 0, "particle animation time is negative");
-        Require(Signed(16) >= 0 && Signed(16) < Frame, "particle animation anchor exceeds its period");
+        Require(Signed(0) >= 0, "particle animation time is negative");
+        Require(Signed(8) >= 0 && Signed(8) < Frame, "particle animation anchor exceeds its period");
     }
     else if (kind == Kind::Plant || kind == Kind::Zombie)
     {
@@ -123,15 +116,15 @@ inline void Validate(Kind kind, std::span<const Byte> state)
             Require(Signed(24) >= 0, "bowling row arrival time is negative");
         }
         else
-            for (const std::size_t at : {24U, 52U})
+            for (const std::size_t at : {24U, 52U, 80U})
             {
                 Require(std::isfinite(Double(state, at)) &&
-                    std::isfinite(Float(state, at + 16)) && std::isfinite(Float(state, at + 20)),
+                    std::isfinite(Float(state, at + 16)),
                     "zombie velocity segment is not finite");
-                Require(Read(state, at + 24, 1) <= 1, "zombie velocity binding is not boolean");
+                Require(Read(state, at + 20, 1) <= 1, "zombie velocity binding is not boolean");
             }
     }
-    else if (kind == Kind::GridItem)
+    if (kind == Kind::GridItem)
     {
         Require(std::isfinite(Double(state, 192)) && std::isfinite(Double(state, 200)) &&
             std::isfinite(Float(state, 220)), "root-motion coordinate is not finite");
@@ -173,52 +166,55 @@ inline std::vector<Byte> FromHistorical(Kind kind, std::span<const Byte> canonic
     {
         const auto age = std::bit_cast<std::int64_t>(Time(expanded, kind, 108));
         if (age < 0) throw std::runtime_error("historical projectile age is negative");
-        Put(0, -age); // Relative draft; converter binds both timestamps to Board now.
-        Put(8, 0);
-        for (const auto [source, target] : {
-            std::pair{60U, 16U}, std::pair{64U, 20U}, std::pair{68U, 24U},
-            std::pair{116U, 28U}, std::pair{88U, 32U}})
-            PutFloat(state, target, Float(canonical, source));
+        Put(0, -age); // Relative draft; converter binds the creation time to Board now.
     }
     else if (kind == Kind::Reanimation)
     {
         const auto count = std::int32_t(Read(canonical, 36, 4));
-        const auto loops = std::int32_t(Read(canonical, 104, 4));
         const double rate = Float(canonical, 8);
         const double phase = Float(canonical, 4);
         const double last = Float(canonical, 168);
-        Put(4, 0);
-        const auto periodNs = count > 0 && rate != 0
-            ? Rounded(std::floor(double(count) * 1'000'000'000.0 / std::abs(rate)))
+        if (!std::isfinite(rate) || !std::isfinite(phase) || !std::isfinite(last))
+            throw std::runtime_error("historical animation clock is not finite");
+        const auto loop = Read(canonical, 24, 4);
+        const bool full = loop == 1 || loop == 4 || loop == 5;
+        const int intervals = std::max(1, full ? count : count - 1);
+        const auto original = count > 0 && rate != 0
+            ? Rounded(std::floor(double(count) * 1e9 / std::abs(rate)))
             : std::int64_t(std::max(count, 1)) * 1'000'000'000LL;
-        if (periodNs <= 0) throw std::runtime_error("historical animation period is below one nanosecond");
-        Put(12, Rounded(phase * periodNs));
-        Put(20, periodNs);
-        Put(28, rate < 0 ? -std::int64_t(loops) : std::int64_t(loops));
-        Put(36, last >= 0 ? Rounded(last * periodNs) : 0);
-        const std::int64_t cycles = rate < 0 ? -std::int64_t(loops) : std::int64_t(loops);
-        const bool wrapped = last >= 0 && (rate >= 0 ? phase < last : phase > last);
-        Put(44, cycles - (wrapped ? (rate < 0 ? -1 : 1) : 0));
-        Put(52, last >= 0, 1);
+        const auto q = original / intervals;
+        if (q <= 0) throw std::runtime_error("historical keyframe duration is below one nanosecond");
+        const auto period = q * intervals;
+        const auto at = std::clamp<std::int64_t>(Rounded(phase * period), 0, period);
+        const auto frame = at / q, remainder = at % q;
+        const bool reverse = rate < 0;
+        const auto age = reverse && remainder != 0 ? q - remainder : remainder;
+        Put(4, -age);
+        Put(12, frame + (reverse && remainder != 0), 4);
+        Put(16, q);
+        Put(24, period);
+        Put(40, last >= 0 ? std::clamp<std::int64_t>(Rounded(last * period), 0, period) : 0);
+        const bool wrapped = last >= 0 && (reverse ? phase > last : phase < last);
+        Put(32, wrapped ? (reverse ? -1 : 1) : 0);
+        // Saved actor coordinates already contain historical completed motion.
+        // Bind the new displacement origin at load, without replaying old loops.
+        PutDouble(state, 48, 0);
+        Put(56, last >= 0, 1);
+
     }
     else if (kind == Kind::ParticleEmitter)
     {
         Put(0, Rounded(double(Float(canonical, 48)) * Frame));
-        Put(8, 0); // Effective emission integral starts at the migrated current state.
         for (std::size_t vector = 0; vector < 2; ++vector)
-            std::memcpy(state.data() + 16 + vector * 8, canonical.data() + 52, 8);
+            std::memcpy(state.data() + 8 + vector * 8, canonical.data() + 52, 8);
         // No authored curve origin exists in historical records. The runtime
         // binds it from the saved center and age after resolving the definition.
     }
     else if (kind == Kind::Particle)
     {
-        // The historical previous phase is retired; its reserved slot stays zero.
-        Put(8, 0);
-        Put(16, Rounded(double(Float(canonical, 24)) * Frame));
-        Put(24, 0x9E3779B9U, 4);
-        // No historical motion anchor exists: bind lazily to the migrated
-        // public position on its first positive step.
-        Put(44, -1);
+        Put(0, 0);
+        Put(8, Rounded(double(Float(canonical, 24)) * Frame));
+        Put(16, 0x9E3779B9U, 4);
     }
     else if (kind == Kind::ParticleSystem)
     {

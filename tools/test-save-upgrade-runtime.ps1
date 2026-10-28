@@ -12,8 +12,14 @@ $taskRoot=Split-Path -Parent $PSScriptRoot
 $taskBuild=(Resolve-Path -LiteralPath $BuildDirectory).Path
 $taskOriginal=(Resolve-Path -LiteralPath $SaveFile).Path
 $taskBefore=(Get-FileHash -LiteralPath $taskOriginal -Algorithm SHA256).Hash
+$taskInputHeader=[IO.File]::ReadAllBytes($taskOriginal)
+if (!$PakFile -and $taskInputHeader.Length -ge 12 -and
+    [Text.Encoding]::ASCII.GetString($taskInputHeader,0,8) -eq 'PVZDAT64' -and
+    [BitConverter]::ToUInt32($taskInputHeader,8) -eq 4) {
+    throw 'Current DAT64 saves require -PakFile for the resident-resource load/write/reload test.'
+}
 $taskRuntime=Join-Path $taskBuild 'Release'
-$taskOutput=if($OutputDirectory){[IO.Path]::GetFullPath($OutputDirectory)}else{Join-Path $taskBuild 'save-upgrade-tests'}
+$taskOutput=if($OutputDirectory){[IO.Path]::GetFullPath($OutputDirectory)}else{Join-Path ([IO.Path]::GetTempPath()) ('pvz-save-upgrade-'+[Guid]::NewGuid().ToString('N'))}
 $taskNinja='C:\Users\Administrator\AppData\Local\Programs\CLion\bin\ninja\win\x64\ninja.exe'
 $taskVcvars='C:\UserProgram\Visual Studuio\2026\Community\VC\Auxiliary\Build\vcvars64.bat'
 $taskCommands=@(& $taskNinja -C $taskBuild -t commands LawnProject)
@@ -34,9 +40,9 @@ Copy-Item -LiteralPath $taskOriginal -Destination $taskCopy
 if ($RejectVariant) {
     if (!$PakFile) { throw 'Variant rejection needs the production resource package' }
     $taskBytes=[IO.File]::ReadAllBytes($taskCopy)
-    if ($taskBytes.Length -lt 52 -or [BitConverter]::ToUInt32($taskBytes,36) -ne 0x10740 -or
-        [BitConverter]::ToUInt32($taskBytes,40) -ne 3) {
-        throw 'Variant rejection requires a current DAT64 v3.3 copy'
+    if ($taskBytes.Length -lt 52 -or [BitConverter]::ToUInt32($taskBytes,36) -ne 0x10745 -or
+        [BitConverter]::ToUInt32($taskBytes,40) -ne 0) {
+        throw 'Variant rejection requires a current DAT64 v4 copy'
     }
     $taskCursor=48+4+[BitConverter]::ToUInt32($taskBytes,48)
     $taskPool=if ($RejectVariant -eq 'Particle') { 6 } else { 9 }
@@ -44,8 +50,8 @@ if ($RejectVariant) {
         $taskCursor+=16+[BitConverter]::ToUInt32($taskBytes,($taskCursor+12))
     }
     $taskUsed=[BitConverter]::ToUInt32($taskBytes,($taskCursor+4))
-    $taskRecordSize=if ($RejectVariant -eq 'Particle') { 76 } else { 244 }
-    $taskStride=if ($RejectVariant -eq 'Particle') { 84 } else { 252 }
+    $taskRecordSize=if ($RejectVariant -eq 'Particle') { 76 } else { 248 }
+    $taskStride=if ($RejectVariant -eq 'Particle') { 84 } else { 256 }
     $taskVariantOffset=if ($RejectVariant -eq 'Particle') { 4 } else { 12 }
     if ([BitConverter]::ToUInt32($taskBytes,($taskCursor+12)) -ne $taskUsed*$taskStride) {
         throw 'Unexpected current pool layout in variant rejection fixture'

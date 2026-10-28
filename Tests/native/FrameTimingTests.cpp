@@ -20,6 +20,97 @@ int main()
     using namespace Sexy;
     try
     {
+        // Real elapsed time is conserved even when work cannot reach target FPS.
+        for (unsigned int fps : {1U, 30U, 60U, 100U, 240U, 10000U})
+        {
+            const auto timing = FrameTiming::FromTargetFps(fps);
+            for (unsigned long long elapsed : {100'000ULL, 6'000'000ULL,
+                     10'000'000ULL, 10'000'001ULL, 16'666'666ULL,
+                     35'123'456ULL, 250'000'000ULL, 1'000'000'000ULL})
+            {
+                auto pending = SimulationTimeFromWallTime(elapsed, 1.0);
+                unsigned long long total = 0;
+                unsigned long long phase = 0;
+                while (pending)
+                {
+                    const auto interval = TakeSimulationStep(pending, timing.mIntervalNs, phase);
+                    if (!interval) break;
+                    Require(interval > 0 && interval <= 10'000'000ULL,
+                        "Catch-up produced a zero or unsafe collision step");
+                    ApplySimulationStep(interval);
+                    Require(gUpdateIntervalNs == interval &&
+                        std::abs(gUpdateTicks - double(interval) / 10'000'000.0) < 1e-12,
+                        "Motion scaling differs from the actual simulation interval");
+                    total += interval;
+                }
+                Require(total + pending == elapsed, "Scheduler dropped elapsed wall time");
+                const auto quantum = std::min(timing.mIntervalNs, FrameTiming::LegacyTickNs);
+                Require(pending < quantum - phase,
+                    "Scheduler deferred a logical interval that was already due");
+
+            }
+        }
+        Require(SimulationTimeFromWallTime(35'123'456, 2.0) == 70'246'912,
+            "Game speed multiplier lost elapsed time");
+        unsigned long long simulated = 0;
+        for (unsigned int frame = 0; frame < 200; ++frame)
+        {
+            auto pending = SimulationTimeFromWallTime(5'000'000, 1.0);
+            unsigned long long phase = 0;
+            while (pending)
+            {
+                const auto stepNs = TakeSimulationStep(pending, 100'000, phase);
+                if (!stepNs) break;
+                simulated += stepNs;
+            }
+        }
+        Require(simulated == 1'000'000'000ULL,
+            "10000FPS target with 5ms actual frames slowed the game clock");
+        {
+            unsigned long long pending = 35'123'456, phase = 0;
+            Require(TakeSimulationStep(pending, 10'000'000, phase) == 10'000'000 &&
+                TakeSimulationStep(pending, 10'000'000, phase) == 10'000'000 &&
+                TakeSimulationStep(pending, 10'000'000, phase) == 10'000'000,
+                "10ms catch-up changed full steps");
+            Require(TakeSimulationStep(pending, 10'000'000, phase) == 0 && pending == 5'123'456,
+                "Sub-step remainder was processed instead of carried forward");
+            pending += 4'876'544;
+            Require(TakeSimulationStep(pending, 10'000'000, phase) == 10'000'000 && pending == 0,
+                "Carried remainder did not join the next update");
+            pending = 10'123'456; phase = 0;
+            Require(TakeSimulationStep(pending, 10'000'000, phase) == 10'000'000 &&
+                pending == 123'456 && phase == 0,
+                "10ms hard limit allowed an oversized update");
+            Require(TakeSimulationStep(pending, 10'000'000, phase) == 0,
+                "10ms target processed the 0.123456ms remainder prematurely");
+            pending += 9'876'544;
+            Require(TakeSimulationStep(pending, 10'000'000, phase) == 10'000'000 &&
+                pending == 0 && phase == 0,
+                "10ms target shortened the next logical update");
+            pending = 5'123'456; phase = 0;
+            Require(TakeSimulationStep(pending, 4'000'000, phase) == 5'123'456 &&
+                pending == 0 && phase == 1'123'456,
+                "Overrun was truncated to the requested step");
+            Require(FrameWaitNs(0, 4'000'000, phase) == 2'876'544 &&
+                FrameWaitNs(2'876'544, 4'000'000, phase) == 0 &&
+                FrameWaitNs(6'000'000, 4'000'000, phase) == 0,
+                "Pacing lost overshoot credit or slept after the deadline");
+            pending = 2'876'544;
+            Require(TakeSimulationStep(pending, 4'000'000, phase) == 2'876'544 &&
+                pending == 0 && phase == 0,
+                "Compensating update could not be shorter than the target step");
+            pending = 9'000'000; phase = 0;
+            Require(TakeSimulationStep(pending, 4'000'000, phase) == 9'000'000 &&
+                pending == 0 && phase == 1'000'000,
+                "4ms target incorrectly capped actual work at two target intervals");
+            Require(FrameWaitNs(0, 4'000'000, phase) == 3'000'000,
+                "9ms update did not preserve its next 3ms presentation opportunity");
+            pending = 8'000'000;
+            Require(TakeSimulationStep(pending, 4'000'000, phase) == 8'000'000,
+                "Next update was forced to the 3ms minimum instead of actual elapsed time");
+
+        }
+        ApplySimulationStep(FrameTiming::LegacyTickNs);
         constexpr auto stock = FrameTiming::FromTargetFps(100);
         constexpr auto high = FrameTiming::FromTargetFps(240);
         static_assert(stock.mIntervalNs == 10'000'000ULL);
@@ -111,7 +202,7 @@ int main()
                 ++age;
                 pulses += age % 5 == 0;
                 position += UpdateDelta(3.33f);
-                velocity *= UpdateDecay(0.97f);
+                velocity *= std::max(0.0f, 1.0f - static_cast<float>(gUpdateIntervalNs * 3.0e-9));
             }
             Require(std::abs(wholeTicks - 1000) <= 1, "Integer UI motion changed speed");
             Require(std::abs(pulses - 200) <= 1, "Periodic event cadence changed speed");

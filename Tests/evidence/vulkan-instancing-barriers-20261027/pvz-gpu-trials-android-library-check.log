@@ -1,0 +1,119 @@
+[0/2] Re-checking globbed directories...
+[1/2] Re-running CMake...
+CMake Warning (deprecated) at C:/UserProgram/DevTools/AndroidSdk/ndk/27.2.12479018/build/cmake/android.toolchain.cmake:35 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  C:/UserProgram/vcpkg/scripts/buildsystems/vcpkg.cmake:210 (include)
+  out/android-arm64/CMakeFiles/4.4.3/CMakeSystem.cmake:6 (include)
+  CMakeLists.txt:36 (project)
+This warning is for project developers.  Use -Wno-author or -Wno-deprecated
+to suppress it.
+
+CMake Warning (deprecated) at C:/UserProgram/DevTools/AndroidSdk/ndk/27.2.12479018/build/cmake/android-legacy.toolchain.cmake:35 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  C:/UserProgram/DevTools/AndroidSdk/ndk/27.2.12479018/build/cmake/android.toolchain.cmake:55 (include)
+  C:/UserProgram/vcpkg/scripts/buildsystems/vcpkg.cmake:210 (include)
+  out/android-arm64/CMakeFiles/4.4.3/CMakeSystem.cmake:6 (include)
+  CMakeLists.txt:36 (project)
+This warning is for project developers.  Use -Wno-author or -Wno-deprecated
+to suppress it.
+
+-- Running vcpkg install
+Detecting compiler hash for triplet x64-windows...
+Compiler found: C:/UserProgram/Visual Studuio/2026/Community/VC/Tools/MSVC/14.51.36231/bin/Hostx64/x64/cl.exe
+Detecting compiler hash for triplet arm64-android...
+Compiler found: C:/UserProgram/DevTools/AndroidSdk/ndk/27.2.12479018/toolchains/llvm/prebuilt/windows-x86_64/bin/clang++.exe
+The following packages are already installed:
+  * fmt:arm64-android@12.2.0#1
+  * highway:arm64-android@1.4.0
+    jpegli:arm64-android@2026-06-01#2
+  * lcms:arm64-android@2.19.1#1
+  * libjpeg-turbo:arm64-android@3.2.0
+    libspng:arm64-android@0.7.4
+    nlohmann-json:arm64-android@3.12.0#2
+    openal-soft:arm64-android@1.25.1#2
+  * vcpkg-cmake:x64-windows@2025-08-07
+  * vcpkg-cmake-config:x64-windows@2026-07-21
+  * vcpkg-cmake-get-vars:x64-windows@2025-05-29
+  * vcpkg-tool-meson:x64-windows@1.9.0#10
+    zlib:arm64-android@1.3.2#2
+jpegli provides CMake targets:
+
+  # this is heuristically generated, and may not be correct
+  find_package(jpegli CONFIG REQUIRED)
+  target_link_libraries(main PRIVATE jpegli::jpegli-static)
+
+zlib is compatible with built-in CMake targets:
+
+  find_package(ZLIB REQUIRED)
+  target_link_libraries(main PRIVATE ZLIB::ZLIB)
+
+zlib provides pkg-config modules:
+
+  # zlib compression library
+  zlib
+
+libspng provides CMake targets:
+
+    find_package(SPNG CONFIG REQUIRED)
+    target_link_libraries(main PRIVATE $<IF:$<TARGET_EXISTS:spng::spng>,spng::spng,spng::spng_static>) 
+The package nlohmann-json provides CMake targets:
+
+    find_package(nlohmann_json CONFIG REQUIRED)
+    target_link_libraries(main PRIVATE nlohmann_json::nlohmann_json)
+
+The package nlohmann-json can be configured to not provide implicit conversions via a custom triplet file:
+
+    set(nlohmann-json_IMPLICIT_CONVERSIONS OFF)
+
+For more information, see the docs here:
+    
+    https://json.nlohmann.me/api/macros/json_use_implicit_conversions/
+
+openal-soft provides CMake targets:
+
+  # this is heuristically generated, and may not be correct
+  find_package(OpenAL CONFIG REQUIRED)
+  target_link_libraries(main PRIVATE OpenAL::OpenAL)
+
+openal-soft provides pkg-config modules:
+
+  # OpenAL is a cross-platform 3D audio API
+  openal
+
+All requested installations completed successfully in: 461 us
+-- Running vcpkg install - done
+CMake Warning (deprecated) at C:/UserProgram/DevTools/AndroidSdk/ndk/27.2.12479018/build/cmake/flags.cmake:18 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  C:/UserProgram/DevTools/cmake/share/cmake-4.4/Modules/Platform/Android-Clang.cmake:23 (include)
+  C:/UserProgram/DevTools/cmake/share/cmake-4.4/Modules/Platform/Android-Clang-C.cmake:1 (include)
+  C:/UserProgram/DevTools/cmake/share/cmake-4.4/Modules/CMakeCInformation.cmake:48 (include)
+  CMakeLists.txt:36 (project)
+This warning is for project developers.  Use -Wno-author or -Wno-deprecated
+to suppress it.
+
+-- Found Vulkan: C:/UserProgram/DevTools/AndroidSdk/ndk/27.2.12479018/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/lib/aarch64-linux-android/29/libvulkan.so (found suitable version "1.3.275", minimum required is "1.2") found components: glslc glslangValidator
+-- Found Vulkan: C:/UserProgram/DevTools/AndroidSdk/ndk/27.2.12479018/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/lib/aarch64-linux-android/29/libvulkan.so (found version "1.3.275") found components: glslc glslangValidator
+-- Configuring done (5.0s)
+-- Generating done (0.3s)
+-- Build files have been written to: C:/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/out/android-arm64
+[0/4] Re-checking globbed directories...
+[1/5] Building CXX object SexyAppFramework/graphics/vulkan/CMakeFiles/sexy_vulkan.dir/VulkanRenderer.cpp.o
+[2/5] Linking CXX static library SexyAppFramework\graphics\vulkan\libsexy_vulkan.a

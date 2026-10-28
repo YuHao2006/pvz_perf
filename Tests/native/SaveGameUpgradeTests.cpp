@@ -1,3 +1,4 @@
+#include "ReanimClock.h"
 #include "LawnApp.h"
 #include "Lawn/System/SaveGame.h"
 #include "Lawn/System/LevelSaveFormat.h"
@@ -20,6 +21,7 @@
 #include "SexyAppFramework/sound/DummyMusicInterface.h"
 #include <cstdio>
 #include <algorithm>
+#include <array>
 #include <bit>
 #include <iostream>
 #include <fstream>
@@ -157,7 +159,7 @@ void LoadCurrentWithResources(LawnApp& app, HiddenWindow& window, const char* sa
         std::cout << "PASS production loader rejects out-of-range variant before drawing\n";
         return;
     }
-    Require(LawnLoadGame(&board, save), "Full production v3.3 save load failed");
+    Require(LawnLoadGame(&board, save), "Full production v4 save load failed");
     Require(app.mGameScene == GameScenes::SCENE_PLAYING, "Save load did not publish the playing scene");
     auto& systems = app.mEffectSystem->mParticleHolder->mParticleSystems;
     TodParticleSystem* particle = nullptr;
@@ -235,8 +237,6 @@ void LoadCurrentWithResources(LawnApp& app, HiddenWindow& window, const char* sa
     if (systems.IterateNext(particle))
     {
         particle->mRandomState = 0x173ABC29U;
-        if (particle->EmitterRosterCount())
-            particle->EmitterRosterEmitterAt(0)->mEmissionElapsedNs = 217'123'456;
     }
     Plant* coordinateProbe = nullptr;
     if (board.mPlants.IterateNext(coordinateProbe))
@@ -248,10 +248,14 @@ void LoadCurrentWithResources(LawnApp& app, HiddenWindow& window, const char* sa
         const auto now = static_cast<std::int64_t>(board.mLevelTimeNs);
         coordinateProbe->mNextLaunchTimeNs = now + 217'123'456;
         coordinateProbe->mLaunchWindowStartNs = now - 4'567'888;
+        coordinateProbe->mMagnetStartTimeNs = now - 400'123'457;
+        coordinateProbe->mWakeUpEndTimeNs = now + 12'345'679;
     }
     // Keep a real pool object with nonzero velocity-segment state so the
     // production writer/reader checks its double origin and integer clock too.
     auto* motionProbe = board.mZombies.DataArrayAlloc();
+    motionProbe->mApp = &app;
+    motionProbe->mBoard = &board;
     motionProbe->mZombieType = ZombieType::ZOMBIE_NORMAL;
     motionProbe->mZombiePhase = ZombiePhase::PHASE_ZOMBIE_NORMAL;
     motionProbe->mRow = 2;
@@ -259,8 +263,54 @@ void LoadCurrentWithResources(LawnApp& app, HiddenWindow& window, const char* sa
     motionProbe->mY = 251.987654f;
     motionProbe->mScaleZombie = 1.3372819f;
     motionProbe->mRootOriginX = -0.000123456789;
-    AdvanceVelocity(motionProbe->mX, -0.123456789f, 123'456'789, motionProbe->mVelocityX);
-    AdvanceVelocity(motionProbe->mY, 0.000123456789f, 987'654'321, motionProbe->mVelocityY);
+    motionProbe->mBirthTimeNs = static_cast<std::int64_t>(board.mLevelTimeNs)-987'654'321;
+    motionProbe->mShotFlashEndTimeNs = static_cast<std::int64_t>(board.mLevelTimeNs)+123'456'789;
+    motionProbe->mChilledEndTimeNs = static_cast<std::int64_t>(board.mLevelTimeNs)+456'789'123;
+    AdvanceVelocity(motionProbe->mX, -0.123456789f, 123'456'789, static_cast<std::int64_t>(board.mLevelTimeNs), motionProbe->mVelocityX);
+    AdvanceVelocity(motionProbe->mY, 0.000123456789f, 987'654'321, static_cast<std::int64_t>(board.mLevelTimeNs), motionProbe->mVelocityY);
+    // A separate live root walker exercises nonzero v4 root-cycle state. Keep
+    // the existing linear probe above: these are independent persistence paths.
+    auto* rootProbe = board.mZombies.DataArrayAlloc();
+    rootProbe->mApp = &app;
+    rootProbe->mBoard = &board;
+    rootProbe->mZombieType = ZombieType::ZOMBIE_NORMAL;
+    rootProbe->mZombiePhase = ZombiePhase::PHASE_ZOMBIE_NORMAL;
+    rootProbe->mZombieHeight = ZombieHeight::HEIGHT_ZOMBIE_NORMAL;
+    rootProbe->mFromWave = 0;
+    rootProbe->mRow = 2;
+    rootProbe->mX = 712.349243f;
+    rootProbe->mY = 251.125f;
+    rootProbe->mScaleZombie = 1.3372819f;
+    auto* rootAnimation = app.AddReanimation(0, 0, 0, ReanimationType::REANIM_ZOMBIE);
+    rootAnimation->BindTimeDomain(ReanimTimeDomain::Battle);
+    rootAnimation->PlayReanim(ReanimTrackId::anim_walk, ReanimLoopType::REANIM_LOOP, 0, 13.3072289f);
+    Require(rootAnimation->mPeriodNs > 2'000'003 && rootAnimation->mFramePeriodNs > 5'123'457,
+        "Root save probe clip cannot straddle one cycle boundary with a small step");
+    rootAnimation->Seek(rootAnimation->mPeriodNs - 2'000'003, rootAnimation->mPeriodNs);
+    rootProbe->mBodyReanimID = app.ReanimationGetID(rootAnimation);
+    rootProbe->mRootBindingGeneration = 0;
+    const float rootSignedScale = -rootProbe->mScaleZombie;
+    rootProbe->mX = CheckedPosition(rootProbe->RootPosition(*rootAnimation, rootSignedScale));
+    const double initialRootBase = rootProbe->mRootOriginX;
+    // Exercise actual frame wrapping before saving: completed displacement is
+    // retained by the reanimation, while the actor keeps a fixed world intercept.
+    const auto rootClockBefore = holder->mBattleTimeNs;
+    const auto rootAdvance = rootAnimation->mPeriodNs * 3;
+    for (std::int64_t elapsed = rootAnimation->mFramePeriodNs; elapsed <= rootAdvance;
+         elapsed += rootAnimation->mFramePeriodNs)
+    {
+        holder->mBattleTimeNs = ReanimClock::Add(rootClockBefore, elapsed);
+        rootAnimation->UpdateAt(holder->mBattleTimeNs);
+        rootProbe->mX = CheckedPosition(rootProbe->RootPosition(*rootAnimation, rootSignedScale));
+    }
+    rootAnimation->mStartTimeNs = ReanimClock::Subtract(rootAnimation->mStartTimeNs, rootAdvance);
+    rootAnimation->mLastUpdateTimeNs = ReanimClock::Subtract(rootAnimation->mLastUpdateTimeNs, rootAdvance);
+    holder->mBattleTimeNs = rootClockBefore;
+    Require(rootAnimation->mRootDisplacement != 0 &&
+        rootProbe->mRootBindingGeneration == rootAnimation->mPlaybackGeneration &&
+        rootProbe->mRootOriginX == initialRootBase,
+        "Root save probe did not settle nonzero displacement with a fixed actor intercept");
+    const auto rootProbeId = board.mZombies.DataArrayGetID(rootProbe);
     // Real live shots exercise both timestamp anchors and the original float
     // trajectory parameters, rather than merely roundtripping an empty pool.
     std::vector<unsigned int> projectileProbeIds;
@@ -269,12 +319,6 @@ void LoadCurrentWithResources(LawnApp& app, HiddenWindow& window, const char* sa
         auto* shot = board.AddProjectile(121, 151, 0, 1, type);
         const auto now = static_cast<std::int64_t>(board.mLevelTimeNs);
         shot->mCreationTimeNs = now - 217'123'456;
-        shot->mMotionOriginTimeNs = now - 123'456'789;
-        shot->mOriginX = 121.123456f;
-        shot->mOriginY = 151.987654f;
-        shot->mOriginZ = -0.000123456f;
-        shot->mOriginRotation = 0.123456789f;
-        shot->mOriginShadowY = 218.987654f;
         shot->mRotationSpeed = 0.013372819f;
         shot->mVelX = 2.7137289f;
         shot->mVelY = 0.031372819f;
@@ -292,16 +336,14 @@ void LoadCurrentWithResources(LawnApp& app, HiddenWindow& window, const char* sa
     const auto projectileState = [](const Projectile& shot) {
         const auto bits = [](float value) { return std::int64_t(std::bit_cast<std::uint32_t>(value)); };
         return std::vector<std::int64_t>{
-            shot.mCreationTimeNs, shot.mMotionOriginTimeNs,
-            bits(shot.mOriginX), bits(shot.mOriginY), bits(shot.mOriginZ),
-            bits(shot.mOriginRotation), bits(shot.mOriginShadowY),
+            shot.mCreationTimeNs,
             bits(shot.mPosX), bits(shot.mPosY), bits(shot.mPosZ),
             bits(shot.mVelX), bits(shot.mVelY), bits(shot.mVelZ), bits(shot.mAccZ),
             bits(shot.mRotation), bits(shot.mRotationSpeed), bits(shot.mShadowY),
             bits(shot.mX), bits(shot.mY), shot.mRow, shot.mDead};
     };
     // A real rooted definition keeps this probe saveable by the normal loader.
-    // Its rounded public position differs from its exact segment endpoint.
+    // The ordinary discrete state must survive save/load and continue identically.
     TodParticle* linearParticle=nullptr;
     for (int effect=0;effect<gParticleDefCount && !linearParticle;++effect)
     {
@@ -317,13 +359,14 @@ void LoadCurrentWithResources(LawnApp& app, HiddenWindow& window, const char* sa
         linearParticle=emitter->SpawnParticle(0,1);
         Require(linearParticle!=nullptr,"Cannot spawn linear particle save probe");
         linearParticle->mParticleDurationNs=60'000'000'000;
-        linearParticle->mParticleEmitter->RebaseParticlePosition(linearParticle, {1'048'576.f,-1'048'576.f});
+        linearParticle->mPosition = {1'048'576.f,-1'048'576.f};
         linearParticle->mVelocity={.125f,-.125f};
-        linearParticle->mParticleEmitter->RebaseParticleSpin(linearParticle, 1'048'576.f);
+        linearParticle->mSpinPosition = 1'048'576.f;
         linearParticle->mSpinVelocity=.125f;
-        Require(emitter->UpdateParticle(linearParticle,16'000'000) &&
-            linearParticle->mLinearElapsedNs==16'000'000 && linearParticle->mLinearSpinActive==1,
-            "Linear particle save probe did not establish an integer-time segment");
+        emitter->mParticleSystem->mLastUpdateTimeNs = ReanimClock::Add(emitter->mParticleSystem->mLastUpdateTimeNs, 16'000'000);
+        Require(emitter->UpdateParticle(linearParticle,16'000'000, emitter->mParticleSystem->mLastUpdateTimeNs) &&
+            ParticleLifeAgeAt(linearParticle->mParticleEmitter->mParticleSystem->mLastUpdateTimeNs, linearParticle->mBirthTimeNs, linearParticle->mParticleDurationNs)==16'000'000,
+            "Particle save probe did not advance its lifetime");
     }
     Require(linearParticle!=nullptr,"No field-free production particle definition for save probe");
     TodParticle* accelerationParticle=nullptr;
@@ -346,12 +389,12 @@ void LoadCurrentWithResources(LawnApp& app, HiddenWindow& window, const char* sa
         accelerationParticle=emitter->SpawnParticle(0,1);
         Require(accelerationParticle!=nullptr,"Cannot spawn acceleration save probe");
         accelerationParticle->mParticleDurationNs=60'000'000'000;
-        accelerationParticle->mParticleEmitter->RebaseParticlePosition(accelerationParticle, {1'048'576.f,-1'048'576.f});
+        accelerationParticle->mPosition = {1'048'576.f,-1'048'576.f};
         accelerationParticle->mVelocity={.125f,-.25f};
-        Require(emitter->UpdateParticle(accelerationParticle,16'000'003) &&
-            accelerationParticle->mLinearElapsedNs==16'000'003 &&
-            (accelerationParticle->mLinearAcceleration.x!=0 || accelerationParticle->mLinearAcceleration.y!=0),
-            "Acceleration save probe did not retain nonzero segment coefficients");
+        emitter->mParticleSystem->mLastUpdateTimeNs = ReanimClock::Add(emitter->mParticleSystem->mLastUpdateTimeNs, 16'000'003);
+        Require(emitter->UpdateParticle(accelerationParticle,16'000'003, emitter->mParticleSystem->mLastUpdateTimeNs) &&
+            ParticleLifeAgeAt(accelerationParticle->mParticleEmitter->mParticleSystem->mLastUpdateTimeNs, accelerationParticle->mBirthTimeNs, accelerationParticle->mParticleDurationNs)==16'000'003,
+            "Acceleration save probe did not advance its lifetime");
     }
     Require(accelerationParticle!=nullptr,"No constant acceleration production definition for save probe");
     int positionType=-1;
@@ -377,12 +420,10 @@ void LoadCurrentWithResources(LawnApp& app, HiddenWindow& window, const char* sa
         auto* emitter=positionSystem->EmitterRosterEmitterAt(i);
         if (!emitter->mEmitterDef->mSystemFields.count) continue;
         emitter->mSystemDurationNs=60'000'000'000;
-        emitter->mSystemPositionOriginX=.015625;
-        emitter->mSystemPositionOriginY=-.03125;
-        emitter->Update(16'000'000);
+        emitter->Update(16'000'000, ReanimClock::Add(emitter->mParticleSystem->mLastUpdateTimeNs, 16'000'000));
         Require(emitter->mSystemPositionBound==1 &&
-            emitter->mSystemPositionOriginX==.015625 && emitter->mSystemPositionOriginY==-.03125,
-            "System-position save probe lost its exact authored origin");
+            std::isfinite(emitter->mSystemPositionOriginX) && std::isfinite(emitter->mSystemPositionOriginY),
+            "System-position save probe did not retain its previous curve sample");
         positionBound=true;
         break;
     }
@@ -416,10 +457,10 @@ void LoadCurrentWithResources(LawnApp& app, HiddenWindow& window, const char* sa
             // offset from the current shared clock must preserve local progress.
             append(animation->mTimeDomain,
                 animation->mStartTimeNs - now,
-                animation->mPhaseOriginNs, animation->mPeriodNs,
-                animation->mOriginCycleCount, std::bit_cast<std::uint32_t>(animation->mAnimRate),
+                animation->mCurrentFrame, animation->mFramePeriodNs, animation->mPeriodNs,
+                animation->mCycleCrossings, std::bit_cast<std::uint32_t>(animation->mAnimRate),
                 position.phaseNs, position.cycles,
-                animation->mLastFrameNs, animation->mLastCycleCount, animation->mHasLastFrame,
+                animation->mLastFrameNs, std::bit_cast<std::int64_t>(animation->mRootDisplacement), animation->mHasLastFrame,
                 animation->mPlaybackGeneration);
         }
         Plant* plant = nullptr;
@@ -427,7 +468,9 @@ void LoadCurrentWithResources(LawnApp& app, HiddenWindow& window, const char* sa
             append(plant->mX, plant->mY, plant->mRootOriginX,
                 plant->mRootBindingGeneration, plant->mRootScale, plant->mBowlingRowArrivalTimeNs,
                 plant->mNextLaunchTimeNs,
-                plant->mLaunchWindowStartNs);
+                plant->mLaunchWindowStartNs,
+                ReanimClock::Subtract(static_cast<std::int64_t>(board.mLevelTimeNs),plant->mMagnetStartTimeNs),
+                plant->mWakeUpEndTimeNs==0?0:std::max<std::int64_t>(0,ReanimClock::Subtract(plant->mWakeUpEndTimeNs,static_cast<std::int64_t>(board.mLevelTimeNs))));
         Projectile* shot = nullptr;
         while (board.mProjectiles.IterateNext(shot))
         {
@@ -438,9 +481,19 @@ void LoadCurrentWithResources(LawnApp& app, HiddenWindow& window, const char* sa
         while (board.mZombies.IterateNext(zombie))
         {
             append(zombie->mX, zombie->mY, zombie->mRootOriginX,
-                zombie->mRootBindingGeneration, zombie->mRootScale);
-            for (const auto* motion : {&zombie->mVelocityX, &zombie->mVelocityY})
-                append(motion->origin, motion->elapsedNs, motion->rate, motion->lastOutput, motion->bound);
+                zombie->mRootBindingGeneration, zombie->mRootScale,
+                ReanimClock::Subtract(static_cast<std::int64_t>(board.mLevelTimeNs),zombie->mBirthTimeNs),
+                zombie->mShotFlashEndTimeNs==0?0:std::max<std::int64_t>(0,ReanimClock::Subtract(zombie->mShotFlashEndTimeNs,static_cast<std::int64_t>(board.mLevelTimeNs))),
+                zombie->mChilledEndTimeNs==0?0:std::max<std::int64_t>(0,ReanimClock::Subtract(zombie->mChilledEndTimeNs,static_cast<std::int64_t>(board.mLevelTimeNs))));
+            for (const auto* motion : {&zombie->mVelocityX, &zombie->mVelocityY, &zombie->mAltitudeMotion})
+            {
+                // Unbound origins have no local age. Flat-tire X uses the same
+                // field as an explicitly persisted absolute speed-ramp anchor.
+                const auto temporalState = !motion->bound ? 0 :
+                    zombie->mFlatTires && motion == &zombie->mVelocityX ? motion->startTimeNs :
+                    ReanimClock::Subtract(static_cast<std::int64_t>(board.mLevelTimeNs), motion->startTimeNs);
+                append(motion->origin, temporalState, motion->rate, motion->bound);
+            }
         }
         TodParticleSystem* system = nullptr;
         while (systems.IterateNext(system))
@@ -449,19 +502,19 @@ void LoadCurrentWithResources(LawnApp& app, HiddenWindow& window, const char* sa
             for (int e = 0; e < system->EmitterRosterCount(); ++e)
             {
                 auto* emitter = system->EmitterRosterEmitterAt(e);
-                append(emitter->mSpawnRemainder, emitter->mEmissionElapsedNs,
+                append(ParticleLifeAgeAt(system->mLastUpdateTimeNs, emitter->mBirthTimeNs, emitter->mSystemDurationNs),
+                    emitter->mCrossFadeEndTimeNs == 0 ? 0 : std::max<std::int64_t>(0,ReanimClock::Subtract(emitter->mCrossFadeEndTimeNs,system->mLastUpdateTimeNs)),
+                    emitter->mSpawnRemainder,
                     emitter->mSystemPositionOriginX, emitter->mSystemPositionOriginY,
                     emitter->mSystemPositionBound);
                 for (int p = 0; p < emitter->ParticleRosterCount(); ++p)
                 {
                     auto* item = emitter->ParticleRosterParticleAt(p);
-                    append(item->mParticleAgeNs,
-                        item->mAnimationElapsedNs, item->mAnimationSampleIntegral, item->mRandomSeed,
-                        item->mLinearOriginX, item->mLinearOriginY, item->mLinearElapsedNs,
-                        item->mLinearVelocity.x, item->mLinearVelocity.y,
-                        item->mLinearAcceleration.x, item->mLinearAcceleration.y,
-                        item->mLinearSpinOrigin,item->mLinearSpinRate,
-                        item->mLinearSpinActive);
+                    append(ParticleLifeAgeAt(item->mParticleEmitter->mParticleSystem->mLastUpdateTimeNs, item->mBirthTimeNs, item->mParticleDurationNs),
+                        ReanimClock::Subtract(item->mParticleEmitter->mParticleSystem->mLastUpdateTimeNs, item->mAnimationBirthTimeNs), item->mAnimationSampleIntegral, item->mRandomSeed,
+                        item->mPosition.x, item->mPosition.y,
+                        item->mVelocity.x, item->mVelocity.y,
+                        item->mSpinPosition, item->mSpinVelocity);
                 }
             }
         }
@@ -474,19 +527,64 @@ void LoadCurrentWithResources(LawnApp& app, HiddenWindow& window, const char* sa
     const auto nondefault = std::count_if(beforeSave.begin(), beforeSave.end(),
         [](const auto& entry) { return entry.second != 0; });
     const std::string roundtrip = std::string(save) + ".runtime-roundtrip.dat64";
-    Require(LawnSaveGame(&board, roundtrip), "Production v3.3 save writer failed");
+    Require(LawnSaveGame(&board, roundtrip), "Production v4 save writer failed");
     std::ifstream saved(roundtrip, std::ios::binary);
     const std::vector<std::uint8_t> savedBytes{
         std::istreambuf_iterator<char>(saved), std::istreambuf_iterator<char>()};
-    Require(LevelSaveFormat::IsCurrentDat64Header(savedBytes), "Production writer did not emit v3.3");
+    Require(LevelSaveFormat::IsCurrentDat64Header(savedBytes), "Production writer did not emit v4");
     saved.close();
     const auto continueParticles = [&] {
         TodParticleSystem* system = nullptr;
         while (systems.IterateNext(system))
-            system->Update(17'123'457);
+            system->Update(17'123'457, ReanimClock::Add(system->mLastUpdateTimeNs, static_cast<std::int64_t>(17'123'457)));
         return exactSnapshot();
     };
     const auto continuedParticleState = continueParticles();
+    // Advance only this root walker. The temporary shared time is restored on
+    // both success and failure; particle/projectile continuation uses its own
+    // unchanged clock setup. Resolve pool IDs anew so reload cannot reuse stale pointers.
+    const auto continueRoot = [&] {
+        auto* zombie = board.mZombies.DataArrayGet(rootProbeId);
+        Require(zombie != nullptr, "Root continuation lost its live pool object");
+        auto* animation = app.ReanimationTryToGet(zombie->mBodyReanimID);
+        Require(animation != nullptr, "Root continuation lost its body reanimation");
+        const auto previousTime = holder->mBattleTimeNs;
+        const auto nextTime = ReanimClock::Add(previousTime, 5'123'457);
+        const double previousBase = zombie->mRootOriginX;
+        const double previousDisplacement = animation->mRootDisplacement;
+        holder->mBattleTimeNs = nextTime;
+        try
+        {
+            const double beforeConsume = zombie->RootPosition(*animation, -zombie->mScaleZombie);
+            Require(zombie->RootPosition(*animation, -zombie->mScaleZombie) == beforeConsume,
+                "Repeated root sampling changed position before consuming the frame");
+            animation->UpdateAt(nextTime);
+            const double afterConsume = zombie->RootPosition(*animation, -zombie->mScaleZombie);
+            Require(afterConsume == beforeConsume &&
+                zombie->RootPosition(*animation, -zombie->mScaleZombie) == afterConsume,
+                "Root position changed across consuming the same timestamp");
+            zombie->mX = CheckedPosition(afterConsume);
+            const auto frame = animation->SampleFrameAt(nextTime);
+            Require(animation->mCycleCrossings == 1 && animation->mCurrentFrame == 0 &&
+                animation->mRootDisplacement != previousDisplacement &&
+                zombie->mRootOriginX == previousBase,
+                "Root continuation did not settle one wrap while retaining the actor intercept");
+            const std::array<std::int64_t, 8> result{
+                std::int64_t(std::bit_cast<std::uint32_t>(zombie->mX)),
+                std::bit_cast<std::int64_t>(zombie->mRootOriginX),
+                animation->mCycleCrossings,
+                std::bit_cast<std::int64_t>(animation->mRootDisplacement),
+                animation->mCurrentFrame, frame.frame, frame.ageNs, frame.cycles};
+            holder->mBattleTimeNs = previousTime;
+            return result;
+        }
+        catch (...)
+        {
+            holder->mBattleTimeNs = previousTime;
+            throw;
+        }
+    };
+    const auto continuedRootState = continueRoot();
     // Sample a future point on independent copies. Reloaded live objects must
     // reach the identical float results, including rotation and roof/shadow
     // correction, from the saved absolute time anchors.
@@ -510,11 +608,11 @@ void LoadCurrentWithResources(LawnApp& app, HiddenWindow& window, const char* sa
     Sexy::gUpdateIntervalNs = savedInterval;
     Sexy::gUpdateTicks = savedTicks;
     holder->mVisualTimeNs += 17'123'456'789;
-    Require(LawnLoadGame(&board, roundtrip), "Production v3.3 roundtrip reload failed");
+    Require(LawnLoadGame(&board, roundtrip), "Production v4 roundtrip reload failed");
     Require(board.mLevelTimeNs == savedBoardTime &&
         board.mEffectCounter.mNanoseconds == 9'876'543'210,
         "Raw level-clock load overwrote its adjacent effect counter with a removed previous sample");
-    Require(exactSnapshot() == exactBefore, "Native v3.3 reload changed exact time, motion or random state");
+    Require(exactSnapshot() == exactBefore, "Native v4 reload changed exact time, motion or random state");
     if (coordinateProbe)
     {
         Plant* restoredProbe = nullptr;
@@ -532,6 +630,8 @@ void LoadCurrentWithResources(LawnApp& app, HiddenWindow& window, const char* sa
         "Particle base/appearance changed through native save/reload");
     Require(continueParticles() == continuedParticleState,
         "Native reload changed the continued variable-step particle state");
+    Require(continueRoot() == continuedRootState,
+        "Native v4 reload changed root position/base/cycle/coefficient or cached-frame continuation");
     board.mLevelTimeNs += continuationNs;
     holder->mBattleTimeNs = static_cast<std::int64_t>(board.mLevelTimeNs);
     Sexy::gUpdateIntervalNs = continuationNs;

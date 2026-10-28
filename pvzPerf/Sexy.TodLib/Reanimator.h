@@ -4,6 +4,7 @@
 #include "FilterEffect.h"
 #include "misc/SexyMatrix.h"
 #include <map>
+#include <array>
 #include <cstdint>
 #include "ReanimTrackId.h"
 #include "DefinitionImageRegion.h"
@@ -33,23 +34,9 @@ namespace Sexy
 constexpr const float DEFAULT_FIELD_PLACEHOLDER = -10000.0f;
 constexpr const double SECONDS_PER_UPDATE = 0.01f;
 
-namespace ReanimFlags
-{
-    constexpr int FastDrawInSwModeBit = 1;
-}
-
-enum class ReanimTrackStorage : std::uint32_t {
-    Both = 0,
-    Cpu = 1,
-    Gpu = 2
-};
-
 struct ReanimatorTransformArray {
     ReanimatorSourceTransform* mTransforms;
     int count;
-    // DSL regions control keyframe residency, never the logical track index.
-    // GPU-only tracks retain their slot/count but have no CPU keyframe array.
-    ReanimTrackStorage mStorage = ReanimTrackStorage::Both;
 };
 
 class ReanimatorTrack
@@ -85,7 +72,6 @@ public:
     std::uint32_t*                  mVariantActionStarts = nullptr;
     std::uint32_t*                  mVariantActionCounts = nullptr;
     std::uint32_t*                  mVariantOptions = nullptr;
-    Sexy::GpuReanimResource*         mGpuData = nullptr;
 
 };
 extern ReanimatorDefinition* gReanimatorDefArray;   //[0x6A9EE8]
@@ -115,7 +101,6 @@ class ReanimationParams
 public:
     ReanimationType                 mReanimationType;
     const char*                     mReanimFileName;
-    int                             mReanimParamFlags;
 };
 
 void                                ReanimatorEnsureDefinitionLoaded(ReanimationType theReanimType, bool theIsPreloading);
@@ -129,11 +114,10 @@ void                                ReanimatorPreloadAll();
 // 全量源图上传【仅主线程】，上传成功后释放 CPU 位图。
 int                                 ReanimatorUploadAllTexturesToGPU();
 // Main-thread loading only. Upload binary keyframes/UV once; keep CPU Both data.
-void                                ReanimatorUploadGpuDefinitionData();
 // Startup definitions can be uploaded while the native window is still hidden.
-void                                ReanimatorUploadGpuDefinitionData(ReanimationType theType);
-void                                ReanimatorFreeGpuDefinitionData();
 
+// Compile-time fixed-track indices; -1 means the definition has no ground track.
+extern const std::array<int, (int)ReanimationType::NUM_REANIMS> gReanimGroundTrackIndices;
 extern ReanimationParams gLawnReanimationArray[(int)ReanimationType::NUM_REANIMS];  //0x6A1340
 
 // ######################################################################################################################################################
@@ -237,9 +221,16 @@ public:
     ReanimatorTrackInstance();
 };
 
+struct ReanimFramePosition
+{
+    std::int64_t cycles; // Temporary wraps relative to the cached keyframe.
+    int frame;
+    std::int64_t ageNs;
+};
+
 struct ReanimPlaybackPosition
 {
-    std::int64_t cycles;
+    std::int64_t cycles; // Temporary wraps relative to the cached keyframe.
     std::int64_t phaseNs;
 };
 
@@ -263,9 +254,11 @@ public:
     std::uint32_t                   mVariant;
     ReanimTimeDomain                mTimeDomain;
     std::int64_t                    mStartTimeNs;
-    std::int64_t                    mPhaseOriginNs;
+    int                             mCurrentFrame;
+    std::int64_t                    mFramePeriodNs;
+    double                          mRootFrameScale;
     std::int64_t                    mPeriodNs;
-    std::int64_t                    mOriginCycleCount;
+    std::int64_t                    mCycleCrossings; // Only the last processed interval, never a lifetime count.
     float                           mAnimRate;
     std::uint32_t                   mPlaybackGeneration;
     ReanimatorDefinition*           mDefinition;
@@ -286,7 +279,7 @@ public:
     Color                           mExtraOverlayColor;
     bool                            mEnableExtraOverlayDraw;
     std::int64_t                    mLastFrameNs;
-    std::int64_t                    mLastCycleCount;
+    double                          mRootDisplacement; // Completed _ground displacement, including mRootFrameScale.
     std::int64_t                    mLastUpdateTimeNs;
     bool                            mHasLastFrame;
     bool                            mPendingTiming;
@@ -316,6 +309,7 @@ public:
     void                            Update();
     void                            UpdateAt(std::int64_t nowNs);
     void                            Advance(std::int64_t deltaNs);
+    ReanimFramePosition             SampleFrameAt(std::int64_t nowNs, std::int64_t offsetNs = 0) const;
     ReanimPlaybackPosition          SamplePlayback(std::int64_t offsetNs = 0) const;
     ReanimPlaybackPosition          SamplePlaybackAt(std::int64_t nowNs, std::int64_t offsetNs = 0) const;
     void                            BindTimeDomain(ReanimTimeDomain domain);
@@ -331,7 +325,7 @@ public:
     /*inline*/ void                 Draw(Graphics* g);
     void                            DrawRenderGroup(Graphics* g, int theRenderGroup);
     bool                            DrawTrack(Graphics* g, int theTrackIndex, int theRenderGroup,
-        const ReanimatorFrameTime* theFrameTime = nullptr, std::uint32_t* theGpuInstance = nullptr);
+        const ReanimatorFrameTime* theFrameTime = nullptr);
     void                            GetCurrentTransform(int theTrackIndex, ReanimatorTransform* theTransformCurrent, const ReanimatorFrameTime* theFrameTime = nullptr);
     void                            GetTransformAtTime(int theTrackIndex, ReanimatorTransform* theTransform, const ReanimatorFrameTime* theFrameTime);
     void                            GetFrameTime(ReanimatorFrameTime* theFrameTime);

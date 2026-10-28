@@ -11,10 +11,14 @@ find_program(PVZ_GLSLC NAMES glslc HINTS "$ENV{VULKAN_SDK}/Bin"
 find_program(PVZ_SPIRV_VAL NAMES spirv-val HINTS "$ENV{VULKAN_SDK}/Bin"
     "C:/UserProgram/VulkanSDK/1.4.350.0/Bin" REQUIRED)
 
+option(PVZ_VULKAN_SEPARATE_BLEND_TEST "Android-only single-output premultiplied sprite blend test" OFF)
+if(PVZ_VULKAN_SEPARATE_BLEND_TEST AND NOT ANDROID)
+    message(FATAL_ERROR "PVZ_VULKAN_SEPARATE_BLEND_TEST requires Android")
+endif()
 add_library(sexy_vulkan STATIC VulkanContext.cpp VulkanRenderer.cpp)
-# Particle rendering uses the resident arena in every build. The reanimation
-# draw policy can still be selected independently by its experimental option.
-target_compile_definitions(sexy_vulkan PRIVATE PVZ_REANIM_GEOMETRY=1 PVZ_REANIM_UNIFIED=1)
+if(ANDROID AND PVZ_VULKAN_SEPARATE_BLEND_TEST)
+    target_compile_definitions(sexy_vulkan PRIVATE PVZ_VULKAN_SEPARATE_BLEND_TEST=1)
+endif()
 if(NOT WIN32 OR NOT PVZ_WINDOWS_PLATFORM STREQUAL "WIN7")
     target_sources(sexy_vulkan PRIVATE VulkanHdrDisplay.cpp VulkanHdrObserver.cpp)
 endif()
@@ -47,24 +51,17 @@ if(WIN32)
 endif()
 if(MSVC)
     target_compile_options(sexy_vulkan PRIVATE /W4 /utf-8 /permissive-)
+elseif(ANDROID OR CMAKE_SYSTEM_NAME STREQUAL "Android")
+    target_compile_options(sexy_vulkan PRIVATE -Wno-missing-field-initializers)
 endif()
 
 set(PVZ_NATIVE_SHADER_DIR "${CMAKE_CURRENT_BINARY_DIR}/shaders/$<CONFIG>")
-foreach(stage IN ITEMS vs pool_vs ps hdr_ps coverage_ps caustic_cs font_cs alpha_cs color_cs reanim_unified_vs reanim_unified_gs)
+foreach(stage IN ITEMS vs pool_vs ps sprite_ps sprite_mixed_ps hdr_ps coverage_ps caustic_cs font_cs alpha_cs color_cs)
     if(stage STREQUAL "vs" OR stage STREQUAL "pool_vs")
         set(shaderStage vertex)
         set(shaderSource "${CMAKE_CURRENT_SOURCE_DIR}/shaders/game_${stage}.hlsl")
         set(shaderLanguage -x hlsl)
-    elseif(stage STREQUAL "reanim_unified_vs" OR stage STREQUAL "reanim_unified_gs")
-        if(stage STREQUAL "reanim_unified_vs")
-            set(shaderStage vertex)
-            set(shaderSource "${CMAKE_CURRENT_SOURCE_DIR}/shaders/game_${stage}.vert")
-        else()
-            set(shaderStage geometry)
-            set(shaderSource "${CMAKE_CURRENT_SOURCE_DIR}/shaders/game_${stage}.geom")
-        endif()
-        set(shaderLanguage "")
-    elseif(stage STREQUAL "ps" OR stage STREQUAL "coverage_ps")
+    elseif(stage STREQUAL "ps" OR stage STREQUAL "sprite_ps" OR stage STREQUAL "sprite_mixed_ps" OR stage STREQUAL "coverage_ps")
         # GLSL：bindless 数组采样需要 nonuniformEXT 装饰，glslc 的 HLSL 前端
         # 没有 NonUniformResourceIndex 内建
         set(shaderStage fragment)
@@ -89,14 +86,27 @@ foreach(stage IN ITEMS vs pool_vs ps hdr_ps coverage_ps caustic_cs font_cs alpha
             --target-env=vulkan1.2 -O "${shaderSource}"
             -o "${output}"
         COMMAND "${PVZ_SPIRV_VAL}" --target-env vulkan1.2 "${output}"
-        DEPENDS "${shaderSource}" "${CMAKE_CURRENT_SOURCE_DIR}/../GpuParticleShader.glsl" VERBATIM)
+        DEPENDS "${shaderSource}" VERBATIM)
     list(APPEND nativeShaders "${output}")
 endforeach()
+if(ANDROID AND PVZ_VULKAN_SEPARATE_BLEND_TEST)
+    set(singleOutputShader "${PVZ_NATIVE_SHADER_DIR}/game_sprite_single_output_ps.spv")
+    add_custom_command(OUTPUT "${singleOutputShader}"
+        COMMAND "${CMAKE_COMMAND}" -E make_directory "${PVZ_NATIVE_SHADER_DIR}"
+        COMMAND "${PVZ_GLSLC}" -Werror -fshader-stage=fragment --target-env=vulkan1.2 -O
+            "${CMAKE_SOURCE_DIR}/Tests/performance/single_output_premult_experiment.frag" -o "${singleOutputShader}"
+        COMMAND "${PVZ_SPIRV_VAL}" --target-env vulkan1.2 "${singleOutputShader}"
+        DEPENDS "${CMAKE_SOURCE_DIR}/Tests/performance/single_output_premult_experiment.frag" VERBATIM)
+    list(APPEND nativeShaders "${singleOutputShader}")
+endif()
 add_custom_target(sexy_vulkan_shaders DEPENDS ${nativeShaders})
 add_dependencies(sexy_vulkan sexy_vulkan_shaders)
 
 # User-authored scaling effects compile once while loading configuration.
+# Android ships precompiled SPIR-V and has no DXC host dependency.
+if(NOT ANDROID AND NOT CMAKE_SYSTEM_NAME STREQUAL "Android")
 find_package(directx-dxc CONFIG REQUIRED GLOBAL)
+endif()
 add_library(sexy_vulkan_effects STATIC
     VulkanEffectPrograms.cpp
     VulkanScaleDds.cpp
@@ -105,13 +115,20 @@ add_library(sexy_vulkan_effects STATIC
     ../../effect/ScaleEffectSizing.cpp)
 target_include_directories(sexy_vulkan_effects PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}/../../effect")
 target_compile_features(sexy_vulkan_effects PUBLIC cxx_std_23)
-target_compile_definitions(sexy_vulkan_effects PUBLIC SEXY_SCALE_EFFECT_AUTHORING=1)
-target_link_libraries(sexy_vulkan_effects PUBLIC Vulkan::Vulkan PRIVATE Microsoft::DirectXShaderCompiler)
+if(NOT ANDROID AND NOT CMAKE_SYSTEM_NAME STREQUAL "Android")
+    target_compile_definitions(sexy_vulkan_effects PUBLIC SEXY_SCALE_EFFECT_AUTHORING=1)
+    target_link_libraries(sexy_vulkan_effects PUBLIC Vulkan::Vulkan PRIVATE Microsoft::DirectXShaderCompiler)
+else()
+    target_link_libraries(sexy_vulkan_effects PUBLIC Vulkan::Vulkan)
+endif()
 if(MSVC)
     target_compile_options(sexy_vulkan_effects PRIVATE /W4 /utf-8 /permissive-)
+elseif(ANDROID OR CMAKE_SYSTEM_NAME STREQUAL "Android")
+    target_compile_options(sexy_vulkan_effects PRIVATE -Wno-missing-field-initializers)
 endif()
 
 # Authoring parsers/DXC are available only in the explicitly offline asset tool.
+if(NOT ANDROID AND NOT CMAKE_SYSTEM_NAME STREQUAL "Android")
 add_executable(compile_numeric_scale EXCLUDE_FROM_ALL
     "${CMAKE_SOURCE_DIR}/tools/compile-numeric-scale.cpp"
     ../../effect/ScaleEffectCompiler.cpp)
@@ -142,12 +159,13 @@ else()
     message(STATUS "No external scaling effects found; skipping offline effect baking")
 endif()
 add_custom_target(bake_numeric_scale DEPENDS ${numericEffects})
+endif()
 
 target_link_libraries(sexy_vulkan PRIVATE sexy_vulkan_effects)
 set_target_properties(sexy_vulkan sexy_vulkan_effects PROPERTIES
     INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE)
 
-if(BUILD_TESTING)
+if(BUILD_TESTING AND NOT ANDROID AND NOT CMAKE_SYSTEM_NAME STREQUAL "Android")
     set(PVZ_TEST_EFFECTS_DIR "${CMAKE_SOURCE_DIR}/effects" CACHE PATH
         "External scaling effect fixtures for Vulkan tests")
     add_executable(sexy_vulkan_enumeration_tests tests/enumeration_tests.cpp)
@@ -231,28 +249,64 @@ if(BUILD_TESTING AND WIN32)
     add_test(NAME sexy_vulkan_render_semantics COMMAND sexy_vulkan_render_tests)
     set_tests_properties(sexy_vulkan_render_semantics PROPERTIES
         TIMEOUT 60 ENVIRONMENT "VK_LAYER_VALIDATE_SYNC=1")
-    if(WIN32)
-    # Explicitly opt in after coordinating access to the GPU. Kept outside the
-    # ordinary CTest run until production pixel and performance gates are met.
-    get_target_property(reanimBenchmarkSources sexy_vulkan SOURCES)
-    add_library(sexy_vulkan_reanim_unified_backend STATIC EXCLUDE_FROM_ALL ${reanimBenchmarkSources})
-    target_include_directories(sexy_vulkan_reanim_unified_backend PUBLIC
-        "$<TARGET_PROPERTY:sexy_vulkan,INTERFACE_INCLUDE_DIRECTORIES>")
-    target_compile_features(sexy_vulkan_reanim_unified_backend PUBLIC cxx_std_23)
-    target_compile_definitions(sexy_vulkan_reanim_unified_backend PUBLIC
-        PVZ_REANIM_BENCHMARK=1 PVZ_REANIM_GEOMETRY=1 PVZ_REANIM_UNIFIED=1)
-    target_link_libraries(sexy_vulkan_reanim_unified_backend PUBLIC Vulkan::Vulkan
-        PRIVATE sexy_vulkan_effects user32 ole32)
-    if(NOT PVZ_WINDOWS_PLATFORM STREQUAL "WIN7")
-        target_link_libraries(sexy_vulkan_reanim_unified_backend PRIVATE runtimeobject)
-    endif()
-    add_dependencies(sexy_vulkan_reanim_unified_backend sexy_vulkan_shaders)
-    if(MSVC)
-        target_compile_options(sexy_vulkan_reanim_unified_backend PRIVATE /W4 /utf-8 /permissive-)
-    endif()
-    set_target_properties(sexy_vulkan_reanim_unified_backend PROPERTIES INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE)
-    add_executable(sexy_vulkan_reanim_unified_tests EXCLUDE_FROM_ALL tests/reanim_tests.cpp ../../misc/FastMath.cpp)
-    target_link_libraries(sexy_vulkan_reanim_unified_tests PRIVATE sexy_vulkan_reanim_unified_backend)
-    target_compile_definitions(sexy_vulkan_reanim_unified_tests PRIVATE PVZ_NATIVE_SHADER_DIR="${PVZ_NATIVE_SHADER_DIR}")
-    endif()
+endif()
+
+# Explicit desktop GPU experiment. Production and Android never compile these hooks.
+if(BUILD_TESTING AND WIN32 AND NOT PVZ_WINDOWS_PLATFORM STREQUAL "WIN7")
+    set(spriteExperiment "${CMAKE_CURRENT_BINARY_DIR}/sprite-experiment/$<CONFIG>/generated_sprite.spv")
+    add_custom_command(OUTPUT "${spriteExperiment}"
+        COMMAND "${CMAKE_COMMAND}" -E make_directory "${CMAKE_CURRENT_BINARY_DIR}/sprite-experiment/$<CONFIG>"
+        COMMAND "${PVZ_GLSLC}" -Werror -fshader-stage=fragment --target-env=vulkan1.2 -O
+            "${CMAKE_SOURCE_DIR}/Tests/performance/generated_sprite_experiment.frag" -o "${spriteExperiment}"
+        COMMAND "${PVZ_SPIRV_VAL}" --target-env vulkan1.2 "${spriteExperiment}"
+        DEPENDS "${CMAKE_SOURCE_DIR}/Tests/performance/generated_sprite_experiment.frag" VERBATIM)
+    add_custom_target(sexy_sprite_experiment_shader DEPENDS "${spriteExperiment}")
+    set(filterExperiment "${CMAKE_CURRENT_BINARY_DIR}/sprite-experiment/$<CONFIG>/baked_filter.spv")
+    add_custom_command(OUTPUT "${filterExperiment}"
+        COMMAND "${CMAKE_COMMAND}" -E make_directory "${CMAKE_CURRENT_BINARY_DIR}/sprite-experiment/$<CONFIG>"
+        COMMAND "${PVZ_GLSLC}" -Werror -fshader-stage=fragment --target-env=vulkan1.2 -O
+            "${CMAKE_SOURCE_DIR}/Tests/performance/baked_filter_experiment.frag" -o "${filterExperiment}"
+        COMMAND "${PVZ_SPIRV_VAL}" --target-env vulkan1.2 "${filterExperiment}"
+        DEPENDS "${CMAKE_SOURCE_DIR}/Tests/performance/baked_filter_experiment.frag" VERBATIM)
+    add_custom_target(sexy_filter_experiment_shader DEPENDS "${filterExperiment}")
+    set(instanceExperiment "${CMAKE_CURRENT_BINARY_DIR}/sprite-experiment/$<CONFIG>/sprite_instance.spv")
+    add_custom_command(OUTPUT "${instanceExperiment}"
+        COMMAND "${CMAKE_COMMAND}" -E make_directory "${CMAKE_CURRENT_BINARY_DIR}/sprite-experiment/$<CONFIG>"
+        COMMAND "${PVZ_GLSLC}" -Werror -fshader-stage=vertex --target-env=vulkan1.2 -O
+            "${CMAKE_SOURCE_DIR}/Tests/performance/sprite_instance_experiment.vert" -o "${instanceExperiment}"
+        COMMAND "${PVZ_SPIRV_VAL}" --target-env vulkan1.2 "${instanceExperiment}"
+        DEPENDS "${CMAKE_SOURCE_DIR}/Tests/performance/sprite_instance_experiment.vert" VERBATIM)
+    add_custom_target(sexy_instance_experiment_shader DEPENDS "${instanceExperiment}")
+    set(solidExperiment "${CMAKE_CURRENT_BINARY_DIR}/sprite-experiment/$<CONFIG>/solid_fill.spv")
+    add_custom_command(OUTPUT "${solidExperiment}"
+        COMMAND "${CMAKE_COMMAND}" -E make_directory "${CMAKE_CURRENT_BINARY_DIR}/sprite-experiment/$<CONFIG>"
+        COMMAND "${PVZ_GLSLC}" -Werror -fshader-stage=fragment --target-env=vulkan1.2 -O
+            "${CMAKE_SOURCE_DIR}/Tests/performance/solid_fill_experiment.frag" -o "${solidExperiment}"
+        COMMAND "${PVZ_SPIRV_VAL}" --target-env vulkan1.2 "${solidExperiment}"
+        DEPENDS "${CMAKE_SOURCE_DIR}/Tests/performance/solid_fill_experiment.frag" VERBATIM)
+    add_custom_target(sexy_solid_experiment_shader DEPENDS "${solidExperiment}")
+    set(separateBlendExperiment "${CMAKE_CURRENT_BINARY_DIR}/sprite-experiment/$<CONFIG>/single_output_premult.spv")
+    add_custom_command(OUTPUT "${separateBlendExperiment}"
+        COMMAND "${CMAKE_COMMAND}" -E make_directory "${CMAKE_CURRENT_BINARY_DIR}/sprite-experiment/$<CONFIG>"
+        COMMAND "${PVZ_GLSLC}" -Werror -fshader-stage=fragment --target-env=vulkan1.2 -O
+            "${CMAKE_SOURCE_DIR}/Tests/performance/single_output_premult_experiment.frag" -o "${separateBlendExperiment}"
+        COMMAND "${PVZ_SPIRV_VAL}" --target-env vulkan1.2 "${separateBlendExperiment}"
+        DEPENDS "${CMAKE_SOURCE_DIR}/Tests/performance/single_output_premult_experiment.frag" VERBATIM)
+    add_custom_target(sexy_separate_blend_experiment_shader DEPENDS "${separateBlendExperiment}")
+    add_library(sexy_vulkan_sprite_experiment STATIC EXCLUDE_FROM_ALL
+        VulkanContext.cpp VulkanRenderer.cpp VulkanHdrDisplay.cpp VulkanHdrObserver.cpp platform/Win32Surface.cpp)
+    target_include_directories(sexy_vulkan_sprite_experiment PUBLIC
+        "${CMAKE_SOURCE_DIR}/pvzPerf" "${CMAKE_CURRENT_SOURCE_DIR}"
+        "${CMAKE_CURRENT_SOURCE_DIR}/../../../Sexy.TodLib")
+    target_compile_features(sexy_vulkan_sprite_experiment PUBLIC cxx_std_23)
+    target_compile_definitions(sexy_vulkan_sprite_experiment PUBLIC PVZ_VULKAN_SPRITE_EXPERIMENT=1
+        PRIVATE PVZ_SEPARATE_BLEND_EXPERIMENT_SPV="${separateBlendExperiment}" PVZ_SOLID_EXPERIMENT_SPV="${solidExperiment}" PVZ_INSTANCE_EXPERIMENT_SPV="${instanceExperiment}" PVZ_SPRITE_EXPERIMENT_SPV="${spriteExperiment}" PVZ_FILTER_EXPERIMENT_SPV="${filterExperiment}")
+    target_link_libraries(sexy_vulkan_sprite_experiment PUBLIC Vulkan::Vulkan
+        PRIVATE sexy_vulkan_effects user32 ole32 runtimeobject)
+    set_target_properties(sexy_vulkan_sprite_experiment PROPERTIES INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE)
+    add_dependencies(sexy_vulkan_sprite_experiment sexy_vulkan_shaders sexy_sprite_experiment_shader sexy_filter_experiment_shader sexy_instance_experiment_shader sexy_solid_experiment_shader sexy_separate_blend_experiment_shader)
+    add_executable(sexy_vulkan_sprite_benchmark EXCLUDE_FROM_ALL
+        "${CMAKE_SOURCE_DIR}/Tests/performance/vulkan_sprite_benchmark.cpp")
+    target_link_libraries(sexy_vulkan_sprite_benchmark PRIVATE sexy_vulkan_sprite_experiment)
+    target_compile_definitions(sexy_vulkan_sprite_benchmark PRIVATE PVZ_NATIVE_SHADER_DIR="${PVZ_NATIVE_SHADER_DIR}")
 endif()

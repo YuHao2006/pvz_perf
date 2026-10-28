@@ -1,0 +1,2 @@
+bench8a FireOrigin | before 44.25 ns | after 85.89 ns | diff -94.1% | C(static) 36.78 ns | checksum=OK (A=33E87B47DBC29286 B=33E87B47DBC29286 C=33E87B47DBC29286)
+bench8b FireMotion | before 54.91 ns | after 111.23 ns | diff -102.6% | C(static) 60.47 ns | checksum=OK (A=C8B46F715A661899 B=C8B46F715A661899 C=C8B46F715A661899)

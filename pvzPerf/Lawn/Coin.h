@@ -19,28 +19,19 @@ public:
     float                   mVelY;                  //+0x30
     float                   mScale;                 //+0x34
     bool                    mDead;                  //+0x38
-    Sexy::TimeCounter                     mFadeCount;             //+0x3C
-    // Falling and pickup segments are mutually exclusive and share their origin.
-    // 当前拾取运动段的起点，不是恒定的生成坐标。Collect() 记录；
-    // 普通拾取的目标切换或外部改位时，会重新绑定这两个起点。
+    std::int64_t            mFadeEndTimeNs;             //+0x3C
+    // Collection start position, retained for award curves and widescreen drawing.
     float                   mCollectX;              //+0x40
     float                   mCollectY;              //+0x44
     int                     mGroundY;               //+0x48
-    Sexy::TimeCounter                     mCoinAge;               //+0x4C
+    std::int64_t            mBirthTimeNs;               //+0x4C
     bool                    mIsBeingCollected;      //+0x50
-    // 按状态复用，底层 mNanoseconds 的单位始终是 ns：
-    // 1. 未拾取：空中为当前解析运动段经过的时间；落地时重置为消失计时。
-    //    关卡奖品另用作奖品/显示计时。
-    // 2. 拾取中的普通阳光、钱币、解锁提示礼盒：当前吸附段已经过的时间，
-    //    Collect() / 运动重绑定时归零，再加本次更新的纳秒步长。
-    // 上述路径互斥；状态 2 中不是“还剩多久消失”，不得同时跑落地计时。
-    // 存档连同 mIsBeingCollected、mType 和 mCollectX/Y 保存并恢复其含义。
-    Sexy::TimeCounter                     mDisappearCounter;      //+0x54
+    // Ground disappearance time; awards and special collected items reuse it as a timer.
+    std::int64_t            mDisappearStartTimeNs; // INT64_MAX means this phase has not started.      //+0x54
     CoinType                mType;                  //+0x58
     CoinMotion              mCoinMotion;            //+0x5C
     AttachmentID            mAttachmentID;          //+0x60
-    // 拾取的入账/缩放/透明度采样距离；保留原版前一个 10ms 时刻的语义，
-    // 不一定等于本次新坐标到目标的几何距离。
+    // Distance before this update's pickup movement, used for scoring, scale and fade.
     float                   mCollectionDistance;    //+0x64
     SeedType                mUsableSeedType;        //+0x68
     PottedPlant             mPottedPlantSpec;       //+0x70
@@ -48,16 +39,6 @@ public:
     bool                    mHasBouncyArrow;        //+0xC9
     bool                    mHitGround;             //+0xCA
     int                     mTimesDropped;          //+0xCC
-    // Segment-origin velocities for analytic falling. Current mVelX/Y remain
-    // public outputs and external edits rebind this segment on the next update.
-    float                   mFallVelocityX = 0;
-    float                   mFallVelocityY = 0;
-    // Plant-sun growth advances only while UpdateFall runs. Coin age also
-    // advances during scene freezes, and the flight/ground counter can rebase.
-    // Keep this separate integer segment so pauses, landing and wall impacts
-    // cannot change growth. Public scale edits rebind its origin.
-    float                   mFallScaleOrigin = 1;
-    std::uint64_t           mFallScaleElapsedNs = 0;
 
 public:
     Coin();

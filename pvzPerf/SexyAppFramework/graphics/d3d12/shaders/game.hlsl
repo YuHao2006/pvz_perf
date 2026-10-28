@@ -290,3 +290,31 @@ float4 PSMain(VertexOut input) : SV_Target0
         return source * input.color;
     }
 }
+
+// Ordinary straight-alpha images have no generated-image, coverage or filter
+// work. Loading already repairs decoded transparent edges where requested.
+float4 SpritePS(VertexOut input) : SV_Target0
+{
+    float4 source = images[NonUniformResourceIndex(input.slot & 0xfffu)].Sample(
+        samplers[NonUniformResourceIndex(input.samplerIndex)], input.uv);
+    if ((input.slot & 0x04000000u) != 0u) source.a = 1.0;
+    return source * input.color;
+}
+
+struct MixedSpriteOutput
+{
+    float4 color : SV_Target0;
+    float4 blendControl : SV_Target1;
+};
+
+MixedSpriteOutput MixedSpritePS(VertexOut input)
+{
+    const float4 fragment = SpritePS(input);
+    MixedSpriteOutput output;
+    output.color = float4(fragment.rgb * fragment.a, fragment.a);
+    // Bit 25 is renderer-internal. Destination alpha retains the historical
+    // normal/additive accumulation; only destination RGB uses source 1 alpha.
+    output.blendControl = float4(0, 0, 0,
+        (input.slot & 0x02000000u) != 0u ? 0.0 : fragment.a);
+    return output;
+}

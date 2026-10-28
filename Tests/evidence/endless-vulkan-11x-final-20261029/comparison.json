@@ -1,0 +1,9 @@
+{
+  "previous_cpu_ms_per_frame": 6.155949036918138,
+  "current_cpu_ms_per_frame": 5.789079629926734,
+  "observed_cpu_ms_per_frame_reduction_percent": 5.95959136099461,
+  "retail_fps_ratio": 2.2751413893602153,
+  "retail_cpu_reduction_percent": 36.29931583087965,
+  "retail_cpu_ms_per_frame_reduction_percent": 72.00143935360721,
+  "qualification": "Single runs, same source checkpoint; not repeated ABBA or identical frame-by-frame state. GPU clocks unverified."
+}

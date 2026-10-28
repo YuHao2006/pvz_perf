@@ -4,6 +4,8 @@
 // (r,0,0,1)，整数覆盖公式保持原样。采样器同 game_ps.frag 走数组
 // （覆盖路径恒 nearest/clamp=0，由顶点携带）。
 #extension GL_EXT_nonuniform_qualifier : require
+precision mediump float;
+precision highp int;
 
 layout(set = 0, binding = 0) uniform texture2D coverageMasks[4096];
 layout(set = 1, binding = 0) uniform sampler samplers[4];

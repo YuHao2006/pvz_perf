@@ -146,6 +146,7 @@ void CompileShaders()
     };
     const std::array pairs{
         std::pair{GL3::SceneVertexShader(), GL3::SceneFragmentShader()},
+        std::pair{GL3::SceneVertexShader(), GL3::SpriteFragmentShader()},
         std::pair{GL3::QuadVertexShader(), GL3::ImageFragmentShader()},
         std::pair{GL3::QuadVertexShader(), GL3::FontFragmentShader()},
         std::pair{GL3::QuadVertexShader(), GL3::PresentFragmentShader()}};
@@ -510,6 +511,49 @@ void RepeatedTargetSelection(OpenGLRenderer& r)
     }
     r.DestroyTexture(image);
 }
+#if !defined(PVZ_TEST_D3D9)
+void OrdinarySpriteHardwareSampling(OpenGLRenderer& r)
+{
+    auto pixels=Pattern(7,5);
+    for(size_t i=0;i<pixels.size();++i)
+        pixels[i]=(pixels[i]&0x00ffffffU)|((i%4)*85U<<24);
+    auto* texture=r.CreateTexture(7,5,pixels.data(),7*4,false);
+    const auto capture=[&](bool forceGeneral) {
+        ClearGroupedScene(r);
+        Require(r.BeginScene(),"Begin sprite sampling comparison");
+        for(unsigned int sampler=0;sampler<4;++sampler) {
+            for(unsigned int opaque=0;opaque<2;++opaque) {
+                auto q=Quad(texture,float(sampler*72),float(opaque*64),64,56,
+                    -0.75f,-0.5f,1.75f,1.5f);
+                for(auto& vertex:q) {
+                    vertex.r=0.75f;vertex.g=0.5f;vertex.b=0.875f;vertex.a=0.625f;
+                    if(forceGeneral)vertex.slot|=GpuVertex::kIndependentColorFilter;
+                    if(opaque)vertex.slot|=GpuVertex::kOpaqueInput;
+                }
+                Draw(r,texture,q,sampler&1U,sampler&2U,GpuBlend::Normal);
+            }
+        }
+        Require(r.GetResourceCounts().queuedBatches==(forceGeneral?1U:4U),
+            "Sprite sampler changes did not delimit batches or split unchanged state");
+        r.EndSceneAndPresent();
+        return r.ReadScenePixels();
+    };
+    const auto reference=capture(true);
+    for(unsigned int repeat=0;repeat<2;++repeat) {
+        const auto actual=capture(false);
+        // GL filtering may quantize fractional tap weights in the texture unit.
+        for(size_t i=0;i<actual.size();++i)
+            for(unsigned int shift=0;shift<32;shift+=8)
+                Require(std::abs(int((actual[i]>>shift)&255)-
+                    int((reference[i]>>shift)&255))<=2,
+                    "Hardware sprite filtering differs from general shader by more than two bytes");
+    }
+    Require(r.ReadTexturePixels(texture).pixels==pixels,
+        "Hardware sampler preparation modified source pixels");
+    r.DestroyTexture(texture);
+}
+#endif
+
 void IndependentTextureRectangles(OpenGLRenderer& r)
 {
     r.ReserveStaticTextureSlots(16);
@@ -562,9 +606,19 @@ void IndependentTextureFilterSampling(OpenGLRenderer& r)
                 for(auto& vertex:q) vertex.slot|=GpuVertex::kAlphaEdgeFilter|(filter<<28);
                 Draw(r,texture,q,mode&1,mode&2,GpuBlend::Normal);
             }
-        if(verifyBatches)
-            Require(r.GetResourceCounts().queuedBatches==(anchor==image?1u:2u),
-                "Sampler flags changed storage batching");
+        if(verifyBatches) {
+#if defined(PVZ_TEST_D3D9)
+            const size_t expected=anchor==image?1U:2U;
+#else
+            // The unfiltered anchor uses the hardware sprite program. The
+            // following explicit edge/HSL filters require the general program,
+            // even when both draws sample the same texture. Its sixteen
+            // filter/sampler combinations must still share one general batch.
+            const size_t expected=2;
+#endif
+            Require(r.GetResourceCounts().queuedBatches==expected,
+                "Sampler flags split the general batch or merged different programs");
+        }
         r.EndSceneAndPresent();
         return r.ReadScenePixels();
     };
@@ -705,21 +759,33 @@ void IndependentTextureBlendAndClipOrder(OpenGLRenderer& r)
     Require(before==after,"Repeated rendering reordered interleaved transparent blend/clip draws");
     // Independent per-pixel painter's-order reference, including uncovered pixels.
     for(int y=0;y<32;++y) for(int x=0;x<32;++x) {
-        std::array<double,3> expected{};
+        std::array<double,3> expected{}, roundingError{};
         for(const auto& layer:layers) {
             if(x<layer.clip.x || y<layer.clip.y ||
                 x>=layer.clip.x+layer.clip.width || y>=layer.clip.y+layer.clip.height) continue;
             const auto source=images.pixels[layer.image][1];
             for(unsigned int channel=0;channel<3;++channel) {
                 const unsigned int shift=(2-channel)*8;
+                const double destinationFactor=layer.blend==GpuBlend::Additive?1.0:0.5;
                 expected[channel]=double((source>>shift)&255u)/255.0*0.5+
-                    expected[channel]*(layer.blend==GpuBlend::Additive?1.0:0.5);
+                    expected[channel]*destinationFactor;
+                // Bound half precision source/blend intermediates and attachment stores
+                // independently. A binary16 normal has ten fraction bits; allow
+                // one ULP for each of the input conversion and output conversion.
+                int exponent=0;
+                std::frexp(std::abs(expected[channel])+roundingError[channel],&exponent);
+                const double storeError=std::ldexp(1.0,std::max(exponent-11,-24));
+                roundingError[channel]=roundingError[channel]*destinationFactor+2.0*storeError;
             }
         }
         const auto pixel=(size_t(y)*SceneW+x)*4;
-        for(size_t channel=0;channel<3;++channel)
-            Require(std::abs(after[pixel+channel]-expected[channel])<0.000001,
+        for(size_t channel=0;channel<3;++channel) {
+            if(std::abs(after[pixel+channel]-expected[channel])>roundingError[channel]+0.000001)
+                std::fprintf(stderr,"blend mismatch x=%d y=%d c=%zu actual=%.9f expected=%.9f tolerance=%.9f\n",
+                    x,y,channel,after[pixel+channel],expected[channel],roundingError[channel]);
+            Require(std::abs(after[pixel+channel]-expected[channel])<=roundingError[channel]+0.000001,
                 "Grouped float blending changed painter order or blend equations");
+        }
         Require(after[pixel+3]==1.0f,"Grouped float blending changed destination alpha");
     }
     r.DestroyTexture(target);
@@ -800,7 +866,7 @@ void FloatAndSelfSample(OpenGLRenderer& r)
     auto* t = r.CreateRenderImage(4,1);
     const auto zero = r.ReadTextureFloats(t);
     Require(zero.size()==16 && std::all_of(zero.begin(),zero.end(),
-        [](float v) { return v==0; }), "RGBA32F initial clear");
+        [](float v) { return v==0; }), "RGBA16F initial clear");
     r.SetRenderImage(t);
     Require(r.BeginScene(), "Begin float scene");
     auto q = Quad(r.whiteTexture,0,0,4,1);
@@ -810,13 +876,18 @@ void FloatAndSelfSample(OpenGLRenderer& r)
     r.SetRenderImage(nullptr);
     const auto p = r.ReadTextureFloats(t);
     Require(p.size()==16, "Float readback extent");
-    for (size_t i=0; i<p.size(); i+=4)
-        Require(std::abs(p[i]-1.125123f)<0.000002f &&
-            std::abs(p[i+1]-0.1234567f)<0.000002f &&
-            std::abs(p[i+2]-0.00012345f)<0.0000001f &&
-            std::abs(p[i+3]-1)<0.000002f, "RenderImage quantized or clamped RGBA32F");
+    // Independently rounded binary16 values, exactly representable in float32.
+    // Allow one binary16 ULP for implementation-dependent attachment rounding.
+    const std::array<float,4> expected{1.125f,0.12347412109375f,0.000123500823974609375f,1.0f};
+    const std::array<float,4> tolerance{0.0009765625f,0.00006103515625f,0.00000011920928955078125f,0.0009765625f};
+    for (size_t i=0; i<p.size(); i+=4) {
+        Require(p[i]>1.0f && p[i+2]>0.0f, "RGBA16F render image clamped or lost small values");
+        for (size_t channel=0; channel<4; ++channel)
+            Require(std::abs(p[i+channel]-expected[channel])<=tolerance[channel],
+                "RenderImage did not retain binary16 precision");
+    }
     auto* floatCopy = r.CopyTextureRegion(t,0,0,4,1);
-    Require(r.ReadTextureFloats(floatCopy)==p, "Region copy quantized a float render image");
+    Require(r.ReadTextureFloats(floatCopy)==p, "Region copy changed stored RGBA16F values");
     r.DestroyTexture(floatCopy);
     const std::array<unsigned int,4> colors{0xffff0000u,0xff00ff00u,0xff0000ffu,0xffffffffu};
     auto* source = r.CreateTexture(4,1,colors.data(),16);
@@ -848,7 +919,7 @@ void FloatBlending(OpenGLRenderer& r)
     const auto result=r.ReadTextureFloats(target);
     const std::array<float,4> expected{0.25f,0.5f,1.5f,0.75f};
     for(size_t i=0;i<expected.size();++i)
-        Require(std::abs(result[i]-expected[i])<0.000002f,"RGBA32F blending clamped or used the wrong factors");
+        Require(std::abs(result[i]-expected[i])<0.000002f,"RGBA16F normal/additive blending clamped or used the wrong factors");
     r.DestroyTexture(target);
 }
 void ImageFactories(OpenGLRenderer& r)
@@ -1194,33 +1265,15 @@ int main(int argc, char** argv)
                 test(renderer);
             });
         };
-#if !defined(PVZ_TEST_D3D9) && !defined(PVZ_OPENGL_REANIM_RESIDENT)
-        rendererTest("resident-disabled-native-stubs-no-policy-writes",[](OpenGLRenderer& renderer) {
-            Require(renderer.reanimPictureCandidates==0&&!renderer.reanimFrameEligible,
-                "Disabled resident policy defaults differ");
-            Require(!renderer.UploadReanimDefinition({}),"Disabled resident upload returned a resource");
-            Require(renderer.BeginReanimInstance(nullptr,nullptr,{},false,false)==~0u,
-                "Disabled resident instance returned a token");
-            Require(!renderer.SubmitReanimTrack(0,{},GpuBlend::Normal),"Disabled resident track was accepted");
-            Require(!renderer.SubmitReanim(nullptr,nullptr,{},false,false,GpuBlend::Normal),
-                "Disabled resident draw was accepted");
-            renderer.DestroyReanimDefinition(nullptr);
-            bool rejected=false;
-            try {renderer.DestroyReanimDefinition(reinterpret_cast<OpenGLReanim*>(uintptr_t(1)));}
-            catch(const std::invalid_argument&) {rejected=true;}
-            Require(rejected,"Disabled resident destroy accepted a nonnull handle");
-            renderer.reanimPictureCandidates=17;
-            Require(renderer.BeginScene(),"Disabled resident ordinary frame failed");
-            renderer.EndSceneAndPresent();
-            Require(renderer.reanimPictureCandidates==17&&!renderer.reanimFrameEligible,
-                "Disabled resident frame updated policy state");
-        });
-#endif
+
         rendererTest("production-pool-gpu-direct-UV",[](OpenGLRenderer& renderer) {
             PoolGpuChecks::Run(renderer);
         });
         rendererTest("precompiled-atlas-direct-upload-regions-filters-storage-batches",PrecompiledAtlasRegions);
         rendererTest("precompiled-atlas-replace-destroy-static-slot-reuse",PrecompiledAtlasVersions);
+#if !defined(PVZ_TEST_D3D9)
+        rendererTest("ordinary-sprite-hardware-samplers-match-general",OrdinarySpriteHardwareSampling);
+#endif
         rendererTest("independent-NPOT-negative-UV-CPU-taps",IndependentTextureSampling);
         rendererTest("replacement-all-samplers-filters-zero-difference",ReplacementSampling);
         rendererTest("repeated-main-and-offscreen-target-selection-preserves-batching",RepeatedTargetSelection);
@@ -1232,8 +1285,8 @@ int main(int argc, char** argv)
         rendererTest("independent-transparent-blend-clip-painter-order",IndependentTextureBlendAndClipOrder);
         rendererTest("primitive-order-replace-destroy-recorded-versions",OrderAndVersions);
         rendererTest("slot-flags-coverage-65536",FlagsAndCoverage);
-        rendererTest("RGBA32F-self-sample-snapshot",FloatAndSelfSample);
-        rendererTest("RGBA32F-normal-additive-no-clamp",FloatBlending);
+        rendererTest("RGBA16F-self-sample-snapshot",FloatAndSelfSample);
+        rendererTest("RGBA16F-normal-additive-no-clamp",FloatBlending);
         rendererTest("copy-zero-fill-compose-process",ImageFactories);
         rendererTest("resource-lifetime-copy-metadata-replacement",ResourceLifetime);
         rendererTest("static-slot-identity-replacement",StaticIdentity);

@@ -28,19 +28,19 @@ void VisitTimeCounterOffsets(Fn&& visit)
     }
     else if constexpr (std::is_same_v<Type, Zombie>)
     {
-        TIMER(mAnimCounter); TIMER(mGroanCounter); TIMER(mJustGotShotCounter);
-        TIMER(mShieldJustGotShotCounter); TIMER(mShieldRecoilCounter); TIMER(mZombieAge);
-        TIMER(mPhaseCounter); TIMER(mZombieFade); TIMER(mChilledCounter); TIMER(mButteredCounter);
-        TIMER(mIceTrapCounter); TIMER(mYuckyFaceCounter); TIMER(mSummonCounter);
+        TIMER(mAnimCounter); TIMER(mGroanCounter); visit(offsetof(Type, mShotFlashEndTimeNs), false);
+        visit(offsetof(Type, mShieldFlashEndTimeNs), false); visit(offsetof(Type, mShieldRecoilEndTimeNs), false); visit(offsetof(Type, mBirthTimeNs), false);
+        TIMER(mPhaseCounter); visit(offsetof(Type, mFadeEndTimeNs), false); visit(offsetof(Type, mChilledEndTimeNs), false); visit(offsetof(Type, mButteredEndTimeNs), false);
+        visit(offsetof(Type, mIceTrapEndTimeNs), false); visit(offsetof(Type, mYuckyFaceStartTimeNs), false); TIMER(mSummonCounter);
         TIMER(mBossBungeeCounter); TIMER(mBossStompCounter); TIMER(mBossHeadCounter);
         TIMER(mAnimTicksPerFrame);
     }
     else if constexpr (std::is_same_v<Type, Plant>)
     {
-        TIMER(mAnimCounter); TIMER(mDisappearCountdown); TIMER(mDoSpecialCountdown);
+        TIMER(mAnimCounter); visit(offsetof(Type, mDisappearEndTimeNs), false); TIMER(mDoSpecialCountdown);
         TIMER(mStateCountdown); TIMER(mZenProductionCountdown); TIMER(mShootingCounter);
-        TIMER(mBlinkCountdown); TIMER(mRecentlyEatenCountdown); TIMER(mEatenFlashCountdown);
-        TIMER(mBeghouledFlashCountdown); TIMER(mWakeUpCounter);
+        TIMER(mBlinkCountdown); visit(offsetof(Type, mRecentlyEatenEndTimeNs), false); visit(offsetof(Type, mEatenFlashEndTimeNs), false);
+        visit(offsetof(Type, mBeghouledFlashEndTimeNs), false); visit(offsetof(Type, mWakeUpEndTimeNs), false);
         TIMER(mFrameLength); TIMER(mLaunchRate);
     }
     else if constexpr (std::is_same_v<Type, Projectile>)
@@ -49,27 +49,27 @@ void VisitTimeCounterOffsets(Fn&& visit)
     }
     else if constexpr (std::is_same_v<Type, Coin>)
     {
-        TIMER(mFadeCount); TIMER(mCoinAge); TIMER(mDisappearCounter);
+        visit(offsetof(Type, mFadeEndTimeNs), false); visit(offsetof(Type, mBirthTimeNs), false); visit(offsetof(Type, mDisappearStartTimeNs), false);
     }
     else if constexpr (std::is_same_v<Type, LawnMower>)
     {
-        TIMER(mChompCounter); TIMER(mRollingInCounter); TIMER(mSquishedCounter);
+        visit(offsetof(Type, mChompEndTimeNs), false); visit(offsetof(Type, mRollingInStartTimeNs), false); visit(offsetof(Type, mSquishEndTimeNs), false);
         TIMER(mAnimTicksPerFrame);
     }
     else if constexpr (std::is_same_v<Type, GridItem>)
     {
-        TIMER(mGridItemCounter); TIMER(mTransparentCounter);
+        visit(offsetof(Type, mStateStartTimeNs), false); visit(offsetof(Type, mTransparencyTimeNs), false);
     }
     else if constexpr (std::is_same_v<Type, TodParticle>)
     {
-        visit(offsetof(Type, mParticleAgeNs), false);
+        visit(offsetof(Type, mBirthTimeNs), false);
         visit(offsetof(Type, mParticleDurationNs), false);
         visit(offsetof(Type, mCrossFadeDurationNs), false);
     }
     else if constexpr (std::is_same_v<Type, TodParticleEmitter>)
     {
-        visit(offsetof(Type, mSystemAgeNs), false);
-        visit(offsetof(Type, mEmitterCrossFadeCountDownNs), false);
+        visit(offsetof(Type, mBirthTimeNs), false);
+        visit(offsetof(Type, mCrossFadeEndTimeNs), false);
         visit(offsetof(Type, mSystemDurationNs), false);
     }
     else if constexpr (std::is_same_v<Type, ReanimatorTrackInstance>)
@@ -80,11 +80,11 @@ void VisitTimeCounterOffsets(Fn&& visit)
         TIMER(mHammerDownCounter);
     else if constexpr (std::is_same_v<Type, MessageWidget>)
     {
-        TIMER(mDisplayTime); TIMER(mDuration); TIMER(mSlideOffTime);
+        TIMER(mDisplayTime); visit(offsetof(Type, mEndTimeNs), false); TIMER(mSlideOffTime);
     }
     else if constexpr (std::is_same_v<Type, SeedPacket>)
     {
-        TIMER(mRefreshCounter); TIMER(mSlotMachineCountDown);
+        visit(offsetof(Type, mRefreshStartTimeNs), false); visit(offsetof(Type, mSlotMachineEndTimeNs), false);
         TIMER(mRefreshTime);
     }
     else if constexpr (std::is_same_v<Type, SeedBank>)
@@ -103,8 +103,8 @@ void VisitTimeCounterOffsets(Fn&& visit)
     }
     else if constexpr (std::is_same_v<Type, Music>)
     {
-        TIMER(mBurstStateCounter); TIMER(mDrumsStateCounter); TIMER(mFadeOutCounter);
-        TIMER(mFadeOutDuration);
+        visit(offsetof(Type, mBurstEndTimeNs), false); visit(offsetof(Type, mDrumsEndTimeNs), false); visit(offsetof(Type, mFadeOutEndTimeNs), false);
+        visit(offsetof(Type, mFadeOutDurationNs), false);
     }
 #undef TIMER
 }

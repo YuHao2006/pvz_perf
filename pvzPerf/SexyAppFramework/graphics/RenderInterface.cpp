@@ -60,63 +60,6 @@ struct ScreenVertex
 
 #define RGBA_MAKE(r, g, b, a) (((DWORD)(a) << 24) | ((DWORD)(r) << 16) | ((DWORD)(g) << 8) | (DWORD)(b))
 
-struct VertexList
-{
-	enum { MAX_STACK_VERTS = 100 };
-	ScreenVertex mStackVerts[MAX_STACK_VERTS];
-	ScreenVertex *mVerts;
-	int mSize;
-	int mCapacity;
-
-	typedef int size_type;
-
-	VertexList() : mVerts(mStackVerts), mSize(0), mCapacity(MAX_STACK_VERTS) { }
-	VertexList(const VertexList &theList) : mVerts(mStackVerts), mSize(0), mCapacity(MAX_STACK_VERTS)
-	{
-		reserve(theList.mSize);
-		mSize = theList.mSize;
-		memcpy(mVerts, theList.mVerts, mSize*sizeof(mVerts[0]));
-	}
-
-	~VertexList()
-	{
-		if (mVerts != mStackVerts)
-			delete[] mVerts;
-	}
-
-	void reserve(int theCapacity)
-	{
-		if (mCapacity < theCapacity)
-		{
-			mCapacity = theCapacity;
-			ScreenVertex *aNewList = new ScreenVertex[theCapacity];
-			memcpy(aNewList, mVerts, mSize*sizeof(mVerts[0]));
-			if (mVerts != mStackVerts)
-				delete[] mVerts;
-			mVerts = aNewList;
-		}
-	}
-
-	void push_back(const ScreenVertex &theVert)
-	{
-		if (mSize == mCapacity)
-			reserve(mCapacity*2);
-		mVerts[mSize++] = theVert;
-	}
-
-	void operator=(const VertexList &theList)
-	{
-		reserve(theList.mSize);
-		mSize = theList.mSize;
-		memcpy(mVerts, theList.mVerts, mSize*sizeof(mVerts[0]));
-	}
-
-	ScreenVertex& operator[](int thePos)
-	{
-		return mVerts[thePos];
-	}
-
-};
 }  // namespace
 
 static void RequireImageDimensions(const GpuRenderer* renderer, int width, int height)
@@ -420,21 +363,23 @@ static void SubmitNativeTriangles(std::span<const GpuVertex> vertices,
 	GpuTexture* texture,bool linearFilter,int drawMode,const Rect* clipRect)
 {
 	const int mode=drawMode<0?gGpuCurrentDrawMode:drawMode;
-	GpuClip clip{};
-	if(clipRect) clip={clipRect->mX,clipRect->mY,clipRect->mWidth,clipRect->mHeight};
+	// A deliberately empty clip is a visibility/measurement marker.
+	if (clipRect && (clipRect->mWidth <= 0 || clipRect->mHeight <= 0)) return;
+	GpuClip nativeClip{};
+	if (clipRect) nativeClip={clipRect->mX,clipRect->mY,clipRect->mWidth,clipRect->mHeight};
 	const auto blend=mode==1?GpuBlend::Additive:mode==2?GpuBlend::Opaque:GpuBlend::Normal;
 	gGpuRenderer->SubmitTriangles(vertices,texture,linearFilter,RenderInterface::sSamplerAddressWrap,
-		blend,clipRect?&clip:nullptr);
+		blend,clipRect ? &nativeClip : nullptr);
 }
 
-template<class VertexAt>
+template<bool Quads = false, class VertexAt>
 static void SubmitTextureTriangleBatch(size_t triangleCount,VertexAt vertexAt,
-	const TextureSource& data,DWORD color,float tx,float ty)
+	const TextureSource& data,DWORD color,float tx,float ty,const Rect* clip=nullptr)
 {
 	if(!triangleCount) return;
 	GpuTexture* texture=data.mTexture;
 	TextureSamplingScope sampling(data.mSamplingFlags);
-	const size_t count=triangleCount*3;
+	const size_t count=triangleCount*(Quads ? 4 : 3);
 	GpuVertex local[192];
 	auto* vertices=local;
 	if(count>std::size(local)) {
@@ -453,7 +398,17 @@ static void SubmitTextureTriangleBatch(size_t triangleCount,VertexAt vertexAt,
 			(tint&0xff)/255.0f,((tint>>24)&0xff)/255.0f,
 			source.u,source.v,slot,sampler};
 	}
-	SubmitNativeTriangles(std::span<const GpuVertex>(vertices,count),texture,gLinearFilter,-1,nullptr);
+#if defined(PVZ_GPU_VULKAN) || defined(PVZ_GPU_D3D12)
+    if constexpr (Quads) {
+        const auto blend=gGpuCurrentDrawMode==1 ? GpuBlend::Additive :
+            gGpuCurrentDrawMode==2 ? GpuBlend::Opaque : GpuBlend::Normal;
+        GpuClip nativeClip{};
+        if(clip) nativeClip={clip->mX,clip->mY,clip->mWidth,clip->mHeight};
+        gGpuRenderer->SubmitQuads(std::span<const GpuVertex>(vertices,count),texture,
+            gLinearFilter,RenderInterface::sSamplerAddressWrap,blend,clip ? &nativeClip : nullptr);
+    } else
+#endif
+	SubmitNativeTriangles(std::span<const GpuVertex>(vertices,count),texture,gLinearFilter,-1,clip);
 }
 
 static void SubmitGpuTriangles(
@@ -498,6 +453,14 @@ static void SubmitGpuTriangles(
 		aOut.sampler = aSampler;
 	};
 
+#if defined(PVZ_GPU_VULKAN) || defined(PVZ_GPU_D3D12)
+    if (theNumVertices==4 && theType!=PRIMITIVE_TRIANGLELIST) {
+        if (theType==PRIMITIVE_TRIANGLESTRIP)
+            for (int i=0;i<4;++i) ConvertVertex(theVertices[i]);
+        else
+            for (int i : {1,2,0,3}) ConvertVertex(theVertices[i]);
+    } else
+#endif
 	if (theType == PRIMITIVE_TRIANGLESTRIP)
 	{
 		for (int i = 0; i + 2 < theNumVertices; i++)
@@ -522,125 +485,21 @@ static void SubmitGpuTriangles(
 			ConvertVertex(theVertices[i]);
 	}
 
-    GpuClip aClip{};
-    if (theClipRect)
-        aClip = {theClipRect->mX, theClipRect->mY, theClipRect->mWidth, theClipRect->mHeight};
+    if (theClipRect && (theClipRect->mWidth <= 0 || theClipRect->mHeight <= 0)) return;
+    GpuClip nativeClip{};
+    if(theClipRect) nativeClip={theClipRect->mX,theClipRect->mY,theClipRect->mWidth,theClipRect->mHeight};
     const auto aBlend = aDrawMode == 1 ? GpuBlend::Additive :
         aDrawMode == 2 ? GpuBlend::Opaque : GpuBlend::Normal;
+#if defined(PVZ_GPU_VULKAN) || defined(PVZ_GPU_D3D12)
+    if (aCount==4) {
+        gGpuRenderer->SubmitQuads(std::span<const GpuVertex>(aConverted,aCount),theSRV,
+            theLinearFilter,RenderInterface::sSamplerAddressWrap,aBlend,theClipRect ? &nativeClip : nullptr);
+        return;
+    }
+#endif
     gGpuRenderer->SubmitTriangles(
         std::span<const GpuVertex>(aConverted, aCount), theSRV,
-        theLinearFilter, RenderInterface::sSamplerAddressWrap, aBlend, theClipRect ? &aClip : nullptr);
-}
-
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-namespace
-{
-template<class Pred>
-struct PointClipper
-{
-	Pred mPred;
-
-	float GetCoord(const ScreenVertex &theVertex, int n)
-	{
-		if (n == 0)
-			return theVertex.sx;
-		if (n == 1)
-			return theVertex.sy;
-		if (n == 3)
-			return theVertex.tu;
-		return theVertex.tv;
-	}
-
-	void SetCoord(ScreenVertex &theVertex, int n, float theValue)
-	{
-		if (n == 0)
-			theVertex.sx = theValue;
-		else if (n == 1)
-			theVertex.sy = theValue;
-		else if (n == 3)
-			theVertex.tu = theValue;
-		else
-			theVertex.tv = theValue;
-	}
-
-	ScreenVertex Interpolate(const ScreenVertex &v1, const ScreenVertex &v2, float t)
-	{
-		ScreenVertex result;
-		result.sx = v1.sx + (v2.sx-v1.sx)*t;
-		result.sy = v1.sy + (v2.sy-v1.sy)*t;
-		result.sz = v1.sz + (v2.sz-v1.sz)*t;
-		result.rhw = v1.rhw + (v2.rhw-v1.rhw)*t;
-		result.color = v1.color;
-		result.tu = v1.tu + (v2.tu-v1.tu)*t;
-		result.tv = v1.tv + (v2.tv-v1.tv)*t;
-		return result;
-	}
-
-	void ClipPoint(int n, float clipVal, ScreenVertex &v1, ScreenVertex &v2, VertexList &out)
-	{
-		float aV1 = GetCoord(v1,n);
-		float aV2 = GetCoord(v2,n);
-		// Inside means the coordinate survives this clip. The original
-		// clip keeps NOT-mPred: less() keeps coord >= left, greater_equal()
-		// keeps coord < right, so the polygon stays inside the rect.
-		bool aV1Inside = !mPred(aV1, clipVal);
-		bool aV2Inside = !mPred(aV2, clipVal);
-
-		if (aV1Inside && aV2Inside)
-		{
-			out.push_back(v2);
-		}
-		else if (aV1Inside && !aV2Inside)
-		{
-			float t = (clipVal - aV1) / (aV2 - aV1);
-			out.push_back(Interpolate(v1, v2, t));
-		}
-		else if (!aV1Inside && aV2Inside)
-		{
-			float t = (clipVal - aV1) / (aV2 - aV1);
-			out.push_back(Interpolate(v1, v2, t));
-			out.push_back(v2);
-		}
-	}
-
-	void ClipPoints(int n, float clipVal, VertexList &in, VertexList &out)
-	{
-		if (in.mSize < 2)
-			return;
-		ClipPoint(n, clipVal, in[in.mSize-1], in[0], out);
-		for (VertexList::size_type i=0; i<in.mSize-1; i++)
-			ClipPoint(n, clipVal, in[i], in[i+1], out);
-	}
-};
-}  // namespace
-
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-static void DrawPolyClipped(const Rect *theClipRect, const VertexList &theList, GpuTexture* theSRV)
-{
-	VertexList l1, l2;
-	l1 = theList;
-
-	int left = theClipRect->mX;
-	int right = left + theClipRect->mWidth;
-	int top = theClipRect->mY;
-	int bottom = top + theClipRect->mHeight;
-
-	VertexList *in = &l1, *out = &l2;
-	PointClipper<std::less<float> > aLessClipper;
-	PointClipper<std::greater_equal<float> > aGreaterClipper;
-
-	aLessClipper.ClipPoints(0, left, *in, *out); std::swap(in, out); out->mSize = 0;
-	aLessClipper.ClipPoints(1, top, *in, *out); std::swap(in, out); out->mSize = 0;
-	aGreaterClipper.ClipPoints(0, right, *in, *out); std::swap(in, out); out->mSize = 0;
-	aGreaterClipper.ClipPoints(1, bottom, *in, *out);
-
-	VertexList &aList = *out;
-	if (aList.mSize >= 3)
-	{
-		SubmitGpuTriangles(&aList[0], (int)aList.mSize, PRIMITIVE_TRIANGLEFAN, theSRV, gLinearFilter, -1, NULL);
-	}
+        theLinearFilter, RenderInterface::sSamplerAddressWrap, aBlend, theClipRect ? &nativeClip : nullptr);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -694,20 +553,16 @@ void TextureSource::BltTransformed(const SexyMatrix3 &theTrans, const TextureReg
 		{ p[2].x, p[2].y, 0, 1, aColor, u2, v1 },
 		{ p[3].x, p[3].y, 0, 1, aColor, u2, v2 }
 	};
-	// Preserve the original CPU polygon clip and its boundary interpolation.
-	if(theClipRect)
+	if (theClipRect && (theClipRect->mWidth <= 0 || theClipRect->mHeight <= 0)) return;
+	// Retain each existing call form's triangle diagonal for UV interpolation;
+	// local scissor is applied by GPU without changing the submitted vertices.
+	if (theClipRect)
 	{
-		VertexList aList;
-		aList.push_back(aVertex[0]);
-		aList.push_back(aVertex[1]);
-		aList.push_back(aVertex[3]);
-		aList.push_back(aVertex[2]);
-		DrawPolyClipped(theClipRect,aList,mTexture);
+		const ScreenVertex polygon[4] = {aVertex[0], aVertex[1], aVertex[3], aVertex[2]};
+		SubmitGpuTriangles(polygon, 4, PRIMITIVE_TRIANGLEFAN, mTexture, gLinearFilter, -1, theClipRect);
 	}
 	else
-	{
-		SubmitGpuTriangles(aVertex, 4, PRIMITIVE_TRIANGLESTRIP, mTexture, gLinearFilter, -1, NULL);
-	}
+		SubmitGpuTriangles(aVertex, 4, PRIMITIVE_TRIANGLESTRIP, mTexture, gLinearFilter, -1, nullptr);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -720,11 +575,11 @@ void TextureSource::BltTriangles(const TriVertex theVertices[][3], int theNumTri
 		*this,theColor,tx,ty);
 }
 
-void TextureSource::BltTriangles(std::span<const std::array<TriVertex,3>> theTriangles, DWORD theColor, float tx, float ty) const
+void TextureSource::BltTriangles(std::span<const std::array<TriVertex,3>> theTriangles, DWORD theColor, float tx, float ty,const Rect* clip) const
 {
 	SubmitTextureTriangleBatch(theTriangles.size(),
 		[&](size_t i)->const TriVertex& {return theTriangles[i/3][i%3];},
-		*this,theColor,tx,ty);
+		*this,theColor,tx,ty,clip);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1279,7 +1134,10 @@ void RenderInterface::FillPoly(const Point theVertices[], int theNumVertices, co
 	gGpuCurrentDrawMode = theDrawMode;
 	DWORD aColor = RGBA_MAKE(theColor.mRed, theColor.mGreen, theColor.mBlue, theColor.mAlpha);
 
-	VertexList aList;
+	ScreenVertex local[100];
+	std::vector<ScreenVertex> large;
+	if (theNumVertices > int(std::size(local))) large.resize(theNumVertices);
+	ScreenVertex* vertices = large.empty() ? local : large.data();
 	for (int i=0; i<theNumVertices; i++)
 	{
 		ScreenVertex vert = { theVertices[i].mX + (float)tx, theVertices[i].mY + (float)ty, 0, 1, aColor, 0, 0 };
@@ -1290,16 +1148,11 @@ void RenderInterface::FillPoly(const Point theVertices[], int theNumVertices, co
 			vert.sx = v.x;
 			vert.sy = v.y;
 		}
-		aList.push_back(vert);
+		vertices[i] = vert;
 	}
 
-	if (theClipRect != NULL)
-		DrawPolyClipped(theClipRect, aList, gGpuRenderer->whiteTexture);
-	else
-	{
-		SubmitGpuTriangles(&aList[0], (int)aList.mSize, PRIMITIVE_TRIANGLEFAN,
-			gGpuRenderer->whiteTexture, false, theDrawMode, NULL);
-	}
+	SubmitGpuTriangles(vertices, theNumVertices, PRIMITIVE_TRIANGLEFAN,
+		gGpuRenderer->whiteTexture, false, theDrawMode, theClipRect);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1335,6 +1188,7 @@ void RenderInterface::DrawPool(Image* image,const GpuPoolParams& params)
     auto* texture=CreateImageTexture(image);
     if (!texture) return;
     TextureSamplingScope sampling(image->mGpuSamplingFlags);
+    if (params.clip.width <= 0 || params.clip.height <= 0) return;
     auto state=params;
     state.samplingFlags|=CombinedImageSamplingFlags();
     mRenderer->SubmitPool(texture,state);
@@ -1368,14 +1222,27 @@ void RenderInterface::DrawTrianglesTex(std::span<const std::array<TriVertex,3>> 
 }
 
 void RenderInterface::DrawTrianglesTex(std::span<const std::array<TriVertex,3>> triangles,
-	const Color& color,int drawMode,const TextureSource& source,float tx,float ty,bool blend)
+	const Color& color,int drawMode,const TextureSource& source,float tx,float ty,bool blend,const Rect* clip)
 {
 	if (triangles.empty() || !source.mTexture || !PreDraw()) return;
 	gGpuCurrentDrawMode=drawMode;
 	gLinearFilter=blend;
 	source.BltTriangles(triangles,
-		RGBA_MAKE(color.mRed,color.mGreen,color.mBlue,color.mAlpha),tx,ty);
+		RGBA_MAKE(color.mRed,color.mGreen,color.mBlue,color.mAlpha),tx,ty,clip);
 }
+
+#if defined(PVZ_GPU_VULKAN) || defined(PVZ_GPU_D3D12)
+void RenderInterface::DrawQuadsTex(std::span<const std::array<TriVertex,4>> quads,
+    const Color& color,int drawMode,const TextureSource& source,float tx,float ty,bool blend,const Rect* clip)
+{
+    if (quads.empty() || !source.mTexture || !PreDraw()) return;
+    gGpuCurrentDrawMode=drawMode;
+    gLinearFilter=blend;
+    SubmitTextureTriangleBatch<true>(quads.size(),
+        [&](size_t i)->const TriVertex& {return quads[i/4][i%4];},source,
+        RGBA_MAKE(color.mRed,color.mGreen,color.mBlue,color.mAlpha),tx,ty,clip);
+}
+#endif
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////

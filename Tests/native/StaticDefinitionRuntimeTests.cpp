@@ -1,3 +1,4 @@
+#include "ParticleRenderParamsTests.h"
 #include "SexyAppFramework/SexyAppBase.h"
 #include "SexyAppFramework/graphics/DDInterface.h"
 #include "SexyAppFramework/graphics/Graphics.h"
@@ -65,6 +66,34 @@ LONG CALLBACK SuppressCrashDialogs(EXCEPTION_POINTERS* exception)
 class TestApp final : public LawnApp
 {
 public:
+    using Sexy::SexyAppBase::Process;
+    bool scheduleProbe = false;
+    bool refuseProbeUpdate = false;
+    unsigned long long probeTimeNs = 0;
+    unsigned long long probeMaxStepNs = 0;
+    unsigned int probeUpdates = 0;
+    unsigned int probeDraws = 0;
+    bool DoUpdateFrames() override
+    {
+        if (!scheduleProbe) return LawnApp::DoUpdateFrames();
+        if (refuseProbeUpdate) return false;
+        probeTimeNs += Sexy::gUpdateIntervalNs;
+        probeMaxStepNs = std::max(probeMaxStepNs, Sexy::gUpdateIntervalNs);
+        ++probeUpdates;
+        ++mUpdateCount;
+        return true;
+    }
+    void DoUpdateFramesF(float fraction) override
+    {
+        if (!scheduleProbe) LawnApp::DoUpdateFramesF(fraction);
+    }
+    bool DrawDirtyStuff() override
+    {
+        if (!scheduleProbe) return LawnApp::DrawDirtyStuff();
+        ++probeDraws;
+        mHasPendingDraw = false;
+        return true;
+    }
     void ButtonPress(int) override {}
     void ButtonDepress(int) override {}
     void ButtonDownTick(int) override {}
@@ -72,6 +101,104 @@ public:
     void ButtonMouseLeave(int) override {}
     void ButtonMouseMove(int, int, int) override {}
 };
+
+void CheckActualScheduler(TestApp& app)
+{
+    const auto oldTiming = app.mFrameTiming;
+    const auto oldStep = Sexy::gUpdateIntervalNs;
+    const auto oldCount = app.mUpdateCount;
+    const auto oldLoaded = app.mLoaded;
+    const auto oldYield = app.mYieldMainThread;
+    app.scheduleProbe = true;
+    app.mLoaded = true;
+    app.mYieldMainThread = false;
+    for (const auto [fps, elapsed] : std::vector<std::pair<unsigned int, unsigned long long>>{
+             {10000, 6'000'000}, {250, 5'123'456}, {240, 6'000'000}, {100, 12'500'000},
+             {60, 17'000'000}, {30, 40'000'000}})
+    {
+        app.mFrameTiming = Sexy::FrameTiming::FromTargetFps(fps);
+        app.mUpdateAppState = Sexy::UPDATESTATE_PROCESS_1;
+        app.mNonDrawCount = 0;
+        app.mUpdateFTimeAccNs = 0;
+        app.mPendingUpdatesAccNs = 0;
+        app.mFramePacingPhaseNs = app.mSimulationPhaseNs = 0;
+        app.probeTimeNs = app.probeMaxStepNs = 0;
+        app.probeUpdates = app.probeDraws = 0;
+        const auto origin = std::chrono::time_point_cast<std::chrono::nanoseconds>(
+            Sexy::FrameDeadline::Clock::now()) - std::chrono::nanoseconds(elapsed);
+        app.mLastTimeCheck = origin;
+        app.Process(false);
+        const auto elapsedUpperBound = static_cast<unsigned long long>(
+            std::chrono::duration_cast<std::chrono::nanoseconds>(
+                Sexy::FrameDeadline::Clock::now() - origin).count());
+        Require(app.mUpdateAppState == Sexy::UPDATESTATE_PROCESS_2,
+            "Actual scheduler did not start an overdue update");
+        app.Process(false);
+        Require(app.probeTimeNs + app.mPendingUpdatesAccNs >= elapsed &&
+            app.probeTimeNs + app.mPendingUpdatesAccNs <= elapsedUpperBound,
+            "Actual Process discarded elapsed time or used the target interval");
+        Require(app.probeMaxStepNs <= 10'000'000 && app.probeDraws == 1,
+            "Actual Process skipped collision steps or starved drawing");
+        if (app.probeTimeNs <= 10'000'000)
+            Require(app.probeUpdates == 1, "Actual high-FPS scheduler unnecessarily caught up");
+        const auto quantum = std::min(app.mFrameTiming.mIntervalNs, 10'000'000ULL);
+        Require(app.mPendingUpdatesAccNs < quantum - app.mSimulationPhaseNs,
+            "Actual Process left a due logical interval unprocessed");
+        if (fps == 250 && app.probeTimeNs < 8'000'000 && app.mSimulationPhaseNs > 0)
+        {
+            const auto previous = app.probeTimeNs;
+            const auto compensation = quantum - app.mSimulationPhaseNs;
+            app.mUpdateAppState = Sexy::UPDATESTATE_PROCESS_1;
+            app.mLastTimeCheck = std::chrono::time_point_cast<std::chrono::nanoseconds>(
+                Sexy::FrameDeadline::Clock::now()) - std::chrono::nanoseconds(compensation);
+            app.mUpdateFTimeAccNs = 0;
+            app.Process(false);
+            Require(app.mUpdateAppState == Sexy::UPDATESTATE_PROCESS_2,
+                "Actual Process ignored the shortened compensated interval");
+            app.Process(false);
+            Require(app.probeTimeNs - previous >= compensation &&
+                app.probeTimeNs - previous < quantum && app.probeDraws == 2,
+                "Actual Process could not execute a short compensation update");
+        }
+    }
+    // DoUpdateFrames also refuses work while the screensaver is active or
+    // a demo awaits input. Neither case may strand the native message stage.
+    app.mFrameTiming = Sexy::FrameTiming::FromTargetFps(100);
+    app.mUpdateAppState = Sexy::UPDATESTATE_PROCESS_1;
+    app.mHasPendingDraw = false;
+    app.probeTimeNs = app.probeUpdates = app.probeDraws = 0;
+    app.refuseProbeUpdate = true;
+    app.mLastTimeCheck = std::chrono::time_point_cast<std::chrono::nanoseconds>(
+        Sexy::FrameDeadline::Clock::now()) - std::chrono::milliseconds(250);
+    app.Process(false);
+    Require(app.mUpdateAppState == Sexy::UPDATESTATE_PROCESS_DONE &&
+        app.probeUpdates == 0 && app.mPendingUpdatesAccNs == 0 && app.mUpdateFTimeAccNs == 0,
+        "Refused update stranded PROCESS_1 or retained frozen simulation backlog");
+    bool updated = true;
+    Require(app.UpdateAppStep(&updated) && !updated &&
+        app.mUpdateAppState == Sexy::UPDATESTATE_PROCESS_1,
+        "Refused update did not return through the native message stage");
+    app.refuseProbeUpdate = false;
+    app.mLastTimeCheck = std::chrono::time_point_cast<std::chrono::nanoseconds>(
+        Sexy::FrameDeadline::Clock::now()) - std::chrono::milliseconds(10);
+    app.Process(false);
+    Require(app.mUpdateAppState == Sexy::UPDATESTATE_PROCESS_2 && app.probeUpdates == 1,
+        "Scheduler did not resume after a refused update");
+    app.Process(false);
+    Require(app.probeTimeNs < 30'000'000 && app.probeDraws == 1,
+        "Scheduler replayed the frozen quarter-second after resuming");
+    std::cout << "PASS refused updates: native messages resume, frozen backlog discarded and retry draws\n";
+    app.scheduleProbe = false;
+    app.mFrameTiming = oldTiming;
+    app.mLoaded = oldLoaded;
+    app.mYieldMainThread = oldYield;
+    app.mUpdateCount = oldCount;
+    app.mUpdateAppState = Sexy::UPDATESTATE_PROCESS_DONE;
+    app.mHasPendingDraw = false;
+    app.ClearUpdateBacklog(false);
+    Sexy::ApplySimulationStep(oldStep);
+    std::cout << "PASS actual Process: 30/60/100/240/10000 FPS, elapsed-time conservation, <=10ms steps and per-batch drawing\n";
+}
 
 class HiddenWindow
 {
@@ -108,7 +235,16 @@ constexpr TrackMember Tracks[]{
     &TodEmitterDefinition::mParticleDuration, &TodEmitterDefinition::mLaunchSpeed,
     &TodEmitterDefinition::mLaunchAngle, &TodEmitterDefinition::mParticleSpinAngle,
     &TodEmitterDefinition::mParticleSpinSpeed, &TodEmitterDefinition::mCollisionReflect,
-    &TodEmitterDefinition::mCollisionSpin, &TodEmitterDefinition::mAnimationRate};
+    &TodEmitterDefinition::mCollisionSpin, &TodEmitterDefinition::mAnimationRate,
+    &TodEmitterDefinition::mSystemRed, &TodEmitterDefinition::mSystemGreen,
+    &TodEmitterDefinition::mSystemBlue, &TodEmitterDefinition::mSystemAlpha,
+    &TodEmitterDefinition::mSystemBrightness, &TodEmitterDefinition::mParticleRed,
+    &TodEmitterDefinition::mParticleGreen, &TodEmitterDefinition::mParticleBlue,
+    &TodEmitterDefinition::mParticleAlpha, &TodEmitterDefinition::mParticleBrightness,
+    &TodEmitterDefinition::mParticleScale, &TodEmitterDefinition::mParticleStretch,
+    &TodEmitterDefinition::mClipTop, &TodEmitterDefinition::mClipBottom,
+    &TodEmitterDefinition::mClipLeft, &TodEmitterDefinition::mClipRight};
+static_assert(std::size(Tracks) == 38);
 
 // Static reanimation storage retains its addresses. Compiled particle records
 // retain their authored values across allocation, release and reload.
@@ -128,13 +264,6 @@ struct StaticSnapshot
                     offset += sizeof(ReanimatorTransform))
                     std::memset(result.data() + offset + offsetof(ReanimatorTransform, mFont),
                         0, sizeof(ReanimatorTransform::mFont));
-            // This binding is a mutable GPU allocation, not static behavior.
-            // Its release and idempotency are checked separately below.
-            if (label == "reanimation roots")
-                for (std::size_t offset = 0; offset < result.size();
-                    offset += sizeof(ReanimatorDefinition))
-                    std::memset(result.data() + offset + offsetof(ReanimatorDefinition, mGpuData),
-                        0, sizeof(ReanimatorDefinition::mGpuData));
             return result;
         }
     };
@@ -278,7 +407,6 @@ void CheckReanimationTextures(bool loaded)
     for (const auto& definition : Definitions::Reanimations)
     {
         CheckTextures(definition, loaded);
-        Require(loaded || !definition.mGpuData,"Released reanimation retained GPU keyframes");
     }
 }
 
@@ -411,13 +539,6 @@ void LoadAll(TestApp& app)
     Require(projectile && FontBindingCount() > 0, "Bulk load omitted projectile/font bindings");
     Require(DefinitionUploadAtlasImages() == 0 && ReanimatorUploadAllTexturesToGPU() == 0,
         "Primary-thread repeated bulk load queued duplicate uploads");
-    std::vector<GpuReanimResource*> gpuDefinitions;
-    for (const auto& definition:Definitions::Reanimations)
-        gpuDefinitions.push_back(definition.mGpuData);
-    Require(ReanimatorUploadAllTexturesToGPU()==0,"Repeated definition upload changed atlas progress");
-    for (int i=0;i<Definitions::ReanimationCount;++i)
-        Require(Definitions::Reanimations[i].mGpuData==gpuDefinitions[i],
-            "Repeated loading replaced a live GPU reanimation allocation");
     std::set<GpuTexture*> unique(textures.begin(), textures.end());
     unique.insert(projectile);
     unique.insert(gZombatarAtlas.mTexture);
@@ -595,20 +716,26 @@ void ReanimationIntegerPlayback()
         constexpr I total = 13'781'234'567;
         Reanimation reference;
         initialize(reference, loop, rate);
+        const I startPhase = reference.SamplePlayback().phaseNs;
+        const I signedPhase = startPhase + (rate < 0 ? -total : total);
+        I expectedWraps = signedPhase / reference.mPeriodNs;
+        I expectedPhase = signedPhase % reference.mPeriodNs;
+        if (expectedPhase < 0) { expectedPhase += reference.mPeriodNs; --expectedWraps; }
         const auto rootOrigin = reference.RootMotion(ReanimTrackId::_ground, 15.0f);
         const auto clippedOrigin = reference.RootMotionClamped(ReanimTrackId::_ground, 15.0f, 50.0f);
         const auto future = reference.RootMotion(ReanimTrackId::_ground, 15.0f, total);
         reference.Advance(total);
         const auto expected = reference.SamplePlayback();
+        Require(expected.phaseNs == expectedPhase && expected.cycles == 0,
+            "Consumed cursor differs from independent signed integer phase");
         Require(reference.RootMotion(ReanimTrackId::_ground, 15.0f) == future,
             "Production future root sample differs from actual elapsed playback");
-        const auto analytic = [&reference, loop](bool clipped) {
-            const auto position = reference.SamplePlayback();
+        const auto analytic = [&reference, loop, expectedWraps, expectedPhase](bool clipped) {
             const auto* keys = reference.mDefinition->mTracks.tracks[
                 reference.FindTrackIndex(ReanimTrackId::_ground)].mTransforms.mTransforms;
             const int count = reference.mFrameCount;
             const int intervals = loop == ReanimLoopType::REANIM_LOOP_FULL_LAST_FRAME ? count : count - 1;
-            const long double source = static_cast<long double>(position.phaseNs) * intervals / reference.mPeriodNs;
+            const long double source = static_cast<long double>(expectedPhase) * intervals / reference.mPeriodNs;
             const int current = int(source);
             const long double seconds = static_cast<long double>(reference.mPeriodNs) / intervals / 1e9L;
             long double cycle = 0, partial = 0;
@@ -623,7 +750,7 @@ void ReanimationIntegerPlayback()
                 if (i < current) partial += distance;
                 else if (i == current) partial += distance * (source - current);
             }
-            return position.cycles * cycle + partial;
+            return expectedWraps * cycle + partial;
         };
         const auto checkAnalytic = [](double actual, long double integral) {
             Require(std::fabs(static_cast<long double>(actual) - integral) <=
@@ -653,9 +780,10 @@ void ReanimationIntegerPlayback()
             Require(actual.phaseNs == expected.phaseNs && actual.cycles == expected.cycles &&
                 animation.mLastUpdateTimeNs == total && animation.mLoopCount == reference.mLoopCount,
                 "Production elapsed playback depends on outer update partition");
-            Require(lastRoot == future && lastClipped ==
-                reference.RootMotionClamped(ReanimTrackId::_ground, 15.0f, 50.0f),
-                "Production root movement depends on outer update partition");
+            // Root bases contain physical doubles, not lifetime cycle counters.
+            // Compare each partition to the independently integrated authored keys.
+            checkAnalytic(lastRoot, analytic(false));
+            checkAnalytic(lastClipped, analytic(true));
             Require(events == reference.TimedEventCount(2, 5),
                 "Production event multiplicity depends on outer update partition");
         }
@@ -674,6 +802,58 @@ void ReanimationIntegerPlayback()
         reference.ApplyRate(-17.003f);
         Require(reference.SamplePlayback().phaseNs == resumed.phaseNs,
             "Production reverse-rate switch reset phase");
+    }
+    for (const auto loop : {REANIM_LOOP, REANIM_LOOP_FULL_LAST_FRAME})
+    for (const float rate : {12.0f, -12.0f})
+    {
+        Reanimation cursor;
+        initialize(cursor, loop, rate);
+        cursor.Seek(rate > 0 ? 999 : 1);
+        const auto initial = cursor.SamplePlayback();
+        const I delta = rate > 0 ? cursor.mPeriodNs - initial.phaseNs + 1 : initial.phaseNs + 1;
+        const auto pendingRoot = cursor.RootMotion(ReanimTrackId::_ground, 1.0f, delta);
+        const auto pendingFrame = cursor.SamplePlayback(delta);
+        Require(pendingFrame.cycles == (rate > 0 ? 1 : -1),
+            "Pending wrap must be relative to the cached frame");
+        cursor.Advance(delta);
+        Require(cursor.SamplePlayback().cycles == 0 && cursor.mCycleCrossings == (rate > 0 ? 1 : -1),
+            "Consumed wrap was retained as a cumulative cursor cycle");
+        Require(cursor.RootMotion(ReanimTrackId::_ground, 1.0f) == pendingRoot,
+            "Committing a forward/reverse wrap changed sampled root displacement");
+        const double committed = cursor.mRootDisplacement;
+        const auto phase = cursor.SamplePlayback().phaseNs;
+        const int loops = cursor.mLoopCount;
+        cursor.Advance(0);
+        Require(cursor.mRootDisplacement == committed && cursor.mCycleCrossings == 0 &&
+            cursor.mLoopCount == loops && cursor.SamplePlayback().phaseNs == phase,
+            "Consuming the same timestamp added a root cycle twice");
+        cursor.ApplyRate(rate * 2);
+        Require(cursor.mRootDisplacement == committed,
+            "Changing rate rewrote physical completed root displacement");
+        cursor.ApplyRate(0);
+        Require(cursor.mRootDisplacement == committed,
+            "Pausing rewrote physical completed root displacement");
+    }
+    {
+        ReanimationHolder clock;
+        Reanimation paused;
+        initialize(paused, REANIM_LOOP, 12.0f);
+        paused.Advance(123'456'789);
+        paused.ApplyRate(0);
+        const auto expected = paused.SamplePlayback();
+        paused.mReanimationHolder = &clock;
+        clock.mVisualTimeNs = paused.mLastUpdateTimeNs + 3 * paused.mFramePeriodNs;
+        const auto wire = SaveRecordMapping::WriteSaveRecord(paused);
+        Reanimation restored;
+        SaveRecordMapping::ReadSaveRecord(restored, wire.data());
+        restored.mDead = true;
+        restored.mTrackInstances = nullptr; // The record reader does not own source instance storage.
+        restored.RebaseTime(clock.mVisualTimeNs + 987'654'321);
+        const auto actual = restored.SamplePlayback();
+        Require(actual.phaseNs == expected.phaseNs && actual.cycles == expected.cycles &&
+            restored.mCurrentFrame == paused.mCurrentFrame,
+            "Paused frame cursor changed when saving ahead of its last Consume");
+        std::cout << "PASS paused shared-clock frame cursor save/rebase without age change\n";
     }
     Reanimation held;
     initialize(held, ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD, 12.0f);
@@ -783,6 +963,8 @@ void Lifecycle(TestApp& app, const StaticSnapshot& snapshot, int reanimationInde
     {
         LoadAll(app);
         std::cerr << "PASS lifecycle definitions loaded: repeat " << repeat << '\n';
+        ParticleRenderParamsChecks();
+        std::cerr << "PASS lifecycle authored particle render parameters\n";
         CurveTiming();
         std::cerr << "PASS lifecycle curve timing\n";
         ReanimationIntegerPlayback();
@@ -932,6 +1114,7 @@ int main(int argc, char** argv)
         HiddenWindow window;
         TestApp app;
         gLawnApp = &app;
+        CheckActualScheduler(app);
         app.mPrimaryThreadId = CurrentNativeThreadIdentity();
         app.mScaleHDREnabled = false;
         app.mReadFromRegistry = false;

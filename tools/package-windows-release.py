@@ -108,7 +108,8 @@ def package(args):
             if path.is_file() and path.suffix.lower() in extensions:
                 # HDR regression tests share the build output directory; their
                 # probe is not a runtime shader or a release dependency.
-                if path.stem == "hdr_probe":
+                if path.stem == "hdr_probe" or path.stem.startswith("game_reanim"):
+                    # Removed GPU animation pipelines can remain in incremental build trees.
                     continue
                 include(path, path.relative_to(release).as_posix())
     if shader_extension and not any(n.startswith("shaders/") for n in files):
@@ -141,11 +142,11 @@ def package(args):
         f"pvz_perf {args.version} - Windows x64 / {args.platform} / {api}\n\n"
         f"Source revision: {source_commit}\n\n"
         f"{recommendation}"
-        "BREAKING CHANGES: saves and main.pak64 are not interchangeable with v1.x.\n"
-        "The game loads only PVZDAT64 v2 nanosecond level checkpoints.\n"
-        "Convert original DAT / DAT64 v1 checkpoints with the standalone converter first.\n"
+        "BREAKING CHANGES: saves and main.pak64 are not interchangeable with v1.x/v2.x.\n"
+        "The game loads only PVZDAT64 v4 level checkpoints (schema 0x10745).\n"
+        "Convert original DAT / DAT64 v1/v2 checkpoints with the standalone converter first.\n"
         "users.dat summaries and PVZUSR64 v13 player details retain their existing formats.\n"
-        "This main.pak64 uses reanim/particle v5 offline atlases. Update EXE and PAK64 together.\n"
+        "This main.pak64 uses generated reanim/particle definitions and current offline atlases. Update EXE and PAK64 together.\n"
         "Do not mix old and new executables, definition files or resource packages.\n\n"
         "Extract the entire archive into a fresh writable directory, then run pvz_perf.exe.\n"
         "data/ contains the generated PerfTest completed profile and canonical endless baseline.\n"
@@ -153,8 +154,8 @@ def package(args):
         "No personal settings or progressed personal saves are included.\n"
         "Re-extract the supplied baseline before each benchmark comparison.\n"
         "The DAT/DAT64 converter is in data/pvz_dat64_converter.exe.\n"
-        "Supported level formats: original 1073 DAT, DAT64 v1, v2, v3.2 and v3.3.\n"
-        "Unpublished DAT64 v3.0/v3.1 inputs and targets are unsupported.\n"
+        "Supported level formats: original 1073 DAT, DAT64 v1, v2 and v4; all v3 intermediates are unsupported.\n"
+        "All DAT64 v3 intermediate inputs and targets are unsupported.\n"
         "The game uses the Microsoft Visual C++ x64 runtime (/MD); the converter is /MT.\n"
         "CRT DLLs are not bundled. Install a compatible Microsoft Visual C++ x64 runtime on the host.\n"
         + ("External scaling effects are configured in scale.json; see effects/README.md.\n"
@@ -195,7 +196,7 @@ if __name__ == "__main__":
     parser.add_argument("--release", type=Path, required=True)
     parser.add_argument("--notices", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--version", default="v1.1")
+    parser.add_argument("--version", default="v3.0")
     parser.add_argument("--test-saves", type=Path, required=True,
                         help="Generated package-test-saves.py ZIP; both data/ and retail/ are required")
     parser.add_argument("--effects-directory", type=Path, required=True,

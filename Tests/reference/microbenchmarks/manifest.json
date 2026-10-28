@@ -1,0 +1,610 @@
+{
+  "source": "C:\\Users\\Administrator\\CLionProjects\\codex\\_shared\\bench35",
+  "scope": "Historical standalone benchmark fixtures, extracted game fragments and downstream stubs; not a complete retail decompilation.",
+  "files": [
+    {
+      "path": "cellbucket/bench_cellbucket.cpp",
+      "sha256": "41dc567b8f0e42df3b54b3e50db8118c2e7b23b3dc83c80a974f0bb0946208e7"
+    },
+    {
+      "path": "ifelse/bench10_getcost.cpp",
+      "sha256": "20d70a935b95b2eaa4cd260bc8e54bb52362a6672a885502e4e1708011a3520a"
+    },
+    {
+      "path": "ifelse/bench1_seedpacket.cpp",
+      "sha256": "e2c95d2b8ab34fec107ff54f66d11203fa491d8b6aeaff1cd48c1499abd82033"
+    },
+    {
+      "path": "ifelse/bench2_potoffset.cpp",
+      "sha256": "d4823dba92dddc129c5cbcaab1be780992857ab95c380855e87953429c74f3c9"
+    },
+    {
+      "path": "ifelse/bench3_magnetitems.cpp",
+      "sha256": "cf292ea11f8c8afbc18ac12e0732336aed5991a5cc8159ba32785440bf263968"
+    },
+    {
+      "path": "ifelse/bench4_coindraw.cpp",
+      "sha256": "3579539296bf71abec624a23bc729e2e99a6e557533e11f8cf71f41ddf86d20a"
+    },
+    {
+      "path": "ifelse/bench5_plantshadow.cpp",
+      "sha256": "15fe1a56e80408e5b5096becd83185febf75e7f133398a3a4340b06da8d96d90"
+    },
+    {
+      "path": "ifelse/bench6_zombieshadow.cpp",
+      "sha256": "f83357d966bc8ea5c1ba2e92b808c3d6e3183e584e43e9885e072c915be52409"
+    },
+    {
+      "path": "ifelse/bench7_plantheight.cpp",
+      "sha256": "e7cb879e29f565bd28f7f568ae1db91626f35bc4b76b6e220508247214aa2ddc"
+    },
+    {
+      "path": "ifelse/bench8_fire.cpp",
+      "sha256": "83a867e99852f40964fe3e6dd8144f5780400beadf30a4e2f194b82edbc3847c"
+    },
+    {
+      "path": "ifelse/bench9_updateboss.cpp",
+      "sha256": "fd7e9468c5164c25003f1038f281e8407bb5f89bafdab1338dcb334a0a14b501"
+    },
+    {
+      "path": "ifelse/bench_common.h",
+      "sha256": "62b6ddd88ef2f3724c1af60e3d2d195a85e37772bb2694fc3d38a3b20a7c807a"
+    },
+    {
+      "path": "r2plant/bench_blink_bodies.h",
+      "sha256": "e95cabc72d33720fa2d91af95552fedfb4826ab2bcd9f2692ddb2b30b77f2335"
+    },
+    {
+      "path": "r2plant/bench_blink_dbg.cpp",
+      "sha256": "b90265c6471a998c5acc868fbe317ea48e7bac0ed27cf30ea88fff62b8590d77"
+    },
+    {
+      "path": "r2plant/bench_coin.cpp",
+      "sha256": "44f231db71381f78e88bc780976a161fd5869385323a3c4e5603f94ca46e93b1"
+    },
+    {
+      "path": "r2plant/bench_mower.cpp",
+      "sha256": "8c2d03f015084fb233b9bc93223c4c8e11c5ca1c58040c9ca1f924c86018998a"
+    },
+    {
+      "path": "r2plant/bench_plant.cpp",
+      "sha256": "5fd3ad115a4f051a884b7e81ea795a6d0798967d9b77834de41ca5cc5ab0bee2"
+    },
+    {
+      "path": "r2plant/bench_probe_plant.cpp",
+      "sha256": "34802473060f69dbcb8be7a91f67ea88d6ec7db16deeeac53fedd51ddab50358"
+    },
+    {
+      "path": "r2plant/bench_probe_proj.cpp",
+      "sha256": "093f64e76ce7784401c485e7439f8409ea290f624fedf7b0b63af6282d0e8548"
+    },
+    {
+      "path": "r2plant/bench_proj.cpp",
+      "sha256": "a42498ea6403a5eee44ceb7c9dd5648e8a176c0ed18ad7ad78984ea1f5cae5ad"
+    },
+    {
+      "path": "r2plant/bench_proj_bodies.h",
+      "sha256": "375b26ed3496eda1d6b6f459f49a5121c9ec27519f9bfe99071b13ab41d4bd09"
+    },
+    {
+      "path": "r2plant/bench_rect_dbg.cpp",
+      "sha256": "594d292a2a1f20732dcde5f450d8d4b103b6b26da8095066b9293358b3ddbbb0"
+    },
+    {
+      "path": "r2plant/bench_seed.cpp",
+      "sha256": "dd4e63e699406767f0dd2547bda3fa205ab6b75fd05a3d0f5eecd76b5abd2ffa"
+    },
+    {
+      "path": "r2plant/formA/Coin.cpp",
+      "sha256": "1af1861225042e89ecabef42584fe271f7726c86ea07b4df7af4a614c43b843f"
+    },
+    {
+      "path": "r2plant/formA/LawnMower.cpp",
+      "sha256": "8265772794c2cfe9afd1075043b3f81e013791043cef2576375950a8a85eb1e9"
+    },
+    {
+      "path": "r2plant/formA/Plant.cpp",
+      "sha256": "d6ea16fd114b1b4bc07c2a697726bcb7924fb09e175b53c927c71e1866b69918"
+    },
+    {
+      "path": "r2plant/formA/Projectile.cpp",
+      "sha256": "e23a6de6cf6bc32589c2d09ca06d7e0dd0975052c3f85e041dba295fcffb9853"
+    },
+    {
+      "path": "r2plant/formA/SeedPacket.cpp",
+      "sha256": "3105acddb869e1beeb6d850ffe4a95f40521019b83ec74f3a8cf18a8da9364fd"
+    },
+    {
+      "path": "r2plant/formB/Coin.cpp",
+      "sha256": "9b934d34c0167c4d17f9e176e5a0eeb726bd3b25bede7f8b1e0a7179d6e26c53"
+    },
+    {
+      "path": "r2plant/formB/LawnMower.cpp",
+      "sha256": "67de93776c1e08aea0bcb5377095cc471fc7cc214c83c7459fe13c8607370627"
+    },
+    {
+      "path": "r2plant/formB/Plant.cpp",
+      "sha256": "2cb9442e4d81998757bef70d868888f6ae47cabdad5e4e0d5ed40860bb300d71"
+    },
+    {
+      "path": "r2plant/formB/Projectile.cpp",
+      "sha256": "17c98b379dca237416f12090032a9d14c4ad01ee7f6656a5d54ab51c99097ea8"
+    },
+    {
+      "path": "r2plant/formB/SeedPacket.cpp",
+      "sha256": "ed6ef6858ba0eb275817c0a8dc3742ffac5becef1898f9bfa0fa20d81eed99d2"
+    },
+    {
+      "path": "r2plant/r2_stub.h",
+      "sha256": "e7263c771b0ce9bb27279414b5eb4e16cc87a28ba81e99e722eda3abc08671c4"
+    },
+    {
+      "path": "r2ui/src/bench_award.cpp",
+      "sha256": "11b3f1e12f7a698fca3c526bee0d0d80a7c5d888372b3eef84eb99599af3adb1"
+    },
+    {
+      "path": "r2ui/src/bench_board.cpp",
+      "sha256": "721a69463f70b07d419ae40d9c94161568df718b7b7dcaf2a3c977e1b80c4a2f"
+    },
+    {
+      "path": "r2ui/src/bench_cold_events.cpp",
+      "sha256": "bcb8a3e2b0c15b27123990b99fe4adf9b94812109575acd7d5f12afbccac616e"
+    },
+    {
+      "path": "r2ui/src/bench_conveyor.cpp",
+      "sha256": "8cc595590315e52b61a40fa1ea9c58612881ebfd4f762ce4bb27f8052b53d8c7"
+    },
+    {
+      "path": "r2ui/src/bench_credit.cpp",
+      "sha256": "38cb556fe0869dc7de1dbaa12d43cf8d6314646e648d5e31805543e5c908aec4"
+    },
+    {
+      "path": "r2ui/src/bench_cutscene.cpp",
+      "sha256": "936f98413887d052e80ec20c189ea21d8af863f572af6ce6f68ca4fa75f9e408"
+    },
+    {
+      "path": "r2ui/src/bench_plant_defhash.cpp",
+      "sha256": "955240b50ccf701b656aee15234662934e6b4b9a3fd1d6108151877dc03a0bd7"
+    },
+    {
+      "path": "r2ui/src/bench_static3.cpp",
+      "sha256": "008bedc7e249d6b348b3caaf49479fe23c5eff15f720c915bab588b63b565c95"
+    },
+    {
+      "path": "r2ui/src/bench_store.cpp",
+      "sha256": "a4493c39090b0baef6ff431b460da4df3c0348da5b42ee5975a51e2b608864e8"
+    },
+    {
+      "path": "r2ui/src/bench_zombie.cpp",
+      "sha256": "874d24b777f70c81543dc1c4f9e2ca0e6df130a5c4870231a88f9480532d6463"
+    },
+    {
+      "path": "r2zombie/bench_t01_helm.cpp",
+      "sha256": "0503d54ffc15f61ffac0a4d88498d898fd44614890aea8667baf99702f63a09a"
+    },
+    {
+      "path": "r2zombie/bench_t01s_helm.cpp",
+      "sha256": "662adf84f1cc2c04a916e413de42d9a054c9d844647835e6cd1d49dc510b7ece"
+    },
+    {
+      "path": "r2zombie/bench_t02_drophead.cpp",
+      "sha256": "7f1ddcb875ab8709e4194b9178b15f10a3436eb6dec0cc0ce4f140197a0e60b3"
+    },
+    {
+      "path": "r2zombie/bench_t03_shield.cpp",
+      "sha256": "e05ad16dad73cc177f93a0bb07318741dce514b973cf009b3bb9f3e7e3f20dd3"
+    },
+    {
+      "path": "r2zombie/bench_t03s_shield.cpp",
+      "sha256": "eb3f6e035df798e6098426355927b7110232f7d6d045d981e622368099ca1d0e"
+    },
+    {
+      "path": "r2zombie/bench_t04_deathanim.cpp",
+      "sha256": "f8383923de54ff56c273898b39aceec983e4af98a4697135e8ce649191fb6689"
+    },
+    {
+      "path": "r2zombie/bench_t05_preload.cpp",
+      "sha256": "77a4e45ede6bd41dcb329daf6c27e6e08ea7d3948359f0afc010f7aece61bc7c"
+    },
+    {
+      "path": "r2zombie/bench_t06_snorkel.cpp",
+      "sha256": "33ecd346c06d1b9f30be23b4de6c994608f41309c185cab69799f168eb92fe63"
+    },
+    {
+      "path": "r2zombie/bench_t07_bungee.cpp",
+      "sha256": "71b067798637611464621fd35311115f5a568211a18c5fb70be7288e40c94f6c"
+    },
+    {
+      "path": "r2zombie/bench_t08_dolphin.cpp",
+      "sha256": "2bdeeb2a79e356e0995b807d94dd580da37de588be68b7e085ef135dbdc1b582"
+    },
+    {
+      "path": "r2zombie/bench_t09_digger.cpp",
+      "sha256": "13b7eb409f58e23e333f774366f3eaed4f8d8aede6d635f3696b5c9d81d3d732"
+    },
+    {
+      "path": "r2zombie/bench_t10_layers.cpp",
+      "sha256": "597eac1077335a54d3a244227ea6528e5d699a315feefc83d292628338dbda51"
+    },
+    {
+      "path": "r2zombie/bench_t11_mowdown.cpp",
+      "sha256": "67a699925a28dd348540a17f66c939c23ad7696eeb70c9d0b4c621f3788f8578"
+    },
+    {
+      "path": "r2zombie/bench_t12_bodydmg.cpp",
+      "sha256": "a952f0489a7158a9bfeb1eeff1decdfd8bcef52a9e060c00923e5926fffc8002"
+    },
+    {
+      "path": "r2zombie/zb_common.h",
+      "sha256": "4a630f326b3cc00b68b0c0573257f136f91cb77c372f2a5d3d978f1ae841745e"
+    },
+    {
+      "path": "r2zombie/Zombie_after.cpp",
+      "sha256": "47cffb61f2d8d3155fb898a2ea15ffc5d7c27c911e593681f1b06ee80ee523b9"
+    },
+    {
+      "path": "r2zombie/Zombie_before.cpp",
+      "sha256": "9333298ab1f1727a539ea18cd27488565c2da606c1ed2c85407db00b3915ff65"
+    },
+    {
+      "path": "r3/b18_almanac.cpp",
+      "sha256": "789f9ef1c548643e977a9765fe0a8df3beed928ccc6dfd0a538b0d5cdbdec056"
+    },
+    {
+      "path": "r3/b21_music.cpp",
+      "sha256": "e77ebff8b178a01c674000ad2da2212743183df265fdbf4f600b8b8045f93903"
+    },
+    {
+      "path": "r3/b23_b24_coin.cpp",
+      "sha256": "44050274cfc38f56313431c2d434d8a1dcf5b67cdeb49683f93d9d22c82628a7"
+    },
+    {
+      "path": "r3/b_board_events.cpp",
+      "sha256": "7b31235171276136ad21a98562530aeee580145db2e379ec56008153be4db605"
+    },
+    {
+      "path": "r3/b_zombie_events.cpp",
+      "sha256": "cd73d29d064b69081b0a2e455eb40edf85b5fd04476ae16c34ddf610959236ac"
+    },
+    {
+      "path": "r3/dbg17.cpp",
+      "sha256": "cff611c388e2a1ee10ab0c44bd4a9fe3981f43177f73a72b7e2e2b08b16fe3b7"
+    },
+    {
+      "path": "r3/diag11.cpp",
+      "sha256": "245256419447225635ed94a39ad9b00997f9fb0a20584f9bb1a3e3ae94bae3f6"
+    },
+    {
+      "path": "r3/diag17.cpp",
+      "sha256": "65a0175ea2c2a4938f7c47b5b976362d9b4fbf5be0a83a6ab5ace7d81059856b"
+    },
+    {
+      "path": "r3/diag25.cpp",
+      "sha256": "b6ae8c886d3b2c50e8f55e85371e20480a8f6bc1399e3cbfd8f818c57255d934"
+    },
+    {
+      "path": "r3/envtest.cpp",
+      "sha256": "1996b789bdc98edcffe3d2539c14471ed16b2f259ef9048aad2618cb6f72336e"
+    },
+    {
+      "path": "r3/r3_common.h",
+      "sha256": "bacfe57f9337a61e7467a2d93a8bf140cc37415fe8b87b0d5b8e264833b6fd6e"
+    },
+    {
+      "path": "r3/r3_entities.h",
+      "sha256": "6afb874e1fdb0378d3ca253504e7059e19f126db4aad0856ef2b7598099da2d0"
+    },
+    {
+      "path": "r3/r3_stubs.h",
+      "sha256": "e57b279f7163bb092b33850b209bb21ed9a488852e67f7364d48fbd0f4b39708"
+    },
+    {
+      "path": "r3/ref_PlantInit_A.cpp",
+      "sha256": "e718323858b297f78d5546e0c7e7dc72b4e95e6a8f403ae142cd4ee07dfd9ed0"
+    },
+    {
+      "path": "r3/ref_ZombieInit_A.cpp",
+      "sha256": "1c167dd71b4fa5ea6e794710241003a15e59e5e98857b5d8eee114cfc2b055fd"
+    },
+    {
+      "path": "r3/ref_ZombieInit_B_table.cpp",
+      "sha256": "0bba24e9d232451c63bd0b91222351c5584aa93f374b1befcfde114ee3ab3095"
+    },
+    {
+      "path": "r3/refA_coinmotion.cpp",
+      "sha256": "a3f48a5b15b40e6f49f4bec6df4e4549c1fa0c90b2926de1a4eb84ca389ccdfa"
+    },
+    {
+      "path": "r3/refA_cursordraw.cpp",
+      "sha256": "dcc6b785a9ee6e6914dd2ea55ff7f1a6abafcf48d67aac10d68cd5724413441d"
+    },
+    {
+      "path": "r3/refA_keychar_cheat.cpp",
+      "sha256": "88ad3d971874129237404e92d7c18aaf87ba617119ff3c15f388c1acd977d98c"
+    },
+    {
+      "path": "r3/refA_met.cpp",
+      "sha256": "249e0e6462a27cda0c3de9e617d89dbe6fa0b0dbea88b2bd668d51c8cc5f9f17"
+    },
+    {
+      "path": "r3/refA_msgdraw.cpp",
+      "sha256": "334d8c06dca426da4eace80f11638a37de12368f2d6ce8728a14379816fc6442"
+    },
+    {
+      "path": "r3/refA_music.cpp",
+      "sha256": "af3baf55ea48b9f8ebe73fe3ca78992666ead44a14eef0ada729f08596d77b10"
+    },
+    {
+      "path": "r3/refA_pickup_tutorial.cpp",
+      "sha256": "3646776ef88b20de84d384c1410db382ee1280bc92a04a17aab5866ff3e50df3"
+    },
+    {
+      "path": "r3/refA_presentseeds.cpp",
+      "sha256": "ee6706a2ef44ca4ca71a36497a3006a883d0a409149d476985edb6c8c0eae507"
+    },
+    {
+      "path": "r3/refA_render_switch.cpp",
+      "sha256": "6a6933105fced001bfefb86fe83a34150aaef86d7cfb85ba92164e9c64905774"
+    },
+    {
+      "path": "r3/refA_setlabel.cpp",
+      "sha256": "84faf91334f4ba70a82e59ef524a1982e9cc1578ba34d5c5814be55882014e0b"
+    },
+    {
+      "path": "r3/refA_storemouse.cpp",
+      "sha256": "48694cd2f96c36b18a4b175c172543d9a7209ab901d9a0c520f3d204ab746324"
+    },
+    {
+      "path": "r3/refA_upgradeadvice.cpp",
+      "sha256": "6de362bb9a450711b260e2149dfaadbea603da86cb9f27b1f44244f2df0f1e40"
+    },
+    {
+      "path": "r3/repro.cpp",
+      "sha256": "e3303dbd5b094382f26998231db0b3c29725ed575a675245f95b8bd84b23ecdb"
+    },
+    {
+      "path": "r3/smoke.cpp",
+      "sha256": "0542813286f7c3c09f2b5ca4eaee1e71a7c3ed8f57a8474bd90efb3626622ca2"
+    },
+    {
+      "path": "r3/t08_backdrop.cpp",
+      "sha256": "d6a82678b30f214b622e909e05255bfd30344b450eeac1afc2d4d6f784acad29"
+    },
+    {
+      "path": "r3/t14_render.cpp",
+      "sha256": "c84bd7dc6d408c1c0acb7ecd7550b18adea048f77887b9f6a2c14a6f8de8b4e7"
+    },
+    {
+      "path": "r3/t16_cursor.cpp",
+      "sha256": "ad8d691d57cc576ce8b792b69d7c9684efc90a9c348e57cf4c1ae6631a8eadd2"
+    },
+    {
+      "path": "r3/t17_store.cpp",
+      "sha256": "2c71f03d0d4b5fa43b3fc36e0870e41b731d0bdbff2885168bd042dc2a0ae373"
+    },
+    {
+      "path": "r3/t19_msgdraw.cpp",
+      "sha256": "8bb4d534c6c3a83a60f8827808ced0a3b22533cbba26da29504ffbb654a11022"
+    },
+    {
+      "path": "r3/t25_plant_init.cpp",
+      "sha256": "59333071f90cdff55c0f36497dc3c18be99458ef4736b37196a4138c572f5abe"
+    },
+    {
+      "path": "r3/t26_zombie_init.cpp",
+      "sha256": "53b9c4c36e8d9b35b6d57d17ccd6529d8ed83b344c4a7489bef3eca4c64243f5"
+    },
+    {
+      "path": "r3/t_zombie_draw.cpp",
+      "sha256": "893e84c81d64ab8bb083c4d52d255ea857ab1fbd1f4f4b7648ab8b156fde4bcb"
+    },
+    {
+      "path": "r4/bench01_dmgflags.cpp",
+      "sha256": "a170ffe6205f699def534573b3fc2999319fe6eb718d1c23e97ea343ef3e973a"
+    },
+    {
+      "path": "r4/bench02_fireproj.cpp",
+      "sha256": "f0f058441ca86461dff1bcecccdb3a90b56cd4b2ddb120e05407c59df6dd5180"
+    },
+    {
+      "path": "r4/bench03_shootctr.cpp",
+      "sha256": "4c80479842cead80b46bb139191317830e2a9f1dd1d429df342b58a223953f22"
+    },
+    {
+      "path": "r4/bench04_flowerpot.cpp",
+      "sha256": "35281508461c58f813d672097250a88071b421c7bd9b91441666589fb04c65b8"
+    },
+    {
+      "path": "r4/bench05_packetdraw.cpp",
+      "sha256": "f864ab063540bb02b8bbb7837296285976994187604df546df14469e99a63035"
+    },
+    {
+      "path": "r4/bench06_zimgoff.cpp",
+      "sha256": "ec630214f176f58422d4081280b674e9b4621b057bab17239bde58efaf695048"
+    },
+    {
+      "path": "r4/bench07_walkhead.cpp",
+      "sha256": "479c4a25f627acbddf9ea8b97364cc19359ee4bacd398a231d9bc29560db490a"
+    },
+    {
+      "path": "r4/bench08_seedupdate.cpp",
+      "sha256": "537e391cfb209e68d2e05372b81d0ed7747575544476cdc353e4e25f0a77cd9e"
+    },
+    {
+      "path": "r4/bench09_zaction.cpp",
+      "sha256": "057b7124aedf9685dff86777e154d7d371f6635702be4bae45a7073d59303fcc"
+    },
+    {
+      "path": "r4/bench10_prodraw.cpp",
+      "sha256": "13db8257246e381b3e99e151b2baa7f81e98ad1c3d2c40a770522239aa1e8763"
+    },
+    {
+      "path": "r4/bench11_proshadow.cpp",
+      "sha256": "c6e45f3ffd7e428e6df8c490a2721067a1af2c1dae5ace4c346a41cfe36571d0"
+    },
+    {
+      "path": "r4/bench12_proimmediate.cpp",
+      "sha256": "0350b244949d1667e9c19eeb66717229dbcb3e262b66633125817bcb1e7f678d"
+    },
+    {
+      "path": "r4/bench13_dynamics.cpp",
+      "sha256": "4aab2ab199fb5866958c3ecb4a2e3945e38e28a8b8e85be00b529ca0496445c4"
+    },
+    {
+      "path": "r4/bench14_seedcost.cpp",
+      "sha256": "fd92805c447080e2d4a9d67e210df99b7ed97453073f3aa8876d7d4ea4278f49"
+    },
+    {
+      "path": "r4/bench15_storecost.cpp",
+      "sha256": "682e357b3865ceb97367cd23e2fb45d7c186eecc8099838d325826b340d6c9ee"
+    },
+    {
+      "path": "r4/bench16_falltime.cpp",
+      "sha256": "8f817c320c3ecbf2dcba44eb901b82641df947f4a0e0aeb1abc3f4c28011b7a7"
+    },
+    {
+      "path": "r4/bench_common.h",
+      "sha256": "f5467b9ac852bcd227e9b9acb7fa1f5c5cf66bcda1d9b5e50748ab272fd58b0b"
+    },
+    {
+      "path": "todlib/bench_attachment.cpp",
+      "sha256": "cfade59b926bcf86715075977ef87535b24f88f19793ef11ab04a93317f7767b"
+    },
+    {
+      "path": "todlib/bench_filtercreate.cpp",
+      "sha256": "f134546d1b47b2e547f036b6abfed350fb5fc8bf8b0c3e83cdcc457242e261a2"
+    },
+    {
+      "path": "todlib/bench_mowerframe.cpp",
+      "sha256": "6002a05e56a4222b3329b205f266a5286e46246537396a43383ef1464588c20b"
+    },
+    {
+      "path": "todlib/bench_particlefield.cpp",
+      "sha256": "b3857b388949f873352663b7b59204f6908ee1a6c5bb9eb846557a9918d85734"
+    },
+    {
+      "path": "todlib/bench_spawnparticle.cpp",
+      "sha256": "193e5187d946188f35a2a2634e35ecfe6954f1ed1269e293b3eabe1825a67b1c"
+    },
+    {
+      "path": "todlib/bench_variation.cpp",
+      "sha256": "62bff77e9caff6dbc8d2c601a59a1c4d4c2417d5505cf80fa360162b52f0dce1"
+    },
+    {
+      "path": "ui/bench01_Board_DrawDebugText.cpp",
+      "sha256": "eec057708a1fc6db81f6d9d64898f64e5a4f24a1e75d585444484981ee59c65a"
+    },
+    {
+      "path": "ui/bench02_Plant_DoSpecial.cpp",
+      "sha256": "c57471259ab5210e3ffae06e58491c2fae11289861f8afd2b8f306463fe35534"
+    },
+    {
+      "path": "ui/bench03_Zombie_UpdateZombieBackupDancer.cpp",
+      "sha256": "9ca86465d4b520f6583fef709b767c8b24b94e4190cb4ba64a5e9889d68263f3"
+    },
+    {
+      "path": "ui/bench04_Zombie_UpdateZombieDancer.cpp",
+      "sha256": "2c21bd18794b861fa4c4ac8293d7e722c35ff396ed8cfcbd242e87a6112e10e3"
+    },
+    {
+      "path": "ui/bench05_Challenge_ScaryPotterPopulate.cpp",
+      "sha256": "ede5238556d327b99c212bd9d920548ac6c4e978366fc0abc39752345a243148"
+    },
+    {
+      "path": "ui/bench06_Challenge_IZombieInitLevel.cpp",
+      "sha256": "743e4018a71ed5e7e3be9fa9fe0452d60c02295758f28eec1211e54082c4fbac"
+    },
+    {
+      "path": "ui/bench07_Challenge_BeghouledPickSeed.cpp",
+      "sha256": "b091d91afc6fa00d565b8148a6b1c01fa19ad2192b8778b11e78842d0bcee0c3"
+    },
+    {
+      "path": "ui/bench08_Challenge_SquirrelFound.cpp",
+      "sha256": "09e1405c54decefc0b8f3d815ef05b28a5a868d38ea3815c861b47bf46fd6e3c"
+    },
+    {
+      "path": "ui/bench09_ZenGarden_DrawPlantOverlay.cpp",
+      "sha256": "058c2866cba55b83c0e899731dd8ed83444692af805d1aaecfa2f4c7457eaa80"
+    },
+    {
+      "path": "ui/bench10_GridItem_DrawGridItem.cpp",
+      "sha256": "d1f721aec612afa8d2998c86813e8ab7e14b0be17241dfa02d6120d4cba308b3"
+    },
+    {
+      "path": "ui/bench11_ZombatarItems_DrawCategoryHighlight.cpp",
+      "sha256": "6b5999f4e49b5a0ce728382f3e56530800dc58d95e0c93ffba3949b28ceabe7a"
+    },
+    {
+      "path": "ui/bench12_CreditScreen_UpdateMovie.cpp",
+      "sha256": "c1e7b20b8d4f9753667667395f5eea219490620da830dbaaaa0d5174eb92748d"
+    },
+    {
+      "path": "ui/bench13_ZombatarColors_SetColorMode.cpp",
+      "sha256": "d7aadb8d0210dc0cee9647963df02dd6a22460d885e20b3a7f6714e6ca862831"
+    },
+    {
+      "path": "ui/extract/Board_after.cpp",
+      "sha256": "c39d595d3e18f8d81f9787d9a8687021c1978f42301870814e18945856cac20b"
+    },
+    {
+      "path": "ui/extract/Board_before.cpp",
+      "sha256": "8cc43f89b16777e48e6f42a0fef6f652d75e7c4f627b9c9ef7defec61f959587"
+    },
+    {
+      "path": "ui/extract/Challenge_after.cpp",
+      "sha256": "5667d7c9c3e26d98ecaf2f54e445fc11436a0834b3101a812c2403a31e3d9829"
+    },
+    {
+      "path": "ui/extract/Challenge_before.cpp",
+      "sha256": "7a239bce42203c08f70ed9957a28dc403ed4e4dc1daccbb2603e56fc9897543f"
+    },
+    {
+      "path": "ui/extract/CreditScreen_after.cpp",
+      "sha256": "03a72df912275ac991cd0d0f547d45622684747dedc8edb22f7d88e84f5a0195"
+    },
+    {
+      "path": "ui/extract/CreditScreen_before.cpp",
+      "sha256": "3fa164785195674c0cbb584060188e0b7fe4372dc6c5937021fdae2d2653294f"
+    },
+    {
+      "path": "ui/extract/GridItem_after.cpp",
+      "sha256": "de8fb803e20e8f8262337e3a22fd24b24c5607181e2abafebb8fd7db11ec4b4c"
+    },
+    {
+      "path": "ui/extract/GridItem_before.cpp",
+      "sha256": "978e07b05a1bda197141bf7184cc1a2d1e19f94dd963c144e3f902598fd48e63"
+    },
+    {
+      "path": "ui/extract/Plant_after.cpp",
+      "sha256": "4c5848580c45d91107af358b6697dbb74b51c3d851125a462e90f40afd6c4a1e"
+    },
+    {
+      "path": "ui/extract/Plant_before.cpp",
+      "sha256": "c6a6dab1df85725b33a2a99d6512eee84981721b4be21abbd70dc90604bb538f"
+    },
+    {
+      "path": "ui/extract/ZenGarden_after.cpp",
+      "sha256": "72be1ba1f0962857e406201c8a0af164865b973860a96c391470ed0ab4f25d3e"
+    },
+    {
+      "path": "ui/extract/ZenGarden_before.cpp",
+      "sha256": "2b310239e179ec9d03e10dc44de61fa5c61c0f49b5e5fbae24cf39ac20dc2eee"
+    },
+    {
+      "path": "ui/extract/ZombatarColors_after.cpp",
+      "sha256": "1013a466bdbaf3013ea86cb34537ee9bfad83f83528924dd3e3dc50bbbb63f55"
+    },
+    {
+      "path": "ui/extract/ZombatarColors_before.cpp",
+      "sha256": "70886eb615ef28dfd10ead77afa61c9af0a5572670ca5ad73db32482f394fcfa"
+    },
+    {
+      "path": "ui/extract/Zombie_after.cpp",
+      "sha256": "7364b29f325042d410f2302ce89ed59520e2822a0d830956d263ad62ba93a99c"
+    },
+    {
+      "path": "ui/extract/Zombie_before.cpp",
+      "sha256": "1217715d4be50b9607678d888b82a965d8e2cff9826516cbad588d5fea3e9bf9"
+    }
+  ]
+}

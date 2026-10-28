@@ -74,6 +74,26 @@ void main()
 )GLSL";
 }
 
+std::string_view SpriteFragmentShader()
+{
+    // Uploaded straight-alpha sprites targeting the main scene need only the
+    // texture unit's filtering/addressing and vertex tint. Fonts, generated
+    // images and explicit color/edge filters retain SceneFragmentShader.
+    return R"GLSL(#version 130
+uniform sampler2D image;
+in vec4 color;
+in vec2 uv;
+flat in uint slot;
+out vec4 outColor;
+void main()
+{
+    vec4 source = texture(image, uv);
+    if ((slot & 0x04000000u) != 0u) source.a = 1.0;
+    outColor = source * color;
+}
+)GLSL";
+}
+
 std::string_view SceneFragmentShader()
 {
     return R"GLSL(#version 130

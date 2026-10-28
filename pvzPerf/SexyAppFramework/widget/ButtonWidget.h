@@ -49,9 +49,9 @@ public:
 	double					mOverAlpha;
 	double					mOverAlphaSpeed;
 	double					mOverAlphaFadeInSpeed;
-	double					mOverAlphaOrigin = 0;
-	std::uint64_t			mOverAlphaElapsedNs = 0;
-	bool					mOverAlphaTargetOver = false;
+    double mOverAlphaOrigin = 0;
+    double mOverAlphaRate = 0;
+    std::int64_t mOverAlphaStartTimeNs = 0;
 
 	bool					HaveButtonImage(Image *theImage, const TextureRegion& theRegion);
 	virtual void			DrawButtonImage(Graphics *g, Image *theImage, const TextureRegion& theRegion, int x, int y);

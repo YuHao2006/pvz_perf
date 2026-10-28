@@ -1,3 +1,5 @@
+#include "ReanimClock.h"
+#include <limits>
 #include "Sexy.TodLib/generated/EntityStrings.h"
 #include "Board.h"
 #include "Challenge.h"
@@ -53,7 +55,7 @@ SexyString gLabelStr;
 MessageWidget::MessageWidget(LawnApp* theApp)
 {
 	mApp = theApp;
-	mDuration = 0;
+	mEndTimeNs = 0;
 	mDisplayTime = 0;
 	mLabel[0] = ('\0');
 	mMessageStyle = MessageStyle::MESSAGE_STYLE_OFF;
@@ -82,11 +84,11 @@ void MessageWidget::ClearLabel()
 {
 	if (mReanimType != ReanimationType::REANIM_NONE)
 	{
-		mDuration = std::min<Sexy::TimeCounter>(mDuration, 100 + mSlideOffTime + 1);
+		mEndTimeNs = std::min(mEndTimeNs, ReanimClock::Add(static_cast<std::int64_t>(mApp->mBoard->mLevelTimeNs), mSlideOffTime.mNanoseconds + 1'010'000'000));
 	}
 	else
 	{
-		mDuration = 0;
+		mEndTimeNs = 0;
 	}
 }
 
@@ -104,21 +106,21 @@ void MessageWidget::SetLabel(const SexyString& theNewLabel, MessageStyle theMess
 	// 原 case MESSAGE_STYLE_HINT_LONG, MESSAGE_STYLE_BIG_MIDDLE, MESSAGE_STYLE_ZEN_GARDEN_LONG, MESSAGE_STYLE_HINT_TALL_LONG
 	static constexpr auto MsgDurationMessageStyleHintLong = [](MessageWidget& w, int theMessageStyle)
 	{
-	w.mDuration = 1500;
+	w.mDisplayTime = 1500;
 	};
 
 	// 标签共体（匿名 lambda 无法跨槽复用，复用即具名）
 	// 原 case MESSAGE_STYLE_HINT_FAST, MESSAGE_STYLE_HINT_TALL_FAST, MESSAGE_STYLE_BIG_MIDDLE_FAST, MESSAGE_STYLE_TUTORIAL_LEVEL1, MESSAGE_STYLE_TUTORIAL_LEVEL2, MESSAGE_STYLE_TUTORIAL_LATER
 	static constexpr auto MsgDurationMessageStyleHintFast = [](MessageWidget& w, int theMessageStyle)
 	{
-	w.mDuration = 500;
+	w.mDisplayTime = 500;
 	};
 
 	// 标签共体（匿名 lambda 无法跨槽复用，复用即具名）
 	// 原 case MESSAGE_STYLE_HINT_STAY, MESSAGE_STYLE_TUTORIAL_LEVEL1_STAY, MESSAGE_STYLE_TUTORIAL_LATER_STAY
 	static constexpr auto MsgDurationMessageStyleHintStay = [](MessageWidget& w, int theMessageStyle)
 	{
-	w.mDuration = 10000;
+	w.mDisplayTime = 10000;
 	};
 
 	// 原 default（无 case 的 1 型与表外哨兵共用）
@@ -142,7 +144,7 @@ void MessageWidget::SetLabel(const SexyString& theNewLabel, MessageStyle theMess
 	// 原 case MESSAGE_STYLE_HINT_TALL_UNLOCKMESSAGE
 	[](MessageWidget& w, int theMessageStyle)
 	{
-	w.mDuration = 500;
+	w.mDisplayTime = 500;
 	},  // 10 MESSAGE_STYLE_HINT_TALL_UNLOCKMESSAGE
 	MsgDurationMessageStyleHintLong,  // 11 MESSAGE_STYLE_HINT_TALL_LONG（共体）
 	MsgDurationMessageStyleHintLong,  // 12 MESSAGE_STYLE_BIG_MIDDLE（共体）
@@ -150,25 +152,25 @@ void MessageWidget::SetLabel(const SexyString& theNewLabel, MessageStyle theMess
 	// 原 case MESSAGE_STYLE_HOUSE_NAME
 	[](MessageWidget& w, int theMessageStyle)
 	{
-	w.mDuration = 250;
+	w.mDisplayTime = 250;
 	},  // 14 MESSAGE_STYLE_HOUSE_NAME
 	// 原 case MESSAGE_STYLE_HUGE_WAVE
 	[](MessageWidget& w, int theMessageStyle)
 	{
-	w.mDuration = 750;
+	w.mDisplayTime = 750;
 	w.mReanimType = ReanimationType::REANIM_TEXT_FADE_ON;
 	},  // 15 MESSAGE_STYLE_HUGE_WAVE
 	// 原 case MESSAGE_STYLE_SLOT_MACHINE
 	[](MessageWidget& w, int theMessageStyle)
 	{
-	w.mDuration = 750;
+	w.mDisplayTime = 750;
 	},  // 16 MESSAGE_STYLE_SLOT_MACHINE
 	MsgDurationMessageStyleHintLong,  // 17 MESSAGE_STYLE_ZEN_GARDEN_LONG（共体）
 	// 原 case MESSAGE_STYLE_ACHIEVEMENT
 	[](MessageWidget& w, int theMessageStyle)
 	{
 	// @Patoke: implemented
-	w.mDuration = 250;
+	w.mDisplayTime = 250;
 	},  // 18 MESSAGE_STYLE_ACHIEVEMENT
 	};
 	static_assert(sizeof(kMessageDurations) / sizeof(kMessageDurations[0]) ==
@@ -176,7 +178,7 @@ void MessageWidget::SetLabel(const SexyString& theNewLabel, MessageStyle theMess
 
 	SexyString aLabel = theNewLabel;
 
-	if (mReanimType != ReanimationType::REANIM_NONE && mDuration > 0)
+	if (mReanimType != ReanimationType::REANIM_NONE && mEndTimeNs != 0)
 	{
 		mMessageStyleNext = theMessageStyle;
 		CopyMessageLabel(mLabelNext, aLabel);
@@ -207,7 +209,8 @@ void MessageWidget::SetLabel(const SexyString& theNewLabel, MessageStyle theMess
 		{
 			LayoutReanimText();
 		}
-		mDisplayTime = mDuration;
+		mEndTimeNs = mDisplayTime >= 10000 ? INT64_MAX : ReanimClock::Add(
+			static_cast<std::int64_t>(mApp->mBoard->mLevelTimeNs), mDisplayTime.mNanoseconds);
 	}
 }
 
@@ -267,12 +270,13 @@ void MessageWidget::Update()
 	if (!mApp->mBoard || mApp->mBoard->mPaused)
 		return;
 
-	// 更新字幕的剩余时间倒计时和下一轮字幕的切换
-	if (mDuration < 10000 && mDuration > 0)
+	const auto nowNs = static_cast<std::int64_t>(mApp->mBoard->mLevelTimeNs);
+	// The deadline is consumed once; indefinite messages have no expiry event.
+	if (mEndTimeNs != 0 && mEndTimeNs != INT64_MAX)
 	{
-		mDuration--;
-		if (mDuration == 0)
+		if (nowNs >= mEndTimeNs)
 		{
+			mEndTimeNs = 0;
 			mMessageStyle = MessageStyle::MESSAGE_STYLE_OFF;
 			if (mMessageStyleNext != MessageStyle::MESSAGE_STYLE_OFF)
 			{
@@ -282,6 +286,10 @@ void MessageWidget::Update()
 		}
 	}
 
+	const auto remainingNs = mEndTimeNs == INT64_MAX ? 100'000'000'000 :
+		std::max<std::int64_t>(0, mEndTimeNs - nowNs);
+	const auto previousRemainingNs = mEndTimeNs == INT64_MAX ? remainingNs :
+		std::max<std::int64_t>(0, mEndTimeNs - nowNs + static_cast<std::int64_t>(Sexy::gUpdateIntervalNs));
 	int aLabelLen = sexystrlen(mLabel);
 	// 以下遍历每个文字的动画，设置其动画速率并更新其动画
 	for (int aPos = 0; aPos < aLabelLen; aPos++)
@@ -294,7 +302,7 @@ void MessageWidget::Update()
 
 		// 设置动画速率
 		int aTextSpeed = mReanimType == ReanimationType::REANIM_TEXT_FADE_ON ? 100 : 1;
-		if (mDuration > mSlideOffTime)
+		if (remainingNs > mSlideOffTime.mNanoseconds)
 		{
 			if (mReanimType == ReanimationType::REANIM_TEXT_FADE_ON)
 			{
@@ -303,18 +311,18 @@ void MessageWidget::Update()
 			else
 			{
 				aTextReanim->ApplyRate(TodAnimateCurveNs(0, 500'000'000,
-					(mDisplayTime.mNanoseconds - mDuration.mNanoseconds) * aTextSpeed -
+					(mDisplayTime.mNanoseconds - remainingNs) * aTextSpeed -
 						std::int64_t(aPos) * 10'000'000, 0.0f, 40.0f, Curves::Linear));
 			}
 		}
 		else
 		{
-			if (mDuration == mSlideOffTime)
+			if (previousRemainingNs > mSlideOffTime.mNanoseconds && remainingNs <= mSlideOffTime.mNanoseconds)
 			{
 				aTextReanim->PlayReanim(ReanimTrackId::anim_leave, ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD, 0, 0.0f);
 			}
 			aTextReanim->ApplyRate(TodAnimateCurveNs(0, 500'000'000,
-				(mSlideOffTime.mNanoseconds - mDuration.mNanoseconds) * aTextSpeed -
+				(mSlideOffTime.mNanoseconds - remainingNs) * aTextSpeed -
 					std::int64_t(aPos) * 10'000'000, 0.0f, 40.0f, Curves::Linear));
 		}
 
@@ -325,6 +333,8 @@ void MessageWidget::Update()
 //0x459710
 void MessageWidget::DrawReanimatedText(Graphics* g, _Font* theFont, const Color& theColor, float thePosY)
 {
+	const auto remainingNs = mEndTimeNs == INT64_MAX ? 100'000'000'000 :
+		std::max<std::int64_t>(0, mEndTimeNs - static_cast<std::int64_t>(mApp->mBoard->mLevelTimeNs));
 	int aLabelLen = sexystrlen(mLabel);
 	for (int aPos = 0; aPos < aLabelLen; aPos++)
 	{
@@ -347,7 +357,7 @@ void MessageWidget::DrawReanimatedText(Graphics* g, _Font* theFont, const Color&
 
 		aTransform.mTransX += aTextReanim->mOverlayMatrix.m02;
 		aTransform.mTransY += aTextReanim->mOverlayMatrix.m12 + thePosY - BOARD_HEIGHT / 2;
-		if (mReanimType == ReanimationType::REANIM_TEXT_FADE_ON && mDisplayTime - mDuration < mSlideOffTime)
+		if (mReanimType == ReanimationType::REANIM_TEXT_FADE_ON && mDisplayTime.mNanoseconds - remainingNs < mSlideOffTime.mNanoseconds)
 		{
 			float aStretch = 1.0f - static_cast<float>(static_cast<double>(
 				aTextReanim->SamplePlayback().phaseNs) / aTextReanim->mPeriodNs);
@@ -403,7 +413,9 @@ _Font* MessageWidget::GetFont()
 // GOTY @Patoke: 0x45D2B0
 void MessageWidget::Draw(Graphics* g)
 {
-	if (mDuration <= 0)
+	const auto remainingNs = mEndTimeNs == INT64_MAX ? 100'000'000'000 :
+		std::max<std::int64_t>(0, mEndTimeNs - static_cast<std::int64_t>(mApp->mBoard->mLevelTimeNs));
+	if (mEndTimeNs == 0 || remainingNs == 0)
 		return;
 	
 	_Font* aFont = GetFont();
@@ -489,7 +501,7 @@ void MessageWidget::Draw(Graphics* g)
 		}
 		if (aFadeOut)
 		{
-			aColor.mAlpha = ClampInt(mDuration * 15, 0, 255);
+			aColor.mAlpha = ClampInt(static_cast<int>(std::min<std::int64_t>(17, remainingNs / 10'000'000)) * 15, 0, 255);
 			aOutlineColor.mAlpha = aColor.mAlpha;
 		}
 
@@ -538,4 +550,14 @@ void MessageWidget::Draw(Graphics* g)
 			}
 		}
 	}
+}
+
+MessageWidget::~MessageWidget()
+{
+    ClearReanim();
+}
+
+bool MessageWidget::IsBeingDisplayed()
+{
+    return mEndTimeNs != 0;
 }

@@ -1,0 +1,898 @@
+[
+  {
+    "variant": "before",
+    "run": 1,
+    "definition": "normal",
+    "kernel": "legacy_velocity_accumulate",
+    "min_ns": 18.02515,
+    "rounds": [
+      18.03305,
+      18.09995,
+      18.02515,
+      18.09105,
+      18.13175
+    ]
+  },
+  {
+    "variant": "before",
+    "run": 1,
+    "definition": "normal",
+    "kernel": "current_root_method",
+    "min_ns": 88.0781,
+    "rounds": [
+      88.08575,
+      88.0781,
+      88.13955,
+      88.09065,
+      88.203
+    ]
+  },
+  {
+    "variant": "before",
+    "run": 1,
+    "definition": "normal",
+    "kernel": "current_root_resolved",
+    "min_ns": 60.7097,
+    "rounds": [
+      60.75765,
+      60.77985,
+      60.7379,
+      60.7097,
+      60.7138
+    ]
+  },
+  {
+    "variant": "before",
+    "run": 1,
+    "definition": "normal",
+    "kernel": "current_period_local",
+    "min_ns": 88.14755,
+    "rounds": [
+      88.2254,
+      88.14755,
+      88.25445,
+      88.26445,
+      88.279
+    ]
+  },
+  {
+    "variant": "before",
+    "run": 1,
+    "definition": "football",
+    "kernel": "legacy_velocity_accumulate",
+    "min_ns": 18.1712,
+    "rounds": [
+      18.21015,
+      18.2191,
+      18.1818,
+      18.19195,
+      18.1712
+    ]
+  },
+  {
+    "variant": "before",
+    "run": 1,
+    "definition": "football",
+    "kernel": "current_root_method",
+    "min_ns": 87.9233,
+    "rounds": [
+      88.03005,
+      87.94885,
+      87.92615,
+      87.9233,
+      87.9333
+    ]
+  },
+  {
+    "variant": "before",
+    "run": 1,
+    "definition": "football",
+    "kernel": "current_root_resolved",
+    "min_ns": 59.42485,
+    "rounds": [
+      60.8732,
+      60.86805,
+      60.07915,
+      59.54535,
+      59.42485
+    ]
+  },
+  {
+    "variant": "before",
+    "run": 1,
+    "definition": "football",
+    "kernel": "current_period_local",
+    "min_ns": 87.69805,
+    "rounds": [
+      87.69805,
+      87.72585,
+      87.7573,
+      87.7657,
+      87.7242
+    ]
+  },
+  {
+    "variant": "before",
+    "run": 1,
+    "definition": "newspaper",
+    "kernel": "legacy_velocity_accumulate",
+    "min_ns": 18.009,
+    "rounds": [
+      18.05425,
+      18.04975,
+      18.0592,
+      18.009,
+      18.0281
+    ]
+  },
+  {
+    "variant": "before",
+    "run": 1,
+    "definition": "newspaper",
+    "kernel": "current_root_method",
+    "min_ns": 88.0171,
+    "rounds": [
+      88.051,
+      88.0171,
+      88.085,
+      88.0847,
+      88.11385
+    ]
+  },
+  {
+    "variant": "before",
+    "run": 1,
+    "definition": "newspaper",
+    "kernel": "current_root_resolved",
+    "min_ns": 58.9105,
+    "rounds": [
+      58.9547,
+      59.2024,
+      58.9511,
+      58.9105,
+      58.9509
+    ]
+  },
+  {
+    "variant": "before",
+    "run": 1,
+    "definition": "newspaper",
+    "kernel": "current_period_local",
+    "min_ns": 87.84115,
+    "rounds": [
+      88.0028,
+      87.9676,
+      88.00955,
+      88.0061,
+      87.84115
+    ]
+  },
+  {
+    "variant": "before",
+    "run": 1,
+    "definition": "polevaulter",
+    "kernel": "legacy_velocity_accumulate",
+    "min_ns": 18.0216,
+    "rounds": [
+      18.0322,
+      18.03405,
+      18.06485,
+      18.0523,
+      18.0216
+    ]
+  },
+  {
+    "variant": "before",
+    "run": 1,
+    "definition": "polevaulter",
+    "kernel": "current_root_method",
+    "min_ns": 87.986,
+    "rounds": [
+      88.8865,
+      88.8624,
+      88.5023,
+      88.12935,
+      87.986
+    ]
+  },
+  {
+    "variant": "before",
+    "run": 1,
+    "definition": "polevaulter",
+    "kernel": "current_root_resolved",
+    "min_ns": 59.00445,
+    "rounds": [
+      59.01045,
+      59.158,
+      59.0646,
+      59.08935,
+      59.00445
+    ]
+  },
+  {
+    "variant": "before",
+    "run": 1,
+    "definition": "polevaulter",
+    "kernel": "current_period_local",
+    "min_ns": 87.9049,
+    "rounds": [
+      87.9049,
+      88.0195,
+      88.16105,
+      88.1032,
+      88.12275
+    ]
+  },
+  {
+    "variant": "before",
+    "run": 2,
+    "definition": "normal",
+    "kernel": "legacy_velocity_accumulate",
+    "min_ns": 17.99545,
+    "rounds": [
+      18.0211,
+      18.0659,
+      18.03985,
+      17.99545,
+      18.03825
+    ]
+  },
+  {
+    "variant": "before",
+    "run": 2,
+    "definition": "normal",
+    "kernel": "current_root_method",
+    "min_ns": 88.04745,
+    "rounds": [
+      88.04745,
+      88.07385,
+      88.2159,
+      88.1917,
+      88.0669
+    ]
+  },
+  {
+    "variant": "before",
+    "run": 2,
+    "definition": "normal",
+    "kernel": "current_root_resolved",
+    "min_ns": 60.86995,
+    "rounds": [
+      60.86995,
+      60.94875,
+      60.9671,
+      60.9374,
+      60.9186
+    ]
+  },
+  {
+    "variant": "before",
+    "run": 2,
+    "definition": "normal",
+    "kernel": "current_period_local",
+    "min_ns": 88.85275,
+    "rounds": [
+      88.86115,
+      88.85275,
+      88.88895,
+      89.0085,
+      88.96915
+    ]
+  },
+  {
+    "variant": "before",
+    "run": 2,
+    "definition": "football",
+    "kernel": "legacy_velocity_accumulate",
+    "min_ns": 18.16735,
+    "rounds": [
+      18.17745,
+      18.2204,
+      18.232,
+      18.16735,
+      18.2195
+    ]
+  },
+  {
+    "variant": "before",
+    "run": 2,
+    "definition": "football",
+    "kernel": "current_root_method",
+    "min_ns": 88.5006,
+    "rounds": [
+      88.58915,
+      88.5006,
+      88.82165,
+      88.65265,
+      88.689
+    ]
+  },
+  {
+    "variant": "before",
+    "run": 2,
+    "definition": "football",
+    "kernel": "current_root_resolved",
+    "min_ns": 60.8376,
+    "rounds": [
+      60.8807,
+      60.9057,
+      60.8376,
+      60.9364,
+      60.98665
+    ]
+  },
+  {
+    "variant": "before",
+    "run": 2,
+    "definition": "football",
+    "kernel": "current_period_local",
+    "min_ns": 87.63325,
+    "rounds": [
+      87.83535,
+      87.7007,
+      87.63325,
+      87.7341,
+      87.71195
+    ]
+  },
+  {
+    "variant": "before",
+    "run": 2,
+    "definition": "newspaper",
+    "kernel": "legacy_velocity_accumulate",
+    "min_ns": 18.0184,
+    "rounds": [
+      18.07325,
+      18.0184,
+      18.18455,
+      18.07775,
+      18.06415
+    ]
+  },
+  {
+    "variant": "before",
+    "run": 2,
+    "definition": "newspaper",
+    "kernel": "current_root_method",
+    "min_ns": 87.99005,
+    "rounds": [
+      87.99005,
+      88.14925,
+      88.03935,
+      88.0282,
+      88.0925
+    ]
+  },
+  {
+    "variant": "before",
+    "run": 2,
+    "definition": "newspaper",
+    "kernel": "current_root_resolved",
+    "min_ns": 60.85925,
+    "rounds": [
+      60.89685,
+      61.01115,
+      60.90225,
+      60.9116,
+      60.85925
+    ]
+  },
+  {
+    "variant": "before",
+    "run": 2,
+    "definition": "newspaper",
+    "kernel": "current_period_local",
+    "min_ns": 88.10525,
+    "rounds": [
+      88.74355,
+      88.93295,
+      88.80705,
+      88.3928,
+      88.10525
+    ]
+  },
+  {
+    "variant": "before",
+    "run": 2,
+    "definition": "polevaulter",
+    "kernel": "legacy_velocity_accumulate",
+    "min_ns": 18.02995,
+    "rounds": [
+      18.04495,
+      18.0643,
+      18.02995,
+      18.10445,
+      18.04525
+    ]
+  },
+  {
+    "variant": "before",
+    "run": 2,
+    "definition": "polevaulter",
+    "kernel": "current_root_method",
+    "min_ns": 87.92505,
+    "rounds": [
+      87.94035,
+      87.92505,
+      87.95545,
+      88.0495,
+      88.0643
+    ]
+  },
+  {
+    "variant": "before",
+    "run": 2,
+    "definition": "polevaulter",
+    "kernel": "current_root_resolved",
+    "min_ns": 59.5404,
+    "rounds": [
+      60.8972,
+      60.8599,
+      60.895,
+      59.66785,
+      59.5404
+    ]
+  },
+  {
+    "variant": "before",
+    "run": 2,
+    "definition": "polevaulter",
+    "kernel": "current_period_local",
+    "min_ns": 87.78705,
+    "rounds": [
+      87.8541,
+      87.97335,
+      87.78705,
+      87.933,
+      88.0102
+    ]
+  },
+  {
+    "variant": "after",
+    "run": 1,
+    "definition": "normal",
+    "kernel": "legacy_velocity_accumulate",
+    "min_ns": 17.99745,
+    "rounds": [
+      18.0094,
+      17.99745,
+      18.01335,
+      18.0255,
+      18.00755
+    ]
+  },
+  {
+    "variant": "after",
+    "run": 1,
+    "definition": "normal",
+    "kernel": "current_root_method",
+    "min_ns": 79.2603,
+    "rounds": [
+      79.43575,
+      79.33245,
+      79.2603,
+      79.3296,
+      79.34575
+    ]
+  },
+  {
+    "variant": "after",
+    "run": 1,
+    "definition": "normal",
+    "kernel": "current_root_resolved",
+    "min_ns": 63.90025,
+    "rounds": [
+      63.90025,
+      64.0024,
+      63.94385,
+      63.9571,
+      63.98635
+    ]
+  },
+  {
+    "variant": "after",
+    "run": 1,
+    "definition": "normal",
+    "kernel": "current_period_local",
+    "min_ns": 60.0244,
+    "rounds": [
+      60.0304,
+      60.0244,
+      60.11785,
+      60.1497,
+      60.1189
+    ]
+  },
+  {
+    "variant": "after",
+    "run": 1,
+    "definition": "football",
+    "kernel": "legacy_velocity_accumulate",
+    "min_ns": 18.1547,
+    "rounds": [
+      18.17335,
+      18.203,
+      18.25265,
+      18.177,
+      18.1547
+    ]
+  },
+  {
+    "variant": "after",
+    "run": 1,
+    "definition": "football",
+    "kernel": "current_root_method",
+    "min_ns": 78.42695,
+    "rounds": [
+      78.60915,
+      78.42695,
+      78.49035,
+      78.5618,
+      78.45145
+    ]
+  },
+  {
+    "variant": "after",
+    "run": 1,
+    "definition": "football",
+    "kernel": "current_root_resolved",
+    "min_ns": 63.8996,
+    "rounds": [
+      63.91025,
+      63.8996,
+      63.93295,
+      63.94185,
+      63.91265
+    ]
+  },
+  {
+    "variant": "after",
+    "run": 1,
+    "definition": "football",
+    "kernel": "current_period_local",
+    "min_ns": 59.8401,
+    "rounds": [
+      59.901,
+      59.92305,
+      59.8401,
+      59.9142,
+      59.89675
+    ]
+  },
+  {
+    "variant": "after",
+    "run": 1,
+    "definition": "newspaper",
+    "kernel": "legacy_velocity_accumulate",
+    "min_ns": 18.01585,
+    "rounds": [
+      18.27835,
+      18.04315,
+      18.0162,
+      18.01585,
+      18.1598
+    ]
+  },
+  {
+    "variant": "after",
+    "run": 1,
+    "definition": "newspaper",
+    "kernel": "current_root_method",
+    "min_ns": 78.52685,
+    "rounds": [
+      78.8366,
+      78.6298,
+      78.61165,
+      78.6444,
+      78.52685
+    ]
+  },
+  {
+    "variant": "after",
+    "run": 1,
+    "definition": "newspaper",
+    "kernel": "current_root_resolved",
+    "min_ns": 64.3604,
+    "rounds": [
+      64.455,
+      64.4464,
+      64.5499,
+      64.3604,
+      64.5333
+    ]
+  },
+  {
+    "variant": "after",
+    "run": 1,
+    "definition": "newspaper",
+    "kernel": "current_period_local",
+    "min_ns": 61.10745,
+    "rounds": [
+      61.10745,
+      61.13485,
+      61.11345,
+      61.12165,
+      61.1548
+    ]
+  },
+  {
+    "variant": "after",
+    "run": 1,
+    "definition": "polevaulter",
+    "kernel": "legacy_velocity_accumulate",
+    "min_ns": 17.99335,
+    "rounds": [
+      18.005,
+      17.99335,
+      18.0484,
+      18.0215,
+      18.0
+    ]
+  },
+  {
+    "variant": "after",
+    "run": 1,
+    "definition": "polevaulter",
+    "kernel": "current_root_method",
+    "min_ns": 78.49855,
+    "rounds": [
+      78.554,
+      78.6251,
+      78.5536,
+      78.53225,
+      78.49855
+    ]
+  },
+  {
+    "variant": "after",
+    "run": 1,
+    "definition": "polevaulter",
+    "kernel": "current_root_resolved",
+    "min_ns": 63.89485,
+    "rounds": [
+      63.94225,
+      63.93545,
+      63.935,
+      63.9285,
+      63.89485
+    ]
+  },
+  {
+    "variant": "after",
+    "run": 1,
+    "definition": "polevaulter",
+    "kernel": "current_period_local",
+    "min_ns": 59.9023,
+    "rounds": [
+      59.93685,
+      60.0293,
+      59.91505,
+      59.9023,
+      60.047
+    ]
+  },
+  {
+    "variant": "after",
+    "run": 2,
+    "definition": "normal",
+    "kernel": "legacy_velocity_accumulate",
+    "min_ns": 17.99385,
+    "rounds": [
+      18.0612,
+      18.02135,
+      18.07875,
+      18.01975,
+      17.99385
+    ]
+  },
+  {
+    "variant": "after",
+    "run": 2,
+    "definition": "normal",
+    "kernel": "current_root_method",
+    "min_ns": 78.5187,
+    "rounds": [
+      78.5317,
+      78.56825,
+      78.5187,
+      78.5719,
+      78.53035
+    ]
+  },
+  {
+    "variant": "after",
+    "run": 2,
+    "definition": "normal",
+    "kernel": "current_root_resolved",
+    "min_ns": 63.89975,
+    "rounds": [
+      64.13195,
+      63.89975,
+      63.985,
+      64.03215,
+      64.0039
+    ]
+  },
+  {
+    "variant": "after",
+    "run": 2,
+    "definition": "normal",
+    "kernel": "current_period_local",
+    "min_ns": 59.96455,
+    "rounds": [
+      59.96455,
+      60.05435,
+      60.00645,
+      60.02235,
+      60.06695
+    ]
+  },
+  {
+    "variant": "after",
+    "run": 2,
+    "definition": "football",
+    "kernel": "legacy_velocity_accumulate",
+    "min_ns": 18.1674,
+    "rounds": [
+      18.1674,
+      18.1691,
+      18.17245,
+      18.1873,
+      18.20655
+    ]
+  },
+  {
+    "variant": "after",
+    "run": 2,
+    "definition": "football",
+    "kernel": "current_root_method",
+    "min_ns": 78.4798,
+    "rounds": [
+      78.5014,
+      78.5642,
+      78.4798,
+      78.52355,
+      78.52665
+    ]
+  },
+  {
+    "variant": "after",
+    "run": 2,
+    "definition": "football",
+    "kernel": "current_root_resolved",
+    "min_ns": 63.91575,
+    "rounds": [
+      64.10545,
+      63.9483,
+      63.91575,
+      64.0213,
+      64.04775
+    ]
+  },
+  {
+    "variant": "after",
+    "run": 2,
+    "definition": "football",
+    "kernel": "current_period_local",
+    "min_ns": 60.9224,
+    "rounds": [
+      61.0584,
+      61.0356,
+      61.07765,
+      61.0988,
+      60.9224
+    ]
+  },
+  {
+    "variant": "after",
+    "run": 2,
+    "definition": "newspaper",
+    "kernel": "legacy_velocity_accumulate",
+    "min_ns": 18.0268,
+    "rounds": [
+      18.0268,
+      18.03565,
+      18.089,
+      18.05595,
+      18.0592
+    ]
+  },
+  {
+    "variant": "after",
+    "run": 2,
+    "definition": "newspaper",
+    "kernel": "current_root_method",
+    "min_ns": 78.5866,
+    "rounds": [
+      78.6319,
+      78.64115,
+      78.69595,
+      78.7122,
+      78.5866
+    ]
+  },
+  {
+    "variant": "after",
+    "run": 2,
+    "definition": "newspaper",
+    "kernel": "current_root_resolved",
+    "min_ns": 64.42285,
+    "rounds": [
+      64.42285,
+      64.47415,
+      64.45465,
+      64.45175,
+      64.43005
+    ]
+  },
+  {
+    "variant": "after",
+    "run": 2,
+    "definition": "newspaper",
+    "kernel": "current_period_local",
+    "min_ns": 61.07945,
+    "rounds": [
+      61.07945,
+      61.2007,
+      61.1733,
+      61.14375,
+      61.13365
+    ]
+  },
+  {
+    "variant": "after",
+    "run": 2,
+    "definition": "polevaulter",
+    "kernel": "legacy_velocity_accumulate",
+    "min_ns": 17.9126,
+    "rounds": [
+      18.02525,
+      18.0291,
+      17.9756,
+      17.95905,
+      17.9126
+    ]
+  },
+  {
+    "variant": "after",
+    "run": 2,
+    "definition": "polevaulter",
+    "kernel": "current_root_method",
+    "min_ns": 78.4952,
+    "rounds": [
+      78.58845,
+      78.49545,
+      78.52995,
+      78.4952,
+      78.52135
+    ]
+  },
+  {
+    "variant": "after",
+    "run": 2,
+    "definition": "polevaulter",
+    "kernel": "current_root_resolved",
+    "min_ns": 63.9376,
+    "rounds": [
+      63.99235,
+      63.9376,
+      64.1001,
+      63.97275,
+      63.96905
+    ]
+  },
+  {
+    "variant": "after",
+    "run": 2,
+    "definition": "polevaulter",
+    "kernel": "current_period_local",
+    "min_ns": 60.1199,
+    "rounds": [
+      60.1199,
+      60.1656,
+      60.23415,
+      60.12945,
+      60.16195
+    ]
+  }
+]

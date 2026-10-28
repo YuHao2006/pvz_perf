@@ -1,0 +1,11 @@
+{
+  "processId": 38536,
+  "executable": "C:\\Users\\Administrator\\CLionProjects\\codex\\PlantsVsZombiesModern\\out\\x64-win32-vulkan\\Release\\pvz_perf.exe",
+  "executableSha256": "4C2ED515E61B58C3D0D4945306D7359E835D37C76CFA4F0418A8FB899B6D6B7C",
+  "processStartedUtc": "2026-10-28T22:51:20.0868352Z",
+  "captureStartedUtc": "2026-10-28T23:01:13.2966067Z",
+  "captureFinishedUtc": "2026-10-28T23:01:40.4061112Z",
+  "captureKind": "external-full-memory-thread-handle-dump",
+  "dump": "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\pvz-windows-hang-20261029-070113-0b1d51cc0862420e9856977b58e736d6\\game.dmp",
+  "status": "captured"
+}

@@ -1,0 +1,1010 @@
+[
+  {
+    "process": 1,
+    "definition": "normal",
+    "kernel": "frozen_v36_root",
+    "scope": "query_only",
+    "min_ns": 28.120613,
+    "rounds": [
+      28.173733,
+      28.256226,
+      28.188992,
+      28.199959,
+      28.120613
+    ]
+  },
+  {
+    "process": 1,
+    "definition": "normal",
+    "kernel": "v4_root",
+    "scope": "query_only",
+    "min_ns": 60.366154,
+    "rounds": [
+      60.366154,
+      60.482502,
+      60.411263,
+      60.513306,
+      60.419846
+    ]
+  },
+  {
+    "process": 1,
+    "definition": "normal",
+    "kernel": "frozen_v36_frame",
+    "scope": "query_only",
+    "min_ns": 16.789055,
+    "rounds": [
+      16.878128,
+      16.838074,
+      16.789055,
+      16.88242,
+      16.800499
+    ]
+  },
+  {
+    "process": 1,
+    "definition": "normal",
+    "kernel": "v4_frame",
+    "scope": "query_only",
+    "min_ns": 48.152256,
+    "rounds": [
+      48.532581,
+      48.161793,
+      48.169804,
+      48.156261,
+      48.152256
+    ]
+  },
+  {
+    "process": 1,
+    "definition": "normal",
+    "kernel": "frozen_v36_update_root",
+    "scope": "update_and_query",
+    "min_ns": 52.7267,
+    "rounds": [
+      52.7628,
+      52.816,
+      52.7922,
+      52.7267,
+      52.8499
+    ]
+  },
+  {
+    "process": 1,
+    "definition": "normal",
+    "kernel": "v4_update_root",
+    "scope": "update_and_query",
+    "min_ns": 151.1497,
+    "rounds": [
+      151.4424,
+      151.4876,
+      151.5019,
+      151.1497,
+      151.4697
+    ]
+  },
+  {
+    "process": 1,
+    "definition": "normal",
+    "kernel": "frozen_v36_update_frame",
+    "scope": "update_and_query",
+    "min_ns": 40.4331,
+    "rounds": [
+      40.5677,
+      40.4331,
+      40.6195,
+      40.5201,
+      40.4341
+    ]
+  },
+  {
+    "process": 1,
+    "definition": "normal",
+    "kernel": "v4_update_frame",
+    "scope": "update_and_query",
+    "min_ns": 137.1364,
+    "rounds": [
+      137.6003,
+      137.1805,
+      137.4316,
+      137.1364,
+      137.241
+    ]
+  },
+  {
+    "process": 1,
+    "definition": "normal",
+    "kernel": "v4_update_zombie_root",
+    "scope": "update_and_query",
+    "min_ns": 144.259,
+    "rounds": [
+      144.4549,
+      144.259,
+      144.724,
+      144.742,
+      144.5243
+    ]
+  },
+  {
+    "process": 1,
+    "definition": "football",
+    "kernel": "frozen_v36_root",
+    "scope": "query_only",
+    "min_ns": 28.040314,
+    "rounds": [
+      28.040314,
+      28.201008,
+      28.068161,
+      28.119564,
+      28.225994
+    ]
+  },
+  {
+    "process": 1,
+    "definition": "football",
+    "kernel": "v4_root",
+    "scope": "query_only",
+    "min_ns": 60.28862,
+    "rounds": [
+      60.537052,
+      60.37302,
+      60.420227,
+      60.476589,
+      60.28862
+    ]
+  },
+  {
+    "process": 1,
+    "definition": "football",
+    "kernel": "frozen_v36_frame",
+    "scope": "query_only",
+    "min_ns": 16.784191,
+    "rounds": [
+      16.87479,
+      16.784191,
+      16.870594,
+      16.864872,
+      16.803169
+    ]
+  },
+  {
+    "process": 1,
+    "definition": "football",
+    "kernel": "v4_frame",
+    "scope": "query_only",
+    "min_ns": 48.212624,
+    "rounds": [
+      48.212624,
+      48.22607,
+      48.257351,
+      48.214912,
+      48.243904
+    ]
+  },
+  {
+    "process": 1,
+    "definition": "football",
+    "kernel": "frozen_v36_update_root",
+    "scope": "update_and_query",
+    "min_ns": 52.9262,
+    "rounds": [
+      53.1511,
+      52.9515,
+      52.9262,
+      53.0866,
+      53.0178
+    ]
+  },
+  {
+    "process": 1,
+    "definition": "football",
+    "kernel": "v4_update_root",
+    "scope": "update_and_query",
+    "min_ns": 152.7948,
+    "rounds": [
+      152.8296,
+      152.8441,
+      152.7948,
+      153.0229,
+      152.8349
+    ]
+  },
+  {
+    "process": 1,
+    "definition": "football",
+    "kernel": "frozen_v36_update_frame",
+    "scope": "update_and_query",
+    "min_ns": 40.5496,
+    "rounds": [
+      40.6371,
+      40.8256,
+      40.7206,
+      40.5496,
+      40.5793
+    ]
+  },
+  {
+    "process": 1,
+    "definition": "football",
+    "kernel": "v4_update_frame",
+    "scope": "update_and_query",
+    "min_ns": 137.635,
+    "rounds": [
+      137.7624,
+      137.6705,
+      138.0075,
+      137.803,
+      137.635
+    ]
+  },
+  {
+    "process": 1,
+    "definition": "football",
+    "kernel": "v4_update_zombie_root",
+    "scope": "update_and_query",
+    "min_ns": 145.3753,
+    "rounds": [
+      145.4374,
+      145.3753,
+      145.6165,
+      145.6302,
+      145.4882
+    ]
+  },
+  {
+    "process": 1,
+    "definition": "newspaper",
+    "kernel": "frozen_v36_root",
+    "scope": "query_only",
+    "min_ns": 28.104877,
+    "rounds": [
+      28.188801,
+      28.28207,
+      28.104877,
+      28.247356,
+      28.114223
+    ]
+  },
+  {
+    "process": 1,
+    "definition": "newspaper",
+    "kernel": "v4_root",
+    "scope": "query_only",
+    "min_ns": 60.349751,
+    "rounds": [
+      60.465813,
+      60.39753,
+      60.349751,
+      60.476303,
+      60.449696
+    ]
+  },
+  {
+    "process": 1,
+    "definition": "newspaper",
+    "kernel": "frozen_v36_frame",
+    "scope": "query_only",
+    "min_ns": 16.779613,
+    "rounds": [
+      16.779613,
+      16.875172,
+      16.875553,
+      16.810703,
+      16.814709
+    ]
+  },
+  {
+    "process": 1,
+    "definition": "newspaper",
+    "kernel": "v4_frame",
+    "scope": "query_only",
+    "min_ns": 48.15197,
+    "rounds": [
+      48.15197,
+      48.167133,
+      48.253536,
+      48.221874,
+      48.282814
+    ]
+  },
+  {
+    "process": 1,
+    "definition": "newspaper",
+    "kernel": "frozen_v36_update_root",
+    "scope": "update_and_query",
+    "min_ns": 52.8611,
+    "rounds": [
+      52.9248,
+      52.9808,
+      53.2474,
+      52.8611,
+      52.9199
+    ]
+  },
+  {
+    "process": 1,
+    "definition": "newspaper",
+    "kernel": "v4_update_root",
+    "scope": "update_and_query",
+    "min_ns": 151.5211,
+    "rounds": [
+      151.9635,
+      151.879,
+      151.5211,
+      151.6737,
+      151.9745
+    ]
+  },
+  {
+    "process": 1,
+    "definition": "newspaper",
+    "kernel": "frozen_v36_update_frame",
+    "scope": "update_and_query",
+    "min_ns": 40.513,
+    "rounds": [
+      40.5199,
+      40.5351,
+      40.513,
+      40.5603,
+      40.5268
+    ]
+  },
+  {
+    "process": 1,
+    "definition": "newspaper",
+    "kernel": "v4_update_frame",
+    "scope": "update_and_query",
+    "min_ns": 137.4538,
+    "rounds": [
+      137.7681,
+      137.7814,
+      137.4538,
+      137.5843,
+      137.7147
+    ]
+  },
+  {
+    "process": 1,
+    "definition": "newspaper",
+    "kernel": "v4_update_zombie_root",
+    "scope": "update_and_query",
+    "min_ns": 144.7194,
+    "rounds": [
+      144.7536,
+      144.8199,
+      144.7718,
+      144.9233,
+      144.7194
+    ]
+  },
+  {
+    "process": 1,
+    "definition": "polevaulter",
+    "kernel": "frozen_v36_root",
+    "scope": "query_only",
+    "min_ns": 28.248119,
+    "rounds": [
+      28.318882,
+      28.311062,
+      28.300285,
+      28.386784,
+      28.248119
+    ]
+  },
+  {
+    "process": 1,
+    "definition": "polevaulter",
+    "kernel": "v4_root",
+    "scope": "query_only",
+    "min_ns": 60.321903,
+    "rounds": [
+      60.38847,
+      60.507679,
+      60.321903,
+      60.332203,
+      60.356712
+    ]
+  },
+  {
+    "process": 1,
+    "definition": "polevaulter",
+    "kernel": "frozen_v36_frame",
+    "scope": "query_only",
+    "min_ns": 16.792583,
+    "rounds": [
+      16.792583,
+      16.827583,
+      16.884136,
+      16.793633,
+      16.824722
+    ]
+  },
+  {
+    "process": 1,
+    "definition": "polevaulter",
+    "kernel": "v4_frame",
+    "scope": "query_only",
+    "min_ns": 48.198032,
+    "rounds": [
+      48.294353,
+      48.273945,
+      48.245907,
+      48.198032,
+      48.211479
+    ]
+  },
+  {
+    "process": 1,
+    "definition": "polevaulter",
+    "kernel": "frozen_v36_update_root",
+    "scope": "update_and_query",
+    "min_ns": 53.0271,
+    "rounds": [
+      53.0271,
+      53.0585,
+      53.1026,
+      53.1535,
+      53.0374
+    ]
+  },
+  {
+    "process": 1,
+    "definition": "polevaulter",
+    "kernel": "v4_update_root",
+    "scope": "update_and_query",
+    "min_ns": 151.6349,
+    "rounds": [
+      151.6471,
+      151.6349,
+      151.7495,
+      151.7149,
+      151.6455
+    ]
+  },
+  {
+    "process": 1,
+    "definition": "polevaulter",
+    "kernel": "frozen_v36_update_frame",
+    "scope": "update_and_query",
+    "min_ns": 40.4288,
+    "rounds": [
+      40.5488,
+      40.5591,
+      40.4288,
+      40.5409,
+      40.4409
+    ]
+  },
+  {
+    "process": 1,
+    "definition": "polevaulter",
+    "kernel": "v4_update_frame",
+    "scope": "update_and_query",
+    "min_ns": 137.3821,
+    "rounds": [
+      137.5129,
+      137.4812,
+      137.4818,
+      137.5819,
+      137.3821
+    ]
+  },
+  {
+    "process": 1,
+    "definition": "polevaulter",
+    "kernel": "v4_update_zombie_root",
+    "scope": "update_and_query",
+    "min_ns": 144.773,
+    "rounds": [
+      144.7856,
+      144.9426,
+      144.7741,
+      144.773,
+      145.0009
+    ]
+  },
+  {
+    "process": 2,
+    "definition": "normal",
+    "kernel": "v4_update_zombie_root",
+    "scope": "update_and_query",
+    "min_ns": 144.5296,
+    "rounds": [
+      144.5296,
+      144.8501,
+      144.5556,
+      144.8391,
+      144.7674
+    ]
+  },
+  {
+    "process": 2,
+    "definition": "normal",
+    "kernel": "v4_update_frame",
+    "scope": "update_and_query",
+    "min_ns": 137.2197,
+    "rounds": [
+      137.2959,
+      137.336,
+      137.3449,
+      137.3398,
+      137.2197
+    ]
+  },
+  {
+    "process": 2,
+    "definition": "normal",
+    "kernel": "frozen_v36_update_frame",
+    "scope": "update_and_query",
+    "min_ns": 40.4837,
+    "rounds": [
+      40.4989,
+      40.6015,
+      40.4837,
+      40.5798,
+      40.5314
+    ]
+  },
+  {
+    "process": 2,
+    "definition": "normal",
+    "kernel": "v4_update_root",
+    "scope": "update_and_query",
+    "min_ns": 151.2082,
+    "rounds": [
+      151.3473,
+      151.3018,
+      151.3449,
+      151.9762,
+      151.2082
+    ]
+  },
+  {
+    "process": 2,
+    "definition": "normal",
+    "kernel": "frozen_v36_update_root",
+    "scope": "update_and_query",
+    "min_ns": 52.8309,
+    "rounds": [
+      52.8309,
+      53.0351,
+      53.0237,
+      53.0586,
+      53.0342
+    ]
+  },
+  {
+    "process": 2,
+    "definition": "normal",
+    "kernel": "v4_frame",
+    "scope": "query_only",
+    "min_ns": 48.161793,
+    "rounds": [
+      48.161793,
+      48.224831,
+      48.318386,
+      48.224735,
+      48.252106
+    ]
+  },
+  {
+    "process": 2,
+    "definition": "normal",
+    "kernel": "frozen_v36_frame",
+    "scope": "query_only",
+    "min_ns": 16.79945,
+    "rounds": [
+      16.902065,
+      16.79945,
+      16.887093,
+      16.861248,
+      16.820335
+    ]
+  },
+  {
+    "process": 2,
+    "definition": "normal",
+    "kernel": "v4_root",
+    "scope": "query_only",
+    "min_ns": 60.339546,
+    "rounds": [
+      60.408306,
+      60.497665,
+      60.351562,
+      60.339546,
+      60.427189
+    ]
+  },
+  {
+    "process": 2,
+    "definition": "normal",
+    "kernel": "frozen_v36_root",
+    "scope": "query_only",
+    "min_ns": 28.126621,
+    "rounds": [
+      28.26376,
+      28.126621,
+      28.162384,
+      28.182697,
+      28.184319
+    ]
+  },
+  {
+    "process": 2,
+    "definition": "football",
+    "kernel": "v4_update_zombie_root",
+    "scope": "update_and_query",
+    "min_ns": 145.8259,
+    "rounds": [
+      146.1243,
+      145.8259,
+      146.4132,
+      146.0959,
+      146.2141
+    ]
+  },
+  {
+    "process": 2,
+    "definition": "football",
+    "kernel": "v4_update_frame",
+    "scope": "update_and_query",
+    "min_ns": 138.0274,
+    "rounds": [
+      138.0521,
+      138.2016,
+      138.3803,
+      138.2037,
+      138.0274
+    ]
+  },
+  {
+    "process": 2,
+    "definition": "football",
+    "kernel": "frozen_v36_update_frame",
+    "scope": "update_and_query",
+    "min_ns": 40.7144,
+    "rounds": [
+      41.0491,
+      40.7144,
+      41.0043,
+      41.1654,
+      41.2926
+    ]
+  },
+  {
+    "process": 2,
+    "definition": "football",
+    "kernel": "v4_update_root",
+    "scope": "update_and_query",
+    "min_ns": 154.2278,
+    "rounds": [
+      154.4361,
+      154.2278,
+      154.4742,
+      155.0287,
+      154.7174
+    ]
+  },
+  {
+    "process": 2,
+    "definition": "football",
+    "kernel": "frozen_v36_update_root",
+    "scope": "update_and_query",
+    "min_ns": 53.2604,
+    "rounds": [
+      53.2604,
+      53.3166,
+      53.4459,
+      53.4863,
+      53.5272
+    ]
+  },
+  {
+    "process": 2,
+    "definition": "football",
+    "kernel": "v4_frame",
+    "scope": "query_only",
+    "min_ns": 48.539925,
+    "rounds": [
+      48.807907,
+      48.539925,
+      48.810768,
+      49.018192,
+      49.14093
+    ]
+  },
+  {
+    "process": 2,
+    "definition": "football",
+    "kernel": "frozen_v36_frame",
+    "scope": "query_only",
+    "min_ns": 16.863918,
+    "rounds": [
+      16.863918,
+      17.25235,
+      17.202091,
+      16.921139,
+      17.026043
+    ]
+  },
+  {
+    "process": 2,
+    "definition": "football",
+    "kernel": "v4_root",
+    "scope": "query_only",
+    "min_ns": 60.846996,
+    "rounds": [
+      60.846996,
+      61.144447,
+      60.883045,
+      60.918236,
+      61.466026
+    ]
+  },
+  {
+    "process": 2,
+    "definition": "football",
+    "kernel": "frozen_v36_root",
+    "scope": "query_only",
+    "min_ns": 28.255749,
+    "rounds": [
+      28.326511,
+      28.300571,
+      28.291512,
+      28.257751,
+      28.255749
+    ]
+  },
+  {
+    "process": 2,
+    "definition": "newspaper",
+    "kernel": "v4_update_zombie_root",
+    "scope": "update_and_query",
+    "min_ns": 145.4288,
+    "rounds": [
+      145.6816,
+      145.9048,
+      145.615,
+      145.831,
+      145.4288
+    ]
+  },
+  {
+    "process": 2,
+    "definition": "newspaper",
+    "kernel": "v4_update_frame",
+    "scope": "update_and_query",
+    "min_ns": 137.7157,
+    "rounds": [
+      137.7157,
+      138.3089,
+      138.8137,
+      138.259,
+      139.2419
+    ]
+  },
+  {
+    "process": 2,
+    "definition": "newspaper",
+    "kernel": "frozen_v36_update_frame",
+    "scope": "update_and_query",
+    "min_ns": 40.446,
+    "rounds": [
+      40.5174,
+      40.588,
+      40.6555,
+      40.446,
+      40.4908
+    ]
+  },
+  {
+    "process": 2,
+    "definition": "newspaper",
+    "kernel": "v4_update_root",
+    "scope": "update_and_query",
+    "min_ns": 151.3321,
+    "rounds": [
+      151.3321,
+      151.7452,
+      152.1249,
+      151.8759,
+      151.6362
+    ]
+  },
+  {
+    "process": 2,
+    "definition": "newspaper",
+    "kernel": "frozen_v36_update_root",
+    "scope": "update_and_query",
+    "min_ns": 53.0987,
+    "rounds": [
+      53.4041,
+      53.2797,
+      53.1862,
+      53.3668,
+      53.0987
+    ]
+  },
+  {
+    "process": 2,
+    "definition": "newspaper",
+    "kernel": "v4_frame",
+    "scope": "query_only",
+    "min_ns": 48.279381,
+    "rounds": [
+      48.586082,
+      48.801231,
+      48.435593,
+      48.380661,
+      48.279381
+    ]
+  },
+  {
+    "process": 2,
+    "definition": "newspaper",
+    "kernel": "frozen_v36_frame",
+    "scope": "query_only",
+    "min_ns": 16.842747,
+    "rounds": [
+      16.842747,
+      16.901112,
+      16.872025,
+      16.93306,
+      16.949844
+    ]
+  },
+  {
+    "process": 2,
+    "definition": "newspaper",
+    "kernel": "v4_root",
+    "scope": "query_only",
+    "min_ns": 60.381317,
+    "rounds": [
+      60.381317,
+      60.67524,
+      60.825348,
+      60.85825,
+      60.723686
+    ]
+  },
+  {
+    "process": 2,
+    "definition": "newspaper",
+    "kernel": "frozen_v36_root",
+    "scope": "query_only",
+    "min_ns": 28.184509,
+    "rounds": [
+      28.184509,
+      28.68433,
+      28.278923,
+      28.417206,
+      28.431702
+    ]
+  },
+  {
+    "process": 2,
+    "definition": "polevaulter",
+    "kernel": "v4_update_zombie_root",
+    "scope": "update_and_query",
+    "min_ns": 145.2035,
+    "rounds": [
+      147.5404,
+      145.2035,
+      145.7418,
+      145.3985,
+      146.2252
+    ]
+  },
+  {
+    "process": 2,
+    "definition": "polevaulter",
+    "kernel": "v4_update_frame",
+    "scope": "update_and_query",
+    "min_ns": 137.6771,
+    "rounds": [
+      138.4908,
+      138.62,
+      137.6771,
+      138.441,
+      137.83
+    ]
+  },
+  {
+    "process": 2,
+    "definition": "polevaulter",
+    "kernel": "frozen_v36_update_frame",
+    "scope": "update_and_query",
+    "min_ns": 40.6445,
+    "rounds": [
+      40.8068,
+      40.9417,
+      40.756,
+      40.6445,
+      40.7473
+    ]
+  },
+  {
+    "process": 2,
+    "definition": "polevaulter",
+    "kernel": "v4_update_root",
+    "scope": "update_and_query",
+    "min_ns": 151.7513,
+    "rounds": [
+      152.0966,
+      151.7513,
+      152.5609,
+      152.446,
+      151.9467
+    ]
+  },
+  {
+    "process": 2,
+    "definition": "polevaulter",
+    "kernel": "frozen_v36_update_root",
+    "scope": "update_and_query",
+    "min_ns": 52.8183,
+    "rounds": [
+      52.8183,
+      53.0317,
+      53.1705,
+      53.1574,
+      53.3618
+    ]
+  },
+  {
+    "process": 2,
+    "definition": "polevaulter",
+    "kernel": "v4_frame",
+    "scope": "query_only",
+    "min_ns": 48.438931,
+    "rounds": [
+      48.438931,
+      48.457527,
+      48.521805,
+      48.811436,
+      48.93589
+    ]
+  },
+  {
+    "process": 2,
+    "definition": "polevaulter",
+    "kernel": "frozen_v36_frame",
+    "scope": "query_only",
+    "min_ns": 17.035961,
+    "rounds": [
+      17.091846,
+      17.1731,
+      17.096615,
+      17.043209,
+      17.035961
+    ]
+  },
+  {
+    "process": 2,
+    "definition": "polevaulter",
+    "kernel": "v4_root",
+    "scope": "query_only",
+    "min_ns": 60.409451,
+    "rounds": [
+      61.407852,
+      61.561584,
+      60.513592,
+      60.409451,
+      60.492134
+    ]
+  },
+  {
+    "process": 2,
+    "definition": "polevaulter",
+    "kernel": "frozen_v36_root",
+    "scope": "query_only",
+    "min_ns": 28.109074,
+    "rounds": [
+      28.109074,
+      28.172112,
+      28.120899,
+      28.236866,
+      28.130627
+    ]
+  }
+]

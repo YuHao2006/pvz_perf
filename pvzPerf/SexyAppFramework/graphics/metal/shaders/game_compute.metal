@@ -4,7 +4,7 @@ using namespace metal;
 
 // Hand-written ports of the four D3D12/Vulkan built-in compute shaders.
 // Sources/targets must be distinct resources, with encoded UNORM source views.
-// Color/alpha/caustic targets are RGBA8Unorm; font targets are RGBA32Float.
+// Color/alpha/caustic targets are RGBA8Unorm; font targets are RGBA16Float.
 // Dispatch color/alpha/font in 8x8 groups, caustics in 8x4 groups, depth 1.
 
 kernel void pvz_color_kernel(

@@ -1,3 +1,6 @@
+#include "EffectSystem.h"
+#include "Reanimator.h"
+#include "ReanimClock.h"
 #include "Sexy.TodLib/generated/EntityStrings.h"
 #include "Lawn/Board.h"
 #include "Lawn/Zombie.h"
@@ -54,11 +57,8 @@ int ChosenSeedPresentationX(const SeedChooserScreen& theChooser, const ChosenSee
 	// Apply the current viewport offset to the appropriate curve endpoints.
 	const bool aToBank = theSeed.mSeedState == SEED_FLYING_TO_BANK;
 	const bool aFromBank = !aToBank || theSeed.mStartY == theSeed.mEndY;
-	constexpr std::uint64_t aClockPeriodNs = (std::uint64_t(1) << 32) * 10'000'000;
-	const auto aDurationNs = (theSeed.mTimeEndMotion.mNanoseconds + aClockPeriodNs -
-		theSeed.mTimeStartMotion.mNanoseconds) % aClockPeriodNs;
-	const auto aElapsedNs = (theChooser.mSeedChooserAge.mNanoseconds + aClockPeriodNs -
-		theSeed.mTimeStartMotion.mNanoseconds) % aClockPeriodNs;
+	const auto aDurationNs = theSeed.mTimeEndMotion - theSeed.mTimeStartMotion;
+	const auto aElapsedNs = theChooser.mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs - theSeed.mTimeStartMotion;
 	return TodAnimateCurveNs(0, static_cast<std::int64_t>(aDurationNs),
 		static_cast<std::int64_t>(std::min(aElapsedNs, aDurationNs)),
 		theSeed.mStartX + (aFromBank ? aLeft : 0),
@@ -103,13 +103,13 @@ SeedChooserScreen::SeedChooserScreen()
 	mClip = false;
 	// 1073 leaves this clock uninitialized. Keep its 15/25-tick animations,
 	// not its dependency on old heap bytes or signed-overflow deadlines.
-	mSeedChooserAge = 0;
 	mSeedsInFlight = 0;
 	mSeedsInBank = 0;
 	mLastMouseX = -1;
 	mLastMouseY = -1;
 	mChooseState = CHOOSE_NORMAL;
-	mViewLawnTime = 0;
+	mViewLawnStartTimeNs = 0;
+	mViewLawnReturnTimeNs = -1;
 	mToolTip = new ToolTipWidget();
 	mToolTipSeed = -1;
 
@@ -249,7 +249,7 @@ SeedChooserScreen::SeedChooserScreen()
 		aChosenSeed.mEndY = aChosenSeed.mY;
 		aChosenSeed.mSeedState = aSeedType == SEED_IMITATER ? SEED_PACKET_HIDDEN : SEED_IN_CHOOSER;
 		aChosenSeed.mSeedIndexInBank = 0;
-		aChosenSeed.mRefreshCounter = 0;
+		aChosenSeed.mRefreshStartTimeNs = 0;
 		aChosenSeed.mRefreshing = false;
 		aChosenSeed.mImitaterType = SEED_NONE;
 		aChosenSeed.mCrazyDavePicked = false;
@@ -261,7 +261,7 @@ SeedChooserScreen::SeedChooserScreen()
 			SeedPacket* aSeedPacket = &mBoard->mSeedBank->mSeedPackets[anIdx];
 			ChosenSeed& aChosenSeed = mChosenSeeds[aSeedPacket->mPacketType];
 			aChosenSeed.mRefreshing = aSeedPacket->mRefreshing;
-			aChosenSeed.mRefreshCounter = aSeedPacket->mRefreshCounter;
+			aChosenSeed.mRefreshStartTimeNs = aSeedPacket->mRefreshStartTimeNs;
 		}
 		mBoard->mSeedBank->mNumPackets = 0;
 	}
@@ -554,28 +554,32 @@ void SeedChooserScreen::DrawZombieToolTip(Graphics* g)
 void SeedChooserScreen::UpdateViewLawn()
 {
 	if (mChooseState != CHOOSE_VIEW_LAWN) return;
-	mViewLawnTime++;
-	if (mViewLawnTime == 100) mBoard->DisplayAdviceAgain(gStr.CLICK_TO_CONTINUE, MESSAGE_STYLE_HINT_STAY, ADVICE_CLICK_TO_CONTINUE);
-	else if (mViewLawnTime == 251) mViewLawnTime = 250;
-
-	int aSeedChooserY = SEED_CHOOSER_OFFSET_Y - Sexy::IMAGE_SEEDCHOOSER_BACKGROUND->mHeight;
-	if (mViewLawnTime <= 100)
+	const auto nowNs = mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs;
+	const auto elapsedNs = nowNs - mViewLawnStartTimeNs;
+	if (mViewLawnReturnTimeNs < 0 && elapsedNs >= 1'000'000'000)
 	{
-		Move(mApp->mScreenBounds.mX, TodAnimateCurveNs(0, 400'000'000, mViewLawnTime.mNanoseconds, aSeedChooserY, SEED_CHOOSER_OFFSET_Y, Curves::EaseInOut));
+		mBoard->DisplayAdviceAgain(gStr.CLICK_TO_CONTINUE, MESSAGE_STYLE_HINT_STAY, ADVICE_CLICK_TO_CONTINUE);
+		mViewLawnReturnTimeNs = 0; // Hint consumed; awaiting the return click.
 	}
-	else if (mViewLawnTime <= 250)
+	const int chooserY = SEED_CHOOSER_OFFSET_Y - Sexy::IMAGE_SEEDCHOOSER_BACKGROUND->mHeight;
+	if (mViewLawnReturnTimeNs <= 0)
 	{
-		Move(mApp->mScreenBounds.mX, SEED_CHOOSER_OFFSET_Y);
+		Move(mApp->mScreenBounds.mX, TodAnimateCurveNs(0, 400'000'000,
+			elapsedNs, chooserY, SEED_CHOOSER_OFFSET_Y, Curves::EaseInOut));
+		return;
 	}
-	else if (mViewLawnTime <= 350)
+	const auto returnPhaseNs = 2'510'000'000 + nowNs - mViewLawnReturnTimeNs;
+	if (returnPhaseNs <= 3'500'000'000)
 	{
 		mBoard->ClearAdvice(ADVICE_CLICK_TO_CONTINUE);
-		Move(mApp->mScreenBounds.mX, TodAnimateCurveNs(3'100'000'000, 3'500'000'000, mViewLawnTime.mNanoseconds, SEED_CHOOSER_OFFSET_Y, aSeedChooserY, Curves::EaseInOut));
+		Move(mApp->mScreenBounds.mX, TodAnimateCurveNs(3'100'000'000, 3'500'000'000,
+			returnPhaseNs, SEED_CHOOSER_OFFSET_Y, chooserY, Curves::EaseInOut));
 	}
 	else
 	{
 		mChooseState = CHOOSE_NORMAL;
-		mViewLawnTime = 0;
+		mViewLawnStartTimeNs = 0;
+		mViewLawnReturnTimeNs = -1;
 		mMenuButton->mDisabled = false;
 	}
 }
@@ -639,7 +643,6 @@ void SeedChooserScreen::Update()
 	mLastMouseX = SeedChooserLayout::RebaseX(mApp->mWidgetManager->mLastMouseX, 0, mX);
 	mLastMouseY = mApp->mWidgetManager->mLastMouseY - mY;
 
-	mSeedChooserAge++;
 	mToolTip->Update();
 
 	for (SeedType aSeedType = SEED_PEASHOOTER; aSeedType < NUM_SEEDS_IN_CHOOSER; aSeedType = (SeedType)(aSeedType + 1))
@@ -649,12 +652,8 @@ void SeedChooserScreen::Update()
 			ChosenSeed& aChosenSeed = mChosenSeeds[aSeedType];
 			if (aChosenSeed.mSeedState == SEED_FLYING_TO_BANK || aChosenSeed.mSeedState == SEED_FLYING_TO_CHOOSER)
 			{
-				constexpr std::uint64_t aClockPeriodNs = (std::uint64_t(1) << 32) * 10'000'000;
-				const auto aDurationNs = (aChosenSeed.mTimeEndMotion.mNanoseconds + aClockPeriodNs -
-					aChosenSeed.mTimeStartMotion.mNanoseconds) % aClockPeriodNs;
-				const auto aElapsedNs = (mSeedChooserAge.mNanoseconds + aClockPeriodNs -
-					aChosenSeed.mTimeStartMotion.mNanoseconds) % aClockPeriodNs;
-				// Preserve the UI clock's wrap while evaluating the flight in exact ns.
+				const auto aDurationNs = aChosenSeed.mTimeEndMotion - aChosenSeed.mTimeStartMotion;
+				const auto aElapsedNs = mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs - aChosenSeed.mTimeStartMotion;
 				const auto aCurveTimeNs = static_cast<std::int64_t>(std::min(aElapsedNs, aDurationNs));
 				aChosenSeed.mX = TodAnimateCurveNs(0, static_cast<std::int64_t>(aDurationNs), aCurveTimeNs, aChosenSeed.mStartX, aChosenSeed.mEndX, Curves::EaseInOut);
 				aChosenSeed.mY = TodAnimateCurveNs(0, static_cast<std::int64_t>(aDurationNs), aCurveTimeNs, aChosenSeed.mStartY, aChosenSeed.mEndY, Curves::EaseInOut);
@@ -883,7 +882,8 @@ void SeedChooserScreen::ButtonDepress(int theId)
         {
             s.mChooseState = CHOOSE_VIEW_LAWN;
             s.mMenuButton->mDisabled = true;
-            s.mViewLawnTime = 0;
+            s.mViewLawnStartTimeNs = s.mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs;
+            s.mViewLawnReturnTimeNs = -1;
             return true;
         },  // 102 SeedChooserScreen_ViewLawn
         [](SeedChooserScreen& s, ChooserModalSession& aSession) -> bool
@@ -982,9 +982,9 @@ void SeedChooserScreen::ClickedSeedInBank(ChosenSeed& theChosenSeed)
 		if (aSeedType != SEED_NONE)
 		{
 			ChosenSeed& aChosenSeed = mChosenSeeds[aSeedType];
-			aChosenSeed.mTimeStartMotion = mSeedChooserAge;
-			aChosenSeed.mTimeEndMotion = mSeedChooserAge;
-			aChosenSeed.mTimeEndMotion.AddNanoseconds(150'000'000);
+			aChosenSeed.mTimeStartMotion = mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs;
+			aChosenSeed.mTimeEndMotion = mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs;
+			aChosenSeed.mTimeEndMotion = ReanimClock::Add(aChosenSeed.mTimeEndMotion, 150'000'000);
 			aChosenSeed.mStartX = aChosenSeed.mX;
 			aChosenSeed.mStartY = aChosenSeed.mY;
 			GetSeedPositionInBank(anIndex - 1, aChosenSeed.mEndX, aChosenSeed.mEndY);
@@ -993,9 +993,9 @@ void SeedChooserScreen::ClickedSeedInBank(ChosenSeed& theChosenSeed)
 			mSeedsInFlight++;
 		}
 	}
-	theChosenSeed.mTimeStartMotion = mSeedChooserAge;
-	theChosenSeed.mTimeEndMotion = mSeedChooserAge;
-	theChosenSeed.mTimeEndMotion.AddNanoseconds(250'000'000);
+	theChosenSeed.mTimeStartMotion = mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs;
+	theChosenSeed.mTimeEndMotion = mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs;
+	theChosenSeed.mTimeEndMotion = ReanimClock::Add(theChosenSeed.mTimeEndMotion, 250'000'000);
 	theChosenSeed.mStartX = theChosenSeed.mX;
 	theChosenSeed.mStartY = theChosenSeed.mY;
 	GetSeedPositionInChooser(theChosenSeed.mSeedType, theChosenSeed.mEndX, theChosenSeed.mEndY);
@@ -1015,9 +1015,9 @@ void SeedChooserScreen::ClickedSeedInChooser(ChosenSeed& theChosenSeed)
 	if (mSeedsInBank == mBoard->mSeedBank->mNumPackets)
 		return;
 
-	theChosenSeed.mTimeStartMotion = mSeedChooserAge;
-	theChosenSeed.mTimeEndMotion = mSeedChooserAge;
-	theChosenSeed.mTimeEndMotion.AddNanoseconds(250'000'000);
+	theChosenSeed.mTimeStartMotion = mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs;
+	theChosenSeed.mTimeEndMotion = mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs;
+	theChosenSeed.mTimeEndMotion = ReanimClock::Add(theChosenSeed.mTimeEndMotion, 250'000'000);
 	theChosenSeed.mStartX = theChosenSeed.mX;
 	theChosenSeed.mStartY = theChosenSeed.mY;
 	GetSeedPositionInBank(mSeedsInBank, theChosenSeed.mEndX, theChosenSeed.mEndY);
@@ -1134,7 +1134,9 @@ void SeedChooserScreen::ShowToolTip()
 //0x486600
 void SeedChooserScreen::CancelLawnView()
 {
-	if (mChooseState == CHOOSE_VIEW_LAWN && mViewLawnTime > 100 && mViewLawnTime <= 250) mViewLawnTime = 251;
+	if (mChooseState == CHOOSE_VIEW_LAWN && mViewLawnReturnTimeNs == 0 &&
+        mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs - mViewLawnStartTimeNs > 1'000'000'000)
+        mViewLawnReturnTimeNs = mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs;
 }
 
 //0x486630
@@ -1308,7 +1310,7 @@ void SeedChooserScreen::CloseSeedChooser()
 		aSeedPacket.SetPacketType(aSeedType, aChosenSeed.mImitaterType);
 		if (aChosenSeed.mRefreshing)
 		{
-			aSeedPacket.mRefreshCounter = aChosenSeed.mRefreshCounter;
+			aSeedPacket.mRefreshStartTimeNs = aChosenSeed.mRefreshStartTimeNs;
 			aSeedPacket.mRefreshTime = Plant::GetRefreshTime(aSeedPacket.mPacketType, aSeedPacket.mImitaterType);
 			aSeedPacket.mRefreshing = true;
 			aSeedPacket.mActive = false;

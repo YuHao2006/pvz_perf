@@ -3,16 +3,7 @@
 
 namespace Sexy {
 // Stable numeric file-format IDs; backend SDK enums stay in their modules.
-constexpr bool IsScaleEffectFormat(unsigned int format)
-{
-    constexpr unsigned int formats[]{
-        109, 97, 91, 92, 103, 64, 122, 37, 38, 83,
-        77, 78, 100, 16, 17, 76, 70, 71, 9, 10
-    };
-    for (const auto candidate : formats)
-        if (candidate == format) return true;
-    return false;
-}
+bool IsScaleEffectFormat(unsigned int format);
 
 #if defined(SEXY_SCALE_EFFECT_AUTHORING)
 struct ScaleAuthoringFormatInfo {

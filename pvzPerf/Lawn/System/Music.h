@@ -70,16 +70,18 @@ public:
 	float						mBaseBPM;							//+0x1C
 	float						mBaseModSpeed;						//+0x20
 	MusicBurstState				mMusicBurstState;					//+0x24
-	Sexy::TimeCounter							mBurstStateCounter;					//+0x28
+	std::int64_t							mBurstEndTimeNs;					//+0x28
 	MusicDrumsState				mMusicDrumsState;					//+0x2C
 	int							mQueuedDrumTrackPackedOrder;		//+0x30
-	Sexy::TimeCounter							mDrumsStateCounter;					//+0x34
+	std::int64_t							mDrumsEndTimeNs;					//+0x34
 	int							mPauseOffset;						//+0x38
 	int							mPauseOffsetDrums;					//+0x3C
 	bool						mPaused;							//+0x40
 	mutable bool				mMusicDisabled;						//+0x41
-	Sexy::TimeCounter							mFadeOutCounter;					//+0x44
-	Sexy::TimeCounter							mFadeOutDuration;					//+0x48
+	std::int64_t							mFadeOutEndTimeNs;					//+0x44
+	std::int64_t							mFadeOutDurationNs;					//+0x48
+
+	std::int64_t mLastUpdateTimeNs; // Runtime application-clock binding; not serialized.
 
 public:
 	Music();
@@ -89,30 +91,38 @@ public:
 	// loader to have finished, just like the rest of Music's state.
 	bool IsMusicDisabled() const noexcept
 	{
+#if defined(__ANDROID__)
+		return mMusicDisabled;
+#else
 		static_assert(std::atomic_ref<bool>::is_always_lock_free);
 		static_assert(std::atomic_ref<bool>::required_alignment <= alignof(bool));
 		return std::atomic_ref<bool>(mMusicDisabled).load(std::memory_order_relaxed);
+#endif
 	}
 	void SetMusicDisabled(bool theDisabled) noexcept
 	{
+#if defined(__ANDROID__)
+		mMusicDisabled = theDisabled;
+#else
 		static_assert(std::atomic_ref<bool>::is_always_lock_free);
 		static_assert(std::atomic_ref<bool>::required_alignment <= alignof(bool));
 		std::atomic_ref<bool>(mMusicDisabled).store(theDisabled, std::memory_order_relaxed);
+#endif
 	}
 
 	void						MusicInit();
 	void						MusicDispose() { ; }
-	void						MusicUpdate();
+	void						MusicUpdate(std::int64_t nowNs);
 	void						StopAllMusic();
 	/*inline*/ void				PlayMusic(MusicTune theMusicTune, int theOffset = -1, int theDrumsOffset = -1);
 	/*inline*/ HMUSIC			GetBassMusicHandle(MusicFile theMusicFile);
 	void						StartGameMusic();
 	/*inline*/ void				LoadSong(MusicFile theMusicFile, const std::string& theFileName);
 	void						MusicResync();
-	void						UpdateMusicBurst();
+	void						UpdateMusicBurst(std::int64_t nowNs);
 	/*inline*/ void				StartBurst();
 	void						GameMusicPause(bool thePause);
-	void						PlayFromOffset(MusicFile theMusicFile, int theOffset, double theVolume);
+	void						PlayFromOffset(MusicFile theMusicFile, int theOffset, float theVolume);
 	void						MusicResyncChannel(MusicFile theMusicFileToMatch, MusicFile theMusicFileToSync);
 	bool						TodLoadMusic(MusicFile theMusicFile, const std::string& theFileName);
 	void						MusicTitleScreenInit();

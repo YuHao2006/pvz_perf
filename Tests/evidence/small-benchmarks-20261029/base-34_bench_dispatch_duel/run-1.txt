@@ -1,0 +1,10 @@
+== A. aDancerPhase 败案重测（负载：94% 落空 / 6% 命中 44..49，N=2000000）==
+A1 原版 switch（编译器自选）      :   2.54 ns/op  sink=0
+A2 96 槽稀疏 fn-ptr 表（null 判） :   3.19 ns/op  sink=15157531056393204704
+A3 96 槽满表（落空也调空函数）    :   5.62 ns/op  sink=13077879614327451584
+== B. DrawBossPart 本轮改动（负载：均匀 0..4，N=2000000）==
+B1 原 5 case switch              :  21.86 ns/op  sink=5097566720241841056
+B2 5 槽 lambda fn-ptr 表（本轮）  :  11.96 ns/op  sink=3453816700628932684
+== C. UpdateZombieDancer 赢案复核（负载：90% 命中稀疏 case 集，N=2000000）==
+C1 原 switch（值域分散=比较级联） :   7.74 ns/op  sink=1387096949986301688
+C2 96 槽满表（kDancerPhaseCases）  :   8.25 ns/op  sink=2315280708946107593

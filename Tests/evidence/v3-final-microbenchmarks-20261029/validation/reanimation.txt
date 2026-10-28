@@ -1,0 +1,1 @@
+PASS reanimation appearance catalog, legacy/v1/v2/v4, unsupported v3/v3.1 rejection, physical 12-byte-per-track removal, identity, state, CRC independence and roundtrips

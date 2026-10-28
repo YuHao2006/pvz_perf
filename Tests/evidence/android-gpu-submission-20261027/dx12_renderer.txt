@@ -1,0 +1,2 @@
+d3d12-debug-errors=0
+backend=D3D12 result=PASS

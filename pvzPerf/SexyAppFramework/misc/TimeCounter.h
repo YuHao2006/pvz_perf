@@ -21,10 +21,7 @@ inline void BeginTimedUpdate()
     gLegacyTickPhaseNs %= 10'000'000ULL;
 }
 inline float UpdateDelta(float value) { return value * static_cast<float>(gUpdateTicks); }
-inline float UpdateDecay(float value)
-{
-    return gUpdateTicks == 1.0 ? value : std::pow(value, static_cast<float>(gUpdateTicks));
-}
+
 
 // Numeric constants retain their documented unit. State stores nanoseconds,
 // independent of target FPS; legacy conversion is confined to explicit I/O.

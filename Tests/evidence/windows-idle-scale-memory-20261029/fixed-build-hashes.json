@@ -1,0 +1,14 @@
+[
+  {
+    "Path": "C:\\Users\\Administrator\\CLionProjects\\codex\\PlantsVsZombiesModern\\out\\x64-win32-vulkan\\Release\\pvz_perf.exe",
+    "Hash": "A93A7D7096486355B34CABDF862253CDACA095589C530AC4F2F6006FB875B37B"
+  },
+  {
+    "Path": "C:\\Users\\Administrator\\CLionProjects\\codex\\PlantsVsZombiesModern\\out\\x64-win32-dx12\\Release\\pvz_perf.exe",
+    "Hash": "807ED3ABA0E2A7CB822AE4F0AEBE5183DF0658AD64D8764C2EC5C125627D5B15"
+  },
+  {
+    "Path": "C:\\Users\\Administrator\\CLionProjects\\codex\\PlantsVsZombiesModern\\out\\x64-win32-vulkan\\Release\\main.pak64",
+    "Hash": "5BDD71C632D945304AE3752BFED61941BB8C7E4351E616E1FF6FBCEAB1431545"
+  }
+]

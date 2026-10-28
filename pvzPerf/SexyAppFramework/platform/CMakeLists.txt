@@ -10,6 +10,13 @@ if(ANDROID)
     target_include_directories(sexy_native_window PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
     target_compile_features(sexy_native_window PUBLIC cxx_std_20)
     target_link_libraries(sexy_native_window PUBLIC android log)
+    # AndroidWindow.cpp 直接消费 native_app_glue（looper 排空/命令常量）。
+    set(_PVZ_ANDROID_NDK "${CMAKE_ANDROID_NDK}")
+    if(NOT _PVZ_ANDROID_NDK)
+        set(_PVZ_ANDROID_NDK "$ENV{ANDROID_NDK_HOME}")
+    endif()
+    target_include_directories(sexy_native_window PRIVATE
+        "${_PVZ_ANDROID_NDK}/sources/android/native_app_glue")
     return()
 endif()
 if(NOT CMAKE_SYSTEM_NAME STREQUAL "Linux")

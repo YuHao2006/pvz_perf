@@ -1,0 +1,184 @@
+[
+  {
+    "table": "kDamageRangeFlags",
+    "historical_final_ns": 6.89,
+    "current_ns_per_process": [
+      6.89,
+      6.88
+    ],
+    "old_mechanism_ns_per_process": [
+      32.89,
+      32.98
+    ],
+    "evidence": "base-42_current_bench01_dmgflags",
+    "scope": "current_table_in_historical_harness"
+  },
+  {
+    "table": "kFireProjectiles",
+    "historical_final_ns": 7.12,
+    "current_ns_per_process": [
+      7.12,
+      7.12
+    ],
+    "old_mechanism_ns_per_process": [
+      43.9,
+      44.57
+    ],
+    "evidence": "base-43_current_bench02_fireproj",
+    "scope": "current_table_in_historical_harness"
+  },
+  {
+    "table": "kFlowerPotAdjust",
+    "historical_final_ns": 8.96,
+    "current_ns_per_process": [
+      8.95,
+      8.96
+    ],
+    "old_mechanism_ns_per_process": [
+      33.9,
+      34.18
+    ],
+    "evidence": "base-44_current_bench04_flowerpot",
+    "scope": "current_table_in_historical_harness"
+  },
+  {
+    "table": "kSeedPacketDrawMetrics",
+    "historical_final_ns": 26.77,
+    "current_ns_per_process": [
+      26.76,
+      26.75
+    ],
+    "old_mechanism_ns_per_process": [
+      62.32,
+      62.36
+    ],
+    "evidence": "base-45_current_bench05_packetdraw",
+    "scope": "current_table_in_historical_harness"
+  },
+  {
+    "table": "kZombieImageOffsetFix",
+    "historical_final_ns": 9.53,
+    "current_ns_per_process": [
+      9.42,
+      9.42
+    ],
+    "old_mechanism_ns_per_process": [
+      32.92,
+      32.86
+    ],
+    "evidence": "base-46_current_bench06_zimgoff",
+    "scope": "current_table_in_historical_harness"
+  },
+  {
+    "table": "kWalkHeadPos",
+    "historical_final_ns": 14.66,
+    "current_ns_per_process": [
+      14.65,
+      14.61
+    ],
+    "old_mechanism_ns_per_process": [
+      30.72,
+      30.56
+    ],
+    "evidence": "base-47_current_bench07_walkhead",
+    "scope": "current_table_in_historical_harness"
+  },
+  {
+    "table": "kSeedTypeUpdates",
+    "historical_final_ns": 48.16,
+    "current_ns_per_process": [
+      47.4,
+      47.42
+    ],
+    "old_mechanism_ns_per_process": [
+      55.36,
+      55.27
+    ],
+    "evidence": "base-48_current_bench08_seedupdate",
+    "scope": "current_table_in_historical_harness"
+  },
+  {
+    "table": "kShadowParams",
+    "historical_final_ns": 59.93,
+    "current_ns_per_process": [
+      59.73,
+      59.73
+    ],
+    "old_mechanism_ns_per_process": [
+      89.54,
+      89.54
+    ],
+    "evidence": "base-49_current_bench11_proshadow",
+    "scope": "current_table_in_historical_harness"
+  },
+  {
+    "table": "kSeedCostOverrides",
+    "historical_final_ns": 32.87,
+    "current_ns_per_process": [
+      32.61,
+      32.47
+    ],
+    "old_mechanism_ns_per_process": [
+      39.23,
+      39.26
+    ],
+    "evidence": "base-50_current_bench14_seedcost",
+    "scope": "current_table_in_historical_harness"
+  },
+  {
+    "table": "kStoreItemCosts",
+    "historical_final_ns": 9.22,
+    "current_ns_per_process": [
+      9.2,
+      9.16
+    ],
+    "old_mechanism_ns_per_process": [
+      40.13,
+      40.02
+    ],
+    "evidence": "base-51_current_bench15_storecost",
+    "scope": "current_table_in_historical_harness"
+  },
+  {
+    "table": "kPlantHeightOffsets",
+    "historical_final_ns": 11.72,
+    "current_ns_per_process": [
+      11.7,
+      11.71
+    ],
+    "old_mechanism_ns_per_process": [
+      27.12,
+      27.1
+    ],
+    "evidence": "extra-02_current_bench7_plantheight",
+    "scope": "current_table_in_historical_harness"
+  },
+  {
+    "table": "kPlantShadow",
+    "historical_final_ns": 22.89,
+    "current_ns_per_process": [
+      22.87,
+      22.87
+    ],
+    "old_mechanism_ns_per_process": [
+      40.44,
+      40.41
+    ],
+    "evidence": "extra-03_current_bench5_plantshadow",
+    "scope": "current_table_in_historical_harness"
+  },
+  {
+    "table": "kZombatarPaletteRange",
+    "historical_final_ns": 8.67,
+    "current_ns_per_process": [
+      8.67,
+      8.68
+    ],
+    "old_mechanism_ns_per_process": [
+      26.65,
+      26.69
+    ],
+    "evidence": "extra-04_current_bench13_ZombatarColors_SetColorMode",
+    "scope": "current_table_in_historical_harness"
+  }
+]

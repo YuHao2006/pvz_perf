@@ -153,15 +153,37 @@ public:
     FloatParameterTrack         mParticleDuration;
     FloatParameterTrack         mLaunchSpeed;
     FloatParameterTrack         mLaunchAngle;
+    // 渲染轨道（2026-10-26 恢复）：GPU resident 时期曾被移出 CPU 结构、装载端
+    // discardTrack 直接丢弃；粒子绘制回收 CPU 后按 v2.0 布局原样恢复（编译
+    // 文件始终携带全部轨道，装载端同步恢复读取）。
+    FloatParameterTrack         mSystemRed;
+    FloatParameterTrack         mSystemGreen;
+    FloatParameterTrack         mSystemBlue;
+    FloatParameterTrack         mSystemAlpha;
+    FloatParameterTrack         mSystemBrightness;
     EmitterFieldArray           mParticleFields;
     EmitterFieldArray           mSystemFields;
+    FloatParameterTrack         mParticleRed;
+    FloatParameterTrack         mParticleGreen;
+    FloatParameterTrack         mParticleBlue;
+    FloatParameterTrack         mParticleAlpha;
+    FloatParameterTrack         mParticleBrightness;
     FloatParameterTrack         mParticleSpinAngle;
     FloatParameterTrack         mParticleSpinSpeed;
+    FloatParameterTrack         mParticleScale;
+    FloatParameterTrack         mParticleStretch;
     FloatParameterTrack         mCollisionReflect;
     FloatParameterTrack         mCollisionSpin;
+    FloatParameterTrack         mClipTop;
+    FloatParameterTrack         mClipBottom;
+    FloatParameterTrack         mClipLeft;
+    FloatParameterTrack         mClipRight;
     FloatParameterTrack         mAnimationRate;
     // IDT3 stores the first matching definition index in declaration order.
     int                         mOnDurationEmitterIndex = -1;
+    // def 级渲染轨道预扫描位掩码（bit=通道有已设轨）：全零 def 的
+    // GetRenderParams 跳过 20 次求值直给默认色（v2.0 P5-④ 同款快路）。
+    unsigned                    mRenderTrackMask = 0;
 };
 
 // ====================================================================================================
@@ -183,7 +205,6 @@ public:
     const Sexy::TextureRegion*  mImageRects = nullptr;
     TodEmitterDefinition*       mEmitterDefs = nullptr;
     int                         mEmitterDefCount = 0;
-    Sexy::GpuParticleResource*   mGpuDefinition = nullptr;
     std::array<int, static_cast<std::size_t>(ParticleEmitterName::top)> mEmitterIndexByName = [] {
         std::array<int, static_cast<std::size_t>(ParticleEmitterName::top)> indices{};
         indices.fill(-1);
@@ -256,6 +277,31 @@ class TodParticleSystem;
 class TodParticleEmitter;
 class TodParticle;
 struct TodParticleRosterStorage;
+class TodTriangleGroup;
+
+// CPU 绘制路径的求值结果（v2.0 同款）：颜色/缩放/拉伸/旋转/位置一次性算好，
+// *IsSet 标记交叉混合时哪些通道参与插值。
+class ParticleRenderParams
+{
+public:
+	bool							mRedIsSet;
+	bool							mGreenIsSet;
+	bool							mBlueIsSet;
+	bool							mAlphaIsSet;
+	bool							mParticleScaleIsSet;
+	bool							mParticleStretchIsSet;
+	bool							mSpinPositionIsSet;
+	bool							mPositionIsSet;
+	float							mRed;
+	float							mGreen;
+	float							mBlue;
+	float							mAlpha;
+	float							mParticleScale;
+	float							mParticleStretch;
+	float							mSpinPosition;
+	float							mPosX;
+	float							mPosY;
+};
 
 class TodParticleData
 {
@@ -263,6 +309,8 @@ public:
 	DataArray<TodParticleSystem>	mParticleSystems;
 	DataArray<TodParticleEmitter>	mEmitters;
 	DataArray<TodParticle>			mParticles;
+	std::array<double, 1024> mParticleLifeFractions{};
+	std::array<double, 1024> mEmitterLifeFractions{};
 
 private:
 	friend struct TodParticleRosterStorage;
@@ -286,8 +334,7 @@ public:
 	DataArray<TodParticleEmitter>&	mEmitters;
 	DataArray<TodParticle>&			mParticles;
 
-private:
-	friend struct TodParticleRosterStorage;
+public:
 	TodParticleData* const			mData;
 
 public:
@@ -304,84 +351,32 @@ public:
 class TodParticle
 {
 public:
-	TodParticle() noexcept
-		: mParticleEmitter(nullptr),
-		  mParticleDurationNs(0),
-		  mParticleAgeNs(0),
-		  mAnimationElapsedNs(0),
-		  mAnimationSampleIntegral(0),
-		  mRandomSeed(0),
-		  mVelocity(0, 0),
-		  mPosition(0, 0),
-		  mImageFrame(0),
-		  mSpinPosition(0),
-		  mSpinVelocity(0),
-		  mCrossFadeParticleID(ParticleID::PARTICLEID_NULL),
-		  mCrossFadeDurationNs(0),
-		  mParticleInterp{},
-		  mParticleFieldInterp{},
-		  mLinearOriginX(0),
-		  mLinearOriginY(0),
-		  mLinearElapsedNs(-1),
-		  mLinearVelocity(0, 0),
-		  mLinearAcceleration(0, 0),
-		  mLinearSpinOrigin(0),
-		  mLinearSpinRate(0),
-		  mLinearSpinActive(0)
-	{
-	}
-
-	TodParticleEmitter*				mParticleEmitter;
-	std::int64_t					mParticleDurationNs;
-	std::int64_t					mParticleAgeNs;
-	std::int64_t					mAnimationElapsedNs;
-	std::int64_t					mAnimationSampleIntegral; // fixed initial phase for constant rate; sampled integral otherwise
-	std::uint32_t					mRandomSeed;
-	SexyVector2						mVelocity;
-	SexyVector2						mPosition;
-	int								mImageFrame;
-	float							mSpinPosition;
-	float							mSpinVelocity;
-	ParticleID						mCrossFadeParticleID;
-	std::int64_t					mCrossFadeDurationNs;
-	float							mParticleInterp[ParticleTracks::NUM_PARTICLE_TRACKS];
-	float							mParticleFieldInterp[MAX_PARTICLE_FIELDS][2];
-	// Motion-specific state shares one slot in every particle. The emitter
-	// definition determines which arm is active; no per-particle discriminator
-	// is stored. Discrete motion has no cached previous-tick state.
-	union
-	{
-		struct
-		{
-			// Constant velocity/acceleration samples one segment, never the
-			// last rounded position. -1 elapsed means unbound.
-			double                          mLinearOriginX;
-			double                          mLinearOriginY;
-			std::int64_t                    mLinearElapsedNs;
-			SexyVector2                     mLinearVelocity;
-			SexyVector2                     mLinearAcceleration;
-			double                          mLinearSpinOrigin;
-			double                          mLinearSpinRate;
-			std::uint32_t                   mLinearSpinActive;
-		};
-		std::uint64_t mDiscreteMotionStorage[7];
-	};
+	TodParticleEmitter* mParticleEmitter = nullptr;
+	std::int64_t mParticleDurationNs = 0;
+	std::int64_t mBirthTimeNs = 0; // Loop-local lifetime origin; random initial age may precede creation.
+	std::int64_t mAnimationBirthTimeNs = 0; // Independent image-animation origin; lifetime loops do not reset it.
+	std::int64_t mAnimationSampleIntegral = 0; // Initial phase for constant rate; sampled integral otherwise.
+	unsigned int mRandomSeed = 0;
+	SexyVector2 mVelocity{0, 0};
+	SexyVector2 mPosition{0, 0};
+	int mImageFrame = 0;
+	float mSpinPosition = 0;
+	float mSpinVelocity = 0;
+	ParticleID mCrossFadeParticleID = ParticleID::PARTICLEID_NULL;
+	std::int64_t mCrossFadeDurationNs = 0;
+	float mParticleInterp[ParticleTracks::NUM_PARTICLE_TRACKS]{};
+	float mParticleFieldInterp[MAX_PARTICLE_FIELDS][2]{};
 };
 
-inline bool TodParticleConstantAnimationRate(const FloatParameterTrack& track)
-{
-    return track.mCountNodes == 1 && track.mNodes[0].mLow == track.mNodes[0].mHigh;
-}
+bool TodParticleConstantAnimationRate(const FloatParameterTrack& track);
 
+// Lifetime clamps at the endpoint; looping updates rebase the birth timestamp.
+std::int64_t ParticleLifeAgeAt(std::int64_t nowNs, std::int64_t birthNs, std::int64_t durationNs);
+// Refresh derived ratios after changing clock, birth or lifetime (including save restore).
+void RefreshParticleLifeFraction(TodParticle& particle, std::int64_t nowNs);
+void RefreshParticleLifeFraction(TodParticleEmitter& emitter, std::int64_t nowNs);
 // Shared by drawing and explicit legacy save projection. Units are 10^-12 cycles.
-inline std::int64_t TodParticleAnimationPhase(const TodParticle& particle, const FloatParameterTrack& track)
-{
-    if (!TodParticleConstantAnimationRate(track)) return particle.mAnimationSampleIntegral;
-    const auto phase = ParticleClock::ConstantRatePhase(particle.mAnimationElapsedNs, track.mNodes[0].mLow);
-    const auto anchored = (phase + particle.mAnimationSampleIntegral % ParticleClock::Cycle) %
-        ParticleClock::Cycle;
-    return anchored < 0 ? anchored + ParticleClock::Cycle : anchored;
-}
+std::int64_t TodParticleAnimationPhase(const TodParticle& particle, const FloatParameterTrack& track);
 
 class TodParticleEmitter
 {
@@ -391,11 +386,8 @@ public:
 	std::int64_t					mSpawnRemainder; // 10^12 units per particle
 	Sexy::SexyVector2				mSystemCenter;
 	int								mParticlesSpawned;
-	std::int64_t					mSystemAgeNs;
+	std::int64_t                     mBirthTimeNs;
 	std::int64_t					mSystemDurationNs;
-	std::int64_t					mEmissionElapsedNs; // total active emission time, independent of lifetime loops
-	Sexy::SexyVector2				mExternalTarget; // input held until the next SystemMove event
-	Sexy::SexyVector2				mExternalAppliedCenter; // last main-step input sample
 	double							mSystemPositionOriginX; // Offset from external input, excluding authored system-position curves.
 	double							mSystemPositionOriginY;
 	std::uint32_t					mSystemPositionBound; // Historical saves bind from their saved center before advancing.
@@ -404,7 +396,7 @@ public:
 	bool							mExtraAdditiveDrawOverride;
 	float							mScaleOverride;
 	ParticleEmitterID				mCrossFadeEmitterID;
-	std::int64_t					mEmitterCrossFadeCountDownNs;
+	std::int64_t					mCrossFadeEndTimeNs; // Zero means no fade; otherwise an absolute deadline.
 	int								mFrameOverride;
 	float							mTrackInterp[ParticleSystemTracks::NUM_SYSTEM_TRACKS];
 	float							mSystemFieldInterp[MAX_PARTICLE_FIELDS][2];
@@ -425,20 +417,19 @@ public:
 	void							ParticleRosterClear();
 
 	void							TodEmitterInitialize(float theX, float theY, TodParticleSystem* theSystem, TodEmitterDefinition* theEmitterDef);
-	void							Update(std::uint64_t deltaNs);
-	void							Update(std::uint64_t deltaNs, std::span<const ParticleID> theParticles);
+	void							Update(std::uint64_t deltaNs, std::int64_t nowNs);
+	void							Update(std::uint64_t deltaNs, std::int64_t nowNs, std::int64_t previousNowNs, std::span<const ParticleID> theParticles);
 	float							RandomFloat(float theMaximum);
 	int								RandomInt(int theMaximum);
 	void							Draw(Graphics* g);
 	void							SystemMove(float theX, float theY);
-	void							DrawParticle(Graphics* g, TodParticle* theParticle);
+	// CPU 绘制：三角形组内逐粒求值攒批。
+	void							DrawParticle(Graphics* g, TodParticle* theParticle, TodTriangleGroup* theTriangleGroup);
+	static bool						GetRenderParams(TodParticle* theParticle, ParticleRenderParams* theParams);
+	static bool						GetRenderParamsDepth(TodParticle* theParticle, ParticleRenderParams* theParams, int theDepth);
 	void							UpdateSpawning(std::uint64_t deltaNs);
-	bool							UpdateParticle(TodParticle* theParticle, std::uint64_t deltaNs);
-	bool							UpdateParticle(TodParticle* theParticle, std::uint64_t deltaNs, std::int64_t previousAgeNs);
-	// Convert an intentional edit into an analytic anchor without caching
-	// previous samples or rounding the untouched axes' accumulated motion.
-	void							RebaseParticlePosition(TodParticle* theParticle, const SexyVector2& position);
-	void							RebaseParticleSpin(TodParticle* theParticle, float spin);
+	bool							UpdateParticle(TodParticle* theParticle, std::uint64_t deltaNs, std::int64_t nowNs);
+	bool							UpdateParticle(TodParticle* theParticle, std::uint64_t deltaNs, std::int64_t nowNs, std::int64_t previousAgeNs);
 	TodParticle*					SpawnParticle(int theIndex, int theSpawnCount);
 	bool							CrossFadeParticle(TodParticle* theParticle, TodParticleEmitter* theToEmitter);
 	void							CrossFadeEmitter(TodParticleEmitter* theToEmitter);
@@ -448,9 +439,8 @@ public:
 	// 按发射器 def 直取交叉淡入（分配实例 + 入表 + CrossFadeParticle）。
 	bool							CrossFadeParticleToDef(TodParticle* theParticle, TodEmitterDefinition* theToEmitterDef);
 	void							DeleteAll();
-	void							UpdateParticleField(TodParticle* theParticle, ParticleField* theParticleField, double theParticleTimeValue, int theFieldIndex, double theDeltaTicks, std::int64_t previousAgeNs);
+	void							UpdateParticleField(TodParticle* theParticle, ParticleField* theParticleField, double theParticleTimeValue, int theFieldIndex, std::uint64_t deltaNs, std::int64_t previousAgeNs);
 	void							SampleSystemPosition(double theTimeValue);
-    /*inline*/ float				SystemTrackEvaluate(const FloatParameterTrack& theTrack, ParticleSystemTracks theSystemTrack) const;
 	void							DeleteParticle(TodParticle* theParticle);
 	// 下标化删除：更新循环/DeleteNonCrossFading 已知名册下标直入，省掉
 	// Find 的 uint16 槽位线性探测与一次寻址（Find 本是流式比对、量级很小；
@@ -471,6 +461,7 @@ public:
     int								mRenderOrder;
     bool							mDontUpdate;
     std::uint32_t                   mRandomState;
+    std::int64_t                    mLastUpdateTimeNs; // Runtime clock binding; not serialized.
 
 public:
     TodParticleSystem();
@@ -488,8 +479,7 @@ public:
 
     void							TodParticleInitializeFromDef(float theX, float theY, int theRenderOrder, TodParticleDefinition* theDefinition, ParticleEffect theEffectType, std::uint32_t theVariant = 0);
     void							ParticleSystemDie();
-    void							Update();
-    void							Update(std::uint64_t theDeltaNs);
+    void							Update(std::uint64_t theDeltaNs, std::int64_t nowNs);
     void							Draw(Graphics* g);
     void							SystemMove(float theX, float theY);
     void							OverrideColor(ParticleEmitterName theName, const Color& theColor);

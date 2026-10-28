@@ -38,6 +38,35 @@ Image::~Image()
 	delete[] mBits;
 }
 
+void ImageLib::FixTransparentEdges(Image& image)
+{
+	// Legacy sanding samples the rows immediately above and below, excluding
+	// the current row. Only alpha-bearing neighbors contribute, so updating a
+	// transparent pixel in place cannot affect any later result. No pixel copy.
+	for (int y = 0; y < image.mHeight; ++y)
+		for (int x = 0; x < image.mWidth; ++x)
+		{
+			auto& pixel = image.mBits[static_cast<size_t>(y) * image.mWidth + x];
+			if (pixel >> 24) continue;
+			unsigned int red = 0, green = 0, blue = 0, count = 0;
+			for (int dy : {-1, 1})
+			{
+				const int ny = y + dy;
+				if (ny < 0 || ny >= image.mHeight) continue;
+				for (int nx = std::max(0, x - 1); nx <= std::min(image.mWidth - 1, x + 1); ++nx)
+				{
+					const unsigned int neighbor = image.mBits[static_cast<size_t>(ny) * image.mWidth + nx];
+					if (!(neighbor >> 24)) continue;
+					red += (neighbor >> 16) & 255;
+					green += (neighbor >> 8) & 255;
+					blue += neighbor & 255;
+					++count;
+				}
+			}
+			pixel = count ? ((red / count) << 16) | ((green / count) << 8) | (blue / count) : 0;
+		}
+}
+
 
 //////////////////////////////////////////////////////////////////////////
 // PNG support
@@ -820,8 +849,8 @@ my_error_exit (j_common_ptr cinfo)
 namespace ImageLib
 {
 // 命名污染审计：仅本 TU 使用，声明自对应头文件下沉（内部链接）。
-static bool WriteJPEGImage(const std::string& theFileName, Image* theImage, int theQuality = 80);
-static bool WriteTGAImage(const std::string& theFileName, Image* theImage);
+[[maybe_unused]] static bool WriteJPEGImage(const std::string& theFileName, Image* theImage, int theQuality = 80);
+[[maybe_unused]] static bool WriteTGAImage(const std::string& theFileName, Image* theImage);
 static bool WriteBMPImage(const std::string& theFileName, Image* theImage);
 }
 
@@ -1031,7 +1060,7 @@ bool ImageLib::WriteTGAImage(const std::string& theFileName, Image* theImage)
 	return fclose(aFile.release()) == 0;
 }
 
-bool ImageLib::WriteBMPImage(const std::string& theFileName, Image* theImage)
+[[maybe_unused]] bool ImageLib::WriteBMPImage(const std::string& theFileName, Image* theImage)
 {
 	static_assert(sizeof(unsigned int) == 4);
 	static_assert(std::endian::native == std::endian::little);

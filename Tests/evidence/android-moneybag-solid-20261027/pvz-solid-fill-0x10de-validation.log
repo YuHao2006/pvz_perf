@@ -1,0 +1,15 @@
+GPU NVIDIA GeForce RTX 4070 Laptop GPU period_ns=1 validation=1
+[validation] vkCreateGraphicsPipelines(): pCreateInfos[0] (SPIR-V Interface) [VK_SHADER_STAGE_VERTEX_BIT] has an Output value declared at Location 2 Component 0, but there is no corresponding Input declared in [VK_SHADER_STAGE_FRAGMENT_BIT].
+This is not invalid, but the write to the unused Output is discarded.
+The Output variable is:
+  pointer to Output -> uint32
+[validation] vkCreateGraphicsPipelines(): pCreateInfos[0] (SPIR-V Interface) [VK_SHADER_STAGE_VERTEX_BIT] has an Output value declared at Location 3 Component 0, but there is no corresponding Input declared in [VK_SHADER_STAGE_FRAGMENT_BIT].
+This is not invalid, but the write to the unused Output is discarded.
+The Output variable is:
+  pointer to Output -> uint32
+PIXELS white_0 max=0 changed=0
+PIXELS white_25 max=0 changed=0
+PIXELS white_50 max=0 changed=0
+PIXELS white_75 max=0 changed=0
+PIXELS white_100 max=0 changed=0
+PASS pixel correctness; validation_errors=0 output="C:\\Users\\ADMINI~1\\AppData\\Local\\Temp/pvz-solid-fill-0x10de-validation"

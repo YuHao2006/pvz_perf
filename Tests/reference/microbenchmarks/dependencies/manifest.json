@@ -1,0 +1,18 @@
+{
+  "commit": "b0d78ac9",
+  "purpose": "Frozen historical enum/track/string declarations for archived r3 fixtures, not current production headers.",
+  "files": [
+    {
+      "path": "ConstEnums.h",
+      "sha256": "0d511a1f12ac0b3591e93d64d9534b504fbdff225f5a017b1134aa60853f6bbf"
+    },
+    {
+      "path": "Sexy.TodLib/ReanimTrackId.h",
+      "sha256": "c3e12f19501609da90e9287d593a1e388cf71e945aaf21b3777eb549f1cbda8d"
+    },
+    {
+      "path": "Sexy.TodLib/generated/LawnStrings.h",
+      "sha256": "58e0e49a63cfa7750b2cd317a149a0b772ac0af96a54b9068e34afb40f6195db"
+    }
+  ]
+}

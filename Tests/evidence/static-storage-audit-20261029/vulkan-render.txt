@@ -1,0 +1,43 @@
+PASS: odd, cropped and letterboxed presentation defines every border pixel exactly once
+PASS surface extent policy: fixed/variable pixels, zero deferral, explicit malformed rejection
+PASS: shared viewport/input mapping, DPI, portrait/landscape, odd dimensions
+PASS single-frame queue: one reused command buffer, 32 consecutive vertex frames, pending descriptor retirement, retained pixels and suspend/resize/reacquire
+PASS single-frame static slots: both current-frame overwrite rejections, pending creation/binding drains and old/new descriptor pixels
+PASS single-frame fonts: same/cross-frame metadata, immutable backing/slot snapshots, old/new pixels and image-only/main stream alternation
+PASS deferred WSI mode transaction: setters coalesced, explicit/implicit single commit
+PASS: BGRA, pitch, opacity, alpha/additive, nearest/linear, wrap/clamp, scissor, pixel edges
+canvas hash mixed-state=d41ff91a456335d5
+PASS: retained logical scene and multi-buffer vertex stream
+canvas hash stream-overflow=8b5b8c57b0ae9bba
+PASS: swapchain resize preserves scene and texture content
+PASS native WSI suspension: resources retained, single restore commit, exact retained pixels
+PASS: repeated texture/descriptor allocation and deferred destruction
+PASS GPU coverage: all 65536 byte/alpha pairs exact, odd R8 pitch+BGRA alignment, source snapshot, clip/additive/pipeline switching, retirement
+PASS raw filter aliases: WHITE/WASHED/LESS nearest+linear match premultiplied cache edges
+PASS dynamic textures: 24 frames with stable handles and no retired textures; same-frame versions, coalescing, pitch, resize, alpha, suspension
+PASS mixed normal/additive: ordering, opaque input and transparent destination alpha
+PASS upload edges: 32 padded snapshots, released CPU sources, 4 MiB rollover, oversized image, pending retirement/minimize/teardown
+PASS: 1100 alpha dispatches retain distinct image bindings across transfer batches
+PASS canvas-resize-800-through-1400-resident-textures
+PASS: odd, cropped and letterboxed presentation defines every border pixel exactly once
+PASS surface extent policy: fixed/variable pixels, zero deferral, explicit malformed rejection
+PASS: shared viewport/input mapping, DPI, portrait/landscape, odd dimensions
+PASS single-frame queue: one reused command buffer, 32 consecutive vertex frames, pending descriptor retirement, retained pixels and suspend/resize/reacquire
+PASS single-frame static slots: both current-frame overwrite rejections, pending creation/binding drains and old/new descriptor pixels
+PASS single-frame fonts: same/cross-frame metadata, immutable backing/slot snapshots, old/new pixels and image-only/main stream alternation
+PASS deferred WSI mode transaction: setters coalesced, explicit/implicit single commit
+PASS: BGRA, pitch, opacity, alpha/additive, nearest/linear, wrap/clamp, scissor, pixel edges
+canvas hash mixed-state=d41ff91a456335d5
+PASS: retained logical scene and multi-buffer vertex stream
+canvas hash stream-overflow=8b5b8c57b0ae9bba
+PASS: swapchain resize preserves scene and texture content
+PASS native WSI suspension: resources retained, single restore commit, exact retained pixels
+PASS: repeated texture/descriptor allocation and deferred destruction
+PASS GPU coverage: all 65536 byte/alpha pairs exact, odd R8 pitch+BGRA alignment, source snapshot, clip/additive/pipeline switching, retirement
+PASS raw filter aliases: WHITE/WASHED/LESS nearest+linear match premultiplied cache edges
+PASS dynamic textures: 24 frames with stable handles and no retired textures; same-frame versions, coalescing, pitch, resize, alpha, suspension
+PASS mixed normal/additive: ordering, opaque input and transparent destination alpha
+PASS upload edges: 32 padded snapshots, released CPU sources, 4 MiB rollover, oversized image, pending retirement/minimize/teardown
+PASS: 1100 alpha dispatches retain distinct image bindings across transfer batches
+PASS canvas-resize-800-through-1400-resident-textures
+PASS: native renderer resource teardown/reinitialization; zero validation errors

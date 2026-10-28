@@ -1,18 +1,6 @@
-# Native definitions, compiled particles, NRSC4 plans and V6 offline interchange
+# Static definitions, CPU particles and NRSC4 resources
 
-The resource pipeline resolves authoring image names offline. An intermediate
-particle or reanimation root definition contains
-all of its appearance rows, each with an atlas binding and final image
-rectangles. Current records use behavior-first `PAV6` particles and `RAV7`
-reanimations in v6 envelopes. These wire records are offline intermediates:
-the final build emits statically initialized CPU reanimation and projectile
-definitions, plus complete `PTC1` CPU particle records and offline-built `PGP1`
-GPU drawing tables. Reanimation GPU keyframes
-have a separate `GRU1` transport under `compiled/gpu-reanim/`; this is not a
-return of the behavior/default-filling loader.
-Explicit build groups may share an atlas across definitions and appearances.
-Definitions obtain their atlas pointers and normalized sampling regions directly
-from generated loading functions or the validated particle compiled record.
+This page describes the current runtime resource contract and the retained offline interchange formats. Reanimation and projectile behavior is generated as static C++ data; particles load complete PTC1 CPU records. Definitions share behavior and select an appearance row with its atlas pointer and final UVs. Reanimation/particle evaluation and drawing preparation run on the CPU; there are no GRU1/PGP1 GPU animation records in the runtime package.
 
 ## Runtime sampling contract
 
@@ -111,18 +99,13 @@ attacher action ranges. Particle roots start empty and load their tracks,
 fields, prefilled defaults and UV rows from `PTC1`; the root owns these arrays
 until release. The former eight `ParticleData*.cpp` shards are removed.
 Generated particle C++ contains only root slots, compiled paths and enum checks.
-No instance duplicates the loaded root data. GPU upload uses temporary arrays
-which are discarded after upload.
+No instance duplicates loaded root behavior. Temporary decoded atlas pixels are discarded after upload.
 The current corpus contains 398381 reanimation frames, 5328 particle curve
 nodes and 689 precomputed attacher segments.
 
-## Compiled particle CPU and GPU records
+## Compiled particle CPU records
 
-Particle authoring has no residency selector. Each root always compiles the CPU
-simulation data and GPU drawing data together. `PTC1` and `PGP1` are explicit
-little-endian streams; they contain no native pointers or copied C++ aggregates.
-The 56 additional appearances share their original 106 roots and do not add
-another emitter, field or behavior-track array.
+Particle roots contain all CPU simulation and drawing tracks. PTC1 is an explicit little-endian stream, without native pointers or copied C++ aggregates. Appearance rows share the root's emitter, field and track arrays.
 
 Each `compiled/particle-runtime/<root>.compiled` contains:
 
@@ -144,90 +127,12 @@ ranges, target/name indices, path lengths and UV bounds. A failed load unbinds
 pending atlas destinations and frees every partially allocated array. A later
 load may return different addresses while preserving all authored values.
 
-Each `compiled/gpu-particle/<root>.compiled` contains:
-
-| Section | Layout |
-| --- | --- |
-| Header | four u32: `PGP1` (`0x31504750`), float-word count, emitter count, variant count |
-| Word header | four f32 numeric words: emitter-table offset, emitter count, geometry offset, slots per variant |
-| Emitters | 32 words per emitter: flags, channel mask, region offset/count, image frames, animated, animation-rate-is-set, render mask, 17 track offsets, then reserved zeros |
-| Drawing track | f32 node count followed by eight-word nodes: time, low, high, curve, distribution, three reserved zeros |
-| Geometry | variant-major slots: eight f32 words width,height,U0,V0,U1,V1,0,0 |
-
-All offsets address float words relative to the word header. Offsets and counts
-must be exact integers below `2^24`. Drawing tracks are system RGBA/brightness,
-particle RGBA/brightness, scale, stretch, four clip channels and animation rate,
-in `GpuParticleTrack` order. These tables are built offline and uploaded
-without rebuilding curves during runtime loading. The upload reader validates
-the stream before publishing the GPU resource; staging data is discarded.
-Definitions release the GPU allocation before freeing their CPU arrays.
-
-The drawing entry submits a chain of raw 192-byte `GpuParticleState` records,
-plus variant, translation and sampling controls. Shaders derive time ratios,
-animation frames, color/brightness, crossfade values, scale/stretch, clipping
-and transformed vertices. CPU simulation still updates motion and force fields.
-No CPU-rendered particle fallback or GPU vertex readback is part of this path.
-Vulkan, OpenGL and DX12 provide the required resident backend capability
-independently of the reanimation experiment policy. Metal is source-integrated
-and requires macOS validation; D3D9 currently lacks this particle capability.
-This describes storage and execution ownership, not a new performance claim.
-
-## Reanimation CPU/GPU residency
-
-Within a reanimation component, `cpu:`, `gpu:` and `both:` select the residency
-of subsequent tracks until another selector or the component end. Each
-component starts in `both:`; existing sources need no edits. Variants inherit
-their root policy and cannot declare selectors. Track IDs, declaration order,
-visibility bits and attachment indices do not change.
-
-The prefixes `cpu Track {...}`, `gpu Track {...}` and `both Track {...}`
-override only that declaration, including named declarations such as
-`cpu ground := Track {...}`. They do not change the enclosing default:
-after `gpu: cpu Track {...} Track {...}`, the second track is GPU-only.
-
-`cpu:` emits C++ keys and a no-keys GPU descriptor. `gpu:` emits GPU keys and
-retains a null CPU transform pointer plus the original frame count. `both:`
-emits both. CPU sampling of a GPU-only track reports an explicit error;
-GPU-only tracks cannot carry CPU font/text data. The shipping authored corpus
-currently uses the default `both:` throughout.
-
-In authored `IDTF` intermediates the fourth track-header word uses bit 0 for
-UI text and bits 1–2 for residency (`both=0`, `cpu=1`, `gpu=2`).
-Other values are rejected. Legacy IDT records accept only their old text bit.
-
-Each `compiled/gpu-reanim/<definition>.compiled` contains:
-
-| Section | Little-endian layout |
-| --- | --- |
-| Header | eight u32: `GRU1` (`0x31555247`), track count, key count, image-slot count, variant count, strides 16/48/32 |
-| Logical tracks | `{u32 keyOffset,keyCount,flags,padding}` per original logical slot; CPU-only offset is `0xffffffff` |
-| GPU keys | seven f32: translation XY, skew XY, scale XY, alpha; i32 frame; u32 image slot; three padding words |
-| Geometry | variant-major slots: six f32 width,height,U0,V0,U1,V1; two padding words |
-
-Offsets address key records, not bytes. There is no dense GPU track renumbering:
-even CPU-only tracks keep their original descriptor slot. Missing keys allocate
-no frame array. Variant zero supplies the original geometry pivot. CPU `both`
-arrays remain generated C++; GPU source arrays are loading-only.
-The reanimation drawing policy is opt-in through `PVZ_EXPERIMENTAL_GPU_REANIM`;
-the resident backend capability is also required independently by particles.
-Disabling the reanimation policy does not disable the particle resident pipeline.
-CPU-only and GPU-only selectors are authoring support;
-all current assets remain `both`, and CPU queries require CPU-resident keys.
-
-`GeneratedDefinitionLoading.cpp` binds image fields through
-`DefinitionBindAtlasPath`, plus caption fonts, with idempotent per-kind release
-functions. PNG decoding and upload are shared; `GpuTexture` is a compile-time
-backend alias. GPU creation and destruction remain backend-specific. CPU
-decoded pixels are deleted after a successful upload. Program and package must
-be rebuilt together when geometry changes. DAT64 v3.2 IDs and layouts remain unchanged.
-
 ## Package layout
 
-Runtime particle records are shipped as 106 `compiled/particle-runtime/*.compiled`
-CPU records and 106 `compiled/gpu-particle/*.compiled` GPU records.
+Runtime particle records are shipped as 106 `compiled/particle-runtime/*.compiled` CPU records.
 The original `compiled/particles/` PAV6 records remain offline intermediates;
 reanimation CPU behavior and projectile PRJ1 records are also offline.
-The package additionally includes GRU1 reanimation GPU records, atlas PNGs,
+The package additionally includes atlas PNGs,
 20 font records and one NRSC4 resource loading plan. `DefinitionImageBindings.h` and the
 manifest retain offline verification metadata; the game does not include that
 header. The remaining wire-format sections below document offline interchange.
@@ -423,16 +328,16 @@ gameplay; they are not a legacy fallback. Old files and runnable packages were
 backed up outside the build tree before replacement. Related appearances share
 atlases using `ResourceBuild.pvzbuild`; no runtime Image pointer override remains.
 
-DAT64 v3.2 stores the original base effect ID at system-record offset 0 and a
+DAT64 v4 stores the original base effect ID at system-record offset 0 and a
 `u32` internal variant at offset 4, using the existing padding without increasing
 record size. No supplemental system definition ID or emitter image ResourceId
 is stored. Old saves pass through the offline converter with
-`--target dat64-v3.2` and an explicit output path. It maps historical
+`--target dat64-v4` and an explicit output path. It maps historical
 effect/image pairs and v2 definition IDs to base/variant
 pairs, preserving particle state, frames and nanoseconds. Unknown appearances
-fail conversion. The converter supports only original DAT, DAT64 v1, v2 and v3.2;
-unpublished v3.0/v3.1 inputs and targets are rejected. The game accepts only
-v3.2; supported older headers require offline upgrade.
+fail conversion. The converter supports only original 1073 DAT, DAT64 v1, v2 and v4;
+all v3-series inputs and targets are rejected. The game accepts only
+v4; supported older headers require offline upgrade.
 
 The authoring DSL and original source images remain build inputs. The standalone
 compiler supplies a temporary `.source-record` and its own `image_sources.txt`;
@@ -707,7 +612,7 @@ Packing does not rotate images. Two pixels of replicated edge padding surround
 each packed image; padding is outside its rectangle. Old cookies and the
 IDP5/IDR5/IDV1 runtime particle representations are rejected; executable and
 package must be rebuilt together. Save conversion is independent and uses the
-explicit DAT64 v3.2 schema.
+explicit DAT64 v4 schema.
 
 Compiler-only `.source-record` files use `IDR4`: each emitter contains an
 ordered source-handle list instead of rectangles, and the second header word
@@ -733,22 +638,7 @@ program; loaded particle data lives until `TodParticleFreeDefinitions`.
 There are no separately loaded child definitions or runtime parent chains.
 Failed texture binding clears partial published bindings and temporary payloads
 before rethrowing, allowing a clean retry; repeated cleanup is safe.
-Particle drawing submits raw simulation state and selects/evaluates UVs, frame
-animation, color, scale, crop and transforms on the GPU. The PGP1 source tables
-are uploaded on the primary thread and then discarded. The production particle
-draw entry has no CPU drawing fallback and accepts no reanimation
-`cpu:`/`gpu:`/`both:` selectors. CPU simulation and save state remain authoritative.
-Reanimation rendering selects a UV region by frame number and applies any dynamic local crop
-within it, retaining logical size. No atlas-extent division, source-sheet lookup,
-fixed frame stride or runtime packing is required. Definitions do not own atlas
-dimension arrays; temporary draw sources and batches borrow the texture only.
-
-Definition atlases must bypass the older runtime atlas packing path. Source
-PNG decoding may run on the loading worker; GPU upload remains on the primary
-thread and releases the temporary decoded pixels. There is no per-atlas
-image object, CPU host or per-region texture metadata. Loaded
-definitions retain the GPU texture and region records. A failed load releases
-the incomplete definition.
+Particle simulation, drawing-track sampling, image-frame selection, crossfade, clipping and transforms are computed on the CPU. TodTriangleGroup batches the final geometry; the renderer receives triangles and textures, without reading particle behavior from GPU-resident definitions. Temporary GPU experiment packet formats are not part of this contract.
 
 ## Global image resources
 

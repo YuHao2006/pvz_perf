@@ -654,7 +654,7 @@ private:
     RawTransform ReadFrameBody(bool (&set)[8], bool& setImage, bool& setFont,
                                bool& setText)
     {
-        constexpr const char* names[8] = {"x", "y", "skew-x", "skew-y", "scale-x", "scale-y", "cel", "alpha"};
+        static constexpr const char* names[8] = {"x", "y", "skew-x", "skew-y", "scale-x", "scale-y", "cel", "alpha"};
         RawTransform transform;
         while (!(lexer_.current().kind == TokenKind::brace && lexer_.current().text == "}")) {
             if (lexer_.current().kind != TokenKind::identifier)
@@ -1057,7 +1057,7 @@ std::uint32_t StorageBits(const TrackStorage storage)
 
 std::string ToDsl(const RawReanim& source)
 {
-    constexpr const char* names[8] = {"x", "y", "skew-x", "skew-y", "scale-x", "scale-y", "cel", "alpha"};
+    static constexpr const char* names[8] = {"x", "y", "skew-x", "skew-y", "scale-x", "scale-y", "cel", "alpha"};
     std::ostringstream out;
     out << "export component "
         << (source.name.empty() ? std::string("Reanim") : source.name)

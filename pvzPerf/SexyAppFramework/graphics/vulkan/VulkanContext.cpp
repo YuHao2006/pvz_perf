@@ -1,4 +1,4 @@
-#include <iostream>
+﻿#include <iostream>
 #include <stdexcept>
 #include <string>
 #include <cstring>
@@ -342,8 +342,23 @@ std::optional<VkExtent2D> VulkanContext::QuerySwapchainExtent(VkSurfaceCapabilit
     if (!drawable.width || !drawable.height)
         return std::nullopt;
     VK_CHECK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice,surface,&caps));
-    return ChooseVulkanSurfaceExtent(caps,static_cast<int>(drawable.width),
-                                    static_cast<int>(drawable.height));
+    const auto extent = ChooseVulkanSurfaceExtent(caps,static_cast<int>(drawable.width),
+                                                static_cast<int>(drawable.height));
+#if defined(__ANDROID__)
+    if (!extent) return std::nullopt;
+    // Android WSI scales swapchain images to the surface. Submit at the game's
+    // native 600-pixel height, preserving the surface aspect and letterboxing.
+    // Do not resize ANativeWindow: touch/client coordinates stay in screen pixels.
+    constexpr unsigned int nativeHeight = 600;
+    const auto nativeWidth = (static_cast<unsigned long long>(extent->width) * nativeHeight +
+                              extent->height / 2) / extent->height;
+    if (nativeWidth < caps.minImageExtent.width || nativeWidth > caps.maxImageExtent.width ||
+        nativeHeight < caps.minImageExtent.height || nativeHeight > caps.maxImageExtent.height)
+        throw std::runtime_error("Android surface cannot present the native game resolution");
+    return VkExtent2D{static_cast<unsigned int>(nativeWidth),nativeHeight};
+#else
+    return extent;
+#endif
 }
 
 void VulkanContext::CreateSwapchain(const VkSurfaceCapabilitiesKHR& caps, VkExtent2D extent) {
@@ -378,6 +393,7 @@ void VulkanContext::CreateSwapchain(const VkSurfaceCapabilitiesKHR& caps, VkExte
     // dismantling the old resources. Window configuration is not a fallback.
     scInfo.imageExtent = extent;
     swapchainExtent = extent;
+    drawableExtentAtCreate = QueryDrawableExtent();
 
     // 图像数 = 最小值 + 1：避免 CPU 等待 GPU 释放图像；上限再钳一次
     uint32_t imageCount = caps.minImageCount + 1;
@@ -398,11 +414,17 @@ void VulkanContext::CreateSwapchain(const VkSurfaceCapabilitiesKHR& caps, VkExte
     {
         scInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
     }
-    scInfo.preTransform = caps.currentTransform;
+    // 90°/270° 变换要求应用侧预旋转内容；本引擎按正向画面渲染，
+    // 改请求 IDENTITY 交给合成器旋转（各安卓驱动普遍支持）。
+    scInfo.preTransform =
+        (caps.currentTransform == VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR ||
+         caps.currentTransform == VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR)
+            ? VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR
+            : caps.currentTransform;
     // Some Linux compositors do not advertise OPAQUE. Preserve the caller's
     // supported mode; otherwise select one the presentation engine accepts.
     if (!(caps.supportedCompositeAlpha & scInfo.compositeAlpha)) {
-        constexpr VkCompositeAlphaFlagBitsKHR candidates[]{
+        static constexpr VkCompositeAlphaFlagBitsKHR candidates[]{
             VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
             VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR,
             VK_COMPOSITE_ALPHA_POST_MULTIPLIED_BIT_KHR,
@@ -452,7 +474,7 @@ void VulkanContext::CreateRenderPass() {
     color.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
     color.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
     color.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;   // 不关心旧内容
-    color.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR; // 结束即可呈现
+    color.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL; // Explicit release after the pass.
 
     VkAttachmentReference colorRef{};
     colorRef.attachment = 0;
@@ -474,33 +496,14 @@ void VulkanContext::CreateRenderPass() {
     acquireDependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
     acquireDependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 
-    // Release side: the implicit COLOR_ATTACHMENT -> PRESENT_SRC transition at
-    // vkCmdEndRenderPass is itself an image write. Without a subpass ->
-    // EXTERNAL dependency its availability scope is empty, so the color
-    // attachment writes are not ordered/flushed relative to that transition
-    // and the presentation engine's read — sync validation reports
-    // PRESENT_AFTER_WRITE for every present. This dependency is the render
-    // pass equivalent of the explicit release barrier the dynamic-rendering
-    // backend records before signaling the present semaphore.
-    VkSubpassDependency releaseDependency{};
-    releaseDependency.srcSubpass = 0;
-    releaseDependency.dstSubpass = VK_SUBPASS_EXTERNAL;
-    releaseDependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    releaseDependency.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-    releaseDependency.dstStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
-    releaseDependency.dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
-    releaseDependency.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
-
-    const VkSubpassDependency dependencies[] = {acquireDependency, releaseDependency};
-
     VkRenderPassCreateInfo rpInfo{
         VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO};
     rpInfo.attachmentCount = 1;
     rpInfo.pAttachments = &color;
     rpInfo.subpassCount = 1;
     rpInfo.pSubpasses = &subpass;
-    rpInfo.dependencyCount = 2;
-    rpInfo.pDependencies = dependencies;
+    rpInfo.dependencyCount = 1;
+    rpInfo.pDependencies = &acquireDependency;
     VK_CHECK(vkCreateRenderPass(device, &rpInfo, nullptr, &renderPass));
 }
 
@@ -522,28 +525,23 @@ void VulkanContext::CreateFramebuffers() {
 }
 
 void VulkanContext::CreateFrameLoopAssets() {
-    // RESET_COMMAND_BUFFER_BIT：每帧整条重录（demo 级简单，不做复用优化）
-    VkCommandPoolCreateInfo poolInfo{
-        VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO};
-    poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-    poolInfo.queueFamilyIndex = graphicsFamily;
-    VK_CHECK(vkCreateCommandPool(device, &poolInfo, nullptr, &commandPool_));
+    auto& resource = frameResources_;
+    VkCommandPoolCreateInfo pool{VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO};
+    pool.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+    pool.queueFamilyIndex = graphicsFamily;
+    VK_CHECK(vkCreateCommandPool(device, &pool, nullptr, &resource.pool));
+    VkCommandBufferAllocateInfo allocate{VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO};
+    allocate.commandPool = resource.pool;
+    allocate.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+    allocate.commandBufferCount = 1;
+    VK_CHECK(vkAllocateCommandBuffers(device, &allocate, &resource.cmd));
+    VkSemaphoreCreateInfo semaphore{VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO};
+    VK_CHECK(vkCreateSemaphore(device, &semaphore, nullptr, &resource.acquired));
+    VkFenceCreateInfo fence{VK_STRUCTURE_TYPE_FENCE_CREATE_INFO};
+    fence.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+    VK_CHECK(vkCreateFence(device, &fence, nullptr, &resource.fence));
 
-    VkCommandBufferAllocateInfo allocInfo{
-        VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO};
-    allocInfo.commandPool = commandPool_;
-    allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-    allocInfo.commandBufferCount = 1;
-    VK_CHECK(vkAllocateCommandBuffers(device, &allocInfo, &commandBuffer_));
-
-    // 栅栏限制单帧在途；取图信号量单份即可（每次提交都会等它）
-    VkSemaphoreCreateInfo semInfo{VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO};
-    VkFenceCreateInfo fenceInfo{VK_STRUCTURE_TYPE_FENCE_CREATE_INFO};
-    fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
-    VK_CHECK(vkCreateSemaphore(device, &semInfo, nullptr, &imageAvailable_));
-    VK_CHECK(vkCreateFence(device, &fenceInfo, nullptr, &inFlight_));
-
-    CreatePresentSemaphores();   // 呈现信号量必须每交换链图像一个
+    CreatePresentSemaphores();
 }
 
 // 呈现信号量按图像索引建：MAILBOX 下旧图的 present 可能还"占用"着上一份
@@ -581,18 +579,14 @@ void VulkanContext::CreateSurfaceAssets() {
         physicalDevice = PickPhysicalDevice(instance, surface, gpuFilter,
                                             requiredExtensions, deviceFeatures,
                                             graphicsFamily, presentFamily);
-#if defined(PVZ_REANIM_UNIFIED)
-        if (initConfigSnapshot.allowOptionalGeometryShader) {
-            VkPhysicalDeviceFeatures supported{};
-            vkGetPhysicalDeviceFeatures(physicalDevice,&supported);
-            deviceFeatures.geometryShader=supported.geometryShader;
-        }
-#endif
+        VkPhysicalDeviceFeatures supported{};
+        vkGetPhysicalDeviceFeatures(physicalDevice,&supported);
+        deviceFeatures.dualSrcBlend = supported.dualSrcBlend;
         device = CreateLogicalDevice(physicalDevice, graphicsFamily,
                                      presentFamily, deviceFeatures,
                                      requiredExtensions,
                                      &graphicsQueue, &presentQueue);
-        geometryShaderEnabled = deviceFeatures.geometryShader == VK_TRUE;
+        dualSourceBlendEnabled = deviceFeatures.dualSrcBlend == VK_TRUE;
     }
 
     // present 守门员：后续窗口可能落在另一块显卡驱动的显示器上（混合显卡
@@ -624,7 +618,8 @@ bool VulkanContext::RecreateSwapchain() {
     VkSurfaceCapabilitiesKHR caps{};
     auto extent=QuerySwapchainExtent(caps);
     if (!extent) return false; // No wait, destruction, or invented dimensions.
-    VK_CHECK(vkDeviceWaitIdle(device));       // Report device loss, do not destroy/rebuild as if it succeeded.
+    VK_CHECK(vkDeviceWaitIdle(device));
+    completedSerial = submittedSerial;       // Report device loss, do not destroy/rebuild as if it succeeded.
     // The surface can change while the GPU drains. Recheck before destruction.
     extent=QuerySwapchainExtent(caps);
     if (!extent) return false;
@@ -652,7 +647,36 @@ bool VulkanContext::RecreateSwapchain() {
 }
 
 void VulkanContext::WaitForFrame() {
-    VK_CHECK(vkWaitForFences(device, 1, &inFlight_, VK_TRUE, UINT64_MAX));
+    if (frameLoopFailed_) {
+        VK_CHECK(vkDeviceWaitIdle(device));
+        completedSerial = submittedSerial;
+        return;
+    }
+    if (!submittedSerial) return;
+    VK_CHECK(vkWaitForFences(device, 1, &frameResources_.fence, VK_TRUE, UINT64_MAX));
+    completedSerial = submittedSerial;
+}
+
+void VulkanContext::AbortFrame() noexcept {
+    frameLoopFailed_ = true;
+    if (!frameActive_) return;
+    // Terminal recording error: CPU image-layout/version bookkeeping cannot be
+    // rolled back reliably. Drain the acquired semaphore and release the held
+    // image by subsequent swapchain destruction, then prohibit further frames.
+    auto& resource = frameResources_;
+    const VkPipelineStageFlags stage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+    VkSubmitInfo submit{VK_STRUCTURE_TYPE_SUBMIT_INFO};
+    submit.waitSemaphoreCount = 1; submit.pWaitSemaphores = &resource.acquired;
+    submit.pWaitDstStageMask = &stage;
+    auto result = vkQueueSubmit(graphicsQueue, 1, &submit, VK_NULL_HANDLE);
+    if (result == VK_SUCCESS) result = vkQueueWaitIdle(graphicsQueue);
+    if (result == VK_SUCCESS) {
+        submittedSerial = std::max(submittedSerial, recordingSerial);
+        completedSerial = submittedSerial;
+    }
+    frameActive_ = presentPassActive_ = false;
+    recordingSerial = 0;
+    swapchainDirty_ = true;
 }
 
 void VulkanContext::NotifySurfaceSuspended(bool suspended) {
@@ -661,20 +685,72 @@ void VulkanContext::NotifySurfaceSuspended(bool suspended) {
     swapchainDirty_ = true;
 }
 
+void VulkanContext::NotifySurfaceWindow(NativeWindowHandle window) {
+    if (window == nullptr || window == hwnd) return;
+    if (device == VK_NULL_HANDLE)
+        throw std::logic_error("Cannot rebind a surface before initialization");
+    if (frameActive_)
+        throw std::logic_error("Cannot rebind the surface while recording a frame");
+    VK_CHECK(vkDeviceWaitIdle(device));
+    completedSerial = submittedSerial;
+    // 拆除顺序：framebuffer → 视图 → 交换链 → renderPass → surface。
+    for (VkFramebuffer fb : framebuffers_)
+        if (fb) vkDestroyFramebuffer(device, fb, nullptr);
+    framebuffers_.clear();
+    for (VkImageView view : swapchainViews)
+        if (view) vkDestroyImageView(device, view, nullptr);
+    swapchainViews.clear();
+    if (swapchain != VK_NULL_HANDLE) {
+        vkDestroySwapchainKHR(device, swapchain, nullptr);
+        swapchain = VK_NULL_HANDLE;
+    }
+    if (renderPass != VK_NULL_HANDLE) {
+        vkDestroyRenderPass(device, renderPass, nullptr);
+        renderPass = VK_NULL_HANDLE;
+    }
+    if (surface != VK_NULL_HANDLE) {
+        vkDestroySurfaceKHR(instance, surface, nullptr);
+        surface = VK_NULL_HANDLE;
+    }
+    hwnd = window;
+    surfaceSuspended_ = false;
+    // 与 CreateSurfaceAssets 相同的重建序列；逻辑设备与帧循环对象跨窗口复用。
+    surface = VulkanSurfacePlatform::Create(instance, hwnd);
+    VkBool32 presentOK = VK_FALSE;
+    VK_CHECK(vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, presentFamily,
+                                                  surface, &presentOK));
+    if (!presentOK)
+        throw std::runtime_error("所选显卡无法呈现到恢复后的窗口");
+    VkSurfaceCapabilitiesKHR caps{};
+    const auto extent = QuerySwapchainExtent(caps);
+    if (!extent)
+        throw std::runtime_error("Resumed Vulkan surface has no drawable extent");
+    CreateSwapchain(caps, *extent);
+    CreateRenderPass();
+    CreateFramebuffers();
+    CreatePresentSemaphores();
+    swapchainDirty_ = false;
+}
+
 VulkanContext::FrameContext VulkanContext::BeginCommands() {
+    if (frameLoopFailed_) throw std::logic_error("Cannot continue after a Vulkan frame recording failure");
+    auto& resource = frameResources_;
     if (frameActive_)
         throw std::runtime_error("上一帧还没 EndFrame");
     const auto drawable = QueryDrawableExtent();
     if (!drawable.width || !drawable.height)
         return {}; // Do not acquire images from a minimized surface.
-    if (swapchainDirty_ || drawable.width != swapchainExtent.width ||
-        drawable.height != swapchainExtent.height)
+    if (swapchainDirty_ || drawable.width != drawableExtentAtCreate.width ||
+        drawable.height != drawableExtentAtCreate.height)
         if (!RecreateSwapchain()) return {};
+    // This one command buffer and its mapped draw streams may be overwritten
+    // only after their previous GPU submission finishes. Logic updates already
+    // run before this point; no post-submit fence wait is added.
     WaitForFrame();
 
     uint32_t imageIndex = 0;
     const auto acquired=vkAcquireNextImageKHR(device, swapchain, UINT64_MAX,
-        imageAvailable_, VK_NULL_HANDLE,&imageIndex);
+        resource.acquired, VK_NULL_HANDLE,&imageIndex);
     if (acquired == VK_ERROR_OUT_OF_DATE_KHR) {
         swapchainDirty_=true;     // Next frame rebuilds only when the surface is drawable.
         return {};                // valid=false
@@ -683,21 +759,27 @@ VulkanContext::FrameContext VulkanContext::BeginCommands() {
         throw std::runtime_error("vkAcquireNextImageKHR 失败: " +
                                  std::to_string(static_cast<int>(acquired)));
 
-    swapchainDirty_ = acquired == VK_SUBOPTIMAL_KHR;
+    frameActive_ = true;
+    recordingSerial = submittedSerial + 1;
+
+    // SUBOPTIMAL 在 preTransform 强制 IDENTITY 的安卓形态下是常态（合成器
+    // 代为旋转），不触发重建——否则逐帧销毁重建交换链（nubia 实机 3000 次/秒）。
+    swapchainDirty_ = false;
     // Keep the fence signaled throughout recording. Reset only immediately
     // before submit: a recording failure must not leave a permanently unsignaled fence.
-    VK_CHECK(vkResetCommandBuffer(commandBuffer_, 0));
+    VK_CHECK(vkResetCommandBuffer(resource.cmd, 0));
     VkCommandBufferBeginInfo beginInfo{
         VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO};
     beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-    VK_CHECK(vkBeginCommandBuffer(commandBuffer_, &beginInfo));
+    VK_CHECK(vkBeginCommandBuffer(resource.cmd, &beginInfo));
 
     frameActive_ = true;
     currentImageIndex_ = imageIndex;
-    return {commandBuffer_, imageIndex, swapchainExtent, true};
+    return {resource.cmd, imageIndex, swapchainExtent, true, recordingSerial};
 }
 
 void VulkanContext::BeginPresentPass(VkClearColorValue clearColor) {
+    auto& resource = frameResources_;
     if (!frameActive_ || presentPassActive_)
         throw std::logic_error("Invalid presentation pass state");
 
@@ -711,7 +793,7 @@ void VulkanContext::BeginPresentPass(VkClearColorValue clearColor) {
     passBegin.renderArea.extent = swapchainExtent;
     passBegin.clearValueCount = 1;
     passBegin.pClearValues = &clear;
-    vkCmdBeginRenderPass(commandBuffer_, &passBegin, VK_SUBPASS_CONTENTS_INLINE);
+    vkCmdBeginRenderPass(resource.cmd, &passBegin, VK_SUBPASS_CONTENTS_INLINE);
 
     // viewport/scissor 恒动态：每帧按当前交换链尺寸设
     VkViewport viewport{};
@@ -719,35 +801,49 @@ void VulkanContext::BeginPresentPass(VkClearColorValue clearColor) {
     viewport.height = static_cast<float>(swapchainExtent.height);
     viewport.maxDepth = 1.0F;
     VkRect2D scissor{{0, 0}, swapchainExtent};
-    vkCmdSetViewport(commandBuffer_, 0, 1, &viewport);
-    vkCmdSetScissor(commandBuffer_, 0, 1, &scissor);
+    vkCmdSetViewport(resource.cmd, 0, 1, &viewport);
+    vkCmdSetScissor(resource.cmd, 0, 1, &scissor);
 
     presentPassActive_ = true;
 }
 
 void VulkanContext::EndFrame() {
+    auto& resource = frameResources_;
     if (!frameActive_)
         return;                   // 交换链过期那帧没活可干；重复调用也安全
     if (!presentPassActive_)
         throw std::logic_error("A frame must have a presentation pass before submit");
 
-    vkCmdEndRenderPass(commandBuffer_);
+    vkCmdEndRenderPass(resource.cmd);
     presentPassActive_ = false;
-    VK_CHECK(vkEndCommandBuffer(commandBuffer_));
+    // Make the final layout transition an explicit release before signaling
+    // renderFinished. The presentation engine reads the whole swapchain image.
+    VkImageMemoryBarrier release{VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER};
+    release.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+    release.oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+    release.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+    release.srcQueueFamilyIndex = release.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    release.image = swapchainImages[currentImageIndex_];
+    release.subresourceRange = {VK_IMAGE_ASPECT_COLOR_BIT,0,1,0,1};
+    vkCmdPipelineBarrier(resource.cmd,VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+        VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,0,0,nullptr,0,nullptr,1,&release);
+    VK_CHECK(vkEndCommandBuffer(resource.cmd));
 
     // 提交：等 imageAvailable（等到才能往这幅图上画）→ 执行 → 交出本图的
     // 呈现信号量（每图一份，防 MAILBOX 下呈现引擎还占用旧信号量）
     VkPipelineStageFlags waitStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
     VkSubmitInfo submit{VK_STRUCTURE_TYPE_SUBMIT_INFO};
     submit.waitSemaphoreCount = 1;
-    submit.pWaitSemaphores = &imageAvailable_;
+    submit.pWaitSemaphores = &resource.acquired;
     submit.pWaitDstStageMask = &waitStage;
     submit.commandBufferCount = 1;
-    submit.pCommandBuffers = &commandBuffer_;
+    submit.pCommandBuffers = &resource.cmd;
     submit.signalSemaphoreCount = 1;
     submit.pSignalSemaphores = &renderFinished_[currentImageIndex_];
-    VK_CHECK(vkResetFences(device, 1, &inFlight_));
-    VK_CHECK(vkQueueSubmit(graphicsQueue, 1, &submit, inFlight_));
+    VK_CHECK(vkResetFences(device, 1, &resource.fence));
+    VK_CHECK(vkQueueSubmit(graphicsQueue, 1, &submit, resource.fence));
+    submittedSerial = recordingSerial;
+    recordingSerial = 0;
     frameActive_ = false;
 
     // 呈现：本图的 renderFinished 一到就把这幅图换上屏
@@ -759,9 +855,12 @@ void VulkanContext::EndFrame() {
     uint32_t imageIndex = currentImageIndex_;
     present.pImageIndices = &imageIndex;
     const auto result=vkQueuePresentKHR(presentQueue,&present);
-    if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
+    // 仅 OUT_OF_DATE 触发重建；SUBOPTIMAL 在安卓强制 IDENTITY（合成器旋转）
+    // 形态下每次 present 都返回，当作正常状态——标脏即逐帧重建风暴，
+    // 且 VK_CHECK 拒收 SUBOPTIMAL 会直接致命（"result failed: 1000001003"）。
+    if (result == VK_ERROR_OUT_OF_DATE_KHR)
         swapchainDirty_ = true;
-    else
+    else if (result != VK_SUBOPTIMAL_KHR)
         VK_CHECK(result);
 }
 
@@ -769,16 +868,17 @@ VulkanContext::~VulkanContext() { DestroyAssets(); }
 
 void VulkanContext::DestroyAssets() noexcept {
     // Also called after partial initialization fails; no fallback rendering.
+    if (frameActive_) AbortFrame();
     if (device) vkDeviceWaitIdle(device);   // 等 GPU 把在途帧画完（托管帧资产还在用）
+    auto& resource = frameResources_;
+    if (resource.pool) vkDestroyCommandPool(device, resource.pool, nullptr);
+    if (resource.acquired) vkDestroySemaphore(device, resource.acquired, nullptr);
+    if (resource.fence) vkDestroyFence(device, resource.fence, nullptr);
+
     for (VkFramebuffer fb : framebuffers_)
         if (fb) vkDestroyFramebuffer(device, fb, nullptr);
-    if (commandPool_)
-        vkDestroyCommandPool(device, commandPool_, nullptr);  // 连带释放 cmd
-    if (imageAvailable_)
-        vkDestroySemaphore(device, imageAvailable_, nullptr);
-    for (VkSemaphore s : renderFinished_)
-        if (s) vkDestroySemaphore(device, s, nullptr);
-    if (inFlight_) vkDestroyFence(device, inFlight_, nullptr);
+    for (VkSemaphore semaphore : renderFinished_)
+        if (semaphore) vkDestroySemaphore(device, semaphore, nullptr);
     for (VkImageView view : swapchainViews)
         if (view) vkDestroyImageView(device, view, nullptr);
     if (swapchain) vkDestroySwapchainKHR(device, swapchain, nullptr);
@@ -789,7 +889,7 @@ void VulkanContext::DestroyAssets() noexcept {
     if (contextCount == 0) {
         if (device) vkDestroyDevice(device, nullptr);
         device = VK_NULL_HANDLE;
-        geometryShaderEnabled = false;
+        dualSourceBlendEnabled = false;
         physicalDevice = VK_NULL_HANDLE;
         graphicsQueue = presentQueue = VK_NULL_HANDLE;
         if (debugMessenger) {

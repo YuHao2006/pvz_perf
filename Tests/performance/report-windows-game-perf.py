@@ -19,9 +19,52 @@ def sha(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def plot_game_timeline(rows, summary, label, destination, stem):
+    selected = [r for r in rows if r["segment"] == "game"]
+    seconds = summary["seconds"]
+    font = FontProperties(fname="C:/Windows/Fonts/msyh.ttc")
+    plt.rcParams.update({"axes.spines.top":False,"axes.spines.right":False,"axes.titleweight":"bold"})
+    fig, axes = plt.subplots(2, 1, figsize=(12, 7.4), sharex=True,
+                             gridspec_kw={"height_ratios":[2,1]})
+    times = [float(r["elapsed_s"]) for r in rows]
+    values={}
+    for field in ("draw_fps","cpu_percent","cpu_ms_per_draw_frame"):
+        values[field]=[]
+        for r in rows:
+            if r["segment"] != "game": values[field].append(float("nan")); continue
+            value=(float(r["cpu_percent"])*10/float(r["draw_fps"])
+                   if field=="cpu_ms_per_draw_frame" else float(r[field]))
+            values[field].append(value)
+    for field,color,title in [("draw_fps","#176b92","绘制FPS"),
+                               ("cpu_percent","#dc7b18","CPU占用（单核100%）")]:
+        axes[0].plot(times,values[field],color=color,linewidth=1.2,label=title)
+    axes[0].set_ylabel("绘制FPS／CPU占用（%）",fontproperties=font)
+    axes[0].set_ylim(0,max(110,summary["fps_max"]*1.05,max(float(r["cpu_percent"])for r in selected)*1.08))
+    axes[0].legend(prop=font,loc="lower left",ncol=2)
+    axes[1].plot(times,values["cpu_ms_per_draw_frame"],color="#7053a0",linewidth=1.1)
+    axes[1].axhline(summary["cpu_ms_per_frame"],color="#7053a0",linewidth=.85,linestyle="--",
+                    label=f"整体 {summary['cpu_ms_per_frame']:.3f} ms／帧")
+    axes[1].set_ylabel("CPU ms／绘制帧",fontproperties=font)
+    axes[1].set_ylim(bottom=0)
+    axes[1].legend(prop=font,loc="upper right")
+    for ax in axes:
+        ax.grid(alpha=.2)
+        ax.set_xlim(0,max(times))
+    axes[-1].set_xlabel("观测开始后的时间（秒）；剔除区间保留缺口",fontproperties=font)
+    fig.suptitle(label,fontproperties=font,fontsize=15,y=.98)
+    fig.text(.09,.925,f"有效战斗 {seconds:.3f}s  |  波次 {summary['wave_first']}→{summary['wave_last']}  |  "
+             f"{summary['fps']:.3f} FPS  |  CPU {summary['cpu_percent']:.2f}%  |  {summary['cpu_ms_per_frame']:.3f} ms／帧",
+             fontproperties=font,fontsize=10)
+    fig.text(.09,.018,"只绘制 game 有效前台样本；1秒区间统计，非独立逐帧计时；CPU为整个进程。GPU频率本轮未核验。",
+             fontproperties=font,fontsize=9)
+    fig.tight_layout(rect=(.02,.04,.99,.91))
+    fig.savefig(destination / f"{stem}-timeline.png",dpi=160)
+    fig.savefig(destination / f"{stem}-timeline.svg")
+    plt.close(fig)
+
+
 def report(source, destination):
     destination.mkdir(parents=True, exist_ok=True)
-    font = FontProperties(fname="C:/Windows/Fonts/msyh.ttc")
     reports = []
     for kind, label in (("original", "原版 1073"), ("project", "pvz_perf / DX12")):
         case = source / f"{kind}-endless-25x"
@@ -78,50 +121,11 @@ def report(source, destination):
                     if row["segment"] == "game" and float(row["draw_fps"]) > 0 else "")
                 writer.writerow(row)
 
-        times = [float(r["elapsed_s"]) for r in rows]
-        values = {}
-        for field in ("draw_fps", "cpu_percent", "cpu_ms_per_draw_frame"):
-            values[field] = []
-            for r in rows:
-                value = float("nan")
-                if r["segment"] == "game":
-                    value = (float(r["cpu_percent"]) * 10 / float(r["draw_fps"])
-                             if field == "cpu_ms_per_draw_frame" and float(r["draw_fps"]) > 0
-                             else float(r[field]) if field != "cpu_ms_per_draw_frame"
-                             else float("nan"))
-                values[field].append(value)
-        fig, axes = plt.subplots(2, 1, figsize=(12, 6.8), sharex=True,
-                                 gridspec_kw={"height_ratios": [2, 1]})
-        for field, color, title in (
-            ("draw_fps", "#157b49", "帧率（FPS）"),
-            ("cpu_percent", "#c44c28", "CPU（单核 %）"),
-        ):
-            axes[0].plot(times, values[field], color=color, linewidth=1.2, label=title)
-        axes[0].set_ylim(0, 100)
-        axes[0].set_ylabel("FPS / CPU %", fontproperties=font)
-        axes[0].legend(prop=font, loc="lower left")
-        axes[0].set_title(
-            f"{label} · 统一无尽 · LP14 / 25x"
-            + (" · 暂定：暂停识别待核实" if kind == "original" else ""),
-            fontproperties=font)
-        axes[1].plot(times, values["cpu_ms_per_draw_frame"], color="#6551a0", linewidth=1.2)
-        axes[1].axhline(entry["cpu_ms_per_draw_frame"], color="#6551a0",
-                        linewidth=.8, linestyle="--",
-                        label=f"整体 {entry['cpu_ms_per_draw_frame']:.3f} ms/帧")
-        axes[1].set_ylabel("CPU ms / 绘制帧", fontproperties=font)
-        axes[1].set_xlabel("观测开始后的时间（秒）", fontproperties=font)
-        axes[1].set_ylim(bottom=0)
-        axes[1].legend(prop=font, loc="upper left")
-        for ax in axes:
-            ax.set_xlim(0, max(times))
-            ax.grid(alpha=.22)
-        fig.text(.07, .015,
-                 "仅绘制 segment=game；缺口为剔除样本；1 秒区间采样，非逐帧计时。"
-                 "上图范围 0–100，原始数据保留超过 100 的值。",
-                 fontproperties=font, fontsize=9)
-        fig.tight_layout(rect=(0, .04, 1, 1))
-        fig.savefig(destination / f"{kind}-timeline.png", dpi=160)
-        plt.close(fig)
+        plot_game_timeline(rows, dict(fps=entry["fps_mean"],
+            cpu_percent=entry["cpu_percent"], cpu_ms_per_frame=entry["cpu_ms_per_draw_frame"],
+            seconds=seconds, wave_first=selected[0]["wave"], wave_last=selected[-1]["wave"],
+            fps_max=max(float(r["draw_fps"]) for r in selected)),
+            f"{label} · {metadata['core']} {metadata['multiplier']}", destination, kind)
         reports.append(entry)
     payload = {
         "source_directory": str(source.resolve()),
@@ -143,9 +147,41 @@ def report(source, destination):
     print(json.dumps(payload, ensure_ascii=False, indent=2))
 
 
+def report_single(source, destination, label):
+    destination.mkdir(parents=True, exist_ok=True)
+    metadata = json.loads((source / "measurement.json").read_text(encoding="utf-8"))
+    with (source / "samples.csv").open(newline="", encoding="utf-8") as stream:
+        rows = list(csv.DictReader(stream))
+    selected = [r for r in rows if r["segment"] == "game"]
+    if not selected or any(r["valid"] != "1" or r["scene"] != "3" or r["foreground"] != "1" for r in selected):
+        raise ValueError("No consistent foreground game samples")
+    seconds = sum(float(r["interval_s"]) for r in selected)
+    frames = sum(float(r["draw_fps"]) * float(r["interval_s"]) for r in selected)
+    cpu = sum(float(r["cpu_percent"]) * float(r["interval_s"]) / 100 for r in selected)
+    updates = sum(float(r["update_hz"]) * float(r["interval_s"]) for r in selected)
+    summary = dict(label=label, selection="segment=game, valid=1, scene=3, foreground=1",
+        seconds=seconds, valid_samples=len(selected), recorded_seconds=metadata["recorded_seconds"],
+        frames=round(frames), cpu_seconds=cpu, fps=frames/seconds, update_hz=updates/seconds,
+        cpu_percent=cpu/seconds*100, cpu_ms_per_frame=cpu*1000/frames,
+        wave_first=int(selected[0]["wave"]), wave_last=int(selected[-1]["wave"]),
+        fps_min=min(float(r["draw_fps"]) for r in selected),
+        fps_max=max(float(r["draw_fps"]) for r in selected),
+        max_interval_cpu_ms=max(float(r["cpu_percent"])*10/float(r["draw_fps"]) for r in selected),
+        excluded=dict(Counter(r["segment"] for r in rows if r["segment"] != "game")),
+        executable_sha256=metadata["executable_sha256"], stop_reason=metadata["stop_reason"])
+    plot_game_timeline(rows, summary, label, destination, metadata["kind"])
+    for name in ("samples.csv","measurement.json"):
+        shutil.copy2(source/name,destination/name)
+    (destination/"summary.json").write_text(json.dumps(summary,ensure_ascii=False,indent=2),encoding="utf-8")
+    print(json.dumps(summary,ensure_ascii=False,indent=2))
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("source", type=Path)
     parser.add_argument("destination", type=Path)
+    parser.add_argument("--single", action="store_true")
+    parser.add_argument("--label", default="pvz_perf / Vulkan · LPE14 11x")
     args = parser.parse_args()
-    report(args.source, args.destination)
+    if args.single: report_single(args.source,args.destination,args.label)
+    else: report(args.source, args.destination)

@@ -61,7 +61,7 @@ struct MetalAlphaConstants
     unsigned int colorOnly;
 };
 
-// pvz_font_kernel: buffer(0), source texture(0), RGBA32Float target texture(1).
+// pvz_font_kernel: buffer(0), source texture(0), RGBA16Float target texture(1).
 // Positive source/destination extents required; dst must fit the target.
 // Flags: samplingFlags bit27 sanding; sourceSlot bit26 opaque, bit31 generated.
 struct MetalFontConstants

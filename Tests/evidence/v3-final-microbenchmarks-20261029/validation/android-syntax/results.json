@@ -1,0 +1,30 @@
+[
+  {
+    "file": "Lawn/Zombie.cpp",
+    "exit": 0
+  },
+  {
+    "file": "Lawn/Plant.cpp",
+    "exit": 0
+  },
+  {
+    "file": "Lawn/Board.cpp",
+    "exit": 0
+  },
+  {
+    "file": "Lawn/System/SaveGame.cpp",
+    "exit": 0
+  },
+  {
+    "file": "Sexy.TodLib/Reanimator.cpp",
+    "exit": 0
+  },
+  {
+    "file": "Sexy.TodLib/TodParticle.cpp",
+    "exit": 0
+  },
+  {
+    "file": "Sexy.TodLib/ParticleLifetime.cpp",
+    "exit": 0
+  }
+]

@@ -125,12 +125,9 @@ public:
     float                   mDestOffsetX;                   //+0x8
     float                   mDestOffsetY;                   //+0xC
     MagnetItemType          mItemType;                      //+0x10
-    // Fixed start vector relative to the magnet's destination. Position is
-    // sampled from the shared batch time, never integrated from mPosX/Y.
-    float                   mOriginDeltaX = 0;
-    float                   mOriginDeltaY = 0;
-    float                   mCaptureFactor = 0;
-    std::uint64_t           mCenterDurationNs = 0;
+    // Discrete inverse-square attraction velocity, in pixels/second.
+    float                   mVelocityX = 0;
+    float                   mVelocityY = 0;
 };
 
 class Coin;
@@ -155,7 +152,7 @@ public:
     int                     mPlantHealth;                   //+0x40
     int                     mPlantMaxHealth;                //+0x44
     int                     mSubclass;                      //+0x48
-    Sexy::TimeCounter                     mDisappearCountdown;            //+0x4C
+    std::int64_t                     mDisappearEndTimeNs;            //+0x4C
     Sexy::TimeCounter                     mDoSpecialCountdown;            //+0x50
     Sexy::TimeCounter                     mStateCountdown;                //+0x54
     // ZenGarden production duration; mutually exclusive bowling counts impacts
@@ -165,7 +162,7 @@ public:
     std::int64_t            mLaunchWindowStartNs = 0;
     // All items in one magnet suction start together. Integer elapsed time is
     // shared across the batch and pauses when this plant's abilities stop.
-    std::uint64_t           mMagnetElapsedNs = 0;
+    std::int64_t            mMagnetStartTimeNs = 0;
     bool                    mLaunchClockActive = false;
     Sexy::TimeCounter                     mLaunchRate;                    //+0x5C
     Rect                    mPlantRect;                     //+0x60
@@ -183,14 +180,14 @@ public:
     ReanimationID           mLightReanimID;                 //+0xA8
     ReanimationID           mSleepingReanimID;              //+0xAC
     Sexy::TimeCounter                     mBlinkCountdown;                //+0xB0
-    Sexy::TimeCounter                     mRecentlyEatenCountdown;        //+0xB4
-    Sexy::TimeCounter                     mEatenFlashCountdown;           //+0xB8
-    Sexy::TimeCounter                     mBeghouledFlashCountdown;       //+0xBC
+    std::int64_t                     mRecentlyEatenEndTimeNs;        //+0xB4
+    std::int64_t                     mEatenFlashEndTimeNs;           //+0xB8
+    std::int64_t                     mBeghouledFlashEndTimeNs;       //+0xBC
     float                   mShakeOffsetX;                  //+0xC0
     float                   mShakeOffsetY;                  //+0xC4
     MagnetItem              mMagnetItems[MAX_MAGNET_ITEMS]; //+0xC8
     ZombieID                mTargetZombieID;                //+0x12C
-    Sexy::TimeCounter                     mWakeUpCounter;                 //+0x130
+    std::int64_t                     mWakeUpEndTimeNs;                 //+0x130
     PlantOnBungeeState      mOnBungeeState;                 //+0x134
     SeedType                mImitaterType;                  //+0x138
     int                     mPottedPlantIndex;              //+0x13C

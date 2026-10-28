@@ -53,9 +53,9 @@ GameButton::GameButton(int theId)
 {
 	mLabel = "";
 	mOverAlpha = mOverAlphaSpeed = mOverAlphaFadeInSpeed = 0;
-	mOverAlphaOrigin = 0;
-	mOverAlphaElapsedNs = 0;
-	mOverAlphaTargetOver = false;
+
+
+
 	mApp = (LawnApp*)gSexyAppBase;
 	mId = theId;
 	mLabelJustify = 0;
@@ -307,35 +307,24 @@ void GameButton::Update()
 		mIsDown = false;
 	}
 
-	if (mOverAlphaTargetOver != mIsOver)
-	{
-		mOverAlphaTargetOver = mIsOver;
-		mOverAlphaOrigin = mOverAlpha;
-		mOverAlphaElapsedNs = 0;
-	}
 
-	if (!mIsDown && !mIsOver && mOverAlpha > 0)
-	{
-		if (mOverAlphaSpeed < 0)
-		{ 
-			mOverAlpha = 0;
-			return;
-		}
-		if (mOverAlphaSpeed > 0)
-		{
-			mOverAlphaElapsedNs = std::min<std::uint64_t>(
-				UINT64_MAX, mOverAlphaElapsedNs + Sexy::gUpdateIntervalNs);
-			mOverAlpha = std::max(0.0, mOverAlphaOrigin -
-				mOverAlphaSpeed * (double(mOverAlphaElapsedNs) / 10'000'000.0));
-		}
-	}
-	else if (mIsOver && mOverAlphaFadeInSpeed > 0 && mOverAlpha < 1)
-	{
-		mOverAlphaElapsedNs = std::min<std::uint64_t>(
-			UINT64_MAX, mOverAlphaElapsedNs + Sexy::gUpdateIntervalNs);
-		mOverAlpha = std::min(1.0, mOverAlphaOrigin +
-			mOverAlphaFadeInSpeed * (double(mOverAlphaElapsedNs) / 10'000'000.0));
-	}
+    if (!mIsDown && !mIsOver && mOverAlphaSpeed < 0) mOverAlpha = 0;
+    const double rate = !mIsDown && !mIsOver && mOverAlpha > 0 && mOverAlphaSpeed > 0
+        ? -mOverAlphaSpeed : mIsOver && mOverAlphaFadeInSpeed > 0 && mOverAlpha < 1
+        ? mOverAlphaFadeInSpeed : 0;
+    const auto nowNs = gSexyAppBase ? gSexyAppBase->mApplicationTimeNs : 0;
+    if (rate != mOverAlphaRate)
+    {
+        mOverAlphaOrigin = mOverAlpha;
+        mOverAlphaRate = rate;
+        mOverAlphaStartTimeNs = nowNs - static_cast<std::int64_t>(Sexy::gUpdateIntervalNs);
+    }
+    if (rate != 0)
+    {
+        mOverAlpha = std::clamp(mOverAlphaOrigin + rate *
+            (static_cast<double>(nowNs - mOverAlphaStartTimeNs) / 10'000'000.0), 0.0, 1.0);
+    }
+
 }
 
 //0x4485C0

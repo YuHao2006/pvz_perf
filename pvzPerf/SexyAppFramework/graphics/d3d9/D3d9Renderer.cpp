@@ -32,7 +32,7 @@ unsigned long long FontInstructionBound(const std::vector<DWORD>& code)
 {
     unsigned long long instructions = 0;
     std::array<DWORD, 16> repeatCounts{};
-    constexpr std::array<DWORD, 4> expectedCounts{4, 129, 129, 6};
+    static constexpr std::array<DWORD, 4> expectedCounts{4, 129, 129, 6};
     size_t depth = 0;
     for (size_t i = 1; i < code.size();) {
         const DWORD token = code[i++];
@@ -160,7 +160,7 @@ D3d9Renderer::Impl::Impl(D3d9Context& ctx, int w, int h, const std::filesystem::
         context.caps.maxPixelShaderInstructionsExecuted < 65535 ||
         context.caps.pixelShaderDynamicFlowControlDepth < 4)
         throw std::runtime_error("D3D9 SM3 instruction/sampler limits cannot support exact image operations");
-    const D3DVERTEXELEMENT9 elements[]{
+    static constexpr D3DVERTEXELEMENT9 elements[]{
         {0, 0, D3DDECLTYPE_FLOAT2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
         {0, 8, D3DDECLTYPE_FLOAT4, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_COLOR, 0},
         {0, 24, D3DDECLTYPE_FLOAT2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 0},
@@ -417,7 +417,7 @@ void D3d9Renderer::PrepareLoadingPipelines()
     ps(2, s.scenePS); ps(3, s.copyPS); ps(4, s.colorizePS); ps(5, s.composePS);
     ps(6, s.causticsPS); ps(7, s.fontPS); ps(8, s.presentPS);
     vs(9, s.poolVS);
-    const D3DVERTEXELEMENT9 elements[]{
+    static constexpr D3DVERTEXELEMENT9 elements[]{
         {0,0,D3DDECLTYPE_FLOAT2,D3DDECLMETHOD_DEFAULT,D3DDECLUSAGE_POSITION,0},
         {0,8,D3DDECLTYPE_FLOAT2,D3DDECLMETHOD_DEFAULT,D3DDECLUSAGE_TEXCOORD,0},D3DDECL_END()};
     Check(s.device->CreateVertexDeclaration(elements,s.poolDeclaration.put()),"Create D3D9 pool declaration");

@@ -4,16 +4,15 @@
 文档维护当前有效机制与修复；现行实测和历史算法证据分开标注，不按日期追加开发过程。
 
 发行下载：[GitHub Releases](https://github.com/YuHao2006/pvz_perf/releases)。
-**当前版本 v2.0：存档与 PAK64 均有不兼容变更，不能直接沿用旧关卡存档或旧运行包。**
-本次提供 `x64-win10-vulkan-v2.0.zip`（推荐）及 `x64-win7-opengl-v2.0.zip`，
+**v3.0 是破坏性更新：旧存档与旧 PAK64 不能直接混用。**
+本次提供 `x64-win10-vulkan-v3.0.zip`（推荐）、`x64-win7-opengl-v3.0.zip`，以及独立的完美用户档和统一无尽基准。
 完整解压到新的可写目录后运行 `pvz_perf.exe`。
-游戏仅接受 **DAT64 v2 纳秒关卡存档**；原 DAT 和 DAT64 v1 必须先用独立转换器升级。
-`main.pak64` 使用 **reanim/particle v5 离线图集**，主程序和资源包必须成套更新，
-不能混用 v1.x 与 v2.0 的 EXE/PAK64。用户摘要 `users.dat` 与玩家详情
-`PVZUSR64` 版本 13 的格式保持不变，关卡存档和玩家详情的版本号分别管理。
-转换步骤及完整变更见 [v2.0 发布说明](docs/releases/v2.0.md)。
-发行包包含生成的 PerfTest 完美用户档、DAT64 v2 统一无尽基准和外部 Magpie effects，
-不包含个人进度或个人设置。普通生存的完成记录为 5 旗，困难生存为 10 旗。
+游戏只读取 **DAT64 v4 / schema 0x10745**；原版 DAT、DAT64 v1/v2 需使用附带转换器升级。
+未发布的 v3 系列中间存档不受支持。用户摘要 `users.dat` 和玩家详情 `PVZUSR64` v13 独立管理。
+资源采用当前静态定义和离线图集，EXE、shaders 与 PAK64 必须成套更新。
+转换步骤与变更见 [v3.0 发布说明](docs/releases/v3.0.md)。
+生成的 PerfTest 完美用户档包含全解锁进度，DAT64 v4 无尽档来自仓库原版基准；不包含个人进度或设置。
+普通生存完成记录为 5 旗，困难生存为 10 旗。
 **Win7 统一 SDR，不支持 HDR；DX9/OpenGL 的默认配置不启用自定义缩放效果。**
 Windows 游戏使用 `/MD`，发行包不携带 CRT DLL，运行机器需安装兼容的 VC++ x64 运行库；
 存档转换器使用 `/MT`。
@@ -30,6 +29,10 @@ Linux 依赖与外部效果许可随包提供，系统图形、窗口、音频�
 - [存档转换](docs/DAT-DAT64-CONVERSION.md)：DAT/DAT64、模式编号和图像 ID。
 - [无尽性能基准](Tests/README.md)：原版 DAT 与项目 DAT64 的同状态存档、校验值及测试使用规则。
 - [资产与发行边界](docs/ASSETS.md)：源码、编译输入、资源、外部效果及现有工具链缺口。
+
+## 当前源码的存档协议
+
+当前源码只直接读写 **DAT64 v4（major4/minor0/schema0x10745）**。独立转换器只支持原版1073 DAT、DAT64 v1、v2和v4；整个v3系列的输入与输出均已删除。原版／v1／v2先用 `--target dat64-v4` 转到新文件，不能改头部或扩展名混读。历史v2.0包的协议见其独立发布说明，详见[存档转换](docs/DAT-DAT64-CONVERSION.md)。
 
 ## 构建与运行
 

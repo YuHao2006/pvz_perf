@@ -1,0 +1,10 @@
+bench_phase_query.cpp
+C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\Tests\performance\bench_phase_query.cpp(47): error C2039: "CanFly": 不是 "ZombieFlags" 的成员
+C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\pvzPerf\Lawn/ZombieFlags.h(14): note: 参见“ZombieFlags”的声明
+C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\Tests\performance\bench_phase_query.cpp(47): error C2065: “CanFly”: 未声明的标识符
+C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\Tests\performance\bench_phase_query.cpp(55): error C2039: "CanFly": 不是 "ZombieFlags" 的成员
+C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\pvzPerf\Lawn/ZombieFlags.h(14): note: 参见“ZombieFlags”的声明
+C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\Tests\performance\bench_phase_query.cpp(55): error C2065: “CanFly”: 未声明的标识符
+C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\Tests\performance\bench_phase_query.cpp(55): error C2039: "Jumper": 不是 "ZombieFlags" 的成员
+C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\pvzPerf\Lawn/ZombieFlags.h(14): note: 参见“ZombieFlags”的声明
+C:\Users\Administrator\CLionProjects\codex\PlantsVsZombiesModern\Tests\performance\bench_phase_query.cpp(55): error C2065: “Jumper”: 未声明的标识符

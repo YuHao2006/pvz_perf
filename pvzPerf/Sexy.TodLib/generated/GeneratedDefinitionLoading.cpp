@@ -5473,7 +5473,6 @@ void LoadAllImages() {
     LoadProjectileImages();
 }
 void ReleaseReanimationImages() {
-    ReanimatorFreeGpuDefinitionData();
     for(auto& definition:Reanimations)
         for(unsigned v=0;v<definition.mVariantCount;++v) DefinitionUnbindAtlas(definition.mTextures[v]);
     Reanim120Frames20[0].mFont = nullptr;

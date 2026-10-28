@@ -32,13 +32,10 @@ public:
     void Pause();
     void Resume();
     unsigned int State() const;
-    void SetGain(double value);
+    void SetGain(float value);
     bool Seek(unsigned long long position, unsigned int mode);
     unsigned long long Position(unsigned int mode) const;
     void Check() const;
-    static inline void SetMasterGain(double value)
-    {
-        sMasterGain.store(static_cast<float>(value), std::memory_order_relaxed);
-    }
+    static void SetMasterGain(float value);
 };
 }

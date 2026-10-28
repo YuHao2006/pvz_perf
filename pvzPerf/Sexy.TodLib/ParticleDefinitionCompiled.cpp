@@ -1,6 +1,5 @@
 #include "ParticleDefinitionCompiled.h"
 #include "TodParticle.h"
-#include "ParticleGpu.h"
 #include "paklib/PakInterface.h"
 #include <cmath>
 #include <cstdio>
@@ -94,7 +93,6 @@ struct Reader
 
 void TodParticleFreeCompiledDefinition(TodParticleDefinition& definition)
 {
-    TodParticleFreeGpuDefinition(definition);
     for (unsigned v = 0; v < definition.mVariantCount && definition.mTextures; ++v)
         DefinitionUnbindAtlas(definition.mTextures[v]);
     for (int i = 0; i < definition.mEmitterDefCount && definition.mEmitterDefs; ++i)
@@ -157,7 +155,8 @@ void TodParticleLoadCompiledDefinition(TodParticleDefinition& definition, const 
             emitter.mAnimated = reader.value<std::int32_t>();
             emitter.mParticleFlags = reader.value<std::int32_t>();
             const auto type = reader.word(), name = reader.word(), duration = reader.word();
-            reader.word(); // render-channel mask is retained only by the GPU/test oracle
+            // 渲染通道掩码随 CPU 绘制路径一并恢复读取（GPU/测试 oracle 不再独占）。
+            emitter.mRenderTrackMask = reader.word();
             reader.require(emitter.mImageRectOffset == nextSlot && emitter.mImageRectCount >= 0 &&
                 unsigned(emitter.mImageRectCount) <= slots - nextSlot && emitter.mImageFrames > 0 &&
                 (emitter.mAnimated == 0 || emitter.mAnimated == 1) &&
@@ -170,15 +169,27 @@ void TodParticleLoadCompiledDefinition(TodParticleDefinition& definition, const 
             emitter.mOnDurationEmitterIndex = duration == 0xffffffff ? -1 : int(duration);
             if (definition.mEmitterIndexByName[name] < 0) definition.mEmitterIndexByName[name] = int(i);
             for (auto member : systemTracks) reader.track(emitter.*member);
-            for (unsigned i = 0; i < 5; ++i) reader.discardTrack(); // system color/brightness
+            reader.track(emitter.mSystemRed);
+            reader.track(emitter.mSystemGreen);
+            reader.track(emitter.mSystemBlue);
+            reader.track(emitter.mSystemAlpha);
+            reader.track(emitter.mSystemBrightness);
             reader.fields(emitter.mParticleFields); reader.fields(emitter.mSystemFields);
-            for (unsigned i = 0; i < 5; ++i) reader.discardTrack(); // particle color/brightness
+            reader.track(emitter.mParticleRed);
+            reader.track(emitter.mParticleGreen);
+            reader.track(emitter.mParticleBlue);
+            reader.track(emitter.mParticleAlpha);
+            reader.track(emitter.mParticleBrightness);
             reader.track(emitter.mParticleSpinAngle);
             reader.track(emitter.mParticleSpinSpeed);
-            for (unsigned i = 0; i < 2; ++i) reader.discardTrack(); // scale/stretch
+            reader.track(emitter.mParticleScale);
+            reader.track(emitter.mParticleStretch);
             reader.track(emitter.mCollisionReflect);
             reader.track(emitter.mCollisionSpin);
-            for (unsigned i = 0; i < 4; ++i) reader.discardTrack(); // clip tracks
+            reader.track(emitter.mClipTop);
+            reader.track(emitter.mClipBottom);
+            reader.track(emitter.mClipLeft);
+            reader.track(emitter.mClipRight);
             reader.track(emitter.mAnimationRate);
         }
         reader.require(nextSlot == slots);

@@ -1,0 +1,29 @@
+{
+  "cpu_frequency": "LPE14 11x, user-controlled; affinity verified 0x4000 throughout sampling",
+  "gpu_frequency": "not verified in this run; no GPU-time or cross-frequency speedup claim",
+  "backend": "Windows Vulkan",
+  "build": "Release /GL /LTCG; PVZ_ENABLE_GAME_PROBES=OFF",
+  "scope": "process CPU time and generated draw frames, not independent per-frame latency or physical presentations",
+  "retail_source_sha256": "a1bbc2f43a129b655f0068de8f28a731f1ef6814170419d3f4ec406436437cf1",
+  "converted_save_sha256": "f03c392d1ab6c55a7d5899e7846ce756808048489419d161d16667cf297b2f7a",
+  "pak_sha256": "93ab6cad22e86ce5a2fdc68c4a55ca4e36ade35adb7dc39185722087680261ff",
+  "executable_sha256": "d5b37a4e3c4c3fe21688e79ff0f063de91d7dbc1d13856ef525edbf92e695731",
+  "settings": {
+    "targetFps": 100,
+    "musicVolume": 100,
+    "sfxVolume": 65,
+    "muted": 0,
+    "screenMode": "windowed",
+    "preferredX": 953,
+    "preferredY": 479,
+    "customCursors": 0,
+    "waitForVSync": 0,
+    "customScale": 0
+  },
+  "hashes": {
+    "measurement.json": "970ef60f1b34e60ad0765cc8013e0746f9bd8cb6db4f7f1bb119ec41a1eaf605",
+    "samples.csv": "e9c2d4ce8adf7a885ab18d2615c67c4c01326aaba142a3cec7c376f894eb26d2",
+    "game-layout.json": "bf5416cfe9ca6b42aabdf9769f443d13989e0d266bd917325f418830cce55dab",
+    "preparation.json": "ad1a349dbc79e65cde394bf07f3eea76552619845bd52912e6ce23f8f3de7ec4"
+  }
+}

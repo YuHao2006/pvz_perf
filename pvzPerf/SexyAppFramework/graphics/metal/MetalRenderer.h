@@ -1,7 +1,6 @@
 #pragma once
 #include "SexyAppFramework/graphics/GpuTypes.h"
 #include "SexyAppFramework/graphics/GpuPool.h"
-#include "SexyAppFramework/graphics/GpuReanim.h"
 #include "SexyAppFramework/graphics/ImageReadback.h"
 #include "SexyAppFramework/graphics/vulkan/VulkanHdr.h"
 #include "MetalScaleTypes.h"
@@ -15,7 +14,6 @@
 namespace Sexy {
 class MetalContext;
 struct MetalTexture;
-struct MetalReanim;
 using GpuHdrParams = VulkanHdrParams;
 
 class MetalRenderer final {
@@ -64,26 +62,6 @@ public:
     void SubmitCoverageTriangles(std::span<const GpuVertex> vertices,
         MetalTexture* mask, GpuBlend blend, const GpuClip* clip = nullptr);
     void SubmitPool(MetalTexture* texture, const GpuPoolParams& params);
-    MetalReanim* UploadReanimDefinition(const GpuReanimDefinition& definition);
-    MetalReanim* UploadParticleDefinition(std::span<const float> words, uint32_t variants);
-    bool SubmitParticle(MetalReanim* definition, MetalTexture* texture,
-        const GpuParticleDraw& draw, std::span<const GpuParticleState> chain,
-        bool linear, bool repeat, GpuBlend blend, const GpuClip* clip = nullptr);
-    bool SubmitFormulaParticles(MetalReanim* d, MetalTexture* t, const GpuParticleDraw& p,
-        std::span<const GpuParticleFormulaState> s, bool l, bool r, GpuBlend b, const GpuClip* c = nullptr)
-    { return SubmitParticle(d,t,p,{reinterpret_cast<const GpuParticleState*>(s.data()),s.size()},l,r,b,c); }
-    bool SubmitDiscreteParticles(MetalReanim* d, MetalTexture* t, const GpuParticleDraw& p,
-        std::span<const GpuParticleState> s, bool l, bool r, GpuBlend b, const GpuClip* c = nullptr)
-    { return SubmitParticle(d,t,p,s,l,r,b,c); }
-    void DestroyReanimDefinition(MetalReanim* definition);
-    uint32_t& reanimPictureCandidates;
-    const bool& reanimFrameEligible;
-    uint32_t BeginReanimInstance(MetalReanim* definition, MetalTexture* texture,
-        const GpuReanimInstance& instance, bool linear, bool repeat, const GpuClip* clip = nullptr,
-        bool forceGpu = false);
-    bool SubmitReanimTrack(uint32_t instance, const GpuReanimTrackDraw& draw, GpuBlend blend);
-    bool SubmitReanim(MetalReanim* definition, MetalTexture* texture, const GpuReanimDraw& draw,
-        bool linear, bool repeat, GpuBlend blend, const GpuClip* clip = nullptr, bool forceGpu = false);
     void EndSceneAndPresent();
     bool PresentRetainedScene();
     bool ResizePresent();

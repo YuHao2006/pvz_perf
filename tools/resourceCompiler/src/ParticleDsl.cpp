@@ -2481,7 +2481,7 @@ std::vector<std::uint8_t> SerializeParticleV4(
     std::vector<std::uint8_t> body;
     // Native runtime track order differs from the historical import/oracle
     // order stored in ParticleEmitter::systemTracks.
-    constexpr int authoredSystemIndex[kSystemTrackCount] = {
+    static constexpr int authoredSystemIndex[kSystemTrackCount] = {
         0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 13, 11, 14, 20, 21, 15, 16, 17, 18, 19};
     const auto writeAuthoredTrack = [&](const std::string& raw) {
         const auto nodes = ParseAuthoredTrack(raw);

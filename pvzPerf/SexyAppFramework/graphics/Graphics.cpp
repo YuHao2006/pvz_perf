@@ -246,10 +246,12 @@ void Graphics::PolyFill(const Point *theVertexList, int theNumVertices, bool con
     int k, y0, y1, y, i, j, xl, xr;
 
 
-	int aMinX = mClipRect.mX;
-	int aMaxX = mClipRect.mX + mClipRect.mWidth - 1;
-	int aMinY = mClipRect.mY;
-	int aMaxY = mClipRect.mY + mClipRect.mHeight - 1;
+	// Bound CPU scanline storage to the target as well as the UI clip.
+	auto* aTarget = RequireDrawDestination(mDestImage, DrawOperation::FillRect);
+	const Rect aRasterClip=mClipRect.Intersection(Rect(0,0,aTarget->mWidth,aTarget->mHeight));
+	if (aRasterClip.mWidth <= 0 || aRasterClip.mHeight <= 0) return;
+	const int aMinX=aRasterClip.mX, aMaxX=aRasterClip.mX+aRasterClip.mWidth-1;
+	const int aMinY=aRasterClip.mY, aMaxY=aRasterClip.mY+aRasterClip.mHeight-1;
 
 	GraphicsPolygonScratch aScratch(*this, theVertexList, theNumVertices);
 	int* ind = aScratch.mIndices;
@@ -385,10 +387,12 @@ void Graphics::PolyFillAA(const Point *theVertexList, int theNumVertices, bool c
     int k, y0, y1, y, j, xl, xr;
 
 
-	int aMinX = mClipRect.mX;
-	int aMaxX = mClipRect.mX + mClipRect.mWidth - 1;
-	int aMinY = mClipRect.mY;
-	int aMaxY = mClipRect.mY + mClipRect.mHeight - 1;
+	// Bound CPU scanline storage to the target as well as the UI clip.
+	auto* aTarget = RequireDrawDestination(mDestImage, DrawOperation::FillRect);
+	const Rect aRasterClip=mClipRect.Intersection(Rect(0,0,aTarget->mWidth,aTarget->mHeight));
+	if (aRasterClip.mWidth <= 0 || aRasterClip.mHeight <= 0) return;
+	const int aMinX=aRasterClip.mX, aMaxX=aRasterClip.mX+aRasterClip.mWidth-1;
+	const int aMinY=aRasterClip.mY, aMaxY=aRasterClip.mY+aRasterClip.mHeight-1;
 
 	GraphicsPolygonScratch aScratch(*this, theVertexList, theNumVertices);
 	int* ind = aScratch.mIndices;
@@ -601,7 +605,8 @@ void Graphics::DrawLine(int theStartX, int theStartY, int theEndX, int theEndY)
 	double aEndX = theEndX + mTransX;
 	double aEndY = theEndY + mTransY;
 
-	if (!DrawLineClipHelper(&aStartX, &aStartY, &aEndX, &aEndY))
+	if (mClipRect.mWidth <= 0 || mClipRect.mHeight <= 0 ||
+		!DrawLineClipHelper(&aStartX, &aStartY, &aEndX, &aEndY))
 		return;
 
 	RequireDrawDestination(mDestImage, DrawOperation::DrawLine)->DrawLine(aStartX, aStartY, aEndX, aEndY, mColor, mDrawMode);
@@ -614,7 +619,8 @@ void Graphics::DrawLineAA(int theStartX, int theStartY, int theEndX, int theEndY
 	double aEndX = theEndX + mTransX;
 	double aEndY = theEndY + mTransY;
 
-	if (!DrawLineClipHelper(&aStartX, &aStartY, &aEndX, &aEndY))
+	if (mClipRect.mWidth <= 0 || mClipRect.mHeight <= 0 ||
+		!DrawLineClipHelper(&aStartX, &aStartY, &aEndX, &aEndY))
 		return;
 
 	RequireDrawDestination(mDestImage, DrawOperation::DrawLineAA)->DrawLineAA(aStartX, aStartY, aEndX, aEndY, mColor, mDrawMode);
@@ -622,6 +628,7 @@ void Graphics::DrawLineAA(int theStartX, int theStartY, int theEndX, int theEndY
 
 void Graphics::DrawString(const SexyString& theString, int theX, int theY)
 {
+	if (mClipRect.mWidth <= 0 || mClipRect.mHeight <= 0) return;
 	if (mFont != NULL)
 		mFont->DrawString(this, theX, theY, theString, mColor, mClipRect);
 }
@@ -672,8 +679,8 @@ void Graphics::DrawImage(Image* theImage, int theX, int theY, const Rect& theSrc
 
 void Graphics::DrawImage(Image* image, int x, int y, const TextureRegion& source)
 {
-	// Match the pixel-source overload: empty sources and fully clipped draws
-	// emit no pixels and do not require a destination.
+	// Empty sources and explicit empty clips emit no pixels and do not require
+	// a destination. The transformed path forwards local clipping to the GPU.
 	if (source.mWidth<=0 || source.mHeight<=0 ||
 		mClipRect.mWidth<=0 || mClipRect.mHeight<=0) return;
 	auto* destination=RequireDrawDestination(mDestImage,DrawOperation::Blt);
@@ -1237,7 +1244,8 @@ static int WriteWordWrappedLayout(Graphics* graphics,_Font& font,bool colored,co
 				//	theJustification, true, aLineStartPos, aSpacePos-aLineStartPos, anOrigColorInt, theMaxChars);
 
 				int aPhysPos = theRect.mY + aYOffset + mTransY;
-				if (DrawText && (aPhysPos >= mClipRect.mY) && (aPhysPos < mClipRect.mY + mClipRect.mHeight + theLineSpacing))
+				if (DrawText && mClipRect.mWidth > 0 && mClipRect.mHeight > 0 &&
+					(aPhysPos >= mClipRect.mY) && (aPhysPos < mClipRect.mY + mClipRect.mHeight + theLineSpacing))
 				{
 					WriteWordWrappedHelper(graphics,font,colored, theLine, theRect.mX + anIndentX, theRect.mY + aYOffset, theRect.mWidth,
 						theJustification, true, aLineStartPos, aSpacePos-aLineStartPos, anOrigColorInt, theMaxChars);

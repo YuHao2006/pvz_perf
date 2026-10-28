@@ -143,9 +143,10 @@ void TitleScreen::Draw(Graphics* g)
 	{
 		if (static_cast<int>(mCurBarWidth) > 0)
 		{
-			Graphics aClipG(*g);
-			aClipG.ClipRect(240, aGrassY, mCurBarWidth, IMAGE_LOADBAR_GRASS->mHeight);
-			aClipG.DrawImage(IMAGE_LOADBAR_GRASS, aGrassX, aGrassY);
+			// The revealed lawn is animation geometry, independent of UI clipping.
+			const int width = std::min(static_cast<int>(mCurBarWidth), IMAGE_LOADBAR_GRASS->mWidth);
+			g->DrawImage(IMAGE_LOADBAR_GRASS, aGrassX, aGrassY,
+				Rect(0, 0, width, IMAGE_LOADBAR_GRASS->mHeight));
 		}
 
 		float aRollLen = mCurBarWidth * 0.94f;

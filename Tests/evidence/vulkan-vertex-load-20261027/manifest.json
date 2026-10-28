@@ -1,0 +1,16 @@
+{
+  "date": "2026-10-27",
+  "scope": "Opt-in offscreen desktop benchmark only; no phone run, no production behavior change; VBO allocation/reuse and uint16 batch limit unchanged.",
+  "results": {
+    "rgba8_vertex_color": "max channel error 5 on both GPUs; rejected before timing",
+    "rgba16_unorm_vertex_color": "3 scenarios pixel-identical on both GPUs; synchronization validation errors 0; upload conversion cost exceeds observed GPU saving",
+    "discard_scene": "Full opaque background repaint only; 3 scenarios pixel-identical on both GPUs; synchronization validation errors 0; no stable desktop saving. Not valid for preserved canvas or feedback resume."
+  },
+  "production_compile": "Windows Release sexy_vulkan target passed; full application not rebuilt in this trial",
+  "clocks_controlled": false,
+  "sources_sha256": {
+    "pvzPerf/SexyAppFramework/graphics/vulkan/VulkanRenderer.cpp": "243f234f0b0b77bbf088ad6d6e21cf22e3419bd4e88042ee37c7e8733570f877",
+    "pvzPerf/SexyAppFramework/graphics/vulkan/VulkanRenderer.h": "4dd711f86a40a25fce562746acfc5b865d385484f09a27b715d764d0729879f9",
+    "Tests/performance/vulkan_sprite_benchmark.cpp": "75234cf801847b44e706af770577e274ba6de1f332649eb394d538d05fdb2a91"
+  }
+}

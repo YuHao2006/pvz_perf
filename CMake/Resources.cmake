@@ -1,8 +1,19 @@
 find_package(Python3 COMPONENTS Interpreter REQUIRED)
-add_subdirectory("${CMAKE_SOURCE_DIR}/tools/resourceCompiler/src"
-    "${CMAKE_BINARY_DIR}/tools/resourceCompiler/build")
+if(ANDROID OR CMAKE_SYSTEM_NAME STREQUAL "Android")
+    set(PVZ_RESOURCE_COMPILER_HOST "${CMAKE_SOURCE_DIR}/out/x64-win32-vulkan/tools/resourceCompiler/build/reanimc.exe"
+        CACHE FILEPATH "Host reanimc executable used while cross-compiling Android resources")
+    if(NOT EXISTS "${PVZ_RESOURCE_COMPILER_HOST}")
+        message(FATAL_ERROR "Android resource builds need a host reanimc.exe: ${PVZ_RESOURCE_COMPILER_HOST}")
+    endif()
+    add_executable(reanimc IMPORTED GLOBAL)
+    set_target_properties(reanimc PROPERTIES IMPORTED_LOCATION "${PVZ_RESOURCE_COMPILER_HOST}")
+else()
+    add_subdirectory("${CMAKE_SOURCE_DIR}/tools/resourceCompiler/src"
+        "${CMAKE_BINARY_DIR}/tools/resourceCompiler/build")
+endif()
 
-set(PVZ_RESOURCE_CACHE "${CMAKE_BINARY_DIR}/cache/resources")
+set(PVZ_RESOURCE_CACHE "${CMAKE_BINARY_DIR}/cache/resources" CACHE PATH
+    "Resource compiler cache, optionally shared with a verified host build")
 set(PVZ_STATIC_DEFINITION_SOURCES
     "${PVZ_GAME_SOURCE_DIR}/Sexy.TodLib/generated/GeneratedDefinitions.cpp"
     "${PVZ_GAME_SOURCE_DIR}/Sexy.TodLib/generated/GeneratedDefinitionLoading.cpp"
@@ -21,6 +32,27 @@ file(GLOB_RECURSE PVZ_RESOURCE_INPUTS CONFIGURE_DEPENDS
     "${PVZ_GAME_SOURCE_DIR}/*.h")
 list(FILTER PVZ_RESOURCE_INPUTS EXCLUDE REGEX "/generated/")
 list(FILTER PVZ_RESOURCE_INPUTS EXCLUDE REGEX "/ReanimTrack(Id|MphfGlobal)\\.h$")
+
+# Keep generated contract headers visible as explicit compile inputs. MSVC's
+# discovered includes may use a relative spelling while BYPRODUCTS use an
+# absolute spelling; an order-only target dependency cannot invalidate an
+# already-clean object after the resource producer changes that physical file.
+set(PVZ_RESOURCE_CONTRACT_HEADERS
+    "${PVZ_GAME_SOURCE_DIR}/Sexy.TodLib/generated/DefinitionImageBindings.h"
+    "${PVZ_GAME_SOURCE_DIR}/Sexy.TodLib/generated/ZombatarImage.h"
+    "${PVZ_GAME_SOURCE_DIR}/Sexy.TodLib/generated/SceneAtlasData.h"
+    "${PVZ_GAME_SOURCE_DIR}/Sexy.TodLib/generated/SceneAtlasBindings.h"
+    "${PVZ_GAME_SOURCE_DIR}/Sexy.TodLib/generated/GeneratedDefinitions.h"
+    "${PVZ_GAME_SOURCE_DIR}/Sexy.TodLib/generated/GeneratedDefinitionStorage.h"
+    "${PVZ_GAME_SOURCE_DIR}/Sexy.TodLib/generated/NumericResourceBindings.h"
+    "${PVZ_GAME_SOURCE_DIR}/Sexy.TodLib/generated/ResourceLoadBindings.inc"
+    "${PVZ_GAME_SOURCE_DIR}/Sexy.TodLib/generated/ParticleEmitterName.h"
+    "${PVZ_GAME_SOURCE_DIR}/Sexy.TodLib/generated/ReanimVariantId.h"
+    "${PVZ_GAME_SOURCE_DIR}/Sexy.TodLib/generated/ParticleVariantId.h"
+    "${PVZ_GAME_SOURCE_DIR}/Sexy.TodLib/generated/LawnStrings.h"
+    "${PVZ_GAME_SOURCE_DIR}/Sexy.TodLib/generated/ReanimAttacherMasks.h"
+    "${PVZ_GAME_SOURCE_DIR}/Sexy.TodLib/ReanimTrackId.h"
+    "${PVZ_GAME_SOURCE_DIR}/Sexy.TodLib/ReanimTrackMphfGlobal.h")
 
 add_custom_command(
     OUTPUT "${PVZ_RESOURCE_CACHE}/resources.stamp" "${PVZ_RESOURCE_CACHE}/main.pak64"
@@ -58,7 +90,6 @@ add_custom_command(
         "${CMAKE_SOURCE_DIR}/tools/static_definition_codegen.py"
         "${CMAKE_SOURCE_DIR}/tools/static_reanim_codegen.py"
         "${CMAKE_SOURCE_DIR}/tools/static_particle_codegen.py"
-        "${CMAKE_SOURCE_DIR}/tools/particle_gpu_codegen.py"
         "${CMAKE_SOURCE_DIR}/tools/resource_build_config.py"
         "${CMAKE_SOURCE_DIR}/tools/exact_atlas.py"
         "${CMAKE_SOURCE_DIR}/tools/compile_numeric_resources.py"

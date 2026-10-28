@@ -17,11 +17,11 @@ class BassMusicInfo
 public:
 	HMUSIC					mHMusic;
 	HSTREAM					mHStream;
-	double					mVolume;
-	double					mVolumeCap;
-	double					mFadeOrigin;
-	double					mFadeTarget;
-	std::uint64_t			mFadeElapsedNs;
+	float					mVolume;
+	float					mVolumeCap;
+	float					mFadeOrigin;
+	float					mFadeTarget;
+	std::int64_t			mFadeStartTimeNs;
 	std::uint64_t			mFadeDurationNs;
 	bool					mStopOnFade;
 	std::unique_ptr<char[]> mStreamData;
@@ -74,15 +74,15 @@ public:
 	virtual void			ResumeAllMusic();
 	virtual void			PauseMusic(int theSongId);
 	virtual void			ResumeMusic(int theSongId);	
-	virtual void			FadeIn(int theSongId, int theOffset = -1, double theSpeed = 0.002, bool noLoop = false);
-	virtual void			FadeOut(int theSongId, bool stopSong = true, double theSpeed = 0.004);
-	virtual void			FadeOutAll(bool stopSong = true, double theSpeed = 0.004);
-	virtual void			SetSongVolume(int theSongId, double theVolume);
-	virtual void			SetSongMaxVolume(int theSongId, double theMaxVolume);
+	virtual void			FadeIn(int theSongId, int theOffset = -1, float theSpeed = 0.002f, bool noLoop = false);
+	virtual void			FadeOut(int theSongId, bool stopSong = true, float theSpeed = 0.004f);
+	virtual void			FadeOutAll(bool stopSong = true, float theSpeed = 0.004f);
+	virtual void			SetSongVolume(int theSongId, float theVolume);
+	virtual void			SetSongMaxVolume(int theSongId, float theMaxVolume);
 	virtual bool			IsPlaying(int theSongId);
 
-	virtual void			SetVolume(double theVolume);
-	virtual void			SetMusicAmplify(int theSongId, double theAmp); // default is 0.50
+	virtual void			SetVolume(float theVolume);
+	virtual void			SetMusicAmplify(int theSongId, float theAmp); // default is 0.50
 	virtual void			Update();
 
 	// True once LoadMusic published a song for theSongId (bounded by the

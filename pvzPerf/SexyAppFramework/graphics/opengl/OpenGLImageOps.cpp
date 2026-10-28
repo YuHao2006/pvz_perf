@@ -130,13 +130,8 @@ OpenGLTexture* OpenGLRenderer::AdoptComposedTexture(OpenGLTexture* texture)
     for (auto it = s.textures.begin(); it != s.textures.end();) {
         auto* candidate = *it;
         if (candidate != s.scene && candidate != s.selected && candidate->slot == ~0U) {
-#if defined(PVZ_OPENGL_REANIM_RESIDENT)
-            ++it;
-            DestroyTexture(candidate);
-#else
             delete candidate;
             it = s.textures.erase(it);
-#endif
         } else ++it;
     }
     return texture;

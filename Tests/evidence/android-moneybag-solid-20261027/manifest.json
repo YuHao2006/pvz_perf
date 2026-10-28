@@ -1,0 +1,21 @@
+{
+  "date": "2026-10-27",
+  "phone_capture": "C:/Users/Administrator/CLionProjects/codex/GpuBenchmarks/android-u16-20261027/moneybag-continuous-194154",
+  "phone_result": "User-confirmed white fade correlates with drop in render submissions and physical presentations; GPU top-to-scene-end interval increases while draw count decreases; recovery captured. Those elapsed intervals include synchronization stalls, not shader-only work.",
+  "solid_trial": "Two desktop GPUs, five white alpha values, pixel-identical, sync validation errors 0. Unconsumed vertex output warnings preserved in logs. Candidate skips texture sampling and uses ordinary premultiplied normal blending; one additional draw. No phone adoption or claim of fixing phone flash.",
+  "native_trial_extended": "Two GPUs, 24 clip/shear/flipped UV/nearest-linear-repeat/blend/float-color pixel cases each, exact; sync errors 0.",
+  "timestamp_probe": "Four GPU timestamps: top, first color-output stage marker, scene bottom, present bottom. Keeps old total, adds leading/trailing intervals and per-window maxima. Stage placement can be later on implementations; not an exact standalone semaphore-wait measurement. Synchronization unchanged.",
+  "probe_apk": "C:\\Users\\Administrator\\CLionProjects\\codex\\PlantsVsZombiesModern\\out\\pvz-arm64-u16-240-color-gate.apk",
+  "probe_apk_sha256": "9ac25e791dcd49a445aadb865f7f24d085b5c278163dc50e4671941dcc3b8d8e",
+  "probe_installed": false,
+  "sources_sha256": {
+    "Tests/performance/solid_fill_experiment.frag": "dc2ec2a91ddc1332b790488d3a72e12cdc35252ecb0a394e398dd02f863115f1",
+    "Tests/performance/vulkan_sprite_benchmark.cpp": "8b4b7ac28e3ec1e9c96a0018d0c44ea02950e7f941ac966f9cab88993b87d992",
+    "pvzPerf/SexyAppFramework/graphics/vulkan/VulkanRenderer.cpp": "b333e0f4a2f830c3d485b7079b37c6fee81174d1a6fd829cff631cc3c11a9f78",
+    "pvzPerf/SexyAppFramework/graphics/vulkan/VulkanRenderer.h": "da4864ea23fcd85f44d9ca135f24ef42496b553365d040b8367008a3fe395ed7",
+    "pvzPerf/SexyAppFramework/graphics/vulkan/CMakeLists.txt": "27319f7f75d9e51032f714e757e0b96b000ac4f5a2524c617ed56ec42a0a0b4b"
+  },
+  "timing_location": "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\pvz-solid-fill-summary-20261027.json",
+  "clocks_controlled": false,
+  "source_snapshot": "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\pvz-solid-fill-source-20261027"
+}

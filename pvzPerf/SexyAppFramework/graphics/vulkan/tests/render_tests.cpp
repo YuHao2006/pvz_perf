@@ -67,6 +67,40 @@ void CanvasHash(const std::vector<uint32_t>& pixels,const char* label) {
         hash=(hash^((pixel>>shift)&255))*1099511628211ull;
     std::cout<<"canvas hash "<<label<<"="<<std::hex<<hash<<std::dec<<'\n';
 }
+void MixedBlendPixels(Sexy::VulkanRenderer& renderer) {
+    using namespace Sexy;
+    Require(renderer.BeginScene(),"Cannot test mixed blend ordering and alpha");
+    const uint32_t colors[]{0x805a90c0,0x005a90c0};
+    auto* translucent=renderer.CreateTexture(1,1,&colors[0],4);
+    auto* opaque=renderer.CreateTexture(1,1,&colors[1],4,true);
+    const float destinationAlpha[]{0,1/255.0f,0.25f,0.5f,1};
+    const VulkanBlend modes[]{VulkanBlend::Normal,VulkanBlend::Additive,
+        VulkanBlend::Normal,VulkanBlend::Additive};
+    for (int i=0;i<10;++i)
+        SubmitImage(renderer,Quad(float(400+i),80,1,2,0.125f,0.25f,0.5f,destinationAlpha[i%5]),
+            renderer.whiteTexture,false,false,VulkanBlend::Opaque);
+    for (int reference=0;reference<2;++reference) for (int i=0;i<10;++i) {
+        auto* texture=i<5?translucent:opaque;
+        for (auto mode:modes) {
+            auto vertices=Quad(float(400+i),float(80+reference),1,1,0.75f,0.5f,0.875f,0.625f);
+            EncodeSource(vertices,texture,false,false);
+            // With no filter alias this bit is mathematically inert, but keeps
+            // the reference on the original separate-blend scene pipeline.
+            if (reference) for (auto& vertex:vertices) vertex.slot|=GpuVertex::kIndependentColorFilter;
+            renderer.SubmitTriangles(vertices,texture,false,false,mode,nullptr);
+        }
+    }
+    renderer.DestroyTexture(translucent);renderer.DestroyTexture(opaque);
+    renderer.EndSceneAndPresent();
+    const auto pixels=renderer.ReadScenePixels();
+    for (int i=0;i<10;++i) {
+        const auto reference=pixels[size_t(81)*800+400+i];
+        Pixel(pixels,400+i,80,reference,2);
+        Require(std::abs(int(pixels[size_t(80)*800+400+i]>>24)-int(reference>>24))<=1,
+            "Mixed normal/additive draws changed alpha accumulation");
+    }
+    std::cout<<"PASS mixed normal/additive: ordering, opaque input and transparent destination alpha\n";
+}
 void CoveragePixels(Sexy::VulkanRenderer& renderer) {
     using namespace Sexy;
     Require(renderer.BeginScene(),"Cannot test GPU byte coverage");
@@ -400,6 +434,202 @@ void RawFilterAliasEdges(Sexy::VulkanRenderer& renderer) {
     std::cout<<"PASS raw filter aliases: WHITE/WASHED/LESS nearest+linear match premultiplied cache edges\n";
 }
 
+
+// Exercise frame resource reuse without readbacks between submissions.
+// BeginCommands must retire the previous use before reusing the unique command buffer.
+void SingleFrameReuseAndRetirement(Sexy::VulkanRenderer& renderer,VulkanContext& window,
+    VulkanTest::Window& native) {
+    using namespace Sexy;
+    window.WaitForFrame();
+    VkCommandBuffer singleCommand=VK_NULL_HANDLE;
+    for (int frame=0;frame<8;++frame) {
+        const auto previousSubmission=window.submittedSerial;
+        const auto context=window.BeginCommands();
+        Require(context.valid,"Cannot acquire consecutive single-resource fixture");
+        Require(window.completedSerial>=previousSubmission,
+            "Single command buffer reused before previous submission completed");
+        if(singleCommand==VK_NULL_HANDLE) singleCommand=context.cmd;
+        Require(context.cmd==singleCommand,"Consecutive frames allocated another command buffer");
+        Require(context.serial==window.submittedSerial+1,"Recording serial does not follow submission");
+        window.BeginPresentPass({{0,0,0,1}});
+        window.EndFrame();
+        Require(window.submittedSerial==context.serial,"Submit did not publish its recording serial");
+    }
+    const unsigned int red=0xffff0000u;
+    auto* warm=renderer.CreateTexture(1,1,&red,4);
+    renderer.ReadTexturePixels(warm); // Finish setup uploads, not the draw loop.
+    for(int frame=0;frame<32;++frame) {
+        Require(renderer.BeginScene(),"Cannot reuse mapped draw streams");
+        const float r=(frame&1)?1.f:0.f, g=(frame&2)?1.f:0.f, b=(frame&4)?1.f:0.f;
+        SubmitImage(renderer,Quad(float(frame),60,1,1,r,g,b),renderer.whiteTexture,
+            false,false,VulkanBlend::Opaque);
+        renderer.EndSceneAndPresent();
+    }
+    struct RetiredSlot { unsigned int slot;unsigned long long serial; };
+    std::vector<RetiredSlot> retired;
+    for(int frame=0;frame<8;++frame) {
+        Require(renderer.BeginScene(),"Cannot exercise pending texture retirement");
+        const unsigned int color=0xff000000u|unsigned(frame+1)*0x010307u;
+        auto* texture=renderer.CreateTexture(1,1,&color,4);
+        const auto slot=VulkanRenderer::SlotOf(texture);
+        for(const auto& old:retired)
+            Require(old.serial<=window.completedSerial || slot!=old.slot,
+                "A descriptor slot was recycled before its submission completed");
+        SubmitImage(renderer,Quad(float(40+frame),60,1,1),texture,false,false,VulkanBlend::Opaque);
+        renderer.DestroyTexture(texture);
+        Require(renderer.GetResourceCounts().retiredTextures!=0,
+            "Recorded texture was destroyed before its command buffer was submitted");
+        retired.push_back({slot,window.recordingSerial});
+        renderer.EndSceneAndPresent();
+    }
+    // Suspend/reacquire after the single resource set has been reused and without a
+    // readback between them. The logical scene must survive WSI recreation.
+    const auto oldSwapchain=window.swapchain;
+    const auto generation=window.swapchainGeneration;
+    native.Minimized(true);
+    Require(!renderer.BeginScene(),"Suspension acquired another frame");
+    Require(window.swapchain==oldSwapchain && window.swapchainGeneration==generation,
+        "Suspension destroyed pending-frame WSI assets");
+    native.Minimized(false);native.Resize(333,251);
+    Require(renderer.BeginScene(),"Cannot reacquire after pending-frame resize");
+    Require(window.swapchainGeneration==generation+1,"Pending-frame resize did not rebuild exactly once");
+    renderer.EndSceneAndPresent();
+    const auto pixels=renderer.ReadScenePixels();
+    for(int frame=0;frame<32;++frame)
+        Pixel(pixels,frame,60,0xff000000u|((frame&1)?0xff0000u:0u)|
+            ((frame&2)?0x00ff00u:0u)|((frame&4)?0x0000ffu:0u));
+    for(int frame=0;frame<8;++frame)
+        Pixel(pixels,40+frame,60,0xff000000u|unsigned(frame+1)*0x010307u);
+    renderer.DestroyTexture(warm);
+    native.Resize(320,240);
+    Require(renderer.ResizePresent(),"Cannot restore frame-slot fixture surface");
+    Require(renderer.BeginScene(),"Cannot reap completed texture versions");
+    renderer.EndSceneAndPresent();
+    window.WaitForFrame();
+    Require(renderer.BeginScene(),"Cannot finish single-frame retirement");
+    renderer.EndSceneAndPresent();
+    Require(renderer.GetResourceCounts().textures==1 && !renderer.GetResourceCounts().retiredTextures,
+        "Single-frame retirement retained dead textures after the fence completed");
+    std::cout<<"PASS single-frame queue: one reused command buffer, 32 consecutive vertex frames, "
+        "pending descriptor retirement, retained pixels and suspend/resize/reacquire\n";
+}
+
+void SingleFrameStaticSlots(Sexy::VulkanRenderer& renderer,VulkanContext& window) {
+    using namespace Sexy;
+    renderer.ReserveStaticTextureSlots(1);
+    const unsigned int red=0xffff0000u, green=0xff00ff00u, blue=0xff0000ffu;
+    auto* first=renderer.CreateTextureStatic(1,1,&red,4,false,0);
+    auto* dynamic=renderer.CreateTexture(1,1,&blue,4);
+    Require(renderer.BeginScene(),"Cannot record original static entry");
+    SubmitImage(renderer,Quad(200,60,1,1),first,false,false,VulkanBlend::Opaque);
+    bool rejected=false;
+    try {
+        auto* unexpected=renderer.CreateTextureStatic(1,1,&green,4,false,0);
+        renderer.DestroyTexture(unexpected);
+    } catch(const std::logic_error&) {rejected=true;}
+    Require(rejected,"Static creation overwrote a descriptor used by unsubmitted commands");
+    rejected=false;
+    try {renderer.BindStaticTexture(dynamic,0);} catch(const std::logic_error&) {rejected=true;}
+    Require(rejected,"Static binding overwrote a descriptor used by unsubmitted commands");
+    renderer.EndSceneAndPresent();
+    const auto firstSerial=window.submittedSerial;
+    auto* second=renderer.CreateTextureStatic(1,1,&green,4,false,0);
+    Require(window.completedSerial>=firstSerial,"Pending static overwrite did not drain its old submission");
+    renderer.DestroyTexture(first);
+    Require(renderer.BeginScene(),"Cannot draw replaced static entry");
+    SubmitImage(renderer,Quad(202,60,1,1),second,false,false,VulkanBlend::Opaque);
+    renderer.EndSceneAndPresent();
+    const auto secondSerial=window.submittedSerial;
+    renderer.BindStaticTexture(dynamic,0);
+    Require(window.completedSerial>=secondSerial,"Pending static binding did not drain its old submission");
+    renderer.DestroyTexture(second);
+    Require(renderer.BeginScene(),"Cannot draw dynamically rebound static entry");
+    SubmitImage(renderer,Quad(204,60,1,1),dynamic,false,false,VulkanBlend::Opaque);
+    renderer.EndSceneAndPresent();
+    const auto pixels=renderer.ReadScenePixels();
+    Pixel(pixels,200,60,red);Pixel(pixels,202,60,green);Pixel(pixels,204,60,blue);
+    renderer.DestroyTexture(dynamic);
+    std::cout<<"PASS single-frame static slots: both current-frame overwrite rejections, "
+        "pending creation/binding drains and old/new descriptor pixels\n";
+}
+
+void SingleFrameFontSnapshots(Sexy::VulkanRenderer& renderer,VulkanContext& window) {
+    using namespace Sexy;
+    const unsigned int red=0xffff0000u;
+    const std::array<unsigned int,2> greenBlue{0xff00ff00u,0xff0000ffu};
+    auto* first=renderer.CreateTexture(1,1,&red,4);
+    auto* second=renderer.CreateTexture(2,1,greenBlue.data(),8);
+    auto* target=renderer.CreateRenderImage(2,1);
+    const VulkanFontGlyph right{0,0,1,1,1,0,1,1}, left{0,0,1,1,0,0,1,1};
+    const VulkanFontGlyph blue{1,0,1,1,1,0,1,1};
+    // Font atlas sampling intentionally retains the original 257/256-style
+    // quantization; even a single isolated saturated glyph may produce 254.
+    // Build exact oracles from fresh targets with one dispatch each, before
+    // any of the pending/same-frame reuse under test. Do not hide lifetime
+    // corruption behind a color tolerance or assume the source remains 255.
+    const auto isolated=[&](VulkanTexture* source,const VulkanFontGlyph& glyph) {
+        auto* reference=renderer.CreateRenderImage(2,1);
+        renderer.SetRenderImage(reference);
+        Require(renderer.BeginScene(),"Cannot begin isolated font reference");
+        renderer.RenderFontAtlas(reference,source,std::span(&glyph,1),0,false);
+        renderer.SetRenderImage(nullptr);
+        auto pixels=renderer.ReadTexturePixels(reference).pixels;
+        renderer.DestroyTexture(reference);
+        return pixels;
+    };
+    const auto expectedRed=isolated(first,right);
+    const auto expectedGreen=isolated(second,left);
+    const auto expectedBlue=isolated(second,blue);
+    Require(expectedRed.size()==2 && expectedGreen.size()==2 && expectedBlue.size()==2,
+        "Isolated font references changed their target dimensions");
+    Require(expectedRed[0]==0 && expectedGreen[1]==0 && expectedBlue[0]==0 &&
+        (expectedRed[1]&0x00ff0000u)!=0 && (expectedRed[1]&0x0000ffffu)==0 &&
+        (expectedGreen[0]&0x0000ff00u)!=0 && (expectedGreen[0]&0x00ff00ffu)==0 &&
+        (expectedBlue[1]&0x000000ffu)!=0 && (expectedBlue[1]&0x00ffff00u)==0,
+        "Isolated font references lost glyph colors or modified untouched cells");
+    Require(renderer.BeginScene(),"Cannot begin repeated font metadata fixture");
+    renderer.SetRenderImage(target);
+    // Different source extents and bindless slots require distinct metadata.
+    // Replacing/freeing the first dispatch's buffer would turn its red cell green.
+    renderer.RenderFontAtlas(target,first,std::span(&right,1),0,false);
+    renderer.RenderFontAtlas(target,second,std::span(&left,1),0,false);
+    renderer.SetRenderImage(nullptr);
+    SubmitImage(renderer,Quad(300,60,2,1),target,false,false,VulkanBlend::Opaque);
+    renderer.SetRenderImage(target);
+    renderer.RenderFontAtlas(target,second,std::span(&blue,1),0,false);
+    renderer.SetRenderImage(nullptr);
+    SubmitImage(renderer,Quad(302,60,2,1),target,false,false,VulkanBlend::Opaque);
+    renderer.EndSceneAndPresent();
+    // No readback/drain: the next frame rewrites the same public font handle.
+    Require(renderer.BeginScene(),"Cannot begin cross-frame font metadata fixture");
+    renderer.SetRenderImage(target);
+    renderer.RenderFontAtlas(target,first,std::span(&right,1),0,false);
+    renderer.SetRenderImage(nullptr);
+    SubmitImage(renderer,Quad(304,60,2,1),target,false,false,VulkanBlend::Opaque);
+    renderer.EndSceneAndPresent();
+    const auto pixels=renderer.ReadScenePixels();
+    Pixel(pixels,300,60,expectedGreen[0]);Pixel(pixels,301,60,expectedRed[1]);
+    Pixel(pixels,302,60,expectedGreen[0]);Pixel(pixels,303,60,expectedBlue[1]);
+    Pixel(pixels,304,60,expectedGreen[0]);Pixel(pixels,305,60,expectedRed[1]);
+    // The synchronous offscreen route borrows streams only after both main
+    // slots drain; switching back must not rewind a pending main draw stream.
+    renderer.SetRenderImage(target);
+    Require(renderer.BeginScene(),"Cannot begin image-only stream reuse fixture");
+    SubmitImage(renderer,Quad(0,0,2,1),first,false,false,VulkanBlend::Opaque);
+    renderer.SetRenderImage(nullptr);
+    Require(renderer.BeginScene(),"Cannot return from image-only to main frame");
+    SubmitImage(renderer,Quad(308,60,2,1),target,false,false,VulkanBlend::Opaque);
+    renderer.EndSceneAndPresent();
+    const auto alternated=renderer.ReadScenePixels();
+    Pixel(alternated,308,60,red);Pixel(alternated,309,60,red);
+    for(auto* texture:{target,first,second}) renderer.DestroyTexture(texture);
+    window.WaitForFrame();
+    Require(renderer.BeginScene(),"Cannot reap font snapshot resources");
+    renderer.EndSceneAndPresent();
+    std::cout<<"PASS single-frame fonts: same/cross-frame metadata, immutable backing/slot snapshots, "
+        "old/new pixels and image-only/main stream alternation\n";
+}
+
 void Run() {
     using namespace Sexy;
     for(const auto& rect:std::array<VulkanClip,7>{{
@@ -470,6 +700,9 @@ void Run() {
     renderer.PrepareLoadingPipelines();
     Require(!renderer.PresentRetainedScene(), "An uninitialized scene was falsely presented");
     Require(!renderer.PresentRetainedScene(), "Repeated startup deferral changed scene state");
+    SingleFrameReuseAndRetirement(renderer,window,native);
+    SingleFrameStaticSlots(renderer,window);
+    SingleFrameFontSnapshots(renderer,window);
     // A mode transaction can update more than one geometry/format property.
     // Setters must not do intermediate device-idle/WSI rebuilds.
     const auto generation=window.swapchainGeneration;
@@ -604,6 +837,7 @@ void Run() {
     CoveragePixels(renderer);
     RawFilterAliasEdges(renderer);
     DynamicUpdates(renderer,window);
+    MixedBlendPixels(renderer);
     UploadEdges(renderer,window);
     BatchedAlphaComposition(renderer);
     const uint32_t resizeColor = 0xff2468ac;

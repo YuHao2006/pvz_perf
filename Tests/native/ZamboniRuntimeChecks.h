@@ -1,9 +1,8 @@
 #pragma once
-// Coupled speed/position checks through the real type action and walking path.
+// Actual-step movement and absolute-time tire speed checks.
 #include "LawnApp.h"
 #include "Lawn/Board.h"
 #include "Lawn/Zombie.h"
-#include "Lawn/ZamboniMotion.h"
 #include "Lawn/SeedPacket.h"
 #include "Lawn/SlotMachineMotion.h"
 #include "Sexy.TodLib/TodParticle.h"
@@ -41,6 +40,7 @@ inline void Step(Zombie& zombie)
 {
     // This is their production ordering in UpdatePlaying: the type action
     // computes speed/ice using the old position, then walking moves the actor.
+    zombie.mBoard->mLevelTimeNs += Sexy::gUpdateIntervalNs;
     zombie.UpdateZamboni();
     zombie.UpdateZombieWalking();
 }
@@ -49,7 +49,7 @@ inline auto State(const Zombie& zombie)
 {
     return std::array<std::uint64_t, 7>{
         std::bit_cast<std::uint32_t>(zombie.mX), std::bit_cast<std::uint32_t>(zombie.mVelX),
-        std::bit_cast<std::uint64_t>(zombie.mVelocityX.origin), zombie.mVelocityX.elapsedNs,
+        std::bit_cast<std::uint64_t>(zombie.mVelocityX.origin), static_cast<std::uint64_t>(zombie.mVelocityX.startTimeNs),
         std::bit_cast<std::uint32_t>(zombie.mVelocityX.rate),
         std::uint64_t(zombie.mVelocityX.bound), std::uint64_t(zombie.mMindControlled)};
 }
@@ -59,6 +59,7 @@ inline void Check(LawnApp& app, Board& board)
     const auto oldMode = app.mGameMode;
     const auto oldDelta = Sexy::gUpdateIntervalNs;
     const auto oldTicks = Sexy::gUpdateTicks;
+    const auto oldTime = board.mLevelTimeNs;
     const auto oldIceX = std::to_array(board.mIceMinX);
     const auto oldIceTimer = std::to_array(board.mIceTimer);
     auto* animation = app.AddReanimation(0, 0, 0, ReanimationType::REANIM_ZOMBIE_ZAMBONI);
@@ -70,18 +71,20 @@ inline void Check(LawnApp& app, Board& board)
         GameMode mode;
         unsigned long long delta;
         double ticks;
+        unsigned long long time;
         std::array<int, MAX_GRID_SIZE_Y> iceX;
         std::array<Sexy::TimeCounter, MAX_GRID_SIZE_Y> iceTimer;
         ReanimationID animation;
         ~Restore()
         {
             app.mGameMode = mode;
+            board.mLevelTimeNs = time;
             Sexy::gUpdateIntervalNs = delta; Sexy::gUpdateTicks = ticks;
             std::copy(iceX.begin(), iceX.end(), board.mIceMinX);
             std::copy(iceTimer.begin(), iceTimer.end(), board.mIceTimer);
             app.RemoveReanimation(animation);
         }
-    } restore{app, board, oldMode, oldDelta, oldTicks, oldIceX, oldIceTimer, animationId};
+    } restore{app, board, oldMode, oldDelta, oldTicks, oldTime, oldIceX, oldIceTimer, animationId};
     app.mGameMode = GameMode::GAMEMODE_MINIGAME_WALLNUT_BOWLING;
     const auto initialize = [&](Zombie& zombie, float x, bool backwards, bool flat)
     {
@@ -101,107 +104,101 @@ inline void Check(LawnApp& app, Board& board)
         zombie.mAttachmentID = AttachmentID::ATTACHMENTID_NULL;
         zombie.mBodyReanimID = animationId;
     };
+    // Normal speed is selected from the pre-move integer X, then integrated
+    // once using the actual nanosecond step. Different partitions may differ.
     for (const bool backwards : {false, true})
-        for (const bool flat : {false, true})
-            for (const float x : {751.123413f, 650.123413f, 401.125f, 399.875f})
+        for (const float x : {751.123413f, 650.123413f, 401.125f, 399.875f})
+            for (const int frequency : {100, 200, 1000, 0})
             {
-                const auto sample = [&](int frequency, std::int64_t duration)
+                board.mLevelTimeNs = 0;
+                Zombie zombie{};
+                initialize(zombie, x, backwards, false);
+                float expectedX = x, expectedSpeed = zombie.mVelX;
+                Schedule(frequency, 1'273'192'835, [&]
                 {
-                    Zombie zombie{};
-                    initialize(zombie, x, backwards, flat);
-                    Schedule(frequency, duration, [&] { Step(zombie); });
-                    return State(zombie);
-                };
-                for (const auto duration : {1'273'192'835LL, 23'319'283'501LL})
-                {
-                    const auto expected = sample(100, duration);
-                    for (const int frequency : {200, 1000, 0})
-                        Require(sample(frequency, duration) == expected,
-                            "Zamboni coupled speed/position or canonical tail depends on partition");
-                }
-                // Independent recurrence using the actual float endpoints,
-                // without feeding rounded float state back into the oracle.
-                long double oracleX = x, speed = .2317289f;
-                const long double direction = backwards ? 1 : -1;
-                for (int tick = 0; tick < 700; ++tick)
-                {
-                    if (oracleX > 400 && !flat)
+                    if (expectedX > 400.0f)
                     {
-                        const auto fraction = std::clamp((oracleX - 700) / (300 - 700), 0.0L, 1.0L);
-                        speed = static_cast<long double>(.25f) +
-                            (static_cast<long double>(.05f) - .25f) * fraction;
+                        const double fraction = std::clamp(
+                            double(static_cast<int>(expectedX) - 700) / -400.0, 0.0, 1.0);
+                        expectedSpeed = static_cast<float>(.25 + (double(.05f) - .25) * fraction);
                     }
-                    else if (flat && speed > static_cast<long double>(.0005f))
-                        speed -= static_cast<long double>(.0005f);
-                    oracleX += direction * speed;
-                }
-                Zombie oracle{};
-                initialize(oracle, x, backwards, flat);
-                Schedule(100, 7'000'000'000, [&] { Step(oracle); });
-                Require(std::abs(double(oracle.mX) - double(oracleX)) < .0002 &&
-                        std::abs(double(oracle.mVelX) - double(speed)) < .000002,
-                    "Zamboni analytic motion differs from the mathematical 1073 recurrence");
-                Zombie original{};
-                initialize(original, x, backwards, flat);
-                Schedule(1000, 137'192'835, [&] { Step(original); });
-                const auto saved = SaveRecordMapping::WriteSaveRecord(original);
-                Zombie resumed{};
-                initialize(resumed, x, backwards, flat);
-                SaveRecordMapping::ReadSaveRecord(resumed, saved.data());
-                resumed.mApp = &app; resumed.mBoard = &board;
-                Require(State(resumed) == State(original), "Zamboni save lost its coupled motion origin");
-                Schedule(100, 1'173'192'835, [&] { Step(original); });
-                Schedule(1000, 1'173'192'835, [&] { Step(resumed); });
-                Require(State(resumed) == State(original), "Saved Zamboni motion continuation diverged");
-                original.mX += 37.123413f;
-                resumed.mX = original.mX;
-                original.mMindControlled = resumed.mMindControlled = !backwards;
-                Schedule(200, 137'192'835, [&] { Step(original); });
-                Schedule(1000, 137'192'835, [&] { Step(resumed); });
-                Require(State(resumed) == State(original), "Zamboni teleport/direction edit failed to rebind");
-                original.mFlatTires = resumed.mFlatTires = !flat;
-                original.mVelX = resumed.mVelX = .173289f;
-                Schedule(200, 137'192'835, [&] { Step(original); });
-                Schedule(1000, 137'192'835, [&] { Step(resumed); });
-                Require(State(resumed) == State(original), "Zamboni flat-tire/velocity edit failed to rebind");
+                    expectedX += static_cast<float>(double(backwards ? expectedSpeed : -expectedSpeed) *
+                        double(Sexy::gUpdateIntervalNs) / 10'000'000.0);
+                    Step(zombie);
+                    Require(std::abs(zombie.mVelX - expectedSpeed) < .0000001f &&
+                        std::abs(zombie.mX - expectedX) < .0001f,
+                        "Zamboni differs from actual-step original speed recurrence");
+                });
+                Require(!zombie.mVelocityX.bound, "Normal Zamboni retained a trajectory anchor");
             }
-    for (const auto elapsed : {0ULL, 10'000'000ULL, 9'007'199'254'740'993ULL,
-            std::numeric_limits<std::uint64_t>::max()})
+    // Only flat-tire speed is time-valued. Position remains step integration.
+    float referenceSpeed = 0;
+    for (const int frequency : {100, 200, 1000, 0})
     {
-        const auto forward = ZamboniMotion::Sample<1>(700, .19f, elapsed, false, true, -.25f);
-        const auto backward = ZamboniMotion::Sample<-1>(700, .19f, elapsed, false, true, .25f);
-        Require(forward.position == 700 && backward.position == 700 &&
-                forward.speed == .25 && backward.speed == .25,
-            "Zamboni exact equilibrium overflowed or changed over a long interval");
-    }
-    const auto additional = [&](int frequency)
-    {
+        board.mLevelTimeNs = 0;
         Zombie zombie{};
-        initialize(zombie, 650.123413f, false, false);
-        zombie.mBlowingAway = true;
-        Schedule(frequency, 137'192'835, [&] { Step(zombie); });
-        return State(zombie);
-    };
-    const auto additionalReference = additional(100);
-    for (const auto frequency : {200, 1000, 0})
-        Require(additional(frequency) == additionalReference,
-            "Zamboni source curve plus additional motion depends on partition");
+        initialize(zombie, 650.125f, false, true);
+        zombie.mVelocityX.rate = zombie.mVelX;
+        zombie.mVelocityX.startTimeNs = 0;
+        zombie.mVelocityX.bound = true;
+        Schedule(frequency, 1'273'192'835, [&] { Step(zombie); });
+        if (frequency == 100) referenceSpeed = zombie.mVelX;
+        Require(zombie.mVelX == referenceSpeed,
+            "Flat-tire speed depends on the step partition");
+        Schedule(frequency, 5'000'000'000, [&] { Step(zombie); });
+        Require(zombie.mVelX == 0, "Flat-tire speed did not clamp to rest");
+    }
     for (const bool flat : {false, true})
     {
-        const auto stopped = [&](int frequency)
-        {
-            Zombie zombie{};
-            initialize(zombie, 650.123413f, false, flat);
-            zombie.mIsEating = true;
-            Schedule(frequency, 137'192'835, [&] { Step(zombie); });
-            Require(zombie.mX == 650.123413f, "Stopped Zamboni still moved its body");
-            zombie.mIsEating = false;
-            Schedule(frequency, 137'192'835, [&] { Step(zombie); });
-            return State(zombie);
-        };
-        const auto expected = stopped(100);
-        for (const auto frequency : {200, 1000, 0})
-            Require(stopped(frequency) == expected, "Zamboni stop/resume rebound depends on partition");
+        board.mLevelTimeNs = 0;
+        Zombie original{};
+        initialize(original, 650.125f, false, flat);
+        Schedule(200, 137'192'835, [&] { Step(original); });
+        const auto savedTime = board.mLevelTimeNs;
+        const auto saved = SaveRecordMapping::WriteSaveRecord(original);
+        Zombie resumed{};
+        initialize(resumed, 0, false, flat);
+        SaveRecordMapping::ReadSaveRecord(resumed, saved.data());
+        resumed.mApp = &app; resumed.mBoard = &board;
+        Require(State(resumed) == State(original), "Zamboni save lost its speed anchor");
+        Schedule(200, 1'173'192'835, [&] { Step(original); });
+        board.mLevelTimeNs = savedTime;
+        Schedule(200, 1'173'192'835, [&] { Step(resumed); });
+        Require(State(resumed) == State(original), "Zamboni identical-step save continuation diverged");
+        resumed.mIsEating = true;
+        const float stoppedX = resumed.mX;
+        Schedule(200, 137'192'835, [&] { Step(resumed); });
+        Require(resumed.mX == stoppedX, "Stopped Zamboni moved");
+        resumed.mIsEating = false;
+        resumed.mX += 37.125f;
+        Sexy::gUpdateIntervalNs = 0;
+        const float editedX = resumed.mX;
+        Step(resumed);
+        Require(resumed.mX == editedX, "Zero-step Zamboni snapped to an obsolete trajectory");
     }
+    // Pending movement is consumed even when ordinary walking is stopped;
+    // blowing-away displacement remains additive and uses the current step.
+    {
+        Zombie additional{};
+        initialize(additional, 650, false, false);
+        additional.mIsEating = true;
+        additional.mPendingAdditionalSpeedX = 2;
+        additional.mBlowingAway = true;
+        Sexy::gUpdateIntervalNs = 5'000'000;
+        Step(additional);
+        Require(additional.mX == 656 && additional.mPendingAdditionalSpeedX == 0,
+            "Stopped Zamboni lost additive displacement or failed to consume it");
+    }
+    board.mLevelTimeNs = 7'000'000'000;
+    Zombie lazy{};
+    initialize(lazy, 650, false, true);
+    Sexy::gUpdateIntervalNs = 10'000'000;
+    Step(lazy);
+    Require(lazy.mVelocityX.bound && lazy.mVelocityX.startTimeNs == board.mLevelTimeNs &&
+        lazy.mVelX == .2317289f, "Loaded flat-tire speed failed to bind lazily");
+    lazy.mVelocityX.rate = 0;
+    lazy.mVelX = 0;
+    Schedule(1000, 1'000'000'000, [&] { Step(lazy); });
+    Require(lazy.mVelX == 0, "Spike-stopped Zamboni regained speed");
 }
 } // namespace ZamboniRuntime

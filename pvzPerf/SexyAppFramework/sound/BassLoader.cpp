@@ -130,7 +130,13 @@ std::string ResolveBassPath()
 {
 	if (const char* path = std::getenv("PVZ_BASS_LIBRARY"); path && *path)
 		return path;
+#if defined(__ANDROID__)
+	// libbass.so 随 APK 装进 nativeLibraryDir；按 soname 走链接器默认搜索。
+	// 数据目录里的绝对路径在 targetSdk 29+ 会被 SELinux 拒绝 dlopen。
+	return NativeBassFilename;
+#else
 	return Sexy::GetExecutableDirectory() + NativeBassFilename;
+#endif
 }
 #endif
 }
@@ -185,6 +191,7 @@ BASS_INSTANCE::BASS_INSTANCE(const char *dllName) : mModule(NULL)
 	GETPROC(BASS_SetDevice);
 	GETPROC(BASS_Stop);
 	GETPROC(BASS_Start);
+	GETPROC(BASS_Pause);
 	
 	//*((uintptr_t*) &BASS_SetConfig) = (uintptr_t) GetProcAddress(mModule, "BASS_SetConfig");
 	//*((uintptr_t*) &BASS_GetConfig) = (uintptr_t) GetProcAddress(mModule, "BASS_GetConfig");
@@ -349,7 +356,18 @@ void Sexy::LoadBassDLL()
 	}
 	if ((instance->BASS_GetVersion() >> 16) != BASSVERSION)
 		throw std::runtime_error("Linux audio requires BASS ABI 2.4");
+	// Android：双设备——设备 0（无声）供 SoundDecode 的解码翻转使用，
+	// 默认设备（AAudio）供音乐/采样回放。设备选择是每线程状态：装载线程
+	// 解码翻到 0 不影响主线程的回放设备。
+#if defined(__ANDROID__)
 	if (!instance->BASS_Init(0, 44100, 0, nullptr, nullptr))
+		throw std::runtime_error("Android BASS decode device initialization failed, error " +
+			std::to_string(instance->BASS_ErrorGetCode()));
+	const int device = -1;
+#else
+	const int device = 0;
+#endif
+	if (!instance->BASS_Init(device, 44100, 0, nullptr, nullptr))
 		throw std::runtime_error("Linux BASS decoder initialization failed, error " +
 			std::to_string(instance->BASS_ErrorGetCode()));
 	gBass = instance.release();

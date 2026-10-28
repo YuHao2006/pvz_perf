@@ -1,0 +1,9 @@
+{
+  "date": "2026-10-27",
+  "native_instance_source_snapshot": "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\pvz-native-instances-local-source-20261027",
+  "native_results": "Both GPUs: five scenarios pixel-identical, sync errors 0. Direct source generation removes four-vertex packing; metadata classification uses CPU local value, never a read from mapped upload output. Not a full-game/native UI integration.",
+  "present_copy_results": "Both GPUs: four scenarios including background-only, pixel-identical, sync errors 0. A includes extra identity fullscreen SDR sample pass and B omits it. Output image is compared; not merely comparing the unchanged source scene. Offscreen, 1333x600; no WSI, screen scaling, HDR or compute scaling coverage.",
+  "clocks_controlled": false,
+  "production_decision": "Native-instance and presentation experiments not promoted. Ordinary uint16 production path remains.",
+  "timing_scope": "Only Temp; GPU timestamps and partial CPU recording wall time. No formal performance ledger numbers. First native prototype read mapped upload memory for pipeline classification and had pathological host cost; corrected local-value variant is reported separately."
+}

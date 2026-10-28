@@ -4,6 +4,8 @@
 // nonuniformEXT() 原生可用——合并游程里同一绘制跨三角携带不同槽位/采样器，
 // 索引必须声明非一致，否则驱动按动态一致优化属未定义行为。
 #extension GL_EXT_nonuniform_qualifier : require
+precision mediump float;
+precision highp int;
 
 // bindless：全场纹理数组按存活数定容 4096（复用语义，渲染器侧见
 // kTextureSlots）。采样器同理：4 个（bit0=线性过滤 bit1=重复寻址）装一个

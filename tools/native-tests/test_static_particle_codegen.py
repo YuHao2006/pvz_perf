@@ -108,25 +108,9 @@ class CompiledParticleTests(unittest.TestCase):
             offset += 24
         self.assertEqual(offset, len(binary))
 
-    def test_gpu_blob_contains_direct_track_offsets_masks_and_float_geometry(self):
-        data = fixture(curve=1)
-        output = compiler.generate(self.config, {self.path: data})
-        binary = output["runtime_records"]["compiled/gpu-particle/test.compiled"]
-        magic, count, emitters, variants = struct.unpack_from("<4I", binary)
-        self.assertEqual((magic, emitters, variants), (0x31504750, 2, 1))
-        self.assertEqual(len(binary), 16 + count * 4)
-        words = struct.unpack_from(f"<{count}f", binary, 16)
-        self.assertEqual(words[:2], (4., 2.))
-        self.assertEqual(words[3], 0.)
-        # SystemRed sets the red channel bit and render mask bit zero.
-        self.assertEqual(int(words[4 + 1]) & 1, 1)
-        self.assertEqual(int(words[4 + 1]) & 128, 128)  # Authored position field.
-        self.assertEqual(words[4 + 7], 1.)
-        red = int(words[4 + 8])
-        self.assertEqual(words[red], 1.)
-        expected_low, expected_high = struct.unpack("<2f", struct.pack("<2f", .000123456789, 13.3072289))
-        time = struct.unpack("<f", struct.pack("<f", 1 / 3))[0]
-        self.assertEqual(words[red + 1:red + 6], (time, expected_low, expected_high, 1., 13.))
+    def test_particle_runtime_does_not_emit_gpu_behavior_transport(self):
+        output = compiler.generate(self.config, {self.path: fixture(curve=1)})
+        self.assertEqual(set(output["runtime_records"]), {"compiled/particle-runtime/test.compiled"})
 
 
 if __name__ == "__main__":

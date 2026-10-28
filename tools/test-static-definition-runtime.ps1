@@ -85,6 +85,9 @@ try {
     $taskCompileCommand=$taskCompile[0].Replace($taskMain,$taskSource)
     $taskCompileCommand=[regex]::Replace($taskCompileCommand,'/Fo[^ ]+','/Fo"'+$taskObject+'"')
     $taskCompileCommand=[regex]::Replace($taskCompileCommand,'/Fd[^ ]+','/Fd"'+(Join-Path $taskOutput 'compile.pdb')+'"')
+    $taskParticleSource=Join-Path $taskRoot 'Tests\native\ParticleRenderParamsTests.cpp'
+    $taskParticleObject=Join-Path $taskOutput 'ParticleRenderParamsTests.cpp.obj'
+    $taskParticleCompileCommand=$taskCompileCommand.Replace($taskSource,$taskParticleSource).Replace($taskObject,$taskParticleObject)
     $taskCompilerMatch=[regex]::Match($taskCompile[0],'^(?:"([^"]+)"|(\S+))')
     $taskCompiler=if ($taskCompilerMatch.Groups[1].Success) {
         $taskCompilerMatch.Groups[1].Value
@@ -100,6 +103,7 @@ try {
     $taskLinkCommand=[regex]::Replace($taskLinkCommand,'/subsystem:windows','/subsystem:console','IgnoreCase')
     $taskLinkMatch=[regex]::Match($taskLinkCommand,'^(?:"[^"]+link.exe"|\S*link.exe)')
     if (!$taskLinkMatch.Success) { throw 'Cannot identify the runtime linker' }
+    $taskLinkCommand+=' "'+$taskParticleObject+'"'
     $taskResponse=Join-Path $taskOutput 'link.rsp'
     [IO.File]::WriteAllText($taskResponse,$taskLinkCommand.Substring($taskLinkMatch.Length),
         [Text.UTF8Encoding]::new($false))
@@ -110,6 +114,9 @@ try {
             & $env:ComSpec /d /v:on /s /c ($taskEnvironment+$taskCompileCommand) |
                 Where-Object { $_ -notmatch '^(Note: including file:|注意: 包含文件:)' }
             if ($LASTEXITCODE -ne 0) { throw 'Static definition runtime test compilation failed' }
+            & $env:ComSpec /d /v:on /s /c ($taskEnvironment+$taskParticleCompileCommand) |
+                Where-Object { $_ -notmatch '^(Note: including file:|注意: 包含文件:)' }
+            if ($LASTEXITCODE -ne 0) { throw 'Particle render parameter test compilation failed' }
             & $env:ComSpec /d /v:on /s /c ($taskEnvironment+$taskLinkCommand)
             if ($LASTEXITCODE -ne 0) { throw 'Static definition runtime test link failed' }
         }

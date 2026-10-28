@@ -1,0 +1,1297 @@
+{
+  "affinity": "LP14/0x4000",
+  "frequency": "11x user-confirmed, not independently measured",
+  "compiler": "MSVC 14.51.36231 x64",
+  "serial": true,
+  "processes_per_fixture": 2,
+  "scope": "Historical fixtures and current extracted declarations are distinct. No measurement here calls retail executable machine code.",
+  "excluded_attempts": [
+    "cmd start escaping error (no usable measurement)",
+    "initial r3 wrong include paths/current enum dependency",
+    "initial particle roster two 170-second timeouts",
+    "overlapping exploratory zombie/roster attempt; zombie rerun serially, roster aborted before results"
+  ],
+  "jobs": [
+    {
+      "name": "00_bench01_dmgflags",
+      "scope": "historical_fixture_reproduction",
+      "source_sha256": "a170ffe6205f699def534573b3fc2999319fe6eb718d1c23e97ea343ef3e973a",
+      "build_exit": 0,
+      "runs": [
+        {
+          "exit": 0,
+          "seconds": 0.6976219000061974
+        },
+        {
+          "exit": 0,
+          "seconds": 0.6852888999856077
+        }
+      ],
+      "exe_sha256": "c5fb48f1d2cca860af564b32a90e8a6eb94bf8a258219c62294b61fe168455bf",
+      "batch": "base",
+      "evidence": "base-00_bench01_dmgflags",
+      "successful": true
+    },
+    {
+      "name": "01_bench02_fireproj",
+      "scope": "historical_fixture_reproduction",
+      "source_sha256": "f0f058441ca86461dff1bcecccdb3a90b56cd4b2ddb120e05407c59df6dd5180",
+      "build_exit": 0,
+      "runs": [
+        {
+          "exit": 0,
+          "seconds": 0.8517090000095777
+        },
+        {
+          "exit": 0,
+          "seconds": 0.8479583000007551
+        }
+      ],
+      "exe_sha256": "dc2113585cdf6c6501049f50844eae133fcb6bf566f68a5029f9dc28af4ac9c6",
+      "batch": "base",
+      "evidence": "base-01_bench02_fireproj",
+      "successful": true
+    },
+    {
+      "name": "02_bench03_shootctr",
+      "scope": "historical_fixture_reproduction",
+      "source_sha256": "4c80479842cead80b46bb139191317830e2a9f1dd1d429df342b58a223953f22",
+      "build_exit": 0,
+      "runs": [
+        {
+          "exit": 0,
+          "seconds": 0.7720697000040673
+        },
+        {
+          "exit": 0,
+          "seconds": 0.7673503000114579
+        }
+      ],
+      "exe_sha256": "1e6a0198ebd1f538a090f492d652d7b313c2cdbd3e3827b627f295e3c92bac70",
+      "batch": "base",
+      "evidence": "base-02_bench03_shootctr",
+      "successful": true
+    },
+    {
+      "name": "03_bench04_flowerpot",
+      "scope": "historical_fixture_reproduction",
+      "source_sha256": "35281508461c58f813d672097250a88071b421c7bd9b91441666589fb04c65b8",
+      "build_exit": 0,
+      "runs": [
+        {
+          "exit": 0,
+          "seconds": 0.7317535000038333
+        },
+        {
+          "exit": 0,
+          "seconds": 0.7324309999821708
+        }
+      ],
+      "exe_sha256": "43f19ebbc717a3d5414b4374cb1e4690ac8c2dad2736d436b1f622f94296e754",
+      "batch": "base",
+      "evidence": "base-03_bench04_flowerpot",
+      "successful": true
+    },
+    {
+      "name": "04_bench05_packetdraw",
+      "scope": "historical_fixture_reproduction",
+      "source_sha256": "f864ab063540bb02b8bbb7837296285976994187604df546df14469e99a63035",
+      "build_exit": 0,
+      "runs": [
+        {
+          "exit": 0,
+          "seconds": 1.3795930000196677
+        },
+        {
+          "exit": 0,
+          "seconds": 1.381137199990917
+        }
+      ],
+      "exe_sha256": "d4260d431bb96fae5697c4339aa1d17b5e7f94cae5af59fa478cb7c1aee60602",
+      "batch": "base",
+      "evidence": "base-04_bench05_packetdraw",
+      "successful": true
+    },
+    {
+      "name": "05_bench06_zimgoff",
+      "scope": "historical_fixture_reproduction",
+      "source_sha256": "ec630214f176f58422d4081280b674e9b4621b057bab17239bde58efaf695048",
+      "build_exit": 0,
+      "runs": [
+        {
+          "exit": 0,
+          "seconds": 0.7283043000206817
+        },
+        {
+          "exit": 0,
+          "seconds": 0.7197474999993574
+        }
+      ],
+      "exe_sha256": "d2ef944b5080f1e33f06d28bb9d0b5a6d789f984368ea51eb4ad4e058d3fd6cd",
+      "batch": "base",
+      "evidence": "base-05_bench06_zimgoff",
+      "successful": true
+    },
+    {
+      "name": "06_bench07_walkhead",
+      "scope": "historical_fixture_reproduction",
+      "source_sha256": "479c4a25f627acbddf9ea8b97364cc19359ee4bacd398a231d9bc29560db490a",
+      "build_exit": 0,
+      "runs": [
+        {
+          "exit": 0,
+          "seconds": 0.7648078999773134
+        },
+        {
+          "exit": 0,
+          "seconds": 0.7612113999784924
+        }
+      ],
+      "exe_sha256": "c7731cc1960c280785ef44016eaf96fdf14b86a4cb707811556f9cded0bc07e2",
+      "batch": "base",
+      "evidence": "base-06_bench07_walkhead",
+      "successful": true
+    },
+    {
+      "name": "07_bench08_seedupdate",
+      "scope": "historical_fixture_reproduction",
+      "source_sha256": "537e391cfb209e68d2e05372b81d0ed7747575544476cdc353e4e25f0a77cd9e",
+      "build_exit": 0,
+      "runs": [
+        {
+          "exit": 0,
+          "seconds": 1.5757915999856777
+        },
+        {
+          "exit": 0,
+          "seconds": 1.5728329999838024
+        }
+      ],
+      "exe_sha256": "adc9d0141e77d34157047dc89cf63cdc4f6cab886d37239e9b0cfece56496c8f",
+      "batch": "base",
+      "evidence": "base-07_bench08_seedupdate",
+      "successful": true
+    },
+    {
+      "name": "08_bench09_zaction",
+      "scope": "historical_fixture_reproduction",
+      "source_sha256": "057b7124aedf9685dff86777e154d7d371f6635702be4bae45a7073d59303fcc",
+      "build_exit": 0,
+      "runs": [
+        {
+          "exit": 0,
+          "seconds": 1.1825152999954298
+        },
+        {
+          "exit": 0,
+          "seconds": 1.176121199998306
+        }
+      ],
+      "exe_sha256": "e714e64b60c9bab7c85a489a15c66007fd5918f9fb23d8883db9d16cf3557edd",
+      "batch": "base",
+      "evidence": "base-08_bench09_zaction",
+      "successful": true
+    },
+    {
+      "name": "09_bench10_prodraw",
+      "scope": "historical_fixture_reproduction",
+      "source_sha256": "13db8257246e381b3e99e151b2baa7f81e98ad1c3d2c40a770522239aa1e8763",
+      "build_exit": 0,
+      "runs": [
+        {
+          "exit": 0,
+          "seconds": 1.019175900000846
+        },
+        {
+          "exit": 0,
+          "seconds": 1.010315100022126
+        }
+      ],
+      "exe_sha256": "745e262d2bde938f045713045cd315fb56fb6b263706d8eb2b4eee1d006e6517",
+      "batch": "base",
+      "evidence": "base-09_bench10_prodraw",
+      "successful": true
+    },
+    {
+      "name": "10_bench11_proshadow",
+      "scope": "historical_fixture_reproduction",
+      "source_sha256": "c6e45f3ffd7e428e6df8c490a2721067a1af2c1dae5ace4c346a41cfe36571d0",
+      "build_exit": 0,
+      "runs": [
+        {
+          "exit": 0,
+          "seconds": 2.239393399999244
+        },
+        {
+          "exit": 0,
+          "seconds": 2.2223030000168364
+        }
+      ],
+      "exe_sha256": "d4f1bdac6af2013ec79861c1259ef925b8b321406ca2527bcd51719d3f0bd67c",
+      "batch": "base",
+      "evidence": "base-10_bench11_proshadow",
+      "successful": true
+    },
+    {
+      "name": "11_bench12_proimmediate",
+      "scope": "historical_fixture_reproduction",
+      "source_sha256": "0350b244949d1667e9c19eeb66717229dbcb3e262b66633125817bcb1e7f678d",
+      "build_exit": 0,
+      "runs": [
+        {
+          "exit": 0,
+          "seconds": 0.7452149000018835
+        },
+        {
+          "exit": 0,
+          "seconds": 0.7456014000053983
+        }
+      ],
+      "exe_sha256": "0a39e483c66863b7fe14b76799da621b9be87ec71970e5b267c7cbbce6109480",
+      "batch": "base",
+      "evidence": "base-11_bench12_proimmediate",
+      "successful": true
+    },
+    {
+      "name": "12_bench13_dynamics",
+      "scope": "historical_fixture_reproduction",
+      "source_sha256": "4aab2ab199fb5866958c3ecb4a2e3945e38e28a8b8e85be00b529ca0496445c4",
+      "build_exit": 0,
+      "runs": [
+        {
+          "exit": 0,
+          "seconds": 0.7440930999873672
+        },
+        {
+          "exit": 0,
+          "seconds": 0.7440837000031024
+        }
+      ],
+      "exe_sha256": "0db9c2ca0c2cb773bf5d2bd26be450db98952739957dd092750acc49e31ed6e0",
+      "batch": "base",
+      "evidence": "base-12_bench13_dynamics",
+      "successful": true
+    },
+    {
+      "name": "13_bench14_seedcost",
+      "scope": "historical_fixture_reproduction",
+      "source_sha256": "fd92805c447080e2d4a9d67e210df99b7ed97453073f3aa8876d7d4ea4278f49",
+      "build_exit": 0,
+      "runs": [
+        {
+          "exit": 0,
+          "seconds": 1.159677899995586
+        },
+        {
+          "exit": 0,
+          "seconds": 1.1557825000199955
+        }
+      ],
+      "exe_sha256": "5f497dbfe0e5796441f5293b9039806c8d479a43d9792bfd2d9ab6b5689bb3bf",
+      "batch": "base",
+      "evidence": "base-13_bench14_seedcost",
+      "successful": true
+    },
+    {
+      "name": "14_bench15_storecost",
+      "scope": "historical_fixture_reproduction",
+      "source_sha256": "682e357b3865ceb97367cd23e2fb45d7c186eecc8099838d325826b340d6c9ee",
+      "build_exit": 0,
+      "runs": [
+        {
+          "exit": 0,
+          "seconds": 0.8231970999913756
+        },
+        {
+          "exit": 0,
+          "seconds": 0.8180798999965191
+        }
+      ],
+      "exe_sha256": "dc1d6970c66bd5e607c2f3e05a6098f582a03737b9267968dded3919fb01b055",
+      "batch": "base",
+      "evidence": "base-14_bench15_storecost",
+      "successful": true
+    },
+    {
+      "name": "15_bench16_falltime",
+      "scope": "historical_fixture_reproduction",
+      "source_sha256": "8f817c320c3ecbf2dcba44eb901b82641df947f4a0e0aeb1abc3f4c28011b7a7",
+      "build_exit": 0,
+      "runs": [
+        {
+          "exit": 0,
+          "seconds": 1.4091218000103254
+        },
+        {
+          "exit": 0,
+          "seconds": 1.4048651999910362
+        }
+      ],
+      "exe_sha256": "38a03ddc3a5c36fd3f9157ca334f4a652cc5d19b377c0aa04d3e57125b0fb188",
+      "batch": "base",
+      "evidence": "base-15_bench16_falltime",
+      "successful": true
+    },
+    {
+      "name": "16_bench1_seedpacket",
+      "scope": "historical_fixture_reproduction",
+      "source_sha256": "e2c95d2b8ab34fec107ff54f66d11203fa491d8b6aeaff1cd48c1499abd82033",
+      "build_exit": 0,
+      "runs": [
+        {
+          "exit": 0,
+          "seconds": 1.50431469999603
+        },
+        {
+          "exit": 0,
+          "seconds": 1.5073479000129737
+        }
+      ],
+      "exe_sha256": "3c837b5a980d37cf49735932a3520f6f99ef93333afe18a5e5f2b2201ad3e85a",
+      "batch": "base",
+      "evidence": "base-16_bench1_seedpacket",
+      "successful": true
+    },
+    {
+      "name": "17_bench2_potoffset",
+      "scope": "historical_fixture_reproduction",
+      "source_sha256": "d4823dba92dddc129c5cbcaab1be780992857ab95c380855e87953429c74f3c9",
+      "build_exit": 0,
+      "runs": [
+        {
+          "exit": 0,
+          "seconds": 1.0116111999959685
+        },
+        {
+          "exit": 0,
+          "seconds": 1.0134177999862004
+        }
+      ],
+      "exe_sha256": "e79bc6340dc6ee21e938dac6da504eb8b7a3e454ff12e5519c005013a551bacc",
+      "batch": "base",
+      "evidence": "base-17_bench2_potoffset",
+      "successful": true
+    },
+    {
+      "name": "18_bench4_coindraw",
+      "scope": "historical_fixture_reproduction",
+      "source_sha256": "3579539296bf71abec624a23bc729e2e99a6e557533e11f8cf71f41ddf86d20a",
+      "build_exit": 0,
+      "runs": [
+        {
+          "exit": 0,
+          "seconds": 4.319472599978326
+        },
+        {
+          "exit": 0,
+          "seconds": 4.318689599982463
+        }
+      ],
+      "exe_sha256": "ae63c4bd611163c0f215e7354fe613b6f2663ba82a99de2e7f4f82ea8d603442",
+      "batch": "base",
+      "evidence": "base-18_bench4_coindraw",
+      "successful": true
+    },
+    {
+      "name": "19_bench5_plantshadow",
+      "scope": "historical_fixture_reproduction",
+      "source_sha256": "15fe1a56e80408e5b5096becd83185febf75e7f133398a3a4340b06da8d96d90",
+      "build_exit": 0,
+      "runs": [
+        {
+          "exit": 0,
+          "seconds": 1.6465388000069652
+        },
+        {
+          "exit": 0,
+          "seconds": 1.650688399997307
+        }
+      ],
+      "exe_sha256": "a0f95389ae243d0ef27eb3418e7a05a1b8184411d7414f97801e4ce76805c007",
+      "batch": "base",
+      "evidence": "base-19_bench5_plantshadow",
+      "successful": true
+    },
+    {
+      "name": "20_bench7_plantheight",
+      "scope": "historical_fixture_reproduction",
+      "source_sha256": "e7cb879e29f565bd28f7f568ae1db91626f35bc4b76b6e220508247214aa2ddc",
+      "build_exit": 0,
+      "runs": [
+        {
+          "exit": 0,
+          "seconds": 0.9230218000011519
+        },
+        {
+          "exit": 0,
+          "seconds": 0.9200883000157773
+        }
+      ],
+      "exe_sha256": "adc5ee530d2ea841338c71fc045d69866831c8d05d18534b4615235c72bfc574",
+      "batch": "base",
+      "evidence": "base-20_bench7_plantheight",
+      "successful": true
+    },
+    {
+      "name": "21_bench8_fire",
+      "scope": "historical_fixture_reproduction",
+      "source_sha256": "83a867e99852f40964fe3e6dd8144f5780400beadf30a4e2f194b82edbc3847c",
+      "build_exit": 0,
+      "runs": [
+        {
+          "exit": 0,
+          "seconds": 5.658635799976764
+        },
+        {
+          "exit": 0,
+          "seconds": 5.644801099988399
+        }
+      ],
+      "exe_sha256": "9e7bf5335ec663fa0131e67d1254067dcb6aa8a59b6cc1c136f3e3ad087bd7dc",
+      "batch": "base",
+      "evidence": "base-21_bench8_fire",
+      "successful": true
+    },
+    {
+      "name": "22_bench02_Plant_DoSpecial",
+      "scope": "historical_fixture_reproduction",
+      "source_sha256": "c57471259ab5210e3ffae06e58491c2fae11289861f8afd2b8f306463fe35534",
+      "build_exit": 0,
+      "runs": [
+        {
+          "exit": 0,
+          "seconds": 1.0057760000054259
+        },
+        {
+          "exit": 0,
+          "seconds": 0.9802375999861397
+        }
+      ],
+      "exe_sha256": "a446155afff2ada9138360ec5784923060477bfea7c5edd4b6cdb32456e5bc21",
+      "batch": "base",
+      "evidence": "base-22_bench02_Plant_DoSpecial",
+      "successful": true
+    },
+    {
+      "name": "23_bench07_Challenge_BeghouledPickSeed",
+      "scope": "historical_fixture_reproduction",
+      "source_sha256": "b091d91afc6fa00d565b8148a6b1c01fa19ad2192b8778b11e78842d0bcee0c3",
+      "build_exit": 0,
+      "runs": [
+        {
+          "exit": 0,
+          "seconds": 1.9382685000018682
+        },
+        {
+          "exit": 0,
+          "seconds": 1.92950369999744
+        }
+      ],
+      "exe_sha256": "443093834b0d50a9adfad033c79cea4b5fe636ba7950744ac61e7b78c6260cdc",
+      "batch": "base",
+      "evidence": "base-23_bench07_Challenge_BeghouledPickSeed",
+      "successful": true
+    },
+    {
+      "name": "24_bench08_Challenge_SquirrelFound",
+      "scope": "historical_fixture_reproduction",
+      "source_sha256": "09e1405c54decefc0b8f3d815ef05b28a5a868d38ea3815c861b47bf46fd6e3c",
+      "build_exit": 0,
+      "runs": [
+        {
+          "exit": 0,
+          "seconds": 1.8576702999998815
+        },
+        {
+          "exit": 0,
+          "seconds": 1.776555400021607
+        }
+      ],
+      "exe_sha256": "1ea4c76d5d44979bad723d35b0d2351cc32e57d8d40f4a7dfd39a01ee9d16581",
+      "batch": "base",
+      "evidence": "base-24_bench08_Challenge_SquirrelFound",
+      "successful": true
+    },
+    {
+      "name": "25_bench09_ZenGarden_DrawPlantOverlay",
+      "scope": "historical_fixture_reproduction",
+      "source_sha256": "058c2866cba55b83c0e899731dd8ed83444692af805d1aaecfa2f4c7457eaa80",
+      "build_exit": 0,
+      "runs": [
+        {
+          "exit": 0,
+          "seconds": 0.6592284000071231
+        },
+        {
+          "exit": 0,
+          "seconds": 0.6529595000029076
+        }
+      ],
+      "exe_sha256": "b8bf4ebdba2031d72298524b4d6946fb5badb81a01b003d174f0da2a85a4f31c",
+      "batch": "base",
+      "evidence": "base-25_bench09_ZenGarden_DrawPlantOverlay",
+      "successful": true
+    },
+    {
+      "name": "26_bench11_ZombatarItems_DrawCategoryHighlight",
+      "scope": "historical_fixture_reproduction",
+      "source_sha256": "6b5999f4e49b5a0ce728382f3e56530800dc58d95e0c93ffba3949b28ceabe7a",
+      "build_exit": 0,
+      "runs": [
+        {
+          "exit": 0,
+          "seconds": 0.8079787000024226
+        },
+        {
+          "exit": 0,
+          "seconds": 0.7863900000229478
+        }
+      ],
+      "exe_sha256": "a1799b0c3b9e66d1d6b3f8a03202e6e95d0c7fd86c4921d035b8ac74f45e199d",
+      "batch": "base",
+      "evidence": "base-26_bench11_ZombatarItems_DrawCategoryHighlight",
+      "successful": true
+    },
+    {
+      "name": "27_bench13_ZombatarColors_SetColorMode",
+      "scope": "historical_fixture_reproduction",
+      "source_sha256": "d7aadb8d0210dc0cee9647963df02dd6a22460d885e20b3a7f6714e6ca862831",
+      "build_exit": 0,
+      "runs": [
+        {
+          "exit": 0,
+          "seconds": 0.4904631999961566
+        },
+        {
+          "exit": 0,
+          "seconds": 0.48701450001681224
+        }
+      ],
+      "exe_sha256": "d4af89cabc758cb9392f11b832985c2432f815032184c7f0a0328046ece89b35",
+      "batch": "base",
+      "evidence": "base-27_bench13_ZombatarColors_SetColorMode",
+      "successful": true
+    },
+    {
+      "name": "30_bench_plant",
+      "scope": "historical_fixture_reproduction",
+      "source_sha256": "5fd3ad115a4f051a884b7e81ea795a6d0798967d9b77834de41ca5cc5ab0bee2",
+      "build_exit": 0,
+      "runs": [
+        {
+          "exit": 0,
+          "seconds": 16.63722800000687
+        },
+        {
+          "exit": 0,
+          "seconds": 16.648918099992443
+        }
+      ],
+      "exe_sha256": "a0a3a91e52159c1ddb49c80e6f4ec2203680f79155de19fd5837f48751a508fb",
+      "batch": "base",
+      "evidence": "base-30_bench_plant",
+      "successful": true
+    },
+    {
+      "name": "31_bench_cellbucket",
+      "scope": "historical_fixture_reproduction",
+      "source_sha256": "41dc567b8f0e42df3b54b3e50db8118c2e7b23b3dc83c80a974f0bb0946208e7",
+      "build_exit": 0,
+      "runs": [
+        {
+          "exit": 0,
+          "seconds": 2.6966650999966078
+        },
+        {
+          "exit": 0,
+          "seconds": 2.704477899998892
+        }
+      ],
+      "exe_sha256": "2df7bef8f3d5ec06eb5e00bda53d285470c11e905489a1c63de5f4ecd31a9d6f",
+      "batch": "base",
+      "evidence": "base-31_bench_cellbucket",
+      "successful": true
+    },
+    {
+      "name": "32_bench_attachment",
+      "scope": "historical_fixture_reproduction",
+      "source_sha256": "cfade59b926bcf86715075977ef87535b24f88f19793ef11ab04a93317f7767b",
+      "build_exit": 0,
+      "runs": [
+        {
+          "exit": 0,
+          "seconds": 10.512053599988576
+        },
+        {
+          "exit": 0,
+          "seconds": 10.590639699978055
+        }
+      ],
+      "exe_sha256": "85313f22f7f56e54f183e5496badad73671b9c1a21d1f68cc59a5048a41cd47c",
+      "batch": "base",
+      "evidence": "base-32_bench_attachment",
+      "successful": true
+    },
+    {
+      "name": "33_bench_curve_dispatch",
+      "scope": "historical_fixture_reproduction",
+      "source_sha256": "49542ded9890ddc4ef484386512433584794f28f450adc5f99a13380585dd39a",
+      "build_exit": 0,
+      "runs": [
+        {
+          "exit": 0,
+          "seconds": 0.5963343000039458
+        },
+        {
+          "exit": 0,
+          "seconds": 0.5973416999913752
+        }
+      ],
+      "exe_sha256": "87b0d19301e3dc1d2102a4d8935872cf04f96cb5ebb559160922335d77670abd",
+      "batch": "base",
+      "evidence": "base-33_bench_curve_dispatch",
+      "successful": true
+    },
+    {
+      "name": "34_bench_dispatch_duel",
+      "scope": "historical_fixture_reproduction",
+      "source_sha256": "a612d1369866023a39224f34615e8066b20dd827d6fe642edeeb47f847fdf29c",
+      "build_exit": 0,
+      "runs": [
+        {
+          "exit": 0,
+          "seconds": 0.7406771999958437
+        },
+        {
+          "exit": 0,
+          "seconds": 0.6580925000016578
+        }
+      ],
+      "exe_sha256": "0a7ce72c1c2f01db7c971b41e618a2675a60fb737a2391da617bee0418d1887d",
+      "batch": "base",
+      "evidence": "base-34_bench_dispatch_duel",
+      "successful": true
+    },
+    {
+      "name": "35_bench_d_algebra",
+      "scope": "historical_fixture_reproduction",
+      "source_sha256": "71199752cb6a076533939fcc7ae56d4e1f1ad6df1aff8eb3ebb2c5a2d18ed029",
+      "build_exit": 0,
+      "runs": [
+        {
+          "exit": 0,
+          "seconds": 0.2616869999910705
+        },
+        {
+          "exit": 0,
+          "seconds": 0.2504076999903191
+        }
+      ],
+      "exe_sha256": "3401549ef78ef112aca5016aa117adb8a1dac668d3c99f3f6a4664c9a3200c87",
+      "batch": "base",
+      "evidence": "base-35_bench_d_algebra",
+      "successful": true
+    },
+    {
+      "name": "36_bench_phase_query",
+      "scope": "historical_fixture_reproduction",
+      "source_sha256": "1bec4da6c0771b1e9be97022e8835c4b5aa78c212e0e581e0d90f3be6164d20f",
+      "build_exit": 2,
+      "runs": [],
+      "batch": "base",
+      "evidence": "base-36_bench_phase_query",
+      "successful": false
+    },
+    {
+      "name": "38_bench_reanim_trackwalk",
+      "scope": "historical_fixture_reproduction",
+      "source_sha256": "b9ed92dfc313999afe2aca0d6250b4d25c0ef4d75d77a33594fb8e05ef90d5b6",
+      "build_exit": 0,
+      "runs": [
+        {
+          "exit": 0,
+          "seconds": 4.490416499989806
+        },
+        {
+          "exit": 0,
+          "seconds": 4.469998400018085
+        }
+      ],
+      "exe_sha256": "e64ca5236119979c0fca83f3cfc28250694ea535a52e934914abda8e5d284c73",
+      "batch": "base",
+      "evidence": "base-38_bench_reanim_trackwalk",
+      "successful": true
+    },
+    {
+      "name": "39_bench_zombie_rowscan",
+      "scope": "historical_fixture_reproduction",
+      "source_sha256": "60ad5da1270aa32b8a59ab0ec7e3766567b271eb15ff39ebb47daaedb7594ed3",
+      "build_exit": 0,
+      "runs": [
+        {
+          "exit": 0,
+          "seconds": 17.512759399978677
+        },
+        {
+          "exit": 0,
+          "seconds": 17.550680299988016
+        }
+      ],
+      "exe_sha256": "223bdd79e27f6d7143088f43603cac364e36f9578e1d5588ee69da73ae03f2e7",
+      "batch": "base",
+      "evidence": "base-39_bench_zombie_rowscan",
+      "successful": true
+    },
+    {
+      "name": "40_bench_image_variation",
+      "scope": "historical_fixture_reproduction",
+      "source_sha256": "44f60605869135876c1fc0ca3e62087f1eb56becb5c16da9ea92423b87045297",
+      "build_exit": 0,
+      "runs": [
+        {
+          "exit": 0,
+          "seconds": 4.393975000013597
+        },
+        {
+          "exit": 0,
+          "seconds": 4.401065300015034
+        }
+      ],
+      "exe_sha256": "19ee4637fa5c26830ccb6451db705e908c16d6d60c3895cc99aa873193bde3e8",
+      "batch": "base",
+      "evidence": "base-40_bench_image_variation",
+      "successful": true
+    },
+    {
+      "name": "41_bench_sincos",
+      "scope": "historical_fixture_reproduction",
+      "source_sha256": "91bf020b401781d29e473951d7db5b1457e6280e41f49ede3415e452dc95a94a",
+      "build_exit": 0,
+      "runs": [
+        {
+          "exit": 0,
+          "seconds": 0.16494640000746585
+        },
+        {
+          "exit": 0,
+          "seconds": 0.16381729999557137
+        }
+      ],
+      "exe_sha256": "e43f1cc973e5f2c14e68516377abf9a36e2fa9060a1ae6eb54601e3a333a5800",
+      "batch": "base",
+      "evidence": "base-41_bench_sincos",
+      "successful": true
+    },
+    {
+      "name": "42_current_bench01_dmgflags",
+      "scope": "current_table_in_historical_harness",
+      "source_sha256": "c403cd14e7c3cadb74cfc9f04ca104cc3bcc0ee64b73be6049738ea1d8cdc1da",
+      "production_source": "pvzPerf\\Lawn\\Plant.cpp",
+      "production_sha256": "6a4efa961c4b5d079ac4d55d5ce978d9e158b385623873efba71decb1b0765d8",
+      "table": "kDamageRangeFlags",
+      "declaration_sha256": "900a06d4e430cc6d284b63a62ba01bd93c6fee993c58be4a3848ecf282f51593",
+      "build_exit": 0,
+      "runs": [
+        {
+          "exit": 0,
+          "seconds": 0.6896598000021186
+        },
+        {
+          "exit": 0,
+          "seconds": 0.6876522000238765
+        }
+      ],
+      "exe_sha256": "cff43276b313dcc5bafca74dccb75d8c43525580cb0982c6ea00c148cfbc1694",
+      "batch": "base",
+      "evidence": "base-42_current_bench01_dmgflags",
+      "successful": true
+    },
+    {
+      "name": "43_current_bench02_fireproj",
+      "scope": "current_table_in_historical_harness",
+      "source_sha256": "4971a97166c08fecf15b4e477daf588334f6ef9c4a68588570bcee053a6b382d",
+      "production_source": "pvzPerf\\Lawn\\Plant.cpp",
+      "production_sha256": "6a4efa961c4b5d079ac4d55d5ce978d9e158b385623873efba71decb1b0765d8",
+      "table": "kFireProjectiles",
+      "declaration_sha256": "8182ac70461ae73d185969c9c6cfa2c404a2e722d4e1a37011e850e72a3d4817",
+      "build_exit": 0,
+      "runs": [
+        {
+          "exit": 0,
+          "seconds": 0.8504446999868378
+        },
+        {
+          "exit": 0,
+          "seconds": 0.8501648000092246
+        }
+      ],
+      "exe_sha256": "a767f3531c3ca640cb4e879351d6a4e860286daab362f42366bf2bc95fe2e5a2",
+      "batch": "base",
+      "evidence": "base-43_current_bench02_fireproj",
+      "successful": true
+    },
+    {
+      "name": "44_current_bench04_flowerpot",
+      "scope": "current_table_in_historical_harness",
+      "source_sha256": "2d548fb2918e4f67f1b21a5534f4ebd52c4ee8b0840f95013fd252a0be6bb3db",
+      "production_source": "pvzPerf\\Lawn\\Plant.cpp",
+      "production_sha256": "6a4efa961c4b5d079ac4d55d5ce978d9e158b385623873efba71decb1b0765d8",
+      "table": "kFlowerPotAdjust",
+      "declaration_sha256": "6ac7c52fed689b73320e1f25a9e8ff3a2731bc9df0cf51b377877b9e92947a58",
+      "build_exit": 0,
+      "runs": [
+        {
+          "exit": 0,
+          "seconds": 0.7355615000124089
+        },
+        {
+          "exit": 0,
+          "seconds": 0.7310369999904651
+        }
+      ],
+      "exe_sha256": "ff8b45968dd0f672daf6e5152f2bf23015cc823de0528ddf3565074e562a8cac",
+      "batch": "base",
+      "evidence": "base-44_current_bench04_flowerpot",
+      "successful": true
+    },
+    {
+      "name": "45_current_bench05_packetdraw",
+      "scope": "current_table_in_historical_harness",
+      "source_sha256": "a276b781928bd4c3cdbfa4ac251b18f6bab1d5d265604d97d5334b4aa0a70231",
+      "production_source": "pvzPerf\\Lawn\\SeedPacket.cpp",
+      "production_sha256": "92c293cecb883e61947edf8ba97448967b8055521e7678d9b5e374adea6dd056",
+      "table": "kSeedPacketDrawMetrics",
+      "declaration_sha256": "7844a73472fd5fe05a40298ecb518e15f9639659efad506ad0a97a37c3d028b5",
+      "build_exit": 0,
+      "runs": [
+        {
+          "exit": 0,
+          "seconds": 1.3783180000027642
+        },
+        {
+          "exit": 0,
+          "seconds": 1.3806358000147156
+        }
+      ],
+      "exe_sha256": "afc23803b2ab1eecdd947a2a7e1ab29aa777406d75b400aa9f7d27e0173009bf",
+      "batch": "base",
+      "evidence": "base-45_current_bench05_packetdraw",
+      "successful": true
+    },
+    {
+      "name": "46_current_bench06_zimgoff",
+      "scope": "current_table_in_historical_harness",
+      "source_sha256": "a06f8c64ca360d885768f87aa3e9e1a85a61b328bd6f452fd233792cf591ac84",
+      "production_source": "pvzPerf\\Lawn\\Zombie.cpp",
+      "production_sha256": "5b5c8cfea8e9d9dc4a01f027afe253f4884eee7fa331ce58fb8832fb90d30f90",
+      "table": "kZombieImageOffsetFix",
+      "declaration_sha256": "25ad29c6a5ab0b63e4d951d278973ff958a43920a5b10cf7b73e3b310de0b6a3",
+      "build_exit": 0,
+      "runs": [
+        {
+          "exit": 0,
+          "seconds": 0.7260249000100885
+        },
+        {
+          "exit": 0,
+          "seconds": 0.7198537000222132
+        }
+      ],
+      "exe_sha256": "2d975a2cc730d78fff1f5adb812f6adb35e230f6ccd1a2e129fdac9a44ef4db8",
+      "batch": "base",
+      "evidence": "base-46_current_bench06_zimgoff",
+      "successful": true
+    },
+    {
+      "name": "47_current_bench07_walkhead",
+      "scope": "current_table_in_historical_harness",
+      "source_sha256": "11a8718fea2eaea063353f608086bac4769361e5b29734139a9cfe975f577489",
+      "production_source": "pvzPerf\\Lawn\\Zombie.cpp",
+      "production_sha256": "5b5c8cfea8e9d9dc4a01f027afe253f4884eee7fa331ce58fb8832fb90d30f90",
+      "table": "kWalkHeadPos",
+      "declaration_sha256": "5c3d5bed403e84e7d33245626327bb1e86ea3a3b316aafed97aabfc847a2a98f",
+      "build_exit": 0,
+      "runs": [
+        {
+          "exit": 0,
+          "seconds": 0.7644381999853067
+        },
+        {
+          "exit": 0,
+          "seconds": 0.7619227999821305
+        }
+      ],
+      "exe_sha256": "5ee3f388c28d2a4f4ae720db51f2b8e095c6f3136f65bce46366d990a31b9b0e",
+      "batch": "base",
+      "evidence": "base-47_current_bench07_walkhead",
+      "successful": true
+    },
+    {
+      "name": "48_current_bench08_seedupdate",
+      "scope": "current_table_in_historical_harness",
+      "source_sha256": "dddaa5f7b6ee0914ba787dd4c28b8dfbb559d72e9d78f9e89dc06116531cbe47",
+      "production_source": "pvzPerf\\Lawn\\Plant.cpp",
+      "production_sha256": "6a4efa961c4b5d079ac4d55d5ce978d9e158b385623873efba71decb1b0765d8",
+      "table": "kSeedTypeUpdates",
+      "declaration_sha256": "139ef647853ca5912d2c1c4ae6928dd6a3847c1efcd7cae7f96f815bdd6694c3",
+      "build_exit": 0,
+      "runs": [
+        {
+          "exit": 0,
+          "seconds": 1.5782004999928176
+        },
+        {
+          "exit": 0,
+          "seconds": 1.5746251000091434
+        }
+      ],
+      "exe_sha256": "ab500b8407d8876663344e772ae954e03bd8dcb42353160bb79d72bdfdb99ac2",
+      "batch": "base",
+      "evidence": "base-48_current_bench08_seedupdate",
+      "successful": true
+    },
+    {
+      "name": "49_current_bench11_proshadow",
+      "scope": "current_table_in_historical_harness",
+      "source_sha256": "4c02202db49993f403a037357ed50049ccd1a35a32395e18b91ddb0515030002",
+      "production_source": "pvzPerf\\Lawn\\Projectile.cpp",
+      "production_sha256": "a31877695185edb72fee9a39d63ab78a643aa5ecd923144e32f863c5388fc02d",
+      "table": "kShadowParams",
+      "declaration_sha256": "8b3e02275a0aa0f4aa938f4f870e0a663f65adba86af2db93830dd8c774c1fe6",
+      "build_exit": 0,
+      "runs": [
+        {
+          "exit": 0,
+          "seconds": 2.2413797000190243
+        },
+        {
+          "exit": 0,
+          "seconds": 2.2191527000104543
+        }
+      ],
+      "exe_sha256": "999bd17c2b12972bc4777ff566e133c55d9325a6234258e5286f008d5734f86b",
+      "batch": "base",
+      "evidence": "base-49_current_bench11_proshadow",
+      "successful": true
+    },
+    {
+      "name": "50_current_bench14_seedcost",
+      "scope": "current_table_in_historical_harness",
+      "source_sha256": "50764b9489506c75e2be8e5fec746b5226042955f618007b1fe73d8d4557de79",
+      "production_source": "pvzPerf\\Lawn\\Plant.cpp",
+      "production_sha256": "6a4efa961c4b5d079ac4d55d5ce978d9e158b385623873efba71decb1b0765d8",
+      "table": "kSeedCostOverrides",
+      "declaration_sha256": "34355dd5e3529e8ba8c772c81c6d332740cffbc6ea1c101335b928072dd276cd",
+      "build_exit": 0,
+      "runs": [
+        {
+          "exit": 0,
+          "seconds": 1.1362470999883953
+        },
+        {
+          "exit": 0,
+          "seconds": 1.1399533999792766
+        }
+      ],
+      "exe_sha256": "3c493ddc1f8bb0e998698dfefae085de057c1fb6ba2291f862746dc72eb60786",
+      "batch": "base",
+      "evidence": "base-50_current_bench14_seedcost",
+      "successful": true
+    },
+    {
+      "name": "51_current_bench15_storecost",
+      "scope": "current_table_in_historical_harness",
+      "source_sha256": "043fc36448a1c2fcbe985303324dfcc9047a04ca002b766602287adf0a6e98f8",
+      "production_source": "pvzPerf\\Lawn\\Widget\\StoreScreen.cpp",
+      "production_sha256": "1741f10bdb4cce965a8041d895c66ed92c32ea840270aea984fa55783cc98ab0",
+      "table": "kStoreItemCosts",
+      "declaration_sha256": "f37bc0a085b472ef6e01951dffb3c36b3c30e12eb1057b9d980f1290d3e7458e",
+      "build_exit": 0,
+      "runs": [
+        {
+          "exit": 0,
+          "seconds": 0.822216100001242
+        },
+        {
+          "exit": 0,
+          "seconds": 0.8177112000121269
+        }
+      ],
+      "exe_sha256": "227825d067a1889dd5a284ff72d3758e68ad6c6c814a54b6350f6a49284a8bea",
+      "batch": "base",
+      "evidence": "base-51_current_bench15_storecost",
+      "successful": true
+    },
+    {
+      "name": "02_current_bench7_plantheight",
+      "scope": "current_table_in_historical_harness",
+      "source_sha256": "e7cb879e29f565bd28f7f568ae1db91626f35bc4b76b6e220508247214aa2ddc",
+      "command": [
+        "C:\\UserProgram\\Visual Studuio\\2026\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\cl.exe",
+        "/nologo",
+        "/O2",
+        "/EHsc",
+        "/std:c++20",
+        "/GL-",
+        "/utf-8",
+        "/IC:\\Users\\Administrator\\CLionProjects\\codex\\PlantsVsZombiesModern\\pvzPerf",
+        "/FoC:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\pvz-small-bench-build-n4_cu1a2\\02_current_bench7_plantheight.obj",
+        "/FeC:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\pvz-small-bench-build-n4_cu1a2\\02_current_bench7_plantheight.exe",
+        "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\pvz-small-bench-build-n4_cu1a2\\archive\\ifelse\\current_bench7_plantheight.cpp"
+      ],
+      "production_source": "pvzPerf\\Lawn\\Plant.cpp",
+      "production_sha256": "6a4efa961c4b5d079ac4d55d5ce978d9e158b385623873efba71decb1b0765d8",
+      "table": "kPlantHeightOffsets",
+      "declaration_sha256": "c911f7e8f56f3c82881514d3e140d40a1149af1f58166ce3f3dc6d9fe46b4df7",
+      "candidate": "C(static)",
+      "build_exit": 0,
+      "runs": [
+        {
+          "exit": 0,
+          "seconds": 0.9273334000026807,
+          "mismatch_marker": false
+        },
+        {
+          "exit": 0,
+          "seconds": 0.923044299997855,
+          "mismatch_marker": false
+        }
+      ],
+      "exe_sha256": "0f615b3d592446f4d405ce244b82e2f9a93ce644bb0ef93d9c6f7b25a53c1ff8",
+      "batch": "extra",
+      "evidence": "extra-02_current_bench7_plantheight",
+      "successful": true
+    },
+    {
+      "name": "03_current_bench5_plantshadow",
+      "scope": "current_table_in_historical_harness",
+      "source_sha256": "22f2fcf500d1f8283d0174d9e0272bde259538e98bc90a2f22d608f081c5c6eb",
+      "command": [
+        "C:\\UserProgram\\Visual Studuio\\2026\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\cl.exe",
+        "/nologo",
+        "/O2",
+        "/EHsc",
+        "/std:c++20",
+        "/GL-",
+        "/utf-8",
+        "/IC:\\Users\\Administrator\\CLionProjects\\codex\\PlantsVsZombiesModern\\pvzPerf",
+        "/FoC:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\pvz-small-bench-build-n4_cu1a2\\03_current_bench5_plantshadow.obj",
+        "/FeC:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\pvz-small-bench-build-n4_cu1a2\\03_current_bench5_plantshadow.exe",
+        "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\pvz-small-bench-build-n4_cu1a2\\archive\\ifelse\\current_bench5_plantshadow.cpp"
+      ],
+      "production_source": "pvzPerf\\Lawn\\Plant.cpp",
+      "production_sha256": "6a4efa961c4b5d079ac4d55d5ce978d9e158b385623873efba71decb1b0765d8",
+      "table": "kPlantShadow",
+      "declaration_sha256": "6c3d02c417db95fb98592d45037f29215124caaea5a8c5994692167dfe03651d",
+      "candidate": "C(static)",
+      "build_exit": 0,
+      "runs": [
+        {
+          "exit": 0,
+          "seconds": 1.6485755000030622,
+          "mismatch_marker": false
+        },
+        {
+          "exit": 0,
+          "seconds": 1.6447889999835752,
+          "mismatch_marker": false
+        }
+      ],
+      "exe_sha256": "b0601a73b4a9dd2c8a3d99273d091a338a94e73cdf6ca1ecbc3dc2e764b37503",
+      "batch": "extra",
+      "evidence": "extra-03_current_bench5_plantshadow",
+      "successful": true
+    },
+    {
+      "name": "04_current_bench13_ZombatarColors_SetColorMode",
+      "scope": "current_table_in_historical_harness",
+      "source_sha256": "4a1e1e020e4a5b8e2d02a6012444205db9f68364df43e57fc9bcdfbc78e7c918",
+      "command": [
+        "C:\\UserProgram\\Visual Studuio\\2026\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\cl.exe",
+        "/nologo",
+        "/O2",
+        "/EHsc",
+        "/std:c++20",
+        "/GL-",
+        "/utf-8",
+        "/IC:\\Users\\Administrator\\CLionProjects\\codex\\PlantsVsZombiesModern\\pvzPerf",
+        "/FoC:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\pvz-small-bench-build-n4_cu1a2\\04_current_bench13_ZombatarColors_SetColorMode.obj",
+        "/FeC:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\pvz-small-bench-build-n4_cu1a2\\04_current_bench13_ZombatarColors_SetColorMode.exe",
+        "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\pvz-small-bench-build-n4_cu1a2\\archive\\ui\\current_bench13_ZombatarColors_SetColorMode.cpp"
+      ],
+      "production_source": "pvzPerf\\Lawn\\Widget\\ZombatarColors.cpp",
+      "production_sha256": "14fd59c6ac5b237c4eac0c417a665619d7b7f1ff1b3fda766d8a54d241e77887",
+      "table": "kZombatarPaletteRange",
+      "declaration_sha256": "286ac3fc471c1fafcfa3bd779f3fde78e58f62b5ea7c13f38de3f6bb4f4d615d",
+      "candidate": "B",
+      "build_exit": 0,
+      "runs": [
+        {
+          "exit": 0,
+          "seconds": 0.4927312000072561,
+          "mismatch_marker": false
+        },
+        {
+          "exit": 0,
+          "seconds": 0.48951029998715967,
+          "mismatch_marker": false
+        }
+      ],
+      "exe_sha256": "ef1d47f62231270b6e3f8bfc097ccbd14e7bf3bbd9d916f5ec6f0fe907ca32d6",
+      "batch": "extra",
+      "evidence": "extra-04_current_bench13_ZombatarColors_SetColorMode",
+      "successful": true
+    },
+    {
+      "name": "05_bench_particle_emitter_names",
+      "scope": "current_name_contract_historical_corpus",
+      "source_sha256": "1a5df09a2bd74854378b7f41f14c86fda38ad8982db2e7cf6348d6eacb3a4877",
+      "command": [
+        "C:\\UserProgram\\Visual Studuio\\2026\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\cl.exe",
+        "/nologo",
+        "/O2",
+        "/EHsc",
+        "/std:c++23preview",
+        "/GL-",
+        "/utf-8",
+        "/IC:\\Users\\Administrator\\CLionProjects\\codex\\PlantsVsZombiesModern\\pvzPerf",
+        "/FoC:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\pvz-small-bench-build-n4_cu1a2\\05_bench_particle_emitter_names.obj",
+        "/FeC:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\pvz-small-bench-build-n4_cu1a2\\05_bench_particle_emitter_names.exe",
+        "C:\\Users\\Administrator\\CLionProjects\\codex\\PlantsVsZombiesModern\\Tests\\performance\\bench_particle_emitter_names.cpp",
+        "/Ob2",
+        "/DNDEBUG",
+        "/W4",
+        "/MD",
+        "/fp:precise",
+        "/IC:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\pvz-small-bench-build-n4_cu1a2",
+        "/link",
+        "/INCREMENTAL:NO",
+        "/OPT:REF",
+        "/OPT:NOICF"
+      ],
+      "fixture_sha256": "06a597a4c9d4a5141a9b0d2594abb310630731b50dd12e5dfb1a2adbb6a3170a",
+      "build_exit": 0,
+      "runs": [
+        {
+          "exit": 0,
+          "seconds": 5.0073268999985885,
+          "mismatch_marker": false
+        },
+        {
+          "exit": 0,
+          "seconds": 4.975299499987159,
+          "mismatch_marker": false
+        }
+      ],
+      "exe_sha256": "6b0d3585361d704462cdf4f4ba2b00d93984e7b5840734e807ec0b10a77bb1f1",
+      "batch": "extra",
+      "evidence": "extra-05_bench_particle_emitter_names",
+      "successful": true
+    },
+    {
+      "name": "00_t16_cursor",
+      "scope": "historical_fixture_reproduction",
+      "source_sha256": "ad8d691d57cc576ce8b792b69d7c9684efc90a9c348e57cf4c1ae6631a8eadd2",
+      "command": [
+        "C:\\UserProgram\\Visual Studuio\\2026\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\cl.exe",
+        "/nologo",
+        "/O2",
+        "/EHsc",
+        "/std:c++20",
+        "/GL-",
+        "/utf-8",
+        "/IC:\\Users\\Administrator\\CLionProjects\\codex\\PlantsVsZombiesModern\\pvzPerf",
+        "/FoC:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\pvz-small-bench-build-_27lfc08\\00_t16_cursor.obj",
+        "/FeC:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\pvz-small-bench-build-_27lfc08\\00_t16_cursor.exe",
+        "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\pvz-small-bench-build-_27lfc08\\archive\\r3\\t16_cursor.cpp"
+      ],
+      "build_exit": 0,
+      "runs": [
+        {
+          "exit": 0,
+          "seconds": 1.760516300011659,
+          "mismatch_marker": false
+        },
+        {
+          "exit": 0,
+          "seconds": 1.781531399989035,
+          "mismatch_marker": false
+        }
+      ],
+      "exe_sha256": "0e1f9f0f5c0be7d7439e35b884681d5fb54ac2084355a0c45e54764bcda46e59",
+      "batch": "r3",
+      "evidence": "r3-00_t16_cursor",
+      "successful": true
+    },
+    {
+      "name": "00_b_zombie_events",
+      "scope": "historical_fixture_reproduction",
+      "source_sha256": "cd73d29d064b69081b0a2e455eb40edf85b5fd04476ae16c34ddf610959236ac",
+      "command": [
+        "C:\\UserProgram\\Visual Studuio\\2026\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\cl.exe",
+        "/nologo",
+        "/O2",
+        "/EHsc",
+        "/std:c++20",
+        "/GL-",
+        "/utf-8",
+        "/IC:\\Users\\Administrator\\CLionProjects\\codex\\PlantsVsZombiesModern\\pvzPerf",
+        "/FoC:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\pvz-small-bench-build-mrnjyew9\\00_b_zombie_events.obj",
+        "/FeC:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\pvz-small-bench-build-mrnjyew9\\00_b_zombie_events.exe",
+        "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\pvz-small-bench-build-mrnjyew9\\archive\\r3\\b_zombie_events.cpp"
+      ],
+      "build_exit": 0,
+      "runs": [
+        {
+          "exit": 0,
+          "seconds": 24.945723699987866,
+          "mismatch_marker": false
+        },
+        {
+          "exit": 0,
+          "seconds": 24.90750190001563,
+          "mismatch_marker": false
+        }
+      ],
+      "exe_sha256": "201a9103bc0fc7e2833bcc224872e582f1f9f96c98ad25bba9b6425f1b2aa28b",
+      "batch": "zombie",
+      "evidence": "zombie-00_b_zombie_events",
+      "successful": true
+    },
+    {
+      "name": "00_bench_particle_roster",
+      "scope": "historical_fixture_reproduction",
+      "source_sha256": "c869553787101136254b9f8bab209a2ca05a7172f0d3c5e10c586616513fc09c",
+      "command": [
+        "C:\\UserProgram\\Visual Studuio\\2026\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\cl.exe",
+        "/nologo",
+        "/O2",
+        "/EHsc",
+        "/std:c++20",
+        "/GL-",
+        "/utf-8",
+        "/IC:\\Users\\Administrator\\CLionProjects\\codex\\PlantsVsZombiesModern\\pvzPerf",
+        "/FoC:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\pvz-small-bench-build-j0cfxrec\\00_bench_particle_roster.obj",
+        "/FeC:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\pvz-small-bench-build-j0cfxrec\\00_bench_particle_roster.exe",
+        "C:\\Users\\Administrator\\CLionProjects\\codex\\PlantsVsZombiesModern\\Tests\\performance\\bench_particle_roster.cpp"
+      ],
+      "build_exit": 0,
+      "runs": [
+        {
+          "exit": 0,
+          "seconds": 176.9673482000071,
+          "mismatch_marker": false
+        },
+        {
+          "exit": 0,
+          "seconds": 173.67030810000142,
+          "mismatch_marker": false
+        }
+      ],
+      "exe_sha256": "7654d9f5c1b118eb15a71d3da8368421b2592bfe1b453b0de429a27025057d26",
+      "batch": "roster",
+      "evidence": "roster-00_bench_particle_roster",
+      "successful": true
+    }
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "date": "2026-10-27",
+  "scope": "Production Vulkan native quads and uint16 indexed runs; desktop correctness and Android build, no phone runtime acceptance",
+  "structural": {
+    "vertex_bytes": 40,
+    "minimum_vertex_buffer_bytes": 8388608,
+    "local_run_vertex_limit": 65536,
+    "index_type": "uint16",
+    "pure_runs": "immutable triangle/quad tables",
+    "mixed_runs": "reused mixed index buffer, no topology-only draw split",
+    "backend_vertex_deduplication": false,
+    "save_layout_changed": false
+  },
+  "logs_sha256": {
+    "pvz-u16-static-nvidia-validation.txt": "dca1f387af56e0353100bb627b23bd5acdb48f935b0645502514d925fc858956",
+    "pvz-u16-static-intel-validation.txt": "8a5c613ffea27b1da64e9d7024da3774788b4452bd85d645c02a1a356710a57c",
+    "pvz-u16-static-image-runtime.txt": "704f6f5fa16ce09d7a0a0602f50ddfd41b37383cbe99b983ca7305e1417a82ca",
+    "pvz-index-width-0x10de-validation.txt": "ad73ce3297a4b6694cb29a73d6afb091113fb9736d9d8e8a41c7df6f8f239c30",
+    "pvz-index-width-0x8086-validation.txt": "934644b44794f19159f67907d870901f5015474e908e9a0405b7b34900833470",
+    "pvz-baked-filter-0x10de-rgba8-manual-validation.txt": "a0a46187ce2611321f9e82f1fc6bccd631eeb3bf8b8784b3a5d6b0dadb6f11fc",
+    "pvz-baked-filter-0x8086-rgba8-manual-validation.txt": "bb3a01963227f64043a6460a4bcb59b31c27a37c1950aa016af282ed2d96b4d6",
+    "pvz-trim-powie-0x10de-validation.txt": "b3a06ec7fb8a148caf124056cff1430070fcbed62d7dbd179d2fd30fb5afe166",
+    "pvz-trim-powie-0x8086-validation.txt": "feb37edee1332c235a278c502a82c08b13b20cf0abd5efb4fcbb7f2cf5d35f37"
+  },
+  "artifact_sha256": {
+    "out/x64-win32-vulkan/Release/pvz_perf.exe": "bd67a4d6f272c00e5276af9e46a0edcd3ab055bf7168a45dfa7b2e94405271dd",
+    "out/android-arm64/Release/libpvz_perf.so": "7b81b3077d1af94ece206eb752e8f119c429b54012f6558a8b592e7de3aed342",
+    "out/android-arm64/Release/main.pak64": "13a7cadc52eaec77ce6aa06bbf4c9854c61af9b25398a906da35cb4b111f4d3d",
+    "out/pvz-arm64-u16-indexed.apk": "bd7cfa2d476d458779a71793afc694b433e740c144a51de0cc8cffb0f90060ef"
+  },
+  "temporary_experiment_results": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\pvz-gpu-followups-20261027",
+  "limits": [
+    "Android device disconnected; no installation or device run.",
+    "Windows complete WSI synchronization issue remains separately tracked.",
+    "32-bit indexing exists only in opt-in experiment.",
+    "Filter caching and geometric trimming remain experiments; no canonical PAK/source-image changes.",
+    "GPU clocks uncontrolled; timing records are not formal performance results."
+  ],
+  "phone_followup": {
+    "date": "2026-10-27",
+    "scope": "Original u16 APK accepted on nubia Z60 Ultra in isolated fixed Continue dialog; 34 draws and 7687 triangles; identical PAK and shader assets to baseline; no proven performance gain in unlocked-clock 30s pair. New generated-prefix production variant not yet phone-accepted.",
+    "apk_sha256": "bd7cfa2d476d458779a71793afc694b433e740c144a51de0cc8cffb0f90060ef",
+    "raw_archive": "C:/Users/Administrator/CLionProjects/codex/GpuBenchmarks/android-u16-20261027",
+    "index_prefix_followup": "Tests/evidence/vulkan-index-prefix-20261027"
+  }
+}

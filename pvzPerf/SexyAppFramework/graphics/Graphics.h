@@ -92,7 +92,7 @@ public:
 	void					DrawString(const SexyString& theString, int theX, int theY);
 	
 private:
-	bool					DrawLineClipHelper(double* theStartX, double* theStartY, double *theEndX, double* theEndY);
+	bool DrawLineClipHelper(double* theStartX, double* theStartY, double* theEndX, double* theEndY);
 public:
 	void					DrawLine(int theStartX, int theStartY, int theEndX, int theEndY);
 	void					DrawLineAA(int theStartX, int theStartY, int theEndX, int theEndY);

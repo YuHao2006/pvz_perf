@@ -64,6 +64,7 @@ using GLsizeiptr = std::ptrdiff_t;
 #define GL_RG32UI 0x823C
 #define GL_RG_INTEGER 0x8228
 #define GL_R8 0x8229
+#define GL_RGBA16F 0x881A
 #define GL_RGBA32F 0x8814
 #define GL_TEXTURE_BASE_LEVEL 0x813C
 #define GL_TEXTURE_MAX_LEVEL 0x813D

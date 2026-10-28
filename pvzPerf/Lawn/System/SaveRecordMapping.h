@@ -1,3 +1,4 @@
+#include "SaveClockProjection.h"
 #pragma once
 #include "NativeSaveFields.h"
 #include "Dat64TimeSchema.h"
@@ -148,22 +149,20 @@ template<class T, class Fn> void VisitV7Members(Fn&& visit)
             visit(offsetof(T, mBowlingRowArrivalTimeNs), 24, 8);
             visit(offsetof(T, mNextLaunchTimeNs), 32, 8);
             visit(offsetof(T, mLaunchWindowStartNs), 40, 8);
-            visit(offsetof(T, mMagnetElapsedNs), 48, 8);
+            visit(offsetof(T, mMagnetStartTimeNs), 48, 8);
             for (size_t i = 0; i < MAX_MAGNET_ITEMS; ++i)
             {
                 const size_t native = offsetof(T, mMagnetItems) + i * sizeof(MagnetItem);
                 const size_t wire = 56 + i * 20;
-                visit(native + offsetof(MagnetItem, mOriginDeltaX), wire, 4);
-                visit(native + offsetof(MagnetItem, mOriginDeltaY), wire + 4, 4);
-                visit(native + offsetof(MagnetItem, mCaptureFactor), wire + 8, 4);
-                visit(native + offsetof(MagnetItem, mCenterDurationNs), wire + 12, 8);
+                visit(native + offsetof(MagnetItem, mVelocityX), wire, 4);
+                visit(native + offsetof(MagnetItem, mVelocityY), wire + 4, 4);
             }
         }
         else
         {
             const auto segment = [&](size_t native, size_t wire) {
                 visit(native + offsetof(TimedLinearMotion, origin), wire, 8);
-                visit(native + offsetof(TimedLinearMotion, elapsedNs), wire + 8, 8);
+                visit(native + offsetof(TimedLinearMotion, startTimeNs), wire + 8, 8);
                 visit(native + offsetof(TimedLinearMotion, rate), wire + 16, 4);
                 visit(native + offsetof(TimedLinearMotion, bound), wire + 20, 1);
             };
@@ -175,40 +174,20 @@ template<class T, class Fn> void VisitV7Members(Fn&& visit)
     else if constexpr (std::is_same_v<T, Projectile>)
     {
         visit(offsetof(T, mCreationTimeNs), 0, 8);
-        visit(offsetof(T, mMotionOriginTimeNs), 8, 8);
-        visit(offsetof(T, mOriginX), 16, 4);
-        visit(offsetof(T, mOriginY), 20, 4);
-        visit(offsetof(T, mOriginZ), 24, 4);
-        visit(offsetof(T, mOriginRotation), 28, 4);
-        visit(offsetof(T, mOriginShadowY), 32, 4);
-    }
-    else if constexpr (std::is_same_v<T, Coin>)
-    {
-        visit(offsetof(T, mFallVelocityX), 0, 4);
-        visit(offsetof(T, mFallVelocityY), 4, 4);
-        visit(offsetof(T, mFallScaleOrigin), 8, 4);
-        visit(offsetof(T, mFallScaleElapsedNs), 12, 8);
-    }
-    else if constexpr (std::is_same_v<T, LawnMower>)
-    {
-        visit(offsetof(T, mMotionOriginX), 0, 8);
-        visit(offsetof(T, mMotionElapsedNs), 8, 8);
-        visit(offsetof(T, mMotionChompStartNs), 16, 8);
-        visit(offsetof(T, mMotionBaseSpeed), 24, 4);
-        visit(offsetof(T, mAltitudeElapsedNs), 32, 8);
     }
     else if constexpr (std::is_same_v<T, Reanimation>)
     {
         visit(offsetof(T, mTimeDomain), 0, 4);
         visit(offsetof(T, mStartTimeNs), 4, 8);
-        visit(offsetof(T, mPhaseOriginNs), 12, 8);
-        visit(offsetof(T, mPeriodNs), 20, 8);
-        visit(offsetof(T, mOriginCycleCount), 28, 8);
-        visit(offsetof(T, mLastFrameNs), 36, 8);
-        visit(offsetof(T, mLastCycleCount), 44, 8);
-        visit(offsetof(T, mHasLastFrame), 52, 1);
-        visit(offsetof(T, mPlaybackGeneration), 56, 4);
-        visit(offsetof(T, mLastUpdateTimeNs), 60, 8);
+        visit(offsetof(T, mCurrentFrame), 12, 4);
+        visit(offsetof(T, mFramePeriodNs), 16, 8);
+        visit(offsetof(T, mPeriodNs), 24, 8);
+        visit(offsetof(T, mCycleCrossings), 32, 8);
+        visit(offsetof(T, mLastFrameNs), 40, 8);
+        visit(offsetof(T, mRootDisplacement), 48, 8);
+        visit(offsetof(T, mHasLastFrame), 56, 1);
+        visit(offsetof(T, mPlaybackGeneration), 60, 4);
+        visit(offsetof(T, mLastUpdateTimeNs), 64, 8);
     }
     else if constexpr (std::is_same_v<T, TodParticleSystem>)
     {
@@ -217,29 +196,16 @@ template<class T, class Fn> void VisitV7Members(Fn&& visit)
     else if constexpr (std::is_same_v<T, TodParticleEmitter>)
     {
         visit(offsetof(T, mSpawnRemainder), 0, 8);
-        visit(offsetof(T, mEmissionElapsedNs), 8, 8);
-        visit(offsetof(T, mExternalTarget), 16, 8);
-        visit(offsetof(T, mExternalAppliedCenter), 24, 8);
-        visit(offsetof(T, mSystemPositionOriginX), 32, 8);
-        visit(offsetof(T, mSystemPositionOriginY), 40, 8);
-        visit(offsetof(T, mSystemPositionBound), 48, 4);
+        // Frozen wire bytes 8..23 are reserved zeros: SystemMove applies input directly.
+        visit(offsetof(T, mSystemPositionOriginX), 24, 8);
+        visit(offsetof(T, mSystemPositionOriginY), 32, 8);
+        visit(offsetof(T, mSystemPositionBound), 40, 4);
     }
     else if constexpr (std::is_same_v<T, TodParticle>)
     {
-        // [0,8) is the retired previous-age slot, kept zero on the wire.
-        visit(offsetof(T, mAnimationElapsedNs), 8, 8);
-        visit(offsetof(T, mAnimationSampleIntegral), 16, 8);
-        visit(offsetof(T, mRandomSeed), 24, 4);
-        visit(offsetof(T, mLinearOriginX), 28, 8);
-        visit(offsetof(T, mLinearOriginY), 36, 8);
-        visit(offsetof(T, mLinearElapsedNs), 44, 8);
-        visit(offsetof(T, mLinearVelocity), 52, 8);
-        // [60,68) is the retired previous-position slot.
-        visit(offsetof(T, mLinearSpinOrigin), 68, 8);
-        visit(offsetof(T, mLinearSpinRate), 76, 8);
-        // [84,88) is the retired previous-spin slot.
-        visit(offsetof(T, mLinearSpinActive), 88, 4);
-        visit(offsetof(T, mLinearAcceleration), 92, 8);
+        visit(offsetof(T, mAnimationBirthTimeNs), 0, 8);
+        visit(offsetof(T, mAnimationSampleIntegral), 8, 8);
+        visit(offsetof(T, mRandomSeed), 16, 4);
     }
     else if constexpr (std::is_same_v<T, GridItem>)
     {
@@ -278,12 +244,10 @@ template<class T> void WriteHistoricalProjection(const T& value, std::span<Legac
             {
                 V7SaveSchema::Write(bytes, 56 + i * 96 + 16, pixel(value.mSeedPackets[i].mX), 4);
                 V7SaveSchema::Write(bytes, 56 + i * 96 + 20, pixel(value.mSeedPackets[i].mY), 4);
-                PutFloat(bytes, 56 + i * 96 + 80, static_cast<float>(
-                    SlotMachineMotion::Fraction(value.mSeedPackets[i].mSlotMachineCountDown.mNanoseconds)));
+                PutFloat(bytes, 56 + i * 96 + 80, value.mSeedPackets[i].mSlotMachiningPosition);
             }
         if constexpr (std::is_same_v<T, SeedPacket>)
-            PutFloat(bytes, 80, static_cast<float>(
-                SlotMachineMotion::Fraction(value.mSlotMachineCountDown.mNanoseconds)));
+            PutFloat(bytes, 80, value.mSlotMachiningPosition);
         if constexpr (std::is_same_v<T, Zombie>)
         {
             PutFloat(bytes, 56, value.mX);
@@ -309,8 +273,8 @@ template<class T> void WriteHistoricalProjection(const T& value, std::span<Legac
                 ? float(double(age) / (duration - 10'000'000)) : 0.0f;
         };
         PutFloat(bytes, 48, float(double(value.mSpawnRemainder) / V7SaveSchema::Frame));
-        PutFloat(bytes, 72, phase(value.mSystemAgeNs));
-        PutFloat(bytes, 76, phase(value.mSystemAgeNs));
+        PutFloat(bytes, 72, phase(ParticleLifeAgeAt(value.mParticleSystem ? value.mParticleSystem->mLastUpdateTimeNs : 0, value.mBirthTimeNs, value.mSystemDurationNs)));
+        PutFloat(bytes, 76, phase(ParticleLifeAgeAt(value.mParticleSystem ? value.mParticleSystem->mLastUpdateTimeNs : 0, value.mBirthTimeNs, value.mSystemDurationNs)));
     }
     else if constexpr (std::is_same_v<T, TodParticle>)
     {
@@ -319,8 +283,8 @@ template<class T> void WriteHistoricalProjection(const T& value, std::span<Legac
             return age < 0 ? -1.0f : duration > 10'000'000
                 ? float(double(age) / (duration - 10'000'000)) : 0.0f;
         };
-        PutFloat(bytes, 16, phase(value.mParticleAgeNs));
-        PutFloat(bytes, 20, phase(value.mParticleAgeNs));
+        PutFloat(bytes, 16, phase(ParticleLifeAgeAt(value.mParticleEmitter && value.mParticleEmitter->mParticleSystem ? value.mParticleEmitter->mParticleSystem->mLastUpdateTimeNs : 0, value.mBirthTimeNs, value.mParticleDurationNs)));
+        PutFloat(bytes, 20, phase(ParticleLifeAgeAt(value.mParticleEmitter && value.mParticleEmitter->mParticleSystem ? value.mParticleEmitter->mParticleSystem->mLastUpdateTimeNs : 0, value.mBirthTimeNs, value.mParticleDurationNs)));
         // Preserve the sampled legacy image phase for explicit downgrades.
         // The current format still restores its exact elapsed time and anchor.
         auto animationPhase = value.mAnimationSampleIntegral;
@@ -364,11 +328,27 @@ template<class T> std::vector<LegacyByte> WriteSaveRecord(const T& value)
         {
             if (field.mOffset != 108) return std::uint64_t(0);
             const auto now = value.mBoard ? static_cast<std::int64_t>(value.mBoard->mLevelTimeNs)
-                : value.mMotionOriginTimeNs;
+                : value.mCreationTimeNs;
             return static_cast<std::uint64_t>(ReanimClock::Subtract(now, value.mCreationTimeNs));
         }
         else
         {
+            if constexpr (std::is_same_v<T, TodParticle>)
+                if (field.mOffset == 12)
+                    return static_cast<std::uint64_t>(ParticleLifeAgeAt(
+                        value.mParticleEmitter && value.mParticleEmitter->mParticleSystem
+                            ? value.mParticleEmitter->mParticleSystem->mLastUpdateTimeNs : 0,
+                        value.mBirthTimeNs, value.mParticleDurationNs));
+            if constexpr (std::is_same_v<T, TodParticleEmitter>)
+                if (field.mOffset == 124)
+                    return static_cast<std::uint64_t>(value.mCrossFadeEndTimeNs == 0 ? 0 :
+                        std::max<std::int64_t>(0, ReanimClock::Subtract(value.mCrossFadeEndTimeNs,
+                            value.mParticleSystem ? value.mParticleSystem->mLastUpdateTimeNs : 0)));
+            if constexpr (std::is_same_v<T, TodParticleEmitter>)
+                if (field.mOffset == 64)
+                    return static_cast<std::uint64_t>(ParticleLifeAgeAt(
+                        value.mParticleSystem ? value.mParticleSystem->mLastUpdateTimeNs : 0,
+                        value.mBirthTimeNs, value.mSystemDurationNs));
             if constexpr (std::is_same_v<T, Plant>)
                 if (field.mOffset == 100)
                 {
@@ -383,7 +363,10 @@ template<class T> std::vector<LegacyByte> WriteSaveRecord(const T& value)
                         ReanimClock::Subtract(value.mNextLaunchTimeNs, now));
                 }
             std::uint64_t result;
-            std::memcpy(&result, ObjectBytes(value) + NativeTimeOffset<T>(field), 8);
+            const auto native = NativeTimeOffset<T>(field);
+            std::memcpy(&result, ObjectBytes(value) + native, 8);
+            if constexpr (SaveClockProjection::Supported<T>)
+                result = static_cast<std::uint64_t>(SaveClockProjection::Encode(value, native, static_cast<std::int64_t>(result)));
             return result;
         }
     };
@@ -395,14 +378,35 @@ template<class T> std::vector<LegacyByte> WriteSaveRecord(const T& value)
         const size_t offset = expanded.size();
         expanded.resize(offset + V7SaveSchema::Size(SaveRecordKind<T>::value), 0);
         VisitV7Members<T>([&](size_t native, size_t wire, size_t width) {
+            if constexpr (SaveClockProjection::Supported<T>)
+                if (width == 8 && SaveClockProjection::IsRawTime(value, native))
+                {
+                    std::int64_t raw; std::memcpy(&raw, ObjectBytes(value) + native, 8);
+                    raw = SaveClockProjection::Encode(value, native, raw);
+                    std::memcpy(expanded.data() + offset + wire, &raw, 8);
+                    return;
+                }
             std::memcpy(expanded.data() + offset + wire, ObjectBytes(value) + native, width);
         });
+        if constexpr (std::is_same_v<T, TodParticle>)
+        {
+            const auto now = value.mParticleEmitter && value.mParticleEmitter->mParticleSystem
+                ? value.mParticleEmitter->mParticleSystem->mLastUpdateTimeNs : 0;
+            V7SaveSchema::Write(expanded, offset, static_cast<std::uint64_t>(
+                ReanimClock::Subtract(now, value.mAnimationBirthTimeNs)), 8);
+        }
         if constexpr (std::is_same_v<T, Reanimation>)
         {
             const auto* holder = value.mReanimationHolder;
             const auto nowNs = holder ? (value.mTimeDomain == ReanimTimeDomain::Battle
                 ? holder->mBattleTimeNs : holder->mVisualTimeNs) : value.mLastUpdateTimeNs;
-            V7SaveSchema::Write(expanded, offset + 60, static_cast<std::uint64_t>(nowNs), 8);
+            if (value.mAnimRate == 0)
+            {
+                const auto frozenStart = ReanimClock::Add(value.mStartTimeNs,
+                    ReanimClock::Subtract(nowNs, value.mLastUpdateTimeNs));
+                V7SaveSchema::Write(expanded, offset + 4, static_cast<std::uint64_t>(frozenStart), 8);
+            }
+            V7SaveSchema::Write(expanded, offset + 64, static_cast<std::uint64_t>(nowNs), 8);
         }
     }
     return expanded;
@@ -437,14 +441,21 @@ template<class T> void ReadSaveRecord(T& value, const LegacyByte* source)
     });
     for (const auto& [offset, ns] : times)
     {
-        std::memcpy(ObjectBytes(value) + offset, &ns, 8);
+        auto decoded = ns;
+        if constexpr (SaveClockProjection::Supported<T>)
+            decoded = static_cast<std::uint64_t>(SaveClockProjection::Decode(value, offset, static_cast<std::int64_t>(ns)));
+        std::memcpy(ObjectBytes(value) + offset, &decoded, 8);
         if constexpr (std::is_same_v<T, Board>)
         {
             if (offset != offsetof(Board, mLevelTimeNs))
                 std::memcpy(ObjectBytes(value) + offset + 8, &ns, 8);
         }
         else if constexpr (!std::is_same_v<T, TodParticle> && !std::is_same_v<T, TodParticleEmitter>)
+        {
+            if constexpr (SaveClockProjection::Supported<T>)
+                if (SaveClockProjection::IsRawTime(value, offset)) continue;
             std::memcpy(ObjectBytes(value) + offset + 8, &ns, 8);
+        }
     }
     if constexpr (std::is_base_of_v<GameObject, T>)
     {
@@ -463,8 +474,33 @@ template<class T> void ReadSaveRecord(T& value, const LegacyByte* source)
     }
     if constexpr (!std::is_same_v<T, Board> && !std::is_same_v<T, SeedBank>)
         VisitV7Members<T>([&](size_t native, size_t wire, size_t width) {
+            if constexpr (SaveClockProjection::Supported<T>)
+                if (width == 8 && SaveClockProjection::IsRawTime(value, native))
+                {
+                    std::int64_t raw; std::memcpy(&raw, source + SaveV2Size<T>() + wire, 8);
+                    raw = SaveClockProjection::Decode(value, native, raw);
+                    std::memcpy(ObjectBytes(value) + native, &raw, 8);
+                    return;
+                }
             std::memcpy(ObjectBytes(value) + native, source + SaveV2Size<T>() + wire, width);
         });
+    if constexpr (std::is_same_v<T, Reanimation>)
+    {
+        const bool fullFrame = value.mLoopType == REANIM_LOOP_FULL_LAST_FRAME ||
+            value.mLoopType == REANIM_PLAY_ONCE_FULL_LAST_FRAME ||
+            value.mLoopType == REANIM_PLAY_ONCE_FULL_LAST_FRAME_AND_HOLD;
+        const int intervals = std::max(1, fullFrame ? value.mFrameCount : value.mFrameCount - 1);
+        if (value.mPeriodNs / value.mFramePeriodNs != intervals || value.mCurrentFrame > intervals)
+            throw std::runtime_error("saved frame cursor differs from its animation action");
+        const bool full = value.mLoopType == REANIM_LOOP_FULL_LAST_FRAME ||
+            value.mLoopType == REANIM_PLAY_ONCE_FULL_LAST_FRAME ||
+            value.mLoopType == REANIM_PLAY_ONCE_FULL_LAST_FRAME_AND_HOLD;
+        value.mRootFrameScale = full ? 1.0 : double(value.mFrameCount) / std::max(1, value.mFrameCount - 1);
+    }
+    if constexpr (std::is_same_v<T, TodParticle> || std::is_same_v<T, TodParticleEmitter>)
+        value.mBirthTimeNs = ReanimClock::Subtract(0, value.mBirthTimeNs);
+    if constexpr (std::is_same_v<T, TodParticle>)
+        value.mAnimationBirthTimeNs = ReanimClock::Subtract(0, value.mAnimationBirthTimeNs);
 }
 
 template<class T> struct Dat64Layout

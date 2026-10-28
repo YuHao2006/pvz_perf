@@ -1,4 +1,5 @@
-#include "Music.h"
+﻿#include "Music.h"
+#include "Sexy.TodLib/ReanimClock.h"
 #include "MusicLoadingPlan.h"
 #include "Lawn/Board.h"
 #include "PlayerInfo.h"
@@ -27,18 +28,19 @@ Music::Music()
 	mCurMusicFileHihats = MusicFile::MUSIC_FILE_NONE;
 	mBurstOverride = -1;
 	mMusicDrumsState = MusicDrumsState::MUSIC_DRUMS_OFF;
-	mDrumsStateCounter = 0;
+	mDrumsEndTimeNs = 0;
 	mQueuedDrumTrackPackedOrder = -1;
 	mBaseBPM = 155.0f;
 	mBaseModSpeed = 3.0f;
 	mMusicBurstState = MusicBurstState::MUSIC_BURST_OFF;
-	mBurstStateCounter = 0;
+	mBurstEndTimeNs = 0;
 	mPauseOffset = 0;
 	mPauseOffsetDrums = 0;
 	mPaused = false;
 	SetMusicDisabled(mApp->mNoSoundNeeded);
-	mFadeOutCounter = 0;
-	mFadeOutDuration = 0;
+	mFadeOutEndTimeNs = 0;
+	mFadeOutDurationNs = 0;
+	mLastUpdateTimeNs = mApp->mApplicationTimeNs;
 }
 
 //0x45A2C0
@@ -263,7 +265,7 @@ void Music::StopAllMusic()
 	mPauseOffset = 0;
 	mPauseOffsetDrums = 0;
 	mPaused = false;
-	mFadeOutCounter = 0;
+	mFadeOutEndTimeNs = 0;
 }
 
 //0x45AC20
@@ -276,7 +278,7 @@ HMUSIC Music::GetBassMusicHandle(MusicFile theMusicFile)
 }
 
 //0x45AC70
-void Music::PlayFromOffset(MusicFile theMusicFile, int theOffset, double theVolume)
+void Music::PlayFromOffset(MusicFile theMusicFile, int theOffset, float theVolume)
 {
 	BassMusicInterface* aBass = (BassMusicInterface*)mApp->mMusicInterface;
 	const std::unique_ptr<BassMusicInfo>& aSlot = aBass->mMusicSlots.at((size_t)theMusicFile);
@@ -563,7 +565,7 @@ void Music::StartBurst()
 	if (mMusicBurstState == MusicBurstState::MUSIC_BURST_OFF)
 	{ 
 		mMusicBurstState = MusicBurstState::MUSIC_BURST_STARTING;
-		mBurstStateCounter = 400;
+		mBurstEndTimeNs = ReanimClock::Add(mApp->mApplicationTimeNs, 4000000000LL);
 	}
 }
 
@@ -571,13 +573,14 @@ void Music::FadeOut(int theFadeOutDuration)
 { 
 	if (mCurMusicTune != MusicTune::MUSIC_TUNE_NONE)
 	{
-		mFadeOutCounter = theFadeOutDuration;
-		mFadeOutDuration = theFadeOutDuration;
+		mFadeOutDurationNs = static_cast<std::int64_t>(theFadeOutDuration) * 10'000'000;
+		mFadeOutEndTimeNs = mFadeOutDurationNs > 0
+			? ReanimClock::Add(mApp->mApplicationTimeNs, mFadeOutDurationNs) : 0;
 	}
 }
 
 //0x45B260
-void Music::UpdateMusicBurst()
+void Music::UpdateMusicBurst(std::int64_t nowNs)
 {
 	if (mApp->mBoard == nullptr)
 		return;
@@ -598,10 +601,8 @@ void Music::UpdateMusicBurst()
 		return;
 
 	int aPackedOrderMain = GetMusicOrder(mCurMusicFileMain);
-	if (mBurstStateCounter > 0)
-		mBurstStateCounter--;
-	if (mDrumsStateCounter > 0)
-		mDrumsStateCounter--;
+	const auto burstRemainingNs = std::max<std::int64_t>(0, ReanimClock::Subtract(mBurstEndTimeNs, nowNs));
+	const auto drumsRemainingNs = std::max<std::int64_t>(0, ReanimClock::Subtract(mDrumsEndTimeNs, nowNs));
 
 	float aFadeTrackVolume = 0.0f;
 	float aDrumsVolume = 0.0f;
@@ -615,16 +616,16 @@ void Music::UpdateMusicBurst()
 		case MusicBurstState::MUSIC_BURST_STARTING:
 			if (aBurstScheme == 1)
 			{
-				aFadeTrackVolume = TodAnimateCurveNs(4'000'000'000LL, 0, mBurstStateCounter.mNanoseconds, 0.0f, 1.0f, Curves::Linear);
-				if (mBurstStateCounter == 100)
+				aFadeTrackVolume = TodAnimateCurveNs(4'000'000'000LL, 0, burstRemainingNs, 0.0f, 1.0f, Curves::Linear);
+				if (burstRemainingNs <= 1'000'000'000 && mMusicDrumsState == MusicDrumsState::MUSIC_DRUMS_OFF)
 				{
 					mMusicDrumsState = MusicDrumsState::MUSIC_DRUMS_ON_QUEUED;
 					mQueuedDrumTrackPackedOrder = aPackedOrderMain;
 				}
-				else if (mBurstStateCounter == 0)
+				else if (burstRemainingNs == 0)
 				{
 					mMusicBurstState = MusicBurstState::MUSIC_BURST_ON;
-					mBurstStateCounter = 800;
+					mBurstEndTimeNs = ReanimClock::Add(nowNs, 8000000000LL);
 				}
 			}
 			else if (aBurstScheme == 2)
@@ -633,17 +634,17 @@ void Music::UpdateMusicBurst()
 				{
 					mMusicDrumsState = MusicDrumsState::MUSIC_DRUMS_ON_QUEUED;
 					mQueuedDrumTrackPackedOrder = aPackedOrderMain;
-					mBurstStateCounter = 400;
+					mBurstEndTimeNs = ReanimClock::Add(nowNs, 4000000000LL);
 				}
 				else if (mMusicDrumsState == MusicDrumsState::MUSIC_DRUMS_ON_QUEUED)
-					mBurstStateCounter = 400;
+					mBurstEndTimeNs = ReanimClock::Add(nowNs, 4000000000LL);
 				else
 				{
-					aMainTrackVolume = TodAnimateCurveNs(4'000'000'000LL, 0, mBurstStateCounter.mNanoseconds, 1.0f, 0.0f, Curves::Linear);
-					if (mBurstStateCounter == 0)
+					aMainTrackVolume = TodAnimateCurveNs(4'000'000'000LL, 0, burstRemainingNs, 1.0f, 0.0f, Curves::Linear);
+					if (burstRemainingNs == 0)
 					{
 						mMusicBurstState = MusicBurstState::MUSIC_BURST_ON;
-						mBurstStateCounter = 800;
+						mBurstEndTimeNs = ReanimClock::Add(nowNs, 8000000000LL);
 					}
 				}
 			}
@@ -652,30 +653,30 @@ void Music::UpdateMusicBurst()
 			aFadeTrackVolume = 1.0f;
 			if (aBurstScheme == 2)
 				aMainTrackVolume = 0.0f;
-			if (mBurstStateCounter == 0 && ((mApp->mBoard->CountZombiesOnScreen() < 4 && mBurstOverride == -1) || mBurstOverride == 2))
+			if (burstRemainingNs == 0 && ((mApp->mBoard->CountZombiesOnScreen() < 4 && mBurstOverride == -1) || mBurstOverride == 2))
 			{
 				if (aBurstScheme == 1)
 				{
 					mMusicBurstState = MusicBurstState::MUSIC_BURST_FINISHING;
-					mBurstStateCounter = 800;
+					mBurstEndTimeNs = ReanimClock::Add(nowNs, 8000000000LL);
 					mMusicDrumsState = MusicDrumsState::MUSIC_DRUMS_OFF_QUEUED;
 					mQueuedDrumTrackPackedOrder = aPackedOrderMain;
 				}
 				else if (aBurstScheme == 2)
 				{
 					mMusicBurstState = MusicBurstState::MUSIC_BURST_FINISHING;
-					mBurstStateCounter = 1100;
+					mBurstEndTimeNs = ReanimClock::Add(nowNs, 11000000000LL);
 					mMusicDrumsState = MusicDrumsState::MUSIC_DRUMS_FADING;
-					mDrumsStateCounter = 800;
+					mDrumsEndTimeNs = ReanimClock::Add(nowNs, 8000000000LL);
 				}
 			}
 			break;
 		case MusicBurstState::MUSIC_BURST_FINISHING:
 			if (aBurstScheme == 1)
-				aFadeTrackVolume = TodAnimateCurveNs(8'000'000'000LL, 0, mBurstStateCounter.mNanoseconds, 1.0f, 0.0f, Curves::Linear);
+				aFadeTrackVolume = TodAnimateCurveNs(8'000'000'000LL, 0, burstRemainingNs, 1.0f, 0.0f, Curves::Linear);
 			else
-				aMainTrackVolume = TodAnimateCurveNs(4'000'000'000LL, 0, mBurstStateCounter.mNanoseconds, 0.0f, 1.0f, Curves::Linear);
-			if (mBurstStateCounter == 0 && mMusicDrumsState == MusicDrumsState::MUSIC_DRUMS_OFF)
+				aMainTrackVolume = TodAnimateCurveNs(4'000'000'000LL, 0, burstRemainingNs, 0.0f, 1.0f, Curves::Linear);
+			if (burstRemainingNs == 0 && mMusicDrumsState == MusicDrumsState::MUSIC_DRUMS_OFF)
 				mMusicBurstState = MusicBurstState::MUSIC_BURST_OFF;
 			break;
 	}
@@ -716,15 +717,15 @@ void Music::UpdateMusicBurst()
 			if (aOrderMain != aOrderDrum && aBurstScheme == 1)
 			{
 				mMusicDrumsState = MusicDrumsState::MUSIC_DRUMS_FADING;
-				mDrumsStateCounter = 50;
+				mDrumsEndTimeNs = ReanimClock::Add(nowNs, 500000000LL);
 			}
 			break;
 		case MusicDrumsState::MUSIC_DRUMS_FADING:
 			if (aBurstScheme == 2)
-				aDrumsVolume = TodAnimateCurveNs(8'000'000'000LL, 0, mDrumsStateCounter.mNanoseconds, 1.0f, 0.0f, Curves::Linear);
+				aDrumsVolume = TodAnimateCurveNs(8'000'000'000LL, 0, drumsRemainingNs, 1.0f, 0.0f, Curves::Linear);
 			else
-				aDrumsVolume = TodAnimateCurveNs(500'000'000, 0, mDrumsStateCounter.mNanoseconds, 1.0f, 0.0f, Curves::Linear);
-			if (mDrumsStateCounter == 0)
+				aDrumsVolume = TodAnimateCurveNs(500'000'000, 0, drumsRemainingNs, 1.0f, 0.0f, Curves::Linear);
+			if (drumsRemainingNs == 0)
 				mMusicDrumsState = MusicDrumsState::MUSIC_DRUMS_OFF;
 			break;
 		case MusicDrumsState::MUSIC_DRUMS_OFF:
@@ -748,30 +749,35 @@ void Music::UpdateMusicBurst()
 }
 
 //0x45B670
-void Music::MusicUpdate()
+void Music::MusicUpdate(std::int64_t nowNs)
 {
-	// A save may restore a tune even when this process has only the dummy
-	// music interface. No playback clock/handles exist to update in that case.
-	if (IsMusicDisabled())
-		return;
-
-	if (mFadeOutCounter > 0)
-	{
-		mFadeOutCounter--;
-		if (mFadeOutCounter == 0)
-			StopAllMusic();
-		else
-		{
-			float aFadeLevel = TodAnimateCurveNs(mFadeOutDuration.mNanoseconds, 0, mFadeOutCounter.mNanoseconds, 1.0f, 0.0f, Curves::Linear);
-			mMusicInterface->SetSongVolume(mCurMusicFileMain, aFadeLevel);
-		}
-	}
-
-	if (mApp->mBoard == nullptr || !mApp->mBoard->mPaused)
-	{
-		UpdateMusicBurst();
-		MusicResync();
-	}
+    const auto elapsedNs = ReanimClock::Subtract(nowNs, mLastUpdateTimeNs);
+    mLastUpdateTimeNs = nowNs;
+    // The application clock keeps running through a board pause. Burst/drum
+    // controller deadlines are translated; the ordinary song fade continues.
+    const bool disabled = IsMusicDisabled();
+    if (disabled || (mApp->mBoard && mApp->mBoard->mPaused))
+    {
+        if (mBurstEndTimeNs != 0) mBurstEndTimeNs = ReanimClock::Add(mBurstEndTimeNs, elapsedNs);
+        if (mDrumsEndTimeNs != 0) mDrumsEndTimeNs = ReanimClock::Add(mDrumsEndTimeNs, elapsedNs);
+        if (disabled && mFadeOutEndTimeNs != 0)
+            mFadeOutEndTimeNs = ReanimClock::Add(mFadeOutEndTimeNs, elapsedNs);
+    }
+    if (disabled) return;
+    if (mFadeOutEndTimeNs != 0)
+    {
+        const auto remainingNs = std::max<std::int64_t>(0, ReanimClock::Subtract(mFadeOutEndTimeNs, nowNs));
+        if (remainingNs == 0)
+            StopAllMusic();
+        else
+            mMusicInterface->SetSongVolume(mCurMusicFileMain,
+                TodAnimateCurveNs(mFadeOutDurationNs, 0, remainingNs, 1.0f, 0.0f, Curves::Linear));
+    }
+    if (mApp->mBoard == nullptr || !mApp->mBoard->mPaused)
+    {
+        UpdateMusicBurst(nowNs);
+        MusicResync();
+    }
 }
 
 //0x45B750

@@ -1,0 +1,608 @@
+?UpdateShooter@Plant@FB@@QEAAXXZ PROC			; FB::Plant::UpdateShooter, COMDAT
+
+; 748  : {
+
+$LN53:
+	mov	QWORD PTR [rsp+8], rbx
+	mov	QWORD PTR [rsp+16], rsi
+	push	rdi
+	sub	rsp, 32					; 00000020H
+
+; 749  :     mLaunchCounter--;
+
+	dec	DWORD PTR [rcx+32]
+	mov	rbx, rcx
+
+; 750  :     if (mLaunchCounter <= 0)
+
+	cmp	DWORD PTR [rcx+32], 0
+	mov	rsi, 7764610175701363102		; 6bc16fd0ee10299eH
+	mov	rdi, 1099511628211			; 00000100000001b3H
+	jg	SHORT $LN42@UpdateShoo
+; File C:\Users\Administrator\AppData\Local\Temp\pvz-small-bench-build-_27lfc08\archive\r2plant\r2_stub.h
+
+; 26   :     g_ck = g_ck * 0x100000001B3ULL ^ (salt * 0x9E3779B97F4A7C15ULL + v + 0x165667B19E3779F9ULL);
+
+	mov	rax, QWORD PTR ?g_ck@@3_KA		; g_ck
+	mov	rcx, -8218506755370857976		; 8df1ffa645f8ca08H
+	imul	rax, rdi
+	xor	rax, rcx
+
+; 35   :     g_rng = g_rng * 6364136223846793005ULL + 1442695040888963407ULL;
+
+	mov	rcx, 6364136223846793005		; 5851f42d4c957f2dH
+
+; 26   :     g_ck = g_ck * 0x100000001B3ULL ^ (salt * 0x9E3779B97F4A7C15ULL + v + 0x165667B19E3779F9ULL);
+
+	mov	QWORD PTR ?g_ck@@3_KA, rax		; g_ck
+
+; 35   :     g_rng = g_rng * 6364136223846793005ULL + 1442695040888963407ULL;
+
+	mov	rax, QWORD PTR ?g_rng@@3_KA		; g_rng
+	imul	rax, rcx
+	mov	rcx, 1442695040888963407		; 14057b7ef767814fH
+	add	rcx, rax
+
+; 227  :         return theRange ? RngNext() % theRange : 0u;
+
+	mov	eax, -2004318071			; 88888889H
+
+; 35   :     g_rng = g_rng * 6364136223846793005ULL + 1442695040888963407ULL;
+
+	mov	QWORD PTR ?g_rng@@3_KA, rcx		; g_rng
+	shr	rcx, 33					; 00000021H
+
+; 227  :         return theRange ? RngNext() % theRange : 0u;
+
+	mul	ecx
+	shr	edx, 3
+	imul	eax, edx, 15
+
+; 36   :     return (uint32_t)(g_rng >> 33);
+
+	add	eax, DWORD PTR [rbx+36]
+	sub	eax, ecx
+; File C:\Users\Administrator\AppData\Local\Temp\pvz-table-storage-diagnosis-20261029\static.cpp
+
+; 752  :         mLaunchCounter = mLaunchRate - Sexy::Rand(15);
+
+	mov	DWORD PTR [rbx+32], eax
+
+; 753  : 
+; 754  :         // C 形态 -> 匿名 lambda 函数指针表 kShooterFireCases（仿 kSeedTypeUpdates
+; 755  :         // 范式）：行序 = SeedType 枚举序 0..52；无 case 槽 = 原 else 支（正面
+; 756  :         // 开火，constexpr 指针变量填满）。SPLITPEA/CACTUS 两支体积较大整体入槽。
+; 757  :         static constexpr auto kShooterDefaultFire = [](Plant* p)
+; 758  :         {
+; 759  :             p->FindTargetAndFire(p->mRow, PlantWeapon::WEAPON_PRIMARY);
+; 760  :         };
+; 761  :         static constexpr void (*kShooterFireCases[])(Plant*) = {
+; 762  :             // 0..14 默认开火（PEASHOOTER..DOOMSHROOM 前 15 槽）
+; 763  :             kShooterDefaultFire, kShooterDefaultFire, kShooterDefaultFire, kShooterDefaultFire, kShooterDefaultFire,
+; 764  :             kShooterDefaultFire, kShooterDefaultFire, kShooterDefaultFire, kShooterDefaultFire, kShooterDefaultFire,
+; 765  :             kShooterDefaultFire, kShooterDefaultFire, kShooterDefaultFire, kShooterDefaultFire, kShooterDefaultFire,
+; 766  :             // 15..17 LILYPAD/SQUASH/（17 空）
+; 767  :             kShooterDefaultFire, kShooterDefaultFire, kShooterDefaultFire,
+; 768  :             [](Plant* p) { p->LaunchThreepeater(); },  // 18 SEED_THREEPEATER
+; 769  :             // 19..25 TANGLEKELP..SEASHROOM 默认
+; 770  :             kShooterDefaultFire, kShooterDefaultFire, kShooterDefaultFire, kShooterDefaultFire, kShooterDefaultFire,
+; 771  :             kShooterDefaultFire, kShooterDefaultFire,
+; 772  :             [](Plant* p)   // 26 SEED_CACTUS
+; 773  :             {
+; 774  :                 if (p->mState == PlantState::STATE_CACTUS_HIGH)
+; 775  :                 {
+; 776  :                     p->FindTargetAndFire(p->mRow, PlantWeapon::WEAPON_PRIMARY);
+; 777  :                 }
+; 778  :                 else if (p->mState == PlantState::STATE_CACTUS_LOW)
+; 779  :                 {
+; 780  :                     p->FindTargetAndFire(p->mRow, PlantWeapon::WEAPON_SECONDARY);
+; 781  :                 }
+; 782  :             },
+; 783  :             kShooterDefaultFire,  // 27 SEED_BLOVER
+; 784  :             [](Plant* p)   // 28 SEED_SPLITPEA
+; 785  :             {
+; 786  :                 p->FindTargetAndFire(p->mRow, PlantWeapon::WEAPON_SECONDARY);
+; 787  : 
+; 788  :                 // 1073 00463200: the second back shot must not reuse the front
+; 789  :                 // head's previous shooting state. Keep the 25-tick front trigger.
+; 790  :                 Reanimation* aHeadReanim = p->mApp->ReanimationGet(p->mHeadReanimID);
+; 791  :                 Reanimation* aBodyReanim = p->mApp->ReanimationGet(p->mBodyReanimID);
+; 792  :                 aHeadReanim->StartBlend(20);
+; 793  :                 aHeadReanim->mLoopType = ReanimLoopType::REANIM_LOOP;
+; 794  :                 aHeadReanim->SetFramesForLayer(ReanimTrackId::anim_head_idle);
+; 795  :                 aHeadReanim->mAnimRate = aBodyReanim->mAnimRate;
+; 796  :                 aHeadReanim->mAnimTime = aBodyReanim->mAnimTime;
+; 797  :             },
+; 798  :             [](Plant* p) { p->LaunchStarFruit(); },  // 29 SEED_STARFRUIT
+; 799  :             // 30..39 PUMPKINSHELL..MELONPULT 默认
+; 800  :             kShooterDefaultFire, kShooterDefaultFire, kShooterDefaultFire, kShooterDefaultFire, kShooterDefaultFire,
+; 801  :             kShooterDefaultFire, kShooterDefaultFire, kShooterDefaultFire, kShooterDefaultFire, kShooterDefaultFire,
+; 802  :             // 40..52 GATLINGPEA..LEFTPEATER 默认
+; 803  :             kShooterDefaultFire, kShooterDefaultFire, kShooterDefaultFire, kShooterDefaultFire, kShooterDefaultFire,
+; 804  :             kShooterDefaultFire, kShooterDefaultFire, kShooterDefaultFire, kShooterDefaultFire, kShooterDefaultFire,
+; 805  :             kShooterDefaultFire, kShooterDefaultFire, kShooterDefaultFire,
+; 806  :         };
+; 807  :         static_assert(sizeof(kShooterFireCases) / sizeof(kShooterFireCases[0]) == (int)SeedType::NUM_SEED_TYPES,
+; 808  :             "射手开火槽位须与 SeedType 枚举同步");
+; 809  : 
+; 810  :         if ((unsigned)mSeedType < sizeof(kShooterFireCases) / sizeof(kShooterFireCases[0]))
+
+	movsxd	rax, DWORD PTR [rbx]
+	cmp	eax, 53					; 00000035H
+	jae	$LN3@UpdateShoo
+
+; 811  :         {
+; 812  :             kShooterFireCases[mSeedType](this);
+
+	lea	rdx, OFFSET FLAT:?kShooterFireCases@?4??UpdateShooter@Plant@FB@@QEAAXXZ@4QBQ6AXPEAU23@@ZB
+	mov	rcx, rbx
+	call	QWORD PTR [rdx+rax*8]
+$LN42@UpdateShoo:
+
+; 813  :         }
+; 814  :         else
+; 815  :         {
+; 816  :             kShooterDefaultFire(this);  // 原 else 支（哨兵越界等价）
+; 817  :         }
+; 818  :     }
+; 819  : 
+; 820  :     if (mLaunchCounter == 50 && mSeedType == SeedType::SEED_CATTAIL)
+
+	mov	rdx, QWORD PTR ?g_ck@@3_KA		; g_ck
+$LN4@UpdateShoo:
+	cmp	DWORD PTR [rbx+32], 50			; 00000032H
+	jne	SHORT $LN5@UpdateShoo
+	cmp	DWORD PTR [rbx], 43			; 0000002bH
+	jne	SHORT $LN5@UpdateShoo
+
+; 730  :     void FindTargetAndFire(int row, PlantWeapon w) { MixCk(0x3005ULL, (uint64_t)row + (uint64_t)w); }
+
+	movsxd	rcx, DWORD PTR [rbx+12]
+; File C:\Users\Administrator\AppData\Local\Temp\pvz-small-bench-build-_27lfc08\archive\r2plant\r2_stub.h
+
+; 26   :     g_ck = g_ck * 0x100000001B3ULL ^ (salt * 0x9E3779B97F4A7C15ULL + v + 0x165667B19E3779F9ULL);
+
+	mov	rax, rdx
+	sub	rcx, rsi
+	imul	rax, rdi
+	mov	rdx, rcx
+	xor	rdx, rax
+	mov	QWORD PTR ?g_ck@@3_KA, rdx		; g_ck
+$LN5@UpdateShoo:
+; File C:\Users\Administrator\AppData\Local\Temp\pvz-table-storage-diagnosis-20261029\static.cpp
+
+; 824  :     if (mLaunchCounter == 25)
+
+	cmp	DWORD PTR [rbx+32], 25
+	jne	SHORT $LN10@UpdateShoo
+
+; 825  :     {
+; 826  :         if (mSeedType == SeedType::SEED_REPEATER || mSeedType == SeedType::SEED_LEFTPEATER)
+
+	mov	eax, DWORD PTR [rbx]
+	cmp	eax, 7
+	je	SHORT $LN9@UpdateShoo
+	cmp	eax, 52					; 00000034H
+	je	SHORT $LN9@UpdateShoo
+
+; 827  :         {
+; 828  :             FindTargetAndFire(mRow, PlantWeapon::WEAPON_PRIMARY);
+; 829  :         }
+; 830  :         else if (mSeedType == SeedType::SEED_SPLITPEA)
+
+	cmp	eax, 28
+	jne	SHORT $LN10@UpdateShoo
+
+; 730  :     void FindTargetAndFire(int row, PlantWeapon w) { MixCk(0x3005ULL, (uint64_t)row + (uint64_t)w); }
+
+	movsxd	rcx, DWORD PTR [rbx+12]
+; File C:\Users\Administrator\AppData\Local\Temp\pvz-small-bench-build-_27lfc08\archive\r2plant\r2_stub.h
+
+; 26   :     g_ck = g_ck * 0x100000001B3ULL ^ (salt * 0x9E3779B97F4A7C15ULL + v + 0x165667B19E3779F9ULL);
+
+	imul	rdx, rdi
+	sub	rcx, rsi
+	xor	rcx, rdx
+	mov	rdx, 7764610175701363101		; 6bc16fd0ee10299dH
+	mov	QWORD PTR ?g_ck@@3_KA, rcx		; g_ck
+; File C:\Users\Administrator\AppData\Local\Temp\pvz-table-storage-diagnosis-20261029\static.cpp
+
+; 730  :     void FindTargetAndFire(int row, PlantWeapon w) { MixCk(0x3005ULL, (uint64_t)row + (uint64_t)w); }
+
+	movsxd	rax, DWORD PTR [rbx+12]
+; File C:\Users\Administrator\AppData\Local\Temp\pvz-small-bench-build-_27lfc08\archive\r2plant\r2_stub.h
+
+; 26   :     g_ck = g_ck * 0x100000001B3ULL ^ (salt * 0x9E3779B97F4A7C15ULL + v + 0x165667B19E3779F9ULL);
+
+	imul	rcx, rdi
+	sub	rax, rdx
+	xor	rax, rcx
+	jmp	SHORT $LN51@UpdateShoo
+$LN3@UpdateShoo:
+	mov	rax, QWORD PTR ?g_ck@@3_KA		; g_ck
+; File C:\Users\Administrator\AppData\Local\Temp\pvz-table-storage-diagnosis-20261029\static.cpp
+
+; 730  :     void FindTargetAndFire(int row, PlantWeapon w) { MixCk(0x3005ULL, (uint64_t)row + (uint64_t)w); }
+
+	movsxd	rdx, DWORD PTR [rbx+12]
+; File C:\Users\Administrator\AppData\Local\Temp\pvz-small-bench-build-_27lfc08\archive\r2plant\r2_stub.h
+
+; 26   :     g_ck = g_ck * 0x100000001B3ULL ^ (salt * 0x9E3779B97F4A7C15ULL + v + 0x165667B19E3779F9ULL);
+
+	imul	rax, rdi
+	sub	rdx, rsi
+	xor	rdx, rax
+	mov	QWORD PTR ?g_ck@@3_KA, rdx		; g_ck
+; File C:\Users\Administrator\AppData\Local\Temp\pvz-table-storage-diagnosis-20261029\static.cpp
+
+; 750  :     if (mLaunchCounter <= 0)
+
+	jmp	$LN4@UpdateShoo
+$LN9@UpdateShoo:
+
+; 730  :     void FindTargetAndFire(int row, PlantWeapon w) { MixCk(0x3005ULL, (uint64_t)row + (uint64_t)w); }
+
+	movsxd	rax, DWORD PTR [rbx+12]
+; File C:\Users\Administrator\AppData\Local\Temp\pvz-small-bench-build-_27lfc08\archive\r2plant\r2_stub.h
+
+; 26   :     g_ck = g_ck * 0x100000001B3ULL ^ (salt * 0x9E3779B97F4A7C15ULL + v + 0x165667B19E3779F9ULL);
+
+	imul	rdx, rdi
+	sub	rax, rsi
+	xor	rax, rdx
+$LN51@UpdateShoo:
+; File C:\Users\Administrator\AppData\Local\Temp\pvz-table-storage-diagnosis-20261029\static.cpp
+
+; 836  : }
+
+	mov	QWORD PTR ?g_ck@@3_KA, rax		; g_ck
+$LN10@UpdateShoo:
+	mov	rbx, QWORD PTR [rsp+48]
+	mov	rsi, QWORD PTR [rsp+56]
+	add	rsp, 32					; 00000020H
+	pop	rdi
+	ret	0
+?UpdateShooter@Plant@FB@@QEAAXXZ ENDP			; FB::Plant::UpdateShooter
+
+?UpdateProductionPlant@Plant@FB@@QEAAXXZ PROC		; FB::Plant::UpdateProductionPlant, COMDAT
+
+; 840  : {
+
+$LN95:
+	mov	QWORD PTR [rsp+32], rbx
+	push	rbp
+	sub	rsp, 32					; 00000020H
+	mov	rbx, rcx
+; File C:\Users\Administrator\AppData\Local\Temp\pvz-small-bench-build-_27lfc08\archive\r2plant\r2_stub.h
+
+; 26   :     g_ck = g_ck * 0x100000001B3ULL ^ (salt * 0x9E3779B97F4A7C15ULL + v + 0x165667B19E3779F9ULL);
+
+	mov	rbp, 1099511628211			; 00000100000001b3H
+	mov	rcx, QWORD PTR ?g_ck@@3_KA		; g_ck
+	mov	rax, 3636104643621835383		; 327609e8913a5277H
+	imul	rcx, rbp
+	xor	rcx, rax
+; File C:\Users\Administrator\AppData\Local\Temp\pvz-table-storage-diagnosis-20261029\static.cpp
+
+; 841  :     if (!IsInPlay() || mApp->IsIZombieLevel() || mApp->mGameMode == GameMode::GAMEMODE_INTRO)
+
+	cmp	BYTE PTR ?g_plantInPlay@@3_NA, 0	; g_plantInPlay
+; File C:\Users\Administrator\AppData\Local\Temp\pvz-small-bench-build-_27lfc08\archive\r2plant\r2_stub.h
+
+; 26   :     g_ck = g_ck * 0x100000001B3ULL ^ (salt * 0x9E3779B97F4A7C15ULL + v + 0x165667B19E3779F9ULL);
+
+	mov	QWORD PTR ?g_ck@@3_KA, rcx		; g_ck
+; File C:\Users\Administrator\AppData\Local\Temp\pvz-table-storage-diagnosis-20261029\static.cpp
+
+; 841  :     if (!IsInPlay() || mApp->IsIZombieLevel() || mApp->mGameMode == GameMode::GAMEMODE_INTRO)
+
+	je	$LN6@UpdateProd
+; File C:\Users\Administrator\AppData\Local\Temp\pvz-small-bench-build-_27lfc08\archive\r2plant\r2_stub.h
+
+; 26   :     g_ck = g_ck * 0x100000001B3ULL ^ (salt * 0x9E3779B97F4A7C15ULL + v + 0x165667B19E3779F9ULL);
+
+	imul	rcx, rbp
+	mov	rax, -927826067084850265		; f31fb31b9a0f4ba7H
+	xor	rcx, rax
+; File C:\Users\Administrator\AppData\Local\Temp\pvz-table-storage-diagnosis-20261029\static.cpp
+
+; 841  :     if (!IsInPlay() || mApp->IsIZombieLevel() || mApp->mGameMode == GameMode::GAMEMODE_INTRO)
+
+	cmp	BYTE PTR ?g_izombieLevel@@3_NA, 0	; g_izombieLevel
+; File C:\Users\Administrator\AppData\Local\Temp\pvz-small-bench-build-_27lfc08\archive\r2plant\r2_stub.h
+
+; 26   :     g_ck = g_ck * 0x100000001B3ULL ^ (salt * 0x9E3779B97F4A7C15ULL + v + 0x165667B19E3779F9ULL);
+
+	mov	QWORD PTR ?g_ck@@3_KA, rcx		; g_ck
+; File C:\Users\Administrator\AppData\Local\Temp\pvz-table-storage-diagnosis-20261029\static.cpp
+
+; 841  :     if (!IsInPlay() || mApp->IsIZombieLevel() || mApp->mGameMode == GameMode::GAMEMODE_INTRO)
+
+	jne	$LN6@UpdateProd
+	mov	rax, QWORD PTR [rbx+64]
+	cmp	DWORD PTR [rax+8], 1
+	je	$LN6@UpdateProd
+; File C:\Users\Administrator\AppData\Local\Temp\pvz-small-bench-build-_27lfc08\archive\r2plant\r2_stub.h
+
+; 26   :     g_ck = g_ck * 0x100000001B3ULL ^ (salt * 0x9E3779B97F4A7C15ULL + v + 0x165667B19E3779F9ULL);
+
+	imul	rcx, rbp
+	mov	rax, 3184181188763830535		; 2c307bebb0bfc907H
+	xor	rcx, rax
+	mov	QWORD PTR ?g_ck@@3_KA, rcx		; g_ck
+; File C:\Users\Administrator\AppData\Local\Temp\pvz-table-storage-diagnosis-20261029\static.cpp
+
+; 847  :     if (mSeedType == SeedType::SEED_MARIGOLD && mBoard->mCurrentWave == mBoard->mNumWaves)
+
+	cmp	DWORD PTR [rbx], 38			; 00000026H
+	jne	SHORT $LN11@UpdateProd
+	mov	rcx, QWORD PTR [rbx+72]
+	mov	eax, DWORD PTR [rcx+4]
+	cmp	DWORD PTR [rcx], eax
+	jne	SHORT $LN11@UpdateProd
+
+; 848  :     {
+; 849  :         if (mState != PlantState::STATE_MARIGOLD_ENDING)
+
+	cmp	DWORD PTR [rbx+4], 46			; 0000002eH
+	je	SHORT $LN9@UpdateProd
+
+; 850  :         {
+; 851  :             mState = PlantState::STATE_MARIGOLD_ENDING;
+
+	mov	DWORD PTR [rbx+4], 46			; 0000002eH
+
+; 852  :             mStateCountdown = 6000;
+
+	mov	DWORD PTR [rbx+8], 6000			; 00001770H
+
+; 853  :         }
+
+	jmp	SHORT $LN11@UpdateProd
+$LN9@UpdateProd:
+
+; 854  :         else if (mStateCountdown <= 0)
+
+	cmp	DWORD PTR [rbx+8], 0
+	jle	$LN6@UpdateProd
+$LN11@UpdateProd:
+
+; 855  :             return;
+; 856  :     }
+; 857  : 
+; 858  :     if (mApp->mGameMode == GameMode::GAMEMODE_CHALLENGE_LAST_STAND && mBoard->mChallenge->mChallengeState != ChallengeState::STATECHALLENGE_LAST_STAND_ONSLAUGHT)
+
+	mov	rax, QWORD PTR [rbx+64]
+	cmp	DWORD PTR [rax+8], 2
+	jne	SHORT $LN12@UpdateProd
+	mov	rax, QWORD PTR [rbx+72]
+	mov	rcx, QWORD PTR [rax+8]
+	cmp	DWORD PTR [rcx], 1
+	jne	$LN6@UpdateProd
+$LN12@UpdateProd:
+
+; 859  :         return;
+; 860  : 
+; 861  :     mLaunchCounter--;
+
+	dec	DWORD PTR [rbx+32]
+	movsxd	rax, DWORD PTR [rbx+32]
+
+; 862  :     if (mLaunchCounter <= 100)
+
+	cmp	eax, 100				; 00000064H
+	jg	SHORT $LN13@UpdateProd
+; File C:\Users\Administrator\AppData\Local\Temp\pvz-small-bench-build-_27lfc08\archive\r2plant\r2_stub.h
+
+; 244  : inline int  TodAnimateCurve(int a, int b, int c, int d, int e, Curves) { MixCk(0x1006ULL, (uint64_t)a + c); return (a + c + e) % (d + 1); }
+
+	mov	rcx, rax
+
+; 26   :     g_ck = g_ck * 0x100000001B3ULL ^ (salt * 0x9E3779B97F4A7C15ULL + v + 0x165667B19E3779F9ULL);
+
+	mov	rax, 4845549939439678171		; 433ed9ff41b7b2dbH
+	add	rcx, rax
+	mov	rax, QWORD PTR ?g_ck@@3_KA		; g_ck
+	imul	rax, rbp
+	xor	rcx, rax
+	mov	QWORD PTR ?g_ck@@3_KA, rcx		; g_ck
+; File C:\UserProgram\Visual Studuio\2026\Community\VC\Tools\MSVC\14.51.36231\include\utility
+
+; 80   :     return _Left < _Right ? _Right : _Left;
+
+	xor	ecx, ecx
+	mov	eax, DWORD PTR [rbx+88]
+	test	eax, eax
+	cmovs	eax, ecx
+; File C:\Users\Administrator\AppData\Local\Temp\pvz-table-storage-diagnosis-20261029\static.cpp
+
+; 865  :         mEatenFlashCountdown = std::max(mEatenFlashCountdown, aFlashCountdown);
+
+	mov	DWORD PTR [rbx+88], eax
+$LN13@UpdateProd:
+
+; 866  :     }
+; 867  :     if (mLaunchCounter <= 0)
+
+	cmp	DWORD PTR [rbx+32], 0
+	jg	$LN6@UpdateProd
+
+; 868  :     {
+; 869  :         mLaunchCounter = RandRangeInt(mLaunchRate - 150, mLaunchRate);
+
+	mov	edx, DWORD PTR [rbx+36]
+	lea	ecx, DWORD PTR [rdx-150]
+	call	?RandRangeInt@@YAHHH@Z			; RandRangeInt
+	mov	DWORD PTR [rbx+32], eax
+; File C:\Users\Administrator\AppData\Local\Temp\pvz-small-bench-build-_27lfc08\archive\r2plant\r2_stub.h
+
+; 26   :     g_ck = g_ck * 0x100000001B3ULL ^ (salt * 0x9E3779B97F4A7C15ULL + v + 0x165667B19E3779F9ULL);
+
+	mov	rax, -5282511632021695610		; b6b0bfa89b7a5386H
+	mov	r8, QWORD PTR ?g_ck@@3_KA		; g_ck
+	imul	r8, rbp
+	xor	r8, rax
+	mov	QWORD PTR ?g_ck@@3_KA, r8		; g_ck
+; File C:\Users\Administrator\AppData\Local\Temp\pvz-table-storage-diagnosis-20261029\static.cpp
+
+; 944  :         if ((unsigned)mSeedType < sizeof(kProductionCoins) / sizeof(kProductionCoins[0]))
+
+	movsxd	rax, DWORD PTR [rbx]
+	cmp	eax, 53					; 00000035H
+	jae	$LN3@UpdateProd
+	mov	QWORD PTR [rsp+48], rsi
+	mov	QWORD PTR [rsp+56], rdi
+
+; 945  :         {
+; 946  :             const auto& aRow = kProductionCoins[mSeedType];
+
+	lea	rdi, QWORD PTR [rax+rax*4]
+	mov	QWORD PTR [rsp+64], r14
+	lea	r14, OFFSET FLAT:?kProductionCoins@?BH@??UpdateProductionPlant@Plant@FB@@QEAAXXZ@4QBU<unnamed-type-kProductionCoins>@?BH@??123@QEAAXXZ@B
+
+; 947  :             if (aRow.mPick != ProductionCoinPick::NONE)
+
+	movzx	ecx, BYTE PTR [r14+rdi*4]
+	lea	rsi, QWORD PTR [r14+rdi*4]
+	test	cl, cl
+	je	$LN91@UpdateProd
+
+; 948  :             {
+; 949  :                 CoinType aCoin = aRow.mCoinA;
+
+	mov	eax, DWORD PTR [r14+rdi*4+4]
+
+; 950  :                 if (aRow.mPick == ProductionCoinPick::SMALL_STATE)
+
+	cmp	cl, 2
+	jne	SHORT $LN17@UpdateProd
+
+; 951  :                 {
+; 952  :                     aCoin = (mState == PlantState::STATE_SUNSHROOM_SMALL) ? aRow.mCoinA : aRow.mCoinB;
+
+	cmp	DWORD PTR [rbx+4], 23
+	je	SHORT $LN70@UpdateProd
+	mov	eax, DWORD PTR [r14+rdi*4+8]
+
+; 953  :                 }
+
+	jmp	SHORT $LN70@UpdateProd
+$LN17@UpdateProd:
+
+; 954  :                 else if (aRow.mPick == ProductionCoinPick::RANDOM10)
+
+	cmp	cl, 3
+	jne	SHORT $LN70@UpdateProd
+
+; 955  :                 {
+; 956  :                     aCoin = (Sexy::Rand(100) < 10) ? aRow.mCoinA : aRow.mCoinB;
+
+	mov	ecx, 100				; 00000064H
+	call	?Rand@Sexy@@YAII@Z			; Sexy::Rand
+	mov	r8, QWORD PTR ?g_ck@@3_KA		; g_ck
+	cmp	eax, 10
+	mov	ecx, 4
+	mov	edx, 8
+	cmovae	ecx, edx
+	mov	eax, DWORD PTR [rcx+rsi]
+$LN70@UpdateProd:
+
+; 958  :                 for (int i = 0; i < aRow.mCount; i++)
+
+	mov	edx, DWORD PTR [r14+rdi*4+16]
+	test	edx, edx
+	jle	SHORT $LN91@UpdateProd
+
+; 959  :                 {
+; 960  :                     mBoard->AddCoin(mX, mY, aCoin, aRow.mMotion);
+
+	movsxd	rcx, eax
+	mov	r9, 1520839313276492958			; 151b1b4c344b5c9eH
+	movsxd	rax, DWORD PTR [r14+rdi*4+12]
+	add	r9, rax
+	add	r9, rcx
+	npad	7
+$LL4@UpdateProd:
+; File C:\Users\Administrator\AppData\Local\Temp\pvz-small-bench-build-_27lfc08\archive\r2plant\r2_stub.h
+
+; 448  :     void AddCoin(int x, int y, CoinType t, CoinMotion m) { MixCk(0x2051ULL, (uint64_t)t + (uint64_t)m + (uint64_t)x + (uint64_t)y); }
+
+	movsxd	rax, DWORD PTR [rbx+20]
+	movsxd	rcx, DWORD PTR [rbx+16]
+
+; 26   :     g_ck = g_ck * 0x100000001B3ULL ^ (salt * 0x9E3779B97F4A7C15ULL + v + 0x165667B19E3779F9ULL);
+
+	add	rax, r9
+	add	rcx, rax
+	mov	rax, r8
+	imul	rax, rbp
+	mov	r8, rcx
+	xor	r8, rax
+	mov	QWORD PTR ?g_ck@@3_KA, r8		; g_ck
+; File C:\Users\Administrator\AppData\Local\Temp\pvz-table-storage-diagnosis-20261029\static.cpp
+
+; 958  :                 for (int i = 0; i < aRow.mCount; i++)
+
+	sub	edx, 1
+	jne	SHORT $LL4@UpdateProd
+$LN91@UpdateProd:
+	mov	rdi, QWORD PTR [rsp+56]
+	mov	rsi, QWORD PTR [rsp+48]
+	mov	r14, QWORD PTR [rsp+64]
+$LN3@UpdateProd:
+
+; 961  :                 }
+; 962  :             }
+; 963  :         }
+; 964  : 
+; 965  :         if (mApp->mGameMode == GameMode::GAMEMODE_CHALLENGE_BIG_TIME)
+
+	mov	rax, QWORD PTR [rbx+64]
+	cmp	DWORD PTR [rax+8], 3
+	jne	SHORT $LN6@UpdateProd
+
+; 966  :         {
+; 967  :             if (mSeedType == SeedType::SEED_SUNFLOWER)
+
+	mov	eax, DWORD PTR [rbx]
+	cmp	eax, 1
+	jne	SHORT $LN21@UpdateProd
+; File C:\Users\Administrator\AppData\Local\Temp\pvz-small-bench-build-_27lfc08\archive\r2plant\r2_stub.h
+
+; 26   :     g_ck = g_ck * 0x100000001B3ULL ^ (salt * 0x9E3779B97F4A7C15ULL + v + 0x165667B19E3779F9ULL);
+
+	mov	rdx, 1520839313276492964		; 151b1b4c344b5ca4H
+; File C:\Users\Administrator\AppData\Local\Temp\pvz-table-storage-diagnosis-20261029\static.cpp
+
+; 970  :             }
+
+	jmp	SHORT $LN92@UpdateProd
+$LN21@UpdateProd:
+
+; 971  :             else if (mSeedType == SeedType::SEED_MARIGOLD)
+
+	cmp	eax, 38					; 00000026H
+	jne	SHORT $LN6@UpdateProd
+; File C:\Users\Administrator\AppData\Local\Temp\pvz-small-bench-build-_27lfc08\archive\r2plant\r2_stub.h
+
+; 26   :     g_ck = g_ck * 0x100000001B3ULL ^ (salt * 0x9E3779B97F4A7C15ULL + v + 0x165667B19E3779F9ULL);
+
+	mov	rdx, 1520839313276492962		; 151b1b4c344b5ca2H
+$LN92@UpdateProd:
+; File C:\Users\Administrator\AppData\Local\Temp\pvz-table-storage-diagnosis-20261029\static.cpp
+
+; 977  : }
+
+	movsxd	rax, DWORD PTR [rbx+20]
+	movsxd	rcx, DWORD PTR [rbx+16]
+	add	rdx, rax
+	imul	r8, rbp
+	add	rdx, rcx
+	xor	rdx, r8
+	mov	QWORD PTR ?g_ck@@3_KA, rdx		; g_ck
+$LN6@UpdateProd:
+	mov	rbx, QWORD PTR [rsp+72]
+	add	rsp, 32					; 00000020H
+	pop	rbp
+	ret	0
+?UpdateProductionPlant@Plant@FB@@QEAAXXZ ENDP		; FB::Plant::UpdateProductionPlant

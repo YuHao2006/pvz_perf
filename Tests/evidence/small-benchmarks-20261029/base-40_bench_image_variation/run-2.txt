@@ -1,0 +1,9 @@
+image variation bench: N=2, per-op:
+  find avg   list   5.52 ns / table   7.34 ns (133%)
+  find miss  list   7.32 ns / table   9.17 ns (125%)
+  walk+free  list   3.66 ns / table   7.10 ns (194%)
+image variation bench: N=10, per-op:
+  find avg   list  16.44 ns / table  13.04 ns (79%)
+  find miss  list  20.27 ns / table  29.35 ns (145%)
+  walk+free  list  11.00 ns / table  19.01 ns (173%)
+sink=0

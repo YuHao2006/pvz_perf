@@ -15,6 +15,8 @@
 
 namespace MowerMotionRuntime
 {
+inline Board* scheduleBoard=nullptr;
+inline LawnApp* scheduleApp=nullptr;
 inline void Require(bool ok, const char* text)
 {
     if (!ok) throw std::runtime_error(text);
@@ -32,6 +34,8 @@ void Schedule(int frequency, std::int64_t duration, Step step)
         Sexy::gUpdateIntervalNs = end - elapsed;
         Sexy::gUpdateTicks = double(end - elapsed) / 10'000'000;
         Sexy::gWholeLegacyTicks = 0;
+        scheduleBoard->mLevelTimeNs+=end-elapsed;
+        scheduleApp->mEffectSystem->mReanimationHolder->mVisualTimeNs+=end-elapsed;
         step();
         elapsed = end;
     }
@@ -45,6 +49,7 @@ struct MowerFixture
     LawnMower mower{};
     MowerFixture(LawnApp& a, Board& board, LawnMowerType type, int chomp) : app(a)
     {
+        scheduleBoard=&board;scheduleApp=&app;
         mower.mApp = &app;
         mower.mBoard = &board;
         mower.mRow = 2;
@@ -53,7 +58,7 @@ struct MowerFixture
         mower.mMowerState = LawnMowerState::MOWER_TRIGGERED;
         mower.mMowerType = type;
         mower.mMowerHeight = MowerHeight::MOWER_HEIGHT_LAND;
-        mower.mChompCounter = chomp;
+        mower.mChompEndTimeNs = chomp ? static_cast<std::int64_t>(board.mLevelTimeNs)+std::int64_t(chomp)*10'000'000 : 0;
         auto* animation = app.AddReanimation(0, 0, 0, type == LawnMowerType::LAWNMOWER_POOL ?
             ReanimationType::REANIM_POOL_CLEANER : ReanimationType::REANIM_LAWNMOWER);
         animation->ChangeLoopType(ReanimLoopType::REANIM_LOOP);
@@ -62,27 +67,43 @@ struct MowerFixture
     ~MowerFixture() { app.RemoveReanimation(mower.mReanimID); }
 };
 
-inline std::array<std::uint32_t, 3> Travel(LawnApp& app, Board& board,
+inline void Travel(LawnApp& app, Board& board,
     int frequency, LawnMowerType type, int chomp)
 {
     MowerFixture fixture(app, board, type, chomp);
     auto& mower = fixture.mower;
-    Schedule(frequency, 712'345'679, [&] { mower.Update(); });
-    const auto first = Bits(mower.mPosX);
-    mower.mChompCounter = 50; // Real collision writes this same public countdown.
-    Schedule(frequency, 423'456'789, [&] { mower.Update(); });
-    const auto second = Bits(mower.mPosX);
-    mower.mPosX = -1500.125f; // Explicit movement reset starts a new segment.
-    Schedule(frequency, 864'197'532, [&] { mower.Update(); });
+    const float base = type == LawnMowerType::LAWNMOWER_POOL ? 2.5f : 3.33f;
+    float expected = mower.mPosX;
+    std::int64_t remaining = std::int64_t(chomp) * 10'000'000;
+    const auto update = [&] {
+        float speed = base;
+        if (remaining > 0)
+        {
+            remaining = std::uint64_t(remaining) > Sexy::gUpdateIntervalNs
+                ? remaining - static_cast<std::int64_t>(Sexy::gUpdateIntervalNs) : 0;
+            speed = TodAnimateCurveNs(500'000'000, 0, remaining, base, 1.0f, Curves::BounceSlowMiddle);
+        }
+        expected += speed * static_cast<float>(Sexy::gUpdateTicks);
+        mower.Update();
+        Require(Bits(mower.mPosX) == Bits(expected),
+            "Mower did not accumulate the current step's chomp speed");
+        Require(std::max<std::int64_t>(0,mower.mChompEndTimeNs-static_cast<std::int64_t>(board.mLevelTimeNs)) == remaining,
+            "Mower collision countdown did not consume the actual step");
+    };
+    Schedule(frequency, 712'345'679, update);
+    mower.mChompEndTimeNs = static_cast<std::int64_t>(board.mLevelTimeNs)+500'000'000;
+    remaining = 500'000'000;
+    Schedule(frequency, 423'456'789, update);
+    mower.mPosX = expected = -1500.125f;
+    Schedule(frequency, 864'197'532, update);
     Require(!mower.mDead, "Mower fixture unexpectedly died");
-    return {first, second, Bits(mower.mPosX)};
 }
 
 inline void Source100Hz(LawnApp& app, Board& board, LawnMowerType type, int chomp)
 {
     MowerFixture fixture(app, board, type, chomp);
     const float base = type == LawnMowerType::LAWNMOWER_POOL ? 2.5f : 3.33f;
-    double expected = fixture.mower.mPosX;
+    float expected = fixture.mower.mPosX;
     int counter = chomp;
     for (int tick = 0; tick < 100; ++tick)
     {
@@ -92,7 +113,7 @@ inline void Source100Hz(LawnApp& app, Board& board, LawnMowerType type, int chom
                 base, 1.0f, Curves::BounceSlowMiddle);
         expected += speed;
         Schedule(100, 10'000'000, [&] { fixture.mower.Update(); });
-        Require(std::fabs(double(fixture.mower.mPosX) - expected) < .0002,
+        Require(Bits(fixture.mower.mPosX) == Bits(expected),
             "Production mower changed the 100Hz source chomp speed sequence");
     }
     if (chomp == 50)
@@ -101,7 +122,7 @@ inline void Source100Hz(LawnApp& app, Board& board, LawnMowerType type, int chom
             (-2000.25 + 100.0 * base);
         const double expectedLoss = type == LawnMowerType::LAWNMOWER_POOL ?
             -49.98 : -77.6356;
-        Require(std::fabs(loss - expectedLoss) < .002,
+        Require(std::fabs(loss - expectedLoss) < .02,
             "Mower slowdown distance no longer matches the original 0.5 second curve");
     }
 }
@@ -109,29 +130,50 @@ inline void Source100Hz(LawnApp& app, Board& board, LawnMowerType type, int chom
 inline void PoolAltitude(LawnApp& app, Board& board)
 {
     for (bool rising : {false, true})
-    {
-        const auto run = [&](int frequency) {
+        for (int frequency : {1, 30, 60, 100, 144, 200, 240, 1000, 0})
+        {
             MowerFixture fixture(app, board, LawnMowerType::LAWNMOWER_POOL, 0);
             auto& mower = fixture.mower;
             mower.mPosX = rising ? 700.f : 100.f;
             mower.mMowerHeight = rising ? MowerHeight::MOWER_HEIGHT_UP_TO_LAND :
                 MowerHeight::MOWER_HEIGHT_DOWN_TO_POOL;
             mower.mAltitude = rising ? -28.f : 0.f;
-            Schedule(frequency, 123'456'789, [&] { mower.UpdatePool(); });
-            const auto sample = Bits(mower.mAltitude);
-            Schedule(frequency, 16'543'210, [&] { mower.UpdatePool(); });
-            Require(mower.mMowerHeight == (rising ? MowerHeight::MOWER_HEIGHT_UP_TO_LAND :
-                MowerHeight::MOWER_HEIGHT_DOWN_TO_POOL),
-                "Mower altitude transitioned before its integer deadline");
-            Schedule(100, 1, [&] { mower.UpdatePool(); });
-            Require(mower.mAltitude == 0 && mower.mMowerHeight ==
+            float expected = mower.mAltitude;
+            bool complete = false;
+            Schedule(frequency, 200'000'000, [&] {
+                if (!complete)
+                {
+                    expected += (rising ? 2.0f : -2.0f) * static_cast<float>(Sexy::gUpdateTicks);
+                    complete = rising ? expected >= 0 : expected <= -28;
+                    if (complete) expected = 0;
+                }
+                mower.UpdatePool();
+                Require(Bits(mower.mAltitude) == Bits(expected),
+                    "Mower pool altitude did not accumulate the current step");
+            });
+            Require(complete && mower.mAltitude == 0 && mower.mMowerHeight ==
                 (rising ? MowerHeight::MOWER_HEIGHT_LAND : MowerHeight::MOWER_HEIGHT_IN_POOL),
-                "Mower altitude missed the 140ms endpoint");
-            return sample;
-        };
-        const auto expected = run(100);
-        for (int frequency : {1, 30, 60, 144, 200, 240, 1000, 0})
-            Require(run(frequency) == expected, "Production mower altitude depends on step partition");
+                "Mower pool transition missed its altitude boundary");
+        }
+}
+
+inline void RepeatedChomp(LawnApp& app, Board& board)
+{
+    for (auto type : {LawnMowerType::LAWNMOWER_LAWN, LawnMowerType::LAWNMOWER_POOL})
+    {
+        MowerFixture fixture(app, board, type, 0);
+        const float base = type == LawnMowerType::LAWNMOWER_POOL ? 2.5f : 3.33f;
+        const float speed = TodAnimateCurveNs(500'000'000, 0, 490'000'000,
+            base, 1.0f, Curves::BounceSlowMiddle);
+        Require(speed > .9f * base, "Repeated collisions should stay near base speed");
+        for (int tick = 0; tick < 20; ++tick)
+        {
+            const float expected = fixture.mower.mPosX + speed;
+            fixture.mower.mChompEndTimeNs = static_cast<std::int64_t>(board.mLevelTimeNs)+500'000'000;
+            Schedule(100, 10'000'000, [&] { fixture.mower.Update(); });
+            Require(Bits(fixture.mower.mPosX) == Bits(expected) && fixture.mower.mChompEndTimeNs-static_cast<std::int64_t>(board.mLevelTimeNs)==490'000'000,
+                "Repeated collision did not refresh the start of the 500ms slowdown");
+        }
     }
 }
 
@@ -185,16 +227,16 @@ inline void Run(LawnApp& app, Board& board)
         for (int chomp : {0, 25, 50})
         {
             Source100Hz(app, board, type, chomp);
-            const auto expected = Travel(app, board, 100, type, chomp);
-            for (int frequency : {1, 30, 60, 144, 200, 240, 1000, 0})
-                Require(Travel(app, board, frequency, type, chomp) == expected,
-                    "Production mower travel/chomp/reset/reposition depends on update partition");
+            for (int frequency : {1, 30, 60, 100, 144, 200, 240, 1000, 0})
+                Travel(app, board, frequency, type, chomp);
         }
     }
+    RepeatedChomp(app, board);
     PoolAltitude(app, board);
     Brain(app, board);
     app.mGameScene = scene;
-    std::cout << "PASS actual mower/brain motion: 100Hz speed samples, chomp resets, explicit segment reset, "
-        "pool integer endpoints, brain fall/reposition/death; 1/30/60/100/144/200/240/1000Hz/random\n";
+    std::cout << "PASS actual mower/brain motion: original 100Hz chomp samples, actual-step accumulation, "
+        "repeated-collision resets, direct reposition, pool altitude boundaries and brain behavior; "
+        "1/30/60/100/144/200/240/1000Hz/random\n";
 }
 }

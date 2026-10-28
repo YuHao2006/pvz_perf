@@ -17,7 +17,6 @@
 #include <fstream>
 #include <stdexcept>
 #include <string_view>
-#include "reanim_checks.h"
 
 namespace Sexy {
 const char* GetLogFilePathC(const char* name) {
@@ -132,6 +131,73 @@ void Coverage(D3d12Renderer& renderer) {
             Pixel(pixels, int(cover), 100+int(alpha), 0xff000000u | value*0x010101u);
         }
     std::cout << "coverage-exact-65536=PASS\n";
+}
+void MixedSprites(D3d12Renderer& renderer) {
+    const uint32_t pixel = 0x8073c92b;
+    auto* texture = renderer.CreateTexture(1, 1, &pixel, 4);
+    Require(renderer.BeginScene(), "Cannot begin mixed sprite scene");
+    auto background = Quad(0, 0, 800, 96, D3d12Renderer::SlotOf(renderer.whiteTexture));
+    for (auto& vertex : background) { vertex.r = 0.13f; vertex.g = 0.27f; vertex.b = 0.41f; }
+    renderer.SubmitTriangles(background, renderer.whiteTexture, false, false, GpuBlend::Opaque);
+    // The independent-filter flag with no filter and a straight input selects
+    // the general shader with identical sampling semantics. Paint matching
+    // columns through both paths, alternating normal/additive at every draw.
+    for (int pass = 0; pass < 2; ++pass) {
+        for (unsigned int layer = 0; layer < 4; ++layer) {
+            for (unsigned int alpha = 0; alpha < 256; ++alpha) {
+                auto vertices = Quad(float(alpha + pass * 400), 0, 1, 96,
+                    D3d12Renderer::SlotOf(texture) |
+                    (pass ? GpuVertex::kIndependentColorFilter : 0), float(alpha) / 255);
+                renderer.SubmitTriangles(vertices, texture, false, false,
+                    (alpha + layer) % 2 ? GpuBlend::Additive : GpuBlend::Normal);
+            }
+        }
+    }
+    renderer.EndSceneAndPresent();
+    const auto pixels = renderer.ReadScenePixels();
+    for (int y = 0; y < 96; ++y) for (int x = 0; x < 256; ++x) {
+        const auto fast = pixels[size_t(y) * 800 + x];
+        const auto general = pixels[size_t(y) * 800 + x + 400];
+        // RGBA8 blending quantizes shader output before blending. Moving the
+        // source RGB multiplication into the shader permits one byte of
+        // rounding difference per layer (four layers in this comparison).
+        for (unsigned int shift = 0; shift < 32; shift += 8)
+            if (std::abs(int((fast >> shift) & 255) - int((general >> shift) & 255)) > 4) {
+                std::cerr << "mixed x=" << x << " y=" << y << " fast=" << std::hex << fast
+                    << " general=" << general << std::dec << '\n';
+                throw std::runtime_error("Mixed sprite blend differs from general shader");
+            }
+    }
+    renderer.DestroyTexture(texture);
+    std::cout << "mixed-sprite-normal-additive-ramp=PASS layers=4 tolerance=4-unorm-bytes\n";
+}
+void IndexedGeometry(D3d12Renderer& renderer) {
+    Require(renderer.BeginScene(), "Cannot begin indexed geometry scene");
+    const auto slot = D3d12Renderer::SlotOf(renderer.whiteTexture);
+    const auto square = Quad(280, 10, 8, 8, slot);
+    std::vector<GpuVertex> quads;
+    quads.reserve(20000 * 4);
+    for (unsigned int i = 0; i < 20000; ++i) {
+        for (const auto corner : {0, 1, 5, 2}) {
+            auto vertex = square[corner];
+            vertex.r = i == 19999 ? 0.0f : 1.0f;
+            vertex.g = 0; vertex.b = i == 19999 ? 1.0f : 0.0f;
+            quads.push_back(vertex);
+        }
+    }
+    renderer.SubmitQuads(quads, renderer.whiteTexture, false, false, GpuBlend::Opaque);
+    // Mix an existing quad prefix, triangles, then another quad in one run.
+    auto triangle = Quad(300, 10, 8, 8, slot);
+    renderer.SubmitTriangles(triangle, renderer.whiteTexture, false, false, GpuBlend::Opaque);
+    const auto last = Quad(320, 10, 8, 8, slot);
+    const std::array<GpuVertex, 4> strip{last[0], last[1], last[5], last[2]};
+    renderer.SubmitQuads(strip, renderer.whiteTexture, false, false, GpuBlend::Opaque);
+    renderer.EndSceneAndPresent();
+    const auto pixels = renderer.ReadScenePixels();
+    Pixel(pixels, 284, 14, 0xff0000ff);
+    Pixel(pixels, 304, 14, 0xffffffff);
+    Pixel(pixels, 324, 14, 0xffffffff);
+    std::cout << "indexed-quads-80000-vertices-mixed-prefix-and-split=PASS\n";
 }
 void ImageFactories(D3d12Renderer& renderer) {
     const uint32_t sourcePixel = 0x80402010;
@@ -373,9 +439,7 @@ int main(int argc, char** argv) {
             if (std::string_view(argv[i]) == "--arena-stress") arenaStress = true;
             else throw std::invalid_argument("Unknown D3D12 render-test argument");
         }
-#if !defined(PVZ_D3D12_REANIM_RESIDENT)
         if (arenaStress) throw std::invalid_argument("--arena-stress requires resident reanimation");
-#endif
         TestWindow window;
         Sexy::D3d12Context context(window.hwnd, true);
         std::cout << "adapter=" << context.adapterDescription << '\n';
@@ -384,16 +448,14 @@ int main(int argc, char** argv) {
             Sexy::D3d12Renderer renderer(context, 800, 600, PVZ_D3D12_SHADER_DIRECTORY);
             renderer.PrepareLoadingPipelines();
             UploadAndBindless(renderer);
+            MixedSprites(renderer);
+            IndexedGeometry(renderer);
             Coverage(renderer);
             ImageFactories(renderer);
             PoolDraw(renderer);
             SourceScale(renderer, scaleEffect);
             StaticSlots(renderer);
             ResizeCanvas(renderer, scaleEffect);
-#if defined(PVZ_D3D12_REANIM_RESIDENT)
-            D3d12ReanimTest::Run(renderer);
-            if (arenaStress) D3d12ReanimTest::ArenaStress(renderer);
-#endif
         } catch (...) {
             Validation(context.device);
             throw;

@@ -7,15 +7,11 @@
 #include "SexyAppFramework/graphics/ImageReadback.h"
 #include "SexyAppFramework/graphics/GpuTypes.h"
 #include "SexyAppFramework/graphics/GpuPool.h"
-#include "SexyAppFramework/graphics/GpuReanim.h"
 #include <cstdint>
 #include <memory>
 #include <span>
 #include <string>
 #include <vector>
-#if defined(PVZ_REANIM_BENCHMARK)
-#include <chrono>
-#endif
 
 namespace Sexy {
 
@@ -24,25 +20,50 @@ namespace Sexy {
 using VulkanVertex = GpuVertex;
 using VulkanBlend = GpuBlend;
 struct VulkanTexture;
-struct VulkanReanim;
 using VulkanFontGlyph = GpuFontGlyph;
 using VulkanImageOperation = GpuImageOperation;
 using VulkanImageProcessing = GpuImageProcessing;
+
+#if defined(PVZ_VULKAN_SPRITE_EXPERIMENT)
+// Uniform per-quad metadata; no runtime animation data or color quantization.
+struct VulkanSpriteInstance {
+    float positions[8],uvs[8],color[4];
+    unsigned int slot,sampler;
+};
+static_assert(sizeof(VulkanSpriteInstance)==88);
+#endif
 
 // Lives inside SexyFramework. VulkanContext owns GPU/WSI resources; this owns the
 // logical game render target, textures, samplers, pipelines and vertex streams.
 // ResizePresent changes WSI only; ResizeScene explicitly replaces the canvas.
 // Neither operation replaces resident game images.
 // Read-only metadata references borrow stable storage from this renderer's Impl.
+// Main WSI uses one command/fence set and one shared collection of draw streams.
+// Texture descriptors remain immutable while referenced by recorded GPU work.
 class VulkanRenderer final {
     struct Impl;
     std::unique_ptr<Impl> impl_;
 public:
-#if defined(PVZ_REANIM_BENCHMARK)
-    // Only the opt-in benchmark backend contains this borrowed query-pool hook.
-    VkQueryPool frameTimestampQueries = VK_NULL_HANDLE;
-    // Renderer preparation/recording endpoint, before queue submission or WSI.
-    const std::chrono::steady_clock::time_point& frameRecordEnd;
+#if defined(PVZ_VULKAN_SPRITE_EXPERIMENT)
+    // Isolated desktop experiment only; absent from the production library.
+    static VkQueryPool benchmarkQueries;
+    static bool benchmarkSimpleGenerated;
+    static bool benchmarkSeparateBlend;
+    static bool benchmarkManualBakedFilters;
+    static bool benchmarkNonIndexedTriangles;
+    static bool benchmark32BitQuads;
+    static bool benchmarkPackedColor;
+    static bool benchmarkPackedColor16;
+    static bool benchmarkDiscardScene;
+    static bool benchmarkInstancedQuads;
+    static bool benchmarkTightSceneBarriers;
+    static bool benchmarkPresentCopy;
+    static bool benchmarkSolidFill;
+    static bool benchmarkGenerateIndexPrefix;
+    static unsigned int benchmarkDrawCalls, benchmarkSceneDraws;
+    static unsigned int benchmarkTriangles, benchmarkSceneTriangles;
+    void SubmitBenchmarkSprite(const VulkanSpriteInstance&,VulkanTexture*,VulkanBlend,const VulkanClip*);
+    VulkanTexture* ConvertBenchmarkTexture(VulkanTexture* source,VkFormat format);
 #endif
     VulkanRenderer(VulkanContext& window, int sceneWidth, int sceneHeight,
                    const std::string& vertexShader, const std::string& fragmentShader,
@@ -64,8 +85,8 @@ public:
     // handle's recorded drawing/upload remains alive through the frame fence.
     VulkanTexture* CreateTexture(int width, int height, const void* bgra,
                                  int rowPitch, bool opaque = false);
-    // Device-local RGBA32F premultiplied image, initialized to transparent black
-    // on the GPU. Unsupported attachment/blend/filter/transfer support throws.
+    // Device-local premultiplied RGBA16F image, initialized to transparent black
+    // on the GPU; attachment, blend, filtering, storage and transfer usages checked.
     // Its pointer stays stable when writes snapshot a previously sampled version.
     // Premultiplied storage does not retain hidden RGB at exactly zero alpha.
     VulkanTexture* CreateRenderImage(int width, int height);
@@ -91,8 +112,6 @@ public:
     const bool& sceneOpen;
     // Common drawing counts eligible picture candidates even on CPU fallback.
     // The next completed-batch decision uses their aggregate frame density.
-    uint32_t& reanimPictureCandidates;
-    const bool& reanimFrameEligible;
     // reanim-v4 静态槽位：纹理落在槽位区恒等位 staticBase+staticSlot——
     // 编译记录烘焙的最终下标，运行时零翻译。静态槽永不回收（启动语料
     // 终身常驻）；重复放置同槽（变体重建）原地覆盖描述符。
@@ -136,33 +155,12 @@ public:
     void SubmitTriangles(std::span<const VulkanVertex> vertices, VulkanTexture* texture,
                          bool linear, bool wrap, VulkanBlend blend,
                          const VulkanClip* clip = nullptr);
+    // Four vertices per rectangle, with triangles (0,1,2) and (1,2,3).
+    // Native uint16 indexed runs also accept ordinary triangles without reordering.
+    void SubmitQuads(std::span<const VulkanVertex> vertices,VulkanTexture* texture,
+        bool linear,bool wrap,VulkanBlend blend,const VulkanClip* clip = nullptr);
     void SubmitPool(VulkanTexture* texture, const GpuPoolParams& params);
-    // Loading-time immutable resident data. The renderer retains GPU resources;
-    // source spans can be released after upload. Destruction retires at a fence.
-    VulkanReanim* UploadReanimDefinition(const GpuReanimDefinition& definition);
-    VulkanReanim* UploadParticleDefinition(std::span<const float> words, uint32_t variants);
-    bool SubmitParticle(VulkanReanim*, VulkanTexture*, const GpuParticleDraw&,
-        std::span<const GpuParticleState>, bool linear, bool repeat, VulkanBlend,
-        const VulkanClip* clip = nullptr);
-    bool SubmitFormulaParticles(VulkanReanim* d, VulkanTexture* t, const GpuParticleDraw& p,
-        std::span<const GpuParticleFormulaState> s, bool l, bool r, VulkanBlend b, const VulkanClip* c = nullptr)
-    { return SubmitParticle(d,t,p,{reinterpret_cast<const GpuParticleState*>(s.data()),s.size()},l,r,b,c); }
-    bool SubmitDiscreteParticles(VulkanReanim* d, VulkanTexture* t, const GpuParticleDraw& p,
-        std::span<const GpuParticleState> s, bool l, bool r, VulkanBlend b, const VulkanClip* c = nullptr)
-    { return SubmitParticle(d,t,p,s,l,r,b,c); }
-    void DestroyReanimDefinition(VulkanReanim* definition);
-    // false means the track/job requires the CPU path; no drawing was queued.
-    // Each accepted track is evaluated once per marker primitive in the GPU
-    // geometry stage; ordinary sprites retain painter order around markers.
-    bool SubmitReanim(VulkanReanim* definition, VulkanTexture* texture,
-        const GpuReanimDraw& draw, bool linear, bool repeat, VulkanBlend blend,
-        const VulkanClip* clip = nullptr,bool forceGpu = false);
-    // Frame-scoped append index, without a pointer-to-index map. UINT32_MAX
-    // means unsupported; the caller retains its ordinary CPU draw route.
-    uint32_t BeginReanimInstance(VulkanReanim* definition,VulkanTexture* texture,
-        const GpuReanimInstance& instance,bool linear,bool repeat,const VulkanClip* clip=nullptr,
-        bool forceGpu=false);
-    bool SubmitReanimTrack(uint32_t instance,const GpuReanimTrackDraw& track,VulkanBlend blend);
+    void SavePipelineCache();
     // Nearest/clamp mask sampling, integer byte coverage -> alpha in the GPU,
     // with the same native blending and clipping as ordinary primitives.
     void SubmitCoverageTriangles(std::span<const VulkanVertex> vertices, VulkanTexture* mask,

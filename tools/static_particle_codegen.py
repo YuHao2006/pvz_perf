@@ -8,7 +8,6 @@ import struct
 from fractions import Fraction
 
 import build_numeric_runtime_pak64 as pak
-from particle_gpu_codegen import gpu_record
 CURVES = ("Constant", "Linear", "EaseIn", "EaseOut", "EaseInOut",
           "EaseInOutWeak", "FastInOut", "FastInOutWeak", "Constant",
           "Bounce", "BounceFastMiddle", "BounceSlowMiddle", "SinWave", "EaseSinWave")
@@ -173,7 +172,6 @@ def generate(config, records: dict[str, bytes], reports: dict | None = None) -> 
         variants = reports[path].get("variants", [reports[path]]) if reports else [
             {"atlas_path": ""} for _ in range(atlas["variant_count"])]
         runtime[f"compiled/particle-runtime/{name.casefold()}.compiled"] = compiled_record(definition, variants)
-        runtime[f"compiled/gpu-particle/{name.casefold()}.compiled"] = gpu_record(definition)
         summary["emitters"] += len(definition["emitters"])
         summary["variants"] += atlas["variant_count"]
         summary["rectangles"] += atlas["variant_count"] * atlas["slot_count"]

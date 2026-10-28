@@ -86,9 +86,9 @@ unsigned int NativeMusicPlayback::State() const
     return state == AL_PLAYING ? BASS_ACTIVE_PLAYING :
         state == AL_PAUSED ? BASS_ACTIVE_PAUSED : BASS_ACTIVE_STOPPED;
 }
-void NativeMusicPlayback::SetGain(double value)
+void NativeMusicPlayback::SetGain(float value)
 {
-    alSourcef(mSource, AL_GAIN, static_cast<float>(value) *
+    alSourcef(mSource, AL_GAIN, value *
         sMasterGain.load(std::memory_order_relaxed));
     CheckOpenAL("OpenAL music gain update failed");
 }
@@ -120,4 +120,9 @@ void NativeMusicPlayback::Check() const
     if (error)
         throw std::runtime_error("OpenAL music callback decoder failed: " + std::to_string(error));
 }
+}
+
+void Sexy::NativeMusicPlayback::SetMasterGain(float value)
+{
+    sMasterGain.store(value, std::memory_order_relaxed);
 }

@@ -1,0 +1,7 @@
+PASS production curves: nanoseconds, extreme epochs, signed and reversed ranges, zero-duration steps, 13 endpoint contracts, integer rounding and double progress
+PASS production reanimation integer playback, original-speed roots, clipped roots, rate continuity, hold, synchronization, and partition-independent events
+PASS lifecycle resource plans
+PASS lifecycle definitions loaded: repeat 0
+PASS lifecycle curve timing
+PASS lifecycle reanimation playback
+FAIL static definition runtime: Changing velocity fed a rounded position into its next segment

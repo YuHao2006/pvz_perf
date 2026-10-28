@@ -1,0 +1,74 @@
+{
+  "date": "2026-10-27",
+  "scope": "Desktop isolated offscreen correctness and experiment configuration, not formal unlocked-clock performance results",
+  "git_head": "96d0b73edab294979d5b27184863954ed82942e7",
+  "worktree": "dirty; no GitHub push",
+  "devices": [
+    "NVIDIA GeForce RTX 4070 Laptop GPU (10de:2860)",
+    "Intel Arc integrated GPU (8086:7d55)"
+  ],
+  "target": "sexy_vulkan_sprite_benchmark",
+  "surface": "Offscreen BGRA8 1333x600; hidden window used only to initialize VulkanContext; no WSI presents inside the benchmark",
+  "workload": {
+    "sprite_count": 3000,
+    "sprite_size": [
+      64,
+      64
+    ],
+    "generated_every": [
+      0,
+      256,
+      8
+    ],
+    "draws_per_scene": [
+      2,
+      24,
+      751
+    ],
+    "order_unchanged": true
+  },
+  "timing_method": {
+    "api": "Vulkan timestamp query",
+    "begin": "TOP_OF_PIPE before scene pass",
+    "end": "BOTTOM_OF_PIPE after scene pass",
+    "readback": "after completed submission, outside timestamp interval",
+    "validation_for_timing": false,
+    "clocks_controlled": false,
+    "samples_per_path_per_round": 128,
+    "rounds": 8,
+    "process_repeats": 2
+  },
+  "variants": {
+    "A": "current path",
+    "B_default": "separate lightweight generated-source shader, unchanged blend equations and draws",
+    "B_indexed": "same shaders, four unique vertices and static uint32 indices; prototype backend compaction only"
+  },
+  "correctness_files_sha256": {
+    "pvz-sprite-nvidia-offscreen-validation.txt": "699828ca9a7d5fae17f1decc313cb41dbd48789c64de0133afe8d2f22789bbe0",
+    "pvz-sprite-intel-offscreen-validation.txt": "ac02009bd2999f2f86292bbfed4fe60d707faa676b907d9e3cd05823a83ab3c5",
+    "pvz-quads-nvidia-validation.txt": "fc378d4c05cc6f9bb8e57d01a05c9ab44efc342d2a6dc2d66be0feaa61de8c50",
+    "pvz-quads-intel-validation.txt": "ce5cafbb6eaeed0b29a2311f2f63011f3ae9744328cebcd93ae6fc15e4693d90",
+    "pvz-quads-nvidia-final-validation.txt": "9b61d6046ffa6b26e02461dacdf29df1083dd92cdde735d8b88e8bda3b5b67cd",
+    "pvz-sprite-intel-final-validation.txt": "ed91e017286efbf2127937d1b840cd2c82e3d7fc394aa30b6425fdfbcd10f7f6",
+    "production-wsi-validation.txt": "ac92b2ac4aa413f6f9879423a0a7941b738eaacae7e12ba023ad5ad8ff7ae895",
+    "rejected-merged-pipeline.txt": "3377fb9a35b171d947af4564bb52c8b8d93cb7189fa42668fbb66ee91dd2c611"
+  },
+  "current_source_sha256": {
+    "Tests/performance/vulkan_sprite_benchmark.cpp": "30f8e0e04c4a441180b9d4d7e4846ca3c57e003143838117a1c8eba166db214a",
+    "Tests/performance/generated_sprite_experiment.frag": "44984bfa4989f050784a2e47428380a83d548950f7f2ec7cee982ac84aaf3a34",
+    "pvzPerf/SexyAppFramework/graphics/vulkan/VulkanRenderer.cpp": "803f80491a1c2fba7e5f7b6d73681a76f97a73575a7313101528cf74bc06ca3d",
+    "pvzPerf/SexyAppFramework/graphics/vulkan/VulkanRenderer.h": "3c328260ca0ee5aa2a9a62bf78993574cb80f028c3b533d67f9a62327f927a8c",
+    "pvzPerf/SexyAppFramework/graphics/vulkan/CMakeLists.txt": "f81f3e402a5e0697ff8f4e08d3987abd07cdbdd623a1511cd8611cf6144a676d"
+  },
+  "final_executable_sha256": "2216bbafaa29cb8cfdd67e98f1fca324192b98c6f829e5c122eb89ae7f464938",
+  "raw_interim_results_directory": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\pvz-desktop-gpu-experiments-20261027",
+  "provenance_note": "Raw archive contains a measured-source snapshot for the indexed runs and later generated-source runs. Earlier generated-source prototype EXEs were not individually hashed before replacement. Final source changes only replace fixture unique ownership with explicit raw ownership and were revalidated; timing binaries are retained in the raw archive. Do not treat all raw runs as one byte-identical executable.",
+  "limitations": [
+    "Synthetic sprites; not the endless gameplay workload.",
+    "Desktop results cannot establish Adreno performance or energy use.",
+    "Indexed prototype adds host compaction work; production requires four vertices at call sites.",
+    "Rejected merged-blend experiment failed the pixel gate and was not timed.",
+    "Full WSI validation still reports PRESENT_AFTER_WRITE; root cause is not established.",
+    "Experimental controls/timing code compile only in the opt-in library."
+  ]
+}

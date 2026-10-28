@@ -22,6 +22,7 @@
 #include "metal/MetalRenderer.h"
 #include "metal/MetalScaleTypes.h"
 #else
+#define PVZ_GPU_VULKAN 1
 #include "vulkan/VulkanContext.h"
 #include "vulkan/VulkanRenderer.h"
 #endif
@@ -59,24 +60,6 @@ using GpuTexture = VulkanTexture;
 using GpuScaleStep = VulkanScaleStep;
 using GpuScaleImage = VulkanScaleImage;
 #endif
-#if !defined(PVZ_GPU_D3D9) && !defined(PVZ_GPU_OPENGL) && !defined(PVZ_GPU_D3D12) && !defined(PVZ_GPU_METAL)
-#define PVZ_GPU_REANIM_VULKAN 1
-#define PVZ_GPU_REANIM_RESIDENT 1
-using GpuReanimResource = VulkanReanim;
-#elif defined(PVZ_GPU_OPENGL)
-#define PVZ_GPU_REANIM_RESIDENT 1
-using GpuReanimResource = OpenGLReanim;
-#elif defined(PVZ_GPU_D3D12)
-#define PVZ_GPU_REANIM_RESIDENT 1
-using GpuReanimResource = D3d12Reanim;
-#elif defined(PVZ_GPU_METAL)
-#define PVZ_GPU_REANIM_RESIDENT 1
-using GpuReanimResource = MetalReanim;
-#else
-struct GpuReanimResource;
-#endif
-// Both immutable animation formats use the backend's resident arena.
-using GpuParticleResource = GpuReanimResource;
 using GpuHdrParams = VulkanHdrParams;
 #ifdef _WIN32
 using GpuHdrDisplayObserver = VulkanHdrDisplayObserver;

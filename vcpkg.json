@@ -5,11 +5,15 @@
   "dependencies": [
     {
       "name": "directx-dxc",
-      "platform": "!osx"
+      "platform": "!osx & !android"
     },
     {
       "name": "jpegli",
       "version>=": "2026-06-01"
+    },
+    {
+      "name": "openal-soft",
+      "platform": "android"
     },
     {
       "name": "libspng",

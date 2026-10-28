@@ -100,7 +100,7 @@ OpenGLContext::OpenGLContext(NativeWindowHandle hwnd, bool validation, bool requ
         SetWindowPixelFormat(impl_->dc);
         if (createContext) {
             // GL 3.0 has no core/compatibility profile mask. Do not request 3.1+ flags.
-            const int attributes[] = {WglContextMajorVersion, 3, WglContextMinorVersion, 0, 0};
+            static constexpr int attributes[] = {WglContextMajorVersion, 3, WglContextMinorVersion, 0, 0};
             impl_->context = createContext(impl_->dc, nullptr, attributes);
             if (!impl_->context) Fail("wglCreateContextAttribsARB(OpenGL 3.0)");
         }

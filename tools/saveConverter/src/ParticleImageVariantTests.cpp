@@ -28,7 +28,7 @@ void ReplacePool(Document& document, std::size_t index, std::size_t count)
     for (std::size_t i = 0; i < count; ++i)
         pool.mSlots.push_back({
             std::vector<Byte>(LevelSaveFormat::GetRecordLayout(pool.mKind).mDat64Size, 0),
-            {}, {}, 0x10000U + static_cast<std::uint32_t>(i)});
+            {}, {}, 0, false, 0x10000U + static_cast<std::uint32_t>(i)});
 }
 
 Document WithParticles(Document document, const ParticleImageVariant& entry)
@@ -76,26 +76,33 @@ void CheckWireRoundTrips(const Document& fixture)
             oldRepresentation.mParticleSystems[0].mEmitters[0].mImageResourceID == entry.mImage,
             "Explicit v2 export did not restore base definition and image override");
         const auto v2Wire = WriteFileImage(expected, Format::Dat64V2, LEGACY_DATE_OFFICIAL);
-        const auto v3Wire = WriteFileImage(expected, Format::Dat64V32, LEGACY_DATE_OFFICIAL);
-        Require(v2Wire.size() == v3Wire.size() + 12,
-            "V3 did not physically omit one system definition and two image override IDs");
+        auto modern = expected;
+        PrepareV7Output(modern, Format::Dat64V4);
+        const auto v3Wire = WriteFileImage(modern, Format::Dat64V4, LEGACY_DATE_OFFICIAL);
+        std::size_t tails = 0;
+        for (const auto& pool : modern.mArrays) for (const auto& slot : pool.mSlots) tails += slot.mV7State.size();
+        Require(v2Wire.size() + tails == v3Wire.size() + 12,
+            "V4 did not physically omit one system definition and two image override IDs");
         for (const auto format : {Format::Legacy1073Dat, Format::Dat64V1, Format::Dat64V2,
-                                  Format::Dat64V32})
+                                  Format::Dat64V4})
         {
-            const auto image = WriteFileImage(expected, format, LEGACY_DATE_OFFICIAL);
+            auto outgoing = expected;
+            PrepareV7Output(outgoing, format);
+            const auto image = WriteFileImage(outgoing, format, LEGACY_DATE_OFFICIAL);
             std::uint32_t dateEcho = 0;
             auto parsed = Parse(image, format, dateEcho);
             // Legacy stores the build-date echo in canonical SeedBank padding.
-            auto comparable = expected;
+            auto comparable = outgoing;
             WriteU32At(comparable.mSeedBank, SEED_BANK_DATE_ECHO_OFFSET,
                 ReadU32At(parsed.mSeedBank, SEED_BANK_DATE_ECHO_OFFSET));
             Require(parsed == comparable, "Variant/frames/state/time changed through wire roundtrip");
-            auto v2 = WriteFileImage(parsed, Format::Dat64V32, dateEcho);
+            PrepareV7Output(parsed, Format::Dat64V4);
+            auto v2 = WriteFileImage(parsed, Format::Dat64V4, dateEcho);
             std::uint32_t echoAgain = 0;
-            const auto repeated = Parse(v2, Format::Dat64V32, echoAgain);
+            const auto repeated = Parse(v2, Format::Dat64V4, echoAgain);
             Require(repeated == parsed, "Legacy/v1 import did not retain canonical variant");
-            Require(WriteFileImage(repeated, Format::Dat64V32, echoAgain) == v2,
-                "v3.2-to-v3.2 conversion is not idempotent");
+            Require(WriteFileImage(repeated, Format::Dat64V4, echoAgain) == v2,
+                "v4-to-v4 conversion is not idempotent");
         }
     }
 }
@@ -135,7 +142,7 @@ void CheckRejections(const Document& fixture)
         "Emitterless variant lost its image during legacy export");
     Reject([&] { ParticleImagesForOutput(old, Format::Dat64V2); },
         "Emitterless variant lost its image during v2 export");
-    const auto unchanged = ParticleImagesForOutput(old, Format::Dat64V32);
+    const auto unchanged = ParticleImagesForOutput(old, Format::Dat64V4);
     Require(unchanged == old, "Emitterless modern variant was not retained");
 }
 
@@ -159,19 +166,22 @@ void CheckMusicTempo(const Document& fixture)
     auto precise = upgraded;
     WriteU32At(precise.mMusic, 36, std::bit_cast<std::uint32_t>(155.25f));
     WriteU32At(precise.mMusic, 40, std::bit_cast<std::uint32_t>(3.5f));
-    const auto newWire = WriteFileImage(precise, Format::Dat64V32, LEGACY_DATE_OFFICIAL);
-    Require(ReadU32At(newWire, 8) == 3 && ReadU32At(newWire, 36) == 0x10735 &&
-        ReadU32At(newWire, 40) == 2, "New saves did not use the v3.2 version/schema");
-    Require(Parse(newWire, Format::Dat64V32, echo) == precise,
-        "Fractional float tempos changed on a v3.2 roundtrip");
-    Require(WriteFileImage(Parse(newWire, Format::Dat64V32, echo),
-        Format::Dat64V32, LEGACY_DATE_OFFICIAL) == newWire,
-        "Float-tempo v3.2 normalization is not idempotent");
+    PrepareV7Output(precise, Format::Dat64V4);
+    const auto newWire = WriteFileImage(precise, Format::Dat64V4, LEGACY_DATE_OFFICIAL);
+    Require(ReadU32At(newWire, 8) == 4 && ReadU32At(newWire, 36) == 0x10745 &&
+        ReadU32At(newWire, 40) == 0, "New saves did not use the v4 version/schema");
+    Require(Parse(newWire, Format::Dat64V4, echo) == precise,
+        "Fractional float tempos changed on a v4 roundtrip");
+    Require(WriteFileImage(Parse(newWire, Format::Dat64V4, echo),
+        Format::Dat64V4, LEGACY_DATE_OFFICIAL) == newWire,
+        "Float-tempo v4 normalization is not idempotent");
     auto transitionalV2 = oldWire;
     const auto musicOffset = transitionalV2.size() - 12 - 104;
     WriteU32At(transitionalV2, musicOffset + 36, std::bit_cast<std::uint32_t>(155.25f));
     WriteU32At(transitionalV2, musicOffset + 40, std::bit_cast<std::uint32_t>(3.5f));
-    Require(Parse(transitionalV2, Format::Dat64V2, echo) == precise,
+    auto preciseWithoutTail = precise;
+    PrepareV7Output(preciseWithoutTail, Format::Dat64V2);
+    Require(Parse(transitionalV2, Format::Dat64V2, echo) == preciseWithoutTail,
         "Transitional float-tempo v2 input was not preserved offline");
     for (const auto format : {Format::Legacy1073Dat, Format::Dat64V1, Format::Dat64V2})
     {
@@ -191,7 +201,7 @@ void CheckMusicTempo(const Document& fixture)
     {
         auto invalid = precise.mMusic;
         WriteU32At(invalid, 36, std::bit_cast<std::uint32_t>(value));
-        Reject([&] { ToCanonicalRecord(invalid, Format::Dat64V32, RecordKind::Music, 0, "Music"); },
+        Reject([&] { ToCanonicalRecord(invalid, Format::Dat64V4, RecordKind::Music, 0, "Music"); },
             "Invalid float tempo accepted");
     }
 }
@@ -211,10 +221,10 @@ void CheckInternalParticleAppearances()
             "Particle base/variant reverse mapping changed");
         std::vector<Byte> record(72, 0);
         WriteU32At(record, 0, entry.oldV3Effect);
-        const auto wire = FromCanonicalRecord(record, Format::Dat64V32, RecordKind::ParticleSystem);
+        const auto wire = FromCanonicalRecord(record, Format::Dat64V4, RecordKind::ParticleSystem);
         Require(ReadU32At(wire, 0) == entry.baseEffect && ReadU32At(wire, 4) == entry.variant &&
             wire.size() == 72, "Current particle record does not store base plus internal variant");
-        Require(ToCanonicalRecord(wire, Format::Dat64V32, RecordKind::ParticleSystem, 0, "Particle") == record,
+        Require(ToCanonicalRecord(wire, Format::Dat64V4, RecordKind::ParticleSystem, 0, "Particle") == record,
             "Particle appearance mapping changed record state");
     }
     Require(oldIds.size() == 162, "Particle catalog omitted an old independent appearance");
@@ -249,7 +259,7 @@ void CheckFrozenParticleIds()
                     "Retail/v1 particle ID remapping is not reversible");
     }
     Require(ParticleIdToCanonical(-1, Format::Legacy1073Dat) == -1 &&
-        ParticleIdFromCanonical(-1, Format::Dat64V32) == -1,
+        ParticleIdFromCanonical(-1, Format::Dat64V4) == -1,
         "PARTICLE_NONE changed its sentinel");
     Reject([&] { ParticleIdToCanonical(106, Format::Legacy1073Dat); },
         "Retail format accepted an appended v2 definition ID");
@@ -270,7 +280,7 @@ int main(int argc, char** argv)
         CheckFrozenParticleIds();
         CheckInternalParticleAppearances();
         std::cout << "PASS: " << std::size(PARTICLE_IMAGE_VARIANTS)
-            << " particle variants across legacy/v1/v2/v3.2; 162 canonical identities to 106 roots/internal variants, no image IDs, frames, state, time, tempo floats, idempotence\n";
+            << " particle variants across legacy/v1/v2/v4; 162 canonical identities to 106 roots/internal variants, no image IDs, frames, state, time, tempo floats, idempotence\n";
         return 0;
     }
     catch (const std::exception& error)

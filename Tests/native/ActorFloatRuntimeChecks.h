@@ -1,9 +1,4 @@
 #pragma once
-#include "CoinFallRuntimeChecks.h"
-#include "MowerMotionRuntimeChecks.h"
-#include "ZombieAltitudeRuntimeChecks.h"
-#include "CreditsScrollRuntimeChecks.h"
-#include "ZamboniRuntimeChecks.h"
 // Included by the game-linked static-definition fixture. These checks execute
 // real Plant/Zombie methods, real Board pools/buckets and real source animation.
 #include "Lawn/Board.h"
@@ -20,15 +15,14 @@
 #include "Lawn/MessageWidget.h"
 #include "Lawn/System/Music.h"
 #include "Lawn/Challenge.h"
-#include "Lawn/GridItem.h"
 #include "Lawn/Zombie.h"
 #include "Lawn/Motion.h"
 #include "Lawn/MagnetMotion.h"
 #include "Sexy.TodLib/Attachment.h"
 #include "Sexy.TodLib/TodParticle.h"
 #include "Sexy.TodLib/EffectSystem.h"
-#include "Sexy.TodLib/ExponentialCurve.h"
 #include "Sexy.TodLib/generated/SceneAtlasData.h"
+#include "Lawn/SlotMachineMotion.h"
 #include "Lawn/System/SaveRecordMapping.h"
 #include "SexyAppFramework/misc/ResourceManager.h"
 #include <array>
@@ -37,6 +31,12 @@
 #include <random>
 #include <stdexcept>
 #include <vector>
+#include "CoinFallRuntimeChecks.h"
+#include "MowerMotionRuntimeChecks.h"
+#include "ZombieAltitudeRuntimeChecks.h"
+#include "CreditsScrollRuntimeChecks.h"
+#include "ZamboniRuntimeChecks.h"
+
 
 namespace MowerMotionRuntime
 {
@@ -59,18 +59,22 @@ inline void SaveContinuation(LawnApp& app, Board& board)
         };
         Schedule(144, 73'456'789, update);
         const auto record = SaveRecordMapping::WriteSaveRecord(mower);
+        const auto savedBoardTime=board.mLevelTimeNs;
+        const auto savedVisualTime=app.mEffectSystem->mReanimationHolder->mVisualTimeNs;
         const auto sample = [&] {
             Schedule(1000, 23'456'789, update);
-            return std::array<std::uint64_t, 6>{
+            return std::array<std::uint64_t, 4>{
                 Bits(mower.mPosX), Bits(mower.mAltitude),
-                std::bit_cast<std::uint64_t>(mower.mMotionOriginX),
-                mower.mMotionElapsedNs, mower.mAltitudeElapsedNs,
-                static_cast<std::uint64_t>(mower.mChompCounter.mNanoseconds)};
+                static_cast<std::uint64_t>(std::max<std::int64_t>(0,mower.mChompEndTimeNs-static_cast<std::int64_t>(board.mLevelTimeNs))),
+                static_cast<std::uint64_t>(mower.mMowerHeight)};
         };
         const auto uninterrupted = sample();
         SaveRecordMapping::ReadSaveRecord(mower, record.data());
         mower.mApp = &app;
         mower.mBoard = &board;
+        board.mLevelTimeNs=savedBoardTime;
+        app.mEffectSystem->mReanimationHolder->mVisualTimeNs=savedVisualTime;
+        SaveClockProjection::Bind(mower);
         Require(sample() == uninterrupted,
             "Mower flight/chomp/pool phase changed after actual native save/reload");
     }
@@ -104,8 +108,9 @@ void Schedule(int frequency, std::int64_t duration, Step step)
 inline std::uint64_t Bits(float value) { return std::bit_cast<std::uint32_t>(value); }
 inline std::uint64_t Bits(double value) { return std::bit_cast<std::uint64_t>(value); }
 
-inline void PublishTime(LawnApp& app, std::int64_t delta)
+inline void PublishTime(LawnApp& app, Board& board, std::int64_t delta)
 {
+    board.mLevelTimeNs += delta;
     auto& clocks = *app.mEffectSystem->mReanimationHolder;
     clocks.mBattleTimeNs = ReanimClock::Add(clocks.mBattleTimeNs, delta);
     clocks.mVisualTimeNs = ReanimClock::Add(clocks.mVisualTimeNs, delta);
@@ -124,11 +129,14 @@ inline void SharedClockConsumers(Board& board)
     board.mZombieHealthToNextWave = -1;
     board.mZombieCountDownStart = 100;
     board.mZombieCountDown = 0;
-    board.mFlagRaiseCounter = 0;
+    board.mFlagRaiseCounter = 4;
     board.mProgressMeterWidth = 0;
     board.mLevelTimeNs = 49'999'999;
+    auto expectedFlag = board.mFlagRaiseCounter;
+    --expectedFlag; // TimeCounter decrements by the published nanosecond step.
     board.UpdateProgressMeter(1);
     Require(board.mProgressMeterWidth == 0, "Progress event fired before its nanosecond boundary");
+    Require(board.mFlagRaiseCounter == expectedFlag, "Progress width early exit skipped flag animation countdown");
     board.mLevelTimeNs += 1;
     board.UpdateProgressMeter(1);
     Require(board.mProgressMeterWidth == 1, "Progress event missed an exact nanosecond boundary");
@@ -233,12 +241,12 @@ inline void LaunchDeadlines(LawnApp& app, Board& board)
     paused.mIsOnBoard = true;
     paused.mIsAsleep = true;
     paused.mSquished = true;
-    paused.mDisappearCountdown = 1000;
-    paused.mWakeUpCounter = 0;
+    paused.mDisappearEndTimeNs = 11'237'192'835;
+    paused.mWakeUpEndTimeNs = 0;
     paused.mPlantHealth = 300;
-    paused.mRecentlyEatenCountdown = 0;
-    paused.mEatenFlashCountdown = 0;
-    paused.mBeghouledFlashCountdown = 0;
+    paused.mRecentlyEatenEndTimeNs = 0;
+    paused.mEatenFlashEndTimeNs = 0;
+    paused.mBeghouledFlashEndTimeNs = 0;
     paused.mBodyReanimID = ReanimationID::REANIMATIONID_NULL;
     paused.mLaunchWindowStartNs = 1'000'000'000;
     paused.mNextLaunchTimeNs = 1'712'345'678;
@@ -405,7 +413,7 @@ inline std::array<std::uint64_t, 8> Bowling(LawnApp& app, Board& board,
         animation->RootMotion(ReanimTrackId::_ground, scale, duration));
     AdvanceRoot(*plant, *animation, scale, 0);
     Schedule(frequency, duration, [&](std::int64_t delta) {
-        PublishTime(app, delta);
+        PublishTime(app, board, delta);
         plant->UpdateBowling();
         animation->UpdateAt(app.mEffectSystem->mReanimationHolder->mBattleTimeNs);
         if (app.mEffectSystem->mReanimationHolder->mBattleTimeNs < 10'000'000)
@@ -475,7 +483,7 @@ inline void GiantBowlingImpact(LawnApp& app, Board& board)
     for (const std::int64_t delta : {1LL, 1'234'567LL, 900'000'001LL})
     {
         Sexy::gUpdateIntervalNs = delta;
-        PublishTime(app, delta);
+        PublishTime(app, board, delta);
         const int before = zombie->mBodyHealth;
         plant->UpdateBowling();
         Require(zombie->mBodyHealth == before - 1'000'000 &&
@@ -515,9 +523,9 @@ inline std::array<std::uint64_t, 6> Walking(LawnApp& app, Board& board, int freq
     const auto expectedX = CheckedPosition((double(zombie.mX) - initialRoot) +
         animation->RootMotion(ReanimTrackId::_ground, -zombie.mScaleZombie, duration) +
         (additionalMotion ? 9.5 * duration / 10'000'000.0 : 0.0));
-    AdvanceRoot(zombie, *animation, -zombie.mScaleZombie, 0);
+    zombie.mX = CheckedPosition(zombie.RootPosition(*animation, -zombie.mScaleZombie));
     Schedule(frequency, duration, [&](std::int64_t delta) {
-        PublishTime(app, delta);
+        PublishTime(app, board, delta);
         if (additionalMotion) zombie.mPendingAdditionalSpeedX = -0.5f;
         zombie.UpdateZombieWalking();
         animation->UpdateAt(app.mEffectSystem->mReanimationHolder->mBattleTimeNs);
@@ -534,6 +542,96 @@ inline std::array<std::uint64_t, 6> Walking(LawnApp& app, Board& board, int freq
     return {Bits(zombie.mX), Bits(zombie.mY), Bits(zombie.mRootOriginX),
         Bits(zombie.mRootScale), std::uint64_t(animation->SamplePlayback().phaseNs),
         std::uint64_t(animation->SamplePlayback().cycles)};
+}
+
+inline void VaultAndRoofImpSegments(LawnApp& app, Board& board)
+{
+    const auto oldBackground = board.mBackground;
+    for (const int frequency : {100, 240, 480})
+    {
+        for (const bool priorWalking : {false, true})
+        {
+            app.mEffectSystem->EffectSystemFreeAll();
+            Zombie zombie{};
+            ZombieAltitudeRuntime::Initialize(zombie, app, board, ZombieAltitudeRuntime::Path::Imp);
+            zombie.mFromWave = 0;
+            zombie.mZombieType = ZombieType::ZOMBIE_POLEVAULTER;
+            zombie.mZombiePhase = ZombiePhase::PHASE_POLEVAULTER_PRE_VAULT;
+            zombie.mX = 279.5f;
+            zombie.mVelX = .67f;
+            auto* animation = app.AddReanimation(0, 0, 0, ReanimationType::REANIM_POLEVAULTER);
+            animation->BindTimeDomain(ReanimTimeDomain::Battle);
+            animation->PlayReanim(ReanimTrackId::anim_run, ReanimLoopType::REANIM_LOOP, 0, 12);
+            zombie.mBodyReanimID = app.ReanimationGetID(animation);
+            if (priorWalking)
+            {
+                Schedule(frequency, 270'000'000, [&](std::int64_t delta) {
+                    PublishTime(app, board, delta);
+                    zombie.UpdateZombieWalking();
+                    animation->UpdateAt(app.mEffectSystem->mReanimationHolder->mBattleTimeNs);
+                });
+                Require(zombie.mRootBindingGeneration && zombie.mVelocityX.bound &&
+                    zombie.mVelocityX.rate == 0 && static_cast<std::int64_t>(board.mLevelTimeNs) > zombie.mVelocityX.startTimeNs,
+                    "Vault regression did not establish a prior root/offset segment");
+            }
+            const float launchX = zombie.mX;
+            // Ordinary contact can yield int(zombieX - plantX - 80) == 0.
+            // This is the real root-to-linear handoff on the entry update.
+            zombie.mZombiePhase = ZombiePhase::PHASE_POLEVAULTER_IN_VAULT;
+            zombie.mVelX = 0;
+            animation->PlayReanim(ReanimTrackId::anim_jump,
+                ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD, 0, 24);
+            Sexy::gUpdateIntervalNs = 1'000'000'000 / frequency;
+            zombie.UpdateZombieWalking();
+            Require(zombie.mX == launchX, "Zero-travel vault reused a root offset as world X");
+            Schedule(frequency, 250'000'000, [&](std::int64_t delta) {
+                PublishTime(app, board, delta);
+                zombie.UpdateZombiePolevaulter();
+                zombie.UpdateZombieWalking();
+                animation->UpdateAt(app.mEffectSystem->mReanimationHolder->mBattleTimeNs);
+                Require(zombie.mX == launchX, "Zero-travel vault lost its world-position segment");
+            });
+            animation->mLoopCount = 1;
+            zombie.UpdateZombiePolevaulter();
+            Require(zombie.mX == launchX - 150 && zombie.mX > -150,
+                "Vault landing used the offset origin and crossed the house edge");
+        }
+
+        board.mBackground = BackgroundType::BACKGROUND_5_ROOF;
+        Zombie imp{};
+        ZombieAltitudeRuntime::Initialize(imp, app, board, ZombieAltitudeRuntime::Path::Imp);
+        imp.mFromWave = 0;
+        imp.mX = 667;
+        imp.mY = imp.GetPosYBasedOnRow(imp.mRow);
+        imp.mAltitude = 88;
+        imp.mVelX = 3;
+        imp.mVelZ = .5f * (440.0f / 3) * THOWN_ZOMBIE_GRAVITY;
+        const double initialY = imp.mY, initialVelocity = imp.mVelZ;
+        double previousAltitude = imp.mAltitude;
+        std::int64_t elapsed = 0;
+        Schedule(frequency, 1'800'000'000, [&](std::int64_t delta) {
+            elapsed += delta;
+            board.mLevelTimeNs += delta;
+            // Both production calls are required: the previous isolated
+            // altitude checks could not expose the stale row-approach origin.
+            imp.UpdateZombieImp();
+            imp.UpdateZombiePosition();
+            const double ticks = double(elapsed) / 10'000'000;
+            const double rowY = imp.GetPosYBasedOnRow(imp.mRow);
+            const auto expectedAltitude = CheckedPosition(88 - initialY + rowY +
+                initialVelocity * ticks - double(THOWN_ZOMBIE_GRAVITY) * ticks * (ticks + 1) * .5);
+            Require(imp.mY == rowY && std::abs(imp.mAltitude - expectedAltitude) < .001f,
+                "Roof imp row placement was overwritten by a stale Y segment");
+            if (imp.mVelZ < -.8f)
+                Require(imp.mAltitude <= previousAltitude,
+                    "Descending roof imp rebounded before landing");
+            previousAltitude = imp.mAltitude;
+        });
+        Require(imp.mX > 100 && imp.mAltitude > 0 && imp.mAltitude < 5,
+            "Roof imp flight did not approach the expected first landing");
+        board.mBackground = oldBackground;
+    }
+    std::cerr << "PASS fresh/moving zero-travel vault and full roof Imp position updates at 100/240/480Hz\n";
 }
 
 inline void Projectiles(LawnApp& app, Board& board)
@@ -567,7 +665,7 @@ inline void Projectiles(LawnApp& app, Board& board)
         shot->mVelY = motion == ProjectileMotion::MOTION_THREEPEATER ? -3.0f : 0.312713f;
         shot->mVelZ = motion == ProjectileMotion::MOTION_FLOAT_OVER ? -0.1317f : -7.318291f;
         shot->mAccZ = 0.115f;
-        shot->mOriginRotation = shot->mRotation = 0.312713f;
+        shot->mRotation = 0.312713f;
         shot->mRotationSpeed = 0.037281f;
         if (type == ProjectileType::PROJECTILE_COBBIG)
         {
@@ -585,14 +683,21 @@ inline void Projectiles(LawnApp& app, Board& board)
         });
         Require(!shot->mDead && shot->mX == int(shot->mPosX) &&
             shot->mY == int(shot->mPosY + shot->mPosZ),
-            "Analytic production projectile lost its collision pixel cache");
+            "Discrete production projectile lost its collision pixel cache");
+        Require(std::isfinite(shot->mPosX) && std::isfinite(shot->mPosY) &&
+            std::isfinite(shot->mPosZ) && std::isfinite(shot->mRotation),
+            "Discrete production projectile produced a non-finite state");
         if (type == ProjectileType::PROJECTILE_COBBIG)
-            Require(shot->mVelZ == 8 && shot->mRow == 3 &&
-                shot->mMotionOriginTimeNs == 890'000'000,
+            Require(shot->mVelZ == 8 && shot->mRow == 3 && shot->mPosX >= 600,
                 "Production cob changed its original ascent/teleport/descent event");
+        if (motion == ProjectileMotion::MOTION_STRAIGHT)
+            Require(std::abs(shot->mPosX - (321.0 + shot->mVelX * (double(duration) / 10'000'000))) < .01,
+                "Discrete straight projectile stopped using its configured horizontal velocity");
+        if (motion == ProjectileMotion::MOTION_BACKWARDS)
+            Require(shot->mPosX < 321, "Backward projectile moved in the forward direction");
         return std::array<std::uint64_t, 8>{Bits(shot->mPosX), Bits(shot->mPosY), Bits(shot->mPosZ),
             Bits(shot->mShadowY), Bits(shot->mRotation), std::uint64_t(shot->mRow),
-            std::uint64_t(shot->mCreationTimeNs), std::uint64_t(shot->mMotionOriginTimeNs)};
+            std::uint64_t(shot->mCreationTimeNs), Bits(shot->mVelZ)};
     };
     const struct { ProjectileMotion motion; ProjectileType type; } cases[]{
         {ProjectileMotion::MOTION_STRAIGHT, ProjectileType::PROJECTILE_SNOWPEA},
@@ -609,10 +714,14 @@ inline void Projectiles(LawnApp& app, Board& board)
       for (bool roof : {false, true})
        for (bool highGravity : {false, true})
     {
-        const auto expected = run(item.motion, item.type, 100, roof, highGravity);
-        for (int frequency : {30, 60, 144, 200, 240, 1000, 0})
+        // Different step sizes intentionally follow different discrete paths.
+        // Replay the same schedule to catch stale origins or unreset state.
+        for (int frequency : {30, 60, 100, 144, 200, 240, 1000, 0})
+        {
+            const auto expected = run(item.motion, item.type, frequency, roof, highGravity);
             Require(run(item.motion, item.type, frequency, roof, highGravity) == expected,
-                "Production analytic projectile depends on outer update partition");
+                "Production discrete projectile failed to replay the same update schedule");
+        }
     }
     board.mBackground = originalBackground;
     app.mGameMode = originalMode;
@@ -668,7 +777,7 @@ inline void Projectiles(LawnApp& app, Board& board)
         projectile->DoImpact(zombie);
         Require(projectile->mDead && zombie->mBodyHealth == expectedHealth,
             "Production projectile impact did not retire the shot and apply its damage");
-        Require(type != ProjectileType::PROJECTILE_SNOWPEA || zombie->mChilledCounter > 0,
+        Require(type != ProjectileType::PROJECTILE_SNOWPEA || zombie->mChilledEndTimeNs > static_cast<std::int64_t>(board.mLevelTimeNs),
             "Production snowpea impact did not chill its target");
     }
     board.mProjectiles.DataArrayFreeAll();
@@ -682,16 +791,16 @@ inline void Projectiles(LawnApp& app, Board& board)
     entrance->mGridX = 4; entrance->mGridY = 2;
     exit->mGridX = 7; exit->mGridY = 3;
     const auto birth = portalShot->mCreationTimeNs;
-    const auto motionOrigin = portalShot->mMotionOriginTimeNs;
     board.mChallenge->UpdatePortal(entrance);
-    Require(portalShot->mRow == 3 && portalShot->mCreationTimeNs == birth &&
-        portalShot->mMotionOriginTimeNs == motionOrigin,
-        "Production portal changed the projectile's birth or motion clock");
+    Require(portalShot->mRow == 3 && portalShot->mCreationTimeNs == birth,
+        "Production portal changed the projectile's birth clock");
     const auto teleportedX = portalShot->mPosX;
     board.mLevelTimeNs = 10'000'000;
+    Sexy::gUpdateIntervalNs = 10'000'000;
+    Sexy::gUpdateTicks = 1.0;
     portalShot->UpdateMotion();
     Require(portalShot->mPosX == float(double(teleportedX) + portalShot->mVelX),
-        "Production portal failed to translate the analytic motion origin");
+        "Production portal failed to continue motion from its destination");
     board.mGridItems.DataArrayFreeAll();
     board.mProjectiles.DataArrayFreeAll();
     board.mLevelTimeNs = 0;
@@ -731,8 +840,8 @@ inline void Projectiles(LawnApp& app, Board& board)
     board.mProjectiles.DataArrayFreeAll();
     board.mZombies.DataArrayFreeAll();
     board.RebuildZombieRowBucket();
-    std::cout << "PASS actual projectile: 9 analytic modes, roofs/high gravity, 8 partitions, "
-        "cob segments, portal origins, homing steering/hits, Snowpea/Kernel damage and chill\n";
+    std::cout << "PASS actual projectile: 9 discrete modes, roofs/high gravity, 8 schedules, "
+        "cob transition, portal motion, homing steering/hits, Snowpea/Kernel damage and chill\n";
 }
 
 inline void MagnetTransferOrigins(LawnApp& app, Board& board)
@@ -813,11 +922,11 @@ inline void MagnetTransferOrigins(LawnApp& app, Board& board)
                     plant.mPlantCol, plant.mRow) + rect.mHeight * drawScale * 0.5f - sourceY) < 0.0001f,
                 "Equipment jumped away from its visible source center on magnet transfer");
             auto firstFrame = item;
-            MagnetMotion::Sample(firstFrame, plant.mX + item.mDestOffsetX,
-                plant.mY + item.mDestOffsetY, 0);
+            MagnetMotion::Advance(firstFrame, plant.mX + item.mDestOffsetX,
+                plant.mY + item.mDestOffsetY, 0, 0);
             Require(std::abs(firstFrame.mPosX - item.mPosX) < 0.0001f &&
                 std::abs(firstFrame.mPosY - item.mPosY) < 0.0001f,
-                "Magnet curve did not preserve its transferred source position at time zero");
+                "Magnet simulation moved its transferred source position at zero step");
         }
         body->ReanimationDie();
     }
@@ -874,6 +983,7 @@ inline void MagnetAttraction(LawnApp& app, Board& board)
     MagnetTransferOrigins(app, board);
     auto* animation = app.AddReanimation(0, 0, 0, ReanimationType::REANIM_GOLD_MAGNET);
     const auto run = [&](bool gold, int frequency, std::int64_t duration) {
+        board.mLevelTimeNs=0;
         auto plant = std::bit_cast<Plant>(std::array<std::byte, sizeof(Plant)>{});
         plant.mApp = &app;
         plant.mBoard = &board;
@@ -888,42 +998,52 @@ inline void MagnetAttraction(LawnApp& app, Board& board)
         item.mItemType = gold ? MagnetItemType::MAGNET_ITEM_GOLD_COIN : MagnetItemType::MAGNET_ITEM_PAIL_1;
         MagnetMotion::Bind(item, 100, 100);
         profile.mCoins = 0;
-        Schedule(frequency, duration, [&](std::int64_t) {
+        Schedule(frequency, duration, [&](std::int64_t delta) {
+            board.mLevelTimeNs+=delta;
             if (gold) plant.UpdateGoldMagnetShroom();
             else plant.UpdateMagnetShroom();
+            if(frequency==100 && board.mLevelTimeNs==10'000'000)
+                Require(item.mVelocityX==-15.625f && item.mVelocityY==0 && item.mPosX==899.84375f,
+                    "Production 100Hz magnet differs from inverse-square velocity-before-position baseline");
+            Require(std::isfinite(item.mPosX) && item.mPosX>=100 && item.mPosX<=900 &&
+                std::isfinite(item.mVelocityX) && std::isfinite(item.mVelocityY),
+                "Production actual-step magnet left its legal flight segment");
         });
         if (duration == 900'000'000)
             Require(gold ? item.mItemType == MagnetItemType::MAGNET_ITEM_NONE && profile.mCoins == 5 :
-                std::abs(item.mPosX - 120) < 0.001f,
+                item.mPosX == 100 && item.mPosY == 100,
                 "Production magnet did not capture its distant item below one second");
         else
         {
             const auto saved = SaveRecordMapping::WriteSaveRecord(plant);
+            const auto saveTimeNs=board.mLevelTimeNs;
             Sexy::gUpdateIntervalNs = 23'456'789;
+            board.mLevelTimeNs+=Sexy::gUpdateIntervalNs;
             if (gold) plant.UpdateGoldMagnetShroom(); else plant.UpdateMagnetShroom();
             const auto expected = std::array<std::uint64_t, 3>{
-                Bits(item.mPosX), Bits(item.mPosY), plant.mMagnetElapsedNs};
+                Bits(item.mPosX), Bits(item.mPosY), static_cast<std::uint64_t>(plant.mMagnetStartTimeNs)};
             SaveRecordMapping::ReadSaveRecord(plant, saved.data());
             plant.mApp = &app;
             plant.mBoard = &board;
+            board.mLevelTimeNs=saveTimeNs;
+            SaveClockProjection::Bind(plant);
+            board.mLevelTimeNs+=Sexy::gUpdateIntervalNs;
             if (gold) plant.UpdateGoldMagnetShroom(); else plant.UpdateMagnetShroom();
             Require(std::array<std::uint64_t, 3>{Bits(item.mPosX), Bits(item.mPosY),
-                plant.mMagnetElapsedNs} == expected, "Magnet flight changed after native save/reload");
+                static_cast<std::uint64_t>(plant.mMagnetStartTimeNs)} == expected, "Magnet flight changed after native save/reload");
         }
         return std::array<std::uint64_t, 4>{
-              Bits(item.mPosX), Bits(item.mPosY), plant.mMagnetElapsedNs,
+              Bits(item.mPosX), Bits(item.mPosY), static_cast<std::uint64_t>(plant.mMagnetStartTimeNs),
               static_cast<std::uint64_t>(profile.mCoins)};
     };
     for (bool gold : {false, true})
         for (const auto duration : {400'000'000LL, 900'000'000LL})
         {
-            const auto expected = run(gold, 100, duration);
-            for (int frequency : {1, 30, 60, 144, 200, 240, 1000, 0})
-                Require(run(gold, frequency, duration) == expected,
-                    "Production magnet flight depends on update partition");
+            for (int frequency : {1, 30, 60, 100, 144, 200, 240, 1000, 0})
+                run(gold, frequency, duration);
         }
     animation->ReanimationDie();
-    std::cerr << "PASS actual magnet inverse-square motion / sub-second capture / save continuation\n";
+    std::cerr << "PASS actual discrete inverse-square magnet / sub-second capture / save continuation\n";
 }
 
 inline void PickupMotion(LawnApp& app, Board& board)
@@ -972,50 +1092,64 @@ inline void PickupMotion(LawnApp& app, Board& board)
         coin->mIsBeingCollected = true;
         coin->mCollectX = coin->mPosX = type == CoinType::COIN_SUN ? 415.0f : 439.0f;
         coin->mCollectY = coin->mPosY = type == CoinType::COIN_SUN ? 0.0f : 558.0f;
-        coin->mDisappearCounter = 0;
+        coin->mDisappearStartTimeNs=INT64_MAX;
         return coin;
+    };
+    const auto setStep = [](unsigned long long ns) {
+        Sexy::gUpdateIntervalNs = ns;
+        Sexy::gUpdateTicks = double(ns) / 10'000'000;
+    };
+    const auto state = [](const Coin& coin) {
+        return std::array<std::uint64_t, 5>{Bits(coin.mPosX), Bits(coin.mPosY),
+            Bits(coin.mCollectionDistance), Bits(coin.mScale),
+            static_cast<std::uint64_t>(coin.mDisappearStartTimeNs==INT64_MAX ? 0 : coin.mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs-coin.mDisappearStartTimeNs)};
     };
     for (const auto type : {CoinType::COIN_SUN, CoinType::COIN_GOLD})
     {
         const auto sample = [&](int frequency) {
             auto* coin = make(type);
-            Schedule(frequency, 637'192'835, [&](std::int64_t) { coin->UpdateCollected(); });
+            float expectedX = coin->mPosX, expectedY = coin->mPosY;
+            const float targetX = type == CoinType::COIN_SUN ? 15.f : 39.f;
+            const float targetY = type == CoinType::COIN_SUN ? 0.f : 558.f;
+            Schedule(frequency, 137'192'835, [&](std::int64_t ns) {
+                // Reference integrates each actual nanosecond step from its
+                // current coordinate, never from the original collection point.
+                const float dx = targetX - expectedX, dy = targetY - expectedY;
+                expectedX += (dx / 21.f) * static_cast<float>(double(ns) / 10'000'000);
+                expectedY += (dy / 21.f) * static_cast<float>(double(ns) / 10'000'000);
+                coin->UpdateCollected();
+                Require(Bits(coin->mPosX) == Bits(expectedX) && Bits(coin->mPosY) == Bits(expectedY),
+                    "Pickup did not accumulate its current nanosecond step");
+            });
             Require(!coin->mDead, "Pickup completed before the original distance threshold");
-            return std::array<std::uint64_t, 5>{Bits(coin->mPosX), Bits(coin->mPosY),
-                Bits(coin->mCollectionDistance), Bits(coin->mScale),
-                static_cast<std::uint64_t>(coin->mDisappearCounter.mNanoseconds)};
+            return state(*coin);
         };
-        const auto expected = sample(100);
-        for (const auto frequency : {1, 30, 60, 144, 200, 240, 1000, 0})
-            Require(sample(frequency) == expected, "Pickup interpolation depends on update partition");
+        for (const auto frequency : {1, 30, 60, 100, 144, 200, 240, 1000, 0})
+            Require(sample(frequency) == sample(frequency),
+                "Pickup failed to replay the same discrete update schedule");
 
         auto* savedCoin = make(type);
-        Sexy::gUpdateIntervalNs = 123'456'789;
+        setStep(123'456'789);
         savedCoin->UpdateCollected();
         const auto saved = SaveRecordMapping::WriteSaveRecord(*savedCoin);
         const auto continuedState = [&] {
             savedCoin->UpdateCollected();
-            return std::array<std::uint64_t, 5>{Bits(savedCoin->mPosX), Bits(savedCoin->mPosY),
-                Bits(savedCoin->mCollectionDistance), Bits(savedCoin->mScale),
-                static_cast<std::uint64_t>(savedCoin->mDisappearCounter.mNanoseconds)};
+            return state(*savedCoin);
         };
-        Sexy::gUpdateIntervalNs = 23'456'789;
+        setStep(23'456'789);
         const auto continued = continuedState();
         SaveRecordMapping::ReadSaveRecord(*savedCoin, saved.data());
         savedCoin->mApp = &app;
         savedCoin->mBoard = &board;
-        Require(continuedState() == continued, "Pickup changed trajectory after native save/reload");
-        const auto pausedState = std::array<std::uint64_t, 3>{
-            Bits(savedCoin->mPosX), Bits(savedCoin->mPosY),
-            static_cast<std::uint64_t>(savedCoin->mDisappearCounter.mNanoseconds)};
-        Sexy::gUpdateIntervalNs = 0;
+        SaveClockProjection::Bind(*savedCoin);
+        Require(continuedState() == continued, "Pickup changed its discrete state after native save/reload");
+        const auto pausedState = state(*savedCoin);
+        setStep(0);
         savedCoin->UpdateCollected();
-        Require(std::array<std::uint64_t, 3>{Bits(savedCoin->mPosX), Bits(savedCoin->mPosY),
-            static_cast<std::uint64_t>(savedCoin->mDisappearCounter.mNanoseconds)} == pausedState,
-            "Zero-step pickup advanced or rebound its origin");
+        Require(state(*savedCoin) == pausedState, "Zero-step pickup advanced");
 
         auto* coin = make(type);
-        Sexy::gUpdateIntervalNs = 10'000'000;
+        setStep(10'000'000);
         int updates = 0;
         while (!coin->mDead && updates < 200)
         {
@@ -1028,24 +1162,26 @@ inline void PickupMotion(LawnApp& app, Board& board)
             "Pickup did not award its value exactly once");
     }
     auto* coin = make(CoinType::COIN_GOLD);
-    Sexy::gUpdateIntervalNs = 123'456'789;
+    setStep(123'456'789);
     coin->UpdateCollected();
     const auto previousX = coin->mPosX, previousY = coin->mPosY;
     app.mGameMode = GameMode::GAMEMODE_LIMBO_ZEN_GARDEN;
-    Sexy::gUpdateIntervalNs = 7'192'835;
+    setStep(7'192'835);
     coin->UpdateCollected();
-    const auto factor = TodExponentialCurve<20.0 / 21.0>(7'192'835);
-    Require(coin->mCollectX == previousX && coin->mCollectY == previousY &&
-        coin->mPosX == static_cast<float>(442 + (double(previousX) - 442) * factor),
-        "Pickup destination switch did not rebind from the current position");
+    const float expectedX = previousX + ((442.f - previousX) / 21.f) *
+        static_cast<float>(double(7'192'835) / 10'000'000);
+    const float expectedY = previousY + ((558.f - previousY) / 21.f) *
+        static_cast<float>(double(7'192'835) / 10'000'000);
+    Require(Bits(coin->mPosX) == Bits(expectedX) && Bits(coin->mPosY) == Bits(expectedY),
+        "Pickup destination switch did not continue from the current position");
     coin = make(CoinType::COIN_GOLD);
-    coin->mDisappearCounter = -1;
-    Sexy::gUpdateIntervalNs = 0;
+    coin->mDisappearStartTimeNs=app.mEffectSystem->mReanimationHolder->mVisualTimeNs+10'000'000;
+    const auto untouched = state(*coin);
+    setStep(0);
     coin->UpdateCollected();
-    Require(!coin->mDead && coin->mDisappearCounter.mNanoseconds == 0 &&
-        coin->mPosX == 439.0f && coin->mPosY == 558.0f,
-        "Negative historical elapsed time wrapped to a huge unsigned sample");
-    std::cerr << "PASS actual pickup time interpolation / 1073 thresholds / destination rebinding\n";
+    Require(!coin->mDead && state(*coin) == untouched,
+        "Zero nanosecond step changed a historical pickup timer or coordinate");
+    std::cerr << "PASS actual pickup discrete nanosecond steps / 1073 thresholds / native save continuation / destination changes\n";
 }
 
 inline void SlotMachine(LawnApp& app, Board& board)
@@ -1053,8 +1189,8 @@ inline void SlotMachine(LawnApp& app, Board& board)
     const auto oldScene = app.mGameScene;
     const auto oldTime = board.mLevelTimeNs;
     app.mGameScene = GameScenes::SCENE_PLAYING;
-    board.mLevelTimeNs = 1;
-    const auto sample = [&](int frequency, std::int64_t duration) {
+    const auto sample = [&](int frequency, std::int64_t duration, bool original) {
+        board.mLevelTimeNs = 1;
         Sexy::SRand(0x5191);
         SeedPacket packet;
         packet.mApp = &app;
@@ -1063,94 +1199,117 @@ inline void SlotMachine(LawnApp& app, Board& board)
         packet.mIndex = 0;
         packet.mActive = false;
         packet.SlotMachineStart();
-        Schedule(frequency, duration, [&](std::int64_t) { packet.Update(); });
-        return std::array<std::int64_t, 5>{static_cast<int>(packet.mPacketType),
-            static_cast<int>(packet.mSlotMachiningNextSeed),
-            packet.mSlotMachineCountDown.mNanoseconds, packet.mActive, Sexy::Rand()};
+        int countdown = 400;
+        Schedule(frequency, duration, [&](std::int64_t delta) {
+            board.mLevelTimeNs += delta;
+            if (!original) {packet.Update(); return;}
+            if (countdown == 0) return;
+            --countdown;
+            const float warped = (countdown - 400) / -400.0f;
+            const float speed = 6.0f + (2.0f - 6.0f) * warped;
+            packet.mSlotMachiningPosition += speed * .01f;
+            if (packet.mSlotMachiningPosition >= 1.0f)
+            {
+                packet.mPacketType = packet.mSlotMachiningNextSeed;
+                if (countdown == 0) {packet.Activate();packet.mSlotMachiningPosition=0;}
+                else {packet.mSlotMachiningPosition -= 1.0f;packet.PickNextSlotMachineSeed();}
+            }
+            else if (countdown == 0) countdown = 1;
+        });
+        const auto remaining = original ? countdown * 10'000'000LL :
+            packet.mSlotMachineEndTimeNs == 0 ? 0 : packet.mSlotMachineEndTimeNs <= static_cast<std::int64_t>(board.mLevelTimeNs)
+                ? 10'000'000 : packet.mSlotMachineEndTimeNs - static_cast<std::int64_t>(board.mLevelTimeNs);
+        return std::array<std::int64_t, 6>{static_cast<int>(packet.mPacketType),
+            static_cast<int>(packet.mSlotMachiningNextSeed), remaining, packet.mActive,
+            Sexy::Rand(), static_cast<std::int64_t>(Bits(packet.mSlotMachiningPosition))};
     };
-    Require(SlotMachineMotion::Turns(SlotMachineMotion::DurationNs) == 0 &&
-        SlotMachineMotion::Turns(250'000'000) == 10.5 &&
-        SlotMachineMotion::Turns(0) == 11,
-        "Slot-machine integrated speed endpoints changed");
-    for (const auto duration : {1'234'567'891LL, 3'100'000'000LL,
-        SlotMachineMotion::DurationNs})
+    for (const auto duration : {1'230'000'000LL, 3'100'000'000LL,
+        4'000'000'000LL, 4'010'000'000LL, 4'020'000'000LL})
+        Require(sample(100,duration,false) == sample(100,duration,true),
+            "100Hz slot phase, random seed sequence or completion differs from1073");
     {
-        const auto expected = sample(100, duration);
-        for (const int frequency : {1, 30, 60, 144, 200, 240, 1000, 0})
-            Require(sample(frequency, duration) == expected,
-                "Slot-machine seed events or phase depend on update partition");
-        if (duration == SlotMachineMotion::DurationNs)
-            Require(expected[2] == 0 && expected[3] == 1,
-                "Slot-machine did not activate on the final turn boundary");
+        board.mLevelTimeNs = 1;
+        SeedPacket packet;
+        packet.mApp=&app; packet.mBoard=&board; packet.mIndex=0;
+        packet.mPacketType=SeedType::SEED_PEASHOOTER; packet.mActive=false;
+        packet.SlotMachineStart();
+        Schedule(144,4'000'000'000LL,[&](std::int64_t delta){board.mLevelTimeNs+=delta;packet.Update();});
+        Require(packet.mSlotMachineEndTimeNs!=0 &&
+            packet.mSlotMachineEndTimeNs==static_cast<std::int64_t>(board.mLevelTimeNs),
+            "144Hz slot fixture did not reach its active expiry boundary");
+        for (const auto overdue : {0LL,1'234'567LL})
+        {
+            if (overdue) {Sexy::gUpdateIntervalNs=overdue;board.mLevelTimeNs+=overdue;packet.Update();}
+            const auto bytes=SaveRecordMapping::WriteSaveRecord(packet);
+            SeedPacket restored;
+            SaveRecordMapping::ReadSaveRecord(restored,bytes.data());
+            restored.mApp=&app; restored.mBoard=&board;
+            SaveClockProjection::Bind(restored);
+            Require(restored.mSlotMachineEndTimeNs==packet.mSlotMachineEndTimeNs &&
+                Bits(restored.mSlotMachiningPosition)==Bits(packet.mSlotMachiningPosition),
+                "Slot save re-armed an expired final-turn deadline");
+            Sexy::gUpdateIntervalNs=1; ++board.mLevelTimeNs;
+            packet.Update(); restored.Update();
+            Require(Bits(restored.mSlotMachiningPosition)==Bits(packet.mSlotMachiningPosition) &&
+                restored.mSlotMachineEndTimeNs==packet.mSlotMachineEndTimeNs,
+                "Slot final-turn simulation changed after save/reload");
+        }
+    }
+    for (const int frequency : {1,30,60,144,200,240,1000,0})
+    {
+        const auto result = sample(frequency,6'000'000'000LL,false);
+        if (!(result[2] == 0 && result[3] == 1 && result[5] == Bits(0.0f)))
+            std::cerr << "Slot completion frequency=" << frequency << " remaining=" << result[2]
+                << " active=" << result[3] << " phaseBits=" << result[5] << '\n';
+        Require(result[2] == 0 && result[3] == 1 && result[5] == Bits(0.0f),
+            "Discrete nanosecond slot failed to stop at a whole turn");
     }
     board.mLevelTimeNs = oldTime;
     app.mGameScene = oldScene;
-    std::cerr << "PASS actual slot-machine nanosecond phase / seed sequence / final activation\n";
+    std::cerr << "PASS discrete slot100Hz original phase/RNG and other-frequency legal completion\n";
 }
 
 inline void ChangingVelocity()
 {
-    constexpr std::array<float, 4> rates{.125f, -.0625f, .25f, -.125f};
-    constexpr std::array<std::int64_t, 4> increments{2, -1, 4, -2};
-    constexpr std::uint64_t deltaNs = 1'250'000; // Exactly 1/8 legacy tick.
+    constexpr std::uint64_t deltaNs = 1'250'000;
+    std::int64_t nowNs = 0;
     float position = 1'048'576;
     TimedLinearMotion motion;
-    std::int64_t units = 1'048'576LL * 128;
-    for (size_t i = 0; i < 4096; ++i)
+    for (std::uint64_t i=1;i<=4096;++i)
     {
-        // The integer oracle is in exact 1/128 pixel units. Each increment is
-        // smaller than the starting float ULP, so float rebasing loses motion.
-        AdvanceVelocity(position, rates[i % rates.size()], deltaNs, motion);
-        units += increments[i % increments.size()];
-        Require(position == static_cast<float>(double(units) / 128),
-            "Changing velocity fed a rounded position into its next segment");
-        if (i % 17 == 0)
-        {
-            const auto before = Bits(position);
-            AdvanceVelocity(position, -.5f, 0, motion);
-            Require(Bits(position) == before,
-                "A zero-length rate change moved the actor");
-        }
+        nowNs += deltaNs;
+        AdvanceVelocity(position,.125f,deltaNs,nowNs,motion);
+        Require(position==static_cast<float>(1'048'576.0+.125*double(i*deltaNs)/10'000'000),
+            "Constant velocity lost its birth-clock endpoint");
     }
-    position = 53.375f;
-    AdvanceVelocity(position, .25f, deltaNs, motion);
-    Require(position == 53.40625f && motion.origin == 53.375,
-        "A zero-length rate change moved the actor");
-    position = 1'048'576;
-    motion = {};
-    AdvanceVelocity(position, .125f, deltaNs, motion);
-    // Explicit invalidation discards even a valid sub-ULP old endpoint.
-    const float resetOrigin = position;
-    motion.bound = false;
-    AdvanceVelocity(position, -.125f, deltaNs, motion);
-    Require(motion.origin == double(resetOrigin) && position == resetOrigin - .015625f,
-        "Explicit motion invalidation failed to bind the public position");
-    const auto still = std::array<std::uint64_t, 4>{Bits(position), Bits(motion.origin),
-        motion.elapsedNs, Bits(motion.rate)};
-    AdvanceVelocity(position, motion.rate, 0, motion);
-    Require(still == std::array<std::uint64_t, 4>{Bits(position), Bits(motion.origin),
-        motion.elapsedNs, Bits(motion.rate)},
-        "A zero-length constant-rate step changed its segment");
-
-    // Mirror the actual hand-written Zamboni and thrown-imp model layouts.
-    // Their published position does not match origin + rate * elapsed, so a
-    // transition to a new linear rate must retain the previous float rebase.
-    for (bool imp : {false, true})
+    constexpr std::array<float,4> rates{.125f,-.0625f,.25f,-.125f};
+    position=1'048'576;motion={};nowNs=0;
+    for (size_t i=0;i<4096;++i)
     {
-        TimedLinearMotion reused{imp ? 200.125 : 600.125,
-            137'192'835, imp ? 2.375f : .2317289f, true};
-        const double ticks = double(reused.elapsedNs) / 10'000'000.0;
-        position = imp ? static_cast<float>(reused.origin + 240 +
-            double(reused.rate) * ticks - double(THOWN_ZOMBIE_GRAVITY) * ticks * (ticks + 1) * .5) :
-            static_cast<float>(ZamboniMotion::Sample<-1>(reused.origin, reused.rate,
-                reused.elapsedNs, false, true, 0).position);
-        Require(static_cast<float>(reused.origin + double(reused.rate) * ticks) != position,
-            "Hand-written motion fixture did not distinguish its nonlinear model");
-        AdvanceVelocity(position, -.125f, deltaNs, reused);
-        Require(reused.origin == position - (-.125 * deltaNs / 10'000'000.0) &&
-            position == static_cast<float>(reused.origin - .015625),
-            "Explicit linear motion rebinding failed");
+        const float rate=rates[i%rates.size()];
+        const double origin=position;
+        nowNs += deltaNs;
+        AdvanceVelocity(position,rate,deltaNs,nowNs,motion);
+        Require(position==static_cast<float>(origin+double(rate)*deltaNs/10'000'000) &&
+            motion.origin==origin && motion.startTimeNs==nowNs-static_cast<std::int64_t>(deltaNs),
+            "Changed velocity did not rebind its segment origin");
+        const auto before=Bits(position);
+        AdvanceVelocity(position,rate,0,nowNs,motion);
+        Require(Bits(position)==before,"Zero time advanced a linear segment");
     }
+    position=53.375f;motion={};nowNs+=deltaNs;
+    AdvanceVelocity(position,.25f,deltaNs,nowNs,motion);
+    Require(position==53.40625f && motion.origin==53.375,"Relocation lost its new segment origin");
+    position=1'048'576;motion={};nowNs+=deltaNs;
+    AdvanceVelocity(position,.125f,deltaNs,nowNs,motion);
+    const float reset=position;
+    motion.bound=false;nowNs+=deltaNs;
+    AdvanceVelocity(position,-.125f,deltaNs,nowNs,motion);
+    Require(motion.origin==double(reset)&&position==reset-.015625f,"Invalidation failed to rebind");
+    const auto birth=motion.startTimeNs;
+    AdvanceVelocity(position,-.125f,1,nowNs+50'000'000,motion);
+    Require(motion.startTimeNs==birth && position==CheckedPosition(motion.origin-.125*double(nowNs+50'000'000-birth)/10'000'000),
+        "Linear motion accumulated delta instead of sampling the supplied clock");
 }
 
 inline void ChangingVelocitySave(LawnApp& app, Board& board)
@@ -1159,31 +1318,38 @@ inline void ChangingVelocitySave(LawnApp& app, Board& board)
     original.mApp = &app; original.mBoard = &board;
     original.mZombieType = ZombieType::ZOMBIE_NORMAL;
     original.mX = 1'048'576;
-    // The public float still rounds to the initial value, while the saved
-    // double origin/clock encode the sub-ULP position needed by the next rate.
-    AdvanceVelocity(original.mX, .125f, 1'250'000, original.mVelocityX);
+    // Save the sub-ULP clock state needed to continue the same-rate segment.
+    board.mLevelTimeNs += 1'250'000;
+    AdvanceVelocity(original.mX, .125f, 1'250'000, board.mLevelTimeNs, original.mVelocityX);
     const auto record = SaveRecordMapping::WriteSaveRecord(original);
     Zombie resumed{};
     SaveRecordMapping::ReadSaveRecord(resumed, record.data());
     resumed.mApp = &app; resumed.mBoard = &board;
+    SaveClockProjection::Bind(resumed);
     const auto state = [](const Zombie& zombie) {
         const auto& motion = zombie.mVelocityX;
         return std::array<std::uint64_t, 5>{Bits(zombie.mX), Bits(motion.origin),
-            motion.elapsedNs, Bits(motion.rate),
+            static_cast<std::uint64_t>(motion.startTimeNs), Bits(motion.rate),
             std::uint64_t(motion.bound)};
     };
     Require(state(original) == state(resumed), "Save lost a sub-ULP linear segment");
+    board.mLevelTimeNs += 1'000'000'000;
+    AdvanceVelocity(original.mX, .125f, 1'000'000'000, board.mLevelTimeNs, original.mVelocityX);
+    AdvanceVelocity(resumed.mX, .125f, 1'000'000'000, board.mLevelTimeNs, resumed.mVelocityX);
+    Require(state(original) == state(resumed) &&
+        resumed.mX == static_cast<float>(1'048'576.0 + .125 * 1'001'250'000 / 10'000'000),
+        "Save continuation lost the original constant-rate nanosecond endpoint");
     constexpr std::array<float, 4> rates{.25f, -.125f, .125f, -.0625f};
-    constexpr std::array<std::int64_t, 4> increments{4, -2, 2, -1};
-    std::int64_t units = 1'048'576LL * 128 + 2;
     for (size_t i = 0; i < 4096; ++i)
     {
         const auto rate = rates[i % rates.size()];
-        AdvanceVelocity(original.mX, rate, 1'250'000, original.mVelocityX);
-        AdvanceVelocity(resumed.mX, rate, 1'250'000, resumed.mVelocityX);
-        units += increments[i % increments.size()];
+        const double origin = original.mX;
+        const auto expected = static_cast<float>(origin + double(rate) * 1'250'000 / 10'000'000);
+        board.mLevelTimeNs += 1'250'000;
+        AdvanceVelocity(original.mX, rate, 1'250'000, board.mLevelTimeNs, original.mVelocityX);
+        AdvanceVelocity(resumed.mX, rate, 1'250'000, board.mLevelTimeNs, resumed.mVelocityX);
         Require(state(original) == state(resumed) &&
-            resumed.mX == static_cast<float>(double(units) / 128),
+            resumed.mX == expected && resumed.mVelocityX.origin == origin,
             "Changing-rate continuation diverged after actual native save/reload");
     }
 }
@@ -1196,14 +1362,17 @@ inline void Check(LawnApp& app)
         float position = 91.123413f;
         TimedLinearMotion motion;
         constexpr std::int64_t duration = 2'718'281'829;
+        std::int64_t nowNs=0;
         Schedule(frequency, duration, [&](std::int64_t delta) {
-            AdvanceVelocity(position, -0.7137289f, delta, motion);
+            nowNs+=delta;
+            AdvanceVelocity(position, -0.7137289f, delta, nowNs, motion);
         });
         Require(position == CheckedPosition(double(91.123413f) +
             double(-0.7137289f) * duration / 10'000'000.0),
             "Timed float velocity depends on update partition");
         position = 177.283919f;
-        AdvanceVelocity(position, 0.3127131f, 1'234'567, motion);
+        motion = {}; // Explicitly invalidate the old segment at relocation.
+        AdvanceVelocity(position, 0.3127131f, 1'234'567, nowNs+1'234'567, motion);
         Require(position == CheckedPosition(double(177.283919f) +
             double(0.3127131f) * 1'234'567 / 10'000'000.0),
             "Timed float velocity ignored an explicit teleport or changed rate");
@@ -1275,8 +1444,9 @@ inline void Check(LawnApp& app)
     std::cerr << "PASS actual analytic mower motion, pool height and brain falling\n";
     ZombieAltitudeRuntime::Check(app,board);
     std::cerr << "PASS actual Zombie altitude: 14 paths, roof Imp, combined Balloon, save continuation\n";
+    VaultAndRoofImpSegments(app, board);
     ZamboniRuntime::Check(app,board);
-    std::cerr << "PASS actual Zamboni coupled speed and position, canonical boundaries and save continuation\n";
+    std::cerr << "PASS actual Zamboni discrete movement, timestamp tire speed and save continuation\n";
     LaunchDeadlines(app, board);
     SlotMachine(app, board);
     PickupMotion(app, board);

@@ -231,14 +231,18 @@ int main(int argc, char** argv)
             }
             music.mBurstOverride = 1;
             music.StartBurst();
-            music.UpdateMusicBurst();
+            music.UpdateMusicBurst(app.mApplicationTimeNs);
             Require(music.mMusicDrumsState == MUSIC_DRUMS_ON_QUEUED, "Production climax was not queued");
             playback.mMusicSlots[MUSIC_FILE_MAIN_MUSIC]->mPlayback.Seek(49, BASS_POS_MUSIC_ORDER);
-            music.UpdateMusicBurst();
+            music.UpdateMusicBurst(app.mApplicationTimeNs);
             Require(music.mMusicDrumsState == MUSIC_DRUMS_ON, "Production climax did not start");
             Require(LOWORD(music.GetMusicOrder(MUSIC_FILE_DRUMS)) == 77,
                 "Production climax seek missed order 77");
-            for (unsigned i = 0; i < fps * 5; ++i) music.MusicUpdate();
+            for (unsigned i = 0; i < fps * 5; ++i)
+            {
+                app.mApplicationTimeNs += static_cast<std::int64_t>(Sexy::gUpdateIntervalNs);
+                music.MusicUpdate(app.mApplicationTimeNs);
+            }
             Require(music.mMusicBurstState == MUSIC_BURST_ON, "Production night crossfade stalled");
             Require(Gain(playback, MUSIC_FILE_MAIN_MUSIC) == 0 &&
                 Gain(playback, MUSIC_FILE_DRUMS) == 1, "Actual BASS climax gains are incorrect");
@@ -270,7 +274,7 @@ int main(int argc, char** argv)
             Require(music.mPaused && !playback.IsPlaying(MUSIC_FILE_DRUMS),
                 "Production pause did not stop the climax");
             music.GameMusicPause(false);
-            music.MusicUpdate();
+            music.MusicUpdate(app.mApplicationTimeNs);
             Require(!music.mPaused && playback.IsPlaying(MUSIC_FILE_DRUMS) &&
                 Gain(playback, MUSIC_FILE_DRUMS) == 1, "Production resume lost the climax");
             std::cout << "PASS production Music/BassMusicInterface: night setup, seek, gains, clock, pause/resume at "

@@ -1432,7 +1432,7 @@ void ZenGarden::StinkyPickGoal(GridItem* theStinky)
                 if (aDistFromLastGoal < 5.0f)
                 {
                     aWeight -= 20.0f;
-                    aWeight += TodAnimateCurveNs(30'000'000'000LL, 60'000'000'000LL, aCoin->mDisappearCounter.mNanoseconds, 0, -40, Curves::Linear);
+                    aWeight += TodAnimateCurveNs(30'000'000'000LL, 60'000'000'000LL, (aCoin->mDisappearStartTimeNs==INT64_MAX ? 0 : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs-aCoin->mDisappearStartTimeNs), 0, -40, Curves::Linear);
                 }
 
                 if (aBestCoin == nullptr || aWeight < aCurWeight)
@@ -1482,7 +1482,7 @@ void ZenGarden::StinkyPickGoal(GridItem* theStinky)
         theStinky->mGoalY = aTarget->mY;
     }
 
-    theStinky->mGridItemCounter = 100;
+    theStinky->mStateEndTimeNs = mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs+1'000'000'000;
     if (theStinky->mGoalX < theStinky->mPosX && theStinky->mGridItemState == GridItemState::GRIDITEM_STINKY_WALKING_RIGHT)
     {
         Reanimation* aStinyReanim = mApp->ReanimationGet(theStinky->mGridItemReanimID);
@@ -1607,6 +1607,7 @@ void ZenGarden::ResetStinkyTimers()
 //0x520500
 void ZenGarden::StinkyUpdate(GridItem* theStinky)
 {
+    const auto oldDeadline=theStinky->mStateEndTimeNs;
     Reanimation* aStinkyReanim = mApp->ReanimationGet(theStinky->mGridItemReanimID);
 
 	const long long aNow = mFrameTime;
@@ -1626,6 +1627,8 @@ void ZenGarden::StinkyUpdate(GridItem* theStinky)
         {
             StinkyFinishFallingAsleep(theStinky, 20);
         }
+        if(theStinky->mStateEndTimeNs==oldDeadline && oldDeadline!=0)
+            theStinky->mStateEndTimeNs+=static_cast<std::int64_t>(Sexy::gUpdateIntervalNs);
         return;
     }
 
@@ -1647,6 +1650,8 @@ void ZenGarden::StinkyUpdate(GridItem* theStinky)
         {
             StinkyWakeUp(theStinky);
         }
+        if(theStinky->mStateEndTimeNs==oldDeadline && oldDeadline!=0)
+            theStinky->mStateEndTimeNs+=static_cast<std::int64_t>(Sexy::gUpdateIntervalNs);
         return;
     }
 
@@ -1658,6 +1663,8 @@ void ZenGarden::StinkyUpdate(GridItem* theStinky)
             aStinkyReanim->PlayReanim(ReanimTrackId::anim_crawl, ReanimLoopType::REANIM_LOOP, 10, 6.0f);
             StinkyPickGoal(theStinky);
         }
+        if(theStinky->mStateEndTimeNs==oldDeadline && oldDeadline!=0)
+            theStinky->mStateEndTimeNs+=static_cast<std::int64_t>(Sexy::gUpdateIntervalNs);
         return;
     }
 
@@ -1675,6 +1682,8 @@ void ZenGarden::StinkyUpdate(GridItem* theStinky)
             if (theStinky->mGridItemState == GridItemState::GRIDITEM_STINKY_WALKING_LEFT)
             {
                 StinkyStartFallingAsleep(theStinky);
+                if(theStinky->mStateEndTimeNs==oldDeadline && oldDeadline!=0)
+                    theStinky->mStateEndTimeNs+=static_cast<std::int64_t>(Sexy::gUpdateIntervalNs);
                 return;
             }
             else if (theStinky->mGridItemState == GridItemState::GRIDITEM_STINKY_WALKING_RIGHT)
@@ -1685,15 +1694,13 @@ void ZenGarden::StinkyUpdate(GridItem* theStinky)
                 theStinky->mMotionTrailCount = 0;
                 theStinky->mGoalX = theStinky->mPosX;
                 theStinky->mGoalY = theStinky->mPosY;
+                if(theStinky->mStateEndTimeNs==oldDeadline && oldDeadline!=0)
+                    theStinky->mStateEndTimeNs+=static_cast<std::int64_t>(Sexy::gUpdateIntervalNs);
                 return;
             }
         }
     }
 
-    if (theStinky->mGridItemCounter > 0)
-    {
-        theStinky->mGridItemCounter--;
-    }
 
     Coin* aCoin = nullptr;
     while (mBoard->IterateCoins(aCoin))
@@ -1798,7 +1805,7 @@ void ZenGarden::StinkyUpdate(GridItem* theStinky)
         {
             StinkyPickGoal(theStinky);
         }
-        else if (theStinky->mGridItemCounter == 0)
+        else if (theStinky->mStateEndTimeNs <= mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs)
         {
             StinkyPickGoal(theStinky);
         }

@@ -27,6 +27,17 @@
 namespace Sexy
 {
 
+bool IsScaleEffectFormat(unsigned int format)
+{
+    static constexpr unsigned int formats[]{
+        109, 97, 91, 92, 103, 64, 122, 37, 38, 83,
+        77, 78, 100, 16, 17, 76, 70, 71, 9, 10
+    };
+    for (const auto candidate : formats)
+        if (candidate == format) return true;
+    return false;
+}
+
 namespace
 {
 
@@ -957,7 +968,7 @@ bool ScaleEffectCompiler::GenerateAndCompilePasses(ScaleEffectDesc& ioDesc,
 			AddMacro("MP_PS_STYLE", "");
 		AddMacro("MP_INLINE_PARAMS", "");
 		AddMacro("MF", "float");
-		const char* aDigits[] = { "1", "2", "3", "4" };
+		static constexpr const char* aDigits[] = { "1", "2", "3", "4" };
 		for (int k = 0; k < 4; k++)
 		{
 			AddMacro(std::string("MF") + aDigits[k], std::string("float") + aDigits[k]);

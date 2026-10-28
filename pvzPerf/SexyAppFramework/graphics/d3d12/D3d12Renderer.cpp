@@ -1,5 +1,4 @@
 #include "D3d12Renderer.h"
-#include "../GpuParticleUpload.h"
 #include "D3d12Context.h"
 #include "D3d12Check.h"
 #include "D3d12ScalePipeline.h"
@@ -76,14 +75,6 @@ struct D3d12Texture {
     bool opaque = false, generated = false, sampled = false;
 };
 
-struct D3d12Reanim {
-    void* owner = nullptr;
-    std::vector<GpuReanimTrack> tracks;
-    UINT64 blobBytes = 0;
-    uint32_t header = 0, imageSlotCount = 0, variantCount = 0;
-    uint32_t particleEmitterCount = 0, particleVariantCount = 0;
-};
-
 struct D3d12Renderer::Impl {
     struct Page {
         ComPtr<ID3D12Resource> resource;
@@ -96,6 +87,10 @@ struct D3d12Renderer::Impl {
         GpuBlend blend = GpuBlend::Normal;
         D3D12_RECT scissor{};
         bool coverage = false;
+        bool simple = false;
+        enum Geometry { Triangles, Quads, Mixed } geometry = Triangles;
+        Page* indices = nullptr;
+        UINT firstIndex = 0, indexCount = 0;
     };
     struct Kernel {
         ComPtr<ID3D12RootSignature> root;
@@ -129,10 +124,14 @@ struct D3d12Renderer::Impl {
     ID3D12GraphicsCommandList* commands = nullptr;
     bool sceneOpen = false;
     bool imageOnly = false, sceneInitialized = false, inFlight = false;
-    std::vector<std::unique_ptr<Page>> staging, vertices;
+    std::vector<std::unique_ptr<Page>> staging, vertices, indices;
+    ComPtr<ID3D12Resource> staticIndices;
+    // Reused by Draw; avoids a heap allocation for every submitted primitive.
+    std::vector<D3d12Texture*> drawSources;
     Run run;
     ComPtr<ID3D12RootSignature> gameRoot, presentRoot;
     std::array<ComPtr<ID3D12PipelineState>, 3> scenePipelines, imagePipelines;
+    ComPtr<ID3D12PipelineState> spriteOpaquePipeline, mixedSpritePipeline;
     ComPtr<ID3D12PipelineState> presentPipeline;
     ComPtr<ID3D12RootSignature> poolRoot;
     std::array<ComPtr<ID3D12PipelineState>, 3> poolScenePipelines, poolImagePipelines;
@@ -149,46 +148,12 @@ struct D3d12Renderer::Impl {
     bool causticQueued = false;
     ID3D12PipelineState* boundPipeline = nullptr;
     Page* boundVertex = nullptr;
+    ID3D12Resource* boundIndex = nullptr;
     bool gameBound = false;
+    std::array<UINT, 4> boundConstants{};
+    bool hasConstants = false;
     D3D12_RECT boundScissor{};
     bool hasScissor = false;
-    uint32_t reanimPictureCandidates = 0;
-    bool reanimFrameEligible = false;
-#if defined(PVZ_D3D12_REANIM_RESIDENT)
-    uint64_t reanimOrdinaryTriangles = 0;
-    bool reanimBatchStarted = false;
-    struct ReanimInstance {
-        GpuReanimInstance draw;
-        uint32_t header, imageSlotCount, textureSlot, flags;
-        float clip[4];
-    };
-    struct ReanimTrack {
-        uint32_t track, instance, color, flags;
-        float shakeX, shakeY;
-        uint32_t padding[2]{};
-    };
-    static_assert(sizeof(ReanimInstance) == 96 && sizeof(ReanimTrack) == 32);
-    struct ReanimControl {
-        D3d12Reanim* definition;
-        D3d12Texture* texture;
-        uint32_t before, after;
-        uint32_t textureSlot = UINT32_MAX;
-    };
-    ComPtr<ID3D12Resource> reanimStatic;
-    Page reanimInstances, reanimTracks;
-    UINT64 reanimStaticUsed = 0, reanimStaticCapacity = 0;
-    static constexpr UINT64 ReanimStaticInitialCapacity = 64 * 1024 * 1024;
-    // ByteAddressBuffer.Load takes a uint byte address, despite DWORD headers.
-    static constexpr UINT64 ReanimStaticMaximum = UINT64{1} << 32;
-    struct ReanimRange { UINT64 offset, size; };
-    std::vector<ReanimRange> reanimFreeRanges;
-    std::vector<D3d12Reanim*> reanimDefinitions, reanimRetired;
-    std::vector<ReanimControl> reanimControls;
-    ComPtr<ID3D12RootSignature> reanimRoot;
-    std::array<ComPtr<ID3D12PipelineState>, 3> reanimScenePipelines, reanimImagePipelines;
-    uint32_t reanimGeneration = 0;
-    bool reanimActive = false;
-#endif
 
     Impl(D3d12Context& ctx, int w, int h,
         const std::filesystem::path& shaders)
@@ -254,10 +219,6 @@ struct D3d12Renderer::Impl {
         } catch (...) {
             // Preserve the original failure while attempting the final queue wait.
         }
-#if defined(PVZ_D3D12_REANIM_RESIDENT)
-        for (auto* definition : reanimDefinitions) delete definition;
-        for (auto* definition : reanimRetired) delete definition;
-#endif
     }
 
     void Dimensions(int w, int h) const {
@@ -283,12 +244,12 @@ struct D3d12Renderer::Impl {
     }
 
     ComPtr<ID3D12RootSignature> Root(UINT constants, UINT inputs, bool game,
-        bool sampler, bool compute, bool pool = false, bool reanim = false) {
+        bool sampler, bool compute, bool pool = false) {
         std::array<D3D12_DESCRIPTOR_RANGE, 2> ranges{};
         ranges[0] = {D3D12_DESCRIPTOR_RANGE_TYPE_SRV, inputs, 0, 0, 0};
         ranges[1] = {game ? D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER :
             D3D12_DESCRIPTOR_RANGE_TYPE_UAV, game ? 4u : 1u, 0, 0, 0};
-        std::array<D3D12_ROOT_PARAMETER, 6> params{};
+        std::array<D3D12_ROOT_PARAMETER, 4> params{};
         params[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
         params[0].Constants = {0, 0, constants};
         params[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
@@ -303,12 +264,6 @@ struct D3d12Renderer::Impl {
         params[3].ParameterType = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
         params[3].Constants = {1, 0, 16};
         params[3].ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
-        if (reanim)
-            for (UINT i = 0; i < 3; ++i) {
-                params[3 + i].ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV;
-                params[3 + i].Descriptor = {i, 1};
-                params[3 + i].ShaderVisibility = D3D12_SHADER_VISIBILITY_GEOMETRY;
-            }
         std::array<D3D12_STATIC_SAMPLER_DESC, 4> samplers{};
         for (UINT i = 0; i < samplers.size(); ++i) {
             auto& s = samplers[i];
@@ -323,7 +278,7 @@ struct D3d12Renderer::Impl {
             s.ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
         }
         D3D12_ROOT_SIGNATURE_DESC desc{};
-        desc.NumParameters = reanim ? 6 : (pool ? 4 : (compute || game ? 3 : 2));
+        desc.NumParameters = pool ? 4 : (compute || game ? 3 : 2);
         desc.pParameters = params.data();
         desc.NumStaticSamplers = sampler && !game ? 1 : 0;
         desc.pStaticSamplers = samplers.data();
@@ -345,7 +300,7 @@ struct D3d12Renderer::Impl {
     ComPtr<ID3D12PipelineState> Graphics(ID3D12RootSignature* root,
         const std::vector<char>& vs, const std::vector<char>& ps,
         DXGI_FORMAT format, GpuBlend blend, bool premultiplied, bool pool = false,
-        const std::vector<char>* gs = nullptr) {
+        const std::vector<char>* gs = nullptr, bool dualSource = false) {
         D3D12_GRAPHICS_PIPELINE_STATE_DESC desc{};
         desc.pRootSignature = root;
         desc.VS = {vs.data(), vs.size()};
@@ -370,12 +325,12 @@ struct D3d12Renderer::Impl {
         desc.DepthStencilState.BackFace = desc.DepthStencilState.FrontFace;
         auto& rt = desc.BlendState.RenderTarget[0];
         rt.BlendEnable = blend != GpuBlend::Opaque;
-        rt.SrcBlend = premultiplied ? D3D12_BLEND_ONE : D3D12_BLEND_SRC_ALPHA;
-        rt.DestBlend = blend == GpuBlend::Additive ? D3D12_BLEND_ONE :
+        rt.SrcBlend = premultiplied || dualSource ? D3D12_BLEND_ONE : D3D12_BLEND_SRC_ALPHA;
+        rt.DestBlend = dualSource ? D3D12_BLEND_INV_SRC1_ALPHA : blend == GpuBlend::Additive ? D3D12_BLEND_ONE :
             D3D12_BLEND_INV_SRC_ALPHA;
         rt.BlendOp = rt.BlendOpAlpha = D3D12_BLEND_OP_ADD;
         rt.SrcBlendAlpha = D3D12_BLEND_ONE;
-        rt.DestBlendAlpha = blend == GpuBlend::Additive ? D3D12_BLEND_ONE :
+        rt.DestBlendAlpha = dualSource ? D3D12_BLEND_INV_SRC1_ALPHA : blend == GpuBlend::Additive ? D3D12_BLEND_ONE :
             D3D12_BLEND_INV_SRC_ALPHA;
         rt.RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
         desc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
@@ -389,14 +344,33 @@ struct D3d12Renderer::Impl {
     }
 
     void InitGraphics() {
+        constexpr UINT staticIndexCount = 65536 + 65536 / 4 * 6;
+        staticIndices = Buffer(staticIndexCount * sizeof(unsigned short), D3D12_HEAP_TYPE_UPLOAD);
+        unsigned short* pattern = nullptr;
+        const D3D12_RANGE noRead{0, 0};
+        Check(staticIndices->Map(0, &noRead, reinterpret_cast<void**>(&pattern)),
+            "Map immutable primitive indices", device);
+        for (UINT i = 0; i < 65536; ++i) pattern[i] = static_cast<unsigned short>(i);
+        auto* quads = pattern + 65536;
+        for (UINT i = 0; i < 65536; i += 4) {
+            const unsigned short quad[]{static_cast<unsigned short>(i), static_cast<unsigned short>(i + 1),
+                static_cast<unsigned short>(i + 2), static_cast<unsigned short>(i + 1),
+                static_cast<unsigned short>(i + 2), static_cast<unsigned short>(i + 3)};
+            std::memcpy(quads, quad, sizeof(quad)); quads += 6;
+        }
+        staticIndices->Unmap(0, nullptr);
         gameRoot = Root(4, TextureSlots, true, true, false);
         const auto vs = Shader(directory, "game_vs"), ps = Shader(directory, "game_ps");
         for (UINT i = 0; i < 3; ++i) {
             scenePipelines[i] = Graphics(gameRoot.Get(), vs, ps,
                 DXGI_FORMAT_B8G8R8A8_UNORM, static_cast<GpuBlend>(i), false);
             imagePipelines[i] = Graphics(gameRoot.Get(), vs, ps,
-                DXGI_FORMAT_R32G32B32A32_FLOAT, static_cast<GpuBlend>(i), true);
+                DXGI_FORMAT_R16G16B16A16_FLOAT, static_cast<GpuBlend>(i), true);
         }
+        spriteOpaquePipeline = Graphics(gameRoot.Get(), vs, Shader(directory, "game_sprite_ps"),
+            DXGI_FORMAT_B8G8R8A8_UNORM, GpuBlend::Opaque, false);
+        mixedSpritePipeline = Graphics(gameRoot.Get(), vs, Shader(directory, "game_sprite_mixed_ps"),
+            DXGI_FORMAT_B8G8R8A8_UNORM, GpuBlend::Normal, false, false, nullptr, true);
         if (context.hdr) {
             presentRoot = Root(8, 1, false, true, false);
             presentPipeline = Graphics(presentRoot.Get(), Shader(directory, "game_present_vs"),
@@ -413,7 +387,7 @@ struct D3d12Renderer::Impl {
             poolScenePipelines[i] = Graphics(poolRoot.Get(), vs, ps,
                 DXGI_FORMAT_B8G8R8A8_UNORM, GpuBlend(i), false, true);
             poolImagePipelines[i] = Graphics(poolRoot.Get(), vs, ps,
-                DXGI_FORMAT_R32G32B32A32_FLOAT, GpuBlend(i), true, true);
+                DXGI_FORMAT_R16G16B16A16_FLOAT, GpuBlend(i), true, true);
         }
         auto upload = [&](const void* data, size_t size) {
             auto buffer = Buffer(size, D3D12_HEAP_TYPE_UPLOAD);
@@ -468,7 +442,7 @@ struct D3d12Renderer::Impl {
         image->height = h;
         image->format = format;
         image->clearColor = clearColor;
-        image->generated = format == DXGI_FORMAT_R32G32B32A32_FLOAT;
+        image->generated = format == DXGI_FORMAT_R16G16B16A16_FLOAT;
         D3D12_RESOURCE_DESC desc{};
         desc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
         desc.Width = UINT64(w);
@@ -522,7 +496,8 @@ struct D3d12Renderer::Impl {
         boundTarget = nullptr;
         boundPipeline = nullptr;
         boundVertex = nullptr;
-        gameBound = hasScissor = false;
+        boundIndex = nullptr;
+        gameBound = hasScissor = hasConstants = false;
     }
     void Begin() {
         if (commands) return;
@@ -573,7 +548,7 @@ struct D3d12Renderer::Impl {
         return result;
     }
     Page* Allocate(std::vector<std::unique_ptr<Page>>& pages, UINT64 bytes,
-        UINT64 alignment, bool upload) {
+        UINT64 alignment) {
         for (auto& page : pages) {
             const auto offset = Align(page->used, alignment);
             if (offset + bytes <= page->size) {
@@ -591,121 +566,6 @@ struct D3d12Renderer::Impl {
         pages.push_back(std::move(page));
         return result;
     }
-#if defined(PVZ_D3D12_REANIM_RESIDENT)
-    void InitReanim() {
-        if (reanimRoot) return;
-        auto root = Root(4, TextureSlots, true, true, false, false, true);
-        const auto vs = Shader(directory, "game_reanim_vs");
-        const auto gs = Shader(directory, "game_reanim_gs");
-        const auto ps = Shader(directory, "game_ps");
-        for (UINT i = 0; i < 3; ++i) {
-            reanimScenePipelines[i] = Graphics(root.Get(), vs, ps,
-                DXGI_FORMAT_B8G8R8A8_UNORM, GpuBlend(i), false, false, &gs);
-            reanimImagePipelines[i] = Graphics(root.Get(), vs, ps,
-                DXGI_FORMAT_R32G32B32A32_FLOAT, GpuBlend(i), true, false, &gs);
-        }
-        auto arena = Buffer(ReanimStaticInitialCapacity, D3D12_HEAP_TYPE_DEFAULT);
-        for (Page* page : {&reanimInstances, &reanimTracks}) {
-            page->size = 4 * 1024 * 1024;
-            page->resource = Buffer(page->size, D3D12_HEAP_TYPE_UPLOAD);
-            D3D12_RANGE read{0, 0};
-            Check(page->resource->Map(0, &read, reinterpret_cast<void**>(&page->mapped)),
-                "Map(reanimation packets)", device);
-        }
-        reanimStatic = std::move(arena);
-        reanimStaticCapacity = ReanimStaticInitialCapacity;
-        reanimRoot = std::move(root);
-    }
-    void MergeReanimRanges() {
-        std::sort(reanimFreeRanges.begin(), reanimFreeRanges.end(),
-            [](const ReanimRange& a, const ReanimRange& b) { return a.offset < b.offset; });
-        size_t merged = 0;
-        for (const auto range : reanimFreeRanges) {
-            if (merged && reanimFreeRanges[merged - 1].offset +
-                    reanimFreeRanges[merged - 1].size == range.offset)
-                reanimFreeRanges[merged - 1].size += range.size;
-            else reanimFreeRanges[merged++] = range;
-        }
-        reanimFreeRanges.resize(merged);
-        while (!reanimFreeRanges.empty() && reanimFreeRanges.back().offset +
-                reanimFreeRanges.back().size == reanimStaticUsed) {
-            reanimStaticUsed = reanimFreeRanges.back().offset;
-            reanimFreeRanges.pop_back();
-        }
-    }
-    void ReclaimReanimRanges() {
-        if (reanimRetired.empty()) return;
-        // Only call after the submission fence completes. Destroy reserves
-        // metadata capacity so this completion path cannot allocate.
-        for (auto* definition : reanimRetired) {
-            reanimFreeRanges.push_back({UINT64(definition->header) * 4, definition->blobBytes});
-            delete definition;
-        }
-        reanimRetired.clear();
-        MergeReanimRanges();
-    }
-    void WaitReanimLoading() {
-        if (commands) Finish(false, true);
-        else {
-            context.WaitIdle();
-            if (inFlight) { Completed(true); inFlight = false; }
-            else ReclaimReanimRanges();
-        }
-    }
-    void GrowReanimStatic(UINT64 required) {
-        if (required <= reanimStaticCapacity) return;
-        if (required > ReanimStaticMaximum)
-            throw std::runtime_error("Resident D3D12 arena exceeds 32-bit byte addressing");
-        const auto capacity = std::min(ReanimStaticMaximum,
-            std::max(required, reanimStaticCapacity * 2));
-        auto replacement = Buffer(capacity, D3D12_HEAP_TYPE_DEFAULT);
-        WaitReanimLoading();
-        if (reanimStaticUsed) {
-            Begin();
-            D3D12_RESOURCE_BARRIER barriers[2]{};
-            for (auto& barrier : barriers) {
-                barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-                barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
-                barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_GENERIC_READ;
-            }
-            barriers[0].Transition.pResource = reanimStatic.Get();
-            barriers[0].Transition.StateAfter = D3D12_RESOURCE_STATE_COPY_SOURCE;
-            barriers[1].Transition.pResource = replacement.Get();
-            barriers[1].Transition.StateAfter = D3D12_RESOURCE_STATE_COPY_DEST;
-            commands->ResourceBarrier(2, barriers);
-            commands->CopyBufferRegion(replacement.Get(), 0, reanimStatic.Get(), 0, reanimStaticUsed);
-            for (auto& barrier : barriers)
-                std::swap(barrier.Transition.StateBefore, barrier.Transition.StateAfter);
-            commands->ResourceBarrier(2, barriers);
-            try {
-                Finish(false, true);
-            } catch (...) {
-                // Submit can fail after queue execution. Keep both buffers
-                // alive through a final wait before unwinding the replacement.
-                try { context.WaitIdle(); } catch (...) {}
-                throw;
-            }
-        }
-        reanimStatic = std::move(replacement);
-        reanimStaticCapacity = capacity;
-        InvalidateDrawState();
-    }
-    UINT64 AllocateReanimStatic(UINT64 bytes) {
-        for (auto it = reanimFreeRanges.begin(); it != reanimFreeRanges.end(); ++it)
-            if (it->size >= bytes) {
-                const auto offset = it->offset;
-                it->offset += bytes; it->size -= bytes;
-                if (!it->size) reanimFreeRanges.erase(it);
-                return offset;
-            }
-        if (bytes > ReanimStaticMaximum - reanimStaticUsed)
-            throw std::runtime_error("Resident D3D12 arena exceeds 32-bit byte addressing");
-        GrowReanimStatic(reanimStaticUsed + bytes);
-        const auto offset = reanimStaticUsed;
-        reanimStaticUsed += bytes;
-        return offset;
-    }
-#endif
 
     void Upload(D3d12Texture* texture, const void* source, int pitch, UINT pixelBytes) {
         if (!source || pitch < int64_t(texture->width) * pixelBytes)
@@ -717,7 +577,7 @@ struct D3d12Renderer::Impl {
         UINT64 rowBytes = 0, bytes = 0;
         const auto desc = texture->resource->GetDesc();
         device->GetCopyableFootprints(&desc, 0, 1, 0, &footprint, &rows, &rowBytes, &bytes);
-        auto* page = Allocate(staging, bytes, D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT, true);
+        auto* page = Allocate(staging, bytes, D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT);
         footprint.Offset = page->used;
         for (UINT y = 0; y < rows; ++y)
             std::memcpy(page->mapped + footprint.Offset + UINT64(y) * footprint.Footprint.RowPitch,
@@ -772,14 +632,7 @@ struct D3d12Renderer::Impl {
             if (mode) mode->sampledOutput->sampled = false;
         for (auto& page : staging) page->used = 0;
         for (auto& page : vertices) page->used = 0;
-#if defined(PVZ_D3D12_REANIM_RESIDENT)
-        ReclaimReanimRanges();
-        reanimControls.clear();
-        reanimInstances.used = reanimTracks.used = 0;
-        reanimActive = false;
-        ++reanimGeneration;
-        reanimBatchStarted = false;
-#endif
+        for (auto& page : indices) page->used = 0;
         temporary = TextureSlots;
         InvalidateDrawState();
     }
@@ -855,7 +708,7 @@ struct D3d12Renderer::Impl {
     void InitializeScene() {
         if (sceneInitialized) return;
         Transition(scene.get(), D3D12_RESOURCE_STATE_RENDER_TARGET);
-        const float clear[]{0, 0, 0, 1};
+        static constexpr float clear[]{0, 0, 0, 1};
         commands->ClearRenderTargetView(Rtv(scene->rtv), clear, 0, nullptr);
         sceneInitialized = true;
     }
@@ -893,35 +746,26 @@ struct D3d12Renderer::Impl {
         BindTarget(target);
         if (!gameBound) {
             auto* root = gameRoot.Get();
-#if defined(PVZ_D3D12_REANIM_RESIDENT)
-            if (reanimActive) root = reanimRoot.Get();
-#endif
             commands->SetGraphicsRootSignature(root);
             commands->SetGraphicsRootDescriptorTable(1, Gpu(0));
             commands->SetGraphicsRootDescriptorTable(2,
                 samplerHeap->GetGPUDescriptorHandleForHeapStart());
             commands->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-#if defined(PVZ_D3D12_REANIM_RESIDENT)
-            if (reanimActive) {
-                commands->SetGraphicsRootShaderResourceView(3, reanimStatic->GetGPUVirtualAddress());
-                commands->SetGraphicsRootShaderResourceView(4, reanimInstances.resource->GetGPUVirtualAddress());
-                commands->SetGraphicsRootShaderResourceView(5, reanimTracks.resource->GetGPUVirtualAddress());
-            }
-#endif
             gameBound = true;
+            hasConstants = false;
         }
         const std::array<UINT, 4> constants{
             std::bit_cast<UINT>(float(target->width)),
             std::bit_cast<UINT>(float(target->height)),
             target->generated ? 1u : 0u, run.coverage ? 1u : 0u};
-        commands->SetGraphicsRoot32BitConstants(0, 4, constants.data(), 0);
-        auto* pipeline = (target->generated ? imagePipelines : scenePipelines)
-            .at(size_t(run.blend)).Get();
-#if defined(PVZ_D3D12_REANIM_RESIDENT)
-        if (reanimActive)
-            pipeline = (target->generated ? reanimImagePipelines : reanimScenePipelines)
-                .at(size_t(run.blend)).Get();
-#endif
+        if (!hasConstants || boundConstants != constants) {
+            commands->SetGraphicsRoot32BitConstants(0, 4, constants.data(), 0);
+            boundConstants = constants;
+            hasConstants = true;
+        }
+        auto* pipeline = run.simple ? (run.blend == GpuBlend::Opaque ?
+            spriteOpaquePipeline.Get() : mixedSpritePipeline.Get()) :
+            (target->generated ? imagePipelines : scenePipelines).at(size_t(run.blend)).Get();
         if (boundPipeline != pipeline) {
             commands->SetPipelineState(pipeline);
             boundPipeline = pipeline;
@@ -937,21 +781,74 @@ struct D3d12Renderer::Impl {
             commands->IASetVertexBuffers(0, 1, &view);
             boundVertex = run.page;
         }
-        commands->DrawInstanced(run.count, 1, run.first, 0);
+        const auto indexBuffer = run.indices ? run.indices->resource.Get() : staticIndices.Get();
+        if (boundIndex != indexBuffer) {
+            D3D12_INDEX_BUFFER_VIEW indexView{indexBuffer->GetGPUVirtualAddress(),
+                run.indices ? UINT(run.indices->size) : UINT((65536 + 65536 / 4 * 6) * sizeof(unsigned short)),
+                DXGI_FORMAT_R16_UINT};
+            commands->IASetIndexBuffer(&indexView);
+            boundIndex = indexBuffer;
+        }
+        commands->DrawIndexedInstanced(run.indexCount, 1,
+            run.indices ? run.firstIndex : run.geometry == Run::Quads ? 65536u : 0u,
+            INT(run.first), 0);
         run.count = 0;
     }
 
+    // Indices are local to a run, capped at the full uint16 address range.
+    // Pure runs use immutable patterns. Only a mixed run writes an index stream.
+    template<bool Quads>
+    void Append(Page* page, UINT first, UINT count, GpuBlend blend,
+        D3D12_RECT scissor, bool coverage, bool simple) {
+        constexpr UINT primitive = Quads ? 4 : 3;
+        constexpr auto geometry = Quads ? Run::Quads : Run::Triangles;
+        while (count) {
+            if (!run.count) {
+                run = {};
+                run.page = page; run.first = first; run.blend = blend;
+                run.scissor = scissor; run.coverage = coverage; run.simple = simple;
+                run.geometry = geometry;
+            }
+            UINT chunk = std::min(count, 65536u - run.count);
+            chunk -= chunk % primitive;
+            if (!chunk) { Flush(); continue; }
+            auto write = [](unsigned short* output, UINT base, UINT vertices, bool quads) {
+                if (quads) for (UINT i = 0; i < vertices; i += 4) {
+                    const auto a = base + i;
+                    const unsigned short quad[]{static_cast<unsigned short>(a), static_cast<unsigned short>(a+1),
+                        static_cast<unsigned short>(a+2), static_cast<unsigned short>(a+1),
+                        static_cast<unsigned short>(a+2), static_cast<unsigned short>(a+3)};
+                    std::memcpy(output, quad, sizeof(quad)); output += 6;
+                } else for (UINT i = 0; i < vertices; ++i) output[i] = static_cast<unsigned short>(base + i);
+            };
+            if (run.geometry != geometry && run.geometry != Run::Mixed) {
+                run.indices = Allocate(indices, 65536 * 3, sizeof(unsigned short));
+                run.firstIndex = UINT(run.indices->used / sizeof(unsigned short));
+                write(reinterpret_cast<unsigned short*>(run.indices->mapped + run.indices->used),
+                    0, run.count, run.geometry == Run::Quads);
+                run.indices->used += run.indexCount * sizeof(unsigned short);
+                run.geometry = Run::Mixed;
+            }
+            const UINT indexCount = Quads ? chunk / 4 * 6 : chunk;
+            if (run.geometry == Run::Mixed) {
+                write(reinterpret_cast<unsigned short*>(run.indices->mapped + run.indices->used),
+                    run.count, chunk, Quads);
+                run.indices->used += indexCount * sizeof(unsigned short);
+            }
+            run.count += chunk; run.indexCount += indexCount;
+            first += chunk; count -= chunk;
+        }
+    }
+
+    template<bool Quads = false>
     void Draw(std::span<const GpuVertex> input, D3d12Texture* texture,
         GpuBlend blend, const GpuClip* clip, bool coverage) {
         if (!sceneOpen) throw std::logic_error("D3D12 draw outside a scene");
         Require(texture);
-        if (size_t(blend) >= 3 || input.size() % 3 ||
+        if (size_t(blend) >= 3 || input.size() % (Quads ? 4 : 3) ||
             input.size_bytes() > UINT_MAX - sizeof(GpuVertex))
             throw std::invalid_argument("Invalid D3D12 triangle list/blend");
         if (input.empty()) return;
-#if defined(PVZ_D3D12_REANIM_RESIDENT)
-        reanimOrdinaryTriangles += input.size() / 3;
-#endif
         auto* target = Output();
         D3D12_RECT scissor{0, 0, target->width, target->height};
         if (clip) {
@@ -965,14 +862,17 @@ struct D3d12Renderer::Impl {
         constexpr UINT keep = GpuVertex::kIndependentColorFilter |
             GpuVertex::kColorFilterMask | GpuVertex::kAlphaEdgeFilter;
         bool feedback = false;
-        std::vector<D3d12Texture*> sources;
+        auto& sources = drawSources;
+        sources.clear();
         sources.reserve(input.size());
+        bool simple = !coverage && !target->generated;
         for (const auto& vertex : input) {
             if ((vertex.slot & ~valid) || vertex.sampler > 3 ||
                 !owners[vertex.slot & 4095])
                 throw std::invalid_argument("Invalid D3D12 vertex descriptor/sampler");
             sources.push_back(owners[vertex.slot & 4095]);
             feedback |= sources.back() == target;
+            simple &= !sources.back()->generated && (vertex.slot & keep) == 0;
         }
         if (feedback) {
             Snapshot(target, true);
@@ -981,6 +881,7 @@ struct D3d12Renderer::Impl {
                 if (source == target) source = oldTarget;
         }
         else if (target->sampled) Snapshot(target);
+        simple &= !target->generated;
         // Each source supplies its actual descriptor. Mutable static versions
         // temporarily use a dynamic slot while recorded older versions survive.
         for (auto* source : sources) {
@@ -990,11 +891,14 @@ struct D3d12Renderer::Impl {
             }
             source->sampled = true;
         }
-        auto* page = Allocate(vertices, input.size_bytes(), sizeof(float), false);
+        auto* page = Allocate(vertices, input.size_bytes(), sizeof(float));
         // Vertex allocations are contiguous multiples of the 40-byte contract.
         const auto first = UINT(page->used / sizeof(GpuVertex));
+        // Only ordinary normal/additive draws share the dual-source pipeline.
+        // The additive decision is carried per vertex, preserving paint order.
+        const auto batchBlend = simple && blend != GpuBlend::Opaque ? GpuBlend::Normal : blend;
         if (run.count && (run.page != page || run.first + run.count != first ||
-            run.blend != blend || run.coverage != coverage ||
+            run.blend != batchBlend || run.coverage != coverage || run.simple != simple ||
             std::memcmp(&run.scissor, &scissor, sizeof(scissor)) ||
             uint64_t(run.count) + input.size() > UINT_MAX))
             Flush();
@@ -1003,11 +907,11 @@ struct D3d12Renderer::Impl {
             copied[i] = input[i];
             copied[i].slot = sources[i]->slot |
                 (sources[i]->generated ? 0x80000000u : 0u) |
-                (sources[i]->opaque ? GpuVertex::kOpaqueInput : 0u) | (input[i].slot & keep);
+                (sources[i]->opaque ? GpuVertex::kOpaqueInput : 0u) | (input[i].slot & keep) |
+                (simple && blend == GpuBlend::Additive ? 0x02000000u : 0u);
         }
         page->used += input.size_bytes();
-        if (!run.count) run = {page, first, 0, blend, scissor, coverage};
-        run.count += UINT(input.size());
+        Append<Quads>(page, first, UINT(input.size()), batchBlend, scissor, coverage, simple);
     }
 
     // Upload primitives keep their existing calls; only the loading overload creates.
@@ -1107,7 +1011,7 @@ struct D3d12Renderer::Impl {
         } else Transition(scene.get(), SampleState);
         if (!context.BeginPresent()) return false;
         const D3D12_CPU_DESCRIPTOR_HANDLE rtv{SIZE_T(context.BackBufferRtv())};
-        const float black[]{0, 0, 0, 1};
+        static constexpr float black[]{0, 0, 0, 1};
         commands->OMSetRenderTargets(1, &rtv, FALSE, nullptr);
         commands->ClearRenderTargetView(rtv, black, 0, nullptr);
         const auto rect = Rectangle(int(context.width), int(context.height));
@@ -1119,7 +1023,7 @@ struct D3d12Renderer::Impl {
             {x+w,y+h,1,1,1,1,1,1,slot,1}, {x,y,1,1,1,1,0,0,slot,1},
             {x+w,y+h,1,1,1,1,1,1,slot,1}, {x,y+h,1,1,1,1,0,1,slot,1}
         }};
-        auto* page = Allocate(vertices, sizeof(quad), sizeof(float), false);
+        auto* page = Allocate(vertices, sizeof(quad), sizeof(float));
         const UINT first = UINT(page->used / sizeof(GpuVertex));
         std::memcpy(page->mapped + page->used, quad.data(), sizeof(quad));
         page->used += sizeof(quad);
@@ -1213,8 +1117,6 @@ D3d12Renderer::D3d12Renderer(D3d12Context& context, int width, int height,
     : impl_(std::make_unique<Impl>(context, width, height, directory)),
       whiteTexture(impl_->white), causticsTexture(impl_->causticTarget),
       sceneOpen(impl_->sceneOpen),
-      reanimPictureCandidates(impl_->reanimPictureCandidates),
-      reanimFrameEligible(impl_->reanimFrameEligible),
       sceneWidth(impl_->width), sceneHeight(impl_->height) {
     if (hdr) {
         hdr->Validate();
@@ -1354,12 +1256,12 @@ D3d12Texture* D3d12Renderer::CreateCoverageMask(int width, int height,
 }
 D3d12Texture* D3d12Renderer::CreateRenderImage(int width, int height) {
     auto& s = *impl_;
-    auto* texture = s.Own(s.Image(width, height, DXGI_FORMAT_R32G32B32A32_FLOAT,
+    auto* texture = s.Own(s.Image(width, height, DXGI_FORMAT_R16G16B16A16_FLOAT,
         true, true, true), true);
     s.Begin();
     s.Flush();
     s.Transition(texture, D3D12_RESOURCE_STATE_RENDER_TARGET);
-    const float clear[]{0, 0, 0, 0};
+    static constexpr float clear[]{0, 0, 0, 0};
     s.commands->ClearRenderTargetView(s.Rtv(texture->rtv), clear, 0, nullptr);
     s.Transition(texture, SampleState);
     return texture;
@@ -1378,9 +1280,6 @@ void D3d12Renderer::SetRenderImage(D3d12Texture* image) {
         }
     }
     s.renderImage = image;
-#if defined(PVZ_D3D12_REANIM_RESIDENT)
-    ++s.reanimGeneration;
-#endif
     s.InvalidateDrawState();
     if (s.sceneOpen && image) s.Snapshot(image);
 }
@@ -1402,7 +1301,7 @@ D3d12Texture* D3d12Renderer::CopyTextureRegion(D3d12Texture* source,
     const int copyHeight = std::min(height, source->height - y);
     if (copyWidth != width || copyHeight != height) {
         s.Transition(target, D3D12_RESOURCE_STATE_RENDER_TARGET);
-        const float zero[]{0, 0, 0, 0};
+        static constexpr float zero[]{0, 0, 0, 0};
         s.commands->ClearRenderTargetView(s.Rtv(target->rtv), zero, 0, nullptr);
     }
     s.Transition(source, D3D12_RESOURCE_STATE_COPY_SOURCE);
@@ -1507,10 +1406,6 @@ void D3d12Renderer::DestroyTexture(D3d12Texture* texture) {
     }
     if (s.commands || s.inFlight) s.retired.push_back(std::move(found->second));
     else s.ReleaseSlots(texture);
-#if defined(PVZ_D3D12_REANIM_RESIDENT)
-    for (auto& control : s.reanimControls)
-        if (control.texture == texture) control.texture = nullptr;
-#endif
     container->erase(found);
 }
 uint32_t D3d12Renderer::SlotOf(const D3d12Texture* texture) {
@@ -1530,7 +1425,7 @@ D3d12Texture* D3d12Renderer::CreateCausticsTexture(int width, int height,
     s.Begin();
     s.Flush();
     s.Transition(target, D3D12_RESOURCE_STATE_RENDER_TARGET);
-    const float clear[]{1, 1, 1, 0};
+    static constexpr float clear[]{1, 1, 1, 0};
     s.commands->ClearRenderTargetView(s.Rtv(target->rtv), clear, 0, nullptr);
     s.Transition(target, SampleState);
     UseCausticsTexture(target, source);
@@ -1560,20 +1455,6 @@ bool D3d12Renderer::BeginScene() {
     s.Begin();
     if (!s.renderImage && !s.context.BackBuffer()) return false;
     s.sceneOpen = true;
-#if defined(PVZ_D3D12_REANIM_RESIDENT)
-    if (!s.reanimBatchStarted) {
-        s.reanimFrameEligible = s.reanimPictureCandidates >= 256 &&
-            s.reanimOrdinaryTriangles <= uint64_t(s.reanimPictureCandidates) * 32;
-        s.reanimPictureCandidates = 0;
-        s.reanimOrdinaryTriangles = 0;
-        s.reanimBatchStarted = true;
-    }
-    ++s.reanimGeneration;
-#endif
-#if defined(PVZ_D3D12_REANIM_BENCHMARK)
-    if (frameTimestampQueries && frameTimestampReadback)
-        s.commands->EndQuery(frameTimestampQueries, D3D12_QUERY_TYPE_TIMESTAMP, frameTimestampPair * 2);
-#endif
     s.imageOnly = s.renderImage != nullptr;
     s.InvalidateDrawState();
     s.RecordCaustics();
@@ -1588,264 +1469,18 @@ void D3d12Renderer::SubmitTriangles(std::span<const GpuVertex> vertices,
     (void)wrap;
     impl_->Draw(vertices, texture, blend, clip, false);
 }
+void D3d12Renderer::SubmitQuads(std::span<const GpuVertex> vertices,
+    D3d12Texture* texture, bool linear, bool wrap, GpuBlend blend, const GpuClip* clip) {
+    (void)linear;
+    (void)wrap;
+    impl_->Draw<true>(vertices, texture, blend, clip, false);
+}
 void D3d12Renderer::SubmitCoverageTriangles(std::span<const GpuVertex> vertices,
     D3d12Texture* mask, GpuBlend blend, const GpuClip* clip) {
     impl_->Require(mask);
     if (mask->format != DXGI_FORMAT_R8_UNORM)
         throw std::invalid_argument("D3D12 coverage draw requires an R8 mask");
     impl_->Draw(vertices, mask, blend, clip, true);
-}
-D3d12Reanim* D3d12Renderer::UploadParticleDefinition(std::span<const float> words,uint32_t variants) {
-    return UploadParticleResident(*this,words,variants);
-}
-bool D3d12Renderer::SubmitParticle(D3d12Reanim* definition,D3d12Texture* texture,
-    const GpuParticleDraw& draw,std::span<const GpuParticleState> chain,
-    bool linear,bool repeat,GpuBlend blend,const GpuClip* clip) {
-#if defined(PVZ_D3D12_REANIM_RESIDENT)
-    auto& s=*impl_;
-    const auto stateWords = draw.stateWords ? draw.stateWords : uint32_t(sizeof(GpuParticleState)/sizeof(float));
-    const auto slots=(24+chain.size()*stateWords+23)/24;
-    if(!definition||definition->owner!=&s||draw.variant>=definition->particleVariantCount||
-        chain.empty()||draw.frameSource>=chain.size()||slots+1>65535-s.reanimControls.size()||
-        (slots+1)*96>s.reanimInstances.size-s.reanimInstances.used)return false;
-    for(const auto& state:chain)if(state.emitter>=definition->particleEmitterCount)return false;
-    GpuReanimInstance instance{};
-    instance.translateX=draw.translateX;instance.translateY=draw.translateY;
-    instance.overlay00=float((s.reanimControls.size()+1)*24);
-    instance.overlay01=float(chain.size());
-    const auto token=BeginReanimInstance(definition,texture,instance,linear,repeat,clip,true);
-    if(token==UINT32_MAX)return false;
-    const uint32_t flags=(linear?1u:0u)|(repeat?2u:0u)|(clip?4u:0u)|16u;
-    std::memcpy(s.reanimInstances.mapped+size_t(token&65535u)*96+offsetof(Impl::ReanimInstance,flags),&flags,4);
-    const auto start=s.reanimInstances.used;
-    std::memset(s.reanimInstances.mapped+start,0,96);
-    std::memcpy(s.reanimInstances.mapped+start,&draw,sizeof(draw));
-    std::memcpy(s.reanimInstances.mapped+start+96,chain.data(),chain.size()*size_t(stateWords)*sizeof(float));
-    s.reanimInstances.used+=slots*96;
-    s.reanimControls.resize(s.reanimControls.size()+slots);
-    const GpuReanimTrackDraw packet{0,0xffffffff,draw.samplingFlags};
-    return SubmitReanimTrack(token,packet,blend);
-#else
-    (void)definition;(void)texture;(void)draw;(void)chain;(void)linear;(void)repeat;(void)blend;(void)clip;
-    return false;
-#endif
-}
-D3d12Reanim* D3d12Renderer::UploadReanimDefinition(const GpuReanimDefinition& source) {
-#if defined(PVZ_D3D12_REANIM_RESIDENT)
-    auto& s = *impl_;
-    if (s.sceneOpen) throw std::logic_error("Upload resident D3D12 definitions between scenes");
-    if (source.tracks.empty() || !source.imageSlotCount || !source.variantCount ||
-        uint64_t(source.imageSlotCount) * source.variantCount != source.geometry.size())
-        throw std::invalid_argument("Invalid resident D3D12 reanimation definition");
-    uint64_t bytes = 16;
-    const auto addBytes = [&](size_t count, size_t stride) {
-        if (count > (Impl::ReanimStaticMaximum - bytes) / stride)
-            throw std::runtime_error("Resident D3D12 definition exceeds 32-bit byte addressing");
-        bytes += uint64_t(count) * stride;
-    };
-    addBytes(source.tracks.size(), sizeof(GpuReanimTrack));
-    addBytes(source.keys.size(), sizeof(GpuReanimKey));
-    addBytes(source.geometry.size(), sizeof(GpuReanimGeometry));
-    for (const auto& track : source.tracks)
-        if (track.keyOffset != GpuReanimNoKeys &&
-            (!track.keyCount || uint64_t(track.keyOffset) + track.keyCount > source.keys.size()))
-            throw std::invalid_argument("Invalid resident D3D12 reanimation track");
-    for (const auto& key : source.keys)
-        if (key.imageSlot >= source.imageSlotCount)
-            throw std::invalid_argument("Invalid resident D3D12 reanimation image");
-    s.InitReanim();
-    auto* result = new D3d12Reanim;
-    uint64_t origin = 0;
-    bool allocated = false;
-    try {
-        result->owner = &s;
-        result->tracks.assign(source.tracks.begin(), source.tracks.end());
-        result->imageSlotCount = source.imageSlotCount; result->variantCount = source.variantCount;
-        s.reanimDefinitions.reserve(s.reanimDefinitions.size() + 1);
-        // Includes an allocation rollback span and all fence-retired spans.
-        s.reanimFreeRanges.reserve(s.reanimFreeRanges.size() + s.reanimRetired.size() + 1);
-        if (!s.reanimRetired.empty()) s.WaitReanimLoading();
-        // Growth can submit and reset staging pages; allocate the static range first.
-        origin = s.AllocateReanimStatic(bytes);
-        allocated = true;
-        s.Begin(); s.Flush();
-        auto* page = s.Allocate(s.staging, bytes, 16, true);
-        const uint32_t header[]{uint32_t((origin + 16) / 4),
-            uint32_t((origin + 16 + source.tracks.size_bytes()) / 4),
-            uint32_t((origin + 16 + source.tracks.size_bytes() + source.keys.size_bytes()) / 4),
-            source.imageSlotCount};
-        auto* output = page->mapped + page->used;
-        std::memcpy(output, header, 16); output += 16;
-        if (!source.tracks.empty()) std::memcpy(output, source.tracks.data(), source.tracks.size_bytes());
-        output += source.tracks.size_bytes();
-        if (!source.keys.empty()) std::memcpy(output, source.keys.data(), source.keys.size_bytes());
-        output += source.keys.size_bytes();
-        std::memcpy(output, source.geometry.data(), source.geometry.size_bytes());
-        D3D12_RESOURCE_BARRIER barrier{};
-        barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-        barrier.Transition.pResource = s.reanimStatic.Get();
-        barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
-        barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_GENERIC_READ;
-        barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_COPY_DEST;
-        s.commands->ResourceBarrier(1, &barrier);
-        s.commands->CopyBufferRegion(s.reanimStatic.Get(), origin,
-            page->resource.Get(), page->used, bytes);
-        std::swap(barrier.Transition.StateBefore, barrier.Transition.StateAfter);
-        s.commands->ResourceBarrier(1, &barrier);
-        page->used += bytes;
-        result->header = uint32_t(origin / 4);
-        result->blobBytes = bytes;
-        s.reanimDefinitions.push_back(result);
-        return result;
-    } catch (...) {
-        if (allocated) {
-            s.reanimFreeRanges.push_back({origin, bytes});
-            s.MergeReanimRanges();
-        }
-        delete result;
-        throw;
-    }
-#else
-    (void)source;
-    return nullptr;
-#endif
-}
-void D3d12Renderer::DestroyReanimDefinition(D3d12Reanim* definition) {
-    if (!definition) return;
-#if defined(PVZ_D3D12_REANIM_RESIDENT)
-    auto& s = *impl_;
-    const auto found = std::find(s.reanimDefinitions.begin(), s.reanimDefinitions.end(), definition);
-    if (found == s.reanimDefinitions.end())
-        throw std::invalid_argument("Unknown resident D3D12 reanimation");
-    s.reanimFreeRanges.reserve(s.reanimFreeRanges.size() + s.reanimRetired.size() + 1);
-    s.reanimRetired.push_back(definition);
-    for (auto& control : s.reanimControls)
-        if (control.definition == definition) control.definition = nullptr;
-    definition->owner = nullptr;
-    s.reanimDefinitions.erase(found);
-#else
-    throw std::invalid_argument("Resident D3D12 reanimation is disabled");
-#endif
-}
-uint32_t D3d12Renderer::BeginReanimInstance(D3d12Reanim* definition, D3d12Texture* texture,
-    const GpuReanimInstance& instance, bool linear, bool repeat, const GpuClip* clip, bool forceGpu) {
-#if defined(PVZ_D3D12_REANIM_RESIDENT)
-    auto& s = *impl_;
-    if (!s.sceneOpen) throw std::logic_error("D3D12 reanimation instance outside scene");
-    if (!forceGpu && !s.reanimFrameEligible) return UINT32_MAX;
-    // Raw definition handles must remain live; destruction invalidates tokens,
-    // and callers clear their original handle rather than beginning with it again.
-    if (!definition || definition->owner != &s ||
-        !texture || !s.textures.contains(texture) || texture == s.renderImage ||
-        instance.variant >= definition->variantCount || !std::isfinite(instance.fraction) ||
-        instance.fraction < 0 || instance.fraction > 1 || s.reanimControls.size() >= 65535 ||
-        s.reanimInstances.size - s.reanimInstances.used < sizeof(Impl::ReanimInstance)) return UINT32_MAX;
-    Impl::ReanimInstance packet{};
-    packet.draw = instance; packet.header = definition->header;
-    packet.imageSlotCount = definition->imageSlotCount;
-    packet.textureSlot = SlotOf(texture);
-    packet.flags = (linear ? 1u : 0u) | (repeat ? 2u : 0u) | (clip ? 4u : 0u);
-    if (clip) {
-        packet.clip[0] = float(clip->x); packet.clip[1] = float(clip->y);
-        packet.clip[2] = float(int64_t(clip->x) + clip->width);
-        packet.clip[3] = float(int64_t(clip->y) + clip->height);
-    }
-    const auto index = uint32_t(s.reanimControls.size());
-    s.reanimControls.push_back({definition, texture, instance.before, instance.after});
-    std::memcpy(s.reanimInstances.mapped + s.reanimInstances.used, &packet, sizeof(packet));
-    s.reanimInstances.used += sizeof(packet);
-    return ((s.reanimGeneration & 0xffffu) << 16) | index;
-#else
-    (void)definition; (void)texture; (void)instance; (void)linear; (void)repeat; (void)clip; (void)forceGpu;
-    return UINT32_MAX;
-#endif
-}
-bool D3d12Renderer::SubmitReanim(D3d12Reanim* definition, D3d12Texture* texture,
-    const GpuReanimDraw& draw, bool linear, bool repeat, GpuBlend blend, const GpuClip* clip, bool forceGpu) {
-    GpuReanimInstance instance{draw.before, draw.after, draw.variant, 0,
-        draw.fraction, draw.translateX, draw.translateY, 0,
-        draw.overlay00, draw.overlay01, draw.overlay02, 0,
-        draw.overlay10, draw.overlay11, draw.overlay12, 0};
-    const auto token = BeginReanimInstance(definition, texture, instance, linear, repeat, clip, forceGpu);
-    if (token == UINT32_MAX) return false;
-#if defined(PVZ_D3D12_REANIM_RESIDENT)
-    // Legacy draws already contain the half-pixel adjustment. Mark this new,
-    // unsubmitted packet without undoing and repeating rounded float additions.
-    const uint32_t flags = (linear ? 1u : 0u) | (repeat ? 2u : 0u) | (clip ? 4u : 0u) | 8u;
-    std::memcpy(impl_->reanimInstances.mapped + (token & 0xffffu) * sizeof(Impl::ReanimInstance) +
-        offsetof(Impl::ReanimInstance, flags), &flags, sizeof(flags));
-#endif
-    const GpuReanimTrackDraw track{draw.track, draw.color, draw.samplingFlags,
-        draw.truncate ? GpuReanimTrackDraw::Truncate : 0u};
-    return SubmitReanimTrack(token, track, blend);
-}
-bool D3d12Renderer::SubmitReanimTrack(uint32_t instance, const GpuReanimTrackDraw& draw, GpuBlend blend) {
-#if defined(PVZ_D3D12_REANIM_RESIDENT)
-    auto& s = *impl_;
-    if (!s.sceneOpen || (instance >> 16) != (s.reanimGeneration & 0xffffu) ||
-        (instance & 0xffffu) >= s.reanimControls.size() || size_t(blend) >= 3 ||
-        (draw.flags & ~3u) || (draw.samplingFlags & ~(GpuVertex::kIndependentColorFilter |
-            GpuVertex::kColorFilterMask | GpuVertex::kAlphaEdgeFilter))) return false;
-    const auto index = instance & 0xffffu;
-    auto& control = s.reanimControls[index];
-    auto* definition = control.definition;
-    auto* texture = control.texture;
-    // Begin validates ownership; successful destruction nulls matching controls.
-    if (!definition || !texture || texture == s.renderImage ||
-        draw.track >= definition->tracks.size()) return false;
-    const auto& track = definition->tracks[draw.track];
-    if (track.keyOffset == GpuReanimNoKeys || track.flags || control.before >= track.keyCount ||
-        control.after >= track.keyCount ||
-        s.reanimTracks.size - s.reanimTracks.used < sizeof(Impl::ReanimTrack)) return false;
-    const auto textureSlot = SlotOf(texture);
-    if (control.textureSlot != UINT32_MAX && control.textureSlot != textureSlot) return false;
-    if (control.textureSlot == UINT32_MAX) {
-        // Resolve the slot on first submission, then leave the packet immutable.
-        // A begin-only instance never marks its texture sampled.
-        std::memcpy(s.reanimInstances.mapped + index * sizeof(Impl::ReanimInstance) +
-            offsetof(Impl::ReanimInstance, textureSlot), &textureSlot, sizeof(textureSlot));
-        control.textureSlot = textureSlot;
-    }
-    auto* target = s.Output();
-    // Resolve source mutations exactly as ordinary draws do. Its descriptor
-    // remains resident until the command fence; instance bytes stay immutable.
-    if (target->sampled) s.Snapshot(target);
-    if (texture->state != SampleState) {
-        s.Flush(); s.Transition(texture, SampleState);
-    }
-    texture->sampled = true;
-    if (!s.reanimActive) {
-        s.Flush();
-        s.reanimActive = true;
-        s.InvalidateDrawState();
-    }
-    const Impl::ReanimTrack packet{draw.track, index, draw.color,
-        draw.samplingFlags | draw.flags, draw.shakeX, draw.shakeY};
-    const auto packetIndex = uint32_t(s.reanimTracks.used / sizeof(packet));
-    std::memcpy(s.reanimTracks.mapped + s.reanimTracks.used, &packet, sizeof(packet));
-    s.reanimTracks.used += sizeof(packet);
-    // Marker and ordinary triangles share the existing painter-order stream.
-    auto* page = s.Allocate(s.vertices, 3 * sizeof(GpuVertex), sizeof(float), false);
-    const auto first = UINT(page->used / sizeof(GpuVertex));
-    const D3D12_RECT scissor{0, 0, target->width, target->height};
-    if (s.run.count && (s.run.page != page || s.run.first + s.run.count != first ||
-        s.run.blend != blend || s.run.coverage ||
-        std::memcmp(&s.run.scissor, &scissor, sizeof(scissor)))) s.Flush();
-    GpuVertex marker{};
-    marker.sampler = 0xc0000000u | packetIndex;
-    // UPLOAD memory can be write-combined: chained assignment returns the
-    // destination lvalue and can force slow reads from mapped memory. Build
-    // the repeated triangle in CPU memory and copy from that CPU array.
-    const GpuVertex markers[]{marker, marker, marker};
-    std::memcpy(page->mapped + page->used, markers, sizeof(markers));
-    page->used += 3 * sizeof(GpuVertex);
-    if (!s.run.count) s.run = {page, first, 0, blend, scissor, false};
-    s.run.count += 3;
-    return true;
-#else
-    (void)instance; (void)draw; (void)blend;
-    return false;
-#endif
 }
 void D3d12Renderer::SubmitPool(D3d12Texture* texture, const GpuPoolParams& p) {
     auto& s = *impl_;
@@ -1905,25 +1540,9 @@ void D3d12Renderer::EndSceneAndPresent() {
     s.Flush();
     if (s.imageOnly) {
         s.Transition(s.renderImage, SampleState);
-#if defined(PVZ_D3D12_REANIM_BENCHMARK)
-        if (frameTimestampQueries && frameTimestampReadback) {
-            s.commands->EndQuery(frameTimestampQueries, D3D12_QUERY_TYPE_TIMESTAMP, frameTimestampPair * 2 + 1);
-            s.commands->ResolveQueryData(frameTimestampQueries, D3D12_QUERY_TYPE_TIMESTAMP,
-                frameTimestampPair * 2, 2, frameTimestampReadback, UINT64(frameTimestampPair) * 16);
-        }
-        frameRecordEnd = std::chrono::steady_clock::now();
-#endif
         s.Finish(false);
     } else {
         s.Present();
-#if defined(PVZ_D3D12_REANIM_BENCHMARK)
-        if (frameTimestampQueries && frameTimestampReadback) {
-            s.commands->EndQuery(frameTimestampQueries, D3D12_QUERY_TYPE_TIMESTAMP, frameTimestampPair * 2 + 1);
-            s.commands->ResolveQueryData(frameTimestampQueries, D3D12_QUERY_TYPE_TIMESTAMP,
-                frameTimestampPair * 2, 2, frameTimestampReadback, UINT64(frameTimestampPair) * 16);
-        }
-        frameRecordEnd = std::chrono::steady_clock::now();
-#endif
         s.Finish(true);
     }
     s.sceneOpen = false;

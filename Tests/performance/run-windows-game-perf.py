@@ -16,7 +16,7 @@ from windows_game_probe import Game, checked, kernel, user, w
 ROOT = Path(__file__).resolve().parents[2]
 RETAIL = Path("C:/UserProgram/Plants_Vs_Zombies_V1.2.0.1073_EN/PlantsVsZombies.exe")
 RETAIL_DATA = Path("C:/ProgramData/PopCap Games/PlantsVsZombies/userdata")
-PROJECT = ROOT / "out/x64-win32-dx12/Release/pvz_perf.exe"
+PROJECT = ROOT / "out/x64-win32-vulkan/Release/pvz_perf.exe"
 CONVERTER = PROJECT.parent / "data/pvz_dat64_converter.exe"
 PROFILE = 1000003
 
@@ -65,11 +65,14 @@ def prepare(directory):
     (fixture / "users.dat").write_bytes(one_user)
     shutil.copy2(RETAIL_DATA / "user3.dat", old / f"user{PROFILE}.dat")
     shutil.copy2(saves["original"], old / f"game{PROFILE}_13.dat")
-    shutil.copy2(saves["project"], new / f"game{PROFILE}_58.dat64")
     for source, destination in (
         (old / f"user{PROFILE}.dat", new / f"user{PROFILE}.dat64"),
+        (saves["original"], new / f"game{PROFILE}_58.dat64"),
     ):
-        result = subprocess.run([str(CONVERTER), str(source), str(destination)],
+        command = [str(CONVERTER), str(source), str(destination)]
+        if source == saves["original"]:
+            command += ["--target", "dat64-v4"]
+        result = subprocess.run(command,
                                 capture_output=True, text=True, check=True)
         (fixture / (destination.name + ".conversion.txt")).write_text(
             result.stdout + result.stderr, encoding="utf-8")
@@ -78,8 +81,10 @@ def prepare(directory):
     manifest = {
         "source_save": str(saves["original"]),
         "source_sha256": sha(saves["original"]),
-        "source_project_save": str(saves["project"]),
-        "source_project_sha256": sha(saves["project"]),
+        "project_conversion_source": str(saves["original"]),
+        "project_conversion_source_sha256": sha(saves["original"]),
+        "project_save_format": "DAT64 v4",
+        "backend": "VULKAN",
         "source_profile": str(RETAIL_DATA / "user3.dat"),
         "profile_id": PROFILE, "profile_summary_version": version,
         "canonical_original": str(old / f"game{PROFILE}_13.dat"),
@@ -143,7 +148,7 @@ def run_case(directory, fixture, kind, scene, multiplier, seconds):
     (case / "retail-settings.json").write_text(json.dumps(retail_settings, indent=2))
     if kind == "project":
         settings = json.loads((PROJECT.parent / "settings.json").read_text(encoding="utf-8-sig"))
-        settings.update(screenMode="windowed", customScale=0, waitForVSync=0,
+        settings.update(targetFps=100, screenMode="windowed", customScale=0, waitForVSync=0,
                         musicVolume=retail_settings["MusicVolume"],
                         sfxVolume=retail_settings["SfxVolume"], muted=retail_settings["Muted"])
         (case / "settings.json").write_text(json.dumps(settings))
@@ -209,10 +214,13 @@ def main():
     else:
         fixture = prepare(directory)
     saves = canonical_saves()
-    for kind, filename in (("original", f"game{PROFILE}_13.dat"),
-                           ("project", f"game{PROFILE}_58.dat64")):
-        if sha(fixture / kind / filename) != sha(saves[kind]):
-            raise RuntimeError(f"The {kind} fixture differs from Tests; prepare a new fixture")
+    fixture_manifest = json.loads((fixture / "manifest.json").read_text())
+    if sha(fixture / "original" / f"game{PROFILE}_13.dat") != sha(saves["original"]):
+        raise RuntimeError("The original fixture differs from Tests")
+    if sha(fixture / "project" / f"game{PROFILE}_58.dat64") != fixture_manifest["converted_project_sha256"]:
+        raise RuntimeError("The converted fixture differs from its manifest")
+    if sha(CONVERTER) != fixture_manifest["converter_sha256"] or sha(PROJECT) != fixture_manifest["project_sha256"]:
+        raise RuntimeError("The executable/converter changed; prepare a new fixture")
     if args.prepare_only:
         print(fixture)
         return

@@ -1,0 +1,19 @@
+reanim track walk bench: 250 reanims x 30 tracks = 7500 slots, per-pass:
+-- update scan (active=0%, attacher 2/reanim) --
+  V0 AoS 112B stride :    31301 ns/pass
+  V1 hot 12B inter   :    21651 ns/pass (69%)
+  V2 3 separate u32  :    19295 ns/pass (62%)
+  mask skip (V1 base):     3121 ns/pass (10%)
+-- update scan (active=5%, attacher 2/reanim) --
+  V0 AoS 112B stride :    31839 ns/pass
+  V1 hot 12B inter   :    21319 ns/pass (67%)
+  V2 3 separate u32  :    19723 ns/pass (62%)
+  mask skip (V1 base):     5183 ns/pass (16%)
+-- mask source A/B (P4 compile-time fronting equivalence) --
+  from constexpr table :  705.6 ns/pass
+  from heap vector     :  704.7 ns/pass (100%)
+-- draw group scan (occupancy: group0 25 tracks + 5 scattered) --
+  V0 18-pass AoS      :   161627 ns/pass
+  occupancy, grp in AoS:   57799 ns/pass (36%)
+  occupancy, grp u8[] :    57054 ns/pass (35%)
+sink=0

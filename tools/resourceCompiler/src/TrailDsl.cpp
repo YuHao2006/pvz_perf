@@ -163,7 +163,7 @@ bool ReadTrailXml(const std::filesystem::path& input, RawTrail& output,
 
         // 已知标签白名单（gTrailDefFields；TrailFlags 只接受 Loops symbol，
         // <TrailFlags> 本体不是合法标签，与官方读取端一致）。
-        const char* known[] = {"Image",       "MaxPoints",      "MinPointDistance", "Loops",
+        static constexpr const char* known[] = {"Image",       "MaxPoints",      "MinPointDistance", "Loops",
                                "WidthOverLength", "WidthOverTime", "AlphaOverLength",
                                "AlphaOverTime",   "TrailDuration"};
         std::size_t cursor = 0;
@@ -786,7 +786,7 @@ std::vector<std::uint8_t> SerializeTrail(const RawTrail& source,
         std::size_t size;
         const char* label;
     };
-    const DumpSpan spans[] = {
+    static constexpr DumpSpan spans[] = {
         {0, 8, "dump mImage ptr slot (zero)"},
         {8, 4, "dump mMaxPoints (MaxPoints)"},
         {12, 4, "dump mMinPointDistance (MinPointDistance)"},

@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "SexyAppFramework/platform/NativeHandles.h"
 #include <vulkan/vulkan.h>
 #include <cstdint>
@@ -23,9 +23,6 @@ struct VulkanInitConfig {
     bool enableValidation = false;
     VulkanGpuFilter gpuFilter = [](VkPhysicalDevice) { return true; };
     VkPhysicalDeviceFeatures features{};
-    // The packed reanimation backend may enable this optional feature only
-    // after normal GPU selection. Unsupported devices retain the CPU route.
-    bool allowOptionalGeometryShader = true;
     PFN_vkDebugUtilsMessengerCallbackEXT debugCallback = &DefaultDebugCallback;
     static VkBool32 VKAPI_CALL DefaultDebugCallback(
         VkDebugUtilsMessageSeverityFlagBitsEXT severity,
@@ -46,11 +43,12 @@ public:
     VulkanContext(VulkanContext&&) = delete;
     VulkanContext& operator=(VulkanContext&&) = delete;
 
-    NativeWindowHandle const hwnd;
+    // Android 恢复会换绑新的 ANativeWindow（NotifySurfaceWindow）；其他平台恒定。
+    NativeWindowHandle hwnd;
     // Shared GPU lifetime is retained for the renderer's existing resources.
     static inline VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
     static inline VkDevice device = VK_NULL_HANDLE;
-    static inline bool geometryShaderEnabled = false;
+    static inline bool dualSourceBlendEnabled = false;
     static inline uint32_t graphicsFamily = 0;
     static inline uint32_t presentFamily = 0;
     static inline VkQueue graphicsQueue = VK_NULL_HANDLE;
@@ -61,6 +59,10 @@ public:
     VkFormat swapchainFormat = VK_FORMAT_UNDEFINED;
     VkColorSpaceKHR swapchainColorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
     VkExtent2D swapchainExtent{};
+    // 创建交换链时的窗口原始查询值（安卓横屏锁定的竖屏窗口=1116x2480，
+    // 交换链经 preTransform 修正是 2480x1116——两者恒不等）。重建判定必须
+    // "查询值对查询值"，否则每帧都触发销毁重建（nubia 实机逐帧重建案）。
+    VkExtent2D drawableExtentAtCreate{};
     std::vector<VkImage> swapchainImages;
     std::vector<VkImageView> swapchainViews;
     VkRenderPass renderPass = VK_NULL_HANDLE;
@@ -70,16 +72,24 @@ public:
         uint32_t imageIndex = 0;
         VkExtent2D extent{};
         bool valid = false;
+        unsigned long long serial = 0;
     };
     // Zero-size/minimized surfaces defer without acquiring or destroying assets.
     bool RecreateSwapchain();
     // Application notification only: retains the existing suspension/rebuild
     // state without performing any window action or GPU operation.
     void NotifySurfaceSuspended(bool suspended);
+    // Android resume hands back a NEW ANativeWindow; the old VkSurfaceKHR is
+    // backed by the released window. Rebuild surface + swapchain on the new one.
+    void NotifySurfaceWindow(NativeWindowHandle window);
     FrameContext BeginCommands();
     void BeginPresentPass(VkClearColorValue clearColor);
     void WaitForFrame();
     void EndFrame();
+    void AbortFrame() noexcept;
+    unsigned long long submittedSerial = 0;
+    unsigned long long completedSerial = 0;
+    unsigned long long recordingSerial = 0;
     uint64_t swapchainGeneration = 0;
 
 private:
@@ -97,12 +107,17 @@ private:
     VkSwapchainCreateInfoKHR swapchainConfig_{};
     bool counted_ = false;
     std::vector<VkFramebuffer> framebuffers_;
-    VkCommandPool commandPool_ = VK_NULL_HANDLE;
-    VkCommandBuffer commandBuffer_ = VK_NULL_HANDLE;
-    VkSemaphore imageAvailable_ = VK_NULL_HANDLE;
+    struct FrameResources {
+        VkCommandPool pool = VK_NULL_HANDLE;
+        VkCommandBuffer cmd = VK_NULL_HANDLE;
+        VkSemaphore acquired = VK_NULL_HANDLE;
+        VkFence fence = VK_NULL_HANDLE;
+
+    };
+    FrameResources frameResources_{};
     std::vector<VkSemaphore> renderFinished_;
-    VkFence inFlight_ = VK_NULL_HANDLE;
     bool frameActive_ = false;
+    bool frameLoopFailed_ = false;
     bool presentPassActive_ = false;
     bool swapchainDirty_ = false;
     bool surfaceSuspended_ = false;

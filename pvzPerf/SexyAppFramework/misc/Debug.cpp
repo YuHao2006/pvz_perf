@@ -95,7 +95,7 @@ void SexyTrace(const char *theStr)
 
 //////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////
-static void SexyTraceFmt(const SexyChar* fmt ...)
+[[maybe_unused]] static void SexyTraceFmt(const SexyChar* fmt ...)
 {
 	// Does not append a newline by default, also takes vararg parameters
 
@@ -260,7 +260,7 @@ static void SexyDumpUnfreed()
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-static void OutputDebug(const SexyChar* fmt ...)
+[[maybe_unused]] static void OutputDebug(const SexyChar* fmt ...)
 {
 	va_list argList;
     va_start(argList, fmt);

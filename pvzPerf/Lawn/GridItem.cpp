@@ -1,3 +1,4 @@
+#include "EffectSystem.h"
 #include "Board.h"
 #include "GridItem.h"
 #include "Challenge.h"
@@ -29,7 +30,7 @@ GridItem::GridItem()
     mGridItemType = GridItemType::GRIDITEM_NONE;
     mGridX = 0;
     mGridY = 0;
-    mGridItemCounter = 0;
+    mStateEndTimeNs = 0;
     mRenderOrder = 0;
     mDead = false;
     mGridItemReanimID = ReanimationID::REANIMATIONID_NULL;
@@ -38,7 +39,8 @@ GridItem::GridItem()
     mSeedType = SeedType::SEED_NONE;
     mScaryPotType = ScaryPotType::SCARYPOT_NONE;
     mHighlighted = false;
-    mTransparentCounter = 0;
+    mTransparencyTimeNs = 0;
+    mTransparencyIncreasing = false;
     mSunCount = 0;
     mMotionTrailCount = 0;
 }
@@ -115,13 +117,17 @@ void GridItem::DrawGridItem(Graphics* g)
 //0x44D250
 void GridItem::DrawIZombieBrain(Graphics* g)
 {
+    const auto nowNs=static_cast<std::int64_t>(mBoard->mLevelTimeNs);
+    const auto transparencyNs=mTransparencyIncreasing
+        ? std::clamp<std::int64_t>(nowNs-mTransparencyTimeNs,0,500'000'000)
+        : std::max<std::int64_t>(0,mTransparencyTimeNs-nowNs);
     if (mGridItemState == GridItemState::GRIDITEM_STATE_BRAIN_SQUISHED)
     {
         TodDrawImageScaledF(g, IMAGE_BRAIN, mPosX, mPosY + 20.0f, 1.0f, 0.25f);
         return;
     }
 
-    if (mBoard->mAdvice->mDuration > 0 && mBoard->mHelpIndex == AdviceType::ADVICE_I_ZOMBIE_EAT_ALL_BRAINS)
+    if (mBoard->mAdvice->mEndTimeNs > static_cast<std::int64_t>(mBoard->mLevelTimeNs) && mBoard->mHelpIndex == AdviceType::ADVICE_I_ZOMBIE_EAT_ALL_BRAINS)
     {
         Color aFlashingColor = GetFlashingColorNs(mBoard->mLevelTimeNs, 750'000'000);
         g->mColorizeImages = true;
@@ -129,11 +135,11 @@ void GridItem::DrawIZombieBrain(Graphics* g)
     }
 
     g->DrawImageF(IMAGE_BRAIN, mPosX, mPosY);
-    if (mTransparentCounter > 0)
+    if (transparencyNs > 0)
     {
         g->mDrawMode = Graphics::DRAWMODE_ADDITIVE;
         g->mColorizeImages = true;
-        g->mColor = Color(255, 255, 255, ClampInt(mTransparentCounter * 3, 0, 255));
+        g->mColor = Color(255, 255, 255, ClampInt(static_cast<int>(transparencyNs * 3 / 10'000'000), 0, 255));
         g->DrawImageF(IMAGE_BRAIN, mPosX, mPosY);
         g->mDrawMode = Graphics::DRAWMODE_NORMAL;
         g->mColorizeImages = false;
@@ -146,10 +152,11 @@ void GridItem::DrawIZombieBrain(Graphics* g)
 // GOTY @Patoke: 0x450673
 void GridItem::DrawGraveStone(Graphics* g)
 {
-    if (mGridItemCounter <= 0)
+    const auto ageNs=static_cast<std::int64_t>(mBoard->mLevelTimeNs)-mStateStartTimeNs;
+    if (ageNs <= 0)
         return;
 
-    int aHeightPosition = TodAnimateCurveNs(0, 1'000'000'000, mGridItemCounter.mNanoseconds, 1000, 0, Curves::EaseInOut);
+    int aHeightPosition = TodAnimateCurveNs(0, 1'000'000'000, ageNs, 1000, 0, Curves::EaseInOut);
     int aGridCelLook = mBoard->mGridCelLook[mGridX][mGridY];
     int aGridCelOffsetX = mBoard->mGridCelOffset[mGridX][mGridY][0];
     int aGridCelOffsetY = mBoard->mGridCelOffset[mGridX][mGridY][1];
@@ -192,7 +199,7 @@ void GridItem::DrawGraveStone(Graphics* g)
 void GridItem::DrawStinky(Graphics* g)
 {
     Reanimation* aStinkyReanim = mApp->ReanimationGet(mGridItemReanimID);
-    const auto aOriginalClock = aStinkyReanim->mPhaseOriginNs;
+    const auto aOriginalFrame = aStinkyReanim->mCurrentFrame;
     const auto aOriginalStart = aStinkyReanim->mStartTimeNs;
     const float aOriginalTransX = g->mTransX;
     const float aOriginalTransY = g->mTransY;
@@ -209,11 +216,18 @@ void GridItem::DrawStinky(Graphics* g)
             int anAlpha = TodAnimateCurve(0, 11, i, 64, 16, Curves::Linear);
             g->mColor = Color(255, 255, 255, anAlpha);
             g->mColorizeImages = true;
-            aStinkyReanim->mPhaseOriginNs = ReanimClock::SignedMulDiv(aFrame.mAnimClock,
+            const auto phase = ReanimClock::SignedMulDiv(aFrame.mAnimClock,
                 aStinkyReanim->mPeriodNs, aStinkyReanim->mFrameCount * ReanimClock::Frame);
-            aStinkyReanim->mStartTimeNs = aStinkyReanim->mTimeDomain == ReanimTimeDomain::Battle ?
-                aStinkyReanim->mReanimationHolder->mBattleTimeNs :
-                aStinkyReanim->mReanimationHolder->mVisualTimeNs;
+            const auto q = aStinkyReanim->mFramePeriodNs;
+            const auto remainder = phase % q;
+            const bool reverse = aStinkyReanim->mAnimRate < 0;
+            aStinkyReanim->mCurrentFrame = int(phase / q + (reverse && remainder != 0));
+            const auto age = reverse && remainder != 0 ? q - remainder : remainder;
+            const auto now = aStinkyReanim->mAnimRate == 0 ? aStinkyReanim->mLastUpdateTimeNs :
+                aStinkyReanim->mTimeDomain == ReanimTimeDomain::Battle ?
+                    aStinkyReanim->mReanimationHolder->mBattleTimeNs :
+                    aStinkyReanim->mReanimationHolder->mVisualTimeNs;
+            aStinkyReanim->mStartTimeNs = ReanimClock::Subtract(now, age);
 
             g->mTransX = aOriginalTransX + aDiffX;
             g->mTransY = aOriginalTransY + aDiffY;
@@ -225,7 +239,7 @@ void GridItem::DrawStinky(Graphics* g)
             g->mTransY = aOriginalTransY;
         }
     }
-    aStinkyReanim->mPhaseOriginNs = aOriginalClock;
+    aStinkyReanim->mCurrentFrame = aOriginalFrame;
     aStinkyReanim->mStartTimeNs = aOriginalStart;
 
     if (mGridItemType == GridItemType::GRIDITEM_STINKY && mHighlighted)
@@ -241,16 +255,17 @@ void GridItem::DrawStinky(Graphics* g)
 // GOTY @Patoke: 0x450B39
 void GridItem::DrawCrater(Graphics* g)
 {
+    const auto remainingNs=std::max<std::int64_t>(0,mStateEndTimeNs-static_cast<std::int64_t>(mBoard->mLevelTimeNs));
     float aXPos = mBoard->GridToPixelX(mGridX, mGridY) - 8.0f;
     float aYPos = mBoard->GridToPixelY(mGridX, mGridY) + 40.0f;
-    if (mGridItemCounter < 25)
+    if (remainingNs < 250'000'000)
     {
-        int anAlpha = TodAnimateCurveNs(250'000'000, 0, mGridItemCounter.mNanoseconds, 255, 0, Curves::Linear);
+        int anAlpha = TodAnimateCurveNs(250'000'000, 0, remainingNs, 255, 0, Curves::Linear);
         g->mColor = Color(255, 255, 255, anAlpha);
         g->mColorizeImages = true;
     }
 
-    bool fading = mGridItemCounter < 9000;
+    bool fading = remainingNs < 90'000'000'000;
     Image* aImage = IMAGE_CRATER;
     Rect aSource(0, 0, 90, 61);
 
@@ -319,6 +334,10 @@ void GridItem::DrawCrater(Graphics* g)
 //0x44DB00
 void GridItem::DrawScaryPot(Graphics* g)
 {
+    const auto nowNs=static_cast<std::int64_t>(mBoard->mLevelTimeNs);
+    const auto transparencyNs=mTransparencyIncreasing
+        ? std::clamp<std::int64_t>(nowNs-mTransparencyTimeNs,0,500'000'000)
+        : std::max<std::int64_t>(0,mTransparencyTimeNs-nowNs);
     int aImageCol = (int)mGridItemState - (int)GridItemState::GRIDITEM_STATE_SCARY_POT_QUESTION;
     TOD_ASSERT(aImageCol >= 0 && aImageCol < 3);
 
@@ -326,7 +345,7 @@ void GridItem::DrawScaryPot(Graphics* g)
     int aYPos = mBoard->GridToPixelY(mGridX, mGridY) - 15;
     TodDrawImageRectCenterScaledF(g, IMAGE_PLANTSHADOW2, aXPos - 5.0f, aYPos + 72.0f, Rect(0, 0, IMAGE_PLANTSHADOW2->mWidth, IMAGE_PLANTSHADOW2->mHeight), 1.3f, 1.3f);
 
-    if (mTransparentCounter > 0)
+    if (transparencyNs > 0)
     {
         g->DrawImage(IMAGE_SCARY_POT, aXPos, aYPos, Rect(aImageCol * 80, 0, 80, 101));
 
@@ -386,7 +405,7 @@ void GridItem::DrawScaryPot(Graphics* g)
             }
         }
 
-        int aAlpha = TodAnimateCurveNs(0, 500'000'000, mTransparentCounter.mNanoseconds, 255, 58, Curves::Linear);
+        int aAlpha = TodAnimateCurveNs(0, 500'000'000, transparencyNs, 255, 58, Curves::Linear);
         g->mColorizeImages = true;
         g->mColor = Color(255, 255, 255, aAlpha);
     }
@@ -396,7 +415,7 @@ void GridItem::DrawScaryPot(Graphics* g)
     {
         g->mDrawMode = Graphics::DRAWMODE_ADDITIVE;
         g->mColorizeImages = true;
-        if (mTransparentCounter == 0)
+        if (transparencyNs == 0)
         {
             g->mColor = Color(255, 255, 255, 196);
         }
@@ -425,23 +444,23 @@ void GridItem::DrawSquirrel(Graphics* g)
     int aYPos = mBoard->GridToPixelY(mGridX, mGridY);
     if (mGridItemState == GridItemState::GRIDITEM_STATE_SQUIRREL_PEEKING)
     {
-        aYPos += TodAnimateCurveNs(500'000'000, 0, mGridItemCounter.mNanoseconds, 0, -40, Curves::BounceSlowMiddle);
+        aYPos += TodAnimateCurveNs(500'000'000, 0, mStateEndTimeNs-static_cast<std::int64_t>(mBoard->mLevelTimeNs), 0, -40, Curves::BounceSlowMiddle);
     }
     else if (mGridItemState == GridItemState::GRIDITEM_STATE_SQUIRREL_RUNNING_UP)
     {
-        aYPos += TodAnimateCurveNs(500'000'000, 0, mGridItemCounter.mNanoseconds, 100, 0, Curves::EaseIn);
+        aYPos += TodAnimateCurveNs(500'000'000, 0, mStateEndTimeNs-static_cast<std::int64_t>(mBoard->mLevelTimeNs), 100, 0, Curves::EaseIn);
     }
     else if (mGridItemState == GridItemState::GRIDITEM_STATE_SQUIRREL_RUNNING_DOWN)
     {
-        aYPos += TodAnimateCurveNs(500'000'000, 0, mGridItemCounter.mNanoseconds, -100, 0, Curves::EaseIn);
+        aYPos += TodAnimateCurveNs(500'000'000, 0, mStateEndTimeNs-static_cast<std::int64_t>(mBoard->mLevelTimeNs), -100, 0, Curves::EaseIn);
     }
     else if (mGridItemState == GridItemState::GRIDITEM_STATE_SQUIRREL_RUNNING_LEFT)
     {
-        aXPos += TodAnimateCurveNs(500'000'000, 0, mGridItemCounter.mNanoseconds, 80, 0, Curves::EaseIn);
+        aXPos += TodAnimateCurveNs(500'000'000, 0, mStateEndTimeNs-static_cast<std::int64_t>(mBoard->mLevelTimeNs), 80, 0, Curves::EaseIn);
     }
     else if (mGridItemState == GridItemState::GRIDITEM_STATE_SQUIRREL_RUNNING_RIGHT)
     {
-        aXPos += TodAnimateCurveNs(500'000'000, 0, mGridItemCounter.mNanoseconds, -80, 0, Curves::EaseIn);
+        aXPos += TodAnimateCurveNs(500'000'000, 0, mStateEndTimeNs-static_cast<std::int64_t>(mBoard->mLevelTimeNs), -80, 0, Curves::EaseIn);
     }
 
     // @Patoke: assets, removed, perhaps add back?
@@ -555,54 +574,32 @@ void GridItem::UpdatePortal()
 //0x44E520
 void GridItem::UpdateScaryPot()
 {
-    if (mApp->mTodCheatKeys && mApp->mWidgetManager->mKeyDown[(int)KeyCode::KEYCODE_SHIFT])
+    bool revealed=mApp->mTodCheatKeys && mApp->mWidgetManager->mKeyDown[(int)KeyCode::KEYCODE_SHIFT];
+    if (!revealed)
     {
-        if (mTransparentCounter < 50)
-        {
-            mTransparentCounter++;
-        }
-        return;
+        Plant* plant=nullptr;
+        while(mBoard->IteratePlants(plant))
+            if(plant->mSeedType==SeedType::SEED_PLANTERN && !plant->NotOnGround() &&
+                std::max(abs(plant->mPlantCol-mGridX),abs(plant->mRow-mGridY))<=1)
+            { revealed=true;break; }
     }
-
-    Plant* aPlant = nullptr;
-    while (mBoard->IteratePlants(aPlant))
+    if(revealed!=mTransparencyIncreasing)
     {
-        if (aPlant->mSeedType == SeedType::SEED_PLANTERN && !aPlant->NotOnGround())
-        {
-            int aDiffX = abs(aPlant->mPlantCol - mGridX);
-            int aDiffY = abs(aPlant->mRow - mGridY);
-            if (std::max(aDiffX, aDiffY) <= 1)
-            {
-                if (mTransparentCounter < 50)
-                {
-                    mTransparentCounter++;
-                }
-                return;
-            }
-        }
-    }
-
-    if (mTransparentCounter > 0)
-    {
-        mTransparentCounter--;
+        const auto previousNow=static_cast<std::int64_t>(mBoard->mLevelTimeNs)-
+            static_cast<std::int64_t>(Sexy::gUpdateIntervalNs);
+        const auto value=mTransparencyIncreasing
+            ? std::clamp<std::int64_t>(previousNow-mTransparencyTimeNs,0,500'000'000)
+            : std::max<std::int64_t>(0,mTransparencyTimeNs-previousNow);
+        mTransparencyTimeNs=revealed ? previousNow-value : previousNow+value;
+        mTransparencyIncreasing=revealed;
     }
 }
 
 void GridItem::UpdateBrain()
 {
-    if (mGridItemState == GridItemState::GRIDITEM_STATE_BRAIN_SQUISHED)
-    {
-        mGridItemCounter--;
-        if (mGridItemCounter <= 0)
-        {
-            GridItemDie();
-        }
-    }
-
-    if (mTransparentCounter > 0)
-    {
-        mTransparentCounter--;
-    }
+    if(mGridItemState==GridItemState::GRIDITEM_STATE_BRAIN_SQUISHED &&
+        static_cast<std::int64_t>(mBoard->mLevelTimeNs)>=mStateEndTimeNs)
+        GridItemDie();
 }
 
 //0x44E5E0
@@ -617,7 +614,7 @@ void GridItem::Update()
     TodParticleSystem* aGridItemParticle = mApp->ParticleTryToGet(mGridItemParticleID);
     if (aGridItemParticle)
     {
-        aGridItemParticle->Update();
+        aGridItemParticle->Update(Sexy::gUpdateIntervalNs, mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs);
     }
 
     if (mGridItemType == GridItemType::GRIDITEM_PORTAL_CIRCLE || mGridItemType == GridItemType::GRIDITEM_PORTAL_SQUARE)
@@ -671,7 +668,7 @@ void GridItem::UpdateRake()
         {
             Reanimation* aRakeReanim = mApp->ReanimationGet(mGridItemReanimID);
             aRakeReanim->ApplyRate(20.0f);
-            mGridItemCounter = 200;
+            mStateEndTimeNs = static_cast<std::int64_t>(mBoard->mLevelTimeNs)+2'000'000'000;
             mGridItemState = GridItemState::GRIDITEM_STATE_RAKE_TRIGGERED;
             mApp->PlayFoley(FoleyType::FOLEY_SWING);
         }
@@ -689,8 +686,7 @@ void GridItem::UpdateRake()
             }
         }
 
-        mGridItemCounter--;
-        if (mGridItemCounter == 0)
+        if (static_cast<std::int64_t>(mBoard->mLevelTimeNs)>=mStateEndTimeNs)
         {
             GridItemDie();
         }

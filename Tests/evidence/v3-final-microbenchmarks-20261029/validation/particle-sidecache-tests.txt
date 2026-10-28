@@ -1,0 +1,3 @@
+[0/2] Re-checking globbed directories...
+[1/3] Building CXX object CMakeFiles\pvz_particle_v7_tests.dir\Tests\native\ParticleV7Tests.cpp.obj
+[2/3] Linking CXX executable pvz_particle_v7_tests.exe

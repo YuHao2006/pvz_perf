@@ -1,10 +1,4 @@
 set(PROJECT_NAME LawnProject)
-if(PVZ_EXPERIMENTAL_GPU_REANIM)
-    # Only this implementation changes; no public layout or per-draw switch.
-    set_property(SOURCE "../Sexy.TodLib/Reanimator.cpp" APPEND PROPERTY
-        COMPILE_DEFINITIONS PVZ_EXPERIMENTAL_GPU_REANIM=1)
-endif()
-
 ################################################################################
 # Source groups
 ################################################################################
@@ -38,10 +32,12 @@ set(Lawn__Board__Board_Source
     "../Lawn/GridItem.cpp"
     "../Lawn/LawnMower.cpp"
     "../Lawn/Motion.cpp"
+    "../Lawn/MagnetMotion.cpp"
     "../Lawn/MessageWidget.cpp"
     "../Lawn/Plant.cpp"
     "../Lawn/Projectile.cpp"
     "../Lawn/SeedPacket.cpp"
+    "../Lawn/SlotMachineMotion.cpp"
     "../Lawn/ToolTipWidget.cpp"
     "../Lawn/ZenGarden.cpp"
     "../Lawn/Zombie.cpp"
@@ -86,6 +82,7 @@ set(Lawn__System__System_Source
     "../Lawn/System/ProfileMgr.cpp"
     "../Lawn/System/ReanimationLawn.cpp"
     "../Lawn/System/SaveGame.cpp"
+    "../Lawn/System/SaveClockProjection.cpp"
     "../Lawn/System/TypingCheck.cpp"
 )
 source_group("Lawn\\System\\System Source" FILES ${Lawn__System__System_Source})
@@ -156,6 +153,7 @@ set(TodLib__Common__TodCommon_Source
     "../Sexy.TodLib/Definition.cpp"
     "../Sexy.TodLib/TodCommon.cpp"
     "misc/FastMath.cpp"
+    "misc/FrameTiming.cpp"
     "../Sexy.TodLib/TodDebug.cpp"
     "../Sexy.TodLib/TodFoley.cpp"
     "../Sexy.TodLib/TodAllocator.cpp"
@@ -182,8 +180,8 @@ set(TodLib__Effect__Effect_Source
     "../Sexy.TodLib/FilterEffect.cpp"
     "../Sexy.TodLib/Reanimator.cpp"
     "../Sexy.TodLib/TodParticle.cpp"
+    "../Sexy.TodLib/ParticleLifetime.cpp"
     "../Sexy.TodLib/ParticleDefinitionCompiled.cpp"
-    "../Sexy.TodLib/ParticleGpu.cpp"
 )
 source_group("TodLib\\Effect\\Effect Source" FILES ${TodLib__Effect__Effect_Source})
 
@@ -209,10 +207,17 @@ set(ALL_FILES
 # LTO（MSVC：/GL + /LTCG，vcxproj WholeProgramOptimization），仅 Release。
 # 目录级变量须在 add_executable 之前设置才能覆盖本目录及全部子目标；
 # Debug 不受影响。
-include(CheckIPOSupported)
-check_ipo_supported(RESULT LAWN_IPO_SUPPORTED OUTPUT LAWN_IPO_ERROR)
-if(LAWN_IPO_SUPPORTED)
+if(ANDROID OR CMAKE_SYSTEM_NAME STREQUAL "Android")
+    # NDK Clang/LLD supports full LTO. CMake's generic IPO probe can select
+    # host gold without the Android toolchain flags and falsely reject it.
+    # Keep Release IPO mandatory for the actual Android targets instead.
     set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE ON)
+else()
+    include(CheckIPOSupported)
+    check_ipo_supported(RESULT LAWN_IPO_SUPPORTED OUTPUT LAWN_IPO_ERROR)
+    if(LAWN_IPO_SUPPORTED)
+        set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE ON)
+    endif()
 endif()
 
 # P4：reanim attacher 掩码编译期生成（reanimc 重跑更新 MPHF 头 → 联动重生成，
@@ -224,11 +229,17 @@ add_library(${PROJECT_NAME} SHARED ${ALL_FILES})
 elseif(MSVC)
     add_executable(${PROJECT_NAME} WIN32 ${ALL_FILES})
     target_compile_options(${PROJECT_NAME} PRIVATE /we4834)
+elseif(ANDROID OR CMAKE_SYSTEM_NAME STREQUAL "Android")
+    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+        COMMAND "${CMAKE_COMMAND}" -E copy_directory
+            "${gameShaderDirectory}" "$<TARGET_FILE_DIR:${PROJECT_NAME}>/shaders"
+        VERBATIM)
 else()
 add_executable(${PROJECT_NAME} ${ALL_FILES})
 target_compile_options(${PROJECT_NAME} PRIVATE -Werror=unused-result)
 endif()
 add_dependencies(${PROJECT_NAME} pvz_resources)
+
 
 # GOTY 1073 officially excludes the cob-cannon projectile from roof-slope
 # correction (the community-named "Wind from the Upper Boundary" fix).
@@ -285,7 +296,10 @@ if(ANDROID OR CMAKE_SYSTEM_NAME STREQUAL "Android")
     endif()
     target_sources(${PROJECT_NAME} PRIVATE "${_PVZ_ANDROID_GLUE}")
     target_include_directories(${PROJECT_NAME} PRIVATE
-        "${_PVZ_ANDROID_NDK}/sources/android/native_app_glue")
+        "${_PVZ_ANDROID_NDK}/sources/android/native_app_glue"
+        # OpenAL-soft 头（AL/al.h 等）随源码树供给；Android 运行库用 BASS，
+        # 这些头仅为编译 platform/Audio.h 的引用闭包。
+        "${CMAKE_CURRENT_SOURCE_DIR}/platform/audio/openal")
     target_link_libraries(${PROJECT_NAME} PRIVATE android log)
 endif()
 
@@ -513,6 +527,11 @@ elseif(PVZ_RENDER_BACKEND STREQUAL "D3D9")
             "-DDESTINATION=$<TARGET_FILE_DIR:${PROJECT_NAME}>"
             -P "${CMAKE_SOURCE_DIR}/CMake/StageScaleConfig.cmake"
         VERBATIM)
+elseif(ANDROID OR CMAKE_SYSTEM_NAME STREQUAL "Android")
+    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+        COMMAND "${CMAKE_COMMAND}" -E copy_directory
+            "${gameShaderDirectory}" "$<TARGET_FILE_DIR:${PROJECT_NAME}>/shaders"
+        VERBATIM)
 else()
     add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
         COMMAND "${CMAKE_COMMAND}" -E copy_directory
@@ -530,10 +549,12 @@ else()
             "$<TARGET_FILE:Microsoft::DirectXShaderCompiler>"
             "$<TARGET_FILE_DIR:${PROJECT_NAME}>"
         VERBATIM)
+if(NOT ANDROID AND NOT CMAKE_SYSTEM_NAME STREQUAL "Android")
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
     COMMAND "${CMAKE_COMMAND}" -E copy_if_different
         "$<TARGET_FILE_DIR:Microsoft::DirectXShaderCompiler>/${CMAKE_SHARED_LIBRARY_PREFIX}dxil${CMAKE_SHARED_LIBRARY_SUFFIX}"
         "$<TARGET_FILE_DIR:${PROJECT_NAME}>" VERBATIM)
+endif()
 endif()
 
 set(ADDITIONAL_LIBRARY_DEPENDENCIES
@@ -568,6 +589,10 @@ if(MSVC)
     # research targets must not be linked merely because they are configured.
 elseif(WIN32)
     target_link_libraries(${PROJECT_NAME} PRIVATE -static -static-libgcc -static-libstdc++ "${ADDITIONAL_LIBRARY_DEPENDENCIES}")
+elseif(ANDROID)
+    # 16KB 内存页设备（Android 15+ 旗舰）要求 LOAD 段 16KB 对齐才能加载。
+    target_link_options(${PROJECT_NAME} PRIVATE
+        "-Wl,-z,max-page-size=16384" "-Wl,-z,common-page-size=16384")
 endif()
 
 if(WIN32)
@@ -621,6 +646,21 @@ elseif(PVZ_RENDER_BACKEND STREQUAL "METAL")
         target_link_libraries(${PROJECT_NAME} PRIVATE sexy_metal_effects)
     endif()
 elseif(NOT PVZ_RENDER_BACKEND MATCHES "^(OPENGL|D3D9)$")
-    target_link_libraries(${PROJECT_NAME} PRIVATE sexy_vulkan_effects)
+    if(TARGET sexy_vulkan_effects)
+        target_link_libraries(${PROJECT_NAME} PRIVATE sexy_vulkan_effects)
+    endif()
 endif()
 target_link_libraries(${PROJECT_NAME} PRIVATE nlohmann_json::nlohmann_json)
+
+# A regenerated resource contract must invalidate consumers in the same build,
+# before a new PAK64 is paired with the executable. Use the producer's exact
+# path spelling rather than relying solely on compiler-discovered aliases.
+get_target_property(_PVZ_CONTRACT_CONSUMERS ${PROJECT_NAME} SOURCES)
+foreach(_PVZ_CONSUMER IN LISTS _PVZ_CONTRACT_CONSUMERS)
+    if(_PVZ_CONSUMER MATCHES "\\.cpp$")
+        get_filename_component(_PVZ_CONSUMER_ABSOLUTE "${_PVZ_CONSUMER}"
+            ABSOLUTE BASE_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
+        set_property(SOURCE "${_PVZ_CONSUMER_ABSOLUTE}" APPEND PROPERTY
+            OBJECT_DEPENDS "${PVZ_RESOURCE_CONTRACT_HEADERS}")
+    endif()
+endforeach()

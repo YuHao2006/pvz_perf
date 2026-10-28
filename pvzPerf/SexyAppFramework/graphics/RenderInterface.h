@@ -131,8 +131,12 @@ public:
 	void DrawTrianglesTex(std::span<const std::array<TriVertex,3>> theTriangles, const Color& theColor, int theDrawMode, Image* theTexture, float tx = 0, float ty = 0, bool blend = true);
 	void DrawTrianglesTex(std::span<const std::array<TriVertex,3>> triangles,
 		const Color& color, int drawMode, const TextureSource& source,
-		float tx = 0, float ty = 0, bool blend = true);
+		float tx = 0, float ty = 0, bool blend = true, const Rect* clip = nullptr);
 	void					DrawTrianglesTexStrip(const TriVertex theVertices[], int theNumTriangles, const Color &theColor, int theDrawMode, Image *theTexture, float tx = 0, float ty = 0, bool blend = true);
+#if defined(PVZ_GPU_VULKAN) || defined(PVZ_GPU_D3D12)
+    void DrawQuadsTex(std::span<const std::array<TriVertex,4>> quads,const Color& color,
+        int drawMode,const TextureSource& source,float tx=0,float ty=0,bool blend=true,const Rect* clip=nullptr);
+#endif
 	void					FillPoly(const Point theVertices[], int theNumVertices, const Rect *theClipRect, const Color &theColor, int theDrawMode, int tx, int ty);
 
 	// Sampler wrap toggle used by the pool caustic effect.

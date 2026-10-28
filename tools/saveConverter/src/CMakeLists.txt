@@ -36,19 +36,19 @@ install(TARGETS pvz_dat64_converter RUNTIME DESTINATION data)
 
 include(CTest)
 if(BUILD_TESTING)
-    add_executable(pvz_milli_v33_migration_tests EXCLUDE_FROM_ALL MilliV33MigrationTests.cpp)
-    target_compile_features(pvz_milli_v33_migration_tests PRIVATE cxx_std_23)
-    target_include_directories(pvz_milli_v33_migration_tests PRIVATE
+    add_executable(pvz_v4_conversion_tests EXCLUDE_FROM_ALL V4ConversionTests.cpp)
+    target_compile_features(pvz_v4_conversion_tests PRIVATE cxx_std_23)
+    target_include_directories(pvz_v4_conversion_tests PRIVATE
         "${PVZ_CONVERTER_ROOT}" "${PVZ_CONVERTER_ROOT}/pvzPerf")
     if(MSVC)
-        set_property(TARGET pvz_milli_v33_migration_tests PROPERTY
+        set_property(TARGET pvz_v4_conversion_tests PROPERTY
             MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
-        target_compile_options(pvz_milli_v33_migration_tests PRIVATE /utf-8 /W4 /permissive-)
-        target_compile_definitions(pvz_milli_v33_migration_tests PRIVATE
+        target_compile_options(pvz_v4_conversion_tests PRIVATE /utf-8 /W4 /permissive-)
+        target_compile_definitions(pvz_v4_conversion_tests PRIVATE
             _SILENCE_CXX20_U8PATH_DEPRECATION_WARNING)
     endif()
-    add_test(NAME pvz_milli_v33_migration
-        COMMAND pvz_milli_v33_migration_tests "${PVZ_CONVERTER_ROOT}/Tests/game3_58.dat64")
+    add_test(NAME pvz_v4_conversion
+        COMMAND pvz_v4_conversion_tests "${PVZ_CONVERTER_ROOT}/Tests/game3_13.dat")
     add_executable(pvz_particle_image_variant_tests EXCLUDE_FROM_ALL ParticleImageVariantTests.cpp)
     target_compile_features(pvz_particle_image_variant_tests PRIVATE cxx_std_23)
     target_include_directories(pvz_particle_image_variant_tests PRIVATE

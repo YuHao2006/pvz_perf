@@ -1,0 +1,1044 @@
+?UpdateShooter@Plant@FB@@QEAAXXZ PROC			; FB::Plant::UpdateShooter, COMDAT
+
+; 748  : {
+
+$LN53:
+	push	rbp
+	push	rbx
+	push	rsi
+	push	rdi
+	lea	rbp, QWORD PTR [rsp-216]
+	sub	rsp, 472				; 000001d8H
+
+; 749  :     mLaunchCounter--;
+
+	dec	DWORD PTR [rcx+32]
+	mov	rbx, rcx
+
+; 750  :     if (mLaunchCounter <= 0)
+
+	cmp	DWORD PTR [rcx+32], 0
+	mov	rsi, 7764610175701363102		; 6bc16fd0ee10299eH
+	mov	rdi, 1099511628211			; 00000100000001b3H
+	jg	$LN42@UpdateShoo
+; File C:\Users\Administrator\AppData\Local\Temp\pvz-small-bench-build-_27lfc08\archive\r2plant\r2_stub.h
+
+; 26   :     g_ck = g_ck * 0x100000001B3ULL ^ (salt * 0x9E3779B97F4A7C15ULL + v + 0x165667B19E3779F9ULL);
+
+	mov	rax, QWORD PTR ?g_ck@@3_KA		; g_ck
+	mov	rcx, -8218506755370857976		; 8df1ffa645f8ca08H
+	imul	rax, rdi
+	xor	rax, rcx
+
+; 35   :     g_rng = g_rng * 6364136223846793005ULL + 1442695040888963407ULL;
+
+	mov	rcx, 6364136223846793005		; 5851f42d4c957f2dH
+
+; 26   :     g_ck = g_ck * 0x100000001B3ULL ^ (salt * 0x9E3779B97F4A7C15ULL + v + 0x165667B19E3779F9ULL);
+
+	mov	QWORD PTR ?g_ck@@3_KA, rax		; g_ck
+
+; 35   :     g_rng = g_rng * 6364136223846793005ULL + 1442695040888963407ULL;
+
+	mov	rax, QWORD PTR ?g_rng@@3_KA		; g_rng
+	imul	rax, rcx
+	mov	rcx, 1442695040888963407		; 14057b7ef767814fH
+	add	rcx, rax
+
+; 227  :         return theRange ? RngNext() % theRange : 0u;
+
+	mov	eax, -2004318071			; 88888889H
+
+; 35   :     g_rng = g_rng * 6364136223846793005ULL + 1442695040888963407ULL;
+
+	mov	QWORD PTR ?g_rng@@3_KA, rcx		; g_rng
+	shr	rcx, 33					; 00000021H
+
+; 227  :         return theRange ? RngNext() % theRange : 0u;
+
+	mul	ecx
+	shr	edx, 3
+	imul	eax, edx, 15
+
+; 36   :     return (uint32_t)(g_rng >> 33);
+
+	add	eax, DWORD PTR [rbx+36]
+	sub	eax, ecx
+; File C:\Users\Administrator\AppData\Local\Temp\pvz-table-storage-diagnosis-20261029\legacy.cpp
+
+; 761  :         constexpr void (*kShooterFireCases[])(Plant*) = {
+
+	lea	rcx, OFFSET FLAT:?<lambda_invoker_cdecl>@<lambda_1>@?4??UpdateShooter@Plant@FB@@QEAAXXZ@SA@PEAU34@@Z ; `FB::Plant::UpdateShooter'::`5'::<lambda_1>::<lambda_invoker_cdecl>
+	mov	DWORD PTR [rbx+32], eax
+	lea	rax, OFFSET FLAT:?<lambda_invoker_cdecl>@<lambda_2>@?4??UpdateShooter@Plant@FB@@QEAAXXZ@SA@PEAU34@@Z ; `FB::Plant::UpdateShooter'::`5'::<lambda_2>::<lambda_invoker_cdecl>
+	mov	QWORD PTR kShooterFireCases$1[rbp-112], rax
+	lea	rax, OFFSET FLAT:?<lambda_invoker_cdecl>@<lambda_3>@?4??UpdateShooter@Plant@FB@@QEAAXXZ@SA@PEAU34@@Z ; `FB::Plant::UpdateShooter'::`5'::<lambda_3>::<lambda_invoker_cdecl>
+	mov	QWORD PTR kShooterFireCases$1[rbp-48], rax
+	lea	rax, OFFSET FLAT:?<lambda_invoker_cdecl>@<lambda_4>@?4??UpdateShooter@Plant@FB@@QEAAXXZ@SA@PEAU34@@Z ; `FB::Plant::UpdateShooter'::`5'::<lambda_4>::<lambda_invoker_cdecl>
+	mov	QWORD PTR kShooterFireCases$1[rbp-32], rax
+	lea	rax, OFFSET FLAT:?<lambda_invoker_cdecl>@<lambda_5>@?4??UpdateShooter@Plant@FB@@QEAAXXZ@SA@PEAU34@@Z ; `FB::Plant::UpdateShooter'::`5'::<lambda_5>::<lambda_invoker_cdecl>
+	mov	QWORD PTR kShooterFireCases$1[rbp-24], rax
+
+; 762  :             // 0..14 默认开火（PEASHOOTER..DOOMSHROOM 前 15 槽）
+; 763  :             kShooterDefaultFire, kShooterDefaultFire, kShooterDefaultFire, kShooterDefaultFire, kShooterDefaultFire,
+; 764  :             kShooterDefaultFire, kShooterDefaultFire, kShooterDefaultFire, kShooterDefaultFire, kShooterDefaultFire,
+; 765  :             kShooterDefaultFire, kShooterDefaultFire, kShooterDefaultFire, kShooterDefaultFire, kShooterDefaultFire,
+; 766  :             // 15..17 LILYPAD/SQUASH/（17 空）
+; 767  :             kShooterDefaultFire, kShooterDefaultFire, kShooterDefaultFire,
+; 768  :             [](Plant* p) { p->LaunchThreepeater(); },  // 18 SEED_THREEPEATER
+; 769  :             // 19..25 TANGLEKELP..SEASHROOM 默认
+; 770  :             kShooterDefaultFire, kShooterDefaultFire, kShooterDefaultFire, kShooterDefaultFire, kShooterDefaultFire,
+; 771  :             kShooterDefaultFire, kShooterDefaultFire,
+; 772  :             [](Plant* p)   // 26 SEED_CACTUS
+; 773  :             {
+; 774  :                 if (p->mState == PlantState::STATE_CACTUS_HIGH)
+; 775  :                 {
+; 776  :                     p->FindTargetAndFire(p->mRow, PlantWeapon::WEAPON_PRIMARY);
+; 777  :                 }
+; 778  :                 else if (p->mState == PlantState::STATE_CACTUS_LOW)
+; 779  :                 {
+; 780  :                     p->FindTargetAndFire(p->mRow, PlantWeapon::WEAPON_SECONDARY);
+; 781  :                 }
+; 782  :             },
+; 783  :             kShooterDefaultFire,  // 27 SEED_BLOVER
+; 784  :             [](Plant* p)   // 28 SEED_SPLITPEA
+; 785  :             {
+; 786  :                 p->FindTargetAndFire(p->mRow, PlantWeapon::WEAPON_SECONDARY);
+; 787  : 
+; 788  :                 // 1073 00463200: the second back shot must not reuse the front
+; 789  :                 // head's previous shooting state. Keep the 25-tick front trigger.
+; 790  :                 Reanimation* aHeadReanim = p->mApp->ReanimationGet(p->mHeadReanimID);
+; 791  :                 Reanimation* aBodyReanim = p->mApp->ReanimationGet(p->mBodyReanimID);
+; 792  :                 aHeadReanim->StartBlend(20);
+; 793  :                 aHeadReanim->mLoopType = ReanimLoopType::REANIM_LOOP;
+; 794  :                 aHeadReanim->SetFramesForLayer(ReanimTrackId::anim_head_idle);
+; 795  :                 aHeadReanim->mAnimRate = aBodyReanim->mAnimRate;
+; 796  :                 aHeadReanim->mAnimTime = aBodyReanim->mAnimTime;
+; 797  :             },
+; 798  :             [](Plant* p) { p->LaunchStarFruit(); },  // 29 SEED_STARFRUIT
+; 799  :             // 30..39 PUMPKINSHELL..MELONPULT 默认
+; 800  :             kShooterDefaultFire, kShooterDefaultFire, kShooterDefaultFire, kShooterDefaultFire, kShooterDefaultFire,
+; 801  :             kShooterDefaultFire, kShooterDefaultFire, kShooterDefaultFire, kShooterDefaultFire, kShooterDefaultFire,
+; 802  :             // 40..52 GATLINGPEA..LEFTPEATER 默认
+; 803  :             kShooterDefaultFire, kShooterDefaultFire, kShooterDefaultFire, kShooterDefaultFire, kShooterDefaultFire,
+; 804  :             kShooterDefaultFire, kShooterDefaultFire, kShooterDefaultFire, kShooterDefaultFire, kShooterDefaultFire,
+; 805  :             kShooterDefaultFire, kShooterDefaultFire, kShooterDefaultFire,
+; 806  :         };
+; 807  :         static_assert(sizeof(kShooterFireCases) / sizeof(kShooterFireCases[0]) == (int)SeedType::NUM_SEED_TYPES,
+; 808  :             "射手开火槽位须与 SeedType 枚举同步");
+; 809  : 
+; 810  :         if ((unsigned)mSeedType < sizeof(kShooterFireCases) / sizeof(kShooterFireCases[0]))
+
+	movsxd	rax, DWORD PTR [rbx]
+	mov	QWORD PTR kShooterFireCases$1[rsp], rcx
+	mov	QWORD PTR kShooterFireCases$1[rsp+8], rcx
+	mov	QWORD PTR kShooterFireCases$1[rsp+16], rcx
+	mov	QWORD PTR kShooterFireCases$1[rsp+24], rcx
+	mov	QWORD PTR kShooterFireCases$1[rsp+32], rcx
+	mov	QWORD PTR kShooterFireCases$1[rsp+40], rcx
+	mov	QWORD PTR kShooterFireCases$1[rsp+48], rcx
+	mov	QWORD PTR kShooterFireCases$1[rsp+56], rcx
+	mov	QWORD PTR kShooterFireCases$1[rsp+64], rcx
+	mov	QWORD PTR kShooterFireCases$1[rsp+72], rcx
+	mov	QWORD PTR kShooterFireCases$1[rsp+80], rcx
+	mov	QWORD PTR kShooterFireCases$1[rsp+88], rcx
+	mov	QWORD PTR kShooterFireCases$1[rbp-160], rcx
+	mov	QWORD PTR kShooterFireCases$1[rbp-152], rcx
+	mov	QWORD PTR kShooterFireCases$1[rbp-144], rcx
+	mov	QWORD PTR kShooterFireCases$1[rbp-136], rcx
+	mov	QWORD PTR kShooterFireCases$1[rbp-128], rcx
+	mov	QWORD PTR kShooterFireCases$1[rbp-120], rcx
+	mov	QWORD PTR kShooterFireCases$1[rbp-104], rcx
+	mov	QWORD PTR kShooterFireCases$1[rbp-96], rcx
+	mov	QWORD PTR kShooterFireCases$1[rbp-88], rcx
+	mov	QWORD PTR kShooterFireCases$1[rbp-80], rcx
+	mov	QWORD PTR kShooterFireCases$1[rbp-72], rcx
+	mov	QWORD PTR kShooterFireCases$1[rbp-64], rcx
+	mov	QWORD PTR kShooterFireCases$1[rbp-56], rcx
+	mov	QWORD PTR kShooterFireCases$1[rbp-40], rcx
+	mov	QWORD PTR kShooterFireCases$1[rbp-16], rcx
+	mov	QWORD PTR kShooterFireCases$1[rbp-8], rcx
+	mov	QWORD PTR kShooterFireCases$1[rbp], rcx
+	mov	QWORD PTR kShooterFireCases$1[rbp+8], rcx
+	mov	QWORD PTR kShooterFireCases$1[rbp+16], rcx
+	mov	QWORD PTR kShooterFireCases$1[rbp+24], rcx
+	mov	QWORD PTR kShooterFireCases$1[rbp+32], rcx
+	mov	QWORD PTR kShooterFireCases$1[rbp+40], rcx
+	mov	QWORD PTR kShooterFireCases$1[rbp+48], rcx
+	mov	QWORD PTR kShooterFireCases$1[rbp+56], rcx
+	mov	QWORD PTR kShooterFireCases$1[rbp+64], rcx
+	mov	QWORD PTR kShooterFireCases$1[rbp+72], rcx
+	mov	QWORD PTR kShooterFireCases$1[rbp+80], rcx
+	mov	QWORD PTR kShooterFireCases$1[rbp+88], rcx
+	mov	QWORD PTR kShooterFireCases$1[rbp+96], rcx
+	mov	QWORD PTR kShooterFireCases$1[rbp+104], rcx
+	mov	QWORD PTR kShooterFireCases$1[rbp+112], rcx
+	mov	QWORD PTR kShooterFireCases$1[rbp+120], rcx
+	mov	QWORD PTR kShooterFireCases$1[rbp+128], rcx
+	mov	QWORD PTR kShooterFireCases$1[rbp+136], rcx
+	mov	QWORD PTR kShooterFireCases$1[rbp+144], rcx
+	mov	QWORD PTR kShooterFireCases$1[rbp+152], rcx
+	mov	QWORD PTR kShooterFireCases$1[rbp+160], rcx
+	cmp	eax, 53					; 00000035H
+	jae	SHORT $LN3@UpdateShoo
+
+; 811  :         {
+; 812  :             kShooterFireCases[mSeedType](this);
+
+	mov	rcx, rbx
+	call	QWORD PTR kShooterFireCases$1[rsp+rax*8]
+$LN42@UpdateShoo:
+
+; 813  :         }
+; 814  :         else
+; 815  :         {
+; 816  :             kShooterDefaultFire(this);  // 原 else 支（哨兵越界等价）
+; 817  :         }
+; 818  :     }
+; 819  : 
+; 820  :     if (mLaunchCounter == 50 && mSeedType == SeedType::SEED_CATTAIL)
+
+	mov	rdx, QWORD PTR ?g_ck@@3_KA		; g_ck
+$LN4@UpdateShoo:
+	cmp	DWORD PTR [rbx+32], 50			; 00000032H
+	jne	SHORT $LN5@UpdateShoo
+	cmp	DWORD PTR [rbx], 43			; 0000002bH
+	jne	SHORT $LN5@UpdateShoo
+
+; 730  :     void FindTargetAndFire(int row, PlantWeapon w) { MixCk(0x3005ULL, (uint64_t)row + (uint64_t)w); }
+
+	movsxd	rcx, DWORD PTR [rbx+12]
+; File C:\Users\Administrator\AppData\Local\Temp\pvz-small-bench-build-_27lfc08\archive\r2plant\r2_stub.h
+
+; 26   :     g_ck = g_ck * 0x100000001B3ULL ^ (salt * 0x9E3779B97F4A7C15ULL + v + 0x165667B19E3779F9ULL);
+
+	mov	rax, rdx
+	sub	rcx, rsi
+	imul	rax, rdi
+	mov	rdx, rcx
+	xor	rdx, rax
+	mov	QWORD PTR ?g_ck@@3_KA, rdx		; g_ck
+$LN5@UpdateShoo:
+; File C:\Users\Administrator\AppData\Local\Temp\pvz-table-storage-diagnosis-20261029\legacy.cpp
+
+; 824  :     if (mLaunchCounter == 25)
+
+	cmp	DWORD PTR [rbx+32], 25
+	jne	SHORT $LN10@UpdateShoo
+
+; 825  :     {
+; 826  :         if (mSeedType == SeedType::SEED_REPEATER || mSeedType == SeedType::SEED_LEFTPEATER)
+
+	mov	eax, DWORD PTR [rbx]
+	cmp	eax, 7
+	je	SHORT $LN9@UpdateShoo
+	cmp	eax, 52					; 00000034H
+	je	SHORT $LN9@UpdateShoo
+
+; 827  :         {
+; 828  :             FindTargetAndFire(mRow, PlantWeapon::WEAPON_PRIMARY);
+; 829  :         }
+; 830  :         else if (mSeedType == SeedType::SEED_SPLITPEA)
+
+	cmp	eax, 28
+	jne	SHORT $LN10@UpdateShoo
+
+; 730  :     void FindTargetAndFire(int row, PlantWeapon w) { MixCk(0x3005ULL, (uint64_t)row + (uint64_t)w); }
+
+	movsxd	rcx, DWORD PTR [rbx+12]
+; File C:\Users\Administrator\AppData\Local\Temp\pvz-small-bench-build-_27lfc08\archive\r2plant\r2_stub.h
+
+; 26   :     g_ck = g_ck * 0x100000001B3ULL ^ (salt * 0x9E3779B97F4A7C15ULL + v + 0x165667B19E3779F9ULL);
+
+	imul	rdx, rdi
+	sub	rcx, rsi
+	xor	rcx, rdx
+	mov	rdx, 7764610175701363101		; 6bc16fd0ee10299dH
+	mov	QWORD PTR ?g_ck@@3_KA, rcx		; g_ck
+; File C:\Users\Administrator\AppData\Local\Temp\pvz-table-storage-diagnosis-20261029\legacy.cpp
+
+; 730  :     void FindTargetAndFire(int row, PlantWeapon w) { MixCk(0x3005ULL, (uint64_t)row + (uint64_t)w); }
+
+	movsxd	rax, DWORD PTR [rbx+12]
+; File C:\Users\Administrator\AppData\Local\Temp\pvz-small-bench-build-_27lfc08\archive\r2plant\r2_stub.h
+
+; 26   :     g_ck = g_ck * 0x100000001B3ULL ^ (salt * 0x9E3779B97F4A7C15ULL + v + 0x165667B19E3779F9ULL);
+
+	imul	rcx, rdi
+	sub	rax, rdx
+	xor	rax, rcx
+	jmp	SHORT $LN51@UpdateShoo
+$LN3@UpdateShoo:
+	mov	rax, QWORD PTR ?g_ck@@3_KA		; g_ck
+; File C:\Users\Administrator\AppData\Local\Temp\pvz-table-storage-diagnosis-20261029\legacy.cpp
+
+; 730  :     void FindTargetAndFire(int row, PlantWeapon w) { MixCk(0x3005ULL, (uint64_t)row + (uint64_t)w); }
+
+	movsxd	rdx, DWORD PTR [rbx+12]
+; File C:\Users\Administrator\AppData\Local\Temp\pvz-small-bench-build-_27lfc08\archive\r2plant\r2_stub.h
+
+; 26   :     g_ck = g_ck * 0x100000001B3ULL ^ (salt * 0x9E3779B97F4A7C15ULL + v + 0x165667B19E3779F9ULL);
+
+	imul	rax, rdi
+	sub	rdx, rsi
+	xor	rdx, rax
+	mov	QWORD PTR ?g_ck@@3_KA, rdx		; g_ck
+; File C:\Users\Administrator\AppData\Local\Temp\pvz-table-storage-diagnosis-20261029\legacy.cpp
+
+; 750  :     if (mLaunchCounter <= 0)
+
+	jmp	$LN4@UpdateShoo
+$LN9@UpdateShoo:
+
+; 730  :     void FindTargetAndFire(int row, PlantWeapon w) { MixCk(0x3005ULL, (uint64_t)row + (uint64_t)w); }
+
+	movsxd	rax, DWORD PTR [rbx+12]
+; File C:\Users\Administrator\AppData\Local\Temp\pvz-small-bench-build-_27lfc08\archive\r2plant\r2_stub.h
+
+; 26   :     g_ck = g_ck * 0x100000001B3ULL ^ (salt * 0x9E3779B97F4A7C15ULL + v + 0x165667B19E3779F9ULL);
+
+	imul	rdx, rdi
+	sub	rax, rsi
+	xor	rax, rdx
+$LN51@UpdateShoo:
+; File C:\Users\Administrator\AppData\Local\Temp\pvz-table-storage-diagnosis-20261029\legacy.cpp
+
+; 836  : }
+
+	mov	QWORD PTR ?g_ck@@3_KA, rax		; g_ck
+$LN10@UpdateShoo:
+	add	rsp, 472				; 000001d8H
+	pop	rdi
+	pop	rsi
+	pop	rbx
+	pop	rbp
+	ret	0
+?UpdateShooter@Plant@FB@@QEAAXXZ ENDP			; FB::Plant::UpdateShooter
+
+?UpdateProductionPlant@Plant@FB@@QEAAXXZ PROC		; FB::Plant::UpdateProductionPlant, COMDAT
+
+; 840  : {
+
+$LN94:
+	push	rbp
+	push	rbx
+	push	r15
+	lea	rbp, QWORD PTR [rsp-848]
+	sub	rsp, 1104				; 00000450H
+	mov	rbx, rcx
+; File C:\Users\Administrator\AppData\Local\Temp\pvz-small-bench-build-_27lfc08\archive\r2plant\r2_stub.h
+
+; 26   :     g_ck = g_ck * 0x100000001B3ULL ^ (salt * 0x9E3779B97F4A7C15ULL + v + 0x165667B19E3779F9ULL);
+
+	mov	r15, 1099511628211			; 00000100000001b3H
+	mov	rcx, QWORD PTR ?g_ck@@3_KA		; g_ck
+	mov	rax, 3636104643621835383		; 327609e8913a5277H
+	imul	rcx, r15
+	xor	rcx, rax
+; File C:\Users\Administrator\AppData\Local\Temp\pvz-table-storage-diagnosis-20261029\legacy.cpp
+
+; 841  :     if (!IsInPlay() || mApp->IsIZombieLevel() || mApp->mGameMode == GameMode::GAMEMODE_INTRO)
+
+	cmp	BYTE PTR ?g_plantInPlay@@3_NA, 0	; g_plantInPlay
+; File C:\Users\Administrator\AppData\Local\Temp\pvz-small-bench-build-_27lfc08\archive\r2plant\r2_stub.h
+
+; 26   :     g_ck = g_ck * 0x100000001B3ULL ^ (salt * 0x9E3779B97F4A7C15ULL + v + 0x165667B19E3779F9ULL);
+
+	mov	QWORD PTR ?g_ck@@3_KA, rcx		; g_ck
+; File C:\Users\Administrator\AppData\Local\Temp\pvz-table-storage-diagnosis-20261029\legacy.cpp
+
+; 841  :     if (!IsInPlay() || mApp->IsIZombieLevel() || mApp->mGameMode == GameMode::GAMEMODE_INTRO)
+
+	je	$LN6@UpdateProd
+; File C:\Users\Administrator\AppData\Local\Temp\pvz-small-bench-build-_27lfc08\archive\r2plant\r2_stub.h
+
+; 26   :     g_ck = g_ck * 0x100000001B3ULL ^ (salt * 0x9E3779B97F4A7C15ULL + v + 0x165667B19E3779F9ULL);
+
+	imul	rcx, r15
+	mov	rax, -927826067084850265		; f31fb31b9a0f4ba7H
+	xor	rcx, rax
+; File C:\Users\Administrator\AppData\Local\Temp\pvz-table-storage-diagnosis-20261029\legacy.cpp
+
+; 841  :     if (!IsInPlay() || mApp->IsIZombieLevel() || mApp->mGameMode == GameMode::GAMEMODE_INTRO)
+
+	cmp	BYTE PTR ?g_izombieLevel@@3_NA, 0	; g_izombieLevel
+; File C:\Users\Administrator\AppData\Local\Temp\pvz-small-bench-build-_27lfc08\archive\r2plant\r2_stub.h
+
+; 26   :     g_ck = g_ck * 0x100000001B3ULL ^ (salt * 0x9E3779B97F4A7C15ULL + v + 0x165667B19E3779F9ULL);
+
+	mov	QWORD PTR ?g_ck@@3_KA, rcx		; g_ck
+; File C:\Users\Administrator\AppData\Local\Temp\pvz-table-storage-diagnosis-20261029\legacy.cpp
+
+; 841  :     if (!IsInPlay() || mApp->IsIZombieLevel() || mApp->mGameMode == GameMode::GAMEMODE_INTRO)
+
+	jne	$LN6@UpdateProd
+	mov	rax, QWORD PTR [rbx+64]
+	cmp	DWORD PTR [rax+8], 1
+	je	$LN6@UpdateProd
+; File C:\Users\Administrator\AppData\Local\Temp\pvz-small-bench-build-_27lfc08\archive\r2plant\r2_stub.h
+
+; 26   :     g_ck = g_ck * 0x100000001B3ULL ^ (salt * 0x9E3779B97F4A7C15ULL + v + 0x165667B19E3779F9ULL);
+
+	imul	rcx, r15
+	mov	rax, 3184181188763830535		; 2c307bebb0bfc907H
+	xor	rcx, rax
+	mov	QWORD PTR ?g_ck@@3_KA, rcx		; g_ck
+; File C:\Users\Administrator\AppData\Local\Temp\pvz-table-storage-diagnosis-20261029\legacy.cpp
+
+; 847  :     if (mSeedType == SeedType::SEED_MARIGOLD && mBoard->mCurrentWave == mBoard->mNumWaves)
+
+	cmp	DWORD PTR [rbx], 38			; 00000026H
+	jne	SHORT $LN11@UpdateProd
+	mov	rcx, QWORD PTR [rbx+72]
+	mov	eax, DWORD PTR [rcx+4]
+	cmp	DWORD PTR [rcx], eax
+	jne	SHORT $LN11@UpdateProd
+
+; 848  :     {
+; 849  :         if (mState != PlantState::STATE_MARIGOLD_ENDING)
+
+	cmp	DWORD PTR [rbx+4], 46			; 0000002eH
+	je	SHORT $LN9@UpdateProd
+
+; 850  :         {
+; 851  :             mState = PlantState::STATE_MARIGOLD_ENDING;
+
+	mov	DWORD PTR [rbx+4], 46			; 0000002eH
+
+; 852  :             mStateCountdown = 6000;
+
+	mov	DWORD PTR [rbx+8], 6000			; 00001770H
+
+; 853  :         }
+
+	jmp	SHORT $LN11@UpdateProd
+$LN9@UpdateProd:
+
+; 854  :         else if (mStateCountdown <= 0)
+
+	cmp	DWORD PTR [rbx+8], 0
+	jle	$LN6@UpdateProd
+$LN11@UpdateProd:
+
+; 855  :             return;
+; 856  :     }
+; 857  : 
+; 858  :     if (mApp->mGameMode == GameMode::GAMEMODE_CHALLENGE_LAST_STAND && mBoard->mChallenge->mChallengeState != ChallengeState::STATECHALLENGE_LAST_STAND_ONSLAUGHT)
+
+	mov	rax, QWORD PTR [rbx+64]
+	cmp	DWORD PTR [rax+8], 2
+	jne	SHORT $LN12@UpdateProd
+	mov	rax, QWORD PTR [rbx+72]
+	mov	rcx, QWORD PTR [rax+8]
+	cmp	DWORD PTR [rcx], 1
+	jne	$LN6@UpdateProd
+$LN12@UpdateProd:
+
+; 859  :         return;
+; 860  : 
+; 861  :     mLaunchCounter--;
+
+	dec	DWORD PTR [rbx+32]
+	movsxd	rax, DWORD PTR [rbx+32]
+	mov	QWORD PTR [rsp+1144], rsi
+
+; 862  :     if (mLaunchCounter <= 100)
+
+	xor	esi, esi
+	cmp	eax, 100				; 00000064H
+	jg	SHORT $LN13@UpdateProd
+; File C:\Users\Administrator\AppData\Local\Temp\pvz-small-bench-build-_27lfc08\archive\r2plant\r2_stub.h
+
+; 244  : inline int  TodAnimateCurve(int a, int b, int c, int d, int e, Curves) { MixCk(0x1006ULL, (uint64_t)a + c); return (a + c + e) % (d + 1); }
+
+	mov	rcx, rax
+
+; 26   :     g_ck = g_ck * 0x100000001B3ULL ^ (salt * 0x9E3779B97F4A7C15ULL + v + 0x165667B19E3779F9ULL);
+
+	mov	rax, 4845549939439678171		; 433ed9ff41b7b2dbH
+	add	rcx, rax
+	mov	rax, QWORD PTR ?g_ck@@3_KA		; g_ck
+	imul	rax, r15
+	xor	rcx, rax
+	mov	QWORD PTR ?g_ck@@3_KA, rcx		; g_ck
+; File C:\UserProgram\Visual Studuio\2026\Community\VC\Tools\MSVC\14.51.36231\include\utility
+
+; 80   :     return _Left < _Right ? _Right : _Left;
+
+	mov	ecx, DWORD PTR [rbx+88]
+	test	ecx, ecx
+	cmovs	ecx, esi
+; File C:\Users\Administrator\AppData\Local\Temp\pvz-table-storage-diagnosis-20261029\legacy.cpp
+
+; 865  :         mEatenFlashCountdown = std::max(mEatenFlashCountdown, aFlashCountdown);
+
+	mov	DWORD PTR [rbx+88], ecx
+$LN13@UpdateProd:
+
+; 866  :     }
+; 867  :     if (mLaunchCounter <= 0)
+
+	cmp	DWORD PTR [rbx+32], esi
+	jg	$LN89@UpdateProd
+
+; 868  :     {
+; 869  :         mLaunchCounter = RandRangeInt(mLaunchRate - 150, mLaunchRate);
+
+	mov	edx, DWORD PTR [rbx+36]
+	mov	QWORD PTR [rsp+1152], rdi
+	lea	ecx, DWORD PTR [rdx-150]
+	call	?RandRangeInt@@YAHHH@Z			; RandRangeInt
+
+; 887  :         } kProductionCoins[(int)SeedType::NUM_SEED_TYPES] = {
+
+	movdqa	xmm0, XMMWORD PTR __xmm@00000000000000020000000400000004
+	mov	edi, 4
+	mov	DWORD PTR [rbx+32], eax
+; File C:\Users\Administrator\AppData\Local\Temp\pvz-small-bench-build-_27lfc08\archive\r2plant\r2_stub.h
+
+; 26   :     g_ck = g_ck * 0x100000001B3ULL ^ (salt * 0x9E3779B97F4A7C15ULL + v + 0x165667B19E3779F9ULL);
+
+	mov	rax, -5282511632021695610		; b6b0bfa89b7a5386H
+	mov	r8, QWORD PTR ?g_ck@@3_KA		; g_ck
+	imul	r8, r15
+; File C:\Users\Administrator\AppData\Local\Temp\pvz-table-storage-diagnosis-20261029\legacy.cpp
+
+; 887  :         } kProductionCoins[(int)SeedType::NUM_SEED_TYPES] = {
+
+	movdqa	XMMWORD PTR kProductionCoins$1[rsp+64], xmm0
+	movdqa	XMMWORD PTR kProductionCoins$1[rbp-112], xmm0
+	movdqa	XMMWORD PTR kProductionCoins$1[rbp-32], xmm0
+	mov	BYTE PTR kProductionCoins$1[rsp], sil
+; File C:\Users\Administrator\AppData\Local\Temp\pvz-small-bench-build-_27lfc08\archive\r2plant\r2_stub.h
+
+; 26   :     g_ck = g_ck * 0x100000001B3ULL ^ (salt * 0x9E3779B97F4A7C15ULL + v + 0x165667B19E3779F9ULL);
+
+	xor	r8, rax
+; File C:\Users\Administrator\AppData\Local\Temp\pvz-table-storage-diagnosis-20261029\legacy.cpp
+
+; 887  :         } kProductionCoins[(int)SeedType::NUM_SEED_TYPES] = {
+
+	mov	DWORD PTR kProductionCoins$1[rsp+4], edi
+	xor	eax, eax
+; File C:\Users\Administrator\AppData\Local\Temp\pvz-small-bench-build-_27lfc08\archive\r2plant\r2_stub.h
+
+; 26   :     g_ck = g_ck * 0x100000001B3ULL ^ (salt * 0x9E3779B97F4A7C15ULL + v + 0x165667B19E3779F9ULL);
+
+	mov	QWORD PTR ?g_ck@@3_KA, r8		; g_ck
+; File C:\Users\Administrator\AppData\Local\Temp\pvz-table-storage-diagnosis-20261029\legacy.cpp
+
+; 887  :         } kProductionCoins[(int)SeedType::NUM_SEED_TYPES] = {
+
+	mov	WORD PTR kProductionCoins$1[rsp+1], ax
+	mov	BYTE PTR kProductionCoins$1[rsp+3], al
+	mov	WORD PTR kProductionCoins$1[rsp+21], ax
+	mov	BYTE PTR kProductionCoins$1[rsp+23], al
+	mov	BYTE PTR kProductionCoins$1[rsp+40], al
+	mov	WORD PTR kProductionCoins$1[rsp+41], ax
+	mov	BYTE PTR kProductionCoins$1[rsp+43], al
+	mov	BYTE PTR kProductionCoins$1[rsp+60], al
+	mov	WORD PTR kProductionCoins$1[rsp+61], ax
+	mov	BYTE PTR kProductionCoins$1[rsp+63], al
+	mov	BYTE PTR kProductionCoins$1[rsp+80], al
+	mov	WORD PTR kProductionCoins$1[rsp+81], ax
+	mov	BYTE PTR kProductionCoins$1[rsp+83], al
+	mov	BYTE PTR kProductionCoins$1[rbp-156], al
+	mov	WORD PTR kProductionCoins$1[rbp-155], ax
+	mov	BYTE PTR kProductionCoins$1[rbp-153], al
+	mov	BYTE PTR kProductionCoins$1[rbp-136], al
+	mov	WORD PTR kProductionCoins$1[rbp-135], ax
+	mov	BYTE PTR kProductionCoins$1[rbp-133], al
+	mov	BYTE PTR kProductionCoins$1[rbp-116], al
+	mov	WORD PTR kProductionCoins$1[rbp-115], ax
+	mov	BYTE PTR kProductionCoins$1[rbp-113], al
+	mov	BYTE PTR kProductionCoins$1[rbp-96], al
+	mov	WORD PTR kProductionCoins$1[rbp-95], ax
+	mov	BYTE PTR kProductionCoins$1[rbp-93], al
+	mov	WORD PTR kProductionCoins$1[rbp-75], ax
+	mov	BYTE PTR kProductionCoins$1[rbp-73], al
+	mov	BYTE PTR kProductionCoins$1[rbp-56], al
+	mov	WORD PTR kProductionCoins$1[rbp-55], ax
+	mov	BYTE PTR kProductionCoins$1[rbp-53], al
+	mov	BYTE PTR kProductionCoins$1[rbp-36], al
+	mov	WORD PTR kProductionCoins$1[rbp-35], ax
+	mov	BYTE PTR kProductionCoins$1[rbp-33], al
+	mov	DWORD PTR kProductionCoins$1[rsp+8], edi
+	mov	QWORD PTR kProductionCoins$1[rsp+12], 2
+	mov	BYTE PTR kProductionCoins$1[rsp+20], 1
+	mov	DWORD PTR kProductionCoins$1[rsp+24], edi
+	mov	DWORD PTR kProductionCoins$1[rsp+28], edi
+	mov	DWORD PTR kProductionCoins$1[rsp+32], 2
+	mov	DWORD PTR kProductionCoins$1[rsp+36], 1
+	mov	DWORD PTR kProductionCoins$1[rsp+44], edi
+	mov	DWORD PTR kProductionCoins$1[rsp+48], edi
+	mov	QWORD PTR kProductionCoins$1[rsp+52], 2
+	mov	DWORD PTR kProductionCoins$1[rsp+84], edi
+	mov	DWORD PTR kProductionCoins$1[rsp+88], edi
+	mov	QWORD PTR kProductionCoins$1[rsp+92], 2
+	mov	DWORD PTR kProductionCoins$1[rbp-152], edi
+	mov	DWORD PTR kProductionCoins$1[rbp-148], edi
+	mov	QWORD PTR kProductionCoins$1[rbp-144], 2
+	mov	DWORD PTR kProductionCoins$1[rbp-132], edi
+	mov	DWORD PTR kProductionCoins$1[rbp-128], edi
+	mov	QWORD PTR kProductionCoins$1[rbp-124], 2
+	mov	DWORD PTR kProductionCoins$1[rbp-92], edi
+	mov	DWORD PTR kProductionCoins$1[rbp-88], edi
+	mov	QWORD PTR kProductionCoins$1[rbp-84], 2
+	mov	BYTE PTR kProductionCoins$1[rbp-76], 2
+	mov	DWORD PTR kProductionCoins$1[rbp-72], 5
+	mov	DWORD PTR kProductionCoins$1[rbp-68], edi
+	mov	DWORD PTR kProductionCoins$1[rbp-64], 2
+	mov	DWORD PTR kProductionCoins$1[rbp-60], 1
+	mov	DWORD PTR kProductionCoins$1[rbp-52], edi
+	mov	DWORD PTR kProductionCoins$1[rbp-48], edi
+	mov	QWORD PTR kProductionCoins$1[rbp-44], 2
+	mov	BYTE PTR kProductionCoins$1[rbp-16], al
+	mov	WORD PTR kProductionCoins$1[rbp-15], ax
+	mov	BYTE PTR kProductionCoins$1[rbp-13], al
+	mov	DWORD PTR kProductionCoins$1[rbp-12], edi
+	mov	DWORD PTR kProductionCoins$1[rbp-8], edi
+	mov	QWORD PTR kProductionCoins$1[rbp-4], 2
+	mov	BYTE PTR kProductionCoins$1[rbp+4], al
+	mov	WORD PTR kProductionCoins$1[rbp+5], ax
+	mov	BYTE PTR kProductionCoins$1[rbp+7], al
+	mov	DWORD PTR kProductionCoins$1[rbp+8], edi
+	mov	DWORD PTR kProductionCoins$1[rbp+12], edi
+	mov	QWORD PTR kProductionCoins$1[rbp+16], 2
+	mov	BYTE PTR kProductionCoins$1[rbp+24], al
+	mov	WORD PTR kProductionCoins$1[rbp+25], ax
+	mov	BYTE PTR kProductionCoins$1[rbp+27], al
+	mov	DWORD PTR kProductionCoins$1[rbp+28], edi
+	mov	DWORD PTR kProductionCoins$1[rbp+32], edi
+	mov	QWORD PTR kProductionCoins$1[rbp+36], 2
+	mov	BYTE PTR kProductionCoins$1[rbp+44], al
+	mov	WORD PTR kProductionCoins$1[rbp+45], ax
+	mov	BYTE PTR kProductionCoins$1[rbp+47], al
+	movdqa	XMMWORD PTR kProductionCoins$1[rbp+48], xmm0
+	mov	BYTE PTR kProductionCoins$1[rbp+64], al
+	mov	WORD PTR kProductionCoins$1[rbp+65], ax
+	mov	BYTE PTR kProductionCoins$1[rbp+67], al
+	mov	DWORD PTR kProductionCoins$1[rbp+68], edi
+	mov	DWORD PTR kProductionCoins$1[rbp+72], edi
+	mov	QWORD PTR kProductionCoins$1[rbp+76], 2
+	mov	BYTE PTR kProductionCoins$1[rbp+84], al
+	mov	WORD PTR kProductionCoins$1[rbp+85], ax
+	mov	BYTE PTR kProductionCoins$1[rbp+87], al
+	mov	DWORD PTR kProductionCoins$1[rbp+88], edi
+	mov	DWORD PTR kProductionCoins$1[rbp+92], edi
+	mov	QWORD PTR kProductionCoins$1[rbp+96], 2
+	mov	BYTE PTR kProductionCoins$1[rbp+104], al
+	mov	WORD PTR kProductionCoins$1[rbp+105], ax
+	mov	BYTE PTR kProductionCoins$1[rbp+107], al
+	mov	DWORD PTR kProductionCoins$1[rbp+108], edi
+	mov	DWORD PTR kProductionCoins$1[rbp+112], edi
+	mov	QWORD PTR kProductionCoins$1[rbp+116], 2
+	mov	BYTE PTR kProductionCoins$1[rbp+124], al
+	mov	WORD PTR kProductionCoins$1[rbp+125], ax
+	mov	BYTE PTR kProductionCoins$1[rbp+127], al
+	movdqa	XMMWORD PTR kProductionCoins$1[rbp+128], xmm0
+	mov	BYTE PTR kProductionCoins$1[rbp+144], al
+	mov	WORD PTR kProductionCoins$1[rbp+145], ax
+	mov	BYTE PTR kProductionCoins$1[rbp+147], al
+	mov	DWORD PTR kProductionCoins$1[rbp+148], edi
+	mov	DWORD PTR kProductionCoins$1[rbp+152], edi
+	mov	QWORD PTR kProductionCoins$1[rbp+156], 2
+	mov	BYTE PTR kProductionCoins$1[rbp+164], al
+	mov	WORD PTR kProductionCoins$1[rbp+165], ax
+	mov	BYTE PTR kProductionCoins$1[rbp+167], al
+	mov	DWORD PTR kProductionCoins$1[rbp+168], edi
+	mov	DWORD PTR kProductionCoins$1[rbp+172], edi
+	mov	QWORD PTR kProductionCoins$1[rbp+176], 2
+	mov	BYTE PTR kProductionCoins$1[rbp+184], al
+	mov	WORD PTR kProductionCoins$1[rbp+185], ax
+	mov	BYTE PTR kProductionCoins$1[rbp+187], al
+	mov	DWORD PTR kProductionCoins$1[rbp+188], edi
+	mov	DWORD PTR kProductionCoins$1[rbp+192], edi
+	mov	QWORD PTR kProductionCoins$1[rbp+196], 2
+	mov	BYTE PTR kProductionCoins$1[rbp+204], al
+	mov	WORD PTR kProductionCoins$1[rbp+205], ax
+	mov	BYTE PTR kProductionCoins$1[rbp+207], al
+	movdqa	XMMWORD PTR kProductionCoins$1[rbp+208], xmm0
+	mov	BYTE PTR kProductionCoins$1[rbp+224], al
+	mov	WORD PTR kProductionCoins$1[rbp+225], ax
+	mov	BYTE PTR kProductionCoins$1[rbp+227], al
+	mov	DWORD PTR kProductionCoins$1[rbp+228], edi
+	mov	DWORD PTR kProductionCoins$1[rbp+232], edi
+	mov	QWORD PTR kProductionCoins$1[rbp+236], 2
+	mov	BYTE PTR kProductionCoins$1[rbp+244], al
+	mov	WORD PTR kProductionCoins$1[rbp+245], ax
+	mov	BYTE PTR kProductionCoins$1[rbp+247], al
+	mov	DWORD PTR kProductionCoins$1[rbp+248], edi
+	mov	DWORD PTR kProductionCoins$1[rbp+252], edi
+	mov	QWORD PTR kProductionCoins$1[rbp+256], 2
+	mov	BYTE PTR kProductionCoins$1[rbp+264], al
+	mov	WORD PTR kProductionCoins$1[rbp+265], ax
+	mov	BYTE PTR kProductionCoins$1[rbp+267], al
+	mov	DWORD PTR kProductionCoins$1[rbp+268], edi
+	mov	DWORD PTR kProductionCoins$1[rbp+272], edi
+	mov	QWORD PTR kProductionCoins$1[rbp+276], 2
+	mov	BYTE PTR kProductionCoins$1[rbp+284], al
+	mov	WORD PTR kProductionCoins$1[rbp+285], ax
+	mov	BYTE PTR kProductionCoins$1[rbp+287], al
+	movdqa	XMMWORD PTR kProductionCoins$1[rbp+288], xmm0
+	mov	BYTE PTR kProductionCoins$1[rbp+304], al
+	mov	WORD PTR kProductionCoins$1[rbp+305], ax
+	mov	BYTE PTR kProductionCoins$1[rbp+307], al
+	mov	DWORD PTR kProductionCoins$1[rbp+308], edi
+	mov	DWORD PTR kProductionCoins$1[rbp+312], edi
+	mov	QWORD PTR kProductionCoins$1[rbp+316], 2
+	mov	BYTE PTR kProductionCoins$1[rbp+324], al
+	mov	WORD PTR kProductionCoins$1[rbp+325], ax
+	mov	BYTE PTR kProductionCoins$1[rbp+327], al
+	mov	DWORD PTR kProductionCoins$1[rbp+328], edi
+	mov	DWORD PTR kProductionCoins$1[rbp+332], edi
+	mov	QWORD PTR kProductionCoins$1[rbp+336], 2
+	mov	BYTE PTR kProductionCoins$1[rbp+344], al
+	mov	WORD PTR kProductionCoins$1[rbp+345], ax
+	mov	BYTE PTR kProductionCoins$1[rbp+347], al
+	mov	DWORD PTR kProductionCoins$1[rbp+348], edi
+	mov	DWORD PTR kProductionCoins$1[rbp+352], edi
+	mov	QWORD PTR kProductionCoins$1[rbp+356], 2
+	mov	BYTE PTR kProductionCoins$1[rbp+364], al
+	mov	WORD PTR kProductionCoins$1[rbp+365], ax
+	mov	BYTE PTR kProductionCoins$1[rbp+367], al
+	movdqa	XMMWORD PTR kProductionCoins$1[rbp+368], xmm0
+	mov	BYTE PTR kProductionCoins$1[rbp+384], al
+	mov	WORD PTR kProductionCoins$1[rbp+385], ax
+	mov	BYTE PTR kProductionCoins$1[rbp+387], al
+	mov	DWORD PTR kProductionCoins$1[rbp+388], edi
+	mov	DWORD PTR kProductionCoins$1[rbp+392], edi
+	mov	QWORD PTR kProductionCoins$1[rbp+396], 2
+	mov	BYTE PTR kProductionCoins$1[rbp+404], al
+	mov	WORD PTR kProductionCoins$1[rbp+405], ax
+	mov	BYTE PTR kProductionCoins$1[rbp+407], al
+	mov	DWORD PTR kProductionCoins$1[rbp+408], edi
+	mov	DWORD PTR kProductionCoins$1[rbp+412], edi
+	mov	QWORD PTR kProductionCoins$1[rbp+416], 2
+	mov	BYTE PTR kProductionCoins$1[rbp+424], al
+	mov	WORD PTR kProductionCoins$1[rbp+425], ax
+	mov	BYTE PTR kProductionCoins$1[rbp+427], al
+	mov	DWORD PTR kProductionCoins$1[rbp+428], edi
+	mov	DWORD PTR kProductionCoins$1[rbp+432], edi
+	mov	QWORD PTR kProductionCoins$1[rbp+436], 2
+	mov	BYTE PTR kProductionCoins$1[rbp+444], al
+	mov	WORD PTR kProductionCoins$1[rbp+445], ax
+	mov	BYTE PTR kProductionCoins$1[rbp+447], al
+	movdqa	XMMWORD PTR kProductionCoins$1[rbp+448], xmm0
+	mov	BYTE PTR kProductionCoins$1[rbp+464], al
+	mov	WORD PTR kProductionCoins$1[rbp+465], ax
+	mov	BYTE PTR kProductionCoins$1[rbp+467], al
+	mov	DWORD PTR kProductionCoins$1[rbp+468], edi
+	mov	DWORD PTR kProductionCoins$1[rbp+472], edi
+	mov	QWORD PTR kProductionCoins$1[rbp+476], 2
+	mov	BYTE PTR kProductionCoins$1[rbp+484], al
+	mov	WORD PTR kProductionCoins$1[rbp+485], ax
+	mov	BYTE PTR kProductionCoins$1[rbp+487], al
+	mov	DWORD PTR kProductionCoins$1[rbp+488], edi
+	mov	DWORD PTR kProductionCoins$1[rbp+492], edi
+	mov	QWORD PTR kProductionCoins$1[rbp+496], 2
+	mov	BYTE PTR kProductionCoins$1[rbp+504], 3
+	mov	WORD PTR kProductionCoins$1[rbp+505], ax
+	mov	BYTE PTR kProductionCoins$1[rbp+507], al
+	mov	DWORD PTR kProductionCoins$1[rbp+508], 2
+	mov	DWORD PTR kProductionCoins$1[rbp+512], 1
+	mov	DWORD PTR kProductionCoins$1[rbp+516], 3
+	mov	DWORD PTR kProductionCoins$1[rbp+520], 1
+	mov	BYTE PTR kProductionCoins$1[rbp+524], al
+	mov	WORD PTR kProductionCoins$1[rbp+525], ax
+	mov	BYTE PTR kProductionCoins$1[rbp+527], al
+	movdqa	XMMWORD PTR kProductionCoins$1[rbp+528], xmm0
+	mov	BYTE PTR kProductionCoins$1[rbp+544], al
+	mov	WORD PTR kProductionCoins$1[rbp+545], ax
+	mov	BYTE PTR kProductionCoins$1[rbp+547], al
+	mov	DWORD PTR kProductionCoins$1[rbp+548], edi
+	mov	DWORD PTR kProductionCoins$1[rbp+552], edi
+	mov	QWORD PTR kProductionCoins$1[rbp+556], 2
+	mov	BYTE PTR kProductionCoins$1[rbp+564], 1
+	mov	WORD PTR kProductionCoins$1[rbp+565], ax
+	mov	BYTE PTR kProductionCoins$1[rbp+567], al
+	mov	BYTE PTR kProductionCoins$1[rbp+584], al
+	mov	WORD PTR kProductionCoins$1[rbp+585], ax
+	mov	BYTE PTR kProductionCoins$1[rbp+587], al
+	mov	BYTE PTR kProductionCoins$1[rbp+604], al
+	mov	WORD PTR kProductionCoins$1[rbp+605], ax
+	mov	BYTE PTR kProductionCoins$1[rbp+607], al
+	mov	BYTE PTR kProductionCoins$1[rbp+624], al
+	mov	WORD PTR kProductionCoins$1[rbp+625], ax
+	mov	BYTE PTR kProductionCoins$1[rbp+627], al
+	mov	BYTE PTR kProductionCoins$1[rbp+644], al
+	mov	WORD PTR kProductionCoins$1[rbp+645], ax
+	mov	BYTE PTR kProductionCoins$1[rbp+647], al
+	mov	BYTE PTR kProductionCoins$1[rbp+664], al
+	mov	WORD PTR kProductionCoins$1[rbp+665], ax
+	mov	BYTE PTR kProductionCoins$1[rbp+667], al
+	mov	BYTE PTR kProductionCoins$1[rbp+684], al
+	mov	WORD PTR kProductionCoins$1[rbp+685], ax
+	mov	BYTE PTR kProductionCoins$1[rbp+687], al
+	mov	BYTE PTR kProductionCoins$1[rbp+704], al
+	mov	WORD PTR kProductionCoins$1[rbp+705], ax
+	mov	BYTE PTR kProductionCoins$1[rbp+707], al
+	mov	BYTE PTR kProductionCoins$1[rbp+724], al
+	mov	WORD PTR kProductionCoins$1[rbp+725], ax
+	mov	BYTE PTR kProductionCoins$1[rbp+727], al
+	mov	BYTE PTR kProductionCoins$1[rbp+744], al
+	mov	WORD PTR kProductionCoins$1[rbp+745], ax
+	mov	BYTE PTR kProductionCoins$1[rbp+747], al
+	mov	BYTE PTR kProductionCoins$1[rbp+764], al
+	mov	WORD PTR kProductionCoins$1[rbp+765], ax
+	mov	BYTE PTR kProductionCoins$1[rbp+767], al
+	mov	BYTE PTR kProductionCoins$1[rbp+784], al
+	mov	WORD PTR kProductionCoins$1[rbp+785], ax
+	mov	BYTE PTR kProductionCoins$1[rbp+787], al
+
+; 888  :             { ProductionCoinPick::NONE, CoinType::COIN_SUN, CoinType::COIN_SUN, CoinMotion::COIN_MOTION_FROM_PLANT, 0 },  // 0
+; 889  :             { ProductionCoinPick::FIXED, CoinType::COIN_SUN, CoinType::COIN_SUN, CoinMotion::COIN_MOTION_FROM_PLANT, 1 },  // 1 SUNFLOWER
+; 890  :             { ProductionCoinPick::NONE, CoinType::COIN_SUN, CoinType::COIN_SUN, CoinMotion::COIN_MOTION_FROM_PLANT, 0 },
+; 891  :             { ProductionCoinPick::NONE, CoinType::COIN_SUN, CoinType::COIN_SUN, CoinMotion::COIN_MOTION_FROM_PLANT, 0 },
+; 892  :             { ProductionCoinPick::NONE, CoinType::COIN_SUN, CoinType::COIN_SUN, CoinMotion::COIN_MOTION_FROM_PLANT, 0 },
+; 893  :             { ProductionCoinPick::NONE, CoinType::COIN_SUN, CoinType::COIN_SUN, CoinMotion::COIN_MOTION_FROM_PLANT, 0 },
+; 894  :             { ProductionCoinPick::NONE, CoinType::COIN_SUN, CoinType::COIN_SUN, CoinMotion::COIN_MOTION_FROM_PLANT, 0 },
+; 895  :             { ProductionCoinPick::NONE, CoinType::COIN_SUN, CoinType::COIN_SUN, CoinMotion::COIN_MOTION_FROM_PLANT, 0 },
+; 896  :             { ProductionCoinPick::NONE, CoinType::COIN_SUN, CoinType::COIN_SUN, CoinMotion::COIN_MOTION_FROM_PLANT, 0 },
+; 897  :             { ProductionCoinPick::SMALL_STATE, CoinType::COIN_SMALLSUN, CoinType::COIN_SUN, CoinMotion::COIN_MOTION_FROM_PLANT, 1 },  // 9 SUNSHROOM
+; 898  :             { ProductionCoinPick::NONE, CoinType::COIN_SUN, CoinType::COIN_SUN, CoinMotion::COIN_MOTION_FROM_PLANT, 0 },
+; 899  :             { ProductionCoinPick::NONE, CoinType::COIN_SUN, CoinType::COIN_SUN, CoinMotion::COIN_MOTION_FROM_PLANT, 0 },
+; 900  :             { ProductionCoinPick::NONE, CoinType::COIN_SUN, CoinType::COIN_SUN, CoinMotion::COIN_MOTION_FROM_PLANT, 0 },
+; 901  :             { ProductionCoinPick::NONE, CoinType::COIN_SUN, CoinType::COIN_SUN, CoinMotion::COIN_MOTION_FROM_PLANT, 0 },
+; 902  :             { ProductionCoinPick::NONE, CoinType::COIN_SUN, CoinType::COIN_SUN, CoinMotion::COIN_MOTION_FROM_PLANT, 0 },
+; 903  :             { ProductionCoinPick::NONE, CoinType::COIN_SUN, CoinType::COIN_SUN, CoinMotion::COIN_MOTION_FROM_PLANT, 0 },
+; 904  :             { ProductionCoinPick::NONE, CoinType::COIN_SUN, CoinType::COIN_SUN, CoinMotion::COIN_MOTION_FROM_PLANT, 0 },
+; 905  :             { ProductionCoinPick::NONE, CoinType::COIN_SUN, CoinType::COIN_SUN, CoinMotion::COIN_MOTION_FROM_PLANT, 0 },
+; 906  :             { ProductionCoinPick::NONE, CoinType::COIN_SUN, CoinType::COIN_SUN, CoinMotion::COIN_MOTION_FROM_PLANT, 0 },
+; 907  :             { ProductionCoinPick::NONE, CoinType::COIN_SUN, CoinType::COIN_SUN, CoinMotion::COIN_MOTION_FROM_PLANT, 0 },
+; 908  :             { ProductionCoinPick::NONE, CoinType::COIN_SUN, CoinType::COIN_SUN, CoinMotion::COIN_MOTION_FROM_PLANT, 0 },
+; 909  :             { ProductionCoinPick::NONE, CoinType::COIN_SUN, CoinType::COIN_SUN, CoinMotion::COIN_MOTION_FROM_PLANT, 0 },
+; 910  :             { ProductionCoinPick::NONE, CoinType::COIN_SUN, CoinType::COIN_SUN, CoinMotion::COIN_MOTION_FROM_PLANT, 0 },
+; 911  :             { ProductionCoinPick::NONE, CoinType::COIN_SUN, CoinType::COIN_SUN, CoinMotion::COIN_MOTION_FROM_PLANT, 0 },
+; 912  :             { ProductionCoinPick::NONE, CoinType::COIN_SUN, CoinType::COIN_SUN, CoinMotion::COIN_MOTION_FROM_PLANT, 0 },
+; 913  :             { ProductionCoinPick::NONE, CoinType::COIN_SUN, CoinType::COIN_SUN, CoinMotion::COIN_MOTION_FROM_PLANT, 0 },
+; 914  :             { ProductionCoinPick::NONE, CoinType::COIN_SUN, CoinType::COIN_SUN, CoinMotion::COIN_MOTION_FROM_PLANT, 0 },
+; 915  :             { ProductionCoinPick::NONE, CoinType::COIN_SUN, CoinType::COIN_SUN, CoinMotion::COIN_MOTION_FROM_PLANT, 0 },
+; 916  :             { ProductionCoinPick::NONE, CoinType::COIN_SUN, CoinType::COIN_SUN, CoinMotion::COIN_MOTION_FROM_PLANT, 0 },
+; 917  :             { ProductionCoinPick::NONE, CoinType::COIN_SUN, CoinType::COIN_SUN, CoinMotion::COIN_MOTION_FROM_PLANT, 0 },
+; 918  :             { ProductionCoinPick::NONE, CoinType::COIN_SUN, CoinType::COIN_SUN, CoinMotion::COIN_MOTION_FROM_PLANT, 0 },
+; 919  :             { ProductionCoinPick::NONE, CoinType::COIN_SUN, CoinType::COIN_SUN, CoinMotion::COIN_MOTION_FROM_PLANT, 0 },
+; 920  :             { ProductionCoinPick::NONE, CoinType::COIN_SUN, CoinType::COIN_SUN, CoinMotion::COIN_MOTION_FROM_PLANT, 0 },
+; 921  :             { ProductionCoinPick::NONE, CoinType::COIN_SUN, CoinType::COIN_SUN, CoinMotion::COIN_MOTION_FROM_PLANT, 0 },
+; 922  :             { ProductionCoinPick::NONE, CoinType::COIN_SUN, CoinType::COIN_SUN, CoinMotion::COIN_MOTION_FROM_PLANT, 0 },
+; 923  :             { ProductionCoinPick::NONE, CoinType::COIN_SUN, CoinType::COIN_SUN, CoinMotion::COIN_MOTION_FROM_PLANT, 0 },
+; 924  :             { ProductionCoinPick::NONE, CoinType::COIN_SUN, CoinType::COIN_SUN, CoinMotion::COIN_MOTION_FROM_PLANT, 0 },
+; 925  :             { ProductionCoinPick::NONE, CoinType::COIN_SUN, CoinType::COIN_SUN, CoinMotion::COIN_MOTION_FROM_PLANT, 0 },
+; 926  :             { ProductionCoinPick::RANDOM10, CoinType::COIN_GOLD, CoinType::COIN_SILVER, CoinMotion::COIN_MOTION_COIN, 1 },  // 38 MARIGOLD
+; 927  :             { ProductionCoinPick::NONE, CoinType::COIN_SUN, CoinType::COIN_SUN, CoinMotion::COIN_MOTION_FROM_PLANT, 0 },
+; 928  :             { ProductionCoinPick::NONE, CoinType::COIN_SUN, CoinType::COIN_SUN, CoinMotion::COIN_MOTION_FROM_PLANT, 0 },
+; 929  :             { ProductionCoinPick::FIXED, CoinType::COIN_SUN, CoinType::COIN_SUN, CoinMotion::COIN_MOTION_FROM_PLANT, 2 },  // 41 TWINSUNFLOWER
+; 930  :             { ProductionCoinPick::NONE, CoinType::COIN_SUN, CoinType::COIN_SUN, CoinMotion::COIN_MOTION_FROM_PLANT, 0 },
+; 931  :             { ProductionCoinPick::NONE, CoinType::COIN_SUN, CoinType::COIN_SUN, CoinMotion::COIN_MOTION_FROM_PLANT, 0 },
+; 932  :             { ProductionCoinPick::NONE, CoinType::COIN_SUN, CoinType::COIN_SUN, CoinMotion::COIN_MOTION_FROM_PLANT, 0 },
+; 933  :             { ProductionCoinPick::NONE, CoinType::COIN_SUN, CoinType::COIN_SUN, CoinMotion::COIN_MOTION_FROM_PLANT, 0 },
+; 934  :             { ProductionCoinPick::NONE, CoinType::COIN_SUN, CoinType::COIN_SUN, CoinMotion::COIN_MOTION_FROM_PLANT, 0 },
+; 935  :             { ProductionCoinPick::NONE, CoinType::COIN_SUN, CoinType::COIN_SUN, CoinMotion::COIN_MOTION_FROM_PLANT, 0 },
+; 936  :             { ProductionCoinPick::NONE, CoinType::COIN_SUN, CoinType::COIN_SUN, CoinMotion::COIN_MOTION_FROM_PLANT, 0 },
+; 937  :             { ProductionCoinPick::NONE, CoinType::COIN_SUN, CoinType::COIN_SUN, CoinMotion::COIN_MOTION_FROM_PLANT, 0 },
+; 938  :             { ProductionCoinPick::NONE, CoinType::COIN_SUN, CoinType::COIN_SUN, CoinMotion::COIN_MOTION_FROM_PLANT, 0 },
+; 939  :             { ProductionCoinPick::NONE, CoinType::COIN_SUN, CoinType::COIN_SUN, CoinMotion::COIN_MOTION_FROM_PLANT, 0 },
+; 940  :         };
+; 941  :         static_assert(sizeof(kProductionCoins) / sizeof(kProductionCoins[0]) == (int)SeedType::NUM_SEED_TYPES,
+; 942  :             "产币槽位须与 SeedType 枚举同步");
+; 943  : 
+; 944  :         if ((unsigned)mSeedType < sizeof(kProductionCoins) / sizeof(kProductionCoins[0]))
+
+	movsxd	rax, DWORD PTR [rbx]
+	mov	DWORD PTR kProductionCoins$1[rbp+568], edi
+	mov	DWORD PTR kProductionCoins$1[rbp+572], edi
+	mov	DWORD PTR kProductionCoins$1[rbp+576], 2
+	mov	DWORD PTR kProductionCoins$1[rbp+580], 2
+	mov	DWORD PTR kProductionCoins$1[rbp+588], edi
+	mov	DWORD PTR kProductionCoins$1[rbp+592], edi
+	mov	QWORD PTR kProductionCoins$1[rbp+596], 2
+	movdqa	XMMWORD PTR kProductionCoins$1[rbp+608], xmm0
+	mov	DWORD PTR kProductionCoins$1[rbp+628], edi
+	mov	DWORD PTR kProductionCoins$1[rbp+632], edi
+	mov	QWORD PTR kProductionCoins$1[rbp+636], 2
+	mov	DWORD PTR kProductionCoins$1[rbp+648], edi
+	mov	DWORD PTR kProductionCoins$1[rbp+652], edi
+	mov	QWORD PTR kProductionCoins$1[rbp+656], 2
+	mov	DWORD PTR kProductionCoins$1[rbp+668], edi
+	mov	DWORD PTR kProductionCoins$1[rbp+672], edi
+	mov	QWORD PTR kProductionCoins$1[rbp+676], 2
+	movdqa	XMMWORD PTR kProductionCoins$1[rbp+688], xmm0
+	mov	DWORD PTR kProductionCoins$1[rbp+708], edi
+	mov	DWORD PTR kProductionCoins$1[rbp+712], edi
+	mov	QWORD PTR kProductionCoins$1[rbp+716], 2
+	mov	DWORD PTR kProductionCoins$1[rbp+728], edi
+	mov	DWORD PTR kProductionCoins$1[rbp+732], edi
+	mov	QWORD PTR kProductionCoins$1[rbp+736], 2
+	mov	DWORD PTR kProductionCoins$1[rbp+748], edi
+	mov	DWORD PTR kProductionCoins$1[rbp+752], edi
+	mov	QWORD PTR kProductionCoins$1[rbp+756], 2
+	movdqa	XMMWORD PTR kProductionCoins$1[rbp+768], xmm0
+	mov	QWORD PTR kProductionCoins$1[rbp+788], rsi
+	mov	QWORD PTR kProductionCoins$1[rbp+796], rsi
+	cmp	eax, 53					; 00000035H
+	jae	$LN3@UpdateProd
+	mov	QWORD PTR [rsp+1160], r14
+
+; 945  :         {
+; 946  :             const auto& aRow = kProductionCoins[mSeedType];
+
+	lea	rsi, QWORD PTR [rax+rax*4]
+	lea	r14, QWORD PTR kProductionCoins$1[rsp]
+
+; 947  :             if (aRow.mPick != ProductionCoinPick::NONE)
+
+	movzx	ecx, BYTE PTR [r14+rsi*4]
+	lea	r14, QWORD PTR [r14+rsi*4]
+	test	cl, cl
+	je	$LN90@UpdateProd
+
+; 948  :             {
+; 949  :                 CoinType aCoin = aRow.mCoinA;
+
+	mov	eax, DWORD PTR kProductionCoins$1[rsp+rsi*4+4]
+
+; 950  :                 if (aRow.mPick == ProductionCoinPick::SMALL_STATE)
+
+	cmp	cl, 2
+	jne	SHORT $LN17@UpdateProd
+
+; 951  :                 {
+; 952  :                     aCoin = (mState == PlantState::STATE_SUNSHROOM_SMALL) ? aRow.mCoinA : aRow.mCoinB;
+
+	cmp	DWORD PTR [rbx+4], 23
+	je	SHORT $LN70@UpdateProd
+	mov	eax, DWORD PTR kProductionCoins$1[rsp+rsi*4+8]
+
+; 953  :                 }
+
+	jmp	SHORT $LN70@UpdateProd
+$LN17@UpdateProd:
+
+; 954  :                 else if (aRow.mPick == ProductionCoinPick::RANDOM10)
+
+	cmp	cl, 3
+	jne	SHORT $LN70@UpdateProd
+
+; 955  :                 {
+; 956  :                     aCoin = (Sexy::Rand(100) < 10) ? aRow.mCoinA : aRow.mCoinB;
+
+	mov	ecx, 100				; 00000064H
+	call	?Rand@Sexy@@YAII@Z			; Sexy::Rand
+	mov	r8, QWORD PTR ?g_ck@@3_KA		; g_ck
+	cmp	eax, 10
+	mov	ecx, 8
+	cmovae	rdi, rcx
+	mov	eax, DWORD PTR [rdi+r14]
+$LN70@UpdateProd:
+
+; 958  :                 for (int i = 0; i < aRow.mCount; i++)
+
+	mov	edx, DWORD PTR kProductionCoins$1[rsp+rsi*4+16]
+	test	edx, edx
+	jle	SHORT $LN90@UpdateProd
+
+; 959  :                 {
+; 960  :                     mBoard->AddCoin(mX, mY, aCoin, aRow.mMotion);
+
+	movsxd	rcx, DWORD PTR kProductionCoins$1[rsp+rsi*4+12]
+	mov	r9, 1520839313276492958			; 151b1b4c344b5c9eH
+	cdqe
+	add	r9, rax
+	add	r9, rcx
+	npad	6
+$LL4@UpdateProd:
+; File C:\Users\Administrator\AppData\Local\Temp\pvz-small-bench-build-_27lfc08\archive\r2plant\r2_stub.h
+
+; 448  :     void AddCoin(int x, int y, CoinType t, CoinMotion m) { MixCk(0x2051ULL, (uint64_t)t + (uint64_t)m + (uint64_t)x + (uint64_t)y); }
+
+	movsxd	rax, DWORD PTR [rbx+20]
+	movsxd	rcx, DWORD PTR [rbx+16]
+
+; 26   :     g_ck = g_ck * 0x100000001B3ULL ^ (salt * 0x9E3779B97F4A7C15ULL + v + 0x165667B19E3779F9ULL);
+
+	add	rax, r9
+	add	rcx, rax
+	mov	rax, r8
+	imul	rax, r15
+	mov	r8, rcx
+	xor	r8, rax
+	mov	QWORD PTR ?g_ck@@3_KA, r8		; g_ck
+; File C:\Users\Administrator\AppData\Local\Temp\pvz-table-storage-diagnosis-20261029\legacy.cpp
+
+; 958  :                 for (int i = 0; i < aRow.mCount; i++)
+
+	sub	edx, 1
+	jne	SHORT $LL4@UpdateProd
+$LN90@UpdateProd:
+	mov	r14, QWORD PTR [rsp+1160]
+$LN3@UpdateProd:
+
+; 961  :                 }
+; 962  :             }
+; 963  :         }
+; 964  : 
+; 965  :         if (mApp->mGameMode == GameMode::GAMEMODE_CHALLENGE_BIG_TIME)
+
+	mov	rax, QWORD PTR [rbx+64]
+	mov	rdi, QWORD PTR [rsp+1152]
+	cmp	DWORD PTR [rax+8], 3
+	jne	SHORT $LN89@UpdateProd
+
+; 966  :         {
+; 967  :             if (mSeedType == SeedType::SEED_SUNFLOWER)
+
+	mov	eax, DWORD PTR [rbx]
+	cmp	eax, 1
+	jne	SHORT $LN21@UpdateProd
+; File C:\Users\Administrator\AppData\Local\Temp\pvz-small-bench-build-_27lfc08\archive\r2plant\r2_stub.h
+
+; 26   :     g_ck = g_ck * 0x100000001B3ULL ^ (salt * 0x9E3779B97F4A7C15ULL + v + 0x165667B19E3779F9ULL);
+
+	mov	rdx, 1520839313276492964		; 151b1b4c344b5ca4H
+; File C:\Users\Administrator\AppData\Local\Temp\pvz-table-storage-diagnosis-20261029\legacy.cpp
+
+; 970  :             }
+
+	jmp	SHORT $LN91@UpdateProd
+$LN21@UpdateProd:
+
+; 971  :             else if (mSeedType == SeedType::SEED_MARIGOLD)
+
+	cmp	eax, 38					; 00000026H
+	jne	SHORT $LN89@UpdateProd
+; File C:\Users\Administrator\AppData\Local\Temp\pvz-small-bench-build-_27lfc08\archive\r2plant\r2_stub.h
+
+; 26   :     g_ck = g_ck * 0x100000001B3ULL ^ (salt * 0x9E3779B97F4A7C15ULL + v + 0x165667B19E3779F9ULL);
+
+	mov	rdx, 1520839313276492962		; 151b1b4c344b5ca2H
+$LN91@UpdateProd:
+
+; 448  :     void AddCoin(int x, int y, CoinType t, CoinMotion m) { MixCk(0x2051ULL, (uint64_t)t + (uint64_t)m + (uint64_t)x + (uint64_t)y); }
+
+	movsxd	rax, DWORD PTR [rbx+20]
+	movsxd	rcx, DWORD PTR [rbx+16]
+
+; 26   :     g_ck = g_ck * 0x100000001B3ULL ^ (salt * 0x9E3779B97F4A7C15ULL + v + 0x165667B19E3779F9ULL);
+
+	add	rdx, rax
+	imul	r8, r15
+	add	rdx, rcx
+	xor	rdx, r8
+	mov	QWORD PTR ?g_ck@@3_KA, rdx		; g_ck
+$LN89@UpdateProd:
+	mov	rsi, QWORD PTR [rsp+1144]
+$LN6@UpdateProd:
+; File C:\Users\Administrator\AppData\Local\Temp\pvz-table-storage-diagnosis-20261029\legacy.cpp
+
+; 977  : }
+
+	add	rsp, 1104				; 00000450H
+	pop	r15
+	pop	rbx
+	pop	rbp
+	ret	0
+?UpdateProductionPlant@Plant@FB@@QEAAXXZ ENDP		; FB::Plant::UpdateProductionPlant

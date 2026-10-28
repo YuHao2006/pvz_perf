@@ -1,0 +1,1 @@
+PASS legacy/v1/v2/v4 roundtrips, current default/import/export, v4 header and CRC independence, all v3 headers rejected without output writes. Evidence: C:\Users\ADMINI~1\AppData\Local\Temp\pvz-v4-conversion-186918096427300

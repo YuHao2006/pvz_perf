@@ -1,0 +1,9 @@
+target(Plant)                |          A ns r1/r2 |          B ns r1/r2 |    diff% | checksum A/B
+1 kChomperStateCases 49      |  32822500  33019000 |  30279900  30466000 |   +7.75% | 6b66081f2d76412e 6b66081f2d76412e EQ
+2 kShooterFireCases 53       |  43498300  45419500 | 100095300 100089900 | -130.10% | a2c8fb778ee56afa a2c8fb778ee56afa EQ
+3 kProductionCoins 53        |  83959100  83969600 | 396427700 397239600 | -372.17% | bd69a2c4d8b5ccf4 bd69a2c4d8b5ccf4 EQ
+4 kScaredyStateCases 49      | 109598000 110401400 | 109269200 109313300 |   +0.30% | 0097675577cfe8b3 0097675577cfe8b3 EQ
+5 kCobCannonStateCases 4     |  22527100  22563600 |  20116700  20107400 |  +10.74% | 917960807169bb51 917960807169bb51 EQ
+6 kCactusStateCases 3        |  70153600  71416400 |  57623500  58514300 |  +17.86% | db15b476ed75fa13 db15b476ed75fa13 EQ
+7 kBowlingBounceCoins 4      | 165136400 165073400 | 167386600 170754700 |   -1.40% | d626fbba959b9a49 d626fbba959b9a49 EQ
+8 kBlinkCases 53             | 103583400 104872200 | 103237600 106984800 |   +0.33% | fbd8d6b83869f23e fbd8d6b83869f23e EQ

@@ -1,0 +1,442 @@
+[
+  {
+    "file": "pvzPerf/Lawn/Challenge.cpp",
+    "line": 5271,
+    "declaration": "constexpr int kSquirrelStep[4][2] = {\n\t\t{-1, 0},  // 0 左\n\t\t{1, 0},   // 1 右\n\t\t{0, -1},  // 2 上\n\t\t{0, 1},   // 3 下\n\t};"
+  },
+  {
+    "file": "pvzPerf/Lawn/Challenge.cpp",
+    "line": 5746,
+    "declaration": "constexpr int kTreeWisdomMilestoneSize[3] = { 100, 500, 1000 };"
+  },
+  {
+    "file": "pvzPerf/Lawn/Challenge.cpp",
+    "line": 5747,
+    "declaration": "constexpr int kTreeWisdomMilestoneTalk[3] = { 800, 900, 1000 };"
+  },
+  {
+    "file": "pvzPerf/Lawn/System/DataSync.cpp",
+    "line": 747,
+    "declaration": "const unsigned char aBytes[4] = {\n\t\tstatic_cast<unsigned char>(aValue), static_cast<unsigned char>(aValue >> 8),\n\t\tstatic_cast<unsigned char>(aValue >> 16), static_cast<unsigned char>(aValue >> 24)\n\t};"
+  },
+  {
+    "file": "pvzPerf/Lawn/Widget/ZombatarItems.cpp",
+    "line": 888,
+    "declaration": "const std::array<ZombatarButton*, 9> aCategoryButtons = {\n\t\tmSkinButton, mHairButton, mFacialHairButton, mTidbitsButton,\n\t\tmEyeWearButton, mClothesButton, mAccessoryButton, mHatsButton,\n\t\tmBackdropsButton\n\t};"
+  },
+  {
+    "file": "pvzPerf/Lawn/Zombie.cpp",
+    "line": 4087,
+    "declaration": "constexpr LostArmOverride kLostArmOverrides[ZombieType::NUM_ZOMBIE_TYPES] = {\n    /* [0]  ZOMBIE_NORMAL          */ { ReanimTrackId::Zombie_outerarm_lower, ReanimTrackId::Zombie_outerarm_upper, 1 },\n    /* [1]  ZOMBIE_FLAG            */ { ReanimTrackId::Zombie_outerarm_lower, ReanimTrackId::Zombie_outerarm_upper, 1 },\n    /* [2]  ZOMBIE_TRAFFIC_CONE    */ { ReanimTrackId::Zombie_outerarm_lower, ReanimTrackId::Zombie_outerarm_upper, 1 },\n    /* [3]  ZOMBIE_POLEVAULTER     */ { ReanimTrackId::Zombie_polevaulter_outerarm_lower, ReanimTrackId::Zombie_polevaulter_outerarm_upper, 1 },\n    /* [4]  ZOMBIE_PAIL            */ { ReanimTrackId::Zombie_outerarm_lower, ReanimTrackId::Zombie_outerarm_upper, 1 },\n    /* [5]  ZOMBIE_NEWSPAPER       */ { ReanimTrackId::Zombie_paper_leftarm_lower, ReanimTrackId::Zombie_paper_leftarm_upper, 1 },\n    /* [6]  ZOMBIE_DOOR            */ { ReanimTrackId::Zombie_outerarm_lower, ReanimTrackId::Zombie_outerarm_upper, 1 },\n    /* [7]  ZOMBIE_FOOTBALL        */ { ReanimTrackId::zombie_football_leftarm_hand, ReanimTrackId::zombie_football_leftarm_upper, 1 },\n    /* [8]  ZOMBIE_DANCER          */ { ReanimTrackId::Zombie_disco_outerarm_lower, ReanimTrackId::Zombie_disco_outerarm_upper, 1 },\n    /* [9]  ZOMBIE_BACKUP_DANCER   */ { ReanimTrackId::Zombie_disco_outerarm_lower, ReanimTrackId::Zombie_disco_outerarm_upper, 1 },\n    /* [10] ZOMBIE_DUCKY_TUBE      */ { ReanimTrackId::Zombie_outerarm_lower, ReanimTrackId::Zombie_outerarm_upper, 1 },\n    /* [11] ZOMBIE_SNORKEL         */ { ReanimTrackId::Zombie_outerarm_lower, ReanimTrackId::Zombie_snorkle_outerarm_upper, 1 },\n    /* [12] ZOMBIE_ZAMBONI         */ { ReanimTrackId::Zombie_outerarm_lower, ReanimTrackId::Zombie_outerarm_upper, 1 },\n    /* [13] ZOMBIE_BOBSLED         */ { ReanimTrackId::Zombie_outerarm_lower, ReanimTrackId::Zombie_dolphinrider_outerarm_upper, 1 },\n    /* [14] ZOMBIE_DOLPHIN_RIDER   */ { ReanimTrackId::Zombie_outerarm_lower, ReanimTrackId::Zombie_dolphinrider_outerarm_upper, 1 },\n    /* [15] ZOMBIE_JACK_IN_THE_BOX */ { ReanimTrackId::Zombie_jackbox_outerarm_lower, ReanimTrackId::Zombie_jackbox_outerarm_lower, 1 },\n    /* [16] ZOMBIE_BALLOON         */ { ReanimTrackId::Zombie_outerarm_lower, ReanimTrackId::Zombie_outerarm_upper, 1 },\n    /* [17] ZOMBIE_DIGGER          */ { ReanimTrackId::Zombie_outerarm_lower, ReanimTrackId::Zombie_digger_outerarm_upper, 1 },\n    /* [18] ZOMBIE_POGO            */ { ReanimTrackId::Zombie_outerarm_lower, ReanimTrackId::Zombie_outerarm_upper, 1 },\n    /* [19] ZOMBIE_YETI            */ { ReanimTrackId::Zombie_outerarm_hand, ReanimTrackId::Zombie_yeti_outerarm_upper, 1 },\n    /* [20] ZOMBIE_BUNGEE          */ { ReanimTrackId::Zombie_outerarm_lower, ReanimTrackId::Zombie_outerarm_upper, 1 },\n    /* [21] ZOMBIE_LADDER          */ { ReanimTrackId::Zombie_outerarm_hand, ReanimTrackId::Zombie_ladder_outerarm_upper, 1 },\n    /* [22] ZOMBIE_CATAPULT        */ { ReanimTrackId::Zombie_outerarm_lower, ReanimTrackId::Zombie_outerarm_upper, 1 },\n    /* [23] ZOMBIE_GARGANTUAR      */ { ReanimTrackId::Zombie_outerarm_lower, ReanimTrackId::Zombie_outerarm_upper, 1 },\n    /* [24] ZOMBIE_IMP             */ { ReanimTrackId::Zombie_outerarm_lower, ReanimTrackId::Zombie_imp_outerarm_upper, 1 },\n    /* [25] ZOMBIE_BOSS            */ { ReanimTrackId::Zombie_outerarm_lower, ReanimTrackId::Zombie_outerarm_upper, 1 },\n    /* [26] ZOMBIE_PEA_HEAD        */ { ReanimTrackId::Zombie_outerarm_lower, ReanimTrackId::Zombie_outerarm_upper, 1 },\n    /* [27] ZOMBIE_WALLNUT_HEAD    */ { ReanimTrackId::Zombie_outerarm_lower, ReanimTrackId::Zombie_outerarm_upper, 1 },\n    /* [28] ZOMBIE_JALAPENO_HEAD   */ { ReanimTrackId::Zombie_outerarm_lower, ReanimTrackId::Zombie_outerarm_upper, 1 },\n    /* [29] ZOMBIE_GATLING_HEAD    */ { ReanimTrackId::Zombie_outerarm_lower, ReanimTrackId::Zombie_outerarm_upper, 1 },\n    /* [30] ZOMBIE_SQUASH_HEAD     */ { ReanimTrackId::Zombie_outerarm_lower, ReanimTrackId::Zombie_outerarm_upper, 1 },\n    /* [31] ZOMBIE_TALLNUT_"
+  },
+  {
+    "file": "pvzPerf/Lawn/Zombie.cpp",
+    "line": 4142,
+    "declaration": "constexpr LostArmHideCaseFn kLostArmHideCases[(int)ZombieType::NUM_ZOMBIE_TYPES] = {\n    &LostArmHideDefault,  // 0 ZOMBIE_NORMAL（原 default）\n    &LostArmHideDefault,  // 1 ZOMBIE_FLAG（原 default）\n    &LostArmHideDefault,  // 2 ZOMBIE_TRAFFIC_CONE（原 default）\n    // 原 case ZOMBIE_POLEVAULTER\n    [](Zombie& z)\n    {\n            z.ReanimShowTrack(ReanimTrackId::Zombie_polevaulter_outerarm_lower, RENDER_GROUP_HIDDEN);\n            z.ReanimShowTrack(ReanimTrackId::Zombie_outerarm_hand, RENDER_GROUP_HIDDEN);\n\n        // @Patoke: add cases\n    },  // 3 ZOMBIE_POLEVAULTER\n    &LostArmHideDefault,  // 4 ZOMBIE_PAIL（原 default）\n    // 原 case ZOMBIE_NEWSPAPER\n    [](Zombie& z)\n    {\n            z.ReanimShowTrack(ReanimTrackId::Zombie_paper_hands, RENDER_GROUP_HIDDEN);\n            z.ReanimShowTrack(ReanimTrackId::Zombie_paper_leftarm_lower, RENDER_GROUP_HIDDEN);\n    },  // 5 ZOMBIE_NEWSPAPER\n    &LostArmHideDefault,  // 6 ZOMBIE_DOOR（原 default）\n    // 原 case ZOMBIE_FOOTBALL\n    [](Zombie& z)\n    {\n            z.ReanimShowRange(ReanimTrackRanges::Zombie_football_leftarm_lower, RENDER_GROUP_HIDDEN);\n            z.ReanimShowRange(ReanimTrackRanges::Zombie_football_leftarm_hand, RENDER_GROUP_HIDDEN);\n    },  // 7 ZOMBIE_FOOTBALL\n    // 原 case ZOMBIE_DANCER\n    [](Zombie& z)\n    {\n            z.ReanimShowTrack(ReanimTrackId::Zombie_disco_outerarm_lower, RENDER_GROUP_HIDDEN);\n            z.ReanimShowTrack(ReanimTrackId::Zombie_disco_outerhand_point, RENDER_GROUP_HIDDEN);\n    },  // 8 ZOMBIE_DANCER\n    // 原 case ZOMBIE_BACKUP_DANCER\n    [](Zombie& z)\n    {\n            z.ReanimShowTrack(ReanimTrackId::Zombie_disco_outerarm_lower, RENDER_GROUP_HIDDEN);\n            z.ReanimShowTrack(ReanimTrackId::Zombie_disco_outerhand, RENDER_GROUP_HIDDEN);\n    },  // 9 ZOMBIE_BACKUP_DANCER\n    &LostArmHideDefault,  // 10 ZOMBIE_DUCKY_TUBE（原 default）\n    &LostArmHideDefault,  // 11 ZOMBIE_SNORKEL（原 default）\n    &LostArmHideDefault,  // 12 ZOMBIE_ZAMBONI（原 default）\n    &LostArmHideDefault,  // 13 ZOMBIE_BOBSLED（原 default）\n    &LostArmHideDefault,  // 14 ZOMBIE_DOLPHIN_RIDER（原 default）\n    &LostArmHideDefault,  // 15 ZOMBIE_JACK_IN_THE_BOX（原 default）\n    &LostArmHideDefault,  // 16 ZOMBIE_BALLOON（原 default）\n    &LostArmHideDefault,  // 17 ZOMBIE_DIGGER（原 default）\n    &LostArmHideDefault,  // 18 ZOMBIE_POGO（原 default）\n    &LostArmHideDefault,  // 19 ZOMBIE_YETI（原 default）\n    &LostArmHideDefault,  // 20 ZOMBIE_BUNGEE（原 default）\n    &LostArmHideDefault,  // 21 ZOMBIE_LADDER（原 default）\n    &LostArmHideDefault,  // 22 ZOMBIE_CATAPULT（原 default）\n    &LostArmHideDefault,  // 23 ZOMBIE_GARGANTUAR（原 default）\n    &LostArmHideDefault,  // 24 ZOMBIE_IMP（原 default）\n    &LostArmHideDefault,  // 25 ZOMBIE_BOSS（原 default）\n    &LostArmHideDefault,  // 26 ZOMBIE_PEA_HEAD（原 default）\n    &LostArmHideDefault,  // 27 ZOMBIE_WALLNUT_HEAD（原 default）\n    &LostArmHideDefault,  // 28 ZOMBIE_JALAPENO_HEAD（原 default）\n    &LostArmHideDefault,  // 29 ZOMBIE_GATLING_HEAD（原 default）\n    &LostArmHideDefault,  // 30 ZOMBIE_SQUASH_HEAD（原 default）\n    &LostArmHideDefault,  // 31 ZOMBIE_TALLNUT_HEAD（原 default）\n    &LostArmHideDefault,  // 32 ZOMBIE_REDEYE_GARGANTUAR（原 default）\n    &LostArmHideDefault,  // 33 ZOMBIE_ZOMBATAR（原 default）\n};"
+  },
+  {
+    "file": "pvzPerf/LawnApp.cpp",
+    "line": 1811,
+    "declaration": "const ResourceGroupId groups[] = { ResourceGroupId::LoadingFonts, ResourceGroupId::LoadingImages, ResourceGroupId::LoadingSounds };"
+  },
+  {
+    "file": "pvzPerf/Sexy.TodLib/NumericTextControls.h",
+    "line": 56,
+    "declaration": "const char aRecord[] = {kUiTextFormatMarker, static_cast<char>(theFormat)};"
+  },
+  {
+    "file": "pvzPerf/Sexy.TodLib/NumericTextControls.h",
+    "line": 62,
+    "declaration": "const char aRecord[] = {kUiTextPlaceholderMarker, static_cast<char>(thePlaceholder)};"
+  },
+  {
+    "file": "pvzPerf/Sexy.TodLib/TodStringFile.cpp",
+    "line": 114,
+    "declaration": "constexpr uint8_t aJustifyDivisor[6] = {\n\t\t    0,  // DS_ALIGN_LEFT\n\t\t    1,  // DS_ALIGN_RIGHT\n\t\t    2,  // DS_ALIGN_CENTER\n\t\t    0,  // DS_ALIGN_LEFT_VERTICAL_MIDDLE\n\t\t    1,  // DS_ALIGN_RIGHT_VERTICAL_MIDDLE\n\t\t    2,  // DS_ALIGN_CENTER_VERTICAL_MIDDLE\n\t\t};"
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/effect/ScaleEffectCompiler.cpp",
+    "line": 179,
+    "declaration": "const wchar_t* args[] = {name.c_str(), L\"-E\", L\"__M\", L\"-T\", L\"cs_6_0\",\n            L\"-HV\", L\"2018\", L\"-O3\", L\"-Ges\", L\"-I\", directory.c_str()};"
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/effect/ScaleEffectCompiler.cpp",
+    "line": 215,
+    "declaration": "const wchar_t* args[] = {name.c_str(), L\"-E\", L\"__M\", L\"-T\", L\"cs_6_0\",\n            L\"-spirv\", L\"-fspv-target-env=vulkan1.2\", L\"-HV\", L\"2018\",\n            L\"-O3\", L\"-Ges\", L\"-I\", directory.c_str()};"
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/effect/ScaleEffectCompiler.cpp",
+    "line": 960,
+    "declaration": "const char* aDigits[] = { \"1\", \"2\", \"3\", \"4\" };"
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/effect/ScaleEffectCompiler.cpp",
+    "line": 1177,
+    "declaration": "const char bytes[]={char(word),char(word>>8),char(word>>16),char(word>>24)};"
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/effect/ScaleEffectFormats.h",
+    "line": 8,
+    "declaration": "constexpr unsigned int formats[]{\n        109, 97, 91, 92, 103, 64, 122, 37, 38, 83,\n        77, 78, 100, 16, 17, 76, 70, 71, 9, 10\n    };"
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/graphics/d3d12/D3d12Renderer.cpp",
+    "line": 356,
+    "declaration": "const unsigned short quad[]{static_cast<unsigned short>(i), static_cast<unsigned short>(i + 1),\n                static_cast<unsigned short>(i + 2), static_cast<unsigned short>(i + 1),\n                static_cast<unsigned short>(i + 2), static_cast<unsigned short>(i + 3)};"
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/graphics/d3d12/D3d12Renderer.cpp",
+    "line": 711,
+    "declaration": "const float clear[]{0, 0, 0, 1};"
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/graphics/d3d12/D3d12Renderer.cpp",
+    "line": 726,
+    "declaration": "const std::array inputs{causticSource};"
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/graphics/d3d12/D3d12Renderer.cpp",
+    "line": 757,
+    "declaration": "const std::array<UINT, 4> constants{\n            std::bit_cast<UINT>(float(target->width)),\n            std::bit_cast<UINT>(float(target->height)),\n            target->generated ? 1u : 0u, run.coverage ? 1u : 0u};"
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/graphics/d3d12/D3d12Renderer.cpp",
+    "line": 818,
+    "declaration": "const unsigned short quad[]{static_cast<unsigned short>(a), static_cast<unsigned short>(a+1),\n                        static_cast<unsigned short>(a+2), static_cast<unsigned short>(a+1),\n                        static_cast<unsigned short>(a+2), static_cast<unsigned short>(a+3)};"
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/graphics/d3d12/D3d12Renderer.cpp",
+    "line": 981,
+    "declaration": "const std::array inputs{source};"
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/graphics/d3d12/D3d12Renderer.cpp",
+    "line": 1014,
+    "declaration": "const float black[]{0, 0, 0, 1};"
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/graphics/d3d12/D3d12Renderer.cpp",
+    "line": 1021,
+    "declaration": "const std::array<GpuVertex, 6> quad{{\n            {x,y,1,1,1,1,0,0,slot,1}, {x+w,y,1,1,1,1,1,0,slot,1},\n            {x+w,y+h,1,1,1,1,1,1,slot,1}, {x,y,1,1,1,1,0,0,slot,1},\n            {x+w,y+h,1,1,1,1,1,1,slot,1}, {x,y+h,1,1,1,1,0,1,slot,1}\n        }};"
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/graphics/d3d12/D3d12Renderer.cpp",
+    "line": 1040,
+    "declaration": "const float constants[]{float(context.width), float(context.height),\n                0, 0, hdr.paperWhiteNits, hdr.peakNits, hdr.reinhardPaperNits, hdr.strength};"
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/graphics/d3d12/D3d12Renderer.cpp",
+    "line": 1047,
+    "declaration": "const UINT constants[]{std::bit_cast<UINT>(float(context.width)),\n                std::bit_cast<UINT>(float(context.height)), 0, 0};"
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/graphics/d3d12/D3d12Renderer.cpp",
+    "line": 1264,
+    "declaration": "const float clear[]{0, 0, 0, 0};"
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/graphics/d3d12/D3d12Renderer.cpp",
+    "line": 1304,
+    "declaration": "const float zero[]{0, 0, 0, 0};"
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/graphics/d3d12/D3d12Renderer.cpp",
+    "line": 1340,
+    "declaration": "const std::array inputs{base, alpha};"
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/graphics/d3d12/D3d12Renderer.cpp",
+    "line": 1387,
+    "declaration": "const std::array inputs{source};"
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/graphics/d3d12/D3d12Renderer.cpp",
+    "line": 1428,
+    "declaration": "const float clear[]{1, 1, 1, 0};"
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/graphics/d3d12/D3d12Renderer.cpp",
+    "line": 1506,
+    "declaration": "const std::array<UINT, 4> scene{\n        std::bit_cast<UINT>(float(target->width)), std::bit_cast<UINT>(float(target->height)),\n        target->generated ? 1u : 0u, 0u};"
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/graphics/d3d12/D3d12Renderer.cpp",
+    "line": 1512,
+    "declaration": "const std::array<UINT, 16> constants{\n        std::bit_cast<UINT>(p.width), std::bit_cast<UINT>(p.height),\n        std::bit_cast<UINT>(p.transX), std::bit_cast<UINT>(p.transY),\n        std::bit_cast<UINT>(p.time1), std::bit_cast<UINT>(p.time2),\n        std::bit_cast<UINT>(p.time3), std::bit_cast<UINT>(p.time5),\n        std::bit_cast<UINT>(float(p.clip.x)), std::bit_cast<UINT>(float(p.clip.y)),\n        std::bit_cast<UINT>(float(p.clip.width)), std::bit_cast<UINT>(float(p.clip.height)),\n        p.layer, p.night, source->slot | (p.samplingFlags & filters) |\n            (source->generated ? 0x80000000u : 0u) |\n            (source->opaque ? GpuVertex::kOpaqueInput : 0u), p.sampler};"
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/graphics/d3d9/D3d9Renderer.cpp",
+    "line": 35,
+    "declaration": "constexpr std::array<DWORD, 4> expectedCounts{4, 129, 129, 6};"
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/graphics/d3d9/D3d9Renderer.cpp",
+    "line": 163,
+    "declaration": "const D3DVERTEXELEMENT9 elements[]{\n        {0, 0, D3DDECLTYPE_FLOAT2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},\n        {0, 8, D3DDECLTYPE_FLOAT4, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_COLOR, 0},\n        {0, 24, D3DDECLTYPE_FLOAT2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 0},\n        {0, 32, D3DDECLTYPE_FLOAT4, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 1},\n        {0, 48, D3DDECLTYPE_FLOAT1, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 2},\n        D3DDECL_END()};"
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/graphics/d3d9/D3d9Renderer.cpp",
+    "line": 243,
+    "declaration": "const float projection[]{2.0f / float(w), -2.0f / float(h),\n        -1.0f - 1.0f / float(w), 1.0f + 1.0f / float(h)};"
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/graphics/d3d9/D3d9Renderer.cpp",
+    "line": 420,
+    "declaration": "const D3DVERTEXELEMENT9 elements[]{\n        {0,0,D3DDECLTYPE_FLOAT2,D3DDECLMETHOD_DEFAULT,D3DDECLUSAGE_POSITION,0},\n        {0,8,D3DDECLTYPE_FLOAT2,D3DDECLMETHOD_DEFAULT,D3DDECLUSAGE_TEXCOORD,0},D3DDECL_END()};"
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/graphics/d3d9/D3d9Renderer.cpp",
+    "line": 597,
+    "declaration": "const S::Float4 constants[]{\n        {params.width,params.height,params.transX,params.transY},\n        {params.time1,params.time2,params.time3,params.time5},\n        {float(params.clip.x),float(params.clip.y),float(double(params.clip.x)+params.clip.width),\n            float(double(params.clip.y)+params.clip.height)},\n        {float(params.layer),float(params.night),float(texture->width),float(texture->height)},\n        {float(packed),0,0,0}};"
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/graphics/d3d9/D3d9Renderer.cpp",
+    "line": 627,
+    "declaration": "const Vertex quad[]{\n        {0, 0, 1, 1, 1, 1, 0, 0, {}, 0},\n        {float(w), 0, 1, 1, 1, 1, 1, 0, {}, 0},\n        {0, float(h), 1, 1, 1, 1, 0, 1, {}, 0},\n        {float(w), float(h), 1, 1, 1, 1, 1, 1, {}, 0}};"
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/graphics/metal/MetalRenderer.mm",
+    "line": 435,
+    "declaration": "const std::array<GpuVertex, 6> vertices{{\n            {x,y,1,1,1,1,0,0,0,1}, {r,y,1,1,1,1,1,0,0,1}, {x,b,1,1,1,1,0,1,0,1},\n            {x,b,1,1,1,1,0,1,0,1}, {r,y,1,1,1,1,1,0,0,1}, {r,b,1,1,1,1,1,1,0,1}\n        }};"
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/graphics/metal/MetalRenderer.mm",
+    "line": 690,
+    "declaration": "const std::array inputs{source};"
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/graphics/metal/MetalRenderer.mm",
+    "line": 703,
+    "declaration": "const std::array inputs{base, alpha};"
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/graphics/metal/MetalRenderer.mm",
+    "line": 742,
+    "declaration": "const std::array inputs{source};"
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/graphics/metal/MetalRenderer.mm",
+    "line": 806,
+    "declaration": "const std::array inputs{s.causticSource};"
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/graphics/metal/MetalRenderer.mm",
+    "line": 1000,
+    "declaration": "const std::array inputs{&source};"
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/graphics/metal/MetalScalePipeline.mm",
+    "line": 260,
+    "declaration": "const MTLSamplerAddressMode modes[] = {MTLSamplerAddressModeRepeat,\n            MTLSamplerAddressModeMirrorRepeat, MTLSamplerAddressModeClampToEdge,\n            MTLSamplerAddressModeClampToBorderColor};"
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/graphics/opengl/OpenGLContext.cpp",
+    "line": 103,
+    "declaration": "const int attributes[] = {WglContextMajorVersion, 3, WglContextMinorVersion, 0, 0};"
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/graphics/opengl/OpenGLRenderer.cpp",
+    "line": 113,
+    "declaration": "constexpr const char* attributes[]{\"inPosition\", \"inColor\", \"inUV\", \"inSlot\", \"inSampler\"};"
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/graphics/opengl/OpenGLRenderer.cpp",
+    "line": 328,
+    "declaration": "constexpr std::array names{\"targetExtent\",\"image\",\"premultipliedOutput\",\"coverageInput\",\n        \"sourceImage\",\"alphaImage\",\"sourceRect\",\"alphaRect\",\"sourceSlot\",\n        \"operation\",\"rectangle\",\"tint\",\"packedColor\",\"counter\",\"colorOnly\",\n        \"samplingFlags\",\"forceWhite\",\"xRanges\",\"yRanges\",\"xTaps\",\"yTaps\",\n        \"xTapExtent\",\"yTapExtent\",\"glyphSrc\",\"glyphDst\"};"
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/graphics/opengl/OpenGLRenderer.cpp",
+    "line": 341,
+    "declaration": "constexpr std::array poolNames{\"targetExtent\",\"image\",\"premultipliedOutput\",\"coverageInput\",\n        \"poolSize\",\"poolTranslation\",\"waveTime\",\"poolClip\",\"poolLayer\",\"poolNight\",\"poolSlot\",\"poolSampler\"};"
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/graphics/RenderInterface.cpp",
+    "line": 561,
+    "declaration": "const ScreenVertex polygon[4] = {aVertex[0], aVertex[1], aVertex[3], aVertex[2]};"
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/graphics/RenderInterface.cpp",
+    "line": 1097,
+    "declaration": "const float u[]={u1,u2,u2,u1},v[]={v1,v1,v2,v2};"
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/graphics/vulkan/VulkanContext.cpp",
+    "line": 427,
+    "declaration": "constexpr VkCompositeAlphaFlagBitsKHR candidates[]{\n            VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,\n            VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR,\n            VK_COMPOSITE_ALPHA_POST_MULTIPLIED_BIT_KHR,\n            VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR};"
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/graphics/vulkan/VulkanEffectPrograms.cpp",
+    "line": 54,
+    "declaration": "const uint32_t counts[]={1,uint32_t(metadata.mInputs.size()),\n                uint32_t(metadata.mOutputs.size()),uint32_t(samplers_.size())};"
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/graphics/vulkan/VulkanEffectPrograms.cpp",
+    "line": 56,
+    "declaration": "const VkDescriptorType types[]={VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,\n                VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,VK_DESCRIPTOR_TYPE_SAMPLER};"
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/graphics/vulkan/VulkanRenderer.cpp",
+    "line": 572,
+    "declaration": "const VkDescriptorPoolSize sizes[] = {\n                {VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1024}, {VK_DESCRIPTOR_TYPE_SAMPLER, 1024}};"
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/graphics/vulkan/VulkanRenderer.cpp",
+    "line": 624,
+    "declaration": "const VkDescriptorSetLayoutBinding bindings[] = {\n                {0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_COMPUTE_BIT, nullptr},\n                {1, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1, VK_SHADER_STAGE_COMPUTE_BIT, nullptr},\n            };"
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/graphics/vulkan/VulkanRenderer.cpp",
+    "line": 941,
+    "declaration": "const VkBool32 specializations[] = {premultiplied ? VK_TRUE : VK_FALSE,\n            coverage ? VK_TRUE : VK_FALSE};"
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/graphics/vulkan/VulkanRenderer.cpp",
+    "line": 943,
+    "declaration": "const VkSpecializationMapEntry entries[] = {\n            {0, 0, sizeof(VkBool32)}, {1, sizeof(VkBool32), sizeof(VkBool32)}};"
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/graphics/vulkan/VulkanRenderer.cpp",
+    "line": 973,
+    "declaration": "const VkVertexInputAttributeDescription poolAttributes[] = {\n            {0,0,VK_FORMAT_R32G32_SFLOAT,offsetof(GpuPoolVertex,x)},\n            {1,0,VK_FORMAT_R32G32_SFLOAT,offsetof(GpuPoolVertex,phaseX)}};"
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/graphics/vulkan/VulkanRenderer.cpp",
+    "line": 982,
+    "declaration": "const VkVertexInputAttributeDescription instanceAttributes[]{\n            {0,0,VK_FORMAT_R32G32B32A32_SFLOAT,0},\n            {1,0,VK_FORMAT_R32G32B32A32_SFLOAT,16},\n            {2,0,VK_FORMAT_R32G32B32A32_SFLOAT,32},\n            {3,0,VK_FORMAT_R32G32B32A32_SFLOAT,48},\n            {4,0,VK_FORMAT_R32G32B32A32_SFLOAT,64},\n            {5,0,VK_FORMAT_R32_UINT,80},{6,0,VK_FORMAT_R32_UINT,84}};"
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/graphics/vulkan/VulkanRenderer.cpp",
+    "line": 1005,
+    "declaration": "const VkDynamicState states[] = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};"
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/graphics/vulkan/VulkanRenderer.cpp",
+    "line": 1189,
+    "declaration": "const VkDescriptorSetLayout layouts[] = {imageLayout, samplerLayout};"
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/graphics/vulkan/VulkanRenderer.cpp",
+    "line": 1552,
+    "declaration": "const VulkanVertex vertices[]{\n        {w,0,1,1,1,1,1,0,scene->slot,1},{w,h,1,1,1,1,1,1,scene->slot,1},\n        {0,0,1,1,1,1,0,0,scene->slot,1},{0,h,1,1,1,1,0,1,scene->slot,1}};"
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/graphics/vulkan/VulkanRenderer.cpp",
+    "line": 1599,
+    "declaration": "const VkDescriptorSetLayout sets[]{imageLayout,samplerLayout};"
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/graphics/vulkan/VulkanRenderer.cpp",
+    "line": 1735,
+    "declaration": "const VkDescriptorSetLayoutBinding bindings[]={\n        {0,VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,1,VK_SHADER_STAGE_COMPUTE_BIT,nullptr},\n        {1,VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,1,VK_SHADER_STAGE_COMPUTE_BIT,nullptr}};"
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/graphics/vulkan/VulkanRenderer.cpp",
+    "line": 1741,
+    "declaration": "const VkDescriptorSetLayout sets[]={imageLayout,samplerLayout,kernel.setLayout};"
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/graphics/vulkan/VulkanRenderer.cpp",
+    "line": 1747,
+    "declaration": "const VkDescriptorPoolSize sizes[]={\n        {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,kTextureSlots},\n        {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,kTextureSlots}};"
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/graphics/vulkan/VulkanRenderer.cpp",
+    "line": 1773,
+    "declaration": "const VkDescriptorSetLayoutBinding bindings[]={\n        {0,VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,1,VK_SHADER_STAGE_COMPUTE_BIT,nullptr},\n        {1,VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,1,VK_SHADER_STAGE_COMPUTE_BIT,nullptr},\n        {2,VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,1,VK_SHADER_STAGE_COMPUTE_BIT,nullptr}};"
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/graphics/vulkan/VulkanRenderer.cpp",
+    "line": 1785,
+    "declaration": "const VkDescriptorPoolSize sizes[]={\n        {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,2u*kTextureSlots},\n        {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,kTextureSlots}};"
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/graphics/vulkan/VulkanRenderer.cpp",
+    "line": 1816,
+    "declaration": "const VkDescriptorImageInfo images[]={\n        {s.samplers[0],base->view,base->sampledLayout},\n        {s.samplers[0],alpha->view,alpha->sampledLayout},\n        {VK_NULL_HANDLE,target->view,VK_IMAGE_LAYOUT_GENERAL}};"
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/graphics/vulkan/VulkanRenderer.cpp",
+    "line": 1973,
+    "declaration": "const std::array<uint32_t,3> metadata{uint32_t(source->width),uint32_t(source->height),\n        SlotOf(source)};"
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/graphics/vulkan/VulkanRenderer.cpp",
+    "line": 2003,
+    "declaration": "const VkDescriptorSet sets[]={s.textureArray,s.samplerSet,handle->computeSet};"
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/graphics/vulkan/VulkanRenderer.cpp",
+    "line": 2042,
+    "declaration": "const std::array<uint32_t,4> header{uint32_t(source->width),uint32_t(source->height),\n        samplingFlags,SlotOf(source)};"
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/graphics/vulkan/VulkanRenderer.cpp",
+    "line": 2073,
+    "declaration": "const VkDescriptorSet sets[]={s.textureArray,s.samplerSet,target->computeSet};"
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/graphics/vulkan/VulkanRenderer.cpp",
+    "line": 2413,
+    "declaration": "const float colors[]{vertex.r,vertex.g,vertex.b,vertex.a};"
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/graphics/vulkan/VulkanRenderer.cpp",
+    "line": 2464,
+    "declaration": "const std::array sets{textureArray,samplerSet};"
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/graphics/vulkan/VulkanRenderer.cpp",
+    "line": 2476,
+    "declaration": "const float extent[]={static_cast<float>(vw),static_cast<float>(vh)};"
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/graphics/vulkan/VulkanRenderer.cpp",
+    "line": 2535,
+    "declaration": "const unsigned short quad[]{a,static_cast<unsigned short>(a+1),static_cast<unsigned short>(a+2),\n                            static_cast<unsigned short>(a+1),static_cast<unsigned short>(a+2),static_cast<unsigned short>(a+3)};"
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/graphics/vulkan/VulkanRenderer.cpp",
+    "line": 2555,
+    "declaration": "const unsigned short quad[]{a,static_cast<unsigned short>(a+1),static_cast<unsigned short>(a+2),\n                        static_cast<unsigned short>(a+1),static_cast<unsigned short>(a+2),static_cast<unsigned short>(a+3)};"
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/graphics/vulkan/VulkanRenderer.cpp",
+    "line": 2729,
+    "declaration": "const VkDescriptorSet sets[]{s.textureArray,s.samplerSet};"
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/graphics/vulkan/VulkanRenderer.cpp",
+    "line": 3065,
+    "declaration": "const float pixel[]{component(i*4),component(i*4+1),component(i*4+2),component(i*4+3)};"
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/graphics/vulkan/VulkanScalePipeline.cpp",
+    "line": 233,
+    "declaration": "const VkDescriptorType types[]={VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,\n            VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,VK_DESCRIPTOR_TYPE_SAMPLER};"
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/platform/audio/openal/OpenALDevice.cpp",
+    "line": 9,
+    "declaration": "const int attributes[]{ALC_MONO_SOURCES, 32, ALC_STEREO_SOURCES, 8, 0};"
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/SexyAppBase.cpp",
+    "line": 92,
+    "declaration": "const char* copyArgs[] = {\"wl-copy\", \"--type\", \"text/plain;charset=utf-8\", nullptr};"
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/SexyAppBase.cpp",
+    "line": 93,
+    "declaration": "const char* pasteArgs[] = {\"wl-paste\", \"--no-newline\", \"--type\", \"text\", nullptr};"
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/SexyAppBase.cpp",
+    "line": 95,
+    "declaration": "const char* copyArgs[] = {\"xclip\", \"-selection\", \"clipboard\", \"-in\", nullptr};"
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/SexyAppBase.cpp",
+    "line": 96,
+    "declaration": "const char* pasteArgs[] = {\"xclip\", \"-selection\", \"clipboard\", \"-out\", nullptr};"
+  }
+]

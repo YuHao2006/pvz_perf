@@ -35,12 +35,6 @@ public:
     ProjectileMotion        mMotionType;            //+0x58
     ProjectileType          mProjectileType;        //+0x5C
     std::int64_t            mCreationTimeNs;
-    std::int64_t            mMotionOriginTimeNs;
-    float                   mOriginX;
-    float                   mOriginY;
-    float                   mOriginZ;
-    float                   mOriginRotation;
-    float                   mOriginShadowY;
     float                   mRotation;              //+0x68
     float                   mRotationSpeed;         //+0x6C
     bool                    mOnHighGround;          //+0x70

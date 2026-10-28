@@ -1,0 +1,1 @@
+bench12 kImmediateRender | before 25.56 ns | after 18.21 ns | diff 28.8% | checksum=OK (632B3F88A170D046/632B3F88A170D046)

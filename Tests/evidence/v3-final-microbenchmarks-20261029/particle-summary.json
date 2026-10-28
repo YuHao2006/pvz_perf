@@ -1,0 +1,218 @@
+[
+  {
+    "run": 1,
+    "case": "default_fast",
+    "scope": "query_only",
+    "consumers": 1,
+    "frozen_current_uncached": 83.618164,
+    "production_side_cache": 83.614349,
+    "throughput_gain_percent": 0.004562614007785903
+  },
+  {
+    "run": 1,
+    "case": "default_fast",
+    "scope": "query_only",
+    "consumers": 2,
+    "frozen_current_uncached": 83.670044,
+    "production_side_cache": 83.646011,
+    "throughput_gain_percent": 0.028731794514391673
+  },
+  {
+    "run": 1,
+    "case": "default_fast",
+    "scope": "query_only",
+    "consumers": 4,
+    "frozen_current_uncached": 83.656311,
+    "production_side_cache": 83.706665,
+    "throughput_gain_percent": -0.06015530543476144
+  },
+  {
+    "run": 1,
+    "case": "default_fast",
+    "scope": "refresh_and_query",
+    "consumers": 1,
+    "frozen_current_uncached": 83.601379,
+    "production_side_cache": 93.12973,
+    "throughput_gain_percent": -10.231266642778847
+  },
+  {
+    "run": 1,
+    "case": "default_fast",
+    "scope": "refresh_and_query",
+    "consumers": 2,
+    "frozen_current_uncached": 83.654785,
+    "production_side_cache": 88.411331,
+    "throughput_gain_percent": -5.380018540836129
+  },
+  {
+    "run": 1,
+    "case": "default_fast",
+    "scope": "refresh_and_query",
+    "consumers": 4,
+    "frozen_current_uncached": 83.846664,
+    "production_side_cache": 86.081505,
+    "throughput_gain_percent": -2.596191830056882
+  },
+  {
+    "run": 1,
+    "case": "authored_tracks",
+    "scope": "query_only",
+    "consumers": 1,
+    "frozen_current_uncached": 203.883362,
+    "production_side_cache": 198.53363,
+    "throughput_gain_percent": 2.6946225684786995
+  },
+  {
+    "run": 1,
+    "case": "authored_tracks",
+    "scope": "query_only",
+    "consumers": 2,
+    "frozen_current_uncached": 204.122925,
+    "production_side_cache": 198.249817,
+    "throughput_gain_percent": 2.962478396638324
+  },
+  {
+    "run": 1,
+    "case": "authored_tracks",
+    "scope": "query_only",
+    "consumers": 4,
+    "frozen_current_uncached": 204.179382,
+    "production_side_cache": 198.598862,
+    "throughput_gain_percent": 2.809945607845421
+  },
+  {
+    "run": 1,
+    "case": "authored_tracks",
+    "scope": "refresh_and_query",
+    "consumers": 1,
+    "frozen_current_uncached": 204.283142,
+    "production_side_cache": 208.766937,
+    "throughput_gain_percent": -2.147751489978522
+  },
+  {
+    "run": 1,
+    "case": "authored_tracks",
+    "scope": "refresh_and_query",
+    "consumers": 2,
+    "frozen_current_uncached": 204.317093,
+    "production_side_cache": 203.711319,
+    "throughput_gain_percent": 0.29736884674533837
+  },
+  {
+    "run": 1,
+    "case": "authored_tracks",
+    "scope": "refresh_and_query",
+    "consumers": 4,
+    "frozen_current_uncached": 204.323578,
+    "production_side_cache": 201.562309,
+    "throughput_gain_percent": 1.3699332051211988
+  },
+  {
+    "run": 2,
+    "case": "default_fast",
+    "scope": "query_only",
+    "consumers": 1,
+    "frozen_current_uncached": 83.828735,
+    "production_side_cache": 83.831024,
+    "throughput_gain_percent": -0.0027304927111559962
+  },
+  {
+    "run": 2,
+    "case": "default_fast",
+    "scope": "query_only",
+    "consumers": 2,
+    "frozen_current_uncached": 83.774185,
+    "production_side_cache": 83.886337,
+    "throughput_gain_percent": -0.13369519281786202
+  },
+  {
+    "run": 2,
+    "case": "default_fast",
+    "scope": "query_only",
+    "consumers": 4,
+    "frozen_current_uncached": 83.828163,
+    "production_side_cache": 83.839417,
+    "throughput_gain_percent": -0.013423280364643908
+  },
+  {
+    "run": 2,
+    "case": "default_fast",
+    "scope": "refresh_and_query",
+    "consumers": 1,
+    "frozen_current_uncached": 83.783722,
+    "production_side_cache": 93.253326,
+    "throughput_gain_percent": -10.154709119972837
+  },
+  {
+    "run": 2,
+    "case": "default_fast",
+    "scope": "refresh_and_query",
+    "consumers": 2,
+    "frozen_current_uncached": 83.854675,
+    "production_side_cache": 88.479614,
+    "throughput_gain_percent": -5.227123843465231
+  },
+  {
+    "run": 2,
+    "case": "default_fast",
+    "scope": "refresh_and_query",
+    "consumers": 4,
+    "frozen_current_uncached": 83.805275,
+    "production_side_cache": 86.344147,
+    "throughput_gain_percent": -2.940410077824973
+  },
+  {
+    "run": 2,
+    "case": "authored_tracks",
+    "scope": "query_only",
+    "consumers": 1,
+    "frozen_current_uncached": 204.190063,
+    "production_side_cache": 198.807526,
+    "throughput_gain_percent": 2.707411086640654
+  },
+  {
+    "run": 2,
+    "case": "authored_tracks",
+    "scope": "query_only",
+    "consumers": 2,
+    "frozen_current_uncached": 204.171371,
+    "production_side_cache": 199.428558,
+    "throughput_gain_percent": 2.3782015211682994
+  },
+  {
+    "run": 2,
+    "case": "authored_tracks",
+    "scope": "query_only",
+    "consumers": 4,
+    "frozen_current_uncached": 204.367065,
+    "production_side_cache": 199.552917,
+    "throughput_gain_percent": 2.4124668646161584
+  },
+  {
+    "run": 2,
+    "case": "authored_tracks",
+    "scope": "refresh_and_query",
+    "consumers": 1,
+    "frozen_current_uncached": 204.563904,
+    "production_side_cache": 208.895111,
+    "throughput_gain_percent": -2.073388400171805
+  },
+  {
+    "run": 2,
+    "case": "authored_tracks",
+    "scope": "refresh_and_query",
+    "consumers": 2,
+    "frozen_current_uncached": 204.153061,
+    "production_side_cache": 203.638458,
+    "throughput_gain_percent": 0.25270423133925135
+  },
+  {
+    "run": 2,
+    "case": "authored_tracks",
+    "scope": "refresh_and_query",
+    "consumers": 4,
+    "frozen_current_uncached": 204.284286,
+    "production_side_cache": 201.204681,
+    "throughput_gain_percent": 1.5305831776349255
+  }
+]

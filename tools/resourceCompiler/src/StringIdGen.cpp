@@ -697,7 +697,7 @@ std::string MakeEntitySource(const std::vector<BakedString>& strings)
            "{\n\treturn static_cast<unsigned>(theIndex) < static_cast<unsigned>(theLimit) &&\n"
            "\t\t(thePresence[theIndex / 64] & (std::uint64_t{1} << (theIndex % 64))) != 0;\n"
            "}\n} // namespace\n\n";
-    const char* const helpers[][3] = {
+    static constexpr const char* helpers[][3] = {
         {"PlantName", "PlantNames", "SeedType theSeedType"},
         {"PlantToolTip", "PlantToolTips", "SeedType theSeedType"},
         {"PlantDescription", "PlantDescriptions", "SeedType theSeedType"},

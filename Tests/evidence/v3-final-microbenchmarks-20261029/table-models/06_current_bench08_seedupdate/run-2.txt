@@ -1,0 +1,1 @@
+bench08 kSeedTypeUpdates | before 55.29 ns | after 47.30 ns | diff 14.5% | checksum=OK (C2FFEBB3A0E60CAB/C2FFEBB3A0E60CAB)

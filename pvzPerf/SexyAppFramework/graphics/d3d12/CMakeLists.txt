@@ -23,18 +23,14 @@ function(d3d12_shader source entry profile output)
             "${CMAKE_CURRENT_SOURCE_DIR}/shaders/${source}.hlsl" -Fo "${binary}"
         DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/shaders/${source}.hlsl"
             "${CMAKE_CURRENT_SOURCE_DIR}/shaders/game.hlsl"
-            "${CMAKE_CURRENT_SOURCE_DIR}/../GpuParticleShader.glsl"
         VERBATIM)
     set(d3d12Shaders ${d3d12Shaders} "${binary}" PARENT_SCOPE)
 endfunction()
 d3d12_shader(game VSMain vs_6_0 game_vs)
 d3d12_shader(game PSMain ps_6_0 game_ps)
+d3d12_shader(game SpritePS ps_6_0 game_sprite_ps)
+d3d12_shader(game MixedSpritePS ps_6_0 game_sprite_mixed_ps)
 d3d12_shader(game_pool PoolVS vs_6_0 game_pool_vs)
-set(PVZ_D3D12_REANIM_RESIDENT ON) # Shared resident arena is required by particles.
-if(PVZ_D3D12_REANIM_RESIDENT)
-    d3d12_shader(game_reanim UnifiedVS vs_6_0 game_reanim_vs)
-    d3d12_shader(game_reanim UnifiedGS gs_6_0 game_reanim_gs)
-endif()
 foreach(stage IN ITEMS alpha color font caustic)
     d3d12_shader("game_${stage}_cs" CSMain cs_6_0 "game_${stage}_cs")
 endforeach()
@@ -45,9 +41,6 @@ add_library(sexy_d3d12 STATIC D3d12Context.cpp D3d12Renderer.cpp)
 target_sources(sexy_d3d12 PRIVATE
     ../vulkan/VulkanHdrDisplay.cpp ../vulkan/VulkanHdrObserver.cpp)
 target_compile_features(sexy_d3d12 PUBLIC cxx_std_23)
-if(PVZ_D3D12_REANIM_RESIDENT)
-    target_compile_definitions(sexy_d3d12 PUBLIC PVZ_D3D12_REANIM_RESIDENT=1)
-endif()
 target_include_directories(sexy_d3d12 PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
 target_link_libraries(sexy_d3d12 PRIVATE d3d12 dxgi dxguid user32 runtimeobject ole32)
 add_dependencies(sexy_d3d12 sexy_d3d12_shaders)
@@ -68,9 +61,6 @@ if(MSVC)
 endif()
 if(BUILD_TESTING)
     add_executable(sexy_d3d12_render_tests tests/render_tests.cpp)
-    if(PVZ_D3D12_REANIM_RESIDENT)
-        target_sources(sexy_d3d12_render_tests PRIVATE ../../misc/FastMath.cpp)
-    endif()
     target_link_libraries(sexy_d3d12_render_tests PRIVATE sexy_d3d12)
     target_compile_definitions(sexy_d3d12_render_tests PRIVATE
         PVZ_D3D12_SHADER_DIRECTORY="${shaderDirectory}")
@@ -96,40 +86,4 @@ if(BUILD_TESTING)
     add_test(NAME sexy_d3d12_scale_compile COMMAND sexy_d3d12_scale_compile_tests
         "${PVZ_D3D12_TEST_EFFECTS_DIRECTORY}")
     set_tests_properties(sexy_d3d12_scale_compile PROPERTIES TIMEOUT 180 RUN_SERIAL TRUE)
-    if(PVZ_D3D12_REANIM_RESIDENT)
-        # Explicit build/run after coordinating GPU access. Production and the
-        # ordinary correctness gate contain no query hooks or timestamps.
-        get_target_property(d3d12BenchmarkSources sexy_d3d12 SOURCES)
-        add_library(sexy_d3d12_reanim_benchmark_backend STATIC EXCLUDE_FROM_ALL
-            ${d3d12BenchmarkSources})
-        target_compile_features(sexy_d3d12_reanim_benchmark_backend PUBLIC cxx_std_23)
-        target_compile_definitions(sexy_d3d12_reanim_benchmark_backend PUBLIC
-            PVZ_D3D12_REANIM_RESIDENT=1 PVZ_D3D12_REANIM_BENCHMARK=1)
-        target_include_directories(sexy_d3d12_reanim_benchmark_backend PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
-        target_link_libraries(sexy_d3d12_reanim_benchmark_backend PUBLIC sexy_d3d12_effects)
-        if(TARGET pvz_source_headers)
-            target_link_libraries(sexy_d3d12_reanim_benchmark_backend PUBLIC pvz_source_headers)
-        endif()
-        target_link_libraries(sexy_d3d12_reanim_benchmark_backend PRIVATE
-            d3d12 dxgi dxguid user32 runtimeobject ole32)
-        add_dependencies(sexy_d3d12_reanim_benchmark_backend sexy_d3d12_shaders)
-        add_executable(sexy_d3d12_reanim_benchmark EXCLUDE_FROM_ALL
-            tests/reanim_benchmark.cpp ../../misc/FastMath.cpp)
-        target_link_libraries(sexy_d3d12_reanim_benchmark PRIVATE sexy_d3d12_reanim_benchmark_backend)
-        target_compile_definitions(sexy_d3d12_reanim_benchmark PRIVATE
-            PVZ_D3D12_SHADER_DIRECTORY="${shaderDirectory}")
-        set_target_properties(sexy_d3d12_reanim_benchmark_backend sexy_d3d12_reanim_benchmark
-            PROPERTIES INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE)
-        if(MSVC)
-            target_compile_options(sexy_d3d12_reanim_benchmark_backend PRIVATE /W4 /utf-8 /permissive-)
-            target_compile_options(sexy_d3d12_reanim_benchmark PRIVATE /W4 /utf-8 /permissive-)
-        endif()
-        add_custom_command(TARGET sexy_d3d12_reanim_benchmark POST_BUILD
-            COMMAND "${CMAKE_COMMAND}" -E copy_if_different
-                "$<TARGET_FILE:Microsoft::DirectXShaderCompiler>"
-                "$<TARGET_FILE_DIR:sexy_d3d12_reanim_benchmark>"
-            COMMAND "${CMAKE_COMMAND}" -E copy_if_different
-                "$<TARGET_FILE_DIR:Microsoft::DirectXShaderCompiler>/dxil.dll"
-                "$<TARGET_FILE_DIR:sexy_d3d12_reanim_benchmark>" VERBATIM)
-    endif()
 endif()

@@ -1,64 +1,54 @@
 #pragma once
-#include <algorithm>
 #include <cmath>
 #include <cstdint>
 
 namespace MagnetMotion
 {
-// Acceleration toward the target is K/r^2, in pixels and seconds.
-// At 800px the center-arrival time is about 795ms. Extremely distant targets
-// receive stronger attraction to enforce the strict sub-second flight limit.
 inline constexpr double Strength = 1'000'000'000.0;
 inline constexpr std::uint64_t MaxFlightNs = 900'000'000;
 inline constexpr float CaptureRadius = 20.0f;
-inline constexpr double Curve[] = {
-#include "MagnetMotionCurve.inc"
-};
-
-inline double Fraction(std::uint64_t elapsedNs, std::uint64_t centerDurationNs)
-{
-    if (elapsedNs >= centerDurationNs) return 0;
-    const double index = static_cast<double>(elapsedNs) / centerDurationNs * 4096;
-    const auto cell = static_cast<unsigned>(index);
-    return Curve[cell] + (double(Curve[cell + 1]) - Curve[cell]) * (index - cell);
-}
+float SizeAt(std::uint64_t ageNs);
 
 template<class Item>
-inline void Bind(Item& item, float targetX, float targetY)
+void Bind(Item& item, float, float)
 {
-    item.mOriginDeltaX = item.mPosX - targetX;
-    item.mOriginDeltaY = item.mPosY - targetY;
-    const double squared = double(item.mOriginDeltaX) * item.mOriginDeltaX +
-        double(item.mOriginDeltaY) * item.mOriginDeltaY;
-    const double radius = std::sqrt(squared);
-    item.mCaptureFactor = radius > CaptureRadius ? static_cast<float>(CaptureRadius / radius) : 1.0f;
-    const double duration = 1.57079632679489661923 *
-        std::sqrt(squared * radius / (2 * Strength)) * 1'000'000'000;
-    item.mCenterDurationNs = static_cast<std::uint64_t>(
-        std::clamp(std::ceil(duration), 1.0, double(MaxFlightNs)));
+    item.mVelocityX=0;
+    item.mVelocityY=0;
 }
 
+// Discrete simulation in pixels/seconds. Age is supplied by the owning clock;
+// it enforces the existing sub-second cap, never an independently accumulated age.
 template<class Item>
-inline bool Sample(Item& item, float targetX, float targetY, std::uint64_t elapsedNs)
+bool Advance(Item& item,float targetX,float targetY,std::uint64_t ageNs,std::uint64_t deltaNs)
 {
-    if (elapsedNs >= item.mCenterDurationNs)
+    if(deltaNs==0) return item.mPosX==targetX && item.mPosY==targetY;
+    const double dx=double(targetX)-item.mPosX,dy=double(targetY)-item.mPosY;
+    const double squared=dx*dx+dy*dy;
+    if(ageNs>=MaxFlightNs || squared<=double(CaptureRadius)*CaptureRadius)
     {
-        // End the flight at the receiving plant. This makes the layer
-        // transition exact instead of depending on float rounding at the
-        // nominal 20px capture radius.
-        item.mPosX = targetX;
-        item.mPosY = targetY;
+        item.mPosX=targetX;item.mPosY=targetY;
+        item.mVelocityX=item.mVelocityY=0;
         return true;
     }
-    const double factor = std::max<double>(item.mCaptureFactor,
-        Fraction(elapsedNs, item.mCenterDurationNs));
-    item.mPosX = static_cast<float>(targetX + item.mOriginDeltaX * factor);
-    item.mPosY = static_cast<float>(targetY + item.mOriginDeltaY * factor);
+    const double inverseRadius=1.0/std::sqrt(squared);
+    // Extremely distant modded objects receive stronger initial attraction;
+    // otherwise a hard capture deadline would create a large final teleport.
+    const double inverseSquare=Strength/squared;
+    const double acceleration=squared>800.0*800.0 && 16.0/inverseRadius>inverseSquare
+        ? 16.0/inverseRadius : inverseSquare;
+    const double seconds=double(deltaNs)*1e-9;
+    item.mVelocityX=static_cast<float>(item.mVelocityX+dx*inverseRadius*acceleration*seconds);
+    item.mVelocityY=static_cast<float>(item.mVelocityY+dy*inverseRadius*acceleration*seconds);
+    const float nextX=static_cast<float>(item.mPosX+double(item.mVelocityX)*seconds);
+    const float nextY=static_cast<float>(item.mPosY+double(item.mVelocityY)*seconds);
+    const double nextDx=double(targetX)-nextX,nextDy=double(targetY)-nextY;
+    if(dx*nextDx+dy*nextDy<=0 || nextDx*nextDx+nextDy*nextDy<=double(CaptureRadius)*CaptureRadius)
+    {
+        item.mPosX=targetX;item.mPosY=targetY;
+        item.mVelocityX=item.mVelocityY=0;
+        return true;
+    }
+    item.mPosX=nextX;item.mPosY=nextY;
     return false;
-}
-
-inline std::uint64_t Advance(std::uint64_t elapsedNs, std::uint64_t deltaNs)
-{
-    return elapsedNs + std::min(deltaNs, MaxFlightNs - elapsedNs);
 }
 }

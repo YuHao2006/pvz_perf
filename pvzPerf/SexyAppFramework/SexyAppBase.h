@@ -216,9 +216,9 @@ public:
 	int						mWidth;
 	int						mHeight;
 	int						mFullscreenBits;
-	double					mMusicVolume;
+	float					mMusicVolume;
 	double					mSfxVolume;
-	double					mDemoMusicVolume;
+	float					mDemoMusicVolume;
 	double					mDemoSfxVolume;
 	bool					mNoSoundNeeded;
 	bool					mCmdLineParsed;
@@ -272,7 +272,7 @@ public:
 	HCURSOR						mOverrideCursor; // Borrowed shared/native cursor; not owned by the game.
 	DWORD					mLastTimerTime;
 	DWORD					mLastBigDelayTime;	
-	double					mUnmutedMusicVolume;
+	float					mUnmutedMusicVolume;
 	double					mUnmutedSfxVolume;	
 	int						mMuteCount;
 	int						mAutoMuteCount;
@@ -293,12 +293,15 @@ public:
 	bool					mHasPendingDraw;
 	unsigned long long		mPendingUpdatesAccNs;
 	unsigned long long		mUpdateFTimeAccNs;
+    unsigned long long mFramePacingPhaseNs = 0; // Wall-clock overshoot of the presentation interval.
+    unsigned long long mSimulationPhaseNs = 0; // Already simulated part of the next logical interval.
 	FrameDeadline::TimePoint	mLastTimeCheck{};
 	DWORD					mLastTime;
 	DWORD					mLastUserInputTick;
 
 	std::uint32_t			mDrawCount;
 	std::uint32_t			mUpdateCount;
+	std::int64_t            mApplicationTimeNs = 0; // Monotonic logical app clock; continues through board pauses.
 	int						mUpdateAppState;
 	int						mUpdateAppDepth;
 	double					mUpdateMultiplier;		
@@ -541,7 +544,7 @@ public:
 
 	virtual bool			IsMuted();
 
-	virtual void			SetMusicVolume(double theVolume);
+	virtual void			SetMusicVolume(float theVolume);
 	virtual void			SetSfxVolume(double theVolume);	
 	virtual void			Mute(bool autoMute = false);
 	virtual void			Unmute(bool autoMute = false);

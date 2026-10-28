@@ -10,13 +10,14 @@ class HitResult;
 class SeedPacket : public GameObject
 {
 public:
-    Sexy::TimeCounter                 mRefreshCounter;                            //+0x24
+    std::int64_t                      mRefreshStartTimeNs;                            //+0x24
     Sexy::TimeCounter                 mRefreshTime;                               //+0x28
     int                 mIndex;                                     //+0x2C
     int                 mOffsetX;                                   //+0x30
     SeedType            mPacketType;                                //+0x34
     SeedType            mImitaterType;                              //+0x38
-    Sexy::TimeCounter                 mSlotMachineCountDown;                      //+0x3C
+    std::int64_t                      mSlotMachineEndTimeNs;                      //+0x3C
+    float               mSlotMachiningPosition;
     SeedType            mSlotMachiningNextSeed;                     //+0x40
     bool                mActive;                                    //+0x48
     bool                mRefreshing;                                //+0x49

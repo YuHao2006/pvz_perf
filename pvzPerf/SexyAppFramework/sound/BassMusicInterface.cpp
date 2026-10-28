@@ -1,4 +1,5 @@
 #include "BassMusicInterface.h"
+#include "SexyAppBase.h"
 #include "SexyAppFramework/Common.h"
 #include "BassLoader.h"
 #include "Sexy.TodLib/TodDebug.h"
@@ -21,16 +22,15 @@ namespace
 
 // Direct time evaluation for every loaded song. Only entries with an active
 // fade (non-zero duration) touch the channel.
-void ApplyVolumeFade(BassMusicInfo* aMusicInfo)
+void ApplyVolumeFade(BassMusicInfo* aMusicInfo, std::int64_t nowNs)
 {
 	if (aMusicInfo->mFadeDurationNs == 0)
 		return;
 
-	aMusicInfo->mFadeElapsedNs = std::min<std::uint64_t>(
-		aMusicInfo->mFadeDurationNs,
-		aMusicInfo->mFadeElapsedNs + Sexy::gUpdateIntervalNs);
-	const double fraction = aMusicInfo->mFadeDurationNs == 0 ? 1.0 :
-		double(aMusicInfo->mFadeElapsedNs) / double(aMusicInfo->mFadeDurationNs);
+	const auto elapsedNs = nowNs > aMusicInfo->mFadeStartTimeNs
+		? static_cast<std::uint64_t>(nowNs - aMusicInfo->mFadeStartTimeNs) : 0;
+	const float fraction = std::min(1.0f,
+		static_cast<float>(elapsedNs) / static_cast<float>(aMusicInfo->mFadeDurationNs));
 	aMusicInfo->mVolume = aMusicInfo->mFadeOrigin +
 		(aMusicInfo->mFadeTarget - aMusicInfo->mFadeOrigin) * fraction;
 
@@ -68,7 +68,7 @@ BassMusicInfo::BassMusicInfo()
 	mVolumeCap = 1.0;
 	mFadeOrigin = 0.0;
 	mFadeTarget = 0.0;
-	mFadeElapsedNs = 0;
+	mFadeStartTimeNs = 0;
 	mFadeDurationNs = 0;
 	mStopOnFade = false;
 	mHMusic = 0;
@@ -122,7 +122,9 @@ BassMusicInterface::BassMusicInterface(NativeWindowHandle theHWnd)
 	mMaxMusicVolume = 40;
 
 	mMusicLoadFlags = BASS_MUSIC_LOOP | BASS_MUSIC_RAMP;
-#ifndef _WIN32
+	// DECODE 仅为 Linux 自绘输出（OpenAL 拉流）准备；Android 走 BASS 通道
+	// 直通输出，带上它会让 BASS_ChannelPlay 报 38（BASS_ERROR_DECODE）。
+#if !defined(_WIN32) && !defined(__ANDROID__)
 	mMusicLoadFlags |= BASS_MUSIC_DECODE;
 #endif
 }
@@ -185,8 +187,8 @@ bool BassMusicInterface::LoadMusic(int theSongId, const std::string& theFileName
 		aMusicInfo.mStreamData = std::move(aData);
 		aMusicInfo.mHStream = gBass->BASS_StreamCreateFile(TRUE,
 			aMusicInfo.mStreamData.get(), 0, aSize,
-#ifdef _WIN32
-			0);
+#if defined(_WIN32) || defined(__ANDROID__)
+			0);   // 可播通道：输出由 BASS 设备直接驱动
 #else
 			BASS_STREAM_DECODE);
 #endif
@@ -197,7 +199,14 @@ bool BassMusicInterface::LoadMusic(int theSongId, const std::string& theFileName
 		aData.reset(); // MOD loading finishes reading the source before returning.
 	}
 	if (aMusicInfo.GetHandle() == 0)
+	{
+#if defined(__ANDROID__)
+		Sexy::AndroidDiag("music load failed: %s ext=%s err=%d size=%d",
+			theFileName.c_str(), anExt.c_str(),
+			static_cast<int>(gBass->BASS_ErrorGetCode()), aSize);
+#endif
 		return false;
+	}
 
 	// Callback userdata must point at the final, immovable slot object.
 	aMusicInfo.mPlayback.Initialize(aMusicInfo.GetHandle(), aMusicInfo.mHMusic != 0);
@@ -210,15 +219,22 @@ bool BassMusicInterface::LoadMusic(int theSongId, const std::string& theFileName
 void BassMusicInterface::PlayMusic(int theSongId, int theOffset, bool noLoop)
 {
 	// 主线程入口：装载发布前槽位未就绪，安全 no-op（零锁——发布后不可变）。
+#if defined(__ANDROID__)
+	if (!mSlotsPublished.load(std::memory_order_acquire)) {
+		Sexy::AndroidDiag("playmusic id=%d skipped: slots not published", theSongId);
+		return;
+	}
+#else
 	if (!mSlotsPublished.load(std::memory_order_acquire))
 		return;
+#endif
 	if (!SlotIndexValid(theSongId))
 		return;
 	BassMusicInfo* aMusicInfo = mMusicSlots[theSongId].get();
 	if (aMusicInfo != nullptr)
 	{
 		aMusicInfo->mVolume = aMusicInfo->mVolumeCap;
-		aMusicInfo->mFadeElapsedNs = 0;
+		aMusicInfo->mFadeStartTimeNs = 0;
 		aMusicInfo->mFadeDurationNs = 0;
 		aMusicInfo->mStopOnFade = noLoop;
 		aMusicInfo->mPlayback.SetGain(aMusicInfo->mVolume);
@@ -253,7 +269,7 @@ void BassMusicInterface::StopMusic(int theSongId)
 	if (aMusicInfo != nullptr)
 	{
 		aMusicInfo->mVolume = 0.0;
-		aMusicInfo->mFadeElapsedNs = 0;
+		aMusicInfo->mFadeStartTimeNs = 0;
 		aMusicInfo->mFadeDurationNs = 0;
 		aMusicInfo->mPlayback.Stop();
 	}
@@ -356,7 +372,7 @@ void BassMusicInterface::ResumeMusic(int theSongId)
 	}
 }
 
-void BassMusicInterface::FadeIn(int theSongId, int theOffset, double theSpeed, bool noLoop)
+void BassMusicInterface::FadeIn(int theSongId, int theOffset, float theSpeed, bool noLoop)
 {
 	// 主线程入口：装载发布前槽位未就绪，安全 no-op（零锁——发布后不可变）。
 	if (!mSlotsPublished.load(std::memory_order_acquire))
@@ -368,10 +384,10 @@ void BassMusicInterface::FadeIn(int theSongId, int theOffset, double theSpeed, b
 	{
 		aMusicInfo->mFadeOrigin = aMusicInfo->mVolume;
 		aMusicInfo->mFadeTarget = aMusicInfo->mVolumeCap;
-		aMusicInfo->mFadeElapsedNs = 0;
+		aMusicInfo->mFadeStartTimeNs = gSexyAppBase->mApplicationTimeNs;
 		aMusicInfo->mFadeDurationNs = theSpeed > 0.0
 			? static_cast<std::uint64_t>(std::ceil(
-				std::max(0.0, aMusicInfo->mFadeTarget - aMusicInfo->mFadeOrigin) /
+				std::max(0.0f, aMusicInfo->mFadeTarget - aMusicInfo->mFadeOrigin) /
 				theSpeed * 10'000'000.0))
 			: 0;
 		aMusicInfo->mStopOnFade = noLoop;
@@ -403,7 +419,7 @@ void BassMusicInterface::FadeIn(int theSongId, int theOffset, double theSpeed, b
 	}
 }
 
-void BassMusicInterface::FadeOut(int theSongId, bool stopSong, double theSpeed)
+void BassMusicInterface::FadeOut(int theSongId, bool stopSong, float theSpeed)
 {
 	// 主线程入口：装载发布前槽位未就绪，安全 no-op（零锁——发布后不可变）。
 	if (!mSlotsPublished.load(std::memory_order_acquire))
@@ -417,7 +433,7 @@ void BassMusicInterface::FadeOut(int theSongId, bool stopSong, double theSpeed)
 		{
 			aMusicInfo->mFadeOrigin = aMusicInfo->mVolume;
 			aMusicInfo->mFadeTarget = 0.0;
-			aMusicInfo->mFadeElapsedNs = 0;
+			aMusicInfo->mFadeStartTimeNs = gSexyAppBase->mApplicationTimeNs;
 			aMusicInfo->mFadeDurationNs = theSpeed > 0.0
 				? static_cast<std::uint64_t>(std::ceil(
 					aMusicInfo->mFadeOrigin / theSpeed * 10'000'000.0))
@@ -428,7 +444,7 @@ void BassMusicInterface::FadeOut(int theSongId, bool stopSong, double theSpeed)
 	}
 }
 
-void BassMusicInterface::FadeOutAll(bool stopSong, double theSpeed)
+void BassMusicInterface::FadeOutAll(bool stopSong, float theSpeed)
 {
 	// 主线程入口：装载发布前槽位未就绪，安全 no-op（零锁——发布后不可变）。
 	if (!mSlotsPublished.load(std::memory_order_acquire))
@@ -441,7 +457,7 @@ void BassMusicInterface::FadeOutAll(bool stopSong, double theSpeed)
 				
 		aMusicInfo->mFadeOrigin = aMusicInfo->mVolume;
 		aMusicInfo->mFadeTarget = 0.0;
-		aMusicInfo->mFadeElapsedNs = 0;
+		aMusicInfo->mFadeStartTimeNs = gSexyAppBase->mApplicationTimeNs;
 		aMusicInfo->mFadeDurationNs = theSpeed > 0.0
 			? static_cast<std::uint64_t>(std::ceil(
 				aMusicInfo->mFadeOrigin / theSpeed * 10'000'000.0))
@@ -450,7 +466,7 @@ void BassMusicInterface::FadeOutAll(bool stopSong, double theSpeed)
 	}
 }
 
-void BassMusicInterface::SetVolume(double theVolume)
+void BassMusicInterface::SetVolume(float theVolume)
 {
 	// Ready voices own stable slots even while other songs are still loading.
 	NativeMusicPlayback::SetMasterGain(theVolume);
@@ -463,7 +479,7 @@ void BassMusicInterface::SetVolume(double theVolume)
 	}
 }
 
-void BassMusicInterface::SetSongVolume(int theSongId, double theVolume)
+void BassMusicInterface::SetSongVolume(int theSongId, float theVolume)
 {
 	// 主线程入口：装载发布前槽位未就绪，安全 no-op（零锁——发布后不可变）。
 	if (!mSlotsPublished.load(std::memory_order_acquire))
@@ -478,7 +494,7 @@ void BassMusicInterface::SetSongVolume(int theSongId, double theVolume)
 	}
 }
 
-void BassMusicInterface::SetSongMaxVolume(int theSongId, double theMaxVolume)
+void BassMusicInterface::SetSongMaxVolume(int theSongId, float theMaxVolume)
 {
 	// 主线程入口：装载发布前槽位未就绪，安全 no-op（零锁——发布后不可变）。
 	if (!mSlotsPublished.load(std::memory_order_acquire))
@@ -518,7 +534,7 @@ bool BassMusicInterface::IsMusicLoaded(int theSongId)
 	return SlotIndexValid(theSongId) && mMusicSlots[theSongId] != nullptr;
 }
 
-void BassMusicInterface::SetMusicAmplify(int theSongId, double theAmp)
+void BassMusicInterface::SetMusicAmplify(int theSongId, float theAmp)
 {
 	// 主线程入口：装载发布前槽位未就绪，安全 no-op（零锁——发布后不可变）。
 	if (!mSlotsPublished.load(std::memory_order_acquire))
@@ -542,7 +558,7 @@ void BassMusicInterface::Update()
 		if (!aSlot)
 			continue;
 		aSlot->mPlayback.Check();
-		ApplyVolumeFade(aSlot.get());
+		ApplyVolumeFade(aSlot.get(), gSexyAppBase->mApplicationTimeNs);
 	}
 }
 
@@ -565,3 +581,18 @@ int BassMusicInterface::GetMusicOrder(int theSongId)
 	}
 	return -1;
 }
+
+#if defined(_WIN32) || defined(__ANDROID__)
+void Sexy::NativeMusicPlayback::SetGain(float value)
+{
+    gBass->BASS_ChannelSetAttribute(mHandle, BASS_ATTRIB_VOL, value);
+}
+
+void Sexy::NativeMusicPlayback::SetMasterGain(float value)
+{
+#if defined(_WIN32)
+    gBass->BASS_SetConfig(BASS_CONFIG_GVOL_MUSIC, static_cast<unsigned int>(value * 10000.0f));
+#endif
+    gBass->BASS_SetConfig(BASS_CONFIG_GVOL_STREAM, static_cast<unsigned int>(value * 10000.0f));
+}
+#endif

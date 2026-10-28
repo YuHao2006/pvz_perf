@@ -1,5 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-    <application android:theme="@style/AppTheme" android:label="PlantsVsZombiesModern" android:hasCode="false">
+    <application android:theme="@style/AppTheme" android:label="pvz_perf" android:hasCode="false" android:debuggable="true">
         <activity android:name="android.app.NativeActivity" android:screenOrientation="landscape"
             android:configChanges="orientation|screenSize|keyboardHidden" android:exported="true">
             <meta-data android:name="android.app.lib_name" android:value="pvz_perf" />

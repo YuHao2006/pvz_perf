@@ -1,0 +1,29 @@
+PASS GLSL130-compile-link
+PASS production GPU pool vs independent legacy CPU mesh: day/night, normal/additive/opaque, nearest/linear/repeat, phase wrap, vertex-alpha clip, fractional translation, ordinary painter order and float target feedback
+PASS production-pool-gpu-direct-UV
+PASS precompiled-atlas-direct-upload-regions-filters-storage-batches
+PASS precompiled-atlas-replace-destroy-static-slot-reuse
+PASS independent-NPOT-negative-UV-CPU-taps
+PASS replacement-all-samplers-filters-zero-difference
+PASS repeated-main-and-offscreen-target-selection-preserves-batching
+PASS independent-storage-eight-ordered-batches
+PASS independent-dimensions-repeat-sampling
+PASS independent-samplers-filters-repeat-sampling
+PASS independent-large-float-mutable-images
+PASS independent-replace-destroy-static-slot-reuse
+PASS independent-transparent-blend-clip-painter-order
+PASS primitive-order-replace-destroy-recorded-versions
+PASS slot-flags-coverage-65536
+PASS RGBA32F-self-sample-snapshot
+PASS RGBA32F-normal-additive-no-clamp
+PASS copy-zero-fill-compose-process
+PASS resource-lifetime-copy-metadata-replacement
+PASS static-slot-identity-replacement
+PASS upload-adopt-composition-paths
+PASS static-replace-with-full-dynamic-region
+PASS caustics-CPU-reference
+PASS font-endpoint-expand-shrink-singleton
+PASS effects-prepare-rejection
+PASS canvas-resize-preserves-resident-image
+PASS hidden-retained-resize-simulated-suspension
+failed=0; hidden HWND only; no Win7/old-GPU certification

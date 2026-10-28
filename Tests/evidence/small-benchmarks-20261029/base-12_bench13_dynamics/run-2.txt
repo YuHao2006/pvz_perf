@@ -1,0 +1,1 @@
+bench13 kDynamics(=kImmediateRender 直飞判定) | before 25.53 ns | after 18.23 ns | diff 28.6% | checksum=OK (FC2795EF7BD68F54/FC2795EF7BD68F54)

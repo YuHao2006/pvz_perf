@@ -1,0 +1,11 @@
+Fixture: initialize native renderer
+Fixture: mount package and parse manifest
+Fixture: load resident resources
+Fixture: load reanimation and particle definitions
+Fixture: reanimation definitions resident; load particles
+Fixture: particle definitions resident; drain textures
+Fixture: construct Board and load save
+PASS production loader rejects out-of-range variant before drawing
+
+
+Original save SHA256 unchanged: CB18BDBE8A5104AC16A7AA923BBD350B7780E48F4C26A78C8E690B47ADC86541

@@ -1,0 +1,1 @@
+bench10 kDrawParams | before 47.86 ns | after 15.38 ns | diff 67.9% | checksum=OK (10A55351124E2524/10A55351124E2524)

@@ -207,11 +207,11 @@ struct MacWindow::Impl {
     if (!self.owner) return;
     // Compare aggregate state so releasing one Shift while the other is held
     // does not release the game's single Shift key.
-    constexpr NSEventModifierFlags masks[] = {
+    static constexpr NSEventModifierFlags masks[] = {
         NSEventModifierFlagShift, NSEventModifierFlagControl,
         NSEventModifierFlagOption, NSEventModifierFlagCommand, NSEventModifierFlagCapsLock
     };
-    constexpr unsigned keys[] = {0x10, 0x11, 0x12, 0x5B, 0x14};
+    static constexpr unsigned keys[] = {0x10, 0x11, 0x12, 0x5B, 0x14};
     for (unsigned i = 0; i < std::size(masks); ++i) {
         if (!((self.previousFlags ^ flags) & masks[i])) continue;
         Sexy::MacWindowEvent queued{};

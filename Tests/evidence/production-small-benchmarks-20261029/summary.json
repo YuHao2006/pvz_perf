@@ -1,0 +1,398 @@
+[
+  {
+    "kind": "retail",
+    "process": 1,
+    "kernel": "damage_range",
+    "min_ns": 34.59365,
+    "median_ns": 34.6889,
+    "calls_per_round": 2000000,
+    "checksum": "28758216"
+  },
+  {
+    "kind": "retail",
+    "process": 1,
+    "kernel": "flower_pot_height",
+    "min_ns": 46.01,
+    "median_ns": 46.9444,
+    "calls_per_round": 2000000,
+    "checksum": "6153060641968128"
+  },
+  {
+    "kind": "retail",
+    "process": 1,
+    "kernel": "plants_actual_pool_48",
+    "min_ns": 557.70715,
+    "median_ns": 560.2999,
+    "calls_per_round": 2000000,
+    "checksum": "57087483720130"
+  },
+  {
+    "kind": "retail",
+    "process": 1,
+    "kernel": "seed_cost_tail",
+    "min_ns": 51.68775,
+    "median_ns": 51.7517,
+    "calls_per_round": 2000000,
+    "checksum": "349831475"
+  },
+  {
+    "kind": "retail",
+    "process": 1,
+    "kernel": "store_priced_items",
+    "min_ns": 52.17075,
+    "median_ns": 52.50725,
+    "calls_per_round": 2000000,
+    "checksum": "1551947590"
+  },
+  {
+    "kind": "retail",
+    "process": 1,
+    "kernel": "zombatar_palette",
+    "min_ns": 41.2904,
+    "median_ns": 42.1859,
+    "calls_per_round": 2000000,
+    "checksum": "19683276679"
+  },
+  {
+    "kind": "retail",
+    "process": 1,
+    "kernel": "zombies_actual_pool_1024",
+    "min_ns": 8343.2175,
+    "median_ns": 8347.813,
+    "calls_per_round": 200000,
+    "checksum": "34200000"
+  },
+  {
+    "kind": "current",
+    "process": 1,
+    "kernel": "damage_range",
+    "min_ns": 6.93285,
+    "median_ns": 6.98545,
+    "calls_per_round": 2000000,
+    "checksum": "28758216"
+  },
+  {
+    "kind": "current",
+    "process": 1,
+    "kernel": "flower_pot_height",
+    "min_ns": 8.2624,
+    "median_ns": 8.2702,
+    "calls_per_round": 2000000,
+    "checksum": "6153060641968128"
+  },
+  {
+    "kind": "current",
+    "process": 1,
+    "kernel": "seed_cost_tail",
+    "min_ns": 6.42785,
+    "median_ns": 6.4348,
+    "calls_per_round": 2000000,
+    "checksum": "349831475"
+  },
+  {
+    "kind": "current",
+    "process": 1,
+    "kernel": "store_priced_items",
+    "min_ns": 10.6032,
+    "median_ns": 10.68615,
+    "calls_per_round": 2000000,
+    "checksum": "1551947590"
+  },
+  {
+    "kind": "current",
+    "process": 1,
+    "kernel": "zombatar_palette",
+    "min_ns": 8.72475,
+    "median_ns": 8.7707,
+    "calls_per_round": 2000000,
+    "checksum": "19683276679"
+  },
+  {
+    "kind": "current",
+    "process": 2,
+    "kernel": "damage_range",
+    "min_ns": 6.92505,
+    "median_ns": 6.9384,
+    "calls_per_round": 2000000,
+    "checksum": "28758216"
+  },
+  {
+    "kind": "current",
+    "process": 2,
+    "kernel": "flower_pot_height",
+    "min_ns": 8.26945,
+    "median_ns": 8.2749,
+    "calls_per_round": 2000000,
+    "checksum": "6153060641968128"
+  },
+  {
+    "kind": "current",
+    "process": 2,
+    "kernel": "seed_cost_tail",
+    "min_ns": 6.4314,
+    "median_ns": 6.44185,
+    "calls_per_round": 2000000,
+    "checksum": "349831475"
+  },
+  {
+    "kind": "current",
+    "process": 2,
+    "kernel": "store_priced_items",
+    "min_ns": 10.60235,
+    "median_ns": 10.6505,
+    "calls_per_round": 2000000,
+    "checksum": "1551947590"
+  },
+  {
+    "kind": "current",
+    "process": 2,
+    "kernel": "zombatar_palette",
+    "min_ns": 8.7196,
+    "median_ns": 8.7768,
+    "calls_per_round": 2000000,
+    "checksum": "19683276679"
+  },
+  {
+    "kind": "retail",
+    "process": 2,
+    "kernel": "damage_range",
+    "min_ns": 34.58815,
+    "median_ns": 34.6596,
+    "calls_per_round": 2000000,
+    "checksum": "28758216"
+  },
+  {
+    "kind": "retail",
+    "process": 2,
+    "kernel": "flower_pot_height",
+    "min_ns": 46.1365,
+    "median_ns": 46.9707,
+    "calls_per_round": 2000000,
+    "checksum": "6153060641968128"
+  },
+  {
+    "kind": "retail",
+    "process": 2,
+    "kernel": "plants_actual_pool_48",
+    "min_ns": 552.84095,
+    "median_ns": 571.01265,
+    "calls_per_round": 2000000,
+    "checksum": "57087483720130"
+  },
+  {
+    "kind": "retail",
+    "process": 2,
+    "kernel": "seed_cost_tail",
+    "min_ns": 51.574,
+    "median_ns": 51.67875,
+    "calls_per_round": 2000000,
+    "checksum": "349831475"
+  },
+  {
+    "kind": "retail",
+    "process": 2,
+    "kernel": "store_priced_items",
+    "min_ns": 48.85835,
+    "median_ns": 48.94255,
+    "calls_per_round": 2000000,
+    "checksum": "1551947590"
+  },
+  {
+    "kind": "retail",
+    "process": 2,
+    "kernel": "zombatar_palette",
+    "min_ns": 41.7136,
+    "median_ns": 42.78235,
+    "calls_per_round": 2000000,
+    "checksum": "19683276679"
+  },
+  {
+    "kind": "retail",
+    "process": 2,
+    "kernel": "zombies_actual_pool_1024",
+    "min_ns": 8344.109,
+    "median_ns": 8354.0345,
+    "calls_per_round": 200000,
+    "checksum": "34200000"
+  },
+  {
+    "kind": "structure",
+    "process": 1,
+    "kernel": "groups_all_18",
+    "min_ns": 207757.25,
+    "median_ns": 209656.8,
+    "calls_per_round": 2000,
+    "checksum": "534743444136919040"
+  },
+  {
+    "kind": "structure",
+    "process": 1,
+    "kernel": "groups_occupied",
+    "min_ns": 58245.1,
+    "median_ns": 58734.0,
+    "calls_per_round": 2000,
+    "checksum": "534743444136919040"
+  },
+  {
+    "kind": "structure",
+    "process": 1,
+    "kernel": "plants_actual_bucket_48",
+    "min_ns": 55.5057,
+    "median_ns": 55.5257,
+    "calls_per_round": 2000000,
+    "checksum": "57087483720130"
+  },
+  {
+    "kind": "structure",
+    "process": 1,
+    "kernel": "plants_actual_pool_48",
+    "min_ns": 280.2109,
+    "median_ns": 280.8226,
+    "calls_per_round": 2000000,
+    "checksum": "57087483720130"
+  },
+  {
+    "kind": "structure",
+    "process": 1,
+    "kernel": "tracks_mask_0pct",
+    "min_ns": 6140.7,
+    "median_ns": 6200.65,
+    "calls_per_round": 2000,
+    "checksum": "0"
+  },
+  {
+    "kind": "structure",
+    "process": 1,
+    "kernel": "tracks_mask_5pct",
+    "min_ns": 9808.3,
+    "median_ns": 9829.25,
+    "calls_per_round": 2000,
+    "checksum": "698000"
+  },
+  {
+    "kind": "structure",
+    "process": 1,
+    "kernel": "tracks_scan_0pct",
+    "min_ns": 60140.65,
+    "median_ns": 63579.65,
+    "calls_per_round": 2000,
+    "checksum": "0"
+  },
+  {
+    "kind": "structure",
+    "process": 1,
+    "kernel": "tracks_scan_5pct",
+    "min_ns": 54171.35,
+    "median_ns": 54988.1,
+    "calls_per_round": 2000,
+    "checksum": "698000"
+  },
+  {
+    "kind": "structure",
+    "process": 1,
+    "kernel": "zombies_actual_pool_1024",
+    "min_ns": 6483.232,
+    "median_ns": 6487.6145,
+    "calls_per_round": 200000,
+    "checksum": "34200000"
+  },
+  {
+    "kind": "structure",
+    "process": 1,
+    "kernel": "zombies_actual_row_171",
+    "min_ns": 3957.169,
+    "median_ns": 3958.4375,
+    "calls_per_round": 200000,
+    "checksum": "34200000"
+  },
+  {
+    "kind": "structure",
+    "process": 2,
+    "kernel": "groups_all_18",
+    "min_ns": 203177.5,
+    "median_ns": 206768.15,
+    "calls_per_round": 2000,
+    "checksum": "534743444136919040"
+  },
+  {
+    "kind": "structure",
+    "process": 2,
+    "kernel": "groups_occupied",
+    "min_ns": 58168.55,
+    "median_ns": 58954.1,
+    "calls_per_round": 2000,
+    "checksum": "534743444136919040"
+  },
+  {
+    "kind": "structure",
+    "process": 2,
+    "kernel": "plants_actual_bucket_48",
+    "min_ns": 55.55335,
+    "median_ns": 55.57805,
+    "calls_per_round": 2000000,
+    "checksum": "57087483720130"
+  },
+  {
+    "kind": "structure",
+    "process": 2,
+    "kernel": "plants_actual_pool_48",
+    "min_ns": 280.45705,
+    "median_ns": 281.22515,
+    "calls_per_round": 2000000,
+    "checksum": "57087483720130"
+  },
+  {
+    "kind": "structure",
+    "process": 2,
+    "kernel": "tracks_mask_0pct",
+    "min_ns": 6149.8,
+    "median_ns": 6215.7,
+    "calls_per_round": 2000,
+    "checksum": "0"
+  },
+  {
+    "kind": "structure",
+    "process": 2,
+    "kernel": "tracks_mask_5pct",
+    "min_ns": 9803.15,
+    "median_ns": 9836.65,
+    "calls_per_round": 2000,
+    "checksum": "698000"
+  },
+  {
+    "kind": "structure",
+    "process": 2,
+    "kernel": "tracks_scan_0pct",
+    "min_ns": 59013.45,
+    "median_ns": 62687.4,
+    "calls_per_round": 2000,
+    "checksum": "0"
+  },
+  {
+    "kind": "structure",
+    "process": 2,
+    "kernel": "tracks_scan_5pct",
+    "min_ns": 53663.25,
+    "median_ns": 55027.2,
+    "calls_per_round": 2000,
+    "checksum": "698000"
+  },
+  {
+    "kind": "structure",
+    "process": 2,
+    "kernel": "zombies_actual_pool_1024",
+    "min_ns": 6481.277,
+    "median_ns": 6484.791,
+    "calls_per_round": 200000,
+    "checksum": "34200000"
+  },
+  {
+    "kind": "structure",
+    "process": 2,
+    "kernel": "zombies_actual_row_171",
+    "min_ns": 3956.8805,
+    "median_ns": 3958.4555,
+    "calls_per_round": 200000,
+    "checksum": "34200000"
+  }
+]

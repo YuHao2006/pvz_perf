@@ -1,0 +1,5 @@
+GPU NVIDIA GeForce RTX 4070 Laptop GPU period_ns=1 validation=1
+PIXELS raw_only max=0 changed=0
+PIXELS sparse_generated max=1 changed=11027
+PIXELS frequent_generated max=4 changed=236321
+FAIL Candidate differs from the current renderer pixel contract

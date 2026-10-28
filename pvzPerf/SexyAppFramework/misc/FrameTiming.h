@@ -31,7 +31,7 @@ struct FrameTiming
     }
 };
 
-// Simulation consumes the planned interval, never an OS wake-up or Present delay.
+// A simulation update consumes its actual elapsed interval, capped at 10ms.
 struct UpdateStep
 {
     unsigned long long mNanoseconds = FrameTiming::LegacyTickNs;
@@ -49,6 +49,13 @@ struct UpdateStep
 
     constexpr bool operator==(const UpdateStep&) const = default;
 };
+
+unsigned long long SimulationTimeFromWallTime(unsigned long long elapsedNs, double multiplier);
+unsigned long long TakeSimulationStep(unsigned long long& pendingNs,
+    unsigned long long requestedNs, unsigned long long& phaseNs);
+unsigned long long FrameWaitNs(unsigned long long elapsedNs,
+    unsigned long long intervalNs, unsigned long long phaseNs);
+void ApplySimulationStep(unsigned long long intervalNs);
 
 // Keep the deadline anchored to the previous deadline, including after overruns.
 struct FrameDeadline

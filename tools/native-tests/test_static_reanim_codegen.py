@@ -177,11 +177,11 @@ class StaticReanimTests(unittest.TestCase):
         output = self.generate(data)
         generated = output["files"]["ReanimData00.cpp"].decode()
         self.assertIn("{static_cast<ReanimTrackId>(19u), {Reanim0Frames0, 1}}", generated)
-        self.assertIn("{static_cast<ReanimTrackId>(7u), {nullptr, 2, ReanimTrackStorage::Gpu}}",
+        self.assertIn("{static_cast<ReanimTrackId>(7u), {Reanim0Frames1, 2}}",
                       generated)
         self.assertIn("{static_cast<ReanimTrackId>(19u), "
-                      "{Reanim0Frames2, 3, ReanimTrackStorage::Cpu}}", generated)
-        self.assertNotIn("Reanim0Frames1", generated)
+                      "{Reanim0Frames2, 3}}", generated)
+        self.assertIn("Reanim0Frames1", generated)
         self.assertTrue(output["initializers"][0].startswith("{{Reanim0Tracks, 3},"))
         self.assertEqual(output["font_bindings"],
                          [f"Reanim0Frames2[{index}].mFont = font;" for index in range(3)])
@@ -198,13 +198,17 @@ class StaticReanimTests(unittest.TestCase):
         for index, count in enumerate((1, 2, 3)):
             self.assertIn(f"Reanim0Frames{index}, {count}}}", generated)
 
-    def test_gpu_only_font_and_caption_are_rejected_before_emitting_cpu_bindings(self):
+    def test_retired_gpu_annotation_keeps_font_and_caption_on_cpu(self):
         frame = (0, 0, 0, 0, 1, 1, 0, 1)
         for mode, font, text in ((4, 1, b""), (5, 0, b"caption"), (5, 1, b"caption")):
             with self.subTest(mode=mode, font=font, text=text):
                 data = record([frame], [(0, font, text)], mode=mode, source_float=True)
-                with self.assertRaisesRegex(ValueError, "GPU-only"):
-                    self.generate(data)
+                output = self.generate(data)
+                generated = output["files"]["ReanimData00.cpp"].decode()
+                self.assertIn("Reanim0Frames0", generated)
+                self.assertEqual(bool(output["font_bindings"]), bool(font))
+                self.assertNotIn("gpu_records", output)
+                self.assertNotIn("ReanimTrackStorage", generated)
 
     def test_invalid_storage_bits_and_legacy_storage_fail_at_every_entry_point(self):
         for authored, flags in ((True, 6), (True, 7), (True, 8), (True, 0x80),
@@ -224,64 +228,8 @@ class StaticReanimTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "track flags"):
                     self.generate(data)
 
-    def test_gpu_transport_keeps_cpu_only_logical_slot_without_allocating_its_keys(self):
-        data = pack_storage_source(storage_source((0, 2, 4)))
-        output = self.generate(data)
-        self.assertEqual(list(output["gpu_records"]), ["compiled/gpu-reanim/root.compiled"])
-        gpu = output["gpu_records"]["compiled/gpu-reanim/root.compiled"]
-        self.assertEqual(struct.unpack_from("<8I", gpu),
-                         (0x31555247, 3, 4, 4, 1, 16, 48, 32))
-        self.assertEqual([struct.unpack_from("<4I", gpu, 32 + index * 16) for index in range(3)],
-                         [(0, 1, 0, 0), (0xFFFFFFFF, 2, 0, 0), (1, 3, 0, 0)])
-        key_start = 32 + 3 * 16
-        keys = [struct.unpack_from("<7fi4I", gpu, key_start + index * 48) for index in range(4)]
-        # Logical track 1 remains addressable as a descriptor. Its two CPU
-        # frames do not consume GPU keys or shift the third logical track.
-        self.assertEqual([key[0] for key in keys], [0, 2, 2.25, 2.5])
-        self.assertEqual([key[8] for key in keys], [1, 3, 3, 3])
-        self.assertEqual([key[9:] for key in keys], [(0, 0, 0)] * 4)
-        self.assertEqual(len(gpu), 32 + 3 * 16 + 4 * 48 + 4 * 32)
-        self.assertEqual(output["summary"]["gpu_record_bytes"], len(gpu))
-        parsed = static._parse("compiled/reanim/root.compiled", data, 1)
-        self.assertEqual(gpu, static.gpu_record(parsed))
-        self.assertEqual(gpu, self.generate(data)["gpu_records"]["compiled/gpu-reanim/root.compiled"])
 
-    def test_gpu_keys_preserve_full_integer_cel_and_float_bits_in_contract_order(self):
-        values = (.000123456789, -.123456789, 29.3125, 25.59375,
-                  .791999996, 1.00000012, 2147483647, .123456789)
-        data = record([values], [(0, 0, b"")], mode=4, source_float=True)
-        gpu = self.generate(data)["gpu_records"]["compiled/gpu-reanim/root.compiled"]
-        self.assertEqual(struct.unpack_from("<8I", gpu), (0x31555247, 1, 1, 1, 1, 16, 48, 32))
-        self.assertEqual(struct.unpack_from("<4I", gpu, 32), (0, 1, 0, 0))
-        expected = struct.pack("<7fi4I", *values[:6], values[7], values[6], 0, 0, 0, 0)
-        self.assertEqual(gpu[48:96], expected)
-        self.assertEqual(struct.unpack_from("<i", gpu, 48 + 28)[0], 2147483647)
-        self.assertEqual(struct.unpack_from("<6f2I", gpu, 96), (0.0,) * 6 + (0, 0))
-        self.assertEqual(len(gpu), 128)
 
-    def test_gpu_geometry_is_variant_major_with_normalized_uv_and_base_pixel_size(self):
-        data, _ = fixtures.ReanimVariantPackingTests().fixture()
-        gpu = self.generate(data)["gpu_records"]["compiled/gpu-reanim/root.compiled"]
-        magic, tracks, keys, slots, variants, track_size, key_size, geometry_size = (
-            struct.unpack_from("<8I", gpu))
-        self.assertEqual((magic, slots, variants, geometry_size), (0x31555247, 4, 4, 32))
-        geometry_start = 32 + tracks * track_size + keys * key_size
-
-        def geometry(variant, slot):
-            return struct.unpack_from("<6f2I", gpu,
-                                      geometry_start + (variant * slots + slot) * geometry_size)
-
-        for variant in range(4):
-            self.assertEqual(geometry(variant, 0), (0.0,) * 6 + (0, 0))
-        self.assertEqual(geometry(0, 1), (10, 8, 2 / 64, 2 / 64, 12 / 64, 10 / 64, 0, 0))
-        self.assertEqual(geometry(0, 2), (10, 8, 12 / 64, 2 / 64, 22 / 64, 10 / 64, 0, 0))
-        self.assertEqual(geometry(0, 3), (4, 6, 2 / 64, 14 / 64, 6 / 64, 20 / 64, 0, 0))
-        self.assertEqual(geometry(1, 1), (13, 7, 2 / 64, 24 / 64, 15 / 64, 31 / 64, 0, 0))
-        self.assertEqual(geometry(1, 1), geometry(1, 2))
-        self.assertEqual(geometry(2, 3), (0.0,) * 6 + (0, 0))
-        self.assertEqual(geometry(3, 1), geometry(1, 1))
-        self.assertEqual(geometry(3, 3), (0.0,) * 6 + (0, 0))
-        self.assertEqual(len(gpu), geometry_start + variants * slots * geometry_size)
 
 
 if __name__ == "__main__":

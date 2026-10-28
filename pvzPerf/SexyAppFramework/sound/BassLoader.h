@@ -44,6 +44,7 @@ struct BASS_INSTANCE
 	BASSBOOL(WINAPI *BASS_SetDevice)(DWORD device);
 	BASSBOOL(WINAPI *BASS_Stop)();
 	BASSBOOL(WINAPI *BASS_Start)();
+	BASSBOOL(WINAPI *BASS_Pause)();
 //	void(WINAPI *BASS_SetGlobalVolumes)(int musvol, int samvol, int strvol);
 	BASSBOOL(WINAPI *BASS_GetInfo)(BASS_INFO* info);
 	BASSBOOL(WINAPI *BASS_ChannelGetInfo)(DWORD handle, BASS_CHANNELINFO* info);

@@ -1,0 +1,10 @@
+{
+  "changes.json": "645cc703388cdeb22eb9489885d184eb85aa310d04e589272a10219f0698ce89",
+  "dx12-render.txt": "3a868facb7cf90c8d760f68cc3de828337b08bdf773fd5bfe99a9d67510e6705",
+  "opengl-render.txt": "391e5e69d3b4eb1c6f1fc3648f68a3b2b9e4e25f1168e4b5d980c2d125eaefc7",
+  "README.md": "6be2898f8b4610529efefc3c9f9a6754dd6c388acefbf836c13416681bdd2cc5",
+  "source-hashes.json": "e5da4e6fb6fc3de74384f1fb4d9777b1b8a96a6bc44b9e5fad9576336dfb9b3a",
+  "static-storage-audit-20261029.py": "80c4d18d98b9daff9c59122a2e494e28cfa0ff0355e6fbe0f2db2279c564310a",
+  "static-storage-candidates-20261029.json": "06dfa5128aeb59ddb8e8f0d9d2f71bb0e6491ff014c8e00174dac4109ea68916",
+  "vulkan-render.txt": "314fe59af0ed3cc636515a988cac800d410752f8713e2f6ba58ff132a50339cc"
+}

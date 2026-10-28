@@ -1,5 +1,10 @@
 #include "SexyAppBase.h"
 #include "SexyAppFramework/platform/NativeWindow.h"
+#if defined(__ANDROID__)
+#include "SexyAppFramework/platform/android/AndroidWindow.h"
+#include "SexyAppFramework/platform/Audio.h"
+#include <android/log.h>
+#endif
 #include "LinuxInput.h"
 #include "graphics/DDInterface.h"
 #include "graphics/GpuBackend.h"
@@ -123,6 +128,17 @@ void SexyAppBase::ProcessNativeWindowEvent(const NativeWindowEvent& event)
         app.mNativeResizePending = true;
         app.mPhysMinimized = event.minimized;
         app.mGpuContext->NotifySurfaceSuspended(event.minimized);
+#if defined(__ANDROID__)
+        // 恢复时 glue 交回的可能是新的 ANativeWindow；旧 VkSurface 绑死
+        // 已释放的旧窗口——只重建交换链不够，必须连 surface 一起换绑。
+        if (!event.minimized) {
+            if (auto* resumed = AttachedAndroidNativeWindow(); resumed != app.mHWnd) {
+                app.mGpuContext->NotifySurfaceWindow(resumed);
+                app.mHWnd = resumed;
+                if (app.mDDInterface) app.mDDInterface->mHWnd = resumed;
+            }
+        }
+#endif
         if (app.mMinimized != event.minimized) {
             app.mMinimized = event.minimized;
             if (app.mMuteOnLostFocus) {
@@ -139,6 +155,10 @@ void SexyAppBase::ProcessNativeWindowEvent(const NativeWindowEvent& event)
         return;
     }
     if (event.kind == Kind::Focus) {
+#if defined(__ANDROID__)
+        // 后台/回焦：挂起/恢复 BASS 输出（音乐+音效一起停，与桌面离焦静音对齐）
+        SetAndroidAudioSuspended(!event.focused);
+#endif
         app.NativeFocusChanged(event.focused);
         if (app.mRecordingDemoBuffer && !app.mShutdown) {
             RecordCommand(app, DEMO_ACTIVATE_APP);
@@ -172,7 +192,7 @@ void SexyAppBase::ProcessNativeWindowEvent(const NativeWindowEvent& event)
         break;
     }
     case Kind::Key: {
-        const auto value = NativeInput::GameKeyFromXkb(event.key);
+        const auto value = NativeInput::EngineKeyFromNative(event.key);
         if (!value) break;
         const auto key = static_cast<KeyCode>(value);
         app.mLastUserInputTick = SexyGetTickCount();
@@ -267,11 +287,16 @@ void SexyAppBase::MakeWindow()
     config.callback = QueueWindowEvent;
     config.callbackContext = this;
     mNativeWindow = std::make_unique<NativeWindow>(config);
+#if defined(__ANDROID__)
+    // Android：NativeWindowHandle 是裸 ANativeWindow*，由 android_main 在
+    // APP_CMD_INIT_WINDOW 挂接；窗口本体归 native_app_glue 所有，不可重建。
+    mHWnd = AttachedAndroidNativeWindow();
+#else
     mHWnd = mNativeWindow.get(); // NativeWindowHandle, never a Win32 HWND.
+#endif
     VulkanInitConfig init{};
     init.appInfo.pApplicationName = "pvz_perf";
     init.enableValidation = std::getenv("PVZ_VULKAN_VALIDATION") != nullptr;
-    init.features.shaderFloat64 = VK_TRUE;
     if (!mScaleEffects.empty()) {
         init.features.shaderStorageImageExtendedFormats = VK_TRUE;
         init.features.shaderImageGatherExtended = VK_TRUE;
@@ -282,6 +307,8 @@ void SexyAppBase::MakeWindow()
         .imageColorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR,
         .imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
         .compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
+        // MAILBOX：循环不锁帧（菜单动画持续渲染，按用户要求保持不锁；
+        // 2026-10-27 FIFO 实验在均衡模式下反而劣化到 ~21fps 上屏，已回退）。
         .presentMode = VK_PRESENT_MODE_MAILBOX_KHR,
         .clipped = VK_TRUE
     };

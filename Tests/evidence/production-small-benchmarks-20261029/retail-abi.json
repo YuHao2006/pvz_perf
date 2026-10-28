@@ -1,0 +1,70 @@
+{
+  "retail_sha256": "5f650f52d12751e08b63e590edb0d9b9f09d087cea900baa0eb39e4af8eda251",
+  "preferred_base": "0x400000",
+  "mapping": "SEC_IMAGE at exact preferred base. Relocations stripped; reserve 5 MiB before suspended child CRT startup. Only private mapped app globals rebound. Original file unchanged.",
+  "functions": [
+    {
+      "kernel": "damage_range",
+      "function": "Plant::GetDamageRangeFlags",
+      "rva": "0x62440",
+      "preferred_va": "0x462440",
+      "abi": "EAX=Plant*, stack weapon; RET 4",
+      "inputs": "plant seed +0x24; seed 0..52, two weapons",
+      "first_16_bytes": "8b 40 24 83 f8 1a 75 0e 33 c0 83 7c 24 04 01 0f"
+    },
+    {
+      "kernel": "flower_pot_height",
+      "function": "PlantFlowerPotHeightOffset",
+      "rva": "0x68940",
+      "preferred_va": "0x468940",
+      "abi": "EAX=seed, stack float scale; ST0 result; caller pops 4",
+      "inputs": "53 seeds x 256 scales",
+      "first_16_bytes": "51 d9 44 24 08 dd 05 b0 db 6f 00 d8 c9 d9 1c 24"
+    },
+    {
+      "kernel": "seed_cost_tail",
+      "function": "Plant::GetCost",
+      "rva": "0x6b5c0",
+      "preferred_va": "0x46b5c0",
+      "abi": "EAX=seed, EDX=imitater; EAX result",
+      "inputs": "special seed tail 56..74, imitater=-1, adventure mode",
+      "first_16_bytes": "8b 0d 70 96 72 00 8b 89 18 09 00 00 83 f9 14 74"
+    },
+    {
+      "kernel": "store_priced_items",
+      "function": "StoreScreen::GetItemCost",
+      "rva": "0x97220",
+      "preferred_va": "0x497220",
+      "abi": "ECX=item; EAX result",
+      "inputs": "29 priced items; purchases[i]=i%4; excluded 26/30 have no valid retail price",
+      "first_16_bytes": "a1 fc 96 72 00 83 f9 09 75 1b 8b 80 4c 09 00 00"
+    },
+    {
+      "kernel": "zombatar_palette",
+      "function": "ZombatarColors::SetColorMode",
+      "rva": "0x12d3b0",
+      "preferred_va": "0x52d3b0",
+      "abi": "EAX=object, ECX=&selectedColor",
+      "inputs": "mode +0xd8; count +0xac, start +0xcc, selected +0xd4; original correlated mode/selection workload",
+      "first_16_bytes": "c7 80 d0 00 00 00 ff ff ff ff 8b 11 89 90 d4 00"
+    },
+    {
+      "kernel": "zombies_actual_pool_1024",
+      "function": "Board::IterateZombies",
+      "rva": "0x1f6b0",
+      "preferred_va": "0x41f6b0",
+      "abi": "EDX=Board*, ESI=Zombie**; AL result",
+      "inputs": "Board pool +0xa8; slot 0x168, key +0x164, row +0x1c, dead +0xec; 1024 alive, row 3 has 171",
+      "first_16_bytes": "57 bf 00 00 ff ff 8b 06 85 c0 75 08 8b 82 a8 00"
+    },
+    {
+      "kernel": "plants_actual_pool_48",
+      "function": "Board::GetPlantsOnLawn",
+      "rva": "0xfca0",
+      "preferred_va": "0x40fca0",
+      "abi": "EDX=Board*, EBX=output[4], stack x,y; RET 8",
+      "inputs": "Board pool +0xc4; slot 0x14c; normalize Under/Pumpkin/Flying/Normal to Under/Normal/Pumpkin/Flying; MT19937=20261003",
+      "first_16_bytes": "55 8b 6c 24 08 56 33 f6 89 33 89 73 04 89 73 08"
+    }
+  ]
+}

@@ -257,7 +257,7 @@ std::unique_ptr<Program> CreateProgram(id<MTLDevice> device, const ScaleEffectRu
         MTLSamplerDescriptor* desc = [MTLSamplerDescriptor new];
         desc.minFilter = desc.magFilter = sampler.mFilter ? MTLSamplerMinMagFilterLinear : MTLSamplerMinMagFilterNearest;
         desc.mipFilter = MTLSamplerMipFilterNotMipmapped;
-        const MTLSamplerAddressMode modes[] = {MTLSamplerAddressModeRepeat,
+        static constexpr MTLSamplerAddressMode modes[] = {MTLSamplerAddressModeRepeat,
             MTLSamplerAddressModeMirrorRepeat, MTLSamplerAddressModeClampToEdge,
             MTLSamplerAddressModeClampToBorderColor};
         desc.sAddressMode = desc.tAddressMode = desc.rAddressMode = modes[sampler.mAddress];

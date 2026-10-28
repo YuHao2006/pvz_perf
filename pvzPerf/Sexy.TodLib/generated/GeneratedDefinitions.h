@@ -7,10 +7,8 @@
 namespace GeneratedDefinitions {
 inline constexpr int ReanimationCount=144, ParticleCount=106;
 extern ReanimatorDefinition Reanimations[ReanimationCount];
-extern const char* const ReanimationGpuPaths[ReanimationCount];
 extern TodParticleDefinition Particles[ParticleCount];
 extern const char* const ParticlePaths[ParticleCount];
-extern const char* const ParticleGpuPaths[ParticleCount];
 extern ProjectileAtlasDefinition Projectiles;
 extern std::span<AttacherSegmentRT> AttacherSegments[ReanimationCount];
 void LoadReanimationImages(int type);

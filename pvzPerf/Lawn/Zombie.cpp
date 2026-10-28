@@ -2,7 +2,6 @@
 #include "Board.h"
 #include "Zombie.h"
 #include "Motion.h"
-#include "ZamboniMotion.h"
 #include "CatapultState.h"
 #include "ZombieFlags.h"
 #include "Cutscene.h"
@@ -85,6 +84,19 @@ ZombieDefinition& GetZombieDefinition(ZombieType theZombieType)
     TOD_ASSERT(gZombieDefs[theZombieType].mZombieType == theZombieType);
 
     return gZombieDefs[theZombieType];
+}
+
+namespace
+{
+bool ZombieAgeCrossedPeriod(std::int64_t ageNs, std::uint64_t deltaNs, std::int64_t periodNs)
+{
+    const auto previous = std::max<std::int64_t>(0, ageNs-static_cast<std::int64_t>(deltaNs));
+    return ageNs == 0 || ageNs / periodNs != previous / periodNs;
+}
+bool ZombieAgeCrossedPoint(std::int64_t ageNs, std::uint64_t deltaNs, std::int64_t pointNs)
+{
+    return ageNs == pointNs || (ageNs > pointNs && ageNs-static_cast<std::int64_t>(deltaNs) < pointNs);
+}
 }
 
 //0x522580
@@ -896,12 +908,14 @@ void Zombie::ZombieInitialize(int theRow, ZombieType theType, bool theVariant, Z
     mZombieType = theType;
     mVariant = theVariant;
     mIsEating = false;
-    mJustGotShotCounter = 0;
-    mShieldJustGotShotCounter = 0;
-    mShieldRecoilCounter = 0;
-    mChilledCounter = 0;
-    mIceTrapCounter = 0;
-    mButteredCounter = 0;
+    const auto aStatusNowNs = IsOnBoard() ? static_cast<std::int64_t>(mBoard->mLevelTimeNs)
+        : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs;
+    mShotFlashEndTimeNs = aStatusNowNs;
+    mShieldFlashEndTimeNs = 0;
+    mShieldRecoilEndTimeNs = 0;
+    mChilledEndTimeNs = 0;
+    mIceTrapEndTimeNs = 0;
+    mButteredEndTimeNs = 0;
     mMindControlled = false;
     mBlowingAway = false;
     mHasHead = true;
@@ -912,12 +926,12 @@ void Zombie::ZombieInitialize(int theRow, ZombieType theType, bool theVariant, Z
     mHelmType = HelmType::HELMTYPE_NONE;
     mShieldType = ShieldType::SHIELDTYPE_NONE;
     mYuckyFace = false;
-    mYuckyFaceCounter = 0;
+    mYuckyFaceStartTimeNs = aStatusNowNs;
     mAnimCounter = 0;
     mGroanCounter = RandRangeInt(300, 400);
     mAnimTicksPerFrame = 12;
     mAnimFrames = 12;
-    mZombieAge = 0;
+    mBirthTimeNs = aStatusNowNs;
     mTargetCol = -1;
     mZombiePhase = ZombiePhase::PHASE_ZOMBIE_NORMAL;
     mZombieHeight = ZombieHeight::HEIGHT_ZOMBIE_NORMAL;
@@ -928,7 +942,7 @@ void Zombie::ZombieInitialize(int theRow, ZombieType theType, bool theVariant, Z
     mZombieRect = Rect(36, 0, 42, 115);
     mZombieAttackRect = Rect(50, 0, 20, 115);
     mPlayingSong = false;
-    mZombieFade = -1;
+    mFadeEndTimeNs = -1;
     mFlatTires = false;
     mScaleZombie = 1.0f;
     mUseLadderCol = -1;
@@ -1199,7 +1213,7 @@ Reanimation* Zombie::LoadReanim(ReanimationType theReanimationType)
     }
 
     if (IsOnBoard() && aBodyReanim->TrackExists(ReanimTrackId::_ground))
-        AdvanceRoot(*this, *aBodyReanim, IsWalkingBackwards() ? mScaleZombie : -mScaleZombie, 0);
+        mX = CheckedPosition(RootPosition(*aBodyReanim, IsWalkingBackwards() ? mScaleZombie : -mScaleZombie));
     return aBodyReanim;
 }
 
@@ -1499,7 +1513,7 @@ void Zombie::UpdateZombieBungee()
     static constexpr BungeePhaseFn kBungeeDiving = [](Zombie& z)
     {
         float aOldAltitude = z.mAltitude;
-        AdvanceVelocity(z.mAltitude, -8.0f, Sexy::gUpdateIntervalNs, z.mAltitudeMotion);
+        AdvanceVelocity(z.mAltitude, -8.0f, Sexy::gUpdateIntervalNs, static_cast<std::int64_t>(z.mBoard->mLevelTimeNs), z.mAltitudeMotion);
         if (z.mAltitude <= BUNGEE_ZOMBIE_HEIGHT - 404.0f && aOldAltitude > BUNGEE_ZOMBIE_HEIGHT - 404.0f && z.mRelatedZombieID == ZombieID::ZOMBIEID_NULL)
         {
             z.mApp->PlayFoley(FoleyType::FOLEY_GRASSSTEP);  // 靶子扎地的音效
@@ -1532,7 +1546,7 @@ void Zombie::UpdateZombieBungee()
         // 原 else-if PHASE_BUNGEE_RISING
         [](Zombie& z)
         {
-            AdvanceVelocity(z.mAltitude, 8.0f, Sexy::gUpdateIntervalNs, z.mAltitudeMotion);
+            AdvanceVelocity(z.mAltitude, 8.0f, Sexy::gUpdateIntervalNs, static_cast<std::int64_t>(z.mBoard->mLevelTimeNs), z.mAltitudeMotion);
             if (z.mAltitude >= 600.0f)
             {
                 z.DieNoLoot();
@@ -1849,7 +1863,7 @@ void Zombie::UpdateZombieFlyer(bool theAltitudeAlreadyAdvanced)
     if (mApp->mGameMode == GameMode::GAMEMODE_LIMBO_HIGH_GRAVITY && (mX) < 720.0f)
     {
         if (!theAltitudeAlreadyAdvanced)
-            AdvanceVelocity(mAltitude, -0.1f, Sexy::gUpdateIntervalNs, mAltitudeMotion);
+            AdvanceVelocity(mAltitude, -0.1f, Sexy::gUpdateIntervalNs, static_cast<std::int64_t>(mBoard->mLevelTimeNs), mAltitudeMotion);
         if (mAltitude < -35.0f)
         {
             LandFlyer(0U);
@@ -2334,6 +2348,9 @@ void Zombie::UpdateZombieJackInTheBox()
 //0x526D10
 void Zombie::UpdateZombieGargantuar()
 {
+    const auto aStatusNowNs = IsOnBoard() ? static_cast<std::int64_t>(mBoard->mLevelTimeNs)
+        : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs;
+
     if (mZombiePhase == ZombiePhase::PHASE_GARGANTUAR_SMASHING)
     {
         Reanimation* aBodyReanim = mApp->ReanimationGet(mBodyReanimID);
@@ -2498,7 +2515,7 @@ void Zombie::UpdateZombieGargantuar()
 #else
             aZombieImp->mVelX = 3.0f;
 #endif
-            aZombieImp->mChilledCounter = mChilledCounter;
+            aZombieImp->mChilledEndTimeNs = mChilledEndTimeNs;
             aZombieImp->mVelZ = 0.5f * (aThrowingDistance / aZombieImp->mVelX) * THOWN_ZOMBIE_GRAVITY;
             aZombieImp->PlayZombieReanim(ReanimTrackId::anim_thrown, ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD, 0, 18.0f);
             aZombieImp->UpdateReanim();
@@ -2565,7 +2582,8 @@ void Zombie::UpdateZombieImp()
         // Gravity is applied before movement in 1073:
         // z(n)=z0+n*v0-g*n*(n+1)/2, vz(n)=v0-g*n.
         auto& motion = mAltitudeMotion;
-        const double previousTicks = double(motion.elapsedNs) / 10'000'000.0;
+        const auto previousNowNs = ReanimClock::Subtract(static_cast<std::int64_t>(mBoard->mLevelTimeNs), static_cast<std::int64_t>(Sexy::gUpdateIntervalNs));
+        const double previousTicks = double(ReanimClock::Subtract(previousNowNs, motion.startTimeNs)) / 10'000'000.0;
         const float previousVelocity = CheckedPosition(double(motion.rate) -
             double(THOWN_ZOMBIE_GRAVITY) * previousTicks);
         const float previousAltitude = CheckedPosition(motion.origin + double(mY) +
@@ -2578,18 +2596,15 @@ void Zombie::UpdateZombieImp()
             // continuously; summing its rounded per-update differences would
             // reintroduce feedback even in a double accumulator.
             motion.origin = double(mAltitude) - mY;
-            motion.elapsedNs = 0;
+            motion.startTimeNs = previousNowNs;
             motion.rate = mVelZ;
             motion.bound = true;
         }
-        if (Sexy::gUpdateIntervalNs > UINT64_MAX - motion.elapsedNs)
-            throw std::overflow_error("imp altitude interval exceeds clock range");
-        motion.elapsedNs += Sexy::gUpdateIntervalNs;
-        const double ticks = double(motion.elapsedNs) / 10'000'000.0;
+        const double ticks = double(ReanimClock::Subtract(static_cast<std::int64_t>(mBoard->mLevelTimeNs), motion.startTimeNs)) / 10'000'000.0;
         mVelZ = CheckedPosition(double(motion.rate) - double(THOWN_ZOMBIE_GRAVITY) * ticks);
         mRootBindingGeneration = 0;
         AdvanceVelocity(mX, -mVelX,
-            Sexy::gUpdateIntervalNs, mVelocityX);
+            Sexy::gUpdateIntervalNs, static_cast<std::int64_t>(mBoard->mLevelTimeNs), mVelocityX);
 
         mY = GetPosYBasedOnRow(mRow);
         mAltitude = CheckedPosition(motion.origin + double(mY) + double(motion.rate) * ticks -
@@ -3305,11 +3320,9 @@ void Zombie::UpdateZombieBackupDancer()
     ZombiePhase aDancerPhase = GetDancerPhase();
     if (aDancerPhase != mZombiePhase)
     {
-        // 原版 switch 保留（对拍 2026-10-03：本函数判别值域 44-49 连续，MSVC
-        // 编译为跳转表；查 96 槽表对 94% 落空槽的相位都要付一次间接调用，
-        // +25~28% 回归。2026-10-07 LPE14 恒频复核 +27.8% 维持；当时注释称
-        // "同表在 UpdateZombieDancer 净赚 19%"已经翻案——见 UpdateZombieDancer
-        // 内恢复注释，kDancerPhaseCases 已删）。
+        // Only a changed target phase restarts the animation. GetDancerPhase
+        // returns the four dance phases; unrelated zombie phases do not enter
+        // this dispatch as the old synthetic 94%-miss benchmark assumed.
         switch (aDancerPhase)
         {
         case ZombiePhase::PHASE_DANCER_DANCING_LEFT:
@@ -3398,13 +3411,8 @@ void Zombie::UpdateZombieDancer()
         ZombiePhase aDancerPhase = GetDancerPhase();
         if (aDancerPhase != mZombiePhase)
         {
-            // 原版 switch 恢复（2026-10-07 LPE14 恒频复核翻案：kDancerPhaseCases
-            // 满表"净赚 19%"判决证据链瓦解——①3385 注释"值域分散编成比较级联"
-            // 与实际 case 集 44..49 连续矛盾，主程序必编跳转表（3389 同款已
-            // 反汇编证实：lea/cmp/ja/jmp 落空 3 指令、命中无 call/ret）；②恒频
-            // bench_dispatch_duel 场景 C（90% 命中负载）满表对级联 -17%（七跑
-            // 方向一致），对跳转表只会更差。本 switch 与 UpdateZombieBackupDancer
-            // 同款逐字（两处同一状态机分支）。
+            // Dispatch only a changed target dance phase. The archived random
+            // phase-domain benchmark did not model this outer state-change gate.
             switch (aDancerPhase)
             {
             case ZombiePhase::PHASE_DANCER_DANCING_LEFT:
@@ -3486,7 +3494,7 @@ bool Zombie::ZombiquariumFindClosestBrain()
     GridItem* aGridItem = nullptr;
     while (mBoard->IterateGridItems(aGridItem))
     {
-        if (aGridItem->mGridItemType == GridItemType::GRIDITEM_BRAIN && aGridItem->mGridItemCounter >= 15)
+        if (aGridItem->mGridItemType == GridItemType::GRIDITEM_BRAIN && aGridItem->mBrainHealth >= 15)
         {
             float aDistance = Distance2D(aGridItem->mPosX + 15.0f, aGridItem->mPosY + 15.0f, (mX) + 50.0f, (mY) + 40.0f);
             if (aBrainClosest == nullptr || aDistance < aDistanceClosest)
@@ -3534,6 +3542,9 @@ bool Zombie::ZombiquariumFindClosestBrain()
 //0x5291E0
 void Zombie::UpdateZombiquarium()
 {
+    const auto aStatusNowNs = IsOnBoard() ? static_cast<std::int64_t>(mBoard->mLevelTimeNs)
+        : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs;
+
     if (IsDeadOrDying())
         return;
 
@@ -3652,7 +3663,7 @@ void Zombie::UpdateZombiquarium()
             }
         }
 
-        if (mZombieAge % 100 == 0)
+        if (ZombieAgeCrossedPeriod(aStatusNowNs-mBirthTimeNs, Sexy::gUpdateIntervalNs, 1'000'000'000))
         {
             TakeDamage(10, 8U);
             if (IsDeadOrDying())
@@ -3669,7 +3680,7 @@ void Zombie::UpdateZombiePool()
     if (mZombieHeight == ZombieHeight::HEIGHT_OUT_OF_POOL)
     {
         AdvanceVelocity(mAltitude, mZombieType == ZombieType::ZOMBIE_SNORKEL ? 2.0f : 1.0f,
-            Sexy::gUpdateIntervalNs, mAltitudeMotion);
+            Sexy::gUpdateIntervalNs, static_cast<std::int64_t>(mBoard->mLevelTimeNs), mAltitudeMotion);
 
         if (mAltitude >= 0.0f)
         {
@@ -3681,7 +3692,7 @@ void Zombie::UpdateZombiePool()
     }
     else if (mZombieHeight == ZombieHeight::HEIGHT_IN_TO_POOL)
     {
-        AdvanceVelocity(mAltitude, -1.0f, Sexy::gUpdateIntervalNs, mAltitudeMotion);
+        AdvanceVelocity(mAltitude, -1.0f, Sexy::gUpdateIntervalNs, static_cast<std::int64_t>(mBoard->mLevelTimeNs), mAltitudeMotion);
         int aDepth = -40 * mScaleZombie;
         if (mAltitude <= aDepth)
         {
@@ -3693,7 +3704,7 @@ void Zombie::UpdateZombiePool()
     }
     else if (mZombieHeight == ZombieHeight::HEIGHT_DRAGGED_UNDER)
     {
-        AdvanceVelocity(mAltitude, -1.0f, Sexy::gUpdateIntervalNs, mAltitudeMotion);
+        AdvanceVelocity(mAltitude, -1.0f, Sexy::gUpdateIntervalNs, static_cast<std::int64_t>(mBoard->mLevelTimeNs), mAltitudeMotion);
     }
 }
 
@@ -3705,7 +3716,7 @@ void Zombie::UpdateZombieHighGround()
 
     if (mZombieHeight == ZombieHeight::HEIGHT_UP_TO_HIGH_GROUND)
     {
-        AdvanceVelocity(mAltitude, 1.0f, Sexy::gUpdateIntervalNs, mAltitudeMotion);
+        AdvanceVelocity(mAltitude, 1.0f, Sexy::gUpdateIntervalNs, static_cast<std::int64_t>(mBoard->mLevelTimeNs), mAltitudeMotion);
         if (mAltitude >= HIGH_GROUND_HEIGHT)
         {
             mAltitude = HIGH_GROUND_HEIGHT;
@@ -3715,7 +3726,7 @@ void Zombie::UpdateZombieHighGround()
     }
     else if (mZombieHeight == ZombieHeight::HEIGHT_DOWN_OFF_HIGH_GROUND)
     {
-        AdvanceVelocity(mAltitude, -1.0f, Sexy::gUpdateIntervalNs, mAltitudeMotion);
+        AdvanceVelocity(mAltitude, -1.0f, Sexy::gUpdateIntervalNs, static_cast<std::int64_t>(mBoard->mLevelTimeNs), mAltitudeMotion);
         if (mAltitude <= 0.0f)
         {
             mAltitude = 0.0f;
@@ -3731,7 +3742,7 @@ void Zombie::UpdateZombieFalling(float theAdditionalRate)
 {
     const float fallingRate = mZombiePhase == ZombiePhase::PHASE_POLEVAULTER_PRE_VAULT ? -2.0f : -1.0f;
     const float rate = fallingRate + theAdditionalRate;
-    AdvanceVelocity(mAltitude, rate, Sexy::gUpdateIntervalNs, mAltitudeMotion);
+    AdvanceVelocity(mAltitude, rate, Sexy::gUpdateIntervalNs, static_cast<std::int64_t>(mBoard->mLevelTimeNs), mAltitudeMotion);
 
     int aGroundHeight = 0;
     if (IsOnHighGround())
@@ -3748,11 +3759,12 @@ void Zombie::UpdateZombieFalling(float theAdditionalRate)
         const double eventTicks = std::max(1.0, std::ceil(1.0 +
             (mAltitudeMotion.origin + fallingRate - aGroundHeight) / -double(rate)));
         const double eventNs = eventTicks * 10'000'000.0;
-        if (eventNs <= double(mAltitudeMotion.elapsedNs))
+        const auto ageNs = ReanimClock::Subtract(static_cast<std::int64_t>(mBoard->mLevelTimeNs), mAltitudeMotion.startTimeNs);
+        if (eventNs <= double(ageNs))
         {
-            const auto remaining = mAltitudeMotion.elapsedNs - static_cast<std::uint64_t>(eventNs);
+            const auto remaining = ageNs - static_cast<std::int64_t>(eventNs);
             mAltitudeMotion.origin = static_cast<float>(aGroundHeight + theAdditionalRate);
-            mAltitudeMotion.elapsedNs = remaining;
+            mAltitudeMotion.startTimeNs = ReanimClock::Subtract(static_cast<std::int64_t>(mBoard->mLevelTimeNs), remaining);
             mAltitudeMotion.rate = theAdditionalRate;
             mAltitude = CheckedPosition(mAltitudeMotion.origin +
                 double(theAdditionalRate) * double(remaining) / 10'000'000.0);
@@ -3781,6 +3793,9 @@ void Zombie::OverrideParticleScale(TodParticleSystem* aParticle)
 // GOTY @Patoke: 0x539F60
 void Zombie::OverrideParticleColor(TodParticleSystem* aParticle)
 {
+    const auto aStatusNowNs = IsOnBoard() ? static_cast<std::int64_t>(mBoard->mLevelTimeNs)
+        : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs;
+
     if (aParticle)
     {
         if (mMindControlled)
@@ -3788,7 +3803,7 @@ void Zombie::OverrideParticleColor(TodParticleSystem* aParticle)
             aParticle->OverrideColor(ParticleEmitterRanges::All, ZOMBIE_MINDCONTROLLED_COLOR);
             aParticle->OverrideExtraAdditiveDraw(ParticleEmitterRanges::All, true);
         }
-        else if (mChilledCounter > 0 || mIceTrapCounter > 0)
+        else if (mChilledEndTimeNs > aStatusNowNs || mIceTrapEndTimeNs > aStatusNowNs)
         {
             aParticle->OverrideColor(ParticleEmitterRanges::All, Color(75, 75, 255, 255));
             aParticle->OverrideExtraAdditiveDraw(ParticleEmitterRanges::All, true);
@@ -3904,12 +3919,15 @@ constexpr std::uint32_t GetZombieHeadParticleVariant(ParticleEffect theBase, Zom
 // GOTY @Patoke: 0x53A1DB
 void Zombie::DropHead(unsigned int theDamageFlags)
 {
+    const auto aStatusNowNs = IsOnBoard() ? static_cast<std::int64_t>(mBoard->mLevelTimeNs)
+        : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs;
+
     if (!CanLoseBodyParts() || !mHasHead)
         return;
 
-    if (mButteredCounter > 0)
+    if (mButteredEndTimeNs > aStatusNowNs)
     {
-        mButteredCounter = 0;
+        mButteredEndTimeNs = 0;
         UpdateAnimSpeed();
     }
 
@@ -4359,8 +4377,11 @@ void Zombie::UpdateDamageStates(unsigned int theDamageFlags)
 //0x52A580
 float Zombie::ZombieTargetLeadX(float theTime)
 {
+    const auto aStatusNowNs = IsOnBoard() ? static_cast<std::int64_t>(mBoard->mLevelTimeNs)
+        : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs;
+
     float aSpeed = mVelX;
-    if (mChilledCounter > 0)
+    if (mChilledEndTimeNs > aStatusNowNs)
     {
         aSpeed *= CHILLED_SPEED_FACTOR;
     }
@@ -4452,8 +4473,28 @@ bool Zombie::ZombieNotWalking()
 //0x52A7B0
 void Zombie::UpdateZamboni()
 {
-    // Speed and position are sampled together by UpdateZombieWalking below.
-    // Ice still observes the original pre-move position in this type action.
+    if (mFlatTires)
+    {
+        // Loaded flat tires may have no anchor. Store the current speed once;
+        // The same segment timestamp anchors the flat-tire speed ramp.
+        auto& motion = mVelocityX;
+        if (!motion.bound)
+        {
+            motion.rate = mVelX;
+            motion.startTimeNs = mBoard->mLevelTimeNs;
+            motion.bound = true;
+        }
+        const auto elapsedNs = mBoard->mLevelTimeNs - motion.startTimeNs;
+        mVelX = static_cast<float>(std::max(0.0,
+            double(motion.rate) - double(elapsedNs) * (0.0005 / 10'000'000.0)));
+    }
+    else
+    {
+        mVelocityX.bound = false;
+        if (mX > 400.0f)
+            mVelX = TodAnimateCurveFloat(700, 300, static_cast<int>(mX),
+                0.25f, 0.05f, Curves::Linear);
+    }
 
     int anIceX = (mX) + 118;
     if (mBoard->StageHasRoof())
@@ -4530,6 +4571,21 @@ void Zombie::UpdateLadder()
     }
 }
 
+double Zombie::RootPosition(const Reanimation& animation, float signedScale)
+{
+    const double root = animation.RootMotion(ReanimTrackId::_ground, signedScale);
+    if (!mRootBindingGeneration || mRootBindingGeneration != animation.mPlaybackGeneration ||
+        mRootScale != signedScale)
+    {
+        // Reanimation settles completed-cycle displacement when its frame wraps.
+        // This is only the actor's world-space intercept, not a playback counter.
+        mRootOriginX = double(mX) - root;
+        mRootBindingGeneration = animation.mPlaybackGeneration;
+        mRootScale = signedScale;
+    }
+    return mRootOriginX + root;
+}
+
 //0x52AA40
 void Zombie::UpdateZombieWalking()
 {
@@ -4538,33 +4594,10 @@ void Zombie::UpdateZombieWalking()
     const bool aNotWalking = ZombieNotWalking();
     if (mZombieType == ZombieType::ZOMBIE_ZAMBONI)
     {
-        // UpdateZamboni runs first, but its speed depends on X. Rebinding a
-        // constant-velocity anchor to that new speed every update would still
-        // feed rounded X back into integration. Keep one coupled trajectory.
-        auto& motion = mVelocityX;
-        const bool backwards = IsWalkingBackwards();
-        const auto sample = [&](std::uint64_t elapsed)
-        {
-            return backwards ?
-                ZamboniMotion::Sample<1>(motion.origin, motion.rate, elapsed,
-                    mFlatTires, !aNotWalking, aAdditionalSpeed) :
-                ZamboniMotion::Sample<-1>(motion.origin, motion.rate, elapsed,
-                    mFlatTires, !aNotWalking, aAdditionalSpeed);
-        };
-        bool rebind = !motion.bound;
-        if (rebind)
-        {
-            motion.origin = mX;
-            motion.elapsedNs = 0;
-            motion.rate = mVelX;  // Initial speed, not a mode flag.
-            motion.bound = true;
-        }
-        if (Sexy::gUpdateIntervalNs > UINT64_MAX - motion.elapsedNs)
-            throw std::overflow_error("zamboni movement interval exceeds clock range");
-        motion.elapsedNs += Sexy::gUpdateIntervalNs;
-        const auto current = sample(motion.elapsedNs);
-        mX = CheckedPosition(current.position);
-        mVelX = CheckedPosition(current.speed);
+        const float speed = aNotWalking ? 0.0f :
+            (IsWalkingBackwards() ? mVelX : -mVelX);
+        mX += static_cast<float>(double(speed + aAdditionalSpeed) *
+            double(Sexy::gUpdateIntervalNs) / 10'000'000.0);
         mRootBindingGeneration = 0;
         return;
     }
@@ -4572,7 +4605,7 @@ void Zombie::UpdateZombieWalking()
     {
         mRootBindingGeneration = 0;
         if (aAdditionalSpeed != 0)
-            AdvanceVelocity(mX, aAdditionalSpeed, Sexy::gUpdateIntervalNs, mVelocityX);
+            AdvanceVelocity(mX, aAdditionalSpeed, Sexy::gUpdateIntervalNs, static_cast<std::int64_t>(mBoard->mLevelTimeNs), mVelocityX);
         return;
     }
 
@@ -4595,7 +4628,7 @@ void Zombie::UpdateZombieWalking()
         {
             aSpeed = mVelX;
         }
-        else if (aBodyReanim->TrackExists(ReanimTrackId::_ground))
+        else if (gReanimGroundTrackIndices[(unsigned int)aBodyReanim->mReanimationType] >= 0)
         {
             aUseRoot = true;
         }
@@ -4614,28 +4647,29 @@ void Zombie::UpdateZombieWalking()
             // Root and additional linear movement have independent anchors.
             // A root rebind absorbs the complete current world position.
             const float aScale = aDirection * mScaleZombie;
-            const auto aRoot = aBodyReanim->RootMotion(ReanimTrackId::_ground, aScale);
             if (!mRootBindingGeneration || mRootBindingGeneration != aBodyReanim->mPlaybackGeneration ||
                 mRootScale != aScale)
             {
                 mVelocityX = {};
-                mRootOriginX = mX - aRoot;
-                mRootBindingGeneration = aBodyReanim->mPlaybackGeneration;
-                mRootScale = aScale;
             }
+            const auto aRoot = RootPosition(*aBodyReanim, aScale);
             float aAdditionalOffset = mVelocityX.bound ?
                 CheckedPosition(mVelocityX.origin +
-                    double(mVelocityX.rate) * double(mVelocityX.elapsedNs) / 10'000'000.0) : 0.0f;
-            AdvanceVelocity(aAdditionalOffset, aAdditionalSpeed, Sexy::gUpdateIntervalNs, mVelocityX);
-            mX = CheckedPosition(mRootOriginX +
-                aRoot +
-                mVelocityX.origin + double(mVelocityX.rate) * mVelocityX.elapsedNs / 10'000'000.0);
+                    double(mVelocityX.rate) * double(ReanimClock::Subtract(ReanimClock::Subtract(static_cast<std::int64_t>(mBoard->mLevelTimeNs), static_cast<std::int64_t>(Sexy::gUpdateIntervalNs)), mVelocityX.startTimeNs)) / 10'000'000.0) : 0.0f;
+            AdvanceVelocity(aAdditionalOffset, aAdditionalSpeed, Sexy::gUpdateIntervalNs, static_cast<std::int64_t>(mBoard->mLevelTimeNs), mVelocityX);
+            mX = CheckedPosition(aRoot +
+                mVelocityX.origin + double(mVelocityX.rate) * ReanimClock::Subtract(static_cast<std::int64_t>(mBoard->mLevelTimeNs), mVelocityX.startTimeNs) / 10'000'000.0);
         }
         else
         {
+            // Root walking stores an additional offset in mVelocityX; this
+            // branch stores a world position. Begin a new segment even when
+            // both rates are zero (a pole vault can have zero travel).
+            if (mRootBindingGeneration)
+                mVelocityX = {};
             mRootBindingGeneration = 0;
             AdvanceVelocity(mX, aDirection * aSpeed + aAdditionalSpeed,
-                Sexy::gUpdateIntervalNs, mVelocityX);
+                Sexy::gUpdateIntervalNs, static_cast<std::int64_t>(mBoard->mLevelTimeNs), mVelocityX);
         }
 
         if (mZombieType == ZombieType::ZOMBIE_FOOTBALL && mFromWave != Zombie::ZOMBIE_WAVE_WINNER)
@@ -4698,7 +4732,7 @@ void Zombie::UpdateZombieWalking()
 
             mRootBindingGeneration = 0;
             AdvanceVelocity(mX, (doWalk ? (IsWalkingBackwards() ? 1 : -1) * aSpeed : 0.0f) + aAdditionalSpeed,
-                Sexy::gUpdateIntervalNs, mVelocityX);
+                Sexy::gUpdateIntervalNs, static_cast<std::int64_t>(mBoard->mLevelTimeNs), mVelocityX);
         }
     }
 }
@@ -4775,11 +4809,21 @@ void Zombie::UpdateZombiePosition()
     {
         const auto aDesiredY = GetPosYBasedOnRow(mRow);
         const auto aDirection = (aDesiredY > mY) - (aDesiredY < mY);
-        AdvanceVelocity(mY, static_cast<float>(aDirection), Sexy::gUpdateIntervalNs, mVelocityY);
-        if ((aDirection > 0 && mY >= aDesiredY) || (aDirection < 0 && mY <= aDesiredY))
+        // Type actions can place Y directly on the row (notably a thrown imp
+        // following a roof slope). A settled row has no active approach
+        // segment; sampling an old zero-rate origin would undo that placement.
+        if (aDirection == 0)
         {
-            mY = aDesiredY;
             mVelocityY = {};
+        }
+        else
+        {
+            AdvanceVelocity(mY, static_cast<float>(aDirection), Sexy::gUpdateIntervalNs, static_cast<std::int64_t>(mBoard->mLevelTimeNs), mVelocityY);
+            if ((aDirection > 0 && mY >= aDesiredY) || (aDirection < 0 && mY <= aDesiredY))
+            {
+                mY = aDesiredY;
+                mVelocityY = {};
+            }
         }
     }
 }
@@ -4808,9 +4852,13 @@ void Zombie::UpdateBurn()
 //0x52AE60
 void Zombie::Update()
 {
+    const auto aStatusNowNs = IsOnBoard() ? static_cast<std::int64_t>(mBoard->mLevelTimeNs)
+        : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs;
+
     TOD_ASSERT(!mDead);
-    mZombieAge++;
     bool doUpdate = false;
+    bool playingUpdated = false;
+    bool animated = false;
     if (mApp->mGameScene == GameScenes::SCENE_LEVEL_INTRO && ((ZombieFlagsOf(mZombieType) & ZombieFlags::Boss) != 0))
     {
         doUpdate = true;
@@ -4863,6 +4911,7 @@ void Zombie::Update()
             }
             else if (IsOnBoard())
             {
+                playingUpdated = true;
                 UpdatePlaying();
             }
 
@@ -4875,26 +4924,12 @@ void Zombie::Update()
                 UpdateZombiePogo();
             }
 
+            animated = true;
             Animate();
         }
 
-        mJustGotShotCounter--;
-        if (mShieldJustGotShotCounter > 0)
-        {
-            mShieldJustGotShotCounter--;
-        }
-        if (mShieldRecoilCounter > 0)
-        {
-            mShieldRecoilCounter--;
-        }
-        if (mZombieFade > 0)
-        {
-            mZombieFade--;
-            if (mZombieFade == 0)
-            {
-                DieNoLoot();
-            }
-        }
+        if (mFadeEndTimeNs >= 0 && aStatusNowNs >= mFadeEndTimeNs)
+            DieNoLoot();
 
 
 
@@ -4904,6 +4939,25 @@ void Zombie::Update()
             domain == ReanimTimeDomain::Battle ? clocks.mBattleTimeNs : clocks.mVisualTimeNs, domain);
         UpdateReanim();
     }
+    const auto statusStepNs = !IsOnBoard() ||
+        (mBoard->AnimationTimeDomain() == ReanimTimeDomain::Battle && mBoard->mTimeStopCounter == 0)
+        ? static_cast<std::int64_t>(Sexy::gUpdateIntervalNs) : 0;
+    if (!playingUpdated)
+    {
+        if (mChilledEndTimeNs != 0) mChilledEndTimeNs += statusStepNs;
+        if (mButteredEndTimeNs != 0) mButteredEndTimeNs += statusStepNs;
+        if (mIceTrapEndTimeNs != 0) mIceTrapEndTimeNs += statusStepNs;
+    }
+    if (!doUpdate)
+    {
+        // Preserve time since last hit as well as a still-active flash.
+        mShotFlashEndTimeNs += statusStepNs;
+        if (mShieldFlashEndTimeNs != 0) mShieldFlashEndTimeNs += statusStepNs;
+        if (mShieldRecoilEndTimeNs != 0) mShieldRecoilEndTimeNs += statusStepNs;
+        if (mFadeEndTimeNs >= 0) mFadeEndTimeNs += statusStepNs;
+    }
+    if (!animated && mYuckyFace) mYuckyFaceStartTimeNs += statusStepNs;
+
 }
 
 //0x52B010
@@ -4921,7 +4975,7 @@ void Zombie::UpdateClimbingLadder()
         return;
     }
 
-    AdvanceVelocity(mAltitude, 0.8f, Sexy::gUpdateIntervalNs, mAltitudeMotion);
+    AdvanceVelocity(mAltitude, 0.8f, Sexy::gUpdateIntervalNs, static_cast<std::int64_t>(mBoard->mLevelTimeNs), mAltitudeMotion);
     if (mVelX < 0.5f)
     {
         mPendingAdditionalSpeedX = -0.5f;
@@ -5075,6 +5129,9 @@ void Zombie::CheckForBoardEdge()
 //0x52B340
 void Zombie::UpdatePlaying()
 {
+    const auto aStatusNowNs = IsOnBoard() ? static_cast<std::int64_t>(mBoard->mLevelTimeNs)
+        : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs;
+
     TOD_ASSERT(mBodyHealth > 0 || mZombiePhase == ZombiePhase::PHASE_BOBSLED_CRASHING);
 
     mGroanCounter--;
@@ -5107,30 +5164,21 @@ void Zombie::UpdatePlaying()
         mGroanCounter = Rand(1000) + 500;
     }
 
-    if (mIceTrapCounter > 0)
+    if (mIceTrapEndTimeNs != 0 && aStatusNowNs >= mIceTrapEndTimeNs)
     {
-        mIceTrapCounter--;
-        if (mIceTrapCounter == 0)
-        {
-            RemoveIceTrap();
-            AddAttachedParticle(75, 106, ParticleEffect::PARTICLE_ICE_TRAP_RELEASE);
-        }
+        mIceTrapEndTimeNs = 0;
+        RemoveIceTrap();
+        AddAttachedParticle(75, 106, ParticleEffect::PARTICLE_ICE_TRAP_RELEASE);
     }
-    if (mChilledCounter > 0)
+    if (mChilledEndTimeNs != 0 && aStatusNowNs >= mChilledEndTimeNs)
     {
-        mChilledCounter--;
-        if (mChilledCounter == 0)
-        {
-            UpdateAnimSpeed();
-        }
+        mChilledEndTimeNs = 0;
+        UpdateAnimSpeed();
     }
-    if (mButteredCounter > 0)
+    if (mButteredEndTimeNs != 0 && aStatusNowNs >= mButteredEndTimeNs)
     {
-        mButteredCounter--;
-        if (mButteredCounter == 0)
-        {
-            RemoveButter();
-        }
+        mButteredEndTimeNs = 0;
+        RemoveButter();
     }
 
     if (mZombiePhase == ZombiePhase::PHASE_RISING_FROM_GRAVE)
@@ -5237,11 +5285,15 @@ void Zombie::ShowYuckyFace(bool theShow)
 //0x52B6A0
 void Zombie::UpdateYuckyFace()
 {
-    mYuckyFaceCounter++;
-    if (mYuckyFaceCounter > 20 && mYuckyFaceCounter < 170 && !HasYuckyFaceImage())
+    const auto aStatusNowNs = IsOnBoard() ? static_cast<std::int64_t>(mBoard->mLevelTimeNs)
+        : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs;
+
+    bool skippedFaceImage = false;
+    if (aStatusNowNs-mYuckyFaceStartTimeNs > 200'000'000 && aStatusNowNs-mYuckyFaceStartTimeNs < 1'700'000'000 && !HasYuckyFaceImage())
     {
         StopEating();
-        mYuckyFaceCounter = 170;
+        mYuckyFaceStartTimeNs = aStatusNowNs - 1'700'000'000;
+        skippedFaceImage = true;
         if (mBoard->CountZombiesOnScreen() <= 5 && mHasHead)
         {
             mApp->PlayFoley(FoleyType::FOLEY_YUCK);
@@ -5252,15 +5304,15 @@ void Zombie::UpdateYuckyFace()
         }
     }
 
-    if (mYuckyFaceCounter > 270)
+    if (aStatusNowNs-mYuckyFaceStartTimeNs > 2'700'000'000)
     {
         ShowYuckyFace(false);
         mYuckyFace = false;
-        mYuckyFaceCounter = 0;
+        mYuckyFaceStartTimeNs = aStatusNowNs;
         return;
     }
 
-    if (mYuckyFaceCounter == 70)
+    if (!skippedFaceImage && ZombieAgeCrossedPoint(aStatusNowNs-mYuckyFaceStartTimeNs, Sexy::gUpdateIntervalNs, 700000000LL))
     {
         StopEating();
         ShowYuckyFace(true);
@@ -5273,7 +5325,7 @@ void Zombie::UpdateYuckyFace()
             mApp->PlayFoley(FoleyType::FOLEY_YUCK);
         }
     }
-    if (mYuckyFaceCounter == 170)
+    if (ZombieAgeCrossedPoint(aStatusNowNs-mYuckyFaceStartTimeNs, Sexy::gUpdateIntervalNs, 1700000000LL))
     {
         StartWalkAnim(20);
 
@@ -5328,6 +5380,9 @@ void Zombie::UpdateYuckyFace()
 //0x52B940
 void Zombie::AnimateChewSound()
 {
+    const auto aStatusNowNs = IsOnBoard() ? static_cast<std::int64_t>(mBoard->mLevelTimeNs)
+        : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs;
+
     if (mZombiePhase == ZombiePhase::PHASE_SNORKEL_UP_TO_EAT)
         return;
 
@@ -5352,7 +5407,7 @@ void Zombie::AnimateChewSound()
             if (!mYuckyFace)
             {
                 mYuckyFace = true;
-                mYuckyFaceCounter = 0;
+                mYuckyFaceStartTimeNs = aStatusNowNs;
                 UpdateAnimSpeed();
                 mApp->PlayFoley(FoleyType::FOLEY_CHOMP);
             }
@@ -5393,7 +5448,7 @@ void Zombie::AnimateChewEffect()
         GridItem* aBrain = mBoard->mChallenge->IZombieGetBrainTarget(this);
         if (aBrain)
         {
-            aBrain->mTransparentCounter = std::max<Sexy::TimeCounter>(aBrain->mTransparentCounter, 25);
+            aBrain->mTransparencyTimeNs = std::max<std::int64_t>(aBrain->mTransparencyTimeNs, static_cast<std::int64_t>(mBoard->mLevelTimeNs)+250'000'000);
             return;
         }
     }
@@ -5431,13 +5486,16 @@ void Zombie::AnimateChewEffect()
             mApp->AddTodParticle(aPosX, aPosY, aRenderOrder, ParticleEffect::PARTICLE_WALLNUT_EAT_SMALL);
         }
 
-        aPlant->mEatenFlashCountdown = std::max<Sexy::TimeCounter>(aPlant->mEatenFlashCountdown, 25);
+        aPlant->mEatenFlashEndTimeNs = std::max<std::int64_t>(aPlant->mEatenFlashEndTimeNs, static_cast<std::int64_t>(mBoard->mLevelTimeNs)+250'000'000);
     }
 }
 
 //0x52BCA0
 void Zombie::Animate()
 {
+    const auto aStatusNowNs = IsOnBoard() ? static_cast<std::int64_t>(mBoard->mLevelTimeNs)
+        : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs;
+
     mPrevFrame = mFrame;
     if (mZombiePhase == ZombiePhase::PHASE_JACK_IN_THE_BOX_POPPING ||
         mZombiePhase == ZombiePhase::PHASE_NEWSPAPER_MADDENING ||
@@ -5446,7 +5504,11 @@ void Zombie::Animate()
         mZombiePhase == ZombiePhase::PHASE_DIGGER_RISE_WITHOUT_AXE ||
         mZombiePhase == ZombiePhase::PHASE_DIGGER_STUNNED ||
         IsImmobilizied())
+    {
+        if (mYuckyFace)
+            mYuckyFaceStartTimeNs += static_cast<std::int64_t>(Sexy::gUpdateIntervalNs);
         return;
+    }
 
     mAnimCounter++;
     if (mYuckyFace)
@@ -5457,7 +5519,7 @@ void Zombie::Animate()
     if (mIsEating && mHasHead)
     {
         int aFrameLength = 6;
-        if (mChilledCounter > 0)
+        if (mChilledEndTimeNs > aStatusNowNs)
         {
             aFrameLength = 12;
         }
@@ -5705,6 +5767,9 @@ void Zombie::UpdateReanim()
 //0x52C6D0
 void Zombie::DrawBobsledReanim(Graphics* g, const ZombieDrawPosition& theDrawPos, bool theBeforeZombie)
 {
+    const auto aStatusNowNs = IsOnBoard() ? static_cast<std::int64_t>(mBoard->mLevelTimeNs)
+        : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs;
+
     int aPosition = GetBobsledPosition();
     bool aDrawFront = false;
     bool aDrawBack = false;
@@ -5831,11 +5896,11 @@ void Zombie::DrawBobsledReanim(Graphics* g, const ZombieDrawPosition& theDrawPos
         g->DrawImageF(aImage, aOffsetX, aOffsetY);
     }
 
-    if (aZombieLeader->mJustGotShotCounter > 0)
+    if (aZombieLeader->mShotFlashEndTimeNs > aStatusNowNs)
     {
         g->mDrawMode = Graphics::DRAWMODE_ADDITIVE;
         g->mColorizeImages = true;
-        int aGrayness = aZombieLeader->mJustGotShotCounter * 10;
+        int aGrayness = static_cast<int>((aZombieLeader->mShotFlashEndTimeNs - aStatusNowNs) / 1'000'000);
         g->mColor = Color(aGrayness, aGrayness, aGrayness, 255);
 
         if (aDrawBack && aBobsledDamageStatus != 3)
@@ -5927,7 +5992,7 @@ void Zombie::DrawBungeeTarget(Graphics* g)
 namespace
 {
 // 舞王聚光灯颜色表（手工生成；整型直下标 0..4，与原 switch 表达式
-// mZombieAge/100*7%5 的值域一一对应）
+// mBirthTimeNs/100*7%5 的值域一一对应）
 // Color 无 constexpr 构造——表为运行期初始化（一次性，静态存储）
 const Color kDancerSpotlight[5] = {
     Color(250, 250, 160),  // 0
@@ -5943,6 +6008,9 @@ static_assert(sizeof(kDancerSpotlight) / sizeof(kDancerSpotlight[0]) == 5, "聚�
 // GOTY @Patoke: 0x53D710
 void Zombie::DrawDancerReanim(Graphics* g)
 {
+    const auto aStatusNowNs = IsOnBoard() ? static_cast<std::int64_t>(mBoard->mLevelTimeNs)
+        : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs;
+
     Color aSpotLightColor;
     bool aDrawSpotLight = false;
     if (mZombiePhase != ZombiePhase::PHASE_DANCER_DANCING_IN && mZombiePhase != ZombiePhase::PHASE_DANCER_SNAPPING_FINGERS &&
@@ -5951,7 +6019,7 @@ void Zombie::DrawDancerReanim(Graphics* g)
         aDrawSpotLight = true;
 
         // B 形态 -> 常量表（下方 kDancerSpotlight，整型直下标 0..4）
-        aSpotLightColor = kDancerSpotlight[mZombieAge >= 700 ? mZombieAge / 100 * 7 % 5 : 0];
+        aSpotLightColor = kDancerSpotlight[aStatusNowNs-mBirthTimeNs >= 7'000'000'000LL ? (aStatusNowNs-mBirthTimeNs) / 1'000'000'000 * 7 % 5 : 0];
 
         g->mColorizeImages = true;
         g->mColor = aSpotLightColor;
@@ -5975,6 +6043,9 @@ void Zombie::DrawDancerReanim(Graphics* g)
 // GOTY @Patoke: 0x53D950
 void Zombie::DrawReanim(Graphics* g, const ZombieDrawPosition& theDrawPos, int theBaseRenderGroup)
 {
+    const auto aStatusNowNs = IsOnBoard() ? static_cast<std::int64_t>(mBoard->mLevelTimeNs)
+        : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs;
+
     Reanimation* aBodyReanim = mApp->ReanimationGet(mBodyReanimID);
     if (aBodyReanim == nullptr)
     {
@@ -5992,9 +6063,9 @@ void Zombie::DrawReanim(Graphics* g, const ZombieDrawPosition& theDrawPos, int t
     }
 
     int aFadeAlpha = 255;
-    if (mZombieFade >= 0)
+    if (mFadeEndTimeNs >= 0)
     {
-        aFadeAlpha = ClampInt(255 * mZombieFade / 10, 0, 255);
+        aFadeAlpha = ClampInt(static_cast<int>(255 * std::max<std::int64_t>(0, mFadeEndTimeNs-aStatusNowNs) / 100'000'000), 0, 255);
     }
 
     Color aColorOverride(255, 255, 255, aFadeAlpha);
@@ -6009,7 +6080,7 @@ void Zombie::DrawReanim(Graphics* g, const ZombieDrawPosition& theDrawPos, int t
     else if (((ZombieFlagsOf(mZombieType) & ZombieFlags::Boss) != 0) && mZombiePhase != ZombiePhase::PHASE_ZOMBIE_DYING && mBodyHealth < mBodyMaxHealth / BOSS_FLASH_HEALTH_FRACTION)
     {
         int aGrayness = TodAnimateCurveNs(0, 390'000'000, mBoard->mLevelTimeNs % 400'000'000, 155, 255, Curves::Bounce);
-        if (mChilledCounter > 0 || mIceTrapCounter > 0)
+        if (mChilledEndTimeNs > aStatusNowNs || mIceTrapEndTimeNs > aStatusNowNs)
         {
             int aColdColor = TodAnimateCurveNs(0, 390'000'000, mBoard->mLevelTimeNs % 400'000'000, 65, 75, Curves::Bounce);
             aColorOverride = Color(aColdColor, aColdColor, aGrayness, aFadeAlpha);
@@ -6029,7 +6100,7 @@ void Zombie::DrawReanim(Graphics* g, const ZombieDrawPosition& theDrawPos, int t
         aExtraAdditiveColor = aColorOverride;
         aEnableExtraAdditiveDraw = true;
     }
-    else if (mChilledCounter > 0 || mIceTrapCounter > 0)
+    else if (mChilledEndTimeNs > aStatusNowNs || mIceTrapEndTimeNs > aStatusNowNs)
     {
         aColorOverride = Color(75, 75, 255, aFadeAlpha);
         aExtraAdditiveColor = aColorOverride;
@@ -6041,9 +6112,9 @@ void Zombie::DrawReanim(Graphics* g, const ZombieDrawPosition& theDrawPos, int t
         aExtraAdditiveColor = aColorOverride;
         aEnableExtraAdditiveDraw = true;
     }
-    if (mJustGotShotCounter > 0 && !IsBobsledTeamWithSled())
+    if (mShotFlashEndTimeNs > aStatusNowNs && !IsBobsledTeamWithSled())
     {
-        int aGrayness = mJustGotShotCounter * 10;
+        int aGrayness = static_cast<int>((mShotFlashEndTimeNs - aStatusNowNs) / 1'000'000);
         Color aHighlightColor(aGrayness, aGrayness, aGrayness, 255);
         aExtraAdditiveColor = ColorAdd(aHighlightColor, aExtraAdditiveColor);
         aEnableExtraAdditiveDraw = true;
@@ -6079,9 +6150,9 @@ void Zombie::DrawReanim(Graphics* g, const ZombieDrawPosition& theDrawPos, int t
             aBodyReanim->mExtraAdditiveColor = Color::Black;
             aBodyReanim->mEnableExtraAdditiveDraw = false;
         }
-        else if (mShieldJustGotShotCounter > 0)
+        else if (mShieldFlashEndTimeNs > aStatusNowNs)
         {
-            int aGrayness = mShieldJustGotShotCounter * 10;
+            int aGrayness = static_cast<int>((mShieldFlashEndTimeNs - aStatusNowNs) / 1'000'000);
             aBodyReanim->mColorOverride = Color(aGrayness, aGrayness, aGrayness, aFadeAlpha);
             aBodyReanim->mExtraAdditiveColor = Color::White;
             aBodyReanim->mEnableExtraAdditiveDraw = true;
@@ -6094,9 +6165,9 @@ void Zombie::DrawReanim(Graphics* g, const ZombieDrawPosition& theDrawPos, int t
         }
 
         float aShieldHitOffset = 0.0f;
-        if (mShieldRecoilCounter > 0)
+        if (mShieldRecoilEndTimeNs > aStatusNowNs)
         {
-            aShieldHitOffset = TodAnimateCurveNs(120'000'000, 0, mShieldRecoilCounter.mNanoseconds, 3.0f, 0.0f, Curves::Linear);
+            aShieldHitOffset = TodAnimateCurveNs(120'000'000, 0, std::max<std::int64_t>(0, mShieldRecoilEndTimeNs - aStatusNowNs), 3.0f, 0.0f, Curves::Linear);
         }
 
         const float aOriginalTransX = g->mTransX;
@@ -6745,6 +6816,9 @@ void Zombie::DrawButter(Graphics* g, const ZombieDrawPosition& theDrawPos)
 // GOTY @Patoke: 0x53EC85
 void Zombie::Draw(Graphics* g)
 {
+    const auto aStatusNowNs = IsOnBoard() ? static_cast<std::int64_t>(mBoard->mLevelTimeNs)
+        : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs;
+
     if (mZombieHeight == ZombieHeight::HEIGHT_GETTING_BUNGEE_DROPPED)
         return;
 
@@ -6754,7 +6828,7 @@ void Zombie::Draw(Graphics* g)
     if (mApp->mGameScene == GameScenes::SCENE_ZOMBIES_WON && !SetupDrawZombieWon(g))
         return;
 
-    if (mIceTrapCounter > 0)
+    if (mIceTrapEndTimeNs > aStatusNowNs)
     {
         DrawIceTrap(g, aDrawPos, false);
     }
@@ -6769,11 +6843,11 @@ void Zombie::Draw(Graphics* g)
             //DrawZombie(g, aDrawPos);
         }
     }
-    if (mIceTrapCounter > 0)
+    if (mIceTrapEndTimeNs > aStatusNowNs)
     {
         DrawIceTrap(g, aDrawPos, true);
     }
-    if (mButteredCounter > 0)
+    if (mButteredEndTimeNs > aStatusNowNs)
     {
         DrawButter(g, aDrawPos);
     }
@@ -6989,6 +7063,9 @@ void Zombie::ZamboniDeath(unsigned int theDamageFlags)
         mZombiePhase = ZombiePhase::PHASE_ZOMBIE_DYING;
         mApp->AddTodParticle((mX) + 29.0f, (mY) + 114.0f, mRenderOrder + 1, ParticleEffect::PARTICLE_ZAMBONI_TIRE);
         mVelX = 0.0f;
+        mVelocityX.rate = mVelX;
+        mVelocityX.startTimeNs = mBoard->mLevelTimeNs;
+        mVelocityX.bound = true;
 
         if (Rand(4) == 0 && (mX) < 600.0f)
         {
@@ -7091,13 +7168,19 @@ void Zombie::CheckSquish(ZombieAttackType theAttackType)
 //0x52EEF0
 bool Zombie::IsImmobilizied()
 {
-    return mIceTrapCounter > 0 || mButteredCounter > 0;
+    const auto aStatusNowNs = IsOnBoard() ? static_cast<std::int64_t>(mBoard->mLevelTimeNs)
+        : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs;
+
+    return mIceTrapEndTimeNs > aStatusNowNs || mButteredEndTimeNs > aStatusNowNs;
 }
 
 //0x52EF10
 bool Zombie::IsMovingAtChilledSpeed()
 {
-    if (mChilledCounter > 0)
+    const auto aStatusNowNs = IsOnBoard() ? static_cast<std::int64_t>(mBoard->mLevelTimeNs)
+        : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs;
+
+    if (mChilledEndTimeNs > aStatusNowNs)
         return true;
 
     if (mZombieType == ZombieType::ZOMBIE_DANCER || mZombieType == ZombieType::ZOMBIE_BACKUP_DANCER)
@@ -7114,7 +7197,7 @@ bool Zombie::IsMovingAtChilledSpeed()
 
         if (aLeader)
         {
-            if (aLeader->mChilledCounter > 0)
+            if (aLeader->mChilledEndTimeNs > aStatusNowNs)
             {
                 return true;
             }
@@ -7122,7 +7205,7 @@ bool Zombie::IsMovingAtChilledSpeed()
             for (int i = 0; i < NUM_BACKUP_DANCERS; i++)
             {
                 Zombie* aDancer = mBoard->ZombieTryToGet(aLeader->mFollowerZombieID[i]);
-                if (aDancer && aDancer->mChilledCounter > 0)
+                if (aDancer && aDancer->mChilledEndTimeNs > aStatusNowNs)
                 {
                     return true;
                 }
@@ -7153,6 +7236,9 @@ void Zombie::ApplyAnimRate(float theAnimRate)
 //0x52F050
 void Zombie::UpdateAnimSpeed()
 {
+    const auto aStatusNowNs = IsOnBoard() ? static_cast<std::int64_t>(mBoard->mLevelTimeNs)
+        : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs;
+
     if (!IsOnBoard())
         return;
 
@@ -7160,7 +7246,7 @@ void Zombie::UpdateAnimSpeed()
     if (aBodyReanim == nullptr)
         return;
 
-    if (IsImmobilizied() || (mYuckyFace && mYuckyFaceCounter < 170))
+    if (IsImmobilizied() || (mYuckyFace && aStatusNowNs-mYuckyFaceStartTimeNs < 1'700'000'000))
     {
         ApplyAnimRate(0.0f);
         return;
@@ -7336,6 +7422,9 @@ void Zombie::StopEating()
 //0x52F4C0
 void Zombie::CheckIfPreyCaught()
 {
+    const auto aStatusNowNs = IsOnBoard() ? static_cast<std::int64_t>(mBoard->mLevelTimeNs)
+        : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs;
+
     if (mZombieType == ZombieType::ZOMBIE_BUNGEE ||
         mZombieType == ZombieType::ZOMBIE_GARGANTUAR ||
         mZombieType == ZombieType::ZOMBIE_REDEYE_GARGANTUAR ||
@@ -7377,11 +7466,11 @@ void Zombie::CheckIfPreyCaught()
         return;
 
     int aTicksBetweenEats = TICKS_BETWEEN_EATS;
-    if (mChilledCounter > 0)
+    if (mChilledEndTimeNs > aStatusNowNs)
     {
         aTicksBetweenEats *= 2;
     }
-    if (mZombieAge % aTicksBetweenEats != 0)
+    if (!ZombieAgeCrossedPeriod(aStatusNowNs-mBirthTimeNs, Sexy::gUpdateIntervalNs, static_cast<std::int64_t>(aTicksBetweenEats)*10'000'000))
     {
         return;
     }
@@ -7443,6 +7532,9 @@ void Zombie::PoolSplash(bool theInToPoolSound)
 //0x52F870
 void Zombie::CheckForPool()
 {
+    const auto aStatusNowNs = IsOnBoard() ? static_cast<std::int64_t>(mBoard->mLevelTimeNs)
+        : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs;
+
     if (!Zombie::ZombieTypeCanGoInPool(mZombieType) || IsFlying())
     {
         return;
@@ -7465,7 +7557,7 @@ void Zombie::CheckForPool()
     {
         if (mBoard->mIceTrapCounter > 0)
         {
-            mIceTrapCounter = mBoard->mIceTrapCounter;
+            mIceTrapEndTimeNs = aStatusNowNs + mBoard->mIceTrapCounter.mNanoseconds;
             ApplyChill(true);
         }
         else
@@ -7556,6 +7648,9 @@ void Zombie::StartMindControlled()
 //0x52FB40
 void Zombie::EatPlant(Plant* thePlant)
 {
+    const auto aStatusNowNs = IsOnBoard() ? static_cast<std::int64_t>(mBoard->mLevelTimeNs)
+        : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs;
+
     if (mZombiePhase == ZombiePhase::PHASE_DANCER_DANCING_IN)
     {
         mPhaseCounter = 1;
@@ -7614,7 +7709,7 @@ void Zombie::EatPlant(Plant* thePlant)
         return;
     }
 
-    if (mChilledCounter > 0 && mZombieAge % 2 == 1)
+    if (mChilledEndTimeNs > aStatusNowNs && !ZombieAgeCrossedPeriod(aStatusNowNs-mBirthTimeNs, Sexy::gUpdateIntervalNs, 20'000'000))
         return;
 
     if (mApp->IsIZombieLevel() && thePlant->mSeedType == SeedType::SEED_SUNFLOWER)
@@ -7628,8 +7723,8 @@ void Zombie::EatPlant(Plant* thePlant)
     }
 
     thePlant->mPlantHealth -= DAMAGE_PER_EAT;
-    thePlant->mRecentlyEatenCountdown = 50;
-    if (mApp->IsIZombieLevel() && mJustGotShotCounter < -500)
+    thePlant->mRecentlyEatenEndTimeNs = static_cast<std::int64_t>(mBoard->mLevelTimeNs)+500'000'000;
+    if (mApp->IsIZombieLevel() && aStatusNowNs - mShotFlashEndTimeNs > 5'000'000'000LL)
     {
         if (thePlant->mSeedType == SeedType::SEED_WALLNUT || thePlant->mSeedType == SeedType::SEED_TALLNUT || thePlant->mSeedType == SeedType::SEED_PUMPKINSHELL)
         {
@@ -8111,10 +8206,13 @@ void Zombie::StopZombieSound()
 //0x530950
 void Zombie::ApplyChill(bool theIsIceTrap)
 {
+    const auto aStatusNowNs = IsOnBoard() ? static_cast<std::int64_t>(mBoard->mLevelTimeNs)
+        : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs;
+
     if (!CanBeChilled())
         return;
 
-    if (mChilledCounter == 0)
+    if (mChilledEndTimeNs <= aStatusNowNs)
     {
         mApp->PlayFoley(FoleyType::FOLEY_FROZEN);
     }
@@ -8124,7 +8222,7 @@ void Zombie::ApplyChill(bool theIsIceTrap)
     {
         aChillTime = 2000;
     }
-    mChilledCounter = std::max<Sexy::TimeCounter>(aChillTime, mChilledCounter);
+    mChilledEndTimeNs = std::max(aStatusNowNs + static_cast<std::int64_t>(aChillTime) * 10'000'000, mChilledEndTimeNs);
 
     UpdateAnimSpeed();
 }
@@ -8132,6 +8230,9 @@ void Zombie::ApplyChill(bool theIsIceTrap)
 //0x530A00
 void Zombie::DropShield(unsigned int theDamageFlags)
 {
+    const auto aStatusNowNs = IsOnBoard() ? static_cast<std::int64_t>(mBoard->mLevelTimeNs)
+        : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs;
+
     if (mShieldType == ShieldType::SHIELDTYPE_NONE)
         return;
 
@@ -8155,7 +8256,7 @@ void Zombie::DropShield(unsigned int theDamageFlags)
         {
             ShowYuckyFace(false);
             mYuckyFace = false;
-            mYuckyFaceCounter = 0;
+            mYuckyFaceStartTimeNs = aStatusNowNs;
         }
 
         mZombiePhase = ZombiePhase::PHASE_NEWSPAPER_MADDENING;
@@ -8194,18 +8295,21 @@ void Zombie::DropShield(unsigned int theDamageFlags)
 //0x530BC0
 int Zombie::TakeShieldDamage(int theDamage, unsigned int theDamageFlags)
 {
+    const auto aStatusNowNs = IsOnBoard() ? static_cast<std::int64_t>(mBoard->mLevelTimeNs)
+        : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs;
+
     if (!TestBit(theDamageFlags, (int)DamageFlags::DAMAGE_DOESNT_CAUSE_FLASH))
     {
-        mShieldJustGotShotCounter = 25;
-        if (mJustGotShotCounter < 0)
+        mShieldFlashEndTimeNs = aStatusNowNs + static_cast<std::int64_t>(25) * 10'000'000;
+        if (mShotFlashEndTimeNs < aStatusNowNs)
         {
-            mJustGotShotCounter = 0;
+            mShotFlashEndTimeNs = aStatusNowNs;
         }
     }
 
     if (!TestBit(theDamageFlags, (int)DamageFlags::DAMAGE_DOESNT_CAUSE_FLASH) && !TestBit(theDamageFlags, (int)DamageFlags::DAMAGE_HITS_SHIELD_AND_BODY))
     {
-        mShieldRecoilCounter = 12;
+        mShieldRecoilEndTimeNs = aStatusNowNs + static_cast<std::int64_t>(12) * 10'000'000;
         if (mShieldType == ShieldType::SHIELDTYPE_DOOR || mShieldType == ShieldType::SHIELDTYPE_LADDER)
         {
             mApp->PlayFoley(FoleyType::FOLEY_SHIELD_HIT);
@@ -8359,9 +8463,12 @@ void Zombie::DropHelm(unsigned int theDamageFlags)
 //0x530FE0
 int Zombie::TakeHelmDamage(int theDamage, unsigned int theDamageFlags)
 {
+    const auto aStatusNowNs = IsOnBoard() ? static_cast<std::int64_t>(mBoard->mLevelTimeNs)
+        : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs;
+
     if (!TestBit(theDamageFlags, (int)DamageFlags::DAMAGE_DOESNT_CAUSE_FLASH))
     {
-        mJustGotShotCounter = 25;
+        mShotFlashEndTimeNs = aStatusNowNs + static_cast<std::int64_t>(25) * 10'000'000;
     }
 
     int aDamageIndexBeforeDamage = GetHelmDamageIndex();
@@ -8441,9 +8548,12 @@ int Zombie::TakeHelmDamage(int theDamage, unsigned int theDamageFlags)
 
 int Zombie::TakeFlyingDamage(int theDamage, unsigned int theDamageFlags)
 {
+    const auto aStatusNowNs = IsOnBoard() ? static_cast<std::int64_t>(mBoard->mLevelTimeNs)
+        : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs;
+
     if (!TestBit(theDamageFlags, (int)DamageFlags::DAMAGE_DOESNT_CAUSE_FLASH))
     {
-        mJustGotShotCounter = 25;
+        mShotFlashEndTimeNs = aStatusNowNs + static_cast<std::int64_t>(25) * 10'000'000;
     }
 
     int aDamageActual = std::min(mFlyingHealth, theDamage);
@@ -8460,9 +8570,12 @@ int Zombie::TakeFlyingDamage(int theDamage, unsigned int theDamageFlags)
 //0x5312D0
 void Zombie::TakeBodyDamage(int theDamage, unsigned int theDamageFlags)
 {
+    const auto aStatusNowNs = IsOnBoard() ? static_cast<std::int64_t>(mBoard->mLevelTimeNs)
+        : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs;
+
     if (!TestBit(theDamageFlags, (int)DamageFlags::DAMAGE_DOESNT_CAUSE_FLASH))
     {
-        mJustGotShotCounter = 25;
+        mShotFlashEndTimeNs = aStatusNowNs + static_cast<std::int64_t>(25) * 10'000'000;
     }
 
     if (TestBit(theDamageFlags, (int)DamageFlags::DAMAGE_FREEZE))
@@ -9093,7 +9206,10 @@ Reanimation* Zombie::AddAttachedReanim(int thePosX, int thePosY, ReanimationType
 //0x532350
 void Zombie::RemoveIceTrap()
 {
-    mIceTrapCounter = 0;
+    const auto aStatusNowNs = IsOnBoard() ? static_cast<std::int64_t>(mBoard->mLevelTimeNs)
+        : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs;
+
+    mIceTrapEndTimeNs = 0;
     if (mZombieType == ZombieType::ZOMBIE_BALLOON)
     {
         BalloonPropellerHatSpin(true);
@@ -9106,8 +9222,11 @@ void Zombie::RemoveIceTrap()
 //0x5323C0
 void Zombie::HitIceTrap()
 {
+    const auto aStatusNowNs = IsOnBoard() ? static_cast<std::int64_t>(mBoard->mLevelTimeNs)
+        : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs;
+
     bool cold = false;
-    if (mChilledCounter > 0 || mIceTrapCounter != 0)
+    if (mChilledEndTimeNs > aStatusNowNs || mIceTrapEndTimeNs > aStatusNowNs)
     {
         cold = true;
     }
@@ -9118,15 +9237,15 @@ void Zombie::HitIceTrap()
 
     if (mInPool)
     {
-        mIceTrapCounter = 300;
+        mIceTrapEndTimeNs = aStatusNowNs + static_cast<std::int64_t>(300) * 10'000'000;
     }
     else if (cold)
     {
-        mIceTrapCounter = RandRangeInt(300, 400);
+        mIceTrapEndTimeNs = aStatusNowNs + static_cast<std::int64_t>(RandRangeInt(300, 400)) * 10'000'000;
     }
     else
     {
-        mIceTrapCounter = RandRangeInt(400, 600);
+        mIceTrapEndTimeNs = aStatusNowNs + static_cast<std::int64_t>(RandRangeInt(400, 600)) * 10'000'000;
     }
 
     StopZombieSound();
@@ -9241,13 +9360,16 @@ void Zombie::RemoveButter()
 //0x5326D0
 void Zombie::ApplyButter()
 {
+    const auto aStatusNowNs = IsOnBoard() ? static_cast<std::int64_t>(mBoard->mLevelTimeNs)
+        : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs;
+
     if (!mHasHead || !CanBeFrozen())
         return;
 
     if (mZombieType == ZombieType::ZOMBIE_ZAMBONI || ((ZombieFlagsOf(mZombieType) & ZombieFlags::Boss) != 0) || IsTangleKelpTarget() || IsBobsledTeamWithSled() || IsFlying())
         return;
 
-    mButteredCounter = 400;
+    mButteredEndTimeNs = aStatusNowNs + static_cast<std::int64_t>(400) * 10'000'000;
     Zombie* aZombie = mBoard->ZombieTryToGet(mRelatedZombieID);
     if (aZombie)
     {
@@ -9283,6 +9405,9 @@ void Zombie::ApplyButter()
 //0x5327E0
 void Zombie::MowDown()
 {
+    const auto aStatusNowNs = IsOnBoard() ? static_cast<std::int64_t>(mBoard->mLevelTimeNs)
+        : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs;
+
     if (mDead || mZombiePhase == ZombiePhase::PHASE_ZOMBIE_MOWERED || ((ZombieFlagsOf(mZombieType) & ZombieFlags::Boss) != 0))
         return;
 
@@ -9335,13 +9460,13 @@ void Zombie::MowDown()
         return;
     }
 
-    if (mIceTrapCounter > 0)
+    if (mIceTrapEndTimeNs > aStatusNowNs)
     {
         RemoveIceTrap();
     }
-    if (mButteredCounter > 0)
+    if (mButteredEndTimeNs > aStatusNowNs)
     {
-        mButteredCounter = 0;
+        mButteredEndTimeNs = 0;
     }
 
     DropShield(0U);
@@ -9417,14 +9542,17 @@ void Zombie::MowDown()
 //0x532B40
 void Zombie::RemoveColdEffects()
 {
-    if (mIceTrapCounter > 0)
+    const auto aStatusNowNs = IsOnBoard() ? static_cast<std::int64_t>(mBoard->mLevelTimeNs)
+        : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs;
+
+    if (mIceTrapEndTimeNs > aStatusNowNs)
     {
         RemoveIceTrap();
     }
 
-    if (mChilledCounter > 0)
+    if (mChilledEndTimeNs > aStatusNowNs)
     {
-        mChilledCounter = 0;
+        mChilledEndTimeNs = 0;
         UpdateAnimSpeed();
     }
 }
@@ -9432,6 +9560,9 @@ void Zombie::RemoveColdEffects()
 //0x532B70
 void Zombie::ApplyBurn()
 {
+    const auto aStatusNowNs = IsOnBoard() ? static_cast<std::int64_t>(mBoard->mLevelTimeNs)
+        : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs;
+
     if (mDead || mZombiePhase == ZombiePhase::PHASE_ZOMBIE_BURNED)
         return;
 
@@ -9447,13 +9578,13 @@ void Zombie::ApplyBurn()
         mSpecialHeadReanimID = ReanimationID::REANIMATIONID_NULL;
     }
 
-    if (mIceTrapCounter > 0)
+    if (mIceTrapEndTimeNs > aStatusNowNs)
     {
         RemoveIceTrap();
     }
-    if (mButteredCounter > 0)
+    if (mButteredEndTimeNs > aStatusNowNs)
     {
-        mButteredCounter = 0;
+        mButteredEndTimeNs = 0;
     }
 
     AttachmentDetachCrossFadeParticleType(mAttachmentID, ParticleEffect::PARTICLE_ZAMBONI_SMOKE);
@@ -9488,7 +9619,7 @@ void Zombie::ApplyBurn()
 
         mZombiePhase = ZombiePhase::PHASE_ZOMBIE_BURNED;
         mPhaseCounter = 300;
-        mJustGotShotCounter = 0;
+        mShotFlashEndTimeNs = aStatusNowNs;
         DropLoot();
 
         if (mZombieType == ZombieType::ZOMBIE_BALLOON)
@@ -9590,7 +9721,7 @@ void Zombie::ApplyBurn()
 //0x533000
 void Zombie::AttachShield()
 {
-    ReanimTrackId aTrackName;
+    ReanimTrackId aTrackName{};  // 显式零初始化（clang -Wsometimes-uninitialized：else 分支 TOD_ASSERT(false) 后不可达但编译器仍告警）
     Reanimation* aBodyReanim = mApp->ReanimationGet(mBodyReanimID);
     if (mShieldType == ShieldType::SHIELDTYPE_DOOR)
     {
@@ -9684,6 +9815,9 @@ void Zombie::ReanimShowTrack(ReanimTrackId theTrackId, int theRenderGroup)
 //0x533240
 void Zombie::PlayDeathAnim(unsigned int theDamageFlags)
 {
+    const auto aStatusNowNs = IsOnBoard() ? static_cast<std::int64_t>(mBoard->mLevelTimeNs)
+        : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs;
+
     if (mZombiePhase == ZombiePhase::PHASE_ZOMBIE_DYING || mZombiePhase == ZombiePhase::PHASE_ZOMBIE_BURNED || mZombiePhase == ZombiePhase::PHASE_ZOMBIE_MOWERED)
         return;
 
@@ -9704,20 +9838,20 @@ void Zombie::PlayDeathAnim(unsigned int theDamageFlags)
         return;
     }
 
-    if (mIceTrapCounter > 0)
+    if (mIceTrapEndTimeNs > aStatusNowNs)
     {
         AddAttachedParticle(75, 106, ParticleEffect::PARTICLE_ICE_TRAP_RELEASE);
-        mIceTrapCounter = 0;
+        mIceTrapEndTimeNs = 0;
     }
-    if (mButteredCounter > 0)
+    if (mButteredEndTimeNs > aStatusNowNs)
     {
-        mButteredCounter = 0;
+        mButteredEndTimeNs = 0;
     }
     if (mYuckyFace)
     {
         ShowYuckyFace(false);
         mYuckyFace = false;
-        mYuckyFaceCounter = 0;
+        mYuckyFaceStartTimeNs = aStatusNowNs;
     }
 
     if (TestBit(theDamageFlags, (int)DamageFlags::DAMAGE_DOESNT_LEAVE_BODY))
@@ -9840,7 +9974,7 @@ void Zombie::PlayDeathAnim(unsigned int theDamageFlags)
         aDeathTrackName = ReanimTrackId::anim_waterdeath;
         ReanimIgnoreClipRect(ReanimTrackId::Zombie_duckytube, false);
     }
-    else if (aDeathAnimHit == 99 && aBodyReanim->TrackExists(ReanimTrackId::anim_superlongdeath) && aCanDoSuperLongDeath && mChilledCounter == 0 && mBoard->CountZombiesOnScreen() <= 5)
+    else if (aDeathAnimHit == 99 && aBodyReanim->TrackExists(ReanimTrackId::anim_superlongdeath) && aCanDoSuperLongDeath && mChilledEndTimeNs <= aStatusNowNs && mBoard->CountZombiesOnScreen() <= 5)
     {
         aDeathAnimRate = 14.0f;
         aDeathTrackName = ReanimTrackId::anim_superlongdeath;
@@ -9941,6 +10075,9 @@ constexpr float kZombieFallTime[(int)ZombieType::NUM_ZOMBIE_TYPES] = {
 //0x5336B0
 void Zombie::UpdateDeath()
 {
+    const auto aStatusNowNs = IsOnBoard() ? static_cast<std::int64_t>(mBoard->mLevelTimeNs)
+        : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs;
+
     Reanimation* aBodyReanim = mApp->ReanimationTryToGet(mBodyReanimID);
     if (aBodyReanim == nullptr)
     {
@@ -10088,9 +10225,9 @@ void Zombie::UpdateDeath()
             mApp->PlayFoley(FoleyType::FOLEY_EXPLOSION);
         }
     }
-    else if (mZombieFade == -1 && aBodyReanim->mLoopCount > 0 && mZombieType != ZombieType::ZOMBIE_BOSS)
+    else if (mFadeEndTimeNs == -1 && aBodyReanim->mLoopCount > 0 && mZombieType != ZombieType::ZOMBIE_BOSS)
     {
-        mZombieFade = mInPool ? 10 : 100;
+        mFadeEndTimeNs = aStatusNowNs + static_cast<std::int64_t>(mInPool ? 10 : 100) * 10'000'000;
     }
 }
 
@@ -10628,7 +10765,7 @@ void Zombie::BossSpawnAttack()
 
     // B 形态 -> 常量表 kBossSpawnTracks[5]（见函数前 namespace）：整型直下标；
     // default（DO_FIX_BUGS 回退/断言）保留表外。
-    ReanimTrackId aTrackName;
+    ReanimTrackId aTrackName{};  // 显式零初始化（clang -Wsometimes-uninitialized：else 分支 TOD_ASSERT(false) 后不可达但编译器仍告警）
     if (static_cast<unsigned>(mTargetRow) < 5)
     {
         aTrackName = kBossSpawnTracks[mTargetRow];
@@ -10648,16 +10785,19 @@ void Zombie::BossSpawnAttack()
 //0x534DC0
 void Zombie::BossSpawnContact()
 {
+    const auto aStatusNowNs = IsOnBoard() ? static_cast<std::int64_t>(mBoard->mLevelTimeNs)
+        : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs;
+
     ZombieType aZombieType;
-    if (mZombieAge < 3500)
+    if (aStatusNowNs-mBirthTimeNs < 35000000000LL)
     {
         aZombieType = ZombieType::ZOMBIE_NORMAL;
     }
-    else if (mZombieAge < 8000)
+    else if (aStatusNowNs-mBirthTimeNs < 80000000000LL)
     {
         aZombieType = ZombieType::ZOMBIE_TRAFFIC_CONE;
     }
-    else if (mZombieAge < 12500)
+    else if (aStatusNowNs-mBirthTimeNs < 125000000000LL)
     {
         aZombieType = ZombieType::ZOMBIE_PAIL;
     }
@@ -10798,12 +10938,15 @@ void Zombie::BossBungeeSpawn()
 //0x5352B0
 void Zombie::BossBungeeLeave()
 {
+    const auto aStatusNowNs = IsOnBoard() ? static_cast<std::int64_t>(mBoard->mLevelTimeNs)
+        : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs;
+
     mZombiePhase = ZombiePhase::PHASE_BOSS_BUNGEES_LEAVE;
 
     for (int i = 0; i < NUM_BOSS_BUNGEES; i++)
     {
         Zombie* aZombie = mBoard->ZombieTryToGet(mFollowerZombieID[i]);
-        if (aZombie && aZombie->mButteredCounter > 0)
+        if (aZombie && aZombie->mButteredEndTimeNs > aStatusNowNs)
         {
             aZombie->DieWithLoot();
         }
@@ -10862,7 +11005,7 @@ void Zombie::BossHeadSpit()
 
     // B 形态 -> 常量表 kBossHeadTracks[5]（见函数前 namespace）：整型直下标；
     // default（DO_FIX_BUGS 回退/断言）保留表外。
-    ReanimTrackId aTrackName;
+    ReanimTrackId aTrackName{};  // 显式零初始化（clang -Wsometimes-uninitialized：else 分支 TOD_ASSERT(false) 后不可达但编译器仍告警）
     if (static_cast<unsigned>(mFireballRow) < 5)
     {
         aTrackName = kBossHeadTracks[mFireballRow];
@@ -11085,6 +11228,9 @@ void Zombie::BossStartDeath()
 //0x536080
 void Zombie::UpdateBoss()
 {
+    const auto aStatusNowNs = IsOnBoard() ? static_cast<std::int64_t>(mBoard->mLevelTimeNs)
+        : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs;
+
     Reanimation* aBodyReanim = mApp->ReanimationTryToGet(mBodyReanimID);
     if (mApp->mGameScene == GameScenes::SCENE_LEVEL_INTRO)
     {
@@ -11100,7 +11246,7 @@ void Zombie::UpdateBoss()
 
     Reanimation* aHeadReanim = mApp->ReanimationGet(mSpecialHeadReanimID);
     UpdateBossFireball();
-    if (mIceTrapCounter == 0)
+    if (mIceTrapEndTimeNs <= aStatusNowNs)
     {
         if (mSummonCounter > 0)
         {
@@ -11119,7 +11265,7 @@ void Zombie::UpdateBoss()
             mBossHeadCounter--;
         }
 
-        if (mChilledCounter > 0)
+        if (mChilledEndTimeNs > aStatusNowNs)
         {
             aHeadReanim->ApplyRate(6.0f);
         }
@@ -11339,7 +11485,7 @@ void Zombie::UpdateBoss()
         {
             if (aBodyReanim->ShouldTriggerTimedEvent(0.23f))
             {
-                z.mChilledCounter = 0;
+                z.mChilledEndTimeNs = 0;
                 z.UpdateAnimSpeed();
             }
 

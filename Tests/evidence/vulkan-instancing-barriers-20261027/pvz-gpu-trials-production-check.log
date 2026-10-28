@@ -1,0 +1,3 @@
+[0/2] Re-checking globbed directories...
+[1/3] Building CXX object SexyAppFramework\graphics\vulkan\CMakeFiles\sexy_vulkan.dir\VulkanRenderer.cpp.obj
+[2/3] Linking CXX static library SexyAppFramework\graphics\vulkan\sexy_vulkan.lib

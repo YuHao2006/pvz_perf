@@ -2,7 +2,6 @@
 
 #include "SexyAppFramework/graphics/GpuTypes.h"
 #include "SexyAppFramework/graphics/GpuPool.h"
-#include "SexyAppFramework/graphics/GpuReanim.h"
 #include "SexyAppFramework/graphics/ImageReadback.h"
 #include "SexyAppFramework/graphics/vulkan/VulkanHdr.h"
 #include <cstddef>
@@ -11,16 +10,10 @@
 #include <memory>
 #include <span>
 #include <vector>
-#if defined(PVZ_D3D12_REANIM_BENCHMARK)
-#include <chrono>
-struct ID3D12QueryHeap;
-struct ID3D12Resource;
-#endif
 
 namespace Sexy {
 class D3d12Context;
 struct D3d12Texture;
-struct D3d12Reanim;
 struct D3d12ScaleImage;
 struct D3d12ScaleStep;
 using GpuHdrParams = VulkanHdrParams;
@@ -31,13 +24,6 @@ class D3d12Renderer final {
     struct Impl;
     std::unique_ptr<Impl> impl_;
 public:
-#if defined(PVZ_D3D12_REANIM_BENCHMARK)
-    // Borrowed diagnostics only in the separate benchmark backend.
-    ID3D12QueryHeap* frameTimestampQueries = nullptr;
-    ID3D12Resource* frameTimestampReadback = nullptr;
-    uint32_t frameTimestampPair = 0;
-    std::chrono::steady_clock::time_point frameRecordEnd{};
-#endif
     D3d12Renderer(D3d12Context& context, int sceneWidth, int sceneHeight,
         const std::filesystem::path& shaderDirectory, const GpuHdrParams* hdr = nullptr);
     ~D3d12Renderer();
@@ -69,7 +55,7 @@ public:
     D3d12Texture* CreateCoverageMask(int width, int height,
         std::span<const uint8_t> coverage, int rowPitch);
 
-    // GPU-cleared RGBA32F, with premultiplied storage. The handle stays stable
+    // GPU-cleared RGBA16F, with premultiplied storage. The handle stays stable
     // when a write snapshots pixels previously sampled in the current frame.
     D3d12Texture* CreateRenderImage(int width, int height);
     void SetRenderImage(D3d12Texture* image);
@@ -100,32 +86,12 @@ public:
     const bool& sceneOpen;
     void SubmitTriangles(std::span<const GpuVertex> vertices, D3d12Texture* texture,
         bool linear, bool wrap, GpuBlend blend, const GpuClip* clip = nullptr);
+    // Four-corner strips; mixed triangles/quads retain submission order.
+    void SubmitQuads(std::span<const GpuVertex> vertices, D3d12Texture* texture,
+        bool linear, bool wrap, GpuBlend blend, const GpuClip* clip = nullptr);
     void SubmitCoverageTriangles(std::span<const GpuVertex> vertices,
         D3d12Texture* mask, GpuBlend blend, const GpuClip* clip = nullptr);
     void SubmitPool(D3d12Texture* texture, const GpuPoolParams& params);
-    D3d12Reanim* UploadReanimDefinition(const GpuReanimDefinition& definition);
-    D3d12Reanim* UploadParticleDefinition(std::span<const float> words, uint32_t variants);
-    bool SubmitParticle(D3d12Reanim*, D3d12Texture*, const GpuParticleDraw&,
-        std::span<const GpuParticleState>, bool linear, bool repeat, GpuBlend,
-        const GpuClip* clip = nullptr);
-    bool SubmitFormulaParticles(D3d12Reanim* d, D3d12Texture* t, const GpuParticleDraw& p,
-        std::span<const GpuParticleFormulaState> s, bool l, bool r, GpuBlend b, const GpuClip* c = nullptr)
-    { return SubmitParticle(d,t,p,{reinterpret_cast<const GpuParticleState*>(s.data()),s.size()},l,r,b,c); }
-    bool SubmitDiscreteParticles(D3d12Reanim* d, D3d12Texture* t, const GpuParticleDraw& p,
-        std::span<const GpuParticleState> s, bool l, bool r, GpuBlend b, const GpuClip* c = nullptr)
-    { return SubmitParticle(d,t,p,s,l,r,b,c); }
-    void DestroyReanimDefinition(D3d12Reanim* definition);
-    uint32_t& reanimPictureCandidates;
-    const bool& reanimFrameEligible;
-    uint32_t BeginReanimInstance(D3d12Reanim* definition, D3d12Texture* texture,
-        const GpuReanimInstance& instance, bool linear, bool repeat, const GpuClip* clip = nullptr,
-        bool forceGpu = false);
-    bool SubmitReanim(D3d12Reanim* definition, D3d12Texture* texture, const GpuReanimDraw& draw,
-        bool linear, bool repeat, GpuBlend blend, const GpuClip* clip = nullptr, bool forceGpu = false);
-    bool SubmitReanimTrack(uint32_t instance, const GpuReanimTrackDraw& draw, GpuBlend blend);
-    // Main scenes queue presentation asynchronously. The next recording waits
-    // their fence before reusing mapped pages, descriptors, or retired images.
-    // Image-only scenes remain synchronous.
     void EndSceneAndPresent();
     bool PresentRetainedScene();
     bool ResizePresent();

@@ -23,10 +23,8 @@ inline constexpr std::array<std::uint8_t, 8> DAT64_MAGIC = {
 };
 inline constexpr std::uint32_t DAT64_V1_VERSION = 1;
 inline constexpr std::uint32_t DAT64_V2_VERSION = 2;
-inline constexpr std::uint32_t DAT64_V32_VERSION = 3;
-inline constexpr std::uint32_t DAT64_V32_MINOR_VERSION = 2;
-inline constexpr std::uint32_t DAT64_VERSION = 3;
-inline constexpr std::uint32_t DAT64_MINOR_VERSION = 3;
+inline constexpr std::uint32_t DAT64_VERSION = 4;
+inline constexpr std::uint32_t DAT64_MINOR_VERSION = 0;
 inline constexpr std::uint32_t DAT64_HEADER_SIZE = 48;
 inline constexpr std::uint32_t DAT64_AUTHORITY_BUILD = 1073;
 inline constexpr std::uint32_t DAT64_FLAG_LITTLE_ENDIAN = 1U << 0;
@@ -35,15 +33,7 @@ inline constexpr std::uint32_t DAT64_V1_FLAGS = DAT64_FLAG_LITTLE_ENDIAN;
 inline constexpr std::uint32_t DAT64_FLAGS = DAT64_FLAG_LITTLE_ENDIAN | DAT64_FLAG_NANOSECONDS;
 inline constexpr std::uint32_t DAT64_V1_SCHEMA_ID = 0x00010731U;
 inline constexpr std::uint32_t DAT64_V2_SCHEMA_ID = 0x00010732U;
-// Unpublished schemas are named only for explicit rejection tests.
-inline constexpr std::uint32_t DAT64_V3_SCHEMA_ID = 0x00010733U;
-inline constexpr std::uint32_t DAT64_V31_SCHEMA_ID = 0x00010734U;
-inline constexpr std::uint32_t DAT64_V32_SCHEMA_ID = 0x00010735U;
-inline constexpr std::uint32_t DAT64_V33_FIXED_SCHEMA_ID = 0x00010736U;
-inline constexpr std::uint32_t DAT64_V33_RELATIVE_SCHEMA_ID = 0x00010737U;
-inline constexpr std::uint32_t DAT64_V33_ACTOR_CLOCK_SCHEMA_ID = 0x00010738U;
-inline constexpr std::uint32_t DAT64_V33_PROJECTILE_CLOCK_SCHEMA_ID = 0x00010739U;
-inline constexpr std::uint32_t DAT64_SCHEMA_ID = 0x00010740U;
+inline constexpr std::uint32_t DAT64_SCHEMA_ID = 0x00010745U;
 inline constexpr std::uint64_t DAT64_END_MARKER = 0xB4A9ABBEBBA5A9AFULL;
 
 // Header bytes, all little-endian except the literal magic:
@@ -53,22 +43,13 @@ inline constexpr std::uint64_t DAT64_END_MARKER = 0xB4A9ABBEBBA5A9AFULL;
 //   10 u32 authority build (1073)
 //   14 u32 flags
 //   18 u64 payload size
-//   20 u32 ignored former payload CRC32 (v2/v3 write zero; v1 exports retain CRC)
+//   20 u32 ignored former payload CRC32 (v2/v4 write zero; v1 exports retain CRC)
 //   24 u32 schema id
-//   28 u32 minor version (zero in v1/v2, two in v3.2, three in v3.3)
+//   28 u32 minor version (zero in all supported formats)
 //   2C u32 reserved (must be zero)
-// RECORD_LAYOUTS and size/offset constants below describe the fixed v1
-// canonical ABI. Dat64TimeSchema expands its time fields for v2/v3.2.
-// V3.2 schema 10735 stores float Music tempos, Reanimation mVariant at 12,
-// removes track bytes 80..87 plus supplemental per-track image ResourceIds,
-// and stores ParticleSystem base effect (original 106 order) plus mVariant at 4.
-// Unpublished v3.0/v3.1 are unsupported by both game and converter.
-// V3.3 schema 10740 appends V7SaveSchema exact state to affected pool objects:
-// absolute playback/projectile/bowling times, float actor positions and anchored
-// motion, particle simulation and random state. Frozen prefixes stay convertible.
-// Older v3.3 layouts 10736..10739 are converter input only.
-// Historical canonical layouts
-// below remain frozen for offline conversion.
+// RECORD_LAYOUTS and offsets below describe the fixed v1 canonical ABI.
+// Dat64TimeSchema expands time fields for v2/v4; v4 appends current exact
+// runtime state. All v3 development formats are unsupported.
 
 // Shared by the game reader and converter. Offset 0x20 deliberately has no
 // meaning here: valid field edits require no checksum or hash update.
@@ -83,31 +64,20 @@ constexpr bool IsSupportedDat64Header(const std::span<const std::uint8_t>& file)
 			value |= std::uint64_t(file[offset + i]) << (i * 8);
 		return value;
 	};
-	const bool v33 = read(8, 4) == DAT64_VERSION &&
+    const auto version = read(8, 4);
+    const bool current = version == DAT64_VERSION &&
         read(40, 4) == DAT64_MINOR_VERSION && read(36, 4) == DAT64_SCHEMA_ID;
-    const bool v33Fixed = read(8, 4) == DAT64_VERSION &&
-        read(40, 4) == DAT64_MINOR_VERSION && read(36, 4) == DAT64_V33_FIXED_SCHEMA_ID;
-    const bool v33Relative = read(8, 4) == DAT64_VERSION &&
-        read(40, 4) == DAT64_MINOR_VERSION && read(36, 4) == DAT64_V33_RELATIVE_SCHEMA_ID;
-    const bool v33ActorClock = read(8, 4) == DAT64_VERSION &&
-        read(40, 4) == DAT64_MINOR_VERSION && read(36, 4) == DAT64_V33_ACTOR_CLOCK_SCHEMA_ID;
-    const bool v33ProjectileClock = read(8, 4) == DAT64_VERSION &&
-        read(40, 4) == DAT64_MINOR_VERSION && read(36, 4) == DAT64_V33_PROJECTILE_CLOCK_SCHEMA_ID;
-    const bool v3 = read(8, 4) == DAT64_V32_VERSION;
-	const bool v2 = read(8, 4) == DAT64_V2_VERSION;
-	const bool v32 = v3 && read(40, 4) == DAT64_V32_MINOR_VERSION &&
-		read(36, 4) == DAT64_V32_SCHEMA_ID;
-	return (v33 || v33Fixed || v33Relative || v33ActorClock || v33ProjectileClock || v32 || v2 || read(8, 4) == DAT64_V1_VERSION) &&
-		read(12, 4) == DAT64_HEADER_SIZE &&
-		read(16, 4) == DAT64_AUTHORITY_BUILD &&
-		read(20, 4) == (v33 || v3 || v2 ? DAT64_FLAGS : DAT64_V1_FLAGS) &&
-		read(24, 8) == file.size() - DAT64_HEADER_SIZE &&
-		(v33 || v33Fixed || v33Relative || v33ActorClock || v33ProjectileClock || v32 || (read(36, 4) == (v2 ? DAT64_V2_SCHEMA_ID : DAT64_V1_SCHEMA_ID) &&
-			read(40, 4) == 0)) &&
-		read(44, 4) == 0;
+    const bool v1 = version == DAT64_V1_VERSION && read(40, 4) == 0 &&
+        read(36, 4) == DAT64_V1_SCHEMA_ID;
+    const bool v2 = version == DAT64_V2_VERSION && read(40, 4) == 0 &&
+        read(36, 4) == DAT64_V2_SCHEMA_ID;
+    return (current || v1 || v2) && read(12, 4) == DAT64_HEADER_SIZE &&
+        read(16, 4) == DAT64_AUTHORITY_BUILD &&
+        read(20, 4) == (v1 ? DAT64_V1_FLAGS : DAT64_FLAGS) &&
+        read(24, 8) == file.size() - DAT64_HEADER_SIZE && read(44, 4) == 0;
 }
 
-// The runtime accepts only the current v3.3 format. Historical formats
+// The runtime accepts only the current v4 format. Historical formats
 // are inputs to the standalone converter, never alternate game load paths.
 constexpr bool IsCurrentDat64Header(const std::span<const std::uint8_t>& file)
 {

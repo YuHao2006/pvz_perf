@@ -426,7 +426,7 @@ def source_audit(root: Path, removed: dict[str, str], numeric_names: set[str], *
             reanim_table = (
                 name == "Sexy.TodLib/Reanimator.cpp"
                 and re.search(r"\{\s*ReanimationType::\w+\s*,\s*$", before)
-                and re.match(r"\s*,", after)
+                and re.match(r"\s*[,}]", after)
             )
             particle_table = (
                 name == "Sexy.TodLib/TodParticle.cpp"

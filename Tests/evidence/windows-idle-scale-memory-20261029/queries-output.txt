@@ -1,0 +1,369 @@
+
+************* Path validation summary **************
+Response                         Time (ms)     Location
+OK                                             C:/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/out/x64-win32-vulkan/Release
+Opening C:\Users\Administrator\AppData\Local\Temp\pvz-windows-hang-20261029-070113-0b1d51cc0862420e9856977b58e736d6\game.dmp
+No .natvis files found at C:\Windows\SYSTEM32\Visualizers.
+No .natvis files found at C:\Users\Administrator\AppData\Local\Dbg\Visualizers.
+
+Microsoft (R) Windows Debugger Version 10.0.26100.1 AMD64
+Copyright (c) Microsoft Corporation. All rights reserved.
+
+
+Loading Dump File [C:\Users\Administrator\AppData\Local\Temp\pvz-windows-hang-20261029-070113-0b1d51cc0862420e9856977b58e736d6\game.dmp]
+User Mini Dump File with Full Memory: Only application data is available
+
+OpenDump 0
+
+************* Path validation summary **************
+Response                         Time (ms)     Location
+OK                                             C:/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/out/x64-win32-vulkan/Release
+DBGHELP: Symbol Search Path: c:/users/administrator/clionprojects/codex/plantsvszombiesmodern/out/x64-win32-vulkan/release
+Symbol search path is: C:/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/out/x64-win32-vulkan/Release
+Executable search path is: 
+Windows 10 Version 26100 MP (16 procs) Free x64
+Product: WinNt, suite: SingleUserTS
+Edition build lab: 26100.1.amd64fre.ge_release.240331-1435
+Debug session time: Thu Oct 29 07:01:13.000 2026 (UTC + 8:00)
+System Uptime: 2 days 4:44:04.444
+Process Uptime: 0 days 0:09:53.000
+.
+DBGHELP: Module is not fully loaded into memory.
+DBGHELP: Searching for symbols using debugger-provided data.
+.
+DBGHELP: Module is not fully loaded into memory.
+DBGHELP: Searching for symbols using debugger-provided data.
+.
+DBGHELP: Module is not fully loaded into memory.
+DBGHELP: Searching for symbols using debugger-provided data.
+.
+DBGHELP: Module is not fully loaded into memory.
+DBGHELP: Searching for symbols using debugger-provided data.
+.
+DBGHELP: Module is not fully loaded into memory.
+DBGHELP: Searching for symbols using debugger-provided data.
+.
+DBGHELP: Module is not fully loaded into memory.
+DBGHELP: Searching for symbols using debugger-provided data.
+.
+DBGHELP: Module is not fully loaded into memory.
+DBGHELP: Searching for symbols using debugger-provided data.
+.
+DBGHELP: Module is not fully loaded into memory.
+DBGHELP: Searching for symbols using debugger-provided data.
+.
+DBGHELP: Module is not fully loaded into memory.
+DBGHELP: Searching for symbols using debugger-provided data.
+.
+DBGHELP: Module is not fully loaded into memory.
+DBGHELP: Searching for symbols using debugger-provided data.
+.
+DBGHELP: Module is not fully loaded into memory.
+DBGHELP: Searching for symbols using debugger-provided data.
+.
+DBGHELP: Module is not fully loaded into memory.
+DBGHELP: Searching for symbols using debugger-provided data.
+.
+DBGHELP: Module is not fully loaded into memory.
+DBGHELP: Searching for symbols using debugger-provided data.
+.
+DBGHELP: Module is not fully loaded into memory.
+DBGHELP: Searching for symbols using debugger-provided data.
+.
+DBGHELP: Module is not fully loaded into memory.
+DBGHELP: Searching for symbols using debugger-provided data.
+.
+DBGHELP: Module is not fully loaded into memory.
+DBGHELP: Searching for symbols using debugger-provided data.
+.
+DBGHELP: Module is not fully loaded into memory.
+DBGHELP: Searching for symbols using debugger-provided data.
+.
+DBGHELP: Module is not fully loaded into memory.
+DBGHELP: Searching for symbols using debugger-provided data.
+.
+DBGHELP: Module is not fully loaded into memory.
+DBGHELP: Searching for symbols using debugger-provided data.
+.
+DBGHELP: Module is not fully loaded into memory.
+DBGHELP: Searching for symbols using debugger-provided data.
+.
+DBGHELP: Module is not fully loaded into memory.
+DBGHELP: Searching for symbols using debugger-provided data.
+.
+DBGHELP: Module is not fully loaded into memory.
+DBGHELP: Searching for symbols using debugger-provided data.
+.
+DBGHELP: Module is not fully loaded into memory.
+DBGHELP: Searching for symbols using debugger-provided data.
+.
+DBGHELP: Module is not fully loaded into memory.
+DBGHELP: Searching for symbols using debugger-provided data.
+.
+DBGHELP: Module is not fully loaded into memory.
+DBGHELP: Searching for symbols using debugger-provided data.
+.
+DBGHELP: Module is not fully loaded into memory.
+DBGHELP: Searching for symbols using debugger-provided data.
+.
+DBGHELP: Module is not fully loaded into memory.
+DBGHELP: Searching for symbols using debugger-provided data.
+.
+DBGHELP: Module is not fully loaded into memory.
+DBGHELP: Searching for symbols using debugger-provided data.
+.
+DBGHELP: Module is not fully loaded into memory.
+DBGHELP: Searching for symbols using debugger-provided data.
+.
+DBGHELP: Module is not fully loaded into memory.
+DBGHELP: Searching for symbols using debugger-provided data.
+.
+DBGHELP: Module is not fully loaded into memory.
+DBGHELP: Searching for symbols using debugger-provided data.
+.
+DBGHELP: Module is not fully loaded into memory.
+DBGHELP: Searching for symbols using debugger-provided data.
+.
+DBGHELP: Module is not fully loaded into memory.
+DBGHELP: Searching for symbols using debugger-provided data.
+.
+DBGHELP: Module is not fully loaded into memory.
+DBGHELP: Searching for symbols using debugger-provided data.
+.
+DBGHELP: Module is not fully loaded into memory.
+DBGHELP: Searching for symbols using debugger-provided data.
+.
+DBGHELP: Module is not fully loaded into memory.
+DBGHELP: Searching for symbols using debugger-provided data.
+.
+DBGHELP: Module is not fully loaded into memory.
+DBGHELP: Searching for symbols using debugger-provided data.
+.
+DBGHELP: Module is not fully loaded into memory.
+DBGHELP: Searching for symbols using debugger-provided data.
+.
+DBGHELP: Module is not fully loaded into memory.
+DBGHELP: Searching for symbols using debugger-provided data.
+.
+DBGHELP: Module is not fully loaded into memory.
+DBGHELP: Searching for symbols using debugger-provided data.
+.
+DBGHELP: Module is not fully loaded into memory.
+DBGHELP: Searching for symbols using debugger-provided data.
+.
+DBGHELP: Module is not fully loaded into memory.
+DBGHELP: Searching for symbols using debugger-provided data.
+.
+DBGHELP: Module is not fully loaded into memory.
+DBGHELP: Searching for symbols using debugger-provided data.
+.
+DBGHELP: Module is not fully loaded into memory.
+DBGHELP: Searching for symbols using debugger-provided data.
+.
+DBGHELP: Module is not fully loaded into memory.
+DBGHELP: Searching for symbols using debugger-provided data.
+.
+DBGHELP: Module is not fully loaded into memory.
+DBGHELP: Searching for symbols using debugger-provided data.
+.
+DBGHELP: Module is not fully loaded into memory.
+DBGHELP: Searching for symbols using debugger-provided data.
+.
+DBGHELP: Module is not fully loaded into memory.
+DBGHELP: Searching for symbols using debugger-provided data.
+.
+DBGHELP: Module is not fully loaded into memory.
+DBGHELP: Searching for symbols using debugger-provided data.
+.
+DBGHELP: Module is not fully loaded into memory.
+DBGHELP: Searching for symbols using debugger-provided data.
+.
+DBGHELP: Module is not fully loaded into memory.
+DBGHELP: Searching for symbols using debugger-provided data.
+.
+DBGHELP: Module is not fully loaded into memory.
+DBGHELP: Searching for symbols using debugger-provided data.
+.
+DBGHELP: Module is not fully loaded into memory.
+DBGHELP: Searching for symbols using debugger-provided data.
+.
+DBGHELP: Module is not fully loaded into memory.
+DBGHELP: Searching for symbols using debugger-provided data.
+.
+DBGHELP: Module is not fully loaded into memory.
+DBGHELP: Searching for symbols using debugger-provided data.
+.
+DBGHELP: Module is not fully loaded into memory.
+DBGHELP: Searching for symbols using debugger-provided data.
+.
+DBGHELP: Module is not fully loaded into memory.
+DBGHELP: Searching for symbols using debugger-provided data.
+.
+DBGHELP: Module is not fully loaded into memory.
+DBGHELP: Searching for symbols using debugger-provided data.
+.
+DBGHELP: Module is not fully loaded into memory.
+DBGHELP: Searching for symbols using debugger-provided data.
+.
+DBGHELP: Module is not fully loaded into memory.
+DBGHELP: Searching for symbols using debugger-provided data.
+.
+DBGHELP: Module is not fully loaded into memory.
+DBGHELP: Searching for symbols using debugger-provided data.
+.
+DBGHELP: Module is not fully loaded into memory.
+DBGHELP: Searching for symbols using debugger-provided data.
+.
+DBGHELP: Module is not fully loaded into memory.
+DBGHELP: Searching for symbols using debugger-provided data.
+.
+DBGHELP: Module is not fully loaded into memory.
+DBGHELP: Searching for symbols using debugger-provided data.
+.
+DBGHELP: Module is not fully loaded into memory.
+DBGHELP: Searching for symbols using debugger-provided data.
+.
+DBGHELP: Module is not fully loaded into memory.
+DBGHELP: Searching for symbols using debugger-provided data.
+.
+DBGHELP: Module is not fully loaded into memory.
+DBGHELP: Searching for symbols using debugger-provided data.
+.
+DBGHELP: Module is not fully loaded into memory.
+DBGHELP: Searching for symbols using debugger-provided data.
+.
+DBGHELP: Module is not fully loaded into memory.
+DBGHELP: Searching for symbols using debugger-provided data.
+.
+DBGHELP: Module is not fully loaded into memory.
+DBGHELP: Searching for symbols using debugger-provided data.
+..
+DBGHELP: Module is not fully loaded into memory.
+DBGHELP: Searching for symbols using debugger-provided data.
+.
+DBGHELP: Module is not fully loaded into memory.
+DBGHELP: Searching for symbols using debugger-provided data.
+.
+DBGHELP: Module is not fully loaded into memory.
+DBGHELP: Searching for symbols using debugger-provided data.
+.
+DBGHELP: Module is not fully loaded into memory.
+DBGHELP: Searching for symbols using debugger-provided data.
+.
+DBGHELP: Module is not fully loaded into memory.
+DBGHELP: Searching for symbols using debugger-provided data.
+.
+DBGHELP: Module is not fully loaded into memory.
+DBGHELP: Searching for symbols using debugger-provided data.
+.
+DBGHELP: Module is not fully loaded into memory.
+DBGHELP: Searching for symbols using debugger-provided data.
+.
+DBGHELP: Module is not fully loaded into memory.
+DBGHELP: Searching for symbols using debugger-provided data.
+.
+DBGHELP: Module is not fully loaded into memory.
+DBGHELP: Searching for symbols using debugger-provided data.
+.
+DBGHELP: Module is not fully loaded into memory.
+DBGHELP: Searching for symbols using debugger-provided data.
+.
+DBGHELP: Module is not fully loaded into memory.
+DBGHELP: Searching for symbols using debugger-provided data.
+.
+DBGHELP: Module is not fully loaded into memory.
+DBGHELP: Searching for symbols using debugger-provided data.
+.
+DBGHELP: Module is not fully loaded into memory.
+DBGHELP: Searching for symbols using debugger-provided data.
+.
+DBGHELP: Module is not fully loaded into memory.
+DBGHELP: Searching for symbols using debugger-provided data.
+.
+DBGHELP: Module is not fully loaded into memory.
+DBGHELP: Searching for symbols using debugger-provided data.
+.
+DBGHELP: Module is not fully loaded into memory.
+DBGHELP: Searching for symbols using debugger-provided data.
+.
+DBGHELP: Module is not fully loaded into memory.
+DBGHELP: Searching for symbols using debugger-provided data.
+.
+DBGHELP: Module is not fully loaded into memory.
+DBGHELP: Searching for symbols using debugger-provided data.
+.
+DBGHELP: Module is not fully loaded into memory.
+DBGHELP: Searching for symbols using debugger-provided data.
+.
+DBGHELP: Module is not fully loaded into memory.
+DBGHELP: Searching for symbols using debugger-provided data.
+.
+DBGHELP: Module is not fully loaded into memory.
+DBGHELP: Searching for symbols using debugger-provided data.
+.
+DBGHELP: Module is not fully loaded into memory.
+DBGHELP: Searching for symbols using debugger-provided data.
+.
+DBGHELP: Module is not fully loaded into memory.
+DBGHELP: Searching for symbols using debugger-provided data.
+.
+DBGHELP: Module is not fully loaded into memory.
+DBGHELP: Searching for symbols using debugger-provided data.
+.
+DBGHELP: Module is not fully loaded into memory.
+DBGHELP: Searching for symbols using debugger-provided data.
+.
+DBGHELP: Module is not fully loaded into memory.
+DBGHELP: Searching for symbols using debugger-provided data.
+.
+DBGHELP: Module is not fully loaded into memory.
+DBGHELP: Searching for symbols using debugger-provided data.
+.
+DBGHELP: Module is not fully loaded into memory.
+DBGHELP: Searching for symbols using debugger-provided data.
+.
+Loading unloaded module list
+.........
+Unable to add extension DLL: ntsdexts
+Unable to add extension DLL: uext
+Unable to add extension DLL: exts
+
++------------------------------------------------------------------------+
+| This target supports Hardware-enforced Stack Protection. A HW based    |
+| "Shadow Stack" may be available to assist in debugging and analysis.   |
+| See aka.ms/userhsp for more info.                                      |
+|                                                                        |
+| dps @ssp                                                               |
+|                                                                        |
++------------------------------------------------------------------------+
+
+For analysis of this file, run !analyze -v
+Wait 0
+DBGHELP: Module is not fully loaded into memory.
+DBGHELP: Searching for symbols using debugger-provided data.
+DBGHELP: symsrv.dll load failure
+*** WARNING: Unable to verify checksum for pvz_perf.exe
+DBGHELP: pvz_perf - private symbols & lines 
+        c:/users/administrator/clionprojects/codex/plantsvszombiesmodern/out/x64-win32-vulkan/release\pvz_perf.pdb
+DBGHELP: c:/users/administrator/clionprojects/codex/plantsvszombiesmodern/out/x64-win32-vulkan/release\ntdll.pdb - file not found
+DBGHELP: c:/users/administrator/clionprojects/codex/plantsvszombiesmodern/out/x64-win32-vulkan/release\dll\ntdll.pdb - file not found
+DBGHELP: c:/users/administrator/clionprojects/codex/plantsvszombiesmodern/out/x64-win32-vulkan/release\symbols\dll\ntdll.pdb - file not found
+DBGHELP: ntdll.pdb - file not found
+DBGHELP: ntdll - export symbols
+00007ff7`010d8109 pvz_perf!gScreenSaverActive = true
+DBGHELP: SharedUserData - virtual symbol module
+bool true
+int 0n1
+bool false
+bool true
+int 0n800
+int 0n600
+class Sexy::VulkanRenderer * 0x00000000`0449d190
+   +0x000 impl_            : std::unique_ptr<Sexy::VulkanRenderer::Impl,std::default_delete<Sexy::VulkanRenderer::Impl> >
+   +0x008 sceneOpen        : 0x00000000`04623094  -> 0
+   +0x010 whiteTexture     : 0x00000000`0462b460  -> 0x00000000`042e0060 Sexy::VulkanTexture
+   +0x018 causticsTexture  : 0x00000000`0462b4a0  -> 0x00000000`40379cf0 Sexy::VulkanTexture
+   +0x020 sceneWidth       : 0x00000000`04623068  -> 0n960
+   +0x028 sceneHeight      : 0x00000000`0462306c  -> 0n600
+unsigned int64 0x00000004`772713f4
+unsigned int64 0

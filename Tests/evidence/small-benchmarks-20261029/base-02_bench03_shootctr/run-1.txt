@@ -1,0 +1,1 @@
+bench03 kShootingCounter | before 29.93 ns | after 15.69 ns | diff 47.6% | checksum=OK (CDF0958ECF3DA34D/CDF0958ECF3DA34D)

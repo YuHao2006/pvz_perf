@@ -18,7 +18,6 @@
 #include <cmath>
 #include <stdexcept>
 #include <utility>
-#include "NativeMessageReadiness.h"
 
 using namespace Sexy;
 
@@ -58,22 +57,9 @@ void SetStyle(HWND window,int index,LONG_PTR style) {
     if(!previous && GetLastError()!=ERROR_SUCCESS) WindowFailure("SetWindowLongPtr");
 }
 // The application owns one main native window; MakeWindow resets this state.
-NativeFrameMotionPoll nativeFrameMotionPoll;
 GameViewport nativeStartupViewport;
 
-bool NativeQueueReady(const SexyAppBase& app) {
-    if(!app.mNativeWindowShown || !app.mActive || app.mPhysMinimized ||
-        app.mSwitchingScreenMode) {
-        return true;
-    }
-    if(NativeNonMoveReady()) {
-        return true;
-    }
-    if(nativeFrameMotionPoll.Allow(app.mUpdateCount,app.mMouseIn)) {
-        return true;
-    }
-    return false;
-}
+
 }
 
 void SexyAppBase::MapWindowMouse(double x,double y,int& sx,int& sy) const {
@@ -89,7 +75,6 @@ void SexyAppBase::MapWindowMouse(double x,double y,int& sx,int& sy) const {
 void SexyAppBase::MakeWindow() {
     if(mHWnd || mGpuContext) throw std::logic_error("Game window already exists");
     if constexpr (!NativeWindowsWindowApi::HdrOutput) mScaleHDREnabled=false;
-    nativeFrameMotionPoll={};
     mTitle="pvz_perf";
     const DWORD style=WS_OVERLAPPED|WS_CAPTION|WS_SYSMENU|WS_MINIMIZEBOX|
         WS_THICKFRAME;
@@ -122,7 +107,8 @@ void SexyAppBase::MakeWindow() {
     VulkanInitConfig init{};
     init.appInfo.pApplicationName="pvz_perf";
     init.enableValidation=getenv("PVZ_VULKAN_VALIDATION")!=nullptr;
-    init.features.shaderFloat64=VK_TRUE;
+    // 不再要求 shaderFloat64：字体内核已是纯整数实现，fp64 是 NVIDIA 有而
+    // Intel 消费卡（Arc 核显）没有的特性，曾被此行全灭候选卡。
     if(!mScaleEffects.empty()) {
         init.features.shaderStorageImageExtendedFormats=VK_TRUE;
         init.features.shaderImageGatherExtended=VK_TRUE;
@@ -180,9 +166,9 @@ void SexyAppBase::RegisterWindowClasses() {
 
 void SexyAppBase::PumpWindowEvents() {
     MSG message{};
-    nativeFrameMotionPoll.PollHeartbeat(mUpdateCount);
-    while(NativeQueueReady(*this) &&
-        PeekMessageW(&message,nullptr,0,0,PM_REMOVE)) {
+    // Always drain the OS queue, including mouse movement. Hover is sampled
+    // separately, but queued input must not remain pending on the window thread.
+    while(PeekMessageW(&message,nullptr,0,0,PM_REMOVE)) {
         if(message.message==WM_QUIT) {
             Shutdown();
             break;

@@ -1,0 +1,1 @@
+bench05 kSeedPacketDrawMetrics | before 62.32 ns | after 26.76 ns | diff 57.1% | checksum=OK (52ED507FBA93DF49/52ED507FBA93DF49)

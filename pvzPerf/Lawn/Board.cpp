@@ -506,7 +506,7 @@ GridItem* Board::AddAGraveStone(int theGridX, int theGridY)
 {
 	GridItem* aGraveStone = mGridItems.DataArrayAlloc();
 	aGraveStone->mGridItemType = GridItemType::GRIDITEM_GRAVESTONE;
-	aGraveStone->mGridItemCounter = -Rand(50);
+	aGraveStone->mStateStartTimeNs = static_cast<std::int64_t>(mLevelTimeNs) + static_cast<std::int64_t>(Rand(50)) * 10'000'000;
 	aGraveStone->mRenderOrder = MakeRenderOrder(RenderLayer::RENDER_LAYER_GRAVE_STONE, theGridY, 3);
 	aGraveStone->mGridX = theGridX;
 	aGraveStone->mGridY = theGridY;
@@ -2269,7 +2269,7 @@ void Board::DisplayAdviceAgain(const SexyString& theAdvice, MessageStyle theMess
 void Board::ClearAdviceImmediately()
 {
 	ClearAdvice(AdviceType::ADVICE_NONE);
-	mAdvice->mDuration = 0;
+	mAdvice->mEndTimeNs = 0;
 }
 
 //0x40CAB0
@@ -3640,7 +3640,7 @@ PlantingReason Board::CanPlantAt(int theGridX, int theGridY, SeedType theSeedTyp
 			return PlantingReason::PLANTING_NOT_HERE;
 		}
 
-		if (!aPlantOnLawn.mNormalPlant || !aPlantOnLawn.mNormalPlant->mIsAsleep || aPlantOnLawn.mNormalPlant->mWakeUpCounter > 0 ||
+		if (!aPlantOnLawn.mNormalPlant || !aPlantOnLawn.mNormalPlant->mIsAsleep || aPlantOnLawn.mNormalPlant->mWakeUpEndTimeNs > static_cast<std::int64_t>(mLevelTimeNs) ||
 			aPlantOnLawn.mNormalPlant->mOnBungeeState == PlantOnBungeeState::GETTING_GRABBED_BY_BUNGEE)
 		{
 			return PlantingReason::PLANTING_NEEDS_SLEEPING;
@@ -4733,7 +4733,7 @@ void Board::MouseDownWithPlant(int x, int y, int theClickCount)
 
 	// 升级种植或坚果包扎术等情况时，先将原植物销毁
 	bool aIsAwake = false;
-	int aWakeUpCounter = 0;
+	std::int64_t aWakeUpEndTimeNs = 0;
 	PlantsOnLawn aPlantOnLawn;
 	GetPlantsOnLawn(aGridX, aGridY, &aPlantOnLawn);
 	Plant* aNormalPlant = aPlantOnLawn.mNormalPlant;
@@ -4743,7 +4743,7 @@ void Board::MouseDownWithPlant(int x, int y, int theClickCount)
 		if (aPlantingSeedType == SeedType::SEED_GLOOMSHROOM)
 		{
 			aIsAwake = !aNormalPlant->mIsAsleep;
-			aWakeUpCounter = aNormalPlant->mWakeUpCounter;
+			aWakeUpEndTimeNs = aNormalPlant->mWakeUpEndTimeNs;
 		}
 		aNormalPlant->Die();
 	}
@@ -4786,7 +4786,7 @@ void Board::MouseDownWithPlant(int x, int y, int theClickCount)
 	// CURSOR_TYPE_PLANT_FROM_WHEEL_BARROW(5)。注意原链文本顺序 GLOVE→BARROW→
 	// COIN→BANK ≠ 枚举数值序（GameSelector 教训，靠下方 static_assert 锚键值）；
 	// [4] PLANT_FROM_DUPLICATOR 与段外值同落原 else 支的 TOD_ASSERT(false)。
-	// 各支所需 x/y/aGridX/aGridY/aIsAwake/aWakeUpCounter 原为函数局部值，
+	// 各支所需 x/y/aGridX/aGridY/aIsAwake/aWakeUpEndTimeNs 原为函数局部值，
 	// 经 PlantFromCursorCtx 传参（lambda 须免捕获才可转函数指针）。
 	struct PlantFromCursorCtx
 	{
@@ -4795,7 +4795,7 @@ void Board::MouseDownWithPlant(int x, int y, int theClickCount)
 		int mGridX;
 		int mGridY;
 		bool mIsAwake;
-		int mWakeUpCounter;
+		std::int64_t mWakeUpEndTimeNs;
 	};
 	using PlantFromCursorFn = void (*)(Board&, const PlantFromCursorCtx&);
 	static constexpr PlantFromCursorFn kPlantFromCursorCases[(int)CursorType::CURSOR_TYPE_PLANT_FROM_WHEEL_BARROW - (int)CursorType::CURSOR_TYPE_PLANT_FROM_BANK + 1] = {
@@ -4809,7 +4809,7 @@ void Board::MouseDownWithPlant(int x, int y, int theClickCount)
 			}
 			else
 			{
-				aPlant->mWakeUpCounter = c.mWakeUpCounter;
+				aPlant->mWakeUpEndTimeNs = c.mWakeUpEndTimeNs;
 			}
 
 			b.mSeedBank->mSeedPackets[b.mCursorObject->mSeedBankIndex].WasPlanted();
@@ -4843,7 +4843,7 @@ void Board::MouseDownWithPlant(int x, int y, int theClickCount)
 		(int)CursorType::CURSOR_TYPE_PLANT_FROM_WHEEL_BARROW == 5,
 		"CursorType PLANT_FROM 段键值须与 kPlantFromCursorCases 行序一致");
 
-	const PlantFromCursorCtx aCursorCtx{ x, y, aGridX, aGridY, aIsAwake, aWakeUpCounter };
+	const PlantFromCursorCtx aCursorCtx{ x, y, aGridX, aGridY, aIsAwake, aWakeUpEndTimeNs };
 	const unsigned aCursorIndex = static_cast<unsigned>(mCursorObject->mCursorType) - static_cast<unsigned>(CursorType::CURSOR_TYPE_PLANT_FROM_BANK);
 	if (aCursorIndex < sizeof(kPlantFromCursorCases) / sizeof(kPlantFromCursorCases[0]))
 	{
@@ -5579,7 +5579,7 @@ static_assert(sizeof(kTutorialReturn) / sizeof(kTutorialReturn[0]) == TutorialSt
 //0x412330
 void Board::ClearCursor()
 {
-	if (mAdvice->mDuration > 0)
+	if (mAdvice->mEndTimeNs != 0)
 	{
 		if (mHelpIndex == AdviceType::ADVICE_PLANT_GRAVEBUSTERS_ON_GRAVES ||
 			mHelpIndex == AdviceType::ADVICE_PLANT_LILYPAD_ON_WATER ||
@@ -6024,7 +6024,7 @@ void Board::SpawnZombiesFromGraves()
 	GridItem* aGridItem = nullptr;
 	while (IterateGridItems(aGridItem))
 	{
-		if (aGridItem->mGridItemType != GridItemType::GRIDITEM_GRAVESTONE || aGridItem->mGridItemCounter < 100)
+		if (aGridItem->mGridItemType != GridItemType::GRIDITEM_GRAVESTONE || static_cast<std::int64_t>(mLevelTimeNs) - aGridItem->mStateStartTimeNs < 1'000'000'000)
 		{
 			continue;
 		}
@@ -6504,7 +6504,11 @@ void Board::NextWaveComing()
 	{
 		if (!IsSurvivalStageWithRepick() && mApp->mGameMode != GameMode::GAMEMODE_MINIGAME_LAST_STAND && !mApp->IsContinuousChallenge())
 		{
-			mApp->AddReanimation(0, 30, MakeRenderOrder(RenderLayer::RENDER_LAYER_ABOVE_UI, 0, 0), ReanimationType::REANIM_FINAL_WAVE);
+			// The authored animation is centered in the original 800px board.
+			// Battle viewports can extend asymmetrically, so use their actual center.
+			const auto& aBounds = mApp->mScreenBounds;
+			const float aBannerX = aBounds.mX - mX + (aBounds.mWidth - BOARD_WIDTH) * 0.5f;
+			mApp->AddReanimation(aBannerX, 30, MakeRenderOrder(RenderLayer::RENDER_LAYER_ABOVE_UI, 0, 0), ReanimationType::REANIM_FINAL_WAVE);
 			mFinalWaveSoundCounter = 60;
 		}
 	}
@@ -6739,6 +6743,14 @@ void Board::UpdateProgressMeter(std::uint64_t theDeltaNs)
 		if (mFlagRaiseCounter > 0)
 			mFlagRaiseCounter--;
 
+        // Width only changes on these boundaries. Avoid scanning the current
+        // wave's health and dividing progress geometry on intervening updates.
+        const auto aPreviousTimeNs = mLevelTimeNs - theDeltaNs;
+        const bool aFastBoundary = aPreviousTimeNs / 50'000'000 != mLevelTimeNs / 50'000'000;
+        const bool aSlowBoundary = aPreviousTimeNs / 200'000'000 != mLevelTimeNs / 200'000'000;
+        if (!aFastBoundary && !aSlowBoundary)
+            return;
+
 		int aTotalWidth = 150;  // 可用于平均分配给每一小波的进度条总长度
 		int aNumWavesPerFlag = GetNumWavesPerFlag();  // 本关卡中每相邻两个旗帜波之前的小波数量
 		bool aHasFlags = ProgressMeterHasFlags();  // 进度条标注旗帜时，旗帜波占用更长的进度条
@@ -6781,9 +6793,7 @@ void Board::UpdateProgressMeter(std::uint64_t theDeltaNs)
 		// 取得当前实际与理论的进度条长度之差
 		int aDelta = aLength - mProgressMeterWidth;
 		// 当差值不超过一波的长度时，每 20cs 调整一次长度；否则，每 5cs 调整一次长度
-		const auto aPreviousTimeNs = mLevelTimeNs - theDeltaNs;
-		if ((aDelta > aWaveLength && aPreviousTimeNs / 50'000'000 != mLevelTimeNs / 50'000'000) ||
-			(aDelta > 0 && aPreviousTimeNs / 200'000'000 != mLevelTimeNs / 200'000'000))
+		if ((aDelta > aWaveLength && aFastBoundary) || (aDelta > 0 && aSlowBoundary))
 		{
 			mProgressMeterWidth++;
 		}
@@ -7014,7 +7024,7 @@ void Board::UpdateGame(std::uint64_t theDeltaNs)
 		}
 		else if (mFogOffset < aMaxFogOffset)
 		{
-			mFogOffset = TodAnimateCurveFloat(-5, aMaxFogOffset, mFogOffset * Sexy::UpdateDecay(1.1f), 0, aMaxFogOffset, Curves::Linear);
+			mFogOffset = TodAnimateCurveFloat(-5, aMaxFogOffset, mFogOffset * (1.0f + static_cast<float>(Sexy::gUpdateIntervalNs * 1.0e-8)), 0, aMaxFogOffset, Curves::Linear);
 		}
 	}
 
@@ -8416,17 +8426,17 @@ constexpr MusicStateLabelFn kMusicBurstStateLabels[(int)MusicBurstState::MUSIC_B
     // 原 MUSIC_BURST_STARTING 支
     [](Music& aMusic, SexyString& aText)
     {
-				aText += StrFormat(("Starting %d/%d"), static_cast<int>(aMusic.mBurstStateCounter), 400);
+				aText += StrFormat(("Starting %dms/%dms"), static_cast<int>(std::max<std::int64_t>(0, aMusic.mBurstEndTimeNs - aMusic.mApp->mApplicationTimeNs) / 1'000'000), 4000);
     },  // 1 MUSIC_BURST_STARTING
     // 原 MUSIC_BURST_ON 支
     [](Music& aMusic, SexyString& aText)
     {
-				aText += StrFormat(("On at least until %d/%d"), static_cast<int>(aMusic.mBurstStateCounter), 800);
+				aText += StrFormat(("On at least until %dms/%dms"), static_cast<int>(std::max<std::int64_t>(0, aMusic.mBurstEndTimeNs - aMusic.mApp->mApplicationTimeNs) / 1'000'000), 8000);
     },  // 2 MUSIC_BURST_ON
     // 原 MUSIC_BURST_FINISHING 支
     [](Music& aMusic, SexyString& aText)
     {
-				aText += StrFormat(("Finishing %d/%d"), static_cast<int>(aMusic.mBurstStateCounter), 400);
+				aText += StrFormat(("Finishing %dms/%dms"), static_cast<int>(std::max<std::int64_t>(0, aMusic.mBurstEndTimeNs - aMusic.mApp->mApplicationTimeNs) / 1'000'000), 4000);
     },  // 3 MUSIC_BURST_FINISHING
 };
 static_assert(sizeof(kMusicBurstStateLabels) / sizeof(kMusicBurstStateLabels[0]) ==
@@ -8458,7 +8468,7 @@ constexpr MusicStateLabelFn kMusicDrumsStateLabels[(int)MusicDrumsState::MUSIC_D
     // 原 MUSIC_DRUMS_FADING 支
     [](Music& aMusic, SexyString& aText)
     {
-				aText += StrFormat((", Drums fading off %d/%d"), static_cast<int>(aMusic.mDrumsStateCounter), 50);
+				aText += StrFormat((", Drums fading off %dms/%dms"), static_cast<int>(std::max<std::int64_t>(0, aMusic.mDrumsEndTimeNs - aMusic.mApp->mApplicationTimeNs) / 1'000'000), 500);
     },  // 4 MUSIC_DRUMS_FADING
 };
 static_assert(sizeof(kMusicDrumsStateLabels) / sizeof(kMusicDrumsStateLabels[0]) ==
@@ -11176,21 +11186,17 @@ void Board::UpdateGridItems()
 	GridItem* aGridItem = nullptr;
 	while (IterateGridItems(aGridItem))
 	{
-		if (mEnableGraveStones && aGridItem->mGridItemType == GridItemType::GRIDITEM_GRAVESTONE && aGridItem->mGridItemCounter < 100)
+		const auto nowNs = static_cast<std::int64_t>(mLevelTimeNs);
+		if (!mEnableGraveStones && aGridItem->mGridItemType == GridItemType::GRIDITEM_GRAVESTONE)
+			aGridItem->mStateStartTimeNs += static_cast<std::int64_t>(Sexy::gUpdateIntervalNs);
+		if (aGridItem->mGridItemType == GridItemType::GRIDITEM_CRATER)
 		{
-			aGridItem->mGridItemCounter++;
-		}
-
-		if (aGridItem->mGridItemType == GridItemType::GRIDITEM_CRATER && mApp->mGameScene == GameScenes::SCENE_PLAYING)
-		{
-			if (aGridItem->mGridItemCounter > 0)
+			if (mApp->mGameScene == GameScenes::SCENE_PLAYING)
 			{
-				aGridItem->mGridItemCounter--;
+				if (nowNs >= aGridItem->mStateEndTimeNs) aGridItem->GridItemDie();
 			}
-			if (aGridItem->mGridItemCounter == 0)
-			{
-				aGridItem->GridItemDie();
-			}
+			else if (aGridItem->mStateEndTimeNs != 0)
+				aGridItem->mStateEndTimeNs += static_cast<std::int64_t>(Sexy::gUpdateIntervalNs);
 		}
 		aGridItem->Update();
 	}

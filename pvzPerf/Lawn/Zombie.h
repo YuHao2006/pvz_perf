@@ -100,15 +100,15 @@ public:
     int                             mPrevFrame;                                 //+0x4C
     bool                            mVariant;                                   //+0x50
     bool                            mIsEating;                                  //+0x51
-    Sexy::TimeCounter                             mJustGotShotCounter;                        //+0x54
-    Sexy::TimeCounter                             mShieldJustGotShotCounter;                  //+0x58
-    Sexy::TimeCounter                             mShieldRecoilCounter;                       //+0x5C
-    Sexy::TimeCounter                             mZombieAge;                                 //+0x60
+    std::int64_t                             mShotFlashEndTimeNs;                        //+0x54
+    std::int64_t                             mShieldFlashEndTimeNs;                  //+0x58
+    std::int64_t                             mShieldRecoilEndTimeNs;                       //+0x5C
+    std::int64_t                             mBirthTimeNs;                                 //+0x60
     ZombieHeight                    mZombieHeight;                              //+0x64
     Sexy::TimeCounter                             mPhaseCounter;                              //+0x68
     int                             mFromWave;                                  //+0x6C
     bool                            mDroppedLoot;                               //+0x70
-    Sexy::TimeCounter                             mZombieFade;                                //+0x74
+    std::int64_t                             mFadeEndTimeNs;                                //+0x74
     bool                            mFlatTires;                                 //+0x78
     int                             mUseLadderCol;                              //+0x7C
     int                             mTargetCol;                                 //+0x80
@@ -116,9 +116,9 @@ public:
     bool                            mHitUmbrella;                               //+0x88
     Rect                            mZombieRect;                                //+0x8C
     Rect                            mZombieAttackRect;                          //+0x9C
-    Sexy::TimeCounter                             mChilledCounter;                            //+0xAC
-    Sexy::TimeCounter                             mButteredCounter;                           //+0xB0
-    Sexy::TimeCounter                             mIceTrapCounter;                            //+0xB4
+    std::int64_t                             mChilledEndTimeNs;                            //+0xAC
+    std::int64_t                             mButteredEndTimeNs;                           //+0xB0
+    std::int64_t                             mIceTrapEndTimeNs;                            //+0xB4
     bool                            mMindControlled;                            //+0xB8
     bool                            mBlowingAway;                               //+0xB9
     bool                            mHasHead;                                   //+0xBA
@@ -127,7 +127,7 @@ public:
     bool                            mInPool;                                    //+0xBD
     bool                            mOnHighGround;                              //+0xBE
     bool                            mYuckyFace;                                 //+0xBF
-    Sexy::TimeCounter                             mYuckyFaceCounter;                          //+0xC0
+    std::int64_t                             mYuckyFaceStartTimeNs;                          //+0xC0
     HelmType                        mHelmType;                                  //+0xC4
     int                             mBodyHealth;                                //+0xC8
     int                             mBodyMaxHealth;                             //+0xCC
@@ -168,16 +168,18 @@ public:
     double                          mRootOriginX = 0;
     std::uint32_t                   mRootBindingGeneration = 0;
     float                           mRootScale = 0;
-    // Zamboni uses this same origin/clock for its coupled curve; rate is its
-    // initial positive speed, while other types retain signed linear rate.
+    // Flat-tire Zamboni reuses rate as its initial positive speed and startTimeNs
+    // as the absolute level timestamp of that speed; origin is unused there.
+    // Other types retain a signed linear rate and an absolute segment origin.
     TimedLinearMotion               mVelocityX;
     TimedLinearMotion               mVelocityY;
     // Shared by mutually exclusive linear altitude and thrown-imp segments.
-    // For an imp, rate is its initial vertical velocity; elapsedNs remains ns.
+    // For an imp, rate is its initial vertical velocity; startTimeNs remains ns.
     TimedLinearMotion               mAltitudeMotion;
     float                           mPendingAdditionalSpeedX = 0; // consumed within the current Update
 
 public:
+    double RootPosition(const Reanimation& animation, float signedScale);
     // Pool value-initialization must clear reused state before animation setup.
     Zombie() = default;
     ~Zombie();

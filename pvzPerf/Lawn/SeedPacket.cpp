@@ -1,3 +1,4 @@
+#include "ReanimClock.h"
 #include "Board.h"
 #include "Cutscene.h"
 #include "Challenge.h"
@@ -20,12 +21,13 @@ SeedPacket::SeedPacket()
 	mSlotMachiningNextSeed = SeedType::SEED_NONE;
 	mWidth = 50;
 	mHeight = 70;
-	mRefreshCounter = 0;
+	mRefreshStartTimeNs = mBoard ? static_cast<std::int64_t>(mBoard->mLevelTimeNs) : 0;
 	mRefreshTime = 0;
 	mRefreshing = false;
 	mActive = true;
 	mOffsetX = 0;
-	mSlotMachineCountDown = 0;
+	mSlotMachineEndTimeNs = 0;
+	mSlotMachiningPosition = 0;
 	mSlotMachiningNextSeed = SeedType::SEED_NONE;
 	mTimesUsed = 0;
 }
@@ -78,8 +80,8 @@ void SeedPacket::PickNextSlotMachineSeed()
 
 void SeedPacket::SlotMachineStart()
 {
-	mSlotMachineCountDown.mNanoseconds = SlotMachineMotion::DurationNs;
-	mSlotMachineCountDown.mPreviousNanoseconds = SlotMachineMotion::DurationNs;
+	mSlotMachineEndTimeNs = ReanimClock::Add(static_cast<std::int64_t>(mBoard->mLevelTimeNs), SlotMachineMotion::DurationNs);
+	mSlotMachiningPosition = 0;
 	PickNextSlotMachineSeed();
 }
 
@@ -124,7 +126,7 @@ void SeedPacket::SetActivate(bool theActive)
 	else
 	{
 		mActive = false;
-		mRefreshCounter = 0;
+		mRefreshStartTimeNs = mBoard ? static_cast<std::int64_t>(mBoard->mLevelTimeNs) : 0;
 		mRefreshTime = 0;
 		mRefreshing = false;
 	}
@@ -145,38 +147,41 @@ void SeedPacket::Update()
 
 	if (!mActive && mRefreshing)
 	{
-		mRefreshCounter++;
-		if (mRefreshCounter > mRefreshTime)
+		if (static_cast<std::int64_t>(mBoard->mLevelTimeNs) - mRefreshStartTimeNs > mRefreshTime.mNanoseconds)
 		{
-			mRefreshCounter = 0;
+			mRefreshStartTimeNs = mBoard ? static_cast<std::int64_t>(mBoard->mLevelTimeNs) : 0;
 			mRefreshing = false;
 			Activate();
 			FlashIfReady();
 		}
 	}
 
-	if (mSlotMachineCountDown > 0)
+	if (mSlotMachineEndTimeNs > 0)
 	{
-		const auto aBeforeNs = mSlotMachineCountDown.mNanoseconds;
-		const int aBeforeTurn = static_cast<int>(SlotMachineMotion::Turns(aBeforeNs));
-		const auto aDeltaNs = std::min<std::uint64_t>(Sexy::gUpdateIntervalNs, aBeforeNs);
-		mSlotMachineCountDown.mPreviousNanoseconds = aBeforeNs;
-		mSlotMachineCountDown.mNanoseconds -= static_cast<std::int64_t>(aDeltaNs);
-		const int aAfterTurn = static_cast<int>(
-			SlotMachineMotion::Turns(mSlotMachineCountDown.mNanoseconds));
-		for (int aTurn = aBeforeTurn; aTurn < aAfterTurn; ++aTurn)
+		const auto nowNs = static_cast<std::int64_t>(mBoard->mLevelTimeNs);
+		const auto remainingNs = std::max<std::int64_t>(0, mSlotMachineEndTimeNs - nowNs);
+		const float speed = SlotMachineMotion::Speed(remainingNs);
+		// Position is deliberately simulated. At 100Hz this is the original
+		// float addition and decrement-before-speed order; other step sizes may differ.
+		mSlotMachiningPosition += speed * static_cast<float>(
+			static_cast<double>(Sexy::gUpdateIntervalNs) / 1'000'000'000.0);
+		while (mSlotMachiningPosition >= 1.0f)
 		{
 			mPacketType = mSlotMachiningNextSeed;
-			if (mSlotMachineCountDown.mNanoseconds == 0 && aTurn + 1 == aAfterTurn)
+			if (remainingNs == 0)
 			{
+				mSlotMachiningPosition = 0;
+				mSlotMachineEndTimeNs = 0;
 				Activate();
+				return;
 			}
-			else
-			{
-				PickNextSlotMachineSeed();
-			}
+			mSlotMachiningPosition -= 1.0f;
+			PickNextSlotMachineSeed();
 		}
+		// Keep the original deadline expired while finishing this turn. Re-arming
+		// it each update could place every wrap before expiry at non-100Hz rates.
 	}
+
 }
 
 //0x487380
@@ -557,14 +562,14 @@ void SeedPacket::Draw(Graphics* g)
 		}
 		else
 		{
-			aPercentDark = (float)(mRefreshTime - mRefreshCounter) / (float)mRefreshTime;
+			aPercentDark = static_cast<float>(double(mRefreshTime.mNanoseconds -
+				(static_cast<std::int64_t>(mBoard->mLevelTimeNs) - mRefreshStartTimeNs)) / mRefreshTime.mNanoseconds);
 		}
 	}
 
-	if (mSlotMachineCountDown > 0)
+	if (mSlotMachineEndTimeNs > 0)
 	{
-		int aOffsetY = FloatRoundToInt(-mHeight *
-			SlotMachineMotion::Fraction(mSlotMachineCountDown.mNanoseconds));
+		int aOffsetY = FloatRoundToInt(-mHeight * mSlotMachiningPosition);
 
 		Graphics aClipG(*g);
 		aClipG.ClipRect(0, 0, mWidth, mHeight);
@@ -868,7 +873,7 @@ void SeedPacket::MouseDown(int x, int y, int theClickCount)
 		}
 
 		mActive = false;
-		mRefreshCounter = 0;
+		mRefreshStartTimeNs = mBoard ? static_cast<std::int64_t>(mBoard->mLevelTimeNs) : 0;
 		mRefreshTime = 0;
 		mRefreshing = false;
 	}
@@ -886,7 +891,7 @@ void SeedPacket::WasPlanted()
 	else if (mApp->IsSlotMachineLevel())
 	{
 		mActive = false;
-		mRefreshCounter = 0;
+		mRefreshStartTimeNs = mBoard ? static_cast<std::int64_t>(mBoard->mLevelTimeNs) : 0;
 		mRefreshTime = 0;
 		mRefreshing = false;
 	}
@@ -900,6 +905,7 @@ void SeedPacket::WasPlanted()
 	{
 		mTimesUsed++;
 		mRefreshing = true;
+		mRefreshStartTimeNs = static_cast<std::int64_t>(mBoard->mLevelTimeNs);
 		mRefreshTime = Plant::GetRefreshTime(mPacketType, mImitaterType);
 	}
 }
@@ -907,7 +913,7 @@ void SeedPacket::WasPlanted()
 //0x488F90
 bool SeedPacket::MouseHitTest(int theX, int theY, HitResult* theHitResult)
 {
-	if (mSlotMachineCountDown > 0 || mPacketType == SeedType::SEED_NONE)
+	if (mSlotMachineEndTimeNs > 0 || mPacketType == SeedType::SEED_NONE)
 	{
 		theHitResult->mObject = nullptr;
 		theHitResult->mObjectType = GameObjectType::OBJECT_TYPE_NONE;
@@ -1057,7 +1063,7 @@ void SeedBank::AddSeed(SeedType theSeedType, bool thePlaceOnLeft)
 
 	SeedPacket* aSeedPacket = &mSeedPackets[aNumSeeds];
 	aSeedPacket->mPacketType = theSeedType;
-	aSeedPacket->mRefreshCounter = 0;
+	aSeedPacket->mRefreshStartTimeNs = mBoard ? static_cast<std::int64_t>(mBoard->mLevelTimeNs) : 0;
 	aSeedPacket->mRefreshTime = 0;
 	aSeedPacket->mRefreshing = false;
 	aSeedPacket->mActive = true;
@@ -1102,7 +1108,7 @@ void SeedBank::RemoveSeed(int theIndex)
 			aSeedPacket->mOffsetX = aNextPacket->mOffsetX + SEED_PACKET_WIDTH + 1;
 		}
 
-		aSeedPacket->mRefreshCounter = 0;
+		aSeedPacket->mRefreshStartTimeNs = mBoard ? static_cast<std::int64_t>(mBoard->mLevelTimeNs) : 0;
 		aSeedPacket->mRefreshTime = 0;
 		aSeedPacket->mRefreshing = false;
 		aSeedPacket->mActive = true;
@@ -1140,7 +1146,7 @@ void SeedPacket::SetPacketType(SeedType theSeedType, SeedType theImitaterType)
 {
 	mPacketType = theSeedType;
 	mImitaterType = theImitaterType;
-	mRefreshCounter = 0;
+	mRefreshStartTimeNs = mBoard ? static_cast<std::int64_t>(mBoard->mLevelTimeNs) : 0;
 	mRefreshTime = 0;
 	mRefreshing = false;
 	mActive = true;
@@ -1219,7 +1225,7 @@ void SeedBank::RefreshAllPackets()
 
 		if (aSeedPacket->mRefreshing)
 		{
-			aSeedPacket->mRefreshCounter = 0;
+			aSeedPacket->mRefreshStartTimeNs = mBoard ? static_cast<std::int64_t>(mBoard->mLevelTimeNs) : 0;
 			aSeedPacket->mRefreshing = false;
 			aSeedPacket->mActive = true;
 			aSeedPacket->FlashIfReady();

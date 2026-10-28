@@ -1,0 +1,28 @@
+{
+  "backend": "VULKAN",
+  "cpu_condition": "LPE14 11x, user controlled",
+  "linux_condition": "25x, separate series",
+  "source": "C:\\Users\\Administrator\\CLionProjects\\codex\\PlantsVsZombiesModern\\Tests\\game3_13.dat",
+  "source_sha256": "a1bbc2f43a129b655f0068de8f28a731f1ef6814170419d3f4ec406436437cf1",
+  "save": "C:\\Users\\Administrator\\CLionProjects\\codex\\PlantsVsZombiesModern\\out\\x64-win32-vulkan\\Release\\data\\game1_58.dat64",
+  "save_sha256": "f03c392d1ab6c55a7d5899e7846ce756808048489419d161d16667cf297b2f7a",
+  "format": "DAT64 v3.6",
+  "target_fps": 100,
+  "settings": {
+    "targetFps": 100,
+    "musicVolume": 100,
+    "sfxVolume": 65,
+    "muted": 0,
+    "screenMode": "windowed",
+    "preferredX": 953,
+    "preferredY": 479,
+    "customCursors": 0,
+    "waitForVSync": 0,
+    "customScale": 0
+  },
+  "measurement": "external read-only process counters and GetProcessTimes; no injected instrumentation",
+  "executable_sha256": "d5b37a4e3c4c3fe21688e79ff0f063de91d7dbc1d13856ef525edbf92e695731",
+  "pak_sha256": "93ab6cad22e86ce5a2fdc68c4a55ca4e36ade35adb7dc39185722087680261ff",
+  "lto": "/GL /LTCG",
+  "game_probes": false
+}

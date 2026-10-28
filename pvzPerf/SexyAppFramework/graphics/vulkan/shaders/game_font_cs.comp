@@ -1,11 +1,10 @@
 #version 450
 #extension GL_EXT_nonuniform_qualifier : require
-#extension GL_ARB_gpu_shader_fp64 : require
 
 layout(local_size_x=8, local_size_y=8) in;
 layout(set=0,binding=0) uniform texture2D images[4096];
 layout(set=1,binding=0) uniform sampler samplers[4];
-layout(set=2,binding=0,rgba32f) writeonly uniform image2D target;
+layout(set=2,binding=0,rgba16f) writeonly uniform image2D target;
 layout(set=2,binding=1,std430) readonly buffer Source {
     int width;
     int height;
@@ -51,15 +50,19 @@ uvec4 pixel(ivec2 position)
 
 // The separable integer weights mirror MI_SlowStretchBlt.inc, including
 // its asymmetric 257/256 factors and endpoint-aligned enlargement.
+// 所有权重都是小整数有理数：此处用整数算术精确求值（移动 GPU 无 fp64）。
+// 语义与旧 double 版逐位一致：double 在这些数值范围内本就是精确的。
 struct Axis {
     int first;
     int last;
     uint firstWeight;
     uint lastWeight;
     bool shrinking;
-    double factor;
     int outputIndex;
     uint unit;
+    // 缩小时 factor == outNum/den（有理数）；放大时该两域无意义。
+    int outNum;
+    int den;
 };
 
 Axis axis(int inputExtent,int outputExtent,int outputIndex,int start,int physicalExtent,uint unit)
@@ -69,23 +72,31 @@ Axis axis(int inputExtent,int outputExtent,int outputIndex,int start,int physica
     result.outputIndex=outputIndex+1;
     result.unit=unit;
     if (result.shrinking) {
-        precise double factor=double(outputExtent)/double(inputExtent);
-        result.factor=factor;
-        result.first=max(0,int(floor(double(outputIndex)/factor))-1);
-        result.last=min(inputExtent-1,int(ceil(double(outputIndex+1)/factor))+1);
+        result.outNum=outputExtent;
+        result.den=inputExtent;
+        // floor(outputIndex/factor)：整数除即下取整（非负）
+        const int q=(outputIndex*inputExtent)/outputExtent;
+        result.first=max(0,q-1);
+        // ceil((outputIndex+1)/factor)
+        const int n=((outputIndex+1)*inputExtent+outputExtent-1)/outputExtent;
+        result.last=min(inputExtent-1,n+1);
         result.firstWeight=result.lastWeight=0u;
     } else {
-        precise double factor=double(inputExtent-1)/double(outputExtent-1);
-        precise double coordinate=double(outputIndex)*factor;
-        if (unit==257u) coordinate+=double(start);
-        const int base=int(coordinate);
-        precise double fraction=coordinate-double(base);
+        // coordinate = outputIndex*(inputExtent-1)/(outputExtent-1) (+start)
+        const int num=inputExtent-1;
+        const int den=outputExtent-1;
+        int coordNum=outputIndex*num;
+        if (unit==257u) coordNum+=start*den;
+        const int base=coordNum/den;
+        const int rem=coordNum-base*den;
         result.first=base-(unit==257u?start:0);
         result.last=unit==257u?min(result.first+1,physicalExtent-1-start):
             min(result.first+1,inputExtent-1);
-        result.firstWeight=uint(double(unit)*(1.0-fraction));
+        // firstWeight = unit*(1-fraction) 截断 == unit*(den-rem)/den
+        result.firstWeight=uint(int(unit)*(den-rem)/den);
         result.lastWeight=unit-result.firstWeight;
-        result.factor=0.0;
+        result.outNum=0;
+        result.den=0;
     }
     return result;
 }
@@ -94,13 +105,15 @@ uint weight(Axis value,int index)
 {
     if (!value.shrinking)
         return (index==value.first?value.firstWeight:0u)+(index==value.last?value.lastWeight:0u);
-    precise double begin=double(index)*value.factor+1.0;
-    precise double end=begin+value.factor;
-    const int a=int(begin),b=int(end);
+    // begin = index*factor+1, end = begin+factor，均以 den 为分母的整数分子表示
+    const int den=value.den;
+    const int numBegin=index*value.outNum+den;
+    const int numEnd=numBegin+value.outNum;
+    const int a=numBegin/den,b=numEnd/den;
     if (a==b)
-        return a==value.outputIndex?uint(double(value.unit)*value.factor):0u;
-    return (a==value.outputIndex?uint(double(value.unit)*(double(b)-begin)):0u)+
-        (b==value.outputIndex?uint(double(value.unit)*(end-double(b))):0u);
+        return a==value.outputIndex?uint(int(value.unit)*value.outNum/den):0u;
+    return (a==value.outputIndex?uint(int(value.unit)*(b*den-numBegin)/den):0u)+
+        (b==value.outputIndex?uint(int(value.unit)*(numEnd-b*den)/den):0u);
 }
 
 void main()

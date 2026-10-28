@@ -1,0 +1,52 @@
+{
+  "created_local": "2026-10-29T02:54:27",
+  "work": "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\pvz-small-bench-build-130ll0hj",
+  "compiler": "C:\\UserProgram\\Visual Studuio\\2026\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\cl.exe",
+  "flags": [
+    "/O2",
+    "/EHsc",
+    "/std:c++20",
+    "/GL-"
+  ],
+  "affinity": "0x4000",
+  "frequency": "User-confirmed 11x; not measured by runner",
+  "scope": "Archived fixtures remain historical models. Extracted tables are current production declarations in the unchanged historical harness; not complete current functions.",
+  "jobs": [
+    {
+      "name": "00_current_bench15_storecost",
+      "scope": "current_table_in_historical_harness",
+      "source_sha256": "733910929fe128e90cd6c2eec31d5d76e1f7df9b08193aa4e9365400a9fa7641",
+      "command": [
+        "C:\\UserProgram\\Visual Studuio\\2026\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\cl.exe",
+        "/nologo",
+        "/O2",
+        "/EHsc",
+        "/std:c++20",
+        "/GL-",
+        "/utf-8",
+        "/IC:\\Users\\Administrator\\CLionProjects\\codex\\PlantsVsZombiesModern\\pvzPerf",
+        "/FoC:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\pvz-small-bench-build-130ll0hj\\00_current_bench15_storecost.obj",
+        "/FeC:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\pvz-small-bench-build-130ll0hj\\00_current_bench15_storecost.exe",
+        "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\pvz-small-bench-build-130ll0hj\\archive\\r4\\current_bench15_storecost.cpp"
+      ],
+      "production_source": "pvzPerf\\Lawn\\Widget\\StoreScreen.cpp",
+      "production_sha256": "de25767a8b4dd8194eb627551531b937e1436f0e6413d2402070c1fe0a6db645",
+      "table": "kStoreItemCosts",
+      "declaration_sha256": "ae4b9797a5c8935a1ef7d098ad258d69828288ff77fa0b1fbda8853987b6b091",
+      "build_exit": 0,
+      "runs": [
+        {
+          "exit": 0,
+          "seconds": 0.848704700008966,
+          "mismatch_marker": false
+        },
+        {
+          "exit": 0,
+          "seconds": 0.8359633999934886,
+          "mismatch_marker": false
+        }
+      ],
+      "exe_sha256": "e01c4f60e87fe0ba96ad3764d79b19705305601cbcb40e82112cd0b6cf0c55db"
+    }
+  ]
+}

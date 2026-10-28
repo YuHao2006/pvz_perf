@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 import os
 import subprocess
+import tempfile
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -15,6 +16,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--repository", default="YuHao2006/pvz_perf")
     parser.add_argument("--inspect", action="store_true")
+    parser.add_argument("--proxy", help="Explicit HTTP proxy; uses system curl TLS transport")
     parser.add_argument("--tag")
     parser.add_argument("--commit")
     parser.add_argument("--notes", type=Path)
@@ -36,6 +38,24 @@ def main():
         request_headers = dict(headers)
         if body is not None:
             request_headers["Content-Type"] = content_type
+        if args.proxy:
+            # Credentials go through stdin, never command arguments or log files.
+            config = "".join("header = " + json.dumps(k + ": " + v) + "\n"
+                             for k, v in request_headers.items())
+            with tempfile.TemporaryDirectory(prefix="pvz-release-http-") as tmp:
+                result_file = Path(tmp) / "response.json"
+                command = ["curl.exe", "--silent", "--show-error", "--http1.1", "--tls-max", "1.2", "--retry", "4", "--retry-all-errors", "--retry-delay", "2", "--proxy", args.proxy,
+                           "--config", "-", "--request", method, "--max-time", "300",
+                           "--output", str(result_file), "--write-out", "%{http_code}", url]
+                if body is not None:
+                    payload = Path(tmp) / "payload"
+                    payload.write_bytes(body)
+                    command += ["--data-binary", "@" + str(payload)]
+                result = subprocess.run(command, input=config, capture_output=True, text=True, check=True)
+                status = int(result.stdout)
+                if status >= 400:
+                    raise urllib.error.HTTPError(url, status, "GitHub API request failed", {}, None)
+                return json.loads(result_file.read_text(encoding="utf-8"))
         req = urllib.request.Request(url, data=body, headers=request_headers, method=method)
         with urllib.request.urlopen(req, timeout=300) as response:
             return json.load(response)

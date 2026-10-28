@@ -1,0 +1,1 @@
+PASS frozen historical float rates/coords, exact ns migration, absolute animation/deadline fields, particle RNG/anchors, trail phases, and invalid exact-state rejection

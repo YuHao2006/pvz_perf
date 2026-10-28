@@ -1,7 +1,6 @@
 #pragma once
 #include "graphics/GpuTypes.h"
 #include "graphics/GpuPool.h"
-#include "graphics/GpuReanim.h"
 #include "graphics/ImageReadback.h"
 #include "graphics/vulkan/VulkanHdr.h"
 #include "OpenGLScaleTypes.h"
@@ -14,7 +13,6 @@
 namespace Sexy {
 class OpenGLContext;
 struct OpenGLTexture;
-struct OpenGLReanim;
 class OpenGLRenderer final {
     struct Impl;
     std::unique_ptr<Impl> impl_;
@@ -56,45 +54,9 @@ public:
     bool HasCausticsCompute() const;
     bool BeginScene();
     const bool& sceneOpen;
-    uint32_t& reanimPictureCandidates;
-    const bool& reanimFrameEligible;
     void SubmitTriangles(std::span<const GpuVertex> vertices, OpenGLTexture* texture,
         bool linear, bool wrap, GpuBlend blend, const GpuClip* clip = nullptr);
     void SubmitPool(OpenGLTexture* texture, const GpuPoolParams& params);
-    // Optional GL 3.2 fused track evaluation/geometry expansion. Null/false
-    // means the caller must retain its CPU path on unsupported contexts/jobs.
-    OpenGLReanim* UploadReanimDefinition(const GpuReanimDefinition& definition);
-    OpenGLReanim* UploadParticleDefinition(std::span<const float> words, uint32_t variants);
-    bool SubmitParticle(OpenGLReanim*, OpenGLTexture*, const GpuParticleDraw&,
-        std::span<const GpuParticleState>, bool linear, bool repeat, GpuBlend,
-        const GpuClip* clip = nullptr);
-    bool SubmitFormulaParticles(OpenGLReanim* d, OpenGLTexture* t, const GpuParticleDraw& p,
-        std::span<const GpuParticleFormulaState> s, bool l, bool r, GpuBlend b, const GpuClip* c = nullptr)
-    { return SubmitParticle(d,t,p,{reinterpret_cast<const GpuParticleState*>(s.data()),s.size()},l,r,b,c); }
-    bool SubmitDiscreteParticles(OpenGLReanim* d, OpenGLTexture* t, const GpuParticleDraw& p,
-        std::span<const GpuParticleState> s, bool l, bool r, GpuBlend b, const GpuClip* c = nullptr)
-    { return SubmitParticle(d,t,p,s,l,r,b,c); }
-    void DestroyReanimDefinition(OpenGLReanim* definition);
-    bool SubmitReanim(OpenGLReanim* definition, OpenGLTexture* texture,
-        const GpuReanimDraw& draw, bool linear, bool repeat, GpuBlend blend,
-        const GpuClip* clip = nullptr, bool forceGpu = false);
-    unsigned int BeginReanimInstance(OpenGLReanim* definition, OpenGLTexture* texture,
-        const GpuReanimInstance& instance, bool linear, bool repeat,
-        const GpuClip* defaultClip = nullptr, bool forceGpu = false);
-    bool SubmitReanimTrack(unsigned int instance, const GpuReanimTrackDraw& draw, GpuBlend blend);
-#if defined(PVZ_OPENGL_REANIM_DIAGNOSTICS)
-    // Available only in the standalone correctness/benchmark library.
-    struct FrameTiming {
-        unsigned int elapsedQuery = 0, vertexInvocationsQuery = 0;
-        unsigned int uploadBeginTimestamp = 0, drawBeginTimestamp = 0, drawEndTimestamp = 0;
-#if defined(PVZ_OPENGL_REANIM_COMPUTE_EXPERIMENT)
-        unsigned int computeBeginTimestamp = 0;
-        bool computeAvailable = false;
-#endif
-        double presentCpuUs = 0;
-    };
-    FrameTiming*& frameTiming;
-#endif
     void SubmitCoverageTriangles(std::span<const GpuVertex> vertices, OpenGLTexture* texture,
         GpuBlend blend, const GpuClip* clip = nullptr);
     void EndSceneAndPresent();

@@ -1,0 +1,1 @@
+bench4 CoinDraw | before 63.10 ns | after 179.40 ns | diff -184.3% | C(static) 55.33 ns | checksum=OK (A=C1EC17E786475E88 B=C1EC17E786475E88 C=C1EC17E786475E88)

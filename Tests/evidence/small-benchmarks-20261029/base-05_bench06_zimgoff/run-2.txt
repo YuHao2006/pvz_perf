@@ -1,0 +1,1 @@
+bench06 kZombieImageOffsetFix | before 32.78 ns | after 9.46 ns | diff 71.1% | checksum=OK (88676A37D134B000/88676A37D134B000)

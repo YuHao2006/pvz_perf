@@ -1,0 +1,24 @@
+{
+  "label": "pvz_perf / Vulkan · LPE14 11x",
+  "selection": "segment=game, valid=1, scene=3, foreground=1",
+  "seconds": 373.99980170000003,
+  "valid_samples": 374,
+  "recorded_seconds": 383.0006852,
+  "frames": 37398,
+  "cpu_seconds": 216.5,
+  "fps": 99.99470542500022,
+  "update_hz": 100.00005302141848,
+  "cpu_percent": 57.88773122763931,
+  "cpu_ms_per_frame": 5.789079629926734,
+  "wave_first": 0,
+  "wave_last": 20,
+  "fps_min": 98.94624250644586,
+  "fps_max": 101.0397591452209,
+  "max_interval_cpu_ms": 8.90625,
+  "excluded": {
+    "preroll": 2,
+    "other-scene": 7
+  },
+  "executable_sha256": "a93a7d7096486355b34cabdf862253cdaca095589c530ac4f2f6006fb875b37b",
+  "stop_reason": "game-exited"
+}

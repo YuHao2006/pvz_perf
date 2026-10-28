@@ -1,0 +1,84 @@
+{
+  "executable_sha256": "5f650f52d12751e08b63e590edb0d9b9f09d087cea900baa0eb39e4af8eda251",
+  "source_sha256": "a1bbc2f43a129b655f0068de8f28a731f1ef6814170419d3f4ec406436437cf1",
+  "old_layout_error": "Board reference offsets were 0x18 earlier than this executable",
+  "anchors": [
+    {
+      "source_offset": 4,
+      "bytes": 216,
+      "runtime_board_record_base": "0x17c",
+      "unique": true
+    },
+    {
+      "source_offset": 220,
+      "bytes": 216,
+      "runtime_board_record_base": "0x17c",
+      "unique": true
+    },
+    {
+      "source_offset": 436,
+      "bytes": 432,
+      "runtime_board_record_base": "0x17c",
+      "unique": true
+    }
+  ],
+  "verified_offsets": {
+    "paused": 380,
+    "counter": 21888,
+    "wave": 21908,
+    "waves": 21884,
+    "sun": 21880
+  },
+  "expected_checkpoint": {
+    "paused": true,
+    "counter": 229196,
+    "wave": 0,
+    "waves": 20,
+    "sun": 9990
+  },
+  "first_snapshot": {
+    "pid": 21660,
+    "app": 61321440,
+    "mDrawCount": 6561,
+    "mUpdateCount": 8056,
+    "mGameScene": 3,
+    "mGameMode": 13,
+    "mHWnd": 8720338,
+    "mBoard": 481501408,
+    "mCreditScreen": 0,
+    "mGameSelector": 0,
+    "mTitleScreen": 0,
+    "mPlayerInfo": 308833760,
+    "mAwardScreen": 0,
+    "board": {
+      "paused": true,
+      "counter": 229196,
+      "wave": 0,
+      "waves": 20,
+      "sun": 9990
+    }
+  },
+  "second_snapshot": {
+    "pid": 21660,
+    "app": 61321440,
+    "mDrawCount": 6582,
+    "mUpdateCount": 8082,
+    "mGameScene": 3,
+    "mGameMode": 13,
+    "mHWnd": 8720338,
+    "mBoard": 481501408,
+    "mCreditScreen": 0,
+    "mGameSelector": 0,
+    "mTitleScreen": 0,
+    "mPlayerInfo": 308833760,
+    "mAwardScreen": 0,
+    "board": {
+      "paused": true,
+      "counter": 229196,
+      "wave": 0,
+      "waves": 20,
+      "sun": 9990
+    }
+  },
+  "scope": "ReadProcessMemory only; no process or save writes"
+}

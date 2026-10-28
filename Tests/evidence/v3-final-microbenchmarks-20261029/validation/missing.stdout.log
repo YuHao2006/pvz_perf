@@ -1,0 +1,5 @@
+PASS actual Process: 30/60/100/240/10000 FPS, elapsed-time conservation, <=10ms steps and per-batch drawing
+Expected missing rejection: definition atlas PNG dimensions mismatch: compiled/atlases/potato_mine.atlas.png
+Expected missing rejection: definition atlas PNG dimensions mismatch: compiled/atlases/potato_mine.atlas.png
+Expected missing rejection: definition atlas PNG dimensions mismatch: compiled/atlases/potato_mine.atlas.png
+PASS missing: repeated particle rollback, lazy reanimation rejection, clean release, same-process intact-PNG recovery and full catalog reload

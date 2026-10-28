@@ -1,4 +1,4 @@
-#include <thread>
+﻿#include <thread>
 #include <chrono>
 #include <time.h>
 #include <cstdlib>
@@ -159,7 +159,7 @@ LawnApp::LawnApp()
 	mDebugKeysEnabled = false;
 	mFullCompanyName = "PopCap Games";
 	mProdName = "PopCap\\PlantsVsZombies";
-	mProductVersion = "2.0.0";
+	mProductVersion = "3.0.0";
 	std::string aTitleName = "pvz_perf";
 #ifdef _DEBUG
 	aTitleName += " BETA ";
@@ -1401,12 +1401,6 @@ void LawnApp::Init()
 	// Preload the loader-bar definitions before the loading thread starts.
 	ReanimatorEnsureDefinitionLoaded(ReanimationType::REANIM_LOADBAR_SPROUT, true);
 	ReanimatorEnsureDefinitionLoaded(ReanimationType::REANIM_LOADBAR_ZOMBIEHEAD, true);
-#if defined(PVZ_EXPERIMENTAL_GPU_REANIM)
-	// Init finishes before Start shows the native window. Only the loader-bar
-	// definitions belong here; bulk resident data follows the loading barrier.
-	ReanimatorUploadGpuDefinitionData(ReanimationType::REANIM_LOADBAR_SPROUT);
-	ReanimatorUploadGpuDefinitionData(ReanimationType::REANIM_LOADBAR_ZOMBIEHEAD);
-#endif
 }
 
 //0x4522A0
@@ -1719,12 +1713,22 @@ void LawnApp::UpdateFrames()
 	for (int i = 0; i < aUpdateCount; i++)
 	{
 		Sexy::BeginTimedUpdate();
-		if (mEffectSystem && (!mBoard || !mBoard->mPaused))
+		// The full-screen Store pauses the board, but its Dave animation must
+		// still consume visual time. Other board pauses keep their frozen clock.
+		if (mEffectSystem && (!mBoard || !mBoard->mPaused || GetDialog(Dialogs::DIALOG_STORE)))
 		{
 			if (Sexy::gUpdateIntervalNs > INT64_MAX)
 				throw std::overflow_error("visual animation update exceeds clock range");
 			auto& clock = mEffectSystem->mReanimationHolder->mVisualTimeNs;
 			clock = ReanimClock::Add(clock, static_cast<std::int64_t>(Sexy::gUpdateIntervalNs));
+		}
+		// Store dialogue advances the visual clock while the board is paused.
+		// Freeze particle origins without simulation, spawning or random draws.
+		if (mEffectSystem && mBoard && mBoard->mPaused)
+		{
+			TodParticleSystem* particle = nullptr;
+			while (mEffectSystem->mParticleHolder->mParticleSystems.IterateNext(particle))
+				particle->Update(0, mEffectSystem->mReanimationHolder->mVisualTimeNs);
 		}
 		mAppCounter++;
 		
@@ -1736,7 +1740,7 @@ void LawnApp::UpdateFrames()
 		SexyApp::UpdateFrames();
 
 		{
-			mMusic->MusicUpdate();
+			mMusic->MusicUpdate(mApplicationTimeNs);
 		}
 		if (mLoadingThreadCompleted && mEffectSystem)
 		{
@@ -1786,6 +1790,7 @@ void LawnApp::LoadingThreadProc()
 	if (!TodLoadResources(ResourceGroupId::LoaderBar))
 		return;
 
+
 	// LawnStrings 装载已退役（删除验证阶段 4）：字符串全部来自编译期烘焙的
 	// generated/LawnStrings.h gStr 与 generated/EntityStrings.h 实体表。
 
@@ -1802,8 +1807,9 @@ void LawnApp::LoadingThreadProc()
 	ZombatarLoadResources();
 	LoadSceneAtlases();
 
-	const ResourceGroupId groups[] = { ResourceGroupId::LoadingFonts, ResourceGroupId::LoadingImages, ResourceGroupId::LoadingSounds };
-	int group_ave_ms_to_load[] = { 54, 9, 54 };
+
+	static constexpr ResourceGroupId groups[] = { ResourceGroupId::LoadingFonts, ResourceGroupId::LoadingImages, ResourceGroupId::LoadingSounds };
+	static constexpr int group_ave_ms_to_load[] = { 54, 9, 54 };
 	for (int i = 0; i < 3; i++)
 	{
 		mNumLoadingThreadTasks += mResourceManager->GetNumResources(groups[i]) * group_ave_ms_to_load[i];
@@ -1815,22 +1821,28 @@ void LawnApp::LoadingThreadProc()
 
 
 	LoadGroup(ResourceGroupId::LoadingImages, 9);
+
 	LoadGroup(ResourceGroupId::LoadingFonts, 54);
+
 	if (mLoadingFailed || mShutdown || mCloseRequest)
 		return;
 
 
 	mMusic->MusicInit();
 
+
 	// mPoolEffect 构造已移至 LoadingCompleted（主线程）：装载线程构造会经
 	// InstallCausticsCompute 直接触碰 Vulkan，与主线程传输并发成竞态
 	mZenGarden = new ZenGarden();
 	mReanimatorCache = new ReanimatorCache();
 	mReanimatorCache->ReanimatorCacheInitialize();
+
 	TodFoleyInitialize(gLawnFoleyParamArray, LENGTH(gLawnFoleyParamArray));
 
 
+
 	TodParticleLoadDefinitions(gLawnParticleArray, LENGTH(gLawnParticleArray));
+
 
 	if (mLoadingFailed || mShutdown || mCloseRequest)
 		return;
@@ -1838,6 +1850,7 @@ void LawnApp::LoadingThreadProc()
 
 	GetNumPreloadingTasks();
 	LoadGroup(ResourceGroupId::LoadingSounds, 54);
+
 	// 2026-10-07 用户架构"全部启动时装载"：全部 DelayLoad_* 组提前到
 	// 装载屏（以 Resources.cpp 有效分发表为准——TreeOfWisdom 在表中
 	// 被禁用（新版本组占位，走 dispatch 尾部 return false = 空弹窗退出，
@@ -1859,12 +1872,14 @@ void LawnApp::LoadingThreadProc()
 			return;
 		TodLoadResources(aGroup);
 	}
+
 	// 硬保证（双条件）：装载条完成 = 全部解码且全部纹理已上 GPU。装载
 	// 线程在此等"队列空 && 主线程清扫净"——装载屏仍在 tick（驱动主线程
 	// 泵+清扫），无死锁；快进玩家也不会再撞首盘懒建尖峰。清扫在主线程
 	// UpdateApp 执行（Vulkan 上传严禁跨线程，焦散案同型竞态教训）。
 	while (!TodWarmDrained() && !gSexyAppBase->mShutdown && !mCloseRequest)
 		std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
 
 }
 
@@ -1883,6 +1898,11 @@ void LawnApp::FastLoad(GameMode theGameMode)
 
 void LawnApp::LoadingThreadCompleted()
 {
+#if defined(__ANDROID__)
+	// 装载期编译的全部管线（含 12 条几何着色器）落盘，二次启动免重编
+	if (mDDInterface && mDDInterface->mRenderInterface && mDDInterface->mRenderInterface->mRenderer)
+		mDDInterface->mRenderInterface->mRenderer->SavePipelineCache();
+#endif
 	mReanimatorCache->PrebuildCacheFrames();
 	// Cached-frame draws must finish before compute-owned pool resources are created.
 	mDDInterface->mRenderInterface->Flush();
@@ -1894,6 +1914,12 @@ void LawnApp::LoadingThreadCompleted()
 		mPoolEffect = new PoolEffect();
 		mPoolEffect->PoolEffectInitialize();
 	}
+#if defined(__ANDROID__)
+	// The FPS overlay needs the loaded debug font. Use the same timer/reset path
+	// as the desktop shortcut, without enabling unrelated debug keys.
+	if (std::getenv("PVZ_ANDROID_TEST_FPS") && !mShowFPS)
+		DebugKeyDown(KEYCODE_F3);
+#endif
 }
 
 //0x452CB0
@@ -2377,16 +2403,20 @@ bool LawnApp::UpdateApp()
 	// ~30fps（装载屏动画卡顿，2026-10-07 实机定罪）；12ms 帧约 20ms≈50fps，
 	// 上传排空由装载线程的等待保证完成后再放行菜单。棋盘期小预算兜底
 	//（单张大图上传可超支一拍，游戏帧不可大手笔）
-	TodWarmPump(mBoard != nullptr ? 2 : 12);
+	// 装载期预算 100ms：每帧固定支付一次 staging 提交+GPU 等待（Adreno
+	// ~12ms），12ms 预算会被它吃光导致每帧仅 1 张（2400 张=40 秒实测定罪）；
+	// 100ms 把同步成本摊到数十张，装载屏帧率下降是可接受代价。
+	TodWarmPump(mBoard != nullptr ? 2 : 100);
 	// 装载期硬保证（主线程侧）：队列排干后全表清扫，净了才放行装载线程
 	//（TodWarmDrained 双条件）。清扫严禁装载线程调用（Vulkan 非线程安全）。
 	// 全量定义就绪后核对源图上传，净了才置清扫完成标志。
 	if (mBoard == nullptr && mLoadingThreadStarted && !mLoadingThreadCompleted
-		&& TodWarmQueueEmpty() && TodWarmFinalSweep() == 0)
-	{
-		if (ReanimatorUploadAllTexturesToGPU()>=0)
-			TodWarmMarkSweepClean();
-	}
+		&& TodWarmQueueEmpty()) {
+		if (TodWarmFinalSweep() == 0) {
+			if (ReanimatorUploadAllTexturesToGPU()>=0)
+				TodWarmMarkSweepClean();
+		}
+		}
 
 	//if (mLoadingThreadCompleted)
 	//{
@@ -2394,6 +2424,16 @@ bool LawnApp::UpdateApp()
 	//}
 
 	bool updated = SexyAppBase::UpdateApp();
+#if defined(__ANDROID__)
+    if (mTitleScreen && mLoaded && mCacheFramesPrebuilt && std::getenv("PVZ_ANDROID_GPU_FIXTURE")) {
+        unsetenv("PVZ_ANDROID_GPU_FIXTURE");
+        LoadingCompleted();
+        KillGameSelector();
+        PreNewGame(GameMode::GAMEMODE_SURVIVAL_ENDLESS_STAGE_3, true);
+        if (!mBoard || !GetDialog(Dialogs::DIALOG_CONTINUE))
+            throw std::runtime_error("GPU benchmark failed to restore the paused fixture");
+    }
+#endif
 
 	return updated;
 }

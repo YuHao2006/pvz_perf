@@ -95,8 +95,12 @@ ORIGINAL_LAYOUT = {
     "selector": {"options": 0xB4, "survival": 0xCC},
     "widget": {"x": 0x40, "y": 0x44, "width": 0x48, "height": 0x4C, "parent": 0x24},
     "continueButton": 0x184, "creditsButton": 0x188, "awardStart": 0xA0,
-    "board": {"paused": 0x164, "counter": 0x5568, "wave": 0x557C,
-              "waves": 0x5564, "sun": 0x5560},
+    # Verified against the exact English 1073 executable above: three distinct
+    # contiguous grid arrays match the canonical save at Board+0x17C.
+    # The reference decompilation's Board offsets are 0x18 bytes earlier.
+    "boardCounterBytes": 4,
+    "board": {"paused": 0x17C, "counter": 0x5580, "wave": 0x5594,
+              "waves": 0x557C, "sun": 0x5578},
 }
 
 
@@ -190,7 +194,7 @@ def percentile(values, fraction):
     return sorted(values)[min(len(values) - 1, int((len(values) - 1) * fraction))]
 
 
-def measure(game, seconds, scene, multiplier, output, preroll=0, interactive=False):
+def measure(game, seconds, scene, multiplier, output, preroll=0, interactive=False, until_exit=False):
     output = Path(output)
     output.mkdir(parents=True)
     observer, system = SIZE(), SIZE()
@@ -226,14 +230,14 @@ def measure(game, seconds, scene, multiplier, output, preroll=0, interactive=Fal
                 "draw_count", "update_count", "scene", "wave", "board_counter",
                 "foreground", "valid", "segment", "cpu_ms_per_draw_frame"))
             writer.writeheader()
-            if interactive:
+            if interactive or until_exit:
                 print("t=0 s  Observation started. At t=3 s click the game start button.",
                       flush=True)
             while last < end:
                 if not game.alive():
                     reason = "game-exited"
                     break
-                if interactive and msvcrt.kbhit():
+                if interactive and not until_exit and msvcrt.kbhit():
                     key = msvcrt.getwch()
                     if key in ("\r", "\n"):
                         reason = "enter"
@@ -282,12 +286,12 @@ def measure(game, seconds, scene, multiplier, output, preroll=0, interactive=Fal
                 previous, previous_cpu, last = current, cpu, now
                 previous_foreground = focused
                 next_deadline = min(begin + int(time.perf_counter() - begin) + 1, end)
-                if interactive:
+                if interactive or until_exit:
                     cost = row["cpu_ms_per_draw_frame"]
                     cost_text = f"{cost:.3f} ms" if cost != "" else "n/a"
                     print(f"t={now-begin:7.1f}s | FPS={row['draw_fps']:6.1f} "
                           f"| CPU={row['cpu_percent']:6.1f}% | CPU/frame={cost_text} | {segment} "
-                          "| Enter / game exit = stop", flush=True)
+                          + ("| game exit = stop" if until_exit else "| Enter / game exit = stop"), flush=True)
         valid_rows = [r for r in rows if r["valid"]]
         total = sum(r["interval_s"] for r in valid_rows)
         metadata.update(
@@ -324,13 +328,24 @@ def main():
     parser.add_argument("--multiplier", choices=("11x", "25x"))
     parser.add_argument("--output", type=Path)
     parser.add_argument("--interactive", action="store_true")
+    parser.add_argument("--until-exit", action="store_true",
+                        help="observe until the game exits; Enter does not stop observation")
+    parser.add_argument("--verify-original-endless", action="store_true",
+                        help="check retail offsets against the known paused canonical save before observing")
     parser.add_argument("--preroll", type=int, default=3)
     args = parser.parse_args()
+    if args.until_exit and args.seconds:
+        parser.error("--until-exit cannot be combined with --seconds")
     game = Game(args.pid, args.kind, args.layout)
     try:
+        if args.verify_original_endless:
+            state = game.snapshot()
+            expected = dict(paused=True, counter=229196, wave=0, waves=20, sun=9990)
+            if args.kind != "original" or state["mGameScene"] != 3 or state["mGameMode"] != 13 or state.get("board") != expected:
+                raise RuntimeError(f"Retail checkpoint/layout verification failed; expected {expected}, got {state}")
         result = (measure(game, args.seconds, args.scene, args.multiplier, args.output,
-                          args.preroll, args.interactive)
-                  if args.seconds or args.interactive else game.snapshot())
+                          args.preroll, args.interactive, args.until_exit)
+                  if args.seconds or args.interactive or args.until_exit else game.snapshot())
         print(json.dumps(result, indent=2))
     finally:
         game.close()

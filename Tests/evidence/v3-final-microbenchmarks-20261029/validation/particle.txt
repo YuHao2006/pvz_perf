@@ -1,0 +1,1 @@
+PASS: 56 particle variants across legacy/v1/v2/v4; 162 canonical identities to 106 roots/internal variants, no image IDs, frames, state, time, tempo floats, idempotence

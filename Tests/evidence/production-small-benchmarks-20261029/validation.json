@@ -1,0 +1,16 @@
+{
+  "status": "PASS",
+  "shared_leaf_vector_rows_per_process": {
+    "flower_pot_height": 17664,
+    "store_priced_items": 4125,
+    "seed_cost_tail": 4115,
+    "damage_range": 4202,
+    "zombatar_palette": 4136
+  },
+  "retail_repeat_vectors_identical": true,
+  "timed_rounds_per_kernel": 5,
+  "retail_plant_oracle_queries": 4096,
+  "current_plant_all_cells_checked": 54,
+  "world_query_checksums_match": true,
+  "original_file_unchanged": true
+}

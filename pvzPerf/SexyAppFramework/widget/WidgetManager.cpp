@@ -11,6 +11,9 @@
 #include "SexyAppBase.h"
 #include "misc/Debug.h"
 #include <typeinfo>
+#if defined(__ANDROID__)
+#include "platform/android/AndroidWindow.h"
+#endif
 
 using namespace Sexy;
 //using namespace std;
@@ -194,7 +197,7 @@ void WidgetManager::FlushDeferredOverlayWidgets(int theMaxPriority)
 
 void WidgetManager::DoMouseUps(Widget* theWidget, unsigned int theDownCode)
 {
-	int aClickCountTable[3] = { 1,-1, 3 };
+	static constexpr int aClickCountTable[3] = { 1,-1, 3 };
 	for (int i = 0; i < 3; i++)
 	{
 		if ((theDownCode & (1 << i)) != 0)
@@ -330,9 +333,13 @@ void WidgetManager::Resize(const Rect& theMouseDestRect, const Rect& theMouseSou
 }
 
 void WidgetManager::SetFocus(Widget* aWidget)
-{	
+{
 	if (aWidget==mFocusWidget)
 		return;
+#if defined(__ANDROID__)
+	// 焦点进/出文本控件时同步系统输入法可见性。
+	ShowAndroidSoftInput(aWidget != nullptr);
+#endif
 
 	if (mFocusWidget != NULL)
 		mFocusWidget->LostFocus();
@@ -644,7 +651,7 @@ bool WidgetManager::MouseDown(int x, int y, int theClickCount)
 
 	int aWidgetX;
 	int aWidgetY;
-	Widget* aWidget = GetWidgetAt(x, y, &aWidgetX, &aWidgetY);	
+	Widget* aWidget = GetWidgetAt(x, y, &aWidgetX, &aWidgetY);
 
 	// Begin mouse down options
 /*	

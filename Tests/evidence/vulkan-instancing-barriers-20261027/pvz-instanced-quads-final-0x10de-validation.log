@@ -1,0 +1,7 @@
+GPU NVIDIA GeForce RTX 4070 Laptop GPU period_ns=1 validation=1
+PIXELS raw_only max=0 changed=0
+PIXELS sparse_generated max=0 changed=0
+PIXELS frequent_generated max=0 changed=0
+PIXELS rotated max=0 changed=0
+PIXELS large_instances max=0 changed=0
+PASS pixel correctness; validation_errors=0 output="C:\\Users\\ADMINI~1\\AppData\\Local\\Temp/pvz-instanced-quads-final-0x10de-validation"

@@ -1,0 +1,18 @@
+{
+  "date": "2026-10-27",
+  "scope": "Production Vulkan mixed-run index prefix generation; no buffer capacity, lifetime, paint order, uint16 boundary or save change.",
+  "mechanism": "Pure runs keep immutable GPU index tables. On topology mixing, synthesize the old pure prefix into the existing mixed index stream. No CPU read from the mapped GPU table in production. Old mapped-copy baseline is compiled only in the separate desktop experiment.",
+  "correctness": "Two GPUs: three mixed workloads, pixel-identical and sync validation errors 0; uint16 exact/crossing boundary and mixed topology checks passed. Real ImageRuntimeTests passed including 293 CPU particle cases, RAV7 body-first, fonts, projectiles, pool, 29 resource groups/398 resources, repeated shutdown.",
+  "windows_build": "Release/LTO full LawnProject built successfully",
+  "android_build": "Android arm64 LawnProject linked successfully; phone installation and measurement of this change remain pending",
+  "clocks_controlled": false,
+  "timing_scope": "Mixed synthetic calls only; GPU timestamps, partial host wall time. Raw CSV in Temp; no full-game or phone performance claim. Run 1 predates branch reorder; run 2 matches recorded source snapshot.",
+  "source_snapshot": "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\pvz-generated-prefix-source-20261027",
+  "sources_sha256": {
+    "pvzPerf/SexyAppFramework/graphics/vulkan/VulkanRenderer.cpp": "72d431913cdde7e058ef0b2b36b80b7b0caddf171c730ad0f027442723e2c37f",
+    "pvzPerf/SexyAppFramework/graphics/vulkan/VulkanRenderer.h": "9fd1f8690313748ad11409b097060d0268272e7208f0234a87cc08366329279c",
+    "Tests/performance/vulkan_sprite_benchmark.cpp": "ecfd0c8b3512513361d67ff7f4a5ea60b5c68f504cfe3e0737533138e4f3b76a"
+  },
+  "benchmark_sha256": "6768f722926c4a595d4bdab8c558b0799896e326c085a6f6169491ee4856b045",
+  "windows_exe_sha256": "4778da8e7a30d0a391e6a3feefe24913c50c740cf7c9b3b09d5fad54fc20f182"
+}

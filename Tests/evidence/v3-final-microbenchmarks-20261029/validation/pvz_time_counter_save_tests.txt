@@ -1,0 +1,1 @@
+PASS: 20 native save types, frozen wire timer inventory with Projectile projections; float music attributes; catapult cycle/recovery; six FPS settings, nanosecond advancement, countdown expiry, periodic events, sentinels, legacy unsigned wrap and monotonic battle time beyond 2^32 ticks

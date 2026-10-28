@@ -1,0 +1,99 @@
+PASS pure wrapped text measurement: wrapping, newlines, color tags, no glyph draws and empty fill
+pool GPU day-normal-nearest: RGBA max=0 mean=0 poolMean=0 changedPixels=0 worst=(0,0) outsideBoundaryMax=0
+pool GPU night-normal-linear: RGBA max=1 mean=2.55208e-05 poolMean=7.32656e-05 changedPixels=48 worst=(708,281) outsideBoundaryMax=1
+pool GPU day-additive-partial-fractional: RGBA max=1 mean=0.00149271 poolMean=0.00428529 changedPixels=2677 worst=(334,276) outsideBoundaryMax=1
+pool GPU night-additive-phase-wrap: RGBA max=1 mean=6.25e-06 poolMean=1.79426e-05 changedPixels=12 worst=(708,285) outsideBoundaryMax=1
+pool GPU day-opaque-partial-fractional: RGBA max=1 mean=0.000376562 poolMean=0.00108104 changedPixels=679 worst=(121,276) outsideBoundaryMax=1
+pool GPU night-opaque-large-counter: RGBA max=1 mean=0.00140729 poolMean=0.00404007 changedPixels=2551 worst=(339,281) outsideBoundaryMax=1
+pool GPU feedback-float-source-pending-batch: RGBA max=1 mean=2.29167e-05 poolMean=6.57895e-05 changedPixels=43 worst=(442,287) outsideBoundaryMax=1
+PASS production GPU pool vs independent legacy CPU mesh: day/night, normal/additive/opaque, nearest/linear/repeat, phase wrap, vertex-alpha clip, fractional translation, ordinary painter order and float target feedback
+PASS precomputed transparent edges: alpha, visible RGB, idempotency, nearest/linear, upload-discard
+PASS public font upload: deferred alpha, upload-and-discard, texture reuse, independent copies
+PASS nonzero source rectangles and repacked whole-sheet atlas views: translation, scale origins, clipping, tint, additive, local-source views and floating scales
+PASS actual GameButton atlas states: normal, hover, press/fallbacks, disabled, overAlpha, additive glow, translation/offsets and hidden state match independent images
+PASS direct shared-image snapshots and reference lifetime
+PASS actual boss back-arm drawing: four attack offsets, reference pixels, 1024 exact shared-animation translation restorations
+PASS reanimation appearances: independent options, image slots, atlas dimensions, original centers and actual AttachmentDraw visibility pixels
+PASS fullscreen reanimation: destination fill pixels, hidden/zero alpha, color modulation, both blend modes, translation and effective clip without track matrices
+Nearest texel boundaries type=9 rotation=0.37 motion=0 creationTimeNs=0 pixels=1 maxChannelDelta=12 (all match adjacent CPU texels; all other pixels exact within2)
+Nearest texel boundaries type=9 rotation=0.37 motion=4 creationTimeNs=0 pixels=1 maxChannelDelta=12 (all match adjacent CPU texels; all other pixels exact within2)
+Nearest texel boundaries type=9 rotation=0.37 motion=0 creationTimeNs=-123456789 pixels=1 maxChannelDelta=12 (all match adjacent CPU texels; all other pixels exact within2)
+Nearest texel boundaries type=9 rotation=0.37 motion=4 creationTimeNs=-123456789 pixels=1 maxChannelDelta=12 (all match adjacent CPU texels; all other pixels exact within2)
+Nearest texel boundaries type=9 rotation=0.37 motion=0 creationTimeNs=-300000000 pixels=1 maxChannelDelta=12 (all match adjacent CPU texels; all other pixels exact within2)
+Nearest texel boundaries type=9 rotation=0.37 motion=4 creationTimeNs=-300000000 pixels=1 maxChannelDelta=12 (all match adjacent CPU texels; all other pixels exact within2)
+Nearest texel boundaries type=11 rotation=0.37 motion=0 creationTimeNs=0 pixels=1 maxChannelDelta=39 (all match adjacent CPU texels; all other pixels exact within2)
+Nearest texel boundaries type=11 rotation=0.37 motion=4 creationTimeNs=0 pixels=1 maxChannelDelta=39 (all match adjacent CPU texels; all other pixels exact within2)
+Nearest texel boundaries type=11 rotation=0.37 motion=0 creationTimeNs=-123456789 pixels=1 maxChannelDelta=39 (all match adjacent CPU texels; all other pixels exact within2)
+Nearest texel boundaries type=11 rotation=0.37 motion=4 creationTimeNs=-123456789 pixels=1 maxChannelDelta=39 (all match adjacent CPU texels; all other pixels exact within2)
+Nearest texel boundaries type=11 rotation=0.37 motion=0 creationTimeNs=-300000000 pixels=1 maxChannelDelta=39 (all match adjacent CPU texels; all other pixels exact within2)
+Nearest texel boundaries type=11 rotation=0.37 motion=4 creationTimeNs=-300000000 pixels=1 maxChannelDelta=39 (all match adjacent CPU texels; all other pixels exact within2)
+PASS actual projectile body/shadow atlas pixels: all14 types, both shadow cels, source offsets, scale, rotation, mirrors, puff ages, lobbed shadows and collision dimensions
+pool scene width=800 night=0 max=1
+pool scene width=800 night=1 max=1
+pool scene width=1400 night=0 max=1
+pool scene width=1400 night=1 max=1
+Store clock fixture: initialize
+Store clock fixture: board initialized
+Store clock fixture: 100 Hz ordinary pause
+Store clock fixture: opening menu Store
+Store clock fixture: drawing Store
+Store clock fixture: drawing completed, updating entry
+Store clock fixture: entry completed, navigating
+Store clock fixture: navigation completed, removing Store
+Store clock fixture: Store removed
+Store clock fixture: opening level Store
+Store clock fixture: drawing Store
+Store clock fixture: drawing completed, updating entry
+Store clock fixture: entry completed, navigating
+Store clock fixture: navigation completed, removing Store
+Store clock fixture: Store removed
+PASS Store clocks 100 Hz: menu/level Dave entry, next/prev hatch, pause/resume poses and battle clock
+Store clock fixture: 240 Hz ordinary pause
+Store clock fixture: opening menu Store
+Store clock fixture: drawing Store
+Store clock fixture: drawing completed, updating entry
+Store clock fixture: entry completed, navigating
+Store clock fixture: navigation completed, removing Store
+Store clock fixture: Store removed
+Store clock fixture: opening level Store
+Store clock fixture: drawing Store
+Store clock fixture: drawing completed, updating entry
+Store clock fixture: entry completed, navigating
+Store clock fixture: navigation completed, removing Store
+Store clock fixture: Store removed
+Store clock fixture: 480 Hz ordinary pause
+Store clock fixture: opening menu Store
+PASS Store clocks 240 Hz: menu/level Dave entry, next/prev hatch, pause/resume poses and battle clock
+Store clock fixture: drawing Store
+Store clock fixture: drawing completed, updating entry
+Store clock fixture: entry completed, navigating
+Store clock fixture: navigation completed, removing Store
+Store clock fixture: Store removed
+Store clock fixture: opening level Store
+Store clock fixture: drawing Store
+Store clock fixture: drawing completed, updating entry
+Store clock fixture: entry completed, navigating
+Store clock fixture: navigation completed, removing Store
+Store clock fixture: Store removed
+PASS Store clocks 480 Hz: menu/level Dave entry, next/prev hatch, pause/resume poses and battle clock
+Store clock fixture: 1000 Hz ordinary pause
+Store clock fixture: opening menu Store
+Store clock fixture: drawing Store
+Store clock fixture: drawing completed, updating entry
+Store clock fixture: entry completed, navigating
+Store clock fixture: navigation completed, removing Store
+Store clock fixture: Store removed
+Store clock fixture: opening level Store
+Store clock fixture: drawing Store
+Store clock fixture: drawing completed, updating entry
+Store clock fixture: entry completed, navigating
+Store clock fixture: navigation completed, removing Store
+Store clock fixture: Store removed
+PASS Store clocks 1000 Hz: menu/level Dave entry, next/prev hatch, pause/resume poses and battle clock
+PASS actual Quit confirmation: target-free layout, body, yes/no buttons and clean dialog release
+PASS all 29 resource groups / 398 resources: 210 GPU-only images, 20 named fonts, 168 real sound decodes, volume/pan setup, all plans discarded, complete release and repeated shutdown
+PASS NRSC4 explicit groups: plan disposal, named image/font ownership, temporary font clone, title release, independent shared aliases
+PASS production RAV7/IDT6 body-first: cel inheritance and hidden-frame draws, shared definitions, all Garlic rows, uploaded bindings, derived option tables and Gargantuar independent damage/weapon/head transitions
+PASS production CPU particle drawing: 293 authored emitter/variant/clip cases, 291 visible, CPU oracle only in test code
+PASS resource shutdown: all pending plans freed and repeated release safe
+PASS static production particles: catalog validation, flat appearance rows, shared behavior, fire/ice dimensions and pixels, no-image, logical frames, sunglasses override, frame clamps, animation pixels, repeated load and release

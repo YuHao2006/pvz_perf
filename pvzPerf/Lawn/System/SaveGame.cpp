@@ -1,3 +1,4 @@
+#include "ReanimClock.h"
 #include "Music.h"
 #include "SaveGame.h"
 #include "LevelSaveFormat.h"
@@ -162,7 +163,6 @@ void SyncDat64DataArray(
 	SaveGameContext& theContext,
 	DataArray<T>& theDataArray)
 {
-	using DataArrayItem = typename DataArray<T>::DataArrayItem;
 	if (theContext.mFailed)
 		return;
 	unsigned int aFreeListHead = theDataArray.mFreeListHead;
@@ -421,6 +421,8 @@ static void SyncParticleEmitter(TodParticleSystem* theParticleSystem, TodParticl
 				return;
 			}
 			aSeenParticles[anIndex] = true;
+			aParticle->mBirthTimeNs = ReanimClock::Add(theParticleSystem->mLastUpdateTimeNs, aParticle->mBirthTimeNs);
+			aParticle->mAnimationBirthTimeNs = ReanimClock::Add(theParticleSystem->mLastUpdateTimeNs, aParticle->mAnimationBirthTimeNs);
 			aParticle->mParticleEmitter = theParticleEmitter;  // 回指回填（=原循环同位）
 			aRosterScratch[i] = static_cast<ParticleID>(aDataID);
 		}
@@ -442,13 +444,19 @@ static void SyncParticleEmitter(TodParticleSystem* theParticleSystem, TodParticl
 	}
 	if (theContext.mReading)
 	{
+		theParticleEmitter->mBirthTimeNs = ReanimClock::Add(theParticleSystem->mLastUpdateTimeNs, theParticleEmitter->mBirthTimeNs);
+		if (theParticleEmitter->mCrossFadeEndTimeNs != 0)
+			theParticleEmitter->mCrossFadeEndTimeNs = ReanimClock::Add(theParticleSystem->mLastUpdateTimeNs, theParticleEmitter->mCrossFadeEndTimeNs);
 		theParticleEmitter->mParticleSystem = theParticleSystem;
 		theParticleEmitter->mEmitterDef = &theParticleSystem->mParticleDef->mEmitterDefs[aEmitterDefIndex];
+        RefreshParticleLifeFraction(*theParticleEmitter, theParticleSystem->mLastUpdateTimeNs);
 		// 入册：盘上头→尾（新→旧）→侧表尾存（旧→新）= 倒序填
 		theParticleEmitter->ParticleRosterClear();
 		for (int i = aRosterCount - 1; i >= 0; --i)
 		{
 			TodParticle* aParticle = aHolder.mParticles.DataArrayTryToGet((unsigned int)aRosterScratch[i]);
+            // Restore ownership before rebuilding this pool-indexed cache.
+            RefreshParticleLifeFraction(*aParticle, theParticleSystem->mLastUpdateTimeNs);
 			theParticleEmitter->ParticleRosterAdd(aParticle);
 		}
 	}
@@ -525,6 +533,7 @@ void SyncParticleSystem(Board* theBoard, TodParticleSystem* theParticleSystem, S
 			aRosterScratch[i] = static_cast<ParticleEmitterID>(aDataID);
 		}
 		aRosterCount = aCountOnDisk;
+		theParticleSystem->mLastUpdateTimeNs = theBoard->mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs;
 		theParticleSystem->mParticleDef = aDefinition;
 		theParticleSystem->mParticleHolder = aHolder;
 	}
@@ -749,6 +758,7 @@ void FixBoardAfterLoad(Board* theBoard)
 		{
 			aPlant->mApp = theBoard->mApp;
 			aPlant->mBoard = theBoard;
+			SaveClockProjection::Bind(*aPlant);
 		}
 	}
 	{
@@ -757,6 +767,7 @@ void FixBoardAfterLoad(Board* theBoard)
 		{
 			aZombie->mApp = theBoard->mApp;
 			aZombie->mBoard = theBoard;
+			SaveClockProjection::Bind(*aZombie);
 		}
 	}
 	{
@@ -773,6 +784,7 @@ void FixBoardAfterLoad(Board* theBoard)
 		{
 			aCoin->mApp = theBoard->mApp;
 			aCoin->mBoard = theBoard;
+			SaveClockProjection::Bind(*aCoin);
 		}
 	}
 	{
@@ -781,6 +793,7 @@ void FixBoardAfterLoad(Board* theBoard)
 		{
 			aLawnMower->mApp = theBoard->mApp;
 			aLawnMower->mBoard = theBoard;
+			SaveClockProjection::Bind(*aLawnMower);
 		}
 	}
 	{
@@ -789,10 +802,12 @@ void FixBoardAfterLoad(Board* theBoard)
 		{
 			aGridItem->mApp = theBoard->mApp;
 			aGridItem->mBoard = theBoard;
+			SaveClockProjection::Bind(*aGridItem);
 		}
 	}
 
 	theBoard->mAdvice->mApp = theBoard->mApp;
+	SaveClockProjection::Bind(*theBoard->mAdvice);
 	theBoard->mCursorObject->mApp = theBoard->mApp;
 	theBoard->mCursorObject->mBoard = theBoard;
 	theBoard->mCursorPreview->mApp = theBoard->mApp;
@@ -804,10 +819,12 @@ void FixBoardAfterLoad(Board* theBoard)
 		theBoard->mSeedBank->mSeedPackets[i].mApp = theBoard->mApp;
 		theBoard->mSeedBank->mSeedPackets[i].mBoard = theBoard;
 	}
+	SaveClockProjection::Bind(*theBoard->mSeedBank);
 	theBoard->mChallenge->mApp = theBoard->mApp;
 	theBoard->mChallenge->mBoard = theBoard;
 	theBoard->mApp->mMusic->mApp = theBoard->mApp;
 	theBoard->mApp->mMusic->mMusicInterface = theBoard->mApp->mMusicInterface;
+	SaveClockProjection::Bind(*theBoard->mApp->mMusic);
 	if (theBoard->mLevelTimeNs > std::uint64_t(INT64_MAX))
 		return; // A failed partial read must still leave owner pointers repaired.
 	auto& aHolder = *theBoard->mApp->mEffectSystem->mReanimationHolder;

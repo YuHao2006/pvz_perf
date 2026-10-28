@@ -1,0 +1,15 @@
+{
+  "passed": true,
+  "argv": [
+    "argument with spaces",
+    "ends\\",
+    "embedded\"quote",
+    "C:\\directory with spaces\\"
+  ],
+  "actual": [
+    "argument with spaces",
+    "ends\\",
+    "embedded\"quote",
+    "C:\\directory with spaces\\"
+  ]
+}

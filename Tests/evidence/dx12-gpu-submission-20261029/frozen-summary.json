@@ -1,0 +1,31 @@
+{
+  "backend": "D3D12",
+  "lp": 14,
+  "multiplier": "11x controlled by user, not independently sampled",
+  "warmup_per_process": 128,
+  "samples_per_process": 640,
+  "plants": 32,
+  "zombies": 40,
+  "scene": "800x600",
+  "scope": "CPU WidgetManager::DrawScreen only; setup, flush, fence and readback outside timed interval",
+  "cross_process_pixels_equal": true,
+  "pixel_sha256": "185d2ade644271b4ca67de2181de5f3d7cc741559c29e70f5dd74309dd5b8b08",
+  "historical_cross_version_pixels_verified": false,
+  "gpu_optimization_only_gain_measured": false,
+  "results": [
+    {
+      "run": 1,
+      "samples": 640,
+      "median_cpu_us": 1419.7,
+      "p90_nearest_rank_us": 1487.0,
+      "median_thread_cycles": 4379136.0
+    },
+    {
+      "run": 2,
+      "samples": 640,
+      "median_cpu_us": 1431.4,
+      "p90_nearest_rank_us": 1549.6,
+      "median_thread_cycles": 4396339.0
+    }
+  ]
+}

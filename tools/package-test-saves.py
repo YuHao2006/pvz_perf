@@ -46,6 +46,8 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--converter", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--perfect-output", type=Path, help="Optional completed-profile-only ZIP")
+    parser.add_argument("--benchmark-output", type=Path, help="Optional independently named full benchmark ZIP")
     args = parser.parse_args()
     root = Path(__file__).resolve().parents[1]
     manifest = json.loads((root / "Tests/manifest.json").read_text(encoding="utf-8"))
@@ -71,13 +73,13 @@ def main():
         if roundtrip.read_bytes() != profile:
             raise ValueError("Completed profile DAT64/DAT roundtrip differs")
         checkpoint = directory / "game1_58.dat64"
-        subprocess.run([str(converter), "--target", "dat64-v3.3",
-                        str(source_files["project"]), str(checkpoint)], check=True)
+        subprocess.run([str(converter), "--target", "dat64-v4",
+                        str(source_files["original"]), str(checkpoint)], check=True)
         checkpoint_bytes = checkpoint.read_bytes()
         if (checkpoint_bytes[:8] != b"PVZDAT64"
-                or struct.unpack_from("<I", checkpoint_bytes, 8)[0] != 3
-                or struct.unpack_from("<II", checkpoint_bytes, 36) != (0x10740, 3)):
-            raise ValueError("Modern checkpoint must use DAT64 v3.3")
+                or struct.unpack_from("<I", checkpoint_bytes, 8)[0] != 4
+                or struct.unpack_from("<II", checkpoint_bytes, 36) != (0x10745, 0)):
+            raise ValueError("Modern checkpoint must use DAT64 v4")
         args.output.parent.mkdir(parents=True, exist_ok=True)
         with zipfile.ZipFile(args.output, "x", zipfile.ZIP_DEFLATED) as archive:
             archive.writestr("data/users.dat", summary)
@@ -95,7 +97,7 @@ def main():
                 "20 achievements, ten seed slots, permanent store upgrades and coins.\n"
                 "Wisdom tree: 1000. Zen garden and custom Zombatars are empty.\n"
                 "No personal user profile is included; this profile is generated for testing.\n\n"
-                "data/game1_58.dat64 is the Tests endless benchmark converted to DAT64 v3.3.\n"
+                "data/game1_58.dat64 is the Tests endless benchmark converted to DAT64 v4.\n"
                 "The converter verifies that all saved semantics are preserved.\n"
                 "Do not advance it and reuse the progressed checkpoint as a new baseline.\n"
                 "Re-extract the benchmark before each comparison.\n"
@@ -104,6 +106,23 @@ def main():
         with zipfile.ZipFile(args.output) as archive:
             if archive.testzip():
                 raise ValueError("Save archive CRC validation failed")
+    if args.perfect_output:
+        args.perfect_output.parent.mkdir(parents=True, exist_ok=True)
+        with zipfile.ZipFile(args.output) as source, zipfile.ZipFile(
+                args.perfect_output, "x", zipfile.ZIP_DEFLATED) as archive:
+            for name in ("data/users.dat", "data/user1.dat64"):
+                archive.writestr(name, source.read(name))
+            archive.writestr("README.txt", "pvz_perf v3.0 completed test profile\n\n"
+                "Exit the game, back up your own data, then extract data/ beside pvz_perf.exe.\n"
+                "Generated PerfTest / ID1 profile; replaces destination profile summary.\n"
+                "All permanent unlocks, two adventure completions, trophies, achievements, ten seed slots.\n"
+                "Zen garden and custom Zombatars are empty. No level checkpoint is included.\n"
+                "Use the separate endless benchmark ZIP for a canonical level checkpoint.\n")
+    if args.benchmark_output:
+        import shutil
+        args.benchmark_output.parent.mkdir(parents=True, exist_ok=True)
+        with args.output.open("rb") as source, args.benchmark_output.open("xb") as target:
+            shutil.copyfileobj(source, target)
     print(json.dumps({"archive": str(args.output.resolve()),
                       "completed_profile": True, "endless_benchmark": True,
                       "profile_roundtrip": "identical"}, indent=2))

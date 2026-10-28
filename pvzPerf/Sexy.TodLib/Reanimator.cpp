@@ -1,16 +1,16 @@
-#include "graphics/Graphics.h"
+﻿#include "graphics/Graphics.h"
 #include "TodDebug.h"
 #include "TodCommon.h"
 #include "Definition.h"
 #include "TodAllocator.h"
 #include "Reanimator.h"
+#include <chrono>
 #include "ReanimRenderSemantics.h"
 #include "ReanimTrackMphfGlobal.h"  // 全局单表 MPHF（唯一 MPHF 层）：(type,id) 联合键 -> trackIndex + 语料成员位图（reanimc compile-v2 生成）
 #include "generated/ReanimAttacherMasks.h"  // P4：每类型轨道数 + attacher 位掩码（编译期生成，与本 cpp 独占包含）
 #include "generated/GeneratedDefinitions.h"
 #include "Attachment.h"
 #include "EffectSystem.h"
-#include "ParticleGpu.h"
 #include "GameConstants.h"
 #include "graphics/Font.h"
 #include <bit>
@@ -30,121 +30,15 @@
 #include <stdexcept>
 #include "paklib/PakInterface.h"
 
+static bool ReanimFullLast(ReanimLoopType loop);
+static void ConfigureFramePeriod(Reanimation& animation, std::int64_t requestedPeriod);
+static void BindFramePosition(Reanimation& animation, std::int64_t nowNs,
+    std::int64_t phaseNs);
+
 static unsigned int gReanimatorDefCount;                     //[0x6A9EE4]
 ReanimatorDefinition* gReanimatorDefArray;   //[0x6A9EE8]
 static unsigned int gReanimationParamArraySize;              //[0x6A9EEC]
 
-static void UploadGpuDefinitionRange(int firstType, int endType)
-{
-#if defined(PVZ_GPU_REANIM_RESIDENT)
-	if (!gSexyAppBase || CurrentNativeThreadIdentity() != gSexyAppBase->mPrimaryThreadId ||
-		!gSexyAppBase->mDDInterface || !gSexyAppBase->mDDInterface->mRenderInterface)
-		throw std::logic_error("Reanimation GPU upload requires the primary renderer thread");
-	auto& render = *gSexyAppBase->mDDInterface->mRenderInterface;
-	auto* renderer = render.mRenderer;
-	if (!renderer) throw std::logic_error("Reanimation GPU upload requires a renderer");
-	std::vector<ReanimatorDefinition*> uploaded;
-	uploaded.reserve(endType - firstType);
-	try
-	{
-		for (int type = firstType; type < endType; ++type)
-		{
-			auto& definition = GeneratedDefinitions::Reanimations[type];
-			if (definition.mGpuData) continue;
-			if (std::all_of(definition.mTracks.tracks,
-				definition.mTracks.tracks + definition.mTracks.count,
-				[](const auto& track) { return track.mTransforms.mStorage == ReanimTrackStorage::Cpu; }))
-				continue;
-			const char* path = GeneratedDefinitions::ReanimationGpuPaths[type];
-			PFILE* file = p_fopen(path, "rb");
-			if (!file) throw std::runtime_error(std::string("Missing GPU reanimation data: ") + path);
-			try
-			{
-				std::uint32_t header[8]{};
-				if (p_fread(header, sizeof(header), 1, file) != 1 ||
-					header[0] != 0x31555247u || header[1] != unsigned(definition.mTracks.count) ||
-					header[3] != definition.mImageSlotCount || header[4] != definition.mVariantCount ||
-					header[5] != sizeof(GpuReanimTrack) || header[6] != sizeof(GpuReanimKey) ||
-					header[7] != sizeof(GpuReanimGeometry) || header[2] > (1u << 24))
-					throw std::runtime_error(std::string("Invalid GPU reanimation header: ") + path);
-				std::vector<GpuReanimTrack> tracks(header[1]);
-				std::vector<GpuReanimKey> keys(header[2]);
-				std::vector<GpuReanimGeometry> geometry(
-					std::size_t(header[3]) * header[4]);
-				const auto read = [&](auto& values)
-				{
-					if (!values.empty() && p_fread(values.data(), sizeof(values[0]),
-						int(values.size()), file) != values.size())
-						throw std::runtime_error(std::string("Truncated GPU reanimation data: ") + path);
-				};
-				read(tracks); read(keys); read(geometry);
-				if (p_fgetc(file) != EOF)
-					throw std::runtime_error(std::string("Trailing GPU reanimation data: ") + path);
-				for (std::size_t i = 0; i < tracks.size(); ++i)
-				{
-					if (tracks[i].keyCount != unsigned(definition.mTracks.tracks[i].mTransforms.count))
-						throw std::runtime_error(std::string("GPU reanimation track mismatch: ") + path);
-				}
-				// Loading-screen/cache draws can leave a scene open when the
-				// worker becomes ready. Finish it once before the first upload;
-				// an already resident range never interrupts another frame.
-				if (uploaded.empty()) render.Flush();
-				definition.mGpuData = renderer->UploadReanimDefinition(
-					{tracks, keys, geometry, header[3], header[4]});
-				if (!definition.mGpuData && std::any_of(definition.mTracks.tracks,
-					definition.mTracks.tracks + definition.mTracks.count,
-					[](const auto& track) { return track.mTransforms.mStorage == ReanimTrackStorage::Gpu; }))
-					throw std::runtime_error(std::string(
-						"The renderer cannot draw GPU-only reanimation tracks: ") + path);
-				uploaded.push_back(&definition);
-				// Only the GPU resource survives this scope; upload staging is discarded.
-			}
-			catch (...) { p_fclose(file); throw; }
-			p_fclose(file);
-		}
-	}
-	catch (...)
-	{
-		for (auto* definition : uploaded)
-		{
-			renderer->DestroyReanimDefinition(definition->mGpuData);
-			definition->mGpuData = nullptr;
-		}
-		throw;
-	}
-#else
-	(void)firstType;
-	(void)endType;
-#endif
-}
-
-void ReanimatorUploadGpuDefinitionData()
-{
-	UploadGpuDefinitionRange(0, GeneratedDefinitions::ReanimationCount);
-}
-
-void ReanimatorUploadGpuDefinitionData(ReanimationType type)
-{
-	const auto index = static_cast<unsigned>(type);
-	if (index >= GeneratedDefinitions::ReanimationCount)
-		throw std::out_of_range("Invalid early GPU reanimation type");
-	UploadGpuDefinitionRange(int(index), int(index) + 1);
-}
-
-void ReanimatorFreeGpuDefinitionData()
-{
-#if defined(PVZ_GPU_REANIM_RESIDENT)
-	auto* renderer = gSexyAppBase && gSexyAppBase->mDDInterface &&
-		gSexyAppBase->mDDInterface->mRenderInterface
-		? gSexyAppBase->mDDInterface->mRenderInterface->mRenderer : nullptr;
-	for (auto& definition : GeneratedDefinitions::Reanimations)
-	{
-		if (definition.mGpuData && renderer)
-			renderer->DestroyReanimDefinition(definition.mGpuData);
-		definition.mGpuData = nullptr;
-	}
-#endif
-}
 static ReanimationParams* gReanimationParamArray;   //[0x6A9EF0]
 
 std::uint32_t ReanimatorTrackIdAt(ReanimationType theReanimType, int theTrackIndex)
@@ -156,6 +50,15 @@ std::uint32_t ReanimatorTrackIdAt(ReanimationType theReanimType, int theTrackInd
 		return 0;
 	return static_cast<std::uint32_t>(aDef.mTracks.tracks[theTrackIndex].mTrackId);
 }
+
+// Resolve the single root-motion track once at compile time, including misses.
+// Uses the generated MPHF, so type order and first matching track stay identical.
+extern constexpr std::array<int, (int)ReanimationType::NUM_REANIMS> gReanimGroundTrackIndices = [] {
+    std::array<int, (int)ReanimationType::NUM_REANIMS> indices{};
+    for (unsigned int type = 0; type < indices.size(); ++type)
+        indices[type] = MphfLookupGlobal(type, (unsigned int)ReanimTrackId::_ground);
+    return indices;
+}();
 
 static int ReanimatorTrackIndexOf(ReanimationType theReanimType, ReanimTrackId theTrackId)
 {
@@ -180,150 +83,150 @@ static int ReanimatorTrackIndexOf(ReanimationType theReanimType, ReanimTrackId t
 
 
 ReanimationParams gLawnReanimationArray[(int)ReanimationType::NUM_REANIMS] = { //0x6A1340
-	{ ReanimationType::REANIM_LOADBAR_SPROUT,                       "reanim\\LoadBar_sprout.reanim", 0},
-	{ ReanimationType::REANIM_LOADBAR_ZOMBIEHEAD,                   "reanim\\LoadBar_Zombiehead.reanim", 0},
-	{ ReanimationType::REANIM_SODROLL,                              "reanim\\SodRoll.reanim",                           0 },
-	{ ReanimationType::REANIM_FINAL_WAVE,                           "reanim\\FinalWave.reanim", 0},
-	{ ReanimationType::REANIM_PEASHOOTER,                           "reanim\\PeaShooterSingle.reanim",                  0 },
-	{ ReanimationType::REANIM_WALLNUT,                              "reanim\\Wallnut.reanim",                           0 },
-	{ ReanimationType::REANIM_LILYPAD,                              "reanim\\Lilypad.reanim",                           0 },
-	{ ReanimationType::REANIM_SUNFLOWER,                            "reanim\\SunFlower.reanim",                         0 },
-	{ ReanimationType::REANIM_LAWNMOWER,                            "reanim\\LawnMower.reanim",                         0 },
-	{ ReanimationType::REANIM_READYSETPLANT,                        "reanim\\StartReadySetPlant.reanim", 0},
-	{ ReanimationType::REANIM_CHERRYBOMB,                           "reanim\\CherryBomb.reanim",                        0 },
-	{ ReanimationType::REANIM_SQUASH,                               "reanim\\Squash.reanim",                            0 },
-	{ ReanimationType::REANIM_DOOMSHROOM,                           "reanim\\DoomShroom.reanim",                        0 },
-	{ ReanimationType::REANIM_SNOWPEA,                              "reanim\\SnowPea.reanim",                           0 },
-	{ ReanimationType::REANIM_REPEATER,                             "reanim\\PeaShooter.reanim",                        0 },
-	{ ReanimationType::REANIM_SUNSHROOM,                            "reanim\\SunShroom.reanim",                         0 },
-	{ ReanimationType::REANIM_TALLNUT,                              "reanim\\Tallnut.reanim",                           0 },
-	{ ReanimationType::REANIM_FUMESHROOM,                           "reanim\\Fumeshroom.reanim",                        0 },
-	{ ReanimationType::REANIM_PUFFSHROOM,                           "reanim\\Puffshroom.reanim",                        0 },
-	{ ReanimationType::REANIM_HYPNOSHROOM,                          "reanim\\Hypnoshroom.reanim",                       0 },
-	{ ReanimationType::REANIM_CHOMPER,                              "reanim\\Chomper.reanim",                           0 },
-	{ ReanimationType::REANIM_ZOMBIE,                               "reanim\\Zombie.reanim",                            0 },
-	{ ReanimationType::REANIM_SUN,                                  "reanim\\Sun.reanim",                               0 },
-	{ ReanimationType::REANIM_POTATOMINE,                           "reanim\\PotatoMine.reanim",                        0 },
-	{ ReanimationType::REANIM_SPIKEWEED,                            "reanim\\Caltrop.reanim",                           0 },
-	{ ReanimationType::REANIM_SPIKEROCK,                            "reanim\\SpikeRock.reanim",                         0 },
-	{ ReanimationType::REANIM_THREEPEATER,                          "reanim\\ThreePeater.reanim",                       0 },
-	{ ReanimationType::REANIM_MARIGOLD,                             "reanim\\Marigold.reanim",                          0 },
-	{ ReanimationType::REANIM_ICESHROOM,                            "reanim\\IceShroom.reanim",                         0 },
-	{ ReanimationType::REANIM_ZOMBIE_FOOTBALL,                      "reanim\\Zombie_football.reanim",                   0 },
-	{ ReanimationType::REANIM_ZOMBIE_NEWSPAPER,                     "reanim\\Zombie_paper.reanim",                      0 },
-	{ ReanimationType::REANIM_ZOMBIE_ZAMBONI,                       "reanim\\Zombie_zamboni.reanim",                    0 },
-	{ ReanimationType::REANIM_SPLASH,                               "reanim\\splash.reanim",                            0 },
-	{ ReanimationType::REANIM_JALAPENO,                             "reanim\\Jalapeno.reanim",                          0 },
-	{ ReanimationType::REANIM_JALAPENO_FIRE,                        "reanim\\fire.reanim",                              0 },
-	{ ReanimationType::REANIM_COIN_SILVER,                          "reanim\\Coin_silver.reanim",                       0 },
-	{ ReanimationType::REANIM_ZOMBIE_CHARRED,                       "reanim\\Zombie_charred.reanim",                    0 },
-	{ ReanimationType::REANIM_ZOMBIE_CHARRED_IMP,                   "reanim\\Zombie_charred_imp.reanim",                0 },
-	{ ReanimationType::REANIM_ZOMBIE_CHARRED_DIGGER,                "reanim\\Zombie_charred_digger.reanim",             0 },
-	{ ReanimationType::REANIM_ZOMBIE_CHARRED_ZAMBONI,               "reanim\\Zombie_charred_zamboni.reanim",            0 },
-	{ ReanimationType::REANIM_ZOMBIE_CHARRED_CATAPULT,              "reanim\\Zombie_charred_catapult.reanim",           0 },
-	{ ReanimationType::REANIM_ZOMBIE_CHARRED_GARGANTUAR,            "reanim\\Zombie_charred_gargantuar.reanim",         0 },
-	{ ReanimationType::REANIM_SCRAREYSHROOM,                        "reanim\\ScaredyShroom.reanim",                     0 },
-	{ ReanimationType::REANIM_PUMPKIN,                              "reanim\\Pumpkin.reanim",                           0 },
-	{ ReanimationType::REANIM_PLANTERN,                             "reanim\\Plantern.reanim",                          0 },
-	{ ReanimationType::REANIM_TORCHWOOD,                            "reanim\\Torchwood.reanim",                         0 },
-	{ ReanimationType::REANIM_SPLITPEA,                             "reanim\\SplitPea.reanim",                          0 },
-	{ ReanimationType::REANIM_SEASHROOM,                            "reanim\\SeaShroom.reanim",                         0 },
-	{ ReanimationType::REANIM_BLOVER,                               "reanim\\Blover.reanim",                            0 },
-	{ ReanimationType::REANIM_FLOWER_POT,                           "reanim\\Pot.reanim",                               0 },
-	{ ReanimationType::REANIM_CACTUS,                               "reanim\\Cactus.reanim",                            0 },
-	{ ReanimationType::REANIM_TANGLEKELP,                           "reanim\\Tanglekelp.reanim",                        0 },
-	{ ReanimationType::REANIM_STARFRUIT,                            "reanim\\Starfruit.reanim",                         0 },
-	{ ReanimationType::REANIM_POLEVAULTER,                          "reanim\\Zombie_polevaulter.reanim",                0 },
-	{ ReanimationType::REANIM_BALLOON,                              "reanim\\Zombie_balloon.reanim",                    0 },
-	{ ReanimationType::REANIM_GARGANTUAR,                           "reanim\\Zombie_gargantuar.reanim",                 0 },
-	{ ReanimationType::REANIM_IMP,                                  "reanim\\Zombie_imp.reanim",                        0 },
-	{ ReanimationType::REANIM_DIGGER,                               "reanim\\Zombie_digger.reanim",                     0 },
-	{ ReanimationType::REANIM_DIGGER_DIRT,                          "reanim\\Digger_rising_dirt.reanim",                0 },
-	{ ReanimationType::REANIM_ZOMBIE_DOLPHINRIDER,                  "reanim\\Zombie_dolphinrider.reanim",               0 },
-	{ ReanimationType::REANIM_POGO,                                 "reanim\\Zombie_pogo.reanim",                       0 },
-	{ ReanimationType::REANIM_BOBSLED,                              "reanim\\Zombie_bobsled.reanim",                    0 },
-	{ ReanimationType::REANIM_JACKINTHEBOX,                         "reanim\\Zombie_jackbox.reanim",                    0 },
-	{ ReanimationType::REANIM_SNORKEL,                              "reanim\\Zombie_snorkle.reanim",                    0 },
-	{ ReanimationType::REANIM_BUNGEE,                               "reanim\\Zombie_bungi.reanim",                      0 },
-	{ ReanimationType::REANIM_CATAPULT,                             "reanim\\Zombie_catapult.reanim",                   0 },
-	{ ReanimationType::REANIM_LADDER,                               "reanim\\Zombie_ladder.reanim",                     0 },
-	{ ReanimationType::REANIM_PUFF,                                 "reanim\\Puff.reanim",                              0 },
-	{ ReanimationType::REANIM_SLEEPING,                             "reanim\\Z.reanim",                                 0 },
-	{ ReanimationType::REANIM_GRAVE_BUSTER,                         "reanim\\Gravebuster.reanim",                       0 },
-	{ ReanimationType::REANIM_ZOMBIES_WON,                          "reanim\\ZombiesWon.reanim", 0},
-	{ ReanimationType::REANIM_MAGNETSHROOM,                         "reanim\\Magnetshroom.reanim",                      0 },
-	{ ReanimationType::REANIM_BOSS,                                 "reanim\\Zombie_boss.reanim",                       0 },
-	{ ReanimationType::REANIM_CABBAGEPULT,                          "reanim\\Cabbagepult.reanim",                       0 },
-	{ ReanimationType::REANIM_KERNELPULT,                           "reanim\\Cornpult.reanim",                          0 },
-	{ ReanimationType::REANIM_MELONPULT,                            "reanim\\Melonpult.reanim",                         0 },
-	{ ReanimationType::REANIM_COFFEEBEAN,                           "reanim\\Coffeebean.reanim", 0},
-	{ ReanimationType::REANIM_UMBRELLALEAF,                         "reanim\\Umbrellaleaf.reanim",                      0 },
-	{ ReanimationType::REANIM_GATLINGPEA,                           "reanim\\GatlingPea.reanim",                        0 },
-	{ ReanimationType::REANIM_CATTAIL,                              "reanim\\Cattail.reanim",                           0 },
-	{ ReanimationType::REANIM_GLOOMSHROOM,                          "reanim\\GloomShroom.reanim",                       0 },
-	{ ReanimationType::REANIM_BOSS_ICEBALL,                         "reanim\\Zombie_boss_iceball.reanim", 0},
-	{ ReanimationType::REANIM_BOSS_FIREBALL,                        "reanim\\Zombie_boss_fireball.reanim", 0},
-	{ ReanimationType::REANIM_COBCANNON,                            "reanim\\CobCannon.reanim",                         0 },
-	{ ReanimationType::REANIM_GARLIC,                               "reanim\\Garlic.reanim",                            0 },
-	{ ReanimationType::REANIM_GOLD_MAGNET,                          "reanim\\GoldMagnet.reanim",                        0 },
-	{ ReanimationType::REANIM_WINTER_MELON,                         "reanim\\WinterMelon.reanim",                       0 },
-	{ ReanimationType::REANIM_TWIN_SUNFLOWER,                       "reanim\\TwinSunflower.reanim",                     0 },
-	{ ReanimationType::REANIM_POOL_CLEANER,                         "reanim\\PoolCleaner.reanim",                       0 },
-	{ ReanimationType::REANIM_ROOF_CLEANER,                         "reanim\\RoofCleaner.reanim",                       0 },
-	{ ReanimationType::REANIM_FIRE_PEA,                             "reanim\\FirePea.reanim",                           0 },
-	{ ReanimationType::REANIM_IMITATER,                             "reanim\\Imitater.reanim",                          0 },
-	{ ReanimationType::REANIM_YETI,                                 "reanim\\Zombie_yeti.reanim",                       0 },
-	{ ReanimationType::REANIM_BOSS_DRIVER,                          "reanim\\Zombie_Boss_driver.reanim",                0 },
-	{ ReanimationType::REANIM_LAWN_MOWERED_ZOMBIE,                  "reanim\\LawnMoweredZombie.reanim",                 0 },
-	{ ReanimationType::REANIM_CRAZY_DAVE,                           "reanim\\CrazyDave.reanim", 0},
-	{ ReanimationType::REANIM_TEXT_FADE_ON,                         "reanim\\TextFadeOn.reanim",                        0 },
-	{ ReanimationType::REANIM_HAMMER,                               "reanim\\Hammer.reanim",                            0 },
-	{ ReanimationType::REANIM_SLOT_MACHINE_HANDLE,                  "reanim\\SlotMachine.reanim",                       0 },
-	{ ReanimationType::REANIM_CREDITS_FOOTBALL,                     "reanim\\Credits_Football.reanim", 0},
-	{ ReanimationType::REANIM_CREDITS_JACKBOX,                      "reanim\\Credits_Jackbox.reanim", 0},
-	{ ReanimationType::REANIM_SELECTOR_SCREEN,                      "reanim\\SelectorScreen.reanim",                    3 },
-	{ ReanimationType::REANIM_PORTAL_CIRCLE,                        "reanim\\Portal_Circle.reanim",                     0 },
-	{ ReanimationType::REANIM_PORTAL_SQUARE,                        "reanim\\Portal_Square.reanim",                     0 },
-	{ ReanimationType::REANIM_ZENGARDEN_SPROUT,                     "reanim\\ZenGarden_sprout.reanim",                  0 },
-	{ ReanimationType::REANIM_ZENGARDEN_WATERINGCAN,                "reanim\\ZenGarden_wateringcan.reanim", 0},
-	{ ReanimationType::REANIM_ZENGARDEN_FERTILIZER,                 "reanim\\ZenGarden_fertilizer.reanim", 0},
-	{ ReanimationType::REANIM_ZENGARDEN_BUGSPRAY,                   "reanim\\ZenGarden_bugspray.reanim", 0},
-	{ ReanimationType::REANIM_ZENGARDEN_PHONOGRAPH,                 "reanim\\ZenGarden_phonograph.reanim", 0},
-	{ ReanimationType::REANIM_DIAMOND,                              "reanim\\Diamond.reanim",                           0 },
-	{ ReanimationType::REANIM_ZOMBIE_HAND,                          "reanim\\Zombie_hand.reanim", 0},
-	{ ReanimationType::REANIM_STINKY,                               "reanim\\Stinky.reanim",                            0 },
-	{ ReanimationType::REANIM_RAKE,                                 "reanim\\Rake.reanim",                              0 },
-	{ ReanimationType::REANIM_RAIN_CIRCLE,                          "reanim\\Rain_circle.reanim",                       0 },
-	{ ReanimationType::REANIM_RAIN_SPLASH,                          "reanim\\Rain_splash.reanim",                       0 },
-	{ ReanimationType::REANIM_ZOMBIE_SURPRISE,                      "reanim\\Zombie_surprise.reanim",                   0 },
-	{ ReanimationType::REANIM_COIN_GOLD,                            "reanim\\Coin_gold.reanim",                         0 },
-	{ ReanimationType::REANIM_TREEOFWISDOM,                         "reanim\\TreeOfWisdom.reanim", 0},
-	{ ReanimationType::REANIM_TREEOFWISDOM_CLOUDS,                  "reanim\\TreeOfWisdomClouds.reanim", 0},
-	{ ReanimationType::REANIM_TREEOFWISDOM_TREEFOOD,                "reanim\\TreeFood.reanim", 0},
-	{ ReanimationType::REANIM_CREDITS_MAIN,                         "reanim\\Credits_Main.reanim",                      3 },
-	{ ReanimationType::REANIM_CREDITS_MAIN2,                        "reanim\\Credits_Main2.reanim",                     3 },
-	{ ReanimationType::REANIM_CREDITS_MAIN3,                        "reanim\\Credits_Main3.reanim",                     3 },
-	{ ReanimationType::REANIM_ZOMBIE_CREDITS_DANCE,                 "reanim\\Zombie_credits_dance.reanim",              0 },
-	{ ReanimationType::REANIM_CREDITS_STAGE,                        "reanim\\Credits_stage.reanim", 0},
-	{ ReanimationType::REANIM_CREDITS_BIGBRAIN,                     "reanim\\Credits_BigBrain.reanim", 0},
-	{ ReanimationType::REANIM_CREDITS_FLOWER_PETALS,                "reanim\\Credits_Flower_petals.reanim", 0},
-	{ ReanimationType::REANIM_CREDITS_INFANTRY,                     "reanim\\Credits_Infantry.reanim", 0},
-	{ ReanimationType::REANIM_CREDITS_THROAT,                       "reanim\\Credits_Throat.reanim", 0},
-	{ ReanimationType::REANIM_CREDITS_CRAZYDAVE,                    "reanim\\Credits_CrazyDave.reanim", 0},
-	{ ReanimationType::REANIM_CREDITS_BOSSDANCE,                    "reanim\\Credits_Bossdance.reanim", 0},
-	{ ReanimationType::REANIM_ZOMBIE_CREDITS_SCREEN_DOOR,           "reanim\\Zombie_Credits_Screendoor.reanim", 0},
-	{ ReanimationType::REANIM_ZOMBIE_CREDITS_CONEHEAD,              "reanim\\Zombie_Credits_Conehead.reanim", 0},
-	{ ReanimationType::REANIM_CREDITS_ZOMBIEARMY1,                  "reanim\\Credits_ZombieArmy1.reanim", 0},
-	{ ReanimationType::REANIM_CREDITS_ZOMBIEARMY2,                  "reanim\\Credits_ZombieArmy2.reanim", 0},
-	{ ReanimationType::REANIM_CREDITS_TOMBSTONES,                   "reanim\\Credits_Tombstones.reanim", 0},
-	{ ReanimationType::REANIM_CREDITS_SOLARPOWER,                   "reanim\\Credits_SolarPower.reanim", 0},
-	{ ReanimationType::REANIM_CREDITS_ANYHOUR,                      "reanim\\Credits_Anyhour.reanim",                   3 },
-	{ ReanimationType::REANIM_CREDITS_WEARETHEUNDEAD,               "reanim\\Credits_WeAreTheUndead.reanim", 0},
-	{ ReanimationType::REANIM_CREDITS_DISCOLIGHTS,                  "reanim\\Credits_DiscoLights.reanim", 0},
-	{ ReanimationType::REANIM_FLAG,                                 "reanim\\Zombie_FlagPole.reanim",                   0 },
-	{ ReanimationType::REANIM_DANCER,                               "reanim\\Zombie_disco.reanim",						0 }, // @Patoke: GOTY has different reanim name
-	{ ReanimationType::REANIM_BACKUP_DANCER,                        "reanim\\Zombie_backup.reanim",                     0 }, // @Patoke: GOTY has different reanim name
-	{ ReanimationType::REANIM_ZOMBATAR_HEAD,                        "reanim\\zombatar_zombie_head.reanim", 0}, // @Patoke: GOTY has different reanim name
+	{ ReanimationType::REANIM_LOADBAR_SPROUT,                       "reanim\\LoadBar_sprout.reanim" },
+	{ ReanimationType::REANIM_LOADBAR_ZOMBIEHEAD,                   "reanim\\LoadBar_Zombiehead.reanim" },
+	{ ReanimationType::REANIM_SODROLL,                              "reanim\\SodRoll.reanim" },
+	{ ReanimationType::REANIM_FINAL_WAVE,                           "reanim\\FinalWave.reanim" },
+	{ ReanimationType::REANIM_PEASHOOTER,                           "reanim\\PeaShooterSingle.reanim" },
+	{ ReanimationType::REANIM_WALLNUT,                              "reanim\\Wallnut.reanim" },
+	{ ReanimationType::REANIM_LILYPAD,                              "reanim\\Lilypad.reanim" },
+	{ ReanimationType::REANIM_SUNFLOWER,                            "reanim\\SunFlower.reanim" },
+	{ ReanimationType::REANIM_LAWNMOWER,                            "reanim\\LawnMower.reanim" },
+	{ ReanimationType::REANIM_READYSETPLANT,                        "reanim\\StartReadySetPlant.reanim" },
+	{ ReanimationType::REANIM_CHERRYBOMB,                           "reanim\\CherryBomb.reanim" },
+	{ ReanimationType::REANIM_SQUASH,                               "reanim\\Squash.reanim" },
+	{ ReanimationType::REANIM_DOOMSHROOM,                           "reanim\\DoomShroom.reanim" },
+	{ ReanimationType::REANIM_SNOWPEA,                              "reanim\\SnowPea.reanim" },
+	{ ReanimationType::REANIM_REPEATER,                             "reanim\\PeaShooter.reanim" },
+	{ ReanimationType::REANIM_SUNSHROOM,                            "reanim\\SunShroom.reanim" },
+	{ ReanimationType::REANIM_TALLNUT,                              "reanim\\Tallnut.reanim" },
+	{ ReanimationType::REANIM_FUMESHROOM,                           "reanim\\Fumeshroom.reanim" },
+	{ ReanimationType::REANIM_PUFFSHROOM,                           "reanim\\Puffshroom.reanim" },
+	{ ReanimationType::REANIM_HYPNOSHROOM,                          "reanim\\Hypnoshroom.reanim" },
+	{ ReanimationType::REANIM_CHOMPER,                              "reanim\\Chomper.reanim" },
+	{ ReanimationType::REANIM_ZOMBIE,                               "reanim\\Zombie.reanim" },
+	{ ReanimationType::REANIM_SUN,                                  "reanim\\Sun.reanim" },
+	{ ReanimationType::REANIM_POTATOMINE,                           "reanim\\PotatoMine.reanim" },
+	{ ReanimationType::REANIM_SPIKEWEED,                            "reanim\\Caltrop.reanim" },
+	{ ReanimationType::REANIM_SPIKEROCK,                            "reanim\\SpikeRock.reanim" },
+	{ ReanimationType::REANIM_THREEPEATER,                          "reanim\\ThreePeater.reanim" },
+	{ ReanimationType::REANIM_MARIGOLD,                             "reanim\\Marigold.reanim" },
+	{ ReanimationType::REANIM_ICESHROOM,                            "reanim\\IceShroom.reanim" },
+	{ ReanimationType::REANIM_ZOMBIE_FOOTBALL,                      "reanim\\Zombie_football.reanim" },
+	{ ReanimationType::REANIM_ZOMBIE_NEWSPAPER,                     "reanim\\Zombie_paper.reanim" },
+	{ ReanimationType::REANIM_ZOMBIE_ZAMBONI,                       "reanim\\Zombie_zamboni.reanim" },
+	{ ReanimationType::REANIM_SPLASH,                               "reanim\\splash.reanim" },
+	{ ReanimationType::REANIM_JALAPENO,                             "reanim\\Jalapeno.reanim" },
+	{ ReanimationType::REANIM_JALAPENO_FIRE,                        "reanim\\fire.reanim" },
+	{ ReanimationType::REANIM_COIN_SILVER,                          "reanim\\Coin_silver.reanim" },
+	{ ReanimationType::REANIM_ZOMBIE_CHARRED,                       "reanim\\Zombie_charred.reanim" },
+	{ ReanimationType::REANIM_ZOMBIE_CHARRED_IMP,                   "reanim\\Zombie_charred_imp.reanim" },
+	{ ReanimationType::REANIM_ZOMBIE_CHARRED_DIGGER,                "reanim\\Zombie_charred_digger.reanim" },
+	{ ReanimationType::REANIM_ZOMBIE_CHARRED_ZAMBONI,               "reanim\\Zombie_charred_zamboni.reanim" },
+	{ ReanimationType::REANIM_ZOMBIE_CHARRED_CATAPULT,              "reanim\\Zombie_charred_catapult.reanim" },
+	{ ReanimationType::REANIM_ZOMBIE_CHARRED_GARGANTUAR,            "reanim\\Zombie_charred_gargantuar.reanim" },
+	{ ReanimationType::REANIM_SCRAREYSHROOM,                        "reanim\\ScaredyShroom.reanim" },
+	{ ReanimationType::REANIM_PUMPKIN,                              "reanim\\Pumpkin.reanim" },
+	{ ReanimationType::REANIM_PLANTERN,                             "reanim\\Plantern.reanim" },
+	{ ReanimationType::REANIM_TORCHWOOD,                            "reanim\\Torchwood.reanim" },
+	{ ReanimationType::REANIM_SPLITPEA,                             "reanim\\SplitPea.reanim" },
+	{ ReanimationType::REANIM_SEASHROOM,                            "reanim\\SeaShroom.reanim" },
+	{ ReanimationType::REANIM_BLOVER,                               "reanim\\Blover.reanim" },
+	{ ReanimationType::REANIM_FLOWER_POT,                           "reanim\\Pot.reanim" },
+	{ ReanimationType::REANIM_CACTUS,                               "reanim\\Cactus.reanim" },
+	{ ReanimationType::REANIM_TANGLEKELP,                           "reanim\\Tanglekelp.reanim" },
+	{ ReanimationType::REANIM_STARFRUIT,                            "reanim\\Starfruit.reanim" },
+	{ ReanimationType::REANIM_POLEVAULTER,                          "reanim\\Zombie_polevaulter.reanim" },
+	{ ReanimationType::REANIM_BALLOON,                              "reanim\\Zombie_balloon.reanim" },
+	{ ReanimationType::REANIM_GARGANTUAR,                           "reanim\\Zombie_gargantuar.reanim" },
+	{ ReanimationType::REANIM_IMP,                                  "reanim\\Zombie_imp.reanim" },
+	{ ReanimationType::REANIM_DIGGER,                               "reanim\\Zombie_digger.reanim" },
+	{ ReanimationType::REANIM_DIGGER_DIRT,                          "reanim\\Digger_rising_dirt.reanim" },
+	{ ReanimationType::REANIM_ZOMBIE_DOLPHINRIDER,                  "reanim\\Zombie_dolphinrider.reanim" },
+	{ ReanimationType::REANIM_POGO,                                 "reanim\\Zombie_pogo.reanim" },
+	{ ReanimationType::REANIM_BOBSLED,                              "reanim\\Zombie_bobsled.reanim" },
+	{ ReanimationType::REANIM_JACKINTHEBOX,                         "reanim\\Zombie_jackbox.reanim" },
+	{ ReanimationType::REANIM_SNORKEL,                              "reanim\\Zombie_snorkle.reanim" },
+	{ ReanimationType::REANIM_BUNGEE,                               "reanim\\Zombie_bungi.reanim" },
+	{ ReanimationType::REANIM_CATAPULT,                             "reanim\\Zombie_catapult.reanim" },
+	{ ReanimationType::REANIM_LADDER,                               "reanim\\Zombie_ladder.reanim" },
+	{ ReanimationType::REANIM_PUFF,                                 "reanim\\Puff.reanim" },
+	{ ReanimationType::REANIM_SLEEPING,                             "reanim\\Z.reanim" },
+	{ ReanimationType::REANIM_GRAVE_BUSTER,                         "reanim\\Gravebuster.reanim" },
+	{ ReanimationType::REANIM_ZOMBIES_WON,                          "reanim\\ZombiesWon.reanim" },
+	{ ReanimationType::REANIM_MAGNETSHROOM,                         "reanim\\Magnetshroom.reanim" },
+	{ ReanimationType::REANIM_BOSS,                                 "reanim\\Zombie_boss.reanim" },
+	{ ReanimationType::REANIM_CABBAGEPULT,                          "reanim\\Cabbagepult.reanim" },
+	{ ReanimationType::REANIM_KERNELPULT,                           "reanim\\Cornpult.reanim" },
+	{ ReanimationType::REANIM_MELONPULT,                            "reanim\\Melonpult.reanim" },
+	{ ReanimationType::REANIM_COFFEEBEAN,                           "reanim\\Coffeebean.reanim" },
+	{ ReanimationType::REANIM_UMBRELLALEAF,                         "reanim\\Umbrellaleaf.reanim" },
+	{ ReanimationType::REANIM_GATLINGPEA,                           "reanim\\GatlingPea.reanim" },
+	{ ReanimationType::REANIM_CATTAIL,                              "reanim\\Cattail.reanim" },
+	{ ReanimationType::REANIM_GLOOMSHROOM,                          "reanim\\GloomShroom.reanim" },
+	{ ReanimationType::REANIM_BOSS_ICEBALL,                         "reanim\\Zombie_boss_iceball.reanim" },
+	{ ReanimationType::REANIM_BOSS_FIREBALL,                        "reanim\\Zombie_boss_fireball.reanim" },
+	{ ReanimationType::REANIM_COBCANNON,                            "reanim\\CobCannon.reanim" },
+	{ ReanimationType::REANIM_GARLIC,                               "reanim\\Garlic.reanim" },
+	{ ReanimationType::REANIM_GOLD_MAGNET,                          "reanim\\GoldMagnet.reanim" },
+	{ ReanimationType::REANIM_WINTER_MELON,                         "reanim\\WinterMelon.reanim" },
+	{ ReanimationType::REANIM_TWIN_SUNFLOWER,                       "reanim\\TwinSunflower.reanim" },
+	{ ReanimationType::REANIM_POOL_CLEANER,                         "reanim\\PoolCleaner.reanim" },
+	{ ReanimationType::REANIM_ROOF_CLEANER,                         "reanim\\RoofCleaner.reanim" },
+	{ ReanimationType::REANIM_FIRE_PEA,                             "reanim\\FirePea.reanim" },
+	{ ReanimationType::REANIM_IMITATER,                             "reanim\\Imitater.reanim" },
+	{ ReanimationType::REANIM_YETI,                                 "reanim\\Zombie_yeti.reanim" },
+	{ ReanimationType::REANIM_BOSS_DRIVER,                          "reanim\\Zombie_Boss_driver.reanim" },
+	{ ReanimationType::REANIM_LAWN_MOWERED_ZOMBIE,                  "reanim\\LawnMoweredZombie.reanim" },
+	{ ReanimationType::REANIM_CRAZY_DAVE,                           "reanim\\CrazyDave.reanim" },
+	{ ReanimationType::REANIM_TEXT_FADE_ON,                         "reanim\\TextFadeOn.reanim" },
+	{ ReanimationType::REANIM_HAMMER,                               "reanim\\Hammer.reanim" },
+	{ ReanimationType::REANIM_SLOT_MACHINE_HANDLE,                  "reanim\\SlotMachine.reanim" },
+	{ ReanimationType::REANIM_CREDITS_FOOTBALL,                     "reanim\\Credits_Football.reanim" },
+	{ ReanimationType::REANIM_CREDITS_JACKBOX,                      "reanim\\Credits_Jackbox.reanim" },
+	{ ReanimationType::REANIM_SELECTOR_SCREEN,                      "reanim\\SelectorScreen.reanim" },
+	{ ReanimationType::REANIM_PORTAL_CIRCLE,                        "reanim\\Portal_Circle.reanim" },
+	{ ReanimationType::REANIM_PORTAL_SQUARE,                        "reanim\\Portal_Square.reanim" },
+	{ ReanimationType::REANIM_ZENGARDEN_SPROUT,                     "reanim\\ZenGarden_sprout.reanim" },
+	{ ReanimationType::REANIM_ZENGARDEN_WATERINGCAN,                "reanim\\ZenGarden_wateringcan.reanim" },
+	{ ReanimationType::REANIM_ZENGARDEN_FERTILIZER,                 "reanim\\ZenGarden_fertilizer.reanim" },
+	{ ReanimationType::REANIM_ZENGARDEN_BUGSPRAY,                   "reanim\\ZenGarden_bugspray.reanim" },
+	{ ReanimationType::REANIM_ZENGARDEN_PHONOGRAPH,                 "reanim\\ZenGarden_phonograph.reanim" },
+	{ ReanimationType::REANIM_DIAMOND,                              "reanim\\Diamond.reanim" },
+	{ ReanimationType::REANIM_ZOMBIE_HAND,                          "reanim\\Zombie_hand.reanim" },
+	{ ReanimationType::REANIM_STINKY,                               "reanim\\Stinky.reanim" },
+	{ ReanimationType::REANIM_RAKE,                                 "reanim\\Rake.reanim" },
+	{ ReanimationType::REANIM_RAIN_CIRCLE,                          "reanim\\Rain_circle.reanim" },
+	{ ReanimationType::REANIM_RAIN_SPLASH,                          "reanim\\Rain_splash.reanim" },
+	{ ReanimationType::REANIM_ZOMBIE_SURPRISE,                      "reanim\\Zombie_surprise.reanim" },
+	{ ReanimationType::REANIM_COIN_GOLD,                            "reanim\\Coin_gold.reanim" },
+	{ ReanimationType::REANIM_TREEOFWISDOM,                         "reanim\\TreeOfWisdom.reanim" },
+	{ ReanimationType::REANIM_TREEOFWISDOM_CLOUDS,                  "reanim\\TreeOfWisdomClouds.reanim" },
+	{ ReanimationType::REANIM_TREEOFWISDOM_TREEFOOD,                "reanim\\TreeFood.reanim" },
+	{ ReanimationType::REANIM_CREDITS_MAIN,                         "reanim\\Credits_Main.reanim" },
+	{ ReanimationType::REANIM_CREDITS_MAIN2,                        "reanim\\Credits_Main2.reanim" },
+	{ ReanimationType::REANIM_CREDITS_MAIN3,                        "reanim\\Credits_Main3.reanim" },
+	{ ReanimationType::REANIM_ZOMBIE_CREDITS_DANCE,                 "reanim\\Zombie_credits_dance.reanim" },
+	{ ReanimationType::REANIM_CREDITS_STAGE,                        "reanim\\Credits_stage.reanim" },
+	{ ReanimationType::REANIM_CREDITS_BIGBRAIN,                     "reanim\\Credits_BigBrain.reanim" },
+	{ ReanimationType::REANIM_CREDITS_FLOWER_PETALS,                "reanim\\Credits_Flower_petals.reanim" },
+	{ ReanimationType::REANIM_CREDITS_INFANTRY,                     "reanim\\Credits_Infantry.reanim" },
+	{ ReanimationType::REANIM_CREDITS_THROAT,                       "reanim\\Credits_Throat.reanim" },
+	{ ReanimationType::REANIM_CREDITS_CRAZYDAVE,                    "reanim\\Credits_CrazyDave.reanim" },
+	{ ReanimationType::REANIM_CREDITS_BOSSDANCE,                    "reanim\\Credits_Bossdance.reanim" },
+	{ ReanimationType::REANIM_ZOMBIE_CREDITS_SCREEN_DOOR,           "reanim\\Zombie_Credits_Screendoor.reanim" },
+	{ ReanimationType::REANIM_ZOMBIE_CREDITS_CONEHEAD,              "reanim\\Zombie_Credits_Conehead.reanim" },
+	{ ReanimationType::REANIM_CREDITS_ZOMBIEARMY1,                  "reanim\\Credits_ZombieArmy1.reanim" },
+	{ ReanimationType::REANIM_CREDITS_ZOMBIEARMY2,                  "reanim\\Credits_ZombieArmy2.reanim" },
+	{ ReanimationType::REANIM_CREDITS_TOMBSTONES,                   "reanim\\Credits_Tombstones.reanim" },
+	{ ReanimationType::REANIM_CREDITS_SOLARPOWER,                   "reanim\\Credits_SolarPower.reanim" },
+	{ ReanimationType::REANIM_CREDITS_ANYHOUR,                      "reanim\\Credits_Anyhour.reanim" },
+	{ ReanimationType::REANIM_CREDITS_WEARETHEUNDEAD,               "reanim\\Credits_WeAreTheUndead.reanim" },
+	{ ReanimationType::REANIM_CREDITS_DISCOLIGHTS,                  "reanim\\Credits_DiscoLights.reanim" },
+	{ ReanimationType::REANIM_FLAG,                                 "reanim\\Zombie_FlagPole.reanim" },
+	{ ReanimationType::REANIM_DANCER,                               "reanim\\Zombie_disco.reanim" }, // @Patoke: GOTY has different reanim name
+	{ ReanimationType::REANIM_BACKUP_DANCER,                        "reanim\\Zombie_backup.reanim" }, // @Patoke: GOTY has different reanim name
+	{ ReanimationType::REANIM_ZOMBATAR_HEAD,                        "reanim\\zombatar_zombie_head.reanim" }, // @Patoke: GOTY has different reanim name
 };
 
 //0x471890
@@ -372,14 +275,17 @@ Reanimation::Reanimation()
 	mStartTimeNs = 0;
 	mLastUpdateTimeNs = 0;
 	mPendingTiming = false;
-	mPhaseOriginNs = 0;
+	mCurrentFrame = 0;
+	mFramePeriodNs = 1;
+	mRootFrameScale = 1.0;
 	mPeriodNs = 1;
 	mAnimRate = 12.0f;
 	mPlaybackGeneration = 0;
 	mDefinition = nullptr;
 	mLoopType = ReanimLoopType::REANIM_PLAY_ONCE;
 	mLastFrameNs = 0;
-	mOriginCycleCount = mLastCycleCount = 0;
+	mCycleCrossings = 0;
+    mRootDisplacement = 0;
 	mHasLastFrame = false;
 	mDead = false;
 	mFrameStart = 0;
@@ -464,10 +370,12 @@ void Reanimation::ReanimationInitialize(float theX, float theY, ReanimatorDefini
 	}
 	else
 		mFrameCount = 0;
-	mPeriodNs = ReanimClock::PeriodFromRate(mFrameCount, mAnimRate == 0 ? 12.0f : mAnimRate);
+	ConfigureFramePeriod(*this, ReanimClock::PeriodFromRate(mFrameCount, mAnimRate == 0 ? 12.0f : mAnimRate));
 	mStartTimeNs = mLastUpdateTimeNs = mReanimationHolder ?
 		(mTimeDomain == ReanimTimeDomain::Battle ? mReanimationHolder->mBattleTimeNs : mReanimationHolder->mVisualTimeNs) : mLastUpdateTimeNs;
-	mPhaseOriginNs = mOriginCycleCount = mLastCycleCount = 0;
+	mCurrentFrame = 0;
+	mCycleCrossings = 0;
+    mRootDisplacement = 0;
 	mPendingTiming = false;
 
 	// P4 派生掩码：新实例全零活动；轨道 ctor 全 RENDER_GROUP_NORMAL → 组 0 占位。
@@ -493,241 +401,387 @@ static bool ReanimFullLast(ReanimLoopType loop)
 		loop == ReanimLoopType::REANIM_PLAY_ONCE_FULL_LAST_FRAME_AND_HOLD;
 }
 
-void Reanimation::Seek(std::int64_t numerator, std::int64_t denominator)
+static int FrameIntervals(const Reanimation& animation)
 {
-	++mPlaybackGeneration;
-	const auto phase = std::clamp<std::int64_t>(ReanimClock::SignedMulDiv(numerator, mPeriodNs, denominator), 0, mPeriodNs);
-	mLastUpdateTimeNs = mReanimationHolder ?
-		(mTimeDomain == ReanimTimeDomain::Battle ? mReanimationHolder->mBattleTimeNs : mReanimationHolder->mVisualTimeNs) : mLastUpdateTimeNs;
-	mStartTimeNs = ReanimClock::StartTimeAt(mLastUpdateTimeNs, phase, mPeriodNs,
-		mAnimRate == 0 ? 0 : (mAnimRate > 0 ? 1 : -1), mPhaseOriginNs);
-	mPendingTiming = false;
-	mOriginCycleCount = mLastCycleCount = 0;
-	mLastFrameNs = SamplePlayback().phaseNs;
-	mHasLastFrame = false;
+    return std::max(1, ReanimFullLast(animation.mLoopType) ? animation.mFrameCount : animation.mFrameCount - 1);
 }
 
-void Reanimation::SeekRatio(float phase)
+static void ConfigureFramePeriod(Reanimation& animation, std::int64_t requestedPeriod)
 {
-	if (!std::isfinite(phase)) throw std::out_of_range("nonfinite animation seek phase");
-	++mPlaybackGeneration;
-	const auto position = static_cast<double>(std::clamp(phase, 0.0f, 1.0f)) * mPeriodNs;
-	const auto targetPhase = position >= static_cast<double>(mPeriodNs) ? mPeriodNs :
-		static_cast<std::int64_t>(position);
-	mLastUpdateTimeNs = mReanimationHolder ?
-		(mTimeDomain == ReanimTimeDomain::Battle ? mReanimationHolder->mBattleTimeNs : mReanimationHolder->mVisualTimeNs) : mLastUpdateTimeNs;
-	mStartTimeNs = ReanimClock::StartTimeAt(mLastUpdateTimeNs, targetPhase, mPeriodNs,
-		mAnimRate == 0 ? 0 : (mAnimRate > 0 ? 1 : -1), mPhaseOriginNs);
-	mPendingTiming = false;
-	mOriginCycleCount = mLastCycleCount = 0;
-	mLastFrameNs = SamplePlayback().phaseNs;
-	mHasLastFrame = false;
+    const int intervals = FrameIntervals(animation);
+    animation.mFramePeriodNs = requestedPeriod / intervals;
+    if (animation.mFramePeriodNs <= 0) throw std::overflow_error("keyframe duration below one nanosecond");
+    animation.mPeriodNs = ReanimClock::Product(animation.mFramePeriodNs, intervals);
+    animation.mRootFrameScale = ReanimFullLast(animation.mLoopType) ? 1.0 :
+        double(animation.mFrameCount) / intervals;
+}
+
+static void BindFramePosition(Reanimation& animation, std::int64_t nowNs,
+    std::int64_t phaseNs)
+{
+    phaseNs = std::clamp<std::int64_t>(phaseNs, 0, animation.mPeriodNs);
+    const auto q = animation.mFramePeriodNs;
+    const auto frame = phaseNs / q;
+    const auto remainder = phaseNs % q;
+    const bool reverse = animation.mAnimRate < 0;
+    animation.mCurrentFrame = int(frame + (reverse && remainder != 0));
+    const auto age = reverse && remainder != 0 ? q - remainder : remainder;
+    animation.mStartTimeNs = ReanimClock::Subtract(nowNs, age);
+    animation.mLastUpdateTimeNs = nowNs;
+}
+
+static std::int64_t FramePhase(const Reanimation& animation, const ReanimFramePosition& position)
+{
+    const auto start = std::int64_t(position.frame) * animation.mFramePeriodNs;
+    return animation.mAnimRate < 0 ? start - position.ageNs : start + position.ageNs;
+}
+
+static void FrameCoordinates(const Reanimation& animation, const ReanimFramePosition& position,
+    int& before, double& fraction)
+{
+    before = position.frame;
+    fraction = double(position.ageNs) / double(animation.mFramePeriodNs);
+    if (animation.mAnimRate < 0 && position.ageNs != 0)
+    {
+        --before;
+        fraction = 1.0 - fraction;
+    }
+    before = std::clamp(before, 0, FrameIntervals(animation));
+}
+
+void Reanimation::Seek(std::int64_t numerator, std::int64_t denominator)
+{
+    ++mPlaybackGeneration;
+    const auto phase = std::clamp<std::int64_t>(ReanimClock::SignedMulDiv(numerator, mPeriodNs, denominator), 0, mPeriodNs);
+    const auto now = mReanimationHolder ? (mTimeDomain == ReanimTimeDomain::Battle ?
+        mReanimationHolder->mBattleTimeNs : mReanimationHolder->mVisualTimeNs) : mLastUpdateTimeNs;
+    BindFramePosition(*this, now, phase);
+    mPendingTiming = false;
+    mCycleCrossings = 0;
+    mRootDisplacement = 0;
+    mLastFrameNs = phase;
+    mHasLastFrame = false;
+}
+
+void Reanimation::SeekRatio(float ratio)
+{
+    if (!std::isfinite(ratio)) throw std::out_of_range("nonfinite animation seek phase");
+    ++mPlaybackGeneration;
+    const double position = double(std::clamp(ratio, 0.0f, 1.0f)) * mPeriodNs;
+    const auto phase = position >= double(mPeriodNs) ? mPeriodNs : std::int64_t(position);
+    const auto now = mReanimationHolder ? (mTimeDomain == ReanimTimeDomain::Battle ?
+        mReanimationHolder->mBattleTimeNs : mReanimationHolder->mVisualTimeNs) : mLastUpdateTimeNs;
+    BindFramePosition(*this, now, phase);
+    mPendingTiming = false;
+    mCycleCrossings = 0;
+    mRootDisplacement = 0;
+    mLastFrameNs = phase;
+    mHasLastFrame = false;
 }
 
 void Reanimation::SynchronizePhase(const Reanimation& source)
 {
-	++mPlaybackGeneration;
-	const auto position = source.SamplePlayback();
-	const auto phase = source.mFrameCount > 0 ?
-		ReanimClock::SignedMulDiv(position.phaseNs, mPeriodNs, source.mPeriodNs) : 0;
-	mOriginCycleCount = position.cycles;
-	mLastUpdateTimeNs = mReanimationHolder ?
-		(mTimeDomain == ReanimTimeDomain::Battle ? mReanimationHolder->mBattleTimeNs : mReanimationHolder->mVisualTimeNs) : mLastUpdateTimeNs;
-	mStartTimeNs = ReanimClock::StartTimeAt(mLastUpdateTimeNs, phase, mPeriodNs,
-		mAnimRate == 0 ? 0 : (mAnimRate > 0 ? 1 : -1), mPhaseOriginNs);
-	mPendingTiming = true;
-	mLastFrameNs = source.mFrameCount > 0 ?
-		ReanimClock::SignedMulDiv(source.mLastFrameNs, mPeriodNs, source.mPeriodNs) : 0;
-	mLastCycleCount = source.mLastCycleCount;
-	mHasLastFrame = source.mHasLastFrame;
+    ++mPlaybackGeneration;
+    const auto position = source.SamplePlayback();
+    const auto phase = source.mFrameCount > 0 ?
+        ReanimClock::SignedMulDiv(position.phaseNs, mPeriodNs, source.mPeriodNs) : 0;
+    const auto now = mReanimationHolder ? (mTimeDomain == ReanimTimeDomain::Battle ?
+        mReanimationHolder->mBattleTimeNs : mReanimationHolder->mVisualTimeNs) : mLastUpdateTimeNs;
+    BindFramePosition(*this, now, phase);
+    mPendingTiming = true;
+    mLastFrameNs = source.mFrameCount > 0 ?
+        ReanimClock::SignedMulDiv(source.mLastFrameNs, mPeriodNs, source.mPeriodNs) : 0;
+    mCycleCrossings = source.mCycleCrossings;
+    mRootDisplacement = 0;
+    mHasLastFrame = source.mHasLastFrame;
+}
+
+#if defined(_MSC_VER)
+__declspec(noinline)
+#else
+__attribute__((noinline, cold))
+#endif
+static ReanimFramePosition SampleFrameGeneral(const Reanimation& animation,
+    std::int64_t nowNs, std::int64_t offsetNs)
+{
+    ReanimFramePosition position{0, animation.mCurrentFrame, 0};
+    if (animation.mFrameCount <= 0) return position;
+    const auto requested = ReanimClock::Add(nowNs, offsetNs);
+    const auto age = ReanimClock::Subtract(animation.mAnimRate == 0 ? animation.mLastUpdateTimeNs : requested, animation.mStartTimeNs);
+    const auto q = animation.mFramePeriodNs;
+    const int intervals = FrameIntervals(animation);
+    const bool reverse = animation.mAnimRate < 0;
+    const bool looping = animation.mLoopType == REANIM_LOOP || animation.mLoopType == REANIM_LOOP_FULL_LAST_FRAME;
+    position.ageNs = age;
+    if (age >= 0 && age / 2 < q)
+    {
+        // Ordinary updates cross at most one keyframe. Preserve integer overshoot.
+        if (reverse && position.frame == 0 && age > 0)
+        {
+            if (!looping) return {0, 0, 0};
+            position.frame = intervals;
+            position.cycles = ReanimClock::Add(position.cycles, -1);
+        }
+        else if (!reverse && position.frame == intervals && age > 0)
+        {
+            if (!looping) return {0, intervals, 0};
+            position.frame = 0;
+            position.cycles = ReanimClock::Add(position.cycles, 1);
+        }
+        const bool advance = position.ageNs >= q;
+        position.frame += reverse ? -int(advance) : int(advance);
+        position.ageNs -= q * advance;
+        if (!reverse && position.frame == intervals && advance)
+        {
+            if (!looping) return {0, intervals, 0};
+            position.frame = 0;
+            position.cycles = ReanimClock::Add(position.cycles, 1);
+        }
+        if (reverse && position.frame == 0 && position.ageNs > 0)
+        {
+            if (!looping) return {0, 0, 0};
+            position.frame = intervals;
+            position.cycles = ReanimClock::Add(position.cycles, -1);
+        }
+        return position;
+    }
+    // Explicit seek/look-ahead and independent fixture jumps are cold queries,
+    // not a fixed-rate sub-simulation or a loop in the ordinary update path.
+    auto phase = std::int64_t(animation.mCurrentFrame) * q;
+    std::int64_t cycles = 0;
+    ReanimClock::Advance(phase, cycles, animation.mPeriodNs, reverse ? -1 : 1, age);
+    if (!looping && cycles != 0) return {0, cycles > 0 ? intervals : 0, 0};
+    const auto frame = phase / q, remainder = phase % q;
+    return {cycles, int(frame + (reverse && remainder != 0)),
+        reverse && remainder != 0 ? q - remainder : remainder};
+}
+
+ReanimFramePosition Reanimation::SampleFrameAt(std::int64_t nowNs, std::int64_t offsetNs) const
+{
+    // Keep common current-frame reads small enough to inline into draw/root
+    // consumers. Reverse, endpoint and explicit look-ahead rules live below.
+    if (offsetNs == 0 && mFrameCount > 0)
+    {
+        const auto sampleTime = mAnimRate == 0 ? mLastUpdateTimeNs : nowNs;
+        const auto age = ReanimClock::Subtract(sampleTime, mStartTimeNs);
+        const auto q = mFramePeriodNs;
+        const int intervals = FrameIntervals(*this);
+        if (static_cast<std::uint64_t>(age) < static_cast<std::uint64_t>(q) &&
+            (mAnimRate < 0 ? (mCurrentFrame > 0 || age == 0) : (mCurrentFrame < intervals || age == 0)))
+            return {0, mCurrentFrame, age};
+        if (mAnimRate > 0 && mCurrentFrame < intervals && age >= q &&
+            static_cast<std::uint64_t>(age - q) < static_cast<std::uint64_t>(q))
+        {
+            if (mCurrentFrame + 1 < intervals)
+                return {0, mCurrentFrame + 1, age - q};
+            if (mLoopType == REANIM_LOOP || mLoopType == REANIM_LOOP_FULL_LAST_FRAME)
+                return {1, 0, age - q};
+        }
+    }
+    return SampleFrameGeneral(*this, nowNs, offsetNs);
 }
 
 ReanimPlaybackPosition Reanimation::SamplePlayback(std::int64_t offsetNs) const
 {
-	const auto nowNs = mReanimationHolder ?
-		(mTimeDomain == ReanimTimeDomain::Battle ? mReanimationHolder->mBattleTimeNs : mReanimationHolder->mVisualTimeNs) : mLastUpdateTimeNs;
-	return SamplePlaybackAt(nowNs, offsetNs);
+    const auto nowNs = mReanimationHolder ? (mTimeDomain == ReanimTimeDomain::Battle ?
+        mReanimationHolder->mBattleTimeNs : mReanimationHolder->mVisualTimeNs) : mLastUpdateTimeNs;
+    return SamplePlaybackAt(nowNs, offsetNs);
 }
 
 ReanimPlaybackPosition Reanimation::SamplePlaybackAt(std::int64_t nowNs, std::int64_t offsetNs) const
 {
-	ReanimPlaybackPosition position{mOriginCycleCount, mPhaseOriginNs};
-	if (mFrameCount <= 0) return position;
-	ReanimClock::SampleAt(ReanimClock::Add(nowNs, offsetNs), mStartTimeNs,
-		mPhaseOriginNs, mOriginCycleCount, mPeriodNs,
-		mAnimRate == 0 ? 0 : (mAnimRate > 0 ? 1 : -1), position.phaseNs, position.cycles);
-	if (mLoopType != ReanimLoopType::REANIM_LOOP && mLoopType != ReanimLoopType::REANIM_LOOP_FULL_LAST_FRAME &&
-		position.cycles != 0)
-	{
-		position.phaseNs = position.cycles > 0 ? mPeriodNs : 0;
-		position.cycles = 0;
-	}
-	return position;
+    const auto position = SampleFrameAt(nowNs, offsetNs);
+    return {position.cycles, FramePhase(*this, position)};
 }
 
 void Reanimation::RebaseTime(std::int64_t nowNs)
 {
-	mStartTimeNs = ReanimClock::Add(mStartTimeNs, ReanimClock::Subtract(nowNs, mLastUpdateTimeNs));
-	mLastUpdateTimeNs = nowNs;
-	mPendingTiming = false;
+    mStartTimeNs = ReanimClock::Add(mStartTimeNs, ReanimClock::Subtract(nowNs, mLastUpdateTimeNs));
+    mLastUpdateTimeNs = nowNs;
+    mPendingTiming = false;
 }
 
 void Reanimation::BindTimeDomain(ReanimTimeDomain domain)
 {
-	if (domain == mTimeDomain) return;
-	const auto oldNow = mReanimationHolder ?
-		(mTimeDomain == ReanimTimeDomain::Battle ? mReanimationHolder->mBattleTimeNs : mReanimationHolder->mVisualTimeNs) : mLastUpdateTimeNs;
-	ConsumeTimeAt(oldNow);
-	mTimeDomain = domain;
-	const auto newNow = mReanimationHolder ?
-		(mTimeDomain == ReanimTimeDomain::Battle ? mReanimationHolder->mBattleTimeNs : mReanimationHolder->mVisualTimeNs) : mLastUpdateTimeNs;
-	mStartTimeNs = ReanimClock::Add(mStartTimeNs, ReanimClock::Subtract(newNow, oldNow));
-	mLastUpdateTimeNs = newNow;
-	mHasLastFrame = false;
-	mPendingTiming = false;
+    if (domain == mTimeDomain) return;
+    const auto oldNow = mReanimationHolder ? (mTimeDomain == ReanimTimeDomain::Battle ?
+        mReanimationHolder->mBattleTimeNs : mReanimationHolder->mVisualTimeNs) : mLastUpdateTimeNs;
+    ConsumeTimeAt(oldNow);
+    mTimeDomain = domain;
+    const auto newNow = mReanimationHolder ? (mTimeDomain == ReanimTimeDomain::Battle ?
+        mReanimationHolder->mBattleTimeNs : mReanimationHolder->mVisualTimeNs) : mLastUpdateTimeNs;
+    mStartTimeNs = ReanimClock::Add(mStartTimeNs, ReanimClock::Subtract(newNow, oldNow));
+    mLastUpdateTimeNs = newNow;
+    mHasLastFrame = false;
+    mPendingTiming = false;
 }
 
 void Reanimation::ApplyRate(float rate)
 {
-	if (!std::isfinite(rate)) throw std::overflow_error("nonfinite animation rate");
-	if (rate == mAnimRate) return;
-	const auto nowNs = mReanimationHolder ?
-		(mTimeDomain == ReanimTimeDomain::Battle ? mReanimationHolder->mBattleTimeNs : mReanimationHolder->mVisualTimeNs) : mLastUpdateTimeNs;
-	if (nowNs != mLastUpdateTimeNs)
-	{
-		ConsumeTimeAt(nowNs);
-		mPendingTiming = true;
-	}
-	const auto position = SamplePlaybackAt(nowNs);
-	const auto newPeriod = rate == 0 || mFrameCount <= 0 ? mPeriodNs :
-		ReanimClock::PeriodFromRate(mFrameCount, rate);
-	if (newPeriod <= 0) throw std::overflow_error("animation period below one nanosecond");
-	const auto phase = ReanimClock::SignedMulDiv(position.phaseNs, newPeriod, mPeriodNs);
-	mLastFrameNs = ReanimClock::SignedMulDiv(mLastFrameNs, newPeriod, mPeriodNs);
-	mPeriodNs = newPeriod;
-	mOriginCycleCount = position.cycles;
-	mStartTimeNs = ReanimClock::StartTimeAt(nowNs, phase, mPeriodNs,
-		rate == 0 ? 0 : (rate > 0 ? 1 : -1), mPhaseOriginNs);
-	mAnimRate = rate;
+    if (!std::isfinite(rate)) throw std::overflow_error("nonfinite animation rate");
+    if (rate == mAnimRate) return;
+    const auto now = mReanimationHolder ? (mTimeDomain == ReanimTimeDomain::Battle ?
+        mReanimationHolder->mBattleTimeNs : mReanimationHolder->mVisualTimeNs) : mLastUpdateTimeNs;
+    if (now != mLastUpdateTimeNs) { ConsumeTimeAt(now); mPendingTiming = true; }
+    const auto position = SampleFrameAt(now);
+    const auto oldFramePeriod = mFramePeriodNs;
+    const bool reverse = mAnimRate < 0;
+    ConfigureFramePeriod(*this, rate == 0 || mFrameCount <= 0 ? mPeriodNs :
+        ReanimClock::PeriodFromRate(mFrameCount, rate));
+    // Convert only the age inside one keyframe. Avoid multiplying whole-cycle
+    // phase by another whole-cycle period merely to cancel the frame count.
+    std::uint64_t remainder;
+    const auto converted = ReanimClock::MulDiv(position.ageNs, mFramePeriodNs,
+        oldFramePeriod, &remainder);
+    const auto frameStart = std::int64_t(position.frame) * mFramePeriodNs;
+    const auto phase = reverse ? frameStart - std::int64_t(converted + (remainder != 0)) :
+        frameStart + std::int64_t(converted);
+    const auto lastFrame = mLastFrameNs / oldFramePeriod;
+    const auto lastAge = mLastFrameNs % oldFramePeriod;
+    mLastFrameNs = lastFrame * mFramePeriodNs +
+        ReanimClock::SignedMulDiv(lastAge, mFramePeriodNs, oldFramePeriod);
+
+    mAnimRate = rate;
+    BindFramePosition(*this, now, phase);
 }
 
 void Reanimation::ChangeLoopType(ReanimLoopType loop)
 {
-	if (loop == mLoopType) return;
-	const auto position = SamplePlayback();
-	mLastUpdateTimeNs = mReanimationHolder ?
-		(mTimeDomain == ReanimTimeDomain::Battle ? mReanimationHolder->mBattleTimeNs : mReanimationHolder->mVisualTimeNs) : mLastUpdateTimeNs;
-	mStartTimeNs = ReanimClock::StartTimeAt(mLastUpdateTimeNs, position.phaseNs, mPeriodNs,
-		mAnimRate == 0 ? 0 : (mAnimRate > 0 ? 1 : -1), mPhaseOriginNs);
-	mPendingTiming = false;
-	mOriginCycleCount = mLastCycleCount = 0;
-	mLastFrameNs = position.phaseNs;
-	mHasLastFrame = false;
-	mLoopCount = 0;
-	mLoopType = loop;
-	++mPlaybackGeneration;
+    if (loop == mLoopType) return;
+    const auto position = SamplePlayback();
+    const auto oldPeriod = mPeriodNs;
+    mLoopType = loop;
+    ConfigureFramePeriod(*this, mFrameCount > 0 && mAnimRate != 0 ?
+        ReanimClock::PeriodFromRate(mFrameCount, mAnimRate) : oldPeriod);
+    const auto phase = ReanimClock::SignedMulDiv(position.phaseNs, mPeriodNs, oldPeriod);
+    const auto now = mReanimationHolder ? (mTimeDomain == ReanimTimeDomain::Battle ?
+        mReanimationHolder->mBattleTimeNs : mReanimationHolder->mVisualTimeNs) : mLastUpdateTimeNs;
+    BindFramePosition(*this, now, phase);
+    mPendingTiming = false;
+    mCycleCrossings = 0;
+    mRootDisplacement = 0;
+    mLastFrameNs = phase;
+    mHasLastFrame = false;
+    mLoopCount = 0;
+    ++mPlaybackGeneration;
 }
 
 void Reanimation::Advance(std::int64_t deltaNs)
 {
-	// Independent fixtures can supply a relative interval. Production UpdateAt
-	// consumes the shared clock and never increments a per-animation age.
-	ConsumeTimeAt(ReanimClock::Add(mLastUpdateTimeNs, deltaNs));
-	mPendingTiming = false;
+    ConsumeTimeAt(ReanimClock::Add(mLastUpdateTimeNs, deltaNs));
+    mPendingTiming = false;
+}
+
+static double GroundCycleDisplacement(const Reanimation& animation)
+{
+    if (animation.mFrameCount <= 1 || !animation.mDefinition ||
+        (unsigned int)animation.mReanimationType >= gReanimGroundTrackIndices.size()) return 0;
+    const int index = gReanimGroundTrackIndices[(unsigned int)animation.mReanimationType];
+    if (index < 0) return 0;
+    const auto* keys = animation.mDefinition->mTracks.tracks[index].mTransforms.mTransforms;
+    if (!keys) throw std::logic_error("ground displacement requires CPU keyframes");
+    return (double(keys[animation.mFrameStart + animation.mFrameCount - 1].mTransX) -
+        keys[animation.mFrameStart].mTransX) * animation.mRootFrameScale;
 }
 
 void Reanimation::ConsumeTimeAt(std::int64_t nowNs)
 {
-	if (mFrameCount <= 0 || mDead) return;
-	const auto previous = SamplePlaybackAt(mLastUpdateTimeNs);
-	mLastFrameNs = previous.phaseNs;
-	mLastCycleCount = previous.cycles;
-	mHasLastFrame = true;
-	const auto position = SamplePlaybackAt(nowNs);
-	mLastUpdateTimeNs = nowNs;
-	const bool looping = mLoopType == ReanimLoopType::REANIM_LOOP ||
-		mLoopType == ReanimLoopType::REANIM_LOOP_FULL_LAST_FRAME;
-	const auto crossed = ReanimClock::Subtract(position.cycles, mLastCycleCount);
-	if (looping)
-	{
-		if (crossed < -INT_MAX || crossed > INT_MAX) throw std::overflow_error("animation loop counter overflow");
-		const auto loops = ReanimClock::Add(mLoopCount, crossed < 0 ? -crossed : crossed);
-		if (loops > INT_MAX) throw std::overflow_error("animation loop counter overflow");
-		mLoopCount = static_cast<int>(loops);
-		if (mAnimRate != 0)
-		{
-			// Historical saves may start at an arbitrary phase. Shifting that
-			// anchor by whole cycles can move it beyond now after a wrap.
-			// Preserve the sampled phase/cycles with a phase-zero timestamp.
-			mStartTimeNs = ReanimClock::StartTimeAt(nowNs, position.phaseNs,
-				mPeriodNs, mAnimRate > 0 ? 1 : -1, mPhaseOriginNs);
-			mOriginCycleCount = position.cycles;
-		}
-	}
-	else if ((mAnimRate > 0 && position.phaseNs == mPeriodNs) ||
-		(mAnimRate < 0 && position.phaseNs == 0))
-	{
-		mLoopCount = 1;
-		mDead = mLoopType == ReanimLoopType::REANIM_PLAY_ONCE ||
-			mLoopType == ReanimLoopType::REANIM_PLAY_ONCE_FULL_LAST_FRAME;
-	}
+    if (mFrameCount <= 0 || mDead) return;
+    const auto previous = SamplePlaybackAt(mLastUpdateTimeNs);
+    mLastFrameNs = previous.phaseNs;
+    mHasLastFrame = true;
+    const auto frame = SampleFrameAt(nowNs);
+    const auto phase = FramePhase(*this, frame);
+    const auto crossed = ReanimClock::Subtract(frame.cycles, previous.cycles);
+    mCycleCrossings = crossed;
+    if (frame.cycles != 0)
+        mRootDisplacement += double(frame.cycles) * GroundCycleDisplacement(*this);
+    if (frame.frame != mCurrentFrame || frame.cycles != 0 || mAnimRate == 0)
+    {
+        mCurrentFrame = frame.frame;
+        mStartTimeNs = ReanimClock::Subtract(nowNs, frame.ageNs);
+    }
+    mLastUpdateTimeNs = nowNs;
+    const bool looping = mLoopType == REANIM_LOOP || mLoopType == REANIM_LOOP_FULL_LAST_FRAME;
+    if (looping && crossed != 0)
+    {
+        if (crossed < -INT_MAX || crossed > INT_MAX) throw std::overflow_error("animation loop counter overflow");
+        const auto loops = ReanimClock::Add(mLoopCount, crossed < 0 ? -crossed : crossed);
+        if (loops > INT_MAX) throw std::overflow_error("animation loop counter overflow");
+        mLoopCount = int(loops);
+    }
+    else if (!looping && ((mAnimRate > 0 && phase == mPeriodNs) || (mAnimRate < 0 && phase == 0)))
+    {
+        mLoopCount = 1;
+        mDead = mLoopType == REANIM_PLAY_ONCE || mLoopType == REANIM_PLAY_ONCE_FULL_LAST_FRAME;
+    }
 }
 
-double Reanimation::RootMotion(ReanimTrackId trackId, float scale,
-	std::int64_t offsetNs) const
+double Reanimation::RootMotion(ReanimTrackId trackId, float scale, std::int64_t offsetNs) const
 {
-	if (mFrameCount <= 1) return 0;
-	const int trackIndex = const_cast<Reanimation*>(this)->FindTrackIndex(trackId);
-	const auto& track = mDefinition->mTracks.tracks[trackIndex];
-	if (track.mTransforms.mTransforms == nullptr)
-		throw std::logic_error("RootMotion requires CPU keyframes for track index " +
-			std::to_string(trackIndex) + " (id " + std::to_string(static_cast<std::uint32_t>(track.mTrackId)) + ")");
-	const auto position = SamplePlayback(offsetNs);
-	const auto phase = position.phaseNs;
-	const auto cycles = position.cycles;
-	const auto period = mPeriodNs;
-	std::uint64_t remainder;
-	const bool full = ReanimFullLast(mLoopType);
-	auto frame = ReanimClock::MulDiv(phase, full ? mFrameCount : mFrameCount - 1, period, &remainder);
-	const auto before = mFrameStart + static_cast<int>(std::min<std::uint64_t>(frame, mFrameCount - 1));
-	const auto after = std::min(before + 1, mFrameStart + mFrameCount - 1);
-	const auto* keys = track.mTransforms.mTransforms;
-	return ReanimClock::RootSampleFloat(mFrameCount, full, period, cycles, keys[mFrameStart].mTransX,
-		keys[before].mTransX, keys[after].mTransX, keys[mFrameStart + mFrameCount - 1].mTransX,
-		remainder, scale);
+    if (trackId != ReanimTrackId::_ground)
+        throw std::invalid_argument("RootMotion only supports the _ground track");
+    if (mFrameCount <= 1) return 0;
+    const int groundIndex =
+        (unsigned int)mReanimationType < gReanimGroundTrackIndices.size() ?
+        gReanimGroundTrackIndices[(unsigned int)mReanimationType] : -1;
+    if (groundIndex < 0) throw std::logic_error("RootMotion requires a _ground track");
+    const auto* keys = mDefinition->mTracks.tracks[groundIndex].mTransforms.mTransforms;
+    if (!keys) throw std::logic_error("RootMotion requires CPU keyframes");
+    const auto now = mReanimationHolder ? (mTimeDomain == ReanimTimeDomain::Battle ?
+        mReanimationHolder->mBattleTimeNs : mReanimationHolder->mVisualTimeNs) : mLastUpdateTimeNs;
+    const auto position = SampleFrameAt(now, offsetNs);
+    int frame; double fraction;
+    FrameCoordinates(*this, position, frame, fraction);
+    const double first = keys[mFrameStart].mTransX;
+    const double before = keys[mFrameStart + std::min(frame, mFrameCount - 1)].mTransX;
+    const double after = keys[mFrameStart + std::min(frame + 1, mFrameCount - 1)].mTransX;
+    const double cycle = double(keys[mFrameStart + mFrameCount - 1].mTransX) - first;
+    const double local = (before - first + (after - before) * fraction) * mRootFrameScale;
+    const double pending = double(position.cycles) * (cycle * mRootFrameScale);
+    return (mRootDisplacement + pending + local) * scale;
 }
 
 double Reanimation::RootMotionClamped(ReanimTrackId trackId, float scale,
-	float minimumVelocityPixelsPerSecond, std::int64_t offsetNs) const
+    float minimumVelocityPixelsPerSecond, std::int64_t offsetNs) const
 {
-	if (mFrameCount <= 1) return 0;
-	const int trackIndex = const_cast<Reanimation*>(this)->FindTrackIndex(trackId);
-	const auto& track = mDefinition->mTracks.tracks[trackIndex];
-	if (track.mTransforms.mTransforms == nullptr)
-		throw std::logic_error("RootMotionClamped requires CPU keyframes for track index " +
-			std::to_string(trackIndex) + " (id " + std::to_string(static_cast<std::uint32_t>(track.mTrackId)) + ")");
-	const auto* keys = track.mTransforms.mTransforms;
-	const bool full = ReanimFullLast(mLoopType);
-	const int intervals = full ? mFrameCount : mFrameCount - 1;
-	const auto position = SamplePlayback(offsetNs);
-	std::uint64_t fraction;
-	const auto frame = ReanimClock::MulDiv(position.phaseNs, intervals, mPeriodNs, &fraction);
-	const double minimum = static_cast<double>(minimumVelocityPixelsPerSecond) *
-		(static_cast<double>(mPeriodNs) / intervals / 1'000'000'000.0);
-	double cyclePixels = 0, prefixPixels = 0, selectedPixels = 0;
-	for (int i = 0; i < intervals; ++i)
-	{
-		const int after = std::min(i + 1, mFrameCount - 1);
-		const double delta = static_cast<double>(keys[mFrameStart + after].mTransX) -
-			static_cast<double>(keys[mFrameStart + i].mTransX);
-		const double authored = delta * mFrameCount / intervals * static_cast<double>(scale);
-		const double displacement = std::max(authored, minimum);
-		cyclePixels += displacement;
-		if (i < frame) prefixPixels += displacement;
-		else if (i == frame) selectedPixels = displacement;
-	}
-	return ReanimClock::ClippedRootSampleFloat(position.cycles, mPeriodNs,
-		fraction, cyclePixels, prefixPixels, selectedPixels);
+    if (trackId != ReanimTrackId::_ground)
+        throw std::invalid_argument("RootMotionClamped only supports the _ground track");
+    if (mFrameCount <= 1) return 0;
+    const int groundIndex = (unsigned int)mReanimationType < gReanimGroundTrackIndices.size() ?
+        gReanimGroundTrackIndices[(unsigned int)mReanimationType] : -1;
+    if (groundIndex < 0) throw std::logic_error("RootMotionClamped requires a _ground track");
+    const auto* keys = mDefinition->mTracks.tracks[groundIndex].mTransforms.mTransforms;
+    if (!keys) throw std::logic_error("RootMotionClamped requires CPU keyframes");
+    const auto now = mReanimationHolder ? (mTimeDomain == ReanimTimeDomain::Battle ?
+        mReanimationHolder->mBattleTimeNs : mReanimationHolder->mVisualTimeNs) : mLastUpdateTimeNs;
+    const auto position = SampleFrameAt(now, offsetNs);
+    int frame; double fraction;
+    FrameCoordinates(*this, position, frame, fraction);
+    const int intervals = FrameIntervals(*this);
+    const double minimum = double(minimumVelocityPixelsPerSecond) * double(mFramePeriodNs) / 1e9;
+    double cyclePixels = 0, prefixPixels = 0, selectedPixels = 0;
+    for (int i = 0; i < intervals; ++i)
+    {
+        const double delta = double(keys[mFrameStart + std::min(i + 1, mFrameCount - 1)].mTransX) - keys[mFrameStart + i].mTransX;
+        const double displacement = std::max(delta * mRootFrameScale * scale, minimum);
+        cyclePixels += displacement;
+        if (i < frame) prefixPixels += displacement;
+        else if (i == frame) selectedPixels = displacement;
+    }
+    // Only the chocolate snail uses the per-interval minimum. Its crawl has a
+    // nonzero authored ground displacement; scale the physical completed root
+    // base into this curve rather than retaining a lifetime cycle counter.
+    const double normalizedCycle = (double(keys[mFrameStart + mFrameCount - 1].mTransX) -
+        keys[mFrameStart].mTransX) * mRootFrameScale;
+    if (normalizedCycle == 0)
+    {
+        if (cyclePixels != 0)
+            throw std::logic_error("clamped root requires a nonzero authored cycle displacement");
+        return prefixPixels + selectedPixels * fraction;
+    }
+    const double completed = (mRootDisplacement / normalizedCycle) * cyclePixels;
+    return completed + double(position.cycles) * cyclePixels + prefixPixels + selectedPixels * fraction;
 }
 
 // Half-open intervals: forward [previous,current), reverse (current,previous].
@@ -750,7 +804,8 @@ std::int64_t Reanimation::TimedEventCount(std::int64_t numerator, std::int64_t d
 		return ReanimClock::EventCount(previous.phaseNs, previous.cycles,
 			position.phaseNs, position.cycles, mPeriodNs, threshold);
 	}
-	return ReanimClock::EventCount(mLastFrameNs, mLastCycleCount, position.phaseNs, position.cycles, mPeriodNs, threshold);
+	return ReanimClock::EventCount(mLastFrameNs, 0, position.phaseNs,
+        ReanimClock::Add(mCycleCrossings, position.cycles), mPeriodNs, threshold);
 }
 
 //0x471BC0
@@ -966,166 +1021,35 @@ void Reanimation::MatrixFromTransform(const ReanimatorTransform& theTransform, S
 //0x4723B0
 // GOTY @Patoke: 0x4769B0
 bool Reanimation::DrawTrack(Graphics* g, int theTrackIndex, int theRenderGroup,
-	const ReanimatorFrameTime* theFrameTime, std::uint32_t* theGpuInstance)
+	const ReanimatorFrameTime* theFrameTime )
 {
 	(void)theRenderGroup;
-	(void)theGpuInstance;
 	const auto& trackData = mDefinition->mTracks.tracks[theTrackIndex].mTransforms;
-	if (trackData.mStorage == ReanimTrackStorage::Cpu)
-		return false;
-#if defined(PVZ_GPU_REANIM_RESIDENT) && defined(PVZ_EXPERIMENTAL_GPU_REANIM)
-	// Picture jobs evaluate one track once on the GPU. CPU samples only the
-	// visibility/alpha required by AttachmentDraw's synchronous return contract.
-	if (mDefinition->mGpuData && mTrackInstances[theTrackIndex].mBlendCounter <= 0 &&
-		!mEnableExtraAdditiveDraw && !mEnableExtraOverlayDraw &&
-		g->mDestImage && g->mDestImage->IsGpuDrawTarget() &&
-		(!trackData.mTransforms || g->mDestImage->mRenderOwner->mRenderer->reanimFrameEligible))
-	{
-		auto& render = *g->mDestImage->mRenderOwner;
-		if (render.mTransformStack.empty())
-		{
-			const auto& instance = mTrackInstances[theTrackIndex];
-			ReanimatorFrameTime frameTime;
-			if (!theFrameTime) { GetFrameTime(&frameTime); theFrameTime = &frameTime; }
-			const auto* keys = trackData.mTransforms;
-			bool picture = !keys;
-			Color color = instance.mTrackColor;
-			if (!instance.mIgnoreColorOverride) color = ColorsMultiply(color, mColorOverride);
-			if (g->mColorizeImages) color = ColorsMultiply(color, g->mColor);
-			if (keys)
-			{
-				const auto& before = keys[theFrameTime->mAnimFrameBeforeInt];
-				const auto& after = keys[theFrameTime->mAnimFrameAfterInt];
-				if (before.mFrame < 0 || (before.mFrame != -1 && after.mFrame == -1 &&
-					theFrameTime->mFraction > 0 && instance.mTruncateDisappearingFrames))
-					return false;
-				const float alpha = FloatLerp(before.mAlpha, after.mAlpha, theFrameTime->mFraction);
-				if (ClampInt(FloatRoundToInt(alpha * color.mAlpha), 0, 255) == 0) return false;
-				picture = before.mImageSlot != 0;
-				if (picture)
-				{
-					const auto& region = mDefinition->mImageRects[
-						std::size_t(mVariant) * mDefinition->mImageSlotCount + before.mImageSlot];
-					if (!region.mWidth || !region.mHeight) return true;
-				}
-			}
-			else
-			{
-				if (instance.mAttachmentID != AttachmentID::ATTACHMENTID_NULL)
-					throw std::logic_error("GPU-only reanimation track cannot supply CPU attachment visibility");
-				if (ReanimRenderSemantics::IsFullscreenTrack(
-					static_cast<ReanimTrackId>(ReanimatorTrackIdAt(mReanimationType, theTrackIndex))))
-					throw std::logic_error("Fullscreen reanimation tracks require CPU keyframes");
-			}
-			if (picture)
-			{
-				auto* texture = mDefinition->mTextures[mVariant];
-				if (!texture && !keys)
-				{
-					const auto* regions = mDefinition->mImageRects +
-						std::size_t(mVariant) * mDefinition->mImageSlotCount;
-					if (std::none_of(regions, regions + mDefinition->mImageSlotCount,
-						[](const auto& region) { return region.mWidth > 0 && region.mHeight > 0; }))
-						return true;
-				}
-				if (!texture) throw std::logic_error("reanimation appearance atlas is not uploaded");
-				const auto blend = g->mDrawMode == Graphics::DRAWMODE_ADDITIVE
-					? GpuBlend::Additive : g->mDrawMode == 2 ? GpuBlend::Opaque : GpuBlend::Normal;
-				render.SelectDrawSurface(g->mDestImage);
-				if (!render.PreDraw()) return true;
-				const auto packedColor = (std::uint32_t(color.mAlpha) << 24) |
-					(std::uint32_t(color.mRed) << 16) | (std::uint32_t(color.mGreen) << 8) |
-					std::uint32_t(color.mBlue);
-				static constexpr std::uint32_t filters[] = {
-					0, std::uint32_t(GpuImageColorFilter::WashedOut),
-					std::uint32_t(GpuImageColorFilter::LessWashedOut),
-					std::uint32_t(GpuImageColorFilter::White)};
-				const auto samplingFlags = mFilterEffect == FilterEffect::FILTER_EFFECT_NONE
-					? 0u : filters[static_cast<int>(mFilterEffect) + 1];
-#if defined(PVZ_GPU_REANIM_RESIDENT)
-				if (theGpuInstance && *theGpuInstance == UINT32_MAX)
-				{
-					// Allocate only after an actual picture qualifies. GPU-only
-					// tracks must share a packet even when sparse-frame policy
-					// would reject optional GPU work for a both-resident track.
-					GpuReanimInstance packet{};
-					packet.before = unsigned(theFrameTime->mAnimFrameBeforeInt);
-					packet.after = unsigned(theFrameTime->mAnimFrameAfterInt);
-					packet.variant = mVariant;
-					packet.fraction = theFrameTime->mFraction;
-					packet.translateX = g->mTransX; packet.translateY = g->mTransY;
-					packet.overlay00 = mOverlayMatrix.m00; packet.overlay01 = mOverlayMatrix.m01;
-					packet.overlay02 = mOverlayMatrix.m02; packet.overlay10 = mOverlayMatrix.m10;
-					packet.overlay11 = mOverlayMatrix.m11; packet.overlay12 = mOverlayMatrix.m12;
-					// The group packet uses Graphics' clip. Individual tracks
-					// can select the default clip through IgnoreDefaultClip.
-					const auto& groupClip = g->mClipRect;
-					const GpuClip groupGpuClip{groupClip.mX, groupClip.mY,
-						groupClip.mWidth, groupClip.mHeight};
-					const bool fullGroupClip = groupClip.mX == 0 && groupClip.mY == 0 &&
-						groupClip.mWidth == BOARD_WIDTH && groupClip.mHeight == BOARD_HEIGHT;
-					*theGpuInstance = render.mRenderer->BeginReanimInstance(mDefinition->mGpuData,
-						texture, packet, g->mLinearBlend, RenderInterface::sSamplerAddressWrap,
-						fullGroupClip ? nullptr : &groupGpuClip, !keys);
-				}
-				if (theGpuInstance && *theGpuInstance != UINT32_MAX)
-				{
-					GpuReanimTrackDraw track{};
-					track.track = unsigned(theTrackIndex);
-					track.color = packedColor;
-					track.samplingFlags = samplingFlags;
-					track.flags = (instance.mTruncateDisappearingFrames ? GpuReanimTrackDraw::Truncate : 0u) |
-						(instance.mIgnoreClipRect ? GpuReanimTrackDraw::IgnoreDefaultClip : 0u);
-					track.shakeX = instance.mShakeX;
-					track.shakeY = instance.mShakeY;
-					if (render.mRenderer->SubmitReanimTrack(*theGpuInstance, track, blend))
-					{
-						++render.mRenderer->reanimPictureCandidates;
-						return true;
-					}
-				}
-#endif
-				// A shared instance already owns the group clip, and its track
-				// flag selects the default clip. Only legacy submission needs
-				// this separately materialized per-track rectangle.
-				const Rect clip = instance.mIgnoreClipRect
-					? Rect(0, 0, BOARD_WIDTH, BOARD_HEIGHT) : g->mClipRect;
-				const GpuClip gpuClip{clip.mX, clip.mY, clip.mWidth, clip.mHeight};
-				const bool fullClip = clip.mX == 0 && clip.mY == 0 &&
-					clip.mWidth == BOARD_WIDTH && clip.mHeight == BOARD_HEIGHT;
-				GpuReanimDraw draw{};
-				draw.track = unsigned(theTrackIndex);
-				draw.before = unsigned(theFrameTime->mAnimFrameBeforeInt);
-				draw.after = unsigned(theFrameTime->mAnimFrameAfterInt);
-				draw.variant = mVariant;
-				draw.fraction = theFrameTime->mFraction;
-				draw.translateX = instance.mShakeX + g->mTransX - 0.5f;
-				draw.translateY = instance.mShakeY + g->mTransY - 0.5f;
-				draw.overlay00 = mOverlayMatrix.m00; draw.overlay01 = mOverlayMatrix.m01;
-				draw.overlay02 = mOverlayMatrix.m02; draw.overlay10 = mOverlayMatrix.m10;
-				draw.overlay11 = mOverlayMatrix.m11; draw.overlay12 = mOverlayMatrix.m12;
-				draw.color = packedColor;
-				draw.samplingFlags = samplingFlags;
-				draw.truncate = instance.mTruncateDisappearingFrames;
-				if (render.mRenderer->SubmitReanim(mDefinition->mGpuData, texture, draw,
-					g->mLinearBlend, RenderInterface::sSamplerAddressWrap, blend,
-					fullClip ? nullptr : &gpuClip, !keys))
-				{
-					++render.mRenderer->reanimPictureCandidates;
-					return true;
-				}
-			}
-		}
-	}
-#endif
 	if (!trackData.mTransforms)
-		throw std::logic_error("GPU-only reanimation track requires a supported GPU picture draw");
-	ReanimatorTransform aTransform;
+		throw std::logic_error("CPU reanimation track has no transform data");
 	ReanimatorTrackInstance* aTrackInstance = &mTrackInstances[theTrackIndex];  // 目标轨道的指针
-	GetCurrentTransform(theTrackIndex, &aTransform, theFrameTime);  // 取得当前动画变换
-	int aImageFrame = FloatRoundToInt(aTransform.mFrame);  // 图像在贴图中所处的份数
-	if (aImageFrame < 0)  // 不存在图像时，返回
+	ReanimatorFrameTime aFrameTime;
+	if (theFrameTime == nullptr)
+	{
+		GetFrameTime(&aFrameTime);
+		theFrameTime = &aFrameTime;
+	}
+	const auto& aBefore = trackData.mTransforms[theFrameTime->mAnimFrameBeforeInt];
+	const auto& aAfter = trackData.mTransforms[theFrameTime->mAnimFrameAfterInt];
+	// Frame/image/text metadata comes from the preceding keyframe even during
+	// blending. Reject invisible/control tracks before interpolating transforms.
+	if (aBefore.mFrame < 0 ||
+		(aBefore.mFrame != -1 && aAfter.mFrame == -1 &&
+			theFrameTime->mFraction > 0.0f && aTrackInstance->mTruncateDisappearingFrames))
 		return false;
+	const auto aSlot = aBefore.mImageSlot;
+	const bool aHasImage = aSlot != 0;
+	if (!aHasImage && (aBefore.mFont == nullptr || aBefore.mText == nullptr) &&
+		!ReanimRenderSemantics::IsFullscreenTrack(
+			static_cast<ReanimTrackId>(ReanimatorTrackIdAt(mReanimationType, theTrackIndex))))
+		return false;
+	ReanimatorTransform aTransform;
+	GetCurrentTransform(theTrackIndex, &aTransform, theFrameTime);  // 取得当前动画变换
 
 	Color aColor = aTrackInstance->mTrackColor;
 	if (!aTrackInstance->mIgnoreColorOverride)  // 除非轨道无视动画的覆写颜色
@@ -1142,6 +1066,15 @@ bool Reanimation::DrawTrack(Graphics* g, int theTrackIndex, int theRenderGroup,
 		return false;
 	}
 	aColor.mAlpha = aImageAlpha;
+	const TextureRegion* aImageRect = nullptr;
+	if (aHasImage)
+	{
+		aImageRect = &mDefinition->mImageRects[std::size_t(mVariant) * mDefinition->mImageSlotCount + aSlot];
+		// Blank appearances keep attachments visible, but fully transparent
+		// tracks above still report hidden. Neither case needs a matrix.
+		if (aImageRect->mWidth == 0 || aImageRect->mHeight == 0)
+			return true;
+	}
 
 	Color aExtraAdditiveColor;
 	if (mEnableExtraAdditiveDraw)  // 如果动画启用额外叠加颜色（高亮）
@@ -1162,8 +1095,6 @@ bool Reanimation::DrawTrack(Graphics* g, int theTrackIndex, int theRenderGroup,
 		aClipRect = Rect(0, 0, BOARD_WIDTH, BOARD_HEIGHT);  // 裁剪矩形重置为屏幕矩形
 	}
 
-	const auto aSlot = aTransform.mImageSlot;
-	const bool aHasImage = aSlot != 0;
 	const auto& aGeometry = mDefinition->mImageRects[aSlot];
 	int aCelWidth = 0, aCelHeight = 0;
 	SexyMatrix3 aMatrix;
@@ -1182,9 +1113,6 @@ bool Reanimation::DrawTrack(Graphics* g, int theTrackIndex, int theRenderGroup,
 	}
 	else
 	{
-		if (!ReanimRenderSemantics::IsFullscreenTrack(
-		        static_cast<ReanimTrackId>(ReanimatorTrackIdAt(mReanimationType, theTrackIndex))))  // 原版为完整名称比较，不匹配 fullscreen2
-			return false;  // 无需绘制
 		// Fullscreen fills destination space. Its authored rotation, scale and
 		// position never participate, so skip their interpolation-to-matrix
 		// conversion and trigonometry entirely.
@@ -1204,11 +1132,7 @@ bool Reanimation::DrawTrack(Graphics* g, int theTrackIndex, int theRenderGroup,
 
 	if (aHasImage)
 	{
-		const TextureRegion& aSrcRect = mDefinition->mImageRects[std::size_t(mVariant) * mDefinition->mImageSlotCount + aSlot];
-		// A blank appearance suppresses only the image, not the track's original
-		// geometry or its attachment visibility.
-		if (aSrcRect.mWidth == 0 || aSrcRect.mHeight == 0)
-			return true;
+		const TextureRegion& aSrcRect = *aImageRect;
 		auto* const aTexture = mDefinition->mTextures[mVariant];
 		if (!aTexture)
 			throw std::logic_error("reanimation appearance atlas is not uploaded");
@@ -1224,19 +1148,6 @@ bool Reanimation::DrawTrack(Graphics* g, int theTrackIndex, int theRenderGroup,
 				filterFlags[static_cast<int>(mFilterEffect) + 1];
 		}
 		TodBltMatrix(g, source, aMatrix, aClipRect, aColor, g->mDrawMode, aSrcRect);
-#if defined(PVZ_GPU_REANIM_RESIDENT) && defined(PVZ_EXPERIMENTAL_GPU_REANIM)
-		// Sparse frames use the original CPU route. Count candidates here so
-		// the next frame can choose GPU drawing without a second track walk
-		// or duplicate visibility/alpha sampling on this CPU route.
-		if (mDefinition->mGpuData && aTrackInstance->mBlendCounter <= 0 &&
-			!mEnableExtraAdditiveDraw && !mEnableExtraOverlayDraw &&
-			g->mDestImage && g->mDestImage->IsGpuDrawTarget())
-		{
-			auto& render = *g->mDestImage->mRenderOwner;
-			if (render.mTransformStack.empty())
-				++render.mRenderer->reanimPictureCandidates;
-		}
-#endif
 		if (mEnableExtraAdditiveDraw)
 		{
 			TodBltMatrix(g, source, aMatrix, aClipRect, aExtraAdditiveColor, Graphics::DRAWMODE_ADDITIVE, aSrcRect);
@@ -1292,17 +1203,12 @@ void Reanimation::GetTrackMatrix(int theTrackIndex, SexyTransform2D& theMatrix)
 void Reanimation::GetFrameTime(ReanimatorFrameTime* theFrameTime)
 {
 	TOD_ASSERT(mFrameStart + mFrameCount <= mDefinition->mTracks.tracks[0].mTransforms.count);
-	int aFrameCount;
-	if (mLoopType == ReanimLoopType::REANIM_PLAY_ONCE_FULL_LAST_FRAME || mLoopType == ReanimLoopType::REANIM_LOOP_FULL_LAST_FRAME ||
-		mLoopType == ReanimLoopType::REANIM_PLAY_ONCE_FULL_LAST_FRAME_AND_HOLD)
-		aFrameCount = mFrameCount;
-	else
-		aFrameCount = mFrameCount - 1;
-	std::uint64_t remainder = 0;
-	const auto frame = mFrameCount > 0 ? ReanimClock::MulDiv(SamplePlayback().phaseNs, aFrameCount,
-		mPeriodNs, &remainder) : 0;
-	theFrameTime->mFraction = mFrameCount > 0 ? static_cast<float>(static_cast<double>(remainder) /
-		mPeriodNs) : 0;
+    const auto now = mReanimationHolder ? (mTimeDomain == ReanimTimeDomain::Battle ?
+        mReanimationHolder->mBattleTimeNs : mReanimationHolder->mVisualTimeNs) : mLastUpdateTimeNs;
+    const auto position = SampleFrameAt(now);
+    int frame; double fraction;
+    FrameCoordinates(*this, position, frame, fraction);
+    theFrameTime->mFraction = float(fraction);
 	theFrameTime->mAnimFrameBeforeInt = mFrameStart + static_cast<int>(frame);
 	if (theFrameTime->mAnimFrameBeforeInt >= mFrameStart + mFrameCount - 1)  // 如果当前处于结束的一帧
 	{
@@ -1323,7 +1229,6 @@ void Reanimation::DrawRenderGroup(Graphics* g, int theRenderGroup)
 
 	ReanimatorFrameTime aFrameTime;
 	bool aHasFrameTime = false;
-	std::uint32_t gpuInstance = UINT32_MAX;
 	for (int aTrackIndex = 0; aTrackIndex < mDefinition->mTracks.count; aTrackIndex++)
 	{
 		ReanimatorTrackInstance* aTrackInstance = &mTrackInstances[aTrackIndex];
@@ -1337,7 +1242,7 @@ void Reanimation::DrawRenderGroup(Graphics* g, int theRenderGroup)
 				GetFrameTime(&aFrameTime);
 				aHasFrameTime = true;
 			}
-			bool aTrackDrawn = DrawTrack(g, aTrackIndex, theRenderGroup, &aFrameTime, &gpuInstance);
+			bool aTrackDrawn = DrawTrack(g, aTrackIndex, theRenderGroup, &aFrameTime);
 			if (aTrackInstance->mAttachmentID != AttachmentID::ATTACHMENTID_NULL)
 			{
 				AttachmentDraw(aTrackInstance->mAttachmentID, g, !aTrackDrawn);
@@ -1507,7 +1412,8 @@ void Reanimation::SetFramesForLayerIndex(int theTrackIndex)
 {
 	++mPlaybackGeneration;
 	mHasLastFrame = false;
-	mOriginCycleCount = mLastCycleCount = 0;
+	mCycleCrossings = 0;
+    mRootDisplacement = 0;
 	mLastUpdateTimeNs = mReanimationHolder ?
 		(mTimeDomain == ReanimTimeDomain::Battle ? mReanimationHolder->mBattleTimeNs : mReanimationHolder->mVisualTimeNs) : mLastUpdateTimeNs;
 	mStartTimeNs = mLastUpdateTimeNs;
@@ -1520,9 +1426,9 @@ void Reanimation::SetFramesForLayerIndex(int theTrackIndex)
 	}
 	GetFramesForTrackIndex(theTrackIndex, mFrameStart, mFrameCount);
 	if (mAnimRate != 0)
-		mPeriodNs = ReanimClock::PeriodFromRate(mFrameCount, mAnimRate);
-	mStartTimeNs = ReanimClock::StartTimeAt(mLastUpdateTimeNs, mAnimRate >= 0 ? 0 : mPeriodNs - 1,
-		mPeriodNs, mAnimRate == 0 ? 0 : (mAnimRate > 0 ? 1 : -1), mPhaseOriginNs);
+		ConfigureFramePeriod(*this, ReanimClock::PeriodFromRate(mFrameCount, mAnimRate));
+	ConfigureFramePeriod(*this, mPeriodNs);
+    BindFramePosition(*this, mLastUpdateTimeNs, mAnimRate >= 0 ? 0 : mPeriodNs - 1);
 	mLastFrameNs = SamplePlayback().phaseNs;
 }
 
@@ -1717,10 +1623,6 @@ int ReanimatorUploadAllTexturesToGPU()
 		return -1;
 
 	const int uploaded = DefinitionUploadAtlasImages();
-	TodParticleUploadGpuDefinitionData();
-#if defined(PVZ_EXPERIMENTAL_GPU_REANIM)
-	ReanimatorUploadGpuDefinitionData();
-#endif
 	return uploaded;
 }
 
@@ -1880,12 +1782,12 @@ void Reanimation::AttacherSynchWalkSpeed(int theTrackIndex, Reanimation* theAtta
 void Reanimation::UpdateAttacherTrack(int theTrackIndex)
 {
 	ReanimatorTrackInstance* aTrackInstance = &mTrackInstances[theTrackIndex];
-	ReanimatorTransform aTransform;
-	GetCurrentTransform(theTrackIndex, &aTransform);  // 供段尾颜色合成的 alpha
-
-	// IDT3：编译期链接的段表。当前帧号 -> 段（少量段线性查找），全部整数。
 	ReanimatorFrameTime aFrameTime;
 	GetFrameTime(&aFrameTime);
+	ReanimatorTransform aTransform;
+	GetTransformAtTime(theTrackIndex, &aTransform, &aFrameTime);  // same frame sample for alpha and segment
+
+	// IDT3：编译期链接的段表。当前帧号 -> 段（少量段线性查找），全部整数。
 	const std::uint32_t aFrame = static_cast<std::uint32_t>(aFrameTime.mAnimFrameBeforeInt);
 
 	// 1073 FUN_004787D0 的第一判定：GetTransformAtTime 产出的 mFrame 含截断消失帧

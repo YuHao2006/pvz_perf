@@ -1,0 +1,23 @@
+{
+  "program": "retail English 1.2.0.1073, own renderer",
+  "cpu": "LPE14 / logical processor14 / user-confirmed 11x",
+  "affinity": "0x4000 checked while sampling",
+  "gpu_frequency": "not verified",
+  "source_save_sha256": "a1bbc2f43a129b655f0068de8f28a731f1ef6814170419d3f4ec406436437cf1",
+  "executable_sha256": "5f650f52d12751e08b63e590edb0d9b9f09d087cea900baa0eb39e4af8eda251",
+  "music_volume": 100,
+  "sfx_volume": 65,
+  "muted": false,
+  "wait_for_vsync": false,
+  "settings_basis": "Registry values read during preparation, not enforced continuously",
+  "initial_checkpoint_verified": true,
+  "layout_evidence": "Tests/evidence/retail-1073-layout-20261028/verification.json",
+  "selection": "segment=game, valid=1, scene=3, foreground=1",
+  "termination": "game-exited",
+  "limitations": [
+    "one serial run per program, not repeated ABBA",
+    "different renderers and potentially different gameplay trajectories; not an isolated algorithm benchmark",
+    "one-second samples, not per-frame latency",
+    "the complete game intervals have different durations"
+  ]
+}

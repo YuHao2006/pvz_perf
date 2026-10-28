@@ -53,7 +53,7 @@ VulkanEffectProgram::VulkanEffectProgram(VkDevice device,VkPipelineCache cache,c
             const auto& metadata=effect.mPasses[i];
             const uint32_t counts[]={1,uint32_t(metadata.mInputs.size()),
                 uint32_t(metadata.mOutputs.size()),uint32_t(samplers_.size())};
-            const VkDescriptorType types[]={VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+            static constexpr VkDescriptorType types[]={VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
                 VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,VK_DESCRIPTOR_TYPE_SAMPLER};
             for(uint32_t set=0;set<4;++set) {
                 std::vector<VkDescriptorSetLayoutBinding> bindings(counts[set]);

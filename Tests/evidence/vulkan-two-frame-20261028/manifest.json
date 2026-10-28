@@ -1,0 +1,13 @@
+{
+  "scope": "Native two-frame synchronization, descriptors, fonts, buffers, resize and teardown; pixel/semantic assertions enabled; sync submit-time validation enabled",
+  "results": {
+    "SDK 1.4.350": "exit0, zero validation errors",
+    "official nightly 1.4.366": "exit0, zero validation errors"
+  },
+  "test_executable_sha256": "aa9e0dc642bfac03ecac02de98d3fa954bcf18b474a9f6d57658af4896980aac",
+  "hook_isolation": "Identical executable TEMP alias 7zFM.exe uses installed RTSS exclusion template; DISABLE_VULKAN_OBS_CAPTURE=1. No global process/profile changes. Ordinary name with RTSS hook adds unsynchronized swapchain draw after game signal; API trace and callback module stack retained externally. Production barriers not changed to mask hook.",
+  "logs": {
+    "nightly-native-rtss-excluded.log": "6c6820fda7898339097e5db96050e23baf9435f1c4416004628da54d647f4961",
+    "sdk-native-rtss-excluded.log": "a3812eef66077289cc0d1fc0f2f045400868efde994c27c6de47362aa01406fd"
+  }
+}

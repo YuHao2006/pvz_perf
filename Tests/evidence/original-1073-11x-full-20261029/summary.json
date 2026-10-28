@@ -1,0 +1,25 @@
+{
+  "label": "原版 1073 · Windows · LPE14 11x",
+  "selection": "segment=game, valid=1, scene=3, foreground=1",
+  "seconds": 388.000404099992,
+  "valid_samples": 388,
+  "recorded_seconds": 399.00056700001005,
+  "frames": 17053,
+  "cpu_seconds": 352.59375,
+  "fps": 43.95098515311147,
+  "update_hz": 100.00247316752936,
+  "cpu_percent": 90.87458318964346,
+  "cpu_ms_per_frame": 20.676347270275024,
+  "wave_first": 0,
+  "wave_last": 20,
+  "fps_min": 21.996940226003154,
+  "fps_max": 98.01584916368238,
+  "max_interval_cpu_ms": 42.61363636363636,
+  "excluded": {
+    "preroll": 2,
+    "paused": 1,
+    "other-scene": 8
+  },
+  "executable_sha256": "5f650f52d12751e08b63e590edb0d9b9f09d087cea900baa0eb39e4af8eda251",
+  "stop_reason": "game-exited"
+}

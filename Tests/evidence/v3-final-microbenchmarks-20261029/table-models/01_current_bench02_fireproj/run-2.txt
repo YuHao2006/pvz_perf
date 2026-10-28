@@ -1,0 +1,1 @@
+bench02 kFireProjectiles | before 44.58 ns | after 7.11 ns | diff 84.0% | checksum=OK (01619191BCFC8E1C/01619191BCFC8E1C)

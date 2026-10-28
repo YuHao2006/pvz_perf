@@ -1,0 +1,142 @@
+{
+  "date": "2026-10-27",
+  "scope": "Android Vulkan GPU submission and texture sampling; structural counts and correctness, not a controlled timing benchmark",
+  "device": {
+    "model": "nubia Z60 Ultra",
+    "android": "14",
+    "mode": "balanced selected by user",
+    "cpu_gpu_clocks_controlled": false
+  },
+  "git_head": "96d0b73edab294979d5b27184863954ed82942e7",
+  "worktree": "dirty; exact relevant sources hashed below; no claim this is a clean commit build",
+  "fixture_sha256": "172c2458ceeb053874ab033fcfab83f3c0397994f464310ceeec82836fc043fe",
+  "matched_workload": [
+    {
+      "stage": "split_normal_additive",
+      "fixture": "mode=58 flags=2048 levelTimeNs=2322920000000",
+      "draws": 1989.0,
+      "triangles": 7687.0,
+      "pipeline_binds": 1989.0,
+      "scissors": 6.0,
+      "target_passes": 1.0,
+      "sprite_spans": 2999.0,
+      "generic_spans": 188.0,
+      "additive_spans": 903.0
+    },
+    {
+      "stage": "mixed_sprites",
+      "fixture": "mode=58 flags=2048 levelTimeNs=2322920000000",
+      "draws": 185.0,
+      "triangles": 7687.0,
+      "pipeline_binds": 185.0,
+      "scissors": 6.0,
+      "target_passes": 1.0,
+      "sprite_spans": 2999.0,
+      "generic_spans": 188.0,
+      "additive_spans": 903.0
+    },
+    {
+      "stage": "mixed_sprites_precomputed_edges",
+      "fixture": "mode=58 flags=2048 levelTimeNs=2322920000000",
+      "draws": 34.0,
+      "triangles": 7687.0,
+      "pipeline_binds": 34.0,
+      "scissors": 6.0,
+      "target_passes": 1.0,
+      "sprite_spans": 3164.0,
+      "generic_spans": 23.0,
+      "additive_spans": 903.0
+    }
+  ],
+  "apk_sha256": "f7c012fb405629eb6a87320bdc94564407090e9aaa1f3f2f775300c1595daf65",
+  "apk_payload_sha256": {
+    "lib/arm64-v8a/libpvz_perf.so": "d24fff7e5642ddd93f42c194698b8a7e82607f8a8d25384a9fe0a97ce36d4d02",
+    "assets/main.pak64": "13a7cadc52eaec77ce6aa06bbf4c9854c61af9b25398a906da35cb4b111f4d3d",
+    "assets/shaders/game_alpha_cs.spv": "b838143134a29ddf867a159b922940c6938827420fba66ed8b35ddeefc941772",
+    "assets/shaders/game_caustic_cs.spv": "76d06697787759a26af7b631403d46214942a206150ca4845c43051d72196611",
+    "assets/shaders/game_color_cs.spv": "e298c5ed410de77db3716ed0f594ece1e4a2c8897bdbe6cf9a5cb67fe7d23054",
+    "assets/shaders/game_coverage_ps.spv": "066f03cb97737071a23d4357cf846f64632e6458d79db58d6d1db2551328f51e",
+    "assets/shaders/game_font_cs.spv": "48e2e960ec2ae4d0ef55534aa24c08927540fae8f25859ab54daa9f4a092357c",
+    "assets/shaders/game_hdr_ps.spv": "57f82263250b8e69653b8907b59a6f62b3d066fecd6d985d8b9d836c07ae4674",
+    "assets/shaders/game_pool_vs.spv": "0fc16534c8628d9aae6e1db0130d89d69471565a74fe267b2daa6234833c6449",
+    "assets/shaders/game_ps.spv": "2c34649f2443b2e02ba0024efc77adb64c0b017fe3f6c6610a09f26dd827c74a",
+    "assets/shaders/game_vs.spv": "23ab113371a2ae06f8f0115d2e9d2418340ae5a6cd076d5c6a9e3a14e7206b80",
+    "assets/shaders/game_sprite_ps.spv": "159955a3b4c4bc284de42566f349c5e945d0b40fcc28d178f9ee23ba871283ce",
+    "assets/shaders/game_sprite_mixed_ps.spv": "89ae1ddd6a5aa4455513c3a2d449e2fc24669cd93437db2594d0380d47f2d563"
+  },
+  "source_sha256": {
+    "pvzPerf/SexyAppFramework/graphics/vulkan/VulkanRenderer.cpp": "669b9409e089186db9243476ca946b20316316973ec9d5e655dc6d515472c470",
+    "pvzPerf/SexyAppFramework/graphics/vulkan/VulkanContext.cpp": "9836b890ebac66de869ec2d03c79a05b9770758c9c480f97a495e742bc64c46f",
+    "pvzPerf/SexyAppFramework/graphics/vulkan/shaders/game_sprite_mixed_ps.frag": "c0f2500118e39d5cdef6e408e15ac11cabd342fbfb1e208123b50dc5dd47eadb",
+    "pvzPerf/SexyAppFramework/imagelib/ImageLib.cpp": "7af27f5792a26bd50da6cff62a1fcb52718f830770d9b6c83a5444a2bbd96bb3",
+    "pvzPerf/Sexy.TodLib/TodCommon.cpp": "e0ee3b42328fae3f1ab2dd7c2e29988d96d871aa15585edb20013ee2bdfaa55e",
+    "pvzPerf/Sexy.TodLib/TodParticle.cpp": "fb123d6b93ca44a98db29e8e0430af5d2135ac012e2df9501b66c17c27a3204d",
+    "Tests/native/ImageRuntimeTests.cpp": "084ec28874782d277fe0c785617bad337961b23dfc56103ca6fce01e5a53e6ff",
+    "Tests/native/ParticleRuntimeDrawChecks.h": "dc718b96666482edfae8674c5217c6ed5a29b304783884436b38462f6806e25a"
+  },
+  "correctness_logs": {
+    "vulkan_renderer": {
+      "file": "vulkan_renderer.txt",
+      "sha256": "4c459230a918ce5bc94d0789d884d9bf2022b829d001e910fb9601bd77d1ab27"
+    },
+    "opengl_renderer": {
+      "file": "opengl_renderer.txt",
+      "sha256": "f2a12d56d8356bbe7e3f31380bee8638f881bd677aa145979a1a14493218c116"
+    },
+    "dx12_renderer": {
+      "file": "dx12_renderer.txt",
+      "sha256": "e5874252a62ed960c694d9bb6078bc9564fa9a437952603f4228ecbae682017e"
+    },
+    "public_image_runtime": {
+      "file": "public_image_runtime.txt",
+      "sha256": "704f6f5fa16ce09d7a0a0602f50ddfd41b37383cbe99b983ca7305e1417a82ca"
+    },
+    "static_definition_runtime_known_failure": {
+      "file": "static_definition_runtime_known_failure.txt",
+      "sha256": "800a9e6f4de99cb401c0e92b53ffa40e248f5ddb21cb5eda6c7838b459c6b31a"
+    },
+    "reanim_codegen": {
+      "file": "reanim_codegen.txt",
+      "sha256": "ffc4fefc5fa8c586c210f4e48222c7174c81106d99cc6a5dbeb29cd17f44837a"
+    },
+    "particle_codegen": {
+      "file": "particle_codegen.txt",
+      "sha256": "c5614f9066bbef241f410c693431a7413abaac24d222ad12e49d266b11f39fde"
+    }
+  },
+  "pixel_comparison": {
+    "compared_pixels": 2215780,
+    "mean_absolute_channel_difference": 0.04019656734874401,
+    "max_channel_difference": 5,
+    "pixels_any_channel_over_2": 422,
+    "excluded": "top 185 screen pixels and right 100 pixels"
+  },
+  "limits": [
+    "Paused fixture is not proof of sustained active-battle FPS.",
+    "Uncontrolled clocks: timing samples remain external interim observations.",
+    "Retired GPU animation sources are absent from the diagnostic APK.",
+    "Static definition suite still fails the existing actor ChangingVelocity precision check.",
+    "Metal has not been compiled on this Windows host.",
+    "Diagnostic counters and private benchmark entry are temporary, pending active-battle acceptance."
+  ],
+  "scene_state": "Frozen Continue Game? confirmation dialog, not the in-game Game Paused dialog or active battle.",
+  "stay_awake_validation": {
+    "original_stay_on_while_plugged_in": 0,
+    "test_setting": 15,
+    "observed_plug_type": 1,
+    "awake_checks": 51,
+    "all_awake": true,
+    "all_stayon": true,
+    "scope": "45-second follow-up capture, application scene still frozen; not a controlled timing result"
+  },
+  "retail1073_transparent_edges": {
+    "file": "retail1073-transparent-edges.txt",
+    "sha256": "e617aff48453daf827fcceef16ceee512899f5af7bd2b4d67000b3816ad64bb1",
+    "exe_sha256": "5f650f52d12751e08b63e590edb0d9b9f09d087cea900baa0eb39e4af8eda251",
+    "fix_function": "0x0051CFD0",
+    "neighbor_function": "0x0051CE20",
+    "draw_lazy_call": "0x0051C98C",
+    "clear_pending_flag": "0x0051C991",
+    "scope": "read-only static analysis; original EXE was not launched"
+  }
+}

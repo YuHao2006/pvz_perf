@@ -1,3 +1,4 @@
+#include "ReanimClock.h"
 #include "SexyAppFramework/SexyAppBase.h"
 #include "SexyAppFramework/graphics/DDInterface.h"
 #include "SexyAppFramework/graphics/Graphics.h"
@@ -21,14 +22,22 @@
 #include "Lawn/Projectile.h"
 #include "Lawn/ProjectileResources.h"
 #include "Lawn/Zombie.h"
+#include "Lawn/SeedPacket.h"
 #include "Lawn/Widget/GameButton.h"
 #include "SexyAppFramework/widget/WidgetManager.h"
 #include "Lawn/System/PlayerInfo.h"
+#include "Lawn/System/Music.h"
+#include "Lawn/System/ReanimationLawn.h"
+#include "Lawn/Widget/StoreScreen.h"
+#include "Lawn/Widget/TitleScreen.h"
+#include "SexyAppFramework/widget/HyperlinkWidget.h"
+#include "Sexy.TodLib/TodFoley.h"
 #include "SexyAppFramework/imagelib/ImageLib.h"
 #include "SexyAppFramework/sound/SoundManager.h"
 #include "SexyAppFramework/sound/SoundDecode.h"
+#include "SexyAppFramework/sound/DummyMusicInterface.h"
 #include "PoolGpuChecks.h"
-#include "ParticleGpuRuntimeChecks.h"
+#include "ParticleRuntimeDrawChecks.h"
 #include "Lawn/System/PoolEffect.h"
 #include "QuitDialogRuntimeChecks.h"
 #include <array>
@@ -272,6 +281,133 @@ void SourceRectangleDraws(SexyAppBase& app)
             }
     std::cout<<"PASS nonzero source rectangles and repacked whole-sheet atlas views: translation, "
         "scale origins, clipping, tint, additive, local-source views and floating scales\n";
+}
+
+
+void NecessaryLocalClipDraws(SexyAppBase& app)
+{
+    auto& render=*app.mDDInterface->mRenderInterface;
+    constexpr int width=16,height=12;
+    constexpr unsigned background=0xff030507u, solid=0xff113355u;
+    std::array<unsigned,8> colors{0xffff0000u,0xff00ff00u,0xff0000ffu,0xffffffffu,
+        0xffffff00u,0xffff00ffu,0xff00ffffu,0xff805020u};
+    Image source(&app);
+    source.SetBits(colors.data(),4,2);
+    const Rect region(1,0,2,2);
+    const TextureRegion uv{.25f,0,.75f,1,2,2};
+    std::unique_ptr<Image> target(render.CreateRenderImage(width,height));
+    enum Method { Fill,Outline,FullImage,SourceImage,MirrorImage,MatrixImage,
+        MatrixTexture,ParticleQuad,ConvexPolygon };
+    for(const auto method:{Fill,Outline,FullImage,SourceImage,MirrorImage,MatrixImage,
+        MatrixTexture,ParticleQuad,ConvexPolygon})
+    for(const auto origin:{Point(2,3),Point(-1,-1)})
+    for(const int clipCase:{0,1,2,3})
+    {
+        const bool empty=clipCase>=2;
+        const Rect clip=clipCase==0 ? Rect(10,8,1,1) : clipCase==1 ?
+            Rect(origin.mX+1,origin.mY+1,1,1) : clipCase==2 ? Rect(0,0,0,4) : Rect(0,0,4,0);
+        {
+            GpuImageDrawScope destination(render,target.get());
+            Graphics g(target.get());
+            g.mColor=Color(3,5,7,255);
+            g.FillRect(0,0,width,height);
+            g.mClipRect=clip;
+            g.mColor=Color(17,51,85,255);
+            g.mLinearBlend=false;g.mFastStretch=true;
+            switch(method)
+            {
+            case Fill:g.FillRect(origin.mX,origin.mY,4,2);break;
+            case Outline:g.DrawRect(origin.mX,origin.mY,4,2);break;
+            case FullImage:g.DrawImage(&source,origin.mX,origin.mY);break;
+            case SourceImage:g.DrawImage(&source,origin.mX,origin.mY,region);break;
+            case MirrorImage:g.DrawImageMirror(&source,origin.mX,origin.mY,region,true);break;
+            case MatrixImage:case MatrixTexture:case ParticleQuad:
+            {
+                SexyMatrix3 matrix;matrix.LoadIdentity();
+                matrix.m02=origin.mX+1;matrix.m12=origin.mY+1;
+                const TextureSource texture{render.CreateImageTexture(&source),0};
+                if(method==MatrixImage)
+                    TodBltMatrix(&g,&source,matrix,clip,Color::White,g.mDrawMode,region);
+                else if(method==MatrixTexture)
+                    TodBltMatrix(&g,texture,matrix,clip,Color::White,g.mDrawMode,uv);
+                else {
+                    TodTriangleGroup triangles;
+                    triangles.AddTriangle(&g,texture,matrix,clip,Color::White,g.mDrawMode,uv);
+                    triangles.DrawGroup(&g);
+                }
+                break;
+            }
+            case ConvexPolygon:
+            {
+                const Point polygon[]{origin,Point(origin.mX+4,origin.mY),
+                    Point(origin.mX+4,origin.mY+2),Point(origin.mX,origin.mY+2)};
+                g.PolyFill(polygon,4,true);
+                break;
+            }
+            }
+        }
+        render.Flush();
+        const auto actual=render.ReadImagePixels(*target);
+        for(int y=0;y<height;++y)for(int x=0;x<width;++x) {
+            unsigned expected=background;
+            const int column=x-origin.mX,row=y-origin.mY;
+            if(!empty && x>=clip.mX && x<clip.mX+clip.mWidth &&
+                y>=clip.mY && y<clip.mY+clip.mHeight) {
+                if(method==Outline) {
+                    if(column>=0 && column<=4 && row>=0 && row<=2 &&
+                        (column==0 || column==4 || row==0 || row==2)) expected=solid;
+                } else {
+                    const bool plain=method==FullImage;
+                    const bool shape=method==Fill || method==ConvexPolygon;
+                    const int drawnWidth=shape || plain ? 4 : 2;
+                    if(column>=0 && column<drawnWidth && row>=0 && row<2)
+                        expected=shape ? solid : colors[row*4+(plain ? column :
+                            1+(method==MirrorImage ? 1-column : column))];
+                }
+            }
+            try {Pixel(actual,y*width+x,expected,0);}
+            catch(...) {
+                std::cerr<<"Necessary-local-clip method="<<method<<" case="<<clipCase
+                    <<" origin="<<origin.mX<<','<<origin.mY<<" pixel="<<x<<','<<y<<'\n';
+                throw;
+            }
+        }
+    }
+    // A native line's edge-coverage convention is backend-specific. Compare
+    // exact bytes with the same geometry under the full target clip, and require
+    // that reference to be visible; no tolerance or relaxed pixel comparison.
+    for(const bool negative:{false,true}) {
+        const auto line=[&](const Rect& clip,bool explicitClippedEndpoints=false) {
+            {
+                GpuImageDrawScope destination(render,target.get());
+                Graphics g(target.get());
+                g.mColor=Color(3,5,7,255);g.FillRect(0,0,width,height);
+                g.mClipRect=clip;g.mColor=Color::White;
+                g.DrawLine(explicitClippedEndpoints ? 4 : negative ? -3 : 2,4,explicitClippedEndpoints ? 5 : 8,4);
+                g.DrawLineAA(explicitClippedEndpoints ? 4 : negative ? -2 : 3,7,explicitClippedEndpoints ? 5 : 9,7);
+            }
+            render.Flush();
+            return render.ReadImagePixels(*target).pixels;
+        };
+        const auto reference=line(Rect(0,0,width,height));
+        Require(std::any_of(reference.begin(),reference.end(),[](unsigned p){return p!=background;}),
+            "Unclipped line reference did not draw");
+        const auto outside=line(Rect(12,9,1,1));
+        Require(std::all_of(outside.begin(),outside.end(),[](unsigned p){return p==background;}),
+            "Disjoint clip did not suppress native lines");
+        const Rect partial(4,0,2,height);
+        const auto clipped=line(partial);
+        // Legacy line clipping ends at the last integer coordinate (5),
+        // while native triangle coverage excludes that endpoint. Compare to
+        // independently submitted explicit endpoints, not a scissored long line.
+        Require(clipped==line(Rect(0,0,width,height),true),
+            "Partial line clip differs from its exact historical endpoint geometry");
+        const auto hidden=line(Rect(0,0,0,height));
+        Require(std::all_of(hidden.begin(),hidden.end(),[](unsigned p){return p==background;}),
+            "Empty clip did not suppress line drawing");
+    }
+    std::cout<<"PASS necessary local-clip contract: independent full-pixel rect/image/source/mirror/"
+        "matrix/particle/convex oracles, disjoint/partial/empty clips and negative framebuffer crossings\n";
 }
 
 void AtlasButtonStates(SexyAppBase& app)
@@ -658,36 +794,6 @@ void ReanimationAppearancePixels(SexyAppBase& app)
     definition.mVariantActionStarts=starts.data();
     definition.mVariantActionCounts=counts.data();
     definition.mVariantOptions=options.data();
-#if defined(PVZ_GPU_REANIM_RESIDENT)
-    {
-        std::vector<GpuReanimTrack> gpuTracks;
-        std::vector<GpuReanimKey> gpuKeys;
-        std::vector<GpuReanimGeometry> gpuGeometry;
-        for (const auto& transform:transforms)
-        {
-            gpuTracks.push_back({unsigned(gpuKeys.size()),1});
-            gpuKeys.push_back({transform.mTransX,transform.mTransY,transform.mSkewX,
-                transform.mSkewY,transform.mScaleX,transform.mScaleY,transform.mAlpha,
-                transform.mFrame,transform.mImageSlot});
-        }
-        for (const auto& region:rectangles)
-            gpuGeometry.push_back({float(region.mWidth),float(region.mHeight),
-                region.mU0,region.mV0,region.mU1,region.mV1});
-        definition.mGpuData=render.mRenderer->UploadReanimDefinition(
-            {gpuTracks,gpuKeys,gpuGeometry,3,4});
-        if (!definition.mGpuData && std::getenv("PVZ_EXPECT_GPU_REANIM"))
-            throw std::runtime_error("Resident drawing was required but synthetic GPU upload is unsupported");
-        // Upload inputs go out of scope before DrawTrack and AttachmentDraw.
-    }
-    struct GpuDefinitionCleanup {
-        GpuRenderer* renderer;
-        ReanimatorDefinition& definition;
-        ~GpuDefinitionCleanup() {
-            renderer->DestroyReanimDefinition(definition.mGpuData);
-            definition.mGpuData=nullptr;
-        }
-    } gpuDefinitionCleanup{render.mRenderer,definition};
-#endif
     EffectSystem effects;
     effects.EffectSystemInitialize();
     Reanimation animation;
@@ -745,6 +851,70 @@ void ReanimationAppearancePixels(SexyAppBase& app)
                 Pixel(pixels,y*20+x,expected);
             }
     }
+    // DrawTrack visibility: explicit synchronous visibility for metadata tracks,
+    // incomplete text and a real bitmap-font text track, including blank rows.
+    {
+        Image glyphImage(&app);
+        unsigned glyphPixels[]{0xffffffffu, 0xffffffffu, 0xffffffffu};
+        glyphImage.SetBits(glyphPixels,3,1,false);
+        ImageFont font(&glyphImage);
+        auto& layer=font.mFontData->mFontLayerList.front();
+        layer.mPointSize=0; layer.mAscent=1; layer.mHeight=1;
+        auto& glyph=layer.mCharData['A'];
+        glyph.mImageRect={0,0,1,1,3,1}; glyph.mWidth=3;
+        const auto original=transforms[face];
+        const auto originalVariant=animation.mVariant;
+        const bool originalTruncation=animation.mTrackInstances[face].mTruncateDisappearingFrames;
+        ReanimatorFrameTime time{0,0,0};
+        const auto check=[&](bool expected,const char* message) {
+            {
+                GpuImageDrawScope destination(render,target.get());
+                Graphics graphics(target.get());
+                graphics.mColor=Color::Black;
+                graphics.FillRect(Rect(0,0,20,12));
+                Require(animation.DrawTrack(&graphics,face,0,&time)==expected,message);
+            }
+            render.Flush();
+            const auto pixels=render.ReadImagePixels(*target);
+            Require(pixels.pixels.size()==240,"Metadata fixture changed target size");
+        };
+        transforms[face].mImageSlot=0;
+        transforms[face].mFont=nullptr; transforms[face].mText=nullptr;
+        check(false,"Control track incorrectly reports visible");
+        transforms[face].mText="attacher__Garlic";
+        check(false,"Attacher metadata incorrectly draws as text");
+        transforms[face].mFont=&font; transforms[face].mText=nullptr;
+        check(false,"Font without text incorrectly reports visible");
+        transforms[face].mText="A";
+        check(true,"Font/text track was rejected by metadata fast path");
+        transforms[face].mText="";
+        check(true,"Empty but non-null text changed visibility");
+        transforms[face].mText="A"; transforms[face].mAlpha=0;
+        check(false,"Zero-alpha text incorrectly reports visible");
+        transforms[face].mAlpha=1; transforms[face].mFrame=-1;
+        check(false,"Hidden text incorrectly reports visible");
+        transforms[face]=original;
+        animation.SelectVariant(1);
+        check(true,"Blank appearance incorrectly hides attachment parent");
+        transforms[face].mAlpha=0;
+        check(false,"Zero-alpha blank appearance incorrectly reports visible");
+        transforms[face]=original;
+        std::vector<std::array<ReanimatorSourceTransform,2>> fade(trackCount);
+        for (int t=0;t<trackCount;++t)
+        {
+            fade[t]={transforms[t],transforms[t]};
+            tracks[t].mTransforms={fade[t].data(),2};
+        }
+        fade[face][1].mFrame=-1;
+        time={.5f,0,1};
+        animation.mTrackInstances[face].mTruncateDisappearingFrames=true;
+        check(false,"Disappearing truncated track incorrectly reports visible");
+        animation.mTrackInstances[face].mTruncateDisappearingFrames=false;
+        check(true,"Nontruncated disappearing track lost its visible frame");
+        for (int t=0;t<trackCount;++t) tracks[t].mTransforms={&transforms[t],1};
+        animation.SelectVariant(originalVariant);
+        animation.mTrackInstances[face].mTruncateDisappearingFrames=originalTruncation;
+    }
     // A genuinely hidden track must still hide this same attachment, so the
     // visible child above cannot pass merely because parentHidden was ignored.
     transforms[face].mAlpha=0;
@@ -760,142 +930,6 @@ void ReanimationAppearancePixels(SexyAppBase& app)
     Pixel(hidden,8*20+4,0xff000000u);
     Pixel(hidden,8*20+10,0xff000000u);
     transforms[face].mAlpha=1;
-#if defined(PVZ_GPU_REANIM_RESIDENT)
-    if (std::getenv("PVZ_EXPECT_GPU_REANIM"))
-    {
-        // Seed the previous frame's real policy input, then begin a new image
-        // frame. A different CPU translation proves DrawTrack consumes the
-        // already uploaded GPU keys rather than silently passing on CPU pixels.
-        {
-            GpuImageDrawScope destination(render,target.get());
-            Graphics graphics(target.get());
-            graphics.mColor=Color::Black;
-            graphics.FillRect(Rect(0,0,20,12));
-            render.mRenderer->reanimPictureCandidates=256;
-        }
-        render.Flush();
-        animation.SelectVariant(0);
-        const float originalX=transforms[stem].mTransX;
-        transforms[stem].mTransX=50.5f;
-        {
-            GpuImageDrawScope destination(render,target.get());
-            Graphics graphics(target.get());
-            graphics.mColor=Color::Black;
-            graphics.FillRect(Rect(0,0,20,12));
-            Require(render.mRenderer->reanimFrameEligible,
-                "Resident DrawTrack proof failed to enter an eligible image frame");
-            graphics.mLinearBlend=false;
-            animation.DrawRenderGroup(&graphics,0);
-        }
-        render.Flush();
-        transforms[stem].mTransX=originalX;
-        const auto resident=render.ReadImagePixels(*target);
-        Pixel(resident,5*20+11,0xff0000ffu);
-        Require(render.mRenderer->reanimPictureCandidates>0,
-            "Resident DrawTrack failed to record picture candidates");
-        std::cout<<"PASS actual resident DrawTrack: uploaded keys differ from CPU transforms, "
-            "shared instance and attachment rendering use GPU pixels\n";
-        // A sparse frame must still render GPU-only tracks, and successive
-        // tracks in one group must reuse its forced instance packet.
-        {
-            GpuImageDrawScope destination(render,target.get());
-            Graphics graphics(target.get());
-            graphics.mColor=Color::Black;
-            graphics.FillRect(Rect(0,0,20,12));
-            render.mRenderer->reanimPictureCandidates=0;
-        }
-        render.Flush();
-        const auto originalTransforms=tracks[stem].mTransforms;
-        tracks[stem].mTransforms.mTransforms=nullptr;
-        tracks[stem].mTransforms.mStorage=ReanimTrackStorage::Gpu;
-        {
-            GpuImageDrawScope destination(render,target.get());
-            Graphics graphics(target.get());
-            graphics.mColor=Color::Black;
-            graphics.FillRect(Rect(0,0,20,12));
-            graphics.mLinearBlend=false;
-            Require(!render.mRenderer->reanimFrameEligible,
-                "GPU-only group proof failed to enter a sparse image frame");
-            animation.DrawRenderGroup(&graphics,0);
-            ReanimatorFrameTime time;
-            animation.GetFrameTime(&time);
-            std::uint32_t sharedInstance=UINT32_MAX;
-            Require(animation.DrawTrack(&graphics,stem,0,&time,&sharedInstance) &&
-                sharedInstance!=UINT32_MAX,
-                "Sparse GPU-only DrawTrack failed to create a shared forced instance");
-            const auto firstInstance=sharedInstance;
-            Require(animation.DrawTrack(&graphics,stem,0,&time,&sharedInstance) &&
-                sharedInstance==firstInstance,
-                "GPU-only DrawTrack replaced an already shared instance");
-        }
-        render.Flush();
-        tracks[stem].mTransforms=originalTransforms;
-        const auto sparseResident=render.ReadImagePixels(*target);
-        Pixel(sparseResident,5*20+11,0xff0000ffu);
-        std::cout<<"PASS sparse GPU-only DrawTrack: group draws without CPU keys and "
-            "successive tracks reuse a forced shared instance\n";
-        // Compare the real DrawTrack entry with CPU, legacy GPU and shared GPU
-        // submission. Only the legacy route needs a per-track clip rectangle.
-        const auto uploadedDefinition=definition.mGpuData;
-        const auto oldIgnoreClip=animation.mTrackInstances[stem].mIgnoreClipRect;
-        {
-            GpuImageDrawScope destination(render,target.get());
-            Graphics graphics(target.get());
-            graphics.mColor=Color::Black;
-            graphics.FillRect(Rect(0,0,20,12));
-            render.mRenderer->reanimPictureCandidates=256;
-        }
-        render.Flush();
-        for (bool ignoreClip:{false,true})
-            for (const Rect clip:{Rect(0,0,20,12),Rect(11,4,1,1),Rect(5,5,0,0)})
-            {
-                std::vector<std::uint32_t> expected;
-                animation.mTrackInstances[stem].mIgnoreClipRect=ignoreClip;
-                for (int route=0;route<3;++route)
-                {
-                    {
-                        GpuImageDrawScope destination(render,target.get());
-                        Graphics graphics(target.get());
-                        graphics.mColor=Color::Black;
-                        graphics.FillRect(Rect(0,0,20,12));
-                        graphics.mLinearBlend=false;
-                        graphics.mClipRect=clip;
-                        Require(render.mRenderer->reanimFrameEligible,
-                            "DrawTrack clip comparison did not enter an eligible GPU frame");
-                        ReanimatorFrameTime time;
-                        animation.GetFrameTime(&time);
-                        std::uint32_t token=UINT32_MAX;
-                        definition.mGpuData=route?uploadedDefinition:nullptr;
-                        try {
-                            Require(animation.DrawTrack(&graphics,stem,0,&time,route==2?&token:nullptr),
-                                "DrawTrack clip comparison lost visible-track semantics");
-                        } catch (...) {
-                            definition.mGpuData=uploadedDefinition;
-                            throw;
-                        }
-                        definition.mGpuData=uploadedDefinition;
-                        Require(render.mRenderer->reanimPictureCandidates==(route?1u:0u),
-                            "DrawTrack clip comparison used an unexpected CPU/GPU route");
-                        if (route==2) Require(token!=UINT32_MAX,
-                            "DrawTrack clip comparison silently used legacy or CPU submission");
-                        render.mRenderer->reanimPictureCandidates=256;
-                    }
-                    render.Flush();
-                    const auto pixels=render.ReadImagePixels(*target);
-                    if (!route) {
-                        expected=pixels.pixels;
-                        const bool visible=ignoreClip || clip.mWidth>0;
-                        Pixel(pixels,4*20+11,visible?0xff0000ffu:0xff000000u);
-                    } else Require(pixels.pixels==expected,
-                        "CPU, legacy GPU and shared GPU DrawTrack clip pixels differ");
-                }
-            }
-        animation.mTrackInstances[stem].mIgnoreClipRect=oldIgnoreClip;
-        std::cout<<"PASS actual DrawTrack clipping: CPU/legacy GPU/shared GPU, full/partial/empty "
-            "group clips and IgnoreDefaultClip\n";
-        animation.SelectVariant(3);
-    }
-#endif
     {
         auto& lawn=static_cast<LawnApp&>(app);
         auto* previousEffects=lawn.mEffectSystem;
@@ -906,8 +940,9 @@ void ReanimationAppearancePixels(SexyAppBase& app)
             ~RestoreEffects() { app.mEffectSystem=previous; }
         } restoreEffects{lawn,previousEffects};
         Zombie boss{};
+        boss.mFromWave=Zombie::ZOMBIE_WAVE_UI;
         boss.mZombieType=ZombieType::ZOMBIE_BOSS;
-        boss.mZombieFade=-1;
+        boss.mFadeEndTimeNs=-1;
         boss.mBodyHealth=boss.mBodyMaxHealth=1000;
         boss.mShieldType=ShieldType::SHIELDTYPE_NONE;
         boss.mBodyReanimID=static_cast<ReanimationID>(
@@ -1089,51 +1124,6 @@ void ReanimationAppearanceDefinitions(SexyAppBase& app)
         blinkFrames[2].mFrame==0 && blinkFrames[4].mFrame==-1 && blinkFrames[5].mFrame==-1,
         "Cel inheritance changed Garlic's explicit or inherited hidden frames");
     auto& render=*app.mDDInterface->mRenderInterface;
-#if defined(PVZ_GPU_REANIM_RESIDENT)
-    Require(!app.mNativeWindowShown && !first.mDefinition->mGpuData,
-        "Early upload fixture did not start with a hidden window and deferred bulk definitions");
-    for (const auto type : {ReanimationType::REANIM_LOADBAR_SPROUT,
-        ReanimationType::REANIM_LOADBAR_ZOMBIEHEAD})
-    {
-        ReanimatorEnsureDefinitionLoaded(type,true);
-        ReanimatorUploadGpuDefinitionData(type);
-        if (std::getenv("PVZ_EXPECT_GPU_REANIM"))
-            Require(GeneratedDefinitions::Reanimations[int(type)].mGpuData,
-                "Loading-screen reanimation was not uploaded before the window became visible");
-    }
-    Require(!app.mNativeWindowShown && !first.mDefinition->mGpuData,
-        "Early upload exposed the window or loaded unrelated bulk keyframes");
-    // Startup can leave a loading-screen/cache draw open when the worker's
-    // ready flag becomes visible. Upload through the production boundary in
-    // that state, preserving pending pixels and allowing the next draw.
-    std::unique_ptr<Image> uploadTarget(render.CreateRenderImage(4,1));
-    {
-        GpuImageDrawScope destination(render,uploadTarget.get());
-        Graphics graphics(uploadTarget.get());
-        graphics.mColor=Color::Black;
-        graphics.FillRect(0,0,4,1);
-        graphics.mColor=Color(255,0,0);
-        graphics.FillRect(0,0,1,1);
-        Require(render.mSceneBegun,"Upload regression did not leave a pending draw");
-        ReanimatorUploadGpuDefinitionData();
-        Require(!render.mSceneBegun,"First definition upload did not finish the pending frame");
-        graphics.mColor=Color(0,255,0);
-        graphics.FillRect(1,0,1,1);
-        ReanimatorUploadGpuDefinitionData();
-        Require(render.mSceneBegun,"Repeated definition upload needlessly finished another frame");
-        graphics.mColor=Color(0,0,255);
-        graphics.FillRect(2,0,1,1);
-    }
-    render.Flush();
-    const auto uploadPixels=render.ReadImagePixels(*uploadTarget);
-    Pixel(uploadPixels,0,0xffff0000u,0);
-    Pixel(uploadPixels,1,0xff00ff00u,0);
-    Pixel(uploadPixels,2,0xff0000ffu,0);
-    std::cout<<"PASS startup GPU definition upload: pending frame completed, pixels preserved, "
-        "subsequent drawing and repeated upload remain valid\n";
-    if (std::getenv("PVZ_EXPECT_GPU_REANIM"))
-        Require(first.mDefinition->mGpuData,"Production GRU1 reanimation data was not uploaded");
-#endif
     std::unique_ptr<Image> target(render.CreateRenderImage(128,128));
     {
         GpuImageDrawScope destination(render,target.get());
@@ -1199,6 +1189,7 @@ public:
     std::array<Slot,MAX_SOURCE_SOUNDS> slots{};
     std::vector<ResourceManager::SoundRes> expected;
     unsigned nextExpected=0,loads=0,releases=0,volumeCalls=0,panCalls=0,invalidReleases=0;
+    bool allowSilentPlayback=false;
 
     bool LoadSound(unsigned id,const std::string& path) override
     {
@@ -1239,6 +1230,7 @@ public:
     }
     SoundInstance* GetSoundInstance(unsigned) override
     {
+        if (allowSilentPlayback) return nullptr;
         throw std::runtime_error("Resource loading unexpectedly requested sound playback");
     }
     void ReleaseSounds() override
@@ -1259,6 +1251,153 @@ public:
         return int(std::count_if(slots.begin(),slots.end(),[](const auto& slot){return slot.live;}));
     }
 };
+
+void StorePauseClockRuntime(TestApp& app, DecodeOnlySoundManager& sounds)
+{
+    std::cerr<<"Store clock fixture: initialize\n";
+    ReanimatorLoadDefinitions(gLawnReanimationArray,static_cast<int>(ReanimationType::NUM_REANIMS));
+    struct FreeCatalog { ~FreeCatalog() { ReanimatorFreeDefinitions(); } } freeCatalog;
+    EffectSystem effects;
+    effects.EffectSystemInitialize();
+    PlayerInfo profile;
+    profile.mLevel=50;
+    DummyMusicInterface silentMusicInterface;
+    Music music;
+    music.SetMusicDisabled(true);
+    TodFoleyInitialize(gLawnFoleyParamArray,NUM_FOLEY);
+    TodFoley foley;
+    ReanimatorCache cache;
+    cache.ReanimatorCacheInitialize();
+    for (const auto seed:{SEED_GATLINGPEA,SEED_TWINSUNFLOWER,SEED_GLOOMSHROOM,SEED_CATTAIL})
+        cache.mPlantImages[seed]=cache.MakeCachedPlantFrame(seed,VARIATION_NORMAL);
+    struct RestoreWorld {
+        TestApp& app;
+        DecodeOnlySoundManager& sounds;
+        PlayerInfo* profile;
+        Music* music;
+        TodFoley* foley;
+        MusicInterface* musicInterface;
+        ReanimatorCache* cache;
+        GameScenes scene;
+        std::uint64_t interval=Sexy::gUpdateIntervalNs;
+        double ticks=Sexy::gUpdateTicks, steps=Sexy::gStepsPerLegacyTick;
+        ~RestoreWorld() {
+            app.KillStoreScreen();
+            app.ProcessSafeDeleteList();
+            app.mBoard=nullptr;
+            app.mEffectSystem=nullptr;
+            app.mPlayerInfo=profile;
+            app.mMusic=music;
+            app.mSoundSystem=foley;
+            app.mMusicInterface=musicInterface;
+            app.mReanimatorCache=cache;
+            app.mGameScene=scene;
+            sounds.allowSilentPlayback=false;
+            Sexy::gUpdateIntervalNs=interval;
+            Sexy::gUpdateTicks=ticks;
+            Sexy::gStepsPerLegacyTick=steps;
+        }
+    } restore{app,sounds,app.mPlayerInfo,app.mMusic,app.mSoundSystem,app.mMusicInterface,app.mReanimatorCache,app.mGameScene};
+    app.mEffectSystem=&effects;
+    app.mPlayerInfo=&profile;
+    app.mMusic=&music;
+    app.mSoundSystem=&foley;
+    app.mMusicInterface=&silentMusicInterface;
+    app.mReanimatorCache=&cache;
+    sounds.allowSilentPlayback=true;
+    Board board(&app);
+    std::cerr<<"Store clock fixture: board initialized\n";
+    app.mGameScene=GameScenes::SCENE_PLAYING;
+    auto& holder=*effects.mReanimationHolder;
+    auto* background=app.AddReanimation(0,0,0,REANIM_PEASHOOTER);
+    background->PlayReanim(ReanimTrackId::anim_idle,REANIM_LOOP,0,12);
+    auto* battle=app.AddReanimation(0,0,0,REANIM_PEASHOOTER);
+    battle->PlayReanim(ReanimTrackId::anim_idle,REANIM_LOOP,0,12);
+    battle->BindTimeDomain(ReanimTimeDomain::Battle);
+    auto& render=*app.mDDInterface->mRenderInterface;
+    Image* target=render.CreateRenderImage(800,600);
+    struct FreeTarget { Image* image; ~FreeTarget() { delete image; } } freeTarget{target};
+    for (const int hz:{100,240,480,1000})
+    {
+        std::cerr<<"Store clock fixture: "<<hz<<" Hz ordinary pause\n";
+        Sexy::gUpdateIntervalNs=1'000'000'000ULL/hz;
+        Sexy::gUpdateTicks=100.0/hz;
+        Sexy::gStepsPerLegacyTick=hz/100.0;
+        const auto phase=background->SamplePlayback().phaseNs;
+        const auto battleTime=holder.mBattleTimeNs;
+        board.Pause(true);
+        for (int frame=0;frame<hz;++frame) app.UpdateFrames();
+        Require(background->SamplePlayback().phaseNs==phase && holder.mBattleTimeNs==battleTime,
+            "Ordinary pause advanced the background pose or battle clock");
+        board.Pause(false);
+        background->Update();
+        Require(background->SamplePlayback().phaseNs==phase,
+            "Resuming an ordinary pause consumed elapsed UI time");
+        for (const bool inLevel:{false,true})
+        {
+            std::cerr<<"Store clock fixture: opening "<<(inLevel ? "level" : "menu")<<" Store\n";
+            app.mBoard=inLevel ? &board : nullptr;
+            auto* store=app.ShowStoreScreen();
+            std::cerr<<"Store clock fixture: drawing Store\n";
+            Require(board.mPaused==inLevel,"Store modal did not preserve the expected board pause");
+            {
+                GpuImageDrawScope destination(render,target);
+                Graphics graphics(target);
+                store->Draw(&graphics);
+            }
+            std::cerr<<"Store clock fixture: drawing completed, updating entry\n";
+            for (int frame=0;frame<3*hz;++frame)
+            {
+                try { app.UpdateFrames(); }
+                catch (...) { std::cerr<<"Store entry update failed at frame "<<frame<<'\n'; throw; }
+            }
+            Require(app.mCrazyDaveState!=CRAZY_DAVE_ENTERING && app.mCrazyDaveState!=CRAZY_DAVE_OFF,
+                "Store Crazy Dave did not complete his entry animation");
+            std::cerr<<"Store clock fixture: entry completed, navigating\n";
+            for (const int button:{store->mNextButton->mId,store->mPrevButton->mId})
+            {
+                const auto previousPage=store->mPage;
+                store->ButtonDepress(button);
+                Require(store->mPage!=previousPage && store->mHatchTimer>0,
+                    "Store page button did not start its hatch transition");
+                for (int frame=0;frame<hz;++frame) app.UpdateFrames();
+                Require(store->mHatchTimer==0 && !store->mPrevButton->mDisabled &&
+                    !store->mNextButton->mDisabled,"Store hatch remained closed after page navigation");
+            }
+            constexpr int nestedDialogId=41000;
+            std::cerr<<"Store clock fixture: navigation completed, removing Store\n";
+            if (inLevel)
+            {
+                auto* nested=new Dialog(nullptr,nullptr,nestedDialogId,true,"","","",Dialog::BUTTONS_NONE);
+                nested->Resize(0,0,100,100);
+                app.AddDialog(nested);
+            }
+            app.KillStoreScreen();
+            std::cerr<<"Store clock fixture: Store removed\n";
+            app.ProcessSafeDeleteList();
+            if (inLevel)
+            {
+                Require(board.mPaused && background->SamplePlayback().phaseNs==phase,
+                    "Removing Store under another modal did not restore the paused background pose");
+                for (int frame=0;frame<hz;++frame) app.UpdateFrames();
+                Require(background->SamplePlayback().phaseNs==phase,
+                    "Background pose advanced under the modal remaining after Store closed");
+                app.KillDialog(nestedDialogId);
+                app.ProcessSafeDeleteList();
+                background->Update();
+                battle->Update();
+                Require(background->SamplePlayback().phaseNs==phase && holder.mBattleTimeNs==battleTime,
+                    "Store resume advanced a paused background animation or battle clock");
+            }
+            Require(!board.mPaused,"Closing the Store and its modal left the board paused");
+            // The menu case deliberately had no board. Consume its visual time
+            // before measuring the next paused in-level interval.
+            background->RebaseTime(holder.mVisualTimeNs);
+        }
+        app.mBoard=&board;
+        std::cout<<"PASS Store clocks "<<hz<<" Hz: menu/level Dave entry, next/prev hatch, pause/resume poses and battle clock\n";
+    }
+}
 
 void ProjectileAtlasPixels(LawnApp& app)
 {
@@ -1569,6 +1708,47 @@ void PoolScenePixels(SexyAppBase& app)
     }
 }
 
+void SeedPacketCooldownPixels(SexyAppBase& app)
+{
+    auto& render=*app.mDDInterface->mRenderInterface;
+    Require(IMAGE_SEEDS && IMAGE_SEEDS->mTexture,"Cooldown test requires resident production seed texture");
+    std::unique_ptr<Image> target(render.CreateRenderImage(80,100));
+    const auto capture=[&](float fraction,int grayness) {
+        {
+            GpuImageDrawScope destination(render,target.get());
+            Graphics g(target.get());
+            g.mColor=Color::Black;g.FillRect(0,0,80,100);
+            // This production packet has no cached plant thumbnail, isolating
+            // the actual background and its same cooldown overlay draw path.
+            DrawSeedPacket(&g,10,10,SEED_BEGHOULED_BUTTON_SHUFFLE,SEED_NONE,
+                fraction,grayness,false,false);
+        }
+        render.Flush();
+        return render.ReadImagePixels(*target).pixels;
+    };
+    const auto ready=capture(0,128), dark=capture(1,255);
+    Require(ready!=dark,"Actual fully dark seed packet did not differ from its ready base");
+    std::vector<unsigned int> previous;
+    for (const auto [fraction,edge]:{std::pair{.25f,19},std::pair{.5f,36},std::pair{.75f,53}})
+    {
+        const auto actual=capture(fraction,255);
+        unsigned changedTop=0,unchangedBottom=0;
+        for (int y=0;y<100;++y)for(int x=0;x<80;++x)
+        {
+            const bool covered=x>=10 && x<60 && y>=10 && y<10+edge;
+            const unsigned expected=covered ? dark[y*80+x] : ready[y*80+x];
+            Require(actual[y*80+x]==expected,
+                "Actual seed cooldown overlay leaked below its reveal edge or changed the ready portion");
+            if(covered && dark[y*80+x]!=ready[y*80+x])++changedTop;
+            if(x>=10 && x<60 && y>=10+edge && y<80 && actual[y*80+x]==ready[y*80+x])++unchangedBottom;
+        }
+        Require(changedTop>0 && unchangedBottom>0,"Cooldown fixture did not cover both dark and ready pixels");
+        Require(previous.empty() || previous!=actual,"Different cooldown fractions produced the same full-gray packet");
+        previous=actual;
+    }
+    std::cout<<"PASS actual DrawSeedPacket cooldown: production atlas, quarter/half/three-quarter edges, dark upper and unchanged ready lower pixels\n";
+}
+
 void AllResourceGroups(SexyAppBase& app)
 {
     DecodeOnlySoundManager sounds;
@@ -1675,9 +1855,11 @@ void AllResourceGroups(SexyAppBase& app)
         }
     }
     Require(loadedImages==RESOURCE_LOAD_IMAGE_COUNT,"Full loading skipped an image recipe");
+    SeedPacketCooldownPixels(app);
     ProjectileAtlasPixels(static_cast<LawnApp&>(app));
     PoolScenePixels(app);
     FixedUIAtlas::Load();
+    StorePauseClockRuntime(static_cast<TestApp&>(app),sounds);
     {
         auto& render=*app.mDDInterface->mRenderInterface;
         Image* target=render.CreateRenderImage(800,600);
@@ -1803,8 +1985,8 @@ void ParticleDefinitionsAndFrames(SexyAppBase& app, const char* pakPath)
             !gParticleAllDefinitionDataLoaded.load(),
             "Invalid particle catalog published definition state");
         TodParticleLoadDefinitions(gLawnParticleArray,ParticleEffect::NUM_PARTICLES);
-        ParticleDrawReference::LoadGpuDefinitions();
-        ParticleGpuRuntimeChecks(*app.mDDInterface->mRenderInterface);
+        ParticleDrawReference::LoadRenderDefinitions();
+        ParticleRuntimeDrawChecks(*app.mDDInterface->mRenderInterface);
         Require(gParticleAllDefinitionDataLoaded.load() &&
             gParticleDefCount==ParticleEffect::NUM_PARTICLES &&
             gParticleDefArray==GeneratedDefinitions::Particles,
@@ -2071,9 +2253,9 @@ void ParticleDefinitionsAndFrames(SexyAppBase& app, const char* pakPath)
             const int animated=glasses.mAnimated;
             glasses.mAnimated=1;
             particle.mParticleDurationNs = std::int64_t(101) * 10'000'000;
-            particle.mParticleAgeNs=990'000'000;
+            particle.mBirthTimeNs = 0 - (990'000'000);
             Require(draw(false,0)==last,"Particle lifetime animation selected the wrong frame");
-            particle.mParticleAgeNs=0;
+            particle.mBirthTimeNs = 0 - (0);
             Require(draw(false,0)==first,"Particle lifetime animation did not return to frame zero");
             glasses.mAnimated=animated;
             // 61x48 logical geometry: left=.25 rounds to 15 source pixels,
@@ -2100,7 +2282,7 @@ void ParticleDefinitionsAndFrames(SexyAppBase& app, const char* pakPath)
             Require(draw(false,0,true)==draw(true,3,true),
                 "Particle UV crop changed rounded pixels or logical center shifts");
         }
-        ParticleDrawReference::ClearGpuDefinitions();
+        ParticleDrawReference::ClearRenderDefinitions();
         TodParticleFreeDefinitions();
         Require(!gParticleDefArray && !gParticleDefCount && !gParticleAllDefinitionDataLoaded.load(),
             "Public particle free left published definition state");
@@ -2124,13 +2306,13 @@ void ParticleDefinitionsAndFrames(SexyAppBase& app, const char* pakPath)
                         a.mCurveType==b.mCurveType && a.mDistribution==b.mDistribution;
                 }),
             "Repeated compiled particle load changed emitter, geometry or track values");
-        ParticleDrawReference::ClearGpuDefinitions();
+        ParticleDrawReference::ClearRenderDefinitions();
         TodParticleFreeDefinitions();
         DefinitionFreeAtlasImages();
     }
     catch (...)
     {
-        ParticleDrawReference::ClearGpuDefinitions();
+        ParticleDrawReference::ClearRenderDefinitions();
         TodParticleFreeDefinitions();
         DefinitionFreeAtlasImages();
         throw;
@@ -2140,6 +2322,126 @@ void ParticleDefinitionsAndFrames(SexyAppBase& app, const char* pakPath)
         "fire/ice dimensions and pixels, no-image, logical frames, sunglasses override, frame clamps, "
         "animation pixels, repeated load and release\n";
 }
+void TitleGrassRevealPixels(TestApp& app)
+{
+    auto& render=*app.mDDInterface->mRenderInterface;
+    constexpr unsigned int grassColor=0xff29b74d;
+    Image grass, transparent;
+    std::vector<unsigned int> grassBits(314*8,grassColor);
+    unsigned int clear=0;
+    grass.SetBits(grassBits.data(),314,8);
+    transparent.SetBits(&clear,1,1);
+    EffectSystem effects;
+    effects.EffectSystemInitialize();
+    struct RestoreTitleWorld {
+        TestApp& app;
+        EffectSystem* effects;
+        Rect bounds;
+        Image* title=IMAGE_TITLESCREEN;
+        Image* logo=IMAGE_PVZ_LOGO;
+        Image* dirt=IMAGE_LOADBAR_DIRT;
+        Image* grass=IMAGE_LOADBAR_GRASS;
+        Image* cap=IMAGE_REANIM_SODROLLCAP;
+        ~RestoreTitleWorld() {
+            app.mEffectSystem=effects;
+            app.mScreenBounds=bounds;
+            IMAGE_TITLESCREEN=title;
+            IMAGE_PVZ_LOGO=logo;
+            IMAGE_LOADBAR_DIRT=dirt;
+            IMAGE_LOADBAR_GRASS=grass;
+            IMAGE_REANIM_SODROLLCAP=cap;
+        }
+    } restore{app,app.mEffectSystem,app.mScreenBounds};
+    app.mEffectSystem=&effects;
+    app.mScreenBounds=Rect(0,0,800,600);
+    IMAGE_TITLESCREEN=IMAGE_PVZ_LOGO=IMAGE_LOADBAR_DIRT=IMAGE_REANIM_SODROLLCAP=&transparent;
+    IMAGE_LOADBAR_GRASS=&grass;
+    TitleScreen title(&app);
+    title.mTitleState=TITLESTATE_SCREEN;
+    title.mLoaderScreenIsLoaded=true;
+    title.mNeedToInit=false;
+    title.mLoadingThreadComplete=false;
+    title.mWidth=800;
+    title.mHeight=600;
+    title.mStartButton->mX=240;
+    title.mStartButton->mY=300;
+    std::unique_ptr<Image> target(render.CreateRenderImage(800,600));
+    for (const Point translation:{Point(0,0),Point(13,9)})
+        for (const int width:{0,1,157,313,314,400})
+        {
+            title.mCurBarWidth=static_cast<float>(width);
+            {
+                GpuImageDrawScope destination(render,target.get());
+                Graphics graphics(target.get());
+                graphics.mColor=Color::Black;
+                graphics.FillRect(Rect(0,0,800,600));
+                graphics.Translate(translation.mX,translation.mY);
+                title.Draw(&graphics);
+            }
+            const auto pixels=render.ReadImagePixels(*target).pixels;
+            const int startX=240+translation.mX, startY=283+translation.mY;
+            // Check every pixel of all lawn rows, including both sides of the
+            // revealed edge. The production Draw selects the source region.
+            for (int y=startY; y<startY+8; ++y)
+                for (int x=0; x<800; ++x)
+                    Require(pixels[y*800+x]==
+                        (x>=startX && x<startX+std::min(width,314) ? grassColor : 0xff000000),
+                        "TitleScreen grass appeared beyond its revealed animation width");
+        }
+    std::cout<<"PASS actual TitleScreen grass reveal: widths 0/1/157/313/314/400, translated draw and unrevealed black pixels\n";
+}
+
+void PrecomputedTransparentEdges(TestApp& app)
+{
+    auto& render = *app.mDDInterface->mRenderInterface;
+    constexpr int width = 9, height = 7;
+    std::array<unsigned int, width * height> pixels;
+    for (unsigned int i = 0; i < pixels.size(); ++i)
+        pixels[i] = ((i % 4 == 0 ? 0u : (i % 3 == 0 ? 97u : 255u)) << 24) |
+            (((i * 71) & 255) << 16) | (((i * 53) & 255) << 8) | ((i * 137) & 255);
+    Image original, repaired;
+    original.SetBits(pixels.data(), width, height);
+    repaired.SetBits(pixels.data(), width, height);
+    original.mGpuSamplingFlags |= GpuVertex::kAlphaEdgeFilter;
+    FixPixelsOnAlphaEdgeForBlending(&repaired);
+    Require(repaired.mGpuSamplingFlags == 0, "Plain loading image retained runtime sanding");
+    for (unsigned int i = 0; i < pixels.size(); ++i)
+        Require((pixels[i] >> 24) ? repaired.mPendingDecoded->mBits[i] == pixels[i] :
+            (repaired.mPendingDecoded->mBits[i] >> 24) == 0,
+            "Edge repair changed visible pixels or alpha");
+    // A second loading pass must not propagate hidden RGB into later neighbors.
+    const std::vector<unsigned int> once(repaired.mPendingDecoded->mBits,
+        repaired.mPendingDecoded->mBits + pixels.size());
+    FixPixelsOnAlphaEdgeForBlending(&repaired);
+    Require(std::equal(once.begin(), once.end(), repaired.mPendingDecoded->mBits),
+        "Edge repair was not idempotent");
+    std::unique_ptr<Image> target(render.CreateRenderImage(73, 61));
+    for (bool linear : {false, true})
+        for (float offset : {0.f, .375f})
+        {
+            const auto capture = [&](Image& source) {
+                {
+                    GpuImageDrawScope destination(render, target.get());
+                    Graphics graphics(target.get());
+                    graphics.mColor = Color(35, 71, 109, 255);
+                    graphics.FillRect(Rect(0, 0, 73, 61));
+                    graphics.mLinearBlend = linear;
+                    TodDrawImageRectScaledF(&graphics, &source, 5.f + offset, 4.f + offset,
+                        Rect(0, 0, width, height), 6.125f, 5.375f);
+                }
+                return render.ReadImagePixels(*target).pixels;
+            };
+            const auto expected = capture(original), actual = capture(repaired);
+            for (unsigned int i = 0; i < actual.size(); ++i)
+                for (unsigned int shift : {0u, 8u, 16u, 24u})
+                    Require(std::abs(int((actual[i] >> shift) & 255) -
+                        int((expected[i] >> shift) & 255)) <= 2,
+                        "Precomputed edge repair differs from shader reference");
+        }
+    Require(!repaired.mPendingDecoded, "Repaired image retained loading pixels after upload");
+    std::cout << "PASS precomputed transparent edges: alpha, visible RGB, idempotency, nearest/linear, upload-discard\n";
+}
+
 }
 
 int main(int argc, char** argv)
@@ -2177,8 +2479,11 @@ int main(int argc, char** argv)
             "Cannot initialize public image runtime");
         WrappedTextMeasurements();
         PoolGpuChecks::Run(*app.mDDInterface->mRenderInterface->mRenderer);
+        PrecomputedTransparentEdges(app);
         FontUploadAndCopies(app);
         SourceRectangleDraws(app);
+        NecessaryLocalClipDraws(app);
+        TitleGrassRevealPixels(app);
         AtlasButtonStates(app);
         SharedReferences(app);
         ReanimationAppearancePixels(app);

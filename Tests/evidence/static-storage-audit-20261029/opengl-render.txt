@@ -1,0 +1,47 @@
+adapter=NVIDIA GeForce RTX 4070 Laptop GPU/PCIe/SSE2 / 4.6.0 NVIDIA 591.44 context=4.6 GLSL=4.60 NVIDIA
+requested=3.0; actual version above is driver-reported, not a 3.0-only certification
+PASS GLSL130-compile-link
+pool GPU day-normal-nearest: RGBA max=0 mean=0 poolMean=0 changedPixels=0 worst=(0,0) outsideBoundaryMax=0
+pool GPU day-normal-nearest: premultiplied float max=0 mean=0 outsideBoundaryMax=0
+pool GPU night-normal-linear: RGBA max=1 mean=2.91667e-05 poolMean=8.37321e-05 changedPixels=56 worst=(572,285) outsideBoundaryMax=1
+pool GPU night-normal-linear: premultiplied float max=0.000976562 mean=9.60032e-08 outsideBoundaryMax=0.000976562
+pool GPU day-additive-partial-fractional: RGBA max=1 mean=0.0015 poolMean=0.00430622 changedPixels=2718 worst=(204,277) outsideBoundaryMax=1
+pool GPU day-additive-partial-fractional: premultiplied float max=0.00390625 mean=7.63817e-06 outsideBoundaryMax=0.00390625
+pool GPU night-additive-phase-wrap: RGBA max=1 mean=1.25e-05 poolMean=3.58852e-05 changedPixels=23 worst=(724,293) outsideBoundaryMax=1
+pool GPU night-additive-phase-wrap: premultiplied float max=0.00195312 mean=6.20524e-08 outsideBoundaryMax=0.00195312
+pool GPU day-opaque-partial-fractional: RGBA max=1 mean=0.000442708 poolMean=0.00127093 changedPixels=813 worst=(490,276) outsideBoundaryMax=1
+pool GPU day-opaque-partial-fractional: premultiplied float max=0.000488281 mean=5.82638e-07 outsideBoundaryMax=0.000488281
+pool GPU night-opaque-large-counter: RGBA max=1 mean=0.00145625 poolMean=0.00418062 changedPixels=2671 worst=(73,281) outsideBoundaryMax=1
+pool GPU night-opaque-large-counter: premultiplied float max=0.000488281 mean=9.26321e-07 outsideBoundaryMax=0.000488281
+pool GPU feedback-float-source-pending-batch: RGBA max=1 mean=2.91667e-05 poolMean=8.37321e-05 changedPixels=49 worst=(241,298) outsideBoundaryMax=1
+pool GPU feedback-float-source-pending-batch: premultiplied float max=0.000488281 mean=4.34399e-08 outsideBoundaryMax=0.000488281
+PASS production GPU pool vs independent legacy CPU mesh: day/night, normal/additive/opaque, nearest/linear/repeat, phase wrap, vertex-alpha clip, fractional translation, ordinary painter order and float target feedback
+PASS production-pool-gpu-direct-UV
+PASS precompiled-atlas-direct-upload-regions-filters-storage-batches
+PASS precompiled-atlas-replace-destroy-static-slot-reuse
+PASS independent-NPOT-negative-UV-CPU-taps
+PASS replacement-all-samplers-filters-zero-difference
+PASS repeated-main-and-offscreen-target-selection-preserves-batching
+PASS independent-storage-eight-ordered-batches
+PASS independent-dimensions-repeat-sampling
+PASS independent-samplers-filters-repeat-sampling
+PASS independent-large-float-mutable-images
+PASS independent-replace-destroy-static-slot-reuse
+PASS independent-transparent-blend-clip-painter-order
+PASS primitive-order-replace-destroy-recorded-versions
+PASS slot-flags-coverage-65536
+PASS RGBA16F-self-sample-snapshot
+PASS RGBA16F-normal-additive-no-clamp
+PASS copy-zero-fill-compose-process
+PASS resource-lifetime-copy-metadata-replacement
+PASS static-slot-identity-replacement
+PASS upload-adopt-composition-paths
+PASS static-replace-with-full-dynamic-region
+PASS caustics-CPU-reference
+PASS font-endpoint-expand-shrink-singleton
+effect preparation rejected: OpenGL 3.0 cannot execute the configured HLSL compute scaling chain; GLSL 1.30 has no compute stage
+effect preparation rejected: OpenGL 3.0 cannot execute the configured HLSL compute scaling chain; GLSL 1.30 has no compute stage
+PASS effects-prepare-rejection
+PASS canvas-resize-preserves-resident-image
+PASS hidden-retained-resize-simulated-suspension
+failed=0; hidden HWND only; no Win7/old-GPU certification

@@ -15,20 +15,13 @@ struct OpenGLTexture {
     int width = 0, height = 0;
     unsigned int format = 0;
     unsigned int slot = ~0U, staticSlot = ~0U, flags = 0;
+    unsigned int sampler = 0; // Actual GL texture filter/wrap state; GL 3.0 has no core sampler objects.
     bool render = false, caustic = false;
     OpenGLTexture() = default;
     ~OpenGLTexture();
     OpenGLTexture(const OpenGLTexture&) = delete;
     OpenGLTexture& operator=(const OpenGLTexture&) = delete;
 };
-#if defined(PVZ_OPENGL_REANIM_RESIDENT)
-struct OpenGLReanim {
-    unsigned int firstTexel = 0, texelCount = 0;
-    unsigned int imageSlotCount = 0, variantCount = 0;
-    uint32_t particleEmitterCount = 0, particleVariantCount = 0;
-    std::vector<GpuReanimTrack> trackInfo;
-};
-#endif
 struct OpenGLRenderer::Impl {
     enum Uniform : unsigned int {
         uTargetExtent, uImage, uPremultipliedOutput, uCoverageInput,
@@ -42,80 +35,22 @@ struct OpenGLRenderer::Impl {
         GpuVertex draw;
     };
     struct Batch {
-        unsigned int image;
+        OpenGLTexture* texture;
         // VBO vertex range, except actual compute frames use their original EBO range.
         size_t first, count;
         GpuBlend blend;
         GpuClip clip;
         bool coverage;
-#if defined(PVZ_OPENGL_REANIM_RESIDENT)
-        size_t segmentFirst = 0, segmentCount = 0;
-#endif
+        bool sprite;
+        unsigned int sampler;
     };
     OpenGLContext& context;
     int width, height, maximum = 0;
     unsigned int staticBase = 4096, vao = 0, stream = 0;
-    unsigned int sceneProgram = 0, imageProgram = 0, fontProgram = 0, presentProgram = 0;
+    unsigned int sceneProgram = 0, spriteProgram = 0, imageProgram = 0, fontProgram = 0, presentProgram = 0;
     unsigned int poolProgram = 0, poolVao = 0, poolVertices = 0, poolIndices = 0;
     std::array<int, 12> poolUniforms{};
-    uint32_t reanimPictureCandidates = 0;
-    bool reanimFrameEligible = false;
-#if defined(PVZ_OPENGL_REANIM_RESIDENT)
-    unsigned int reanimProgram = 0, reanimVao = 0, reanimIndexBuffer = 0;
-    unsigned int reanimBlob = 0, reanimBlobTexture = 0, reanimInstanceBuffer = 0, reanimInstanceTexture = 0;
-    size_t reanimBlobUsed = 0, reanimBlobCapacity = 0, reanimBlobMaximum = 0;
-    struct ReanimRange { size_t first, count; };
-    struct ReanimDrawSegment { size_t first, count; bool resident; };
-    std::vector<ReanimRange> reanimFreeRanges;
-    std::vector<ReanimDrawSegment> reanimDrawSegments;
-    using TexBufferFn = void(APIENTRY*)(GLenum, GLenum, GLuint);
-    using CopyBufferFn = void(APIENTRY*)(GLenum, GLenum, GLintptr, GLintptr, GLsizeiptr);
-    TexBufferFn texBuffer = nullptr;
-    CopyBufferFn copyBuffer = nullptr;
-#if defined(PVZ_OPENGL_REANIM_DIAGNOSTICS)
-    using BeginQueryFn = void(APIENTRY*)(GLenum, GLuint);
-    using EndQueryFn = void(APIENTRY*)(GLenum);
-    using QueryCounterFn = void(APIENTRY*)(GLuint, GLenum);
-    BeginQueryFn beginFrameQuery = nullptr;
-    EndQueryFn endFrameQuery = nullptr;
-    QueryCounterFn queryCounter = nullptr;
-    FrameTiming* frameTiming = nullptr;
-#endif
-    std::array<int, 6> reanimUniforms{};
-    bool reanimChecked = false;
-    std::unordered_set<OpenGLReanim*> reanimDefinitions;
-    std::vector<OpenGLReanim*> retiredReanims;
-    struct ReanimInstanceState {
-        OpenGLReanim* definition;
-        OpenGLTexture* texture;
-        unsigned int image;
-        GpuClip clip;
-    };
-    std::vector<ReanimInstanceState> reanimInstances;
-    static constexpr size_t ReanimInstanceTexels = 6;
-    std::vector<std::array<float,ReanimInstanceTexels*4>> reanimInstanceData;
-    std::vector<unsigned int> reanimIndices;
-    std::vector<size_t> reanimMarkerOffsets; // VBO starts for noncompute GS/VS/fallback markers.
-    std::vector<ReanimRange> reanimOrdinarySpans;
-    bool hasReanimDraws = false;
-    unsigned int reanimFrameGeneration = 0;
-    uint64_t reanimOrdinaryTriangles = 0;
-#if defined(PVZ_OPENGL_REANIM_COMPUTE_EXPERIMENT)
-    struct ReanimComputeJob { unsigned int vertex, firstIndex; };
-    std::vector<ReanimComputeJob> reanimComputeJobs;
-    unsigned int reanimComputeProgram = 0, reanimComputeOutput = 0, reanimComputeVao = 0, reanimComputeJobBuffer = 0;
-    size_t reanimComputeMaximumBytes = 0;
-    unsigned int reanimComputeMaximumGroups = 0;
-    std::array<int,4> reanimComputeUniforms{};
-    using BindBufferBaseFn = void(APIENTRY*)(GLenum,GLuint,GLuint);
-    using DispatchComputeFn = void(APIENTRY*)(GLuint,GLuint,GLuint);
-    using MemoryBarrierFn = void(APIENTRY*)(GLbitfield);
-    BindBufferBaseFn bindComputeBuffer = nullptr;
-    DispatchComputeFn dispatchCompute = nullptr;
-    MemoryBarrierFn computeBarrier = nullptr;
-#endif
-#endif
-    UniformLocations sceneUniforms{}, imageUniforms{}, fontUniforms{}, presentUniforms{};
+    UniformLocations sceneUniforms{}, spriteUniforms{}, imageUniforms{}, fontUniforms{}, presentUniforms{};
     bool open = false, mainFrame = false, initialized = false, sceneInitialized = false;
     OpenGLTexture* white = nullptr;
     OpenGLTexture* scene = nullptr;
@@ -141,16 +76,6 @@ struct OpenGLRenderer::Impl {
     void Upload(OpenGLTexture* texture, const void* data, int pitch, unsigned int format);
     void BindTarget();
     void Flush();
-#if defined(PVZ_OPENGL_REANIM_RESIDENT)
-    bool InitReanim();
-    size_t AllocateReanimRange(size_t count);
-    void CollectReanims();
-#if defined(PVZ_OPENGL_REANIM_COMPUTE_EXPERIMENT)
-    void InitReanimCompute();
-    void DestroyReanimCompute();
-    void ExpandReanimCompute();
-#endif
-#endif
     void Submit(std::span<const GpuVertex> input, OpenGLTexture* source,
         GpuBlend blend, const GpuClip* clip, bool coverage);
     unsigned int Program(std::string_view vertex, std::string_view fragment);
@@ -167,7 +92,4 @@ struct OpenGLRenderer::Impl {
 #endif
     }
 };
-#if defined(PVZ_OPENGL_REANIM_RESIDENT)
-extern const std::string OpenGLReanimEvaluationShader;
-#endif
 }

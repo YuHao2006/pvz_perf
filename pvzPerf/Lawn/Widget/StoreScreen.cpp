@@ -15,10 +15,10 @@
 #include "Lawn/System/StinkyTimestamp.h"
 #include "SeedChooserScreen.h"
 #include "GameConstants.h"
-#include "Lawn/System/PopDRMComm.h"
 #include "Sexy.TodLib/TodFoley.h"
 #include "Sexy.TodLib/TodCommon.h"
 #include "Sexy.TodLib/Reanimator.h"
+#include "Sexy.TodLib/EffectSystem.h"
 #include "misc/Debug.h"
 #include "Sexy.TodLib/TodStringFile.h"
 #include "graphics/ImageFont.h"
@@ -250,10 +250,6 @@ StoreItem StoreScreen::GetStoreItemType(int theSpotIndex)
 
     if (mPage < NUM_STORE_PAGES && theSpotIndex < MAX_PAGE_SPOTS)
     {
-        if (mPage == STORE_PAGE_SLOT_UPGRADES && theSpotIndex == 6 && mApp->IsTrialStageLocked())
-        {
-            return STORE_ITEM_PVZ;
-        }
         return gStoreItemSpots[mPage][theSpotIndex];
     }
 
@@ -294,7 +290,7 @@ bool StoreScreen::IsComingSoon(StoreItem theStoreItem)
 
     using StoreComingSoonFn = bool (*)(StoreScreen&);
 
-    static constexpr StoreComingSoonFn kStoreComingSoon[(int)StoreItem::STORE_ITEM_PVZ + 1] = {
+    static constexpr StoreComingSoonFn kStoreComingSoon[(int)StoreItem::STORE_ITEM_FIRSTAID + 1] = {
     nullptr,                                                                                       // 0 STORE_ITEM_PLANT_GATLINGPEA
     [](StoreScreen& s) { return s.IsFullVersionOnly(STORE_ITEM_PLANT_TWINSUNFLOWER); },            // 1 STORE_ITEM_PLANT_TWINSUNFLOWER
     nullptr,                                                                                       // 2 STORE_ITEM_PLANT_GLOOMSHROOM
@@ -321,14 +317,13 @@ bool StoreScreen::IsComingSoon(StoreItem theStoreItem)
     nullptr,                                                                                       // 23 STORE_ITEM_ROOF_CLEANER
     nullptr,                                                                                       // 24 STORE_ITEM_RAKE
     nullptr,                                                                                       // 25 STORE_ITEM_AQUARIUM_GARDEN
-    nullptr,                                                                                       // 26 STORE_ITEM_CHOCOLATE
+    nullptr,                                                                                       // 26 库存保留槽，不是商店商品
     nullptr,                                                                                       // 27 STORE_ITEM_TREE_OF_WISDOM
     [](StoreScreen& s) { return !s.mApp->mPlayerInfo->mPurchases[STORE_ITEM_TREE_OF_WISDOM] || s.mApp->mPlayerInfo->mPurchases[STORE_ITEM_TREE_FOOD] < PURCHASE_COUNT_OFFSET; },  // 28 STORE_ITEM_TREE_FOOD
     nullptr,                                                                                       // 29 STORE_ITEM_FIRSTAID
-    nullptr,                                                                                       // 30 STORE_ITEM_PVZ
     };
     static_assert(sizeof(kStoreComingSoon) / sizeof(kStoreComingSoon[0]) ==
-    (int)StoreItem::STORE_ITEM_PVZ + 1, "kStoreComingSoon 槽位须与 StoreItem 枚举同步");
+    (int)StoreItem::STORE_ITEM_FIRSTAID + 1, "kStoreComingSoon 槽位须与 StoreItem 枚举同步");
     static_assert(kStoreComingSoon[(int)StoreItem::STORE_ITEM_POTTED_MARIGOLD_1] == +StoreComingSoonPotted &&
     kStoreComingSoon[(int)StoreItem::STORE_ITEM_POTTED_MARIGOLD_3] == +StoreComingSoonPotted &&
     kStoreComingSoon[(int)StoreItem::STORE_ITEM_WHEEL_BARROW] != nullptr &&
@@ -457,7 +452,7 @@ void StoreScreen::DrawItemIcon(Graphics* g, int theItemPosition, StoreItem theIt
     int mDx;
     int mDy;
     bool mDrawX5;
-    } kStoreIconDrawRows[(int)StoreItem::STORE_ITEM_PVZ + 1] = {
+    } kStoreIconDrawRows[(int)StoreItem::STORE_ITEM_FIRSTAID + 1] = {
     { nullptr, 0, 0, false },                                   // 0 STORE_ITEM_PLANT_GATLINGPEA（种子包默认支）
     { nullptr, 0, 0, false },                                   // 1 STORE_ITEM_PLANT_TWINSUNFLOWER（种子包默认支）
     { nullptr, 0, 0, false },                                   // 2 STORE_ITEM_PLANT_GLOOMSHROOM（种子包默认支）
@@ -484,14 +479,13 @@ void StoreScreen::DrawItemIcon(Graphics* g, int theItemPosition, StoreItem theIt
     { &Sexy::IMAGE_ICON_ROOFCLEANER, 0, 28, false },            // 23 STORE_ITEM_ROOF_CLEANER
     { &Sexy::IMAGE_ICON_RAKE, -5, 10, false },                  // 24 STORE_ITEM_RAKE
     { &Sexy::IMAGE_STORE_AQUARIUMGARDENICON, -8, 2, false },    // 25 STORE_ITEM_AQUARIUM_GARDEN
-    { nullptr, 0, 0, false },                                   // 26 STORE_ITEM_CHOCOLATE（种子包默认支）
+    { nullptr, 0, 0, false },                                   // 26 库存保留槽，不是商店商品
     { &Sexy::IMAGE_STORE_TREEOFWISDOMICON, -8, 2, false },      // 27 STORE_ITEM_TREE_OF_WISDOM
     { &Sexy::IMAGE_TREEFOOD, -8, -2, false },                   // 28 STORE_ITEM_TREE_FOOD
     { &Sexy::IMAGE_STORE_FIRSTAIDWALLNUTICON, -1, 13, false },  // 29 STORE_ITEM_FIRSTAID
-    { &Sexy::IMAGE_STORE_PVZICON, 0, -9, false },               // 30 STORE_ITEM_PVZ
     };
     static_assert(sizeof(kStoreIconDrawRows) / sizeof(kStoreIconDrawRows[0]) ==
-    (int)StoreItem::STORE_ITEM_PVZ + 1, "kStoreIconDrawRows 槽位须与 StoreItem 枚举同步");
+    (int)StoreItem::STORE_ITEM_FIRSTAID + 1, "kStoreIconDrawRows 槽位须与 StoreItem 枚举同步");
     static_assert(kStoreIconDrawRows[(int)StoreItem::STORE_ITEM_POOL_CLEANER].mImage == &Sexy::IMAGE_ICON_POOLCLEANER &&
     kStoreIconDrawRows[(int)StoreItem::STORE_ITEM_WHEEL_BARROW].mImage == &Sexy::IMAGE_ZEN_WHEELBARROW &&
     kStoreIconDrawRows[(int)StoreItem::STORE_ITEM_PLANT_IMITATER].mImage == &Sexy::IMAGE_IMITATERSEED &&
@@ -564,12 +558,9 @@ void StoreScreen::DrawItem(Graphics* g, int theItemPosition, StoreItem theItemTy
 
     int aPosX, aPosY;
     GetStorePosition(theItemPosition, aPosX, aPosY);
-    if (theItemType != STORE_ITEM_PVZ)
-    {
-        g->DrawImage(Sexy::IMAGE_STORE_PRICETAG, aPosX - 3, aPosY + 70);
-        SexyString aCostString = LawnApp::GetMoneyString(GetItemCost(theItemType));
-        TodDrawString(g, aCostString, aPosX + 23, aPosY + 85, Sexy::FONT_BRIANNETOD12, Color::Black, DS_ALIGN_CENTER);
-    }
+    g->DrawImage(Sexy::IMAGE_STORE_PRICETAG, aPosX - 3, aPosY + 70);
+    SexyString aCostString = LawnApp::GetMoneyString(GetItemCost(theItemType));
+    TodDrawString(g, aCostString, aPosX + 23, aPosY + 85, Sexy::FONT_BRIANNETOD12, Color::Black, DS_ALIGN_CENTER);
     if (IsComingSoon(theItemType))
     {
         Rect aRect(aPosX, aPosY, 60, 70);
@@ -705,10 +696,10 @@ void StoreScreen::SetBubbleText(int theCrazyDaveMessage, int theTime, bool theCl
 
 namespace
 {
-// 商店气泡消息索引表：原 UpdateMouse 31 case 纯常量（生成器解析原 switch 生成，
-// 逐槽对拍 0 差异）。-1 = 无提示（CHOCOLATE 及无 case 槽）；PACKET_UPGRADE 依
+// 商店气泡消息索引表：商品提示纯常量（生成器解析原 switch 生成，
+// 逐槽对拍 0 差异）。-1 = 无提示（库存保留槽及无 case 槽）；PACKET_UPGRADE 依
 // 购买量三段+default 特例保留表外；default=TOD_ASSERT 由越界分支保留。
-constexpr int kStoreBubbleMessage[(int)StoreItem::STORE_ITEM_PVZ + 1] = {
+constexpr int kStoreBubbleMessage[(int)StoreItem::STORE_ITEM_FIRSTAID + 1] = {
     2000,  // 0 STORE_ITEM_PLANT_GATLINGPEA
     2001,  // 1 STORE_ITEM_PLANT_TWINSUNFLOWER
     2002,  // 2 STORE_ITEM_PLANT_GLOOMSHROOM
@@ -735,14 +726,13 @@ constexpr int kStoreBubbleMessage[(int)StoreItem::STORE_ITEM_PVZ + 1] = {
     2027,  // 23 STORE_ITEM_ROOF_CLEANER
     2028,  // 24 STORE_ITEM_RAKE
     2029,  // 25 STORE_ITEM_AQUARIUM_GARDEN
-    -1,  // 26 STORE_ITEM_CHOCOLATE  // 无提示（原 case 空；r3 对拍抓获曾被误填 2030 树智慧台词）
+    -1,  // 26 库存保留槽，不是商店商品
     2030,  // 27 STORE_ITEM_TREE_OF_WISDOM
     2031,  // 28 STORE_ITEM_TREE_FOOD
     2033,  // 29 STORE_ITEM_FIRSTAID
-    2034,  // 30 STORE_ITEM_PVZ
 };
 static_assert(sizeof(kStoreBubbleMessage) / sizeof(kStoreBubbleMessage[0]) ==
-    (int)StoreItem::STORE_ITEM_PVZ + 1, "槽位须与 StoreItem 枚举同步");
+    (int)StoreItem::STORE_ITEM_FIRSTAID + 1, "槽位须与 StoreItem 枚举同步");
 }  // namespace
 
 //0x48BAD0
@@ -774,7 +764,7 @@ void StoreScreen::UpdateMouse()
         const int aCount = mApp->mPlayerInfo->mPurchases[STORE_ITEM_PACKET_UPGRADE];
         aMessageIndex = aCount == 0 ? 2011 : aCount == 1 ? 2012 : aCount == 2 ? 2013 : 2014;
                 }
-                else if (static_cast<unsigned>(aItemType) < static_cast<unsigned>((int)StoreItem::STORE_ITEM_PVZ + 1))
+                else if (static_cast<unsigned>(aItemType) < static_cast<unsigned>((int)StoreItem::STORE_ITEM_FIRSTAID + 1))
                 {
                     aMessageIndex = kStoreBubbleMessage[aItemType];
                 }
@@ -996,6 +986,20 @@ void StoreScreen::AddedToManager(WidgetManager* theWidgetManager)
 //0x48C3B0
 void StoreScreen::RemovedFromManager(WidgetManager* theWidgetManager)
 {
+    if (mApp->mBoard && mApp->mBoard->mPaused && mApp->mEffectSystem)
+    {
+        // Only the Store consumes visual time while the board is paused.
+        // Restore inactive background poses before exposing the board, even
+        // when another modal keeps it paused after this Store is removed.
+        auto& holder = *mApp->mEffectSystem->mReanimationHolder;
+        Reanimation* reanimation = nullptr;
+        while (holder.mReanimations.IterateNext(reanimation))
+        {
+            if (!reanimation->mDead && reanimation->mTimeDomain == ReanimTimeDomain::Visual &&
+                reanimation->mLastUpdateTimeNs != holder.mVisualTimeNs)
+                reanimation->RebaseTime(holder.mVisualTimeNs);
+        }
+    }
     // Finish only our own child, never a later dialog reusing the same id.
     if (mPurchaseDialog)
         mApp->SexyAppBase::KillDialog(mPurchaseDialog);
@@ -1107,11 +1111,10 @@ int StoreScreen::GetItemCost(StoreItem theStoreItem)
         300,    // STORE_ITEM_ROOF_CLEANER
         20,     // STORE_ITEM_RAKE
         3000,   // STORE_ITEM_AQUARIUM_GARDEN
-        -1,     // STORE_ITEM_CHOCOLATE（无定价）
+        -1,     // 库存保留槽，不是商店商品
         1000,   // STORE_ITEM_TREE_OF_WISDOM
         250,    // STORE_ITEM_TREE_FOOD
         200,    // STORE_ITEM_FIRSTAID
-        -1,     // STORE_ITEM_PVZ（无定价）
     };
     if ((unsigned)theStoreItem < sizeof(kStoreItemCosts) / sizeof(kStoreItemCosts[0]) && kStoreItemCosts[theStoreItem] >= 0)
     {
@@ -1380,17 +1383,6 @@ void StoreScreen::MouseDown(int x, int y, int theClickCount)
                 mWaitForDialog = true;
                 mApp->LawnMessageBox(DIALOG_MESSAGE, gStr.GET_FULL_VERSION_TITLE.c_str(), gStr.FULL_VERSION_TO_BUY.c_str(), gStr.DIALOG_BUTTON_OK.c_str(), "", BUTTONS_FOOTER);
                 mWaitForDialog = false;
-            }
-            else if (aItemType == STORE_ITEM_PVZ)
-            {
-                mWaitForDialog = true;
-                int aResult = mApp->LawnMessageBox(
-                    DIALOG_MESSAGE, gStr.BUY_PVZ_TITLE.c_str(), gStr.BUY_PVZ_BODY.c_str(), gStr.GET_FULL_VERSION_YES_BUTTON.c_str(), gStr.GET_FULL_VERSION_NO_BUTTON.c_str(), BUTTONS_YES_NO);
-                mWaitForDialog = false;
-                if (aResult == ID_OK)
-                {
-                    if (mApp->mDRM) mApp->mDRM->BuyGame();
-                }
             }
             else if(!IsItemSoldOut(aItemType) && !IsItemUnavailable(aItemType) && !IsComingSoon(aItemType))
                 PurchaseItem(aItemType);

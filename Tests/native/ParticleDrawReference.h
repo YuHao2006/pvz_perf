@@ -1,6 +1,7 @@
+#include "ReanimClock.h"
 #pragma once
 // Frozen CPU drawing oracle for native regression comparisons only.
-// Production particles submit their authored curves and instance data to the GPU.
+// Production particles evaluate their authored tracks on the CPU.
 #include "Sexy.TodLib/TodCommon.h"
 #include "Sexy.TodLib/TodParticle.h"
 #include "Sexy.TodLib/Definition.h"
@@ -11,7 +12,6 @@
 #include "SexyAppFramework/graphics/DDInterface.h"
 #include "SexyAppFramework/graphics/RenderInterface.h"
 #include "SexyAppFramework/misc/SexyMatrix.h"
-#include "SexyAppFramework/graphics/GpuParticleUpload.h"
 #include "SexyAppFramework/paklib/PakInterface.h"
 #include "Sexy.TodLib/generated/GeneratedDefinitions.h"
 #include <array>
@@ -21,8 +21,7 @@
 
 namespace ParticleDrawReference
 {
-// Test-owned render tracks are loaded independently from the compiled GPU
-// record. Production emitter definitions retain only simulation attributes.
+// A test-owned copy keeps input mutations separate from the runtime definition.
 struct EmitterRenderData
 {
     FloatParameterTrack mSystemRed{}, mSystemGreen{}, mSystemBlue{}, mSystemAlpha{}, mSystemBrightness{};
@@ -41,7 +40,7 @@ inline constexpr FloatParameterTrack EmitterRenderData::* RenderTracks[] = {
     &EmitterRenderData::mClipTop, &EmitterRenderData::mClipBottom,
     &EmitterRenderData::mClipLeft, &EmitterRenderData::mClipRight};
 inline std::unordered_map<const TodEmitterDefinition*, EmitterRenderData> RenderDefinitions;
-inline void ClearGpuDefinitions() { RenderDefinitions.clear(); }
+inline void ClearRenderDefinitions() { RenderDefinitions.clear(); }
 inline EmitterRenderData& RenderData(const TodEmitterDefinition& emitter)
 {
     return RenderDefinitions.at(&emitter);
@@ -50,52 +49,33 @@ inline void BindRenderData(TodEmitterDefinition& emitter, const EmitterRenderDat
 {
     RenderDefinitions.insert_or_assign(&emitter, data);
 }
-inline void LoadGpuDefinitions()
+inline void LoadRenderDefinitions()
 {
     decltype(RenderDefinitions) loaded;
     for (int type = 0; type < gParticleDefCount; ++type)
-    {
-        auto& definition = gParticleDefArray[type];
-        const auto* path = GeneratedDefinitions::ParticleGpuPaths[type];
-        auto* file = p_fopen(path, "rb");
-        if (!file) throw std::runtime_error(std::string("Missing reference GPU particle data: ") + path);
-        try
+        for (int index = 0; index < gParticleDefArray[type].mEmitterDefCount; ++index)
         {
-            std::uint32_t header[4]{};
-            if (p_fread(header, sizeof(header), 1, file) != 1 ||
-                header[0] != 0x31504750 || header[1] < 4 || header[1] >= (1u << 24) ||
-                header[2] != unsigned(definition.mEmitterDefCount) || header[3] != definition.mVariantCount)
-                throw std::runtime_error("Invalid reference GPU particle header");
-            std::vector<float> words(header[1]);
-            if (p_fread(words.data(), sizeof(float), int(words.size()), file) != words.size() ||
-                p_fgetc(file) != EOF)
-                throw std::runtime_error("Truncated reference GPU particle data");
-            Sexy::ValidateParticleResident(words, header[3]);
-            for (int index = 0; index < definition.mEmitterDefCount; ++index)
-            {
-                EmitterRenderData render;
-                render.nodes = std::make_shared<std::array<std::vector<FloatParameterTrackNode>, 16>>();
-                const auto emitter = unsigned(words[0]) + unsigned(index) * 32;
-                render.mRenderTrackMask = unsigned(words[emitter + 7]);
-                for (unsigned track = 0; track < std::size(RenderTracks); ++track)
-                {
-                    const auto offset = unsigned(words[emitter + 8 + track]);
-                    auto& nodes = (*render.nodes)[track];
-                    nodes.resize(unsigned(words[offset]));
-                    for (unsigned node = 0; node < nodes.size(); ++node)
-                    {
-                        const auto at = offset + 1 + node * 8;
-                        nodes[node] = {double(words[at]), words[at + 1], words[at + 2],
-                            int(words[at + 3]), int(words[at + 4])};
-                    }
-                    render.*RenderTracks[track] = {nodes.data(), int(nodes.size())};
-                }
-                loaded.emplace(&definition.mEmitterDefs[index], std::move(render));
-            }
+            const auto& emitter = gParticleDefArray[type].mEmitterDefs[index];
+            EmitterRenderData render;
+            render.mRenderTrackMask = emitter.mRenderTrackMask;
+            render.mSystemRed = emitter.mSystemRed;
+            render.mSystemGreen = emitter.mSystemGreen;
+            render.mSystemBlue = emitter.mSystemBlue;
+            render.mSystemAlpha = emitter.mSystemAlpha;
+            render.mSystemBrightness = emitter.mSystemBrightness;
+            render.mParticleRed = emitter.mParticleRed;
+            render.mParticleGreen = emitter.mParticleGreen;
+            render.mParticleBlue = emitter.mParticleBlue;
+            render.mParticleAlpha = emitter.mParticleAlpha;
+            render.mParticleBrightness = emitter.mParticleBrightness;
+            render.mParticleScale = emitter.mParticleScale;
+            render.mParticleStretch = emitter.mParticleStretch;
+            render.mClipTop = emitter.mClipTop;
+            render.mClipBottom = emitter.mClipBottom;
+            render.mClipLeft = emitter.mClipLeft;
+            render.mClipRight = emitter.mClipRight;
+            loaded.emplace(&emitter, std::move(render));
         }
-        catch (...) { p_fclose(file); throw; }
-        p_fclose(file);
-    }
     RenderDefinitions.swap(loaded);
 }
 
@@ -105,11 +85,11 @@ inline double LifeFraction(std::int64_t age, std::int64_t duration)
 }
 inline double ParticleTime(const TodParticle* particle)
 {
-    return LifeFraction(particle->mParticleAgeNs, particle->mParticleDurationNs);
+    return LifeFraction(ParticleLifeAgeAt(particle->mParticleEmitter->mParticleSystem->mLastUpdateTimeNs, particle->mBirthTimeNs, particle->mParticleDurationNs), particle->mParticleDurationNs);
 }
 inline double SystemTime(const TodParticleEmitter& emitter)
 {
-    return LifeFraction(emitter.mSystemAgeNs, emitter.mSystemDurationNs);
+    return LifeFraction(ParticleLifeAgeAt(emitter.mParticleSystem->mLastUpdateTimeNs, emitter.mBirthTimeNs, emitter.mSystemDurationNs), emitter.mSystemDurationNs);
 }
 class ParticleRenderParams
 {
@@ -249,7 +229,7 @@ inline bool GetRenderParams(TodParticle* theParticle, ParticleRenderParams* theP
 		if (GetRenderParams(aCrossFadeParticle, &aCrossFadeParams))
 		{
 			const float aFraction = static_cast<float>(LifeFraction(
-				theParticle->mParticleAgeNs, aCrossFadeParticle->mCrossFadeDurationNs));
+				ParticleLifeAgeAt(theParticle->mParticleEmitter->mParticleSystem->mLastUpdateTimeNs, theParticle->mBirthTimeNs, theParticle->mParticleDurationNs), aCrossFadeParticle->mCrossFadeDurationNs));
 			// 各项数值按照 aFraction 比例混合
 			theParams->mRed = CrossFadeLerp(aCrossFadeParams.mRed, theParams->mRed, aCrossFadeParams.mRedIsSet, theParams->mRedIsSet, aFraction);
 			theParams->mGreen = CrossFadeLerp(aCrossFadeParams.mGreen, theParams->mGreen, aCrossFadeParams.mGreenIsSet, theParams->mGreenIsSet, aFraction);

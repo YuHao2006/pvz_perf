@@ -1,5 +1,8 @@
-#include "VulkanRenderer.h"
-#include "../GpuParticleUpload.h"
+﻿#include "VulkanRenderer.h"
+#if defined(__ANDROID__)
+#include "SexyAppFramework/Common.h"
+#include <chrono>
+#endif
 #include <algorithm>
 #include <array>
 #include <cmath>
@@ -13,7 +16,44 @@
 #include <utility>
 
 namespace Sexy {
+#if defined(PVZ_VULKAN_SPRITE_EXPERIMENT)
+VkQueryPool VulkanRenderer::benchmarkQueries = VK_NULL_HANDLE;
+bool VulkanRenderer::benchmarkSimpleGenerated = false;
+bool VulkanRenderer::benchmarkSeparateBlend = false;
+bool VulkanRenderer::benchmarkManualBakedFilters = false;
+bool VulkanRenderer::benchmarkNonIndexedTriangles = false;
+bool VulkanRenderer::benchmark32BitQuads = false;
+bool VulkanRenderer::benchmarkPackedColor = false;
+bool VulkanRenderer::benchmarkPackedColor16 = false;
+bool VulkanRenderer::benchmarkDiscardScene = false;
+bool VulkanRenderer::benchmarkInstancedQuads = false;
+bool VulkanRenderer::benchmarkTightSceneBarriers = false;
+bool VulkanRenderer::benchmarkPresentCopy = false;
+bool VulkanRenderer::benchmarkSolidFill = false;
+bool VulkanRenderer::benchmarkGenerateIndexPrefix = true;
+unsigned int VulkanRenderer::benchmarkDrawCalls = 0, VulkanRenderer::benchmarkSceneDraws = 0;
+unsigned int VulkanRenderer::benchmarkTriangles = 0, VulkanRenderer::benchmarkSceneTriangles = 0;
+#endif
 namespace {
+#if defined(PVZ_VULKAN_SPRITE_EXPERIMENT)
+struct PackedColorVertex {
+    float x,y;
+    unsigned char color[4];
+    float u,v;
+    unsigned int slot,sampler;
+};
+static_assert(sizeof(PackedColorVertex)==28);
+struct PackedColor16Vertex {
+    float x,y;
+    unsigned short color[4];
+    float u,v;
+    unsigned int slot,sampler;
+};
+static_assert(sizeof(PackedColor16Vertex)==32);
+// Explicit corners preserve CPU transforms and UVs without reconstructing angles.
+using SpriteInstance=VulkanSpriteInstance;
+static_assert(sizeof(SpriteInstance)==88);
+#endif
 void Check(VkResult result, const char* operation) {
     if (result != VK_SUCCESS)
         throw std::runtime_error(std::string(operation) + " failed: " + std::to_string(result));
@@ -58,6 +98,11 @@ struct Buffer {
     }
 };
 
+struct DrawStream {
+    Buffer vertices;
+    Buffer indices;
+};
+
 void Barrier(VkCommandBuffer cmd, VkImage image, VkImageLayout oldLayout,
              VkImageLayout newLayout, VkPipelineStageFlags srcStage,
              VkPipelineStageFlags dstStage, VkAccessFlags srcAccess, VkAccessFlags dstAccess) {
@@ -93,10 +138,100 @@ std::vector<uint32_t> ReadShader(const std::string& path) {
 }
 }
 
+struct TextureMemoryPool;
+
+// 纹理专用子分配池：移动端专用 vkAllocateMemory 单次数毫~数十毫秒，且
+// maxMemoryAllocationCount 有限（Adreno≈4096）——数千纹理必须共享大块
+// DEVICE_LOCAL 内存。仅主线程访问（CreateImageTexture 的线程约束同源）。
+struct TextureMemoryPool {
+    struct Block { VkDeviceSize offset, size; bool free; };
+    struct Chunk { VkDeviceMemory memory; uint32_t typeIndex; std::vector<Block> blocks; };
+    std::vector<Chunk> chunks;
+    static constexpr VkDeviceSize kChunkBytes = 64ull << 20;
+
+    // 返回 VK_NULL_HANDLE = 池无法服务（超大/无类型），调用方回退专用分配
+    VkDeviceMemory Allocate(const VkMemoryRequirements& req, VkDeviceSize& outOffset,
+                            VkDeviceSize& outBytes) {
+        const uint32_t type = MemoryType(req.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+        const VkDeviceSize align = req.alignment ? req.alignment : 1;
+        const VkDeviceSize alignedSize = (req.size + align - 1) / align * align;
+        if (alignedSize > kChunkBytes) return VK_NULL_HANDLE;
+        for (auto& chunk : chunks)
+            if (chunk.typeIndex == type && Carve(chunk, align, alignedSize, outOffset)) {
+                outBytes = alignedSize;
+                return chunk.memory;
+            }
+        Chunk chunk{};
+        chunk.typeIndex = type;
+        VkMemoryAllocateInfo alloc{VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO};
+        alloc.allocationSize = kChunkBytes;
+        alloc.memoryTypeIndex = type;
+        VK_REQUIRE(vkAllocateMemory(VulkanContext::device, &alloc, nullptr, &chunk.memory));
+        chunk.blocks.push_back({0, kChunkBytes, true});
+        chunks.push_back(std::move(chunk));
+        const bool carved = Carve(chunks.back(), align, alignedSize, outOffset);
+        // 全新空块必然成功
+        if (!carved) throw std::runtime_error("TextureMemoryPool fresh chunk carve failed");
+        outBytes = alignedSize;
+        return chunks.back().memory;
+    }
+
+    void Free(VkDeviceMemory memory, VkDeviceSize offset, VkDeviceSize) {
+        for (auto& chunk : chunks) {
+            if (chunk.memory != memory) continue;
+            for (auto& block : chunk.blocks)
+                if (block.offset == offset && !block.free) {
+                    block.free = true;
+                    Coalesce(chunk);
+                    return;
+                }
+            return;
+        }
+    }
+
+    ~TextureMemoryPool() {
+        for (auto& chunk : chunks)
+            if (chunk.memory) vkFreeMemory(VulkanContext::device, chunk.memory, nullptr);
+    }
+private:
+    static bool Carve(Chunk& chunk, VkDeviceSize align, VkDeviceSize size, VkDeviceSize& outOffset) {
+        for (size_t i = 0; i < chunk.blocks.size(); ++i) {
+            auto& block = chunk.blocks[i];
+            if (!block.free) continue;
+            const VkDeviceSize start = (block.offset + align - 1) / align * align;
+            if (start + size > block.offset + block.size) continue;
+            // 就地切分为 [左残片][占用][右残片]，保持 offset 有序
+            std::vector<Block> replacement;
+            replacement.reserve(3);
+            if (start > block.offset)
+                replacement.push_back({block.offset, start - block.offset, true});
+            replacement.push_back({start, size, false});
+            if (start + size < block.offset + block.size)
+                replacement.push_back({start + size, block.offset + block.size - start - size, true});
+            chunk.blocks.erase(chunk.blocks.begin() + i);
+            chunk.blocks.insert(chunk.blocks.begin() + i,
+                replacement.begin(), replacement.end());
+            outOffset = start;
+            return true;
+        }
+        return false;
+    }
+    static void Coalesce(Chunk& chunk) {
+        for (size_t i = 0; i + 1 < chunk.blocks.size();) {
+            if (chunk.blocks[i].free && chunk.blocks[i + 1].free) {
+                chunk.blocks[i].size += chunk.blocks[i + 1].size;
+                chunk.blocks.erase(chunk.blocks.begin() + i + 1);
+            } else ++i;
+        }
+    }
+};
+
 struct VulkanTexture {
     VkImage image = VK_NULL_HANDLE;
     VkImageView view = VK_NULL_HANDLE;
     VkDeviceMemory memory = VK_NULL_HANDLE;
+    TextureMemoryPool* pool = nullptr;      // 非空=子分配（析构归还池）
+    VkDeviceSize memoryOffset = 0, pooledBytes = 0;
     VkFramebuffer framebuffer = VK_NULL_HANDLE;
     VkDescriptorPool computePool = VK_NULL_HANDLE;
     VkDescriptorSet computeSet = VK_NULL_HANDLE;
@@ -118,54 +253,46 @@ struct VulkanTexture {
     bool opaque = false, uploaded = false;
     size_t pendingUpload = SIZE_MAX;
     uint64_t lastDraw = 0;
+    unsigned long long retireAfterSerial = 0;
     ~VulkanTexture() {
         if (computeSet) vkFreeDescriptorSets(VulkanContext::device,computePool,1,&computeSet);
         if (slotOwner && *slotOwner == this) *slotOwner = nullptr;
         if (framebuffer) vkDestroyFramebuffer(VulkanContext::device, framebuffer, nullptr);
         if (ownsImage && view) vkDestroyImageView(VulkanContext::device, view, nullptr);
         if (ownsImage && image) vkDestroyImage(VulkanContext::device, image, nullptr);
-        if (memory) vkFreeMemory(VulkanContext::device, memory, nullptr);
+        if (memory) {
+            if (pool) pool->Free(memory, memoryOffset, pooledBytes);
+            else vkFreeMemory(VulkanContext::device, memory, nullptr);
+        }
     }
 };
 
-struct VulkanReanim {
-    const void* owner=nullptr;
-    // Validation metadata only; no CPU keyframes or geometry are retained.
-    std::vector<GpuReanimTrack> trackInfo;
-    uint32_t imageSlotCount = 0, variantCount = 0;
-    uint32_t particleEmitterCount = 0, particleVariantCount = 0;
-#if defined(PVZ_REANIM_UNIFIED)
-    uint32_t blobHeader=UINT32_MAX;
-    VkDeviceSize blobBytes=0;
-#endif
-};
-#if defined(PVZ_REANIM_UNIFIED)
-struct ReanimInstanceData {
-    GpuReanimInstance draw;
-    uint32_t header,imageSlotCount,textureSlot,flags;
-    float clip[4];
-};
-struct ReanimTrackData {
-    uint32_t track,instance,color,flags;
-    float shakeX,shakeY;
-    uint32_t padding[2]{};
-};
-static_assert(sizeof(ReanimInstanceData)==96 && sizeof(ReanimTrackData)==32);
-#endif
-
 struct VulkanRenderer::Impl {
+#if defined(PVZ_VULKAN_SPRITE_EXPERIMENT)
+    bool simpleGeneratedExperiment = false, manualFilterExperiment = false;
+    VkShaderModule generatedExperimentShader = VK_NULL_HANDLE;
+    VkShaderModule solidExperimentShader = VK_NULL_HANDLE;
+    VkPipeline solidExperimentPipeline = VK_NULL_HANDLE;
+    bool solidFillExperiment = false, generateIndexPrefixExperiment = false;
+    std::array<VkPipeline,3> generatedExperimentPipelines{};
+    bool nonIndexedExperiment = false, wideIndexExperiment = false, packedColorExperiment = false, packedColor16Experiment = false, discardSceneExperiment = false, instancedExperiment = false, tightSceneBarriersExperiment = false, presentCopyExperiment = false;
+    VulkanTexture* benchmarkOutput = nullptr;
+    VkRenderPass benchmarkOutputPass = VK_NULL_HANDLE;
+    VkPipeline benchmarkOutputPipeline = VK_NULL_HANDLE;
+    void RecordBenchmarkPresentCopy();
+    Buffer wideQuadIndices;
+#endif
+#if defined(PVZ_VULKAN_SPRITE_EXPERIMENT) || defined(PVZ_VULKAN_SEPARATE_BLEND_TEST)
+    VkShaderModule separateBlendExperimentShader = VK_NULL_HANDLE;
+#endif
     VulkanContext& window;
+    TextureMemoryPool texturePool;
     VkDevice device;
     int width, height;
     bool sceneInitialized = false;
     uint64_t frameSerial = 0;
     VulkanContext::FrameContext frame{};
     bool imageOnly = false, targetPassOpen = false;
-    uint32_t reanimPictureCandidates=0;
-#if defined(PVZ_REANIM_UNIFIED)
-    uint64_t reanimOrdinaryTriangles=0;
-#endif
-    bool reanimFrameEligible=false;
     VulkanTexture* renderImage = nullptr;
     VkRenderPass scenePass = VK_NULL_HANDLE;
     VkRenderPass imagePass = VK_NULL_HANDLE;
@@ -173,10 +300,14 @@ struct VulkanRenderer::Impl {
     VkDescriptorSetLayout imageLayout = VK_NULL_HANDLE, samplerLayout = VK_NULL_HANDLE;
     VkPipelineLayout pipelineLayout = VK_NULL_HANDLE;
     std::array<VkPipeline, 3> pipelines{};
+    std::array<VkPipeline, 3> spritePipelines{};
+    VkPipeline mixedSpritePipeline = VK_NULL_HANDLE;
     std::array<VkPipeline, 3> coveragePipelines{};
     std::array<VkPipeline, 3> imagePipelines{}, imageCoveragePipelines{};
     VkPipeline presentPipeline = VK_NULL_HANDLE;
     VkShaderModule vertexShader = VK_NULL_HANDLE, fragmentShader = VK_NULL_HANDLE;
+    VkShaderModule spriteFragmentShader = VK_NULL_HANDLE;
+    VkShaderModule mixedSpriteFragmentShader = VK_NULL_HANDLE;
     VkShaderModule hdrFragmentShader = VK_NULL_HANDLE;
     VkShaderModule poolVertexShader = VK_NULL_HANDLE;
     VkPipelineLayout poolLayout = VK_NULL_HANDLE;
@@ -203,6 +334,7 @@ struct VulkanRenderer::Impl {
     static constexpr uint32_t kTextureSlots = 4096;
     static constexpr uint32_t kSlotMask = kTextureSlots - 1;
     static constexpr uint32_t kGeneratedPremult = 0x80000000u;
+    static constexpr uint32_t kMixedAdditive = 0x02000000u;
     std::array<VulkanTexture*, kTextureSlots> slotOwners{};
     // reanim-v4 静态槽位区（顶部）：[staticBase, kTextureSlots) 恒等映射
     // 图像符号号（编译记录烘焙最终下标，零运行时翻译）。默认无静态区。
@@ -240,43 +372,29 @@ struct VulkanRenderer::Impl {
     VkCommandPool imageCommandPool = VK_NULL_HANDLE;
     VkCommandBuffer imageCommand = VK_NULL_HANDLE;
     VkFence imageFence = VK_NULL_HANDLE;
-    std::vector<std::unique_ptr<Buffer>> streams;
-#if defined(PVZ_REANIM_UNIFIED)
-    std::vector<VulkanReanim*> reanimDefinitions, reanimRetired;
-    std::vector<Buffer*> reanimStaging;
-    std::string reanimShaderFolder;
-    VkShaderModule reanimVertex=VK_NULL_HANDLE,reanimGeometry=VK_NULL_HANDLE;
-    VkDescriptorSetLayout reanimGeometrySetLayout=VK_NULL_HANDLE;
-    VkPipelineLayout reanimGeometryLayout=VK_NULL_HANDLE;
-    std::array<VkPipeline,3> reanimGeometryPipelines{},reanimGeometryImagePipelines{};
-    Buffer* unifiedStatic=nullptr;
-    VkDeviceSize unifiedStaticUsed=0;
-    struct ArenaRange {VkDeviceSize offset,size;};
-    std::vector<ArenaRange> unifiedFreeRanges;
-    Buffer* unifiedInstances=nullptr;
-    Buffer* unifiedPackets=nullptr;
-    Buffer* unifiedIndices=nullptr;
-    struct InstanceControl {VulkanReanim* definition;VulkanTexture* texture;uint32_t before,after;};
-    std::vector<InstanceControl> unifiedInstanceControls;
-    struct OrdinaryRun {
-        // Low two bits: blend; family: scene/image/coverage/imageCoverage (0..3).
-        Buffer* stream;VkDeviceSize offset;uint32_t count,pipelineSlot;
-        VkRect2D scissor;int width,height;
-    };
-    std::vector<OrdinaryRun> unifiedOrdinary;
-    size_t unifiedOrdinaryTriangles=0;
-    bool flushingOrdinary=false;
-    VkDescriptorPool unifiedPool=VK_NULL_HANDLE;
-    VkDescriptorSet unifiedSet=VK_NULL_HANDLE;
-    bool unifiedFrame=false;
-    std::array<VkPipeline,3> unifiedCoverage{},unifiedImageCoverage{};
+#if defined(PVZ_VULKAN_SPRITE_EXPERIMENT)
+    unsigned int vertexStride = sizeof(VulkanVertex);
+#else
+    static constexpr unsigned int vertexStride = sizeof(VulkanVertex);
 #endif
-#if defined(PVZ_REANIM_BENCHMARK)
-    VkQueryPool frameTimestampQueries = VK_NULL_HANDLE;
-    std::chrono::steady_clock::time_point frameRecordEnd{};
-#endif
-    std::unique_ptr<Buffer> textureStaging;
-    struct TextureUpload { VulkanTexture* texture; VkDeviceSize offset; };
+    std::vector<DrawStream*> streams;
+    bool recordingFailed = false;
+    Buffer staticIndices;
+    // 上传 staging 轮换环：提交后的旧 arena 仍被在途批读取，轮换到下一个
+    // 即可无等待覆写（单在途批约束下，环回时旧批必已完成）。
+    std::vector<std::unique_ptr<Buffer>> stagingRing;
+    size_t stagingIndex = 0;
+    static constexpr size_t kStagingRingSize = 4;
+    Buffer* Staging() { return stagingIndex < stagingRing.size() ? stagingRing[stagingIndex].get() : nullptr; }
+    // 管线缓存：Adreno 单条几何/计算管线编译秒级（12 条 GS 管线曾冻结
+    // 装载屏 39 秒）。首启编译后落盘，二次启动直接命中。
+    mutable VkPipelineCache pipelineCache = VK_NULL_HANDLE;
+    void SavePipelineCache();
+    // reanim/粒子定义上传的常驻 scratch：此前每定义一次 vkCreateBuffer+
+    // vkAllocateMemory，Adreno 单次数十毫秒，五百粒子定义冻结装载屏 39 秒。
+    std::unique_ptr<Buffer> reanimScratch;
+    VkDeviceSize reanimScratchUsed = 0;
+    struct TextureUpload { VulkanTexture* texture; VkDeviceSize offset; size_t arena; };
     std::vector<TextureUpload> pendingUploads;
     // Native command-buffer state, not emulated DX state. All scene/present
     // pipelines share pipelineLayout and use dynamic viewport/scissor. Reset
@@ -287,14 +405,33 @@ struct VulkanRenderer::Impl {
         VkRect2D scissor{};
         VkPipeline pipeline=VK_NULL_HANDLE;
         std::array<VkDescriptorSet,2> descriptors{};
+        VkBuffer indexBuffer=VK_NULL_HANDLE;
         VkBuffer vertexBuffer=VK_NULL_HANDLE; // 冲刷游程时的已绑定流缓冲
-#if defined(PVZ_REANIM_UNIFIED)
-        bool unified=false;
-#endif
     } drawState;
     std::unique_ptr<VulkanTexture> scene;
     std::unordered_map<VulkanTexture*, std::unique_ptr<VulkanTexture>> textures;
     std::vector<std::unique_ptr<VulkanTexture>> retired;
+    struct RetiredDescriptorPool {
+        VkDescriptorPool pool = VK_NULL_HANDLE;
+        unsigned long long serial = 0;
+    };
+    std::vector<RetiredDescriptorPool> retiredDescriptorPools;
+    void Retire(std::unique_ptr<VulkanTexture> texture) {
+        texture->retireAfterSerial = std::max({window.submittedSerial, window.recordingSerial, frame.serial});
+        retired.push_back(std::move(texture));
+    }
+    void GuardStaticSlot(unsigned int slot) {
+        // Fresh and fully retired dynamic slots are immutable while referenced.
+        // Static overwrites are administrative: drain pending draws, and reject
+        // overwriting an entry already recorded by this unsubmitted frame.
+        const auto* previous = slotOwners[slot];
+        if (!previous) return;
+        if (frame.valid && previous->lastDraw == frameSerial)
+            throw std::logic_error("Cannot overwrite a static texture slot used by the recording frame");
+        window.WaitForFrame();
+        if (transferOpen) FinishTransfer();
+        CompleteTransfers();
+    }
     VulkanTexture* white = nullptr;
     // Pool caustics compute path: one pipeline, one LUT buffer, one target.
     // The target stays in GENERAL layout so the compute write and the scene's
@@ -347,37 +484,42 @@ struct VulkanRenderer::Impl {
 
     Impl(VulkanContext& w, int sw, int sh) : window(w), device(w.device), width(sw), height(sh) {}
     ~Impl() {
+        if (frame.valid) window.AbortFrame();
         // Lifetime failure is not a fallback: this only releases partial or
         // completed initialization after the caller reports the original error.
         if (device) vkDeviceWaitIdle(device);
         // Pending uploads only own host snapshots; no unfinished transfer can
         // reference this buffer because FlushTextureUploads waits for its fence.
         pendingUploads.clear();
-        textureStaging.reset();
+        stagingRing.clear();
+        reanimScratch.reset();
         ReleaseScale(0); ReleaseScale(1);
         scaleLibrary.reset();
         retired.clear();
+        for (const auto& retiredPool : retiredDescriptorPools)
+            vkDestroyDescriptorPool(device, retiredPool.pool, nullptr);
+        retiredDescriptorPools.clear();
         textures.clear();
         if (sceneFramebuffer) vkDestroyFramebuffer(device, sceneFramebuffer, nullptr);
         scene.reset();
+        for (auto* stream : streams) delete stream;
         streams.clear();
-#if defined(PVZ_REANIM_UNIFIED)
-        for (auto* definition : reanimDefinitions) delete definition;
-        for (auto* definition : reanimRetired) delete definition;
-        for (auto* staging : reanimStaging) delete staging;
-        for (auto pipeline:reanimGeometryPipelines) if (pipeline) vkDestroyPipeline(device,pipeline,nullptr);
-        for (auto pipeline:reanimGeometryImagePipelines) if (pipeline) vkDestroyPipeline(device,pipeline,nullptr);
-        if (reanimGeometryLayout) vkDestroyPipelineLayout(device,reanimGeometryLayout,nullptr);
-        if (reanimGeometrySetLayout) vkDestroyDescriptorSetLayout(device,reanimGeometrySetLayout,nullptr);
-        if (reanimVertex) vkDestroyShaderModule(device,reanimVertex,nullptr);
-        if (reanimGeometry) vkDestroyShaderModule(device,reanimGeometry,nullptr);
-        delete unifiedStatic;
-        delete unifiedInstances;delete unifiedPackets;delete unifiedIndices;
-        if (unifiedPool) vkDestroyDescriptorPool(device,unifiedPool,nullptr);
-        for (auto pipeline:unifiedCoverage) if (pipeline) vkDestroyPipeline(device,pipeline,nullptr);
-        for (auto pipeline:unifiedImageCoverage) if (pipeline) vkDestroyPipeline(device,pipeline,nullptr);
-#endif
         for (auto pipeline : pipelines) if (pipeline) vkDestroyPipeline(device, pipeline, nullptr);
+        for (auto pipeline : spritePipelines) if (pipeline) vkDestroyPipeline(device, pipeline, nullptr);
+        if (mixedSpritePipeline) vkDestroyPipeline(device,mixedSpritePipeline,nullptr);
+#if defined(PVZ_VULKAN_SPRITE_EXPERIMENT)
+        for (auto pipeline : generatedExperimentPipelines)
+            if (pipeline) vkDestroyPipeline(device,pipeline,nullptr);
+        if (generatedExperimentShader) vkDestroyShaderModule(device,generatedExperimentShader,nullptr);
+        if (solidExperimentPipeline) vkDestroyPipeline(device,solidExperimentPipeline,nullptr);
+        if (solidExperimentShader) vkDestroyShaderModule(device,solidExperimentShader,nullptr);
+        if (benchmarkOutputPipeline) vkDestroyPipeline(device,benchmarkOutputPipeline,nullptr);
+        delete benchmarkOutput;
+        if (benchmarkOutputPass) vkDestroyRenderPass(device,benchmarkOutputPass,nullptr);
+#endif
+#if defined(PVZ_VULKAN_SPRITE_EXPERIMENT) || defined(PVZ_VULKAN_SEPARATE_BLEND_TEST)
+        if (separateBlendExperimentShader) vkDestroyShaderModule(device,separateBlendExperimentShader,nullptr);
+#endif
         for (auto pipeline : coveragePipelines) if (pipeline) vkDestroyPipeline(device, pipeline, nullptr);
         for (auto pipeline : imagePipelines) if (pipeline) vkDestroyPipeline(device, pipeline, nullptr);
         for (auto pipeline : imageCoveragePipelines) if (pipeline) vkDestroyPipeline(device, pipeline, nullptr);
@@ -409,6 +551,8 @@ struct VulkanRenderer::Impl {
         if (alphaKernel.shader) vkDestroyShaderModule(device,alphaKernel.shader,nullptr);
         if (vertexShader) vkDestroyShaderModule(device, vertexShader, nullptr);
         if (fragmentShader) vkDestroyShaderModule(device, fragmentShader, nullptr);
+        if (spriteFragmentShader) vkDestroyShaderModule(device, spriteFragmentShader, nullptr);
+        if (mixedSpriteFragmentShader) vkDestroyShaderModule(device,mixedSpriteFragmentShader,nullptr);
         if (hdrFragmentShader) vkDestroyShaderModule(device, hdrFragmentShader, nullptr);
         for (auto pool : pools) vkDestroyDescriptorPool(device, pool, nullptr);
         for (auto sampler : samplers) if (sampler) vkDestroySampler(device, sampler, nullptr);
@@ -425,7 +569,7 @@ struct VulkanRenderer::Impl {
         size_t index = 0;
         while (index < pools.size() && poolFreeSets[index] == 0) ++index;
         if (index == pools.size()) {
-            const VkDescriptorPoolSize sizes[] = {
+            static constexpr VkDescriptorPoolSize sizes[] = {
                 {VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1024}, {VK_DESCRIPTOR_TYPE_SAMPLER, 1024}};
             VkDescriptorPoolCreateInfo info{VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO};
             info.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
@@ -449,32 +593,35 @@ struct VulkanRenderer::Impl {
     }
 
     void ReapRetired() {
-        // 围栏已确认在途帧完成：纹理本体销毁，槽号回收入栈（同一道闸门，
-        // 先记账再销毁）。复用的安全性来源=这道闸门，与纹理销毁共用不变量。
-        //  retired 纹理还可能被未等待的传输/合成批引用：销毁前先等完
-        // （空 retire 不等待，常态零成本）。
-        if (!retired.empty()) CompleteTransfers();
-        for (const auto& texture : retired) {
-            // 裸图（合成中间体）slot=UINT32_MAX：无槽可回收
-            if (texture->slot >= kTextureSlots) continue;
-            if (slotOwners[texture->slot] == texture.get())
-                slotOwners[texture->slot] = nullptr;
-            // 静态槽永不回收（恒等映射区，重放置=原地覆盖描述符）
-            if (texture->slot < staticBase)
-                freeSlots.push_back(texture->slot);
-        }
-        retired.clear();
+        // Retire includes the recording submission even when an old backing
+        // was only copied, not sampled. Never free a recording resource after merely
+        // waiting a transfer or image-only batch that does not cover it.
+        if (!retired.empty() || !retiredDescriptorPools.empty()) CompleteTransfers();
+        std::erase_if(retired, [&](const auto& texture) {
+            if (texture->retireAfterSerial > window.completedSerial) return false;
+            if (texture->slot < kTextureSlots) {
+                if (slotOwners[texture->slot] == texture.get()) slotOwners[texture->slot] = nullptr;
+                if (texture->slot < staticBase) freeSlots.push_back(texture->slot);
+            }
+            return true;
+        });
+        std::erase_if(retiredDescriptorPools, [&](const auto& retiredPool) {
+            if (retiredPool.serial > window.completedSerial) return false;
+            vkDestroyDescriptorPool(device, retiredPool.pool, nullptr);
+            return true;
+        });
     }
 
     // 池水焦散 compute（一次性装配）：管线 + LUT SSBO + 目标图描述集。
     // LUT 是 256x256 灰度字节，主机写入先于任何提交，HOST_COHERENT 直读。
     void InitCaustics(VulkanTexture* target, VulkanTexture* source) {
         auto& c = caustics;
+        const bool replacingBindings = c.set != VK_NULL_HANDLE;
         c.target = target;
         c.source = source;
         c.frameQueued = true; // 装配后首帧即产出内容（counter=0），杜绝白帧
         if (!c.setLayout) {
-            const VkDescriptorSetLayoutBinding bindings[] = {
+            static constexpr VkDescriptorSetLayoutBinding bindings[] = {
                 {0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_COMPUTE_BIT, nullptr},
                 {1, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1, VK_SHADER_STAGE_COMPUTE_BIT, nullptr},
             };
@@ -508,7 +655,28 @@ struct VulkanRenderer::Impl {
             compute.stage.module = c.shader;
             compute.stage.pName = "main";
             compute.layout = c.layout;
-            VK_REQUIRE(vkCreateComputePipelines(device, VK_NULL_HANDLE, 1, &compute, nullptr, &c.pipeline));
+            VK_REQUIRE(vkCreateComputePipelines(device, pipelineCache, 1, &compute, nullptr, &c.pipeline));
+        }
+        if (replacingBindings) {
+            VkDescriptorPoolSize sizes[] = {
+                {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1},
+                {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1}};
+            VkDescriptorPoolCreateInfo pool{VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO};
+            pool.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
+            pool.maxSets = 1; pool.poolSizeCount = 2; pool.pPoolSizes = sizes;
+            VkDescriptorPool next = VK_NULL_HANDLE;
+            VK_REQUIRE(vkCreateDescriptorPool(device, &pool, nullptr, &next));
+            VkDescriptorSetAllocateInfo allocate{VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO};
+            allocate.descriptorPool = next; allocate.descriptorSetCount = 1;
+            allocate.pSetLayouts = &c.setLayout;
+            VkDescriptorSet set = VK_NULL_HANDLE;
+            const auto result = vkAllocateDescriptorSets(device, &allocate, &set);
+            if (result != VK_SUCCESS) { vkDestroyDescriptorPool(device, next, nullptr); VK_REQUIRE(result); }
+            try {
+                retiredDescriptorPools.push_back({c.pool,
+                    std::max({window.submittedSerial, window.recordingSerial, frame.serial})});
+            } catch (...) { vkDestroyDescriptorPool(device, next, nullptr); throw; }
+            c.pool = next; c.set = set;
         }
         // 目标可能换代（重开关卡）：改写 storage image 绑定即可，管线与 LUT 复用。
         VkDescriptorImageInfo sourceInfo{samplers[0],source->view,source->sampledLayout};
@@ -585,7 +753,8 @@ struct VulkanRenderer::Impl {
         image->opaque = opaque;
         image->format = format;
         image->texelBytes = format==VK_FORMAT_R8_UNORM?1:
-            format==VK_FORMAT_R32G32B32A32_SFLOAT?16:4;
+            format==VK_FORMAT_R32G32B32A32_SFLOAT?16:
+            format==VK_FORMAT_R16G16B16A16_SFLOAT?8:4;
         VkImageCreateInfo info{VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO};
         info.imageType = VK_IMAGE_TYPE_2D;
         info.format = format;
@@ -597,11 +766,21 @@ struct VulkanRenderer::Impl {
         VK_REQUIRE(vkCreateImage(device, &info, nullptr, &image->image));
         VkMemoryRequirements req{};
         vkGetImageMemoryRequirements(device, image->image, &req);
-        VkMemoryAllocateInfo alloc{VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO};
-        alloc.allocationSize = req.size;
-        alloc.memoryTypeIndex = MemoryType(req.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-        VK_REQUIRE(vkAllocateMemory(device, &alloc, nullptr, &image->memory));
-        VK_REQUIRE(vkBindImageMemory(device, image->image, image->memory, 0));
+        VkDeviceSize poolOffset = 0, poolBytes = 0;
+        VkDeviceMemory pooled = texturePool.Allocate(req, poolOffset, poolBytes);
+        if (pooled != VK_NULL_HANDLE) {
+            image->memory = pooled;
+            image->memoryOffset = poolOffset;
+            image->pooledBytes = poolBytes;
+            image->pool = &texturePool;
+            VK_REQUIRE(vkBindImageMemory(device, image->image, pooled, poolOffset));
+        } else {
+            VkMemoryAllocateInfo alloc{VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO};
+            alloc.allocationSize = req.size;
+            alloc.memoryTypeIndex = MemoryType(req.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+            VK_REQUIRE(vkAllocateMemory(device, &alloc, nullptr, &image->memory));
+            VK_REQUIRE(vkBindImageMemory(device, image->image, image->memory, 0));
+        }
         VkImageViewCreateInfo view{VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO};
         view.image = image->image;
         view.viewType = VK_IMAGE_VIEW_TYPE_2D;
@@ -613,6 +792,7 @@ struct VulkanRenderer::Impl {
         image->slot = staticSlot == 0xFFFFFFFFu ? AllocSlot() : staticBase + staticSlot;
         if (image->slot >= kTextureSlots)
             throw std::runtime_error("Static texture slot out of range");
+        if (staticSlot != 0xFFFFFFFFu) GuardStaticSlot(image->slot);
         VkDescriptorImageInfo binding{};
         binding.imageView = image->view;
         binding.imageLayout = sampledLayout;
@@ -662,12 +842,6 @@ struct VulkanRenderer::Impl {
                 static_cast<unsigned int>(pendingComposeSets.size()), pendingComposeSets.data()));
             pendingComposeSets.clear();
         }
-#if defined(PVZ_REANIM_UNIFIED)
-        if (!transferOpen) {
-            for (auto* staging : reanimStaging) delete staging;
-            reanimStaging.clear();
-        }
-#endif
     }
 
     void RecordTextureUploads(VkCommandBuffer cmd) {
@@ -688,7 +862,7 @@ struct VulkanRenderer::Impl {
             copy.bufferOffset=upload.offset;
             copy.imageSubresource={VK_IMAGE_ASPECT_COLOR_BIT,0,0,1};
             copy.imageExtent={uint32_t(image.width),uint32_t(image.height),1};
-            vkCmdCopyBufferToImage(cmd,textureStaging->buffer,image.image,
+            vkCmdCopyBufferToImage(cmd,stagingRing[upload.arena]->buffer,image.image,
                 VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,1,&copy);
             Barrier(cmd,image.image,VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,image.sampledLayout,
                 VK_PIPELINE_STAGE_TRANSFER_BIT,VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT|VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
@@ -707,24 +881,32 @@ struct VulkanRenderer::Impl {
             upload.texture->pendingUpload=SIZE_MAX;
         }
         pendingUploads.clear();
-        textureStaging->used=0;
+        stagingRing[stagingIndex]->used=0;
+        // 推进轮换：本批已提交、仍在读此 arena；下一批写别的 arena。
+        stagingIndex=(stagingIndex+1)%kStagingRingSize;
     }
 
     void ReserveTextureUpload(VkDeviceSize bytes) {
-        // Bound accumulated host copies: one 4 MiB arena, enlarged only for a
-        // single larger texture. Overflow submits the existing batch, not a
-        // growing collection of per-texture mapped allocations.
+        // Bound accumulated host copies: 4 MiB arenas in a rotation ring,
+        // enlarged only for a single larger texture. Overflow submits the
+        // existing batch and rotates——旧 arena 仍被在途批读取，新批写别的
+        // arena，无需等待（单在途批约束；环回时旧批必已完成）。原先此处
+        // 每张纹理都 CompleteTransfers：Adreno 每次往返数十毫秒，数千张
+        // 纹理被串行拖成 40 秒（2026-10-26 实机 sweep/imgstats 定罪）。
         constexpr VkDeviceSize defaultCapacity=4*1024*1024;
-        if (textureStaging && bytes>textureStaging->size-textureStaging->used)
+        if (const Buffer* staging=Staging(); staging && bytes>staging->size-staging->used)
             FlushTextureUploads();
-        // 批次边界等待（必须在 flush 之后）：flush 提交在途批并把 staging
-        // used 归零，本次 memcpy 复用同一段宿主字节——在途 copy 未等完就
-        // 覆写会让已录制的副本读到别人的像素（多片图首行雪花即此竞态）。
-        if (transferInFlight) CompleteTransfers();
-        if (!textureStaging || bytes>textureStaging->size) {
+        const Buffer* staging=Staging();
+        if (!staging || bytes>staging->size) {
             auto next=std::make_unique<Buffer>();
             next->Create(std::max(defaultCapacity,bytes),VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
-            textureStaging=std::move(next);
+            if (stagingRing.size()<kStagingRingSize) {
+                stagingIndex=stagingRing.size();          // 新槽：不覆盖在途 arena
+                stagingRing.push_back(std::move(next));
+            } else {
+                if (transferInFlight) CompleteTransfers(); // 槽重建：旧内存可能被在途批引用
+                stagingRing[stagingIndex]=std::move(next);
+            }
         }
     }
 
@@ -741,12 +923,12 @@ struct VulkanRenderer::Impl {
             offset=pendingUploads[texture->pendingUpload].offset;
         } else {
             ReserveTextureUpload(reserved);
-            offset=textureStaging->used;
-            pendingUploads.push_back({texture,offset});
+            offset=stagingRing[stagingIndex]->used;
+            pendingUploads.push_back({texture,offset,stagingIndex});
             texture->pendingUpload=pendingUploads.size()-1;
-            textureStaging->used+=reserved;
+            stagingRing[stagingIndex]->used+=reserved;
         }
-        auto* destination=static_cast<std::byte*>(textureStaging->mapped)+offset;
+        auto* destination=static_cast<std::byte*>(stagingRing[stagingIndex]->mapped)+offset;
         if (VkDeviceSize(pitch)==rowBytes) std::memcpy(destination,pixels,size_t(bytes));
         else for (int y=0;y<imageHeight;++y)
             std::memcpy(destination+size_t(y)*rowBytes,
@@ -754,10 +936,11 @@ struct VulkanRenderer::Impl {
     }
 
     VkPipeline Pipeline(VkRenderPass pass, VulkanBlend blend, VkShaderModule pixelShader = VK_NULL_HANDLE,
-        bool premultiplied = false, bool coverage = false, bool pool = false, bool reanim = false) {
+        bool premultiplied = false, bool coverage = false, bool pool = false,
+        bool dualSource = false) {
         const VkBool32 specializations[] = {premultiplied ? VK_TRUE : VK_FALSE,
             coverage ? VK_TRUE : VK_FALSE};
-        const VkSpecializationMapEntry entries[] = {
+        static constexpr VkSpecializationMapEntry entries[] = {
             {0, 0, sizeof(VkBool32)}, {1, sizeof(VkBool32), sizeof(VkBool32)}};
         const VkSpecializationInfo specialization{2, entries, sizeof(specializations), specializations};
         VkPipelineShaderStageCreateInfo shaders[] = {
@@ -766,15 +949,28 @@ struct VulkanRenderer::Impl {
             {VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO, nullptr, 0,
                 VK_SHADER_STAGE_FRAGMENT_BIT, pixelShader ? pixelShader : fragmentShader, "main",
                 premultiplied || coverage ? &specialization : nullptr},{}};
+#if defined(PVZ_VULKAN_SPRITE_EXPERIMENT) || defined(PVZ_VULKAN_SEPARATE_BLEND_TEST)
+        if (pixelShader && pixelShader == separateBlendExperimentShader)
+            shaders[1].pSpecializationInfo = nullptr;
+#endif
         VkVertexInputBindingDescription binding{0,
-            pool ? uint32_t(sizeof(GpuPoolVertex)) : uint32_t(sizeof(VulkanVertex)), VK_VERTEX_INPUT_RATE_VERTEX};
-        const VkVertexInputAttributeDescription attributes[] = {
+            pool ? uint32_t(sizeof(GpuPoolVertex)) : vertexStride, VK_VERTEX_INPUT_RATE_VERTEX};
+        VkVertexInputAttributeDescription attributes[] = {
             {0, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(VulkanVertex, x)},
             {1, 0, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(VulkanVertex, r)},
             {2, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(VulkanVertex, u)},
             {3, 0, VK_FORMAT_R32_UINT, offsetof(VulkanVertex, slot)},
             {4, 0, VK_FORMAT_R32_UINT, offsetof(VulkanVertex, sampler)}};
-        const VkVertexInputAttributeDescription poolAttributes[] = {
+#if defined(PVZ_VULKAN_SPRITE_EXPERIMENT)
+        if (packedColorExperiment) {
+            attributes[1].format=packedColor16Experiment ? VK_FORMAT_R16G16B16A16_UNORM : VK_FORMAT_R8G8B8A8_UNORM;
+            attributes[1].offset=offsetof(PackedColorVertex,color);
+            attributes[2].offset=packedColor16Experiment ? offsetof(PackedColor16Vertex,u) : offsetof(PackedColorVertex,u);
+            attributes[3].offset=packedColor16Experiment ? offsetof(PackedColor16Vertex,slot) : offsetof(PackedColorVertex,slot);
+            attributes[4].offset=packedColor16Experiment ? offsetof(PackedColor16Vertex,sampler) : offsetof(PackedColorVertex,sampler);
+        }
+#endif
+        static constexpr VkVertexInputAttributeDescription poolAttributes[] = {
             {0,0,VK_FORMAT_R32G32_SFLOAT,offsetof(GpuPoolVertex,x)},
             {1,0,VK_FORMAT_R32G32_SFLOAT,offsetof(GpuPoolVertex,phaseX)}};
         VkPipelineVertexInputStateCreateInfo input{VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO};
@@ -782,16 +978,19 @@ struct VulkanRenderer::Impl {
         input.pVertexBindingDescriptions = &binding;
         input.vertexAttributeDescriptionCount = pool ? 2 : 5;
         input.pVertexAttributeDescriptions = pool ? poolAttributes : attributes;
-#if defined(PVZ_REANIM_UNIFIED)
-        if (reanim) {
-            shaders[2]=shaders[1]; shaders[1]={VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO};
-            shaders[0].module=reanimVertex;
-            shaders[1].stage=VK_SHADER_STAGE_GEOMETRY_BIT;shaders[1].module=reanimGeometry;shaders[1].pName="main";
-            binding.stride=sizeof(GpuVertex);
-            input.vertexAttributeDescriptionCount=5;input.pVertexAttributeDescriptions=attributes;
+#if defined(PVZ_VULKAN_SPRITE_EXPERIMENT)
+        static constexpr VkVertexInputAttributeDescription instanceAttributes[]{
+            {0,0,VK_FORMAT_R32G32B32A32_SFLOAT,0},
+            {1,0,VK_FORMAT_R32G32B32A32_SFLOAT,16},
+            {2,0,VK_FORMAT_R32G32B32A32_SFLOAT,32},
+            {3,0,VK_FORMAT_R32G32B32A32_SFLOAT,48},
+            {4,0,VK_FORMAT_R32G32B32A32_SFLOAT,64},
+            {5,0,VK_FORMAT_R32_UINT,80},{6,0,VK_FORMAT_R32_UINT,84}};
+        if (instancedExperiment && !pool) {
+            binding.inputRate=VK_VERTEX_INPUT_RATE_INSTANCE;
+            input.vertexAttributeDescriptionCount=7;
+            input.pVertexAttributeDescriptions=instanceAttributes;
         }
-#else
-        (void)reanim;
 #endif
         VkPipelineInputAssemblyStateCreateInfo assembly{VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO};
         assembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
@@ -803,7 +1002,7 @@ struct VulkanRenderer::Impl {
         msaa.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
         VkPipelineViewportStateCreateInfo viewport{VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO};
         viewport.viewportCount = viewport.scissorCount = 1;
-        const VkDynamicState states[] = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
+        static constexpr VkDynamicState states[] = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
         VkPipelineDynamicStateCreateInfo dynamic{VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO};
         dynamic.dynamicStateCount = 2;
         dynamic.pDynamicStates = states;
@@ -811,8 +1010,9 @@ struct VulkanRenderer::Impl {
         attachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
             VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
         attachment.blendEnable = blend != VulkanBlend::Opaque;
-        attachment.srcColorBlendFactor = premultiplied ? VK_BLEND_FACTOR_ONE : VK_BLEND_FACTOR_SRC_ALPHA;
-        attachment.dstColorBlendFactor = blend == VulkanBlend::Additive ? VK_BLEND_FACTOR_ONE : VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+        attachment.srcColorBlendFactor = premultiplied || dualSource ? VK_BLEND_FACTOR_ONE : VK_BLEND_FACTOR_SRC_ALPHA;
+        attachment.dstColorBlendFactor = dualSource ? VK_BLEND_FACTOR_ONE_MINUS_SRC1_ALPHA :
+            blend == VulkanBlend::Additive ? VK_BLEND_FACTOR_ONE : VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
         attachment.colorBlendOp = attachment.alphaBlendOp = VK_BLEND_OP_ADD;
         attachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
         attachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
@@ -821,9 +1021,6 @@ struct VulkanRenderer::Impl {
         blending.pAttachments = &attachment;
         VkGraphicsPipelineCreateInfo info{VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO};
         info.stageCount = 2;
-#if defined(PVZ_REANIM_UNIFIED)
-        if (reanim) info.stageCount=3;
-#endif
         info.pStages = shaders;
         info.pVertexInputState = &input;
         info.pInputAssemblyState = &assembly;
@@ -833,12 +1030,9 @@ struct VulkanRenderer::Impl {
         info.pColorBlendState = &blending;
         info.pDynamicState = &dynamic;
         info.layout = pool ? poolLayout : pipelineLayout;
-#if defined(PVZ_REANIM_UNIFIED)
-        if (reanim) info.layout=reanimGeometryLayout;
-#endif
         info.renderPass = pass;
         VkPipeline pipeline{};
-        VK_REQUIRE(vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &info, nullptr, &pipeline));
+        VK_REQUIRE(vkCreateGraphicsPipelines(device, pipelineCache, 1, &info, nullptr, &pipeline));
         return pipeline;
     }
 
@@ -857,41 +1051,77 @@ struct VulkanRenderer::Impl {
     void InitAlphaKernel() const;
     void InitAlphaKernel(LoadingPipelines);
     void FinishImageBatch();
+    template<bool Quads = false>
     void Draw(std::span<const VulkanVertex>, VulkanTexture*,
               VkPipeline, const VulkanClip*, int viewportWidth, int viewportHeight
-#if defined(PVZ_REANIM_UNIFIED)
-              ,uint32_t pipelineSlot
-#endif
     );
-    void AppendRun(Buffer*, VkDeviceSize, uint32_t, VkPipeline,
+    template<bool Quads>
+    void AppendRun(DrawStream*, VkDeviceSize, uint32_t, VkPipeline,
         VkRect2D, int, int
-#if defined(PVZ_REANIM_UNIFIED)
-        ,bool marker=false,bool unified=false
-#endif
     );
-#if defined(PVZ_REANIM_UNIFIED)
-    void InitReanimGeometry();
-    bool SubmitUnifiedMarker(uint32_t,VulkanTexture*,VulkanBlend);
-    void QueueOrdinary(Buffer*,VkDeviceSize,uint32_t,uint32_t,VkRect2D,int,int);
-    void FlushOrdinary();
-    void ReclaimUnifiedRanges();
-    void GrowUnifiedStatic(VkDeviceSize required);
-    VkDeviceSize AllocateUnifiedStatic(VkDeviceSize bytes);
-#endif
     // P5 游程合并（2026-10-05）：连续同状态（流连续+管线/描述符/剪刀/视口未变）
     // 的提交延迟 BindVertexBuffers+Draw 合一——图元顺序逐字保持（三角列表同序
     // 合批=帧缓冲混合序列等价），任何状态变化/换流/帧尾先冲刷旧游程
-    struct PendingRun { Buffer* stream; VkDeviceSize offset; uint32_t count; };
-    PendingRun pendingRun{nullptr, 0, 0};
+    enum class RunGeometry { Triangles, Quads, Mixed };
+    struct PendingRun {
+        DrawStream* stream = nullptr;
+        VkDeviceSize offset = 0, indexOffset = 0;
+        unsigned int count = 0, indexCount = 0;
+        RunGeometry geometry = RunGeometry::Triangles;
+    };
+    PendingRun pendingRun;
     void FlushPendingRun(VkCommandBuffer);
 };
 
 void VulkanRenderer::Impl::Initialize(const std::string& vsPath, const std::string& psPath) {
-    if (width <= 0 || height <= 0) throw std::invalid_argument("Invalid game scene extent");
-    poolShaderPath = (std::filesystem::path(vsPath).parent_path()/"game_pool_vs.spv").string();
-#if defined(PVZ_REANIM_UNIFIED)
-    reanimShaderFolder=std::filesystem::path(vsPath).parent_path().string();
+    static_assert(sizeof(unsigned short)==2);
+    // Immutable tables cover every possible local uint16 vertex address.
+    staticIndices.Create((65536u+98304u)*sizeof(unsigned short),VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
+    auto* table=static_cast<unsigned short*>(staticIndices.mapped);
+    for (unsigned int i=0;i<65536;++i) table[i]=static_cast<unsigned short>(i);
+    auto* quad=table+65536;
+    for (unsigned int i=0;i<65536;i+=4)
+        for (unsigned int corner : {0u,1u,2u,1u,2u,3u}) *quad++=static_cast<unsigned short>(i+corner);
+#if defined(PVZ_VULKAN_SPRITE_EXPERIMENT)
+    generateIndexPrefixExperiment=VulkanRenderer::benchmarkGenerateIndexPrefix;
+    presentCopyExperiment=VulkanRenderer::benchmarkPresentCopy;
+    tightSceneBarriersExperiment=VulkanRenderer::benchmarkTightSceneBarriers;
+    instancedExperiment=VulkanRenderer::benchmarkInstancedQuads;
+    if (instancedExperiment) vertexStride=sizeof(SpriteInstance);
+    discardSceneExperiment=VulkanRenderer::benchmarkDiscardScene;
+    packedColor16Experiment=VulkanRenderer::benchmarkPackedColor16;
+    packedColorExperiment=VulkanRenderer::benchmarkPackedColor || packedColor16Experiment;
+    if (packedColorExperiment) vertexStride=packedColor16Experiment ? sizeof(PackedColor16Vertex) : sizeof(PackedColorVertex);
+    nonIndexedExperiment = VulkanRenderer::benchmarkNonIndexedTriangles;
+    wideIndexExperiment=VulkanRenderer::benchmark32BitQuads;
+    if (wideIndexExperiment) {
+        wideQuadIndices.Create(65536u*6*sizeof(unsigned int),VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
+        auto* wide=static_cast<unsigned int*>(wideQuadIndices.mapped);
+        for(unsigned int i=0;i<262144;i+=4)
+            for(unsigned int corner:{0u,1u,2u,1u,2u,3u}) *wide++=i+corner;
+    }
 #endif
+    if (width <= 0 || height <= 0) throw std::invalid_argument("Invalid game scene extent");
+#if defined(__ANDROID__)
+    {
+        // 装载磁盘管线缓存（驱动数据，跨启动复用；损坏时驱动自动忽略）
+        std::vector<std::byte> cached;
+        if (std::ifstream in(GetExecutableDirectory()+"pipeline_cache.bin", std::ios::binary); in) {
+            in.seekg(0, std::ios::end);
+            const auto size = in.tellg();
+            in.seekg(0);
+            if (size > 0) {
+                cached.resize(static_cast<size_t>(size));
+                in.read(reinterpret_cast<char*>(cached.data()), size);
+            }
+        }
+        VkPipelineCacheCreateInfo info{VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO};
+        info.initialDataSize = cached.size();
+        info.pInitialData = cached.data();
+        VK_REQUIRE(vkCreatePipelineCache(device, &info, nullptr, &pipelineCache));
+    }
+#endif
+    poolShaderPath = (std::filesystem::path(vsPath).parent_path()/"game_pool_vs.spv").string();
     CheckPresentEncoding();
     // 采样器数组（4 元素）：与纹理数组同法消除采样器切换断点——
     // bit0=线性过滤 bit1=重复寻址，索引由顶点携带
@@ -970,8 +1200,29 @@ void VulkanRenderer::Impl::Initialize(const std::string& vsPath, const std::stri
         info.pCode = words.data();
         VK_REQUIRE(vkCreateShaderModule(device, &info, nullptr, &shader));
     };
+#if defined(PVZ_VULKAN_SPRITE_EXPERIMENT)
+    createShader(instancedExperiment ? PVZ_INSTANCE_EXPERIMENT_SPV : vsPath,vertexShader);
+#else
     createShader(vsPath, vertexShader);
+#endif
     createShader(psPath, fragmentShader);
+    createShader((std::filesystem::path(psPath).parent_path()/"game_sprite_ps.spv").string(),spriteFragmentShader);
+#if defined(PVZ_VULKAN_SEPARATE_BLEND_TEST)
+    createShader((std::filesystem::path(psPath).parent_path()/"game_sprite_single_output_ps.spv").string(),separateBlendExperimentShader);
+#else
+    if (window.dualSourceBlendEnabled)
+        createShader((std::filesystem::path(psPath).parent_path()/"game_sprite_mixed_ps.spv").string(),mixedSpriteFragmentShader);
+#endif
+#if defined(PVZ_VULKAN_SPRITE_EXPERIMENT)
+    if (VulkanRenderer::benchmarkSeparateBlend)
+        createShader(PVZ_SEPARATE_BLEND_EXPERIMENT_SPV,separateBlendExperimentShader);
+    solidFillExperiment=VulkanRenderer::benchmarkSolidFill;
+    if (solidFillExperiment) createShader(PVZ_SOLID_EXPERIMENT_SPV,solidExperimentShader);
+    simpleGeneratedExperiment = VulkanRenderer::benchmarkSimpleGenerated;
+    manualFilterExperiment=VulkanRenderer::benchmarkManualBakedFilters;
+    if (simpleGeneratedExperiment || manualFilterExperiment)
+        createShader(manualFilterExperiment ? PVZ_FILTER_EXPERIMENT_SPV : PVZ_SPRITE_EXPERIMENT_SPV,generatedExperimentShader);
+#endif
     createShader((std::filesystem::path(psPath).parent_path()/"game_caustic_cs.spv").string(),caustics.shader);
     fontKernel.shaderPath=(std::filesystem::path(psPath).parent_path()/"game_font_cs.spv").string();
     colorKernel.shaderPath=(std::filesystem::path(psPath).parent_path()/"game_color_cs.spv").string();
@@ -999,6 +1250,9 @@ void VulkanRenderer::Impl::Initialize(const std::string& vsPath, const std::stri
     attachment.format = VK_FORMAT_B8G8R8A8_UNORM;
     attachment.samples = VK_SAMPLE_COUNT_1_BIT;
     attachment.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD; // Dirty-region rendering retains the last scene.
+#if defined(PVZ_VULKAN_SPRITE_EXPERIMENT)
+    if (discardSceneExperiment) attachment.loadOp=VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+#endif
     attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
     attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
     attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
@@ -1023,23 +1277,65 @@ void VulkanRenderer::Impl::Initialize(const std::string& vsPath, const std::stri
     fb.layers = 1;
     VK_REQUIRE(vkCreateFramebuffer(device, &fb, nullptr, &sceneFramebuffer));
     for (unsigned i = 0; i < pipelines.size(); ++i) pipelines[i] = Pipeline(scenePass, static_cast<VulkanBlend>(i));
+#if !defined(PVZ_VULKAN_SEPARATE_BLEND_TEST)
+    if (window.dualSourceBlendEnabled
+#if defined(PVZ_VULKAN_SPRITE_EXPERIMENT)
+        && !VulkanRenderer::benchmarkSeparateBlend
+#endif
+        )
+        mixedSpritePipeline = Pipeline(scenePass,VulkanBlend::Normal,mixedSpriteFragmentShader,
+            false,false,false,true);
+#endif
+    for (unsigned i = 0; i < spritePipelines.size(); ++i)
+        if (!mixedSpritePipeline || i == unsigned(VulkanBlend::Opaque)) {
+#if defined(PVZ_VULKAN_SPRITE_EXPERIMENT) || defined(PVZ_VULKAN_SEPARATE_BLEND_TEST)
+            if (separateBlendExperimentShader && i != unsigned(VulkanBlend::Opaque))
+                spritePipelines[i] = Pipeline(scenePass,static_cast<VulkanBlend>(i),separateBlendExperimentShader,true);
+            else
+#endif
+                spritePipelines[i] = Pipeline(scenePass,static_cast<VulkanBlend>(i),spriteFragmentShader);
+        }
     for (unsigned i = 0; i < coveragePipelines.size(); ++i)
         coveragePipelines[i] = Pipeline(scenePass,static_cast<VulkanBlend>(i),fragmentShader,false,true);
+#if defined(PVZ_VULKAN_SPRITE_EXPERIMENT)
+    if (solidFillExperiment)
+        solidExperimentPipeline=Pipeline(scenePass,VulkanBlend::Normal,solidExperimentShader,true);
+    if (simpleGeneratedExperiment || manualFilterExperiment)
+        for (unsigned int i=0;i<3;++i)
+            generatedExperimentPipelines[i]=Pipeline(scenePass,static_cast<VulkanBlend>(i),generatedExperimentShader);
+#endif
+#if defined(PVZ_VULKAN_SPRITE_EXPERIMENT)
+    if (presentCopyExperiment) {
+        benchmarkOutput=Image(width,height,VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT |
+            VK_IMAGE_USAGE_TRANSFER_SRC_BIT,false).release();
+        attachment.loadOp=VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+        VK_REQUIRE(vkCreateRenderPass(device,&pass,nullptr,&benchmarkOutputPass));
+        fb.renderPass=benchmarkOutputPass;fb.pAttachments=&benchmarkOutput->view;
+        VK_REQUIRE(vkCreateFramebuffer(device,&fb,nullptr,&benchmarkOutput->framebuffer));
+        benchmarkOutputPipeline=Pipeline(benchmarkOutputPass,VulkanBlend::Opaque,fragmentShader);
+    }
+#endif
     RefreshPresentPipeline();
 }
 
 void VulkanRenderer::Impl::InitImagePass() {
     if (imagePass) return;
-    constexpr VkFormat format = VK_FORMAT_R32G32B32A32_SFLOAT;
-    VkFormatProperties properties{};
-    vkGetPhysicalDeviceFormatProperties(window.physicalDevice, format, &properties);
     constexpr VkFormatFeatureFlags required = VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT |
         VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BLEND_BIT | VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT |
         VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT |
         VK_FORMAT_FEATURE_TRANSFER_SRC_BIT | VK_FORMAT_FEATURE_TRANSFER_DST_BIT |
         VK_FORMAT_FEATURE_STORAGE_IMAGE_BIT;
-    if ((properties.optimalTilingFeatures & required) != required)
-        throw std::runtime_error("GPU render images require RGBA32F attachment, blend, sampling, linear filtering and transfers");
+    constexpr VkImageUsageFlags usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT |
+        VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT |
+        VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_STORAGE_BIT;
+    constexpr VkFormat format = VK_FORMAT_R16G16B16A16_SFLOAT;
+    VkFormatProperties properties{};
+    vkGetPhysicalDeviceFormatProperties(window.physicalDevice, format, &properties);
+    VkImageFormatProperties imageProperties{};
+    if ((properties.optimalTilingFeatures & required) != required ||
+        vkGetPhysicalDeviceImageFormatProperties(window.physicalDevice, format,
+            VK_IMAGE_TYPE_2D, VK_IMAGE_TILING_OPTIMAL, usage, 0, &imageProperties) != VK_SUCCESS)
+        throw std::runtime_error("GPU render images require RGBA16F attachment, blend, sampling, linear filtering, storage and transfers");
     VkAttachmentDescription attachment{};
     attachment.format = format;
     attachment.samples = VK_SAMPLE_COUNT_1_BIT;
@@ -1086,7 +1382,7 @@ std::unique_ptr<VulkanTexture> VulkanRenderer::Impl::RenderImage(int w, int h) {
         VK_IMAGE_USAGE_STORAGE_BIT;
     VkImageFormatProperties properties{};
     VK_REQUIRE(vkGetPhysicalDeviceImageFormatProperties(window.physicalDevice,
-        VK_FORMAT_R32G32B32A32_SFLOAT, VK_IMAGE_TYPE_2D, VK_IMAGE_TILING_OPTIMAL, usage, 0, &properties));
+        VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_TYPE_2D, VK_IMAGE_TILING_OPTIMAL, usage, 0, &properties));
     VkPhysicalDeviceProperties deviceProperties{};
     vkGetPhysicalDeviceProperties(window.physicalDevice, &deviceProperties);
     if (uint32_t(w) > std::min(properties.maxExtent.width, deviceProperties.limits.maxFramebufferWidth) ||
@@ -1094,7 +1390,7 @@ std::unique_ptr<VulkanTexture> VulkanRenderer::Impl::RenderImage(int w, int h) {
         uint32_t(w) > deviceProperties.limits.maxViewportDimensions[0] ||
         uint32_t(h) > deviceProperties.limits.maxViewportDimensions[1])
         throw std::invalid_argument("GPU render image exceeds device image/framebuffer limits");
-    auto image = Image(w, h, usage, false, VK_FORMAT_R32G32B32A32_SFLOAT);
+    auto image = Image(w, h, usage, false, VK_FORMAT_R16G16B16A16_SFLOAT);
     image->generated = true;
     VkFramebufferCreateInfo framebuffer{VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO};
     framebuffer.renderPass = imagePass;
@@ -1145,7 +1441,7 @@ void VulkanRenderer::Impl::SnapshotRenderImage(VulkanTexture* image, bool force)
     std::swap(image->computeMetadata,next->computeMetadata);
     slotOwners[image->slot] = image;
     slotOwners[next->slot] = next.get();
-    retired.push_back(std::move(next));
+    Retire(std::move(next));
 }
 
 void VulkanRenderer::Impl::BeginTargetPass() {
@@ -1161,10 +1457,33 @@ void VulkanRenderer::Impl::BeginTargetPass() {
         target->layout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
         sceneInitialized = true;
     }
+#if defined(PVZ_VULKAN_SPRITE_EXPERIMENT)
+    if (tightSceneBarriersExperiment && !renderImage) {
+        VkPipelineStageFlags sourceStage=VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
+        VkAccessFlags sourceAccess=VK_ACCESS_MEMORY_READ_BIT | VK_ACCESS_MEMORY_WRITE_BIT;
+        switch (target->layout) {
+        case VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL:
+            sourceStage=VK_PIPELINE_STAGE_TRANSFER_BIT;sourceAccess=VK_ACCESS_TRANSFER_WRITE_BIT;break;
+        case VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL:
+            sourceStage=VK_PIPELINE_STAGE_TRANSFER_BIT;sourceAccess=VK_ACCESS_TRANSFER_READ_BIT;break;
+        case VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL:
+            sourceStage=VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;sourceAccess=VK_ACCESS_SHADER_READ_BIT;break;
+        case VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL:
+            sourceStage=VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+            sourceAccess=VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;break;
+        default: throw std::logic_error("Unexpected benchmark scene layout");
+        }
+        Barrier(frame.cmd,target->image,target->layout,VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+            sourceStage,VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,sourceAccess,
+            VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT);
+    } else
+#endif
+    {
     Barrier(frame.cmd, target->image, target->layout, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
         VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
         VK_ACCESS_MEMORY_READ_BIT | VK_ACCESS_MEMORY_WRITE_BIT,
         VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT);
+    }
     target->layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
     VkRenderPassBeginInfo pass{VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO};
     pass.renderPass = renderImage ? imagePass : scenePass;
@@ -1193,17 +1512,19 @@ void VulkanRenderer::Impl::EndTargetPass() {
 void VulkanRenderer::Impl::FinishImageBatch() {
     if (!frame.valid || !imageOnly) throw std::logic_error("No GPU image-only batch to finish");
     EndTargetPass();
+#if defined(PVZ_VULKAN_SPRITE_EXPERIMENT)
+    if (presentCopyExperiment && !renderImage) RecordBenchmarkPresentCopy();
+#endif
     // 帧批引用的合成/上传必须先于帧批提交（队列同序）。
     if (transferOpen) FinishTransfer();
     FlushTextureUploads();
-#if defined(PVZ_REANIM_BENCHMARK)
-    if (frameTimestampQueries)
-        vkCmdWriteTimestamp(imageCommand,VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,frameTimestampQueries,1);
+#if defined(PVZ_VULKAN_SPRITE_EXPERIMENT)
+    VulkanRenderer::benchmarkSceneDraws=VulkanRenderer::benchmarkDrawCalls;
+    VulkanRenderer::benchmarkSceneTriangles=VulkanRenderer::benchmarkTriangles;
+    if (VulkanRenderer::benchmarkQueries)
+        vkCmdWriteTimestamp(imageCommand,VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,VulkanRenderer::benchmarkQueries,1);
 #endif
     VK_REQUIRE(vkEndCommandBuffer(imageCommand));
-#if defined(PVZ_REANIM_BENCHMARK)
-    frameRecordEnd=std::chrono::steady_clock::now();
-#endif
     VK_REQUIRE(vkResetFences(device, 1, &imageFence));
     VkSubmitInfo submit{VK_STRUCTURE_TYPE_SUBMIT_INFO};
     submit.commandBufferCount = 1;
@@ -1214,14 +1535,39 @@ void VulkanRenderer::Impl::FinishImageBatch() {
     imageOnly = false;
 }
 
+#if defined(PVZ_VULKAN_SPRITE_EXPERIMENT)
+void VulkanRenderer::Impl::RecordBenchmarkPresentCopy() {
+    // Models an identity, SDR fullscreen sample pass; no WSI/acquire/present cost.
+    auto* output=benchmarkOutput;
+    Barrier(frame.cmd,output->image,output->layout,VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+        VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+        output->layout==VK_IMAGE_LAYOUT_UNDEFINED ? 0 : VK_ACCESS_MEMORY_READ_BIT | VK_ACCESS_MEMORY_WRITE_BIT,
+        VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT);
+    VkRenderPassBeginInfo pass{VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO};
+    pass.renderPass=benchmarkOutputPass;pass.framebuffer=output->framebuffer;
+    pass.renderArea.extent={static_cast<unsigned int>(width),static_cast<unsigned int>(height)};
+    vkCmdBeginRenderPass(frame.cmd,&pass,VK_SUBPASS_CONTENTS_INLINE);
+    drawState={};
+    const float w=float(width),h=float(height);
+    const VulkanVertex vertices[]{
+        {w,0,1,1,1,1,1,0,scene->slot,1},{w,h,1,1,1,1,1,1,scene->slot,1},
+        {0,0,1,1,1,1,0,0,scene->slot,1},{0,h,1,1,1,1,0,1,scene->slot,1}};
+    Draw<true>(vertices,scene.get(),benchmarkOutputPipeline,nullptr,width,height);
+    FlushPendingRun(frame.cmd);
+    vkCmdEndRenderPass(frame.cmd);
+    Barrier(frame.cmd,output->image,VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,output->sampledLayout,
+        VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_TRANSFER_BIT,
+        VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_TRANSFER_READ_BIT);
+    output->layout=output->sampledLayout;
+    drawState={};
+}
+#endif
+
 VulkanRenderer::VulkanRenderer(VulkanContext& window, int width, int height,
     const std::string& vs, const std::string& ps,const VulkanHdrParams* hdr)
     : impl_(std::make_unique<Impl>(window, width, height)),
-#if defined(PVZ_REANIM_BENCHMARK)
-      frameRecordEnd(impl_->frameRecordEnd),
-#endif
-      sceneOpen(impl_->frame.valid), reanimPictureCandidates(impl_->reanimPictureCandidates),
-      reanimFrameEligible(impl_->reanimFrameEligible), whiteTexture(impl_->white),
+      sceneOpen(impl_->frame.valid),
+      whiteTexture(impl_->white),
       causticsTexture(impl_->caustics.target), sceneWidth(impl_->width),
       sceneHeight(impl_->height) {
     if (hdr) { hdr->Validate(); impl_->hdr=*hdr; }
@@ -1281,6 +1627,7 @@ void VulkanRenderer::PrepareLoadingPipelines() {
     auto& s = *impl_;
     if (s.frame.valid)
         throw std::logic_error("Prepare Vulkan loading pipelines before opening a scene");
+    s.InitImagePass(); // Select the matching floating-point font storage format first.
     s.InitImageKernel(s.fontKernel, Impl::LoadingPipelines{});
     s.InitImageKernel(s.colorKernel, Impl::LoadingPipelines{});
     s.InitAlphaKernel(Impl::LoadingPipelines{});
@@ -1300,6 +1647,41 @@ VulkanRenderer::ResourceCounts VulkanRenderer::GetResourceCounts() const {
     return {s.textures.size(),s.retired.size(),s.pools.size(),
         s.streams.size()+(s.poolVertexBuffer ? 1u : 0u)};
 }
+
+#if defined(PVZ_VULKAN_SPRITE_EXPERIMENT)
+VulkanTexture* VulkanRenderer::ConvertBenchmarkTexture(VulkanTexture* source,VkFormat format) {
+    auto& s=*impl_;
+    if (s.frame.valid || !s.textures.contains(source))
+        throw std::logic_error("Benchmark conversion requires a completed source image");
+    VkFormatProperties properties{};
+    vkGetPhysicalDeviceFormatProperties(s.window.physicalDevice,format,&properties);
+    const auto required=VK_FORMAT_FEATURE_BLIT_DST_BIT|VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT;
+    if ((properties.optimalTilingFeatures&required)!=required)
+        throw std::runtime_error("Requested benchmark texture format lacks filtered blit support");
+    s.FlushTextureUploads();s.CompleteTransfers();s.window.WaitForFrame();
+    auto target=s.Image(source->width,source->height,VK_IMAGE_USAGE_TRANSFER_SRC_BIT|VK_IMAGE_USAGE_TRANSFER_DST_BIT,
+        false,format);
+    target->generated=true; // Conversion preserves the source's premultiplied pixels.
+    target->texelBytes=format==VK_FORMAT_R16G16B16A16_SFLOAT ? 8 : 4;
+    const auto cmd=s.BeginTransfer();
+    Barrier(cmd,source->image,source->sampledLayout,VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+        VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,VK_PIPELINE_STAGE_TRANSFER_BIT,
+        VK_ACCESS_MEMORY_WRITE_BIT|VK_ACCESS_MEMORY_READ_BIT,VK_ACCESS_TRANSFER_READ_BIT);
+    Barrier(cmd,target->image,VK_IMAGE_LAYOUT_UNDEFINED,VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+        VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,VK_PIPELINE_STAGE_TRANSFER_BIT,0,VK_ACCESS_TRANSFER_WRITE_BIT);
+    VkImageBlit blit{};
+    blit.srcSubresource=blit.dstSubresource={VK_IMAGE_ASPECT_COLOR_BIT,0,0,1};
+    blit.srcOffsets[1]=blit.dstOffsets[1]={source->width,source->height,1};
+    vkCmdBlitImage(cmd,source->image,VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,target->image,
+        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,1,&blit,VK_FILTER_NEAREST);
+    Barrier(cmd,source->image,VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,source->sampledLayout,
+        VK_PIPELINE_STAGE_TRANSFER_BIT,VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,VK_ACCESS_TRANSFER_READ_BIT,VK_ACCESS_SHADER_READ_BIT);
+    Barrier(cmd,target->image,VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,target->sampledLayout,
+        VK_PIPELINE_STAGE_TRANSFER_BIT,VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,VK_ACCESS_TRANSFER_WRITE_BIT,VK_ACCESS_SHADER_READ_BIT);
+    s.FinishTransfer();s.CompleteTransfers();
+    auto* result=target.get();s.textures.emplace(result,std::move(target));return result;
+}
+#endif
 
 VulkanTexture* VulkanRenderer::CreateRenderImage(int width, int height) {
     auto& s = *impl_;
@@ -1350,7 +1732,7 @@ void VulkanRenderer::Impl::InitImageKernel(ImageKernel& kernel, LoadingPipelines
     VkShaderModuleCreateInfo shader{VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO};
     shader.codeSize=words.size()*sizeof(uint32_t);shader.pCode=words.data();
     VK_REQUIRE(vkCreateShaderModule(device,&shader,nullptr,&kernel.shader));
-    const VkDescriptorSetLayoutBinding bindings[]={
+    static constexpr VkDescriptorSetLayoutBinding bindings[]={
         {0,VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,1,VK_SHADER_STAGE_COMPUTE_BIT,nullptr},
         {1,VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,1,VK_SHADER_STAGE_COMPUTE_BIT,nullptr}};
     VkDescriptorSetLayoutCreateInfo setLayout{VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO};
@@ -1362,7 +1744,7 @@ void VulkanRenderer::Impl::InitImageKernel(ImageKernel& kernel, LoadingPipelines
     layout.setLayoutCount=3;layout.pSetLayouts=sets;
     layout.pushConstantRangeCount=1;layout.pPushConstantRanges=&push;
     VK_REQUIRE(vkCreatePipelineLayout(device,&layout,nullptr,&kernel.layout));
-    const VkDescriptorPoolSize sizes[]={
+    static constexpr VkDescriptorPoolSize sizes[]={
         {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,kTextureSlots},
         {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,kTextureSlots}};
     VkDescriptorPoolCreateInfo pool{VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO};
@@ -1373,7 +1755,7 @@ void VulkanRenderer::Impl::InitImageKernel(ImageKernel& kernel, LoadingPipelines
     pipeline.layout=kernel.layout;
     pipeline.stage={VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,nullptr,0,
         VK_SHADER_STAGE_COMPUTE_BIT,kernel.shader,"main",nullptr};
-    VK_REQUIRE(vkCreateComputePipelines(device,VK_NULL_HANDLE,1,&pipeline,nullptr,&kernel.pipeline));
+    VK_REQUIRE(vkCreateComputePipelines(device,pipelineCache,1,&pipeline,nullptr,&kernel.pipeline));
 }
 
 void VulkanRenderer::Impl::InitAlphaKernel() const {
@@ -1388,7 +1770,7 @@ void VulkanRenderer::Impl::InitAlphaKernel(LoadingPipelines) {
     VkShaderModuleCreateInfo shader{VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO};
     shader.codeSize=words.size()*sizeof(uint32_t);shader.pCode=words.data();
     VK_REQUIRE(vkCreateShaderModule(device,&shader,nullptr,&kernel.shader));
-    const VkDescriptorSetLayoutBinding bindings[]={
+    static constexpr VkDescriptorSetLayoutBinding bindings[]={
         {0,VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,1,VK_SHADER_STAGE_COMPUTE_BIT,nullptr},
         {1,VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,1,VK_SHADER_STAGE_COMPUTE_BIT,nullptr},
         {2,VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,1,VK_SHADER_STAGE_COMPUTE_BIT,nullptr}};
@@ -1400,7 +1782,7 @@ void VulkanRenderer::Impl::InitAlphaKernel(LoadingPipelines) {
     layout.setLayoutCount=1;layout.pSetLayouts=&kernel.setLayout;
     layout.pushConstantRangeCount=1;layout.pPushConstantRanges=&push;
     VK_REQUIRE(vkCreatePipelineLayout(device,&layout,nullptr,&kernel.layout));
-    const VkDescriptorPoolSize sizes[]={
+    static constexpr VkDescriptorPoolSize sizes[]={
         {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,2u*kTextureSlots},
         {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,kTextureSlots}};
     VkDescriptorPoolCreateInfo pool{VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO};
@@ -1412,7 +1794,7 @@ void VulkanRenderer::Impl::InitAlphaKernel(LoadingPipelines) {
     pipeline.layout=kernel.layout;
     pipeline.stage={VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,nullptr,0,
         VK_SHADER_STAGE_COMPUTE_BIT,kernel.shader,"main",nullptr};
-    VK_REQUIRE(vkCreateComputePipelines(device,VK_NULL_HANDLE,1,&pipeline,nullptr,&kernel.pipeline));
+    VK_REQUIRE(vkCreateComputePipelines(device,pipelineCache,1,&pipeline,nullptr,&kernel.pipeline));
 }
 
 VulkanTexture* VulkanRenderer::ComposeAlphaRaw(VulkanTexture* base,VulkanTexture* alpha,
@@ -1467,7 +1849,7 @@ VulkanTexture* VulkanRenderer::ComposeAlphaRaw(VulkanTexture* base,VulkanTexture
         VK_ACCESS_SHADER_WRITE_BIT,VK_ACCESS_SHADER_READ_BIT);
     target->layout=target->sampledLayout;target->uploaded=true;
     auto* handle=target.get();
-    s.retired.push_back(std::move(target));
+    s.Retire(std::move(target));
     return handle;
 }
 
@@ -1512,6 +1894,10 @@ void VulkanRenderer::BindStaticTexture(VulkanTexture* texture,uint32_t staticSlo
     const uint32_t slot=s.staticBase+staticSlot;
     if(!s.textures.contains(texture) || slot>=s.kTextureSlots || texture->lastDraw || texture->slot>=s.staticBase)
         throw std::exception{};
+    s.GuardStaticSlot(slot);
+    // lastDraw==0 does not exclude references in an off-frame compute batch.
+    if (s.transferOpen) s.FinishTransfer();
+    s.CompleteTransfers();
     s.slotOwners[texture->slot]=nullptr;s.freeSlots.push_back(texture->slot);
     texture->slot=slot;s.slotOwners[slot]=texture;texture->slotOwner=&s.slotOwners[slot];
     const VkDescriptorImageInfo image{VK_NULL_HANDLE,texture->view,texture->sampledLayout};
@@ -1660,6 +2046,7 @@ void VulkanRenderer::RenderFontAtlas(VulkanTexture* target,VulkanTexture* source
     Barrier(s.frame.cmd,source->image,source->sampledLayout,source->sampledLayout,
         VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
         VK_ACCESS_MEMORY_READ_BIT|VK_ACCESS_MEMORY_WRITE_BIT,VK_ACCESS_SHADER_READ_BIT);
+    if (target->computeSet) s.SnapshotRenderImage(target, true);
     target->computeMetadata=std::move(metadata);
     if (!target->computeSet) {
         VkDescriptorSetAllocateInfo allocate{VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO};
@@ -1702,7 +2089,11 @@ void VulkanRenderer::RenderFontAtlas(VulkanTexture* target,VulkanTexture* source
 }
 VulkanRenderer::TextureUploadState VulkanRenderer::GetTextureUploadState() const {
     const auto& s=*impl_;
-    return {s.pendingUploads.size(),s.textureStaging?s.textureStaging->size:0};
+    // Ring rotation can grow any slot, not necessarily back(). This diagnostic
+    // reports the largest arena capacity, preserving its single-arena meaning.
+    uint64_t capacity = 0;
+    for (const auto& arena : s.stagingRing) capacity = std::max(capacity,uint64_t(arena->size));
+    return {s.pendingUploads.size(),capacity};
 }
 
 VulkanTexture* VulkanRenderer::CreateTextureStatic(int width, int height, const void* bgra, int pitch, bool opaque, uint32_t staticSlot) {
@@ -1755,7 +2146,7 @@ VulkanTexture* VulkanRenderer::CreateRawTexture(int width, int height, const voi
         VK_IMAGE_USAGE_TRANSFER_DST_BIT|VK_IMAGE_USAGE_TRANSFER_SRC_BIT, false,
         VK_FORMAT_B8G8R8A8_UNORM, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, 0xFFFFFFFFu, false);
     auto* handle = texture.get();
-    s.retired.push_back(std::move(texture));
+    s.Retire(std::move(texture));
     s.QueueTextureUpload(handle,bgra,pitch);
     return handle;
 }
@@ -1803,11 +2194,7 @@ void VulkanRenderer::DestroyTexture(VulkanTexture* texture) {
     if (found == s.textures.end()) throw std::invalid_argument("Texture does not belong to this renderer");
     // unique_ptr's noexcept move keeps push_back's strong guarantee: failed
     // growth leaves live ownership/tokens intact, with amortized capacity growth.
-    s.retired.push_back(std::move(found->second));
-#if defined(PVZ_REANIM_UNIFIED)
-    for (auto& control : s.unifiedInstanceControls)
-        if (control.texture == texture) control.texture = nullptr;
-#endif
+    s.Retire(std::move(found->second));
     s.textures.erase(found);
     // 池水焦散目标被销毁（重开关卡）时先解关联，描述集等换代纹理改写。
     if (texture == s.caustics.target) {
@@ -1871,14 +2258,19 @@ void VulkanRenderer::UseCausticsTexture(VulkanTexture* output,VulkanTexture* sou
 
 bool VulkanRenderer::HasCausticsCompute() const { return impl_->caustics.shader != VK_NULL_HANDLE; }
 
-bool VulkanRenderer::BeginScene() {
+bool VulkanRenderer::BeginScene() try {
     auto& s = *impl_;
+    if (s.recordingFailed) throw std::logic_error("Cannot continue a failed Vulkan recording");
     if (s.frame.valid) throw std::logic_error("Scene already open");
     // 新帧命令会引用累积批里的上传/合成结果：先提交开放传输缓冲，保持
     // 队列提交序（传输批 → 帧批）。
     if (s.transferOpen) s.FinishTransfer();
     s.CompleteTransfers();  // 回收上批合成描述集；栅栏多半已 signaled，代价≈0
-    if (s.renderImage) {
+    if (s.renderImage
+#if defined(PVZ_VULKAN_SPRITE_EXPERIMENT)
+        || true // This isolated executable always renders offscreen.
+#endif
+    ) {
         // No swapchain acquire, surface queries or presentation semaphores.
         // The prior main-frame fence protects all shared vertices/descriptors.
         s.window.WaitForFrame();
@@ -1887,7 +2279,8 @@ bool VulkanRenderer::BeginScene() {
         VkCommandBufferBeginInfo begin{VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO};
         begin.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
         VK_REQUIRE(vkBeginCommandBuffer(s.imageCommand, &begin));
-        s.frame = {s.imageCommand, 0, {uint32_t(s.renderImage->width), uint32_t(s.renderImage->height)}, true};
+        auto* batchTarget=s.renderImage ? s.renderImage : s.scene.get();
+        s.frame = {s.imageCommand, 0, {uint32_t(batchTarget->width), uint32_t(batchTarget->height)}, true};
         s.imageOnly = true;
     } else {
         s.frame = s.window.BeginCommands();
@@ -1897,52 +2290,41 @@ bool VulkanRenderer::BeginScene() {
         s.RefreshPresentPipeline();
     }
     ++s.frameSerial;
-#if defined(PVZ_REANIM_UNIFIED)
-    // Counts belong to completed main or image-only batches. Internal target
-    // switches preserve them. A failed acquire does not consume the evidence.
-    s.reanimFrameEligible=s.reanimPictureCandidates>=256 &&
-        s.reanimOrdinaryTriangles<=uint64_t(s.reanimPictureCandidates)*32;
-    s.reanimPictureCandidates=0;s.reanimOrdinaryTriangles=0;
-#endif
-#if defined(PVZ_REANIM_BENCHMARK)
-    s.frameTimestampQueries=frameTimestampQueries;
-    s.frameRecordEnd={};
-    if (s.frameTimestampQueries) {
-        vkCmdResetQueryPool(s.frame.cmd,s.frameTimestampQueries,0,2);
-        vkCmdWriteTimestamp(s.frame.cmd,VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,s.frameTimestampQueries,0);
-    }
-#endif
     // Complete uploads before reclaiming retired textures: a texture may have
     // been queued and destroyed outside a frame, including while minimized.
     s.drawState = {}; // Vulkan command buffers do not inherit last frame's state.
     s.ReapRetired();
-#if defined(PVZ_REANIM_UNIFIED)
-    s.ReclaimUnifiedRanges();
-#endif
-    for (auto& stream : s.streams) stream->used = 0;
-#if defined(PVZ_REANIM_UNIFIED)
-    s.unifiedFrame=false;
-    if (s.unifiedInstances) s.unifiedInstances->used=0;
-    if (s.unifiedPackets) s.unifiedPackets->used=0;
-    if (s.unifiedIndices) s.unifiedIndices->used=0;
-    s.unifiedInstanceControls.clear();
-    s.unifiedOrdinary.clear();s.unifiedOrdinaryTriangles=0;s.flushingOrdinary=false;
+    for (auto* stream : s.streams) { stream->vertices.used = 0; stream->indices.used = 0; }
+#if defined(PVZ_VULKAN_SPRITE_EXPERIMENT)
+    benchmarkDrawCalls = 0;
+    benchmarkTriangles = 0;
+    if (benchmarkQueries) {
+        vkCmdResetQueryPool(s.frame.cmd,benchmarkQueries,0,2);
+        vkCmdWriteTimestamp(s.frame.cmd,VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,benchmarkQueries,0);
+    }
 #endif
     s.RecordCaustics(s.frame.cmd);
     s.BeginTargetPass();
     return true;
+} catch (...) {
+    auto& s = *impl_;
+    s.window.AbortFrame();
+    s.recordingFailed = true;
+    s.frame = {};
+    s.targetPassOpen = false;
+    s.pendingRun = {};
+    s.drawState = {};
+    throw;
 }
 
+template<bool Quads>
 void VulkanRenderer::Impl::Draw(std::span<const VulkanVertex> vertices, VulkanTexture* texture,
     VkPipeline pipeline, const VulkanClip* clip, int vw, int vh
-#if defined(PVZ_REANIM_UNIFIED)
-    ,uint32_t pipelineSlot
-#endif
 ) {
     if (!frame.valid) throw std::logic_error("Draw outside a frame");
     if (!texture) throw std::invalid_argument("Missing draw texture");
     if (vertices.empty()) { return; }
-    if (vertices.size() % 3 || vertices.size() > UINT32_MAX)
+    if (vertices.size() % (Quads ? 4 : 3) || vertices.size() > UINT32_MAX)
         throw std::invalid_argument("Expected a triangle list");
     int64_t left = 0, top = 0, right = vw, bottom = vh;
     if (clip) {
@@ -1963,19 +2345,31 @@ void VulkanRenderer::Impl::Draw(std::span<const VulkanVertex> vertices, VulkanTe
         SnapshotRenderImage(renderImage, true);
         BeginTargetPass();
     }
-    const VkDeviceSize bytes = vertices.size_bytes();
-    Buffer* stream = nullptr;
-    for (auto& candidate : streams)
-        if (candidate->size - candidate->used >= bytes) { stream = candidate.get(); break; }
-    if (!stream) {
-        auto allocation = std::make_unique<Buffer>();
-        allocation->Create(std::max<VkDeviceSize>(8 * 1024 * 1024, bytes),
-            VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
-        stream = allocation.get();
-        streams.push_back(std::move(allocation));
+    VkDeviceSize bytes = VkDeviceSize(vertices.size())*vertexStride;
+#if defined(PVZ_VULKAN_SPRITE_EXPERIMENT)
+    if (instancedExperiment) {
+        if constexpr (!Quads) throw std::invalid_argument("Instance experiment requires explicit quads");
+        bytes/=4;
     }
-    auto offset = stream->used;
-    auto* copiedVertices = reinterpret_cast<VulkanVertex*>(static_cast<std::byte*>(stream->mapped) + offset);
+#endif
+    DrawStream* stream = nullptr;
+    for (auto* candidate : streams)
+        if (candidate->vertices.size - candidate->vertices.used >= bytes) { stream = candidate; break; }
+    if (!stream) {
+        auto* allocation = new DrawStream;
+        try {
+            const auto capacity=std::max<VkDeviceSize>(8 * 1024 * 1024, bytes);
+            allocation->vertices.Create(capacity,
+                VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
+            // Quad streams have the largest ratio: six indices per four vertices.
+            const auto indexCapacity=(capacity/vertexStride+3)/4*6*sizeof(unsigned short);
+            allocation->indices.Create(indexCapacity,VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
+            streams.push_back(allocation);
+        } catch (...) { delete allocation; throw; }
+        stream = allocation;
+    }
+    auto offset = stream->vertices.used;
+    auto* copiedVertices = reinterpret_cast<VulkanVertex*>(static_cast<std::byte*>(stream->vertices.mapped) + offset);
     constexpr uint32_t kVertexSlotValid = kSlotMask | kGeneratedPremult |
         VulkanVertex::kIndependentColorFilter | VulkanVertex::kColorFilterMask |
         VulkanVertex::kAlphaEdgeFilter | VulkanVertex::kOpaqueInput;
@@ -1983,6 +2377,8 @@ void VulkanRenderer::Impl::Draw(std::span<const VulkanVertex> vertices, VulkanTe
         VulkanVertex::kColorFilterMask | VulkanVertex::kAlphaEdgeFilter;
     const VulkanTexture* lastSource = nullptr;
     uint32_t ownerSlotBits = 0;
+    uint32_t sourceFeatures = 0;
+    const uint32_t primitiveFlags = mixedSpritePipeline && pipeline == pipelines[1] ? kMixedAdditive : 0u;
     for (size_t i = 0; i < vertices.size(); ++i) {
         const VulkanVertex& vertex = vertices[i];
         if ((vertex.slot & ~kVertexSlotValid) != 0 || vertex.sampler >= samplers.size())
@@ -1994,62 +2390,84 @@ void VulkanRenderer::Impl::Draw(std::span<const VulkanVertex> vertices, VulkanTe
             lastSource = source;
             ownerSlotBits = VulkanRenderer::SlotOf(source);
         }
-        copiedVertices[i] = vertex;
-        copiedVertices[i].slot = ownerSlotBits | (vertex.slot & kVertexSlotKeep);
+        const auto slot=ownerSlotBits | (vertex.slot & kVertexSlotKeep) | primitiveFlags;
+#if defined(PVZ_VULKAN_SPRITE_EXPERIMENT)
+        if (instancedExperiment) {
+            auto& sprite=reinterpret_cast<SpriteInstance*>(copiedVertices)[i/4];
+            const auto& first=vertices[i-i%4];
+            if (vertex.r!=first.r || vertex.g!=first.g || vertex.b!=first.b || vertex.a!=first.a ||
+                vertex.slot!=first.slot || vertex.sampler!=first.sampler)
+                throw std::invalid_argument("Instance experiment requires uniform quad color and sampling");
+            sprite.positions[i%4*2]=vertex.x;sprite.positions[i%4*2+1]=vertex.y;
+            sprite.uvs[i%4*2]=vertex.u;sprite.uvs[i%4*2+1]=vertex.v;
+            if (i%4==0) {
+                sprite.color[0]=vertex.r;sprite.color[1]=vertex.g;
+                sprite.color[2]=vertex.b;sprite.color[3]=vertex.a;
+                sprite.slot=slot;sprite.sampler=vertex.sampler;
+            }
+        } else if (packedColorExperiment) {
+            auto* packed=reinterpret_cast<PackedColorVertex*>(copiedVertices);
+            auto* packed16=reinterpret_cast<PackedColor16Vertex*>(copiedVertices);
+            if (packedColor16Experiment) packed16[i]={vertex.x,vertex.y,{},vertex.u,vertex.v,slot,vertex.sampler};
+            else packed[i]={vertex.x,vertex.y,{},vertex.u,vertex.v,slot,vertex.sampler};
+            const float colors[]{vertex.r,vertex.g,vertex.b,vertex.a};
+            for(unsigned int c=0;c<4;++c) {
+                if (!(colors[c]>=0 && colors[c]<=1)) throw std::invalid_argument("Packed color outside UNORM range");
+                if (packedColor16Experiment) packed16[i].color[c]=static_cast<unsigned short>(colors[c]*65535+0.5f);
+                else packed[i].color[c]=static_cast<unsigned char>(colors[c]*255+0.5f);
+            }
+        } else
+#endif
+        { copiedVertices[i]=vertex;copiedVertices[i].slot=slot; }
+        sourceFeatures |= slot;
     }
-    stream->used += bytes;
-#if defined(PVZ_REANIM_UNIFIED)
-    if (pipeline!=presentPipeline) reanimOrdinaryTriangles+=vertices.size()/3;
+    stream->vertices.used += bytes;
+    // Classify the whole submitted span; never route mixed/filter/font draws
+    // through the straight sprite shader. Keep adjacent eligible spans batched.
+    uint32_t simpleFeatures = kSlotMask | VulkanVertex::kOpaqueInput | kMixedAdditive;
+#if defined(PVZ_VULKAN_SPRITE_EXPERIMENT)
+    if (manualFilterExperiment && (sourceFeatures & VulkanVertex::kColorFilterMask) &&
+        (sourceFeatures & ~(simpleFeatures | VulkanVertex::kColorFilterMask))==0)
+        for (unsigned int i=0;i<3;++i)
+            if (pipeline==pipelines[i]) {pipeline=generatedExperimentPipelines[i];break;}
+    if (simpleGeneratedExperiment && (sourceFeatures & kGeneratedPremult) &&
+        (sourceFeatures & ~(simpleFeatures | kGeneratedPremult)) == 0)
+        for (unsigned int i=0;i<3;++i)
+            if (pipeline == pipelines[i]) { pipeline=generatedExperimentPipelines[i]; break; }
+#endif
+    if ((sourceFeatures & ~simpleFeatures) == 0) {
+        for (unsigned int i = 0; i < pipelines.size(); ++i)
+            if (pipeline == pipelines[i]) {
+                pipeline = mixedSpritePipeline && i < 2 ? mixedSpritePipeline : spritePipelines[i];
+                break;
+            }
+    }
+#if defined(PVZ_VULKAN_SPRITE_EXPERIMENT)
+    if (solidFillExperiment && texture==white && pipeline==mixedSpritePipeline &&
+        (sourceFeatures & kMixedAdditive)==0)
+        pipeline=solidExperimentPipeline;
 #endif
     VkRect2D scissor{{static_cast<int32_t>(left), static_cast<int32_t>(top)},
         {static_cast<uint32_t>(right-left), static_cast<uint32_t>(bottom-top)}};
-#if defined(PVZ_REANIM_UNIFIED)
-    if (unifiedFrame && pipeline!=presentPipeline) {
-        QueueOrdinary(stream,offset,static_cast<uint32_t>(vertices.size()),pipelineSlot,scissor,vw,vh);
-        return;
-    }
-#endif
-    AppendRun(stream,offset,static_cast<uint32_t>(vertices.size()),pipeline,scissor,vw,vh
-#if defined(PVZ_REANIM_UNIFIED)
-        ,false,false
-#endif
+    AppendRun<Quads>(stream,offset,static_cast<uint32_t>(vertices.size()),pipeline,scissor,vw,vh
     );
 }
 
-void VulkanRenderer::Impl::AppendRun(Buffer* stream, VkDeviceSize offset, uint32_t count,
+template<bool Quads>
+void VulkanRenderer::Impl::AppendRun(DrawStream* stream, VkDeviceSize offset, uint32_t count,
     VkPipeline pipeline, VkRect2D scissor, int vw, int vh
-#if defined(PVZ_REANIM_UNIFIED)
-    ,bool marker,bool useUnified
-#endif
 ) {
     auto cmd = frame.cmd;
     // P5 游程：状态变化检测前置（先判后绑）。bindless+采样器数组后描述符
     // 对恒为 {纹理数组, 采样器数组}——首绘绑定一次，帧内不再变化；断点
     // 只剩 管线/剪刀/视口/换流
     const std::array sets{textureArray,samplerSet};
-#if defined(PVZ_REANIM_UNIFIED)
-    const bool layoutChange=drawState.unified!=useUnified;
-    VkDeviceSize runOffset=offset;
-    if (useUnified) {
-        const auto indexBytes=VkDeviceSize(count)*sizeof(uint32_t);
-        if (unifiedIndices->size-unifiedIndices->used<indexBytes)
-            throw std::runtime_error("Unified reanimation prototype index capacity exceeded");
-        runOffset=unifiedIndices->used;
-        auto* indices=reinterpret_cast<uint32_t*>(static_cast<std::byte*>(unifiedIndices->mapped)+runOffset);
-        const auto first=uint32_t(offset/sizeof(GpuVertex));
-        for (uint32_t i=0;i<count;++i) indices[i]=first+(marker?0u:i);
-        unifiedIndices->used+=indexBytes;
-    }
-#else
-    const bool layoutChange=false;
-    const auto runOffset=offset;
-#endif
-    const bool aVpChange = drawState.width!=vw || drawState.height!=vh || layoutChange;
+    const bool aVpChange = drawState.width!=vw || drawState.height!=vh;
     const bool aScChange = !drawState.hasScissor || drawState.scissor.offset.x!=scissor.offset.x ||
         drawState.scissor.offset.y!=scissor.offset.y || drawState.scissor.extent.width!=scissor.extent.width ||
         drawState.scissor.extent.height!=scissor.extent.height;
     const bool aPlChange = drawState.pipeline!=pipeline;
-    const bool aDsChange = drawState.descriptors!=sets || layoutChange;
+    const bool aDsChange = drawState.descriptors!=sets;
     if (pendingRun.count != 0 && (aVpChange || aScChange || aPlChange || aDsChange || pendingRun.stream != stream))
         FlushPendingRun(cmd);
     if (aVpChange) {
@@ -2057,13 +2475,7 @@ void VulkanRenderer::Impl::AppendRun(Buffer* stream, VkDeviceSize offset, uint32
         vkCmdSetViewport(cmd,0,1,&viewport);
         const float extent[]={static_cast<float>(vw),static_cast<float>(vh)};
         vkCmdPushConstants(cmd,
-#if defined(PVZ_REANIM_UNIFIED)
-            useUnified?reanimGeometryLayout:
-#endif
             pipelineLayout,
-#if defined(PVZ_REANIM_UNIFIED)
-            useUnified?VK_SHADER_STAGE_GEOMETRY_BIT:
-#endif
             hdr ? VK_SHADER_STAGE_VERTEX_BIT|VK_SHADER_STAGE_FRAGMENT_BIT : VK_SHADER_STAGE_VERTEX_BIT,
             0,sizeof(extent),extent);
         drawState.width=vw;drawState.height=vh;
@@ -2077,432 +2489,150 @@ void VulkanRenderer::Impl::AppendRun(Buffer* stream, VkDeviceSize offset, uint32
         drawState.pipeline=pipeline;
     }
     if (aDsChange) {
-#if defined(PVZ_REANIM_UNIFIED)
-        if (useUnified) {
-            const VkDescriptorSet unifiedSets[]={textureArray,samplerSet,unifiedSet};
-            vkCmdBindDescriptorSets(cmd,VK_PIPELINE_BIND_POINT_GRAPHICS,reanimGeometryLayout,0,3,unifiedSets,0,nullptr);
-            // This index buffer is shared by all resident runs. State resets
-            // after pool/target changes also restore its buffer and uint32 type.
-            vkCmdBindIndexBuffer(cmd,unifiedIndices->buffer,0,VK_INDEX_TYPE_UINT32);
-        } else
-#endif
         vkCmdBindDescriptorSets(cmd,VK_PIPELINE_BIND_POINT_GRAPHICS,pipelineLayout,0,2,sets.data(),0,nullptr);
         drawState.descriptors=sets;
     }
-#if defined(PVZ_REANIM_UNIFIED)
-    drawState.unified=useUnified;
+    // All ordinary geometry uses one uint16 index stream. Mixed triangles and
+    // quads keep their paint order in one run; no topology-change draw break.
+    constexpr unsigned int primitiveVertices=Quads ? 4u : 3u;
+    while (count) {
+        if (!pendingRun.count)
+            pendingRun={stream,offset,stream->indices.used,0,0,Quads ? RunGeometry::Quads : RunGeometry::Triangles};
+        unsigned int limit=65536;
+#if defined(PVZ_VULKAN_SPRITE_EXPERIMENT)
+        if (wideIndexExperiment) {
+            if constexpr (!Quads) throw std::logic_error("32-bit comparison accepts explicit quads only");
+            limit=262144;
+        }
 #endif
-    // P5：并入待决游程（流连续追加），bind+draw 延迟到冲刷点
-    if (pendingRun.count == 0)
-        pendingRun = PendingRun{stream, runOffset, 0};
-    pendingRun.count += count;
+        unsigned int chunk=std::min(count,limit-pendingRun.count);
+        chunk-=chunk%primitiveVertices;
+        if (!chunk) { FlushPendingRun(cmd); continue; }
+        const auto indexCount=Quads ? chunk/4*6 : chunk;
+        constexpr auto geometry=Quads ? RunGeometry::Quads : RunGeometry::Triangles;
+        if (pendingRun.geometry!=geometry && pendingRun.geometry!=RunGeometry::Mixed) {
+            // Materialize the already queued pure prefix only when topology
+            // actually mixes. Pure runs keep using the immutable GPU table.
+            const auto prefixBytes=VkDeviceSize(pendingRun.indexCount)*sizeof(unsigned short);
+            if (prefixBytes>stream->indices.size-stream->indices.used)
+                throw std::logic_error("Index prefix capacity exceeded");
+#if defined(PVZ_VULKAN_SPRITE_EXPERIMENT)
+            if (!generateIndexPrefixExperiment) {
+                const auto* prefix=static_cast<const unsigned short*>(staticIndices.mapped)+
+                    (pendingRun.geometry==RunGeometry::Quads ? 65536 : 0);
+                std::memcpy(static_cast<std::byte*>(stream->indices.mapped)+stream->indices.used,prefix,size_t(prefixBytes));
+            } else
+#endif
+            {
+                // Mapped upload storage is write-only in the frame hot path.
+                // Generate this tiny pattern rather than reading the GPU table.
+                auto* out=reinterpret_cast<unsigned short*>(static_cast<std::byte*>(stream->indices.mapped)+stream->indices.used);
+                if (pendingRun.geometry==RunGeometry::Triangles) {
+                    for(unsigned int i=0;i<pendingRun.count;++i) out[i]=static_cast<unsigned short>(i);
+                } else {
+                    for(unsigned int i=0;i<pendingRun.count;i+=4) {
+                        const unsigned short a=static_cast<unsigned short>(i);
+                        const unsigned short quad[]{a,static_cast<unsigned short>(a+1),static_cast<unsigned short>(a+2),
+                            static_cast<unsigned short>(a+1),static_cast<unsigned short>(a+2),static_cast<unsigned short>(a+3)};
+                        std::memcpy(out,quad,sizeof(quad));out+=6;
+                    }
+                }
+            }
+            stream->indices.used+=prefixBytes;
+            pendingRun.geometry=RunGeometry::Mixed;
+        }
+        if (pendingRun.geometry==RunGeometry::Mixed) {
+            const auto indexBytes=VkDeviceSize(indexCount)*sizeof(unsigned short);
+            if (indexBytes>stream->indices.size-stream->indices.used)
+                throw std::logic_error("Vertex/index stream capacities disagree");
+            auto* indices=reinterpret_cast<unsigned short*>(
+                static_cast<std::byte*>(stream->indices.mapped)+stream->indices.used);
+            const auto base=pendingRun.count;
+            if constexpr (Quads) {
+                for (unsigned int i=0;i<chunk;i+=4) {
+                    const unsigned short a=static_cast<unsigned short>(base+i);
+                    // Input is a four-corner strip, matching the original frontend.
+                    const unsigned short quad[]{a,static_cast<unsigned short>(a+1),static_cast<unsigned short>(a+2),
+                        static_cast<unsigned short>(a+1),static_cast<unsigned short>(a+2),static_cast<unsigned short>(a+3)};
+                    std::memcpy(indices,quad,sizeof(quad)); indices+=6;
+                }
+            } else {
+                for (unsigned int i=0;i<chunk;++i) indices[i]=static_cast<unsigned short>(base+i);
+            }
+            stream->indices.used+=indexBytes;
+        }
+        pendingRun.count+=chunk; pendingRun.indexCount+=indexCount;
+#if defined(PVZ_VULKAN_SPRITE_EXPERIMENT)
+        offset+=VkDeviceSize(instancedExperiment ? chunk/4 : chunk)*vertexStride;
+#else
+        offset+=VkDeviceSize(chunk)*vertexStride;
+#endif
+        count-=chunk;
+    }
 }
 
 void VulkanRenderer::Impl::FlushPendingRun(VkCommandBuffer cmd) {
-#if defined(PVZ_REANIM_UNIFIED)
-    if (!flushingOrdinary && !unifiedOrdinary.empty()) FlushOrdinary();
-#endif
     if (pendingRun.count == 0) return;
+#if defined(PVZ_VULKAN_SPRITE_EXPERIMENT)
+    ++VulkanRenderer::benchmarkDrawCalls;
+    VulkanRenderer::benchmarkTriangles += pendingRun.indexCount / 3;
+#endif
     // 游程顶点总在流缓冲内连续追加：整个缓冲绑定一次，游程用 firstVertex
     // 偏移取址（绑 22 次/帧纯属结构浪费）；仅换流缓冲时重绑
-    if (drawState.vertexBuffer != pendingRun.stream->buffer) {
+    if (drawState.vertexBuffer != pendingRun.stream->vertices.buffer) {
         const VkDeviceSize zero = 0;
-        vkCmdBindVertexBuffers(cmd, 0, 1, &pendingRun.stream->buffer, &zero);
-        drawState.vertexBuffer = pendingRun.stream->buffer;
+        vkCmdBindVertexBuffers(cmd, 0, 1, &pendingRun.stream->vertices.buffer, &zero);
+        drawState.vertexBuffer = pendingRun.stream->vertices.buffer;
     }
-#if defined(PVZ_REANIM_UNIFIED)
-    if (drawState.unified) {
-        vkCmdDrawIndexed(cmd,pendingRun.count,1,uint32_t(pendingRun.offset/sizeof(uint32_t)),0,0);
+    auto indexBuffer=pendingRun.geometry==RunGeometry::Mixed ? pendingRun.stream->indices.buffer : staticIndices.buffer;
+    auto firstIndex=pendingRun.geometry==RunGeometry::Mixed ?
+        static_cast<uint32_t>(pendingRun.indexOffset/sizeof(unsigned short)) :
+        pendingRun.geometry==RunGeometry::Quads ? 65536u : 0u;
+    auto indexType=VK_INDEX_TYPE_UINT16;
+#if defined(PVZ_VULKAN_SPRITE_EXPERIMENT)
+    if (wideIndexExperiment) {
+        if (pendingRun.geometry!=RunGeometry::Quads) throw std::logic_error("Mixed 32-bit fixture unsupported");
+        indexBuffer=wideQuadIndices.buffer;firstIndex=0;indexType=VK_INDEX_TYPE_UINT32;
+    }
+#endif
+    if (drawState.indexBuffer!=indexBuffer) {
+        vkCmdBindIndexBuffer(cmd,indexBuffer,0,indexType);
+        drawState.indexBuffer=indexBuffer;
+    }
+#if defined(PVZ_VULKAN_SPRITE_EXPERIMENT)
+    if (instancedExperiment) {
+        if (pendingRun.geometry!=RunGeometry::Quads) throw std::logic_error("Instance experiment expects pure quads");
+        vkCmdDrawIndexed(cmd,6,pendingRun.count/4,65536,0,
+            static_cast<unsigned int>(pendingRun.offset/sizeof(SpriteInstance)));
+    } else if (nonIndexedExperiment) {
+        vkCmdDraw(cmd,pendingRun.count,1,static_cast<uint32_t>(pendingRun.offset/vertexStride),0);
     } else
 #endif
-    vkCmdDraw(cmd, pendingRun.count, 1,
-        static_cast<uint32_t>(pendingRun.offset / sizeof(VulkanVertex)), 0);
+        vkCmdDrawIndexed(cmd,pendingRun.indexCount,1,firstIndex,
+            static_cast<int32_t>(pendingRun.offset/vertexStride),0);
     pendingRun.count = 0;
 }
 
-#if defined(PVZ_REANIM_UNIFIED)
-void VulkanRenderer::Impl::InitReanimGeometry() {
-    if (reanimVertex || !window.geometryShaderEnabled) return;
-    const auto folder=std::filesystem::path(reanimShaderFolder);
-    const auto module=[&](const char* name,VkShaderModule& target) {
-        const auto words=ReadShader((folder/name).string());
-        VkShaderModuleCreateInfo info{VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO};
-        info.codeSize=words.size()*sizeof(uint32_t);info.pCode=words.data();
-        VK_REQUIRE(vkCreateShaderModule(device,&info,nullptr,&target));
-    };
-    module("game_reanim_unified_vs.spv",reanimVertex);module("game_reanim_unified_gs.spv",reanimGeometry);
-    std::array<VkDescriptorSetLayoutBinding,3> bindings{};
-    for (uint32_t i=0;i<3;++i) bindings[i]={i,VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,1,VK_SHADER_STAGE_GEOMETRY_BIT,nullptr};
-    VkDescriptorSetLayoutCreateInfo set{VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO};
-    set.bindingCount=3;set.pBindings=bindings.data();
-    VK_REQUIRE(vkCreateDescriptorSetLayout(device,&set,nullptr,&reanimGeometrySetLayout));
-    const VkDescriptorSetLayout sets[]={imageLayout,samplerLayout,reanimGeometrySetLayout};
-    const VkPushConstantRange push{VK_SHADER_STAGE_GEOMETRY_BIT,0,8};
-    VkPipelineLayoutCreateInfo layout{VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO};
-    layout.setLayoutCount=3;layout.pSetLayouts=sets;layout.pushConstantRangeCount=1;layout.pPushConstantRanges=&push;
-    VK_REQUIRE(vkCreatePipelineLayout(device,&layout,nullptr,&reanimGeometryLayout));
-    InitImagePass();
-    for (unsigned i=0;i<3;++i) {
-        reanimGeometryPipelines[i]=Pipeline(scenePass,VulkanBlend(i),fragmentShader,false,false,false,true);
-        reanimGeometryImagePipelines[i]=Pipeline(imagePass,VulkanBlend(i),fragmentShader,true,false,false,true);
-        unifiedCoverage[i]=Pipeline(scenePass,VulkanBlend(i),fragmentShader,false,true,false,true);
-        unifiedImageCoverage[i]=Pipeline(imagePass,VulkanBlend(i),fragmentShader,true,true,false,true);
-    }
-    unifiedStatic=new Buffer;unifiedInstances=new Buffer;
-    unifiedPackets=new Buffer;unifiedIndices=new Buffer;
-    unifiedStatic->Create(64*1024*1024,VK_BUFFER_USAGE_STORAGE_BUFFER_BIT|
-        VK_BUFFER_USAGE_TRANSFER_DST_BIT|VK_BUFFER_USAGE_TRANSFER_SRC_BIT,false);
-    unifiedInstances->Create(1024*1024,VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
-    unifiedPackets->Create(8*1024*1024,VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
-    unifiedIndices->Create(8*1024*1024,VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
-    const VkDescriptorPoolSize size{VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,3};
-    VkDescriptorPoolCreateInfo pool{VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO};
-    pool.maxSets=1;pool.poolSizeCount=1;pool.pPoolSizes=&size;
-    VK_REQUIRE(vkCreateDescriptorPool(device,&pool,nullptr,&unifiedPool));
-    VkDescriptorSetAllocateInfo alloc{VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO};
-    alloc.descriptorPool=unifiedPool;alloc.descriptorSetCount=1;alloc.pSetLayouts=&reanimGeometrySetLayout;
-    VK_REQUIRE(vkAllocateDescriptorSets(device,&alloc,&unifiedSet));
-    const VkDescriptorBufferInfo infos[]={{unifiedStatic->buffer,0,unifiedStatic->size},
-        {unifiedInstances->buffer,0,unifiedInstances->size},
-        {unifiedPackets->buffer,0,unifiedPackets->size}};
-    VkWriteDescriptorSet writes[3]{};
-    for (uint32_t i=0;i<3;++i) {
-        writes[i]={VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET};
-        writes[i].dstSet=unifiedSet;writes[i].dstBinding=i;writes[i].descriptorCount=1;
-        writes[i].descriptorType=VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;writes[i].pBufferInfo=&infos[i];
-    }
-    vkUpdateDescriptorSets(device,3,writes,0,nullptr);
-}
-void VulkanRenderer::Impl::ReclaimUnifiedRanges() {
-    // Caller has completed both frame and transfer fences. Only range metadata
-    // survives retirement; immutable keyframes remain exclusively on the GPU.
-    if (reanimRetired.empty()) return;
-    unifiedFreeRanges.reserve(unifiedFreeRanges.size()+reanimRetired.size());
-    for (auto* definition:reanimRetired) {
-        if (definition->blobHeader!=UINT32_MAX && definition->blobBytes)
-            unifiedFreeRanges.push_back({VkDeviceSize(definition->blobHeader)*4,definition->blobBytes});
-        delete definition;
-    }
-    reanimRetired.clear();
-    std::sort(unifiedFreeRanges.begin(),unifiedFreeRanges.end(),
-        [](const ArenaRange& a,const ArenaRange& b) {return a.offset<b.offset;});
-    size_t merged=0;
-    for (const auto range:unifiedFreeRanges) {
-        if (merged && unifiedFreeRanges[merged-1].offset+unifiedFreeRanges[merged-1].size==range.offset)
-            unifiedFreeRanges[merged-1].size+=range.size;
-        else unifiedFreeRanges[merged++]=range;
-    }
-    unifiedFreeRanges.resize(merged);
-    while (!unifiedFreeRanges.empty() &&
-        unifiedFreeRanges.back().offset+unifiedFreeRanges.back().size==unifiedStaticUsed) {
-        unifiedStaticUsed=unifiedFreeRanges.back().offset;unifiedFreeRanges.pop_back();
-    }
-}
-void VulkanRenderer::Impl::GrowUnifiedStatic(VkDeviceSize required) {
-    if (required<=unifiedStatic->size) return;
-    if (frame.valid) throw std::logic_error("Grow resident arena between frames");
-    VkPhysicalDeviceProperties limits{};vkGetPhysicalDeviceProperties(window.physicalDevice,&limits);
-    const VkDeviceSize maximum=limits.limits.maxStorageBufferRange;
-    if (required>maximum) throw std::runtime_error("Resident reanimation arena exceeds device storage-buffer limit");
-    const VkDeviceSize capacity=std::min(maximum,std::max(required,unifiedStatic->size*2));
-    auto replacement=std::make_unique<Buffer>();
-    replacement->Create(capacity,VK_BUFFER_USAGE_STORAGE_BUFFER_BIT|
-        VK_BUFFER_USAGE_TRANSFER_DST_BIT|VK_BUFFER_USAGE_TRANSFER_SRC_BIT,false);
-    // Descriptor set binding zero can change only after every old reader has
-    // completed. This is a loading action, never a frame submission stall.
-    window.WaitForFrame();FinishTransfer();CompleteTransfers();
-    if (unifiedStaticUsed) {
-        const auto cmd=BeginTransfer();
-        VkMemoryBarrier before{VK_STRUCTURE_TYPE_MEMORY_BARRIER};
-        before.srcAccessMask=VK_ACCESS_TRANSFER_WRITE_BIT|VK_ACCESS_SHADER_READ_BIT;
-        before.dstAccessMask=VK_ACCESS_TRANSFER_READ_BIT;
-        vkCmdPipelineBarrier(cmd,VK_PIPELINE_STAGE_TRANSFER_BIT|VK_PIPELINE_STAGE_GEOMETRY_SHADER_BIT,
-            VK_PIPELINE_STAGE_TRANSFER_BIT,0,1,&before,0,nullptr,0,nullptr);
-        const VkBufferCopy copy{0,0,unifiedStaticUsed};
-        vkCmdCopyBuffer(cmd,unifiedStatic->buffer,replacement->buffer,1,&copy);
-        VkMemoryBarrier after{VK_STRUCTURE_TYPE_MEMORY_BARRIER};
-        after.srcAccessMask=VK_ACCESS_TRANSFER_WRITE_BIT;after.dstAccessMask=VK_ACCESS_SHADER_READ_BIT;
-        vkCmdPipelineBarrier(cmd,VK_PIPELINE_STAGE_TRANSFER_BIT,VK_PIPELINE_STAGE_GEOMETRY_SHADER_BIT,
-            0,1,&after,0,nullptr,0,nullptr);
-        FinishTransfer();CompleteTransfers();
-    }
-    const VkDescriptorBufferInfo info{replacement->buffer,0,replacement->size};
-    VkWriteDescriptorSet write{VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET};
-    write.dstSet=unifiedSet;write.dstBinding=0;write.descriptorCount=1;
-    write.descriptorType=VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;write.pBufferInfo=&info;
-    vkUpdateDescriptorSets(device,1,&write,0,nullptr);
-    delete unifiedStatic;unifiedStatic=replacement.release();
-}
-VkDeviceSize VulkanRenderer::Impl::AllocateUnifiedStatic(VkDeviceSize bytes) {
-    for (auto it=unifiedFreeRanges.begin();it!=unifiedFreeRanges.end();++it) if (it->size>=bytes) {
-        const auto offset=it->offset;it->offset+=bytes;it->size-=bytes;
-        if (!it->size) unifiedFreeRanges.erase(it);
-        return offset;
-    }
-    GrowUnifiedStatic(unifiedStaticUsed+bytes);
-    const auto offset=unifiedStaticUsed;unifiedStaticUsed+=bytes;return offset;
-}
-void VulkanRenderer::Impl::QueueOrdinary(Buffer* stream,VkDeviceSize offset,uint32_t count,
-    uint32_t pipelineSlot,VkRect2D scissor,int targetWidth,int targetHeight) {
-    if (!unifiedOrdinary.empty()) {
-        auto& last=unifiedOrdinary.back();
-        if (last.stream==stream && last.offset+VkDeviceSize(last.count)*sizeof(GpuVertex)==offset &&
-            last.pipelineSlot==pipelineSlot && last.width==targetWidth && last.height==targetHeight &&
-            std::memcmp(&last.scissor,&scissor,sizeof(scissor))==0) {
-            last.count+=count;unifiedOrdinaryTriangles+=count/3;return;
-        }
-    }
-    unifiedOrdinary.push_back({stream,offset,count,pipelineSlot,scissor,targetWidth,targetHeight});
-    unifiedOrdinaryTriangles+=count/3;
-}
-void VulkanRenderer::Impl::FlushOrdinary() {
-    if (unifiedOrdinary.empty()) return;
-    // Decide only when the complete ordinary span is known. Short gaps can
-    // share the resident batch; long gaps amortize returning to the normal VS.
-    constexpr size_t directThreshold=512;
-    const bool useUnified=unifiedOrdinaryTriangles<=directThreshold;
-    // Slots encode family in the high bits and blend in the low two bits.
-    // These pipeline families remain fixed while ordinary runs are pending.
-    const std::array<VkPipeline,3>* const families[2][4]{
-        {&pipelines,&imagePipelines,&coveragePipelines,&imageCoveragePipelines},
-        {&reanimGeometryPipelines,&reanimGeometryImagePipelines,&unifiedCoverage,&unifiedImageCoverage}};
-    flushingOrdinary=true;
-    for (const auto& run:unifiedOrdinary) {
-        const auto pipeline=(*families[useUnified][run.pipelineSlot>>2])[run.pipelineSlot&3u];
-        AppendRun(run.stream,run.offset,run.count,pipeline,run.scissor,run.width,run.height,false,useUnified);
-    }
-    unifiedOrdinary.clear();unifiedOrdinaryTriangles=0;flushingOrdinary=false;
-}
-bool VulkanRenderer::Impl::SubmitUnifiedMarker(uint32_t encoded,VulkanTexture* texture,VulkanBlend blend) {
-    FlushOrdinary();
-    constexpr VkDeviceSize bytes=sizeof(GpuVertex);
-    Buffer* stream=nullptr;
-    for (auto& candidate:streams) if (candidate->size-candidate->used>=bytes) {stream=candidate.get();break;}
-    if (!stream) {
-        auto allocation=std::make_unique<Buffer>();
-        allocation->Create(8*1024*1024,VK_BUFFER_USAGE_VERTEX_BUFFER_BIT|VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
-        stream=allocation.get();streams.push_back(std::move(allocation));
-    }
-    GpuVertex marker{};marker.slot=VulkanRenderer::SlotOf(texture);marker.sampler=encoded;
-    std::memcpy(static_cast<std::byte*>(stream->mapped)+stream->used,&marker,sizeof(marker));
-    const auto offset=stream->used;stream->used+=bytes;
-    unifiedFrame=true;texture->lastDraw=frameSerial;
-    auto* target=renderImage?renderImage:scene.get();
-    const auto pipeline=(renderImage?reanimGeometryImagePipelines:reanimGeometryPipelines).at(size_t(blend));
-    AppendRun(stream,offset,3,pipeline,{{0,0},{uint32_t(target->width),uint32_t(target->height)}},
-        target->width,target->height,true,true);
-    return true;
-}
-#endif
 
-VulkanReanim* VulkanRenderer::UploadParticleDefinition(std::span<const float> words,uint32_t variants) {
-    return UploadParticleResident(*this,words,variants);
-}
-bool VulkanRenderer::SubmitParticle(VulkanReanim* definition,VulkanTexture* texture,
-    const GpuParticleDraw& draw,std::span<const GpuParticleState> chain,
-    bool linear,bool repeat,VulkanBlend blend,const VulkanClip* clip) {
-#if defined(PVZ_REANIM_UNIFIED)
-    auto& s=*impl_;
-    const auto stateWords = draw.stateWords ? draw.stateWords : uint32_t(sizeof(GpuParticleState)/sizeof(float));
-    const auto slots=(24+chain.size()*stateWords+23)/24;
-    if(!definition||definition->owner!=&s||draw.variant>=definition->particleVariantCount||
-        chain.empty()||draw.frameSource>=chain.size()||slots+1>65535-s.unifiedInstanceControls.size()||
-        (slots+1)*96>s.unifiedInstances->size-s.unifiedInstances->used)return false;
-    for(const auto& state:chain)if(state.emitter>=definition->particleEmitterCount)return false;
-    GpuReanimInstance instance{};
-    instance.translateX=draw.translateX;instance.translateY=draw.translateY;
-    instance.overlay00=float((s.unifiedInstanceControls.size()+1)*24);
-    instance.overlay01=float(chain.size());
-    const auto token=BeginReanimInstance(definition,texture,instance,linear,repeat,clip,true);
-    if(token==UINT32_MAX)return false;
-    const uint32_t flags=(linear?1u:0u)|(repeat?2u:0u)|(clip?4u:0u)|16u;
-    auto* bytes=static_cast<std::byte*>(s.unifiedInstances->mapped);
-    std::memcpy(bytes+size_t(token&65535u)*96+offsetof(ReanimInstanceData,flags),&flags,4);
-    const auto start=s.unifiedInstances->used;
-    std::memset(bytes+start,0,96);
-    std::memcpy(bytes+start,&draw,sizeof(draw));
-    std::memcpy(bytes+start+96,chain.data(),chain.size()*size_t(stateWords)*sizeof(float));
-    s.unifiedInstances->used+=slots*96;
-    s.unifiedInstanceControls.resize(s.unifiedInstanceControls.size()+slots);
-    const GpuReanimTrackDraw packet{0,0xffffffff,draw.samplingFlags};
-    return SubmitReanimTrack(token,packet,blend);
+// 管线缓存落盘与 resident 无关（桌面为空操作），置于 UNIFIED 块外编译。
+void VulkanRenderer::Impl::SavePipelineCache() {
+#if !defined(__ANDROID__)
+    (void)0;  // 桌面暂不落盘缓存（VK_NULL_HANDLE 对创建调用天然合法）
 #else
-    (void)definition;(void)texture;(void)draw;(void)chain;(void)linear;(void)repeat;(void)blend;(void)clip;
-    return false;
-#endif
-}
-VulkanReanim* VulkanRenderer::UploadReanimDefinition(const GpuReanimDefinition& source) {
-#if defined(PVZ_REANIM_UNIFIED)
-    auto& s=*impl_;
-    if (s.frame.valid) throw std::logic_error("Upload reanimation definitions between frames");
-    if (!s.window.geometryShaderEnabled) return nullptr;
-    if (!s.reanimRetired.empty()) {
-        s.window.WaitForFrame();s.FinishTransfer();s.CompleteTransfers();s.ReclaimUnifiedRanges();
-    }
-    if (source.tracks.empty() || source.keys.empty() || !source.imageSlotCount || !source.variantCount ||
-        uint64_t(source.imageSlotCount)*source.variantCount!=source.geometry.size())
-        throw std::invalid_argument("Invalid resident reanimation definition");
-    for (const auto& track:source.tracks)
-        if (track.keyOffset!=GpuReanimNoKeys &&
-            (!track.keyCount || uint64_t(track.keyOffset)+track.keyCount>source.keys.size()))
-            throw std::invalid_argument("Invalid resident reanimation track range");
-    for (const auto& key:source.keys)
-        if (key.imageSlot>=source.imageSlotCount)
-            throw std::invalid_argument("Invalid resident reanimation image slot");
-    s.InitReanimGeometry();
-    auto* result=new VulkanReanim;
-    result->owner=&s;
-    Buffer* staging=nullptr;
-    try {
-        result->trackInfo.assign(source.tracks.begin(),source.tracks.end());
-        result->imageSlotCount=source.imageSlotCount; result->variantCount=source.variantCount;
-        const VkDeviceSize sizes[]={source.tracks.size_bytes(),source.keys.size_bytes(),source.geometry.size_bytes()};
-        const void* data[]={source.tracks.data(),source.keys.data(),source.geometry.data()};
-        staging=new Buffer;
-        constexpr VkDeviceSize headerBytes=16;
-        staging->Create(sizes[0]+sizes[1]+sizes[2]+headerBytes,VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
-        VkDeviceSize offset=headerBytes;
-        for (unsigned i=0;i<3;++i) {
-            std::memcpy(static_cast<std::byte*>(staging->mapped)+offset,data[i],size_t(sizes[i]));
-            offset+=sizes[i];
-        }
-        // Reserve before command recording so allocation failure cannot leave a
-        // recorded upload referring to an object released by this catch block.
-        s.reanimDefinitions.reserve(s.reanimDefinitions.size()+1);
-        s.reanimStaging.reserve(s.reanimStaging.size()+1);
-        const VkDeviceSize origin=s.AllocateUnifiedStatic(staging->size);
-        const auto cmd=s.BeginTransfer();
-        const uint32_t header[]={uint32_t((origin+16)/4),uint32_t((origin+16+sizes[0])/4),
-            uint32_t((origin+16+sizes[0]+sizes[1])/4),source.imageSlotCount};
-        std::memcpy(staging->mapped,header,sizeof(header));
-        const VkBufferCopy copy{0,origin,staging->size};
-        vkCmdCopyBuffer(cmd,staging->buffer,s.unifiedStatic->buffer,1,&copy);
-        result->blobHeader=uint32_t(origin/4);result->blobBytes=staging->size;
-        VkMemoryBarrier barrier{VK_STRUCTURE_TYPE_MEMORY_BARRIER};
-        barrier.srcAccessMask=VK_ACCESS_TRANSFER_WRITE_BIT; barrier.dstAccessMask=VK_ACCESS_SHADER_READ_BIT;
-        vkCmdPipelineBarrier(cmd,VK_PIPELINE_STAGE_TRANSFER_BIT,
-            VK_PIPELINE_STAGE_GEOMETRY_SHADER_BIT,
-            0,1,&barrier,0,nullptr,0,nullptr);
-        s.reanimDefinitions.push_back(result); s.reanimStaging.push_back(staging);
-        return result;
-    } catch (...) { delete staging; delete result; throw; }
-#else
-    (void)source;return nullptr;
+    if (pipelineCache == VK_NULL_HANDLE) return;
+    std::size_t size = 0;
+    if (vkGetPipelineCacheData(device, pipelineCache, &size, nullptr) != VK_SUCCESS || size == 0)
+        return;
+    std::vector<std::byte> data(size);
+    if (vkGetPipelineCacheData(device, pipelineCache, &size, data.data()) != VK_SUCCESS)
+        return;
+    std::ofstream out(GetExecutableDirectory()+"pipeline_cache.bin",
+        std::ios::binary | std::ios::trunc);
+    if (out) out.write(reinterpret_cast<const char*>(data.data()), static_cast<std::streamsize>(size));
 #endif
 }
 
-void VulkanRenderer::DestroyReanimDefinition(VulkanReanim* definition) {
-    if (!definition) return;
-#if defined(PVZ_REANIM_UNIFIED)
-    auto& s=*impl_;
-    const auto found=std::find(s.reanimDefinitions.begin(),s.reanimDefinitions.end(),definition);
-    if (found==s.reanimDefinitions.end()) throw std::invalid_argument("Unknown reanimation definition");
-    s.reanimRetired.push_back(definition);
-    for (auto& control:s.unifiedInstanceControls)
-        if (control.definition==definition) control.definition=nullptr;
-    definition->owner=nullptr;
-    s.reanimDefinitions.erase(found);
-#else
-    throw std::invalid_argument("Resident reanimation is disabled in this renderer");
-#endif
-}
-
-bool VulkanRenderer::SubmitReanim(VulkanReanim* definition,VulkanTexture* texture,
-    const GpuReanimDraw& draw,bool linear,bool repeat,VulkanBlend blend,const VulkanClip* clip,bool forceGpu) {
-#if defined(PVZ_REANIM_UNIFIED)
-    auto& s=*impl_;
-    if (!s.frame.valid) throw std::logic_error("Reanimation draw outside frame");
-    if ((!s.reanimFrameEligible && !forceGpu) || !s.window.geometryShaderEnabled ||
-        !definition || definition->owner!=&s || draw.track>=definition->trackInfo.size() ||
-        (draw.samplingFlags & ~(GpuVertex::kIndependentColorFilter|GpuVertex::kColorFilterMask|
-            GpuVertex::kAlphaEdgeFilter))!=0) return false;
-    const auto& track=definition->trackInfo[draw.track];
-    if (track.keyOffset==GpuReanimNoKeys || track.flags || draw.before>=track.keyCount ||
-        draw.after>=track.keyCount) return false;
-    GpuReanimInstance instance{};
-    instance.before=draw.before;instance.after=draw.after;instance.variant=draw.variant;
-    instance.fraction=draw.fraction;instance.translateX=draw.translateX;instance.translateY=draw.translateY;
-    instance.overlay00=draw.overlay00;instance.overlay01=draw.overlay01;instance.overlay02=draw.overlay02;
-    instance.overlay10=draw.overlay10;instance.overlay11=draw.overlay11;instance.overlay12=draw.overlay12;
-    const auto token=BeginReanimInstance(definition,texture,instance,linear,repeat,clip,forceGpu);
-    if (token==UINT32_MAX) return false;
-    // Legacy translation already includes the half-pixel adjustment. Write the
-    // known flag value without reading write-combined mapped instance memory.
-    const uint32_t flags=(linear?1u:0u)|(repeat?2u:0u)|(clip?4u:0u)|8u;
-    std::memcpy(static_cast<std::byte*>(s.unifiedInstances->mapped)+
-        VkDeviceSize(token&0xffffu)*sizeof(ReanimInstanceData)+offsetof(ReanimInstanceData,flags),
-        &flags,sizeof(flags));
-    GpuReanimTrackDraw packet{};packet.track=draw.track;packet.color=draw.color;
-    packet.samplingFlags=draw.samplingFlags;
-    packet.flags=draw.truncate?GpuReanimTrackDraw::Truncate:0;
-    return SubmitReanimTrack(token,packet,blend);
-#else
-    (void)definition;(void)texture;(void)draw;(void)linear;(void)repeat;(void)blend;(void)clip;(void)forceGpu;
-    return false;
-#endif
-}
-
-uint32_t VulkanRenderer::BeginReanimInstance(VulkanReanim* definition,VulkanTexture* texture,
-    const GpuReanimInstance& instance,bool linear,bool repeat,const VulkanClip* clip,bool forceGpu) {
-#if defined(PVZ_REANIM_UNIFIED)
-    auto& s=*impl_;
-    if (!s.frame.valid) throw std::logic_error("Reanimation instance outside frame");
-    if (!s.reanimFrameEligible && !forceGpu) return UINT32_MAX;
-    if (!s.window.geometryShaderEnabled || !definition || definition->owner!=&s ||
-        definition->blobHeader==UINT32_MAX || !texture || !s.textures.contains(texture) ||
-        texture==s.renderImage || instance.variant>=definition->variantCount ||
-        !std::isfinite(instance.fraction) || instance.fraction<0 || instance.fraction>1 ||
-        s.unifiedInstances->size-s.unifiedInstances->used<sizeof(ReanimInstanceData) ||
-        s.unifiedInstanceControls.size()>=65535) return UINT32_MAX;
-    ReanimInstanceData packet{};
-    packet.draw=instance;packet.header=definition->blobHeader;
-    packet.imageSlotCount=definition->imageSlotCount;packet.textureSlot=SlotOf(texture);
-    packet.flags=(linear?1u:0u)|(repeat?2u:0u)|(clip?4u:0u);
-    if (clip) {
-        packet.clip[0]=float(clip->x);packet.clip[1]=float(clip->y);
-        packet.clip[2]=float(int64_t(clip->x)+clip->width);packet.clip[3]=float(int64_t(clip->y)+clip->height);
-    }
-    const auto index=uint32_t(s.unifiedInstanceControls.size());
-    s.unifiedInstanceControls.push_back({definition,texture,instance.before,instance.after});
-    std::memcpy(static_cast<std::byte*>(s.unifiedInstances->mapped)+s.unifiedInstances->used,&packet,sizeof(packet));
-    s.unifiedInstances->used+=sizeof(packet);
-    // A begin-only group never activates the geometry path. The generation
-    // also rejects tokens surviving a real frame boundary/target batch close.
-    return (uint32_t(s.frameSerial&0xffffu)<<16)|index;
-#else
-    (void)definition;(void)texture;(void)instance;(void)linear;(void)repeat;(void)clip;(void)forceGpu;
-    return UINT32_MAX;
-#endif
-}
-bool VulkanRenderer::SubmitReanimTrack(uint32_t instance,const GpuReanimTrackDraw& draw,VulkanBlend blend) {
-#if defined(PVZ_REANIM_UNIFIED)
-    auto& s=*impl_;
-    if (!s.frame.valid || (instance>>16)!=(s.frameSerial&0xffffu)) return false;
-    const auto index=instance&0xffffu;
-    if (index>=s.unifiedInstanceControls.size() || (draw.flags&~3u) ||
-        (draw.samplingFlags & ~(GpuVertex::kIndependentColorFilter|GpuVertex::kColorFilterMask|
-            GpuVertex::kAlphaEdgeFilter))) return false;
-    const auto& control=s.unifiedInstanceControls[index];
-    auto* definition=control.definition;
-    auto* texture=control.texture;
-    // Begin validates ownership; successful destruction invalidates controls
-    // before releasing either resource, including begin-only instances.
-    if (!definition || !texture || texture==s.renderImage ||
-        draw.track>=definition->trackInfo.size()) return false;
-    const auto& track=definition->trackInfo[draw.track];
-    if (track.keyOffset==GpuReanimNoKeys || track.flags || control.before>=track.keyCount ||
-        control.after>=track.keyCount) return false;
-    // No mapped GPU memory is read during validation.
-    if (s.unifiedPackets->size-s.unifiedPackets->used<sizeof(ReanimTrackData)) return false;
-    const ReanimTrackData packet{draw.track,index,draw.color,draw.samplingFlags|draw.flags,draw.shakeX,draw.shakeY};
-    const auto packetIndex=uint32_t(s.unifiedPackets->used/sizeof(ReanimTrackData));
-    std::memcpy(static_cast<std::byte*>(s.unifiedPackets->mapped)+s.unifiedPackets->used,&packet,sizeof(packet));
-    s.unifiedPackets->used+=sizeof(packet);
-    return s.SubmitUnifiedMarker(0x80000000u|packetIndex,texture,blend);
-#else
-    (void)instance;(void)draw;(void)blend;return false;
-#endif
-}
+void VulkanRenderer::SavePipelineCache() { impl_->SavePipelineCache(); }
 
 void VulkanRenderer::SubmitTriangles(std::span<const VulkanVertex> vertices, VulkanTexture* texture,
     bool linear, bool wrap, VulkanBlend blend, const VulkanClip* clip) {
@@ -2511,11 +2641,68 @@ void VulkanRenderer::SubmitTriangles(std::span<const VulkanVertex> vertices, Vul
     auto* output = s.renderImage ? s.renderImage : s.scene.get();
     const auto& pipelines = s.renderImage ? s.imagePipelines : s.pipelines;
     s.Draw(vertices, texture, pipelines.at(static_cast<size_t>(blend)), clip, output->width, output->height
-#if defined(PVZ_REANIM_UNIFIED)
-        ,(s.renderImage?4u:0u)|static_cast<uint32_t>(blend)
-#endif
     );
 }
+
+void VulkanRenderer::SubmitQuads(std::span<const VulkanVertex> vertices,VulkanTexture* texture,
+    bool linear,bool wrap,VulkanBlend blend,const VulkanClip* clip) {
+    (void)linear; (void)wrap;
+    auto& s=*impl_;
+    s.Draw<true>(vertices,texture,(s.renderImage ? s.imagePipelines : s.pipelines).at(size_t(blend)),
+        clip,(s.renderImage ? s.renderImage->width : s.width),(s.renderImage ? s.renderImage->height : s.height));
+}
+
+#if defined(PVZ_VULKAN_SPRITE_EXPERIMENT)
+void VulkanRenderer::SubmitBenchmarkSprite(const VulkanSpriteInstance& sprite,VulkanTexture* texture,
+    VulkanBlend blend,const VulkanClip* clip) {
+    auto& s=*impl_;
+    if (!s.instancedExperiment || !s.frame.valid || s.renderImage)
+        throw std::logic_error("Direct instance experiment requires an open main scene");
+    constexpr auto valid=Impl::kSlotMask | Impl::kGeneratedPremult | VulkanVertex::kIndependentColorFilter |
+        VulkanVertex::kColorFilterMask | VulkanVertex::kAlphaEdgeFilter | VulkanVertex::kOpaqueInput;
+    constexpr auto keep=VulkanVertex::kIndependentColorFilter | VulkanVertex::kColorFilterMask |
+        VulkanVertex::kAlphaEdgeFilter;
+    if (!texture || (sprite.slot & ~valid) || sprite.sampler>=s.samplers.size() ||
+        s.slotOwners[sprite.slot & Impl::kSlotMask]!=texture)
+        throw std::invalid_argument("Invalid direct instance texture or sampling metadata");
+    int64_t left=0,top=0,right=s.width,bottom=s.height;
+    if (clip) {
+        left=std::max<int64_t>(0,clip->x);top=std::max<int64_t>(0,clip->y);
+        right=std::min<int64_t>(right,int64_t(clip->x)+clip->width);
+        bottom=std::min<int64_t>(bottom,int64_t(clip->y)+clip->height);
+    }
+    if (right<=left || bottom<=top) return;
+    DrawStream* stream=nullptr;
+    for(auto* candidate:s.streams)
+        if(candidate->vertices.size-candidate->vertices.used>=sizeof(sprite)) {stream=candidate;break;}
+    if (!stream) {
+        auto* allocation=new DrawStream;
+        try {
+            constexpr VkDeviceSize capacity=8*1024*1024;
+            allocation->vertices.Create(capacity,VK_BUFFER_USAGE_VERTEX_BUFFER_BIT|VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
+            allocation->indices.Create((capacity/sizeof(sprite)+3)/4*6*sizeof(unsigned short),VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
+            s.streams.push_back(allocation);
+        } catch (...) {delete allocation;throw;}
+        stream=allocation;
+    }
+    texture->lastDraw=s.frameSerial;
+    const auto offset=stream->vertices.used;
+    auto* stored=reinterpret_cast<VulkanSpriteInstance*>(static_cast<std::byte*>(stream->vertices.mapped)+offset);
+    *stored=sprite;
+    const auto encodedSlot=SlotOf(texture) | (sprite.slot & keep) |
+        (s.mixedSpritePipeline && blend==VulkanBlend::Additive ? Impl::kMixedAdditive : 0u);
+    stored->slot=encodedSlot;
+    stream->vertices.used+=sizeof(sprite);
+    const auto index=static_cast<size_t>(blend);
+    auto pipeline=s.pipelines.at(index);
+    constexpr auto simple=Impl::kSlotMask | VulkanVertex::kOpaqueInput | Impl::kMixedAdditive;
+    if ((encodedSlot & ~simple)==0)
+        pipeline=s.mixedSpritePipeline && index<2 ? s.mixedSpritePipeline : s.spritePipelines[index];
+    const VkRect2D scissor{{static_cast<int>(left),static_cast<int>(top)},
+        {static_cast<unsigned int>(right-left),static_cast<unsigned int>(bottom-top)}};
+    s.AppendRun<true>(stream,offset,4,pipeline,scissor,s.width,s.height);
+}
+#endif
 
 void VulkanRenderer::SubmitPool(VulkanTexture* texture,const GpuPoolParams& p) {
     auto& s=*impl_;
@@ -2571,13 +2758,10 @@ void VulkanRenderer::SubmitCoverageTriangles(std::span<const VulkanVertex> verti
     auto* output = s.renderImage ? s.renderImage : s.scene.get();
     const auto& pipelines = s.renderImage ? s.imageCoveragePipelines : s.coveragePipelines;
     s.Draw(vertices,mask,pipelines.at(static_cast<size_t>(blend)),clip,output->width,output->height
-#if defined(PVZ_REANIM_UNIFIED)
-        ,(s.renderImage?12u:8u)|static_cast<uint32_t>(blend)
-#endif
     );
 }
 
-void VulkanRenderer::EndSceneAndPresent() {
+void VulkanRenderer::EndSceneAndPresent() try {
     auto& s = *impl_;
     if (!s.frame.valid) throw std::logic_error("No open scene");
     // 帧批（含 present）引用的合成/上传结果必须先提交（队列同序）。
@@ -2588,6 +2772,12 @@ void VulkanRenderer::EndSceneAndPresent() {
     }
     s.EndTargetPass();
     auto* scale = s.ActiveScale();
+#if defined(PVZ_VULKAN_SPRITE_EXPERIMENT)
+    benchmarkSceneDraws = benchmarkDrawCalls;
+    benchmarkSceneTriangles = benchmarkTriangles;
+    if (benchmarkQueries)
+        vkCmdWriteTimestamp(s.frame.cmd,VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,benchmarkQueries,1);
+#endif
     VulkanTexture* presentImage = s.scene.get();
     if (scale) {
         if (!scale->warm) throw std::logic_error("Activating a scale chain before GPU warm-up");
@@ -2625,20 +2815,21 @@ void VulkanRenderer::EndSceneAndPresent() {
         vkCmdPushConstants(s.frame.cmd,s.pipelineLayout,VK_SHADER_STAGE_VERTEX_BIT|VK_SHADER_STAGE_FRAGMENT_BIT,0,sizeof(push),push);
     }
     s.Draw(vertices, presentImage, s.presentPipeline, nullptr, s.frame.extent.width, s.frame.extent.height
-#if defined(PVZ_REANIM_UNIFIED)
-        ,0 // Present bypasses the ordinary queue and does not use a family slot.
-#endif
     );
     s.FlushPendingRun(s.frame.cmd);  // P5：present 四边形入令后冲刷
     s.FlushTextureUploads(); // Includes textures first encountered during this scene.
-#if defined(PVZ_REANIM_BENCHMARK)
-    if (s.frameTimestampQueries)
-        vkCmdWriteTimestamp(s.frame.cmd,VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,s.frameTimestampQueries,1);
-    s.frameRecordEnd=std::chrono::steady_clock::now();
-#endif
     s.window.EndFrame();
     s.frame = {};
     s.sceneInitialized = true;
+} catch (...) {
+    auto& s = *impl_;
+    s.window.AbortFrame();
+    s.recordingFailed = true;
+    s.frame = {};
+    s.targetPassOpen = false;
+    s.pendingRun = {};
+    s.drawState = {};
+    throw;
 }
 
 bool VulkanRenderer::PresentRetainedScene() {
@@ -2828,9 +3019,9 @@ ImagePixels VulkanRenderer::ReadTexturePixels(VulkanTexture* handle) {
     const auto found=s.textures.find(handle);
     if(found==s.textures.end())throw std::invalid_argument("Readback texture is not live in this renderer");
     auto& texture=*found->second;
-    const bool generated=texture.generated && texture.format==VK_FORMAT_R32G32B32A32_SFLOAT;
+    const bool generated=texture.generated && texture.format==VK_FORMAT_R16G16B16A16_SFLOAT;
     if(texture.format!=VK_FORMAT_B8G8R8A8_UNORM && texture.format!=VK_FORMAT_R8G8B8A8_UNORM && !generated)
-        throw std::invalid_argument("Texture diagnostic readback requires BGRA8, RGBA8 or a generated RGBA32F image");
+        throw std::invalid_argument("Texture diagnostic readback requires BGRA8, RGBA8 or a generated floating-point image");
     const bool swizzle=texture.format==VK_FORMAT_R8G8B8A8_UNORM;
     ImagePixels result(texture.width,texture.height);
     s.window.WaitForFrame();
@@ -2857,14 +3048,21 @@ ImagePixels VulkanRenderer::ReadTexturePixels(VulkanTexture* handle) {
     s.CompleteTransfers();
     if(generated) {
         // Explicit diagnostics/export only: rendering keeps all generated pixels
-        // in RGBA32F GPU memory and never routes through this host conversion.
-        const auto* source=static_cast<const float*>(readback.mapped);
+        // in floating-point GPU memory and never routes through this conversion.
+        const auto component=[&](size_t index) -> float {
+            const unsigned int bits=static_cast<const unsigned short*>(readback.mapped)[index];
+            const unsigned int exponent=(bits>>10)&31u, mantissa=bits&1023u;
+            const float value=exponent==31u ? (mantissa ? std::numeric_limits<float>::quiet_NaN() :
+                std::numeric_limits<float>::infinity()) : exponent==0u ?
+                std::ldexp(float(mantissa),-24) : std::ldexp(float(1024u+mantissa),int(exponent)-25);
+            return bits&0x8000u ? -value : value;
+        };
         const auto byte=[](float value) -> uint32_t {
             if(!std::isfinite(value))return 0;
             return uint32_t(std::lround(std::clamp(value,0.0f,1.0f)*255.0f));
         };
         for(size_t i=0;i<result.pixels.size();++i) {
-            const float* pixel=source+i*4;
+            const float pixel[]{component(i*4),component(i*4+1),component(i*4+2),component(i*4+3)};
             const float alpha=pixel[3];
             const float inverse=alpha>0.0f?1.0f/alpha:0.0f;
             result.pixels[i]=(byte(alpha)<<24)|(byte(pixel[0]*inverse)<<16)|
@@ -2883,17 +3081,21 @@ ImagePixels VulkanRenderer::ReadTexturePixels(VulkanTexture* handle) {
 std::vector<uint32_t> VulkanRenderer::ReadScenePixels() {
     auto& s = *impl_;
     if (s.frame.valid || !s.sceneInitialized) throw std::logic_error("Readback requires a completed scene");
+    auto* image=s.scene.get();
+#if defined(PVZ_VULKAN_SPRITE_EXPERIMENT)
+    if (s.presentCopyExperiment) image=s.benchmarkOutput;
+#endif
     s.window.WaitForFrame();
     Buffer readback;
     readback.Create(VkDeviceSize(s.width) * s.height * 4, VK_BUFFER_USAGE_TRANSFER_DST_BIT);
     auto cmd = s.BeginTransfer();
-    Barrier(cmd, s.scene->image, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+    Barrier(cmd, image->image, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
         VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_ACCESS_SHADER_READ_BIT, VK_ACCESS_TRANSFER_READ_BIT);
     VkBufferImageCopy copy{};
     copy.imageSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
     copy.imageExtent = {static_cast<uint32_t>(s.width), static_cast<uint32_t>(s.height), 1};
-    vkCmdCopyImageToBuffer(cmd, s.scene->image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, readback.buffer, 1, &copy);
-    Barrier(cmd, s.scene->image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+    vkCmdCopyImageToBuffer(cmd, image->image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, readback.buffer, 1, &copy);
+    Barrier(cmd, image->image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
         VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_ACCESS_TRANSFER_READ_BIT, VK_ACCESS_SHADER_READ_BIT);
     HostReadBarrier(cmd);
     s.FinishTransfer();

@@ -458,3 +458,8 @@ standalone_build.log
 *.pem
 *.pfx
 *.key
+
+# Android local build state and VM crash dumps.
+/android/.gradle/
+/android/app/src/main/assets/
+*.hprof

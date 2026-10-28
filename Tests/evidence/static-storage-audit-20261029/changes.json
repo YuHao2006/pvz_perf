@@ -1,0 +1,207 @@
+[
+  {
+    "file": "pvzPerf/Lawn/Challenge.cpp",
+    "declaration": "static constexpr int aTripleChance[6]",
+    "count": 1
+  },
+  {
+    "file": "pvzPerf/Lawn/Challenge.cpp",
+    "declaration": "static constexpr int aPailChance[6]",
+    "count": 1
+  },
+  {
+    "file": "pvzPerf/Lawn/Challenge.cpp",
+    "declaration": "static constexpr int aConeChance[6]",
+    "count": 1
+  },
+  {
+    "file": "pvzPerf/Lawn/Challenge.cpp",
+    "declaration": "static constexpr SeedType gUpgradableSeedTypes[3]",
+    "count": 1
+  },
+  {
+    "file": "pvzPerf/LawnApp.cpp",
+    "declaration": "static constexpr ResourceGroupId groups[]",
+    "count": 1
+  },
+  {
+    "file": "pvzPerf/LawnApp.cpp",
+    "declaration": "static constexpr int group_ave_ms_to_load[]",
+    "count": 1
+  },
+  {
+    "file": "pvzPerf/Sexy.TodLib/TodStringFile.cpp",
+    "declaration": "static constexpr uint8_t aJustifyDivisor[6]",
+    "count": 1
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/widget/WidgetManager.cpp",
+    "declaration": "static constexpr int aClickCountTable[3]",
+    "count": 1
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/effect/ScaleEffectCompiler.cpp",
+    "declaration": "static constexpr const char* aDigits[]",
+    "count": 1
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/graphics/opengl/OpenGLContext.cpp",
+    "declaration": "static constexpr int attributes[]",
+    "count": 1
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/graphics/opengl/OpenGLRenderer.cpp",
+    "declaration": "static constexpr const char* attributes[]",
+    "count": 1
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/graphics/opengl/OpenGLRenderer.cpp",
+    "declaration": "static constexpr std::array names{",
+    "count": 1
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/graphics/opengl/OpenGLRenderer.cpp",
+    "declaration": "static constexpr std::array poolNames{",
+    "count": 1
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/graphics/d3d9/D3d9Renderer.cpp",
+    "declaration": "static constexpr std::array<DWORD, 4> expectedCounts",
+    "count": 1
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/graphics/d3d9/D3d9Renderer.cpp",
+    "declaration": "static constexpr D3DVERTEXELEMENT9 elements[]",
+    "count": 2
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/graphics/d3d12/D3d12Renderer.cpp",
+    "declaration": "static constexpr float clear[]{0, 0, 0, 1}",
+    "count": 1
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/graphics/d3d12/D3d12Renderer.cpp",
+    "declaration": "static constexpr float black[]{0, 0, 0, 1}",
+    "count": 1
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/graphics/d3d12/D3d12Renderer.cpp",
+    "declaration": "static constexpr float clear[]{0, 0, 0, 0}",
+    "count": 1
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/graphics/d3d12/D3d12Renderer.cpp",
+    "declaration": "static constexpr float zero[]{0, 0, 0, 0}",
+    "count": 1
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/graphics/d3d12/D3d12Renderer.cpp",
+    "declaration": "static constexpr float clear[]{1, 1, 1, 0}",
+    "count": 1
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/graphics/vulkan/VulkanContext.cpp",
+    "declaration": "static constexpr VkCompositeAlphaFlagBitsKHR candidates[]",
+    "count": 1
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/graphics/vulkan/VulkanEffectPrograms.cpp",
+    "declaration": "static constexpr VkDescriptorType types[]",
+    "count": 1
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/graphics/vulkan/VulkanScalePipeline.cpp",
+    "declaration": "static constexpr VkDescriptorType types[]",
+    "count": 1
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/graphics/vulkan/VulkanRenderer.cpp",
+    "declaration": "static constexpr VkDescriptorPoolSize sizes[]",
+    "count": 3
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/graphics/vulkan/VulkanRenderer.cpp",
+    "declaration": "static constexpr VkDescriptorSetLayoutBinding bindings[]",
+    "count": 3
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/graphics/vulkan/VulkanRenderer.cpp",
+    "declaration": "static constexpr VkSpecializationMapEntry entries[]",
+    "count": 1
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/graphics/vulkan/VulkanRenderer.cpp",
+    "declaration": "static constexpr VkVertexInputAttributeDescription poolAttributes[]",
+    "count": 1
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/graphics/vulkan/VulkanRenderer.cpp",
+    "declaration": "static constexpr VkVertexInputAttributeDescription instanceAttributes[]",
+    "count": 1
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/graphics/vulkan/VulkanRenderer.cpp",
+    "declaration": "static constexpr VkDynamicState states[]",
+    "count": 1
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/graphics/metal/MetalScalePipeline.mm",
+    "declaration": "static constexpr MTLSamplerAddressMode modes[]",
+    "count": 1
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/platform/macos/MacWindow.mm",
+    "declaration": "static constexpr NSEventModifierFlags masks[]",
+    "count": 1
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/platform/macos/MacWindow.mm",
+    "declaration": "static constexpr unsigned keys[]",
+    "count": 1
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/platform/audio/openal/OpenALDevice.cpp",
+    "declaration": "static constexpr int attributes[]",
+    "count": 1
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/SexyAppBase.cpp",
+    "declaration": "static constexpr const char* copyArgs[]",
+    "count": 2
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/SexyAppBase.cpp",
+    "declaration": "static constexpr const char* pasteArgs[]",
+    "count": 2
+  },
+  {
+    "file": "pvzPerf/Lawn/Challenge.cpp",
+    "declaration": "static constexpr int aDoubleChance",
+    "count": 1
+  },
+  {
+    "file": "pvzPerf/SexyAppFramework/effect/ScaleEffectCompiler.cpp",
+    "declaration": "static constexpr std::string_view formats",
+    "count": 1
+  },
+  {
+    "file": "tools/resourceCompiler/src/TrailDsl.cpp",
+    "declaration": "known and DumpSpan spans",
+    "count": 2
+  },
+  {
+    "file": "tools/resourceCompiler/src/ParticleDsl.cpp",
+    "declaration": "authoredSystemIndex",
+    "count": 1
+  },
+  {
+    "file": "tools/resourceCompiler/src/Pak64.cpp",
+    "declaration": "transform names",
+    "count": 2
+  },
+  {
+    "file": "tools/resourceCompiler/src/StringIdGen.cpp",
+    "declaration": "helpers",
+    "count": 1
+  }
+]

@@ -19,8 +19,8 @@ class ChosenSeed
 public:
     int                     mX;                                //+0x0
     int                     mY;                                //+0x4
-    Sexy::UnsignedTimeCounter           mTimeStartMotion;                  //+0x8
-    Sexy::UnsignedTimeCounter           mTimeEndMotion;                    //+0xC
+    std::int64_t                       mTimeStartMotion;                  //+0x8
+    std::int64_t                       mTimeEndMotion;                    //+0xC
     int                     mStartX;                           //+0x10
     int                     mStartY;                           //+0x14
     int                     mEndX;                             //+0x18
@@ -29,7 +29,7 @@ public:
     ChosenSeedState         mSeedState;                        //+0x24
     int                     mSeedIndexInBank;                  //+0x28
     bool                    mRefreshing;                       //+0x2C
-    Sexy::TimeCounter                     mRefreshCounter;                   //+0x30
+    std::int64_t                          mRefreshStartTimeNs;                   //+0x30
     SeedType                mImitaterType;                     //+0x34
     bool                    mCrazyDavePicked;                  //+0x38
 };
@@ -60,7 +60,6 @@ public:
     LawnApp*                mApp;                               //+0xD10
     Board*                  mBoard;                             //+0xD14
     int                     mNumSeedsToChoose;                  //+0xD18
-    Sexy::UnsignedTimeCounter           mSeedChooserAge;                    //+0xD1C, UI-local wrapping tick
     int                     mSeedsInFlight;                     //+0xD20
     int                     mSeedsInBank;                       //+0xD24
     ToolTipWidget*          mToolTip;                           //+0xD28
@@ -68,7 +67,8 @@ public:
     int                     mLastMouseX;                        //+0xD30
     int                     mLastMouseY;                        //+0xD34
     SeedChooserState        mChooseState;                       //+0xD38
-    Sexy::TimeCounter                     mViewLawnTime;                      //+0xD3C
+    std::int64_t                          mViewLawnStartTimeNs;
+    std::int64_t                          mViewLawnReturnTimeNs; // -1 entering, 0 waiting after hint, >0 return origin.                      //+0xD3C
 
 public:
     SeedChooserScreen();

@@ -10,7 +10,7 @@ import sys
 SRC = "Lawn/Widget/StoreScreen.cpp"
 MODE = sys.argv[1] if len(sys.argv) > 1 else "gen"
 
-# StoreItem 真值（剥注释；INVALID=-1 尾哨兵，末真值 PVZ 锚定计数）
+# StoreItem 真值（剥注释；INVALID=-1 尾哨兵，末真值 FIRSTAID 锚定计数）
 t = re.sub(r"/\*.*?\*/", "", open("ConstEnums.h", encoding="utf-8").read(), flags=re.S)
 m = re.search(r"enum StoreItem\s*\{(.*?)\}", t, flags=re.S)
 raw = "\n".join(l.split("//")[0] for l in m.group(1).split("\n"))
@@ -26,7 +26,7 @@ for it in raw.split(","):
         n, val = it, (0 if val is None else val + 1)
     items.append((n, val))
 valuemap = dict(items)
-LAST = "STORE_ITEM_PVZ"
+LAST = "STORE_ITEM_FIRSTAID"
 COUNT = valuemap[LAST] + 1
 real = [n for n, v in items if 0 <= v < COUNT]
 assert len(real) == COUNT and valuemap["STORE_ITEM_INVALID"] == -1
@@ -141,10 +141,10 @@ block = (
     "// 商店气泡消息索引表：原 UpdateMouse 31 case 纯常量（生成器解析原 switch 生成，\n"
     "// 逐槽对拍 0 差异）。-1 = 无提示（CHOCOLATE 及无 case 槽）；PACKET_UPGRADE 依\n"
     "// 购买量三段+default 特例保留表外；default=TOD_ASSERT 由越界分支保留。\n"
-    "constexpr int kStoreBubbleMessage[(int)StoreItem::STORE_ITEM_PVZ + 1] = {\n"
+    "constexpr int kStoreBubbleMessage[(int)StoreItem::STORE_ITEM_FIRSTAID + 1] = {\n"
     + "\n".join(rows) + "\n};\n"
     "static_assert(sizeof(kStoreBubbleMessage) / sizeof(kStoreBubbleMessage[0]) ==\n"
-    "    (int)StoreItem::STORE_ITEM_PVZ + 1, \"槽位须与 StoreItem 枚举同步\");\n"
+    "    (int)StoreItem::STORE_ITEM_FIRSTAID + 1, \"槽位须与 StoreItem 枚举同步\");\n"
     "}  // namespace\n\n")
 
 disp = (
@@ -152,7 +152,7 @@ disp = (
     "                // 购买量特例与 default 断言保留表外。\n"
     "                if (aItemType == StoreItem::STORE_ITEM_PACKET_UPGRADE)\n"
     "                {\n" + sp_ind + "\n                }\n"
-    "                else if (static_cast<unsigned>(aItemType) < static_cast<unsigned>((int)StoreItem::STORE_ITEM_PVZ + 1))\n"
+    "                else if (static_cast<unsigned>(aItemType) < static_cast<unsigned>((int)StoreItem::STORE_ITEM_FIRSTAID + 1))\n"
     "                {\n"
     "                    aMessageIndex = kStoreBubbleMessage[aItemType];\n"
     "                }\n"

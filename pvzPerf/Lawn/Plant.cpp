@@ -523,7 +523,7 @@ void Plant::PlantInitialize(int theGridX, int theGridY, SeedType theSeedType, Se
     mImitaterType = theImitaterType;
     mPlantHealth = 300;
     mDoSpecialCountdown = 0;
-    mDisappearCountdown = 200;
+    mDisappearEndTimeNs = 0;
     mStateCountdown = 0;
     mParticleID = ParticleSystemID::PARTICLESYSTEMID_NULL;
     mBodyReanimID = ReanimationID::REANIMATIONID_NULL; mRootBindingGeneration = 0;
@@ -534,16 +534,16 @@ void Plant::PlantInitialize(int theGridX, int theGridY, SeedType theSeedType, Se
     mLightReanimID = ReanimationID::REANIMATIONID_NULL;
     mSleepingReanimID = ReanimationID::REANIMATIONID_NULL;
     mBlinkCountdown = 0;
-    mRecentlyEatenCountdown = 0;
-    mEatenFlashCountdown = 0;
-    mBeghouledFlashCountdown = 0;
+    mRecentlyEatenEndTimeNs = 0;
+    mEatenFlashEndTimeNs = 0;
+    mBeghouledFlashEndTimeNs = 0;
     mWidth = 80;
     mHeight = 80;
     memset(mMagnetItems, 0, sizeof(mMagnetItems));
-    mMagnetElapsedNs = 0;
+    mMagnetStartTimeNs = mBoard ? mBoard->mLevelTimeNs : 0;
     const PlantDefinition& aPlantDef = GetPlantDefinition(theSeedType);
     mIsAsleep = false;
-    mWakeUpCounter = 0;
+    mWakeUpEndTimeNs = 0;
     mOnBungeeState = PlantOnBungeeState::NOT_ON_BUNGEE;
     mPottedPlantIndex = -1;
     mLaunchRate = aPlantDef.mLaunchRate;
@@ -1066,7 +1066,7 @@ void Plant::LaunchThreepeater()
 //0x45F470
 bool Plant::FindStarFruitTarget()
 {
-    if (mRecentlyEatenCountdown > 0)
+    if (mRecentlyEatenEndTimeNs > static_cast<std::int64_t>(mBoard->mLevelTimeNs))
         return true;
 
     int aDamageRangeFlags = GetDamageRangeFlags(PlantWeapon::WEAPON_PRIMARY);
@@ -1332,7 +1332,7 @@ void Plant::UpdateProductionPlant()
     {
         int aFlashCountdown = static_cast<int>(std::clamp<std::int64_t>(
             100 - aRemaining / PlantLaunchClock::Tick, 0, 100));
-        mEatenFlashCountdown = std::max<Sexy::TimeCounter>(mEatenFlashCountdown, aFlashCountdown);
+        mEatenFlashEndTimeNs = std::max(mEatenFlashEndTimeNs, static_cast<std::int64_t>(mBoard->mLevelTimeNs) + static_cast<std::int64_t>(aFlashCountdown) * 10'000'000);
     }
     int aEvents = 0;
     while (mNextLaunchTimeNs <= aNow && aEvents++ < PlantLaunchClock::MaxEventsPerUpdate)
@@ -1546,26 +1546,22 @@ void Plant::UpdatePotato()
             reanimation.mLastUpdateTimeNs;
         const auto oldPeriod = reanimation.mPeriodNs;
         const auto position = reanimation.SamplePlaybackAt(nowNs);
+        const auto rootDisplacement = reanimation.mRootDisplacement;
         reanimation.mFrameCount = frameCount;
         const auto newPeriod = ReanimClock::PeriodFromRate(
             reanimation.mFrameCount, reanimation.mAnimRate);
         if (newPeriod <= 0)
             throw std::overflow_error("animation period below one nanosecond");
-        const auto phase = oldPeriod > 0 ?
-            ReanimClock::SignedMulDiv(position.phaseNs, newPeriod, oldPeriod) : 0;
-        reanimation.mPeriodNs = newPeriod;
-        reanimation.mStartTimeNs = ReanimClock::StartTimeAt(nowNs,
-            std::clamp<std::int64_t>(phase, 0, reanimation.mPeriodNs),
-            reanimation.mPeriodNs,
-            reanimation.mAnimRate == 0 ? 0 :
-                (reanimation.mAnimRate > 0 ? 1 : -1),
-            reanimation.mPhaseOriginNs);
-        reanimation.mLastFrameNs = oldPeriod > 0 ?
-            ReanimClock::SignedMulDiv(reanimation.mLastFrameNs,
-                newPeriod, oldPeriod) : 0;
-        reanimation.mLastUpdateTimeNs = nowNs;
-        reanimation.mHasLastFrame = false;
-        reanimation.mPendingTiming = false;
+        const bool full = reanimation.mLoopType == REANIM_LOOP_FULL_LAST_FRAME ||
+            reanimation.mLoopType == REANIM_PLAY_ONCE_FULL_LAST_FRAME ||
+            reanimation.mLoopType == REANIM_PLAY_ONCE_FULL_LAST_FRAME_AND_HOLD;
+        const int intervals = std::max(1, full ? frameCount : frameCount - 1);
+        reanimation.mFramePeriodNs = std::max<std::int64_t>(1, newPeriod / intervals);
+        reanimation.mPeriodNs = reanimation.mFramePeriodNs * intervals;
+        reanimation.mRootFrameScale = full ? 1.0 : double(frameCount) / intervals;
+        reanimation.Seek(position.phaseNs, oldPeriod);
+        reanimation.mRootDisplacement = rootDisplacement;
+
     };
 
     if (mState == PlantState::STATE_NOTREADY)
@@ -2597,7 +2593,7 @@ void Plant::MagnetShroomAttactItem(Zombie* theZombie)
         aMagnetItem->mDestOffsetY = RandRangeFloat(-10.0f, 10.0f) + 15.0f;
     }
     MagnetMotion::Bind(*aMagnetItem, mX + aMagnetItem->mDestOffsetX, mY + aMagnetItem->mDestOffsetY);
-    mMagnetElapsedNs = 0;
+    mMagnetStartTimeNs = mBoard ? mBoard->mLevelTimeNs : 0;
 }
 
 //0x461CD0
@@ -2641,14 +2637,14 @@ bool Plant::DrawMagnetItemsOnTop()
 //0x461D90
 void Plant::UpdateMagnetShroom()
 {
-    mMagnetElapsedNs = MagnetMotion::Advance(mMagnetElapsedNs, Sexy::gUpdateIntervalNs);
+    const auto magnetAgeNs = mBoard->mLevelTimeNs - mMagnetStartTimeNs;
     for (int i = 0; i < MAX_MAGNET_ITEMS; i++)
     {
         MagnetItem* aMagnetItem = &mMagnetItems[i];
         if (aMagnetItem->mItemType != MagnetItemType::MAGNET_ITEM_NONE)
         {
-            MagnetMotion::Sample(*aMagnetItem, mX + aMagnetItem->mDestOffsetX,
-                mY + aMagnetItem->mDestOffsetY, mMagnetElapsedNs);
+            MagnetMotion::Advance(*aMagnetItem, mX + aMagnetItem->mDestOffsetX,
+                mY + aMagnetItem->mDestOffsetY, magnetAgeNs, Sexy::gUpdateIntervalNs);
         }
     }
 
@@ -2793,7 +2789,7 @@ void Plant::UpdateMagnetShroom()
             aMagnetItem->mDestOffsetY = RandRangeFloat(-10.0f, 10.0f);
             aMagnetItem->mItemType = MagnetItemType::MAGNET_ITEM_LADDER_PLACED;
             MagnetMotion::Bind(*aMagnetItem, mX + aMagnetItem->mDestOffsetX, mY + aMagnetItem->mDestOffsetY);
-            mMagnetElapsedNs = 0;
+            mMagnetStartTimeNs = mBoard ? mBoard->mLevelTimeNs : 0;
         }
     }
 }
@@ -2807,7 +2803,7 @@ Coin* Plant::FindGoldMagnetTarget()
     Coin* aCoin = nullptr;
     while (mBoard->IterateCoins(aCoin))
     {
-        if (aCoin->IsMoney() && aCoin->mCoinMotion != CoinMotion::COIN_MOTION_FROM_PRESENT && !aCoin->mIsBeingCollected && aCoin->mCoinAge >= 50)
+        if (aCoin->IsMoney() && aCoin->mCoinMotion != CoinMotion::COIN_MOTION_FROM_PRESENT && !aCoin->mIsBeingCollected && mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs - aCoin->mBirthTimeNs >= 500'000'000)
         {
             float aDistance = Distance2D((mX) + mWidth / 2, (mY) + mHeight / 2, aCoin->mPosX + aCoin->mWidth / 2, aCoin->mPosY + aCoin->mHeight / 2);
             if (aClosestCoin == nullptr || aDistance < aClosestDistance)
@@ -2854,7 +2850,7 @@ void Plant::GoldMagnetFindTargets()
         }
 
         MagnetMotion::Bind(*aMagnetItem, mX + aMagnetItem->mDestOffsetX, mY + aMagnetItem->mDestOffsetY);
-        mMagnetElapsedNs = 0;
+        mMagnetStartTimeNs = mBoard ? mBoard->mLevelTimeNs : 0;
         aCoin->Die();
     }
 }
@@ -2881,7 +2877,7 @@ bool Plant::IsAGoldMagnetAboutToSuck()
 //0x462680
 void Plant::UpdateGoldMagnetShroom()
 {
-    mMagnetElapsedNs = MagnetMotion::Advance(mMagnetElapsedNs, Sexy::gUpdateIntervalNs);
+    const auto magnetAgeNs = mBoard->mLevelTimeNs - mMagnetStartTimeNs;
     Reanimation* aBodyReanim = mApp->ReanimationGet(mBodyReanimID);
 
     bool aIsSuckingCoin = false;
@@ -2890,8 +2886,8 @@ void Plant::UpdateGoldMagnetShroom()
         MagnetItem* aMagnetItem = &mMagnetItems[i];
         if (aMagnetItem->mItemType != MagnetItemType::MAGNET_ITEM_NONE)
         {
-            if (MagnetMotion::Sample(*aMagnetItem, mX + aMagnetItem->mDestOffsetX,
-                mY + aMagnetItem->mDestOffsetY, mMagnetElapsedNs))
+            if (MagnetMotion::Advance(*aMagnetItem, mX + aMagnetItem->mDestOffsetX,
+                mY + aMagnetItem->mDestOffsetY, magnetAgeNs, Sexy::gUpdateIntervalNs))
             {
                 CoinType aCoinType;
                 switch (aMagnetItem->mItemType)
@@ -2985,7 +2981,7 @@ void Plant::Squish()
 
     mRenderOrder = Board::MakeRenderOrder(RenderLayer::RENDER_LAYER_GRAVE_STONE, mRow, 8);
     mSquished = true;
-    mDisappearCountdown = 500;
+    mDisappearEndTimeNs = static_cast<std::int64_t>(mBoard->mLevelTimeNs) + 5'000'000'000;
     mApp->PlayFoley(FoleyType::FOLEY_SQUISH);
     RemoveEffects();
 
@@ -3221,23 +3217,26 @@ void Plant::UpdateAbilities()
 
     if (mState == PlantState::STATE_DOINGSPECIAL || mSquished)
     {
-        mDisappearCountdown--;
-        if (mDisappearCountdown < 0)
+        const auto nowNs = static_cast<std::int64_t>(mBoard->mLevelTimeNs);
+        if (mDisappearEndTimeNs == 0)
+            mDisappearEndTimeNs = nowNs - static_cast<std::int64_t>(Sexy::gUpdateIntervalNs) + 2'000'000'000;
+        if (nowNs > mDisappearEndTimeNs)
         {
             Die();
             return;
         }
     }
 
-    if (mWakeUpCounter > 0)
+    if (mWakeUpEndTimeNs != 0)
     {
-        mWakeUpCounter--;
-        if (mWakeUpCounter == 60)
-        {
+        const auto nowNs = static_cast<std::int64_t>(mBoard->mLevelTimeNs);
+        const auto beforeNs = nowNs - static_cast<std::int64_t>(Sexy::gUpdateIntervalNs);
+        const auto soundNs = mWakeUpEndTimeNs - 600'000'000;
+        if (beforeNs < soundNs && nowNs >= soundNs)
             mApp->PlayFoley(FoleyType::FOLEY_WAKEUP);
-        }
-        if (mWakeUpCounter == 0)
+        if (nowNs >= mWakeUpEndTimeNs)
         {
+            mWakeUpEndTimeNs = 0;
             SetSleeping(false);
         }
     }
@@ -3448,15 +3447,15 @@ void Plant::UpdateReanimColor()
             aBodyReanim->mExtraAdditiveColor = Color(255, 255, 255, 92);
         }
     }
-    else if (mBeghouledFlashCountdown > 0)
+    else if (mBeghouledFlashEndTimeNs > static_cast<std::int64_t>(mBoard->mLevelTimeNs))
     {
-        int anAlpha = TodAnimateCurveNs(500'000'000, 0, mBeghouledFlashCountdown.mNanoseconds % 500'000'000, 0, 128, Curves::Bounce);
+        int anAlpha = TodAnimateCurveNs(500'000'000, 0, std::max<std::int64_t>(0, mBeghouledFlashEndTimeNs - static_cast<std::int64_t>(mBoard->mLevelTimeNs)) % 500'000'000, 0, 128, Curves::Bounce);
         aBodyReanim->mExtraAdditiveColor = Color(255, 255, 255, anAlpha);
         aBodyReanim->mEnableExtraAdditiveDraw = true;
     }
-    else if (mEatenFlashCountdown > 0)
+    else if (mEatenFlashEndTimeNs > static_cast<std::int64_t>(mBoard->mLevelTimeNs))
     {
-        int aGrayness = ClampInt(mEatenFlashCountdown * 3, 0, mImitaterType == SeedType::SEED_IMITATER ? 128 : 255);
+        int aGrayness = ClampInt(static_cast<int>(std::max<std::int64_t>(0, mEatenFlashEndTimeNs - static_cast<std::int64_t>(mBoard->mLevelTimeNs)) / 10'000'000) * 3, 0, mImitaterType == SeedType::SEED_IMITATER ? 128 : 255);
         aBodyReanim->mExtraAdditiveColor = Color(aGrayness, aGrayness, aGrayness);
         aBodyReanim->mEnableExtraAdditiveDraw = true;
     }
@@ -3465,9 +3464,9 @@ void Plant::UpdateReanimColor()
         aBodyReanim->mEnableExtraAdditiveDraw = false;
     }
 
-    if (mBeghouledFlashCountdown > 0)
+    if (mBeghouledFlashEndTimeNs > static_cast<std::int64_t>(mBoard->mLevelTimeNs))
     {
-        int anAlpha = TodAnimateCurveNs(500'000'000, 0, mBeghouledFlashCountdown.mNanoseconds % 500'000'000, 0, 128, Curves::Bounce);
+        int anAlpha = TodAnimateCurveNs(500'000'000, 0, std::max<std::int64_t>(0, mBeghouledFlashEndTimeNs - static_cast<std::int64_t>(mBoard->mLevelTimeNs)) % 500'000'000, 0, 128, Curves::Bounce);
         aBodyReanim->mExtraOverlayColor = Color(255, 255, 255, anAlpha);
         aBodyReanim->mEnableExtraOverlayDraw = true;
     }
@@ -3530,9 +3529,9 @@ void Plant::UpdateReanim()
     {
         aOffsetY += TodAnimateCurveNs(4'000'000'000LL, 0, mStateCountdown.mNanoseconds, 0.0f, 30.0f, Curves::Linear);
     }
-    if (mWakeUpCounter > 0)
+    if (mWakeUpEndTimeNs > static_cast<std::int64_t>(mBoard->mLevelTimeNs))
     {
-        float aScaleFactor = TodAnimateCurveNs(700'000'000, 0, mWakeUpCounter.mNanoseconds, 1.0f, 0.8f, Curves::EaseSinWave);
+        float aScaleFactor = TodAnimateCurveNs(700'000'000, 0, std::max<std::int64_t>(0, mWakeUpEndTimeNs - static_cast<std::int64_t>(mBoard->mLevelTimeNs)), 1.0f, 0.8f, Curves::EaseSinWave);
         aScaleY *= aScaleFactor;
         aOffsetY += 80.0f - 80.0f * aScaleFactor;
     }
@@ -4002,7 +4001,7 @@ void Plant::AnimateNuts()
 
     if (IsInPlay() && !mApp->IsIZombieLevel())
     {
-        if (mRecentlyEatenCountdown > 0)
+        if (mRecentlyEatenEndTimeNs > static_cast<std::int64_t>(mBoard->mLevelTimeNs))
         {
             aBodyReanim->ApplyRate(0.1f);
             return;
@@ -4289,18 +4288,6 @@ void Plant::Animate()
         mShakeOffsetY = RandRangeFloat(-1.0f, 1.0f);
     }
 
-    if (mRecentlyEatenCountdown > 0)
-    {
-        mRecentlyEatenCountdown--;
-    }
-    if (mEatenFlashCountdown > 0)
-    {
-        mEatenFlashCountdown--;
-    }
-    if (mBeghouledFlashCountdown > 0)
-    {
-        mBeghouledFlashCountdown--;
-    }
 
     if (mSquished)
     {
@@ -4603,6 +4590,9 @@ void Plant::GetPeaHeadOffset(int& theOffsetX, int& theOffsetY)
 void Plant::DrawMagnetItems(Graphics* g)
 {
     const TextureSource aTexture{MagnetAtlas::Texture, 0};
+    const auto ageNs = mBoard->mLevelTimeNs - mMagnetStartTimeNs;
+    const float sizeFactor = MagnetMotion::SizeAt(ageNs);
+    if (sizeFactor <= 0.0f) return;
     float aOffsetX = 0.0f;
     float aOffsetY = PlantDrawHeightOffset(mBoard, this, mSeedType, mPlantCol, mRow);
 
@@ -4615,16 +4605,20 @@ void Plant::DrawMagnetItems(Graphics* g)
             TOD_ASSERT(aType > 0 && aType < static_cast<int>(std::size(kMagnetSprites)));
             const auto aSprite=static_cast<unsigned>(kMagnetSprites[aType]);
             const TextureRegion& aSrcRect=MagnetAtlas::Images[aSprite];
-            const float aScale=MagnetAtlas::Scales[aSprite];
+            const float baseScale=MagnetAtlas::Scales[aSprite];
+            const float aScale=baseScale * sizeFactor;
+            // Preserve the original sprite center while its geometry shrinks.
+            const float drawX=aMagnetItem->mPosX-mX+aOffsetX +
+                aSrcRect.mWidth * baseScale * (1.0f-sizeFactor) * 0.5f;
+            const float drawY=aMagnetItem->mPosY-mY+aOffsetY +
+                aSrcRect.mHeight * baseScale * (1.0f-sizeFactor) * 0.5f;
             if (aScale == 1.0f)
             {
-                DrawAtlasImage(g,aTexture,aSrcRect,aMagnetItem->mPosX-(mX)+aOffsetX,
-                    aMagnetItem->mPosY-(mY)+aOffsetY);
+                DrawAtlasImage(g,aTexture,aSrcRect,drawX,drawY);
             }
             else
             {
-                DrawAtlasImageScaled(g,aTexture,aSrcRect,aMagnetItem->mPosX-(mX)+aOffsetX,
-                    aMagnetItem->mPosY-(mY)+aOffsetY,aScale,aScale);
+                DrawAtlasImageScaled(g,aTexture,aSrcRect,drawX,drawY,aScale,aScale);
             }
         }
     }
@@ -5147,7 +5141,7 @@ constexpr PlantSpecialCaseFn kPlantSpecialCases[(int)SeedType::NUM_SEED_TYPES] =
             p.KillAllPlantsNearDoom();
 
             p.mApp->AddTodParticle(lc.mPosX, lc.mPosY, (int)RenderLayer::RENDER_LAYER_TOP, ParticleEffect::PARTICLE_DOOM);
-            p.mBoard->AddACrater(p.mPlantCol, p.mRow)->mGridItemCounter = 18000;
+            p.mBoard->AddACrater(p.mPlantCol, p.mRow)->mStateEndTimeNs = static_cast<std::int64_t>(p.mBoard->mLevelTimeNs) + 180'000'000'000LL;
             p.mBoard->mShakeCounter = 12;
             p.mBoard->mShakeAmountX = 3;
             p.mBoard->mShakeAmountY = -4;
@@ -5202,7 +5196,7 @@ constexpr PlantSpecialCaseFn kPlantSpecialCases[(int)SeedType::NUM_SEED_TYPES] =
             Plant* aPlant = p.mBoard->GetTopPlantAt(p.mPlantCol, p.mRow, PlantPriority::TOPPLANT_ONLY_NORMAL_POSITION);
             if (aPlant && aPlant->mIsAsleep)
             {
-                aPlant->mWakeUpCounter = 100;
+                aPlant->mWakeUpEndTimeNs = static_cast<std::int64_t>(aPlant->mBoard->mLevelTimeNs) + 1'000'000'000;
             }
 
             p.mState = PlantState::STATE_DOINGSPECIAL;
@@ -5631,14 +5625,12 @@ void Plant::Fire(Zombie* theTargetZombie, int theRow, PlantWeapon thePlantWeapon
             aProjectile->mMotionType = ProjectileMotion::MOTION_THREEPEATER;
             aProjectile->mVelY = -3.0f;
             aProjectile->mShadowY += 80.0f;
-            aProjectile->mOriginShadowY += 80.0f;
         }
         else if (theRow > mRow)
         {
             aProjectile->mMotionType = ProjectileMotion::MOTION_THREEPEATER;
             aProjectile->mVelY = 3.0f;
             aProjectile->mShadowY -= 80.0f;
-            aProjectile->mOriginShadowY -= 80.0f;
         }
     }
     else if (mSeedType == SeedType::SEED_CATTAIL)

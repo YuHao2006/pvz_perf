@@ -30,6 +30,7 @@
 #include "Sexy.TodLib/TodDebug.h"
 #include "misc/MTRand.h"
 #include "misc/ModVal.h"
+#include "Common.h"
 #ifdef _WIN32
 #include <process.h>
 #include <direct.h>
@@ -74,23 +75,26 @@ extern char** environ;
 #include "sound/DummyMusicInterface.h"
 
 #include "misc/memmgr.h"
+#if defined(__ANDROID__)
+#include <android/log.h>
+#endif
 
 using namespace Sexy;
 
 namespace
 {
-#if defined(__linux__)
+#if defined(__linux__) && !defined(__ANDROID__)
 std::string TransferClipboard(const std::string* input)
 {
 	// Native selection owners must outlive the caller; xclip/wl-copy provide
 	// that lifetime. Arguments are fixed and user text only travels over stdin.
 #if defined(SEXY_WINDOW_WAYLAND)
-	const char* copyArgs[] = {"wl-copy", "--type", "text/plain;charset=utf-8", nullptr};
-	const char* pasteArgs[] = {"wl-paste", "--no-newline", "--type", "text", nullptr};
+	static constexpr const char* copyArgs[] = {"wl-copy", "--type", "text/plain;charset=utf-8", nullptr};
+	static constexpr const char* pasteArgs[] = {"wl-paste", "--no-newline", "--type", "text", nullptr};
 #else
-	const char* copyArgs[] = {"xclip", "-selection", "clipboard", "-in", nullptr};
-	const char* pasteArgs[] = {"xclip", "-selection", "clipboard", "-out", nullptr};
-#endif
+	static constexpr const char* copyArgs[] = {"xclip", "-selection", "clipboard", "-in", nullptr};
+	static constexpr const char* pasteArgs[] = {"xclip", "-selection", "clipboard", "-out", nullptr};
+
 	int endpoints[2];
 	if (socketpair(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0, endpoints) != 0)
 		throw std::runtime_error("Cannot create native clipboard transport");
@@ -171,6 +175,7 @@ std::string TransferClipboard(const std::string* input)
 	return output;
 }
 #endif
+#endif
 unsigned int RuntimeTick()
 {
 #ifdef _WIN32
@@ -185,14 +190,6 @@ void RuntimeSleep(unsigned int milliseconds)
 	Sleep(milliseconds);
 #else
 	std::this_thread::sleep_for(std::chrono::milliseconds(milliseconds));
-#endif
-}
-void RuntimeDebugOutput(const char* text)
-{
-#ifdef _WIN32
-	OutputDebugStringA(text);
-#else
-	fputs(text, stderr);
 #endif
 }
 std::string SettingsPath()
@@ -421,7 +418,7 @@ SexyAppBase::SexyAppBase()
 	mStandardWordWrap = true;
 	mbAllowExtendedChars = true;
 	mEnableMaximizeButton = false;
-	mMusicVolume = 0.85;
+	mMusicVolume = 0.85f;
 	mSfxVolume = 0.85;
 	mDemoMusicVolume = mDemoSfxVolume = 0.0;
 	mMuteCount = 0;	
@@ -608,6 +605,8 @@ void SexyAppBase::ClearUpdateBacklog(bool relaxForASecond)
 	mLastTimeCheck = std::chrono::time_point_cast<std::chrono::nanoseconds>(
 		FrameDeadline::Clock::now());
 	mUpdateFTimeAccNs = 0;
+    mPendingUpdatesAccNs = 0;
+    mFramePacingPhaseNs = mSimulationPhaseNs = 0;
 
 	if (relaxForASecond)
 		mRelaxUpdateBacklogCount = 1000;
@@ -1692,7 +1691,7 @@ void SexyAppBase::ReadFromRegistry()
 	if (aDoc.GetType("targetFps") == JsonDoc::Type::Number)
 		mFrameTiming = FrameTiming::FromSetting(aDoc.GetFloat("targetFps", 100));
 	if (aDoc.Has("musicVolume"))
-		mMusicVolume = aDoc.GetInt("musicVolume", 0) / 100.0;
+		mMusicVolume = aDoc.GetInt("musicVolume", 0) / 100.0f;
 	if (aDoc.Has("sfxVolume"))
 		mSfxVolume = aDoc.GetInt("sfxVolume", 0) / 100.0;
 	if (aDoc.Has("muted"))
@@ -2087,6 +2086,9 @@ void SexyAppBase::DoExit(int theCode)
 
 void SexyAppBase::UpdateFrames()
 {
+	if (gUpdateIntervalNs > static_cast<unsigned long long>(INT64_MAX - mApplicationTimeNs))
+		throw std::overflow_error("application clock exceeds nanosecond range");
+	mApplicationTimeNs += static_cast<std::int64_t>(gUpdateIntervalNs);
 	mUpdateCount++;
 	SampleNativeMousePosition();
 
@@ -2413,7 +2415,7 @@ bool SexyAppBase::DrawDirtyStuff()
 
 		Redraw(NULL);		
 
-		// This is our one UpdateFTimeAcc if we are vsynched
+		// Capture presentation time; Process also samples before scheduling.
 		UpdateFTimeAcc(); 
 
 		DWORD aEndTime = SexyGetTickCount();
@@ -2904,7 +2906,6 @@ bool SexyAppBase::DebugKeyDown(int theKey)
 #if !defined(RELEASEFINAL) && !defined(SEXY_DISABLE_MODVAL)
 		if (ReparseModValues())
 		{
-			RuntimeDebugOutput("Mod values reloaded\n");
 		}
 		else
 		{
@@ -3084,10 +3085,15 @@ void SexyAppBase::RequestScreenMode(bool wantWindowed, bool useCustomScale)
         } else {
             // Commit both choices in the single mode transaction below. Do not
             // resize/present an intermediate window for the old mode first.
-            if (useCustomScale && !mModernScalePrepared)
-                throw std::logic_error("Requested a scale pipeline not prepared at startup");
+            auto& render=*mDDInterface->mRenderInterface;
+            render.Flush();
             mUseCustomScale=useCustomScale;
             mWindowScale=mUseCustomScale?GetWindowScaleForCustomScale():1;
+            PrepareScalePipelineObjects();
+            if (mUseCustomScale) {
+                render.mRenderer->WarmScale(false);
+                render.mRenderer->WarmScale(true);
+            }
         }
     }
     // The virtual completion hook still synchronizes the options checkboxes.
@@ -3285,12 +3291,9 @@ void SexyAppBase::UpdateFTimeAcc()
 			std::max<std::int64_t>(0,
 				std::chrono::duration_cast<std::chrono::nanoseconds>(
 					aCurTime - mLastTimeCheck).count()));
-		const auto aBacklogLimitNs = std::max<unsigned long long>(
-			200'000'000ULL, mFrameTiming.mIntervalNs * 2ULL);
-		mUpdateFTimeAccNs = std::min(
-			mUpdateFTimeAccNs > UINT64_MAX - aDeltaTimeNs
-				? UINT64_MAX : mUpdateFTimeAccNs + aDeltaTimeNs,
-			aBacklogLimitNs);
+		if (mUpdateFTimeAccNs > UINT64_MAX - aDeltaTimeNs)
+			throw std::overflow_error("wall-clock backlog exceeds nanosecond range");
+		mUpdateFTimeAccNs += aDeltaTimeNs;
 		const double aDeltaTime = double(aDeltaTimeNs) / 1'000'000.0;
 
 		if (mRelaxUpdateBacklogCount > 0)
@@ -3309,8 +3312,6 @@ bool SexyAppBase::Process(bool allowSleep)
 		Shutdown();
 	}
 	
-	bool isVSynched = (!mPlayingDemoBuffer) && (mVSyncUpdates) && (!mLastDrawWasEmpty) && (!mVSyncBroken) &&
-		((!mIsPhysWindowed) || (mIsPhysWindowed && mWaitForVSync && !mSoftVSyncWait));
 	unsigned long long aFrameIntervalNs;
 	double anUpdatesPerUpdateF;
 
@@ -3326,14 +3327,13 @@ bool SexyAppBase::Process(bool allowSleep)
 			1.0, std::round(double(mFrameTiming.mIntervalNs) / mUpdateMultiplier)));
 		anUpdatesPerUpdateF = 1.0;
 	}
-	const auto pendingAdvanceNs = static_cast<unsigned long long>(std::min(
-		double(UINT64_MAX), std::round(anUpdatesPerUpdateF * double(gUpdateIntervalNs))));
-
 	// Do we need to fast forward?
 	if (mPlayingDemoBuffer)
 	{
 		if (mUpdateCount < mFastForwardToUpdateNum || mFastForwardToMarker)
 		{
+            const auto pendingAdvanceNs = static_cast<unsigned long long>(std::min(
+                double(UINT64_MAX), std::round(anUpdatesPerUpdateF * double(gUpdateIntervalNs))));
 			if (!mDemoMute && !mFastForwardStep)
 			{
 				mDemoMute = true;
@@ -3391,7 +3391,7 @@ bool SexyAppBase::Process(bool allowSleep)
 				{
 					mFastForwardStep = false;
 					aTick = RuntimeTick();
-					DrawDirtyStuff();			
+					DrawDirtyStuff();
 					return true;
 				}
 			}
@@ -3413,35 +3413,19 @@ bool SexyAppBase::Process(bool allowSleep)
 		// unsigned int aCurTime = aStartTime; // Unused
 		int aCumSleepTime = 0;
 		
-		// When we are VSynching, only calculate this FTimeAcc right after drawing
+		// Sample actual elapsed time independently of presentation pacing.
 		
-		if (!isVSynched)		
-			UpdateFTimeAcc();					
+		UpdateFTimeAcc();
 
-		// mNonDrawCount is used to make sure we draw the screen at least
-		// 10 times per second, even if it means we have to slow down
-		// the updates to make it draw 10 times per second in "game time"
-		
 		bool didUpdate = false;
 		
 		if (mUpdateAppState == UPDATESTATE_PROCESS_1)
 		{
-			if ((++mNonDrawCount < (int) ceil(10*mUpdateMultiplier)) || (!mLoaded))
+			if (!mShutdown)
 			{
 				bool doUpdate = false;
 				
-				if (isVSynched)
-				{
-					// Synch'ed to vertical refresh, so update as soon as possible after draw.
-					// 阈值精确 = aFrameFTime（原 0.75× 造成 99~100Hz 波动）；
-					// acc 由 QPC 实时累加、每 update 精确扣 10ms（见 PROCESS_2），
-					// 守恒式节拍让速率恒定 100.00Hz 且零漂移。
-					doUpdate = (!mHasPendingDraw) || (mUpdateFTimeAccNs >= aFrameIntervalNs);
-				}
-				else if (mUpdateFTimeAccNs >= aFrameIntervalNs)
-				{
-					doUpdate = true;
-				}
+				doUpdate = FrameWaitNs(mUpdateFTimeAccNs, aFrameIntervalNs, mFramePacingPhaseNs) == 0;
 
 
 				if (doUpdate)
@@ -3470,17 +3454,35 @@ bool SexyAppBase::Process(bool allowSleep)
 						}
 					}
 					
-					bool hadRealUpdate = DoUpdateFrames();
+					// Wall time controls presentation; unconsumed simulation time
+					// survives the batch. Overshoot shortens the next interval.
+					const auto advanceNs = SimulationTimeFromWallTime(mUpdateFTimeAccNs, mUpdateMultiplier);
+					if (mPendingUpdatesAccNs > UINT64_MAX - advanceNs)
+						throw std::overflow_error("simulation backlog exceeds nanosecond range");
+					mPendingUpdatesAccNs += advanceNs;
+					mFramePacingPhaseNs = (mFramePacingPhaseNs % aFrameIntervalNs +
+						mUpdateFTimeAccNs % aFrameIntervalNs) % aFrameIntervalNs;
+					mUpdateFTimeAccNs = 0;
+					const auto stepNs = TakeSimulationStep(mPendingUpdatesAccNs,
+						mFrameTiming.mIntervalNs, mSimulationPhaseNs);
+					if (stepNs) ApplySimulationStep(stepNs);
+					bool hadRealUpdate = stepNs == 0 || DoUpdateFrames();
 					if (hadRealUpdate)
 						mUpdateAppState = UPDATESTATE_PROCESS_2;					
-					else if (gScreenSaverActive)
+					else
 					{
-						// DoUpdateFrames refused to run because the screensaver
-						// idle mode is active. Pace the spin at ~100Hz instead
-						// of 100% CPU: the !didUpdate path would otherwise
-						// never be reached and the game would busy-loop until
-						// the next screensaver check observes input.
-						RuntimeSleep(10);
+						// A refused update must yield to the native message stage.
+						// Otherwise screensaver idle mode pins PROCESS_1 forever:
+						// neither input nor DrawDirtyStuff's idle recheck can run.
+						mUpdateAppState = UPDATESTATE_PROCESS_DONE;
+						ClearUpdateBacklog(false);
+						if (gScreenSaverActive)
+						{
+							UpdateScreenSaverInfo(SexyGetTickCount());
+							if (allowSleep) RuntimeSleep(10);
+						}
+						ProcessSafeDeleteList();
+						return true;
 					}
 
 					mHasPendingDraw = true;
@@ -3492,45 +3494,32 @@ bool SexyAppBase::Process(bool allowSleep)
 		{
 			mUpdateAppState = UPDATESTATE_PROCESS_DONE;
 			
-			mPendingUpdatesAccNs = mPendingUpdatesAccNs > UINT64_MAX - pendingAdvanceNs
-				? UINT64_MAX : mPendingUpdatesAccNs + pendingAdvanceNs;
-			mPendingUpdatesAccNs = mPendingUpdatesAccNs >= gUpdateIntervalNs
-				? mPendingUpdatesAccNs - gUpdateIntervalNs : 0;
 			ProcessSafeDeleteList();
 
 			// Process any extra updates
-			while (mPendingUpdatesAccNs >= gUpdateIntervalNs)
-			{	
-				// These should just be IDLE commands we have to clear out
-				ProcessDemo();												
-
+			while (mPendingUpdatesAccNs != 0 && !mShutdown && !mExitToTop && !mPaused)
+			{
+				const auto stepNs = TakeSimulationStep(mPendingUpdatesAccNs,
+					mFrameTiming.mIntervalNs, mSimulationPhaseNs);
+				if (stepNs == 0) break;
+				ProcessDemo();
 				++mNonDrawCount;
+				ApplySimulationStep(stepNs);
 				bool hasRealUpdate = DoUpdateFrames();
 				DBG_ASSERTE(hasRealUpdate);
-
-				if (!hasRealUpdate)
-					break;
-										
+				if (!hasRealUpdate) break;
 				ProcessSafeDeleteList();
-				mPendingUpdatesAccNs -= gUpdateIntervalNs;
-			}					
+			}
 
 			//aNumCalls++;
 			DoUpdateFramesF((float) anUpdatesPerUpdateF);
 			ProcessSafeDeleteList();		
 		
-			// Don't let mUpdateFTimeAcc dip below 0.
-			// 每次更新精确消耗 mFrameTime（原多扣 0.2ms 的偏置会让平均速率
-			// 偏离 100Hz）：acc 增长来自真实时间、消耗恒定 10ms，长期零漂移。
-			if (isVSynched)
-				mUpdateFTimeAccNs = mUpdateFTimeAccNs >= aFrameIntervalNs
-					? mUpdateFTimeAccNs - aFrameIntervalNs : 0;
-			else
-				mUpdateFTimeAccNs = mUpdateFTimeAccNs >= aFrameIntervalNs
-					? mUpdateFTimeAccNs - aFrameIntervalNs : 0;
-
-			if (mRelaxUpdateBacklogCount > 0)
-				mUpdateFTimeAccNs = 0;
+			// Always present after a batch: an over-budget high-FPS target
+			// must not keep scheduling updates and starve rendering.
+			if (mHasPendingDraw)
+				DrawDirtyStuff();
+			mNonDrawCount = 0;
 
 			didUpdate = true;
 		}
@@ -3541,13 +3530,6 @@ bool SexyAppBase::Process(bool allowSleep)
 
 			mNonDrawCount = 0;
 
-			// 2026-10-12 输入侧呈现节流撤案（用户实机：全场景到不了 100fps、
-			// 关卡缓速）。教训：VSync 模式下 mUpdateFTimeAcc 的唯一心跳在
-			// DrawDirtyStuff→Redraw 内（"This is our one UpdateFTimeAcc if we
-			// are vsynched"）——节流让输入触发路径少走 DrawDirtyStuff，等于
-			// 给配速器停跳。这条路径是零售控制流的承重墙，不可节流不可删。
-			// 鼠标每事件成本问题另案：正确靶=DrawDirtyStuff/呈现本身的成本，
-			// 不是它的频率（见 perf 卷输入侧条目后续）。
 			if (mHasPendingDraw)
 			{
 				DrawDirtyStuff();
@@ -3555,29 +3537,14 @@ bool SexyAppBase::Process(bool allowSleep)
 			else
 			{
 				// Let us take into account the time it took to draw dirty stuff
-				const auto aTimeToNextFrameNs = mUpdateFTimeAccNs >= aFrameIntervalNs
-					? 0ULL : aFrameIntervalNs - mUpdateFTimeAccNs;
-				double aTimeToNextFrame = double(aTimeToNextFrameNs) / 1'000'000.0;
-				auto aWaitOrigin = mLastTimeCheck;
-				if (aTimeToNextFrame <= 0)
-				{
-					// Prevent a tight non-sleeping loop when the accumulator is
-					// already at/above the frame time. This shows up as high CPU
-					// and an unresponsive window before the first frame.
-					aTimeToNextFrame = 1;
-					mUpdateFTimeAccNs = 0;
-					aWaitOrigin = std::chrono::time_point_cast<std::chrono::nanoseconds>(
-						FrameDeadline::Clock::now());
-				}
-				if (aTimeToNextFrame > 0)
+				const auto aTimeToNextFrameNs = FrameWaitNs(
+					mUpdateFTimeAccNs, aFrameIntervalNs, mFramePacingPhaseNs);
+				if (aTimeToNextFrameNs > 0)
 				{
 					if (!allowSleep)
 						return false;
-
-					// Wait till next processing cycle
-					const auto aDeadline = aWaitOrigin +
-						std::chrono::duration_cast<std::chrono::nanoseconds>(
-							std::chrono::duration<double, std::milli>(aTimeToNextFrame));
+					const auto aDeadline = mLastTimeCheck +
+						std::chrono::nanoseconds(aTimeToNextFrameNs);
 					const auto aSleepStart = FrameDeadline::Clock::now();
 					std::this_thread::sleep_until(aDeadline);
 					aCumSleepTime += static_cast<int>(
@@ -3767,8 +3734,18 @@ int SexyAppBase::InitDDInterface()
 
 bool SexyAppBase::PrepareScalePipelineObjects()
 {
-    if (mModernScalePrepared) return true;
     auto& renderer=*mDDInterface->mRenderInterface->mRenderer;
+    if (!mUseCustomScale) {
+        if (mModernScalePrepared) {
+            renderer.SetScaleMode(false,!mIsWindowed);
+            // Empty chains wait for in-flight work and release their intermediates.
+            for (bool fullscreen : {false,true})
+                renderer.PrepareScale(fullscreen,{},uint32_t(renderer.sceneWidth),uint32_t(renderer.sceneHeight));
+            mModernScalePrepared=false;
+        }
+        return true;
+    }
+    if (mModernScalePrepared) return true;
     const int windowScale = std::max(1, mScaleWindowConfig.mEffects.empty() ?
         mScaleConfigWindow : mWindowScaleFromPipeline);
     const int windowTargetW = renderer.sceneWidth * windowScale;
@@ -3813,8 +3790,10 @@ void SexyAppBase::WarmScalePipelinesBeforeShow()
 {
     PrepareScalePipelineObjects();
     auto& renderer=*mDDInterface->mRenderInterface->mRenderer;
-    renderer.WarmScale(false);
-    renderer.WarmScale(true);
+    if (mUseCustomScale) {
+        renderer.WarmScale(false);
+        renderer.WarmScale(true);
+    }
     renderer.SetScaleMode(IsScalePresentActive(),!mIsWindowed);
     if (mIsWindowed) {
         int width=renderer.sceneWidth,height=renderer.sceneHeight;
@@ -4421,11 +4400,15 @@ void SexyAppBase::CopyToClipboard(const std::string& theString)
 	}
 #else
 	if (!mPlayingDemoBuffer)
+	{
 #ifdef __APPLE__
         MacClipboard(&theString);
-#else
+#elif defined(__linux__) && !defined(__ANDROID__)
         TransferClipboard(&theString);
+#else
+        ;  // Android：系统剪贴板接入暂缺，空操作
 #endif
+	}
 #endif
 }
 
@@ -4460,11 +4443,15 @@ std::string	SexyAppBase::GetClipboard()
 #else
 	std::string value;
 	if (!mPlayingDemoBuffer)
+	{
 #ifdef __APPLE__
         value = MacClipboard(nullptr);
-#else
+#elif defined(__linux__) && !defined(__ANDROID__)
         value = TransferClipboard(nullptr);
+#else
+        ;  // Android：系统剪贴板接入暂缺，空操作
 #endif
+	}
 	DemoSyncString(&value);
 	return value;
 #endif
@@ -4577,12 +4564,12 @@ void SexyAppBase::Unmute(bool autoMute)
 }
 
 
-void SexyAppBase::SetMusicVolume(double theVolume)
+void SexyAppBase::SetMusicVolume(float theVolume)
 {
 	mMusicVolume = theVolume;
 
 	if (mMusicInterface != NULL)
-		mMusicInterface->SetVolume((mMuteCount > 0) ? 0.0 : mMusicVolume);
+		mMusicInterface->SetVolume((mMuteCount > 0) ? 0.0f : mMusicVolume);
 }
 
 void SexyAppBase::SetSfxVolume(double theVolume)
@@ -4634,13 +4621,11 @@ void SexyAppBase::DemoSyncRefreshRate()
 }
 
 
-// Vulkan rendering is mandatory. Both scale.json chains and native programs
-// are prepared at startup and remain resident until renderer destruction.
-// Toggling never reloads XML/HLSL and never destroys the dormant pipeline.
+// Keep compiled scale programs available, but allocate/warm their image chains
+// only while custom scaling is enabled. Disabling releases both mode chains.
 void SexyAppBase::ReconfigureScale(bool theUseCustomScale)
 {
     if (mUseCustomScale==theUseCustomScale) return;
-    if (!mModernScalePrepared) throw std::logic_error("Scale startup preparation was skipped");
     if (mSwitchingScreenMode) throw std::logic_error("Nested scale/mode transaction");
     mSwitchingScreenMode=true;
     struct Reset { bool& flag; ~Reset(){flag=false;} } reset{mSwitchingScreenMode};
@@ -4650,9 +4635,13 @@ void SexyAppBase::ReconfigureScale(bool theUseCustomScale)
     render.Flush();
     mUseCustomScale=theUseCustomScale;
     mWindowScale=mUseCustomScale?GetWindowScaleForCustomScale():1;
+    PrepareScalePipelineObjects();
+    if (mUseCustomScale) {
+        render.mRenderer->WarmScale(false);
+        render.mRenderer->WarmScale(true);
+    }
     render.mRenderer->SetScaleMode(IsScalePresentActive(),!mIsWindowed);
-    // All expensive compilation/preparation/warm-up finished at startup.
-    // Only now change geometry, then present the retained GPU canvas.
+    // Change geometry after enabled pipelines are ready, then present the canvas.
     if (mIsWindowed) {
         int width=render.mRenderer->sceneWidth,height=render.mRenderer->sceneHeight;
         if (IsScalePresentActive()) {
@@ -4674,7 +4663,7 @@ static std::string LowerScaleText(const std::string& theText)
 	return aResult;
 }
 
-static std::string NormalizeScaleEffectPath(std::string thePath)
+[[maybe_unused]] static std::string NormalizeScaleEffectPath(std::string thePath)
 {
 	if (thePath.empty())
 		return thePath;
@@ -4689,7 +4678,7 @@ static std::string NormalizeScaleEffectPath(std::string thePath)
 	return thePath;
 }
 
-static bool ParseScaleParamValue(const std::string& text, float& out)
+[[maybe_unused]] static bool ParseScaleParamValue(const std::string& text, float& out)
 {
     const char* begin=text.c_str(); char* end=nullptr; errno=0;
     const float value=std::strtof(begin,&end);
@@ -4752,7 +4741,7 @@ void SexyAppBase::LoadScaleConfig()
 	}
 
 	// Decode protocol fields once; only numeric IDs/values survive in app state.
-#if defined(PVZ_GPU_OPENGL) || defined(PVZ_GPU_D3D9)
+#if defined(PVZ_GPU_OPENGL) || defined(PVZ_GPU_D3D9) || (defined(__ANDROID__) && !defined(SEXY_SCALE_EFFECT_AUTHORING))
     auto LoadPipelineEffects = [&aDoc](const char* section, ScalePipelineConfig&)
     {
         if(aDoc.GetArraySize(std::string(section)+"/effects") != 0)
@@ -4895,7 +4884,7 @@ void SexyAppBase::CompileScaleEffects()
 {
     // Source was compiled while resolving startup configuration, before GPU preparation.
     if(mModernScalePrepared) throw std::logic_error("Scale shaders may only load before device preparation");
-#if defined(PVZ_GPU_OPENGL) || defined(PVZ_GPU_D3D9)
+#if defined(PVZ_GPU_OPENGL) || defined(PVZ_GPU_D3D9) || (defined(__ANDROID__) && !defined(SEXY_SCALE_EFFECT_AUTHORING))
     if(!mScaleEffects.empty())
         throw std::runtime_error("This graphics backend does not support HLSL/compute scale effects");
 #else

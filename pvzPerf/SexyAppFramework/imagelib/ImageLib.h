@@ -34,6 +34,8 @@ public:
 };
 
 bool WritePNGImage(const std::string& theFileName, Image* theImage);
+// Preserve alpha and visible RGB; repair only fully transparent texels before upload.
+void FixTransparentEdges(Image& image);
 // Non-owning, read-only pixels: useful for GPU snapshots without another copy
 // or temporarily transferring vector storage to Image's owning raw pointer.
 bool WritePNGImage(const std::string& theFileName, int width, int height, std::span<const uint32_t> pixels);

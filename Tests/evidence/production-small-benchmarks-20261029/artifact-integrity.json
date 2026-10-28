@@ -1,0 +1,7 @@
+{
+  "binary_hashes_verified": true,
+  "source_hashes_match_compiled_probes": true,
+  "lto_compile_and_link": true,
+  "original_exe_unchanged": true,
+  "paired_pak_verified": true
+}

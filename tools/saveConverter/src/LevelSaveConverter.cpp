@@ -48,24 +48,21 @@ using Byte = std::uint8_t;
 using LevelSaveFormat::RecordKind;
 using LevelSaveFormat::RecordLayout;
 
-// Earlier v3.3 fixed-coordinate and relative-clock layouts are input-only wire
-// dialects. The public target always writes the current absolute-clock schema.
-constexpr std::uint32_t MILLI_V33_SCHEMA_ID = LevelSaveFormat::DAT64_V33_FIXED_SCHEMA_ID;
-constexpr std::uint32_t RELATIVE_V33_SCHEMA_ID = 0x10737;
-constexpr std::uint32_t ACTOR_CLOCK_V33_SCHEMA_ID = LevelSaveFormat::DAT64_V33_ACTOR_CLOCK_SCHEMA_ID;
-constexpr std::uint32_t TIMESTAMP_V33_SCHEMA_ID = LevelSaveFormat::DAT64_V33_PROJECTILE_CLOCK_SCHEMA_ID;
-
+constexpr bool HasV7State(Format format)
+{
+    return format == Format::Dat64V4;
+}
 constexpr bool IsNanosecondFormat(Format format)
 {
-    return format == Format::Dat64V2 || format == Format::Dat64V32 || format == Format::Dat64V33;
+    return format == Format::Dat64V2 || HasV7State(format);
 }
 constexpr bool HasParticleVariants(Format format)
 {
-    return format == Format::Dat64V32 || format == Format::Dat64V33;
+    return HasV7State(format);
 }
 constexpr bool HasReanimationVariants(Format format)
 {
-    return format == Format::Dat64V32 || format == Format::Dat64V33;
+    return HasV7State(format);
 }
 
 constexpr std::string_view LEGACY_PARTICLE_NAMES[] = {
@@ -282,10 +279,6 @@ public:
     std::span<const Byte> mData;
     std::size_t mPosition;
     std::vector<std::uint64_t> mNanoseconds;
-    bool mMilliV33Source = false;
-    bool mRelativeV33Source = false;
-    bool mActorClockV33Source = false;
-    bool mTimestampV33Source = false;
 
     void SetPosition(std::size_t thePosition, const std::string& theField)
     {
@@ -416,18 +409,13 @@ Format Dat64Format(std::span<const Byte> file)
     {
     case LevelSaveFormat::DAT64_V1_VERSION: return Format::Dat64V1;
     case LevelSaveFormat::DAT64_V2_VERSION: return Format::Dat64V2;
-    case LevelSaveFormat::DAT64_V32_VERSION:
-        if (ReadU32At(file, 40) == LevelSaveFormat::DAT64_V32_MINOR_VERSION &&
-            ReadU32At(file, 36) == LevelSaveFormat::DAT64_V32_SCHEMA_ID)
-            return Format::Dat64V32;
+    case LevelSaveFormat::DAT64_VERSION:
         if (ReadU32At(file, 40) == LevelSaveFormat::DAT64_MINOR_VERSION &&
-            (ReadU32At(file, 36) == LevelSaveFormat::DAT64_SCHEMA_ID ||
-             ReadU32At(file, 36) == MILLI_V33_SCHEMA_ID ||
-             ReadU32At(file, 36) == RELATIVE_V33_SCHEMA_ID ||
-             ReadU32At(file, 36) == ACTOR_CLOCK_V33_SCHEMA_ID ||
-             ReadU32At(file, 36) == TIMESTAMP_V33_SCHEMA_ID))
-            return Format::Dat64V33;
-        Fail(36, "dat64.schema", "不支持的存档版本；仅支持原版 DAT、DAT64 v1、v2、v3.2、v3.3，未发布的 v3.0/v3.1 不受支持");
+            ReadU32At(file, 36) == LevelSaveFormat::DAT64_SCHEMA_ID)
+            return Format::Dat64V4;
+        Fail(36, "dat64.schema", "不支持的 v4 schema");
+    case 3:
+        Fail(8, "dat64.version", "DAT64 v3 系列开发格式已停止支持；仅支持原版 DAT、DAT64 v1、v2、v4");
     default: Fail(8, "dat64.version", "不支持的存档版本");
     }
 }
@@ -1244,149 +1232,6 @@ struct SlotSnapshot
     }
 };
 
-constexpr std::size_t MilliV33StateSize(RecordKind kind)
-{
-    switch (kind)
-    {
-    case RecordKind::Zombie: return 40;
-    case RecordKind::Plant: return 32;
-    case RecordKind::GridItem: return 232;
-    case RecordKind::Reanimation: return 60;
-    case RecordKind::ParticleSystem: return 12;
-    case RecordKind::ParticleEmitter: return 40;
-    case RecordKind::Particle: return 36;
-    default: return 0;
-    }
-}
-
-constexpr std::size_t RelativeV33StateSize(RecordKind kind)
-{
-    switch (kind)
-    {
-    case RecordKind::Zombie: return 80;
-    case RecordKind::Plant: return 32;
-    case RecordKind::GridItem: return 240;
-    case RecordKind::Reanimation: return 60;
-    case RecordKind::ParticleSystem: return 12;
-    case RecordKind::ParticleEmitter: return 40;
-    case RecordKind::Particle: return 36;
-    default: return 0;
-    }
-}
-
-constexpr std::size_t ActorClockV33StateSize(RecordKind kind)
-{
-    switch (kind)
-    {
-    case RecordKind::Zombie: return 80;
-    case RecordKind::Plant: return 56;
-    case RecordKind::GridItem: return 240;
-    case RecordKind::Reanimation: return 68;
-    case RecordKind::ParticleSystem: return 12;
-    case RecordKind::ParticleEmitter: return 40;
-    case RecordKind::Particle: return 36;
-    default: return 0;
-    }
-}
-
-constexpr std::size_t TimestampV33StateSize(RecordKind kind)
-{
-    if (kind == RecordKind::Projectile) return 36;
-    return ActorClockV33StateSize(kind);
-}
-
-std::vector<Byte> UpgradeParticleStepV33State(RecordKind kind, std::span<const Byte> source)
-{
-    if (source.size() != TimestampV33StateSize(kind))
-        Fail("timestamp v3.3 state length differs from its frozen schema");
-    std::vector<Byte> result(V7SaveSchema::Size(kind), 0);
-    if (kind == RecordKind::ParticleSystem)
-        std::copy_n(source.begin() + 8, 4, result.begin());
-    else if (kind == RecordKind::Particle)
-        std::copy_n(source.begin() + 8, 28, result.begin());
-    else if (kind == RecordKind::ParticleEmitter)
-    {
-        std::copy_n(source.begin(), 8, result.begin());
-        std::copy_n(source.begin() + 24, 16, result.begin() + 16);
-        // Discard the previous sampled phase; bind the authored position
-        // origin from the saved center after resolving its definition.
-    }
-    else if (kind == RecordKind::Plant)
-    {
-        std::copy_n(source.begin(), 40, result.begin());
-        std::copy_n(source.begin() + 48, 8, result.begin() + 40);
-    }
-    else
-    {
-        std::copy(source.begin(), source.end(), result.begin());
-    }
-    return result;
-}
-
-std::vector<Byte> UpgradeRelativeV33State(RecordKind kind, std::span<const Byte> source)
-{
-    if (source.size() != RelativeV33StateSize(kind))
-        Fail("relative v3.3 state length differs from its frozen schema");
-    std::vector<Byte> result(TimestampV33StateSize(kind), 0);
-    std::copy(source.begin(), source.end(), result.begin());
-    if (kind == RecordKind::Reanimation)
-    {
-        // Draft start is -elapsed. Bind it to the saved Board clock after all
-        // time records have been read, preserving forward, reverse and pause.
-        const auto elapsed = std::bit_cast<std::int64_t>(ReadU64At(source, 4));
-        if (elapsed == INT64_MIN) Fail("relative animation elapsed time cannot be negated");
-        WriteU32At(result, 0, 1); // Battle domain.
-        WriteU64At(result, 4, static_cast<std::uint64_t>(-elapsed));
-    }
-    return UpgradeParticleStepV33State(kind, result);
-}
-
-std::vector<Byte> UpgradeMilliV33State(RecordKind kind, std::span<const Byte> source)
-{
-    if (source.size() != MilliV33StateSize(kind))
-        Fail("earlier v3.3 state length differs from its frozen schema");
-    if (kind != RecordKind::Zombie && kind != RecordKind::Plant && kind != RecordKind::GridItem)
-        return {source.begin(), source.end()};
-    std::vector<Byte> result(RelativeV33StateSize(kind), 0);
-    const auto signed32 = [&](std::size_t offset) {
-        return std::bit_cast<std::int32_t>(std::uint32_t(V7SaveSchema::Read(source, offset, 4)));
-    };
-    const auto signed64 = [&](std::size_t offset) {
-        return std::bit_cast<std::int64_t>(V7SaveSchema::Read(source, offset, 8));
-    };
-    const auto putFloat = [&](std::size_t offset, float value) {
-        V7SaveSchema::PutFloat(result, offset, value);
-    };
-    const auto putDouble = [&](std::size_t offset, double value) {
-        V7SaveSchema::Write(result, offset, std::bit_cast<std::uint64_t>(value), 8);
-    };
-    const auto copy = [&](std::size_t from, std::size_t to, std::size_t size) {
-        std::copy_n(source.begin() + from, size, result.begin() + to);
-    };
-    if (kind == RecordKind::Zombie || kind == RecordKind::Plant)
-    {
-        putFloat(0, static_cast<float>(static_cast<double>(signed32(0)) / 1000.0));
-        putFloat(4, static_cast<float>(static_cast<double>(signed32(4)) / 1000.0));
-        putDouble(8, static_cast<double>(signed64(8)) / 1000.0);
-        copy(16, 16, 4);
-        putFloat(20, static_cast<float>(static_cast<double>(signed32(20)) / 1000.0));
-        if (kind == RecordKind::Plant) copy(24, 24, 8);
-        // The old Zombie velocity remainder cannot reconstruct a float velocity
-        // segment. Both new segments stay zero/unbound and bind on first use.
-    }
-    else
-    {
-        copy(0, 0, 192); // Twelve float-position/integer-phase trail snapshots.
-        putDouble(192, static_cast<double>(signed32(192)) / 1000.0);
-        putDouble(200, static_cast<double>(signed64(196)) / 1000.0);
-        copy(204, 208, 12); // Reanimation ID, generation, direction.
-        putFloat(220, static_cast<float>(static_cast<double>(signed32(216)) / 1000.0));
-        copy(220, 224, 8);
-        copy(228, 232, 1);
-    }
-    return result;
-}
-
 struct ArraySnapshot
 {
     RecordKind mKind{};
@@ -1514,28 +1359,27 @@ void BindHistoricalClock(SlotSnapshot& slot, RecordKind kind, std::int64_t now,
     {
         const auto birthDraft = std::bit_cast<std::int64_t>(ReadU64At(state, 0));
         WriteU64At(state, 0, static_cast<std::uint64_t>(CheckedClockAdd(now, birthDraft)));
-        WriteU64At(state, 8, static_cast<std::uint64_t>(now));
     }
     else if (kind == RecordKind::Reanimation)
     {
         const auto startDraft = std::bit_cast<std::int64_t>(ReadU64At(state, 4));
         WriteU32At(state, 0, 1);
         WriteU64At(state, 4, static_cast<std::uint64_t>(CheckedClockAdd(now, startDraft)));
-        WriteU64At(state, 60, static_cast<std::uint64_t>(now));
+        WriteU64At(state, 64, static_cast<std::uint64_t>(now));
     }
     slot.mNeedsClockBinding = false;
 }
 
 void PrepareV7Output(Document& document, Format target)
 {
-    const auto now = target == Format::Dat64V33 ? SavedBattleClock(document) : 0;
+    const auto now = HasV7State(target) ? SavedBattleClock(document) : 0;
     const ArraySnapshot* animations = nullptr;
     for (const auto& array : document.mArrays)
         if (array.mKind == RecordKind::Reanimation) animations = &array;
     for (auto& array : document.mArrays)
         for (auto& slot : array.mSlots)
         {
-            if (target != Format::Dat64V33)
+            if (!HasV7State(target))
             {
                 slot.mV7State.clear();
                 continue;
@@ -1549,7 +1393,7 @@ void PrepareV7Output(Document& document, Format target)
             }
             slot.mV7State = slot.mV7Migration;
             if (slot.mV7State.empty()) slot.mV7State.resize(size, 0);
-            if (slot.mV7State.size() != size) Fail("v3.3 migration state differs from schema");
+            if (slot.mV7State.size() != size) Fail("historical migration state differs from v4 schema");
             BindHistoricalClock(slot, array.mKind, now, document.mCanonicalBoard);
             if (array.mKind == RecordKind::GridItem && (slot.mID & DATA_ARRAY_KEY_MASK))
             {
@@ -1940,12 +1784,8 @@ ArraySnapshot ReadArray(
         aSlotSize = static_cast<std::uint32_t>(Dat64TimeSchema::V2Size(aSlotSize, timeFields));
         anObjectSize = static_cast<std::uint32_t>(Dat64TimeSchema::V2Size(anObjectSize, timeFields));
     }
-    const std::size_t aV7Size = theFormat == Format::Dat64V33
-        ? (theReader.mMilliV33Source ? MilliV33StateSize(theDescriptor.mKind) :
-            theReader.mRelativeV33Source ? RelativeV33StateSize(theDescriptor.mKind) :
-            theReader.mActorClockV33Source ? ActorClockV33StateSize(theDescriptor.mKind) :
-            theReader.mTimestampV33Source ? TimestampV33StateSize(theDescriptor.mKind) :
-            V7SaveSchema::Size(theDescriptor.mKind)) : 0;
+    const std::size_t aV7Size = HasV7State(theFormat)
+        ? V7SaveSchema::Size(theDescriptor.mKind) : 0;
     aSlotSize += static_cast<std::uint32_t>(aV7Size);
 
     const std::size_t aLengthOffset = theReader.mPosition;
@@ -2016,15 +1856,6 @@ ArraySnapshot ReadArray(
         {
             aSlot.mV7State.assign(aStoredSlot.begin() + anObjectSize,
                 aStoredSlot.begin() + anObjectSize + aV7Size);
-            if (theReader.mMilliV33Source)
-                aSlot.mV7State = UpgradeMilliV33State(theDescriptor.mKind, aSlot.mV7State);
-            if (theReader.mMilliV33Source || theReader.mRelativeV33Source)
-            {
-                aSlot.mV7State = UpgradeRelativeV33State(theDescriptor.mKind, aSlot.mV7State);
-                aSlot.mNeedsClockBinding = true;
-            }
-            else if (theReader.mActorClockV33Source || theReader.mTimestampV33Source)
-                aSlot.mV7State = UpgradeParticleStepV33State(theDescriptor.mKind, aSlot.mV7State);
         }
         aSlot.mID = ReadU32At(aSlotBytes, aV1ObjectSize);
         if (theDescriptor.mKind == RecordKind::Plant)
@@ -2738,19 +2569,6 @@ Document ParsePayload(
         aDocument.mNanoseconds = std::move(theReader.mNanoseconds);
     else
         CaptureLegacyTimes(aDocument);
-    if (theReader.mMilliV33Source || theReader.mRelativeV33Source ||
-        theReader.mActorClockV33Source || theReader.mTimestampV33Source)
-    {
-        PrepareV7Output(aDocument, Format::Dat64V33);
-        for (auto& array : aDocument.mArrays)
-            for (auto& slot : array.mSlots)
-            {
-                if (theReader.mActorClockV33Source && array.mKind == RecordKind::Plant)
-                    MigrateBowlingClock(slot, SavedBattleClock(aDocument), aDocument.mCanonicalBoard);
-                if (slot.mID & DATA_ARRAY_KEY_MASK)
-                    V7SaveSchema::Validate(array.mKind, slot.mV7State);
-            }
-    }
     return aDocument;
 }
 
@@ -2787,22 +2605,7 @@ Document ParseDat64(std::span<const Byte> theFile, std::uint32_t& theDateEcho)
         Fail(0, "dat64.magic", "不是 PVZDAT64");
     }
     const Format format = Dat64Format(theFile);
-    const bool milliV33 = format == Format::Dat64V33 &&
-        ReadU32At(theFile, 36) == MILLI_V33_SCHEMA_ID;
-    const bool relativeV33 = format == Format::Dat64V33 &&
-        ReadU32At(theFile, 36) == RELATIVE_V33_SCHEMA_ID;
-    const bool actorClockV33 = format == Format::Dat64V33 &&
-        ReadU32At(theFile, 36) == ACTOR_CLOCK_V33_SCHEMA_ID;
-    const bool timestampV33 = format == Format::Dat64V33 &&
-        ReadU32At(theFile, 36) == TIMESTAMP_V33_SCHEMA_ID;
-    const bool supportedMilliHeader = (milliV33 || relativeV33 || actorClockV33 || timestampV33) &&
-        ReadU32At(theFile, 12) == LevelSaveFormat::DAT64_HEADER_SIZE &&
-        ReadU32At(theFile, 16) == LevelSaveFormat::DAT64_AUTHORITY_BUILD &&
-        ReadU32At(theFile, 20) == LevelSaveFormat::DAT64_FLAGS &&
-        ReadU32At(theFile, 40) == LevelSaveFormat::DAT64_MINOR_VERSION &&
-        ReadU32At(theFile, 44) == 0 &&
-        ReadU64At(theFile, 24) == theFile.size() - LevelSaveFormat::DAT64_HEADER_SIZE;
-    if (!LevelSaveFormat::IsSupportedDat64Header(theFile) && !supportedMilliHeader)
+    if (!LevelSaveFormat::IsSupportedDat64Header(theFile))
     {
         Fail(8, "dat64.header", "版本、权威版本、flags、schema 或保留字段错误");
     }
@@ -2812,14 +2615,10 @@ Document ParseDat64(std::span<const Byte> theFile, std::uint32_t& theDateEcho)
         Fail(24, "dat64.payloadSize", "与实际文件长度不一致");
     }
     const auto aPayload = theFile.subspan(LevelSaveFormat::DAT64_HEADER_SIZE);
-    // The former payload CRC at 0x20 is ignored for v1/v2/v3.
+    // The former payload CRC at 0x20 is ignored for v1/v2/v4.
     // 现行 11 池语法优先；失败则按“过渡 dat64”方言（2026-09-30 便携构建：
     // 12 池含退役 Trail 池，其余一致）重试一次。
     Reader aReader(aPayload);
-    aReader.mMilliV33Source = milliV33;
-    aReader.mRelativeV33Source = relativeV33;
-    aReader.mActorClockV33Source = actorClockV33;
-    aReader.mTimestampV33Source = timestampV33;
     Document aDocument = [&]()
     {
         try
@@ -2898,7 +2697,7 @@ void WriteArray(
     const std::size_t aV1SlotSize = theFormat == Format::Legacy1073Dat
         ? LegacySlotSizeFor(theDescriptor, theDialect)
         : aLayout.mDat64ArraySlotSize;
-    const std::size_t aV7Size = theFormat == Format::Dat64V33
+    const std::size_t aV7Size = HasV7State(theFormat)
         ? V7SaveSchema::Size(theArray.mKind) : 0;
     const std::size_t aSlotSize = (IsNanosecondFormat(theFormat)
         ? Dat64TimeSchema::V2Size(aV1SlotSize, timeFields) : aV1SlotSize) + aV7Size;
@@ -3104,21 +2903,18 @@ std::vector<Byte> WriteFileImage(
     else
     {
         aFile.Bytes(LevelSaveFormat::DAT64_MAGIC);
-        aFile.U32(theFormat == Format::Dat64V33 ? LevelSaveFormat::DAT64_VERSION :
-            theFormat == Format::Dat64V32 ? LevelSaveFormat::DAT64_V32_VERSION :
+        aFile.U32(HasV7State(theFormat) ? LevelSaveFormat::DAT64_VERSION :
             theFormat == Format::Dat64V2 ? LevelSaveFormat::DAT64_V2_VERSION : LevelSaveFormat::DAT64_V1_VERSION);
         aFile.U32(LevelSaveFormat::DAT64_HEADER_SIZE);
         aFile.U32(LevelSaveFormat::DAT64_AUTHORITY_BUILD);
         aFile.U32(IsNanosecondFormat(theFormat) ? Dat64TimeSchema::FLAGS : LevelSaveFormat::DAT64_V1_FLAGS);
         aFile.U64(aPayload.size());
-        // v1 exports retain a CRC for older readers; v2/v3 reserve the slot
+        // v1 exports retain a CRC for older readers; v2/v4 reserve the slot
         // as zero. No version requires a matching CRC on input.
         aFile.U32(theFormat == Format::Dat64V1 ? Crc32(aPayload) : 0);
-        aFile.U32(theFormat == Format::Dat64V33 ? LevelSaveFormat::DAT64_SCHEMA_ID :
-            theFormat == Format::Dat64V32 ? LevelSaveFormat::DAT64_V32_SCHEMA_ID :
+        aFile.U32(theFormat == Format::Dat64V4 ? LevelSaveFormat::DAT64_SCHEMA_ID :
             theFormat == Format::Dat64V2 ? LevelSaveFormat::DAT64_V2_SCHEMA_ID : LevelSaveFormat::DAT64_V1_SCHEMA_ID);
-        aFile.U32(theFormat == Format::Dat64V33 ? LevelSaveFormat::DAT64_MINOR_VERSION :
-            theFormat == Format::Dat64V32 ? LevelSaveFormat::DAT64_V32_MINOR_VERSION : 0);
+        aFile.U32(theFormat == Format::Dat64V4 ? LevelSaveFormat::DAT64_MINOR_VERSION : 0);
         aFile.U32(0);
         if (aFile.Position() != LevelSaveFormat::DAT64_HEADER_SIZE)
         {
@@ -3549,8 +3345,7 @@ const char* FormatName(Format theFormat)
     case Format::Legacy1073Dat: return "PvZ 1.2.0.1073 game*.dat";
     case Format::Dat64V1: return "Legacy dat64 v1";
     case Format::Dat64V2: return "Nanosecond dat64 v2";
-    case Format::Dat64V32: return "Particle/reanimation internal-appearance dat64 v3.2";
-    case Format::Dat64V33: return "Integer animation time and deterministic particle dat64 v3.3";
+    case Format::Dat64V4: return "Frame-cursor dat64 v4";
     }
     return "Unknown";
 }
@@ -3654,8 +3449,26 @@ ConversionResult ConvertFile(
     std::uint32_t aDateEcho = 0;
     Document aDocument = Parse(aSource, aSourceFormat, aDateEcho);
     const Format aTargetFormat = theOptions.mTargetFormat.value_or(
-        aSourceFormat == Format::Legacy1073Dat ? Format::Dat64V33 : Format::Legacy1073Dat);
+        aSourceFormat == Format::Legacy1073Dat ? Format::Dat64V4 : Format::Legacy1073Dat);
     PrepareAppearanceOutput(aDocument, aTargetFormat);
+    if (aSourceFormat == Format::Dat64V4 && aTargetFormat != Format::Dat64V4)
+    {
+        std::size_t index = 0;
+        VisitTimeRecords(aDocument, [&](auto& bytes, Dat64TimeSchema::Fields fields) {
+            for (const auto& field : fields)
+            {
+                if (&bytes == &aDocument.mSeedBank && std::string_view(field.mName) == "mSlotMachineCountDown" &&
+                    std::bit_cast<std::int64_t>(aDocument.mNanoseconds[index]) < 0)
+                {
+                    // Old readers represent final-turn waiting as one 10ms
+                    // interval. Current readers retain the exact expired time.
+                    aDocument.mNanoseconds[index] = 10'000'000;
+                    WriteU32At(bytes, field.mOffset, 1);
+                }
+                ++index;
+            }
+        });
+    }
     if (!IsNanosecondFormat(aTargetFormat))
     {
         QuantizeDocumentTimes(aDocument, theOptions.mRoundTimeToNearestTick);
@@ -3663,6 +3476,14 @@ ConversionResult ConvertFile(
     if (!HasParticleVariants(aTargetFormat))
         QuantizeMusicTempo(aDocument);
     PrepareV7Output(aDocument, aTargetFormat);
+    // Earlier magnet tails held start vectors and lookup parameters. They are
+    // not velocities: discard those transient trajectory parameters explicitly.
+    if (aTargetFormat == Format::Dat64V4 && aSourceFormat != Format::Dat64V4)
+        for (auto& array : aDocument.mArrays)
+            if (array.mKind == RecordKind::Plant)
+                for (auto& slot : array.mSlots)
+                    if (slot.mV7State.size() == V7SaveSchema::Size(RecordKind::Plant))
+                        std::fill(slot.mV7State.begin() + 56, slot.mV7State.end(), Byte{0});
     const std::vector<Byte> aTarget = WriteFileImage(aDocument, aTargetFormat, aDateEcho);
 
     // Parse the generated target with the opposite grammar and compare every

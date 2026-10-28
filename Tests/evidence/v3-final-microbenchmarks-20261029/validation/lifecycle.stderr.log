@@ -1,0 +1,29 @@
+PASS lifecycle resource plans
+PASS lifecycle definitions loaded: repeat 0
+PASS lifecycle authored particle render parameters
+PASS lifecycle curve timing
+PASS lifecycle reanimation playback
+PASS actor fixture production fonts
+PASS actor fixture production Board images
+PASS actor fixture real effect pools
+PASS actor fixture real Board construction
+PASS changing-rate linear segments: exact binary oracle, zero steps, teleport, invalidation, nonlinear handoff and native save continuation
+PASS actual analytic Coin/Sun falling and wall events
+PASS actual analytic mower motion, pool height and brain falling
+PASS actual Zombie altitude: 14 paths, roof Imp, combined Balloon, save continuation
+PASS fresh/moving zero-travel vault and full roof Imp position updates at 100/240/480Hz
+PASS actual Zamboni discrete movement, timestamp tire speed and save continuation
+PASS discrete slot100Hz original phase/RNG and other-frequency legal completion
+PASS actual pickup discrete nanosecond steps / 1073 thresholds / native save continuation / destination changes
+PASS actual magnet equipment transfer: seven source tracks, scaled/mirrored poses, placed ladder
+PASS actual discrete inverse-square magnet / sub-second capture / save continuation
+PASS actor bowling reference: seed 3
+PASS actor bowling reference: seed 50
+PASS actor walking reference
+PASS lifecycle actor coordinates
+PASS lifecycle real consumers
+PASS lifecycle definitions loaded: repeat 1
+PASS lifecycle authored particle render parameters
+PASS lifecycle curve timing
+PASS lifecycle reanimation playback
+PASS lifecycle real consumers

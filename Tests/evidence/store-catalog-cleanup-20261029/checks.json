@@ -1,0 +1,13 @@
+{
+  "removed_shop_product": "STORE_ITEM_PVZ",
+  "chocolate_inventory_slot": 26,
+  "remaining_ids_unchanged": true,
+  "profile_purchase_slot_count": 80,
+  "save_layout_changed": false,
+  "vulkan_release_build": "passed",
+  "resource_load_plan_tests": 19,
+  "retired_icon_in_runtime_pak": [],
+  "pak_sha256": "5bdd71c632d945304ae3752bfed61941bb8c7e4351e616e1ff6fbceab1431545",
+  "exe_sha256": "007147fe7fe16d4effaa28d0c53cf88a0cf4db92464f0e8e1fb6db50d76abb15",
+  "production_init_loading_and_frozen_draw": "PASS; resource contract loaded after explicit generated-header object dependency fix"
+}

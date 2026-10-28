@@ -19,14 +19,14 @@ public:
 	virtual void 			UnloadAllMusic(){}
 	virtual void 			PauseAllMusic(){}
 	virtual void 			ResumeAllMusic(){}
-	virtual void 			FadeIn(int, int, double, bool){}
-	virtual void 			FadeOut(int, bool, double){}
-	virtual void 			FadeOutAll(bool, double){}
-	virtual void 			SetSongVolume(int, double){}
-	virtual void 			SetSongMaxVolume(int, double){}
+	virtual void 			FadeIn(int, int, float, bool){}
+	virtual void 			FadeOut(int, bool, float){}
+	virtual void 			FadeOutAll(bool, float){}
+	virtual void 			SetSongVolume(int, float){}
+	virtual void 			SetSongMaxVolume(int, float){}
 	virtual bool			IsPlaying(int){return false;};
 	
-	virtual void			SetVolume(double){}
-	virtual void			SetMusicAmplify(int, double){}
+	virtual void			SetVolume(float){}
+	virtual void			SetMusicAmplify(int, float){}
 	virtual void			Update(){}
 };

@@ -32,9 +32,6 @@ void CheckEditableHeader()
     for (const auto [version, minor, schema] :
          {std::array{DAT64_V1_VERSION, 0U, DAT64_V1_SCHEMA_ID},
           std::array{DAT64_V2_VERSION, 0U, DAT64_V2_SCHEMA_ID},
-          std::array{DAT64_V32_VERSION, DAT64_V32_MINOR_VERSION, DAT64_V32_SCHEMA_ID},
-          std::array{DAT64_VERSION, DAT64_MINOR_VERSION, DAT64_V33_ACTOR_CLOCK_SCHEMA_ID},
-          std::array{DAT64_VERSION, DAT64_MINOR_VERSION, DAT64_V33_PROJECTILE_CLOCK_SCHEMA_ID},
           std::array{DAT64_VERSION, DAT64_MINOR_VERSION, DAT64_SCHEMA_ID}})
     {
         const bool current = version == DAT64_VERSION && minor == DAT64_MINOR_VERSION &&
@@ -49,7 +46,7 @@ void CheckEditableHeader()
         Set32(file, 36, schema);
         Set32(file, 40, minor);
         Require(IsSupportedDat64Header(file), "Game/converter header rejected a supported version");
-        Require(IsCurrentDat64Header(file) == current, "Runtime must accept only DAT64 v3.3");
+        Require(IsCurrentDat64Header(file) == current, "Runtime must accept only DAT64 v4");
         // Neither the payload nor the former CRC field participates in the header decision.
         Set32(file, 32, 0xdeadbeef);
         file[DAT64_HEADER_SIZE + 3] ^= 0x37;
@@ -63,14 +60,19 @@ void CheckEditableHeader()
         Require(!IsSupportedDat64Header(bad), "Unknown minor version accepted");
         if (current)
         {
-            for (const auto [unpublishedMinor, unpublishedSchema] :
-                 {std::array{0U, DAT64_V3_SCHEMA_ID}, std::array{1U, DAT64_V31_SCHEMA_ID}})
+            bad = file;
+            Set32(bad, 36, 0x10744);
+            Require(!IsSupportedDat64Header(bad) && !IsCurrentDat64Header(bad),
+                "Retired v4 draft schema accepted");
+            for (unsigned int oldMinor = 0; oldMinor <= 7; ++oldMinor)
+            for (unsigned int oldSchema = 0x10733; oldSchema <= 0x10745; ++oldSchema)
             {
                 bad = file;
-                Set32(bad, 40, unpublishedMinor);
-                Set32(bad, 36, unpublishedSchema);
+                Set32(bad, 8, 3);
+                Set32(bad, 40, oldMinor);
+                Set32(bad, 36, oldSchema);
                 Require(!IsSupportedDat64Header(bad) && !IsCurrentDat64Header(bad),
-                    "Unpublished v3.0/v3.1 accepted");
+                    "Retired v3 development format accepted");
             }
             bad = file;
             Set32(bad, 40, 1);

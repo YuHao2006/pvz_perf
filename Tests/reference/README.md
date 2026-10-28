@@ -7,6 +7,7 @@
 | --- | --- |
 | render-groups | 旧渲染分组代码的源码对照，供 audit_1073_render_semantics.py 读取 |
 | legacy1073-resources | 旧 1073 精简资源包及其原始生成清单，供旧格式资源审计使用 |
+| microbenchmarks | 历史小基准源码、提取片段和下游桩，附逐文件哈希及复测范围说明 |
 
 当前发行包由 assets 下的编译输入重新生成，进入 out/<组合>/Release。
 这些历史夹具不作为当前项目的冻结性能基线。

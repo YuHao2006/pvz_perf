@@ -25,6 +25,6 @@ struct TextureSource
 	void BltTriangles(const TriVertex vertices[][3], int count, DWORD color,
 		float tx = 0, float ty = 0) const;
 	void BltTriangles(std::span<const std::array<TriVertex,3>> triangles, DWORD color,
-		float tx = 0, float ty = 0) const;
+		float tx = 0, float ty = 0, const Rect* clip = nullptr) const;
 };
 }

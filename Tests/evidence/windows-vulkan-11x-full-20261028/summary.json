@@ -1,0 +1,24 @@
+{
+  "label": "pvz_perf · Windows Vulkan · LPE14 11x",
+  "selection": "segment=game, valid=1, scene=3, foreground=1",
+  "seconds": 374.00027030002093,
+  "valid_samples": 374,
+  "recorded_seconds": 384.0003806000168,
+  "frames": 37380,
+  "cpu_seconds": 230.109375,
+  "fps": 99.94645183013898,
+  "update_hz": 99.99992772731936,
+  "cpu_percent": 61.52652638871291,
+  "cpu_ms_per_frame": 6.155949036918138,
+  "wave_first": 0,
+  "wave_last": 20,
+  "fps_min": 96.78369445309683,
+  "fps_max": 101.05116220478972,
+  "max_interval_cpu_ms": 9.21875,
+  "excluded": {
+    "preroll": 2,
+    "other-scene": 8
+  },
+  "executable_sha256": "d5b37a4e3c4c3fe21688e79ff0f063de91d7dbc1d13856ef525edbf92e695731",
+  "stop_reason": "game-exited"
+}

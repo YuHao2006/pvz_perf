@@ -1,0 +1,12 @@
+adapter=NVIDIA GeForce RTX 4070 Laptop GPU
+npot-pitched-upload=PASS bindless-mixed-slots=PASS destroy-before-submit=PASS
+mixed-sprite-normal-additive-ramp=PASS layers=4 tolerance=4-unorm-bytes
+indexed-quads-80000-vertices-mixed-prefix-and-split=PASS
+coverage-exact-65536=PASS
+color-alpha-copy-font-offscreen=PASS
+pool-three-layers-day-night-translated-offscreen-state-restore=PASS
+user-hlsl-runtime-scale-exact-1920000=PASS
+static-symbols-2000-no-dynamic-duplicates=PASS
+canvas-resize-800-through-1400-resident-textures-and-scale=PASS
+d3d12-debug-errors=0
+backend=D3D12 result=PASS

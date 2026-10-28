@@ -5,7 +5,7 @@
 struct TimedLinearMotion
 {
     double origin = 0;
-    std::uint64_t elapsedNs = 0;
+    std::int64_t startTimeNs = 0; // Absolute beginning of the current constant-rate segment.
     float rate = 0;
     bool bound = false;
 };
@@ -14,7 +14,7 @@ float CheckedPosition(double value);
 
 // Rebase when an input changes; constant velocity is sampled from total integer
 // elapsed time, without feeding a rounded float position back into integration.
-void AdvanceVelocity(float& position, float rate, std::uint64_t deltaNs,
+void AdvanceVelocity(float& position, float rate, std::uint64_t deltaNs, std::int64_t nowNs,
     TimedLinearMotion& motion);
 
 template<class Actor>

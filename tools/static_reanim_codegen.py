@@ -83,40 +83,11 @@ def _frame_range(definition: dict, action: int) -> tuple[int, int]:
     return (visible[0], visible[-1] - visible[0] + 1) if visible else (0, 1)
 
 
-def gpu_record(definition: dict) -> bytes:
-    """GPU-only transport; original logical track slots are never renumbered."""
-    tracks, keys = bytearray(), bytearray()
-    for track in definition["tracks"]:
-        count = len(track["frames"])
-        offset = 0xFFFFFFFF if track["storage"] == 1 else len(keys) // 48
-        tracks.extend(struct.pack("<4I", offset, count, 0, 0))
-        if track["storage"] == 1:
-            continue
-        for frame in track["frames"]:
-            x, y, kx, ky, sx, sy, cel, alpha = frame["values"]
-            keys.extend(struct.pack("<7fi4I", x, y, kx, ky, sx, sy, alpha,
-                                    cel, frame["slot"], 0, 0, 0))
-    atlas = definition["atlas"]
-    geometry = bytearray()
-    for row, (width, height) in zip(atlas["variant_rectangles"], atlas["variant_dimensions"]):
-        for x, y, w, h in row:
-            pak.require(width > 0 and height > 0 or (x, y, w, h) == (0, 0, 0, 0),
-                        "GPU region requires atlas dimensions")
-            geometry.extend(struct.pack("<6f2I", w, h,
-                                        x / width if width else 0, y / height if height else 0,
-                                        (x + w) / width if width else 0,
-                                        (y + h) / height if height else 0, 0, 0))
-    # Fixed little-endian header; the payload mirrors GpuReanim.h aggregates.
-    return (struct.pack("<8I", 0x31555247, len(definition["tracks"]), len(keys) // 48,
-                        atlas["slot_count"], atlas["variant_count"], 16, 48, 32)
-            + tracks + keys + geometry)
-
-
 def generate(config, records: dict[str, bytes]) -> dict:
     """Return eight deterministic source shards and central-table fragments."""
     order = config.definition_orders.get("reanim")
     pak.require(bool(order), "Static reanimations require definition_order(reanim ...)")
-    definitions, gpu_records = [], {}
+    definitions = []
     expected = []
     for _, name in order:
         path = f"compiled/reanim/{name.casefold()}.compiled"
@@ -139,7 +110,6 @@ def generate(config, records: dict[str, bytes]) -> dict:
         code = shards[index % SHARD_COUNT]
         prefix = f"Reanim{index}"
         atlas, tracks = definition["atlas"], definition["tracks"]
-        gpu_records[f"compiled/gpu-reanim/{order[index][1].casefold()}.compiled"] = gpu_record(definition)
 
         def emit(type_name, suffix, values, *, readonly=False):
             return array(declarations, code, type_name, prefix + suffix, values, readonly=readonly)
@@ -154,18 +124,13 @@ def generate(config, records: dict[str, bytes]) -> dict:
                 values.append("{" + ", ".join([*(str(v) if i == 6 else cpp_float(v)
                                                 for i, v in enumerate(frame["values"])),
                                               f'{frame["slot"]}u', "nullptr", text]) + "}")
-                pak.require(storage != 2 or not (frame["font"] or frame["text"]),
-                            "GPU-only reanimation tracks cannot contain CPU font/text data")
-                if frame["font"] and storage != 2:
+                if frame["font"]:
                     target = f"{prefix}Frames{t}[{f}].mFont"
                     font_bindings.append(f"{target} = font;")
                     font_resets.append(f"{target} = nullptr;")
-            frames_name = (emit("ReanimatorSourceTransform", f"Frames{t}", values)
-                           if storage != 2 else "nullptr")
-            storage_field = (", ReanimTrackStorage::" + ("Both", "Cpu", "Gpu")[storage]
-                             if storage else "")
+            frames_name = emit("ReanimatorSourceTransform", f"Frames{t}", values)
             track_values.append(f'{{static_cast<ReanimTrackId>({track["id"]}u), '
-                                f'{{{frames_name}, {len(values)}{storage_field}}}}}')
+                                f'{{{frames_name}, {len(values)}}}}}')
             summary["frames"] += len(values)
         tracks_name = emit("ReanimatorTrack", "Tracks", track_values)
         variants, slots, actions = atlas["variant_count"], atlas["slot_count"], atlas["action_count"]
@@ -209,12 +174,10 @@ def generate(config, records: dict[str, bytes]) -> dict:
         summary["attacher_segments"] += len(segment_values)
     summary["font_frames"] = len(font_bindings)
     summary["rectangle_bytes"] = summary["rectangles"] * 24
-    summary["gpu_record_bytes"] = sum(map(len, gpu_records.values()))
     files = {}
     for index, code in enumerate(shards):
         code.append("}")
         files[f"ReanimData{index:02d}.cpp"] = ("\n".join(code) + "\n").encode("utf-8")
     return {"files": files, "declarations": declarations, "initializers": initializers,
             "font_bindings": font_bindings, "font_resets": font_resets,
-            "attacher_initializers": attacher_initializers, "summary": summary,
-            "gpu_records": gpu_records}
+            "attacher_initializers": attacher_initializers, "summary": summary}

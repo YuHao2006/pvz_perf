@@ -1,3 +1,4 @@
+#include "ReanimClock.h"
 #include "Lawn/Board.h"
 #include "Lawn/Zombie.h"
 #include "Lawn/CatapultState.h"
@@ -42,18 +43,51 @@ void Configure(unsigned int fps)
     Sexy::gLegacyTickPhaseNs = 0;
 }
 
+void CheckDancerClockConversion()
+{
+    // Production GetDancerFrame reads the app clock through its legacy modulo
+    // operator. Check that variable <=10ms steps retain the same 100/200ms
+    // frame windows, including the cycle boundary where modulo synthesizes 0.
+    static constexpr unsigned long long steps[]{
+        10'000'000, 1'000'000, 4'000'000, 3'333'333, 9'000'000,
+        7'000'000, 1, 9'999'999, 5'123'456
+    };
+    for (const auto [length, frames] : {std::pair{20, 23}, std::pair{10, 11}})
+    {
+        Sexy::UnsignedTimeCounter clock = 0;
+        unsigned long long elapsed = 0;
+        for (unsigned int i = 0; i < 50'000; ++i)
+        {
+            Sexy::gUpdateIntervalNs = steps[i % std::size(steps)];
+            ++clock;
+            elapsed += Sexy::gUpdateIntervalNs;
+            const auto actual = (clock % (length * frames)) / length;
+            const auto expected = (elapsed / (length * 10'000'000ULL)) % frames;
+            Require(actual == expected, "Dancer frame changed under variable nanosecond steps");
+        }
+        unsigned int originalTicks = UINT32_MAX - 10;
+        clock = originalTicks;
+        Sexy::gUpdateIntervalNs = 10'000'000;
+        for (int i = 0; i < 32; ++i)
+        {
+            ++originalTicks;
+            ++clock;
+            Require((clock % (length * frames)) / length ==
+                int((originalTicks % (length * frames)) / length),
+                "Dancer frame changed at original unsigned app-counter wrap");
+        }
+    }
+    Configure(100);
+}
+
 template<class T>
 void CheckRecord()
 {
     std::vector<std::pair<size_t, bool>> nativeFields;
     VisitTimeCounterOffsets<T>([&](size_t offset, bool isUnsigned) {
-        const size_t width = [&] {
-            if constexpr (std::is_same_v<T, Board>)
-                if (offset == offsetof(Board, mLevelTimeNs)) return sizeof(std::uint64_t);
-            if constexpr (std::is_same_v<T, TodParticle> || std::is_same_v<T, TodParticleEmitter>)
-                return sizeof(std::int64_t);
-            return sizeof(Sexy::TimeCounter);
-        }();
+        // Inventory entries point at a 64-bit nanosecond value. Some are
+        // absolute timestamps, others are the first member of a duration wrapper.
+        constexpr size_t width = sizeof(std::int64_t);
         Require(offset + width <= sizeof(T), "Native time member extends beyond object");
         nativeFields.emplace_back(offset, isUnsigned);
     });
@@ -215,27 +249,16 @@ void CheckLiveSave()
     T source{};
     if constexpr (std::is_same_v<T, TodParticle>)
     {
-        source.mAnimationElapsedNs = 123'456'789'012;
+        source.mAnimationBirthTimeNs = 0 - (123'456'789'012);
         source.mAnimationSampleIntegral = 987'654'321;
         source.mRandomSeed = 0x71234567U;
-        source.mLinearOriginX = 1'048'576.015625;
-        source.mLinearOriginY = -1'048'576.03125;
-        source.mLinearElapsedNs = 1'250'001;
-        source.mLinearVelocity = {.125f,-.25f};
-        source.mLinearAcceleration = {.08f,-.04f};
-        source.mLinearSpinOrigin = 1'048'576.015625;
-        source.mLinearSpinRate = .125;
-        source.mLinearSpinActive = 1;
     }
     else if constexpr (std::is_same_v<T, TodParticleEmitter>)
     {
-        source.mEmissionElapsedNs = 34'567'891;
         source.mSystemPositionOriginX = 1'048'576.015625;
         source.mSystemPositionOriginY = -1'048'576.03125;
         source.mSystemPositionBound = 1;
         source.mSpawnRemainder = 123'456'789'012;
-        source.mExternalTarget = {12.25f, -31.5f};
-        source.mExternalAppliedCenter = {-21.5f, 43.25f};
     }
     const auto fields = SaveTimeFields<T>();
     std::uint64_t ordinal = 0;
@@ -252,42 +275,27 @@ void CheckLiveSave()
             [](unsigned char byte) { return byte == 0; }),
             "Retired particle roster bytes were written to the historical reserved slot");
     if constexpr (std::is_same_v<T, TodParticleEmitter>)
-        Require(tail.size() == 52 && V7SaveSchema::Read(tail,0,8) == 123'456'789'012LL &&
-            V7SaveSchema::Read(tail,8,8) == 34'567'891 &&
-            V7SaveSchema::Float(tail,16) == 12.25f && V7SaveSchema::Float(tail,20) == -31.5f &&
-            V7SaveSchema::Float(tail,24) == -21.5f && V7SaveSchema::Float(tail,28) == 43.25f &&
-            V7SaveSchema::Double(tail,32) == 1'048'576.015625 &&
-            V7SaveSchema::Double(tail,40) == -1'048'576.03125 &&
-            V7SaveSchema::Read(tail,48,4) == 1,
-            "Emitter exact curve origin/external input fields differ from their frozen wire offsets");
+        Require(tail.size() == 44 && V7SaveSchema::Read(tail,0,8) == 123'456'789'012LL &&
+            std::all_of(tail.begin()+8, tail.begin()+24, [](unsigned char byte){return byte==0;}) &&
+            V7SaveSchema::Double(tail,24) == 1'048'576.015625 &&
+            V7SaveSchema::Double(tail,32) == -1'048'576.03125 &&
+            V7SaveSchema::Read(tail,40,4) == 1,
+            "Emitter curve samples/reserved bytes differ from their frozen wire offsets");
     if constexpr (std::is_same_v<T, TodParticle>)
-        Require(tail.size() == 100 && V7SaveSchema::Read(tail, 0, 8) == 0 &&
-            V7SaveSchema::Read(tail, 8, 8) == 123'456'789'012LL &&
-            V7SaveSchema::Read(tail, 16, 8) == 987'654'321 &&
-            V7SaveSchema::Read(tail, 24, 4) == 0x71234567U &&
-            V7SaveSchema::Double(tail,28)==1'048'576.015625 &&
-            V7SaveSchema::Double(tail,36)==-1'048'576.03125 &&
-            V7SaveSchema::Read(tail,44,8)==1'250'001 &&
-            V7SaveSchema::Float(tail,52)==.125f &&
-            V7SaveSchema::Float(tail,56)==-.25f &&
-            V7SaveSchema::Read(tail,60,8)==0 &&
-            V7SaveSchema::Double(tail,68)==1'048'576.015625 &&
-            V7SaveSchema::Double(tail,76)==.125 &&
-            V7SaveSchema::Read(tail,84,4)==0 &&
-            V7SaveSchema::Read(tail,88,4)==1 &&
-            V7SaveSchema::Float(tail,92)==.08f &&
-            V7SaveSchema::Float(tail,96)==-.04f,
-            "Native particle main-step tail retained a removed current sample or shifted its exact fields");
-    // Older current-format records may still contain the retired caches.
-    // Ignore them while loading and write canonical zeros without reviving state.
+        Require(tail.size() == 20 &&
+            V7SaveSchema::Read(tail, 0, 8) == 123'456'789'012LL &&
+            V7SaveSchema::Read(tail, 8, 8) == 987'654'321 &&
+            V7SaveSchema::Read(tail, 16, 4) == 0x71234567U,
+            "Native particle animation/random tail changed its compact wire offsets");
+    // The emitter's historical projection still has retired roster cache bytes.
+    // They are not runtime state and must serialize back as canonical zeros.
     auto oldRecord = original;
     if constexpr (std::is_same_v<T, TodParticleEmitter>)
-        std::fill(oldRecord.begin() + 16, oldRecord.begin() + 48, 0xa5);
-    if constexpr (std::is_same_v<T, TodParticle>)
     {
-        const auto offset = SaveV2Size<T>();
-        for (const auto [first, last] : {std::pair{0, 8}, {60, 68}, {84, 88}})
-            std::fill(oldRecord.begin() + offset + first, oldRecord.begin() + offset + last, 0xa5);
+        std::fill(oldRecord.begin() + 16, oldRecord.begin() + 48, 0xa5);
+        // Retired held-input anchors must not re-enter runtime or survive a save.
+        std::fill(oldRecord.begin() + SaveV2Size<T>() + 8,
+            oldRecord.begin() + SaveV2Size<T>() + 24, 0xa5);
     }
     for (const unsigned fps : {60u, 100u, 144u, 240u, 250u, 1000u})
     {
@@ -319,13 +327,13 @@ void CheckObjectCoordinateSave()
     source.mX = 123.75f;
     source.mY = -45.25f;
     if constexpr (std::is_same_v<T, SeedPacket>)
-        source.mSlotMachineCountDown.mNanoseconds = 1'234'567'891;
+        source.mSlotMachineEndTimeNs = 1'234'567'891;
     if constexpr (std::is_same_v<T, SeedBank>)
         for (int i = 0; i < 10; ++i)
         {
             source.mSeedPackets[i].mX = 20.0f + i;
             source.mSeedPackets[i].mY = -10.0f - i;
-            source.mSeedPackets[i].mSlotMachineCountDown.mNanoseconds = 123'456'789 + i;
+            source.mSeedPackets[i].mSlotMachineEndTimeNs = 123'456'789 + i;
         }
     const auto bytes = WriteSaveRecord(source);
     const auto canonical = Dat64TimeSchema::Collapse(bytes, SaveTimeFields<T>(),
@@ -343,13 +351,45 @@ void CheckObjectCoordinateSave()
         for (int i = 0; i < 10; ++i)
             Require(restored.mSeedPackets[i].mX == source.mSeedPackets[i].mX &&
                 restored.mSeedPackets[i].mY == source.mSeedPackets[i].mY &&
-                restored.mSeedPackets[i].mSlotMachineCountDown.mNanoseconds ==
-                    source.mSeedPackets[i].mSlotMachineCountDown.mNanoseconds,
+                restored.mSeedPackets[i].mSlotMachineEndTimeNs ==
+                    source.mSeedPackets[i].mSlotMachineEndTimeNs,
                 "Nested SeedPacket coordinates or slot phase did not survive SeedBank serialization");
     if constexpr (std::is_same_v<T, SeedPacket>)
-        Require(restored.mSlotMachineCountDown.mNanoseconds == source.mSlotMachineCountDown.mNanoseconds,
+        Require(restored.mSlotMachineEndTimeNs == source.mSlotMachineEndTimeNs,
             "Slot-machine integer nanosecond phase did not survive serialization");
     Require(WriteSaveRecord(restored) == bytes, "GameObject coordinate save was not stable after reload");
+}
+
+void CheckV4FrameMapping()
+{
+    static_assert(std::is_integral_v<decltype(Reanimation::mStartTimeNs)>);
+    static_assert(std::is_integral_v<decltype(Reanimation::mFramePeriodNs)>);
+    static_assert(std::is_integral_v<decltype(Reanimation::mPeriodNs)>);
+    VisitV7Members<Zombie>([&](size_t, size_t wire, size_t width) {
+        Require(wire + width <= 105, "Zombie mapping retains removed root cache fields");
+    });
+    Require(V7SaveSchema::Size(LevelSaveFormat::RecordKind::Zombie) == 105,
+        "v4 Zombie retains removed root cache tail");
+    size_t mapped = 0;
+    VisitV7Members<Reanimation>([&](size_t native, size_t wire, size_t width) {
+        if (native == offsetof(Reanimation, mCurrentFrame)) {
+            Require(wire == 12 && width == 4, "v4 current frame mapping differs"); ++mapped;
+        }
+        if (native == offsetof(Reanimation, mFramePeriodNs)) {
+            Require(wire == 16 && width == 8, "v4 frame duration mapping differs"); ++mapped;
+        }
+        if (native == offsetof(Reanimation, mLastUpdateTimeNs)) {
+            Require(wire == 64 && width == 8, "v4 frame clock sample mapping differs"); ++mapped;
+        }
+    });
+    bool crossings = false, displacement = false;
+    VisitV7Members<Reanimation>([&](size_t native, size_t wire, size_t width) {
+        if (native == offsetof(Reanimation, mCycleCrossings)) crossings = wire == 32 && width == 8;
+        if (native == offsetof(Reanimation, mRootDisplacement)) displacement = wire == 48 && width == 8;
+    });
+    Require(crossings && displacement, "v4 root displacement/event interval mapping is incomplete");
+    Require(mapped == 3 && V7SaveSchema::Size(LevelSaveFormat::RecordKind::Reanimation) == 72,
+        "v4 frame cursor state mapping is incomplete");
 }
 
 void CheckPlantDeadlineSave()
@@ -361,21 +401,22 @@ void CheckPlantDeadlineSave()
     source.mLaunchWindowStartNs = 91'234'567'891;
     source.mNextLaunchTimeNs = source.mLaunchWindowStartNs + 217'123'456;
     source.mZenProductionCountdown.mNanoseconds = 333'333'333;
-    source.mMagnetElapsedNs = 31'234'567;
+    source.mMagnetStartTimeNs = -31'234'567; // 31ms elapsed at epoch zero.
     for (auto& item : source.mMagnetItems)
     {
         item.mPosX = 321.25f;
         item.mPosY = -12.125f;
-        item.mOriginDeltaX = 512.75f;
-        item.mOriginDeltaY = -125.5f;
-        item.mCaptureFactor = 0.0375f;
-        item.mCenterDurationNs = 812'345'678;
+        item.mVelocityX = 512.75f;
+        item.mVelocityY = -125.5f;
     }
     const auto wire = WriteSaveRecord(source);
     Require(wire.size() == SaveV2Size<Plant>() + 156 &&
         V7SaveSchema::Time(wire, LevelSaveFormat::RecordKind::Plant, 100) == 217'123'456,
         "Battle launch compatibility projection lost exact remaining nanoseconds");
     const auto tail = std::span(wire).subspan(SaveV2Size<Plant>());
+    for (std::size_t i=0;i<MAX_MAGNET_ITEMS;++i)
+        Require(std::all_of(tail.begin()+56+i*20+8,tail.begin()+56+(i+1)*20,
+            [](unsigned char byte){return byte==0;}), "Retired magnet lookup parameters leaked into the reserved wire tail");
     Require(V7SaveSchema::Read(tail, 32, 8) == std::uint64_t(source.mNextLaunchTimeNs) &&
         V7SaveSchema::Read(tail, 40, 8) == std::uint64_t(source.mLaunchWindowStartNs) &&
         tail.size() == 156,
@@ -384,9 +425,10 @@ void CheckPlantDeadlineSave()
     ReadSaveRecord(restored, wire.data());
     Require(restored.mNextLaunchTimeNs == source.mNextLaunchTimeNs &&
         restored.mLaunchWindowStartNs == source.mLaunchWindowStartNs &&
-        restored.mMagnetElapsedNs == source.mMagnetElapsedNs &&
+        restored.mMagnetStartTimeNs == source.mMagnetStartTimeNs &&
         restored.mMagnetItems[4].mPosX == source.mMagnetItems[4].mPosX &&
-        restored.mMagnetItems[4].mCenterDurationNs == source.mMagnetItems[4].mCenterDurationNs &&
+        restored.mMagnetItems[4].mVelocityX == source.mMagnetItems[4].mVelocityX &&
+        restored.mMagnetItems[4].mVelocityY == source.mMagnetItems[4].mVelocityY &&
         WriteSaveRecord(restored) == wire,
         "Real Plant record save/load changed absolute deadline or event cursor");
     source.mState = PlantState::STATE_BOWLING_UP;
@@ -407,16 +449,65 @@ void CheckPlantDeadlineSave()
         "Overdue launch deadline was clamped or wrapped during native save");
 }
 
+void CheckEpochClockProjection()
+{
+    auto packet = std::bit_cast<SeedPacket>(std::array<std::byte, sizeof(SeedPacket)>{});
+    packet.mRefreshing = true;
+    packet.mRefreshStartTimeNs = -123'456'789;
+    packet.mRefreshTime.mNanoseconds = 500'000'000;
+    packet.mRefreshTime.mPreviousNanoseconds = 500'000'000;
+    packet.mSlotMachineEndTimeNs = 1'234'567'891;
+    packet.mIndex = 0x12345678;
+    packet.mSlotMachiningPosition = .375f;
+    const auto packetWire = WriteSaveRecord(packet);
+    Require(V7SaveSchema::Time(packetWire, LevelSaveFormat::RecordKind::SeedPacket, 48) == 123'456'789 &&
+        V7SaveSchema::Time(packetWire, LevelSaveFormat::RecordKind::SeedPacket, 72) == 1'234'567'891,
+        "Seed timers serialized absolute clock values into elapsed/remaining slots");
+    auto packetRestored = std::bit_cast<SeedPacket>(std::array<std::byte, sizeof(SeedPacket)>{});
+    ReadSaveRecord(packetRestored, packetWire.data());
+    Require(packetRestored.mBoard == nullptr &&
+        packetRestored.mRefreshStartTimeNs == -123'456'789 &&
+        packetRestored.mSlotMachineEndTimeNs == 1'234'567'891 &&
+        packetRestored.mIndex == packet.mIndex &&
+        packetRestored.mSlotMachiningPosition == packet.mSlotMachiningPosition,
+        "Seed epoch-zero decode or adjacent raw clock field was overwritten");
+    SaveClockProjection::Bind(packetRestored);
+    Require(WriteSaveRecord(packetRestored) == packetWire,
+        "Seed epoch-zero clock binding changed its frozen wire projection");
+
+    auto plant = std::bit_cast<Plant>(std::array<std::byte, sizeof(Plant)>{});
+    plant.mState = PlantState::STATE_READY;
+    plant.mMagnetStartTimeNs = -8'123'456'789;
+    plant.mRecentlyEatenEndTimeNs = 21'234'567;
+    plant.mEatenFlashEndTimeNs = 31'234'567;
+    plant.mBeghouledFlashEndTimeNs = 41'234'567;
+    plant.mWakeUpEndTimeNs = 51'234'567;
+    const auto plantWire = WriteSaveRecord(plant);
+    auto plantRestored = std::bit_cast<Plant>(std::array<std::byte, sizeof(Plant)>{});
+    ReadSaveRecord(plantRestored, plantWire.data());
+    Require(plantRestored.mMagnetStartTimeNs == plant.mMagnetStartTimeNs &&
+        plantRestored.mRecentlyEatenEndTimeNs == plant.mRecentlyEatenEndTimeNs &&
+        plantRestored.mEatenFlashEndTimeNs == plant.mEatenFlashEndTimeNs &&
+        plantRestored.mBeghouledFlashEndTimeNs == plant.mBeghouledFlashEndTimeNs &&
+        plantRestored.mWakeUpEndTimeNs == plant.mWakeUpEndTimeNs,
+        "Plant epoch-zero clock decoding lost exact lifetime/deadline nanoseconds");
+    Require(plantRestored.mDisappearEndTimeNs == 2'000'000'000,
+        "Plant inactive disappearance sentinel did not retain frozen wire meaning before binding");
+    SaveClockProjection::Bind(plantRestored);
+    Require(plantRestored.mDisappearEndTimeNs == 0 && WriteSaveRecord(plantRestored) == plantWire,
+        "Plant binding failed to recover the inactive disappearance state");
+}
+
 void CheckMusicFloatSave()
 {
-    static_assert(LevelSaveFormat::DAT64_VERSION == 3 && LevelSaveFormat::DAT64_MINOR_VERSION == 3);
+    static_assert(LevelSaveFormat::DAT64_VERSION == 4 && LevelSaveFormat::DAT64_MINOR_VERSION == 0);
     static_assert(std::is_same_v<decltype(Music::mBaseBPM), float>);
     static_assert(std::is_same_v<decltype(Music::mBaseModSpeed), float>);
     static_assert(std::is_trivially_copyable_v<Music>);
     auto source = std::bit_cast<Music>(std::array<std::byte, sizeof(Music)>{});
     source.mBaseBPM = 120.5f;
     source.mBaseModSpeed = 3.25f;
-    source.mBurstStateCounter.mNanoseconds = 123'456'789;
+    source.mBurstEndTimeNs = 123'456'789;
     const auto wire = WriteSaveRecord(source);
     float bpm = 0, speed = 0;
     std::memcpy(&bpm, wire.data() + 36, sizeof(bpm));
@@ -426,7 +517,7 @@ void CheckMusicFloatSave()
     auto restored = std::bit_cast<Music>(std::array<std::byte, sizeof(Music)>{});
     ReadSaveRecord(restored, wire.data());
     Require(restored.mBaseBPM == 120.5f && restored.mBaseModSpeed == 3.25f &&
-        restored.mBurstStateCounter.mNanoseconds == 123'456'789 &&
+        restored.mBurstEndTimeNs == 123'456'789 &&
         WriteSaveRecord(restored) == wire,
         "Music float attributes did not round-trip with exact nanosecond timers");
 }
@@ -456,7 +547,7 @@ void CheckCatapultCycle()
     using enum CatapultLoadState;
     Require(SaveV2Size<Zombie>() == 436 &&
         Dat64Layout<Zombie>::SlotSize() == 444 + V7SaveSchema::Size(LevelSaveFormat::RecordKind::Zombie),
-        "Catapult presentation changed the frozen prefix or v3.3 motion tail");
+        "Catapult presentation changed the frozen prefix or v4 motion tail");
     Require(CatapultCycle::Resolve(true, true, CatapultCycle::ProjectileEvent) == Loaded,
         "Projectile creation incorrectly released the carried ball early");
     Require(CatapultCycle::Resolve(true, true, 17.0f / 31.0f) == Released,
@@ -517,13 +608,16 @@ int main()
         CheckRecord<Reanimation>();
         CheckRecord<Attachment>();
         CheckRuntime();
+        CheckDancerClockConversion();
         CheckObjectCoordinateSave<Plant>();
         CheckObjectCoordinateSave<CursorObject>();
         CheckObjectCoordinateSave<CursorPreview>();
         CheckObjectCoordinateSave<SeedPacket>();
         CheckObjectCoordinateSave<SeedBank>();
+        CheckV4FrameMapping();
         CheckPlantDeadlineSave();
         CheckMusicFloatSave();
+        CheckEpochClockProjection();
         CheckBlendRegionSave();
         CheckCatapultCycle();
         CheckLiveSave<TodParticle>();

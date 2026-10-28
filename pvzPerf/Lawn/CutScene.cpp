@@ -1,3 +1,4 @@
+#include "EffectSystem.h"
 #include "Sexy.TodLib/generated/EntityStrings.h"
 #include "Board.h"
 #include "Plant.h"
@@ -1245,12 +1246,12 @@ void CutScene::UpdateSeedChooserCamera()
 	const SeedChooserScreen* aChooser = mApp->mSeedChooserScreen;
 	if (mSeedChoosing && aChooser && aChooser->mChooseState == CHOOSE_VIEW_LAWN)
 	{
-		if (aChooser->mViewLawnTime <= 100)
-			aCameraX = TodAnimateCurveNs(0, 1'000'000'000, aChooser->mViewLawnTime.mNanoseconds, aChooserX, 0, Curves::EaseInOut);
-		else if (aChooser->mViewLawnTime <= 250)
-			aCameraX = 0;
-		else
-			aCameraX = TodAnimateCurveNs(2'500'000'000, 3'500'000'000, aChooser->mViewLawnTime.mNanoseconds, 0, aChooserX, Curves::EaseInOut);
+		const auto nowNs = mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs;
+		if (aChooser->mViewLawnReturnTimeNs > 0)
+			aCameraX = TodAnimateCurveNs(0, 1'000'000'000, nowNs-aChooser->mViewLawnReturnTimeNs, 0, aChooserX, Curves::EaseInOut);
+		else if (nowNs-aChooser->mViewLawnStartTimeNs <= 1'000'000'000)
+			aCameraX = TodAnimateCurveNs(0, 1'000'000'000, nowNs-aChooser->mViewLawnStartTimeNs, aChooserX, 0, Curves::EaseInOut);
+		else aCameraX = 0;
 	}
 	else if (mCutsceneTime <= TimePanRightStart + mCrazyDaveTime)
 		aCameraX = aStartX;

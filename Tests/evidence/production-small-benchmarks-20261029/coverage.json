@@ -1,0 +1,466 @@
+{
+  "scope": "All historical fixtures have an explicit measured/retired disposition. Actual EXE comparison is seven controlled queries, not every original function.",
+  "historical_fixture_count": 56,
+  "historical_completed": 55,
+  "production_leaf_queries": 5,
+  "production_structure_queries": 10,
+  "retail_machine_code_queries": 7,
+  "fixed_dx12_drawscreen": "two current game processes complete; separate evidence",
+  "fixtures": [
+    {
+      "fixture": "00_bench01_dmgflags",
+      "scope": "historical_fixture_reproduction",
+      "historical_evidence": "base-00_bench01_dmgflags",
+      "two_processes_passed": true,
+      "retail_exe_baseline_for_this_harness": false,
+      "disposition": "MEASURED archived standalone model; not a claim about the complete current function"
+    },
+    {
+      "fixture": "01_bench02_fireproj",
+      "scope": "historical_fixture_reproduction",
+      "historical_evidence": "base-01_bench02_fireproj",
+      "two_processes_passed": true,
+      "retail_exe_baseline_for_this_harness": false,
+      "disposition": "MEASURED archived standalone model; not a claim about the complete current function"
+    },
+    {
+      "fixture": "02_bench03_shootctr",
+      "scope": "historical_fixture_reproduction",
+      "historical_evidence": "base-02_bench03_shootctr",
+      "two_processes_passed": true,
+      "retail_exe_baseline_for_this_harness": false,
+      "disposition": "RETIRED runtime field/texture table; historical model reproduced only"
+    },
+    {
+      "fixture": "03_bench04_flowerpot",
+      "scope": "historical_fixture_reproduction",
+      "historical_evidence": "base-03_bench04_flowerpot",
+      "two_processes_passed": true,
+      "retail_exe_baseline_for_this_harness": false,
+      "disposition": "MEASURED archived standalone model; not a claim about the complete current function"
+    },
+    {
+      "fixture": "04_bench05_packetdraw",
+      "scope": "historical_fixture_reproduction",
+      "historical_evidence": "base-04_bench05_packetdraw",
+      "two_processes_passed": true,
+      "retail_exe_baseline_for_this_harness": false,
+      "disposition": "MEASURED archived standalone model; not a claim about the complete current function"
+    },
+    {
+      "fixture": "05_bench06_zimgoff",
+      "scope": "historical_fixture_reproduction",
+      "historical_evidence": "base-05_bench06_zimgoff",
+      "two_processes_passed": true,
+      "retail_exe_baseline_for_this_harness": false,
+      "disposition": "MEASURED archived standalone model; not a claim about the complete current function"
+    },
+    {
+      "fixture": "06_bench07_walkhead",
+      "scope": "historical_fixture_reproduction",
+      "historical_evidence": "base-06_bench07_walkhead",
+      "two_processes_passed": true,
+      "retail_exe_baseline_for_this_harness": false,
+      "disposition": "MEASURED archived standalone model; not a claim about the complete current function"
+    },
+    {
+      "fixture": "07_bench08_seedupdate",
+      "scope": "historical_fixture_reproduction",
+      "historical_evidence": "base-07_bench08_seedupdate",
+      "two_processes_passed": true,
+      "retail_exe_baseline_for_this_harness": false,
+      "disposition": "MEASURED archived standalone model; not a claim about the complete current function"
+    },
+    {
+      "fixture": "08_bench09_zaction",
+      "scope": "historical_fixture_reproduction",
+      "historical_evidence": "base-08_bench09_zaction",
+      "two_processes_passed": true,
+      "retail_exe_baseline_for_this_harness": false,
+      "disposition": "MEASURED archived standalone model; not a claim about the complete current function"
+    },
+    {
+      "fixture": "09_bench10_prodraw",
+      "scope": "historical_fixture_reproduction",
+      "historical_evidence": "base-09_bench10_prodraw",
+      "two_processes_passed": true,
+      "retail_exe_baseline_for_this_harness": false,
+      "disposition": "RETIRED runtime field/texture table; historical model reproduced only"
+    },
+    {
+      "fixture": "10_bench11_proshadow",
+      "scope": "historical_fixture_reproduction",
+      "historical_evidence": "base-10_bench11_proshadow",
+      "two_processes_passed": true,
+      "retail_exe_baseline_for_this_harness": false,
+      "disposition": "MEASURED archived standalone model; not a claim about the complete current function"
+    },
+    {
+      "fixture": "11_bench12_proimmediate",
+      "scope": "historical_fixture_reproduction",
+      "historical_evidence": "base-11_bench12_proimmediate",
+      "two_processes_passed": true,
+      "retail_exe_baseline_for_this_harness": false,
+      "disposition": "CHANGED time/state/domain; historical model reproduced, no replacement metric"
+    },
+    {
+      "fixture": "12_bench13_dynamics",
+      "scope": "historical_fixture_reproduction",
+      "historical_evidence": "base-12_bench13_dynamics",
+      "two_processes_passed": true,
+      "retail_exe_baseline_for_this_harness": false,
+      "disposition": "CHANGED time/state/domain; historical model reproduced, no replacement metric"
+    },
+    {
+      "fixture": "13_bench14_seedcost",
+      "scope": "historical_fixture_reproduction",
+      "historical_evidence": "base-13_bench14_seedcost",
+      "two_processes_passed": true,
+      "retail_exe_baseline_for_this_harness": false,
+      "disposition": "MEASURED archived standalone model; not a claim about the complete current function"
+    },
+    {
+      "fixture": "14_bench15_storecost",
+      "scope": "historical_fixture_reproduction",
+      "historical_evidence": "base-14_bench15_storecost",
+      "two_processes_passed": true,
+      "retail_exe_baseline_for_this_harness": false,
+      "disposition": "MEASURED archived standalone model; not a claim about the complete current function"
+    },
+    {
+      "fixture": "15_bench16_falltime",
+      "scope": "historical_fixture_reproduction",
+      "historical_evidence": "base-15_bench16_falltime",
+      "two_processes_passed": true,
+      "retail_exe_baseline_for_this_harness": false,
+      "disposition": "CHANGED time/state/domain; historical model reproduced, no replacement metric"
+    },
+    {
+      "fixture": "16_bench1_seedpacket",
+      "scope": "historical_fixture_reproduction",
+      "historical_evidence": "base-16_bench1_seedpacket",
+      "two_processes_passed": true,
+      "retail_exe_baseline_for_this_harness": false,
+      "disposition": "MEASURED archived standalone model; not a claim about the complete current function"
+    },
+    {
+      "fixture": "17_bench2_potoffset",
+      "scope": "historical_fixture_reproduction",
+      "historical_evidence": "base-17_bench2_potoffset",
+      "two_processes_passed": true,
+      "retail_exe_baseline_for_this_harness": false,
+      "disposition": "MEASURED archived standalone model; not a claim about the complete current function"
+    },
+    {
+      "fixture": "18_bench4_coindraw",
+      "scope": "historical_fixture_reproduction",
+      "historical_evidence": "base-18_bench4_coindraw",
+      "two_processes_passed": true,
+      "retail_exe_baseline_for_this_harness": false,
+      "disposition": "MEASURED archived standalone model; not a claim about the complete current function"
+    },
+    {
+      "fixture": "19_bench5_plantshadow",
+      "scope": "historical_fixture_reproduction",
+      "historical_evidence": "base-19_bench5_plantshadow",
+      "two_processes_passed": true,
+      "retail_exe_baseline_for_this_harness": false,
+      "disposition": "MEASURED archived standalone model; not a claim about the complete current function"
+    },
+    {
+      "fixture": "20_bench7_plantheight",
+      "scope": "historical_fixture_reproduction",
+      "historical_evidence": "base-20_bench7_plantheight",
+      "two_processes_passed": true,
+      "retail_exe_baseline_for_this_harness": false,
+      "disposition": "MEASURED archived standalone model; not a claim about the complete current function"
+    },
+    {
+      "fixture": "21_bench8_fire",
+      "scope": "historical_fixture_reproduction",
+      "historical_evidence": "base-21_bench8_fire",
+      "two_processes_passed": true,
+      "retail_exe_baseline_for_this_harness": false,
+      "disposition": "MEASURED archived standalone model; not a claim about the complete current function"
+    },
+    {
+      "fixture": "22_bench02_Plant_DoSpecial",
+      "scope": "historical_fixture_reproduction",
+      "historical_evidence": "base-22_bench02_Plant_DoSpecial",
+      "two_processes_passed": true,
+      "retail_exe_baseline_for_this_harness": false,
+      "disposition": "MEASURED archived standalone model; not a claim about the complete current function"
+    },
+    {
+      "fixture": "23_bench07_Challenge_BeghouledPickSeed",
+      "scope": "historical_fixture_reproduction",
+      "historical_evidence": "base-23_bench07_Challenge_BeghouledPickSeed",
+      "two_processes_passed": true,
+      "retail_exe_baseline_for_this_harness": false,
+      "disposition": "MEASURED archived standalone model; not a claim about the complete current function"
+    },
+    {
+      "fixture": "24_bench08_Challenge_SquirrelFound",
+      "scope": "historical_fixture_reproduction",
+      "historical_evidence": "base-24_bench08_Challenge_SquirrelFound",
+      "two_processes_passed": true,
+      "retail_exe_baseline_for_this_harness": false,
+      "disposition": "MEASURED archived standalone model; not a claim about the complete current function"
+    },
+    {
+      "fixture": "25_bench09_ZenGarden_DrawPlantOverlay",
+      "scope": "historical_fixture_reproduction",
+      "historical_evidence": "base-25_bench09_ZenGarden_DrawPlantOverlay",
+      "two_processes_passed": true,
+      "retail_exe_baseline_for_this_harness": false,
+      "disposition": "MEASURED archived standalone model; not a claim about the complete current function"
+    },
+    {
+      "fixture": "26_bench11_ZombatarItems_DrawCategoryHighlight",
+      "scope": "historical_fixture_reproduction",
+      "historical_evidence": "base-26_bench11_ZombatarItems_DrawCategoryHighlight",
+      "two_processes_passed": true,
+      "retail_exe_baseline_for_this_harness": false,
+      "disposition": "MEASURED archived standalone model; not a claim about the complete current function"
+    },
+    {
+      "fixture": "27_bench13_ZombatarColors_SetColorMode",
+      "scope": "historical_fixture_reproduction",
+      "historical_evidence": "base-27_bench13_ZombatarColors_SetColorMode",
+      "two_processes_passed": true,
+      "retail_exe_baseline_for_this_harness": false,
+      "disposition": "MEASURED archived standalone model; not a claim about the complete current function"
+    },
+    {
+      "fixture": "30_bench_plant",
+      "scope": "historical_fixture_reproduction",
+      "historical_evidence": "base-30_bench_plant",
+      "two_processes_passed": true,
+      "retail_exe_baseline_for_this_harness": false,
+      "disposition": "CHANGED time/state/domain; historical model reproduced, no replacement metric"
+    },
+    {
+      "fixture": "31_bench_cellbucket",
+      "scope": "historical_fixture_reproduction",
+      "historical_evidence": "base-31_bench_cellbucket",
+      "two_processes_passed": true,
+      "retail_exe_baseline_for_this_harness": false,
+      "disposition": "Historical simplified layout reproduced; actual current-layout supplement in this report, not same-layout replacement"
+    },
+    {
+      "fixture": "32_bench_attachment",
+      "scope": "historical_fixture_reproduction",
+      "historical_evidence": "base-32_bench_attachment",
+      "two_processes_passed": true,
+      "retail_exe_baseline_for_this_harness": false,
+      "disposition": "CHANGED time/state/domain; historical model reproduced, no replacement metric"
+    },
+    {
+      "fixture": "33_bench_curve_dispatch",
+      "scope": "historical_fixture_reproduction",
+      "historical_evidence": "base-33_bench_curve_dispatch",
+      "two_processes_passed": true,
+      "retail_exe_baseline_for_this_harness": false,
+      "disposition": "CHANGED time/state/domain; historical model reproduced, no replacement metric"
+    },
+    {
+      "fixture": "34_bench_dispatch_duel",
+      "scope": "historical_fixture_reproduction",
+      "historical_evidence": "base-34_bench_dispatch_duel",
+      "two_processes_passed": true,
+      "retail_exe_baseline_for_this_harness": false,
+      "disposition": "MEASURED archived standalone model; not a claim about the complete current function"
+    },
+    {
+      "fixture": "35_bench_d_algebra",
+      "scope": "historical_fixture_reproduction",
+      "historical_evidence": "base-35_bench_d_algebra",
+      "two_processes_passed": true,
+      "retail_exe_baseline_for_this_harness": false,
+      "disposition": "CHANGED time/state/domain; historical model reproduced, no replacement metric"
+    },
+    {
+      "fixture": "36_bench_phase_query",
+      "scope": "historical_fixture_reproduction",
+      "historical_evidence": "base-36_bench_phase_query",
+      "two_processes_passed": false,
+      "retail_exe_baseline_for_this_harness": false,
+      "disposition": "RETIRED CanFly/Jumper experiment; no current metric"
+    },
+    {
+      "fixture": "38_bench_reanim_trackwalk",
+      "scope": "historical_fixture_reproduction",
+      "historical_evidence": "base-38_bench_reanim_trackwalk",
+      "two_processes_passed": true,
+      "retail_exe_baseline_for_this_harness": false,
+      "disposition": "Historical simplified layout reproduced; actual current-layout supplement in this report, not same-layout replacement"
+    },
+    {
+      "fixture": "39_bench_zombie_rowscan",
+      "scope": "historical_fixture_reproduction",
+      "historical_evidence": "base-39_bench_zombie_rowscan",
+      "two_processes_passed": true,
+      "retail_exe_baseline_for_this_harness": false,
+      "disposition": "Historical simplified layout reproduced; actual current-layout supplement in this report, not same-layout replacement"
+    },
+    {
+      "fixture": "40_bench_image_variation",
+      "scope": "historical_fixture_reproduction",
+      "historical_evidence": "base-40_bench_image_variation",
+      "two_processes_passed": true,
+      "retail_exe_baseline_for_this_harness": false,
+      "disposition": "MEASURED archived standalone model; not a claim about the complete current function"
+    },
+    {
+      "fixture": "41_bench_sincos",
+      "scope": "historical_fixture_reproduction",
+      "historical_evidence": "base-41_bench_sincos",
+      "two_processes_passed": true,
+      "retail_exe_baseline_for_this_harness": false,
+      "disposition": "MEASURED archived standalone model; not a claim about the complete current function"
+    },
+    {
+      "fixture": "42_current_bench01_dmgflags",
+      "scope": "current_table_in_historical_harness",
+      "historical_evidence": "base-42_current_bench01_dmgflags",
+      "two_processes_passed": true,
+      "retail_exe_baseline_for_this_harness": false,
+      "disposition": "MEASURED current declaration in unchanged historical input/downstream/timing harness"
+    },
+    {
+      "fixture": "43_current_bench02_fireproj",
+      "scope": "current_table_in_historical_harness",
+      "historical_evidence": "base-43_current_bench02_fireproj",
+      "two_processes_passed": true,
+      "retail_exe_baseline_for_this_harness": false,
+      "disposition": "MEASURED current declaration in unchanged historical input/downstream/timing harness"
+    },
+    {
+      "fixture": "44_current_bench04_flowerpot",
+      "scope": "current_table_in_historical_harness",
+      "historical_evidence": "base-44_current_bench04_flowerpot",
+      "two_processes_passed": true,
+      "retail_exe_baseline_for_this_harness": false,
+      "disposition": "MEASURED current declaration in unchanged historical input/downstream/timing harness"
+    },
+    {
+      "fixture": "45_current_bench05_packetdraw",
+      "scope": "current_table_in_historical_harness",
+      "historical_evidence": "base-45_current_bench05_packetdraw",
+      "two_processes_passed": true,
+      "retail_exe_baseline_for_this_harness": false,
+      "disposition": "MEASURED current declaration in unchanged historical input/downstream/timing harness"
+    },
+    {
+      "fixture": "46_current_bench06_zimgoff",
+      "scope": "current_table_in_historical_harness",
+      "historical_evidence": "base-46_current_bench06_zimgoff",
+      "two_processes_passed": true,
+      "retail_exe_baseline_for_this_harness": false,
+      "disposition": "MEASURED current declaration in unchanged historical input/downstream/timing harness"
+    },
+    {
+      "fixture": "47_current_bench07_walkhead",
+      "scope": "current_table_in_historical_harness",
+      "historical_evidence": "base-47_current_bench07_walkhead",
+      "two_processes_passed": true,
+      "retail_exe_baseline_for_this_harness": false,
+      "disposition": "MEASURED current declaration in unchanged historical input/downstream/timing harness"
+    },
+    {
+      "fixture": "48_current_bench08_seedupdate",
+      "scope": "current_table_in_historical_harness",
+      "historical_evidence": "base-48_current_bench08_seedupdate",
+      "two_processes_passed": true,
+      "retail_exe_baseline_for_this_harness": false,
+      "disposition": "MEASURED current declaration in unchanged historical input/downstream/timing harness"
+    },
+    {
+      "fixture": "49_current_bench11_proshadow",
+      "scope": "current_table_in_historical_harness",
+      "historical_evidence": "base-49_current_bench11_proshadow",
+      "two_processes_passed": true,
+      "retail_exe_baseline_for_this_harness": false,
+      "disposition": "MEASURED current declaration in unchanged historical input/downstream/timing harness"
+    },
+    {
+      "fixture": "50_current_bench14_seedcost",
+      "scope": "current_table_in_historical_harness",
+      "historical_evidence": "base-50_current_bench14_seedcost",
+      "two_processes_passed": true,
+      "retail_exe_baseline_for_this_harness": false,
+      "disposition": "MEASURED current declaration in unchanged historical input/downstream/timing harness"
+    },
+    {
+      "fixture": "51_current_bench15_storecost",
+      "scope": "current_table_in_historical_harness",
+      "historical_evidence": "base-51_current_bench15_storecost",
+      "two_processes_passed": true,
+      "retail_exe_baseline_for_this_harness": false,
+      "disposition": "MEASURED current declaration in unchanged historical input/downstream/timing harness",
+      "final_update": "store-table-after-cleanup; original snapshot retained"
+    },
+    {
+      "fixture": "02_current_bench7_plantheight",
+      "scope": "current_table_in_historical_harness",
+      "historical_evidence": "extra-02_current_bench7_plantheight",
+      "two_processes_passed": true,
+      "retail_exe_baseline_for_this_harness": false,
+      "disposition": "MEASURED current declaration in unchanged historical input/downstream/timing harness"
+    },
+    {
+      "fixture": "03_current_bench5_plantshadow",
+      "scope": "current_table_in_historical_harness",
+      "historical_evidence": "extra-03_current_bench5_plantshadow",
+      "two_processes_passed": true,
+      "retail_exe_baseline_for_this_harness": false,
+      "disposition": "MEASURED current declaration in unchanged historical input/downstream/timing harness"
+    },
+    {
+      "fixture": "04_current_bench13_ZombatarColors_SetColorMode",
+      "scope": "current_table_in_historical_harness",
+      "historical_evidence": "extra-04_current_bench13_ZombatarColors_SetColorMode",
+      "two_processes_passed": true,
+      "retail_exe_baseline_for_this_harness": false,
+      "disposition": "MEASURED current declaration in unchanged historical input/downstream/timing harness"
+    },
+    {
+      "fixture": "05_bench_particle_emitter_names",
+      "scope": "current_name_contract_historical_corpus",
+      "historical_evidence": "extra-05_bench_particle_emitter_names",
+      "two_processes_passed": true,
+      "retail_exe_baseline_for_this_harness": false,
+      "disposition": "MEASURED 17 published name-query workloads on frozen 112/222 corpus"
+    },
+    {
+      "fixture": "00_t16_cursor",
+      "scope": "historical_fixture_reproduction",
+      "historical_evidence": "r3-00_t16_cursor",
+      "two_processes_passed": true,
+      "retail_exe_baseline_for_this_harness": false,
+      "disposition": "MEASURED archived standalone model; not a claim about the complete current function"
+    },
+    {
+      "fixture": "00_b_zombie_events",
+      "scope": "historical_fixture_reproduction",
+      "historical_evidence": "zombie-00_b_zombie_events",
+      "two_processes_passed": true,
+      "retail_exe_baseline_for_this_harness": false,
+      "disposition": "MEASURED archived standalone model; not a claim about the complete current function"
+    },
+    {
+      "fixture": "00_bench_particle_roster",
+      "scope": "historical_fixture_reproduction",
+      "historical_evidence": "roster-00_bench_particle_roster",
+      "two_processes_passed": true,
+      "retail_exe_baseline_for_this_harness": false,
+      "disposition": "MEASURED archived standalone model; not a claim about the complete current function"
+    }
+  ],
+  "retired_metrics_outside_fixture_count": [
+    {
+      "metric": "IDT4/IDT5 runtime behavior decoding",
+      "status": "RETIRED; preserve historical ns/ms, no substitute metric"
+    }
+  ]
+}

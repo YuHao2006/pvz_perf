@@ -1,0 +1,453 @@
+#pragma once
+#include "misc/TimeCounter.h"
+#include "GameObject.h"
+#include "Motion.h"
+#include "GameConstants.h"
+#include "Sexy.TodLib/ReanimTrackId.h"
+
+#define MAX_ZOMBIE_FOLLOWERS 4
+#define NUM_BOBSLED_FOLLOWERS 3
+#define NUM_BACKUP_DANCERS 4
+#define NUM_BOSS_BUNGEES 3
+
+constexpr const int ZOMBIE_START_RANDOM_OFFSET = 40;
+constexpr const int BUNGEE_ZOMBIE_HEIGHT = 3000;
+constexpr const int RENDER_GROUP_SHIELD = 1;
+constexpr const int RENDER_GROUP_ARMS = 2;
+constexpr const int RENDER_GROUP_OVER_SHIELD = 3;
+constexpr const int RENDER_GROUP_BOSS_BACK_LEG = 4;
+constexpr const int RENDER_GROUP_BOSS_FRONT_LEG = 5;
+constexpr const int RENDER_GROUP_BOSS_BACK_ARM = 6;
+constexpr const int RENDER_GROUP_BOSS_FIREBALL_ADDITIVE = 7;
+constexpr const int RENDER_GROUP_BOSS_FIREBALL_TOP = 8;
+constexpr const int ZOMBIE_LIMP_SPEED_FACTOR = 2;
+constexpr const int POGO_BOUNCE_TIME = 80;
+constexpr const int DOLPHIN_JUMP_TIME = 120;
+constexpr const int JackInTheBoxZombieRadius = 115;
+constexpr const int JackInTheBoxPlantRadius = 90;
+constexpr const int BOBSLED_CRASH_TIME = 150;
+constexpr const int ZOMBIE_BACKUP_DANCER_RISE_HEIGHT = -200;
+constexpr const int BOSS_FLASH_HEALTH_FRACTION = 10;
+constexpr const int TICKS_BETWEEN_EATS = 4;
+constexpr const int DAMAGE_PER_EAT = TICKS_BETWEEN_EATS;
+constexpr const float THOWN_ZOMBIE_GRAVITY = 0.05f;
+constexpr const float CHILLED_SPEED_FACTOR = 0.4f;
+constexpr const float CLIP_HEIGHT_LIMIT = -100.0f;
+constexpr const float CLIP_HEIGHT_OFF = -200.0f;
+const Color ZOMBIE_MINDCONTROLLED_COLOR = Color(128, 64, 192, 255);
+
+enum ZombieAttackType
+{
+    ATTACKTYPE_CHEW,
+    ATTACKTYPE_DRIVE_OVER,
+    ATTACKTYPE_VAULT,
+    ATTACKTYPE_LADDER
+};
+
+enum ZombieParts
+{
+    PART_BODY,
+    PART_HEAD,
+    PART_HEAD_EATING,
+    PART_TONGUE,
+    PART_ARM,
+    PART_HAIR,
+    PART_HEAD_YUCKY,
+    PART_ARM_PICKAXE,
+    PART_ARM_POLEVAULT,
+    PART_ARM_LEASH,
+    PART_ARM_FLAG,
+    PART_POGO,
+    PART_DIGGER
+};
+
+class ZombieDrawPosition
+{
+public:
+    int                             mHeadX;
+    int                             mHeadY;
+    int                             mArmY;
+    float                           mBodyY;
+    float                           mImageOffsetX;
+    float                           mImageOffsetY;
+    float                           mClipHeight;
+};
+
+class Plant;
+class Zombatar;
+class Reanimation;
+class TodParticleSystem;
+class Zombie : public GameObject
+{
+public:
+    enum
+    {
+        ZOMBIE_WAVE_DEBUG = -1,
+        ZOMBIE_WAVE_CUTSCENE = -2,
+        ZOMBIE_WAVE_UI = -3,
+        ZOMBIE_WAVE_WINNER = -4
+    };
+
+public:
+	ZombieType			            mZombieType;                                //+0x24
+	ZombiePhase			            mZombiePhase;                               //+0x28
+	float				            mVelX;                                      //+0x34
+    Sexy::TimeCounter                             mAnimCounter;                               //+0x38
+    Sexy::TimeCounter                             mGroanCounter;                              //+0x3C
+    Sexy::TimeCounter                             mAnimTicksPerFrame;                         //+0x40
+    int                             mAnimFrames;                                //+0x44
+    int                             mFrame;                                     //+0x48
+    int                             mPrevFrame;                                 //+0x4C
+    bool                            mVariant;                                   //+0x50
+    bool                            mIsEating;                                  //+0x51
+    std::int64_t                             mShotFlashEndTimeNs;                        //+0x54
+    std::int64_t                             mShieldFlashEndTimeNs;                  //+0x58
+    std::int64_t                             mShieldRecoilEndTimeNs;                       //+0x5C
+    std::int64_t                             mBirthTimeNs;                                 //+0x60
+    ZombieHeight                    mZombieHeight;                              //+0x64
+    Sexy::TimeCounter                             mPhaseCounter;                              //+0x68
+    int                             mFromWave;                                  //+0x6C
+    bool                            mDroppedLoot;                               //+0x70
+    std::int64_t                             mFadeEndTimeNs;                                //+0x74
+    bool                            mFlatTires;                                 //+0x78
+    int                             mUseLadderCol;                              //+0x7C
+    int                             mTargetCol;                                 //+0x80
+    float                           mAltitude;                                  //+0x84
+    bool                            mHitUmbrella;                               //+0x88
+    Rect                            mZombieRect;                                //+0x8C
+    Rect                            mZombieAttackRect;                          //+0x9C
+    std::int64_t                             mChilledEndTimeNs;                            //+0xAC
+    std::int64_t                             mButteredEndTimeNs;                           //+0xB0
+    std::int64_t                             mIceTrapEndTimeNs;                            //+0xB4
+    bool                            mMindControlled;                            //+0xB8
+    bool                            mBlowingAway;                               //+0xB9
+    bool                            mHasHead;                                   //+0xBA
+    bool                            mHasArm;                                    //+0xBB
+    bool                            mHasObject;                                 //+0xBC
+    bool                            mInPool;                                    //+0xBD
+    bool                            mOnHighGround;                              //+0xBE
+    bool                            mYuckyFace;                                 //+0xBF
+    std::int64_t                             mYuckyFaceStartTimeNs;                          //+0xC0
+    HelmType                        mHelmType;                                  //+0xC4
+    int                             mBodyHealth;                                //+0xC8
+    int                             mBodyMaxHealth;                             //+0xCC
+    int                             mHelmHealth;                                //+0xD0
+    int                             mHelmMaxHealth;                             //+0xD4
+    ShieldType                      mShieldType;                                //+0xD8
+    int                             mShieldHealth;                              //+0xDC
+    int                             mShieldMaxHealth;                           //+0xE0
+    int                             mFlyingHealth;                              //+0xE4
+    int                             mFlyingMaxHealth;                           //+0xE8
+    bool                            mDead;                                      //+0xEC
+    ZombieID                        mRelatedZombieID;                           //+0xF0
+    ZombieID                        mFollowerZombieID[MAX_ZOMBIE_FOLLOWERS];    //+0xF4
+    bool                            mPlayingSong;                               //+0x104
+    int                             mParticleOffsetX;                           //+0x108
+    int                             mParticleOffsetY;                           //+0x10C
+    AttachmentID                    mAttachmentID;                              //+0x110
+    Sexy::TimeCounter                             mSummonCounter;                             //+0x114
+    ReanimationID                   mBodyReanimID;                              //+0x118
+    float                           mScaleZombie;                               //+0x11C
+    float                           mVelZ;                                      //+0x120
+    float                           mOriginalAnimRate;                          //+0x124
+    PlantID                         mTargetPlantID;                             //+0x128
+    int                             mBossMode;                                  //+0x12C
+    int                             mTargetRow;                                 //+0x130
+    Sexy::TimeCounter                             mBossBungeeCounter;                         //+0x134
+    Sexy::TimeCounter                             mBossStompCounter;                          //+0x138
+    Sexy::TimeCounter                             mBossHeadCounter;                           //+0x13C
+    ReanimationID                   mBossFireBallReanimID;                      //+0x140
+    ReanimationID                   mSpecialHeadReanimID;                       //+0x144
+    ReanimationID                   mZombatarHeadReanimID;                      //+GOTY @Patoke: 0x148
+    int                             mFireballRow;                               //+0x148
+    bool                            mIsFireBall;                                //+0x14C
+    ReanimationID                   mMoweredReanimID;                           //+0x150
+    int                             mLastPortalX;                               //+0x154
+    bool                            mHasZombatar;                               //+GOTY @Patoke: 0x15C
+    int                             mZombatarIndex;                             //+GOTY @Patoke: 0x160
+    double                          mRootOriginX = 0;
+    long long                       mRootCycleCount = 0;
+    double                          mRootCoordinateScale = 0;
+    std::uint32_t                   mRootBindingGeneration = 0;
+    float                           mRootScale = 0;
+    // Flat-tire Zamboni reuses rate as its initial positive speed and startTimeNs
+    // as the absolute level timestamp of that speed; origin is unused there.
+    // Other types retain a signed linear rate and an absolute segment origin.
+    TimedLinearMotion               mVelocityX;
+    TimedLinearMotion               mVelocityY;
+    // Shared by mutually exclusive linear altitude and thrown-imp segments.
+    // For an imp, rate is its initial vertical velocity; startTimeNs remains ns.
+    TimedLinearMotion               mAltitudeMotion;
+    float                           mPendingAdditionalSpeedX = 0; // consumed within the current Update
+
+public:
+    double RootPosition(const Reanimation& animation, float signedScale);
+    // Pool value-initialization must clear reused state before animation setup.
+    Zombie() = default;
+    ~Zombie();
+
+    void                            ZombieInitialize(int theRow, ZombieType theType, bool theVariant, Zombie* theParentZombie, int theFromWave);
+    void                            Animate();
+    void                            CheckIfPreyCaught();
+    void                            EatZombie(Zombie* theZombie);
+    void                            EatPlant(Plant* thePlant);
+    void                            Update();
+    void                            DieNoLoot();
+    /*inline*/ void                 DieWithLoot();
+    void                            Draw(Graphics* g);
+    void                            DrawBungeeCord(Graphics* g, int theOffsetX);
+    void                            TakeDamage(int theDamage, unsigned int theDamageFlags);
+    /*inline*/ void                 SetRow(int theRow);
+    float                           GetPosYBasedOnRow(int theRow);
+    void                            ApplyChill(bool theIsIceTrap);
+    void                            UpdateZombieBungee();
+    void                            BungeeLanding();
+    bool                            EffectedByDamage(unsigned int theDamageRangeFlags);
+    void                            PickRandomSpeed();
+    void                            UpdateZombiePolevaulter();
+    void                            UpdateZombieDolphinRider();
+    void                            PickBungeeZombieTarget(int theColumn);
+    int                             CountBungeesTargetingSunFlowers();
+    [[nodiscard]] Plant*                          FindPlantTarget(ZombieAttackType theAttackType);
+    void                            CheckSquish(ZombieAttackType theAttackType);
+    void                            RiseFromGrave(int theCol, int theRow);
+    void                            UpdateZombieRiseFromGrave();
+    void                            UpdateDamageStates(unsigned int theDamageFlags);
+    void                            UpdateZombiePool();
+    void                            CheckForPool();
+    void                            GetDrawPos(ZombieDrawPosition& theDrawPos);
+    void                            UpdateZombieHighGround();
+    void                            CheckForHighGround();
+    bool                            IsOnHighGround();
+    void                            DropLoot();
+    bool                            TrySpawnLevelAward();
+    /*inline*/ void                 StartZombieSound();
+    void                            StopZombieSound();
+    void                            UpdateZombieJackInTheBox();
+    void                            UpdateZombiePosition();
+    Rect                            GetZombieRect();
+    Rect                            GetZombieAttackRect();
+    void                            UpdateZombieWalking();
+    void                            UpdateZombieBobsled();
+    void                            BobsledCrash();
+    Plant*                          IsStandingOnSpikeweed();
+    void                            CheckForZombieStep();
+    void                            CountExpectedMowers() { ; }
+    /*inline*/ void                 OverrideParticleColor(TodParticleSystem* aParticle);
+    /*inline*/ void                 OverrideParticleScale(TodParticleSystem* aParticle);
+    void                            PoolSplash(bool theInToPoolSound);
+    void                            UpdateZombieFlyer(bool theAltitudeAlreadyAdvanced = false);
+    void                            UpdateZombiePogo();
+    void                            UpdateZombieNewspaper();
+    void                            LandFlyer(unsigned int theDamageFlags);
+    void                            UpdateZombieDigger();
+    bool                            IsWalkingBackwards();
+    TodParticleSystem*              AddAttachedParticle(int thePosX, int thePosY, ParticleEffect theEffect);
+    void                            PogoBreak(unsigned int theDamageFlags);
+    void                            UpdateZombieFalling(float theAdditionalRate = 0);
+    void                            UpdateZombieDancer();
+    ZombieID                        SummonBackupDancer(int theRow, int thePosX);
+    void                            SummonBackupDancers();
+    int                             GetDancerFrame();
+    void                            BungeeStealTarget();
+    void                            BungeeLiftTarget();
+    void                            UpdateYuckyFace();
+    void                            DrawIceTrap(Graphics* g, const ZombieDrawPosition& theDrawPos, bool theFront);
+    void                            HitIceTrap();
+    inline int                             GetHelmDamageIndex()
+    {
+        if (mHelmHealth < mHelmMaxHealth / 3)
+        {
+            return 2;
+        }
+
+        if (mHelmHealth < mHelmMaxHealth * 2 / 3)
+        {
+            return 1;
+        }
+
+        return 0;
+    }
+    inline int                             GetShieldDamageIndex()
+    {
+        if (mShieldHealth < mShieldMaxHealth / 3)
+        {
+            return 2;
+        }
+
+        if (mShieldHealth < mShieldMaxHealth * 2 / 3)
+        {
+            return 1;
+        }
+
+        return 0;
+    }
+    void                            DrawReanim(Graphics* g, const ZombieDrawPosition& theDrawPos, int theBaseRenderGroup);
+    void                            UpdatePlaying();
+    bool                            NeedsMoreBackupDancers();
+    void                            ConvertToNormalZombie();
+    void                            UpdateDancerWalking() { ; }
+    void                            StartEating();
+    void                            StopEating();
+    void                            UpdateAnimSpeed();
+    /*inline*/ void                 ReanimShowRange(const ReanimTrackIdRange& theTrackRange, int theRenderGroup);
+    void                            PlayDeathAnim(unsigned int theDamageFlags);
+    void                            UpdateDeath();
+    void                            DrawShadow(Graphics* g);
+    bool                            HasShadow();
+    Reanimation*                    LoadReanim(ReanimationType theReanimationType);
+    /*inline*/ int                  TakeFlyingDamage(int theDamage, unsigned int theDamageFlags);
+    int                             TakeShieldDamage(int theDamage, unsigned int theDamageFlags);
+    int                             TakeHelmDamage(int theDamage, unsigned int theDamageFlags);
+    void                            TakeBodyDamage(int theDamage, unsigned int theDamageFlags);
+    void                            AttachShield();
+    void                            DetachShield();
+    void                            UpdateReanim();
+    void                            GetTrackPosition(ReanimTrackId theTrackId, float& thePosX, float& thePosY);
+    void                            LoadPlainZombieReanim();
+    void                            ShowDoorArms(bool theShow);
+    /*inline*/ void                 ReanimShowTrack(ReanimTrackId theTrackId, int theRenderGroup);
+    /*inline*/ void                 PlayZombieAppearSound();
+    void                            StartMindControlled();
+    bool                            IsFlying();
+    void                            DropHead(unsigned int theDamageFlags);
+    bool                            CanTargetPlant(Plant* thePlant, ZombieAttackType theAttackType);
+    void                            UpdateZombieCatapult();
+    [[nodiscard]] Plant*                          FindCatapultTarget();
+    void                            ZombieCatapultFire(Plant* thePlant);
+    void                            UpdateClimbingLadder();
+    void                            UpdateZombieGargantuar();
+    int                             GetBodyDamageIndex();
+    void                            ApplyBurn();
+    void                            UpdateBurn();
+    bool                            ZombieNotWalking();
+    [[nodiscard]] Zombie*                         FindZombieTarget();
+    /*inline*/ void                 PlayZombieReanim(ReanimTrackId theTrackId, ReanimLoopType theLoopType, int theBlendTime, float theAnimRate);
+    void                            UpdateZombieBackupDancer();
+    ZombiePhase                     GetDancerPhase();
+    bool                            IsMovingAtChilledSpeed();
+    void                            StartWalkAnim(int theBlendTime);
+    Reanimation*                    AddAttachedReanim(int thePosX, int thePosY, ReanimationType theReanimType);
+    void                            DragUnder();
+    static /*inline*/ void          SetupDoorArms(Reanimation* aReanim, bool theShow);
+    static void                     SetupReanimLayers(Reanimation* aReanim, ZombieType theZombieType);
+    /*inline*/ bool                 IsOnBoard();
+    void                            DrawButter(Graphics* g, const ZombieDrawPosition& theDrawPos);
+    bool                            IsImmobilizied();
+    void                            ApplyButter();
+    float                           ZombieTargetLeadX(float theTime);
+    void                            UpdateZombieImp();
+    void                            SquishAllInSquare(int theX, int theY, ZombieAttackType theAttackType);
+    void                            RemoveIceTrap();
+    bool                            IsBouncingPogo();
+    int                             GetBobsledPosition();
+    void                            DrawBobsledReanim(Graphics* g, const ZombieDrawPosition& theDrawPos, bool theBeforeZombie);
+    void                            BobsledDie();
+    void                            BobsledBurn();
+    bool                            IsBobsledTeamWithSled();
+    bool                            CanBeFrozen();
+    bool                            CanBeChilled();
+    void                            UpdateZombieSnorkel();
+    void                            ReanimIgnoreClipRect(ReanimTrackId theTrackId, bool theIgnoreClipRect);
+    void                            SetAnimRate(float theAnimRate);
+    void                            ApplyAnimRate(float theAnimRate);
+    /*inline*/ bool                 IsDeadOrDying();
+    void                            DrawDancerReanim(Graphics* g);
+    void                            DrawBungeeReanim(Graphics* g);
+    void                            DrawBungeeTarget(Graphics* g);
+    void                            BungeeDie();
+    void                            ZamboniDeath(unsigned int theDamageFlags);
+    void                            CatapultDeath(unsigned int theDamageFlags);
+    bool                            SetupDrawZombieWon(Graphics* g);
+    void                            WalkIntoHouse();
+    void                            UpdateZamboni();
+    void                            UpdateZombieChimney();
+    void                            UpdateLadder();
+    void                            DropArm(unsigned int theDamageFlags);
+    bool                            CanLoseBodyParts();
+    void                            DropHelm(unsigned int theDamageFlags);
+    void                            DropShield(unsigned int theDamageFlags);
+    void                            ReanimReenableClipping();
+    void                            UpdateBoss();
+    void                            BossPlayIdle();
+    void                            BossRVLanding();
+    void                            BossStompContact();
+    bool                            BossAreBungeesDone();
+    void                            BossBungeeSpawn();
+    void                            BossSpawnAttack();
+    void                            BossBungeeAttack();
+    void                            BossRVAttack();
+    void                            BossSpawnContact();
+    void                            BossBungeeLeave();
+    void                            BossStompAttack();
+    bool                            BossCanStompRow(int theRow);
+    void                            BossDie();
+    void                            BossHeadAttack();
+    void                            BossHeadSpitContact();
+    void                            BossHeadSpit();
+    void                            UpdateBossFireball();
+    void                            BossDestroyFireball();
+    void                            BossDestroyIceballInRow();
+    void                            DiggerLoseAxe();
+    void                            BungeeDropZombie(Zombie* theDroppedZombie, int theGridX, int theGridY);
+    void                            ShowYuckyFace(bool theShow);
+    void                            AnimateChewSound();
+    void                            AnimateChewEffect();
+    void                            UpdateActions();
+    void                            CheckForBoardEdge();
+    void                            UpdateYeti();
+    void                            DrawBossPart(Graphics* g, BossPart theBossPart);
+    void                            BossSetupReanim();
+    void                            MowDown();
+    void                            UpdateMowered();
+    void                            DropFlag();
+    void                            DropPole();
+    void                            DrawBossBackArm(Graphics* g, const ZombieDrawPosition& theDrawPos);
+    static void                     PreloadZombieResources(ZombieType theZombieType);
+    void                            BossStartDeath();
+    void                            RemoveColdEffects();
+    void                            BossHeadSpitEffect();
+    void                            DrawBossFireBall(Graphics* g);
+    void                            UpdateZombiePeaHead();
+    void                            UpdateZombieJalapenoHead();
+    void                            ApplyBossSmokeParticles(bool theEnable);
+    void                            UpdateZombiquarium();
+    bool                            ZombiquariumFindClosestBrain();
+    void                            UpdateZombieGatlingHead();
+    void                            UpdateZombieSquashHead();
+    bool                            IsTanglekelpTarget();
+    bool                            HasYuckyFaceImage();
+    bool                            IsTangleKelpTarget();
+    bool                            IsFireResistant();
+    /*inline*/ void                 EnableMustache(bool theEnableMustache);
+    /*inline*/ void                 EnableFuture(bool theEnableFuture);
+    /*inline*/ void                 EnableDance();
+    void                            BungeeDropPlant();
+    void                            RemoveButter();
+    void                            BalloonPropellerHatSpin(bool theSpinning);
+    void                            DoDaisies();
+    static /*inline*/ bool          ZombieTypeCanGoOnHighGround(ZombieType theZombieType);
+    static /*inline*/ bool          ZombieTypeCanGoInPool(ZombieType theZombieType);
+    void                            SetupWaterTrack(ReanimTrackId theTrackId);
+    void                            BurnRow(int theRow);
+    void                            SetupReanimForLostHead();
+    void                            SetupReanimForLostArm(unsigned int theDamageFlags);
+    bool                            IsSquashTarget(Plant* theExcept);
+    static /*inline*/ bool			IsZombotany(ZombieType theZombieType);
+    void                            ResetZombatarHead(LawnApp* theApp);
+    void                            ApplyZombatarHead(LawnApp* theApp, Zombatar* theZombatar);
+};
+
+class ZombieDefinition
+{
+public:
+    ZombieType                      mZombieType;
+    ReanimationType                 mReanimationType;
+    int                             mZombieValue;
+    int                             mStartingLevel;
+    int                             mFirstAllowedWave;
+    int                             mPickWeight;
+};
+
+/*inline*/ ZombieDefinition&            GetZombieDefinition(ZombieType theZombieType);
+

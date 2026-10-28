@@ -1,0 +1,5 @@
+zombie row-query bench: pool=1024 stride=168B row=3 members=171
+  A full-pool scan (172KB/query) :   2719.6 ns/query
+  B row segment  (contiguous)    :    590.3 ns/query
+  C row chain    (next[] hops)   :    876.1 ns/query
+sink=34200000

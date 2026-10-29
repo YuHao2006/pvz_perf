@@ -106,6 +106,13 @@ BassMusicInterface::BassMusicInterface(NativeWindowHandle theHWnd)
 #else
 		(void)theHWnd; // LoadBassDLL owns the shared native output device.
 #endif
+#if defined(_WIN32) || defined(__ANDROID__)
+		// Keep the actual output chosen by BASS_Init, rather than assuming that
+		// the default Android output has a particular device index.
+		mOutputDevice = gBass->BASS_GetDevice();
+		if (mOutputDevice == 0 || mOutputDevice == ~0U)
+			throw std::runtime_error("BASS music output device is not initialized");
+#endif
 		if (!gBass->BASS_SetConfig(BASS_CONFIG_BUFFER, 2000))
 			throw std::runtime_error("BASS_CONFIG_BUFFER failed: " + std::to_string(gBass->BASS_ErrorGetCode()));
 		// BASS_Init already starts output; no extra BASS_Start is required.
@@ -153,12 +160,12 @@ bool BassMusicInterface::LoadMusic(int theSongId, const std::string& theFileName
 	}
 	if (!SlotIndexValid(theSongId) || mMusicSlots[theSongId])
 		return false; // Never replace a playing song or report a rejected insert as success.
-#ifdef _WIN32
+#if defined(_WIN32) || defined(__ANDROID__)
 	// BASS selects its device per thread. The title loads on the main thread,
-	// but MusicInit loads the other layers on a fresh worker, whose default is
-	// the silent decoding device 0. Bind every playback channel to the same output
-	// used by OpenOutput before creating either a module or a stream.
-	if (!gBass->BASS_SetDevice(NativeMusicPlayback::OutputDevice))
+	// but MusicInit loads the other layers and credits stream on a worker,
+	// which can still select the silent decoding device 0. Bind every playback
+	// channel to the initialized output before creating a module or stream.
+	if (!gBass->BASS_SetDevice(mOutputDevice))
 		throw std::runtime_error("BASS music output device selection failed: " +
 			std::to_string(gBass->BASS_ErrorGetCode()));
 #endif

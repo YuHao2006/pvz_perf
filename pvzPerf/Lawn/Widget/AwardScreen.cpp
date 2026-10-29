@@ -189,6 +189,9 @@ AwardScreen::AwardScreen(LawnApp* theApp, AwardType theAwardType, bool theShowin
 	{
 		mStartButton->mLabel = gStr.ROLL_CREDITS;
 		mStartButton->mButtonImage = Sexy::IMAGE_CREDITS_PLAYBUTTON;
+		// Credits uses the standalone music-note image, not the seedchooser atlas.
+		mStartButton->mNormalRegion = {};
+		mStartButton->mDisabledRegion = {};
 		mStartButton->mOverImage = nullptr;
 		mStartButton->mDownImage = nullptr;
 		mStartButton->mDisabledImage = nullptr;
@@ -435,7 +438,10 @@ void AwardScreen::Draw(Graphics* g)
 
 	const Sexy::TextureSource fixedUI{FixedUIAtlas::Texture, 0};
 	const TextureRegion& glow = FixedUIAtlas::Images[size_t(FixedUIAtlas::Sprite::SEEDCHOOSER_BUTTON_GLOW)];
-	mStartButton->DrawAtlas(g, fixedUI, &glow);
+	if (mAwardType == AWARD_CREDITS_ZOMBIENOTE)
+		mStartButton->Draw(g);
+	else
+		mStartButton->DrawAtlas(g, fixedUI, &glow);
 	mMenuButton->DrawAtlas(g, fixedUI);
 	mContinueButton->DrawAtlas(g, fixedUI, &glow);
 

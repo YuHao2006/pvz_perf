@@ -4,13 +4,13 @@
 文档维护当前有效机制与修复；现行实测和历史算法证据分开标注，不按日期追加开发过程。
 
 发行下载：[GitHub Releases](https://github.com/YuHao2006/pvz_perf/releases)。
-**v3.0 是破坏性更新：旧存档与旧 PAK64 不能直接混用。**
-本次提供 `x64-win10-vulkan-v3.0.zip`（推荐）、`x64-win7-opengl-v3.0.zip`，以及独立的完美用户档和统一无尽基准。
+**当前发行 v3.1，沿用 v3.0 引入的 DAT64 v4：v1.x/v2.x 的旧存档与旧 PAK64 不能直接混用。**
+提供 `x64-win10-vulkan1.3-v3.1.zip`、`x64-win7-openGL3.3-v3.1.zip`、`arm64-android14-vulkan1.3-v3.1.apk`，以及独立的完美用户档和统一无尽基准。
 完整解压到新的可写目录后运行 `pvz_perf.exe`。
 游戏只读取 **DAT64 v4 / schema 0x10745**；原版 DAT、DAT64 v1/v2 需使用附带转换器升级。
 未发布的 v3 系列中间存档不受支持。用户摘要 `users.dat` 和玩家详情 `PVZUSR64` v13 独立管理。
 资源采用当前静态定义和离线图集，EXE、shaders 与 PAK64 必须成套更新。
-转换步骤与变更见 [v3.0 发布说明](docs/releases/v3.0.md)。
+使用要求与变更见 [v3.1 发布说明](docs/releases/v3.1.md)，存档迁移背景见 [v3.0 发布说明](docs/releases/v3.0.md)。
 生成的 PerfTest 完美用户档包含全解锁进度，DAT64 v4 无尽档来自仓库原版基准；不包含个人进度或设置。
 普通生存完成记录为 5 旗，困难生存为 10 旗。
 **Win7 统一 SDR，不支持 HDR；DX9/OpenGL 的默认配置不启用自定义缩放效果。**
@@ -42,7 +42,7 @@ Linux 依赖与外部效果许可随包提供，系统图形、窗口、音频�
 | 组合 | 构建入口 | 程序目录 |
 | --- | --- | --- |
 | Windows 7 x64 / Win32 / DX9 | `tools/build-win7-opengl.ps1 -RenderBackend D3D9` | `out/x64-win7-d3d9/Release/` |
-| Windows 7 x64 / Win32 / OpenGL 3.0 | `tools/build-win7-opengl.ps1` | `out/x64-win7-opengl/Release/` |
+| Windows 7 x64 / Win32 / OpenGL 3.3 | `tools/build-win7-opengl.ps1` | `out/x64-win7-opengl/Release/` |
 | Windows x64 / Win32 / Vulkan（推荐） | CMake：`PVZ_RENDER_BACKEND=VULKAN` | `out/x64-win32-vulkan/Release/` |
 | Windows x64 / Win32 / DX12 | `tools/build-d3d12-game.ps1` | `out/x64-win32-dx12/Release/` |
 | Linux x64 / X11 / Vulkan | `sh tools/build-linux-game.sh x11` | `out/x64-x11-vulkan/Release/` |
@@ -51,6 +51,39 @@ Linux 依赖与外部效果许可随包提供，系统图形、窗口、音频�
 Linux 构建脚本按本机架构选择 x64 或 arm64；依赖 vcpkg、编译器、CMake、
 Ninja、Vulkan shader 工具以及对应窗口开发库。跨架构不能复用 CMakeCache。
 Windows 发行优先推荐 Vulkan，保留 DX12；没有为 DX12 Ultimate 单独创建后端。
+
+当前开发中的 Vulkan 后端要求 **Vulkan 1.3**、Synchronization2 和所需的
+descriptor indexing 功能／限额，旧 Vulkan 兼容路径尚未实现；这不改变已发行 v3.0 包的要求。
+内置 shader 按 Vulkan 1.3 编译并校验。屏障与队列提交使用 Synchronization2，
+仍保留单套帧资源，下一次复用前等待上一帧完成。
+
+Android 的 APK ABI 为 `arm64-v8a`，PAK64 内置于 APK，无需另外复制数据包或安装 Java。
+新包默认以 Armv9-A 为指令集基线，使用 `-march=armv9-a+nosve+nosve2`，
+不要求手机内核暴露 SVE/SVE2；保留 NEON。NDK r27 Clang 在关闭 SVE2 后仍定义其功能宏，
+构建同时取消这个错误宏，避免依赖库误选 SVE2 路径。Armv9 包的 ABI 目录仍是 `arm64-v8a`，
+不能据此判断其指令集基线，也不保证 Armv8 设备能够运行。
+旧包可用 `-DPVZ_ANDROID_CPU_BASELINE=armv8-a` 单独重建；当前 Vulkan 后端仍要求 1.3，
+这个 CPU 配置不代表旧 Vulkan 降级路径已经完成。已有 Android 构建树切换方式：
+
+```powershell
+cmake -S . -B out/android-arm64 -DPVZ_ANDROID_CPU_BASELINE=armv9-a
+cmake --build out/android-arm64 --config Release
+```
+
+当前 manifest 的最低版本为 API 26，但现有原生构建树使用 `android-29`，
+因此当前产物按 **Android 10 / API 29 及以上**看待，尚未验证 Android 8/9。
+电脑可使用 GraalVM JDK 25 配合 Gradle 9.2.1 构建；这里使用其 JDK，
+不使用 Native Image 替代 Android DEX 或 NDK C++ 编译。
+原生 Release 构建完成后，运行：
+
+```powershell
+./tools/build-android-apk.ps1 -JavaHome 'C:\Program Files\Java\graalvm-jdk-25.0.3+9.1'
+```
+
+APK 输出到 `out/android-vulkan/`；未配置发行签名时输出文件标记为 `-unsigned.apk`，
+需签名后安装。脚本仅在子构建期间设置 JDK 和短 AF_UNIX 临时目录，结束后恢复环境变量。
+测试 APK 内置完美用户档和由原版转换的统一泳池无尽基准，首次启动且不存在用户档时
+自动初始化。更新安装保留已有进度，不重新补入已消费的关卡存档。
 
 源码目录可以命名为 `pvzPerf`，文件夹名称不参与应用身份。
 改名或搬迁后重新配置并构建，不复用旧路径的 CMakeCache、Ninja 文件和 PDB。

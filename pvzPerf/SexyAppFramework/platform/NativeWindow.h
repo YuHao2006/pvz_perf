@@ -68,6 +68,7 @@ public:
     bool Visible = false;
     // Throws if the native protocol cannot report this state.
     bool Minimized() const;
+    double RefreshRate() const;
     NativeWindowBackend Backend() const;
     NativeSurfaceHandles SurfaceHandles() const;
 private:

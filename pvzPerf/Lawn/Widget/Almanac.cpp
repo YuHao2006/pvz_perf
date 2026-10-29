@@ -14,6 +14,8 @@
 #include "Lawn/System/PoolEffect.h"
 #include "Lawn/System/ReanimationLawn.h"
 #include "Sexy.TodLib/TodStringFile.h"
+#include "Sexy.TodLib/EffectSystem.h"
+#include "Sexy.TodLib/Reanimator.h"
 #include "widget/WidgetManager.h"
 #include "Sexy.TodLib/generated/SceneAtlasData.h"
 #include "graphics/AtlasDraw.h"
@@ -201,15 +203,16 @@ AlmanacDialog::~AlmanacDialog()
 //0x401970
 void AlmanacDialog::ClearPlantsAndZombies()
 {
+	const auto visualNowNs = mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs;
 	if (mPlant)
 	{
-		mPlant->Die();
+		mPlant->Die(visualNowNs, visualNowNs, visualNowNs);
 		delete mPlant;
 		mPlant = nullptr;
 	}
 	if (mZombie)
 	{
-		mZombie->DieNoLoot();
+		mZombie->DieNoLoot(visualNowNs, visualNowNs, visualNowNs);
 		delete mZombie;
 		mZombie = nullptr;
 	}
@@ -226,6 +229,7 @@ void AlmanacDialog::RemovedFromManager(WidgetManager* theWidgetManager)
 // GOTY @Patoke: 0x402C50
 void AlmanacDialog::SetupPlant()
 {
+	const auto visualNowNs = mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs;
 	ClearPlantsAndZombies();
 
 	float aPosX = ALMANAC_PLANT_POSITION_X;
@@ -239,7 +243,7 @@ void AlmanacDialog::SetupPlant()
 	mPlant = new Plant();
 	mPlant->mBoard = nullptr;
 	mPlant->mIsOnBoard = false;
-	mPlant->PlantInitialize(0, 0, mSelectedSeed, SEED_NONE);
+	mPlant->PlantInitialize(visualNowNs, visualNowNs, visualNowNs, 0, 0, mSelectedSeed, SEED_NONE);
 	{ mPlant->mX = (aPosX); mPlant->mRootBindingGeneration = 0; }
 	mPlant->mY = (aPosY);
 }
@@ -248,11 +252,12 @@ void AlmanacDialog::SetupPlant()
 // GOTY @Patoke: 0x402D90
 void AlmanacDialog::SetupZombie()
 {
+	const auto visualNowNs = mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs;
 	ClearPlantsAndZombies();
 
 	mZombie = new Zombie();
 	mZombie->mBoard = nullptr;
-	mZombie->ZombieInitialize(0, mSelectedZombie, false, nullptr, Zombie::ZOMBIE_WAVE_UI);
+	mZombie->ZombieInitialize(visualNowNs, visualNowNs, visualNowNs, 0, mSelectedZombie, false, nullptr, Zombie::ZOMBIE_WAVE_UI);
 	{ mZombie->mX = (ALMANAC_ZOMBIE_POSITION_X); mZombie->mRootBindingGeneration = 0; }
 	mZombie->mY = (ALMANAC_ZOMBIE_POSITION_Y);
 }
@@ -260,6 +265,7 @@ void AlmanacDialog::SetupZombie()
 //0x401BE0
 void AlmanacDialog::SetPage(AlmanacPage thePage)
 {
+	const auto visualNowNs = mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs;
 	mOpenPage = thePage;
 	ClearPlantsAndZombies();
 
@@ -268,13 +274,13 @@ void AlmanacDialog::SetPage(AlmanacPage thePage)
 		mPlant = new Plant();
 		mPlant->mBoard = nullptr;
 		mPlant->mIsOnBoard = false;
-		mPlant->PlantInitialize(0, 0, SeedType::SEED_SUNFLOWER, SeedType::SEED_NONE);
+		mPlant->PlantInitialize(visualNowNs, visualNowNs, visualNowNs, 0, 0, SeedType::SEED_SUNFLOWER, SeedType::SEED_NONE);
 		{ mPlant->mX = (ALMANAC_INDEXPLANT_POSITION_X); mPlant->mRootBindingGeneration = 0; }
 		mPlant->mY = (ALMANAC_INDEXPLANT_POSITION_Y);
 
 		mZombie = new Zombie();
 		mZombie->mBoard = nullptr;
-		mZombie->ZombieInitialize(0, ZombieType::ZOMBIE_NORMAL, false, nullptr, Zombie::ZOMBIE_WAVE_UI);
+		mZombie->ZombieInitialize(visualNowNs, visualNowNs, visualNowNs, 0, ZombieType::ZOMBIE_NORMAL, false, nullptr, Zombie::ZOMBIE_WAVE_UI);
 		{ mZombie->mX = (ALMANAC_INDEXZOMBIE_POSITION_X); mZombie->mRootBindingGeneration = 0; }
 		mZombie->mY = (ALMANAC_INDEXZOMBIE_POSITION_Y);
 
@@ -313,13 +319,14 @@ void AlmanacDialog::ShowZombie(ZombieType theZombieType)
 //0x401D30
 void AlmanacDialog::Update()
 {
+	const auto visualNowNs = mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs;
 	RefreshAlmanacLayout(*this);
 	mCloseButton->Update();
 	mIndexButton->Update();
 	mPlantButton->Update();
 	mZombieButton->Update();
-	if (mPlant) mPlant->Update(0);
-	if (mZombie) mZombie->Update();
+	if (mPlant) mPlant->Update(visualNowNs, visualNowNs, visualNowNs, 0);
+	if (mZombie) mZombie->Update(visualNowNs, visualNowNs, visualNowNs, Sexy::gUpdateIntervalNs);
 
 	int aMouseX = mApp->mWidgetManager->mLastMouseX - mX;
 	int aMouseY = mApp->mWidgetManager->mLastMouseY - mY;
@@ -340,6 +347,7 @@ void AlmanacDialog::Update()
 //0x401E70
 void AlmanacDialog::DrawIndex(Graphics* g)
 {
+	const auto visualNowNs = mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs;
 	const TextureSource aTexture{AlmanacAtlas::Texture, 0};
 	DrawAlmanacBackground(g,aTexture,AlmanacAtlas::Images[static_cast<unsigned>(AlmanacSprite::ALMANAC_INDEXBACK)],
 		mApp->mScreenBounds,mX);
@@ -352,19 +360,20 @@ void AlmanacDialog::DrawIndex(Graphics* g)
 	{
 		Graphics aPlantGraphics = Graphics(*g);
 		mPlant->BeginDraw(&aPlantGraphics);
-		mPlant->Draw(&aPlantGraphics);
+		mPlant->Draw(visualNowNs, &aPlantGraphics);
 	}
 	if (mZombie)
 	{
 		Graphics aZombieGraphics = Graphics(*g);
 		mZombie->BeginDraw(&aZombieGraphics);
-		mZombie->Draw(&aZombieGraphics);
+		mZombie->Draw(visualNowNs, &aZombieGraphics);
 	}
 }
 
 //0x402060
 void AlmanacDialog::DrawPlants(Graphics* g)
 {
+	const auto visualNowNs = mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs;
 	const TextureSource aTexture{AlmanacAtlas::Texture, 0};
 	DrawAlmanacBackground(g,aTexture,AlmanacAtlas::Images[static_cast<unsigned>(AlmanacSprite::ALMANAC_PLANTBACK)],
 		mApp->mScreenBounds,mX);
@@ -419,7 +428,7 @@ void AlmanacDialog::DrawPlants(Graphics* g)
 	{
 		Graphics aPlantGraphics = Graphics(*g);
 		mPlant->BeginDraw(&aPlantGraphics);
-		mPlant->Draw(&aPlantGraphics);
+		mPlant->Draw(visualNowNs, &aPlantGraphics);
 	}
 
 	DrawAtlasImage(g,aTexture,AlmanacAtlas::Images[static_cast<unsigned>(AlmanacSprite::ALMANAC_PLANTCARD)],459,86);
@@ -551,6 +560,7 @@ static_assert(sizeof(kAlmanacPortraitOffset) / sizeof(kAlmanacPortraitOffset[0])
 // GOTY @Patoke: 0x403DE0
 void AlmanacDialog::DrawZombies(Graphics* g)
 {
+	const auto visualNowNs = mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs;
 	const TextureSource aTexture{AlmanacAtlas::Texture, 0};
 	DrawAlmanacBackground(g,aTexture,AlmanacAtlas::Images[static_cast<unsigned>(AlmanacSprite::ALMANAC_ZOMBIEBACK)],
 		mApp->mScreenBounds,mX);
@@ -642,7 +652,7 @@ void AlmanacDialog::DrawZombies(Graphics* g)
 		if (mZombie->mZombieType != ZombieType::ZOMBIE_BUNGEE && mZombie->mZombieType != ZombieType::ZOMBIE_BOSS &&
 			mZombie->mZombieType != ZombieType::ZOMBIE_ZAMBONI && mZombie->mZombieType != ZombieType::ZOMBIE_CATAPULT)
 			mZombie->DrawShadow(&aZombieGraphics);
-		mZombie->Draw(&aZombieGraphics);
+		mZombie->Draw(visualNowNs, &aZombieGraphics);
 	}
 	DrawAtlasImage(g,aTexture,AlmanacAtlas::Images[static_cast<unsigned>(AlmanacSprite::ALMANAC_ZOMBIECARD)],455,78);
 

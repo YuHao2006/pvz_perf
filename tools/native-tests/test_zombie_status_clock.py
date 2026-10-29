@@ -30,7 +30,6 @@ class ZombieStatusClockTests(unittest.TestCase):
 #include <cstdint>
 #include <stdexcept>
 namespace Sexy { unsigned long long gUpdateIntervalNs = 10'000'000; }
-enum class ReanimTimeDomain { Battle, Visual };
 namespace FoleyType { constexpr int FOLEY_FROZEN = 1; }
 namespace ParticleEffect { constexpr int PARTICLE_ICE_TRAP_RELEASE = 1; }
 struct Clock { std::int64_t mVisualTimeNs = 0; };
@@ -38,8 +37,6 @@ struct Effect { Clock* mReanimationHolder; };
 struct Board {
     unsigned long long mLevelTimeNs = 0;
     int mTimeStopCounter = 0;
-    ReanimTimeDomain domain = ReanimTimeDomain::Battle;
-    ReanimTimeDomain AnimationTimeDomain() { return domain; }
 };
 struct App {
     Effect* mEffectSystem;
@@ -57,55 +54,66 @@ public:
     int animationUpdates = 0, iceReleases = 0, butterReleases = 0, particles = 0;
     bool IsOnBoard() { return onboard; }
     bool CanBeChilled() { return true; }
-    void UpdateAnimSpeed() { ++animationUpdates; }
-    void RemoveIceTrap() { ++iceReleases; }
-    void RemoveButter() { ++butterReleases; }
-    void AddAttachedParticle(int,int,int) { ++particles; }
-    bool IsImmobilizied();
-    void ApplyChill(bool);
-    void Expire();
-    void FreezeSkipped(bool playingUpdated, bool doUpdate, bool animated);
+    void UpdateAnimSpeed(std::int64_t) { ++animationUpdates; }
+    void RemoveIceTrap(std::int64_t) { ++iceReleases; }
+    void RemoveButter(std::int64_t) { ++butterReleases; }
+    void AddAttachedParticle(std::int64_t,int,int,int) { ++particles; }
+    bool IsImmobilizied(std::int64_t ownerNowNs);
+    void ApplyChill(std::int64_t ownerNowNs, bool);
+    void Expire(std::int64_t ownerNowNs);
+    void FreezeSkipped(std::uint64_t ownerDeltaNs, bool playingUpdated, bool doUpdate, bool animated);
 };
 '''
         source += definition(production, "bool ZombieAgeCrossedPeriod(") + "\n"
         source += definition(production, "bool ZombieAgeCrossedPoint(") + "\n"
         source += definition(production, "bool Zombie::IsImmobilizied(") + "\n"
         source += definition(production, "void Zombie::ApplyChill(") + "\n"
-        source += "void Zombie::Expire() { const auto aStatusNowNs = onboard ? std::int64_t(mBoard->mLevelTimeNs) : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs;\n"
+        source += "void Zombie::Expire(std::int64_t ownerNowNs) { const auto aStatusNowNs = ownerNowNs;\n"
         source += production[expiry_start:expiry_end] + "}\n"
-        source += "void Zombie::FreezeSkipped(bool playingUpdated, bool doUpdate, bool animated) {\n" + production[freeze_start:freeze_end] + "}\n"
+        source += "void Zombie::FreezeSkipped(std::uint64_t ownerDeltaNs, bool playingUpdated, bool doUpdate, bool animated) {\n" + production[freeze_start:freeze_end] + "}\n"
         source += r'''
 void Require(bool value, const char* message) { if(!value) throw std::runtime_error(message); }
 int main() {
     Clock clock; Effect effect{&clock}; App app{&effect}; Board board;
     board.mLevelTimeNs = 50'000'000'000;
     Zombie z; z.mBoard=&board; z.mApp=&app;
-    z.ApplyChill(false);
+    z.ApplyChill(static_cast<std::int64_t>(board.mLevelTimeNs), false);
     Require(z.mChilledEndTimeNs == 60'000'000'000 && app.sounds == 1, "chill did not bind to level time");
     board.mLevelTimeNs += 3'000'000'000;
-    z.ApplyChill(true);
+    z.ApplyChill(static_cast<std::int64_t>(board.mLevelTimeNs), true);
     Require(z.mChilledEndTimeNs == 73'000'000'000 && app.sounds == 1, "chill extension/sound edge changed");
     z.mIceTrapEndTimeNs = board.mLevelTimeNs + 7;
     z.mButteredEndTimeNs = board.mLevelTimeNs + 13;
-    Require(z.IsImmobilizied(), "active immobilization missing");
+    Require(z.IsImmobilizied(static_cast<std::int64_t>(board.mLevelTimeNs)), "active immobilization missing");
     board.mLevelTimeNs += 20;
-    z.Expire(); z.Expire();
+    z.Expire(static_cast<std::int64_t>(board.mLevelTimeNs)); z.Expire(static_cast<std::int64_t>(board.mLevelTimeNs));
     Require(z.mIceTrapEndTimeNs == 0 && z.mButteredEndTimeNs == 0 &&
         z.iceReleases == 1 && z.butterReleases == 1 && z.particles == 1,
         "skipped deadline did not consume expiry exactly once");
-    Require(!z.IsImmobilizied(), "expired immobilization remained active");
+    Require(!z.IsImmobilizied(static_cast<std::int64_t>(board.mLevelTimeNs)), "expired immobilization remained active");
     z.mShotFlashEndTimeNs = board.mLevelTimeNs - 6'000'000'000;
     const auto hungerRemaining = z.mShotFlashEndTimeNs - std::int64_t(board.mLevelTimeNs);
     z.mYuckyFace=true; z.mYuckyFaceStartTimeNs=10;
-    z.FreezeSkipped(false,false,false);
+    z.FreezeSkipped(10'000'000,false,false,false);
     Require(z.mShotFlashEndTimeNs - std::int64_t(board.mLevelTimeNs) == hungerRemaining + 10'000'000 &&
         z.mYuckyFaceStartTimeNs == 10+10'000'000, "conditional pause did not shift signed hit/face origins");
-    board.domain=ReanimTimeDomain::Visual;
     const auto frozen=z.mShotFlashEndTimeNs;
-    z.FreezeSkipped(false,false,false);
-    Require(z.mShotFlashEndTimeNs == frozen, "stopped battle clock shifted origins anyway");
+    z.FreezeSkipped(0,false,false,false);
+    Require(z.mShotFlashEndTimeNs == frozen && z.mYuckyFaceStartTimeNs == 10+10'000'000,
+        "zero owner delta shifted paused origins anyway");
+    z.mChilledEndTimeNs=board.mLevelTimeNs+100'000'000;
+    const auto chillDeadline=z.mChilledEndTimeNs;
+    z.FreezeSkipped(10'000'000,true,true,true);
+    Require(z.mShotFlashEndTimeNs == frozen && z.mChilledEndTimeNs == chillDeadline &&
+        z.mYuckyFaceStartTimeNs == 10+10'000'000,
+        "active status update incorrectly shifted its deadlines");
+    z.FreezeSkipped(37'192'835,false,false,false);
+    Require(z.mChilledEndTimeNs == chillDeadline+37'192'835 &&
+        z.mShotFlashEndTimeNs == frozen+37'192'835 &&
+        z.mYuckyFaceStartTimeNs == 10+10'000'000+37'192'835,
+        "skipped status update did not consume its explicit owner delta");
     z.onboard=false; clock.mVisualTimeNs=100'000'000'000;
-    z.mChilledEndTimeNs=0; z.ApplyChill(false);
+    z.mChilledEndTimeNs=0; z.ApplyChill(clock.mVisualTimeNs, false);
     Require(z.mChilledEndTimeNs==110'000'000'000, "preview status used frozen battle time");
     Require(ZombieAgeCrossedPeriod(1'000'000'001,5,1'000'000'000) &&
         !ZombieAgeCrossedPeriod(1'000'000'002,1,1'000'000'000), "age period crossing repeated or skipped");

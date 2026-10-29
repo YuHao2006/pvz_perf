@@ -223,10 +223,7 @@ void GridItem::DrawStinky(Graphics* g)
             const bool reverse = aStinkyReanim->mAnimRate < 0;
             aStinkyReanim->mCurrentFrame = int(phase / q + (reverse && remainder != 0));
             const auto age = reverse && remainder != 0 ? q - remainder : remainder;
-            const auto now = aStinkyReanim->mAnimRate == 0 ? aStinkyReanim->mLastUpdateTimeNs :
-                aStinkyReanim->mTimeDomain == ReanimTimeDomain::Battle ?
-                    aStinkyReanim->mReanimationHolder->mBattleTimeNs :
-                    aStinkyReanim->mReanimationHolder->mVisualTimeNs;
+            const auto now = aStinkyReanim->mLastUpdateTimeNs;
             aStinkyReanim->mStartTimeNs = ReanimClock::Subtract(now, age);
 
             g->mTransX = aOriginalTransX + aDiffX;
@@ -383,7 +380,7 @@ void GridItem::DrawScaryPot(Graphics* g)
             int aSuns = mSunCount;
 
             Reanimation aReanim;
-            aReanim.ReanimationInitializeType(0.0f, 0.0f, ReanimationType::REANIM_SUN);
+            aReanim.ReanimationInitializeType(0.0f, 0.0f, ReanimationType::REANIM_SUN, 0);
             aReanim.mOverlayMatrix.m00 = 0.5f;
             aReanim.mOverlayMatrix.m11 = 0.5f;
 
@@ -475,7 +472,7 @@ void GridItem::AddGraveStoneParticles()
     int aYOffset = mBoard->mGridCelOffset[mGridX][mGridY][1];
     int aXPos = mBoard->GridToPixelX(mGridX, mGridY) + 14 + aXOffset;
     int aYPos = mBoard->GridToPixelY(mGridX, mGridY) + 78 + aYOffset;
-    mApp->AddTodParticle(aXPos, aYPos, mRenderOrder + 1, ParticleEffect::PARTICLE_GRAVE_STONE_RISE);
+    mApp->AddTodParticle(aXPos, aYPos, mRenderOrder + 1, ParticleEffect::PARTICLE_GRAVE_STONE_RISE, static_cast<std::int64_t>(mBoard->mLevelTimeNs));
     mApp->PlayFoley(FoleyType::FOLEY_DIRT_RISE);
 }
 
@@ -494,7 +491,7 @@ void GridItem::OpenPortal()
             aXPos -= 4.0f;
             aReanimType = ReanimationType::REANIM_PORTAL_SQUARE;
         }
-        aPortalReanim = mApp->AddReanimation(aXPos, aYPos, 0, aReanimType);
+        aPortalReanim = mApp->AddReanimation(aXPos, aYPos, 0, aReanimType, (mBoard && mBoard->AnimationTimeDomain() == ReanimTimeDomain::Battle ? static_cast<std::int64_t>(mBoard->mLevelTimeNs) : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs), (mBoard ? mBoard->AnimationTimeDomain() : ReanimTimeDomain::Visual));
         aPortalReanim->mIsAttachment = true;
         mGridItemReanimID = mApp->ReanimationGetID(aPortalReanim);
     }
@@ -566,7 +563,7 @@ void GridItem::UpdatePortal()
             aYPos += 15.0f;
         }
 
-        TodParticleSystem* aParticle = mApp->AddTodParticle(aXPos, aYPos, 0, aEffect);
+        TodParticleSystem* aParticle = mApp->AddTodParticle(aXPos, aYPos, 0, aEffect, static_cast<std::int64_t>(mBoard->mLevelTimeNs));
         mGridItemParticleID = mApp->ParticleGetID(aParticle);
     }
 }
@@ -608,13 +605,15 @@ void GridItem::Update()
     Reanimation* aGridItemReanim = mApp->ReanimationTryToGet(mGridItemReanimID);
     if (aGridItemReanim)
     {
-        aGridItemReanim->Update();
-    }
-
-    TodParticleSystem* aGridItemParticle = mApp->ParticleTryToGet(mGridItemParticleID);
-    if (aGridItemParticle)
-    {
-        aGridItemParticle->Update(Sexy::gUpdateIntervalNs, mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs);
+        // Stinky owns visual time across garden visits. Other grid items follow
+        // their Board when its intro transitions into battle simulation.
+        const auto domain = mGridItemType == GridItemType::GRIDITEM_STINKY
+            ? ReanimTimeDomain::Visual : mBoard->AnimationTimeDomain();
+        const auto nowNs = domain == ReanimTimeDomain::Battle
+            ? static_cast<std::int64_t>(mBoard->mLevelTimeNs)
+            : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs;
+        mApp->mEffectSystem->mReanimationHolder->BindAnimationTime(*aGridItemReanim, domain, nowNs);
+        aGridItemReanim->UpdateAt(nowNs);
     }
 
     if (mGridItemType == GridItemType::GRIDITEM_PORTAL_CIRCLE || mGridItemType == GridItemType::GRIDITEM_PORTAL_SQUARE)
@@ -681,7 +680,7 @@ void GridItem::UpdateRake()
             Zombie* aZombie = RakeFindZombie();
             if (aZombie)
             {
-                aZombie->TakeDamage(1800, 0U);
+                aZombie->TakeDamage(static_cast<std::int64_t>(mBoard->mLevelTimeNs), mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs, (mBoard->AnimationTimeDomain() == ReanimTimeDomain::Battle ? static_cast<std::int64_t>(mBoard->mLevelTimeNs) : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs), 1800, 0U);
                 mApp->PlayFoley(FoleyType::FOLEY_BONK);
             }
         }

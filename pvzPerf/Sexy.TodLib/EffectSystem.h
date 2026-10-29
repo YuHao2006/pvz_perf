@@ -25,7 +25,7 @@ class TodTriangleGroup
 public:
     TextureSource               mTexture;
     std::vector<std::array<TriVertex,3>> mVertArray;
-#if defined(PVZ_GPU_VULKAN) || defined(PVZ_GPU_D3D12)
+#if defined(PVZ_GPU_VULKAN) || defined(PVZ_GPU_D3D12) || defined(PVZ_GPU_OPENGL)
     std::vector<std::array<TriVertex,4>> mQuadArray;
 #endif
     int                         mDrawMode;
@@ -159,7 +159,6 @@ public:
     void                        EffectSystemDispose();
     void                        EffectSystemFreeAll();
     void                        ProcessDeleteQueue();
-    void                        Update();
     void                        UpdateAt(std::int64_t visualNowNs, std::int64_t battleNowNs);
 };
 extern EffectSystem* gEffectSystem;  //[0x6A9EB8]

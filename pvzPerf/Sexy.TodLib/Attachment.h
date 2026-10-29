@@ -14,7 +14,6 @@ using namespace Sexy;
 
 class Reanimation;
 class TodParticleSystem;
-enum class ReanimTimeDomain : std::uint32_t;
 
 class AttachEffect
 {
@@ -37,15 +36,14 @@ public:
     Attachment();
     ~Attachment();
 
-    void                    Update();
-    void                    UpdateAt(std::int64_t nowNs, ReanimTimeDomain domain);
+    void                    UpdateAt(std::int64_t nowNs);
     void                    SetPosition(const SexyVector2& thePosition);
     void                    SetMatrix(const SexyTransform2D& theMatrix);
     void                    OverrideColor(const Color& theColor);
     void                    OverrideScale(float theScale);
     void                    Draw(Graphics* g, bool theParentHidden);
     void                    AttachmentDie();
-    void                    Detach();
+    void                    Detach(std::int64_t nowNs);
     void                    CrossFade(ParticleEmitterName theName);
     void                    CrossFade(ParticleEmitterNameRange theRange);
     void                    PropogateColor(const Color& theColor, bool theEnableAdditiveColor, const Color& theAdditiveColor, bool theEnableOverlayColor, const Color& theOverlayColor);
@@ -56,12 +54,10 @@ AttachEffect*               AttachParticle(AttachmentID& theAttachmentID, TodPar
 /*inline*/ void             AttachmentPropogateColor(AttachmentID& theAttachmentID, const Color& theColor, bool theEnableAdditiveColor, const Color& theAdditiveColor, bool theEnableOverlayColor, const Color& theOverlayColor);
 /*inline*/ void             AttachmentOverrideColor(AttachmentID& theAttachmentID, const Color& theColor);
 /*inline*/ void             AttachmentOverrideScale(AttachmentID& theAttachmentID, float theScale);
-/*inline*/ void             AttachmentUpdateAndMove(AttachmentID& theAttachmentID, float theX, float theY);
-void                        AttachmentUpdateAndMoveAt(AttachmentID& theAttachmentID, float theX, float theY, std::int64_t nowNs, ReanimTimeDomain domain);
-/*inline*/ void             AttachmentUpdateAndSetMatrix(AttachmentID& theAttachmentID, SexyTransform2D& theMatrix);
-void                        AttachmentUpdateAndSetMatrixAt(AttachmentID& theAttachmentID, SexyTransform2D& theMatrix, std::int64_t nowNs, ReanimTimeDomain domain);
+void                        AttachmentUpdateAndMoveAt(AttachmentID& theAttachmentID, float theX, float theY, std::int64_t nowNs);
+void                        AttachmentUpdateAndSetMatrixAt(AttachmentID& theAttachmentID, SexyTransform2D& theMatrix, std::int64_t nowNs);
 /*inline*/ void             AttachmentDraw(AttachmentID& theAttachmentID, Graphics* g, bool theParentHidden);
-/*inline*/ void             AttachmentDetach(AttachmentID& theAttachmentID);
+/*inline*/ void             AttachmentDetach(AttachmentID& theAttachmentID, std::int64_t nowNs);
 /*inline*/ void             AttachmentDetachCrossFadeParticleType(AttachmentID& theAttachmentID, ParticleEffect theParticleEffect);
 /*inline*/ void             AttachmentDetachCrossFadeParticleType(AttachmentID& theAttachmentID, ParticleEffect theParticleEffect, ParticleEmitterName theName);
 /*inline*/ void             AttachmentDetachCrossFadeParticleType(AttachmentID& theAttachmentID, ParticleEffect theParticleEffect, ParticleEmitterNameRange theRange);

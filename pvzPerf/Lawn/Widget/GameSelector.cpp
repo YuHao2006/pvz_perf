@@ -357,7 +357,7 @@ GameSelector::GameSelector(LawnApp* theApp)
 	mTrophyParticleID = ParticleSystemID::PARTICLESYSTEMID_NULL;
 	mShowStartButton = false;
 
-	Reanimation* aSelectorReanim = mApp->AddReanimation(0.5f, 0.5f, 0, ReanimationType::REANIM_SELECTOR_SCREEN);
+	Reanimation* aSelectorReanim = mApp->AddReanimation(0.5f, 0.5f, 0, ReanimationType::REANIM_SELECTOR_SCREEN, mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs, ReanimTimeDomain::Visual);
 	aSelectorReanim->PlayReanim(ReanimTrackId::anim_open, ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD, 0, 30.0f);
 	aSelectorReanim->AssignRenderGroupToRange(ReanimTrackRanges::flower, RENDER_GROUP_HIDDEN);
 	aSelectorReanim->AssignRenderGroupToRange(ReanimTrackRanges::leaf, RENDER_GROUP_HIDDEN);
@@ -375,7 +375,7 @@ GameSelector::GameSelector(LawnApp* theApp)
 
 	for (int i = 0; i < 6; i++)
 	{
-		Reanimation* aCloudReanim = mApp->AddReanimation(0.5f, 0.5f, 0, ReanimationType::REANIM_SELECTOR_SCREEN);
+		Reanimation* aCloudReanim = mApp->AddReanimation(0.5f, 0.5f, 0, ReanimationType::REANIM_SELECTOR_SCREEN, mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs, ReanimTimeDomain::Visual);
 		static constexpr ReanimTrackId aCloudLayers[] = {
 			ReanimTrackId::anim_cloud1, ReanimTrackId::anim_cloud2, ReanimTrackId::anim_cloud4,
 			ReanimTrackId::anim_cloud5, ReanimTrackId::anim_cloud6, ReanimTrackId::anim_cloud7};
@@ -394,7 +394,7 @@ GameSelector::GameSelector(LawnApp* theApp)
 
 	for (int i = 0; i < 3; i++)
 	{
-		Reanimation* aFlowerReanim = mApp->AddReanimation(0.5f, 0.5f, 0, ReanimationType::REANIM_SELECTOR_SCREEN);
+		Reanimation* aFlowerReanim = mApp->AddReanimation(0.5f, 0.5f, 0, ReanimationType::REANIM_SELECTOR_SCREEN, mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs, ReanimTimeDomain::Visual);
 		static constexpr ReanimTrackId aFlowerLayers[] = {
 			ReanimTrackId::anim_flower1, ReanimTrackId::anim_flower2, ReanimTrackId::anim_flower3};
 		aFlowerReanim->PlayReanim(aFlowerLayers[i], ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD, 0, 0.0f);
@@ -404,7 +404,7 @@ GameSelector::GameSelector(LawnApp* theApp)
 		mFlowerReanimID[i] = mApp->ReanimationGetID(aFlowerReanim);
 	}
 
-	Reanimation* aLeafReanim = mApp->AddReanimation(0.5f, 0.5f, 0, ReanimationType::REANIM_SELECTOR_SCREEN);
+	Reanimation* aLeafReanim = mApp->AddReanimation(0.5f, 0.5f, 0, ReanimationType::REANIM_SELECTOR_SCREEN, mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs, ReanimTimeDomain::Visual);
 	aLeafReanim->PlayReanim(ReanimTrackId::anim_grass, ReanimLoopType::REANIM_LOOP, 0, 6.0f);
 	aLeafReanim->ApplyRate(0.0f);
 	mLeafReanimID = mApp->ReanimationGetID(aLeafReanim);
@@ -598,7 +598,7 @@ void GameSelector::SyncButtons()
 void GameSelector::AddTrophySparkle()
 {
 	TOD_ASSERT(mTrophyParticleID == PARTICLESYSTEMID_NULL);
-	TodParticleSystem* aTrophyParticle = mApp->AddTodParticle(85.0f, 380.0f, RenderLayer::RENDER_LAYER_TOP, ParticleEffect::PARTICLE_TROPHY_SPARKLE);
+	TodParticleSystem* aTrophyParticle = mApp->AddTodParticle(85.0f, 380.0f, RenderLayer::RENDER_LAYER_TOP, ParticleEffect::PARTICLE_TROPHY_SPARKLE, mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs);
 	mTrophyParticleID = mApp->ParticleGetID(aTrophyParticle);
 }
 
@@ -1115,10 +1115,10 @@ void GameSelector::Update()
 		else if (aCloudReanim->mLoopCount > 0)
 			mCloudCounter[i] = RandRangeInt(2000, 4000);
 	}
-	aSelectorReanim->Update();
+	aSelectorReanim->UpdateAt(mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs);
 
 	Reanimation* aLeafReanim = mApp->ReanimationGet(mLeafReanimID);
-	aLeafReanim->Update();
+	aLeafReanim->UpdateAt(mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs);
 	int aLeafTrackIndex = aSelectorReanim->FindTrackIndex(ReanimTrackId::SelectorScreen_BG_Right);
 	ReanimatorTransform aLeafTransform;
 	aSelectorReanim->GetCurrentTransform(aLeafTrackIndex, &aLeafTransform);
@@ -1132,10 +1132,10 @@ void GameSelector::Update()
 	}
 
 	for (int i = 0; i < 6; i++)
-		mApp->ReanimationGet(mCloudReanimID[i])->Update();
+		mApp->ReanimationGet(mCloudReanimID[i])->UpdateAt(mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs);
 	Reanimation* aHandReanim = mApp->ReanimationTryToGet(mHandReanimID);
 	if (aHandReanim)
-		aHandReanim->Update();
+		aHandReanim->UpdateAt(mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs);
 
 	TrackButton(mAdventureButton, mShowStartButton ? ReanimTrackId::SelectorScreen_StartAdventure_button : ReanimTrackId::SelectorScreen_Adventure_button, SELECTOR_MAIN_PAGE_X, 0.0f);
 	TrackButton(mMinigameButton, ReanimTrackId::SelectorScreen_Survival_button, SELECTOR_MAIN_PAGE_X, 0.0f);
@@ -1402,7 +1402,7 @@ void GameSelector::ClickedAdventure()
 	mZombatarButton->SetDisabled(true); // @Patoke: added new widgets
 	mAchievementsButton->SetDisabled(true);
 
-	Reanimation* aHandReanim = mApp->AddReanimation(-70.0f, 10.0f, 0, ReanimationType::REANIM_ZOMBIE_HAND);
+	Reanimation* aHandReanim = mApp->AddReanimation(-70.0f, 10.0f, 0, ReanimationType::REANIM_ZOMBIE_HAND, mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs, ReanimTimeDomain::Visual);
 	aHandReanim->ChangeLoopType(ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD);
 	mHandReanimID = mApp->ReanimationGetID(aHandReanim);
 	mApp->PlayFoley(FoleyType::FOLEY_DIRT_RISE);

@@ -43,6 +43,7 @@ struct MacWindow final {
     // Common code also asks during message draining; only one poll per update.
     bool BeginMouseSample(std::uint32_t update);
     bool Minimized() const;
+    double RefreshRate() const;
     // Content extent and input coordinates are top-left Cocoa points.
     int Width = 0, Height = 0;
     // Metal presentation and QueryNativeClientExtent use backing pixels.

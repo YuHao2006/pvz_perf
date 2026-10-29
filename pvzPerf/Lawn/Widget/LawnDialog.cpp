@@ -405,7 +405,7 @@ void ReanimationWidget::AddReanimation(float x, float y, ReanimationType theRean
     
     mPosX = x;
     mPosY = y;
-    mReanim = mApp->mEffectSystem->mReanimationHolder->AllocReanimation(x, y, 0, theReanimationType);
+    mReanim = mApp->mEffectSystem->mReanimationHolder->AllocReanimation(x, y, 0, theReanimationType, mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs, ReanimTimeDomain::Visual);
     mReanim->ChangeLoopType(ReanimLoopType::REANIM_LOOP);
     mReanim->mIsAttachment = true;
     if (mReanim->TrackExists(ReanimTrackId::anim_idle))
@@ -426,7 +426,7 @@ void ReanimationWidget::Update()
 {
     if (mReanim)
     {
-        mReanim->Update();
+        mReanim->UpdateAt(mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs);
         MarkDirty();
     }
 }

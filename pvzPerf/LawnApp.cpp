@@ -159,7 +159,7 @@ LawnApp::LawnApp()
 	mDebugKeysEnabled = false;
 	mFullCompanyName = "PopCap Games";
 	mProdName = "PopCap\\PlantsVsZombies";
-	mProductVersion = "3.0.0";
+	mProductVersion = "3.1.0";
 	std::string aTitleName = "pvz_perf";
 #ifdef _DEBUG
 	aTitleName += " BETA ";
@@ -1715,7 +1715,8 @@ void LawnApp::UpdateFrames()
 		Sexy::BeginTimedUpdate();
 		// The full-screen Store pauses the board, but its Dave animation must
 		// still consume visual time. Other board pauses keep their frozen clock.
-		if (mEffectSystem && (!mBoard || !mBoard->mPaused || GetDialog(Dialogs::DIALOG_STORE)))
+		if (mEffectSystem && !mCreditScreen &&
+            (!mBoard || !mBoard->mPaused || GetDialog(Dialogs::DIALOG_STORE)))
 		{
 			if (Sexy::gUpdateIntervalNs > INT64_MAX)
 				throw std::overflow_error("visual animation update exceeds clock range");
@@ -1728,7 +1729,11 @@ void LawnApp::UpdateFrames()
 		{
 			TodParticleSystem* particle = nullptr;
 			while (mEffectSystem->mParticleHolder->mParticleSystems.IterateNext(particle))
-				particle->Update(0, mEffectSystem->mReanimationHolder->mVisualTimeNs);
+			{
+				if (!particle->mIsAttachment)
+					particle->Update(0, static_cast<std::int64_t>(mBoard->mLevelTimeNs));
+			}
+			mBoard->mCutScene->UpdateVisualParticles(mEffectSystem->mReanimationHolder->mVisualTimeNs,false);
 		}
 		mAppCounter++;
 		
@@ -2541,15 +2546,16 @@ bool LawnApp::SeedTypeAvailable(SeedType theSeedType)
 }
 
 //0x453C30
-Reanimation* LawnApp::AddReanimation(float theX, float theY, int theRenderOrder, ReanimationType theReanimationType)
+Reanimation* LawnApp::AddReanimation(float theX, float theY, int theRenderOrder, ReanimationType theReanimationType,
+    std::int64_t nowNs, ReanimTimeDomain domain)
 {
-	return mEffectSystem->mReanimationHolder->AllocReanimation(theX, theY, theRenderOrder, theReanimationType);
+	return mEffectSystem->mReanimationHolder->AllocReanimation(theX, theY, theRenderOrder, theReanimationType, nowNs, domain);
 }
 
 //0x453C80
-TodParticleSystem* LawnApp::AddTodParticle(float theX, float theY, int theRenderOrder, ParticleEffect theEffect, std::uint32_t theVariant)
+TodParticleSystem* LawnApp::AddTodParticle(float theX, float theY, int theRenderOrder, ParticleEffect theEffect, std::int64_t nowNs, std::uint32_t theVariant)
 {
-	return mEffectSystem->mParticleHolder->AllocParticleSystem(theX, theY, theRenderOrder, theEffect, theVariant);
+	return mEffectSystem->mParticleHolder->AllocParticleSystem(theX, theY, theRenderOrder, theEffect, nowNs, theVariant);
 }
 
 ParticleSystemID LawnApp::ParticleGetID(TodParticleSystem* theParticle)
@@ -2709,7 +2715,7 @@ void LawnApp::CrazyDaveEnter()
 	TOD_ASSERT(mCrazyDaveState == CRAZY_DAVE_OFF);
 	TOD_ASSERT(!ReanimationTryToGet(mCrazyDaveReanimID));
 
-	Reanimation* aCrazyDaveReanim = AddReanimation(0.0f, 0.0f, 0, ReanimationType::REANIM_CRAZY_DAVE);
+	Reanimation* aCrazyDaveReanim = AddReanimation(0.0f, 0.0f, 0, ReanimationType::REANIM_CRAZY_DAVE, mEffectSystem->mReanimationHolder->mVisualTimeNs, ReanimTimeDomain::Visual);
 	aCrazyDaveReanim->mIsAttachment = true;
 	aCrazyDaveReanim->SetBasePoseFromAnim(ReanimTrackId::anim_idle_handing);
 	mCrazyDaveReanimID = ReanimationGetID(aCrazyDaveReanim);
@@ -2881,7 +2887,7 @@ void LawnApp::CrazyDaveTalkMessage(const SexyString& theMessage, const DaveDialo
 		{
 			aCrazyDaveReanim->PlayReanim(ReanimTrackId::anim_talk_handing, ReanimLoopType::REANIM_LOOP, 50, 12.0f);
 
-			Reanimation* aWallnutReanim = AddReanimation(0.0f, 0.0f, 0, ReanimationType::REANIM_WALLNUT);
+			Reanimation* aWallnutReanim = AddReanimation(0.0f, 0.0f, 0, ReanimationType::REANIM_WALLNUT, mEffectSystem->mReanimationHolder->mVisualTimeNs, ReanimTimeDomain::Visual);
 			aWallnutReanim->PlayReanim(ReanimTrackId::anim_idle, ReanimLoopType::REANIM_LOOP, 0, 12.0f);
 
 			ReanimatorTrackInstance* aHandTrackInstance = aCrazyDaveReanim->GetTrackInstanceByName(ReanimTrackId::Dave_handinghand);
@@ -2889,7 +2895,7 @@ void LawnApp::CrazyDaveTalkMessage(const SexyString& theMessage, const DaveDialo
 			aAttachEffect->mOffset.m00 = 1.2f;
 			aAttachEffect->mOffset.m11 = 1.2f;
 
-			aCrazyDaveReanim->Update();
+			aCrazyDaveReanim->UpdateAt(mEffectSystem->mReanimationHolder->mVisualTimeNs);
 
 			if (doSound)
 			{
@@ -2902,7 +2908,7 @@ void LawnApp::CrazyDaveTalkMessage(const SexyString& theMessage, const DaveDialo
 		{
 			aCrazyDaveReanim->PlayReanim(ReanimTrackId::anim_talk_handing, ReanimLoopType::REANIM_LOOP, 50, 12.0f);
 
-			Reanimation* aHammerReanim = AddReanimation(0.0f, 0.0f, 0, ReanimationType::REANIM_HAMMER);
+			Reanimation* aHammerReanim = AddReanimation(0.0f, 0.0f, 0, ReanimationType::REANIM_HAMMER, mEffectSystem->mReanimationHolder->mVisualTimeNs, ReanimTimeDomain::Visual);
 			aHammerReanim->PlayReanim(ReanimTrackId::anim_whack_zombie, ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD, 0, 24.0f);
 			aHammerReanim->Seek(1000);
 
@@ -2911,7 +2917,7 @@ void LawnApp::CrazyDaveTalkMessage(const SexyString& theMessage, const DaveDialo
 			aAttachEffect->mOffset.m00 = 1.5f;
 			aAttachEffect->mOffset.m11 = 1.5f;
 
-			aCrazyDaveReanim->Update();
+			aCrazyDaveReanim->UpdateAt(mEffectSystem->mReanimationHolder->mVisualTimeNs);
 
 			if (doSound)
 			{
@@ -2924,13 +2930,13 @@ void LawnApp::CrazyDaveTalkMessage(const SexyString& theMessage, const DaveDialo
 		{
 			aCrazyDaveReanim->PlayReanim(ReanimTrackId::anim_talk_handing, ReanimLoopType::REANIM_LOOP, 50, 12.0f);
 
-			Reanimation* aFertilizerReanim = AddReanimation(0.0f, 0.0f, 0, ReanimationType::REANIM_ZENGARDEN_FERTILIZER);
+			Reanimation* aFertilizerReanim = AddReanimation(0.0f, 0.0f, 0, ReanimationType::REANIM_ZENGARDEN_FERTILIZER, mEffectSystem->mReanimationHolder->mVisualTimeNs, ReanimTimeDomain::Visual);
 			aFertilizerReanim->PlayReanim(ReanimTrackId::bag, ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD, 0, 24.0f);
 			aFertilizerReanim->ApplyRate(0.0f);
 
 			ReanimatorTrackInstance* aHandTrackInstance = aCrazyDaveReanim->GetTrackInstanceByName(ReanimTrackId::Dave_handinghand);
 			AttachReanim(aHandTrackInstance->mAttachmentID, aFertilizerReanim, 102.0f, 412.0f);
-			aCrazyDaveReanim->Update();
+			aCrazyDaveReanim->UpdateAt(mEffectSystem->mReanimationHolder->mVisualTimeNs);
 
 			if (doSound)
 			{
@@ -2943,13 +2949,13 @@ void LawnApp::CrazyDaveTalkMessage(const SexyString& theMessage, const DaveDialo
 		{
 			aCrazyDaveReanim->PlayReanim(ReanimTrackId::anim_talk_handing, ReanimLoopType::REANIM_LOOP, 50, 12.0f);
 
-			Reanimation* aTreeFoodReanim = AddReanimation(0.0f, 0.0f, 0, ReanimationType::REANIM_TREEOFWISDOM_TREEFOOD);
+			Reanimation* aTreeFoodReanim = AddReanimation(0.0f, 0.0f, 0, ReanimationType::REANIM_TREEOFWISDOM_TREEFOOD, mEffectSystem->mReanimationHolder->mVisualTimeNs, ReanimTimeDomain::Visual);
 			aTreeFoodReanim->PlayReanim(ReanimTrackId::bag, ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD, 0, 24.0f);
 			aTreeFoodReanim->ApplyRate(0.0f);
 
 			ReanimatorTrackInstance* aHandTrackInstance = aCrazyDaveReanim->GetTrackInstanceByName(ReanimTrackId::Dave_handinghand);
 			AttachReanim(aHandTrackInstance->mAttachmentID, aTreeFoodReanim, 102.0f, 412.0f);
-			aCrazyDaveReanim->Update();
+			aCrazyDaveReanim->UpdateAt(mEffectSystem->mReanimationHolder->mVisualTimeNs);
 
 			if (doSound)
 			{
@@ -2962,14 +2968,14 @@ void LawnApp::CrazyDaveTalkMessage(const SexyString& theMessage, const DaveDialo
 		{
 			aCrazyDaveReanim->PlayReanim(ReanimTrackId::anim_talk_handing, ReanimLoopType::REANIM_LOOP, 50, 12.0f);
 
-			Reanimation* aMoneyBagReanim = AddReanimation(0.0f, 0.0f, 0, ReanimationType::REANIM_ZENGARDEN_FERTILIZER);
+			Reanimation* aMoneyBagReanim = AddReanimation(0.0f, 0.0f, 0, ReanimationType::REANIM_ZENGARDEN_FERTILIZER, mEffectSystem->mReanimationHolder->mVisualTimeNs, ReanimTimeDomain::Visual);
 			aMoneyBagReanim->PlayReanim(ReanimTrackId::bag, ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD, 0, 24.0f);
 			aMoneyBagReanim->ApplyRate(0.0f);
 			aMoneyBagReanim->SetVariantOption(ReanimTrackId::bag, ReanimOptions::ZenGarden_fertilizer::bag::MONEYBAG);
 
 			ReanimatorTrackInstance* aHandTrackInstance = aCrazyDaveReanim->GetTrackInstanceByName(ReanimTrackId::Dave_handinghand);
 			AttachReanim(aHandTrackInstance->mAttachmentID, aMoneyBagReanim, 90.0f, 405.0f);
-			aCrazyDaveReanim->Update();
+			aCrazyDaveReanim->UpdateAt(mEffectSystem->mReanimationHolder->mVisualTimeNs);
 			/*
 			v16 = Reanimation::GetTrackInstanceByName(v3, "Dave_handinghand");
 			theAnimRate = 405.0;
@@ -3106,7 +3112,7 @@ void LawnApp::UpdateCrazyDave()
 		if (mCrazyDaveBlinkCounter <= 0)
 		{
 			mCrazyDaveBlinkCounter = RandRangeInt(400, 800);
-			Reanimation* aBlinkReanim = AddReanimation(0.0f, 0.0f, 0, ReanimationType::REANIM_CRAZY_DAVE);
+			Reanimation* aBlinkReanim = AddReanimation(0.0f, 0.0f, 0, ReanimationType::REANIM_CRAZY_DAVE, mEffectSystem->mReanimationHolder->mVisualTimeNs, ReanimTimeDomain::Visual);
 			aBlinkReanim->SetFramesForLayer(ReanimTrackId::anim_blink);
 			aBlinkReanim->ChangeLoopType(ReanimLoopType::REANIM_PLAY_ONCE_FULL_LAST_FRAME_AND_HOLD);
 			aBlinkReanim->ApplyRate(15.0f);
@@ -3125,7 +3131,7 @@ void LawnApp::UpdateCrazyDave()
 		mCrazyDaveBlinkReanimID = ReanimationID::REANIMATIONID_NULL;
 	}
 
-	aCrazyDaveReanim->Update();
+	aCrazyDaveReanim->UpdateAt(mEffectSystem->mReanimationHolder->mVisualTimeNs);
 }
 
 //0x4552F0

@@ -125,6 +125,14 @@ void SexyAppBase::ProcessNativeWindowEvent(const NativeWindowEvent& event)
         return;
     }
     if (event.kind == Kind::Resize) {
+#if defined(__ANDROID__)
+        // Touch coordinates are window-local. Keep their mapping extent in
+        // sync with the resized native window, including split/freeform mode.
+        if (!event.minimized && event.width > 0 && event.height > 0) {
+            app.mNativeWindow->Width = event.width;
+            app.mNativeWindow->Height = event.height;
+        }
+#endif
         app.mNativeResizePending = true;
         app.mPhysMinimized = event.minimized;
         app.mGpuContext->NotifySurfaceSuspended(event.minimized);

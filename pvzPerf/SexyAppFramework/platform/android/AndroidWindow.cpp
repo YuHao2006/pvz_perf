@@ -1,6 +1,11 @@
 ﻿#include "../NativeWindow.h"
 #include "AndroidWindow.h"
 #include "SexyAppFramework/Common.h"
+#include "widget/EditWidget.h"
+#include <cmath>
+#include <atomic>
+#include <mutex>
+#include <string>
 #include <android/input.h>
 #include <android/log.h>
 #include <android_native_app_glue.h>
@@ -14,6 +19,92 @@ void* gEventContext = nullptr;
 // 触摸即指针：MOVE 只更新采样值，DOWN/UP 走事件 FIFO（坐标随事件携带）。
 NativePointerState gPointer{};
 bool gTouching = false;
+bool gGameGesture = false;
+std::atomic<unsigned long long> gSurfaceOrigin{0};
+EditWidget* gEditor = nullptr; // Only dereferenced on the native game thread.
+jlong gEditorSession = 0;
+std::string gEditorText;
+struct TextEdit {
+    jlong session = 0;
+    std::string text;
+    bool done = false;
+    bool pending = false;
+};
+std::mutex gTextMutex;
+TextEdit gPendingText;
+
+void PublishEditor(bool show)
+{
+    if (!gApp || !gApp->activity) return;
+    JavaVM* vm = gApp->activity->vm;
+    JNIEnv* env = nullptr;
+    bool attached = false;
+    if (vm->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6) == JNI_EDETACHED) {
+        if (vm->AttachCurrentThread(&env, nullptr) != JNI_OK) return;
+        attached = true;
+    }
+    if (!env) return;
+    if (env->PushLocalFrame(4) == JNI_OK) {
+        jclass activityClass = env->GetObjectClass(gApp->activity->clazz);
+        if (show) {
+            jmethodID method = env->GetMethodID(activityClass, "showTextInput", "(J[BIIIZ)V");
+            if (method) {
+                jbyteArray text = env->NewByteArray(static_cast<jsize>(gEditorText.size()));
+                if (text) {
+                    env->SetByteArrayRegion(text, 0, static_cast<jsize>(gEditorText.size()),
+                        reinterpret_cast<const jbyte*>(gEditorText.data()));
+                    env->CallVoidMethod(gApp->activity->clazz, method, gEditorSession, text,
+                        gEditor->mCursorPos, gEditor->mHilitePos, gEditor->mMaxChars,
+                        static_cast<jboolean>(gEditor->mPasswordChar != 0));
+                }
+            }
+        } else {
+            jmethodID method = env->GetMethodID(activityClass, "hideTextInput", "(J)V");
+            if (method) env->CallVoidMethod(gApp->activity->clazz, method, gEditorSession);
+        }
+        env->PopLocalFrame(nullptr);
+    }
+    if (env->ExceptionCheck()) env->ExceptionClear();
+    if (attached) vm->DetachCurrentThread();
+}
+
+void ConsumeTextEdit()
+{
+    if (!gEditor) return; // No lock or mailbox work in ordinary game frames.
+    TextEdit edit;
+    {
+        std::lock_guard lock(gTextMutex);
+        if (!gPendingText.pending) return;
+        edit = std::move(gPendingText);
+        gPendingText = {};
+    }
+    if (!gEditor || edit.session != gEditorSession) return;
+    EditWidget* editor = gEditor;
+    // Keep the original editor's validation, capitalization, font and width
+    // limits. UTF-8 bytes must never be inserted directly into bitmap-font text.
+    const std::string oldText = editor->mString;
+    size_t prefix = 0;
+    while (prefix < oldText.size() && prefix < edit.text.size() && oldText[prefix] == edit.text[prefix])
+        ++prefix;
+    size_t suffix = 0;
+    while (suffix < oldText.size() - prefix && suffix < edit.text.size() - prefix &&
+        oldText[oldText.size() - suffix - 1] == edit.text[edit.text.size() - suffix - 1])
+        ++suffix;
+    editor->mCursorPos = static_cast<int>(oldText.size() - suffix);
+    editor->mHilitePos = static_cast<int>(prefix);
+    if (oldText.size() - suffix > prefix) editor->KeyDown(KEYCODE_BACK);
+    for (size_t i = prefix; i < edit.text.size() - suffix; ++i) {
+        const auto value = static_cast<unsigned char>(edit.text[i]);
+        if (value >= 32 && value <= 126) editor->KeyChar(static_cast<char>(value));
+    }
+    editor->mHilitePos = -1;
+    gEditorText = edit.text;
+    if (editor->mString != gEditorText) SyncAndroidTextInput(editor);
+    if (edit.done) {
+        EndAndroidTextInput(editor);
+        editor->KeyDown(KEYCODE_RETURN); // May close and destroy the widget.
+    }
+}
 
 void EmitEvent(const NativeWindowEvent& event)
 {
@@ -24,23 +115,61 @@ void EmitEvent(const NativeWindowEvent& event)
 
 void BindAndroidApp(android_app* state) { gApp = state; }
 
+extern "C" JNIEXPORT void JNICALL
+Java_com_openpvz_perf_PerfActivity_nativeSurfaceOriginChanged(JNIEnv*, jclass, jint left, jint top)
+{
+    gSurfaceOrigin.store((static_cast<unsigned long long>(static_cast<unsigned int>(left)) << 32)
+        | static_cast<unsigned int>(top), std::memory_order_relaxed);
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_openpvz_perf_PerfActivity_nativeTextChanged(JNIEnv* env, jclass,
+    jlong session, jbyteArray bytes, jboolean done)
+{
+    TextEdit edit;
+    edit.session = session;
+    edit.text.resize(static_cast<size_t>(env->GetArrayLength(bytes)));
+    env->GetByteArrayRegion(bytes, 0, static_cast<jsize>(edit.text.size()),
+        reinterpret_cast<jbyte*>(edit.text.data()));
+    if (env->ExceptionCheck()) return;
+    edit.done = done;
+    edit.pending = true;
+    std::lock_guard lock(gTextMutex);
+    gPendingText = std::move(edit);
+}
+
+void BeginAndroidTextInput(EditWidget* editor)
+{
+    if (gEditor != editor) ++gEditorSession;
+    gEditor = editor;
+    gEditorText = editor->mString;
+    PublishEditor(true);
+}
+
+void EndAndroidTextInput(EditWidget* editor)
+{
+    if (gEditor != editor) return;
+    ++gEditorSession; // Reject callbacks already queued by the previous editor.
+    gEditor = nullptr;
+    gEditorText.clear();
+    PublishEditor(false);
+}
+
+void SyncAndroidTextInput(EditWidget* editor)
+{
+    if (gEditor != editor || gEditorText == editor->mString) return;
+    gEditorText = editor->mString;
+    PublishEditor(true);
+}
+
 void AttachAndroidNativeWindow(ANativeWindow* window) { gWindow = window; }
 ANativeWindow* AttachedAndroidNativeWindow() { return gWindow; }
-
-void ShowAndroidSoftInput(bool show)
-{
-    if (!gApp || !gApp->activity) return;
-    if (show)
-        // FORCED：IMPLICIT 需窗口声明 softInputMode，NativeActivity 默认没有
-        ANativeActivity_showSoftInput(gApp->activity,
-            ANATIVEACTIVITY_SHOW_SOFT_INPUT_FORCED);
-    else
-        ANativeActivity_hideSoftInput(gApp->activity, 0);
-}
 
 void AndroidAppCommand(android_app* state, int32_t command)
 {
     switch (command) {
+    case APP_CMD_WINDOW_RESIZED:
+    case APP_CMD_CONFIG_CHANGED:
     case APP_CMD_INIT_WINDOW:
         gWindow = state->window;
 
@@ -49,6 +178,8 @@ void AndroidAppCommand(android_app* state, int32_t command)
         if (gWindow) {
             NativeWindowEvent event{};
             event.kind = NativeWindowEventKind::Resize;
+            event.width = ANativeWindow_getWidth(gWindow);
+            event.height = ANativeWindow_getHeight(gWindow);
             EmitEvent(event);
         }
         break;
@@ -56,6 +187,9 @@ void AndroidAppCommand(android_app* state, int32_t command)
         // 必须先于 glue 释放 ANativeWindow 停止呈现；Resize(最小化) 在
         // 本帧排水点把 surface 标记挂起，之后无人再触碰该窗口指针。
         gWindow = nullptr;
+        gGameGesture = false;
+        gTouching = false;
+        gPointer.inside = false;
         {
             NativeWindowEvent event{};
             event.kind = NativeWindowEventKind::Resize;
@@ -71,6 +205,7 @@ void AndroidAppCommand(android_app* state, int32_t command)
         break;
     }
     case APP_CMD_LOST_FOCUS: {
+        if (gEditor) EndAndroidTextInput(gEditor);
         NativeWindowEvent event{};
         event.kind = NativeWindowEventKind::Focus;
         event.focused = false;
@@ -115,7 +250,12 @@ int32_t AndroidAppInput(android_app*, AInputEvent* event)
             case AKEYCODE_SLASH: text = '/'; break;
             case AKEYCODE_PLUS: text = '+'; break;
             case AKEYCODE_EQUALS: text = '='; break;
-            default: return 0;  // 未映射键（含音量键）交还系统处理
+            default:
+                // Non-text keys (Back/Escape, Enter, Delete, arrows) still
+                // belong to the game's key path. Leave volume/system keys alone.
+                if (NativeInput::EngineKeyFromNative(static_cast<unsigned>(keycode)) == 0)
+                    return 0;
+                break;
         }
         const unsigned long long timeMs = static_cast<unsigned long long>(
             AKeyEvent_getEventTime(event) / 1000000);
@@ -136,10 +276,18 @@ int32_t AndroidAppInput(android_app*, AInputEvent* event)
     }
     if (type != AINPUT_EVENT_TYPE_MOTION)
         return 0;
-    const float x = AMotionEvent_getX(event, 0);
-    const float y = AMotionEvent_getY(event, 0);
+    const auto origin = gSurfaceOrigin.load(std::memory_order_relaxed);
+    const float x = AMotionEvent_getX(event, 0) - static_cast<int>(origin >> 32);
+    const float y = AMotionEvent_getY(event, 0) - static_cast<int>(static_cast<unsigned int>(origin));
     const int32_t action = AMotionEvent_getAction(event);
     const int32_t masked = action & AMOTION_EVENT_ACTION_MASK;
+    if (masked == AMOTION_EVENT_ACTION_DOWN) {
+        gGameGesture = gWindow && x >= 0 && y >= 0 &&
+            x < ANativeWindow_getWidth(gWindow) && y < ANativeWindow_getHeight(gWindow);
+    }
+    // The DOWN target owns the complete gesture. In particular, caption drags
+    // must stay in Java even if the pointer later crosses into the game area.
+    if (!gGameGesture) return 0;
     const int32_t pointerIndex = action >> AMOTION_EVENT_ACTION_POINTER_INDEX_SHIFT;
     bool button = false, pressed = false;
     switch (masked) {
@@ -166,6 +314,8 @@ int32_t AndroidAppInput(android_app*, AInputEvent* event)
     gPointer.x = x;
     gPointer.y = y;
     if (button) gTouching = pressed;
+    if (masked == AMOTION_EVENT_ACTION_UP || masked == AMOTION_EVENT_ACTION_CANCEL)
+        gGameGesture = false;
     gPointer.inside = gTouching;
     if (button) {
         NativeWindowEvent out{};
@@ -201,6 +351,7 @@ NativeWindow::~NativeWindow()
 void NativeWindow::PumpEvents()
 {
     if (!gApp) return;
+    ConsumeTextEdit();
     // 非阻塞排空：命令/输入在本线程分发，分发即入队，渲染在同一帧稍后消费。
     int events = 0;
     android_poll_source* source = nullptr;
@@ -218,6 +369,61 @@ void NativeWindow::SetFullscreen(bool) {}
 void NativeWindow::Resize(int, int)
 {
     // 窗口尺寸归系统所有；几何以 QueryNativeClientExtent 直读为准。
+}
+double NativeWindow::RefreshRate() const
+{
+    if (!gApp || !gApp->activity || !gApp->activity->vm || !gApp->activity->clazz)
+        return 0.0;
+
+    JavaVM* vm = gApp->activity->vm;
+    JNIEnv* env = nullptr;
+    bool attachedHere = false;
+    const jint status = vm->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6);
+    if (status == JNI_EDETACHED)
+    {
+        if (vm->AttachCurrentThread(&env, nullptr) != JNI_OK)
+            return 0.0;
+        attachedHere = true;
+    }
+    else if (status != JNI_OK)
+        return 0.0;
+
+    double refreshRate = 0.0;
+    if (env->PushLocalFrame(8) == JNI_OK)
+    {
+        // The default-display API also works on Android releases before API 30.
+        // This query is made at window creation, outside the frame loop.
+        do
+        {
+            const jclass activityClass = env->GetObjectClass(gApp->activity->clazz);
+            if (env->ExceptionCheck() || !activityClass) break;
+            const jmethodID getWindowManager = env->GetMethodID(activityClass,
+                "getWindowManager", "()Landroid/view/WindowManager;");
+            if (env->ExceptionCheck() || !getWindowManager) break;
+            const jobject manager = env->CallObjectMethod(gApp->activity->clazz, getWindowManager);
+            if (env->ExceptionCheck() || !manager) break;
+            const jclass managerClass = env->GetObjectClass(manager);
+            if (env->ExceptionCheck() || !managerClass) break;
+            const jmethodID getDefaultDisplay = env->GetMethodID(managerClass,
+                "getDefaultDisplay", "()Landroid/view/Display;");
+            if (env->ExceptionCheck() || !getDefaultDisplay) break;
+            const jobject display = env->CallObjectMethod(manager, getDefaultDisplay);
+            if (env->ExceptionCheck() || !display) break;
+            const jclass displayClass = env->GetObjectClass(display);
+            if (env->ExceptionCheck() || !displayClass) break;
+            const jmethodID getRefreshRate = env->GetMethodID(displayClass, "getRefreshRate", "()F");
+            if (env->ExceptionCheck() || !getRefreshRate) break;
+            const jfloat value = env->CallFloatMethod(display, getRefreshRate);
+            if (env->ExceptionCheck()) break;
+            if (std::isfinite(value) && value > 0.0f)
+                refreshRate = value;
+        } while (false);
+        if (env->ExceptionCheck()) env->ExceptionClear();
+        env->PopLocalFrame(nullptr);
+    }
+    if (env->ExceptionCheck()) env->ExceptionClear();
+    if (attachedHere) vm->DetachCurrentThread();
+    return refreshRate;
 }
 bool NativeWindow::Minimized() const { return gWindow == nullptr; }
 NativeWindowBackend NativeWindow::Backend() const { return NativeWindowBackend::Android; }

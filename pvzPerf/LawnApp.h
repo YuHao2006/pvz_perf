@@ -21,6 +21,7 @@ class PottedPlant;
 class EffectSystem;
 class TodParticleSystem;
 class Reanimation;
+enum class ReanimTimeDomain : std::uint32_t;
 class ReanimatorCache;
 class ProfileMgr;
 class PlayerInfo;
@@ -218,8 +219,9 @@ public:
 	AlmanacDialog*					DoAlmanacDialog(SeedType theSeedType = SeedType::SEED_NONE, ZombieType theZombieType = ZombieType::ZOMBIE_INVALID);
 	bool							KillAlmanacDialog();
 	int								GetSeedsAvailable();
-	Reanimation*					AddReanimation(float theX, float theY, int theRenderOrder, ReanimationType theReanimationType);
-	TodParticleSystem*				AddTodParticle(float theX, float theY, int theRenderOrder, ParticleEffect theEffect, std::uint32_t theVariant = 0);
+	Reanimation*					AddReanimation(float theX, float theY, int theRenderOrder, ReanimationType theReanimationType,
+        std::int64_t nowNs, ReanimTimeDomain domain = static_cast<ReanimTimeDomain>(0));
+	TodParticleSystem*				AddTodParticle(float theX, float theY, int theRenderOrder, ParticleEffect theEffect, std::int64_t nowNs, std::uint32_t theVariant = 0);
 	/*inline*/ ParticleSystemID		ParticleGetID(TodParticleSystem* theParticle);
 	/*inline*/ TodParticleSystem*	ParticleGet(ParticleSystemID theParticleID);
 	/*inline*/ TodParticleSystem*	ParticleTryToGet(ParticleSystemID theParticleID);

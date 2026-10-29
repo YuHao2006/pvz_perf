@@ -11,6 +11,8 @@
 #include "Lawn/Coin.h"
 #include "Lawn/LawnMower.h"
 #include "Lawn/GridItem.h"
+#include "Lawn/ZenGarden.h"
+#include "Lawn/System/StinkyTimestamp.h"
 #include "Lawn/CursorObject.h"
 #include "Lawn/MessageWidget.h"
 #include "Lawn/System/Music.h"
@@ -27,6 +29,7 @@
 #include "SexyAppFramework/misc/ResourceManager.h"
 #include <array>
 #include <bit>
+#include <ctime>
 #include <memory>
 #include <random>
 #include <stdexcept>
@@ -114,6 +117,228 @@ inline void PublishTime(LawnApp& app, Board& board, std::int64_t delta)
     auto& clocks = *app.mEffectSystem->mReanimationHolder;
     clocks.mBattleTimeNs = ReanimClock::Add(clocks.mBattleTimeNs, delta);
     clocks.mVisualTimeNs = ReanimClock::Add(clocks.mVisualTimeNs, delta);
+}
+
+inline void StinkyGardenReentry(LawnApp& app, Board& board)
+{
+    PlayerInfo profile;
+    ZenGarden garden;
+    auto& clocks = *app.mEffectSystem->mReanimationHolder;
+    struct RestoreStinkyContext {
+        LawnApp& app;
+        Board& board;
+        PlayerInfo* profile;
+        ZenGarden* garden;
+        GameMode mode;
+        GameScenes scene;
+        BackgroundType background;
+        std::uint64_t level;
+        std::int64_t visual, battle;
+        ~RestoreStinkyContext() {
+            board.mGridItems.DataArrayFreeAll();
+            app.mEffectSystem->EffectSystemFreeAll();
+            app.mBoard = &board;
+            app.mPlayerInfo = profile;
+            app.mZenGarden = garden;
+            app.mGameMode = mode;
+            app.mGameScene = scene;
+            board.mBackground = background;
+            board.mLevelTimeNs = level;
+            auto& clocks = *app.mEffectSystem->mReanimationHolder;
+            clocks.mVisualTimeNs = visual;
+            clocks.mBattleTimeNs = battle;
+        }
+    } restore{app, board, app.mPlayerInfo, app.mZenGarden, app.mGameMode,
+        app.mGameScene, board.mBackground, board.mLevelTimeNs,
+        clocks.mVisualTimeNs, clocks.mBattleTimeNs};
+    app.mPlayerInfo = &profile;
+    app.mZenGarden = &garden;
+    app.mGameMode = GAMEMODE_LIMBO_ZEN_GARDEN;
+    app.mGameScene = SCENE_PLAYING; // The Board selects Battle; Stinky must remain Visual.
+    board.mBackground = BACKGROUND_GREENHOUSE;
+    board.mLevelTimeNs = 0;
+    clocks.mBattleTimeNs = 0;
+    clocks.mVisualTimeNs = 123'456'789'000;
+    garden.mApp = &app;
+    garden.mBoard = &board;
+    garden.mGardenType = GARDEN_MAIN;
+    garden.RefreshTimeCache();
+    profile.mHasSeenStinky = 1;
+    profile.mHasWokenStinky = 1;
+    profile.mPurchases[STORE_ITEM_STINKY_THE_SNAIL] =
+        StinkyTimestamp::EncodeWakeTime(std::time(nullptr));
+    profile.mStinkyPosX = 400;
+    profile.mStinkyPosY = 300;
+    garden.AddStinky();
+    auto* stinky = garden.GetStinky();
+    Require(stinky && stinky->mPosX == 400 && stinky->mPosY == 300,
+        "Stinky failed to restore a valid saved garden position");
+    auto* animation = app.ReanimationGet(stinky->mGridItemReanimID);
+    Require((*app.mEffectSystem->mReanimationHolder).mTimeDomains[(*app.mEffectSystem->mReanimationHolder).mReanimations.DataArrayIndexOf(animation)] == ReanimTimeDomain::Visual &&
+        animation->mLastUpdateTimeNs == clocks.mVisualTimeNs,
+        "Stinky creation used the reset Board clock instead of nonzero visual time");
+    stinky->mGoalX = 200;
+    stinky->mGoalY = 300;
+    stinky->mStateEndTimeNs = clocks.mVisualTimeNs + 60'000'000'000;
+    const auto initialX = stinky->mPosX;
+    Schedule(100, 500'000'000, [&](std::int64_t delta) {
+        clocks.mVisualTimeNs += delta;
+        // Execute the actual owner/EffectSystem/GridItem order with a reset level clock.
+        garden.StinkyUpdate(stinky);
+        Require(animation->mLastUpdateTimeNs == clocks.mVisualTimeNs,
+            "Stinky owner did not prepare the supplied visual instant before root motion");
+        app.mEffectSystem->UpdateAt(clocks.mVisualTimeNs, 0);
+        stinky->Update();
+        Require(animation->mLastUpdateTimeNs == clocks.mVisualTimeNs &&
+            (*app.mEffectSystem->mReanimationHolder).mTimeDomains[(*app.mEffectSystem->mReanimationHolder).mReanimations.DataArrayIndexOf(animation)] == ReanimTimeDomain::Visual && !animation->mDead &&
+            stinky->mPosX <= initialX && stinky->mPosX >= stinky->mGoalX,
+            "GridItem rewound Stinky onto Board time or its source root escaped the goal segment");
+    });
+    Require(stinky->mPosX < initialX,
+        "Stinky source horizontal root stopped advancing on its visual timeline");
+    garden.LeaveGarden();
+    const int savedX = profile.mStinkyPosX, savedY = profile.mStinkyPosY;
+    Require(!garden.GetStinky(), "Leaving the garden retained a live Stinky runtime actor");
+    board.mGridItems.DataArrayFreeAll();
+    app.mEffectSystem->EffectSystemFreeAll();
+    {
+        Board reentered(&app); // A genuinely new Board resets level time, not visual time.
+        reentered.mBackground = BACKGROUND_GREENHOUSE;
+        reentered.mLevelTimeNs = 0;
+        clocks.mBattleTimeNs = 0;
+        clocks.mVisualTimeNs += 60'000'000'000;
+        garden.mBoard = &reentered;
+        garden.AddStinky();
+        stinky = garden.GetStinky();
+        animation = app.ReanimationGet(stinky->mGridItemReanimID);
+        Require(stinky->mPosX == savedX && stinky->mPosY == savedY &&
+            animation->mLastUpdateTimeNs == clocks.mVisualTimeNs &&
+            (*app.mEffectSystem->mReanimationHolder).mTimeDomains[(*app.mEffectSystem->mReanimationHolder).mReanimations.DataArrayIndexOf(animation)] == ReanimTimeDomain::Visual &&
+            stinky->mRootReanimID == ReanimationID::REANIMATIONID_NULL,
+            "New-board garden re-entry lost saved coordinates or retained an old root binding");
+        garden.StinkyUpdate(stinky);
+        stinky->Update();
+        Require(!animation->mDead && animation->mLastUpdateTimeNs == clocks.mVisualTimeNs &&
+            stinky->mPosX == savedX && stinky->mPosY == savedY,
+            "First re-entry update jumped the saved snail onto an old root/time origin");
+        // Ordinary grid owners must still rebase from an intro's Visual domain
+        // to their Board's Battle clock, without replaying their entry phase.
+        GridItem ordinary;
+        ordinary.mBoard = &reentered;
+        ordinary.mGridItemType = GRIDITEM_LADDER;
+        auto* ordinaryAnim = app.AddReanimation(0, 0, 0, REANIM_STINKY,
+            clocks.mVisualTimeNs, ReanimTimeDomain::Visual);
+        ordinaryAnim->PlayReanim(ReanimTrackId::anim_crawl, REANIM_LOOP, 0, 6.0f);
+        ordinaryAnim->SeekRatio(0.25f);
+        const auto ordinaryPhase = ordinaryAnim->SamplePlayback().phaseNs;
+        ordinary.mGridItemReanimID = app.ReanimationGetID(ordinaryAnim);
+        ordinary.Update();
+        Require((*app.mEffectSystem->mReanimationHolder).mTimeDomains[(*app.mEffectSystem->mReanimationHolder).mReanimations.DataArrayIndexOf(ordinaryAnim)] == ReanimTimeDomain::Battle &&
+            ordinaryAnim->mLastUpdateTimeNs == 0 &&
+            ordinaryAnim->SamplePlayback().phaseNs == ordinaryPhase,
+            "Ordinary grid item failed its Visual-intro to Battle owner clock transition");
+        ordinary.GridItemDie();
+        for (const auto invalid : {std::array<int,2>{-4000,300},
+                std::array<int,2>{800,300}, std::array<int,2>{400,600}})
+        {
+            garden.LeaveGarden();
+            reentered.mGridItems.DataArrayFreeAll();
+            app.mEffectSystem->EffectSystemFreeAll();
+            profile.mStinkyPosX = invalid[0];
+            profile.mStinkyPosY = invalid[1];
+            garden.AddStinky();
+            stinky = garden.GetStinky();
+            Require(stinky && stinky->mPosX > 0 && stinky->mPosX < BOARD_WIDTH &&
+                stinky->mPosY > 0 && stinky->mPosY < BOARD_HEIGHT &&
+                stinky->mGoalX == stinky->mPosX && stinky->mGoalY == stinky->mPosY &&
+                profile.mStinkyPosX == stinky->mPosX && profile.mStinkyPosY == stinky->mPosY,
+                "Impossible saved Stinky position did not recover through original default goals");
+        }
+        // Coin chasing may legitimately leave the raised platform: preserve that save.
+        garden.LeaveGarden();
+        reentered.mGridItems.DataArrayFreeAll();
+        app.mEffectSystem->EffectSystemFreeAll();
+        profile.mStinkyPosX = 10;
+        profile.mStinkyPosY = 500;
+        garden.AddStinky();
+        stinky = garden.GetStinky();
+        Require(stinky && stinky->mPosX == 10 && stinky->mPosY == 500,
+            "Stinky load recovery clamped a legitimate on-canvas coin-chasing position");
+        garden.LeaveGarden();
+    }
+    app.mBoard = &board;
+    std::cout << "PASS Stinky: visual root ownership, new-Board re-entry, saved-position preservation and invalid-save recovery\n";
+}
+
+inline void TreeOfWisdomEntryPose(LawnApp& app, Board& board)
+{
+    PlayerInfo profile;
+    auto& clocks=*app.mEffectSystem->mReanimationHolder;
+    struct RestoreTreeContext {
+        LawnApp& app;
+        Board& board;
+        PlayerInfo* profile;
+        GameMode mode;
+        GameScenes scene;
+        bool mute;
+        std::uint64_t level;
+        std::int64_t visual, battle;
+        ~RestoreTreeContext() {
+            app.mEffectSystem->EffectSystemFreeAll();
+            app.mPlayerInfo=profile;
+            app.mGameMode=mode;
+            app.mGameScene=scene;
+            app.mMuteSoundsForCutscene=mute;
+            board.mLevelTimeNs=level;
+            auto& clocks=*app.mEffectSystem->mReanimationHolder;
+            clocks.mVisualTimeNs=visual;
+            clocks.mBattleTimeNs=battle;
+        }
+    } restore{app,board,app.mPlayerInfo,app.mGameMode,app.mGameScene,
+        app.mMuteSoundsForCutscene,board.mLevelTimeNs,clocks.mVisualTimeNs,clocks.mBattleTimeNs};
+    app.mPlayerInfo=&profile;
+    app.mGameMode=GAMEMODE_TREE_OF_WISDOM;
+    app.mMuteSoundsForCutscene=true;
+    const int record=app.GetCurrentChallengeIndex();
+    for (const int height:{0,1,12,50,100})
+    {
+        app.mEffectSystem->EffectSystemFreeAll();
+        app.mGameScene=SCENE_LEVEL_INTRO;
+        board.mLevelTimeNs=0;
+        clocks.mBattleTimeNs=0;
+        clocks.mVisualTimeNs=123'456'789'000;
+        profile.mChallengeRecords[record]=height;
+        profile.mPurchases[STORE_ITEM_TREE_FOOD]=0;
+        Challenge challenge;
+        challenge.mBoard=&board;
+        challenge.TreeOfWisdomInit();
+        auto* tree=app.ReanimationGet(challenge.mReanimChallenge);
+        const auto entry=tree->SamplePlayback().phaseNs;
+        Require(entry==ReanimClock::SignedMulDiv(990,tree->mPeriodNs,1000) &&
+            tree->mLastUpdateTimeNs==clocks.mVisualTimeNs &&
+            (*app.mEffectSystem->mReanimationHolder).mTimeDomains[(*app.mEffectSystem->mReanimationHolder).mReanimations.DataArrayIndexOf(tree)]==ReanimTimeDomain::Visual,
+            "Tree entry replayed growth instead of selecting the original completed pose");
+        app.mGameScene=SCENE_PLAYING;
+        board.mLevelTimeNs=10'000'000;
+        challenge.Update(10'000'000);
+        Require((*app.mEffectSystem->mReanimationHolder).mTimeDomains[(*app.mEffectSystem->mReanimationHolder).mReanimations.DataArrayIndexOf(tree)]==ReanimTimeDomain::Battle &&
+            tree->mLastUpdateTimeNs==static_cast<std::int64_t>(board.mLevelTimeNs) &&
+            tree->SamplePlayback().phaseNs==entry &&
+            profile.mChallengeRecords[record]==height &&
+            challenge.mChallengeState==STATECHALLENGE_TREE_WAITING_TO_BABBLE,
+            "Tree playing-clock transition rewound the entry pose or fabricated growth");
+        challenge.TreeOfWisdomGrow();
+        Require(profile.mChallengeRecords[record]==height+1 &&
+            tree->SamplePlayback().phaseNs==0 && tree->mAnimRate==8.0f &&
+            tree->mLoopType==REANIM_PLAY_ONCE_AND_HOLD &&
+            challenge.mChallengeState==(height ? STATECHALLENGE_TREE_JUST_GREW : STATECHALLENGE_NORMAL),
+            "Actual Tree food no longer starts its original growth animation");
+        board.mLevelTimeNs+=1;
+        challenge.Update(1);
+        Require(tree->SamplePlayback().phaseNs==1,
+            "Actual Tree growth did not advance from the supplied owner timestamp");
+    }
+    std::cout<<"PASS Tree of Wisdom: completed entry pose, visual-to-battle rebase and food-only growth at five heights\n";
 }
 
 inline void SharedClockConsumers(Board& board)
@@ -222,7 +447,7 @@ inline void LaunchDeadlines(LawnApp& app, Board& board)
         plant.mLaunchWindowStartNs = 0;
         Schedule(frequency, 12'718'281'829, [&](std::int64_t delta) {
             board.mLevelTimeNs += delta;
-            plant.UpdateShooter();
+            plant.UpdateShooter(static_cast<std::int64_t>(board.mLevelTimeNs), app.mEffectSystem->mReanimationHolder->mVisualTimeNs, (board.AnimationTimeDomain()==ReanimTimeDomain::Battle ? static_cast<std::int64_t>(board.mLevelTimeNs) : app.mEffectSystem->mReanimationHolder->mVisualTimeNs));
         });
         Require(plant.mNextLaunchTimeNs > board.mLevelTimeNs,
             "Production shooter did not consume elapsed firing periods");
@@ -251,15 +476,15 @@ inline void LaunchDeadlines(LawnApp& app, Board& board)
     paused.mLaunchWindowStartNs = 1'000'000'000;
     paused.mNextLaunchTimeNs = 1'712'345'678;
     board.mLevelTimeNs = 1'237'192'835;
-    paused.Update(237'192'835);
+    paused.Update(static_cast<std::int64_t>(board.mLevelTimeNs), app.mEffectSystem->mReanimationHolder->mVisualTimeNs, (board.AnimationTimeDomain()==ReanimTimeDomain::Battle ? static_cast<std::int64_t>(board.mLevelTimeNs) : app.mEffectSystem->mReanimationHolder->mVisualTimeNs), 237'192'835);
     Require(paused.mNextLaunchTimeNs == 1'949'538'513 &&
         paused.mLaunchWindowStartNs == board.mLevelTimeNs,
         "Production paused plant did not preserve its exact remaining launch time");
     const auto frozenDeadline = paused.mNextLaunchTimeNs;
-    paused.Update(0);
+    paused.Update(static_cast<std::int64_t>(board.mLevelTimeNs), app.mEffectSystem->mReanimationHolder->mVisualTimeNs, (board.AnimationTimeDomain()==ReanimTimeDomain::Battle ? static_cast<std::int64_t>(board.mLevelTimeNs) : app.mEffectSystem->mReanimationHolder->mVisualTimeNs), 0);
     Require(paused.mNextLaunchTimeNs == frozenDeadline,
         "Plant shifted a deadline while the level clock was stopped");
-    paused.Update(237'192'835);
+    paused.Update(static_cast<std::int64_t>(board.mLevelTimeNs), app.mEffectSystem->mReanimationHolder->mVisualTimeNs, (board.AnimationTimeDomain()==ReanimTimeDomain::Battle ? static_cast<std::int64_t>(board.mLevelTimeNs) : app.mEffectSystem->mReanimationHolder->mVisualTimeNs), 237'192'835);
     Require(paused.mNextLaunchTimeNs == frozenDeadline,
         "Plant newly anchored at this step's endpoint was frozen for time before its creation");
     std::cout << "PASS actual Plant launch deadlines: ns randomness, exact partitions, "
@@ -297,7 +522,7 @@ inline void LaunchDeadlines(LawnApp& app, Board& board)
         board.mLevelTimeNs = 0;
         Sexy::SRand(0x601982);
         Plant gloom;
-        gloom.PlantInitialize(3, 2, seed, SeedType::SEED_NONE);
+        gloom.PlantInitialize(static_cast<std::int64_t>(board.mLevelTimeNs), app.mEffectSystem->mReanimationHolder->mVisualTimeNs, (board.AnimationTimeDomain()==ReanimTimeDomain::Battle ? static_cast<std::int64_t>(board.mLevelTimeNs) : app.mEffectSystem->mReanimationHolder->mVisualTimeNs), 3, 2, seed, SeedType::SEED_NONE);
         gloom.mIsAsleep = false;
         gloom.mNextLaunchTimeNs = 100'000'000;
         gloom.mLaunchWindowStartNs = 0;
@@ -312,7 +537,7 @@ inline void LaunchDeadlines(LawnApp& app, Board& board)
             board.mLevelTimeNs += delta;
             const int health = target->mBodyHealth;
             const auto projectiles = board.mProjectiles.mSize;
-            gloom.UpdateShooting();
+            gloom.UpdateShooting(static_cast<std::int64_t>(board.mLevelTimeNs), app.mEffectSystem->mReanimationHolder->mVisualTimeNs, (board.AnimationTimeDomain()==ReanimTimeDomain::Battle ? static_cast<std::int64_t>(board.mLevelTimeNs) : app.mEffectSystem->mReanimationHolder->mVisualTimeNs));
             if (isGloom ? target->mBodyHealth != health : board.mProjectiles.mSize != projectiles)
             {
                 Require(isGloom ? target->mBodyHealth == health - 20 :
@@ -325,7 +550,7 @@ inline void LaunchDeadlines(LawnApp& app, Board& board)
                 ++hits;
             }
             const auto due = gloom.mNextLaunchTimeNs;
-            gloom.UpdateShooter();
+            gloom.UpdateShooter(static_cast<std::int64_t>(board.mLevelTimeNs), app.mEffectSystem->mReanimationHolder->mVisualTimeNs, (board.AnimationTimeDomain()==ReanimTimeDomain::Battle ? static_cast<std::int64_t>(board.mLevelTimeNs) : app.mEffectSystem->mReanimationHolder->mVisualTimeNs));
             if (due <= board.mLevelTimeNs)
             {
                 if (volleys)
@@ -355,12 +580,12 @@ inline void LaunchDeadlines(LawnApp& app, Board& board)
         app.mEffectSystem->EffectSystemFreeAll();
         board.mLevelTimeNs = 0;
         Plant plant;
-        plant.PlantInitialize(3, 2, seed, SeedType::SEED_NONE);
+        plant.PlantInitialize(static_cast<std::int64_t>(board.mLevelTimeNs), app.mEffectSystem->mReanimationHolder->mVisualTimeNs, (board.AnimationTimeDomain()==ReanimTimeDomain::Battle ? static_cast<std::int64_t>(board.mLevelTimeNs) : app.mEffectSystem->mReanimationHolder->mVisualTimeNs), 3, 2, seed, SeedType::SEED_NONE);
         plant.mNextLaunchTimeNs = 1'000'000'000;
         plant.mLaunchWindowStartNs = 0;
         plant.mShootingCounter = 10;
         board.mLevelTimeNs = seed == SeedType::SEED_CATTAIL ? 500'000'000 : 750'000'000;
-        plant.UpdateShooter();
+        plant.UpdateShooter(static_cast<std::int64_t>(board.mLevelTimeNs), app.mEffectSystem->mReanimationHolder->mVisualTimeNs, (board.AnimationTimeDomain()==ReanimTimeDomain::Battle ? static_cast<std::int64_t>(board.mLevelTimeNs) : app.mEffectSystem->mReanimationHolder->mVisualTimeNs));
         Require(plant.mShootingCounter.mNanoseconds ==
             (seed == SeedType::SEED_CATTAIL ? 50 : 26) * PlantLaunchClock::Tick,
             "Secondary launch was suppressed by an unfinished shooting timer");
@@ -387,6 +612,7 @@ inline std::array<std::uint64_t, 8> Bowling(LawnApp& app, Board& board,
     board.mPlants.DataArrayFreeAll();
     board.RebuildPlantCellBucket();
     app.mEffectSystem->EffectSystemFreeAll();
+    board.mLevelTimeNs = 0;
     app.mEffectSystem->mReanimationHolder->mBattleTimeNs = 0;
     app.mEffectSystem->mReanimationHolder->mVisualTimeNs = 0;
     auto* plant = board.mPlants.DataArrayAlloc();
@@ -400,8 +626,8 @@ inline std::array<std::uint64_t, 8> Bowling(LawnApp& app, Board& board,
     plant->mDead = false;
     plant->mIsOnBoard = false;
     board.RebuildPlantCellBucket();
-    auto* animation = app.AddReanimation(0, 0, 0, ReanimationType::REANIM_WALLNUT);
-    animation->BindTimeDomain(ReanimTimeDomain::Battle);
+    auto* animation = app.AddReanimation(0, 0, 0, ReanimationType::REANIM_WALLNUT, app.mEffectSystem->mReanimationHolder->mBattleTimeNs, ReanimTimeDomain::Battle);
+    (*app.mEffectSystem->mReanimationHolder).BindAnimationTime(*animation,ReanimTimeDomain::Battle, app.mEffectSystem->mReanimationHolder->mBattleTimeNs);
     animation->SetFramesForLayer(ReanimTrackId::_ground);
     animation->ApplyRate(15.3072289f);
     animation->SeekRatio(0.3372819f);
@@ -414,7 +640,8 @@ inline std::array<std::uint64_t, 8> Bowling(LawnApp& app, Board& board,
     AdvanceRoot(*plant, *animation, scale, 0);
     Schedule(frequency, duration, [&](std::int64_t delta) {
         PublishTime(app, board, delta);
-        plant->UpdateBowling();
+        animation->PrepareTimeAt(static_cast<std::int64_t>(board.mLevelTimeNs));
+        plant->UpdateBowling(static_cast<std::int64_t>(board.mLevelTimeNs), app.mEffectSystem->mReanimationHolder->mVisualTimeNs, (board.AnimationTimeDomain()==ReanimTimeDomain::Battle ? static_cast<std::int64_t>(board.mLevelTimeNs) : app.mEffectSystem->mReanimationHolder->mVisualTimeNs));
         animation->UpdateAt(app.mEffectSystem->mReanimationHolder->mBattleTimeNs);
         if (app.mEffectSystem->mReanimationHolder->mBattleTimeNs < 10'000'000)
             Require(plant->mY != static_cast<float>(board.GridToPixelY(0, 2)),
@@ -485,7 +712,7 @@ inline void GiantBowlingImpact(LawnApp& app, Board& board)
         Sexy::gUpdateIntervalNs = delta;
         PublishTime(app, board, delta);
         const int before = zombie->mBodyHealth;
-        plant->UpdateBowling();
+        plant->UpdateBowling(static_cast<std::int64_t>(board.mLevelTimeNs), app.mEffectSystem->mReanimationHolder->mVisualTimeNs, (board.AnimationTimeDomain()==ReanimTimeDomain::Battle ? static_cast<std::int64_t>(board.mLevelTimeNs) : app.mEffectSystem->mReanimationHolder->mVisualTimeNs));
         Require(zombie->mBodyHealth == before - 1'000'000 &&
             plant->mState == PlantState::STATE_NOTREADY && plant->mBowlingRowArrivalTimeNs == 0,
             "Production giant bowling damage depends on 100Hz substeps or a hit cooldown");
@@ -502,6 +729,7 @@ inline std::array<std::uint64_t, 6> Walking(LawnApp& app, Board& board, int freq
     bool additionalMotion = false)
 {
     app.mEffectSystem->EffectSystemFreeAll();
+    board.mLevelTimeNs = 0;
     app.mEffectSystem->mReanimationHolder->mBattleTimeNs = 0;
     app.mEffectSystem->mReanimationHolder->mVisualTimeNs = 0;
     Zombie zombie{};
@@ -513,8 +741,8 @@ inline std::array<std::uint64_t, 6> Walking(LawnApp& app, Board& board, int freq
     zombie.mY = 200.0f;
     zombie.mFromWave = 0;
     zombie.mBlowingAway = additionalMotion;
-    auto* animation = app.AddReanimation(0, 0, 0, ReanimationType::REANIM_ZOMBIE);
-    animation->BindTimeDomain(ReanimTimeDomain::Battle);
+    auto* animation = app.AddReanimation(0, 0, 0, ReanimationType::REANIM_ZOMBIE, static_cast<std::int64_t>(board.mLevelTimeNs), ReanimTimeDomain::Battle);
+    (*app.mEffectSystem->mReanimationHolder).BindAnimationTime(*animation,ReanimTimeDomain::Battle, static_cast<std::int64_t>(board.mLevelTimeNs));
     animation->PlayReanim(ReanimTrackId::anim_walk, ReanimLoopType::REANIM_LOOP, 0, 13.3072289f);
     animation->SeekRatio(0.3372819f);
     zombie.mBodyReanimID = app.ReanimationGetID(animation);
@@ -527,8 +755,9 @@ inline std::array<std::uint64_t, 6> Walking(LawnApp& app, Board& board, int freq
     Schedule(frequency, duration, [&](std::int64_t delta) {
         PublishTime(app, board, delta);
         if (additionalMotion) zombie.mPendingAdditionalSpeedX = -0.5f;
-        zombie.UpdateZombieWalking();
-        animation->UpdateAt(app.mEffectSystem->mReanimationHolder->mBattleTimeNs);
+        animation->PrepareTimeAt(static_cast<std::int64_t>(board.mLevelTimeNs));
+        zombie.UpdateZombieWalking(static_cast<std::int64_t>(zombie.mBoard->mLevelTimeNs));
+        animation->UpdateAt(static_cast<std::int64_t>(board.mLevelTimeNs));
     });
     Require(zombie.mX == expectedX,
         "Production zombie walking differs from anchored root interpolation");
@@ -537,7 +766,8 @@ inline std::array<std::uint64_t, 6> Walking(LawnApp& app, Board& board, int freq
     zombie.mRootBindingGeneration = 0;
     const auto teleported = zombie.mX;
     Sexy::gUpdateIntervalNs = 0;
-    zombie.UpdateZombieWalking();
+    animation->PrepareTimeAt(static_cast<std::int64_t>(board.mLevelTimeNs));
+    zombie.UpdateZombieWalking(static_cast<std::int64_t>(zombie.mBoard->mLevelTimeNs));
     Require(zombie.mX == teleported, "Root binding erased an explicit teleport");
     return {Bits(zombie.mX), Bits(zombie.mY), Bits(zombie.mRootOriginX),
         Bits(zombie.mRootScale), std::uint64_t(animation->SamplePlayback().phaseNs),
@@ -559,16 +789,17 @@ inline void VaultAndRoofImpSegments(LawnApp& app, Board& board)
             zombie.mZombiePhase = ZombiePhase::PHASE_POLEVAULTER_PRE_VAULT;
             zombie.mX = 279.5f;
             zombie.mVelX = .67f;
-            auto* animation = app.AddReanimation(0, 0, 0, ReanimationType::REANIM_POLEVAULTER);
-            animation->BindTimeDomain(ReanimTimeDomain::Battle);
+            auto* animation = app.AddReanimation(0, 0, 0, ReanimationType::REANIM_POLEVAULTER, static_cast<std::int64_t>(board.mLevelTimeNs), ReanimTimeDomain::Battle);
+            (*app.mEffectSystem->mReanimationHolder).BindAnimationTime(*animation,ReanimTimeDomain::Battle, static_cast<std::int64_t>(board.mLevelTimeNs));
             animation->PlayReanim(ReanimTrackId::anim_run, ReanimLoopType::REANIM_LOOP, 0, 12);
             zombie.mBodyReanimID = app.ReanimationGetID(animation);
             if (priorWalking)
             {
                 Schedule(frequency, 270'000'000, [&](std::int64_t delta) {
                     PublishTime(app, board, delta);
-                    zombie.UpdateZombieWalking();
-                    animation->UpdateAt(app.mEffectSystem->mReanimationHolder->mBattleTimeNs);
+                    animation->PrepareTimeAt(static_cast<std::int64_t>(board.mLevelTimeNs));
+                    zombie.UpdateZombieWalking(static_cast<std::int64_t>(zombie.mBoard->mLevelTimeNs));
+                    animation->UpdateAt(static_cast<std::int64_t>(board.mLevelTimeNs));
                 });
                 Require(zombie.mRootBindingGeneration && zombie.mVelocityX.bound &&
                     zombie.mVelocityX.rate == 0 && static_cast<std::int64_t>(board.mLevelTimeNs) > zombie.mVelocityX.startTimeNs,
@@ -582,17 +813,21 @@ inline void VaultAndRoofImpSegments(LawnApp& app, Board& board)
             animation->PlayReanim(ReanimTrackId::anim_jump,
                 ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD, 0, 24);
             Sexy::gUpdateIntervalNs = 1'000'000'000 / frequency;
-            zombie.UpdateZombieWalking();
+            animation->PrepareTimeAt(static_cast<std::int64_t>(board.mLevelTimeNs));
+            zombie.UpdateZombieWalking(static_cast<std::int64_t>(zombie.mBoard->mLevelTimeNs));
             Require(zombie.mX == launchX, "Zero-travel vault reused a root offset as world X");
             Schedule(frequency, 250'000'000, [&](std::int64_t delta) {
                 PublishTime(app, board, delta);
-                zombie.UpdateZombiePolevaulter();
-                zombie.UpdateZombieWalking();
-                animation->UpdateAt(app.mEffectSystem->mReanimationHolder->mBattleTimeNs);
+                animation->PrepareTimeAt(static_cast<std::int64_t>(board.mLevelTimeNs));
+                zombie.UpdateZombiePolevaulter(static_cast<std::int64_t>(zombie.mBoard->mLevelTimeNs));
+                animation->PrepareTimeAt(static_cast<std::int64_t>(board.mLevelTimeNs));
+                zombie.UpdateZombieWalking(static_cast<std::int64_t>(zombie.mBoard->mLevelTimeNs));
+                animation->UpdateAt(static_cast<std::int64_t>(board.mLevelTimeNs));
                 Require(zombie.mX == launchX, "Zero-travel vault lost its world-position segment");
             });
             animation->mLoopCount = 1;
-            zombie.UpdateZombiePolevaulter();
+            animation->PrepareTimeAt(static_cast<std::int64_t>(board.mLevelTimeNs));
+            zombie.UpdateZombiePolevaulter(static_cast<std::int64_t>(zombie.mBoard->mLevelTimeNs));
             Require(zombie.mX == launchX - 150 && zombie.mX > -150,
                 "Vault landing used the offset origin and crossed the house edge");
         }
@@ -614,8 +849,8 @@ inline void VaultAndRoofImpSegments(LawnApp& app, Board& board)
             board.mLevelTimeNs += delta;
             // Both production calls are required: the previous isolated
             // altitude checks could not expose the stale row-approach origin.
-            imp.UpdateZombieImp();
-            imp.UpdateZombiePosition();
+            imp.UpdateZombieImp(static_cast<std::int64_t>(imp.mBoard->mLevelTimeNs));
+            imp.UpdateZombiePosition(static_cast<std::int64_t>(imp.mBoard->mLevelTimeNs), imp.mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs, (imp.mBoard->AnimationTimeDomain()==ReanimTimeDomain::Battle ? static_cast<std::int64_t>(imp.mBoard->mLevelTimeNs) : imp.mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs));
             const double ticks = double(elapsed) / 10'000'000;
             const double rowY = imp.GetPosYBasedOnRow(imp.mRow);
             const auto expectedAltitude = CheckedPosition(88 - initialY + rowY +
@@ -864,10 +1099,10 @@ inline void MagnetTransferOrigins(LawnApp& app, Board& board)
         {ZOMBIE_DIGGER, REANIM_DIGGER, ReanimTrackId::Zombie_digger_pickaxe,
             Sprite::REANIM_ZOMBIE_DIGGER_PICKAXE}
     };
-    auto* magnet = app.AddReanimation(0, 0, 0, REANIM_MAGNETSHROOM);
+    auto* magnet = app.AddReanimation(0, 0, 0, REANIM_MAGNETSHROOM, app.mEffectSystem->mReanimationHolder->mBattleTimeNs, ReanimTimeDomain::Battle);
     for (const auto& sample : cases)
     {
-        auto* body = app.AddReanimation(0, 0, 0, sample.animation);
+        auto* body = app.AddReanimation(0, 0, 0, sample.animation, app.mEffectSystem->mReanimationHolder->mBattleTimeNs, ReanimTimeDomain::Battle);
         for (const float scale : {0.5f, 1.0f, -1.3f})
         {
             auto plant = std::bit_cast<Plant>(std::array<std::byte, sizeof(Plant)>{});
@@ -912,13 +1147,13 @@ inline void MagnetTransferOrigins(LawnApp& app, Board& board)
             body->GetTrackMatrix(body->FindTrackIndex(sample.track), matrix);
             const float sourceX = zombie.mX + matrix.m02;
             const float sourceY = zombie.mY + matrix.m12;
-            plant.MagnetShroomAttactItem(&zombie);
+            plant.MagnetShroomAttactItem(static_cast<std::int64_t>(board.mLevelTimeNs), &zombie);
             const auto& item = plant.mMagnetItems[0];
             const auto sprite = static_cast<size_t>(sample.sprite);
             const auto& rect = MagnetAtlas::Images[sprite];
             const float drawScale = MagnetAtlas::Scales[sprite];
             Require(std::abs(item.mPosX + rect.mWidth * drawScale * 0.5f - sourceX) < 0.0001f &&
-                std::abs(item.mPosY + PlantDrawHeightOffset(&board, &plant, plant.mSeedType,
+                std::abs(item.mPosY + PlantDrawHeightOffset(static_cast<std::int64_t>(board.mLevelTimeNs), &board, &plant, plant.mSeedType,
                     plant.mPlantCol, plant.mRow) + rect.mHeight * drawScale * 0.5f - sourceY) < 0.0001f,
                 "Equipment jumped away from its visible source center on magnet transfer");
             auto firstFrame = item;
@@ -944,11 +1179,11 @@ inline void MagnetTransferOrigins(LawnApp& app, Board& board)
     const float ladderX = board.GridToPixelX(2, 2) + 25.0f;
     const float ladderY = board.GridToPixelY(2, 2) - 4.0f;
     Sexy::gUpdateIntervalNs = 0;
-    plant.UpdateMagnetShroom();
+    plant.UpdateMagnetShroom(static_cast<std::int64_t>(board.mLevelTimeNs));
     const auto& item = plant.mMagnetItems[0];
     Require(ladder->mDead && item.mItemType == MAGNET_ITEM_LADDER_PLACED &&
         std::abs(item.mPosX - ladderX) < 0.0001f &&
-        std::abs(item.mPosY + PlantDrawHeightOffset(&board, &plant,
+        std::abs(item.mPosY + PlantDrawHeightOffset(static_cast<std::int64_t>(board.mLevelTimeNs), &board, &plant,
             plant.mSeedType, plant.mPlantCol, plant.mRow) - ladderY) < 0.0001f,
         "Placed ladder jumped away from GridItem::DrawLadder's top-left on transfer");
     board.mGridItems.DataArrayFree(ladder);
@@ -981,7 +1216,7 @@ inline void MagnetAttraction(LawnApp& app, Board& board)
         }
     } restore{app, board, oldProfile, oldMute, oldCollected, oldLevelCoins};
     MagnetTransferOrigins(app, board);
-    auto* animation = app.AddReanimation(0, 0, 0, ReanimationType::REANIM_GOLD_MAGNET);
+    auto* animation = app.AddReanimation(0, 0, 0, ReanimationType::REANIM_GOLD_MAGNET, app.mEffectSystem->mReanimationHolder->mBattleTimeNs, ReanimTimeDomain::Battle);
     const auto run = [&](bool gold, int frequency, std::int64_t duration) {
         board.mLevelTimeNs=0;
         auto plant = std::bit_cast<Plant>(std::array<std::byte, sizeof(Plant)>{});
@@ -1000,8 +1235,8 @@ inline void MagnetAttraction(LawnApp& app, Board& board)
         profile.mCoins = 0;
         Schedule(frequency, duration, [&](std::int64_t delta) {
             board.mLevelTimeNs+=delta;
-            if (gold) plant.UpdateGoldMagnetShroom();
-            else plant.UpdateMagnetShroom();
+            if (gold) plant.UpdateGoldMagnetShroom(static_cast<std::int64_t>(board.mLevelTimeNs), app.mEffectSystem->mReanimationHolder->mVisualTimeNs, (board.AnimationTimeDomain()==ReanimTimeDomain::Battle ? static_cast<std::int64_t>(board.mLevelTimeNs) : app.mEffectSystem->mReanimationHolder->mVisualTimeNs));
+            else plant.UpdateMagnetShroom(static_cast<std::int64_t>(board.mLevelTimeNs));
             if(frequency==100 && board.mLevelTimeNs==10'000'000)
                 Require(item.mVelocityX==-15.625f && item.mVelocityY==0 && item.mPosX==899.84375f,
                     "Production 100Hz magnet differs from inverse-square velocity-before-position baseline");
@@ -1019,7 +1254,7 @@ inline void MagnetAttraction(LawnApp& app, Board& board)
             const auto saveTimeNs=board.mLevelTimeNs;
             Sexy::gUpdateIntervalNs = 23'456'789;
             board.mLevelTimeNs+=Sexy::gUpdateIntervalNs;
-            if (gold) plant.UpdateGoldMagnetShroom(); else plant.UpdateMagnetShroom();
+            if (gold) plant.UpdateGoldMagnetShroom(static_cast<std::int64_t>(board.mLevelTimeNs), app.mEffectSystem->mReanimationHolder->mVisualTimeNs, (board.AnimationTimeDomain()==ReanimTimeDomain::Battle ? static_cast<std::int64_t>(board.mLevelTimeNs) : app.mEffectSystem->mReanimationHolder->mVisualTimeNs)); else plant.UpdateMagnetShroom(static_cast<std::int64_t>(board.mLevelTimeNs));
             const auto expected = std::array<std::uint64_t, 3>{
                 Bits(item.mPosX), Bits(item.mPosY), static_cast<std::uint64_t>(plant.mMagnetStartTimeNs)};
             SaveRecordMapping::ReadSaveRecord(plant, saved.data());
@@ -1028,7 +1263,7 @@ inline void MagnetAttraction(LawnApp& app, Board& board)
             board.mLevelTimeNs=saveTimeNs;
             SaveClockProjection::Bind(plant);
             board.mLevelTimeNs+=Sexy::gUpdateIntervalNs;
-            if (gold) plant.UpdateGoldMagnetShroom(); else plant.UpdateMagnetShroom();
+            if (gold) plant.UpdateGoldMagnetShroom(static_cast<std::int64_t>(board.mLevelTimeNs), app.mEffectSystem->mReanimationHolder->mVisualTimeNs, (board.AnimationTimeDomain()==ReanimTimeDomain::Battle ? static_cast<std::int64_t>(board.mLevelTimeNs) : app.mEffectSystem->mReanimationHolder->mVisualTimeNs)); else plant.UpdateMagnetShroom(static_cast<std::int64_t>(board.mLevelTimeNs));
             Require(std::array<std::uint64_t, 3>{Bits(item.mPosX), Bits(item.mPosY),
                 static_cast<std::uint64_t>(plant.mMagnetStartTimeNs)} == expected, "Magnet flight changed after native save/reload");
         }
@@ -1432,6 +1667,8 @@ inline void Check(LawnApp& app)
     app.mGameMode = GameMode::GAMEMODE_MINIGAME_WALLNUT_BOWLING;
     Board board(&app);
     std::cerr << "PASS actor fixture real Board construction\n";
+    TreeOfWisdomEntryPose(app,board);
+    StinkyGardenReentry(app,board);
     ChangingVelocitySave(app, board);
     std::cerr << "PASS changing-rate linear segments: exact binary oracle, zero steps, "
         "teleport, invalidation, nonlinear handoff and native save continuation\n";

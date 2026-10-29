@@ -31,26 +31,26 @@ struct OpenGLRenderer::Impl {
         uXTapExtent, uYTapExtent, uGlyphSrc, uGlyphDst, uUniformCount
     };
     using UniformLocations=std::array<int,uUniformCount>;
-    struct Vertex {
-        GpuVertex draw;
-    };
+    using Vertex = GpuVertex;
     struct Batch {
         OpenGLTexture* texture;
-        // VBO vertex range, except actual compute frames use their original EBO range.
+        // Contiguous VBO vertex range; quad batches use the shared static index pattern.
         size_t first, count;
         GpuBlend blend;
         GpuClip clip;
         bool coverage;
         bool sprite;
+        bool mixed;
+        bool quads;
         unsigned int sampler;
     };
     OpenGLContext& context;
     int width, height, maximum = 0;
-    unsigned int staticBase = 4096, vao = 0, stream = 0;
-    unsigned int sceneProgram = 0, spriteProgram = 0, imageProgram = 0, fontProgram = 0, presentProgram = 0;
+    unsigned int staticBase = 4096, vao = 0, stream = 0, quadIndices = 0;
+    unsigned int sceneProgram = 0, spriteProgram = 0, mixedSpriteProgram = 0, imageProgram = 0, fontProgram = 0, presentProgram = 0;
     unsigned int poolProgram = 0, poolVao = 0, poolVertices = 0, poolIndices = 0;
     std::array<int, 12> poolUniforms{};
-    UniformLocations sceneUniforms{}, spriteUniforms{}, imageUniforms{}, fontUniforms{}, presentUniforms{};
+    UniformLocations sceneUniforms{}, spriteUniforms{}, mixedSpriteUniforms{}, imageUniforms{}, fontUniforms{}, presentUniforms{};
     bool open = false, mainFrame = false, initialized = false, sceneInitialized = false;
     OpenGLTexture* white = nullptr;
     OpenGLTexture* scene = nullptr;
@@ -77,8 +77,9 @@ struct OpenGLRenderer::Impl {
     void BindTarget();
     void Flush();
     void Submit(std::span<const GpuVertex> input, OpenGLTexture* source,
-        GpuBlend blend, const GpuClip* clip, bool coverage);
-    unsigned int Program(std::string_view vertex, std::string_view fragment);
+        GpuBlend blend, const GpuClip* clip, bool coverage, bool quads = false);
+    unsigned int Program(std::string_view vertex, std::string_view fragment, bool mixed = false);
+    void VertexBase(size_t first);
     void ImagePass(OpenGLTexture* target, OpenGLTexture* source, OpenGLTexture* alpha,
         int operation, const GpuImageProcessing* processing = nullptr,
         unsigned int color = 0, bool colorOnly = false);

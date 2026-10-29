@@ -342,8 +342,8 @@ public:
 	TodParticleHolder(const TodParticleHolder&) = delete;
 	TodParticleHolder& operator=(const TodParticleHolder&) = delete;
 
-    TodParticleSystem*				AllocParticleSystemFromDef(float theX, float theY, int theRenderOrder, TodParticleDefinition* theDefinition, ParticleEffect theParticleEffect, std::uint32_t theVariant = 0);
-    TodParticleSystem*				AllocParticleSystem(float theX, float theY, int theRenderOrder, ParticleEffect theParticleEffect, std::uint32_t theVariant = 0);
+    TodParticleSystem*				AllocParticleSystemFromDef(float theX, float theY, int theRenderOrder, TodParticleDefinition* theDefinition, ParticleEffect theParticleEffect, std::int64_t nowNs, std::uint32_t theVariant = 0);
+    TodParticleSystem*				AllocParticleSystem(float theX, float theY, int theRenderOrder, ParticleEffect theParticleEffect, std::int64_t nowNs, std::uint32_t theVariant = 0);
     /*inline*/ bool					IsOverLoaded();
 };
 
@@ -477,7 +477,7 @@ public:
     bool							EmitterRosterAdd(TodParticleEmitter* theEmitter);
     void							EmitterRosterClear();
 
-    void							TodParticleInitializeFromDef(float theX, float theY, int theRenderOrder, TodParticleDefinition* theDefinition, ParticleEffect theEffectType, std::uint32_t theVariant = 0);
+    void							TodParticleInitializeFromDef(float theX, float theY, int theRenderOrder, TodParticleDefinition* theDefinition, ParticleEffect theEffectType, std::int64_t nowNs, std::uint32_t theVariant = 0);
     void							ParticleSystemDie();
     void							Update(std::uint64_t theDeltaNs, std::int64_t nowNs);
     void							Draw(Graphics* g);

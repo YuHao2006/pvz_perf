@@ -234,7 +234,13 @@ void SyncDat64DataArray(
 				sizeof(anID));
 			T* aNativeItem = theDataArray.DataArrayPrepareItemForLoad(i, anID);
 			if (aNativeItem != nullptr)
-				Dat64Layout<T>::Read(*aNativeItem, aDat64Item);
+			{
+				if constexpr (std::is_same_v<T, Reanimation>)
+					Dat64Layout<T>::Read(*aNativeItem, aDat64Item,
+						gEffectSystem ? gEffectSystem->mReanimationHolder.get() : nullptr);
+				else
+					Dat64Layout<T>::Read(*aNativeItem, aDat64Item);
+			}
 		}
 	}
 	catch (...)
@@ -533,7 +539,8 @@ void SyncParticleSystem(Board* theBoard, TodParticleSystem* theParticleSystem, S
 			aRosterScratch[i] = static_cast<ParticleEmitterID>(aDataID);
 		}
 		aRosterCount = aCountOnDisk;
-		theParticleSystem->mLastUpdateTimeNs = theBoard->mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs;
+		// The saved pool belongs to this Board. UI particle pools are not saved.
+		theParticleSystem->mLastUpdateTimeNs = static_cast<std::int64_t>(theBoard->mLevelTimeNs);
 		theParticleSystem->mParticleDef = aDefinition;
 		theParticleSystem->mParticleHolder = aHolder;
 	}
@@ -832,7 +839,7 @@ void FixBoardAfterLoad(Board* theBoard)
 	Reanimation* aReanimation = nullptr;
 	while (aHolder.mReanimations.IterateNext(aReanimation))
 		if (aReanimation->mDefinition && aReanimation->mReanimationHolder == &aHolder)
-			aReanimation->RebaseTime(aReanimation->mTimeDomain == ReanimTimeDomain::Battle
+			aReanimation->RebaseTime(aHolder.mTimeDomains[aHolder.mReanimations.DataArrayIndexOf(aReanimation)] == ReanimTimeDomain::Battle
 				? aHolder.mBattleTimeNs : aHolder.mVisualTimeNs);
 }
 

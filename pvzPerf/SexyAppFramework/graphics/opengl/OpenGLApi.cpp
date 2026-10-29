@@ -7,6 +7,7 @@ namespace Sexy::GL3 {
 #define SEXY_GL3_DEFINE(result, name, arguments) name##Proc name = nullptr;
 SEXY_GL3_FUNCTIONS(SEXY_GL3_DEFINE)
 #undef SEXY_GL3_DEFINE
+glBindFragDataLocationIndexedProc glBindFragDataLocationIndexed = nullptr;
 
 PROC GetProcAddress(const char* name)
 {
@@ -28,6 +29,7 @@ void Load()
     name = reinterpret_cast<name##Proc>(GetProcAddress(#name)); \
     if (!name) throw std::runtime_error("OpenGL 3.0 entry point missing: " #name);
     SEXY_GL3_FUNCTIONS(SEXY_GL3_LOAD)
+    glBindFragDataLocationIndexed = reinterpret_cast<glBindFragDataLocationIndexedProc>(GetProcAddress("glBindFragDataLocationIndexed"));
 #undef SEXY_GL3_LOAD
 }
 

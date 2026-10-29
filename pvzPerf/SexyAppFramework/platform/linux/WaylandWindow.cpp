@@ -78,6 +78,12 @@ struct NativeWindow::Impl {
     wl_keyboard* keyboard = nullptr;
     wl_surface* surface = nullptr;
     wl_shm* shm = nullptr;
+    struct Output {
+        wl_output* object = nullptr;
+        int refreshMillihertz = 0;
+        bool entered = false;
+    };
+    std::unordered_map<uint32_t, Output> outputs;
     wl_surface* cursorSurface = nullptr;
     wl_cursor_theme* cursorTheme = nullptr;
     std::array<wl_cursor*, 10> cursorShapes{};
@@ -183,6 +189,11 @@ struct NativeWindow::Impl {
                 wl_seat_destroy(seat);
             seat = nullptr;
         }
+        for (auto& [name, output] : outputs) {
+            (void)name;
+            if (output.object) wl_output_destroy(output.object);
+        }
+        outputs.clear();
         if (compositor) { wl_compositor_destroy(compositor); compositor = nullptr; }
         if (registry) { wl_registry_destroy(registry); registry = nullptr; }
         if (display) { wl_display_disconnect(display); display = nullptr; }
@@ -442,6 +453,49 @@ struct NativeWindow::Impl {
         DeliverEvents();
     }
 
+    static const wl_output_listener& OutputListener() {
+        static const wl_output_listener listener = [] {
+            wl_output_listener result{};
+            result.geometry = [](void*, wl_output*, int32_t, int32_t, int32_t, int32_t,
+                                 int32_t, const char*, const char*, int32_t) {};
+            result.mode = [](void* data, wl_output* object, uint32_t flags,
+                             int32_t, int32_t, int32_t refresh) {
+                Guard(data, [&](Impl& self) {
+                    if (!(flags & WL_OUTPUT_MODE_CURRENT)) return;
+                    for (auto& [name, output] : self.outputs) {
+                        (void)name;
+                        if (output.object == object) {
+                            output.refreshMillihertz = std::max(0, refresh);
+                            break;
+                        }
+                    }
+                });
+            };
+            result.done = [](void*, wl_output*) {};
+            result.scale = [](void*, wl_output*, int32_t) {};
+            // Bind at v2, so newer output name/description events cannot arrive.
+            return result;
+        }();
+        return listener;
+    }
+
+    double RefreshRate() const {
+        int enteredRefresh = 0;
+        uint32_t fallbackName = std::numeric_limits<uint32_t>::max();
+        int fallbackRefresh = 0;
+        for (const auto& [name, output] : outputs) {
+            if (output.entered)
+                enteredRefresh = std::max(enteredRefresh, output.refreshMillihertz);
+            // Before the first buffer is mapped, no surface enter may have arrived.
+            // The lowest registry name gives a deterministic startup output fallback.
+            if (output.refreshMillihertz > 0 && name < fallbackName) {
+                fallbackName = name;
+                fallbackRefresh = output.refreshMillihertz;
+            }
+        }
+        return (enteredRefresh > 0 ? enteredRefresh : fallbackRefresh) / 1000.0;
+    }
+
     static const wl_registry_listener& RegistryListener() {
         static const wl_registry_listener listener{
             [](void* data, wl_registry* registry, uint32_t name,
@@ -452,6 +506,12 @@ struct NativeWindow::Impl {
                             wl_registry_bind(registry, name, &wl_compositor_interface,
                                              std::min(version, 4u))), "compositor");
                         self.compositorName = name;
+                    } else if (std::strcmp(interface, wl_output_interface.name) == 0) {
+                        auto& output = self.outputs[name];
+                        output.object = Require(static_cast<wl_output*>(
+                            wl_registry_bind(registry, name, &wl_output_interface,
+                                             std::min(version, 2u))), "output");
+                        CheckListener(wl_output_add_listener(output.object, &OutputListener(), &self));
                     } else if (std::strcmp(interface, wl_shm_interface.name) == 0 && !self.shm) {
                         self.shm = Require(static_cast<wl_shm*>(
                             wl_registry_bind(registry, name, &wl_shm_interface, 1)), "shm");
@@ -470,7 +530,10 @@ struct NativeWindow::Impl {
             },
             [](void* data, wl_registry*, uint32_t name) {
                 Guard(data, [&](Impl& self) {
-                    if (name == self.seatName) {
+                    if (auto output = self.outputs.find(name); output != self.outputs.end()) {
+                        wl_output_destroy(output->second.object);
+                        self.outputs.erase(output);
+                    } else if (name == self.seatName) {
                         self.RemoveKeyboard();
                         self.RemovePointer();
                         if (wl_seat_get_version(self.seat) >= WL_SEAT_RELEASE_SINCE_VERSION)
@@ -494,11 +557,23 @@ struct NativeWindow::Impl {
     static const wl_surface_listener& CoreSurfaceListener() {
         static const wl_surface_listener listener = [] {
             wl_surface_listener result{};
-            result.enter = [](void* data, wl_surface*, wl_output*) {
-                Guard(data, [](Impl&) {});
+            result.enter = [](void* data, wl_surface* surface, wl_output* object) {
+                Guard(data, [&](Impl& self) {
+                    if (surface != self.surface) return;
+                    for (auto& [name, output] : self.outputs) {
+                        (void)name;
+                        if (output.object == object) output.entered = true;
+                    }
+                });
             };
-            result.leave = [](void* data, wl_surface*, wl_output*) {
-                Guard(data, [](Impl&) {});
+            result.leave = [](void* data, wl_surface* surface, wl_output* object) {
+                Guard(data, [&](Impl& self) {
+                    if (surface != self.surface) return;
+                    for (auto& [name, output] : self.outputs) {
+                        (void)name;
+                        if (output.object == object) output.entered = false;
+                    }
+                });
             };
             // Compositor v4 creates v4 surfaces; newer scale/transform events
             // cannot be sent. Geometry and pointer coordinates remain logical.
@@ -865,6 +940,7 @@ void NativeWindow::Resize(int width, int height) {
 bool NativeWindow::Minimized() const {
     throw std::logic_error("Wayland xdg-shell cannot report minimized state");
 }
+double NativeWindow::RefreshRate() const { return impl_->RefreshRate(); }
 NativeWindowBackend NativeWindow::Backend() const { return NativeWindowBackend::Wayland; }
 NativeSurfaceHandles NativeWindow::SurfaceHandles() const {
     return {impl_->display, impl_->surface, 0};

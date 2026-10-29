@@ -96,8 +96,10 @@ def main():
             if asset.get("digest") != digest:
                 raise RuntimeError("A different release asset already exists: " + path.name)
         else:
+            content_type = ("application/vnd.android.package-archive"
+                            if path.suffix.lower() == ".apk" else "application/zip")
             asset = request("POST", upload_root + "?name=" + urllib.parse.quote(path.name),
-                            contents, "application/zip")
+                            contents, content_type)
         if asset["size"] != len(contents) or asset.get("digest") not in (None, digest):
             raise RuntimeError("Uploaded asset verification failed: " + path.name)
         uploaded.append({"name": asset["name"], "bytes": asset["size"]})

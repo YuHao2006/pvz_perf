@@ -27,7 +27,6 @@ bool VulkanRenderer::benchmarkPackedColor = false;
 bool VulkanRenderer::benchmarkPackedColor16 = false;
 bool VulkanRenderer::benchmarkDiscardScene = false;
 bool VulkanRenderer::benchmarkInstancedQuads = false;
-bool VulkanRenderer::benchmarkTightSceneBarriers = false;
 bool VulkanRenderer::benchmarkPresentCopy = false;
 bool VulkanRenderer::benchmarkSolidFill = false;
 bool VulkanRenderer::benchmarkGenerateIndexPrefix = true;
@@ -104,9 +103,11 @@ struct DrawStream {
 };
 
 void Barrier(VkCommandBuffer cmd, VkImage image, VkImageLayout oldLayout,
-             VkImageLayout newLayout, VkPipelineStageFlags srcStage,
-             VkPipelineStageFlags dstStage, VkAccessFlags srcAccess, VkAccessFlags dstAccess) {
-    VkImageMemoryBarrier barrier{VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER};
+             VkImageLayout newLayout, VkPipelineStageFlags2 srcStage,
+             VkPipelineStageFlags2 dstStage, VkAccessFlags2 srcAccess, VkAccessFlags2 dstAccess) {
+    VkImageMemoryBarrier2 barrier{VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2};
+    barrier.srcStageMask = oldLayout == VK_IMAGE_LAYOUT_UNDEFINED ? VK_PIPELINE_STAGE_2_NONE : srcStage;
+    barrier.dstStageMask = dstStage;
     barrier.oldLayout = oldLayout;
     barrier.newLayout = newLayout;
     barrier.srcAccessMask = srcAccess;
@@ -114,15 +115,22 @@ void Barrier(VkCommandBuffer cmd, VkImage image, VkImageLayout oldLayout,
     barrier.srcQueueFamilyIndex = barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
     barrier.image = image;
     barrier.subresourceRange = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
-    vkCmdPipelineBarrier(cmd, srcStage, dstStage, 0, 0, nullptr, 0, nullptr, 1, &barrier);
+    VkDependencyInfo dependency{VK_STRUCTURE_TYPE_DEPENDENCY_INFO};
+    dependency.imageMemoryBarrierCount = 1;
+    dependency.pImageMemoryBarriers = &barrier;
+    VulkanContext::pipelineBarrier2(cmd, &dependency);
 }
 
 void HostReadBarrier(VkCommandBuffer cmd) {
-    VkMemoryBarrier barrier{VK_STRUCTURE_TYPE_MEMORY_BARRIER};
-    barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-    barrier.dstAccessMask = VK_ACCESS_HOST_READ_BIT;
-    vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_HOST_BIT,
-        0, 1, &barrier, 0, nullptr, 0, nullptr);
+    VkMemoryBarrier2 barrier{VK_STRUCTURE_TYPE_MEMORY_BARRIER_2};
+    barrier.srcStageMask = VK_PIPELINE_STAGE_2_COPY_BIT;
+    barrier.dstStageMask = VK_PIPELINE_STAGE_2_HOST_BIT;
+    barrier.srcAccessMask = VK_ACCESS_2_TRANSFER_WRITE_BIT;
+    barrier.dstAccessMask = VK_ACCESS_2_HOST_READ_BIT;
+    VkDependencyInfo dependency{VK_STRUCTURE_TYPE_DEPENDENCY_INFO};
+    dependency.memoryBarrierCount = 1;
+    dependency.pMemoryBarriers = &barrier;
+    VulkanContext::pipelineBarrier2(cmd, &dependency);
 }
 
 std::vector<uint32_t> ReadShader(const std::string& path) {
@@ -275,7 +283,7 @@ struct VulkanRenderer::Impl {
     VkPipeline solidExperimentPipeline = VK_NULL_HANDLE;
     bool solidFillExperiment = false, generateIndexPrefixExperiment = false;
     std::array<VkPipeline,3> generatedExperimentPipelines{};
-    bool nonIndexedExperiment = false, wideIndexExperiment = false, packedColorExperiment = false, packedColor16Experiment = false, discardSceneExperiment = false, instancedExperiment = false, tightSceneBarriersExperiment = false, presentCopyExperiment = false;
+    bool nonIndexedExperiment = false, wideIndexExperiment = false, packedColorExperiment = false, packedColor16Experiment = false, discardSceneExperiment = false, instancedExperiment = false, presentCopyExperiment = false;
     VulkanTexture* benchmarkOutput = nullptr;
     VkRenderPass benchmarkOutputPass = VK_NULL_HANDLE;
     VkPipeline benchmarkOutputPipeline = VK_NULL_HANDLE;
@@ -824,10 +832,12 @@ struct VulkanRenderer::Impl {
         if (!transferOpen) return;
         VK_REQUIRE(vkEndCommandBuffer(transferCommand));
         VK_REQUIRE(vkResetFences(device, 1, &transferFence));
-        VkSubmitInfo submit{VK_STRUCTURE_TYPE_SUBMIT_INFO};
-        submit.commandBufferCount = 1;
-        submit.pCommandBuffers = &transferCommand;
-        VK_REQUIRE(vkQueueSubmit(window.graphicsQueue, 1, &submit, transferFence));
+        VkCommandBufferSubmitInfo commands{VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO};
+        commands.commandBuffer = transferCommand;
+        VkSubmitInfo2 submit{VK_STRUCTURE_TYPE_SUBMIT_INFO_2};
+        submit.commandBufferInfoCount = 1;
+        submit.pCommandBufferInfos = &commands;
+        VK_REQUIRE(VulkanContext::queueSubmit2(window.graphicsQueue, 1, &submit, transferFence));
         transferOpen = false;
         transferInFlight = true;
         // 不在此等待：完成点统一在 CompleteTransfers（帧界/批界/销毁前）。
@@ -1085,7 +1095,6 @@ void VulkanRenderer::Impl::Initialize(const std::string& vsPath, const std::stri
 #if defined(PVZ_VULKAN_SPRITE_EXPERIMENT)
     generateIndexPrefixExperiment=VulkanRenderer::benchmarkGenerateIndexPrefix;
     presentCopyExperiment=VulkanRenderer::benchmarkPresentCopy;
-    tightSceneBarriersExperiment=VulkanRenderer::benchmarkTightSceneBarriers;
     instancedExperiment=VulkanRenderer::benchmarkInstancedQuads;
     if (instancedExperiment) vertexStride=sizeof(SpriteInstance);
     discardSceneExperiment=VulkanRenderer::benchmarkDiscardScene;
@@ -1104,9 +1113,12 @@ void VulkanRenderer::Impl::Initialize(const std::string& vsPath, const std::stri
     if (width <= 0 || height <= 0) throw std::invalid_argument("Invalid game scene extent");
 #if defined(__ANDROID__)
     {
-        // 装载磁盘管线缓存（驱动数据，跨启动复用；损坏时驱动自动忽略）
+        // Vulkan 1.3 shader target starts a fresh driver cache. Never reuse
+        // the previous target's on-device cache after an APK replacement.
+        std::error_code cacheError;
+        std::filesystem::remove(GetExecutableDirectory()+"pipeline_cache.bin", cacheError);
         std::vector<std::byte> cached;
-        if (std::ifstream in(GetExecutableDirectory()+"pipeline_cache.bin", std::ios::binary); in) {
+        if (std::ifstream in(GetExecutableDirectory()+"pipeline_cache_v13.bin", std::ios::binary); in) {
             in.seekg(0, std::ios::end);
             const auto size = in.tellg();
             in.seekg(0);
@@ -1457,28 +1469,27 @@ void VulkanRenderer::Impl::BeginTargetPass() {
         target->layout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
         sceneInitialized = true;
     }
-#if defined(PVZ_VULKAN_SPRITE_EXPERIMENT)
-    if (tightSceneBarriersExperiment && !renderImage) {
-        VkPipelineStageFlags sourceStage=VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
-        VkAccessFlags sourceAccess=VK_ACCESS_MEMORY_READ_BIT | VK_ACCESS_MEMORY_WRITE_BIT;
+    // The scene has one writer and tracked layouts. Do not stall unrelated
+    // shader/transfer work with an ALL_COMMANDS dependency when returning to it.
+    if (!renderImage) {
+        VkPipelineStageFlags2 sourceStage=VK_PIPELINE_STAGE_2_NONE;
+        VkAccessFlags2 sourceAccess=VK_ACCESS_2_NONE;
         switch (target->layout) {
         case VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL:
             sourceStage=VK_PIPELINE_STAGE_TRANSFER_BIT;sourceAccess=VK_ACCESS_TRANSFER_WRITE_BIT;break;
         case VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL:
             sourceStage=VK_PIPELINE_STAGE_TRANSFER_BIT;sourceAccess=VK_ACCESS_TRANSFER_READ_BIT;break;
         case VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL:
-            sourceStage=VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;sourceAccess=VK_ACCESS_SHADER_READ_BIT;break;
+            sourceStage=VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT;sourceAccess=VK_ACCESS_2_SHADER_SAMPLED_READ_BIT;break;
         case VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL:
             sourceStage=VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
             sourceAccess=VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;break;
-        default: throw std::logic_error("Unexpected benchmark scene layout");
+        default: throw std::logic_error("Unexpected scene layout");
         }
         Barrier(frame.cmd,target->image,target->layout,VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
             sourceStage,VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,sourceAccess,
             VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT);
-    } else
-#endif
-    {
+    } else {
     Barrier(frame.cmd, target->image, target->layout, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
         VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
         VK_ACCESS_MEMORY_READ_BIT | VK_ACCESS_MEMORY_WRITE_BIT,
@@ -1526,10 +1537,12 @@ void VulkanRenderer::Impl::FinishImageBatch() {
 #endif
     VK_REQUIRE(vkEndCommandBuffer(imageCommand));
     VK_REQUIRE(vkResetFences(device, 1, &imageFence));
-    VkSubmitInfo submit{VK_STRUCTURE_TYPE_SUBMIT_INFO};
-    submit.commandBufferCount = 1;
-    submit.pCommandBuffers = &imageCommand;
-    VK_REQUIRE(vkQueueSubmit(window.graphicsQueue, 1, &submit, imageFence));
+    VkCommandBufferSubmitInfo commands{VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO};
+    commands.commandBuffer = imageCommand;
+    VkSubmitInfo2 submit{VK_STRUCTURE_TYPE_SUBMIT_INFO_2};
+    submit.commandBufferInfoCount = 1;
+    submit.pCommandBufferInfos = &commands;
+    VK_REQUIRE(VulkanContext::queueSubmit2(window.graphicsQueue, 1, &submit, imageFence));
     VK_REQUIRE(vkWaitForFences(device, 1, &imageFence, VK_TRUE, UINT64_MAX));
     frame = {};
     imageOnly = false;
@@ -1595,7 +1608,7 @@ void VulkanRenderer::Impl::InitPool() {
         VkShaderModuleCreateInfo shader{VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO};
         shader.codeSize=words.size()*sizeof(uint32_t); shader.pCode=words.data();
         VK_REQUIRE(vkCreateShaderModule(device,&shader,nullptr,&poolVertexShader));
-        const VkPushConstantRange push{VK_SHADER_STAGE_VERTEX_BIT,0,80};
+        const VkPushConstantRange push{VK_SHADER_STAGE_VERTEX_BIT,0,64};
         const VkDescriptorSetLayout sets[]{imageLayout,samplerLayout};
         VkPipelineLayoutCreateInfo layout{VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO};
         layout.setLayoutCount=2; layout.pSetLayouts=sets;
@@ -2626,7 +2639,7 @@ void VulkanRenderer::Impl::SavePipelineCache() {
     std::vector<std::byte> data(size);
     if (vkGetPipelineCacheData(device, pipelineCache, &size, data.data()) != VK_SUCCESS)
         return;
-    std::ofstream out(GetExecutableDirectory()+"pipeline_cache.bin",
+    std::ofstream out(GetExecutableDirectory()+"pipeline_cache_v13.bin",
         std::ios::binary | std::ios::trunc);
     if (out) out.write(reinterpret_cast<const char*>(data.data()), static_cast<std::streamsize>(size));
 #endif
@@ -2710,6 +2723,12 @@ void VulkanRenderer::SubmitPool(VulkanTexture* texture,const GpuPoolParams& p) {
     if (!s.poolIndexBuffer) throw std::logic_error("Prepare pool pipelines while loading");
     if (!texture || !s.textures.contains(texture) || p.layer>=3 || p.sampler>=4)
         throw std::invalid_argument("Invalid pool texture, layer or sampler");
+    auto* output=s.renderImage ? s.renderImage : s.scene.get();
+    const auto left=std::max<int64_t>(0,p.clip.x);
+    const auto top=std::max<int64_t>(0,p.clip.y);
+    const auto right=std::min<int64_t>(output->width,int64_t(p.clip.x)+p.clip.width);
+    const auto bottom=std::min<int64_t>(output->height,int64_t(p.clip.y)+p.clip.height);
+    if (right<=left || bottom<=top) return;
     if (texture==s.renderImage) {
         const uint32_t sourceSlot=texture->slot;
         s.EndTargetPass();
@@ -2717,12 +2736,13 @@ void VulkanRenderer::SubmitPool(VulkanTexture* texture,const GpuPoolParams& p) {
         s.BeginTargetPass();
         texture=s.slotOwners[sourceSlot];
     }
+    output=s.renderImage ? s.renderImage : s.scene.get();
     s.FlushPendingRun(s.frame.cmd);
     texture->lastDraw=s.frameSerial;
-    const auto* output=s.renderImage ? s.renderImage : s.scene.get();
     const auto& pipelines=s.renderImage ? s.poolImagePipelines : s.poolPipelines;
     const VkViewport viewport{0,0,float(output->width),float(output->height),0,1};
-    const VkRect2D scissor{{0,0},{uint32_t(output->width),uint32_t(output->height)}};
+    const VkRect2D scissor{{int32_t(left),int32_t(top)},
+        {uint32_t(right-left),uint32_t(bottom-top)}};
     vkCmdSetViewport(s.frame.cmd,0,1,&viewport);
     vkCmdSetScissor(s.frame.cmd,0,1,&scissor);
     vkCmdBindPipeline(s.frame.cmd,VK_PIPELINE_BIND_POINT_GRAPHICS,pipelines.at(size_t(p.blend)));
@@ -2733,15 +2753,13 @@ void VulkanRenderer::SubmitPool(VulkanTexture* texture,const GpuPoolParams& p) {
     vkCmdBindIndexBuffer(s.frame.cmd,s.poolIndexBuffer,0,VK_INDEX_TYPE_UINT16);
     struct PoolPush {
         float extent[2], geometry[2], translation[2], padding[2];
-        float time[4], clip[4];
+        float time[4];
         uint32_t meta[4];
     };
-    static_assert(sizeof(PoolPush)==80);
+    static_assert(sizeof(PoolPush)==64);
     const PoolPush push{
         {float(output->width),float(output->height)}, {p.width,p.height}, {p.transX,p.transY}, {},
         {p.time1,p.time2,p.time3,p.time5},
-        {float(p.clip.x),float(p.clip.y),float(int64_t(p.clip.x)+p.clip.width),
-            float(int64_t(p.clip.y)+p.clip.height)},
         {p.layer,p.night,SlotOf(texture)|p.samplingFlags,p.sampler}};
     vkCmdPushConstants(s.frame.cmd,s.poolLayout,VK_SHADER_STAGE_VERTEX_BIT,0,sizeof(push),&push);
     vkCmdDrawIndexed(s.frame.cmd,uint32_t(GpuPoolIndices.size()),1,0,0,0);

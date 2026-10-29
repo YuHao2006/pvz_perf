@@ -226,8 +226,7 @@ TodParticleSystem::TodParticleSystem()
 	mIsAttachment = false;
 	mRenderOrder = 0;
 	mRandomState = 0;
-	mLastUpdateTimeNs = gEffectSystem && gEffectSystem->mReanimationHolder
-		? gEffectSystem->mReanimationHolder->mVisualTimeNs : 0;
+	mLastUpdateTimeNs = 0;
 }
 
 TodParticleSystem::~TodParticleSystem()
@@ -236,9 +235,10 @@ TodParticleSystem::~TodParticleSystem()
 }
 
 //0x515E90 : (edx = theEffectType, *theDefinition, ecx = theRenderOrder, theY, theX, *this)
-void TodParticleSystem::TodParticleInitializeFromDef(float theX, float theY, int theRenderOrder, TodParticleDefinition* theDefinition, ParticleEffect theEffectType, std::uint32_t theVariant)
+void TodParticleSystem::TodParticleInitializeFromDef(float theX, float theY, int theRenderOrder, TodParticleDefinition* theDefinition, ParticleEffect theEffectType, std::int64_t nowNs, std::uint32_t theVariant)
 {
 	TOD_ASSERT(mParticleHolder);
+	mLastUpdateTimeNs = nowNs;
 	if (!theDefinition || theVariant>=theDefinition->mVariantCount)
 		throw std::out_of_range("particle appearance variant out of range");
 	// 名册侧表：系统池槽位键天然就位，无需分配器（链表成员已退役）
@@ -1822,7 +1822,7 @@ bool TodParticleHolder::IsOverLoaded()
 	return mParticleSystems.mSize > MAX_PARTICLES_SIZE || mEmitters.mSize > MAX_PARTICLES_SIZE || mParticles.mSize > MAX_PARTICLES_SIZE;
 }
 
-TodParticleSystem* TodParticleHolder::AllocParticleSystemFromDef(float theX, float theY, int theRenderOrder, TodParticleDefinition* theDefinition, ParticleEffect theParticleEffect, std::uint32_t theVariant)
+TodParticleSystem* TodParticleHolder::AllocParticleSystemFromDef(float theX, float theY, int theRenderOrder, TodParticleDefinition* theDefinition, ParticleEffect theParticleEffect, std::int64_t nowNs, std::uint32_t theVariant)
 {
 	if (!theDefinition || theVariant>=theDefinition->mVariantCount)
 		throw std::out_of_range("particle appearance variant out of range");
@@ -1839,13 +1839,13 @@ TodParticleSystem* TodParticleHolder::AllocParticleSystemFromDef(float theX, flo
 
 	TodParticleSystem* aTodParticle = mParticleSystems.DataArrayAlloc();
 	aTodParticle->mParticleHolder = this;
-	aTodParticle->TodParticleInitializeFromDef(theX, theY, theRenderOrder, theDefinition, theParticleEffect, theVariant);
+	aTodParticle->TodParticleInitializeFromDef(theX, theY, theRenderOrder, theDefinition, theParticleEffect, nowNs, theVariant);
 	return aTodParticle;
 }
 
 //0x518A70
-TodParticleSystem* TodParticleHolder::AllocParticleSystem(float theX, float theY, int theRenderOrder, ParticleEffect theParticleEffect, std::uint32_t theVariant)
+TodParticleSystem* TodParticleHolder::AllocParticleSystem(float theX, float theY, int theRenderOrder, ParticleEffect theParticleEffect, std::int64_t nowNs, std::uint32_t theVariant)
 {
 	TOD_ASSERT((int)theParticleEffect >= 0 && (int)theParticleEffect < gParticleDefCount);
-	return AllocParticleSystemFromDef(theX, theY, theRenderOrder, &gParticleDefArray[(int)theParticleEffect], theParticleEffect, theVariant);
+	return AllocParticleSystemFromDef(theX, theY, theRenderOrder, &gParticleDefArray[(int)theParticleEffect], theParticleEffect, nowNs, theVariant);
 }

@@ -4,6 +4,21 @@
 
 namespace Sexy
 {
+FrameTiming FrameTiming::FromSetting(double targetFps)
+{
+    if (!std::isfinite(targetFps) || targetFps < MinimumTargetFps ||
+        targetFps > NanosecondsPerSecond || std::floor(targetFps) != targetFps)
+        return {};
+    return FromTargetFps(static_cast<unsigned int>(targetFps));
+}
+
+FrameTiming FrameTiming::FromDisplayRefreshRate(double refreshRate)
+{
+    if (!std::isfinite(refreshRate) || refreshRate <= 0 || refreshRate > NanosecondsPerSecond)
+        return {};
+    return FromTargetFps(static_cast<unsigned int>(std::max<double>(MinimumTargetFps,std::round(refreshRate))));
+}
+
 unsigned long long SimulationTimeFromWallTime(unsigned long long elapsedNs, double multiplier)
 {
     if (!(multiplier > 0) || !std::isfinite(multiplier))
@@ -17,8 +32,9 @@ unsigned long long SimulationTimeFromWallTime(unsigned long long elapsedNs, doub
 unsigned long long TakeSimulationStep(unsigned long long& pendingNs,
     unsigned long long requestedNs, unsigned long long& phaseNs)
 {
-    const auto quantumNs = std::min(requestedNs, FrameTiming::LegacyTickNs);
-    if (quantumNs == 0) throw std::invalid_argument("simulation interval must be positive");
+    if (requestedNs == 0 || requestedNs > FrameTiming::LegacyTickNs)
+        throw std::invalid_argument("simulation target interval must be within 1ns..10ms");
+    const auto quantumNs = requestedNs;
     phaseNs %= quantumNs;
     if (pendingNs < quantumNs - phaseNs) return 0;
     const auto stepNs = std::min(pendingNs, FrameTiming::LegacyTickNs);

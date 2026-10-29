@@ -154,7 +154,7 @@ void Image::BltTrianglesTex(Image *theTexture, const TriVertex theVertices[][3],
 	if (IsGpuDrawTarget())
 	{
 		mRenderOwner->SelectDrawSurface(this);
-		mRenderOwner->DrawTrianglesTex(theVertices, theNumTriangles, theColor, theDrawMode, theTexture, tx, ty, blend);
+		mRenderOwner->DrawTrianglesTexClipped(theVertices, theNumTriangles, theColor, theDrawMode, theTexture, theClipRect, tx, ty, blend);
 		return;
 	}
 	FailNonScreen(DrawOperation::BltTrianglesTex);

@@ -3,6 +3,7 @@
 #include "NativeSaveFields.h"
 #include "Dat64TimeSchema.h"
 #include "V7SaveSchema.h"
+#include "Sexy.TodLib/Reanimator.h"
 #include <span>
 #include <cstring>
 
@@ -17,6 +18,27 @@ template<class T> const LegacyByte* ObjectBytes(const T& value)
 {
     return reinterpret_cast<const LegacyByte*>(&value);
 }
+// The wire tag belongs to the pool owner; scalar fixture records have no owner.
+// Validate addresses before indexing, including while a pool slot is being read.
+template<class T> ReanimationHolder* SaveReanimationOwner(const T& value, ReanimationHolder* candidate = nullptr)
+{
+    static_assert(std::is_same_v<T, Reanimation>);
+    const auto contains = [&](const ReanimationHolder* holder) {
+        if (!holder || !holder->mReanimations.mBlock) return false;
+        const auto address = reinterpret_cast<std::uintptr_t>(&value);
+        const auto begin = reinterpret_cast<std::uintptr_t>(holder->mReanimations.mBlock);
+        constexpr auto stride = sizeof(DataArray<Reanimation>::DataArrayItem);
+        if (address < begin) return false;
+        const auto relative = address - begin;
+        return relative % stride == 0 &&
+            relative / stride < holder->mReanimations.mMaxSize &&
+            relative / stride < holder->mTimeDomains.size();
+    };
+    if (contains(candidate)) return candidate;
+    auto* holder = value.mReanimationHolder;
+    return contains(holder) ? holder : nullptr;
+}
+
 template<class T> void ClearNativeObject(T& value)
 {
     std::memset(ObjectBytes(value), 0, sizeof(T));
@@ -177,7 +199,7 @@ template<class T, class Fn> void VisitV7Members(Fn&& visit)
     }
     else if constexpr (std::is_same_v<T, Reanimation>)
     {
-        visit(offsetof(T, mTimeDomain), 0, 4);
+        // Wire bytes 0..3 store the owning holder's time-domain metadata.
         visit(offsetof(T, mStartTimeNs), 4, 8);
         visit(offsetof(T, mCurrentFrame), 12, 4);
         visit(offsetof(T, mFramePeriodNs), 16, 8);
@@ -397,22 +419,25 @@ template<class T> std::vector<LegacyByte> WriteSaveRecord(const T& value)
         }
         if constexpr (std::is_same_v<T, Reanimation>)
         {
-            const auto* holder = value.mReanimationHolder;
-            const auto nowNs = holder ? (value.mTimeDomain == ReanimTimeDomain::Battle
-                ? holder->mBattleTimeNs : holder->mVisualTimeNs) : value.mLastUpdateTimeNs;
-            if (value.mAnimRate == 0)
-            {
-                const auto frozenStart = ReanimClock::Add(value.mStartTimeNs,
-                    ReanimClock::Subtract(nowNs, value.mLastUpdateTimeNs));
-                V7SaveSchema::Write(expanded, offset + 4, static_cast<std::uint64_t>(frozenStart), 8);
-            }
-            V7SaveSchema::Write(expanded, offset + 64, static_cast<std::uint64_t>(nowNs), 8);
+            const auto* holder = SaveReanimationOwner(value);
+            const auto domain = holder
+                ? holder->mTimeDomains[holder->mReanimations.DataArrayIndexOf(&value)]
+                : ReanimTimeDomain::Visual;
+            V7SaveSchema::Write(expanded, offset, static_cast<std::uint32_t>(domain), 4);
+            // Preserve the processed pose's timestamp. Ownership metadata can
+            // lag an actor-created replacement until the next manager binding.
+            // Paused animations likewise keep their existing start/last pair.
+            V7SaveSchema::Write(expanded, offset + 64,
+                static_cast<std::uint64_t>(value.mLastUpdateTimeNs), 8);
         }
     }
     return expanded;
 }
-template<class T> void ReadSaveRecord(T& value, const LegacyByte* source)
+template<class T> void ReadSaveRecord(T& value, const LegacyByte* source, ReanimationHolder* owner = nullptr)
 {
+    ReanimationHolder* reanimationOwner = nullptr;
+    if constexpr (std::is_same_v<T, Reanimation>)
+        reanimationOwner = SaveReanimationOwner(value, owner);
     if constexpr (!std::is_same_v<T, Board> && !std::is_same_v<T, SeedBank>)
     {
         const auto kind = SaveRecordKind<T>::value;
@@ -486,6 +511,10 @@ template<class T> void ReadSaveRecord(T& value, const LegacyByte* source)
         });
     if constexpr (std::is_same_v<T, Reanimation>)
     {
+        if (reanimationOwner)
+            reanimationOwner->mTimeDomains[reanimationOwner->mReanimations.DataArrayIndexOf(&value)] =
+                static_cast<ReanimTimeDomain>(V7SaveSchema::Read(
+                    std::span(source + SaveV2Size<T>(), V7SaveSchema::Size(SaveRecordKind<T>::value)), 0, 4));
         const bool fullFrame = value.mLoopType == REANIM_LOOP_FULL_LAST_FRAME ||
             value.mLoopType == REANIM_PLAY_ONCE_FULL_LAST_FRAME ||
             value.mLoopType == REANIM_PLAY_ONCE_FULL_LAST_FRAME_AND_HOLD;
@@ -517,14 +546,14 @@ template<class T> struct Dat64Layout
         return layout.mDat64ArraySlotSize + 4 * SaveTimeFields<T>().size()
             + V7SaveSchema::Size(SaveRecordKind<T>::value);
     }
-    static void Read(T& value, const LegacyByte* bytes)
+    static void Read(T& value, const LegacyByte* bytes, ReanimationHolder* owner = nullptr)
     {
         if constexpr (std::is_same_v<T, Music>)
         {
             const bool disabled = value.IsMusicDisabled();
             ReadSaveRecord(value, bytes); value.SetMusicDisabled(disabled);
         }
-        else ReadSaveRecord(value, bytes);
+        else ReadSaveRecord(value, bytes, owner);
     }
     static void Write(LegacyByte* bytes, const T& value)
     {

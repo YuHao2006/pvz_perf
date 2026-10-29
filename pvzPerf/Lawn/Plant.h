@@ -5,6 +5,7 @@
 #include "GameObject.h"
 #include "Sexy.TodLib/ReanimTrackId.h"
 
+
 #define MAX_MAGNET_ITEMS 5
 
 enum PlantSubClass
@@ -201,19 +202,19 @@ public:
 public:
     Plant();
 
-    void                    PlantInitialize(int theGridX, int theGridY, SeedType theSeedType, SeedType theImitaterType);
-    void                    Update(std::uint64_t theLevelDeltaNs);
-    void                    Animate();
-    void                    Draw(Graphics* g);
+    void                    PlantInitialize(std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, int theGridX, int theGridY, SeedType theSeedType, SeedType theImitaterType);
+    void                    Update(std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, std::uint64_t theLevelDeltaNs);
+    void                    Animate(std::int64_t ownerNowNs, std::int64_t animationNowNs);
+    void                    Draw(std::int64_t ownerNowNs, Graphics* g);
     void                    MouseDown(int x, int y, int theClickCount);
-    void                    DoSpecial();
-    void                    Fire(Zombie* theTargetZombie, int theRow, PlantWeapon thePlantWeapon = PlantWeapon::WEAPON_PRIMARY);
+    void                    DoSpecial(std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs);
+    void                    Fire(std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, Zombie* theTargetZombie, int theRow, PlantWeapon thePlantWeapon = PlantWeapon::WEAPON_PRIMARY);
     [[nodiscard]] Zombie*                 FindTargetZombie(int theRow, PlantWeapon thePlantWeapon = PlantWeapon::WEAPON_PRIMARY);
-    void                    Die();
-    void                    UpdateProductionPlant();
-    void                    UpdateShooter();
-    bool                    FindTargetAndFire(int theRow, PlantWeapon thePlantWeapon = PlantWeapon::WEAPON_PRIMARY);
-    void                    LaunchThreepeater();
+    void                    Die(std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs);
+    void                    UpdateProductionPlant(std::int64_t ownerNowNs);
+    void                    UpdateShooter(std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs);
+    bool                    FindTargetAndFire(std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, int theRow, PlantWeapon thePlantWeapon = PlantWeapon::WEAPON_PRIMARY);
+    void                    LaunchThreepeater(std::int64_t ownerNowNs);
     static int              GetCost(SeedType theSeedType, SeedType theImitaterType = SeedType::SEED_NONE);
     static SexyString       GetNameString(SeedType theSeedType, SeedType theImitaterType = SeedType::SEED_NONE);
     static SexyString       GetToolTip(SeedType theSeedType);
@@ -223,9 +224,9 @@ public:
     static /*inline*/ bool  IsAquatic(SeedType theSeedType);
     static /*inline*/ bool  IsFlying(SeedType theSeedtype);
     static /*inline*/ bool  IsUpgrade(SeedType theSeedtype);
-    void                    UpdateAbilities();
-    void                    Squish();
-    void                    DoRowAreaDamage(int theDamage, unsigned int theDamageFlags);
+    void                    UpdateAbilities(std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs);
+    void                    Squish(std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs);
+    void                    DoRowAreaDamage(std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, int theDamage, unsigned int theDamageFlags);
     int                     GetDamageRangeFlags(PlantWeapon thePlantWeapon = PlantWeapon::WEAPON_PRIMARY);
     inline Rect                    GetPlantRect()
     {
@@ -251,79 +252,79 @@ public:
     }
     Rect                    GetPlantAttackRect(PlantWeapon thePlantWeapon = PlantWeapon::WEAPON_PRIMARY);
     [[nodiscard]] Zombie*                 FindSquashTarget();
-    void                    UpdateSquash();
+    void                    UpdateSquash(std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs);
     /*inline*/ bool         NotOnGround();
-    void                    DoSquashDamage();
-    void                    BurnRow(int theRow);
-    void                    IceZombies();
+    void                    DoSquashDamage(std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs);
+    void                    BurnRow(std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, int theRow);
+    void                    IceZombies(std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs);
     void                    BlowAwayFliers();
-    void                    UpdateGraveBuster();
-    TodParticleSystem*      AddAttachedParticle(int thePosX, int thePosY, int theRenderPosition, ParticleEffect theEffect);
-    void                    GetPeaHeadOffset(int& theOffsetX, int& theOffsetY);
+    void                    UpdateGraveBuster(std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs);
+    TodParticleSystem*      AddAttachedParticle(std::int64_t ownerNowNs, int thePosX, int thePosY, int theRenderPosition, ParticleEffect theEffect);
+    void                    GetPeaHeadOffset(std::int64_t ownerNowNs, int& theOffsetX, int& theOffsetY);
     /*inline*/ bool         MakesSun();
     static void             DrawSeedType(Graphics* g, SeedType theSeedType, SeedType theImitaterType, DrawVariation theDrawVariation, float thePosX, float thePosY);
-    void                    KillAllPlantsNearDoom();
+    void                    KillAllPlantsNearDoom(std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs);
     bool                    IsOnHighGround();
     void                    UpdateTorchwood();
-    void                    LaunchStarFruit();
-    bool                    FindStarFruitTarget();
-    void                    UpdateChomper();
-    void                    DoBlink();
-    void                    UpdateBlink();
-    void                    PlayBodyReanim(ReanimTrackId theTrackId, ReanimLoopType theLoopType, int theBlendTime, float theAnimRate);
-    void                    UpdateMagnetShroom();
+    void                    LaunchStarFruit(std::int64_t ownerNowNs);
+    bool                    FindStarFruitTarget(std::int64_t ownerNowNs);
+    void                    UpdateChomper(std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs);
+    void                    DoBlink(std::int64_t ownerNowNs, std::int64_t animationNowNs);
+    void                    UpdateBlink(std::int64_t ownerNowNs, std::int64_t animationNowNs);
+    void                    PlayBodyReanim(std::int64_t ownerNowNs, ReanimTrackId theTrackId, ReanimLoopType theLoopType, int theBlendTime, float theAnimRate);
+    void                    UpdateMagnetShroom(std::int64_t ownerNowNs);
     MagnetItem*             GetFreeMagnetItem();
-    void                    DrawMagnetItems(Graphics* g);
-    void                    UpdateDoomShroom();
-    void                    UpdateIceShroom();
-    void                    UpdatePotato();
+    void                    DrawMagnetItems(std::int64_t ownerNowNs, Graphics* g);
+    void                    UpdateDoomShroom(std::int64_t ownerNowNs);
+    void                    UpdateIceShroom(std::int64_t ownerNowNs);
+    void                    UpdatePotato(std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs);
     int                     CalcRenderOrder();
-    void                    AnimateNuts();
-    void                    SetSleeping(bool theIsAsleep);
-    void                    UpdateShooting();
-    void                    DrawShadow(Graphics* g, float theOffsetX, float theOffsetY);
-    void                    UpdateScaredyShroom();
+    void                    AnimateNuts(std::int64_t ownerNowNs);
+    void                    SetSleeping(std::int64_t ownerNowNs, std::int64_t animationNowNs, bool theIsAsleep);
+    void                    UpdateShooting(std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs);
+    void                    DrawShadow(std::int64_t ownerNowNs, Graphics* g, float theOffsetX, float theOffsetY);
+    void                    UpdateScaredyShroom(std::int64_t ownerNowNs);
     int                     DistanceToClosestZombie();
-    void                    UpdateSpikeweed();
-    void                    MagnetShroomAttactItem(Zombie* theZombie);
-    void                    UpdateSunShroom();
-    void                    UpdateBowling();
+    void                    UpdateSpikeweed(std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs);
+    void                    MagnetShroomAttactItem(std::int64_t ownerNowNs, Zombie* theZombie);
+    void                    UpdateSunShroom(std::int64_t ownerNowNs);
+    void                    UpdateBowling(std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs);
     void                    AnimatePumpkin();
-    void                    UpdateBlover();
-    void                    UpdateCactus();
+    void                    UpdateBlover(std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs);
+    void                    UpdateCactus(std::int64_t ownerNowNs);
     void                    StarFruitFire();
-    void                    UpdateTanglekelp();
-    Reanimation*            AttachBlinkAnim(Reanimation* theReanimBody);
-    void                    UpdateReanimColor();
+    void                    UpdateTanglekelp(std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs);
+    Reanimation*            AttachBlinkAnim(std::int64_t ownerNowNs, std::int64_t animationNowNs, Reanimation* theReanimBody);
+    void                    UpdateReanimColor(std::int64_t ownerNowNs);
     bool                    IsUpgradableTo(SeedType theUpgradedType);
     bool                    IsPartOfUpgradableTo(SeedType theUpgradedType);
-    void                    UpdateCobCannon();
-    void                    CobCannonFire(int theTargetX, int theTargetY);
-    void                    UpdateGoldMagnetShroom();
+    void                    UpdateCobCannon(std::int64_t ownerNowNs);
+    void                    CobCannonFire(std::int64_t ownerNowNs, int theTargetX, int theTargetY);
+    void                    UpdateGoldMagnetShroom(std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs);
     void                    RemoveEffects();
-    void                    UpdateCoffeeBean();
-    void                    UpdateUmbrella();
+    void                    UpdateCoffeeBean(std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs);
+    void                    UpdateUmbrella(std::int64_t ownerNowNs);
     void                    EndBlink();
     void                    AnimateGarlic();
-    [[nodiscard]] Coin*                   FindGoldMagnetTarget();
-    void                    SpikeweedAttack();
-    void                    ImitaterMorph();
-    void                    UpdateImitater();
-    void                    UpdateReanim();
-    void                    SpikeRockTakeDamage();
+    [[nodiscard]] Coin*                   FindGoldMagnetTarget(std::int64_t visualNowNs);
+    void                    SpikeweedAttack(std::int64_t ownerNowNs);
+    void                    ImitaterMorph(std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs);
+    void                    UpdateImitater(std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs);
+    void                    UpdateReanim(std::int64_t ownerNowNs, std::int64_t animationNowNs);
+    void                    SpikeRockTakeDamage(std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs);
     bool                    IsSpiky();
     static /*inline*/ void  PreloadPlantResources(SeedType theSeedType);
     /*inline*/ bool         IsInPlay();
     void                    UpdateNeedsFood() { ; }
-    void                    PlayIdleAnim(float theRate);
+    void                    PlayIdleAnim(std::int64_t ownerNowNs, float theRate);
     void                    UpdateFlowerPot();
     void                    UpdateLilypad();
-    void                    GoldMagnetFindTargets();
-    bool                    IsAGoldMagnetAboutToSuck();
+    void                    GoldMagnetFindTargets(std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs);
+    bool                    IsAGoldMagnetAboutToSuck(std::int64_t ownerNowNs);
     bool                    DrawMagnetItemsOnTop();
 };
 
-float                       PlantDrawHeightOffset(Board* theBoard, Plant* thePlant, SeedType theSeedType, int theCol, int theRow);
+float                       PlantDrawHeightOffset(std::int64_t ownerNowNs, Board* theBoard, Plant* thePlant, SeedType theSeedType, int theCol, int theRow);
 float                       PlantFlowerPotHeightOffset(SeedType theSeedType, float theFlowerPotScale);
 
 class PlantDefinition

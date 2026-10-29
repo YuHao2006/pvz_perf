@@ -461,5 +461,6 @@ standalone_build.log
 
 # Android local build state and VM crash dumps.
 /android/.gradle/
-/android/app/src/main/assets/
+/android/app/src/main/assets/*
+!/android/app/src/main/assets/bundled-saves/
 *.hprof

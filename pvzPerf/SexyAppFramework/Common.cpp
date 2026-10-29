@@ -158,11 +158,11 @@ std::string Sexy::GetAppDataFolder()
 		else if (home && *home && std::filesystem::path(home).is_absolute())
 			root = std::string(home) + "/.local/share/PlantsVsZombiesModern";
 #if defined(__ANDROID__)
-		// 存档/日志放应用专属外部存储（文件管理器与 USB 可见）；
-		// 运行目录（pak/shaders/缓存）仍在 internalDataPath。属主应用
-		// 对自身 Android/data 子目录的裸路径 I/O 在所有版本均免权限。
+		// AndroidMain resolves the actual user/package directory through the
+		// Activity, tests writability, then sets PVZ_APPDATA_DIR. Do not guess
+		// a user ID or fall back to a retired package name here.
 		else
-			root = "/storage/emulated/0/Android/data/com.openpvz.modern/files";
+			throw std::runtime_error("Android Activity has not initialized PVZ_APPDATA_DIR");
 #else
 		else throw std::runtime_error("Set PVZ_APPDATA_DIR or an absolute HOME/XDG_DATA_HOME");
 #endif

@@ -19,7 +19,13 @@
 #include "Resources.h"
 #include "LawnApp.h"
 #include "Lawn/Board.h"
+#include "Lawn/Challenge.h"
+#include "Lawn/CutScene.h"
+#include "Lawn/GridItem.h"
+#include "Lawn/Coin.h"
+#include "Lawn/ZenGarden.h"
 #include "Lawn/Projectile.h"
+#include "Lawn/Plant.h"
 #include "Lawn/ProjectileResources.h"
 #include "Lawn/Zombie.h"
 #include "Lawn/SeedPacket.h"
@@ -30,6 +36,8 @@
 #include "Lawn/System/ReanimationLawn.h"
 #include "Lawn/Widget/StoreScreen.h"
 #include "Lawn/Widget/TitleScreen.h"
+#include "Lawn/Widget/CreditScreen.h"
+#include "Lawn/Widget/LawnDialog.h"
 #include "SexyAppFramework/widget/HyperlinkWidget.h"
 #include "Sexy.TodLib/TodFoley.h"
 #include "SexyAppFramework/imagelib/ImageLib.h"
@@ -45,6 +53,8 @@
 #include <cmath>
 #include <cstdlib>
 #include <iostream>
+#include <DbgHelp.h>
+#pragma comment(lib, "dbghelp.lib")
 #include <stdexcept>
 #include <vector>
 
@@ -65,6 +75,20 @@ LONG CALLBACK SuppressFixtureCrashDialogs(EXCEPTION_POINTERS* exception)
         code==EXCEPTION_INT_DIVIDE_BY_ZERO)
     {
         std::fprintf(stderr,"FAIL image runtime fixture: hardware exception %08lX\n",code);
+        SymInitialize(GetCurrentProcess(), nullptr, TRUE);
+        alignas(SYMBOL_INFO) char storage[sizeof(SYMBOL_INFO)+MAX_SYM_NAME]{};
+        auto* symbol=reinterpret_cast<SYMBOL_INFO*>(storage);
+        symbol->SizeOfStruct=sizeof(SYMBOL_INFO);
+        symbol->MaxNameLen=MAX_SYM_NAME;
+        DWORD64 displacement=0;
+        if (SymFromAddr(GetCurrentProcess(),
+            reinterpret_cast<DWORD64>(exception->ExceptionRecord->ExceptionAddress),&displacement,symbol))
+            std::fprintf(stderr,"Fault: %s + %llX\n",symbol->Name,displacement);
+        void* frames[24]{};
+        const auto count=CaptureStackBackTrace(0,24,frames,nullptr);
+        for (USHORT frame=0;frame<count;++frame)
+            if (SymFromAddr(GetCurrentProcess(),reinterpret_cast<DWORD64>(frames[frame]),&displacement,symbol))
+                std::fprintf(stderr,"Frame: %s + %llX\n",symbol->Name,displacement);
         std::fflush(stderr);
         TerminateProcess(GetCurrentProcess(),code);
     }
@@ -798,13 +822,13 @@ void ReanimationAppearancePixels(SexyAppBase& app)
     effects.EffectSystemInitialize();
     Reanimation animation;
     animation.mReanimationType=ReanimationType::REANIM_GARLIC;
-    animation.ReanimationInitialize(0,0,&definition);
+    animation.ReanimationInitialize(0,0,&definition, 0);
     // Use the actual pools and AttachmentDraw path. The child keeps its default
     // appearance below the parent, and must honor the parent's visibility flag.
     auto* child=effects.mReanimationHolder->mReanimations.DataArrayAlloc();
     child->mReanimationHolder=effects.mReanimationHolder.get();
     child->mReanimationType=ReanimationType::REANIM_GARLIC;
-    child->ReanimationInitialize(0,4,&definition);
+    child->ReanimationInitialize(0,4,&definition, 0);
     auto* attachment=AttachReanim(animation.mTrackInstances[face].mAttachmentID,child,0,0);
     attachment->mDontDrawIfParentHidden=true;
     animation.SetVariantOption(ReanimTrackId::anim_face,1);
@@ -984,7 +1008,7 @@ void ReanimationAppearancePixels(SexyAppBase& app)
                 Graphics graphics(bossTarget.get());
                 graphics.mColor=Color::Black;
                 graphics.FillRect(Rect(0,0,256,128));
-                boss.DrawBossBackArm(&graphics,drawPosition);
+                boss.DrawBossBackArm(0, &graphics,drawPosition);
                 Require(child->mOverlayMatrix.m02==original.m02 &&
                     child->mOverlayMatrix.m12==original.m12,
                     "Boss back-arm drawing changed the shared animation's fractional translation");
@@ -1001,7 +1025,7 @@ void ReanimationAppearancePixels(SexyAppBase& app)
                 boss.mZombiePhase=phases[i%4];
                 boss.mTargetCol=i%3;
                 boss.mTargetRow=i%4;
-                boss.DrawBossBackArm(&graphics,drawPosition);
+                boss.DrawBossBackArm(0, &graphics,drawPosition);
                 Require(child->mOverlayMatrix.m02==original.m02 &&
                     child->mOverlayMatrix.m12==original.m12,
                     "Repeated boss back-arm drawing accumulated animation translation rounding");
@@ -1046,7 +1070,7 @@ void ReanimationFullscreenPixels(SexyAppBase& app)
     definition.mImageRects=&empty;
     Reanimation animation;
     animation.mReanimationType=lookup.mReanimationType;
-    animation.ReanimationInitialize(0,0,&definition);
+    animation.ReanimationInitialize(0,0,&definition, 0);
     animation.mColorOverride=Color(200,120,220,200);
     auto& instance=animation.mTrackInstances[fullscreen];
     instance.mTrackColor=Color(90,160,210,180);
@@ -1108,8 +1132,8 @@ void ReanimationAppearanceDefinitions(SexyAppBase& app)
     } catalogCleanup;
     ReanimatorEnsureDefinitionLoaded(ReanimationType::REANIM_GARLIC,false);
     Reanimation first,second;
-    first.ReanimationInitializeType(0,0,ReanimationType::REANIM_GARLIC);
-    second.ReanimationInitializeType(0,0,ReanimationType::REANIM_GARLIC);
+    first.ReanimationInitializeType(0,0,ReanimationType::REANIM_GARLIC, 0);
+    second.ReanimationInitializeType(0,0,ReanimationType::REANIM_GARLIC, 0);
     Require(first.mDefinition==second.mDefinition && first.mDefinition->mVariantCount==3,
         "Garlic appearances duplicated shared animation definitions");
     const auto* sharedTracks=first.mDefinition->mTracks.tracks;
@@ -1163,7 +1187,7 @@ void ReanimationAppearanceDefinitions(SexyAppBase& app)
     }
     ReanimatorEnsureDefinitionLoaded(ReanimationType::REANIM_GARGANTUAR,false);
     Reanimation giant;
-    giant.ReanimationInitializeType(0,0,ReanimationType::REANIM_GARGANTUAR);
+    giant.ReanimationInitializeType(0,0,ReanimationType::REANIM_GARGANTUAR, 0);
     giant.SetVariantOption(ReanimTrackId::Zombie_gargantuar_telephonepole,2);
     giant.SetVariantOption(ReanimTrackId::anim_head1,1);
     giant.SetVariantOption(ReanimTrackId::Zombie_gargantua_body1,2);
@@ -1252,11 +1276,539 @@ public:
     }
 };
 
+void ExplicitReanimationOwnerTime(LawnApp& app)
+{
+    auto& holder=*app.mEffectSystem->mReanimationHolder;
+    struct RestoreClocks {
+        ReanimationHolder& holder;
+        std::int64_t visual, battle;
+        ~RestoreClocks() { holder.mVisualTimeNs=visual; holder.mBattleTimeNs=battle; }
+    } restore{holder,holder.mVisualTimeNs,holder.mBattleTimeNs};
+    constexpr std::int64_t start=5'123'456'789;
+    holder.mVisualTimeNs=900'000'000'000;
+    holder.mBattleTimeNs=-800'000'000'000;
+    auto* first=app.AddReanimation(0,0,0,REANIM_PEASHOOTER,start,ReanimTimeDomain::Visual);
+    holder.mVisualTimeNs=-700'000'000'000;
+    holder.mBattleTimeNs=600'000'000'000;
+    auto* second=app.AddReanimation(0,0,0,REANIM_PEASHOOTER,start,ReanimTimeDomain::Visual);
+    struct RemoveAnimations {
+        LawnApp& app;
+        ReanimationID first, second;
+        ~RemoveAnimations() { app.RemoveReanimation(first); app.RemoveReanimation(second); }
+    } remove{app,app.ReanimationGetID(first),app.ReanimationGetID(second)};
+    Require(first->mLastUpdateTimeNs==start && second->mLastUpdateTimeNs==start,
+        "Explicit animation creation read a holder clock");
+    for (auto* animation:{first,second})
+        animation->PlayReanim(ReanimTrackId::anim_idle,REANIM_LOOP,0,12);
+    for (const std::int64_t elapsed:{17'123'457LL,321'987'654LL,2'345'678'901LL})
+    {
+        const auto previous=first->SamplePlayback().phaseNs;
+        holder.mVisualTimeNs+=37'000'000'000;
+        holder.mBattleTimeNs-=41'000'000'000;
+        Require(first->SamplePlayback().phaseNs==previous,
+            "Changing a holder clock changed an unadvanced animation query");
+        first->UpdateAt(start+elapsed);
+        holder.mVisualTimeNs=-holder.mVisualTimeNs;
+        holder.mBattleTimeNs=-holder.mBattleTimeNs;
+        second->UpdateAt(start+elapsed);
+        ReanimatorFrameTime a{}, b{};
+        first->GetFrameTime(&a); second->GetFrameTime(&b);
+        Require(first->SamplePlayback().phaseNs==second->SamplePlayback().phaseNs &&
+            a.mAnimFrameBeforeInt==b.mAnimFrameBeforeInt && a.mFraction==b.mFraction,
+            "Supplied animation time produced holder-dependent phases or frame queries");
+    }
+    constexpr auto prepared=start+2'567'890'123;
+    first->PrepareTimeAt(prepared);
+    const auto preparedPhase=first->SamplePlayback().phaseNs;
+    holder.mVisualTimeNs=1'234'567'890'123;
+    first->ApplyRate(7.5f);
+    second->PrepareTimeAt(prepared);
+    holder.mVisualTimeNs=-1'234'567'890'123;
+    second->ApplyRate(7.5f);
+    Require(first->mLastUpdateTimeNs==prepared && second->mLastUpdateTimeNs==prepared &&
+        first->SamplePlayback().phaseNs==second->SamplePlayback().phaseNs && preparedPhase>0,
+        "Rate mutation did not use the prepared owner time");
+    first->Seek(1,3);
+    holder.mVisualTimeNs+=999'000'000'000;
+    second->Seek(1,3);
+    const auto phase=first->SamplePlayback().phaseNs;
+    Require(phase==first->mPeriodNs/3 && second->SamplePlayback().phaseNs==phase &&
+        first->mLastUpdateTimeNs==prepared && second->mLastUpdateTimeNs==prepared,
+        "Seek rebound playback to a holder clock instead of prepared owner time");
+    constexpr std::int64_t destination=90'123'456'789;
+    holder.BindAnimationTime(*first,ReanimTimeDomain::Battle,destination);
+    Require(holder.mTimeDomains[holder.mReanimations.DataArrayIndexOf(first)]==ReanimTimeDomain::Battle &&
+        first->mLastUpdateTimeNs==destination && first->SamplePlayback().phaseNs==phase,
+        "Switching clock domains changed the animation phase");
+    constexpr std::int64_t delta=123'456'789;
+    first->UpdateAt(destination+delta);
+    second->UpdateAt(prepared+delta);
+    Require(first->SamplePlayback().phaseNs==second->SamplePlayback().phaseNs,
+        "Clock switching changed subsequent advancement");
+    const auto switchedPhase=first->SamplePlayback().phaseNs;
+    holder.BindAnimationTime(*first,ReanimTimeDomain::Visual,-7'654'321'987);
+    Require(first->SamplePlayback().phaseNs==switchedPhase,
+        "Switching back to a differently based visual clock changed phase");
+    std::cout<<"PASS explicit reanimation owner time: creation, prepared rate/seek, frame queries and clock switching\n";
+}
+
+void BoardlessPlantPreviewRuntime(LawnApp& app)
+{
+    auto& holder=*app.mEffectSystem->mReanimationHolder;
+    struct RestorePreviewContext {
+        LawnApp& app;
+        Board* board;
+        std::int64_t visual, battle;
+        ~RestorePreviewContext() {
+            app.mBoard=board;
+            app.mEffectSystem->mReanimationHolder->mVisualTimeNs=visual;
+            app.mEffectSystem->mReanimationHolder->mBattleTimeNs=battle;
+        }
+    } restore{app,app.mBoard,holder.mVisualTimeNs,holder.mBattleTimeNs};
+    app.mBoard=nullptr;
+    auto& render=*app.mDDInterface->mRenderInterface;
+    std::unique_ptr<Image> target(render.CreateRenderImage(256,256));
+    {
+        GpuImageDrawScope destination(render,target.get());
+        Graphics graphics(target.get());
+        constexpr std::int64_t start=37'123'456'789;
+        for (const auto seed:{SEED_PEASHOOTER,SEED_SUNFLOWER,SEED_MAGNETSHROOM})
+        {
+            holder.mVisualTimeNs=-800'000'000'000;
+            holder.mBattleTimeNs=900'000'000'000;
+            Plant preview;
+            preview.mIsOnBoard=false;
+            preview.PlantInitialize(start,start,start,0,0,seed,SEED_NONE);
+            Require(preview.mBoard==nullptr && !preview.mIsOnBoard,
+                "Boardless preview unexpectedly acquired a Board");
+            auto* body=app.ReanimationGet(preview.mBodyReanimID);
+            Require(body->mLastUpdateTimeNs==start && holder.mTimeDomains[holder.mReanimations.DataArrayIndexOf(body)]==ReanimTimeDomain::Visual,
+                "Boardless preview initialization ignored explicit visual time");
+            const auto phase=body->SamplePlayback().phaseNs;
+            for (const std::int64_t elapsed:{10'000'000LL,123'456'789LL,987'654'321LL})
+            {
+                const auto now=start+elapsed;
+                holder.mVisualTimeNs+=101'000'000'000;
+                holder.mBattleTimeNs-=103'000'000'000;
+                preview.Update(now,now,now,0);
+                preview.Draw(now,&graphics);
+                if (seed==SEED_MAGNETSHROOM)
+                    preview.DrawMagnetItems(now,&graphics);
+                Require(preview.mBoard==nullptr && body->mLastUpdateTimeNs==now &&
+                    holder.mTimeDomains[holder.mReanimations.DataArrayIndexOf(body)]==ReanimTimeDomain::Visual,
+                    "Boardless preview update/draw did not retain its explicit visual timeline");
+            }
+            Require(body->SamplePlayback().phaseNs!=phase,
+                "Boardless preview pose did not advance with supplied visual time");
+            for (const auto id:{preview.mBodyReanimID,preview.mHeadReanimID,
+                preview.mHeadReanimID2,preview.mHeadReanimID3,preview.mBlinkReanimID,
+                preview.mLightReanimID,preview.mSleepingReanimID})
+                app.RemoveReanimation(id);
+        }
+    }
+    render.Flush();
+    std::cout<<"PASS Boardless Plant previews: explicit visual init/update/draw including Magnet-shroom items\n";
+}
+
+void CreditsMovieOwnerClockRuntime(TestApp& app)
+{
+    auto& clocks=*app.mEffectSystem->mReanimationHolder;
+    PoolEffect pool;
+    pool.PoolEffectInitialize();
+    struct RestoreCreditsContext {
+        TestApp& app;
+        CreditScreen* credits;
+        PoolEffect* pool;
+        Board* board;
+        GameScenes scene;
+        Rect bounds;
+        std::int64_t visual, battle;
+        unsigned long long interval;
+        double ticks, steps;
+        ~RestoreCreditsContext() {
+            app.mCreditScreen=credits;
+            app.mPoolEffect=pool;
+            app.mBoard=board;
+            app.mGameScene=scene;
+            app.mScreenBounds=bounds;
+            app.mEffectSystem->EffectSystemFreeAll();
+            app.mEffectSystem->mReanimationHolder->mVisualTimeNs=visual;
+            app.mEffectSystem->mReanimationHolder->mBattleTimeNs=battle;
+            Sexy::gUpdateIntervalNs=interval;
+            Sexy::gUpdateTicks=ticks;
+            Sexy::gStepsPerLegacyTick=steps;
+        }
+    } restore{app,app.mCreditScreen,app.mPoolEffect,app.mBoard,app.mGameScene,app.mScreenBounds,
+        clocks.mVisualTimeNs,clocks.mBattleTimeNs,Sexy::gUpdateIntervalNs,
+        Sexy::gUpdateTicks,Sexy::gStepsPerLegacyTick};
+    app.mPoolEffect=&pool;
+    app.mBoard=nullptr;
+    app.mGameScene=GameScenes::SCENE_CREDIT;
+    Sexy::gUpdateIntervalNs=10'000'000;
+    Sexy::gUpdateTicks=1;
+    Sexy::gStepsPerLegacyTick=1;
+    CreditScreen credits(&app);
+    app.mCreditScreen=&credits;
+    credits.Resize(0,0,800,600);
+    auto& render=*app.mDDInterface->mRenderInterface;
+    std::unique_ptr<Image> target(render.CreateRenderImage(800,600));
+    const auto beforeDraw=clocks.mVisualTimeNs;
+    credits.Update();
+    Require(credits.mUpdateCount==0 && clocks.mVisualTimeNs==beforeDraw,
+        "Credits advanced before its first loading draw");
+    {
+        GpuImageDrawScope destination(render,target.get());
+        Graphics graphics(target.get());
+        credits.Draw(&graphics);
+    }
+    credits.Update();
+    Require(credits.mPreloaded && credits.mUpdateCount==1 &&
+        credits.mCreditsReanimID!=ReanimationID::REANIMATIONID_NULL,
+        "Credits first draw did not enter the original movie initialization path");
+    credits.mDontSync=true;
+    auto* movie=app.ReanimationGet(credits.mCreditsReanimID);
+    const auto start=clocks.mVisualTimeNs;
+    const auto firstExpected=movie->SamplePlaybackAt(start+10'000'000).phaseNs;
+    credits.UpdateMovie();
+    Require(clocks.mVisualTimeNs==start+10'000'000 &&
+        movie->mLastUpdateTimeNs==clocks.mVisualTimeNs &&
+        movie->SamplePlayback().phaseNs==firstExpected,
+        "First Credits movie step did not own its supplied time");
+    const auto firstPhase=movie->SamplePlayback().phaseNs;
+    const auto secondExpected=movie->SamplePlaybackAt(start+20'000'000).phaseNs;
+    credits.UpdateMovie();
+    Require(clocks.mVisualTimeNs==start+20'000'000 &&
+        movie->SamplePlayback().phaseNs==secondExpected && secondExpected!=firstPhase,
+        "Credits catch-up iterations reused one absolute animation timestamp");
+
+    auto* sunflower=CreditScreen::FindSubReanim(movie,REANIM_SUNFLOWER);
+    if (!sunflower)
+    {
+        sunflower=app.AddReanimation(0,0,0,REANIM_SUNFLOWER,
+            clocks.mVisualTimeNs,ReanimTimeDomain::Visual);
+        sunflower->PlayReanim(ReanimTrackId::anim_idle,REANIM_LOOP,0,12);
+        sunflower->AttachToAnotherReanimation(movie,ReanimTrackId::Words);
+    }
+    credits.mBlinkCountdown=0;
+    credits.UpdateMovie();
+    auto* blink=FindReanimAttachment(
+        sunflower->GetTrackInstanceByName(ReanimTrackId::anim_idle)->mAttachmentID);
+    Require(blink && blink->mReanimationType==REANIM_SUNFLOWER &&
+        blink->mLoopType==REANIM_PLAY_ONCE_FULL_LAST_FRAME && !blink->mDead,
+        "Credits blink fixture failed to attach its real one-shot animation");
+    const auto blinkId=app.ReanimationGetID(blink);
+    const auto blinkDuration=blink->mPeriodNs;
+    const int blinkSteps=static_cast<int>(blinkDuration/10'000'000)+3;
+    Require(blinkSteps<600,"Credits blink fixture would cross the next scheduled blink");
+    for (int step=0;step<blinkSteps;++step) credits.UpdateMovie();
+    Require(blink->mDead && credits.mBlinkCountdown>0,
+        "Credits blink countdown advanced while its attached blink remained frozen");
+
+    credits.mCreditsPaused=true;
+    const auto pausedTime=clocks.mVisualTimeNs;
+    const auto pausedPhase=movie->SamplePlayback().phaseNs;
+    const auto pausedBlink=credits.mBlinkCountdown.mNanoseconds;
+    for (int step=0;step<250;++step)
+    {
+        app.UpdateFrames();
+        credits.Update();
+    }
+    Require(clocks.mVisualTimeNs==pausedTime && movie->mLastUpdateTimeNs==pausedTime &&
+        movie->SamplePlayback().phaseNs==pausedPhase &&
+        credits.mBlinkCountdown.mNanoseconds==pausedBlink,
+        "Paused Credits advanced its movie clock, pose or blink schedule");
+    const auto resumeExpected=movie->SamplePlaybackAt(
+        pausedTime+static_cast<std::int64_t>(Sexy::gUpdateIntervalNs)).phaseNs;
+    credits.mCreditsPaused=false;
+    app.UpdateFrames();
+    credits.Update();
+    Require(clocks.mVisualTimeNs==pausedTime+static_cast<std::int64_t>(Sexy::gUpdateIntervalNs) &&
+        movie->SamplePlayback().phaseNs==resumeExpected,
+        "Resuming Credits consumed paused wall time or double-advanced the movie step");
+    Require(!app.ReanimationTryToGet(blinkId) || app.ReanimationTryToGet(blinkId)->mDead,
+        "Completed Credits blink became continuously active after pause/resume");
+    {
+        GpuImageDrawScope destination(render,target.get());
+        Graphics graphics(target.get());
+        credits.Draw(&graphics);
+    }
+    render.Flush();
+    std::cout<<"PASS Credits movie owner clock: distinct catch-up steps, one-shot blink, paused app updates and single-step resume\n";
+    std::unique_ptr<Image> wide(render.CreateRenderImage(1400,600));
+    credits.mCreditsPaused=true;
+    struct Scene { CreditsPhase phase; int frame; };
+    for (const auto scene : {Scene{CreditsPhase::CREDITS_MAIN1,230},
+            Scene{CreditsPhase::CREDITS_MAIN1,320}, Scene{CreditsPhase::CREDITS_MAIN2,50},
+            Scene{CreditsPhase::CREDITS_MAIN2,210}, Scene{CreditsPhase::CREDITS_MAIN3,50},
+            Scene{CreditsPhase::CREDITS_MAIN3,250}, Scene{CreditsPhase::CREDITS_END,1}})
+    {
+        app.mEffectSystem->EffectSystemFreeAll();
+        movie=credits.PlayReanim(scene.phase==CreditsPhase::CREDITS_END ? 3 : int(scene.phase)+1);
+        credits.mCreditsPhase=scene.phase;
+        movie->Seek(scene.frame,movie->mDefinition->mTracks.tracks->mTransforms.count-1);
+        movie->UpdateAt(clocks.mVisualTimeNs);
+        credits.mDrawCount=10;
+        app.mScreenBounds=Rect(0,0,800,600);
+        {
+            GpuImageDrawScope destination(render,target.get());
+            Graphics graphics(target.get());
+            credits.Draw(&graphics);
+        }
+        const auto reference=render.ReadImagePixels(*target);
+        app.mScreenBounds=Rect(-300,0,1400,600);
+        {
+            GpuImageDrawScope destination(render,wide.get());
+            Graphics graphics(wide.get());
+            graphics.mTransX=300;
+            const auto originalClip=graphics.mClipRect;
+            credits.Draw(&graphics);
+            Require(graphics.mClipRect==originalClip && graphics.mTransX==300,
+                "Credits movie draw leaked its crop into sibling buttons");
+        }
+        const auto actual=render.ReadImagePixels(*wide);
+        int differences=0;
+        for (int y=0;y<600;++y) for (int x=0;x<1400;++x)
+        {
+            const auto pixel=actual.pixels[y*1400+x];
+            if (x<300 || x>=1100)
+            {
+                if (pixel!=0xff000000u)
+                    std::cerr<<"Credits crop leak: phase="<<int(scene.phase)<<" frame="<<scene.frame
+                        <<" x="<<x<<" y="<<y<<" color="<<std::hex<<pixel<<std::dec<<'\n';
+                Require(pixel==0xff000000u,"Credits pool/lights escaped the centered 800x600 movie");
+            }
+            else
+            {
+                const auto expected=reference.pixels[y*800+x-300];
+                for (const int shift:{0,8,16,24})
+                    if (std::abs(int((pixel>>shift)&255)-int((expected>>shift)&255))>4)
+                    { ++differences; break; }
+            }
+        }
+        Require(differences<1440,"Credits wide crop differs from the original 800x600 movie");
+        credits.Update(); // Paused layout still follows the physical window edge.
+        Require(credits.mReplayButton->mX==-290,"Credits Replay did not follow the whole-window left edge");
+    }
+    std::cout<<"PASS Credits 800x600 crop: day/night pool, disco, scene transitions, final roll and window-left Replay\n";
+}
+
+void PottedGiftPickupRuntime(TestApp& app, Board& board)
+{
+    PlayerInfo profile;
+    profile.mLevel=50;
+    ZenGarden garden;
+    struct Restore {
+        TestApp& app;
+        PlayerInfo* profile;
+        ZenGarden* garden;
+        Board* board;
+        ~Restore() { app.mPlayerInfo=profile; app.mZenGarden=garden; app.mBoard=board; }
+    } restore{app,app.mPlayerInfo,app.mZenGarden,app.mBoard};
+    app.mPlayerInfo=&profile;
+    app.mZenGarden=&garden;
+    app.mBoard=&board;
+    garden.mApp=&app;
+    garden.mBoard=nullptr; // Normal combat has never entered Zen Garden.
+    auto& cache=*app.mReanimatorCache;
+    for (const auto seed:{SEED_PEASHOOTER,SEED_TANGLEKELP,SEED_FLOWERPOT})
+        if (!cache.mPlantImages[seed]) cache.mPlantImages[seed]=cache.MakeCachedPlantFrame(seed,VARIATION_NORMAL);
+    for (const auto variation:{VARIATION_ZEN_GARDEN,VARIATION_ZEN_GARDEN_WATER})
+    {
+        auto*& image=cache.mImageVariations.At(SEED_FLOWERPOT,variation);
+        if (!image) { image=cache.MakeCachedPlantFrame(SEED_FLOWERPOT,variation); ++cache.mImageVariations.mCount; }
+    }
+    auto*& kelp=cache.mImageVariations.At(SEED_TANGLEKELP,VARIATION_AQUARIUM);
+    if (!kelp) { kelp=cache.MakeCachedPlantFrame(SEED_TANGLEKELP,VARIATION_AQUARIUM); ++cache.mImageVariations.mCount; }
+    auto& render=*app.mDDInterface->mRenderInterface;
+    std::unique_ptr<Image> target(render.CreateRenderImage(240,200));
+    for (const auto kind:{COIN_PRESENT_PLANT,COIN_AWARD_PRESENT})
+        for (const auto seed:{SEED_PEASHOOTER,SEED_TANGLEKELP})
+        {
+            Coin gift;
+            gift.CoinInitialize(60,80,kind,COIN_MOTION_COIN);
+            gift.mPottedPlantSpec.mSeedType=seed;
+            gift.mPottedPlantSpec.mPlantAge=PLANTAGE_FULL;
+            gift.mPottedPlantSpec.mDrawVariation=VARIATION_NORMAL;
+            const int before=profile.mNumPottedPlants;
+            gift.Collect();
+            Require(gift.mIsBeingCollected && profile.mNumPottedPlants==before+1 && !garden.mBoard,
+                "Gift pickup required entering Zen Garden or failed to store the plant");
+            {
+                GpuImageDrawScope destination(render,target.get());
+                Graphics graphics(target.get());
+                graphics.mColor=Color::Black;
+                graphics.FillRect(0,0,240,200);
+                gift.Draw(&graphics);
+            }
+            const auto pixels=render.ReadImagePixels(*target);
+            Require(std::count_if(pixels.pixels.begin(),pixels.pixels.end(),
+                [](unsigned p) { return (p&0xffffffu)!=0; })>20,
+                "Collected garden gift did not draw its plant icon");
+            gift.Die();
+        }
+    std::cout<<"PASS collected garden gifts: both present types, ordinary/aquatic plants, real Collect/Draw with null garden Board\n";
+}
+
+void SurvivalOwnerClockRuntime(TestApp& app, int hz)
+{
+    auto& holder=*app.mEffectSystem->mReanimationHolder;
+    struct Restore {
+        TestApp& app;
+        Board* board;
+        GameMode mode;
+        GameScenes scene;
+        std::int64_t visual, battle;
+        std::uint64_t interval=Sexy::gUpdateIntervalNs;
+        double ticks=Sexy::gUpdateTicks, steps=Sexy::gStepsPerLegacyTick;
+        ~Restore() {
+            app.mBoard=board; app.mGameMode=mode; app.mGameScene=scene;
+            auto& holder=*app.mEffectSystem->mReanimationHolder;
+            holder.mVisualTimeNs=visual; holder.mBattleTimeNs=battle;
+            Sexy::gUpdateIntervalNs=interval; Sexy::gUpdateTicks=ticks; Sexy::gStepsPerLegacyTick=steps;
+        }
+    } restore{app,app.mBoard,app.mGameMode,app.mGameScene,holder.mVisualTimeNs,holder.mBattleTimeNs};
+    app.mGameMode=GAMEMODE_SURVIVAL_ENDLESS_STAGE_3;
+    app.mGameScene=SCENE_PLAYING;
+    Board board(&app);
+    app.mBoard=&board;
+    board.mLevelTimeNs=123'456'000'000;
+    holder.mBattleTimeNs=static_cast<std::int64_t>(board.mLevelTimeNs);
+    holder.mVisualTimeNs=987'654'000'000;
+    board.mNumWaves=20;
+    board.mZombieCountDown=100000;
+    board.mSunCountDown=100000;
+    auto* plant=board.NewPlant(2,2,SEED_PEASHOOTER,SEED_NONE);
+    auto* body=app.ReanimationGet(plant->mBodyReanimID);
+    auto battleTime=board.mLevelTimeNs;
+    auto phase=body->SamplePlayback().phaseNs;
+    auto deadline=plant->mNextLaunchTimeNs;
+    board.mNextSurvivalStageCounter=500;
+    const auto step=1'000'000'000ULL/hz;
+    Sexy::gUpdateIntervalNs=step;
+    Sexy::gUpdateTicks=100.0/hz;
+    Sexy::gStepsPerLegacyTick=hz/100.0;
+    for (int frame=0;frame<30;++frame) {
+        holder.mVisualTimeNs+=step;
+        board.Update();
+    }
+    Require(board.mLevelTimeNs==battleTime+30*step && holder.mBattleTimeNs==static_cast<std::int64_t>(battleTime+30*step) &&
+        body->SamplePlayback().phaseNs!=phase &&
+        board.mNextSurvivalStageCounter.mNanoseconds==5'000'000'000LL-30*static_cast<std::int64_t>(step),
+        "Survival round-end wait froze battle time/animation or failed to advance its countdown");
+    board.mNextSurvivalStageCounter=0;
+    board.mChallenge->mSurvivalStage=1;
+    app.mGameScene=SCENE_LEVEL_INTRO;
+    board.mDrawCount=0; // Keep the real cutscene from starting the chooser in this hidden fixture.
+    battleTime=board.mLevelTimeNs;
+    deadline=plant->mNextLaunchTimeNs;
+    board.mCutScene->mCutsceneTime.mNanoseconds=CutScene::SurvivalBattleClockStopTimeNs-static_cast<std::int64_t>(step);
+    holder.mVisualTimeNs+=step;
+    board.Update();
+    Require(board.mLevelTimeNs==battleTime+step,
+        "Survival pre-pan delay froze the Board before the camera started moving");
+    Require(plant->mNextLaunchTimeNs==deadline+static_cast<std::int64_t>(step),
+        "Survival pre-pan delay consumed the inactive plant's attack timer");
+    battleTime=board.mLevelTimeNs;
+    phase=body->SamplePlayback().phaseNs;
+    deadline=plant->mNextLaunchTimeNs;
+    board.mCutScene->mCutsceneTime.mNanoseconds=CutScene::SurvivalBattleClockStopTimeNs;
+    auto* preview=board.AddZombieInRow(ZOMBIE_NORMAL,2,Zombie::ZOMBIE_WAVE_CUTSCENE);
+    auto* previewBody=app.ReanimationGet(preview->mBodyReanimID);
+    Require(holder.mTimeDomains[holder.mReanimations.DataArrayIndexOf(previewBody)]==ReanimTimeDomain::Visual &&
+        previewBody->mLastUpdateTimeNs==holder.mVisualTimeNs,
+        "Street preview was created in the battle epoch");
+    const auto previewPhase=previewBody->SamplePlayback().phaseNs;
+    TodParticleSystem* cutsceneParticle=nullptr;
+    std::int64_t cutsceneParticleBirth=0;
+    GridItem portal;
+    portal.mBoard=&board;
+    portal.mGridItemType=GRIDITEM_PORTAL_CIRCLE;
+    portal.mGridX=2;
+    portal.mGridY=2;
+    portal.OpenPortal();
+    app.ReanimationGet(portal.mGridItemReanimID)->mLoopCount=1;
+    portal.UpdatePortal();
+    auto* portalParticle=app.ParticleGet(portal.mGridItemParticleID);
+    const auto portalParticleBirth=portalParticle->EmitterRosterEmitterAt(0)->mBirthTimeNs;
+    Require(portalParticleBirth==static_cast<std::int64_t>(battleTime) && !portalParticle->mIsAttachment,
+        "Portal particle did not retain global Board-time ownership");
+    for (int frame=0;frame<30;++frame) {
+        // PeaSplat lives 200 ms; create it late enough to remain alive at every tested rate.
+        if (frame==20) {
+            cutsceneParticle=board.mCutScene->AddVisualParticle(0,0,0,PARTICLE_PEA_SPLAT);
+            cutsceneParticleBirth=cutsceneParticle->EmitterRosterEmitterAt(0)->mBirthTimeNs;
+            Require(cutsceneParticleBirth==holder.mVisualTimeNs && cutsceneParticle->mIsAttachment &&
+                std::find(board.mCutScene->mVisualParticleIDs.begin(),board.mCutScene->mVisualParticleIDs.end(),
+                    app.ParticleGetID(cutsceneParticle))!=board.mCutScene->mVisualParticleIDs.end(),
+                "Cutscene particle did not register with its visual owner");
+        }
+        holder.mVisualTimeNs+=step;
+        board.Update();
+    }
+    Require(board.mLevelTimeNs==battleTime, "Repick advanced Board time during camera movement");
+    Require(holder.mTimeDomains[holder.mReanimations.DataArrayIndexOf(body)]==ReanimTimeDomain::Battle,
+        "Repick rebound retained actors to visual time");
+    Require(body->SamplePlayback().phaseNs==phase, "Repick advanced retained animation phase");
+    Require(plant->mNextLaunchTimeNs==deadline, "Repick changed the plant launch deadline");
+    Require(holder.mTimeDomains[holder.mReanimations.DataArrayIndexOf(previewBody)]==ReanimTimeDomain::Visual &&
+        previewBody->mLastUpdateTimeNs==holder.mVisualTimeNs &&
+        previewBody->SamplePlayback().phaseNs!=previewPhase,
+        "Street preview did not consume the Board-supplied visual time");
+    Require(cutsceneParticle->mLastUpdateTimeNs==holder.mVisualTimeNs &&
+        cutsceneParticle->EmitterRosterEmitterAt(0)->mBirthTimeNs==cutsceneParticleBirth,
+        "Cutscene particle froze with the held Board clock or changed its visual birth");
+    Require(portalParticle->mLastUpdateTimeNs==static_cast<std::int64_t>(battleTime) &&
+        portalParticle->EmitterRosterEmitterAt(0)->mBirthTimeNs==portalParticleBirth,
+        "Globally scheduled portal particle aged while Board time was held");
+    auto* particle=app.AddTodParticle(0,0,0,PARTICLE_PEA_SPLAT,
+        static_cast<std::int64_t>(battleTime));
+    auto* visualParticle=app.AddTodParticle(0,0,0,PARTICLE_PEA_SPLAT,
+        holder.mVisualTimeNs);
+    visualParticle->mIsAttachment=true; // This visual fixture owns its update timestamp.
+    Require(particle->mLastUpdateTimeNs==static_cast<std::int64_t>(battleTime) &&
+        particle->EmitterRosterEmitterAt(0)->mBirthTimeNs==static_cast<std::int64_t>(battleTime),
+        "Battle particle creation did not use the Board clock");
+    const auto particleBirth=particle->EmitterRosterEmitterAt(0)->mBirthTimeNs;
+    auto* boardParticle=app.AddTodParticle(0,0,0,PARTICLE_PEA_SPLAT,
+        static_cast<std::int64_t>(battleTime));
+    const auto visualParticleBirth=visualParticle->EmitterRosterEmitterAt(0)->mBirthTimeNs;
+    AttachmentID attachment=ATTACHMENTID_NULL;
+    AttachParticle(attachment,particle,0,0);
+    holder.mVisualTimeNs+=step;
+    app.mEffectSystem->UpdateAt(holder.mVisualTimeNs,static_cast<std::int64_t>(battleTime));
+    AttachmentUpdateAndMoveAt(attachment,0,0,static_cast<std::int64_t>(battleTime));
+    visualParticle->Update(step,holder.mVisualTimeNs);
+    Require(particle->mLastUpdateTimeNs==static_cast<std::int64_t>(battleTime) &&
+        particle->EmitterRosterEmitterAt(0)->mBirthTimeNs==particleBirth &&
+        boardParticle->mLastUpdateTimeNs==static_cast<std::int64_t>(battleTime) &&
+        static_cast<std::int64_t>(battleTime)-particleBirth==0 &&
+        holder.mVisualTimeNs-visualParticleBirth==static_cast<std::int64_t>(step) &&
+        visualParticle->mLastUpdateTimeNs==holder.mVisualTimeNs,
+        "Battle particle birth or attachment update consumed the visual epoch");
+    AttachmentDie(attachment);
+    visualParticle->ParticleSystemDie();
+    boardParticle->ParticleSystemDie();
+    board.RemoveCutsceneZombies();
+    app.mGameScene=SCENE_PLAYING;
+    holder.mVisualTimeNs+=step;
+    board.Update();
+    Require(board.mLevelTimeNs==battleTime+step && holder.mTimeDomains[holder.mReanimations.DataArrayIndexOf(body)]==ReanimTimeDomain::Battle &&
+        body->mLastUpdateTimeNs==static_cast<std::int64_t>(board.mLevelTimeNs) &&
+        body->SamplePlayback().phaseNs!=phase,
+        "Resuming survival did not advance exactly one battle step");
+    Require(portalParticle->mLastUpdateTimeNs==static_cast<std::int64_t>(board.mLevelTimeNs) &&
+        portalParticle->EmitterRosterEmitterAt(0)->mBirthTimeNs==portalParticleBirth,
+        "Portal particle did not resume through the global Board effect update");
+    portal.GridItemDie();
+    std::cout<<"PASS survival owner clocks "<<hz<<" Hz: intermission, retained actors, preview creation/update, particle birth/attachment and resume\n";
+}
+
 void StorePauseClockRuntime(TestApp& app, DecodeOnlySoundManager& sounds)
 {
     std::cerr<<"Store clock fixture: initialize\n";
     ReanimatorLoadDefinitions(gLawnReanimationArray,static_cast<int>(ReanimationType::NUM_REANIMS));
-    struct FreeCatalog { ~FreeCatalog() { ReanimatorFreeDefinitions(); } } freeCatalog;
+    struct FreeCatalog { ~FreeCatalog() { TodParticleFreeDefinitions(); ReanimatorFreeDefinitions(); } } freeCatalog;
+    TodParticleLoadDefinitions(gLawnParticleArray,ParticleEffect::NUM_PARTICLES);
     EffectSystem effects;
     effects.EffectSystemInitialize();
     PlayerInfo profile;
@@ -1305,15 +1857,20 @@ void StorePauseClockRuntime(TestApp& app, DecodeOnlySoundManager& sounds)
     app.mMusicInterface=&silentMusicInterface;
     app.mReanimatorCache=&cache;
     sounds.allowSilentPlayback=true;
+    ExplicitReanimationOwnerTime(app);
+    BoardlessPlantPreviewRuntime(app);
+    CreditsMovieOwnerClockRuntime(app);
+    for (const int hz:{100,240,480,1000}) SurvivalOwnerClockRuntime(app,hz);
     Board board(&app);
     std::cerr<<"Store clock fixture: board initialized\n";
     app.mGameScene=GameScenes::SCENE_PLAYING;
+    PottedGiftPickupRuntime(app,board);
     auto& holder=*effects.mReanimationHolder;
-    auto* background=app.AddReanimation(0,0,0,REANIM_PEASHOOTER);
+    auto* background=app.AddReanimation(0,0,0,REANIM_PEASHOOTER, app.mEffectSystem->mReanimationHolder->mVisualTimeNs, ReanimTimeDomain::Visual);
     background->PlayReanim(ReanimTrackId::anim_idle,REANIM_LOOP,0,12);
-    auto* battle=app.AddReanimation(0,0,0,REANIM_PEASHOOTER);
+    auto* battle=app.AddReanimation(0,0,0,REANIM_PEASHOOTER, app.mEffectSystem->mReanimationHolder->mBattleTimeNs, ReanimTimeDomain::Battle);
     battle->PlayReanim(ReanimTrackId::anim_idle,REANIM_LOOP,0,12);
-    battle->BindTimeDomain(ReanimTimeDomain::Battle);
+    holder.BindAnimationTime(*battle,ReanimTimeDomain::Battle, app.mEffectSystem->mReanimationHolder->mBattleTimeNs);
     auto& render=*app.mDDInterface->mRenderInterface;
     Image* target=render.CreateRenderImage(800,600);
     struct FreeTarget { Image* image; ~FreeTarget() { delete image; } } freeTarget{target};
@@ -1330,7 +1887,7 @@ void StorePauseClockRuntime(TestApp& app, DecodeOnlySoundManager& sounds)
         Require(background->SamplePlayback().phaseNs==phase && holder.mBattleTimeNs==battleTime,
             "Ordinary pause advanced the background pose or battle clock");
         board.Pause(false);
-        background->Update();
+        background->UpdateAt(holder.mVisualTimeNs);
         Require(background->SamplePlayback().phaseNs==phase,
             "Resuming an ordinary pause consumed elapsed UI time");
         for (const bool inLevel:{false,true})
@@ -1384,8 +1941,8 @@ void StorePauseClockRuntime(TestApp& app, DecodeOnlySoundManager& sounds)
                     "Background pose advanced under the modal remaining after Store closed");
                 app.KillDialog(nestedDialogId);
                 app.ProcessSafeDeleteList();
-                background->Update();
-                battle->Update();
+                background->UpdateAt(holder.mVisualTimeNs);
+                battle->UpdateAt(holder.mBattleTimeNs);
                 Require(background->SamplePlayback().phaseNs==phase && holder.mBattleTimeNs==battleTime,
                     "Store resume advanced a paused background animation or battle clock");
             }
@@ -2122,16 +2679,16 @@ void ParticleDefinitionsAndFrames(SexyAppBase& app, const char* pakPath)
             } poolCleanup{data};
             const auto systemCount=holder.mParticleSystems.mSize;
             bool invalidVariantRejected=false;
-            try { holder.AllocParticleSystem(0,0,0,fireEffect,2); }
+            try { holder.AllocParticleSystem(0,0,0,fireEffect, 0,2); }
             catch (const std::out_of_range&) { invalidVariantRejected=true; }
             Require(invalidVariantRejected && holder.mParticleSystems.mSize==systemCount,
                 "Invalid particle variant consumed a system pool slot");
             auto* empty=holder.AllocParticleSystemFromDef(0,0,0,&emptyDefinition,
-                fireEffect);
+                fireEffect, 0);
             Require(empty && empty->mVariant==0 && empty->EmitterRosterCount()==0,
                 "Zero-emitter definition failed to initialize");
-            auto* fireSystem=holder.AllocParticleSystem(0,0,0,fireEffect,0);
-            auto* iceSystem=holder.AllocParticleSystem(0,0,0,fireEffect,1);
+            auto* fireSystem=holder.AllocParticleSystem(0,0,0,fireEffect, 0,0);
+            auto* iceSystem=holder.AllocParticleSystem(0,0,0,fireEffect, 0,1);
             Require(fireSystem && iceSystem && fireSystem->mVariant==0 && iceSystem->mVariant==1 &&
                 fireSystem->mParticleDef==iceSystem->mParticleDef &&
                 fireSystem->EmitterRosterCount()>0 && iceSystem->EmitterRosterCount()>0,
@@ -2139,7 +2696,7 @@ void ParticleDefinitionsAndFrames(SexyAppBase& app, const char* pakPath)
             Require(fireSystem->EmitterRosterEmitterAt(0)->mEmitterDef==
                 iceSystem->EmitterRosterEmitterAt(0)->mEmitterDef,
                 "Particle appearance selection copied emitter behavior");
-            auto* system=holder.AllocParticleSystem(0,0,0,glassesEffect);
+            auto* system=holder.AllocParticleSystem(0,0,0,glassesEffect, 0);
             Require(system && system->EmitterRosterCount()==1,
                 "Cannot initialize the real sunglasses particle emitter");
             auto* emitter=system->EmitterRosterEmitterAt(0);
@@ -2478,7 +3035,13 @@ int main(int argc, char** argv)
         Require(app.mDDInterface->Init(window.handle,true)==DDInterface::RESULT_OK,
             "Cannot initialize public image runtime");
         WrappedTextMeasurements();
-        PoolGpuChecks::Run(*app.mDDInterface->mRenderInterface->mRenderer);
+        PoolGpuChecks::Run(*app.mDDInterface->mRenderInterface->mRenderer,
+#if defined(PVZ_GPU_VULKAN)
+            true
+#else
+            false
+#endif
+        );
         PrecomputedTransparentEdges(app);
         FontUploadAndCopies(app);
         SourceRectangleDraws(app);

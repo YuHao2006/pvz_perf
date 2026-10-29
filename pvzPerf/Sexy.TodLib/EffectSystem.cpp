@@ -88,24 +88,25 @@ void EffectSystem::ProcessDeleteQueue()
 }
 
 //0x445890
-void EffectSystem::Update()
-{
-	UpdateAt(mReanimationHolder->mVisualTimeNs, mReanimationHolder->mBattleTimeNs);
-}
-
 void EffectSystem::UpdateAt(std::int64_t visualNowNs, std::int64_t battleNowNs)
 {
-	mReanimationHolder->mVisualTimeNs = visualNowNs;
-	mReanimationHolder->mBattleTimeNs = battleNowNs;
 	TodParticleSystem* aParticle = nullptr;
 	while (mParticleHolder->mParticleSystems.IterateNext(aParticle))
 		if (!aParticle->mIsAttachment)
-			aParticle->Update(Sexy::gUpdateIntervalNs, visualNowNs);
+		{
+			// The owner supplies particle time: Board passes its frozen/running
+			// battle clock; full-screen UI owners pass their own visual clock.
+			const auto nowNs = battleNowNs;
+			const auto deltaNs = nowNs > aParticle->mLastUpdateTimeNs
+				? static_cast<std::uint64_t>(nowNs - aParticle->mLastUpdateTimeNs) : 0;
+			aParticle->Update(deltaNs, nowNs);
+		}
 
 	Reanimation* aReanim = nullptr;
 	while (mReanimationHolder->mReanimations.IterateNext(aReanim))
 		if (!aReanim->mIsAttachment)
-			aReanim->UpdateAt(aReanim->mTimeDomain == ReanimTimeDomain::Battle ? battleNowNs : visualNowNs);
+			aReanim->UpdateAt(mReanimationHolder->mTimeDomains[mReanimationHolder->mReanimations.DataArrayIndexOf(aReanim)]
+				== ReanimTimeDomain::Battle ? battleNowNs : visualNowNs);
 }
 
 // #################################################################################################### //
@@ -136,7 +137,7 @@ void TodTriangleGroup::DrawGroup(Graphics* g)
     // The legacy full-board rectangle means no local clip, including when the
     // drawable canvas is wider than the original board.
     const Rect* clip = mClipRect == Rect(0, 0, BOARD_WIDTH, BOARD_HEIGHT) ? nullptr : &mClipRect;
-#if defined(PVZ_GPU_VULKAN) || defined(PVZ_GPU_D3D12)
+#if defined(PVZ_GPU_VULKAN) || defined(PVZ_GPU_D3D12) || defined(PVZ_GPU_OPENGL)
     if (mTexture.mTexture && !mQuadArray.empty()) {
         if (!g->mDestImage || !g->mDestImage->IsGpuDrawTarget())
             throw NonScreenDrawError(DrawOperation::BltTrianglesTex);
@@ -187,7 +188,7 @@ void TodTriangleGroup::AddTriangle(Graphics* g, const TextureSource& texture, co
 	TOD_ASSERT(texture.mTexture != nullptr);
 
 	if ((!mVertArray.empty()
-#if defined(PVZ_GPU_VULKAN) || defined(PVZ_GPU_D3D12)
+#if defined(PVZ_GPU_VULKAN) || defined(PVZ_GPU_D3D12) || defined(PVZ_GPU_OPENGL)
         || !mQuadArray.empty()
 #endif
     ) && (mDrawMode != theDrawMode || !(mClipRect == theClipRect) ||
@@ -227,7 +228,7 @@ void TodTriangleGroup::AddTriangle(Graphics* g, const TextureSource& texture, co
 
 	// Keep uncut topology and pixel/UV coordinates. The batch's local clip is
 	// applied by GPU scissor; changing it flushes the preceding batch in order.
-#if defined(PVZ_GPU_VULKAN) || defined(PVZ_GPU_D3D12)
+#if defined(PVZ_GPU_VULKAN) || defined(PVZ_GPU_D3D12) || defined(PVZ_GPU_OPENGL)
 	if (!mVertArray.empty()) DrawGroup(g);
 	mQuadArray.push_back({TriVertex{tp[0].x,tp[0].y,aTexX1,aTexY1,aTexColor},
 		TriVertex{tp[1].x,tp[1].y,aTexX1,aTexY2,aTexColor},

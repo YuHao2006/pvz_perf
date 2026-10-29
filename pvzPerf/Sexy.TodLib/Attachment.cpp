@@ -17,13 +17,7 @@ Attachment::~Attachment()
 }
 
 //0x404490
-void Attachment::Update()
-{
-	TOD_ASSERT(gEffectSystem);
-	UpdateAt(gEffectSystem->mReanimationHolder->mVisualTimeNs, ReanimTimeDomain::Visual);
-}
-
-void Attachment::UpdateAt(std::int64_t nowNs, ReanimTimeDomain domain)
+void Attachment::UpdateAt(std::int64_t nowNs)
 {
 	TOD_ASSERT(gEffectSystem);
 
@@ -38,7 +32,9 @@ void Attachment::UpdateAt(std::int64_t nowNs, ReanimTimeDomain domain)
 			TodParticleSystem* aParticleSystem = gEffectSystem->mParticleHolder->mParticleSystems.DataArrayTryToGet(aAttachEffect->mEffectID);
 			if (aParticleSystem && !aParticleSystem->mDead)
 			{
-				aParticleSystem->Update(Sexy::gUpdateIntervalNs, gEffectSystem->mReanimationHolder->mVisualTimeNs);
+				const auto deltaNs = nowNs > aParticleSystem->mLastUpdateTimeNs
+					? static_cast<std::uint64_t>(nowNs - aParticleSystem->mLastUpdateTimeNs) : 0;
+				aParticleSystem->Update(deltaNs, nowNs);
 				isEmpty = false;
 			}
 			break;
@@ -54,7 +50,6 @@ void Attachment::UpdateAt(std::int64_t nowNs, ReanimTimeDomain domain)
 			Reanimation* aReanimation = gEffectSystem->mReanimationHolder->mReanimations.DataArrayTryToGet(aAttachEffect->mEffectID);
 			if (aReanimation && !aReanimation->mDead)
 			{
-				aReanimation->BindTimeDomain(domain);
 				aReanimation->UpdateAt(nowNs);
 				isEmpty = false;
 			}
@@ -402,7 +397,7 @@ void Attachment::Draw(Graphics* g, bool theParentHidden)
 }
 
 //0x404E80
-void Attachment::Detach()
+void Attachment::Detach(std::int64_t nowNs)
 {
 	TOD_ASSERT(gEffectSystem);
 
@@ -421,6 +416,7 @@ void Attachment::Detach()
 			if (aParticleSystem)
 			{
 				TOD_ASSERT(aParticleSystem->mIsAttachment);
+				aParticleSystem->Update(0,nowNs);
 				aParticleSystem->mIsAttachment = false;
 			}
 			break;
@@ -437,7 +433,9 @@ void Attachment::Detach()
 			{
 				TOD_ASSERT(aReanimation->mIsAttachment);
 				aReanimation->mIsAttachment = false;
-				aReanimation->BindTimeDomain(ReanimTimeDomain::Visual);
+				// The recipient supplies its current timestamp. Ownership metadata
+				// remains with the effect manager; the animation sees only nowNs.
+				aReanimation->RebaseTime(nowNs);
 			}
 			break;
 		}
@@ -543,15 +541,8 @@ Attachment* AttachmentHolder::AllocAttachment()
 }
 
 //0x4051B0
-void AttachmentUpdateAndSetMatrix(AttachmentID& theAttachmentID, SexyTransform2D& theMatrix)
-{
-	TOD_ASSERT(gEffectSystem);
-	AttachmentUpdateAndSetMatrixAt(theAttachmentID, theMatrix,
-		gEffectSystem->mReanimationHolder->mVisualTimeNs, ReanimTimeDomain::Visual);
-}
-
 void AttachmentUpdateAndSetMatrixAt(AttachmentID& theAttachmentID, SexyTransform2D& theMatrix,
-	std::int64_t nowNs, ReanimTimeDomain domain)
+	std::int64_t nowNs)
 {
 	if (theAttachmentID == AttachmentID::ATTACHMENTID_NULL)
 		return;
@@ -560,7 +551,7 @@ void AttachmentUpdateAndSetMatrixAt(AttachmentID& theAttachmentID, SexyTransform
 	Attachment* aAttachment = gEffectSystem->mAttachmentHolder->mAttachments.DataArrayTryToGet((unsigned int)theAttachmentID);
 	if (aAttachment)
 	{
-		aAttachment->UpdateAt(nowNs, domain);
+		aAttachment->UpdateAt(nowNs);
 		aAttachment->SetMatrix(theMatrix);
 	}
 	else
@@ -570,15 +561,8 @@ void AttachmentUpdateAndSetMatrixAt(AttachmentID& theAttachmentID, SexyTransform
 }
 
 //0x405200
-void AttachmentUpdateAndMove(AttachmentID& theAttachmentID, float theX, float theY)
-{
-	TOD_ASSERT(gEffectSystem);
-	AttachmentUpdateAndMoveAt(theAttachmentID, theX, theY,
-		gEffectSystem->mReanimationHolder->mVisualTimeNs, ReanimTimeDomain::Visual);
-}
-
 void AttachmentUpdateAndMoveAt(AttachmentID& theAttachmentID, float theX, float theY,
-	std::int64_t nowNs, ReanimTimeDomain domain)
+	std::int64_t nowNs)
 {
 	if (theAttachmentID == AttachmentID::ATTACHMENTID_NULL)
 		return;
@@ -587,7 +571,7 @@ void AttachmentUpdateAndMoveAt(AttachmentID& theAttachmentID, float theX, float 
 	Attachment* aAttachment = gEffectSystem->mAttachmentHolder->mAttachments.DataArrayTryToGet((unsigned int)theAttachmentID);
 	if (aAttachment)
 	{
-		aAttachment->UpdateAt(nowNs, domain);
+		aAttachment->UpdateAt(nowNs);
 		aAttachment->SetPosition(SexyVector2(theX, theY));
 	}
 	else
@@ -772,7 +756,7 @@ void AttachmentDie(AttachmentID& theAttachmentID)
 }
 
 //0x405430
-void AttachmentDetach(AttachmentID& theAttachmentID)
+void AttachmentDetach(AttachmentID& theAttachmentID, std::int64_t nowNs)
 {
 	if (theAttachmentID == AttachmentID::ATTACHMENTID_NULL)
 		return;
@@ -782,7 +766,7 @@ void AttachmentDetach(AttachmentID& theAttachmentID)
 	theAttachmentID = AttachmentID::ATTACHMENTID_NULL;
 	if (aAttachment)
 	{
-		aAttachment->Detach();
+		aAttachment->Detach(nowNs);
 	}
 }
 

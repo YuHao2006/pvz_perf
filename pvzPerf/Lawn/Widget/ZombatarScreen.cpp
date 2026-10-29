@@ -4,6 +4,8 @@
 #include "Resources.h"
 #include "Sexy.TodLib/TodCommon.h"
 #include "Lawn/Zombie.h"
+#include "Sexy.TodLib/EffectSystem.h"
+#include "Sexy.TodLib/Reanimator.h"
 #include "ZombatarItems.h"
 #include "graphics/Graphics.h"
 #include "graphics/AtlasDraw.h"
@@ -60,6 +62,7 @@ ZombatarScreen::~ZombatarScreen()
 
 void ZombatarScreen::SetupZombiePreview()
 {
+	const auto visualNowNs = mZombatarApp->mEffectSystem->mReanimationHolder->mVisualTimeNs;
 	if (mZombiePreview)
 	{
 		ApplyCurrentZombatar();
@@ -70,7 +73,7 @@ void ZombatarScreen::SetupZombiePreview()
 	// constructor inherits the current board pointer, so clear it before
 	// ZombieInitialize to keep board-only positioning logic disabled.
 	mZombiePreview->mBoard = nullptr;
-	mZombiePreview->ZombieInitialize(
+	mZombiePreview->ZombieInitialize(visualNowNs, visualNowNs, visualNowNs,
 		0,
 		// 1073 constructs the dedicated Zombatar flag-zombie type here. It keeps
 		// the flag attachment while exposing the extra custom-head render groups.
@@ -99,7 +102,8 @@ void ZombatarScreen::ClearZombiePreview()
 	// the effect system is gone, discard its effect IDs and let the object die.
 	if (mZombatarApp && mZombatarApp->mEffectSystem)
 	{
-		mZombiePreview->DieNoLoot();
+		const auto visualNowNs = mZombatarApp->mEffectSystem->mReanimationHolder->mVisualTimeNs;
+		mZombiePreview->DieNoLoot(visualNowNs, visualNowNs, visualNowNs);
 	}
 	else
 	{
@@ -127,10 +131,11 @@ void ZombatarScreen::PrepareToShow()
 
 void ZombatarScreen::Update()
 {
+	const auto visualNowNs = mZombatarApp->mEffectSystem->mReanimationHolder->mVisualTimeNs;
 	LawnDialog::Update();
 	if (mZombiePreview)
 	{
-		mZombiePreview->Update();
+		mZombiePreview->Update(visualNowNs, visualNowNs, visualNowNs, Sexy::gUpdateIntervalNs);
 		if (mZombatarItems && mZombatarItems->HasVisualSelectionChanged())
 			ApplyCurrentZombatar();
 	}
@@ -145,6 +150,7 @@ void ZombatarScreen::DrawBackground(Graphics* g)
 
 void ZombatarScreen::Draw(Graphics* g)
 {
+	const auto visualNowNs = mZombatarApp->mEffectSystem->mReanimationHolder->mVisualTimeNs;
 	if (g->mClipRect.mWidth <= 0 || g->mClipRect.mHeight <= 0)
 		return;
 
@@ -173,7 +179,7 @@ void ZombatarScreen::Draw(Graphics* g)
 		Graphics aZombieGraphics(*g);
 		if (mZombiePreview->BeginDraw(&aZombieGraphics))
 		{
-			mZombiePreview->Draw(&aZombieGraphics);
+			mZombiePreview->Draw(visualNowNs, &aZombieGraphics);
 		}
 	}
 

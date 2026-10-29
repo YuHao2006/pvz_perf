@@ -128,12 +128,15 @@ public:
 	void					DrawTriangle(const TriVertex &p1, const TriVertex &p2, const TriVertex &p3, const Color &theColor, int theDrawMode);
 	void					DrawTriangleTex(const TriVertex &p1, const TriVertex &p2, const TriVertex &p3, const Color &theColor, int theDrawMode, Image *theTexture, bool blend = true);
 	void					DrawTrianglesTex(const TriVertex theVertices[][3], int theNumTriangles, const Color &theColor, int theDrawMode, Image *theTexture, float tx = 0, float ty = 0, bool blend = true);
+	void DrawTrianglesTexClipped(const TriVertex vertices[][3], int count,
+		const Color& color, int drawMode, Image* image, const Rect& clip,
+		float tx = 0, float ty = 0, bool blend = true);
 	void DrawTrianglesTex(std::span<const std::array<TriVertex,3>> theTriangles, const Color& theColor, int theDrawMode, Image* theTexture, float tx = 0, float ty = 0, bool blend = true);
 	void DrawTrianglesTex(std::span<const std::array<TriVertex,3>> triangles,
 		const Color& color, int drawMode, const TextureSource& source,
 		float tx = 0, float ty = 0, bool blend = true, const Rect* clip = nullptr);
 	void					DrawTrianglesTexStrip(const TriVertex theVertices[], int theNumTriangles, const Color &theColor, int theDrawMode, Image *theTexture, float tx = 0, float ty = 0, bool blend = true);
-#if defined(PVZ_GPU_VULKAN) || defined(PVZ_GPU_D3D12)
+#if defined(PVZ_GPU_VULKAN) || defined(PVZ_GPU_D3D12) || defined(PVZ_GPU_OPENGL)
     void DrawQuadsTex(std::span<const std::array<TriVertex,4>> quads,const Color& color,
         int drawMode,const TextureSource& source,float tx=0,float ty=0,bool blend=true,const Rect* clip=nullptr);
 #endif

@@ -32,3 +32,20 @@ its distance accumulation at 40.
 loop and tests every old and partner coordinate pair against the row rules,
 including occupied cells, same-column candidates, and both edge columns.
 It does not require opening or manipulating the game.
+
+## Particle update ownership
+
+Read-only disassembly of the same 1073 executable shows two update paths:
+`GridItem::Update` calls particle update `0x521A20` at `0x45191C`; the global
+effect update calls it at `0x4484EC` unless byte `+0x1D` is set. The pool
+allocator clears that byte at `0x5232B3`, and portal creation at
+`0x4517E8` only stores the returned particle ID at `0x4517F0`.
+It does not set the attachment/update-owner flag. Thus a live portal particle
+normally receives both calls in a logical step. The omission is observable;
+whether its resulting speed was deliberate cannot be established from code alone.
+
+The current implementation intentionally uses one global update with the
+Board-supplied nanosecond timestamp. GridItem retains creation, drawing,
+positioning and destruction, but does not advance particle simulation.
+This removes the original duplicate update rather than claiming exact parity
+with that particular original behavior. Reanim and relocation rules are separate.

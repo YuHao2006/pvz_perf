@@ -1,3 +1,4 @@
+#include "Sexy.TodLib/Reanimator.h"
 #include "ReanimClock.h"
 #include "EffectSystem.h"
 EffectSystem* gEffectSystem = nullptr;
@@ -155,7 +156,7 @@ struct Scene
         definition.mVariantCount = 1;
         data.Initialize();
         system = holder.AllocParticleSystemFromDef(100, 200, 0, &definition,
-            ParticleEffect::PARTICLE_NONE);
+            ParticleEffect::PARTICLE_NONE, 0);
     }
     TodParticleEmitter* Emitter() const { return system->EmitterRosterEmitterAt(0); }
     TodParticle* Spawn() { return Emitter()->SpawnParticle(0, 1); }
@@ -657,7 +658,7 @@ void TestLifeFractionSideTableOwnership()
     const auto emitterSlot=ah.mEmitters.DataArrayIndexOf(first.Emitter());
     first.system->ParticleSystemDie();
     ah.mParticleSystems.DataArrayFree(first.system);
-    first.system=ah.AllocParticleSystemFromDef(100,200,0,&first.definition,ParticleEffect::PARTICLE_NONE);
+    first.system=ah.AllocParticleSystemFromDef(100,200,0,&first.definition,ParticleEffect::PARTICLE_NONE, 0);
     Require(ah.mEmitters.DataArrayIndexOf(first.Emitter())==emitterSlot &&
         ah.mData->mEmitterLifeFractions[emitterSlot]==0,
         "recycled emitter slot retained old life cache");

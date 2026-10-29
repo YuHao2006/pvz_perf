@@ -297,7 +297,7 @@ void TitleScreen::Update()
 		return;
 	}
 
-	mApp->mEffectSystem->Update();
+	mApp->mEffectSystem->UpdateAt(mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs, mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs);
 
 	float aPrevWidth = mCurBarWidth;
 	mCurBarWidth += Sexy::UpdateDelta(mBarVel);
@@ -398,7 +398,7 @@ void TitleScreen::Update()
 			}
 			float aPosX = aTriggerPoint[i] + 225.0f;
 			float aPosY = 511.0f;
-			Reanimation* aSproutReanim = mApp->AddReanimation(aPosX, aPosY, 0, aReanimType);
+			Reanimation* aSproutReanim = mApp->AddReanimation(aPosX, aPosY, 0, aReanimType, mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs, ReanimTimeDomain::Visual);
 			aSproutReanim->ApplyRate(18.0f);
 			aSproutReanim->ChangeLoopType(ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD);
 

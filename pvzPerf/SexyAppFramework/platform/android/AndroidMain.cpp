@@ -8,6 +8,7 @@
 #include "SexyAppFramework/JsonDoc.h"
 #include <android/log.h>
 #include <cerrno>
+#include <cstdlib>
 #include <cstdio>
 
 namespace Sexy {
@@ -91,11 +92,12 @@ void android_main(android_app* state) {
     SetAndroidRuntimeDirectory(state->activity->internalDataPath);
     std::string settingsPath;
     int requestedTargetFps=0;
-    // 存档目录：优先应用专属外部存储（JNI 取真实路径，文件管理器可见）；
-    // 部分 ROM（实测 nubia Android 14）对本进程直写 Android/data 也拒绝，
-    // 探测失败即回退 internalDataPath——存档功能永远优先于可见性。
+    int resetEndless=0;
+    // Prefer the Activity's Android/media directory. Keep the former external
+    // files directory as a migration source and a fallback when media is absent.
     {
         std::string appDataDir = state->activity->internalDataPath;
+        std::string legacyExternalDir;
         JNIEnv* env = state->activity->env;
         if (env && state->activity->vm) {
             state->activity->vm->AttachCurrentThread(&env, nullptr);
@@ -121,6 +123,11 @@ void android_main(android_app* state) {
                 const jmethodID getIntExtra=env->GetMethodID(intentClass,"getIntExtra","(Ljava/lang/String;I)I");
                 const jstring key=env->NewStringUTF("targetFps");
                 if (getIntExtra) requestedTargetFps=env->CallIntMethod(intent,getIntExtra,key,0);
+                const jstring resetKey=env->NewStringUTF("resetEndless");
+                if (getIntExtra) resetEndless=env->CallIntMethod(intent,getIntExtra,resetKey,0);
+                const jmethodID removeExtra=env->GetMethodID(intentClass,"removeExtra","(Ljava/lang/String;)V");
+                if (removeExtra) env->CallVoidMethod(intent,removeExtra,resetKey);
+                env->DeleteLocalRef(resetKey);
                 env->DeleteLocalRef(key);env->DeleteLocalRef(intentClass);env->DeleteLocalRef(intent);
             }
             if (env->ExceptionCheck()) {env->ExceptionClear();requestedTargetFps=0;}
@@ -137,6 +144,7 @@ void android_main(android_app* state) {
                         env->CallObjectMethod(file, getAbs));
                     const char* chars = env->GetStringUTFChars(jstr, nullptr);
                     const std::string external = chars;
+                    legacyExternalDir = external;
                     env->ReleaseStringUTFChars(jstr, chars);
                     // 探测可写：真实 app 进程视角（run-as 域测试会失真）
                     const std::filesystem::path probe =
@@ -154,6 +162,40 @@ void android_main(android_app* state) {
                     env->ExceptionClear();
                 }
             }
+            const jmethodID getMedia = env->GetMethodID(cls, "getExternalMediaDirs", "()[Ljava/io/File;");
+            const auto mediaDirs = getMedia ? static_cast<jobjectArray>(
+                env->CallObjectMethod(state->activity->clazz, getMedia)) : nullptr;
+            if (!env->ExceptionCheck() && mediaDirs) {
+                for (jsize i = 0; i < env->GetArrayLength(mediaDirs); ++i) {
+                    jobject directory = env->GetObjectArrayElement(mediaDirs, i);
+                    if (!directory) continue;
+                    jclass fileClass = env->GetObjectClass(directory);
+                    jmethodID getPath = env->GetMethodID(fileClass, "getAbsolutePath", "()Ljava/lang/String;");
+                    auto path = getPath ? static_cast<jstring>(env->CallObjectMethod(directory, getPath)) : nullptr;
+                    std::string media;
+                    if (!env->ExceptionCheck() && path) {
+                        if (const char* chars = env->GetStringUTFChars(path, nullptr)) {
+                            media = chars;
+                            env->ReleaseStringUTFChars(path, chars);
+                        }
+                    }
+                    if (path) env->DeleteLocalRef(path);
+                    env->DeleteLocalRef(fileClass);
+                    env->DeleteLocalRef(directory);
+                    if (env->ExceptionCheck()) { env->ExceptionClear(); continue; }
+                    if (media.empty()) continue;
+                    const auto probe = std::filesystem::path(media) / ".pvz-write-probe";
+                    if (FILE* file = std::fopen(probe.string().c_str(), "w")) {
+                        const bool writable = std::fputc('x', file) != EOF;
+                        const bool closed = std::fclose(file) == 0;
+                        std::remove(probe.string().c_str());
+                        if (writable && closed) { appDataDir = media; break; }
+                    }
+                }
+                env->DeleteLocalRef(mediaDirs);
+            }
+            if (env->ExceptionCheck()) env->ExceptionClear();
+            env->DeleteLocalRef(cls);
         }
         // Settings belong to the normal external data directory even when test saves are isolated.
         const std::filesystem::path settingsDirectory(appDataDir);
@@ -176,31 +218,32 @@ void android_main(android_app* state) {
             setenv("PVZ_ANDROID_GPU_FIXTURE", "1", 1);
         }
         setenv("PVZ_APPDATA_DIR", appDataDir.c_str(), 1);
-        // 一次性迁移：旧版把档写在 internal；外部缺档时拷入。
-        if (appDataDir != state->activity->internalDataPath) {
+        // Import once, preferring the latest external files over old internal
+        // copies. Without a marker, consumed level saves would resurrect on
+        // the next launch. Never overwrite files already in the destination.
+        const auto migrationMarker = settingsDirectory / ".user-data-migrated";
+        if (!std::filesystem::exists(migrationMarker)) {
             namespace fs2 = std::filesystem;
-            const fs2::path legacy(state->activity->internalDataPath);
-            const fs2::path external(settingsDirectory);
-            std::error_code ec;
-            for (const char* name : {"users.dat", "settings.json"}) {
-                const fs2::path from = legacy / name, to = external / name;
-                std::error_code copyEc;
-                if (!fs2::exists(to, copyEc) && fs2::exists(from, copyEc) &&
-                    !fs2::copy_file(from, to, copyEc))
-                    AndroidDiag("migrate %s failed: %s", name,
-                        copyEc.message().c_str());
+            for (const fs2::path& source : {fs2::path(legacyExternalDir), internal}) {
+                if (source.empty() || source == settingsDirectory || !fs2::exists(source)) continue;
+                for (const auto& entry : fs2::directory_iterator(source)) {
+                    if (!entry.is_regular_file()) continue;
+                    const auto name = entry.path().filename().string();
+                    if (entry.path().extension() != ".dat64" ||
+                        (name.rfind("user", 0) != 0 && name.rfind("game", 0) != 0)) continue;
+                    const auto to = settingsDirectory / name;
+                    if (!fs2::exists(to)) fs2::copy_file(entry.path(), to);
+                }
+                // Publish the profile index only after its records are present.
+                for (const char* name : {"settings.json", "users.dat"}) {
+                    const auto from = source / name, to = settingsDirectory / name;
+                    if (!fs2::exists(to) && fs2::is_regular_file(from)) fs2::copy_file(from, to);
+                }
             }
-            for (fs2::directory_iterator it(legacy, ec), end; !ec && it != end;
-                 it.increment(ec)) {
-                const auto n = it->path().filename().string();
-                if (n.rfind("user", 0) != 0 && n.rfind("game", 0) != 0) continue;
-                if (it->path().extension() != ".dat64") continue;
-                const fs2::path to = external / n;
-                std::error_code copyEc;
-                if (!fs2::exists(to, copyEc) && !fs2::copy_file(it->path(), to, copyEc))
-                    AndroidDiag("migrate %s failed: %s", n.c_str(),
-                        copyEc.message().c_str());
-            }
+            std::ofstream completed(migrationMarker);
+            completed << "1\n";
+            completed.close();
+            if (!completed) throw std::runtime_error("Cannot commit Android user-data migration");
         }
     }
     while (!state->window) {
@@ -214,6 +257,38 @@ void android_main(android_app* state) {
         gTodStringFormats = gLawnStringFormats;
         gTodStringFormatCount = gLawnStringFormatCount;
         gAppCloseRequest = LawnGetCloseRequest;
+        // Test APKs include the perfect profile and canonical endless start.
+        // Publish users.dat last; an interrupted first launch can retry without
+        // replacing an established profile or a consumed level save.
+        const char* dataPath = std::getenv("PVZ_APPDATA_DIR");
+        const std::filesystem::path userDirectory(dataPath ? dataPath : state->activity->internalDataPath);
+        if (!std::filesystem::exists(userDirectory / "users.dat")) {
+            for (const char* name : {"user1.dat64", "game1_58.dat64", "users.dat"}) {
+                const std::string asset = std::string("bundled-saves/") + name;
+                ExtractAsset(state->activity->assetManager, asset.c_str(), userDirectory / name);
+            }
+        }
+        const std::filesystem::path internalDirectory(state->activity->internalDataPath);
+        int previousReset=0;
+        if (std::ifstream marker(internalDirectory / "endless-reset-token"); marker)
+            marker >> previousReset;
+        if (resetEndless > 0 && resetEndless != previousReset) {
+            const auto level=userDirectory / "game1_58.dat64";
+            const std::filesystem::path internal(state->activity->internalDataPath);
+            // Explicit benchmark reset replaces only this slot. Do not retain
+            // superseded gameplay saves; the bundled baseline is authoritative.
+            ExtractAsset(state->activity->assetManager,"bundled-saves/game1_58.dat64",level);
+            // Export a copy from the actual application storage namespace for
+            // external verification; run-as cannot write that path on all ROMs.
+            std::filesystem::copy_file(level,internal / "endless-restored.dat64",
+                std::filesystem::copy_options::overwrite_existing);
+            // Do not let the old internal migration seed resurrect a consumed
+            // level on a later launch after restoring the external slot.
+            if (userDirectory != internal)
+                std::filesystem::remove(internal / "game1_58.dat64");
+            std::ofstream marker(internal / "endless-reset-token", std::ios::trunc);
+            if (!(marker << resetEndless)) throw std::runtime_error("Cannot record completed endless reset");
+        }
         app = new LawnApp();
         // main.cpp 在安卓构建被排除；gLawnApp（PoolEffect/关卡逻辑依赖）
         // 必须在此补赋值，否则资源加载在 LoadingThreadCompleted 处终止。
@@ -226,8 +301,7 @@ void android_main(android_app* state) {
         SetAndroidRuntimeDirectory(runtimeRoot.string());
         app->mChangeDirTo = runtimeRoot.string();
         if (requestedTargetFps!=0) {
-            if (requestedTargetFps<1) throw std::invalid_argument("targetFps launch option must be positive");
-            const auto timing=FrameTiming::FromTargetFps(static_cast<unsigned int>(requestedTargetFps));
+            const auto timing=FrameTiming::FromSetting(requestedTargetFps);
             JsonDoc settings;
             if (std::filesystem::exists(settingsPath) && !settings.LoadFile(settingsPath))
                 throw std::runtime_error("Cannot read existing settings: "+settings.mError);

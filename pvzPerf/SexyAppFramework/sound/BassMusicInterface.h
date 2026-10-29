@@ -57,6 +57,10 @@ public:
 	std::atomic<bool> mSlotsPublished{false};
 	int						mMaxMusicVolume;
 	int						mMusicLoadFlags;
+#if defined(_WIN32) || defined(__ANDROID__)
+	// BASS device selection is local to each loading thread.
+	unsigned int				mOutputDevice = 0;
+#endif
 
 public:
 	BassMusicInterface(NativeWindowHandle theHWnd);

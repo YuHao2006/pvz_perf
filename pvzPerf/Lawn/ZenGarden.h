@@ -46,8 +46,8 @@ public:
 
     void                    ZenGardenInitLevel();
     void                    CancelPendingSale();
-    /*inline*/ void         DrawPottedPlantIcon(Graphics* g, float x, float y, PottedPlant* thePottedPlant);
-    void                    DrawPottedPlant(Graphics* g, float x, float y, PottedPlant* thePottedPlant, float theScale, bool theDrawPot);
+    void                    DrawPottedPlantIcon(std::int64_t nowNs, Graphics* g, float x, float y, PottedPlant* thePottedPlant);
+    void                    DrawPottedPlant(std::int64_t nowNs, Graphics* g, float x, float y, PottedPlant* thePottedPlant, float theScale, bool theDrawPot);
     bool                    IsZenGardenFull(bool theIncludeDroppedPresents);
     void                    FindOpenZenGardenSpot(int& theSpotX, int& theSpotY);
     void                    AddPottedPlant(PottedPlant* thePottedPlant);

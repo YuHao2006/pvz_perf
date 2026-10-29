@@ -2,6 +2,7 @@
 #include "misc/TimeCounter.h"
 #include "misc/KeyCodes.h"
 #include "Zombie.h"
+#include <vector>
 
 using namespace Sexy;
 class LawnApp;
@@ -11,6 +12,8 @@ class ChallengeScreen;
 class CutScene
 {
 public:
+    static const std::int64_t SurvivalBattleClockStopTimeNs;
+    std::vector<ParticleSystemID> mVisualParticleIDs; // Cutscene-owned effects; never part of the level save.
     LawnApp*                    mApp;                             //+0x0
     Board*                      mBoard;                           //+0x4
     Sexy::TimeCounter                         mCutsceneTime;                    //+0x8
@@ -40,6 +43,8 @@ public:
     void                        StartLevelIntro();
     void                        CancelIntro();
     void                        Update();
+    TodParticleSystem*           AddVisualParticle(float x, float y, int renderOrder, ParticleEffect effect);
+    void                        UpdateVisualParticles(std::int64_t nowNs, bool simulate);
     void                        AnimateBoard();
     void                        UpdateSeedChooserCamera();
     /*inline*/ void             StartSeedChooser();

@@ -25,6 +25,11 @@
 #include "graphics/ImageDiagnostics.h"
 #include <filesystem>
 #include "platform/Audio.h"
+#if defined(__APPLE__)
+#include "platform/macos/MacWindow.h"
+#elif !defined(_WIN32)
+#include "platform/NativeWindow.h"
+#endif
 #include "misc/Rect.h"
 #include "misc/PerfTimer.h"
 #include "Sexy.TodLib/TodDebug.h"
@@ -1346,6 +1351,7 @@ void SexyAppBase::WriteToRegistry()
 {
 	JsonDoc aDoc;
 	aDoc.SetInt("targetFps", mFrameTiming.mTargetFps);
+	aDoc.SetBool("autoDetectFrameRate",mAutoDetectFrameRate);
 	aDoc.SetInt("musicVolume", (long long)(mMusicVolume * 100));
 	aDoc.SetInt("sfxVolume", (long long)(mSfxVolume * 100));
 	aDoc.SetInt("muted", (mMuteCount - mAutoMuteCount > 0) ? 1 : 0);
@@ -1676,6 +1682,31 @@ bool SexyAppBase::RegistryReadData(const std::string&, uchar*, unsigned int*) { 
 
 static std::string LowerScaleText(const std::string& theText);
 
+void SexyAppBase::DetectTargetFrameRate()
+{
+	if (!mAutoDetectFrameRate) return;
+#ifdef _WIN32
+	MONITORINFOEXW monitorInfo{};
+	monitorInfo.cbSize=sizeof(monitorInfo);
+	DEVMODEW mode{};
+	mode.dmSize=sizeof(mode);
+	const auto monitor=MonitorFromWindow(mHWnd,MONITOR_DEFAULTTONEAREST);
+	const double refreshRate=monitor && GetMonitorInfoW(monitor,&monitorInfo) &&
+		EnumDisplaySettingsW(monitorInfo.szDevice,ENUM_CURRENT_SETTINGS,&mode)
+		? mode.dmDisplayFrequency : 0;
+#else
+	const double refreshRate=mNativeWindow ? mNativeWindow->RefreshRate() : 0;
+#endif
+	mFrameTiming=FrameTiming::FromDisplayRefreshRate(refreshRate);
+	ApplySimulationStep(mFrameTiming.mIntervalNs);
+	JsonDoc settings;
+	if (!settings.LoadFile(SettingsPath())) return;
+	settings.SetInt("targetFps",mFrameTiming.mTargetFps);
+	settings.SetBool("autoDetectFrameRate",true);
+	if (!settings.SaveFile(SettingsPath()))
+		throw std::runtime_error("Cannot save detected target frame rate: " + SettingsPath());
+}
+
 void SexyAppBase::ReadFromRegistry()
 {
 	mReadFromRegistry = true;
@@ -1687,9 +1718,20 @@ void SexyAppBase::ReadFromRegistry()
 	JsonDoc aDoc;
 	if (!aDoc.LoadFile(SettingsPath().c_str()))
 		return;
+	mAutoDetectFrameRate=aDoc.GetBool("autoDetectFrameRate",true);
+	bool settingsChanged=!aDoc.Has("autoDetectFrameRate");
+	if (settingsChanged) aDoc.SetBool("autoDetectFrameRate",true);
 
 	if (aDoc.GetType("targetFps") == JsonDoc::Type::Number)
-		mFrameTiming = FrameTiming::FromSetting(aDoc.GetFloat("targetFps", 100));
+	{
+		const auto targetFps = aDoc.GetFloat("targetFps", FrameTiming::DefaultTargetFps);
+		mFrameTiming = FrameTiming::FromSetting(targetFps);
+		if (targetFps < FrameTiming::MinimumTargetFps)
+		{
+			aDoc.SetInt("targetFps", FrameTiming::MinimumTargetFps);
+			settingsChanged=true;
+		}
+	}
 	if (aDoc.Has("musicVolume"))
 		mMusicVolume = aDoc.GetInt("musicVolume", 0) / 100.0f;
 	if (aDoc.Has("sfxVolume"))
@@ -1708,6 +1750,8 @@ void SexyAppBase::ReadFromRegistry()
 		mWaitForVSync = aDoc.GetInt("waitForVSync", 0) != 0;
 	if (aDoc.Has("customScale"))
 		mUseCustomScale = aDoc.GetInt("customScale", 0) != 0;
+	if (settingsChanged && !aDoc.SaveFile(SettingsPath()))
+		throw std::runtime_error("Cannot normalize frame rate settings: " + SettingsPath());
 }
 
 bool SexyAppBase::WriteBytesToFile(const std::string& theFileName, const void *theData, unsigned int theDataLen)
@@ -4270,14 +4314,20 @@ void SexyAppBase::Init()
 	// flock lifetime follows the descriptor; a crash releases it automatically.
 	if (mOnlyAllowOneCopyToRun)
 	{
+#if defined(__ANDROID__)
+		// Shared Android/media supports data files but not reliable flock.
+		// Runtime synchronization belongs to the private native runtime folder.
+		const auto path = GetExecutableDirectory() + ".instance.lock";
+#else
 		const auto path = GetAppDataFolder() + ".instance.lock";
+#endif
 		mInstanceLockFd = open(path.c_str(), O_RDWR | O_CREAT | O_CLOEXEC, 0600);
 		if (mInstanceLockFd < 0)
 			throw std::runtime_error("Cannot open Linux instance lock: " + path);
 		if (flock(mInstanceLockFd, LOCK_EX | LOCK_NB) != 0)
 		{
 			if (errno != EWOULDBLOCK && errno != EAGAIN)
-				throw std::runtime_error("Cannot lock Linux instance file: " + path);
+				throw std::runtime_error("Cannot lock instance file: " + path + " (errno " + std::to_string(errno) + ")");
 			HandleGameAlreadyRunning();
 			return;
 		}
@@ -4318,6 +4368,7 @@ void SexyAppBase::Init()
 	// silently entering exclusive fullscreen changes the user's display mode.
 
 	MakeWindow();
+	DetectTargetFrameRate();
 	// Device/window remain hidden while BOTH native chains are materialized and
 	// warmed. This happens even when the checkbox is initially off.
 	WarmScalePipelinesBeforeShow();
@@ -4360,8 +4411,12 @@ void SexyAppBase::HandleGameAlreadyRunning()
 			PostMessage(HWND_BROADCAST, mNotifyGameMessage, 0, 0);
 		DoExit(0);
 #else
+#if defined(__ANDROID__)
+		throw std::runtime_error("Another game process holds " + GetExecutableDirectory() + ".instance.lock");
+#else
 		throw std::runtime_error("Another game process holds " + GetAppDataFolder() +
 			".instance.lock; close that game before starting another window backend");
+#endif
 #endif
 	}
 }

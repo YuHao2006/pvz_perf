@@ -9,6 +9,7 @@ namespace Sexy
 struct FrameTiming
 {
     static constexpr unsigned int DefaultTargetFps = 100;
+    static constexpr unsigned int MinimumTargetFps = 100;
     static constexpr unsigned long long NanosecondsPerSecond = 1'000'000'000ULL;
     static constexpr unsigned long long LegacyTickNs = 10'000'000ULL;
 
@@ -19,16 +20,12 @@ struct FrameTiming
     {
         if (targetFps == 0 || targetFps > NanosecondsPerSecond)
             throw std::invalid_argument("targetFps must produce an interval of at least one nanosecond");
+        if (targetFps < MinimumTargetFps) targetFps = MinimumTargetFps;
         return {targetFps, NanosecondsPerSecond / targetFps};
     }
 
-    static FrameTiming FromSetting(double targetFps)
-    {
-        if (!std::isfinite(targetFps) || targetFps < 1 ||
-            targetFps > NanosecondsPerSecond || std::floor(targetFps) != targetFps)
-            return {};
-        return FromTargetFps(static_cast<unsigned int>(targetFps));
-    }
+    static FrameTiming FromSetting(double targetFps);
+    static FrameTiming FromDisplayRefreshRate(double refreshRate);
 };
 
 // A simulation update consumes its actual elapsed interval, capped at 10ms.

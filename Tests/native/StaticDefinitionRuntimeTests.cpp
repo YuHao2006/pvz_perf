@@ -1,3 +1,4 @@
+#include "Sexy.TodLib/Reanimator.h"
 #include "ParticleRenderParamsTests.h"
 #include "SexyAppFramework/SexyAppBase.h"
 #include "SexyAppFramework/graphics/DDInterface.h"
@@ -114,7 +115,7 @@ void CheckActualScheduler(TestApp& app)
     app.mYieldMainThread = false;
     for (const auto [fps, elapsed] : std::vector<std::pair<unsigned int, unsigned long long>>{
              {10000, 6'000'000}, {250, 5'123'456}, {240, 6'000'000}, {100, 12'500'000},
-             {60, 17'000'000}, {30, 40'000'000}})
+             {100, 17'000'000}, {100, 40'000'000}})
     {
         app.mFrameTiming = Sexy::FrameTiming::FromTargetFps(fps);
         app.mUpdateAppState = Sexy::UPDATESTATE_PROCESS_1;
@@ -602,14 +603,14 @@ std::vector<unsigned> Sample(TestApp& app, GpuTexture* texture, const TodParticl
 void RealConsumers(int reanimationIndex, int particleIndex)
 {
     Reanimation animation;
-    animation.ReanimationInitializeType(0, 0, static_cast<ReanimationType>(reanimationIndex));
+    animation.ReanimationInitializeType(0, 0, static_cast<ReanimationType>(reanimationIndex), 0);
     Require(animation.mDefinition == &Definitions::Reanimations[reanimationIndex] &&
         animation.mTrackInstances, "Real reanimation did not borrow the static definition");
     TodParticleData data;
     data.Initialize();
     struct PoolCleanup { TodParticleData& data; ~PoolCleanup() { data.Dispose(); } } cleanup{data};
     TodParticleHolder holder(&data);
-    auto* system = holder.AllocParticleSystem(0, 0, 0, static_cast<ParticleEffect>(particleIndex), 0);
+    auto* system = holder.AllocParticleSystem(0, 0, 0, static_cast<ParticleEffect>(particleIndex), 0, 0);
     Require(system && system->mParticleDef == &Definitions::Particles[particleIndex] &&
         system->EmitterRosterCount() > 0 && system->EmitterRosterEmitterAt(0)->mEmitterDef ==
         Definitions::Particles[particleIndex].mEmitterDefs,
@@ -705,8 +706,8 @@ void CurveTiming()
 void ReanimationIntegerPlayback()
 {
     using I = std::int64_t;
-    const auto initialize = [](Reanimation& animation, ReanimLoopType loop, float rate) {
-        animation.ReanimationInitializeType(0, 0, ReanimationType::REANIM_STINKY);
+    const auto initialize = [](Reanimation& animation, ReanimLoopType loop, float rate, I nowNs = 0) {
+        animation.ReanimationInitializeType(0, 0, ReanimationType::REANIM_STINKY, nowNs);
         animation.PlayReanim(ReanimTrackId::anim_crawl, loop, 0, rate);
         animation.Seek(337);
     };
@@ -888,37 +889,39 @@ void ReanimationIntegerPlayback()
     mode.Advance(1);
     Require(mode.SamplePlayback().phaseNs == 1 && mode.mLoopCount == 1,
         "Production held endpoint did not wrap in the new loop mode");
-    // Zombie actions read events before UpdateReanim consumes the published
-    // clock. A later query must not include the preceding update's interval.
+    // Owners prepare animation time before action queries and mutations, then
+    // UpdateAt performs track work without discarding that consumed interval.
+    // Preparing a later time must not include the preceding update's interval.
     ReanimationHolder clocks;
     for (const auto domain : {ReanimTimeDomain::Battle, ReanimTimeDomain::Visual})
     for (const float rate : {13.3072289f, -13.3072289f})
     {
         Reanimation events;
         events.mReanimationHolder = &clocks;
-        events.mTimeDomain = domain;
         auto& now = domain == ReanimTimeDomain::Battle ? clocks.mBattleTimeNs : clocks.mVisualTimeNs;
         now = 123'456'789'000;
-        initialize(events, ReanimLoopType::REANIM_LOOP, rate);
+        initialize(events, ReanimLoopType::REANIM_LOOP, rate, now);
         events.Seek(rate > 0 ? 0 : 800);
         const I origin = now, period = events.mPeriodNs;
         const I threshold = rate > 0 ? 400 : 700;
         now = origin + period / 2;
         events.UpdateAt(now);
         Require(events.TimedEventCount(threshold, 1000) == (rate > 0 ? 1 : -1),
-            "Production published-clock event setup did not cross its threshold");
+            "Production explicit-time event setup did not cross its threshold");
         now = origin + period * 3 / 5;
+        events.PrepareTimeAt(now);
         Require(events.TimedEventCount(threshold, 1000) == 0 &&
             !events.ShouldTriggerTimedEvent(static_cast<float>(threshold) / 1000),
-            "Production event query before UpdateAt repeated the preceding interval");
+            "Production event query after PrepareTimeAt repeated the preceding interval");
         events.UpdateAt(now);
         Require(events.TimedEventCount(threshold, 1000) == 0,
-            "Production event interval changed after consuming the published clock");
+            "Production event interval changed after UpdateAt completed prepared track work");
 
         events.ApplyRate(13.3072289f);
         events.Seek(0);
         const I rateStart = now, originalPeriod = events.mPeriodNs;
         now = rateStart + originalPeriod / 2;
+        events.PrepareTimeAt(now);
         events.ApplyRate(6.65361445f);
         Require(events.TimedEventCount(2, 5) == 1,
             "Production rate change discarded the consumed event interval");
@@ -926,11 +929,13 @@ void ReanimationIntegerPlayback()
         Require(events.TimedEventCount(2, 5) == 1,
             "Production same-time UpdateAt discarded the rate-change event interval");
         now += events.mPeriodNs / 10;
+        events.PrepareTimeAt(now);
         Require(events.TimedEventCount(2, 5) == 0,
-            "Production pre-update event query repeated a rate-change interval");
+            "Production prepared event query repeated a rate-change interval");
         events.UpdateAt(now);
         events.Seek(0);
         now += events.mPeriodNs / 2;
+        events.PrepareTimeAt(now);
         events.ApplyRate(0);
         Require(events.TimedEventCount(2, 5) == 1,
             "Production pause discarded the consumed event interval");
@@ -938,8 +943,9 @@ void ReanimationIntegerPlayback()
         Require(events.TimedEventCount(2, 5) == 1,
             "Production same-time pause update discarded its event interval");
         now += events.mPeriodNs;
+        events.PrepareTimeAt(now);
         Require(events.TimedEventCount(2, 5) == 0,
-            "Production pre-update paused query repeated the pause event interval");
+            "Production prepared paused query repeated the pause event interval");
         events.UpdateAt(now);
         Require(events.TimedEventCount(2, 5) == 0,
             "Production paused update repeated the pause event interval");

@@ -47,9 +47,10 @@ public:
 	LawnApp*	mApp;                       //+GOTY @Patoke: 0xA8
 	int			mScrollDirection;			//+GOTY @Patoke: 0xAC
 	Rect		mMoreRockRect;				//+GOTY @Patoke: 0xC0
-	int			mScrollValue;				//+GOTY @Patoke: 0xB0
-	int			mScrollDecay;				//+GOTY @Patoke: 0xB4
-	int			mDefaultScrollValue;		//+GOTY @Patoke: 0xB8
+	float		mScrollValue;             // Pixels per second.
+	float		mScrollDecay;             // Pixels per second squared.
+	float		mDefaultScrollValue;      // Maximum pixels per second.
+	float		mScrollRemainderY;        // Subpixel displacement for the integer widget position.
 	bool		mDidPressMoreButton;		//+GOTY @Patoke: 0xBC
 
 	AchievementsWidget(LawnApp* theApp);

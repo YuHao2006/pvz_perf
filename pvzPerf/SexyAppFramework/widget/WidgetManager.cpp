@@ -11,9 +11,6 @@
 #include "SexyAppBase.h"
 #include "misc/Debug.h"
 #include <typeinfo>
-#if defined(__ANDROID__)
-#include "platform/android/AndroidWindow.h"
-#endif
 
 using namespace Sexy;
 //using namespace std;
@@ -336,10 +333,6 @@ void WidgetManager::SetFocus(Widget* aWidget)
 {
 	if (aWidget==mFocusWidget)
 		return;
-#if defined(__ANDROID__)
-	// 焦点进/出文本控件时同步系统输入法可见性。
-	ShowAndroidSoftInput(aWidget != nullptr);
-#endif
 
 	if (mFocusWidget != NULL)
 		mFocusWidget->LostFocus();

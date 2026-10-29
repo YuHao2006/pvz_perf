@@ -161,7 +161,7 @@ void Projectile::ProjectileInitialize(int theX, int theY, int theRenderOrder, in
 		}
 		if (aRow.mTrail != ParticleEffect::PARTICLE_NONE)
 		{
-			TodParticleSystem* aParticle = mApp->AddTodParticle(mPosX + aRow.mTrailOffX, mPosY + aRow.mTrailOffY, 400000, aRow.mTrail);
+			TodParticleSystem* aParticle = mApp->AddTodParticle(mPosX + aRow.mTrailOffX, mPosY + aRow.mTrailOffY, 400000, aRow.mTrail, static_cast<std::int64_t>(mBoard->mLevelTimeNs));
 			AttachParticle(mAttachmentID, aParticle, aRow.mTrailOffX, aRow.mTrailOffY);
 		}
 	}
@@ -354,7 +354,7 @@ void Projectile::CheckForCollision()
 			aPlant->mEatenFlashEndTimeNs = std::max(aPlant->mEatenFlashEndTimeNs, static_cast<std::int64_t>(aPlant->mBoard->mLevelTimeNs) + 250'000'000);
 
 			mApp->PlayFoley(FoleyType::FOLEY_SPLAT);
-			mApp->AddTodParticle(mPosX - 3.0f, mPosY + 17.0f, mRenderOrder + 1, ParticleEffect::PARTICLE_PEA_SPLAT);
+			mApp->AddTodParticle(mPosX - 3.0f, mPosY + 17.0f, mRenderOrder + 1, ParticleEffect::PARTICLE_PEA_SPLAT, static_cast<std::int64_t>(mBoard->mLevelTimeNs));
 			Die();
 		}
 		return;
@@ -540,11 +540,11 @@ void Projectile::DoSplashDamage(Zombie* theZombie)
 			unsigned int aDamageFlags = GetDamageFlags(aZombie);
 			if (aZombie == theZombie)
 			{
-				aZombie->TakeDamage(aOriginalDamage, aDamageFlags);
+				aZombie->TakeDamage(static_cast<std::int64_t>(mBoard->mLevelTimeNs), mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs, (mBoard->AnimationTimeDomain() == ReanimTimeDomain::Battle ? static_cast<std::int64_t>(mBoard->mLevelTimeNs) : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs), aOriginalDamage, aDamageFlags);
 			}
 			else
 			{
-				aZombie->TakeDamage(aSplashDamage, aDamageFlags);
+				aZombie->TakeDamage(static_cast<std::int64_t>(mBoard->mLevelTimeNs), mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs, (mBoard->AnimationTimeDomain() == ReanimTimeDomain::Battle ? static_cast<std::int64_t>(mBoard->mLevelTimeNs) : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs), aSplashDamage, aDamageFlags);
 			}
 		}
 	}
@@ -653,13 +653,13 @@ void Projectile::UpdateLobMotion()
 			{
 				mApp->PlayFoley(FoleyType::FOLEY_SPLAT);
 				int aRenderPosition = Board::MakeRenderOrder(RenderLayer::RENDER_LAYER_TOP, 0, 1);
-				mApp->AddTodParticle(mPosX + 20.0f, mPosY + 20.0f, aRenderPosition, ParticleEffect::PARTICLE_UMBRELLA_REFLECT);
+				mApp->AddTodParticle(mPosX + 20.0f, mPosY + 20.0f, aRenderPosition, ParticleEffect::PARTICLE_UMBRELLA_REFLECT, static_cast<std::int64_t>(mBoard->mLevelTimeNs));
 				Die();
 			}
 			else if (aUmbrellaPlant->mState != PlantState::STATE_UMBRELLA_TRIGGERED)
 			{
 				mApp->PlayFoley(FoleyType::FOLEY_UMBRELLA);
-				aUmbrellaPlant->DoSpecial();
+				aUmbrellaPlant->DoSpecial(static_cast<std::int64_t>(mBoard->mLevelTimeNs), mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs, (mBoard->AnimationTimeDomain() == ReanimTimeDomain::Battle ? static_cast<std::int64_t>(mBoard->mLevelTimeNs) : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs));
 			}
 		}
 		else
@@ -763,7 +763,7 @@ constexpr ProjMotionFn kProjMotionCases[(int)ProjectileMotion::MOTION_HOMING + 1
         if (aZombie && aZombie->EffectedByDamage((unsigned int)p.mDamageRangeFlags))
         {
             Rect aZombieRect = aZombie->GetZombieRect();
-            SexyVector2 aTargetCenter(aZombie->ZombieTargetLeadX(0.0f), aZombieRect.mY + aZombieRect.mHeight / 2);
+            SexyVector2 aTargetCenter(aZombie->ZombieTargetLeadX(static_cast<std::int64_t>(p.mBoard->mLevelTimeNs), 0.0f), aZombieRect.mY + aZombieRect.mHeight / 2);
             SexyVector2 aProjectileCenter(p.mPosX + p.mWidth / 2, p.mPosY + p.mHeight / 2);
             const SexyVector2 toTarget = (aTargetCenter - aProjectileCenter).Normalize();
             SexyVector2 motion(p.mVelX, p.mVelY);
@@ -895,7 +895,7 @@ void Projectile::DoImpact(Zombie* theZombie)
 	{
 		if (mProjectileType == ProjectileType::PROJECTILE_FIREBALL && theZombie)
 		{
-			theZombie->RemoveColdEffects();
+			theZombie->RemoveColdEffects(static_cast<std::int64_t>(mBoard->mLevelTimeNs));
 		}
 
 		DoSplashDamage(theZombie);
@@ -903,7 +903,7 @@ void Projectile::DoImpact(Zombie* theZombie)
 	else if (theZombie)
 	{
 		unsigned int aDamageFlags = GetDamageFlags(theZombie);
-		theZombie->TakeDamage(GetProjectileDef().mDamage, aDamageFlags);
+		theZombie->TakeDamage(static_cast<std::int64_t>(mBoard->mLevelTimeNs), mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs, (mBoard->AnimationTimeDomain() == ReanimTimeDomain::Battle ? static_cast<std::int64_t>(mBoard->mLevelTimeNs) : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs), GetProjectileDef().mDamage, aDamageFlags);
 	}
 
 	float aLastPosX = mPosX - Sexy::UpdateDelta(mVelX);
@@ -959,17 +959,17 @@ void Projectile::DoImpact(Zombie* theZombie)
 	// 震屏；FIREBALL 溅射命中时加火苗 reanim；BUTTER 命中僵尸上黄油。
 	if (mProjectileType == ProjectileType::PROJECTILE_MELON)
 	{
-		mApp->AddTodParticle(aLastPosX + 30.0f, aLastPosY + 30.0f, mRenderOrder + 1, ParticleEffect::PARTICLE_MELONSPLASH);
+		mApp->AddTodParticle(aLastPosX + 30.0f, aLastPosY + 30.0f, mRenderOrder + 1, ParticleEffect::PARTICLE_MELONSPLASH, static_cast<std::int64_t>(mBoard->mLevelTimeNs));
 	}
 	else if (mProjectileType == ProjectileType::PROJECTILE_WINTERMELON)
 	{
-		mApp->AddTodParticle(aLastPosX + 30.0f, aLastPosY + 30.0f, mRenderOrder + 1, ParticleEffect::PARTICLE_WINTERMELON);
+		mApp->AddTodParticle(aLastPosX + 30.0f, aLastPosY + 30.0f, mRenderOrder + 1, ParticleEffect::PARTICLE_WINTERMELON, static_cast<std::int64_t>(mBoard->mLevelTimeNs));
 	}
 	else if (mProjectileType == ProjectileType::PROJECTILE_COBBIG)
 	{
 		int aRenderOrder = Board::MakeRenderOrder(RenderLayer::RENDER_LAYER_GROUND, mCobTargetRow, 2);
-		mApp->AddTodParticle(mPosX + 80.0f, mPosY + 40.0f, aRenderOrder, ParticleEffect::PARTICLE_BLASTMARK);
-		mApp->AddTodParticle(mPosX + 80.0f, mPosY + 40.0f, mRenderOrder + 1, ParticleEffect::PARTICLE_POPCORNSPLASH);
+		mApp->AddTodParticle(mPosX + 80.0f, mPosY + 40.0f, aRenderOrder, ParticleEffect::PARTICLE_BLASTMARK, static_cast<std::int64_t>(mBoard->mLevelTimeNs));
+		mApp->AddTodParticle(mPosX + 80.0f, mPosY + 40.0f, mRenderOrder + 1, ParticleEffect::PARTICLE_POPCORNSPLASH, static_cast<std::int64_t>(mBoard->mLevelTimeNs));
 		mApp->PlaySample(SOUND_DOOMSHROOM);
 		mBoard->mShakeCounter = 12;
 		mBoard->mShakeAmountX = 3;
@@ -979,7 +979,7 @@ void Projectile::DoImpact(Zombie* theZombie)
 	{
 		if (IsSplashDamage(theZombie))
 		{
-			Reanimation* aFireReanim = mApp->AddReanimation(mPosX + 38.0f, mPosY - 20.0f, mRenderOrder + 1, ReanimationType::REANIM_JALAPENO_FIRE);
+			Reanimation* aFireReanim = mApp->AddReanimation(mPosX + 38.0f, mPosY - 20.0f, mRenderOrder + 1, ReanimationType::REANIM_JALAPENO_FIRE, (mBoard && mBoard->AnimationTimeDomain() == ReanimTimeDomain::Battle ? static_cast<std::int64_t>(mBoard->mLevelTimeNs) : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs), (mBoard ? mBoard->AnimationTimeDomain() : ReanimTimeDomain::Visual));
 			aFireReanim->Seek(250);
 			aFireReanim->ApplyRate(24.0f);
 			aFireReanim->mOverlayMatrix.m00 = 0.7f;
@@ -989,7 +989,7 @@ void Projectile::DoImpact(Zombie* theZombie)
 
 	if (mProjectileType == ProjectileType::PROJECTILE_BUTTER && theZombie)
 	{
-		theZombie->ApplyButter();
+		theZombie->ApplyButter(static_cast<std::int64_t>(mBoard->mLevelTimeNs));
 	}
 
 	if (aEffect != ParticleEffect::PARTICLE_NONE)
@@ -1012,11 +1012,11 @@ void Projectile::DoImpact(Zombie* theZombie)
 			}
 
 			aPosY = ClampFloat(aPosY, 20.0f, 100.0f);
-			theZombie->AddAttachedParticle(aPosX, aPosY, aEffect);
+			theZombie->AddAttachedParticle(static_cast<std::int64_t>(mBoard->mLevelTimeNs), aPosX, aPosY, aEffect);
 		}
 		else
 		{
-			mApp->AddTodParticle(aSplatPosX, aSplatPosY, mRenderOrder + 1, aEffect);
+			mApp->AddTodParticle(aSplatPosX, aSplatPosY, mRenderOrder + 1, aEffect, static_cast<std::int64_t>(mBoard->mLevelTimeNs));
 		}
 	}
 
@@ -1058,10 +1058,8 @@ void Projectile::Update()
 	mRotation += Sexy::UpdateDelta(mRotationSpeed);
 
 	UpdateMotion();
-	const auto domain = mBoard ? mBoard->AnimationTimeDomain() : ReanimTimeDomain::Visual;
-	const auto& clocks = *mApp->mEffectSystem->mReanimationHolder;
 	AttachmentUpdateAndMoveAt(mAttachmentID, mPosX, mPosY + mPosZ,
-		domain == ReanimTimeDomain::Battle ? clocks.mBattleTimeNs : clocks.mVisualTimeNs, domain);
+		static_cast<std::int64_t>(mBoard->mLevelTimeNs));
 }
 
 //0x46E540
@@ -1216,7 +1214,7 @@ void Projectile::Die()
 	if (mProjectileType == ProjectileType::PROJECTILE_PUFF || mProjectileType == ProjectileType::PROJECTILE_SNOWPEA)
 	{
 		AttachmentCrossFade(mAttachmentID, ParticleEmitterName::fadeout);
-		AttachmentDetach(mAttachmentID);
+		AttachmentDetach(mAttachmentID, static_cast<std::int64_t>(mBoard->mLevelTimeNs));
 	}
 	else
 	{
@@ -1238,7 +1236,7 @@ void Projectile::ConvertToFireball(int theGridX)
 
 	float aOffsetX = -25.0f;
 	float aOffsetY = -25.0f;
-	Reanimation* aFirePeaReanim = mApp->AddReanimation(0.0f, 0.0f, 0, ReanimationType::REANIM_FIRE_PEA);
+	Reanimation* aFirePeaReanim = mApp->AddReanimation(0.0f, 0.0f, 0, ReanimationType::REANIM_FIRE_PEA, static_cast<std::int64_t>(mBoard->mLevelTimeNs), ReanimTimeDomain::Battle);
 	if (mMotionType == ProjectileMotion::MOTION_BACKWARDS)
 	{
 		aFirePeaReanim->mOverlayMatrix.m00 = -1.0f;

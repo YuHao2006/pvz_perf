@@ -11,7 +11,7 @@ struct VulkanInitConfig {
         .sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
         .pApplicationName = "VulkanContext",
         .applicationVersion = VK_MAKE_VERSION(0, 1, 0),
-        .apiVersion = VK_API_VERSION_1_2,
+        .apiVersion = VK_API_VERSION_1_3,
     };
     VkInstanceCreateInfo instanceInfo{
         .sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
@@ -48,6 +48,10 @@ public:
     // Shared GPU lifetime is retained for the renderer's existing resources.
     static inline VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
     static inline VkDevice device = VK_NULL_HANDLE;
+    // Device commands are resolved at startup: older Android loader stubs do
+    // not export 1.3 symbols even when the installed driver supports them.
+    static PFN_vkQueueSubmit2 queueSubmit2;
+    static PFN_vkCmdPipelineBarrier2 pipelineBarrier2;
     static inline bool dualSourceBlendEnabled = false;
     static inline uint32_t graphicsFamily = 0;
     static inline uint32_t presentFamily = 0;

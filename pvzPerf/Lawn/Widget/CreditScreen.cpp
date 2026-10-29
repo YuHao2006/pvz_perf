@@ -339,7 +339,7 @@ CreditScreen::CreditScreen(LawnApp* theApp)
 	mReplayButton->mTextDownOffsetY = 1;
 	mReplayButton->mColors[ButtonWidget::COLOR_LABEL] = Color(255, 255, 255);
 	mReplayButton->mColors[ButtonWidget::COLOR_LABEL_HILITE] = Color(213, 159, 43);
-	mReplayButton->Resize(10, 530, 125, 65);
+	mReplayButton->Resize(mApp->mScreenBounds.mX - mX + 10, 530, 125, 65);
     mReplayButton->SetVisible(false);
 	mReplayButton->mTextOffsetX = 33;
 	mReplayButton->mTextOffsetY = -5;
@@ -590,7 +590,7 @@ Reanimation* CreditScreen::PlayReanim(int aIndex)
 
     if (aIndex == 1)
     {
-        aCreditsReanim = mApp->AddReanimation(0.0f, 0.0f, 0, ReanimationType::REANIM_CREDITS_MAIN);
+        aCreditsReanim = mApp->AddReanimation(0.0f, 0.0f, 0, ReanimationType::REANIM_CREDITS_MAIN, mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs, ReanimTimeDomain::Visual);
         aCreditsReanim->AssignRenderGroupToRange(ReanimTrackRanges::Background, 1);
         aCreditsReanim->AssignRenderGroupToRange(ReanimTrackRanges::attacher__Zombie, 2);
         aCreditsReanim->AssignRenderGroupToRange(ReanimTrackRanges::Words, 3);
@@ -598,7 +598,7 @@ Reanimation* CreditScreen::PlayReanim(int aIndex)
     }
     else if (aIndex == 2)
     {
-        aCreditsReanim = mApp->AddReanimation(0.0f, 0.0f, 0, ReanimationType::REANIM_CREDITS_MAIN2);
+        aCreditsReanim = mApp->AddReanimation(0.0f, 0.0f, 0, ReanimationType::REANIM_CREDITS_MAIN2, mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs, ReanimTimeDomain::Visual);
         aCreditsReanim->AssignRenderGroupToRange(ReanimTrackRanges::Background, 1);
         aCreditsReanim->AssignRenderGroupToRange(ReanimTrackRanges::attacher__Zombie, 2);
         aCreditsReanim->AssignRenderGroupToRange(ReanimTrackRanges::Words, 3);
@@ -607,7 +607,7 @@ Reanimation* CreditScreen::PlayReanim(int aIndex)
     }
     else if (aIndex == 3)
     {
-        aCreditsReanim = mApp->AddReanimation(0.0f, 0.0f, 0, ReanimationType::REANIM_CREDITS_MAIN3);
+        aCreditsReanim = mApp->AddReanimation(0.0f, 0.0f, 0, ReanimationType::REANIM_CREDITS_MAIN3, mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs, ReanimTimeDomain::Visual);
         aCreditsReanim->AssignRenderGroupToRange(ReanimTrackRanges::Background, 1);
         aCreditsReanim->AssignRenderGroupToRange(ReanimTrackRanges::attacher__Zombie, 2);
         aCreditsReanim->AssignRenderGroupToRange(ReanimTrackRanges::attacher__DiscoLights, 2);
@@ -673,18 +673,8 @@ static void DrawDisco(Graphics* g, float aCenterX, float aCenterY, float theTime
     aVerts[1][2].v = 1.0;
     aVerts[1][2].color = aColor;
 
-    if (!g->mDestImage) throw NonScreenDrawError(DrawOperation::BltTrianglesTex);
-    g->mDestImage->BltTrianglesTex(
-        IMAGE_REANIM_CREDITS_DISCOLIGHTS, 
-        aVerts, 
-        2, 
-        Rect(0, 0, BOARD_WIDTH, BOARD_HEIGHT), 
-        Color::White, 
-        g->mDrawMode, 
-        0.0f, 
-        0.0f, 
-        g->mLinearBlend
-    );
+    // Use the same destination translation and clip as the movie's sprites.
+    g->DrawTrianglesTex(IMAGE_REANIM_CREDITS_DISCOLIGHTS, aVerts, 2);
 }
 
 //0x4351E0
@@ -771,9 +761,9 @@ int CreditScreen::DrawCreditsContent(Graphics* g, int theY, bool theDraw)
 // GOTY 1073 00438700: clip the roll above the replay button.
 void CreditScreen::DrawFinalCredits(Graphics* g)
 {
-	g->ClearClipRect();
-	g->ClipRect(0, 0, mWidth, mReplayButton->mY - 10);
-	DrawCreditsContent(g, static_cast<int>(mCreditsScrollPosition), true);
+	Graphics roll(*g);
+	roll.ClipRect(0, 0, BOARD_WIDTH, mReplayButton->mY - 10);
+	DrawCreditsContent(&roll, static_cast<int>(mCreditsScrollPosition), true);
 }
 
 //0x435A90
@@ -781,21 +771,26 @@ static void DrawReanimToPreload(Graphics* g, ReanimationType theReanimType)
 {
     Reanimation aReanim;
     aReanim.ApplyRate(0.3f);
-    aReanim.ReanimationInitializeType(0.0f, 0.0f, theReanimType);
+    aReanim.ReanimationInitializeType(0.0f, 0.0f, theReanimType, 0);
     aReanim.Draw(g);
 }
 
 //0x435B60
-void CreditScreen::Draw(Graphics* g)
+void CreditScreen::Draw(Graphics* destination)
 {
+    Graphics movie(*destination);
+    Graphics* g = &movie;
     if (mApp->mScreenBounds.mWidth > mWidth) {
         {
             Graphics background(*g);
             background.mColor = Color::Black;
             background.FillRect(mApp->mScreenBounds);
         }
-        g->ClipRect(0, 0, mWidth, mHeight);
     }
+    // Keep the authored 800x600 movie centered by the widget's translation.
+    // Local scene crops may narrow this boundary, but must never clear it.
+    g->ClipRect(0, 0, BOARD_WIDTH, BOARD_HEIGHT);
+    const Rect movieClip = g->mClipRect;
     g->mLinearBlend = true;
 
     if (!mPreloaded)
@@ -865,7 +860,7 @@ void CreditScreen::Draw(Graphics* g)
             const TextureRegion& aRegion = aCreditsReanim->mDefinition->mImageRects[aTransformBackground2.mImageSlot];
             aBackground2G.ClipRect(aTransformBackground2.mTransX, aTransformBackground2.mTransY, aRegion.mWidth - 1, aRegion.mHeight - 1);
             aBackground2G.DrawImageF(IMAGE_BACKGROUND1, aTransformBackground2.mTransX - BOARD_WIDTH / 2, aTransformBackground2.mTransY - BOARD_HEIGHT / 2);
-            aBackground2G.ClearClipRect();
+            aBackground2G.mClipRect = movieClip;
         }
         if (aTransformBackground3.mFrame != -1.0f)
         {
@@ -1022,7 +1017,7 @@ void CreditScreen::Draw(Graphics* g)
 
     if (aDrawDoorBottom)
     {
-        g->ClearClipRect();
+        g->mClipRect = movieClip;
         aBackground2G.DrawImage(IMAGE_BACKGROUND3_GAMEOVER_MASK, -172, 234);
     }
     if (aDrawChimney)
@@ -1098,7 +1093,7 @@ void CreditScreen::UpdateBlink()
             }
         }
 
-        Reanimation* aBlinkReanim = mApp->AddReanimation(0.0f, 0.0f, 0, ReanimationType::REANIM_SUNFLOWER);
+        Reanimation* aBlinkReanim = mApp->AddReanimation(0.0f, 0.0f, 0, ReanimationType::REANIM_SUNFLOWER, mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs, ReanimTimeDomain::Visual);
         aBlinkReanim->SetFramesForLayer(ReanimTrackId::anim_blink);
         aBlinkReanim->ApplyRate(15.0f);
         aBlinkReanim->ChangeLoopType(ReanimLoopType::REANIM_PLAY_ONCE_FULL_LAST_FRAME);
@@ -1109,6 +1104,9 @@ void CreditScreen::UpdateBlink()
 //0x436A30
 void CreditScreen::Update()
 {
+    const int replayX = mApp->mScreenBounds.mX - mX + 10;
+    if (mReplayButton->mX != replayX)
+        mReplayButton->Move(replayX, mReplayButton->mY);
     Widget::Update();
     if (!mCreditsPaused && !mMainMenuButton->mIsOver && !mReplayButton->mIsOver)
     {
@@ -1299,12 +1297,19 @@ void CreditScreen::UpdateMovie()
 {
     UpdateBlink();
 
+    // Credits owns this clock: each catch-up iteration is a real movie step.
+    // LawnApp leaves it frozen while Credits is paused or awaiting its first draw.
+    if (Sexy::gUpdateIntervalNs > INT64_MAX)
+        throw std::overflow_error("credits movie update exceeds clock range");
+    auto& visualNowNs = mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs;
+    visualNowNs = ReanimClock::Add(visualNowNs, static_cast<std::int64_t>(Sexy::gUpdateIntervalNs));
+
     Reanimation* aCreditsReanim = mApp->ReanimationGet(mCreditsReanimID);
     const int aFrameCount = aCreditsReanim->mDefinition->mTracks.tracks->mTransforms.count - 1;
     float aFrameFactor = 1.0f / aFrameCount;
 
-    aCreditsReanim->Update();
-    mApp->mEffectSystem->Update();
+    aCreditsReanim->UpdateAt(visualNowNs);
+    mApp->mEffectSystem->UpdateAt(visualNowNs, visualNowNs);
     mApp->mPoolEffect->PoolEffectUpdate();
     TurnOffTongues(aCreditsReanim, 0);
 
@@ -1327,11 +1332,11 @@ void CreditScreen::UpdateMovie()
             (aCreditsReanim->TimedEventCount(140, aFrameCount) != 0) ||
             (aCreditsReanim->TimedEventCount(142, aFrameCount) != 0))
         {
-            mApp->AddTodParticle(BOARD_WIDTH / 2, BOARD_HEIGHT / 2, (int)RenderLayer::RENDER_LAYER_TOP, ParticleEffect::PARTICLE_CREDIT_STROBE);
+            mApp->AddTodParticle(BOARD_WIDTH / 2, BOARD_HEIGHT / 2, (int)RenderLayer::RENDER_LAYER_TOP, ParticleEffect::PARTICLE_CREDIT_STROBE, mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs);
         }
         if (aCreditsReanim->ShouldTriggerTimedEvent(aFrameFactor * 136.5f))
         {
-            mApp->AddTodParticle(BOARD_WIDTH / 2, BOARD_HEIGHT / 2, (int)RenderLayer::RENDER_LAYER_TOP, ParticleEffect::PARTICLE_CREDITS_RAYSWIPE);
+            mApp->AddTodParticle(BOARD_WIDTH / 2, BOARD_HEIGHT / 2, (int)RenderLayer::RENDER_LAYER_TOP, ParticleEffect::PARTICLE_CREDITS_RAYSWIPE, mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs);
         }
         if ((aCreditsReanim->TimedEventCount(330, aFrameCount) != 0))
         {
@@ -1380,7 +1385,7 @@ void CreditScreen::UpdateMovie()
 
         if ((aCreditsReanim->TimedEventCount(120, aFrameCount) != 0))
         {
-            mApp->AddTodParticle(BOARD_WIDTH / 2, BOARD_HEIGHT / 2, (int)RenderLayer::RENDER_LAYER_TOP, ParticleEffect::PARTICLE_CREDITS_ZOMBIEHEADWIPE);
+            mApp->AddTodParticle(BOARD_WIDTH / 2, BOARD_HEIGHT / 2, (int)RenderLayer::RENDER_LAYER_TOP, ParticleEffect::PARTICLE_CREDITS_ZOMBIEHEADWIPE, mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs);
         }
     }
     if (mCreditsPhase == CreditsPhase::CREDITS_MAIN2)
@@ -1422,11 +1427,11 @@ void CreditScreen::UpdateMovie()
             aCreditsReanim->ShouldTriggerTimedEvent(aFrameFactor * 239.5f) ||
             aCreditsReanim->ShouldTriggerTimedEvent(aFrameFactor * 243.5f))
         {
-            mApp->AddTodParticle(BOARD_WIDTH / 2, BOARD_HEIGHT / 2, (int)RenderLayer::RENDER_LAYER_TOP, ParticleEffect::PARTICLE_CREDIT_STROBE);
+            mApp->AddTodParticle(BOARD_WIDTH / 2, BOARD_HEIGHT / 2, (int)RenderLayer::RENDER_LAYER_TOP, ParticleEffect::PARTICLE_CREDIT_STROBE, mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs);
         }
         if (aCreditsReanim->ShouldTriggerTimedEvent(aFrameFactor * 332.75f))
         {
-            mApp->AddTodParticle(678.0f, 352.0f, (int)RenderLayer::RENDER_LAYER_TOP, ParticleEffect::PARTICLE_MELONSPLASH);
+            mApp->AddTodParticle(678.0f, 352.0f, (int)RenderLayer::RENDER_LAYER_TOP, ParticleEffect::PARTICLE_MELONSPLASH, mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs);
         }
         if ((aCreditsReanim->TimedEventCount(336, aFrameCount) != 0))
         {
@@ -1441,7 +1446,7 @@ void CreditScreen::UpdateMovie()
         }
         if ((aCreditsReanim->TimedEventCount(342, aFrameCount) != 0))
         {
-            mApp->AddTodParticle(BOARD_WIDTH / 2, BOARD_HEIGHT / 2, (int)RenderLayer::RENDER_LAYER_TOP, ParticleEffect::PARTICLE_CREDIT_STROBE);
+            mApp->AddTodParticle(BOARD_WIDTH / 2, BOARD_HEIGHT / 2, (int)RenderLayer::RENDER_LAYER_TOP, ParticleEffect::PARTICLE_CREDIT_STROBE, mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs);
         }
 
         int aBackground2Index = aCreditsReanim->FindTrackIndex(ReanimTrackId::Background2);
@@ -1451,7 +1456,7 @@ void CreditScreen::UpdateMovie()
         float aFogPosX = aTransformBackground2.mTransX + 856.0f;
         if ((aCreditsReanim->TimedEventCount(188, aFrameCount) != 0))
         {
-            TodParticleSystem* aFogParticle = mApp->AddTodParticle(aFogPosX, 230.0f, (int)RenderLayer::RENDER_LAYER_TOP, ParticleEffect::PARTICLE_CREDITS_FOG);
+            TodParticleSystem* aFogParticle = mApp->AddTodParticle(aFogPosX, 230.0f, (int)RenderLayer::RENDER_LAYER_TOP, ParticleEffect::PARTICLE_CREDITS_FOG, mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs);
             mFogParticleID = mApp->ParticleGetID(aFogParticle);
         }
         TodParticleSystem* aFogParticle = mApp->ParticleTryToGet(mFogParticleID);
@@ -1488,7 +1493,7 @@ void CreditScreen::UpdateMovie()
             (aCreditsReanim->TimedEventCount(243, aFrameCount) != 0) ||
             (aCreditsReanim->TimedEventCount(247, aFrameCount) != 0))
         {
-            mApp->AddTodParticle(BOARD_WIDTH / 2, BOARD_HEIGHT / 2, (int)RenderLayer::RENDER_LAYER_TOP, ParticleEffect::PARTICLE_CREDIT_STROBE);
+            mApp->AddTodParticle(BOARD_WIDTH / 2, BOARD_HEIGHT / 2, (int)RenderLayer::RENDER_LAYER_TOP, ParticleEffect::PARTICLE_CREDIT_STROBE, mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs);
         }
     }
 

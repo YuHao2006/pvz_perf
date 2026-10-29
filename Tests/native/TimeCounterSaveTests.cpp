@@ -121,7 +121,7 @@ void CheckRuntime()
     static_assert(std::is_same_v<decltype(GameObject::mX), float>);
     static_assert(std::is_same_v<decltype(GameObject::mY), float>);
     static_assert(std::is_same_v<decltype(Plant::mZenProductionCountdown), Sexy::TimeCounter>);
-    for (const unsigned fps : {60u, 100u, 144u, 240u, 250u, 1000u})
+    for (const unsigned fps : {100u, 144u, 240u, 250u, 1000u})
     {
         Configure(fps);
         const auto interval = static_cast<std::int64_t>(Sexy::gUpdateIntervalNs);
@@ -554,7 +554,7 @@ void CheckCatapultCycle()
         "Catapult release boundary lost");
     Require(CatapultCycle::Resolve(true, true, 1.0f) == Loaded,
         "Catapult did not reload at completion");
-    for (int fps : {60, 100, 144, 240, 250, 1000})
+    for (int fps : {100, 144, 240, 250, 1000})
         for (float rate : {0.0f, 12.0f, 24.0f}) // Immobilized, chilled and normal.
         {
             float progress = 0.0f;

@@ -27,7 +27,7 @@ using namespace Sexy;
 unsigned int vendor = 0x10de;
 VkFormat bakeFormat=VK_FORMAT_R32G32B32A32_SFLOAT;
 bool separateBlend=false;
-bool manualBaked=false, compareIndexWidths=false, trimExperiment=false, packedColor=false, packedColor16=false, discardScene=false, instancedQuads=false, tightBarriers=false, nativeInstances=false, presentCopy=false, solidFill=false, generatePrefix=false;
+bool manualBaked=false, compareIndexWidths=false, trimExperiment=false, packedColor=false, packedColor16=false, discardScene=false, instancedQuads=false, nativeInstances=false, presentCopy=false, solidFill=false, generatePrefix=false;
 unsigned int inputWidth=128,inputHeight=128;
 std::vector<unsigned int> inputPixels;
 std::array<float,4> trimBounds{0,0,1,1};
@@ -107,7 +107,7 @@ void Submit(Fixture& f,const std::array<VulkanVertex,4>& quad,VulkanTexture* tex
     }
 }
 Fixture MakeFixture(VulkanContext& context, bool candidate, bool indexed, bool filters) {
-    VulkanRenderer::benchmarkSimpleGenerated = candidate && !separateBlend && !indexed && !filters && !compareIndexWidths && !trimExperiment && !packedColor && !discardScene && !instancedQuads && !tightBarriers && !presentCopy && !solidFill && !generatePrefix;
+    VulkanRenderer::benchmarkSimpleGenerated = candidate && !separateBlend && !indexed && !filters && !compareIndexWidths && !trimExperiment && !packedColor && !discardScene && !instancedQuads && !presentCopy && !solidFill && !generatePrefix;
     VulkanRenderer::benchmarkSeparateBlend=separateBlend && candidate;
     VulkanRenderer::benchmarkManualBakedFilters=filters && candidate && manualBaked;
     VulkanRenderer::benchmarkNonIndexedTriangles = indexed && !candidate;
@@ -116,13 +116,12 @@ Fixture MakeFixture(VulkanContext& context, bool candidate, bool indexed, bool f
     VulkanRenderer::benchmarkPackedColor16=packedColor16 && candidate;
     VulkanRenderer::benchmarkDiscardScene=discardScene && candidate;
     VulkanRenderer::benchmarkInstancedQuads=instancedQuads && candidate;
-    VulkanRenderer::benchmarkTightSceneBarriers=tightBarriers && candidate;
     VulkanRenderer::benchmarkPresentCopy=presentCopy && !candidate;
     VulkanRenderer::benchmarkSolidFill=solidFill && candidate;
     VulkanRenderer::benchmarkGenerateIndexPrefix=!generatePrefix || candidate;
     const std::filesystem::path shaders = PVZ_NATIVE_SHADER_DIR;
     Fixture f;
-    f.quads=(candidate && indexed) || filters || compareIndexWidths || trimExperiment || packedColor || discardScene || instancedQuads || tightBarriers || presentCopy || solidFill || generatePrefix || separateBlend;
+    f.quads=(candidate && indexed) || filters || compareIndexWidths || trimExperiment || packedColor || discardScene || instancedQuads || presentCopy || solidFill || generatePrefix || separateBlend;
     f.trimmed=trimExperiment && candidate;
     f.filterExperiment=filters; f.prebaked=filters && candidate;
     f.renderer = new VulkanRenderer(context,1333,600,
@@ -321,7 +320,6 @@ int main(int argc,char** argv) {
             if(arg=="--validate") validation=true;
             else if(arg=="--separate-blend") separateBlend=true;
             else if(arg=="--indexed-quads") indexed=true;
-            else if(arg=="--tight-scene-barriers") tightBarriers=true;
             else if(arg=="--generate-index-prefix") generatePrefix=true;
             else if(arg=="--solid-fill") solidFill=true;
             else if(arg=="--present-copy") presentCopy=true;
@@ -360,7 +358,7 @@ int main(int argc,char** argv) {
             else throw std::runtime_error("Unknown benchmark option");
         }
         Require(samples && rounds,"Nonempty measurements required");
-        Require(unsigned(indexed)+unsigned(filters)+unsigned(compareIndexWidths)+unsigned(trimExperiment)+unsigned(packedColor)+unsigned(discardScene)+unsigned(instancedQuads)+unsigned(tightBarriers)+unsigned(presentCopy)+unsigned(solidFill)+unsigned(generatePrefix)+unsigned(separateBlend)<=1,"Select one experiment at a time");
+        Require(unsigned(indexed)+unsigned(filters)+unsigned(compareIndexWidths)+unsigned(trimExperiment)+unsigned(packedColor)+unsigned(discardScene)+unsigned(instancedQuads)+unsigned(presentCopy)+unsigned(solidFill)+unsigned(generatePrefix)+unsigned(separateBlend)<=1,"Select one experiment at a time");
         const std::span<const Scenario> cases=separateBlend ? std::span<const Scenario>(blendScenarios) : generatePrefix ? std::span<const Scenario>(prefixScenarios) : solidFill ? std::span<const Scenario>(fadeScenarios) : presentCopy ? std::span<const Scenario>(presentScenarios) : instancedQuads ? std::span<const Scenario>(instanceScenarios) :
             trimExperiment ? std::span<const Scenario>(trimScenarios) :
             compareIndexWidths ? std::span<const Scenario>(largeScenarios) : std::span<const Scenario>(scenarios);
@@ -385,7 +383,6 @@ int main(int argc,char** argv) {
             <<",\"device\":"<<properties.deviceID<<",\"driver_version\":"<<properties.driverVersion
             <<",\"timestamp_period_ns\":"<<period<<",\"valid_bits\":"<<bits
             <<",\"validation\":"<<(validation?"true":"false")
-            <<",\"tight_scene_barriers\":"<<(tightBarriers?"true":"false")
             <<",\"separate_blend\":"<<(separateBlend?"true":"false")
             <<",\"generate_index_prefix\":"<<(generatePrefix?"true":"false")
             <<",\"solid_fill_experiment\":"<<(solidFill?"true":"false")

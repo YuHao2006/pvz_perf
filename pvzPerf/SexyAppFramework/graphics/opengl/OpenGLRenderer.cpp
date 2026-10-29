@@ -88,7 +88,7 @@ void OpenGLRenderer::Impl::Upload(OpenGLTexture* texture, const void* data, int 
     glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
     GL3::CheckError("Upload OpenGL image");
 }
-unsigned int OpenGLRenderer::Impl::Program(std::string_view vs, std::string_view fs)
+unsigned int OpenGLRenderer::Impl::Program(std::string_view vs, std::string_view fs, bool mixed)
 {
     const auto shader = [&](unsigned int type, std::string_view text) {
         const unsigned int object = glCreateShader(type);
@@ -113,7 +113,10 @@ unsigned int OpenGLRenderer::Impl::Program(std::string_view vs, std::string_view
         static constexpr const char* attributes[]{"inPosition", "inColor", "inUV", "inSlot", "inSampler"};
         for (unsigned int i = 0; i < std::size(attributes); ++i)
             glBindAttribLocation(program, i, attributes[i]);
-        glBindFragDataLocation(program, 0, "outColor");
+        if(mixed) {
+            glBindFragDataLocationIndexed(program,0,0,"outColor");
+            glBindFragDataLocationIndexed(program,0,1,"blendControl");
+        } else glBindFragDataLocation(program, 0, "outColor");
         glLinkProgram(program);
         int success = 0; glGetProgramiv(program, GL_LINK_STATUS, &success);
         if (!success) {
@@ -140,15 +143,24 @@ OpenGLRenderer::Impl::Impl(OpenGLContext& window, int w, int h)
     glClampColor(GL_CLAMP_FRAGMENT_COLOR, GL_FALSE);
     glGenVertexArrays(1, &vao); glBindVertexArray(vao);
     glGenBuffers(1, &stream); glBindBuffer(GL_ARRAY_BUFFER, stream);
-    glEnableVertexAttribArray(0); glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), nullptr);
-    glEnableVertexAttribArray(1); glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex),
-        reinterpret_cast<const void*>(offsetof(Vertex, draw) + offsetof(GpuVertex, r)));
-    glEnableVertexAttribArray(2); glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex),
-        reinterpret_cast<const void*>(offsetof(Vertex, draw) + offsetof(GpuVertex, u)));
-    glEnableVertexAttribArray(3); glVertexAttribIPointer(3, 1, GL_UNSIGNED_INT, sizeof(Vertex),
-        reinterpret_cast<const void*>(offsetof(Vertex, draw) + offsetof(GpuVertex, slot)));
-    glEnableVertexAttribArray(4); glVertexAttribIPointer(4, 1, GL_UNSIGNED_INT, sizeof(Vertex),
-        reinterpret_cast<const void*>(offsetof(Vertex, draw) + offsetof(GpuVertex, sampler)));
+    for(unsigned int attribute=0;attribute<5;++attribute)glEnableVertexAttribArray(attribute);
+    VertexBase(0);
+    // One reusable 16-bit index pattern covers 16384 complete strip-order quads.
+    // Larger streams split at complete quad boundaries; no 32-bit index requirement.
+    std::vector<unsigned short> indices(65536/4*6);
+    for(unsigned int quad=0;quad<65536/4;++quad) {
+        const unsigned int base=quad*4;
+        const size_t at=size_t(quad)*6;
+        indices[at]=static_cast<unsigned short>(base);
+        indices[at+1]=static_cast<unsigned short>(base+1);
+        indices[at+2]=static_cast<unsigned short>(base+2);
+        indices[at+3]=static_cast<unsigned short>(base+2);
+        indices[at+4]=static_cast<unsigned short>(base+1);
+        indices[at+5]=static_cast<unsigned short>(base+3);
+    }
+    glGenBuffers(1,&quadIndices);glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,quadIndices);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER,static_cast<GLsizeiptr>(indices.size()*sizeof(unsigned short)),
+        indices.data(),GL_STATIC_DRAW);
     vertices.reserve(16384); batches.reserve(1024);
 }
 OpenGLRenderer::Impl::~Impl()
@@ -157,14 +169,28 @@ OpenGLRenderer::Impl::~Impl()
     batches.clear();
     for (auto* texture : textures) delete texture;
     for (auto* texture : retired) delete texture;
-    for (const auto program : {sceneProgram, spriteProgram, imageProgram, fontProgram, presentProgram})
+    for (const auto program : {sceneProgram, spriteProgram, mixedSpriteProgram, imageProgram, fontProgram, presentProgram})
         if (program) glDeleteProgram(program);
     if (poolProgram) glDeleteProgram(poolProgram);
     if (poolVao) glDeleteVertexArrays(1, &poolVao);
     if (poolVertices) glDeleteBuffers(1, &poolVertices);
     if (poolIndices) glDeleteBuffers(1, &poolIndices);
+    if (quadIndices) glDeleteBuffers(1,&quadIndices);
     if (stream) glDeleteBuffers(1, &stream);
     if (vao) glDeleteVertexArrays(1, &vao);
+}
+void OpenGLRenderer::Impl::VertexBase(size_t first)
+{
+    const size_t base=first*sizeof(Vertex);
+    glVertexAttribPointer(0,2,GL_FLOAT,GL_FALSE,sizeof(Vertex),reinterpret_cast<const void*>(base));
+    glVertexAttribPointer(1,4,GL_FLOAT,GL_FALSE,sizeof(Vertex),
+        reinterpret_cast<const void*>(base+offsetof(Vertex,r)));
+    glVertexAttribPointer(2,2,GL_FLOAT,GL_FALSE,sizeof(Vertex),
+        reinterpret_cast<const void*>(base+offsetof(Vertex,u)));
+    glVertexAttribIPointer(3,1,GL_UNSIGNED_INT,sizeof(Vertex),
+        reinterpret_cast<const void*>(base+offsetof(Vertex,slot)));
+    glVertexAttribIPointer(4,1,GL_UNSIGNED_INT,sizeof(Vertex),
+        reinterpret_cast<const void*>(base+offsetof(Vertex,sampler)));
 }
 void OpenGLRenderer::Impl::BindTarget()
 {
@@ -195,18 +221,24 @@ void OpenGLRenderer::Impl::Flush()
     glActiveTexture(GL_TEXTURE0);
     int sceneCoverage=-1;
     unsigned int currentProgram=0;
+    unsigned int configuredPrograms=0;
+    size_t vertexBase=~size_t(0);
     // These caches start unknown on every Flush: other passes may have changed
     // all GL state. The draw loop keeps its target and batch storage fixed.
     const Batch* previousBatch=nullptr;
     glEnable(GL_SCISSOR_TEST);
     for (const auto& batch : batches) {
-        const unsigned int program=batch.sprite?spriteProgram:sceneProgram;
+        const unsigned int program=batch.mixed?mixedSpriteProgram:batch.sprite?spriteProgram:sceneProgram;
         if(currentProgram!=program) {
             glUseProgram(program);
-            const auto& uniforms=batch.sprite?spriteUniforms:sceneUniforms;
-            glUniform2f(uniforms[uTargetExtent],float(target->width),float(target->height));
-            glUniform1i(uniforms[uImage],0);
-            if(!batch.sprite)glUniform1i(uniforms[uPremultipliedOutput],target->render);
+            const unsigned int programBit=batch.mixed?4U:batch.sprite?1U:2U;
+            if(!(configuredPrograms&programBit)) {
+                const auto& uniforms=batch.mixed?mixedSpriteUniforms:batch.sprite?spriteUniforms:sceneUniforms;
+                glUniform2f(uniforms[uTargetExtent],float(target->width),float(target->height));
+                glUniform1i(uniforms[uImage],0);
+                if(!batch.sprite)glUniform1i(uniforms[uPremultipliedOutput],target->render);
+                configuredPrograms|=programBit;
+            }
             currentProgram=program;
         }
         if(!previousBatch||batch.texture!=previousBatch->texture)
@@ -223,12 +255,13 @@ void OpenGLRenderer::Impl::Flush()
         if(!previousBatch||batch.clip.x!=previousBatch->clip.x||batch.clip.y!=previousBatch->clip.y||
             batch.clip.width!=previousBatch->clip.width||batch.clip.height!=previousBatch->clip.height)
             glScissor(batch.clip.x,batch.clip.y,batch.clip.width,batch.clip.height);
-        if(!previousBatch||batch.blend!=previousBatch->blend){
+        if(!previousBatch||batch.blend!=previousBatch->blend||batch.mixed!=previousBatch->mixed){
             if (batch.blend == GpuBlend::Opaque) glDisable(GL_BLEND);
             else {
                 glEnable(GL_BLEND);
-                glBlendFuncSeparate(target->render ? GL_ONE : GL_SRC_ALPHA,
-                    batch.blend == GpuBlend::Additive ? GL_ONE : GL_ONE_MINUS_SRC_ALPHA,
+                glBlendFuncSeparate((target->render || batch.mixed) ? GL_ONE : GL_SRC_ALPHA,
+                    batch.mixed ? GL_ONE_MINUS_SRC1_ALPHA :
+                        batch.blend == GpuBlend::Additive ? GL_ONE : GL_ONE_MINUS_SRC_ALPHA,
                     GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
             }
         }
@@ -236,7 +269,31 @@ void OpenGLRenderer::Impl::Flush()
             glUniform1i(sceneUniforms[uCoverageInput],batch.coverage);
             sceneCoverage=int(batch.coverage);
         }
-        glDrawArrays(GL_TRIANGLES,static_cast<int>(batch.first),static_cast<int>(batch.count));
+        if(batch.quads) {
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,quadIndices);
+            for(size_t offset=0;offset<batch.count;) {
+                const size_t first=batch.first+offset;
+                // Reuse the static EBO's local origin across adjacent batches.
+                // A preceding triangle batch can make the next quad unaligned;
+                // only then, or at the 16-bit limit, rebase the five attributes.
+                if(vertexBase==~size_t(0) || first<vertexBase ||
+                    first-vertexBase>=65536 || (first-vertexBase)%4!=0) {
+                    VertexBase(first);vertexBase=first;
+                }
+                const size_t relative=first-vertexBase;
+                const size_t count=std::min<size_t>(65536-relative,batch.count-offset);
+                const size_t indexOffset=relative/4*6*sizeof(unsigned short);
+                glDrawElements(GL_TRIANGLES,static_cast<int>(count/4*6),GL_UNSIGNED_SHORT,
+                    reinterpret_cast<const void*>(indexOffset));
+                offset+=count;
+            }
+        } else {
+            if(vertexBase==~size_t(0) || batch.first<vertexBase ||
+                batch.first-vertexBase>size_t(std::numeric_limits<int>::max())) {
+                VertexBase(batch.first);vertexBase=batch.first;
+            }
+            glDrawArrays(GL_TRIANGLES,static_cast<int>(batch.first-vertexBase),static_cast<int>(batch.count));
+        }
         previousBatch=&batch;
     }
     vertices.clear(); batches.clear();
@@ -266,11 +323,12 @@ void OpenGLRenderer::Impl::Snapshot(const OpenGLTexture& original, OpenGLTexture
     Check("Snapshot OpenGL feedback source");
 }
 void OpenGLRenderer::Impl::Submit(std::span<const GpuVertex> input, OpenGLTexture* source,
-    GpuBlend blend, const GpuClip* requested, bool coverage)
+    GpuBlend blend, const GpuClip* requested, bool coverage, bool quads)
 {
     (void)source; // The vertex's logical slot is authoritative, as in bindless draws.
-    if (!open || input.size() % 3)
-        throw std::logic_error("OpenGL submission requires an open scene and triangle list");
+    const size_t primitiveSize=quads?4:3;
+    if (!open || input.size() % primitiveSize)
+        throw std::logic_error("OpenGL submission requires an open scene and complete primitive list");
     auto* target = selected ? selected : scene;
     const GpuClip bounds{0, 0, target->width, target->height};
     GpuClip clip = requested ? *requested : bounds;
@@ -280,7 +338,7 @@ void OpenGLRenderer::Impl::Submit(std::span<const GpuVertex> input, OpenGLTextur
     clip.width = std::max(0, right - clip.x); clip.height = std::max(0, top - clip.y);
     if (!clip.width || !clip.height) return;
     OpenGLTexture* feedback = nullptr;
-    for (size_t index = 0; index < input.size(); index += 3) {
+    for (size_t index = 0; index < input.size();) {
         auto* image = slots[input[index].slot & 4095U];
         if (!image) throw std::logic_error("OpenGL draw references an unbound logical texture");
         auto* native = image;
@@ -300,25 +358,43 @@ void OpenGLRenderer::Impl::Submit(std::span<const GpuVertex> input, OpenGLTextur
             GpuVertex::kAlphaEdgeFilter;
         const bool sprite=!coverage && !target->render && !image->render &&
             (input[index].slot&complexSampling)==0;
+        const bool mixed=sprite && blend!=GpuBlend::Opaque;
+        const GpuBlend batchBlend=mixed?GpuBlend::Normal:blend;
         const unsigned int sampler=sprite?input[index].sampler:0;
-        const size_t first = vertices.size();
-        for (size_t corner = 0; corner < 3; ++corner) {
-            auto draw = input[index + corner];
-            // Vulkan's default provoking vertex is the first vertex. GL 3.0
-            // fixes it to the last; duplicate only flat metadata, never UV/color.
-            draw.slot = input[index].slot;
-            draw.sampler = coverage ? 0 : input[index].sampler;
-            vertices.push_back({draw});
+        // Resolve texture/sampling and batch identity once for an adjacent run,
+        // rather than repeating all bookkeeping for both triangles of every quad.
+        // Only provoking metadata controls a triangle; UV and color stay per vertex.
+        const auto sourceSlot=input[index].slot;
+        const auto slot=sourceSlot | (mixed && blend==GpuBlend::Additive?0x02000000U:0U);
+        const auto triangleSampler=coverage?0:input[index].sampler;
+        size_t end=index+primitiveSize;
+        while(end<input.size() && input[end].slot==sourceSlot &&
+              (coverage || input[end].sampler==triangleSampler)) end+=primitiveSize;
+        const size_t count=end-index;
+        const size_t first=vertices.size();
+        vertices.insert(vertices.end(),input.begin()+index,input.begin()+end);
+        auto* output=vertices.data()+first;
+        // Flat outputs are taken from the last vertex on GL 3.0. The first two
+        // vertices' metadata is unobserved; preserve their position/color/UV.
+        for(size_t offset=0;offset<count;offset+=primitiveSize) {
+            output[offset+2].slot=slot;
+            output[offset+2].sampler=triangleSampler;
+            if(quads) {
+                output[offset+3].slot=slot;
+                output[offset+3].sampler=triangleSampler;
+            }
         }
         const auto sameClip = [](const GpuClip& a, const GpuClip& b) {
             return a.x == b.x && a.y == b.y && a.width == b.width && a.height == b.height;
         };
         if (!batches.empty() && batches.back().texture == native &&
-            batches.back().blend == blend && batches.back().coverage == coverage &&
-            batches.back().sprite == sprite && batches.back().sampler == sampler &&
+            batches.back().blend == batchBlend && batches.back().coverage == coverage &&
+            batches.back().sprite == sprite && batches.back().mixed == mixed &&
+            batches.back().quads == quads && batches.back().sampler == sampler &&
             sameClip(batches.back().clip, clip))
-            batches.back().count += 3;
-        else batches.push_back({native, first, 3, blend, clip, coverage, sprite, sampler});
+            batches.back().count += count;
+        else batches.push_back({native, first, count, batchBlend, clip, coverage, sprite, mixed, quads, sampler});
+        index=end;
     }
 }
 OpenGLRenderer::OpenGLRenderer(OpenGLContext& context, int w, int h,
@@ -345,6 +421,7 @@ void OpenGLRenderer::PrepareLoadingPipelines()
     if (s.initialized) return;
     s.sceneProgram = s.Program(SceneVertexShader(), SceneFragmentShader());
     s.spriteProgram = s.Program(SceneVertexShader(), SpriteFragmentShader());
+    s.mixedSpriteProgram=s.Program(SceneVertexShader(),MixedSpriteFragmentShader(),true);
     s.imageProgram = s.Program(QuadVertexShader(), ImageFragmentShader());
     s.fontProgram = s.Program(QuadVertexShader(), FontFragmentShader());
     s.presentProgram = s.Program(QuadVertexShader(), PresentFragmentShader());
@@ -359,6 +436,7 @@ void OpenGLRenderer::PrepareLoadingPipelines()
             locations[i]=glGetUniformLocation(program,names[i]);
     };
     cache(s.sceneProgram,s.sceneUniforms);cache(s.spriteProgram,s.spriteUniforms);
+    cache(s.mixedSpriteProgram,s.mixedSpriteUniforms);
     cache(s.imageProgram,s.imageUniforms);
     cache(s.fontProgram,s.fontUniforms);cache(s.presentProgram,s.presentUniforms);
     s.poolProgram = s.Program(PoolVertexShader(), SceneFragmentShader());
@@ -505,6 +583,10 @@ bool OpenGLRenderer::BeginScene()
     auto& s = *impl_;
     if (s.open) throw std::logic_error("OpenGL scene already open");
     if (!s.selected && !s.context.BeginPresent()) return false;
+    // Match the single-frame Vulkan ownership boundary: logic has already
+    // advanced, drain previous GPU work before this frame's first GL commands.
+    // Never add a completion wait after a normal main-frame submission.
+    if (!s.selected) glFinish();
     s.open = true; s.mainFrame = !s.selected;
     if (s.causticsQueued && s.causticTarget && s.causticSource) {
         s.ImagePass(s.causticTarget, s.causticSource, nullptr, 3);
@@ -517,6 +599,11 @@ void OpenGLRenderer::SubmitTriangles(std::span<const GpuVertex> vertices,
     OpenGLTexture* texture, bool, bool, GpuBlend blend, const GpuClip* clip)
 {
     impl_->Submit(vertices, texture, blend, clip, false);
+}
+void OpenGLRenderer::SubmitQuads(std::span<const GpuVertex> vertices,
+    OpenGLTexture* texture, bool, bool, GpuBlend blend, const GpuClip* clip)
+{
+    impl_->Submit(vertices,texture,blend,clip,false,true);
 }
 void OpenGLRenderer::SubmitPool(OpenGLTexture* texture,const GpuPoolParams& params)
 {

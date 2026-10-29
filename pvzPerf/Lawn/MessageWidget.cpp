@@ -6,6 +6,7 @@
 #include "LawnApp.h"
 #include "Resources.h"
 #include "MessageWidget.h"
+#include "Sexy.TodLib/EffectSystem.h"
 #include "graphics/Font.h"
 #include "Sexy.TodLib/TodCommon.h"
 #include "Sexy.TodLib/Reanimator.h"
@@ -248,7 +249,7 @@ void MessageWidget::LayoutReanimText()
 	for (int aPos = 0; aPos < aLabelLen; aPos++)
 	{
 		// 创建文字的动画
-		Reanimation* aReanimText = mApp->AddReanimation(aCurPosX, aCurPosY, 0, mReanimType);
+		Reanimation* aReanimText = mApp->AddReanimation(aCurPosX, aCurPosY, 0, mReanimType, mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs, ReanimTimeDomain::Visual);
 		aReanimText->mIsAttachment = true;
 		aReanimText->PlayReanim(ReanimTrackId::anim_enter, ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD, 0.0f, 0.0f);
 		mTextReanimID[aPos] = mApp->ReanimationGetID(aReanimText);
@@ -326,13 +327,19 @@ void MessageWidget::Update()
 					std::int64_t(aPos) * 10'000'000, 0.0f, 40.0f, Curves::Linear));
 		}
 
-		aTextReanim->Update();  //更新动画
+		aTextReanim->UpdateAt(mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs);  //更新动画
 	}
 }
 
 //0x459710
 void MessageWidget::DrawReanimatedText(Graphics* g, _Font* theFont, const Color& theColor, float thePosY)
 {
+	const Rect& aBounds = mApp->mScreenBounds;
+	// Matrix text is submitted directly; TodBltMatrix does not apply Graphics translation.
+	// Shift the authored center after the per-letter stretch, in final draw coordinates.
+	const float aCenterOffsetX = mMessageStyle == MessageStyle::MESSAGE_STYLE_HUGE_WAVE
+		? g->mTransX - mApp->mBoard->mX + aBounds.mX + aBounds.mWidth * 0.5f - BOARD_WIDTH * 0.5f
+		: 0.0f;
 	const auto remainingNs = mEndTimeNs == INT64_MAX ? 100'000'000'000 :
 		std::max<std::int64_t>(0, mEndTimeNs - static_cast<std::int64_t>(mApp->mBoard->mLevelTimeNs));
 	int aLabelLen = sexystrlen(mLabel);
@@ -364,6 +371,7 @@ void MessageWidget::DrawReanimatedText(Graphics* g, _Font* theFont, const Color&
 			aTransform.mTransX += aStretch * aTextReanim->mOverlayMatrix.m02;
 		}
 
+		aTransform.mTransX += aCenterOffsetX;
 		SexyMatrix3 aMatrix;
 		Reanimation::MatrixFromTransform(aTransform, aMatrix);
 		SexyString aLetter;

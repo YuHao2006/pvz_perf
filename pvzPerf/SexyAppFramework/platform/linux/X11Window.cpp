@@ -6,6 +6,12 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/cursorfont.h>
+#if defined(PVZ_HAVE_XRANDR)
+#include <X11/extensions/Xrandr.h>
+#endif
+
+#include <algorithm>
+#include <cmath>
 
 #include <array>
 #include <climits>
@@ -642,6 +648,64 @@ void NativeWindow::Resize(int width, int height)
         static_cast<unsigned>(width), static_cast<unsigned>(height));
     errors.Finish("Resize X11 window");
     // ConfigureNotify reports the actual size accepted by the window manager.
+}
+
+double NativeWindow::RefreshRate() const
+{
+    impl_->RequireWindow();
+#if defined(PVZ_HAVE_XRANDR)
+    auto* display = impl_->display;
+    int eventBase = 0, errorBase = 0;
+    int major = 1, minor = 3;
+    if (!XRRQueryExtension(display, &eventBase, &errorBase) ||
+        !XRRQueryVersion(display, &major, &minor) || major < 1 || (major == 1 && minor < 3))
+        return 0;
+    XWindowAttributes attributes{};
+    if (!XGetWindowAttributes(display, impl_->window, &attributes))
+        return 0;
+    int windowX = 0, windowY = 0;
+    Window child = None;
+    if (!XTranslateCoordinates(display, impl_->window, attributes.root, 0, 0,
+        &windowX, &windowY, &child))
+        return 0;
+    auto* resources = XRRGetScreenResourcesCurrent(display, attributes.root);
+    if (!resources)
+        return 0;
+    long long bestOverlap = -1;
+    double refresh = 0;
+    for (int i = 0; i < resources->ncrtc; ++i) {
+        auto* crtc = XRRGetCrtcInfo(display, resources, resources->crtcs[i]);
+        if (!crtc)
+            continue;
+        if (crtc->mode != None && crtc->width && crtc->height) {
+            const auto width = std::max(0LL, std::min<long long>(windowX + attributes.width,
+                static_cast<long long>(crtc->x) + crtc->width) - std::max(windowX, crtc->x));
+            const auto height = std::max(0LL, std::min<long long>(windowY + attributes.height,
+                static_cast<long long>(crtc->y) + crtc->height) - std::max(windowY, crtc->y));
+            const auto overlap = width * height;
+            if (overlap > bestOverlap) {
+                for (int j = 0; j < resources->nmode; ++j) {
+                    const auto& mode = resources->modes[j];
+                    if (mode.id != crtc->mode || !mode.hTotal || !mode.vTotal)
+                        continue;
+                    double rate = static_cast<double>(mode.dotClock) / mode.hTotal / mode.vTotal;
+                    if (mode.modeFlags & RR_Interlace) rate *= 2;
+                    if (mode.modeFlags & RR_DoubleScan) rate /= 2;
+                    if (std::isfinite(rate) && rate > 0) {
+                        refresh = rate;
+                        bestOverlap = overlap;
+                    }
+                    break;
+                }
+            }
+        }
+        XRRFreeCrtcInfo(crtc);
+    }
+    XRRFreeScreenResources(resources);
+    return refresh;
+#else
+    return 0;
+#endif
 }
 
 bool NativeWindow::Minimized() const { impl_->RequireWindow(); return impl_->minimized; }

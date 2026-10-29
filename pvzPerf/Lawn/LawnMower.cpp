@@ -45,7 +45,7 @@ void LawnMower::LawnMowerInitialize(int theRow)
         aReanimType = ReanimationType::REANIM_LAWNMOWER;
     }
 
-    Reanimation* aMowerReanim = mApp->AddReanimation(0.0f, 18.0f, mRenderOrder, aReanimType);
+    Reanimation* aMowerReanim = mApp->AddReanimation(0.0f, 18.0f, mRenderOrder, aReanimType, (mBoard && mBoard->AnimationTimeDomain() == ReanimTimeDomain::Battle ? static_cast<std::int64_t>(mBoard->mLevelTimeNs) : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs), (mBoard ? mBoard->AnimationTimeDomain() : ReanimTimeDomain::Visual));
     aMowerReanim->ApplyRate(0.0f);
     aMowerReanim->ChangeLoopType(ReanimLoopType::REANIM_LOOP);
     aMowerReanim->mIsAttachment = true;
@@ -86,10 +86,10 @@ constexpr MowerPoolFn kMowerPoolCases[(int)MowerHeight::MOWER_HEIGHT_UP_TO_LAND 
         (void)aMowerReanim;
         if (isPoolRange)
         {
-            Reanimation* aSplashReanim = m.mApp->AddReanimation(m.mPosX + 0.0f, m.mPosY + 25.0f, m.mRenderOrder + 1, ReanimationType::REANIM_SPLASH);
+            Reanimation* aSplashReanim = m.mApp->AddReanimation(m.mPosX + 0.0f, m.mPosY + 25.0f, m.mRenderOrder + 1, ReanimationType::REANIM_SPLASH, (m.mBoard && m.mBoard->AnimationTimeDomain() == ReanimTimeDomain::Battle ? static_cast<std::int64_t>(m.mBoard->mLevelTimeNs) : m.mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs), (m.mBoard ? m.mBoard->AnimationTimeDomain() : ReanimTimeDomain::Visual));
             aSplashReanim->mOverlayMatrix.m00 = 1.2f;
             aSplashReanim->mOverlayMatrix.m11 = 0.8f;
-            m.mApp->AddTodParticle(m.mPosX + 0.0f + 50.0f, m.mPosY + 0.0f + 42.0f, m.mRenderOrder + 1, ParticleEffect::PARTICLE_PLANTING_POOL);
+            m.mApp->AddTodParticle(m.mPosX + 0.0f + 50.0f, m.mPosY + 0.0f + 42.0f, m.mRenderOrder + 1, ParticleEffect::PARTICLE_PLANTING_POOL, static_cast<std::int64_t>(m.mBoard->mLevelTimeNs));
             m.mApp->PlayFoley(FoleyType::FOLEY_ZOMBIESPLASH);
             m.mMowerHeight = MowerHeight::MOWER_HEIGHT_DOWN_TO_POOL;
         }
@@ -113,10 +113,10 @@ constexpr MowerPoolFn kMowerPoolCases[(int)MowerHeight::MOWER_HEIGHT_UP_TO_LAND 
         {
             m.mAltitude = -28.0f;
             m.mMowerHeight = MowerHeight::MOWER_HEIGHT_UP_TO_LAND;
-            Reanimation* aSplashReanim = m.mApp->AddReanimation(m.mPosX + 0.0f, m.mPosY + 25.0f, m.mRenderOrder + 1, ReanimationType::REANIM_SPLASH);
+            Reanimation* aSplashReanim = m.mApp->AddReanimation(m.mPosX + 0.0f, m.mPosY + 25.0f, m.mRenderOrder + 1, ReanimationType::REANIM_SPLASH, (m.mBoard && m.mBoard->AnimationTimeDomain() == ReanimTimeDomain::Battle ? static_cast<std::int64_t>(m.mBoard->mLevelTimeNs) : m.mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs), (m.mBoard ? m.mBoard->AnimationTimeDomain() : ReanimTimeDomain::Visual));
             aSplashReanim->mOverlayMatrix.m00 = 1.2f;
             aSplashReanim->mOverlayMatrix.m11 = 0.8f;
-            m.mApp->AddTodParticle(m.mPosX + 0.0f + 50.0f, m.mPosY + 0.0f + 42.0f, m.mRenderOrder + 1, ParticleEffect::PARTICLE_PLANTING_POOL);
+            m.mApp->AddTodParticle(m.mPosX + 0.0f + 50.0f, m.mPosY + 0.0f + 42.0f, m.mRenderOrder + 1, ParticleEffect::PARTICLE_PLANTING_POOL, static_cast<std::int64_t>(m.mBoard->mLevelTimeNs));
             m.mApp->PlayFoley(FoleyType::FOLEY_PLANT_WATER);
             aMowerReanim->PlayReanim(ReanimTrackId::anim_land, ReanimLoopType::REANIM_LOOP, 0, 0.0f);
         }
@@ -191,12 +191,12 @@ void LawnMower::MowZombie(Zombie* theZombie)
             aMowerReanim->PlayReanim(ReanimTrackId::anim_landsuck, ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD, 10, 35.0f);
         }
 
-        theZombie->DieWithLoot();
+        theZombie->DieWithLoot(static_cast<std::int64_t>(mBoard->mLevelTimeNs), mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs, (mBoard->AnimationTimeDomain() == ReanimTimeDomain::Battle ? static_cast<std::int64_t>(mBoard->mLevelTimeNs) : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs));
     }
     else
     {
         mApp->PlayFoley(FoleyType::FOLEY_SPLAT);
-        theZombie->MowDown();
+        theZombie->MowDown(static_cast<std::int64_t>(mBoard->mLevelTimeNs), mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs, (mBoard->AnimationTimeDomain() == ReanimTimeDomain::Battle ? static_cast<std::int64_t>(mBoard->mLevelTimeNs) : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs));
     }
 }
 
@@ -208,6 +208,15 @@ Rect LawnMower::GetLawnMowerAttackRect()
 //0x4586E0
 void LawnMower::Update()
 {
+    const auto domain = mBoard->AnimationTimeDomain();
+    const auto nowNs = domain == ReanimTimeDomain::Battle
+        ? static_cast<std::int64_t>(mBoard->mLevelTimeNs)
+        : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs;
+    auto* reanim = mApp->ReanimationGet(mReanimID);
+    // Selection and battle have different clock origins. Rebase before collision
+    // handling can start playback or otherwise mutate this owned animation.
+    mApp->mEffectSystem->mReanimationHolder->BindAnimationTime(*reanim, domain, nowNs);
+    reanim->PrepareTimeAt(nowNs);
     if (mMowerState == LawnMowerState::MOWER_SQUISHED)
     {
         if (static_cast<std::int64_t>(mBoard->mLevelTimeNs) >= mSquishEndTimeNs)
@@ -284,10 +293,10 @@ void LawnMower::Update()
     }
     if (mMowerType == LawnMowerType::LAWNMOWER_LAWN && mBoard->mPlantRow[mRow] == PlantRowType::PLANTROW_POOL && mPosX > 50.0f)
     {
-        Reanimation* aSplashReanim = mApp->AddReanimation(mPosX, mPosY + 25.0f, mRenderOrder + 1, ReanimationType::REANIM_SPLASH);
+        Reanimation* aSplashReanim = mApp->AddReanimation(mPosX, mPosY + 25.0f, mRenderOrder + 1, ReanimationType::REANIM_SPLASH, (mBoard && mBoard->AnimationTimeDomain() == ReanimTimeDomain::Battle ? static_cast<std::int64_t>(mBoard->mLevelTimeNs) : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs), (mBoard ? mBoard->AnimationTimeDomain() : ReanimTimeDomain::Visual));
         aSplashReanim->mOverlayMatrix.m00 = 1.2f;
         aSplashReanim->mOverlayMatrix.m11 = 0.8f;
-        mApp->AddTodParticle(mPosX + 50.0f, mPosY + 67.0f, mRenderOrder + 1, ParticleEffect::PARTICLE_PLANTING_POOL);
+        mApp->AddTodParticle(mPosX + 50.0f, mPosY + 67.0f, mRenderOrder + 1, ParticleEffect::PARTICLE_PLANTING_POOL, static_cast<std::int64_t>(mBoard->mLevelTimeNs));
         mApp->PlaySample(SOUND_ZOMBIE_ENTERING_WATER);
         mApp->mSoundSystem->StopFoley(FoleyType::FOLEY_LAWNMOWER);
         Die();
@@ -297,7 +306,7 @@ void LawnMower::Update()
         Die();
     }
 
-    mApp->ReanimationGet(mReanimID)->Update();
+    reanim->UpdateAt(nowNs);
 }
 
 //0x458A80

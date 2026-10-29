@@ -5,7 +5,7 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     include(CTest)
 endif()
 
-find_package(Vulkan 1.2 REQUIRED)
+find_package(Vulkan 1.3 REQUIRED)
 find_program(PVZ_GLSLC NAMES glslc HINTS "$ENV{VULKAN_SDK}/Bin"
     "C:/UserProgram/VulkanSDK/1.4.350.0/Bin" REQUIRED)
 find_program(PVZ_SPIRV_VAL NAMES spirv-val HINTS "$ENV{VULKAN_SDK}/Bin"
@@ -83,9 +83,9 @@ foreach(stage IN ITEMS vs pool_vs ps sprite_ps sprite_mixed_ps hdr_ps coverage_p
     add_custom_command(OUTPUT "${output}"
         COMMAND "${CMAKE_COMMAND}" -E make_directory "${PVZ_NATIVE_SHADER_DIR}"
         COMMAND "${PVZ_GLSLC}" -Werror ${shaderLanguage} "-fshader-stage=${shaderStage}"
-            --target-env=vulkan1.2 -O "${shaderSource}"
+            --target-env=vulkan1.3 -O "${shaderSource}"
             -o "${output}"
-        COMMAND "${PVZ_SPIRV_VAL}" --target-env vulkan1.2 "${output}"
+        COMMAND "${PVZ_SPIRV_VAL}" --target-env vulkan1.3 "${output}"
         DEPENDS "${shaderSource}" VERBATIM)
     list(APPEND nativeShaders "${output}")
 endforeach()
@@ -93,9 +93,9 @@ if(ANDROID AND PVZ_VULKAN_SEPARATE_BLEND_TEST)
     set(singleOutputShader "${PVZ_NATIVE_SHADER_DIR}/game_sprite_single_output_ps.spv")
     add_custom_command(OUTPUT "${singleOutputShader}"
         COMMAND "${CMAKE_COMMAND}" -E make_directory "${PVZ_NATIVE_SHADER_DIR}"
-        COMMAND "${PVZ_GLSLC}" -Werror -fshader-stage=fragment --target-env=vulkan1.2 -O
+        COMMAND "${PVZ_GLSLC}" -Werror -fshader-stage=fragment --target-env=vulkan1.3 -O
             "${CMAKE_SOURCE_DIR}/Tests/performance/single_output_premult_experiment.frag" -o "${singleOutputShader}"
-        COMMAND "${PVZ_SPIRV_VAL}" --target-env vulkan1.2 "${singleOutputShader}"
+        COMMAND "${PVZ_SPIRV_VAL}" --target-env vulkan1.3 "${singleOutputShader}"
         DEPENDS "${CMAKE_SOURCE_DIR}/Tests/performance/single_output_premult_experiment.frag" VERBATIM)
     list(APPEND nativeShaders "${singleOutputShader}")
 endif()
@@ -204,9 +204,9 @@ if(BUILD_TESTING AND WIN32)
     target_link_libraries(sexy_vulkan_layer_probe PRIVATE sexy_vulkan)
     set(hdrProbe "${PVZ_NATIVE_SHADER_DIR}/hdr_probe.spv")
     add_custom_command(OUTPUT "${hdrProbe}"
-        COMMAND "${PVZ_GLSLC}" -Werror -x hlsl -fshader-stage=compute --target-env=vulkan1.2 -O
+        COMMAND "${PVZ_GLSLC}" -Werror -x hlsl -fshader-stage=compute --target-env=vulkan1.3 -O
             "${CMAKE_CURRENT_SOURCE_DIR}/tests/hdr_probe_cs.hlsl" -o "${hdrProbe}"
-        COMMAND "${PVZ_SPIRV_VAL}" --target-env vulkan1.2 "${hdrProbe}"
+        COMMAND "${PVZ_SPIRV_VAL}" --target-env vulkan1.3 "${hdrProbe}"
         DEPENDS tests/hdr_probe_cs.hlsl shaders/game_hdr_ps.hlsl VERBATIM)
     add_custom_target(sexy_vulkan_hdr_probe DEPENDS "${hdrProbe}")
     add_dependencies(sexy_vulkan_hdr_probe sexy_vulkan_shaders)
@@ -256,41 +256,41 @@ if(BUILD_TESTING AND WIN32 AND NOT PVZ_WINDOWS_PLATFORM STREQUAL "WIN7")
     set(spriteExperiment "${CMAKE_CURRENT_BINARY_DIR}/sprite-experiment/$<CONFIG>/generated_sprite.spv")
     add_custom_command(OUTPUT "${spriteExperiment}"
         COMMAND "${CMAKE_COMMAND}" -E make_directory "${CMAKE_CURRENT_BINARY_DIR}/sprite-experiment/$<CONFIG>"
-        COMMAND "${PVZ_GLSLC}" -Werror -fshader-stage=fragment --target-env=vulkan1.2 -O
+        COMMAND "${PVZ_GLSLC}" -Werror -fshader-stage=fragment --target-env=vulkan1.3 -O
             "${CMAKE_SOURCE_DIR}/Tests/performance/generated_sprite_experiment.frag" -o "${spriteExperiment}"
-        COMMAND "${PVZ_SPIRV_VAL}" --target-env vulkan1.2 "${spriteExperiment}"
+        COMMAND "${PVZ_SPIRV_VAL}" --target-env vulkan1.3 "${spriteExperiment}"
         DEPENDS "${CMAKE_SOURCE_DIR}/Tests/performance/generated_sprite_experiment.frag" VERBATIM)
     add_custom_target(sexy_sprite_experiment_shader DEPENDS "${spriteExperiment}")
     set(filterExperiment "${CMAKE_CURRENT_BINARY_DIR}/sprite-experiment/$<CONFIG>/baked_filter.spv")
     add_custom_command(OUTPUT "${filterExperiment}"
         COMMAND "${CMAKE_COMMAND}" -E make_directory "${CMAKE_CURRENT_BINARY_DIR}/sprite-experiment/$<CONFIG>"
-        COMMAND "${PVZ_GLSLC}" -Werror -fshader-stage=fragment --target-env=vulkan1.2 -O
+        COMMAND "${PVZ_GLSLC}" -Werror -fshader-stage=fragment --target-env=vulkan1.3 -O
             "${CMAKE_SOURCE_DIR}/Tests/performance/baked_filter_experiment.frag" -o "${filterExperiment}"
-        COMMAND "${PVZ_SPIRV_VAL}" --target-env vulkan1.2 "${filterExperiment}"
+        COMMAND "${PVZ_SPIRV_VAL}" --target-env vulkan1.3 "${filterExperiment}"
         DEPENDS "${CMAKE_SOURCE_DIR}/Tests/performance/baked_filter_experiment.frag" VERBATIM)
     add_custom_target(sexy_filter_experiment_shader DEPENDS "${filterExperiment}")
     set(instanceExperiment "${CMAKE_CURRENT_BINARY_DIR}/sprite-experiment/$<CONFIG>/sprite_instance.spv")
     add_custom_command(OUTPUT "${instanceExperiment}"
         COMMAND "${CMAKE_COMMAND}" -E make_directory "${CMAKE_CURRENT_BINARY_DIR}/sprite-experiment/$<CONFIG>"
-        COMMAND "${PVZ_GLSLC}" -Werror -fshader-stage=vertex --target-env=vulkan1.2 -O
+        COMMAND "${PVZ_GLSLC}" -Werror -fshader-stage=vertex --target-env=vulkan1.3 -O
             "${CMAKE_SOURCE_DIR}/Tests/performance/sprite_instance_experiment.vert" -o "${instanceExperiment}"
-        COMMAND "${PVZ_SPIRV_VAL}" --target-env vulkan1.2 "${instanceExperiment}"
+        COMMAND "${PVZ_SPIRV_VAL}" --target-env vulkan1.3 "${instanceExperiment}"
         DEPENDS "${CMAKE_SOURCE_DIR}/Tests/performance/sprite_instance_experiment.vert" VERBATIM)
     add_custom_target(sexy_instance_experiment_shader DEPENDS "${instanceExperiment}")
     set(solidExperiment "${CMAKE_CURRENT_BINARY_DIR}/sprite-experiment/$<CONFIG>/solid_fill.spv")
     add_custom_command(OUTPUT "${solidExperiment}"
         COMMAND "${CMAKE_COMMAND}" -E make_directory "${CMAKE_CURRENT_BINARY_DIR}/sprite-experiment/$<CONFIG>"
-        COMMAND "${PVZ_GLSLC}" -Werror -fshader-stage=fragment --target-env=vulkan1.2 -O
+        COMMAND "${PVZ_GLSLC}" -Werror -fshader-stage=fragment --target-env=vulkan1.3 -O
             "${CMAKE_SOURCE_DIR}/Tests/performance/solid_fill_experiment.frag" -o "${solidExperiment}"
-        COMMAND "${PVZ_SPIRV_VAL}" --target-env vulkan1.2 "${solidExperiment}"
+        COMMAND "${PVZ_SPIRV_VAL}" --target-env vulkan1.3 "${solidExperiment}"
         DEPENDS "${CMAKE_SOURCE_DIR}/Tests/performance/solid_fill_experiment.frag" VERBATIM)
     add_custom_target(sexy_solid_experiment_shader DEPENDS "${solidExperiment}")
     set(separateBlendExperiment "${CMAKE_CURRENT_BINARY_DIR}/sprite-experiment/$<CONFIG>/single_output_premult.spv")
     add_custom_command(OUTPUT "${separateBlendExperiment}"
         COMMAND "${CMAKE_COMMAND}" -E make_directory "${CMAKE_CURRENT_BINARY_DIR}/sprite-experiment/$<CONFIG>"
-        COMMAND "${PVZ_GLSLC}" -Werror -fshader-stage=fragment --target-env=vulkan1.2 -O
+        COMMAND "${PVZ_GLSLC}" -Werror -fshader-stage=fragment --target-env=vulkan1.3 -O
             "${CMAKE_SOURCE_DIR}/Tests/performance/single_output_premult_experiment.frag" -o "${separateBlendExperiment}"
-        COMMAND "${PVZ_SPIRV_VAL}" --target-env vulkan1.2 "${separateBlendExperiment}"
+        COMMAND "${PVZ_SPIRV_VAL}" --target-env vulkan1.3 "${separateBlendExperiment}"
         DEPENDS "${CMAKE_SOURCE_DIR}/Tests/performance/single_output_premult_experiment.frag" VERBATIM)
     add_custom_target(sexy_separate_blend_experiment_shader DEPENDS "${separateBlendExperiment}")
     add_library(sexy_vulkan_sprite_experiment STATIC EXCLUDE_FROM_ALL

@@ -6,12 +6,14 @@
 struct android_app;
 struct AInputEvent;
 namespace Sexy {
+class EditWidget;
+void BeginAndroidTextInput(EditWidget* editor);
+void EndAndroidTextInput(EditWidget* editor);
+void SyncAndroidTextInput(EditWidget* editor);
 // android_main 在首帧轮询前调用：NativeWindow::PumpEvents 由此驱动 glue 事件源。
 void BindAndroidApp(android_app* state);
 void AttachAndroidNativeWindow(ANativeWindow* window);
 ANativeWindow* AttachedAndroidNativeWindow();
-// 文本输入框获得/失去焦点时弹出/收起系统输入法。
-void ShowAndroidSoftInput(bool show);
 // native_app_glue 回调：命令与输入事件换算成 NativeWindowEvent 走统一 FIFO。
 void AndroidAppCommand(android_app* state, int32_t command);
 int32_t AndroidAppInput(android_app* state, AInputEvent* event);

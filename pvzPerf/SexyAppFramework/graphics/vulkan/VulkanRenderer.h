@@ -56,7 +56,6 @@ public:
     static bool benchmarkPackedColor16;
     static bool benchmarkDiscardScene;
     static bool benchmarkInstancedQuads;
-    static bool benchmarkTightSceneBarriers;
     static bool benchmarkPresentCopy;
     static bool benchmarkSolidFill;
     static bool benchmarkGenerateIndexPrefix;

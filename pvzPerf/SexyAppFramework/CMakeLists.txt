@@ -320,7 +320,7 @@ if(APPLE)
     target_compile_definitions(${PROJECT_NAME} PRIVATE
         SEXY_WINDOW_COCOA=1 SEXY_RENDER_GPU=1 PVZ_GPU_METAL=1
         "$<$<NOT:$<CONFIG:Release>>:SEXY_DISABLE_MODVAL=1>")
-    foreach(framework IN ITEMS Cocoa Metal QuartzCore AudioUnit AudioToolbox CoreAudio)
+    foreach(framework IN ITEMS Cocoa CoreGraphics Metal QuartzCore AudioUnit AudioToolbox CoreAudio)
         find_library(PVZ_MAC_${framework} NAMES ${framework} REQUIRED)
         target_link_libraries(${PROJECT_NAME} PRIVATE "${PVZ_MAC_${framework}}")
     endforeach()

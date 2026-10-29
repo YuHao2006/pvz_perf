@@ -9,6 +9,8 @@ using CreateContextAttribs = HGLRC (WINAPI*)(HDC, HGLRC, const int*);
 using SwapInterval = BOOL (WINAPI*)(int);
 constexpr int WglContextMajorVersion = 0x2091;
 constexpr int WglContextMinorVersion = 0x2092;
+constexpr int WglContextProfileMask = 0x9126;
+constexpr int WglContextCompatibilityProfile = 0x00000002;
 
 [[noreturn]] void Fail(const char* operation)
 {
@@ -99,10 +101,10 @@ OpenGLContext::OpenGLContext(NativeWindowHandle hwnd, bool validation, bool requ
         if (!impl_->dc) Fail("GetDC(OpenGL)");
         SetWindowPixelFormat(impl_->dc);
         if (createContext) {
-            // GL 3.0 has no core/compatibility profile mask. Do not request 3.1+ flags.
-            static constexpr int attributes[] = {WglContextMajorVersion, 3, WglContextMinorVersion, 0, 0};
+            static constexpr int attributes[] = {WglContextMajorVersion, 3, WglContextMinorVersion, 3,
+                WglContextProfileMask, WglContextCompatibilityProfile, 0};
             impl_->context = createContext(impl_->dc, nullptr, attributes);
-            if (!impl_->context) Fail("wglCreateContextAttribsARB(OpenGL 3.0)");
+            if (!impl_->context) Fail("wglCreateContextAttribsARB(OpenGL 3.3)");
         }
         else impl_->context = wglCreateContext(impl_->dc);
         if (!impl_->context) Fail("Create OpenGL context");
@@ -113,9 +115,16 @@ OpenGLContext::OpenGLContext(NativeWindowHandle hwnd, bool validation, bool requ
         while (glGetError() != GL_NO_ERROR) {}
         glGetIntegerv(GL_MAJOR_VERSION, &majorVersion);
         glGetIntegerv(GL_MINOR_VERSION, &minorVersion);
-        if (glGetError() != GL_NO_ERROR || majorVersion < 3)
-            throw std::runtime_error(std::string("Desktop OpenGL >= 3.0 required; driver reports ") + versionText);
+        if (glGetError() != GL_NO_ERROR || majorVersion < 3 || (majorVersion == 3 && minorVersion < 3))
+            throw std::runtime_error(std::string("Desktop OpenGL >= 3.3 required; driver reports ") + versionText);
         GL3::Load();
+        // Dual-source blending is part of this backend's required baseline.
+        if (!GL3::glBindFragDataLocationIndexed)
+            throw std::runtime_error("OpenGL 3.3 dual-source blending entry point is unavailable");
+        GLint dualOutputs=0;
+        glGetIntegerv(GL_MAX_DUAL_SOURCE_DRAW_BUFFERS,&dualOutputs);
+        if(dualOutputs<1)
+            throw std::runtime_error("OpenGL dual-source blending requires at least one dual-source draw buffer");
         const auto renderer = reinterpret_cast<const char*>(glGetString(GL_RENDERER));
         adapterDescription = std::string(renderer ? renderer : "OpenGL") + " / " + versionText;
         impl_->swapInterval = reinterpret_cast<SwapInterval>(GL3::GetProcAddress("wglSwapIntervalEXT"));

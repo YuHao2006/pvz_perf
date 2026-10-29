@@ -115,18 +115,36 @@ int main()
         constexpr auto high = FrameTiming::FromTargetFps(240);
         static_assert(stock.mIntervalNs == 10'000'000ULL);
         static_assert(high.mIntervalNs == 4'166'666ULL);
-        static_assert(FrameTiming::FromTargetFps(60).mIntervalNs == 16'666'666ULL);
+        static_assert(FrameTiming::FromTargetFps(60).mIntervalNs == 10'000'000ULL);
         static_assert(FrameTiming::FromTargetFps(250).mIntervalNs == 4'000'000ULL);
-        static_assert(FrameTiming::FromTargetFps(1).mIntervalNs == 1'000'000'000ULL);
+        static_assert(FrameTiming::FromTargetFps(1).mIntervalNs == 10'000'000ULL);
         static_assert(FrameTiming::FromTargetFps(1'000'000'000).mIntervalNs == 1);
 
-        for (double invalid : {0.0, -1.0, 239.5, 1'000'000'001.0,
+        for (double invalid : {0.0, -1.0, 1.0, 30.0, 60.0, 99.0, 99.999, 239.5, 1'000'000'001.0,
                  std::numeric_limits<double>::infinity(),
                  std::numeric_limits<double>::quiet_NaN()})
             Require(FrameTiming::FromSetting(invalid).mTargetFps == 100,
                 "Invalid setting did not fall back to 100 Hz");
         Require(FrameTiming::FromSetting(240).mIntervalNs == high.mIntervalNs,
             "Integer setting was not accepted");
+        Require(FrameTiming::FromSetting(100).mIntervalNs == stock.mIntervalNs &&
+            FrameTiming::FromSetting(101).mTargetFps == 101,
+            "Minimum target FPS boundary changed valid settings");
+        for (const double refresh : {0.0,59.94,60.0,90.0,99.9,100.0})
+            Require(FrameTiming::FromDisplayRefreshRate(refresh).mTargetFps==100,
+                "Low or unavailable display refresh bypassed the 100 FPS minimum");
+        Require(FrameTiming::FromDisplayRefreshRate(119.88).mTargetFps==120 &&
+            FrameTiming::FromDisplayRefreshRate(143.98).mTargetFps==144 &&
+            FrameTiming::FromDisplayRefreshRate(240).mTargetFps==240,
+            "Display refresh did not round to its target frame rate");
+        {
+            unsigned long long pending=50'000'000, phase=0;
+            bool rejected=false;
+            try { (void)TakeSimulationStep(pending,16'666'666,phase); }
+            catch (const std::invalid_argument&) { rejected=true; }
+            Require(rejected && pending==50'000'000 && phase==0,
+                "Retired sub-100Hz scheduling accepted a target interval above 10ms");
+        }
         bool rejected = false;
         try { (void)FrameTiming::FromTargetFps(0); }
         catch (const std::invalid_argument&) { rejected = true; }
@@ -167,7 +185,7 @@ int main()
         static_assert(!CrossedTime(3, 4, 3));
         static_assert(CrossedTime(0.9, 1.1, 1));
 
-        for (unsigned int fps : {60u, 100u, 144u, 240u, 250u, 1000u})
+        for (unsigned int fps : {100u, 144u, 240u, 250u, 1000u})
         {
             const auto timing = FrameTiming::FromTargetFps(fps);
             gUpdateTicks = static_cast<double>(timing.mIntervalNs) / FrameTiming::LegacyTickNs;
@@ -228,7 +246,7 @@ int main()
         }
         gUpdateTicks = gStepsPerLegacyTick = 1;
         gUpdateIntervalNs = FrameTiming::LegacyTickNs;
-        std::cout << "PASS: integer FPS, deadlines, 60/100/144/240/250/1000 Hz timers, motion, nanosecond state\n";
+        std::cout << "PASS: minimum 100 FPS, display refresh targets, deadlines, 100/144/240/250/1000 Hz timers, motion, nanosecond state\n";
         return EXIT_SUCCESS;
     }
     catch (const std::exception& error)

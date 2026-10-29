@@ -53,7 +53,7 @@ inline GpuPoolParams Parameters(std::uint32_t counter, std::uint32_t layer,
 }
 
 inline std::array<GpuVertex, 450> LegacyVertices(
-    const GpuPoolParams& p, std::uint32_t slot)
+    const GpuPoolParams& p, std::uint32_t slot, bool destinationClip = false)
 {
     // Intentionally independent of GpuPoolVertices/GpuPoolIndices: an incorrect
     // shared grid, winding, edge classification or phase must fail this oracle.
@@ -109,7 +109,7 @@ inline std::array<GpuVertex, 450> LegacyVertices(
                 const bool inside = cx >= p.clip.x && cy >= p.clip.y &&
                     cx < p.clip.x + p.clip.width && cy < p.clip.y + p.clip.height;
                 unsigned alpha = 255;
-                if (!inside) alpha = 0;
+                if (!destinationClip && !inside) alpha = 0;
                 else if (p.layer == 2)
                     alpha = ix == 0 || ix == 15 || iy == 0 ? 32 :
                         p.night ? 48 : ix <= 7 ? 192 : 128;
@@ -140,16 +140,17 @@ void Rectangle(Renderer& renderer, Texture* texture, float x, float y,
 
 template<class Renderer, class Texture>
 void Pool(Renderer& renderer, Texture* texture, const GpuPoolParams& p, bool gpu,
-    float offsetU = 0.f, float offsetV = 0.f)
+    float offsetU = 0.f, float offsetV = 0.f, bool destinationClip = false)
 {
     if (gpu) renderer.SubmitPool(texture, p);
     else
     {
-        auto vertices = LegacyVertices(p, Renderer::SlotOf(texture));
+        auto vertices = LegacyVertices(p, Renderer::SlotOf(texture), destinationClip);
         for (auto& vertex : vertices) { vertex.u += offsetU; vertex.v += offsetV; }
-        // No scissor: legacy pool clipping fades triangles through vertex alpha.
+        // Legacy backends fade through vertex alpha; Vulkan now crops in the
+        // translated destination space, using the independent triangle scissor.
         renderer.SubmitTriangles(vertices, texture, (p.sampler & 1u) != 0,
-            (p.sampler & 2u) != 0, p.blend);
+            (p.sampler & 2u) != 0, p.blend, destinationClip ? &p.clip : nullptr);
     }
 }
 
@@ -228,7 +229,7 @@ void CompareFloatsIfAvailable(Renderer& renderer, Texture* expected,
 }
 
 template<class Renderer>
-void Run(Renderer& renderer)
+void Run(Renderer& renderer, bool destinationClip = false)
 {
     using Texture = std::remove_pointer_t<decltype(renderer.CreateRenderImage(1, 1))>;
     // Raw pointers match the renderer's ownership contract; unwind cleanup is
@@ -311,7 +312,7 @@ void Run(Renderer& renderer)
                     s.blend, s.partial, s.nearest);
                 Pool(renderer, sources[layer], p, gpu,
                     int(layer) == shiftedLayer ? offsetU : 0.f,
-                    int(layer) == shiftedLayer ? offsetV : 0.f);
+                    int(layer) == shiftedLayer ? offsetV : 0.f, destinationClip);
             }
             Rectangle(renderer, renderer.whiteTexture, 418.25f, 323.75f, 127.f, 69.f,
                 {0.17f, 0.79f, 0.27f, 0.51f}, GpuBlend::Normal);
@@ -437,7 +438,7 @@ void Run(Renderer& renderer)
             Check(owned.Begin(), "Begin marked pool feedback oracle");
         }
         const auto p = Parameters(1901u, 2, false, GpuBlend::Normal, true, false);
-        Pool(renderer, source, p, gpu);
+        Pool(renderer, source, p, gpu, 0.f, 0.f, destinationClip);
         Rectangle(renderer, renderer.whiteTexture, 527, 351, 101, 53,
             {0.23f, 0.83f, 0.37f, 0.39f}, GpuBlend::Normal);
         owned.End();
@@ -449,7 +450,8 @@ void Run(Renderer& renderer)
         "feedback-float-source-pending-batch");
     CompareFloatsIfAvailable(renderer, expected, actual, "feedback-float-source-pending-batch");
     std::cout << "PASS production GPU pool vs independent legacy CPU mesh: day/night, "
-        "normal/additive/opaque, nearest/linear/repeat, phase wrap, vertex-alpha clip, "
+        "normal/additive/opaque, nearest/linear/repeat, phase wrap, "
+        << (destinationClip ? "destination scissor, " : "vertex-alpha clip, ") <<
         "fractional translation, ordinary painter order and float target feedback\n";
 }
 } // namespace PoolGpuChecks

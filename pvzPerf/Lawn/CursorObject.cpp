@@ -6,6 +6,7 @@
 #include "GardenHudLayout.h"
 #include "Resources.h"
 #include "Sexy.TodLib/Reanimator.h"
+#include "Sexy.TodLib/EffectSystem.h"
 #include "widget/WidgetManager.h"
 
 //0x438640
@@ -27,7 +28,7 @@ CursorObject::CursorObject()
     if (mApp->IsWhackAZombieLevel())
     {
         ReanimatorEnsureDefinitionLoaded(ReanimationType::REANIM_HAMMER, true);
-        Reanimation* aHammerReanim = mApp->AddReanimation(-25.0f, 16.0f, 0, ReanimationType::REANIM_HAMMER);
+        Reanimation* aHammerReanim = mApp->AddReanimation(-25.0f, 16.0f, 0, ReanimationType::REANIM_HAMMER, mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs, ReanimTimeDomain::Visual);
         aHammerReanim->mIsAttachment = true;
         aHammerReanim->PlayReanim(ReanimTrackId::anim_whack_zombie, ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD, 0, 24.0f);
         aHammerReanim->Seek(1000);
@@ -56,7 +57,7 @@ void CursorObject::Update()
     Reanimation* aCursorReanim = mApp->ReanimationTryToGet(mReanimCursorID);
     if (aCursorReanim)
     {
-        aCursorReanim->Update();
+        aCursorReanim->UpdateAt(mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs);
     }
 
     mVisible = true;
@@ -84,7 +85,7 @@ void CursorObject::Draw(Graphics* g)
     static constexpr auto CursorDrawCursorTypePlantFromBank = [](CursorObject& c, Graphics* g)
     {
     float aOffsetX = -10.0f;
-    float aOffsetY = PlantDrawHeightOffset(c.mBoard, nullptr, c.mType, -1, -1) - 10.0f;
+    float aOffsetY = PlantDrawHeightOffset(c.mBoard ? static_cast<std::int64_t>(c.mBoard->mLevelTimeNs) : c.mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs, c.mBoard, nullptr, c.mType, -1, -1) - 10.0f;
     if (Plant::IsFlying(c.mType) || c.mType == SeedType::SEED_GRAVEBUSTER)
     {
     aOffsetY += 30.0f;
@@ -115,11 +116,11 @@ void CursorObject::Draw(Graphics* g)
     PottedPlant* aPottedPlant = &c.mApp->mPlayerInfo->mPottedPlant[aPlant->mPottedPlantIndex];
     if (c.mBoard->mBackground == BackgroundType::BACKGROUND_MUSHROOM_GARDEN || c.mBoard->mBackground == BackgroundType::BACKGROUND_ZOMBIQUARIUM)
     {
-    c.mApp->mZenGarden->DrawPottedPlant(g, -10.0f, -10.0f, aPottedPlant, 1.0f, false);
+    c.mApp->mZenGarden->DrawPottedPlant(c.mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs, g, -10.0f, -10.0f, aPottedPlant, 1.0f, false);
     }
     else
     {
-    c.mApp->mZenGarden->DrawPottedPlant(g, -22.0f, -38.0f, aPottedPlant, 1.0f, true);
+    c.mApp->mZenGarden->DrawPottedPlant(c.mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs, g, -22.0f, -38.0f, aPottedPlant, 1.0f, true);
     }
     },  // 3 CURSOR_TYPE_PLANT_FROM_GLOVE
     CursorDrawCursorTypePlantFromBank,  // 4 CURSOR_TYPE_PLANT_FROM_DUPLICATOR（共体）
@@ -129,11 +130,11 @@ void CursorObject::Draw(Graphics* g)
     PottedPlant* aPottedPlant = c.mApp->mZenGarden->GetPottedPlantInWheelbarrow();
     if (c.mBoard->mBackground == BackgroundType::BACKGROUND_MUSHROOM_GARDEN || c.mBoard->mBackground == BackgroundType::BACKGROUND_ZOMBIQUARIUM)
     {
-    c.mApp->mZenGarden->DrawPottedPlant(g, -10.0f, -10.0f, aPottedPlant, 1.0f, false);
+    c.mApp->mZenGarden->DrawPottedPlant(c.mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs, g, -10.0f, -10.0f, aPottedPlant, 1.0f, false);
     }
     else
     {
-    c.mApp->mZenGarden->DrawPottedPlant(g, -22.0f, -38.0f, aPottedPlant, 1.0f, true);
+    c.mApp->mZenGarden->DrawPottedPlant(c.mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs, g, -22.0f, -38.0f, aPottedPlant, 1.0f, true);
     }
     },  // 5 CURSOR_TYPE_PLANT_FROM_WHEEL_BARROW
     // 原 case CURSOR_TYPE_SHOVEL
@@ -208,15 +209,15 @@ void CursorObject::Draw(Graphics* g)
     g->DrawImage(IMAGE_ZEN_WHEELBARROW, -20, -23);
     if (aPottedPlant->mPlantAge == PottedPlantAge::PLANTAGE_SMALL)
     {
-    c.mApp->mZenGarden->DrawPottedPlant(g, 10.0f, -35.0f, aPottedPlant, 0.6f, true);
+    c.mApp->mZenGarden->DrawPottedPlant(c.mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs, g, 10.0f, -35.0f, aPottedPlant, 0.6f, true);
     }
     else if (aPottedPlant->mPlantAge == PottedPlantAge::PLANTAGE_MEDIUM)
     {
-    c.mApp->mZenGarden->DrawPottedPlant(g, 15.0f, -25.0f, aPottedPlant, 0.5f, true);
+    c.mApp->mZenGarden->DrawPottedPlant(c.mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs, g, 15.0f, -25.0f, aPottedPlant, 0.5f, true);
     }
     else
     {
-    c.mApp->mZenGarden->DrawPottedPlant(g, 21.0f, -15.0f, aPottedPlant, 0.4f, true);
+    c.mApp->mZenGarden->DrawPottedPlant(c.mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs, g, 21.0f, -15.0f, aPottedPlant, 0.4f, true);
     }
     }
     else
@@ -337,14 +338,14 @@ void CursorPreview::Draw(Graphics* g)
         {
             aDrawPot = false;
         }
-        mApp->mZenGarden->DrawPottedPlant(g, 0.0f, 0.0f, aPottedPlant, 1.0f, aDrawPot);
+        mApp->mZenGarden->DrawPottedPlant(mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs, g, 0.0f, 0.0f, aPottedPlant, 1.0f, aDrawPot);
     }
     else
     {
         float aOffsetX, aOffsetY;
         if (mApp->IsIZombieLevel())
         {
-            float aHeight = PlantDrawHeightOffset(mBoard, nullptr, aSeedType, mGridX, mGridY);
+            float aHeight = PlantDrawHeightOffset(static_cast<std::int64_t>(mBoard->mLevelTimeNs), mBoard, nullptr, aSeedType, mGridX, mGridY);
             if (aSeedType == SeedType::SEED_ZOMBIE_GARGANTUAR)
             {
                 aHeight -= 30.0f;
@@ -355,7 +356,7 @@ void CursorPreview::Draw(Graphics* g)
         }
         else
         {
-            aOffsetY = PlantDrawHeightOffset(mBoard, nullptr, aSeedType, mGridX, mGridY);
+            aOffsetY = PlantDrawHeightOffset(static_cast<std::int64_t>(mBoard->mLevelTimeNs), mBoard, nullptr, aSeedType, mGridX, mGridY);
             aOffsetX = 0.0f;
         }
 
@@ -368,7 +369,7 @@ void CursorPreview::Draw(Graphics* g)
         {
             if (y != mGridY && mBoard->CanPlantAt(mGridX, y, aSeedType) == PlantingReason::PLANTING_OK)
             {
-                float aOffsetY = 85.0f * (y - mGridY) + PlantDrawHeightOffset(mBoard, nullptr, aSeedType, mGridX, y);
+                float aOffsetY = 85.0f * (y - mGridY) + PlantDrawHeightOffset(static_cast<std::int64_t>(mBoard->mLevelTimeNs), mBoard, nullptr, aSeedType, mGridX, y);
                 Plant::DrawSeedType(g, mBoard->mCursorObject->mType, mBoard->mCursorObject->mImitaterType, DrawVariation::VARIATION_NORMAL, 0.0f, aOffsetY);
             }
         }

@@ -1,4 +1,5 @@
 #include "VulkanScalePipeline.h"
+#include "VulkanContext.h"
 #include "VulkanEffectFormats.h"
 #include "VulkanScaleDds.h"
 #include <algorithm>
@@ -26,8 +27,8 @@ struct Image {
     VkDevice device{};
     VkDeviceMemory memory{};
     VkImageLayout layout=VK_IMAGE_LAYOUT_UNDEFINED;
-    VkPipelineStageFlags stage=VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-    VkAccessFlags access=0;
+    VkPipelineStageFlags2 stage=VK_PIPELINE_STAGE_2_NONE;
+    VkAccessFlags2 access=0;
     bool owned=false;
     ~Image() {
         if (!owned) return;
@@ -37,15 +38,19 @@ struct Image {
     }
 };
 void Transition(VkCommandBuffer cmd, Image& image, VkImageLayout layout,
-    VkPipelineStageFlags stage, VkAccessFlags access) {
+    VkPipelineStageFlags2 stage, VkAccessFlags2 access) {
     // Include same-layout WAW and WAR dependencies, not just layout changes.
-    VkImageMemoryBarrier barrier{VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER};
+    VkImageMemoryBarrier2 barrier{VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2};
+    barrier.srcStageMask=image.stage; barrier.dstStageMask=stage;
     barrier.srcAccessMask=image.access; barrier.dstAccessMask=access;
     barrier.oldLayout=image.layout; barrier.newLayout=layout;
     barrier.srcQueueFamilyIndex=barrier.dstQueueFamilyIndex=VK_QUEUE_FAMILY_IGNORED;
     barrier.image=image.native.image;
     barrier.subresourceRange={VK_IMAGE_ASPECT_COLOR_BIT,0,1,0,1};
-    vkCmdPipelineBarrier(cmd,image.stage,stage,0,0,nullptr,0,nullptr,1,&barrier);
+    VkDependencyInfo dependency{VK_STRUCTURE_TYPE_DEPENDENCY_INFO};
+    dependency.imageMemoryBarrierCount=1;
+    dependency.pImageMemoryBarriers=&barrier;
+    VulkanContext::pipelineBarrier2(cmd,&dependency);
     image.layout=layout; image.stage=stage; image.access=access;
 }
 void RequireFormat(VkPhysicalDevice physical, VkFormat format, VkFormatFeatureFlags features) {
@@ -161,9 +166,11 @@ std::unique_ptr<Image> LoadLookup(VulkanScaleDevice context, const std::filesyst
     Check(vkEndCommandBuffer(cmd),"end scale upload");
     VkFenceCreateInfo fence{VK_STRUCTURE_TYPE_FENCE_CREATE_INFO};
     Check(vkCreateFence(context.device,&fence,nullptr,&commands.fence),"create scale upload fence");
-    VkSubmitInfo submit{VK_STRUCTURE_TYPE_SUBMIT_INFO};
-    submit.commandBufferCount=1; submit.pCommandBuffers=&cmd;
-    Check(vkQueueSubmit(context.queue,1,&submit,commands.fence),"submit scale upload");
+    VkCommandBufferSubmitInfo command{VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO};
+    command.commandBuffer=cmd;
+    VkSubmitInfo2 submit{VK_STRUCTURE_TYPE_SUBMIT_INFO_2};
+    submit.commandBufferInfoCount=1; submit.pCommandBufferInfos=&command;
+    Check(VulkanContext::queueSubmit2(context.queue,1,&submit,commands.fence),"submit scale upload");
     Check(vkWaitForFences(context.device,1,&commands.fence,VK_TRUE,UINT64_MAX),"wait scale upload");
     return result; // CPU file/staging released only after upload completion.
 }

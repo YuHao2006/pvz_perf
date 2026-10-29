@@ -63,7 +63,6 @@ void TileImageVertically(Graphics* g, Image* theImage, int theX, int theY, int t
 LawnEditWidget::LawnEditWidget(int theId, EditListener* theListener, Dialog* theDialog) : EditWidget(theId, theListener)
 {
     mDialog = theDialog;
-    mAutoCapFirstLetter = true;
 }
 
 //0x456700
@@ -77,18 +76,6 @@ void LawnEditWidget::KeyDown(KeyCode theKey)
     EditWidget::KeyDown(theKey);
     if (theKey == KeyCode::KEYCODE_ESCAPE)
         mDialog->KeyDown(KeyCode::KEYCODE_ESCAPE);
-}
-
-//0x456760
-void LawnEditWidget::KeyChar(char theChar)
-{
-    if (mAutoCapFirstLetter && isalpha(theChar))
-    {
-        theChar = toupper(theChar);
-        mAutoCapFirstLetter = false;
-    }
-
-    EditWidget::KeyChar(theChar);
 }
 
 //0x4567B0

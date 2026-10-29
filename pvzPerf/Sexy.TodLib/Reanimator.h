@@ -144,7 +144,7 @@ public:
     DataArray<Reanimation>          mReanimations;
     std::int64_t                    mVisualTimeNs = 0;
     std::int64_t                    mBattleTimeNs = 0;
-    ReanimTimeDomain                mDefaultTimeDomain = ReanimTimeDomain::Visual;
+    std::array<ReanimTimeDomain, 1024> mTimeDomains{};
 
 public:
     ReanimationHolder() { ; }
@@ -152,7 +152,9 @@ public:
 
     void                            InitializeHolder();
     void                            DisposeHolder();
-    Reanimation*                    AllocReanimation(float theX, float theY, int theRenderOrder, ReanimationType theReanimationType);
+    Reanimation*                    AllocReanimation(float theX, float theY, int theRenderOrder, ReanimationType theReanimationType, std::int64_t nowNs, ReanimTimeDomain domain = ReanimTimeDomain::Visual);
+    void                            BindAnimationTime(Reanimation& animation, ReanimTimeDomain domain, std::int64_t nowNs);
+    void                            AdoptAnimationTime(Reanimation& animation, const Reanimation& parent, std::int64_t nowNs);
 };
 
 // ====================================================================================================
@@ -252,7 +254,6 @@ class Reanimation
 public:
     ReanimationType                 mReanimationType;
     std::uint32_t                   mVariant;
-    ReanimTimeDomain                mTimeDomain;
     std::int64_t                    mStartTimeNs;
     int                             mCurrentFrame;
     std::int64_t                    mFramePeriodNs;
@@ -303,16 +304,15 @@ public:
     // 掩码重建：按轨道字段现值精确重算两掩码（存档读回后 / 夹具直写字段后）
     void                            RebuildTrackActivityMasks();
 
-    void                            ReanimationInitialize(float theX, float theY, ReanimatorDefinition* theDefinition);
-    /*inline*/ void                 ReanimationInitializeType(float theX, float theY, ReanimationType theReanimType);
+    void                            ReanimationInitialize(float theX, float theY, ReanimatorDefinition* theDefinition, std::int64_t nowNs);
+    /*inline*/ void                 ReanimationInitializeType(float theX, float theY, ReanimationType theReanimType, std::int64_t nowNs);
     void                            ReanimationDie();
-    void                            Update();
+    void                            PrepareTimeAt(std::int64_t nowNs);
     void                            UpdateAt(std::int64_t nowNs);
     void                            Advance(std::int64_t deltaNs);
     ReanimFramePosition             SampleFrameAt(std::int64_t nowNs, std::int64_t offsetNs = 0) const;
     ReanimPlaybackPosition          SamplePlayback(std::int64_t offsetNs = 0) const;
     ReanimPlaybackPosition          SamplePlaybackAt(std::int64_t nowNs, std::int64_t offsetNs = 0) const;
-    void                            BindTimeDomain(ReanimTimeDomain domain);
     void                            RebaseTime(std::int64_t nowNs);
     void                            ApplyRate(float rate);
     void                            ChangeLoopType(ReanimLoopType loop);

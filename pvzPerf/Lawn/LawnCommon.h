@@ -25,14 +25,12 @@ class LawnEditWidget : public EditWidget
 {
 public:
 	Dialog*					mDialog;
-	bool					mAutoCapFirstLetter;
 
 public:
 	LawnEditWidget(int theId, EditListener* theListener, Dialog* theDialog);
 	~LawnEditWidget();
 
 	virtual void			KeyDown(KeyCode theKey);
-	virtual void			KeyChar(char theChar);
 };
 
 // ====================================================================================================

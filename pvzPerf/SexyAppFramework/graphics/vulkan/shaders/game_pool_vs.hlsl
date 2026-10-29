@@ -4,7 +4,6 @@ struct PushData {
     float2 translation;
     float2 padding;
     float4 time;
-    float4 clip;
     uint4 meta; // layer, night, encoded texture slot, sampler
 };
 [[vk::push_constant]] ConstantBuffer<PushData> push;
@@ -40,11 +39,10 @@ Output main(Input input) {
     const float2 base=float2(x/15,y/5);
     const float2 position=layer==2 ? float2((704.0/15)*x+45,30*y+288) :
         float2((push.geometry.x/15)*x+35,(push.geometry.y/5)*y+279);
-    const int2 clipped=int2(position);
     float alpha=1;
-    if (clipped.x<push.clip.x || clipped.y<push.clip.y ||
-        clipped.x>=push.clip.z || clipped.y>=push.clip.w) alpha=0;
-    else if (layer==2)
+    // Destination-space scissors clip translated pool geometry exactly.
+    // Vertex alpha is only the authored caustic opacity, never a crop mask.
+    if (layer==2)
         alpha=(x==0 || x==15 || y==0 ? 32 : push.meta.y!=0 ? 48 : x<=7 ? 192 : 128)/255.0;
     Output output;
     output.position=float4((position+push.translation)/push.extent*2-1,0,1);

@@ -60,7 +60,7 @@ struct MowerFixture
         mower.mMowerHeight = MowerHeight::MOWER_HEIGHT_LAND;
         mower.mChompEndTimeNs = chomp ? static_cast<std::int64_t>(board.mLevelTimeNs)+std::int64_t(chomp)*10'000'000 : 0;
         auto* animation = app.AddReanimation(0, 0, 0, type == LawnMowerType::LAWNMOWER_POOL ?
-            ReanimationType::REANIM_POOL_CLEANER : ReanimationType::REANIM_LAWNMOWER);
+            ReanimationType::REANIM_POOL_CLEANER : ReanimationType::REANIM_LAWNMOWER, app.mEffectSystem->mReanimationHolder->mBattleTimeNs, ReanimTimeDomain::Battle);
         animation->ChangeLoopType(ReanimLoopType::REANIM_LOOP);
         mower.mReanimID = app.ReanimationGetID(animation);
     }

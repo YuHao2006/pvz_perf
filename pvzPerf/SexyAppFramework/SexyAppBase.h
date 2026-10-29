@@ -285,6 +285,7 @@ public:
 	int						mNonDrawCount;
 	int						mFrameTime;
 	FrameTiming				mFrameTiming{};
+	bool                    mAutoDetectFrameRate = true;
 
 		bool					mIsDrawing;
 		bool					mRedrawInProgress;
@@ -506,6 +507,7 @@ public:
 	virtual void			LoadingThreadProc();
 	virtual void			WriteToRegistry();
 	virtual void			ReadFromRegistry();
+	void                    DetectTargetFrameRate();
 	virtual Dialog*			NewDialog(int theDialogId, bool isModal, const SexyString& theDialogHeader, const SexyString& theDialogLines, const SexyString& theDialogFooter, int theButtonMode);		
 	virtual void			PreDisplayHook();
 	virtual _Font*			GetDebugFont();

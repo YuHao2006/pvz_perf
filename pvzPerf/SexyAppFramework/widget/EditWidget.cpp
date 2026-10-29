@@ -4,6 +4,9 @@
 #include "WidgetManager.h"
 #include "SexyAppBase.h"
 #include "EditListener.h"
+#if defined(__ANDROID__)
+#include "platform/android/AndroidWindow.h"
+#endif
 
 using namespace Sexy;
 
@@ -42,6 +45,9 @@ EditWidget::EditWidget(int theId, EditListener* theEditListener)
 
 EditWidget::~EditWidget()
 {
+#if defined(__ANDROID__)
+	EndAndroidTextInput(this);
+#endif
 	delete mFont;
 	ClearWidthCheckFonts();
 
@@ -184,6 +190,9 @@ void EditWidget::UpdateCaretPos()
 void EditWidget::GotFocus()
 {
 	Widget::GotFocus();
+#if defined(__ANDROID__)
+	BeginAndroidTextInput(this);
+#endif
 	if (mWidgetManager && mWidgetManager->mApp->mTabletPC)
 	{
 		SexyAppBase *anApp = mWidgetManager->mApp;
@@ -201,6 +210,9 @@ void EditWidget::GotFocus()
 void EditWidget::LostFocus()
 {
 	Widget::LostFocus();
+#if defined(__ANDROID__)
+	EndAndroidTextInput(this);
+#endif
 
 	if (mWidgetManager && mWidgetManager->mApp->mTabletPC)
 	{
@@ -214,6 +226,9 @@ void EditWidget::LostFocus()
 void EditWidget::Update()
 {
 	Widget::Update();
+#if defined(__ANDROID__)
+	SyncAndroidTextInput(this);
+#endif
 
 	if (mHasFocus)
 	{
@@ -602,6 +617,10 @@ void EditWidget::FocusCursor(bool bigJump)
 void EditWidget::MouseDown(int x, int y, int theBtnNum, int theClickCount)
 {
 	Widget::MouseDown(x, y, theBtnNum, theClickCount);
+#if defined(__ANDROID__)
+	// Reopen after the user dismissed the IME while this editor kept focus.
+	BeginAndroidTextInput(this);
+#endif
 
 	mHilitePos = -1;
 	mCursorPos = GetCharAt(x, y);

@@ -1,6 +1,7 @@
 #include "MacWindow.h"
 #import <AppKit/AppKit.h>
 #import <QuartzCore/CAMetalLayer.h>
+#import <CoreGraphics/CoreGraphics.h>
 #include <algorithm>
 #include <array>
 #include <cmath>
@@ -523,6 +524,18 @@ void MacWindow::SetFullscreen(bool fullscreen)
     RefreshGeometry();
 }
 bool MacWindow::Minimized() const { return impl_->window.miniaturized; }
+double MacWindow::RefreshRate() const
+{
+    RequireMainThread();
+    NSScreen* screen=impl_->window.screen ?: NSScreen.mainScreen;
+    NSNumber* number=screen.deviceDescription[@"NSScreenNumber"];
+    if (!number) return 0;
+    CGDisplayModeRef mode=CGDisplayCopyDisplayMode(number.unsignedIntValue);
+    if (!mode) return 0;
+    const double rate=CGDisplayModeGetRefreshRate(mode);
+    CGDisplayModeRelease(mode);
+    return rate;
+}
 bool MacWindow::BeginMouseSample(std::uint32_t update)
 {
     if (impl_->mouseSampled && impl_->mouseSampleUpdate == update) return false;

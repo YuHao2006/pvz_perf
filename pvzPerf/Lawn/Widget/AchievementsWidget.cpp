@@ -12,6 +12,7 @@
 #include "Lawn/System/ProfileMgr.h"
 #include "Sexy.TodLib/TodFoley.h"
 #include "Sexy.TodLib/TodDebug.h"
+#include "Sexy.TodLib/TodCommon.h"
 #include "graphics/Font.h"
 #include "Sexy.TodLib/Reanimator.h"
 #include "Sexy.TodLib/TodParticle.h"
@@ -65,8 +66,9 @@ AchievementsWidget::AchievementsWidget(LawnApp* theApp) {
 		+ AchievementsAtlas::Images[static_cast<unsigned>(AchievementSprite::SELECTORSCREEN_ACHIEVEMENTS_BG)].mHeight + 15700;
 	mScrollDirection = -1;
 	mScrollValue = 0;
-	mDefaultScrollValue = 30;
-	mScrollDecay = 1;
+	mDefaultScrollValue = 3000.0f;
+	mScrollDecay = 10000.0f;
+	mScrollRemainderY = 0.0f;
 	mDidPressMoreButton = false;
 	const TextureRegion& aRock=AchievementsAtlas::Images[static_cast<unsigned>(AchievementSprite::ACHEESEMENTS_MORE_ROCK)];
 	mMoreRockRect = Rect(710,470,aRock.mWidth-25,aRock.mHeight-50);
@@ -82,16 +84,24 @@ void AchievementsWidget::Update() {
 	if (mScrollValue <= 0)
 		return;
 
-	mScrollValue = std::max(0, std::min(mScrollValue, mDefaultScrollValue) -
-		mScrollDecay * Sexy::gWholeLegacyTicks);
-
-	int aNewY = mY + mScrollValue * mScrollDirection * Sexy::gWholeLegacyTicks;
+	const float aSeconds = static_cast<float>(Sexy::gUpdateIntervalNs) * 1.0e-9f;
+	mScrollValue = std::max(0.0f, std::min(mScrollValue, mDefaultScrollValue) - mScrollDecay * aSeconds);
+	const float aDisplacement = mScrollRemainderY + mScrollValue * mScrollDirection * aSeconds;
+	const int aPixels = FloatRoundToInt(aDisplacement);
+	mScrollRemainderY = aDisplacement - aPixels;
+	int aNewY = mY + aPixels;
 	if (aNewY >= mApp->mHeight)
+	{
 		aNewY = mApp->mHeight;
+		mScrollRemainderY = 0.0f;
+	}
 
 	int aMaxScroll = 2 * mApp->mHeight + 50 - mHeight;
 	if (aNewY <= aMaxScroll)
+	{
 		aNewY = aMaxScroll;
+		mScrollRemainderY = 0.0f;
+	}
 
 	// Mouse events and hit rectangles are already in this widget's local frame.
 	Move(mX, aNewY);
@@ -211,6 +221,7 @@ void AchievementsWidget::MouseUp(int x, int y, int theClickCount) {
 		mScrollValue = 0;
 		mDidPressMoreButton = false;
 		Move(mX, mApp->mHeight);
+		mScrollRemainderY = 0.0f;
 		mApp->mGameSelector->SlideTo(-mX, 0);
 		mApp->mGameSelector->mWidgetManager->SetFocus(mApp->mGameSelector);
 		return;
@@ -219,7 +230,7 @@ void AchievementsWidget::MouseUp(int x, int y, int theClickCount) {
 	if (mMoreRockRect.Contains(aPos)) {
 		mDidPressMoreButton = !mDidPressMoreButton;
 		mScrollDirection = mDidPressMoreButton ? -1 : 1;
-		mScrollValue = 20;
+		mScrollValue = 2000.0f;
 	}
 }
 

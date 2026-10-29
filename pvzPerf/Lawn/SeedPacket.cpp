@@ -1,4 +1,6 @@
 #include "ReanimClock.h"
+#include "Sexy.TodLib/EffectSystem.h"
+#include "Sexy.TodLib/Reanimator.h"
 #include "Board.h"
 #include "Cutscene.h"
 #include "Challenge.h"
@@ -94,7 +96,7 @@ void SeedPacket::FlashIfReady()
 	if (!mBoard->HasConveyorBeltSeedBank())
 	{
 		int aRenderPosition = Board::MakeRenderOrder(RenderLayer::RENDER_LAYER_UI_BOTTOM, 0, 2);
-		mApp->AddTodParticle(mX + mBoard->mSeedBank->mX, mY + mBoard->mSeedBank->mY, aRenderPosition, ParticleEffect::PARTICLE_SEED_PACKET_FLASH);
+		mApp->AddTodParticle(mX + mBoard->mSeedBank->mX, mY + mBoard->mSeedBank->mY, aRenderPosition, ParticleEffect::PARTICLE_SEED_PACKET_FLASH, static_cast<std::int64_t>(mBoard->mLevelTimeNs));
 	}
 	
 	if (mBoard->mTutorialState == TutorialState::TUTORIAL_LEVEL_1_REFRESH_PEASHOOTER)

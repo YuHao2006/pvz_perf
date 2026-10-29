@@ -126,7 +126,7 @@ Plant::Plant()
 
 //0x45DB60
 // GOTY @Patoke: 0x461483
-void Plant::PlantInitialize(int theGridX, int theGridY, SeedType theSeedType, SeedType theImitaterType)
+void Plant::PlantInitialize(std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, int theGridX, int theGridY, SeedType theSeedType, SeedType theImitaterType)
 {
     // PlantInitialize 槽位上下文：switch 外提引用（主体 reanim 指针、定义动画
     // 型）经此传递。表内匿名 lambda = 原 case 体逐句迁移（生成器 + 逆变换
@@ -136,16 +136,16 @@ void Plant::PlantInitialize(int theGridX, int theGridY, SeedType theSeedType, Se
     Reanimation* mBodyReanim;
     ReanimationType mReanimationType;
     };
-    using PlantInitCaseFn = void (*)(Plant&, PlantInitLocals&);
+    using PlantInitCaseFn = void (*)(std::int64_t, std::int64_t, std::int64_t, Plant&, PlantInitLocals&);
 
     // 标签共体（匿名 lambda 无法跨槽复用，复用即具名）
     // 原 case SEED_PEASHOOTER, SEED_SNOWPEA, SEED_REPEATER, SEED_LEFTPEATER, SEED_GATLINGPEA
-    static constexpr auto PlantInitPeashooter = [](Plant& p, PlantInitLocals& lc)
+    static constexpr auto PlantInitPeashooter = [](std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, Plant& p, PlantInitLocals& lc)
     {
     if (lc.mBodyReanim)
     {
     lc.mBodyReanim->ApplyRate(RandRangeFloat(15.0f, 20.0f));
-    Reanimation* aHeadReanim = p.mApp->AddReanimation(0.0f, 0.0f, p.mRenderOrder + 2, lc.mReanimationType);
+    Reanimation* aHeadReanim = p.mApp->AddReanimation(0.0f, 0.0f, p.mRenderOrder + 2, lc.mReanimationType, animationNowNs);
     aHeadReanim->ChangeLoopType(ReanimLoopType::REANIM_LOOP);
     aHeadReanim->ApplyRate(lc.mBodyReanim->mAnimRate);
     aHeadReanim->SetFramesForLayer(ReanimTrackId::anim_head_idle);
@@ -160,7 +160,7 @@ void Plant::PlantInitialize(int theGridX, int theGridY, SeedType theSeedType, Se
 
     // 标签共体（匿名 lambda 无法跨槽复用，复用即具名）
     // 原 case SEED_CHERRYBOMB, SEED_JALAPENO
-    static constexpr auto PlantInitCherrybomb = [](Plant& p, PlantInitLocals& lc)
+    static constexpr auto PlantInitCherrybomb = [](std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, Plant& p, PlantInitLocals& lc)
     {
     TOD_ASSERT(lc.mBodyReanim);
 
@@ -177,7 +177,7 @@ void Plant::PlantInitialize(int theGridX, int theGridY, SeedType theSeedType, Se
 
     // 标签共体（匿名 lambda 无法跨槽复用，复用即具名）
     // 原 case SEED_PUFFSHROOM, SEED_SEASHROOM
-    static constexpr auto PlantInitPuffshroom = [](Plant& p, PlantInitLocals& lc)
+    static constexpr auto PlantInitPuffshroom = [](std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, Plant& p, PlantInitLocals& lc)
     {
     if (p.IsInPlay())
     {
@@ -187,7 +187,7 @@ void Plant::PlantInitialize(int theGridX, int theGridY, SeedType theSeedType, Se
     };
 
     // 原 default（无 case 的 15 型（空操作）共用）
-    static constexpr auto PlantInitDefault = [](Plant& p, PlantInitLocals& lc)
+    static constexpr auto PlantInitDefault = [](std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, Plant& p, PlantInitLocals& lc)
     {
 
     };
@@ -198,13 +198,13 @@ void Plant::PlantInitialize(int theGridX, int theGridY, SeedType theSeedType, Se
     PlantInitDefault,  // 1 SEED_SUNFLOWER（原 default）
     PlantInitCherrybomb,  // 2 SEED_CHERRYBOMB（共体）
     // 原 case SEED_WALLNUT
-    [](Plant& p, PlantInitLocals& lc)
+    [](std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, Plant& p, PlantInitLocals& lc)
     {
     p.mPlantHealth = 4000;
     p.mBlinkCountdown = 1000 + Sexy::Rand(1000);
     },  // 3 SEED_WALLNUT
     // 原 case SEED_POTATOMINE
-    [](Plant& p, PlantInitLocals& lc)
+    [](std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, Plant& p, PlantInitLocals& lc)
     {
     TOD_ASSERT(lc.mBodyReanim);
 
@@ -223,14 +223,14 @@ void Plant::PlantInitialize(int theGridX, int theGridY, SeedType theSeedType, Se
     },  // 4 SEED_POTATOMINE
     PlantInitPeashooter,  // 5 SEED_SNOWPEA（共体）
     // 原 case SEED_CHOMPER
-    [](Plant& p, PlantInitLocals& lc)
+    [](std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, Plant& p, PlantInitLocals& lc)
     {
     p.mState = PlantState::STATE_READY;
     },  // 6 SEED_CHOMPER
     PlantInitPeashooter,  // 7 SEED_REPEATER（共体）
     PlantInitPuffshroom,  // 8 SEED_PUFFSHROOM（共体）
     // 原 case SEED_SUNSHROOM
-    [](Plant& p, PlantInitLocals& lc)
+    [](std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, Plant& p, PlantInitLocals& lc)
     {
     TOD_ASSERT(lc.mBodyReanim);
 
@@ -251,7 +251,7 @@ void Plant::PlantInitialize(int theGridX, int theGridY, SeedType theSeedType, Se
     },  // 9 SEED_SUNSHROOM
     PlantInitDefault,  // 10 SEED_FUMESHROOM（原 default）
     // 原 case SEED_GRAVEBUSTER
-    [](Plant& p, PlantInitLocals& lc)
+    [](std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, Plant& p, PlantInitLocals& lc)
     {
     TOD_ASSERT(lc.mBodyReanim);
 
@@ -266,14 +266,14 @@ void Plant::PlantInitialize(int theGridX, int theGridY, SeedType theSeedType, Se
     },  // 11 SEED_GRAVEBUSTER
     PlantInitDefault,  // 12 SEED_HYPNOSHROOM（原 default）
     // 原 case SEED_SCAREDYSHROOM
-    [](Plant& p, PlantInitLocals& lc)
+    [](std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, Plant& p, PlantInitLocals& lc)
     {
     p.mState = PlantState::STATE_READY;
     },  // 13 SEED_SCAREDYSHROOM
     PlantInitDefault,  // 14 SEED_ICESHROOM（原 default）
     PlantInitDefault,  // 15 SEED_DOOMSHROOM（原 default）
     // 原 case SEED_LILYPAD
-    [](Plant& p, PlantInitLocals& lc)
+    [](std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, Plant& p, PlantInitLocals& lc)
     {
     if (p.IsInPlay())
     {
@@ -283,26 +283,26 @@ void Plant::PlantInitialize(int theGridX, int theGridY, SeedType theSeedType, Se
     },  // 16 SEED_LILYPAD
     PlantInitDefault,  // 17 SEED_SQUASH（原 default）
     // 原 case SEED_THREEPEATER
-    [](Plant& p, PlantInitLocals& lc)
+    [](std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, Plant& p, PlantInitLocals& lc)
     {
     TOD_ASSERT(lc.mBodyReanim);
 
     lc.mBodyReanim->ApplyRate(RandRangeFloat(15.0f, 20.0f));
-    Reanimation* aHeadReanim1 = p.mApp->AddReanimation(0.0f, 0.0f, p.mRenderOrder + 2, lc.mReanimationType);
+    Reanimation* aHeadReanim1 = p.mApp->AddReanimation(0.0f, 0.0f, p.mRenderOrder + 2, lc.mReanimationType, animationNowNs);
     aHeadReanim1->ChangeLoopType(ReanimLoopType::REANIM_LOOP);
     aHeadReanim1->ApplyRate(lc.mBodyReanim->mAnimRate);
     aHeadReanim1->SetFramesForLayer(ReanimTrackId::anim_head_idle1);
     aHeadReanim1->AttachToAnotherReanimation(lc.mBodyReanim, ReanimTrackId::anim_head1);
     p.mHeadReanimID = p.mApp->ReanimationGetID(aHeadReanim1);
 
-    Reanimation* aHeadReanim2 = p.mApp->AddReanimation(0.0f, 0.0f, p.mRenderOrder + 2, lc.mReanimationType);
+    Reanimation* aHeadReanim2 = p.mApp->AddReanimation(0.0f, 0.0f, p.mRenderOrder + 2, lc.mReanimationType, animationNowNs);
     aHeadReanim2->ChangeLoopType(ReanimLoopType::REANIM_LOOP);
     aHeadReanim2->ApplyRate(lc.mBodyReanim->mAnimRate);
     aHeadReanim2->SetFramesForLayer(ReanimTrackId::anim_head_idle2);
     aHeadReanim2->AttachToAnotherReanimation(lc.mBodyReanim, ReanimTrackId::anim_head2);
     p.mHeadReanimID2 = p.mApp->ReanimationGetID(aHeadReanim2);
 
-    Reanimation* aHeadReanim3 = p.mApp->AddReanimation(0.0f, 0.0f, p.mRenderOrder + 2, lc.mReanimationType);
+    Reanimation* aHeadReanim3 = p.mApp->AddReanimation(0.0f, 0.0f, p.mRenderOrder + 2, lc.mReanimationType, animationNowNs);
     aHeadReanim3->ChangeLoopType(ReanimLoopType::REANIM_LOOP);
     aHeadReanim3->ApplyRate(lc.mBodyReanim->mAnimRate);
     aHeadReanim3->SetFramesForLayer(ReanimTrackId::anim_head_idle3);
@@ -310,7 +310,7 @@ void Plant::PlantInitialize(int theGridX, int theGridY, SeedType theSeedType, Se
     p.mHeadReanimID3 = p.mApp->ReanimationGetID(aHeadReanim3);
     },  // 18 SEED_THREEPEATER
     // 原 case SEED_TANGLEKELP
-    [](Plant& p, PlantInitLocals& lc)
+    [](std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, Plant& p, PlantInitLocals& lc)
     {
     TOD_ASSERT(lc.mBodyReanim);
     lc.mBodyReanim->SetTruncateDisappearingFramesAll(false);
@@ -318,12 +318,12 @@ void Plant::PlantInitialize(int theGridX, int theGridY, SeedType theSeedType, Se
     PlantInitCherrybomb,  // 20 SEED_JALAPENO（共体）
     PlantInitDefault,  // 21 SEED_SPIKEWEED（原 default）
     // 原 case SEED_TORCHWOOD
-    [](Plant& p, PlantInitLocals& lc)
+    [](std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, Plant& p, PlantInitLocals& lc)
     {
 
     },  // 22 SEED_TORCHWOOD
     // 原 case SEED_TALLNUT
-    [](Plant& p, PlantInitLocals& lc)
+    [](std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, Plant& p, PlantInitLocals& lc)
     {
     p.mPlantHealth = 8000;
     p.mHeight = 80;
@@ -331,13 +331,13 @@ void Plant::PlantInitialize(int theGridX, int theGridY, SeedType theSeedType, Se
     },  // 23 SEED_TALLNUT
     PlantInitPuffshroom,  // 24 SEED_SEASHROOM（共体）
     // 原 case SEED_PLANTERN
-    [](Plant& p, PlantInitLocals& lc)
+    [](std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, Plant& p, PlantInitLocals& lc)
     {
     p.mStateCountdown = 50;
 
     if (!p.mIsOnBoard || p.mApp->mGameMode != GameMode::GAMEMODE_LIMBO_ZEN_GARDEN)
     {
-    p.AddAttachedParticle((p.mX) + 40, (p.mY) + 40, (int)RenderLayer::RENDER_LAYER_FOG + 1, ParticleEffect::PARTICLE_LANTERN_SHINE);
+    p.AddAttachedParticle(ownerNowNs, (p.mX) + 40, (p.mY) + 40, (int)RenderLayer::RENDER_LAYER_FOG + 1, ParticleEffect::PARTICLE_LANTERN_SHINE);
     }
     if (p.IsInPlay())
     {
@@ -345,12 +345,12 @@ void Plant::PlantInitialize(int theGridX, int theGridY, SeedType theSeedType, Se
     }
     },  // 25 SEED_PLANTERN
     // 原 case SEED_CACTUS
-    [](Plant& p, PlantInitLocals& lc)
+    [](std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, Plant& p, PlantInitLocals& lc)
     {
     p.mState = PlantState::STATE_CACTUS_LOW;
     },  // 26 SEED_CACTUS
     // 原 case SEED_BLOVER
-    [](Plant& p, PlantInitLocals& lc)
+    [](std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, Plant& p, PlantInitLocals& lc)
     {
     p.mDoSpecialCountdown = 50;
 
@@ -367,19 +367,19 @@ void Plant::PlantInitialize(int theGridX, int theGridY, SeedType theSeedType, Se
     }
     },  // 27 SEED_BLOVER
     // 原 case SEED_SPLITPEA
-    [](Plant& p, PlantInitLocals& lc)
+    [](std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, Plant& p, PlantInitLocals& lc)
     {
     TOD_ASSERT(lc.mBodyReanim);
 
     lc.mBodyReanim->ApplyRate(RandRangeFloat(15.0f, 20.0f));
-    Reanimation* aHeadReanim1 = p.mApp->AddReanimation(0.0f, 0.0f, p.mRenderOrder + 2, lc.mReanimationType);
+    Reanimation* aHeadReanim1 = p.mApp->AddReanimation(0.0f, 0.0f, p.mRenderOrder + 2, lc.mReanimationType, animationNowNs);
     aHeadReanim1->ChangeLoopType(ReanimLoopType::REANIM_LOOP);
     aHeadReanim1->ApplyRate(lc.mBodyReanim->mAnimRate);
     aHeadReanim1->SetFramesForLayer(ReanimTrackId::anim_head_idle);
     aHeadReanim1->AttachToAnotherReanimation(lc.mBodyReanim, ReanimTrackId::anim_idle);
     p.mHeadReanimID = p.mApp->ReanimationGetID(aHeadReanim1);
 
-    Reanimation* aHeadReanim2 = p.mApp->AddReanimation(0.0f, 0.0f, p.mRenderOrder + 2, lc.mReanimationType);
+    Reanimation* aHeadReanim2 = p.mApp->AddReanimation(0.0f, 0.0f, p.mRenderOrder + 2, lc.mReanimationType, animationNowNs);
     aHeadReanim2->ChangeLoopType(ReanimLoopType::REANIM_LOOP);
     aHeadReanim2->ApplyRate(lc.mBodyReanim->mAnimRate);
     aHeadReanim2->SetFramesForLayer(ReanimTrackId::anim_splitpea_idle);
@@ -388,7 +388,7 @@ void Plant::PlantInitialize(int theGridX, int theGridY, SeedType theSeedType, Se
     },  // 28 SEED_SPLITPEA
     PlantInitDefault,  // 29 SEED_STARFRUIT（原 default）
     // 原 case SEED_PUMPKINSHELL
-    [](Plant& p, PlantInitLocals& lc)
+    [](std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, Plant& p, PlantInitLocals& lc)
     {
     p.mPlantHealth = 4000;
     p.mWidth = 120;
@@ -397,14 +397,14 @@ void Plant::PlantInitialize(int theGridX, int theGridY, SeedType theSeedType, Se
     lc.mBodyReanim->AssignRenderGroupToTrack(ReanimTrackId::Pumpkin_back, 1);
     },  // 30 SEED_PUMPKINSHELL
     // 原 case SEED_MAGNETSHROOM
-    [](Plant& p, PlantInitLocals& lc)
+    [](std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, Plant& p, PlantInitLocals& lc)
     {
     TOD_ASSERT(lc.mBodyReanim);
     lc.mBodyReanim->SetTruncateDisappearingFramesAll(false);
     },  // 31 SEED_MAGNETSHROOM
     PlantInitDefault,  // 32 SEED_CABBAGEPULT（原 default）
     // 原 case SEED_FLOWERPOT
-    [](Plant& p, PlantInitLocals& lc)
+    [](std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, Plant& p, PlantInitLocals& lc)
     {
     if (p.IsInPlay())
     {
@@ -413,18 +413,18 @@ void Plant::PlantInitialize(int theGridX, int theGridY, SeedType theSeedType, Se
     }
     },  // 33 SEED_FLOWERPOT
     // 原 case SEED_KERNELPULT
-    [](Plant& p, PlantInitLocals& lc)
+    [](std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, Plant& p, PlantInitLocals& lc)
     {
     TOD_ASSERT(lc.mBodyReanim);
     lc.mBodyReanim->AssignRenderGroupToRange(ReanimTrackRanges::Cornpult_butter, RENDER_GROUP_HIDDEN);
     },  // 34 SEED_KERNELPULT
     // 原 case SEED_INSTANT_COFFEE
-    [](Plant& p, PlantInitLocals& lc)
+    [](std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, Plant& p, PlantInitLocals& lc)
     {
     p.mDoSpecialCountdown = 100;
     },  // 35 SEED_INSTANT_COFFEE
     // 原 case SEED_GARLIC
-    [](Plant& p, PlantInitLocals& lc)
+    [](std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, Plant& p, PlantInitLocals& lc)
     {
     TOD_ASSERT(lc.mBodyReanim);
     p.mPlantHealth = 400;
@@ -432,7 +432,7 @@ void Plant::PlantInitialize(int theGridX, int theGridY, SeedType theSeedType, Se
     },  // 36 SEED_GARLIC
     PlantInitDefault,  // 37 SEED_UMBRELLA（原 default）
     // 原 case SEED_MARIGOLD
-    [](Plant& p, PlantInitLocals& lc)
+    [](std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, Plant& p, PlantInitLocals& lc)
     {
     TOD_ASSERT(lc.mBodyReanim);
     lc.mBodyReanim->ApplyRate(RandRangeFloat(15.0f, 20.0f));
@@ -444,19 +444,19 @@ void Plant::PlantInitialize(int theGridX, int theGridY, SeedType theSeedType, Se
     PlantInitDefault,  // 43 SEED_CATTAIL（原 default）
     PlantInitDefault,  // 44 SEED_WINTERMELON（原 default）
     // 原 case SEED_GOLD_MAGNET
-    [](Plant& p, PlantInitLocals& lc)
+    [](std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, Plant& p, PlantInitLocals& lc)
     {
     TOD_ASSERT(lc.mBodyReanim);
     lc.mBodyReanim->SetTruncateDisappearingFramesAll(false);
     },  // 45 SEED_GOLD_MAGNET
     // 原 case SEED_SPIKEROCK
-    [](Plant& p, PlantInitLocals& lc)
+    [](std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, Plant& p, PlantInitLocals& lc)
     {
     p.mPlantHealth = 450;
     TOD_ASSERT(lc.mBodyReanim);
     },  // 46 SEED_SPIKEROCK
     // 原 case SEED_COBCANNON
-    [](Plant& p, PlantInitLocals& lc)
+    [](std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, Plant& p, PlantInitLocals& lc)
     {
     if (p.IsInPlay())
     {
@@ -468,27 +468,27 @@ void Plant::PlantInitialize(int theGridX, int theGridY, SeedType theSeedType, Se
     }
     },  // 47 SEED_COBCANNON
     // 原 case SEED_IMITATER
-    [](Plant& p, PlantInitLocals& lc)
+    [](std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, Plant& p, PlantInitLocals& lc)
     {
     TOD_ASSERT(lc.mBodyReanim);
     lc.mBodyReanim->ApplyRate(RandRangeFloat(25.0f, 30.0f));
     p.mStateCountdown = 200;
     },  // 48 SEED_IMITATER
     // 原 case SEED_EXPLODE_O_NUT
-    [](Plant& p, PlantInitLocals& lc)
+    [](std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, Plant& p, PlantInitLocals& lc)
     {
     p.mPlantHealth = 4000;
     p.mBlinkCountdown = 1000 + Sexy::Rand(1000);
     lc.mBodyReanim->mColorOverride = Color(255, 64, 64);
     },  // 49 SEED_EXPLODE_O_NUT
     // 原 case SEED_GIANT_WALLNUT
-    [](Plant& p, PlantInitLocals& lc)
+    [](std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, Plant& p, PlantInitLocals& lc)
     {
     p.mPlantHealth = 4000;
     p.mBlinkCountdown = 1000 + Sexy::Rand(1000);
     },  // 50 SEED_GIANT_WALLNUT
     // 原 case SEED_SPROUT
-    [](Plant& p, PlantInitLocals& lc)
+    [](std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, Plant& p, PlantInitLocals& lc)
     {
 
     },  // 51 SEED_SPROUT
@@ -540,7 +540,7 @@ void Plant::PlantInitialize(int theGridX, int theGridY, SeedType theSeedType, Se
     mWidth = 80;
     mHeight = 80;
     memset(mMagnetItems, 0, sizeof(mMagnetItems));
-    mMagnetStartTimeNs = mBoard ? mBoard->mLevelTimeNs : 0;
+    mMagnetStartTimeNs = ownerNowNs;
     const PlantDefinition& aPlantDef = GetPlantDefinition(theSeedType);
     mIsAsleep = false;
     mWakeUpEndTimeNs = 0;
@@ -553,8 +553,8 @@ void Plant::PlantInitialize(int theGridX, int theGridY, SeedType theSeedType, Se
     Reanimation* aBodyReanim = nullptr;
     if (aPlantDef.mReanimationType != ReanimationType::REANIM_NONE)
     {
-        float aOffsetY = PlantDrawHeightOffset(mBoard, this, mSeedType, mPlantCol, mRow);
-        aBodyReanim = mApp->AddReanimation(0.0f, aOffsetY, mRenderOrder + 1, aPlantDef.mReanimationType);
+        float aOffsetY = PlantDrawHeightOffset(ownerNowNs, mBoard, this, mSeedType, mPlantCol, mRow);
+        aBodyReanim = mApp->AddReanimation(0.0f, aOffsetY, mRenderOrder + 1, aPlantDef.mReanimationType, animationNowNs);
         aBodyReanim->ChangeLoopType(ReanimLoopType::REANIM_LOOP);
         aBodyReanim->ApplyRate(RandRangeFloat(10.0f, 15.0f));
 
@@ -571,11 +571,6 @@ void Plant::PlantInitialize(int theGridX, int theGridY, SeedType theSeedType, Se
         }
 
         aBodyReanim->mIsAttachment = true;
-        const bool aVisualActor = !mIsOnBoard ||
-            (mApp->mGameScene == GameScenes::SCENE_LEVEL_INTRO && mApp->IsWallnutBowlingLevel()) ||
-            mApp->mGameMode == GameMode::GAMEMODE_LIMBO_ZEN_GARDEN;
-        aBodyReanim->BindTimeDomain(!mIsOnBoard ? ReanimTimeDomain::Visual :
-            (aVisualActor && mBoard ? mBoard->AnimationTimeDomain() : ReanimTimeDomain::Battle));
         mBodyReanimID = mApp->ReanimationGetID(aBodyReanim); mRootBindingGeneration = 0;
         if (mApp->IsWallnutBowlingLevel() && aBodyReanim->TrackExists(ReanimTrackId::_ground))
             AdvanceRoot(*this, *aBodyReanim,
@@ -584,9 +579,9 @@ void Plant::PlantInitialize(int theGridX, int theGridY, SeedType theSeedType, Se
     }
 
     if (IsNocturnal(mSeedType) && mBoard && !mBoard->StageIsNight())
-        SetSleeping(true);
+        SetSleeping(ownerNowNs, animationNowNs, true);
 
-    const auto aLaunchStartNs = mBoard ? static_cast<std::int64_t>(mBoard->mLevelTimeNs) : 0;
+    const auto aLaunchStartNs = ownerNowNs;
     mLaunchWindowStartNs = aLaunchStartNs;
     mLaunchClockActive = false;
     mZenProductionCountdown = 0;
@@ -608,7 +603,7 @@ void Plant::PlantInitialize(int theGridX, int theGridY, SeedType theSeedType, Se
     const unsigned aSeedIndex = static_cast<unsigned>(theSeedType);
     if (aSeedIndex < static_cast<unsigned>(SeedType::NUM_SEED_TYPES))
     {
-        kPlantInitCases[aSeedIndex](*this, aInitLocals);
+        kPlantInitCases[aSeedIndex](ownerNowNs, visualNowNs, animationNowNs, *this, aInitLocals);
     }
 
 
@@ -659,7 +654,7 @@ int Plant::CalcRenderOrder()
 }
 
 //0x45E860
-void Plant::SetSleeping(bool theIsAsleep)
+void Plant::SetSleeping(std::int64_t ownerNowNs, std::int64_t animationNowNs, bool theIsAsleep)
 {
     if (mIsAsleep == theIsAsleep || NotOnGround())
         return;
@@ -676,7 +671,9 @@ void Plant::SetSleeping(bool theIsAsleep)
         else if (mSeedType == SeedType::SEED_GLOOMSHROOM)
             aPosY -= 12.0f;
 
-        Reanimation* aSleepReanim = mApp->AddReanimation(aPosX, aPosY, mRenderOrder + 2, ReanimationType::REANIM_SLEEPING);
+        Reanimation* aSleepReanim = mApp->AddReanimation(aPosX, aPosY, mRenderOrder + 2, ReanimationType::REANIM_SLEEPING, animationNowNs);
+
+        aSleepReanim->mIsAttachment = true;
         aSleepReanim->ChangeLoopType(ReanimLoopType::REANIM_LOOP);
         aSleepReanim->ApplyRate(RandRangeFloat(6.0f, 8.0f));
         aSleepReanim->SeekRatio(RandRangeFloat(0.0f, 0.9f));
@@ -689,6 +686,7 @@ void Plant::SetSleeping(bool theIsAsleep)
     }
 
     Reanimation* aBodyReanim = mApp->ReanimationTryToGet(mBodyReanimID);
+
     if (aBodyReanim == nullptr)
         return;
 
@@ -804,11 +802,12 @@ bool Plant::IsOnHighGround()
 }
 
 //0x45EC00
-void Plant::SpikeRockTakeDamage()
+void Plant::SpikeRockTakeDamage(std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs)
 {
     Reanimation* aBodyReanim = mApp->ReanimationGet(mBodyReanimID);
 
-    SpikeweedAttack();
+
+    SpikeweedAttack(ownerNowNs);
 
     mPlantHealth -= 50;
     if (mPlantHealth <= 300)
@@ -822,7 +821,7 @@ void Plant::SpikeRockTakeDamage()
     if (mPlantHealth <= 0)
     {
         mApp->PlayFoley(FoleyType::FOLEY_SQUISH);
-        Die();
+        Die(ownerNowNs, visualNowNs, animationNowNs);
     }
 }
 
@@ -833,7 +832,7 @@ bool Plant::IsSpiky()
 }
 
 //0x45ED00
-void Plant::DoRowAreaDamage(int theDamage, unsigned int theDamageFlags)
+void Plant::DoRowAreaDamage(std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, int theDamage, unsigned int theDamageFlags)
 {
     int aDamageRangeFlags = GetDamageRangeFlags(PlantWeapon::WEAPON_PRIMARY);
     Rect aAttackRect = GetPlantAttackRect(PlantWeapon::WEAPON_PRIMARY);
@@ -863,15 +862,15 @@ void Plant::DoRowAreaDamage(int theDamage, unsigned int theDamageFlags)
 
                     if (mSeedType == SeedType::SEED_SPIKEROCK)
                     {
-                        SpikeRockTakeDamage();
+                        SpikeRockTakeDamage(ownerNowNs, visualNowNs, animationNowNs);
                     }
                     else
                     {
-                        Die();
+                        Die(ownerNowNs, visualNowNs, animationNowNs);
                     }
                 }
 
-                aZombie->TakeDamage(aDamage, theDamageFlags);
+                aZombie->TakeDamage(ownerNowNs, visualNowNs, animationNowNs, aDamage, theDamageFlags);
                 mApp->PlayFoley(FoleyType::FOLEY_SPLAT);
             }
         }
@@ -879,13 +878,13 @@ void Plant::DoRowAreaDamage(int theDamage, unsigned int theDamageFlags)
 }
 
 //0x45EEA0
-TodParticleSystem* Plant::AddAttachedParticle(int thePosX, int thePosY, int theRenderPosition, ParticleEffect theEffect)
+TodParticleSystem* Plant::AddAttachedParticle(std::int64_t ownerNowNs, int thePosX, int thePosY, int theRenderPosition, ParticleEffect theEffect)
 {
     TodParticleSystem* aParticle = mApp->ParticleTryToGet(mParticleID);
     if (aParticle)
         aParticle->ParticleSystemDie();
 
-    TodParticleSystem* aNewParticle = mApp->AddTodParticle(thePosX, thePosY, theRenderPosition, theEffect);
+    TodParticleSystem* aNewParticle = mApp->AddTodParticle(thePosX, thePosY, theRenderPosition, theEffect, ownerNowNs);
     if (aNewParticle)
         mParticleID = mApp->ParticleGetID(aNewParticle);
 
@@ -893,7 +892,7 @@ TodParticleSystem* Plant::AddAttachedParticle(int thePosX, int thePosY, int theR
 }
 
 //0x45EF10
-bool Plant::FindTargetAndFire(int theRow, PlantWeapon thePlantWeapon)
+bool Plant::FindTargetAndFire(std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, int theRow, PlantWeapon thePlantWeapon)
 {
     Zombie* aZombie = FindTargetZombie(theRow, thePlantWeapon);
     if (aZombie == nullptr)
@@ -901,11 +900,14 @@ bool Plant::FindTargetAndFire(int theRow, PlantWeapon thePlantWeapon)
 
     EndBlink();
     Reanimation* aBodyReanim = mApp->ReanimationTryToGet(mBodyReanimID);
+
     Reanimation* aHeadReanim = mApp->ReanimationTryToGet(mHeadReanimID);
+
 
     if (mSeedType == SeedType::SEED_SPLITPEA && thePlantWeapon == PlantWeapon::WEAPON_SECONDARY)
     {
         Reanimation* aHeadReanim2 = mApp->ReanimationGet(mHeadReanimID2);
+
         aHeadReanim2->StartBlend(20);
         aHeadReanim2->ChangeLoopType(ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD);
         aHeadReanim2->ApplyRate(35.0f);
@@ -933,22 +935,22 @@ bool Plant::FindTargetAndFire(int theRow, PlantWeapon thePlantWeapon)
     }
     else if (mState == PlantState::STATE_CACTUS_HIGH)
     {
-        PlayBodyReanim(ReanimTrackId::anim_shootinghigh, ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD, 20, 35.0f);
+        PlayBodyReanim(ownerNowNs, ReanimTrackId::anim_shootinghigh, ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD, 20, 35.0f);
         mShootingCounter = 23;
     }
     else if (mSeedType == SeedType::SEED_GLOOMSHROOM)
     {
-        PlayBodyReanim(ReanimTrackId::anim_shooting, ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD, 20, 14.0f);
+        PlayBodyReanim(ownerNowNs, ReanimTrackId::anim_shooting, ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD, 20, 14.0f);
         mShootingCounter = 200;
     }
     else if (mSeedType == SeedType::SEED_CATTAIL)
     {
-        PlayBodyReanim(ReanimTrackId::anim_shooting, ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD, 20, 30.0f);
+        PlayBodyReanim(ownerNowNs, ReanimTrackId::anim_shooting, ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD, 20, 30.0f);
         mShootingCounter = 50;
     }
     else if (aBodyReanim && aBodyReanim->TrackExists(ReanimTrackId::anim_shooting))
     {
-        PlayBodyReanim(ReanimTrackId::anim_shooting, ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD, 20, 35.0f);
+        PlayBodyReanim(ownerNowNs, ReanimTrackId::anim_shooting, ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD, 20, 35.0f);
 
         // 射击节奏（cs）：按 SeedType 槽位直查（行序 = 枚举序，未列出 = 29）。
         // 玉米粒炮 1/4 概率黄油弹道特判保留在表外。
@@ -1019,13 +1021,13 @@ bool Plant::FindTargetAndFire(int theRow, PlantWeapon thePlantWeapon)
         mShootingCounter = kShootingCounter[mSeedType];
     }
     else
-        Fire(aZombie, theRow, thePlantWeapon);
+        Fire(ownerNowNs, visualNowNs, animationNowNs, aZombie, theRow, thePlantWeapon);
 
     return true;
 }
 
 //0x45F2A0
-void Plant::LaunchThreepeater()
+void Plant::LaunchThreepeater(std::int64_t ownerNowNs)
 {
     int rowAbove = mRow - 1;
     int rowBelow = mRow + 1;
@@ -1035,8 +1037,11 @@ void Plant::LaunchThreepeater()
         (mBoard->RowCanHaveZombies(rowBelow) && FindTargetZombie(rowBelow, PlantWeapon::WEAPON_PRIMARY)))
     {
         Reanimation* aHeadReanim1 = mApp->ReanimationGet(mHeadReanimID);
+
         Reanimation* aHeadReanim2 = mApp->ReanimationGet(mHeadReanimID2);
+
         Reanimation* aHeadReanim3 = mApp->ReanimationGet(mHeadReanimID3);
+
 
         if (mBoard->RowCanHaveZombies(rowBelow))
         {
@@ -1064,9 +1069,9 @@ void Plant::LaunchThreepeater()
 }
 
 //0x45F470
-bool Plant::FindStarFruitTarget()
+bool Plant::FindStarFruitTarget(std::int64_t ownerNowNs)
 {
-    if (mRecentlyEatenEndTimeNs > static_cast<std::int64_t>(mBoard->mLevelTimeNs))
+    if (mRecentlyEatenEndTimeNs > ownerNowNs)
         return true;
 
     int aDamageRangeFlags = GetDamageRangeFlags(PlantWeapon::WEAPON_PRIMARY);
@@ -1093,7 +1098,7 @@ bool Plant::FindStarFruitTarget()
                     aZombieRect.mWidth += 10;
 
                 float aProjectileTime = Distance2D(aCenterStarX, aCenterStarY, aZombieRect.mX + aZombieRect.mWidth / 2, aZombieRect.mY + aZombieRect.mHeight / 2) / 3.33f;
-                int aZombieHitX = aZombie->ZombieTargetLeadX(aProjectileTime) - aZombieRect.mWidth / 2;
+                int aZombieHitX = aZombie->ZombieTargetLeadX(ownerNowNs, aProjectileTime) - aZombieRect.mWidth / 2;
                 if ((aZombieHitX + aZombieRect.mWidth > aCenterStarX) && (aZombieHitX < aCenterStarX))
                     return true;
 
@@ -1118,11 +1123,11 @@ bool Plant::FindStarFruitTarget()
 }
 
 //0x45F6E0
-void Plant::LaunchStarFruit()
+void Plant::LaunchStarFruit(std::int64_t ownerNowNs)
 {
-    if (FindStarFruitTarget())
+    if (FindStarFruitTarget(ownerNowNs))
     {
-        PlayBodyReanim(ReanimTrackId::anim_shoot, ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD, 20, 28.0f);
+        PlayBodyReanim(ownerNowNs, ReanimTrackId::anim_shoot, ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD, 20, 28.0f);
         mShootingCounter = 40;
     }
 }
@@ -1153,26 +1158,26 @@ void Plant::StarFruitFire()
 }
 
 //0x45F8A0
-void Plant::UpdateShooter()
+void Plant::UpdateShooter(std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs)
 {
     mLaunchClockActive = true;
-    const auto aNow = mBoard->mLevelTimeNs;
+    const auto aNow = ownerNowNs;
     auto aWindowStart = mLaunchWindowStartNs;
     const auto aSecondaryFire = [&](std::int64_t aWindowEnd)
     {
         if (mSeedType == SeedType::SEED_CATTAIL &&
             PlantLaunchClock::Crossed(aWindowStart, aWindowEnd,
                 mNextLaunchTimeNs - 50 * PlantLaunchClock::Tick))
-            FindTargetAndFire(mRow, PlantWeapon::WEAPON_PRIMARY);
+            FindTargetAndFire(ownerNowNs, visualNowNs, animationNowNs, mRow, PlantWeapon::WEAPON_PRIMARY);
         if (PlantLaunchClock::Crossed(aWindowStart, aWindowEnd,
                 mNextLaunchTimeNs - 25 * PlantLaunchClock::Tick))
         {
             if (mSeedType == SeedType::SEED_REPEATER || mSeedType == SeedType::SEED_LEFTPEATER)
-                FindTargetAndFire(mRow, PlantWeapon::WEAPON_PRIMARY);
+                FindTargetAndFire(ownerNowNs, visualNowNs, animationNowNs, mRow, PlantWeapon::WEAPON_PRIMARY);
             else if (mSeedType == SeedType::SEED_SPLITPEA)
             {
-                FindTargetAndFire(mRow, PlantWeapon::WEAPON_PRIMARY);
-                FindTargetAndFire(mRow, PlantWeapon::WEAPON_SECONDARY);
+                FindTargetAndFire(ownerNowNs, visualNowNs, animationNowNs, mRow, PlantWeapon::WEAPON_PRIMARY);
+                FindTargetAndFire(ownerNowNs, visualNowNs, animationNowNs, mRow, PlantWeapon::WEAPON_SECONDARY);
             }
         }
     };
@@ -1191,11 +1196,11 @@ void Plant::UpdateShooter()
         // C 形态 -> 匿名 lambda 函数指针表 kShooterFireCases（仿 kSeedTypeUpdates
         // 范式）：行序 = SeedType 枚举序 0..52；无 case 槽 = 原 else 支（正面
         // 开火，constexpr 指针变量填满）。SPLITPEA/CACTUS 两支体积较大整体入槽。
-        static constexpr auto kShooterDefaultFire = [](Plant* p)
+        static constexpr auto kShooterDefaultFire = [](std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, Plant* p)
         {
-            p->FindTargetAndFire(p->mRow, PlantWeapon::WEAPON_PRIMARY);
+            p->FindTargetAndFire(ownerNowNs, visualNowNs, animationNowNs, p->mRow, PlantWeapon::WEAPON_PRIMARY);
         };
-        static constexpr void (*kShooterFireCases[])(Plant*) = {
+        static constexpr void (*kShooterFireCases[])(std::int64_t, std::int64_t, std::int64_t, Plant*) = {
 			/* SEED_PEASHOOTER        豌豆射手     */ kShooterDefaultFire,
 			/* SEED_SUNFLOWER         向日葵      */ kShooterDefaultFire,
 			/* SEED_CHERRYBOMB        樱桃炸弹     */ kShooterDefaultFire,
@@ -1214,7 +1219,7 @@ void Plant::UpdateShooter()
 			/* SEED_DOOMSHROOM        毁灭菇      */ kShooterDefaultFire,
 			/* SEED_LILYPAD           睡莲       */ kShooterDefaultFire,
 			/* SEED_SQUASH            窝瓜       */ kShooterDefaultFire,
-			/* SEED_THREEPEATER       三线射手     */ [](Plant* p) { p->LaunchThreepeater(); },
+			/* SEED_THREEPEATER       三线射手     */ [](std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, Plant* p) { p->LaunchThreepeater(ownerNowNs); },
 			/* SEED_TANGLEKELP        缠绕海草     */ kShooterDefaultFire,
 			/* SEED_JALAPENO          火爆辣椒     */ kShooterDefaultFire,
 			/* SEED_SPIKEWEED         地刺       */ kShooterDefaultFire,
@@ -1222,33 +1227,35 @@ void Plant::UpdateShooter()
 			/* SEED_TALLNUT                    */ kShooterDefaultFire,
 			/* SEED_SEASHROOM                  */ kShooterDefaultFire,
 			/* SEED_PLANTERN                   */ kShooterDefaultFire,
-			/* SEED_CACTUS                     */ [](Plant* p)
+			/* SEED_CACTUS                     */ [](std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, Plant* p)
             {
                 if (p->mState == PlantState::STATE_CACTUS_HIGH)
                 {
-                    p->FindTargetAndFire(p->mRow, PlantWeapon::WEAPON_PRIMARY);
+                    p->FindTargetAndFire(ownerNowNs, visualNowNs, animationNowNs, p->mRow, PlantWeapon::WEAPON_PRIMARY);
                 }
                 else if (p->mState == PlantState::STATE_CACTUS_LOW)
                 {
-                    p->FindTargetAndFire(p->mRow, PlantWeapon::WEAPON_SECONDARY);
+                    p->FindTargetAndFire(ownerNowNs, visualNowNs, animationNowNs, p->mRow, PlantWeapon::WEAPON_SECONDARY);
                 }
             },
 			/* SEED_BLOVER                     */ kShooterDefaultFire,
-			/* SEED_SPLITPEA                   */ [](Plant* p)
+			/* SEED_SPLITPEA                   */ [](std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, Plant* p)
             {
-                p->FindTargetAndFire(p->mRow, PlantWeapon::WEAPON_SECONDARY);
+                p->FindTargetAndFire(ownerNowNs, visualNowNs, animationNowNs, p->mRow, PlantWeapon::WEAPON_SECONDARY);
 
                 // 1073 00463200: the second back shot must not reuse the front
                 // head's previous shooting state. Keep the 25-tick front trigger.
                 Reanimation* aHeadReanim = p->mApp->ReanimationGet(p->mHeadReanimID);
+
                 Reanimation* aBodyReanim = p->mApp->ReanimationGet(p->mBodyReanimID);
+
                 aHeadReanim->StartBlend(20);
                 aHeadReanim->ChangeLoopType(ReanimLoopType::REANIM_LOOP);
                 aHeadReanim->SetFramesForLayer(ReanimTrackId::anim_head_idle);
                 aHeadReanim->ApplyRate(aBodyReanim->mAnimRate);
                 aHeadReanim->SynchronizePhase(*aBodyReanim);
             },
-			/* SEED_STARFRUIT                  */ [](Plant* p) { p->LaunchStarFruit(); },
+			/* SEED_STARFRUIT                  */ [](std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, Plant* p) { p->LaunchStarFruit(ownerNowNs); },
 			/* SEED_PUMPKINSHELL               */ kShooterDefaultFire,
 			/* SEED_MAGNETSHROOM               */ kShooterDefaultFire,
 			/* SEED_CABBAGEPULT                */ kShooterDefaultFire,
@@ -1278,11 +1285,11 @@ void Plant::UpdateShooter()
 
         if ((unsigned)mSeedType < sizeof(kShooterFireCases) / sizeof(kShooterFireCases[0]))
         {
-            kShooterFireCases[mSeedType](this);
+            kShooterFireCases[mSeedType](ownerNowNs, visualNowNs, animationNowNs, this);
         }
         else
         {
-            kShooterDefaultFire(this);  // 原 else 支（哨兵越界等价）
+            kShooterDefaultFire(ownerNowNs, visualNowNs, animationNowNs, this);  // 原 else 支（哨兵越界等价）
         }
         aWindowStart = aDue;
         ++aEvents;
@@ -1303,7 +1310,7 @@ bool Plant::MakesSun()
 }
 
 //0x45F9A0
-void Plant::UpdateProductionPlant()
+void Plant::UpdateProductionPlant(std::int64_t ownerNowNs)
 {
     if (!IsInPlay() || mApp->IsIZombieLevel() || mApp->mGameMode == GameMode::GAMEMODE_INTRO)
         return;
@@ -1326,13 +1333,13 @@ void Plant::UpdateProductionPlant()
         return;
 
     mLaunchClockActive = true;
-    const auto aNow = mBoard->mLevelTimeNs;
+    const auto aNow = ownerNowNs;
     const auto aRemaining = mNextLaunchTimeNs - aNow;
     if (aRemaining <= 100 * PlantLaunchClock::Tick)
     {
         int aFlashCountdown = static_cast<int>(std::clamp<std::int64_t>(
             100 - aRemaining / PlantLaunchClock::Tick, 0, 100));
-        mEatenFlashEndTimeNs = std::max(mEatenFlashEndTimeNs, static_cast<std::int64_t>(mBoard->mLevelTimeNs) + static_cast<std::int64_t>(aFlashCountdown) * 10'000'000);
+        mEatenFlashEndTimeNs = std::max(mEatenFlashEndTimeNs, ownerNowNs + static_cast<std::int64_t>(aFlashCountdown) * 10'000'000);
     }
     int aEvents = 0;
     while (mNextLaunchTimeNs <= aNow && aEvents++ < PlantLaunchClock::MaxEventsPerUpdate)
@@ -1457,45 +1464,46 @@ void Plant::UpdateProductionPlant()
 }
 
 //0x45FB70
-void Plant::UpdateSunShroom()
+void Plant::UpdateSunShroom(std::int64_t ownerNowNs)
 {
     Reanimation* aBodyReanim = mApp->ReanimationGet(mBodyReanimID);
+
     if (mState == PlantState::STATE_SUNSHROOM_SMALL)
     {
         if (mStateCountdown == 0)
         {
-            PlayBodyReanim(ReanimTrackId::anim_grow, ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD, 10, 12.0f);
+            PlayBodyReanim(ownerNowNs, ReanimTrackId::anim_grow, ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD, 10, 12.0f);
             mState = PlantState::STATE_SUNSHROOM_GROWING;
             mApp->PlayFoley(FoleyType::FOLEY_PLANTGROW);
         }
 
-        UpdateProductionPlant();
+        UpdateProductionPlant(ownerNowNs);
     }
     else if (mState == PlantState::STATE_SUNSHROOM_GROWING)
     {
         if (aBodyReanim->mLoopCount > 0)
         {
-            PlayBodyReanim(ReanimTrackId::anim_bigidle, ReanimLoopType::REANIM_LOOP, 10, RandRangeFloat(12.0f, 15.0f));
+            PlayBodyReanim(ownerNowNs, ReanimTrackId::anim_bigidle, ReanimLoopType::REANIM_LOOP, 10, RandRangeFloat(12.0f, 15.0f));
             mState = PlantState::STATE_SUNSHROOM_BIG;
         }
     }
     else
     {
-        UpdateProductionPlant();
+        UpdateProductionPlant(ownerNowNs);
     }
 }
 
 //0x45FC70
-void Plant::UpdateGraveBuster()
+void Plant::UpdateGraveBuster(std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs)
 {
     if (mState == PlantState::STATE_GRAVEBUSTER_LANDING)
     {
         if (mApp->ReanimationGet(mBodyReanimID)->mLoopCount > 0)
         {
-            PlayBodyReanim(ReanimTrackId::anim_idle, ReanimLoopType::REANIM_LOOP, 10, 12.0f);
+            PlayBodyReanim(ownerNowNs, ReanimTrackId::anim_idle, ReanimLoopType::REANIM_LOOP, 10, 12.0f);
             mStateCountdown = 400;
             mState = PlantState::STATE_GRAVEBUSTER_EATING;
-            AddAttachedParticle((mX) + 40, (mY) + 40, mRenderOrder + 4, ParticleEffect::PARTICLE_GRAVE_BUSTER);
+            AddAttachedParticle(ownerNowNs, (mX) + 40, (mY) + 40, mRenderOrder + 4, ParticleEffect::PARTICLE_GRAVE_BUSTER);
         }
     }
     else if (mState == PlantState::STATE_GRAVEBUSTER_EATING && mStateCountdown == 0)
@@ -1507,17 +1515,18 @@ void Plant::UpdateGraveBuster()
             mBoard->mGravesCleared++;
         }
 
-        mApp->AddTodParticle((mX) + 40, (mY) + 40, mRenderOrder + 4, ParticleEffect::PARTICLE_GRAVE_BUSTER_DIE);
-        Die();
+        mApp->AddTodParticle((mX) + 40, (mY) + 40, mRenderOrder + 4, ParticleEffect::PARTICLE_GRAVE_BUSTER_DIE, ownerNowNs);
+        Die(ownerNowNs, visualNowNs, animationNowNs);
         mBoard->DropLootPiece((mX) + 40, (mY), 12);
     }
 }
 
 //0x45FD90
 // GOTY @Patoke: 0x463760
-void Plant::PlayBodyReanim(ReanimTrackId theTrackId, ReanimLoopType theLoopType, int theBlendTime, float theAnimRate)
+void Plant::PlayBodyReanim(std::int64_t ownerNowNs, ReanimTrackId theTrackId, ReanimLoopType theLoopType, int theBlendTime, float theAnimRate)
 {
     Reanimation* aBodyReanim = mApp->ReanimationGet(mBodyReanimID);
+
 
     if (theBlendTime > 0)
         aBodyReanim->StartBlend(theBlendTime);
@@ -1530,20 +1539,17 @@ void Plant::PlayBodyReanim(ReanimTrackId theTrackId, ReanimLoopType theLoopType,
 }
 
 //0x45FE20
-void Plant::UpdatePotato()
+void Plant::UpdatePotato(std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs)
 {
     Reanimation* aBodyReanim = mApp->ReanimationGet(mBodyReanimID);
-    const auto setLightFrameCount = [](Reanimation& reanimation, int frameCount)
+
+    const auto setLightFrameCount = [animationNowNs](Reanimation& reanimation, int frameCount)
     {
         if (frameCount <= 0)
             throw std::invalid_argument("animation frame count must be positive");
         if (frameCount == reanimation.mFrameCount)
             return;
-        const auto nowNs = reanimation.mReanimationHolder ?
-            (reanimation.mTimeDomain == ReanimTimeDomain::Battle ?
-                reanimation.mReanimationHolder->mBattleTimeNs :
-                reanimation.mReanimationHolder->mVisualTimeNs) :
-            reanimation.mLastUpdateTimeNs;
+        const auto nowNs = animationNowNs;
         const auto oldPeriod = reanimation.mPeriodNs;
         const auto position = reanimation.SamplePlaybackAt(nowNs);
         const auto rootDisplacement = reanimation.mRootDisplacement;
@@ -1568,8 +1574,8 @@ void Plant::UpdatePotato()
     {
         if (mStateCountdown == 0)
         {
-            mApp->AddTodParticle((mX) + mWidth / 2, (mY) + mHeight / 2, mRenderOrder, ParticleEffect::PARTICLE_POTATO_MINE_RISE);
-            PlayBodyReanim(ReanimTrackId::anim_rise, ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD, 20, 18.0f);
+            mApp->AddTodParticle((mX) + mWidth / 2, (mY) + mHeight / 2, mRenderOrder, ParticleEffect::PARTICLE_POTATO_MINE_RISE, ownerNowNs);
+            PlayBodyReanim(ownerNowNs, ReanimTrackId::anim_rise, ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD, 20, 18.0f);
             mState = PlantState::STATE_POTATO_RISING;
             mApp->PlayFoley(FoleyType::FOLEY_DIRT_RISE);
         }
@@ -1579,9 +1585,10 @@ void Plant::UpdatePotato()
         if (aBodyReanim->mLoopCount > 0)
         {
             float aRate = RandRangeFloat(12.0f, 15.0f);
-            PlayBodyReanim(ReanimTrackId::anim_armed, ReanimLoopType::REANIM_LOOP, 0, aRate);
+            PlayBodyReanim(ownerNowNs, ReanimTrackId::anim_armed, ReanimLoopType::REANIM_LOOP, 0, aRate);
 
-            Reanimation* aLightReanim = mApp->AddReanimation(0.0f, 0.0f, mRenderOrder + 2, GetPlantDefinition(mSeedType).mReanimationType);
+            Reanimation* aLightReanim = mApp->AddReanimation(0.0f, 0.0f, mRenderOrder + 2, GetPlantDefinition(mSeedType).mReanimationType, animationNowNs);
+
             aLightReanim->ChangeLoopType(ReanimLoopType::REANIM_LOOP);
             aLightReanim->ApplyRate(aRate - 2.0f);
             aLightReanim->SetFramesForLayer(ReanimTrackId::anim_glow);
@@ -1599,11 +1606,12 @@ void Plant::UpdatePotato()
     {
         if (FindTargetZombie(mRow, PlantWeapon::WEAPON_PRIMARY))
         {
-            DoSpecial();
+            DoSpecial(ownerNowNs, visualNowNs, animationNowNs);
         }
         else
         {
             Reanimation* aLightReanim = mApp->ReanimationTryToGet(mLightReanimID);
+
             if (aLightReanim)
             {
                 setLightFrameCount(*aLightReanim,
@@ -1614,7 +1622,7 @@ void Plant::UpdatePotato()
 }
 
 //0x460060
-void Plant::UpdateTanglekelp()
+void Plant::UpdateTanglekelp(std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs)
 {
     if (mState != PlantState::STATE_TANGLEKELP_GRABBING)
     {
@@ -1624,7 +1632,7 @@ void Plant::UpdateTanglekelp()
             mApp->PlayFoley(FoleyType::FOLEY_FLOOP);
             mState = PlantState::STATE_TANGLEKELP_GRABBING;
             mStateCountdown = 100;
-            aZombie->PoolSplash(false);
+            aZombie->PoolSplash(ownerNowNs, visualNowNs, animationNowNs, false);
 
             float aVinesPosX = -13.0f;
             float aVinesPosY = 15.0f;
@@ -1638,7 +1646,7 @@ void Plant::UpdateTanglekelp()
                 aVinesPosX = -20.0f;
                 aVinesPosY = 37.0f;
             }
-            Reanimation* aGrabReanim = aZombie->AddAttachedReanim(aVinesPosX, aVinesPosY, ReanimationType::REANIM_TANGLEKELP);
+            Reanimation* aGrabReanim = aZombie->AddAttachedReanim(ownerNowNs, visualNowNs, animationNowNs, aVinesPosX, aVinesPosY, ReanimationType::REANIM_TANGLEKELP);
             if (aGrabReanim)
             {
                 aGrabReanim->SetFramesForLayer(ReanimTrackId::anim_grab);
@@ -1656,43 +1664,44 @@ void Plant::UpdateTanglekelp()
             Zombie* aZombie = mBoard->ZombieTryToGet(mTargetZombieID);
             if (aZombie)
             {
-                aZombie->DragUnder();
-                aZombie->PoolSplash(false);
+                aZombie->DragUnder(ownerNowNs);
+                aZombie->PoolSplash(ownerNowNs, visualNowNs, animationNowNs, false);
             }
         }
 
         if (mStateCountdown == 20)
         {
             int aRenderPosition = Board::MakeRenderOrder(RenderLayer::RENDER_LAYER_PARTICLE, mRow, 0);
-            Reanimation* aSplashReanim = mApp->AddReanimation((mX) - 23, (mY) + 7, aRenderPosition, ReanimationType::REANIM_SPLASH);
+            Reanimation* aSplashReanim = mApp->AddReanimation((mX) - 23, (mY) + 7, aRenderPosition, ReanimationType::REANIM_SPLASH, visualNowNs);
+
             aSplashReanim->mOverlayMatrix.m00 = 1.3f;
             aSplashReanim->mOverlayMatrix.m11 = 1.3f;
 
-            mApp->AddTodParticle((mX) + 31, (mY) + 64, aRenderPosition, ParticleEffect::PARTICLE_PLANTING_POOL);
+            mApp->AddTodParticle((mX) + 31, (mY) + 64, aRenderPosition, ParticleEffect::PARTICLE_PLANTING_POOL, ownerNowNs);
             mApp->PlayFoley(FoleyType::FOLEY_ZOMBIE_ENTERING_WATER);
         }
 
         if (mStateCountdown == 0)
         {
-            Die();
+            Die(ownerNowNs, visualNowNs, animationNowNs);
 
             Zombie* aZombie = mBoard->ZombieTryToGet(mTargetZombieID);
             if (aZombie)
             {
-                aZombie->DieWithLoot();
+                aZombie->DieWithLoot(ownerNowNs, visualNowNs, animationNowNs);
             }
         }
     }
 }
 
 //0x460320
-void Plant::SpikeweedAttack()
+void Plant::SpikeweedAttack(std::int64_t ownerNowNs)
 {
     TOD_ASSERT(IsSpiky());
 
     if (mState != PlantState::STATE_SPIKEWEED_ATTACKING)
     {
-        PlayBodyReanim(ReanimTrackId::anim_attack, ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD, 20, 18.0f);
+        PlayBodyReanim(ownerNowNs, ReanimTrackId::anim_attack, ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD, 20, 18.0f);
         mApp->PlaySample(SOUND_THROW);
 
         mState = PlantState::STATE_SPIKEWEED_ATTACKING;
@@ -1701,9 +1710,10 @@ void Plant::SpikeweedAttack()
 }
 
 //0x460370
-void Plant::UpdateSpikeweed()
+void Plant::UpdateSpikeweed(std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs)
 {
     Reanimation* aBodyReanim = mApp->ReanimationGet(mBodyReanimID);
+
     if (mState == PlantState::STATE_SPIKEWEED_ATTACKING)
     {
         if (mStateCountdown == 0)
@@ -1714,27 +1724,27 @@ void Plant::UpdateSpikeweed()
         {
             if (mStateCountdown == 70 || mStateCountdown == 32)
             {
-                DoRowAreaDamage(20, 33U);
+                DoRowAreaDamage(ownerNowNs, visualNowNs, animationNowNs, 20, 33U);
             }
         }
         else if (mStateCountdown == 75)
         {
-            DoRowAreaDamage(20, 33U);
+            DoRowAreaDamage(ownerNowNs, visualNowNs, animationNowNs, 20, 33U);
         }
 
         if (aBodyReanim->mLoopCount > 0)
         {
-            PlayIdleAnim(RandRangeFloat(12.0f, 15.0f));
+            PlayIdleAnim(ownerNowNs, RandRangeFloat(12.0f, 15.0f));
         }
     }
     else if (FindTargetZombie(mRow, PlantWeapon::WEAPON_PRIMARY))
     {
-        SpikeweedAttack();
+        SpikeweedAttack(ownerNowNs);
     }
 }
 
 //0x460420
-void Plant::UpdateScaredyShroom()
+void Plant::UpdateScaredyShroom(std::int64_t ownerNowNs)
 {
     if (mShootingCounter > 0)
         return;
@@ -1756,21 +1766,22 @@ void Plant::UpdateScaredyShroom()
     }
 
     Reanimation* aBodyReanim = mApp->ReanimationGet(mBodyReanimID);
+
     // C 形态 -> 匿名 lambda 函数指针表 kScaredyStateCases（仿 kSeedTypeUpdates
     // 范式）：行序 = PlantState 枚举序 0..48（count_last=STATE_LILYPAD_
     // INVULNERABLE 锚定，无 NUM 哨兵）；4 支状态机分散（READY=1，LOWERING
     // ..RAISING=20..22）故取全宽表；nullptr = 无 case 槽（无操作 = 原链
     // 落空）。aBodyReanim 与 aHasZombieNearby 两个链前局部经参数传入。
-    using ScaredyStateFn = void (*)(Plant&, Reanimation*, bool);
+    using ScaredyStateFn = void (*)(std::int64_t, Plant&, Reanimation*, bool);
     static constexpr ScaredyStateFn kScaredyStateCases[(int)PlantState::STATE_LILYPAD_INVULNERABLE + 1] = {
         nullptr,  // 0 STATE_NOTREADY（无 case）
         // 原 if STATE_READY
-        [](Plant& p, Reanimation* aBodyReanim, bool aHasZombieNearby)
+        [](std::int64_t ownerNowNs, Plant& p, Reanimation* aBodyReanim, bool aHasZombieNearby)
         {
             if (aHasZombieNearby)
             {
                 p.mState = PlantState::STATE_SCAREDYSHROOM_LOWERING;
-                p.PlayBodyReanim(ReanimTrackId::anim_scared, ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD, 10, 10.0f);
+                p.PlayBodyReanim(ownerNowNs, ReanimTrackId::anim_scared, ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD, 10, 10.0f);
             }
         },  // 1 STATE_READY
         nullptr,  // 2 STATE_DOINGSPECIAL（无 case）
@@ -1792,34 +1803,34 @@ void Plant::UpdateScaredyShroom()
         nullptr,  // 18 STATE_SPIKEWEED_ATTACKING（无 case）
         nullptr,  // 19 STATE_SPIKEWEED_ATTACKING_2（无 case）
         // 原 else-if STATE_SCAREDYSHROOM_LOWERING
-        [](Plant& p, Reanimation* aBodyReanim, bool aHasZombieNearby)
+        [](std::int64_t ownerNowNs, Plant& p, Reanimation* aBodyReanim, bool aHasZombieNearby)
         {
             if (aBodyReanim->mLoopCount > 0)
             {
                 p.mState = PlantState::STATE_SCAREDYSHROOM_SCARED;
-                p.PlayBodyReanim(ReanimTrackId::anim_scaredidle, ReanimLoopType::REANIM_LOOP, 10, 0.0f);
+                p.PlayBodyReanim(ownerNowNs, ReanimTrackId::anim_scaredidle, ReanimLoopType::REANIM_LOOP, 10, 0.0f);
             }
         },  // 20 STATE_SCAREDYSHROOM_LOWERING
         // 原 else-if STATE_SCAREDYSHROOM_SCARED
-        [](Plant& p, Reanimation* aBodyReanim, bool aHasZombieNearby)
+        [](std::int64_t ownerNowNs, Plant& p, Reanimation* aBodyReanim, bool aHasZombieNearby)
         {
             if (!aHasZombieNearby)
             {
                 p.mState = PlantState::STATE_SCAREDYSHROOM_RAISING;
 
                 float aAnimRate = RandRangeFloat(7.0f, 12.0f);
-                p.PlayBodyReanim(ReanimTrackId::anim_grow, ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD, 10, aAnimRate);
+                p.PlayBodyReanim(ownerNowNs, ReanimTrackId::anim_grow, ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD, 10, aAnimRate);
             }
         },  // 21 STATE_SCAREDYSHROOM_SCARED
         // 原 else-if STATE_SCAREDYSHROOM_RAISING
-        [](Plant& p, Reanimation* aBodyReanim, bool aHasZombieNearby)
+        [](std::int64_t ownerNowNs, Plant& p, Reanimation* aBodyReanim, bool aHasZombieNearby)
         {
             if (aBodyReanim->mLoopCount > 0)
             {
                 p.mState = PlantState::STATE_READY;
 
                 float aAnimRate = RandRangeFloat(10.0f, 15.0f);
-                p.PlayIdleAnim(aAnimRate);
+                p.PlayIdleAnim(ownerNowNs, aAnimRate);
             }
         },  // 22 STATE_SCAREDYSHROOM_RAISING
         nullptr,  // 23 STATE_SUNSHROOM_SMALL（无 case）
@@ -1856,12 +1867,12 @@ void Plant::UpdateScaredyShroom()
     if (aStateIndex < sizeof(kScaredyStateCases) / sizeof(kScaredyStateCases[0]) &&
         kScaredyStateCases[aStateIndex] != nullptr)
     {
-        kScaredyStateCases[aStateIndex](*this, aBodyReanim, aHasZombieNearby);
+        kScaredyStateCases[aStateIndex](ownerNowNs, *this, aBodyReanim, aHasZombieNearby);
     }
 
     if (mState != PlantState::STATE_READY)
     {
-        mNextLaunchTimeNs = PlantLaunchClock::Add(mBoard->mLevelTimeNs,
+        mNextLaunchTimeNs = PlantLaunchClock::Add(ownerNowNs,
             mLaunchRate.mNanoseconds);
     }
 }
@@ -1894,7 +1905,7 @@ void Plant::UpdateTorchwood()
 }
 
 //0x4606F0
-void Plant::DoSquashDamage()
+void Plant::DoSquashDamage(std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs)
 {
     int aDamageRangeFlags = GetDamageRangeFlags(PlantWeapon::WEAPON_PRIMARY);
     Rect aAttackRect = GetPlantAttackRect(PlantWeapon::WEAPON_PRIMARY);
@@ -1908,7 +1919,7 @@ void Plant::DoSquashDamage()
             Rect aZombieRect = aZombie->GetZombieRect();
             if (GetRectOverlap(aAttackRect, aZombieRect) > (aZombie->mZombieType == ZombieType::ZOMBIE_FOOTBALL ? -20 : 0))
             {
-                aZombie->TakeDamage(1800, 18U);
+                aZombie->TakeDamage(ownerNowNs, visualNowNs, animationNowNs, 1800, 18U);
             }
         }
     }
@@ -1976,9 +1987,10 @@ Zombie* Plant::FindSquashTarget()
 }
 
 //0x4609D0
-void Plant::UpdateSquash()
+void Plant::UpdateSquash(std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs)
 {
     Reanimation* aBodyReanim = mApp->ReanimationTryToGet(mBodyReanimID);
+
     (void)aBodyReanim; // unused in Release mode
     TOD_ASSERT(aBodyReanim);
 
@@ -1988,10 +2000,10 @@ void Plant::UpdateSquash()
         if (aZombie)
         {
             mTargetZombieID = mBoard->ZombieGetID(aZombie);
-            mTargetX = aZombie->ZombieTargetLeadX(0.0f) - mWidth / 2;
+            mTargetX = aZombie->ZombieTargetLeadX(ownerNowNs, 0.0f) - mWidth / 2;
             mState = PlantState::STATE_SQUASH_LOOK;
             mStateCountdown = 80;
-            PlayBodyReanim(mTargetX < (mX) ? ReanimTrackId::anim_lookleft : ReanimTrackId::anim_lookright, ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD, 10, 24.0f);
+            PlayBodyReanim(ownerNowNs, mTargetX < (mX) ? ReanimTrackId::anim_lookleft : ReanimTrackId::anim_lookright, ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD, 10, 24.0f);
             mApp->PlayFoley(FoleyType::FOLEY_SQUASH_HMM);
         }
     }
@@ -1999,7 +2011,7 @@ void Plant::UpdateSquash()
     {
         if (mStateCountdown <= 0)
         {
-            PlayBodyReanim(ReanimTrackId::anim_jumpup, ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD, 20, 24.0f);
+            PlayBodyReanim(ownerNowNs, ReanimTrackId::anim_jumpup, ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD, 20, 24.0f);
             mState = PlantState::STATE_SQUASH_PRE_LAUNCH;
             mStateCountdown = 45;
         }
@@ -2011,7 +2023,7 @@ void Plant::UpdateSquash()
             Zombie* aZombie = FindSquashTarget();
             if (aZombie)
             {
-                mTargetX = aZombie->ZombieTargetLeadX(30.0f) - mWidth / 2;
+                mTargetX = aZombie->ZombieTargetLeadX(ownerNowNs, 30.0f) - mWidth / 2;
             }
 
             mState = PlantState::STATE_SQUASH_RISING;
@@ -2031,7 +2043,7 @@ void Plant::UpdateSquash()
 
             if (mStateCountdown == 0)
             {
-                PlayBodyReanim(ReanimTrackId::anim_jumpdown, ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD, 0, 60.0f);
+                PlayBodyReanim(ownerNowNs, ReanimTrackId::anim_jumpdown, ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD, 0, 60.0f);
                 mState = PlantState::STATE_SQUASH_FALLING;
                 mStateCountdown = 10;
             }
@@ -2042,18 +2054,18 @@ void Plant::UpdateSquash()
 
             if (mStateCountdown == 5)
             {
-                DoSquashDamage();
+                DoSquashDamage(ownerNowNs, visualNowNs, animationNowNs);
             }
 
             if (mStateCountdown == 0)
             {
                 if (mBoard->IsPoolSquare(aTargetCol, mRow))
                 {
-                    mApp->AddReanimation((mX) - 11, (mY) + 20, mRenderOrder + 1, ReanimationType::REANIM_SPLASH);
+                    mApp->AddReanimation((mX) - 11, (mY) + 20, mRenderOrder + 1, ReanimationType::REANIM_SPLASH, visualNowNs);
                     mApp->PlayFoley(FoleyType::FOLEY_SPLAT);
                     mApp->PlaySample(SOUND_ZOMBIESPLASH);
 
-                    Die();
+                    Die(ownerNowNs, visualNowNs, animationNowNs);
                 }
                 else
                 {
@@ -2065,7 +2077,7 @@ void Plant::UpdateSquash()
                     mBoard->mShakeAmountY = 4;
                     mApp->PlayFoley(FoleyType::FOLEY_THUMP);
                     float aOffsetY = mBoard->StageHasRoof() ? 69.0f : 80.0f;
-                    mApp->AddTodParticle((mX) + 40, (mY) + aOffsetY, mRenderOrder + 4, ParticleEffect::PARTICLE_DUST_SQUASH);
+                    mApp->AddTodParticle((mX) + 40, (mY) + aOffsetY, mRenderOrder + 4, ParticleEffect::PARTICLE_DUST_SQUASH, ownerNowNs);
                 }
             }
         }
@@ -2073,14 +2085,14 @@ void Plant::UpdateSquash()
         {
             if (mStateCountdown == 0)
             {
-                Die();
+                Die(ownerNowNs, visualNowNs, animationNowNs);
             }
         }
     }
 }
 
 //0x460DD0
-void Plant::UpdateDoomShroom()
+void Plant::UpdateDoomShroom(std::int64_t ownerNowNs)
 {
     if (mIsAsleep || mState == PlantState::STATE_DOINGSPECIAL)
         return;
@@ -2089,6 +2101,7 @@ void Plant::UpdateDoomShroom()
     mDoSpecialCountdown = 100;
 
     Reanimation* aBodyReanim = mApp->ReanimationTryToGet(mBodyReanimID);
+
     TOD_ASSERT(aBodyReanim);
 
     aBodyReanim->SetFramesForLayer(ReanimTrackId::anim_explode);
@@ -2100,7 +2113,7 @@ void Plant::UpdateDoomShroom()
     mApp->PlayFoley(FoleyType::FOLEY_REVERSE_EXPLOSION);
 }
 
-void Plant::UpdateIceShroom()
+void Plant::UpdateIceShroom(std::int64_t ownerNowNs)
 {
     if (!mIsAsleep && mState != PlantState::STATE_DOINGSPECIAL)
     {
@@ -2110,9 +2123,10 @@ void Plant::UpdateIceShroom()
 }
 
 //0x460F00
-void Plant::UpdateBlover()
+void Plant::UpdateBlover(std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs)
 {
     Reanimation* aBodyReanim = mApp->ReanimationGet(mBodyReanimID);
+
     if (aBodyReanim->mLoopCount > 0 && aBodyReanim->mLoopType != ReanimLoopType::REANIM_LOOP)
     {
         aBodyReanim->SetFramesForLayer(ReanimTrackId::anim_loop);
@@ -2122,7 +2136,7 @@ void Plant::UpdateBlover()
     // 1073 UpdateBlover (0x4648D0) tests Plant+0x50, the special-action timer.
     if (mState != PlantState::STATE_DOINGSPECIAL && mDoSpecialCountdown == 0)
     {
-        DoSpecial();
+        DoSpecial(ownerNowNs, visualNowNs, animationNowNs);
     }
 }
 
@@ -2139,20 +2153,21 @@ void Plant::UpdateLilypad()
 }
 
 //0x460F60
-void Plant::UpdateCoffeeBean()
+void Plant::UpdateCoffeeBean(std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs)
 {
     if (mState == PlantState::STATE_DOINGSPECIAL)
     {
         Reanimation* aBodyReanim = mApp->ReanimationGet(mBodyReanimID);
+
         if (aBodyReanim->mLoopCount > 0)
         {
-            Die();
+            Die(ownerNowNs, visualNowNs, animationNowNs);
         }
     }
 }
 
 //0x460FA0
-void Plant::UpdateUmbrella()
+void Plant::UpdateUmbrella(std::int64_t ownerNowNs)
 {
     if (mState == PlantState::STATE_UMBRELLA_TRIGGERED)
     {
@@ -2165,9 +2180,10 @@ void Plant::UpdateUmbrella()
     else if (mState == PlantState::STATE_UMBRELLA_REFLECTING)
     {
         Reanimation* aBodyReanim = mApp->ReanimationGet(mBodyReanimID);
+
         if (aBodyReanim->mLoopCount > 0)
         {
-            PlayIdleAnim(0.0f);
+            PlayIdleAnim(ownerNowNs, 0.0f);
             mState = PlantState::STATE_NOTREADY;
             mRenderOrder = CalcRenderOrder();
         }
@@ -2176,27 +2192,28 @@ void Plant::UpdateUmbrella()
 
 //0x461020
 // GOTY @Patoke: 0x4649F0
-void Plant::UpdateCobCannon()
+void Plant::UpdateCobCannon(std::int64_t ownerNowNs)
 {
     // C 形态 -> 匿名 lambda 函数指针表 kCobCannonStateCases（仿 kBossPhaseCases
     // 范式）：行序 = PlantState 枚举序 STATE_COBCANNON_ARMING..
     // STATE_COBCANNON_FIRING（4 状态连续，全覆盖无空槽）；各支原在支内自取
     // aBodyReanim，lambda 内保持原样。
-    using CobCannonStateFn = void (*)(Plant&);
+    using CobCannonStateFn = void (*)(std::int64_t, Plant&);
     static constexpr CobCannonStateFn kCobCannonStateCases[(int)PlantState::STATE_COBCANNON_FIRING - (int)PlantState::STATE_COBCANNON_ARMING + 1] = {
         // 原 if STATE_COBCANNON_ARMING
-        [](Plant& p)
+        [](std::int64_t ownerNowNs, Plant& p)
         {
             if (p.mStateCountdown == 0)
             {
                 p.mState = PlantState::STATE_COBCANNON_LOADING;
-                p.PlayBodyReanim(ReanimTrackId::anim_charge, ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD, 20, 12.0f);
+                p.PlayBodyReanim(ownerNowNs, ReanimTrackId::anim_charge, ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD, 20, 12.0f);
             }
         },  // STATE_COBCANNON_ARMING
         // 原 else-if STATE_COBCANNON_LOADING
-        [](Plant& p)
+        [](std::int64_t ownerNowNs, Plant& p)
         {
             Reanimation* aBodyReanim = p.mApp->ReanimationGet(p.mBodyReanimID);
+
             if (aBodyReanim->ShouldTriggerTimedEvent(0.5f))
             {
                 p.mApp->PlayFoley(FoleyType::FOLEY_SHOOP);
@@ -2204,20 +2221,22 @@ void Plant::UpdateCobCannon()
             if (aBodyReanim->mLoopCount > 0)
             {
                 p.mState = PlantState::STATE_COBCANNON_READY;
-                p.PlayIdleAnim(12.0f);
+                p.PlayIdleAnim(ownerNowNs, 12.0f);
             }
         },  // STATE_COBCANNON_LOADING
         // 原 else-if STATE_COBCANNON_READY
-        [](Plant& p)
+        [](std::int64_t ownerNowNs, Plant& p)
         {
             Reanimation* aBodyReanim = p.mApp->ReanimationGet(p.mBodyReanimID);
+
             ReanimatorTrackInstance* aCobTrack = aBodyReanim->GetTrackInstanceByName(ReanimTrackId::CobCannon_cob);
-            aCobTrack->mTrackColor = GetFlashingColorNs(p.mBoard->mLevelTimeNs, 750'000'000);
+            aCobTrack->mTrackColor = GetFlashingColorNs(ownerNowNs, 750'000'000);
         },  // STATE_COBCANNON_READY
         // 原 else-if STATE_COBCANNON_FIRING
-        [](Plant& p)
+        [](std::int64_t ownerNowNs, Plant& p)
         {
             Reanimation* aBodyReanim = p.mApp->ReanimationGet(p.mBodyReanimID);
+
             if (aBodyReanim->ShouldTriggerTimedEvent(0.48f))
             {
                 p.mApp->PlayFoley(FoleyType::FOLEY_COB_LAUNCH);
@@ -2231,65 +2250,66 @@ void Plant::UpdateCobCannon()
     const unsigned aStateIndex = static_cast<unsigned>(mState) - static_cast<unsigned>(PlantState::STATE_COBCANNON_ARMING);
     if (aStateIndex < sizeof(kCobCannonStateCases) / sizeof(kCobCannonStateCases[0]))
     {
-        kCobCannonStateCases[aStateIndex](*this);
+        kCobCannonStateCases[aStateIndex](ownerNowNs, *this);
     }
 }
 
 //0x4611F0
-void Plant::UpdateCactus()
+void Plant::UpdateCactus(std::int64_t ownerNowNs)
 {
     if (mShootingCounter > 0)
         return;
 
     Reanimation* aBodyReanim = mApp->ReanimationGet(mBodyReanimID);
+
     // C 形态 -> 匿名 lambda 函数指针表 kCactusStateCases（仿 kBossPhaseCases
     // 范式）：行序 = PlantState 枚举序 STATE_CACTUS_RISING..
     // STATE_CACTUS_LOWERING（3 状态连续）；表外相位（含 STATE_CACTUS_LOW 与
     // 未列状态）一律走 kCactusRiseOnTarget 具名默认支（= 原 else 支的条件
     // 起跳，未命中目标时无操作）。aBodyReanim 为链前局部，经参数传入。
-    using CactusStateFn = void (*)(Plant&, Reanimation*);
-    static constexpr CactusStateFn kCactusRiseOnTarget = [](Plant& p, Reanimation* aBodyReanim)
+    using CactusStateFn = void (*)(std::int64_t, Plant&, Reanimation*);
+    static constexpr CactusStateFn kCactusRiseOnTarget = [](std::int64_t ownerNowNs, Plant& p, Reanimation* aBodyReanim)
     {
         if (p.FindTargetZombie(p.mRow, PlantWeapon::WEAPON_PRIMARY))
         {
             p.mState = PlantState::STATE_CACTUS_RISING;
-            p.PlayBodyReanim(ReanimTrackId::anim_rise, ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD, 20, aBodyReanim->mDefinition->mFPS);
+            p.PlayBodyReanim(ownerNowNs, ReanimTrackId::anim_rise, ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD, 20, aBodyReanim->mDefinition->mFPS);
             p.mApp->PlayFoley(FoleyType::FOLEY_PLANTGROW);
         }
     };
     static constexpr CactusStateFn kCactusStateCases[(int)PlantState::STATE_CACTUS_LOWERING - (int)PlantState::STATE_CACTUS_RISING + 1] = {
         // 原 if STATE_CACTUS_RISING
-        [](Plant& p, Reanimation* aBodyReanim)
+        [](std::int64_t ownerNowNs, Plant& p, Reanimation* aBodyReanim)
         {
             if (aBodyReanim->mLoopCount > 0)
             {
                 p.mState = PlantState::STATE_CACTUS_HIGH;
-                p.PlayBodyReanim(ReanimTrackId::anim_idlehigh, ReanimLoopType::REANIM_LOOP, 20, 0.0f);
+                p.PlayBodyReanim(ownerNowNs, ReanimTrackId::anim_idlehigh, ReanimLoopType::REANIM_LOOP, 20, 0.0f);
                 if (p.mApp->IsIZombieLevel())
                 {
                     aBodyReanim->ApplyRate(0);
                 }
 
                 p.mNextLaunchTimeNs = PlantLaunchClock::Add(
-                    p.mBoard->mLevelTimeNs, PlantLaunchClock::Tick);
+                    ownerNowNs, PlantLaunchClock::Tick);
             }
         },  // STATE_CACTUS_RISING
         // 原 else-if STATE_CACTUS_HIGH
-        [](Plant& p, Reanimation* aBodyReanim)
+        [](std::int64_t ownerNowNs, Plant& p, Reanimation* aBodyReanim)
         {
             if (p.FindTargetZombie(p.mRow, PlantWeapon::WEAPON_PRIMARY) == nullptr)
             {
                 p.mState = PlantState::STATE_CACTUS_LOWERING;
-                p.PlayBodyReanim(ReanimTrackId::anim_lower, ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD, 20, aBodyReanim->mDefinition->mFPS);
+                p.PlayBodyReanim(ownerNowNs, ReanimTrackId::anim_lower, ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD, 20, aBodyReanim->mDefinition->mFPS);
             }
         },  // STATE_CACTUS_HIGH
         // 原 else-if STATE_CACTUS_LOWERING
-        [](Plant& p, Reanimation* aBodyReanim)
+        [](std::int64_t ownerNowNs, Plant& p, Reanimation* aBodyReanim)
         {
             if (aBodyReanim->mLoopCount > 0)
             {
                 p.mState = PlantState::STATE_CACTUS_LOW;
-                p.PlayIdleAnim(0.0f);
+                p.PlayIdleAnim(ownerNowNs, 0.0f);
             }
         },  // STATE_CACTUS_LOWERING
     };
@@ -2300,41 +2320,42 @@ void Plant::UpdateCactus()
     const unsigned aStateIndex = static_cast<unsigned>(mState) - static_cast<unsigned>(PlantState::STATE_CACTUS_RISING);
     if (aStateIndex < sizeof(kCactusStateCases) / sizeof(kCactusStateCases[0]))
     {
-        kCactusStateCases[aStateIndex](*this, aBodyReanim);
+        kCactusStateCases[aStateIndex](ownerNowNs, *this, aBodyReanim);
     }
     else
     {
-        kCactusRiseOnTarget(*this, aBodyReanim);  // 原 else 支（CACTUS_LOW 及未列状态）
+        kCactusRiseOnTarget(ownerNowNs, *this, aBodyReanim);  // 原 else 支（CACTUS_LOW 及未列状态）
     }
 }
 
 //0x461320
-void Plant::UpdateChomper()
+void Plant::UpdateChomper(std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs)
 {
     Reanimation* aBodyReanim = mApp->ReanimationTryToGet(mBodyReanimID);
+
     // C 形态 -> 匿名 lambda 函数指针表 kChomperStateCases（仿 kSeedTypeUpdates
     // 范式）：行序 = PlantState 枚举序 0..48（count_last=STATE_LILYPAD_
     // INVULNERABLE 锚定）；5 支中 READY=1 与 CHOMPER 段 10..14 分散故取全宽表；
     // 末支 (SWALLOWING || BITING_MISSED) && mLoopCount>0 为共体 + 复合条件，
     // 两槽同填（constexpr 指针变量），mLoopCount 判入 lambda；nullptr = 无
     // case 槽（无操作）。aBodyReanim 为链前局部（TryToGet），经参数传入。
-    using ChomperStateFn = void (*)(Plant&, Reanimation*);
-    static constexpr ChomperStateFn kChomperSwallowDone = [](Plant& p, Reanimation* aBodyReanim)
+    using ChomperStateFn = void (*)(std::int64_t, std::int64_t, std::int64_t, Plant&, Reanimation*);
+    static constexpr ChomperStateFn kChomperSwallowDone = [](std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, Plant& p, Reanimation* aBodyReanim)
     {
         if (aBodyReanim->mLoopCount > 0)
         {
-            p.PlayIdleAnim(aBodyReanim->mDefinition->mFPS);
+            p.PlayIdleAnim(ownerNowNs, aBodyReanim->mDefinition->mFPS);
             p.mState = PlantState::STATE_READY;
         }
     };
     static constexpr ChomperStateFn kChomperStateCases[(int)PlantState::STATE_LILYPAD_INVULNERABLE + 1] = {
         nullptr,  // 0 STATE_NOTREADY（无 case）
         // 原 if STATE_READY
-        [](Plant& p, Reanimation* aBodyReanim)
+        [](std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, Plant& p, Reanimation* aBodyReanim)
         {
             if (p.FindTargetZombie(p.mRow, PlantWeapon::WEAPON_PRIMARY))
             {
-                p.PlayBodyReanim(ReanimTrackId::anim_bite, ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD, 20, 24.0f);
+                p.PlayBodyReanim(ownerNowNs, ReanimTrackId::anim_bite, ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD, 20, 24.0f);
                 p.mState = PlantState::STATE_CHOMPER_BITING;
                 p.mStateCountdown = 70;
             }
@@ -2348,7 +2369,7 @@ void Plant::UpdateChomper()
         nullptr,  // 8 STATE_GRAVEBUSTER_LANDING（无 case）
         nullptr,  // 9 STATE_GRAVEBUSTER_EATING（无 case）
         // 原 else-if STATE_CHOMPER_BITING
-        [](Plant& p, Reanimation* aBodyReanim)
+        [](std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, Plant& p, Reanimation* aBodyReanim)
         {
             if (p.mStateCountdown == 0)
             {
@@ -2369,7 +2390,7 @@ void Plant::UpdateChomper()
                 {
                     doMiss = true;
                 }
-                else if (!aZombie->IsImmobilizied())
+                else if (!aZombie->IsImmobilizied(ownerNowNs))
                 {
                     if (aZombie->IsBouncingPogo() ||
                         aZombie->mZombiePhase == ZombiePhase::PHASE_POLEVAULTER_IN_VAULT || aZombie->mZombiePhase == ZombiePhase::PHASE_POLEVAULTER_PRE_VAULT)
@@ -2381,7 +2402,7 @@ void Plant::UpdateChomper()
                 if (doBite)
                 {
                     p.mApp->PlayFoley(FoleyType::FOLEY_SPLAT);
-                    aZombie->TakeDamage(40, 0U);
+                    aZombie->TakeDamage(ownerNowNs, visualNowNs, animationNowNs, 40, 0U);
                     p.mState = PlantState::STATE_CHOMPER_BITING_MISSED;
                 }
                 else if (doMiss)
@@ -2390,17 +2411,17 @@ void Plant::UpdateChomper()
                 }
                 else
                 {
-                    aZombie->DieWithLoot();
+                    aZombie->DieWithLoot(ownerNowNs, visualNowNs, animationNowNs);
                     p.mState = PlantState::STATE_CHOMPER_BITING_GOT_ONE;
                 }
             }
         },  // 10 STATE_CHOMPER_BITING
         // 原 else-if STATE_CHOMPER_BITING_GOT_ONE
-        [](Plant& p, Reanimation* aBodyReanim)
+        [](std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, Plant& p, Reanimation* aBodyReanim)
         {
             if (aBodyReanim->mLoopCount > 0)
             {
-                p.PlayBodyReanim(ReanimTrackId::anim_chew, ReanimLoopType::REANIM_LOOP, 0, 15.0f);
+                p.PlayBodyReanim(ownerNowNs, ReanimTrackId::anim_chew, ReanimLoopType::REANIM_LOOP, 0, 15.0f);
                 if (p.mApp->IsIZombieLevel())
                 {
                     aBodyReanim->ApplyRate(0);
@@ -2412,11 +2433,11 @@ void Plant::UpdateChomper()
         },  // 11 STATE_CHOMPER_BITING_GOT_ONE
         kChomperSwallowDone,  // 12 STATE_CHOMPER_BITING_MISSED（末支共体）
         // 原 else-if STATE_CHOMPER_DIGESTING
-        [](Plant& p, Reanimation* aBodyReanim)
+        [](std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, Plant& p, Reanimation* aBodyReanim)
         {
             if (p.mStateCountdown == 0)
             {
-                p.PlayBodyReanim(ReanimTrackId::anim_swallow, ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD, 20, 12.0f);
+                p.PlayBodyReanim(ownerNowNs, ReanimTrackId::anim_swallow, ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD, 20, 12.0f);
                 p.mState = PlantState::STATE_CHOMPER_SWALLOWING;
             }
         },  // 13 STATE_CHOMPER_DIGESTING
@@ -2463,7 +2484,7 @@ void Plant::UpdateChomper()
     if (aStateIndex < sizeof(kChomperStateCases) / sizeof(kChomperStateCases[0]) &&
         kChomperStateCases[aStateIndex] != nullptr)
     {
-        kChomperStateCases[aStateIndex](*this, aBodyReanim);
+        kChomperStateCases[aStateIndex](ownerNowNs, visualNowNs, animationNowNs, *this, aBodyReanim);
     }
 }
 
@@ -2489,15 +2510,15 @@ MagnetItem* Plant::GetFreeMagnetItem()
 //0x460610
 // GOTY 1073: 0x464FC0. Original offsets and reconstruction differences:
 // docs/research/1073-magnet-coordinates.md.
-void Plant::MagnetShroomAttactItem(Zombie* theZombie)
+void Plant::MagnetShroomAttactItem(std::int64_t ownerNowNs, Zombie* theZombie)
 {
     mState = PlantState::STATE_MAGNETSHROOM_SUCKING;
     mStateCountdown = 1500;
-    PlayBodyReanim(ReanimTrackId::anim_shooting, ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD, 20, 12.0f);
+    PlayBodyReanim(ownerNowNs, ReanimTrackId::anim_shooting, ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD, 20, 12.0f);
     mApp->PlayFoley(FoleyType::FOLEY_MAGNETSHROOM);
 
     MagnetItem* aMagnetItem = GetFreeMagnetItem();
-    const float aDrawHeight = PlantDrawHeightOffset(mBoard, this, mSeedType, mPlantCol, mRow);
+    const float aDrawHeight = PlantDrawHeightOffset(ownerNowNs, mBoard, this, mSeedType, mPlantCol, mRow);
     const auto aTakeTrack = [&](ReanimTrackId track, MagnetItemType type)
     {
         // Capture the visible track center before removing equipment or changing
@@ -2545,12 +2566,12 @@ void Plant::MagnetShroomAttactItem(Zombie* theZombie)
         aTakeTrack(ReanimTrackId::anim_screendoor,
             (MagnetItemType)((int)MagnetItemType::MAGNET_ITEM_DOOR_1 + aDamageIndex));
 
-        theZombie->DetachShield();
+        theZombie->DetachShield(ownerNowNs);
         theZombie->mZombiePhase = ZombiePhase::PHASE_ZOMBIE_NORMAL;
         if (!theZombie->mIsEating)
         {
             TOD_ASSERT(theZombie->mZombieHeight == ZombieHeight::HEIGHT_ZOMBIE_NORMAL);
-            theZombie->StartWalkAnim(0);
+            theZombie->StartWalkAnim(ownerNowNs, 0);
         }
         aMagnetItem->mDestOffsetX = RandRangeFloat(-10.0f, 10.0f) + 30.0f;
         aMagnetItem->mDestOffsetY = RandRangeFloat(-10.0f, 10.0f);
@@ -2561,7 +2582,7 @@ void Plant::MagnetShroomAttactItem(Zombie* theZombie)
         aTakeTrack(ReanimTrackId::Zombie_ladder_1,
             (MagnetItemType)((int)MagnetItemType::MAGNET_ITEM_LADDER_1 + aDamageIndex));
 
-        theZombie->DetachShield();
+        theZombie->DetachShield(ownerNowNs);
 
         aMagnetItem->mDestOffsetX = RandRangeFloat(-10.0f, 10.0f) + 30.0f;
         aMagnetItem->mDestOffsetY = RandRangeFloat(-10.0f, 10.0f);
@@ -2570,7 +2591,7 @@ void Plant::MagnetShroomAttactItem(Zombie* theZombie)
     {
         aTakeTrack(ReanimTrackId::Zombie_pogo_stick,
             theZombie->mHasArm ? MagnetItemType::MAGNET_ITEM_POGO_1 : MagnetItemType::MAGNET_ITEM_POGO_3);
-        theZombie->PogoBreak(16U);
+        theZombie->PogoBreak(ownerNowNs, 16U);
         aMagnetItem->mDestOffsetX = RandRangeFloat(-10.0f, 10.0f) + 30.0f;
         aMagnetItem->mDestOffsetY = RandRangeFloat(-10.0f, 10.0f);
     }
@@ -2578,7 +2599,7 @@ void Plant::MagnetShroomAttactItem(Zombie* theZombie)
     {
         aTakeTrack(ReanimTrackId::Zombie_jackbox_box, MagnetItemType::MAGNET_ITEM_JACK_IN_THE_BOX);
         theZombie->StopZombieSound();
-        theZombie->PickRandomSpeed();
+        theZombie->PickRandomSpeed(ownerNowNs);
         theZombie->mZombiePhase = ZombiePhase::PHASE_ZOMBIE_NORMAL;
         theZombie->ReanimShowRange(ReanimTrackRanges::Zombie_jackbox_box, RENDER_GROUP_HIDDEN);
         theZombie->ReanimShowRange(ReanimTrackRanges::Zombie_jackbox_handle, RENDER_GROUP_HIDDEN);
@@ -2588,12 +2609,12 @@ void Plant::MagnetShroomAttactItem(Zombie* theZombie)
     else if (theZombie->mZombieType == ZombieType::ZOMBIE_DIGGER)
     {
         aTakeTrack(ReanimTrackId::Zombie_digger_pickaxe, MagnetItemType::MAGNET_ITEM_PICK_AXE);
-        theZombie->DiggerLoseAxe();
+        theZombie->DiggerLoseAxe(ownerNowNs);
         aMagnetItem->mDestOffsetX = RandRangeFloat(-10.0f, 10.0f) + 45.0f;
         aMagnetItem->mDestOffsetY = RandRangeFloat(-10.0f, 10.0f) + 15.0f;
     }
     MagnetMotion::Bind(*aMagnetItem, mX + aMagnetItem->mDestOffsetX, mY + aMagnetItem->mDestOffsetY);
-    mMagnetStartTimeNs = mBoard ? mBoard->mLevelTimeNs : 0;
+    mMagnetStartTimeNs = ownerNowNs;
 }
 
 //0x461CD0
@@ -2635,9 +2656,9 @@ bool Plant::DrawMagnetItemsOnTop()
 }
 
 //0x461D90
-void Plant::UpdateMagnetShroom()
+void Plant::UpdateMagnetShroom(std::int64_t ownerNowNs)
 {
-    const auto magnetAgeNs = mBoard->mLevelTimeNs - mMagnetStartTimeNs;
+    const auto magnetAgeNs = ownerNowNs - mMagnetStartTimeNs;
     for (int i = 0; i < MAX_MAGNET_ITEMS; i++)
     {
         MagnetItem* aMagnetItem = &mMagnetItems[i];
@@ -2655,10 +2676,11 @@ void Plant::UpdateMagnetShroom()
             mState = PlantState::STATE_READY;
 
             float aAnimRate = RandRangeFloat(10.0f, 15.0f);
-            PlayBodyReanim(ReanimTrackId::anim_idle, ReanimLoopType::REANIM_LOOP, 30, aAnimRate);
+            PlayBodyReanim(ownerNowNs, ReanimTrackId::anim_idle, ReanimLoopType::REANIM_LOOP, 30, aAnimRate);
             if (mApp->IsIZombieLevel())
             {
                 Reanimation* aBodyReanim = mApp->ReanimationTryToGet(mBodyReanimID);
+
                 aBodyReanim->ApplyRate(0.0f);
             }
 
@@ -2668,9 +2690,10 @@ void Plant::UpdateMagnetShroom()
     else if (mState == PlantState::STATE_MAGNETSHROOM_SUCKING)
     {
         Reanimation* aBodyReanim = mApp->ReanimationTryToGet(mBodyReanimID);
+
         if (aBodyReanim->mLoopCount > 0)
         {
-            PlayBodyReanim(ReanimTrackId::anim_nonactive_idle2, ReanimLoopType::REANIM_LOOP, 20, 2.0f);
+            PlayBodyReanim(ownerNowNs, ReanimTrackId::anim_nonactive_idle2, ReanimLoopType::REANIM_LOOP, 20, 2.0f);
             if (mApp->IsIZombieLevel())
             {
                 aBodyReanim = mApp->ReanimationTryToGet(mBodyReanimID);
@@ -2742,7 +2765,7 @@ void Plant::UpdateMagnetShroom()
 
         if (aClosestZombie)
         {
-            MagnetShroomAttactItem(aClosestZombie);
+            MagnetShroomAttactItem(ownerNowNs, aClosestZombie);
             return;
         }
 
@@ -2775,7 +2798,7 @@ void Plant::UpdateMagnetShroom()
         {
             mState = PlantState::STATE_MAGNETSHROOM_SUCKING;
             mStateCountdown = 1500;
-            PlayBodyReanim(ReanimTrackId::anim_shooting, ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD, 20, 12.0f);
+            PlayBodyReanim(ownerNowNs, ReanimTrackId::anim_shooting, ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD, 20, 12.0f);
             mApp->PlayFoley(FoleyType::FOLEY_MAGNETSHROOM);
 
             aClosestLadder->GridItemDie();
@@ -2784,18 +2807,18 @@ void Plant::UpdateMagnetShroom()
             // Match GridItem::DrawLadder's actual top-left before transfer.
             aMagnetItem->mPosX = mBoard->GridToPixelX(aClosestLadder->mGridX, aClosestLadder->mGridY) + 25.0f;
             aMagnetItem->mPosY = mBoard->GridToPixelY(aClosestLadder->mGridX, aClosestLadder->mGridY) - 4.0f -
-                PlantDrawHeightOffset(mBoard, this, mSeedType, mPlantCol, mRow);
+                PlantDrawHeightOffset(ownerNowNs, mBoard, this, mSeedType, mPlantCol, mRow);
             aMagnetItem->mDestOffsetX = RandRangeFloat(-10.0f, 10.0f) + 10.0f;
             aMagnetItem->mDestOffsetY = RandRangeFloat(-10.0f, 10.0f);
             aMagnetItem->mItemType = MagnetItemType::MAGNET_ITEM_LADDER_PLACED;
             MagnetMotion::Bind(*aMagnetItem, mX + aMagnetItem->mDestOffsetX, mY + aMagnetItem->mDestOffsetY);
-            mMagnetStartTimeNs = mBoard ? mBoard->mLevelTimeNs : 0;
+            mMagnetStartTimeNs = ownerNowNs;
         }
     }
 }
 
 //0x462390
-Coin* Plant::FindGoldMagnetTarget()
+Coin* Plant::FindGoldMagnetTarget(std::int64_t visualNowNs)
 {
     Coin* aClosestCoin = nullptr;
     float aClosestDistance = 0.0f;
@@ -2803,7 +2826,7 @@ Coin* Plant::FindGoldMagnetTarget()
     Coin* aCoin = nullptr;
     while (mBoard->IterateCoins(aCoin))
     {
-        if (aCoin->IsMoney() && aCoin->mCoinMotion != CoinMotion::COIN_MOTION_FROM_PRESENT && !aCoin->mIsBeingCollected && mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs - aCoin->mBirthTimeNs >= 500'000'000)
+        if (aCoin->IsMoney() && aCoin->mCoinMotion != CoinMotion::COIN_MOTION_FROM_PRESENT && !aCoin->mIsBeingCollected && visualNowNs - aCoin->mBirthTimeNs >= 500'000'000)
         {
             float aDistance = Distance2D((mX) + mWidth / 2, (mY) + mHeight / 2, aCoin->mPosX + aCoin->mWidth / 2, aCoin->mPosY + aCoin->mHeight / 2);
             if (aClosestCoin == nullptr || aDistance < aClosestDistance)
@@ -2818,7 +2841,7 @@ Coin* Plant::FindGoldMagnetTarget()
 }
 
 //0x4624B0
-void Plant::GoldMagnetFindTargets()
+void Plant::GoldMagnetFindTargets(std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs)
 {
     if (GetFreeMagnetItem() == nullptr)
     {
@@ -2832,7 +2855,7 @@ void Plant::GoldMagnetFindTargets()
         if (aMagnetItem == nullptr)
             break;
 
-        Coin* aCoin = FindGoldMagnetTarget();
+        Coin* aCoin = FindGoldMagnetTarget(visualNowNs);
         if (aCoin == nullptr)
             break;
 
@@ -2850,13 +2873,13 @@ void Plant::GoldMagnetFindTargets()
         }
 
         MagnetMotion::Bind(*aMagnetItem, mX + aMagnetItem->mDestOffsetX, mY + aMagnetItem->mDestOffsetY);
-        mMagnetStartTimeNs = mBoard ? mBoard->mLevelTimeNs : 0;
+        mMagnetStartTimeNs = ownerNowNs;
         aCoin->Die();
     }
 }
 
 //0x4625D0
-bool Plant::IsAGoldMagnetAboutToSuck()
+bool Plant::IsAGoldMagnetAboutToSuck(std::int64_t ownerNowNs)
 {
     Plant* aPlant = nullptr;
     while (mBoard->IteratePlants(aPlant))
@@ -2864,6 +2887,7 @@ bool Plant::IsAGoldMagnetAboutToSuck()
         if (!aPlant->NotOnGround() && aPlant->mSeedType == SeedType::SEED_GOLD_MAGNET && aPlant->mState == PlantState::STATE_MAGNETSHROOM_SUCKING)
         {
             Reanimation* aBodyReanim = mApp->ReanimationGet(aPlant->mBodyReanimID);
+
             if ((static_cast<double>(aBodyReanim->SamplePlayback().phaseNs) / aBodyReanim->mPeriodNs) < 0.5f)
             {
                 return true;
@@ -2875,10 +2899,11 @@ bool Plant::IsAGoldMagnetAboutToSuck()
 }
 
 //0x462680
-void Plant::UpdateGoldMagnetShroom()
+void Plant::UpdateGoldMagnetShroom(std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs)
 {
-    const auto magnetAgeNs = mBoard->mLevelTimeNs - mMagnetStartTimeNs;
+    const auto magnetAgeNs = ownerNowNs - mMagnetStartTimeNs;
     Reanimation* aBodyReanim = mApp->ReanimationGet(mBodyReanimID);
+
 
     bool aIsSuckingCoin = false;
     for (int i = 0; i < MAX_MAGNET_ITEMS; i++)
@@ -2924,21 +2949,21 @@ void Plant::UpdateGoldMagnetShroom()
         if (aBodyReanim->ShouldTriggerTimedEvent(0.4f))
         {
             mApp->PlayFoley(FoleyType::FOLEY_MAGNETSHROOM);
-            GoldMagnetFindTargets();
+            GoldMagnetFindTargets(ownerNowNs, visualNowNs, animationNowNs);
         }
 
         if (aBodyReanim->mLoopCount > 0 && !aIsSuckingCoin)
         {
-            PlayIdleAnim(14.0f);
+            PlayIdleAnim(ownerNowNs, 14.0f);
             mState = PlantState::STATE_MAGNETSHROOM_CHARGING;
             mStateCountdown = RandRangeInt(200, 300);
         }
     }
-    else if (!IsAGoldMagnetAboutToSuck() && Sexy::UpdateChance(50) && FindGoldMagnetTarget())
+    else if (!IsAGoldMagnetAboutToSuck(ownerNowNs) && Sexy::UpdateChance(50) && FindGoldMagnetTarget(visualNowNs))
     {
         mBoard->mCoinBankFadeCount = 1000;
         mState = PlantState::STATE_MAGNETSHROOM_SUCKING;
-        PlayBodyReanim(ReanimTrackId::anim_attract, ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD, 20, 12.0f);
+        PlayBodyReanim(ownerNowNs, ReanimTrackId::anim_attract, ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD, 20, 12.0f);
     }
 }
 
@@ -2956,7 +2981,7 @@ void Plant::RemoveEffects()
 }
 
 //0x462B80
-void Plant::Squish()
+void Plant::Squish(std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs)
 {
     if (NotOnGround())
         return;
@@ -2966,12 +2991,12 @@ void Plant::Squish()
         if (mSeedType == SeedType::SEED_CHERRYBOMB || mSeedType == SeedType::SEED_JALAPENO ||
             mSeedType == SeedType::SEED_DOOMSHROOM || mSeedType == SeedType::SEED_ICESHROOM)
         {
-            DoSpecial();
+            DoSpecial(ownerNowNs, visualNowNs, animationNowNs);
             return;
         }
         else if (mSeedType == SeedType::SEED_POTATOMINE && mState != PlantState::STATE_NOTREADY)
         {
-            DoSpecial();
+            DoSpecial(ownerNowNs, visualNowNs, animationNowNs);
             return;
         }
     }
@@ -2981,7 +3006,7 @@ void Plant::Squish()
 
     mRenderOrder = Board::MakeRenderOrder(RenderLayer::RENDER_LAYER_GRAVE_STONE, mRow, 8);
     mSquished = true;
-    mDisappearEndTimeNs = static_cast<std::int64_t>(mBoard->mLevelTimeNs) + 5'000'000'000;
+    mDisappearEndTimeNs = ownerNowNs + 5'000'000'000;
     mApp->PlayFoley(FoleyType::FOLEY_SQUISH);
     RemoveEffects();
 
@@ -2999,14 +3024,15 @@ void Plant::Squish()
 
 //0x462CE0
 // GOTY @Patoke: 0x4666E0
-void Plant::UpdateBowling()
+void Plant::UpdateBowling(std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs)
 {
     Reanimation* aBodyReanim = mApp->ReanimationTryToGet(mBodyReanimID);
+
     const bool aHasRoot = aBodyReanim && aBodyReanim->TrackExists(ReanimTrackId::_ground);
     const float aRootScale = mSeedType == SeedType::SEED_GIANT_WALLNUT ? -2.0f : -1.0f;
     if (Sexy::gUpdateIntervalNs > INT64_MAX)
         throw std::overflow_error("bowling simulation interval exceeds clock range");
-    const auto aNow = mApp->mEffectSystem->mReanimationHolder->mBattleTimeNs;
+    const auto aNow = ownerNowNs;
     const auto aTravelTime = [](double distance) -> std::int64_t {
         const auto duration = std::abs(distance) * 5'000'000.0; // 200 pixels/second.
         if (!std::isfinite(duration) || duration >= 9223372036854775808.0)
@@ -3017,7 +3043,7 @@ void Plant::UpdateBowling()
         if (aHasRoot)
             AdvanceRoot(*this, *aBodyReanim, aRootScale, ReanimClock::Subtract(eventTime, aNow));
         if (mX > 800)
-            Die();
+            Die(ownerNowNs, visualNowNs, animationNowNs);
     };
     const auto aProcessRow = [&](std::int64_t eventTime, bool arrived) {
         aSampleRoot(eventTime);
@@ -3052,12 +3078,12 @@ void Plant::UpdateBowling()
 
                 int aDamageRangeFlags = GetDamageRangeFlags(PlantWeapon::WEAPON_PRIMARY) | 32U;
                 mBoard->KillAllZombiesInRadius(mRow, aPosX, aPosY, 90, 1, true, aDamageRangeFlags);
-                mApp->AddTodParticle(aPosX, aPosY, (int)RenderLayer::RENDER_LAYER_TOP, ParticleEffect::PARTICLE_POWIE);
+                mApp->AddTodParticle(aPosX, aPosY, (int)RenderLayer::RENDER_LAYER_TOP, ParticleEffect::PARTICLE_POWIE, ownerNowNs);
                 mBoard->mShakeCounter = 12;
                 mBoard->mShakeAmountX = 3;
                 mBoard->mShakeAmountY = -4;
 
-                Die();
+                Die(ownerNowNs, visualNowNs, animationNowNs);
 
                 return;
             }
@@ -3069,15 +3095,15 @@ void Plant::UpdateBowling()
 
             if (mSeedType == SeedType::SEED_GIANT_WALLNUT)
             {
-                aZombie->TakeDamage(1'000'000, 0U);
+                aZombie->TakeDamage(ownerNowNs, visualNowNs, animationNowNs, 1'000'000, 0U);
             }
             else if (aZombie->mShieldType == ShieldType::SHIELDTYPE_DOOR && mState != PlantState::STATE_NOTREADY)
             {
-                aZombie->TakeDamage(1800, 0U);
+                aZombie->TakeDamage(ownerNowNs, visualNowNs, animationNowNs, 1800, 0U);
             }
             else if (aZombie->mShieldType != ShieldType::SHIELDTYPE_NONE)
             {
-                aZombie->TakeShieldDamage(400, 0U);
+                aZombie->TakeShieldDamage(ownerNowNs, visualNowNs, animationNowNs, 400, 0U);
             }
             else if (aZombie->mHelmType != HelmType::HELMTYPE_NONE)
             {
@@ -3090,11 +3116,11 @@ void Plant::UpdateBowling()
                     mApp->PlayFoley(FoleyType::FOLEY_PLASTIC_HIT);
                 }
 
-                aZombie->TakeHelmDamage(900, 0U);
+                aZombie->TakeHelmDamage(ownerNowNs, 900, 0U);
             }
             else
             {
-                aZombie->TakeDamage(1800, 0U);
+                aZombie->TakeDamage(ownerNowNs, visualNowNs, animationNowNs, 1800, 0U);
             }
 
             if ((!mApp->IsFirstTimeAdventureMode() || mApp->mPlayerInfo->mLevel > 10) && mSeedType == SeedType::SEED_WALLNUT)
@@ -3210,26 +3236,26 @@ void Plant::UpdateBowling()
 
 //0x463150
 // GOTY @Patoke: 0x466B70
-void Plant::UpdateAbilities()
+void Plant::UpdateAbilities(std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs)
 {
     if (!IsInPlay())
         return;
 
     if (mState == PlantState::STATE_DOINGSPECIAL || mSquished)
     {
-        const auto nowNs = static_cast<std::int64_t>(mBoard->mLevelTimeNs);
+        const auto nowNs = ownerNowNs;
         if (mDisappearEndTimeNs == 0)
             mDisappearEndTimeNs = nowNs - static_cast<std::int64_t>(Sexy::gUpdateIntervalNs) + 2'000'000'000;
         if (nowNs > mDisappearEndTimeNs)
         {
-            Die();
+            Die(ownerNowNs, visualNowNs, animationNowNs);
             return;
         }
     }
 
     if (mWakeUpEndTimeNs != 0)
     {
-        const auto nowNs = static_cast<std::int64_t>(mBoard->mLevelTimeNs);
+        const auto nowNs = ownerNowNs;
         const auto beforeNs = nowNs - static_cast<std::int64_t>(Sexy::gUpdateIntervalNs);
         const auto soundNs = mWakeUpEndTimeNs - 600'000'000;
         if (beforeNs < soundNs && nowNs >= soundNs)
@@ -3237,21 +3263,21 @@ void Plant::UpdateAbilities()
         if (nowNs >= mWakeUpEndTimeNs)
         {
             mWakeUpEndTimeNs = 0;
-            SetSleeping(false);
+            SetSleeping(ownerNowNs, animationNowNs, false);
         }
     }
 
     if (mIsAsleep || mSquished || mOnBungeeState != PlantOnBungeeState::NOT_ON_BUNGEE)
         return;
 
-    UpdateShooting();
+    UpdateShooting(ownerNowNs, visualNowNs, animationNowNs);
 
     if (mStateCountdown > 0)
         mStateCountdown--;
 
     if (mApp->IsWallnutBowlingLevel())
     {
-        UpdateBowling();
+        UpdateBowling(ownerNowNs, visualNowNs, animationNowNs);
         return;
     }
 
@@ -3264,47 +3290,47 @@ void Plant::UpdateAbilities()
     // 转发到命名成员函数，空槽 = 无专属更新——射手走 SUBCLASS_SHOOTER 段）。
     // 共享专属更新：多类型同函数（向日葵/双子/金盏花=生产，地刺/地刺王）——
     // 命名 constexpr lambda 复用同一闭包，不重复生成 thunk。
-    static constexpr auto kProductionUpdate = [](Plant* p) { p->UpdateProductionPlant(); };
-    static constexpr auto kSpikeweedUpdate = [](Plant* p) { p->UpdateSpikeweed(); };
-    static constexpr void (*kSeedTypeUpdates[])(Plant*) = {
+    static constexpr auto kProductionUpdate = [](std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, Plant* p) { p->UpdateProductionPlant(ownerNowNs); };
+    static constexpr auto kSpikeweedUpdate = [](std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, Plant* p) { p->UpdateSpikeweed(ownerNowNs, visualNowNs, animationNowNs); };
+    static constexpr void (*kSeedTypeUpdates[] )(std::int64_t, std::int64_t, std::int64_t, Plant*) = {
 		/* SEED_PEASHOOTER        豌豆射手     */ nullptr,
 		/* SEED_SUNFLOWER         向日葵      */ kProductionUpdate,
 		/* SEED_CHERRYBOMB        樱桃炸弹     */ nullptr,
 		/* SEED_WALLNUT           坚果       */ nullptr,
-		/* SEED_POTATOMINE        土豆地雷     */ [](Plant* p) { p->UpdatePotato(); },
+		/* SEED_POTATOMINE        土豆地雷     */ [](std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, Plant* p) { p->UpdatePotato(ownerNowNs, visualNowNs, animationNowNs); },
 		/* SEED_SNOWPEA           寒冰射手     */ nullptr,
-		/* SEED_CHOMPER           大嘴花      */ [](Plant* p) { p->UpdateChomper(); },
+		/* SEED_CHOMPER           大嘴花      */ [](std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, Plant* p) { p->UpdateChomper(ownerNowNs, visualNowNs, animationNowNs); },
 		/* SEED_REPEATER          双发射手     */ nullptr,
 		/* SEED_PUFFSHROOM        小喷菇      */ nullptr,
-		/* SEED_SUNSHROOM         阳光菇      */ [](Plant* p) { p->UpdateSunShroom(); },
+		/* SEED_SUNSHROOM         阳光菇      */ [](std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, Plant* p) { p->UpdateSunShroom(ownerNowNs); },
 		/* SEED_FUMESHROOM        大喷菇      */ nullptr,
-		/* SEED_GRAVEBUSTER       墓碑吞噬者    */ [](Plant* p) { p->UpdateGraveBuster(); },
+		/* SEED_GRAVEBUSTER       墓碑吞噬者    */ [](std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, Plant* p) { p->UpdateGraveBuster(ownerNowNs, visualNowNs, animationNowNs); },
 		/* SEED_HYPNOSHROOM       魅惑菇      */ nullptr,
-		/* SEED_SCAREDYSHROOM     胆小菇      */ [](Plant* p) { p->UpdateScaredyShroom(); },
-		/* SEED_ICESHROOM         寒冰菇      */ [](Plant* p) { p->UpdateIceShroom(); },
-		/* SEED_DOOMSHROOM        毁灭菇      */ [](Plant* p) { p->UpdateDoomShroom(); },
-		/* SEED_LILYPAD           睡莲       */ [](Plant* p) { p->UpdateLilypad(); },
-		/* SEED_SQUASH            窝瓜       */ [](Plant* p) { p->UpdateSquash(); },
+		/* SEED_SCAREDYSHROOM     胆小菇      */ [](std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, Plant* p) { p->UpdateScaredyShroom(ownerNowNs); },
+		/* SEED_ICESHROOM         寒冰菇      */ [](std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, Plant* p) { p->UpdateIceShroom(ownerNowNs); },
+		/* SEED_DOOMSHROOM        毁灭菇      */ [](std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, Plant* p) { p->UpdateDoomShroom(ownerNowNs); },
+		/* SEED_LILYPAD           睡莲       */ [](std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, Plant* p) { p->UpdateLilypad(); },
+		/* SEED_SQUASH            窝瓜       */ [](std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, Plant* p) { p->UpdateSquash(ownerNowNs, visualNowNs, animationNowNs); },
 		/* SEED_THREEPEATER       三线射手     */ nullptr,
-		/* SEED_TANGLEKELP        缠绕海草     */ [](Plant* p) { p->UpdateTanglekelp(); },
+		/* SEED_TANGLEKELP        缠绕海草     */ [](std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, Plant* p) { p->UpdateTanglekelp(ownerNowNs, visualNowNs, animationNowNs); },
 		/* SEED_JALAPENO          火爆辣椒     */ nullptr,
 		/* SEED_SPIKEWEED         地刺       */ kSpikeweedUpdate,
-		/* SEED_TORCHWOOD         火炬树桩     */ [](Plant* p) { p->UpdateTorchwood(); },
+		/* SEED_TORCHWOOD         火炬树桩     */ [](std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, Plant* p) { p->UpdateTorchwood(); },
 		/* SEED_TALLNUT                    */ nullptr,
 		/* SEED_SEASHROOM                  */ nullptr,
 		/* SEED_PLANTERN                   */ nullptr,
-		/* SEED_CACTUS                     */ [](Plant* p) { p->UpdateCactus(); },
-		/* SEED_BLOVER                     */ [](Plant* p) { p->UpdateBlover(); },
+		/* SEED_CACTUS                     */ [](std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, Plant* p) { p->UpdateCactus(ownerNowNs); },
+		/* SEED_BLOVER                     */ [](std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, Plant* p) { p->UpdateBlover(ownerNowNs, visualNowNs, animationNowNs); },
 		/* SEED_SPLITPEA                   */ nullptr,
 		/* SEED_STARFRUIT                  */ nullptr,
 		/* SEED_PUMPKINSHELL               */ nullptr,
-		/* SEED_MAGNETSHROOM               */ [](Plant* p) { p->UpdateMagnetShroom(); },
+		/* SEED_MAGNETSHROOM               */ [](std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, Plant* p) { p->UpdateMagnetShroom(ownerNowNs); },
 		/* SEED_CABBAGEPULT                */ nullptr,
-		/* SEED_FLOWERPOT                  */ [](Plant* p) { p->UpdateFlowerPot(); },
+		/* SEED_FLOWERPOT                  */ [](std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, Plant* p) { p->UpdateFlowerPot(); },
 		/* SEED_KERNELPULT                 */ nullptr,
-		/* SEED_INSTANT_COFFEE             */ [](Plant* p) { p->UpdateCoffeeBean(); },
+		/* SEED_INSTANT_COFFEE             */ [](std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, Plant* p) { p->UpdateCoffeeBean(ownerNowNs, visualNowNs, animationNowNs); },
 		/* SEED_GARLIC                     */ nullptr,
-		/* SEED_UMBRELLA                   */ [](Plant* p) { p->UpdateUmbrella(); },
+		/* SEED_UMBRELLA                   */ [](std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, Plant* p) { p->UpdateUmbrella(ownerNowNs); },
 		/* SEED_MARIGOLD                   */ kProductionUpdate,
 		/* SEED_MELONPULT                  */ nullptr,
 		/* SEED_GATLINGPEA                 */ nullptr,
@@ -3312,10 +3338,10 @@ void Plant::UpdateAbilities()
 		/* SEED_GLOOMSHROOM                */ nullptr,
 		/* SEED_CATTAIL                    */ nullptr,
 		/* SEED_WINTERMELON                */ nullptr,
-		/* SEED_GOLD_MAGNET                */ [](Plant* p) { p->UpdateGoldMagnetShroom(); },
+		/* SEED_GOLD_MAGNET                */ [](std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, Plant* p) { p->UpdateGoldMagnetShroom(ownerNowNs, visualNowNs, animationNowNs); },
 		/* SEED_SPIKEROCK                  */ kSpikeweedUpdate,
-		/* SEED_COBCANNON                  */ [](Plant* p) { p->UpdateCobCannon(); },
-		/* SEED_IMITATER                   */ [](Plant* p) { p->UpdateImitater(); },
+		/* SEED_COBCANNON                  */ [](std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, Plant* p) { p->UpdateCobCannon(ownerNowNs); },
+		/* SEED_IMITATER                   */ [](std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, Plant* p) { p->UpdateImitater(ownerNowNs, visualNowNs, animationNowNs); },
 		/* SEED_EXPLODE_O_NUT              */ nullptr,
 		/* SEED_GIANT_WALLNUT              */ nullptr,
 		/* SEED_SPROUT                     */ nullptr,
@@ -3323,20 +3349,20 @@ void Plant::UpdateAbilities()
     };
     static_assert(sizeof(kSeedTypeUpdates) / sizeof(kSeedTypeUpdates[0]) == (int)SeedType::NUM_SEED_TYPES,
         "专属更新槽位须与 SeedType 枚举同步");
-    if (void (*aUpdate)(Plant*) = kSeedTypeUpdates[mSeedType])
+    if (void (*aUpdate )(std::int64_t, std::int64_t, std::int64_t, Plant*) = kSeedTypeUpdates[mSeedType])
     {
-        aUpdate(this);
+        aUpdate(ownerNowNs, visualNowNs, animationNowNs, this);
     }
     if (mSubclass == PlantSubClass::SUBCLASS_SHOOTER)
     {
-        UpdateShooter();
+        UpdateShooter(ownerNowNs, visualNowNs, animationNowNs);
     }
     if (mDoSpecialCountdown > 0)
     {
         mDoSpecialCountdown--;
         if (mDoSpecialCountdown == 0)
         {
-            DoSpecial();
+            DoSpecial(ownerNowNs, visualNowNs, animationNowNs);
         }
     }
 }
@@ -3393,12 +3419,13 @@ bool Plant::IsUpgradableTo(SeedType theUpgradedType)
 
 //0x4635C0
 // GOTY @Patoke: 0x466FD0
-void Plant::UpdateReanimColor()
+void Plant::UpdateReanimColor(std::int64_t ownerNowNs)
 {
     if (!mIsOnBoard)
         return;
 
     Reanimation* aBodyReanim = mApp->ReanimationTryToGet(mBodyReanimID);
+
     if (aBodyReanim == nullptr)
         return;
 
@@ -3421,11 +3448,11 @@ void Plant::UpdateReanimColor()
     }
     else if (IsPartOfUpgradableTo(aSeedType) && mBoard->CanPlantAt(mPlantCol, mRow, aSeedType) == PLANTING_OK)
     {
-        aColorOverride = GetFlashingColorNs(mBoard->mLevelTimeNs, 900'000'000);
+        aColorOverride = GetFlashingColorNs(ownerNowNs, 900'000'000);
     }
     else if (aSeedType == SeedType::SEED_COBCANNON && mSeedType == SeedType::SEED_KERNELPULT && mBoard->CanPlantAt(mPlantCol - 1, mRow, aSeedType) == PLANTING_OK)
     {
-        aColorOverride = GetFlashingColorNs(mBoard->mLevelTimeNs, 900'000'000);
+        aColorOverride = GetFlashingColorNs(ownerNowNs, 900'000'000);
     }
     else if (mSeedType == SeedType::SEED_EXPLODE_O_NUT)
     {
@@ -3447,15 +3474,15 @@ void Plant::UpdateReanimColor()
             aBodyReanim->mExtraAdditiveColor = Color(255, 255, 255, 92);
         }
     }
-    else if (mBeghouledFlashEndTimeNs > static_cast<std::int64_t>(mBoard->mLevelTimeNs))
+    else if (mBeghouledFlashEndTimeNs > ownerNowNs)
     {
-        int anAlpha = TodAnimateCurveNs(500'000'000, 0, std::max<std::int64_t>(0, mBeghouledFlashEndTimeNs - static_cast<std::int64_t>(mBoard->mLevelTimeNs)) % 500'000'000, 0, 128, Curves::Bounce);
+        int anAlpha = TodAnimateCurveNs(500'000'000, 0, std::max<std::int64_t>(0, mBeghouledFlashEndTimeNs - ownerNowNs) % 500'000'000, 0, 128, Curves::Bounce);
         aBodyReanim->mExtraAdditiveColor = Color(255, 255, 255, anAlpha);
         aBodyReanim->mEnableExtraAdditiveDraw = true;
     }
-    else if (mEatenFlashEndTimeNs > static_cast<std::int64_t>(mBoard->mLevelTimeNs))
+    else if (mEatenFlashEndTimeNs > ownerNowNs)
     {
-        int aGrayness = ClampInt(static_cast<int>(std::max<std::int64_t>(0, mEatenFlashEndTimeNs - static_cast<std::int64_t>(mBoard->mLevelTimeNs)) / 10'000'000) * 3, 0, mImitaterType == SeedType::SEED_IMITATER ? 128 : 255);
+        int aGrayness = ClampInt(static_cast<int>(std::max<std::int64_t>(0, mEatenFlashEndTimeNs - ownerNowNs) / 10'000'000) * 3, 0, mImitaterType == SeedType::SEED_IMITATER ? 128 : 255);
         aBodyReanim->mExtraAdditiveColor = Color(aGrayness, aGrayness, aGrayness);
         aBodyReanim->mEnableExtraAdditiveDraw = true;
     }
@@ -3464,9 +3491,9 @@ void Plant::UpdateReanimColor()
         aBodyReanim->mEnableExtraAdditiveDraw = false;
     }
 
-    if (mBeghouledFlashEndTimeNs > static_cast<std::int64_t>(mBoard->mLevelTimeNs))
+    if (mBeghouledFlashEndTimeNs > ownerNowNs)
     {
-        int anAlpha = TodAnimateCurveNs(500'000'000, 0, std::max<std::int64_t>(0, mBeghouledFlashEndTimeNs - static_cast<std::int64_t>(mBoard->mLevelTimeNs)) % 500'000'000, 0, 128, Curves::Bounce);
+        int anAlpha = TodAnimateCurveNs(500'000'000, 0, std::max<std::int64_t>(0, mBeghouledFlashEndTimeNs - ownerNowNs) % 500'000'000, 0, 128, Curves::Bounce);
         aBodyReanim->mExtraOverlayColor = Color(255, 255, 255, anAlpha);
         aBodyReanim->mEnableExtraOverlayDraw = true;
     }
@@ -3485,16 +3512,17 @@ bool Plant::IsInPlay()
 }
 
 //0x463920
-void Plant::UpdateReanim()
+void Plant::UpdateReanim(std::int64_t ownerNowNs, std::int64_t animationNowNs)
 {
     Reanimation* aBodyReanim = mApp->ReanimationTryToGet(mBodyReanimID);
+
     if (aBodyReanim == nullptr)
         return;
 
-    UpdateReanimColor();
+    UpdateReanimColor(ownerNowNs);
 
     float aOffsetX = mShakeOffsetX;
-    float aOffsetY = PlantDrawHeightOffset(mBoard, this, mSeedType, mPlantCol, mRow);
+    float aOffsetY = PlantDrawHeightOffset(ownerNowNs, mBoard, this, mSeedType, mPlantCol, mRow);
     float aScaleX = 1.0f, aScaleY = 1.0f;
     if ((mApp->mGameMode == GameMode::GAMEMODE_LIMBO_BIG_TIME) &&
         (mSeedType == SeedType::SEED_WALLNUT || mSeedType == SeedType::SEED_SUNFLOWER || mSeedType == SeedType::SEED_MARIGOLD))
@@ -3529,14 +3557,17 @@ void Plant::UpdateReanim()
     {
         aOffsetY += TodAnimateCurveNs(4'000'000'000LL, 0, mStateCountdown.mNanoseconds, 0.0f, 30.0f, Curves::Linear);
     }
-    if (mWakeUpEndTimeNs > static_cast<std::int64_t>(mBoard->mLevelTimeNs))
+    if (mWakeUpEndTimeNs > 0 &&
+        mWakeUpEndTimeNs > ownerNowNs)
     {
-        float aScaleFactor = TodAnimateCurveNs(700'000'000, 0, std::max<std::int64_t>(0, mWakeUpEndTimeNs - static_cast<std::int64_t>(mBoard->mLevelTimeNs)), 1.0f, 0.8f, Curves::EaseSinWave);
+        float aScaleFactor = TodAnimateCurveNs(700'000'000, 0, std::max<std::int64_t>(0, mWakeUpEndTimeNs - ownerNowNs), 1.0f, 0.8f, Curves::EaseSinWave);
         aScaleY *= aScaleFactor;
         aOffsetY += 80.0f - 80.0f * aScaleFactor;
     }
 
-    aBodyReanim->Update();
+    aBodyReanim->UpdateAt(animationNowNs);
+    if (auto* sleepingReanim = mApp->ReanimationTryToGet(mSleepingReanimID))
+        sleepingReanim->UpdateAt(animationNowNs);
 
     if (mSeedType == SeedType::SEED_LEFTPEATER)
     {
@@ -3611,7 +3642,7 @@ void Plant::UpdateReanim()
 }
 
 //0x463E40
-void Plant::Update(std::uint64_t theLevelDeltaNs)
+void Plant::Update(std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, std::uint64_t theLevelDeltaNs)
 {
     mLaunchClockActive = false;
     bool doUpdate = false;
@@ -3624,26 +3655,26 @@ void Plant::Update(std::uint64_t theLevelDeltaNs)
     else if (!mIsOnBoard || mApp->mGameScene == GameScenes::SCENE_PLAYING)
         doUpdate = true;
 
-    const auto domain = !mIsOnBoard ? ReanimTimeDomain::Visual :
-        (doUpdate && mBoard ? mBoard->AnimationTimeDomain() : ReanimTimeDomain::Battle);
     for (const auto id : {mBodyReanimID, mHeadReanimID, mHeadReanimID2, mHeadReanimID3,
         mBlinkReanimID, mLightReanimID, mSleepingReanimID})
         if (auto* animation = mApp->ReanimationTryToGet(id))
-            animation->BindTimeDomain(animation->mIsAttachment ? domain : ReanimTimeDomain::Visual);
+        {
+            animation->PrepareTimeAt(animationNowNs);
+        }
     if (doUpdate)
     {
-        UpdateAbilities();
-        Animate();
+        UpdateAbilities(ownerNowNs, visualNowNs, animationNowNs);
+        Animate(ownerNowNs, animationNowNs);
 
         if (mPlantHealth < 0)
-            Die();
+            Die(ownerNowNs, visualNowNs, animationNowNs);
 
-        UpdateReanim();
+        UpdateReanim(ownerNowNs, animationNowNs);
     }
     if (!mLaunchClockActive)
     {
         // A plant born during this step already starts at now, not at step begin.
-        const auto aNow = mBoard ? static_cast<std::int64_t>(mBoard->mLevelTimeNs) : mLaunchWindowStartNs;
+        const auto aNow = ownerNowNs;
         const auto aFreezeNs = std::min<std::uint64_t>(theLevelDeltaNs,
             aNow > mLaunchWindowStartNs ? aNow - mLaunchWindowStartNs : 0);
         mNextLaunchTimeNs = PlantLaunchClock::Add(mNextLaunchTimeNs, aFreezeNs);
@@ -3664,7 +3695,7 @@ bool Plant::NotOnGround()
 }
 
 //0x463F30
-Reanimation* Plant::AttachBlinkAnim(Reanimation* theReanimBody)
+Reanimation* Plant::AttachBlinkAnim(std::int64_t ownerNowNs, std::int64_t animationNowNs, Reanimation* theReanimBody)
 {
     const PlantDefinition& aPlantDef = GetPlantDefinition(mSeedType);
     LawnApp* aApp = (LawnApp*)gSexyAppBase;
@@ -3684,8 +3715,8 @@ Reanimation* Plant::AttachBlinkAnim(Reanimation* theReanimBody)
         ReanimTrackId mTrackToPlay;
         ReanimTrackId mTrackToAttach;
     };
-    using BlinkCaseFn = void (*)(Plant&, Reanimation*, BlinkSelection&);
-    static constexpr BlinkCaseFn kBlinkWallnutFamily = [](Plant& p, Reanimation* theReanimBody, BlinkSelection& aSel)
+    using BlinkCaseFn = void (*)(std::int64_t, Plant&, Reanimation*, BlinkSelection&);
+    static constexpr BlinkCaseFn kBlinkWallnutFamily = [](std::int64_t ownerNowNs, Plant& p, Reanimation* theReanimBody, BlinkSelection& aSel)
     {
         int aHit = Rand(10);
         if (aHit < 1 && theReanimBody->TrackExists(ReanimTrackId::anim_blink_twitch))
@@ -3697,7 +3728,7 @@ Reanimation* Plant::AttachBlinkAnim(Reanimation* theReanimBody)
             aSel.mTrackToPlay = aHit < 7 ? ReanimTrackId::anim_blink_twice : ReanimTrackId::anim_blink_thrice;
         }
     };
-    static constexpr BlinkCaseFn kBlinkThreepeater = [](Plant& p, Reanimation* theReanimBody, BlinkSelection& aSel)
+    static constexpr BlinkCaseFn kBlinkThreepeater = [](std::int64_t ownerNowNs, Plant& p, Reanimation* theReanimBody, BlinkSelection& aSel)
     {
         int aHit = Rand(3);
         if (aHit == 0)
@@ -3722,7 +3753,7 @@ Reanimation* Plant::AttachBlinkAnim(Reanimation* theReanimBody)
             aSel.mAnimToAttach = FindReanimAttachment(aTrackInstance->mAttachmentID);
         }
     };
-    static constexpr BlinkCaseFn kBlinkSplitPea = [](Plant& p, Reanimation* theReanimBody, BlinkSelection& aSel)
+    static constexpr BlinkCaseFn kBlinkSplitPea = [](std::int64_t ownerNowNs, Plant& p, Reanimation* theReanimBody, BlinkSelection& aSel)
     {
         if (Rand(2) == 0)
         {
@@ -3737,7 +3768,7 @@ Reanimation* Plant::AttachBlinkAnim(Reanimation* theReanimBody)
             aSel.mAnimToAttach = p.mApp->ReanimationTryToGet(p.mHeadReanimID2);
         }
     };
-    static constexpr BlinkCaseFn kBlinkTwinSunflower = [](Plant& p, Reanimation* theReanimBody, BlinkSelection& aSel)
+    static constexpr BlinkCaseFn kBlinkTwinSunflower = [](std::int64_t ownerNowNs, Plant& p, Reanimation* theReanimBody, BlinkSelection& aSel)
     {
         if (Rand(2) == 0)
         {
@@ -3750,7 +3781,7 @@ Reanimation* Plant::AttachBlinkAnim(Reanimation* theReanimBody)
             aSel.mTrackToAttach = ReanimTrackId::anim_face2;
         }
     };
-    static constexpr BlinkCaseFn kBlinkPeaFamily = [](Plant& p, Reanimation* theReanimBody, BlinkSelection& aSel)
+    static constexpr BlinkCaseFn kBlinkPeaFamily = [](std::int64_t ownerNowNs, Plant& p, Reanimation* theReanimBody, BlinkSelection& aSel)
     {
         if (theReanimBody->TrackExists(ReanimTrackId::anim_stem))
         {
@@ -3825,7 +3856,7 @@ Reanimation* Plant::AttachBlinkAnim(Reanimation* theReanimBody)
     if ((unsigned)mSeedType < sizeof(kBlinkCases) / sizeof(kBlinkCases[0]) &&
         kBlinkCases[mSeedType] != nullptr)
     {
-        kBlinkCases[mSeedType](*this, theReanimBody, aSelection);
+        kBlinkCases[mSeedType](ownerNowNs, *this, theReanimBody, aSelection);
     }
     aAnimToAttach = aSelection.mAnimToAttach;
     aTrackToPlay = aSelection.mTrackToPlay;
@@ -3840,7 +3871,7 @@ Reanimation* Plant::AttachBlinkAnim(Reanimation* theReanimBody)
     if (!theReanimBody->TrackExists(aTrackToPlay))
         return nullptr;
 
-    Reanimation* aBlinkReanim = aApp->mEffectSystem->mReanimationHolder->AllocReanimation(0.0f, 0.0f, 0, aPlantDef.mReanimationType);
+    Reanimation* aBlinkReanim = aApp->AddReanimation(0.0f, 0.0f, 0, aPlantDef.mReanimationType, animationNowNs);
     aBlinkReanim->SetFramesForLayer(aTrackToPlay);
     aBlinkReanim->ChangeLoopType(ReanimLoopType::REANIM_PLAY_ONCE_FULL_LAST_FRAME_AND_HOLD);
     aBlinkReanim->ApplyRate(15.0f);
@@ -3868,7 +3899,7 @@ Reanimation* Plant::AttachBlinkAnim(Reanimation* theReanimBody)
 }
 
 //0x464230
-void Plant::DoBlink()
+void Plant::DoBlink(std::int64_t ownerNowNs, std::int64_t animationNowNs)
 {
     mBlinkCountdown = 400 + Rand(400);
 
@@ -3884,6 +3915,7 @@ void Plant::DoBlink()
 
     EndBlink();
     Reanimation* aBodyReanim = mApp->ReanimationTryToGet(mBodyReanimID);
+
     if (aBodyReanim == nullptr)
         return;
 
@@ -3897,7 +3929,7 @@ void Plant::DoBlink()
         mBlinkCountdown = 1000 + Rand(1000);
     }
 
-    Reanimation* aBlinkReanim = AttachBlinkAnim(aBodyReanim);
+    Reanimation* aBlinkReanim = AttachBlinkAnim(ownerNowNs, animationNowNs, aBodyReanim);
     if (aBlinkReanim)
     {
         mBlinkReanimID = mApp->ReanimationGetID(aBlinkReanim);
@@ -3922,11 +3954,12 @@ void Plant::EndBlink()
 }
 
 //0x464410
-void Plant::UpdateBlink()
+void Plant::UpdateBlink(std::int64_t ownerNowNs, std::int64_t animationNowNs)
 {
     if (mBlinkReanimID != ReanimationID::REANIMATIONID_NULL)
     {
         Reanimation* aBlinkReanim = mApp->ReanimationTryToGet(mBlinkReanimID);
+
         if (aBlinkReanim == nullptr || aBlinkReanim->mLoopCount > 0)
         {
             EndBlink();
@@ -3941,15 +3974,16 @@ void Plant::UpdateBlink()
         mBlinkCountdown--;
         if (mBlinkCountdown == 0)
         {
-            DoBlink();
+            DoBlink(ownerNowNs, animationNowNs);
         }
     }
 }
 
 //0x464480
-void Plant::AnimateNuts()
+void Plant::AnimateNuts(std::int64_t ownerNowNs)
 {
     Reanimation* aBodyReanim = mApp->ReanimationTryToGet(mBodyReanimID);
+
     if (aBodyReanim == nullptr)
         return;
 
@@ -3983,7 +4017,7 @@ void Plant::AnimateNuts()
         if (aAppearance != aCracked2)
         {
             aBodyReanim->SetVariantOption(aTrackToOverride, aCracked2);
-            mApp->AddTodParticle(aPosX, aPosY, mRenderOrder + 4, ParticleEffect::PARTICLE_WALLNUT_EAT_LARGE);
+            mApp->AddTodParticle(aPosX, aPosY, mRenderOrder + 4, ParticleEffect::PARTICLE_WALLNUT_EAT_LARGE, ownerNowNs);
         }
     }
     else if (mPlantHealth < mPlantMaxHealth * 2 / 3)
@@ -3991,7 +4025,7 @@ void Plant::AnimateNuts()
         if (aAppearance != aCracked1)
         {
             aBodyReanim->SetVariantOption(aTrackToOverride, aCracked1);
-            mApp->AddTodParticle(aPosX, aPosY, mRenderOrder + 4, ParticleEffect::PARTICLE_WALLNUT_EAT_LARGE);
+            mApp->AddTodParticle(aPosX, aPosY, mRenderOrder + 4, ParticleEffect::PARTICLE_WALLNUT_EAT_LARGE, ownerNowNs);
         }
     }
     else
@@ -4001,7 +4035,7 @@ void Plant::AnimateNuts()
 
     if (IsInPlay() && !mApp->IsIZombieLevel())
     {
-        if (mRecentlyEatenEndTimeNs > static_cast<std::int64_t>(mBoard->mLevelTimeNs))
+        if (mRecentlyEatenEndTimeNs > ownerNowNs)
         {
             aBodyReanim->ApplyRate(0.1f);
             return;
@@ -4064,7 +4098,7 @@ void Plant::AnimatePumpkin()
 }
 
 //0x464820
-void Plant::UpdateShooting()
+void Plant::UpdateShooting(std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs)
 {
     if (NotOnGround() || mShootingCounter == 0)
         return;
@@ -4074,7 +4108,7 @@ void Plant::UpdateShooting()
     if (mSeedType == SeedType::SEED_FUMESHROOM && mShootingCounter == 15)
     {
         int aRenderPosition = Board::MakeRenderOrder(RenderLayer::RENDER_LAYER_PARTICLE, mRow, 0);
-        AddAttachedParticle((mX) + 85, (mY) + 31, aRenderPosition, ParticleEffect::PARTICLE_FUMECLOUD);
+        AddAttachedParticle(ownerNowNs, (mX) + 85, (mY) + 31, aRenderPosition, ParticleEffect::PARTICLE_FUMECLOUD);
     }
 
     if (mSeedType == SeedType::SEED_GLOOMSHROOM)
@@ -4082,18 +4116,18 @@ void Plant::UpdateShooting()
         if (mShootingCounter == 136 || mShootingCounter == 108 || mShootingCounter == 80 || mShootingCounter == 52)
         {
             int aRenderPosition = Board::MakeRenderOrder(RenderLayer::RENDER_LAYER_PARTICLE, mRow, 0);
-            AddAttachedParticle((mX) + 40, (mY) + 40, aRenderPosition, ParticleEffect::PARTICLE_GLOOMCLOUD);
+            AddAttachedParticle(ownerNowNs, (mX) + 40, (mY) + 40, aRenderPosition, ParticleEffect::PARTICLE_GLOOMCLOUD);
         }
         if (mShootingCounter == 126 || mShootingCounter == 98 || mShootingCounter == 70 || mShootingCounter == 42)
         {
-            Fire(nullptr, mRow, PlantWeapon::WEAPON_PRIMARY);
+            Fire(ownerNowNs, visualNowNs, animationNowNs, nullptr, mRow, PlantWeapon::WEAPON_PRIMARY);
         }
     }
     else if (mSeedType == SeedType::SEED_GATLINGPEA)
     {
         if (mShootingCounter == 18 || mShootingCounter == 35 || mShootingCounter == 51 || mShootingCounter == 68)
         {
-            Fire(nullptr, mRow, PlantWeapon::WEAPON_PRIMARY);
+            Fire(ownerNowNs, visualNowNs, animationNowNs, nullptr, mRow, PlantWeapon::WEAPON_PRIMARY);
         }
     }
     else if (mSeedType == SeedType::SEED_CATTAIL)
@@ -4103,7 +4137,7 @@ void Plant::UpdateShooting()
             Zombie* aZombie = FindTargetZombie(mRow, PlantWeapon::WEAPON_PRIMARY);
             if (aZombie)
             {
-                Fire(aZombie, mRow, PlantWeapon::WEAPON_PRIMARY);
+                Fire(ownerNowNs, visualNowNs, animationNowNs, aZombie, mRow, PlantWeapon::WEAPON_PRIMARY);
             }
         }
     }
@@ -4114,38 +4148,43 @@ void Plant::UpdateShooting()
             int rowAbove = mRow - 1;
             int rowBelow = mRow + 1;
             Reanimation* aHeadReanim2 = mApp->ReanimationGet(mHeadReanimID2);
+
             Reanimation* aHeadReanim3 = mApp->ReanimationGet(mHeadReanimID3);
+
             Reanimation* aHeadReanim1 = mApp->ReanimationGet(mHeadReanimID);
+
 
             if (aHeadReanim1->mLoopType == ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD)
             {
-                Fire(nullptr, rowBelow, PlantWeapon::WEAPON_PRIMARY);
+                Fire(ownerNowNs, visualNowNs, animationNowNs, nullptr, rowBelow, PlantWeapon::WEAPON_PRIMARY);
             }
             if (aHeadReanim2->mLoopType == ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD)
             {
-                Fire(nullptr, mRow, PlantWeapon::WEAPON_PRIMARY);
+                Fire(ownerNowNs, visualNowNs, animationNowNs, nullptr, mRow, PlantWeapon::WEAPON_PRIMARY);
             }
             if (aHeadReanim3->mLoopType == ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD)
             {
-                Fire(nullptr, rowAbove, PlantWeapon::WEAPON_PRIMARY);
+                Fire(ownerNowNs, visualNowNs, animationNowNs, nullptr, rowAbove, PlantWeapon::WEAPON_PRIMARY);
             }
         }
         else if (mSeedType == SeedType::SEED_SPLITPEA)
         {
             Reanimation* aHeadBackReanim = mApp->ReanimationTryToGet(mHeadReanimID2);
+
             Reanimation* aHeadFrontReanim = mApp->ReanimationTryToGet(mHeadReanimID);
+
             if (aHeadFrontReanim->mLoopType == ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD)
             {
-                Fire(nullptr, mRow, PlantWeapon::WEAPON_PRIMARY);
+                Fire(ownerNowNs, visualNowNs, animationNowNs, nullptr, mRow, PlantWeapon::WEAPON_PRIMARY);
             }
             if (aHeadBackReanim->mLoopType == ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD)
             {
-                Fire(nullptr, mRow, PlantWeapon::WEAPON_SECONDARY);
+                Fire(ownerNowNs, visualNowNs, animationNowNs, nullptr, mRow, PlantWeapon::WEAPON_SECONDARY);
             }
         }
         else if (mState == PlantState::STATE_CACTUS_LOW)
         {
-            Fire(nullptr, mRow, PlantWeapon::WEAPON_SECONDARY);
+            Fire(ownerNowNs, visualNowNs, animationNowNs, nullptr, mRow, PlantWeapon::WEAPON_SECONDARY);
         }
         else if (mSeedType == SeedType::SEED_CABBAGEPULT || mSeedType == SeedType::SEED_KERNELPULT || mSeedType == SeedType::SEED_MELONPULT || mSeedType == SeedType::SEED_WINTERMELON)
         {
@@ -4153,6 +4192,7 @@ void Plant::UpdateShooting()
             if (mState == PlantState::STATE_KERNELPULT_BUTTER)
             {
                 Reanimation* aBodyReanim = mApp->ReanimationGet(mBodyReanimID);
+
                 aBodyReanim->AssignRenderGroupToRange(ReanimTrackRanges::Cornpult_butter, RENDER_GROUP_HIDDEN);
                 aBodyReanim->AssignRenderGroupToRange(ReanimTrackRanges::Cornpult_kernal, RENDER_GROUP_NORMAL);
                 mState = PlantState::STATE_NOTREADY;
@@ -4160,11 +4200,11 @@ void Plant::UpdateShooting()
             }
 
             Zombie* aZombie = FindTargetZombie(mRow, aPlantWeapon);
-            Fire(aZombie, mRow, aPlantWeapon);
+            Fire(ownerNowNs, visualNowNs, animationNowNs, aZombie, mRow, aPlantWeapon);
         }
         else
         {
-            Fire(nullptr, mRow, PlantWeapon::WEAPON_PRIMARY);
+            Fire(ownerNowNs, visualNowNs, animationNowNs, nullptr, mRow, PlantWeapon::WEAPON_PRIMARY);
         }
 
         return;
@@ -4174,11 +4214,15 @@ void Plant::UpdateShooting()
         return;
 
     Reanimation* aBodyReanim = mApp->ReanimationTryToGet(mBodyReanimID);
+
     Reanimation* aHeadReanim = mApp->ReanimationTryToGet(mHeadReanimID);
+
     if (mSeedType == SeedType::SEED_THREEPEATER)
     {
         Reanimation* aHeadReanim2 = mApp->ReanimationGet(mHeadReanimID2);
+
         Reanimation* aHeadReanim3 = mApp->ReanimationGet(mHeadReanimID3);
+
 
         if (aHeadReanim2->mLoopCount > 0)
         {
@@ -4213,6 +4257,7 @@ void Plant::UpdateShooting()
     {
         Reanimation* aHeadReanim2 = mApp->ReanimationGet(mHeadReanimID2);
 
+
         if (aHeadReanim->mLoopCount > 0)
         {
             aHeadReanim->StartBlend(20);
@@ -4237,7 +4282,7 @@ void Plant::UpdateShooting()
     {
         if (aBodyReanim->mLoopCount > 0)
         {
-            PlayBodyReanim(ReanimTrackId::anim_idlehigh, ReanimLoopType::REANIM_LOOP, 20, 0.0f);
+            PlayBodyReanim(ownerNowNs, ReanimTrackId::anim_idlehigh, ReanimLoopType::REANIM_LOOP, 20, 0.0f);
 
             aBodyReanim->ApplyRate(aBodyReanim->mDefinition->mFPS);
             if (mApp->IsIZombieLevel())
@@ -4266,13 +4311,13 @@ void Plant::UpdateShooting()
         {
             mState = PlantState::STATE_COBCANNON_ARMING;
             mStateCountdown = 3000;
-            PlayBodyReanim(ReanimTrackId::anim_unarmed_idle, ReanimLoopType::REANIM_LOOP, 20, aBodyReanim->mDefinition->mFPS);
+            PlayBodyReanim(ownerNowNs, ReanimTrackId::anim_unarmed_idle, ReanimLoopType::REANIM_LOOP, 20, aBodyReanim->mDefinition->mFPS);
             return;
         }
     }
     else if (aBodyReanim && aBodyReanim->mLoopCount > 0)
     {
-        PlayIdleAnim(aBodyReanim->mDefinition->mFPS);
+        PlayIdleAnim(ownerNowNs, aBodyReanim->mDefinition->mFPS);
         return;
     }
 
@@ -4280,7 +4325,7 @@ void Plant::UpdateShooting()
 }
 
 //0x464DB0
-void Plant::Animate()
+void Plant::Animate(std::int64_t ownerNowNs, std::int64_t animationNowNs)
 {
     if ((mSeedType == SeedType::SEED_CHERRYBOMB || mSeedType == SeedType::SEED_JALAPENO) && mApp->mGameMode != GameMode::GAMEMODE_LIMBO_ZEN_GARDEN)
     {
@@ -4297,7 +4342,7 @@ void Plant::Animate()
 
     if (mSeedType == SeedType::SEED_WALLNUT || mSeedType == SeedType::SEED_TALLNUT)
     {
-        AnimateNuts();
+        AnimateNuts(ownerNowNs);
     }
     else if (mSeedType == SeedType::SEED_GARLIC)
     {
@@ -4308,7 +4353,7 @@ void Plant::Animate()
         AnimatePumpkin();
     }
 
-    UpdateBlink();
+    UpdateBlink(ownerNowNs, animationNowNs);
 
     if (mAnimPing)
     {
@@ -4409,7 +4454,7 @@ float PlantFlowerPotHeightOffset(SeedType theSeedType, float theFlowerPotScale)
 
 //0x465040
 // GOTY @Patoke: 0x468A90
-float PlantDrawHeightOffset(Board* theBoard, Plant* thePlant, SeedType theSeedType, int theCol, int theRow)
+float PlantDrawHeightOffset(std::int64_t ownerNowNs, Board* theBoard, Plant* thePlant, SeedType theSeedType, int theCol, int theRow)
 {
     float aHeightOffset = 0.0f;
 
@@ -4438,8 +4483,7 @@ float PlantDrawHeightOffset(Board* theBoard, Plant* thePlant, SeedType theSeedTy
 
     if (doFloating)
     {
-		const std::uint64_t aTimeNs = theBoard ? theBoard->mLevelTimeNs :
-			gLawnApp->mAppCounter.mNanoseconds;
+		const std::uint64_t aTimeNs = ownerNowNs;
 		constexpr std::uint64_t FLOATING_PLANT_PERIOD_NS = 2'000'000'000;
         float aPos = theRow * PI + theCol * 0.25f * PI;
 		float aTime = static_cast<float>(double(aTimeNs % FLOATING_PLANT_PERIOD_NS) /
@@ -4562,9 +4606,10 @@ float PlantDrawHeightOffset(Board* theBoard, Plant* thePlant, SeedType theSeedTy
 }
 
 //0x465380
-void Plant::GetPeaHeadOffset(int& theOffsetX, int& theOffsetY)
+void Plant::GetPeaHeadOffset(std::int64_t ownerNowNs, int& theOffsetX, int& theOffsetY)
 {
     Reanimation* aBodyReanim = mApp->ReanimationTryToGet(mBodyReanimID);
+
 
     int aTrackIndex = 0;
     if (aBodyReanim->TrackExists(ReanimTrackId::anim_stem))
@@ -4587,14 +4632,14 @@ void Plant::GetPeaHeadOffset(int& theOffsetX, int& theOffsetY)
 // The gameplay enum selects an authored atlas sprite; rectangles and scales come
 // from Magnet.atlas.dsl. The old Image* table/if-chain measurements do not measure
 // this atlas path, so this change makes no CPU timing claim.
-void Plant::DrawMagnetItems(Graphics* g)
+void Plant::DrawMagnetItems(std::int64_t ownerNowNs, Graphics* g)
 {
     const TextureSource aTexture{MagnetAtlas::Texture, 0};
-    const auto ageNs = mBoard->mLevelTimeNs - mMagnetStartTimeNs;
+    const auto ageNs = ownerNowNs - mMagnetStartTimeNs;
     const float sizeFactor = MagnetMotion::SizeAt(ageNs);
     if (sizeFactor <= 0.0f) return;
     float aOffsetX = 0.0f;
-    float aOffsetY = PlantDrawHeightOffset(mBoard, this, mSeedType, mPlantCol, mRow);
+    float aOffsetY = PlantDrawHeightOffset(ownerNowNs, mBoard, this, mSeedType, mPlantCol, mRow);
 
     for (int i = 0; i < MAX_MAGNET_ITEMS; i++)
     {
@@ -4625,7 +4670,7 @@ void Plant::DrawMagnetItems(Graphics* g)
 }
 
 //0x465680
-void Plant::DrawShadow(Sexy::Graphics* g, float theOffsetX, float theOffsetY)
+void Plant::DrawShadow(std::int64_t ownerNowNs, Sexy::Graphics* g, float theOffsetX, float theOffsetY)
 {
     if (mSeedType == SeedType::SEED_LILYPAD || mSeedType == SeedType::SEED_STARFRUIT || mSeedType == SeedType::SEED_TANGLEKELP ||
         mSeedType == SeedType::SEED_SEASHROOM || mSeedType == SeedType::SEED_COBCANNON || mSeedType == SeedType::SEED_SPIKEWEED ||
@@ -4724,6 +4769,7 @@ void Plant::DrawShadow(Sexy::Graphics* g, float theOffsetX, float theOffsetY)
         else if (mState == PlantState::STATE_SUNSHROOM_GROWING)
         {
             Reanimation* aBodyReanim = mApp->ReanimationGet(mBodyReanimID);
+
             aScale = 0.5f + 0.5f * (static_cast<double>(aBodyReanim->SamplePlayback().phaseNs) / aBodyReanim->mPeriodNs);
         }
     }
@@ -4756,10 +4802,10 @@ void Plant::DrawShadow(Sexy::Graphics* g, float theOffsetX, float theOffsetY)
 
 //0x465A90
 // GOTY @Patoke: 0x469500
-void Plant::Draw(Graphics* g)
+void Plant::Draw(std::int64_t ownerNowNs, Graphics* g)
 {
     float aOffsetX = 0.0f;
-    float aOffsetY = PlantDrawHeightOffset(mBoard, this, mSeedType, mPlantCol, mRow);
+    float aOffsetY = PlantDrawHeightOffset(ownerNowNs, mBoard, this, mSeedType, mPlantCol, mRow);
     if (Plant::IsFlying(mSeedType) && mSquished)
     {
         aOffsetY += 30.0f;
@@ -4821,12 +4867,11 @@ void Plant::Draw(Graphics* g)
             aPumpkin = this;
         }
 
-        DrawShadow(g, aOffsetX, aOffsetY);
+        DrawShadow(ownerNowNs, g, aOffsetX, aOffsetY);
 
         if (Plant::IsFlying(mSeedType))
         {
-			const std::uint64_t aTimeNs = mIsOnBoard ? mBoard->mLevelTimeNs :
-				mApp->mAppCounter.mNanoseconds;
+			const std::uint64_t aTimeNs = ownerNowNs;
             // Reduce in double before converting the bounded drawing phase to float.
             const double aPhase = fmod(
                 (mRow * 97.0 + mPlantCol * 61.0) * 0.03 +
@@ -4838,6 +4883,7 @@ void Plant::Draw(Graphics* g)
         if (aDrawPumpkinBack)
         {
             Reanimation* aPumpkinReanim = mApp->ReanimationGet(aPumpkin->mBodyReanimID);
+
             Graphics aPumpkinGraphics(*g);
             aPumpkinGraphics.mTransX += (aPumpkin->mX) - (mX);
             aPumpkinGraphics.mTransY += (aPumpkin->mY) - (mY);
@@ -4853,6 +4899,7 @@ void Plant::Draw(Graphics* g)
         else if (mBodyReanimID != ReanimationID::REANIMATIONID_NULL)
         {
             Reanimation* aBodyReanim = mApp->ReanimationTryToGet(mBodyReanimID);
+
             if (aBodyReanim)
             {
                 // GOTY 1073 Plant::Draw (0x00469500) draws only render
@@ -4864,7 +4911,7 @@ void Plant::Draw(Graphics* g)
 
         if (mSeedType == SeedType::SEED_MAGNETSHROOM && !DrawMagnetItemsOnTop())
         {
-            DrawMagnetItems(g);
+            DrawMagnetItems(ownerNowNs, g);
         }
     }
 }
@@ -4958,12 +5005,12 @@ void Plant::MouseDown(int x, int y, int theClickCount)
 }
 
 //0x466420
-void Plant::IceZombies()
+void Plant::IceZombies(std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs)
 {
 	Zombie* aZombie = nullptr;
     while (mBoard->IterateZombies(aZombie))
     {
-        aZombie->HitIceTrap();
+        aZombie->HitIceTrap(ownerNowNs, visualNowNs, animationNowNs);
     }
 
     mBoard->mIceTrapCounter = 300;
@@ -4976,12 +5023,12 @@ void Plant::IceZombies()
     Zombie* aBossZombie = mBoard->GetBossZombie();
     if (aBossZombie)
     {
-        aBossZombie->BossDestroyFireball();
+        aBossZombie->BossDestroyFireball(ownerNowNs, visualNowNs, animationNowNs);
     }
 }
 
 //0x4664B0
-void Plant::BurnRow(int theRow)
+void Plant::BurnRow(std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, int theRow)
 {
     int aDamageRangeFlags = GetDamageRangeFlags(PlantWeapon::WEAPON_PRIMARY);
 
@@ -4991,8 +5038,8 @@ void Plant::BurnRow(int theRow)
     {
         if ((((ZombieFlagsOf(aZombie->mZombieType) & ZombieFlags::Boss) != 0) || aZombie->mRow == theRow) && aZombie->EffectedByDamage(aDamageRangeFlags))
         {
-            aZombie->RemoveColdEffects();
-            aZombie->ApplyBurn();
+            aZombie->RemoveColdEffects(ownerNowNs);
+            aZombie->ApplyBurn(ownerNowNs, visualNowNs, animationNowNs);
         }
     }
 
@@ -5009,7 +5056,7 @@ void Plant::BurnRow(int theRow)
     if (aBossZombie && aBossZombie->mFireballRow == theRow)
     {
         // 注：原版中将 Zombie::BossDestroyIceballInRow(int) 函数改为了 Zombie::BossDestroyIceball()，冰球是否位于目标行的判断则移动至此处进行
-        aBossZombie->BossDestroyIceballInRow();
+        aBossZombie->BossDestroyIceballInRow(ownerNowNs);
     }
 }
 
@@ -5036,7 +5083,7 @@ void Plant::BlowAwayFliers()
 }
 
 //0x466650
-void Plant::KillAllPlantsNearDoom()
+void Plant::KillAllPlantsNearDoom(std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs)
 {
     // 格桶链枚举（2026-10-03 第二批）：原为全池扫 mRow==mRow &&
     // mPlantCol==mPlantCol 同格全层全株 Die——改该格 4 层链全成员
@@ -5051,7 +5098,7 @@ void Plant::KillAllPlantsNearDoom()
         while (aPlant != nullptr)
         {
             Plant* aNext = mBoard->NextCellPlant(aPlant);  // 先取：Die 不摘链但防御性前取
-            aPlant->Die();
+            aPlant->Die(ownerNowNs, visualNowNs, animationNowNs);
             aPlant = aNext;
         }
     }
@@ -5067,10 +5114,10 @@ struct PlantSpecialLocals
     int mPosY;
     int mDamageRangeFlags;
 };
-using PlantSpecialCaseFn = void (*)(Plant&, PlantSpecialLocals&);
+using PlantSpecialCaseFn = void (*)(std::int64_t, std::int64_t, std::int64_t, Plant&, PlantSpecialLocals&);
 
 // 原 default（无 case 的 45 型（空操作）共用）
-void PlantSpecialDefault(Plant& p, PlantSpecialLocals& lc)
+void PlantSpecialDefault(std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, Plant& p, PlantSpecialLocals& lc)
 {
 
 }
@@ -5080,7 +5127,7 @@ constexpr PlantSpecialCaseFn kPlantSpecialCases[(int)SeedType::NUM_SEED_TYPES] =
     &PlantSpecialDefault,  // 0 SEED_PEASHOOTER（原 default）
     &PlantSpecialDefault,  // 1 SEED_SUNFLOWER（原 default）
     // 原 case SEED_CHERRYBOMB
-    [](Plant& p, PlantSpecialLocals& lc)
+    [](std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, Plant& p, PlantSpecialLocals& lc)
     {
             p.mApp->PlayFoley(FoleyType::FOLEY_CHERRYBOMB);
             p.mApp->PlayFoley(FoleyType::FOLEY_JUICY);
@@ -5088,16 +5135,16 @@ constexpr PlantSpecialCaseFn kPlantSpecialCases[(int)SeedType::NUM_SEED_TYPES] =
             if (p.mBoard->KillAllZombiesInRadius(p.mRow, lc.mPosX, lc.mPosY, 115, 1, true, lc.mDamageRangeFlags) >= 10)
                 ReportAchievement::GiveAchievement(p.mApp, Explodonator, true); // @Patoke: add achievement
 
-            p.mApp->AddTodParticle(lc.mPosX, lc.mPosY, (int)RenderLayer::RENDER_LAYER_TOP, ParticleEffect::PARTICLE_POWIE);
+            p.mApp->AddTodParticle(lc.mPosX, lc.mPosY, (int)RenderLayer::RENDER_LAYER_TOP, ParticleEffect::PARTICLE_POWIE, ownerNowNs);
             p.mBoard->mShakeCounter = 12;
             p.mBoard->mShakeAmountX = 3;
             p.mBoard->mShakeAmountY = -4;
 
-            p.Die();
+            p.Die(ownerNowNs, visualNowNs, animationNowNs);
     },  // 2 SEED_CHERRYBOMB
     &PlantSpecialDefault,  // 3 SEED_WALLNUT（原 default）
     // 原 case SEED_POTATOMINE
-    [](Plant& p, PlantSpecialLocals& lc)
+    [](std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, Plant& p, PlantSpecialLocals& lc)
     {
             lc.mPosX = (p.mX) + p.mWidth / 2 - 20;
             lc.mPosY = (p.mY) + p.mHeight / 2;
@@ -5107,12 +5154,12 @@ constexpr PlantSpecialCaseFn kPlantSpecialCases[(int)SeedType::NUM_SEED_TYPES] =
                 ReportAchievement::GiveAchievement(p.mApp, Spudow, true); // @Patoke: add achievement
 
             int aRenderPosition = Board::MakeRenderOrder(RenderLayer::RENDER_LAYER_PARTICLE, p.mRow, 0);
-            p.mApp->AddTodParticle(lc.mPosX + 20.0f, lc.mPosY, aRenderPosition, ParticleEffect::PARTICLE_POTATO_MINE);
+            p.mApp->AddTodParticle(lc.mPosX + 20.0f, lc.mPosY, aRenderPosition, ParticleEffect::PARTICLE_POTATO_MINE, ownerNowNs);
             p.mBoard->mShakeCounter = 12;
             p.mBoard->mShakeAmountX = 3;
             p.mBoard->mShakeAmountY = -4;
 
-            p.Die();
+            p.Die(ownerNowNs, visualNowNs, animationNowNs);
     },  // 4 SEED_POTATOMINE
     &PlantSpecialDefault,  // 5 SEED_SNOWPEA（原 default）
     &PlantSpecialDefault,  // 6 SEED_CHOMPER（原 default）
@@ -5124,36 +5171,36 @@ constexpr PlantSpecialCaseFn kPlantSpecialCases[(int)SeedType::NUM_SEED_TYPES] =
     &PlantSpecialDefault,  // 12 SEED_HYPNOSHROOM（原 default）
     &PlantSpecialDefault,  // 13 SEED_SCAREDYSHROOM（原 default）
     // 原 case SEED_ICESHROOM
-    [](Plant& p, PlantSpecialLocals& lc)
+    [](std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, Plant& p, PlantSpecialLocals& lc)
     {
             p.mApp->PlayFoley(FoleyType::FOLEY_FROZEN);
-            p.IceZombies();
-            p.mApp->AddTodParticle(lc.mPosX, lc.mPosY, (int)RenderLayer::RENDER_LAYER_TOP, ParticleEffect::PARTICLE_ICE_TRAP);
+            p.IceZombies(ownerNowNs, visualNowNs, animationNowNs);
+            p.mApp->AddTodParticle(lc.mPosX, lc.mPosY, (int)RenderLayer::RENDER_LAYER_TOP, ParticleEffect::PARTICLE_ICE_TRAP, ownerNowNs);
 
-            p.Die();
+            p.Die(ownerNowNs, visualNowNs, animationNowNs);
     },  // 14 SEED_ICESHROOM
     // 原 case SEED_DOOMSHROOM
-    [](Plant& p, PlantSpecialLocals& lc)
+    [](std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, Plant& p, PlantSpecialLocals& lc)
     {
             p.mApp->PlaySample(SOUND_DOOMSHROOM);
 
             p.mBoard->KillAllZombiesInRadius(p.mRow, lc.mPosX, lc.mPosY, 250, 3, true, lc.mDamageRangeFlags);
-            p.KillAllPlantsNearDoom();
+            p.KillAllPlantsNearDoom(ownerNowNs, visualNowNs, animationNowNs);
 
-            p.mApp->AddTodParticle(lc.mPosX, lc.mPosY, (int)RenderLayer::RENDER_LAYER_TOP, ParticleEffect::PARTICLE_DOOM);
-            p.mBoard->AddACrater(p.mPlantCol, p.mRow)->mStateEndTimeNs = static_cast<std::int64_t>(p.mBoard->mLevelTimeNs) + 180'000'000'000LL;
+            p.mApp->AddTodParticle(lc.mPosX, lc.mPosY, (int)RenderLayer::RENDER_LAYER_TOP, ParticleEffect::PARTICLE_DOOM, ownerNowNs);
+            p.mBoard->AddACrater(p.mPlantCol, p.mRow)->mStateEndTimeNs = ownerNowNs + 180'000'000'000LL;
             p.mBoard->mShakeCounter = 12;
             p.mBoard->mShakeAmountX = 3;
             p.mBoard->mShakeAmountY = -4;
 
-            p.Die();
+            p.Die(ownerNowNs, visualNowNs, animationNowNs);
     },  // 15 SEED_DOOMSHROOM
     &PlantSpecialDefault,  // 16 SEED_LILYPAD（原 default）
     &PlantSpecialDefault,  // 17 SEED_SQUASH（原 default）
     &PlantSpecialDefault,  // 18 SEED_THREEPEATER（原 default）
     &PlantSpecialDefault,  // 19 SEED_TANGLEKELP（原 default）
     // 原 case SEED_JALAPENO
-    [](Plant& p, PlantSpecialLocals& lc)
+    [](std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, Plant& p, PlantSpecialLocals& lc)
     {
             p.mApp->PlayFoley(FoleyType::FOLEY_JALAPENO_IGNITE);
             p.mApp->PlayFoley(FoleyType::FOLEY_JUICY);
@@ -5163,10 +5210,10 @@ constexpr PlantSpecialCaseFn kPlantSpecialCases[(int)SeedType::NUM_SEED_TYPES] =
             p.mBoard->mShakeAmountX = 3;
             p.mBoard->mShakeAmountY = -4;
 
-            p.BurnRow(p.mRow);
+            p.BurnRow(ownerNowNs, visualNowNs, animationNowNs, p.mRow);
             p.mBoard->mIceTimer[p.mRow] = 20;
 
-            p.Die();
+            p.Die(ownerNowNs, visualNowNs, animationNowNs);
     },  // 20 SEED_JALAPENO
     &PlantSpecialDefault,  // 21 SEED_SPIKEWEED（原 default）
     &PlantSpecialDefault,  // 22 SEED_TORCHWOOD（原 default）
@@ -5175,7 +5222,7 @@ constexpr PlantSpecialCaseFn kPlantSpecialCases[(int)SeedType::NUM_SEED_TYPES] =
     &PlantSpecialDefault,  // 25 SEED_PLANTERN（原 default）
     &PlantSpecialDefault,  // 26 SEED_CACTUS（原 default）
     // 原 case SEED_BLOVER
-    [](Plant& p, PlantSpecialLocals& lc)
+    [](std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, Plant& p, PlantSpecialLocals& lc)
     {
             if (p.mState != PlantState::STATE_DOINGSPECIAL)
             {
@@ -5191,28 +5238,28 @@ constexpr PlantSpecialCaseFn kPlantSpecialCases[(int)SeedType::NUM_SEED_TYPES] =
     &PlantSpecialDefault,  // 33 SEED_FLOWERPOT（原 default）
     &PlantSpecialDefault,  // 34 SEED_KERNELPULT（原 default）
     // 原 case SEED_INSTANT_COFFEE
-    [](Plant& p, PlantSpecialLocals& lc)
+    [](std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, Plant& p, PlantSpecialLocals& lc)
     {
             Plant* aPlant = p.mBoard->GetTopPlantAt(p.mPlantCol, p.mRow, PlantPriority::TOPPLANT_ONLY_NORMAL_POSITION);
             if (aPlant && aPlant->mIsAsleep)
             {
-                aPlant->mWakeUpEndTimeNs = static_cast<std::int64_t>(aPlant->mBoard->mLevelTimeNs) + 1'000'000'000;
+                aPlant->mWakeUpEndTimeNs = ownerNowNs + 1'000'000'000;
             }
 
             p.mState = PlantState::STATE_DOINGSPECIAL;
-            p.PlayBodyReanim(ReanimTrackId::anim_crumble, ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD, 20, 22.0f);
+            p.PlayBodyReanim(ownerNowNs, ReanimTrackId::anim_crumble, ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD, 20, 22.0f);
             p.mApp->PlayFoley(FoleyType::FOLEY_COFFEE);
     },  // 35 SEED_INSTANT_COFFEE
     &PlantSpecialDefault,  // 36 SEED_GARLIC（原 default）
     // 原 case SEED_UMBRELLA
-    [](Plant& p, PlantSpecialLocals& lc)
+    [](std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, Plant& p, PlantSpecialLocals& lc)
     {
             if (p.mState != PlantState::STATE_UMBRELLA_TRIGGERED && p.mState != PlantState::STATE_UMBRELLA_REFLECTING)
             {
                 p.mState = PlantState::STATE_UMBRELLA_TRIGGERED;
                 p.mStateCountdown = 5;
 
-                p.PlayBodyReanim(ReanimTrackId::anim_block, ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD, 0, 22.0f);
+                p.PlayBodyReanim(ownerNowNs, ReanimTrackId::anim_block, ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD, 0, 22.0f);
             }
     },  // 37 SEED_UMBRELLA
     &PlantSpecialDefault,  // 38 SEED_MARIGOLD（原 default）
@@ -5237,7 +5284,7 @@ static_assert(sizeof(kPlantSpecialCases) / sizeof(kPlantSpecialCases[0]) ==
 
 //0x4666A0
 // GOTY @Patoke: 0x46A110
-void Plant::DoSpecial()
+void Plant::DoSpecial(std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs)
 {
     int aPosX = (mX) + mWidth / 2;
     int aPosY = (mY) + mHeight / 2;
@@ -5251,15 +5298,15 @@ void Plant::DoSpecial()
     const unsigned aSeedIndex = static_cast<unsigned>(mSeedType);
     if (aSeedIndex < static_cast<unsigned>(SeedType::NUM_SEED_TYPES))
     {
-        kPlantSpecialCases[aSeedIndex](*this, aSpecialLocals);
+        kPlantSpecialCases[aSeedIndex](ownerNowNs, visualNowNs, animationNowNs, *this, aSpecialLocals);
     }
 
 }
 
 //0x466B80
-void Plant::ImitaterMorph()
+void Plant::ImitaterMorph(std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs)
 {
-    Die();
+    Die(ownerNowNs, visualNowNs, animationNowNs);
     Plant* aPlant = mBoard->AddPlant(mPlantCol, mRow, mImitaterType, SeedType::SEED_IMITATER);
 
     FilterEffect aFilter = FilterEffect::FILTER_EFFECT_WASHED_OUT;
@@ -5268,19 +5315,23 @@ void Plant::ImitaterMorph()
         aFilter = FilterEffect::FILTER_EFFECT_LESS_WASHED_OUT;
 
     Reanimation* aBodyReanim = mApp->ReanimationTryToGet(aPlant->mBodyReanimID);
+
     if (aBodyReanim)
     {
         aBodyReanim->mFilterEffect = aFilter;
     }
     Reanimation* aHeadReanim = mApp->ReanimationTryToGet(aPlant->mHeadReanimID);
+
     if (aHeadReanim)
     {
         aHeadReanim->mFilterEffect = aFilter;
     }Reanimation* aHeadReanim2 = mApp->ReanimationTryToGet(aPlant->mHeadReanimID2);
+
     if (aHeadReanim2)
     {
         aHeadReanim2->mFilterEffect = aFilter;
     }Reanimation* aHeadReanim3 = mApp->ReanimationTryToGet(aPlant->mHeadReanimID3);
+
     if (aHeadReanim3)
     {
         aHeadReanim3->mFilterEffect = aFilter;
@@ -5288,59 +5339,61 @@ void Plant::ImitaterMorph()
 }
 
 //0x466CA0
-void Plant::UpdateImitater()
+void Plant::UpdateImitater(std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs)
 {
     if (mState != PlantState::STATE_IMITATER_MORPHING)
     {
         if (mStateCountdown == 0)
         {
             mState = PlantState::STATE_IMITATER_MORPHING;
-            PlayBodyReanim(ReanimTrackId::anim_explode, ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD, 0, 26.0f);
+            PlayBodyReanim(ownerNowNs, ReanimTrackId::anim_explode, ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD, 0, 26.0f);
         }
     }
     else
     {
         Reanimation* aBodyReanim = mApp->ReanimationGet(mBodyReanimID);
+
         if (aBodyReanim->ShouldTriggerTimedEvent(0.8f))
         {
-            mApp->AddTodParticle((mX) + 40, (mY) + 40, (int)RenderLayer::RENDER_LAYER_TOP, ParticleEffect::PARTICLE_IMITATER_MORPH);
+            mApp->AddTodParticle((mX) + 40, (mY) + 40, (int)RenderLayer::RENDER_LAYER_TOP, ParticleEffect::PARTICLE_IMITATER_MORPH, ownerNowNs);
         }
         if (aBodyReanim->mLoopCount > 0)
         {
-            ImitaterMorph();
+            ImitaterMorph(ownerNowNs, visualNowNs, animationNowNs);
         }
     }
 }
 
 //0x466D50
-void Plant::CobCannonFire(int theTargetX, int theTargetY)
+void Plant::CobCannonFire(std::int64_t ownerNowNs, int theTargetX, int theTargetY)
 {
     TOD_ASSERT(mState == PlantState::STATE_COBCANNON_READY);
 
     mState = PlantState::STATE_COBCANNON_FIRING;
     mShootingCounter = 206;
-    PlayBodyReanim(ReanimTrackId::anim_shooting, ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD, 20, 12.0f);
+    PlayBodyReanim(ownerNowNs, ReanimTrackId::anim_shooting, ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD, 20, 12.0f);
 
     mTargetX = theTargetX - 47.0f;
     mTargetY = theTargetY;
 
     Reanimation* aBodyReanim = mApp->ReanimationGet(mBodyReanimID);
+
     ReanimatorTrackInstance* aTrackInstance = aBodyReanim->GetTrackInstanceByName(ReanimTrackId::CobCannon_cob);
     aTrackInstance->mTrackColor = Color::White;
 }
 
 //0x466E00
-void Plant::Fire(Zombie* theTargetZombie, int theRow, PlantWeapon thePlantWeapon)
+void Plant::Fire(std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, Zombie* theTargetZombie, int theRow, PlantWeapon thePlantWeapon)
 {
     if (mSeedType == SeedType::SEED_FUMESHROOM)
     {
-        DoRowAreaDamage(20, 2U);
+        DoRowAreaDamage(ownerNowNs, visualNowNs, animationNowNs, 20, 2U);
         mApp->PlayFoley(FoleyType::FOLEY_FUME);
         return;
     }
     if (mSeedType == SeedType::SEED_GLOOMSHROOM)
     {
-        DoRowAreaDamage(20, 2U);
+        DoRowAreaDamage(ownerNowNs, visualNowNs, animationNowNs, 20, 2U);
         return;
     }
     if (mSeedType == SeedType::SEED_STARFRUIT)
@@ -5505,28 +5558,28 @@ void Plant::Fire(Zombie* theTargetZombie, int theRow, PlantWeapon thePlantWeapon
     if (mSeedType == SeedType::SEED_PEASHOOTER || mSeedType == SeedType::SEED_SNOWPEA || mSeedType == SeedType::SEED_REPEATER)
     {
         int aOffsetX, aOffsetY;
-        GetPeaHeadOffset(aOffsetX, aOffsetY);
+        GetPeaHeadOffset(ownerNowNs, aOffsetX, aOffsetY);
         aOriginX = (mX) + aOffsetX + 24;
         aOriginY = (mY) + aOffsetY - 33;
     }
     else if (mSeedType == SeedType::SEED_LEFTPEATER)
     {
         int aOffsetX, aOffsetY;
-        GetPeaHeadOffset(aOffsetX, aOffsetY);
+        GetPeaHeadOffset(ownerNowNs, aOffsetX, aOffsetY);
         aOriginX = (mX) - aOffsetX + 27;
         aOriginY = (mY) + aOffsetY - 33;
     }
     else if (mSeedType == SeedType::SEED_GATLINGPEA)
     {
         int aOffsetX, aOffsetY;
-        GetPeaHeadOffset(aOffsetX, aOffsetY);
+        GetPeaHeadOffset(ownerNowNs, aOffsetX, aOffsetY);
         aOriginX = (mX) + aOffsetX + 34;
         aOriginY = (mY) + aOffsetY - 33;
     }
     else if (mSeedType == SeedType::SEED_SPLITPEA)
     {
         int aOffsetX, aOffsetY;
-        GetPeaHeadOffset(aOffsetX, aOffsetY);
+        GetPeaHeadOffset(ownerNowNs, aOffsetX, aOffsetY);
         aOriginY = (mY) + aOffsetY - 33;
 
         if (thePlantWeapon == PlantWeapon::WEAPON_SECONDARY)
@@ -5551,17 +5604,17 @@ void Plant::Fire(Zombie* theTargetZombie, int theRow, PlantWeapon thePlantWeapon
     if (mSeedType == SeedType::SEED_SNOWPEA)
     {
         int aRenderPosition = Board::MakeRenderOrder(RenderLayer::RENDER_LAYER_LAWN_MOWER, mRow, 1);
-        mApp->AddTodParticle(aOriginX + 8, aOriginY + 13, aRenderPosition, ParticleEffect::PARTICLE_SNOWPEA_PUFF);
+        mApp->AddTodParticle(aOriginX + 8, aOriginY + 13, aRenderPosition, ParticleEffect::PARTICLE_SNOWPEA_PUFF, ownerNowNs);
     }
     else if (mSeedType == SeedType::SEED_PUFFSHROOM)
     {
         int aRenderPosition = Board::MakeRenderOrder(RenderLayer::RENDER_LAYER_LAWN_MOWER, mRow, 1);
-        mApp->AddTodParticle(aOriginX + 18, aOriginY + 13, aRenderPosition, ParticleEffect::PARTICLE_PUFFSHROOM_MUZZLE);
+        mApp->AddTodParticle(aOriginX + 18, aOriginY + 13, aRenderPosition, ParticleEffect::PARTICLE_PUFFSHROOM_MUZZLE, ownerNowNs);
     }
     else if (mSeedType == SeedType::SEED_SCAREDYSHROOM)
     {
         int aRenderPosition = Board::MakeRenderOrder(RenderLayer::RENDER_LAYER_LAWN_MOWER, mRow, 1);
-        mApp->AddTodParticle(aOriginX + 27, aOriginY + 13, aRenderPosition, ParticleEffect::PARTICLE_PUFFSHROOM_MUZZLE);
+        mApp->AddTodParticle(aOriginX + 27, aOriginY + 13, aRenderPosition, ParticleEffect::PARTICLE_PUFFSHROOM_MUZZLE, ownerNowNs);
     }
 
     Projectile* aProjectile = mBoard->AddProjectile(aOriginX, aOriginY, mRenderOrder - 1, theRow, aProjectileType);
@@ -5582,7 +5635,7 @@ void Plant::Fire(Zombie* theTargetZombie, int theRow, PlantWeapon thePlantWeapon
         if (theTargetZombie)
         {
             Rect aZombieRect = theTargetZombie->GetZombieRect();
-            aRangeX = theTargetZombie->ZombieTargetLeadX(50.0f) - aOriginX - 30.0f;
+            aRangeX = theTargetZombie->ZombieTargetLeadX(ownerNowNs, 50.0f) - aOriginX - 30.0f;
             aRangeY = aZombieRect.mY - aOriginY;
 
             if (theTargetZombie->mZombiePhase == ZombiePhase::PHASE_DOLPHIN_RIDING)
@@ -5831,7 +5884,7 @@ int Plant::DistanceToClosestZombie()
 }
 
 //0x4679B0
-void Plant::Die()
+void Plant::Die(std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs)
 {
     // PSS 修复（用户方案）：玉米炮死亡即清空瞄准该炮的发射状态——防
     // DataArray 槽位回收复用后 mCobCannonPlantID 悬空（1073 原版：模仿者
@@ -5848,7 +5901,7 @@ void Plant::Die()
         Zombie* aZombie = mBoard->ZombieTryToGet(mTargetZombieID);
         if (aZombie)
         {
-            aZombie->DieWithLoot();
+            aZombie->DieWithLoot(ownerNowNs, visualNowNs, animationNowNs);
         }
     }
 
@@ -5871,6 +5924,7 @@ void Plant::Die()
         if (aFlowerPot && aTopPlant == aFlowerPot)
         {
             Reanimation* aPotReanim = mApp->ReanimationGet(aFlowerPot->mBodyReanimID);
+
             aPotReanim->ApplyRate(RandRangeFloat(10.0f, 15.0f));
         }
     }
@@ -6293,12 +6347,13 @@ void Plant::PreloadPlantResources(SeedType theSeedType)
 }
 
 //0x468280
-void Plant::PlayIdleAnim(float theRate)
+void Plant::PlayIdleAnim(std::int64_t ownerNowNs, float theRate)
 {
     Reanimation* aBodyReanim = mApp->ReanimationTryToGet(mBodyReanimID);
+
     if (aBodyReanim)
     {
-        PlayBodyReanim(ReanimTrackId::anim_idle, ReanimLoopType::REANIM_LOOP, 20, theRate);
+        PlayBodyReanim(ownerNowNs, ReanimTrackId::anim_idle, ReanimLoopType::REANIM_LOOP, 20, theRate);
         if (mApp->IsIZombieLevel())
         {
             aBodyReanim->ApplyRate(0.0f);

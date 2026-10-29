@@ -512,6 +512,88 @@ void RepeatedTargetSelection(OpenGLRenderer& r)
     r.DestroyTexture(image);
 }
 #if !defined(PVZ_TEST_D3D9)
+std::array<GpuVertex,4> NativeQuad(OpenGLTexture* texture,float x,float y,float size)
+{
+    const auto triangles=Quad(texture,x,y,size,size);
+    return {triangles[0],triangles[5],triangles[1],triangles[2]};
+}
+void IndexedQuadChecks(OpenGLContext& context,const std::filesystem::path& shaders)
+{
+    const auto capture=[&](bool quads,bool general) {
+        OpenGLRenderer r(context,SceneW,SceneH,shaders,nullptr);
+        const unsigned int pixel=0x8050c080U;
+        auto* image=r.CreateTexture(1,1,&pixel,4,false);
+        Require(r.BeginScene(),"Clear indexed/mixed comparison");
+        auto background=Quad(r.whiteTexture,0,0,SceneW,SceneH);
+        for(auto& vertex:background)vertex.r=vertex.g=vertex.b=vertex.a=0;
+        Draw(r,r.whiteTexture,background,false,false,GpuBlend::Opaque);
+        r.EndSceneAndPresent();
+        Require(r.BeginScene(),"Begin indexed/mixed comparison");
+        for(unsigned int draw=0;draw<4;++draw) {
+            auto q=NativeQuad(image,float(draw*3),float(draw*2),64);
+            for(auto& v:q){v.a=0.625f;v.r=0.75f;}
+            if(general)for(auto& v:q)v.slot|=GpuVertex::kIndependentColorFilter;
+            const auto blend=(draw&1U)?GpuBlend::Additive:GpuBlend::Normal;
+            if(quads)r.SubmitQuads(q,image,false,false,blend);
+            else {
+                std::array<GpuVertex,6> t{q[0],q[1],q[2],q[2],q[1],q[3]};
+                r.SubmitTriangles(t,image,false,false,blend);
+            }
+        }
+        Require(r.GetResourceCounts().queuedBatches==(general?4U:1U),
+            "Mixed normal/additive program did not merge eligible draws");
+        // Cross the 65536-vertex index limit and return to an arbitrary triangle
+        // draw. Visible sentinels straddle the index chunk boundary.
+        std::vector<GpuVertex> large;
+        large.reserve(16386*4);
+        for(unsigned int i=0;i<16386;++i) {
+            const bool visible=i==0||i==16383||i==16384||i==16385;
+            auto q=NativeQuad(image,visible?float(80+(i==0?0:i-16382)*32):-100.0f,100,16);
+            // A quad's first vertex owns flat metadata, as for both Vulkan triangles.
+            q[1].slot=q[2].slot=q[3].slot=4095;
+            q[1].sampler=q[2].sampler=q[3].sampler=3;
+            if(quads)large.insert(large.end(),q.begin(),q.end());
+            else {
+                for(auto& v:q){v.slot=q[0].slot;v.sampler=q[0].sampler;}
+                const std::array<GpuVertex,6> t{q[0],q[1],q[2],q[2],q[1],q[3]};
+                large.insert(large.end(),t.begin(),t.end());
+            }
+        }
+        if(quads)r.SubmitQuads(large,image,false,false,GpuBlend::Opaque);
+        else r.SubmitTriangles(large,image,false,false,GpuBlend::Opaque);
+        auto tail=Quad(image,240,180,16,16);
+        r.SubmitTriangles(tail,image,false,false,GpuBlend::Opaque);
+        auto unaligned=NativeQuad(image,210,180,8);
+        if(quads)r.SubmitQuads(unaligned,image,false,false,GpuBlend::Opaque);
+        else {
+            const std::array<GpuVertex,6> t{unaligned[0],unaligned[1],unaligned[2],
+                unaligned[2],unaligned[1],unaligned[3]};
+            r.SubmitTriangles(t,image,false,false,GpuBlend::Opaque);
+        }
+        r.EndSceneAndPresent();
+        const auto result=r.ReadScenePixels();
+        Pixel(result,SceneW,81,101,pixel);
+        Pixel(result,SceneW,113,101,pixel);
+        Pixel(result,SceneW,145,101,pixel);
+        Pixel(result,SceneW,177,101,pixel);
+        Pixel(result,SceneW,241,181,pixel);
+        Pixel(result,SceneW,211,181,pixel);
+        r.DestroyTexture(image);
+        return result;
+    };
+    const auto triangles=capture(false,false);
+    Require(capture(true,false)==triangles,
+        "16-bit quad chunks differ from explicit triangles");
+    const auto reference=capture(false,true);
+    for(size_t i=0;i<triangles.size();++i)
+        for(unsigned int shift=0;shift<32;shift+=8)
+            Require(std::abs(int((triangles[i]>>shift)&255)-
+                int((reference[i]>>shift)&255))<=1,
+                "Dual-source painter order or independent destination alpha differs from separate blend modes");
+}
+#endif
+
+#if !defined(PVZ_TEST_D3D9)
 void OrdinarySpriteHardwareSampling(OpenGLRenderer& r)
 {
     auto pixels=Pattern(7,5);
@@ -1266,6 +1348,11 @@ int main(int argc, char** argv)
             });
         };
 
+#if !defined(PVZ_TEST_D3D9)
+        run("indexed-quads-65536-mixed-alpha-order-flat-metadata",[&] {
+            IndexedQuadChecks(context,shaderDirectory);
+        });
+#endif
         rendererTest("production-pool-gpu-direct-UV",[](OpenGLRenderer& renderer) {
             PoolGpuChecks::Run(renderer);
         });

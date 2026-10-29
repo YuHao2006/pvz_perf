@@ -77,6 +77,11 @@ using GLsizeiptr = std::ptrdiff_t;
 #define GL_PIXEL_UNPACK_BUFFER 0x88EC
 #endif
 
+#ifndef GL_ONE_MINUS_SRC1_ALPHA
+#define GL_ONE_MINUS_SRC1_ALPHA 0x88FB
+#define GL_MAX_DUAL_SOURCE_DRAW_BUFFERS 0x88FC
+#endif
+
 namespace Sexy::GL3 {
 // Only desktop GL <= 3.0 entry points belong in this required function table.
 #define SEXY_GL3_FUNCTIONS(X) \
@@ -142,6 +147,9 @@ namespace Sexy::GL3 {
     extern name##Proc name;
 SEXY_GL3_FUNCTIONS(SEXY_GL3_DECLARE)
 #undef SEXY_GL3_DECLARE
+
+using glBindFragDataLocationIndexedProc = void (APIENTRY*)(GLuint, GLuint, GLuint, const GLchar*);
+extern glBindFragDataLocationIndexedProc glBindFragDataLocationIndexed;
 
 // Requires a current context. Reload for each context: WGL addresses are ICD-specific.
 void Load();

@@ -94,6 +94,26 @@ void main()
 )GLSL";
 }
 
+std::string_view MixedSpriteFragmentShader()
+{
+    return R"GLSL(#version 130
+uniform sampler2D image;
+in vec4 color;
+in vec2 uv;
+flat in uint slot;
+out vec4 outColor;
+out vec4 blendControl;
+void main()
+{
+    vec4 source=texture(image,uv);
+    if ((slot & 0x04000000u)!=0u) source.a=1.0;
+    vec4 fragment=source*color;
+    outColor=vec4(fragment.rgb*fragment.a,fragment.a);
+    blendControl=vec4(0.0,0.0,0.0,(slot & 0x02000000u)!=0u?0.0:fragment.a);
+}
+)GLSL";
+}
+
 std::string_view SceneFragmentShader()
 {
     return R"GLSL(#version 130

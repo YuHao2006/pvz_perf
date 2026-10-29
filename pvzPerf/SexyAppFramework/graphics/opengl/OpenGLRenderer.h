@@ -56,6 +56,8 @@ public:
     const bool& sceneOpen;
     void SubmitTriangles(std::span<const GpuVertex> vertices, OpenGLTexture* texture,
         bool linear, bool wrap, GpuBlend blend, const GpuClip* clip = nullptr);
+    void SubmitQuads(std::span<const GpuVertex> vertices, OpenGLTexture* texture,
+        bool linear, bool wrap, GpuBlend blend, const GpuClip* clip = nullptr);
     void SubmitPool(OpenGLTexture* texture, const GpuPoolParams& params);
     void SubmitCoverageTriangles(std::span<const GpuVertex> vertices, OpenGLTexture* texture,
         GpuBlend blend, const GpuClip* clip = nullptr);

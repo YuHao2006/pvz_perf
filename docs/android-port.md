@@ -1,7 +1,9 @@
 # Android Vulkan port
 
 The Android target uses the NDK native app glue and the Vulkan Android WSI. The
-activity owns `ANativeWindow`; `APP_CMD_INIT_WINDOW` attaches it to the game
+activity hosts the game in a SurfaceView and forwards its holder callbacks to
+NativeActivity, leaving the main Window surface available for Android's caption.
+`APP_CMD_INIT_WINDOW` attaches the SurfaceView's `ANativeWindow` to the game
 window adapter and `APP_CMD_TERM_WINDOW` detaches it. Vulkan creates the surface
 with `vkCreateAndroidSurfaceKHR`, and the drawable size is read from
 `ANativeWindow_getWidth/Height`. Android currently requests a 600-pixel-high
@@ -71,16 +73,25 @@ does not guarantee that the user has not subsequently resumed the scene.
 
 ## Android 目标帧率与外部设置（2026-10-27）
 
-设置优先使用 `getExternalFilesDir(null)/settings.json`。实际位置由系统返回，
-本测试机为 `/storage/emulated/0/Android/data/com.openpvz.perf/files/settings.json`。
-存储不可写时沿用已有内部数据目录策略；启动诊断记录最终路径、targetFps 和 intervalNs。
+设置与存档优先使用可写的 `getExternalMediaDirs()` 目录，游戏不请求额外存储权限。
+本测试机的目标位置是 `/storage/emulated/0/Android/media/com.openpvz.perf/`。
+Media 不可用时回退 `getExternalFilesDir(null)`，再回退 Activity 的内部 files 目录。单实例锁
+固定使用内部运行目录，避免 Media 的共享存储文件系统不支持 flock 导致启动失败。资源包、shader 和运行期缓存
+始终使用内部目录。Android/data 的存在不保证第三方文件管理器能看到它；
+本机用有效文件描述符实测 Media 的 flock 返回 ENOSYS（Function not implemented），
+应用内部目录的相同操作成功；用户数据可写不代表该文件系统支持进程锁。
+本机通过 ADB 确认当前用户为 0，上述目录实际包含 settings.json 和 DAT64 存档。
+公共路径解析器不再猜测 `/storage/emulated/0` 或回退旧 `com.openpvz.modern` 包名。
+首次使用新目录时优先复制旧 external-files 中的设置、用户档与关卡档，再补内部目录
+缺少的文件；已有目标文件不覆盖，源文件不删除。完成后写入隐藏迁移标记，避免后续
+启动时把已读取并消费的关卡档从旧目录重新拷回。用户索引在对应记录复制后发布。
 GPU 固定场景仅隔离关卡／用户档，设置不再跟随 fixture 复制到内部 session，
 通过现有 `PVZ_SETTINGS_FILE` 路径覆盖统一读写正常外部设置。
 
 Android 提供持久化启动参数，便于受 scoped storage 限制的设备配置：
 
 ```text
-adb shell am start -n com.openpvz.perf/android.app.NativeActivity --ei targetFps 240
+adb shell am start -n com.openpvz.perf/.PerfActivity --ei targetFps 240
 ```
 
 该参数在新进程初始化前更新正常 settings.json 的 targetFps，保留其余设置，
@@ -103,12 +114,75 @@ Android 包名自本次打包起为 `com.openpvz.perf`，显示名为 `pvz_perf`
 
 ## APK output directory
 
-Ready-to-install APKs and their `.apk.idsig` sidecars live in `out/android-vulkan/`,
+Ready-to-install APKs and their `.apk.idsig` sidecars live in `out/arm64-android14-vulkan1.3/`,
 not directly in `out/`. The current signed package is
-`out/android-vulkan/pvz-arm64-perf.apk`. Native build intermediates remain in
+`out/arm64-android14-vulkan1.3/pvz_perf-arm64-android14-vulkan1.3.apk`. Native build intermediates remain in
 `out/android-arm64/`.
 
 `tools/build-android-apk.ps1` copies Gradle output into this directory by default;
 `-OutputDirectory` can select another package directory. Unsigned Gradle Release
 output keeps the `-release-unsigned.apk` suffix and does not replace the current
 signed package. Sign and align it before installation.
+
+The distribution identifier is `arm64-android14-vulkan1.3`; it names the Android
+14 test target, not a change to Gradle's minimum supported API. The current CPU
+baseline remains Armv9-A without SVE/SVE2. Native intermediates and layout caches
+remain in the single active `out/android-arm64` tree.
+
+The activity uses `sensorLandscape` to support both landscape orientations.
+Native resize events carry the current window extent and update the cached
+NativeWindow width/height before viewport and pointer mapping. Touch coordinates
+remain window-local in split/freeform mode, rather than using startup fullscreen
+dimensions after the window has changed size.
+The SurfaceView's location within the Window is published on layout changes and
+subtracted from native motion coordinates. Gesture ownership is fixed on DOWN:
+caption drags stay with Java until release even when they cross the game area.
+The activity explicitly supports resizing and clears fullscreen/immersive flags
+in multi-window mode. Actual caption buttons and side docking are supplied by
+the device's window manager; they are not game-drawn controls.
+Fullscreen uses edge-to-edge game content beneath transparent navigation buttons,
+with navigation-bar contrast enforcement disabled. Multi-window restores the
+system's caption/content layout rather than retaining fullscreen layout flags.
+Configuration and native-window resize commands invalidate the swapchain even
+when a 180-degree flip leaves the width and height unchanged. Soft input starts
+hidden and does not resize the render surface; only `EditWidget` focus requests
+the keyboard, using an explicit request rather than forcing it for every widget.
+Tapping an already focused editor requests it again after manual dismissal.
+`PerfActivity` makes NativeActivity's content view focusable in touch mode and
+reapplies the soft-input mode after `super.onCreate`, which otherwise replaces
+the manifest setting. Android Back uses the existing Escape mapping; non-text
+keys now reach that mapping instead of being returned to the Android framework.
+Enter, Backspace and arrow keys use the same repaired input route. Volume keys
+remain with the system. Legacy Back dispatch is explicitly retained instead of
+registering a predictive-back callback that would exit the activity.
+
+The initial focus repair was installed and confirmed interactively on the
+Android 14 Z60 Ultra: keyboard opening, Back/Escape and 180-degree rotation work.
+
+Text entry now uses a bottom Android Dialog with an EditText and OK action.
+It owns a separate surface, leaving Vulkan's game SurfaceView at its original size.
+The input window uses resize adjustment to stay above the keyboard. Text changes
+cross JNI through a mutex-protected latest-value mailbox; only the game thread
+accesses EditWidget. Session numbers reject callbacks from closed or destroyed
+widgets. Java explicitly loads `pvz_perf` through its class loader: NativeActivity's
+native dlopen alone does not make exported JNI methods resolvable by ART.
+Both Java's input filter and the native mailbox consumer allow only printable
+ASCII (32..126), including pasted/IME text. The consumer applies an edit through
+the existing KeyDown/KeyChar handlers rather than inserting UTF-8 bytes directly;
+this preserves character checks and length/pixel-width limits. LawnEditWidget's
+one-time first-letter capitalization field and KeyChar override have been removed;
+both desktop and Android preserve the case entered by the user.
+Without that boundary, non-ASCII bytes reached missing bitmap-font glyphs and
+crashed in ImageFont::CharWidthKern during EnforceMaxPixels.
+The actual Java filter was extracted and executed with ASCII, mixed Chinese,
+emoji, control-character, source-range and deletion cases; all passed.
+OK submits the existing Return action; dismissing the input window keeps edits.
+Game-side text changes are mirrored back while editing. Full Unicode rendering
+in the game's bitmap fonts is outside this input bridge.
+
+A real alphabetic InputDevice or an available QWERTY hardware configuration
+suppresses automatic soft input. Virtual keyboards and game controllers do not
+count. Detection happens at input requests and device/configuration events, not
+per frame; InputDeviceListener handles hotplug. The owned input window's focus
+transfer is not treated as leaving the app, while onPause still forwards loss
+of focus and closes the editor when another app takes over.

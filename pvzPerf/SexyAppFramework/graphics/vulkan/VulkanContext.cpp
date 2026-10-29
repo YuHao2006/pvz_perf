@@ -38,8 +38,8 @@ namespace {
                                   const std::vector<const char*>& layers) {
         unsigned int loaderVersion = 0;
         VK_CHECK(vkEnumerateInstanceVersion(&loaderVersion));
-        if (loaderVersion < VK_API_VERSION_1_2 || config.appInfo.apiVersion < VK_API_VERSION_1_2)
-            throw std::runtime_error("This renderer requires Vulkan 1.2");
+        if (loaderVersion < VK_API_VERSION_1_3 || config.appInfo.apiVersion < VK_API_VERSION_1_3)
+            throw std::runtime_error("This renderer requires Vulkan 1.3");
         // Instance WSI extensions and requested validation/extra layers.
         VkInstanceCreateInfo createInfo = config.instanceInfo;
         createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;   // 强制
@@ -141,14 +141,18 @@ namespace {
     bool RequiredFeaturesSupported(VkPhysicalDevice candidate) {
         VkPhysicalDeviceProperties properties{};
         vkGetPhysicalDeviceProperties(candidate, &properties);
-        if (properties.apiVersion < VK_API_VERSION_1_2)
+        if (properties.apiVersion < VK_API_VERSION_1_3)
             return false;
+        VkPhysicalDeviceVulkan13Features v13{
+            VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES};
         VkPhysicalDeviceVulkan12Features v12{
             VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES};
+        v12.pNext = &v13;
         VkPhysicalDeviceFeatures2 features2{
             VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2, &v12};
         vkGetPhysicalDeviceFeatures2(candidate, &features2);
-        return v12.descriptorBindingPartiallyBound == VK_TRUE &&
+        return v13.synchronization2 == VK_TRUE &&
+               v12.descriptorBindingPartiallyBound == VK_TRUE &&
                v12.descriptorBindingSampledImageUpdateAfterBind == VK_TRUE &&
                v12.shaderSampledImageArrayNonUniformIndexing == VK_TRUE;
     }
@@ -239,7 +243,7 @@ namespace {
             }
         }
         if (best == VK_NULL_HANDLE)
-            throw std::runtime_error("No GPU supports Vulkan 1.2, descriptor indexing and graphics/present");
+            throw std::runtime_error("No GPU supports Vulkan 1.3, descriptor indexing and graphics/present");
 
         return best;
     }
@@ -273,6 +277,10 @@ namespace {
             extensions.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
 
         VkPhysicalDeviceVulkan12Features v12 = DescriptorIndexingEnable();
+        VkPhysicalDeviceVulkan13Features v13{
+            VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES};
+        v13.synchronization2 = VK_TRUE;
+        v12.pNext = &v13;
 
         VkDeviceCreateInfo createInfo{VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO};
         createInfo.pNext = &v12;
@@ -293,6 +301,9 @@ namespace {
 }
 
 // ---- 配置里的默认回调实现：放 .cpp，头文件就不必为 std::cerr 引头文件 ----
+PFN_vkQueueSubmit2 VulkanContext::queueSubmit2 = nullptr;
+PFN_vkCmdPipelineBarrier2 VulkanContext::pipelineBarrier2 = nullptr;
+
 VkBool32 VKAPI_CALL VulkanInitConfig::DefaultDebugCallback(
     VkDebugUtilsMessageSeverityFlagBitsEXT severity,
     VkDebugUtilsMessageTypeFlagsEXT,
@@ -586,6 +597,12 @@ void VulkanContext::CreateSurfaceAssets() {
                                      presentFamily, deviceFeatures,
                                      requiredExtensions,
                                      &graphicsQueue, &presentQueue);
+        queueSubmit2 = reinterpret_cast<PFN_vkQueueSubmit2>(
+            vkGetDeviceProcAddr(device, "vkQueueSubmit2"));
+        pipelineBarrier2 = reinterpret_cast<PFN_vkCmdPipelineBarrier2>(
+            vkGetDeviceProcAddr(device, "vkCmdPipelineBarrier2"));
+        if (!queueSubmit2 || !pipelineBarrier2)
+            throw std::runtime_error("Vulkan 1.3 synchronization entry points are unavailable");
         dualSourceBlendEnabled = deviceFeatures.dualSrcBlend == VK_TRUE;
     }
 
@@ -664,11 +681,13 @@ void VulkanContext::AbortFrame() noexcept {
     // rolled back reliably. Drain the acquired semaphore and release the held
     // image by subsequent swapchain destruction, then prohibit further frames.
     auto& resource = frameResources_;
-    const VkPipelineStageFlags stage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-    VkSubmitInfo submit{VK_STRUCTURE_TYPE_SUBMIT_INFO};
-    submit.waitSemaphoreCount = 1; submit.pWaitSemaphores = &resource.acquired;
-    submit.pWaitDstStageMask = &stage;
-    auto result = vkQueueSubmit(graphicsQueue, 1, &submit, VK_NULL_HANDLE);
+    VkSemaphoreSubmitInfo wait{VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO};
+    wait.semaphore = resource.acquired;
+    wait.stageMask = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT;
+    VkSubmitInfo2 submit{VK_STRUCTURE_TYPE_SUBMIT_INFO_2};
+    submit.waitSemaphoreInfoCount = 1;
+    submit.pWaitSemaphoreInfos = &wait;
+    auto result = VulkanContext::queueSubmit2(graphicsQueue, 1, &submit, VK_NULL_HANDLE);
     if (result == VK_SUCCESS) result = vkQueueWaitIdle(graphicsQueue);
     if (result == VK_SUCCESS) {
         submittedSerial = std::max(submittedSerial, recordingSerial);
@@ -818,30 +837,41 @@ void VulkanContext::EndFrame() {
     presentPassActive_ = false;
     // Make the final layout transition an explicit release before signaling
     // renderFinished. The presentation engine reads the whole swapchain image.
-    VkImageMemoryBarrier release{VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER};
-    release.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+    VkImageMemoryBarrier2 release{VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2};
+    release.srcStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
+    release.srcAccessMask = VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT;
+    release.dstStageMask = VK_PIPELINE_STAGE_2_NONE;
     release.oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
     release.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
     release.srcQueueFamilyIndex = release.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
     release.image = swapchainImages[currentImageIndex_];
     release.subresourceRange = {VK_IMAGE_ASPECT_COLOR_BIT,0,1,0,1};
-    vkCmdPipelineBarrier(resource.cmd,VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-        VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,0,0,nullptr,0,nullptr,1,&release);
+    VkDependencyInfo dependency{VK_STRUCTURE_TYPE_DEPENDENCY_INFO};
+    dependency.imageMemoryBarrierCount = 1;
+    dependency.pImageMemoryBarriers = &release;
+    VulkanContext::pipelineBarrier2(resource.cmd, &dependency);
     VK_CHECK(vkEndCommandBuffer(resource.cmd));
 
     // 提交：等 imageAvailable（等到才能往这幅图上画）→ 执行 → 交出本图的
     // 呈现信号量（每图一份，防 MAILBOX 下呈现引擎还占用旧信号量）
-    VkPipelineStageFlags waitStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    VkSubmitInfo submit{VK_STRUCTURE_TYPE_SUBMIT_INFO};
-    submit.waitSemaphoreCount = 1;
-    submit.pWaitSemaphores = &resource.acquired;
-    submit.pWaitDstStageMask = &waitStage;
-    submit.commandBufferCount = 1;
-    submit.pCommandBuffers = &resource.cmd;
-    submit.signalSemaphoreCount = 1;
-    submit.pSignalSemaphores = &renderFinished_[currentImageIndex_];
+    VkSemaphoreSubmitInfo wait{VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO};
+    wait.semaphore = resource.acquired;
+    wait.stageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
+    VkSemaphoreSubmitInfo signal{VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO};
+    signal.semaphore = renderFinished_[currentImageIndex_];
+    // Include the explicit present-layout release, not only color writes.
+    signal.stageMask = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT;
+    VkCommandBufferSubmitInfo commands{VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO};
+    commands.commandBuffer = resource.cmd;
+    VkSubmitInfo2 submit{VK_STRUCTURE_TYPE_SUBMIT_INFO_2};
+    submit.waitSemaphoreInfoCount = 1;
+    submit.pWaitSemaphoreInfos = &wait;
+    submit.commandBufferInfoCount = 1;
+    submit.pCommandBufferInfos = &commands;
+    submit.signalSemaphoreInfoCount = 1;
+    submit.pSignalSemaphoreInfos = &signal;
     VK_CHECK(vkResetFences(device, 1, &resource.fence));
-    VK_CHECK(vkQueueSubmit(graphicsQueue, 1, &submit, resource.fence));
+    VK_CHECK(VulkanContext::queueSubmit2(graphicsQueue, 1, &submit, resource.fence));
     submittedSerial = recordingSerial;
     recordingSerial = 0;
     frameActive_ = false;
@@ -889,6 +919,8 @@ void VulkanContext::DestroyAssets() noexcept {
     if (contextCount == 0) {
         if (device) vkDestroyDevice(device, nullptr);
         device = VK_NULL_HANDLE;
+        queueSubmit2 = nullptr;
+        pipelineBarrier2 = nullptr;
         dualSourceBlendEnabled = false;
         physicalDevice = VK_NULL_HANDLE;
         graphicsQueue = presentQueue = VK_NULL_HANDLE;

@@ -202,7 +202,7 @@ void LoadCurrentWithResources(LawnApp& app, HiddenWindow& window, const char* sa
     holder->mBattleTimeNs = static_cast<std::int64_t>(board.mLevelTimeNs);
     Reanimation* advanced = nullptr;
     while (holder->mReanimations.IterateNext(advanced))
-        advanced->BindTimeDomain(ReanimTimeDomain::Battle);
+        holder->BindAnimationTime(*advanced, ReanimTimeDomain::Battle, holder->mBattleTimeNs);
     advanced = nullptr;
     while (holder->mReanimations.IterateNext(advanced))
         if (advanced->mLoopType == ReanimLoopType::REANIM_LOOP && !advanced->mDead)
@@ -215,23 +215,25 @@ void LoadCurrentWithResources(LawnApp& app, HiddenWindow& window, const char* sa
     Reanimation* visualProbe = nullptr;
     for (float rate : {13.3072289f, -6.65361445f, 0.0f})
     {
-        auto* probe = app.AddReanimation(0, 0, 0, ReanimationType::REANIM_WALLNUT);
-        probe->BindTimeDomain(ReanimTimeDomain::Battle);
+        auto* probe = app.AddReanimation(0, 0, 0, ReanimationType::REANIM_WALLNUT, app.mEffectSystem->mReanimationHolder->mBattleTimeNs, ReanimTimeDomain::Battle);
+        holder->BindAnimationTime(*probe, ReanimTimeDomain::Battle, holder->mBattleTimeNs);
         probe->ChangeLoopType(ReanimLoopType::REANIM_LOOP);
         probe->ApplyRate(rate);
         probe->SeekRatio(0.3372819f);
         if (!visualProbe)
         {
             visualProbe = probe;
-            visualProbe->BindTimeDomain(ReanimTimeDomain::Visual);
+            holder->BindAnimationTime(*visualProbe, ReanimTimeDomain::Visual, holder->mVisualTimeNs);
         }
+        if (rate == 0)
+            holder->BindAnimationTime(*probe, ReanimTimeDomain::Visual, holder->mVisualTimeNs);
     }
     board.mLevelTimeNs += 123'456'789;
     holder->mBattleTimeNs = static_cast<std::int64_t>(board.mLevelTimeNs);
     holder->mVisualTimeNs += 123'456'789;
     advanced = nullptr;
     while (holder->mReanimations.IterateNext(advanced))
-        advanced->UpdateAt(advanced->mTimeDomain == ReanimTimeDomain::Battle
+        advanced->UpdateAt(holder->mTimeDomains[holder->mReanimations.DataArrayIndexOf(advanced)] == ReanimTimeDomain::Battle
             ? holder->mBattleTimeNs : holder->mVisualTimeNs);
     particle = nullptr;
     if (systems.IterateNext(particle))
@@ -281,8 +283,8 @@ void LoadCurrentWithResources(LawnApp& app, HiddenWindow& window, const char* sa
     rootProbe->mX = 712.349243f;
     rootProbe->mY = 251.125f;
     rootProbe->mScaleZombie = 1.3372819f;
-    auto* rootAnimation = app.AddReanimation(0, 0, 0, ReanimationType::REANIM_ZOMBIE);
-    rootAnimation->BindTimeDomain(ReanimTimeDomain::Battle);
+    auto* rootAnimation = app.AddReanimation(0, 0, 0, ReanimationType::REANIM_ZOMBIE, app.mEffectSystem->mReanimationHolder->mBattleTimeNs, ReanimTimeDomain::Battle);
+    holder->BindAnimationTime(*rootAnimation, ReanimTimeDomain::Battle, holder->mBattleTimeNs);
     rootAnimation->PlayReanim(ReanimTrackId::anim_walk, ReanimLoopType::REANIM_LOOP, 0, 13.3072289f);
     Require(rootAnimation->mPeriodNs > 2'000'003 && rootAnimation->mFramePeriodNs > 5'123'457,
         "Root save probe clip cannot straddle one cycle boundary with a small step");
@@ -352,7 +354,7 @@ void LoadCurrentWithResources(LawnApp& app, HiddenWindow& window, const char* sa
             definition.mEmitterDefs[0].mParticleSpinSpeed.mCountNodes>1)
             continue;
         auto* system=app.mEffectSystem->mParticleHolder->AllocParticleSystemFromDef(
-            100,200,0,&definition,static_cast<ParticleEffect>(effect));
+            100,200,0,&definition,static_cast<ParticleEffect>(effect), static_cast<std::int64_t>(board.mLevelTimeNs));
         Require(system && system->EmitterRosterCount(),"Cannot allocate linear particle save probe");
         auto* emitter=system->EmitterRosterEmitterAt(0);
         emitter->mSystemDurationNs=60'000'000'000;
@@ -382,7 +384,7 @@ void LoadCurrentWithResources(LawnApp& app, HiddenWindow& window, const char* sa
                 fields.Fields[i].mX.mCountNodes<=1 && fields.Fields[i].mY.mCountNodes<=1;
         if (!constant) continue;
         auto* system=app.mEffectSystem->mParticleHolder->AllocParticleSystemFromDef(
-            100,200,0,&definition,static_cast<ParticleEffect>(effect));
+            100,200,0,&definition,static_cast<ParticleEffect>(effect), static_cast<std::int64_t>(board.mLevelTimeNs));
         Require(system && system->EmitterRosterCount(),"Cannot allocate acceleration save probe");
         auto* emitter=system->EmitterRosterEmitterAt(0);
         emitter->mSystemDurationNs=60'000'000'000;
@@ -412,7 +414,7 @@ void LoadCurrentWithResources(LawnApp& app, HiddenWindow& window, const char* sa
     }
     Require(positionType>=0,"No production system-position definition for save probe");
     auto* positionSystem=app.mEffectSystem->mParticleHolder->AllocParticleSystemFromDef(
-        100,200,0,&gParticleDefArray[positionType],static_cast<ParticleEffect>(positionType));
+        100,200,0,&gParticleDefArray[positionType],static_cast<ParticleEffect>(positionType), static_cast<std::int64_t>(board.mLevelTimeNs));
     Require(positionSystem!=nullptr,"Cannot allocate system-position save probe");
     bool positionBound=false;
     for (int i=0;i<positionSystem->EmitterRosterCount();++i)
@@ -450,12 +452,12 @@ void LoadCurrentWithResources(LawnApp& app, HiddenWindow& window, const char* sa
         while (app.mEffectSystem->mReanimationHolder->mReanimations.IterateNext(animation))
         {
             const auto position = animation->SamplePlayback();
-            const auto now = animation->mTimeDomain == ReanimTimeDomain::Battle
-                ? app.mEffectSystem->mReanimationHolder->mBattleTimeNs
-                : app.mEffectSystem->mReanimationHolder->mVisualTimeNs;
-            // Absolute Visual timestamps can change between sessions. Their
-            // offset from the current shared clock must preserve local progress.
-            append(animation->mTimeDomain,
+            const auto domain = holder->mTimeDomains[holder->mReanimations.DataArrayIndexOf(animation)];
+            const auto now = animation->mLastUpdateTimeNs;
+            // Absolute timestamps can change between sessions. Preserve the
+            // pose relative to its last supplied timestamp, even if its owner's
+            // current clock has advanced without updating this animation.
+            append(domain,
                 animation->mStartTimeNs - now,
                 animation->mCurrentFrame, animation->mFramePeriodNs, animation->mPeriodNs,
                 animation->mCycleCrossings, std::bit_cast<std::uint32_t>(animation->mAnimRate),
@@ -522,6 +524,9 @@ void LoadCurrentWithResources(LawnApp& app, HiddenWindow& window, const char* sa
     };
     board.mEffectCounter.mNanoseconds = 9'876'543'210;
     board.mEffectCounter.mPreviousNanoseconds = board.mEffectCounter.mNanoseconds;
+    // Saving must preserve the last processed pose, including paused probes,
+    // while the manager's visual clock advances without sampling animations.
+    holder->mVisualTimeNs = ReanimClock::Add(holder->mVisualTimeNs, 9'123'456'789);
     const auto exactBefore = exactSnapshot();
     const auto beforeSave = appearanceSnapshot();
     const auto nondefault = std::count_if(beforeSave.begin(), beforeSave.end(),
@@ -555,6 +560,9 @@ void LoadCurrentWithResources(LawnApp& app, HiddenWindow& window, const char* sa
         holder->mBattleTimeNs = nextTime;
         try
         {
+            // Actor updates explicitly prepare their animation timestamp before
+            // sampling root motion; advancing the holder alone cannot sample it.
+            animation->PrepareTimeAt(nextTime);
             const double beforeConsume = zombie->RootPosition(*animation, -zombie->mScaleZombie);
             Require(zombie->RootPosition(*animation, -zombie->mScaleZombie) == beforeConsume,
                 "Repeated root sampling changed position before consuming the frame");

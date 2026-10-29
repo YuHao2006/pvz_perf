@@ -1,3 +1,4 @@
+#include "Sexy.TodLib/Reanimator.h"
 #include "ParticleRenderParamsTests.h"
 #include "ReanimClock.h"
 #include "Sexy.TodLib/TodCommon.h"
@@ -74,7 +75,7 @@ void PoolSparklyBirthPositions(TodParticleHolder& holder)
     auto& definition = GeneratedDefinitions::Particles[int(ParticleEffect::PARTICLE_POOL_SPARKLY)];
     Require(definition.mEmitterDefCount == 2, "PoolSparkly must have its two original emitters");
     auto* system = holder.AllocParticleSystemFromDef(450.f, 295.f, 0,
-        &definition, ParticleEffect::PARTICLE_POOL_SPARKLY);
+        &definition, ParticleEffect::PARTICLE_POOL_SPARKLY, 0);
     Require(system && system->EmitterRosterCount() == 2, "PoolSparkly system allocation failed");
     system->mRandomState = 0x504f4f4cu;
     constexpr int samples = 512;
@@ -210,7 +211,7 @@ void ParticleRenderParamsChecks()
     TodParticleHolder holder(&data);
     auto& definition = GeneratedDefinitions::Particles[int(ParticleEffect::PARTICLE_POWIE)];
     auto* system = holder.AllocParticleSystemFromDef(320.f, 240.f, 0,
-        &definition, ParticleEffect::PARTICLE_POWIE);
+        &definition, ParticleEffect::PARTICLE_POWIE, 0);
     Require(system != nullptr, "Powie particle system allocation failed");
     TodParticleEmitter* word = nullptr;
     for (int i = 0; i < system->EmitterRosterCount(); ++i)

@@ -521,7 +521,7 @@ void StoreScreen::DrawItemIcon(Graphics* g, int theItemPosition, StoreItem theIt
     // 表外特例：三盆栽槽共体（盆栽图标走禅花园绘制，非静态贴图行）。
     else if (IsPottedPlant(theItemType))
     {
-        mApp->mZenGarden->DrawPottedPlantIcon(g, aPosX, aPosY, &mPottedPlantSpecs);
+        mApp->mZenGarden->DrawPottedPlantIcon(mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs, g, aPosX, aPosY, &mPottedPlantSpecs);
     }
     else
     {
@@ -995,7 +995,7 @@ void StoreScreen::RemovedFromManager(WidgetManager* theWidgetManager)
         Reanimation* reanimation = nullptr;
         while (holder.mReanimations.IterateNext(reanimation))
         {
-            if (!reanimation->mDead && reanimation->mTimeDomain == ReanimTimeDomain::Visual &&
+            if (!reanimation->mDead && holder.mTimeDomains[holder.mReanimations.DataArrayIndexOf(reanimation)] == ReanimTimeDomain::Visual &&
                 reanimation->mLastUpdateTimeNs != holder.mVisualTimeNs)
                 reanimation->RebaseTime(holder.mVisualTimeNs);
         }
@@ -1346,6 +1346,7 @@ void StoreScreen::AdvanceCrazyDaveDialog()
         mApp->WriteCurrentUserConfig();
         mApp->PlaySample(Sexy::SOUND_DIAMOND);
         Coin* aCoin = mCoins.DataArrayAlloc();
+        aCoin->mBoard = nullptr;
         aCoin->CoinInitialize(80, 520, COIN_DIAMOND, COIN_MOTION_FROM_PRESENT);
         aCoin->mVelX = 0;
         aCoin->mVelY = -5;

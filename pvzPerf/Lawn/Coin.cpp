@@ -203,7 +203,7 @@ void Coin::CoinInitialize(int theX, int theY, CoinType theCoinType, CoinMotion t
     {
         float aPosX = mWidth * 0.5f;
         float aPosY = mHeight * 0.5f;
-        Reanimation* aSunReanim = mApp->AddReanimation(0.0f, 0.0f, 0, ReanimationType::REANIM_SUN);
+        Reanimation* aSunReanim = mApp->AddReanimation(0.0f, 0.0f, 0, ReanimationType::REANIM_SUN, (mBoard ? static_cast<std::int64_t>(mBoard->mLevelTimeNs) : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs), (mBoard ? ReanimTimeDomain::Battle : ReanimTimeDomain::Visual));
         aSunReanim->mOverlayMatrix.m02 = mPosX + aPosX;
         aSunReanim->mOverlayMatrix.m12 = mPosY + aPosY;
         aSunReanim->ChangeLoopType(ReanimLoopType::REANIM_LOOP);
@@ -217,7 +217,7 @@ void Coin::CoinInitialize(int theX, int theY, CoinType theCoinType, CoinMotion t
 
         float aPosX = 9.0f;
         float aPosY = 9.0f;
-        Reanimation* aCoinReanim = mApp->AddReanimation(0.0f, 0.0f, 0, ReanimationType::REANIM_COIN_SILVER);
+        Reanimation* aCoinReanim = mApp->AddReanimation(0.0f, 0.0f, 0, ReanimationType::REANIM_COIN_SILVER, (mBoard ? static_cast<std::int64_t>(mBoard->mLevelTimeNs) : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs), (mBoard ? ReanimTimeDomain::Battle : ReanimTimeDomain::Visual));
         aCoinReanim->mOverlayMatrix.m02 = mPosX + aPosX;
         aCoinReanim->mOverlayMatrix.m12 = mPosY + aPosY;
         aCoinReanim->ChangeLoopType(ReanimLoopType::REANIM_LOOP);
@@ -232,7 +232,7 @@ void Coin::CoinInitialize(int theX, int theY, CoinType theCoinType, CoinMotion t
 
         float aPosX = 9.0f;
         float aPosY = 9.0f;
-        Reanimation* aCoinReanim = mApp->AddReanimation(0.0f, 0.0f, 0, ReanimationType::REANIM_COIN_GOLD);
+        Reanimation* aCoinReanim = mApp->AddReanimation(0.0f, 0.0f, 0, ReanimationType::REANIM_COIN_GOLD, (mBoard ? static_cast<std::int64_t>(mBoard->mLevelTimeNs) : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs), (mBoard ? ReanimTimeDomain::Battle : ReanimTimeDomain::Visual));
         aCoinReanim->mOverlayMatrix.m02 = mPosX + aPosX;
         aCoinReanim->mOverlayMatrix.m12 = mPosY + aPosY;
         aCoinReanim->ChangeLoopType(ReanimLoopType::REANIM_LOOP);
@@ -247,7 +247,7 @@ void Coin::CoinInitialize(int theX, int theY, CoinType theCoinType, CoinMotion t
 
         float aPosX = -3.0f;
         float aPosY = 4.0f;
-        Reanimation* aCoinReanim = mApp->AddReanimation(0.0f, 0.0f, 0, ReanimationType::REANIM_DIAMOND);
+        Reanimation* aCoinReanim = mApp->AddReanimation(0.0f, 0.0f, 0, ReanimationType::REANIM_DIAMOND, (mBoard ? static_cast<std::int64_t>(mBoard->mLevelTimeNs) : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs), (mBoard ? ReanimTimeDomain::Battle : ReanimTimeDomain::Visual));
         aCoinReanim->mOverlayMatrix.m02 = mPosX + aPosX;
         aCoinReanim->mOverlayMatrix.m12 = mPosY + aPosY;
         aCoinReanim->ChangeLoopType(ReanimLoopType::REANIM_LOOP);
@@ -554,7 +554,7 @@ void Coin::UpdateFall()
                 aEffect = ParticleEffect::PARTICLE_AWARD_PICKUP_ARROW;
             }
 
-            TodParticleSystem* aParticle = mApp->AddTodParticle(mPosX + aParticleOffsetX, mPosY + aParticleOffsetY, 0, aEffect);
+            TodParticleSystem* aParticle = mApp->AddTodParticle(mPosX + aParticleOffsetX, mPosY + aParticleOffsetY, 0, aEffect, (mBoard ? static_cast<std::int64_t>(mBoard->mLevelTimeNs) : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs));
             AttachParticle(mAttachmentID, aParticle, aParticleOffsetX, aParticleOffsetY);
             mHasBouncyArrow = true;
         }
@@ -762,10 +762,8 @@ void Coin::Update()
             aOffsetY = 13.0f - 13.0f * mScale;
         }
 
-        const auto domain = mBoard ? mBoard->AnimationTimeDomain() : ReanimTimeDomain::Visual;
-        const auto& clocks = *mApp->mEffectSystem->mReanimationHolder;
         AttachmentUpdateAndMoveAt(mAttachmentID, mPosX + aOffsetX, mPosY + aOffsetY,
-            domain == ReanimTimeDomain::Battle ? clocks.mBattleTimeNs : clocks.mVisualTimeNs, domain);
+            mBoard ? static_cast<std::int64_t>(mBoard->mLevelTimeNs) : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs);
         AttachmentOverrideColor(mAttachmentID, GetColor());
         AttachmentOverrideScale(mAttachmentID, mScale);
 
@@ -911,7 +909,7 @@ void Coin::Draw(Graphics* g)
 
     if ((mType == CoinType::COIN_PRESENT_PLANT || mType == CoinType::COIN_AWARD_PRESENT) && mIsBeingCollected)
     {
-        mApp->mZenGarden->DrawPottedPlantIcon(g, mPosX + 10.0f, mPosY - 20.0f, &mPottedPlantSpec);
+        mApp->mZenGarden->DrawPottedPlantIcon(static_cast<std::int64_t>(mBoard->mLevelTimeNs), g, mPosX + 10.0f, mPosY - 20.0f, &mPottedPlantSpec);
         return;
     }
 
@@ -1100,7 +1098,7 @@ void Coin::Collect()
         {
             mBoard->mPottedPlantsCollected++;
             mBoard->DisplayAdvice(gStr.ADVICE_FOUND_PLANT, MessageStyle::MESSAGE_STYLE_HINT_FAST, AdviceType::ADVICE_NONE);
-            mApp->AddTodParticle(mPosX + 30.0f, mPosY + 30.0f, mRenderOrder + 1, ParticleEffect::PARTICLE_PRESENT_PICKUP);
+            mApp->AddTodParticle(mPosX + 30.0f, mPosY + 30.0f, mRenderOrder + 1, ParticleEffect::PARTICLE_PRESENT_PICKUP, (mBoard ? static_cast<std::int64_t>(mBoard->mLevelTimeNs) : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs));
             mApp->mZenGarden->AddPottedPlant(&mPottedPlantSpec);
         }
 
@@ -1119,7 +1117,7 @@ void Coin::Collect()
     {
         TOD_ASSERT(mBoard);
 
-        mApp->AddTodParticle(mPosX + 30.0f, mPosY + 30.0f, mRenderOrder + 1, ParticleEffect::PARTICLE_PRESENT_PICKUP);
+        mApp->AddTodParticle(mPosX + 30.0f, mPosY + 30.0f, mRenderOrder + 1, ParticleEffect::PARTICLE_PRESENT_PICKUP, (mBoard ? static_cast<std::int64_t>(mBoard->mLevelTimeNs) : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs));
 
         mDisappearStartTimeNs = INT64_MAX;
         mFadeEndTimeNs = 0;
@@ -1133,7 +1131,7 @@ void Coin::Collect()
     {
         TOD_ASSERT(mBoard);
 
-        mApp->AddTodParticle(mPosX + 30.0f, mPosY + 30.0f, mRenderOrder + 1, ParticleEffect::PARTICLE_PRESENT_PICKUP);
+        mApp->AddTodParticle(mPosX + 30.0f, mPosY + 30.0f, mRenderOrder + 1, ParticleEffect::PARTICLE_PRESENT_PICKUP, (mBoard ? static_cast<std::int64_t>(mBoard->mLevelTimeNs) : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs));
 
         mDisappearStartTimeNs = INT64_MAX;
         mFadeEndTimeNs = 0;
@@ -1147,7 +1145,7 @@ void Coin::Collect()
     {
         TOD_ASSERT(mBoard);
 
-        mApp->AddTodParticle(mPosX + 30.0f, mPosY + 30.0f, mRenderOrder + 1, ParticleEffect::PARTICLE_PRESENT_PICKUP);
+        mApp->AddTodParticle(mPosX + 30.0f, mPosY + 30.0f, mRenderOrder + 1, ParticleEffect::PARTICLE_PRESENT_PICKUP, (mBoard ? static_cast<std::int64_t>(mBoard->mLevelTimeNs) : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs));
 
         mDisappearStartTimeNs = INT64_MAX;
         mFadeEndTimeNs = 0;
@@ -1163,7 +1161,7 @@ void Coin::Collect()
         TOD_ASSERT(mBoard);
 
         mBoard->mChocolateCollected++;
-        mApp->AddTodParticle(mPosX + 30.0f, mPosY + 30.0f, mRenderOrder + 1, ParticleEffect::PARTICLE_PRESENT_PICKUP);
+        mApp->AddTodParticle(mPosX + 30.0f, mPosY + 30.0f, mRenderOrder + 1, ParticleEffect::PARTICLE_PRESENT_PICKUP, (mBoard ? static_cast<std::int64_t>(mBoard->mLevelTimeNs) : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs));
 
         if (mApp->mPlayerInfo->mPurchases[(int)StoreItem::STORE_ITEM_CHOCOLATE] < PURCHASE_COUNT_OFFSET)
         {
@@ -1251,7 +1249,7 @@ void Coin::Collect()
             mApp->PlaySample(SOUND_TAP2);
         }
 
-        mApp->AddTodParticle(mPosX + 30.0f, mPosY + 30.0f, mRenderOrder + 1, ParticleEffect::PARTICLE_STARBURST);
+        mApp->AddTodParticle(mPosX + 30.0f, mPosY + 30.0f, mRenderOrder + 1, ParticleEffect::PARTICLE_STARBURST, (mBoard ? static_cast<std::int64_t>(mBoard->mLevelTimeNs) : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs));
 
         TOD_ASSERT(mBoard);
 
@@ -1262,14 +1260,14 @@ void Coin::Collect()
 
         if (mType == CoinType::COIN_NOTE)
         {
-            mApp->AddTodParticle(mPosX + 30.0f, mPosY + 30.0f, mRenderOrder + 1, ParticleEffect::PARTICLE_PRESENT_PICKUP);
+            mApp->AddTodParticle(mPosX + 30.0f, mPosY + 30.0f, mRenderOrder + 1, ParticleEffect::PARTICLE_PRESENT_PICKUP, (mBoard ? static_cast<std::int64_t>(mBoard->mLevelTimeNs) : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs));
             mFadeEndTimeNs = ReanimClock::Add(nowNs,150'000'000);
         }
         else if (!aIsEndlessAward)
         {
             float aParticleOffsetX = mWidth / 2;
             float aParticleOffsetY = mHeight / 2;
-            TodParticleSystem* aParticle = mApp->AddTodParticle(mPosX + aParticleOffsetX, mPosY + aParticleOffsetY, mRenderOrder - 1, PARTICLE_SEED_PACKET_PICKUP);
+            TodParticleSystem* aParticle = mApp->AddTodParticle(mPosX + aParticleOffsetX, mPosY + aParticleOffsetY, mRenderOrder - 1, PARTICLE_SEED_PACKET_PICKUP, (mBoard ? static_cast<std::int64_t>(mBoard->mLevelTimeNs) : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs));
             AttachParticle(mAttachmentID, aParticle, aParticleOffsetX, aParticleOffsetY);
         }
 

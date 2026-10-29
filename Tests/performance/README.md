@@ -161,8 +161,9 @@ $bench = 'out/x64-win32-vulkan/SexyAppFramework/graphics/vulkan/sexy_vulkan_spri
 
 `--instanced-quads` 比较四顶点与 88 字节矩形实例，额外检查 CPU 旋转和五万实例，
 保持原绘制次序、混合及 16 位索引拆分；四角染色／采样元数据须相同。
-`--tight-scene-barriers` 只比较场景入口屏障的源等待范围，不删除同步。
-两者同样互斥于其他实验，正式库和 Android 不编译这些开关或实验 shader。
+场景入口按已知用途收窄同步范围已进入 Vulkan 1.3 生产路径，
+原 `--tight-scene-barriers` 实验开关已退役。实例实验仍互斥于其他实验，
+正式库和 Android 不编译实例实验开关或 shader。
 
 `--native-instances` 与 `--instanced-quads` 使用相同 shader／数据格式，但调用端
 直接生成 88 字节矩形，避免四顶点临时整理，仅绘制主场景。

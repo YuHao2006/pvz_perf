@@ -129,15 +129,15 @@ inline void Step(Zombie& zombie, Path path)
 {
     switch (path)
     {
-    case Path::BungeeDown: case Path::BungeeUp: zombie.UpdateZombieBungee(); break;
-    case Path::Flyer: zombie.UpdateZombieFlyer(); break;
+    case Path::BungeeDown: case Path::BungeeUp: zombie.UpdateZombieBungee(static_cast<std::int64_t>(zombie.mBoard->mLevelTimeNs), zombie.mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs, (zombie.mBoard->AnimationTimeDomain()==ReanimTimeDomain::Battle ? static_cast<std::int64_t>(zombie.mBoard->mLevelTimeNs) : zombie.mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs)); break;
+    case Path::Flyer: zombie.UpdateZombieFlyer(static_cast<std::int64_t>(zombie.mBoard->mLevelTimeNs), zombie.mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs, (zombie.mBoard->AnimationTimeDomain()==ReanimTimeDomain::Battle ? static_cast<std::int64_t>(zombie.mBoard->mLevelTimeNs) : zombie.mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs)); break;
     case Path::PoolOut: case Path::SnorkelOut: case Path::PoolIn: case Path::DraggedUnder:
-        zombie.UpdateZombiePool(); break;
-    case Path::HighGroundUp: case Path::HighGroundDown: zombie.UpdateZombieHighGround(); break;
-    case Path::Falling: case Path::VaultFalling: zombie.UpdateZombieFalling(); break;
-    case Path::Ladder: zombie.UpdateClimbingLadder(); break;
-    case Path::Imp: zombie.UpdateZombieImp(); break;
-    case Path::CombinedFlyer: zombie.UpdateActions(); break;
+        zombie.UpdateZombiePool(static_cast<std::int64_t>(zombie.mBoard->mLevelTimeNs)); break;
+    case Path::HighGroundUp: case Path::HighGroundDown: zombie.UpdateZombieHighGround(static_cast<std::int64_t>(zombie.mBoard->mLevelTimeNs)); break;
+    case Path::Falling: case Path::VaultFalling: zombie.UpdateZombieFalling(static_cast<std::int64_t>(zombie.mBoard->mLevelTimeNs)); break;
+    case Path::Ladder: zombie.UpdateClimbingLadder(static_cast<std::int64_t>(zombie.mBoard->mLevelTimeNs)); break;
+    case Path::Imp: zombie.UpdateZombieImp(static_cast<std::int64_t>(zombie.mBoard->mLevelTimeNs)); break;
+    case Path::CombinedFlyer: zombie.UpdateActions(static_cast<std::int64_t>(zombie.mBoard->mLevelTimeNs), zombie.mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs, (zombie.mBoard->AnimationTimeDomain()==ReanimTimeDomain::Battle ? static_cast<std::int64_t>(zombie.mBoard->mLevelTimeNs) : zombie.mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs)); break;
     }
 }
 
@@ -251,7 +251,7 @@ inline void Check(LawnApp& app, Board& board)
     const auto initialAltitude = imp.mAltitude;
     const auto initialVelocity = imp.mVelZ;
     const auto initialY = imp.mY;
-    Schedule(100, 700'000'000, [&] { imp.UpdateZombieImp(); });
+    Schedule(100, 700'000'000, [&] { imp.UpdateZombieImp(static_cast<std::int64_t>(imp.mBoard->mLevelTimeNs)); });
     long double altitude = initialAltitude, velocity = initialVelocity;
     for (int n = 0; n < 70; ++n)
     {
@@ -269,7 +269,7 @@ inline void Check(LawnApp& app, Board& board)
         Zombie zombie{};
         Initialize(zombie, app, board, Path::CombinedFlyer);
         zombie.mAltitude = 5;
-        Schedule(frequency, 67'123'457, [&] { zombie.UpdateActions(); });
+        Schedule(frequency, 67'123'457, [&] { zombie.UpdateActions(static_cast<std::int64_t>(zombie.mBoard->mLevelTimeNs), zombie.mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs, (zombie.mBoard->AnimationTimeDomain()==ReanimTimeDomain::Battle ? static_cast<std::int64_t>(zombie.mBoard->mLevelTimeNs) : zombie.mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs)); });
         Require(zombie.mZombieHeight == ZombieHeight::HEIGHT_ZOMBIE_NORMAL,
             "Combined high-gravity balloon did not complete its falling stage");
         const auto expectedAltitude = static_cast<float>(double(-.1f) +
@@ -317,7 +317,7 @@ inline void Check(LawnApp& app, Board& board)
     SaveClockProjection::Bind(restoredClock);
     Sexy::gUpdateIntervalNs = 1; Sexy::gUpdateTicks = 1e-7;
     board.mLevelTimeNs+=1;
-    longClock.UpdateZombieFlyer(); restoredClock.UpdateZombieFlyer();
+    longClock.UpdateZombieFlyer(static_cast<std::int64_t>(longClock.mBoard->mLevelTimeNs), longClock.mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs, (longClock.mBoard->AnimationTimeDomain()==ReanimTimeDomain::Battle ? static_cast<std::int64_t>(longClock.mBoard->mLevelTimeNs) : longClock.mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs)); restoredClock.UpdateZombieFlyer(static_cast<std::int64_t>(restoredClock.mBoard->mLevelTimeNs), restoredClock.mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs, (restoredClock.mBoard->AnimationTimeDomain()==ReanimTimeDomain::Battle ? static_cast<std::int64_t>(restoredClock.mBoard->mLevelTimeNs) : restoredClock.mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs));
     Require(State(longClock) == State(restoredClock) &&
             ReanimClock::Subtract(static_cast<std::int64_t>(board.mLevelTimeNs), longClock.mAltitudeMotion.startTimeNs) == 9'007'199'254'740'994LL,
         "Saved Zombie altitude lost a nanosecond beyond double's consecutive integer range");
@@ -338,7 +338,7 @@ inline void Check(LawnApp& app, Board& board)
         const double initialZ = zombie.mAltitude;
         const double initialVelocity = zombie.mVelZ;
         constexpr std::int64_t duration = 1'273'192'835;
-        Schedule(frequency, duration, [&] { zombie.UpdateZombieImp(); });
+        Schedule(frequency, duration, [&] { zombie.UpdateZombieImp(static_cast<std::int64_t>(zombie.mBoard->mLevelTimeNs)); });
         const double ticks = double(duration) / 10'000'000;
         const auto expected = static_cast<float>(initialZ - initialY + zombie.mY +
             initialVelocity * ticks - double(THOWN_ZOMBIE_GRAVITY) * ticks * (ticks + 1) * .5);
@@ -350,9 +350,9 @@ inline void Check(LawnApp& app, Board& board)
         resumed.mApp = &app; resumed.mBoard = &board;
         SaveClockProjection::Bind(resumed);
         const auto roofResumeTime=board.mLevelTimeNs;
-        Schedule(200, 37'192'835, [&] { zombie.UpdateZombieImp(); });
+        Schedule(200, 37'192'835, [&] { zombie.UpdateZombieImp(static_cast<std::int64_t>(zombie.mBoard->mLevelTimeNs)); });
         board.mLevelTimeNs=roofResumeTime;
-        Schedule(1000, 37'192'835, [&] { resumed.UpdateZombieImp(); });
+        Schedule(1000, 37'192'835, [&] { resumed.UpdateZombieImp(static_cast<std::int64_t>(resumed.mBoard->mLevelTimeNs)); });
         Require(State(zombie) == State(resumed), "Saved roof imp lost its relative-row ballistic origin");
         return State(zombie);
     };

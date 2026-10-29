@@ -398,7 +398,7 @@ static void SubmitTextureTriangleBatch(size_t triangleCount,VertexAt vertexAt,
 			(tint&0xff)/255.0f,((tint>>24)&0xff)/255.0f,
 			source.u,source.v,slot,sampler};
 	}
-#if defined(PVZ_GPU_VULKAN) || defined(PVZ_GPU_D3D12)
+#if defined(PVZ_GPU_VULKAN) || defined(PVZ_GPU_D3D12) || defined(PVZ_GPU_OPENGL)
     if constexpr (Quads) {
         const auto blend=gGpuCurrentDrawMode==1 ? GpuBlend::Additive :
             gGpuCurrentDrawMode==2 ? GpuBlend::Opaque : GpuBlend::Normal;
@@ -453,7 +453,7 @@ static void SubmitGpuTriangles(
 		aOut.sampler = aSampler;
 	};
 
-#if defined(PVZ_GPU_VULKAN) || defined(PVZ_GPU_D3D12)
+#if defined(PVZ_GPU_VULKAN) || defined(PVZ_GPU_D3D12) || defined(PVZ_GPU_OPENGL)
     if (theNumVertices==4 && theType!=PRIMITIVE_TRIANGLELIST) {
         if (theType==PRIMITIVE_TRIANGLESTRIP)
             for (int i=0;i<4;++i) ConvertVertex(theVertices[i]);
@@ -490,7 +490,7 @@ static void SubmitGpuTriangles(
     if(theClipRect) nativeClip={theClipRect->mX,theClipRect->mY,theClipRect->mWidth,theClipRect->mHeight};
     const auto aBlend = aDrawMode == 1 ? GpuBlend::Additive :
         aDrawMode == 2 ? GpuBlend::Opaque : GpuBlend::Normal;
-#if defined(PVZ_GPU_VULKAN) || defined(PVZ_GPU_D3D12)
+#if defined(PVZ_GPU_VULKAN) || defined(PVZ_GPU_D3D12) || defined(PVZ_GPU_OPENGL)
     if (aCount==4) {
         gGpuRenderer->SubmitQuads(std::span<const GpuVertex>(aConverted,aCount),theSRV,
             theLinearFilter,RenderInterface::sSamplerAddressWrap,aBlend,theClipRect ? &nativeClip : nullptr);
@@ -1182,6 +1182,21 @@ void RenderInterface::DrawTrianglesTex(const TriVertex theVertices[][3], int the
 		theVertices,theNumTriangles,aColor,tx,ty);
 }
 
+void RenderInterface::DrawTrianglesTexClipped(const TriVertex vertices[][3], int count,
+    const Color& color, int drawMode, Image* image, const Rect& clip,
+    float tx, float ty, bool blend)
+{
+    if (count <= 0 || clip.mWidth <= 0 || clip.mHeight <= 0 || !PreDraw()) return;
+    auto* texture = CreateImageTexture(image);
+    if (!texture) return;
+    gGpuCurrentDrawMode = drawMode;
+    gLinearFilter = blend;
+    SubmitTextureTriangleBatch(size_t(count),
+        [&](size_t i)->const TriVertex& { return vertices[i/3][i%3]; },
+        TextureSource{texture,image->mGpuSamplingFlags},
+        RGBA_MAKE(color.mRed,color.mGreen,color.mBlue,color.mAlpha),tx,ty,&clip);
+}
+
 void RenderInterface::DrawPool(Image* image,const GpuPoolParams& params)
 {
     if (!PreDraw()) return;
@@ -1231,7 +1246,7 @@ void RenderInterface::DrawTrianglesTex(std::span<const std::array<TriVertex,3>> 
 		RGBA_MAKE(color.mRed,color.mGreen,color.mBlue,color.mAlpha),tx,ty,clip);
 }
 
-#if defined(PVZ_GPU_VULKAN) || defined(PVZ_GPU_D3D12)
+#if defined(PVZ_GPU_VULKAN) || defined(PVZ_GPU_D3D12) || defined(PVZ_GPU_OPENGL)
 void RenderInterface::DrawQuadsTex(std::span<const std::array<TriVertex,4>> quads,
     const Color& color,int drawMode,const TextureSource& source,float tx,float ty,bool blend,const Rect* clip)
 {

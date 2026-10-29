@@ -41,8 +41,8 @@ inline void Step(Zombie& zombie)
     // This is their production ordering in UpdatePlaying: the type action
     // computes speed/ice using the old position, then walking moves the actor.
     zombie.mBoard->mLevelTimeNs += Sexy::gUpdateIntervalNs;
-    zombie.UpdateZamboni();
-    zombie.UpdateZombieWalking();
+    zombie.UpdateZamboni(static_cast<std::int64_t>(zombie.mBoard->mLevelTimeNs));
+    zombie.UpdateZombieWalking(static_cast<std::int64_t>(zombie.mBoard->mLevelTimeNs));
 }
 
 inline auto State(const Zombie& zombie)
@@ -62,7 +62,7 @@ inline void Check(LawnApp& app, Board& board)
     const auto oldTime = board.mLevelTimeNs;
     const auto oldIceX = std::to_array(board.mIceMinX);
     const auto oldIceTimer = std::to_array(board.mIceTimer);
-    auto* animation = app.AddReanimation(0, 0, 0, ReanimationType::REANIM_ZOMBIE_ZAMBONI);
+    auto* animation = app.AddReanimation(0, 0, 0, ReanimationType::REANIM_ZOMBIE_ZAMBONI, app.mEffectSystem->mReanimationHolder->mBattleTimeNs, ReanimTimeDomain::Battle);
     const auto animationId = app.ReanimationGetID(animation);
     struct Restore
     {

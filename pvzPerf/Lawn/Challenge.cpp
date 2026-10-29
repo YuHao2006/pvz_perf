@@ -26,6 +26,7 @@
 #include "Sexy.TodLib/TodCommon.h"
 #include "graphics/Font.h"
 #include "Sexy.TodLib/Reanimator.h"
+#include "Sexy.TodLib/EffectSystem.h"
 #include "misc/Debug.h"
 #include "misc/MTRand.h"
 #include "misc/FrameCounterMath.h"
@@ -323,7 +324,7 @@ Challenge::Challenge()
 	{
 		Rect aHandleRect = SlotMachineGetHandleRect();
 		ReanimatorEnsureDefinitionLoaded(REANIM_SLOT_MACHINE_HANDLE, true);
-		Reanimation* aHandleReanim = mApp->AddReanimation(aHandleRect.mX - 377, aHandleRect.mY - 20, 0, REANIM_SLOT_MACHINE_HANDLE);
+		Reanimation* aHandleReanim = mApp->AddReanimation(aHandleRect.mX - 377, aHandleRect.mY - 20, 0, REANIM_SLOT_MACHINE_HANDLE, (mBoard && mBoard->AnimationTimeDomain() == ReanimTimeDomain::Battle ? static_cast<std::int64_t>(mBoard->mLevelTimeNs) : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs), (mBoard ? mBoard->AnimationTimeDomain() : ReanimTimeDomain::Visual));
 		aHandleReanim->mIsAttachment = true;
 		aHandleReanim->ApplyRate(0.0f);
 		mReanimChallenge = mApp->ReanimationGetID(aHandleReanim);
@@ -815,7 +816,7 @@ void Challenge::BeghouledRemoveHorizontalMatch(int theGridX, int theGridY, Begho
 		Plant* aPlant = mBoard->GetTopPlantAt(theGridX, theGridY, TOPPLANT_ANY);
 		if (aPlant)
 		{
-			aPlant->Die();
+			aPlant->Die(static_cast<std::int64_t>(mBoard->mLevelTimeNs), mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs, (mBoard->AnimationTimeDomain() == ReanimTimeDomain::Battle ? static_cast<std::int64_t>(mBoard->mLevelTimeNs) : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs));
 
 		}
 		theGridX++;
@@ -831,7 +832,7 @@ void Challenge::BeghouledRemoveVerticalMatch(int theGridX, int theGridY, Beghoul
 		Plant* aPlant = mBoard->GetTopPlantAt(theGridX, theGridY, TOPPLANT_ANY);
 		if (aPlant)
 		{
-			aPlant->Die();
+			aPlant->Die(static_cast<std::int64_t>(mBoard->mLevelTimeNs), mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs, (mBoard->AnimationTimeDomain() == ReanimTimeDomain::Battle ? static_cast<std::int64_t>(mBoard->mLevelTimeNs) : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs));
 		}
 		theGridY++;
 	} while (BeghouledGetPlantAt(theGridX, theGridY, theBoardState) == aSeedType);
@@ -1306,13 +1307,13 @@ void Challenge::MouseDownWhackAZombie(int theX, int theY)
 				mApp->PlayFoley(FOLEY_PLASTIC_HIT);
 			}
 
-			aTopZombie->TakeHelmDamage(900, 0U);
+			aTopZombie->TakeHelmDamage(static_cast<std::int64_t>(mBoard->mLevelTimeNs), 900, 0U);
 		}
 		else
 		{
 			mApp->PlayFoley(FOLEY_BONK);
-			mApp->AddTodParticle(theX - 3, theY + 9, RENDER_LAYER_ABOVE_UI, PARTICLE_POW);
-			aTopZombie->DieWithLoot();
+			mApp->AddTodParticle(theX - 3, theY + 9, RENDER_LAYER_ABOVE_UI, PARTICLE_POW, static_cast<std::int64_t>(mBoard->mLevelTimeNs));
+			aTopZombie->DieWithLoot(static_cast<std::int64_t>(mBoard->mLevelTimeNs), mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs, (mBoard->AnimationTimeDomain() == ReanimTimeDomain::Battle ? static_cast<std::int64_t>(mBoard->mLevelTimeNs) : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs));
 			mBoard->ClearCursor();
 		}
 	}
@@ -1465,10 +1466,13 @@ void Challenge::ClearCursor()
 int Challenge::UpdateBeghouledPlant(Plant* thePlant)
 {
 	int aMoving = false;
-	int aDiffX = mBoard->GridToPixelX(thePlant->mPlantCol, thePlant->mRow) - (thePlant->mX);
-	int aDiffY = mBoard->GridToPixelY(thePlant->mPlantCol, thePlant->mRow) - (thePlant->mY);
-	int aDelta = (mChallengeState == STATECHALLENGE_BEGHOULED_MOVING ? 3 : TodAnimateCurveNs(900'000'000, 300'000'000, mChallengeStateCounter.mNanoseconds, 1, 20, Curves::EaseIn)) * Sexy::gWholeLegacyTicks;
-	int aDeltaX = 0, aDeltaY = 0;
+	const float aDiffX = mBoard->GridToPixelX(thePlant->mPlantCol, thePlant->mRow) - thePlant->mX;
+	const float aDiffY = mBoard->GridToPixelY(thePlant->mPlantCol, thePlant->mRow) - thePlant->mY;
+	// Speeds are pixels per second; every update contributes its actual duration.
+	const float aSpeed = mChallengeState == STATECHALLENGE_BEGHOULED_MOVING ? 300.0f
+		: TodAnimateCurveNs(900'000'000, 300'000'000, mChallengeStateCounter.mNanoseconds, 100.0f, 2000.0f, Curves::EaseIn);
+	const float aDelta = aSpeed * (static_cast<float>(Sexy::gUpdateIntervalNs) * 1.0e-9f);
+	float aDeltaX = 0, aDeltaY = 0;
 
 	if (aDiffX > 0)
 	{
@@ -1707,7 +1711,7 @@ void Challenge::UpdateBeghouled()
 			}
 			else if (mChallengeState == STATECHALLENGE_BEGHOULED_NO_MATCHES)
 			{
-				mApp->AddTodParticle(BOARD_WIDTH / 2, BOARD_HEIGHT / 2, RENDER_LAYER_TOP, PARTICLE_SCREEN_FLASH);
+				mApp->AddTodParticle(BOARD_WIDTH / 2, BOARD_HEIGHT / 2, RENDER_LAYER_TOP, PARTICLE_SCREEN_FLASH, static_cast<std::int64_t>(mBoard->mLevelTimeNs));
 				BeghouledShuffle();
 			}
 		}
@@ -2350,7 +2354,7 @@ void Challenge::Update(std::uint64_t theLevelDeltaNs)
 	Reanimation* aReanim = mApp->ReanimationTryToGet(mReanimChallenge);
 	if (aReanim && aReanim->mIsAttachment)
 	{
-		aReanim->Update();
+		aReanim->UpdateAt((mBoard->AnimationTimeDomain() == ReanimTimeDomain::Battle ? static_cast<std::int64_t>(mBoard->mLevelTimeNs) : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs));
 	}
 }
 
@@ -2385,7 +2389,7 @@ void Challenge::SpawnLevelAward(int theGridX, int theGridY)
 	mApp->mBoardResult = BOARDRESULT_WON;
 	mApp->PlayFoley(FOLEY_SPAWN_SUN);
 	Coin* aCoin = mBoard->AddCoin(aPosX, aPosY, aCoinType, COIN_MOTION_COIN);
-	mApp->AddTodParticle(BOARD_WIDTH / 2, BOARD_HEIGHT / 2, RENDER_LAYER_TOP, PARTICLE_SCREEN_FLASH);
+	mApp->AddTodParticle(BOARD_WIDTH / 2, BOARD_HEIGHT / 2, RENDER_LAYER_TOP, PARTICLE_SCREEN_FLASH, static_cast<std::int64_t>(mBoard->mLevelTimeNs));
 
 	if (mApp->mGameMode == GAMEMODE_MINIGAME_ZOMBIQUARIUM)
 	{
@@ -2398,7 +2402,7 @@ void Challenge::SpawnLevelAward(int theGridX, int theGridY)
 		{
 			if (!aZombie->IsDeadOrDying())
 			{
-				aZombie->TakeDamage(1800, 0U);
+				aZombie->TakeDamage(static_cast<std::int64_t>(mBoard->mLevelTimeNs), mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs, (mBoard->AnimationTimeDomain() == ReanimTimeDomain::Battle ? static_cast<std::int64_t>(mBoard->mLevelTimeNs) : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs), 1800, 0U);
 			}
 		}
 	}
@@ -2567,7 +2571,7 @@ void Challenge::PlantAdded(Plant* thePlant)
 		if (anArtSeed != SEED_NONE && anArtSeed == thePlant->mSeedType)
 		{
 			mApp->PlayFoley(FOLEY_ART_CHALLENGE);
-			mApp->AddTodParticle((thePlant->mX) + 40, (thePlant->mY) + 40, RENDER_LAYER_TOP, PARTICLE_PRESENT_PICKUP);
+			mApp->AddTodParticle((thePlant->mX) + 40, (thePlant->mY) + 40, RENDER_LAYER_TOP, PARTICLE_PRESENT_PICKUP, static_cast<std::int64_t>(mBoard->mLevelTimeNs));
 			CheckForCompleteArtChallenge(thePlant->mPlantCol, thePlant->mRow);
 		}
 	}
@@ -2856,7 +2860,7 @@ void Challenge::WhackAZombiePlaceGraves(int theGraveCount)
 			while (aPlant != nullptr)
 			{
 				Plant* aNext = mBoard->NextCellPlant(aPlant);  // 先取：Die 不摘链但防御性前取
-				aPlant->Die();
+				aPlant->Die(static_cast<std::int64_t>(mBoard->mLevelTimeNs), mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs, (mBoard->AnimationTimeDomain() == ReanimTimeDomain::Battle ? static_cast<std::int64_t>(mBoard->mLevelTimeNs) : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs));
 				aPlant = aNext;
 			}
 		}
@@ -2979,10 +2983,10 @@ void Challenge::WhackAZombieSpawning()
 			if (aZombie == nullptr)
 				break;
 
-			aZombie->RiseFromGrave(aGraveStone->mGridX, aGraveStone->mGridY);
+			aZombie->RiseFromGrave(static_cast<std::int64_t>(mBoard->mLevelTimeNs), mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs, (mBoard->AnimationTimeDomain() == ReanimTimeDomain::Battle ? static_cast<std::int64_t>(mBoard->mLevelTimeNs) : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs), aGraveStone->mGridX, aGraveStone->mGridY);
 			aZombie->mPhaseCounter = 50;
 			aZombie->mVelX = RandRangeFloat(0.5f, aMaxSpeed);
-			aZombie->UpdateAnimSpeed();
+			aZombie->UpdateAnimSpeed(static_cast<std::int64_t>(mBoard->mLevelTimeNs));
 		}
 
 		int aStateCounterMin = TodAnimateCurve(1, 12, mBoard->mCurrentWave, 100, 30, Curves::Linear);
@@ -3034,7 +3038,7 @@ void Challenge::GraveDangerSpawnGraveAt(int theGridX, int theGridY)
 		while (aPlant != nullptr)
 		{
 			Plant* aNext = mBoard->NextCellPlant(aPlant);  // 先取：Die 不摘链但防御性前取
-			aPlant->Die();
+			aPlant->Die(static_cast<std::int64_t>(mBoard->mLevelTimeNs), mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs, (mBoard->AnimationTimeDomain() == ReanimTimeDomain::Battle ? static_cast<std::int64_t>(mBoard->mLevelTimeNs) : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs));
 			aPlant = aNext;
 		}
 	}
@@ -3657,7 +3661,7 @@ void Challenge::BeghouledPacketClicked(SeedPacket* theSeedPacket)
 		{
 			if (aPlant->mSeedType == aSeedPrimary)
 			{
-				aPlant->Die();
+				aPlant->Die(static_cast<std::int64_t>(mBoard->mLevelTimeNs), mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs, (mBoard->AnimationTimeDomain() == ReanimTimeDomain::Battle ? static_cast<std::int64_t>(mBoard->mLevelTimeNs) : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs));
 				mBoard->AddPlant(aPlant->mPlantCol, aPlant->mRow, aPacketType, SEED_NONE);
 			}
 		}
@@ -3690,7 +3694,7 @@ void Challenge::BeghouledPacketClicked(SeedPacket* theSeedPacket)
 		{
 			if (aPlant->mSeedType == aUpgradeRow->mBaseSeedType)
 			{
-				aPlant->Die();
+				aPlant->Die(static_cast<std::int64_t>(mBoard->mLevelTimeNs), mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs, (mBoard->AnimationTimeDomain() == ReanimTimeDomain::Battle ? static_cast<std::int64_t>(mBoard->mLevelTimeNs) : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs));
 				mBoard->AddPlant(aPlant->mPlantCol, aPlant->mRow, theSeedPacket->mPacketType, SEED_NONE);
 			}
 		}
@@ -3723,7 +3727,7 @@ void Challenge::BeghouledShuffle()
 	Plant* aPlant = nullptr;
 	while (mBoard->IteratePlants(aPlant))
 	{
-		aPlant->Die();
+		aPlant->Die(static_cast<std::int64_t>(mBoard->mLevelTimeNs), mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs, (mBoard->AnimationTimeDomain() == ReanimTimeDomain::Battle ? static_cast<std::int64_t>(mBoard->mLevelTimeNs) : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs));
 	}
 
 	BeghouledStartFalling(STATECHALLENGE_BEGHOULED_FALLING);
@@ -3775,7 +3779,7 @@ void Challenge::ZombiquariumPacketClicked(SeedPacket* theSeedPacket)
 
 			Zombie* aZombie = ZombiquariumSpawnSnorkle();
 			mApp->PlayFoley(FOLEY_ZOMBIESPLASH);
-			mApp->AddTodParticle((aZombie->mX) + 60.0f, (aZombie->mY) + 20.0f, RENDER_LAYER_TOP, PARTICLE_PLANTING_POOL);
+			mApp->AddTodParticle((aZombie->mX) + 60.0f, (aZombie->mY) + 20.0f, RENDER_LAYER_TOP, PARTICLE_PLANTING_POOL, static_cast<std::int64_t>(mBoard->mLevelTimeNs));
 		}
 		else if (theSeedPacket->mPacketType == SEED_ZOMBIQUARIUM_TROPHY)
 		{
@@ -4284,7 +4288,7 @@ void Challenge::ScaryPotterMalletPot(GridItem* theScaryPot)
 	mChallengeGridY = theScaryPot->mGridY;
 	int aXPos = mBoard->GridToPixelX(theScaryPot->mGridX, theScaryPot->mGridY);
 	int aYPos = mBoard->GridToPixelY(theScaryPot->mGridX, theScaryPot->mGridY);
-	Reanimation* aMalletReanim = mApp->AddReanimation(aXPos, aYPos, RENDER_LAYER_TOP, REANIM_HAMMER);
+	Reanimation* aMalletReanim = mApp->AddReanimation(aXPos, aYPos, RENDER_LAYER_TOP, REANIM_HAMMER, (mBoard && mBoard->AnimationTimeDomain() == ReanimTimeDomain::Battle ? static_cast<std::int64_t>(mBoard->mLevelTimeNs) : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs), (mBoard ? mBoard->AnimationTimeDomain() : ReanimTimeDomain::Visual));
 	// 1073 0042C432 selects the real anim_open_pot track, not a missing-name fallback.
 	aMalletReanim->PlayReanim(ReanimTrackId::anim_open_pot, REANIM_PLAY_ONCE_AND_HOLD, 0, 40.0f);
 	mReanimChallenge = mApp->ReanimationGetID(aMalletReanim);
@@ -4404,7 +4408,7 @@ void Challenge::ScaryPotterOpenPot(GridItem* theScaryPot)
 		theScaryPot->mGridItemState == GRIDITEM_STATE_SCARY_POT_LEAF ? PARTICLE_VASE_SHATTER_LEAF :
 		theScaryPot->mGridItemState == GRIDITEM_STATE_SCARY_POT_ZOMBIE ? PARTICLE_VASE_SHATTER_ZOMBIE :
 		PARTICLE_VASE_SHATTER;
-	mApp->AddTodParticle(aXPos + 20, aYPos, RENDER_LAYER_GROUND, anEffect);
+	mApp->AddTodParticle(aXPos + 20, aYPos, RENDER_LAYER_GROUND, anEffect, static_cast<std::int64_t>(mBoard->mLevelTimeNs));
 }
 
 //0x429DB0
@@ -4437,7 +4441,7 @@ void Challenge::PuzzleNextStageClear()
 		{
 			if (aZombie->IsOnBoard())
 			{
-				aZombie->DieNoLoot();
+				aZombie->DieNoLoot(static_cast<std::int64_t>(mBoard->mLevelTimeNs), mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs, (mBoard->AnimationTimeDomain() == ReanimTimeDomain::Battle ? static_cast<std::int64_t>(mBoard->mLevelTimeNs) : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs));
 			}
 		}
 	}
@@ -4447,7 +4451,7 @@ void Challenge::PuzzleNextStageClear()
 		{
 			if (aPlant->mIsOnBoard)
 			{
-				aPlant->Die();
+				aPlant->Die(static_cast<std::int64_t>(mBoard->mLevelTimeNs), mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs, (mBoard->AnimationTimeDomain() == ReanimTimeDomain::Battle ? static_cast<std::int64_t>(mBoard->mLevelTimeNs) : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs));
 			}
 		}
 	}
@@ -4477,7 +4481,7 @@ void Challenge::PuzzleNextStageClear()
 	mSurvivalStage++;
 	mBoard->ClearAdviceImmediately();
 	mBoard->mLevelAwardSpawned = false;
-	mApp->AddTodParticle(BOARD_WIDTH / 2, BOARD_HEIGHT / 2, RENDER_LAYER_TOP, PARTICLE_SCREEN_FLASH);
+	mApp->AddTodParticle(BOARD_WIDTH / 2, BOARD_HEIGHT / 2, RENDER_LAYER_TOP, PARTICLE_SCREEN_FLASH, static_cast<std::int64_t>(mBoard->mLevelTimeNs));
 }
 
 //0x42A040
@@ -4580,23 +4584,24 @@ void Challenge::IZombieMouseDownWithZombie(int theX, int theY, int theClickCount
 //0x42A530
 void Challenge::IZombieSetupPlant(Plant* thePlant)
 {
+	const auto animationNowNs = (mBoard->AnimationTimeDomain() == ReanimTimeDomain::Battle ? static_cast<std::int64_t>(mBoard->mLevelTimeNs) : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs);
 	Reanimation* aBodyReanim = mApp->ReanimationTryToGet(thePlant->mBodyReanimID);
 	Reanimation* aHeadReanim = mApp->ReanimationTryToGet(thePlant->mHeadReanimID);
 	Reanimation* aHeadReanim2 = mApp->ReanimationTryToGet(thePlant->mHeadReanimID2);
 	Reanimation* aHeadReanim3 = mApp->ReanimationTryToGet(thePlant->mHeadReanimID3);
-	if (aBodyReanim)	aBodyReanim->ApplyRate(0.0f);
-	if (aHeadReanim)	aHeadReanim->ApplyRate(0.0f);
-	if (aHeadReanim2)	aHeadReanim2->ApplyRate(0.0f);
-	if (aHeadReanim3)	aHeadReanim3->ApplyRate(0.0f);
+	if (aBodyReanim) { aBodyReanim->PrepareTimeAt(animationNowNs); aBodyReanim->ApplyRate(0.0f); }
+	if (aHeadReanim) { aHeadReanim->PrepareTimeAt(animationNowNs); aHeadReanim->ApplyRate(0.0f); }
+	if (aHeadReanim2) { aHeadReanim2->PrepareTimeAt(animationNowNs); aHeadReanim2->ApplyRate(0.0f); }
+	if (aHeadReanim3) { aHeadReanim3->PrepareTimeAt(animationNowNs); aHeadReanim3->ApplyRate(0.0f); }
 
 	if (thePlant->mSeedType == SEED_POTATOMINE)
 	{
-		thePlant->PlayBodyReanim(ReanimTrackId::anim_armed, REANIM_LOOP, 0, 0);
+		thePlant->PlayBodyReanim(static_cast<std::int64_t>(mBoard->mLevelTimeNs), ReanimTrackId::anim_armed, REANIM_LOOP, 0, 0);
 		thePlant->mState = STATE_POTATO_ARMED;
 	}
 
 	thePlant->mBlinkCountdown = 0;
-	thePlant->UpdateReanim();
+	thePlant->UpdateReanim(static_cast<std::int64_t>(mBoard->mLevelTimeNs), animationNowNs);
 }
 
 //0x42A660
@@ -4978,7 +4983,7 @@ void Challenge::IZombieUpdate()
 	{
 		if (!aZombie->IsDeadOrDying() && aZombie->mZombiePhase != PHASE_POLEVAULTER_IN_VAULT && !aZombie->mIsEating && static_cast<std::int64_t>(mBoard->mLevelTimeNs) - aZombie->mShotFlashEndTimeNs > 5'000'000'000LL)
 		{
-			aZombie->PickRandomSpeed();
+			aZombie->PickRandomSpeed(static_cast<std::int64_t>(mBoard->mLevelTimeNs));
 		}
 	}
 
@@ -5144,7 +5149,7 @@ int Challenge::IZombieEatBrain(Zombie* theZombie)
 	if (aBrain == nullptr)
 		return false;
 
-	theZombie->StartEating();
+	theZombie->StartEating(static_cast<std::int64_t>(mBoard->mLevelTimeNs));
 	--aBrain->mBrainHealth;
 	if (aBrain->mBrainHealth <= 0)
 	{
@@ -5257,7 +5262,7 @@ void Challenge::SquirrelChew(GridItem* theSquirrel)
 	{
 		float aPosX = mBoard->GridToPixelX(theSquirrel->mGridX, theSquirrel->mGridY);
 		float aPosY = mBoard->GridToPixelY(theSquirrel->mGridX, theSquirrel->mGridY);
-		mApp->AddTodParticle(aPosX + 40, aPosY + 40, aPlant->mRenderOrder + 1, PARTICLE_WALLNUT_EAT_SMALL);
+		mApp->AddTodParticle(aPosX + 40, aPosY + 40, aPlant->mRenderOrder + 1, PARTICLE_WALLNUT_EAT_SMALL, static_cast<std::int64_t>(mBoard->mLevelTimeNs));
 
 		if (std::max<std::int64_t>(0, aPlant->mEatenFlashEndTimeNs - static_cast<std::int64_t>(aPlant->mBoard->mLevelTimeNs)) <= 250000000LL)
 			aPlant->mEatenFlashEndTimeNs = static_cast<std::int64_t>(aPlant->mBoard->mLevelTimeNs) + 250000000LL;
@@ -5406,7 +5411,7 @@ void Challenge::UpdateRain()
 	{
 		float aPosX = RandRangeFloat(40.0f, 740.0f);
 		float aPosY = RandRangeFloat(90.0f, 240.0f);
-		Reanimation* aSplashReanim = mApp->AddReanimation(aPosX, aPosY, RENDER_LAYER_GROUND, REANIM_RAIN_SPLASH);
+		Reanimation* aSplashReanim = mApp->AddReanimation(aPosX, aPosY, RENDER_LAYER_GROUND, REANIM_RAIN_SPLASH, (mBoard && mBoard->AnimationTimeDomain() == ReanimTimeDomain::Battle ? static_cast<std::int64_t>(mBoard->mLevelTimeNs) : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs), (mBoard ? mBoard->AnimationTimeDomain() : ReanimTimeDomain::Visual));
 		aSplashReanim->mColorOverride = Color(255, 255, 255, RandRangeInt(100, 200));
 		float aScale = RandRangeFloat(0.7f, 1.2f);
 		aSplashReanim->mOverlayMatrix.m00 = aScale;
@@ -5414,7 +5419,7 @@ void Challenge::UpdateRain()
 
 		aPosX = RandRangeFloat(40.0f, 740.0f);
 		aPosY = RandRangeFloat(290.0f, 410.0f);
-		Reanimation* aCircleReanim = mApp->AddReanimation(aPosX, aPosY, RENDER_LAYER_GROUND, REANIM_RAIN_CIRCLE);
+		Reanimation* aCircleReanim = mApp->AddReanimation(aPosX, aPosY, RENDER_LAYER_GROUND, REANIM_RAIN_CIRCLE, (mBoard && mBoard->AnimationTimeDomain() == ReanimTimeDomain::Battle ? static_cast<std::int64_t>(mBoard->mLevelTimeNs) : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs), (mBoard ? mBoard->AnimationTimeDomain() : ReanimTimeDomain::Visual));
 		(void)aCircleReanim; // unused
 		aSplashReanim->mColorOverride = Color(255, 255, 255, RandRangeInt(50, 150));
 		aScale = RandRangeFloat(0.7f, 1.1f);
@@ -5423,7 +5428,7 @@ void Challenge::UpdateRain()
 
 		aPosX = RandRangeFloat(40.0f, 740.0f);
 		aPosY = RandRangeFloat(450.0f, 580.0f);
-		Reanimation* aRainReanim = mApp->AddReanimation(aPosX, aPosY, RENDER_LAYER_GROUND, REANIM_RAIN_SPLASH);
+		Reanimation* aRainReanim = mApp->AddReanimation(aPosX, aPosY, RENDER_LAYER_GROUND, REANIM_RAIN_SPLASH, (mBoard && mBoard->AnimationTimeDomain() == ReanimTimeDomain::Battle ? static_cast<std::int64_t>(mBoard->mLevelTimeNs) : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs), (mBoard ? mBoard->AnimationTimeDomain() : ReanimTimeDomain::Visual));
 		(void)aRainReanim; // unused
 		aSplashReanim->mColorOverride = Color(255, 255, 255, RandRangeInt(100, 200));
 		aScale = RandRangeFloat(0.7f, 1.2f);
@@ -5617,7 +5622,7 @@ void Challenge::TreeOfWisdomDraw(Graphics* g)
 void Challenge::TreeOfWisdomInit()
 {
 	ReanimatorEnsureDefinitionLoaded(REANIM_TREEOFWISDOM, true);
-	Reanimation* aReanimTree = mApp->AddReanimation(0.5f, 0.5f, 0, REANIM_TREEOFWISDOM);
+	Reanimation* aReanimTree = mApp->AddReanimation(0.5f, 0.5f, 0, REANIM_TREEOFWISDOM, (mBoard && mBoard->AnimationTimeDomain() == ReanimTimeDomain::Battle ? static_cast<std::int64_t>(mBoard->mLevelTimeNs) : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs), (mBoard ? mBoard->AnimationTimeDomain() : ReanimTimeDomain::Visual));
 	aReanimTree->mIsAttachment = true;
 	aReanimTree->AssignRenderGroupToRange(ReanimTrackRanges::bg, 1);
 	aReanimTree->AssignRenderGroupToRange(ReanimTrackRanges::tree, 2);
@@ -5629,16 +5634,10 @@ void Challenge::TreeOfWisdomInit()
 	mReanimChallenge = mApp->ReanimationGetID(aReanimTree);
 
 	int aTreeSize = ClampInt(TreeOfWisdomGetSize(), 1, 50);
-		aReanimTree->PlayReanim(aGrowLayers[aTreeSize - 1], REANIM_PLAY_ONCE_AND_HOLD, 0, 18.0f);
-	if (aTreeSize == 1 && mApp->mPlayerInfo->mPurchases[STORE_ITEM_TREE_FOOD] < PURCHASE_COUNT_OFFSET)
-	{
-		aReanimTree->mFrameCount += aReanimTree->mFrameStart;
-		aReanimTree->mFrameStart = 0;
-	}
-	else
-	{
-		aReanimTree->Seek(990);
-	}
+	aReanimTree->PlayReanim(aGrowLayers[aTreeSize - 1], REANIM_PLAY_ONCE_AND_HOLD, 0, 18.0f);
+	// The original clamped size cannot enter its size-zero introduction branch.
+	// Returning to the garden displays the completed tree; food plays growth.
+	aReanimTree->Seek(990);
 
 	for (int i = 0; i < 6; i++)
 	{
@@ -5646,7 +5645,7 @@ void Challenge::TreeOfWisdomInit()
 			ReanimTrackId::Cloud1, ReanimTrackId::Cloud2, ReanimTrackId::Cloud3,
 			ReanimTrackId::Cloud4, ReanimTrackId::Cloud5, ReanimTrackId::Cloud6,
 			ReanimTrackId::Cloud7};
-		Reanimation* aReanimCloud = mApp->AddReanimation(0, 0, 0, REANIM_TREEOFWISDOM_CLOUDS);
+		Reanimation* aReanimCloud = mApp->AddReanimation(0, 0, 0, REANIM_TREEOFWISDOM_CLOUDS, (mBoard && mBoard->AnimationTimeDomain() == ReanimTimeDomain::Battle ? static_cast<std::int64_t>(mBoard->mLevelTimeNs) : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs), (mBoard ? mBoard->AnimationTimeDomain() : ReanimTimeDomain::Visual));
 		aReanimCloud->PlayReanim(aCloudLayers[i], REANIM_PLAY_ONCE_AND_HOLD, 0, 0);
 		mReanimClouds[i] = mApp->ReanimationGetID(aReanimCloud);
 
@@ -5672,9 +5671,15 @@ void Challenge::TreeOfWisdomInit()
 // GOTY @Patoke: 0x42FF00
 void Challenge::TreeOfWisdomGrow()
 {
+	const auto domain = mBoard->AnimationTimeDomain();
+	const auto nowNs = domain == ReanimTimeDomain::Battle ? static_cast<std::int64_t>(mBoard->mLevelTimeNs) :
+		mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs;
+	Reanimation* aTree = mApp->ReanimationGet(mReanimChallenge);
+	mApp->mEffectSystem->mReanimationHolder->BindAnimationTime(*aTree, domain, nowNs);
+	aTree->PrepareTimeAt(nowNs);
 	mApp->mPlayerInfo->mChallengeRecords[mApp->GetCurrentChallengeIndex()]++;
 	int aTreeSize = TreeOfWisdomGetSize();
-		mApp->ReanimationGet(mReanimChallenge)->PlayReanim(aGrowLayers[ClampInt(aTreeSize, 1, 51) - 1], REANIM_PLAY_ONCE_AND_HOLD, 0, 8.0f);
+	aTree->PlayReanim(aGrowLayers[ClampInt(aTreeSize, 1, 51) - 1], REANIM_PLAY_ONCE_AND_HOLD, 0, 8.0f);
 	mApp->PlayFoley(FOLEY_PLANTGROW);
 
 	if (aTreeSize > 1)
@@ -5701,7 +5706,7 @@ void Challenge::TreeOfWisdomFertilize()
 	aTreeFood->mGridX = 0;
 	aTreeFood->mGridY = 0;
 	aTreeFood->mRenderOrder = Board::MakeRenderOrder(RENDER_LAYER_ABOVE_UI, 0, 0);
-	Reanimation* aReanim = mApp->AddReanimation(340.0f, 300.0f, 0, REANIM_TREEOFWISDOM_TREEFOOD);
+	Reanimation* aReanim = mApp->AddReanimation(340.0f, 300.0f, 0, REANIM_TREEOFWISDOM_TREEFOOD, (mBoard && mBoard->AnimationTimeDomain() == ReanimTimeDomain::Battle ? static_cast<std::int64_t>(mBoard->mLevelTimeNs) : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs), (mBoard ? mBoard->AnimationTimeDomain() : ReanimTimeDomain::Visual));
 	aReanim->ChangeLoopType(REANIM_PLAY_ONCE_AND_HOLD);
 	aTreeFood->mGridItemReanimID = mApp->ReanimationGetID(aReanim);
 	aTreeFood->mGridItemState = GRIDITEM_STATE_ZEN_TOOL_FERTILIZER;
@@ -5811,6 +5816,14 @@ void Challenge::TreeOfWisdomToolUpdate(GridItem* theZenTool)
 //0x42D680
 void Challenge::TreeOfWisdomUpdate()
 {
+	const auto domain = mBoard->AnimationTimeDomain();
+	const auto nowNs = domain == ReanimTimeDomain::Battle ? static_cast<std::int64_t>(mBoard->mLevelTimeNs) :
+		mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs;
+	// Initialization can run on visual time before the playing scene starts.
+	// Rebase the existing pose before Challenge::Update supplies battle time.
+	Reanimation* aTree = mApp->ReanimationGet(mReanimChallenge);
+	mApp->mEffectSystem->mReanimationHolder->BindAnimationTime(*aTree, domain, nowNs);
+	aTree->PrepareTimeAt(nowNs);
 	GridItem* aGridItem = nullptr;
 	while (mBoard->IterateGridItems(aGridItem))
 	{
@@ -5848,6 +5861,8 @@ void Challenge::TreeOfWisdomUpdate()
 	for (int i = 5; i >= 0; i--) // Off by one error!
 	{
 		Reanimation* aReanimCloud = mApp->ReanimationGet(mReanimClouds[i]);
+		mApp->mEffectSystem->mReanimationHolder->BindAnimationTime(*aReanimCloud, domain, nowNs);
+		aReanimCloud->PrepareTimeAt(nowNs);
 		if (mCloudsCounter[i] > 0)
 		{
 			mCloudsCounter[i]--;
@@ -5863,7 +5878,7 @@ void Challenge::TreeOfWisdomUpdate()
 			mCloudsCounter[i] = RandRangeInt(2000, 4000);
 		}
 
-		aReanimCloud->Update();
+		aReanimCloud->UpdateAt(nowNs);
 	}
 }
 

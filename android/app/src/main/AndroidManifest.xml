@@ -1,7 +1,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-    <application android:theme="@style/AppTheme" android:label="pvz_perf" android:hasCode="false" android:debuggable="true">
-        <activity android:name="android.app.NativeActivity" android:screenOrientation="landscape"
-            android:configChanges="orientation|screenSize|keyboardHidden" android:exported="true">
+    <application android:theme="@style/AppTheme" android:label="pvz_perf" android:debuggable="true">
+        <activity android:name=".PerfActivity" android:screenOrientation="sensorLandscape"
+            android:resizeableActivity="true"
+            android:enableOnBackInvokedCallback="false"
+            android:windowSoftInputMode="stateHidden|adjustNothing"
+            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboard|keyboardHidden" android:exported="true">
             <meta-data android:name="android.app.lib_name" android:value="pvz_perf" />
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

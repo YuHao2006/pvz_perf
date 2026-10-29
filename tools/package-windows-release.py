@@ -64,8 +64,8 @@ def effect_files(directory):
 def package(args):
     root = Path(__file__).resolve().parents[1]
     release = args.release.resolve()
-    api = {"vulkan": "Vulkan", "d3d12": "DirectX 12",
-           "opengl": "OpenGL 3.0", "d3d9": "Direct3D 9Ex / SM3.0"}[args.backend]
+    api = {"vulkan": "Vulkan 1.3", "d3d12": "DirectX 12",
+           "opengl": "OpenGL 3.3", "d3d9": "Direct3D 9Ex / SM3.0"}[args.backend]
     shader_extension = {"vulkan": ".spv", "d3d12": ".dxil",
                         "opengl": None, "d3d9": ".cso"}[args.backend]
     modern = args.backend in {"vulkan", "d3d12"}
@@ -196,7 +196,7 @@ if __name__ == "__main__":
     parser.add_argument("--release", type=Path, required=True)
     parser.add_argument("--notices", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--version", default="v3.0")
+    parser.add_argument("--version", default="v3.1")
     parser.add_argument("--test-saves", type=Path, required=True,
                         help="Generated package-test-saves.py ZIP; both data/ and retail/ are required")
     parser.add_argument("--effects-directory", type=Path, required=True,

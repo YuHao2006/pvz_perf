@@ -83,6 +83,7 @@ struct DaveUpgradeDialog
 }
 
 static const int	TimePanRightStart				= 1500;
+const std::int64_t CutScene::SurvivalBattleClockStopTimeNs = Sexy::TimeCounter::Encode(TimePanRightStart);
 static const int	TimePanRightEnd					= 3500;		//[0x6A4FFC]
 static const int	TimeEarlyDaveEnterStart			= 2000;		//[0x6A5000]
 static const int	TimeEarlyDaveEnterEnd			= 2750;		//[0x6AA220]
@@ -156,6 +157,9 @@ CutScene::CutScene()
 
 CutScene::~CutScene()
 {
+	if (mApp && mApp->mEffectSystem)
+		for (const auto id : mVisualParticleIDs)
+			if (auto* particle=mApp->ParticleTryToGet(id)) particle->ParticleSystemDie();
 	if (mUpsellChallengeScreen)
 	{
 		delete mUpsellChallengeScreen;
@@ -1099,7 +1103,7 @@ void CutScene::CancelIntro()
 			Plant* aPlant = nullptr;
 			while (mBoard->IteratePlants(aPlant))
 			{
-				aPlant->Die();
+				aPlant->Die(static_cast<std::int64_t>(mBoard->mLevelTimeNs), mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs, (mBoard->AnimationTimeDomain() == ReanimTimeDomain::Battle ? static_cast<std::int64_t>(mBoard->mLevelTimeNs) : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs));
 			}
 			mBoard->mChallenge->mShowBowlingLine = true;
 		}
@@ -1375,22 +1379,22 @@ void CutScene::AnimateBoard()
 			mApp->PlayFoley(FoleyType::FOLEY_DIGGER);
 			if (mBoard->mLevel == 1)
 			{
-				mApp->AddReanimation(0, 0, Board::MakeRenderOrder(RenderLayer::RENDER_LAYER_TOP, 0, 0), ReanimationType::REANIM_SODROLL);
-				mApp->AddTodParticle(35, 348, Board::MakeRenderOrder(RenderLayer::RENDER_LAYER_TOP, 0, 1), ParticleEffect::PARTICLE_SOD_ROLL);
+				mApp->AddReanimation(0, 0, Board::MakeRenderOrder(RenderLayer::RENDER_LAYER_TOP, 0, 0), ReanimationType::REANIM_SODROLL, (mBoard && mBoard->AnimationTimeDomain() == ReanimTimeDomain::Battle ? static_cast<std::int64_t>(mBoard->mLevelTimeNs) : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs), (mBoard ? mBoard->AnimationTimeDomain() : ReanimTimeDomain::Visual));
+				AddVisualParticle(35, 348, Board::MakeRenderOrder(RenderLayer::RENDER_LAYER_TOP, 0, 1), ParticleEffect::PARTICLE_SOD_ROLL);
 			}
 			else if (mBoard->mLevel == 2)
 			{
-				mApp->AddReanimation(0, -102, Board::MakeRenderOrder(RenderLayer::RENDER_LAYER_TOP, 0, 0), ReanimationType::REANIM_SODROLL);
-				mApp->AddReanimation(0, 111, Board::MakeRenderOrder(RenderLayer::RENDER_LAYER_TOP, 0, 0), ReanimationType::REANIM_SODROLL);
-				mApp->AddTodParticle(35, 246, Board::MakeRenderOrder(RenderLayer::RENDER_LAYER_TOP, 0, 1), ParticleEffect::PARTICLE_SOD_ROLL);
-				mApp->AddTodParticle(35, 459, Board::MakeRenderOrder(RenderLayer::RENDER_LAYER_TOP, 0, 1), ParticleEffect::PARTICLE_SOD_ROLL);
+				mApp->AddReanimation(0, -102, Board::MakeRenderOrder(RenderLayer::RENDER_LAYER_TOP, 0, 0), ReanimationType::REANIM_SODROLL, (mBoard && mBoard->AnimationTimeDomain() == ReanimTimeDomain::Battle ? static_cast<std::int64_t>(mBoard->mLevelTimeNs) : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs), (mBoard ? mBoard->AnimationTimeDomain() : ReanimTimeDomain::Visual));
+				mApp->AddReanimation(0, 111, Board::MakeRenderOrder(RenderLayer::RENDER_LAYER_TOP, 0, 0), ReanimationType::REANIM_SODROLL, (mBoard && mBoard->AnimationTimeDomain() == ReanimTimeDomain::Battle ? static_cast<std::int64_t>(mBoard->mLevelTimeNs) : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs), (mBoard ? mBoard->AnimationTimeDomain() : ReanimTimeDomain::Visual));
+				AddVisualParticle(35, 246, Board::MakeRenderOrder(RenderLayer::RENDER_LAYER_TOP, 0, 1), ParticleEffect::PARTICLE_SOD_ROLL);
+				AddVisualParticle(35, 459, Board::MakeRenderOrder(RenderLayer::RENDER_LAYER_TOP, 0, 1), ParticleEffect::PARTICLE_SOD_ROLL);
 			}
 			else if (mBoard->mLevel == 4)
 			{
-				mApp->AddReanimation(-3, -198, Board::MakeRenderOrder(RenderLayer::RENDER_LAYER_TOP, 0, 0), ReanimationType::REANIM_SODROLL);
-				mApp->AddReanimation(-3, 203, Board::MakeRenderOrder(RenderLayer::RENDER_LAYER_TOP, 0, 0), ReanimationType::REANIM_SODROLL);
-				mApp->AddTodParticle(32, 150, Board::MakeRenderOrder(RenderLayer::RENDER_LAYER_TOP, 0, 1), ParticleEffect::PARTICLE_SOD_ROLL);
-				mApp->AddTodParticle(32, 511, Board::MakeRenderOrder(RenderLayer::RENDER_LAYER_TOP, 0, 1), ParticleEffect::PARTICLE_SOD_ROLL);
+				mApp->AddReanimation(-3, -198, Board::MakeRenderOrder(RenderLayer::RENDER_LAYER_TOP, 0, 0), ReanimationType::REANIM_SODROLL, (mBoard && mBoard->AnimationTimeDomain() == ReanimTimeDomain::Battle ? static_cast<std::int64_t>(mBoard->mLevelTimeNs) : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs), (mBoard ? mBoard->AnimationTimeDomain() : ReanimTimeDomain::Visual));
+				mApp->AddReanimation(-3, 203, Board::MakeRenderOrder(RenderLayer::RENDER_LAYER_TOP, 0, 0), ReanimationType::REANIM_SODROLL, (mBoard && mBoard->AnimationTimeDomain() == ReanimTimeDomain::Battle ? static_cast<std::int64_t>(mBoard->mLevelTimeNs) : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs), (mBoard ? mBoard->AnimationTimeDomain() : ReanimTimeDomain::Visual));
+				AddVisualParticle(32, 150, Board::MakeRenderOrder(RenderLayer::RENDER_LAYER_TOP, 0, 1), ParticleEffect::PARTICLE_SOD_ROLL);
+				AddVisualParticle(32, 511, Board::MakeRenderOrder(RenderLayer::RENDER_LAYER_TOP, 0, 1), ParticleEffect::PARTICLE_SOD_ROLL);
 			}
 		}
 
@@ -1492,7 +1496,7 @@ void CutScene::AnimateBoard()
 	int aTimeReadySetPlant = TimeReadySetPlantStart + mLawnMowerTime + mSodTime + mGraveStoneTime + mCrazyDaveTime + mFogTime + mBossTime;
 	if (mReadySetPlantTime > 0 && mCutsceneTime == aTimeReadySetPlant)
 	{
-		mApp->AddReanimation(400, 324, Board::MakeRenderOrder(RenderLayer::RENDER_LAYER_SCREEN_FADE, 0, 0), ReanimationType::REANIM_READYSETPLANT);
+		mApp->AddReanimation(400, 324, Board::MakeRenderOrder(RenderLayer::RENDER_LAYER_SCREEN_FADE, 0, 0), ReanimationType::REANIM_READYSETPLANT, (mBoard && mBoard->AnimationTimeDomain() == ReanimTimeDomain::Battle ? static_cast<std::int64_t>(mBoard->mLevelTimeNs) : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs), (mBoard ? mBoard->AnimationTimeDomain() : ReanimTimeDomain::Visual));
 		mApp->PlaySample(SOUND_READYSETPLANT);
 		if (!mApp->IsFinalBossLevel())
 		{
@@ -1561,12 +1565,36 @@ bool CutScene::IsShowingCrazyDave()
 	return mApp->mGameScene == GameScenes::SCENE_LEVEL_INTRO && (mCrazyDaveTime > 0 && mCutsceneTime < TimePanRightEnd + mCrazyDaveTime);
 }
 
+TodParticleSystem* CutScene::AddVisualParticle(float x, float y, int renderOrder, ParticleEffect effect)
+{
+    auto* particle=mApp->AddTodParticle(x,y,renderOrder,effect,
+        mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs);
+    if (particle) {
+        particle->mIsAttachment=true; // UpdateVisualParticles is its sole update owner.
+        mVisualParticleIDs.push_back(mApp->ParticleGetID(particle));
+    }
+    return particle;
+}
+
+void CutScene::UpdateVisualParticles(std::int64_t nowNs, bool simulate)
+{
+    for (auto it=mVisualParticleIDs.begin();it!=mVisualParticleIDs.end();) {
+        auto* particle=mApp->ParticleTryToGet(*it);
+        if (!particle || particle->mDead) { it=mVisualParticleIDs.erase(it); continue; }
+        const auto deltaNs=simulate && nowNs>particle->mLastUpdateTimeNs
+            ? static_cast<std::uint64_t>(nowNs-particle->mLastUpdateTimeNs) : 0;
+        particle->Update(deltaNs,nowNs);
+        ++it;
+    }
+}
+
 //0x43C200
 // GOTY @Patoke: 0x43F440
 void CutScene::Update()
 {
 	if (mPreUpdatingBoard)
 		return;
+	UpdateVisualParticles(mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs,!mBoard->mPaused);
 
 	// 更新疯狂戴夫
 	if (IsShowingCrazyDave() && !mBoard->mPaused)
@@ -1681,7 +1709,7 @@ void CutScene::UpdateZombiesWon()
 		int aRenderPosition = Board::MakeRenderOrder(RenderLayer::RENDER_LAYER_SCREEN_FADE, 0, 0);
 		Reanimation* aReanimation = mApp->AddReanimation(
 			ZombiesWonLayout::CanvasX(aView.mX, aView.mWidth, mBoard->mX),
-			0, aRenderPosition, ReanimationType::REANIM_ZOMBIES_WON);
+			0, aRenderPosition, ReanimationType::REANIM_ZOMBIES_WON, (mBoard && mBoard->AnimationTimeDomain() == ReanimTimeDomain::Battle ? static_cast<std::int64_t>(mBoard->mLevelTimeNs) : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs), (mBoard ? mBoard->AnimationTimeDomain() : ReanimTimeDomain::Visual));
 		aReanimation->ApplyRate(12.0f);
 		aReanimation->ChangeLoopType(ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD);
 		aReanimation->GetTrackInstanceByName(ReanimTrackId::fullscreen)->mTrackColor = Color::Black;
@@ -2308,7 +2336,7 @@ void CutScene::DrawUpsell(Graphics* g)
 	if (mCrazyDaveLastTalkIndex == 3315)  // “大地科塔！”
 	{
 		Reanimation aReanim;
-		aReanim.ReanimationInitializeType(565, 360, ReanimationType::REANIM_FLOWER_POT);
+		aReanim.ReanimationInitializeType(565, 360, ReanimationType::REANIM_FLOWER_POT, 0);
 		aReanim.SetFramesForLayer(ReanimTrackId::anim_zengarden);
 		aReanim.mOverlayMatrix.m00 = 1.3f;
 		aReanim.mOverlayMatrix.m11 = 1.3f;
@@ -2342,7 +2370,7 @@ void CutScene::UpdateIntro()
 	if (mCutsceneTime == TimeIntro_LogoEnd)
 	{
 		int aRenderPosition = Board::MakeRenderOrder(RenderLayer::RENDER_LAYER_TOP, 0, 0);
-		mApp->AddTodParticle(400, 300, aRenderPosition, ParticleEffect::PARTICLE_SCREEN_FLASH);
+		AddVisualParticle(400, 300, aRenderPosition, ParticleEffect::PARTICLE_SCREEN_FLASH);
 
 		mApp->mMuteSoundsForCutscene = false;
 		mApp->PlaySample(SOUND_HUGE_WAVE);

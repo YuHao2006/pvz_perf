@@ -104,13 +104,13 @@ void ZenGarden::RefreshTimeCache()
 }
 
 //0x51D0E0
-void ZenGarden::DrawPottedPlantIcon(Graphics* g, float x, float y, PottedPlant* thePottedPlant)
+void ZenGarden::DrawPottedPlantIcon(std::int64_t nowNs, Graphics* g, float x, float y, PottedPlant* thePottedPlant)
 {
-    DrawPottedPlant(g, x, y, thePottedPlant, 0.7f, true);
+    DrawPottedPlant(nowNs, g, x, y, thePottedPlant, 0.7f, true);
 }
 
 //0x51D110
-void ZenGarden::DrawPottedPlant(Graphics* g, float x, float y, PottedPlant* thePottedPlant, float theScale, bool theDrawPot)
+void ZenGarden::DrawPottedPlant(std::int64_t nowNs, Graphics* g, float x, float y, PottedPlant* thePottedPlant, float theScale, bool theDrawPot)
 {
     Graphics aPottedPlantG(*g);
     aPottedPlantG.mScaleX = theScale;
@@ -136,11 +136,13 @@ void ZenGarden::DrawPottedPlant(Graphics* g, float x, float y, PottedPlant* theP
     }
 
     float aOffsetX = 0.0f;
-    float aOffsetY = PlantDrawHeightOffset(mBoard, nullptr, aSeedType, -1, -1);
+    // Picked-up gifts and shop icons have no active garden Board. Their owner
+    // supplies time; the optional garden Board only describes draw context.
+    float aOffsetY = PlantDrawHeightOffset(nowNs, mBoard, nullptr, aSeedType, -1, -1);
     if (theDrawPot)
     {
         float aPotOffsetY = theScale * 0.0f - 0.0f + 0.0f;
-        aPotOffsetY += PlantDrawHeightOffset(mBoard, nullptr, SeedType::SEED_FLOWERPOT, -1, -1);
+        aPotOffsetY += PlantDrawHeightOffset(nowNs, mBoard, nullptr, SeedType::SEED_FLOWERPOT, -1, -1);
 
         DrawVariation aPotVariation2 = DrawVariation::VARIATION_ZEN_GARDEN;
         if (Plant::IsAquatic(aSeedType))
@@ -252,8 +254,8 @@ Plant* ZenGarden::PlacePottedPlant(intptr_t thePottedPlantIndex)
             mApp->mReanimatorCache->UpdateReanimationForVariation(aPlantReanim, aPottedPlant->mDrawVariation);
         }
 
-        aPlant->UpdateReanim();
-        aPlantReanim->Update();
+        aPlant->UpdateReanim(static_cast<std::int64_t>(mBoard->mLevelTimeNs), (mBoard->AnimationTimeDomain() == ReanimTimeDomain::Battle ? static_cast<std::int64_t>(mBoard->mLevelTimeNs) : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs));
+        aPlantReanim->UpdateAt((mBoard->AnimationTimeDomain() == ReanimTimeDomain::Battle ? static_cast<std::int64_t>(mBoard->mLevelTimeNs) : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs));
     }
 
     PlantSetLaunchCounter(aPlant);
@@ -264,11 +266,11 @@ Plant* ZenGarden::PlacePottedPlant(intptr_t thePottedPlantIndex)
 //0x51D5C0
 void ZenGarden::RemovePottedPlant(Plant* thePlant)
 {
-    thePlant->Die();
+    thePlant->Die(static_cast<std::int64_t>(mBoard->mLevelTimeNs), mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs, (mBoard->AnimationTimeDomain() == ReanimTimeDomain::Battle ? static_cast<std::int64_t>(mBoard->mLevelTimeNs) : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs));
     Plant* aPot = mBoard->GetTopPlantAt(thePlant->mPlantCol, thePlant->mRow, PlantPriority::TOPPLANT_ONLY_UNDER_PLANT);
     if (aPot)
     {
-        aPot->Die();
+        aPot->Die(static_cast<std::int64_t>(mBoard->mLevelTimeNs), mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs, (mBoard->AnimationTimeDomain() == ReanimTimeDomain::Battle ? static_cast<std::int64_t>(mBoard->mLevelTimeNs) : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs));
     }
 }
 
@@ -776,30 +778,31 @@ void ZenGarden::UpdatePlantEffectState(Plant* thePlant)
 
     if (thePlant->mState == PlantState::STATE_ZEN_GARDEN_HAPPY)
     {
-        thePlant->SetSleeping(false);
+        thePlant->SetSleeping(static_cast<std::int64_t>(mBoard->mLevelTimeNs), (mBoard->AnimationTimeDomain() == ReanimTimeDomain::Battle ? static_cast<std::int64_t>(mBoard->mLevelTimeNs) : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs), false);
         AddHappyEffect(thePlant);
     }
     else if (Plant::IsNocturnal(thePlant->mSeedType) && !mBoard->StageIsNight())
     {
-        thePlant->SetSleeping(true);
+        thePlant->SetSleeping(static_cast<std::int64_t>(mBoard->mLevelTimeNs), (mBoard->AnimationTimeDomain() == ReanimTimeDomain::Battle ? static_cast<std::int64_t>(mBoard->mLevelTimeNs) : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs), true);
     }
 }
 
 //0x51E730
 void ZenGarden::AddHappyEffect(Plant* thePlant)
 {
+    const auto ownerNowNs = static_cast<std::int64_t>(mBoard->mLevelTimeNs);
     Plant* aFlowerPot = mBoard->GetTopPlantAt(thePlant->mPlantCol, thePlant->mRow, PlantPriority::TOPPLANT_ONLY_UNDER_PLANT);
     if (aFlowerPot == nullptr)
     {
-        thePlant->AddAttachedParticle((thePlant->mX) + 40, (thePlant->mY) + 60, thePlant->mRenderOrder - 1, ParticleEffect::PARTICLE_POTTED_ZEN_GLOW);
+        thePlant->AddAttachedParticle(ownerNowNs, (thePlant->mX) + 40, (thePlant->mY) + 60, thePlant->mRenderOrder - 1, ParticleEffect::PARTICLE_POTTED_ZEN_GLOW);
     }
     else if (Plant::IsAquatic(thePlant->mSeedType))
     {
-        aFlowerPot->AddAttachedParticle((aFlowerPot->mX) + 40, (aFlowerPot->mY) + 61, aFlowerPot->mRenderOrder - 1, ParticleEffect::PARTICLE_POTTED_WATER_PLANT_GLOW);
+        aFlowerPot->AddAttachedParticle(ownerNowNs, (aFlowerPot->mX) + 40, (aFlowerPot->mY) + 61, aFlowerPot->mRenderOrder - 1, ParticleEffect::PARTICLE_POTTED_WATER_PLANT_GLOW);
     }
     else
     {
-        aFlowerPot->AddAttachedParticle((aFlowerPot->mX) + 40, (aFlowerPot->mY) + 63, aFlowerPot->mRenderOrder - 1, ParticleEffect::PARTICLE_POTTED_ZEN_GLOW);
+        aFlowerPot->AddAttachedParticle(ownerNowNs, (aFlowerPot->mX) + 40, (aFlowerPot->mY) + 63, aFlowerPot->mRenderOrder - 1, ParticleEffect::PARTICLE_POTTED_ZEN_GLOW);
     }
 }
 
@@ -984,7 +987,7 @@ void ZenGarden::MouseDownWithFeedingTool(int x, int y, CursorType theCursorType)
         if (aStinky && aStinky->mHighlighted)
         {
             WakeStinky();
-            mApp->AddTodParticle(aStinky->mPosX + 40.0f, aStinky->mPosY + 40.0f, aStinky->mRenderOrder + 1, ParticleEffect::PARTICLE_PRESENT_PICKUP);
+            mApp->AddTodParticle(aStinky->mPosX + 40.0f, aStinky->mPosY + 40.0f, aStinky->mRenderOrder + 1, ParticleEffect::PARTICLE_PRESENT_PICKUP, static_cast<std::int64_t>(mBoard->mLevelTimeNs));
             mApp->mPlayerInfo->mLastStinkyChocolateTime = static_cast<std::int32_t>(std::time(nullptr));
             mApp->mPlayerInfo->mPurchases[(int)StoreItem::STORE_ITEM_CHOCOLATE]--;
 
@@ -1017,7 +1020,7 @@ void ZenGarden::MouseDownWithFeedingTool(int x, int y, CursorType theCursorType)
             {
                 aZenTool->mPosX = x;
                 aZenTool->mPosY = y;
-                Reanimation* aWateringCanReanim = mApp->AddReanimation(x, y, 0, ReanimationType::REANIM_ZENGARDEN_WATERINGCAN);
+                Reanimation* aWateringCanReanim = mApp->AddReanimation(x, y, 0, ReanimationType::REANIM_ZENGARDEN_WATERINGCAN, (mBoard && mBoard->AnimationTimeDomain() == ReanimTimeDomain::Battle ? static_cast<std::int64_t>(mBoard->mLevelTimeNs) : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs), (mBoard ? mBoard->AnimationTimeDomain() : ReanimTimeDomain::Visual));
                 aWateringCanReanim->PlayReanim(ReanimTrackId::anim_water_area, ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD, 0, 8.0f);
                 aZenTool->mGridItemReanimID = mApp->ReanimationGetID(aWateringCanReanim);
                 aZenTool->mGridItemState = GridItemState::GRIDITEM_STATE_ZEN_TOOL_GOLD_WATERING_CAN;
@@ -1025,7 +1028,7 @@ void ZenGarden::MouseDownWithFeedingTool(int x, int y, CursorType theCursorType)
             }
             else
             {
-                Reanimation* aWateringCanReanim = mApp->AddReanimation((aPlantToFeed->mX) + 32, (aPlantToFeed->mY), 0, ReanimationType::REANIM_ZENGARDEN_WATERINGCAN);
+                Reanimation* aWateringCanReanim = mApp->AddReanimation((aPlantToFeed->mX) + 32, (aPlantToFeed->mY), 0, ReanimationType::REANIM_ZENGARDEN_WATERINGCAN, (mBoard && mBoard->AnimationTimeDomain() == ReanimTimeDomain::Battle ? static_cast<std::int64_t>(mBoard->mLevelTimeNs) : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs), (mBoard ? mBoard->AnimationTimeDomain() : ReanimTimeDomain::Visual));
                 aWateringCanReanim->PlayReanim(ReanimTrackId::anim_water, ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD, 0, 0.0f);
                 aZenTool->mGridItemReanimID = mApp->ReanimationGetID(aWateringCanReanim);
                 // 1073 00529848: normal animation must feed only the target pot.
@@ -1061,7 +1064,7 @@ void ZenGarden::MouseDownWithFeedingTool(int x, int y, CursorType theCursorType)
             if ((unsigned)aToolIndex < sizeof(kZenToolRows) / sizeof(kZenToolRows[0]))
             {
                 const auto& aRow = kZenToolRows[aToolIndex];
-                Reanimation* aToolReanim = mApp->AddReanimation((aPlantToFeed->mX) + aRow.mOffX, (aPlantToFeed->mY) + aRow.mOffY, 0, aRow.mReanimType);
+                Reanimation* aToolReanim = mApp->AddReanimation((aPlantToFeed->mX) + aRow.mOffX, (aPlantToFeed->mY) + aRow.mOffY, 0, aRow.mReanimType, (mBoard && mBoard->AnimationTimeDomain() == ReanimTimeDomain::Battle ? static_cast<std::int64_t>(mBoard->mLevelTimeNs) : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs), (mBoard ? mBoard->AnimationTimeDomain() : ReanimTimeDomain::Visual));
                 if (aRow.mAnimRate != 0.0f)
                 {
                     aToolReanim->ApplyRate(aRow.mAnimRate);
@@ -1089,7 +1092,7 @@ void ZenGarden::FeedChocolateToPlant(Plant* thePlant)
     PottedPlant* aPottedPlant = PottedPlantFromIndex(thePlant->mPottedPlantIndex);
     aPottedPlant->mLastChocolateTime = std::time(nullptr);
     thePlant->mZenProductionCountdown = 60;
-    mApp->AddTodParticle((thePlant->mX) + 40.0f, (thePlant->mY) + 40.0f, thePlant->mRenderOrder + 1, ParticleEffect::PARTICLE_PRESENT_PICKUP);
+    mApp->AddTodParticle((thePlant->mX) + 40.0f, (thePlant->mY) + 40.0f, thePlant->mRenderOrder + 1, ParticleEffect::PARTICLE_PRESENT_PICKUP, static_cast<std::int64_t>(mBoard->mLevelTimeNs));
 }
 
 //0x51F2A0
@@ -1220,7 +1223,7 @@ void ZenGarden::MovePlant(Plant* thePlant, int theGridX, int theGridY)
     TOD_ASSERT(mBoard->GetTopPlantAt(theGridX, theGridY, PlantPriority::TOPPLANT_ANY) == nullptr);
 
     //bool aIsSleeping = thePlant->mIsAsleep; // unused
-    thePlant->SetSleeping(false);
+    thePlant->SetSleeping(static_cast<std::int64_t>(mBoard->mLevelTimeNs), (mBoard->AnimationTimeDomain() == ReanimTimeDomain::Battle ? static_cast<std::int64_t>(mBoard->mLevelTimeNs) : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs), false);
     Plant* aTopPlantAtGrid = mBoard->GetTopPlantAt(thePlant->mPlantCol, thePlant->mRow, PlantPriority::TOPPLANT_ONLY_UNDER_PLANT);
     if (aTopPlantAtGrid)
     {
@@ -1371,18 +1374,28 @@ void ZenGarden::AddStinky()
         mApp->mPlayerInfo->mPurchases[(int)StoreItem::STORE_ITEM_STINKY_THE_SNAIL] = StinkyTimestamp::EncodeWakeTime(std::time(nullptr));
     }
 
+    const int savedX = mApp->mPlayerInfo->mStinkyPosX;
+    const int savedY = mApp->mPlayerInfo->mStinkyPosY;
+    // A previous crossed-clock root sample could have saved Stinky offscreen.
+    // Keep on-canvas coin-chasing positions; recover only impossible saved ones
+    // through the original first-visit goal selection, never a movement clamp.
+    const bool recoverSavedPosition = savedX < 0 || savedX >= BOARD_WIDTH ||
+        savedY < 0 || savedY >= BOARD_HEIGHT;
+    const bool pickInitialGoal = savedX == 0 || recoverSavedPosition;
     GridItem* aStinky = mBoard->mGridItems.DataArrayAlloc();
     aStinky->mGridItemType = GridItemType::GRIDITEM_STINKY;
-    aStinky->mPosX = mApp->mPlayerInfo->mStinkyPosX;
-    aStinky->mPosY = mApp->mPlayerInfo->mStinkyPosY;
+    aStinky->mPosX = pickInitialGoal ? 0.0f : static_cast<float>(savedX);
+    aStinky->mPosY = pickInitialGoal ? 0.0f : static_cast<float>(savedY);
     aStinky->mGoalX = aStinky->mPosX;
     aStinky->mGoalY = aStinky->mPosY;
-    Reanimation* aReanimStinky = mApp->AddReanimation(aStinky->mPosX, aStinky->mPosY, 0, ReanimationType::REANIM_STINKY);
+    // Stinky belongs to the garden's visual timeline, which survives board re-entry.
+    const auto visualNowNs = mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs;
+    Reanimation* aReanimStinky = mApp->AddReanimation(aStinky->mPosX, aStinky->mPosY, 0, ReanimationType::REANIM_STINKY, visualNowNs, ReanimTimeDomain::Visual);
     aReanimStinky->mOverlayMatrix.m00 = 0.8f;
     aReanimStinky->mOverlayMatrix.m11 = 0.8f;
     aStinky->mGridItemReanimID = mApp->ReanimationGetID(aReanimStinky);
 
-    if (mApp->mPlayerInfo->mStinkyPosX == 0)
+    if (pickInitialGoal)
     {
         StinkyPickGoal(aStinky);
         aStinky->mPosX = aStinky->mGoalX;
@@ -1400,6 +1413,13 @@ void ZenGarden::AddStinky()
         StinkyFinishFallingAsleep(aStinky, 0);
     }
 
+    if (recoverSavedPosition)
+    {
+        aStinky->mGoalX = aStinky->mPosX;
+        aStinky->mGoalY = aStinky->mPosY;
+        mApp->mPlayerInfo->mStinkyPosX = static_cast<int>(aStinky->mPosX);
+        mApp->mPlayerInfo->mStinkyPosY = static_cast<int>(aStinky->mPosY);
+    }
     aStinky->mRenderOrder = Board::MakeRenderOrder(RenderLayer::RENDER_LAYER_PLANT, 0, aStinky->mPosY - 30.0f);
     aReanimStinky->mOverlayMatrix.m02 = aStinky->mPosX;
     aReanimStinky->mOverlayMatrix.m12 = aStinky->mPosY;
@@ -1527,7 +1547,7 @@ void ZenGarden::StinkyFinishFallingAsleep(GridItem* theStinky, int theBlendTime)
     aStinkyReanim->PlayReanim(ReanimTrackId::anim_out, ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD, theBlendTime, 0.0f);
     aStinkyReanim->ApplyRate(0.0f);
 
-    Reanimation* aSleepingReanim = mApp->AddReanimation(0.0f, 0.0f, 0, ReanimationType::REANIM_SLEEPING);
+    Reanimation* aSleepingReanim = mApp->AddReanimation(0.0f, 0.0f, 0, ReanimationType::REANIM_SLEEPING, mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs, ReanimTimeDomain::Visual);
     aSleepingReanim->ApplyRate(3.0f);
     aSleepingReanim->ChangeLoopType(ReanimLoopType::REANIM_LOOP);
     AttachReanim(aStinkyReanim->GetTrackInstanceByName(ReanimTrackId::shell)->mAttachmentID, aSleepingReanim, 34.0f, 39.0f);
@@ -1611,7 +1631,11 @@ void ZenGarden::StinkyUpdate(GridItem* theStinky)
     Reanimation* aStinkyReanim = mApp->ReanimationGet(theStinky->mGridItemReanimID);
 
 	const long long aNow = mFrameTime;
-    aStinkyReanim->BindTimeDomain(ReanimTimeDomain::Visual);
+    const auto visualNowNs = mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs;
+    mApp->mEffectSystem->mReanimationHolder->BindAnimationTime(*aStinkyReanim, ReanimTimeDomain::Visual, visualNowNs);
+    // Consume this visit's supplied visual instant before changing rates or
+    // sampling root motion; GridItem's later track update keeps this interval.
+    aStinkyReanim->PrepareTimeAt(visualNowNs);
     if (StinkyTimestamp::DecodeTime(mApp->mPlayerInfo->mLastStinkyChocolateTime) > aNow ||
         StinkyTimestamp::DecodeTime(mApp->mPlayerInfo->mPurchases[(int)StoreItem::STORE_ITEM_STINKY_THE_SNAIL]) > aNow)
     {

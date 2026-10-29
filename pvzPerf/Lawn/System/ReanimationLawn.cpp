@@ -121,7 +121,7 @@ void ReanimatorCache::UpdateReanimationForVariation(Reanimation* theReanim, Draw
 void ReanimatorCache::DrawReanimatorFrame(Graphics* g, float thePosX, float thePosY, ReanimationType theReanimationType, ReanimTrackId theTrackId, DrawVariation theDrawVariation)
 {
 	Reanimation aReanim;
-	aReanim.ReanimationInitializeType(thePosX, thePosY, theReanimationType);
+	aReanim.ReanimationInitializeType(thePosX, thePosY, theReanimationType, 0);
 
 	if (theTrackId != ReanimTrackId::None && aReanim.TrackExists(theTrackId))
 	{
@@ -414,7 +414,7 @@ Image* ReanimatorCache::MakeCachedZombieFrame(ZombieType theZombieType)
 	if (aZombieDef.mReanimationType == ReanimationType::REANIM_ZOMBIE)
 	{
 		Reanimation aReanim;
-		aReanim.ReanimationInitializeType(aPosX, aPosY, aZombieDef.mReanimationType);
+		aReanim.ReanimationInitializeType(aPosX, aPosY, aZombieDef.mReanimationType, 0);
 		aReanim.SetFramesForLayer(ReanimTrackId::anim_idle);
 		Zombie::SetupReanimLayers(&aReanim, aUseZombieType);
 
@@ -423,7 +423,7 @@ Image* ReanimatorCache::MakeCachedZombieFrame(ZombieType theZombieType)
 		else if (theZombieType == ZombieType::ZOMBIE_FLAG)
 		{
 			Reanimation aReanimFlag;
-			aReanimFlag.ReanimationInitializeType(aPosX, aPosY, ReanimationType::REANIM_FLAG);
+			aReanimFlag.ReanimationInitializeType(aPosX, aPosY, ReanimationType::REANIM_FLAG, 0);
 			aReanimFlag.SetFramesForLayer(ReanimTrackId::Zombie_flag);
 			aReanimFlag.Draw(&aMemoryGraphics);
 		}
@@ -432,10 +432,10 @@ Image* ReanimatorCache::MakeCachedZombieFrame(ZombieType theZombieType)
 	else if (aZombieDef.mReanimationType == ReanimationType::REANIM_BOSS)
 	{
 		Reanimation aReanim;
-		aReanim.ReanimationInitializeType(-524.0f, -88.0f, aZombieDef.mReanimationType);
+		aReanim.ReanimationInitializeType(-524.0f, -88.0f, aZombieDef.mReanimationType, 0);
 		aReanim.SetFramesForLayer(ReanimTrackId::anim_head_idle);
 		Reanimation aReanimDriver;
-		aReanimDriver.ReanimationInitializeType(46.0f, 22.0f, ReanimationType::REANIM_BOSS_DRIVER);
+		aReanimDriver.ReanimationInitializeType(46.0f, 22.0f, ReanimationType::REANIM_BOSS_DRIVER, 0);
 		aReanimDriver.SetFramesForLayer(ReanimTrackId::anim_idle);
 
 		aReanim.Draw(&aMemoryGraphics);

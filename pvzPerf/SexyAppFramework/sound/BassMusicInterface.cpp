@@ -206,14 +206,7 @@ bool BassMusicInterface::LoadMusic(int theSongId, const std::string& theFileName
 		aData.reset(); // MOD loading finishes reading the source before returning.
 	}
 	if (aMusicInfo.GetHandle() == 0)
-	{
-#if defined(__ANDROID__)
-		Sexy::AndroidDiag("music load failed: %s ext=%s err=%d size=%d",
-			theFileName.c_str(), anExt.c_str(),
-			static_cast<int>(gBass->BASS_ErrorGetCode()), aSize);
-#endif
 		return false;
-	}
 
 	// Callback userdata must point at the final, immovable slot object.
 	aMusicInfo.mPlayback.Initialize(aMusicInfo.GetHandle(), aMusicInfo.mHMusic != 0);
@@ -226,15 +219,8 @@ bool BassMusicInterface::LoadMusic(int theSongId, const std::string& theFileName
 void BassMusicInterface::PlayMusic(int theSongId, int theOffset, bool noLoop)
 {
 	// 主线程入口：装载发布前槽位未就绪，安全 no-op（零锁——发布后不可变）。
-#if defined(__ANDROID__)
-	if (!mSlotsPublished.load(std::memory_order_acquire)) {
-		Sexy::AndroidDiag("playmusic id=%d skipped: slots not published", theSongId);
-		return;
-	}
-#else
 	if (!mSlotsPublished.load(std::memory_order_acquire))
 		return;
-#endif
 	if (!SlotIndexValid(theSongId))
 		return;
 	BassMusicInfo* aMusicInfo = mMusicSlots[theSongId].get();

@@ -156,8 +156,6 @@ std::string			GetExecutableDirectory();
 // /proc/self/exe 在 Android 指向 app_process64；android_main 注入包内
 // 数据目录（main.pak64 与 shaders/ 的落点）作为可执行目录语义。
 void				SetAndroidRuntimeDirectory(const std::string& thePath);
-// 部分 ROM（ZTE/努比亚等）压制应用 logcat；诊断信息同时写入 files/diag.txt。
-void				AndroidDiag(const char* theFormat, ...);
 
 #endif
 std::string			GetDataFilePath(const std::string& theFileName);

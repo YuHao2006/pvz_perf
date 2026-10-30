@@ -167,6 +167,8 @@ bool RenderInterface::PresentRetainedFrame()
 ///////////////////////////////////////////////////////////////////////////////
 bool RenderInterface::PreDraw()
 {
+    if (mDrawSurface == nullptr && mScreenDrawDeferred)
+        return false;
 	if (gSexyAppBase->mPhysMinimized && mDrawSurface == nullptr)
 		return false;
 
@@ -175,7 +177,11 @@ bool RenderInterface::PreDraw()
 
 	if (!mSceneBegun)
 	{
-		if (!mRenderer->BeginScene()) return false;
+        if (!mRenderer->BeginScene())
+        {
+            if (mDrawSurface == nullptr) mScreenDrawDeferred = true;
+            return false;
+        }
 		mSceneBegun = true;
 	}
 	return true;

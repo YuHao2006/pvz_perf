@@ -90,13 +90,18 @@ void EffectSystem::ProcessDeleteQueue()
 //0x445890
 void EffectSystem::UpdateAt(std::int64_t visualNowNs, std::int64_t battleNowNs)
 {
+    UpdateAt(visualNowNs, battleNowNs, battleNowNs);
+}
+
+void EffectSystem::UpdateAt(std::int64_t visualNowNs, std::int64_t battleNowNs, std::int64_t poolNowNs)
+{
 	TodParticleSystem* aParticle = nullptr;
 	while (mParticleHolder->mParticleSystems.IterateNext(aParticle))
 		if (!aParticle->mIsAttachment)
 		{
-            // Non-attached Board effects share the Board clock, including pool
-            // sparkles. The caller may supply its own scene clock outside Board.
-            const auto nowNs = battleNowNs;
+            // The owner supplies each effect's current timestamp. First-intro
+            // pool sparkles may advance while the rest of the Board is frozen.
+            const auto nowNs = aParticle->mEffectType == PARTICLE_POOL_SPARKLY ? poolNowNs : battleNowNs;
 			const auto deltaNs = nowNs > aParticle->mLastUpdateTimeNs
 				? static_cast<std::uint64_t>(nowNs - aParticle->mLastUpdateTimeNs) : 0;
 			aParticle->Update(deltaNs, nowNs);

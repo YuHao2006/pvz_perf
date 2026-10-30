@@ -35,14 +35,29 @@ def plot_samples(directory, label):
     fig, axes = plt.subplots(2, 1, figsize=(13, 7), sharex=True,
                              gridspec_kw={"height_ratios": [2, 1]})
     axes[0].plot(times, values("draw_fps"), color="#13834b", label="FPS")
-    axes[0].plot(times, values("cpu_percent"), color="#bd4a2a", label="CPU % (one core)")
-    maximum = max((float(row[field]) for row in rows
-                   if row["segment"] == "game"
-                   for field in ("draw_fps", "cpu_percent") if row[field]), default=100)
-    axes[0].set_ylim(0, max(100, maximum * 1.05))
-    axes[0].set_ylabel("FPS / CPU %")
-    axes[0].set_title(f"{label} | LP14 | active gameplay only")
-    axes[0].legend(loc="lower right")
+    core_fields = [field for field in rows[0] if field.startswith("cpu_lp") and field.endswith("_percent")]
+    if core_fields:
+        cpu_axis = axes[0].twinx()
+        colors = ("#d65b25", "#3259aa", "#9c459b", "#747b18")
+        for field, color in zip(core_fields, colors):
+            core = field[len("cpu_lp"):-len("_percent")]
+            cpu_axis.plot(times, values(field), color=color, label=f"Process on LP{core} (%)")
+        cpu_axis.set_ylim(0, 105)
+        cpu_axis.set_ylabel("Per-core process residency (%)")
+        axes[0].set_ylim(0, max(100, max((float(row["draw_fps"]) for row in rows if row["segment"] == "game" and row["draw_fps"]), default=100) * 1.05))
+        axes[0].set_ylabel("FPS")
+        lines = axes[0].get_lines() + cpu_axis.get_lines()
+        axes[0].legend(lines, [line.get_label() for line in lines], loc="lower right")
+    else:
+        axes[0].plot(times, values("cpu_percent"), color="#bd4a2a", label="CPU % (one core)")
+        maximum = max((float(row[field]) for row in rows if row["segment"] == "game"
+                       for field in ("draw_fps", "cpu_percent") if row[field]), default=100)
+        axes[0].set_ylim(0, max(100, maximum * 1.05))
+        axes[0].set_ylabel("FPS / CPU %")
+        axes[0].legend(loc="lower right")
+    metadata_path = directory / "measurement.json"
+    core_label = json.loads(metadata_path.read_text(encoding="utf-8")).get("core", "LP14") if metadata_path.exists() else "LP14"
+    axes[0].set_title(f"{label} | {core_label} | active gameplay only")
     axes[1].plot(times, values("cpu_ms_per_draw_frame"), color="#3259aa")
     axes[1].set_ylim(bottom=0)
     axes[1].set_ylabel("CPU ms / draw frame")

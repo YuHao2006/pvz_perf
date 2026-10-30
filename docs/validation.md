@@ -9,6 +9,8 @@
 | Windows Vulkan Release | 实际生产编译／链接，/GL与/LTCG核对，PVZ_ENABLE_GAME_PROBES=OFF | 当前可执行文件构建成功，不据此宣称其他平台已实测 |
 | Android arm64 Vulkan | NDK Full LTO编译与链接 | 当前库构建成功；装机与设备运行单独验收 |
 | 主循环 | FrameTiming及真实Process状态机夹具 | 实际纳秒守恒、10ms上限、欠时保留、短补偿步、补拍后绘制；覆盖低频和10000FPS目标 |
+| 水面时钟 | 实际Board首次入场、暂停、Visual→Board交接、寒冰菇与复选卡 | 覆盖100／240／480／1000Hz，保留年龄与相位，不新增存档字段 |
+| Vulkan帧准入 | test_vulkan_frame_admission.py编译实际BeginCommands | 资源忙时仅延期绘制，资源和模拟时间不被重置 |
 | 存档 | time_counter_save、v7_save_schema，真实原版→v4读写／重载 | 原输入SHA256不变；当前游戏仅直接读取v4 |
 | 实际图像与资源 | test-image-runtime.ps1链接生产对象，使用实际PAK | 字体、资源分组、reanim外观、CPU粒子、共享纹理及反复释放通过 |
 

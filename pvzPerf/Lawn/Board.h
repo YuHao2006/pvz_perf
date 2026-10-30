@@ -123,6 +123,8 @@ class Board : public Widget, public ButtonListener
 {
 public:
 	inline static bool sShownMoreSunTutorial = false;
+    // Runtime-only ownership state; precedes the serialized tail at mPaused.
+    bool mPoolIntroVisual;
 	LawnApp*						mApp;													//+0x8C
 	DataArray<Zombie>				mZombies;												//+0x90
 	DataArray<Plant>				mPlants;												//+0xAC

@@ -34,4 +34,5 @@ public:
 	void				PoolEffectDispose();
 	void				PoolEffectDraw(Sexy::Graphics* g, bool theIsNight);
 	void				PoolEffectUpdate(long long nowNs, unsigned long long activeElapsedNs);
+    void RebaseClock(long long nowNs);
 };

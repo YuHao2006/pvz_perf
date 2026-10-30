@@ -1,6 +1,8 @@
 # 时间域线程隔离试验
 
-稳定基线为v3.2（64c38d7）。试验仅在Tests/performance/time_domain_thread_experiment.cpp，未接入生产主循环、EffectSystem或GPU提交；不改变存档。分支experiment/time-domain-workers可直接放弃，main与v3.2保持稳定实现。
+当前游戏代码恢复为v3.2.1（41ea54e），仅补充首次入场水面Visual→Board时钟交接和主绘制双帧资源的非阻塞fence复用。水面worker、1536槽分区、异步焦散双纹理及v4.1存档试验已撤回；完整试验保存在本地experiment/battle-ambient-worker的f1c251d。当前运行期不创建该工作线程，存档恢复为v3.2.1的DAT64 v4.0。外部双核采集与通信基准工具保留，独立测试工具不接入游戏循环。
+
+下列矩阵批次数据属于早期隔离测量；不代表完整关卡性能或已落地优化。
 
 ## 测量范围
 
@@ -87,6 +89,6 @@ PoolEffectUpdate维护出生／采样基准并写renderer的caustics.timeNs；�
 
 ## Board时钟水面与音乐任务
 
-水面和POOL_SPARKLY在关卡内都由Board时间驱动；UI场景仍由其持有者传入相应时间。执行于visual worker不意味着使用Visual时钟。用户选择普通暂停／选卡随Board停止，并保留寒冰菇的局部冻结。原版初次选卡仍有闪光的行为不再作为当前默认目标。1073 IceZombies的0x469EFF证实闪光冻结标志为true；结束时Board解除。运行时测试直接调用实际Plant::IceZombies，覆盖水面与闪光同时冻结／恢复，而非只修改测试标志。
+水面和POOL_SPARKLY在关卡内都由Board时间驱动；UI场景仍由其持有者传入相应时间。执行于visual worker不意味着使用Visual时钟。用户选择普通暂停／选卡随Board停止，并保留寒冰菇的局部冻结。首次新关卡入场已恢复Visual驱动水面与闪光，开战时平移出生时间并交给Board；无尽下一轮仍保持Board冻结。1073 IceZombies的0x469EFF证实闪光冻结标志为true；结束时Board解除。运行时测试直接调用实际Plant::IceZombies，覆盖水面与闪光同时冻结／恢复，而非只修改测试标志。
 
 音乐由控制状态机与BASS播放两部分构成。控制更新包括主旋律／鼓点／hihat声部、高潮进入／退出及淡入淡出；高潮触发会读取屏幕僵尸数，按音乐实际order/row边界切换鼓点，Resync通过调整BPM同步声部。音乐时间不改为Board时间：应用时间与音频播放位置仍是所需输入。移至后台任务需单一持有音乐控制状态，接收暂停、曲目、音量等有序命令及不可变Board状态快照；不得并发读取活体Board或同时从UI改写同一slot。visual任务不得阻塞等GPU完成，否则会拖延音乐控制。

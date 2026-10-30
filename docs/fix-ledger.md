@@ -6,7 +6,7 @@
 
 ## 水面与闪光冻结
 
-关卡水面和POOL_SPARKLY现在按用户要求统一使用Board时间，普通暂停／选卡不推进。此行为有意区别于1073初次选卡仍更新闪光；线程执行者不决定时间来源。寒冰菇继续局部冻结水面与闪光。1073的0x469EFF明确将粒子mDontUpdate写成1，重建代码中的false已修正；期限结束后解除。真实Plant::IceZombies与Board更新回归覆盖100、240、480、1000Hz。[寒冰菇证据](../Tests/evidence/ice-shroom-pool-sparkle-1073-20261030/README.md)。
+新关卡首次入场时，水面和POOL_SPARKLY接收Visual时间，Board时间为零也能正常播放，恢复1073首次入场表现。首次开战前由管理者平移出生时间并交给Board，保持相位、粒子年龄和位置；之后普通暂停与无尽下一轮选卡不推进，读档直接使用Board时间。EffectSystem接收明确的水面时间，不查询Board或自行选择时间域。寒冰菇继续局部冻结水面与闪光。1073的0x469EFF明确将粒子mDontUpdate写成1，重建代码中的false已修正；期限结束后解除。真实Plant::IceZombies与Board更新回归覆盖100、240、480、1000Hz。[寒冰菇证据](../Tests/evidence/ice-shroom-pool-sparkle-1073-20261030/README.md)。
 
 ## 末帧保持动画的历史相位
 
@@ -377,3 +377,7 @@ DAT64 v4 / schema10745，游戏仅直接读取当前版本；转换器仅支持�
 删除Android Vulkan逐帧GPU timestamp查询池、阶段时间累加及每120帧draw／triangle／pipeline／scissor统计；删除纹理创建分段计时、加载阶段／清扫／reanim上传计时和音乐播放追踪。保留真实错误、崩溃与独立基准程序；独立sprite实验的编译期计时不进入普通游戏构建。删除查询字段及计数器，不保留关闭开关下的运行分支。
 
 无尽输入采用Tests/game3_13.dat的原版起点，通过当前转换器生成v4副本；测试仍直接使用Windows Vulkan Release目录，原档和设置保留。Release使用100FPS、关闭VSync，声音设置保留；启动脚本固定逻辑处理器14，频率由用户控制。测量脚本外部读取已有帧计数与进程CPU时间，不注入代码、不关闭被测游戏，结果默认写系统临时目录。Windows11x和Linux25x分别记录，不能混算代码提升比例。本条记录准备和验证，不包含新的性能结论。
+
+## Vulkan双帧资源延期绘制
+
+复用某套主绘制资源前查询对应fence；第三拍对应第一套，未完成时跳过整次屏幕绘制，逻辑更新继续。零超时交换链取图也允许延期。屏幕绘制入口锁定本拍延期状态，保留Widget dirty标志且不计绘制帧数，避免文字／FPS叠加层在同拍重新开启部分帧。生产BeginCommands夹具覆盖忙fence、取图背压、独立第二槽、错误路径与SUBOPTIMAL。

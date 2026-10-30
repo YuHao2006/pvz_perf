@@ -33,7 +33,7 @@ public:
 	~MessageWidget();
 
 	/*inline*/ void		SetLabel(const SexyString& theNewLabel, MessageStyle theMessageStyle);
-	void				Update();
+	void				Update(std::int64_t nowNs);
 	void				Draw(Sexy::Graphics* g);
 	void				ClearReanim();
 	/*inline*/ void		ClearLabel();

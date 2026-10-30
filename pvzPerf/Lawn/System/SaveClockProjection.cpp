@@ -58,7 +58,7 @@ template<class T> Kind FieldKind(const T& v,std::size_t p) {
 }
 template<class T> std::int64_t Now(const T& v,std::size_t p) {
     const auto visual=[&]{return v.mApp && v.mApp->mEffectSystem ? v.mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs : std::int64_t{0};};
-    if constexpr(std::is_same_v<T,MessageWidget>) return v.mApp && v.mApp->mBoard ? static_cast<std::int64_t>(v.mApp->mBoard->mLevelTimeNs) : 0;
+    if constexpr(std::is_same_v<T,MessageWidget>) return v.mMessageStyle==MessageStyle::MESSAGE_STYLE_HOUSE_NAME ? visual() : v.mApp && v.mApp->mBoard ? static_cast<std::int64_t>(v.mApp->mBoard->mLevelTimeNs) : 0;
     else if constexpr(std::is_same_v<T,Music>) return v.mApp?v.mApp->mApplicationTimeNs:0;
     else if constexpr(std::is_same_v<T,Coin>) return visual();
     else if constexpr(std::is_same_v<T,Zombie>) return v.mFromWave==Zombie::ZOMBIE_WAVE_CUTSCENE || v.mFromWave==Zombie::ZOMBIE_WAVE_UI ? visual() : v.mBoard?static_cast<std::int64_t>(v.mBoard->mLevelTimeNs):visual();

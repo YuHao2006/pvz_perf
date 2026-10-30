@@ -19,6 +19,7 @@
 #include "Resources.h"
 #include "LawnApp.h"
 #include "Lawn/Board.h"
+#include "Lawn/MessageWidget.h"
 #include "Lawn/Challenge.h"
 #include "Lawn/CutScene.h"
 #include "Lawn/GridItem.h"
@@ -48,6 +49,7 @@
 #include "ParticleRuntimeDrawChecks.h"
 #include "Lawn/System/PoolEffect.h"
 #include "Lawn/System/V7SaveSchema.h"
+#include "Lawn/System/SaveClockProjection.h"
 #include "QuitDialogRuntimeChecks.h"
 #include <array>
 #include <algorithm>
@@ -2064,6 +2066,62 @@ void StorePauseClockRuntime(TestApp& app, DecodeOnlySoundManager& sounds)
     Board board(&app);
     std::cerr<<"Store clock fixture: board initialized\n";
     app.mGameScene=GameScenes::SCENE_PLAYING;
+    // The opening title owns a Visual deadline from creation, even while
+    // Board time is zero; switching to battle must not rebase that deadline.
+    for (const int hz:{30,100,240,1000})
+    {
+        MessageWidget advice(&app);
+        const auto savedTime=board.mLevelTimeNs;
+        auto& visual=effects.mReanimationHolder->mVisualTimeNs;
+        const auto savedVisual=visual;
+        board.mLevelTimeNs=0;
+        visual=17'000'000'000LL;
+        advice.SetLabel("Pogo Party",MessageStyle::MESSAGE_STYLE_HOUSE_NAME);
+        Require(advice.mEndTimeNs==19'500'000'000LL,"Opening title was not anchored to Visual creation time");
+        const auto deadline=advice.mEndTimeNs;
+        auto elapsed=0LL;
+        const auto step=1'000'000'000LL/hz;
+        while (elapsed<2'500'000'000LL)
+        {
+            const auto dt=std::min(step,2'500'000'000LL-elapsed);
+            Sexy::gUpdateIntervalNs=dt;
+            board.mPaused=true;
+            advice.Update(visual);
+            Require(advice.mEndTimeNs==deadline,
+                "Paused opening title consumed its duration");
+            board.mPaused=false;
+            const bool battle=elapsed>=1'000'000'000LL;
+            if (battle) board.mLevelTimeNs+=dt;
+            visual+=dt;
+            advice.Update(visual);
+            elapsed+=dt;
+            Require(advice.IsBeingDisplayed()==(elapsed<2'500'000'000LL),
+                "Opening title duration changed across intro/battle clocks");
+        }
+        Require(advice.mMessageStyle==MessageStyle::MESSAGE_STYLE_OFF,
+            "Opening title expiry did not clear its style");
+        board.mLevelTimeNs=0;
+        advice.SetLabel("Pogo Party",MessageStyle::MESSAGE_STYLE_HOUSE_NAME);
+        const auto offset=offsetof(MessageWidget,mEndTimeNs);
+        const auto wire=SaveClockProjection::Encode(advice,offset,advice.mEndTimeNs);
+        Require(wire==2'500'000'000LL,"Opening title saved an absolute Visual timestamp");
+        visual+=7'000'000'000LL;
+        advice.mEndTimeNs=SaveClockProjection::Decode(advice,offset,wire);
+        SaveClockProjection::Bind(advice);
+        Require(advice.mEndTimeNs==visual+2'500'000'000LL,"Opening title did not rebind to restored Visual time");
+        Sexy::gUpdateIntervalNs=2'500'000'000ULL;
+        visual+=2'500'000'000LL;
+        advice.Update(visual);
+        Require(!advice.IsBeingDisplayed() && advice.mMessageStyle==MessageStyle::MESSAGE_STYLE_OFF,
+            "Opening title could not expire entirely inside the intro at time zero");
+        advice.SetLabel("Stay",MessageStyle::MESSAGE_STYLE_HINT_STAY);
+        advice.Update(0);
+        Require(advice.mEndTimeNs==INT64_MAX,
+            "Inactive battle clock consumed an indefinite advice message");
+        board.mLevelTimeNs=savedTime;
+        visual=savedVisual;
+    }
+    Sexy::gUpdateIntervalNs=restore.interval;
     PottedGiftPickupRuntime(app,board);
     auto& holder=*effects.mReanimationHolder;
     auto* background=app.AddReanimation(0,0,0,REANIM_PEASHOOTER, app.mEffectSystem->mReanimationHolder->mVisualTimeNs, ReanimTimeDomain::Visual);

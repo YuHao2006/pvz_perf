@@ -1,4 +1,4 @@
-param(
+﻿param(
     [string]$BuildDirectory = (Join-Path $PSScriptRoot '..\out\android-arm64'),
     [string]$PakFile = "",
     [string]$OutputDirectory = (Join-Path $PSScriptRoot '..\out\arm64-android14-vulkan1.3'),
@@ -9,6 +9,8 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 $root = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
+# Resolve while still in the caller's directory; Gradle runs after Push-Location.
+$OutputDirectory = [IO.Path]::GetFullPath([IO.Path]::Combine($PWD.Path, $OutputDirectory))
 $build = (Resolve-Path $BuildDirectory -ErrorAction SilentlyContinue)
 if (!$build) { throw "Android build directory does not exist: $BuildDirectory" }
 $build = $build.Path
@@ -68,11 +70,14 @@ Push-Location $project
 try {
     & $gradle (':app:assemble' + $Configuration)
     if ($LASTEXITCODE -ne 0) { throw "Gradle failed with exit code $LASTEXITCODE" }
-    $apk = Join-Path $project "app\build\outputs\apk\$($Configuration.ToLower())\app-$($Configuration.ToLower()).apk"
-    if (!(Test-Path -LiteralPath $apk)) {
-        $apk = Join-Path $project "app\build\outputs\apk\$($Configuration.ToLower())\app-$($Configuration.ToLower())-unsigned.apk"
+    $apkDirectory = Join-Path $project "app\build\outputs\apk\$($Configuration.ToLower())"
+    $metadata = Get-Content -LiteralPath (Join-Path $apkDirectory 'output-metadata.json') -Raw | ConvertFrom-Json
+    $outputs = @($metadata.elements)
+    if ($outputs.Count -ne 1 -or !$outputs[0].outputFile) {
+        throw 'Expected exactly one APK in the current Gradle output metadata.'
     }
-    if (!(Test-Path -LiteralPath $apk)) { throw 'Gradle finished without an APK output.' }
+    $apk = Join-Path $apkDirectory $outputs[0].outputFile
+    if (!(Test-Path -LiteralPath $apk -PathType Leaf)) { throw 'The APK declared by Gradle is missing.' }
     New-Item -ItemType Directory -Force -Path $OutputDirectory | Out-Null
     $suffix = if ($apk.EndsWith('-unsigned.apk')) { '-unsigned' } else { '' }
     $outputApk = Join-Path $OutputDirectory ("pvz_perf-arm64-android14-vulkan1.3-" + $Configuration.ToLower() + $suffix + '.apk')

@@ -1,5 +1,7 @@
-param(
+﻿param(
     [int]$ProcessId = 0,
+    [long]$AffinityMask = 0x4000,
+    [switch]$PerCoreCpu,
     [int]$Seconds = 0,
     [ValidateSet('11x','25x')][string]$CpuMultiplier = '11x',
     [string]$OutputDirectory = '',
@@ -16,8 +18,8 @@ if (!$ProcessId) {
 }
 $process = Get-Process -Id $ProcessId
 if ($process.Path -ne $executable) { throw 'The PID is not the current Vulkan Release executable.' }
-if ($process.ProcessorAffinity.ToInt64() -ne 0x4000) {
-    throw 'Launch with tools/run-endless-modern.cmd to use logical processor 14.'
+if ($process.ProcessorAffinity.ToInt64() -ne $AffinityMask) {
+    throw ("Expected affinity mask 0x{0:X}." -f $AffinityMask)
 }
 if ($Seconds -lt 0) { throw 'Measurement duration cannot be negative; zero means until game exit.' }
 if (!$OutputDirectory) {
@@ -38,6 +40,8 @@ if (Test-Path -LiteralPath $measurementDirectory) {
 $probeArguments = @((Join-Path $root 'Tests/performance/windows_game_probe.py'), $ProcessId,
     '--kind', 'project', '--layout', $layoutFile, '--scene', 'endless',
     '--multiplier', $CpuMultiplier, '--output', $measurementDirectory, '--preroll', 3)
+$probeArguments += @('--affinity', ('0x{0:X}' -f $AffinityMask))
+if ($PerCoreCpu) { $probeArguments += '--per-core-cpu' }
 if ($Seconds) { $probeArguments += @('--seconds', $Seconds) }
 else { $probeArguments += '--until-exit' }
 if (!$NoPrompt) {

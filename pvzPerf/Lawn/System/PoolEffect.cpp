@@ -120,3 +120,10 @@ void PoolEffect::PoolEffectUpdate(long long nowNs, unsigned long long activeElap
         mApp->mDDInterface->mRenderInterface->SetCausticsTimeNs(
             static_cast<unsigned long long>(ageNs));
 }
+
+void PoolEffect::RebaseClock(long long nowNs)
+{
+    const auto shiftNs = ReanimClock::Subtract(nowNs, mSampleTimeNs);
+    mBirthTimeNs = ReanimClock::Add(mBirthTimeNs, shiftNs);
+    mSampleTimeNs = nowNs;
+}

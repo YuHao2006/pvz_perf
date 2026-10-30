@@ -108,7 +108,7 @@ Plant、Zombie 和 Reanimation 不再通过 Board、全局应用或 holder 查�
 包括镜头尚未移动的停留阶段。保留的植物、冷却与战斗粒子不消费过场和选卡期间的时间。
 出怪预览从创建、更新到绘制都由 Board 传入 visual 时间。开场草卷等过场粒子由 CutScene
 持有并单独传入 visual 时间，不参与 Board 的全局粒子更新；暂停时只对齐基准，不模拟。
-泳池闪光 `PARTICLE_POOL_SPARKLY` 与战斗水面都读取Board时间，选卡和暂停不推进。这是用户明确选择的时间归属，区别于1073初次选卡仍更新闪光的行为。EffectSystem不再为它单独选择Visual时间，也不进行逐帧Visual／Board重绑定；线程执行位置不决定时钟来源。寒冰菇仍专门冻结水面和闪光：1073的0x469EFF写入mDontUpdate=1，当前代码保持此规则，计时结束后解除冻结。证据见[寒冰菇冻结核对](../Tests/evidence/ice-shroom-pool-sparkle-1073-20261030/manifest.json)。
+泳池闪光 `PARTICLE_POOL_SPARKLY` 与水面在新关卡首次入场时接收Visual时间，Board时间为零时也能播放，恢复1073首次入场行为。首次开战前由管理者平移出生时间并交给Board，保持粒子年龄、位置和水面相位；此后普通暂停与无尽下一轮选卡停止推进，读档直接使用Board时间。EffectSystem接收调用者明确传入的水面时间，不查询Board或自行判断时间域。寒冰菇仍专门冻结水面和闪光：1073的0x469EFF写入mDontUpdate=1，当前代码保持此规则，计时结束后解除冻结。证据见[寒冰菇冻结核对](../Tests/evidence/ice-shroom-pool-sparkle-1073-20261030/manifest.json)。
 关卡普通粒子出生于 Board 当前纳秒，EffectSystem 使用 Board 传入的当前纳秒推进，
 传送门粒子只走这一次全局更新，GridItem 不再重复更新。粒子更新的步长由持有者的本次
 时间与上次已处理时间之差给出，年龄仍为当前时间减出生时间。
@@ -205,3 +205,5 @@ mSystemPositionOriginX/Y沿用旧名，实际保存上次采样值，含义以�
 图片动画的固定速率相位由出生时间求值，变量速率保留离散积分；寿命和图片动画使用不同出生基准。
 CPU生成粒子渲染参数并通过TodTriangleGroup合批，交叉淡出保留深度护栏和原有队列顺序。
 零步长与暂停不消耗随机数。实际验收入口及平台限制见[验证说明](validation.md)。
+
+Vulkan保留两套主绘制命令／动态顶点资源及各自fence。第三拍复用第一套前仅查询对应fence；尚未完成或暂时没有交换链图像时跳过整次屏幕绘制，保留dirty标志，不增加绘制计数。逻辑更新和时钟照常推进。显式读回与资源释放等生命周期操作仍可等待完成。水面线程、额外焦散纹理和1536槽粒子分区试验均已撤回。

@@ -1,4 +1,4 @@
-#include "ReanimClock.h"
+﻿#include "ReanimClock.h"
 #include "SexyAppFramework/SexyAppBase.h"
 #include "SexyAppFramework/graphics/DDInterface.h"
 #include "SexyAppFramework/graphics/Graphics.h"
@@ -1918,6 +1918,13 @@ void PoolSparkleOwnerClockRuntime(TestApp& app, int hz)
     pool.PoolEffectInitialize();
     app.mPoolEffect=&pool;
     Board board(&app);
+    // These focused fixtures skip InitLevel; initialize its ice rows explicitly
+    // rather than interpreting recycled Board storage as an active ice trail.
+    for (int row=0;row<MAX_GRID_SIZE_Y;++row) {
+        board.mIceTimer[row]=0;
+        board.mIceMinX[row]=BOARD_ICE_START;
+        board.mIceParticleID[row]=PARTICLESYSTEMID_NULL;
+    }
     app.mBoard=&board;
     board.mBackground=BACKGROUND_3_POOL;
     board.mDrawCount=0; // Keep the chooser UI out of this owner-clock fixture.
@@ -1929,19 +1936,55 @@ void PoolSparkleOwnerClockRuntime(TestApp& app, int hz)
     Sexy::gStepsPerLegacyTick=hz/100.0;
     board.mNumWaves=20;
     board.mZombieCountDown=1'000'000;
-    auto* sparkle=app.AddTodParticle(450,295,0,PARTICLE_POOL_SPARKLY,
-        static_cast<std::int64_t>(board.mLevelTimeNs));
-    board.mPoolSparklyParticleID=app.ParticleGetID(sparkle);
+    // This fixture constructs Board without InitLevel/InitZombieWaves. Seed all
+    // scheduler inputs explicitly; recycled heap contents must not spawn a wave.
+    board.mZombieCountDownStart=board.mZombieCountDown;
+    board.mCurrentWave=0;
+    board.mHugeWaveCountDown=0;
+    board.mRiseFromGraveCounter=0;
+    board.mZombieHealthToNextWave=-1;
+    board.mSunCountDown=1'000'000;
+    for (int row=0;row<MAX_GRID_SIZE_Y;++row) {
+        board.mIceTimer[row]=0;
+        board.mIceMinX[row]=0;
+    }
+    // The first new-level intro owns the water on Visual, even before the
+    // first draw. Its Board clock stays zero throughout the initial pan/chooser.
+    board.Update();
+    auto* sparkle=app.ParticleTryToGet(board.mPoolSparklyParticleID);
+    Require(sparkle && sparkle->mLastUpdateTimeNs==holder.mVisualTimeNs && board.mLevelTimeNs==0,
+        "Initial intro failed to bind pool sparkles to supplied Visual time");
     auto* emitter=sparkle->EmitterRosterEmitterAt(0);
     const auto birth=emitter->mBirthTimeNs;
+    board.FreezeEffectsForCutscene(true);
+    Require(!sparkle->mDontUpdate,"Initial intro incorrectly froze its Visual pool sparkles");
     for (int frame=0;frame<hz/2;++frame) {
         holder.mVisualTimeNs+=step;
         board.Update();
     }
-    Require(board.mLevelTimeNs==0 && sparkle->mLastUpdateTimeNs==0 &&
-        emitter->mBirthTimeNs==birth && pool.mSampleTimeNs-pool.mBirthTimeNs==0,
-        "Chooser water or sparkle followed Visual instead of frozen Board time");
+    int introLive=0;
+    for (int i=0;i<sparkle->EmitterRosterCount();++i)
+        introLive+=sparkle->EmitterRosterEmitterAt(i)->ParticleRosterCount();
+    Require(introLive>0 && board.mLevelTimeNs==0 &&
+        sparkle->mLastUpdateTimeNs==holder.mVisualTimeNs && emitter->mBirthTimeNs==birth &&
+        pool.mSampleTimeNs-pool.mBirthTimeNs>0,
+        "New-level intro water did not animate on supplied Visual time");
+    const auto introAge=sparkle->mLastUpdateTimeNs-emitter->mBirthTimeNs;
+    const auto introWaterAge=pool.mSampleTimeNs-pool.mBirthTimeNs;
+    board.mPaused=true;
+    holder.mVisualTimeNs+=3'000'000'000;
+    board.Update();
+    Require(sparkle->mLastUpdateTimeNs-emitter->mBirthTimeNs==introAge &&
+        pool.mSampleTimeNs-pool.mBirthTimeNs==introWaterAge,
+        "Paused new-level intro advanced water ages");
+    board.mPaused=false;
     app.mGameScene=SCENE_PLAYING;
+    holder.mVisualTimeNs+=step;
+    board.Update();
+    Require(!board.mPoolIntroVisual && board.mLevelTimeNs==step &&
+        sparkle->mLastUpdateTimeNs-emitter->mBirthTimeNs==introAge+step &&
+        pool.mSampleTimeNs-pool.mBirthTimeNs==introWaterAge+step,
+        "First battle update lost the intro phase or inherited a Visual-clock gap");
     for (int frame=0;frame<hz/2;++frame) {
         holder.mVisualTimeNs+=step;
         board.Update();
@@ -2000,7 +2043,7 @@ void PoolSparkleOwnerClockRuntime(TestApp& app, int hz)
     holder.mVisualTimeNs+=step;board.Update();
     Require(sparkle->mLastUpdateTimeNs-emitter->mBirthTimeNs==repickAge+step,
         "Repick resume failed to consume exactly one Board interval");
-    std::cout<<"PASS pool Board clock "<<hz<<" Hz: chooser/paused freeze, combat, real IceZombies, expiry and repick resume\n";
+    std::cout<<"PASS pool Board clock "<<hz<<" Hz: Visual intro, paused freeze, phase-preserving Battle handoff, IceZombies and repick resume\n";
 }
 
 void StorePauseClockRuntime(TestApp& app, DecodeOnlySoundManager& sounds)

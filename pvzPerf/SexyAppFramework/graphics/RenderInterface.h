@@ -46,6 +46,8 @@ public:
 	int						mPresentHeight;				// output (scaled) height
 
 	bool					mSceneBegun;
+    // Latched for one outer screen draw; offscreen rendering is independent.
+    bool mScreenDrawDeferred = false;
 	bool					mIsWindowed;
 
 	typedef std::set<Image*> ImageSet;

@@ -11,6 +11,7 @@ import statistics
 import struct
 import time
 import msvcrt
+from process_core_trace import ProcessCoreTrace
 
 kernel = c.WinDLL("kernel32", use_last_error=True)
 user = c.WinDLL("user32", use_last_error=True)
@@ -194,18 +195,20 @@ def percentile(values, fraction):
     return sorted(values)[min(len(values) - 1, int((len(values) - 1) * fraction))]
 
 
-def measure(game, seconds, scene, multiplier, output, preroll=0, interactive=False, until_exit=False):
+def measure(game, seconds, scene, multiplier, output, preroll=0, interactive=False, until_exit=False,
+            affinity=0x4000, per_core_cpu=False):
     output = Path(output)
     output.mkdir(parents=True)
     observer, system = SIZE(), SIZE()
     checked(kernel.GetProcessAffinityMask(
         kernel.GetCurrentProcess(), c.byref(observer), c.byref(system)))
     checked(kernel.SetProcessAffinityMask(
-        kernel.GetCurrentProcess(), observer.value & ~0x4000))
+        kernel.GetCurrentProcess(), observer.value & ~affinity))
     expected_scene = 6 if scene == "credits" else 3
     metadata = {
         "schema": 1, "pid": game.pid, "kind": game.kind, "scene": scene,
-        "core": "LP14", "affinity": "0x4000", "multiplier": multiplier,
+        "core": "+".join(f"LP{core}" for core in range(64) if affinity & (1 << core)),
+        "affinity": hex(affinity), "multiplier": multiplier,
         "executable": str(game.executable), "executable_sha256": game.sha256,
         "clock": time.get_clock_info("perf_counter").implementation,
         "frame_metric": "existing application mDrawCount, produced draw frames per second",
@@ -215,20 +218,45 @@ def measure(game, seconds, scene, multiplier, output, preroll=0, interactive=Fal
         "status": "running",
     }
     rows = []
+    core_trace = None
     try:
+        if per_core_cpu:
+            helper = Path(__file__).resolve().parents[2] / "out/x64-win32-vulkan/Tests/performance/build/pvz_process_core_trace.exe"
+            if not helper.is_file():
+                raise RuntimeError(f"Build the pvz_process_core_trace helper first: {helper}")
+            core_trace = ProcessCoreTrace(helper, game.pid, affinity, output)
+            metadata["per_core_cpu_basis"] = (
+                "ETW CSwitch scheduled target-process residency per logical processor; "
+                "one processor = 100%; includes interrupt/DPC time during residency, "
+                "distinct from GetProcessTimes user+kernel accounting")
+            metadata["per_core_cpu_cores"] = core_trace.cores
+            metadata["qpc_frequency"] = core_trace.frequency
+            metadata["per_core_trace_helper_sha256"] = hashlib.sha256(helper.read_bytes()).hexdigest()
+            metadata["per_core_trace_files"] = ["process-core.etl", "process-core-slices.csv"]
         previous = game.snapshot()
         previous_cpu = game.cpu_seconds()
-        begin = last = time.perf_counter()
+        if core_trace:
+            stamp = c.c_longlong()
+            checked(kernel.QueryPerformanceCounter(c.byref(stamp)))
+            begin_qpc = stamp.value
+            begin = last = begin_qpc / core_trace.frequency
+            metadata["sample_clock_origin_qpc"] = begin_qpc
+            metadata["sample_clock_origin_ns"] = begin_qpc * 1_000_000_000 // core_trace.frequency
+        else:
+            begin = last = time.perf_counter()
         next_deadline = begin + 1
         end = begin + seconds if seconds else float("inf")
         previous_foreground = False
         reason = "time-limit"
         metadata["initial_state"] = previous
-        with (output / "samples.csv").open("w", newline="") as stream:
-            writer = csv.DictWriter(stream, fieldnames=(
+        fields = (
                 "elapsed_s", "interval_s", "draw_fps", "update_hz", "cpu_percent",
                 "draw_count", "update_count", "scene", "wave", "board_counter",
-                "foreground", "valid", "segment", "cpu_ms_per_draw_frame"))
+                "foreground", "valid", "segment", "cpu_ms_per_draw_frame")
+        if core_trace:
+            fields += tuple(f"cpu_lp{core}_percent" for core in core_trace.cores)
+        with (output / "samples.csv").open("w", newline="") as stream:
+            writer = csv.DictWriter(stream, fieldnames=fields)
             writer.writeheader()
             if interactive or until_exit:
                 print("t=0 s  Observation started. At t=3 s click the game start button.",
@@ -255,7 +283,7 @@ def measure(game, seconds, scene, multiplier, output, preroll=0, interactive=Fal
                     raise
                 cpu = game.cpu_seconds()
                 now = time.perf_counter()
-                if game.affinity() != 0x4000:
+                if game.affinity() != affinity:
                     raise RuntimeError("Game affinity changed")
                 foreground = w.DWORD()
                 user.GetWindowThreadProcessId(user.GetForegroundWindow(), c.byref(foreground))
@@ -292,6 +320,13 @@ def measure(game, seconds, scene, multiplier, output, preroll=0, interactive=Fal
                     print(f"t={now-begin:7.1f}s | FPS={row['draw_fps']:6.1f} "
                           f"| CPU={row['cpu_percent']:6.1f}% | CPU/frame={cost_text} | {segment} "
                           + ("| game exit = stop" if until_exit else "| Enter / game exit = stop"), flush=True)
+        if core_trace:
+            core_trace.annotate(rows, begin_qpc)
+            with (output / "samples.csv").open("w", newline="") as stream:
+                writer = csv.DictWriter(stream, fieldnames=fields)
+                writer.writeheader()
+                writer.writerows(rows)
+            metadata["per_core_cpu_status"] = "complete-no-lost-events"
         valid_rows = [r for r in rows if r["valid"]]
         total = sum(r["interval_s"] for r in valid_rows)
         metadata.update(
@@ -310,11 +345,19 @@ def measure(game, seconds, scene, multiplier, output, preroll=0, interactive=Fal
                 fps_median=statistics.median(r["draw_fps"] for r in valid_rows),
                 fps_p10=percentile([r["draw_fps"] for r in valid_rows], .1),
                 cpu_percent=sum(r["cpu_percent"] * r["interval_s"] for r in valid_rows) / total)
+            if core_trace:
+                metadata["per_core_cpu_percent"] = {
+                    str(core): sum(r[f"cpu_lp{core}_percent"] * r["interval_s"] for r in valid_rows) / total
+                    for core in core_trace.cores}
     except BaseException as error:
         metadata.update(status="failed", error=str(error))
         raise
     finally:
-        (output / "measurement.json").write_text(json.dumps(metadata, indent=2) + "\n")
+        try:
+            if core_trace and not core_trace.stopped:
+                core_trace.stop()
+        finally:
+            (output / "measurement.json").write_text(json.dumps(metadata, indent=2) + "\n")
     return metadata
 
 
@@ -333,7 +376,13 @@ def main():
     parser.add_argument("--verify-original-endless", action="store_true",
                         help="check retail offsets against the known paused canonical save before observing")
     parser.add_argument("--preroll", type=int, default=3)
+    parser.add_argument("--affinity", type=lambda text: int(text, 0), default=0x4000,
+                        help="required game affinity mask, for example 0xC000 for LP14+LP15")
+    parser.add_argument("--per-core-cpu", action="store_true",
+                        help="record exact ETW scheduler residency per selected processor; requires Administrator")
     args = parser.parse_args()
+    if args.affinity <= 0 or args.affinity >= 1 << 64:
+        parser.error("--affinity must select at least one of the first 64 logical processors")
     if args.until_exit and args.seconds:
         parser.error("--until-exit cannot be combined with --seconds")
     game = Game(args.pid, args.kind, args.layout)
@@ -344,7 +393,7 @@ def main():
             if args.kind != "original" or state["mGameScene"] != 3 or state["mGameMode"] != 13 or state.get("board") != expected:
                 raise RuntimeError(f"Retail checkpoint/layout verification failed; expected {expected}, got {state}")
         result = (measure(game, args.seconds, args.scene, args.multiplier, args.output,
-                          args.preroll, args.interactive, args.until_exit)
+                          args.preroll, args.interactive, args.until_exit, args.affinity, args.per_core_cpu)
                   if args.seconds or args.interactive or args.until_exit else game.snapshot())
         print(json.dumps(result, indent=2))
     finally:

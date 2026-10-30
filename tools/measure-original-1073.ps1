@@ -1,5 +1,7 @@
-param(
+﻿param(
     [int]$ProcessId = 0,
+    [long]$AffinityMask = 0x4000,
+    [switch]$PerCoreCpu,
     [ValidateSet('11x','25x')][string]$CpuMultiplier = '11x',
     [string]$OutputDirectory = ''
 )
@@ -12,8 +14,8 @@ if (!$ProcessId) {
     $ProcessId = $candidates[0].Id
 }
 $process = Get-Process -Id $ProcessId
-if ($process.Path -ne $executable -or $process.ProcessorAffinity.ToInt64() -ne 0x4000) {
-    throw 'Expected retail 1073 on logical processor 14.'
+if ($process.Path -ne $executable -or $process.ProcessorAffinity.ToInt64() -ne $AffinityMask) {
+    throw ("Expected retail 1073 with affinity mask 0x{0:X}." -f $AffinityMask)
 }
 if (!$OutputDirectory) {
     $OutputDirectory = Join-Path $env:TEMP ('pvz-retail-' + $CpuMultiplier + '-' + [Guid]::NewGuid().ToString('N'))
@@ -23,8 +25,11 @@ if (Test-Path -LiteralPath $measurementDirectory) { throw 'This measurement dire
 Write-Host 'Load Survival Endless Pool. Leave the Continue/Paused screen showing the canonical starting formation.'
 Write-Host 'Press Enter here to start. Resume at t=3 seconds. Sampling ends only when you Quit the game.'
 $null = Read-Host 'Press Enter to verify the checkpoint and start'
-& python (Join-Path $root 'Tests/performance/windows_game_probe.py') $ProcessId --kind original `
-    --scene endless --multiplier $CpuMultiplier --output $measurementDirectory --preroll 3 `
-    --until-exit --verify-original-endless
+$probeArguments = @((Join-Path $root 'Tests/performance/windows_game_probe.py'), $ProcessId,
+    '--kind', 'original', '--scene', 'endless', '--multiplier', $CpuMultiplier,
+    '--output', $measurementDirectory, '--preroll', 3, '--until-exit',
+    '--verify-original-endless', '--affinity', ('0x{0:X}' -f $AffinityMask))
+if ($PerCoreCpu) { $probeArguments += '--per-core-cpu' }
+& python @probeArguments
 if ($LASTEXITCODE -ne 0) { throw 'Retail observation failed; do not use an unverified run as a baseline.' }
 Write-Output ('Measurement saved to ' + $measurementDirectory)

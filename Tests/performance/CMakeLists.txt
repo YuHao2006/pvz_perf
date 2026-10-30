@@ -16,6 +16,14 @@ add_executable(pvz_game_perf_layout EXCLUDE_FROM_ALL
     "${PVZ_GAME_SOURCE_DIR}/SexyAppFramework/graphics/Color.cpp")
 target_link_libraries(pvz_game_perf_layout PRIVATE pvz_source_headers)
 target_compile_features(pvz_game_perf_layout PRIVATE cxx_std_23)
+
+if(WIN32)
+    add_executable(pvz_two_core_latency_bench EXCLUDE_FROM_ALL two_core_latency_bench.cpp)
+    target_compile_features(pvz_two_core_latency_bench PRIVATE cxx_std_23)
+    add_executable(pvz_process_core_trace EXCLUDE_FROM_ALL process_core_trace.cpp)
+    target_compile_features(pvz_process_core_trace PRIVATE cxx_std_23)
+    target_link_libraries(pvz_process_core_trace PRIVATE advapi32)
+endif()
 target_compile_definitions(pvz_game_perf_layout PRIVATE
     "$<$<CONFIG:Release>:RELEASEFINAL>"
     "$<$<BOOL:${PVZ_ENABLE_GAME_PROBES}>:PVZ_ENABLE_GAME_PROBES=1>")

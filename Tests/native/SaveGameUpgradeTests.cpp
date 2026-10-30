@@ -1,4 +1,4 @@
-#include "ReanimClock.h"
+﻿#include "ReanimClock.h"
 #include "LawnApp.h"
 #include "Lawn/System/SaveGame.h"
 #include "Lawn/System/LevelSaveFormat.h"
@@ -160,6 +160,7 @@ void LoadCurrentWithResources(LawnApp& app, HiddenWindow& window, const char* sa
         return;
     }
     Require(LawnLoadGame(&board, save), "Full production v4 save load failed");
+    Require(!board.mPoolIntroVisual, "Loaded board restarted the first-entry Visual water clock");
     Require(app.mGameScene == GameScenes::SCENE_PLAYING, "Save load did not publish the playing scene");
     auto& systems = app.mEffectSystem->mParticleHolder->mParticleSystems;
     TodParticleSystem* particle = nullptr;

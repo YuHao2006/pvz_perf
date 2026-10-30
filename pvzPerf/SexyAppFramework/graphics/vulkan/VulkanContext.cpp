@@ -671,7 +671,7 @@ void VulkanContext::WaitForFrame() {
         return;
     }
     // Explicit drain for readback, resource mutation and offscreen operations.
-    // Normal frame recording waits only for the slot it is about to reuse.
+    // Normal frame recording only polls the slot it is about to reuse.
     for (auto& resource : frameResources_)
         if (resource.serial > completedSerial) {
             VK_CHECK(vkWaitForFences(device, 1, &resource.fence, VK_TRUE, UINT64_MAX));
@@ -767,16 +767,22 @@ VulkanContext::FrameContext VulkanContext::BeginCommands() {
     if (swapchainDirty_ || drawable.width != drawableExtentAtCreate.width ||
         drawable.height != drawableExtentAtCreate.height)
         if (!RecreateSwapchain()) return {};
-    // Only retire the slot being reused. The other slot can still be in flight;
-    // immutable textures and ordered GPU render targets remain shared.
+    // Reuse only this slot, and never stall the application for an unfinished
+    // frame. A skipped attempt leaves the slot, command buffer, acquire
+    // semaphore and serials untouched; the next draw retries the same slot.
     if (resource.serial > completedSerial) {
-        VK_CHECK(vkWaitForFences(device, 1, &resource.fence, VK_TRUE, UINT64_MAX));
+        const auto status = vkGetFenceStatus(device, resource.fence);
+        if (status == VK_NOT_READY) return {};
+        VK_CHECK(status);
         completedSerial = std::max(completedSerial, resource.serial);
     }
 
     uint32_t imageIndex = 0;
-    const auto acquired=vkAcquireNextImageKHR(device, swapchain, UINT64_MAX,
+    const auto acquired=vkAcquireNextImageKHR(device, swapchain, 0,
         resource.acquired, VK_NULL_HANDLE,&imageIndex);
+    // No image was acquired, so the semaphore remains unsignaled and can be
+    // reused unchanged. Do not convert presentation backpressure into a wait.
+    if (acquired == VK_NOT_READY || acquired == VK_TIMEOUT) return {};
     if (acquired == VK_ERROR_OUT_OF_DATE_KHR) {
         swapchainDirty_=true;     // Next frame rebuilds only when the surface is drawable.
         return {};                // valid=false

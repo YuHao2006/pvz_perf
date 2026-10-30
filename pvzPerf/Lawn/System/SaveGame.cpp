@@ -1,4 +1,4 @@
-#include "ReanimClock.h"
+﻿#include "ReanimClock.h"
 #include "Music.h"
 #include "SaveGame.h"
 #include "LevelSaveFormat.h"
@@ -1052,6 +1052,9 @@ static bool LoadDat64FromBuffer(Board* theBoard, Buffer& aFileBuffer, const std:
 			static_cast<unsigned long>(aContext.ByteLeftToRead()));
 		return false;
 	}
+    // Restored effects already belong to the saved Board clock, including
+    // loading into the Continue/chooser UI. Never replay the first-new intro.
+    theBoard->mPoolIntroVisual = false;
 	theBoard->RebuildPlantCellBucket();  // 格桶为派生索引不进存档，装载验收后重建
 	theBoard->RebuildZombieRowBucket();  // 行段桶同款：整池镜像装载不走初始化尾
 	// 关卡放行门（与 LawnApp::StartPlaying 同语义，2026-10-09 用户规格

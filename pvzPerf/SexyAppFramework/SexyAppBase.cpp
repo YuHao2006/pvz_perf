@@ -2400,6 +2400,11 @@ static void UpdateScreenSaverInfo(DWORD theTick)
 bool SexyAppBase::DrawDirtyStuff()
 {
 	MTAutoDisallowRand aDisallowRand;
+    // Each scheduled draw gets one screen admission attempt. Once deferred,
+    // no later FPS/overlay primitive may start a partial replacement frame.
+    auto* render = mDDInterface->mRenderInterface;
+    render->mScreenDrawDeferred = false;
+
 
 	if (mShowFPS)
 	{
@@ -2436,6 +2441,15 @@ bool SexyAppBase::DrawDirtyStuff()
 	mIsDrawing = true;
 	bool drewScreen = mWidgetManager->DrawScreen();
 	mIsDrawing = false;
+    if (render->mScreenDrawDeferred)
+    {
+        // WidgetManager preflights before consuming dirty flags. Keep those
+        // flags for the next scheduled draw and do not count an absent frame.
+        mHasPendingDraw = false;
+        mLastDrawWasEmpty = true;
+        return false;
+    }
+
 
 	if ((drewScreen || (aStartTime - mLastDrawTick >= 1000) || (mCustomCursorDirty)) &&
 		((int) (aStartTime - mNextDrawTick) >= 0))

@@ -1,4 +1,4 @@
-#include <time.h>
+﻿#include <time.h>
 #include <type_traits>
 #include "ZenGarden.h"
 #include "GardenHudLayout.h"
@@ -58,6 +58,7 @@ static constexpr float BoardIntervalFps(std::int32_t draws, std::int32_t elapsed
 // GOTY @Patoke: 0x40A3C0
 Board::Board(LawnApp* theApp)
 {
+    mPoolIntroVisual = true;
 	mApp = theApp;
 	mApp->mBoard = this;
 
@@ -1465,7 +1466,8 @@ void Board::FreezeEffectsForCutscene(bool theFreeze)
 		}
 		else if (aParticle->mEffectType == ParticleEffect::PARTICLE_POOL_SPARKLY && mIceTrapCounter == 0)
 		{
-			aParticle->mDontUpdate = theFreeze;
+            aParticle->mDontUpdate = theFreeze &&
+                !(mPoolIntroVisual && mApp->mGameScene == SCENE_LEVEL_INTRO && !mCutScene->IsSurvivalRepick());
 		}
 	}
 
@@ -7119,7 +7121,26 @@ void Board::Update()
 	Widget::Update();
 	MarkDirty();
 
+    const auto aVisualNowNs = mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs;
+    const auto waterNowNs = mPoolIntroVisual && mApp->mGameScene == SCENE_LEVEL_INTRO &&
+        !mCutScene->IsSurvivalRepick() ? aVisualNowNs : static_cast<std::int64_t>(mLevelTimeNs);
+	if (mBackground == BackgroundType::BACKGROUND_3_POOL && mPoolSparklyParticleID == ParticleSystemID::PARTICLESYSTEMID_NULL)
+	{
+		int aRenderPosition = MakeRenderOrder(RenderLayer::RENDER_LAYER_GROUND, 2, 0);
+		TodParticleSystem* aPoolParticle = mApp->AddTodParticle(450, 295, aRenderPosition, ParticleEffect::PARTICLE_POOL_SPARKLY, waterNowNs);
+		mPoolSparklyParticleID = mApp->ParticleGetID(aPoolParticle);
+	}
+
 	mCutScene->Update();
+    // Keep the first intro's visual age, then apply the first Battle delta.
+    if (mPoolIntroVisual && mApp->mGameScene == SCENE_PLAYING)
+    {
+        if (auto* sparkle = mApp->ParticleTryToGet(mPoolSparklyParticleID))
+            sparkle->Update(0, static_cast<std::int64_t>(mLevelTimeNs));
+        if (StageHasPool() && mApp->mPoolEffect)
+            mApp->mPoolEffect->RebaseClock(static_cast<long long>(mLevelTimeNs));
+        mPoolIntroVisual = false;
+    }
 	UpdateMousePosition();
 	if (mApp->mGameMode == GameMode::GAMEMODE_LIMBO_ZEN_GARDEN)
 	{
@@ -7163,8 +7184,11 @@ void Board::Update()
 		mStoreButton->Update();
 	}
 
-	const auto aVisualNowNs = mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs;
-    mApp->mEffectSystem->UpdateAt(aVisualNowNs, static_cast<std::int64_t>(mLevelTimeNs));
+    const bool waterUsesVisual = mPoolIntroVisual && mApp->mGameScene == SCENE_LEVEL_INTRO &&
+        !mCutScene->IsSurvivalRepick();
+    const auto waterSampleNs = waterUsesVisual ? aVisualNowNs : static_cast<std::int64_t>(mLevelTimeNs);
+    const auto waterDeltaNs = waterUsesVisual ? Sexy::gUpdateIntervalNs : aLevelDeltaNs;
+    mApp->mEffectSystem->UpdateAt(aVisualNowNs, static_cast<std::int64_t>(mLevelTimeNs), waterSampleNs);
 	// The opening title starts during the intro, before the battle clock runs.
 	mAdvice->Update(mAdvice->mMessageStyle == MessageStyle::MESSAGE_STYLE_HOUSE_NAME
 		? aVisualNowNs : static_cast<std::int64_t>(mLevelTimeNs));
@@ -7208,14 +7232,8 @@ void Board::Update()
 	++mEffectCounter;
 	if (StageHasPool() && !mIceTrapCounter && mApp->mGameScene != GameScenes::SCENE_ZOMBIES_WON && !mCutScene->IsSurvivalRepick())
 	{
-        // Execution may move to the visual worker; its source time remains Board.
-        mApp->mPoolEffect->PoolEffectUpdate(static_cast<long long>(mLevelTimeNs), aLevelDeltaNs);
-	}
-	if (mBackground == BackgroundType::BACKGROUND_3_POOL && mPoolSparklyParticleID == ParticleSystemID::PARTICLESYSTEMID_NULL && mDrawCount > 0)
-	{
-		int aRenderPosition = MakeRenderOrder(RenderLayer::RENDER_LAYER_GROUND, 2, 0);
-		TodParticleSystem* aPoolParticle = mApp->AddTodParticle(450, 295, aRenderPosition, ParticleEffect::PARTICLE_POOL_SPARKLY, static_cast<std::int64_t>(mLevelTimeNs));
-		mPoolSparklyParticleID = mApp->ParticleGetID(aPoolParticle);
+        // First intro uses Visual; combat and retained/reloaded boards use Board.
+        mApp->mPoolEffect->PoolEffectUpdate(waterSampleNs, waterDeltaNs);
 	}
 
 	if (!(mApp->IsSurvivalMode() && mApp->mGameScene == GameScenes::SCENE_LEVEL_INTRO))

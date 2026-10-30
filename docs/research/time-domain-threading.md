@@ -41,3 +41,42 @@ Windows MSVC /O2 /GL /LTCG。固定LP14和LP15及OS调度分别测试，频率�
 ## 复测
 
 先构建Windows Vulkan Release，再运行tools/test-time-domain-threads.ps1；输出默认位于Temp，不读写用户存档。脚本复用生产编译／链接参数，仅替换入口点。原始数据、构建命令、源码与产物哈希见[试验证据](../../Tests/evidence/time-domain-threads-20261030/)。
+
+## 实际时钟及共同推进场景
+
+静态调用链核对：动画域枚举只有Visual与Battle。mBattleTimeNs是Board::mLevelTimeNs的发布副本，不是第三个独立动画时钟。
+
+| 时钟／进度 | 当前归属 | 主要停止条件／说明 |
+| --- | --- | --- |
+| steady_clock墙钟 | 主循环 | 采样实际经过时间与sleep；不是效果对象域 |
+| mApplicationTimeNs | SexyAppBase | 实际应用更新推进；Board暂停仍可推进，音乐等使用 |
+| mVisualTimeNs | ReanimationHolder，场景负责推进 | 通常LawnApp推进；普通Board暂停冻结，Store是继续推进的例外；Credits接管并随其暂停冻结 |
+| mLevelTimeNs | Board | 仅Battle场景有效推进；暂停、选卡过场及time-stop冻结 |
+| mPoolTimeNs | PoolEffect | 调用者传入步长的局部视觉相位；Board、图鉴、Credits按各自规则调用，不需要单独线程 |
+| CutScene、选卡、Credits局部计时 | 各界面 | 动画主要复用Visual；局部倒计时及Credits墙钟同步不等于独立工作域 |
+
+正常战斗同时推进Battle和Visual；无尽选卡冻结保留战斗对象，仅Visual继续。普通暂停通常两者都冻结，Store暂停Battle但推进Visual。主菜单、从主菜单进入的图鉴、独立Credits主要只有Visual动画工作。花园等Board场景可能同时有Board时间和Visual对象，不能仅因不是战斗就认定只有一个域；应按实际非空工作批次调度。
+
+应用时钟和输入UI始终可能有轻量工作，不把它算作必须启动worker的第二个大批次。建议只在Battle与Visual都有足量可独立任务时并行；单域及小批量由主线程直接调用同一更新入口。所有权属于管理组件，不以当前执行线程决定，才能安全在单线程与worker之间切换。
+
+当前多数战斗身体动画、攻击及爆炸粒子使用Battle时间，并不是画面上的特效都属于Visual。正常战斗Visual工作量可能很小，因此此前两域等量基准只能表示上限。
+
+裸管理预览Zombie有现成先例：AlmanacDialog::SetupZombie用new Zombie，不进Board池，清理时DieNoLoot后delete。选卡可采用相同生存期模式并保留CUTSCENE语义，但Zombie自身改为裸管理并不自动隔离其reanim、particle、attachment；这些仍经LawnApp和全局EffectSystem访问。雪橇等预览特殊路径及点击命中需单独核对。
+
+本节为静态审计，没有改变生产调度、预览所有权或存档。
+
+## 合并轻量任务及暂停界面复核
+
+用户要求试验将多个轻量任务合并成一次后台批次，不以单个Visual批次较小就预先否决。单域场景仍主线程执行；关卡进行时可评估水面网格／常驻Visual效果与音乐控制维护合批。既有双批次等量基准不能直接代替此方案的测量。
+
+worker不自行读取steady_clock或忙轮询：主循环发布本轮各时钟、步长和只读输入，唤醒阻塞等待的常驻worker；完成后发布结果并继续等待。条件变量／事件的阻塞等待与循环询问任务不同，仍有唤醒和发布成本。不得让主线程每帧Join。
+
+应用更新是SexyAppBase::UpdateFrames：应用时钟、更新统计、鼠标采样、WidgetManager::UpdateFrame、BassMusicInterface::Update及CleanSharedImages。Widget树内含Board，不能把整个应用更新当作可后台执行的轻量服务。输入、控件事件和带GPU资源生命周期的清理继续需要主线程边界。
+
+暂停报纸由DoPauseDialog创建ReanimationWidget，非Zombie。当前分配与UpdateAt均取mVisualTimeNs；LawnApp只在无Board、Board未暂停或打开Store时推进Visual。因此普通暂停报纸也会冻结，是当前时钟归属缺陷。宜由对话框传入应用时间，不能靠恢复整局Visual来使报纸运动。本次仅识别，未修改此生产行为。
+
+Music::MusicUpdate使用应用时间，BassMusicInterface::Update维护slot/check/fade；音乐高潮控制会读Board::mPaused、游戏模式与CountZombiesOnScreen，现有播放／停止／音量调用也直接修改同一控制状态。后台音乐控制需传入状态快照并集中处理命令，不能让worker扫描正在修改的僵尸池。BASS已有播放音频处理，此处试验对象是主线程控制维护而非重写混音器。
+
+1073发行EXE复核：0x40D64F先写scene=2，0x40D66B调用StartLevelIntro；0x43F4B1检查scene=2，0x43F4DA调用PlaceStreetZombies。正常关卡计数在0x4183B0检查scene=3，0x4183E9才增加。选卡预览的创建／更新属于战斗计时停止阶段，可留主线程；此处不是mPaused=true（CutScene更新反而在该标记为true时提前返回）。[反汇编证据](../../Tests/evidence/visual-domain-owners-1073-20261030/retail-disassembly.txt)。
+
+PoolEffectUpdate主要累加局部相位并写renderer的caustics.timeNs；真正焦散图像由Vulkan compute记录绘制时生成，CPU水面BuildPoolMesh也在DrawPool中计算。若要从主线程搬走水面CPU计算，应生成网格快照，主线程仍负责上传与记录GPU命令；仅把SetCausticsTimeNs挪到worker既没有明显计算收益，也会造成renderer状态跨线程写入。

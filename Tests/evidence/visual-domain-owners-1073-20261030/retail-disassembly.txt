@@ -1,0 +1,72 @@
+
+InitSurvivalStage switches scene before StartLevelIntro
+0040d610: push ebx
+0040d611: push ebp
+0040d612: mov ebp, dword ptr [esp + 0xc]
+0040d616: push esi
+0040d617: push edi
+0040d618: mov eax, ebp
+0040d61a: call 0x40f670
+0040d61f: mov eax, dword ptr [ebp + 0xa4]
+0040d625: mov eax, dword ptr [eax + 0x884]
+0040d62b: push 1
+0040d62d: call 0x51f990
+0040d632: mov bl, 1
+0040d634: mov edi, ebp
+0040d636: call 0x40d560
+0040d63b: mov eax, ebp
+0040d63d: mov byte ptr [ebp + 0x5614], 0
+0040d644: call 0x40d460
+0040d649: mov ecx, dword ptr [ebp + 0xa4]
+0040d64f: mov dword ptr [ecx + 0x91c], 2
+0040d659: mov esi, dword ptr [ebp + 0xa4]
+0040d65f: call 0x453050
+0040d664: mov edx, dword ptr [ebp + 0x174]
+0040d66a: push edx
+0040d66b: call 0x43db50
+0040d670: mov esi, dword ptr [ebp + 0x15c]
+
+Battle counter only advances during PLAYING or special upsell
+004183b0: cmp dword ptr [edi + 0x91c], 3
+004183b7: je 0x4183e4
+004183b9: mov eax, dword ptr [esi + 0x174]
+004183bf: mov ecx, dword ptr [eax]
+004183c1: mov ecx, dword ptr [ecx + 0x918]
+004183c7: cmp ecx, 0x47
+004183ca: je 0x4183d5
+004183cc: cmp ecx, 0x48
+004183cf: jne 0x4185e5
+004183d5: cmp byte ptr [eax + 0x40], 0
+004183d9: sete al
+004183dc: test al, al
+004183de: je 0x4185e5
+004183e4: mov edi, 1
+004183e9: add dword ptr [esi + 0x5580], edi
+004183ef: call 0x4163d0
+
+CutScene Update requires unpaused LEVEL_INTRO before PlaceStreetZombies
+0043f487: mov ecx, dword ptr [esi + 4]
+0043f48a: cmp byte ptr [ecx + 0x17c], 0
+0043f491: jne 0x43f5fc
+0043f497: mov eax, dword ptr [esi]
+0043f499: mov eax, dword ptr [eax + 0x91c]
+0043f49f: cmp eax, 4
+0043f4a2: jne 0x43f4b1
+0043f4a4: add dword ptr [esi + 8], 0xa
+0043f4a8: push esi
+0043f4a9: call 0x43f650
+0043f4ae: pop edi
+0043f4af: pop esi
+0043f4b0: ret 
+0043f4b1: cmp eax, 2
+0043f4b4: jne 0x43f5fc
+0043f4ba: cmp dword ptr [ecx + 0x5588], 0
+0043f4c1: je 0x43f5fc
+0043f4c7: cmp byte ptr [esi + 0x34], 0
+0043f4cb: jne 0x43f4d3
+0043f4cd: push esi
+0043f4ce: call 0x43c840
+0043f4d3: cmp byte ptr [esi + 0x35], 0
+0043f4d7: jne 0x43f4df
+0043f4d9: push esi
+0043f4da: call 0x43d350

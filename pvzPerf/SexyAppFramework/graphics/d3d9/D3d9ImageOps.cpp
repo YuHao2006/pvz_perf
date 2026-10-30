@@ -1,3 +1,4 @@
+#include "SexyAppFramework/graphics/PoolMesh.h"
 #include "D3d9RendererInternal.h"
 #include "graphics/FontWeights.h"
 #include <algorithm>
@@ -23,12 +24,6 @@ S::Float4 TintBytes(int value)
 S::Float4 CausticOffset(unsigned int u, unsigned int v)
 {
     return {float((u >> 16) & 255), float(u & 65535), float((v >> 16) & 255), float(v & 65535)};
-}
-unsigned int DivideSigned(unsigned int value, int divisor)
-{
-    const auto signedValue = value <= 0x7fffffffU ?
-        static_cast<long long>(value) : static_cast<long long>(value) - 0x100000000LL;
-    return static_cast<unsigned int>(signedValue / divisor);
 }
 }
 void D3d9Renderer::Impl::ImagePass(D3d9Texture* target, D3d9Texture* source,
@@ -65,10 +60,9 @@ void D3d9Renderer::Impl::ImagePass(D3d9Texture* target, D3d9Texture* source,
         c[S::Modes].w = float(processing->red <= 255 && processing->green <= 255 &&
             processing->blue <= 255 && processing->alpha <= 255);
     }
-    const unsigned int p0 = causticCounter << 16;
-    const unsigned int p1 = ((causticCounter & 65535U) + 1U) << 16;
-    c[S::CausticOffset0] = CausticOffset(DivideSigned(p0, 10), 0);
-    c[S::CausticOffset1] = CausticOffset(0U - DivideSigned(p1, 6), p0 >> 3);
+    const auto offsets=EvaluatePoolCaustics(causticTimeNs);
+    c[S::CausticOffset0] = CausticOffset(offsets.u0,0);
+    c[S::CausticOffset1] = CausticOffset(offsets.u1,offsets.v1);
     SetConstants(c);
     Check(device->SetTexture(S::SourceImage, source->image.value), "Bind D3D9 image source");
     Check(device->SetTexture(S::AlphaImage, mask->image.value), "Bind D3D9 alpha source");
@@ -286,9 +280,9 @@ void D3d9Renderer::UseCausticsTexture(D3d9Texture* output, D3d9Texture* source)
         throw std::invalid_argument("Invalid D3D9 caustics source/output");
     s.causticTarget = output; s.causticSource = source; s.causticsQueued = true;
 }
-void D3d9Renderer::SetCausticsFrame(unsigned int frame)
+void D3d9Renderer::SetCausticsTimeNs(unsigned long long timeNs)
 {
-    impl_->causticCounter = frame; impl_->causticsQueued = impl_->causticTarget != nullptr;
+    impl_->causticTimeNs = timeNs; impl_->causticsQueued = impl_->causticTarget != nullptr;
 }
 bool D3d9Renderer::HasCausticsCompute() const { return bool(impl_->causticsPS); }
 std::vector<float> D3d9Renderer::ReadTextureFloats(D3d9Texture* image)

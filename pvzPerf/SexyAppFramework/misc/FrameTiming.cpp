@@ -6,7 +6,7 @@ namespace Sexy
 {
 FrameTiming FrameTiming::FromSetting(double targetFps)
 {
-    if (!std::isfinite(targetFps) || targetFps < MinimumTargetFps ||
+    if (!std::isfinite(targetFps) || targetFps <= 0 ||
         targetFps > NanosecondsPerSecond || std::floor(targetFps) != targetFps)
         return {};
     return FromTargetFps(static_cast<unsigned int>(targetFps));
@@ -32,14 +32,14 @@ unsigned long long SimulationTimeFromWallTime(unsigned long long elapsedNs, doub
 unsigned long long TakeSimulationStep(unsigned long long& pendingNs,
     unsigned long long requestedNs, unsigned long long& phaseNs)
 {
-    if (requestedNs == 0 || requestedNs > FrameTiming::LegacyTickNs)
-        throw std::invalid_argument("simulation target interval must be within 1ns..10ms");
+    if (requestedNs == 0)
+        throw std::invalid_argument("simulation target interval must be positive");
     const auto quantumNs = requestedNs;
     phaseNs %= quantumNs;
     if (pendingNs < quantumNs - phaseNs) return 0;
-    const auto stepNs = std::min(pendingNs, FrameTiming::LegacyTickNs);
-    pendingNs -= stepNs;
-    phaseNs = (phaseNs + stepNs) % quantumNs;
+    const auto stepNs = pendingNs;
+    pendingNs = 0;
+    phaseNs = (phaseNs + stepNs % quantumNs) % quantumNs;
     return stepNs;
 }
 

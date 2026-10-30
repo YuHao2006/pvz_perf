@@ -359,7 +359,9 @@ uniform ivec4 rectangle;
 uniform ivec4 tint;
 uniform uint sourceSlot;
 uniform uint packedColor;
-uniform uint counter;
+uniform uint causticU0;
+uniform uint causticU1;
+uniform uint causticV1;
 uniform bool colorOnly;
 uniform int operation;
 out vec4 outColor;
@@ -388,14 +390,6 @@ uint BilinearLookup(uint u, uint v)
            ((((factorU1 * factorV0) / 65536u) * BlueAt(indexV0 * 256u + indexU1)) / 65536u);
 }
 
-uint DivTrunc6(uint n)
-{
-    return (n & 0x80000000u) != 0u ? (0u - ((0u - n) / 6u)) : (n / 6u);
-}
-uint DivTrunc10(uint n)
-{
-    return (n & 0x80000000u) != 0u ? (0u - ((0u - n) / 10u)) : (n / 10u);
-}
 
 void main()
 {
@@ -406,10 +400,8 @@ void main()
         uint timeV1 = (256u - y) << 17u;
         uint timeV0 = y << 17u;
         uint timeU = x << 17u;
-        uint timePool0 = counter << 16u;
-        uint timePool1 = ((counter & 65535u) + 1u) << 16u;
-        uint a1 = BilinearLookup(timeU - DivTrunc6(timePool1), timeV1 + (timePool0 >> 3u)) & 0xFFu;
-        uint a0 = BilinearLookup(timeU + DivTrunc10(timePool0), timeV0) & 0xFFu;
+        uint a1 = BilinearLookup(timeU + causticU1, timeV1 + causticV1) & 0xFFu;
+        uint a0 = BilinearLookup(timeU + causticU0, timeV0) & 0xFFu;
         uint a = (a0 + a1) / 2u;
         uint alpha;
         if (a >= 160u) alpha = 255u - 2u * (a - 160u);

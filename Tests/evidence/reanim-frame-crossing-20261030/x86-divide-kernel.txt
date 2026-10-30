@@ -1,0 +1,90 @@
+Extracted from the measured MSVC /O2 /GL /LTCG crossing.exe. The input loop is unrolled by two: DIV at 0x140001323 and 0x140001339 belong to two different Input records. Each DIV supplies RAX quotient and RDX remainder to Mix. Tail uses one DIV at 0x140001369.
+
+140001305: 83 fa 02                    	cmp	edx, 0x2
+140001308: 7c 48                       	jl	0x140001352 <.text+0x352>
+14000130a: 48 89 74 24 10              	mov	qword ptr [rsp + 0x10], rsi
+14000130f: 8d 72 ff                    	lea	esi, [rdx - 0x1]
+140001312: 33 d2                       	xor	edx, edx
+140001314: 49 63 c8                    	movsxd	rcx, r8d
+140001317: 48 c1 e1 04                 	shl	rcx, 0x4
+14000131b: 41 83 c0 02                 	add	r8d, 0x2
+14000131f: 49 8b 04 09                 	mov	rax, qword ptr [r9 + rcx]
+140001323: 49 f7 74 09 08              	div	qword ptr [r9 + rcx + 0x8]
+140001328: 48 0f af c5                 	imul	rax, rbp
+14000132c: 48 03 c2                    	add	rax, rdx
+14000132f: 33 d2                       	xor	edx, edx
+140001331: 4c 03 d8                    	add	r11, rax
+140001334: 49 8b 44 09 10              	mov	rax, qword ptr [r9 + rcx + 0x10]
+140001339: 49 f7 74 09 18              	div	qword ptr [r9 + rcx + 0x18]
+14000133e: 48 0f af c5                 	imul	rax, rbp
+140001342: 48 03 c2                    	add	rax, rdx
+140001345: 48 03 d8                    	add	rbx, rax
+140001348: 44 3b c6                    	cmp	r8d, esi
+14000134b: 7c c5                       	jl	0x140001312 <.text+0x312>
+14000134d: 48 8b 74 24 10              	mov	rsi, qword ptr [rsp + 0x10]
+140001352: 44 3b c7                    	cmp	r8d, edi
+140001355: 48 8b 7c 24 18              	mov	rdi, qword ptr [rsp + 0x18]
+14000135a: 7d 1c                       	jge	0x140001378 <.text+0x378>
+14000135c: 33 d2                       	xor	edx, edx
+14000135e: 49 63 c8                    	movsxd	rcx, r8d
+140001361: 48 c1 e1 04                 	shl	rcx, 0x4
+140001365: 4a 8b 04 09                 	mov	rax, qword ptr [rcx + r9]
+140001369: 4a f7 74 09 08              	div	qword ptr [rcx + r9 + 0x8]
+14000136e: 4c 8b d0                    	mov	r10, rax
+140001371: 4c 0f af d5                 	imul	r10, rbp
+140001375: 4c 03 d2                    	add	r10, rdx
+140001378: 4a 8d 04 1b                 	lea	rax, [rbx + r11]
+14000137c: 48 8b 5c 24 20              	mov	rbx, qword ptr [rsp + 0x20]
+140001381: 49 03 c2                    	add	rax, r10
+140001384: 5d                          	pop	rbp
+140001385: c3                          	ret
+140001386: cc                          	int3
+140001387: cc                          	int3
+140001388: cc                          	int3
+140001389: cc                          	int3
+14000138a: cc                          	int3
+14000138b: cc                          	int3
+14000138c: cc                          	int3
+14000138d: cc                          	int3
+14000138e: cc                          	int3
+14000138f: cc                          	int3
+140001390: 40 53                       	push	rbx
+140001392: 45 33 d2                    	xor	r10d, r10d
+140001395: 45 33 c9                    	xor	r9d, r9d
+140001398: 8b da                       	mov	ebx, edx
+14000139a: 4c 8b d9                    	mov	r11, rcx
+14000139d: 85 d2                       	test	edx, edx
+14000139f: 7e 51                       	jle	0x1400013f2 <.text+0x3f2>
+1400013a1: 48 89 7c 24 10              	mov	qword ptr [rsp + 0x10], rdi
+1400013a6: 48 bf 15 7c 4a 7f b9 79 37 9e       	movabs	rdi, -0x61c8864680b583eb
+1400013b0: 41 8b c1                    	mov	eax, r9d
+1400013b3: 33 d2                       	xor	edx, edx
+1400013b5: 48 03 c0                    	add	rax, rax
+1400013b8: 49 8b 0c c3                 	mov	rcx, qword ptr [r11 + 8*rax]
+1400013bc: 4d 8b 44 c3 08              	mov	r8, qword ptr [r11 + 8*rax + 0x8]
+1400013c1: 49 3b c8                    	cmp	rcx, r8
+1400013c4: 72 15                       	jb	0x1400013db <.text+0x3db>
+1400013c6: 66 66 0f 1f 84 00 00 00 00 00       	nop	word ptr [rax + rax]
+1400013d0: 49 2b c8                    	sub	rcx, r8
+1400013d3: 48 ff c2                    	inc	rdx
+1400013d6: 49 3b c8                    	cmp	rcx, r8
+1400013d9: 73 f5                       	jae	0x1400013d0 <.text+0x3d0>
+1400013db: 48 0f af d7                 	imul	rdx, rdi
+1400013df: 41 ff c1                    	inc	r9d
+1400013e2: 48 03 d1                    	add	rdx, rcx
+1400013e5: 4c 03 d2                    	add	r10, rdx
+1400013e8: 44 3b cb                    	cmp	r9d, ebx
+1400013eb: 7c c3                       	jl	0x1400013b0 <.text+0x3b0>
+1400013ed: 48 8b 7c 24 10              	mov	rdi, qword ptr [rsp + 0x10]
+1400013f2: 49 8b c2                    	mov	rax, r10
+1400013f5: 5b                          	pop	rbx
+1400013f6: c3                          	ret
+1400013f7: cc                          	int3
+1400013f8: cc                          	int3
+1400013f9: cc                          	int3
+1400013fa: cc                          	int3
+1400013fb: cc                          	int3
+1400013fc: cc                          	int3
+1400013fd: cc                          	int3
+1400013fe: cc                          	int3
+1400013ff: cc                          	int3

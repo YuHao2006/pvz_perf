@@ -744,10 +744,10 @@ bool RenderInterface::InstallCausticsCompute(Image* theImage, Image* source)
 	catch (...) { mRenderer->DestroyTexture(texture); throw; }
 }
 
-void RenderInterface::SetCausticsFrame(unsigned int theCounter)
+void RenderInterface::SetCausticsTimeNs(unsigned long long theTimeNs)
 {
 	if (mRenderer != NULL)
-		mRenderer->SetCausticsFrame(theCounter);
+		mRenderer->SetCausticsTimeNs(theTimeNs);
 }
 
 void RenderInterface::UseCausticsImages(Image* output,Image* source)

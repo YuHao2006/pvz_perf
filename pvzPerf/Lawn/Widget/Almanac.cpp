@@ -340,7 +340,7 @@ void AlmanacDialog::Update()
 		mApp->SetCursor(CURSOR_POINTER);
 	}
 
-	mApp->mPoolEffect->PoolEffectUpdate();
+	mApp->mPoolEffect->PoolEffectUpdate(Sexy::gUpdateIntervalNs);
 	MarkDirty();
 }
 

@@ -1,0 +1,12 @@
+{
+  "compiler": "MSVC 14.51 /O2 /GL /LTCG",
+  "affinity": "LP14",
+  "frequency": "not controlled or verified",
+  "checksums_equal_across_variants": true,
+  "release_sha256": "79220c04d62ede1940e26e456050fbbdc09875f355ded277c90eec4ecf0778e5",
+  "variants": {
+    "production_div": "da65ae09edde756a23a2113e28f12f927e64055097a685b201b2a82d5f20ccbd",
+    "cycle_div_cached": "925921a3abdd568527e2b11274508c32fdcbefa0a95d9dc383d83e7929417cef",
+    "cycle_div_no_frame_cache": "cab64bf1a0b141b207b168d3edf805f8f0aded469ec768a64b93f9a580a17cb3"
+  }
+}

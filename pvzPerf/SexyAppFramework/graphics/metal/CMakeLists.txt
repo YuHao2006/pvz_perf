@@ -36,6 +36,7 @@ add_custom_command(OUTPUT "${shaderDirectory}/game.metallib"
     VERBATIM)
 add_custom_target(sexy_metal_shaders DEPENDS "${shaderDirectory}/game.metallib")
 add_library(sexy_metal STATIC MetalContext.mm MetalRenderer.mm)
+target_sources(sexy_metal PRIVATE ../PoolMesh.cpp)
 target_compile_features(sexy_metal PUBLIC cxx_std_23)
 set_target_properties(sexy_metal PROPERTIES
     OBJCXX_STANDARD 23 OBJCXX_STANDARD_REQUIRED YES OBJCXX_EXTENSIONS NO)

@@ -2,11 +2,9 @@
 // GPU-only pool caustics: the 256x256 source texture supplies blue bytes.
 // 输出 128x64 RGBA8：RGB 恒白、A=alpha/3。写入与采样值与 BGRA8 版完全
 // 一致（RGB 三字节全等，只有字节序差异，GPU 按格式解释）。
-// 整数等价性要点：
-//  - C 的 timePool1/6、timePool0/10 是【有符号】除法（负数向零截断）；
-//    GLSL 无符号除法是 floor，负数域差 1。DivTrunc* 用正数除法+取负精确
-//    复刻向零截断，负数域才不飘（教训同 FastSin 负角折叠）。
-//  - /8 的被除数低 16 位恒零，正负域都等价于 >>3。
+// CPU receives integer nanoseconds and evaluates signed/wrapped coordinate
+// offsets once. This kernel receives only those offsets; no frame counters,
+// floating-point time, or temporal simulation are involved.
 //  - BilinearLookup uses unsigned division and modulo throughout.
 //  - image_format 必须显式 rgba8：glslc 的 HLSL 前端无法标注格式（默认
 //    Rgba32f 与视图冲突），故本文件用 GLSL 而非 hlsl。
@@ -14,7 +12,7 @@ layout(local_size_x = 8, local_size_y = 4, local_size_z = 1) in;
 
 layout(binding = 0) uniform sampler2D uSource;
 layout(rgba8, binding = 1) writeonly uniform image2D uDst;
-layout(push_constant) uniform Params { uint uCounter; } p;
+layout(push_constant) uniform Params { uint u0; uint u1; uint v1; } p;
 
 uint BlueAt(uint index)
 {
@@ -42,14 +40,6 @@ uint BilinearLookup(uint u, uint v)
 
 // C 有符号 int32 除法（向零截断）的无符号等价：正数直接 floor；负数
 // n 的 trunc(n/d) = -floor(-n/d)，按 2^32 回绕。
-uint DivTrunc6(uint n)
-{
-    return (n & 0x80000000u) != 0u ? (0u - ((0u - n) / 6u)) : (n / 6u);
-}
-uint DivTrunc10(uint n)
-{
-    return (n & 0x80000000u) != 0u ? (0u - ((0u - n) / 10u)) : (n / 10u);
-}
 
 void main()
 {
@@ -60,11 +50,9 @@ void main()
     uint timeV1 = (256u - y) << 17u;
     uint timeV0 = y << 17u;
     uint timeU = x << 17u;
-    uint timePool0 = p.uCounter << 16u;   // 32 位回绕，与 bit_cast<int32_t> 同位型
-    uint timePool1 = ((p.uCounter & 65535u) + 1u) << 16u;
 
-    uint a1 = BilinearLookup(timeU - DivTrunc6(timePool1), timeV1 + (timePool0 >> 3u)) & 0xFFu;
-    uint a0 = BilinearLookup(timeU + DivTrunc10(timePool0), timeV0) & 0xFFu;
+    uint a1 = BilinearLookup(timeU + p.u1, timeV1 + p.v1) & 0xFFu;
+    uint a0 = BilinearLookup(timeU + p.u0, timeV0) & 0xFFu;
     uint a = (a0 + a1) / 2u;
 
     uint alpha;

@@ -1,0 +1,11 @@
+[0/2] Re-checking globbed directories...
+[1/4] Generating shaders/Release/game_ps.spv
+[2/4] Building CXX object SexyAppFramework\graphics\vulkan\CMakeFiles\sexy_vulkan_render_tests.dir\tests\render_tests.cpp.obj
+[3/4] Linking CXX executable SexyAppFramework\graphics\vulkan\sexy_vulkan_render_tests.exe
+Test project C:/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/out/x64-win32-vulkan
+    Start 64: sexy_vulkan_render_semantics
+1/1 Test #64: sexy_vulkan_render_semantics .....   Passed   53.27 sec
+
+100% tests passed out of 1
+
+Total Test time (real) =  53.28 sec

@@ -1,0 +1,13 @@
+{
+  "source": "Tests\\performance\\reanim_frame_crossing_benchmark.cpp",
+  "source_sha256": "593c4adfba124df5acb50c497df114c508b4696bc0d851e92d8ae4f67b1e73a7",
+  "command": "crossing.exe --single-frame",
+  "compiler": "MSVC /O2 /GL /LTCG",
+  "affinity": "Logical processor 14; no frequency lock performed or verified",
+  "timing": "7 interleaved rounds, median ns per arithmetic input. No game code timing. Loading/hashing overhead shared by all methods.",
+  "inputs": "All methods receive identical precomputed 64-bit integer ages and frame periods; rates limited to 12/24/30; every timed sample asserts quotient <=1 and checks if/while against division. Exact endpoint cases separately verified.",
+  "machine_code": "if_single uses SUB, CMP and conditional MOV; while_subtract uses CMP, SUB, INC and conditional backward branch. Actual measured executable checked with linker map.",
+  "interpretation": "No universal while-versus-if penalty. Almost equal on mixed <=1-frame 30Hz inputs on this CPU/compiler; do not extrapolate absolute times to full Reanimation, another CPU or ARM.",
+  "measured_executable_sha256": "43d916076d7ddd4e57a29bdb6f49f765d9d103c053858c7a757d9a542bdf931a",
+  "production_changes": "None to animation timing or target-FPS limits. 30Hz is a new adaptation target, not yet an implemented minimum."
+}

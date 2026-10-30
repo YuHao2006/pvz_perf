@@ -1,0 +1,58 @@
+0040d560: push ecx
+0040d561: push esi
+0040d562: lea esi, [esp + 4]
+0040d566: mov eax, edi
+0040d568: mov dword ptr [esp + 4], 0
+0040d570: call 0x41f8f0
+0040d575: test al, al
+0040d577: je 0x40d5ac
+0040d579: lea esp, [esp]
+0040d580: mov eax, dword ptr [esp + 4]
+0040d584: cmp dword ptr [eax], 0x18
+0040d587: jne 0x40d58c
+0040d589: mov byte ptr [eax + 0x24], bl
+0040d58c: cmp dword ptr [eax], 0x22
+0040d58f: jne 0x40d59d
+0040d591: cmp dword ptr [edi + 0x5630], 0
+0040d598: jne 0x40d59d
+0040d59a: mov byte ptr [eax + 0x24], bl
+0040d59d: lea esi, [esp + 4]
+0040d5a1: mov eax, edi
+0040d5a3: call 0x41f8f0
+0040d5a8: test al, al
+0040d5aa: jne 0x40d580
+0040d5ac: lea esi, [esp + 4]
+0040d5b0: mov eax, edi
+0040d5b2: mov dword ptr [esp + 4], 0
+0040d5ba: call 0x41f950
+0040d5bf: test al, al
+0040d5c1: je 0x40d5fe
+0040d5c3: mov esi, dword ptr [esp + 4]
+0040d5c7: cmp dword ptr [esi], 0x44
+0040d5ca: jne 0x40d5ef
+0040d5cc: test bl, bl
+0040d5ce: je 0x40d5d4
+0040d5d0: fldz 
+0040d5d2: jmp 0x40d5ec
+0040d5d4: fld dword ptr [0x6fdbf8]
+0040d5da: push ecx
+0040d5db: fstp dword ptr [esp]
+0040d5de: call 0x5ff2c0
+0040d5e3: fadd qword ptr [0x6fdbc8]
+0040d5e9: add esp, 4
+0040d5ec: fstp dword ptr [esi + 8]
+0040d5ef: lea esi, [esp + 4]
+0040d5f3: mov eax, edi
+0040d5f5: call 0x41f950
+0040d5fa: test al, al
+0040d5fc: jne 0x40d5c3
+0040d5fe: pop esi
+0040d5ff: pop ecx
+0040d600: ret 
+0040d601: int3 
+0040d602: int3 
+0040d603: int3 
+0040d604: int3 
+0040d605: int3 
+0040d606: int3 
+0040d607: int3 

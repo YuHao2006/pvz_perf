@@ -63,11 +63,11 @@ public:
 public:
 	// 池水焦散 GPU 直写（2026-10-05 立项：每帧 CPU 生成 8192px + 纹理重传
 	// 是性能缺陷）。Install 一次性接管 theImage 的纹理并上传 LUT；此后每帧
-	// SetCausticsFrame(counter)，BeginScene 前渲染器 compute 直写目标纹理。
+	// SetCausticsTimeNs(elapsedNs)，BeginScene 前渲染器 compute 直写目标纹理。
 	bool HasCausticsCompute() const;
 	bool InstallCausticsCompute(Image* theImage, Image* source);
 	void UseCausticsImages(Image* output, Image* source);
-	void SetCausticsFrame(unsigned int theCounter);
+	void SetCausticsTimeNs(unsigned long long theTimeNs);
 	GpuTexture* GetCausticsTexture() const;
     void DrawPool(Image* texture, const GpuPoolParams& params);
 

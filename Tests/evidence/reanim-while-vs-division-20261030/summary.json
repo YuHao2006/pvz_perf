@@ -1,0 +1,266 @@
+{
+  "120Hz_update": {
+    "normal12": {
+      "while_cached": 36.60165,
+      "divide_update_cached_queries": 35.0055,
+      "divide_every_query": 27.1971
+    },
+    "football18": {
+      "while_cached": 36.30395,
+      "divide_update_cached_queries": 35.15535,
+      "divide_every_query": 27.29775
+    },
+    "normal30": {
+      "while_cached": 37.062799999999996,
+      "divide_update_cached_queries": 35.182,
+      "divide_every_query": 27.3192
+    },
+    "football60": {
+      "while_cached": 39.27575,
+      "divide_update_cached_queries": 35.7512,
+      "divide_every_query": 27.80875
+    }
+  },
+  "120Hz_update_root": {
+    "normal12": {
+      "while_cached": 81.0901,
+      "divide_update_cached_queries": 80.4693,
+      "divide_every_query": 77.9377
+    },
+    "football18": {
+      "while_cached": 82.79735,
+      "divide_update_cached_queries": 80.6327,
+      "divide_every_query": 78.09155000000001
+    },
+    "normal30": {
+      "while_cached": 80.47735,
+      "divide_update_cached_queries": 80.64435,
+      "divide_every_query": 78.0352
+    },
+    "football60": {
+      "while_cached": 82.7346,
+      "divide_update_cached_queries": 81.21975,
+      "divide_every_query": 78.56085
+    }
+  },
+  "120Hz_update_frame": {
+    "normal12": {
+      "while_cached": 68.4163,
+      "divide_update_cached_queries": 69.27860000000001,
+      "divide_every_query": 66.7086
+    },
+    "football18": {
+      "while_cached": 69.41645,
+      "divide_update_cached_queries": 69.36385,
+      "divide_every_query": 66.7919
+    },
+    "normal30": {
+      "while_cached": 68.90845,
+      "divide_update_cached_queries": 69.4176,
+      "divide_every_query": 66.87819999999999
+    },
+    "football60": {
+      "while_cached": 71.10714999999999,
+      "divide_update_cached_queries": 69.8858,
+      "divide_every_query": 67.26995
+    }
+  },
+  "120Hz_update_root_frame": {
+    "normal12": {
+      "while_cached": 108.2932,
+      "divide_update_cached_queries": 111.48425,
+      "divide_every_query": 113.57285
+    },
+    "football18": {
+      "while_cached": 109.55475,
+      "divide_update_cached_queries": 111.62905,
+      "divide_every_query": 113.69095
+    },
+    "normal30": {
+      "while_cached": 108.0457,
+      "divide_update_cached_queries": 111.60294999999999,
+      "divide_every_query": 113.64845
+    },
+    "football60": {
+      "while_cached": 110.22775,
+      "divide_update_cached_queries": 112.1696,
+      "divide_every_query": 114.10679999999999
+    }
+  },
+  "30Hz_update": {
+    "normal12": {
+      "while_cached": 38.44615,
+      "divide_update_cached_queries": 35.336200000000005,
+      "divide_every_query": 27.46875
+    },
+    "football18": {
+      "while_cached": 39.7084,
+      "divide_update_cached_queries": 35.96265,
+      "divide_every_query": 27.90615
+    },
+    "normal30": {
+      "while_cached": 42.21665,
+      "divide_update_cached_queries": 36.05775,
+      "divide_every_query": 27.973399999999998
+    },
+    "football60": {
+      "while_cached": 46.504149999999996,
+      "divide_update_cached_queries": 38.3231,
+      "divide_every_query": 29.79875
+    }
+  },
+  "30Hz_update_root": {
+    "normal12": {
+      "while_cached": 82.14075,
+      "divide_update_cached_queries": 80.84270000000001,
+      "divide_every_query": 78.2664
+    },
+    "football18": {
+      "while_cached": 85.37235,
+      "divide_update_cached_queries": 81.3878,
+      "divide_every_query": 78.6738
+    },
+    "normal30": {
+      "while_cached": 85.44839999999999,
+      "divide_update_cached_queries": 81.39005,
+      "divide_every_query": 78.6971
+    },
+    "football60": {
+      "while_cached": 89.73625,
+      "divide_update_cached_queries": 83.59800000000001,
+      "divide_every_query": 80.61825
+    }
+  },
+  "30Hz_update_frame": {
+    "normal12": {
+      "while_cached": 70.2209,
+      "divide_update_cached_queries": 69.5517,
+      "divide_every_query": 66.95255
+    },
+    "football18": {
+      "while_cached": 72.64320000000001,
+      "divide_update_cached_queries": 70.08324999999999,
+      "divide_every_query": 67.43545
+    },
+    "normal30": {
+      "while_cached": 73.85345000000001,
+      "divide_update_cached_queries": 70.09225,
+      "divide_every_query": 67.46765
+    },
+    "football60": {
+      "while_cached": 78.22675000000001,
+      "divide_update_cached_queries": 72.17335,
+      "divide_every_query": 69.2676
+    }
+  },
+  "30Hz_update_root_frame": {
+    "normal12": {
+      "while_cached": 111.7756,
+      "divide_update_cached_queries": 111.7904,
+      "divide_every_query": 113.74065
+    },
+    "football18": {
+      "while_cached": 112.71719999999999,
+      "divide_update_cached_queries": 112.3096,
+      "divide_every_query": 114.25
+    },
+    "normal30": {
+      "while_cached": 113.1072,
+      "divide_update_cached_queries": 112.43925,
+      "divide_every_query": 114.28575000000001
+    },
+    "football60": {
+      "while_cached": 117.28985,
+      "divide_update_cached_queries": 114.43095,
+      "divide_every_query": 116.20775
+    }
+  },
+  "30Hz_x4_update": {
+    "normal12": {
+      "while_cached": 44.63445,
+      "divide_update_cached_queries": 36.67335,
+      "divide_every_query": 28.4668
+    },
+    "football18": {
+      "while_cached": 47.997,
+      "divide_update_cached_queries": 39.119299999999996,
+      "divide_every_query": 30.339100000000002
+    },
+    "normal30": {
+      "while_cached": 52.2794,
+      "divide_update_cached_queries": 39.3746,
+      "divide_every_query": 30.5353
+    },
+    "football60": {
+      "while_cached": 64.69425000000001,
+      "divide_update_cached_queries": 42.21455,
+      "divide_every_query": 33.465
+    }
+  },
+  "30Hz_x4_update_root": {
+    "normal12": {
+      "while_cached": 91.1323,
+      "divide_update_cached_queries": 82.05695,
+      "divide_every_query": 79.3041
+    },
+    "football18": {
+      "while_cached": 92.33515,
+      "divide_update_cached_queries": 84.33619999999999,
+      "divide_every_query": 81.13465
+    },
+    "normal30": {
+      "while_cached": 95.67240000000001,
+      "divide_update_cached_queries": 84.65575,
+      "divide_every_query": 81.3263
+    },
+    "football60": {
+      "while_cached": 108.14484999999999,
+      "divide_update_cached_queries": 87.84084999999999,
+      "divide_every_query": 84.25675
+    }
+  },
+  "30Hz_x4_update_frame": {
+    "normal12": {
+      "while_cached": 77.55510000000001,
+      "divide_update_cached_queries": 70.65514999999999,
+      "divide_every_query": 67.9277
+    },
+    "football18": {
+      "while_cached": 79.99755,
+      "divide_update_cached_queries": 72.78055,
+      "divide_every_query": 69.81805
+    },
+    "normal30": {
+      "while_cached": 83.80565,
+      "divide_update_cached_queries": 73.0806,
+      "divide_every_query": 69.98235
+    },
+    "football60": {
+      "while_cached": 96.43809999999999,
+      "divide_update_cached_queries": 76.2947,
+      "divide_every_query": 72.92515
+    }
+  },
+  "30Hz_x4_update_root_frame": {
+    "normal12": {
+      "while_cached": 117.86935,
+      "divide_update_cached_queries": 112.9601,
+      "divide_every_query": 114.77595
+    },
+    "football18": {
+      "while_cached": 119.44810000000001,
+      "divide_update_cached_queries": 115.1308,
+      "divide_every_query": 116.63874999999999
+    },
+    "normal30": {
+      "while_cached": 122.9907,
+      "divide_update_cached_queries": 115.29595,
+      "divide_every_query": 116.85215
+    },
+    "football60": {
+      "while_cached": 135.5371,
+      "divide_update_cached_queries": 118.5818,
+      "divide_every_query": 119.74785
+    }
+  }
+}

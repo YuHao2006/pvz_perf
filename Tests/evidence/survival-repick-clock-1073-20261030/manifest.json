@@ -1,0 +1,17 @@
+{
+  "executable": "C:\\UserProgram\\Plants_Vs_Zombies_V1.2.0.1073_EN\\PlantsVsZombies.exe",
+  "sha256": "5f650f52d12751e08b63e590edb0d9b9f09d087cea900baa0eb39e4af8eda251",
+  "scope": "Read-only static inspection of exact GOTY 1.2.0.1073 EXE, cross-checked against local reconstructed source. No game launched or save changed.",
+  "conclusion": "Normal battle counter and ordinary on-board plant logic stop when the survival transition switches SCENE_PLAYING (3) to SCENE_LEVEL_INTRO (2), before camera movement. More-zombies notice is replaced by the intro house/stage label; notice duration is not the trigger.",
+  "timeline": {
+    "round_end_countdown_original_updates": 500,
+    "normal_original_seconds": 5,
+    "intro_camera_delay_ms": 1500
+  },
+  "pre_fix_project_difference": "AnimationTimeDomain currently continues Battle for IsSurvivalRepick until SurvivalBattleClockStopTimeNs (camera start). This extends the Board clock through the intro pre-pan interval, unlike retail.",
+  "implementation": "Board::AnimationTimeDomain no longer extends Battle through survival pre-pan. Removed SurvivalBattleClockStopTimeNs. Runtime regression covers intro times 0/1490/1500/3500 at 100/240/480/1000 updates per second, with unchanged retained animation/launch deadline and advancing visual preview/effects.",
+  "validation": "Passed actual production-object image runtime regression at 100/240/480/1000 Hz; exact scene-transition freeze, stationary/pan intervals, retained actor phase, attack deadline, visual preview/effects and one-step battle resume.",
+  "release_executable_sha256": "89f468a16b652dcc425f0d7785c3cb1ec55007abeacb54cd581a83a4147f5bbc",
+  "test_executable_sha256": "6c1bdec4565759702e95e5c6defe999db842173dfc85c4d8a9403d3a42b51649",
+  "paused_policy": "Existing Board::mPaused early return remains before level-clock advancement; no independent persisted clock-frozen bool exists or was added."
+}

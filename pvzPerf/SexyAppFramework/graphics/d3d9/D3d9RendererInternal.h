@@ -46,7 +46,7 @@ struct D3d9Renderer::Impl {
     D3d9Texture* scene = nullptr;
     D3d9Texture* selected = nullptr;
     D3d9Texture* causticSource = nullptr;
-    unsigned int causticCounter = 0;
+    unsigned long long causticTimeNs = 0;
     bool causticsQueued = false;
     D3d9Texture* causticTarget = nullptr;
     VulkanHdrParams hdr{80, 1000, 150, 1};

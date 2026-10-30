@@ -1,0 +1,18 @@
+{
+  "scope": "Same production Reanimation API, authored tracks, RootMotion and GetFrameTime consumers. Forward loops only. Same bench-validate.obj linked for all three executables, MSVC O2/GL/LTCG, process pinned LP14. No frequency lock performed or verified.",
+  "methods": [
+    "while_cached: keyframe-local epoch and frame cache, genuine while(age>=framePeriod){age-=framePeriod;++frame;wrap}; snapshot queries reuse state",
+    "divide_update_cached_queries: cycle-local epoch, quotient/remainder each update, snapshot queries reuse derived frame",
+    "divide_every_query: cycle-local epoch, frame calculation deferred to each query"
+  ],
+  "timing": "Same timestamp sequences; 1 million updates/round, 5 rounds per executable order, forward then reverse order; ten samples per cell, median ns/operation.",
+  "validation": "1440 rows /48 cells have identical checksums across variants and both orders. All three execute exact integer phase, loop count, per-update crossings, previous event phase, authored frame/root output validation before timing.",
+  "disassembly": "Measured while executable hot forward block 0x140231BCD..0x140231D7D contains zero integer DIV/IDIV instructions and a backward conditional branch at0x140231C70 to0x140231C50. Full Reanimation fallback for unsupported cases remains outside the measured path. Floating-point interpolation division is common to consumers.",
+  "limitations": "Not whole-game/render timing; candidate implementations deliberately cover forward loops only, not reverse, rate/seek transitions, endpoint/hold or save semantics. No production code replaced.",
+  "source_sha256": "7e3fee8dc63362448a684b3a83f97cd6acba557501c48aab6d2a73a33f8fbcff",
+  "executables": {
+    "while_cached": "bf8e98dff40bd227e6284849e0d09d7d374cc5cc7e870411fc224bf0dc7d56b2",
+    "divide_update_cached_queries": "c76b6babea485e8183cbf15a75f1ad6865b45179dc75e62a991c0d26941c7422",
+    "divide_every_query": "691645c15c94c155250124293dcefccae674b3d69e80b3b9936f9bd83c335f38"
+  }
+}

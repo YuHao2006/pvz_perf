@@ -1180,7 +1180,7 @@ void Caustics(OpenGLRenderer& r)
     auto* output = r.CreateCausticsTexture(128,64,t);
     r.UseCausticsTexture(output,t);
     for (unsigned int frame : {0u,1u,32768u,65535u,65536u}) {
-        r.SetCausticsFrame(frame);
+        r.SetCausticsTimeNs(static_cast<unsigned long long>(frame)*10'000'000ull);
         Require(r.BeginScene(), "Begin caustics frame");
         Draw(r,output,Quad(output,0,0,128,64));
         r.EndSceneAndPresent();

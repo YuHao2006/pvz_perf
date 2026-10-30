@@ -1310,7 +1310,7 @@ void CreditScreen::UpdateMovie()
 
     aCreditsReanim->UpdateAt(visualNowNs);
     mApp->mEffectSystem->UpdateAt(visualNowNs, visualNowNs);
-    mApp->mPoolEffect->PoolEffectUpdate();
+    mApp->mPoolEffect->PoolEffectUpdate(Sexy::gUpdateIntervalNs);
     TurnOffTongues(aCreditsReanim, 0);
 
     // C 形态 -> 匿名 lambda 表（上方 kCreditsPhaseCases）：行序 = CreditsPhase

@@ -1,0 +1,102 @@
+14000160e: cc                          	int3
+14000160f: cc                          	int3
+140001610: 48 89 5c 24 18              	mov	qword ptr [rsp + 0x18], rbx
+140001615: 48 89 7c 24 20              	mov	qword ptr [rsp + 0x20], rdi
+14000161a: 41 56                       	push	r14
+14000161c: 41 57                       	push	r15
+14000161e: 45 33 d2                    	xor	r10d, r10d
+140001621: 48 89 74 24 20              	mov	qword ptr [rsp + 0x20], rsi
+140001626: 45 33 db                    	xor	r11d, r11d
+140001629: 33 db                       	xor	ebx, ebx
+14000162b: 33 ff                       	xor	edi, edi
+14000162d: 45 33 f6                    	xor	r14d, r14d
+140001630: 45 33 ff                    	xor	r15d, r15d
+140001633: 45 33 c0                    	xor	r8d, r8d
+140001636: 8b f2                       	mov	esi, edx
+140001638: 4c 8b c9                    	mov	r9, rcx
+14000163b: 83 fa 02                    	cmp	edx, 0x2
+14000163e: 7c 48                       	jl	0x140001688 <.text+0x688>
+140001640: 48 89 6c 24 18              	mov	qword ptr [rsp + 0x18], rbp
+140001645: 8d 6a ff                    	lea	ebp, [rdx - 0x1]
+140001648: 0f 1f 84 00 00 00 00 00     	nop	dword ptr [rax + rax]
+140001650: 33 d2                       	xor	edx, edx
+140001652: 49 63 c8                    	movsxd	rcx, r8d
+140001655: 48 c1 e1 04                 	shl	rcx, 0x4
+140001659: 41 83 c0 02                 	add	r8d, 0x2
+14000165d: 49 8b 04 09                 	mov	rax, qword ptr [r9 + rcx]
+140001661: 49 f7 74 09 08              	div	qword ptr [r9 + rcx + 0x8]
+140001666: 4c 03 d0                    	add	r10, rax
+140001669: 48 03 da                    	add	rbx, rdx
+14000166c: 49 8b 44 09 10              	mov	rax, qword ptr [r9 + rcx + 0x10]
+140001671: 33 d2                       	xor	edx, edx
+140001673: 49 f7 74 09 18              	div	qword ptr [r9 + rcx + 0x18]
+140001678: 4c 03 d8                    	add	r11, rax
+14000167b: 48 03 fa                    	add	rdi, rdx
+14000167e: 44 3b c5                    	cmp	r8d, ebp
+140001681: 7c cd                       	jl	0x140001650 <.text+0x650>
+140001683: 48 8b 6c 24 18              	mov	rbp, qword ptr [rsp + 0x18]
+140001688: 44 3b c6                    	cmp	r8d, esi
+14000168b: 48 8b 74 24 20              	mov	rsi, qword ptr [rsp + 0x20]
+140001690: 7d 18                       	jge	0x1400016aa <.text+0x6aa>
+140001692: 49 63 c8                    	movsxd	rcx, r8d
+140001695: 33 d2                       	xor	edx, edx
+140001697: 48 c1 e1 04                 	shl	rcx, 0x4
+14000169b: 4a 8b 04 09                 	mov	rax, qword ptr [rcx + r9]
+14000169f: 4a f7 74 09 08              	div	qword ptr [rcx + r9 + 0x8]
+1400016a4: 4c 8b fa                    	mov	r15, rdx
+1400016a7: 4c 8b f0                    	mov	r14, rax
+1400016aa: 4b 8d 04 13                 	lea	rax, [r11 + r10]
+1400016ae: 48 b9 15 7c 4a 7f b9 79 37 9e       	movabs	rcx, -0x61c8864680b583eb
+1400016b8: 49 03 c6                    	add	rax, r14
+1400016bb: 48 0f af c1                 	imul	rax, rcx
+1400016bf: 48 03 c7                    	add	rax, rdi
+1400016c2: 48 8b 7c 24 30              	mov	rdi, qword ptr [rsp + 0x30]
+1400016c7: 48 03 c3                    	add	rax, rbx
+1400016ca: 48 8b 5c 24 28              	mov	rbx, qword ptr [rsp + 0x28]
+1400016cf: 49 03 c7                    	add	rax, r15
+1400016d2: 41 5f                       	pop	r15
+1400016d4: 41 5e                       	pop	r14
+1400016d6: c3                          	ret
+1400016d7: cc                          	int3
+1400016d8: cc                          	int3
+1400016d9: cc                          	int3
+1400016da: cc                          	int3
+1400016db: cc                          	int3
+1400016dc: cc                          	int3
+1400016dd: cc                          	int3
+1400016de: cc                          	int3
+1400016df: cc                          	int3
+1400016e0: 48 89 6c 24 18              	mov	qword ptr [rsp + 0x18], rbp
+1400016e5: 48 89 74 24 20              	mov	qword ptr [rsp + 0x20], rsi
+1400016ea: 57                          	push	rdi
+1400016eb: 41 54                       	push	r12
+1400016ed: 41 56                       	push	r14
+1400016ef: 41 57                       	push	r15
+1400016f1: 33 ff                       	xor	edi, edi
+1400016f3: 48 89 5c 24 28              	mov	qword ptr [rsp + 0x28], rbx
+1400016f8: 33 f6                       	xor	esi, esi
+1400016fa: 33 ed                       	xor	ebp, ebp
+1400016fc: 45 33 f6                    	xor	r14d, r14d
+1400016ff: 45 33 ff                    	xor	r15d, r15d
+140001702: 45 33 e4                    	xor	r12d, r12d
+140001705: 45 33 d2                    	xor	r10d, r10d
+140001708: 8b da                       	mov	ebx, edx
+14000170a: 4c 8b d9                    	mov	r11, rcx
+14000170d: 83 fa 02                    	cmp	edx, 0x2
+140001710: 7c 61                       	jl	0x140001773 <.text+0x773>
+140001712: 4c 89 6c 24 30              	mov	qword ptr [rsp + 0x30], r13
+140001717: 44 8d 6a ff                 	lea	r13d, [rdx - 0x1]
+14000171b: 0f 1f 44 00 00              	nop	dword ptr [rax + rax]
+140001720: 33 d2                       	xor	edx, edx
+140001722: 4d 63 ca                    	movsxd	r9, r10d
+140001725: 4d 03 c9                    	add	r9, r9
+140001728: 41 83 c2 02                 	add	r10d, 0x2
+14000172c: 4b 8b 0c cb                 	mov	rcx, qword ptr [r11 + 8*r9]
+140001730: 4f 8b 44 cb 08              	mov	r8, qword ptr [r11 + 8*r9 + 0x8]
+140001735: 48 8b c1                    	mov	rax, rcx
+140001738: 49 f7 f0                    	div	r8
+14000173b: 33 d2                       	xor	edx, edx
+14000173d: 48 03 f8                    	add	rdi, rax
+140001740: 48 8b c1                    	mov	rax, rcx
+140001743: 4b 8b 4c cb 10              	mov	rcx, qword ptr [r11 + 8*r9 + 0x10]
+140001748: 49 f7 f0                    	div	r8

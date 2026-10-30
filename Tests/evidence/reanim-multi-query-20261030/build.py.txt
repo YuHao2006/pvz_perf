@@ -1,0 +1,32 @@
+from pathlib import Path
+import os,subprocess,re,datetime
+p=Path(os.environ['TEMP']);old=Path((p/'pvz-phase-progression-current.txt').read_text().strip())
+out=p/('pvz-reanim-repeat-'+datetime.datetime.now().strftime('%Y%m%d-%H%M%S'));out.mkdir()
+(p/'pvz-reanim-repeat-current.txt').write_text(str(out),encoding='utf-8')
+compileScript=(old/'compile-benchmark.cmd').read_text().replace(str(old),str(out))
+(out/'compile.cmd').write_text(compileScript)
+print('Compiling multi-consumer benchmark.',flush=True)
+with(out/'compile.log').open('w')as f:subprocess.run(['cmd','/d','/c',str(out/'compile.cmd')],stdout=f,stderr=subprocess.STDOUT,check=True)
+# All candidates use this one benchmark object and the same current libraries.
+variants={'production_div':None,'cycle_div_cached':old/'divide_update_cached_queries.obj','cycle_div_no_frame_cache':old/'divide_every_query.obj'}
+base=(old/'current.rsp').read_text().replace(str(old/'bench.obj'),str(out/'bench.obj'))
+for name,obj in variants.items():
+ print('Linking',name,flush=True)
+ args=base
+ if obj:
+  original=r'SexyAppFramework\CMakeFiles\LawnProject.dir\__\Sexy.TodLib\Reanimator.cpp.obj'
+  assert original in args;args=args.replace(original,'"'+str(obj)+'"')
+ for suffix in ['exe','pdb','lib']:args=args.replace(str(old/('current.'+suffix)),str(out/(name+'.'+suffix)))
+ rsp=out/(name+'.rsp');rsp.write_text(args)
+ script=(old/'link-current.cmd').read_text().replace(str(old/'current.rsp'),str(rsp))
+ file=out/(name+'.cmd');file.write_text(script)
+ with(out/(name+'-link.log')).open('w')as f:subprocess.run(['cmd','/d','/c',str(file)],stdout=f,stderr=subprocess.STDOUT,check=True)
+for dll in old.glob('*.dll'):
+ import shutil
+ shutil.copy2(dll,out/dll.name)
+for order,names in enumerate([list(variants),list(reversed(variants))]):
+ for name in names:
+  print('Measuring',name,order,flush=True)
+  d=out/(name+'-'+str(order));d.mkdir()
+  with(d/'samples.csv').open('w')as so,(d/'stderr.txt').open('w')as se:subprocess.run([str(out/(name+'.exe')),str(d),'repeat_queries'],cwd=out,stdout=so,stderr=se,check=True)
+print('RESULTS',out,flush=True)

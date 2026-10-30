@@ -104,7 +104,7 @@ int main(int argc, char** argv)
             zombie->mX = 320.0f + col * 43.0f;
             zombie->mVelX = 0;
         }
-        app.mPoolEffect->mPoolCounter = 256;
+        app.mPoolEffect->mPoolTimeNs = 2'560'000'000ull;
         auto& render = *app.mDDInterface->mRenderInterface;
         auto& gpu = *render.mRenderer;
         Require(gpu.sceneWidth == 800 && gpu.sceneHeight == 600, "Fixture requires 800x600 scene");
@@ -114,7 +114,7 @@ int main(int argc, char** argv)
         const auto count = board.mZombies.mSize;
         Require(plants == 32 && count == 40, "Fixture population differs");
         render.Flush();
-        render.SetCausticsFrame(256);
+        render.SetCausticsTimeNs(2'560'000'000ull);
         LARGE_INTEGER frequency;
         QueryPerformanceFrequency(&frequency);
         auto draw = [&] {

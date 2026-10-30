@@ -6142,9 +6142,9 @@ void Board::SpawnZombieWave()
 //0x4130D0
 ReanimTimeDomain Board::AnimationTimeDomain() const
 {
-	const bool beforeRepickPan = mCutScene->IsSurvivalRepick() &&
-		mCutScene->mCutsceneTime.mNanoseconds < CutScene::SurvivalBattleClockStopTimeNs;
-	return mApp->mGameScene == GameScenes::SCENE_PLAYING || beforeRepickPan || mCutScene->ShouldRunUpsellBoard()
+	// GOTY 1073 stops normal battle time on entering LEVEL_INTRO, including
+	// the stationary interval before the repick camera starts moving.
+	return mApp->mGameScene == GameScenes::SCENE_PLAYING || mCutScene->ShouldRunUpsellBoard()
 		? ReanimTimeDomain::Battle : ReanimTimeDomain::Visual;
 }
 
@@ -7163,7 +7163,20 @@ void Board::Update()
 		mStoreButton->Update();
 	}
 
-	mApp->mEffectSystem->UpdateAt(mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs, static_cast<std::int64_t>(mLevelTimeNs));
+	const auto aVisualNowNs = mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs;
+	TodParticleSystem* aPoolSparkly = mApp->ParticleTryToGet(mPoolSparklyParticleID);
+	if (aPoolSparkly)
+	{
+		// Retail updates pool sparkles during the initial chooser, before the
+		// battle clock starts. Rebase after loading or a paused visual-clock gap
+		// without simulating that gap; mDontUpdate still owns ice/repick freezes.
+		const auto aPreviousVisualNs = ReanimClock::Subtract(aVisualNowNs,
+			static_cast<std::int64_t>(Sexy::gUpdateIntervalNs));
+		if (aPoolSparkly->mLastUpdateTimeNs != aPreviousVisualNs &&
+			aPoolSparkly->mLastUpdateTimeNs != aVisualNowNs)
+			aPoolSparkly->Update(0, aPreviousVisualNs);
+	}
+	mApp->mEffectSystem->UpdateAt(aVisualNowNs, static_cast<std::int64_t>(mLevelTimeNs), aPoolSparkly);
 	mAdvice->Update();
 	UpdateTutorial();
 
@@ -7205,13 +7218,13 @@ void Board::Update()
 	++mEffectCounter;
 	if (StageHasPool() && !mIceTrapCounter && mApp->mGameScene != GameScenes::SCENE_ZOMBIES_WON && !mCutScene->IsSurvivalRepick())
 	{
-		// 走方法而非裸 ++：GPU 焦散路径在此递帧计数器给渲染器 compute
-		mApp->mPoolEffect->PoolEffectUpdate();
+		// 只传入经过的纳秒数；水面不读取 Board 或其他时间域。
+		mApp->mPoolEffect->PoolEffectUpdate(Sexy::gUpdateIntervalNs);
 	}
 	if (mBackground == BackgroundType::BACKGROUND_3_POOL && mPoolSparklyParticleID == ParticleSystemID::PARTICLESYSTEMID_NULL && mDrawCount > 0)
 	{
 		int aRenderPosition = MakeRenderOrder(RenderLayer::RENDER_LAYER_GROUND, 2, 0);
-		TodParticleSystem* aPoolParticle = mApp->AddTodParticle(450, 295, aRenderPosition, ParticleEffect::PARTICLE_POOL_SPARKLY, static_cast<std::int64_t>(mLevelTimeNs));
+		TodParticleSystem* aPoolParticle = mApp->AddTodParticle(450, 295, aRenderPosition, ParticleEffect::PARTICLE_POOL_SPARKLY, aVisualNowNs);
 		mPoolSparklyParticleID = mApp->ParticleGetID(aPoolParticle);
 	}
 

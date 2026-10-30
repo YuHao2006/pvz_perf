@@ -1,0 +1,37 @@
+{
+  "always_0_frames": {
+    "divide_mod": 5.525208,
+    "while_subtract": 2.994537,
+    "guard_divide_mod": 3.219795,
+    "zero_one_then_divide": 2.99263,
+    "if_single": 3.91922
+  },
+  "always_1_frame": {
+    "divide_mod": 5.498886,
+    "while_subtract": 4.148865,
+    "guard_divide_mod": 6.430244,
+    "zero_one_then_divide": 3.67527,
+    "if_single": 3.910446
+  },
+  "max30rate_30Hz": {
+    "divide_mod": 5.51796,
+    "while_subtract": 3.837776,
+    "guard_divide_mod": 5.307388,
+    "zero_one_then_divide": 3.958893,
+    "if_single": 3.912926
+  },
+  "max30rate_120Hz": {
+    "divide_mod": 5.520821,
+    "while_subtract": 3.358078,
+    "guard_divide_mod": 3.625488,
+    "zero_one_then_divide": 3.190041,
+    "if_single": 3.913879
+  },
+  "max30rate_1000Hz": {
+    "divide_mod": 5.517578,
+    "while_subtract": 3.233147,
+    "guard_divide_mod": 3.440475,
+    "zero_one_then_divide": 3.204155,
+    "if_single": 3.913498
+  }
+}

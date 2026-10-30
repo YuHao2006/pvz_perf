@@ -26,7 +26,7 @@ struct OpenGLRenderer::Impl {
     enum Uniform : unsigned int {
         uTargetExtent, uImage, uPremultipliedOutput, uCoverageInput,
         uSourceImage, uAlphaImage, uSourceRect, uAlphaRect, uSourceSlot,
-        uOperation, uRectangle, uTint, uPackedColor, uCounter, uColorOnly,
+        uOperation, uRectangle, uTint, uPackedColor, uCausticU0, uCausticU1, uCausticV1, uColorOnly,
         uSamplingFlags, uForceWhite, uXRanges, uYRanges, uXTaps, uYTaps,
         uXTapExtent, uYTapExtent, uGlyphSrc, uGlyphDst, uUniformCount
     };
@@ -56,7 +56,7 @@ struct OpenGLRenderer::Impl {
     OpenGLTexture* scene = nullptr;
     OpenGLTexture* selected = nullptr;
     OpenGLTexture* causticSource = nullptr;
-    unsigned int causticCounter = 0;
+    unsigned long long causticTimeNs = 0;
     bool causticsQueued = false;
     OpenGLTexture* causticTarget = nullptr;
     VulkanHdrParams hdr{80, 1000, 150, 1};

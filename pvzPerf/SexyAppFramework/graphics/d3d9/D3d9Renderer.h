@@ -43,7 +43,7 @@ public:
     static unsigned int SlotOf(const D3d9Texture*);
     D3d9Texture* CreateCausticsTexture(int, int, D3d9Texture*);
     void UseCausticsTexture(D3d9Texture*, D3d9Texture*);
-    void SetCausticsFrame(unsigned int);
+    void SetCausticsTimeNs(unsigned long long);
     D3d9Texture* const& causticsTexture;
     bool HasCausticsCompute() const;
     bool BeginScene();

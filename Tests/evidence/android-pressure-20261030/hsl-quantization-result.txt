@@ -1,0 +1,5 @@
+pvz-hsl-check.cpp
+kind=2 colors=16777216 max_channel_error=1 identical=16719405 one_byte=57811 more=0
+kind=2 HDR_positive_random=1000000 skipped_nonfinite_reference=0 max_channel_error=1
+kind=3 colors=16777216 max_channel_error=1 identical=16739688 one_byte=37528 more=0
+kind=3 HDR_positive_random=1000000 skipped_nonfinite_reference=0 max_channel_error=1

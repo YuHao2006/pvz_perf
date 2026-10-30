@@ -416,12 +416,6 @@ static unsigned int pvz_caustic_lookup(texture2d<float, access::read> source,
                 pvz_caustic_blue(source, indexV0 * 256u + indexU1)) / 65536u);
 }
 
-static unsigned int pvz_caustic_div(unsigned int n, unsigned int divisor)
-{
-    return (n & 0x80000000u) != 0u ?
-        0u - ((0u - n) / divisor) : n / divisor;
-}
-
 kernel void pvz_caustic_kernel(
     constant MetalCausticConstants& p [[buffer(0)]],
     texture2d<float, access::read> source [[texture(0)]],
@@ -433,12 +427,10 @@ kernel void pvz_caustic_kernel(
     const unsigned int timeV1 = (256u - id.y) << 17u;
     const unsigned int timeV0 = id.y << 17u;
     const unsigned int timeU = id.x << 17u;
-    const unsigned int timePool0 = p.counter << 16u;
-    const unsigned int timePool1 = ((p.counter & 65535u) + 1u) << 16u;
     const unsigned int a1 = pvz_caustic_lookup(source,
-        timeU - pvz_caustic_div(timePool1, 6u), timeV1 + (timePool0 >> 3u)) & 255u;
+        timeU + p.u1, timeV1 + p.v1) & 255u;
     const unsigned int a0 = pvz_caustic_lookup(source,
-        timeU + pvz_caustic_div(timePool0, 10u), timeV0) & 255u;
+        timeU + p.u0, timeV0) & 255u;
     const unsigned int a = (a0 + a1) / 2u;
     unsigned int alpha;
     if (a >= 160u)

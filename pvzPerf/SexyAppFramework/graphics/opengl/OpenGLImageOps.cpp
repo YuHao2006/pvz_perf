@@ -1,3 +1,4 @@
+#include "SexyAppFramework/graphics/PoolMesh.h"
 #include "OpenGLRendererInternal.h"
 #include "graphics/FontWeights.h"
 #include <algorithm>
@@ -45,7 +46,12 @@ void OpenGLRenderer::Impl::ImagePass(OpenGLTexture* target, OpenGLTexture* sourc
             processing ? processing->red : 255, processing ? processing->green : 255,
             processing ? processing->blue : 255, processing ? processing->alpha : 255);
         glUniform1ui(imageUniforms[uPackedColor], color);
-        glUniform1ui(imageUniforms[uCounter], causticCounter);
+        if (operation==3) {
+            const auto offsets=EvaluatePoolCaustics(causticTimeNs);
+            glUniform1ui(imageUniforms[uCausticU0],offsets.u0);
+            glUniform1ui(imageUniforms[uCausticU1],offsets.u1);
+            glUniform1ui(imageUniforms[uCausticV1],offsets.v1);
+        }
         glUniform1i(imageUniforms[uColorOnly], colorOnly);
         Quad(); Check("OpenGL image processing pass");
     } catch (...) {
@@ -261,9 +267,9 @@ void OpenGLRenderer::UseCausticsTexture(OpenGLTexture* output, OpenGLTexture* so
     s.causticTarget = output; s.causticSource = source;
     s.causticsQueued=true;
 }
-void OpenGLRenderer::SetCausticsFrame(unsigned int frame)
+void OpenGLRenderer::SetCausticsTimeNs(unsigned long long timeNs)
 {
-    impl_->causticCounter=frame;
+    impl_->causticTimeNs=timeNs;
     impl_->causticsQueued=impl_->causticTarget!=nullptr;
 }
 bool OpenGLRenderer::HasCausticsCompute() const { return impl_->imageProgram != 0; }

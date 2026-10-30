@@ -427,7 +427,7 @@ void OpenGLRenderer::PrepareLoadingPipelines()
     s.presentProgram = s.Program(QuadVertexShader(), PresentFragmentShader());
     static constexpr std::array names{"targetExtent","image","premultipliedOutput","coverageInput",
         "sourceImage","alphaImage","sourceRect","alphaRect","sourceSlot",
-        "operation","rectangle","tint","packedColor","counter","colorOnly",
+        "operation","rectangle","tint","packedColor","causticU0","causticU1","causticV1","colorOnly",
         "samplingFlags","forceWhite","xRanges","yRanges","xTaps","yTaps",
         "xTapExtent","yTapExtent","glyphSrc","glyphDst"};
     static_assert(names.size()==Impl::uUniformCount);

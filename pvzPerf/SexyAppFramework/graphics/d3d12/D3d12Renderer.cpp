@@ -1,3 +1,4 @@
+#include "SexyAppFramework/graphics/PoolMesh.h"
 #include "D3d12Renderer.h"
 #include "D3d12Context.h"
 #include "D3d12Check.h"
@@ -144,7 +145,7 @@ struct D3d12Renderer::Impl {
     unsigned scaleMode = 0;
     D3d12Texture* causticTarget = nullptr;
     D3d12Texture* causticSource = nullptr;
-    UINT causticCounter = 0;
+    unsigned long long causticTimeNs = 0;
     bool causticQueued = false;
     ID3D12PipelineState* boundPipeline = nullptr;
     Page* boundVertex = nullptr;
@@ -202,7 +203,7 @@ struct D3d12Renderer::Impl {
         for (UINT i = 0; i < TextureSlots; ++i)
             device->CreateShaderResourceView(nullptr, &nullView, Cpu(i));
         InitGraphics();
-        InitKernel(causticKernel, "game_caustic_cs", 1, 1, LoadingPipelines{});
+        InitKernel(causticKernel, "game_caustic_cs", 3, 1, LoadingPipelines{});
         scene = Image(w, h, DXGI_FORMAT_B8G8R8A8_UNORM, true, false, false,
             {0, 0, 0, 1});
     }
@@ -724,7 +725,8 @@ struct D3d12Renderer::Impl {
         if (!causticQueued || !causticTarget) return;
         if (causticTarget->sampled) Snapshot(causticTarget);
         const std::array inputs{causticSource};
-        Compute(causticKernel, causticTarget, inputs, &causticCounter, 16, 16);
+        const auto offsets=EvaluatePoolCaustics(causticTimeNs);
+        Compute(causticKernel, causticTarget, inputs, &offsets, 16, 16);
         causticQueued = false;
     }
 
@@ -1442,10 +1444,10 @@ void D3d12Renderer::UseCausticsTexture(D3d12Texture* output, D3d12Texture* sourc
     s.causticTarget = output;
     s.causticSource = source;
 }
-void D3d12Renderer::SetCausticsFrame(uint32_t counter) {
+void D3d12Renderer::SetCausticsTimeNs(unsigned long long timeNs) {
     auto& s = *impl_;
-    if (s.sceneOpen) throw std::logic_error("Set caustics counter between D3D12 scenes");
-    s.causticCounter = counter;
+    if (s.sceneOpen) throw std::logic_error("Set caustics nanosecond time between D3D12 scenes");
+    s.causticTimeNs = timeNs;
     s.causticQueued = s.causticTarget != nullptr;
 }
 bool D3d12Renderer::HasCausticsCompute() const { return impl_->causticKernel.pipeline != nullptr; }

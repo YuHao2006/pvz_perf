@@ -52,7 +52,7 @@ public:
     static uint32_t SlotOf(const MetalTexture* texture);
     MetalTexture* CreateCausticsTexture(int width, int height, MetalTexture* source);
     void UseCausticsTexture(MetalTexture* output, MetalTexture* source);
-    void SetCausticsFrame(uint32_t counter);
+    void SetCausticsTimeNs(unsigned long long timeNs);
     MetalTexture* const& causticsTexture;
     bool HasCausticsCompute() const;
     bool BeginScene();

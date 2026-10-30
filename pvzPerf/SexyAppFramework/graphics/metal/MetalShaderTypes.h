@@ -76,10 +76,10 @@ struct MetalFontConstants
 };
 
 // pvz_caustic_kernel: buffer(0), 256x256 source texture(0),
-// 128x64 RGBA8Unorm target texture(1). All time arithmetic wraps at 32 bits.
+// 128x64 RGBA8Unorm target texture(1). CPU supplies wrapped lookup coordinates.
 struct MetalCausticConstants
 {
-    unsigned int counter;
+    unsigned int u0, u1, v1;
 };
 
 // pvz_hdr_vertex: vertices buffer(0), constants buffer(1).
@@ -99,7 +99,7 @@ static_assert(sizeof(MetalSceneConstants) == 16, "Scene constants size");
 static_assert(sizeof(MetalColorConstants) == 48, "Color constants size");
 static_assert(sizeof(MetalAlphaConstants) == 16, "Alpha constants size");
 static_assert(sizeof(MetalFontConstants) == 52, "Font constants size");
-static_assert(sizeof(MetalCausticConstants) == 4, "Caustic constants size");
+static_assert(sizeof(MetalCausticConstants) == 12, "Caustic constants size");
 static_assert(sizeof(MetalPresentConstants) == 32, "Presentation constants size");
 
 #ifndef __METAL_VERSION__

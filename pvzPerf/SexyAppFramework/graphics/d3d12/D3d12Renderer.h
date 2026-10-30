@@ -77,7 +77,7 @@ public:
 
     D3d12Texture* CreateCausticsTexture(int width, int height, D3d12Texture* source);
     void UseCausticsTexture(D3d12Texture* output, D3d12Texture* source);
-    void SetCausticsFrame(uint32_t counter);
+    void SetCausticsTimeNs(unsigned long long timeNs);
     D3d12Texture* const& causticsTexture;
     bool HasCausticsCompute() const;
 

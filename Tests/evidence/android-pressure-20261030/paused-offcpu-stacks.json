@@ -1,0 +1,4118 @@
+[
+  {
+    "tid": 8619,
+    "thread": "binder:8507_2",
+    "symbol": "void* std::__1::__thread_proxy<std::__1::tuple<std::__1::unique_ptr<std::__1::__thread_struct, std::__1::default_delete<std::__1::__thread_struct> >, void (android::AsyncWorker::*)(), android::AsyncWorker*> >(void*)",
+    "ns": 7973630213
+  },
+  {
+    "tid": 8619,
+    "thread": "binder:8507_2",
+    "symbol": "__start_thread",
+    "ns": 7973630213
+  },
+  {
+    "tid": 8619,
+    "thread": "binder:8507_2",
+    "symbol": "unknown",
+    "ns": 7973630213
+  },
+  {
+    "tid": 8619,
+    "thread": "binder:8507_2",
+    "symbol": "__pthread_start(void*)",
+    "ns": 7973630213
+  },
+  {
+    "tid": 8619,
+    "thread": "binder:8507_2",
+    "symbol": "android::AsyncWorker::run()",
+    "ns": 7973073598
+  },
+  {
+    "tid": 8619,
+    "thread": "binder:8507_2",
+    "symbol": "std::__1::condition_variable::wait(std::__1::unique_lock<std::__1::mutex>&)",
+    "ns": 7963932664
+  },
+  {
+    "tid": 8619,
+    "thread": "binder:8507_2",
+    "symbol": "syscall",
+    "ns": 7963677456
+  },
+  {
+    "tid": 8619,
+    "thread": "binder:8507_2",
+    "symbol": "pthread_cond_wait",
+    "ns": 7963677456
+  },
+  {
+    "tid": 8635,
+    "thread": "AudioTrack",
+    "symbol": "android::AndroidRuntime::javaThreadShell(void*)",
+    "ns": 7826877856
+  },
+  {
+    "tid": 8635,
+    "thread": "AudioTrack",
+    "symbol": "__start_thread",
+    "ns": 7826877856
+  },
+  {
+    "tid": 8635,
+    "thread": "AudioTrack",
+    "symbol": "unknown",
+    "ns": 7826877856
+  },
+  {
+    "tid": 8635,
+    "thread": "AudioTrack",
+    "symbol": "__pthread_start(void*)",
+    "ns": 7826877856
+  },
+  {
+    "tid": 8635,
+    "thread": "AudioTrack",
+    "symbol": "android::Thread::_threadLoop(void*)",
+    "ns": 7826805513
+  },
+  {
+    "tid": 8635,
+    "thread": "AudioTrack",
+    "symbol": "android::AudioTrack::AudioTrackThread::threadLoop()",
+    "ns": 7826331086
+  },
+  {
+    "tid": 8635,
+    "thread": "AudioTrack",
+    "symbol": "android::AudioTrack::processAudioBuffer()",
+    "ns": 7822576300
+  },
+  {
+    "tid": 8635,
+    "thread": "AudioTrack",
+    "symbol": "android::AudioTrack::obtainBuffer(android::AudioTrack::Buffer*, timespec const*, timespec*, unsigned long*)",
+    "ns": 7783986784
+  },
+  {
+    "tid": 8635,
+    "thread": "AudioTrack",
+    "symbol": "syscall",
+    "ns": 7783101307
+  },
+  {
+    "tid": 8637,
+    "thread": "alsoft-mixer",
+    "symbol": "__start_thread",
+    "ns": 7558780889
+  },
+  {
+    "tid": 8637,
+    "thread": "alsoft-mixer",
+    "symbol": "void* std::__ndk1::__thread_proxy[abi:fe180000]<std::__ndk1::tuple<std::__ndk1::unique_ptr<std::__ndk1::__thread_struct, std::__ndk1::default_delete<std::__ndk1::__thread_struct> >, void ((anonymous namespace)::OpenSLPlayback::*)(), (anonymous namespace)::OpenSLPlayback*> >(void*)",
+    "ns": 7558780889
+  },
+  {
+    "tid": 8637,
+    "thread": "alsoft-mixer",
+    "symbol": "unknown",
+    "ns": 7558780889
+  },
+  {
+    "tid": 8637,
+    "thread": "alsoft-mixer",
+    "symbol": "__pthread_start(void*)",
+    "ns": 7558780889
+  },
+  {
+    "tid": 8637,
+    "thread": "alsoft-mixer",
+    "symbol": "(anonymous namespace)::OpenSLPlayback::mixerProc()",
+    "ns": 7558089847
+  },
+  {
+    "tid": 8637,
+    "thread": "alsoft-mixer",
+    "symbol": "bool std::__ndk1::__libcpp_thread_poll_with_backoff[abi:fe180000]<std::__ndk1::__cxx_atomic_wait_test_fn_impl<std::__ndk1::__cxx_atomic_impl<bool, std::__ndk1::__cxx_atomic_base_impl<bool> >, bool>&, std::__ndk1::__libcpp_atomic_wait_backoff_impl<std::__ndk1::__cxx_atomic_impl<bool, std::__ndk1::__cxx_atomic_base_impl<bool> >, std::__ndk1::__cxx_atomic_wait_test_fn_impl<std::__ndk1::__cxx_atomic_impl<bool, std::__ndk1::__cxx_atomic_base_impl<bool> >, bool> >&>(std::__ndk1::__cxx_atomic_wait_test_fn_impl<std::__ndk1::__cxx_atomic_impl<bool, std::__ndk1::__cxx_atomic_base_impl<bool> >, bool>&, std::__ndk1::__libcpp_atomic_wait_backoff_impl<std::__ndk1::__cxx_atomic_impl<bool, std::__ndk1::__cxx_atomic_base_impl<bool> >, std::__ndk1::__cxx_atomic_wait_test_fn_impl<std::__ndk1::__cxx_atomic_impl<bool, std::__ndk1::__cxx_atomic_base_impl<bool> >, bool> >&, std::__ndk1::chrono::duration<long long, std::__ndk1::ratio<1l, 1000000000l> >)",
+    "ns": 7470875786
+  },
+  {
+    "tid": 8637,
+    "thread": "alsoft-mixer",
+    "symbol": "syscall",
+    "ns": 7470063494
+  },
+  {
+    "tid": 8557,
+    "thread": "binder:8507_3",
+    "symbol": "android::IPCThreadState::joinThreadPool(bool)",
+    "ns": 6675677285
+  },
+  {
+    "tid": 8557,
+    "thread": "binder:8507_3",
+    "symbol": "android::Thread::_threadLoop(void*)",
+    "ns": 6675677285
+  },
+  {
+    "tid": 8557,
+    "thread": "binder:8507_3",
+    "symbol": "android::AndroidRuntime::javaThreadShell(void*)",
+    "ns": 6675677285
+  },
+  {
+    "tid": 8557,
+    "thread": "binder:8507_3",
+    "symbol": "__start_thread",
+    "ns": 6675677285
+  },
+  {
+    "tid": 8557,
+    "thread": "binder:8507_3",
+    "symbol": "unknown",
+    "ns": 6675677285
+  },
+  {
+    "tid": 8557,
+    "thread": "binder:8507_3",
+    "symbol": "android::PoolThread::threadLoop()",
+    "ns": 6675677285
+  },
+  {
+    "tid": 8557,
+    "thread": "binder:8507_3",
+    "symbol": "__pthread_start(void*)",
+    "ns": 6675677285
+  },
+  {
+    "tid": 8557,
+    "thread": "binder:8507_3",
+    "symbol": "android::IPCThreadState::getAndExecuteCommand()",
+    "ns": 6675442129
+  },
+  {
+    "tid": 8557,
+    "thread": "binder:8507_3",
+    "symbol": "android::IPCThreadState::talkWithDriver(bool)",
+    "ns": 6662310516
+  },
+  {
+    "tid": 8557,
+    "thread": "binder:8507_3",
+    "symbol": "__ioctl",
+    "ns": 6662310516
+  },
+  {
+    "tid": 8638,
+    "thread": "Thread-2",
+    "symbol": "syscall",
+    "ns": 6001387288
+  },
+  {
+    "tid": 8638,
+    "thread": "Thread-2",
+    "symbol": "(anonymous namespace)::EventThread(gsl::not_null<al::Context*>)",
+    "ns": 6001387288
+  },
+  {
+    "tid": 8638,
+    "thread": "Thread-2",
+    "symbol": "void* std::__ndk1::__thread_proxy[abi:fe180000]<std::__ndk1::tuple<std::__ndk1::unique_ptr<std::__ndk1::__thread_struct, std::__ndk1::default_delete<std::__ndk1::__thread_struct> >, void (*)(gsl::not_null<al::Context*>), al::Context*> >(void*)",
+    "ns": 6001387288
+  },
+  {
+    "tid": 8638,
+    "thread": "Thread-2",
+    "symbol": "__start_thread",
+    "ns": 6001387288
+  },
+  {
+    "tid": 8638,
+    "thread": "Thread-2",
+    "symbol": "unknown",
+    "ns": 6001387288
+  },
+  {
+    "tid": 8638,
+    "thread": "Thread-2",
+    "symbol": "bool std::__ndk1::__libcpp_thread_poll_with_backoff[abi:fe180000]<std::__ndk1::__cxx_atomic_wait_test_fn_impl<std::__ndk1::__cxx_atomic_impl<unsigned int, std::__ndk1::__cxx_atomic_base_impl<unsigned int> >, unsigned int>&, std::__ndk1::__libcpp_atomic_wait_backoff_impl<std::__ndk1::__cxx_atomic_impl<unsigned int, std::__ndk1::__cxx_atomic_base_impl<unsigned int> >, std::__ndk1::__cxx_atomic_wait_test_fn_impl<std::__ndk1::__cxx_atomic_impl<unsigned int, std::__ndk1::__cxx_atomic_base_impl<unsigned int> >, unsigned int> >&>(std::__ndk1::__cxx_atomic_wait_test_fn_impl<std::__ndk1::__cxx_atomic_impl<unsigned int, std::__ndk1::__cxx_atomic_base_impl<unsigned int> >, unsigned int>&, std::__ndk1::__libcpp_atomic_wait_backoff_impl<std::__ndk1::__cxx_atomic_impl<unsigned int, std::__ndk1::__cxx_atomic_base_impl<unsigned int> >, std::__ndk1::__cxx_atomic_wait_test_fn_impl<std::__ndk1::__cxx_atomic_impl<unsigned int, std::__ndk1::__cxx_atomic_base_impl<unsigned int> >, unsigned int> >&, std::__ndk1::chrono::duration<long long, std::__ndk1::ratio<1l, 1000000000l> >)",
+    "ns": 6001387288
+  },
+  {
+    "tid": 8638,
+    "thread": "Thread-2",
+    "symbol": "__pthread_start(void*)",
+    "ns": 6001387288
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "android::IPCThreadState::joinThreadPool(bool)",
+    "ns": 5981917905
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "android::Thread::_threadLoop(void*)",
+    "ns": 5981917905
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "android::AndroidRuntime::javaThreadShell(void*)",
+    "ns": 5981917905
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "__start_thread",
+    "ns": 5981917905
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "unknown",
+    "ns": 5981917905
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "android::PoolThread::threadLoop()",
+    "ns": 5981917905
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "__pthread_start(void*)",
+    "ns": 5981917905
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "android::IPCThreadState::getAndExecuteCommand()",
+    "ns": 5981815822
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "android::IPCThreadState::talkWithDriver(bool)",
+    "ns": 5933857919
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "__ioctl",
+    "ns": 5933824169
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "android_app_entry",
+    "ns": 3782446899
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "Sexy::SexyAppBase::Start()",
+    "ns": 3782446899
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "android_main",
+    "ns": 3782446899
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "Sexy::SexyAppBase::DoMainLoop()",
+    "ns": 3782446899
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "__start_thread",
+    "ns": 3782446899
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "LawnApp::UpdateApp()",
+    "ns": 3782446899
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "unknown",
+    "ns": 3782446899
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "__pthread_start(void*)",
+    "ns": 3782446899
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "Sexy::SexyAppBase::UpdateAppStep(bool*)",
+    "ns": 3782069138
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "Sexy::SexyAppBase::Process(bool)",
+    "ns": 3780949921
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "Sexy::SexyAppBase::DrawDirtyStuff()",
+    "ns": 3776914503
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "Sexy::WidgetManager::DrawScreen()",
+    "ns": 3701120136
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "Sexy::VulkanRenderer::BeginScene()",
+    "ns": 3601694011
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "sync_wait",
+    "ns": 3597445412
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "__ppoll",
+    "ns": 3597445412
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "!!!0000!c83e82fe22b881f50f4107c4c3af6f!e0e02d5532!",
+    "ns": 3595624684
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "gsl_syncobj_wait",
+    "ns": 3595624684
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "!!!0000!793137038dbf2b85f2cb5552520123!e0e02d5532!",
+    "ns": 3595624684
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "qglinternal::vkWaitForFences(VkDevice_T*, unsigned int, VkFence_T* const*, unsigned int, unsigned long)",
+    "ns": 3595624684
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "VulkanContext::WaitForFrame()",
+    "ns": 3589794683
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "VulkanContext::BeginCommands()",
+    "ns": 3560281668
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "Sexy::WidgetContainer::DrawAll(Sexy::ModalFlags*, Sexy::Graphics*)",
+    "ns": 137887061
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "Board::Draw(Sexy::Graphics*)",
+    "ns": 135802685
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "Board::DrawGameObjects(Sexy::Graphics*)",
+    "ns": 135031799
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "Reanimation::DrawRenderGroup(Sexy::Graphics*, int)",
+    "ns": 78862807
+  },
+  {
+    "tid": 8637,
+    "thread": "alsoft-mixer",
+    "symbol": "DeviceBase::renderSamples(void*, unsigned int, unsigned long)",
+    "ns": 78741196
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "Reanimation::DrawTrack(Sexy::Graphics*, int, int, ReanimatorFrameTime const*)",
+    "ns": 74649319
+  },
+  {
+    "tid": 8637,
+    "thread": "alsoft-mixer",
+    "symbol": "DeviceBase::renderSamples(unsigned int)",
+    "ns": 71691562
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "Board::DrawGameObjects(Sexy::Graphics*)::$_2::__invoke(Board*, Sexy::Graphics*, RenderItem&)",
+    "ns": 69716556
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "Zombie::Draw(long, Sexy::Graphics*)",
+    "ns": 69230097
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "Zombie::DrawReanim(long, Sexy::Graphics*, ZombieDrawPosition const&, int)",
+    "ns": 61260882
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "android::IPCThreadState::executeCommand(int)",
+    "ns": 46327902
+  },
+  {
+    "tid": 8637,
+    "thread": "alsoft-mixer",
+    "symbol": "Compressor::process(unsigned int, std::__ndk1::span<std::__ndk1::array<float, 1024ul>, 18446744073709551615ul>)",
+    "ns": 46256049
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "android::BnTransactionCompletedListener::onTransact(unsigned int, android::Parcel const&, android::Parcel*, unsigned int)",
+    "ns": 44694884
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "android::BBinder::transact(unsigned int, android::Parcel const&, android::Parcel*, unsigned int)",
+    "ns": 43925144
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "Sexy::TextureSource::BltTransformed(Sexy::SexyMatrix3 const&, Sexy::TextureRegion const&, Sexy::Color const&, Sexy::TRect<int> const*, float, float, bool) const",
+    "ns": 41606298
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "TodBltMatrix(Sexy::Graphics*, Sexy::TextureSource const&, Sexy::SexyMatrix3 const&, Sexy::TRect<int> const&, Sexy::Color const&, int, Sexy::TextureRegion const&)",
+    "ns": 40046770
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "Sexy::Graphics::FillRect(int, int, int, int)",
+    "ns": 38989217
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "Sexy::RenderInterface::FillRect(Sexy::TRect<int> const&, Sexy::Color const&, int)",
+    "ns": 38989217
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "SubmitGpuTriangles((anonymous namespace)::ScreenVertex const*, int, PrimitiveType, Sexy::VulkanTexture*, bool, int, Sexy::TRect<int> const*)",
+    "ns": 32772294
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "android::TransactionCompletedListener::onTransactionCompleted(android::ListenerStats)",
+    "ns": 30800720
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "Sexy::DDInterface::Redraw(Sexy::TRect<int>*)",
+    "ns": 30629784
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "Sexy::SexyAppBase::Redraw(Sexy::TRect<int>*)",
+    "ns": 30629784
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "Sexy::VulkanRenderer::EndSceneAndPresent()",
+    "ns": 30405721
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "VulkanContext::EndFrame()",
+    "ns": 29537284
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "TodParticleEmitter::Draw(Sexy::Graphics*)",
+    "ns": 27724787
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "Sexy::VulkanRenderer::SubmitQuads(std::__ndk1::span<Sexy::GpuVertex const, 18446744073709551615ul>, Sexy::VulkanTexture*, bool, bool, Sexy::GpuBlend, Sexy::GpuClip const*)",
+    "ns": 25328382
+  },
+  {
+    "tid": 8635,
+    "thread": "AudioTrack",
+    "symbol": "android::AudioTrackCallback::onMoreData(android::AudioTrack::Buffer const&)",
+    "ns": 25032644
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "std::__1::__function::__func<std::__1::__bind<void (&)(android::wp<android::BLASTBufferQueue>, android::ReleaseCallbackId const&, android::sp<android::Fence> const&, std::__1::optional<unsigned int>), android::wp<android::BLASTBufferQueue>, std::__1::placeholders::__ph<1> const&, std::__1::placeholders::__ph<2> const&, std::__1::placeholders::__ph<3> const&>, std::__1::allocator<std::__1::__bind<void (&)(android::wp<android::BLASTBufferQueue>, android::ReleaseCallbackId const&, android::sp<android::Fence> const&, std::__1::optional<unsigned int>), android::wp<android::BLASTBufferQueue>, std::__1::placeholders::__ph<1> const&, std::__1::placeholders::__ph<2> const&, std::__1::placeholders::__ph<3> const&> >, void (android::ReleaseCallbackId const&, android::sp<android::Fence> const&, std::__1::optional<unsigned int>)>::operator()(android::ReleaseCallbackId const&, android::sp<android::Fence> const&, std::__1::optional<unsigned int>&&)",
+    "ns": 24724263
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "android::releaseBufferCallbackThunk(android::wp<android::BLASTBufferQueue>, android::ReleaseCallbackId const&, android::sp<android::Fence> const&, std::__1::optional<unsigned int>) (.__uniq.45450631312074835429881721991590974130)",
+    "ns": 24724263
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "android::BLASTBufferQueue::releaseBufferCallback(android::ReleaseCallbackId const&, android::sp<android::Fence> const&, std::__1::optional<unsigned int>)",
+    "ns": 24098325
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "vulkan::driver::QueuePresentKHR(VkQueue_T*, VkPresentInfoKHR const*)",
+    "ns": 23484839
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "android::Surface::queueBuffer(ANativeWindowBuffer*, int)",
+    "ns": 23124838
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "Board::DrawGameObjects(Sexy::Graphics*)::$_9::__invoke(Board*, Sexy::Graphics*, RenderItem&)",
+    "ns": 22240519
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "android::BufferQueueProducer::queueBuffer(int, android::IGraphicBufferProducer::QueueBufferInput const&, android::IGraphicBufferProducer::QueueBufferOutput*)",
+    "ns": 21861505
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "Board::DrawGameObjects(Sexy::Graphics*)::$_5::__invoke(Board*, Sexy::Graphics*, RenderItem&)",
+    "ns": 20733796
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "Plant::Draw(long, Sexy::Graphics*)",
+    "ns": 20661869
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "android::BufferQueue::ProxyConsumerListener::onFrameAvailable(android::BufferItem const&)",
+    "ns": 19451246
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "android::ConsumerBase::onFrameAvailable(android::BufferItem const&)",
+    "ns": 19451246
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "android::BLASTBufferQueue::onFrameAvailable(android::BufferItem const&)",
+    "ns": 19369579
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "TodParticleEmitter::DrawParticle(Sexy::Graphics*, TodParticle*, TodTriangleGroup*)",
+    "ns": 18833385
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "syscall",
+    "ns": 17902548
+  },
+  {
+    "tid": 8637,
+    "thread": "alsoft-mixer",
+    "symbol": "__ieee754_expf",
+    "ns": 17757506
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "android::BLASTBufferQueue::acquireNextBufferLocked(std::__1::optional<android::SurfaceComposerClient::Transaction*>)",
+    "ns": 16512184
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "std::__1::mutex::lock()",
+    "ns": 13700571
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "NonPI::MutexLockWithTimeout(pthread_mutex_internal_t*, bool, timespec const*)",
+    "ns": 13488123
+  },
+  {
+    "tid": 8637,
+    "thread": "alsoft-mixer",
+    "symbol": "Compressor::gainCompressor(unsigned int)",
+    "ns": 13128284
+  },
+  {
+    "tid": 8557,
+    "thread": "binder:8507_3",
+    "symbol": "android::IPCThreadState::executeCommand(int)",
+    "ns": 12967967
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "android::SurfaceComposerClient::Transaction::apply(bool, bool)",
+    "ns": 12272547
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "__ioctl",
+    "ns": 12168431
+  },
+  {
+    "tid": 8557,
+    "thread": "binder:8507_3",
+    "symbol": "android::BBinder::transact(unsigned int, android::Parcel const&, android::Parcel*, unsigned int)",
+    "ns": 12109894
+  },
+  {
+    "tid": 8557,
+    "thread": "binder:8507_3",
+    "symbol": "android::BnTransactionCompletedListener::onTransact(unsigned int, android::Parcel const&, android::Parcel*, unsigned int)",
+    "ns": 12035676
+  },
+  {
+    "tid": 8635,
+    "thread": "AudioTrack",
+    "symbol": "audioTrack_handleMoreData_lockPlay(CAudioPlayer_struct*, android::AudioTrack::Buffer const&)",
+    "ns": 11950672
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "android::BLASTBufferQueue::releaseBufferCallbackLocked(android::ReleaseCallbackId const&, android::sp<android::Fence> const&, std::__1::optional<unsigned int>, bool)",
+    "ns": 11844212
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "android::BLASTBufferQueue::releaseBuffer(android::ReleaseCallbackId const&, android::sp<android::Fence> const&)",
+    "ns": 11844212
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "android::BufferItemConsumer::releaseBuffer(android::BufferItem const&, android::sp<android::Fence> const&)",
+    "ns": 11478587
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "android::ListenerStats::readFromParcel(android::Parcel const*)",
+    "ns": 10669894
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "android::Parcel::readParcelable(android::Parcelable*) const",
+    "ns": 10669894
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "android::BpSurfaceComposer::setTransactionState(android::gui::FrameTimelineInfo const&, android::Vector<android::ComposerState>&, android::Vector<android::DisplayState>&, unsigned int, android::sp<android::IBinder> const&, android::InputWindowCommands, long, bool, std::__1::vector<android::client_cache_t, std::__1::allocator<android::client_cache_t> > const&, bool, std::__1::vector<android::ListenerCallbacks, std::__1::allocator<android::ListenerCallbacks> > const&, unsigned long, std::__1::vector<unsigned long, std::__1::allocator<unsigned long> > const&)",
+    "ns": 10290776
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "android::TransactionStats::readFromParcel(android::Parcel const*)",
+    "ns": 9286457
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "android::IPCThreadState::talkWithDriver(bool)",
+    "ns": 9272025
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "android::IPCThreadState::waitForResponse(android::Parcel*, int*)",
+    "ns": 9050098
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "android::BpBinder::transact(unsigned int, android::Parcel const&, android::Parcel*, unsigned int)",
+    "ns": 9050098
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "Attachment::Draw(Sexy::Graphics*, bool)",
+    "ns": 8388383
+  },
+  {
+    "tid": 8557,
+    "thread": "binder:8507_3",
+    "symbol": "android::TransactionCompletedListener::onTransactionCompleted(android::ListenerStats)",
+    "ns": 8366354
+  },
+  {
+    "tid": 8637,
+    "thread": "alsoft-mixer",
+    "symbol": "sched_yield",
+    "ns": 8047032
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "Board::DrawUIBottom(Sexy::Graphics*)",
+    "ns": 7751764
+  },
+  {
+    "tid": 8619,
+    "thread": "binder:8507_2",
+    "symbol": "NonPI::MutexLockWithTimeout(pthread_mutex_internal_t*, bool, timespec const*)",
+    "ns": 7277136
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "Sexy::RenderInterface::SelectDrawSurface(Sexy::Image*)",
+    "ns": 7222448
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "Sexy::VulkanRenderer::SetRenderImage(Sexy::VulkanTexture*)",
+    "ns": 6968334
+  },
+  {
+    "tid": 8557,
+    "thread": "binder:8507_3",
+    "symbol": "std::__1::__function::__func<std::__1::__bind<void (&)(android::wp<android::BLASTBufferQueue>, android::ReleaseCallbackId const&, android::sp<android::Fence> const&, std::__1::optional<unsigned int>), android::wp<android::BLASTBufferQueue>, std::__1::placeholders::__ph<1> const&, std::__1::placeholders::__ph<2> const&, std::__1::placeholders::__ph<3> const&>, std::__1::allocator<std::__1::__bind<void (&)(android::wp<android::BLASTBufferQueue>, android::ReleaseCallbackId const&, android::sp<android::Fence> const&, std::__1::optional<unsigned int>), android::wp<android::BLASTBufferQueue>, std::__1::placeholders::__ph<1> const&, std::__1::placeholders::__ph<2> const&, std::__1::placeholders::__ph<3> const&> >, void (android::ReleaseCallbackId const&, android::sp<android::Fence> const&, std::__1::optional<unsigned int>)>::operator()(android::ReleaseCallbackId const&, android::sp<android::Fence> const&, std::__1::optional<unsigned int>&&)",
+    "ns": 6814843
+  },
+  {
+    "tid": 8557,
+    "thread": "binder:8507_3",
+    "symbol": "android::releaseBufferCallbackThunk(android::wp<android::BLASTBufferQueue>, android::ReleaseCallbackId const&, android::sp<android::Fence> const&, std::__1::optional<unsigned int>) (.__uniq.45450631312074835429881721991590974130)",
+    "ns": 6814843
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "Sexy::ImageFont::DrawStringEx(Sexy::Graphics*, int, int, std::__ndk1::basic_string<char, std::__ndk1::char_traits<char>, std::__ndk1::allocator<char> > const&, Sexy::Color const&, std::__ndk1::list<Sexy::TRect<int>, std::__ndk1::allocator<Sexy::TRect<int> > >*, int*)",
+    "ns": 6660467
+  },
+  {
+    "tid": 8557,
+    "thread": "binder:8507_3",
+    "symbol": "android::BLASTBufferQueue::releaseBufferCallback(android::ReleaseCallbackId const&, android::sp<android::Fence> const&, std::__1::optional<unsigned int>)",
+    "ns": 6649375
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "SeedBank::Draw(Sexy::Graphics*)",
+    "ns": 6429787
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "FloatTrackEvaluate(FloatParameterTrack const&, double, float)",
+    "ns": 6371404
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "Zombie::DrawDancerReanim(long, Sexy::Graphics*)",
+    "ns": 6280730
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "Sexy::VulkanRenderer::Impl::FinishImageBatch()",
+    "ns": 6082345
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "qglinternal::vkCmdDrawIndexed(VkCommandBuffer_T*, unsigned int, unsigned int, unsigned int, int, unsigned int)",
+    "ns": 6043173
+  },
+  {
+    "tid": 8557,
+    "thread": "binder:8507_3",
+    "symbol": "syscall",
+    "ns": 6006407
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "android::ConsumerBase::releaseBufferLocked(int, android::sp<android::GraphicBuffer>, void*, void*)",
+    "ns": 5969267
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "TodParticleEmitter::GetRenderParamsDepth(TodParticle*, ParticleRenderParams*, int)",
+    "ns": 5960001
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "Sexy::VulkanRenderer::Impl::FlushPendingRun(VkCommandBuffer_T*)",
+    "ns": 5832339
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "android::BufferQueueConsumer::releaseBuffer(int, unsigned long, android::sp<android::Fence> const&, void*, void*)",
+    "ns": 5525204
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "DrawSeedPacket(Sexy::Graphics*, float, float, SeedType, SeedType, float, int, bool, bool)",
+    "ns": 5392602
+  },
+  {
+    "tid": 8619,
+    "thread": "binder:8507_2",
+    "symbol": "scudo::Allocator<scudo::AndroidConfig, &(scudo_malloc_postinit)>::deallocate(void*, scudo::Chunk::Origin, unsigned long, unsigned long)",
+    "ns": 5336559
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "android::AsyncProducerListener::onBufferReleased()",
+    "ns": 5287861
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "android::Parcel::read(android::Parcel::FlattenableHelperInterface&) const",
+    "ns": 5191094
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "Sexy::DrawAtlasImage(Sexy::Graphics*, Sexy::TextureSource const&, Sexy::TextureRegion const&, float, float)",
+    "ns": 5178281
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "vulkan::driver::AcquireNextImageKHR(VkDevice_T*, VkSwapchainKHR_T*, unsigned long, VkSemaphore_T*, VkFence_T*, unsigned int*)",
+    "ns": 5110368
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "android::ConsumerBase::addReleaseFenceLocked(int, android::sp<android::GraphicBuffer>, android::sp<android::Fence> const&)",
+    "ns": 4973487
+  },
+  {
+    "tid": 8619,
+    "thread": "binder:8507_2",
+    "symbol": "scudo::Allocator<scudo::AndroidConfig, &(scudo_malloc_postinit)>::quarantineOrDeallocateChunk(scudo::Options, void*, scudo::Chunk::UnpackedHeader*, unsigned long)",
+    "ns": 4892392
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "@plt",
+    "ns": 4653227
+  },
+  {
+    "tid": 8635,
+    "thread": "AudioTrack",
+    "symbol": "android::CallbackProtector::enterCbIfOk(android::sp<android::CallbackProtector> const&)",
+    "ns": 4644113
+  },
+  {
+    "tid": 8619,
+    "thread": "binder:8507_2",
+    "symbol": "scudo::SizeClassAllocatorLocalCache<scudo::SizeClassAllocator64<scudo::AndroidConfig> >::drain(scudo::SizeClassAllocatorLocalCache<scudo::SizeClassAllocator64<scudo::AndroidConfig> >::PerClass*, unsigned long)",
+    "ns": 4567548
+  },
+  {
+    "tid": 8619,
+    "thread": "binder:8507_2",
+    "symbol": "scudo::SizeClassAllocator64<scudo::AndroidConfig>::pushBlocks(scudo::SizeClassAllocatorLocalCache<scudo::SizeClassAllocator64<scudo::AndroidConfig> >*, unsigned long, unsigned int*, unsigned int)",
+    "ns": 4567548
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "std::__1::condition_variable::notify_one()",
+    "ns": 4449998
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "Sexy::(anonymous namespace)::DrawRegion(Sexy::Graphics&, Sexy::TextureSource const&, Sexy::TextureRegion const&, Sexy::SexyMatrix3 const&, bool)",
+    "ns": 4256353
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "!!!0000!2537cf78b99c7faacbe9e8ee1781e9!e0e02d5532!",
+    "ns": 4086559
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "android::Fence::getStatus()",
+    "ns": 4076249
+  },
+  {
+    "tid": 8557,
+    "thread": "binder:8507_3",
+    "symbol": "NonPI::MutexLockWithTimeout(pthread_mutex_internal_t*, bool, timespec const*)",
+    "ns": 3939271
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "TodTriangleGroup::DrawGroup(Sexy::Graphics*)",
+    "ns": 3925985
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "sync_wait",
+    "ns": 3908853
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "__ppoll",
+    "ns": 3908853
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "android::Fence::wait(int)",
+    "ns": 3908853
+  },
+  {
+    "tid": 8557,
+    "thread": "binder:8507_3",
+    "symbol": "std::__1::mutex::lock()",
+    "ns": 3844011
+  },
+  {
+    "tid": 8635,
+    "thread": "AudioTrack",
+    "symbol": "pthread_mutex_lock",
+    "ns": 3825259
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "Sexy::RenderInterface::DrawQuadsTex(std::__ndk1::span<std::__ndk1::array<Sexy::TriVertex, 4ul> const, 18446744073709551615ul>, Sexy::Color const&, int, Sexy::TextureSource const&, float, float, bool, Sexy::TRect<int> const*)",
+    "ns": 3778850
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "__fcntl",
+    "ns": 3696199
+  },
+  {
+    "tid": 8635,
+    "thread": "AudioTrack",
+    "symbol": "@plt",
+    "ns": 3540102
+  },
+  {
+    "tid": 8637,
+    "thread": "alsoft-mixer",
+    "symbol": "__logf_finite",
+    "ns": 3519061
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "std::__1::mutex::lock()",
+    "ns": 3458282
+  },
+  {
+    "tid": 8635,
+    "thread": "AudioTrack",
+    "symbol": "android::AudioTrack::releaseBuffer(android::AudioTrack::Buffer const*)",
+    "ns": 3398285
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "Sexy::SexyAppBase::DoUpdateFrames()",
+    "ns": 3365261
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "qglinternal::vkQueueSubmit2(VkQueue_T*, unsigned int, VkSubmitInfo2 const*, VkFence_T*)",
+    "ns": 3351614
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "!!!0000!f0ff2d1e04a1ca7bef42d34f453e8a!e0e02d5532!",
+    "ns": 3351614
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "android::SurfaceStats::readFromParcel(android::Parcel const*)",
+    "ns": 3251875
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "LawnApp::UpdateFrames()",
+    "ns": 3148438
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "NonPI::MutexLockWithTimeout(pthread_mutex_internal_t*, bool, timespec const*)",
+    "ns": 3138647
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "!!!0000!260addb415166054346467f72a0679!e0e02d5532!",
+    "ns": 3115468
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "syscall",
+    "ns": 3103333
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "!!!0000!3a4be7d9bfa8ce1de708d9937123e3!e0e02d5532!",
+    "ns": 3076458
+  },
+  {
+    "tid": 8557,
+    "thread": "binder:8507_3",
+    "symbol": "android::ListenerStats::readFromParcel(android::Parcel const*)",
+    "ns": 3037448
+  },
+  {
+    "tid": 8557,
+    "thread": "binder:8507_3",
+    "symbol": "android::Parcel::readParcelable(android::Parcelable*) const",
+    "ns": 3037448
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "qglinternal::vkResetCommandBuffer(VkCommandBuffer_T*, unsigned int)",
+    "ns": 2992812
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "Reanimation::GetCurrentTransform(int, ReanimatorTransform*, ReanimatorFrameTime const*)",
+    "ns": 2977549
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "__close",
+    "ns": 2858024
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "android::Surface::dequeueBuffer(ANativeWindowBuffer**, int*)",
+    "ns": 2849584
+  },
+  {
+    "tid": 8619,
+    "thread": "binder:8507_2",
+    "symbol": "std::__1::__function::__func<android::AsyncProducerListener::onBufferReleased()::'lambda'(), std::__1::allocator<android::AsyncProducerListener::onBufferReleased()::'lambda'()>, void ()>::__clone() const",
+    "ns": 2838852
+  },
+  {
+    "tid": 8637,
+    "thread": "alsoft-mixer",
+    "symbol": "@plt",
+    "ns": 2812918
+  },
+  {
+    "tid": 8557,
+    "thread": "binder:8507_3",
+    "symbol": "android::BLASTBufferQueue::releaseBufferCallbackLocked(android::ReleaseCallbackId const&, android::sp<android::Fence> const&, std::__1::optional<unsigned int>, bool)",
+    "ns": 2805364
+  },
+  {
+    "tid": 8635,
+    "thread": "AudioTrack",
+    "symbol": "__memmove_aarch64_simd",
+    "ns": 2748957
+  },
+  {
+    "tid": 8557,
+    "thread": "binder:8507_3",
+    "symbol": "android::TransactionStats::readFromParcel(android::Parcel const*)",
+    "ns": 2713385
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "scudo::Allocator<scudo::AndroidConfig, &(scudo_malloc_postinit)>::deallocate(void*, scudo::Chunk::Origin, unsigned long, unsigned long)",
+    "ns": 2661354
+  },
+  {
+    "tid": 8557,
+    "thread": "binder:8507_3",
+    "symbol": "android::BufferItemConsumer::releaseBuffer(android::BufferItem const&, android::sp<android::Fence> const&)",
+    "ns": 2656562
+  },
+  {
+    "tid": 8557,
+    "thread": "binder:8507_3",
+    "symbol": "android::BLASTBufferQueue::releaseBuffer(android::ReleaseCallbackId const&, android::sp<android::Fence> const&)",
+    "ns": 2656562
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "scudo::Allocator<scudo::AndroidConfig, &(scudo_malloc_postinit)>::allocate(unsigned long, scudo::Chunk::Origin, unsigned long, bool)",
+    "ns": 2643335
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "operator new(unsigned long)",
+    "ns": 2639791
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "Board::DrawBackdrop(Sexy::Graphics*)",
+    "ns": 2571924
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "TodBltMatrix(Sexy::Graphics*, Sexy::Image*, Sexy::SexyMatrix3 const&, Sexy::TRect<int> const&, Sexy::Color const&, int, Sexy::TRect<int> const&)",
+    "ns": 2565104
+  },
+  {
+    "tid": 8637,
+    "thread": "alsoft-mixer",
+    "symbol": "BFormatDec::process(std::__ndk1::span<std::__ndk1::array<float, 1024ul>, 18446744073709551615ul>, std::__ndk1::span<std::__ndk1::array<float, 1024ul> const, 18446744073709551615ul>, unsigned long)",
+    "ns": 2477915
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "close",
+    "ns": 2472086
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "scudo_malloc",
+    "ns": 2440572
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "malloc",
+    "ns": 2408124
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "@plt",
+    "ns": 2406874
+  },
+  {
+    "tid": 8637,
+    "thread": "alsoft-mixer",
+    "symbol": "decltype(auto) std::__ndk1::__variant_detail::__visitation::__base::__dispatcher<0ul>::__dispatch[abi:fe180000]<std::__ndk1::__variant_detail::__visitation::__variant::__value_visitor<(anonymous namespace)::overloaded<BFormatDec::process(std::__ndk1::span<std::__ndk1::array<float, 1024ul>, 18446744073709551615ul>, std::__ndk1::span<std::__ndk1::array<float, 1024ul> const, 18446744073709551615ul>, unsigned long)::$_0, BFormatDec::process(std::__ndk1::span<std::__ndk1::array<float, 1024ul>, 18446744073709551615ul>, std::__ndk1::span<std::__ndk1::array<float, 1024ul> const, 18446744073709551615ul>, unsigned long)::$_1> >&&, std::__ndk1::__variant_detail::__base<(std::__ndk1::__variant_detail::_Trait)1, std::__ndk1::vector<BFormatDec::ChannelDecoderSingle, std::__ndk1::allocator<BFormatDec::ChannelDecoderSingle> >, std::__ndk1::vector<BFormatDec::ChannelDecoderDual, std::__ndk1::allocator<BFormatDec::ChannelDecoderDual> > >&>(std::__ndk1::__variant_detail::__visitation::__variant::__value_visitor<(anonymous namespace)::overloaded<BFormatDec::process(std::__ndk1::span<std::__ndk1::array<float, 1024ul>, 18446744073709551615ul>, std::__ndk1::span<std::__ndk1::array<float, 1024ul> const, 18446744073709551615ul>, unsigned long)::$_0, BFormatDec::process(std::__ndk1::span<std::__ndk1::array<float, 1024ul>, 18446744073709551615ul>, std::__ndk1::span<std::__ndk1::array<float, 1024ul> const, 18446744073709551615ul>, unsigned long)::$_1> >&&, std::__ndk1::__variant_detail::__base<(std::__ndk1::__variant_detail::_Trait)1, std::__ndk1::vector<BFormatDec::ChannelDecoderSingle, std::__ndk1::allocator<BFormatDec::ChannelDecoderSingle> >, std::__ndk1::vector<BFormatDec::ChannelDecoderDual, std::__ndk1::allocator<BFormatDec::ChannelDecoderDual> > >&)",
+    "ns": 2391404
+  },
+  {
+    "tid": 8637,
+    "thread": "alsoft-mixer",
+    "symbol": "Mix_NEON(std::__ndk1::span<float const, 18446744073709551615ul>, std::__ndk1::span<std::__ndk1::array<float, 1024ul>, 18446744073709551615ul>, std::__ndk1::span<float, 18446744073709551615ul>, std::__ndk1::span<float const, 18446744073709551615ul>, unsigned long, unsigned long)",
+    "ns": 2391404
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "scudo::Allocator<scudo::AndroidConfig, &(scudo_malloc_postinit)>::allocate(unsigned long, scudo::Chunk::Origin, unsigned long, bool)",
+    "ns": 2323332
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "Board::DrawUITop(Sexy::Graphics*)",
+    "ns": 2319843
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "!!!0000!0964412298f54481475bf89d4ab944!e0e02d5532!",
+    "ns": 2306456
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "scudo_malloc",
+    "ns": 2259272
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "TodTriangleGroup::AddTriangle(Sexy::Graphics*, Sexy::TextureSource const&, Sexy::SexyMatrix3 const&, Sexy::TRect<int> const&, Sexy::Color const&, int, Sexy::TextureRegion const&)",
+    "ns": 2251720
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "operator new(unsigned long)",
+    "ns": 2230106
+  },
+  {
+    "tid": 8619,
+    "thread": "binder:8507_2",
+    "symbol": "scudo::HybridMutex::lock()",
+    "ns": 2193228
+  },
+  {
+    "tid": 8557,
+    "thread": "binder:8507_3",
+    "symbol": "android::AsyncProducerListener::onBufferReleased()",
+    "ns": 2162396
+  },
+  {
+    "tid": 8557,
+    "thread": "binder:8507_3",
+    "symbol": "android::ConsumerBase::releaseBufferLocked(int, android::sp<android::GraphicBuffer>, void*, void*)",
+    "ns": 2162396
+  },
+  {
+    "tid": 8557,
+    "thread": "binder:8507_3",
+    "symbol": "std::__1::condition_variable::notify_one()",
+    "ns": 2162396
+  },
+  {
+    "tid": 8557,
+    "thread": "binder:8507_3",
+    "symbol": "android::BufferQueueConsumer::releaseBuffer(int, unsigned long, android::sp<android::Fence> const&, void*, void*)",
+    "ns": 2162396
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "Sexy::TextureSource::Blt(float, float, Sexy::TextureRegion const&, Sexy::Color const&) const",
+    "ns": 2138491
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "Board::DrawLevel(Sexy::Graphics*)",
+    "ns": 2137916
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "!!!0000!6a59edb2d6e4ac956ef4c608fd9c2c!e0e02d5532!",
+    "ns": 2131561
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "gsl_command_issueib_timeline_sync",
+    "ns": 2131561
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "malloc",
+    "ns": 2125105
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "!!!0000!cb1c7f491f6e0845e5d22ab3f8c9e9!e0e02d5532!",
+    "ns": 2119425
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "std::__1::__function::__func<std::__1::__bind<std::__1::function<void (void*, long, android::sp<android::Fence> const&, std::__1::vector<android::SurfaceControlStats, std::__1::allocator<android::SurfaceControlStats> > const&)>&, void*&, std::__1::placeholders::__ph<1> const&, std::__1::placeholders::__ph<2> const&, std::__1::placeholders::__ph<3> const&>, std::__1::allocator<std::__1::__bind<std::__1::function<void (void*, long, android::sp<android::Fence> const&, std::__1::vector<android::SurfaceControlStats, std::__1::allocator<android::SurfaceControlStats> > const&)>&, void*&, std::__1::placeholders::__ph<1> const&, std::__1::placeholders::__ph<2> const&, std::__1::placeholders::__ph<3> const&> >, void (long, android::sp<android::Fence> const&, std::__1::vector<android::SurfaceControlStats, std::__1::allocator<android::SurfaceControlStats> > const&)>::operator()(long&&, android::sp<android::Fence> const&, std::__1::vector<android::SurfaceControlStats, std::__1::allocator<android::SurfaceControlStats> > const&)",
+    "ns": 2116251
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "android::transactionCallbackThunk(void*, long, android::sp<android::Fence> const&, std::__1::vector<android::SurfaceControlStats, std::__1::allocator<android::SurfaceControlStats> > const&) (.__uniq.45450631312074835429881721991590974130)",
+    "ns": 2116251
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "SeedPacketDrawSeed(Sexy::Graphics*, float, float, SeedType, SeedType, float, float, float)",
+    "ns": 2089844
+  },
+  {
+    "tid": 8557,
+    "thread": "binder:8507_3",
+    "symbol": "android::Parcel::read(android::Parcel::FlattenableHelperInterface&) const",
+    "ns": 2042187
+  },
+  {
+    "tid": 8557,
+    "thread": "binder:8507_3",
+    "symbol": "__fcntl",
+    "ns": 2042187
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "gsl_syncobj_destroy",
+    "ns": 2035054
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "!!!0000!6a7f7ec785028d96437db04399d932!e0e02d5532!",
+    "ns": 2035054
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "!!!0000!8cf9cc05f436738178cf8b8b6481c7!e0e02d5532!",
+    "ns": 2031457
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "ioctl_kgsl_gpu_command",
+    "ns": 2031457
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "android::BLASTBufferQueue::transactionCallback(long, android::sp<android::Fence> const&, std::__1::vector<android::SurfaceControlStats, std::__1::allocator<android::SurfaceControlStats> > const&)",
+    "ns": 2029219
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "Board::DrawGameObjects(Sexy::Graphics*)::$_3::__invoke(Board*, Sexy::Graphics*, RenderItem&)",
+    "ns": 2019065
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "qglinternal::vkAcquireImageANDROID(VkDevice_T*, VkImage_T*, int, VkSemaphore_T*, VkFence_T*)",
+    "ns": 1971825
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "!!!0000!3b3f2aec5c81326b394132c9cfaf9c!e0e02d5532!",
+    "ns": 1971825
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "android::Fence::waitForever(char const*)",
+    "ns": 1966822
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "scudo::Allocator<scudo::AndroidConfig, &(scudo_malloc_postinit)>::deallocate(void*, scudo::Chunk::Origin, unsigned long, unsigned long)",
+    "ns": 1953124
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "void std::__ndk1::__introsort<std::__ndk1::_ClassicAlgPolicy, bool (*&)(RenderItem const&, RenderItem const&), RenderItem*, false>(RenderItem*, RenderItem*, bool (*&)(RenderItem const&, RenderItem const&), std::__ndk1::iterator_traits<RenderItem*>::difference_type, bool)",
+    "ns": 1942449
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "Sexy::RenderInterface::Blt(Sexy::Image*, float, float, Sexy::TRect<int> const&, Sexy::Color const&, int, bool)",
+    "ns": 1921668
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "__close",
+    "ns": 1882497
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "PoolEffect::PoolEffectDraw(Sexy::Graphics*, bool)",
+    "ns": 1848799
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "Sexy::RenderInterface::DrawPool(Sexy::Image*, Sexy::GpuPoolParams const&)",
+    "ns": 1848799
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "Zombie::DrawShadow(Sexy::Graphics*)",
+    "ns": 1837189
+  },
+  {
+    "tid": 8635,
+    "thread": "AudioTrack",
+    "symbol": "android::RefBase::decStrong(void const*) const",
+    "ns": 1751823
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "Sexy::VulkanRenderer::SubmitPool(Sexy::VulkanTexture*, Sexy::GpuPoolParams const&)",
+    "ns": 1739788
+  },
+  {
+    "tid": 8635,
+    "thread": "AudioTrack",
+    "symbol": "android::SortedVector<android::key_value_pair_t<unsigned int, unsigned int> >::do_compare(void const*, void const*) const",
+    "ns": 1739111
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "!!!0000!c117052f4489a5aa1af911a4368a9b!e0e02d5532!",
+    "ns": 1710779
+  },
+  {
+    "tid": 8557,
+    "thread": "binder:8507_3",
+    "symbol": "android::SurfaceStats::readFromParcel(android::Parcel const*)",
+    "ns": 1652187
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "scudo::Allocator<scudo::AndroidConfig, &(scudo_malloc_postinit)>::quarantineOrDeallocateChunk(scudo::Options, void*, scudo::Chunk::UnpackedHeader*, unsigned long)",
+    "ns": 1607864
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "Sexy::RenderInterface::BltTransformed(Sexy::TextureSource const&, Sexy::TRect<int> const*, Sexy::Color const&, int, Sexy::TextureRegion const&, Sexy::SexyMatrix3 const&, bool, float, float, bool)",
+    "ns": 1599845
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "!!!0000!69d92616a4f6f9d79ae8cc45b6fc97!e0e02d5532!",
+    "ns": 1536093
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "android::BufferQueueProducer::dequeueBuffer(int*, android::sp<android::Fence>*, unsigned int, unsigned int, int, unsigned long, unsigned long*, android::FrameEventHistoryDelta*)",
+    "ns": 1508125
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "Plant::DrawSeedType(Sexy::Graphics*, SeedType, SeedType, DrawVariation, float, float)",
+    "ns": 1452604
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "Sexy::Graphics::DrawImage(Sexy::Image*, int, int)",
+    "ns": 1451302
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "android::VectorImpl::finish_vector()",
+    "ns": 1433490
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "scudo::Allocator<scudo::AndroidConfig, &(scudo_malloc_postinit)>::quarantineOrDeallocateChunk(scudo::Options, void*, scudo::Chunk::UnpackedHeader*, unsigned long)",
+    "ns": 1429271
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "android::Parcel::freeDataNoInit()",
+    "ns": 1427967
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "android::Parcel::~Parcel()",
+    "ns": 1427967
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "android::Parcel::closeFileDescriptors()",
+    "ns": 1427967
+  },
+  {
+    "tid": 8635,
+    "thread": "AudioTrack",
+    "symbol": "android_audioPlayer_checkSourceSink(CAudioPlayer_struct*)",
+    "ns": 1406354
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "ReanimatorCache::DrawCachedPlant(Sexy::Graphics*, float, float, SeedType, DrawVariation)",
+    "ns": 1402552
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "TodDrawImageScaledF(Sexy::Graphics*, Sexy::Image*, float, float, float, float)",
+    "ns": 1383646
+  },
+  {
+    "tid": 8635,
+    "thread": "AudioTrack",
+    "symbol": "__cfi_slowpath",
+    "ns": 1373488
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "close",
+    "ns": 1353488
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "!!!0000!097ece140a689b3ba2b5661cb74dce!e0e02d5532!",
+    "ns": 1333281
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "TodDrawImageCenterScaledF(Sexy::Graphics*, Sexy::Image*, float, float, float, float)",
+    "ns": 1326929
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "android::SurfaceComposerClient::Transaction::setBuffer(android::sp<android::SurfaceControl> const&, android::sp<android::GraphicBuffer> const&, std::__1::optional<android::sp<android::Fence> > const&, std::__1::optional<unsigned long> const&, unsigned int, std::__1::function<void (android::ReleaseCallbackId const&, android::sp<android::Fence> const&, std::__1::optional<unsigned int>)>)",
+    "ns": 1317343
+  },
+  {
+    "tid": 8635,
+    "thread": "AudioTrack",
+    "symbol": "android::CallbackProtector::~CallbackProtector()",
+    "ns": 1288334
+  },
+  {
+    "tid": 8619,
+    "thread": "binder:8507_2",
+    "symbol": "scudo::SizeClassAllocator64<scudo::AndroidConfig>::releaseToOSMaybe(scudo::SizeClassAllocator64<scudo::AndroidConfig>::RegionInfo*, unsigned long, scudo::ReleaseToOS)",
+    "ns": 1280831
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "int android::Parcel::readData<std::__1::vector<android::CallbackId, std::__1::allocator<android::CallbackId> >, true>(std::__1::vector<android::CallbackId, std::__1::allocator<android::CallbackId> >*, android::Parcel::ReadFlags) const",
+    "ns": 1260885
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "Reanimation::GetTransformAtTime(int, ReanimatorTransform*, ReanimatorFrameTime const*)",
+    "ns": 1243386
+  },
+  {
+    "tid": 8637,
+    "thread": "alsoft-mixer",
+    "symbol": "(anonymous namespace)::ProcessVoiceChanges(ContextBase*)",
+    "ns": 1237031
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "LawnDialog::Draw(Sexy::Graphics*)",
+    "ns": 1228127
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "__aarch64_cas4_acq",
+    "ns": 1220156
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "!!!0000!f82bbe53268c24e3e7107ea427a2ab!e0e02d5532!",
+    "ns": 1220053
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "!!!0000!b78ad09fc24eab751708d0a80613cf!e0e02d5532!",
+    "ns": 1220053
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "Board::ProcessDeleteQueue()",
+    "ns": 1206042
+  },
+  {
+    "tid": 8619,
+    "thread": "binder:8507_2",
+    "symbol": "init_cpu_features",
+    "ns": 1204010
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "fprintf",
+    "ns": 1181510
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "android::SurfaceComposerClient::Transaction::setMetadata(android::sp<android::SurfaceControl> const&, unsigned int, android::Parcel const&)",
+    "ns": 1163543
+  },
+  {
+    "tid": 8557,
+    "thread": "binder:8507_3",
+    "symbol": "@plt",
+    "ns": 1132917
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "Board::DrawGameObjects(Sexy::Graphics*)::$_10::__invoke(Board*, Sexy::Graphics*, RenderItem&)",
+    "ns": 1103908
+  },
+  {
+    "tid": 8635,
+    "thread": "AudioTrack",
+    "symbol": "(anonymous namespace)::OpenSLPlayback::start()::$_0::__invoke(SLAndroidSimpleBufferQueueItf_ const* const*, void*)",
+    "ns": 1095365
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "android::Surface::applyGrallocMetadataLocked(ANativeWindowBuffer*, android::IGraphicBufferProducer::QueueBufferInput const&)",
+    "ns": 1084115
+  },
+  {
+    "tid": 8635,
+    "thread": "AudioTrack",
+    "symbol": "__futex_wake_ex(void volatile*, bool, int)",
+    "ns": 1078123
+  },
+  {
+    "tid": 8635,
+    "thread": "AudioTrack",
+    "symbol": "std::__ndk1::__cxx_atomic_notify_one(void const volatile*)",
+    "ns": 1062291
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "!!!0000!911e660d6e6b7331f329601621db85!e0e02d5532!",
+    "ns": 1045001
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "ioctl_kgsl_syncobj_create",
+    "ns": 1045001
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "gsl_syncobj_create",
+    "ns": 1045001
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "calloc",
+    "ns": 1043438
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "EffectSystem::ProcessDeleteQueue()",
+    "ns": 1036510
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "PlantDrawHeightOffset(long, Board*, Plant*, SeedType, int, int)",
+    "ns": 1034584
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "android::SurfaceComposerClient::Transaction::registerSurfaceControlForCallback(android::sp<android::SurfaceControl> const&)",
+    "ns": 1025731
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "ALooper_pollOnce",
+    "ns": 1011509
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "Sexy::NativeWindow::PumpEvents()",
+    "ns": 1011509
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "Plant::DrawShadow(long, Sexy::Graphics*, float, float)",
+    "ns": 1010833
+  },
+  {
+    "tid": 8635,
+    "thread": "AudioTrack",
+    "symbol": "object_lock_exclusive_(Object_interface*, char const*, int)",
+    "ns": 1004532
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "!!!0000!65bb4f16e1c4caf7a56f18c58bd23d!e0e02d5532!",
+    "ns": 1002031
+  },
+  {
+    "tid": 8619,
+    "thread": "binder:8507_2",
+    "symbol": "scudo::SizeClassAllocator64<scudo::AndroidConfig>::pushBlocksImpl(scudo::SizeClassAllocatorLocalCache<scudo::SizeClassAllocator64<scudo::AndroidConfig> >*, unsigned long, scudo::SizeClassAllocator64<scudo::AndroidConfig>::RegionInfo*, unsigned int*, unsigned int, bool)",
+    "ns": 982031
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "android::Vector<android::ComposerState>::do_destroy(void*, unsigned long) const",
+    "ns": 976719
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "Zombie::GetDrawPos(ZombieDrawPosition&)",
+    "ns": 941250
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "android::layer_state_t::~layer_state_t()",
+    "ns": 927917
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "std::__1::vector<android::CallbackId, std::__1::allocator<android::CallbackId> >::__append(unsigned long)",
+    "ns": 924062
+  },
+  {
+    "tid": 8635,
+    "thread": "AudioTrack",
+    "symbol": "android::RefBase::weakref_type::decWeak(void const*)",
+    "ns": 920574
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "!!!0000!475f18195e7dc4867a166580dd0950!e0e02d5532!",
+    "ns": 919062
+  },
+  {
+    "tid": 8635,
+    "thread": "AudioTrack",
+    "symbol": "pthread_mutex_init",
+    "ns": 913905
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "android::RefBase::decStrong(void const*) const",
+    "ns": 912761
+  },
+  {
+    "tid": 8635,
+    "thread": "AudioTrack",
+    "symbol": "android::ClientProxy::obtainBuffer(android::Proxy::Buffer*, timespec const*, timespec*)",
+    "ns": 905312
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "scudo_calloc",
+    "ns": 904792
+  },
+  {
+    "tid": 8635,
+    "thread": "AudioTrack",
+    "symbol": "getpriority",
+    "ns": 891561
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "BltPreparedSource(Sexy::RenderInterface&, Sexy::TextureSource const&, Sexy::TRect<int> const*, Sexy::Color const&, int, Sexy::TextureRegion const&, Sexy::SexyMatrix3 const&, bool, float, float, bool)",
+    "ns": 876198
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "__vfprintf",
+    "ns": 876198
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "RenderItemSortFunc(RenderItem const&, RenderItem const&)",
+    "ns": 868802
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "qglinternal::vkCmdBindPipeline(VkCommandBuffer_T*, VkPipelineBindPoint, VkPipeline_T*)",
+    "ns": 855937
+  },
+  {
+    "tid": 8619,
+    "thread": "binder:8507_2",
+    "symbol": "scudo::SizeClassAllocator64<scudo::AndroidConfig>::pushBlocksImpl(scudo::SizeClassAllocatorLocalCache<scudo::SizeClassAllocator64<scudo::AndroidConfig> >*, unsigned long, scudo::SizeClassAllocator64<scudo::AndroidConfig>::RegionInfo*, unsigned int*, unsigned int, bool)::'lambda'(scudo::SizeClassAllocatorLocalCache<scudo::SizeClassAllocator64<scudo::AndroidConfig> >::BatchGroup*, unsigned int*, unsigned int)::operator()(scudo::SizeClassAllocatorLocalCache<scudo::SizeClassAllocator64<scudo::AndroidConfig> >::BatchGroup*, unsigned int*, unsigned int) const",
+    "ns": 849479
+  },
+  {
+    "tid": 8635,
+    "thread": "AudioTrack",
+    "symbol": "pthread_sigqueue",
+    "ns": 844531
+  },
+  {
+    "tid": 8619,
+    "thread": "binder:8507_2",
+    "symbol": "scudo_malloc",
+    "ns": 836302
+  },
+  {
+    "tid": 8619,
+    "thread": "binder:8507_2",
+    "symbol": "malloc",
+    "ns": 836302
+  },
+  {
+    "tid": 8619,
+    "thread": "binder:8507_2",
+    "symbol": "operator new(unsigned long)",
+    "ns": 836302
+  },
+  {
+    "tid": 8619,
+    "thread": "binder:8507_2",
+    "symbol": "scudo::Allocator<scudo::AndroidConfig, &(scudo_malloc_postinit)>::allocate(unsigned long, scudo::Chunk::Origin, unsigned long, bool)",
+    "ns": 836302
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "android::Gralloc4Mapper::setDataspace(native_handle const*, android::hardware::graphics::common::V1_2::Dataspace) const",
+    "ns": 818282
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "!!!0000!3c779bbc40c0011f509694b388f844!e0e02d5532!",
+    "ns": 814792
+  },
+  {
+    "tid": 8635,
+    "thread": "AudioTrack",
+    "symbol": "__cfi_shadow_size",
+    "ns": 812394
+  },
+  {
+    "tid": 8635,
+    "thread": "AudioTrack",
+    "symbol": "slTraceLeaveInterface(char const*, unsigned int)",
+    "ns": 763438
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "Board::DrawTopRightUI(Sexy::Graphics*)",
+    "ns": 740363
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "android::TransactionStats::~TransactionStats()",
+    "ns": 736613
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "qglinternal::vkBeginCommandBuffer(VkCommandBuffer_T*, VkCommandBufferBeginInfo const*)",
+    "ns": 734585
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "android::Fence::~Fence()",
+    "ns": 723751
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "!!!0000!59e591c160170d4597963c154b88bc!e0e02d5532!",
+    "ns": 723437
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "Sexy::RenderInterface::CreateImageTexture(Sexy::Image*)",
+    "ns": 722605
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "android::Parcel::unflattenBinder(android::sp<android::IBinder>*) const",
+    "ns": 705208
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "android::Parcel::readStrongBinder(android::sp<android::IBinder>*) const",
+    "ns": 705208
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "android::hardware::graphics::mapper::V4_0::BsMapper::set(void*, android::hardware::graphics::mapper::V4_0::IMapper::MetadataType const&, android::hardware::hidl_vec<unsigned char> const&)",
+    "ns": 691407
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "__aarch64_cas2_acq",
+    "ns": 688438
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "std::__1::mutex::unlock()",
+    "ns": 682864
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "!!!0000!b00e67652324e358db627445e5ae0a!e0e02d5532!",
+    "ns": 665989
+  },
+  {
+    "tid": 8637,
+    "thread": "alsoft-mixer",
+    "symbol": "std::__ndk1::chrono::steady_clock::now()",
+    "ns": 653073
+  },
+  {
+    "tid": 8637,
+    "thread": "alsoft-mixer",
+    "symbol": "__kernel_clock_gettime",
+    "ns": 653073
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "android::VectorImpl::editItemLocation(unsigned long)",
+    "ns": 638802
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "TodDrawImageRectCenterScaledF(Sexy::Graphics*, Sexy::Image*, float, float, Sexy::TRect<int> const&, float, float)",
+    "ns": 626510
+  },
+  {
+    "tid": 8635,
+    "thread": "AudioTrack",
+    "symbol": "object_unlock_exclusive_(Object_interface*, char const*, int)",
+    "ns": 623803
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "android::SurfaceComposerClient::Transaction::addTransactionCallback(std::__1::function<void (void*, long, android::sp<android::Fence> const&, std::__1::vector<android::SurfaceControlStats, std::__1::allocator<android::SurfaceControlStats> > const&)>, void*, android::CallbackId::Type)",
+    "ns": 623751
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "qglinternal::vkCmdBeginRenderPass(VkCommandBuffer_T*, VkRenderPassBeginInfo const*, VkSubpassContents)",
+    "ns": 614948
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "std::__1::function<void ()>& std::__1::deque<std::__1::function<void ()>, std::__1::allocator<std::__1::function<void ()> > >::emplace_back<std::__1::function<void ()> >(std::__1::function<void ()>&&)",
+    "ns": 613437
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "std::__1::deque<std::__1::function<void ()>, std::__1::allocator<std::__1::function<void ()> > >::__add_back_capacity()",
+    "ns": 613437
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "!!!0000!d897203b0125063bd610ef029c497a!e0e02d5532!",
+    "ns": 612708
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "!!!0000!c2fd9980b8cc0e70a1b2f147a503a2!e0e02d5532!",
+    "ns": 612708
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "__aarch64_ldadd4_relax",
+    "ns": 609636
+  },
+  {
+    "tid": 8635,
+    "thread": "AudioTrack",
+    "symbol": "pthread_mutex_unlock",
+    "ns": 595417
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "__memmove_aarch64_simd",
+    "ns": 589114
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "!!!0000!e5e97d833e0822576a9fca67b3865f!e0e02d5532!",
+    "ns": 578176
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "android::layer_state_t::write(android::Parcel&) const",
+    "ns": 567293
+  },
+  {
+    "tid": 8635,
+    "thread": "AudioTrack",
+    "symbol": "android::sp<android::IMemory>::operator=(android::sp<android::IMemory> const&)",
+    "ns": 567084
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "Curves::Linear(double, float, float)",
+    "ns": 555209
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "scudo::SizeClassAllocatorLocalCache<scudo::SizeClassAllocator64<scudo::AndroidConfig> >::refill(scudo::SizeClassAllocatorLocalCache<scudo::SizeClassAllocator64<scudo::AndroidConfig> >::PerClass*, unsigned long)",
+    "ns": 551510
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "scudo::SizeClassAllocator64<scudo::AndroidConfig>::popBatch(scudo::SizeClassAllocatorLocalCache<scudo::SizeClassAllocator64<scudo::AndroidConfig> >*, unsigned long)",
+    "ns": 551510
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "Sexy::RenderInterface::BltClipF(Sexy::Image*, float, float, Sexy::TRect<int> const&, Sexy::TRect<int> const*, Sexy::Color const&, int)",
+    "ns": 542447
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "scudo::HybridMutex::unlock()",
+    "ns": 540208
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "memset",
+    "ns": 534427
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "android::Fence::~Fence()",
+    "ns": 529009
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "pthread_mutex_unlock",
+    "ns": 506042
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "android::ConsumerBase::setTransformHint(unsigned int)",
+    "ns": 504323
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "android::BufferQueueConsumer::setTransformHint(unsigned int)",
+    "ns": 504323
+  },
+  {
+    "tid": 8635,
+    "thread": "AudioTrack",
+    "symbol": "NonPI::MutexLockWithTimeout(pthread_mutex_internal_t*, bool, timespec const*)",
+    "ns": 503281
+  },
+  {
+    "tid": 8619,
+    "thread": "binder:8507_2",
+    "symbol": "android::RefBase::incStrong(void const*) const",
+    "ns": 500520
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "Sexy::SexyAppBase::UpdateFrames()",
+    "ns": 498802
+  },
+  {
+    "tid": 8557,
+    "thread": "binder:8507_3",
+    "symbol": "android::Fence::getStatus()",
+    "ns": 494166
+  },
+  {
+    "tid": 8557,
+    "thread": "binder:8507_3",
+    "symbol": "sync_wait",
+    "ns": 494166
+  },
+  {
+    "tid": 8557,
+    "thread": "binder:8507_3",
+    "symbol": "android::ConsumerBase::addReleaseFenceLocked(int, android::sp<android::GraphicBuffer>, android::sp<android::Fence> const&)",
+    "ns": 494166
+  },
+  {
+    "tid": 8557,
+    "thread": "binder:8507_3",
+    "symbol": "__ppoll",
+    "ns": 494166
+  },
+  {
+    "tid": 8557,
+    "thread": "binder:8507_3",
+    "symbol": "android::Fence::wait(int)",
+    "ns": 494166
+  },
+  {
+    "tid": 8619,
+    "thread": "binder:8507_2",
+    "symbol": "@plt",
+    "ns": 487344
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "DrawStoneButton(Sexy::Graphics*, int, int, int, int, bool, bool, std::__ndk1::basic_string<char, std::__ndk1::char_traits<char>, std::__ndk1::allocator<char> > const&)",
+    "ns": 481511
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "std::__1::pair<std::__1::__hash_iterator<std::__1::__hash_node<std::__1::__hash_value_type<android::CallbackId, android::TransactionCompletedListener::CallbackTranslation>, void*>*>, bool> std::__1::__hash_table<std::__1::__hash_value_type<android::CallbackId, android::TransactionCompletedListener::CallbackTranslation>, std::__1::__unordered_map_hasher<android::CallbackId, std::__1::__hash_value_type<android::CallbackId, android::TransactionCompletedListener::CallbackTranslation>, android::CallbackIdHash, true>, std::__1::__unordered_map_equal<android::CallbackId, std::__1::__hash_value_type<android::CallbackId, android::TransactionCompletedListener::CallbackTranslation>, std::__1::equal_to<android::CallbackId>, true>, std::__1::allocator<std::__1::__hash_value_type<android::CallbackId, android::TransactionCompletedListener::CallbackTranslation> > >::__emplace_unique_key_args<android::CallbackId, std::__1::piecewise_construct_t const&, std::__1::tuple<android::CallbackId const&>, std::__1::tuple<> >(android::CallbackId const&, std::__1::piecewise_construct_t const&, std::__1::tuple<android::CallbackId const&>&&, std::__1::tuple<>&&)",
+    "ns": 477499
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "android::TransactionCompletedListener::getInstance()",
+    "ns": 475417
+  },
+  {
+    "tid": 8635,
+    "thread": "AudioTrack",
+    "symbol": "pthread_mutex_trylock",
+    "ns": 472761
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "vsnprintf",
+    "ns": 471667
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "__vfprintf",
+    "ns": 471667
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "snprintf(char*, unsigned long pass_object_size1, char const*, ...) (.__uniq.287173636983882500063073191670038830284)",
+    "ns": 471667
+  },
+  {
+    "tid": 8635,
+    "thread": "AudioTrack",
+    "symbol": "android::RefBase::incStrongRequireStrong(void const*) const",
+    "ns": 469584
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "!!!0000!fea1e02cdd037fc854c7e73fecb2be!e0e02d5532!",
+    "ns": 458697
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "scudo::SizeClassAllocatorLocalCache<scudo::SizeClassAllocator64<scudo::AndroidConfig> >::drain(scudo::SizeClassAllocatorLocalCache<scudo::SizeClassAllocator64<scudo::AndroidConfig> >::PerClass*, unsigned long)",
+    "ns": 446146
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "scudo::SizeClassAllocator64<scudo::AndroidConfig>::pushBlocks(scudo::SizeClassAllocatorLocalCache<scudo::SizeClassAllocator64<scudo::AndroidConfig> >*, unsigned long, unsigned int*, unsigned int)",
+    "ns": 446146
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "Sexy::VulkanRenderer::Impl::BeginTargetPass()",
+    "ns": 444948
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "Board::DrawShovel(Sexy::Graphics*)",
+    "ns": 439375
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "!!!0000!0c4af68c257847bbaa7adbb6a36b67!e0e02d5532!",
+    "ns": 437812
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "!!!0000!3e4d8611b5ff0fa5b4397294fb7af7!e0e02d5532!",
+    "ns": 437812
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "!!!0000!93c53ef5a6c041bb2723e5776ce526!e0e02d5532!",
+    "ns": 425936
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "!!!0000!339912d0cbfb8b36cd27d7fdb4bee2!e0e02d5532!",
+    "ns": 425885
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "__powf_finite",
+    "ns": 425052
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "std::__1::__hash_table<std::__1::__hash_value_type<unsigned int, std::__1::vector<unsigned char, std::__1::allocator<unsigned char> > >, std::__1::__unordered_map_hasher<unsigned int, std::__1::__hash_value_type<unsigned int, std::__1::vector<unsigned char, std::__1::allocator<unsigned char> > >, std::__1::hash<unsigned int>, true>, std::__1::__unordered_map_equal<unsigned int, std::__1::__hash_value_type<unsigned int, std::__1::vector<unsigned char, std::__1::allocator<unsigned char> > >, std::__1::equal_to<unsigned int>, true>, std::__1::allocator<std::__1::__hash_value_type<unsigned int, std::__1::vector<unsigned char, std::__1::allocator<unsigned char> > > > >::__rehash(unsigned long)",
+    "ns": 423490
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "std::__1::pair<std::__1::__hash_iterator<std::__1::__hash_node<std::__1::__hash_value_type<unsigned int, std::__1::vector<unsigned char, std::__1::allocator<unsigned char> > >, void*>*>, bool> std::__1::__hash_table<std::__1::__hash_value_type<unsigned int, std::__1::vector<unsigned char, std::__1::allocator<unsigned char> > >, std::__1::__unordered_map_hasher<unsigned int, std::__1::__hash_value_type<unsigned int, std::__1::vector<unsigned char, std::__1::allocator<unsigned char> > >, std::__1::hash<unsigned int>, true>, std::__1::__unordered_map_equal<unsigned int, std::__1::__hash_value_type<unsigned int, std::__1::vector<unsigned char, std::__1::allocator<unsigned char> > >, std::__1::equal_to<unsigned int>, true>, std::__1::allocator<std::__1::__hash_value_type<unsigned int, std::__1::vector<unsigned char, std::__1::allocator<unsigned char> > > > >::__emplace_unique_key_args<unsigned int, std::__1::piecewise_construct_t const&, std::__1::tuple<unsigned int const&>, std::__1::tuple<> >(unsigned int const&, std::__1::piecewise_construct_t const&, std::__1::tuple<unsigned int const&>&&, std::__1::tuple<>&&)",
+    "ns": 423490
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "std::__ndk1::vector<Sexy::GpuVertex, std::__ndk1::allocator<Sexy::GpuVertex> >::__throw_length_error[abi:ne180000]() const",
+    "ns": 421823
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "android::Looper::pollOnce(int, int*, int*, void**)",
+    "ns": 420260
+  },
+  {
+    "tid": 8557,
+    "thread": "binder:8507_3",
+    "symbol": "android::TransactionStats::~TransactionStats()",
+    "ns": 419166
+  },
+  {
+    "tid": 8557,
+    "thread": "binder:8507_3",
+    "symbol": "android::SurfaceStats::~SurfaceStats()",
+    "ns": 419166
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "Sexy::Widget::WriteWordWrapped(Sexy::Graphics*, Sexy::TRect<int> const&, std::__ndk1::basic_string<char, std::__ndk1::char_traits<char>, std::__ndk1::allocator<char> > const&, int, int)",
+    "ns": 412657
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "Sexy::Graphics::WriteWordWrapped(Sexy::TRect<int> const&, std::__ndk1::basic_string<char, std::__ndk1::char_traits<char>, std::__ndk1::allocator<char> > const&, int, int, int*, int, int*)",
+    "ns": 412657
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "android::ProcessState::getStrongProxyForHandle(int)",
+    "ns": 410260
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "Sexy::WidgetContainer::UpdateAll(Sexy::ModalFlags*)",
+    "ns": 410000
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "__cfi_slowpath",
+    "ns": 409427
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "android::SurfaceComposerClient::Transaction::clear()",
+    "ns": 408437
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "Sexy::ImageFont::CharWidthKern(char, char)",
+    "ns": 405574
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "Sexy::ResourceManager::GetNumResources()",
+    "ns": 403386
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "!!!0000!36aed065db0a6254654b9a01a208fb!e0e02d5532!",
+    "ns": 398491
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "std::__1::__tree<std::__1::__value_type<int, android::TransactionCompletedListener::SurfaceStatsCallbackEntry>, std::__1::__map_value_compare<int, std::__1::__value_type<int, android::TransactionCompletedListener::SurfaceStatsCallbackEntry>, std::__1::less<int>, true>, std::__1::allocator<std::__1::__value_type<int, android::TransactionCompletedListener::SurfaceStatsCallbackEntry> > >::destroy(std::__1::__tree_node<std::__1::__value_type<int, android::TransactionCompletedListener::SurfaceStatsCallbackEntry>, void*>*)",
+    "ns": 394792
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "std::__1::__function::__func<std::__1::__bind<std::__1::function<void (void*, long, android::sp<android::Fence> const&, std::__1::vector<android::SurfaceControlStats, std::__1::allocator<android::SurfaceControlStats> > const&)>&, void*&, std::__1::placeholders::__ph<1> const&, std::__1::placeholders::__ph<2> const&, std::__1::placeholders::__ph<3> const&>, std::__1::allocator<std::__1::__bind<std::__1::function<void (void*, long, android::sp<android::Fence> const&, std::__1::vector<android::SurfaceControlStats, std::__1::allocator<android::SurfaceControlStats> > const&)>&, void*&, std::__1::placeholders::__ph<1> const&, std::__1::placeholders::__ph<2> const&, std::__1::placeholders::__ph<3> const&> >, void (long, android::sp<android::Fence> const&, std::__1::vector<android::SurfaceControlStats, std::__1::allocator<android::SurfaceControlStats> > const&)>::__clone() const",
+    "ns": 390834
+  },
+  {
+    "tid": 8635,
+    "thread": "AudioTrack",
+    "symbol": "systemTime",
+    "ns": 385521
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "Board::DrawUICoinBank(Sexy::Graphics*)",
+    "ns": 377032
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "__dup",
+    "ns": 375676
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "android::Parcel::readInt64() const",
+    "ns": 371771
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "android::TransactionCompletedListener::addCallbackFunctionLocked(std::__1::function<void (long, android::sp<android::Fence> const&, std::__1::vector<android::SurfaceControlStats, std::__1::allocator<android::SurfaceControlStats> > const&)> const&, std::__1::unordered_set<android::sp<android::SurfaceControl>, android::SurfaceComposerClient::SCHash, std::__1::equal_to<android::sp<android::SurfaceControl> >, std::__1::allocator<android::sp<android::SurfaceControl> > > const&, android::CallbackId::Type)",
+    "ns": 371251
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "__aarch64_ldadd8_acq_rel",
+    "ns": 365625
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "!!!0000!1d8cf90a0b0d8d51f807e6fd3a502f!e0e02d5532!",
+    "ns": 365469
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "Sexy::RenderInterface::BltTransformed(Sexy::Image*, Sexy::TRect<int> const*, Sexy::Color const&, int, Sexy::TRect<int> const&, Sexy::SexyMatrix3 const&, bool, float, float, bool)",
+    "ns": 355938
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "android::Parcel::flattenBinder(android::sp<android::IBinder> const&)",
+    "ns": 354688
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "android::Parcel::validateReadData(unsigned long) const",
+    "ns": 349115
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "android::Parcel::freeDataNoInit()",
+    "ns": 346146
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "android::Parcel::~Parcel()",
+    "ns": 346146
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "android::RefBase::incStrong(void const*) const",
+    "ns": 345364
+  },
+  {
+    "tid": 8635,
+    "thread": "AudioTrack",
+    "symbol": "std::__ndk1::__cxx_atomic_notify_all(void const volatile*)",
+    "ns": 343437
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "Board::DrawIce(Sexy::Graphics*, int)",
+    "ns": 342031
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "pthread_mutex_init",
+    "ns": 341198
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "WriteStringLayout(Sexy::Graphics*, Sexy::_Font&, bool, std::__ndk1::basic_string<char, std::__ndk1::char_traits<char>, std::__ndk1::allocator<char> > const&, int, int, int, int, int, int, int)",
+    "ns": 338177
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "Reanimation::MatrixFromTransform(ReanimatorTransform const&, Sexy::SexyMatrix3&)",
+    "ns": 335833
+  },
+  {
+    "tid": 8557,
+    "thread": "binder:8507_3",
+    "symbol": "android_fdsan_get_tag_value",
+    "ns": 333802
+  },
+  {
+    "tid": 8635,
+    "thread": "AudioTrack",
+    "symbol": "__aarch64_ldadd4_rel",
+    "ns": 332813
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "Sexy::ImageFont::StringWidth(std::__ndk1::basic_string<char, std::__ndk1::char_traits<char>, std::__ndk1::allocator<char> > const&)",
+    "ns": 331094
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "systemTime",
+    "ns": 326145
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "android::gui::WindowInfoHandle::~WindowInfoHandle()",
+    "ns": 322448
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "android::String16::operator=(android::String16&&)",
+    "ns": 322396
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "scudo::SizeClassAllocator64<scudo::AndroidConfig>::pushBlocksImpl(scudo::SizeClassAllocatorLocalCache<scudo::SizeClassAllocator64<scudo::AndroidConfig> >*, unsigned long, scudo::SizeClassAllocator64<scudo::AndroidConfig>::RegionInfo*, unsigned int*, unsigned int, bool)",
+    "ns": 315990
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "android::SurfaceComposerClient::Transaction::setReleaseBufferCallback(android::BufferData*, std::__1::function<void (android::ReleaseCallbackId const&, android::sp<android::Fence> const&, std::__1::optional<unsigned int>)>)",
+    "ns": 313177
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "android::TransactionCompletedListener::setReleaseBufferCallback(android::ReleaseCallbackId const&, std::__1::function<void (android::ReleaseCallbackId const&, android::sp<android::Fence> const&, std::__1::optional<unsigned int>)>)",
+    "ns": 313177
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "android::SurfaceStats::~SurfaceStats()",
+    "ns": 311874
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "android::Fence::merge(char const*, android::sp<android::Fence> const&, android::sp<android::Fence> const&)",
+    "ns": 305780
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "sync_merge",
+    "ns": 305780
+  },
+  {
+    "tid": 8635,
+    "thread": "AudioTrack",
+    "symbol": "android::RefBase::weakref_type::attemptIncStrong(void const*)",
+    "ns": 302552
+  },
+  {
+    "tid": 8619,
+    "thread": "binder:8507_2",
+    "symbol": "scudo::HybridMutex::tryLock()",
+    "ns": 301979
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "!!!0000!a8a5578ec7eb449d8c8076f2948068!e0e02d5532!",
+    "ns": 295104
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "android::ProcessState::lookupHandleLocked(int)",
+    "ns": 294375
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "!!!0000!8099e1718c17ef6e57d380a6049ebb!e0e02d5532!",
+    "ns": 291302
+  },
+  {
+    "tid": 8557,
+    "thread": "binder:8507_3",
+    "symbol": "int android::Parcel::readData<std::__1::vector<android::CallbackId, std::__1::allocator<android::CallbackId> >, true>(std::__1::vector<android::CallbackId, std::__1::allocator<android::CallbackId> >*, android::Parcel::ReadFlags) const",
+    "ns": 290937
+  },
+  {
+    "tid": 8557,
+    "thread": "binder:8507_3",
+    "symbol": "mallopt",
+    "ns": 290937
+  },
+  {
+    "tid": 8557,
+    "thread": "binder:8507_3",
+    "symbol": "std::__1::vector<android::CallbackId, std::__1::allocator<android::CallbackId> >::__append(unsigned long)",
+    "ns": 290937
+  },
+  {
+    "tid": 8619,
+    "thread": "binder:8507_2",
+    "symbol": "scudo::SizeClassAllocatorLocalCache<scudo::SizeClassAllocator64<scudo::AndroidConfig> >::refill(scudo::SizeClassAllocatorLocalCache<scudo::SizeClassAllocator64<scudo::AndroidConfig> >::PerClass*, unsigned long)",
+    "ns": 289375
+  },
+  {
+    "tid": 8619,
+    "thread": "binder:8507_2",
+    "symbol": "scudo::SizeClassAllocator64<scudo::AndroidConfig>::popBatch(scudo::SizeClassAllocatorLocalCache<scudo::SizeClassAllocator64<scudo::AndroidConfig> >*, unsigned long)",
+    "ns": 289375
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "__aarch64_cas4_acq",
+    "ns": 288542
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "android::ProcessState::init(char const*, bool)",
+    "ns": 285417
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "android::Parcel::writeObject(flat_binder_object const&, bool)",
+    "ns": 285417
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "android::Vector<android::ComposerState>::do_splat(void*, void const*, unsigned long) const",
+    "ns": 284428
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "android::layer_state_t::layer_state_t(android::layer_state_t const&)",
+    "ns": 284428
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "android::VectorImpl::add(void const*)",
+    "ns": 284428
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "fcntl",
+    "ns": 278958
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "android::TransactionCompletedListener::addSurfaceControlToCallbacks(android::SurfaceComposerClient::CallbackInfo&, android::sp<android::SurfaceControl> const&)",
+    "ns": 278073
+  },
+  {
+    "tid": 8635,
+    "thread": "AudioTrack",
+    "symbol": "android::CallbackProtector::exitCb()",
+    "ns": 277812
+  },
+  {
+    "tid": 8637,
+    "thread": "alsoft-mixer",
+    "symbol": "RingBuffer<std::byte>::getWriteVector()",
+    "ns": 271667
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "std::__1::__function::__func<void (*)(void*, long, android::sp<android::Fence> const&, std::__1::vector<android::SurfaceControlStats, std::__1::allocator<android::SurfaceControlStats> > const&), std::__1::allocator<void (*)(void*, long, android::sp<android::Fence> const&, std::__1::vector<android::SurfaceControlStats, std::__1::allocator<android::SurfaceControlStats> > const&)>, void (void*, long, android::sp<android::Fence> const&, std::__1::vector<android::SurfaceControlStats, std::__1::allocator<android::SurfaceControlStats> > const&)>::__clone(std::__1::__function::__base<void (void*, long, android::sp<android::Fence> const&, std::__1::vector<android::SurfaceControlStats, std::__1::allocator<android::SurfaceControlStats> > const&)>*) const",
+    "ns": 271354
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "!!!0000!c69e18d4e357755025d8afd0bc6940!e0e02d5532!",
+    "ns": 270781
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "Sexy::VulkanRenderer::Impl::EndTargetPass()",
+    "ns": 269166
+  },
+  {
+    "tid": 8619,
+    "thread": "binder:8507_2",
+    "symbol": "scudo::getMonotonicTimeFast()",
+    "ns": 266093
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "Sexy::Color::Color(int, int, int, int)",
+    "ns": 266093
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "android::hardware::graphics::mapper::V4_0::BsMapper::get(void*, android::hardware::graphics::mapper::V4_0::IMapper::MetadataType const&, std::__1::function<void (android::hardware::graphics::mapper::V4_0::Error, android::hardware::hidl_vec<unsigned char> const&)>)",
+    "ns": 265833
+  },
+  {
+    "tid": 8637,
+    "thread": "alsoft-mixer",
+    "symbol": "exp2f",
+    "ns": 265364
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "!!!0000!1b82d5011f6dcfdd6b4d70e805d48c!e0e02d5532!",
+    "ns": 264635
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "android_fdsan_close_with_tag",
+    "ns": 259011
+  },
+  {
+    "tid": 8557,
+    "thread": "binder:8507_3",
+    "symbol": "virtual thunk to android::ITransactionCompletedListener::~ITransactionCompletedListener()",
+    "ns": 258802
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "Board::DrawGameObjects(Sexy::Graphics*)::$_0::__invoke(Board*, Sexy::Graphics*, RenderItem&)",
+    "ns": 256876
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "std::__1::__hash_table<std::__1::__hash_value_type<void*, std::__1::function<void (std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&)> >, std::__1::__unordered_map_hasher<void*, std::__1::__hash_value_type<void*, std::__1::function<void (std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&)> >, std::__1::hash<void*>, true>, std::__1::__unordered_map_equal<void*, std::__1::__hash_value_type<void*, std::__1::function<void (std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&)> >, std::__1::equal_to<void*>, true>, std::__1::allocator<std::__1::__hash_value_type<void*, std::__1::function<void (std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&)> > > >::__rehash(unsigned long)",
+    "ns": 255313
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "scudo::HybridMutex::tryLock()",
+    "ns": 255313
+  },
+  {
+    "tid": 8619,
+    "thread": "binder:8507_2",
+    "symbol": "__libc_safe_arc4random_buf(void*, unsigned long)",
+    "ns": 255208
+  },
+  {
+    "tid": 8619,
+    "thread": "binder:8507_2",
+    "symbol": "calloc",
+    "ns": 253125
+  },
+  {
+    "tid": 8635,
+    "thread": "AudioTrack",
+    "symbol": "(anonymous namespace)::OpenSLPlayback::mixerProc()",
+    "ns": 251510
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "bool std::__1::operator==<std::__1::allocator<char> >(std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&)",
+    "ns": 250729
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "!!!0000!e1049b82a6863007009fa24b748a24!e0e02d5532!",
+    "ns": 242344
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "VulkanContext::BeginPresentPass(VkClearColorValue)",
+    "ns": 240677
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "void std::__ndk1::this_thread::sleep_until[abi:ne180000]<std::__ndk1::chrono::duration<long long, std::__ndk1::ratio<1l, 1000000000l> > >(std::__ndk1::chrono::time_point<std::__ndk1::chrono::steady_clock, std::__ndk1::chrono::duration<long long, std::__ndk1::ratio<1l, 1000000000l> > > const&)",
+    "ns": 240573
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "nanosleep",
+    "ns": 240573
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "free",
+    "ns": 240156
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "!!!0000!202b3ff79242da9740cb3b419823c9!e0e02d5532!",
+    "ns": 238281
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "qglinternal::vkResetCommandPool(VkDevice_T*, VkCommandPool_T*, unsigned int)",
+    "ns": 238281
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "!!!0000!2b553f2a2cb25881186a46f978dbe7!e0e02d5532!",
+    "ns": 237656
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "virtual thunk to android::AsyncProducerListener::~AsyncProducerListener()",
+    "ns": 237343
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "Sexy::Image::BltF(Sexy::Image*, float, float, Sexy::TRect<int> const&, Sexy::TRect<int> const&, Sexy::Color const&, int)",
+    "ns": 236355
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "pthread_mutex_lock",
+    "ns": 234739
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "sincosf",
+    "ns": 233699
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "android::BLASTBufferQueue::computeCrop(android::BufferItem const&)",
+    "ns": 233698
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "Reanimation::SynchronizePhase(Reanimation const&)",
+    "ns": 228959
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "android::IPCThreadState::flushCommands()",
+    "ns": 221927
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "std::__1::__vector_base<android::client_cache_t, std::__1::allocator<android::client_cache_t> >::~__vector_base()",
+    "ns": 219062
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "android::SurfaceComposerClient::Transaction::getLayerState(android::sp<android::SurfaceControl> const&)",
+    "ns": 218020
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "!!!0000!3f55a677ebbf50e91904ef3d48285d!e0e02d5532!",
+    "ns": 215781
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "std::__1::pair<android::sp<android::ITransactionCompletedListener> const, android::SurfaceComposerClient::CallbackInfo>::~pair()",
+    "ns": 215677
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "android::Looper::getForThread()",
+    "ns": 215676
+  },
+  {
+    "tid": 8619,
+    "thread": "binder:8507_2",
+    "symbol": "__aarch64_ldadd4_relax",
+    "ns": 214479
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "std::__1::__hash_table<std::__1::__hash_value_type<android::CallbackId, android::TransactionCompletedListener::CallbackTranslation>, std::__1::__unordered_map_hasher<android::CallbackId, std::__1::__hash_value_type<android::CallbackId, android::TransactionCompletedListener::CallbackTranslation>, android::CallbackIdHash, true>, std::__1::__unordered_map_equal<android::CallbackId, std::__1::__hash_value_type<android::CallbackId, android::TransactionCompletedListener::CallbackTranslation>, std::__1::equal_to<android::CallbackId>, true>, std::__1::allocator<std::__1::__hash_value_type<android::CallbackId, android::TransactionCompletedListener::CallbackTranslation> > >::__node_insert_multi(std::__1::__hash_node<std::__1::__hash_value_type<android::CallbackId, android::TransactionCompletedListener::CallbackTranslation>, void*>*)",
+    "ns": 212968
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "android::ConsumerFrameEventHistory::addQueue(android::NewFrameEventsEntry const&)",
+    "ns": 209740
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "android::BufferQueueProducer::addAndGetFrameTimestamps(android::NewFrameEventsEntry const*, android::FrameEventHistoryDelta*)",
+    "ns": 209740
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "android::BufferQueue::ProxyConsumerListener::addAndGetFrameTimestamps(android::NewFrameEventsEntry const*, android::FrameEventHistoryDelta*)",
+    "ns": 209740
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "std::__1::__shared_ptr_emplace<android::FenceTime, std::__1::allocator<android::FenceTime> >::__on_zero_shared()",
+    "ns": 209740
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "android::BLASTBufferItemConsumer::addAndGetFrameTimestamps(android::NewFrameEventsEntry const*, android::FrameEventHistoryDelta*)",
+    "ns": 209740
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "operator new[](unsigned long)",
+    "ns": 207291
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "__memcmp_aarch64",
+    "ns": 205052
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "android::Parcel::enforceInterface(char16_t const*, unsigned long, android::IPCThreadState*) const",
+    "ns": 204635
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "android::RefBase::decStrong(void const*) const",
+    "ns": 204323
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "scudo::SizeClassAllocator64<scudo::AndroidConfig>::pushBlocksImpl(scudo::SizeClassAllocatorLocalCache<scudo::SizeClassAllocator64<scudo::AndroidConfig> >*, unsigned long, scudo::SizeClassAllocator64<scudo::AndroidConfig>::RegionInfo*, unsigned int*, unsigned int, bool)::'lambda'(unsigned long)::operator()(unsigned long) const",
+    "ns": 203542
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "Board::CanTakeSunMoney(int)",
+    "ns": 199739
+  },
+  {
+    "tid": 8635,
+    "thread": "AudioTrack",
+    "symbol": "pthread_detach",
+    "ns": 197084
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "!!!0000!57bc0c31fd2e8aed9ee5412ad100be!e0e02d5532!",
+    "ns": 195468
+  },
+  {
+    "tid": 8557,
+    "thread": "binder:8507_3",
+    "symbol": "scudo_malloc",
+    "ns": 192448
+  },
+  {
+    "tid": 8557,
+    "thread": "binder:8507_3",
+    "symbol": "malloc",
+    "ns": 192448
+  },
+  {
+    "tid": 8557,
+    "thread": "binder:8507_3",
+    "symbol": "operator new(unsigned long)",
+    "ns": 192448
+  },
+  {
+    "tid": 8557,
+    "thread": "binder:8507_3",
+    "symbol": "scudo::Allocator<scudo::AndroidConfig, &(scudo_malloc_postinit)>::allocate(unsigned long, scudo::Chunk::Origin, unsigned long, bool)",
+    "ns": 192448
+  },
+  {
+    "tid": 8619,
+    "thread": "binder:8507_2",
+    "symbol": "__aarch64_cas4_acq",
+    "ns": 192343
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "android::SurfaceComposerClient::Transaction::setTransform(android::sp<android::SurfaceControl> const&, unsigned int)",
+    "ns": 185677
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "Board::DrawProgressMeter(Sexy::Graphics*)",
+    "ns": 181927
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "__aarch64_cas2_acq",
+    "ns": 179219
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "__kernel_clock_gettime",
+    "ns": 178594
+  },
+  {
+    "tid": 8635,
+    "thread": "AudioTrack",
+    "symbol": "android::ClientProxy::releaseBuffer(android::Proxy::Buffer*)",
+    "ns": 177031
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "android::BufferQueueProducer::waitForFreeSlotThenRelock(android::BufferQueueProducer::FreeSlotCaller, std::__1::unique_lock<std::__1::mutex>&, int*) const",
+    "ns": 175990
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "operator new[](unsigned long, std::nothrow_t const&)",
+    "ns": 173958
+  },
+  {
+    "tid": 8557,
+    "thread": "binder:8507_3",
+    "symbol": "android::BLASTBufferQueue::transactionCallback(long, android::sp<android::Fence> const&, std::__1::vector<android::SurfaceControlStats, std::__1::allocator<android::SurfaceControlStats> > const&)",
+    "ns": 173020
+  },
+  {
+    "tid": 8557,
+    "thread": "binder:8507_3",
+    "symbol": "std::__1::__function::__func<std::__1::__bind<std::__1::function<void (void*, long, android::sp<android::Fence> const&, std::__1::vector<android::SurfaceControlStats, std::__1::allocator<android::SurfaceControlStats> > const&)>&, void*&, std::__1::placeholders::__ph<1> const&, std::__1::placeholders::__ph<2> const&, std::__1::placeholders::__ph<3> const&>, std::__1::allocator<std::__1::__bind<std::__1::function<void (void*, long, android::sp<android::Fence> const&, std::__1::vector<android::SurfaceControlStats, std::__1::allocator<android::SurfaceControlStats> > const&)>&, void*&, std::__1::placeholders::__ph<1> const&, std::__1::placeholders::__ph<2> const&, std::__1::placeholders::__ph<3> const&> >, void (long, android::sp<android::Fence> const&, std::__1::vector<android::SurfaceControlStats, std::__1::allocator<android::SurfaceControlStats> > const&)>::operator()(long&&, android::sp<android::Fence> const&, std::__1::vector<android::SurfaceControlStats, std::__1::allocator<android::SurfaceControlStats> > const&)",
+    "ns": 173020
+  },
+  {
+    "tid": 8557,
+    "thread": "binder:8507_3",
+    "symbol": "android::transactionCallbackThunk(void*, long, android::sp<android::Fence> const&, std::__1::vector<android::SurfaceControlStats, std::__1::allocator<android::SurfaceControlStats> > const&) (.__uniq.45450631312074835429881721991590974130)",
+    "ns": 173020
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "scudo::HybridMutex::lockSlow()",
+    "ns": 170469
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "(anonymous namespace)::RefreshGameViewport(LawnApp&)",
+    "ns": 170417
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "!!!0000!74cf0166d7a2bcd8ea8b8421c11d3d!e0e02d5532!",
+    "ns": 167604
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "__on_dlclose_late",
+    "ns": 167396
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "!!!0000!21838a1de4f27ab7cae4bf1026e69d!e0e02d5532!",
+    "ns": 167083
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "android::VectorImpl::finish_vector()",
+    "ns": 165677
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "Challenge::DrawSlotMachine(Sexy::Graphics*)",
+    "ns": 165677
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "Sexy::RenderInterface::RenderFontAtlas(Sexy::Image*, Sexy::Image*, std::__ndk1::span<Sexy::GpuFontGlyph const, 18446744073709551615ul>, bool)",
+    "ns": 165573
+  },
+  {
+    "tid": 8557,
+    "thread": "binder:8507_3",
+    "symbol": "__system_property_add",
+    "ns": 165468
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "Reanimation::GetTrackMatrix(int, Sexy::SexyTransform2D&)",
+    "ns": 164739
+  },
+  {
+    "tid": 8557,
+    "thread": "binder:8507_3",
+    "symbol": "android::Parcel::data() const",
+    "ns": 163646
+  },
+  {
+    "tid": 8557,
+    "thread": "binder:8507_3",
+    "symbol": "android::Parcel::readString16(android::String16*) const",
+    "ns": 163021
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "scudo::HybridMutex::lock()",
+    "ns": 161615
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "!!!0000!847de164e88414f8fdd1cc771b662e!e0e02d5532!",
+    "ns": 159375
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "android::Parcel::readDouble() const",
+    "ns": 155364
+  },
+  {
+    "tid": 8619,
+    "thread": "binder:8507_2",
+    "symbol": "__kernel_clock_gettime",
+    "ns": 154479
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "Coin::Draw(Sexy::Graphics*)",
+    "ns": 154428
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "android::VectorImpl::insertAt(void const*, unsigned long, unsigned long)",
+    "ns": 154114
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "android::VectorImpl::_grow(unsigned long, unsigned long)",
+    "ns": 154114
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "!!!0000!bdf71b398a16aacf6b18af08eb6f3e!e0e02d5532!",
+    "ns": 152761
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "android::SurfaceComposerClient::Transaction::setTransformToDisplayInverse(android::sp<android::SurfaceControl> const&, bool)",
+    "ns": 152397
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "android::VectorImpl::itemSize() const",
+    "ns": 149740
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "android::Parcel::continueWrite(unsigned long)",
+    "ns": 147865
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "scudo::Allocator<scudo::AndroidConfig, &(scudo_malloc_postinit)>::reallocate(void*, unsigned long, unsigned long)",
+    "ns": 147865
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "android::Parcel::writeInplace(unsigned long)",
+    "ns": 147865
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "scudo_realloc",
+    "ns": 147865
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "realloc",
+    "ns": 147865
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "int android::Parcel::write<android::Region>(android::LightFlattenable<android::Region> const&)",
+    "ns": 147865
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "__dtoa",
+    "ns": 146667
+  },
+  {
+    "tid": 8557,
+    "thread": "binder:8507_3",
+    "symbol": "android::TransactionCompletedListener::popReleaseBufferCallbackLocked(android::ReleaseCallbackId const&)",
+    "ns": 144428
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "LawnApp::FinishModelessDialogs()",
+    "ns": 144375
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "__addtf3",
+    "ns": 142605
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "Board::RefreshHudLayout()",
+    "ns": 142239
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "android::findMatchingStat(std::__1::vector<android::SurfaceControlStats, std::__1::allocator<android::SurfaceControlStats> > const&, android::sp<android::SurfaceControl> const&) (.__uniq.45450631312074835429881721991590974130)",
+    "ns": 142188
+  },
+  {
+    "tid": 8635,
+    "thread": "AudioTrack",
+    "symbol": "android::AudioEffect::guidToString(audio_uuid_s const*, char*, unsigned long) (.cfi)",
+    "ns": 140208
+  },
+  {
+    "tid": 8557,
+    "thread": "binder:8507_3",
+    "symbol": "android::Parcel::readInt32() const",
+    "ns": 139896
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "__aarch64_ldadd4_rel",
+    "ns": 135833
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "android::TransactionCompletedListener::popReleaseBufferCallbackLocked(android::ReleaseCallbackId const&)",
+    "ns": 135572
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "android::layer_state_t::layer_state_t()",
+    "ns": 135104
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "std::__1::pair<std::__1::__hash_iterator<std::__1::__hash_node<std::__1::__hash_value_type<android::sp<android::IBinder>, android::ComposerState>, void*>*>, bool> std::__1::__hash_table<std::__1::__hash_value_type<android::sp<android::IBinder>, android::ComposerState>, std::__1::__unordered_map_hasher<android::sp<android::IBinder>, std::__1::__hash_value_type<android::sp<android::IBinder>, android::ComposerState>, android::SurfaceComposerClient::IBinderHash, true>, std::__1::__unordered_map_equal<android::sp<android::IBinder>, std::__1::__hash_value_type<android::sp<android::IBinder>, android::ComposerState>, std::__1::equal_to<android::sp<android::IBinder> >, true>, std::__1::allocator<std::__1::__hash_value_type<android::sp<android::IBinder>, android::ComposerState> > >::__emplace_unique_key_args<android::sp<android::IBinder>, std::__1::piecewise_construct_t const&, std::__1::tuple<android::sp<android::IBinder> const&>, std::__1::tuple<> >(android::sp<android::IBinder> const&, std::__1::piecewise_construct_t const&, std::__1::tuple<android::sp<android::IBinder> const&>&&, std::__1::tuple<>&&)",
+    "ns": 135104
+  },
+  {
+    "tid": 8557,
+    "thread": "binder:8507_3",
+    "symbol": "android::TransactionStats::TransactionStats(android::TransactionStats const&)",
+    "ns": 131615
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "android::gralloc4::encodeMetadataType(android::hardware::graphics::mapper::V4_0::IMapper::MetadataType const&, android::gralloc4::OutputHidlVec*)",
+    "ns": 126875
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "android::gralloc4::encodeDataspace(aidl::android::hardware::graphics::common::Dataspace const&, android::hardware::hidl_vec<unsigned char>*)",
+    "ns": 126875
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "!!!0000!17412be581ad297c56dfd824173f24!e0e02d5532!",
+    "ns": 125312
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "android::Parcel::readString16Inplace(unsigned long*) const",
+    "ns": 123229
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "int android::Parcel::readAligned<int>(int*) const",
+    "ns": 123229
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "TodParticleSystem::Draw(Sexy::Graphics*)",
+    "ns": 122396
+  },
+  {
+    "tid": 8637,
+    "thread": "alsoft-mixer",
+    "symbol": "DeviceBase::renderSamples(std::__ndk1::span<void* const, 18446744073709551615ul>, unsigned int)",
+    "ns": 122344
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "!!!0000!271e7a1e72a9919c9e01c1548d6a39!e0e02d5532!",
+    "ns": 121250
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "android::SurfaceComposerClient::Transaction::setBufferCrop(android::sp<android::SurfaceControl> const&, android::Rect const&)",
+    "ns": 119844
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "android::RefBase::weakref_type::decWeak(void const*)",
+    "ns": 115885
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "android::SharedBuffer::alloc(unsigned long)",
+    "ns": 115833
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "android::Looper::pollInner(int)",
+    "ns": 115833
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "android::VectorImpl::_shrink(unsigned long, unsigned long)",
+    "ns": 115833
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "android::ConsumerBase::onFrameDequeued(unsigned long)",
+    "ns": 114948
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "android::BufferQueue::ProxyConsumerListener::onFrameDequeued(unsigned long)",
+    "ns": 114948
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "std::__1::__hash_table<android::sp<android::gui::WindowInfosListener>, android::gui::SpHash<android::gui::WindowInfosListener>, std::__1::equal_to<android::sp<android::gui::WindowInfosListener> >, std::__1::allocator<android::sp<android::gui::WindowInfosListener> > >::remove(std::__1::__hash_const_iterator<std::__1::__hash_node<android::sp<android::gui::WindowInfosListener>, void*>*>)",
+    "ns": 114948
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "scudo_mallinfo",
+    "ns": 114427
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "Music::MusicUpdate(long)",
+    "ns": 111511
+  },
+  {
+    "tid": 8619,
+    "thread": "binder:8507_2",
+    "symbol": "scudo::getEnv(char const*)",
+    "ns": 111458
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "!!!0000!adaa1cc75d2a1702a5a1a59b2d0d8b!e0e02d5532!",
+    "ns": 110260
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "qglinternal::vkQueueSignalReleaseImageANDROID(VkQueue_T*, unsigned int, VkSemaphore_T* const*, VkImage_T*, int*)",
+    "ns": 110260
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "qglinternal::vkCmdBindDescriptorSets(VkCommandBuffer_T*, VkPipelineBindPoint, VkPipelineLayout_T*, unsigned int, unsigned int, VkDescriptorSet_T* const*, unsigned int, unsigned int const*)",
+    "ns": 109739
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "Sexy::WidgetContainer::MarkDirty()",
+    "ns": 109427
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "android::SurfaceComposerClient::Transaction::addTransactionCompletedCallback(std::__1::function<void (void*, long, android::sp<android::Fence> const&, std::__1::vector<android::SurfaceControlStats, std::__1::allocator<android::SurfaceControlStats> > const&)>, void*)",
+    "ns": 108803
+  },
+  {
+    "tid": 8635,
+    "thread": "AudioTrack",
+    "symbol": "android::RefBase::incStrong(void const*) const",
+    "ns": 108125
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "Sexy::Graphics::MeasureWordWrappedHeight(Sexy::_Font&, int, std::__ndk1::basic_string<char, std::__ndk1::char_traits<char>, std::__ndk1::allocator<char> > const&, int, int*, bool)",
+    "ns": 107656
+  },
+  {
+    "tid": 8619,
+    "thread": "binder:8507_2",
+    "symbol": "__aarch64_ldadd4_rel",
+    "ns": 107500
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "vsnprintf",
+    "ns": 106980
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "android::CloseableScopedTrace::CloseableScopedTrace(unsigned long, bool, char const*, ...)",
+    "ns": 106980
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "__cmsg_nxthdr",
+    "ns": 106979
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "android::RefBase::incStrongRequireStrong(void const*) const",
+    "ns": 105468
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "!!!0000!cd2cb05f27aa6281b8a7c3b69e13ec!e0e02d5532!",
+    "ns": 105260
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "qglinternal::vkCmdBindVertexBuffers(VkCommandBuffer_T*, unsigned int, unsigned int, VkBuffer_T* const*, unsigned long const*)",
+    "ns": 103177
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "scudo::SizeClassAllocatorLocalCache<scudo::SizeClassAllocator64<scudo::AndroidConfig> >::refill(scudo::SizeClassAllocatorLocalCache<scudo::SizeClassAllocator64<scudo::AndroidConfig> >::PerClass*, unsigned long)",
+    "ns": 103021
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "scudo::SizeClassAllocator64<scudo::AndroidConfig>::popBatch(scudo::SizeClassAllocatorLocalCache<scudo::SizeClassAllocator64<scudo::AndroidConfig> >*, unsigned long)",
+    "ns": 103021
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "android::Parcel::ipcSetDataReference(unsigned char const*, unsigned long, unsigned long long const*, unsigned long, void (*)(unsigned char const*, unsigned long, unsigned long long const*, unsigned long))",
+    "ns": 102656
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "android::Parcel::hasFileDescriptorsInRange(unsigned long, unsigned long, bool*) const",
+    "ns": 102656
+  },
+  {
+    "tid": 8557,
+    "thread": "binder:8507_3",
+    "symbol": "void std::__1::allocator_traits<std::__1::allocator<std::__1::__hash_node<std::__1::__hash_value_type<android::CallbackId, android::TransactionCompletedListener::CallbackTranslation>, void*> > >::__destroy<std::__1::pair<android::CallbackId const, android::TransactionCompletedListener::CallbackTranslation> >(std::__1::integral_constant<bool, false>, std::__1::allocator<std::__1::__hash_node<std::__1::__hash_value_type<android::CallbackId, android::TransactionCompletedListener::CallbackTranslation>, void*> >&, std::__1::pair<android::CallbackId const, android::TransactionCompletedListener::CallbackTranslation>*)",
+    "ns": 101146
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "__d2b_D2A",
+    "ns": 99271
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "!!!0000!652a9e46d4bc24b4fe7dfb68950393!e0e02d5532!",
+    "ns": 98750
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "!!!0000!cb660145c9dd7ff1dd2ec819a78706!e0e02d5532!",
+    "ns": 98750
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "!!!0000!f72a1fb123f53418a18fe5b816bfb0!e0e02d5532!",
+    "ns": 98386
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "Board::HasConveyorBeltSeedBank()",
+    "ns": 98333
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "vulkan::api::(anonymous namespace)::CmdPushConstants(VkCommandBuffer_T*, VkPipelineLayout_T*, unsigned int, unsigned int, unsigned int, void const*)",
+    "ns": 96823
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "android::Parcel::continueWrite(unsigned long)",
+    "ns": 96666
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "android::Parcel::setDataSize(unsigned long)",
+    "ns": 96666
+  },
+  {
+    "tid": 8619,
+    "thread": "binder:8507_2",
+    "symbol": "scudo_free",
+    "ns": 95417
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "std::__1::allocator<android::SurfaceControlStats>::destroy(android::SurfaceControlStats*)",
+    "ns": 95000
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "std::__ndk1::vector<Sexy::(anonymous namespace)::DrawStream*, std::__ndk1::allocator<Sexy::(anonymous namespace)::DrawStream*> >::__throw_length_error[abi:ne180000]() const",
+    "ns": 92916
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "android::gralloc4::decodeMetadataType(android::gralloc4::InputHidlVec*, android::hardware::graphics::mapper::V4_0::IMapper::MetadataType*)",
+    "ns": 90365
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "gralloc::BufferManager::SetMetadata(qtigralloc::private_handle_t*, long, android::hardware::hidl_vec<unsigned char>)",
+    "ns": 90365
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "android::gralloc4::validateMetadataType(android::gralloc4::InputHidlVec*, android::hardware::graphics::mapper::V4_0::IMapper::MetadataType const&)",
+    "ns": 90365
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "vendor::qti::hardware::display::mapper::V4_0::implementation::QtiMapper::set(void*, android::hardware::graphics::mapper::V4_0::IMapper::MetadataType const&, android::hardware::hidl_vec<unsigned char> const&)",
+    "ns": 90365
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "android::gralloc4::decodeDataspace(android::hardware::hidl_vec<unsigned char> const&, aidl::android::hardware::graphics::common::Dataspace*)",
+    "ns": 90365
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "!!!0000!de40b54d66160de83358f0d370d54c!e0e02d5532!",
+    "ns": 89948
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "__aarch64_ldadd4_relax",
+    "ns": 89010
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "Sexy::BassMusicInterface::Update()",
+    "ns": 88802
+  },
+  {
+    "tid": 8635,
+    "thread": "AudioTrack",
+    "symbol": "android::sp_report_stack_pointer()",
+    "ns": 88490
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "qglinternal::vkCmdSetScissor(VkCommandBuffer_T*, unsigned int, unsigned int, VkRect2D const*)",
+    "ns": 87709
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "Zombie::HasShadow()",
+    "ns": 87604
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "android::sp_report_stack_pointer()",
+    "ns": 87032
+  },
+  {
+    "tid": 8637,
+    "thread": "alsoft-mixer",
+    "symbol": "MixDirectHrtf_NEON(std::__ndk1::span<float, 1024ul>, std::__ndk1::span<float, 1024ul>, std::__ndk1::span<std::__ndk1::array<float, 1024ul> const, 18446744073709551615ul>, std::__ndk1::span<std::__ndk1::array<float, 2ul>, 18446744073709551615ul>, std::__ndk1::span<float, 1024ul>, std::__ndk1::span<HrtfChannelState, 18446744073709551615ul>, unsigned long, unsigned long)",
+    "ns": 86511
+  },
+  {
+    "tid": 8619,
+    "thread": "binder:8507_2",
+    "symbol": "std::bad_array_new_length::what() const",
+    "ns": 86406
+  },
+  {
+    "tid": 8619,
+    "thread": "binder:8507_2",
+    "symbol": "std::__1::__function::__func<android::AsyncProducerListener::onBufferReleased()::'lambda'(), std::__1::allocator<android::AsyncProducerListener::onBufferReleased()::'lambda'()>, void ()>::~__func()",
+    "ns": 85834
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "android::Surface::hook_dequeueBuffer(ANativeWindow*, ANativeWindowBuffer**, int*)",
+    "ns": 85625
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "std::__1::__shared_mutex_base::lock_shared()",
+    "ns": 85625
+  },
+  {
+    "tid": 8557,
+    "thread": "binder:8507_3",
+    "symbol": "android_fdsan_get_fd_table",
+    "ns": 85364
+  },
+  {
+    "tid": 8635,
+    "thread": "AudioTrack",
+    "symbol": "__aarch64_cas2_acq",
+    "ns": 80156
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "__libc_init",
+    "ns": 78802
+  },
+  {
+    "tid": 8557,
+    "thread": "binder:8507_3",
+    "symbol": "android::Parcel::unflattenBinder(android::sp<android::IBinder>*) const",
+    "ns": 78698
+  },
+  {
+    "tid": 8557,
+    "thread": "binder:8507_3",
+    "symbol": "android::ProcessState::init(char const*, bool)",
+    "ns": 78698
+  },
+  {
+    "tid": 8557,
+    "thread": "binder:8507_3",
+    "symbol": "android::Parcel::readStrongBinder(android::sp<android::IBinder>*) const",
+    "ns": 78698
+  },
+  {
+    "tid": 8557,
+    "thread": "binder:8507_3",
+    "symbol": "__aarch64_ldadd4_relax",
+    "ns": 78698
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "TodTriangleGroup::AddTriangle(Sexy::Graphics*, Sexy::Image*, Sexy::SexyMatrix3 const&, Sexy::TRect<int> const&, Sexy::Color const&, int, Sexy::TRect<int> const&)",
+    "ns": 77968
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "void std::__1::allocator_traits<std::__1::allocator<std::__1::__hash_node<std::__1::__hash_value_type<android::CallbackId, android::TransactionCompletedListener::CallbackTranslation>, void*> > >::__destroy<std::__1::pair<android::CallbackId const, android::TransactionCompletedListener::CallbackTranslation> >(std::__1::integral_constant<bool, false>, std::__1::allocator<std::__1::__hash_node<std::__1::__hash_value_type<android::CallbackId, android::TransactionCompletedListener::CallbackTranslation>, void*> >&, std::__1::pair<android::CallbackId const, android::TransactionCompletedListener::CallbackTranslation>*)",
+    "ns": 77500
+  },
+  {
+    "tid": 8557,
+    "thread": "binder:8507_3",
+    "symbol": "decltype(auto) std::__1::__variant_detail::__visitation::__base::__dispatcher<1ul>::__dispatch<std::__1::__variant_detail::__destructor<std::__1::__variant_detail::__traits<long, android::sp<android::Fence> >, (std::__1::__variant_detail::_Trait)1>::__destroy()::'lambda'(auto&)&&, std::__1::__variant_detail::__base<(std::__1::__variant_detail::_Trait)1, long, android::sp<android::Fence> >&>(auto, std::__1::__variant_detail::__base<(std::__1::__variant_detail::_Trait)1, long, android::sp<android::Fence> >&)",
+    "ns": 77448
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "int android::Parcel::writeData<std::__1::vector<android::CallbackId, std::__1::allocator<android::CallbackId> >, true>(std::__1::vector<android::CallbackId, std::__1::allocator<android::CallbackId> > const&)",
+    "ns": 76510
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "!!!0000!920bd9a7b55e5c5730d91d3c1a10a4!e0e02d5532!",
+    "ns": 74896
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "!!!0000!9ccc0ce405e3b9be299bc3a9cdc953!e0e02d5532!",
+    "ns": 74896
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "!!!0000!278fb05c33760e67d2116e5acdc0a0!e0e02d5532!",
+    "ns": 74896
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "GridItem::DrawGridItem(Sexy::Graphics*)",
+    "ns": 73020
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "Sexy::DrawAtlasImageScaled(Sexy::Graphics*, Sexy::TextureSource const&, Sexy::TextureRegion const&, float, float, float, float)",
+    "ns": 73020
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "sysconf",
+    "ns": 72657
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "TodParticleSystem::Update(unsigned long, long)",
+    "ns": 72448
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "std::__1::mutex::unlock()",
+    "ns": 71406
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "ANativeWindow_getWidth",
+    "ns": 70833
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "android::BufferQueueProducer::query(int, int*)",
+    "ns": 70833
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "android::Surface::query(int, int*) const",
+    "ns": 70833
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "Board::GetCurrentPlantCost(SeedType, SeedType)",
+    "ns": 70781
+  },
+  {
+    "tid": 8637,
+    "thread": "alsoft-mixer",
+    "symbol": "slTraceLeaveInterface(char const*, unsigned int)",
+    "ns": 69270
+  },
+  {
+    "tid": 8637,
+    "thread": "alsoft-mixer",
+    "symbol": "IBufferQueue_Enqueue(SLBufferQueueItf_ const* const*, void const*, unsigned int)",
+    "ns": 69270
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "!!!0000!de97f8279eb621e60cfe80b3c69fa7!e0e02d5532!",
+    "ns": 66563
+  },
+  {
+    "tid": 8619,
+    "thread": "binder:8507_2",
+    "symbol": "android::RefBase::incStrongRequireStrong(void const*) const",
+    "ns": 66354
+  },
+  {
+    "tid": 8535,
+    "thread": "binder:8507_1",
+    "symbol": "android::ListenerStats::writeToParcel(android::Parcel*) const",
+    "ns": 65052
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "android::Region::boolean_operation(unsigned int, android::Region&, android::Region const&, android::Rect const&, int, int)",
+    "ns": 64740
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "std::__ndk1::chrono::steady_clock::now()",
+    "ns": 64740
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "scudo::HybridMutex::tryLock()",
+    "ns": 62812
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "SeedPacket::Draw(Sexy::Graphics*)",
+    "ns": 62343
+  },
+  {
+    "tid": 8637,
+    "thread": "alsoft-mixer",
+    "symbol": "DeviceBase::Process(Bs2bPostProcess const&, unsigned long)",
+    "ns": 59688
+  },
+  {
+    "tid": 8619,
+    "thread": "binder:8507_2",
+    "symbol": "std::__1::__function::__func<android::AsyncProducerListener::onBufferReleased()::'lambda'(), std::__1::allocator<android::AsyncProducerListener::onBufferReleased()::'lambda'()>, void ()>::destroy_deallocate()",
+    "ns": 58542
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "std::__1::pair<std::__1::__hash_iterator<std::__1::__hash_node<std::__1::__hash_value_type<android::sp<android::ITransactionCompletedListener>, android::SurfaceComposerClient::CallbackInfo>, void*>*>, bool> std::__1::__hash_table<std::__1::__hash_value_type<android::sp<android::ITransactionCompletedListener>, android::SurfaceComposerClient::CallbackInfo>, std::__1::__unordered_map_hasher<android::sp<android::ITransactionCompletedListener>, std::__1::__hash_value_type<android::sp<android::ITransactionCompletedListener>, android::SurfaceComposerClient::CallbackInfo>, android::SurfaceComposerClient::TCLHash, true>, std::__1::__unordered_map_equal<android::sp<android::ITransactionCompletedListener>, std::__1::__hash_value_type<android::sp<android::ITransactionCompletedListener>, android::SurfaceComposerClient::CallbackInfo>, std::__1::equal_to<android::sp<android::ITransactionCompletedListener> >, true>, std::__1::allocator<std::__1::__hash_value_type<android::sp<android::ITransactionCompletedListener>, android::SurfaceComposerClient::CallbackInfo> > >::__emplace_unique_key_args<android::sp<android::ITransactionCompletedListener>, std::__1::piecewise_construct_t const&, std::__1::tuple<android::sp<android::ITransactionCompletedListener>&&>, std::__1::tuple<> >(android::sp<android::ITransactionCompletedListener> const&, std::__1::piecewise_construct_t const&, std::__1::tuple<android::sp<android::ITransactionCompletedListener>&&>&&, std::__1::tuple<>&&)",
+    "ns": 57761
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "android::gui::LayerMetadata::LayerMetadata(android::gui::LayerMetadata const&)",
+    "ns": 49896
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "Board::DrawGameObjects(Sexy::Graphics*)::$_4::__invoke(Board*, Sexy::Graphics*, RenderItem&)",
+    "ns": 49531
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "Reanimation::UpdateAttacherTrack(int)",
+    "ns": 34844
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "Zombie::UpdateReanim(long, long, long)",
+    "ns": 34584
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "void Sexy::VulkanRenderer::Impl::Draw<false>(std::__ndk1::span<Sexy::GpuVertex const, 18446744073709551615ul>, Sexy::VulkanTexture*, VkPipeline_T*, Sexy::GpuClip const*, int, int)",
+    "ns": 34375
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "Sexy::Widget::WriteCenteredLine(Sexy::Graphics*, int, std::__ndk1::basic_string<char, std::__ndk1::char_traits<char>, std::__ndk1::allocator<char> > const&)",
+    "ns": 28438
+  },
+  {
+    "tid": 8596,
+    "thread": "Thread-2",
+    "symbol": "!!!0000!75c0859c3a27cca4e4dcaff3626873!e0e02d5532!",
+    "ns": 27188
+  }
+]

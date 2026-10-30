@@ -1,3 +1,4 @@
+#include "SexyAppFramework/graphics/PoolMesh.h"
 #include "MetalRenderer.h"
 #include "MetalContext.h"
 #include "MetalShaderTypes.h"
@@ -62,7 +63,7 @@ struct MetalRenderer::Impl {
     int width, height;
     bool sceneOpen = false, imageOnly = false, initialized = false;
     bool causticQueued = false;
-    uint32_t causticCounter = 0;
+    unsigned long long causticTimeNs = 0;
     MetalTexture* causticTarget = nullptr;
 
     Impl(MetalContext& c, int w, int h, const std::filesystem::path& directory)
@@ -787,10 +788,10 @@ void MetalRenderer::UseCausticsTexture(MetalTexture* target, MetalTexture* sourc
     s.causticTarget = target;
     s.causticSource = source;
 }
-void MetalRenderer::SetCausticsFrame(uint32_t counter) {
+void MetalRenderer::SetCausticsTimeNs(unsigned long long timeNs) {
     auto& s = *impl_;
-    if (s.sceneOpen) throw std::logic_error("Set Metal caustics counter between scenes");
-    s.causticCounter = counter;
+    if (s.sceneOpen) throw std::logic_error("Set Metal caustics nanosecond time between scenes");
+    s.causticTimeNs = timeNs;
     s.causticQueued = s.causticTarget != nullptr;
 }
 bool MetalRenderer::HasCausticsCompute() const { return impl_->causticKernel != nil; }
@@ -802,7 +803,8 @@ bool MetalRenderer::BeginScene() {
     s.Begin();
     if (s.causticQueued && s.causticTarget) {
         s.Snapshot(s.causticTarget);
-        const MetalCausticConstants constants{s.causticCounter};
+        const auto offsets=EvaluatePoolCaustics(s.causticTimeNs);
+        const MetalCausticConstants constants{offsets.u0,offsets.u1,offsets.v1};
         const std::array inputs{s.causticSource};
         s.Compute(s.causticKernel, s.causticTarget, inputs, &constants, sizeof(constants), 128, 64, 4);
         s.causticQueued = false;

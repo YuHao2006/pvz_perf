@@ -1,9 +1,10 @@
-﻿#pragma once
+#pragma once
 #include "SexyAppFramework/platform/NativeHandles.h"
 #include <vulkan/vulkan.h>
 #include <cstdint>
 #include <optional>
 #include <vector>
+#include <array>
 
 using VulkanGpuFilter = bool (*)(VkPhysicalDevice);
 struct VulkanInitConfig {
@@ -71,12 +72,14 @@ public:
     std::vector<VkImageView> swapchainViews;
     VkRenderPass renderPass = VK_NULL_HANDLE;
 
+    static constexpr unsigned int kFramesInFlight = 2;
     struct FrameContext {
         VkCommandBuffer cmd = VK_NULL_HANDLE;
         uint32_t imageIndex = 0;
         VkExtent2D extent{};
         bool valid = false;
         unsigned long long serial = 0;
+        unsigned int resourceIndex = 0;
     };
     // Zero-size/minimized surfaces defer without acquiring or destroying assets.
     bool RecreateSwapchain();
@@ -116,9 +119,11 @@ private:
         VkCommandBuffer cmd = VK_NULL_HANDLE;
         VkSemaphore acquired = VK_NULL_HANDLE;
         VkFence fence = VK_NULL_HANDLE;
+        unsigned long long serial = 0;
 
     };
-    FrameResources frameResources_{};
+    std::array<FrameResources, kFramesInFlight> frameResources_{};
+    unsigned int frameResourceIndex_ = 0;
     std::vector<VkSemaphore> renderFinished_;
     bool frameActive_ = false;
     bool frameLoopFailed_ = false;

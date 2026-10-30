@@ -52,7 +52,7 @@ Windows MSVC /O2 /GL /LTCG。固定LP14和LP15及OS调度分别测试，频率�
 | mApplicationTimeNs | SexyAppBase | 实际应用更新推进；Board暂停仍可推进，音乐等使用 |
 | mVisualTimeNs | ReanimationHolder，场景负责推进 | 通常LawnApp推进；普通Board暂停冻结，Store是继续推进的例外；Credits接管并随其暂停冻结 |
 | mLevelTimeNs | Board | 仅Battle场景有效推进；暂停、选卡过场及time-stop冻结 |
-| 水面出生／发布时刻 | PoolEffect | Visual时间减出生时间得相位；冻结／场景间隙平移出生时间，不是额外的全局时钟 |
+| 水面出生／发布时刻 | PoolEffect | 管理者时间减出生时间得相位；冻结／场景间隙平移出生时间，不是额外的全局时钟 |
 | CutScene、选卡、Credits局部计时 | 各界面 | 动画主要复用Visual；局部倒计时及Credits墙钟同步不等于独立工作域 |
 
 正常战斗同时推进Battle和Visual；无尽选卡冻结保留战斗对象，仅Visual继续。普通暂停通常两者都冻结，Store暂停Battle但推进Visual。主菜单、从主菜单进入的图鉴、独立Credits主要只有Visual动画工作。花园等Board场景可能同时有Board时间和Visual对象，不能仅因不是战斗就认定只有一个域；应按实际非空工作批次调度。
@@ -83,4 +83,10 @@ PoolEffectUpdate维护出生／采样基准并写renderer的caustics.timeNs；�
 
 ## 水面出生时间与冻结
 
-寒冰菇不暂停全局Visual。Board在mIceTrapCounter非零时跳过水面更新，其他Visual工作仍可推进。水面已改为出生时间与已发布采样时刻之差求相位；恢复时将未允许推进的时间平移进出生值，渲染快照仍停在旧相位，不会跳跃或补播。发布时刻还用于识别场景未更新间隙及同一时间的重复调用，不保存另一份累计年龄。寒冰菇对POOL_SPARKLY显式设mDontUpdate=false，不能误记成冻结闪光粒子。
+寒冰菇不暂停全局Visual。Board在mIceTrapCounter非零时跳过水面更新，其他Visual工作仍可推进。水面已改为出生时间与已发布采样时刻之差求相位；恢复时将未允许推进的时间平移进出生值，渲染快照仍停在旧相位，不会跳跃或补播。发布时刻还用于识别场景未更新间隙及同一时间的重复调用，不保存另一份累计年龄。此处早先依据重建源码判断寒冰菇不冻结闪光，现已被1073发行EXE证据推翻：0x469EFF写入mDontUpdate=1，已修正为冻结。
+
+## Board时钟水面与音乐任务
+
+水面和POOL_SPARKLY在关卡内都由Board时间驱动；UI场景仍由其持有者传入相应时间。执行于visual worker不意味着使用Visual时钟。用户选择普通暂停／选卡随Board停止，并保留寒冰菇的局部冻结。原版初次选卡仍有闪光的行为不再作为当前默认目标。1073 IceZombies的0x469EFF证实闪光冻结标志为true；结束时Board解除。运行时测试直接调用实际Plant::IceZombies，覆盖水面与闪光同时冻结／恢复，而非只修改测试标志。
+
+音乐由控制状态机与BASS播放两部分构成。控制更新包括主旋律／鼓点／hihat声部、高潮进入／退出及淡入淡出；高潮触发会读取屏幕僵尸数，按音乐实际order/row边界切换鼓点，Resync通过调整BPM同步声部。音乐时间不改为Board时间：应用时间与音频播放位置仍是所需输入。移至后台任务需单一持有音乐控制状态，接收暂停、曲目、音量等有序命令及不可变Board状态快照；不得并发读取活体Board或同时从UI改写同一slot。visual任务不得阻塞等GPU完成，否则会拖延音乐控制。

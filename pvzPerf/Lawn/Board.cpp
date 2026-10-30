@@ -7164,19 +7164,7 @@ void Board::Update()
 	}
 
 	const auto aVisualNowNs = mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs;
-	TodParticleSystem* aPoolSparkly = mApp->ParticleTryToGet(mPoolSparklyParticleID);
-	if (aPoolSparkly)
-	{
-		// Retail updates pool sparkles during the initial chooser, before the
-		// battle clock starts. Rebase after loading or a paused visual-clock gap
-		// without simulating that gap; mDontUpdate still owns ice/repick freezes.
-		const auto aPreviousVisualNs = ReanimClock::Subtract(aVisualNowNs,
-			static_cast<std::int64_t>(Sexy::gUpdateIntervalNs));
-		if (aPoolSparkly->mLastUpdateTimeNs != aPreviousVisualNs &&
-			aPoolSparkly->mLastUpdateTimeNs != aVisualNowNs)
-			aPoolSparkly->Update(0, aPreviousVisualNs);
-	}
-	mApp->mEffectSystem->UpdateAt(aVisualNowNs, static_cast<std::int64_t>(mLevelTimeNs), aPoolSparkly);
+    mApp->mEffectSystem->UpdateAt(aVisualNowNs, static_cast<std::int64_t>(mLevelTimeNs));
 	mAdvice->Update();
 	UpdateTutorial();
 
@@ -7218,13 +7206,13 @@ void Board::Update()
 	++mEffectCounter;
 	if (StageHasPool() && !mIceTrapCounter && mApp->mGameScene != GameScenes::SCENE_ZOMBIES_WON && !mCutScene->IsSurvivalRepick())
 	{
-		// 只传入经过的纳秒数；水面不读取 Board 或其他时间域。
-		mApp->mPoolEffect->PoolEffectUpdate(aVisualNowNs, Sexy::gUpdateIntervalNs);
+        // Execution may move to the visual worker; its source time remains Board.
+        mApp->mPoolEffect->PoolEffectUpdate(static_cast<long long>(mLevelTimeNs), aLevelDeltaNs);
 	}
 	if (mBackground == BackgroundType::BACKGROUND_3_POOL && mPoolSparklyParticleID == ParticleSystemID::PARTICLESYSTEMID_NULL && mDrawCount > 0)
 	{
 		int aRenderPosition = MakeRenderOrder(RenderLayer::RENDER_LAYER_GROUND, 2, 0);
-		TodParticleSystem* aPoolParticle = mApp->AddTodParticle(450, 295, aRenderPosition, ParticleEffect::PARTICLE_POOL_SPARKLY, aVisualNowNs);
+		TodParticleSystem* aPoolParticle = mApp->AddTodParticle(450, 295, aRenderPosition, ParticleEffect::PARTICLE_POOL_SPARKLY, static_cast<std::int64_t>(mLevelTimeNs));
 		mPoolSparklyParticleID = mApp->ParticleGetID(aPoolParticle);
 	}
 

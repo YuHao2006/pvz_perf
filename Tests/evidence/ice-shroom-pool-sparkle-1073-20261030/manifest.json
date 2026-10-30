@@ -1,0 +1,7 @@
+{
+  "exe_sha256": "5f650f52d12751e08b63e590edb0d9b9f09d087cea900baa0eb39e4af8eda251",
+  "ice_counter_write": "0x469ECC: Board+0x5630 = 300",
+  "sparkle_lookup": "Board+0x5638",
+  "freeze_write": "0x469EFF: particle system byte +0x24 = 1",
+  "conclusion": "Ice-shroom freezes pool sparkle in exact 1073 EXE. Project false write was incorrect; corrected to true. Prior statement that ice explicitly permits sparkle updates is superseded."
+}

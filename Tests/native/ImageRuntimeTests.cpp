@@ -2336,7 +2336,56 @@ void PoolScenePixels(SexyAppBase& app)
     auto& render=*app.mDDInterface->mRenderInterface;
     PoolEffect pool;
     pool.PoolEffectInitialize();
-    pool.mPoolTimeNs=970'000'000ull;
+    for (const long long step : {33'333'333LL,10'000'000LL,4'166'666LL,1'000'000LL})
+    {
+        pool.mBirthTimeNs=pool.mSampleTimeNs=0;
+        long long now=0,expectedAge=0;
+        for (int i=0;i<200;++i)
+        {
+            const auto actual=step+i%3;
+            now+=actual;
+            const bool frozen=i%17<5;
+            pool.PoolEffectUpdate(now,frozen?0:actual);
+            if (!frozen) expectedAge+=actual;
+            Require(pool.mSampleTimeNs-pool.mBirthTimeNs==expectedAge,
+                "Pool birth-time phase drifted through jitter/freeze");
+            if (i%11==0)
+            {
+                pool.PoolEffectUpdate(now,actual);
+                Require(pool.mSampleTimeNs-pool.mBirthTimeNs==expectedAge,
+                    "Two pool owners advanced the same timestamp twice");
+            }
+        }
+        // Ice/repick/paused paths skip the update entirely. Resume must translate
+        // birth by that gap instead of adding it to the visual phase.
+        const auto birthBefore=pool.mBirthTimeNs;
+        now+=3'000'000'000LL;
+        pool.PoolEffectUpdate(now,0);
+        Require(pool.mBirthTimeNs==birthBefore+3'000'000'000LL &&
+            pool.mSampleTimeNs-pool.mBirthTimeNs==expectedAge,
+            "Pool freeze gap was not absorbed by birth");
+        now+=step;
+        pool.PoolEffectUpdate(now,step);expectedAge+=step;
+        Require(pool.mSampleTimeNs-pool.mBirthTimeNs==expectedAge,
+            "Pool resume jumped phase");
+        now+=17'000'000'000LL+step;
+        pool.PoolEffectUpdate(now,step);expectedAge+=step;
+        Require(pool.mSampleTimeNs-pool.mBirthTimeNs==expectedAge,
+            "Pool inherited inactive scene time when changing owner");
+        now=123;
+        pool.PoolEffectUpdate(now,0);
+        Require(pool.mSampleTimeNs-pool.mBirthTimeNs==expectedAge,
+            "Pool clock epoch rebind changed phase");
+        const auto oldBirth=pool.mBirthTimeNs,oldSample=pool.mSampleTimeNs;
+        bool rejected=false;
+        try { pool.PoolEffectUpdate(now,~0ull); }
+        catch (const std::overflow_error&) { rejected=true; }
+        Require(rejected && pool.mBirthTimeNs==oldBirth && pool.mSampleTimeNs==oldSample,
+            "Invalid pool interval mutated the clock sample");
+    }
+    std::cout<<"PASS pool birth clock: 30/100/240/1000Hz jitter, freeze/resume, duplicate owner, scene gap and epoch rebind\n";
+    pool.mSampleTimeNs=970'000'000;
+    pool.mBirthTimeNs=0;
     render.SetCausticsTimeNs(970'000'000ull);
     for (int width:{800,1400})
     {

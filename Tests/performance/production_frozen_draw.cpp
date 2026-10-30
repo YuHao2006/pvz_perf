@@ -104,7 +104,8 @@ int main(int argc, char** argv)
             zombie->mX = 320.0f + col * 43.0f;
             zombie->mVelX = 0;
         }
-        app.mPoolEffect->mPoolTimeNs = 2'560'000'000ull;
+        app.mPoolEffect->mSampleTimeNs = 2'560'000'000;
+        app.mPoolEffect->mBirthTimeNs = 0;
         auto& render = *app.mDDInterface->mRenderInterface;
         auto& gpu = *render.mRenderer;
         Require(gpu.sceneWidth == 800 && gpu.sceneHeight == 600, "Fixture requires 800x600 scene");

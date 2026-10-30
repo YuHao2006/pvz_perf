@@ -7219,7 +7219,7 @@ void Board::Update()
 	if (StageHasPool() && !mIceTrapCounter && mApp->mGameScene != GameScenes::SCENE_ZOMBIES_WON && !mCutScene->IsSurvivalRepick())
 	{
 		// 只传入经过的纳秒数；水面不读取 Board 或其他时间域。
-		mApp->mPoolEffect->PoolEffectUpdate(Sexy::gUpdateIntervalNs);
+		mApp->mPoolEffect->PoolEffectUpdate(aVisualNowNs, Sexy::gUpdateIntervalNs);
 	}
 	if (mBackground == BackgroundType::BACKGROUND_3_POOL && mPoolSparklyParticleID == ParticleSystemID::PARTICLESYSTEMID_NULL && mDrawCount > 0)
 	{

@@ -527,13 +527,16 @@ def audit_portable_fix_parity(audit: Audit) -> None:
     pool_init = function_body(pool, "PoolEffect::PoolEffectInitialize")
     pool_draw = function_body(pool, "PoolEffect::PoolEffectDraw")
     audit.require(
-        "mPoolTimeNs = 0" in pool_init
+        "mBirthTimeNs = 0" in pool_init
+        and "mSampleTimeNs = 0" in pool_init
         and "unsigned long long" in pool_header
-        and "mPoolTimeNs" in pool_header,
-        "pool animation clock is not an initialized integer nanosecond age",
+        and "long long mBirthTimeNs" in pool_header
+        and "long long mSampleTimeNs" in pool_header,
+        "pool animation clock is not an initialized integer birth/sample pair",
     )
     audit.require(
-        "mPoolTimeNs % 1'584'000'000'000ull" in pool_draw
+        "mSampleTimeNs - mBirthTimeNs" in pool_draw
+        and "% 1'584'000'000'000ull" in pool_draw
         and "*2*PI" in pool_draw
         and "phase/8'000'000'000.0" in pool_draw,
         "pool phase no longer preserves GOTY 1073's speed and exact period",

@@ -1886,7 +1886,10 @@ void PoolSparkleOwnerClockRuntime(TestApp& app, int hz)
     Sexy::gUpdateIntervalNs=step;
     Sexy::gUpdateTicks=100.0/hz;
     Sexy::gStepsPerLegacyTick=hz/100.0;
-    auto* sparkle=app.AddTodParticle(450,295,0,PARTICLE_POOL_SPARKLY,holder.mVisualTimeNs);
+    board.mNumWaves=20;
+    board.mZombieCountDown=1'000'000;
+    auto* sparkle=app.AddTodParticle(450,295,0,PARTICLE_POOL_SPARKLY,
+        static_cast<std::int64_t>(board.mLevelTimeNs));
     board.mPoolSparklyParticleID=app.ParticleGetID(sparkle);
     auto* emitter=sparkle->EmitterRosterEmitterAt(0);
     const auto birth=emitter->mBirthTimeNs;
@@ -1894,47 +1897,69 @@ void PoolSparkleOwnerClockRuntime(TestApp& app, int hz)
         holder.mVisualTimeNs+=step;
         board.Update();
     }
+    Require(board.mLevelTimeNs==0 && sparkle->mLastUpdateTimeNs==0 &&
+        emitter->mBirthTimeNs==birth && pool.mSampleTimeNs-pool.mBirthTimeNs==0,
+        "Chooser water or sparkle followed Visual instead of frozen Board time");
+    app.mGameScene=SCENE_PLAYING;
+    for (int frame=0;frame<hz/2;++frame) {
+        holder.mVisualTimeNs+=step;
+        board.Update();
+    }
     int live=0;
     for (int i=0;i<sparkle->EmitterRosterCount();++i)
         live+=sparkle->EmitterRosterEmitterAt(i)->ParticleRosterCount();
-    Require(board.mLevelTimeNs==0 && live>0 && !sparkle->mIsAttachment &&
-        emitter->mBirthTimeNs==birth && sparkle->mLastUpdateTimeNs==holder.mVisualTimeNs,
-        "Initial pool chooser did not emit visible globally queued sparkles at zero battle time");
+    Require(live>0 && sparkle->mLastUpdateTimeNs==static_cast<std::int64_t>(board.mLevelTimeNs),
+        "Combat pool sparkles did not consume Board time");
     const auto age=sparkle->mLastUpdateTimeNs-emitter->mBirthTimeNs;
+    const auto waterAge=pool.mSampleTimeNs-pool.mBirthTimeNs;
     board.mPaused=true;
     holder.mVisualTimeNs+=10'000'000'000;
     board.Update();
-    Require(sparkle->mLastUpdateTimeNs-emitter->mBirthTimeNs==age,
-        "Paused Board advanced pool sparkle age");
+    Require(sparkle->mLastUpdateTimeNs-emitter->mBirthTimeNs==age &&
+        pool.mSampleTimeNs-pool.mBirthTimeNs==waterAge,
+        "Paused water consumed advancing Visual time");
     board.mPaused=false;
-    holder.mVisualTimeNs+=step;
-    board.Update();
-    Require(sparkle->mLastUpdateTimeNs-emitter->mBirthTimeNs==age+step,
-        "Pool sparkle caught up paused visual time on resume");
-    // Loading projects saved ages onto the Board epoch. Rebinding must preserve
-    // that age and consume only the next owner-supplied visual step.
-    sparkle->Update(0,0);
-    holder.mVisualTimeNs+=step;
-    board.Update();
-    Require(sparkle->mLastUpdateTimeNs-emitter->mBirthTimeNs==age+2*step,
-        "Pool sparkle clock rebinding changed saved age");
-    board.FreezeEffectsForCutscene(true);
-    Require(sparkle->mDontUpdate,"Retail repick freeze did not include pool sparkles");
+    holder.mVisualTimeNs+=step;board.Update();
+    Require(sparkle->mLastUpdateTimeNs-emitter->mBirthTimeNs==age+step &&
+        pool.mSampleTimeNs-pool.mBirthTimeNs==waterAge+step,
+        "Water resume caught up paused Visual time");
+    // Exercise actual IceZombies, not a fixture-only write to mDontUpdate.
+    Plant ice;
+    ice.mBoard=&board;ice.mApp=&app;
+    ice.IceZombies(board.mLevelTimeNs,holder.mVisualTimeNs,board.mLevelTimeNs);
+    Require(sparkle->mDontUpdate && board.mIceTrapCounter>0,
+        "Ice-shroom did not freeze pool sparkle like GOTY 1073 0x469EFF");
     const auto frozenAge=sparkle->mLastUpdateTimeNs-emitter->mBirthTimeNs;
-    holder.mVisualTimeNs+=step;
-    board.Update();
-    Require(sparkle->mLastUpdateTimeNs-emitter->mBirthTimeNs==frozenAge,
-        "Frozen pool sparkles advanced their age");
-    board.mIceTrapCounter=1;
+    const auto frozenWater=pool.mSampleTimeNs-pool.mBirthTimeNs;
+    for (int frame=0;frame<5;++frame) {
+        holder.mVisualTimeNs+=step;board.Update();
+    }
+    Require(sparkle->mLastUpdateTimeNs-emitter->mBirthTimeNs==frozenAge &&
+        pool.mSampleTimeNs-pool.mBirthTimeNs==frozenWater,
+        "Ice-shroom failed to freeze water and sparkles together");
     board.FreezeEffectsForCutscene(false);
-    Require(sparkle->mDontUpdate,"Cutscene unfreeze overrode the retail ice freeze");
-    board.mIceTrapCounter=0;
-    board.FreezeEffectsForCutscene(false);
-    holder.mVisualTimeNs+=step;
+    Require(sparkle->mDontUpdate,"Cutscene resume overrode the active ice freeze");
+    board.mIceTrapCounter.mNanoseconds=step;
+    holder.mVisualTimeNs+=step;board.Update();
+    Require(!sparkle->mDontUpdate && board.mIceTrapCounter==0,
+        "Ice expiry did not release the sparkle freeze");
+    holder.mVisualTimeNs+=step;board.Update();
+    Require(sparkle->mLastUpdateTimeNs-emitter->mBirthTimeNs==frozenAge+step &&
+        pool.mSampleTimeNs-pool.mBirthTimeNs==frozenWater+step,
+        "Ice expiry jumped water phase instead of resuming one Board interval");
+    app.mGameScene=SCENE_LEVEL_INTRO;
+    board.FreezeEffectsForCutscene(true);
+    const auto repickAge=sparkle->mLastUpdateTimeNs-emitter->mBirthTimeNs;
+    holder.mVisualTimeNs+=3'000'000'000;
     board.Update();
-    Require(sparkle->mLastUpdateTimeNs-emitter->mBirthTimeNs==frozenAge+step,
-        "Unfrozen pool sparkles failed to resume one visual step");
-    std::cout<<"PASS pool sparkle owner clock "<<hz<<" Hz: chooser emission, pause, load rebinding, repick freeze/resume\n";
+    Require(sparkle->mLastUpdateTimeNs-emitter->mBirthTimeNs==repickAge,
+        "Repick consumed Visual time for retained water effects");
+    board.FreezeEffectsForCutscene(false);
+    app.mGameScene=SCENE_PLAYING;
+    holder.mVisualTimeNs+=step;board.Update();
+    Require(sparkle->mLastUpdateTimeNs-emitter->mBirthTimeNs==repickAge+step,
+        "Repick resume failed to consume exactly one Board interval");
+    std::cout<<"PASS pool Board clock "<<hz<<" Hz: chooser/paused freeze, combat, real IceZombies, expiry and repick resume\n";
 }
 
 void StorePauseClockRuntime(TestApp& app, DecodeOnlySoundManager& sounds)

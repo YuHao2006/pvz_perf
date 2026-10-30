@@ -1,0 +1,5 @@
+# Ice-shroom and Board-owned water
+
+Exact GOTY 1073 EXE writes particle mDontUpdate=1 at 0x469EFF after setting Board+0x5630=300. The project false assignment was corrected to true. Runtime regression calls actual Plant::IceZombies and Board::Update at 100/240/480/1000Hz, checking sparkle and water phases freeze, the ice expiry clears the flag and the next interval resumes without catch-up. Tests also cover paused/chooser Board clocks, live combat emission and repick resume with an independently advancing Visual clock. Complete ImageRuntime suite exited zero. Windows Vulkan Release/LTO rebuilt.
+
+By user choice, water and sparkle now consume Board time during a level (unlike original initial-chooser sparkle movement); removal of the special visualParticle clock parameter does not change render-queue ownership or introduce a worker. Existing cutscene flags and ice-freeze protection remain. No serialized fields or save version changed. Source time and execution thread are independent; async visual production is not enabled by this patch.

@@ -160,6 +160,6 @@ public:
     void                        EffectSystemDispose();
     void                        EffectSystemFreeAll();
     void                        ProcessDeleteQueue();
-    void                        UpdateAt(std::int64_t visualNowNs, std::int64_t battleNowNs, TodParticleSystem* visualParticle = nullptr);
+    void                        UpdateAt(std::int64_t visualNowNs, std::int64_t battleNowNs);
 };
 extern EffectSystem* gEffectSystem;  //[0x6A9EB8]

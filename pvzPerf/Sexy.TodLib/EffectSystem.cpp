@@ -88,15 +88,15 @@ void EffectSystem::ProcessDeleteQueue()
 }
 
 //0x445890
-void EffectSystem::UpdateAt(std::int64_t visualNowNs, std::int64_t battleNowNs, TodParticleSystem* visualParticle)
+void EffectSystem::UpdateAt(std::int64_t visualNowNs, std::int64_t battleNowNs)
 {
 	TodParticleSystem* aParticle = nullptr;
 	while (mParticleHolder->mParticleSystems.IterateNext(aParticle))
 		if (!aParticle->mIsAttachment)
 		{
-			// The owner selects its visual effect without storing a time domain
-			// in the particle system or changing its render-queue ownership.
-			const auto nowNs = aParticle == visualParticle ? visualNowNs : battleNowNs;
+            // Non-attached Board effects share the Board clock, including pool
+            // sparkles. The caller may supply its own scene clock outside Board.
+            const auto nowNs = battleNowNs;
 			const auto deltaNs = nowNs > aParticle->mLastUpdateTimeNs
 				? static_cast<std::uint64_t>(nowNs - aParticle->mLastUpdateTimeNs) : 0;
 			aParticle->Update(deltaNs, nowNs);

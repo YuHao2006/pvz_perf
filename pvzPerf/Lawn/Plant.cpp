@@ -5017,7 +5017,8 @@ void Plant::IceZombies(std::int64_t ownerNowNs, std::int64_t visualNowNs, std::i
     TodParticleSystem* aPoolSparklyParticle = mApp->ParticleTryToGet(mBoard->mPoolSparklyParticleID);
     if (aPoolSparklyParticle)
     {
-        aPoolSparklyParticle->mDontUpdate = false;
+        // GOTY 1073 0x469EFF: freeze pool sparkles while the ice timer runs.
+        aPoolSparklyParticle->mDontUpdate = true;
     }
 
     Zombie* aBossZombie = mBoard->GetBossZombie();

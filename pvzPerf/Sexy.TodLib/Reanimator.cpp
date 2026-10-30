@@ -677,13 +677,18 @@ void Reanimation::ConsumeTimeAt(std::int64_t nowNs)
     mCycleCrossings = crossed;
     if (frame.cycles != 0)
         mRootDisplacement += double(frame.cycles) * GroundCycleDisplacement(*this);
-    if (frame.frame != mCurrentFrame || frame.cycles != 0 || mAnimRate == 0)
+    const bool looping = mLoopType == REANIM_LOOP || mLoopType == REANIM_LOOP_FULL_LAST_FRAME;
+    // A held endpoint has no advancing age. Its frame index no longer changes,
+    // but its birth must follow now or the cached phase grows beyond the action.
+    const bool heldEndpoint = !looping &&
+        ((mAnimRate > 0 && frame.frame == FrameIntervals(*this)) ||
+         (mAnimRate < 0 && frame.frame == 0));
+    if (frame.frame != mCurrentFrame || frame.cycles != 0 || mAnimRate == 0 || heldEndpoint)
     {
         mCurrentFrame = frame.frame;
         mStartTimeNs = ReanimClock::Subtract(nowNs, frame.ageNs);
     }
     mLastUpdateTimeNs = nowNs;
-    const bool looping = mLoopType == REANIM_LOOP || mLoopType == REANIM_LOOP_FULL_LAST_FRAME;
     if (looping && crossed != 0)
     {
         if (crossed < -INT_MAX || crossed > INT_MAX) throw std::overflow_error("animation loop counter overflow");

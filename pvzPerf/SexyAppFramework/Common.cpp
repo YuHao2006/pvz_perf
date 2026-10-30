@@ -20,10 +20,6 @@
 #include <cstring>
 #include <cwchar>
 #include <stdexcept>
-#if defined(__ANDROID__)
-#include <android/log.h>
-#include <fstream>
-#endif
 
 #ifdef __APPLE__
 #include "platform/macos/MacSystem.h"
@@ -620,17 +616,6 @@ std::string gAndroidRuntimeDirectory;
 void Sexy::SetAndroidRuntimeDirectory(const std::string& thePath)
 {
 	gAndroidRuntimeDirectory = thePath;
-}
-void Sexy::AndroidDiag(const char* theFormat, ...)
-{
-    char message[512];
-    va_list arguments;
-    va_start(arguments, theFormat);
-    std::vsnprintf(message, sizeof(message), theFormat, arguments);
-    va_end(arguments);
-    __android_log_print(ANDROID_LOG_DEBUG, "pvz_perf", "%s", message);
-    std::ofstream out(gAndroidRuntimeDirectory + "/diag.txt", std::ios::app);
-    if (out) out << message << std::endl;
 }
 
 

@@ -3,9 +3,12 @@
 本目录保存构建、资源编译、存档转换和发行打包工具。
 性能工具及其夹具、运行脚本和分析脚本位于 Tests/performance。
 
-关卡存档转换器只支持原版 1.2.0.1073 DAT、DAT64 v1、v2 和当前 v3.2，
-输入和输出均适用。`--target` 可选 `legacy|dat64-v1|dat64-v2|dat64-v3.2`；
-未发布的 v3.0/v3.1 文件和目标明确拒绝。游戏本身只读取 v3.2。
+`publish-github-release.py --source-only --tag <标签> --commit <提交> --notes <说明文件>`
+发布仅含GitHub自动源码归档的版本，不允许同时传入`--asset`，也不会覆盖已有附件。
+
+关卡存档转换器只支持原版 1.2.0.1073 DAT、DAT64 v1、v2 和当前 v4，
+输入和输出均适用。`--target` 可选 `legacy|dat64-v1|dat64-v2|dat64-v4`；
+未发布的 DAT64 v3 系列文件和目标明确拒绝。游戏本身只读取 v4。
 原版和旧 DAT64 的 879 项历史资源编号、图片类型及确证别名由
 `saveConverter/src/FrozenResourceIds.h` 冻结，转换器不依赖游戏运行时资源表。
 编号考古工具 `_resid_order.py` 默认读取记录的原版 EXE 映射，也可通过

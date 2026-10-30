@@ -1,4 +1,4 @@
-"""Publish verified release assets using the existing Git credential helper."""
+"""Publish a source-only release or verified assets using the Git credential helper."""
 
 import argparse
 import hashlib
@@ -21,7 +21,11 @@ def main():
     parser.add_argument("--commit")
     parser.add_argument("--notes", type=Path)
     parser.add_argument("--asset", type=Path, action="append", default=[])
+    parser.add_argument("--source-only", action="store_true",
+                        help="Publish tag source archives without uploading attachments")
     args = parser.parse_args()
+    if args.source_only and args.asset:
+        parser.error("--source-only cannot be combined with --asset")
     environment = dict(os.environ, GIT_TERMINAL_PROMPT="0", GCM_INTERACTIVE="never")
     credential = subprocess.run(["git", "credential", "fill"],
         input="protocol=https\nhost=github.com\n\n", text=True, capture_output=True,
@@ -68,8 +72,8 @@ def main():
                           "default_branch": repository["default_branch"],
                           "push": True}, indent=2))
         return
-    if not args.tag or not args.commit or args.notes is None or not args.asset:
-        parser.error("Publishing needs --tag, --commit, --notes and --asset")
+    if not args.tag or not args.commit or args.notes is None or (not args.asset and not args.source_only):
+        parser.error("Publishing needs --tag, --commit, --notes and either --asset or --source-only")
     commit = subprocess.check_output(["git", "rev-parse", args.commit], text=True).strip()
     if subprocess.check_output(["git", "rev-parse", args.tag + "^{commit}"], text=True).strip() != commit:
         raise RuntimeError("Release tag and source commit differ")
@@ -87,6 +91,8 @@ def main():
             "body": notes, "draft": True, "prerelease": False})
     upload_root = release["upload_url"].split("{", 1)[0]
     existing = {asset["name"]: asset for asset in release["assets"]}
+    if args.source_only and existing:
+        raise RuntimeError("Source-only publishing refuses a release with existing attachments")
     uploaded = []
     for path in args.asset:
         contents = path.read_bytes()

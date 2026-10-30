@@ -154,9 +154,6 @@ void android_main(android_app* state) {
                         std::fclose(f);
                         std::remove(probe.c_str());
                         appDataDir = external;
-                    } else {
-                        AndroidDiag("external storage not writable, fallback internal: %s",
-                            std::strerror(errno));
                     }
                 } else if (env->ExceptionCheck()) {
                     env->ExceptionClear();
@@ -317,7 +314,6 @@ void android_main(android_app* state) {
         app = nullptr;
         gLawnApp = nullptr;
     } catch (const std::exception& error) {
-        AndroidDiag("fatal: %s", error.what());
         __android_log_print(ANDROID_LOG_ERROR, "pvz_perf", "%s", error.what());
         if (app) { app->Shutdown(); delete app; app = nullptr; }
         gLawnApp = nullptr;

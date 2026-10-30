@@ -21,6 +21,11 @@ static int gBassLoadCount = 0;
 
 namespace
 {
+#if defined(__ANDROID__)
+// BASS device selection is thread-local. Remember the device owned by this
+// loader so teardown also works when the releasing thread selected decoder 0.
+DWORD gBassOutputDevice = ~0U;
+#endif
 #ifdef _WIN32
 std::string GetDirectoryFromPath(const std::string& thePath)
 {
@@ -368,8 +373,18 @@ void Sexy::LoadBassDLL()
 	const int device = 0;
 #endif
 	if (!instance->BASS_Init(device, 44100, 0, nullptr, nullptr))
-		throw std::runtime_error("Linux BASS decoder initialization failed, error " +
-			std::to_string(instance->BASS_ErrorGetCode()));
+	{
+		const int error = instance->BASS_ErrorGetCode();
+#if defined(__ANDROID__)
+		instance->BASS_SetDevice(0);
+		instance->BASS_Free();
+#endif
+		throw std::runtime_error("BASS native device initialization failed, error " +
+			std::to_string(error));
+	}
+#if defined(__ANDROID__)
+	gBassOutputDevice = instance->BASS_GetDevice();
+#endif
 	gBass = instance.release();
 	gBassLoadCount = 1;
 #endif
@@ -390,11 +405,21 @@ void Sexy::FreeBassDLL()
 		if (--gBassLoadCount <= 0)
 #endif
 		{
+#if defined(__ANDROID__)
+			// Stop AAudio and join its callbacks before dlclose removes their code.
+			// Freeing decoder 0 alone leaves the playback device running.
+			gBass->BASS_SetDevice(gBassOutputDevice);
+			gBass->BASS_Free();
+			gBassOutputDevice = ~0U;
+			gBass->BASS_SetDevice(0);
+			gBass->BASS_Free();
+#else
 			const auto previousDevice = gBass->BASS_GetDevice();
 			gBass->BASS_SetDevice(0);
 			gBass->BASS_Free();
 			if (previousDevice != 0 && previousDevice != ~0U)
 				gBass->BASS_SetDevice(previousDevice);
+#endif
 			delete gBass;
 			gBass = NULL;
 		}

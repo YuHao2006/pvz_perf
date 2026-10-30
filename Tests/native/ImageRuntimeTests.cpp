@@ -47,6 +47,7 @@
 #include "PoolGpuChecks.h"
 #include "ParticleRuntimeDrawChecks.h"
 #include "Lawn/System/PoolEffect.h"
+#include "Lawn/System/V7SaveSchema.h"
 #include "QuitDialogRuntimeChecks.h"
 #include <array>
 #include <algorithm>
@@ -1319,6 +1320,44 @@ void FrameDivisionSampleRuntime()
             }
     }
     std::cout<<"PASS division frame samples: "<<checked<<" exact forward/reverse/stopped, loop/hold/endpoint and retrospective/offset queries\n";
+    unsigned int heldChecks=0;
+    for (const auto kind : {REANIM_PLAY_ONCE_AND_HOLD,REANIM_PLAY_ONCE_FULL_LAST_FRAME_AND_HOLD})
+        for (const float rate : {-30.0f,0.0f,30.0f})
+    {
+        Reanimation held;
+        held.mFrameCount=9;held.mLoopType=kind;held.mAnimRate=rate;
+        held.mFramePeriodNs=17'000'003;
+        const int intervals=kind==REANIM_PLAY_ONCE_AND_HOLD?8:9;
+        held.mPeriodNs=held.mFramePeriodNs*intervals;
+        held.Seek(rate<0?1:0,1);
+        if (rate!=0) held.Advance(held.mPeriodNs*3+7);
+        else held.Seek(1,1);
+        const auto endpoint=rate<0?0:held.mPeriodNs;
+        for (int i=0;i<256;++i)
+        {
+            held.Advance((i%3==0?133'333'333:1'234'567)+i);
+            Require(held.SamplePlayback().phaseNs==endpoint &&
+                held.mLastFrameNs==endpoint && held.mStartTimeNs==held.mLastUpdateTimeNs &&
+                held.SampleFrameAt(held.mLastUpdateTimeNs).ageNs==0,
+                "Held endpoint accumulated age beyond its animation period");
+            Require(held.TimedEventCount(1,2)==0 && held.TimedEventCount(1,1)==0,
+                "Held endpoint emitted a repeated animation event");
+            std::array<unsigned char,72> state{};
+            V7SaveSchema::Write(state,4,held.mStartTimeNs,8);
+            V7SaveSchema::Write(state,12,held.mCurrentFrame,4);
+            V7SaveSchema::Write(state,16,held.mFramePeriodNs,8);
+            V7SaveSchema::Write(state,24,held.mPeriodNs,8);
+            V7SaveSchema::Write(state,40,held.mLastFrameNs,8);
+            V7SaveSchema::Write(state,56,held.mHasLastFrame,1);
+            V7SaveSchema::Write(state,64,held.mLastUpdateTimeNs,8);
+            V7SaveSchema::Validate(LevelSaveFormat::RecordKind::Reanimation,state);
+            ++heldChecks;
+        }
+        held.mDead=true; // No owned track/attachment fixture was allocated.
+    }
+    std::cout<<"PASS held endpoint cache/save: "<<heldChecks
+        <<" forward/reverse/stopped samples, repeated updates and no duplicate events\n";
+
 }
 
 void ExplicitReanimationOwnerTime(LawnApp& app)

@@ -1,0 +1,9 @@
+# Held endpoint cache and save recovery
+
+Observed v4 endless save contained 11 active PLAY_ONCE_AND_HOLD animations (pole vaulter and pogo) whose cached endpoint age kept growing after completion. mLastFrameNs exceeded mPeriodNs and the existing reader rejected it. The file writer had serialized the invalid runtime state. This was introduced by the conditional origin update in the frame-cache optimization; division/remainder itself was not wrong.
+
+Production now rebases a positive held end or negative held start on every update, keeping endpoint age zero. Ordinary loop progression is unchanged. 1,536 additional real Advance/SamplePlayback/TimedEventCount cases cover both hold modes, forward/reverse/zero rate and repeated coarse/fine steps, with the existing save-state validator. The complete ImageRuntime suite and resident-resource load/write/reload of the repaired real save passed. No schema or read validation was relaxed, and no format/version changed.
+
+The offline repair required each affected slot to be active, nondead, positive-rate hold mode at its exact final frame, with matching frame period, action length and no loop crossing. It changes only start timestamp to the stored current timestamp, previous phase to the endpoint, and the two corresponding historical float projections. IDs, actor state, random seed, wave and formation bytes are untouched. converter-check and save-roundtrip logs retain independent validation. The recovered exact copy was restored to the user's existing game1_58.dat64 slot after process exit. The observed original remains in system Temp, not committed here.
+
+apply-observed-repair.py replays only this reviewed repair with exact source/output hashes; it is not a generic converter or runtime recovery path. Bad-record and byte-diff JSON are committed; the user's full save is not.

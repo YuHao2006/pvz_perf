@@ -1,0 +1,12 @@
+{
+  "baseline_commit": "64c38d7569dcc1ce448e1e7c889c6aa55762ef10",
+  "compiler": "MSVC 14.51 /O2 /GL /LTCG",
+  "frames_per_cell": 300,
+  "rounds": 3,
+  "pinning": "LP14 main, LP15 worker; separate OS-scheduled run",
+  "frequency": "not set or verified by experiment",
+  "matrix_oracle": "24 untimed frames per population, full written matrix prefix byte equality",
+  "timed_oracle": "each completed frame checksum; one-frame latency validates visual stream separately; all passed",
+  "executable_sha256": "6b7d893e5000cfc7cc8223f58b7d727cfa86c8ac23c80bc0523c96fcd6ad08db",
+  "source_sha256": "04f01b7fb95cfd7cd224bf79bc99e23e522de1fe3fade6a820e9544fc30e219b"
+}

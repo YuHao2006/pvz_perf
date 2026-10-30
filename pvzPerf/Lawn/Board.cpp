@@ -7165,7 +7165,9 @@ void Board::Update()
 
 	const auto aVisualNowNs = mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs;
     mApp->mEffectSystem->UpdateAt(aVisualNowNs, static_cast<std::int64_t>(mLevelTimeNs));
-	mAdvice->Update();
+	// The opening title starts during the intro, before the battle clock runs.
+	mAdvice->Update(mAdvice->mMessageStyle == MessageStyle::MESSAGE_STYLE_HOUSE_NAME
+		? aVisualNowNs : static_cast<std::int64_t>(mLevelTimeNs));
 	UpdateTutorial();
 
 	if (mCobCannonCursorDelayCounter > 0)

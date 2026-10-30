@@ -1,0 +1,54 @@
+SHA256 5f650f52d12751e08b63e590edb0d9b9f09d087cea900baa0eb39e4af8eda251
+
+SetLabel: style 14 sets duration 250
+0045ca21: cmp      ebx, 0xe
+0045ca24: jne      0x45ca32
+0045ca26: mov      dword ptr [esi + 0x88], 0xfa
+0045ca30: jmp      0x45ca73
+
+MessageWidget::Update: paused guard and countdown
+0045cd9a: mov      esi, ecx
+0045cd9c: mov      eax, dword ptr [esi]
+0045cd9e: mov      eax, dword ptr [eax + 0x868]
+0045cda4: xor      ebx, ebx
+0045cda6: cmp      eax, ebx
+0045cda8: je       0x45cfbf
+0045cdae: cmp      byte ptr [eax + 0x17c], bl
+0045cdb4: jne      0x45cfbf
+0045cdba: mov      eax, dword ptr [esi + 0x88]
+0045cdc0: cmp      eax, 0x2710
+0045cdc5: jge      0x45ce1e
+0045cdc7: cmp      eax, ebx
+0045cdc9: jle      0x45ce1e
+0045cdcb: dec      eax
+0045cdcc: mov      dword ptr [esi + 0x88], eax
+0045cdd2: cmp      eax, ebx
+0045cdd4: jne      0x45ce1e
+0045cdd6: mov      dword ptr [esi + 0x8c], ebx
+0045cddc: cmp      dword ptr [esi + 0x318], ebx
+0045cde2: je       0x45ce1e
+
+Board::Update: paused guard
+004186b4: cmp      byte ptr [ebp + 0x17c], 0
+004186bb: je       0x4186f4
+004186bd: mov      eax, dword ptr [ebp + 0x178]
+004186c3: call     0x4271b0
+004186c8: mov      ecx, dword ptr [ebp + 0x154]
+004186ce: mov      byte ptr [ecx + 0x18], 0
+004186d2: mov      edx, dword ptr [ebp + 0x150]
+004186d8: pop      edi
+004186d9: pop      ebp
+004186da: mov      byte ptr [edx + 0x18], 0
+004186de: pop      ebx
+004186df: mov      ecx, dword ptr [esp + 0x104]
+004186e6: mov      dword ptr fs:[0], ecx
+004186ed: add      esp, 0x110
+004186f3: ret      
+
+Board::Update: advice before later game-state checks
+0041874a: mov      edi, dword ptr [eax + 0x940]
+00418750: call     0x4484b0
+00418755: mov      ecx, dword ptr [ebp + 0x158]
+0041875b: call     0x45cd80
+00418760: push     ebp
+00418761: call     0x416e40

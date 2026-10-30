@@ -211,7 +211,9 @@ void MessageWidget::SetLabel(const SexyString& theNewLabel, MessageStyle theMess
 			LayoutReanimText();
 		}
 		mEndTimeNs = mDisplayTime >= 10000 ? INT64_MAX : ReanimClock::Add(
-			static_cast<std::int64_t>(mApp->mBoard->mLevelTimeNs), mDisplayTime.mNanoseconds);
+			mMessageStyle == MessageStyle::MESSAGE_STYLE_HOUSE_NAME
+				? mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs
+				: static_cast<std::int64_t>(mApp->mBoard->mLevelTimeNs), mDisplayTime.mNanoseconds);
 	}
 }
 
@@ -266,12 +268,11 @@ void MessageWidget::LayoutReanimText()
 }
 
 //0x4594B0
-void MessageWidget::Update()
+void MessageWidget::Update(std::int64_t nowNs)
 {
 	if (!mApp->mBoard || mApp->mBoard->mPaused)
 		return;
 
-	const auto nowNs = static_cast<std::int64_t>(mApp->mBoard->mLevelTimeNs);
 	// The deadline is consumed once; indefinite messages have no expiry event.
 	if (mEndTimeNs != 0 && mEndTimeNs != INT64_MAX)
 	{
@@ -421,8 +422,11 @@ _Font* MessageWidget::GetFont()
 // GOTY @Patoke: 0x45D2B0
 void MessageWidget::Draw(Graphics* g)
 {
+	const auto nowNs = mMessageStyle == MessageStyle::MESSAGE_STYLE_HOUSE_NAME
+		? mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs
+		: static_cast<std::int64_t>(mApp->mBoard->mLevelTimeNs);
 	const auto remainingNs = mEndTimeNs == INT64_MAX ? 100'000'000'000 :
-		std::max<std::int64_t>(0, mEndTimeNs - static_cast<std::int64_t>(mApp->mBoard->mLevelTimeNs));
+		std::max<std::int64_t>(0, mEndTimeNs - nowNs);
 	if (mEndTimeNs == 0 || remainingNs == 0)
 		return;
 	

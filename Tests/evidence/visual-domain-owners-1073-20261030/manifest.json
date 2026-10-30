@@ -1,0 +1,6 @@
+{
+  "exe": "C:\\UserProgram\\Plants_Vs_Zombies_V1.2.0.1073_EN\\PlantsVsZombies.exe",
+  "sha256": "5f650f52d12751e08b63e590edb0d9b9f09d087cea900baa0eb39e4af8eda251",
+  "scope": "read-only static inspection, no game launched or save changed",
+  "conclusion": "Normal selection preview creation occurs in LEVEL_INTRO scene2 with Board paused flag false. Normal battle counter increment is guarded by PLAYING scene3; selection therefore stops the battle clock through scene state, not Board::mPaused=true. Special upsell paths are excluded."
+}

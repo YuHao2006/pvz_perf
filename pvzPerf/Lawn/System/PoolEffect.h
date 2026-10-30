@@ -18,7 +18,10 @@ class PoolEffect
 public:
 	Sexy::Image*	mCausticImage = nullptr;
 	LawnApp*			mApp = nullptr;
-	unsigned long long			mPoolTimeNs = 0;
+	long long mBirthTimeNs = 0;
+    // Timestamp of the published visual sample. Draws reuse it while frozen;
+    // gaps between owners/updates shift birth instead of advancing the phase.
+    long long mSampleTimeNs = 0;
 	// Installation state only; unavailable GPU compute is an error.
 	bool				mCausticGPU = false;
 
@@ -30,5 +33,5 @@ public:
 	void				PoolEffectInitialize();
 	void				PoolEffectDispose();
 	void				PoolEffectDraw(Sexy::Graphics* g, bool theIsNight);
-	void				PoolEffectUpdate(unsigned long long elapsedNs);
+	void				PoolEffectUpdate(long long nowNs, unsigned long long activeElapsedNs);
 };

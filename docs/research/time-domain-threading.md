@@ -52,7 +52,7 @@ Windows MSVC /O2 /GL /LTCG。固定LP14和LP15及OS调度分别测试，频率�
 | mApplicationTimeNs | SexyAppBase | 实际应用更新推进；Board暂停仍可推进，音乐等使用 |
 | mVisualTimeNs | ReanimationHolder，场景负责推进 | 通常LawnApp推进；普通Board暂停冻结，Store是继续推进的例外；Credits接管并随其暂停冻结 |
 | mLevelTimeNs | Board | 仅Battle场景有效推进；暂停、选卡过场及time-stop冻结 |
-| mPoolTimeNs | PoolEffect | 调用者传入步长的局部视觉相位；Board、图鉴、Credits按各自规则调用，不需要单独线程 |
+| 水面出生／发布时刻 | PoolEffect | Visual时间减出生时间得相位；冻结／场景间隙平移出生时间，不是额外的全局时钟 |
 | CutScene、选卡、Credits局部计时 | 各界面 | 动画主要复用Visual；局部倒计时及Credits墙钟同步不等于独立工作域 |
 
 正常战斗同时推进Battle和Visual；无尽选卡冻结保留战斗对象，仅Visual继续。普通暂停通常两者都冻结，Store暂停Battle但推进Visual。主菜单、从主菜单进入的图鉴、独立Credits主要只有Visual动画工作。花园等Board场景可能同时有Board时间和Visual对象，不能仅因不是战斗就认定只有一个域；应按实际非空工作批次调度。
@@ -79,4 +79,8 @@ Music::MusicUpdate使用应用时间，BassMusicInterface::Update维护slot/chec
 
 1073发行EXE复核：0x40D64F先写scene=2，0x40D66B调用StartLevelIntro；0x43F4B1检查scene=2，0x43F4DA调用PlaceStreetZombies。正常关卡计数在0x4183B0检查scene=3，0x4183E9才增加。选卡预览的创建／更新属于战斗计时停止阶段，可留主线程；此处不是mPaused=true（CutScene更新反而在该标记为true时提前返回）。[反汇编证据](../../Tests/evidence/visual-domain-owners-1073-20261030/retail-disassembly.txt)。
 
-PoolEffectUpdate主要累加局部相位并写renderer的caustics.timeNs；真正焦散图像由Vulkan compute记录绘制时生成，CPU水面BuildPoolMesh也在DrawPool中计算。若要从主线程搬走水面CPU计算，应生成网格快照，主线程仍负责上传与记录GPU命令；仅把SetCausticsTimeNs挪到worker既没有明显计算收益，也会造成renderer状态跨线程写入。
+PoolEffectUpdate维护出生／采样基准并写renderer的caustics.timeNs；真正焦散图像由Vulkan compute记录绘制时生成，CPU水面BuildPoolMesh也在DrawPool中计算。若要从主线程搬走水面CPU计算，应生成网格快照，主线程仍负责上传与记录GPU命令；仅把SetCausticsTimeNs挪到worker既没有明显计算收益，也会造成renderer状态跨线程写入。
+
+## 水面出生时间与冻结
+
+寒冰菇不暂停全局Visual。Board在mIceTrapCounter非零时跳过水面更新，其他Visual工作仍可推进。水面已改为出生时间与已发布采样时刻之差求相位；恢复时将未允许推进的时间平移进出生值，渲染快照仍停在旧相位，不会跳跃或补播。发布时刻还用于识别场景未更新间隙及同一时间的重复调用，不保存另一份累计年龄。寒冰菇对POOL_SPARKLY显式设mDontUpdate=false，不能误记成冻结闪光粒子。

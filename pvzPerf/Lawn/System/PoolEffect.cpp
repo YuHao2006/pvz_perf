@@ -1,6 +1,8 @@
 #include "PoolEffect.h"
 #include <stdexcept>
 #include <limits>
+#include <algorithm>
+#include "Sexy.TodLib/ReanimClock.h"
 #include "LawnApp.h"
 #include "Resources.h"
 #include "GameConstants.h"
@@ -43,7 +45,8 @@ void PoolEffect::PoolEffectInitialize()
 
     mCausticImage = aImage;
     mApp = aApp;
-    mPoolTimeNs = 0;
+    mBirthTimeNs = 0;
+    mSampleTimeNs = 0;
     mCausticGPU = true;
 }
 
@@ -72,7 +75,7 @@ void PoolEffect::PoolEffectDraw(Sexy::Graphics* g, bool theIsNight)
     render.SelectDrawSurface(aDestImage);
     // Keep the bounded 1073 phase. Vulkan evaluates the wave mesh on the CPU;
     // the draw parameters retain the existing phase and clock behavior.
-    const double phase=static_cast<double>(mPoolTimeNs % 1'584'000'000'000ull)*2*PI;
+    const double phase=static_cast<double>(static_cast<unsigned long long>(mSampleTimeNs - mBirthTimeNs) % 1'584'000'000'000ull)*2*PI;
     Sexy::GpuPoolParams params{};
     params.width=float(IMAGE_POOL->mWidth);
     params.height=float(IMAGE_POOL->mHeight);
@@ -94,14 +97,26 @@ void PoolEffect::PoolEffectDraw(Sexy::Graphics* g, bool theIsNight)
     render.DrawPool(mCausticImage,params);
 }
 
-void PoolEffect::PoolEffectUpdate(unsigned long long elapsedNs)
+void PoolEffect::PoolEffectUpdate(long long nowNs, unsigned long long activeElapsedNs)
 {
     if (!mCausticGPU || mCausticImage == nullptr || mApp == nullptr ||
         mApp->mDDInterface == nullptr || mApp->mDDInterface->mRenderInterface == nullptr)
         throw std::runtime_error("PoolEffect: updating requires installed GPU caustics");
-    if (elapsedNs > std::numeric_limits<unsigned long long>::max()-mPoolTimeNs)
-        throw std::overflow_error("PoolEffect time overflow");
-    mPoolTimeNs += elapsedNs;
-    RenderInterface* anInterface = mApp->mDDInterface->mRenderInterface;
-    anInterface->SetCausticsTimeNs(mPoolTimeNs);
+    if (activeElapsedNs > static_cast<unsigned long long>(INT64_MAX))
+        throw std::overflow_error("PoolEffect active interval exceeds clock range");
+    const auto elapsedNs = ReanimClock::Subtract(nowNs, mSampleTimeNs);
+    // A second owner may update at the same timestamp. Do not simulate twice.
+    const auto activeNs = elapsedNs > 0
+        ? std::min(activeElapsedNs, static_cast<unsigned long long>(elapsedNs)) : 0;
+    const auto shiftNs = ReanimClock::Subtract(elapsedNs, static_cast<long long>(activeNs));
+    const auto birthNs = ReanimClock::Add(mBirthTimeNs, shiftNs);
+    const auto ageNs = ReanimClock::Subtract(nowNs, birthNs);
+    if (ageNs < 0) throw std::runtime_error("PoolEffect: negative phase age");
+    mBirthTimeNs = birthNs;
+    mSampleTimeNs = nowNs;
+    // No clock delta is accumulated into an age field. Frozen/absent intervals
+    // translate birth once on resume; the previous draw sample stays unchanged.
+    if (activeNs != 0)
+        mApp->mDDInterface->mRenderInterface->SetCausticsTimeNs(
+            static_cast<unsigned long long>(ageNs));
 }

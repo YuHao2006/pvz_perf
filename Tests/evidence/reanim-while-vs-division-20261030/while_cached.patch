@@ -1,0 +1,52 @@
+--- production/Reanimator.cpp
++++ while_cached/Reanimator.cpp
+@@ -553,6 +553,10 @@
+ 
+ ReanimFramePosition Reanimation::SampleFrameAt(std::int64_t nowNs, std::int64_t offsetNs) const
+ {
++    if (mFrameCount > 0 && mAnimRate > 0 && offsetNs == 0 && nowNs == mLastUpdateTimeNs &&
++        (mLoopType == REANIM_LOOP || mLoopType == REANIM_LOOP_FULL_LAST_FRAME))
++        return {0,mCurrentFrame,ReanimClock::Subtract(nowNs,mStartTimeNs)};
++
+     // Keep common current-frame reads small enough to inline into draw/root
+     // consumers. Reverse, endpoint and explicit look-ahead rules live below.
+     if (offsetNs == 0 && mFrameCount > 0)
+@@ -691,6 +695,38 @@
+ 
+ void Reanimation::ConsumeTimeAt(std::int64_t nowNs)
+ {
++    if (mFrameCount > 0 && !mDead && mAnimRate > 0 &&
++        (mLoopType == REANIM_LOOP || mLoopType == REANIM_LOOP_FULL_LAST_FRAME)) {
++        const auto q=mFramePeriodNs;
++        mLastFrameNs=std::int64_t(mCurrentFrame)*q+ReanimClock::Subtract(mLastUpdateTimeNs,mStartTimeNs);
++        mHasLastFrame=true;
++        auto age=ReanimClock::Subtract(nowNs,mStartTimeNs);
++        if(age<0) throw std::logic_error("benchmark update moved backwards");
++        auto frame=mCurrentFrame;
++        const auto intervals=FrameIntervals(*this);
++        std::int64_t cycles=0;
++        // Genuine frame-by-frame comparison/subtraction; no integer division.
++        while(age>=q) {
++            age-=q;
++            ++frame;
++            if(frame==intervals) {frame=0;++cycles;}
++        }
++        mCycleCrossings=cycles;
++        if(cycles) mRootDisplacement+=double(cycles)*GroundCycleDisplacement(*this);
++        if(frame!=mCurrentFrame || cycles) {
++            mCurrentFrame=frame;
++            mStartTimeNs=ReanimClock::Subtract(nowNs,age);
++        }
++        mLastUpdateTimeNs=nowNs;
++        if(cycles) {
++            if(cycles>INT_MAX) throw std::overflow_error("animation loop counter overflow");
++            const auto loops=ReanimClock::Add(mLoopCount,cycles);
++            if(loops>INT_MAX) throw std::overflow_error("animation loop counter overflow");
++            mLoopCount=int(loops);
++        }
++        return;
++    }
++
+     if (mFrameCount <= 0 || mDead) return;
+     const auto previous = SamplePlaybackAt(mLastUpdateTimeNs);
+     mLastFrameNs = previous.phaseNs;

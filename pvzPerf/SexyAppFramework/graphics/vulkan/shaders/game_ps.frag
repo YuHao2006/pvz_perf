@@ -25,63 +25,6 @@ layout(location = 0) out vec4 outColor;
 layout(constant_id = 0) const bool premultipliedOutput = false;
 layout(constant_id = 1) const bool coverageInput = false;
 
-vec3 rgbToHsl(vec3 rgb)
-{
-    precise float maxval = max(rgb.r, rgb.g);
-    maxval = max(maxval, rgb.b);
-    precise float minval = min(rgb.r, rgb.g);
-    minval = min(minval, rgb.b);
-    precise float l = (minval + maxval) / 2.0;
-    if (l <= 0.0)
-        return vec3(0.0, 0.0, l);
-
-    precise float delta = maxval - minval;
-    precise float s = delta;
-    if (s <= 0.0)
-        return vec3(0.0, s, l);
-    s /= l <= 0.5 ? (minval + maxval) : (2.0 - minval - maxval);
-
-    precise float r2 = (maxval - rgb.r) / delta;
-    precise float g2 = (maxval - rgb.g) / delta;
-    precise float b2 = (maxval - rgb.b) / delta;
-    precise float h;
-    if (maxval == rgb.r)
-        h = rgb.g == minval ? (5.0 + b2) : (1.0 - g2);
-    else if (maxval == rgb.g)
-        h = rgb.b == minval ? (1.0 + r2) : (3.0 - b2);
-    else
-        h = rgb.r == minval ? (3.0 + g2) : (5.0 - r2);
-    h /= 6.0;
-    return vec3(h, s, l);
-}
-
-vec3 hslToRgb(vec3 hsl)
-{
-    precise float h = hsl.x;
-    precise float sl = hsl.y;
-    precise float l = hsl.z;
-    precise float v = l <= 0.5 ? (l * (1.0 + sl)) : (l + sl - l * sl);
-    if (v <= 0.0)
-        return vec3(0.0);
-
-    precise float y = 2.0 * l - v;
-    precise float sv = (v - y) / v;
-    h *= 6.0;
-    const int sextant = clamp(int(h), 0, 5);
-    precise float vsf = v * sv * (h - float(sextant));
-    precise float x = y + vsf;
-    precise float z = v - vsf;
-    switch (sextant) {
-    case 0: return vec3(v, x, y);
-    case 1: return vec3(z, v, y);
-    case 2: return vec3(y, v, x);
-    case 3: return vec3(y, z, v);
-    case 4: return vec3(x, y, v);
-    case 5: return vec3(v, y, z);
-    }
-    return vec3(0.0);
-}
-
 vec3 filterRgb(vec3 encodedRgb, uint colorFilterKind)
 {
     // Slot bits 28..29: 0=none, 1=white, 2=washed out, 3=less washed out.
@@ -90,16 +33,26 @@ vec3 filterRgb(vec3 encodedRgb, uint colorFilterKind)
     if (colorFilterKind == 1u)
         return vec3(1.0);
 
-    // Match FilterEffect.cpp on encoded RGB, without clamping scaled luminance.
-    precise vec3 hsl = rgbToHsl(encodedRgb);
-    hsl.y *= colorFilterKind == 2u ? 0.2 : 0.3;
-    hsl.z *= colorFilterKind == 2u ? 1.8 : 1.2;
-    precise vec3 rgb = hslToRgb(hsl);
-    // Clamping before conversion is equivalent for finite values and keeps the
-    // truncating integer conversion within range. Alpha is never quantized here.
+    // Hue is unchanged. RGB deviations from old lightness scale by
+    // saturation * min(newL, 1-newL) / min(oldL, 1-oldL).
+    // Keep the signed terms for generated floating-point images above 1.
+    // This avoids hue extraction, its divisions, and sextant reconstruction;
+    // encoded-byte truncation below retains the existing filter contract.
+    precise float hi = max(max(encodedRgb.r, encodedRgb.g), encodedRgb.b);
+    precise float lo = min(min(encodedRgb.r, encodedRgb.g), encodedRgb.b);
+    precise float oldL = (lo + hi) * 0.5;
+    if (oldL <= 0.0) return vec3(0.0);
+    precise float newL = oldL * (colorFilterKind == 2u ? 1.8 : 1.2);
+    precise float saturation = colorFilterKind == 2u ? 0.2 : 0.3;
+    precise float denominator = oldL <= 0.5 ? oldL : 1.0 - oldL;
+    precise float numerator = newL <= 0.5 ? newL : 1.0 - newL;
+    precise float ratio = denominator != 0.0 ? saturation * numerator / denominator : 0.0;
+    // Retain the legacy black result when HDR inputs produce nonpositive HSL value.
+    precise float value = newL + (hi - lo) * ratio * 0.5;
+    if (value <= 0.0) return vec3(0.0);
+    precise vec3 rgb = (encodedRgb - vec3(oldL)) * ratio + vec3(newL);
     precise vec3 byteRgb = clamp(rgb * 255.0, vec3(0.0), vec3(255.0));
-    precise vec3 result = vec3(ivec3(byteRgb)) / 255.0;
-    return result;
+    return vec3(ivec3(byteRgb)) / 255.0;
 }
 
 vec4 filterSample(vec4 source, bool straightResult)

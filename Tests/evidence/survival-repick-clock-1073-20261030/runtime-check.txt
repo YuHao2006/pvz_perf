@@ -1,0 +1,6 @@
+PASS survival owner clocks 100 Hz: intermission, immediate intro freeze, pre-pan/scroll, retained actors, visual preview/effects and resume
+PASS survival owner clocks 240 Hz: intermission, immediate intro freeze, pre-pan/scroll, retained actors, visual preview/effects and resume
+PASS survival owner clocks 480 Hz: intermission, immediate intro freeze, pre-pan/scroll, retained actors, visual preview/effects and resume
+PASS survival owner clocks 1000 Hz: intermission, immediate intro freeze, pre-pan/scroll, retained actors, visual preview/effects and resume
+PASS actual Quit confirmation: target-free layout, body, yes/no buttons and clean dialog release
+PASS resource shutdown: all pending plans freed and repeated release safe

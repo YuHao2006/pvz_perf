@@ -1,0 +1,25 @@
+NOTE: full capture includes the following loss screen. Use battle-scene3-cpu.json for battle-only totals.
+
+Cmdline: /data/user/0/com.openpvz.perf/simpleperf record --app com.openpvz.perf --add-meta-info app_type=debuggable --in-app --tracepoint-events /data/local/tmp/tracepoint_events --out-fd 3 --stop-signal-fd 4 -e cpu-clock -f 500 --duration 24 --call-graph fp
+Arch: arm64
+Event: cpu-clock (type 1, config 0)
+Samples: 8476
+Event count: 16952000000
+
+Overhead  Tid    Symbol
+13.41%    31793  Reanimation::DrawTrack(Sexy::Graphics*, int, int, ReanimatorFrameTime const*)
+7.27%     31793  Sexy::VulkanRenderer::SubmitQuads(std::__ndk1::span<Sexy::GpuVertex const, 18446744073709551615ul>, Sexy::VulkanTexture*, bool, bool, Sexy::GpuBlend, Sexy::GpuClip const*)
+3.91%     31793  SubmitGpuTriangles((anonymous namespace)::ScreenVertex const*, int, PrimitiveType, Sexy::VulkanTexture*, bool, int, Sexy::TRect<int> const*)
+3.55%     31793  Sexy::TextureSource::BltTransformed(Sexy::SexyMatrix3 const&, Sexy::TextureRegion const&, Sexy::Color const&, Sexy::TRect<int> const*, float, float, bool) const
+3.01%     31816  Resample_Cubic_NEON(std::__ndk1::variant<std::__ndk1::monostate, CubicState, BsincState> const*, std::__ndk1::span<float const, 18446744073709551615ul>, unsigned int, unsigned int, std::__ndk1::span<float, 18446744073709551615ul>)
+2.31%     31793  FloatTrackEvaluate(FloatParameterTrack const&, double, float)
+1.78%     31793  Reanimation::DrawRenderGroup(Sexy::Graphics*, int)
+1.77%     31793  @plt
+1.56%     31793  TodParticleEmitter::DrawParticle(Sexy::Graphics*, TodParticle*, TodTriangleGroup*)
+1.39%     31793  TodParticleEmitter::GetRenderParamsDepth(TodParticle*, ParticleRenderParams*, int)
+1.30%     31793  PlantDrawHeightOffset(long, Board*, Plant*, SeedType, int, int)
+1.20%     31793  [kernel.kallsyms][+ffffffed607c3ad0]
+1.18%     31816  Mix_NEON(std::__ndk1::span<float const, 18446744073709551615ul>, std::__ndk1::span<std::__ndk1::array<float, 1024ul>, 18446744073709551615ul>, std::__ndk1::span<float, 18446744073709551615ul>, std::__ndk1::span<float const, 18446744073709551615ul>, unsigned long, unsigned long)
+1.16%     31793  TodBltMatrix(Sexy::Graphics*, Sexy::TextureSource const&, Sexy::SexyMatrix3 const&, Sexy::TRect<int> const&, Sexy::Color const&, int, Sexy::TextureRegion const&)
+1.13%     31793  Reanimation::GetTransformAtTime(int, ReanimatorTransform*, ReanimatorFrameTime const*)
+1.13%     31816  DeviceBase::renderSamples(unsigned int)

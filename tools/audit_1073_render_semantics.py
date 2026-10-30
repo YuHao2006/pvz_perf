@@ -527,22 +527,20 @@ def audit_portable_fix_parity(audit: Audit) -> None:
     pool_init = function_body(pool, "PoolEffect::PoolEffectInitialize")
     pool_draw = function_body(pool, "PoolEffect::PoolEffectDraw")
     audit.require(
-        "mPoolCounter = 0" in pool_init
-        and "uint32_t" in pool_header
-        and "mPoolCounter" in pool_header,
-        "pool animation counter is no longer initialized with defined wrap-around",
+        "mPoolTimeNs = 0" in pool_init
+        and "unsigned long long" in pool_header
+        and "mPoolTimeNs" in pool_header,
+        "pool animation clock is not an initialized integer nanosecond age",
     )
     audit.require(
-        "POOL_PHASE_PERIOD = 158400u" in pool_draw
-        and "mPoolCounter % POOL_PHASE_PERIOD" in pool_draw
-        and "* 2 * PI" in pool_draw,
-        "pool phase no longer preserves GOTY 1073's 2*PI speed and exact period",
+        "mPoolTimeNs % 1'584'000'000'000ull" in pool_draw
+        and "*2*PI" in pool_draw
+        and "phase/8'000'000'000.0" in pool_draw,
+        "pool phase no longer preserves GOTY 1073's speed and exact period",
     )
+    pool_mesh = read("SexyAppFramework/graphics/PoolMesh.cpp")
     audit.require(
-        "aOffsetArray[2][x][y][0] = x / 15.0f" in pool_draw
-        and "aOffsetArray[2][x][y][1] = y / 5.0f" in pool_draw
-        and "aOffsetArray[2][aIndexX][aIndexY][0] + aIndexX / 15.0f" in pool_draw
-        and "aOffsetArray[2][aIndexX][aIndexY][1] + aIndexY / 5.0f" in pool_draw,
+        "out.u += u; out.v += vv;" in pool_mesh,
         "pool caustic UV repetition differs from GOTY 1073",
     )
     pool_evidence = read("tools/ghidra_output/pool_effect_1073_range.c.txt")

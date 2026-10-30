@@ -1,0 +1,12 @@
+{
+  "retail_executable": "Plants_Vs_Zombies_V1.2.0.1073_EN/PlantsVsZombies.exe",
+  "sha256": "5f650f52d12751e08b63e590edb0d9b9f09d087cea900baa0eb39e4af8eda251",
+  "freeze_function": "0x40D560",
+  "pool_sparkly_effect": "0x22",
+  "freeze_write": "0x40D59A",
+  "ice_counter_offset": "0x5630",
+  "interpretation": "Independent GRAVE_BUSTER and POOL_SPARKLY checks; pool freeze changes only when the ice counter is zero. Board-driven effect update runs during initial chooser, before battle simulation; paused Board skips update. Visual is the remake owner-clock mapping, not an original named domain.",
+  "validation": "Pool sparkle and survival owner-clock regressions passed at 100, 240, 480 and 1000 Hz; Windows Vulkan Release built successfully. Pool tests use the actual particle definitions and Board update, checking emitted live particles, pause gap, load epoch rebind, repick freeze/resume and ice-freeze protection.",
+  "runtime_suite_exit_code": 0,
+  "release_executable_sha256": "8520749fb88c264051bb73fd8ecc88cb9f2bedb73593b3db4b4265240df8f973"
+}

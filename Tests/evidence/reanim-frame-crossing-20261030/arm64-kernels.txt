@@ -1,0 +1,145 @@
+<(anonymous namespace)::RunDivide((anonymous namespace)::Input const*, int)>:
+   1f41c: 7100043f     	cmp	w1, #0x1
+   1f420: 5400016b     	b.lt	0x1f44c <(anonymous namespace)::RunDivide((anonymous namespace)::Input const*, int)+0x30>
+   1f424: d28f82a9     	mov	x9, #0x7c15             // =31765
+   1f428: 7100043f     	cmp	w1, #0x1
+   1f42c: 2a0103ea     	mov	w10, w1
+   1f430: f2afe949     	movk	x9, #0x7f4a, lsl #16
+   1f434: f2cf3729     	movk	x9, #0x79b9, lsl #32
+   1f438: f2f3c6e9     	movk	x9, #0x9e37, lsl #48
+   1f43c: 540000e1     	b.ne	0x1f458 <(anonymous namespace)::RunDivide((anonymous namespace)::Input const*, int)+0x3c>
+   1f440: aa1f03eb     	mov	x11, xzr
+   1f444: aa1f03e8     	mov	x8, xzr
+   1f448: 14000018     	b	0x1f4a8 <(anonymous namespace)::RunDivide((anonymous namespace)::Input const*, int)+0x8c>
+   1f44c: aa1f03e8     	mov	x8, xzr
+   1f450: aa0803e0     	mov	x0, x8
+   1f454: d65f03c0     	ret
+   1f458: 927f754b     	and	x11, x10, #0x7ffffffe
+   1f45c: aa1f03e8     	mov	x8, xzr
+   1f460: aa1f03ec     	mov	x12, xzr
+   1f464: 9100400d     	add	x13, x0, #0x10
+   1f468: aa0b03ee     	mov	x14, x11
+   1f46c: a97f41af     	ldp	x15, x16, [x13, #-0x10]
+   1f470: f10009ce     	subs	x14, x14, #0x2
+   1f474: a8c209a1     	ldp	x1, x2, [x13], #0x20
+   1f478: 9ad009f1     	udiv	x17, x15, x16
+   1f47c: 9ac20823     	udiv	x3, x1, x2
+   1f480: 9b10be2f     	msub	x15, x17, x16, x15
+   1f484: 8b0801e8     	add	x8, x15, x8
+   1f488: 9b092228     	madd	x8, x17, x9, x8
+   1f48c: 9b028470     	msub	x16, x3, x2, x1
+   1f490: 8b0c020c     	add	x12, x16, x12
+   1f494: 9b09306c     	madd	x12, x3, x9, x12
+   1f498: 54fffea1     	b.ne	0x1f46c <(anonymous namespace)::RunDivide((anonymous namespace)::Input const*, int)+0x50>
+   1f49c: eb0a017f     	cmp	x11, x10
+   1f4a0: 8b080188     	add	x8, x12, x8
+   1f4a4: 54000180     	b.eq	0x1f4d4 <(anonymous namespace)::RunDivide((anonymous namespace)::Input const*, int)+0xb8>
+   1f4a8: 8b0b100c     	add	x12, x0, x11, lsl #4
+   1f4ac: cb0b014a     	sub	x10, x10, x11
+   1f4b0: 9100218c     	add	x12, x12, #0x8
+   1f4b4: a97fb58b     	ldp	x11, x13, [x12, #-0x8]
+   1f4b8: f100054a     	subs	x10, x10, #0x1
+   1f4bc: 9100418c     	add	x12, x12, #0x10
+   1f4c0: 9acd096e     	udiv	x14, x11, x13
+   1f4c4: 9b0dadcb     	msub	x11, x14, x13, x11
+   1f4c8: 8b080168     	add	x8, x11, x8
+   1f4cc: 9b0921c8     	madd	x8, x14, x9, x8
+   1f4d0: 54ffff21     	b.ne	0x1f4b4 <(anonymous namespace)::RunDivide((anonymous namespace)::Input const*, int)+0x98>
+   1f4d4: aa0803e0     	mov	x0, x8
+   1f4d8: d65f03c0     	ret
+
+<(anonymous namespace)::RunSubtract((anonymous namespace)::Input const*, int)>:
+   1f4dc: 7100043f     	cmp	w1, #0x1
+   1f4e0: 5400032b     	b.lt	0x1f544 <(anonymous namespace)::RunSubtract((anonymous namespace)::Input const*, int)+0x68>
+   1f4e4: d28f82ab     	mov	x11, #0x7c15            // =31765
+   1f4e8: aa1f03e9     	mov	x9, xzr
+   1f4ec: aa1f03e8     	mov	x8, xzr
+   1f4f0: f2afe94b     	movk	x11, #0x7f4a, lsl #16
+   1f4f4: 2a0103ea     	mov	w10, w1
+   1f4f8: f2cf372b     	movk	x11, #0x79b9, lsl #32
+   1f4fc: f2f3c6eb     	movk	x11, #0x9e37, lsl #48
+   1f500: 14000007     	b	0x1f51c <(anonymous namespace)::RunSubtract((anonymous namespace)::Input const*, int)+0x40>
+   1f504: aa1f03ee     	mov	x14, xzr
+   1f508: 8b080188     	add	x8, x12, x8
+   1f50c: 91000529     	add	x9, x9, #0x1
+   1f510: 9b0b21c8     	madd	x8, x14, x11, x8
+   1f514: eb0a013f     	cmp	x9, x10
+   1f518: 54000180     	b.eq	0x1f548 <(anonymous namespace)::RunSubtract((anonymous namespace)::Input const*, int)+0x6c>
+   1f51c: 8b09100d     	add	x13, x0, x9, lsl #4
+   1f520: a94035ac     	ldp	x12, x13, [x13]
+   1f524: eb0d019f     	cmp	x12, x13
+   1f528: 54fffee3     	b.lo	0x1f504 <(anonymous namespace)::RunSubtract((anonymous namespace)::Input const*, int)+0x28>
+   1f52c: aa1f03ee     	mov	x14, xzr
+   1f530: cb0d018c     	sub	x12, x12, x13
+   1f534: 910005ce     	add	x14, x14, #0x1
+   1f538: eb0d019f     	cmp	x12, x13
+   1f53c: 54ffffa2     	b.hs	0x1f530 <(anonymous namespace)::RunSubtract((anonymous namespace)::Input const*, int)+0x54>
+   1f540: 17fffff2     	b	0x1f508 <(anonymous namespace)::RunSubtract((anonymous namespace)::Input const*, int)+0x2c>
+   1f544: aa1f03e8     	mov	x8, xzr
+   1f548: aa0803e0     	mov	x0, x8
+   1f54c: d65f03c0     	ret
+
+<(anonymous namespace)::RunGuardDivide((anonymous namespace)::Input const*, int)>:
+   1f550: 7100043f     	cmp	w1, #0x1
+   1f554: 5400036b     	b.lt	0x1f5c0 <(anonymous namespace)::RunGuardDivide((anonymous namespace)::Input const*, int)+0x70>
+   1f558: d28f82aa     	mov	x10, #0x7c15            // =31765
+   1f55c: aa0003e8     	mov	x8, x0
+   1f560: aa1f03e0     	mov	x0, xzr
+   1f564: f2afe94a     	movk	x10, #0x7f4a, lsl #16
+   1f568: 2a0103e9     	mov	w9, w1
+   1f56c: 91002108     	add	x8, x8, #0x8
+   1f570: f2cf372a     	movk	x10, #0x79b9, lsl #32
+   1f574: f2f3c6ea     	movk	x10, #0x9e37, lsl #48
+   1f578: 14000008     	b	0x1f598 <(anonymous namespace)::RunGuardDivide((anonymous namespace)::Input const*, int)+0x48>
+   1f57c: 9acd096c     	udiv	x12, x11, x13
+   1f580: 9b0dad8b     	msub	x11, x12, x13, x11
+   1f584: 8b00016b     	add	x11, x11, x0
+   1f588: 9b0a2d80     	madd	x0, x12, x10, x11
+   1f58c: f1000529     	subs	x9, x9, #0x1
+   1f590: 91004108     	add	x8, x8, #0x10
+   1f594: 54000140     	b.eq	0x1f5bc <(anonymous namespace)::RunGuardDivide((anonymous namespace)::Input const*, int)+0x6c>
+   1f598: a97fb50b     	ldp	x11, x13, [x8, #-0x8]
+   1f59c: eb0d017f     	cmp	x11, x13
+   1f5a0: 54fffee2     	b.hs	0x1f57c <(anonymous namespace)::RunGuardDivide((anonymous namespace)::Input const*, int)+0x2c>
+   1f5a4: aa1f03ec     	mov	x12, xzr
+   1f5a8: 8b00016b     	add	x11, x11, x0
+   1f5ac: 9b0a2fe0     	madd	x0, xzr, x10, x11
+   1f5b0: f1000529     	subs	x9, x9, #0x1
+   1f5b4: 91004108     	add	x8, x8, #0x10
+   1f5b8: 54ffff01     	b.ne	0x1f598 <(anonymous namespace)::RunGuardDivide((anonymous namespace)::Input const*, int)+0x48>
+   1f5bc: d65f03c0     	ret
+   1f5c0: aa1f03e0     	mov	x0, xzr
+   1f5c4: d65f03c0     	ret
+
+<(anonymous namespace)::RunZeroOneThenDivide((anonymous namespace)::Input const*, int)>:
+   1f5c8: 7100043f     	cmp	w1, #0x1
+   1f5cc: 5400038b     	b.lt	0x1f63c <(anonymous namespace)::RunZeroOneThenDivide((anonymous namespace)::Input const*, int)+0x74>
+   1f5d0: d28f82aa     	mov	x10, #0x7c15            // =31765
+   1f5d4: aa0003e8     	mov	x8, x0
+   1f5d8: aa1f03e0     	mov	x0, xzr
+   1f5dc: f2afe94a     	movk	x10, #0x7f4a, lsl #16
+   1f5e0: 2a0103e9     	mov	w9, w1
+   1f5e4: 91002108     	add	x8, x8, #0x8
+   1f5e8: f2cf372a     	movk	x10, #0x79b9, lsl #32
+   1f5ec: f2f3c6ea     	movk	x10, #0x9e37, lsl #48
+   1f5f0: 14000008     	b	0x1f610 <(anonymous namespace)::RunZeroOneThenDivide((anonymous namespace)::Input const*, int)+0x48>
+   1f5f4: aa1f03ec     	mov	x12, xzr
+   1f5f8: aa0d03eb     	mov	x11, x13
+   1f5fc: 8b00016b     	add	x11, x11, x0
+   1f600: 9b0a2d80     	madd	x0, x12, x10, x11
+   1f604: f1000529     	subs	x9, x9, #0x1
+   1f608: 91004108     	add	x8, x8, #0x10
+   1f60c: 540001a0     	b.eq	0x1f640 <(anonymous namespace)::RunZeroOneThenDivide((anonymous namespace)::Input const*, int)+0x78>
+   1f610: a97fb10d     	ldp	x13, x12, [x8, #-0x8]
+   1f614: eb0c01ab     	subs	x11, x13, x12
+   1f618: 54fffee3     	b.lo	0x1f5f4 <(anonymous namespace)::RunZeroOneThenDivide((anonymous namespace)::Input const*, int)+0x2c>
+   1f61c: eb0c017f     	cmp	x11, x12
+   1f620: 54000062     	b.hs	0x1f62c <(anonymous namespace)::RunZeroOneThenDivide((anonymous namespace)::Input const*, int)+0x64>
+   1f624: 5280002c     	mov	w12, #0x1               // =1
+   1f628: 17fffff5     	b	0x1f5fc <(anonymous namespace)::RunZeroOneThenDivide((anonymous namespace)::Input const*, int)+0x34>
+   1f62c: 9acc096d     	udiv	x13, x11, x12
+   1f630: 9b0cadab     	msub	x11, x13, x12, x11
+   1f634: 910005ac     	add	x12, x13, #0x1
+   1f638: 17fffff1     	b	0x1f5fc <(anonymous namespace)::RunZeroOneThenDivide((anonymous namespace)::Input const*, int)+0x34>
+   1f63c: aa1f03e0     	mov	x0, xzr
+   1f640: d65f03c0     	ret

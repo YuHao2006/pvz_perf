@@ -1,4 +1,4 @@
-﻿#include "graphics/Graphics.h"
+#include "graphics/Graphics.h"
 #include "TodDebug.h"
 #include "TodCommon.h"
 #include "Definition.h"
@@ -496,52 +496,12 @@ __declspec(noinline)
 #else
 __attribute__((noinline, cold))
 #endif
-static ReanimFramePosition SampleFrameGeneral(const Reanimation& animation,
-    std::int64_t nowNs, std::int64_t offsetNs)
+static ReanimFramePosition SampleFrameSigned(const Reanimation& animation, std::int64_t age)
 {
-    ReanimFramePosition position{0, animation.mCurrentFrame, 0};
-    if (animation.mFrameCount <= 0) return position;
-    const auto requested = ReanimClock::Add(nowNs, offsetNs);
-    const auto age = ReanimClock::Subtract(animation.mAnimRate == 0 ? animation.mLastUpdateTimeNs : requested, animation.mStartTimeNs);
     const auto q = animation.mFramePeriodNs;
     const int intervals = FrameIntervals(animation);
     const bool reverse = animation.mAnimRate < 0;
     const bool looping = animation.mLoopType == REANIM_LOOP || animation.mLoopType == REANIM_LOOP_FULL_LAST_FRAME;
-    position.ageNs = age;
-    if (age >= 0 && age / 2 < q)
-    {
-        // Ordinary updates cross at most one keyframe. Preserve integer overshoot.
-        if (reverse && position.frame == 0 && age > 0)
-        {
-            if (!looping) return {0, 0, 0};
-            position.frame = intervals;
-            position.cycles = ReanimClock::Add(position.cycles, -1);
-        }
-        else if (!reverse && position.frame == intervals && age > 0)
-        {
-            if (!looping) return {0, intervals, 0};
-            position.frame = 0;
-            position.cycles = ReanimClock::Add(position.cycles, 1);
-        }
-        const bool advance = position.ageNs >= q;
-        position.frame += reverse ? -int(advance) : int(advance);
-        position.ageNs -= q * advance;
-        if (!reverse && position.frame == intervals && advance)
-        {
-            if (!looping) return {0, intervals, 0};
-            position.frame = 0;
-            position.cycles = ReanimClock::Add(position.cycles, 1);
-        }
-        if (reverse && position.frame == 0 && position.ageNs > 0)
-        {
-            if (!looping) return {0, 0, 0};
-            position.frame = intervals;
-            position.cycles = ReanimClock::Add(position.cycles, -1);
-        }
-        return position;
-    }
-    // Explicit seek/look-ahead and independent fixture jumps are cold queries,
-    // not a fixed-rate sub-simulation or a loop in the ordinary update path.
     auto phase = std::int64_t(animation.mCurrentFrame) * q;
     std::int64_t cycles = 0;
     ReanimClock::Advance(phase, cycles, animation.mPeriodNs, reverse ? -1 : 1, age);
@@ -551,29 +511,44 @@ static ReanimFramePosition SampleFrameGeneral(const Reanimation& animation,
         reverse && remainder != 0 ? q - remainder : remainder};
 }
 
+static ReanimFramePosition SampleFrameByDivision(const Reanimation& animation,
+    std::int64_t nowNs, std::int64_t offsetNs)
+{
+    if (animation.mFrameCount <= 0) return {0, animation.mCurrentFrame, 0};
+    const auto requested = ReanimClock::Add(nowNs, offsetNs);
+    const auto age = ReanimClock::Subtract(animation.mAnimRate == 0 ? animation.mLastUpdateTimeNs : requested, animation.mStartTimeNs);
+    const auto q = animation.mFramePeriodNs;
+    const int intervals = FrameIntervals(animation);
+    const bool reverse = animation.mAnimRate < 0;
+    const bool looping = animation.mLoopType == REANIM_LOOP || animation.mLoopType == REANIM_LOOP_FULL_LAST_FRAME;
+    if (!reverse && age >= 0) {
+        // Quotient/remainder advance any number of keyframes in one operation.
+        // Keep a seek exactly at the endpoint until time actually advances.
+        if (age == 0) return {0, animation.mCurrentFrame, 0};
+        const auto elapsed = static_cast<unsigned long long>(age);
+        const auto period = static_cast<unsigned long long>(q);
+        const auto steps = elapsed / period;
+        const auto remainder = elapsed % period;
+        const auto frame = static_cast<unsigned long long>(animation.mCurrentFrame) + steps;
+        if (frame < static_cast<unsigned long long>(intervals))
+            return {0, int(frame), std::int64_t(remainder)};
+        if (!looping) return {0, intervals, 0};
+        const auto cycles = frame / static_cast<unsigned long long>(intervals);
+        if (cycles > INT64_MAX) throw std::overflow_error("animation cycle overflow");
+        return {std::int64_t(cycles), int(frame % static_cast<unsigned long long>(intervals)),
+            std::int64_t(remainder)};
+    }
+    return SampleFrameSigned(animation, age);
+}
+
 ReanimFramePosition Reanimation::SampleFrameAt(std::int64_t nowNs, std::int64_t offsetNs) const
 {
-    // Keep common current-frame reads small enough to inline into draw/root
-    // consumers. Reverse, endpoint and explicit look-ahead rules live below.
-    if (offsetNs == 0 && mFrameCount > 0)
-    {
-        const auto sampleTime = mAnimRate == 0 ? mLastUpdateTimeNs : nowNs;
-        const auto age = ReanimClock::Subtract(sampleTime, mStartTimeNs);
-        const auto q = mFramePeriodNs;
-        const int intervals = FrameIntervals(*this);
-        if (static_cast<std::uint64_t>(age) < static_cast<std::uint64_t>(q) &&
-            (mAnimRate < 0 ? (mCurrentFrame > 0 || age == 0) : (mCurrentFrame < intervals || age == 0)))
-            return {0, mCurrentFrame, age};
-        if (mAnimRate > 0 && mCurrentFrame < intervals && age >= q &&
-            static_cast<std::uint64_t>(age - q) < static_cast<std::uint64_t>(q))
-        {
-            if (mCurrentFrame + 1 < intervals)
-                return {0, mCurrentFrame + 1, age - q};
-            if (mLoopType == REANIM_LOOP || mLoopType == REANIM_LOOP_FULL_LAST_FRAME)
-                return {1, 0, age - q};
-        }
-    }
-    return SampleFrameGeneral(*this, nowNs, offsetNs);
+    // ConsumeTimeAt and all timing mutations publish a normalized frame cache.
+    // Ordinary consumers of that same timestamp share it without another divide.
+    if (offsetNs == 0 && mFrameCount > 0 &&
+        (nowNs == mLastUpdateTimeNs || mAnimRate == 0))
+        return {0, mCurrentFrame, ReanimClock::Subtract(mLastUpdateTimeNs, mStartTimeNs)};
+    return SampleFrameByDivision(*this, nowNs, offsetNs);
 }
 
 ReanimPlaybackPosition Reanimation::SamplePlayback(std::int64_t offsetNs) const
@@ -692,12 +667,13 @@ static double GroundCycleDisplacement(const Reanimation& animation)
 void Reanimation::ConsumeTimeAt(std::int64_t nowNs)
 {
     if (mFrameCount <= 0 || mDead) return;
-    const auto previous = SamplePlaybackAt(mLastUpdateTimeNs);
-    mLastFrameNs = previous.phaseNs;
+    const auto previousAge = ReanimClock::Subtract(mLastUpdateTimeNs, mStartTimeNs);
+    const auto previousFrame = std::int64_t(mCurrentFrame) * mFramePeriodNs;
+    mLastFrameNs = mAnimRate < 0 ? previousFrame - previousAge : previousFrame + previousAge;
     mHasLastFrame = true;
-    const auto frame = SampleFrameAt(nowNs);
+    const auto frame = SampleFrameByDivision(*this, nowNs, 0);
     const auto phase = FramePhase(*this, frame);
-    const auto crossed = ReanimClock::Subtract(frame.cycles, previous.cycles);
+    const auto crossed = frame.cycles;
     mCycleCrossings = crossed;
     if (frame.cycles != 0)
         mRootDisplacement += double(frame.cycles) * GroundCycleDisplacement(*this);

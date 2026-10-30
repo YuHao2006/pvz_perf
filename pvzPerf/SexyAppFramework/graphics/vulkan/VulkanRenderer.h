@@ -142,9 +142,9 @@ public:
     // from host memory. lut is the 65536-byte grayscale table (copied).
     VulkanTexture* CreateCausticsTexture(int width, int height, VulkanTexture* source);
     void UseCausticsTexture(VulkanTexture* output, VulkanTexture* source);
-    // Latches the counter for the next frame's compute pass. Call between
+    // Latches integer nanosecond age for the next compute pass. Call between
     // frames (update phase); the dispatch happens inside BeginScene.
-    void SetCausticsFrame(uint32_t counter);
+    void SetCausticsTimeNs(unsigned long long timeNs);
     VulkanTexture* const& causticsTexture;
     bool HasCausticsCompute() const;
 

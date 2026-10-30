@@ -6,6 +6,7 @@ set(SEXY_OPENGL_SOURCES
     ../../effect/ScaleEffectSizing.cpp)
 function(add_sexy_opengl_library target)
 add_library(${target} STATIC ${SEXY_OPENGL_SOURCES})
+target_sources(${target} PRIVATE ../PoolMesh.cpp)
 set_property(TARGET ${target} PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE)
 target_compile_features(${target} PUBLIC cxx_std_23)
 target_compile_definitions(${target} PUBLIC PVZ_GPU_OPENGL=1)

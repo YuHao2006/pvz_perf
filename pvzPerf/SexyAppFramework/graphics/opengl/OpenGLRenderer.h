@@ -49,7 +49,7 @@ public:
     static unsigned int SlotOf(const OpenGLTexture* texture);
     OpenGLTexture* CreateCausticsTexture(int width, int height, OpenGLTexture* source);
     void UseCausticsTexture(OpenGLTexture* output, OpenGLTexture* source);
-    void SetCausticsFrame(unsigned int counter);
+    void SetCausticsTimeNs(unsigned long long timeNs);
     OpenGLTexture* const& causticsTexture;
     bool HasCausticsCompute() const;
     bool BeginScene();

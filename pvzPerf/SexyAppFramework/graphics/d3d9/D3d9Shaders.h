@@ -128,7 +128,7 @@ static_assert(offsetof(Vertex, rect) == 32 && offsetof(Vertex, flags) == 48);
 // half precision, approximate reciprocals before floor, or a shorter loop.
 //
 // Caustic CPU recipe (uint32 wrapping BEFORE shifts/additions):
-// p0 = counter << 16; p1 = ((counter & 65535u) + 1u) << 16;
+// CPU evaluates the lookup offsets directly from integer nanoseconds.
 // divSigned(n,d) = n's signed two's-complement value / d, truncating to zero;
 // implement via int64 to avoid implementation-defined signed conversions.
 // u0 = uint32(divSigned(p0,10)); u1 = 0u-uint32(divSigned(p1,6));

@@ -1,0 +1,112 @@
+
+C:\Users\ADMINI~1\AppData\Local\Temp\pvz-phase-progression-20261030-173656\while_cached.exe:	file format coff-x86-64
+
+Disassembly of section .text:
+
+0000000140001000 <.text>:
+140231bcd: 0f 29 70 c8                 	movaps	xmmword ptr [rax - 0x38], xmm6
+140231bd1: 0f 57 f6                    	xorps	xmm6, xmm6
+140231bd4: 0f 2f c6                    	comiss	xmm0, xmm6
+140231bd7: 48 89 70 08                 	mov	qword ptr [rax + 0x8], rsi
+140231bdb: 48 89 78 10                 	mov	qword ptr [rax + 0x10], rdi
+140231bdf: 4c 89 70 e0                 	mov	qword ptr [rax - 0x20], r14
+140231be3: 0f 86 89 01 00 00           	jbe	0x140231d72 <.text+0x230d72>
+140231be9: 83 79 48 01                 	cmp	dword ptr [rcx + 0x48], 0x1
+140231bed: 0f 87 7f 01 00 00           	ja	0x140231d72 <.text+0x230d72>
+140231bf3: 48 8b 71 18                 	mov	rsi, qword ptr [rcx + 0x18]
+140231bf7: 48 8b 51 08                 	mov	rdx, qword ptr [rcx + 0x8]
+140231bfb: 48 8b 89 e8 00 00 00        	mov	rcx, qword ptr [rcx + 0xe8]
+140231c02: e8 d9 82 dd ff              	call	0x140009ee0 <.text+0x8ee0>
+140231c07: 48 63 4b 10                 	movsxd	rcx, dword ptr [rbx + 0x10]
+140231c0b: 48 8b 53 08                 	mov	rdx, qword ptr [rbx + 0x8]
+140231c0f: 48 0f af ce                 	imul	rcx, rsi
+140231c13: c6 83 f0 00 00 00 01        	mov	byte ptr [rbx + 0xf0], 0x1
+140231c1a: 48 03 c1                    	add	rax, rcx
+140231c1d: 49 8b cc                    	mov	rcx, r12
+140231c20: 48 89 83 d8 00 00 00        	mov	qword ptr [rbx + 0xd8], rax
+140231c27: e8 b4 82 dd ff              	call	0x140009ee0 <.text+0x8ee0>
+140231c2c: 4c 8b c8                    	mov	r9, rax
+140231c2f: 48 85 c0                    	test	rax, rax
+140231c32: 0f 88 68 03 00 00           	js	0x140231fa0 <.text+0x230fa0>
+140231c38: 44 8b 73 10                 	mov	r14d, dword ptr [rbx + 0x10]
+140231c3c: 48 8b cb                    	mov	rcx, rbx
+140231c3f: 45 8b c6                    	mov	r8d, r14d
+140231c42: e8 a9 ec ff ff              	call	0x1402308f0 <.text+0x22f8f0>
+140231c47: 33 ff                       	xor	edi, edi
+140231c49: 4c 3b ce                    	cmp	r9, rsi
+140231c4c: 7c 24                       	jl	0x140231c72 <.text+0x230c72>
+140231c4e: 66 90                       	nop
+140231c50: 41 8d 50 01                 	lea	edx, [r8 + 0x1]
+140231c54: 4c 2b ce                    	sub	r9, rsi
+140231c57: 3b d0                       	cmp	edx, eax
+140231c59: 48 8d 4f 01                 	lea	rcx, [rdi + 0x1]
+140231c5d: 48 0f 45 cf                 	cmovne	rcx, rdi
+140231c61: 45 33 c0                    	xor	r8d, r8d
+140231c64: 3b d0                       	cmp	edx, eax
+140231c66: 48 8b f9                    	mov	rdi, rcx
+140231c69: 44 0f 45 c2                 	cmovne	r8d, edx
+140231c6d: 4c 3b ce                    	cmp	r9, rsi
+140231c70: 7d de                       	jge	0x140231c50 <.text+0x230c50>
+140231c72: 48 89 7b 30                 	mov	qword ptr [rbx + 0x30], rdi
+140231c76: 48 85 ff                    	test	rdi, rdi
+140231c79: 0f 84 93 00 00 00           	je	0x140231d12 <.text+0x230d12>
+140231c7f: 44 8b 5b 54                 	mov	r11d, dword ptr [rbx + 0x54]
+140231c83: 41 83 fb 01                 	cmp	r11d, 0x1
+140231c87: 7e 6a                       	jle	0x140231cf3 <.text+0x230cf3>
+140231c89: 48 8b 53 40                 	mov	rdx, qword ptr [rbx + 0x40]
+140231c8d: 48 85 d2                    	test	rdx, rdx
+140231c90: 74 61                       	je	0x140231cf3 <.text+0x230cf3>
+140231c92: 8b 03                       	mov	eax, dword ptr [rbx]
+140231c94: 3d 90 00 00 00              	cmp	eax, 0x90
+140231c99: 73 58                       	jae	0x140231cf3 <.text+0x230cf3>
+140231c9b: 48 8d 0d fe 22 62 00        	lea	rcx, [rip + 0x6222fe]   # 0x140853fa0
+140231ca2: 4c 63 14 81                 	movsxd	r10, dword ptr [rcx + 4*rax]
+140231ca6: 45 85 d2                    	test	r10d, r10d
+140231ca9: 78 48                       	js	0x140231cf3 <.text+0x230cf3>
+140231cab: 48 8b 02                    	mov	rax, qword ptr [rdx]
+140231cae: 4b 8d 0c 52                 	lea	rcx, [r10 + 2*r10]
+140231cb2: 4c 8b 54 c8 08              	mov	r10, qword ptr [rax + 8*rcx + 0x8]
+140231cb7: 4d 85 d2                    	test	r10, r10
+140231cba: 0f 84 01 03 00 00           	je	0x140231fc1 <.text+0x230fc1>
+140231cc0: 48 63 53 50                 	movsxd	rdx, dword ptr [rbx + 0x50]
+140231cc4: 41 8d 04 13                 	lea	eax, [r11 + rdx]
+140231cc8: 48 63 c8                    	movsxd	rcx, eax
+140231ccb: 48 ff c9                    	dec	rcx
+140231cce: 48 6b c1 38                 	imul	rax, rcx, 0x38
+140231cd2: 48 6b ca 38                 	imul	rcx, rdx, 0x38
+140231cd6: f3 42 0f 10 0c 10           	movss	xmm1, dword ptr [rax + r10] # xmm1 = mem[0],zero,zero,zero
+140231cdc: 0f 5a c9                    	cvtps2pd	xmm1, xmm1
+140231cdf: f3 42 0f 10 04 11           	movss	xmm0, dword ptr [rcx + r10] # xmm0 = mem[0],zero,zero,zero
+140231ce5: 0f 5a c0                    	cvtps2pd	xmm0, xmm0
+140231ce8: f2 0f 5c c8                 	subsd	xmm1, xmm0
+140231cec: f2 0f 59 4b 20              	mulsd	xmm1, qword ptr [rbx + 0x20]
+140231cf1: eb 03                       	jmp	0x140231cf6 <.text+0x230cf6>
+140231cf3: 0f 57 c9                    	xorps	xmm1, xmm1
+140231cf6: 0f 57 c0                    	xorps	xmm0, xmm0
+140231cf9: f2 48 0f 2a c7              	cvtsi2sd	xmm0, rdi
+140231cfe: f2 0f 59 c1                 	mulsd	xmm0, xmm1
+140231d02: f2 0f 58 83 e0 00 00 00     	addsd	xmm0, qword ptr [rbx + 0xe0]
+140231d0a: f2 0f 11 83 e0 00 00 00     	movsd	qword ptr [rbx + 0xe0], xmm0
+140231d12: 45 3b c6                    	cmp	r8d, r14d
+140231d15: 75 05                       	jne	0x140231d1c <.text+0x230d1c>
+140231d17: 48 85 ff                    	test	rdi, rdi
+140231d1a: 74 13                       	je	0x140231d2f <.text+0x230d2f>
+140231d1c: 49 8b d1                    	mov	rdx, r9
+140231d1f: 44 89 43 10                 	mov	dword ptr [rbx + 0x10], r8d
+140231d23: 49 8b cc                    	mov	rcx, r12
+140231d26: e8 b5 81 dd ff              	call	0x140009ee0 <.text+0x8ee0>
+140231d2b: 48 89 43 08                 	mov	qword ptr [rbx + 0x8], rax
+140231d2f: 4c 89 a3 e8 00 00 00        	mov	qword ptr [rbx + 0xe8], r12
+140231d36: 48 85 ff                    	test	rdi, rdi
+140231d39: 0f 84 1d 02 00 00           	je	0x140231f5c <.text+0x230f5c>
+140231d3f: 48 81 ff ff ff ff 7f        	cmp	rdi, 0x7fffffff
+140231d46: 0f 8f 96 02 00 00           	jg	0x140231fe2 <.text+0x230fe2>
+140231d4c: 48 63 8b 98 00 00 00        	movsxd	rcx, dword ptr [rbx + 0x98]
+140231d53: 48 8b d7                    	mov	rdx, rdi
+140231d56: e8 95 d1 e2 ff              	call	0x14005eef0 <.text+0x5def0>
+140231d5b: 48 3d ff ff ff 7f           	cmp	rax, 0x7fffffff
+140231d61: 0f 8f 9c 02 00 00           	jg	0x140232003 <.text+0x231003>
+140231d67: 89 83 98 00 00 00           	mov	dword ptr [rbx + 0x98], eax
+140231d6d: e9 ea 01 00 00              	jmp	0x140231f5c <.text+0x230f5c>
+140231d72: 4c 8b 81 e8 00 00 00        	mov	r8, qword ptr [rcx + 0xe8]
+140231d79: 48 8d 55 b0                 	lea	rdx, [rbp - 0x50]

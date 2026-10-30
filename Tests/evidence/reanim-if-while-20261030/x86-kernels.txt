@@ -1,0 +1,63 @@
+RunSubtract
+140001390: 40 53                       	push	rbx
+140001392: 45 33 d2                    	xor	r10d, r10d
+140001395: 45 33 c9                    	xor	r9d, r9d
+140001398: 8b da                       	mov	ebx, edx
+14000139a: 4c 8b d9                    	mov	r11, rcx
+14000139d: 85 d2                       	test	edx, edx
+14000139f: 7e 51                       	jle	0x1400013f2 <.text+0x3f2>
+1400013a1: 48 89 7c 24 10              	mov	qword ptr [rsp + 0x10], rdi
+1400013a6: 48 bf 15 7c 4a 7f b9 79 37 9e       	movabs	rdi, -0x61c8864680b583eb
+1400013b0: 41 8b c1                    	mov	eax, r9d
+1400013b3: 33 d2                       	xor	edx, edx
+1400013b5: 48 03 c0                    	add	rax, rax
+1400013b8: 49 8b 0c c3                 	mov	rcx, qword ptr [r11 + 8*rax]
+1400013bc: 4d 8b 44 c3 08              	mov	r8, qword ptr [r11 + 8*rax + 0x8]
+1400013c1: 49 3b c8                    	cmp	rcx, r8
+1400013c4: 72 15                       	jb	0x1400013db <.text+0x3db>
+1400013c6: 66 66 0f 1f 84 00 00 00 00 00       	nop	word ptr [rax + rax]
+1400013d0: 49 2b c8                    	sub	rcx, r8
+1400013d3: 48 ff c2                    	inc	rdx
+1400013d6: 49 3b c8                    	cmp	rcx, r8
+1400013d9: 73 f5                       	jae	0x1400013d0 <.text+0x3d0>
+1400013db: 48 0f af d7                 	imul	rdx, rdi
+1400013df: 41 ff c1                    	inc	r9d
+1400013e2: 48 03 d1                    	add	rdx, rcx
+1400013e5: 4c 03 d2                    	add	r10, rdx
+1400013e8: 44 3b cb                    	cmp	r9d, ebx
+1400013eb: 7c c3                       	jl	0x1400013b0 <.text+0x3b0>
+1400013ed: 48 8b 7c 24 10              	mov	rdi, qword ptr [rsp + 0x10]
+1400013f2: 49 8b c2                    	mov	rax, r10
+1400013f5: 5b                          	pop	rbx
+1400013f6: c3                          	ret
+
+RunIfSingle
+1400014d0: 40 53                       	push	rbx
+1400014d2: 45 33 c9                    	xor	r9d, r9d
+1400014d5: 45 33 d2                    	xor	r10d, r10d
+1400014d8: 8b da                       	mov	ebx, edx
+1400014da: 4c 8b d9                    	mov	r11, rcx
+1400014dd: 85 d2                       	test	edx, edx
+1400014df: 7e 47                       	jle	0x140001528 <.text+0x528>
+1400014e1: 48 89 7c 24 10              	mov	qword ptr [rsp + 0x10], rdi
+1400014e6: 48 bf 15 7c 4a 7f b9 79 37 9e       	movabs	rdi, -0x61c8864680b583eb
+1400014f0: 41 8b c2                    	mov	eax, r10d
+1400014f3: 48 03 c0                    	add	rax, rax
+1400014f6: 4d 8b 04 c3                 	mov	r8, qword ptr [r11 + 8*rax]
+1400014fa: 49 8b 4c c3 08              	mov	rcx, qword ptr [r11 + 8*rax + 0x8]
+1400014ff: 49 8b d0                    	mov	rdx, r8
+140001502: 48 2b d1                    	sub	rdx, rcx
+140001505: 4c 3b c1                    	cmp	r8, rcx
+140001508: 49 0f 42 d0                 	cmovb	rdx, r8
+14000150c: 33 c0                       	xor	eax, eax
+14000150e: 4c 3b c1                    	cmp	r8, rcx
+140001511: 48 0f 43 c7                 	cmovae	rax, rdi
+140001515: 41 ff c2                    	inc	r10d
+140001518: 4c 03 c8                    	add	r9, rax
+14000151b: 4c 03 ca                    	add	r9, rdx
+14000151e: 44 3b d3                    	cmp	r10d, ebx
+140001521: 7c cd                       	jl	0x1400014f0 <.text+0x4f0>
+140001523: 48 8b 7c 24 10              	mov	rdi, qword ptr [rsp + 0x10]
+140001528: 49 8b c1                    	mov	rax, r9
+14000152b: 5b                          	pop	rbx
+14000152c: c3                          	ret

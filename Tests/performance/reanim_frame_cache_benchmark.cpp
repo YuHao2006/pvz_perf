@@ -9,6 +9,8 @@
 #include "Sexy.TodLib/ReanimClock.h"
 #include "Sexy.TodLib/generated/GeneratedDefinitions.h"
 #include <algorithm>
+#include <array>
+#include <string>
 #include <bit>
 #include <cmath>
 #include <climits>
@@ -22,7 +24,7 @@ namespace {
 constexpr int Updates = 1'000'000;
 constexpr int QueryBatches = 256;
 constexpr int QueriesPerBatch = 4096;
-constexpr long long StepNs = 10'000'000;
+long long StepNs = 10'000'000;
 volatile unsigned long long sink;
 LONG CALLBACK FailHardwareException(EXCEPTION_POINTERS* exception)
 {
@@ -62,7 +64,7 @@ struct Scenario {
         animation.mFrameStart=start; animation.mFrameCount=count;
         animation.mAnimRate=rate; animation.mLoopType=REANIM_LOOP;
         animation.mFramePeriodNs=ReanimClock::PeriodFromRate(count,rate)/(count-1);
-        Require(animation.mFramePeriodNs>=StepNs,"Fixture exceeds one-frame-per-update scope");
+        Require(animation.mFramePeriodNs>0,"Invalid fixture frame period");
         animation.mPeriodNs=animation.mFramePeriodNs*(count-1);
         animation.mRootFrameScale=double(count)/(count-1);
         Reset();
@@ -150,6 +152,26 @@ __declspec(noinline) unsigned long long NewUpdateZombieRoot(Scenario& s,long lon
     s.animation.Advance(StepNs);
     return std::bit_cast<unsigned int>(float(s.zombie.RootPosition(s.animation,-1)));
 }
+__declspec(noinline) unsigned long long NewUpdateOnly(Scenario& s,long long) {
+    s.animation.Advance(StepNs);
+    return static_cast<unsigned long long>(s.animation.mLastUpdateTimeNs) ^
+        std::bit_cast<unsigned long long>(s.animation.mRootDisplacement) ^ s.animation.mLoopCount;
+}
+__declspec(noinline) unsigned long long NewUpdateBoth(Scenario& s,long long) {
+    s.animation.Advance(StepNs);
+    ReanimatorFrameTime frame;s.animation.GetFrameTime(&frame);
+    return FrameBits(frame) ^ std::bit_cast<unsigned long long>(s.animation.RootMotion(ReanimTrackId::_ground,-1));
+}
+int QueriesPerUpdate=1;
+__declspec(noinline) unsigned long long NewUpdateRepeatedQueries(Scenario& s,long long now) {
+    s.animation.Advance(StepNs);
+    unsigned long long sum=0;
+    for(int i=0;i<QueriesPerUpdate;++i) {
+        unsigned long long(*volatile query)(Scenario&,long long)=(i&1)?NewRootQuery:NewFrameQuery;
+        sum+=query(s,now);
+    }
+    return sum;
+}
 using Query=unsigned long long(*)(Scenario&,long long);
 struct Measurement {double ns;unsigned long long hash;};
 Measurement QueryRun(Scenario& s,Query function) {
@@ -186,6 +208,12 @@ void Validate(Scenario& s,FILE* out) {
     for(int i=0;i<20000;++i) {
         const auto now=(i+1LL)*StepNs;
         OldConsume(s,now);s.animation.Advance(StepNs);
+        const auto position=s.animation.SamplePlayback();
+        const auto expected=OldSample(s.old,now);
+        Require(position.phaseNs==expected.phaseNs && s.animation.mLoopCount==s.old.loopCount &&
+            s.animation.mCycleCrossings==s.old.cycles-s.old.lastCycles &&
+            s.animation.mLastFrameNs==s.old.lastPhase,
+            "Integer phase, loop crossings or previous event phase differ");
         const double a=OldRootValue(s,now),b=s.animation.RootMotion(ReanimTrackId::_ground,-1);
         rootError=std::max(rootError,std::abs(a-b));
         ReanimatorFrameTime frame;s.animation.GetFrameTime(&frame);const auto old=OldFrameValue(s,now);
@@ -214,6 +242,46 @@ int main(int argc,char** argv) {
         std::fputs("definition,max_root_error,max_fraction_error,max_zombie_error\n",validation);
         FILE* layout=std::fopen((dir/"layout.csv").string().c_str(),"wb");Require(layout,"Cannot open layout output");
         std::fprintf(layout,"zombie,reanimation\n%zu,%zu\n",sizeof(Zombie),sizeof(Reanimation));std::fclose(layout);
+        if(argc==3 && std::string(argv[2])=="repeat_queries") {
+            std::puts("kernel,scope,definition,round,operations,ns_per_operation,checksum");
+            struct StepCase {const char* label;long long ns;};
+            for(const auto& step:std::array<StepCase,2>{{{"30Hz",1'000'000'000LL/30},
+                {"30Hz_x4",4'000'000'000LL/30}}}) {
+                StepNs=step.ns;
+                Scenario scenarios[]{{REANIM_ZOMBIE,"normal12",12},{REANIM_ZOMBIE,"normal30",30}};
+                for(auto& scenario:scenarios) {
+                    Validate(scenario,validation);
+                    for(int count:{1,2,4,8}) {
+                        QueriesPerUpdate=count;
+                        const auto name=std::string(step.label)+"_queries"+std::to_string(count);
+                        Measure(scenario,name.c_str(),NewUpdateRepeatedQueries,true);
+                    }
+                }
+            }
+            std::fclose(validation);return 0;
+        }
+        if(argc==3 && (std::string(argv[2])=="compare_progression" || std::string(argv[2])=="validate_progression")) {
+            std::puts("kernel,scope,definition,round,operations,ns_per_operation,checksum");
+            struct StepCase { const char* label; long long ns; };
+            for(const auto& step:std::array<StepCase,3>{{{"120Hz",1'000'000'000LL/120},
+                {"30Hz",1'000'000'000LL/30},{"30Hz_x4",4'000'000'000LL/30}}}) {
+                StepNs=step.ns;
+                Scenario scenarios[]{{REANIM_ZOMBIE,"normal12",12},
+                    {REANIM_ZOMBIE_FOOTBALL,"football18",18},
+                    {REANIM_ZOMBIE,"normal30",30},{REANIM_ZOMBIE_FOOTBALL,"football60",60}};
+                for(auto& scenario:scenarios) {
+                    Validate(scenario,validation);
+                    if(std::string(argv[2])=="validate_progression") continue;
+                    for(const auto& entry:std::array<std::pair<const char*,Query>,4>{{
+                        {"update",NewUpdateOnly},{"update_root",NewUpdateRoot},
+                        {"update_frame",NewUpdateFrame},{"update_root_frame",NewUpdateBoth}}}) {
+                        const auto label=std::string(step.label)+"_"+entry.first;
+                        Measure(scenario,label.c_str(),entry.second,true);
+                    }
+                }
+            }
+            std::fclose(validation);return 0;
+        }
         struct Kernel {const char* name;Query function;bool update;};
         std::vector<Kernel> kernels{{"frozen_v36_root",OldRootQuery,false},{"v4_root",NewRootQuery,false},
             {"frozen_v36_frame",OldFrameQuery,false},{"v4_frame",NewFrameQuery,false},

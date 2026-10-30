@@ -1,0 +1,56 @@
+{
+  "1000Hz": {
+    "divide_mod": 5.504036,
+    "while_subtract": 3.343964,
+    "guard_divide_mod": 3.542519,
+    "zero_one_then_divide": 3.341103
+  },
+  "240Hz": {
+    "divide_mod": 5.498886,
+    "while_subtract": 3.307533,
+    "guard_divide_mod": 3.640366,
+    "zero_one_then_divide": 3.31974
+  },
+  "120Hz": {
+    "divide_mod": 5.505562,
+    "while_subtract": 3.478622,
+    "guard_divide_mod": 4.046059,
+    "zero_one_then_divide": 3.538132
+  },
+  "100Hz": {
+    "divide_mod": 5.500603,
+    "while_subtract": 3.563309,
+    "guard_divide_mod": 4.574966,
+    "zero_one_then_divide": 4.088593
+  },
+  "60Hz_hypothetical": {
+    "divide_mod": 5.517197,
+    "while_subtract": 3.872108,
+    "guard_divide_mod": 5.112457,
+    "zero_one_then_divide": 3.986931
+  },
+  "30Hz_hypothetical": {
+    "divide_mod": 5.501938,
+    "while_subtract": 4.667854,
+    "guard_divide_mod": 5.998611,
+    "zero_one_then_divide": 5.060768
+  },
+  "15Hz_hypothetical": {
+    "divide_mod": 5.501556,
+    "while_subtract": 8.805656,
+    "guard_divide_mod": 6.827927,
+    "zero_one_then_divide": 6.799889
+  },
+  "jump_32_frames": {
+    "divide_mod": 5.951118,
+    "while_subtract": 39.821434,
+    "guard_divide_mod": 6.431007,
+    "zero_one_then_divide": 6.560135
+  },
+  "jump_128_frames": {
+    "divide_mod": 5.970764,
+    "while_subtract": 186.565208,
+    "guard_divide_mod": 6.428719,
+    "zero_one_then_divide": 6.599998
+  }
+}

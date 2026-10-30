@@ -1,0 +1,172 @@
+{
+  "scope": "Only samples within externally observed scene 3, excluding later loss screen",
+  "scene3_window_ns": [
+    16148490000000.0,
+    16174980000000.0
+  ],
+  "sample_window_ns": [
+    16157846169564,
+    16181856278982
+  ],
+  "excluded_samples": 2047,
+  "core_samples": [
+    {
+      "tid": 31793,
+      "name": "Thread-2",
+      "cpu": 0,
+      "sample_weight_ns": 600000000,
+      "sample_share_pct": 6.674082313681868
+    },
+    {
+      "tid": 31793,
+      "name": "Thread-2",
+      "cpu": 1,
+      "sample_weight_ns": 1112000000,
+      "sample_share_pct": 12.369299221357064
+    },
+    {
+      "tid": 31793,
+      "name": "Thread-2",
+      "cpu": 2,
+      "sample_weight_ns": 742000000,
+      "sample_share_pct": 8.253615127919911
+    },
+    {
+      "tid": 31793,
+      "name": "Thread-2",
+      "cpu": 3,
+      "sample_weight_ns": 1602000000,
+      "sample_share_pct": 17.81979977753059
+    },
+    {
+      "tid": 31793,
+      "name": "Thread-2",
+      "cpu": 4,
+      "sample_weight_ns": 1942000000,
+      "sample_share_pct": 21.601779755283648
+    },
+    {
+      "tid": 31793,
+      "name": "Thread-2",
+      "cpu": 5,
+      "sample_weight_ns": 1532000000,
+      "sample_share_pct": 17.04115684093437
+    },
+    {
+      "tid": 31793,
+      "name": "Thread-2",
+      "cpu": 6,
+      "sample_weight_ns": 1460000000,
+      "sample_share_pct": 16.240266963292544
+    },
+    {
+      "tid": 31793,
+      "name": "Thread-2",
+      "cpu": 7,
+      "sample_weight_ns": 0,
+      "sample_share_pct": 0.0
+    }
+  ],
+  "self_symbols": [
+    {
+      "symbol": "unknown",
+      "cpu_sample_pct": 18.229895784725464
+    },
+    {
+      "symbol": "Reanimation::DrawTrack(Sexy::Graphics*, int, int, ReanimatorFrameTime const*)",
+      "cpu_sample_pct": 12.599160055996267
+    },
+    {
+      "symbol": "Sexy::VulkanRenderer::SubmitQuads(std::__ndk1::span<Sexy::GpuVertex const, 18446744073709551615ul>, Sexy::VulkanTexture*, bool, bool, Sexy::GpuBlend, Sexy::GpuClip const*)",
+      "cpu_sample_pct": 6.688442992689376
+    },
+    {
+      "symbol": "Resample_Cubic_NEON(std::__ndk1::variant<std::__ndk1::monostate, CubicState, BsincState> const*, std::__ndk1::span<float const, 18446744073709551615ul>, unsigned int, unsigned int, std::__ndk1::span<float, 18446744073709551615ul>)",
+      "cpu_sample_pct": 3.499766682221185
+    },
+    {
+      "symbol": "SubmitGpuTriangles((anonymous namespace)::ScreenVertex const*, int, PrimitiveType, Sexy::VulkanTexture*, bool, int, Sexy::TRect<int> const*)",
+      "cpu_sample_pct": 3.4842121636335355
+    },
+    {
+      "symbol": "Sexy::TextureSource::BltTransformed(Sexy::SexyMatrix3 const&, Sexy::TextureRegion const&, Sexy::Color const&, Sexy::TRect<int> const*, float, float, bool) const",
+      "cpu_sample_pct": 3.23533986623114
+    },
+    {
+      "symbol": "FloatTrackEvaluate(FloatParameterTrack const&, double, float)",
+      "cpu_sample_pct": 2.5976046041375023
+    },
+    {
+      "symbol": "@plt",
+      "cpu_sample_pct": 2.270959713796858
+    },
+    {
+      "symbol": "Reanimation::DrawRenderGroup(Sexy::Graphics*, int)",
+      "cpu_sample_pct": 1.4932337844143724
+    },
+    {
+      "symbol": "PlantDrawHeightOffset(long, Board*, Plant*, SeedType, int, int)",
+      "cpu_sample_pct": 1.415461191476124
+    },
+    {
+      "symbol": "Mix_NEON(std::__ndk1::span<float const, 18446744073709551615ul>, std::__ndk1::span<std::__ndk1::array<float, 1024ul>, 18446744073709551615ul>, std::__ndk1::span<float, 18446744073709551615ul>, std::__ndk1::span<float const, 18446744073709551615ul>, unsigned long, unsigned long)",
+      "cpu_sample_pct": 1.3843521543008244
+    },
+    {
+      "symbol": "TodParticleEmitter::DrawParticle(Sexy::Graphics*, TodParticle*, TodTriangleGroup*)",
+      "cpu_sample_pct": 1.3065795613625757
+    },
+    {
+      "symbol": "TodParticleEmitter::GetRenderParamsDepth(TodParticle*, ParticleRenderParams*, int)",
+      "cpu_sample_pct": 1.2754705241872766
+    },
+    {
+      "symbol": "decltype(auto) std::__ndk1::__variant_detail::__visitation::__base::__dispatcher<3ul>::__dispatch[abi:fe180000]<std::__ndk1::__variant_detail::__visitation::__variant::__value_visitor<(anonymous namespace)::LoadSamples(std::__ndk1::span<float, 18446744073709551615ul>, std::__ndk1::variant<std::__ndk1::span<unsigned char, 18446744073709551615ul>, std::__ndk1::span<short, 18446744073709551615ul>, std::__ndk1::span<int, 18446744073709551615ul>, std::__ndk1::span<float, 18446744073709551615ul>, std::__ndk1::span<double, 18446744073709551615ul>, std::__ndk1::span<MulawSample, 18446744073709551615ul>, std::__ndk1::span<AlawSample, 18446744073709551615ul>, std::__ndk1::span<IMA4Data, 18446744073709551615ul>, std::__ndk1::span<MSADPCMData, 18446744073709551615ul> > const&, unsigned long, unsigned long, unsigned long, unsigned long)::$_0>&&, std::__ndk1::__variant_detail::__base<(std::__ndk1::__variant_detail::_Trait)0, std::__ndk1::span<unsigned char, 18446744073709551615ul>, std::__ndk1::span<short, 18446744073709551615ul>, std::__ndk1::span<int, 18446744073709551615ul>, std::__ndk1::span<float, 18446744073709551615ul>, std::__ndk1::span<double, 18446744073709551615ul>, std::__ndk1::span<MulawSample, 18446744073709551615ul>, std::__ndk1::span<AlawSample, 18446744073709551615ul>, std::__ndk1::span<IMA4Data, 18446744073709551615ul>, std::__ndk1::span<MSADPCMData, 18446744073709551615ul> > const&>(std::__ndk1::__variant_detail::__visitation::__variant::__value_visitor<(anonymous namespace)::LoadSamples(std::__ndk1::span<float, 18446744073709551615ul>, std::__ndk1::variant<std::__ndk1::span<unsigned char, 18446744073709551615ul>, std::__ndk1::span<short, 18446744073709551615ul>, std::__ndk1::span<int, 18446744073709551615ul>, std::__ndk1::span<float, 18446744073709551615ul>, std::__ndk1::span<double, 18446744073709551615ul>, std::__ndk1::span<MulawSample, 18446744073709551615ul>, std::__ndk1::span<AlawSample, 18446744073709551615ul>, std::__ndk1::span<IMA4Data, 18446744073709551615ul>, std::__ndk1::span<MSADPCMData, 18446744073709551615ul> > const&, unsigned long, unsigned long, unsigned long, unsigned long)::$_0>&&, std::__ndk1::__variant_detail::__base<(std::__ndk1::__variant_detail::_Trait)0, std::__ndk1::span<unsigned char, 18446744073709551615ul>, std::__ndk1::span<short, 18446744073709551615ul>, std::__ndk1::span<int, 18446744073709551615ul>, std::__ndk1::span<float, 18446744073709551615ul>, std::__ndk1::span<double, 18446744073709551615ul>, std::__ndk1::span<MulawSample, 18446744073709551615ul>, std::__ndk1::span<AlawSample, 18446744073709551615ul>, std::__ndk1::span<IMA4Data, 18446744073709551615ul>, std::__ndk1::span<MSADPCMData, 18446744073709551615ul> > const&)",
+      "cpu_sample_pct": 1.0732617825478301
+    },
+    {
+      "symbol": "Reanimation::GetTransformAtTime(int, ReanimatorTransform*, ReanimatorFrameTime const*)",
+      "cpu_sample_pct": 1.0577072639601803
+    },
+    {
+      "symbol": "DeviceBase::renderSamples(unsigned int)",
+      "cpu_sample_pct": 1.0577072639601803
+    },
+    {
+      "symbol": "TodBltMatrix(Sexy::Graphics*, Sexy::TextureSource const&, Sexy::SexyMatrix3 const&, Sexy::TRect<int> const&, Sexy::Color const&, int, Sexy::TextureRegion const&)",
+      "cpu_sample_pct": 0.979934671021932
+    },
+    {
+      "symbol": "scudo::Allocator<scudo::AndroidConfig, &(scudo_malloc_postinit)>::allocate(unsigned long, scudo::Chunk::Origin, unsigned long, bool)",
+      "cpu_sample_pct": 0.8710530409083839
+    },
+    {
+      "symbol": "__ieee754_expf",
+      "cpu_sample_pct": 0.8710530409083839
+    },
+    {
+      "symbol": "Compressor::gainCompressor(unsigned int)",
+      "cpu_sample_pct": 0.8243894851454348
+    },
+    {
+      "symbol": "Compressor::process(unsigned int, std::__ndk1::span<std::__ndk1::array<float, 1024ul>, 18446744073709551615ul>)",
+      "cpu_sample_pct": 0.808834966557785
+    },
+    {
+      "symbol": "Zombie::UpdateReanim(long, long, long)",
+      "cpu_sample_pct": 0.6532897806812878
+    },
+    {
+      "symbol": "Reanimation::UpdateAt(long)",
+      "cpu_sample_pct": 0.6377352620936383
+    },
+    {
+      "symbol": "TodParticleEmitter::UpdateParticle(TodParticle*, unsigned long, long, long)",
+      "cpu_sample_pct": 0.6221807435059885
+    },
+    {
+      "symbol": "Curves::Linear(double, float, float)",
+      "cpu_sample_pct": 0.5755171877430394
+    }
+  ]
+}

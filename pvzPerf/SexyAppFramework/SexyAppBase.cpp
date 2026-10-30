@@ -3540,20 +3540,7 @@ bool SexyAppBase::Process(bool allowSleep)
 			
 			ProcessSafeDeleteList();
 
-			// Process any extra updates
-			while (mPendingUpdatesAccNs != 0 && !mShutdown && !mExitToTop && !mPaused)
-			{
-				const auto stepNs = TakeSimulationStep(mPendingUpdatesAccNs,
-					mFrameTiming.mIntervalNs, mSimulationPhaseNs);
-				if (stepNs == 0) break;
-				ProcessDemo();
-				++mNonDrawCount;
-				ApplySimulationStep(stepNs);
-				bool hasRealUpdate = DoUpdateFrames();
-				DBG_ASSERTE(hasRealUpdate);
-				if (!hasRealUpdate) break;
-				ProcessSafeDeleteList();
-			}
+			// The update consumes the full sampled wall interval. No catch-up substeps.
 
 			//aNumCalls++;
 			DoUpdateFramesF((float) anUpdatesPerUpdateF);

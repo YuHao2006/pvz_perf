@@ -1,4 +1,4 @@
-﻿#include <iostream>
+#include <iostream>
 #include <stdexcept>
 #include <string>
 #include <cstring>
@@ -536,22 +536,23 @@ void VulkanContext::CreateFramebuffers() {
 }
 
 void VulkanContext::CreateFrameLoopAssets() {
-    auto& resource = frameResources_;
-    VkCommandPoolCreateInfo pool{VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO};
-    pool.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-    pool.queueFamilyIndex = graphicsFamily;
-    VK_CHECK(vkCreateCommandPool(device, &pool, nullptr, &resource.pool));
-    VkCommandBufferAllocateInfo allocate{VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO};
-    allocate.commandPool = resource.pool;
-    allocate.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-    allocate.commandBufferCount = 1;
-    VK_CHECK(vkAllocateCommandBuffers(device, &allocate, &resource.cmd));
-    VkSemaphoreCreateInfo semaphore{VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO};
-    VK_CHECK(vkCreateSemaphore(device, &semaphore, nullptr, &resource.acquired));
-    VkFenceCreateInfo fence{VK_STRUCTURE_TYPE_FENCE_CREATE_INFO};
-    fence.flags = VK_FENCE_CREATE_SIGNALED_BIT;
-    VK_CHECK(vkCreateFence(device, &fence, nullptr, &resource.fence));
+    for (auto& resource : frameResources_) {
+        VkCommandPoolCreateInfo pool{VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO};
+        pool.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+        pool.queueFamilyIndex = graphicsFamily;
+        VK_CHECK(vkCreateCommandPool(device, &pool, nullptr, &resource.pool));
+        VkCommandBufferAllocateInfo allocate{VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO};
+        allocate.commandPool = resource.pool;
+        allocate.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+        allocate.commandBufferCount = 1;
+        VK_CHECK(vkAllocateCommandBuffers(device, &allocate, &resource.cmd));
+        VkSemaphoreCreateInfo semaphore{VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO};
+        VK_CHECK(vkCreateSemaphore(device, &semaphore, nullptr, &resource.acquired));
+        VkFenceCreateInfo fence{VK_STRUCTURE_TYPE_FENCE_CREATE_INFO};
+        fence.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+        VK_CHECK(vkCreateFence(device, &fence, nullptr, &resource.fence));
 
+    }
     CreatePresentSemaphores();
 }
 
@@ -669,9 +670,13 @@ void VulkanContext::WaitForFrame() {
         completedSerial = submittedSerial;
         return;
     }
-    if (!submittedSerial) return;
-    VK_CHECK(vkWaitForFences(device, 1, &frameResources_.fence, VK_TRUE, UINT64_MAX));
-    completedSerial = submittedSerial;
+    // Explicit drain for readback, resource mutation and offscreen operations.
+    // Normal frame recording waits only for the slot it is about to reuse.
+    for (auto& resource : frameResources_)
+        if (resource.serial > completedSerial) {
+            VK_CHECK(vkWaitForFences(device, 1, &resource.fence, VK_TRUE, UINT64_MAX));
+            completedSerial = std::max(completedSerial, resource.serial);
+        }
 }
 
 void VulkanContext::AbortFrame() noexcept {
@@ -680,7 +685,7 @@ void VulkanContext::AbortFrame() noexcept {
     // Terminal recording error: CPU image-layout/version bookkeeping cannot be
     // rolled back reliably. Drain the acquired semaphore and release the held
     // image by subsequent swapchain destruction, then prohibit further frames.
-    auto& resource = frameResources_;
+    auto& resource = frameResources_[frameResourceIndex_];
     VkSemaphoreSubmitInfo wait{VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO};
     wait.semaphore = resource.acquired;
     wait.stageMask = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT;
@@ -753,7 +758,7 @@ void VulkanContext::NotifySurfaceWindow(NativeWindowHandle window) {
 
 VulkanContext::FrameContext VulkanContext::BeginCommands() {
     if (frameLoopFailed_) throw std::logic_error("Cannot continue after a Vulkan frame recording failure");
-    auto& resource = frameResources_;
+    auto& resource = frameResources_[frameResourceIndex_];
     if (frameActive_)
         throw std::runtime_error("上一帧还没 EndFrame");
     const auto drawable = QueryDrawableExtent();
@@ -762,10 +767,12 @@ VulkanContext::FrameContext VulkanContext::BeginCommands() {
     if (swapchainDirty_ || drawable.width != drawableExtentAtCreate.width ||
         drawable.height != drawableExtentAtCreate.height)
         if (!RecreateSwapchain()) return {};
-    // This one command buffer and its mapped draw streams may be overwritten
-    // only after their previous GPU submission finishes. Logic updates already
-    // run before this point; no post-submit fence wait is added.
-    WaitForFrame();
+    // Only retire the slot being reused. The other slot can still be in flight;
+    // immutable textures and ordered GPU render targets remain shared.
+    if (resource.serial > completedSerial) {
+        VK_CHECK(vkWaitForFences(device, 1, &resource.fence, VK_TRUE, UINT64_MAX));
+        completedSerial = std::max(completedSerial, resource.serial);
+    }
 
     uint32_t imageIndex = 0;
     const auto acquired=vkAcquireNextImageKHR(device, swapchain, UINT64_MAX,
@@ -794,11 +801,11 @@ VulkanContext::FrameContext VulkanContext::BeginCommands() {
 
     frameActive_ = true;
     currentImageIndex_ = imageIndex;
-    return {resource.cmd, imageIndex, swapchainExtent, true, recordingSerial};
+    return {resource.cmd, imageIndex, swapchainExtent, true, recordingSerial, frameResourceIndex_};
 }
 
 void VulkanContext::BeginPresentPass(VkClearColorValue clearColor) {
-    auto& resource = frameResources_;
+    auto& resource = frameResources_[frameResourceIndex_];
     if (!frameActive_ || presentPassActive_)
         throw std::logic_error("Invalid presentation pass state");
 
@@ -827,7 +834,7 @@ void VulkanContext::BeginPresentPass(VkClearColorValue clearColor) {
 }
 
 void VulkanContext::EndFrame() {
-    auto& resource = frameResources_;
+    auto& resource = frameResources_[frameResourceIndex_];
     if (!frameActive_)
         return;                   // 交换链过期那帧没活可干；重复调用也安全
     if (!presentPassActive_)
@@ -872,7 +879,7 @@ void VulkanContext::EndFrame() {
     submit.pSignalSemaphoreInfos = &signal;
     VK_CHECK(vkResetFences(device, 1, &resource.fence));
     VK_CHECK(VulkanContext::queueSubmit2(graphicsQueue, 1, &submit, resource.fence));
-    submittedSerial = recordingSerial;
+    resource.serial = submittedSerial = recordingSerial;
     recordingSerial = 0;
     frameActive_ = false;
 
@@ -892,6 +899,7 @@ void VulkanContext::EndFrame() {
         swapchainDirty_ = true;
     else if (result != VK_SUBOPTIMAL_KHR)
         VK_CHECK(result);
+    frameResourceIndex_ = (frameResourceIndex_ + 1) % kFramesInFlight;
 }
 
 VulkanContext::~VulkanContext() { DestroyAssets(); }
@@ -900,10 +908,11 @@ void VulkanContext::DestroyAssets() noexcept {
     // Also called after partial initialization fails; no fallback rendering.
     if (frameActive_) AbortFrame();
     if (device) vkDeviceWaitIdle(device);   // 等 GPU 把在途帧画完（托管帧资产还在用）
-    auto& resource = frameResources_;
-    if (resource.pool) vkDestroyCommandPool(device, resource.pool, nullptr);
-    if (resource.acquired) vkDestroySemaphore(device, resource.acquired, nullptr);
-    if (resource.fence) vkDestroyFence(device, resource.fence, nullptr);
+    for (auto& resource : frameResources_) {
+        if (resource.pool) vkDestroyCommandPool(device, resource.pool, nullptr);
+        if (resource.acquired) vkDestroySemaphore(device, resource.acquired, nullptr);
+        if (resource.fence) vkDestroyFence(device, resource.fence, nullptr);
+    }
 
     for (VkFramebuffer fb : framebuffers_)
         if (fb) vkDestroyFramebuffer(device, fb, nullptr);

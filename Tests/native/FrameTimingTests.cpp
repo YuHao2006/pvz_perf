@@ -35,8 +35,8 @@ int main()
                 {
                     const auto interval = TakeSimulationStep(pending, timing.mIntervalNs, phase);
                     if (!interval) break;
-                    Require(interval > 0 && interval <= 10'000'000ULL,
-                        "Catch-up produced a zero or unsafe collision step");
+                    Require(interval > 0,
+                        "Actual-time update produced a zero step");
                     ApplySimulationStep(interval);
                     Require(gUpdateIntervalNs == interval &&
                         std::abs(gUpdateTicks - double(interval) / 10'000'000.0) < 1e-12,
@@ -44,7 +44,7 @@ int main()
                     total += interval;
                 }
                 Require(total + pending == elapsed, "Scheduler dropped elapsed wall time");
-                const auto quantum = std::min(timing.mIntervalNs, FrameTiming::LegacyTickNs);
+                const auto quantum = timing.mIntervalNs;
                 Require(pending < quantum - phase,
                     "Scheduler deferred a logical interval that was already due");
 
@@ -67,26 +67,18 @@ int main()
         Require(simulated == 1'000'000'000ULL,
             "10000FPS target with 5ms actual frames slowed the game clock");
         {
-            unsigned long long pending = 35'123'456, phase = 0;
-            Require(TakeSimulationStep(pending, 10'000'000, phase) == 10'000'000 &&
-                TakeSimulationStep(pending, 10'000'000, phase) == 10'000'000 &&
-                TakeSimulationStep(pending, 10'000'000, phase) == 10'000'000,
-                "10ms catch-up changed full steps");
-            Require(TakeSimulationStep(pending, 10'000'000, phase) == 0 && pending == 5'123'456,
-                "Sub-step remainder was processed instead of carried forward");
-            pending += 4'876'544;
-            Require(TakeSimulationStep(pending, 10'000'000, phase) == 10'000'000 && pending == 0,
-                "Carried remainder did not join the next update");
-            pending = 10'123'456; phase = 0;
-            Require(TakeSimulationStep(pending, 10'000'000, phase) == 10'000'000 &&
-                pending == 123'456 && phase == 0,
-                "10ms hard limit allowed an oversized update");
-            Require(TakeSimulationStep(pending, 10'000'000, phase) == 0,
-                "10ms target processed the 0.123456ms remainder prematurely");
-            pending += 9'876'544;
-            Require(TakeSimulationStep(pending, 10'000'000, phase) == 10'000'000 &&
+            unsigned long long pending = 33'345'000, phase = 0;
+            Require(TakeSimulationStep(pending, 33'333'333, phase) == 33'345'000 &&
+                pending == 0 && phase == 11'667,
+                "30Hz actual interval was subdivided or lost its overshoot credit");
+            pending = 33'321'666;
+            Require(TakeSimulationStep(pending, 33'333'333, phase) == 33'321'666 &&
                 pending == 0 && phase == 0,
-                "10ms target shortened the next logical update");
+                "Overshoot did not permit a shorter compensating interval");
+            pending = 10'123'456; phase = 0;
+            Require(TakeSimulationStep(pending, 10'000'000, phase) == 10'123'456 &&
+                pending == 0 && phase == 123'456,
+                "100Hz actual interval was truncated");
             pending = 5'123'456; phase = 0;
             Require(TakeSimulationStep(pending, 4'000'000, phase) == 5'123'456 &&
                 pending == 0 && phase == 1'123'456,
@@ -115,12 +107,12 @@ int main()
         constexpr auto high = FrameTiming::FromTargetFps(240);
         static_assert(stock.mIntervalNs == 10'000'000ULL);
         static_assert(high.mIntervalNs == 4'166'666ULL);
-        static_assert(FrameTiming::FromTargetFps(60).mIntervalNs == 10'000'000ULL);
+        static_assert(FrameTiming::FromTargetFps(60).mIntervalNs == 16'666'666ULL);
         static_assert(FrameTiming::FromTargetFps(250).mIntervalNs == 4'000'000ULL);
-        static_assert(FrameTiming::FromTargetFps(1).mIntervalNs == 10'000'000ULL);
+        static_assert(FrameTiming::FromTargetFps(1).mIntervalNs == 33'333'333ULL);
         static_assert(FrameTiming::FromTargetFps(1'000'000'000).mIntervalNs == 1);
 
-        for (double invalid : {0.0, -1.0, 1.0, 30.0, 60.0, 99.0, 99.999, 239.5, 1'000'000'001.0,
+        for (double invalid : {0.0, -1.0, 29.999, 239.5, 1'000'000'001.0,
                  std::numeric_limits<double>::infinity(),
                  std::numeric_limits<double>::quiet_NaN()})
             Require(FrameTiming::FromSetting(invalid).mTargetFps == 100,
@@ -130,20 +122,39 @@ int main()
         Require(FrameTiming::FromSetting(100).mIntervalNs == stock.mIntervalNs &&
             FrameTiming::FromSetting(101).mTargetFps == 101,
             "Minimum target FPS boundary changed valid settings");
-        for (const double refresh : {0.0,59.94,60.0,90.0,99.9,100.0})
-            Require(FrameTiming::FromDisplayRefreshRate(refresh).mTargetFps==100,
-                "Low or unavailable display refresh bypassed the 100 FPS minimum");
-        Require(FrameTiming::FromDisplayRefreshRate(119.88).mTargetFps==120 &&
-            FrameTiming::FromDisplayRefreshRate(143.98).mTargetFps==144 &&
-            FrameTiming::FromDisplayRefreshRate(240).mTargetFps==240,
-            "Display refresh did not round to its target frame rate");
+        Require(FrameTiming::FromSetting(1).mTargetFps == 30 &&
+            FrameTiming::FromSetting(29).mTargetFps == 30 &&
+            FrameTiming::FromSetting(30).mTargetFps == 30 &&
+            FrameTiming::FromSetting(60).mTargetFps == 60,
+            "Valid low refresh targets were rejected");
+        Require(FrameTiming::FromDisplayRefreshRate(24).mTargetFps == 30 &&
+            FrameTiming::FromDisplayRefreshRate(59.94).mTargetFps == 60 &&
+            FrameTiming::FromDisplayRefreshRate(119.88).mTargetFps == 120 &&
+            FrameTiming::FromDisplayRefreshRate(0).mTargetFps == 100,
+            "Display refresh target or 30FPS minimum changed");
         {
-            unsigned long long pending=50'000'000, phase=0;
-            bool rejected=false;
-            try { (void)TakeSimulationStep(pending,16'666'666,phase); }
-            catch (const std::invalid_argument&) { rejected=true; }
-            Require(rejected && pending==50'000'000 && phase==0,
-                "Retired sub-100Hz scheduling accepted a target interval above 10ms");
+            unsigned long long pending = 1'234'567'890, phase = 0;
+            Require(TakeSimulationStep(pending,33'333'333,phase) == 1'234'567'890 && pending == 0,
+                "Long elapsed interval was subdivided or discarded");
+            pending = 0;
+            bool invalid = false;
+            try { (void)TakeSimulationStep(pending,0,phase); }
+            catch (const std::invalid_argument&) { invalid = true; }
+            Require(invalid, "Zero simulation target was accepted");
+        }
+        // Jitter, wake-up overshoot and undershoot conserve every nanosecond.
+        for (const auto requested : {33'333'333ULL, 10'000'000ULL, 4'000'000ULL})
+        {
+            unsigned long long pending=0, phase=0, wall=0, consumed=0;
+            for (unsigned int i=0; i<100000; ++i)
+            {
+                const auto elapsed=1ULL+(i*7919ULL)%70'000'000ULL;
+                pending+=elapsed; wall+=elapsed;
+                const auto step=TakeSimulationStep(pending,requested,phase);
+                consumed+=step;
+                Require(consumed+pending==wall && phase==consumed%requested,
+                    "Jittered pacing lost time or double-counted overshoot");
+            }
         }
         bool rejected = false;
         try { (void)FrameTiming::FromTargetFps(0); }
@@ -246,7 +257,7 @@ int main()
         }
         gUpdateTicks = gStepsPerLegacyTick = 1;
         gUpdateIntervalNs = FrameTiming::LegacyTickNs;
-        std::cout << "PASS: minimum 100 FPS, display refresh targets, deadlines, 100/144/240/250/1000 Hz timers, motion, nanosecond state\n";
+        std::cout << "PASS: actual-time unbounded updates, jitter conservation, minimum 30 FPS, display refresh targets, deadlines, 100/144/240/250/1000 Hz timers, motion, nanosecond state\n";
         return EXIT_SUCCESS;
     }
     catch (const std::exception& error)

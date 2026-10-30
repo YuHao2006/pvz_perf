@@ -4,8 +4,8 @@
 #include <cstdint>
 
 namespace Sexy {
-// One immutable grid is shared by all three pool layers. UVs are generated in
-// the vertex shader; phase values preserve the original CPU rounding once.
+// One immutable source grid is shared by all three pool layers. Vulkan uses
+// it to evaluate final vertices on the CPU; legacy backend shaders use the grid.
 struct GpuPoolVertex {
     float x, y, phaseX, phaseY;
 };

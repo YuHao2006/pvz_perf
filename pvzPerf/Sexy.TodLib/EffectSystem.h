@@ -135,6 +135,7 @@ extern void TodDrawTriangle_0565_TEX1_TALPHA1_MOD1_GLOB1_BLEND1_ADDITIVE(SWHelpe
 class Reanimation;
 class TodParticleData;
 class TodParticleHolder;
+class TodParticleSystem;
 class ReanimationHolder;
 class AttachmentHolder;
 class EffectSystem
@@ -159,6 +160,6 @@ public:
     void                        EffectSystemDispose();
     void                        EffectSystemFreeAll();
     void                        ProcessDeleteQueue();
-    void                        UpdateAt(std::int64_t visualNowNs, std::int64_t battleNowNs);
+    void                        UpdateAt(std::int64_t visualNowNs, std::int64_t battleNowNs, TodParticleSystem* visualParticle = nullptr);
 };
 extern EffectSystem* gEffectSystem;  //[0x6A9EB8]

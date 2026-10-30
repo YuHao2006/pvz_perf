@@ -9,7 +9,7 @@ namespace Sexy
 struct FrameTiming
 {
     static constexpr unsigned int DefaultTargetFps = 100;
-    static constexpr unsigned int MinimumTargetFps = 100;
+    static constexpr unsigned int MinimumTargetFps = 30;
     static constexpr unsigned long long NanosecondsPerSecond = 1'000'000'000ULL;
     static constexpr unsigned long long LegacyTickNs = 10'000'000ULL;
 
@@ -28,7 +28,7 @@ struct FrameTiming
     static FrameTiming FromDisplayRefreshRate(double refreshRate);
 };
 
-// A simulation update consumes its actual elapsed interval, capped at 10ms.
+// A simulation update consumes its actual elapsed interval without subdivision.
 struct UpdateStep
 {
     unsigned long long mNanoseconds = FrameTiming::LegacyTickNs;

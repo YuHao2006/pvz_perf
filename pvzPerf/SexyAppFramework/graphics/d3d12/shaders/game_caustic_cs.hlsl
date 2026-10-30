@@ -1,10 +1,12 @@
 // Native port of vulkan/shaders/game_caustic_cs.comp.
-// b0, space0: 1 root DWORD (byte offset 0): uint counter.
+// b0, space0: 3 root DWORDs: integer lookup offsets U0/U1/V1.
 // t0: 256x256 RGBA source, blue channel bytes; u0: 128x64 RGBA8 UNORM.
 // No samplers. Dispatch 16, 16, 1 with numthreads(8,4,1).
 cbuffer CausticConstants : register(b0, space0)
 {
-    uint counter : packoffset(c0.x);
+    uint offsetU0 : packoffset(c0.x);
+    uint offsetU1 : packoffset(c0.y);
+    uint offsetV1 : packoffset(c0.z);
 };
 
 Texture2D<float4> sourceImage : register(t0, space0);
@@ -34,17 +36,6 @@ uint BilinearLookup(uint u, uint v)
         ((((factorU1 * factorV0) / 65536u) * BlueAt(indexV0 * 256u + indexU1)) / 65536u);
 }
 
-// Signed int32 division towards zero, expressed with uint32 wraparound.
-uint DivTrunc6(uint n)
-{
-    return (n & 0x80000000u) != 0u ? (0u - ((0u - n) / 6u)) : (n / 6u);
-}
-
-uint DivTrunc10(uint n)
-{
-    return (n & 0x80000000u) != 0u ? (0u - ((0u - n) / 10u)) : (n / 10u);
-}
-
 [numthreads(8, 4, 1)]
 void CSMain(uint3 id : SV_DispatchThreadID)
 {
@@ -55,11 +46,9 @@ void CSMain(uint3 id : SV_DispatchThreadID)
     uint timeV1 = (256u - y) << 17u;
     uint timeV0 = y << 17u;
     uint timeU = x << 17u;
-    uint timePool0 = counter << 16u;
-    uint timePool1 = ((counter & 65535u) + 1u) << 16u;
 
-    uint a1 = BilinearLookup(timeU - DivTrunc6(timePool1), timeV1 + (timePool0 >> 3u)) & 0xffu;
-    uint a0 = BilinearLookup(timeU + DivTrunc10(timePool0), timeV0) & 0xffu;
+    uint a1 = BilinearLookup(timeU + offsetU1, timeV1 + offsetV1) & 0xffu;
+    uint a0 = BilinearLookup(timeU + offsetU0, timeV0) & 0xffu;
     uint a = (a0 + a1) / 2u;
 
     uint alpha;

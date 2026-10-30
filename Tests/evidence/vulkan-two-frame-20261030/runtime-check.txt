@@ -1,0 +1,38 @@
+PASS pure wrapped text measurement: wrapping, newlines, color tags, no glyph draws and empty fill
+PASS production GPU pool vs independent legacy CPU mesh: day/night, normal/additive/opaque, nearest/linear/repeat, phase wrap, destination scissor, fractional translation, ordinary painter order and float target feedback
+PASS precomputed transparent edges: alpha, visible RGB, idempotency, nearest/linear, upload-discard
+PASS public font upload: deferred alpha, upload-and-discard, texture reuse, independent copies
+PASS nonzero source rectangles and repacked whole-sheet atlas views: translation, scale origins, clipping, tint, additive, local-source views and floating scales
+PASS necessary local-clip contract: independent full-pixel rect/image/source/mirror/matrix/particle/convex oracles, disjoint/partial/empty clips and negative framebuffer crossings
+PASS actual TitleScreen grass reveal: widths 0/1/157/313/314/400, translated draw and unrevealed black pixels
+PASS actual GameButton atlas states: normal, hover, press/fallbacks, disabled, overAlpha, additive glow, translation/offsets and hidden state match independent images
+PASS direct shared-image snapshots and reference lifetime
+PASS actual boss back-arm drawing: four attack offsets, reference pixels, 1024 exact shared-animation translation restorations
+PASS reanimation appearances: independent options, image slots, atlas dimensions, original centers and actual AttachmentDraw visibility pixels
+PASS fullscreen reanimation: destination fill pixels, hidden/zero alpha, color modulation, both blend modes, translation and effective clip without track matrices
+PASS actual DrawSeedPacket cooldown: production atlas, quarter/half/three-quarter edges, dark upper and unchanged ready lower pixels
+PASS actual projectile body/shadow atlas pixels: all14 types, both shadow cels, source offsets, scale, rotation, mirrors, puff ages, lobbed shadows and collision dimensions
+PASS explicit reanimation owner time: creation, prepared rate/seek, frame queries and clock switching
+PASS Boardless Plant previews: explicit visual init/update/draw including Magnet-shroom items
+PASS Credits movie owner clock: distinct catch-up steps, one-shot blink, paused app updates and single-step resume
+PASS Credits 800x600 crop: day/night pool, disco, scene transitions, final roll and window-left Replay
+PASS survival owner clocks 100 Hz: intermission, immediate intro freeze, pre-pan/scroll, retained actors, visual preview/effects and resume
+PASS survival owner clocks 240 Hz: intermission, immediate intro freeze, pre-pan/scroll, retained actors, visual preview/effects and resume
+PASS survival owner clocks 480 Hz: intermission, immediate intro freeze, pre-pan/scroll, retained actors, visual preview/effects and resume
+PASS survival owner clocks 1000 Hz: intermission, immediate intro freeze, pre-pan/scroll, retained actors, visual preview/effects and resume
+PASS pool sparkle owner clock 100 Hz: chooser emission, pause, load rebinding, repick freeze/resume
+PASS pool sparkle owner clock 240 Hz: chooser emission, pause, load rebinding, repick freeze/resume
+PASS pool sparkle owner clock 480 Hz: chooser emission, pause, load rebinding, repick freeze/resume
+PASS pool sparkle owner clock 1000 Hz: chooser emission, pause, load rebinding, repick freeze/resume
+PASS collected garden gifts: both present types, ordinary/aquatic plants, real Collect/Draw with null garden Board
+PASS Store clocks 100 Hz: menu/level Dave entry, next/prev hatch, pause/resume poses and battle clock
+PASS Store clocks 240 Hz: menu/level Dave entry, next/prev hatch, pause/resume poses and battle clock
+PASS Store clocks 480 Hz: menu/level Dave entry, next/prev hatch, pause/resume poses and battle clock
+PASS Store clocks 1000 Hz: menu/level Dave entry, next/prev hatch, pause/resume poses and battle clock
+PASS actual Quit confirmation: target-free layout, body, yes/no buttons and clean dialog release
+PASS all 29 resource groups / 397 resources: 209 GPU-only images, 20 named fonts, 168 real sound decodes, volume/pan setup, all plans discarded, complete release and repeated shutdown
+PASS NRSC4 explicit groups: plan disposal, named image/font ownership, temporary font clone, title release, independent shared aliases
+PASS production RAV7/IDT6 body-first: cel inheritance and hidden-frame draws, shared definitions, all Garlic rows, uploaded bindings, derived option tables and Gargantuar independent damage/weapon/head transitions
+PASS production CPU particle drawing: 293 authored emitter/variant/clip cases, 291 visible, CPU oracle only in test code
+PASS resource shutdown: all pending plans freed and repeated release safe
+PASS static production particles: catalog validation, flat appearance rows, shared behavior, fire/ice dimensions and pixels, no-image, logical frames, sunglasses override, frame clamps, animation pixels, repeated load and release

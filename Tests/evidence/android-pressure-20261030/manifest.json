@@ -1,0 +1,284 @@
+{
+  "device": "nubia NX769J, Snapdragon 8 Gen 3, Android 14",
+  "targetFps": 120,
+  "autoDetectFrameRate": false,
+  "clock_control": "No CPU/GPU locking; existing system overlay unchanged",
+  "apk_base": "v3.1",
+  "checkpoint_sha256": "6d0d0eadce36daa954cedbc5daf541581f658fb1d39d075479b02e04b7b666f0",
+  "measurement": "Temporary native query pool (scene/present) and wall-clock splits; removed after experiments. No APA GPU-counter producer recording during these short runs. External ADB counters add unquantified overhead. Medians are separate distributions and must not be summed to infer precise critical paths.",
+  "results": {
+    "fence-base-paused": {
+      "frames": 1463,
+      "external": {
+        "duration_seconds": 15.010000000002037,
+        "intervals": 30,
+        "game_fps": 97.33510992670232,
+        "update_hz": 115.78947368419482,
+        "cpu_single_core_pct": 54.76349100598857,
+        "fps_min": 86.0,
+        "fps_max": 106.12244897924516
+      },
+      "medians": {
+        "begin_us": 5279.531,
+        "record_us": 3827.448,
+        "present_us": 558.854,
+        "gpu_scene_us": 4456.823,
+        "gpu_present_us": 366.823,
+        "draws": 38.0,
+        "vertices": 19882.0,
+        "fence_us": 5141.302,
+        "acquire_us": 53.386
+      },
+      "note": "Paused means Continue Game dialog. Battle windows use same saved checkpoint, but variable-step trajectories are not frame-identical."
+    },
+    "fence-base-repeat": {
+      "frames": 1428,
+      "external": {
+        "duration_seconds": 15.0,
+        "intervals": 30,
+        "game_fps": 95.13333333333334,
+        "update_hz": 115.13333333333334,
+        "cpu_single_core_pct": 55.53333333333333,
+        "fps_min": 83.67346938748176,
+        "fps_max": 103.77358490588831
+      },
+      "medians": {
+        "begin_us": 5274.0885,
+        "record_us": 3964.4795,
+        "present_us": 562.1355,
+        "gpu_scene_us": 4455.807,
+        "gpu_present_us": 366.979,
+        "draws": 38.0,
+        "vertices": 19882.0,
+        "fence_us": 5136.484,
+        "acquire_us": 51.25
+      },
+      "note": "Paused means Continue Game dialog. Battle windows use same saved checkpoint, but variable-step trajectories are not frame-identical."
+    },
+    "hsl-direct-paused": {
+      "frames": 1479,
+      "external": {
+        "duration_seconds": 15.0,
+        "intervals": 30,
+        "game_fps": 99.0,
+        "update_hz": 115.0,
+        "cpu_single_core_pct": 55.4,
+        "fps_min": 86.04651162784874,
+        "fps_max": 108.51063829760356
+      },
+      "medians": {
+        "begin_us": 5110.26,
+        "record_us": 3795.417,
+        "present_us": 540.052,
+        "gpu_scene_us": 4283.958,
+        "gpu_present_us": 366.302,
+        "draws": 38.0,
+        "vertices": 19882.0,
+        "fence_us": 4989.48,
+        "acquire_us": 50.938
+      },
+      "note": "Paused means Continue Game dialog. Battle windows use same saved checkpoint, but variable-step trajectories are not frame-identical."
+    },
+    "hsl-white-paused": {
+      "frames": 1484,
+      "external": {
+        "duration_seconds": 14.989999999997963,
+        "intervals": 30,
+        "game_fps": 99.13275517012688,
+        "update_hz": 115.14342895265074,
+        "cpu_single_core_pct": 55.637091394270406,
+        "fps_min": 91.48936170190105,
+        "fps_max": 108.33333333343187
+      },
+      "medians": {
+        "begin_us": 5113.4635,
+        "record_us": 3864.974,
+        "present_us": 550.208,
+        "gpu_scene_us": 4292.943,
+        "gpu_present_us": 365.833,
+        "draws": 38.0,
+        "vertices": 19882.0,
+        "fence_us": 4986.771000000001,
+        "acquire_us": 51.094
+      },
+      "note": "Paused means Continue Game dialog. Battle windows use same saved checkpoint, but variable-step trajectories are not frame-identical."
+    },
+    "hsl-guarded-paused": {
+      "frames": 1178,
+      "external": {
+        "duration_seconds": 12.0,
+        "intervals": 24,
+        "game_fps": 98.0,
+        "update_hz": 115.5,
+        "cpu_single_core_pct": 54.333333333333336,
+        "fps_min": 93.33333333318242,
+        "fps_max": 104.34782608715459
+      },
+      "medians": {
+        "begin_us": 5200.9115,
+        "record_us": 3891.224,
+        "present_us": 551.432,
+        "gpu_scene_us": 4398.021,
+        "gpu_present_us": 365.99,
+        "draws": 38.0,
+        "vertices": 19882.0,
+        "fence_us": 5075.781000000001,
+        "acquire_us": 52.083
+      },
+      "note": "Paused means Continue Game dialog. Battle windows use same saved checkpoint, but variable-step trajectories are not frame-identical."
+    },
+    "native-separate-paused": {
+      "frames": 210,
+      "external": {
+        "duration_seconds": 9.180000000000291,
+        "intervals": 18,
+        "game_fps": 26.25272331154601,
+        "update_hz": 106.10021786492038,
+        "cpu_single_core_pct": 40.63180827886581,
+        "fps_min": 23.72881355931618,
+        "fps_max": 29.787234042709976
+      },
+      "medians": {
+        "begin_us": 25324.453,
+        "record_us": 10359.505000000001,
+        "present_us": 840.9635000000001,
+        "gpu_scene_us": 24482.186999999998,
+        "gpu_present_us": 368.802,
+        "draws": 3116.0,
+        "vertices": 19882.0
+      },
+      "note": "Paused means Continue Game dialog. Battle windows use same saved checkpoint, but variable-step trajectories are not frame-identical."
+    },
+    "native-mixed-battle": {
+      "frames": 1647,
+      "external": {
+        "duration_seconds": 15.020000000000437,
+        "intervals": 30,
+        "game_fps": 109.58721704393822,
+        "update_hz": 115.97869507323232,
+        "cpu_single_core_pct": 69.17443408788081,
+        "fps_min": 90.90909090921117,
+        "fps_max": 125.58139534875221
+      },
+      "medians": {
+        "begin_us": 4088.907,
+        "record_us": 2962.083,
+        "present_us": 545.052,
+        "gpu_scene_us": 4189.479,
+        "gpu_present_us": 370.156,
+        "draws": 32.0,
+        "vertices": 16878.0
+      },
+      "note": "Paused means Continue Game dialog. Battle windows use same saved checkpoint, but variable-step trajectories are not frame-identical."
+    },
+    "hsl-guarded-battle": {
+      "frames": 1669,
+      "external": {
+        "duration_seconds": 15.0,
+        "intervals": 30,
+        "game_fps": 111.26666666666667,
+        "update_hz": 116.8,
+        "cpu_single_core_pct": 70.13333333333334,
+        "fps_min": 96.49122807022471,
+        "fps_max": 123.52941176421243
+      },
+      "medians": {
+        "begin_us": 3873.802,
+        "record_us": 3012.187,
+        "present_us": 548.021,
+        "gpu_scene_us": 4108.854,
+        "gpu_present_us": 370.052,
+        "draws": 32.0,
+        "vertices": 16906.0,
+        "fence_us": 3738.802,
+        "acquire_us": 53.75
+      },
+      "note": "Paused means Continue Game dialog. Battle windows use same saved checkpoint, but variable-step trajectories are not frame-identical."
+    }
+  },
+  "correctness": "Both HSL filters: all 16777216 normalized RGB inputs and 1000000 positive HDR random inputs per filter, max encoded channel difference 1 vs old float reference. GPU filter aliases nearest+linear and HDR black boundary pass.",
+  "not_kept": [
+    "Separate normal/additive pipelines: 3116 draws vs 38; large regression",
+    "Additional white-mask shortcut: no measured benefit beyond direct HSL",
+    "Native per-frame instrumentation"
+  ],
+  "main_thread_cpu_clock_sampling_note": "Matched to externally observed scene 3 only: 19.04% A520, 47.68% cpu2-4 A720, 33.28% cpu5-6 A720, 0% X4. Sampling estimates, not continuous scheduler residency. Unscoped text reports include a subsequent loss screen; use battle-scene3-cpu.json for active battle.",
+  "gpu_present_interval_note": "Timestamp for present draw ends before EndFrame closes/releases the WSI pass. It is not total presentation latency or a complete GPU frame time.",
+  "clean_apk": {
+    "path": "out/arm64-android14-vulkan1.3/pvz_perf-arm64-android14-vulkan1.3.apk",
+    "sha256": "6392d8631c511438df35f68bb775ae2ef9e84d5663b06cf276b2f8673517b411",
+    "entries": [
+      {
+        "entry": "lib/arm64-v8a/libpvz_perf.so",
+        "sha256": "34fd412a7b4fbeb463566f15f692970ee329749c4ac373f241489cdf7903afd4"
+      },
+      {
+        "entry": "assets/main.pak64",
+        "sha256": "eb36a5fd51020bb4d69733ab93568f3e988625adcdbd61d8ea9898e5d0fa67a9"
+      },
+      {
+        "entry": "assets/shaders/game_alpha_cs.spv",
+        "sha256": "1837ec72598c416d6278b7d316582cb618fa7c93352db16e266e652dd2e06d49"
+      },
+      {
+        "entry": "assets/shaders/game_caustic_cs.spv",
+        "sha256": "835b8f04c7a9521438c4dbc695562233241490b713b2384907888f6c8abff96f"
+      },
+      {
+        "entry": "assets/shaders/game_color_cs.spv",
+        "sha256": "e2ffb92f86ea69f638df004c88c81f56ceef4fb3849f76c0bf8e6fecfc9af388"
+      },
+      {
+        "entry": "assets/shaders/game_coverage_ps.spv",
+        "sha256": "a9e8e938f7f3d19ff00e1ee11d042044c5a9b8b0545efec9e1cc355bdce07ad1"
+      },
+      {
+        "entry": "assets/shaders/game_font16_cs.spv",
+        "sha256": "580722c9974d751b526dcc9746425202f71f00f35b7e1d13c15917122fd238ed"
+      },
+      {
+        "entry": "assets/shaders/game_font_cs.spv",
+        "sha256": "29da17ed7bf7a407fb81d6aa9d34e5cfeabfd1c66f73aba6b08cd44b7168a0bb"
+      },
+      {
+        "entry": "assets/shaders/game_hdr_ps.spv",
+        "sha256": "f4b30b9d7b06c8adcd59e4644f4a6f0ef9d6c8cb4ff2b05da1ef39098e9e07b6"
+      },
+      {
+        "entry": "assets/shaders/game_pool_vs.spv",
+        "sha256": "8f5884693cd8ef85577c9abed25c9fda0f87038fa4b906e2f1d597e9b260c77d"
+      },
+      {
+        "entry": "assets/shaders/game_ps.spv",
+        "sha256": "ac50db4c196f8d8145cdeb05f3c266f57d3972a059e36a2942522a342ef15a90"
+      },
+      {
+        "entry": "assets/shaders/game_reanim_unified_gs.spv",
+        "sha256": "e0a331122b9a26734b3572bc3e536da443dc0b0fe7a59aa630cc50f856407301"
+      },
+      {
+        "entry": "assets/shaders/game_reanim_unified_vs.spv",
+        "sha256": "12cde7c6b63d0526aec03f123423d6240bea7e07c499463f430097b6f862b076"
+      },
+      {
+        "entry": "assets/shaders/game_sprite_mixed_ps.spv",
+        "sha256": "eb37901ddde0897644729f96a8b0df5eeac89d72380c6782e5ceae85e50b6aa1"
+      },
+      {
+        "entry": "assets/shaders/game_sprite_ps.spv",
+        "sha256": "8592d82afcae3d7c1152aa29906c0792b07148be1eadfa08898c599829210d2c"
+      },
+      {
+        "entry": "assets/shaders/game_sprite_single_output_ps.spv",
+        "sha256": "25a53b3f5e82689c525057b177a8c587be545f640384317f861a74b8919b8c1b"
+      },
+      {
+        "entry": "assets/shaders/game_vs.spv",
+        "sha256": "3802746bbef59b8b2b4ca716a96cee1d559135eb3e09cf74df1c64664157fd7c"
+      }
+    ],
+    "installed": true,
+    "launched_after_install": false,
+    "reason": "Phone remains asleep after measurements; optimized shader already exercised in instrumented matching-resource build."
+  }
+}

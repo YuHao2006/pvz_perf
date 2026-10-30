@@ -1,0 +1,100 @@
+Local reconstructed reference: pvz-decomp-ruslan/Lawn/Board.cpp. Addresses in this reference are not verified against the 1073 executable. Exact 1073 freeze branch is recorded separately.
+
+void Board::Update()
+{
+	TodHesitationBracket aHesitation("Board::Update");
+
+	Widget::Update();
+	MarkDirty();
+
+	mCutScene->Update();
+	UpdateMousePosition();
+	if (mApp->mGameMode == GameMode::GAMEMODE_CHALLENGE_ZEN_GARDEN)
+	{
+		mApp->mZenGarden->ZenGardenUpdate();
+	}
+	if (IsScaryPotterDaveTalking())
+	{
+		mApp->UpdateCrazyDave();
+	}
+
+	if (mPaused)
+	{
+		mChallenge->Update();
+		mCursorPreview->mVisible = false;
+		mCursorObject->mVisible = false;
+		return;
+	}
+
+	bool aDisabled = !CanInteractWithBoardButtons() || mIgnoreMouseUp;
+	if (!mMenuButton->mBtnNoDraw)
+	{
+		mMenuButton->mDisabled = aDisabled;
+	}
+	mMenuButton->Update();
+	if (mStoreButton)
+	{
+		mStoreButton->mDisabled = aDisabled;
+		mStoreButton->Update();
+	}
+
+	mApp->mEffectSystem->Update();
+	mAdvice->Update();
+	UpdateTutorial();
+
+	if (mCobCannonCursorDelayCounter > 0)
+	{
+		mCobCannonCursorDelayCounter--;
+	}
+	if (mOutOfMoneyCounter > 0)
+	{
+		mOutOfMoneyCounter--;
+	}
+	if (mShakeCounter > 0)
+	{
+		mShakeCounter--;
+		if (mShakeCounter == 0)
+		{
+			mX = 0;
+			mY = 0;
+		}
+		else
+		{
+			if (!Rand(3))
+			{
+				mShakeAmountX = -mShakeAmountX;
+			}
+			mX = TodAnimateCurve(12, 0, mShakeCounter, 0, mShakeAmountX, TodCurves::CURVE_BOUNCE);
+			mY = TodAnimateCurve(12, 0, mShakeCounter, 0, mShakeAmountY, TodCurves::CURVE_BOUNCE);
+		}
+	}
+	if (mCoinBankFadeCount > 0 && mApp->GetDialog(Dialogs::DIALOG_PURCHASE_PACKET_SLOT) == nullptr)
+	{
+		mCoinBankFadeCount--;
+	}
+	UpdateLayers();
+
+	if (mTimeStopCounter > 0)
+		return;
+
+	mEffectCounter++;
+	if (StageHasPool() && !mIceTrapCounter && mApp->mGameScene != GameScenes::SCENE_ZOMBIES_WON && !mCutScene->IsSurvivalRepick())
+	{
+		mApp->mPoolEffect->mPoolCounter++;
+	}
+	if (mBackground == BackgroundType::BACKGROUND_3_POOL && mPoolSparklyParticleID == ParticleSystemID::PARTICLESYSTEMID_NULL && mDrawCount > 0)
+	{
+		int aRenderPosition = MakeRenderOrder(RenderLayer::RENDER_LAYER_GROUND, 2, 0);
+		TodParticleSystem* aPoolParticle = mApp->AddTodParticle(450, 295, aRenderPosition, ParticleEffect::PARTICLE_POOL_SPARKLY);
+		mPoolSparklyParticleID = mApp->ParticleGetID(aPoolParticle);
+	}
+
+	UpdateGridItems();
+	UpdateFwoosh();
+	UpdateGame();
+	UpdateFog();
+	mChallenge->Update();
+	UpdateLevelEndSequence();
+	mPrevMouseX = mApp->mWidgetManager->mLastMouseX;
+	mPrevMouseY = mApp->mWidgetManager->mLastMouseY;
+}

@@ -15,7 +15,7 @@ option(PVZ_VULKAN_SEPARATE_BLEND_TEST "Android-only single-output premultiplied 
 if(PVZ_VULKAN_SEPARATE_BLEND_TEST AND NOT ANDROID)
     message(FATAL_ERROR "PVZ_VULKAN_SEPARATE_BLEND_TEST requires Android")
 endif()
-add_library(sexy_vulkan STATIC VulkanContext.cpp VulkanRenderer.cpp)
+add_library(sexy_vulkan STATIC VulkanContext.cpp VulkanRenderer.cpp ../PoolMesh.cpp)
 if(ANDROID AND PVZ_VULKAN_SEPARATE_BLEND_TEST)
     target_compile_definitions(sexy_vulkan PRIVATE PVZ_VULKAN_SEPARATE_BLEND_TEST=1)
 endif()

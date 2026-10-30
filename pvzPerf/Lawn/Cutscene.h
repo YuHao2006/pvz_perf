@@ -12,7 +12,6 @@ class ChallengeScreen;
 class CutScene
 {
 public:
-    static const std::int64_t SurvivalBattleClockStopTimeNs;
     std::vector<ParticleSystemID> mVisualParticleIDs; // Cutscene-owned effects; never part of the level save.
     LawnApp*                    mApp;                             //+0x0
     Board*                      mBoard;                           //+0x4

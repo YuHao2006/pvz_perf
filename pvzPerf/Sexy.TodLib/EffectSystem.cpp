@@ -88,15 +88,15 @@ void EffectSystem::ProcessDeleteQueue()
 }
 
 //0x445890
-void EffectSystem::UpdateAt(std::int64_t visualNowNs, std::int64_t battleNowNs)
+void EffectSystem::UpdateAt(std::int64_t visualNowNs, std::int64_t battleNowNs, TodParticleSystem* visualParticle)
 {
 	TodParticleSystem* aParticle = nullptr;
 	while (mParticleHolder->mParticleSystems.IterateNext(aParticle))
 		if (!aParticle->mIsAttachment)
 		{
-			// The owner supplies particle time: Board passes its frozen/running
-			// battle clock; full-screen UI owners pass their own visual clock.
-			const auto nowNs = battleNowNs;
+			// The owner selects its visual effect without storing a time domain
+			// in the particle system or changing its render-queue ownership.
+			const auto nowNs = aParticle == visualParticle ? visualNowNs : battleNowNs;
 			const auto deltaNs = nowNs > aParticle->mLastUpdateTimeNs
 				? static_cast<std::uint64_t>(nowNs - aParticle->mLastUpdateTimeNs) : 0;
 			aParticle->Update(deltaNs, nowNs);

@@ -1,0 +1,57 @@
+--- production/Reanimator.cpp
++++ divide_update_cached_queries/Reanimator.cpp
+@@ -553,6 +553,21 @@
+ 
+ ReanimFramePosition Reanimation::SampleFrameAt(std::int64_t nowNs, std::int64_t offsetNs) const
+ {
++    if (mFrameCount > 0 && mAnimRate > 0 &&
++        (mLoopType == REANIM_LOOP || mLoopType == REANIM_LOOP_FULL_LAST_FRAME)) {
++        const auto requested = ReanimClock::Add(nowNs, offsetNs);
++        const auto elapsed = ReanimClock::Subtract(requested, mStartTimeNs);
++        if (elapsed < 0) throw std::logic_error("benchmark clock moved backwards");
++        if(requested==mLastUpdateTimeNs)
++            return {0,mCurrentFrame,elapsed-std::int64_t(mCurrentFrame)*mFramePeriodNs};
++        const auto q=mFramePeriodNs;
++        const auto totalFrames=elapsed/q;
++        const auto remainder=elapsed%q;
++        const auto intervals=FrameIntervals(*this);
++        if(totalFrames<intervals) return {0,int(totalFrames),remainder};
++        return {totalFrames/intervals,int(totalFrames%intervals),remainder};
++    }
++
+     // Keep common current-frame reads small enough to inline into draw/root
+     // consumers. Reverse, endpoint and explicit look-ahead rules live below.
+     if (offsetNs == 0 && mFrameCount > 0)
+@@ -691,6 +706,32 @@
+ 
+ void Reanimation::ConsumeTimeAt(std::int64_t nowNs)
+ {
++    if (mFrameCount > 0 && !mDead && mAnimRate > 0 &&
++        (mLoopType == REANIM_LOOP || mLoopType == REANIM_LOOP_FULL_LAST_FRAME)) {
++        mLastFrameNs=ReanimClock::Subtract(mLastUpdateTimeNs,mStartTimeNs);
++        mHasLastFrame=true;
++        const auto elapsed=ReanimClock::Subtract(nowNs,mStartTimeNs);
++        if(elapsed<0) throw std::logic_error("benchmark update moved backwards");
++        const auto q=mFramePeriodNs;
++        auto frame=elapsed/q;
++        const auto remainder=elapsed%q;
++        const auto intervals=FrameIntervals(*this);
++        std::int64_t cycles=0;
++        if(frame>=intervals) {cycles=frame/intervals;frame%=intervals;}
++        mCycleCrossings=cycles;
++        if(cycles) mRootDisplacement+=double(cycles)*GroundCycleDisplacement(*this);
++        mCurrentFrame=int(frame);
++        if(cycles) mStartTimeNs=ReanimClock::Subtract(nowNs,frame*q+remainder);
++        mLastUpdateTimeNs=nowNs;
++        if(cycles) {
++            if(cycles>INT_MAX) throw std::overflow_error("animation loop counter overflow");
++            const auto loops=ReanimClock::Add(mLoopCount,cycles);
++            if(loops>INT_MAX) throw std::overflow_error("animation loop counter overflow");
++            mLoopCount=int(loops);
++        }
++        return;
++    }
++
+     if (mFrameCount <= 0 || mDead) return;
+     const auto previous = SamplePlaybackAt(mLastUpdateTimeNs);
+     mLastFrameNs = previous.phaseNs;

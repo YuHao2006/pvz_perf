@@ -83,7 +83,6 @@ struct DaveUpgradeDialog
 }
 
 static const int	TimePanRightStart				= 1500;
-const std::int64_t CutScene::SurvivalBattleClockStopTimeNs = Sexy::TimeCounter::Encode(TimePanRightStart);
 static const int	TimePanRightEnd					= 3500;		//[0x6A4FFC]
 static const int	TimeEarlyDaveEnterStart			= 2000;		//[0x6A5000]
 static const int	TimeEarlyDaveEnterEnd			= 2750;		//[0x6AA220]

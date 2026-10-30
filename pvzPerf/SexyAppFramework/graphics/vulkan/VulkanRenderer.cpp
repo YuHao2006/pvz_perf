@@ -1,4 +1,5 @@
-﻿#include "VulkanRenderer.h"
+#include "VulkanRenderer.h"
+#include "SexyAppFramework/graphics/PoolMesh.h"
 #if defined(__ANDROID__)
 #include "SexyAppFramework/Common.h"
 #include <chrono>
@@ -320,8 +321,8 @@ struct VulkanRenderer::Impl {
     VkShaderModule poolVertexShader = VK_NULL_HANDLE;
     VkPipelineLayout poolLayout = VK_NULL_HANDLE;
     std::array<VkPipeline,3> poolPipelines{}, poolImagePipelines{};
-    VkBuffer poolVertexBuffer = VK_NULL_HANDLE, poolIndexBuffer = VK_NULL_HANDLE;
-    VkDeviceMemory poolVertexMemory = VK_NULL_HANDLE, poolIndexMemory = VK_NULL_HANDLE;
+    VkBuffer poolIndexBuffer = VK_NULL_HANDLE;
+    VkDeviceMemory poolIndexMemory = VK_NULL_HANDLE;
     std::string poolShaderPath;
     std::optional<VulkanHdrParams> hdr;
     std::array<VkSampler, 4> samplers{};
@@ -385,7 +386,9 @@ struct VulkanRenderer::Impl {
 #else
     static constexpr unsigned int vertexStride = sizeof(VulkanVertex);
 #endif
-    std::vector<DrawStream*> streams;
+    // CPU-written geometry only. Textures, pipelines, static indices and GPU
+    // targets are shared; their existing GPU barriers order consecutive frames.
+    std::array<std::vector<DrawStream*>, VulkanContext::kFramesInFlight> streamSets;
     bool recordingFailed = false;
     Buffer staticIndices;
     // 上传 staging 轮换环：提交后的旧 arena 仍被在途批读取，轮换到下一个
@@ -453,7 +456,7 @@ struct VulkanRenderer::Impl {
         VkDescriptorSet set = VK_NULL_HANDLE;
         VulkanTexture* source = nullptr;
         VulkanTexture* target = nullptr;
-        uint32_t counter = 0;
+        unsigned long long timeNs = 0;
         bool frameQueued = false;
     } caustics;
     struct ImageKernel {
@@ -510,8 +513,10 @@ struct VulkanRenderer::Impl {
         textures.clear();
         if (sceneFramebuffer) vkDestroyFramebuffer(device, sceneFramebuffer, nullptr);
         scene.reset();
-        for (auto* stream : streams) delete stream;
-        streams.clear();
+        for (auto& streams : streamSets) {
+            for (auto* stream : streams) delete stream;
+            streams.clear();
+        }
         for (auto pipeline : pipelines) if (pipeline) vkDestroyPipeline(device, pipeline, nullptr);
         for (auto pipeline : spritePipelines) if (pipeline) vkDestroyPipeline(device, pipeline, nullptr);
         if (mixedSpritePipeline) vkDestroyPipeline(device,mixedSpritePipeline,nullptr);
@@ -650,7 +655,7 @@ struct VulkanRenderer::Impl {
             alloc.descriptorSetCount = 1;
             alloc.pSetLayouts = &c.setLayout;
             VK_REQUIRE(vkAllocateDescriptorSets(device, &alloc, &c.set));
-            const VkPushConstantRange push{VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(uint32_t)};
+            const VkPushConstantRange push{VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(PoolCausticOffsets)};
             VkPipelineLayoutCreateInfo layoutInfo{VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO};
             layoutInfo.setLayoutCount = 1;
             layoutInfo.pSetLayouts = &c.setLayout;
@@ -720,8 +725,8 @@ struct VulkanRenderer::Impl {
             VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
             VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_SHADER_WRITE_BIT);
         vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, c.pipeline);
-        uint32_t counter = c.counter;
-        vkCmdPushConstants(cmd, c.layout, VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(counter), &counter);
+        const auto offsets = EvaluatePoolCaustics(c.timeNs);
+        vkCmdPushConstants(cmd,c.layout,VK_SHADER_STAGE_COMPUTE_BIT,0,sizeof(offsets),&offsets);
         vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, c.layout, 0, 1, &c.set, 0, nullptr);
         vkCmdDispatch(cmd, (128 + 7) / 8, (64 + 3) / 4, 1);
         Barrier(cmd, c.target->image, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_GENERAL,
@@ -964,7 +969,7 @@ struct VulkanRenderer::Impl {
             shaders[1].pSpecializationInfo = nullptr;
 #endif
         VkVertexInputBindingDescription binding{0,
-            pool ? uint32_t(sizeof(GpuPoolVertex)) : vertexStride, VK_VERTEX_INPUT_RATE_VERTEX};
+            pool ? uint32_t(sizeof(PoolMeshVertex)) : vertexStride, VK_VERTEX_INPUT_RATE_VERTEX};
         VkVertexInputAttributeDescription attributes[] = {
             {0, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(VulkanVertex, x)},
             {1, 0, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(VulkanVertex, r)},
@@ -981,12 +986,13 @@ struct VulkanRenderer::Impl {
         }
 #endif
         static constexpr VkVertexInputAttributeDescription poolAttributes[] = {
-            {0,0,VK_FORMAT_R32G32_SFLOAT,offsetof(GpuPoolVertex,x)},
-            {1,0,VK_FORMAT_R32G32_SFLOAT,offsetof(GpuPoolVertex,phaseX)}};
+            {0,0,VK_FORMAT_R32G32_SFLOAT,offsetof(PoolMeshVertex,x)},
+            {1,0,VK_FORMAT_R32G32_SFLOAT,offsetof(PoolMeshVertex,u)},
+            {2,0,VK_FORMAT_R32_SFLOAT,offsetof(PoolMeshVertex,alpha)}};
         VkPipelineVertexInputStateCreateInfo input{VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO};
         input.vertexBindingDescriptionCount = 1;
         input.pVertexBindingDescriptions = &binding;
-        input.vertexAttributeDescriptionCount = pool ? 2 : 5;
+        input.vertexAttributeDescriptionCount = pool ? 3 : 5;
         input.pVertexAttributeDescriptions = pool ? poolAttributes : attributes;
 #if defined(PVZ_VULKAN_SPRITE_EXPERIMENT)
         static constexpr VkVertexInputAttributeDescription instanceAttributes[]{
@@ -1596,9 +1602,7 @@ void VulkanRenderer::Impl::ReleasePool() {
         if (pipeline) vkDestroyPipeline(device,std::exchange(pipeline,VK_NULL_HANDLE),nullptr);
     if (poolLayout) vkDestroyPipelineLayout(device,std::exchange(poolLayout,VK_NULL_HANDLE),nullptr);
     if (poolVertexShader) vkDestroyShaderModule(device,std::exchange(poolVertexShader,VK_NULL_HANDLE),nullptr);
-    if (poolVertexBuffer) vkDestroyBuffer(device,std::exchange(poolVertexBuffer,VK_NULL_HANDLE),nullptr);
     if (poolIndexBuffer) vkDestroyBuffer(device,std::exchange(poolIndexBuffer,VK_NULL_HANDLE),nullptr);
-    if (poolVertexMemory) vkFreeMemory(device,std::exchange(poolVertexMemory,VK_NULL_HANDLE),nullptr);
     if (poolIndexMemory) vkFreeMemory(device,std::exchange(poolIndexMemory,VK_NULL_HANDLE),nullptr);
 }
 void VulkanRenderer::Impl::InitPool() {
@@ -1608,7 +1612,7 @@ void VulkanRenderer::Impl::InitPool() {
         VkShaderModuleCreateInfo shader{VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO};
         shader.codeSize=words.size()*sizeof(uint32_t); shader.pCode=words.data();
         VK_REQUIRE(vkCreateShaderModule(device,&shader,nullptr,&poolVertexShader));
-        const VkPushConstantRange push{VK_SHADER_STAGE_VERTEX_BIT,0,64};
+        const VkPushConstantRange push{VK_SHADER_STAGE_VERTEX_BIT,0,16};
         const VkDescriptorSetLayout sets[]{imageLayout,samplerLayout};
         VkPipelineLayoutCreateInfo layout{VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO};
         layout.setLayoutCount=2; layout.pSetLayouts=sets;
@@ -1629,7 +1633,6 @@ void VulkanRenderer::Impl::InitPool() {
             buffer=std::exchange(staging.buffer,VK_NULL_HANDLE);
             memory=std::exchange(staging.memory,VK_NULL_HANDLE);
         };
-        upload(GpuPoolVertices,VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,poolVertexBuffer,poolVertexMemory);
         upload(GpuPoolIndices,VK_BUFFER_USAGE_INDEX_BUFFER_BIT,poolIndexBuffer,poolIndexMemory);
     } catch (...) {
         ReleasePool();
@@ -1657,8 +1660,9 @@ uint32_t VulkanRenderer::MaxImageDimension2D() const {
 }
 VulkanRenderer::ResourceCounts VulkanRenderer::GetResourceCounts() const {
     const auto& s = *impl_;
-    return {s.textures.size(),s.retired.size(),s.pools.size(),
-        s.streams.size()+(s.poolVertexBuffer ? 1u : 0u)};
+    size_t streamCount = 0;
+    for (const auto& streams : s.streamSets) streamCount += streams.size();
+    return {s.textures.size(),s.retired.size(),s.pools.size(),streamCount};
 }
 
 #if defined(PVZ_VULKAN_SPRITE_EXPERIMENT)
@@ -2254,9 +2258,9 @@ VulkanTexture* VulkanRenderer::CreateCausticsTexture(int width, int height, Vulk
     return handle;
 }
 
-void VulkanRenderer::SetCausticsFrame(uint32_t counter) {
+void VulkanRenderer::SetCausticsTimeNs(unsigned long long timeNs) {
     auto& s = *impl_;
-    s.caustics.counter = counter;
+    s.caustics.timeNs = timeNs;
     s.caustics.frameQueued = s.caustics.target != nullptr;
 }
 
@@ -2307,7 +2311,7 @@ bool VulkanRenderer::BeginScene() try {
     // been queued and destroyed outside a frame, including while minimized.
     s.drawState = {}; // Vulkan command buffers do not inherit last frame's state.
     s.ReapRetired();
-    for (auto* stream : s.streams) { stream->vertices.used = 0; stream->indices.used = 0; }
+    for (auto* stream : s.streamSets[s.frame.resourceIndex]) { stream->vertices.used = 0; stream->indices.used = 0; }
 #if defined(PVZ_VULKAN_SPRITE_EXPERIMENT)
     benchmarkDrawCalls = 0;
     benchmarkTriangles = 0;
@@ -2366,7 +2370,7 @@ void VulkanRenderer::Impl::Draw(std::span<const VulkanVertex> vertices, VulkanTe
     }
 #endif
     DrawStream* stream = nullptr;
-    for (auto* candidate : streams)
+    for (auto* candidate : streamSets[frame.resourceIndex])
         if (candidate->vertices.size - candidate->vertices.used >= bytes) { stream = candidate; break; }
     if (!stream) {
         auto* allocation = new DrawStream;
@@ -2377,7 +2381,7 @@ void VulkanRenderer::Impl::Draw(std::span<const VulkanVertex> vertices, VulkanTe
             // Quad streams have the largest ratio: six indices per four vertices.
             const auto indexCapacity=(capacity/vertexStride+3)/4*6*sizeof(unsigned short);
             allocation->indices.Create(indexCapacity,VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
-            streams.push_back(allocation);
+            streamSets[frame.resourceIndex].push_back(allocation);
         } catch (...) { delete allocation; throw; }
         stream = allocation;
     }
@@ -2686,7 +2690,7 @@ void VulkanRenderer::SubmitBenchmarkSprite(const VulkanSpriteInstance& sprite,Vu
     }
     if (right<=left || bottom<=top) return;
     DrawStream* stream=nullptr;
-    for(auto* candidate:s.streams)
+    for(auto* candidate:s.streamSets[s.frame.resourceIndex])
         if(candidate->vertices.size-candidate->vertices.used>=sizeof(sprite)) {stream=candidate;break;}
     if (!stream) {
         auto* allocation=new DrawStream;
@@ -2694,7 +2698,7 @@ void VulkanRenderer::SubmitBenchmarkSprite(const VulkanSpriteInstance& sprite,Vu
             constexpr VkDeviceSize capacity=8*1024*1024;
             allocation->vertices.Create(capacity,VK_BUFFER_USAGE_VERTEX_BUFFER_BIT|VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
             allocation->indices.Create((capacity/sizeof(sprite)+3)/4*6*sizeof(unsigned short),VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
-            s.streams.push_back(allocation);
+            s.streamSets[s.frame.resourceIndex].push_back(allocation);
         } catch (...) {delete allocation;throw;}
         stream=allocation;
     }
@@ -2748,19 +2752,35 @@ void VulkanRenderer::SubmitPool(VulkanTexture* texture,const GpuPoolParams& p) {
     vkCmdBindPipeline(s.frame.cmd,VK_PIPELINE_BIND_POINT_GRAPHICS,pipelines.at(size_t(p.blend)));
     const VkDescriptorSet sets[]{s.textureArray,s.samplerSet};
     vkCmdBindDescriptorSets(s.frame.cmd,VK_PIPELINE_BIND_POINT_GRAPHICS,s.poolLayout,0,2,sets,0,nullptr);
-    const VkDeviceSize offset=0;
-    vkCmdBindVertexBuffers(s.frame.cmd,0,1,&s.poolVertexBuffer,&offset);
+    std::array<PoolMeshVertex,96> vertices;
+    BuildPoolMesh(p,vertices);
+    // Append each draw's mesh to the existing frame streams. Never overwrite a
+    // previous layer/credits draw while its command buffer still references it.
+    static_assert(sizeof(vertices)%sizeof(VulkanVertex)==0);
+    DrawStream* stream = nullptr;
+    for (auto* candidate : s.streamSets[s.frame.resourceIndex])
+        if (candidate->vertices.size-candidate->vertices.used >= sizeof(vertices)) {stream=candidate;break;}
+    if (!stream) {
+        auto* allocation = new DrawStream;
+        try {
+            constexpr VkDeviceSize capacity = 8*1024*1024;
+            allocation->vertices.Create(capacity,VK_BUFFER_USAGE_VERTEX_BUFFER_BIT|VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
+            allocation->indices.Create((capacity/sizeof(VulkanVertex)+3)/4*6*sizeof(unsigned short),VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
+            s.streamSets[s.frame.resourceIndex].push_back(allocation);
+        } catch (...) { delete allocation; throw; }
+        stream = allocation;
+    }
+    const VkDeviceSize offset = stream->vertices.used;
+    std::memcpy(static_cast<std::byte*>(stream->vertices.mapped)+offset,vertices.data(),sizeof(vertices));
+    stream->vertices.used += sizeof(vertices);
+    vkCmdBindVertexBuffers(s.frame.cmd,0,1,&stream->vertices.buffer,&offset);
     vkCmdBindIndexBuffer(s.frame.cmd,s.poolIndexBuffer,0,VK_INDEX_TYPE_UINT16);
     struct PoolPush {
-        float extent[2], geometry[2], translation[2], padding[2];
-        float time[4];
-        uint32_t meta[4];
+        float extent[2];
+        unsigned int slot, sampler;
     };
-    static_assert(sizeof(PoolPush)==64);
-    const PoolPush push{
-        {float(output->width),float(output->height)}, {p.width,p.height}, {p.transX,p.transY}, {},
-        {p.time1,p.time2,p.time3,p.time5},
-        {p.layer,p.night,SlotOf(texture)|p.samplingFlags,p.sampler}};
+    static_assert(sizeof(PoolPush)==16);
+    const PoolPush push{{float(output->width),float(output->height)},SlotOf(texture)|p.samplingFlags,p.sampler};
     vkCmdPushConstants(s.frame.cmd,s.poolLayout,VK_SHADER_STAGE_VERTEX_BIT,0,sizeof(push),&push);
     vkCmdDrawIndexed(s.frame.cmd,uint32_t(GpuPoolIndices.size()),1,0,0,0);
     // A dedicated layout/vertex format was bound; ordinary draws restore their

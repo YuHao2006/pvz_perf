@@ -1,0 +1,19 @@
+Test project C:/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/out/x64-win32-vulkan
+    Start 36: pvz_frame_timing
+1/7 Test #36: pvz_frame_timing .................   Passed    0.02 sec
+    Start 37: pvz_slot_machine_clock
+2/7 Test #37: pvz_slot_machine_clock ...........   Passed    0.01 sec
+    Start 38: pvz_reanim_clock
+3/7 Test #38: pvz_reanim_clock .................   Passed    0.11 sec
+    Start 39: pvz_plant_launch_clock
+4/7 Test #39: pvz_plant_launch_clock ...........   Passed    0.01 sec
+    Start 43: pvz_time_counter_save
+5/7 Test #43: pvz_time_counter_save ............   Passed    0.02 sec
+    Start 44: pvz_dat64_nanosecond
+6/7 Test #44: pvz_dat64_nanosecond .............   Passed    0.01 sec
+    Start 45: pvz_v7_save_schema
+7/7 Test #45: pvz_v7_save_schema ...............   Passed    0.01 sec
+
+100% tests passed out of 7
+
+Total Test time (real) =   0.23 sec

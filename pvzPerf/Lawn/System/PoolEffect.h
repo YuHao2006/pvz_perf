@@ -1,5 +1,4 @@
 #pragma once
-#include "misc/TimeCounter.h"
 #include <cstdint>
 
 #include "ConstEnums.h"
@@ -19,7 +18,7 @@ class PoolEffect
 public:
 	Sexy::Image*	mCausticImage = nullptr;
 	LawnApp*			mApp = nullptr;
-	Sexy::UnsignedTimeCounter	mPoolCounter = 0;
+	unsigned long long			mPoolTimeNs = 0;
 	// Installation state only; unavailable GPU compute is an error.
 	bool				mCausticGPU = false;
 
@@ -31,5 +30,5 @@ public:
 	void				PoolEffectInitialize();
 	void				PoolEffectDispose();
 	void				PoolEffectDraw(Sexy::Graphics* g, bool theIsNight);
-	void				PoolEffectUpdate();
+	void				PoolEffectUpdate(unsigned long long elapsedNs);
 };

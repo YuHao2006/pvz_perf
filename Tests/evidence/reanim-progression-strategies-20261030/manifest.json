@@ -1,0 +1,24 @@
+{
+  "scope": "Actual current production objects/libraries, /O2 /GL /LTCG. Only main and candidate Reanimator.cpp objects replaced; no GPU/window/gameplay initialization. Forward looping animations only. All variants call the same production RootMotion and GetFrameTime consumers.",
+  "variants": {
+    "current": "Production cached keyframe index and current-keyframe birth anchor; actual Advance/ConsumeTimeAt path.",
+    "divide_update_cached_queries": "Cycle-local epoch; divide at every update, cache the derived frame for query reuse.",
+    "divide_every_query": "Cycle-local epoch; update only wraps completed cycles, leaves mCurrentFrame unused in measured forward path; derive frame using division in each query. ABI field still exists, so this does not measure memory savings."
+  },
+  "hardware": "Windows x64, process affinity LP14; frequency lock not set or verified. Forward/reverse executable order, 5 rounds per order, 1 million updates per round; 10 samples per cell.",
+  "step_ns": [
+    8333333,
+    33333333,
+    133333333
+  ],
+  "fixtures": "Authored normal zombie and football ground/walk tracks, positive rates 12/18/30/60. Same initial state and timestamps; loop/frame/root/frame-fraction checks against independent frozen arithmetic before timing.",
+  "validation": "All 1440 timing rows agree on checksums across variants/orders. Separate exact validation passed for integer phase, loop count, per-update cycle crossings and previous event phase: 20000 updates x12 step/definition combinations x3 variants (720000 validation updates). Root/fraction/zombie output tolerance checks also pass identically.",
+  "limits": "Not complete game-frame timing. No animated track transform walk, rendering, reverse playback, rate changes, seek, nonloop endpoints or save conversion tested; candidate patches are experiments only, not applied to production.",
+  "measured_source_sha256": "aa9a200459bfcdb8181e1ef87fdaf1b6c2ba44d57be29f0faa5d6ef4aacbd454",
+  "reanim_source_sha256": "9d88253eb8c66335a16ea745758c1c0d871ddd192873bd1b01247438d6d87c05",
+  "executable_sha256": {
+    "current": "cceed196b13cffabf90d919a5c70b4086349c2ae0b2d57288f9eb7775a94745e",
+    "divide_update_cached_queries": "05e252e70a407cadfb72a87c1944f71b3633bbe24db88be646d36e7b9b0b69b1",
+    "divide_every_query": "f1a03e8e747fe73156eeecceddef04d4a2e4baa070d2db70dd6c37c22aad854e"
+  }
+}

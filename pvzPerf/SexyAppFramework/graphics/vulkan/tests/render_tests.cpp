@@ -1,4 +1,5 @@
 #include "VulkanRenderer.h"
+#include "../../../../../Tests/native/PoolGpuChecks.h"
 #include "TestWin32Window.h"
 #include "VulkanSurfaceExtent.h"
 #include <array>
@@ -67,6 +68,51 @@ void CanvasHash(const std::vector<uint32_t>& pixels,const char* label) {
         hash=(hash^((pixel>>shift)&255))*1099511628211ull;
     std::cout<<"canvas hash "<<label<<"="<<std::hex<<hash<<std::dec<<'\n';
 }
+unsigned int CausticPhaseReference(const std::vector<unsigned int>& source, unsigned int x,
+    unsigned int y, unsigned int phase)
+{
+    const auto lookup = [&](unsigned int u, unsigned int v) {
+        const auto fu=(u&65534u)+1u, fv=(v&65534u)+1u;
+        const auto tap = [&](unsigned int dx, unsigned int dy) {
+            return source[((v/65536+dy)%256)*256+(u/65536+dx)%256]&255u;
+        };
+        return (((65536-fu)*fv/65536)*tap(0,1)/65536) +
+            ((fu*fv/65536)*tap(1,1)/65536) +
+            (((65536-fu)*(65536-fv)/65536)*tap(0,0)/65536) +
+            ((fu*(65536-fv)/65536)*tap(1,0)/65536);
+    };
+    const auto trunc = [](unsigned int bits, unsigned int divisor) {
+        return bits&0x80000000u ? 0u-((0u-bits)/divisor) : bits/divisor;
+    };
+    const auto time=phase, next=phase+65536u;
+    const auto a0=lookup((x<<17)+trunc(time,10),y<<17)&255u;
+    const auto a1=lookup((x<<17)-trunc(next,6),((256-y)<<17)+(time>>3))&255u;
+    const auto a=(a0+a1)/2;
+    const auto alpha=a>=160 ? 255-2*(a-160) : a>=128 ? 5*(a-128) : 0;
+    return ((alpha/3)<<24)|0xffffffu;
+}
+void DirectCausticPhase(Sexy::VulkanRenderer& renderer) {
+    std::vector<unsigned int> source(256*256);
+    for (unsigned int y=0;y<256;++y) for (unsigned int x=0;x<256;++x)
+        source[y*256+x]=0xff000000u|((x*17+y*29)&255u);
+    auto* input=renderer.CreateTexture(256,256,source.data(),1024);
+    auto* output=renderer.CreateCausticsTexture(128,64,input);
+    const unsigned int phases[]{0,97u<<16,(97u<<16)+32768u,0x80000001u,0xfffffff0u};
+    for (auto phase:phases) {
+        const auto timeNs=(static_cast<unsigned long long>(phase)*156'250ull+1023ull)/1024ull;
+        renderer.SetCausticsTimeNs(timeNs);
+        Require(renderer.BeginScene(),"Cannot begin direct caustic phase");
+        renderer.EndSceneAndPresent();
+        const auto pixels=renderer.ReadTexturePixels(output);
+        Require(pixels.width==128 && pixels.height==64,"Caustic dimensions changed");
+        for (unsigned int y=0;y<64;++y) for (unsigned int x=0;x<128;++x)
+            Require(pixels.pixels[y*128+x]==CausticPhaseReference(source,x,y,phase),
+                "Direct caustic phase differs from integer sampling reference");
+    }
+    renderer.DestroyTexture(output);renderer.DestroyTexture(input);
+    std::cout<<"PASS caustic phase: authored endpoints, fractional phase, sign boundary and wrap; exact 40960 pixels\n";
+}
+
 void MixedBlendPixels(Sexy::VulkanRenderer& renderer) {
     using namespace Sexy;
     Require(renderer.BeginScene(),"Cannot test mixed blend ordering and alpha");
@@ -435,21 +481,53 @@ void RawFilterAliasEdges(Sexy::VulkanRenderer& renderer) {
 }
 
 
+// Generated RGBA16F images can exceed normalized RGB. The old HSL path
+// returns black when its reconstructed value is nonpositive, even if a
+// direct hue-preserving RGB expression would contain positive channels.
+void HdrFilterBlackBoundary(Sexy::VulkanRenderer& renderer) {
+    using namespace Sexy;
+    struct Case { float r,g,b; unsigned int filter; };
+    const Case cases[]={{1.68995f,1.07116f,0.217539f,2u},
+                        {0.272114f,1.67887f,1.65469f,3u}};
+    for(const auto& test:cases) {
+        auto* source=renderer.CreateRenderImage(1,1);
+        renderer.SetRenderImage(source);
+        Require(renderer.BeginScene(),"Cannot create HDR filter boundary");
+        SubmitImage(renderer,Quad(0,0,1,1,test.r,test.g,test.b),
+            renderer.whiteTexture,false,false,VulkanBlend::Opaque);
+        renderer.SetRenderImage(nullptr);
+        Require(renderer.BeginScene(),"Cannot draw HDR filter boundary");
+        auto geometry=Quad(0,0,1,1);
+        EncodeSource(geometry,source,false,false);
+        for(auto& vertex:geometry) vertex.slot|=test.filter<<28u;
+        renderer.SubmitTriangles(geometry,source,false,false,VulkanBlend::Opaque);
+        renderer.EndSceneAndPresent();
+        Pixel(renderer.ReadScenePixels(),0,0,0xff000000u);
+        renderer.DestroyTexture(source);
+    }
+    std::cout<<"PASS: generated HDR filters retain nonpositive-value black boundary\n";
+}
+
 // Exercise frame resource reuse without readbacks between submissions.
-// BeginCommands must retire the previous use before reusing the unique command buffer.
-void SingleFrameReuseAndRetirement(Sexy::VulkanRenderer& renderer,VulkanContext& window,
+// BeginCommands retires only the selected frame slot, with all textures shared.
+void TwoFrameReuseAndRetirement(Sexy::VulkanRenderer& renderer,VulkanContext& window,
     VulkanTest::Window& native) {
     using namespace Sexy;
     window.WaitForFrame();
-    VkCommandBuffer singleCommand=VK_NULL_HANDLE;
+    std::array<VkCommandBuffer,VulkanContext::kFramesInFlight> commands{};
+    std::array<unsigned long long,VulkanContext::kFramesInFlight> serials{};
     for (int frame=0;frame<8;++frame) {
-        const auto previousSubmission=window.submittedSerial;
         const auto context=window.BeginCommands();
-        Require(context.valid,"Cannot acquire consecutive single-resource fixture");
-        Require(window.completedSerial>=previousSubmission,
-            "Single command buffer reused before previous submission completed");
-        if(singleCommand==VK_NULL_HANDLE) singleCommand=context.cmd;
-        Require(context.cmd==singleCommand,"Consecutive frames allocated another command buffer");
+        Require(context.valid && context.resourceIndex<VulkanContext::kFramesInFlight,
+            "Cannot acquire consecutive frame slot");
+        Require(context.resourceIndex==unsigned(frame)%VulkanContext::kFramesInFlight,
+            "Frame resources did not alternate");
+        const auto slot=context.resourceIndex;
+        Require(window.completedSerial>=serials[slot],"Frame slot reused while GPU still owns it");
+        if(commands[slot]==VK_NULL_HANDLE) commands[slot]=context.cmd;
+        Require(context.cmd==commands[slot],"Frame slot did not reuse its command buffer");
+        if(frame>0) Require(commands[0]!=commands[1],"Two slots share the same command buffer");
+        serials[slot]=context.serial;
         Require(context.serial==window.submittedSerial+1,"Recording serial does not follow submission");
         window.BeginPresentPass({{0,0,0,1}});
         window.EndFrame();
@@ -458,6 +536,7 @@ void SingleFrameReuseAndRetirement(Sexy::VulkanRenderer& renderer,VulkanContext&
     const unsigned int red=0xffff0000u;
     auto* warm=renderer.CreateTexture(1,1,&red,4);
     renderer.ReadTexturePixels(warm); // Finish setup uploads, not the draw loop.
+    const auto sharedTextures=renderer.GetResourceCounts().textures;
     for(int frame=0;frame<32;++frame) {
         Require(renderer.BeginScene(),"Cannot reuse mapped draw streams");
         const float r=(frame&1)?1.f:0.f, g=(frame&2)?1.f:0.f, b=(frame&4)?1.f:0.f;
@@ -465,6 +544,8 @@ void SingleFrameReuseAndRetirement(Sexy::VulkanRenderer& renderer,VulkanContext&
             false,false,VulkanBlend::Opaque);
         renderer.EndSceneAndPresent();
     }
+    Require(renderer.GetResourceCounts().textures==sharedTextures,
+        "Alternating frame slots duplicated a texture");
     struct RetiredSlot { unsigned int slot;unsigned long long serial; };
     std::vector<RetiredSlot> retired;
     for(int frame=0;frame<8;++frame) {
@@ -510,7 +591,7 @@ void SingleFrameReuseAndRetirement(Sexy::VulkanRenderer& renderer,VulkanContext&
     renderer.EndSceneAndPresent();
     Require(renderer.GetResourceCounts().textures==1 && !renderer.GetResourceCounts().retiredTextures,
         "Single-frame retirement retained dead textures after the fence completed");
-    std::cout<<"PASS single-frame queue: one reused command buffer, 32 consecutive vertex frames, "
+    std::cout<<"PASS two-frame queue: two reused command buffers, shared textures, 32 consecutive vertex frames, "
         "pending descriptor retirement, retained pixels and suspend/resize/reacquire\n";
 }
 
@@ -700,7 +781,7 @@ void Run() {
     renderer.PrepareLoadingPipelines();
     Require(!renderer.PresentRetainedScene(), "An uninitialized scene was falsely presented");
     Require(!renderer.PresentRetainedScene(), "Repeated startup deferral changed scene state");
-    SingleFrameReuseAndRetirement(renderer,window,native);
+    TwoFrameReuseAndRetirement(renderer,window,native);
     SingleFrameStaticSlots(renderer,window);
     SingleFrameFontSnapshots(renderer,window);
     // A mode transaction can update more than one geometry/format property.
@@ -836,7 +917,10 @@ void Run() {
     std::cout << "PASS: repeated texture/descriptor allocation and deferred destruction\n";
     CoveragePixels(renderer);
     RawFilterAliasEdges(renderer);
+        HdrFilterBlackBoundary(renderer);
     DynamicUpdates(renderer,window);
+    DirectCausticPhase(renderer);
+    PoolGpuChecks::Run(renderer,true);
     MixedBlendPixels(renderer);
     UploadEdges(renderer,window);
     BatchedAlphaComposition(renderer);

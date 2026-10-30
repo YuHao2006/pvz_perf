@@ -1,5 +1,6 @@
 #include "PoolEffect.h"
 #include <stdexcept>
+#include <limits>
 #include "LawnApp.h"
 #include "Resources.h"
 #include "GameConstants.h"
@@ -34,7 +35,7 @@ void PoolEffect::PoolEffectInitialize()
     try {
         if (!anInterface->InstallCausticsCompute(aImage, aSource))
             throw std::runtime_error("PoolEffect: GPU caustics compute installation failed");
-        anInterface->SetCausticsFrame(0u);
+        anInterface->SetCausticsTimeNs(0u);
     } catch (...) {
         delete aImage;
         throw;
@@ -42,7 +43,7 @@ void PoolEffect::PoolEffectInitialize()
 
     mCausticImage = aImage;
     mApp = aApp;
-    mPoolCounter = 0;
+    mPoolTimeNs = 0;
     mCausticGPU = true;
 }
 
@@ -69,18 +70,18 @@ void PoolEffect::PoolEffectDraw(Sexy::Graphics* g, bool theIsNight)
         throw std::runtime_error("PoolEffect: drawing requires a GPU destination");
     auto& render=*aDestImage->mRenderOwner;
     render.SelectDrawSurface(aDestImage);
-    // Keep the bounded 1073 phase. All per-grid sine evaluation and UV
-    // interpolation now run in the vertex shader over a resident static mesh.
-    const float phase=static_cast<float>(mPoolCounter % 158400u)*2*PI;
+    // Keep the bounded 1073 phase. Vulkan evaluates the wave mesh on the CPU;
+    // the draw parameters retain the existing phase and clock behavior.
+    const double phase=static_cast<double>(mPoolTimeNs % 1'584'000'000'000ull)*2*PI;
     Sexy::GpuPoolParams params{};
     params.width=float(IMAGE_POOL->mWidth);
     params.height=float(IMAGE_POOL->mHeight);
     params.transX=g->mTransX;
     params.transY=g->mTransY;
-    params.time1=float(phase/800.0);
-    params.time2=float(phase/150.0);
-    params.time3=float(phase/900.0);
-    params.time5=float(phase/110.0);
+    params.time1=float(phase/8'000'000'000.0);
+    params.time2=float(phase/1'500'000'000.0);
+    params.time3=float(phase/9'000'000'000.0);
+    params.time5=float(phase/1'100'000'000.0);
     params.clip={g->mClipRect.mX,g->mClipRect.mY,g->mClipRect.mWidth,g->mClipRect.mHeight};
     params.night=theIsNight;
     params.sampler=g->mLinearBlend ? 1u : 0u;
@@ -93,12 +94,14 @@ void PoolEffect::PoolEffectDraw(Sexy::Graphics* g, bool theIsNight)
     render.DrawPool(mCausticImage,params);
 }
 
-void PoolEffect::PoolEffectUpdate()
+void PoolEffect::PoolEffectUpdate(unsigned long long elapsedNs)
 {
     if (!mCausticGPU || mCausticImage == nullptr || mApp == nullptr ||
         mApp->mDDInterface == nullptr || mApp->mDDInterface->mRenderInterface == nullptr)
         throw std::runtime_error("PoolEffect: updating requires installed GPU caustics");
-    ++mPoolCounter;
+    if (elapsedNs > std::numeric_limits<unsigned long long>::max()-mPoolTimeNs)
+        throw std::overflow_error("PoolEffect time overflow");
+    mPoolTimeNs += elapsedNs;
     RenderInterface* anInterface = mApp->mDDInterface->mRenderInterface;
-    anInterface->SetCausticsFrame(mPoolCounter);
+    anInterface->SetCausticsTimeNs(mPoolTimeNs);
 }

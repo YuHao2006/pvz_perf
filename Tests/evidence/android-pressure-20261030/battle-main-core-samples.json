@@ -1,0 +1,58 @@
+[
+  {
+    "tid": 31793,
+    "name": "Thread-2",
+    "cpu": 0,
+    "sample_weight_ns": 600000000,
+    "sample_share_pct": 6.674082313681868
+  },
+  {
+    "tid": 31793,
+    "name": "Thread-2",
+    "cpu": 1,
+    "sample_weight_ns": 1112000000,
+    "sample_share_pct": 12.369299221357064
+  },
+  {
+    "tid": 31793,
+    "name": "Thread-2",
+    "cpu": 2,
+    "sample_weight_ns": 742000000,
+    "sample_share_pct": 8.253615127919911
+  },
+  {
+    "tid": 31793,
+    "name": "Thread-2",
+    "cpu": 3,
+    "sample_weight_ns": 1602000000,
+    "sample_share_pct": 17.81979977753059
+  },
+  {
+    "tid": 31793,
+    "name": "Thread-2",
+    "cpu": 4,
+    "sample_weight_ns": 1942000000,
+    "sample_share_pct": 21.601779755283648
+  },
+  {
+    "tid": 31793,
+    "name": "Thread-2",
+    "cpu": 5,
+    "sample_weight_ns": 1532000000,
+    "sample_share_pct": 17.04115684093437
+  },
+  {
+    "tid": 31793,
+    "name": "Thread-2",
+    "cpu": 6,
+    "sample_weight_ns": 1460000000,
+    "sample_share_pct": 16.240266963292544
+  },
+  {
+    "tid": 31793,
+    "name": "Thread-2",
+    "cpu": 7,
+    "sample_weight_ns": 0,
+    "sample_share_pct": 0.0
+  }
+]

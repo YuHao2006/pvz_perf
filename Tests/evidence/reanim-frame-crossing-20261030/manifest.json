@@ -1,0 +1,20 @@
+{
+  "source": "Tests/performance/reanim_frame_crossing_benchmark.cpp",
+  "source_sha256": "f50d1d6bee4e1260af7d9a0e81e3ca4248c5f68ae1b708a496359b2fcbb29aad",
+  "windows": "MSVC /O2 /GL /LTCG; logical processor 14; no frequency lock performed or verified; seven interleaved rounds, 524288 operations/round; median nanoseconds per arithmetic input. Not a full Reanimation update benchmark.",
+  "validation": "Integer forward age/period quotient and remainder match; period boundaries and 0/1/2/127-frame crossings checked outside timing.",
+  "rates": [
+    12,
+    24,
+    30,
+    47,
+    60,
+    100
+  ],
+  "normal_scope": "Actual game target >=100 and logic delta <=10ms. 60/30/15 Hz inputs are hypothetical arithmetic stress, not a claim about current simulation steps.",
+  "android": "armv9-a+nosve+nosve2 -O3 binary compiled; disassembly confirms UDIV+MSUB for divide/remainder and genuine repeated SUB/CMP for while. Device disconnected; no ARM timing measured.",
+  "limitations": "Independent array kernel; excludes cycle wrapping, nonloop endpoints, reverse playback, root motion and rendering. Do not substitute these figures for whole-game or previous full reanim microbenchmarks.",
+  "x86_disassembly": "Measured executable checked: one DIV per input produces both quotient (RAX) and remainder (RDX). Loop unrolling processes two distinct inputs with two DIVs; this is not separate division and modulo for one input.",
+  "measured_executable_sha256": "d61bfadcacc2bd2f9dd5d40438d8ab111c7416ed01ab7d9ee18c4b8030327795",
+  "source_snapshot": "benchmark-source.cpp"
+}

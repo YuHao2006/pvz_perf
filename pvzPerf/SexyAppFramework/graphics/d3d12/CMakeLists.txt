@@ -38,6 +38,7 @@ d3d12_shader(game_hdr VSMain vs_6_0 game_present_vs)
 d3d12_shader(game_hdr PSMain ps_6_0 game_present_ps)
 add_custom_target(sexy_d3d12_shaders DEPENDS ${d3d12Shaders})
 add_library(sexy_d3d12 STATIC D3d12Context.cpp D3d12Renderer.cpp)
+target_sources(sexy_d3d12 PRIVATE ../PoolMesh.cpp)
 target_sources(sexy_d3d12 PRIVATE
     ../vulkan/VulkanHdrDisplay.cpp ../vulkan/VulkanHdrObserver.cpp)
 target_compile_features(sexy_d3d12 PUBLIC cxx_std_23)

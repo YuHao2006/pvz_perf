@@ -1,0 +1,8 @@
+PASS survival owner clocks 100 Hz: intermission, immediate intro freeze, pre-pan/scroll, retained actors, visual preview/effects and resume
+PASS survival owner clocks 240 Hz: intermission, immediate intro freeze, pre-pan/scroll, retained actors, visual preview/effects and resume
+PASS survival owner clocks 480 Hz: intermission, immediate intro freeze, pre-pan/scroll, retained actors, visual preview/effects and resume
+PASS survival owner clocks 1000 Hz: intermission, immediate intro freeze, pre-pan/scroll, retained actors, visual preview/effects and resume
+PASS pool sparkle owner clock 100 Hz: chooser emission, pause, load rebinding, repick freeze/resume
+PASS pool sparkle owner clock 240 Hz: chooser emission, pause, load rebinding, repick freeze/resume
+PASS pool sparkle owner clock 480 Hz: chooser emission, pause, load rebinding, repick freeze/resume
+PASS pool sparkle owner clock 1000 Hz: chooser emission, pause, load rebinding, repick freeze/resume

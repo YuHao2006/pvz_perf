@@ -1276,6 +1276,51 @@ public:
     }
 };
 
+void FrameDivisionSampleRuntime()
+{
+    Reanimation animation;
+    animation.mDead=true;
+    animation.mFrameCount=9;
+    animation.mFramePeriodNs=17'000'003;
+    constexpr std::int64_t base=9'000'000'000;
+    unsigned int checked=0;
+    for(int kind=0;kind<6;++kind) {
+        animation.mLoopType=static_cast<ReanimLoopType>(kind);
+        const bool full=kind==1 || kind==4 || kind==5;
+        const int intervals=full?9:8;
+        animation.mPeriodNs=animation.mFramePeriodNs*intervals;
+        const auto q=animation.mFramePeriodNs;
+        const bool looping=kind<2;
+        for(float rate:{-30.0f,0.0f,30.0f}) for(int cached:{0,1,intervals-1,intervals})
+            for(std::int64_t age:{0LL,1LL,q/2,q-1}) {
+                const bool reverse=rate<0;
+                if(age && ((reverse && cached==0) || (!reverse && cached==intervals))) continue;
+                animation.mAnimRate=rate;animation.mCurrentFrame=cached;
+                animation.mStartTimeNs=base-age;animation.mLastUpdateTimeNs=base;
+                for(std::int64_t delta:{-3*animation.mPeriodNs-7,-q-1,-q,-1LL,0LL,1LL,q-1,q,q+1,2*q,3*animation.mPeriodNs+7})
+                    for(std::int64_t offset:{-1LL,0LL,1LL}) {
+                        const auto now=base+delta;
+                        auto phase=std::int64_t(cached)*q;
+                        std::int64_t cycles=0;
+                        const auto sampleAge=(rate==0?base:now+offset)-animation.mStartTimeNs;
+                        ReanimClock::Advance(phase,cycles,animation.mPeriodNs,reverse?-1:1,sampleAge);
+                        ReanimFramePosition expected;
+                        if(!looping && cycles) expected={0,cycles>0?intervals:0,0};
+                        else {
+                            const auto frame=phase/q,remainder=phase%q;
+                            expected={cycles,int(frame+(reverse && remainder!=0)),
+                                reverse && remainder!=0?q-remainder:remainder};
+                        }
+                        const auto actual=animation.SampleFrameAt(now,offset);
+                        Require(actual.frame==expected.frame && actual.ageNs==expected.ageNs && actual.cycles==expected.cycles,
+                            "Division frame sample changed reverse/hold/endpoint/offset semantics");
+                        ++checked;
+                    }
+            }
+    }
+    std::cout<<"PASS division frame samples: "<<checked<<" exact forward/reverse/stopped, loop/hold/endpoint and retrospective/offset queries\n";
+}
+
 void ExplicitReanimationOwnerTime(LawnApp& app)
 {
     auto& holder=*app.mEffectSystem->mReanimationHolder;
@@ -1701,17 +1746,21 @@ void SurvivalOwnerClockRuntime(TestApp& app, int hz)
     board.mDrawCount=0; // Keep the real cutscene from starting the chooser in this hidden fixture.
     battleTime=board.mLevelTimeNs;
     deadline=plant->mNextLaunchTimeNs;
-    board.mCutScene->mCutsceneTime.mNanoseconds=CutScene::SurvivalBattleClockStopTimeNs-static_cast<std::int64_t>(step);
-    holder.mVisualTimeNs+=step;
-    board.Update();
-    Require(board.mLevelTimeNs==battleTime+step,
-        "Survival pre-pan delay froze the Board before the camera started moving");
-    Require(plant->mNextLaunchTimeNs==deadline+static_cast<std::int64_t>(step),
-        "Survival pre-pan delay consumed the inactive plant's attack timer");
-    battleTime=board.mLevelTimeNs;
     phase=body->SamplePlayback().phaseNs;
-    deadline=plant->mNextLaunchTimeNs;
-    board.mCutScene->mCutsceneTime.mNanoseconds=CutScene::SurvivalBattleClockStopTimeNs;
+    // Retail stops immediately on the PLAYING -> LEVEL_INTRO transition,
+    // before the camera moves. Verify the stationary and scrolling portions.
+    for (const int introTime : {0,1490,1500,3500}) {
+        board.mCutScene->mCutsceneTime=introTime;
+        holder.mVisualTimeNs+=step;
+        board.Update();
+        Require(board.mLevelTimeNs==battleTime &&
+            holder.mBattleTimeNs==static_cast<std::int64_t>(battleTime),
+            "Survival intro advanced Board time before/during camera movement");
+        Require(body->SamplePlayback().phaseNs==phase,
+            "Survival intro advanced retained animation before camera movement");
+        Require(plant->mNextLaunchTimeNs==deadline,
+            "Survival intro changed the inactive plant attack deadline");
+    }
     auto* preview=board.AddZombieInRow(ZOMBIE_NORMAL,2,Zombie::ZOMBIE_WAVE_CUTSCENE);
     auto* previewBody=app.ReanimationGet(preview->mBodyReanimID);
     Require(holder.mTimeDomains[holder.mReanimations.DataArrayIndexOf(previewBody)]==ReanimTimeDomain::Visual &&
@@ -1800,7 +1849,92 @@ void SurvivalOwnerClockRuntime(TestApp& app, int hz)
         portalParticle->EmitterRosterEmitterAt(0)->mBirthTimeNs==portalParticleBirth,
         "Portal particle did not resume through the global Board effect update");
     portal.GridItemDie();
-    std::cout<<"PASS survival owner clocks "<<hz<<" Hz: intermission, retained actors, preview creation/update, particle birth/attachment and resume\n";
+    std::cout<<"PASS survival owner clocks "<<hz<<" Hz: intermission, immediate intro freeze, pre-pan/scroll, retained actors, visual preview/effects and resume\n";
+}
+
+void PoolSparkleOwnerClockRuntime(TestApp& app, int hz)
+{
+    auto& holder=*app.mEffectSystem->mReanimationHolder;
+    struct Restore {
+        TestApp& app;
+        Board* board;
+        PoolEffect* pool;
+        GameMode mode;
+        GameScenes scene;
+        std::int64_t visual, battle;
+        std::uint64_t interval=Sexy::gUpdateIntervalNs;
+        double ticks=Sexy::gUpdateTicks, steps=Sexy::gStepsPerLegacyTick;
+        ~Restore() {
+            app.mBoard=board; app.mPoolEffect=pool; app.mGameMode=mode; app.mGameScene=scene;
+            auto& holder=*app.mEffectSystem->mReanimationHolder;
+            holder.mVisualTimeNs=visual; holder.mBattleTimeNs=battle;
+            Sexy::gUpdateIntervalNs=interval; Sexy::gUpdateTicks=ticks; Sexy::gStepsPerLegacyTick=steps;
+        }
+    } restore{app,app.mBoard,app.mPoolEffect,app.mGameMode,app.mGameScene,holder.mVisualTimeNs,holder.mBattleTimeNs};
+    app.mGameMode=GAMEMODE_SURVIVAL_ENDLESS_STAGE_3;
+    app.mGameScene=SCENE_LEVEL_INTRO;
+    PoolEffect pool;
+    pool.PoolEffectInitialize();
+    app.mPoolEffect=&pool;
+    Board board(&app);
+    app.mBoard=&board;
+    board.mBackground=BACKGROUND_3_POOL;
+    board.mDrawCount=0; // Keep the chooser UI out of this owner-clock fixture.
+    holder.mVisualTimeNs=900'000'000'000;
+    holder.mBattleTimeNs=0;
+    const auto step=1'000'000'000ULL/hz;
+    Sexy::gUpdateIntervalNs=step;
+    Sexy::gUpdateTicks=100.0/hz;
+    Sexy::gStepsPerLegacyTick=hz/100.0;
+    auto* sparkle=app.AddTodParticle(450,295,0,PARTICLE_POOL_SPARKLY,holder.mVisualTimeNs);
+    board.mPoolSparklyParticleID=app.ParticleGetID(sparkle);
+    auto* emitter=sparkle->EmitterRosterEmitterAt(0);
+    const auto birth=emitter->mBirthTimeNs;
+    for (int frame=0;frame<hz/2;++frame) {
+        holder.mVisualTimeNs+=step;
+        board.Update();
+    }
+    int live=0;
+    for (int i=0;i<sparkle->EmitterRosterCount();++i)
+        live+=sparkle->EmitterRosterEmitterAt(i)->ParticleRosterCount();
+    Require(board.mLevelTimeNs==0 && live>0 && !sparkle->mIsAttachment &&
+        emitter->mBirthTimeNs==birth && sparkle->mLastUpdateTimeNs==holder.mVisualTimeNs,
+        "Initial pool chooser did not emit visible globally queued sparkles at zero battle time");
+    const auto age=sparkle->mLastUpdateTimeNs-emitter->mBirthTimeNs;
+    board.mPaused=true;
+    holder.mVisualTimeNs+=10'000'000'000;
+    board.Update();
+    Require(sparkle->mLastUpdateTimeNs-emitter->mBirthTimeNs==age,
+        "Paused Board advanced pool sparkle age");
+    board.mPaused=false;
+    holder.mVisualTimeNs+=step;
+    board.Update();
+    Require(sparkle->mLastUpdateTimeNs-emitter->mBirthTimeNs==age+step,
+        "Pool sparkle caught up paused visual time on resume");
+    // Loading projects saved ages onto the Board epoch. Rebinding must preserve
+    // that age and consume only the next owner-supplied visual step.
+    sparkle->Update(0,0);
+    holder.mVisualTimeNs+=step;
+    board.Update();
+    Require(sparkle->mLastUpdateTimeNs-emitter->mBirthTimeNs==age+2*step,
+        "Pool sparkle clock rebinding changed saved age");
+    board.FreezeEffectsForCutscene(true);
+    Require(sparkle->mDontUpdate,"Retail repick freeze did not include pool sparkles");
+    const auto frozenAge=sparkle->mLastUpdateTimeNs-emitter->mBirthTimeNs;
+    holder.mVisualTimeNs+=step;
+    board.Update();
+    Require(sparkle->mLastUpdateTimeNs-emitter->mBirthTimeNs==frozenAge,
+        "Frozen pool sparkles advanced their age");
+    board.mIceTrapCounter=1;
+    board.FreezeEffectsForCutscene(false);
+    Require(sparkle->mDontUpdate,"Cutscene unfreeze overrode the retail ice freeze");
+    board.mIceTrapCounter=0;
+    board.FreezeEffectsForCutscene(false);
+    holder.mVisualTimeNs+=step;
+    board.Update();
+    Require(sparkle->mLastUpdateTimeNs-emitter->mBirthTimeNs==frozenAge+step,
+        "Unfrozen pool sparkles failed to resume one visual step");
+    std::cout<<"PASS pool sparkle owner clock "<<hz<<" Hz: chooser emission, pause, load rebinding, repick freeze/resume\n";
 }
 
 void StorePauseClockRuntime(TestApp& app, DecodeOnlySoundManager& sounds)
@@ -1857,10 +1991,12 @@ void StorePauseClockRuntime(TestApp& app, DecodeOnlySoundManager& sounds)
     app.mMusicInterface=&silentMusicInterface;
     app.mReanimatorCache=&cache;
     sounds.allowSilentPlayback=true;
+    FrameDivisionSampleRuntime();
     ExplicitReanimationOwnerTime(app);
     BoardlessPlantPreviewRuntime(app);
     CreditsMovieOwnerClockRuntime(app);
     for (const int hz:{100,240,480,1000}) SurvivalOwnerClockRuntime(app,hz);
+    for (const int hz:{100,240,480,1000}) PoolSparkleOwnerClockRuntime(app,hz);
     Board board(&app);
     std::cerr<<"Store clock fixture: board initialized\n";
     app.mGameScene=GameScenes::SCENE_PLAYING;
@@ -2200,8 +2336,8 @@ void PoolScenePixels(SexyAppBase& app)
     auto& render=*app.mDDInterface->mRenderInterface;
     PoolEffect pool;
     pool.PoolEffectInitialize();
-    pool.mPoolCounter=97;
-    render.SetCausticsFrame(97);
+    pool.mPoolTimeNs=970'000'000ull;
+    render.SetCausticsTimeNs(970'000'000ull);
     for (int width:{800,1400})
     {
         Image* target=render.CreateRenderImage(width,600);

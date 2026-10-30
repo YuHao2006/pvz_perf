@@ -1,0 +1,13 @@
+{
+  "frames_in_flight": 2,
+  "duplicated": "Command pools/buffers, acquire semaphores, fences and lazily allocated dynamic geometry streams only.",
+  "shared": "All image/atlas textures, scene/caustic/scale targets, static index buffers, pipelines, immutable definitions and bindless texture array. Shared render-target accesses remain explicitly GPU-barrier ordered.",
+  "synchronization": "Wait selected slot before CPU buffer/command reuse; all-slot drain for explicit readback, mutation and offscreen work. Monotonic submitted/completed serials retain descriptor/texture lifetime.",
+  "regular_extra_stream_bytes": 9017756,
+  "render_validation_exit": 0,
+  "runtime_suite_exit": 0,
+  "release_executable_sha256": "992baea22eba36970612763c340772f43ea8cf509f13df9d76143d98fcab8d04",
+  "android": "Full Android Release fat LTO native build and APK signed/aligned successfully; native library, pak64 and all shaders verified against same Android build tree. Device disconnected; not installed or timed.",
+  "performance": "No whole-game gain claimed. Previous mobile capture was single-resource; must not be attributed to this change.",
+  "apk_sha256": "645701a85e8ac891d6af3788fffe7d914fcbcb19355bbc24dd121974f7d7f905"
+}

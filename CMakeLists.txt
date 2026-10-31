@@ -392,6 +392,8 @@ if(PVZ_BUILD_LEGACY_GAME)
     add_subdirectory(pvzPerf/SexyAppFramework SexyAppFramework)
 endif()
 if(BUILD_TESTING AND PVZ_BUILD_LEGACY_GAME)
+    add_test(NAME release_draft_resume
+        COMMAND "${Python3_EXECUTABLE}" -B "${CMAKE_SOURCE_DIR}/Tests/native/test_release_draft_resume.py")
     add_test(NAME completed_test_profile
         COMMAND "${Python3_EXECUTABLE}" -B "${CMAKE_SOURCE_DIR}/Tests/native/test_completed_profile.py")
     add_test(NAME definition_atlas_pixels

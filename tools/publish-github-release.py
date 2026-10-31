@@ -12,6 +12,34 @@ import urllib.parse
 import urllib.request
 
 
+def resolve_release(request, root, tag, commit, notes):
+    try:
+        return request("GET", root + "/releases/tags/" + urllib.parse.quote(tag))
+    except urllib.error.HTTPError as error:
+        if error.code != 404:
+            raise
+        error.close()
+    # GitHub's by-tag endpoint does not expose draft releases. Recover an
+    # interrupted upload through the authenticated release list before creating.
+    matches = []
+    page = 1
+    while True:
+        releases = request("GET", root + f"/releases?per_page=100&page={page}")
+        matches.extend(release for release in releases if release["tag_name"] == tag)
+        if len(releases) < 100:
+            break
+        page += 1
+    if matches:
+        if any(release["target_commitish"] != commit for release in matches):
+            raise RuntimeError("Existing draft targets a different source commit")
+        return max(matches, key=lambda release: (
+            sum(asset.get("state") == "uploaded" for asset in release.get("assets", [])),
+            release["id"]))
+    return request("POST", root + "/releases", {
+        "tag_name": tag, "target_commitish": commit, "name": tag,
+        "body": notes, "draft": True, "prerelease": False})
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--repository", default="YuHao2006/pvz_perf")
@@ -81,14 +109,7 @@ def main():
         if not path.is_file():
             raise FileNotFoundError(path)
     notes = args.notes.read_text(encoding="utf-8")
-    try:
-        release = request("GET", root + "/releases/tags/" + urllib.parse.quote(args.tag))
-    except urllib.error.HTTPError as error:
-        if error.code != 404:
-            raise
-        release = request("POST", root + "/releases", {
-            "tag_name": args.tag, "target_commitish": commit, "name": args.tag,
-            "body": notes, "draft": True, "prerelease": False})
+    release = resolve_release(request, root, args.tag, commit, notes)
     upload_root = release["upload_url"].split("{", 1)[0]
     existing = {asset["name"]: asset for asset in release["assets"]}
     if args.source_only and existing:

@@ -33,7 +33,7 @@ void VisitTimeCounterOffsets(Fn&& visit)
         TIMER(mPhaseCounter); visit(offsetof(Type, mFadeEndTimeNs), false); visit(offsetof(Type, mChilledEndTimeNs), false); visit(offsetof(Type, mButteredEndTimeNs), false);
         visit(offsetof(Type, mIceTrapEndTimeNs), false); visit(offsetof(Type, mYuckyFaceStartTimeNs), false); TIMER(mSummonCounter);
         TIMER(mBossBungeeCounter); TIMER(mBossStompCounter); TIMER(mBossHeadCounter);
-        TIMER(mAnimTicksPerFrame);
+        visit(offsetof(Type, mSpriteFramePeriodNs), false);
     }
     else if constexpr (std::is_same_v<Type, Plant>)
     {
@@ -54,7 +54,6 @@ void VisitTimeCounterOffsets(Fn&& visit)
     else if constexpr (std::is_same_v<Type, LawnMower>)
     {
         visit(offsetof(Type, mChompEndTimeNs), false); visit(offsetof(Type, mRollingInStartTimeNs), false); visit(offsetof(Type, mSquishEndTimeNs), false);
-        TIMER(mAnimTicksPerFrame);
     }
     else if constexpr (std::is_same_v<Type, GridItem>)
     {
@@ -80,12 +79,12 @@ void VisitTimeCounterOffsets(Fn&& visit)
         TIMER(mHammerDownCounter);
     else if constexpr (std::is_same_v<Type, MessageWidget>)
     {
-        TIMER(mDisplayTime); visit(offsetof(Type, mEndTimeNs), false); TIMER(mSlideOffTime);
+        visit(offsetof(Type, mDisplayDurationNs), false); visit(offsetof(Type, mEndTimeNs), false); visit(offsetof(Type, mSlideDurationNs), false);
     }
     else if constexpr (std::is_same_v<Type, SeedPacket>)
     {
         visit(offsetof(Type, mRefreshStartTimeNs), false); visit(offsetof(Type, mSlotMachineEndTimeNs), false);
-        TIMER(mRefreshTime);
+        visit(offsetof(Type, mCooldownDurationNs), false);
     }
     else if constexpr (std::is_same_v<Type, SeedBank>)
     {

@@ -19,12 +19,12 @@ class MessageWidget
 public:
 	LawnApp*			mApp;									//+0x0
 	SexyChar			mLabel[MAX_MESSAGE_LENGTH];				//+0x4
-	Sexy::TimeCounter					mDisplayTime;							//+0x84
+	long long					mDisplayDurationNs;							//+0x84
 	std::int64_t        mEndTimeNs; // INT64_MAX means an indefinite message.								//+0x88
 	MessageStyle		mMessageStyle;							//+0x8C
 	ReanimationID		mTextReanimID[MAX_MESSAGE_LENGTH];		//+0x90
 	ReanimationType		mReanimType;							//+0x290
-	Sexy::TimeCounter					mSlideOffTime;							//+0x294
+	long long					mSlideDurationNs;							//+0x294
 	SexyChar			mLabelNext[MAX_MESSAGE_LENGTH];			//+0x298
 	MessageStyle		mMessageStyleNext;						//+0x318
 

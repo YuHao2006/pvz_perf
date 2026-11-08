@@ -58,12 +58,12 @@ MessageWidget::MessageWidget(LawnApp* theApp)
 {
 	mApp = theApp;
 	mEndTimeNs = 0;
-	mDisplayTime = 0;
+	mDisplayDurationNs = 0;
 	mLabel[0] = ('\0');
 	mMessageStyle = MessageStyle::MESSAGE_STYLE_OFF;
 	mLabelNext[0] = ('\0');
 	mMessageStyleNext = MessageStyle::MESSAGE_STYLE_OFF;
-	mSlideOffTime = 100;
+	mSlideDurationNs = ((100) * 10'000'000LL) * 10'000'000LL;
 	mReanimType = ReanimationType::REANIM_NONE;
 	std::fill(std::begin(mTextReanimID), std::end(mTextReanimID), ReanimationID::REANIMATIONID_NULL);
 }
@@ -86,7 +86,7 @@ void MessageWidget::ClearLabel()
 {
 	if (mReanimType != ReanimationType::REANIM_NONE)
 	{
-		mEndTimeNs = std::min(mEndTimeNs, ReanimClock::Add(static_cast<std::int64_t>(mApp->mBoard->mLevelTimeNs), mSlideOffTime.mNanoseconds + 1'010'000'000));
+		mEndTimeNs = std::min(mEndTimeNs, ReanimClock::Add(static_cast<std::int64_t>(mApp->mBoard->mLevelTimeNs), mSlideDurationNs + 1'010'000'000));
 	}
 	else
 	{
@@ -108,21 +108,21 @@ void MessageWidget::SetLabel(const SexyString& theNewLabel, MessageStyle theMess
 	// 原 case MESSAGE_STYLE_HINT_LONG, MESSAGE_STYLE_BIG_MIDDLE, MESSAGE_STYLE_ZEN_GARDEN_LONG, MESSAGE_STYLE_HINT_TALL_LONG
 	static constexpr auto MsgDurationMessageStyleHintLong = [](MessageWidget& w, int theMessageStyle)
 	{
-	w.mDisplayTime = 1500;
+	w.mDisplayDurationNs = ((1500) * 10'000'000LL) * 10'000'000LL;
 	};
 
 	// 标签共体（匿名 lambda 无法跨槽复用，复用即具名）
 	// 原 case MESSAGE_STYLE_HINT_FAST, MESSAGE_STYLE_HINT_TALL_FAST, MESSAGE_STYLE_BIG_MIDDLE_FAST, MESSAGE_STYLE_TUTORIAL_LEVEL1, MESSAGE_STYLE_TUTORIAL_LEVEL2, MESSAGE_STYLE_TUTORIAL_LATER
 	static constexpr auto MsgDurationMessageStyleHintFast = [](MessageWidget& w, int theMessageStyle)
 	{
-	w.mDisplayTime = 500;
+	w.mDisplayDurationNs = ((500) * 10'000'000LL) * 10'000'000LL;
 	};
 
 	// 标签共体（匿名 lambda 无法跨槽复用，复用即具名）
 	// 原 case MESSAGE_STYLE_HINT_STAY, MESSAGE_STYLE_TUTORIAL_LEVEL1_STAY, MESSAGE_STYLE_TUTORIAL_LATER_STAY
 	static constexpr auto MsgDurationMessageStyleHintStay = [](MessageWidget& w, int theMessageStyle)
 	{
-	w.mDisplayTime = 10000;
+	w.mDisplayDurationNs = ((10000) * 10'000'000LL) * 10'000'000LL;
 	};
 
 	// 原 default（无 case 的 1 型与表外哨兵共用）
@@ -146,7 +146,7 @@ void MessageWidget::SetLabel(const SexyString& theNewLabel, MessageStyle theMess
 	// 原 case MESSAGE_STYLE_HINT_TALL_UNLOCKMESSAGE
 	[](MessageWidget& w, int theMessageStyle)
 	{
-	w.mDisplayTime = 500;
+	w.mDisplayDurationNs = ((500) * 10'000'000LL) * 10'000'000LL;
 	},  // 10 MESSAGE_STYLE_HINT_TALL_UNLOCKMESSAGE
 	MsgDurationMessageStyleHintLong,  // 11 MESSAGE_STYLE_HINT_TALL_LONG（共体）
 	MsgDurationMessageStyleHintLong,  // 12 MESSAGE_STYLE_BIG_MIDDLE（共体）
@@ -154,25 +154,25 @@ void MessageWidget::SetLabel(const SexyString& theNewLabel, MessageStyle theMess
 	// 原 case MESSAGE_STYLE_HOUSE_NAME
 	[](MessageWidget& w, int theMessageStyle)
 	{
-	w.mDisplayTime = 250;
+	w.mDisplayDurationNs = ((250) * 10'000'000LL) * 10'000'000LL;
 	},  // 14 MESSAGE_STYLE_HOUSE_NAME
 	// 原 case MESSAGE_STYLE_HUGE_WAVE
 	[](MessageWidget& w, int theMessageStyle)
 	{
-	w.mDisplayTime = 750;
+	w.mDisplayDurationNs = ((750) * 10'000'000LL) * 10'000'000LL;
 	w.mReanimType = ReanimationType::REANIM_TEXT_FADE_ON;
 	},  // 15 MESSAGE_STYLE_HUGE_WAVE
 	// 原 case MESSAGE_STYLE_SLOT_MACHINE
 	[](MessageWidget& w, int theMessageStyle)
 	{
-	w.mDisplayTime = 750;
+	w.mDisplayDurationNs = ((750) * 10'000'000LL) * 10'000'000LL;
 	},  // 16 MESSAGE_STYLE_SLOT_MACHINE
 	MsgDurationMessageStyleHintLong,  // 17 MESSAGE_STYLE_ZEN_GARDEN_LONG（共体）
 	// 原 case MESSAGE_STYLE_ACHIEVEMENT
 	[](MessageWidget& w, int theMessageStyle)
 	{
 	// @Patoke: implemented
-	w.mDisplayTime = 250;
+	w.mDisplayDurationNs = ((250) * 10'000'000LL) * 10'000'000LL;
 	},  // 18 MESSAGE_STYLE_ACHIEVEMENT
 	};
 	static_assert(sizeof(kMessageDurations) / sizeof(kMessageDurations[0]) ==
@@ -211,10 +211,10 @@ void MessageWidget::SetLabel(const SexyString& theNewLabel, MessageStyle theMess
 		{
 			LayoutReanimText();
 		}
-		mEndTimeNs = mDisplayTime >= 10000 ? INT64_MAX : ReanimClock::Add(
+		mEndTimeNs = mDisplayDurationNs >= 100'000'000'000LL ? INT64_MAX : ReanimClock::Add(
 			mMessageStyle == MessageStyle::MESSAGE_STYLE_HOUSE_NAME
 				? mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs
-				: static_cast<std::int64_t>(mApp->mBoard->mLevelTimeNs), mDisplayTime.mNanoseconds);
+				: static_cast<std::int64_t>(mApp->mBoard->mLevelTimeNs), mDisplayDurationNs);
 	}
 }
 
@@ -225,7 +225,7 @@ void MessageWidget::LayoutReanimText()
 	int aCurLine = 0, aCurPos = 0;
 	_Font* aFont = GetFont();
 	int aLabelLen = sexystrlen(mLabel);
-	mSlideOffTime = aLabelLen + 100;
+	mSlideDurationNs = ((aLabelLen + 100) * 10'000'000LL) * 10'000'000LL;
 
 	float aLineWidth[MAX_REANIM_LINES];
 	for (int aPos = 0; aPos <= aLabelLen; aPos++)
@@ -305,7 +305,7 @@ void MessageWidget::Update(std::int64_t nowNs)
 
 		// 设置动画速率
 		int aTextSpeed = mReanimType == ReanimationType::REANIM_TEXT_FADE_ON ? 100 : 1;
-		if (remainingNs > mSlideOffTime.mNanoseconds)
+		if (remainingNs > mSlideDurationNs)
 		{
 			if (mReanimType == ReanimationType::REANIM_TEXT_FADE_ON)
 			{
@@ -314,18 +314,18 @@ void MessageWidget::Update(std::int64_t nowNs)
 			else
 			{
 				aTextReanim->ApplyRate(TodAnimateCurveNs(0, 500'000'000,
-					(mDisplayTime.mNanoseconds - remainingNs) * aTextSpeed -
+					(mDisplayDurationNs - remainingNs) * aTextSpeed -
 						std::int64_t(aPos) * 10'000'000, 0.0f, 40.0f, Curves::Linear));
 			}
 		}
 		else
 		{
-			if (previousRemainingNs > mSlideOffTime.mNanoseconds && remainingNs <= mSlideOffTime.mNanoseconds)
+			if (previousRemainingNs > mSlideDurationNs && remainingNs <= mSlideDurationNs)
 			{
 				aTextReanim->PlayReanim(ReanimTrackId::anim_leave, ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD, 0, 0.0f);
 			}
 			aTextReanim->ApplyRate(TodAnimateCurveNs(0, 500'000'000,
-				(mSlideOffTime.mNanoseconds - remainingNs) * aTextSpeed -
+				(mSlideDurationNs - remainingNs) * aTextSpeed -
 					std::int64_t(aPos) * 10'000'000, 0.0f, 40.0f, Curves::Linear));
 		}
 
@@ -366,7 +366,7 @@ void MessageWidget::DrawReanimatedText(Graphics* g, _Font* theFont, const Color&
 
 		aTransform.mTransX += aTextReanim->mOverlayMatrix.m02;
 		aTransform.mTransY += aTextReanim->mOverlayMatrix.m12 + thePosY - BOARD_HEIGHT / 2;
-		if (mReanimType == ReanimationType::REANIM_TEXT_FADE_ON && mDisplayTime.mNanoseconds - remainingNs < mSlideOffTime.mNanoseconds)
+		if (mReanimType == ReanimationType::REANIM_TEXT_FADE_ON && mDisplayDurationNs - remainingNs < mSlideDurationNs)
 		{
 			float aStretch = 1.0f - static_cast<float>(static_cast<double>(
 				aTextReanim->SamplePlayback().phaseNs) / aTextReanim->mPeriodNs);

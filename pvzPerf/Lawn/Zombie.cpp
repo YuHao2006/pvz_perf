@@ -192,7 +192,7 @@ void Zombie::ZombieInitialize(std::int64_t ownerNowNs, std::int64_t visualNowNs,
     z.mHeight = 180;
     z.mBodyHealth = 3000;
     z.mAnimFrames = 24;
-    z.mAnimTicksPerFrame = 8;
+    z.mSpriteFramePeriodNs = 8 * 10'000'000LL;
     { z.mX = (WIDE_BOARD_WIDTH + 45 + Rand(10)); z.mRootBindingGeneration = 0; }
     z.mZombieRect = Rect(-17, -38, 125, 154);
     z.mZombieAttackRect = Rect(-30, -38, 89, 154);
@@ -265,7 +265,7 @@ void Zombie::ZombieInitialize(std::int64_t ownerNowNs, std::int64_t visualNowNs,
     [](std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, Zombie& z, ZombieInitLocals& lc)
     {
     z.mBodyHealth = 500;
-    z.mAnimTicksPerFrame = 6;
+    z.mSpriteFramePeriodNs = 6 * 10'000'000LL;
     z.mZombiePhase = ZombiePhase::PHASE_POLEVAULTER_PRE_VAULT;
     z.mHasObject = true;
     z.mVariant = false;
@@ -322,7 +322,7 @@ void Zombie::ZombieInitialize(std::int64_t ownerNowNs, std::int64_t visualNowNs,
     z.ReanimShowRange(ReanimTrackRanges::anim_hair, RENDER_GROUP_HIDDEN);
     z.mHelmType = HelmType::HELMTYPE_FOOTBALL;
     z.mHelmHealth = 1400;
-    z.mAnimTicksPerFrame = 6;
+    z.mSpriteFramePeriodNs = 6 * 10'000'000LL;
     z.mVariant = false;
     ZombieInitializeTail(ownerNowNs, visualNowNs, animationNowNs, z, lc);
     },  // 7 ZOMBIE_FOOTBALL
@@ -377,7 +377,7 @@ void Zombie::ZombieInitialize(std::int64_t ownerNowNs, std::int64_t visualNowNs,
     {
     z.mBodyHealth = 1350;
     z.mAnimFrames = 2;
-    z.mAnimTicksPerFrame = 8;
+    z.mSpriteFramePeriodNs = 8 * 10'000'000LL;
     { z.mX = (WIDE_BOARD_WIDTH + Rand(10)); z.mRootBindingGeneration = 0; }
     lc.mRenderOffset = 8;
     z.PlayZombieReanim(ownerNowNs, ReanimTrackId::anim_drive, ReanimLoopType::REANIM_LOOP, 0, 12.0f);
@@ -449,7 +449,7 @@ void Zombie::ZombieInitialize(std::int64_t ownerNowNs, std::int64_t visualNowNs,
     [](std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, Zombie& z, ZombieInitLocals& lc)
     {
     z.mBodyHealth = 500;
-    z.mAnimTicksPerFrame = 6;
+    z.mSpriteFramePeriodNs = 6 * 10'000'000LL;
     z.mZombiePhase = ZombiePhase::PHASE_DOLPHIN_WALKING;
     z.mVariant = false;
     if (z.IsOnBoard())
@@ -465,7 +465,7 @@ void Zombie::ZombieInitialize(std::int64_t ownerNowNs, std::int64_t visualNowNs,
     [](std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, Zombie& z, ZombieInitLocals& lc)
     {
     z.mBodyHealth = 500;
-    z.mAnimTicksPerFrame = 6;
+    z.mSpriteFramePeriodNs = 6 * 10'000'000LL;
 
     int aDistance = 450 + Rand(300);
     if (Rand(20) == 0)  // 早爆的概率
@@ -928,7 +928,7 @@ void Zombie::ZombieInitialize(std::int64_t ownerNowNs, std::int64_t visualNowNs,
     mYuckyFaceStartTimeNs = aStatusNowNs;
     mAnimCounter = 0;
     mGroanCounter = RandRangeInt(300, 400);
-    mAnimTicksPerFrame = 12;
+    mSpriteFramePeriodNs = 12 * 10'000'000LL;
     mAnimFrames = 12;
     mBirthTimeNs = aStatusNowNs;
     mTargetCol = -1;
@@ -1372,11 +1372,11 @@ void Zombie::PickRandomSpeed(std::int64_t ownerNowNs)
         mVelX = RandRangeFloat(0.23f, 0.37f);
         if (mVelX < 0.3f)
         {
-            mAnimTicksPerFrame = 12;
+            mSpriteFramePeriodNs = 12 * 10'000'000LL;
         }
         else
         {
-            mAnimTicksPerFrame = 15;
+            mSpriteFramePeriodNs = 15 * 10'000'000LL;
         }
     }
 
@@ -5435,7 +5435,7 @@ void Zombie::AnimateChewSound(std::int64_t ownerNowNs, std::int64_t visualNowNs,
             TrySpawnLevelAward();
 
             mVelX = 0.17f;
-            mAnimTicksPerFrame = 18;
+            mSpriteFramePeriodNs = 18 * 10'000'000LL;
             UpdateAnimSpeed(ownerNowNs);
         }
         else if (aPlant->mSeedType == SeedType::SEED_GARLIC)
@@ -5647,11 +5647,11 @@ void Zombie::Animate(std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int
     }
     else
     {
-        if (mAnimCounter >= mAnimFrames * mAnimTicksPerFrame)
+        if (mAnimCounter.mNanoseconds >= mAnimFrames * mSpriteFramePeriodNs)
         {
             mAnimCounter = 0;
         }
-        mFrame = mAnimCounter / mAnimTicksPerFrame;
+        mFrame = static_cast<int>(mAnimCounter.mNanoseconds / mSpriteFramePeriodNs);
     }
 }
 
@@ -7337,7 +7337,7 @@ void Zombie::ConvertToNormalZombie(std::int64_t ownerNowNs)
     mZombieAttackRect = Rect(50, 0, 20, 115);
 
     mAnimFrames = 12;
-    mAnimTicksPerFrame = 12;
+    mSpriteFramePeriodNs = 12 * 10'000'000LL;
     mPhaseCounter = 0;
 
     PickRandomSpeed(ownerNowNs);

@@ -98,10 +98,16 @@ void CheckRecord()
             "Projectile frozen timer projections were mistaken for native countdowns");
         return;
     }
-    Require(nativeFields.size() == fields.size(), "Schema and native time inventory disagree");
+    Require(nativeFields.size() + (std::is_same_v<T, LawnMower> ? 1 : 0) == fields.size(), "Schema and native time inventory disagree");
     for (const auto& field : fields)
     {
         const auto offset = NativeTimeOffset<T>(field);
+        if (offset == SIZE_MAX)
+        {
+            Require(std::is_same_v<T,LawnMower> && field.mOffset==32,
+                "Unexpected retired wire timer");
+            continue;
+        }
         const auto found = std::find(nativeFields.begin(), nativeFields.end(),
             std::pair<size_t, bool>{offset, field.mUnsigned});
         if (found == nativeFields.end())
@@ -454,8 +460,7 @@ void CheckEpochClockProjection()
     auto packet = std::bit_cast<SeedPacket>(std::array<std::byte, sizeof(SeedPacket)>{});
     packet.mRefreshing = true;
     packet.mRefreshStartTimeNs = -123'456'789;
-    packet.mRefreshTime.mNanoseconds = 500'000'000;
-    packet.mRefreshTime.mPreviousNanoseconds = 500'000'000;
+    packet.mCooldownDurationNs = 500'000'000;
     packet.mSlotMachineEndTimeNs = 1'234'567'891;
     packet.mIndex = 0x12345678;
     packet.mSlotMachiningPosition = .375f;

@@ -137,7 +137,7 @@ visit(offsetof(Type, mZombiePhase), 52, 4, sizeof(Type::mZombiePhase));
 visit(offsetof(Type, mVelX), 64, 4, sizeof(Type::mVelX));
 visit(offsetof(Type, mAnimCounter), 68, 4, sizeof(Type::mAnimCounter));
 visit(offsetof(Type, mGroanCounter), 72, 4, sizeof(Type::mGroanCounter));
-visit(offsetof(Type, mAnimTicksPerFrame), 76, 4, sizeof(Type::mAnimTicksPerFrame));
+visit(offsetof(Type, mSpriteFramePeriodNs), 76, 4, sizeof(Type::mSpriteFramePeriodNs));
 visit(offsetof(Type, mAnimFrames), 80, 4, sizeof(Type::mAnimFrames));
 visit(offsetof(Type, mFrame), 84, 4, sizeof(Type::mFrame));
 visit(offsetof(Type, mPrevFrame), 88, 4, sizeof(Type::mPrevFrame));
@@ -316,7 +316,6 @@ visit(offsetof(Type, mPosX), 16, 4, sizeof(Type::mPosX));
 visit(offsetof(Type, mPosY), 20, 4, sizeof(Type::mPosY));
 visit(offsetof(Type, mRenderOrder), 24, 4, sizeof(Type::mRenderOrder));
 visit(offsetof(Type, mRow), 28, 4, sizeof(Type::mRow));
-visit(offsetof(Type, mAnimTicksPerFrame), 32, 4, sizeof(Type::mAnimTicksPerFrame));
 visit(offsetof(Type, mReanimID), 36, 4, sizeof(Type::mReanimID));
 visit(offsetof(Type, mChompEndTimeNs), 40, 4, sizeof(Type::mChompEndTimeNs));
 visit(offsetof(Type, mRollingInStartTimeNs), 44, 4, sizeof(Type::mRollingInStartTimeNs));
@@ -447,18 +446,18 @@ visit(offsetof(Type, mGridY), 52, 4, sizeof(Type::mGridY));
 if constexpr (std::is_same_v<Type, MessageWidget>) {
 visit(offsetof(Type, mApp), 0, 8, sizeof(Type::mApp));
 visit(offsetof(Type, mLabel), 8, 128, sizeof(Type::mLabel));
-visit(offsetof(Type, mDisplayTime), 136, 4, sizeof(Type::mDisplayTime));
+visit(offsetof(Type, mDisplayDurationNs), 136, 4, sizeof(Type::mDisplayDurationNs));
 visit(offsetof(Type, mEndTimeNs), 140, 4, sizeof(Type::mEndTimeNs));
 visit(offsetof(Type, mMessageStyle), 144, 4, sizeof(Type::mMessageStyle));
 visit(offsetof(Type, mTextReanimID), 148, 512, sizeof(Type::mTextReanimID));
 visit(offsetof(Type, mReanimType), 660, 4, sizeof(Type::mReanimType));
-visit(offsetof(Type, mSlideOffTime), 664, 4, sizeof(Type::mSlideOffTime));
+visit(offsetof(Type, mSlideDurationNs), 664, 4, sizeof(Type::mSlideDurationNs));
 visit(offsetof(Type, mLabelNext), 668, 128, sizeof(Type::mLabelNext));
 visit(offsetof(Type, mMessageStyleNext), 796, 4, sizeof(Type::mMessageStyleNext));
 }
 if constexpr (std::is_same_v<Type, SeedPacket>) {
 visit(offsetof(Type, mRefreshStartTimeNs), 48, 4, sizeof(Type::mRefreshStartTimeNs));
-visit(offsetof(Type, mRefreshTime), 52, 4, sizeof(Type::mRefreshTime));
+visit(offsetof(Type, mCooldownDurationNs), 52, 4, sizeof(Type::mCooldownDurationNs));
 visit(offsetof(Type, mIndex), 56, 4, sizeof(Type::mIndex));
 visit(offsetof(Type, mOffsetX), 60, 4, sizeof(Type::mOffsetX));
 visit(offsetof(Type, mPacketType), 64, 4, sizeof(Type::mPacketType));

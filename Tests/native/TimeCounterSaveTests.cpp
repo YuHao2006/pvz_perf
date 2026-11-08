@@ -500,7 +500,7 @@ void CheckEpochClockProjection()
 
 void CheckMusicFloatSave()
 {
-    static_assert(LevelSaveFormat::DAT64_VERSION == 4 && LevelSaveFormat::DAT64_MINOR_VERSION == 0);
+    static_assert(LevelSaveFormat::DAT64_VERSION == 5 && LevelSaveFormat::DAT64_MINOR_VERSION == 0);
     static_assert(std::is_same_v<decltype(Music::mBaseBPM), float>);
     static_assert(std::is_same_v<decltype(Music::mBaseModSpeed), float>);
     static_assert(std::is_trivially_copyable_v<Music>);
@@ -533,6 +533,16 @@ void CheckBlendRegionSave()
     const auto withoutRegion = WriteSaveRecord(source);
     Require(withoutRegion.size() == 112,
         "Current DAT64 retained the removed eight-byte track image pointer gap");
+    source.mBlendEndTimeNs=12'345'678'901;
+    source.mBlendDurationNs=987'654'321;
+    const auto timed=WriteSaveRecord(source);
+    Require(V7SaveSchema::Time(timed,LevelSaveFormat::RecordKind::ReanimatorTrackInstance,0)==12'345'678'901 &&
+        V7SaveSchema::Time(timed,LevelSaveFormat::RecordKind::ReanimatorTrackInstance,4)==987'654'321,
+        "v5 blend deadline or duration changed on disk");
+    auto exact=source;ReadSaveRecord(exact,timed.data());
+    Require(exact.mBlendEndTimeNs==source.mBlendEndTimeNs && exact.mBlendDurationNs==source.mBlendDurationNs,
+        "v5 raw blend time overwrote its adjacent field");
+    source.mBlendEndTimeNs=source.mBlendDurationNs=0;
     source.mBlendTransform.mImageSlot = 123;
     Require(WriteSaveRecord(source) == withoutRegion,
         "Definition image slot leaked into DAT64 blend state");

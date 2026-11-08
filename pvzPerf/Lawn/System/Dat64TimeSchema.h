@@ -38,14 +38,14 @@ inline constexpr Field BOARD_FIELDS[] = {
     BoardField(0x634, false, "mIceTimer[4]"), BoardField(0x638, false, "mIceTimer[5]"),
     BoardField(0x5538, false, "mSunCountDown"), BoardField(0x5540, false, "mShakeCounter"),
     BoardField(0x5568, true, "mMainCounter"), BoardField(0x556c, true, "mEffectCounter"),
-    BoardField(0x5574, false, "mRiseFromGraveCounter"), BoardField(0x5578, false, "mOutOfMoneyCounter"),
+    BoardField(0x5574, false, "mRiseFromGraveCounter"), BoardField(0x5578, false, "mOutOfMoneyEndTimeNs"),
     BoardField(0x558c, false, "mTutorialTimer"), BoardField(0x559c, false, "mZombieCountDown"),
     BoardField(0x55a0, false, "mZombieCountDownStart"), BoardField(0x55a4, false, "mHugeWaveCountDown"),
     BoardField(0x55f4, false, "mCoinBankFadeCount"), BoardField(0x5600, false, "mBoardFadeOutCounter"),
     BoardField(0x5604, false, "mNextSurvivalStageCounter"), BoardField(0x5608, false, "mScoreNextMowerCounter"),
     BoardField(0x5614, false, "mFlagRaiseCounter"), BoardField(0x5618, false, "mIceTrapCounter"),
     BoardField(0x5744, false, "mFwooshCountDown"), BoardField(0x5748, false, "mTimeStopCounter"),
-    BoardField(0x5750, false, "mFinalWaveSoundCounter"), BoardField(0x5754, false, "mCobCannonCursorDelayCounter"),
+    BoardField(0x5750, false, "mFinalWaveSoundCounter"), BoardField(0x5754, false, "mCobCannonCursorEndTimeNs"),
     // GOTY adds 16 bytes before this tail; the old member comments there are stale.
     BoardField(0x5780, false, "mPlayTimeActiveLevel", 1'000'000'000),
     BoardField(0x5784, false, "mPlayTimeInactiveLevel", 1'000'000'000),
@@ -81,10 +81,10 @@ inline constexpr Field ZOMBIE_FIELDS[] = {
     DAT64_TIME(Zombie, 0x13c, mBossHeadCounter)
 };
 inline constexpr Field PLANT_FIELDS[] = {
-    DAT64_TIME(Plant, 0x2c, mAnimCounter), DAT64_TIME(Plant, 0x34, mFrameLength),
+    DAT64_TIME(Plant, 0x2c, mAnimCounter), DAT64_TIME(Plant, 0x34, mFramePeriodNs),
     DAT64_TIME(Plant, 0x4c, mDisappearCountdown), DAT64_TIME(Plant, 0x50, mDoSpecialCountdown),
     DAT64_TIME(Plant, 0x54, mStateCountdown), DAT64_TIME(Plant, 0x58, mLaunchCounter),
-    DAT64_TIME(Plant, 0x5c, mLaunchRate), DAT64_TIME(Plant, 0x90, mShootingCounter),
+    DAT64_TIME(Plant, 0x5c, mLaunchPeriodNs), DAT64_TIME(Plant, 0x90, mShootingCounter),
     DAT64_TIME(Plant, 0xb0, mBlinkCountdown), DAT64_TIME(Plant, 0xb4, mRecentlyEatenCountdown),
     DAT64_TIME(Plant, 0xb8, mEatenFlashCountdown), DAT64_TIME(Plant, 0xbc, mBeghouledFlashCountdown),
     DAT64_TIME(Plant, 0x130, mWakeUpCounter)
@@ -113,8 +113,8 @@ inline constexpr Field EMITTER_FIELDS[] = {
     DAT64_TIME(ParticleEmitter, 0x5c, mEmitterCrossFadeCountDown)
 };
 inline constexpr Field TRACK_FIELDS[] = {
-    DAT64_TIME(ReanimatorTrackInstance, 0x0, mBlendCounter),
-    DAT64_TIME(ReanimatorTrackInstance, 0x4, mBlendTime)
+    DAT64_TIME(ReanimatorTrackInstance, 0x0, mBlendEndTimeNs),
+    DAT64_TIME(ReanimatorTrackInstance, 0x4, mBlendDurationNs)
 };
 inline constexpr Field CURSOR_FIELDS[] = {DAT64_TIME(CursorObject, 0x44, mHammerDownCounter)};
 inline constexpr Field MESSAGE_FIELDS[] = {

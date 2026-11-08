@@ -46,6 +46,7 @@ def completed_profile():
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--version", default="current")
+    parser.add_argument("--format", choices=("dat64-v4", "dat64-v5"), default="dat64-v5")
     parser.add_argument("--converter", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--perfect-output", type=Path, help="Optional completed-profile-only ZIP")
@@ -75,13 +76,13 @@ def main():
         if roundtrip.read_bytes() != profile:
             raise ValueError("Completed profile DAT64/DAT roundtrip differs")
         checkpoint = directory / "game1_58.dat64"
-        subprocess.run([str(converter), "--target", "dat64-v4",
+        subprocess.run([str(converter), "--target", args.format,
                         str(source_files["original"]), str(checkpoint)], check=True)
         checkpoint_bytes = checkpoint.read_bytes()
         if (checkpoint_bytes[:8] != b"PVZDAT64"
-                or struct.unpack_from("<I", checkpoint_bytes, 8)[0] != 4
-                or struct.unpack_from("<II", checkpoint_bytes, 36) != (0x10745, 0)):
-            raise ValueError("Modern checkpoint must use DAT64 v4")
+                or struct.unpack_from("<I", checkpoint_bytes, 8)[0] != (5 if args.format == "dat64-v5" else 4)
+                or struct.unpack_from("<II", checkpoint_bytes, 36) != ((0x10746 if args.format == "dat64-v5" else 0x10745), 0)):
+            raise ValueError("Modern checkpoint has the wrong target format")
         args.output.parent.mkdir(parents=True, exist_ok=True)
         with zipfile.ZipFile(args.output, "x", zipfile.ZIP_DEFLATED) as archive:
             archive.writestr("data/users.dat", summary)
@@ -99,7 +100,7 @@ def main():
                 "20 achievements, ten seed slots, permanent store upgrades and coins.\n"
                 "Wisdom tree: 1000. Zen garden and custom Zombatars are empty.\n"
                 "No personal user profile is included; this profile is generated for testing.\n\n"
-                "data/game1_58.dat64 is the Tests endless benchmark converted to DAT64 v4.\n"
+                f"data/game1_58.dat64 is the Tests endless benchmark converted to {args.format}.\n"
                 "The converter verifies that all saved semantics are preserved.\n"
                 "Do not advance it and reuse the progressed checkpoint as a new baseline.\n"
                 "Re-extract the benchmark before each comparison.\n"

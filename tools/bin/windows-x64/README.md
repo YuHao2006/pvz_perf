@@ -6,7 +6,7 @@
 | --- | --- |
 | `reanimc.exe` | reanim、particle、projectile DSL 编译、轨道枚举和字符串代码生成、MaxRects 可行布局 |
 | `pvz-resource-build.exe` | 资源配置、字体、原生 CP-SAT 图集求解、PNG 合成、静态 C++ 数据、加载绑定、PAK64 打包和可选重压缩 |
-| `pvz_dat64_converter.exe` | 原版 1073 DAT、DAT64 v1／v2／v4 及用户资料转换 |
+| `pvz_dat64_converter.exe` | 原版 1073 DAT、DAT64 v4／v5 及用户资料转换（v5 开发版） |
 
 正式资源构建链全部使用 C++23，不启动 Python。测试、输出对拍和性能采集可以使用 Python，不属于游戏运行时依赖。Windows 发布包内附求解器所需的 DLL；它们仅供开发工具使用，不进入游戏资源包或 APK。
 

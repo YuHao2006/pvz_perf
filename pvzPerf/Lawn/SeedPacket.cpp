@@ -828,7 +828,7 @@ void SeedPacket::MouseDown(int x, int y, int theClickCount)
 		if (!mBoard->CanTakeSunMoney(aCost) && !mBoard->HasConveyorBeltSeedBank())
 		{
 			mApp->PlaySample(SOUND_BUZZER);
-			mBoard->mOutOfMoneyCounter = 70;
+			mBoard->mOutOfMoneyEndTimeNs = static_cast<long long>(mBoard->mLevelTimeNs) + 700'000'000LL;
 			if (mApp->IsFirstTimeAdventureMode() && mBoard->mLevel == 1 && mBoard->mHelpDisplayed[(int)AdviceType::ADVICE_CLICK_ON_SUN])
 			{
 				mBoard->DisplayAdvice(gStr.ADVICE_CANT_AFFORD_PLANT, MessageStyle::MESSAGE_STYLE_TUTORIAL_LEVEL1, AdviceType::ADVICE_CANT_AFFORD_PLANT);
@@ -1033,7 +1033,8 @@ void SeedBank::DrawSun(Graphics* graphics)
     static int lastSun=-1;static SexyString label;
     const int value=std::max(mBoard->mSunMoney,0);
     if(value!=lastSun) {char buffer[16];label.assign(FormatInt(buffer,value));lastSun=value;}
-    const auto color=mBoard->mOutOfMoneyCounter>0&&mBoard->mOutOfMoneyCounter%20<10?
+    const auto remainingNs=mBoard->mOutOfMoneyEndTimeNs-static_cast<long long>(mBoard->mLevelTimeNs);
+    const auto color=remainingNs>0&&remainingNs%200'000'000LL<100'000'000LL?
         Color(255,0,0):Color::Black;
     TodDrawString(&g,label,labelX,labelY,FONT_CONTINUUMBOLD14,color,DS_ALIGN_CENTER);
 }

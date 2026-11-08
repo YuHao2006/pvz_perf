@@ -63,59 +63,59 @@ static_assert(std::size(kMagnetSprites) == MAGNET_ITEM_PICK_AXE + 1,
 }
 
 static PlantDefinition gPlantDefs[SeedType::NUM_SEED_TYPES] = {  //0x69F2B0
-    { SeedType::SEED_PEASHOOTER,         ReanimationType::REANIM_PEASHOOTER,    0,  100,    750,    PlantSubClass::SUBCLASS_SHOOTER,    150 },
-    { SeedType::SEED_SUNFLOWER,          ReanimationType::REANIM_SUNFLOWER,     1,  50,     750,    PlantSubClass::SUBCLASS_NORMAL,     2500 },
-    { SeedType::SEED_CHERRYBOMB,         ReanimationType::REANIM_CHERRYBOMB,    3,  150,    5000,   PlantSubClass::SUBCLASS_NORMAL,     0 },
-    { SeedType::SEED_WALLNUT,            ReanimationType::REANIM_WALLNUT,       2,  50,     3000,   PlantSubClass::SUBCLASS_NORMAL,     0 },
-    { SeedType::SEED_POTATOMINE,         ReanimationType::REANIM_POTATOMINE,    37, 25,     3000,   PlantSubClass::SUBCLASS_NORMAL,     0 },
-    { SeedType::SEED_SNOWPEA,            ReanimationType::REANIM_SNOWPEA,       4,  175,    750,    PlantSubClass::SUBCLASS_SHOOTER,    150 },
-    { SeedType::SEED_CHOMPER,            ReanimationType::REANIM_CHOMPER,       31, 150,    750,    PlantSubClass::SUBCLASS_NORMAL,     0 },
-    { SeedType::SEED_REPEATER,           ReanimationType::REANIM_REPEATER,      5,  200,    750,    PlantSubClass::SUBCLASS_SHOOTER,    150 },
-    { SeedType::SEED_PUFFSHROOM,         ReanimationType::REANIM_PUFFSHROOM,    6,  0,      750,    PlantSubClass::SUBCLASS_SHOOTER,    150 },
-    { SeedType::SEED_SUNSHROOM,          ReanimationType::REANIM_SUNSHROOM,     7,  25,     750,    PlantSubClass::SUBCLASS_NORMAL,     2500 },
-    { SeedType::SEED_FUMESHROOM,         ReanimationType::REANIM_FUMESHROOM,    9,  75,     750,    PlantSubClass::SUBCLASS_SHOOTER,    150 },
-    { SeedType::SEED_GRAVEBUSTER,        ReanimationType::REANIM_GRAVE_BUSTER,  40, 75,     750,    PlantSubClass::SUBCLASS_NORMAL,     0 },
-    { SeedType::SEED_HYPNOSHROOM,        ReanimationType::REANIM_HYPNOSHROOM,   10, 75,     3000,   PlantSubClass::SUBCLASS_NORMAL,     0 },
-    { SeedType::SEED_SCAREDYSHROOM,      ReanimationType::REANIM_SCRAREYSHROOM, 33, 25,     750,    PlantSubClass::SUBCLASS_SHOOTER,    150 },
-    { SeedType::SEED_ICESHROOM,          ReanimationType::REANIM_ICESHROOM,     36, 75,     5000,   PlantSubClass::SUBCLASS_NORMAL,     0 },
-    { SeedType::SEED_DOOMSHROOM,         ReanimationType::REANIM_DOOMSHROOM,    20, 125,    5000,   PlantSubClass::SUBCLASS_NORMAL,     0 },
-    { SeedType::SEED_LILYPAD,            ReanimationType::REANIM_LILYPAD,       19, 25,     750,    PlantSubClass::SUBCLASS_NORMAL,     0 },
-    { SeedType::SEED_SQUASH,             ReanimationType::REANIM_SQUASH,        21, 50,     3000,   PlantSubClass::SUBCLASS_NORMAL,     0 },
-    { SeedType::SEED_THREEPEATER,        ReanimationType::REANIM_THREEPEATER,   12, 325,    750,    PlantSubClass::SUBCLASS_SHOOTER,    150 },
-    { SeedType::SEED_TANGLEKELP,         ReanimationType::REANIM_TANGLEKELP,    17, 25,     3000,   PlantSubClass::SUBCLASS_NORMAL,     0 },
-    { SeedType::SEED_JALAPENO,           ReanimationType::REANIM_JALAPENO,      11, 125,    5000,   PlantSubClass::SUBCLASS_NORMAL,     0 },
-    { SeedType::SEED_SPIKEWEED,          ReanimationType::REANIM_SPIKEWEED,     22, 100,    750,    PlantSubClass::SUBCLASS_NORMAL,     0 },
-    { SeedType::SEED_TORCHWOOD,          ReanimationType::REANIM_TORCHWOOD,     29, 175,    750,    PlantSubClass::SUBCLASS_NORMAL,     0 },
-    { SeedType::SEED_TALLNUT,            ReanimationType::REANIM_TALLNUT,       28, 125,    3000,   PlantSubClass::SUBCLASS_NORMAL,     0 },
-    { SeedType::SEED_SEASHROOM,          ReanimationType::REANIM_SEASHROOM,     39, 0,      3000,   PlantSubClass::SUBCLASS_SHOOTER,    150 },
-    { SeedType::SEED_PLANTERN,           ReanimationType::REANIM_PLANTERN,      38, 25,     3000,   PlantSubClass::SUBCLASS_NORMAL,     2500 },
-    { SeedType::SEED_CACTUS,             ReanimationType::REANIM_CACTUS,        15, 125,    750,    PlantSubClass::SUBCLASS_SHOOTER,    150 },
-    { SeedType::SEED_BLOVER,             ReanimationType::REANIM_BLOVER,        18, 100,    750,    PlantSubClass::SUBCLASS_NORMAL,     0 },
-    { SeedType::SEED_SPLITPEA,           ReanimationType::REANIM_SPLITPEA,      32, 125,    750,    PlantSubClass::SUBCLASS_SHOOTER,    150 },
-    { SeedType::SEED_STARFRUIT,          ReanimationType::REANIM_STARFRUIT,     30, 125,    750,    PlantSubClass::SUBCLASS_SHOOTER,    150 },
-    { SeedType::SEED_PUMPKINSHELL,       ReanimationType::REANIM_PUMPKIN,       25, 125,    3000,   PlantSubClass::SUBCLASS_NORMAL,     0 },
-    { SeedType::SEED_MAGNETSHROOM,       ReanimationType::REANIM_MAGNETSHROOM,  35, 100,    750,    PlantSubClass::SUBCLASS_NORMAL,     0 },
-    { SeedType::SEED_CABBAGEPULT,        ReanimationType::REANIM_CABBAGEPULT,   13, 100,    750,    PlantSubClass::SUBCLASS_SHOOTER,    300 },
-    { SeedType::SEED_FLOWERPOT,          ReanimationType::REANIM_FLOWER_POT,    33, 25,     750,    PlantSubClass::SUBCLASS_NORMAL,     0 },
-    { SeedType::SEED_KERNELPULT,         ReanimationType::REANIM_KERNELPULT,    13, 100,    750,    PlantSubClass::SUBCLASS_SHOOTER,    300 },
-    { SeedType::SEED_INSTANT_COFFEE,     ReanimationType::REANIM_COFFEEBEAN,    33, 75,     750,    PlantSubClass::SUBCLASS_NORMAL,     0 },
-    { SeedType::SEED_GARLIC,             ReanimationType::REANIM_GARLIC,        8,  50,     750,    PlantSubClass::SUBCLASS_NORMAL,     0 },
-    { SeedType::SEED_UMBRELLA,           ReanimationType::REANIM_UMBRELLALEAF,  23, 100,    750,    PlantSubClass::SUBCLASS_NORMAL,     0 },
-    { SeedType::SEED_MARIGOLD,           ReanimationType::REANIM_MARIGOLD,      24, 50,     3000,   PlantSubClass::SUBCLASS_NORMAL,     2500 },
-    { SeedType::SEED_MELONPULT,          ReanimationType::REANIM_MELONPULT,     14, 300,    750,    PlantSubClass::SUBCLASS_SHOOTER,    300 },
-    { SeedType::SEED_GATLINGPEA,         ReanimationType::REANIM_GATLINGPEA,    5,  250,    5000,   PlantSubClass::SUBCLASS_SHOOTER,    150 },
-    { SeedType::SEED_TWINSUNFLOWER,      ReanimationType::REANIM_TWIN_SUNFLOWER,1,  150,    5000,   PlantSubClass::SUBCLASS_NORMAL,     2500 },
-    { SeedType::SEED_GLOOMSHROOM,        ReanimationType::REANIM_GLOOMSHROOM,   27, 150,    5000,   PlantSubClass::SUBCLASS_SHOOTER,    200 },
-    { SeedType::SEED_CATTAIL,            ReanimationType::REANIM_CATTAIL,       27, 225,    5000,   PlantSubClass::SUBCLASS_SHOOTER,    150 },
-    { SeedType::SEED_WINTERMELON,        ReanimationType::REANIM_WINTER_MELON,  27, 200,    5000,   PlantSubClass::SUBCLASS_SHOOTER,    300 },
-    { SeedType::SEED_GOLD_MAGNET,        ReanimationType::REANIM_GOLD_MAGNET,   27, 50,     5000,   PlantSubClass::SUBCLASS_NORMAL,     0 },
-    { SeedType::SEED_SPIKEROCK,          ReanimationType::REANIM_SPIKEROCK,     27, 125,    5000,   PlantSubClass::SUBCLASS_NORMAL,     0 },
-    { SeedType::SEED_COBCANNON,          ReanimationType::REANIM_COBCANNON,     16, 500,    5000,   PlantSubClass::SUBCLASS_NORMAL,     600 },
-    { SeedType::SEED_IMITATER,           ReanimationType::REANIM_IMITATER,      33, 0,      750,    PlantSubClass::SUBCLASS_NORMAL,     0 },
-    { SeedType::SEED_EXPLODE_O_NUT,      ReanimationType::REANIM_WALLNUT,       2,  0,      3000,   PlantSubClass::SUBCLASS_NORMAL,     0 },
-    { SeedType::SEED_GIANT_WALLNUT,      ReanimationType::REANIM_WALLNUT,       2,  0,      3000,   PlantSubClass::SUBCLASS_NORMAL,     0 },
-    { SeedType::SEED_SPROUT,             ReanimationType::REANIM_ZENGARDEN_SPROUT,          33, 0,      3000,   PlantSubClass::SUBCLASS_NORMAL,     0 },
-    { SeedType::SEED_LEFTPEATER,         ReanimationType::REANIM_REPEATER,      5,  200,    750,    PlantSubClass::SUBCLASS_SHOOTER,    150 }
+    { SeedType::SEED_PEASHOOTER,         ReanimationType::REANIM_PEASHOOTER,    0,  100,    750,    PlantSubClass::SUBCLASS_SHOOTER,    150 * 10'000'000LL },
+    { SeedType::SEED_SUNFLOWER,          ReanimationType::REANIM_SUNFLOWER,     1,  50,     750,    PlantSubClass::SUBCLASS_NORMAL,     2500 * 10'000'000LL },
+    { SeedType::SEED_CHERRYBOMB,         ReanimationType::REANIM_CHERRYBOMB,    3,  150,    5000,   PlantSubClass::SUBCLASS_NORMAL,     0 * 10'000'000LL },
+    { SeedType::SEED_WALLNUT,            ReanimationType::REANIM_WALLNUT,       2,  50,     3000,   PlantSubClass::SUBCLASS_NORMAL,     0 * 10'000'000LL },
+    { SeedType::SEED_POTATOMINE,         ReanimationType::REANIM_POTATOMINE,    37, 25,     3000,   PlantSubClass::SUBCLASS_NORMAL,     0 * 10'000'000LL },
+    { SeedType::SEED_SNOWPEA,            ReanimationType::REANIM_SNOWPEA,       4,  175,    750,    PlantSubClass::SUBCLASS_SHOOTER,    150 * 10'000'000LL },
+    { SeedType::SEED_CHOMPER,            ReanimationType::REANIM_CHOMPER,       31, 150,    750,    PlantSubClass::SUBCLASS_NORMAL,     0 * 10'000'000LL },
+    { SeedType::SEED_REPEATER,           ReanimationType::REANIM_REPEATER,      5,  200,    750,    PlantSubClass::SUBCLASS_SHOOTER,    150 * 10'000'000LL },
+    { SeedType::SEED_PUFFSHROOM,         ReanimationType::REANIM_PUFFSHROOM,    6,  0,      750,    PlantSubClass::SUBCLASS_SHOOTER,    150 * 10'000'000LL },
+    { SeedType::SEED_SUNSHROOM,          ReanimationType::REANIM_SUNSHROOM,     7,  25,     750,    PlantSubClass::SUBCLASS_NORMAL,     2500 * 10'000'000LL },
+    { SeedType::SEED_FUMESHROOM,         ReanimationType::REANIM_FUMESHROOM,    9,  75,     750,    PlantSubClass::SUBCLASS_SHOOTER,    150 * 10'000'000LL },
+    { SeedType::SEED_GRAVEBUSTER,        ReanimationType::REANIM_GRAVE_BUSTER,  40, 75,     750,    PlantSubClass::SUBCLASS_NORMAL,     0 * 10'000'000LL },
+    { SeedType::SEED_HYPNOSHROOM,        ReanimationType::REANIM_HYPNOSHROOM,   10, 75,     3000,   PlantSubClass::SUBCLASS_NORMAL,     0 * 10'000'000LL },
+    { SeedType::SEED_SCAREDYSHROOM,      ReanimationType::REANIM_SCRAREYSHROOM, 33, 25,     750,    PlantSubClass::SUBCLASS_SHOOTER,    150 * 10'000'000LL },
+    { SeedType::SEED_ICESHROOM,          ReanimationType::REANIM_ICESHROOM,     36, 75,     5000,   PlantSubClass::SUBCLASS_NORMAL,     0 * 10'000'000LL },
+    { SeedType::SEED_DOOMSHROOM,         ReanimationType::REANIM_DOOMSHROOM,    20, 125,    5000,   PlantSubClass::SUBCLASS_NORMAL,     0 * 10'000'000LL },
+    { SeedType::SEED_LILYPAD,            ReanimationType::REANIM_LILYPAD,       19, 25,     750,    PlantSubClass::SUBCLASS_NORMAL,     0 * 10'000'000LL },
+    { SeedType::SEED_SQUASH,             ReanimationType::REANIM_SQUASH,        21, 50,     3000,   PlantSubClass::SUBCLASS_NORMAL,     0 * 10'000'000LL },
+    { SeedType::SEED_THREEPEATER,        ReanimationType::REANIM_THREEPEATER,   12, 325,    750,    PlantSubClass::SUBCLASS_SHOOTER,    150 * 10'000'000LL },
+    { SeedType::SEED_TANGLEKELP,         ReanimationType::REANIM_TANGLEKELP,    17, 25,     3000,   PlantSubClass::SUBCLASS_NORMAL,     0 * 10'000'000LL },
+    { SeedType::SEED_JALAPENO,           ReanimationType::REANIM_JALAPENO,      11, 125,    5000,   PlantSubClass::SUBCLASS_NORMAL,     0 * 10'000'000LL },
+    { SeedType::SEED_SPIKEWEED,          ReanimationType::REANIM_SPIKEWEED,     22, 100,    750,    PlantSubClass::SUBCLASS_NORMAL,     0 * 10'000'000LL },
+    { SeedType::SEED_TORCHWOOD,          ReanimationType::REANIM_TORCHWOOD,     29, 175,    750,    PlantSubClass::SUBCLASS_NORMAL,     0 * 10'000'000LL },
+    { SeedType::SEED_TALLNUT,            ReanimationType::REANIM_TALLNUT,       28, 125,    3000,   PlantSubClass::SUBCLASS_NORMAL,     0 * 10'000'000LL },
+    { SeedType::SEED_SEASHROOM,          ReanimationType::REANIM_SEASHROOM,     39, 0,      3000,   PlantSubClass::SUBCLASS_SHOOTER,    150 * 10'000'000LL },
+    { SeedType::SEED_PLANTERN,           ReanimationType::REANIM_PLANTERN,      38, 25,     3000,   PlantSubClass::SUBCLASS_NORMAL,     2500 * 10'000'000LL },
+    { SeedType::SEED_CACTUS,             ReanimationType::REANIM_CACTUS,        15, 125,    750,    PlantSubClass::SUBCLASS_SHOOTER,    150 * 10'000'000LL },
+    { SeedType::SEED_BLOVER,             ReanimationType::REANIM_BLOVER,        18, 100,    750,    PlantSubClass::SUBCLASS_NORMAL,     0 * 10'000'000LL },
+    { SeedType::SEED_SPLITPEA,           ReanimationType::REANIM_SPLITPEA,      32, 125,    750,    PlantSubClass::SUBCLASS_SHOOTER,    150 * 10'000'000LL },
+    { SeedType::SEED_STARFRUIT,          ReanimationType::REANIM_STARFRUIT,     30, 125,    750,    PlantSubClass::SUBCLASS_SHOOTER,    150 * 10'000'000LL },
+    { SeedType::SEED_PUMPKINSHELL,       ReanimationType::REANIM_PUMPKIN,       25, 125,    3000,   PlantSubClass::SUBCLASS_NORMAL,     0 * 10'000'000LL },
+    { SeedType::SEED_MAGNETSHROOM,       ReanimationType::REANIM_MAGNETSHROOM,  35, 100,    750,    PlantSubClass::SUBCLASS_NORMAL,     0 * 10'000'000LL },
+    { SeedType::SEED_CABBAGEPULT,        ReanimationType::REANIM_CABBAGEPULT,   13, 100,    750,    PlantSubClass::SUBCLASS_SHOOTER,    300 * 10'000'000LL },
+    { SeedType::SEED_FLOWERPOT,          ReanimationType::REANIM_FLOWER_POT,    33, 25,     750,    PlantSubClass::SUBCLASS_NORMAL,     0 * 10'000'000LL },
+    { SeedType::SEED_KERNELPULT,         ReanimationType::REANIM_KERNELPULT,    13, 100,    750,    PlantSubClass::SUBCLASS_SHOOTER,    300 * 10'000'000LL },
+    { SeedType::SEED_INSTANT_COFFEE,     ReanimationType::REANIM_COFFEEBEAN,    33, 75,     750,    PlantSubClass::SUBCLASS_NORMAL,     0 * 10'000'000LL },
+    { SeedType::SEED_GARLIC,             ReanimationType::REANIM_GARLIC,        8,  50,     750,    PlantSubClass::SUBCLASS_NORMAL,     0 * 10'000'000LL },
+    { SeedType::SEED_UMBRELLA,           ReanimationType::REANIM_UMBRELLALEAF,  23, 100,    750,    PlantSubClass::SUBCLASS_NORMAL,     0 * 10'000'000LL },
+    { SeedType::SEED_MARIGOLD,           ReanimationType::REANIM_MARIGOLD,      24, 50,     3000,   PlantSubClass::SUBCLASS_NORMAL,     2500 * 10'000'000LL },
+    { SeedType::SEED_MELONPULT,          ReanimationType::REANIM_MELONPULT,     14, 300,    750,    PlantSubClass::SUBCLASS_SHOOTER,    300 * 10'000'000LL },
+    { SeedType::SEED_GATLINGPEA,         ReanimationType::REANIM_GATLINGPEA,    5,  250,    5000,   PlantSubClass::SUBCLASS_SHOOTER,    150 * 10'000'000LL },
+    { SeedType::SEED_TWINSUNFLOWER,      ReanimationType::REANIM_TWIN_SUNFLOWER,1,  150,    5000,   PlantSubClass::SUBCLASS_NORMAL,     2500 * 10'000'000LL },
+    { SeedType::SEED_GLOOMSHROOM,        ReanimationType::REANIM_GLOOMSHROOM,   27, 150,    5000,   PlantSubClass::SUBCLASS_SHOOTER,    200 * 10'000'000LL },
+    { SeedType::SEED_CATTAIL,            ReanimationType::REANIM_CATTAIL,       27, 225,    5000,   PlantSubClass::SUBCLASS_SHOOTER,    150 * 10'000'000LL },
+    { SeedType::SEED_WINTERMELON,        ReanimationType::REANIM_WINTER_MELON,  27, 200,    5000,   PlantSubClass::SUBCLASS_SHOOTER,    300 * 10'000'000LL },
+    { SeedType::SEED_GOLD_MAGNET,        ReanimationType::REANIM_GOLD_MAGNET,   27, 50,     5000,   PlantSubClass::SUBCLASS_NORMAL,     0 * 10'000'000LL },
+    { SeedType::SEED_SPIKEROCK,          ReanimationType::REANIM_SPIKEROCK,     27, 125,    5000,   PlantSubClass::SUBCLASS_NORMAL,     0 * 10'000'000LL },
+    { SeedType::SEED_COBCANNON,          ReanimationType::REANIM_COBCANNON,     16, 500,    5000,   PlantSubClass::SUBCLASS_NORMAL,     600 * 10'000'000LL },
+    { SeedType::SEED_IMITATER,           ReanimationType::REANIM_IMITATER,      33, 0,      750,    PlantSubClass::SUBCLASS_NORMAL,     0 * 10'000'000LL },
+    { SeedType::SEED_EXPLODE_O_NUT,      ReanimationType::REANIM_WALLNUT,       2,  0,      3000,   PlantSubClass::SUBCLASS_NORMAL,     0 * 10'000'000LL },
+    { SeedType::SEED_GIANT_WALLNUT,      ReanimationType::REANIM_WALLNUT,       2,  0,      3000,   PlantSubClass::SUBCLASS_NORMAL,     0 * 10'000'000LL },
+    { SeedType::SEED_SPROUT,             ReanimationType::REANIM_ZENGARDEN_SPROUT,          33, 0,      3000,   PlantSubClass::SUBCLASS_NORMAL,     0 * 10'000'000LL },
+    { SeedType::SEED_LEFTPEATER,         ReanimationType::REANIM_REPEATER,      5,  200,    750,    PlantSubClass::SUBCLASS_SHOOTER,    150 * 10'000'000LL }
 };
 
 //0x401B20
@@ -510,7 +510,7 @@ void Plant::PlantInitialize(std::int64_t ownerNowNs, std::int64_t visualNowNs, s
     mShootingEndTimeNs = 0;
     mShakeOffsetX = 0.0f;
     mShakeOffsetY = 0.0f;
-    mFrameLength = RandRangeInt(12, 18);
+    mFramePeriodNs = RandRangeInt(12, 18) * 10'000'000LL;
     mTargetX = -1;
     mTargetY = -1;
     mStartRow = mRow;
@@ -546,7 +546,7 @@ void Plant::PlantInitialize(std::int64_t ownerNowNs, std::int64_t visualNowNs, s
     mWakeUpEndTimeNs = 0;
     mOnBungeeState = PlantOnBungeeState::NOT_ON_BUNGEE;
     mPottedPlantIndex = -1;
-    mLaunchRate = aPlantDef.mLaunchRate;
+    mLaunchPeriodNs = aPlantDef.mLaunchPeriodNs;
     mSubclass = aPlantDef.mSubClass;
     mRenderOrder = CalcRenderOrder();
 
@@ -586,13 +586,13 @@ void Plant::PlantInitialize(std::int64_t ownerNowNs, std::int64_t visualNowNs, s
     mLaunchClockActive = false;
     mZenProductionCountdown = 0;
     std::int64_t aInitialLaunchDelay = 0;
-    if (mLaunchRate > 0)
+    if (mLaunchPeriodNs > 0)
     {
         if (MakesSun())
             aInitialLaunchDelay = PlantLaunchClock::Uniform(300 * PlantLaunchClock::Tick,
-                mLaunchRate.mNanoseconds / 2, [] { return Sexy::Rand(); });
+                mLaunchPeriodNs / 2, [] { return Sexy::Rand(); });
         else
-            aInitialLaunchDelay = PlantLaunchClock::Uniform(0, mLaunchRate.mNanoseconds,
+            aInitialLaunchDelay = PlantLaunchClock::Uniform(0, mLaunchPeriodNs,
                 [] { return Sexy::Rand(); });
     }
     mNextLaunchTimeNs = PlantLaunchClock::Add(aLaunchStartNs, aInitialLaunchDelay);
@@ -1196,8 +1196,8 @@ void Plant::UpdateShooter(std::int64_t ownerNowNs, std::int64_t visualNowNs, std
         // In particular, Gloom's next volley starts before its 200-tick timer
         // finishes. Gating on that timer silently discards every other volley.
         mNextLaunchTimeNs = PlantLaunchClock::Add(aDue,
-            PlantLaunchClock::Uniform(mLaunchRate.mNanoseconds - 14 * PlantLaunchClock::Tick,
-                mLaunchRate.mNanoseconds, [] { return Sexy::Rand(); }));
+            PlantLaunchClock::Uniform(mLaunchPeriodNs - 14 * PlantLaunchClock::Tick,
+                mLaunchPeriodNs, [] { return Sexy::Rand(); }));
 
         // C 形态 -> 匿名 lambda 函数指针表 kShooterFireCases（仿 kSeedTypeUpdates
         // 范式）：行序 = SeedType 枚举序 0..52；无 case 槽 = 原 else 支（正面
@@ -1351,8 +1351,8 @@ void Plant::UpdateProductionPlant(std::int64_t ownerNowNs)
     while (mNextLaunchTimeNs <= aNow && aEvents++ < PlantLaunchClock::MaxEventsPerUpdate)
     {
         mNextLaunchTimeNs = PlantLaunchClock::Add(mNextLaunchTimeNs,
-            PlantLaunchClock::Uniform(mLaunchRate.mNanoseconds - 150 * PlantLaunchClock::Tick,
-                mLaunchRate.mNanoseconds, [] { return Sexy::Rand(); }));
+            PlantLaunchClock::Uniform(mLaunchPeriodNs - 150 * PlantLaunchClock::Tick,
+                mLaunchPeriodNs, [] { return Sexy::Rand(); }));
         mApp->PlayFoley(FoleyType::FOLEY_SPAWN_SUN);
 
         // B 形态 -> 常量表 kProductionCoins（原 4 支链合并）：行序 = SeedType
@@ -1879,7 +1879,7 @@ void Plant::UpdateScaredyShroom(std::int64_t ownerNowNs)
     if (mState != PlantState::STATE_READY)
     {
         mNextLaunchTimeNs = PlantLaunchClock::Add(ownerNowNs,
-            mLaunchRate.mNanoseconds);
+            mLaunchPeriodNs);
     }
 }
 
@@ -4383,14 +4383,14 @@ void Plant::Animate(std::int64_t ownerNowNs, std::int64_t animationNowNs)
 
     if (mAnimPing)
     {
-        if (mAnimCounter < mFrameLength * mNumFrames - 1)
+        if (mAnimCounter.mNanoseconds < mFramePeriodNs * mNumFrames - 10'000'000LL)
         {
             mAnimCounter++;
         }
         else
         {
             mAnimPing = false;
-            mAnimCounter -= mFrameLength;
+            mAnimCounter.AddNanoseconds(-mFramePeriodNs);
         }
     }
     else if (mAnimCounter > 0)
@@ -4400,9 +4400,9 @@ void Plant::Animate(std::int64_t ownerNowNs, std::int64_t animationNowNs)
     else
     {
         mAnimPing = true;
-        mAnimCounter += mFrameLength;
+        mAnimCounter.AddNanoseconds(mFramePeriodNs);
     }
-    mFrame = mAnimCounter / mFrameLength;
+    mFrame = static_cast<int>(mAnimCounter.mNanoseconds / mFramePeriodNs);
 }
 
 //0x464EF0
@@ -5024,7 +5024,7 @@ void Plant::MouseDown(int x, int y, int theClickCount)
         mBoard->mCursorObject->mSeedBankIndex = -1;
         mBoard->mCursorObject->mCoinID = CoinID::COINID_NULL;
         mBoard->mCursorObject->mCobCannonPlantID = (PlantID)mBoard->mPlants.DataArrayGetID(this);
-        mBoard->mCobCannonCursorDelayCounter = 30;
+        mBoard->mCobCannonCursorEndTimeNs = static_cast<long long>(mBoard->mLevelTimeNs) + 300'000'000LL;
         mBoard->mCobCannonMouseX = x;
         mBoard->mCobCannonMouseY = y;
     }

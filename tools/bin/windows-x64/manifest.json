@@ -45,8 +45,11 @@
     },
     {
       "path": "pvz_dat64_converter.exe",
-      "bytes": 546304,
-      "sha256": "056ef01b4bb55ca816322155e7c784d992c71226e21271b82086a3c575d7de56"
+      "bytes": 551936,
+      "sha256": "7197365ee38a9dfe9004d8b493ee415552f34eaf8c138530aef44bc98f6a0d00",
+      "version": "0.2.0-v5beta1",
+      "source_commit": "0091d2c6aea5fbe856f764d4c9502cbf54b346bd",
+      "development": true
     },
     {
       "path": "pvz-resource-build.exe",
@@ -60,8 +63,8 @@
     },
     {
       "path": "README.md",
-      "bytes": 6076,
-      "sha256": "ce00b3e1a713f7495b5c037dd2117a8ca236113d1574436c8eb5cec66d22ab0e"
+      "bytes": 6089,
+      "sha256": "44c7256c31d0b9389be3f385fb1c878ef1fe1fe0315552cdbd638a7250ddb530"
     },
     {
       "path": "reanimc.exe",

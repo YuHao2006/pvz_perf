@@ -1495,6 +1495,28 @@ void ExplicitReanimationOwnerTime(LawnApp& app)
     holder.BindAnimationTime(*first,ReanimTimeDomain::Visual,-7'654'321'987);
     Require(first->SamplePlayback().phaseNs==switchedPhase,
         "Switching back to a differently based visual clock changed phase");
+    // v5 blend time is an absolute owner-clock deadline, not a per-step
+    // counter. Repeated draws/updates at one time cannot consume it twice.
+    first->StartBlend(25);
+    int blendTrack=-1;
+    for(int i=0;i<first->mDefinition->mTracks.count;++i)
+        if(first->mTrackInstances[i].mBlendEndTimeNs!=0){blendTrack=i;break;}
+    Require(blendTrack>=0,"Blend fixture has no visible track");
+    auto& blend=first->mTrackInstances[blendTrack];
+    Require(blend.mBlendDurationNs==250'000'000,"Blend duration is not nanoseconds");
+    const auto blendStart=first->mLastUpdateTimeNs,blendEnd=blend.mBlendEndTimeNs;
+    first->UpdateAt(blendStart+60'123'456);
+    first->UpdateAt(blendStart+60'123'456);
+    Require(blend.mBlendEndTimeNs==blendEnd,"Update mutated blend deadline");
+    const auto remaining=blend.mBlendEndTimeNs-first->mLastUpdateTimeNs;
+    first->RebaseTime(123'000'000'000);
+    Require(blend.mBlendEndTimeNs-first->mLastUpdateTimeNs==remaining,
+        "Rebase changed blend progress");
+    first->UpdateAt(first->mLastUpdateTimeNs+remaining);
+    Require(blend.mBlendEndTimeNs==0,"Expired blend deadline did not become inactive");
+    first->RebaseTime(-9'000'000'000);
+    Require(blend.mBlendEndTimeNs==0,"Inactive blend revived after backward rebase");
+    std::cout<<"PASS v5 blend deadlines: repeated updates, exact expiry, clock rebase and inactive state\n";
     std::cout<<"PASS explicit reanimation owner time: creation, prepared rate/seek, frame queries and clock switching\n";
 }
 
@@ -2748,6 +2770,24 @@ void PlantAttackCatalogRuntime(TestApp& app)
     profile.mLevel=31;profile.mFinishedAdventure=1;
     app.mPlayerInfo=&profile;app.mZenGarden=&garden;
     app.mGameMode=GAMEMODE_ADVENTURE;app.mGameScene=SCENE_PLAYING;
+    if(const char* saved=std::getenv("PVZ_V5_BASELINE"))
+    {
+        Board board(&app);app.mBoard=&board;
+        Require(LawnLoadGame(&board,saved),"Cannot load the offline-converted v5 endless baseline");
+        const auto time=board.mLevelTimeNs;
+        const auto wave=board.mNextZombieWaveTimeNs;
+        const auto plants=board.mPlants.mSize;
+        Require(plants>0,"Converted v5 baseline lost its formation");
+        board.mOutOfMoneyEndTimeNs=static_cast<long long>(time)+700'000'000LL;
+        board.mCobCannonCursorEndTimeNs=static_cast<long long>(time)-123'456LL;
+        const auto path=(std::filesystem::current_path()/"converted-v5-roundtrip.dat64").string();
+        Require(LawnSaveGame(&board,path)&&LawnLoadGame(&board,path),"Converted v5 baseline failed runtime roundtrip");
+        Require(board.mLevelTimeNs==time&&board.mNextZombieWaveTimeNs==wave&&board.mPlants.mSize==plants&&
+            board.mOutOfMoneyEndTimeNs==static_cast<long long>(time)+700'000'000LL&&
+            board.mCobCannonCursorEndTimeNs==static_cast<long long>(time)-123'456LL,
+            "V5 runtime roundtrip changed clocks, formation or optional deadlines");
+        std::cout<<"PASS offline-converted v5 endless baseline runtime roundtrip plants="<<plants<<"\n";
+    }
     if(const char* saved=std::getenv("PVZ_STALLED_PLANT_SAVE"))
     {
         Board board(&app);app.mBoard=&board;
@@ -2852,7 +2892,7 @@ void PlantAttackCatalogRuntime(TestApp& app)
         auto* plant=board.NewPlant(3,row,test.seed,SEED_NONE);
         plant->mPlantHealth=1000000;
         plant->mNextLaunchTimeNs=1'000'000'000;plant->mLaunchWindowStartNs=0;
-        plant->mLaunchRate=1000000;
+        plant->mLaunchPeriodNs = 1000000 * 10'000'000LL;
         const auto targetAt=[&](int targetRow,float x) {
             auto* target=board.AddZombieInRow(ZOMBIE_NORMAL,targetRow,0);
             target->mX=x;target->mRootBindingGeneration=0;target->mVelocityX={};target->mVelX=0;
@@ -2905,7 +2945,7 @@ void PlantAttackCatalogRuntime(TestApp& app)
         {
             // The first volley cannot detect a later held-animation lock.
             // Keep a durable real target and allow repeated normal deadlines.
-            plant->mLaunchRate=150;
+            plant->mLaunchPeriodNs = 150 * 10'000'000LL;
             plant->mLaunchWindowStartNs=board.mLevelTimeNs;
             plant->mNextLaunchTimeNs=board.mLevelTimeNs+1'000'000'000LL;
             const auto end=board.mLevelTimeNs+30'000'000'000ULL;
@@ -4268,24 +4308,15 @@ void SurvivalRulesRuntime(TestApp& app)
                     Require(LawnLoadGame(&board,save)&&board.mLevelTimeNs==12'345'678'901ULL&&
                         board.mNextZombieWaveTimeNs==static_cast<long long>(board.mLevelTimeNs)+remaining&&
                         board.mZombieWaveCountdownDurationNs==28'123'456'789LL,
-                        "DAT64 changed a future, due or overdue wave deadline during remaining-time projection");
+                        "DAT64 changed a future, due or overdue wave deadline during absolute-deadline serialization");
                 }
                 board.mHugeWaveCountDown=700;
                 board.mNextZombieWaveTimeNs=static_cast<long long>(board.mLevelTimeNs)+7'000'000'000LL;
                 const auto warningSave=(std::filesystem::current_path()/"legacy-active-warning.dat64").string();
                 Require(LawnSaveGame(&board,warningSave),"Could not save the active warning fixture");
-                {
-                    std::fstream patch(warningSave,std::ios::in|std::ios::out|std::ios::binary);
-                    const auto at=LevelSaveFormat::DAT64_HEADER_SIZE+4+
-                        Dat64TimeSchema::V2Offset(0x559c-0x164,Dat64TimeSchema::BoardFields());
-                    patch.seekp(at);
-                    constexpr long long historicalOrdinaryRemaining=40'000'000LL;
-                    patch.write(reinterpret_cast<const char*>(&historicalOrdinaryRemaining),8);
-                    Require(bool(patch),"Could not project the old active-warning ordinary countdown");
-                }
                 Require(LawnLoadGame(&board,warningSave)&&
                     board.mNextZombieWaveTimeNs==static_cast<long long>(board.mLevelTimeNs)+7'000'000'000LL,
-                    "Old active warning interpreted its held ordinary countdown as the spawn deadline");
+                    "V5 active warning changed its absolute spawn deadline");
                 Require(LawnSaveGame(&board,warningSave)&&LawnLoadGame(&board,warningSave)&&
                     board.mNextZombieWaveTimeNs==static_cast<long long>(board.mLevelTimeNs)+7'000'000'000LL,
                     "Active warning deadline changed after another DAT64 roundtrip");
@@ -8140,7 +8171,7 @@ void StorePauseClockRuntime(TestApp& app, DecodeOnlySoundManager& sounds)
     if(gUiRulesOnly) {ChallengeUnlockRulesRuntime(app);SelectorTrophyTouchRuntime(app);AlmanacRulesRuntime(app);AwardRulesRuntime(app);return;}
     if(gAwardRulesOnly) {AwardRulesRuntime(app);return;}
     if(gAlmanacClockOnly) {AlmanacRulesRuntime(app,true);return;}
-    if(gActorBirthOnly) {ActorBirthClockRuntime(app);return;}
+    if(gActorBirthOnly) {ExplicitReanimationOwnerTime(app);ActorBirthClockRuntime(app);return;}
     if(gCreditsOnly) {CreditsMovieOwnerClockRuntime(app);return;}
     if(gLossRulesOnly) {LossRulesRuntime(app);return;}
     if(gOpeningRulesOnly) {CheckOpeningFlows(app,app.fixtureNestedPump,[](LawnApp& a){static_cast<TestApp&>(a).ProcessSafeDeleteList();});return;}

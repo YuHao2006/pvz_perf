@@ -1,12 +1,12 @@
 # 纳秒计时字段与 v5 迁移审计
 
-审计基于 3.3.8beta（2026-11-08）。这是下一次破坏性存档更新的清单，不表示以下字段已经迁移。当前仍写 DAT64 v4。
+审计起点为 3.3.8（2026-11-08），当前开发分支为 v4.0.0beta1 / DAT64 v5（2026-11-09）。下方清单按批迁移，并不表示全部完成。
 
 ## 当前刷新调度
 
 运行时 `mZombieCountDown` 已换为 `long long mNextZombieWaveTimeNs`，由 Board 时间比较刷新终点；`mZombieCountDownStart` 已换为原始间隔参数 `mZombieWaveCountdownDurationNs`。
 
-v4 写档仍将绝对终点投影为剩余纳秒，读档再加 Board 时间还原。旧档在大波预告期间使用预告剩余时间重建实际终点。这是兼容处理。v5 应直接规定终点字段及其时间基准，不继续使用旧倒计时名称和布局。
+已完成：v5 直接保存 `mNextZombieWaveTimeNs` 的 Board 绝对时刻，不再投影剩余量。v4 的剩余时间及旧大波预告兼容只由 PvzDevTools 离线转换器处理。
 
 `mHugeWaveCountDown` 尚在，但已经由刷新终点求值，不独立递减；它服务于预告显示及跨阈值事件。v5 可进一步取消持久化的重复剩余值。
 
@@ -20,7 +20,7 @@ v4 写档仍将绝对终点投影为剩余纳秒，读档再加 Board 时间还�
 | Board | `mRiseFromGraveCounter`、`mFinalWaveSoundCounter` | 墓碑出怪、最后一波音效终点；事件由状态消费 |
 | Board | `mFogBlownCountDown`、`mIceTimer[]`、`mIceTrapCounter`、`mTimeStopCounter` | 各效果的终点，保留独立冻结规则 |
 | Board | `mBoardFadeOutCounter`、`mNextSurvivalStageCounter`、`mScoreNextMowerCounter` | 通关、换轮、小推车计分终点，核对 Board 停止而过场继续的阶段 |
-| Board | `mTutorialTimer`、`mOutOfMoneyCounter`、`mCobCannonCursorDelayCounter` | 教学、余额警告、玉米炮输入延迟终点 |
+| Board | `mTutorialTimer` | 教学终点；余额警告和玉米炮输入延迟已迁移 |
 | Board | `mShakeCounter`、`mFwooshCountDown`、`mFlagRaiseCounter`、`mCoinBankFadeCount` | 震动、声效、旗帜、钱袋显示的起点或终点；随机采样仍属于模拟 |
 | Plant | `mStateCountdown`、`mDoSpecialCountdown`、`mBlinkCountdown` | 状态、技能、眨眼终点；睡眠、被压、蹦极抓取会影响推进条件 |
 | Plant / ZenGarden | `mZenProductionCountdown` | 产出终点；巧克力期间当前每次更新扣两次，速率切换时保持剩余进度 |
@@ -29,7 +29,7 @@ v4 写档仍将绝对终点投影为剩余纳秒，读档再加 Board 时间还�
 | Challenge | `mChallengeStateCounter` | 被多种小游戏状态复用，需要逐状态核对单位、暂停和重置语义 |
 | Challenge | `mConveyorBeltCounter` | 下次发牌终点，与 SeedBank 的同名动画相位不同 |
 | Challenge | `mRainCounter`、`mCloudsCounter[6]` | 雷雨、云效果触发终点 |
-| ReanimatorTrackInstance | `mBlendCounter` | 混合终点；使用外部传入的动画时间，不反向查询 Board |
+| ReanimatorTrackInstance | 已迁移为 `mBlendEndTimeNs` / `mBlendDurationNs` | 使用持有者传入的动画时间；时钟重绑时平移有效终点 |
 | CutScene / MessageWidget | `mCrazyDaveCountDown`、`mSlideOffTime` | 对话及文字滑出起点／终点；`mDisplayTime` 是显示时长参数 |
 | CursorObject / ToolTipWidget | `mHammerDownCounter`、`mWarningFlashCounter` | 当前搜索只找到初始化、设置、读取，未找到递减点；先确认是否无效，再删除或恢复推进 |
 | ChallengeScreen / AwardScreen | `mUnlockStateCounter`、`mFadeInCounter`、`mAchievementAnimTime` | 解锁、淡入、成就动画的起点／终点 |
@@ -62,6 +62,20 @@ v4 写档仍将绝对终点投影为剩余纳秒，读档再加 Board 时间还�
 
 v5 在字段迁移完成后冻结，明确每个起点／终点的时间基准和无效值。游戏直接读取 v5，原版及 v4 的兼容投影放在离线工具中。目标支持原版 1073、v4、v5 相互转换，新网页工具不提供 v1～v3 输入输出。
 
-转换器在 PvzDevTools 独立维护。游戏外的网页功能可使用 JavaScript 或独立工具 Wasm，但不提取或启动游戏 Wasm、不加载 PAK、不访问正在运行的 Board。原版时间舍入需要明确选择；不能表示的字段明确报错，不静默丢失。v5 尚未定稿，不提供改头冒充的 v5 文件。
+转换器在 PvzDevTools 独立维护。游戏外的网页功能可使用 JavaScript 或独立工具 Wasm，但不提取或启动游戏 Wasm、不加载 PAK、不访问正在运行的 Board。原版时间舍入需要明确选择；不能表示的字段明确报错，不静默丢失。v5 尚未定稿；开发工具进行逐字段语义转换，不以仅修改文件头冒充格式转换。
 
 2026-11-08 发布范围修正：v5 与批量计时字段迁移暂缓，3.3.8 先保持 v4 兼容。独立工具复用 C++ 转换器的 wasm32 构建，生成、校验、提取、转换和既有卡死修复均在工具记录模型上完成。游戏网页只交换文件字节；已删除隐藏游戏、游戏对象文件生成器和 PAK／音频依赖。v4 初始记录数据和格式契约由 PvzDevTools 冻结维护。
+
+
+## v4 第一批施工记录（2026-11-09）
+
+- 回退点固定为 `v3.3.8`，提交 `46799b176eefd01efb796c57f95079998c62f34d`。不得覆盖旧发行包。
+- 游戏版本 `4.0.0beta1`；格式 DAT64 v5.0，schema `0x10746`。v5 布局尚在施工，不能作为正式兼容契约发布。
+- 已迁移 ReanimatorTrackInstance 混合计时：两个 16 字节计时包装替换为两个 64 位原始值，每轨道减少 16 字节。只遍历已有 active mask 中的轨道处理时钟重绑；不增加全轨道热路径扫描。
+- Plant 的发射周期、逐帧动画周期去掉计时包装，直接保存纳秒时长，每株减少 16 字节。x64 当前 Plant 544 字节，ReanimatorTrackInstance 112 字节，Zombie 608 字节；不能把结构缩小直接当作实测性能收益。
+- Board 余额闪烁改为 `mOutOfMoneyEndTimeNs`，玉米炮鼠标输入延迟改为 `mCobCannonCursorEndTimeNs`。直接比较 Board 时刻，取消逐更新递减；触控仍遵循原拖动规则。
+- 持续时间参数仍是持续时间，不能机械替换成终点。Plant 状态、Zombie 阶段及其他表中字段继续按推进条件逐项迁移；ICE3/ICE4 更新顺序保持。
+- `mLastUpdateTimeNs` 仍参与 reanim 缓存、事件边界和外部时间重绑，第一批没有删除；不宣称已消灭所有上一次处理时间。
+- 独立转换器支持原版 1073、v4、v5 相互转换，Web 工具仍为 wasm32，不加载游戏、PAK、图形或音频。v4/v5 同族转换保留文件名、外观尾数据；旧 v4 大波预告由离线转换校正。
+- 初步验证已通过：53 种植物四种调度的攻击/技能目录，620 个出生时钟场景，三项格式/纳秒测试；独立 Web 转换字节对齐、82 个生成用例和编辑器离线测试。追加验证已通过：15 种生存模式 × 五种调度、转换后的 85 株基准阵型在真实游戏里的读写往返、余额警告未来终点和炮输入逾期终点保真、按钮和花园触控回归。
+- 下一轮性能条件：用户已锁 LPE14 到 **25x**。必须独立标注，不和 11x 数据混算。首次测量只评估第一批迁移，不代表 v4 全部迁移完成。

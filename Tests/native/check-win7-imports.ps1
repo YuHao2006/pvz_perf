@@ -7,7 +7,7 @@ $directory=Split-Path -Parent $Executable
 $files=@($Executable)
 foreach($name in @('dxcompiler.dll','dxil.dll','bass.dll',
         'msvcp140.dll','vcruntime140.dll','vcruntime140_1.dll',
-        'data\pvz_dat64_converter.exe','data\msvcp140.dll',
+        'data\pvz_dat64_converter.exe','data\pvz_dfu.dll','data\msvcp140.dll',
         'data\vcruntime140.dll','data\vcruntime140_1.dll')){
     $path=Join-Path $directory $name
     if(Test-Path -LiteralPath $path){$files+=$path}

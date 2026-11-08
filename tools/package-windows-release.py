@@ -85,6 +85,7 @@ def package(args):
         for name in ("dxcompiler.dll", "dxil.dll", "start-lp14.cmd"):
             include(release / name, name)
     include(release / "data/pvz_dat64_converter.exe", "data/pvz_dat64_converter.exe")
+    include(release / "data/pvz_dfu.dll", "data/pvz_dfu.dll")
     scale = root / "scale.json"
     if not modern:
         scale = root / f"pvzPerf/SexyAppFramework/graphics/{args.backend}/default-scale.json"

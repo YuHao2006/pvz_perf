@@ -114,7 +114,7 @@ v5 在字段迁移完成后冻结，明确每个起点／终点的时间基准�
 | ReanimatorTrackInstance | 128 | 112 |
 | TodParticle | 184 | 184 |
 | TodParticleEmitter | 200 | 200 |
-| TodParticleSystem | 48 | 48 |
+| TodParticleSystem | 48 | 40 |
 | SeedPacket | 112 | 104 |
 | SeedBank（含10卡） | 1200 | 1120 |
 | LawnMower | 104 | 88 |
@@ -137,5 +137,5 @@ Plant/Zombie池槽分别568→536、616→608字节，容量256/1024不变，两
 - 粒子仍保留出生值与寿命：它们服务于生命周期、发射轨道、淡出和图片动画。速度、位置和旋转依旧逐步模拟，退休的只是系统重复保存的处理时间。
 - 存档冷路径按所有者采样时刻投影相对出生值，完整保留超过一个生命周期的未处理余量。读入恢复全部归属后再绑定出生锚点。DAT64 v5.1 记录宽度与布局不变；不把运行时字段删除误称为磁盘布局变更。
 - 实际生产对象验证通过：无尽/生存十五模式、开场四种调度、Credits 暂停恢复、花园和智慧树、620 个对象出生场景、ICE3/ICE4；粒子单元测试、时间字段读写和 v5 尾部结构测试通过。真实资源的读档—保存—读回—继续模拟逐值一致，原始输入档 SHA256 保持不变；静态定义完整加载、故意损坏资源的回收与恢复检查通过。
-- 本轮没有整局性能测量，不宣称帧率提升。Desktop Release 已构建；既有 Web 预览尚未包含本轮改动。
+- 随后的LP14/用户11x/240FPS无尽测量为193.605FPS、4.60312ms CPU/绘制帧；上一轮v4为194.544FPS、4.60763ms。整局基本持平，不宣称提速；两轮战斗轨迹不同，不能据此给出统计误差范围。内部绘制为960×600。原始数据保留于本地out/measurements，未覆盖历史基线。
 - 本地证据在 `out/verification/v4/particle-retired-*.log`、`particle-retired-runtime/`、`particle-retired-save/` 和 `particle-retired-definitions/`。回退点为 `checkpoint/v4-before-particle-clock-20261109-6e492cc`。

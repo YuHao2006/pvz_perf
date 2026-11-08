@@ -468,3 +468,8 @@ standalone_build.log
 /android/app/src/main/assets/*
 !/android/app/src/main/assets/bundled-saves/
 *.hprof
+
+# Independent Android DataFixerUpper binary from PvzDevTools.
+!/tools/bin/android-arm64/
+!/tools/bin/android-arm64/libpvz_dfu.so
+!/tools/bin/android-arm64/manifest.json

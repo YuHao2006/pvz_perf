@@ -5,6 +5,11 @@
 #include "sound/DummyMusicInterface.h"
 #include "Sexy.TodLib/TodCommon.h"
 #include <thread>
+#if defined(__ANDROID__)
+#include "android/AndroidSaveUpgrade.h"
+#elif defined(_WIN32)
+#include "windows/WindowsSaveUpgrade.h"
+#endif
 #include <vector>
 #include <stdexcept>
 #ifdef __APPLE__
@@ -80,6 +85,16 @@ void HostSleepFor(unsigned int milliseconds) {
 }
 void HostSleepUntil(FrameDeadline::TimePoint deadline) { std::this_thread::sleep_until(deadline); }
 void HostYield() {}
+bool HostUpgradeLevelSaveFile(const std::string& path) {
+#if defined(__ANDROID__)
+    return AndroidUpgradeLevelSaveFile(path);
+#elif defined(_WIN32)
+    return WindowsUpgradeLevelSaveFile(path);
+#else
+    (void)path;
+    return false;
+#endif
+}
 void HostStartLoading(SexyAppBase& app, void (*entry)(void*)) { app.mLoadingThread = std::thread(entry, &app); }
 void HostFinishResourcePrewarm(SexyAppBase& app, const std::atomic<bool>& closeRequest) {
     while (!TodWarmDrained() && !app.mShutdown && !closeRequest)

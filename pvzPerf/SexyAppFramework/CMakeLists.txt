@@ -288,12 +288,17 @@ target_sources(${PROJECT_NAME} PRIVATE
     "LawnProject.rc"
 )
 
+if(WIN32)
+    target_sources(${PROJECT_NAME} PRIVATE "platform/windows/WindowsSaveUpgrade.cpp")
+endif()
+
 if(ANDROID OR CMAKE_SYSTEM_NAME STREQUAL "Android")
     get_target_property(_PVZ_GAME_SOURCES ${PROJECT_NAME} SOURCES)
     list(FILTER _PVZ_GAME_SOURCES EXCLUDE REGEX "(^|/)main\\.cpp$")
     set_property(TARGET ${PROJECT_NAME} PROPERTY SOURCES "${_PVZ_GAME_SOURCES}")
     target_sources(${PROJECT_NAME} PRIVATE
         "platform/android/AndroidMain.cpp"
+        "platform/android/AndroidSaveUpgrade.cpp"
         "platform/android/AndroidWindow.h")
     set(_PVZ_ANDROID_NDK "${CMAKE_ANDROID_NDK}")
     if(NOT _PVZ_ANDROID_NDK)
@@ -641,6 +646,13 @@ if(TARGET pvz_dat64_converter)
         COMMENT "Deploying the native dat/dat64 converter to data/"
         VERBATIM
     )
+    if(WIN32)
+        add_custom_command(TARGET pvz_save_converter_deploy POST_BUILD
+            COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+                "${PVZ_DEVTOOLS_BIN_DIR}/pvz_dfu.dll"
+                "${CMAKE_BINARY_DIR}/$<CONFIG>/data/pvz_dfu.dll"
+            VERBATIM)
+    endif()
     add_dependencies(${PROJECT_NAME} pvz_save_converter_deploy)
 endif()
 set_target_properties(${PROJECT_NAME} PROPERTIES

@@ -2,6 +2,7 @@
 #include "NativeHandles.h"
 #include "misc/FrameTiming.h"
 #include <atomic>
+#include <string>
 namespace Sexy {
 class SexyAppBase;
 class MusicInterface;
@@ -9,6 +10,8 @@ class MusicInterface;
 void HostSleepFor(unsigned int milliseconds);
 void HostSleepUntil(FrameDeadline::TimePoint deadline);
 void HostYield();
+// Cold-path platform migration. Native platforms load DFU; Web migrates offline before starting the game.
+bool HostUpgradeLevelSaveFile(const std::string& path);
 void HostStartLoading(SexyAppBase& app, void (*entry)(void*));
 void HostFinishResourcePrewarm(SexyAppBase& app, const std::atomic<bool>& closeRequest);
 MusicInterface* HostCreateMusic(bool disabled, NativeWindowHandle window);

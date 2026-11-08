@@ -73,6 +73,9 @@ Copy-Item -LiteralPath $PakFile -Destination (Join-Path $assetDir 'main.pak64') 
 $nativeLibrary = Join-Path $build 'Release\libpvz_perf.so'
 if (!(Test-Path -LiteralPath $nativeLibrary)) { throw "Android native library not found: $nativeLibrary" }
 Copy-Item -LiteralPath $nativeLibrary -Destination (Join-Path $jniDir 'libpvz_perf.so') -Force
+$saveUpgradeLibrary = Join-Path $root 'tools/bin/android-arm64/libpvz_dfu.so'
+if (!(Test-Path -LiteralPath $saveUpgradeLibrary)) { throw "Independent save-upgrade library missing: $saveUpgradeLibrary" }
+Copy-Item -LiteralPath $saveUpgradeLibrary -Destination (Join-Path $jniDir 'libpvz_dfu.so') -Force
 $gradle = Get-Command gradlew.bat -ErrorAction SilentlyContinue
 if (!$gradle) { $gradle = Get-Command gradle -ErrorAction SilentlyContinue }
 if (!$gradle) {

@@ -45,7 +45,7 @@ inline constexpr std::uint64_t DAT64_END_MARKER = 0xB4A9ABBEBBA5A9AFULL;
 //   18 u64 payload size
 //   20 u32 ignored former payload CRC32 (v2/v4 write zero; v1 exports retain CRC)
 //   24 u32 schema id
-//   28 u32 minor version (zero in all supported formats)
+//   28 u32 minor version (zero in v1/v2/v4; one in current v5.1)
 //   2C u32 reserved (must be zero)
 // RECORD_LAYOUTS and offsets below describe the fixed v1 canonical ABI.
 // Dat64TimeSchema expands time fields for v2/v4; v4 appends current exact
@@ -71,7 +71,8 @@ constexpr bool IsSupportedDat64Header(const std::span<const std::uint8_t>& file)
         read(36, 4) == DAT64_V1_SCHEMA_ID;
     const bool v2 = version == DAT64_V2_VERSION && read(40, 4) == 0 &&
         read(36, 4) == DAT64_V2_SCHEMA_ID;
-    return (current || v1 || v2) && read(12, 4) == DAT64_HEADER_SIZE &&
+    const bool v4 = version == 4 && read(40, 4) == 0 && read(36, 4) == 0x00010745U;
+    return (current || v1 || v2 || v4) && read(12, 4) == DAT64_HEADER_SIZE &&
         read(16, 4) == DAT64_AUTHORITY_BUILD &&
         read(20, 4) == (v1 ? DAT64_V1_FLAGS : DAT64_FLAGS) &&
         read(24, 8) == file.size() - DAT64_HEADER_SIZE && read(44, 4) == 0;

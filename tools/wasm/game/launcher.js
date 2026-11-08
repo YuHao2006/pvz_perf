@@ -229,6 +229,26 @@ async function installBaseline(){
  await syncSaves();
 }
 function syncSaves(){return new Promise((resolve,reject)=>Module.FS.syncfs(false,error=>error?reject(error):resolve())).then(()=>{document.getElementById('save-local').hidden=true;document.getElementById('local-save-status').textContent='本地存档已写入浏览器'},error=>{document.getElementById('save-local').hidden=false;document.getElementById('local-save-status').textContent='本地保存失败：'+error.message+'。请重试，不要刷新页面。';throw error})}
+// DFU runs in a standalone wasm32 worker before the game starts. Stage every
+// replacement before touching MEMFS, then persist once. It never calls the game.
+async function fixLocalLevelSaves(){
+ const fs=Module.FS,replacements=[];
+ const {runSaveTool}=await saveToolsReady;
+ for(const name of fs.readdir(saveRoot)){
+  const match=/^game[1-9]\d*_(\d+)\.dat64$/.exec(name);
+  if(!match)continue;
+  const bytes=fs.readFile(saveRoot+'/'+name);
+  if(bytes.length<48||new TextDecoder().decode(bytes.subarray(0,8))!=='PVZDAT64')continue;
+  const version=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength).getUint32(8,true);
+  if(version!==4&&version!==5)continue;
+  let result;
+  try{result=await runSaveTool({op:'dfu',mode:Number(match[1])},bytes)}
+  catch(error){throw Error('DFU 处理失败：'+name+'；'+error.message)}
+  if(result.bytes)replacements.push([name,result.bytes]);
+ }
+ for(const [name,bytes] of replacements)fs.writeFile(saveRoot+'/'+name,bytes);
+ if(replacements.length)await syncSaves();
+}
 async function preparePersistentFiles(){
  await new Promise((resolve,reject)=>Module.FS.syncfs(true,error=>error?reject(error):resolve()));
  Module.FS.mkdirTree(saveRoot);
@@ -242,6 +262,7 @@ async function preparePersistentFiles(){
  lineupStorage=new LineupStorage(localStorage,{cloudEnabled:!webConfig.bypassBilibiliChecks,remote:()=>progressStorage.remote(),report:lineupStatus,uploadState:cloudUploadState});
  await lineupStorage.prepare();
  if(webConfig.bypassBilibiliChecks&&!Module.FS.analyzePath(saveRoot+'/users.dat').exists)await installBaseline();
+ try{await fixLocalLevelSaves()}finally{(await saveToolsReady).releaseSaveTools()}
  progressStorage.watchProfileWrites();
 }
 const rewardStatus=document.getElementById('reward-status');

@@ -14,7 +14,7 @@ try {
   assert.deepEqual(await page.locator('#graphics-backend option').evaluateAll(options=>options.map(o=>o.value)),mode==='unavailable'?['webgl']:['auto','webgpu','webgl']);
   assert.equal(await page.locator('#show-fps').isChecked(),false);
   if(mode==='auto')await page.locator('#show-fps').check();
-  assert.equal(await page.evaluate(()=>Module.FS.analyzePath('/persist/development-v331/user1.dat64').exists),true);
+  assert.equal(await page.evaluate(()=>Module.FS.analyzePath('/persist/development-v4/user1.dat64').exists),true);
   await page.locator('#start').click();
   await page.waitForFunction(()=>Module._pvz_web_draws?.()>3||!document.getElementById('error').hidden,null,{timeout:60000});
   assert.equal(await page.locator('#error').isVisible(),false,await page.locator('#error').innerText());

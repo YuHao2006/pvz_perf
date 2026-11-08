@@ -10,6 +10,7 @@ import shutil
 import subprocess
 import runpy
 import zipfile
+import struct
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -49,6 +50,7 @@ def main():
     parser.add_argument('--build', type=Path, default=ROOT / 'out/wasm/game/site')
     parser.add_argument('--output', type=Path, default=ROOT / 'out/wasm/toy')
     parser.add_argument('--config', type=Path, default=ROOT / 'tools/wasm/game/web-config.json')
+    parser.add_argument('--save-bundle', type=Path, help='Matching completed-profile/endless ZIP; defaults to the current native version')
     parser.add_argument('--version', help='Explicit preview version; defaults to the native product version')
     parser.add_argument('--bilibili', action='store_true', help='Disable API bypass; game files remain identical')
     parser.add_argument('--diagnostics', action='store_true', help='Separate diagnostic distribution with recording enabled by default')
@@ -59,7 +61,8 @@ def main():
     parser.add_argument('--wasm64-webgl-build', type=Path, help='Memory64 WebGL runtime paired with --webgl-build')
     args = parser.parse_args()
     version_source = (ROOT / 'pvzPerf/LawnApp.cpp').read_text(encoding='utf-8')
-    version = args.version or re.search(r'mProductVersion\s*=\s*"([^"]+)"', version_source).group(1)
+    native_version = re.search(r'mProductVersion\s*=\s*"([^"]+)"', version_source).group(1)
+    version = args.version or native_version
     config = json.loads(args.config.read_text(encoding='utf-8'))
     if not isinstance(config.get('bypassBilibiliChecks'), bool):
         raise ValueError('bypassBilibiliChecks must be a boolean')
@@ -165,8 +168,18 @@ def main():
         destination.parent.mkdir(exist_ok=True)
         shutil.copyfile(source, destination)
         files.append('audio/licenses/' + source.name)
-    baseline = ROOT / 'out/distribution/v3.3.1/endless-benchmark-v3.3.1.zip'
+    baseline = args.save_bundle or (ROOT / f'out/distribution/v{native_version}/perfect-save-and-endless-v{native_version}.zip')
+    if not baseline.is_file():
+        raise FileNotFoundError(f'Build matching save bundle first: {baseline}')
     with zipfile.ZipFile(baseline) as source:
+        checkpoint=source.read('data/game1_58.dat64')
+        schema_source=(ROOT/'pvzPerf/Lawn/System/LevelSaveFormat.h').read_text(encoding='utf-8')
+        def schema_constant(name):
+            return int(re.search(r'\b'+name+r'\s*=\s*(0x[0-9a-fA-F]+|[0-9]+)',schema_source).group(1),0)
+        expected=(schema_constant('DAT64_VERSION'),schema_constant('DAT64_SCHEMA_ID'),schema_constant('DAT64_MINOR_VERSION'))
+        actual=(struct.unpack_from('<I',checkpoint,8)[0],*struct.unpack_from('<II',checkpoint,36))
+        if checkpoint[:8]!=b'PVZDAT64' or actual!=expected:
+            raise ValueError(f'Preset save format differs from game: {actual}, expected {expected}')
         for name in ['users.dat', 'user1.dat64', 'game1_58.dat64']:
             relative = 'development-save/' + name
             destination = args.output / relative

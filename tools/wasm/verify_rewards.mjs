@@ -10,7 +10,7 @@ try{
   const errors=[];page.on('pageerror',error=>errors.push(String(error)));
   await page.goto(process.env.PVZ_WEBGPU_URL||'http://127.0.0.1:18089/');await page.waitForFunction(()=>!document.getElementById('start').disabled||!document.getElementById('error').hidden,null,{timeout:120000});
   assert.equal(await page.locator('#error').isVisible(),false,await page.locator('#error').innerText());
-  assert.equal(await page.evaluate(()=>Module.FS.analyzePath('/persist/development-v331/users.dat').exists),bypass);
+  assert.equal(await page.evaluate(()=>Module.FS.analyzePath('/persist/development-v4/users.dat').exists),bypass);
   if(!bypass){
    await page.evaluate(()=>{window.toy={getAuthorRelation:async()=>({status:'ok',data:{isFollowing:true,isAuthor:false}}),getVideoUserActions:async()=>({status:'ok',items:[{bvid:'BV1hV4P6PEDc',status:'ok',coinCount:1}]})}});
    await page.locator('#custom-save').click();await page.waitForFunction(()=>!document.getElementById('custom-save').disabled);assert.equal(await page.locator('dialog[open]').count(),0);assert.match(await page.locator('#reward-status').textContent(),/投满两个币/);

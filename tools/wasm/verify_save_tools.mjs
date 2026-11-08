@@ -33,11 +33,11 @@ try{
  if(scenes.length)console.log('PASS: all six scenes serialize, empty previous hand and chooser boundary, full-health plants, DAT64 roundtrip');
  // Deploy the generated fog checkpoint into the launcher's FS, then exercise
  // the real menu/Continue/load/draw path with independent UI settings.
- await page.evaluate(()=>Module.FS.writeFile('/persist/development-v331/game1_58.dat64',window.testGenerated));
+ await page.evaluate(()=>Module.FS.writeFile('/persist/development-v4/game1_58.dat64',window.testGenerated));
  await page.locator('#auto-fps').uncheck();await page.locator('#target-fps').fill('120');await page.locator('#aspect').selectOption('21:9');
  await page.locator('#sfx-volume').fill('37');await page.locator('#music-volume').fill('42');await page.locator('#launch-fullscreen').check();
  await page.locator('#start').click();await page.waitForTimeout(16000);
- const settings=await page.evaluate(()=>JSON.parse(Module.FS.readFile('/persist/development-v331/settings.json',{encoding:'utf8'})));
+ const settings=await page.evaluate(()=>JSON.parse(Module.FS.readFile('/persist/development-v4/settings.json',{encoding:'utf8'})));
  assert.equal(settings.sfxVolume,37);assert.equal(settings.musicVolume,42);assert.equal(settings.screenMode,'fullscreen');
  assert.equal(await page.evaluate(()=>!!document.fullscreenElement),true);
  const click=async(x,y)=>{const b=await page.locator('#canvas').boundingBox();await page.mouse.click(b.x+x*b.width/1400,b.y+y*b.height/600)};

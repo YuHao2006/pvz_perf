@@ -5,7 +5,7 @@ try{
  const page=await browser.newPage({viewport:{width:1440,height:1000}}),errors=[];page.on('pageerror',e=>errors.push(e.message));page.on('dialog',d=>d.accept());
  await page.goto(process.env.PVZ_WEBGPU_URL||'http://127.0.0.1:18089/');await page.waitForFunction(()=>!document.getElementById('start').disabled,null,{timeout:120000});
  assert.equal(await page.locator('#advanced-settings').getAttribute('open'),null);assert.equal(await page.locator('#aspect').isVisible(),false);assert.equal(await page.locator('#show-fps').isVisible(),false);assert.equal(await page.locator('#save-local').isVisible(),false);await page.locator('#advanced-settings>summary').click();assert.equal(await page.locator('#aspect').isVisible(),true);await page.locator('#advanced-settings>summary').click();
- const root='/persist/development-v331',original=await page.evaluate(root=>Array.from(Module.FS.readFile(root+'/user1.dat64')),root);
+ const root='/persist/development-v4',original=await page.evaluate(root=>Array.from(Module.FS.readFile(root+'/user1.dat64')),root);
  await page.locator('#custom-save').click();const e=page.frameLocator('#save-editor-frame');await e.locator('#status').filter({hasText:'已打开'}).waitFor();assert.equal(await e.locator('#profile').isVisible(),true);assert.equal(await e.locator('#perfect').count(),0);
  await e.locator('#add-user').click();await e.locator('#status').filter({hasText:'已新增用户'}).waitFor();assert.equal(await e.locator('#user-id').inputValue(),'2');assert.equal(await e.locator('#user-coins').inputValue(),'0');
  await page.evaluate(root=>Module.FS.writeFile(root+'/game2_58.dat64',Module.FS.readFile(root+'/game1_58.dat64')),root);

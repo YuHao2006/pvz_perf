@@ -14,7 +14,7 @@ try{
  assert.equal(await page.locator('#web-text-value').inputValue(),'webUser7');
  await page.waitForTimeout(200);await page.getByRole('button',{name:'完成',exact:true}).click();
  await page.locator('#web-text-value').waitFor({state:'hidden',timeout:10000});
- const users=await page.evaluate(()=>new TextDecoder().decode(Module.FS.readFile('/persist/development-v331/users.dat')));
+ const users=await page.evaluate(()=>new TextDecoder().decode(Module.FS.readFile('/persist/development-v4/users.dat')));
  assert.ok(users.includes('webUser7'),'ASCII name did not reach the real game profile');
  assert.deepEqual(errors,[]);
  console.log(JSON.stringify({mobileInput:true,realInputFocused:true,nonAsciiRejected:true,profileName:'webUser7',errors}));

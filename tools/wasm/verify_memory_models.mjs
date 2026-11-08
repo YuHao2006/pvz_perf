@@ -27,16 +27,16 @@ try{
   assert.equal(await page.evaluate(()=>Module.pvzMemoryModel),memory);
   const metadata=await page.evaluate(async()=>{
    const {runSaveTool}=await import('./save-tools.js');
-   const bytes=Module.FS.readFile('/persist/development-v331/game1_58.dat64');
+   const bytes=Module.FS.readFile('/persist/development-v4/game1_58.dat64');
    return (await runSaveTool({op:'extract'},bytes)).metadata;
   });
   if(checkpoint)assert.deepEqual(metadata,checkpoint,'The same DAT64 must decode identically across memory models/backends');
   else checkpoint=metadata;
   if(completed){
    assert.equal(await page.locator('#sfx-volume').inputValue(),'43');
-   assert.equal(await page.evaluate(()=>Module.FS.readFile('/persist/development-v331/memory-model-probe.txt',{encoding:'utf8'})),'shared');
+   assert.equal(await page.evaluate(()=>Module.FS.readFile('/persist/development-v4/memory-model-probe.txt',{encoding:'utf8'})),'shared');
   }
-  await page.evaluate(async()=>{Module.FS.writeFile('/persist/development-v331/memory-model-probe.txt','shared');await new Promise((resolve,reject)=>Module.FS.syncfs(false,e=>e?reject(e):resolve()))});
+  await page.evaluate(async()=>{Module.FS.writeFile('/persist/development-v4/memory-model-probe.txt','shared');await new Promise((resolve,reject)=>Module.FS.syncfs(false,e=>e?reject(e):resolve()))});
   await page.locator('#advanced-settings').evaluate(el=>el.open=true);
   await page.locator('#aspect').selectOption('21:9');await page.locator('#auto-fps').uncheck();
   await page.locator('#target-fps').fill('120');await page.locator('#sfx-volume').fill('43');

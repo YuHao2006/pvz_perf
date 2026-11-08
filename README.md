@@ -14,7 +14,7 @@
 | `x64-win7-openGL3.3` | Windows 7 x64、OpenGL 3.3 |
 | `arm64-android14-vulkan1.3` | Android 14、Armv9-A、Vulkan 1.3 及所需 descriptor indexing 能力；不要求 SVE/SVE2 |
 | `arm64-android7-vulkan1.0` | Android 7、Armv8-A、Vulkan 1.0；传统纹理绑定 |
-| `wasm-web` | 包含 wasm32／wasm64 与 WebGPU／WebGL 2 四个运行时；默认 wasm32、优先 WebGPU，可在高级设置切换 |
+| `wasm-web` | 包含 wasm32／wasm64 与 WebGPU／WebGL 2 四个运行时；支持 Memory64 时自动选 wasm64，否则 wasm32；优先 WebGPU，可在高级设置切换 |
 
 下载入口：[GitHub Releases](https://github.com/YuHao2006/pvz_perf/releases)。Windows ZIP 完整解压到可写目录后运行 `pvz_perf.exe`；需要兼容的 VC++ x64 运行库。Android APK 已包含资源，不需要另拷数据包或在手机安装 Java。设备满足系统版本还不够，CPU、驱动和所需图形格式也必须满足对应要求。
 

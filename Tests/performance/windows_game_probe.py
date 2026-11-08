@@ -28,6 +28,8 @@ kernel.GetCurrentProcess.restype = w.HANDLE
 kernel.SetProcessAffinityMask.argtypes = (w.HANDLE, SIZE)
 kernel.GetExitCodeProcess.argtypes = (w.HANDLE, c.POINTER(w.DWORD))
 kernel.WaitForSingleObject.argtypes = (w.HANDLE, w.DWORD)
+user.GetClientRect.argtypes = (w.HWND, c.POINTER(w.RECT))
+user.GetClientRect.restype = w.BOOL
 user.GetForegroundWindow.restype = w.HWND
 user.GetWindowThreadProcessId.argtypes = (w.HWND, c.POINTER(w.DWORD))
 user.PostMessageW.argtypes = (w.HWND, w.UINT, SIZE, c.c_ssize_t)
@@ -171,6 +173,14 @@ class Game:
             result[field] = self.pointer(app + self.layout[field])
         if result["mGameScene"] > 7:
             raise RuntimeError("Scene value contradicts the verified layout")
+        client = w.RECT()
+        if result["mHWnd"] and user.GetClientRect(result["mHWnd"], c.byref(client)):
+            result["client_width"] = client.right - client.left
+            result["client_height"] = client.bottom - client.top
+        if "mScreenBounds" in self.layout:
+            bounds = app + self.layout["mScreenBounds"]
+            result["scene_width"] = self.read(bounds + 8, "<i")
+            result["scene_height"] = self.read(bounds + 12, "<i")
         board = result["mBoard"]
         if board:
             result["board"] = {
@@ -254,7 +264,8 @@ def measure(game, seconds, scene, multiplier, output, preroll=0, interactive=Fal
         fields = (
                 "elapsed_s", "interval_s", "draw_fps", "update_hz", "cpu_percent",
                 "draw_count", "update_count", "scene", "wave", "board_counter",
-                "foreground", "valid", "segment", "cpu_ms_per_draw_frame")
+                "foreground", "valid", "segment", "cpu_ms_per_draw_frame",
+                "client_width", "client_height", "scene_width", "scene_height")
         if core_trace:
             fields += tuple(f"cpu_lp{core}_percent" for core in core_trace.cores)
         with (output / "samples.csv").open("w", newline="") as stream:
@@ -310,6 +321,8 @@ def measure(game, seconds, scene, multiplier, output, preroll=0, interactive=Fal
                 row["cpu_ms_per_draw_frame"] = (
                     row["cpu_percent"] * 10 / row["draw_fps"]
                     if valid and row["draw_fps"] > 0 else "")
+                for dimension in ("client_width", "client_height", "scene_width", "scene_height"):
+                    row[dimension] = current.get(dimension, "")
                 writer.writerow(row)
                 stream.flush()
                 rows.append(row)

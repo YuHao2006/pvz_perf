@@ -7,11 +7,11 @@
 | 范围 | 已执行检查 | 结论边界 |
 | --- | --- | --- |
 | Windows Vulkan Release | 实际生产编译／链接，/GL与/LTCG核对，PVZ_ENABLE_GAME_PROBES=OFF | 当前可执行文件构建成功，不据此宣称其他平台已实测 |
-| Android arm64 Vulkan | NDK Full LTO编译与链接 | 当前库构建成功；装机与设备运行单独验收 |
+| Android arm64 Vulkan | 保留NDK Full LTO配置；DFU so独立API24编译 | 当前v4游戏库与APK尚需重构建、装机验收；不把DFU so通过当作整包通过 |
 | 主循环 | FrameTiming及真实Process状态机夹具 | 实际纳秒守恒、完整实际步长、欠时保留与短补偿步；覆盖30Hz和10000FPS目标，不拆成10ms补拍 |
 | 水面时钟 | 实际Board首次入场、暂停、Visual→Board交接、寒冰菇与复选卡 | 覆盖100／240／480／1000Hz，保留年龄与相位，不新增存档字段 |
 | Vulkan帧准入 | test_vulkan_frame_admission.py编译实际BeginCommands | 资源忙时仅延期绘制，资源和模拟时间不被重置 |
-| 存档 | time_counter_save、v7_save_schema，真实原版→v4读写／重载 | 原输入SHA256不变；当前游戏仅直接读取v4 |
+| 存档 | time_counter_save、v7_save_schema，真实v5.1读写／重载与v4自动DFU | 独立转换器生成并验证新档；游戏仅直接解析当前v5.1；DFU失败保留原档 |
 | 实际图像与资源 | test-image-runtime.ps1链接生产对象，使用实际PAK | 字体、资源分组、reanim外观、CPU粒子、共享纹理及反复释放通过 |
 | Windows触点输入 | Win7 WM_TOUCH／Win10 WM_POINTER；延迟分发、双触点、侧键移除、共享选择、炮拖动、花园、图集与保存回归 | Vulkan／OpenGL生产对象回归及Win7导入检查通过；真实触屏和Win7系统实测待确认，见[当前证据](../Tests/evidence/windows-native-touch-20261103/README.md) |
 | 拉霸HUD与透明边缘 | hud-seams：18组实际绘制／命中／拉动，实际噬碑藤图集GPU读回 | 窗口／Board／种子栏偏移一致，最近邻不变，线性修补与旧shader参考差不超过一个颜色级；手机显示需另行确认 |
@@ -86,3 +86,10 @@ Vulkan独立GPU实验将像素正确性、同步校验与timestamp计时分开�
 Release在自己的目录运行，测量器只读现有计数和进程时间，不注入游戏计时。用户在控制台按Enter开始，3秒后恢复战斗，默认持续到游戏Quit／进程退出，Enter不会提前停止；只有显式-Seconds才限时，采样器不会关闭游戏。采集原始输出写系统Temp，最终精选证据和条件、哈希保存在Tests/evidence，历史对照夹具保存在Tests/reference。不同平台、核心、频率和构建分别记录，不计算跨条件优化倍率。
 
 功能和采样所需临时文件放Temp，不堆入out。独立实验只编入其专用目标；普通Release不保留临时GPU查询、逐帧工作量计数、纹理创建分段计时或音乐追踪。
+
+
+## v4 定版前清理
+
+运行循环没有本轮新增的逐帧计时或日志点。Vulkan微基准计数与时间戳仅在独立的`PVZ_VULKAN_SPRITE_EXPERIMENT`目标中编译，生产链接不含该试验库。网页诊断按既有要求保留为默认关闭、容量受限的用户选项；FPS采样也仅在用户开启显示时运行。读档失败、资源缺失和原生异常报告保留。
+
+DFU只处理历史v4档：Windows的`data/pvz_dfu.dll`、Android的独立so与网页的独立wasm32共用工具核心。正确v5.1不扫描植物动画。网页版手动植物修复控件及事件处理已移除；首次准备和开始游戏前只检查文件头，覆盖会话内导入的旧档。独立Worker处理完释放。已验证真实加农炮旧档和冰瓜识别测试档的DLL/wasm输出一致、重复执行不改写、损坏拒绝、缺DLL保留原档，以及实际v4自动读入后保存/重载/继续模拟。Android so已构建至API24并验证16KiB ELF对齐；不等于已完成APK装机验收。

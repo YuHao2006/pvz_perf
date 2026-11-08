@@ -85,7 +85,7 @@ void PrepareAbsoluteRoot(Scenario& s, long long now) {
     const auto phase=now%period;
     s.animation.mCurrentFrame=int(phase/q);
     s.animation.mStartTimeNs=now-phase%q;
-    s.animation.mLastUpdateTimeNs=now;
+    s.animation.mFrameAgeNs = (now) - s.animation.mStartTimeNs;
     s.animation.mCycleCrossings=0;
     s.animation.mRootDisplacement=double(now/period)*
         (double(s.keys[s.start+s.count-1].mTransX)-s.keys[s.start].mTransX)*s.animation.mRootFrameScale;

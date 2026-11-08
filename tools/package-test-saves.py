@@ -81,7 +81,7 @@ def main():
         checkpoint_bytes = checkpoint.read_bytes()
         if (checkpoint_bytes[:8] != b"PVZDAT64"
                 or struct.unpack_from("<I", checkpoint_bytes, 8)[0] != (5 if args.format == "dat64-v5" else 4)
-                or struct.unpack_from("<II", checkpoint_bytes, 36) != ((0x10746 if args.format == "dat64-v5" else 0x10745), 0)):
+                or struct.unpack_from("<II", checkpoint_bytes, 36) != ((0x10747 if args.format == "dat64-v5" else 0x10745), (1 if args.format == "dat64-v5" else 0))):
             raise ValueError("Modern checkpoint has the wrong target format")
         args.output.parent.mkdir(parents=True, exist_ok=True)
         with zipfile.ZipFile(args.output, "x", zipfile.ZIP_DEFLATED) as archive:

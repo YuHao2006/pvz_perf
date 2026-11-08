@@ -92,9 +92,9 @@ inline void Validate(Kind kind, std::span<const Byte> state)
         Require(Read(state, 56, 1) <= 1, "animation history flag is not boolean");
         if (Read(state, 56, 1)) Require(Signed(40) >= 0 && Signed(40) <= period,
             "previous animation phase is outside period");
-        Require(Signed(64) >= 0 && Signed(4) <= Signed(64) &&
-            std::uint64_t(Signed(64)) - std::uint64_t(Signed(4)) <= std::uint64_t(INT64_MAX),
-            "animation frame time is invalid");
+        Require(Signed(64) >= 0 && Signed(64) < framePeriod &&
+            (Signed(4) <= 0 || Signed(64) <= INT64_MAX - Signed(4)),
+            "animation keyframe remainder is invalid");
 
     }
     else if (kind == Kind::ParticleEmitter)
@@ -190,6 +190,7 @@ inline std::vector<Byte> FromHistorical(Kind kind, std::span<const Byte> canonic
         const bool reverse = rate < 0;
         const auto age = reverse && remainder != 0 ? q - remainder : remainder;
         Put(4, -age);
+        Put(64, age);
         Put(12, frame + (reverse && remainder != 0), 4);
         Put(16, q);
         Put(24, period);

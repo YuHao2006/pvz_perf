@@ -81,7 +81,6 @@ public:
 	std::int64_t							mFadeOutEndTimeNs;					//+0x44
 	std::int64_t							mFadeOutDurationNs;					//+0x48
 
-	std::int64_t mLastUpdateTimeNs; // Runtime application-clock binding; not serialized.
 
 public:
 	Music();
@@ -112,7 +111,7 @@ public:
 
 	void						MusicInit();
 	void						MusicDispose() { ; }
-	void						MusicUpdate(std::int64_t nowNs);
+	void						MusicUpdate(std::int64_t nowNs, std::uint64_t deltaNs);
 	void						StopAllMusic();
 	/*inline*/ void				PlayMusic(MusicTune theMusicTune, int theOffset = -1, int theDrumsOffset = -1);
 	/*inline*/ HMUSIC			GetBassMusicHandle(MusicFile theMusicFile);

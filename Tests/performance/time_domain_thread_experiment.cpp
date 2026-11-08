@@ -55,7 +55,7 @@ struct Domain {
         double checksum=0;
         for(auto& s:objects) {
             auto& a=s->animation;
-            a.Advance(now-a.mLastUpdateTimeNs);
+            a.Advance(now-(a.mStartTimeNs+a.mFrameAgeNs));
             ReanimatorFrameTime time;a.GetFrameTime(&time);
             for(int track=0;track<a.mDefinition->mTracks.count;++track) {
                 if(VisibleOnly) {

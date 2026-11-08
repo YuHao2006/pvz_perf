@@ -87,7 +87,6 @@ Music::Music()
     mDrumsEndTimeNs = 0;
     mQueuedDrumTrackPackedOrder = -1;
     mMusicDisabled = false;
-    mLastUpdateTimeNs = 0;
     mFadeOutEndTimeNs = 0;
     mFadeOutDurationNs = 0;
 }

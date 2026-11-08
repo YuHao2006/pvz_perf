@@ -24,6 +24,7 @@ template<class T, class F> void Fields(const T& v, F&& f)
 #define CLOCK(field,kind) f(offsetof(T, field),Kind::kind)
     if constexpr(std::is_same_v<T,Plant>) {
         CLOCK(mLaunchPeriodNs,Raw); CLOCK(mFramePeriodNs,Raw);
+        CLOCK(mSpecialEndTimeNs,Raw); CLOCK(mNextBlinkTimeNs,Raw);
         CLOCK(mDisappearEndTimeNs,Disappear); CLOCK(mRecentlyEatenEndTimeNs,End);
         CLOCK(mEatenFlashEndTimeNs,End); CLOCK(mBeghouledFlashEndTimeNs,End); CLOCK(mWakeUpEndTimeNs,End);
         CLOCK(mMagnetStartTimeNs,Start); CLOCK(mShootingEndTimeNs,ShootingEnd);
@@ -126,7 +127,6 @@ template<class T> void BindAt(T& v) {
         if((k==Kind::InfiniteEnd||k==Kind::DormantStart)&&raw==INT64_MAX)return;
         raw=ReanimClock::Add(raw,Now(v,p));std::memcpy(reinterpret_cast<unsigned char*>(&v)+p,&raw,8);
     });
-    if constexpr(std::is_same_v<T,Music>)v.mLastUpdateTimeNs=Now(v,0);
     if constexpr(std::is_same_v<T,GridItem>)v.mTransparencyIncreasing=false;
     if constexpr(std::is_same_v<T,Plant>) if(v.mState!=PlantState::STATE_DOINGSPECIAL&&!v.mSquished)v.mDisappearEndTimeNs=0;
 }

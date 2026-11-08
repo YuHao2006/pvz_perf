@@ -165,7 +165,7 @@ LawnApp::LawnApp()
 	mDebugKeysEnabled = false;
 	mFullCompanyName = "PopCap Games";
 	mProdName = "PopCap\\PlantsVsZombies";
-    mProductVersion = "4.0.0beta1";
+    mProductVersion = "4.0.0beta2";
 	std::string aTitleName = "pvz_perf";
 #ifdef _DEBUG
 	aTitleName += " BETA ";
@@ -1761,7 +1761,7 @@ void LawnApp::UpdateFrames()
 		SexyApp::UpdateFrames();
 
 		{
-			mMusic->MusicUpdate(mApplicationTimeNs);
+			mMusic->MusicUpdate(mApplicationTimeNs, Sexy::gUpdateIntervalNs);
 		}
 		if (mLoadingThreadCompleted && mEffectSystem)
 		{

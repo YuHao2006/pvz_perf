@@ -166,7 +166,7 @@ void Plant::PlantInitialize(std::int64_t ownerNowNs, std::int64_t visualNowNs, s
 
     if (p.IsInPlay())
     {
-    p.mDoSpecialCountdown = 100;
+    p.mSpecialEndTimeNs = ReanimClock::Add(ownerNowNs, (100) * 10'000'000LL);
 
     lc.mBodyReanim->SetFramesForLayer(ReanimTrackId::anim_explode);
     lc.mBodyReanim->ChangeLoopType(ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD);
@@ -201,7 +201,7 @@ void Plant::PlantInitialize(std::int64_t ownerNowNs, std::int64_t visualNowNs, s
     [](std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, Plant& p, PlantInitLocals& lc)
     {
     p.mPlantHealth = 4000;
-    p.mBlinkCountdown = 1000 + Sexy::Rand(1000);
+    p.mNextBlinkTimeNs = ReanimClock::Add(ownerNowNs, (1000 + Sexy::Rand(1000)) * 10'000'000LL);
     },  // 3 SEED_WALLNUT
     // 原 case SEED_POTATOMINE
     [](std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, Plant& p, PlantInitLocals& lc)
@@ -327,7 +327,7 @@ void Plant::PlantInitialize(std::int64_t ownerNowNs, std::int64_t visualNowNs, s
     {
     p.mPlantHealth = 8000;
     p.mHeight = 80;
-    p.mBlinkCountdown = 1000 + Sexy::Rand(1000);
+    p.mNextBlinkTimeNs = ReanimClock::Add(ownerNowNs, (1000 + Sexy::Rand(1000)) * 10'000'000LL);
     },  // 23 SEED_TALLNUT
     PlantInitPuffshroom,  // 24 SEED_SEASHROOM（共体）
     // 原 case SEED_PLANTERN
@@ -352,7 +352,7 @@ void Plant::PlantInitialize(std::int64_t ownerNowNs, std::int64_t visualNowNs, s
     // 原 case SEED_BLOVER
     [](std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, Plant& p, PlantInitLocals& lc)
     {
-    p.mDoSpecialCountdown = 50;
+    p.mSpecialEndTimeNs = ReanimClock::Add(ownerNowNs, (50) * 10'000'000LL);
 
     if (p.IsInPlay())
     {
@@ -421,7 +421,7 @@ void Plant::PlantInitialize(std::int64_t ownerNowNs, std::int64_t visualNowNs, s
     // 原 case SEED_INSTANT_COFFEE
     [](std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, Plant& p, PlantInitLocals& lc)
     {
-    p.mDoSpecialCountdown = 100;
+    p.mSpecialEndTimeNs = ReanimClock::Add(ownerNowNs, (100) * 10'000'000LL);
     },  // 35 SEED_INSTANT_COFFEE
     // 原 case SEED_GARLIC
     [](std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, Plant& p, PlantInitLocals& lc)
@@ -478,14 +478,14 @@ void Plant::PlantInitialize(std::int64_t ownerNowNs, std::int64_t visualNowNs, s
     [](std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, Plant& p, PlantInitLocals& lc)
     {
     p.mPlantHealth = 4000;
-    p.mBlinkCountdown = 1000 + Sexy::Rand(1000);
+    p.mNextBlinkTimeNs = ReanimClock::Add(ownerNowNs, (1000 + Sexy::Rand(1000)) * 10'000'000LL);
     lc.mBodyReanim->mColorOverride = Color(255, 64, 64);
     },  // 49 SEED_EXPLODE_O_NUT
     // 原 case SEED_GIANT_WALLNUT
     [](std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, Plant& p, PlantInitLocals& lc)
     {
     p.mPlantHealth = 4000;
-    p.mBlinkCountdown = 1000 + Sexy::Rand(1000);
+    p.mNextBlinkTimeNs = ReanimClock::Add(ownerNowNs, (1000 + Sexy::Rand(1000)) * 10'000'000LL);
     },  // 50 SEED_GIANT_WALLNUT
     // 原 case SEED_SPROUT
     [](std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, Plant& p, PlantInitLocals& lc)
@@ -522,7 +522,7 @@ void Plant::PlantInitialize(std::int64_t ownerNowNs, std::int64_t visualNowNs, s
     mSeedType = theSeedType;
     mImitaterType = theImitaterType;
     mPlantHealth = 300;
-    mDoSpecialCountdown = 0;
+    mSpecialEndTimeNs = 0;
     mDisappearEndTimeNs = 0;
     mStateCountdown = 0;
     mParticleID = ParticleSystemID::PARTICLESYSTEMID_NULL;
@@ -533,7 +533,7 @@ void Plant::PlantInitialize(std::int64_t ownerNowNs, std::int64_t visualNowNs, s
     mBlinkReanimID = ReanimationID::REANIMATIONID_NULL;
     mLightReanimID = ReanimationID::REANIMATIONID_NULL;
     mSleepingReanimID = ReanimationID::REANIMATIONID_NULL;
-    mBlinkCountdown = 0;
+    mNextBlinkTimeNs = 0;
     mRecentlyEatenEndTimeNs = 0;
     mEatenFlashEndTimeNs = 0;
     mBeghouledFlashEndTimeNs = 0;
@@ -575,7 +575,7 @@ void Plant::PlantInitialize(std::int64_t ownerNowNs, std::int64_t visualNowNs, s
         if (mApp->IsWallnutBowlingLevel() && aBodyReanim->TrackExists(ReanimTrackId::_ground))
             AdvanceRoot(*this, *aBodyReanim,
                 mSeedType == SeedType::SEED_GIANT_WALLNUT ? -2.0f : -1.0f, 0);
-        mBlinkCountdown = 400 + Sexy::Rand(400);
+        mNextBlinkTimeNs = ReanimClock::Add(ownerNowNs, (400 + Sexy::Rand(400)) * 10'000'000LL);
     }
 
     if (IsNocturnal(mSeedType) && mBoard && !mBoard->StageIsNight())
@@ -1605,7 +1605,7 @@ void Plant::UpdatePotato(std::int64_t ownerNowNs, std::int64_t visualNowNs, std:
             aLightReanim->AttachToAnotherReanimation(aBodyReanim, ReanimTrackId::anim_light);
 
             mState = PlantState::STATE_POTATO_ARMED;
-            mBlinkCountdown = 400 + Sexy::Rand(4000);
+            mNextBlinkTimeNs = ReanimClock::Add(ownerNowNs, (400 + Sexy::Rand(4000)) * 10'000'000LL);
         }
     }
     else if (mState == PlantState::STATE_POTATO_ARMED)
@@ -2104,7 +2104,7 @@ void Plant::UpdateDoomShroom(std::int64_t ownerNowNs)
         return;
 
     mState = PlantState::STATE_DOINGSPECIAL;
-    mDoSpecialCountdown = 100;
+    mSpecialEndTimeNs = ReanimClock::Add(ownerNowNs - static_cast<long long>(Sexy::gUpdateIntervalNs), 1'000'000'000LL);
 
     Reanimation* aBodyReanim = mApp->ReanimationTryToGet(mBodyReanimID);
 
@@ -2124,7 +2124,7 @@ void Plant::UpdateIceShroom(std::int64_t ownerNowNs)
     if (!mIsAsleep && mState != PlantState::STATE_DOINGSPECIAL)
     {
         mState = PlantState::STATE_DOINGSPECIAL;
-        mDoSpecialCountdown = 100;
+        mSpecialEndTimeNs = ReanimClock::Add(ownerNowNs - static_cast<long long>(Sexy::gUpdateIntervalNs), 1'000'000'000LL);
     }
 }
 
@@ -2140,7 +2140,7 @@ void Plant::UpdateBlover(std::int64_t ownerNowNs, std::int64_t visualNowNs, std:
     }
 
     // 1073 UpdateBlover (0x4648D0) tests Plant+0x50, the special-action timer.
-    if (mState != PlantState::STATE_DOINGSPECIAL && mDoSpecialCountdown == 0)
+    if (mState != PlantState::STATE_DOINGSPECIAL && mSpecialEndTimeNs == 0)
     {
         DoSpecial(ownerNowNs, visualNowNs, animationNowNs);
     }
@@ -3242,10 +3242,14 @@ void Plant::UpdateBowling(std::int64_t ownerNowNs, std::int64_t visualNowNs, std
 
 //0x463150
 // GOTY @Patoke: 0x466B70
-void Plant::UpdateAbilities(std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs)
+void Plant::UpdateAbilities(std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, std::uint64_t deltaNs)
 {
     if (!IsInPlay())
+    {
+        if (mSpecialEndTimeNs != 0)
+            mSpecialEndTimeNs = ReanimClock::Add(mSpecialEndTimeNs, static_cast<long long>(deltaNs));
         return;
+    }
 
     if (mState == PlantState::STATE_DOINGSPECIAL || mSquished)
     {
@@ -3274,7 +3278,11 @@ void Plant::UpdateAbilities(std::int64_t ownerNowNs, std::int64_t visualNowNs, s
     }
 
     if (mIsAsleep || mSquished || mOnBungeeState != PlantOnBungeeState::NOT_ON_BUNGEE)
+    {
+        if (mSpecialEndTimeNs != 0)
+            mSpecialEndTimeNs = ReanimClock::Add(mSpecialEndTimeNs, static_cast<long long>(deltaNs));
         return;
+    }
 
     UpdateShooting(ownerNowNs, visualNowNs, animationNowNs);
 
@@ -3363,13 +3371,10 @@ void Plant::UpdateAbilities(std::int64_t ownerNowNs, std::int64_t visualNowNs, s
     {
         UpdateShooter(ownerNowNs, visualNowNs, animationNowNs);
     }
-    if (mDoSpecialCountdown > 0)
+    if (mSpecialEndTimeNs != 0 && ownerNowNs >= mSpecialEndTimeNs)
     {
-        mDoSpecialCountdown--;
-        if (mDoSpecialCountdown == 0)
-        {
-            DoSpecial(ownerNowNs, visualNowNs, animationNowNs);
-        }
+        mSpecialEndTimeNs = 0; // Consume before callbacks can schedule another action.
+        DoSpecial(ownerNowNs, visualNowNs, animationNowNs);
     }
 }
 
@@ -3670,10 +3675,18 @@ void Plant::Update(std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64
     if (mShootingEndTimeNs != 0 && (!doUpdate || mIsAsleep || mSquished ||
         mOnBungeeState != PlantOnBungeeState::NOT_ON_BUNGEE || NotOnGround()))
         mShootingEndTimeNs = ReanimClock::Add(mShootingEndTimeNs, static_cast<std::int64_t>(theLevelDeltaNs));
+    // Translate only during local suspension. Ordinary updates compare the
+    // supplied owner time directly; there is no per-plant previous timestamp.
+    if (!doUpdate)
+        if (mSpecialEndTimeNs != 0)
+            mSpecialEndTimeNs = ReanimClock::Add(mSpecialEndTimeNs, static_cast<long long>(theLevelDeltaNs));
+    if (!doUpdate)
+        if (mNextBlinkTimeNs != 0)
+            mNextBlinkTimeNs = ReanimClock::Add(mNextBlinkTimeNs, static_cast<long long>(theLevelDeltaNs));
     if (doUpdate)
     {
-        UpdateAbilities(ownerNowNs, visualNowNs, animationNowNs);
-        Animate(ownerNowNs, animationNowNs);
+        UpdateAbilities(ownerNowNs, visualNowNs, animationNowNs, theLevelDeltaNs);
+        Animate(ownerNowNs, animationNowNs, theLevelDeltaNs);
 
         if (mPlantHealth < 0)
             Die(ownerNowNs, visualNowNs, animationNowNs);
@@ -3910,7 +3923,7 @@ Reanimation* Plant::AttachBlinkAnim(std::int64_t ownerNowNs, std::int64_t animat
 //0x464230
 void Plant::DoBlink(std::int64_t ownerNowNs, std::int64_t animationNowNs)
 {
-    mBlinkCountdown = 400 + Rand(400);
+    mNextBlinkTimeNs = ReanimClock::Add(ownerNowNs, (400 + Rand(400)) * 10'000'000LL);
 
     if (NotOnGround() || mShootingEndTimeNs != 0)
         return;
@@ -3935,7 +3948,7 @@ void Plant::DoBlink(std::int64_t ownerNowNs, std::int64_t animationNowNs)
     if (mSeedType == SeedType::SEED_WALLNUT || mSeedType == SeedType::SEED_TALLNUT ||
         mSeedType == SeedType::SEED_EXPLODE_O_NUT || mSeedType == SeedType::SEED_GIANT_WALLNUT)
     {
-        mBlinkCountdown = 1000 + Rand(1000);
+        mNextBlinkTimeNs = ReanimClock::Add(ownerNowNs, (1000 + Rand(1000)) * 10'000'000LL);
     }
 
     Reanimation* aBlinkReanim = AttachBlinkAnim(ownerNowNs, animationNowNs, aBodyReanim);
@@ -3963,7 +3976,7 @@ void Plant::EndBlink()
 }
 
 //0x464410
-void Plant::UpdateBlink(std::int64_t ownerNowNs, std::int64_t animationNowNs)
+void Plant::UpdateBlink(std::int64_t ownerNowNs, std::int64_t animationNowNs, std::uint64_t deltaNs)
 {
     if (mBlinkReanimID != ReanimationID::REANIMATIONID_NULL)
     {
@@ -3976,15 +3989,16 @@ void Plant::UpdateBlink(std::int64_t ownerNowNs, std::int64_t animationNowNs)
     }
 
     if (mIsAsleep)
-        return;
-
-    if (mBlinkCountdown > 0)
     {
-        mBlinkCountdown--;
-        if (mBlinkCountdown == 0)
-        {
-            DoBlink(ownerNowNs, animationNowNs);
-        }
+        if (mNextBlinkTimeNs != 0)
+            mNextBlinkTimeNs = ReanimClock::Add(mNextBlinkTimeNs, static_cast<long long>(deltaNs));
+        return;
+    }
+
+    if (mNextBlinkTimeNs != 0 && ownerNowNs >= mNextBlinkTimeNs)
+    {
+        mNextBlinkTimeNs = 0;
+        DoBlink(ownerNowNs, animationNowNs);
     }
 }
 
@@ -4351,7 +4365,7 @@ void Plant::UpdateShooting(std::int64_t ownerNowNs, std::int64_t visualNowNs, st
 }
 
 //0x464DB0
-void Plant::Animate(std::int64_t ownerNowNs, std::int64_t animationNowNs)
+void Plant::Animate(std::int64_t ownerNowNs, std::int64_t animationNowNs, std::uint64_t deltaNs)
 {
     if ((mSeedType == SeedType::SEED_CHERRYBOMB || mSeedType == SeedType::SEED_JALAPENO) && mApp->mGameMode != GameMode::GAMEMODE_LIMBO_ZEN_GARDEN)
     {
@@ -4362,6 +4376,8 @@ void Plant::Animate(std::int64_t ownerNowNs, std::int64_t animationNowNs)
 
     if (mSquished)
     {
+        if (mNextBlinkTimeNs != 0)
+            mNextBlinkTimeNs = ReanimClock::Add(mNextBlinkTimeNs, static_cast<long long>(deltaNs));
         mFrame = 0;
         return;
     }
@@ -4379,7 +4395,7 @@ void Plant::Animate(std::int64_t ownerNowNs, std::int64_t animationNowNs)
         AnimatePumpkin();
     }
 
-    UpdateBlink(ownerNowNs, animationNowNs);
+    UpdateBlink(ownerNowNs, animationNowNs, deltaNs);
 
     if (mAnimPing)
     {

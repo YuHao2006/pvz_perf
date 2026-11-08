@@ -1359,7 +1359,7 @@ void FrameDivisionSampleRuntime()
                 const bool reverse=rate<0;
                 if(age && ((reverse && cached==0) || (!reverse && cached==intervals))) continue;
                 animation.mAnimRate=rate;animation.mCurrentFrame=cached;
-                animation.mStartTimeNs=base-age;animation.mLastUpdateTimeNs=base;
+                animation.mStartTimeNs=base-age;animation.mFrameAgeNs = (base) - animation.mStartTimeNs;
                 for(std::int64_t delta:{-3*animation.mPeriodNs-7,-q-1,-q,-1LL,0LL,1LL,q-1,q,q+1,2*q,3*animation.mPeriodNs+7})
                     for(std::int64_t offset:{-1LL,0LL,1LL}) {
                         const auto now=base+delta;
@@ -1399,8 +1399,8 @@ void FrameDivisionSampleRuntime()
         {
             held.Advance((i%3==0?133'333'333:1'234'567)+i);
             Require(held.SamplePlayback().phaseNs==endpoint &&
-                held.mLastFrameNs==endpoint && held.mStartTimeNs==held.mLastUpdateTimeNs &&
-                held.SampleFrameAt(held.mLastUpdateTimeNs).ageNs==0,
+                held.mLastFrameNs==endpoint && held.mStartTimeNs==(held.mStartTimeNs + held.mFrameAgeNs) &&
+                held.SampleFrameAt((held.mStartTimeNs + held.mFrameAgeNs)).ageNs==0,
                 "Held endpoint accumulated age beyond its animation period");
             Require(held.TimedEventCount(1,2)==0 && held.TimedEventCount(1,1)==0,
                 "Held endpoint emitted a repeated animation event");
@@ -1411,7 +1411,7 @@ void FrameDivisionSampleRuntime()
             V7SaveSchema::Write(state,24,held.mPeriodNs,8);
             V7SaveSchema::Write(state,40,held.mLastFrameNs,8);
             V7SaveSchema::Write(state,56,held.mHasLastFrame,1);
-            V7SaveSchema::Write(state,64,held.mLastUpdateTimeNs,8);
+            V7SaveSchema::Write(state,64,held.mFrameAgeNs,8);
             V7SaveSchema::Validate(LevelSaveFormat::RecordKind::Reanimation,state);
             ++heldChecks;
         }
@@ -1442,7 +1442,7 @@ void ExplicitReanimationOwnerTime(LawnApp& app)
         ReanimationID first, second;
         ~RemoveAnimations() { app.RemoveReanimation(first); app.RemoveReanimation(second); }
     } remove{app,app.ReanimationGetID(first),app.ReanimationGetID(second)};
-    Require(first->mLastUpdateTimeNs==start && second->mLastUpdateTimeNs==start,
+    Require((first->mStartTimeNs + first->mFrameAgeNs)==start && (second->mStartTimeNs + second->mFrameAgeNs)==start,
         "Explicit animation creation read a holder clock");
     for (auto* animation:{first,second})
         animation->PlayReanim(ReanimTrackId::anim_idle,REANIM_LOOP,0,12);
@@ -1471,7 +1471,7 @@ void ExplicitReanimationOwnerTime(LawnApp& app)
     second->PrepareTimeAt(prepared);
     holder.mVisualTimeNs=-1'234'567'890'123;
     second->ApplyRate(7.5f);
-    Require(first->mLastUpdateTimeNs==prepared && second->mLastUpdateTimeNs==prepared &&
+    Require((first->mStartTimeNs + first->mFrameAgeNs)==prepared && (second->mStartTimeNs + second->mFrameAgeNs)==prepared &&
         first->SamplePlayback().phaseNs==second->SamplePlayback().phaseNs && preparedPhase>0,
         "Rate mutation did not use the prepared owner time");
     first->Seek(1,3);
@@ -1479,12 +1479,12 @@ void ExplicitReanimationOwnerTime(LawnApp& app)
     second->Seek(1,3);
     const auto phase=first->SamplePlayback().phaseNs;
     Require(phase==first->mPeriodNs/3 && second->SamplePlayback().phaseNs==phase &&
-        first->mLastUpdateTimeNs==prepared && second->mLastUpdateTimeNs==prepared,
+        (first->mStartTimeNs + first->mFrameAgeNs)==prepared && (second->mStartTimeNs + second->mFrameAgeNs)==prepared,
         "Seek rebound playback to a holder clock instead of prepared owner time");
     constexpr std::int64_t destination=90'123'456'789;
     holder.BindAnimationTime(*first,ReanimTimeDomain::Battle,destination);
     Require(holder.mTimeDomains[holder.mReanimations.DataArrayIndexOf(first)]==ReanimTimeDomain::Battle &&
-        first->mLastUpdateTimeNs==destination && first->SamplePlayback().phaseNs==phase,
+        (first->mStartTimeNs + first->mFrameAgeNs)==destination && first->SamplePlayback().phaseNs==phase,
         "Switching clock domains changed the animation phase");
     constexpr std::int64_t delta=123'456'789;
     first->UpdateAt(destination+delta);
@@ -1504,15 +1504,15 @@ void ExplicitReanimationOwnerTime(LawnApp& app)
     Require(blendTrack>=0,"Blend fixture has no visible track");
     auto& blend=first->mTrackInstances[blendTrack];
     Require(blend.mBlendDurationNs==250'000'000,"Blend duration is not nanoseconds");
-    const auto blendStart=first->mLastUpdateTimeNs,blendEnd=blend.mBlendEndTimeNs;
+    const auto blendStart=(first->mStartTimeNs + first->mFrameAgeNs),blendEnd=blend.mBlendEndTimeNs;
     first->UpdateAt(blendStart+60'123'456);
     first->UpdateAt(blendStart+60'123'456);
     Require(blend.mBlendEndTimeNs==blendEnd,"Update mutated blend deadline");
-    const auto remaining=blend.mBlendEndTimeNs-first->mLastUpdateTimeNs;
+    const auto remaining=blend.mBlendEndTimeNs-(first->mStartTimeNs + first->mFrameAgeNs);
     first->RebaseTime(123'000'000'000);
-    Require(blend.mBlendEndTimeNs-first->mLastUpdateTimeNs==remaining,
+    Require(blend.mBlendEndTimeNs-(first->mStartTimeNs + first->mFrameAgeNs)==remaining,
         "Rebase changed blend progress");
-    first->UpdateAt(first->mLastUpdateTimeNs+remaining);
+    first->UpdateAt((first->mStartTimeNs + first->mFrameAgeNs)+remaining);
     Require(blend.mBlendEndTimeNs==0,"Expired blend deadline did not become inactive");
     first->RebaseTime(-9'000'000'000);
     Require(blend.mBlendEndTimeNs==0,"Inactive blend revived after backward rebase");
@@ -1550,7 +1550,7 @@ void BoardlessPlantPreviewRuntime(LawnApp& app)
             Require(preview.mBoard==nullptr && !preview.mIsOnBoard,
                 "Boardless preview unexpectedly acquired a Board");
             auto* body=app.ReanimationGet(preview.mBodyReanimID);
-            Require(body->mLastUpdateTimeNs==start && holder.mTimeDomains[holder.mReanimations.DataArrayIndexOf(body)]==ReanimTimeDomain::Visual,
+            Require((body->mStartTimeNs + body->mFrameAgeNs)==start && holder.mTimeDomains[holder.mReanimations.DataArrayIndexOf(body)]==ReanimTimeDomain::Visual,
                 "Boardless preview initialization ignored explicit visual time");
             const auto phase=body->SamplePlayback().phaseNs;
             for (const std::int64_t elapsed:{10'000'000LL,123'456'789LL,987'654'321LL})
@@ -1562,7 +1562,7 @@ void BoardlessPlantPreviewRuntime(LawnApp& app)
                 preview.Draw(now,&graphics);
                 if (seed==SEED_MAGNETSHROOM)
                     preview.DrawMagnetItems(now,&graphics);
-                Require(preview.mBoard==nullptr && body->mLastUpdateTimeNs==now &&
+                Require(preview.mBoard==nullptr && (body->mStartTimeNs + body->mFrameAgeNs)==now &&
                     holder.mTimeDomains[holder.mReanimations.DataArrayIndexOf(body)]==ReanimTimeDomain::Visual,
                     "Boardless preview update/draw did not retain its explicit visual timeline");
             }
@@ -1639,7 +1639,7 @@ void CreditsMovieOwnerClockRuntime(TestApp& app)
     const auto firstExpected=movie->SamplePlaybackAt(start+10'000'000).phaseNs;
     credits.UpdateMovie();
     Require(clocks.mVisualTimeNs==start+10'000'000 &&
-        movie->mLastUpdateTimeNs==clocks.mVisualTimeNs &&
+        (movie->mStartTimeNs + movie->mFrameAgeNs)==clocks.mVisualTimeNs &&
         movie->SamplePlayback().phaseNs==firstExpected,
         "First Credits movie step did not own its supplied time");
     const auto firstPhase=movie->SamplePlayback().phaseNs;
@@ -1681,7 +1681,7 @@ void CreditsMovieOwnerClockRuntime(TestApp& app)
         app.UpdateFrames();
         credits.Update();
     }
-    Require(clocks.mVisualTimeNs==pausedTime && movie->mLastUpdateTimeNs==pausedTime &&
+    Require(clocks.mVisualTimeNs==pausedTime && (movie->mStartTimeNs + movie->mFrameAgeNs)==pausedTime &&
         movie->SamplePlayback().phaseNs==pausedPhase &&
         credits.mBlinkCountdown.mNanoseconds==pausedBlink,
         "Paused Credits advanced its movie clock, pose or blink schedule");
@@ -1948,7 +1948,7 @@ void SurvivalOwnerClockRuntime(TestApp& app, int hz)
     auto* preview=board.AddZombieInRow(ZOMBIE_NORMAL,2,Zombie::ZOMBIE_WAVE_CUTSCENE);
     auto* previewBody=app.ReanimationGet(preview->mBodyReanimID);
     Require(holder.mTimeDomains[holder.mReanimations.DataArrayIndexOf(previewBody)]==ReanimTimeDomain::Visual &&
-        previewBody->mLastUpdateTimeNs==holder.mVisualTimeNs,
+        (previewBody->mStartTimeNs + previewBody->mFrameAgeNs)==holder.mVisualTimeNs,
         "Street preview was created in the battle epoch");
     const auto previewPhase=previewBody->SamplePlayback().phaseNs;
     TodParticleSystem* cutsceneParticle=nullptr;
@@ -1984,7 +1984,7 @@ void SurvivalOwnerClockRuntime(TestApp& app, int hz)
     Require(body->SamplePlayback().phaseNs==phase, "Repick advanced retained animation phase");
     Require(plant->mNextLaunchTimeNs==deadline, "Repick changed the plant launch deadline");
     Require(holder.mTimeDomains[holder.mReanimations.DataArrayIndexOf(previewBody)]==ReanimTimeDomain::Visual &&
-        previewBody->mLastUpdateTimeNs==holder.mVisualTimeNs &&
+        (previewBody->mStartTimeNs + previewBody->mFrameAgeNs)==holder.mVisualTimeNs &&
         previewBody->SamplePlayback().phaseNs!=previewPhase,
         "Street preview did not consume the Board-supplied visual time");
     Require(cutsceneParticle->mLastUpdateTimeNs==holder.mVisualTimeNs &&
@@ -2026,7 +2026,7 @@ void SurvivalOwnerClockRuntime(TestApp& app, int hz)
     holder.mVisualTimeNs+=step;
     board.Update();
     Require(board.mLevelTimeNs==battleTime+step && holder.mTimeDomains[holder.mReanimations.DataArrayIndexOf(body)]==ReanimTimeDomain::Battle &&
-        body->mLastUpdateTimeNs==static_cast<std::int64_t>(board.mLevelTimeNs) &&
+        (body->mStartTimeNs + body->mFrameAgeNs)==static_cast<std::int64_t>(board.mLevelTimeNs) &&
         body->SamplePlayback().phaseNs!=phase,
         "Resuming survival did not advance exactly one battle step");
     Require(portalParticle->mLastUpdateTimeNs==static_cast<std::int64_t>(board.mLevelTimeNs) &&
@@ -2226,19 +2226,19 @@ void PauseDialogWallClockRuntime(TestApp& app, Board& board)
     Require(dialog && dialog->mReanimation->mReanim,
         "Pause dialog did not create its newspaper animation");
     auto& animation=*dialog->mReanimation->mReanim;
-    Require(board.mPaused && animation.mLastUpdateTimeNs>=before &&
-        animation.mLastUpdateTimeNs<=wallNow(),
+    Require(board.mPaused && (animation.mStartTimeNs + animation.mFrameAgeNs)>=before &&
+        (animation.mStartTimeNs + animation.mFrameAgeNs)<=wallNow(),
         "Pause newspaper was created on a frozen game clock instead of steady_clock");
     // Simulate time since the preceding UI update without sleeping or advancing
     // either game clock. The real widget update must sample the wall clock.
     animation.RebaseTime(wallNow()-123'456'789);
-    const auto previous=animation.mLastUpdateTimeNs;
+    const auto previous=(animation.mStartTimeNs + animation.mFrameAgeNs);
     const auto phase=animation.SamplePlayback().phaseNs;
     const auto boardTime=board.mLevelTimeNs;
     Sexy::ApplySimulationStep(0);
     app.UpdateFrames();
-    Require(animation.mLastUpdateTimeNs>=previous+123'456'789 &&
-        animation.mLastUpdateTimeNs<=wallNow() && animation.SamplePlayback().phaseNs!=phase,
+    Require((animation.mStartTimeNs + animation.mFrameAgeNs)>=previous+123'456'789 &&
+        (animation.mStartTimeNs + animation.mFrameAgeNs)<=wallNow() && animation.SamplePlayback().phaseNs!=phase,
         "Pause newspaper did not advance with wall time through the actual widget update");
     Require(board.mLevelTimeNs==boardTime && clocks.mVisualTimeNs==7'000'000'000 &&
         clocks.mBattleTimeNs==9'000'000'000,
@@ -2510,12 +2510,12 @@ void MinigameBehaviorRuntime(TestApp& app)
         reference->UpdateAt((i+1)*speedStep);
         Require(independent->SamplePlayback().phaseNs==reference->SamplePlayback().phaseNs &&
             child->SamplePlayback().phaseNs==reference->SamplePlayback().phaseNs &&
-            child->mLastUpdateTimeNs==static_cast<std::int64_t>(board.mLevelTimeNs) &&
+            (child->mStartTimeNs + child->mFrameAgeNs)==static_cast<std::int64_t>(board.mLevelTimeNs) &&
             childParticle->mLastUpdateTimeNs==static_cast<std::int64_t>(board.mLevelTimeNs),
             "Speed mode failed to preserve the independent animation/attachment clock tree");
         Require(board.mLevelTimeNs==(i+1)*2*speedStep && clocks.mBattleTimeNs==board.mLevelTimeNs,
             "Speed mode repeated logic without advancing its actor timestamps");
-        Require(body->mLastUpdateTimeNs==static_cast<std::int64_t>(board.mLevelTimeNs),
+        Require((body->mStartTimeNs + body->mFrameAgeNs)==static_cast<std::int64_t>(board.mLevelTimeNs),
             "Speed-mode plant animation missed the second actor pass");
         Require(pool.mSampleTimeNs-pool.mBirthTimeNs==static_cast<std::int64_t>((i+1)*speedStep),
             "Speed mode doubled the independent water phase");
@@ -2770,6 +2770,35 @@ void PlantAttackCatalogRuntime(TestApp& app)
     profile.mLevel=31;profile.mFinishedAdventure=1;
     app.mPlayerInfo=&profile;app.mZenGarden=&garden;
     app.mGameMode=GAMEMODE_ADVENTURE;app.mGameScene=SCENE_PLAYING;
+    for (const auto step : {4'166'667ULL, 10'000'000ULL, 33'345'678ULL})
+    {
+        Board board(&app);app.mBoard=&board;
+        constexpr long long birth=31'234'567'890LL;
+        board.mLevelTimeNs=birth;clocks.mBattleTimeNs=birth;
+        auto* plant=board.AddPlant(2,1,SEED_SUNFLOWER,SEED_NONE);
+        plant->mNextLaunchTimeNs=birth+100'000'000'000LL;
+        const auto due=birth+static_cast<long long>(step)+123;
+        plant->mSpecialEndTimeNs=due;
+        Sexy::ApplySimulationStep(step);
+        plant->UpdateAbilities(birth+step,birth+step,birth+step,step);
+        plant->UpdateAbilities(birth+step,birth+step,birth+step,0);
+        Require(plant->mSpecialEndTimeNs==due,"Special deadline changed on an ordinary or duplicate update");
+        plant->UpdateAbilities(due+987,birth,birth,1110);
+        Require(plant->mSpecialEndTimeNs==0,"Special deadline did not consume an overshot expiry");
+        plant->mNextBlinkTimeNs=due;
+        plant->UpdateBlink(birth+step,birth,step);
+        plant->UpdateBlink(birth+step,birth,0);
+        Require(plant->mNextBlinkTimeNs==due,"Blink deadline changed before expiry");
+        plant->UpdateBlink(due+987,due+987,1110);
+        Require(plant->mNextBlinkTimeNs>due+987,"Blink deadline did not reschedule after an overshot expiry");
+        plant->mSpecialEndTimeNs=due;plant->mNextBlinkTimeNs=due;
+        plant->mIsAsleep=true;
+        plant->UpdateAbilities(birth+step,birth,birth,step);
+        plant->UpdateBlink(birth+step,birth,step);
+        Require(plant->mSpecialEndTimeNs==due+step&&plant->mNextBlinkTimeNs==due+step,
+            "Local sleep did not preserve the two Plant deadline ages");
+    }
+    std::cout<<"PASS Plant special/blink deadlines: duplicate timestamps, overshot expiry and local sleep at three step sizes\n";
     if(const char* saved=std::getenv("PVZ_V5_BASELINE"))
     {
         Board board(&app);app.mBoard=&board;
@@ -2968,7 +2997,7 @@ void PlantAttackCatalogRuntime(TestApp& app)
             Require(shots.size()>=10,"Winter Melon stopped firing after its first volleys");
             Require(plant->mShootingEndTimeNs==0 && body->mLoopType==REANIM_LOOP && body->mAnimRate>0,
                 "Winter Melon remained in a held attack after its timer expired");
-            Require(body->mLastUpdateTimeNs==static_cast<long long>(board.mLevelTimeNs),"Winter Melon animation clock stopped following its owner");
+            Require((body->mStartTimeNs + body->mFrameAgeNs)==static_cast<long long>(board.mLevelTimeNs),"Winter Melon animation clock stopped following its owner");
             std::cout<<"PASS repeated Winter Melon Hz="<<hz<<" shots="<<shots.size()<<" idle restored\n";
         }
     }
@@ -5611,7 +5640,7 @@ void ActorBirthClockRuntime(TestApp& app)
                 const auto expectedDomain=animation->mIsAttachment?domain:ReanimTimeDomain::Visual;
                 const auto expectedTime=animation->mIsAttachment?animationNow:holder.mVisualTimeNs;
                 Require(holder.mTimeDomains[holder.mReanimations.DataArrayIndexOf(animation)]==expectedDomain&&
-                    animation->mLastUpdateTimeNs==expectedTime,"Actor birth left its animation in a different clock until the first update");
+                    (animation->mStartTimeNs + animation->mFrameAgeNs)==expectedTime,"Actor birth left its animation in a different clock until the first update");
             }
         };
         try
@@ -8171,7 +8200,7 @@ void StorePauseClockRuntime(TestApp& app, DecodeOnlySoundManager& sounds)
     if(gUiRulesOnly) {ChallengeUnlockRulesRuntime(app);SelectorTrophyTouchRuntime(app);AlmanacRulesRuntime(app);AwardRulesRuntime(app);return;}
     if(gAwardRulesOnly) {AwardRulesRuntime(app);return;}
     if(gAlmanacClockOnly) {AlmanacRulesRuntime(app,true);return;}
-    if(gActorBirthOnly) {ExplicitReanimationOwnerTime(app);ActorBirthClockRuntime(app);return;}
+    if(gActorBirthOnly) {FrameDivisionSampleRuntime();ExplicitReanimationOwnerTime(app);ActorBirthClockRuntime(app);return;}
     if(gCreditsOnly) {CreditsMovieOwnerClockRuntime(app);return;}
     if(gLossRulesOnly) {LossRulesRuntime(app);return;}
     if(gOpeningRulesOnly) {CheckOpeningFlows(app,app.fixtureNestedPump,[](LawnApp& a){static_cast<TestApp&>(a).ProcessSafeDeleteList();});return;}

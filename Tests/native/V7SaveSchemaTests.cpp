@@ -79,7 +79,7 @@ void ReanimationMigration()
     Float(canonical, 168, .75f);
     const auto original = canonical;
     auto state = V7SaveSchema::FromHistorical(Kind::Reanimation, canonical, canonical);
-    Require(state.size() == 72 && Get(state, 0, 4) == 0 && Signed(state, 64) == 0,
+    Require(state.size() == 72 && Get(state, 0, 4) == 0 && Signed(state, 64) == 38'390'379,
             "Reanimation frame-clock draft domain/sample differs");
     // Exact authored float32 gives original period 3531914860ns. Ordinary
     // playback has 46 intervals: q=76780757, period=q*46=3531914822.
@@ -255,12 +255,12 @@ void ExactStateValidation()
         Set(bad, offset, value, width);
         Reject([&] { V7SaveSchema::Validate(kind, bad); }, message);
     };
-    static_assert(LevelSaveFormat::DAT64_VERSION == 5 && LevelSaveFormat::DAT64_MINOR_VERSION == 0);
-    static_assert(LevelSaveFormat::DAT64_SCHEMA_ID == 0x10746);
+    static_assert(LevelSaveFormat::DAT64_VERSION == 5 && LevelSaveFormat::DAT64_MINOR_VERSION == 1);
+    static_assert(LevelSaveFormat::DAT64_SCHEMA_ID == 0x10747);
     Bytes animation(72);
     Set(animation, 0, 1, 4);
     Set(animation, 4, static_cast<std::uint64_t>(-987'654'321LL));
-    Set(animation, 64, 12'345'678'901LL);
+    Set(animation, 64, 9);
     Set(animation, 12, 5, 4); Set(animation, 16, 10); Set(animation, 24, 100); Set(animation, 40, 25);
     Set(animation, 56, 1, 1);
     V7SaveSchema::Validate(Kind::Reanimation, animation);
@@ -273,15 +273,15 @@ void ExactStateValidation()
     rejectField(Kind::Reanimation, animation, 40, 101, "Previous phase beyond period accepted");
     rejectField(Kind::Reanimation, animation, 56, 2, "Invalid animation bool accepted", 1);
     rejectField(Kind::Reanimation, animation, 0, 2, "Invalid animation clock domain accepted", 4);
-    rejectField(Kind::Reanimation, animation, 64, UINT64_MAX, "Negative animation clock snapshot accepted");
-    rejectField(Kind::Reanimation, animation, 4, 12'345'678'902LL,
-        "Frame start after its saved clock snapshot accepted");
-    rejectField(Kind::Reanimation, animation, 4, std::uint64_t(INT64_MIN),
-        "Frame age beyond signed nanosecond range accepted");
+    rejectField(Kind::Reanimation, animation, 64, UINT64_MAX, "Negative keyframe remainder accepted");
+    rejectField(Kind::Reanimation, animation, 64, 10,
+        "Keyframe remainder reached its period without normalization");
+    rejectField(Kind::Reanimation, animation, 4, std::uint64_t(INT64_MAX),
+        "Birth plus remainder overflow accepted");
     Require(Get(animation, 0, 4) == 1 && Signed(animation, 4) == -987'654'321LL &&
         Integer(animation, 12) == 5 && Signed(animation, 16) == 10 &&
-        Signed(animation, 64) == 12'345'678'901LL,
-        "v4 frame birth/index/period/domain/sample offsets differ from wire");
+        Signed(animation, 64) == 9,
+        "v5 frame birth/index/period/domain/remainder offsets differ from wire");
     Reject([&] { V7SaveSchema::Validate(Kind::Reanimation, Bytes(68)); },
         "Retired v3.6 animation tail was accepted as current");
 

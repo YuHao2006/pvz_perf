@@ -73,7 +73,7 @@ struct Scenario {
     void Reset() {
         animation.mDead=false;
         animation.mCurrentFrame=0; animation.mStartTimeNs=0;
-        animation.mRootDisplacement=0; animation.mCycleCrossings=0; animation.mLastUpdateTimeNs=0;
+        animation.mRootDisplacement=0; animation.mCycleCrossings=0; animation.mFrameAgeNs = (0) - animation.mStartTimeNs;
         animation.mLastFrameNs=0;
         animation.mHasLastFrame=false; animation.mPendingTiming=false;
         animation.mLoopCount=0; animation.mPlaybackGeneration=1;
@@ -89,7 +89,7 @@ struct Scenario {
         animation.mStartTimeNs=now-phase%q;
         animation.mRootDisplacement=double(cycles) * (double(keys[start+count-1].mTransX)-keys[start].mTransX) * animation.mRootFrameScale;
         animation.mCycleCrossings=0;
-        animation.mLastUpdateTimeNs=now;
+        animation.mFrameAgeNs = (now) - animation.mStartTimeNs;
         old.start=now-phase;old.cycles=cycles;old.lastTime=now;
     }
 };
@@ -154,7 +154,7 @@ __declspec(noinline) unsigned long long NewUpdateZombieRoot(Scenario& s,long lon
 }
 __declspec(noinline) unsigned long long NewUpdateOnly(Scenario& s,long long) {
     s.animation.Advance(StepNs);
-    return static_cast<unsigned long long>(s.animation.mLastUpdateTimeNs) ^
+    return static_cast<unsigned long long>((s.animation.mStartTimeNs + s.animation.mFrameAgeNs)) ^
         std::bit_cast<unsigned long long>(s.animation.mRootDisplacement) ^ s.animation.mLoopCount;
 }
 __declspec(noinline) unsigned long long NewUpdateBoth(Scenario& s,long long) {

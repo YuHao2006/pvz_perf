@@ -24,7 +24,7 @@ inline constexpr std::array<std::uint8_t, 8> DAT64_MAGIC = {
 inline constexpr std::uint32_t DAT64_V1_VERSION = 1;
 inline constexpr std::uint32_t DAT64_V2_VERSION = 2;
 inline constexpr std::uint32_t DAT64_VERSION = 5;
-inline constexpr std::uint32_t DAT64_MINOR_VERSION = 0;
+inline constexpr std::uint32_t DAT64_MINOR_VERSION = 1;
 inline constexpr std::uint32_t DAT64_HEADER_SIZE = 48;
 inline constexpr std::uint32_t DAT64_AUTHORITY_BUILD = 1073;
 inline constexpr std::uint32_t DAT64_FLAG_LITTLE_ENDIAN = 1U << 0;
@@ -33,7 +33,7 @@ inline constexpr std::uint32_t DAT64_V1_FLAGS = DAT64_FLAG_LITTLE_ENDIAN;
 inline constexpr std::uint32_t DAT64_FLAGS = DAT64_FLAG_LITTLE_ENDIAN | DAT64_FLAG_NANOSECONDS;
 inline constexpr std::uint32_t DAT64_V1_SCHEMA_ID = 0x00010731U;
 inline constexpr std::uint32_t DAT64_V2_SCHEMA_ID = 0x00010732U;
-inline constexpr std::uint32_t DAT64_SCHEMA_ID = 0x00010746U;
+inline constexpr std::uint32_t DAT64_SCHEMA_ID = 0x00010747U;
 inline constexpr std::uint64_t DAT64_END_MARKER = 0xB4A9ABBEBBA5A9AFULL;
 
 // Header bytes, all little-endian except the literal magic:

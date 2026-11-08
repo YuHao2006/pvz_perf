@@ -94,7 +94,7 @@ __declspec(noinline) float LegacyStep(Scenario& s, LegacyState& state, long long
     return state.x;
 }
 __declspec(noinline) float CurrentStep(Scenario& s, LegacyState&, long long now) {
-    s.animation.mLastUpdateTimeNs = now;
+    s.animation.mFrameAgeNs = (now) - s.animation.mStartTimeNs;
     return float(Origin + s.animation.RootMotion(ReanimTrackId::_ground, -1));
 }
 __declspec(noinline) float ResolvedStep(Scenario& s, LegacyState&, long long now) {
@@ -104,7 +104,7 @@ __declspec(noinline) float CurrentLocalStep(Scenario& s, LegacyState&, long long
     // Measure the common period-local anchor separately. Same input modulo in
     // both before/after binaries; this is not an extra production operation.
     now %= s.animation.mPeriodNs;
-    s.animation.mLastUpdateTimeNs = now;
+    s.animation.mFrameAgeNs = (now) - s.animation.mStartTimeNs;
     return float(Origin + s.animation.RootMotion(ReanimTrackId::_ground, -1));
 }
 using Step = float (*)(Scenario&, LegacyState&, long long);
@@ -151,7 +151,7 @@ void Accuracy(Scenario& s, FILE* output) {
             phase += seconds * s.rate / s.count;
             while (phase >= 1) phase -= 1;
             legacy -= LegacyVelocity(s, phase, seconds);
-            s.animation.mLastUpdateTimeNs = now;
+            s.animation.mFrameAgeNs = (now) - s.animation.mStartTimeNs;
             current = float(Origin + s.animation.RootMotion(ReanimTrackId::_ground, -1));
         }
         const auto reference = Reference(s, duration);
@@ -187,7 +187,7 @@ int main(int argc, char** argv) {
         for (auto& scenario : scenarios) {
             for (int i = 0; i < 1024; ++i) {
                 const auto now = scenario.animation.mPeriodNs * 7 / 3 + i * 9876543LL;
-                scenario.animation.mLastUpdateTimeNs = now;
+                scenario.animation.mFrameAgeNs = (now) - scenario.animation.mStartTimeNs;
                 Require(std::abs(scenario.animation.RootMotion(ReanimTrackId::_ground, -1) - ResolvedRoot(scenario, now)) < 1e-9,
                     "Resolved evaluator differs from actual RootMotion");
             }

@@ -223,7 +223,7 @@ void GridItem::DrawStinky(Graphics* g)
             const bool reverse = aStinkyReanim->mAnimRate < 0;
             aStinkyReanim->mCurrentFrame = int(phase / q + (reverse && remainder != 0));
             const auto age = reverse && remainder != 0 ? q - remainder : remainder;
-            const auto now = aStinkyReanim->mLastUpdateTimeNs;
+            const auto now = (aStinkyReanim->mStartTimeNs + aStinkyReanim->mFrameAgeNs);
             aStinkyReanim->mStartTimeNs = ReanimClock::Subtract(now, age);
 
             g->mTransX = aOriginalTransX + aDiffX;

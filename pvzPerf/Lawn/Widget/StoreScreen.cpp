@@ -996,7 +996,7 @@ void StoreScreen::RemovedFromManager(WidgetManager* theWidgetManager)
         while (holder.mReanimations.IterateNext(reanimation))
         {
             if (!reanimation->mDead && holder.mTimeDomains[holder.mReanimations.DataArrayIndexOf(reanimation)] == ReanimTimeDomain::Visual &&
-                reanimation->mLastUpdateTimeNs != holder.mVisualTimeNs)
+                (reanimation->mStartTimeNs + reanimation->mFrameAgeNs) != holder.mVisualTimeNs)
                 reanimation->RebaseTime(holder.mVisualTimeNs);
         }
     }

@@ -37,9 +37,9 @@ void VisitTimeCounterOffsets(Fn&& visit)
     }
     else if constexpr (std::is_same_v<Type, Plant>)
     {
-        TIMER(mAnimCounter); visit(offsetof(Type, mDisappearEndTimeNs), false); TIMER(mDoSpecialCountdown);
+        TIMER(mAnimCounter); visit(offsetof(Type, mDisappearEndTimeNs), false); visit(offsetof(Type, mSpecialEndTimeNs), false);
         TIMER(mStateCountdown); TIMER(mZenProductionCountdown); visit(offsetof(Type, mShootingEndTimeNs), false);
-        TIMER(mBlinkCountdown); visit(offsetof(Type, mRecentlyEatenEndTimeNs), false); visit(offsetof(Type, mEatenFlashEndTimeNs), false);
+        visit(offsetof(Type, mNextBlinkTimeNs), false); visit(offsetof(Type, mRecentlyEatenEndTimeNs), false); visit(offsetof(Type, mEatenFlashEndTimeNs), false);
         visit(offsetof(Type, mBeghouledFlashEndTimeNs), false); visit(offsetof(Type, mWakeUpEndTimeNs), false);
         visit(offsetof(Type, mFramePeriodNs), false); visit(offsetof(Type, mLaunchPeriodNs), false);
     }

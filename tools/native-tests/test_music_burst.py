@@ -216,13 +216,12 @@ int main()
         // completes; controller deadlines retain their remaining durations.
         music.mMusicBurstState = MUSIC_BURST_OFF;
         music.StartBurst();
-        music.mLastUpdateTimeNs = app.mApplicationTimeNs;
         music.mFadeOutDurationNs = 1'000'000'000;
         music.mFadeOutEndTimeNs = app.mApplicationTimeNs + music.mFadeOutDurationNs;
         const auto burstRemaining = music.mBurstEndTimeNs - app.mApplicationTimeNs;
         board.mPaused = true;
         app.mApplicationTimeNs += 2'000'000'000;
-        music.MusicUpdate(app.mApplicationTimeNs);
+        music.MusicUpdate(app.mApplicationTimeNs, 2'000'000'000ULL);
         Require(music.mFadeOutEndTimeNs == 0, "Board pause stalled ordinary music fade");
         Require(music.mBurstEndTimeNs - app.mApplicationTimeNs == burstRemaining,
             "Board pause consumed burst controller time");

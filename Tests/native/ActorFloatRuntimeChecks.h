@@ -347,13 +347,13 @@ inline void SharedClockConsumers(Board& board)
     const auto oldWave = board.mCurrentWave, oldWaves = board.mNumWaves;
     const auto oldWidth = board.mProgressMeterWidth;
     const auto oldHealth = board.mZombieHealthToNextWave;
-    const auto oldCountdown = board.mZombieCountDown, oldStart = board.mZombieCountDownStart;
+    const auto oldCountdown = board.mNextZombieWaveTimeNs, oldStart = board.mZombieWaveCountdownDurationNs;
     const auto oldFlag = board.mFlagRaiseCounter;
     board.mCurrentWave = 2;
     board.mNumWaves = 10;
     board.mZombieHealthToNextWave = -1;
-    board.mZombieCountDownStart = 100;
-    board.mZombieCountDown = 0;
+    board.mZombieWaveCountdownDurationNs = 1'000'000'000;
+    board.mNextZombieWaveTimeNs = 0;
     board.mFlagRaiseCounter = 4;
     board.mProgressMeterWidth = 0;
     board.mLevelTimeNs = 49'999'999;
@@ -377,8 +377,8 @@ inline void SharedClockConsumers(Board& board)
     board.mNumWaves = oldWaves;
     board.mProgressMeterWidth = oldWidth;
     board.mZombieHealthToNextWave = oldHealth;
-    board.mZombieCountDown = oldCountdown;
-    board.mZombieCountDownStart = oldStart;
+    board.mNextZombieWaveTimeNs = oldCountdown;
+    board.mZombieWaveCountdownDurationNs = oldStart;
     board.mFlagRaiseCounter = oldFlag;
 
     GameObject object;

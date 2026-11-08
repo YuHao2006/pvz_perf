@@ -386,6 +386,15 @@ template<class T> std::vector<LegacyByte> WriteSaveRecord(const T& value)
                 }
             std::uint64_t result;
             const auto native = NativeTimeOffset<T>(field);
+            if constexpr (std::is_same_v<T, Board>)
+            {
+                if (native == offsetof(Board, mNextZombieWaveTimeNs))
+                    return static_cast<std::uint64_t>(ReanimClock::Subtract(
+                        value.mNextZombieWaveTimeNs, static_cast<std::int64_t>(value.mLevelTimeNs)));
+                if (native == offsetof(Board, mHugeWaveCountDown) && value.mHugeWaveCountDown.mNanoseconds > 0)
+                    return static_cast<std::uint64_t>(std::max<std::int64_t>(0, ReanimClock::Subtract(
+                        value.mNextZombieWaveTimeNs, static_cast<std::int64_t>(value.mLevelTimeNs))));
+            }
             std::memcpy(&result, ObjectBytes(value) + native, 8);
             if constexpr (SaveClockProjection::Supported<T>)
                 result = static_cast<std::uint64_t>(SaveClockProjection::Encode(value, native, static_cast<std::int64_t>(result)));
@@ -472,7 +481,9 @@ template<class T> void ReadSaveRecord(T& value, const LegacyByte* source, Reanim
         std::memcpy(ObjectBytes(value) + offset, &decoded, 8);
         if constexpr (std::is_same_v<T, Board>)
         {
-            if (offset != offsetof(Board, mLevelTimeNs))
+            if (offset != offsetof(Board, mLevelTimeNs) &&
+                offset != offsetof(Board, mNextZombieWaveTimeNs) &&
+                offset != offsetof(Board, mZombieWaveCountdownDurationNs))
                 std::memcpy(ObjectBytes(value) + offset + 8, &ns, 8);
         }
         else if constexpr (!std::is_same_v<T, TodParticle> && !std::is_same_v<T, TodParticleEmitter>)
@@ -482,6 +493,14 @@ template<class T> void ReadSaveRecord(T& value, const LegacyByte* source, Reanim
             std::memcpy(ObjectBytes(value) + offset + 8, &ns, 8);
         }
     }
+    if constexpr (std::is_same_v<T, Board>)
+        // The wire retains signed remaining nanoseconds, including overdue
+        // deadlines. In an active warning its own remaining-time field is the
+        // effective delay; historical saves held the ordinary counter near 5.
+        // Rebase only after all fields, including the Board clock, are decoded.
+        value.mNextZombieWaveTimeNs = ReanimClock::Add(
+            value.mHugeWaveCountDown.mNanoseconds > 0 ? value.mHugeWaveCountDown.mNanoseconds : value.mNextZombieWaveTimeNs,
+            static_cast<std::int64_t>(value.mLevelTimeNs));
     if constexpr (std::is_base_of_v<GameObject, T>)
     {
         const auto pixel = [&](size_t offset) {

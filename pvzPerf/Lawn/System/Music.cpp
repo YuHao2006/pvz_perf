@@ -603,7 +603,6 @@ void Music::UpdateMusicBurst(std::int64_t nowNs)
 
 	int aPackedOrderMain = GetMusicOrder(mCurMusicFileMain);
 	const auto burstRemainingNs = std::max<std::int64_t>(0, ReanimClock::Subtract(mBurstEndTimeNs, nowNs));
-	const auto drumsRemainingNs = std::max<std::int64_t>(0, ReanimClock::Subtract(mDrumsEndTimeNs, nowNs));
 
 	float aFadeTrackVolume = 0.0f;
 	float aDrumsVolume = 0.0f;
@@ -699,6 +698,11 @@ void Music::UpdateMusicBurst(std::int64_t nowNs)
 			aOrderDrum++;
 	}
 
+	// The burst transition above can start the night layer's eight-second
+	// release in this very update. Read its deadline after that transition;
+	// the expired previous deadline would immediately mute the climax while
+	// the calm layer is still silent, leaving several seconds with no music.
+	const auto drumsRemainingNs = std::max<std::int64_t>(0, ReanimClock::Subtract(mDrumsEndTimeNs, nowNs));
 	switch (mMusicDrumsState)
 	{
 		case MusicDrumsState::MUSIC_DRUMS_ON_QUEUED:

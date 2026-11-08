@@ -1,15 +1,19 @@
 {
-  "tool": "PvzDevTools visual save editor",
-  "version": "0.1.3+12da834",
-  "source_commit": "12da834396ce15aa849a6195c98c0437844c5540",
-  "source_url": "https://github.com/YuHao2006/PvzDevTools/tree/12da834396ce15aa849a6195c98c0437844c5540/saveEditor",
-  "bytes": 51060,
-  "sha256": "ce6bf2ce6c824b3ee3b0f3dcdadcc4a60b0ae4fa2581876cb975ec23f7a4eb07",
+  "tool": "PvzDevTools independent save tools",
+  "version": "0.1.4",
+  "memory_model": "wasm32",
+  "source_commit": "e046e621eea4e4ce1daad484093f5c59bbe1eed1",
+  "source_dirty": false,
   "development": false,
+  "source_url": "https://github.com/YuHao2006/PvzDevTools",
   "files": {
     "save-editor.html": {
-      "bytes": 51060,
-      "sha256": "ce6bf2ce6c824b3ee3b0f3dcdadcc4a60b0ae4fa2581876cb975ec23f7a4eb07"
+      "bytes": 51988,
+      "sha256": "e2706aa0f630e82567f173e989d99a7d75fdf6598c3214f15f73bd3de7746d3b"
+    },
+    "save-converter.html": {
+      "bytes": 578144,
+      "sha256": "7c2483d667c499be2c97a74f74f25ae465b6c24e752fcf41d844651e2aba34b9"
     },
     "save-codec.js": {
       "bytes": 18066,
@@ -18,7 +22,38 @@
     "lineup-library.js": {
       "bytes": 2011,
       "sha256": "406a977fc3d6f26ff97c6cd68a18951de9ebfada9192fe2707a8822a6e642190"
+    },
+    "save-standalone.js": {
+      "bytes": 4979,
+      "sha256": "08ead70922f218d97cc769c053b67c284a2e9e81bc7fd5feec6061b082514af5"
+    },
+    "save-lineups.js": {
+      "bytes": 3419,
+      "sha256": "2a9edf37764e0d201d3e92a86e2fdb8fbfce159ca9800c60b7b694e9f310f1dd"
+    },
+    "save-tool-core.js": {
+      "bytes": 571552,
+      "sha256": "88072b5e2cdb27eed5328f841d6d5ec993bbd6f5212fcbfd677740ccb9f2c6e0"
+    },
+    "save-tool-client.js": {
+      "bytes": 1428,
+      "sha256": "26266493e47a755ff706fce3685448348d3abcbd6a45a343cfcbae6d12b97e5c"
+    },
+    "save-tool-worker.js": {
+      "bytes": 2628,
+      "sha256": "5173cd9c2cfd0fd23bca9b395e007afee755a273c12910b9eca337abf658049b"
+    },
+    "save-model.js": {
+      "bytes": 4403,
+      "sha256": "7cd0c4b131ff0fa97d2111b9bb6bc59ee223ed88aa0f5685399026b0643b49c9"
+    },
+    "save-prefab.js": {
+      "bytes": 4185,
+      "sha256": "22bd767491c0064ab0c50a1b2516ed8db02bdd382565adce343c96e93bbafa9e"
+    },
+    "save-generate.js": {
+      "bytes": 382525,
+      "sha256": "dc241ea3d51fd60e9b68692e2da37fe118e97476301e69c331d0815420a33307"
     }
-  },
-  "source_dirty": false
+  }
 }

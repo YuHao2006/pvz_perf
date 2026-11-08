@@ -191,8 +191,8 @@ public:
 	int								mLastBungeeWave;										//+0x5590
 	int								mZombieHealthToNextWave;								//+0x5594
 	int								mZombieHealthWaveStart;									//+0x5598
-	Sexy::TimeCounter								mZombieCountDown;										//+0x559C
-	Sexy::TimeCounter								mZombieCountDownStart;									//+0x55A0
+	long long								mNextZombieWaveTimeNs;										// Absolute Board-time spawn deadline; wire stores signed remaining ns.
+	long long								mZombieWaveCountdownDurationNs;									// Original refresh interval in ns; health shortening preserves it for the 4s guard and progress UI.
 	Sexy::TimeCounter								mHugeWaveCountDown;										//+0x55A4
 	bool							mHelpDisplayed[NUM_ADVICE_TYPES];						//+0x55A8
 	AdviceType						mHelpIndex;												//+0x55EC
@@ -393,7 +393,7 @@ public:
 	void							DrawShovel(Graphics* g);
 	void							UpdateZombieSpawning();
 private:
-	void							UpdateZombieWaveScheduler();
+	void							UpdateZombieWaveScheduler(bool theHugeWaveReady = false);
 public:
 	void							UpdateSunSpawning();
 	/*inline*/ void					ClearAdvice(AdviceType theHelpIndex);

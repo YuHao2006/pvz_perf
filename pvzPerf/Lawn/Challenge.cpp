@@ -474,8 +474,8 @@ void Challenge::StartLevel()
 	if (mApp->IsWhackAZombieLevel())
 	{
 		mBoard->mCursorObject->mCursorType = CURSOR_TYPE_HAMMER;
-		mBoard->mZombieCountDown = 200;
-		mBoard->mZombieCountDownStart = mBoard->mZombieCountDown;
+		mBoard->mNextZombieWaveTimeNs = static_cast<long long>(mBoard->mLevelTimeNs) + 2'000'000'000LL;
+		mBoard->mZombieWaveCountdownDurationNs = mBoard->mNextZombieWaveTimeNs - static_cast<long long>(mBoard->mLevelTimeNs);
 	}
 	if (mApp->IsStormyNightLevel())
 	{
@@ -496,8 +496,8 @@ void Challenge::StartLevel()
 	}
 	if (mApp->IsWallnutBowlingLevel())
 	{
-		mBoard->mZombieCountDown = 200;
-		mBoard->mZombieCountDownStart = mBoard->mZombieCountDown;
+		mBoard->mNextZombieWaveTimeNs = static_cast<long long>(mBoard->mLevelTimeNs) + 2'000'000'000LL;
+		mBoard->mZombieWaveCountdownDurationNs = mBoard->mNextZombieWaveTimeNs - static_cast<long long>(mBoard->mLevelTimeNs);
 		mBoard->mSeedBank->AddSeed(SEED_WALLNUT);
 		mConveyorBeltCounter = 400;
 		mShowBowlingLine = true;
@@ -512,8 +512,8 @@ void Challenge::StartLevel()
 	}
 	if (mApp->IsLittleTroubleLevel() || mApp->IsStormyNightLevel() || mApp->IsBungeeBlitzLevel() || aGameMode == GAMEMODE_MINIGAME_INVISIGHOUL)
 	{
-		mBoard->mZombieCountDown = 200;
-		mBoard->mZombieCountDownStart = mBoard->mZombieCountDown;
+		mBoard->mNextZombieWaveTimeNs = static_cast<long long>(mBoard->mLevelTimeNs) + 2'000'000'000LL;
+		mBoard->mZombieWaveCountdownDurationNs = mBoard->mNextZombieWaveTimeNs - static_cast<long long>(mBoard->mLevelTimeNs);
 		mConveyorBeltCounter = 200;
 	}
 	if (mApp->IsSurvivalMode() && mSurvivalStage == 0)
@@ -546,8 +546,8 @@ void Challenge::StartLevel()
 	}
 	if (aGameMode == GAMEMODE_MINIGAME_BEGHOULED || aGameMode == GAMEMODE_MINIGAME_BEGHOULED_TWIST)
 	{
-		mBoard->mZombieCountDown = 200;
-		mBoard->mZombieCountDownStart = mBoard->mZombieCountDown;
+		mBoard->mNextZombieWaveTimeNs = static_cast<long long>(mBoard->mLevelTimeNs) + 2'000'000'000LL;
+		mBoard->mZombieWaveCountdownDurationNs = mBoard->mNextZombieWaveTimeNs - static_cast<long long>(mBoard->mLevelTimeNs);
 		mChallengeStateCounter = 1500;
 		BeghouledMakeStartBoard();
 		BeghouledUpdateCraters();
@@ -563,8 +563,8 @@ void Challenge::StartLevel()
 	}
 	if (mApp->IsMiniBossLevel())
 	{
-		mBoard->mZombieCountDown = 100;
-		mBoard->mZombieCountDownStart = mBoard->mZombieCountDown;
+		mBoard->mNextZombieWaveTimeNs = static_cast<long long>(mBoard->mLevelTimeNs) + 1'000'000'000LL;
+		mBoard->mZombieWaveCountdownDurationNs = mBoard->mNextZombieWaveTimeNs - static_cast<long long>(mBoard->mLevelTimeNs);
 		mConveyorBeltCounter = 200;
 	}
 	if (aGameMode == GAMEMODE_MINIGAME_PORTAL_COMBAT)
@@ -574,15 +574,15 @@ void Challenge::StartLevel()
 	if (aGameMode == GAMEMODE_MINIGAME_COLUMN)
 	{
 		mBoard->mCurrentWave = 9;
-		mBoard->mZombieCountDown = 2400;
+		mBoard->mNextZombieWaveTimeNs = static_cast<long long>(mBoard->mLevelTimeNs) + 24'000'000'000LL;
 	}
 	if (aGameMode == GAMEMODE_LIMBO_AIR_RAID || aGameMode == GAMEMODE_MINIGAME_BOBSLED_BONANZA)
 	{
-		mBoard->mZombieCountDown = 4500;
+		mBoard->mNextZombieWaveTimeNs = static_cast<long long>(mBoard->mLevelTimeNs) + 45'000'000'000LL;
 	}
 	if (aGameMode == GAMEMODE_MINIGAME_POGO_PARTY)
 	{
-		mBoard->mZombieCountDown = 5500;
+		mBoard->mNextZombieWaveTimeNs = static_cast<long long>(mBoard->mLevelTimeNs) + 55'000'000'000LL;
 	}
 	if (aGameMode == GAMEMODE_MINIGAME_ZOMBIQUARIUM)
 	{
@@ -2981,27 +2981,30 @@ void Challenge::WhackAZombieSpawning()
 	TOD_ASSERT(mApp->IsWhackAZombieLevel());
 	TOD_ASSERT(mBoard->mCurrentWave >= 0 && mBoard->mCurrentWave <= mBoard->mNumWaves);
 
-	if (mBoard->mCurrentWave == mBoard->mNumWaves && mBoard->mZombieCountDown == 0)
+	const auto now = static_cast<long long>(mBoard->mLevelTimeNs);
+	const auto previous = now - static_cast<long long>(Sexy::gUpdateIntervalNs);
+	if (mBoard->mCurrentWave == mBoard->mNumWaves && now >= mBoard->mNextZombieWaveTimeNs)
 		return;
 
-	mBoard->mZombieCountDown--;
-	if (mBoard->mZombieCountDown == 100 && mBoard->mCurrentWave > 0)
+	if (now >= mBoard->mNextZombieWaveTimeNs - 1'000'000'000LL &&
+		previous < mBoard->mNextZombieWaveTimeNs - 1'000'000'000LL && mBoard->mCurrentWave > 0)
 	{
 		int aNumGraves = 5 - mBoard->GetGraveStonesCount();
 		WhackAZombiePlaceGraves(std::max(1, aNumGraves));
 	}
-	if (mBoard->mZombieCountDown == 5)
+	if (now >= mBoard->mNextZombieWaveTimeNs - 50'000'000LL &&
+		previous < mBoard->mNextZombieWaveTimeNs - 50'000'000LL)
 	{
 		mBoard->NextWaveComing();
 	}
-	if (mBoard->mZombieCountDown == 0)
+	if (now >= mBoard->mNextZombieWaveTimeNs)
 	{
-		mBoard->mZombieCountDown = 2000;
-		mBoard->mZombieCountDownStart = mBoard->mZombieCountDown;
+		mBoard->mNextZombieWaveTimeNs = static_cast<long long>(mBoard->mLevelTimeNs) + 20'000'000'000LL;
+		mBoard->mZombieWaveCountdownDurationNs = mBoard->mNextZombieWaveTimeNs - static_cast<long long>(mBoard->mLevelTimeNs);
 		mBoard->mCurrentWave++;
 		mChallengeStateCounter = mBoard->mCurrentWave == mBoard->mNumWaves ? 300 : 1;
 	}
-	else if (mBoard->mZombieCountDown < 300)
+	else if (mBoard->mNextZombieWaveTimeNs - now < 3'000'000'000LL)
 	{
 		return;
 	}
@@ -3099,7 +3102,7 @@ void Challenge::WhackAZombieSpawning()
 		mChallengeStateCounter = RandRangeInt(aStateCounterMin, aStateCounterMax);
 		if (aIsFinalWave)
 		{
-			mBoard->mZombieCountDown = 0;
+			mBoard->mNextZombieWaveTimeNs = static_cast<long long>(mBoard->mLevelTimeNs) + 0LL;
 			mChallengeStateCounter = 0;
 		}
 	}
@@ -3378,8 +3381,8 @@ void Challenge::PortalStart()
 	aPortal->mRenderOrder = mBoard->MakeRenderOrder(RENDER_LAYER_PARTICLE, aPortal->mGridY, 0);
 	aPortal->OpenPortal();
 
-	mBoard->mZombieCountDown = 200;
-	mBoard->mZombieCountDownStart = mBoard->mZombieCountDown;
+	mBoard->mNextZombieWaveTimeNs = static_cast<long long>(mBoard->mLevelTimeNs) + 2'000'000'000LL;
+	mBoard->mZombieWaveCountdownDurationNs = mBoard->mNextZombieWaveTimeNs - static_cast<long long>(mBoard->mLevelTimeNs);
 	mConveyorBeltCounter = 200;
 }
 

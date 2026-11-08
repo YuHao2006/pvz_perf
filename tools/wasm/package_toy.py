@@ -92,7 +92,9 @@ def main():
             raise ValueError(f'All runtimes must share the identical resource package: {build}')
     args.output.mkdir(parents=True, exist_ok=True)
     (args.output / "save-tool.html").unlink(missing_ok=True)
-    support_files = ['index.html', 'launcher.js', 'launcher.css', 'startup.js', 'diagnostics.js', 'rewards.js', 'lineups.js', 'lineup-storage.js', 'frame-rate.js', 'graphics.js', 'runtime-selection.js', 'save-tools.js', 'save-tool-runtime.js', 'save-editor-host.js', 'progress-storage.js', 'text-input.js', 'serve.py',
+    (args.output / "save-tool-runtime.js").unlink(missing_ok=True)
+    (args.output / "save-initial-records-v4.json.gz").unlink(missing_ok=True)
+    support_files = ['index.html', 'launcher.js', 'launcher.css', 'startup.js', 'diagnostics.js', 'rewards.js', 'lineups.js', 'lineup-storage.js', 'frame-rate.js', 'graphics.js', 'runtime-selection.js', 'save-tools.js', 'save-editor-host.js', 'progress-storage.js', 'text-input.js', 'serve.py',
                      'start-local.cmd', 'start-local.sh', 'README.txt']
     for name in support_files:
         shutil.copyfile(ROOT / 'tools/wasm/game' / name, args.output / name)
@@ -104,6 +106,9 @@ def main():
     shutil.copyfile(ROOT / 'tools/bin/web/manifest.json', args.output / 'save-editor-manifest.json')
     shutil.copyfile(ROOT / 'tools/bin/web/save-codec.js', args.output / 'save-codec.js')
     shutil.copyfile(ROOT / 'tools/bin/web/lineup-library.js', args.output / 'lineup-library.js')
+    for name in ['save-tool-core.js', 'save-tool-worker.js', 'save-tool-client.js', 'save-model.js', 'save-prefab.js', 'save-generate.js', 'save-lineups.js']:
+        shutil.copyfile(ROOT / 'tools/bin/web' / name, args.output / name)
+        support_files.append(name)
     support_files += ['save-editor-document.js', 'save-editor-manifest.json', 'save-codec.js', 'lineup-library.js']
     readme = args.output / 'README.txt'
     text = readme.read_text(encoding='utf-8')

@@ -49,6 +49,8 @@ export function connectSaveEditor({module,root,ready,idle,running,setActive,auth
    if(op==='close'){dialog.close()}
    else if(op==='add-user')result=await commit(store.add({perfect:payload.perfect===true}));
    else if(op==='edit-user')result=await commit(store.edit(payload));
+   else if(op==='export-users')result={files:module.FS.readdir(root).filter(name=>/^(?:users\.dat|user[1-9]\d*\.dat64)$/.test(name)).map(name=>[name,module.FS.readFile(root+'/'+name).slice()])};
+   else if(op==='repair-plant-attacks'){const target=slot(payload.name);result=await saveTools.runSaveTool({op:'repair-plant-attacks',mode:target.mode},read(payload.name))}
    else if(op==='delete-user')result=await commit(store.remove(payload.id));
    else if(op==='delete-lineup'){
     library().remove(payload.code);result=listed();onLineupsChanged();
@@ -68,12 +70,8 @@ export function connectSaveEditor({module,root,ready,idle,running,setActive,auth
     const name=payload.name||'game1_58.dat64',target=slot(name);
     const r=payload.recipe;if(!r||!Array.isArray(r.cells)||r.cells.length!==54||r.cells.some(c=>!Number.isInteger(c)||c<0||c>65535||(c>>>10)>48))throw Error('阵型格子内容无效');
     const m=await lineups,recipe=m.makeRecipe(r,r.flags,r.seed,r.scene,r.sun);
-    const generated=await saveTools.runSaveTool({op:'generate',mode:target.mode,level:payload.level||1,recipe},null,store.details(target.id));if(!generated.bytes)throw Error('存档工具没有生成 DAT64');
-    if(target.mode===0){
-     const user=store.rows().find(p=>p.id===target.id);
-     const plan=store.edit({oldId:target.id,id:target.id,name:user.name,patch:{level:payload.level||1}});
-     plan.writes.set(name,generated.bytes);result=await commit(plan);
-    }else{module.FS.writeFile(root+'/'+name,generated.bytes);await sync();result={saves:names()}}
+    const generated=await saveTools.runSaveTool({op:'generate',mode:target.mode,recipe},null,store.details(target.id));if(!generated.bytes)throw Error('存档工具没有生成 DAT64');
+    module.FS.writeFile(root+'/'+name,generated.bytes);await sync();result={saves:names()};
    }
    else if(op==='import'){
     const match=/^game([1-9]\d*)_(\d+)\.dat64$/.exec(payload.name);

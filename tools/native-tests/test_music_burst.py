@@ -189,6 +189,17 @@ int main()
         Require(playback.volume[1] == 0.0 && playback.volume[2] == 1.0,
             "Night climax gains are incorrect");
         board.zombies = 0;
+        app.mApplicationTimeNs = music.mBurstEndTimeNs + 1;
+        music.UpdateMusicBurst(app.mApplicationTimeNs);
+        Require(music.mMusicDrumsState == MUSIC_DRUMS_FADING && playback.volume[2] == 1,
+            "Night release used the expired previous deadline and muted the climax immediately");
+        const auto releaseStart = app.mApplicationTimeNs;
+        for (const auto elapsed : {1'000'000'000LL, 4'000'000'000LL, 7'000'000'000LL}) {
+            app.mApplicationTimeNs = releaseStart + elapsed;
+            music.UpdateMusicBurst(app.mApplicationTimeNs);
+            Require(music.mMusicDrumsState == MUSIC_DRUMS_FADING && playback.volume[2] > 0,
+                "Night release became silent before the eight-second crossfade finished");
+        }
         for (unsigned i = 0; i < fps * 22; ++i) step();
         Require(music.mMusicBurstState == MUSIC_BURST_OFF &&
             music.mMusicDrumsState == MUSIC_DRUMS_OFF, "Night climax never returned to calm");

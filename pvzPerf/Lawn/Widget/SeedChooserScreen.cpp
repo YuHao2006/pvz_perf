@@ -1069,7 +1069,7 @@ void SeedChooserScreen::ClickedSeedInChooser(ChosenSeed& theChosenSeed)
 //0x486150
 void SeedChooserScreen::ShowToolTip()
 {
-	if (!mApp->mWidgetManager->mMouseIn || !mApp->mActive || mApp->GetDialogCount() > 0 || mChooseState == CHOOSE_VIEW_LAWN)
+	if (mBoard->mLandscapeHud || !mApp->mWidgetManager->mMouseIn || !mApp->mActive || mApp->GetDialogCount() > 0 || mChooseState == CHOOSE_VIEW_LAWN)
 	{
 		mToolTip->mVisible = false;
 		mToolTipSeed = SEED_NONE;

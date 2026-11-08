@@ -1446,15 +1446,15 @@ void Board::InitZombieWaves()
 	mApp->mSawYeti = false;
 	if (mApp->IsFirstTimeAdventureMode() && mLevel == 2)
 	{
-		mZombieCountDown = ZOMBIE_COUNTDOWN * 2;
+		mNextZombieWaveTimeNs = static_cast<long long>(mLevelTimeNs) + (ZOMBIE_COUNTDOWN * 2) * 10'000'000LL;
 	}
 	else if (mApp->IsSurvivalMode() && mChallenge->mSurvivalStage > 0)
 	{
-		mZombieCountDown = ZOMBIE_COUNTDOWN_RANGE;
+		mNextZombieWaveTimeNs = static_cast<long long>(mLevelTimeNs) + (ZOMBIE_COUNTDOWN_RANGE) * 10'000'000LL;
 	}
 	else
 	{
-		mZombieCountDown = ZOMBIE_COUNTDOWN_FIRST_WAVE;
+		mNextZombieWaveTimeNs = static_cast<long long>(mLevelTimeNs) + (ZOMBIE_COUNTDOWN_FIRST_WAVE) * 10'000'000LL;
 	}
 
 	mZombieHealthWaveStart = 0;
@@ -1462,7 +1462,7 @@ void Board::InitZombieWaves()
 	mProgressMeterWidth = 0;
 	mHugeWaveCountDown = 0;
 	mLevelAwardSpawned = false;
-	mZombieCountDownStart = mZombieCountDown;
+	mZombieWaveCountdownDurationNs = mNextZombieWaveTimeNs - static_cast<long long>(mLevelTimeNs);
 	mZombieHealthToNextWave = -1;
 }
 
@@ -4437,7 +4437,7 @@ void Board::UpdateToolTip()
 		return;
 	}
 
-	if (aHitResult.mObjectType != GameObjectType::OBJECT_TYPE_SEEDPACKET)
+	if (mLandscapeHud || aHitResult.mObjectType != GameObjectType::OBJECT_TYPE_SEEDPACKET)
 	{
 		mToolTip->mVisible = false;
 		return;
@@ -4555,10 +4555,6 @@ void Board::UpdateToolTip()
 
 	mToolTip->mX = (SEED_PACKET_WIDTH - mToolTip->mWidth) / 2 + mSeedBank->mX + aSeedPacket->mOffsetX + aSeedPacket->mX + mApp->mScreenBounds.mX;
 	mToolTip->mY = mSeedBank->mY + aSeedPacket->mY + 70;
-    if(mLandscapeHud) {
-        const auto rect=LandscapeHud::PacketBounds(*this,aSeedPacket->mIndex);
-        mToolTip->mX=rect.mX+rect.mWidth;mToolTip->mY=rect.mY;
-    }
 	mToolTip->mVisible = true;
 }
 
@@ -5873,8 +5869,8 @@ void Board::MouseUp(int x, int y, int theClickCount)
 				mChallenge->mChallengeState = ChallengeState::STATECHALLENGE_LAST_STAND_ONSLAUGHT;
 				mStoreButton->mBtnNoDraw = true;
 				mStoreButton->mDisabled = true;
-				mZombieCountDown = 10;
-				mZombieCountDownStart = 10;
+				mNextZombieWaveTimeNs = static_cast<long long>(mLevelTimeNs) + 100'000'000LL;
+				mZombieWaveCountdownDurationNs = 100'000'000LL;
 				break;
 			case StoreButtonAction::None:
 			default:
@@ -6693,18 +6689,26 @@ void Board::UpdateZombieSpawning()
 		}
 	}
 
+	bool aHugeWaveReady = false;
 	if (mHugeWaveCountDown > 0)
 	{
-		mHugeWaveCountDown--;
-		if (mHugeWaveCountDown == 0)
+        // The deadline is the only spawning clock. This counter is a
+        // projection for voice/music thresholds and the existing save field;
+        // repeated updates at the same Board time cannot advance the warning.
+        mHugeWaveCountDown.mPreviousNanoseconds = mHugeWaveCountDown.mNanoseconds;
+        mHugeWaveCountDown.mNanoseconds = std::max(0LL,
+            mNextZombieWaveTimeNs - static_cast<long long>(mLevelTimeNs));
+        if (static_cast<long long>(mLevelTimeNs) >= mNextZombieWaveTimeNs)
 		{
 			ClearAdvice(AdviceType::ADVICE_HUGE_WAVE);
 			NextWaveComing();
-			mZombieCountDown = 1;
+			// The absolute spawn deadline was set when this warning began.
+			aHugeWaveReady = true;
 		}
 		else
 		{
-			if (mHugeWaveCountDown == 725)
+			if (mHugeWaveCountDown.mPreviousNanoseconds > 7'250'000'000LL &&
+                    mHugeWaveCountDown.mNanoseconds <= 7'250'000'000LL)
 			{
 				mApp->PlaySample(Sexy::SOUND_HUGE_WAVE);
 			}
@@ -6715,20 +6719,25 @@ void Board::UpdateZombieSpawning()
 					mApp->mMusic->mCurMusicTune == MusicTune::MUSIC_TUNE_FOG_RIGORMORMIST ||
 					mApp->mMusic->mCurMusicTune == MusicTune::MUSIC_TUNE_ROOF_GRAZETHEROOF)
 				{
-					if (mHugeWaveCountDown == 400)
+					if (mHugeWaveCountDown.mPreviousNanoseconds > 4'000'000'000LL &&
+                    mHugeWaveCountDown.mNanoseconds <= 4'000'000'000LL)
 					{
 						mApp->mMusic->StartBurst();
 					}
 				}
 				else if (mApp->mMusic->mCurMusicTune == MusicTune::MUSIC_TUNE_NIGHT_MOONGRAINS)
 				{
-					if (mHugeWaveCountDown == 700)
+					if (mHugeWaveCountDown.mPreviousNanoseconds > 7'000'000'000LL &&
+                    mHugeWaveCountDown.mNanoseconds <= 7'000'000'000LL)
 					{
 						mApp->mMusic->StartBurst();
 					}
 				}
-				return;
 			}
+            // The old voice-cue fallthrough consumed a second countdown and
+            // could spawn early, then overwrite the final-wave repick timeout.
+            // Never run the ordinary scheduler before this deadline.
+			return;
 		}
 	}
 
@@ -6736,10 +6745,10 @@ void Board::UpdateZombieSpawning()
 	if (aChallengeResult == ZombieSpawningUpdateResult::HANDLED_BY_CHALLENGE)
 		return;
 
-	UpdateZombieWaveScheduler();
+	UpdateZombieWaveScheduler(aHugeWaveReady);
 }
 
-void Board::UpdateZombieWaveScheduler()
+void Board::UpdateZombieWaveScheduler(bool theHugeWaveReady)
 {
 	if (mCurrentWave == mNumWaves)
 	{
@@ -6757,32 +6766,35 @@ void Board::UpdateZombieWaveScheduler()
 		}
 	}
 
-	mZombieCountDown--;
+	const auto now = static_cast<long long>(mLevelTimeNs);
+	const auto remaining = mNextZombieWaveTimeNs - now;
 	if (mCurrentWave == mNumWaves && mApp->IsSurvivalMode())
 	{
-		if (mZombieCountDown == 0)
+		if (now >= mNextZombieWaveTimeNs)
 		{
 			FadeOutLevel();
 		}
 		return;
 	}
 
-	if (mZombieCountDown > 200 && mZombieCountDownStart - mZombieCountDown > 400 && TotalZombiesHealthInWave(mCurrentWave - 1) <= mZombieHealthToNextWave)
+	if (remaining > 2'000'000'000LL && mZombieWaveCountdownDurationNs - remaining > 4'000'000'000LL && TotalZombiesHealthInWave(mCurrentWave - 1) <= mZombieHealthToNextWave)
 	{
-		mZombieCountDown = 200;
+		mNextZombieWaveTimeNs = now + 2'000'000'000LL;
 	}
-	if (mZombieCountDown == 5)
+	if (!theHugeWaveReady && now >= mNextZombieWaveTimeNs - 50'000'000LL &&
+		now - static_cast<long long>(Sexy::gUpdateIntervalNs) < mNextZombieWaveTimeNs - 50'000'000LL)
 	{
 		if (IsFlagWave(mCurrentWave))
 		{
 			ClearAdviceImmediately();
 			DisplayAdviceAgain(gStr.ADVICE_HUGE_WAVE, MessageStyle::MESSAGE_STYLE_HUGE_WAVE, AdviceType::ADVICE_HUGE_WAVE);
 			mHugeWaveCountDown = 750;
+			mNextZombieWaveTimeNs = now + 7'500'000'000LL;
 			return;
 		}
 		NextWaveComing();
 	}
-	if (mZombieCountDown == 0)
+	if (now >= mNextZombieWaveTimeNs)
 	{
 		SpawnZombieWave();
 		mZombieHealthWaveStart = TotalZombiesHealthInWave(mCurrentWave - 1);
@@ -6790,26 +6802,26 @@ void Board::UpdateZombieWaveScheduler()
 		if (mCurrentWave == mNumWaves && mApp->IsSurvivalMode())
 		{
 			mZombieHealthToNextWave = 0;
-			mZombieCountDown = ZOMBIE_COUNTDOWN_BEFORE_REPICK + 1;
+			mNextZombieWaveTimeNs = now + (ZOMBIE_COUNTDOWN_BEFORE_REPICK + 1LL) * 10'000'000LL;
 		}
 		else if (IsFlagWave(mCurrentWave) && !(mApp->IsWallnutBowlingLevel() || mApp->mGameMode == GameMode::GAMEMODE_MINIGAME_LAST_STAND))
 		{
 			mZombieHealthToNextWave = 0;
-			mZombieCountDown = ZOMBIE_COUNTDOWN_BEFORE_FLAG;
+			mNextZombieWaveTimeNs = static_cast<long long>(mLevelTimeNs) + (ZOMBIE_COUNTDOWN_BEFORE_FLAG) * 10'000'000LL;
 		}
 		else
 		{
 			mZombieHealthToNextWave = RandRangeFloat(0.5f, 0.65f) * mZombieHealthWaveStart;
 			if (mApp->IsLittleTroubleLevel() || mApp->mGameMode == GameMode::GAMEMODE_MINIGAME_COLUMN || mApp->mGameMode == GameMode::GAMEMODE_MINIGAME_LAST_STAND)
 			{
-				mZombieCountDown = 750;
+				mNextZombieWaveTimeNs = static_cast<long long>(mLevelTimeNs) + 7'500'000'000LL;
 			}
 			else
 			{
-				mZombieCountDown = ZOMBIE_COUNTDOWN + Rand(ZOMBIE_COUNTDOWN_RANGE);
+				mNextZombieWaveTimeNs = now + (ZOMBIE_COUNTDOWN + Rand(ZOMBIE_COUNTDOWN_RANGE)) * 10'000'000LL;
 			}
 		}
-		mZombieCountDownStart = mZombieCountDown;
+		mZombieWaveCountdownDurationNs = mNextZombieWaveTimeNs - static_cast<long long>(mLevelTimeNs);
 	}
 }
 
@@ -6900,7 +6912,7 @@ void Board::UpdateProgressMeter(std::uint64_t theDeltaNs)
 		}
 
 		// 根据倒计时初步计算当前波已经过的比例
-		float aFraction = (mZombieCountDownStart - mZombieCountDown) / (float)mZombieCountDownStart;
+		float aFraction = (mZombieWaveCountdownDurationNs - (mNextZombieWaveTimeNs - static_cast<long long>(mLevelTimeNs))) / (float)std::max(1LL, mZombieWaveCountdownDurationNs);
 		if (mZombieHealthToNextWave != -1)
 		{
 			// 取得本波僵尸的当前血量
@@ -6954,7 +6966,8 @@ void Board::UpdateTutorial()
 			DisplayAdvice(gStr.ADVICE_PLANT_SUNFLOWER2, MessageStyle::MESSAGE_STYLE_TUTORIAL_LEVEL2, AdviceType::ADVICE_NONE);
 			mTutorialTimer = -1;
 		}
-		else if (mZombieCountDown == 750 && mCurrentWave == 0)
+		else if (mCurrentWave == 0 && static_cast<long long>(mLevelTimeNs) >= mNextZombieWaveTimeNs - 7'500'000'000LL &&
+			static_cast<long long>(mLevelTimeNs) - static_cast<long long>(Sexy::gUpdateIntervalNs) < mNextZombieWaveTimeNs - 7'500'000'000LL)
 		{
 			DisplayAdvice(gStr.ADVICE_PLANT_SUNFLOWER3, MessageStyle::MESSAGE_STYLE_TUTORIAL_LEVEL2, AdviceType::ADVICE_NONE);
 		}
@@ -7054,8 +7067,8 @@ constexpr TutorialStateCaseFn kTutorialStateCases[(int)TutorialState::TUTORIAL_W
     [](Board& b)
     {
     		b.DisplayAdvice(gStr.ADVICE_ZOMBIE_ONSLAUGHT, MessageStyle::MESSAGE_STYLE_TUTORIAL_LEVEL1, AdviceType::ADVICE_NONE);
-    		b.mZombieCountDown = 99;
-    		b.mZombieCountDownStart = b.mZombieCountDown;
+		b.mNextZombieWaveTimeNs = static_cast<long long>(b.mLevelTimeNs) + 990'000'000LL;
+		b.mZombieWaveCountdownDurationNs = b.mNextZombieWaveTimeNs - static_cast<long long>(b.mLevelTimeNs);
     },  // 4 TUTORIAL_LEVEL_1_COMPLETED
     &TutorialCaseTutorialLevel2PickUpSunflower,  // 5 TUTORIAL_LEVEL_2_PICK_UP_SUNFLOWER（共体）
     &TutorialCaseTutorialLevel2PlantSunflower,  // 6 TUTORIAL_LEVEL_2_PLANT_SUNFLOWER（共体）
@@ -7065,8 +7078,8 @@ constexpr TutorialStateCaseFn kTutorialStateCases[(int)TutorialState::TUTORIAL_W
     {
     		if (b.mCurrentWave == 0)
     		{
-    			b.mZombieCountDown = 999;
-    			b.mZombieCountDownStart = b.mZombieCountDown;
+			b.mNextZombieWaveTimeNs = static_cast<long long>(b.mLevelTimeNs) + 9'990'000'000LL;
+			b.mZombieWaveCountdownDurationNs = b.mNextZombieWaveTimeNs - static_cast<long long>(b.mLevelTimeNs);
     		}
     },  // 8 TUTORIAL_LEVEL_2_COMPLETED
     &TutorialCaseTutorialLevel2PickUpSunflower,  // 9 TUTORIAL_MORESUN_PICK_UP_SUNFLOWER（共体）
@@ -7082,6 +7095,8 @@ constexpr TutorialStateCaseFn kTutorialStateCases[(int)TutorialState::TUTORIAL_W
     [](Board& b)
     {
     		b.ClearAdvice(AdviceType::ADVICE_SLOT_MACHINE_PULL);
+		// Spawning is held during the first-pull tutorial; start its interval now.
+		b.mNextZombieWaveTimeNs = static_cast<long long>(b.mLevelTimeNs) + b.mZombieWaveCountdownDurationNs;
     },  // 14 TUTORIAL_SLOT_MACHINE_COMPLETED
     // 原 case TUTORIAL_SHOVEL_PICKUP
     [](Board& b)
@@ -8668,13 +8683,15 @@ constexpr DebugTextCaseFn kDebugTextCases[(int)DebugTextMode::DEBUG_TEXT_COLLISI
     // 原 case DEBUG_TEXT_ZOMBIE_SPAWN
     [](Board& aBoard, SexyString& aText)
     {
-    		int aTime = aBoard.mZombieCountDownStart - aBoard.mZombieCountDown;
-    		float aCountDownFraction = (float)aTime / (float)aBoard.mZombieCountDownStart;
+		const auto remaining = aBoard.mNextZombieWaveTimeNs - static_cast<long long>(aBoard.mLevelTimeNs);
+		const auto elapsed = aBoard.mZombieWaveCountdownDurationNs - remaining;
+		const auto aTime = elapsed;
+		float aCountDownFraction = (float)aTime / (float)std::max(1LL,aBoard.mZombieWaveCountdownDurationNs);
 
     		aText += StrFormat(("ZOMBIE SPAWNING DEBUG\n"));
     		aText += StrFormat(("CurrentWave: %d of %d\n"), aBoard.mCurrentWave, aBoard.mNumWaves);
-    		aText += StrFormat(("TimeSinseLastSpawn: %d %s\n"), aTime, aTime > 400 ? ("") : ("(too soon)"));
-		aText += StrFormat(("ZombieCountDown: %d/%d(%.0f%%)\n"), static_cast<int>(aBoard.mZombieCountDown), static_cast<int>(aBoard.mZombieCountDownStart), aCountDownFraction);
+		aText += StrFormat(("TimeSinceLastSpawnNs: %lld %s\n"), aTime, aTime > 4'000'000'000LL ? ("") : ("(too soon)"));
+		aText += StrFormat(("ZombieRemainingNs: %lld/%lld(%.0f%%)\n"), remaining, aBoard.mZombieWaveCountdownDurationNs, aCountDownFraction);
 
     		if (aBoard.mZombieHealthToNextWave != -1)
     		{

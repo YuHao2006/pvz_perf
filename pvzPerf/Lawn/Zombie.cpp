@@ -7814,7 +7814,7 @@ bool Zombie::TrySpawnLevelAward()
         return false;
     }
 
-    if (mApp->IsWhackAZombieLevel() && mBoard->mZombieCountDown > 0)
+    if (mApp->IsWhackAZombieLevel() && mBoard->mNextZombieWaveTimeNs > static_cast<long long>(mBoard->mLevelTimeNs))
     {
         return false;
     }

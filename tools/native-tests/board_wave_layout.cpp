@@ -25,8 +25,8 @@ int main()
     FIELD(mTutorialTimer);
     FIELD(mZombieHealthToNextWave);
     FIELD(mZombieHealthWaveStart);
-    FIELD(mZombieCountDown);
-    FIELD(mZombieCountDownStart);
+    FIELD(mNextZombieWaveTimeNs);
+    FIELD(mZombieWaveCountdownDurationNs);
     FIELD(mHugeWaveCountDown);
     FIELD(mLevelComplete);
     FIELD(mBoardFadeOutCounter);

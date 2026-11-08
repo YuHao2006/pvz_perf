@@ -71,7 +71,9 @@ Rect SunBounds(const Board& board) {
     const auto bank=BankBounds(board);return {bank.mX,bank.mY,85,31};
 }
 Rect ShovelBounds(const Board& board) {
-    return {board.mApp->mScreenBounds.mX-board.mX,520-board.mY,84,41};
+    // The conveyor reserves a full belt; ordinary banks use their actual slot count.
+    const int slots=board.HasConveyorBeltSeedBank()?SEEDBANK_MAX:board.mSeedBank->mNumPackets;
+    return {board.mApp->mScreenBounds.mX-board.mX,33+slots*Pitch-board.mY,84,41};
 }
 void DrawSilhouette(Graphics* g,int x,int y) {DrawSprite(g,Sprite::SILHOUETTE,x,y);}
 void DrawPacket(Graphics* graphics,float x,float y,SeedType seed,SeedType imitater,

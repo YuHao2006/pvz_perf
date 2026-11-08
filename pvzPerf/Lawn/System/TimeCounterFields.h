@@ -16,12 +16,12 @@ void VisitTimeCounterOffsets(Fn&& visit)
         TIMER(mFogBlownCountDown); TIMER(mSunCountDown); TIMER(mShakeCounter);
         visit(offsetof(Type, mLevelTimeNs), true);
         TIMER(mEffectCounter); TIMER(mRiseFromGraveCounter);
-        TIMER(mOutOfMoneyCounter); TIMER(mTutorialTimer); TIMER(mZombieCountDown);
+        TIMER(mOutOfMoneyCounter); TIMER(mTutorialTimer); visit(offsetof(Type, mNextZombieWaveTimeNs), false);
         TIMER(mHugeWaveCountDown); TIMER(mCoinBankFadeCount); TIMER(mBoardFadeOutCounter);
         TIMER(mNextSurvivalStageCounter); TIMER(mScoreNextMowerCounter);
         TIMER(mFlagRaiseCounter); TIMER(mIceTrapCounter); TIMER(mFwooshCountDown);
         TIMER(mTimeStopCounter); TIMER(mFinalWaveSoundCounter); TIMER(mCobCannonCursorDelayCounter);
-        TIMER(mZombieCountDownStart); TIMER(mPlayTimeActiveLevel); TIMER(mPlayTimeInactiveLevel);
+        visit(offsetof(Type, mZombieWaveCountdownDurationNs), false); TIMER(mPlayTimeActiveLevel); TIMER(mPlayTimeInactiveLevel);
         TIMER(mStartDrawTime); TIMER(mIntervalDrawTime); TIMER(mPreloadTime);
         for (size_t i = 0; i < MAX_GRID_SIZE_Y; ++i)
             visit(offsetof(Type, mIceTimer) + i * sizeof(Sexy::TimeCounter), false);

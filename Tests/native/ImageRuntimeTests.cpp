@@ -80,6 +80,8 @@
 #include <cstdlib>
 #include <filesystem>
 #include <functional>
+#include <fstream>
+#include "Lawn/System/Dat64TimeSchema.h"
 #include <iostream>
 #include <DbgHelp.h>
 #pragma comment(lib, "dbghelp.lib")
@@ -1880,7 +1882,7 @@ void SurvivalOwnerClockRuntime(TestApp& app, int hz)
     holder.mBattleTimeNs=static_cast<std::int64_t>(board.mLevelTimeNs);
     holder.mVisualTimeNs=987'654'000'000;
     board.mNumWaves=20;
-    board.mZombieCountDown=100000;
+    board.mNextZombieWaveTimeNs = static_cast<long long>(board.mLevelTimeNs) + (100000) * 10'000'000LL;
     board.mSunCountDown=100000;
     auto* plant=board.NewPlant(2,2,SEED_PEASHOOTER,SEED_NONE);
     auto* body=app.ReanimationGet(plant->mBodyReanimID);
@@ -2054,10 +2056,10 @@ void PoolSparkleOwnerClockRuntime(TestApp& app, int hz)
     Sexy::gUpdateTicks=100.0/hz;
     Sexy::gStepsPerLegacyTick=hz/100.0;
     board.mNumWaves=20;
-    board.mZombieCountDown=1'000'000;
+    board.mNextZombieWaveTimeNs = static_cast<long long>(board.mLevelTimeNs) + (1'000'000) * 10'000'000LL;
     // This fixture constructs Board without InitLevel/InitZombieWaves. Seed all
     // scheduler inputs explicitly; recycled heap contents must not spawn a wave.
-    board.mZombieCountDownStart=board.mZombieCountDown;
+    board.mZombieWaveCountdownDurationNs = board.mNextZombieWaveTimeNs - static_cast<long long>(board.mLevelTimeNs);
     board.mCurrentWave=0;
     board.mHugeWaveCountDown=0;
     board.mRiseFromGraveCounter=0;
@@ -2454,7 +2456,7 @@ void MinigameBehaviorRuntime(TestApp& app)
     app.mGameMode=GAMEMODE_MINIGAME_SPEED;
     board.mBackground=BACKGROUND_3_POOL;
     board.mLevelTimeNs=0;clocks.mBattleTimeNs=0;clocks.mVisualTimeNs=0;
-    board.mZombieCountDown=100000;board.mSunCountDown=100000;
+    board.mNextZombieWaveTimeNs = static_cast<long long>(board.mLevelTimeNs) + (100000) * 10'000'000LL;board.mSunCountDown=100000;
     PoolEffect pool;
     pool.PoolEffectInitialize();app.mPoolEffect=&pool;
     auto* shooter=board.NewPlant(3,0,SEED_PEASHOOTER,SEED_NONE);
@@ -3504,7 +3506,7 @@ void MinigameRulesRuntime(TestApp& app)
         case GAMEMODE_MINIGAME_BEGHOULED:
         case GAMEMODE_MINIGAME_BEGHOULED_TWIST:
         {
-            board.mZombieCountDown=100000;
+            board.mNextZombieWaveTimeNs = static_cast<long long>(board.mLevelTimeNs) + (100000) * 10'000'000LL;
             advance(2'000'000'000);
             Require(board.mPlants.mSize==40,"Beghouled initial board is not a full 8 by 5 grid");
             BeghouledBoardState state;
@@ -3545,7 +3547,7 @@ void MinigameRulesRuntime(TestApp& app)
         case GAMEMODE_MINIGAME_BOBSLED_BONANZA:
             for(int row=0;row<6;++row)
                 Require((board.mIceMinX[row]==400)==(board.mPlantRow[row]!=PLANTROW_POOL),"Bobsled mode did not initialize its four land ice lanes");
-            board.mZombieCountDown=1;advance(100'000'000);
+            board.mNextZombieWaveTimeNs = static_cast<long long>(board.mLevelTimeNs) + (1) * 10'000'000LL;advance(100'000'000);
             Require(board.mZombies.mSize>0,"Bobsled mode failed to spawn its first wave");
             break;
         case GAMEMODE_MINIGAME_COLUMN:
@@ -3580,7 +3582,7 @@ void MinigameRulesRuntime(TestApp& app)
             break;
         }
         case GAMEMODE_MINIGAME_LAST_STAND:
-            board.mZombieCountDown=0;advance(500'000'000);
+            board.mNextZombieWaveTimeNs = static_cast<long long>(board.mLevelTimeNs) + (0) * 10'000'000LL;advance(500'000'000);
             Require(board.mZombies.mSize==0&&challenge.mChallengeState==STATECHALLENGE_NORMAL,"Last Stand spawned zombies during preparation");
             Require(!board.mStoreButton->mBtnNoDraw,"Last Stand did not expose Start Onslaught");
             app.mWidgetManager->mLastMouseX=board.mStoreButton->mX+20;
@@ -3600,7 +3602,7 @@ void MinigameRulesRuntime(TestApp& app)
         case GAMEMODE_MINIGAME_WAR_AND_PEAS:
         case GAMEMODE_MINIGAME_WAR_AND_PEAS_2:
         {
-            board.mZombieCountDown=1;advance(100'000'000);
+            board.mNextZombieWaveTimeNs = static_cast<long long>(board.mLevelTimeNs) + (1) * 10'000'000LL;advance(100'000'000);
             Require(board.mZombies.mSize>0,"Special roster mode failed to spawn a wave");
             Zombie* zombie=nullptr;
             while(board.IterateZombies(zombie))
@@ -3661,7 +3663,7 @@ void MinigameRulesRuntime(TestApp& app)
         }
         case GAMEMODE_MINIGAME_RAINING_SEEDS:
         {
-            board.mZombieCountDown=100000;advance(1'500'000'000);
+            board.mNextZombieWaveTimeNs = static_cast<long long>(board.mLevelTimeNs) + (100000) * 10'000'000LL;advance(1'500'000'000);
             bool found=false;Coin* coin=nullptr;
             while(board.IterateCoins(coin)) if(coin->mType==COIN_USABLE_SEED_PACKET)
             {
@@ -3686,7 +3688,7 @@ void MinigameRulesRuntime(TestApp& app)
         }
         case GAMEMODE_MINIGAME_SLOT_MACHINE:
         {
-            board.mZombieCountDown=100000;board.mSunCountDown=100000;
+            board.mNextZombieWaveTimeNs = static_cast<long long>(board.mLevelTimeNs) + (100000) * 10'000'000LL;board.mSunCountDown=100000;
             HitResult hit;hit.mObjectType=OBJECT_TYPE_SLOT_MACHINE_HANDLE;hit.mObject=nullptr;
             challenge.MouseDown(0,0,1,&hit);
             Require(board.mSunMoney==25&&challenge.mSlotMachineRollCount==1&&challenge.mChallengeState==STATECHALLENGE_SLOT_MACHINE_ROLLING,
@@ -3701,7 +3703,7 @@ void MinigameRulesRuntime(TestApp& app)
         }
         case GAMEMODE_MINIGAME_SPEED:
         {
-            board.mZombieCountDown=100000;advance(500'000'000);
+            board.mNextZombieWaveTimeNs = static_cast<long long>(board.mLevelTimeNs) + (100000) * 10'000'000LL;advance(500'000'000);
             Require(board.mLevelTimeNs==1'000'000'000ULL,"Speed mode did not advance twice per outer update");
             break;
         }
@@ -4192,7 +4194,7 @@ void SurvivalRulesRuntime(TestApp& app)
     Require(app.mSeedChooserScreen==nullptr,"Survival fixture requires no preexisting chooser");
     bool allPassed=true;
     for(int mode=GAMEMODE_SURVIVAL_ENDLESS_STAGE_1;mode<=GAMEMODE_SURVIVAL_NORMAL_STAGE_5;++mode)
-    for(const int hz:{100,30,240,0})
+    for(const int hz:{100,30,60,240,0})
     {
         std::cout<<"Survival begin mode="<<mode<<" Hz="<<hz<<'\n';
         Sexy::SRand(0xC62E0+mode);Sexy::gLegacyTickPhaseNs=0;
@@ -4252,6 +4254,45 @@ void SurvivalRulesRuntime(TestApp& app)
                 Require(scheduled>=board.mNumWaves,"Survival has an empty scheduled campaign");
             };
             validateWaves();
+            if(endless&&background==2&&hz==100) {
+                const auto oldTime=board.mLevelTimeNs;
+                const auto oldDeadline=board.mNextZombieWaveTimeNs;
+                const auto oldDuration=board.mZombieWaveCountdownDurationNs;
+                board.mLevelTimeNs=12'345'678'901ULL;
+                for(const long long remaining:{2'345'678'901LL,0LL,-98'765'432LL}) {
+                    board.mNextZombieWaveTimeNs=static_cast<long long>(board.mLevelTimeNs)+remaining;
+                    board.mZombieWaveCountdownDurationNs=28'123'456'789LL;
+                    const auto save=(std::filesystem::current_path()/"wave-deadline-roundtrip.dat64").string();
+                    Require(LawnSaveGame(&board,save),"Could not save the deadline boundary fixture");
+                    board.mNextZombieWaveTimeNs=0;board.mZombieWaveCountdownDurationNs=0;
+                    Require(LawnLoadGame(&board,save)&&board.mLevelTimeNs==12'345'678'901ULL&&
+                        board.mNextZombieWaveTimeNs==static_cast<long long>(board.mLevelTimeNs)+remaining&&
+                        board.mZombieWaveCountdownDurationNs==28'123'456'789LL,
+                        "DAT64 changed a future, due or overdue wave deadline during remaining-time projection");
+                }
+                board.mHugeWaveCountDown=700;
+                board.mNextZombieWaveTimeNs=static_cast<long long>(board.mLevelTimeNs)+7'000'000'000LL;
+                const auto warningSave=(std::filesystem::current_path()/"legacy-active-warning.dat64").string();
+                Require(LawnSaveGame(&board,warningSave),"Could not save the active warning fixture");
+                {
+                    std::fstream patch(warningSave,std::ios::in|std::ios::out|std::ios::binary);
+                    const auto at=LevelSaveFormat::DAT64_HEADER_SIZE+4+
+                        Dat64TimeSchema::V2Offset(0x559c-0x164,Dat64TimeSchema::BoardFields());
+                    patch.seekp(at);
+                    constexpr long long historicalOrdinaryRemaining=40'000'000LL;
+                    patch.write(reinterpret_cast<const char*>(&historicalOrdinaryRemaining),8);
+                    Require(bool(patch),"Could not project the old active-warning ordinary countdown");
+                }
+                Require(LawnLoadGame(&board,warningSave)&&
+                    board.mNextZombieWaveTimeNs==static_cast<long long>(board.mLevelTimeNs)+7'000'000'000LL,
+                    "Old active warning interpreted its held ordinary countdown as the spawn deadline");
+                Require(LawnSaveGame(&board,warningSave)&&LawnLoadGame(&board,warningSave)&&
+                    board.mNextZombieWaveTimeNs==static_cast<long long>(board.mLevelTimeNs)+7'000'000'000LL,
+                    "Active warning deadline changed after another DAT64 roundtrip");
+                board.mHugeWaveCountDown=0;
+                board.mLevelTimeNs=oldTime;board.mNextZombieWaveTimeNs=oldDeadline;
+                board.mZombieWaveCountdownDurationNs=oldDuration;
+            }
             profile.mPurchases[STORE_ITEM_ROOF_CLEANER]=0;
             board.mCutScene->PlaceLawnItems();
             if(board.StageHasRoof()) {
@@ -4267,11 +4308,87 @@ void SurvivalRulesRuntime(TestApp& app)
             retained->mNextLaunchTimeNs=100'000'000'000LL;
             board.mSunMoney=375;
             auto* retainedBody=app.ReanimationGet(retained->mBodyReanimID);
-            board.mZombieCountDown=1;advance(100'000'000);
+            board.mNextZombieWaveTimeNs = static_cast<long long>(board.mLevelTimeNs) + (1) * 10'000'000LL;advance(100'000'000);
             Require(board.mCurrentWave==1&&board.mZombies.mSize>0,"Survival did not spawn its first scheduled wave");
             Zombie* enemy=nullptr;
             while(board.IterateZombies(enemy)) Require(enemy->mRow>=0&&enemy->mRow<(board.StageHasPool()?6:5),"Survival spawned a zombie outside its rows");
             removeEnemies();
+            if(endless&&background==2) {
+                // Exercise the production warning/scheduler together. A cue at
+                // 250ms must not consume the held ordinary countdown: low and
+                // fractional refresh rates can leave less than one step in it.
+                for(const int stage:{0,3,4,64})
+                for(const int wave:{9,19}) {
+                    challenge.mSurvivalStage=stage;
+                    board.mCurrentWave=wave;
+                    board.mHugeWaveCountDown=0;
+                    board.mNextZombieWaveTimeNs = static_cast<long long>(board.mLevelTimeNs) + (6) * 10'000'000LL;
+                    board.mZombieWaveCountdownDurationNs=45'000'000'000LL;
+                    board.mZombieHealthToNextWave=-1;
+                    unsigned long long elapsed=0,warningStart=0;
+                    bool warned=false;
+                    while(board.mCurrentWave==wave&&elapsed<8'000'000'000ULL) {
+                        const auto step=hz?1'000'000'000ULL/hz:
+                            static_cast<unsigned long long>(jitter[sequence++%jitter.size()]);
+                        Sexy::ApplySimulationStep(step);
+                        board.mLevelTimeNs+=step;board.UpdateZombieSpawning();elapsed+=step;
+                        if(!warned&&board.mHugeWaveCountDown>0) {
+                            warned=true;warningStart=elapsed;
+                        }
+                        if(warned&&elapsed-warningStart<7'500'000'000ULL)
+                            Require(board.mCurrentWave==wave,
+                                "Huge-wave voice cue advanced the held wave countdown");
+                    }
+                    Require(warned&&board.mCurrentWave==wave+1&&
+                        elapsed-warningStart>=7'500'000'000ULL,
+                        "Huge wave did not spawn after its full warning");
+                    Require(board.mHugeWaveCountDown==0&&board.mNextSurvivalStageCounter==0,
+                        "Huge-wave warning remained active after spawning");
+                    if(wave==19) {
+                        Require(board.mNextZombieWaveTimeNs-static_cast<long long>(board.mLevelTimeNs)==55'000'000'000LL,
+                            "Final wave did not retain its original repick timeout");
+                        for(unsigned long long held=0;held<10'000'000'000ULL;) {
+                            const auto step=std::min<unsigned long long>(hz?1'000'000'000ULL/hz:
+                                jitter[sequence++%jitter.size()],10'000'000'000ULL-held);
+                            Sexy::ApplySimulationStep(step);board.mLevelTimeNs+=step;board.UpdateZombieSpawning();held+=step;
+                        }
+                        Require(board.mNextSurvivalStageCounter==0&&
+                            board.mNextZombieWaveTimeNs-static_cast<long long>(board.mLevelTimeNs)==45'000'000'000LL,
+                            "Final wave entered repick while its timeout and zombies remained");
+                    }
+                    // Do not invoke death callbacks while staging the next case.
+                    board.mCurrentWave=0;removeEnemies();
+                }
+                challenge.mSurvivalStage=0;
+                // Small waves retain one absolute deadline. Passing the health
+                // threshold after four seconds shortens it exactly once.
+                board.mCurrentWave=1;
+                board.mLevelTimeNs=1'000'000'000ULL;
+                board.mNextZombieWaveTimeNs=26'000'000'000LL;
+                board.mZombieWaveCountdownDurationNs=25'000'000'000LL;
+                board.mZombieHealthToNextWave=0;
+                Sexy::ApplySimulationStep(33'333'333);
+                board.mLevelTimeNs=5'000'000'000ULL;
+                board.UpdateZombieSpawning();
+                Require(board.mNextZombieWaveTimeNs==26'000'000'000LL,
+                    "Wave health acceleration ignored its strict four-second guard");
+                board.mLevelTimeNs+=1;
+                board.UpdateZombieSpawning();
+                const auto shortened=board.mNextZombieWaveTimeNs;
+                Require(shortened==7'000'000'001LL&&board.mZombieWaveCountdownDurationNs==25'000'000'000LL,
+                    "Wave health acceleration did not schedule exactly two seconds after first eligibility");
+                board.UpdateZombieSpawning();
+                Require(board.mNextZombieWaveTimeNs==shortened,
+                    "Repeated update at the same Board time shifted the wave deadline");
+                board.mLevelTimeNs+=500'000'000ULL;board.UpdateZombieSpawning();
+                Require(board.mNextZombieWaveTimeNs==shortened&&board.mCurrentWave==1,
+                    "Wave health acceleration slid its deadline forward each update");
+                board.mLevelTimeNs=shortened+12'345'678ULL;board.UpdateZombieSpawning();
+                const auto nextInterval=board.mNextZombieWaveTimeNs-static_cast<long long>(board.mLevelTimeNs);
+                Require(board.mCurrentWave==2&&nextInterval>=25'000'000'000LL&&nextInterval<31'000'000'000LL,
+                    "Due small wave failed to spawn or schedule its original random interval");
+                board.mCurrentWave=0;removeEnemies();
+            }
             // Skip intermediate combat, but use the actual last-wave spawn and
             // death callbacks to enter the five-second repick sequence.
             board.mCurrentWave=board.mNumWaves-1;board.SpawnZombieWave();
@@ -4349,7 +4466,7 @@ void SurvivalRulesRuntime(TestApp& app)
         app.KillSeedChooserScreen();app.ProcessSafeDeleteList();
     }
     Require(allPassed,"Survival rules have failed cases; inspect per-mode output");
-    std::cout<<"PASS actual fifteen survival rules: first/final waves, repick callbacks, retained actors, pause and fixed/endless boundaries at four schedules\n";
+    std::cout<<"PASS actual fifteen survival rules: first/final waves, repick callbacks, retained actors, pause and fixed/endless boundaries at five schedules\n";
 }
 
 void AdventureRulesRuntime(TestApp& app)
@@ -4506,7 +4623,7 @@ void AdventureRulesRuntime(TestApp& app)
                 Require(boss&&boss->mRow==0,"Adventure final boss did not enter in its required row");
             }
             else {
-                board.mZombieCountDown=1;advance(100'000'000);
+                board.mNextZombieWaveTimeNs = static_cast<long long>(board.mLevelTimeNs) + (1) * 10'000'000LL;advance(100'000'000);
                 Require(board.mCurrentWave>=1&&board.mZombies.mSize>0,"Adventure did not spawn its actual first wave");
                 Zombie* enemy=nullptr;
                 while(board.IterateZombies(enemy)) {
@@ -4523,7 +4640,7 @@ void AdventureRulesRuntime(TestApp& app)
             GridItem* item=nullptr;while(board.IterateGridItems(item)) if(item->mGridItemType==GRIDITEM_SCARY_POT) item->GridItemDie();
             Coin* coin=nullptr;while(board.IterateCoins(coin)) coin->Die();
             board.ProcessDeleteQueue();app.mEffectSystem->ProcessDeleteQueue();
-            board.mCurrentWave=board.mNumWaves;board.mZombieCountDown=0;board.mLevelAwardSpawned=false;
+            board.mCurrentWave=board.mNumWaves;board.mNextZombieWaveTimeNs = static_cast<long long>(board.mLevelTimeNs) + (0) * 10'000'000LL;board.mLevelAwardSpawned=false;
             board.mBoardFadeOutCounter=-1;board.mNextSurvivalStageCounter=0;board.mLevelComplete=false;
             auto* finalEnemy=board.AddZombieInRow(level==50?ZOMBIE_BOSS:ZOMBIE_NORMAL,level==50?0:2,board.mNumWaves-1);
             finalEnemy->mX=500;
@@ -4539,6 +4656,54 @@ void AdventureRulesRuntime(TestApp& app)
                         "Adventure progression reward contains the wrong newly unlocked plant");
             }
             Require(found&&board.HasLevelAwardDropped()&&app.mBoardResult==BOARDRESULT_WON,"Adventure final enemy did not drop its correct progression reward");
+            if(level==9&&!replay&&hz==100) {
+                // Unlike the catalogue's direct DieNoLoot check, exercise the
+                // actual damage/burn/mower callbacks and subsequent actor/coin
+                // updates. A missed terminal animation or an award removed on
+                // its first long update must not leave 1-9 without its note.
+                for(const unsigned long long step:{10'000'000ULL,16'666'667ULL,
+                    33'333'333ULL,133'333'333ULL,500'000'000ULL,1'000'000'000ULL})
+                for(int route=0;route<4;++route) {
+                    board.mLevelAwardSpawned=true;
+                    board.RemoveAllZombies();
+                    Coin* oldCoin=nullptr;while(board.IterateCoins(oldCoin)) oldCoin->Die();
+                    board.ProcessDeleteQueue();app.mEffectSystem->ProcessDeleteQueue();
+                    board.mLevelAwardSpawned=false;board.mLevelComplete=false;
+                    board.mNextSurvivalStageCounter=0;board.mBoardFadeOutCounter=-1;
+                    app.mGameScene=SCENE_PLAYING;app.mBoardResult=BOARDRESULT_NONE;
+                    board.mCurrentWave=board.mNumWaves;
+                    const auto first=board.mZombies.DataArrayGetID(board.AddZombieInRow(ZOMBIE_NORMAL,2,board.mNumWaves-1));
+                    const auto last=board.mZombies.DataArrayGetID(board.AddZombieInRow(ZOMBIE_FLAG,2,board.mNumWaves-1));
+                    board.mZombies.DataArrayGet(first)->mX=500;
+                    board.mZombies.DataArrayGet(last)->mX=550;
+                    const auto hit=[&](Zombie* victim) {
+                        if(!victim||victim->IsDeadOrDying()) return;
+                        const auto now=static_cast<std::int64_t>(board.mLevelTimeNs);
+                        if(route==0) victim->TakeDamage(now,clocks.mVisualTimeNs,now,20,0U);
+                        else if(route==1) victim->TakeDamage(now,clocks.mVisualTimeNs,now,10000,0U);
+                        else if(route==2) victim->ApplyBurn(now,clocks.mVisualTimeNs,now);
+                        else victim->MowDown(now,clocks.mVisualTimeNs,now);
+                    };
+                    for(int hits=0;hits<32&&!board.HasLevelAwardDropped();++hits) {
+                        hit(board.mZombies.DataArrayTryToGet(first));
+                        hit(board.mZombies.DataArrayTryToGet(last));
+                        update(step);
+                    }
+                    for(unsigned long long elapsed=0;elapsed<8'000'000'000ULL;elapsed+=step) update(step);
+                    int notes=0;
+                    Coin* note=nullptr;while(board.IterateCoins(note)) if(note->mType==COIN_NOTE) {
+                        ++notes;
+                        Require(!note->mDead&&!note->mIsBeingCollected&&note->mFadeEndTimeNs==0&&
+                            std::isfinite(note->mPosX)&&std::isfinite(note->mPosY)&&
+                            note->mPosX>=0&&note->mPosX<800&&note->mPosY>=0&&note->mPosY<600,
+                            "1-9 note disappeared or left the lawn after a long update");
+                    }
+                    std::cout<<"Adventure note death route="<<route<<" stepNs="<<step
+                        <<" notes="<<notes<<" award="<<board.HasLevelAwardDropped()<<'\n';
+                    Require(notes==1&&board.HasLevelAwardDropped()&&app.mBoardResult==BOARDRESULT_WON,
+                        "1-9 damage/burn/mower path failed to retain exactly one uncollected note");
+                }
+            }
             std::cout<<"Adventure primary level="<<level<<" replay="<<replay<<" Hz="<<hz<<" background="<<background
                 <<" waves="<<expectedWaves<<" rows="<<rows<<" conveyor="<<conveyor<<" award="<<int(expectedAward)<<'\n';
         }
@@ -4676,7 +4841,7 @@ void HiddenRulesRuntime(TestApp& app, DecodeOnlySoundManager& sounds)
             }
             else if(mode==GAMEMODE_LIMBO_ICE) {
                 Require(!board.NeedSaveGame()&&board.mSeedBank->mNumPackets==6,"Ice demonstration gained persistence or lost its fixed cards");
-                board.mZombieCountDown=1;advance(100'000'000);
+                board.mNextZombieWaveTimeNs = static_cast<long long>(board.mLevelTimeNs) + (1) * 10'000'000LL;advance(100'000'000);
                 Require(board.mZombies.mSize==0&&board.mCurrentWave==0,"Ice demonstration used the ordinary wave scheduler");
                 const auto before=sounds.playbackRequests[Sexy::SOUND_LOSEMUSIC];
                 board.mLevelTimeNs=29'999'999'999ULL;clocks.mBattleTimeNs=board.mLevelTimeNs;
@@ -4687,7 +4852,7 @@ void HiddenRulesRuntime(TestApp& app, DecodeOnlySoundManager& sounds)
                 Require(board.mPlantRow[0]==PLANTROW_DIRT&&board.mPlantRow[4]==PLANTROW_DIRT&&
                     !board.RowCanHaveZombieType(0,ZOMBIE_NORMAL)&&!board.RowCanHaveZombieType(4,ZOMBIE_NORMAL),
                     "Resodded admitted its dirt-edge rows before the fifth wave");
-                board.mZombieCountDown=1;advance(100'000'000);
+                board.mNextZombieWaveTimeNs = static_cast<long long>(board.mLevelTimeNs) + (1) * 10'000'000LL;advance(100'000'000);
                 Zombie* enemy=nullptr;while(board.IterateZombies(enemy)) Require(enemy->mRow>=1&&enemy->mRow<=3,"Resodded first wave used an edge row");
                 board.mCurrentWave=5;
                 Require(board.RowCanHaveZombieType(0,ZOMBIE_NORMAL)&&board.RowCanHaveZombieType(4,ZOMBIE_NORMAL),
@@ -4743,7 +4908,7 @@ void HiddenRulesRuntime(TestApp& app, DecodeOnlySoundManager& sounds)
                 Require(large,"Sunny Day did not drop a large sun");
             }
             else { // Air Raid: use the actual first-wave scheduler, not a hand-created flyer.
-                board.mZombieCountDown=1;advance(100'000'000);int flyers=0;Zombie* enemy=nullptr;
+                board.mNextZombieWaveTimeNs = static_cast<long long>(board.mLevelTimeNs) + (1) * 10'000'000LL;advance(100'000'000);int flyers=0;Zombie* enemy=nullptr;
                 while(board.IterateZombies(enemy)) {Require(enemy->mZombieType==ZOMBIE_BALLOON,"Air Raid first wave contains a non-flyer");++flyers;}
                 Require(board.mCurrentWave==1&&flyers>0,"Air Raid did not spawn its first balloon wave");
             }
@@ -5977,7 +6142,7 @@ void HudAndGraveSeamsRuntime(TestApp& app)
     }
     app.mScreenBounds=Rect(0,0,800,600);clocks.mVisualTimeNs=123'456'789'000;clocks.mBattleTimeNs=0;
     app.PreNewGame(GAMEMODE_ADVENTURE,false);app.KillSeedChooserScreen();app.StartPlaying();
-    auto& board=*app.mBoard;board.mGridItems.DataArrayFreeAll();board.mZombieCountDown=100000;board.mSunCountDown=100000;
+    auto& board=*app.mBoard;board.mGridItems.DataArrayFreeAll();board.mNextZombieWaveTimeNs = static_cast<long long>(board.mLevelTimeNs) + (100000) * 10'000'000LL;board.mSunCountDown=100000;
     auto* grave=board.AddAGraveStone(3,1);grave->mStateStartTimeNs=-1'000'000'000;
     auto* plant=board.NewPlant(3,1,SEED_GRAVEBUSTER,SEED_NONE);
     constexpr std::array<unsigned long long,24> samples{0,100'000'000,200'000'000,300'000'000,500'000'000,660'000'000,750'000'000,1'000'000'000,
@@ -7557,6 +7722,13 @@ void LandscapeHudRuntime(TestApp& app)
                 "Drawn horizontal card and actual hit target disagree");
             Require(packet.mY==0&&packet.mX==board.GetSeedPacketPositionX(i),"HUD mutated canonical save coordinates");
         }
+        for(const int count:{0,1,6,7,8,9,10}) {
+            bank.mNumPackets=count;
+            const auto after=LandscapeHud::ShovelBounds(board);
+            Require(after.mY==33+count*48&&after.mX==app.mScreenBounds.mX,
+                "Shovel did not follow the actual horizontal card bank");
+        }
+        bank.mNumPackets=10;
         manager.AddWidget(&board);
         struct RemoveBoard {WidgetManager& manager;Board& board;~RemoveBoard(){manager.CancelTouches(&board);manager.RemoveWidget(&board);}} removeBoard{manager,board};
         const auto card=LandscapeHud::PacketBounds(board,0);
@@ -7650,7 +7822,7 @@ void LandscapeHudRuntime(TestApp& app)
                 const auto packet=LandscapeHud::PacketBounds(board,0);
                 Require(packet.mX+board.mX==app.mScreenBounds.mX,"Native bank anchor inherited the world camera");
                 const auto shovelRect=board.GetShovelButtonRect();
-                Require(shovelRect.mX+board.mX==app.mScreenBounds.mX&&shovelRect.mY==520,"Shovel did not occupy the same left column");
+                Require(shovelRect.mX+board.mX==app.mScreenBounds.mX&&shovelRect.mY==LandscapeHud::PacketBounds(board,bank.mNumPackets-1).mY+48,"Shovel did not occupy the same left column");
                 Require(board.mMenuButton->mX+board.mX+board.mMenuButton->mWidth==app.mScreenBounds.mX+width-2,"Menu moved away from the window edge");
                 HitResult cameraHit;
                 Require(bank.MouseHitTest(packet.mX+40,packet.mY+20,&cameraHit)&&cameraHit.mObject==&bank.mSeedPackets[0],"Camera-independent card hit failed");
@@ -7831,6 +8003,10 @@ void LandscapeHudRuntime(TestApp& app)
         bank.mSeedPackets[0].mX=141;bank.mSeedPackets[0].mOffsetX=25;
         const auto beltCard=LandscapeHud::PacketBounds(board,0);
         Require(beltCard.mY==33+75*48/50,"Conveyor canonical X/offset did not map to the vertical belt");
+        bank.mNumPackets=1;
+        Require(LandscapeHud::ShovelBounds(board).mY==513,
+            "Conveyor shovel moved inside the reserved belt when cards were removed");
+        bank.mNumPackets=10;
         HitResult hit;Require(bank.MouseHitTest(beltCard.mX+40,beltCard.mY+20,&hit),"Vertical conveyor card is not clickable");
         for(int i=0;i<10;++i) {
             bank.mSeedPackets[i].mX=board.GetSeedPacketPositionX(i);bank.mSeedPackets[i].mOffsetX=0;

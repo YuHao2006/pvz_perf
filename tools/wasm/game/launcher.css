@@ -34,3 +34,5 @@ body.playing.portrait-game .stage{position:fixed;flex:none;left:50%;top:50%;tran
 /* Settings use document scrolling: avoid a nested, absolute scroll surface in mobile WebViews. */
 #diagnostics-settings{margin-top:16px}#diagnostics-settings .check{margin:12px 0}#diagnostics-dialog{width:min(800px,94vw);max-height:90dvh;overflow:auto;background:#192316;color:#e9efdf;border:1px solid #a8c681;border-radius:12px;padding:20px}#diagnostics-dialog::backdrop{background:#000b}#diagnostics-text{display:block;width:100%;height:45dvh;resize:vertical;margin:12px 0;padding:10px;background:#10170f;color:#edf2e7;font:12px/1.5 monospace}#diagnostics-dialog>div{display:flex;gap:8px;flex-wrap:wrap}
 body:not(.playing) .stage{display:block;overflow:visible}body:not(.playing) #canvas{display:none}html:not(.playing){touch-action:pan-y pinch-zoom}html.playing,body.playing{height:100%;overflow:hidden;overscroll-behavior:none}body.playing{height:100vh;height:100dvh;min-height:0}
+
+#level-save-cloud-warning{display:block;margin:10px 0;color:#ffd28a;font-size:14px;line-height:1.6}

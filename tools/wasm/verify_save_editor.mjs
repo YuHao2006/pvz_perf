@@ -11,7 +11,7 @@ try{
  await page.reload();await ready();console.log("launcher ready");
  assert.equal(await page.locator('#claim-perfect,#claim-endless,#manage-level-saves').count(),0);
  assert.ok((await page.locator('#start').boundingBox()).y<(await page.locator('#target-fps').boundingBox()).y);
- const original=await page.evaluate(()=>Array.from(Module.FS.readFile('/persist/development-v331/game1_58.dat64')));
+ const original=await page.evaluate(()=>Array.from(Module.FS.readFile('/persist/development-v4/game1_58.dat64')));
  await page.locator('#upload-progress').click();await page.locator('#cloud-upload-warning').waitFor({state:'visible'});
  assert.equal(await page.locator('#cloud-upload-warning').evaluate(el=>getComputedStyle(el).color),'rgb(255, 101, 101)');
  await page.waitForFunction(()=>typeof window.finishUpload==='function');await page.evaluate(()=>{const f=finishUpload;finishUpload=null;f()});await page.waitForFunction(()=>typeof window.finishUpload==='function');await page.evaluate(()=>finishUpload());await page.locator('#cloud-upload-warning').waitFor({state:'hidden'});
@@ -22,7 +22,7 @@ try{
  await editor.locator('#layer').selectOption('main');await editor.locator('#plant').selectOption('0');await editor.locator('#board button').first().click();assert.match(await editor.locator('#board button').first().textContent(),/豌豆射手/);
  await editor.locator('#undo').click();await editor.locator('#redo').click();assert.match(await editor.locator('#board button').first().textContent(),/豌豆射手/);
  await editor.locator('[data-tab=files]').click();await editor.locator('#file').setInputFiles({name:'game1_58.dat64',mimeType:'application/octet-stream',buffer:Buffer.from('invalid')});await editor.locator('#import').click();await editor.locator('#status').filter({hasText:'DAT64 文件无效'}).waitFor();
- assert.deepEqual(await page.evaluate(()=>Array.from(Module.FS.readFile('/persist/development-v331/game1_58.dat64'))),original);
+ assert.deepEqual(await page.evaluate(()=>Array.from(Module.FS.readFile('/persist/development-v4/game1_58.dat64'))),original);
  await editor.locator('#file').setInputFiles({name:'game1_58.dat64',mimeType:'application/octet-stream',buffer:Buffer.from(original)});await editor.locator('#import').click();await editor.locator('#status').filter({hasText:'已校验并导入'}).waitFor({timeout:180000});
  const download=page.waitForEvent('download');await editor.locator('#export').click();assert.equal((await download).suggestedFilename(),'game1_58.dat64');
  assert.equal(await page.evaluate(()=>coinQueries),1);

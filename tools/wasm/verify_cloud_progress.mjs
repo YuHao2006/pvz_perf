@@ -13,8 +13,8 @@ try{
   window.toy={getCloudStorage:async keys=>Object.fromEntries(keys.filter(k=>Object.hasOwn(cloudRows,k)).map(k=>[k,cloudRows[k]])),setCloudStorage:async values=>{if(window.failCloud)throw Error('simulated cloud outage');window.cloudWrites++;Object.assign(cloudRows,values)}};
  });
  await page.reload();await ready();
- const original=await page.evaluate(()=>Array.from(Module.FS.readFile('/persist/development-v331/user1.dat64')));
- const battle=await page.evaluate(()=>Array.from(Module.FS.readFile('/persist/development-v331/game1_58.dat64')));
+ const original=await page.evaluate(()=>Array.from(Module.FS.readFile('/persist/development-v4/user1.dat64')));
+ const battle=await page.evaluate(()=>Array.from(Module.FS.readFile('/persist/development-v4/game1_58.dat64')));
  await page.locator('#upload-progress').click();
  await page.waitForFunction(()=>document.getElementById('cloud-status').textContent.includes('已备份到')&&!document.getElementById('start').disabled);
  const payload=await page.evaluate(async()=>{
@@ -24,12 +24,12 @@ try{
  assert.deepEqual(Object.keys(payload).sort(),['user1.dat64','users.dat']);
  assert.equal(await page.evaluate(()=>window.cloudWrites),4);
  await page.locator('#upload-progress').click();await page.waitForFunction(()=>!document.getElementById('start').disabled);assert.equal(await page.evaluate(()=>window.cloudWrites),4);
- await page.evaluate(()=>{window.failCloud=true;const p='/persist/development-v331/user1.dat64',b=Module.FS.readFile(p);b[200]^=1;Module.FS.writeFile(p,b)});
+ await page.evaluate(()=>{window.failCloud=true;const p='/persist/development-v4/user1.dat64',b=Module.FS.readFile(p);b[200]^=1;Module.FS.writeFile(p,b)});
  await page.locator('#restore-progress').click();await page.locator('#cloud-restore-dialog').waitFor({state:'visible'});
  await page.locator('#cloud-restore-dialog button[value=restore]').click();
  await page.waitForFunction(()=>document.getElementById('cloud-status').textContent.includes('已备份到'));
- assert.deepEqual(await page.evaluate(()=>Array.from(Module.FS.readFile('/persist/development-v331/user1.dat64'))),original);
- assert.deepEqual(await page.evaluate(()=>Array.from(Module.FS.readFile('/persist/development-v331/game1_58.dat64'))),battle);
+ assert.deepEqual(await page.evaluate(()=>Array.from(Module.FS.readFile('/persist/development-v4/user1.dat64'))),original);
+ assert.deepEqual(await page.evaluate(()=>Array.from(Module.FS.readFile('/persist/development-v4/game1_58.dat64'))),battle);
  page.on('dialog',d=>d.accept());
  await page.evaluate(()=>{window.failCloud=false;toy.getAuthorRelation=async()=>({status:'ok',data:{isAuthor:true}})});
  const oldHead=await page.evaluate(()=>cloudRows.pvz_lineups_v1);
@@ -40,6 +40,6 @@ try{
  await page.evaluate(()=>{sessionStorage.setItem('mock-cloud-rows',JSON.stringify(cloudRows));localStorage.removeItem('pvz_lineup_library_v1')});
  await page.reload();await ready();
  assert.deepEqual(await page.evaluate(()=>JSON.parse(localStorage.getItem('pvz_lineup_library_v1')).lineups.map(p=>p.name)),['97无炮','14格','[终极战术]五角星无炮流']);
- assert.deepEqual(await page.evaluate(()=>Array.from(Module.FS.readFile('/persist/development-v331/game1_58.dat64'))),battle);
+ assert.deepEqual(await page.evaluate(()=>Array.from(Module.FS.readFile('/persist/development-v4/game1_58.dat64'))),battle);
  console.log('Bilibili-config UI: profile + JSON lineup cloud upload/restore, unchanged-write suppression, deletion surviving local reset and untouched battle DAT64 passed against SDK mock');
 }finally{await browser.close()}

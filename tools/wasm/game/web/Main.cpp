@@ -21,7 +21,8 @@ EMSCRIPTEN_KEEPALIVE int pvz_web_loading_complete() {
         && gLawnApp->mCacheFramesPrebuilt;
 }
 }
-int main() {    setenv("PVZ_APPDATA_DIR", "/persist/development-v331/", 1);
+int main() {
+    setenv("PVZ_APPDATA_DIR", "/persist/development-v4/", 1);
     try {
         gTodStringFormats = gLawnStringFormats;
         gTodStringFormatCount = gLawnStringFormatCount;

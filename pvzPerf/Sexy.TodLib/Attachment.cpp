@@ -272,7 +272,7 @@ void Attachment::CrossFade(ParticleEmitterName theName)
 			TodParticleSystem* aParticleSystem = gEffectSystem->mParticleHolder->mParticleSystems.DataArrayTryToGet(aAttachEffect->mEffectID);
 			if (aParticleSystem)
 			{
-				aParticleSystem->CrossFade(theName);
+				aParticleSystem->CrossFade(theName, aParticleSystem->mLastUpdateTimeNs);
 			}
 		}
 	}
@@ -290,7 +290,7 @@ void Attachment::CrossFade(ParticleEmitterNameRange theRange)
 			TodParticleSystem* aParticleSystem = gEffectSystem->mParticleHolder->mParticleSystems.DataArrayTryToGet(aAttachEffect->mEffectID);
 			if (aParticleSystem)
 			{
-				aParticleSystem->CrossFade(theRange);
+				aParticleSystem->CrossFade(theRange, aParticleSystem->mLastUpdateTimeNs);
 			}
 		}
 	}
@@ -674,7 +674,7 @@ void AttachmentDetachCrossFadeParticleType(AttachmentID& theAttachmentID, Partic
 	AttachmentDetachParticleType(theAttachmentID, theParticleEffect, [theName](TodParticleSystem* theParticleSystem)
 	{
 		theParticleSystem->mIsAttachment = false;
-		theParticleSystem->CrossFade(theName);
+		theParticleSystem->CrossFade(theName, theParticleSystem->mLastUpdateTimeNs);
 	});
 }
 
@@ -683,7 +683,7 @@ void AttachmentDetachCrossFadeParticleType(AttachmentID& theAttachmentID, Partic
 	AttachmentDetachParticleType(theAttachmentID, theParticleEffect, [theRange](TodParticleSystem* theParticleSystem)
 	{
 		theParticleSystem->mIsAttachment = false;
-		theParticleSystem->CrossFade(theRange);
+		theParticleSystem->CrossFade(theRange, theParticleSystem->mLastUpdateTimeNs);
 	});
 }
 

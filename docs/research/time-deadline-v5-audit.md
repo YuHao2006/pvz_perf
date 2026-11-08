@@ -30,7 +30,7 @@
 | Challenge | `mConveyorBeltCounter` | 下次发牌终点，与 SeedBank 的同名动画相位不同 |
 | Challenge | `mRainCounter`、`mCloudsCounter[6]` | 雷雨、云效果触发终点 |
 | ReanimatorTrackInstance | 已迁移为 `mBlendEndTimeNs` / `mBlendDurationNs` | 使用持有者传入的动画时间；时钟重绑时平移有效终点 |
-| CutScene / MessageWidget | `mCrazyDaveCountDown`、`mSlideOffTime` | 对话及文字滑出起点／终点；`mDisplayTime` 是显示时长参数 |
+| CutScene | `mCrazyDaveCountDown` | 对话终点；MessageWidget 的显示总时长与滑出总时长已改为原始纳秒参数 |
 | CursorObject / ToolTipWidget | `mHammerDownCounter`、`mWarningFlashCounter` | 当前搜索只找到初始化、设置、读取，未找到递减点；先确认是否无效，再删除或恢复推进 |
 | ChallengeScreen / AwardScreen | `mUnlockStateCounter`、`mFadeInCounter`、`mAchievementAnimTime` | 解锁、淡入、成就动画的起点／终点 |
 | GameSelector | `mStartingGameCounter`、`mCloudCounter[6]`、`mLeafCounter`、`mSlideCounter` | 启动过场、云叶效果、滑动起点／终点 |
@@ -92,3 +92,39 @@ v5 在字段迁移完成后冻结，明确每个起点／终点的时间基准�
 - v5.1 的 reanimation 尾部64偏移保存帧内余数；离线工具的内部模型仍按冻结 v4 契约保存时间戳，在文件边界显式转换。存档校验检查余数非负、小于帧时长、出生时间加余数不溢出。
 - 当前仍未退休的是粒子系统管理者的时钟绑定（`TodParticleSystem::mLastUpdateTimeNs`）及旧计时包装中的前次值；粒子/发射器实例本身仍按出生时刻求年龄。这一批不能表述为整个项目已无前次计时状态。
 - 已完成验证：Music 真实 BASS 路径30/60/100/144/240/1000 FPS、确定性动态音乐测试、Plant 特殊/眨眼的重复时刻/跨越到期/睡眠暂停用例，以及独立 v4-v5.1-v4 字节往返和82个网页生成用例。帧内余数真实回归通过：7722个正放/倒放/停止/跨帧采样、1536个末帧保持/存档样本、620个对象出生场景、53种植物四种调度、15种生存模式五种调度，以及Credits暂停恢复。当前x64实测Plant528字节、Music104字节、Reanimation288字节。
+
+## 第三批：纯时长与粒子内部时间参数
+
+- Zombie 的旧图片动画帧时长改为 `mSpriteFramePeriodNs`，SeedPacket 冷却总时长改为 `mCooldownDurationNs`，MessageWidget 的显示/滑出总时长改为 `mDisplayDurationNs` / `mSlideDurationNs`。这些是参数，不需要保存前次值，各由16字节包装收紧到8字节整数。
+- 删除 LawnMower 从未使用的 `mAnimTicksPerFrame`。旧规范记录的槽位由冷路径映射忽略，写出零值，不增加模拟或绘制分支。当前 v5.1 的磁盘字段语义/宽度不变。
+- 粒子出生、发射、交叉淡出、渲染参数和图片动画相位显式接收当前时间。力场分发表接收更新函数已经算出的当前年龄，Shake 不再重复从系统时间减出生时间。发射器单独更新显式接收本次与前次的时间参数，不写入管理者时钟。
+- 这一批尚未删除 `TodParticleSystem::mLastUpdateTimeNs`：系统管理入口、附件调用边界、绘制入口和存档投影仍依赖它。未把字段移到侧表，也未以重命名宣称退休。后续需将管理者的实际区间和保存时刻贯穿这些调用边界。
+- 同批修正老虎机：只有首次从教学拉杆状态进入完成状态时建立首波刷新终点；随后拉杆不再重设下一波终点。真实小游戏回归覆盖30/100/240 FPS与不规则步长，连续拉杆时原路径失败、修正路径通过。
+
+### 当前 x64 对象布局
+
+用同一 MSVC 编译器、相同配置分别编译3.3.8冻结头文件与当前头文件；记录的是 `sizeof`，不是进程常驻内存。
+
+| 类型 | 3.3.8 字节 | 当前字节 |
+| --- | ---: | ---: |
+| Board | 23168 | 23152 |
+| Plant | 560 | 528 |
+| Zombie | 608 | 600 |
+| Reanimation | 288 | 288 |
+| ReanimatorTrackInstance | 128 | 112 |
+| TodParticle | 184 | 184 |
+| TodParticleEmitter | 200 | 200 |
+| TodParticleSystem | 48 | 48 |
+| SeedPacket | 112 | 104 |
+| SeedBank（含10卡） | 1200 | 1120 |
+| LawnMower | 104 | 88 |
+| MessageWidget | 832 | 816 |
+| Music | 112 | 104 |
+
+Plant/Zombie池槽分别568→536、616→608字节，容量256/1024不变，两池合计减少16384字节。轨道实例按实际分配条数另计；不能把字段缩减直接换算成帧率收益。原始布局证据保存在本地 `out/verification/v4/layout-compare/`。
+
+### 非零余数切换动作的回归修正
+
+真实智慧树用例暴露了v4缓存迁移中的起点重复加余数：旧帧内余数非零时，先写 `mStartTimeNs = oldStart + oldAge`，再以 `mStartTimeNs + oldAge` 绑定新动作，会把新动作推迟旧余数那么久。修正为在入口只捕获一次当前姿态时刻，后续配置与绑定共用该值；空轨道同时清零余数。未增加运行时字段和热循环分支。
+
+补充正放、倒放和非整数速率下的动作切换回归，切换后1纳秒就应继续推进；智慧树真实喂食覆盖五个高度。蜗牛残影的临时姿态现在一起设置、恢复帧号/起点/余数，不让历史绘制改动当前播放缓存。真实花园回归覆盖转身、行走、睡眠、巧克力与残影绘制。

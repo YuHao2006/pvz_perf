@@ -1407,23 +1407,28 @@ void Reanimation::SetFramesForLayer(ReanimTrackId theTrackId)
 // index 直达版：时间复位逻辑自 SetFramesForLayer 原样抽出，id 版内部共用。
 void Reanimation::SetFramesForLayerIndex(int theTrackIndex)
 {
+	const auto nowNs = mStartTimeNs + mFrameAgeNs;
 	++mPlaybackGeneration;
 	mHasLastFrame = false;
 	mCycleCrossings = 0;
     mRootDisplacement = 0;
-	mStartTimeNs = (mStartTimeNs + mFrameAgeNs);
 	mPendingTiming = false;
 	if (mDefinition->mTracks.count == 0)  // 如果动画没有轨道
 	{
 		mFrameStart = 0;
 		mFrameCount = 0;
+		mStartTimeNs = nowNs;
+		mFrameAgeNs = 0;
 		return;
 	}
 	GetFramesForTrackIndex(theTrackIndex, mFrameStart, mFrameCount);
 	if (mAnimRate != 0)
 		ConfigureFramePeriod(*this, ReanimClock::PeriodFromRate(mFrameCount, mAnimRate));
 	ConfigureFramePeriod(*this, mPeriodNs);
-    BindFramePosition(*this, (mStartTimeNs + mFrameAgeNs), mAnimRate >= 0 ? 0 : mPeriodNs - 1);
+    // Capture the sampled timestamp before changing either part of the cache.
+    // Assigning start=oldStart+oldAge and then adding oldAge again delays every
+    // new action by the previous keyframe remainder.
+    BindFramePosition(*this, nowNs, mAnimRate >= 0 ? 0 : mPeriodNs - 1);
 	mLastFrameNs = SamplePlayback().phaseNs;
 }
 

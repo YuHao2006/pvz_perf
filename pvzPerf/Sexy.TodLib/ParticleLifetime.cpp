@@ -27,11 +27,9 @@ void RefreshParticleLifeFraction(TodParticleEmitter& emitter, std::int64_t nowNs
     holder.mData->mEmitterLifeFractions[holder.mEmitters.DataArrayIndexOf(&emitter)] = NormalizedLife(nowNs, emitter.mBirthTimeNs, emitter.mSystemDurationNs);
 }
 
-std::int64_t TodParticleAnimationPhase(const TodParticle& particle, const FloatParameterTrack& track)
+std::int64_t TodParticleAnimationPhase(const TodParticle& particle, const FloatParameterTrack& track, std::int64_t nowNs)
 {
     if (!TodParticleConstantAnimationRate(track)) return particle.mAnimationSampleIntegral;
-    const auto nowNs = particle.mParticleEmitter && particle.mParticleEmitter->mParticleSystem
-        ? particle.mParticleEmitter->mParticleSystem->mLastUpdateTimeNs : 0;
     const auto phase = ParticleClock::ConstantRatePhase(
         ReanimClock::Subtract(nowNs, particle.mAnimationBirthTimeNs), track.mNodes[0].mLow);
     const auto anchored = (phase + particle.mAnimationSampleIntegral % ParticleClock::Cycle) % ParticleClock::Cycle;

@@ -273,7 +273,7 @@ inline void RenderParticle(Graphics* g, TodParticle* theParticle, const Color& t
 	{
 		if (FloatTrackIsSet(aEmitterDef->mAnimationRate))  // 如果定义了动画速率
 			aFrame = ClampInt(static_cast<int>(ReanimClock::MulDiv(
-				TodParticleAnimationPhase(*theParticle, aEmitterDef->mAnimationRate),
+				TodParticleAnimationPhase(*theParticle, aEmitterDef->mAnimationRate, aEmitter->mParticleSystem->mLastUpdateTimeNs),
 				std::max(0, aEmitterDef->mImageFrames), ParticleClock::Cycle)),
 				0, aEmitterDef->mImageFrames - 1);
 		else if (aEmitterDef->mAnimated)

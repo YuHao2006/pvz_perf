@@ -54,7 +54,7 @@ void DrawAward(TodParticleSystem& system,Graphics& graphics,int mode,bool manual
     if(!manual && mode==Full) { system.Draw(&graphics);return; }
     for(int e=0;e<system.EmitterRosterCount();++e) {
         auto* emitter=system.EmitterRosterEmitterAt(e);
-        if(Selected(emitter,mode)) emitter->Draw(&graphics);
+        if(Selected(emitter,mode)) emitter->Draw(&graphics,emitter->mParticleSystem->mLastUpdateTimeNs);
     }
 }
 struct Coverage { int active{},drawn{};double quadArea{},clippedAabbArea{}; };
@@ -69,7 +69,7 @@ Coverage Measure(TodParticleSystem& system,int mode,std::ostream& emitterLog,int
         for(int p=0;p<emitter->ParticleRosterCount();++p) {
             auto* particle=emitter->ParticleRosterParticleAt(p);ParticleRenderParams params{};
             if(!Selected(emitter,mode) || particle->mCrossFadeDurationNs>0 ||
-                !TodParticleEmitter::GetRenderParams(particle,&params) || params.mAlpha<=0 ||
+                !TodParticleEmitter::GetRenderParams(particle,&params,emitter->mParticleSystem->mLastUpdateTimeNs) || params.mAlpha<=0 ||
                 emitter->mEmitterDef->mImageRectCount==0) continue;
             const auto& region=system.mParticleDef->mImageRects[
                 system.mVariant*system.mParticleDef->mImageRectCount+emitter->mEmitterDef->mImageRectOffset];

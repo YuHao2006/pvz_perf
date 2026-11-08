@@ -161,7 +161,7 @@ unsigned long long Hash(const ParticleRenderParams& p) {
 }
 __declspec(noinline) unsigned long long Cached(TodParticle& p) {
     ParticleRenderParams result{};
-    return p.mParticleEmitter->GetRenderParams(&p,&result)?Hash(result):0;
+    return p.mParticleEmitter->GetRenderParams(&p,&result,p.mParticleEmitter->mParticleSystem->mLastUpdateTimeNs)?Hash(result):0;
 }
 __declspec(noinline) unsigned long long Uncached(TodParticle& p) {
     ParticleRenderParams result{};

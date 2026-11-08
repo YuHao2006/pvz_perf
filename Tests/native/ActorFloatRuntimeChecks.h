@@ -335,6 +335,10 @@ inline void TreeOfWisdomEntryPose(LawnApp& app, Board& board)
             "Actual Tree food no longer starts its original growth animation");
         board.mLevelTimeNs+=1;
         challenge.Update(1);
+        std::cout << "Tree growth owner height=" << height << " now=" << board.mLevelTimeNs
+            << " phase=" << tree->SamplePlayback().phaseNs << " start=" << tree->mStartTimeNs
+            << " remainder=" << tree->mFrameAgeNs << " frame=" << tree->mCurrentFrame
+            << " rate=" << tree->mAnimRate << " paused=" << board.mPaused << '\n';
         Require(tree->SamplePlayback().phaseNs==1,
             "Actual Tree growth did not advance from the supplied owner timestamp");
     }

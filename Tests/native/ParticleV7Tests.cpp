@@ -159,7 +159,7 @@ struct Scene
             ParticleEffect::PARTICLE_NONE, 0);
     }
     TodParticleEmitter* Emitter() const { return system->EmitterRosterEmitterAt(0); }
-    TodParticle* Spawn() { return Emitter()->SpawnParticle(0, 1); }
+    TodParticle* Spawn() { return Emitter()->SpawnParticle(0, 1, system->mLastUpdateTimeNs); }
 };
 
 std::vector<std::uint64_t> Snapshot(const Scene& scene)
@@ -195,7 +195,7 @@ std::vector<std::uint64_t> Snapshot(const Scene& scene)
             integer(ParticleLifeAgeAt(particle.mParticleEmitter->mParticleSystem->mLastUpdateTimeNs, particle.mBirthTimeNs, particle.mParticleDurationNs));
             integer(ReanimClock::Subtract(particle.mParticleEmitter->mParticleSystem->mLastUpdateTimeNs, particle.mAnimationBirthTimeNs));
             integer(particle.mAnimationSampleIntegral);
-            integer(TodParticleAnimationPhase(particle, emitter.mEmitterDef->mAnimationRate));
+            integer(TodParticleAnimationPhase(particle, emitter.mEmitterDef->mAnimationRate, scene.system->mLastUpdateTimeNs));
             integer(particle.mRandomSeed);
             integer(particle.mImageFrame);
             vector(particle.mPosition);
@@ -436,6 +436,52 @@ void TestLifetimesAndTracks()
         "random initial age retained legacy tick grid");
 }
 
+void TestExplicitParticleTime()
+{
+    // Deliberately leave the system boundary clock unrelated to the supplied
+    // timestamp. Births, fields, fading and image phase must use the argument.
+    Scene scene(0);
+    constexpr std::int64_t birth = 123'456'789;
+    scene.system->mLastUpdateTimeNs = -9'000'000'000;
+    auto* particle = scene.Emitter()->SpawnParticle(0, 1, birth);
+    Require(particle && particle->mBirthTimeNs == birth &&
+        particle->mAnimationBirthTimeNs == birth,
+        "particle birth consulted the system's cached clock");
+    constexpr std::int64_t elapsed = 87'654'321;
+    const auto now = birth + elapsed;
+    Require(TodParticleAnimationPhase(*particle, scene.emitter.mAnimationRate, now) ==
+        ParticleClock::ConstantRatePhase(elapsed, scene.values[8].mLow),
+        "particle image phase ignored the explicit timestamp");
+
+    Scene reference(0);
+    reference.system->mLastUpdateTimeNs = birth;
+    auto* expected = reference.Emitter()->SpawnParticle(0, 1, birth);
+    Require(reference.Emitter()->UpdateParticle(expected, elapsed, now, 0) &&
+        scene.Emitter()->UpdateParticle(particle, elapsed, now, 0),
+        "explicit-time particle unexpectedly expired");
+    Require(particle->mPosition.x == expected->mPosition.x &&
+        particle->mPosition.y == expected->mPosition.y &&
+        particle->mVelocity.x == expected->mVelocity.x &&
+        particle->mVelocity.y == expected->mVelocity.y &&
+        particle->mSpinPosition == expected->mSpinPosition,
+        "particle fields depended on a stored system timestamp");
+    Require(scene.system->mLastUpdateTimeNs == -9'000'000'000,
+        "particle evaluation unexpectedly wrote the system clock");
+
+    TodEmitterDefinition targetDef = scene.emitter;
+    FloatParameterTrackNode fadeNode[]{ {0.0, 25.0f, 25.0f, 1, 1} };
+    targetDef.mCrossFadeDuration = {fadeNode, 1};
+    auto* target = scene.holder.mEmitters.DataArrayAlloc();
+    target->TodEmitterInitialize(100, 200, scene.system, &targetDef, now);
+    Require(target->mBirthTimeNs == now && scene.system->EmitterRosterAdd(target),
+        "crossfade emitter did not use the explicit birth timestamp");
+    scene.Emitter()->CrossFadeEmitter(target, now);
+    Require(scene.Emitter()->mCrossFadeEndTimeNs == now + 250'000'000 &&
+        target->ParticleRosterCount() == 1 &&
+        target->ParticleRosterParticleAt(0)->mAnimationBirthTimeNs == now,
+        "crossfade deadline or target birth consulted the system clock");
+}
+
 void TestEmission()
 {
     constexpr std::int64_t elapsed = 5'123'456'789;
@@ -508,9 +554,9 @@ void TestCrossfade()
     TodEmitterDefinition targetDef = existing.emitter;
     targetDef.mCrossFadeDuration = {&fade, 1};
     auto* targetEmitter = existing.holder.mEmitters.DataArrayAlloc();
-    targetEmitter->TodEmitterInitialize(100, 200, existing.system, &targetDef);
+    targetEmitter->TodEmitterInitialize(100, 200, existing.system, &targetDef, existing.system->mLastUpdateTimeNs);
     Require(existing.system->EmitterRosterAdd(targetEmitter), "target emitter roster full");
-    existing.Emitter()->CrossFadeEmitter(targetEmitter);
+    existing.Emitter()->CrossFadeEmitter(targetEmitter, existing.system->mLastUpdateTimeNs);
     existing.system->Update(20'000'000, ReanimClock::Add(existing.system->mLastUpdateTimeNs, static_cast<std::int64_t>(20'000'000)));
     Require(existing.Emitter()->mCrossFadeEndTimeNs - existing.system->mLastUpdateTimeNs == 80'000'000,
         "crossfade countdown did not use actual ns");
@@ -544,7 +590,7 @@ void TestSystemPositionDeltas()
     fields[1].mX = fields[1].mY = {second, 2};
     scene.emitter.mSystemFields = {fields, 2};
     auto* emitter = scene.Emitter();
-    emitter->TodEmitterInitialize(1000, -1000, scene.system, &scene.emitter);
+    emitter->TodEmitterInitialize(1000, -1000, scene.system, &scene.emitter, scene.system->mLastUpdateTimeNs);
     // Two authored position fields sum to (3.25 + 12.5*t, -4.75 - 9.5*t).
     // Birth applies the first sample once. Later calls add sample differences
     // to the current float center; they do not reconstruct an absolute origin.
@@ -761,13 +807,14 @@ int main()
             TodParticle clock{};
             clock.mAnimationBirthTimeNs = 0 - (test.elapsed);
             clock.mAnimationSampleIntegral = 17;
-            Require(TodParticleAnimationPhase(clock, precise) ==
+            Require(TodParticleAnimationPhase(clock, precise, 0) ==
                 (test.phase + 17) % 1'000'000'000'000LL,
                 "constant float animation rate lost precision in total elapsed phase");
         }
         TestDiscreteMotion();
         TestActualDelta();
         TestLifetimesAndTracks();
+        TestExplicitParticleTime();
         TestEmission();
         TestCrossfade();
         TestSystemPositionDeltas();

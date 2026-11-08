@@ -718,6 +718,21 @@ void ReanimationIntegerPlayback()
         animation.PlayReanim(ReanimTrackId::anim_crawl, loop, 0, rate);
         animation.Seek(337);
     };
+    for (const auto rate : {8.0f, -8.0f, 13.3072289f})
+    {
+        Reanimation animation;
+        initialize(animation, REANIM_LOOP, rate, 123'456'789'000);
+        animation.Advance(17'123'457);
+        const auto now = animation.mStartTimeNs + animation.mFrameAgeNs;
+        Require(animation.mFrameAgeNs != 0, "Action switch fixture needs an in-frame remainder");
+        animation.PlayReanim(ReanimTrackId::anim_crawl, REANIM_PLAY_ONCE_AND_HOLD, 0, rate);
+        const auto phase = animation.SamplePlayback().phaseNs;
+        Require(animation.mStartTimeNs + animation.mFrameAgeNs == now,
+            "Action switch added the previous keyframe remainder to the owner timestamp");
+        animation.Advance(1);
+        Require(animation.SamplePlayback().phaseNs == phase + (rate > 0 ? 1 : -1),
+            "Switched action did not immediately advance from its actual owner timestamp");
+    }
     for (const auto loop : {ReanimLoopType::REANIM_LOOP, ReanimLoopType::REANIM_LOOP_FULL_LAST_FRAME})
     for (const auto rate : {13.3072289f, -13.3072289f, 700.001f})
     {
@@ -786,7 +801,7 @@ void ReanimationIntegerPlayback()
             }
             const auto actual = animation.SamplePlayback();
             Require(actual.phaseNs == expected.phaseNs && actual.cycles == expected.cycles &&
-                animation.mLastUpdateTimeNs == total && animation.mLoopCount == reference.mLoopCount,
+                animation.mStartTimeNs + animation.mFrameAgeNs == total && animation.mLoopCount == reference.mLoopCount,
                 "Production elapsed playback depends on outer update partition");
             // Root bases contain physical doubles, not lifetime cycle counters.
             // Compare each partition to the independently integrated authored keys.
@@ -850,7 +865,7 @@ void ReanimationIntegerPlayback()
         paused.ApplyRate(0);
         const auto expected = paused.SamplePlayback();
         paused.mReanimationHolder = &clock;
-        clock.mVisualTimeNs = paused.mLastUpdateTimeNs + 3 * paused.mFramePeriodNs;
+        clock.mVisualTimeNs = paused.mStartTimeNs + paused.mFrameAgeNs + 3 * paused.mFramePeriodNs;
         const auto wire = SaveRecordMapping::WriteSaveRecord(paused);
         Reanimation restored;
         SaveRecordMapping::ReadSaveRecord(restored, wire.data());

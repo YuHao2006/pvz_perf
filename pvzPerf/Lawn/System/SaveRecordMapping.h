@@ -315,7 +315,7 @@ template<class T> void WriteHistoricalProjection(const T& value, std::span<Legac
         if (value.mParticleEmitter && value.mParticleEmitter->mEmitterDef)
         {
             const auto& track = value.mParticleEmitter->mEmitterDef->mAnimationRate;
-            animationPhase = TodParticleAnimationPhase(value, track);
+            animationPhase = TodParticleAnimationPhase(value, track, value.mParticleEmitter->mParticleSystem->mLastUpdateTimeNs);
         }
         if (animationPhase < 0) animationPhase += V7SaveSchema::Frame;
         PutFloat(bytes, 24, float(double(animationPhase) / V7SaveSchema::Frame));

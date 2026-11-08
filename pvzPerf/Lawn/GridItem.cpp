@@ -201,6 +201,8 @@ void GridItem::DrawStinky(Graphics* g)
     Reanimation* aStinkyReanim = mApp->ReanimationGet(mGridItemReanimID);
     const auto aOriginalFrame = aStinkyReanim->mCurrentFrame;
     const auto aOriginalStart = aStinkyReanim->mStartTimeNs;
+    const auto aOriginalAge = aStinkyReanim->mFrameAgeNs;
+    const auto aSampleTimeNs = aOriginalStart + aOriginalAge;
     const float aOriginalTransX = g->mTransX;
     const float aOriginalTransY = g->mTransY;
 
@@ -223,8 +225,8 @@ void GridItem::DrawStinky(Graphics* g)
             const bool reverse = aStinkyReanim->mAnimRate < 0;
             aStinkyReanim->mCurrentFrame = int(phase / q + (reverse && remainder != 0));
             const auto age = reverse && remainder != 0 ? q - remainder : remainder;
-            const auto now = (aStinkyReanim->mStartTimeNs + aStinkyReanim->mFrameAgeNs);
-            aStinkyReanim->mStartTimeNs = ReanimClock::Subtract(now, age);
+            aStinkyReanim->mStartTimeNs = ReanimClock::Subtract(aSampleTimeNs, age);
+            aStinkyReanim->mFrameAgeNs = age;
 
             g->mTransX = aOriginalTransX + aDiffX;
             g->mTransY = aOriginalTransY + aDiffY;
@@ -238,6 +240,7 @@ void GridItem::DrawStinky(Graphics* g)
     }
     aStinkyReanim->mCurrentFrame = aOriginalFrame;
     aStinkyReanim->mStartTimeNs = aOriginalStart;
+    aStinkyReanim->mFrameAgeNs = aOriginalAge;
 
     if (mGridItemType == GridItemType::GRIDITEM_STINKY && mHighlighted)
     {

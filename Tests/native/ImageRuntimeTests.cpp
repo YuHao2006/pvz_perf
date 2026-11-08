@@ -5215,10 +5215,23 @@ void GardenRulesRuntime(TestApp& app)
                 if(state==GRIDITEM_STINKY_TURNING_LEFT||state==GRIDITEM_STINKY_TURNING_RIGHT)
                     Require(snail->mPosX==400&&snail->mPosY==300,"Chocolate moved Stinky during its stationary turn");
                 advance(2'000'000'000);
+                // Drawing a historical trail pose must restore both halves of
+                // the frame cursor, including its new integer remainder cache.
+                const auto originalStart=snailAnimation->mStartTimeNs;
+                const auto originalAge=snailAnimation->mFrameAgeNs;
+                const auto originalFrame=snailAnimation->mCurrentFrame;
+                snail->mMotionTrailCount=2;
+                snail->mMotionTrailFrames[1].mPosX=snail->mPosX-7;
+                snail->mMotionTrailFrames[1].mPosY=snail->mPosY;
+                snail->mMotionTrailFrames[1].mAnimClock=ReanimClock::Frame/3;
                 {
                     GpuImageDrawScope destination(*app.mDDInterface->mRenderInterface,snailTarget.get());
                     Graphics graphics(snailTarget.get());snail->DrawStinky(&graphics);
                 }
+                Require(snailAnimation->mStartTimeNs==originalStart&&
+                    snailAnimation->mFrameAgeNs==originalAge&&
+                    snailAnimation->mCurrentFrame==originalFrame,
+                    "Stinky trail drawing changed the live animation clock/cache");
                 Require(std::isfinite(snail->mPosX)&&std::isfinite(snail->mPosY),"Chocolate produced a non-finite Stinky position");
             }
             profile.SaveDetails();PlayerInfo loaded;loaded.mId=45;

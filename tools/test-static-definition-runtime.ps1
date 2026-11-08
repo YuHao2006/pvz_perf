@@ -20,10 +20,12 @@ if (!$ManifestFile) {
 }
 $taskManifest=(Resolve-Path -LiteralPath $ManifestFile).Path
 $taskTemp=[IO.Path]::GetFullPath([IO.Path]::GetTempPath()).TrimEnd('\','/')+[IO.Path]::DirectorySeparatorChar
+$taskVerification=[IO.Path]::GetFullPath((Join-Path $taskRoot 'out/verification')).TrimEnd('\','/')+[IO.Path]::DirectorySeparatorChar
 $taskOutput=if($OutputDirectory){[IO.Path]::GetFullPath($OutputDirectory)}else{
-    Join-Path $taskTemp ('pvz-static-definition-runtime-'+[Guid]::NewGuid().ToString('N'))}
-if (!$taskOutput.StartsWith($taskTemp,[StringComparison]::OrdinalIgnoreCase)) {
-    throw 'Static definition test outputs must stay inside the system Temp directory'
+    Join-Path $taskVerification ('static-definition-runtime-'+[Guid]::NewGuid().ToString('N'))}
+if (!$taskOutput.StartsWith($taskTemp,[StringComparison]::OrdinalIgnoreCase) -and
+    !$taskOutput.StartsWith($taskVerification,[StringComparison]::OrdinalIgnoreCase)) {
+    throw 'Static definition test outputs must stay inside out/verification or the system Temp directory'
 }
 New-Item -ItemType Directory -Path $taskOutput -Force | Out-Null
 $taskBefore=(Get-FileHash -LiteralPath $taskPak -Algorithm SHA256).Hash

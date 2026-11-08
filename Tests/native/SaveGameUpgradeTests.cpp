@@ -1,4 +1,4 @@
-﻿#include "ReanimClock.h"
+#include "ReanimClock.h"
 #include "LawnApp.h"
 #include "Lawn/System/SaveGame.h"
 #include "Lawn/System/LevelSaveFormat.h"
@@ -359,7 +359,7 @@ void LoadCurrentWithResources(LawnApp& app, HiddenWindow& window, const char* sa
         Require(system && system->EmitterRosterCount(),"Cannot allocate linear particle save probe");
         auto* emitter=system->EmitterRosterEmitterAt(0);
         emitter->mSystemDurationNs=60'000'000'000;
-        linearParticle=emitter->SpawnParticle(0,1);
+        linearParticle=emitter->SpawnParticle(0,1,emitter->mParticleSystem->mLastUpdateTimeNs);
         Require(linearParticle!=nullptr,"Cannot spawn linear particle save probe");
         linearParticle->mParticleDurationNs=60'000'000'000;
         linearParticle->mPosition = {1'048'576.f,-1'048'576.f};
@@ -389,7 +389,7 @@ void LoadCurrentWithResources(LawnApp& app, HiddenWindow& window, const char* sa
         Require(system && system->EmitterRosterCount(),"Cannot allocate acceleration save probe");
         auto* emitter=system->EmitterRosterEmitterAt(0);
         emitter->mSystemDurationNs=60'000'000'000;
-        accelerationParticle=emitter->SpawnParticle(0,1);
+        accelerationParticle=emitter->SpawnParticle(0,1,emitter->mParticleSystem->mLastUpdateTimeNs);
         Require(accelerationParticle!=nullptr,"Cannot spawn acceleration save probe");
         accelerationParticle->mParticleDurationNs=60'000'000'000;
         accelerationParticle->mPosition = {1'048'576.f,-1'048'576.f};
@@ -423,7 +423,8 @@ void LoadCurrentWithResources(LawnApp& app, HiddenWindow& window, const char* sa
         auto* emitter=positionSystem->EmitterRosterEmitterAt(i);
         if (!emitter->mEmitterDef->mSystemFields.count) continue;
         emitter->mSystemDurationNs=60'000'000'000;
-        emitter->Update(16'000'000, ReanimClock::Add(emitter->mParticleSystem->mLastUpdateTimeNs, 16'000'000));
+        emitter->Update(16'000'000, ReanimClock::Add(emitter->mParticleSystem->mLastUpdateTimeNs, 16'000'000), emitter->mParticleSystem->mLastUpdateTimeNs);
+        emitter->mParticleSystem->mLastUpdateTimeNs += 16'000'000;
         Require(emitter->mSystemPositionBound==1 &&
             std::isfinite(emitter->mSystemPositionOriginX) && std::isfinite(emitter->mSystemPositionOriginY),
             "System-position save probe did not retain its previous curve sample");

@@ -57,7 +57,8 @@ inline void ParticleRuntimeDrawChecks(Sexy::RenderInterface& render)
                 else
                 {
                     TodTriangleGroup triangles;
-                    particle.mParticleEmitter->DrawParticle(&graphics, &particle, &triangles);
+                    particle.mParticleEmitter->DrawParticle(&graphics, &particle, &triangles,
+                        particle.mParticleEmitter->mParticleSystem->mLastUpdateTimeNs);
                     triangles.DrawGroup(&graphics);
                 }
                 if (transformed) render.PopTransform();

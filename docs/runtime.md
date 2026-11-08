@@ -113,8 +113,9 @@ Plant、Zombie 和 Reanimation 不再通过 Board、全局应用或 holder 查�
 传送门粒子只走这一次全局更新，GridItem 不再重复更新。粒子更新的步长由持有者的本次
 时间与上次已处理时间之差给出，年龄仍为当前时间减出生时间。
 
-本次不改变磁盘格式：原有 reanim 时钟标签由序列化层从 Holder 侧表读写，
-记录实际已处理的 `mLastUpdateTimeNs`，不把尚未交给动画的管理者时刻写成动画进度。
+v4 开发版使用 DAT64 v5.1：reanim 时钟标签由序列化层从 Holder 侧表读写，
+记录缓存帧内余数 `mFrameAgeNs`，当前已处理姿态的时刻由 `mStartTimeNs + mFrameAgeNs`
+得到。`Reanimation::mLastUpdateTimeNs` 已删除；管理者尚未交给动画的时间不冒充动画进度。
 粒子存档仍保存相对年龄，加载时以所属 Board 当前时间还原出生值。
 
 每个 `Reanimation` 保存 float 动画速率 `mAnimRate`、当前关键帧 `mCurrentFrame`、关键帧开始时间 `mStartTimeNs`、整数关键帧时长 `mFramePeriodNs` 和完整周期。变速后的帧内年龄为当前所属时钟减关键帧开始时间，绘制与根运动共用，不维护第二套浮点累加相位。

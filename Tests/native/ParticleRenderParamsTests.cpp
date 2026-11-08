@@ -43,7 +43,7 @@ void CompareDefaultRender(TodParticleEmitter& emitter, TodParticle& particle)
     ParticleDrawReference::BindRenderData(localDefinition, renderData);
     ParticleRenderParams fast{};
     ParticleDrawReference::ParticleRenderParams ordinary{};
-    Require(TodParticleEmitter::GetRenderParams(&particle, &fast), "Fast render parameters missing");
+    Require(TodParticleEmitter::GetRenderParams(&particle, &fast, particle.mParticleEmitter->mParticleSystem->mLastUpdateTimeNs), "Fast render parameters missing");
     renderData.mRenderTrackMask = 1;
     ParticleDrawReference::BindRenderData(localDefinition, renderData);
     Require(ParticleDrawReference::GetRenderParams(&particle, &ordinary),
@@ -104,7 +104,7 @@ void PoolSparklyBirthPositions(TodParticleHolder& holder)
             // Real production birth path, including skew and zero-duration
             // initialization of particle fields; delete immediately so the
             // test never depends on particle-roster or pool capacity.
-            auto* particle = emitter->SpawnParticle(sample, samples);
+            auto* particle = emitter->SpawnParticle(sample, samples, emitter->mParticleSystem->mLastUpdateTimeNs);
             Require(particle != nullptr, "PoolSparkly particle birth failed");
             Require(ParticleLifeAgeAt(particle->mParticleEmitter->mParticleSystem->mLastUpdateTimeNs, particle->mBirthTimeNs, particle->mParticleDurationNs) == 0,
                 "PoolSparkly newborn unexpectedly advanced its lifetime");
@@ -168,7 +168,7 @@ void PowieCloudBirthParameters(TodParticleSystem& system)
         {
             emitter->mBirthTimeNs = emitter->mParticleSystem->mLastUpdateTimeNs - (std::int64_t(0) * 10'000'000);
             RefreshParticleLifeFraction(*emitter, emitter->mParticleSystem->mLastUpdateTimeNs);
-            auto* particle = emitter->SpawnParticle(sample, 64);
+            auto* particle = emitter->SpawnParticle(sample, 64, emitter->mParticleSystem->mLastUpdateTimeNs);
             Require(particle != nullptr, "Powie cloud birth failed");
             const float speed = std::hypot(particle->mVelocity.x, particle->mVelocity.y);
             Require(std::isfinite(speed) && speed >= low * 0.01f - 0.0001f &&

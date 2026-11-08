@@ -376,7 +376,7 @@ std::int64_t ParticleLifeAgeAt(std::int64_t nowNs, std::int64_t birthNs, std::in
 void RefreshParticleLifeFraction(TodParticle& particle, std::int64_t nowNs);
 void RefreshParticleLifeFraction(TodParticleEmitter& emitter, std::int64_t nowNs);
 // Shared by drawing and explicit legacy save projection. Units are 10^-12 cycles.
-std::int64_t TodParticleAnimationPhase(const TodParticle& particle, const FloatParameterTrack& track);
+std::int64_t TodParticleAnimationPhase(const TodParticle& particle, const FloatParameterTrack& track, std::int64_t nowNs);
 
 class TodParticleEmitter
 {
@@ -416,30 +416,30 @@ public:
 	void							ParticleRosterRemoveAt(int theIndex);
 	void							ParticleRosterClear();
 
-	void							TodEmitterInitialize(float theX, float theY, TodParticleSystem* theSystem, TodEmitterDefinition* theEmitterDef);
-	void							Update(std::uint64_t deltaNs, std::int64_t nowNs);
+	void							TodEmitterInitialize(float theX, float theY, TodParticleSystem* theSystem, TodEmitterDefinition* theEmitterDef, std::int64_t nowNs);
+	void							Update(std::uint64_t deltaNs, std::int64_t nowNs, std::int64_t previousNowNs);
 	void							Update(std::uint64_t deltaNs, std::int64_t nowNs, std::int64_t previousNowNs, std::span<const ParticleID> theParticles);
 	float							RandomFloat(float theMaximum);
 	int								RandomInt(int theMaximum);
-	void							Draw(Graphics* g);
+	void							Draw(Graphics* g, std::int64_t nowNs);
 	void							SystemMove(float theX, float theY);
 	// CPU 绘制：三角形组内逐粒求值攒批。
-	void							DrawParticle(Graphics* g, TodParticle* theParticle, TodTriangleGroup* theTriangleGroup);
-	static bool						GetRenderParams(TodParticle* theParticle, ParticleRenderParams* theParams);
-	static bool						GetRenderParamsDepth(TodParticle* theParticle, ParticleRenderParams* theParams, int theDepth);
-	void							UpdateSpawning(std::uint64_t deltaNs);
+	void							DrawParticle(Graphics* g, TodParticle* theParticle, TodTriangleGroup* theTriangleGroup, std::int64_t nowNs);
+	static bool						GetRenderParams(TodParticle* theParticle, ParticleRenderParams* theParams, std::int64_t nowNs);
+	static bool						GetRenderParamsDepth(TodParticle* theParticle, ParticleRenderParams* theParams, int theDepth, std::int64_t nowNs);
+	void							UpdateSpawning(std::uint64_t deltaNs, std::int64_t nowNs);
 	bool							UpdateParticle(TodParticle* theParticle, std::uint64_t deltaNs, std::int64_t nowNs);
 	bool							UpdateParticle(TodParticle* theParticle, std::uint64_t deltaNs, std::int64_t nowNs, std::int64_t previousAgeNs);
-	TodParticle*					SpawnParticle(int theIndex, int theSpawnCount);
-	bool							CrossFadeParticle(TodParticle* theParticle, TodParticleEmitter* theToEmitter);
-	void							CrossFadeEmitter(TodParticleEmitter* theToEmitter);
+	TodParticle*					SpawnParticle(int theIndex, int theSpawnCount, std::int64_t nowNs);
+	bool							CrossFadeParticle(TodParticle* theParticle, TodParticleEmitter* theToEmitter, std::int64_t nowNs);
+	void							CrossFadeEmitter(TodParticleEmitter* theToEmitter, std::int64_t nowNs);
 
 	// OnDuration uses the compiled target definition index.
-	bool							CrossFadeParticleOnDuration(TodParticle* theParticle);
+	bool							CrossFadeParticleOnDuration(TodParticle* theParticle, std::int64_t nowNs);
 	// 按发射器 def 直取交叉淡入（分配实例 + 入表 + CrossFadeParticle）。
-	bool							CrossFadeParticleToDef(TodParticle* theParticle, TodEmitterDefinition* theToEmitterDef);
+	bool							CrossFadeParticleToDef(TodParticle* theParticle, TodEmitterDefinition* theToEmitterDef, std::int64_t nowNs);
 	void							DeleteAll();
-	void							UpdateParticleField(TodParticle* theParticle, ParticleField* theParticleField, double theParticleTimeValue, int theFieldIndex, std::uint64_t deltaNs, std::int64_t previousAgeNs);
+	void							UpdateParticleField(TodParticle* theParticle, ParticleField* theParticleField, double theParticleTimeValue, int theFieldIndex, std::uint64_t deltaNs, std::int64_t previousAgeNs, std::int64_t ageNs);
 	void							SampleSystemPosition(double theTimeValue);
 	void							DeleteParticle(TodParticle* theParticle);
 	// 下标化删除：更新循环/DeleteNonCrossFading 已知名册下标直入，省掉
@@ -490,7 +490,7 @@ public:
     void							OverrideFrame(ParticleEmitterNameRange theRange, int theFrame);
     void							OverrideScale(ParticleEmitterName theName, float theScale);
     void							OverrideScale(ParticleEmitterNameRange theRange, float theScale);
-    void							CrossFade(ParticleEmitterName theName);
-    void							CrossFade(ParticleEmitterNameRange theRange);
+    void							CrossFade(ParticleEmitterName theName, std::int64_t nowNs);
+    void							CrossFade(ParticleEmitterNameRange theRange, std::int64_t nowNs);
 };
 

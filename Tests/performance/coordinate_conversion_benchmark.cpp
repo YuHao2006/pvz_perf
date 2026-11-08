@@ -203,9 +203,9 @@ int main(int argc, char** argv)
             sizeof(GameObject), sizeof(Plant), sizeof(Zombie),
             sizeof(TimedLinearMotion), sizeof(Sexy::TimeCounter));
         std::printf("Plant launch flag span=%zu Zombie pending tail=%zu LawnMower unused timer=%zu\n",
-            offsetof(Plant, mLaunchRate) - offsetof(Plant, mLaunchClockActive),
+            offsetof(Plant, mLaunchPeriodNs) - offsetof(Plant, mLaunchClockActive),
             sizeof(Zombie) - offsetof(Zombie, mPendingAdditionalSpeedX),
-            sizeof(LawnMower::mAnimTicksPerFrame));
+            size_t(0));
         return 0;
     }
     std::printf("actor,bytes,cached_bytes,count,boundary,integer_uses,moving_percent,"

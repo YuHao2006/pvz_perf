@@ -145,6 +145,8 @@ template<class T> size_t NativeTimeOffset(const Dat64TimeSchema::Field& field)
 {
     if constexpr (std::is_same_v<T, Board>)
         if (field.mOffset == 22036 - 528) return offsetof(Board, mLevelTimeNs);
+    if constexpr (std::is_same_v<T, LawnMower>)
+        if (field.mOffset == 32) return SIZE_MAX; // Retired, never-used sprite-frame duration.
     size_t result = SIZE_MAX;
     VisitSaveMembers<T>([&](size_t native, size_t wire, size_t oldSize, size_t newSize) {
         if (field.mOffset >= wire && field.mOffset + 4 <= wire + oldSize)
@@ -386,6 +388,7 @@ template<class T> std::vector<LegacyByte> WriteSaveRecord(const T& value)
                 }
             std::uint64_t result;
             const auto native = NativeTimeOffset<T>(field);
+            if (native == SIZE_MAX) return std::uint64_t(0);
             std::memcpy(&result, ObjectBytes(value) + native, 8);
             if constexpr (SaveClockProjection::Supported<T>)
                 result = static_cast<std::uint64_t>(SaveClockProjection::Encode(value, native, static_cast<std::int64_t>(result)));
@@ -447,7 +450,8 @@ template<class T> void ReadSaveRecord(T& value, const LegacyByte* source, Reanim
     const auto bytes = Dat64TimeSchema::Collapse(std::span(source, SaveV2Size<T>()), fields,
         [&](const auto& field, std::uint64_t ns) {
             if constexpr (!std::is_same_v<T, Projectile>)
-                times.emplace_back(NativeTimeOffset<T>(field), ns);
+                if (const auto native=NativeTimeOffset<T>(field); native!=SIZE_MAX)
+                    times.emplace_back(native,ns);
             return std::uint32_t(0);
         });
     if constexpr (std::is_same_v<T, Board>)

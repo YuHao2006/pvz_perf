@@ -7095,8 +7095,12 @@ constexpr TutorialStateCaseFn kTutorialStateCases[(int)TutorialState::TUTORIAL_W
     [](Board& b)
     {
     		b.ClearAdvice(AdviceType::ADVICE_SLOT_MACHINE_PULL);
-		// Spawning is held during the first-pull tutorial; start its interval now.
-		b.mNextZombieWaveTimeNs = static_cast<long long>(b.mLevelTimeNs) + b.mZombieWaveCountdownDurationNs;
+		// SetTutorialState runs this entry handler even when the state did not
+		// change: every successful handle pull also reports COMPLETED. Only the
+		// first PULL -> COMPLETED transition releases the held spawn interval.
+		// Re-arming it on every roll lets frequent pulls postpone waves forever.
+		if (b.mTutorialState == TutorialState::TUTORIAL_SLOT_MACHINE_PULL)
+			b.mNextZombieWaveTimeNs = static_cast<long long>(b.mLevelTimeNs) + b.mZombieWaveCountdownDurationNs;
     },  // 14 TUTORIAL_SLOT_MACHINE_COMPLETED
     // 原 case TUTORIAL_SHOVEL_PICKUP
     [](Board& b)

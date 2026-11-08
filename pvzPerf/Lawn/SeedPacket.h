@@ -11,7 +11,7 @@ class SeedPacket : public GameObject
 {
 public:
     std::int64_t                      mRefreshStartTimeNs;                            //+0x24
-    Sexy::TimeCounter                 mRefreshTime;                               //+0x28
+    long long                 mCooldownDurationNs;                               //+0x28
     int                 mIndex;                                     //+0x2C
     int                 mOffsetX;                                   //+0x30
     SeedType            mPacketType;                                //+0x34

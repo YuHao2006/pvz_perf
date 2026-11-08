@@ -29,7 +29,7 @@ template<class T, class F> void Fields(const T& v, F&& f)
         CLOCK(mEatenFlashEndTimeNs,End); CLOCK(mBeghouledFlashEndTimeNs,End); CLOCK(mWakeUpEndTimeNs,End);
         CLOCK(mMagnetStartTimeNs,Start); CLOCK(mShootingEndTimeNs,ShootingEnd);
     } else if constexpr(std::is_same_v<T,Zombie>) {
-        CLOCK(mShotFlashEndTimeNs,SignedEnd); CLOCK(mShieldFlashEndTimeNs,End); CLOCK(mShieldRecoilEndTimeNs,End);
+        CLOCK(mSpriteFramePeriodNs,Raw); CLOCK(mShotFlashEndTimeNs,SignedEnd); CLOCK(mShieldFlashEndTimeNs,End); CLOCK(mShieldRecoilEndTimeNs,End);
         CLOCK(mBirthTimeNs,Start); CLOCK(mFadeEndTimeNs,Fade); CLOCK(mChilledEndTimeNs,End);
         CLOCK(mButteredEndTimeNs,End); CLOCK(mIceTrapEndTimeNs,End); CLOCK(mYuckyFaceStartTimeNs,Start);
         f(offsetof(T,mVelocityX)+offsetof(TimedLinearMotion,startTimeNs),v.mFlatTires?Kind::Raw:Kind::Start);
@@ -46,10 +46,10 @@ template<class T, class F> void Fields(const T& v, F&& f)
         CLOCK(mTransparencyTimeNs,Transparency);
         if(v.mGridItemType==GridItemType::GRIDITEM_BRAIN) CLOCK(mRootPeriodNs,Start);
     } else if constexpr(std::is_same_v<T,SeedPacket>) {
-        CLOCK(mRefreshStartTimeNs,Refresh); CLOCK(mSlotMachineEndTimeNs,SlotEnd);
+        CLOCK(mCooldownDurationNs,Raw); CLOCK(mRefreshStartTimeNs,Refresh); CLOCK(mSlotMachineEndTimeNs,SlotEnd);
     } else if constexpr(std::is_same_v<T,SeedBank>) {
         for(std::size_t i=0;i<10;++i) Fields(v.mSeedPackets[i],[&](std::size_t p,Kind k){f(offsetof(T,mSeedPackets)+i*sizeof(SeedPacket)+p,k);});
-    } else if constexpr(std::is_same_v<T,MessageWidget>) {CLOCK(mEndTimeNs,InfiniteEnd);}
+    } else if constexpr(std::is_same_v<T,MessageWidget>) {CLOCK(mDisplayDurationNs,Raw); CLOCK(mSlideDurationNs,Raw); CLOCK(mEndTimeNs,InfiniteEnd);}
     else if constexpr(std::is_same_v<T,Music>) {
         CLOCK(mBurstEndTimeNs,End); CLOCK(mDrumsEndTimeNs,End); CLOCK(mFadeOutEndTimeNs,End); CLOCK(mFadeOutDurationNs,Raw);
     }

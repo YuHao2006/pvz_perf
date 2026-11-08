@@ -3757,15 +3757,39 @@ void MinigameRulesRuntime(TestApp& app)
         }
         case GAMEMODE_MINIGAME_SLOT_MACHINE:
         {
-            board.mNextZombieWaveTimeNs = static_cast<long long>(board.mLevelTimeNs) + (100000) * 10'000'000LL;board.mSunCountDown=100000;
+            board.mSunCountDown=100000;
+            const auto firstInterval=board.mZombieWaveCountdownDurationNs;
+            advance(1'000'000'000);
+            Require(board.mTutorialState==TUTORIAL_SLOT_MACHINE_PULL&&board.mTotalSpawnedWaves==0,
+                "Slot machine spawned before its first-pull tutorial completed");
             HitResult hit;hit.mObjectType=OBJECT_TYPE_SLOT_MACHINE_HANDLE;hit.mObject=nullptr;
             challenge.MouseDown(0,0,1,&hit);
             Require(board.mSunMoney==25&&challenge.mSlotMachineRollCount==1&&challenge.mChallengeState==STATECHALLENGE_SLOT_MACHINE_ROLLING,
                 "Slot-machine handle did not charge 25 sun and start one roll");
+            const auto firstDeadline=board.mNextZombieWaveTimeNs;
+            Require(firstDeadline==static_cast<long long>(board.mLevelTimeNs)+firstInterval,
+                "Slot machine did not start its held first-wave interval on the first pull");
             advance(8'000'000'000);
             Require(challenge.mChallengeState==STATECHALLENGE_NORMAL,"Slot machine failed to finish its roll");
             for(int packet=0;packet<3;++packet)
                 Require(board.mSeedBank->mSeedPackets[packet].mSlotMachineEndTimeNs==0,"Slot reel did not stop");
+            board.mSunMoney=50;
+            challenge.MouseDown(0,0,1,&hit);
+            Require(challenge.mSlotMachineRollCount==2&&board.mNextZombieWaveTimeNs==firstDeadline,
+                "A repeat slot-machine pull postponed the first zombie wave");
+            advance(8'000'000'000);
+            Require(board.mTotalSpawnedWaves==0&&static_cast<long long>(board.mLevelTimeNs)<firstDeadline,
+                "Slot machine spawned its first wave before its deadline");
+            advance(static_cast<unsigned long long>(firstDeadline-static_cast<long long>(board.mLevelTimeNs)));
+            Require(board.mTotalSpawnedWaves==1&&board.mZombies.mSize>0,
+                "Slot machine did not spawn its first wave at its deadline after repeated pulls");
+            const auto nextDeadline=board.mNextZombieWaveTimeNs;
+            board.mSunMoney=50;
+            challenge.MouseDown(0,0,1,&hit);
+            Require(challenge.mSlotMachineRollCount==3&&board.mNextZombieWaveTimeNs==nextDeadline,
+                "A later slot-machine pull reset the ordinary wave schedule");
+            std::cout<<"Slot spawn Hz="<<hz<<" firstDue="<<firstDeadline<<" spawned="<<board.mTotalSpawnedWaves
+                <<" rolls="<<challenge.mSlotMachineRollCount<<" nextDue="<<nextDeadline<<'\n';
             board.mSunMoney=2000;challenge.UpdateSlotMachine();
             Require(board.HasLevelAwardDropped(),"Slot-machine sun threshold did not award the level");
             break;
@@ -4456,7 +4480,7 @@ void SurvivalRulesRuntime(TestApp& app)
             auto& cooling=board.mSeedBank->mSeedPackets[0];
             cooling.mRefreshing=true;cooling.mActive=false;
             cooling.mRefreshStartTimeNs=static_cast<std::int64_t>(board.mLevelTimeNs);
-            cooling.mRefreshTime=Plant::GetRefreshTime(cooling.mPacketType,cooling.mImitaterType);
+            cooling.mCooldownDurationNs=(Plant::GetRefreshTime(cooling.mPacketType,cooling.mImitaterType)) * 10'000'000LL;
             removeEnemies();
             Require(board.mNextSurvivalStageCounter>0&&!board.mLevelComplete,"Survival did not enter its round-end wait");
             const auto waitStart=board.mLevelTimeNs;
@@ -6620,7 +6644,7 @@ void TouchFieldCardsRuntime(TestApp& app, Board& board)
             board.mPlants.mSize==initialPlants+2,"Touch stole a mouse-owned field card or committed another plant");
         board.RefreshSeedPacketFromCursor();
         auto& packet=board.mSeedBank->mSeedPackets[0];
-        packet.mPacketType=SEED_PEASHOOTER;packet.mRefreshing=false;packet.mRefreshTime=0;packet.mActive=true;
+        packet.mPacketType=SEED_PEASHOOTER;packet.mRefreshing=false;packet.mCooldownDurationNs=0;packet.mActive=true;
         const TouchEvent bank{804,int(board.mSeedBank->mX+packet.mX)+packet.mOffsetX+20,int(board.mSeedBank->mY)+30};
         tap(bank);tap(c);
         Require(selected.mCoinID==thirdId&&packet.mActive,"Field-card pickup did not return the held bank card");
@@ -7450,7 +7474,7 @@ void TouchInputRuntime(TestApp& app)
     for(auto& packet:board.mSeedBank->mSeedPackets) packet.mOffsetX=0; // Return from the conveyor fixture to a settled normal bank.
     board.mSeedBank->mSeedPackets[1].mPacketType=SEED_SUNFLOWER;
     board.mSeedBank->mSeedPackets[1].mRefreshing=false;
-    board.mSeedBank->mSeedPackets[1].mRefreshTime=0;
+    board.mSeedBank->mSeedPackets[1].mCooldownDurationNs=0;
     board.mSeedBank->mSeedPackets[1].mActive=true;
     manager.TouchBegan(seedPoint(1));manager.TouchEnded(seedPoint(1));
     Require(board.mTouchState->selection->cursor->mType==SEED_SUNFLOWER&&
@@ -7510,7 +7534,7 @@ void TouchInputRuntime(TestApp& app)
     board.ClearTouchSelection();board.RefreshSeedPacketFromCursor();
     for(int i=0;i<2;++i) {
         auto& packet=board.mSeedBank->mSeedPackets[i];
-        packet.mPacketType=seeds[i];packet.mRefreshing=false;packet.mRefreshTime=0;packet.mActive=true;
+        packet.mPacketType=seeds[i];packet.mRefreshing=false;packet.mCooldownDurationNs=0;packet.mActive=true;
     }
     auto sharedMouse=seedPoint(0);
     manager.MouseDown(sharedMouse.x,sharedMouse.y,1);manager.MouseUp(sharedMouse.x,sharedMouse.y,1);
@@ -7606,7 +7630,7 @@ void TouchInputRuntime(TestApp& app)
             {
                 auto& packet=board.mSeedBank->mSeedPackets[i];
                 packet.mPacketType=SEED_PEASHOOTER;packet.mActive=true;packet.mRefreshing=false;
-                packet.mRefreshTime=0;packet.mOffsetX=0;packet.mIndex=i;
+                packet.mCooldownDurationNs=0;packet.mOffsetX=0;packet.mIndex=i;
                 packet.mX=board.GetSeedPacketPositionX(i);packet.mY=0;
             }
             for(unsigned int i=0;i<fingers;++i)
@@ -7750,7 +7774,7 @@ void LandscapeHudRuntime(TestApp& app)
             Require(board.mTutorialState==TUTORIAL_LEVEL_1_PICK_UP_PEASHOOTER,
                 "Peashooter cooldown did not return to card-pickup teaching state");
             board.SetTutorialState(TUTORIAL_OFF);
-            packet.mActive=false;packet.mRefreshing=true;packet.mRefreshTime=750;
+            packet.mActive=false;packet.mRefreshing=true;packet.mCooldownDurationNs=(750) * 10'000'000LL;
             packet.mRefreshStartTimeNs=static_cast<std::int64_t>(board.mLevelTimeNs)-3'750'000'000LL;
             auto& renderer=*app.mDDInterface->mRenderInterface;
             Image* image=renderer.CreateRenderImage(81,70);

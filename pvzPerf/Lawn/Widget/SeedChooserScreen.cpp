@@ -1346,7 +1346,7 @@ void SeedChooserScreen::CloseSeedChooser()
 		if (aChosenSeed.mRefreshing)
 		{
 			aSeedPacket.mRefreshStartTimeNs = aChosenSeed.mRefreshStartTimeNs;
-			aSeedPacket.mRefreshTime = Plant::GetRefreshTime(aSeedPacket.mPacketType, aSeedPacket.mImitaterType);
+			aSeedPacket.mCooldownDurationNs = (Plant::GetRefreshTime(aSeedPacket.mPacketType, aSeedPacket.mImitaterType)) * 10'000'000LL;
 			aSeedPacket.mRefreshing = true;
 			aSeedPacket.mActive = false;
 		}

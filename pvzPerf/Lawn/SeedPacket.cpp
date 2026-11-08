@@ -28,7 +28,7 @@ SeedPacket::SeedPacket()
 	mWidth = 50;
 	mHeight = 70;
 	mRefreshStartTimeNs = mBoard ? static_cast<std::int64_t>(mBoard->mLevelTimeNs) : 0;
-	mRefreshTime = 0;
+	mCooldownDurationNs = 0;
 	mRefreshing = false;
 	mActive = true;
 	mOffsetX = 0;
@@ -138,7 +138,7 @@ void SeedPacket::SetActivate(bool theActive)
 	{
 		mActive = false;
 		mRefreshStartTimeNs = mBoard ? static_cast<std::int64_t>(mBoard->mLevelTimeNs) : 0;
-		mRefreshTime = 0;
+		mCooldownDurationNs = 0;
 		mRefreshing = false;
 	}
 }
@@ -158,7 +158,7 @@ void SeedPacket::Update()
 
 	if (!mActive && mRefreshing)
 	{
-		if (static_cast<std::int64_t>(mBoard->mLevelTimeNs) - mRefreshStartTimeNs > mRefreshTime.mNanoseconds)
+		if (static_cast<std::int64_t>(mBoard->mLevelTimeNs) - mRefreshStartTimeNs > mCooldownDurationNs)
 		{
 			mRefreshStartTimeNs = mBoard ? static_cast<std::int64_t>(mBoard->mLevelTimeNs) : 0;
 			mRefreshing = false;
@@ -572,14 +572,14 @@ void SeedPacket::Draw(Graphics* g)
 		selected(mBoard->mTouchState->selection->cursor));
 	if (!mActive && !held)
 	{
-		if (mRefreshTime == 0)
+		if (mCooldownDurationNs == 0)
 		{
 			aPercentDark = 1.0f;
 		}
 		else
 		{
-			aPercentDark = static_cast<float>(double(mRefreshTime.mNanoseconds -
-				(static_cast<std::int64_t>(mBoard->mLevelTimeNs) - mRefreshStartTimeNs)) / mRefreshTime.mNanoseconds);
+			aPercentDark = static_cast<float>(double(mCooldownDurationNs -
+				(static_cast<std::int64_t>(mBoard->mLevelTimeNs) - mRefreshStartTimeNs)) / mCooldownDurationNs);
 		}
 	}
 
@@ -896,7 +896,7 @@ void SeedPacket::MouseDown(int x, int y, int theClickCount)
 
 		mActive = false;
 		mRefreshStartTimeNs = mBoard ? static_cast<std::int64_t>(mBoard->mLevelTimeNs) : 0;
-		mRefreshTime = 0;
+		mCooldownDurationNs = 0;
 		mRefreshing = false;
 	}
 }
@@ -914,7 +914,7 @@ void SeedPacket::WasPlanted()
 	{
 		mActive = false;
 		mRefreshStartTimeNs = mBoard ? static_cast<std::int64_t>(mBoard->mLevelTimeNs) : 0;
-		mRefreshTime = 0;
+		mCooldownDurationNs = 0;
 		mRefreshing = false;
 	}
 	else if (mApp->mGameMode == GameMode::GAMEMODE_MINIGAME_LAST_STAND && mBoard->mChallenge->mChallengeState != ChallengeState::STATECHALLENGE_LAST_STAND_ONSLAUGHT)
@@ -928,7 +928,7 @@ void SeedPacket::WasPlanted()
 		mTimesUsed++;
 		mRefreshing = true;
 		mRefreshStartTimeNs = static_cast<std::int64_t>(mBoard->mLevelTimeNs);
-		mRefreshTime = Plant::GetRefreshTime(mPacketType, mImitaterType);
+		mCooldownDurationNs = (Plant::GetRefreshTime(mPacketType, mImitaterType)) * 10'000'000LL;
 	}
 }
 
@@ -1095,7 +1095,7 @@ void SeedBank::AddSeed(SeedType theSeedType, bool thePlaceOnLeft)
 	SeedPacket* aSeedPacket = &mSeedPackets[aNumSeeds];
 	aSeedPacket->mPacketType = theSeedType;
 	aSeedPacket->mRefreshStartTimeNs = mBoard ? static_cast<std::int64_t>(mBoard->mLevelTimeNs) : 0;
-	aSeedPacket->mRefreshTime = 0;
+	aSeedPacket->mCooldownDurationNs = 0;
 	aSeedPacket->mRefreshing = false;
 	aSeedPacket->mActive = true;
 	aSeedPacket->mOffsetX = 515 - (SEED_PACKET_WIDTH + 1) * aNumSeeds;
@@ -1140,7 +1140,7 @@ void SeedBank::RemoveSeed(int theIndex)
 		}
 
 		aSeedPacket->mRefreshStartTimeNs = mBoard ? static_cast<std::int64_t>(mBoard->mLevelTimeNs) : 0;
-		aSeedPacket->mRefreshTime = 0;
+		aSeedPacket->mCooldownDurationNs = 0;
 		aSeedPacket->mRefreshing = false;
 		aSeedPacket->mActive = true;
 	}
@@ -1179,7 +1179,7 @@ void SeedPacket::SetPacketType(SeedType theSeedType, SeedType theImitaterType)
 	mPacketType = theSeedType;
 	mImitaterType = theImitaterType;
 	mRefreshStartTimeNs = mBoard ? static_cast<std::int64_t>(mBoard->mLevelTimeNs) : 0;
-	mRefreshTime = 0;
+	mCooldownDurationNs = 0;
 	mRefreshing = false;
 	mActive = true;
 
@@ -1196,19 +1196,19 @@ void SeedPacket::SetPacketType(SeedType theSeedType, SeedType theImitaterType)
 
 	if ((Plant::IsUpgrade(aUseSeedType) && !gLawnApp->IsSurvivalMode()) || Plant::GetRefreshTime(mPacketType, mImitaterType) == 5000)
 	{
-		mRefreshTime = 3500;
+		mCooldownDurationNs = (3500) * 10'000'000LL;
 		mRefreshing = true;
 		mActive = false;
 	}
 	else if (Plant::IsUpgrade(aUseSeedType) && gLawnApp->IsSurvivalMode())
 	{
-		mRefreshTime = 8000;
+		mCooldownDurationNs = (8000) * 10'000'000LL;
 		mRefreshing = true;
 		mActive = false;
 	}
 	else if (Plant::GetRefreshTime(mPacketType, mImitaterType) == 3000)
 	{
-		mRefreshTime = 2000;
+		mCooldownDurationNs = (2000) * 10'000'000LL;
 		mRefreshing = true;
 		mActive = false;
 	}

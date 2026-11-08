@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 const source=fs.readFileSync(new URL('./game/launcher.js',import.meta.url),'utf8');
 const functions=source.slice(source.indexOf('function confirmSaveReplacement()'),source.indexOf('const rewardStatus='));
-const root='/persist/development-v4';
+const root='/persist/development-v331';
 const entries=new Map([[root,null],[root+'/settings.json','settings'],[root+'/users.dat','old-users'],[root+'/user2.dat64','old-profile'],[root+'/game2_58.dat64','old-game'],[root+'/old',null],[root+'/old/save','nested']]);
 let close, fail=false;
 const dialog={returnValue:'',addEventListener(type,fn){close=fn},showModal(){}};

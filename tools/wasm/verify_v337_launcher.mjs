@@ -26,7 +26,7 @@ try{
  console.log('PASS main settings checkbox: default false, non-advanced, denied at 0 coins, granted at 2 coins or author');
  const files=Object.fromEntries(['game1_0.dat64','user1.dat64','users.dat'].map(name=>[name,Array.from(fs.readFileSync('out/verification/web-v337/reported-'+name))]));
  const result=await page.evaluate(async files=>{
-  const root='/persist/development-v4/';for(const [name,data] of Object.entries(files))Module.FS.writeFile(root+name,new Uint8Array(data));
+  const root='/persist/development-v331/';for(const [name,data] of Object.entries(files))Module.FS.writeFile(root+name,new Uint8Array(data));
   const {runSaveTool}=await import('./save-tools.js'),original=Module.FS.readFile(root+'game1_0.dat64').slice(),profile=Module.FS.readFile(root+'user1.dat64');
   const repaired=await runSaveTool({op:'repair-plant-attacks',mode:0},original,profile);
   if(!repaired.bytes)throw Error('Known broken fixture did not produce a repaired copy: '+JSON.stringify(repaired.metadata));
@@ -39,7 +39,7 @@ try{
  assert.equal(await page.locator('#plant-repair-settings,#plant-repair,#plant-repair-save').count(),0);
  console.log('PASS manual repair UI removed; historical files use automatic standalone DFU before launch');
 
- await page.locator('#start').click();await page.waitForFunction(()=>Module.FS.analyzePath('/persist/development-v4/settings.json').exists&&JSON.parse(Module.FS.readFile('/persist/development-v4/settings.json',{encoding:'utf8'})).unlockAllLevels===true||!document.getElementById('error').hidden,null,{timeout:120000});
+ await page.locator('#start').click();await page.waitForFunction(()=>Module.FS.analyzePath('/persist/development-v331/settings.json').exists&&JSON.parse(Module.FS.readFile('/persist/development-v331/settings.json',{encoding:'utf8'})).unlockAllLevels===true||!document.getElementById('error').hidden,null,{timeout:120000});
  assert.equal(await page.locator('#error').isVisible(),false,await page.locator('#error').textContent());
  assert.deepEqual(errors,[]);console.log('PASS native settings propagation and no browser errors');await context.close();
 }finally{await browser.close()}

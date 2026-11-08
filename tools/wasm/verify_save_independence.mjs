@@ -22,13 +22,13 @@ try{
   const session=await context.newCDPSession(page);await session.send('Emulation.setCPUThrottlingRate',{rate:4});
   const result=await page.evaluate(async()=>{
    const {runSaveTool,loadSaveBundle}=await import('./save-tools.js');
-   const bundle=await loadSaveBundle(),original=Module.FS.readFile('/persist/development-v4/game1_58.dat64').slice();
+   const bundle=await loadSaveBundle(),original=Module.FS.readFile('/persist/development-v331/game1_58.dat64').slice();
    const compiled=Module.pvzMemory,started=performance.now(),initialFrames=document.querySelectorAll('iframe').length;
    const baseline=await runSaveTool({op:'extract',mode:58},bundle['game1_58.dat64']);
    const recipe={cells:baseline.metadata.cells,flags:128,seed:114514,scene:2,rake:0,sun:4321};
    const generated=await runSaveTool({op:'generate',mode:58,recipe});
    const extracted=await runSaveTool({op:'extract',mode:58},generated.bytes);
-   const current=Module.FS.readFile('/persist/development-v4/game1_58.dat64');
+   const current=Module.FS.readFile('/persist/development-v331/game1_58.dat64');
    return {milliseconds:performance.now()-started,generated:generated.metadata,extracted:extracted.metadata,
     sameModule:compiled===Module.pvzMemory,samePersistentSave:original.length===current.length&&original.every((b,i)=>b===current[i]),
     frames:document.querySelectorAll('iframe').length,initialFrames,activeJob:!!window.PVZSaveToolJob,scene:Module._pvz_web_scene()};

@@ -19,7 +19,7 @@ try{
  await page.locator('#custom-save').click();const editor=page.frameLocator('#save-editor-frame');await editor.locator('#status').filter({hasText:'已打开'}).waitFor();
  await editor.locator('#add-user').click();await editor.locator('#status').filter({hasText:'已新增用户'}).waitFor();await editor.locator('#user-finished').fill('2');await editor.locator('[data-unlock="2"]').check();await editor.locator('#save-user').click();await editor.locator('#status').filter({hasText:'用户进度已保存'}).waitFor();
  // A baseline DAT64 is a test fixture, not a user-facing claim operation.
- await page.evaluate(async()=>{const files=await(await import('./save-tools.js')).loadSaveBundle();Module.FS.writeFile('/persist/development-v4/game1_58.dat64',files['game1_58.dat64'])});
+ await page.evaluate(async()=>{const files=await(await import('./save-tools.js')).loadSaveBundle();Module.FS.writeFile('/persist/development-v331/game1_58.dat64',files['game1_58.dat64'])});
  await editor.locator('#close').click();await page.locator('#custom-save').click();await editor.locator('#status').filter({hasText:'已打开'}).waitFor();
  await editor.locator('[data-tab=files]').click();await editor.locator('#extract').click();await editor.locator('#status').filter({hasText:'已提取阵型'}).waitFor({timeout:180000});
  assert.equal(page.url(),url);assert.equal(await page.locator('#save-editor-dialog').isVisible(),true);
@@ -29,7 +29,7 @@ try{
  await page.evaluate(()=>{window.toy.getAuthorRelation=async()=>{throw Error('SDK must not be called inside the modal')};window.toy.getVideoUserActions=async()=>{throw Error('SDK must not be called inside the modal')}});
  await editor.locator('#generate').click();await editor.locator('#status').filter({hasText:'已生成并部署'}).waitFor({timeout:180000});
  assert.equal(page.url(),url);assert.equal(await page.locator('iframe').count(),1);
- const state=await page.evaluate(()=>({bytes:Module.FS.stat('/persist/development-v4/game1_58.dat64').size,magic:new TextDecoder().decode(Module.FS.readFile('/persist/development-v4/game1_58.dat64').slice(0,8))}));
+ const state=await page.evaluate(()=>({bytes:Module.FS.stat('/persist/development-v331/game1_58.dat64').size,magic:new TextDecoder().decode(Module.FS.readFile('/persist/development-v331/game1_58.dat64').slice(0,8))}));
  assert.equal(state.magic,'PVZDAT64');assert.ok(state.bytes>100000);
  await editor.locator('[data-tab=files]').click();const download=page.waitForEvent('download');await editor.locator('#export').click();assert.equal((await download).suggestedFilename(),'game1_58.dat64');
  assert.equal(await page.evaluate(()=>window.toyCalls),queriesAtOpen);

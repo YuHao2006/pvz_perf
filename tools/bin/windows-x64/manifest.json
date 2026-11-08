@@ -125,15 +125,16 @@
     },
     {
       "path": "pvz_dat64_converter.exe",
-      "bytes": 173056,
-      "sha256": "78c33fe05d562a57f76e170463ef709de24444b580268528d1f53188f29c1dc5"
+      "bytes": 162304,
+      "sha256": "22d91fbce77521a8e6092f088ffa6de1e3e28e9377ef8c75c52bc303936719a7"
     },
     {
       "path": "pvz_dfu.dll",
       "bytes": 565760,
-      "sha256": "28c5a37e658d5841bb32ba1ec14c9f235e736695810619f4321bd5877669773a"
+      "sha256": "82179fd0fe302063712839da9c9ee553ec591a86ceb240212b6ca32055ec0149"
     }
   ],
   "source_commit": "753819cb73467e4cd2db56831664b7ccf3d46ebf",
-  "resource_builder_source_commit": "57bcd3f7670dfbe2c6fe4763f6ae31050d68cd47"
+  "resource_builder_source_commit": "57bcd3f7670dfbe2c6fe4763f6ae31050d68cd47",
+  "dfu_windows_baseline": "Windows 7; MSVC 14.44; static CRT; checked for known Win8+ hard imports"
 }

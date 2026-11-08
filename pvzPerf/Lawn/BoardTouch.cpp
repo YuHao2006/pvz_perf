@@ -28,7 +28,7 @@ class ContactScope {
     CursorObject* mouseCursor;
     CursorPreview* mousePreview;
     int cursorNumber;
-    Sexy::TimeCounter cannonDelay;
+    long long cannonDelay;
     int cannonX, cannonY;
     bool ignoreUp;
 public:
@@ -39,7 +39,7 @@ public:
 ContactScope::ContactScope(Board& target, BoardTouchContact& input, bool selectCursor)
     : board(target), contact(input),
       mouseCursor(target.mCursorObject), mousePreview(target.mCursorPreview),
-      cursorNumber(target.mApp->mCursorNum), cannonDelay(target.mCobCannonCursorDelayCounter),
+      cursorNumber(target.mApp->mCursorNum), cannonDelay(target.mCobCannonCursorEndTimeNs),
       cannonX(target.mCobCannonMouseX), cannonY(target.mCobCannonMouseY),
       ignoreUp(target.mIgnoreMouseUp)
 {
@@ -48,7 +48,7 @@ ContactScope::ContactScope(Board& target, BoardTouchContact& input, bool selectC
         board.mCursorObject = contact.cursor;
         board.mCursorPreview = contact.preview;
         // Touch uses drag distance, not the mouse's timed tap-to-aim guard.
-        board.mCobCannonCursorDelayCounter = 0;
+        board.mCobCannonCursorEndTimeNs = 0;
         board.mCobCannonMouseX = contact.startX;
         board.mCobCannonMouseY = contact.startY;
     }
@@ -57,7 +57,7 @@ ContactScope::ContactScope(Board& target, BoardTouchContact& input, bool selectC
 
 ContactScope::~ContactScope()
 {
-    board.mCobCannonCursorDelayCounter = cannonDelay;
+    board.mCobCannonCursorEndTimeNs = cannonDelay;
     board.mCobCannonMouseX = cannonX;
     board.mCobCannonMouseY = cannonY;
     contact.ignoreUp = board.mIgnoreMouseUp;

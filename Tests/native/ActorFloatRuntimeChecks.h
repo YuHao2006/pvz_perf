@@ -467,7 +467,7 @@ inline void LaunchDeadlines(LawnApp& app, Board& board)
         plant.mSeedType = SeedType::SEED_PEASHOOTER;
         plant.mRow = 2;
         plant.mShootingEndTimeNs = 0;
-        plant.mLaunchRate = 150;
+        plant.mLaunchPeriodNs = 150 * 10'000'000LL;
         plant.mNextLaunchTimeNs = 123'456'789;
         plant.mLaunchWindowStartNs = 0;
         Schedule(frequency, 12'718'281'829, [&](std::int64_t delta) {

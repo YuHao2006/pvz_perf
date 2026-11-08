@@ -1,10 +1,10 @@
 {
   "tool": "PvzDevTools independent save tools",
-  "version": "0.1.4",
+  "version": "0.2.0-v5beta1",
   "memory_model": "wasm32",
-  "source_commit": "e046e621eea4e4ce1daad484093f5c59bbe1eed1",
+  "source_commit": "0091d2c6aea5fbe856f764d4c9502cbf54b346bd",
   "source_dirty": false,
-  "development": false,
+  "development": true,
   "source_url": "https://github.com/YuHao2006/PvzDevTools",
   "files": {
     "save-editor.html": {
@@ -12,8 +12,8 @@
       "sha256": "e2706aa0f630e82567f173e989d99a7d75fdf6598c3214f15f73bd3de7746d3b"
     },
     "save-converter.html": {
-      "bytes": 578144,
-      "sha256": "7c2483d667c499be2c97a74f74f25ae465b6c24e752fcf41d844651e2aba34b9"
+      "bytes": 586033,
+      "sha256": "20635743ed07f9f20ed91db77a9189c85f027ad66c89d96c9bcf1163bb5ca7f9"
     },
     "save-codec.js": {
       "bytes": 18066,
@@ -32,16 +32,16 @@
       "sha256": "2a9edf37764e0d201d3e92a86e2fdb8fbfce159ca9800c60b7b694e9f310f1dd"
     },
     "save-tool-core.js": {
-      "bytes": 571552,
-      "sha256": "88072b5e2cdb27eed5328f841d6d5ec993bbd6f5212fcbfd677740ccb9f2c6e0"
+      "bytes": 578993,
+      "sha256": "d78e643c86b1207a65611e5d998ee3038070f5b87f346e0dcc492b1c7dd9e9f0"
     },
     "save-tool-client.js": {
       "bytes": 1428,
       "sha256": "26266493e47a755ff706fce3685448348d3abcbd6a45a343cfcbae6d12b97e5c"
     },
     "save-tool-worker.js": {
-      "bytes": 2628,
-      "sha256": "5173cd9c2cfd0fd23bca9b395e007afee755a273c12910b9eca337abf658049b"
+      "bytes": 3004,
+      "sha256": "118d0620b019061365ae95f26fc63954e4b609e36094bf8636c36a1f32a081ef"
     },
     "save-model.js": {
       "bytes": 4403,

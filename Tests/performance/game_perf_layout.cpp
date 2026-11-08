@@ -1,5 +1,8 @@
 #include "LawnApp.h"
 #include "Lawn/Board.h"
+#include "Lawn/Plant.h"
+#include "Lawn/Zombie.h"
+#include "Sexy.TodLib/Reanimator.h"
 #include "Lawn/Widget/GameSelector.h"
 #include "Lawn/Widget/CreditScreen.h"
 #include "Lawn/Widget/ContinueDialog.h"
@@ -13,6 +16,8 @@ int main()
 {
     std::printf("{\"pointerBytes\":%zu,\"boardCounterBytes\":%zu", sizeof(void*),
         sizeof(Board::mLevelTimeNs));
+    std::printf(",\"plantBytes\":%zu,\"zombieBytes\":%zu,\"reanimTrackBytes\":%zu",
+        sizeof(Plant), sizeof(Zombie), sizeof(ReanimatorTrackInstance));
 #define APP(field) std::printf(",\"" #field "\":%zu", offsetof(LawnApp, field))
     APP(mDrawCount);
     APP(mUpdateCount);

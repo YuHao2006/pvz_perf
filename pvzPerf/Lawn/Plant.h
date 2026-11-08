@@ -147,7 +147,7 @@ public:
     int                     mPlantCol;                      //+0x28
     Sexy::TimeCounter                     mAnimCounter;                   //+0x2C
     int                     mFrame;                         //+0x30
-    Sexy::TimeCounter                     mFrameLength;                   //+0x34
+    long long                     mFramePeriodNs;                   //+0x34
     int                     mNumFrames;                     //+0x38
     PlantState              mState;                         //+0x3C
     int                     mPlantHealth;                   //+0x40
@@ -165,7 +165,7 @@ public:
     // shared across the batch and pauses when this plant's abilities stop.
     std::int64_t            mMagnetStartTimeNs = 0;
     bool                    mLaunchClockActive = false;
-    Sexy::TimeCounter                     mLaunchRate;                    //+0x5C
+    long long                     mLaunchPeriodNs;                    //+0x5C
     Rect                    mPlantRect;                     //+0x60
     Rect                    mPlantAttackRect;               //+0x70
     int                     mTargetX;                       //+0x80
@@ -336,7 +336,7 @@ public:
     int                     mSeedCost;          //+0x10
     int                     mRefreshTime;       //+0x14
     PlantSubClass           mSubClass;          //+0x18
-    Sexy::TimeCounter                     mLaunchRate;        //+0x1C
+    long long                     mLaunchPeriodNs;        //+0x1C
 };
 
 /*inline*/ PlantDefinition& GetPlantDefinition(SeedType theSeedType);

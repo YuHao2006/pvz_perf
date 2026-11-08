@@ -255,8 +255,8 @@ void ExactStateValidation()
         Set(bad, offset, value, width);
         Reject([&] { V7SaveSchema::Validate(kind, bad); }, message);
     };
-    static_assert(LevelSaveFormat::DAT64_VERSION == 4 && LevelSaveFormat::DAT64_MINOR_VERSION == 0);
-    static_assert(LevelSaveFormat::DAT64_SCHEMA_ID == 0x10745);
+    static_assert(LevelSaveFormat::DAT64_VERSION == 5 && LevelSaveFormat::DAT64_MINOR_VERSION == 0);
+    static_assert(LevelSaveFormat::DAT64_SCHEMA_ID == 0x10746);
     Bytes animation(72);
     Set(animation, 0, 1, 4);
     Set(animation, 4, static_cast<std::uint64_t>(-987'654'321LL));

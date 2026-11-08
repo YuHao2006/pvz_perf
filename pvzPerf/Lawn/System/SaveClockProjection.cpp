@@ -23,6 +23,7 @@ template<class T, class F> void Fields(const T& v, F&& f)
 {
 #define CLOCK(field,kind) f(offsetof(T, field),Kind::kind)
     if constexpr(std::is_same_v<T,Plant>) {
+        CLOCK(mLaunchPeriodNs,Raw); CLOCK(mFramePeriodNs,Raw);
         CLOCK(mDisappearEndTimeNs,Disappear); CLOCK(mRecentlyEatenEndTimeNs,End);
         CLOCK(mEatenFlashEndTimeNs,End); CLOCK(mBeghouledFlashEndTimeNs,End); CLOCK(mWakeUpEndTimeNs,End);
         CLOCK(mMagnetStartTimeNs,Start); CLOCK(mShootingEndTimeNs,ShootingEnd);

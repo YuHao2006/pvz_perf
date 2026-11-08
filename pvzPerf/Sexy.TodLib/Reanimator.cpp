@@ -232,8 +232,8 @@ ReanimationParams gLawnReanimationArray[(int)ReanimationType::NUM_REANIMS] = { /
 //0x471890
 ReanimatorTrackInstance::ReanimatorTrackInstance()
 {
-	mBlendCounter = 0;
-	mBlendTime = 0;
+	mBlendEndTimeNs = 0;
+	mBlendDurationNs = 0;
 	mShakeOverride = 0.0f;
 	mShakeX = 0.0f;
 	mShakeY = 0.0f;
@@ -565,7 +565,27 @@ ReanimPlaybackPosition Reanimation::SamplePlaybackAt(std::int64_t nowNs, std::in
 
 void Reanimation::RebaseTime(std::int64_t nowNs)
 {
-    mStartTimeNs = ReanimClock::Add(mStartTimeNs, ReanimClock::Subtract(nowNs, mLastUpdateTimeNs));
+    const auto deltaNs = ReanimClock::Subtract(nowNs, mLastUpdateTimeNs);
+    mStartTimeNs = ReanimClock::Add(mStartTimeNs, deltaNs);
+    if (deltaNs && mTrackInstances)
+    {
+        // Expired blends are zeroed before their active bit is retired. Rebase
+        // only active tracks: freezing an ordinary zombie must not scan every
+        // authored track just to find that it has no blend in progress.
+        int base = 0;
+        for (auto word : mActiveMask)
+        {
+            while (word)
+            {
+                const auto track = base + static_cast<int>(std::countr_zero(word));
+                word &= word - 1;
+                auto& endNs = mTrackInstances[track].mBlendEndTimeNs;
+                if (endNs != 0)
+                    endNs = endNs > mLastUpdateTimeNs ? ReanimClock::Add(endNs, deltaNs) : 0;
+            }
+            base += 64;
+        }
+    }
     mLastUpdateTimeNs = nowNs;
     mPendingTiming = false;
 }
@@ -818,11 +838,10 @@ void Reanimation::UpdateAt(std::int64_t nowNs)
 			aWords[aWordIdx] &= aWords[aWordIdx] - 1;
 			ReanimatorTrackInstance* aTrack = &mTrackInstances[aTrackIndex];
 			bool aAnyActive = false;
-			if (aTrack->mBlendCounter > 0)
-			{
-				aTrack->mBlendCounter--;  // 更新轨道的混合倒计时
+			if (aTrack->mBlendEndTimeNs != 0 && aTrack->mBlendEndTimeNs > mLastUpdateTimeNs)
 				aAnyActive = true;
-			}
+            else if (aTrack->mBlendEndTimeNs != 0)
+                aTrack->mBlendEndTimeNs = 0;
 
 			if (aTrack->mShakeOverride != 0.0f)  // 更新轨道震动
 			{
@@ -884,8 +903,10 @@ void Reanimation::RebuildTrackActivityMasks()
 	const int aCount = mDefinition->mTracks.count;
 	for (int i = 0; i < aCount; i++)
 	{
-		const ReanimatorTrackInstance& aTrack = mTrackInstances[i];
-		if (aTrack.mBlendCounter > 0 || aTrack.mShakeOverride != 0.0f ||
+		ReanimatorTrackInstance& aTrack = mTrackInstances[i];
+        if (aTrack.mBlendEndTimeNs != 0 && aTrack.mBlendEndTimeNs <= mLastUpdateTimeNs)
+            aTrack.mBlendEndTimeNs = 0;
+		if ((aTrack.mBlendEndTimeNs != 0 && aTrack.mBlendEndTimeNs > mLastUpdateTimeNs) || aTrack.mShakeOverride != 0.0f ||
 			aTrack.mAttachmentID != AttachmentID::ATTACHMENTID_NULL)
 			ReanimSetActiveBit(*this, i);
 		ReanimOccupyGroupBit(*this, aTrack.mRenderGroup);
@@ -935,9 +956,9 @@ void Reanimation::GetCurrentTransform(int theTrackIndex, ReanimatorTransform* th
 	GetTransformAtTime(theTrackIndex, theTransformCurrent, theFrameTime);  // 结合两帧之间的自然补间取得基础变换
 	
 	ReanimatorTrackInstance* aTrack = &mTrackInstances[theTrackIndex];
-	if (FloatRoundToInt(theTransformCurrent->mFrame) >= 0 && aTrack->mBlendCounter > 0)  // 若当前不为空白帧且轨道处于变换混合过程中
+	if (FloatRoundToInt(theTransformCurrent->mFrame) >= 0 && aTrack->mBlendEndTimeNs != 0 && aTrack->mBlendEndTimeNs > mLastUpdateTimeNs)  // 若当前不为空白帧且轨道处于变换混合过程中
 	{
-		float aBlendFactor = aTrack->mBlendCounter.LegacyTicks() / (float)aTrack->mBlendTime;
+		float aBlendFactor = float(aTrack->mBlendEndTimeNs - mLastUpdateTimeNs) / float(aTrack->mBlendDurationNs);
 		BlendTransform(theTransformCurrent, *theTransformCurrent, aTrack->mBlendTransform, aBlendFactor);  // 结合覆写变换计算混合后的实际变换
 	}
 }
@@ -1422,8 +1443,9 @@ void Reanimation::StartBlend(int theBlendTime)
 		{
 			ReanimatorTrackInstance* aTrackInstance = &mTrackInstances[aTrackIndex];
 			aTrackInstance->mBlendTransform = aTransform;  // 记录当前变换为混合的初始（源）变换
-			aTrackInstance->mBlendTime = theBlendTime;
-			aTrackInstance->mBlendCounter = theBlendTime;
+			aTrackInstance->mBlendDurationNs = std::max(0, theBlendTime) * 10'000'000LL;
+			aTrackInstance->mBlendEndTimeNs = theBlendTime > 0
+                ? ReanimClock::Add(mLastUpdateTimeNs, aTrackInstance->mBlendDurationNs) : 0;
 			ReanimSetActiveBit(*this, aTrackIndex);  // P4：混合置位；归零后由 Update 自愈清位
 			aTrackInstance->mBlendTransform.mFont = nullptr;
 			aTrackInstance->mBlendTransform.mText = nullptr;

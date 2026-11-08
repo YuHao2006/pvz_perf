@@ -182,7 +182,7 @@ public:
 	Sexy::UnsignedTimeCounter						mEffectCounter;											//+0x556C（存储 uint；DrawRain 按 1073 有符号取模读取，负分数钳回起点）
 	int								mDrawCount;												//+0x5570
 	Sexy::TimeCounter								mRiseFromGraveCounter;									//+0x5574
-	Sexy::TimeCounter								mOutOfMoneyCounter;										//+0x5578
+	long long								mOutOfMoneyEndTimeNs;										//+0x5578
 	int								mCurrentWave;											//+0x557C
 	int								mTotalSpawnedWaves;										//+0x5580
 	TutorialState					mTutorialState;											//+0x5584
@@ -191,7 +191,7 @@ public:
 	int								mLastBungeeWave;										//+0x5590
 	int								mZombieHealthToNextWave;								//+0x5594
 	int								mZombieHealthWaveStart;									//+0x5598
-	long long								mNextZombieWaveTimeNs;										// Absolute Board-time spawn deadline; wire stores signed remaining ns.
+	long long								mNextZombieWaveTimeNs;										// Absolute Board-time spawn deadline; v5 stores it directly.
 	long long								mZombieWaveCountdownDurationNs;									// Original refresh interval in ns; health shortening preserves it for the 4s guard and progress UI.
 	Sexy::TimeCounter								mHugeWaveCountDown;										//+0x55A4
 	bool							mHelpDisplayed[NUM_ADVICE_TYPES];						//+0x55A8
@@ -215,7 +215,7 @@ public:
 	Sexy::TimeCounter								mTimeStopCounter;										//+0x5748
 	bool							mDroppedFirstCoin;										//+0x574C
 	Sexy::TimeCounter								mFinalWaveSoundCounter;									//+0x5750
-	Sexy::TimeCounter								mCobCannonCursorDelayCounter;							//+0x5754
+	long long								mCobCannonCursorEndTimeNs;							//+0x5754
 	int								mCobCannonMouseX;										//+0x5758
 	int								mCobCannonMouseY;										//+0x575C
 	bool							mKilledYeti;											//+0x5760

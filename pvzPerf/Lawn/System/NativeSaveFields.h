@@ -62,7 +62,7 @@ visit(offsetof(Type, mLevelTimeNs), 22036, 4, sizeof(Type::mLevelTimeNs));
 visit(offsetof(Type, mEffectCounter), 22040, 4, sizeof(Type::mEffectCounter));
 visit(offsetof(Type, mDrawCount), 22044, 4, sizeof(Type::mDrawCount));
 visit(offsetof(Type, mRiseFromGraveCounter), 22048, 4, sizeof(Type::mRiseFromGraveCounter));
-visit(offsetof(Type, mOutOfMoneyCounter), 22052, 4, sizeof(Type::mOutOfMoneyCounter));
+visit(offsetof(Type, mOutOfMoneyEndTimeNs), 22052, 4, sizeof(Type::mOutOfMoneyEndTimeNs));
 visit(offsetof(Type, mCurrentWave), 22056, 4, sizeof(Type::mCurrentWave));
 visit(offsetof(Type, mTotalSpawnedWaves), 22060, 4, sizeof(Type::mTotalSpawnedWaves));
 visit(offsetof(Type, mTutorialState), 22064, 4, sizeof(Type::mTutorialState));
@@ -95,7 +95,7 @@ visit(offsetof(Type, mFwooshCountDown), 22512, 4, sizeof(Type::mFwooshCountDown)
 visit(offsetof(Type, mTimeStopCounter), 22516, 4, sizeof(Type::mTimeStopCounter));
 visit(offsetof(Type, mDroppedFirstCoin), 22520, 1, sizeof(Type::mDroppedFirstCoin));
 visit(offsetof(Type, mFinalWaveSoundCounter), 22524, 4, sizeof(Type::mFinalWaveSoundCounter));
-visit(offsetof(Type, mCobCannonCursorDelayCounter), 22528, 4, sizeof(Type::mCobCannonCursorDelayCounter));
+visit(offsetof(Type, mCobCannonCursorEndTimeNs), 22528, 4, sizeof(Type::mCobCannonCursorEndTimeNs));
 visit(offsetof(Type, mCobCannonMouseX), 22532, 4, sizeof(Type::mCobCannonMouseX));
 visit(offsetof(Type, mCobCannonMouseY), 22536, 4, sizeof(Type::mCobCannonMouseY));
 visit(offsetof(Type, mKilledYeti), 22540, 1, sizeof(Type::mKilledYeti));
@@ -214,7 +214,7 @@ visit(offsetof(Type, mSeedType), 48, 4, sizeof(Type::mSeedType));
 visit(offsetof(Type, mPlantCol), 52, 4, sizeof(Type::mPlantCol));
 visit(offsetof(Type, mAnimCounter), 56, 4, sizeof(Type::mAnimCounter));
 visit(offsetof(Type, mFrame), 60, 4, sizeof(Type::mFrame));
-visit(offsetof(Type, mFrameLength), 64, 4, sizeof(Type::mFrameLength));
+visit(offsetof(Type, mFramePeriodNs), 64, 4, sizeof(Type::mFramePeriodNs));
 visit(offsetof(Type, mNumFrames), 68, 4, sizeof(Type::mNumFrames));
 visit(offsetof(Type, mState), 72, 4, sizeof(Type::mState));
 visit(offsetof(Type, mPlantHealth), 76, 4, sizeof(Type::mPlantHealth));
@@ -224,7 +224,7 @@ visit(offsetof(Type, mDisappearEndTimeNs), 88, 4, sizeof(Type::mDisappearEndTime
 visit(offsetof(Type, mDoSpecialCountdown), 92, 4, sizeof(Type::mDoSpecialCountdown));
 visit(offsetof(Type, mStateCountdown), 96, 4, sizeof(Type::mStateCountdown));
 visit(offsetof(Type, mZenProductionCountdown), 100, 4, sizeof(Type::mZenProductionCountdown));
-visit(offsetof(Type, mLaunchRate), 104, 4, sizeof(Type::mLaunchRate));
+visit(offsetof(Type, mLaunchPeriodNs), 104, 4, sizeof(Type::mLaunchPeriodNs));
 visit(offsetof(Type, mPlantRect), 108, 16, sizeof(Type::mPlantRect));
 visit(offsetof(Type, mPlantAttackRect), 124, 16, sizeof(Type::mPlantAttackRect));
 visit(offsetof(Type, mTargetX), 140, 4, sizeof(Type::mTargetX));
@@ -525,8 +525,8 @@ visit(offsetof(Type, mFadeOutEndTimeNs), 76, 4, sizeof(Type::mFadeOutEndTimeNs))
 visit(offsetof(Type, mFadeOutDurationNs), 80, 4, sizeof(Type::mFadeOutDurationNs));
 }
 if constexpr (std::is_same_v<Type, ReanimatorTrackInstance>) {
-visit(offsetof(Type, mBlendCounter), 0, 4, sizeof(Type::mBlendCounter));
-visit(offsetof(Type, mBlendTime), 4, 4, sizeof(Type::mBlendTime));
+visit(offsetof(Type, mBlendEndTimeNs), 0, 4, sizeof(Type::mBlendEndTimeNs));
+visit(offsetof(Type, mBlendDurationNs), 4, 4, sizeof(Type::mBlendDurationNs));
 // Only the eight blend floats are persisted. Image geometry, fonts and text
 // belong to definitions and are excluded regardless of the native layout.
 visit(offsetof(Type, mBlendTransform), 8, 32, 32);

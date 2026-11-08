@@ -205,8 +205,8 @@ public:
 class ReanimatorTrackInstance
 {
 public:
-    Sexy::TimeCounter                             mBlendCounter;                  //+0x0
-    Sexy::TimeCounter                             mBlendTime;                     //+0x4
+    long long                      mBlendEndTimeNs;                  //+0x0
+    long long                      mBlendDurationNs;                     //+0x4
     ReanimatorTransform             mBlendTransform;                //+0x8
     float                           mShakeOverride;                 //+0x34
     float                           mShakeX;                        //+0x38

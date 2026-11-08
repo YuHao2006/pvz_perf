@@ -16,11 +16,11 @@ void VisitTimeCounterOffsets(Fn&& visit)
         TIMER(mFogBlownCountDown); TIMER(mSunCountDown); TIMER(mShakeCounter);
         visit(offsetof(Type, mLevelTimeNs), true);
         TIMER(mEffectCounter); TIMER(mRiseFromGraveCounter);
-        TIMER(mOutOfMoneyCounter); TIMER(mTutorialTimer); visit(offsetof(Type, mNextZombieWaveTimeNs), false);
+        visit(offsetof(Type, mOutOfMoneyEndTimeNs), false); TIMER(mTutorialTimer); visit(offsetof(Type, mNextZombieWaveTimeNs), false);
         TIMER(mHugeWaveCountDown); TIMER(mCoinBankFadeCount); TIMER(mBoardFadeOutCounter);
         TIMER(mNextSurvivalStageCounter); TIMER(mScoreNextMowerCounter);
         TIMER(mFlagRaiseCounter); TIMER(mIceTrapCounter); TIMER(mFwooshCountDown);
-        TIMER(mTimeStopCounter); TIMER(mFinalWaveSoundCounter); TIMER(mCobCannonCursorDelayCounter);
+        TIMER(mTimeStopCounter); TIMER(mFinalWaveSoundCounter); visit(offsetof(Type, mCobCannonCursorEndTimeNs), false);
         visit(offsetof(Type, mZombieWaveCountdownDurationNs), false); TIMER(mPlayTimeActiveLevel); TIMER(mPlayTimeInactiveLevel);
         TIMER(mStartDrawTime); TIMER(mIntervalDrawTime); TIMER(mPreloadTime);
         for (size_t i = 0; i < MAX_GRID_SIZE_Y; ++i)
@@ -41,7 +41,7 @@ void VisitTimeCounterOffsets(Fn&& visit)
         TIMER(mStateCountdown); TIMER(mZenProductionCountdown); visit(offsetof(Type, mShootingEndTimeNs), false);
         TIMER(mBlinkCountdown); visit(offsetof(Type, mRecentlyEatenEndTimeNs), false); visit(offsetof(Type, mEatenFlashEndTimeNs), false);
         visit(offsetof(Type, mBeghouledFlashEndTimeNs), false); visit(offsetof(Type, mWakeUpEndTimeNs), false);
-        TIMER(mFrameLength); TIMER(mLaunchRate);
+        visit(offsetof(Type, mFramePeriodNs), false); visit(offsetof(Type, mLaunchPeriodNs), false);
     }
     else if constexpr (std::is_same_v<Type, Projectile>)
     {
@@ -74,7 +74,7 @@ void VisitTimeCounterOffsets(Fn&& visit)
     }
     else if constexpr (std::is_same_v<Type, ReanimatorTrackInstance>)
     {
-        TIMER(mBlendCounter); TIMER(mBlendTime);
+        visit(offsetof(Type, mBlendEndTimeNs), false); visit(offsetof(Type, mBlendDurationNs), false);
     }
     else if constexpr (std::is_same_v<Type, CursorObject>)
         TIMER(mHammerDownCounter);

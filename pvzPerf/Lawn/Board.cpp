@@ -124,7 +124,7 @@ Board::Board(LawnApp* theApp)
 	mFogBlownCountDown = 0;
 	mFwooshCountDown = 0;
 	mTimeStopCounter = 0;
-	mCobCannonCursorDelayCounter = 0;
+	mCobCannonCursorEndTimeNs = 0;
 	mCobCannonMouseX = 0;
 	mCobCannonMouseY = 0;
 	mDroppedFirstCoin = false;
@@ -1855,7 +1855,7 @@ void Board::InitLevel()
 	MarkAllDirty();
 
 	mPaused = false;
-	mOutOfMoneyCounter = 0;
+	mOutOfMoneyEndTimeNs = 0;
 	if (StageHasFog())
 	{
 		mFogBlownCountDown = 200;
@@ -4563,7 +4563,7 @@ void Board::MouseDownCobcannonFire(int x, int y, int theClickCount)
 {
 	if (theClickCount >= 0 && y >= 80)
 	{
-		if (mCobCannonCursorDelayCounter > 0 && Distance2D(x, y, mCobCannonMouseX, mCobCannonMouseY) < 100.0f)
+		if (static_cast<long long>(mLevelTimeNs) < mCobCannonCursorEndTimeNs && Distance2D(x, y, mCobCannonMouseX, mCobCannonMouseY) < 100.0f)
 		{
 			return;  // 误点检测：点击加农炮后的 30cs 内，点击的位置和准心位置之间的距离小于 100 时，将被判定为误点
 		}
@@ -7321,14 +7321,6 @@ void Board::Update()
 		? aVisualNowNs : static_cast<std::int64_t>(mLevelTimeNs));
 	UpdateTutorial();
 
-	if (mCobCannonCursorDelayCounter > 0)
-	{
-		mCobCannonCursorDelayCounter--;
-	}
-	if (mOutOfMoneyCounter > 0)
-	{
-		mOutOfMoneyCounter--;
-	}
     if(mShakeCounter>0)UpdateScreenShake();
 	if (mCoinBankFadeCount > 0 && mApp->GetDialog(Dialogs::DIALOG_PURCHASE_PACKET_SLOT) == nullptr)
 	{
@@ -10358,7 +10350,7 @@ bool Board::TakeSunMoney(int theAmount)
 	}
 
 	mApp->PlaySample(Sexy::SOUND_BUZZER);
-	mOutOfMoneyCounter = 70;
+	mOutOfMoneyEndTimeNs = static_cast<long long>(mLevelTimeNs) + 700'000'000LL;
 	return false;
 }
 

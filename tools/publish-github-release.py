@@ -45,6 +45,7 @@ def main():
     parser.add_argument("--repository", default="YuHao2006/pvz_perf")
     parser.add_argument("--inspect", action="store_true")
     parser.add_argument("--proxy", help="Explicit HTTP proxy; uses system curl TLS transport")
+    parser.add_argument("--curl", action="store_true", help="Use system curl TLS transport without requiring a proxy")
     parser.add_argument("--tag")
     parser.add_argument("--commit")
     parser.add_argument("--notes", type=Path)
@@ -74,15 +75,17 @@ def main():
         request_headers = dict(headers)
         if body is not None:
             request_headers["Content-Type"] = content_type
-        if args.proxy:
+        if args.proxy or args.curl:
             # Credentials go through stdin, never command arguments or log files.
             config = "".join("header = " + json.dumps(k + ": " + v) + "\n"
                              for k, v in request_headers.items())
             with tempfile.TemporaryDirectory(prefix="pvz-release-http-") as tmp:
                 result_file = Path(tmp) / "response.json"
-                command = ["curl.exe", "--silent", "--show-error", "--http1.1", "--tls-max", "1.2", "--retry", "4", "--retry-all-errors", "--retry-delay", "2", "--proxy", args.proxy,
+                command = ["curl.exe", "--silent", "--show-error", "--http1.1", "--tls-max", "1.2", "--retry", "4", "--retry-all-errors", "--retry-delay", "2",
                            "--config", "-", "--request", method, "--max-time", "300",
                            "--output", str(result_file), "--write-out", "%{http_code}", url]
+                if args.proxy:
+                    command += ["--proxy", args.proxy]
                 if body is not None:
                     payload = Path(tmp) / "payload"
                     payload.write_bytes(body)

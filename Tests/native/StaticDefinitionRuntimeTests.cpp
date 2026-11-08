@@ -927,7 +927,7 @@ void ReanimationIntegerPlayback()
         const I origin = now, period = events.mPeriodNs;
         const I threshold = rate > 0 ? 400 : 700;
         now = origin + period / 2;
-        events.UpdateAt(now);
+        events.UpdateAt(now, Sexy::gUpdateIntervalNs);
         Require(events.TimedEventCount(threshold, 1000) == (rate > 0 ? 1 : -1),
             "Production explicit-time event setup did not cross its threshold");
         now = origin + period * 3 / 5;
@@ -935,7 +935,7 @@ void ReanimationIntegerPlayback()
         Require(events.TimedEventCount(threshold, 1000) == 0 &&
             !events.ShouldTriggerTimedEvent(static_cast<float>(threshold) / 1000),
             "Production event query after PrepareTimeAt repeated the preceding interval");
-        events.UpdateAt(now);
+        events.UpdateAt(now, Sexy::gUpdateIntervalNs);
         Require(events.TimedEventCount(threshold, 1000) == 0,
             "Production event interval changed after UpdateAt completed prepared track work");
 
@@ -947,28 +947,28 @@ void ReanimationIntegerPlayback()
         events.ApplyRate(6.65361445f);
         Require(events.TimedEventCount(2, 5) == 1,
             "Production rate change discarded the consumed event interval");
-        events.UpdateAt(now);
+        events.UpdateAt(now, Sexy::gUpdateIntervalNs);
         Require(events.TimedEventCount(2, 5) == 1,
             "Production same-time UpdateAt discarded the rate-change event interval");
         now += events.mPeriodNs / 10;
         events.PrepareTimeAt(now);
         Require(events.TimedEventCount(2, 5) == 0,
             "Production prepared event query repeated a rate-change interval");
-        events.UpdateAt(now);
+        events.UpdateAt(now, Sexy::gUpdateIntervalNs);
         events.Seek(0);
         now += events.mPeriodNs / 2;
         events.PrepareTimeAt(now);
         events.ApplyRate(0);
         Require(events.TimedEventCount(2, 5) == 1,
             "Production pause discarded the consumed event interval");
-        events.UpdateAt(now);
+        events.UpdateAt(now, Sexy::gUpdateIntervalNs);
         Require(events.TimedEventCount(2, 5) == 1,
             "Production same-time pause update discarded its event interval");
         now += events.mPeriodNs;
         events.PrepareTimeAt(now);
         Require(events.TimedEventCount(2, 5) == 0,
             "Production prepared paused query repeated the pause event interval");
-        events.UpdateAt(now);
+        events.UpdateAt(now, Sexy::gUpdateIntervalNs);
         Require(events.TimedEventCount(2, 5) == 0,
             "Production paused update repeated the pause event interval");
     }

@@ -454,7 +454,7 @@ void Reanimation::Seek(std::int64_t numerator, std::int64_t denominator)
     const auto phase = std::clamp<std::int64_t>(ReanimClock::SignedMulDiv(numerator, mPeriodNs, denominator), 0, mPeriodNs);
     const auto now = (mStartTimeNs + mFrameAgeNs);
     BindFramePosition(*this, now, phase);
-    mPendingTiming = false;
+    mPendingTiming &= 2;
     mCycleCrossings = 0;
     mRootDisplacement = 0;
     mLastFrameNs = phase;
@@ -469,7 +469,7 @@ void Reanimation::SeekRatio(float ratio)
     const auto phase = position >= double(mPeriodNs) ? mPeriodNs : std::int64_t(position);
     const auto now = (mStartTimeNs + mFrameAgeNs);
     BindFramePosition(*this, now, phase);
-    mPendingTiming = false;
+    mPendingTiming &= 2;
     mCycleCrossings = 0;
     mRootDisplacement = 0;
     mLastFrameNs = phase;
@@ -484,7 +484,7 @@ void Reanimation::SynchronizePhase(const Reanimation& source)
         ReanimClock::SignedMulDiv(position.phaseNs, mPeriodNs, source.mPeriodNs) : 0;
     const auto now = (mStartTimeNs + mFrameAgeNs);
     BindFramePosition(*this, now, phase);
-    mPendingTiming = true;
+    mPendingTiming |= 1;
     mLastFrameNs = source.mFrameCount > 0 ?
         ReanimClock::SignedMulDiv(source.mLastFrameNs, mPeriodNs, source.mPeriodNs) : 0;
     mCycleCrossings = source.mCycleCrossings;
@@ -584,6 +584,10 @@ void Reanimation::RebaseTime(std::int64_t nowNs)
                 auto& endNs = mTrackInstances[track].mBlendEndTimeNs;
                 if (endNs != 0)
                     endNs = endNs > beforeNs ? ReanimClock::Add(endNs, deltaNs) : 0;
+                if (gEffectSystem)
+                    if (auto* attachment = gEffectSystem->mAttachmentHolder->mAttachments.DataArrayTryToGet(
+                            static_cast<unsigned int>(mTrackInstances[track].mAttachmentID)))
+                        attachment->RebaseClock(beforeNs, nowNs);
             }
             base += 64;
         }
@@ -608,9 +612,6 @@ void ReanimationHolder::BindAnimationTime(Reanimation& animation, ReanimTimeDoma
                     if (auto* child=mReanimations.DataArrayTryToGet(attachment->mEffectArray[j].mEffectID))
                         BindAnimationTime(*child,domain,nowNs);
                 }
-                else if (attachment->mEffectArray[j].mEffectType == EffectType::EFFECT_PARTICLE)
-                    if (auto* particle=gEffectSystem->mParticleHolder->mParticleSystems.DataArrayTryToGet(
-                        attachment->mEffectArray[j].mEffectID)) particle->Update(0,nowNs);
             }
     animation.mHasLastFrame = false;
 }
@@ -658,7 +659,7 @@ void Reanimation::ChangeLoopType(ReanimLoopType loop)
     const auto phase = ReanimClock::SignedMulDiv(position.phaseNs, mPeriodNs, oldPeriod);
     const auto now = (mStartTimeNs + mFrameAgeNs);
     BindFramePosition(*this, now, phase);
-    mPendingTiming = false;
+    mPendingTiming &= 2;
     mCycleCrossings = 0;
     mRootDisplacement = 0;
     mLastFrameNs = phase;
@@ -808,18 +809,22 @@ std::int64_t Reanimation::TimedEventCount(std::int64_t numerator, std::int64_t d
 void Reanimation::PrepareTimeAt(std::int64_t nowNs)
 {
     if (nowNs != (mStartTimeNs + mFrameAgeNs))
+    {
         ConsumeTimeAt(nowNs);
-    mPendingTiming = true;
+        mPendingTiming |= 2;
+    }
+    mPendingTiming |= 1;
 }
 
-void Reanimation::UpdateAt(std::int64_t nowNs)
+void Reanimation::UpdateAt(std::int64_t nowNs, std::uint64_t deltaNs)
 {
 	if (mFrameCount == 0 || mDead)
 		return;
 
-	if (!mPendingTiming || nowNs != (mStartTimeNs + mFrameAgeNs))
-		ConsumeTimeAt(nowNs);
-	mPendingTiming = false;
+    const bool newTime = nowNs != (mStartTimeNs + mFrameAgeNs);
+    if (!(mPendingTiming & 1) || newTime) ConsumeTimeAt(nowNs);
+    if (!(mPendingTiming & 2) && !newTime) deltaNs = 0;
+    mPendingTiming = 0;
 
 	// P4 掩码轨道环：活动位（blend/shake/attach）与 def 级 attacher 位求或
 	// 驱动；零即整实体跳过（bench_reanim_trackwalk：112B×N 步长全扫的
@@ -858,7 +863,7 @@ void Reanimation::UpdateAt(std::int64_t nowNs)
 			{
 				SexyTransform2D aOverlayMatrix;
 				GetAttachmentOverlayMatrix(aTrackIndex, aOverlayMatrix);
-				AttachmentUpdateAndSetMatrixAt(aTrack->mAttachmentID, aOverlayMatrix, nowNs);
+				AttachmentUpdateAndSetMatrixAt(aTrack->mAttachmentID, aOverlayMatrix, nowNs, deltaNs);
 				aAnyActive = true;
 			}
 
@@ -1241,7 +1246,7 @@ void Reanimation::DrawRenderGroup(Graphics* g, int theRenderGroup)
 			bool aTrackDrawn = DrawTrack(g, aTrackIndex, theRenderGroup, &aFrameTime);
 			if (aTrackInstance->mAttachmentID != AttachmentID::ATTACHMENTID_NULL)
 			{
-				AttachmentDraw(aTrackInstance->mAttachmentID, g, !aTrackDrawn);
+				AttachmentDraw(aTrackInstance->mAttachmentID, g, !aTrackDrawn, mStartTimeNs + mFrameAgeNs);
 			}
 		}
 	}
@@ -1412,7 +1417,7 @@ void Reanimation::SetFramesForLayerIndex(int theTrackIndex)
 	mHasLastFrame = false;
 	mCycleCrossings = 0;
     mRootDisplacement = 0;
-	mPendingTiming = false;
+	mPendingTiming &= 2;
 	if (mDefinition->mTracks.count == 0)  // 如果动画没有轨道
 	{
 		mFrameStart = 0;

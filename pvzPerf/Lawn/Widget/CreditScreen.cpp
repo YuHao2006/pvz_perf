@@ -1058,7 +1058,7 @@ void CreditScreen::Draw(Graphics* destination)
     {
         if (!aParticle->mIsAttachment && !aParticle->mDead)
         {
-            aParticle->Draw(g);
+            aParticle->Draw(g, mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs);
         }
     }
 
@@ -1335,8 +1335,8 @@ void CreditScreen::UpdateMovie()
     const int aFrameCount = aCreditsReanim->mDefinition->mTracks.tracks->mTransforms.count - 1;
     float aFrameFactor = 1.0f / aFrameCount;
 
-    aCreditsReanim->UpdateAt(visualNowNs);
-    mApp->mEffectSystem->UpdateAt(visualNowNs, visualNowNs);
+    aCreditsReanim->UpdateAt(visualNowNs, Sexy::gUpdateIntervalNs);
+    mApp->mEffectSystem->UpdateAt(visualNowNs, visualNowNs, visualNowNs, Sexy::gUpdateIntervalNs, Sexy::gUpdateIntervalNs, Sexy::gUpdateIntervalNs);
     mApp->mPoolEffect->PoolEffectUpdate(visualNowNs, Sexy::gUpdateIntervalNs);
     TurnOffTongues(aCreditsReanim, 0);
 

@@ -66,7 +66,7 @@ void CursorObject::Update(int x, int y)
     Reanimation* aCursorReanim = mApp->ReanimationTryToGet(mReanimCursorID);
     if (aCursorReanim)
     {
-        aCursorReanim->UpdateAt(mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs);
+        aCursorReanim->UpdateAt(mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs, Sexy::gUpdateIntervalNs);
     }
 
     mVisible = true;

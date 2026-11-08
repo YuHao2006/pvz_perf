@@ -283,7 +283,7 @@ public:
     double                          mRootDisplacement; // Completed _ground displacement, including mRootFrameScale.
     std::int64_t                    mFrameAgeNs; // Cached nanosecond remainder inside mCurrentFrame, not an update timestamp.
     bool                            mHasLastFrame;
-    bool                            mPendingTiming;
+    unsigned char                   mPendingTiming; // bit 0: prepared pose; bit 1: pending child interval
     FilterEffect                    mFilterEffect;
     // ── P4 派生活动/分组掩码（2026-10-02，bench_reanim_trackwalk 裁决：
     // 掩码跳过 11~22% vs 布局拆段 94~97%，故 112B 轨道结构体原样不拆）──
@@ -308,7 +308,7 @@ public:
     /*inline*/ void                 ReanimationInitializeType(float theX, float theY, ReanimationType theReanimType, std::int64_t nowNs);
     void                            ReanimationDie();
     void                            PrepareTimeAt(std::int64_t nowNs);
-    void                            UpdateAt(std::int64_t nowNs);
+    void                            UpdateAt(std::int64_t nowNs, std::uint64_t deltaNs);
     void                            Advance(std::int64_t deltaNs);
     ReanimFramePosition             SampleFrameAt(std::int64_t nowNs, std::int64_t offsetNs = 0) const;
     ReanimPlaybackPosition          SamplePlayback(std::int64_t offsetNs = 0) const;

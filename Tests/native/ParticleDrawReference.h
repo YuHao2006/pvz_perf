@@ -83,13 +83,13 @@ inline double LifeFraction(std::int64_t age, std::int64_t duration)
 {
     return age < 0 ? -1.0 : static_cast<double>(age) / std::max<std::int64_t>(1, duration);
 }
-inline double ParticleTime(const TodParticle* particle)
+inline double ParticleTime(const TodParticle* particle, std::int64_t nowNs)
 {
-    return LifeFraction(ParticleLifeAgeAt(particle->mParticleEmitter->mParticleSystem->mLastUpdateTimeNs, particle->mBirthTimeNs, particle->mParticleDurationNs), particle->mParticleDurationNs);
+    return LifeFraction(ParticleLifeAgeAt(nowNs, particle->mBirthTimeNs, particle->mParticleDurationNs), particle->mParticleDurationNs);
 }
-inline double SystemTime(const TodParticleEmitter& emitter)
+inline double SystemTime(const TodParticleEmitter& emitter, std::int64_t nowNs)
 {
-    return LifeFraction(ParticleLifeAgeAt(emitter.mParticleSystem->mLastUpdateTimeNs, emitter.mBirthTimeNs, emitter.mSystemDurationNs), emitter.mSystemDurationNs);
+    return LifeFraction(ParticleLifeAgeAt(nowNs, emitter.mBirthTimeNs, emitter.mSystemDurationNs), emitter.mSystemDurationNs);
 }
 class ParticleRenderParams
 {
@@ -123,7 +123,7 @@ inline float CrossFadeLerp(float theFrom, float theTo, bool theFromIsSet, bool t
 }
 
 //0x5176A0
-inline bool GetRenderParams(TodParticle* theParticle, ParticleRenderParams* theParams)
+inline bool GetRenderParams(TodParticle* theParticle, ParticleRenderParams* theParams, std::int64_t nowNs)
 {
 	TodParticleEmitter* aEmitter = theParticle->mParticleEmitter;
 	TodEmitterDefinition* aDef = aEmitter->mEmitterDef;
@@ -191,8 +191,8 @@ inline bool GetRenderParams(TodParticle* theParticle, ParticleRenderParams* theP
 	theParams->mPositionIsSet |= FloatTrackIsSet(aDef->mEmitterBoxX);
 	theParams->mPositionIsSet |= FloatTrackIsSet(aDef->mEmitterBoxY);
 
-	const auto aSystemTime = SystemTime(*aEmitter);
-	const auto aParticleTime = ParticleTime(theParticle);
+	const auto aSystemTime = SystemTime(*aEmitter, nowNs);
+	const auto aParticleTime = ParticleTime(theParticle, nowNs);
 	const auto evaluateSystem = [&](const FloatParameterTrack& track, ParticleSystemTracks slot) {
 		return FloatTrackEvaluate(track, aSystemTime, aEmitter->mTrackInterp[static_cast<int>(slot)]);
 	};
@@ -226,10 +226,10 @@ inline bool GetRenderParams(TodParticle* theParticle, ParticleRenderParams* theP
 	if (aCrossFadeParticle != nullptr)  // 当存在交叉混合的粒子时，将二者的渲染参数进行混合（从 aCrossFadeParticle 至 theParticle 的交叉混合）
 	{
 		ParticleRenderParams aCrossFadeParams;
-		if (GetRenderParams(aCrossFadeParticle, &aCrossFadeParams))
+		if (GetRenderParams(aCrossFadeParticle, &aCrossFadeParams, nowNs))
 		{
 			const float aFraction = static_cast<float>(LifeFraction(
-				ParticleLifeAgeAt(theParticle->mParticleEmitter->mParticleSystem->mLastUpdateTimeNs, theParticle->mBirthTimeNs, theParticle->mParticleDurationNs), aCrossFadeParticle->mCrossFadeDurationNs));
+				ParticleLifeAgeAt(nowNs, theParticle->mBirthTimeNs, theParticle->mParticleDurationNs), aCrossFadeParticle->mCrossFadeDurationNs));
 			// 各项数值按照 aFraction 比例混合
 			theParams->mRed = CrossFadeLerp(aCrossFadeParams.mRed, theParams->mRed, aCrossFadeParams.mRedIsSet, theParams->mRedIsSet, aFraction);
 			theParams->mGreen = CrossFadeLerp(aCrossFadeParams.mGreen, theParams->mGreen, aCrossFadeParams.mGreenIsSet, theParams->mGreenIsSet, aFraction);
@@ -258,7 +258,7 @@ inline bool GetRenderParams(TodParticle* theParticle, ParticleRenderParams* theP
 }
 
 //0x517E20
-inline void RenderParticle(Graphics* g, TodParticle* theParticle, const Color& theColor, ParticleRenderParams* theParams, TodTriangleGroup* theTriangleGroup)
+inline void RenderParticle(Graphics* g, TodParticle* theParticle, const Color& theColor, ParticleRenderParams* theParams, TodTriangleGroup* theTriangleGroup, std::int64_t nowNs)
 {
 	TodParticleEmitter* aEmitter = theParticle->mParticleEmitter;
 	TodEmitterDefinition* aEmitterDef = aEmitter->mEmitterDef;
@@ -273,11 +273,11 @@ inline void RenderParticle(Graphics* g, TodParticle* theParticle, const Color& t
 	{
 		if (FloatTrackIsSet(aEmitterDef->mAnimationRate))  // 如果定义了动画速率
 			aFrame = ClampInt(static_cast<int>(ReanimClock::MulDiv(
-				TodParticleAnimationPhase(*theParticle, aEmitterDef->mAnimationRate, aEmitter->mParticleSystem->mLastUpdateTimeNs),
+				TodParticleAnimationPhase(*theParticle, aEmitterDef->mAnimationRate, nowNs),
 				std::max(0, aEmitterDef->mImageFrames), ParticleClock::Cycle)),
 				0, aEmitterDef->mImageFrames - 1);
 		else if (aEmitterDef->mAnimated)
-			aFrame = ClampInt(ParticleTime(theParticle) * aEmitterDef->mImageFrames, 0, aEmitterDef->mImageFrames - 1);  // 粒子时间值 * 总帧数得到当前帧
+			aFrame = ClampInt(ParticleTime(theParticle, nowNs) * aEmitterDef->mImageFrames, 0, aEmitterDef->mImageFrames - 1);  // 粒子时间值 * 总帧数得到当前帧
 		else
 			aFrame = theParticle->mImageFrame;  // 帧固定的粒子，直接取其贴图帧
 	}
@@ -290,7 +290,7 @@ inline void RenderParticle(Graphics* g, TodParticle* theParticle, const Color& t
 	TextureSource source{definition.mTextures[variant],0};
 	const int aCelWidth = aRegion.mWidth, aCelHeight = aRegion.mHeight;
 	Rect aSrcRect(0, 0, aCelWidth, aCelHeight);
-	const auto aParticleTime = ParticleTime(theParticle);
+	const auto aParticleTime = ParticleTime(theParticle, nowNs);
 	float aClipTop = FloatTrackEvaluate(render.mClipTop, aParticleTime,
 		theParticle->mParticleInterp[ParticleTracks::TRACK_PARTICLE_CLIP_TOP]);
 	float aClipBottom = FloatTrackEvaluate(render.mClipBottom, aParticleTime,

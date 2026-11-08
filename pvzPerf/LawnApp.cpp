@@ -1729,6 +1729,7 @@ void LawnApp::UpdateFrames()
 	for (int i = 0; i < aUpdateCount; i++)
 	{
 		Sexy::BeginTimedUpdate();
+        const auto previousVisualNowNs = mEffectSystem ? mEffectSystem->mReanimationHolder->mVisualTimeNs : 0;
 		// Store dialogue and Almanac previews keep their UI clock while the
 		// modal pauses the battle. Ordinary board pauses still freeze Visual.
 		if (mEffectSystem && !mCreditScreen &&
@@ -1743,13 +1744,8 @@ void LawnApp::UpdateFrames()
 		// Freeze particle origins without simulation, spawning or random draws.
 		if (mEffectSystem && mBoard && mBoard->mPaused)
 		{
-			TodParticleSystem* particle = nullptr;
-			while (mEffectSystem->mParticleHolder->mParticleSystems.IterateNext(particle))
-			{
-				if (!particle->mIsAttachment)
-					particle->Update(0, static_cast<std::int64_t>(mBoard->mLevelTimeNs));
-			}
-			mBoard->mCutScene->UpdateVisualParticles(mEffectSystem->mReanimationHolder->mVisualTimeNs,false);
+            const auto now = mEffectSystem->mReanimationHolder->mVisualTimeNs;
+            mBoard->mCutScene->UpdateVisualParticles(now, static_cast<std::uint64_t>(now-previousVisualNowNs), false);
 		}
 		mAppCounter++;
 		
@@ -2904,7 +2900,7 @@ void LawnApp::CrazyDaveTalkMessage(const SexyString& theMessage, const DaveDialo
 			aAttachEffect->mOffset.m00 = 1.2f;
 			aAttachEffect->mOffset.m11 = 1.2f;
 
-			aCrazyDaveReanim->UpdateAt(mEffectSystem->mReanimationHolder->mVisualTimeNs);
+			aCrazyDaveReanim->UpdateAt(mEffectSystem->mReanimationHolder->mVisualTimeNs, Sexy::gUpdateIntervalNs);
 
 			if (doSound)
 			{
@@ -2926,7 +2922,7 @@ void LawnApp::CrazyDaveTalkMessage(const SexyString& theMessage, const DaveDialo
 			aAttachEffect->mOffset.m00 = 1.5f;
 			aAttachEffect->mOffset.m11 = 1.5f;
 
-			aCrazyDaveReanim->UpdateAt(mEffectSystem->mReanimationHolder->mVisualTimeNs);
+			aCrazyDaveReanim->UpdateAt(mEffectSystem->mReanimationHolder->mVisualTimeNs, Sexy::gUpdateIntervalNs);
 
 			if (doSound)
 			{
@@ -2945,7 +2941,7 @@ void LawnApp::CrazyDaveTalkMessage(const SexyString& theMessage, const DaveDialo
 
 			ReanimatorTrackInstance* aHandTrackInstance = aCrazyDaveReanim->GetTrackInstanceByName(ReanimTrackId::Dave_handinghand);
 			AttachReanim(aHandTrackInstance->mAttachmentID, aFertilizerReanim, 102.0f, 412.0f);
-			aCrazyDaveReanim->UpdateAt(mEffectSystem->mReanimationHolder->mVisualTimeNs);
+			aCrazyDaveReanim->UpdateAt(mEffectSystem->mReanimationHolder->mVisualTimeNs, Sexy::gUpdateIntervalNs);
 
 			if (doSound)
 			{
@@ -2964,7 +2960,7 @@ void LawnApp::CrazyDaveTalkMessage(const SexyString& theMessage, const DaveDialo
 
 			ReanimatorTrackInstance* aHandTrackInstance = aCrazyDaveReanim->GetTrackInstanceByName(ReanimTrackId::Dave_handinghand);
 			AttachReanim(aHandTrackInstance->mAttachmentID, aTreeFoodReanim, 102.0f, 412.0f);
-			aCrazyDaveReanim->UpdateAt(mEffectSystem->mReanimationHolder->mVisualTimeNs);
+			aCrazyDaveReanim->UpdateAt(mEffectSystem->mReanimationHolder->mVisualTimeNs, Sexy::gUpdateIntervalNs);
 
 			if (doSound)
 			{
@@ -2984,7 +2980,7 @@ void LawnApp::CrazyDaveTalkMessage(const SexyString& theMessage, const DaveDialo
 
 			ReanimatorTrackInstance* aHandTrackInstance = aCrazyDaveReanim->GetTrackInstanceByName(ReanimTrackId::Dave_handinghand);
 			AttachReanim(aHandTrackInstance->mAttachmentID, aMoneyBagReanim, 90.0f, 405.0f);
-			aCrazyDaveReanim->UpdateAt(mEffectSystem->mReanimationHolder->mVisualTimeNs);
+			aCrazyDaveReanim->UpdateAt(mEffectSystem->mReanimationHolder->mVisualTimeNs, Sexy::gUpdateIntervalNs);
 			/*
 			v16 = Reanimation::GetTrackInstanceByName(v3, "Dave_handinghand");
 			theAnimRate = 405.0;
@@ -3140,7 +3136,7 @@ void LawnApp::UpdateCrazyDave()
 		mCrazyDaveBlinkReanimID = ReanimationID::REANIMATIONID_NULL;
 	}
 
-	aCrazyDaveReanim->UpdateAt(mEffectSystem->mReanimationHolder->mVisualTimeNs);
+	aCrazyDaveReanim->UpdateAt(mEffectSystem->mReanimationHolder->mVisualTimeNs, Sexy::gUpdateIntervalNs);
 }
 
 //0x4552F0

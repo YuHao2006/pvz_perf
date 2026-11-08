@@ -2402,7 +2402,7 @@ constexpr std::array<Challenge::UpdateFn, NUM_GAME_MODES> Challenge::kChallengeU
 			throw std::overflow_error("speed-mode battle timestamp exceeds clock range");
 		board.mLevelTimeNs += deltaNs;
 		c.mApp->mEffectSystem->mReanimationHolder->mBattleTimeNs = static_cast<std::int64_t>(board.mLevelTimeNs);
-		c.mApp->mEffectSystem->RebaseIndependentBattleEffects(static_cast<std::int64_t>(board.mLevelTimeNs));
+		c.mApp->mEffectSystem->RebaseIndependentBattleEffects(static_cast<std::int64_t>(board.mLevelTimeNs - deltaNs), static_cast<std::int64_t>(board.mLevelTimeNs));
 		board.UpdateGame(deltaNs);
 	};
 	updates[GAMEMODE_MINIGAME_RAINING_SEEDS] = +[](Challenge& c, std::uint64_t) { c.UpdateRainingSeeds(); };
@@ -2458,7 +2458,7 @@ void Challenge::Update(std::uint64_t theLevelDeltaNs)
 	Reanimation* aReanim = mApp->ReanimationTryToGet(mReanimChallenge);
 	if (aReanim && aReanim->mIsAttachment)
 	{
-		aReanim->UpdateAt((mBoard->AnimationTimeDomain() == ReanimTimeDomain::Battle ? static_cast<std::int64_t>(mBoard->mLevelTimeNs) : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs));
+		aReanim->UpdateAt((mBoard->AnimationTimeDomain() == ReanimTimeDomain::Battle ? static_cast<std::int64_t>(mBoard->mLevelTimeNs) : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs), Sexy::gUpdateIntervalNs);
 	}
 }
 
@@ -5996,7 +5996,7 @@ void Challenge::TreeOfWisdomUpdate()
 			mCloudsCounter[i] = RandRangeInt(2000, 4000);
 		}
 
-		aReanimCloud->UpdateAt(nowNs);
+		aReanimCloud->UpdateAt(nowNs, Sexy::gUpdateIntervalNs);
 	}
 }
 

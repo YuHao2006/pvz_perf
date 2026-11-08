@@ -901,7 +901,7 @@ void GameSelector::DrawOverlay(Graphics* g)
 		
 		TodParticleSystem* aTrophyParticle = mApp->ParticleTryToGet(mTrophyParticleID);
 		if (aTrophyParticle)
-			aTrophyParticle->Draw(g);
+			aTrophyParticle->Draw(g, mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs);
 	}
 
 	mToolTip->Draw(g);
@@ -979,7 +979,8 @@ void GameSelector::Update()
 
 	TodParticleSystem* aParticle = mApp->ParticleTryToGet(mTrophyParticleID);
 	if (aParticle)
-		aParticle->Update(Sexy::gUpdateIntervalNs, mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs);
+		aParticle->Update(Sexy::gUpdateIntervalNs, mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs,
+            mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs - static_cast<std::int64_t>(Sexy::gUpdateIntervalNs));
 
 	if (mStartingGame && !mWaitingDialog)
 	{
@@ -1130,10 +1131,10 @@ void GameSelector::Update()
 		else if (aCloudReanim->mLoopCount > 0)
 			mCloudCounter[i] = RandRangeInt(2000, 4000);
 	}
-	aSelectorReanim->UpdateAt(mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs);
+	aSelectorReanim->UpdateAt(mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs, Sexy::gUpdateIntervalNs);
 
 	Reanimation* aLeafReanim = mApp->ReanimationGet(mLeafReanimID);
-	aLeafReanim->UpdateAt(mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs);
+	aLeafReanim->UpdateAt(mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs, Sexy::gUpdateIntervalNs);
 	int aLeafTrackIndex = aSelectorReanim->FindTrackIndex(ReanimTrackId::SelectorScreen_BG_Right);
 	ReanimatorTransform aLeafTransform;
 	aSelectorReanim->GetCurrentTransform(aLeafTrackIndex, &aLeafTransform);
@@ -1147,10 +1148,10 @@ void GameSelector::Update()
 	}
 
 	for (int i = 0; i < 6; i++)
-		mApp->ReanimationGet(mCloudReanimID[i])->UpdateAt(mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs);
+		mApp->ReanimationGet(mCloudReanimID[i])->UpdateAt(mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs, Sexy::gUpdateIntervalNs);
 	Reanimation* aHandReanim = mApp->ReanimationTryToGet(mHandReanimID);
 	if (aHandReanim)
-		aHandReanim->UpdateAt(mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs);
+		aHandReanim->UpdateAt(mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs, Sexy::gUpdateIntervalNs);
 
 	TrackButton(mAdventureButton, mShowStartButton ? ReanimTrackId::SelectorScreen_StartAdventure_button : ReanimTrackId::SelectorScreen_Adventure_button, SELECTOR_MAIN_PAGE_X, 0.0f);
 	TrackButton(mMinigameButton, ReanimTrackId::SelectorScreen_Survival_button, SELECTOR_MAIN_PAGE_X, 0.0f);

@@ -235,7 +235,7 @@ void LoadCurrentWithResources(LawnApp& app, HiddenWindow& window, const char* sa
     advanced = nullptr;
     while (holder->mReanimations.IterateNext(advanced))
         advanced->UpdateAt(holder->mTimeDomains[holder->mReanimations.DataArrayIndexOf(advanced)] == ReanimTimeDomain::Battle
-            ? holder->mBattleTimeNs : holder->mVisualTimeNs);
+            ? holder->mBattleTimeNs : holder->mVisualTimeNs, Sexy::gUpdateIntervalNs);
     particle = nullptr;
     if (systems.IterateNext(particle))
     {
@@ -303,11 +303,10 @@ void LoadCurrentWithResources(LawnApp& app, HiddenWindow& window, const char* sa
          elapsed += rootAnimation->mFramePeriodNs)
     {
         holder->mBattleTimeNs = ReanimClock::Add(rootClockBefore, elapsed);
-        rootAnimation->UpdateAt(holder->mBattleTimeNs);
+        rootAnimation->UpdateAt(holder->mBattleTimeNs, Sexy::gUpdateIntervalNs);
         rootProbe->mX = CheckedPosition(rootProbe->RootPosition(*rootAnimation, rootSignedScale));
     }
     rootAnimation->mStartTimeNs = ReanimClock::Subtract(rootAnimation->mStartTimeNs, rootAdvance);
-    rootAnimation->mLastUpdateTimeNs = ReanimClock::Subtract(rootAnimation->mLastUpdateTimeNs, rootAdvance);
     holder->mBattleTimeNs = rootClockBefore;
     Require(rootAnimation->mRootDisplacement != 0 &&
         rootProbe->mRootBindingGeneration == rootAnimation->mPlaybackGeneration &&
@@ -359,16 +358,17 @@ void LoadCurrentWithResources(LawnApp& app, HiddenWindow& window, const char* sa
         Require(system && system->EmitterRosterCount(),"Cannot allocate linear particle save probe");
         auto* emitter=system->EmitterRosterEmitterAt(0);
         emitter->mSystemDurationNs=60'000'000'000;
-        linearParticle=emitter->SpawnParticle(0,1,emitter->mParticleSystem->mLastUpdateTimeNs);
+        linearParticle=emitter->SpawnParticle(0,1,static_cast<std::int64_t>(board.mLevelTimeNs));
         Require(linearParticle!=nullptr,"Cannot spawn linear particle save probe");
         linearParticle->mParticleDurationNs=60'000'000'000;
         linearParticle->mPosition = {1'048'576.f,-1'048'576.f};
         linearParticle->mVelocity={.125f,-.125f};
         linearParticle->mSpinPosition = 1'048'576.f;
         linearParticle->mSpinVelocity=.125f;
-        emitter->mParticleSystem->mLastUpdateTimeNs = ReanimClock::Add(emitter->mParticleSystem->mLastUpdateTimeNs, 16'000'000);
-        Require(emitter->UpdateParticle(linearParticle,16'000'000, emitter->mParticleSystem->mLastUpdateTimeNs) &&
-            ParticleLifeAgeAt(linearParticle->mParticleEmitter->mParticleSystem->mLastUpdateTimeNs, linearParticle->mBirthTimeNs, linearParticle->mParticleDurationNs)==16'000'000,
+        const auto ownerNow = static_cast<std::int64_t>(board.mLevelTimeNs);
+        system->Update(16'000'000, ownerNow + 16'000'000, ownerNow);
+        system->RebaseClock(ownerNow + 16'000'000, ownerNow);
+        Require(ParticleLifeAgeAt(ownerNow, linearParticle->mBirthTimeNs, linearParticle->mParticleDurationNs)==16'000'000,
             "Particle save probe did not advance its lifetime");
     }
     Require(linearParticle!=nullptr,"No field-free production particle definition for save probe");
@@ -389,14 +389,15 @@ void LoadCurrentWithResources(LawnApp& app, HiddenWindow& window, const char* sa
         Require(system && system->EmitterRosterCount(),"Cannot allocate acceleration save probe");
         auto* emitter=system->EmitterRosterEmitterAt(0);
         emitter->mSystemDurationNs=60'000'000'000;
-        accelerationParticle=emitter->SpawnParticle(0,1,emitter->mParticleSystem->mLastUpdateTimeNs);
+        accelerationParticle=emitter->SpawnParticle(0,1,static_cast<std::int64_t>(board.mLevelTimeNs));
         Require(accelerationParticle!=nullptr,"Cannot spawn acceleration save probe");
         accelerationParticle->mParticleDurationNs=60'000'000'000;
         accelerationParticle->mPosition = {1'048'576.f,-1'048'576.f};
         accelerationParticle->mVelocity={.125f,-.25f};
-        emitter->mParticleSystem->mLastUpdateTimeNs = ReanimClock::Add(emitter->mParticleSystem->mLastUpdateTimeNs, 16'000'003);
-        Require(emitter->UpdateParticle(accelerationParticle,16'000'003, emitter->mParticleSystem->mLastUpdateTimeNs) &&
-            ParticleLifeAgeAt(accelerationParticle->mParticleEmitter->mParticleSystem->mLastUpdateTimeNs, accelerationParticle->mBirthTimeNs, accelerationParticle->mParticleDurationNs)==16'000'003,
+        const auto ownerNow = static_cast<std::int64_t>(board.mLevelTimeNs);
+        system->Update(16'000'003, ownerNow + 16'000'003, ownerNow);
+        system->RebaseClock(ownerNow + 16'000'003, ownerNow);
+        Require(ParticleLifeAgeAt(ownerNow, accelerationParticle->mBirthTimeNs, accelerationParticle->mParticleDurationNs)==16'000'003,
             "Acceleration save probe did not advance its lifetime");
     }
     Require(accelerationParticle!=nullptr,"No constant acceleration production definition for save probe");
@@ -423,8 +424,9 @@ void LoadCurrentWithResources(LawnApp& app, HiddenWindow& window, const char* sa
         auto* emitter=positionSystem->EmitterRosterEmitterAt(i);
         if (!emitter->mEmitterDef->mSystemFields.count) continue;
         emitter->mSystemDurationNs=60'000'000'000;
-        emitter->Update(16'000'000, ReanimClock::Add(emitter->mParticleSystem->mLastUpdateTimeNs, 16'000'000), emitter->mParticleSystem->mLastUpdateTimeNs);
-        emitter->mParticleSystem->mLastUpdateTimeNs += 16'000'000;
+        const auto ownerNow = static_cast<std::int64_t>(board.mLevelTimeNs);
+        positionSystem->Update(16'000'000, ownerNow + 16'000'000, ownerNow);
+        positionSystem->RebaseClock(ownerNow + 16'000'000, ownerNow);
         Require(emitter->mSystemPositionBound==1 &&
             std::isfinite(emitter->mSystemPositionOriginX) && std::isfinite(emitter->mSystemPositionOriginY),
             "System-position save probe did not retain its previous curve sample");
@@ -437,6 +439,23 @@ void LoadCurrentWithResources(LawnApp& app, HiddenWindow& window, const char* sa
     while (systems.IterateNext(particle))
         particleAppearances.emplace_back(static_cast<int>(particle->mEffectType),particle->mVariant);
     variants=static_cast<unsigned>(particleAppearances.size());
+    // The fixture owns its synthetic continuation clocks, just as a real
+    // component supplies time to particles. No processed timestamp lives in a system.
+    std::vector<std::int64_t> particleTimes;
+    const auto resetParticleTimes = [&] {
+        particleTimes.assign(systems.mMaxSize, static_cast<std::int64_t>(board.mLevelTimeNs));
+        Reanimation* animation = nullptr;
+        while (holder->mReanimations.IterateNext(animation))
+            if (animation->mDefinition && animation->mTrackInstances)
+                for (int track = 0; track < animation->mDefinition->mTracks.count; ++track)
+                    if (auto* attached = app.mEffectSystem->mAttachmentHolder->mAttachments.DataArrayTryToGet(
+                        static_cast<unsigned int>(animation->mTrackInstances[track].mAttachmentID)))
+                        for (int i = 0; i < attached->mNumEffects; ++i)
+                            if (attached->mEffectArray[i].mEffectType == EFFECT_PARTICLE)
+                                if (auto* system = systems.DataArrayTryToGet(attached->mEffectArray[i].mEffectID))
+                                    particleTimes[systems.DataArrayIndexOf(system)] = animation->mStartTimeNs + animation->mFrameAgeNs;
+    };
+    resetParticleTimes();
     const auto exactSnapshot = [&] {
         std::vector<std::int64_t> state;
         const auto append = [&](auto... values) {
@@ -455,7 +474,7 @@ void LoadCurrentWithResources(LawnApp& app, HiddenWindow& window, const char* sa
         {
             const auto position = animation->SamplePlayback();
             const auto domain = holder->mTimeDomains[holder->mReanimations.DataArrayIndexOf(animation)];
-            const auto now = animation->mLastUpdateTimeNs;
+            const auto now = animation->mStartTimeNs + animation->mFrameAgeNs;
             // Absolute timestamps can change between sessions. Preserve the
             // pose relative to its last supplied timestamp, even if its owner's
             // current clock has advanced without updating this animation.
@@ -506,16 +525,16 @@ void LoadCurrentWithResources(LawnApp& app, HiddenWindow& window, const char* sa
             for (int e = 0; e < system->EmitterRosterCount(); ++e)
             {
                 auto* emitter = system->EmitterRosterEmitterAt(e);
-                append(ParticleLifeAgeAt(system->mLastUpdateTimeNs, emitter->mBirthTimeNs, emitter->mSystemDurationNs),
-                    emitter->mCrossFadeEndTimeNs == 0 ? 0 : std::max<std::int64_t>(0,ReanimClock::Subtract(emitter->mCrossFadeEndTimeNs,system->mLastUpdateTimeNs)),
+                append(ParticleLifeAgeAt(particleTimes[systems.DataArrayIndexOf(system)], emitter->mBirthTimeNs, emitter->mSystemDurationNs),
+                    emitter->mCrossFadeEndTimeNs == 0 ? 0 : std::max<std::int64_t>(0,ReanimClock::Subtract(emitter->mCrossFadeEndTimeNs,particleTimes[systems.DataArrayIndexOf(system)])),
                     emitter->mSpawnRemainder,
                     emitter->mSystemPositionOriginX, emitter->mSystemPositionOriginY,
                     emitter->mSystemPositionBound);
                 for (int p = 0; p < emitter->ParticleRosterCount(); ++p)
                 {
                     auto* item = emitter->ParticleRosterParticleAt(p);
-                    append(ParticleLifeAgeAt(item->mParticleEmitter->mParticleSystem->mLastUpdateTimeNs, item->mBirthTimeNs, item->mParticleDurationNs),
-                        ReanimClock::Subtract(item->mParticleEmitter->mParticleSystem->mLastUpdateTimeNs, item->mAnimationBirthTimeNs), item->mAnimationSampleIntegral, item->mRandomSeed,
+                    append(ParticleLifeAgeAt(particleTimes[systems.DataArrayIndexOf(system)], item->mBirthTimeNs, item->mParticleDurationNs),
+                        ReanimClock::Subtract(particleTimes[systems.DataArrayIndexOf(system)], item->mAnimationBirthTimeNs), item->mAnimationSampleIntegral, item->mRandomSeed,
                         item->mPosition.x, item->mPosition.y,
                         item->mVelocity.x, item->mVelocity.y,
                         item->mSpinPosition, item->mSpinVelocity);
@@ -543,7 +562,12 @@ void LoadCurrentWithResources(LawnApp& app, HiddenWindow& window, const char* sa
     const auto continueParticles = [&] {
         TodParticleSystem* system = nullptr;
         while (systems.IterateNext(system))
-            system->Update(17'123'457, ReanimClock::Add(system->mLastUpdateTimeNs, static_cast<std::int64_t>(17'123'457)));
+        {
+            auto& now = particleTimes[systems.DataArrayIndexOf(system)];
+            const auto previous = now;
+            now += 17'123'457;
+            system->Update(17'123'457, now, previous);
+        }
         return exactSnapshot();
     };
     const auto continuedParticleState = continueParticles();
@@ -568,7 +592,7 @@ void LoadCurrentWithResources(LawnApp& app, HiddenWindow& window, const char* sa
             const double beforeConsume = zombie->RootPosition(*animation, -zombie->mScaleZombie);
             Require(zombie->RootPosition(*animation, -zombie->mScaleZombie) == beforeConsume,
                 "Repeated root sampling changed position before consuming the frame");
-            animation->UpdateAt(nextTime);
+            animation->UpdateAt(nextTime, Sexy::gUpdateIntervalNs);
             const double afterConsume = zombie->RootPosition(*animation, -zombie->mScaleZombie);
             Require(afterConsume == beforeConsume &&
                 zombie->RootPosition(*animation, -zombie->mScaleZombie) == afterConsume,
@@ -622,6 +646,7 @@ void LoadCurrentWithResources(LawnApp& app, HiddenWindow& window, const char* sa
     Require(board.mLevelTimeNs == savedBoardTime &&
         board.mEffectCounter.mNanoseconds == 9'876'543'210,
         "Raw level-clock load overwrote its adjacent effect counter with a removed previous sample");
+    resetParticleTimes();
     Require(exactSnapshot() == exactBefore, "Native v4 reload changed exact time, motion or random state");
     if (coordinateProbe)
     {
@@ -638,7 +663,19 @@ void LoadCurrentWithResources(LawnApp& app, HiddenWindow& window, const char* sa
         particlesAfterReload.emplace_back(static_cast<int>(particle->mEffectType), particle->mVariant);
     Require(particlesAfterReload == particleAppearances,
         "Particle base/appearance changed through native save/reload");
-    Require(continueParticles() == continuedParticleState,
+    const auto reloadedParticleState = continueParticles();
+    if (reloadedParticleState != continuedParticleState)
+    {
+        std::fprintf(stderr, "Particle continuation sizes: %zu / %zu\n", continuedParticleState.size(), reloadedParticleState.size());
+        for (std::size_t i = 0, printed = 0; i < std::min(continuedParticleState.size(), reloadedParticleState.size()) && printed < 12; ++i)
+            if (continuedParticleState[i] != reloadedParticleState[i])
+            {
+                std::fprintf(stderr, "Continuation mismatch [%zu]: %lld / %lld\n", i,
+                    static_cast<long long>(continuedParticleState[i]), static_cast<long long>(reloadedParticleState[i]));
+                ++printed;
+            }
+    }
+    Require(reloadedParticleState == continuedParticleState,
         "Native reload changed the continued variable-step particle state");
     Require(continueRoot() == continuedRootState,
         "Native v4 reload changed root position/base/cycle/coefficient or cached-frame continuation");

@@ -110,13 +110,15 @@ Plant、Zombie 和 Reanimation 不再通过 Board、全局应用或 holder 查�
 持有并单独传入 visual 时间，不参与 Board 的全局粒子更新；暂停时只对齐基准，不模拟。
 泳池闪光 `PARTICLE_POOL_SPARKLY` 与水面在新关卡首次入场时接收Visual时间，Board时间为零时也能播放，恢复1073首次入场行为。首次开战前由管理者平移出生时间并交给Board，保持粒子年龄、位置和水面相位；此后普通暂停与无尽下一轮选卡停止推进，读档直接使用Board时间。EffectSystem接收调用者明确传入的水面时间，不查询Board或自行判断时间域。寒冰菇仍专门冻结水面和闪光：1073的0x469EFF写入mDontUpdate=1，当前代码保持此规则，计时结束后解除冻结。证据见[寒冰菇冻结核对](../Tests/evidence/ice-shroom-pool-sparkle-1073-20261030/manifest.json)。
 关卡普通粒子出生于 Board 当前纳秒，EffectSystem 使用 Board 传入的当前纳秒推进，
-传送门粒子只走这一次全局更新，GridItem 不再重复更新。粒子更新的步长由持有者的本次
-时间与上次已处理时间之差给出，年龄仍为当前时间减出生时间。
+传送门粒子只走这一次全局更新，GridItem 不再重复更新。粒子更新的实际步长和当前时刻由持有者传入；粒子系统不保存上一次更新时间，
+年龄仍为当前时间减出生时间。冻结或切换时钟时由持有者提供原时刻和新时刻，平移出生锚点。
 
 v4 开发版使用 DAT64 v5.1：reanim 时钟标签由序列化层从 Holder 侧表读写，
 记录缓存帧内余数 `mFrameAgeNs`，当前已处理姿态的时刻由 `mStartTimeNs + mFrameAgeNs`
 得到。`Reanimation::mLastUpdateTimeNs` 已删除；管理者尚未交给动画的时间不冒充动画进度。
-粒子存档仍保存相对年龄，加载时以所属 Board 当前时间还原出生值。
+粒子存档仍保存相对出生值，写入时按所属组件提供的采样时刻计算，加载后恢复到相同的所有者时钟。
+完整相对值不截断到生命周期上限，保留尚未处理的循环余量。附着粒子使用宿主动画的缓存姿态时刻；
+开场视觉粒子使用 Visual，其余关卡独立粒子使用 Board。
 
 每个 `Reanimation` 保存 float 动画速率 `mAnimRate`、当前关键帧 `mCurrentFrame`、关键帧开始时间 `mStartTimeNs`、整数关键帧时长 `mFramePeriodNs` 和完整周期。变速后的帧内年龄为当前所属时钟减关键帧开始时间，绘制与根运动共用，不维护第二套浮点累加相位。
 

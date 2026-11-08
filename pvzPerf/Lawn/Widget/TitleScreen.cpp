@@ -297,7 +297,7 @@ void TitleScreen::Update()
 		return;
 	}
 
-	mApp->mEffectSystem->UpdateAt(mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs, mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs);
+	mApp->mEffectSystem->UpdateAt(mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs, mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs, mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs, Sexy::gUpdateIntervalNs, Sexy::gUpdateIntervalNs, Sexy::gUpdateIntervalNs);
 
 	float aPrevWidth = mCurBarWidth;
 	mCurBarWidth += Sexy::UpdateDelta(mBarVel);

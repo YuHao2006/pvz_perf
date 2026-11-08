@@ -772,7 +772,7 @@ void Coin::Update()
         }
 
         AttachmentUpdateAndMoveAt(mAttachmentID, mPosX + aOffsetX, mPosY + aOffsetY,
-            mBoard ? static_cast<std::int64_t>(mBoard->mLevelTimeNs) : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs);
+            mBoard ? static_cast<std::int64_t>(mBoard->mLevelTimeNs) : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs, Sexy::gUpdateIntervalNs);
         AttachmentOverrideColor(mAttachmentID, GetColor());
         AttachmentOverrideScale(mAttachmentID, mScale);
 
@@ -875,7 +875,7 @@ void Coin::Draw(Graphics* g)
     {
         Graphics theAttachmentGraphics(*g);
         MakeParentGraphicsFrame(&theAttachmentGraphics);
-        AttachmentDraw(mAttachmentID, &theAttachmentGraphics, false);
+        AttachmentDraw(mAttachmentID, &theAttachmentGraphics, false, mBoard ? static_cast<std::int64_t>(mBoard->mLevelTimeNs) : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs);
     }
 
     if ((mType == CoinType::COIN_SILVER || mType == CoinType::COIN_GOLD) && mHitGround && !mIsBeingCollected)

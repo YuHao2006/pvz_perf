@@ -461,7 +461,6 @@ public:
     int								mRenderOrder;
     bool							mDontUpdate;
     std::uint32_t                   mRandomState;
-    std::int64_t                    mLastUpdateTimeNs; // Runtime clock binding; not serialized.
 
 public:
     TodParticleSystem();
@@ -479,8 +478,9 @@ public:
 
     void							TodParticleInitializeFromDef(float theX, float theY, int theRenderOrder, TodParticleDefinition* theDefinition, ParticleEffect theEffectType, std::int64_t nowNs, std::uint32_t theVariant = 0);
     void							ParticleSystemDie();
-    void							Update(std::uint64_t theDeltaNs, std::int64_t nowNs);
-    void							Draw(Graphics* g);
+    void							Update(std::uint64_t theDeltaNs, std::int64_t nowNs, std::int64_t previousNowNs);
+    void                            RebaseClock(std::int64_t previousNowNs, std::int64_t nowNs);
+    void							Draw(Graphics* g, std::int64_t nowNs);
     void							SystemMove(float theX, float theY);
     void							OverrideColor(ParticleEmitterName theName, const Color& theColor);
     void							OverrideColor(ParticleEmitterNameRange theRange, const Color& theColor);

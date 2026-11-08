@@ -3576,9 +3576,9 @@ void Plant::UpdateReanim(std::int64_t ownerNowNs, std::int64_t animationNowNs)
         aOffsetY += 80.0f - 80.0f * aScaleFactor;
     }
 
-    aBodyReanim->UpdateAt(animationNowNs);
+    aBodyReanim->UpdateAt(animationNowNs, Sexy::gUpdateIntervalNs);
     if (auto* sleepingReanim = mApp->ReanimationTryToGet(mSleepingReanimID))
-        sleepingReanim->UpdateAt(animationNowNs);
+        sleepingReanim->UpdateAt(animationNowNs, Sexy::gUpdateIntervalNs);
 
     if (mSeedType == SeedType::SEED_LEFTPEATER)
     {

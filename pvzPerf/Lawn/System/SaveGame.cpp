@@ -5,6 +5,7 @@
 #include "Lawn/Board.h"
 #include "Lawn/BoardTouch.h"
 #include "Lawn/Challenge.h"
+#include "Lawn/CutScene.h"
 #include "Lawn/SeedPacket.h"
 #include "LawnApp.h"
 #include "Lawn/CursorObject.h"
@@ -160,10 +161,44 @@ bool ValidateDataArraySlots(const LegacyByte* theBlock, size_t theStride,
     return aNext == theUsed;
 }
 
+std::vector<std::int64_t> ParticleSampleTimes(Board& board)
+{
+    auto& effects = *board.mApp->mEffectSystem;
+    auto& systems = effects.mParticleHolder->mParticleSystems;
+    const auto battle = static_cast<std::int64_t>(board.mLevelTimeNs);
+    const auto visual = effects.mReanimationHolder->mVisualTimeNs;
+    std::vector<std::int64_t> samples(systems.mMaxSize, battle);
+    const auto assign = [&](AttachmentID id, std::int64_t now) {
+        if (auto* attachment = effects.mAttachmentHolder->mAttachments.DataArrayTryToGet(static_cast<unsigned int>(id)))
+            for (int i = 0; i < attachment->mNumEffects; ++i)
+                if (attachment->mEffectArray[i].mEffectType == EFFECT_PARTICLE)
+                    if (auto* particle = systems.DataArrayTryToGet(attachment->mEffectArray[i].mEffectID))
+                        samples[systems.DataArrayIndexOf(particle)] = now;
+    };
+    Reanimation* animation = nullptr;
+    while (effects.mReanimationHolder->mReanimations.IterateNext(animation))
+        if (animation->mDefinition && animation->mTrackInstances)
+            for (int i = 0; i < animation->mDefinition->mTracks.count; ++i)
+                assign(animation->mTrackInstances[i].mAttachmentID, animation->mStartTimeNs + animation->mFrameAgeNs);
+    Zombie* zombie = nullptr;
+    while (board.mZombies.IterateNext(zombie))
+        assign(zombie->mAttachmentID, zombie->mFromWave == Zombie::ZOMBIE_WAVE_CUTSCENE ||
+            zombie->mFromWave == Zombie::ZOMBIE_WAVE_UI ? visual : battle);
+    if (board.mCutScene)
+        for (auto id : board.mCutScene->mVisualParticleIDs)
+            if (auto* particle = systems.DataArrayTryToGet(static_cast<unsigned int>(id)))
+                samples[systems.DataArrayIndexOf(particle)] = visual;
+    if (board.mPoolIntroVisual && board.mApp->mGameScene == SCENE_LEVEL_INTRO &&
+        !board.mCutScene->IsSurvivalRepick())
+        if (auto* particle = systems.DataArrayTryToGet(static_cast<unsigned int>(board.mPoolSparklyParticleID)))
+            samples[systems.DataArrayIndexOf(particle)] = visual;
+    return samples;
+}
+
 template <typename T>
 void SyncDat64DataArray(
 	SaveGameContext& theContext,
-	DataArray<T>& theDataArray)
+	DataArray<T>& theDataArray, std::span<const std::int64_t> particleTimes = {})
 {
 	if (theContext.mFailed)
 		return;
@@ -195,7 +230,16 @@ void SyncDat64DataArray(
 			LegacyByte* aDat64Item = aDat64Block.data() + i * aDat64ItemSize;
 			if (aNativeItem.mGeneration != 0)
 			{
-				Dat64Layout<T>::Write(aDat64Item, aNativeItem.mItem);
+				if constexpr (std::is_same_v<T, TodParticle> || std::is_same_v<T, TodParticleEmitter>)
+                {
+                    const auto* system = [&] {
+                        if constexpr (std::is_same_v<T, TodParticle>) return aNativeItem.mItem.mParticleEmitter->mParticleSystem;
+                        else return aNativeItem.mItem.mParticleSystem;
+                    }();
+                    Dat64Layout<T>::Write(aDat64Item, aNativeItem.mItem,
+                        particleTimes[system->mParticleHolder->mParticleSystems.DataArrayIndexOf(system)]);
+                }
+                else Dat64Layout<T>::Write(aDat64Item, aNativeItem.mItem);
 			}
 			const unsigned int anID = aNativeItem.PackedID();
 			std::memcpy(
@@ -429,8 +473,6 @@ static void SyncParticleEmitter(TodParticleSystem* theParticleSystem, TodParticl
 				return;
 			}
 			aSeenParticles[anIndex] = true;
-			aParticle->mBirthTimeNs = ReanimClock::Add(theParticleSystem->mLastUpdateTimeNs, aParticle->mBirthTimeNs);
-			aParticle->mAnimationBirthTimeNs = ReanimClock::Add(theParticleSystem->mLastUpdateTimeNs, aParticle->mAnimationBirthTimeNs);
 			aParticle->mParticleEmitter = theParticleEmitter;  // 回指回填（=原循环同位）
 			aRosterScratch[i] = static_cast<ParticleID>(aDataID);
 		}
@@ -452,19 +494,14 @@ static void SyncParticleEmitter(TodParticleSystem* theParticleSystem, TodParticl
 	}
 	if (theContext.mReading)
 	{
-		theParticleEmitter->mBirthTimeNs = ReanimClock::Add(theParticleSystem->mLastUpdateTimeNs, theParticleEmitter->mBirthTimeNs);
-		if (theParticleEmitter->mCrossFadeEndTimeNs != 0)
-			theParticleEmitter->mCrossFadeEndTimeNs = ReanimClock::Add(theParticleSystem->mLastUpdateTimeNs, theParticleEmitter->mCrossFadeEndTimeNs);
 		theParticleEmitter->mParticleSystem = theParticleSystem;
 		theParticleEmitter->mEmitterDef = &theParticleSystem->mParticleDef->mEmitterDefs[aEmitterDefIndex];
-        RefreshParticleLifeFraction(*theParticleEmitter, theParticleSystem->mLastUpdateTimeNs);
 		// 入册：盘上头→尾（新→旧）→侧表尾存（旧→新）= 倒序填
 		theParticleEmitter->ParticleRosterClear();
 		for (int i = aRosterCount - 1; i >= 0; --i)
 		{
 			TodParticle* aParticle = aHolder.mParticles.DataArrayTryToGet((unsigned int)aRosterScratch[i]);
             // Restore ownership before rebuilding this pool-indexed cache.
-            RefreshParticleLifeFraction(*aParticle, theParticleSystem->mLastUpdateTimeNs);
 			theParticleEmitter->ParticleRosterAdd(aParticle);
 		}
 	}
@@ -542,7 +579,6 @@ void SyncParticleSystem(Board* theBoard, TodParticleSystem* theParticleSystem, S
 		}
 		aRosterCount = aCountOnDisk;
 		// The saved pool belongs to this Board. UI particle pools are not saved.
-		theParticleSystem->mLastUpdateTimeNs = static_cast<std::int64_t>(theBoard->mLevelTimeNs);
 		theParticleSystem->mParticleDef = aDefinition;
 		theParticleSystem->mParticleHolder = aHolder;
 	}
@@ -675,11 +711,13 @@ void SyncBoard(SaveGameContext& theContext, Board* theBoard)
 	// Pointer-free records deliberately clear process-local owners. Rebind
 	// them before ANY read exit, including a later bad field or exception,
 	// so normal Board/Zombie cleanup never sees a half-restored null owner.
+    bool clocksRestored = false;
 	struct RuntimeBindings
 	{
 		Board* board;
-		~RuntimeBindings() { if (board) FixBoardAfterLoad(board); }
-	} aRuntimeBindings{theContext.mReading ? theBoard : nullptr};
+		const bool& clocksRestored;
+        ~RuntimeBindings() { if (board) FixBoardAfterLoad(board, clocksRestored); }
+	} aRuntimeBindings{theContext.mReading ? theBoard : nullptr, clocksRestored};
 
 	// 附件池在流序中最后替换，而 ~Attachment 会把 EFFECT_REANIM 引用级联成
 	// ReanimationDie。活板流出时旧 reanim 先死并经轨道 AttachmentDie 预先静默
@@ -699,6 +737,7 @@ void SyncBoard(SaveGameContext& theContext, Board* theBoard)
 			theContext.mFailed = true;
 			return;
 		}
+        const auto particleTimes = theContext.mReading ? std::vector<std::int64_t>{} : ParticleSampleTimes(*theBoard);
 		SyncDat64DataArray(theContext, theBoard->mZombies);
 		SyncDat64DataArray(theContext, theBoard->mPlants);
 		SyncDat64DataArray(theContext, theBoard->mProjectiles);
@@ -706,8 +745,8 @@ void SyncBoard(SaveGameContext& theContext, Board* theBoard)
 		SyncDat64DataArray(theContext, theBoard->mLawnMowers);
 		SyncDat64DataArray(theContext, theBoard->mGridItems);
 		SyncDat64DataArray(theContext, theBoard->mApp->mEffectSystem->mParticleHolder->mParticleSystems);
-		SyncDat64DataArray(theContext, theBoard->mApp->mEffectSystem->mParticleHolder->mEmitters);
-		SyncDat64DataArray(theContext, theBoard->mApp->mEffectSystem->mParticleHolder->mParticles);
+		SyncDat64DataArray(theContext, theBoard->mApp->mEffectSystem->mParticleHolder->mEmitters, particleTimes);
+		SyncDat64DataArray(theContext, theBoard->mApp->mEffectSystem->mParticleHolder->mParticles, particleTimes);
 		SyncDat64DataArray(theContext, theBoard->mApp->mEffectSystem->mReanimationHolder->mReanimations);
 		SyncDat64DataArray(theContext, theBoard->mApp->mEffectSystem->mAttachmentHolder->mAttachments);
 	}
@@ -756,10 +795,37 @@ void SyncBoard(SaveGameContext& theContext, Board* theBoard)
 			theContext.mFailed = true;
 		}
 	}
+    if (theContext.mReading && !theContext.mFailed)
+    {
+        const auto samples = ParticleSampleTimes(*theBoard);
+        auto& holder = *theBoard->mApp->mEffectSystem->mParticleHolder;
+        TodParticleSystem* system = nullptr;
+        while (holder.mParticleSystems.IterateNext(system))
+        {
+            const auto now = samples[holder.mParticleSystems.DataArrayIndexOf(system)];
+            for (int i = 0; i < system->EmitterRosterCount(); ++i)
+            {
+                auto* emitter = system->EmitterRosterEmitterAt(i);
+                emitter->mBirthTimeNs = ReanimClock::Add(now, emitter->mBirthTimeNs);
+                if (emitter->mCrossFadeEndTimeNs != 0)
+                    emitter->mCrossFadeEndTimeNs = ReanimClock::Add(now, emitter->mCrossFadeEndTimeNs);
+                RefreshParticleLifeFraction(*emitter, now);
+                for (int j = 0; j < emitter->ParticleRosterCount(); ++j)
+                {
+                    auto* particle = emitter->ParticleRosterParticleAt(j);
+                    particle->mBirthTimeNs = ReanimClock::Add(now, particle->mBirthTimeNs);
+                    particle->mAnimationBirthTimeNs = ReanimClock::Add(now, particle->mAnimationBirthTimeNs);
+                    RefreshParticleLifeFraction(*particle, now);
+                }
+            }
+        }
+        clocksRestored = true;
+    }
+
 }
 
 //0x481CE0
-void FixBoardAfterLoad(Board* theBoard)
+void FixBoardAfterLoad(Board* theBoard, bool rebaseAnimations)
 {
 	{
 		Plant* aPlant = nullptr;
@@ -834,7 +900,7 @@ void FixBoardAfterLoad(Board* theBoard)
 	theBoard->mApp->mMusic->mApp = theBoard->mApp;
 	theBoard->mApp->mMusic->mMusicInterface = theBoard->mApp->mMusicInterface;
 	SaveClockProjection::Bind(*theBoard->mApp->mMusic);
-	if (theBoard->mLevelTimeNs > std::uint64_t(INT64_MAX))
+	if (!rebaseAnimations || theBoard->mLevelTimeNs > std::uint64_t(INT64_MAX))
 		return; // A failed partial read must still leave owner pointers repaired.
 	auto& aHolder = *theBoard->mApp->mEffectSystem->mReanimationHolder;
 	aHolder.mBattleTimeNs = static_cast<std::int64_t>(theBoard->mLevelTimeNs);

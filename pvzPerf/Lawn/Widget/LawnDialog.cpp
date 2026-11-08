@@ -432,7 +432,8 @@ void ReanimationWidget::Update()
         // The pause dialog owns this animation. Both game clocks may be frozen.
         const auto aNowNs = std::chrono::duration_cast<std::chrono::nanoseconds>(
             std::chrono::steady_clock::now().time_since_epoch()).count();
-        mReanim->UpdateAt(aNowNs);
+        mReanim->UpdateAt(aNowNs, static_cast<std::uint64_t>(std::max<std::int64_t>(0,
+            aNowNs - (mReanim->mStartTimeNs + mReanim->mFrameAgeNs))));
         MarkDirty();
     }
 }

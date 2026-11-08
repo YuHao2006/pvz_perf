@@ -19,6 +19,7 @@ EffectSystem* gEffectSystem = nullptr;
 #include <stdexcept>
 #include <string>
 #include <vector>
+#include <unordered_map>
 
 namespace
 {
@@ -84,6 +85,15 @@ const TodCurveEvalFn kCurveEvals[14]{
 
 namespace
 {
+std::unordered_map<const TodParticleSystem*, std::int64_t> ownerTimes;
+std::int64_t& OwnerTime(const TodParticleSystem* system) { return ownerTimes[system]; }
+void StepSystem(TodParticleSystem* system, std::uint64_t delta, std::int64_t now)
+{
+    const auto previous = OwnerTime(system);
+    system->Update(delta, now, previous);
+    OwnerTime(system) = now;
+}
+
 struct Scene
 {
     FloatParameterTrackNode values[12]{
@@ -157,9 +167,10 @@ struct Scene
         data.Initialize();
         system = holder.AllocParticleSystemFromDef(100, 200, 0, &definition,
             ParticleEffect::PARTICLE_NONE, 0);
+        OwnerTime(system) = 0;
     }
     TodParticleEmitter* Emitter() const { return system->EmitterRosterEmitterAt(0); }
-    TodParticle* Spawn() { return Emitter()->SpawnParticle(0, 1, system->mLastUpdateTimeNs); }
+    TodParticle* Spawn() { return Emitter()->SpawnParticle(0, 1, OwnerTime(system)); }
 };
 
 std::vector<std::uint64_t> Snapshot(const Scene& scene)
@@ -174,9 +185,9 @@ std::vector<std::uint64_t> Snapshot(const Scene& scene)
     for (int e = 0; e < scene.system->EmitterRosterCount(); ++e)
     {
         const auto& emitter = *scene.system->EmitterRosterEmitterAt(e);
-        integer(ParticleLifeAgeAt(emitter.mParticleSystem->mLastUpdateTimeNs, emitter.mBirthTimeNs, emitter.mSystemDurationNs));
+        integer(ParticleLifeAgeAt(OwnerTime(emitter.mParticleSystem), emitter.mBirthTimeNs, emitter.mSystemDurationNs));
         integer(emitter.mSystemDurationNs);
-        const auto emitterAge = ParticleLifeAgeAt(scene.system->mLastUpdateTimeNs, emitter.mBirthTimeNs, emitter.mSystemDurationNs);
+        const auto emitterAge = ParticleLifeAgeAt(OwnerTime(scene.system), emitter.mBirthTimeNs, emitter.mSystemDurationNs);
         Require(emitter.mParticleSystem->mParticleHolder->mData->mEmitterLifeFractions[emitter.mParticleSystem->mParticleHolder->mEmitters.DataArrayIndexOf(&emitter)] == (emitterAge < 0 ? -1.0 : double(emitterAge)/std::max<std::int64_t>(1,emitter.mSystemDurationNs)), "stale emitter life cache");
         integer(std::bit_cast<std::uint64_t>(emitter.mSystemPositionOriginX));
         integer(std::bit_cast<std::uint64_t>(emitter.mSystemPositionOriginY));
@@ -190,12 +201,12 @@ std::vector<std::uint64_t> Snapshot(const Scene& scene)
         {
             const auto& particle = *emitter.ParticleRosterParticleAt(p);
             integer(particle.mParticleDurationNs);
-            const auto particleAge = ParticleLifeAgeAt(scene.system->mLastUpdateTimeNs, particle.mBirthTimeNs, particle.mParticleDurationNs);
+            const auto particleAge = ParticleLifeAgeAt(OwnerTime(scene.system), particle.mBirthTimeNs, particle.mParticleDurationNs);
             Require(particle.mParticleEmitter->mParticleSystem->mParticleHolder->mData->mParticleLifeFractions[particle.mParticleEmitter->mParticleSystem->mParticleHolder->mParticles.DataArrayIndexOf(&particle)] == (particleAge < 0 ? -1.0 : double(particleAge)/std::max<std::int64_t>(1,particle.mParticleDurationNs)), "stale particle life cache");
-            integer(ParticleLifeAgeAt(particle.mParticleEmitter->mParticleSystem->mLastUpdateTimeNs, particle.mBirthTimeNs, particle.mParticleDurationNs));
-            integer(ReanimClock::Subtract(particle.mParticleEmitter->mParticleSystem->mLastUpdateTimeNs, particle.mAnimationBirthTimeNs));
+            integer(ParticleLifeAgeAt(OwnerTime(particle.mParticleEmitter->mParticleSystem), particle.mBirthTimeNs, particle.mParticleDurationNs));
+            integer(ReanimClock::Subtract(OwnerTime(particle.mParticleEmitter->mParticleSystem), particle.mAnimationBirthTimeNs));
             integer(particle.mAnimationSampleIntegral);
-            integer(TodParticleAnimationPhase(particle, emitter.mEmitterDef->mAnimationRate, scene.system->mLastUpdateTimeNs));
+            integer(TodParticleAnimationPhase(particle, emitter.mEmitterDef->mAnimationRate, OwnerTime(scene.system)));
             integer(particle.mRandomSeed);
             integer(particle.mImageFrame);
             vector(particle.mPosition);
@@ -222,7 +233,7 @@ void Advance(Scene& scene, std::uint64_t duration, int frequency, std::uint32_t&
         // Explicit intervals must take precedence over ambient frame settings.
         Sexy::gUpdateTicks = 317;
         Sexy::gUpdateIntervalNs = 999;
-        scene.system->Update(delta, ReanimClock::Add(scene.system->mLastUpdateTimeNs, static_cast<std::int64_t>(delta)));
+        StepSystem(scene.system, delta, ReanimClock::Add(OwnerTime(scene.system), static_cast<std::int64_t>(delta)));
         remaining -= delta;
     }
 }
@@ -246,31 +257,31 @@ void TestActualDelta()
 {
     Scene scene;
     auto* p = scene.Spawn();
-    Require(ParticleLifeAgeAt(p->mParticleEmitter->mParticleSystem->mLastUpdateTimeNs, p->mBirthTimeNs, p->mParticleDurationNs) == 0 && ReanimClock::Subtract(p->mParticleEmitter->mParticleSystem->mLastUpdateTimeNs, p->mAnimationBirthTimeNs) == 0,
+    Require(ParticleLifeAgeAt(OwnerTime(p->mParticleEmitter->mParticleSystem), p->mBirthTimeNs, p->mParticleDurationNs) == 0 && ReanimClock::Subtract(OwnerTime(p->mParticleEmitter->mParticleSystem), p->mAnimationBirthTimeNs) == 0,
         "birth received hidden time");
     p->mPosition = {0, 0};
     p->mVelocity = {2, -4};
-    scene.system->Update(1'250'000, ReanimClock::Add(scene.system->mLastUpdateTimeNs, static_cast<std::int64_t>(1'250'000)));
-    Require(ParticleLifeAgeAt(p->mParticleEmitter->mParticleSystem->mLastUpdateTimeNs, p->mBirthTimeNs, p->mParticleDurationNs) == 1'250'000, "sub-10ms lifetime did not advance");
+    StepSystem(scene.system, 1'250'000, ReanimClock::Add(OwnerTime(scene.system), static_cast<std::int64_t>(1'250'000)));
+    Require(ParticleLifeAgeAt(OwnerTime(p->mParticleEmitter->mParticleSystem), p->mBirthTimeNs, p->mParticleDurationNs) == 1'250'000, "sub-10ms lifetime did not advance");
     Near(p->mPosition.x, 0.25f, "sub-10ms velocity displacement");
     Near(p->mPosition.y, -0.5f, "sub-10ms vertical displacement");
-    Require(ReanimClock::Subtract(p->mParticleEmitter->mParticleSystem->mLastUpdateTimeNs, p->mAnimationBirthTimeNs) == 1'250'000, "sub-10ms animation did not advance");
+    Require(ReanimClock::Subtract(OwnerTime(p->mParticleEmitter->mParticleSystem), p->mAnimationBirthTimeNs) == 1'250'000, "sub-10ms animation did not advance");
     const auto globalBefore = globalRandomCalls;
     scene.system->SystemMove(150, 275);
     const auto held = Snapshot(scene);
-    scene.system->Update(0, ReanimClock::Add(scene.system->mLastUpdateTimeNs, static_cast<std::int64_t>(0)));
+    StepSystem(scene.system, 0, ReanimClock::Add(OwnerTime(scene.system), static_cast<std::int64_t>(0)));
     Require(Snapshot(scene) == held, "zero update sampled input/state/RNG");
     scene.system->mDontUpdate = true;
-    scene.system->Update(123'456'789, ReanimClock::Add(scene.system->mLastUpdateTimeNs, static_cast<std::int64_t>(123'456'789)));
+    StepSystem(scene.system, 123'456'789, ReanimClock::Add(OwnerTime(scene.system), static_cast<std::int64_t>(123'456'789)));
     Require(Snapshot(scene) == held, "paused update sampled input/state/RNG");
     Require(globalBefore == globalRandomCalls, "updates consumed global RNG");
     scene.system->mDontUpdate = false;
-    scene.system->Update(1'000'000, ReanimClock::Add(scene.system->mLastUpdateTimeNs, static_cast<std::int64_t>(1'000'000)));
+    StepSystem(scene.system, 1'000'000, ReanimClock::Add(OwnerTime(scene.system), static_cast<std::int64_t>(1'000'000)));
     Near(p->mPosition.x, 50.45f, "held move was not applied once");
     Near(p->mPosition.y, 74.1f, "held move vertical displacement");
-    scene.system->Update(1'000'000, ReanimClock::Add(scene.system->mLastUpdateTimeNs, static_cast<std::int64_t>(1'000'000)));
+    StepSystem(scene.system, 1'000'000, ReanimClock::Add(OwnerTime(scene.system), static_cast<std::int64_t>(1'000'000)));
     Near(p->mPosition.x, 50.65f, "held move was applied twice");
-    Require(ParticleLifeAgeAt(scene.Emitter()->mParticleSystem->mLastUpdateTimeNs, scene.Emitter()->mBirthTimeNs, scene.Emitter()->mSystemDurationNs) == 3'250'000,
+    Require(ParticleLifeAgeAt(OwnerTime(scene.system), scene.Emitter()->mBirthTimeNs, scene.Emitter()->mSystemDurationNs) == 3'250'000,
         "emitter age used ambient step settings");
     for (int frequency : {30, 60, 100, 144, 200, 240, 1000, 0})
     {
@@ -290,7 +301,7 @@ void TestActualDelta()
     Field(acceleration, FIELD_ACCELERATION, 8, -4);
     auto* a = acceleration.Spawn();
     a->mVelocity = {0, 0};
-    acceleration.system->Update(2'500'000, ReanimClock::Add(acceleration.system->mLastUpdateTimeNs, static_cast<std::int64_t>(2'500'000)));
+    StepSystem(acceleration.system, 2'500'000, ReanimClock::Add(OwnerTime(acceleration.system), static_cast<std::int64_t>(2'500'000)));
     Near(a->mVelocity.x, 0.02f, "acceleration did not scale with dt");
     Near(a->mVelocity.y, -0.01f, "vertical acceleration did not scale with dt");
 
@@ -299,7 +310,7 @@ void TestActualDelta()
     auto* b = attractor.Spawn();
     b->mPosition = {110, 200};
     b->mVelocity = {0, 0};
-    attractor.system->Update(50'000'000, ReanimClock::Add(attractor.system->mLastUpdateTimeNs, static_cast<std::int64_t>(50'000'000)));
+    StepSystem(attractor.system, 50'000'000, ReanimClock::Add(OwnerTime(attractor.system), static_cast<std::int64_t>(50'000'000)));
     Near(b->mVelocity.x, -0.35f, "main step was split into private force steps");
     Near(b->mPosition.x, 108.25f, "main step did not use a single field pass");
 
@@ -307,10 +318,10 @@ void TestActualDelta()
     Field(friction, FIELD_FRICTION, 0.2f, 1.0f);
     auto* f = friction.Spawn();
     f->mVelocity = {4, 5};
-    friction.Emitter()->UpdateParticle(f, 0, friction.system->mLastUpdateTimeNs);
+    friction.Emitter()->UpdateParticle(f, 0, OwnerTime(friction.system));
     Near(f->mVelocity.x, 4, "friction changed x velocity at zero dt");
     Near(f->mVelocity.y, 5, "friction 1 changed velocity at zero dt");
-    friction.system->Update(25'000'000, ReanimClock::Add(friction.system->mLastUpdateTimeNs, static_cast<std::int64_t>(25'000'000)));
+    StepSystem(friction.system, 25'000'000, ReanimClock::Add(OwnerTime(friction.system), static_cast<std::int64_t>(25'000'000)));
     Near(f->mVelocity.x, 2, "friction did not integrate the actual 25ms step");
     Near(f->mVelocity.y, 0, "friction 1 did not stop velocity");
 
@@ -318,7 +329,7 @@ void TestActualDelta()
     Field(frictionOriginalStep, FIELD_FRICTION, 0.2f, 1);
     auto* fo = frictionOriginalStep.Spawn();
     fo->mVelocity = {4, 5};
-    frictionOriginalStep.system->Update(10'000'000, ReanimClock::Add(frictionOriginalStep.system->mLastUpdateTimeNs, static_cast<std::int64_t>(10'000'000)));
+    StepSystem(frictionOriginalStep.system, 10'000'000, ReanimClock::Add(OwnerTime(frictionOriginalStep.system), static_cast<std::int64_t>(10'000'000)));
     Near(fo->mVelocity.x, 3.2f, "10ms friction changed original velocity multiplier");
     Near(fo->mVelocity.y, 0, "10ms friction 1 did not stop velocity");
 
@@ -326,10 +337,10 @@ void TestActualDelta()
     Field(frictionSplit, FIELD_FRICTION, 0.2f, 1);
     auto* fs = frictionSplit.Spawn();
     fs->mVelocity = {4, 5};
-    frictionSplit.system->Update(7'000'000, ReanimClock::Add(frictionSplit.system->mLastUpdateTimeNs, static_cast<std::int64_t>(7'000'000)));
+    StepSystem(frictionSplit.system, 7'000'000, ReanimClock::Add(OwnerTime(frictionSplit.system), static_cast<std::int64_t>(7'000'000)));
     Near(fs->mVelocity.x, 3.44f, "friction did not integrate the first 7ms step");
     Near(fs->mVelocity.y, 1.5f, "friction 1 ignored the partial step");
-    frictionSplit.system->Update(18'000'000, ReanimClock::Add(frictionSplit.system->mLastUpdateTimeNs, static_cast<std::int64_t>(18'000'000)));
+    StepSystem(frictionSplit.system, 18'000'000, ReanimClock::Add(OwnerTime(frictionSplit.system), static_cast<std::int64_t>(18'000'000)));
     // Discrete friction integrates each update independently, so splitting a step changes its result.
     Near(fs->mVelocity.x, 2.2016f, "friction did not integrate the second 18ms step");
     Near(fs->mVelocity.y, 0, "split friction did not clamp the second step");
@@ -338,7 +349,7 @@ void TestActualDelta()
     Field(frictionLargeStep, FIELD_FRICTION, 0.2f, 1);
     auto* fl = frictionLargeStep.Spawn();
     fl->mVelocity = {-4, 5};
-    frictionLargeStep.system->Update(100'000'000, ReanimClock::Add(frictionLargeStep.system->mLastUpdateTimeNs, static_cast<std::int64_t>(100'000'000)));
+    StepSystem(frictionLargeStep.system, 100'000'000, ReanimClock::Add(OwnerTime(frictionLargeStep.system), static_cast<std::int64_t>(100'000'000)));
     Near(fl->mVelocity.x, 0, "large friction step reversed negative velocity");
     Near(fl->mVelocity.y, 0, "large friction step reversed positive velocity");
 
@@ -346,7 +357,7 @@ void TestActualDelta()
     spin.emitter.mParticleSpinSpeed = {spin.values + 11, 1};
     auto* s = spin.Spawn();
     s->mSpinVelocity = 0.4f;
-    spin.system->Update(50'000'000, ReanimClock::Add(spin.system->mLastUpdateTimeNs, static_cast<std::int64_t>(50'000'000)));
+    StepSystem(spin.system, 50'000'000, ReanimClock::Add(OwnerTime(spin.system), static_cast<std::int64_t>(50'000'000)));
     Near(s->mSpinPosition, 2 + 0.15f * 3.14159265358979323846f / 180,
         "spin speed or collision spin did not scale with dt");
 }
@@ -370,7 +381,7 @@ void TestDiscreteMotion()
         expectedPosition.x += static_cast<float>(expectedVelocity.x * static_cast<double>(delta) / 10'000'000);
         expectedPosition.y += static_cast<float>(expectedVelocity.y * static_cast<double>(delta) / 10'000'000);
         expectedSpin += static_cast<float>(.125f * static_cast<double>(delta) / 10'000'000);
-        scene.system->Update(delta, ReanimClock::Add(scene.system->mLastUpdateTimeNs, static_cast<std::int64_t>(delta)));
+        StepSystem(scene.system, delta, ReanimClock::Add(OwnerTime(scene.system), static_cast<std::int64_t>(delta)));
         Near(particle->mVelocity.x, expectedVelocity.x, "discrete acceleration x");
         Near(particle->mVelocity.y, expectedVelocity.y, "discrete acceleration y");
         Near(particle->mPosition.x, expectedPosition.x, "discrete velocity-first position x");
@@ -380,7 +391,7 @@ void TestDiscreteMotion()
     particle->mPosition.x = 100;
     particle->mSpinPosition = 10;
     const auto velocity = particle->mVelocity;
-    scene.system->Update(10'000'000, ReanimClock::Add(scene.system->mLastUpdateTimeNs, static_cast<std::int64_t>(10'000'000)));
+    StepSystem(scene.system, 10'000'000, ReanimClock::Add(OwnerTime(scene.system), static_cast<std::int64_t>(10'000'000)));
     Near(particle->mPosition.x, 100 + velocity.x + .08f,
         "public position edit did not continue discrete motion");
     Near(particle->mSpinPosition, 10.125f,
@@ -393,22 +404,22 @@ void TestLifetimesAndTracks()
     auto* p = scene.Spawn();
     Require(p->mParticleDurationNs == 1'301'250'000,
         "fractional authored duration was truncated");
-    scene.system->Update(1'301'249'999, ReanimClock::Add(scene.system->mLastUpdateTimeNs, static_cast<std::int64_t>(1'301'249'999)));
+    StepSystem(scene.system, 1'301'249'999, ReanimClock::Add(OwnerTime(scene.system), static_cast<std::int64_t>(1'301'249'999)));
     Require(scene.Emitter()->ParticleRosterCount() == 1, "particle died before ns boundary");
-    scene.system->Update(1, ReanimClock::Add(scene.system->mLastUpdateTimeNs, static_cast<std::int64_t>(1)));
+    StepSystem(scene.system, 1, ReanimClock::Add(OwnerTime(scene.system), static_cast<std::int64_t>(1)));
     Require(scene.Emitter()->ParticleRosterCount() == 0, "particle survived exact duration boundary");
 
     Scene looping(-1, true);
     auto* loop = looping.Spawn();
     loop->mParticleDurationNs = 12'345'679;
-    RefreshParticleLifeFraction(*loop, loop->mParticleEmitter->mParticleSystem->mLastUpdateTimeNs);
-    looping.system->Update(40'000'000, ReanimClock::Add(looping.system->mLastUpdateTimeNs, static_cast<std::int64_t>(40'000'000)));
-    Require(ParticleLifeAgeAt(loop->mParticleEmitter->mParticleSystem->mLastUpdateTimeNs, loop->mBirthTimeNs, loop->mParticleDurationNs) == 2'962'963, "particle loop lost ns overshoot");
-    Require(ReanimClock::Subtract(loop->mParticleEmitter->mParticleSystem->mLastUpdateTimeNs, loop->mAnimationBirthTimeNs) == 40'000'000, "loop reset animation elapsed");
+    RefreshParticleLifeFraction(*loop, OwnerTime(loop->mParticleEmitter->mParticleSystem));
+    StepSystem(looping.system, 40'000'000, ReanimClock::Add(OwnerTime(looping.system), static_cast<std::int64_t>(40'000'000)));
+    Require(ParticleLifeAgeAt(OwnerTime(loop->mParticleEmitter->mParticleSystem), loop->mBirthTimeNs, loop->mParticleDurationNs) == 2'962'963, "particle loop lost ns overshoot");
+    Require(ReanimClock::Subtract(OwnerTime(loop->mParticleEmitter->mParticleSystem), loop->mAnimationBirthTimeNs) == 40'000'000, "loop reset animation elapsed");
     looping.Emitter()->mSystemDurationNs = 17'000'003;
-    RefreshParticleLifeFraction(*looping.Emitter(), looping.Emitter()->mParticleSystem->mLastUpdateTimeNs);
-    looping.system->Update(50'000'000, ReanimClock::Add(looping.system->mLastUpdateTimeNs, static_cast<std::int64_t>(50'000'000)));
-    Require(ParticleLifeAgeAt(looping.Emitter()->mParticleSystem->mLastUpdateTimeNs, looping.Emitter()->mBirthTimeNs, looping.Emitter()->mSystemDurationNs) == 4'999'985,
+    RefreshParticleLifeFraction(*looping.Emitter(), OwnerTime(looping.system));
+    StepSystem(looping.system, 50'000'000, ReanimClock::Add(OwnerTime(looping.system), static_cast<std::int64_t>(50'000'000)));
+    Require(ParticleLifeAgeAt(OwnerTime(looping.system), looping.Emitter()->mBirthTimeNs, looping.Emitter()->mSystemDurationNs) == 4'999'985,
         "emitter loop lost ns overshoot");
 
     Scene position;
@@ -418,21 +429,21 @@ void TestLifetimesAndTracks()
     auto* q = position.Spawn();
     Near(q->mPosition.x, 103, "birth offset was not sampled at zero age");
     q->mParticleDurationNs = 100'000'000;
-    RefreshParticleLifeFraction(*q, q->mParticleEmitter->mParticleSystem->mLastUpdateTimeNs);
-    position.system->Update(25'000'000, ReanimClock::Add(position.system->mLastUpdateTimeNs, static_cast<std::int64_t>(25'000'000)));
+    RefreshParticleLifeFraction(*q, OwnerTime(q->mParticleEmitter->mParticleSystem));
+    StepSystem(position.system, 25'000'000, ReanimClock::Add(OwnerTime(position.system), static_cast<std::int64_t>(25'000'000)));
     Near(q->mPosition.x, 105.5f, "lifetime fraction did not use full duration");
     FloatParameterTrackNode rates[]{{0.0, 1, 1, 1, 1}, {1.0, 3, 3, 1, 1}};
     position.emitter.mAnimationRate = {rates, 2};
-    position.system->Update(25'000'000, ReanimClock::Add(position.system->mLastUpdateTimeNs, static_cast<std::int64_t>(25'000'000)));
+    StepSystem(position.system, 25'000'000, ReanimClock::Add(OwnerTime(position.system), static_cast<std::int64_t>(25'000'000)));
     Require(q->mAnimationSampleIntegral == 50'000'000'000,
         "variable animation rate did not integrate actual dt");
 
     Scene random;
     random.emitter.mParticleFlags |= 1 << static_cast<int>(ParticleFlags::PARTICLE_RANDOM_START_TIME);
     auto* r = random.Spawn();
-    Require(ParticleLifeAgeAt(r->mParticleEmitter->mParticleSystem->mLastUpdateTimeNs, r->mBirthTimeNs, r->mParticleDurationNs) >= 0 &&
-        ParticleLifeAgeAt(r->mParticleEmitter->mParticleSystem->mLastUpdateTimeNs, r->mBirthTimeNs, r->mParticleDurationNs) < r->mParticleDurationNs &&
-        ParticleLifeAgeAt(r->mParticleEmitter->mParticleSystem->mLastUpdateTimeNs, r->mBirthTimeNs, r->mParticleDurationNs) % 10'000'000 != 0,
+    Require(ParticleLifeAgeAt(OwnerTime(r->mParticleEmitter->mParticleSystem), r->mBirthTimeNs, r->mParticleDurationNs) >= 0 &&
+        ParticleLifeAgeAt(OwnerTime(r->mParticleEmitter->mParticleSystem), r->mBirthTimeNs, r->mParticleDurationNs) < r->mParticleDurationNs &&
+        ParticleLifeAgeAt(OwnerTime(r->mParticleEmitter->mParticleSystem), r->mBirthTimeNs, r->mParticleDurationNs) % 10'000'000 != 0,
         "random initial age retained legacy tick grid");
 }
 
@@ -442,7 +453,7 @@ void TestExplicitParticleTime()
     // timestamp. Births, fields, fading and image phase must use the argument.
     Scene scene(0);
     constexpr std::int64_t birth = 123'456'789;
-    scene.system->mLastUpdateTimeNs = -9'000'000'000;
+    OwnerTime(scene.system) = -9'000'000'000;
     auto* particle = scene.Emitter()->SpawnParticle(0, 1, birth);
     Require(particle && particle->mBirthTimeNs == birth &&
         particle->mAnimationBirthTimeNs == birth,
@@ -454,7 +465,7 @@ void TestExplicitParticleTime()
         "particle image phase ignored the explicit timestamp");
 
     Scene reference(0);
-    reference.system->mLastUpdateTimeNs = birth;
+    OwnerTime(reference.system) = birth;
     auto* expected = reference.Emitter()->SpawnParticle(0, 1, birth);
     Require(reference.Emitter()->UpdateParticle(expected, elapsed, now, 0) &&
         scene.Emitter()->UpdateParticle(particle, elapsed, now, 0),
@@ -465,7 +476,7 @@ void TestExplicitParticleTime()
         particle->mVelocity.y == expected->mVelocity.y &&
         particle->mSpinPosition == expected->mSpinPosition,
         "particle fields depended on a stored system timestamp");
-    Require(scene.system->mLastUpdateTimeNs == -9'000'000'000,
+    Require(OwnerTime(scene.system) == -9'000'000'000,
         "particle evaluation unexpectedly wrote the system clock");
 
     TodEmitterDefinition targetDef = scene.emitter;
@@ -514,12 +525,12 @@ void TestEmission()
     Require(large.whole == 16'175'293'788 && large.fraction == 212'690'942'246,
         "128-bit rate integral failed exact long-time golden");
     Scene wrap(-1, false, 1);
-    wrap.system->Update(900'000'000, ReanimClock::Add(wrap.system->mLastUpdateTimeNs, static_cast<std::int64_t>(900'000'000)));
+    StepSystem(wrap.system, 900'000'000, ReanimClock::Add(OwnerTime(wrap.system), static_cast<std::int64_t>(900'000'000)));
     Require(wrap.Emitter()->mParticlesSpawned == 0, "fractional emission spawned early");
-    wrap.system->Update(200'000'000, ReanimClock::Add(wrap.system->mLastUpdateTimeNs, static_cast<std::int64_t>(200'000'000)));
+    StepSystem(wrap.system, 200'000'000, ReanimClock::Add(OwnerTime(wrap.system), static_cast<std::int64_t>(200'000'000)));
     Require(wrap.Emitter()->mParticlesSpawned == 1 &&
         wrap.Emitter()->mSpawnRemainder == 100'000'000'000, "constant emission phase wrap");
-    Require(ParticleLifeAgeAt(wrap.Emitter()->ParticleRosterParticleAt(0)->mParticleEmitter->mParticleSystem->mLastUpdateTimeNs, wrap.Emitter()->ParticleRosterParticleAt(0)->mBirthTimeNs, wrap.Emitter()->ParticleRosterParticleAt(0)->mParticleDurationNs) == 0,
+    Require(ParticleLifeAgeAt(OwnerTime(wrap.system), wrap.Emitter()->ParticleRosterParticleAt(0)->mBirthTimeNs, wrap.Emitter()->ParticleRosterParticleAt(0)->mParticleDurationNs) == 0,
         "endpoint emission birth received full outer dt");
 }
 
@@ -535,44 +546,44 @@ void TestCrossfade()
     scene.Emitter()->mEmitterDef = definitions;
     auto* source = scene.Spawn();
     source->mParticleDurationNs = 100'000'000;
-    RefreshParticleLifeFraction(*source, source->mParticleEmitter->mParticleSystem->mLastUpdateTimeNs);
-    source->mBirthTimeNs = scene.system->mLastUpdateTimeNs - 90'000'000;
-    RefreshParticleLifeFraction(*source, source->mParticleEmitter->mParticleSystem->mLastUpdateTimeNs);
-    scene.system->Update(50'000'000, ReanimClock::Add(scene.system->mLastUpdateTimeNs, static_cast<std::int64_t>(50'000'000)));
+    RefreshParticleLifeFraction(*source, OwnerTime(source->mParticleEmitter->mParticleSystem));
+    source->mBirthTimeNs = OwnerTime(scene.system) - 90'000'000;
+    RefreshParticleLifeFraction(*source, OwnerTime(source->mParticleEmitter->mParticleSystem));
+    StepSystem(scene.system, 50'000'000, ReanimClock::Add(OwnerTime(scene.system), static_cast<std::int64_t>(50'000'000)));
     Require(scene.system->EmitterRosterCount() == 2, "OnDuration did not create target emitter");
     auto* target = scene.system->EmitterRosterEmitterAt(1);
     Require(target->ParticleRosterCount() == 1 &&
-        ParticleLifeAgeAt(target->ParticleRosterParticleAt(0)->mParticleEmitter->mParticleSystem->mLastUpdateTimeNs, target->ParticleRosterParticleAt(0)->mBirthTimeNs, target->ParticleRosterParticleAt(0)->mParticleDurationNs) == 0 &&
-        ParticleLifeAgeAt(target->mParticleSystem->mLastUpdateTimeNs, target->mBirthTimeNs, target->mSystemDurationNs) == 0, "duration target received hidden residual/full step");
-    Require(ParticleLifeAgeAt(source->mParticleEmitter->mParticleSystem->mLastUpdateTimeNs, source->mBirthTimeNs, source->mParticleDurationNs) == 100'000'000,
+        ParticleLifeAgeAt(OwnerTime(scene.system), target->ParticleRosterParticleAt(0)->mBirthTimeNs, target->ParticleRosterParticleAt(0)->mParticleDurationNs) == 0 &&
+        ParticleLifeAgeAt(OwnerTime(target->mParticleSystem), target->mBirthTimeNs, target->mSystemDurationNs) == 0, "duration target received hidden residual/full step");
+    Require(ParticleLifeAgeAt(OwnerTime(source->mParticleEmitter->mParticleSystem), source->mBirthTimeNs, source->mParticleDurationNs) == 100'000'000,
         "nonloop crossfade source age did not clamp at duration");
-    scene.system->Update(5'000'000, ReanimClock::Add(scene.system->mLastUpdateTimeNs, static_cast<std::int64_t>(5'000'000)));
-    Require(ParticleLifeAgeAt(target->ParticleRosterParticleAt(0)->mParticleEmitter->mParticleSystem->mLastUpdateTimeNs, target->ParticleRosterParticleAt(0)->mBirthTimeNs, target->ParticleRosterParticleAt(0)->mParticleDurationNs) == 5'000'000,
+    StepSystem(scene.system, 5'000'000, ReanimClock::Add(OwnerTime(scene.system), static_cast<std::int64_t>(5'000'000)));
+    Require(ParticleLifeAgeAt(OwnerTime(scene.system), target->ParticleRosterParticleAt(0)->mBirthTimeNs, target->ParticleRosterParticleAt(0)->mParticleDurationNs) == 5'000'000,
         "crossfade target failed next actual delta");
 
     Scene existing(-1, false, 100);
     TodEmitterDefinition targetDef = existing.emitter;
     targetDef.mCrossFadeDuration = {&fade, 1};
     auto* targetEmitter = existing.holder.mEmitters.DataArrayAlloc();
-    targetEmitter->TodEmitterInitialize(100, 200, existing.system, &targetDef, existing.system->mLastUpdateTimeNs);
+    targetEmitter->TodEmitterInitialize(100, 200, existing.system, &targetDef, OwnerTime(existing.system));
     Require(existing.system->EmitterRosterAdd(targetEmitter), "target emitter roster full");
-    existing.Emitter()->CrossFadeEmitter(targetEmitter, existing.system->mLastUpdateTimeNs);
-    existing.system->Update(20'000'000, ReanimClock::Add(existing.system->mLastUpdateTimeNs, static_cast<std::int64_t>(20'000'000)));
-    Require(existing.Emitter()->mCrossFadeEndTimeNs - existing.system->mLastUpdateTimeNs == 80'000'000,
+    existing.Emitter()->CrossFadeEmitter(targetEmitter, OwnerTime(existing.system));
+    StepSystem(existing.system, 20'000'000, ReanimClock::Add(OwnerTime(existing.system), static_cast<std::int64_t>(20'000'000)));
+    Require(existing.Emitter()->mCrossFadeEndTimeNs - OwnerTime(existing.system) == 80'000'000,
         "crossfade countdown did not use actual ns");
     existing.system->mDontUpdate = true;
-    existing.system->Update(500'000'000, existing.system->mLastUpdateTimeNs + 500'000'000);
-    Require(existing.Emitter()->mCrossFadeEndTimeNs - existing.system->mLastUpdateTimeNs == 80'000'000,
+    StepSystem(existing.system, 500'000'000, OwnerTime(existing.system) + 500'000'000);
+    Require(existing.Emitter()->mCrossFadeEndTimeNs - OwnerTime(existing.system) == 80'000'000,
         "frozen fade deadline expired against the advancing visual clock");
     existing.system->mDontUpdate = false;
     Require(targetEmitter->ParticleRosterCount() >= 2, "crossfade source emitted no targets");
     for (int i = 0; i < targetEmitter->ParticleRosterCount(); ++i)
-        Require(ParticleLifeAgeAt(targetEmitter->ParticleRosterParticleAt(i)->mParticleEmitter->mParticleSystem->mLastUpdateTimeNs, targetEmitter->ParticleRosterParticleAt(i)->mBirthTimeNs, targetEmitter->ParticleRosterParticleAt(i)->mParticleDurationNs) == 0,
+        Require(ParticleLifeAgeAt(OwnerTime(existing.system), targetEmitter->ParticleRosterParticleAt(i)->mBirthTimeNs, targetEmitter->ParticleRosterParticleAt(i)->mParticleDurationNs) == 0,
             "birth into existing later emitter was updated twice in main step");
-    existing.system->Update(100'000'000, ReanimClock::Add(existing.system->mLastUpdateTimeNs, static_cast<std::int64_t>(100'000'000)));
+    StepSystem(existing.system, 100'000'000, ReanimClock::Add(OwnerTime(existing.system), static_cast<std::int64_t>(100'000'000)));
     Require(existing.Emitter()->mParticlesSpawned == 10,
         "crossfade emission was not clipped to active fade time");
-    existing.system->Update(5'000'000, ReanimClock::Add(existing.system->mLastUpdateTimeNs, static_cast<std::int64_t>(5'000'000)));
+    StepSystem(existing.system, 5'000'000, ReanimClock::Add(OwnerTime(existing.system), static_cast<std::int64_t>(5'000'000)));
     Require(existing.Emitter()->mParticlesSpawned == 10,
         "completed crossfade source resumed emission");
 }
@@ -590,7 +601,7 @@ void TestSystemPositionDeltas()
     fields[1].mX = fields[1].mY = {second, 2};
     scene.emitter.mSystemFields = {fields, 2};
     auto* emitter = scene.Emitter();
-    emitter->TodEmitterInitialize(1000, -1000, scene.system, &scene.emitter, scene.system->mLastUpdateTimeNs);
+    emitter->TodEmitterInitialize(1000, -1000, scene.system, &scene.emitter, OwnerTime(scene.system));
     // Two authored position fields sum to (3.25 + 12.5*t, -4.75 - 9.5*t).
     // Birth applies the first sample once. Later calls add sample differences
     // to the current float center; they do not reconstruct an absolute origin.
@@ -635,9 +646,9 @@ void TestSystemPositionDeltas()
     Near(emitter->mSystemCenter.y, 49.5f, "looped system-position y delta");
 
     const auto beforeZero = Snapshot(scene);
-    scene.system->Update(0, ReanimClock::Add(scene.system->mLastUpdateTimeNs, static_cast<std::int64_t>(0)));
+    StepSystem(scene.system, 0, ReanimClock::Add(OwnerTime(scene.system), static_cast<std::int64_t>(0)));
     scene.system->mDontUpdate = true;
-    scene.system->Update(17'123'457, ReanimClock::Add(scene.system->mLastUpdateTimeNs, static_cast<std::int64_t>(17'123'457)));
+    StepSystem(scene.system, 17'123'457, ReanimClock::Add(OwnerTime(scene.system), static_cast<std::int64_t>(17'123'457)));
     Require(Snapshot(scene) == beforeZero, "paused/zero system-position update changed state");
     scene.system->mDontUpdate = false;
     emitter->mSystemPositionBound = 0;
@@ -718,23 +729,23 @@ void TestAbsoluteBirthClock()
     p->mPosition = {0, 0};
     const auto birth = p->mBirthTimeNs;
     // Lifetime follows the supplied timestamp, while velocity integration uses delta.
-    scene.system->Update(1'000'000, birth + 50'000'000);
+    StepSystem(scene.system, 1'000'000, birth + 50'000'000);
     Require(p->mBirthTimeNs == birth &&
-        ParticleLifeAgeAt(scene.system->mLastUpdateTimeNs, p->mBirthTimeNs, p->mParticleDurationNs) == 50'000'000,
+        ParticleLifeAgeAt(OwnerTime(scene.system), p->mBirthTimeNs, p->mParticleDurationNs) == 50'000'000,
         "lifetime accumulated delta instead of sampling the supplied timestamp");
     Near(p->mPosition.x, .2f, "simulation ignored the supplied integration delta");
     const auto emitterBirth = scene.Emitter()->mBirthTimeNs;
     scene.system->mDontUpdate = true;
-    scene.system->Update(100'000'000, birth + 150'000'000);
+    StepSystem(scene.system, 100'000'000, birth + 150'000'000);
     Require(p->mBirthTimeNs == birth + 100'000'000 &&
         scene.Emitter()->mBirthTimeNs == emitterBirth + 100'000'000,
         "local freeze did not translate birth origins");
     scene.system->mDontUpdate = false;
-    scene.system->Update(1'000'000, birth + 151'000'000);
-    Require(ParticleLifeAgeAt(scene.system->mLastUpdateTimeNs, p->mBirthTimeNs, p->mParticleDurationNs) == 51'000'000,
+    StepSystem(scene.system, 1'000'000, birth + 151'000'000);
+    Require(ParticleLifeAgeAt(OwnerTime(scene.system), p->mBirthTimeNs, p->mParticleDurationNs) == 51'000'000,
         "local freeze replayed elapsed wall time");
-    scene.system->Update(0, birth + 500'000'000);
-    Require(ParticleLifeAgeAt(scene.system->mLastUpdateTimeNs, p->mBirthTimeNs, p->mParticleDurationNs) == 51'000'000,
+    StepSystem(scene.system, 0, birth + 500'000'000);
+    Require(ParticleLifeAgeAt(OwnerTime(scene.system), p->mBirthTimeNs, p->mParticleDurationNs) == 51'000'000,
         "paused board clock translation changed particle age");
 }
 
@@ -753,10 +764,10 @@ void TestContinuation()
         copy->mParticleEmitter = to;
     }
     to->mBirthTimeNs = from->mBirthTimeNs;
-    resumed.system->mLastUpdateTimeNs = original.system->mLastUpdateTimeNs;
-    RefreshParticleLifeFraction(*to, resumed.system->mLastUpdateTimeNs);
+    OwnerTime(resumed.system) = OwnerTime(original.system);
+    RefreshParticleLifeFraction(*to, OwnerTime(resumed.system));
     for (int i=0; i<to->ParticleRosterCount(); ++i)
-        RefreshParticleLifeFraction(*to->ParticleRosterParticleAt(i), resumed.system->mLastUpdateTimeNs);
+        RefreshParticleLifeFraction(*to->ParticleRosterParticleAt(i), OwnerTime(resumed.system));
     to->mSystemPositionOriginX = from->mSystemPositionOriginX;
     to->mSystemPositionOriginY = from->mSystemPositionOriginY;
     to->mSystemPositionBound = from->mSystemPositionBound;
@@ -767,8 +778,8 @@ void TestContinuation()
     Require(Snapshot(resumed) == Snapshot(original), "copied continuation state differs");
     for (auto delta : {1ULL, 1'234'567ULL, 35'555'555ULL})
     {
-        original.system->Update(delta, ReanimClock::Add(original.system->mLastUpdateTimeNs, static_cast<std::int64_t>(delta)));
-        resumed.system->Update(delta, ReanimClock::Add(resumed.system->mLastUpdateTimeNs, static_cast<std::int64_t>(delta)));
+        StepSystem(original.system, delta, ReanimClock::Add(OwnerTime(original.system), static_cast<std::int64_t>(delta)));
+        StepSystem(resumed.system, delta, ReanimClock::Add(OwnerTime(resumed.system), static_cast<std::int64_t>(delta)));
         Require(Snapshot(resumed) == Snapshot(original), "particle state failed saved-field continuation");
     }
 }

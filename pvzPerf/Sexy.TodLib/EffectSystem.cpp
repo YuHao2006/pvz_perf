@@ -88,70 +88,39 @@ void EffectSystem::ProcessDeleteQueue()
 }
 
 //0x445890
-void EffectSystem::UpdateAt(std::int64_t visualNowNs, std::int64_t battleNowNs)
+void EffectSystem::UpdateAt(std::int64_t visualNowNs, std::int64_t battleNowNs,
+    std::int64_t poolNowNs, std::uint64_t visualDeltaNs, std::uint64_t battleDeltaNs, std::uint64_t poolDeltaNs)
 {
-    UpdateAt(visualNowNs, battleNowNs, battleNowNs);
-}
-
-void EffectSystem::UpdateAt(std::int64_t visualNowNs, std::int64_t battleNowNs, std::int64_t poolNowNs)
-{
-	TodParticleSystem* aParticle = nullptr;
-	while (mParticleHolder->mParticleSystems.IterateNext(aParticle))
-		if (!aParticle->mIsAttachment)
-		{
-            // The owner supplies each effect's current timestamp. First-intro
-            // pool sparkles may advance while the rest of the Board is frozen.
-            const auto nowNs = aParticle->mEffectType == PARTICLE_POOL_SPARKLY ? poolNowNs : battleNowNs;
-			const auto deltaNs = nowNs > aParticle->mLastUpdateTimeNs
-				? static_cast<std::uint64_t>(nowNs - aParticle->mLastUpdateTimeNs) : 0;
-			aParticle->Update(deltaNs, nowNs);
-		}
-
-	Reanimation* aReanim = nullptr;
-	while (mReanimationHolder->mReanimations.IterateNext(aReanim))
-		if (!aReanim->mIsAttachment)
-			aReanim->UpdateAt(mReanimationHolder->mTimeDomains[mReanimationHolder->mReanimations.DataArrayIndexOf(aReanim)]
-				== ReanimTimeDomain::Battle ? battleNowNs : visualNowNs);
-}
-
-namespace
-{
-void RebaseAnimationTree(EffectSystem& effects, Reanimation& animation, std::int64_t nowNs)
-{
-    animation.RebaseTime(nowNs);
-    if (!animation.mDefinition || !animation.mTrackInstances) return;
-    for (int i = 0; i < animation.mDefinition->mTracks.count; ++i)
-        if (auto* attachment = effects.mAttachmentHolder->mAttachments.DataArrayTryToGet(
-                static_cast<unsigned int>(animation.mTrackInstances[i].mAttachmentID)))
-            for (int j = 0; j < attachment->mNumEffects; ++j)
-            {
-                const auto& child = attachment->mEffectArray[j];
-                if (child.mEffectType == EFFECT_REANIM)
-                {
-                    if (auto* reanim = effects.mReanimationHolder->mReanimations.DataArrayTryToGet(child.mEffectID))
-                        RebaseAnimationTree(effects, *reanim, nowNs);
-                }
-                else if (child.mEffectType == EFFECT_PARTICLE)
-                    if (auto* particle = effects.mParticleHolder->mParticleSystems.DataArrayTryToGet(child.mEffectID))
-                        particle->Update(0, nowNs);
-            }
-}
-}
-
-void EffectSystem::RebaseIndependentBattleEffects(std::int64_t battleNowNs)
-{
-    // An actor-only extra pass must not age independently updated effects.
-    // This traversal is used only by the speed minigame; ordinary updates
-    // keep the same hot loop and the same per-effect branches.
     TodParticleSystem* particle = nullptr;
     while (mParticleHolder->mParticleSystems.IterateNext(particle))
         if (!particle->mIsAttachment)
-            particle->Update(0, battleNowNs);
+        {
+            const bool pool = particle->mEffectType == PARTICLE_POOL_SPARKLY;
+            const auto now = pool ? poolNowNs : battleNowNs;
+            const auto delta = pool ? poolDeltaNs : battleDeltaNs;
+            particle->Update(delta, now, now - static_cast<std::int64_t>(delta));
+        }
+    Reanimation* animation = nullptr;
+    while (mReanimationHolder->mReanimations.IterateNext(animation))
+        if (!animation->mIsAttachment)
+        {
+            const bool battle = mReanimationHolder->mTimeDomains[
+                mReanimationHolder->mReanimations.DataArrayIndexOf(animation)] == ReanimTimeDomain::Battle;
+            animation->UpdateAt(battle ? battleNowNs : visualNowNs, battle ? battleDeltaNs : visualDeltaNs);
+        }
+}
+
+void EffectSystem::RebaseIndependentBattleEffects(std::int64_t previousNowNs, std::int64_t battleNowNs)
+{
+    TodParticleSystem* particle = nullptr;
+    while (mParticleHolder->mParticleSystems.IterateNext(particle))
+        if (!particle->mIsAttachment)
+            particle->RebaseClock(previousNowNs, battleNowNs);
     Reanimation* animation = nullptr;
     while (mReanimationHolder->mReanimations.IterateNext(animation))
         if (!animation->mIsAttachment && mReanimationHolder->mTimeDomains[
                 mReanimationHolder->mReanimations.DataArrayIndexOf(animation)] == ReanimTimeDomain::Battle)
-            RebaseAnimationTree(*this, *animation, battleNowNs);
+            animation->RebaseTime(battleNowNs);
 }
 
 // #################################################################################################### //

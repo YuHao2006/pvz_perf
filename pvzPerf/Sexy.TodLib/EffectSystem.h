@@ -160,8 +160,7 @@ public:
     void                        EffectSystemDispose();
     void                        EffectSystemFreeAll();
     void                        ProcessDeleteQueue();
-    void                        UpdateAt(std::int64_t visualNowNs, std::int64_t battleNowNs);
-    void                        UpdateAt(std::int64_t visualNowNs, std::int64_t battleNowNs, std::int64_t poolNowNs);
-    void                        RebaseIndependentBattleEffects(std::int64_t battleNowNs);
+    void                        UpdateAt(std::int64_t visualNowNs, std::int64_t battleNowNs, std::int64_t poolNowNs, std::uint64_t visualDeltaNs, std::uint64_t battleDeltaNs, std::uint64_t poolDeltaNs);
+    void                        RebaseIndependentBattleEffects(std::int64_t previousNowNs, std::int64_t battleNowNs);
 };
 extern EffectSystem* gEffectSystem;  //[0x6A9EB8]

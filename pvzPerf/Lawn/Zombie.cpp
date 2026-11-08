@@ -2844,7 +2844,7 @@ void Zombie::UpdateZombieSquashHead(std::int64_t ownerNowNs, std::int64_t visual
 
         Reanimation* aBodyReanim = mApp->ReanimationGet(mBodyReanimID);
         ReanimatorTrackInstance* aTrackInstance = aBodyReanim->GetTrackInstanceByName(ReanimTrackId::anim_head1);
-        AttachmentDetach(aTrackInstance->mAttachmentID, ownerNowNs);
+        AttachmentDetach(aTrackInstance->mAttachmentID, aBodyReanim->mStartTimeNs + aBodyReanim->mFrameAgeNs - ((aBodyReanim->mPendingTiming & 2) ? static_cast<std::int64_t>(Sexy::gUpdateIntervalNs) : 0), ownerNowNs);
         aHeadReanim->mOverlayMatrix.m00 = 0.75f;
         aHeadReanim->mOverlayMatrix.m11 = 0.75f;
         aHeadReanim->mOverlayMatrix.m10 = 0.0f;
@@ -4937,7 +4937,7 @@ void Zombie::Update(std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int6
 
 
 
-        AttachmentUpdateAndMoveAt(mAttachmentID, mX, mY, ownerNowNs);
+        AttachmentUpdateAndMoveAt(mAttachmentID, mX, mY, ownerNowNs, ownerDeltaNs);
         UpdateReanim(ownerNowNs, visualNowNs, animationNowNs);
     }
     const auto statusStepNs = static_cast<std::int64_t>(ownerDeltaNs);
@@ -5780,7 +5780,7 @@ void Zombie::UpdateReanim(std::int64_t ownerNowNs, std::int64_t visualNowNs, std
     Reanimation* aMoweredReanim = mApp->ReanimationTryToGet(mMoweredReanimID);
     if (aMoweredReanim)
     {
-        aMoweredReanim->UpdateAt(visualNowNs);
+        aMoweredReanim->UpdateAt(visualNowNs, Sexy::gUpdateIntervalNs);
 
         SexyTransform2D aOverlayMatrix;
         aMoweredReanim->GetAttachmentOverlayMatrix(0, aOverlayMatrix);
@@ -5795,7 +5795,7 @@ void Zombie::UpdateReanim(std::int64_t ownerNowNs, std::int64_t visualNowNs, std
         aBodyReanim->mOverlayMatrix = aOverlayMatrix;
     }
 
-    aBodyReanim->UpdateAt(animationNowNs);
+    aBodyReanim->UpdateAt(animationNowNs, Sexy::gUpdateIntervalNs);
     aBodyReanim->PropogateColorToAttachments();
 }
 
@@ -6895,7 +6895,7 @@ void Zombie::Draw(std::int64_t ownerNowNs, Graphics* g)
             theParticleGraphics.ClipRect((mX) + aDrawPos.mImageOffsetX - 400.0f, (mY) + aDrawPos.mImageOffsetY - 28.0f, 920, aDrawHeight);
         }
 
-        AttachmentDraw(mAttachmentID, &theParticleGraphics, false);
+        AttachmentDraw(mAttachmentID, &theParticleGraphics, false, ownerNowNs);
     }
 
     g->ClearClipRect();
@@ -11244,7 +11244,7 @@ void Zombie::UpdateBossFireball(std::int64_t ownerNowNs, std::int64_t visualNowN
         }
     }
 
-    aFireballReanim->UpdateAt(animationNowNs);
+    aFireballReanim->UpdateAt(animationNowNs, Sexy::gUpdateIntervalNs);
 }
 
 //0x535FB0

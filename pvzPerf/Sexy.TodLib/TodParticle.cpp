@@ -226,7 +226,6 @@ TodParticleSystem::TodParticleSystem()
 	mIsAttachment = false;
 	mRenderOrder = 0;
 	mRandomState = 0;
-	mLastUpdateTimeNs = 0;
 }
 
 TodParticleSystem::~TodParticleSystem()
@@ -238,7 +237,6 @@ TodParticleSystem::~TodParticleSystem()
 void TodParticleSystem::TodParticleInitializeFromDef(float theX, float theY, int theRenderOrder, TodParticleDefinition* theDefinition, ParticleEffect theEffectType, std::int64_t nowNs, std::uint32_t theVariant)
 {
 	TOD_ASSERT(mParticleHolder);
-	mLastUpdateTimeNs = nowNs;
 	if (!theDefinition || theVariant>=theDefinition->mVariantCount)
 		throw std::out_of_range("particle appearance variant out of range");
 	// 名册侧表：系统池槽位键天然就位，无需分配器（链表成员已退役）
@@ -880,30 +878,36 @@ void TodParticleEmitter::DeleteAll()
 
 //0x517370
 // GOTY @Patoke: 0x521A20
-void TodParticleSystem::Update(std::uint64_t deltaNs, std::int64_t nowNs)
+// Clock ownership stays outside the system. New emitters/particles born
+// after the previous sample must not inherit the earlier part of the interval.
+void TodParticleSystem::RebaseClock(std::int64_t previousNowNs, std::int64_t nowNs)
 {
-	if (deltaNs > INT64_MAX) throw std::overflow_error("particle update exceeds clock range");
-	// A frozen system follows clock changes by translating origins only.
-	// Active lifetimes are sampled directly from nowNs, independently of deltaNs.
-	const auto shift = mDontUpdate || deltaNs == 0
-		? ReanimClock::Subtract(nowNs, mLastUpdateTimeNs) : 0;
-	const auto previousNowNs = mLastUpdateTimeNs;
-	mLastUpdateTimeNs = nowNs;
-	if (shift != 0)
-		for (int i = 0; i < EmitterRosterCount(); ++i)
-		{
-			auto* emitter = EmitterRosterEmitterAt(i);
-			emitter->mBirthTimeNs = ReanimClock::Add(emitter->mBirthTimeNs, shift);
-			if (emitter->mCrossFadeEndTimeNs != 0)
-				emitter->mCrossFadeEndTimeNs = ReanimClock::Add(emitter->mCrossFadeEndTimeNs, shift);
-			for (int j = 0; j < emitter->ParticleRosterCount(); ++j)
-			{
-				auto* particle = emitter->ParticleRosterParticleAt(j);
-				particle->mBirthTimeNs = ReanimClock::Add(particle->mBirthTimeNs, shift);
-				particle->mAnimationBirthTimeNs = ReanimClock::Add(particle->mAnimationBirthTimeNs, shift);
-			}
-		}
-	if (mDontUpdate || deltaNs == 0) return;
+    for (int i = 0; i < EmitterRosterCount(); ++i)
+    {
+        auto* emitter = EmitterRosterEmitterAt(i);
+        const auto shift = ReanimClock::Subtract(nowNs, std::max(previousNowNs, emitter->mBirthTimeNs));
+        emitter->mBirthTimeNs = ReanimClock::Add(emitter->mBirthTimeNs, shift);
+        if (emitter->mCrossFadeEndTimeNs != 0)
+            emitter->mCrossFadeEndTimeNs = ReanimClock::Add(emitter->mCrossFadeEndTimeNs, shift);
+        for (int j = 0; j < emitter->ParticleRosterCount(); ++j)
+        {
+            auto* particle = emitter->ParticleRosterParticleAt(j);
+            const auto particleShift = ReanimClock::Subtract(nowNs,
+                std::max(previousNowNs, particle->mAnimationBirthTimeNs));
+            particle->mBirthTimeNs = ReanimClock::Add(particle->mBirthTimeNs, particleShift);
+            particle->mAnimationBirthTimeNs = ReanimClock::Add(particle->mAnimationBirthTimeNs, particleShift);
+        }
+    }
+}
+
+void TodParticleSystem::Update(std::uint64_t deltaNs, std::int64_t nowNs, std::int64_t previousNowNs)
+{
+    if (deltaNs > INT64_MAX) throw std::overflow_error("particle update exceeds clock range");
+    if (mDontUpdate || deltaNs == 0)
+    {
+        if (nowNs != previousNowNs) RebaseClock(previousNowNs, nowNs);
+        return;
+    }
 	// Publish emitter ratios before any emitter samples a crossfade partner.
 	for (int i = 0; i < EmitterRosterCount(); ++i)
 		RefreshParticleLifeFraction(*EmitterRosterEmitterAt(i), nowNs);
@@ -925,7 +929,9 @@ void TodParticleSystem::Update(std::uint64_t deltaNs, std::int64_t nowNs)
 	for (int i = 0; i < aEmitterCount; i++)
 	{
 		TodParticleEmitter* emitter = EmitterRosterEmitterAt(i);
-		emitter->Update(deltaNs, nowNs, previousNowNs, std::span<const ParticleID>(particles.data() + particleOffsets[i],
+		const auto emitterDelta = std::min<std::uint64_t>(deltaNs,
+            std::max<std::int64_t>(0, ReanimClock::Subtract(nowNs, emitter->mBirthTimeNs)));
+        emitter->Update(emitterDelta, nowNs, std::max(previousNowNs, emitter->mBirthTimeNs), std::span<const ParticleID>(particles.data() + particleOffsets[i],
 			particleOffsets[i + 1] - particleOffsets[i]));
 		if ((FloatTrackIsSet(emitter->mEmitterDef->mCrossFadeDuration) && emitter->ParticleRosterCount() > 0) || !emitter->mDead)
 			aEmitterAlive = true;
@@ -1059,7 +1065,11 @@ void TodParticleEmitter::Update(std::uint64_t deltaNs, std::int64_t nowNs, std::
 		TodParticle* aParticle = mParticleSystem->mParticleHolder->mParticles.DataArrayTryToGet(
 			static_cast<unsigned int>(particles[i]));
 		if (!aParticle || aParticle->mParticleEmitter != this) continue;
-		if (!UpdateParticle(aParticle, deltaNs, nowNs, ParticleLifeAgeAt(previousNowNs, aParticle->mBirthTimeNs, aParticle->mParticleDurationNs)))
+        // The system captured these identities before any emitter could spawn
+        // a crossfade target. Births from this update are absent from the span;
+        // clamp the emitter interval once, rather than testing every particle.
+        if (!UpdateParticle(aParticle, deltaNs, nowNs, ParticleLifeAgeAt(
+                previousNowNs, aParticle->mBirthTimeNs, aParticle->mParticleDurationNs)))
 			DeleteParticleAt(i, aParticle);
 	}
 	if (spawnDelta != 0) UpdateSpawning(spawnDelta, nowNs);
@@ -1354,11 +1364,11 @@ void TodParticleEmitter::DrawParticle(Graphics* g, TodParticle* theParticle, Tod
 }
 
 //0x518370
-void TodParticleSystem::Draw(Graphics* g)
+void TodParticleSystem::Draw(Graphics* g, std::int64_t nowNs)
 {
 	const int aDrawCount = EmitterRosterCount();
 	for (int i = 0; i < aDrawCount; i++)
-		EmitterRosterEmitterAt(i)->Draw(g, mLastUpdateTimeNs);
+		EmitterRosterEmitterAt(i)->Draw(g, nowNs);
 }
 
 //0x5183A0

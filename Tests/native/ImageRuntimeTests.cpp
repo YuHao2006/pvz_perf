@@ -1453,10 +1453,10 @@ void ExplicitReanimationOwnerTime(LawnApp& app)
         holder.mBattleTimeNs-=41'000'000'000;
         Require(first->SamplePlayback().phaseNs==previous,
             "Changing a holder clock changed an unadvanced animation query");
-        first->UpdateAt(start+elapsed);
+        first->UpdateAt(start+elapsed, Sexy::gUpdateIntervalNs);
         holder.mVisualTimeNs=-holder.mVisualTimeNs;
         holder.mBattleTimeNs=-holder.mBattleTimeNs;
-        second->UpdateAt(start+elapsed);
+        second->UpdateAt(start+elapsed, Sexy::gUpdateIntervalNs);
         ReanimatorFrameTime a{}, b{};
         first->GetFrameTime(&a); second->GetFrameTime(&b);
         Require(first->SamplePlayback().phaseNs==second->SamplePlayback().phaseNs &&
@@ -1487,8 +1487,8 @@ void ExplicitReanimationOwnerTime(LawnApp& app)
         (first->mStartTimeNs + first->mFrameAgeNs)==destination && first->SamplePlayback().phaseNs==phase,
         "Switching clock domains changed the animation phase");
     constexpr std::int64_t delta=123'456'789;
-    first->UpdateAt(destination+delta);
-    second->UpdateAt(prepared+delta);
+    first->UpdateAt(destination+delta, Sexy::gUpdateIntervalNs);
+    second->UpdateAt(prepared+delta, Sexy::gUpdateIntervalNs);
     Require(first->SamplePlayback().phaseNs==second->SamplePlayback().phaseNs,
         "Clock switching changed subsequent advancement");
     const auto switchedPhase=first->SamplePlayback().phaseNs;
@@ -1505,14 +1505,14 @@ void ExplicitReanimationOwnerTime(LawnApp& app)
     auto& blend=first->mTrackInstances[blendTrack];
     Require(blend.mBlendDurationNs==250'000'000,"Blend duration is not nanoseconds");
     const auto blendStart=(first->mStartTimeNs + first->mFrameAgeNs),blendEnd=blend.mBlendEndTimeNs;
-    first->UpdateAt(blendStart+60'123'456);
-    first->UpdateAt(blendStart+60'123'456);
+    first->UpdateAt(blendStart+60'123'456, Sexy::gUpdateIntervalNs);
+    first->UpdateAt(blendStart+60'123'456, Sexy::gUpdateIntervalNs);
     Require(blend.mBlendEndTimeNs==blendEnd,"Update mutated blend deadline");
     const auto remaining=blend.mBlendEndTimeNs-(first->mStartTimeNs + first->mFrameAgeNs);
     first->RebaseTime(123'000'000'000);
     Require(blend.mBlendEndTimeNs-(first->mStartTimeNs + first->mFrameAgeNs)==remaining,
         "Rebase changed blend progress");
-    first->UpdateAt((first->mStartTimeNs + first->mFrameAgeNs)+remaining);
+    first->UpdateAt((first->mStartTimeNs + first->mFrameAgeNs)+remaining, Sexy::gUpdateIntervalNs);
     Require(blend.mBlendEndTimeNs==0,"Expired blend deadline did not become inactive");
     first->RebaseTime(-9'000'000'000);
     Require(blend.mBlendEndTimeNs==0,"Inactive blend revived after backward rebase");
@@ -1719,7 +1719,7 @@ void CreditsMovieOwnerClockRuntime(TestApp& app)
         movie=credits.PlayReanim(scene.phase==CreditsPhase::CREDITS_END ? 3 : int(scene.phase)+1);
         credits.mCreditsPhase=scene.phase;
         movie->Seek(scene.frame,movie->mDefinition->mTracks.tracks->mTransforms.count-1);
-        movie->UpdateAt(clocks.mVisualTimeNs);
+        movie->UpdateAt(clocks.mVisualTimeNs, Sexy::gUpdateIntervalNs);
         credits.mDrawCount=10;
         const bool isolatedDisco=scene.phase==CreditsPhase::CREDITS_MAIN2 && scene.frame==150;
         if(isolatedDisco) {
@@ -1878,6 +1878,24 @@ void PottedGiftPickupRuntime(TestApp& app, Board& board)
     std::cout<<"PASS collected garden gifts: both present types, ordinary/aquatic plants, real Collect/Draw with null garden Board\n";
 }
 
+bool ParticleCacheMatchesTime(TodParticleSystem* system, std::int64_t now)
+{
+    auto& holder = *system->mParticleHolder;
+    const auto fraction = [now](std::int64_t birth, std::int64_t duration) {
+        const auto age = ParticleLifeAgeAt(now,birth,duration);
+        return age<0 ? -1.0 : double(age)/std::max<std::int64_t>(1,duration);
+    };
+    for (int i=0;i<system->EmitterRosterCount();++i) {
+        const auto* emitter=system->EmitterRosterEmitterAt(i);
+        if (holder.mData->mEmitterLifeFractions[holder.mEmitters.DataArrayIndexOf(emitter)] != fraction(emitter->mBirthTimeNs,emitter->mSystemDurationNs)) return false;
+        for (int j=0;j<emitter->ParticleRosterCount();++j) {
+            const auto* particle=emitter->ParticleRosterParticleAt(j);
+            if (holder.mData->mParticleLifeFractions[holder.mParticles.DataArrayIndexOf(particle)] != fraction(particle->mBirthTimeNs,particle->mParticleDurationNs)) return false;
+        }
+    }
+    return true;
+}
+
 void SurvivalOwnerClockRuntime(TestApp& app, int hz)
 {
     auto& holder=*app.mEffectSystem->mReanimationHolder;
@@ -1987,10 +2005,10 @@ void SurvivalOwnerClockRuntime(TestApp& app, int hz)
         (previewBody->mStartTimeNs + previewBody->mFrameAgeNs)==holder.mVisualTimeNs &&
         previewBody->SamplePlayback().phaseNs!=previewPhase,
         "Street preview did not consume the Board-supplied visual time");
-    Require(cutsceneParticle->mLastUpdateTimeNs==holder.mVisualTimeNs &&
+    Require(ParticleCacheMatchesTime(cutsceneParticle, holder.mVisualTimeNs) &&
         cutsceneParticle->EmitterRosterEmitterAt(0)->mBirthTimeNs==cutsceneParticleBirth,
         "Cutscene particle froze with the held Board clock or changed its visual birth");
-    Require(portalParticle->mLastUpdateTimeNs==static_cast<std::int64_t>(battleTime) &&
+    Require(ParticleCacheMatchesTime(portalParticle, static_cast<std::int64_t>(battleTime)) &&
         portalParticle->EmitterRosterEmitterAt(0)->mBirthTimeNs==portalParticleBirth,
         "Globally scheduled portal particle aged while Board time was held");
     auto* particle=app.AddTodParticle(0,0,0,PARTICLE_PEA_SPLAT,
@@ -1998,7 +2016,7 @@ void SurvivalOwnerClockRuntime(TestApp& app, int hz)
     auto* visualParticle=app.AddTodParticle(0,0,0,PARTICLE_PEA_SPLAT,
         holder.mVisualTimeNs);
     visualParticle->mIsAttachment=true; // This visual fixture owns its update timestamp.
-    Require(particle->mLastUpdateTimeNs==static_cast<std::int64_t>(battleTime) &&
+    Require(ParticleCacheMatchesTime(particle, static_cast<std::int64_t>(battleTime)) &&
         particle->EmitterRosterEmitterAt(0)->mBirthTimeNs==static_cast<std::int64_t>(battleTime),
         "Battle particle creation did not use the Board clock");
     const auto particleBirth=particle->EmitterRosterEmitterAt(0)->mBirthTimeNs;
@@ -2008,15 +2026,15 @@ void SurvivalOwnerClockRuntime(TestApp& app, int hz)
     AttachmentID attachment=ATTACHMENTID_NULL;
     AttachParticle(attachment,particle,0,0);
     holder.mVisualTimeNs+=step;
-    app.mEffectSystem->UpdateAt(holder.mVisualTimeNs,static_cast<std::int64_t>(battleTime));
-    AttachmentUpdateAndMoveAt(attachment,0,0,static_cast<std::int64_t>(battleTime));
-    visualParticle->Update(step,holder.mVisualTimeNs);
-    Require(particle->mLastUpdateTimeNs==static_cast<std::int64_t>(battleTime) &&
+    app.mEffectSystem->UpdateAt(holder.mVisualTimeNs, static_cast<std::int64_t>(battleTime), static_cast<std::int64_t>(battleTime), Sexy::gUpdateIntervalNs, 0, 0);
+    AttachmentUpdateAndMoveAt(attachment, 0, 0, static_cast<std::int64_t>(battleTime), Sexy::gUpdateIntervalNs);
+    visualParticle->Update(step,holder.mVisualTimeNs,holder.mVisualTimeNs-step);
+    Require(ParticleCacheMatchesTime(particle, static_cast<std::int64_t>(battleTime)) &&
         particle->EmitterRosterEmitterAt(0)->mBirthTimeNs==particleBirth &&
-        boardParticle->mLastUpdateTimeNs==static_cast<std::int64_t>(battleTime) &&
+        ParticleCacheMatchesTime(boardParticle, static_cast<std::int64_t>(battleTime)) &&
         static_cast<std::int64_t>(battleTime)-particleBirth==0 &&
         holder.mVisualTimeNs-visualParticleBirth==static_cast<std::int64_t>(step) &&
-        visualParticle->mLastUpdateTimeNs==holder.mVisualTimeNs,
+        ParticleCacheMatchesTime(visualParticle, holder.mVisualTimeNs),
         "Battle particle birth or attachment update consumed the visual epoch");
     AttachmentDie(attachment);
     visualParticle->ParticleSystemDie();
@@ -2029,7 +2047,7 @@ void SurvivalOwnerClockRuntime(TestApp& app, int hz)
         (body->mStartTimeNs + body->mFrameAgeNs)==static_cast<std::int64_t>(board.mLevelTimeNs) &&
         body->SamplePlayback().phaseNs!=phase,
         "Resuming survival did not advance exactly one battle step");
-    Require(portalParticle->mLastUpdateTimeNs==static_cast<std::int64_t>(board.mLevelTimeNs) &&
+    Require(ParticleCacheMatchesTime(portalParticle, static_cast<std::int64_t>(board.mLevelTimeNs)) &&
         portalParticle->EmitterRosterEmitterAt(0)->mBirthTimeNs==portalParticleBirth,
         "Portal particle did not resume through the global Board effect update");
     portal.GridItemDie();
@@ -2095,7 +2113,9 @@ void PoolSparkleOwnerClockRuntime(TestApp& app, int hz)
     // first draw. Its Board clock stays zero throughout the initial pan/chooser.
     board.Update();
     auto* sparkle=app.ParticleTryToGet(board.mPoolSparklyParticleID);
-    Require(sparkle && sparkle->mLastUpdateTimeNs==holder.mVisualTimeNs && board.mLevelTimeNs==0,
+    const auto sampleTime = [&] { return board.mPoolIntroVisual && app.mGameScene==SCENE_LEVEL_INTRO && !board.mCutScene->IsSurvivalRepick()
+        ? holder.mVisualTimeNs : static_cast<std::int64_t>(board.mLevelTimeNs); };
+    Require(sparkle && ParticleCacheMatchesTime(sparkle,holder.mVisualTimeNs) && board.mLevelTimeNs==0,
         "Initial intro failed to bind pool sparkles to supplied Visual time");
     auto* emitter=sparkle->EmitterRosterEmitterAt(0);
     const auto birth=emitter->mBirthTimeNs;
@@ -2109,15 +2129,15 @@ void PoolSparkleOwnerClockRuntime(TestApp& app, int hz)
     for (int i=0;i<sparkle->EmitterRosterCount();++i)
         introLive+=sparkle->EmitterRosterEmitterAt(i)->ParticleRosterCount();
     Require(introLive>0 && board.mLevelTimeNs==0 &&
-        sparkle->mLastUpdateTimeNs==holder.mVisualTimeNs && emitter->mBirthTimeNs==birth &&
+        ParticleCacheMatchesTime(sparkle,holder.mVisualTimeNs) && emitter->mBirthTimeNs==birth &&
         pool.mSampleTimeNs-pool.mBirthTimeNs>0,
         "New-level intro water did not animate on supplied Visual time");
-    const auto introAge=sparkle->mLastUpdateTimeNs-emitter->mBirthTimeNs;
+    const auto introAge=sampleTime()-emitter->mBirthTimeNs;
     const auto introWaterAge=pool.mSampleTimeNs-pool.mBirthTimeNs;
     board.mPaused=true;
     holder.mVisualTimeNs+=3'000'000'000;
     board.Update();
-    Require(sparkle->mLastUpdateTimeNs-emitter->mBirthTimeNs==introAge &&
+    Require(sampleTime()-emitter->mBirthTimeNs==introAge &&
         pool.mSampleTimeNs-pool.mBirthTimeNs==introWaterAge,
         "Paused new-level intro advanced water ages");
     board.mPaused=false;
@@ -2125,7 +2145,7 @@ void PoolSparkleOwnerClockRuntime(TestApp& app, int hz)
     holder.mVisualTimeNs+=step;
     board.Update();
     Require(!board.mPoolIntroVisual && board.mLevelTimeNs==step &&
-        sparkle->mLastUpdateTimeNs-emitter->mBirthTimeNs==introAge+step &&
+        sampleTime()-emitter->mBirthTimeNs==introAge+step &&
         pool.mSampleTimeNs-pool.mBirthTimeNs==introWaterAge+step,
         "First battle update lost the intro phase or inherited a Visual-clock gap");
     for (int frame=0;frame<hz/2;++frame) {
@@ -2135,19 +2155,19 @@ void PoolSparkleOwnerClockRuntime(TestApp& app, int hz)
     int live=0;
     for (int i=0;i<sparkle->EmitterRosterCount();++i)
         live+=sparkle->EmitterRosterEmitterAt(i)->ParticleRosterCount();
-    Require(live>0 && sparkle->mLastUpdateTimeNs==static_cast<std::int64_t>(board.mLevelTimeNs),
+    Require(live>0 && ParticleCacheMatchesTime(sparkle,static_cast<std::int64_t>(board.mLevelTimeNs)),
         "Combat pool sparkles did not consume Board time");
-    const auto age=sparkle->mLastUpdateTimeNs-emitter->mBirthTimeNs;
+    const auto age=sampleTime()-emitter->mBirthTimeNs;
     const auto waterAge=pool.mSampleTimeNs-pool.mBirthTimeNs;
     board.mPaused=true;
     holder.mVisualTimeNs+=10'000'000'000;
     board.Update();
-    Require(sparkle->mLastUpdateTimeNs-emitter->mBirthTimeNs==age &&
+    Require(sampleTime()-emitter->mBirthTimeNs==age &&
         pool.mSampleTimeNs-pool.mBirthTimeNs==waterAge,
         "Paused water consumed advancing Visual time");
     board.mPaused=false;
     holder.mVisualTimeNs+=step;board.Update();
-    Require(sparkle->mLastUpdateTimeNs-emitter->mBirthTimeNs==age+step &&
+    Require(sampleTime()-emitter->mBirthTimeNs==age+step &&
         pool.mSampleTimeNs-pool.mBirthTimeNs==waterAge+step,
         "Water resume caught up paused Visual time");
     // Exercise actual IceZombies, not a fixture-only write to mDontUpdate.
@@ -2156,12 +2176,12 @@ void PoolSparkleOwnerClockRuntime(TestApp& app, int hz)
     ice.IceZombies(board.mLevelTimeNs,holder.mVisualTimeNs,board.mLevelTimeNs);
     Require(sparkle->mDontUpdate && board.mIceTrapCounter>0,
         "Ice-shroom did not freeze pool sparkle like GOTY 1073 0x469EFF");
-    const auto frozenAge=sparkle->mLastUpdateTimeNs-emitter->mBirthTimeNs;
+    const auto frozenAge=sampleTime()-emitter->mBirthTimeNs;
     const auto frozenWater=pool.mSampleTimeNs-pool.mBirthTimeNs;
     for (int frame=0;frame<5;++frame) {
         holder.mVisualTimeNs+=step;board.Update();
     }
-    Require(sparkle->mLastUpdateTimeNs-emitter->mBirthTimeNs==frozenAge &&
+    Require(sampleTime()-emitter->mBirthTimeNs==frozenAge &&
         pool.mSampleTimeNs-pool.mBirthTimeNs==frozenWater,
         "Ice-shroom failed to freeze water and sparkles together");
     board.FreezeEffectsForCutscene(false);
@@ -2171,20 +2191,20 @@ void PoolSparkleOwnerClockRuntime(TestApp& app, int hz)
     Require(!sparkle->mDontUpdate && board.mIceTrapCounter==0,
         "Ice expiry did not release the sparkle freeze");
     holder.mVisualTimeNs+=step;board.Update();
-    Require(sparkle->mLastUpdateTimeNs-emitter->mBirthTimeNs==frozenAge+step &&
+    Require(sampleTime()-emitter->mBirthTimeNs==frozenAge+step &&
         pool.mSampleTimeNs-pool.mBirthTimeNs==frozenWater+step,
         "Ice expiry jumped water phase instead of resuming one Board interval");
     app.mGameScene=SCENE_LEVEL_INTRO;
     board.FreezeEffectsForCutscene(true);
-    const auto repickAge=sparkle->mLastUpdateTimeNs-emitter->mBirthTimeNs;
+    const auto repickAge=sampleTime()-emitter->mBirthTimeNs;
     holder.mVisualTimeNs+=3'000'000'000;
     board.Update();
-    Require(sparkle->mLastUpdateTimeNs-emitter->mBirthTimeNs==repickAge,
+    Require(sampleTime()-emitter->mBirthTimeNs==repickAge,
         "Repick consumed Visual time for retained water effects");
     board.FreezeEffectsForCutscene(false);
     app.mGameScene=SCENE_PLAYING;
     holder.mVisualTimeNs+=step;board.Update();
-    Require(sparkle->mLastUpdateTimeNs-emitter->mBirthTimeNs==repickAge+step,
+    Require(sampleTime()-emitter->mBirthTimeNs==repickAge+step,
         "Repick resume failed to consume exactly one Board interval");
     std::cout<<"PASS pool Board clock "<<hz<<" Hz: Visual intro, paused freeze, phase-preserving Battle handoff, IceZombies and repick resume\n";
 }
@@ -2507,11 +2527,11 @@ void MinigameBehaviorRuntime(TestApp& app)
         Sexy::ApplySimulationStep(speedStep);clocks.mVisualTimeNs+=speedStep;
         board.Update();
         emitted|=board.mProjectiles.mSize>0;
-        reference->UpdateAt((i+1)*speedStep);
+        reference->UpdateAt((i+1)*speedStep, Sexy::gUpdateIntervalNs);
         Require(independent->SamplePlayback().phaseNs==reference->SamplePlayback().phaseNs &&
             child->SamplePlayback().phaseNs==reference->SamplePlayback().phaseNs &&
             (child->mStartTimeNs + child->mFrameAgeNs)==static_cast<std::int64_t>(board.mLevelTimeNs) &&
-            childParticle->mLastUpdateTimeNs==static_cast<std::int64_t>(board.mLevelTimeNs),
+            ParticleCacheMatchesTime(childParticle, static_cast<std::int64_t>(board.mLevelTimeNs)),
             "Speed mode failed to preserve the independent animation/attachment clock tree");
         Require(board.mLevelTimeNs==(i+1)*2*speedStep && clocks.mBattleTimeNs==board.mLevelTimeNs,
             "Speed mode repeated logic without advancing its actor timestamps");
@@ -2523,7 +2543,7 @@ void MinigameBehaviorRuntime(TestApp& app)
     Require(emitted,"Speed-mode shooter failed to emit actual projectiles");
     auto* sparkle=app.ParticleGet(board.mPoolSparklyParticleID);
     auto* emitter=sparkle->EmitterRosterEmitterAt(0);
-    Require(sparkle->mLastUpdateTimeNs-emitter->mBirthTimeNs==20*speedStep,
+    Require(static_cast<std::int64_t>(board.mLevelTimeNs)-emitter->mBirthTimeNs==20*speedStep,
         "Speed mode doubled independent pool-sparkle age");
     std::cout<<"PASS actual Speed mode: double Board time, two actor passes, real shots, ordinary-speed water/sparkles and independent attachment trees\n";
 
@@ -2633,7 +2653,7 @@ void PlantSpecialCatalogRuntime(TestApp& app)
             const auto step=std::min<unsigned long long>(hz>0?1'000'000'000ULL/hz:hz<0?4'000'000'000ULL/(-hz):jitter[stepIndex%jitter.size()],duration-board.mLevelTimeNs);
             Sexy::ApplySimulationStep(step);
             board.mLevelTimeNs+=step;clocks.mVisualTimeNs+=step;clocks.mBattleTimeNs=board.mLevelTimeNs;
-            app.mEffectSystem->UpdateAt(clocks.mVisualTimeNs,clocks.mBattleTimeNs);
+            app.mEffectSystem->UpdateAt(clocks.mVisualTimeNs, clocks.mBattleTimeNs, clocks.mBattleTimeNs, Sexy::gUpdateIntervalNs, Sexy::gUpdateIntervalNs, Sexy::gUpdateIntervalNs);
             board.UpdateGameObjects(step);
             if(seed==SEED_COBCANNON && plant->mState==STATE_COBCANNON_READY)
             {
@@ -2838,7 +2858,7 @@ void PlantAttackCatalogRuntime(TestApp& app)
             constexpr unsigned long long step=16'666'667;
             Sexy::ApplySimulationStep(step);board.mLevelTimeNs+=step;
             clocks.mVisualTimeNs+=step;clocks.mBattleTimeNs=board.mLevelTimeNs;
-            app.mEffectSystem->UpdateAt(clocks.mVisualTimeNs,clocks.mBattleTimeNs);
+            app.mEffectSystem->UpdateAt(clocks.mVisualTimeNs, clocks.mBattleTimeNs, clocks.mBattleTimeNs, Sexy::gUpdateIntervalNs, Sexy::gUpdateIntervalNs, Sexy::gUpdateIntervalNs);
             // Isolate saved plant state: no zombie actions, ICE3 or combat damage.
             for(std::size_t j=0;j<cannons.size();++j){
                 auto* plant=cannons[j];
@@ -2945,7 +2965,7 @@ void PlantAttackCatalogRuntime(TestApp& app)
                 4'000'000'000ULL-board.mLevelTimeNs);
             Sexy::ApplySimulationStep(step);
             board.mLevelTimeNs+=step;clocks.mVisualTimeNs+=step;clocks.mBattleTimeNs=board.mLevelTimeNs;
-            app.mEffectSystem->UpdateAt(clocks.mVisualTimeNs,clocks.mBattleTimeNs);
+            app.mEffectSystem->UpdateAt(clocks.mVisualTimeNs, clocks.mBattleTimeNs, clocks.mBattleTimeNs, Sexy::gUpdateIntervalNs, Sexy::gUpdateIntervalNs, Sexy::gUpdateIntervalNs);
             board.UpdateGameObjects(step);
             Projectile* bullet=nullptr;
             while(board.IterateProjectiles(bullet))
@@ -2984,7 +3004,7 @@ void PlantAttackCatalogRuntime(TestApp& app)
                 if(board.mLevelTimeNs>=end-2'000'000'000ULL)plant->mNextLaunchTimeNs=end+10'000'000'000ULL;
                 Sexy::ApplySimulationStep(step);
                 board.mLevelTimeNs+=step;clocks.mVisualTimeNs+=step;clocks.mBattleTimeNs=board.mLevelTimeNs;
-                app.mEffectSystem->UpdateAt(clocks.mVisualTimeNs,clocks.mBattleTimeNs);
+                app.mEffectSystem->UpdateAt(clocks.mVisualTimeNs, clocks.mBattleTimeNs, clocks.mBattleTimeNs, Sexy::gUpdateIntervalNs, Sexy::gUpdateIntervalNs, Sexy::gUpdateIntervalNs);
                 board.UpdateGameObjects(step);
                 Projectile* bullet=nullptr;
                 while(board.IterateProjectiles(bullet)){
@@ -3066,7 +3086,7 @@ void ZombieBehaviorCatalogRuntime(TestApp& app)
             const auto step=static_cast<unsigned long long>(hz?1'000'000'000ULL/hz:jitter[index%jitter.size()]);
             Sexy::ApplySimulationStep(step);board.mLevelTimeNs+=step;
             clocks.mVisualTimeNs+=step;clocks.mBattleTimeNs=board.mLevelTimeNs;
-            app.mEffectSystem->UpdateAt(clocks.mVisualTimeNs,clocks.mBattleTimeNs);
+            app.mEffectSystem->UpdateAt(clocks.mVisualTimeNs, clocks.mBattleTimeNs, clocks.mBattleTimeNs, Sexy::gUpdateIntervalNs, Sexy::gUpdateIntervalNs, Sexy::gUpdateIntervalNs);
             if(pending && armed && !applied && stun==1) {
                 giant->HitIceTrap(board.mLevelTimeNs,clocks.mVisualTimeNs,board.mLevelTimeNs); // Plant stage before actors.
                 applied=true;
@@ -3112,7 +3132,7 @@ void ZombieBehaviorCatalogRuntime(TestApp& app)
             const auto step=static_cast<unsigned long long>(hz?1'000'000'000ULL/hz:jitter[index%jitter.size()]);
             Sexy::ApplySimulationStep(step);board.mLevelTimeNs+=step;
             clocks.mVisualTimeNs+=step;clocks.mBattleTimeNs=board.mLevelTimeNs;
-            app.mEffectSystem->UpdateAt(clocks.mVisualTimeNs,clocks.mBattleTimeNs);
+            app.mEffectSystem->UpdateAt(clocks.mVisualTimeNs, clocks.mBattleTimeNs, clocks.mBattleTimeNs, Sexy::gUpdateIntervalNs, Sexy::gUpdateIntervalNs, Sexy::gUpdateIntervalNs);
             if(pending && armed && !applied && stun==1) {
                 giant->HitIceTrap(board.mLevelTimeNs,clocks.mVisualTimeNs,board.mLevelTimeNs);
                 applied=true;
@@ -3160,7 +3180,7 @@ void ZombieBehaviorCatalogRuntime(TestApp& app)
             const bool launching=zombie->mZombiePhase==PHASE_CATAPULT_LAUNCHING;
             Sexy::ApplySimulationStep(step);
             board.mLevelTimeNs+=step;clocks.mVisualTimeNs+=step;clocks.mBattleTimeNs=board.mLevelTimeNs;
-            app.mEffectSystem->UpdateAt(clocks.mVisualTimeNs,clocks.mBattleTimeNs);
+            app.mEffectSystem->UpdateAt(clocks.mVisualTimeNs, clocks.mBattleTimeNs, clocks.mBattleTimeNs, Sexy::gUpdateIntervalNs, Sexy::gUpdateIntervalNs, Sexy::gUpdateIntervalNs);
             board.UpdateGameObjects(step);
             Projectile* bullet=nullptr;
             while(board.IterateProjectiles(bullet))
@@ -3225,7 +3245,7 @@ void ZombieBehaviorCatalogRuntime(TestApp& app)
             const auto beforeAltitude=zombie->mAltitude;
             Sexy::ApplySimulationStep(step);
             board.mLevelTimeNs+=step;clocks.mVisualTimeNs+=step;clocks.mBattleTimeNs=board.mLevelTimeNs;
-            app.mEffectSystem->UpdateAt(clocks.mVisualTimeNs,clocks.mBattleTimeNs);
+            app.mEffectSystem->UpdateAt(clocks.mVisualTimeNs, clocks.mBattleTimeNs, clocks.mBattleTimeNs, Sexy::gUpdateIntervalNs, Sexy::gUpdateIntervalNs, Sexy::gUpdateIntervalNs);
             board.UpdateGameObjects(step);
             if(applied)
             {
@@ -3337,7 +3357,7 @@ void ZombieBehaviorCatalogRuntime(TestApp& app)
             const auto oldX=zombie->mX;
             Sexy::ApplySimulationStep(step);
             board.mLevelTimeNs+=step;clocks.mVisualTimeNs+=step;clocks.mBattleTimeNs=board.mLevelTimeNs;
-            app.mEffectSystem->UpdateAt(clocks.mVisualTimeNs,clocks.mBattleTimeNs);
+            app.mEffectSystem->UpdateAt(clocks.mVisualTimeNs, clocks.mBattleTimeNs, clocks.mBattleTimeNs, Sexy::gUpdateIntervalNs, Sexy::gUpdateIntervalNs, Sexy::gUpdateIntervalNs);
             board.UpdateGameObjects(step);
             if(action==Action::Dolphin)
             {
@@ -3463,7 +3483,7 @@ void ZombieBehaviorCatalogRuntime(TestApp& app)
             const auto step=hz?1'000'000'000ULL/hz:static_cast<unsigned long long>(jitter[n%jitter.size()]);
             Sexy::ApplySimulationStep(step);
             board.mLevelTimeNs+=step;clocks.mVisualTimeNs+=step;clocks.mBattleTimeNs=board.mLevelTimeNs;
-            app.mEffectSystem->UpdateAt(clocks.mVisualTimeNs,clocks.mBattleTimeNs);
+            app.mEffectSystem->UpdateAt(clocks.mVisualTimeNs, clocks.mBattleTimeNs, clocks.mBattleTimeNs, Sexy::gUpdateIntervalNs, Sexy::gUpdateIntervalNs, Sexy::gUpdateIntervalNs);
             board.UpdateGameObjects(step);
             Zombie* other=nullptr;
             while(board.IterateZombies(other))
@@ -5928,7 +5948,7 @@ void LateLifecycleRuntime(TestApp& app)
                     const auto step=hz?1'000'000'000ULL/hz:jitter[sequence%jitter.size()];
                     Sexy::ApplySimulationStep(step);board.mLevelTimeNs+=step;
                     clocks.mVisualTimeNs+=step;clocks.mBattleTimeNs=board.mLevelTimeNs;
-                    app.mEffectSystem->UpdateAt(clocks.mVisualTimeNs,clocks.mBattleTimeNs);
+                    app.mEffectSystem->UpdateAt(clocks.mVisualTimeNs, clocks.mBattleTimeNs, clocks.mBattleTimeNs, Sexy::gUpdateIntervalNs, Sexy::gUpdateIntervalNs, Sexy::gUpdateIntervalNs);
                     board.UpdateGameObjects(step);
                     firstAttack|=stage==1&&boss->mBossMode==1&&boss->mZombiePhase==PHASE_BOSS_BUNGEES_ENTER;
                     secondAttack|=stage==2&&boss->mBossMode==2&&boss->mZombiePhase==PHASE_BOSS_DROP_RV;
@@ -6721,7 +6741,7 @@ void TouchFieldCardsRuntime(TestApp& app, Board& board)
             for(int i=0;i<240&&!pot->mDead;++i) {
                 board.mLevelTimeNs+=8'333'333;
                 app.mEffectSystem->mReanimationHolder->mBattleTimeNs=board.mLevelTimeNs;
-                if(auto* hammer=app.ReanimationTryToGet(board.mChallenge->mReanimChallenge)) hammer->UpdateAt(board.mLevelTimeNs);
+                if(auto* hammer=app.ReanimationTryToGet(board.mChallenge->mReanimChallenge)) hammer->UpdateAt(board.mLevelTimeNs, Sexy::gUpdateIntervalNs);
                 board.mChallenge->ScaryPotterUpdate();
             }
             Require(pot->mDead&&board.mChallenge->mChallengeState==STATECHALLENGE_NORMAL,
@@ -8352,7 +8372,7 @@ void StorePauseClockRuntime(TestApp& app, DecodeOnlySoundManager& sounds)
         Require(background->SamplePlayback().phaseNs==phase && holder.mBattleTimeNs==battleTime,
             "Ordinary pause advanced the background pose or battle clock");
         board.Pause(false);
-        background->UpdateAt(holder.mVisualTimeNs);
+        background->UpdateAt(holder.mVisualTimeNs, Sexy::gUpdateIntervalNs);
         Require(background->SamplePlayback().phaseNs==phase,
             "Resuming an ordinary pause consumed elapsed UI time");
         for (const bool inLevel:{false,true})
@@ -8406,8 +8426,8 @@ void StorePauseClockRuntime(TestApp& app, DecodeOnlySoundManager& sounds)
                     "Background pose advanced under the modal remaining after Store closed");
                 app.KillDialog(nestedDialogId);
                 app.ProcessSafeDeleteList();
-                background->UpdateAt(holder.mVisualTimeNs);
-                battle->UpdateAt(holder.mBattleTimeNs);
+                background->UpdateAt(holder.mVisualTimeNs, Sexy::gUpdateIntervalNs);
+                battle->UpdateAt(holder.mBattleTimeNs, Sexy::gUpdateIntervalNs);
                 Require(background->SamplePlayback().phaseNs==phase && holder.mBattleTimeNs==battleTime,
                     "Store resume advanced a paused background animation or battle clock");
             }
@@ -9250,7 +9270,7 @@ void ParticleDefinitionsAndFrames(SexyAppBase& app, const char* pakPath)
                         ParticleDrawReference::ParticleRenderParams values{};
                         values.mParticleScale=values.mParticleStretch=1;
                         values.mPosX=values.mPosY=128;
-                        ParticleDrawReference::RenderParticle(&graphics,&particle,Color::White,&values,&triangles);
+                        ParticleDrawReference::RenderParticle(&graphics,&particle,Color::White,&values,&triangles,0);
                     }
                     triangles.DrawGroup(&graphics);
                 }
@@ -9273,8 +9293,8 @@ void ParticleDefinitionsAndFrames(SexyAppBase& app, const char* pakPath)
                 noImageParticle.mParticleEmitter=&noImageEmitter;
                 ParticleDrawReference::ParticleRenderParams values{};
                 TodTriangleGroup triangles;
-                ParticleDrawReference::RenderParticle(&graphics,&noImageParticle,Color::White,&values,&triangles);
-                empty->Draw(&graphics);
+                ParticleDrawReference::RenderParticle(&graphics,&noImageParticle,Color::White,&values,&triangles,0);
+                empty->Draw(&graphics,0);
                 triangles.DrawGroup(&graphics);
             }
             render.Flush();
@@ -9307,7 +9327,7 @@ void ParticleDefinitionsAndFrames(SexyAppBase& app, const char* pakPath)
                         ParticleDrawReference::ParticleRenderParams values{};
                         values.mParticleScale=values.mParticleStretch=1;
                         values.mPosX=values.mPosY=128;
-                        ParticleDrawReference::RenderParticle(&graphics,&particle,Color::White,&values,&triangles);
+                        ParticleDrawReference::RenderParticle(&graphics,&particle,Color::White,&values,&triangles,0);
                     }
                     triangles.DrawGroup(&graphics);
                 }

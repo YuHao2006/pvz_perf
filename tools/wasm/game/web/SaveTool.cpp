@@ -178,7 +178,26 @@ int RunWebSaveTool() {
         app.mBoard=new Board(&app);
         if(request.at("op")=="generate")Generate(app,*app.mBoard,request.at("recipe"));
         else Require(LawnLoadGame(app.mBoard,"/tool/input.dat64"),"Cannot load DAT64 in offline extractor");
-        const auto result=(request.at("op")=="validate" ? Json{{"mode",mode},{"scene",static_cast<int>(app.mBoard->mBackground)}} : Extract(*app.mBoard)).dump();
+        Json metadata;
+        if(request.at("op")=="repair-plant-attacks") {
+            Json repaired=Json::array();
+            Plant* plant=nullptr;
+            while(app.mBoard->IteratePlants(plant)) {
+                // Same proven signature as PvzDevTools RepairPlantAttacks:
+                // completed Cob Cannon firing animation with an inactive deadline.
+                // Resume completion without replaying a shot or changing RNG.
+                if(plant->mSeedType!=SeedType::SEED_COBCANNON || plant->mState!=PlantState::STATE_COBCANNON_FIRING ||
+                    plant->mDead || plant->mShootingEndTimeNs!=0) continue;
+                auto* animation=app.ReanimationTryToGet(plant->mBodyReanimID);
+                if(!animation || animation->mDead || animation->mLoopType!=REANIM_PLAY_ONCE_AND_HOLD ||
+                    animation->mLoopCount<=0 || animation->mCurrentFrame!=animation->mFrameCount-1) continue;
+                plant->mShootingEndTimeNs=static_cast<std::int64_t>(app.mBoard->mLevelTimeNs)+1;
+                repaired.push_back({{"row",plant->mRow+1},{"column",plant->mPlantCol+1}});
+            }
+            metadata={{"mode",mode},{"repairs",repaired}};
+            if(!repaired.empty())Require(LawnSaveGame(app.mBoard,"/tool/generated.dat64"),"Cannot write repaired DAT64");
+        } else metadata=request.at("op")=="validate" ? Json{{"mode",mode},{"scene",static_cast<int>(app.mBoard->mBackground)}} : Extract(*app.mBoard);
+        const auto result=metadata.dump();
         ReleaseToolApp();
         EM_ASM({Module.pvzToolComplete(UTF8ToString(Number($0)));},result.c_str());
         // The caller also destroys the iframe and remaining Wasm memory.

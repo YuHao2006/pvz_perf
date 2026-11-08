@@ -10,7 +10,7 @@ export function memoryModels(config,supported){
  }
  return config.memory64Available&&supported?['wasm32','wasm64']:['wasm32'];
 }
-export function selectMemoryModel(models,saved){return models.includes(saved)?saved:models[0]}
+export function selectMemoryModel(models,saved){return models.includes(saved)?saved:models.includes('wasm64')?'wasm64':models[0]}
 export function runtimeStem(config,backend,memoryModel){
  const base=config.webgpu&&backend==='webgl'?'pvz-perf-webgl':'pvz-perf';
  return base+(memoryModel==='wasm64'&&!config.memory64?'-wasm64':'');

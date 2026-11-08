@@ -662,6 +662,10 @@ void GameSelector::SyncProfile(bool theShowLoading)
 		}
 	}
 
+	// Resolve once when refreshing the menu; profile unlock flags stay untouched.
+	if (mApp->mUnlockAllLevels)
+		mMinigamesLocked = mPuzzleLocked = mSurvivalLocked = false;
+
 	if (mApp->HasFinishedAdventure() && !mApp->IsTrialStageLocked())
 		mHasTrophy = true;
 	else
@@ -905,16 +909,27 @@ void GameSelector::DrawOverlay(Graphics* g)
 
 //0x44B0D0
 // GOTY @Patoke: 0x44DE6D
+void GameSelector::TouchBegan(const TouchEvent& event)
+{
+    mTrophyTouchPinned=mHasTrophy && Rect(50,250,85,225).Contains(
+        event.x-int(SELECTOR_MAIN_PAGE_X),event.y);
+    Widget::TouchBegan(event);
+}
+
 void GameSelector::UpdateTooltip()
 {
+	mToolTip->mVisible = false;
 	if (!mApp->HasFinishedAdventure() || mApp->GetDialog(Dialogs::DIALOG_MESSAGE))
 		return;
 
 	if (mHasTrophy)
 	{
-		int aMouseX = mApp->mWidgetManager->mLastMouseX;
-		int aMouseY = mApp->mWidgetManager->mLastMouseY;
-		if (aMouseX >= 50 && aMouseX < 135 && aMouseY >= 250 && aMouseY < 475)
+        const auto& manager=*mApp->mWidgetManager;
+        const auto origin=mOverlayWidget->GetAbsPos();
+        const Rect trophy(50,250,85,225);
+        const bool show=mTrophyTouchPinned || (manager.mMouseHoverEnabled && trophy.Contains(
+            manager.mLastMouseX-origin.mX,manager.mLastMouseY-origin.mY));
+		if (show)
 		{
 			if (mApp->EarnedGoldTrophy())
 			{
@@ -1321,6 +1336,7 @@ void GameSelector::KeyChar(char theChar)
 // GOTY @Patoke: 0x44F040
 void GameSelector::MouseDown(int x, int y, int theClickCount)
 {
+    if(!Rect(50,250,85,225).Contains(x-int(SELECTOR_MAIN_PAGE_X),y))mTrophyTouchPinned=false;
 	(void)theClickCount;
 	for (int i = 0; i < 3; i++)
 	{
@@ -1352,6 +1368,7 @@ void GameSelector::ButtonMouseEnter(int theId)
 // GOTY @Patoke: 0x44F220
 void GameSelector::ButtonPress(int theId)
 {
+    mTrophyTouchPinned=false;
 	if (theId == GameSelector::GameSelector_Adventure || theId == GameSelector::GameSelector_Minigame ||
 		theId == GameSelector::GameSelector_Puzzle || theId == GameSelector::GameSelector_Survival ||
 		theId == GameSelector::GameSelector_Zombatar) // @Patoke: add case

@@ -3,6 +3,7 @@
 #include "Sexy.TodLib/generated/EntityStrings.h"
 #include "Board.h"
 #include "Challenge.h"
+#include "SeedPacket.h"
 #include "LawnApp.h"
 #include "Resources.h"
 #include "MessageWidget.h"
@@ -484,6 +485,13 @@ void MessageWidget::Draw(Graphics* g)
 		aMinAlpha = aParams.mMinAlpha;
 		aColor = Color(aParams.mR, aParams.mG, aParams.mB, aParams.mA);
 		aFadeOut = aParams.mFadeOut;
+	}
+	if (mMessageStyle == MessageStyle::MESSAGE_STYLE_SLOT_MACHINE)
+	{
+		// The machine is anchored to the seed bank in viewport coordinates.
+		// Keep its message on that same anchor rather than the old 800-wide origin.
+		aPosX += mApp->mScreenBounds.mX + mApp->mBoard->mSeedBank->mX;
+		aPosY += mApp->mScreenBounds.mY - mApp->mBoard->mY + mApp->mBoard->mSeedBank->mY;
 	}
 
 	if (mReanimType != ReanimationType::REANIM_NONE)

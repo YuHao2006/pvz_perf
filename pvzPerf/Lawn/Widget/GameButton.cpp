@@ -114,7 +114,7 @@ void GameButton::Draw(Graphics* g)
 		return;
 
 	bool isDown = IsButtonDown() ^ mInverted;
-	bool isHighLighted = mIsOver || IsMouseOver();
+	bool isHighLighted = !mDisabled && (mIsOver || IsMouseOver());
 	if (mDrawStoneButton)
 	{
 		DrawStoneButton(g, mX, mY, mWidth, mHeight, isDown, isHighLighted, mLabel);
@@ -198,7 +198,7 @@ void GameButton::DrawAtlas(Graphics* g, const Sexy::TextureSource& texture, cons
 	if (mBtnNoDraw)
 		return;
 	const bool down = IsButtonDown() ^ mInverted;
-	const bool highlighted = mIsOver || IsMouseOver();
+	const bool highlighted = !mDisabled && (mIsOver || IsMouseOver());
 	if (!mFont && !mLabel.empty())
 		throw FontNotConfigured{};
 	int fontX = mTextOffsetX;

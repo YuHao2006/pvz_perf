@@ -290,6 +290,7 @@ public:
 	int						mFrameTime;
 	FrameTiming				mFrameTiming{};
 	bool                    mAutoDetectFrameRate = true;
+    bool                    mUnlockAllLevels = false; // Menu-only unlock override; never modifies profile progress.
     bool                    mLandscapeUI = false; // settings.json preference; keep on mobile fallback.
     bool                    mLandscapeUIActive = false; // Resolved once at native-window initialization.
 

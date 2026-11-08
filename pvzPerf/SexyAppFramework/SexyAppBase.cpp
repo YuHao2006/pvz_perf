@@ -1347,6 +1347,7 @@ void SexyAppBase::WriteToRegistry()
 	aDoc.SetInt("targetFps", mFrameTiming.mTargetFps);
 	aDoc.SetBool("autoDetectFrameRate",mAutoDetectFrameRate);
     aDoc.SetBool("landscapeUI",mLandscapeUI);
+    aDoc.SetBool("unlockAllLevels",mUnlockAllLevels);
 #if defined(__ANDROID__)
     aDoc.SetBool("hdr", false);
 #endif
@@ -1720,6 +1721,7 @@ void SexyAppBase::ReadFromRegistry()
 		return;
 	mAutoDetectFrameRate=aDoc.GetBool("autoDetectFrameRate",true);
     mLandscapeUI=aDoc.GetBool("landscapeUI",false);
+    mUnlockAllLevels=aDoc.GetBool("unlockAllLevels",false);
 	bool settingsChanged=!aDoc.Has("autoDetectFrameRate");
 	if (settingsChanged) aDoc.SetBool("autoDetectFrameRate",true);
 

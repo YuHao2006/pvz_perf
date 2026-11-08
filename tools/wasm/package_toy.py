@@ -55,7 +55,7 @@ def main():
     parser.add_argument('--memory64', action='store_true', help='Require native Wasm Memory64 (diagnostic package, no wasm32 fallback)')
     parser.add_argument('--webgpu', action='store_true', help='Package WebGPU; optionally add selectable WebGL through --webgl-build')
     parser.add_argument('--webgl-build', type=Path, help='Include selectable WebGL runtime, sharing the same data package')
-    parser.add_argument('--wasm64-build', type=Path, help='Add optional Memory64 primary runtime; default remains wasm32')
+    parser.add_argument('--wasm64-build', type=Path, help='Add optional Memory64 primary runtime; Memory64-capable browsers prefer wasm64')
     parser.add_argument('--wasm64-webgl-build', type=Path, help='Memory64 WebGL runtime paired with --webgl-build')
     args = parser.parse_args()
     version_source = (ROOT / 'pvzPerf/LawnApp.cpp').read_text(encoding='utf-8')

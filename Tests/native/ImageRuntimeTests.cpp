@@ -53,6 +53,7 @@
 #include "Lawn/Widget/Almanac.h"
 #include "Lawn/Widget/AwardScreen.h"
 #include "Lawn/Widget/ChallengeScreen.h"
+#include "Lawn/ToolTipWidget.h"
 #include "Lawn/Widget/GameSelector.h"
 #include <chrono>
 #include "SexyAppFramework/widget/HyperlinkWidget.h"
@@ -4849,10 +4850,39 @@ void GardenRulesRuntime(TestApp& app)
                 GridItem* item=nullptr;unsigned int id=0;
                 while(board.IterateGridItems(item)) if(item->mGridItemType==GRIDITEM_ZEN_TOOL) id=board.mGridItems.DataArrayGetID(item);
                 Require(id!=0,"Garden input did not create a real animated tool");
+                const auto* toolItem=board.mGridItems.DataArrayTryToGet(id);
+                const auto* toolAnimation=app.ReanimationGet(toolItem->mGridItemReanimID);
+                const int toolState=toolItem->mGridItemState;
+                const int toolFrames=toolAnimation->mFrameCount;
+                const float toolRate=toolAnimation->mAnimRate;
+                const auto toolPeriod=toolAnimation->mPeriodNs;
+                // Hash-locked 1073: tools are advanced by both EffectSystem
+                // (0044854A) and GridItem (004518F3). These effective periods
+                // also match the externally sampled retail process at 100Hz.
+                struct ToolTiming { GridItemState state;int frames;float rate;long long period;int loops; };
+                static constexpr ToolTiming retailTools[]{
+                    {GRIDITEM_STATE_ZEN_TOOL_WATERING_CAN,17,40,425'000'000,1},
+                    {GRIDITEM_STATE_ZEN_TOOL_GOLD_WATERING_CAN,17,16,1'062'500'000,1},
+                    {GRIDITEM_STATE_ZEN_TOOL_FERTILIZER,31,40,775'000'000,1},
+                    {GRIDITEM_STATE_ZEN_TOOL_BUG_SPRAY,26,60,433'333'333,1},
+                    {GRIDITEM_STATE_ZEN_TOOL_PHONOGRAPH,37,40,924'999'999,2},
+                };
+                const ToolTiming* timing=nullptr;
+                for(const auto& candidate:retailTools)if(candidate.state==toolState)timing=&candidate;
+                Require(timing&&toolFrames==timing->frames&&toolRate==timing->rate&&
+                    std::abs(toolPeriod-timing->period)<=64,"Garden tool lost 1073's double-update playback speed");
                 const auto start=clocks.mVisualTimeNs;
                 while(board.mGridItems.DataArrayTryToGet(id)&&clocks.mVisualTimeNs-start<30'000'000'000LL)
                     update(hz?1'000'000'000ULL/hz:jitter[sequence++%jitter.size()]);
                 Require(!board.mGridItems.DataArrayTryToGet(id),"Garden tool animation never completed and released its item");
+                const auto duration=clocks.mVisualTimeNs-start;
+                const auto expected=timing->period*timing->loops;
+                const auto maxStep=hz?1'000'000'000LL/hz:*std::max_element(jitter.begin(),jitter.end());
+                Require(duration>=expected-128&&duration<=expected+2*maxStep+128,
+                    "Garden tool completion does not match retail duration within update ordering");
+                std::cout<<"Garden tool timing Hz="<<hz<<" cursor="<<int(tool)<<" state="<<toolState
+                    <<" frames="<<toolFrames<<" rate="<<toolRate<<" periodNs="<<toolPeriod
+                    <<" completionNs="<<(clocks.mVisualTimeNs-start)<<'\n';
             };
             Require(findPlant(0)&&findPlant(0)->mSeedType==SEED_SPROUT&&findPlant(1)&&!findPlant(2)&&!findPlant(3),
                 "Garden instantiated the wrong visit's plants");
@@ -5103,6 +5133,91 @@ void IntroRulesRuntime(TestApp& app, DecodeOnlySoundManager& sounds)
     }
     Require(allPassed,"Intro rules have failed cases; inspect per-schedule output");
     std::cout<<"PASS actual intro: fixed-duration warmup, paused clocks, movie events and application handoff at four schedules\n";
+}
+
+void ChallengeUnlockRulesRuntime(TestApp& app)
+{
+    struct Restore {
+        TestApp& app;
+        PlayerInfo* player=app.mPlayerInfo;
+        GameScenes scene=app.mGameScene;
+        bool unlock=app.mUnlockAllLevels;
+        ~Restore(){app.mPlayerInfo=player;app.mGameScene=scene;app.mUnlockAllLevels=unlock;}
+    } restore{app};
+    PlayerInfo profile;
+    profile.mLevel=1;
+    profile.mFinishedAdventure=0;
+    app.mPlayerInfo=&profile;
+    app.mGameScene=SCENE_LEVEL_INTRO; // The fixture does not start menu music.
+    for(const bool unlock:{false,true,false})
+    {
+        app.mUnlockAllLevels=unlock;
+        int locked=0;
+        for(int page=0;page<MAX_CHALLANGE_PAGES;++page)
+        {
+            ChallengeScreen screen(&app,static_cast<ChallengePage>(page));
+            if(page==CHALLENGE_PAGE_CHALLENGE)
+                Require(screen.ShowPageButtons()==unlock,"Limbo entrance must follow the settings override");
+            for(int i=0;i<NUM_CHALLENGE_MODES;++i)
+            {
+                const auto& def=GetChallengeDefinition(i);
+                if(def.mChallengeMode==GAMEMODE_CUSTOM_LEVEL)
+                {
+                    Require(!screen.mChallengeButtons[i]->mVisible&&screen.MoreTrophiesNeeded(i)>0,
+                        "Unlock override exposed the unsupported custom-level placeholder");
+                    screen.ButtonDepress(200+i);
+                    Require(app.mGameScene==SCENE_LEVEL_INTRO,"Custom-level placeholder dispatched a game");
+                    continue;
+                }
+                if(def.mPage!=page)continue;
+                if(unlock)
+                    Require(screen.MoreTrophiesNeeded(i)==0&&screen.AccomplishmentsNeeded(i)==0&&
+                        !screen.mChallengeButtons[i]->mDisabled,"Unlock override left a playable level locked");
+                else if(screen.MoreTrophiesNeeded(i)>0)++locked;
+            }
+        }
+        if(!unlock)Require(locked>0,"Disabling the override did not restore profile-based locks");
+        Require(profile.mLevel==1&&profile.mFinishedAdventure==0&&!profile.mHasUnlockedMinigames&&
+            !profile.mHasUnlockedPuzzleMode&&!profile.mHasUnlockedSurvivalMode,"Unlock override changed player progress");
+    }
+    std::cout<<"PASS menu unlock override: all playable modes, Limbo, false/true/false, unchanged profile and blocked custom placeholder\n";
+}
+
+void SelectorTrophyTouchRuntime(TestApp& app)
+{
+    auto& manager=*app.mWidgetManager;
+    struct Restore {
+        TestApp& app;WidgetManager& manager;
+        PlayerInfo* player=app.mPlayerInfo;
+        bool hover=manager.mMouseHoverEnabled;
+        int x=manager.mLastMouseX,y=manager.mLastMouseY;
+        unsigned int count=manager.mTouchCount;
+        decltype(manager.mTouches) touches=manager.mTouches;
+        ~Restore(){manager.mTouches=touches;manager.mTouchCount=count;manager.mMouseHoverEnabled=hover;
+            manager.mLastMouseX=x;manager.mLastMouseY=y;app.mPlayerInfo=player;}
+    } restore{app,manager};
+    PlayerInfo profile;profile.mLevel=1;profile.mFinishedAdventure=5;
+    for(auto& record:profile.mChallengeRecords)record=1000;
+    app.mPlayerInfo=&profile;
+    GameSelector selector(&app);selector.Resize(-800,0,2400,600);selector.mHasTrophy=true;
+    Require(app.EarnedGoldTrophy(),"Trophy touch fixture needs a golden sunflower");
+    manager.mMouseHoverEnabled=false;manager.mLastMouseX=90;manager.mLastMouseY=350;
+    manager.mTouches={};manager.mTouchCount=0;
+    selector.UpdateTooltip();Require(!selector.mToolTip->mVisible,"Stale mouse position triggered touch tooltip");
+    selector.TouchBegan({7,890,350});selector.TouchEnded({7,890,350});
+    selector.UpdateTooltip();Require(selector.mToolTip->mVisible,"Touch tap did not show the trophy tooltip");
+    manager.mTouches={};manager.mTouchCount=0;
+    selector.UpdateTooltip();Require(selector.mToolTip->mVisible,"Releasing a trophy tap hid the pinned tooltip");
+    selector.TouchBegan({8,1000,350});
+    selector.UpdateTooltip();Require(!selector.mToolTip->mVisible,"Tapping elsewhere did not dismiss the trophy tooltip");
+    selector.TouchMoved({8,890,350});
+    selector.UpdateTooltip();Require(!selector.mToolTip->mVisible,"Dragging into the trophy triggered the tooltip");
+    manager.mTouches={};manager.mTouchCount=0;
+    selector.UpdateTooltip();Require(!selector.mToolTip->mVisible,"Dismissed trophy tooltip reappeared after release");
+    manager.mMouseHoverEnabled=true;
+    selector.UpdateTooltip();Require(selector.mToolTip->mVisible,"Mouse trophy hover stopped working");
+    Require(manager.mLastMouseX==90&&manager.mLastMouseY==350,"Touch trophy interaction changed mouse coordinates");
+    std::cout<<"PASS selector trophy tooltip: tap-to-pin, release retention, outside dismissal, no drag-in, mouse coexistence and main-page offset\n";
 }
 
 void AlmanacRulesRuntime(TestApp& app, bool clockOnly=false)
@@ -7846,7 +7961,7 @@ void StorePauseClockRuntime(TestApp& app, DecodeOnlySoundManager& sounds)
     if(gHiddenRulesOnly) {HiddenRulesRuntime(app,sounds);return;}
     if(gGardenRulesOnly) {GardenRulesRuntime(app);return;}
     if(gIntroRulesOnly) {IntroRulesRuntime(app,sounds);return;}
-    if(gUiRulesOnly) {AlmanacRulesRuntime(app);AwardRulesRuntime(app);return;}
+    if(gUiRulesOnly) {ChallengeUnlockRulesRuntime(app);SelectorTrophyTouchRuntime(app);AlmanacRulesRuntime(app);AwardRulesRuntime(app);return;}
     if(gAwardRulesOnly) {AwardRulesRuntime(app);return;}
     if(gAlmanacClockOnly) {AlmanacRulesRuntime(app,true);return;}
     if(gActorBirthOnly) {ActorBirthClockRuntime(app);return;}

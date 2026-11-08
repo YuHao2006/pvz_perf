@@ -73,6 +73,9 @@ target_link_options(pvz-perf PRIVATE -Oz -flto -fexceptions -sUSE_SDL=2 -sUSE_ZL
     -sSTACK_SIZE=4194304 -sASYNCIFY=1 -sASYNCIFY_STACK_SIZE=131072 -sEXIT_RUNTIME=0
     "-sEXPORTED_RUNTIME_METHODS=['FS','IDBFS','callMain','addRunDependency','removeRunDependency']" -sINVOKE_RUN=0 -lidbfs.js
     "--preload-file=${PVZ_WEB_PAK}@/main.pak64")
+# --preload-file is a linker argument, not an inferred Ninja input.
+# Rebuild the data archive whenever the resource package changes.
+set_property(TARGET pvz-perf APPEND PROPERTY LINK_DEPENDS "${PVZ_WEB_PAK}")
 if(PVZ_WEB_MEMORY64)
     target_compile_options(pvz-perf PRIVATE -sMEMORY64=1)
     target_link_options(pvz-perf PRIVATE -sMEMORY64=1)

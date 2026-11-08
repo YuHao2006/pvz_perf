@@ -237,10 +237,11 @@ async function fixLocalLevelSaves(){
  for(const name of fs.readdir(saveRoot)){
   const match=/^game[1-9]\d*_(\d+)\.dat64$/.exec(name);
   if(!match)continue;
+  const header=new Uint8Array(48),stream=fs.open(saveRoot+'/'+name,'r');let count;
+  try{count=fs.read(stream,header,0,header.length,0)}finally{fs.close(stream)}
+  if(count<48||new TextDecoder().decode(header.subarray(0,8))!=='PVZDAT64')continue;
+  if(new DataView(header.buffer).getUint32(8,true)!==4)continue;
   const bytes=fs.readFile(saveRoot+'/'+name);
-  if(bytes.length<48||new TextDecoder().decode(bytes.subarray(0,8))!=='PVZDAT64')continue;
-  const version=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength).getUint32(8,true);
-  if(version!==4&&version!==5)continue;
   let result;
   try{result=await runSaveTool({op:'dfu',mode:Number(match[1])},bytes)}
   catch(error){throw Error('DFU 处理失败：'+name+'；'+error.message)}
@@ -294,35 +295,6 @@ import('./save-editor-host.js').then(({connectSaveEditor})=>connectSaveEditor({
  library:()=>lineupStorage.library,onLineupsChanged:saveLineups,
  status:message=>{rewardStatus.textContent=message}
 })).catch(showError);
-const repairSelect=document.getElementById('plant-repair-save'),repairButton=document.getElementById('plant-repair'),repairStatus=document.getElementById('plant-repair-status');
-function refreshRepairSaves(){
- if(!runtimeReady||running)return;
- const previous=repairSelect.value,names=Module.FS.readdir(saveRoot).filter(name=>/^game[1-9]\d*_\d+\.dat64$/.test(name)).sort();
- repairSelect.replaceChildren(...names.map(name=>new Option(name,name)));
- if(names.includes(previous))repairSelect.value=previous;
- repairButton.disabled=!names.length||rewardBusy;
-}
-document.getElementById('advanced-settings').addEventListener('toggle',refreshRepairSaves);
-repairButton.onclick=async()=>{
- if(!runtimeReady||running||rewardBusy)return;
- const name=repairSelect.value;if(!/^game[1-9]\d*_\d+\.dat64$/.test(name))return;
- rewardBusy=true;start.disabled=true;repairButton.disabled=true;
- try{
-  const source=Module.FS.readFile(saveRoot+'/'+name).slice(),tools=await saveToolsReady;
-  repairStatus.textContent='正在检查，请稍候…';
-  const result=await tools.runSaveTool({op:'repair-plant-attacks',mode:Number(name.match(/_(\d+)\.dat64$/)[1])},source,Module.FS.readFile(saveRoot+'/user'+name.match(/^game(\d+)_/)[1]+'.dat64'));
-  const repairs=result.metadata.repairs||[];
-  if(!repairs.length){repairStatus.textContent='未发现已知的玉米加农炮零计时卡死状态，未修改存档。';return}
-  tools.downloadSave(source,name.replace('.dat64','.before-repair.dat64'));
-  if(!confirm('发现 '+repairs.length+' 处已知卡死状态。已下载原档备份，是否将修复结果写回浏览器？取消则只下载修复副本。')){
-   tools.downloadSave(result.bytes,name);repairStatus.textContent='已下载修复副本，浏览器中的原档未改动。';return;
-  }
-  try{Module.FS.writeFile(saveRoot+'/'+name,result.bytes);await syncSaves()}
-  catch(error){Module.FS.writeFile(saveRoot+'/'+name,source);await syncSaves().catch(()=>{});throw error}
-  repairStatus.textContent='已修复 '+repairs.length+' 处卡死状态并保存。';
- }catch(error){repairStatus.textContent='修复失败：'+(error.message||error)}
- finally{rewardBusy=false;start.disabled=!runtimeReady;refreshRepairSaves()}
-};
 async function progressAction(operation){
  if(!runtimeReady||running||rewardBusy)return;
  rewardBusy=true;start.disabled=true;
@@ -368,7 +340,7 @@ async function returnToSettings(){
  document.getElementById('graphics-backend').disabled=document.getElementById('graphics-backend').options.length<2;
  document.getElementById('memory-model').disabled=document.getElementById('memory-model').options.length<2;
  document.getElementById('upload-progress').disabled=document.getElementById('restore-progress').disabled=webConfig.bypassBilibiliChecks;
- statusText.textContent='准备就绪';startupPhase='设置页面';start.disabled=false;refreshRepairSaves();scheduleResize();
+ statusText.textContent='准备就绪';startupPhase='设置页面';start.disabled=false;scheduleResize();
 }
 canvas.addEventListener('webglcontextcreationerror',event=>{Module.pvzWebGLCreationError=event.statusMessage||'浏览器未提供创建失败的详情'});
 canvas.addEventListener('webglcontextlost',event=>{event.preventDefault();showError('WebGL 图形上下文丢失，浏览器已停止绘制。请重新加载。')});
@@ -379,7 +351,7 @@ var Module={canvas,locateFile:name=>'./'+name,pvzRefreshRate:60,pvzMobileInput:m
  print:message=>console.log(message),printErr:message=>console.error(message),onAbort:showError,pvzOnError:showError,
  monitorRunDependencies:left=>{statusText.textContent=left?'正在准备资源与存档…':'加载完成';startupPhase=statusText.textContent},
  preRun:[function(){Module.FS.mkdir('/persist');Module.FS.mount(Module.IDBFS,{autoPersist:false},'/persist');Module.addRunDependency('savedata');preparePersistentFiles().catch(error=>{Module.pvzStorageError=true;showError('存档准备失败，未清除原有存档：'+error.message)}).finally(()=>Module.removeRunDependency('savedata'))}],
- onRuntimeInitialized:()=>{runtimeReady=!Module.pvzStorageError;if(!formEdited)fillPreferences({...readPreferences(),...loadNativeSettings()});document.getElementById('progress').hidden=true;statusText.textContent='准备就绪';start.disabled=!runtimeReady||!Module.pvzMusic;document.getElementById('upload-progress').disabled=document.getElementById('restore-progress').disabled=webConfig.bypassBilibiliChecks||!runtimeReady;refreshRepairSaves();scheduleResize()}
+ onRuntimeInitialized:()=>{runtimeReady=!Module.pvzStorageError;if(!formEdited)fillPreferences({...readPreferences(),...loadNativeSettings()});document.getElementById('progress').hidden=true;statusText.textContent='准备就绪';start.disabled=!runtimeReady||!Module.pvzMusic;document.getElementById('upload-progress').disabled=document.getElementById('restore-progress').disabled=webConfig.bypassBilibiliChecks||!runtimeReady;scheduleResize()}
 };
 fillPreferences(readPreferences());
 form.addEventListener('input',()=>{formEdited=true;updateControls()});form.addEventListener('change',()=>{formEdited=true;updateControls()});
@@ -399,6 +371,7 @@ form.addEventListener('submit',async event=>{
   await startupDeadline(Promise.all([audio,textInputReady,full]),'初始化音频与输入');
   document.documentElement.classList.add('playing');document.body.classList.add('playing');window.scrollTo(0,0);fitCanvas();
   await startupDeadline(saveSettings(p),'保存启动设置');
+  try{await fixLocalLevelSaves()}finally{(await saveToolsReady).releaseSaveTools()}
   running=true;lastWidth=Module.pvzViewport.width;stage.classList.add('running');
   for(const input of form.elements)input.disabled=true;
   fitCanvas();canvas.focus();startFps();setStartupPhase('初始化窗口与图形');

@@ -1,7 +1,7 @@
 {
   "tool": "DataFixerUpper",
   "version": "0.3.0-dfu-v5.1",
-  "source_commit": "68267438e4d3beabc2a4c0e6a8029b1bc1f1cb78",
+  "source_commit": "753819cb73467e4cd2db56831664b7ccf3d46ebf",
   "source_url": "https://github.com/YuHao2006/PvzDevTools",
   "abi": "arm64-v8a",
   "minimumAndroidApi": 24,
@@ -10,7 +10,7 @@
   "exportedApi": "pvz_dfu_process_v1",
   "file": {
     "path": "libpvz_dfu.so",
-    "bytes": 1154096,
-    "sha256": "95cfd81616c4f5e4ee70a57c53274069545abbb539cd45f8c0e5d0341e4e569b"
+    "bytes": 1154144,
+    "sha256": "5832d6c79f0d10d4f32addbd222cc5d43c5a15ade07168cd8b145c5fd80da4b3"
   }
 }

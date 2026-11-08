@@ -36,15 +36,8 @@ try{
  },files);
  assert.ok(result.repairs.length>0);assert.equal(result.second.length,0);assert.equal(result.unchanged,true);assert.equal(result.phase,-1);
  console.log('PASS isolated repair: real reported corrupt save, idempotence, valid output, original preserved; '+JSON.stringify(result));
- await page.locator('#advanced-settings').evaluate(e=>e.open=true);await page.locator('#plant-repair-save option[value="game1_0.dat64"]').waitFor({state:'attached'});
- assert.equal(await page.locator('#plant-repair').isEnabled(),true);
- await page.locator('#plant-repair-save').selectOption('game1_0.dat64');
- const downloads=[];page.on('download',d=>downloads.push(d.suggestedFilename()));
- page.once('dialog',d=>d.dismiss());await page.locator('#plant-repair').click();
- await page.waitForFunction(()=>document.getElementById('plant-repair-status').textContent.includes('已下载修复副本'),null,{timeout:180000});
- await assert.doesNotReject(async()=>{for(let i=0;i<50&&downloads.length<2;i++)await new Promise(r=>setTimeout(r,20));assert.deepEqual(downloads.sort(),['game1_0.before-repair.dat64','game1_0.dat64'])});
- assert.deepEqual(await page.evaluate(()=>Array.from(Module.FS.readFile('/persist/development-v4/game1_0.dat64'))),files['game1_0.dat64']);
- console.log('PASS advanced repair UI: original backup + repaired download, declined deployment preserves original');
+ assert.equal(await page.locator('#plant-repair-settings,#plant-repair,#plant-repair-save').count(),0);
+ console.log('PASS manual repair UI removed; historical files use automatic standalone DFU before launch');
 
  await page.locator('#start').click();await page.waitForFunction(()=>Module.FS.analyzePath('/persist/development-v4/settings.json').exists&&JSON.parse(Module.FS.readFile('/persist/development-v4/settings.json',{encoding:'utf8'})).unlockAllLevels===true||!document.getElementById('error').hidden,null,{timeout:120000});
  assert.equal(await page.locator('#error').isVisible(),false,await page.locator('#error').textContent());

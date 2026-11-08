@@ -35,6 +35,7 @@ int main()
     APP(mHWnd);
     APP(mActive);
     APP(mHasFocus);
+    APP(mScreenBounds);
 #undef APP
     std::printf(",\"board\":{\"paused\":%zu,\"counter\":%zu,\"wave\":%zu,"
                 "\"waves\":%zu,\"sun\":%zu},\"selector\":{\"options\":%zu,"

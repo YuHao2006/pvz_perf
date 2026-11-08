@@ -6,7 +6,7 @@
 #include "Lawn/Board.h"
 #include "Lawn/BoardTouch.h"
 #include "Lawn/Challenge.h"
-#include "Lawn/CutScene.h"
+#include "Lawn/Cutscene.h"
 #include "Lawn/SeedPacket.h"
 #include "LawnApp.h"
 #include "Lawn/CursorObject.h"

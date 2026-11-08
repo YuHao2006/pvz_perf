@@ -61,7 +61,7 @@ for(const button of document.querySelectorAll('#cloud-restore-dialog button'))bu
 const mobileUA=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 const mobileInput=mobileUA||
  (navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1)||matchMedia('(pointer:coarse)').matches;
-const saveRoot='/persist/development-v4';
+const saveRoot='/persist/development-v331';
 const storageKey='pvz_perf_web_launcher_v1';
 // Distribution policy is read once, outside the game loop and user preferences.
 const webConfig=window.PVZWebConfig;

@@ -44,7 +44,7 @@ function Invoke-Case([string]$Kind,[string]$Executable,[string]$Directory,[strin
     if (Test-Path $taskSave) { Copy-Item -LiteralPath $taskSave -Destination (Join-Path $taskCase ('previous-'+[IO.Path]::GetFileName($taskSave))) }
     if ($Kind -eq 'modern-240') {
         $taskConverted = Join-Path $taskCase 'canonical.dat64'
-        & $taskConverter $taskSource $taskConverted --target dat64-v4
+        & $taskConverter $taskSource $taskConverted --target dat64-v5
         if ($LASTEXITCODE) { throw 'Canonical current-save conversion failed.' }
         Copy-Item -LiteralPath $taskConverted -Destination $taskSave -Force
         $taskSettingsPath = Join-Path $taskRelease 'settings.json'

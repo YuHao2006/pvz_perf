@@ -1,4 +1,5 @@
-﻿#include "ReanimClock.h"
+#include "SexyAppFramework/platform/ApplicationHost.h"
+#include "ReanimClock.h"
 #include "Music.h"
 #include "SaveGame.h"
 #include "LevelSaveFormat.h"
@@ -1159,6 +1160,26 @@ bool LawnLoadGame(Board* theBoard, const std::string& theFilePath)
 		return false;
 	}
 
+    // Inspect only the file header. The converter is platform-owned and never
+    // sees live game objects. Desktop/Web leave historical files untouched.
+    const std::span file(aFileBuffer.GetDataPtr(), static_cast<std::size_t>(aFileBuffer.GetDataLen()));
+    if (LevelSaveFormat::IsSupportedDat64Header(file) && file[8] == 4)
+    {
+        try
+        {
+            if (Sexy::HostUpgradeLevelSaveFile(theFilePath))
+            {
+                aFileBuffer.Clear();
+                if (!gSexyAppBase->ReadBufferFromFile(theFilePath, &aFileBuffer, false))
+                    throw std::runtime_error("Cannot read upgraded save: " + theFilePath);
+            }
+        }
+        catch (const std::exception& error)
+        {
+            // TryLoadGame must detach the unfinished Board before shutdown can save.
+            throw SaveGameUpgradeRequired(error.what());
+        }
+    }
 	return LoadDat64FromBuffer(theBoard, aFileBuffer, theFilePath);
 }
 

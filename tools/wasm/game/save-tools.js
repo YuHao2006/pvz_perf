@@ -1,4 +1,5 @@
-import {runIndependentSaveTool} from './save-tool-client.js';
+import {runIndependentSaveTool,releaseIndependentSaveTool} from './save-tool-client.js';
+export {releaseIndependentSaveTool as releaseSaveTools};
 let cached;
 async function fetchResource(input,options){
  const base=new URL('./',document.baseURI).href;

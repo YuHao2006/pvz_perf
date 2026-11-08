@@ -48,6 +48,7 @@ void HostFinishResourcePrewarm(SexyAppBase&, const std::atomic<bool>&) {
     ReanimatorUploadAllTexturesToGPU();
     TodWarmMarkSweepClean();
 }
+bool HostUpgradeLevelSaveFile(const std::string&) { return false; }
 MusicInterface* HostCreateMusic(bool disabled, NativeWindowHandle window) {
     if(disabled)return new DummyMusicInterface;
     return new BassMusicInterface(window);

@@ -1,6 +1,6 @@
 {
   "format": "pvz-devtools-binaries-v1",
-  "version": "0.1.3",
+  "version": "0.2.0-dfu-v5.1",
   "platform": "windows-x64",
   "files": [
     {
@@ -42,14 +42,6 @@
       "path": "ortools.dll",
       "bytes": 34522112,
       "sha256": "5bf97be28319711d5262d04e97bdb15af3a0e5e9b6babf67e6c0a042d019e46f"
-    },
-    {
-      "path": "pvz_dat64_converter.exe",
-      "bytes": 556032,
-      "sha256": "19624c0c3bdab85733bc26288cc17c9e7e2250a4bd0bd14b023d9e232e0bd575",
-      "version": "0.2.0-v5beta2",
-      "source_commit": "c6281330efffb75cc9f555c36ae1a68dece42399",
-      "development": true
     },
     {
       "path": "pvz-resource-build.exe",
@@ -130,8 +122,18 @@
       "path": "zlib1.dll",
       "bytes": 90624,
       "sha256": "bb69e0be9857093ba4f3b30f49fc720fe1f295c5cc0cb4030035c57906d0f7c3"
+    },
+    {
+      "path": "pvz_dat64_converter.exe",
+      "bytes": 173056,
+      "sha256": "78c33fe05d562a57f76e170463ef709de24444b580268528d1f53188f29c1dc5"
+    },
+    {
+      "path": "pvz_dfu.dll",
+      "bytes": 566272,
+      "sha256": "03b73aa4f119706043ffee7ecd414676ec398033ce0cd97ca07f106a5b1e2103"
     }
   ],
-  "source_commit": "480b1272b5fcaa32a378bb1dcd05c8be8b331edb",
+  "source_commit": "68267438e4d3beabc2a4c0e6a8029b1bc1f1cb78",
   "resource_builder_source_commit": "57bcd3f7670dfbe2c6fe4763f6ae31050d68cd47"
 }

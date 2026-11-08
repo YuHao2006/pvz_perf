@@ -506,6 +506,18 @@ void CheckEpochClockProjection()
 void CheckMusicFloatSave()
 {
     static_assert(LevelSaveFormat::DAT64_VERSION == 5 && LevelSaveFormat::DAT64_MINOR_VERSION == 1);
+    // Desktop recognizes historical v4 as an upgrade case, never as a corrupt
+    // or current-format record. Android DFU is outside this header contract.
+    {
+        std::array<std::uint8_t,48> old{};
+        std::copy(LevelSaveFormat::DAT64_MAGIC.begin(),LevelSaveFormat::DAT64_MAGIC.end(),old.begin());
+        const auto put=[&](int at,unsigned value){for(int i=0;i<4;++i)old[at+i]=static_cast<std::uint8_t>(value>>(i*8));};
+        put(8,4);put(12,48);put(16,1073);put(20,3);put(36,0x10745);
+        Require(LevelSaveFormat::IsSupportedDat64Header(old), "Historical v4 was not recognized");
+        Require(!LevelSaveFormat::IsCurrentDat64Header(old), "Historical v4 was accepted as current");
+        put(36,0x10744);
+        Require(!LevelSaveFormat::IsSupportedDat64Header(old), "Unknown v4 schema was accepted");
+    }
     static_assert(std::is_same_v<decltype(Music::mBaseBPM), float>);
     static_assert(std::is_same_v<decltype(Music::mBaseModSpeed), float>);
     static_assert(std::is_trivially_copyable_v<Music>);

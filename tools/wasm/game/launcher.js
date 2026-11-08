@@ -18,6 +18,8 @@ const diagnosticsReady=import('./diagnostics.js').then(({createDiagnostics})=>{
   readState:()=>{
    const audio=Module?.pvzMusic,context=audio?.context;
    return {phase:startupPhase,backend:Module?.pvzSelectedBackend,running,hidden:document.hidden,
+    visibilityState:document.visibilityState,focused:document.hasFocus(),
+    wallTimeMs:Date.now(),monotonicMs:performance.now(),
     wasmBytes:Module?.pvzMemory?.buffer.byteLength??null,
     // Optional Chromium heap metric, not portable and not process RSS.
     jsHeapBytes:performance.memory?.usedJSHeapSize??null,
@@ -25,7 +27,7 @@ const diagnosticsReady=import('./diagnostics.js').then(({createDiagnostics})=>{
     canvas:[canvas.width,canvas.height],audio:{backend:audio?.backend,state:context?.state,time:context?.currentTime,
      sampleRate:context?.sampleRate,baseLatency:context?.baseLatency,outputLatency:context?.outputLatency,
      buffers:audio?.sound?.sources.size,channels:audio?.sound?.channels.size,voices:audio?.voices.size}};
-  },schedule:fn=>setInterval(()=>{if(!document.hidden)fn()},10000)});
+  }});
  const checkbox=document.getElementById('diagnostics-enabled');checkbox.checked=diagnostics.enabled;
  if(window.PVZWebConfig?.diagnosticsDefault){document.getElementById('advanced-settings').open=true;document.getElementById('diagnostics-label').textContent='记录运行诊断（此诊断包默认开启）'}
  checkbox.onchange=()=>{diagnostics.setEnabled(checkbox.checked);if(checkbox.checked&&running)diagnostics.start()};
@@ -46,8 +48,12 @@ document.getElementById('diagnostics-download').onclick=async()=>{
  if(navigator.canShare?.({files:[file]})){try{await navigator.share({files:[file]});return}catch(error){if(error.name==='AbortError')return}}
  const url=URL.createObjectURL(file),link=document.createElement('a');link.href=url;link.download=file.name;document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),30000);
 };
-window.addEventListener('pagehide',()=>diagnostics?.pagehide());
-window.addEventListener('pageshow',event=>{if(event.persisted&&running)diagnostics?.start()});
+window.addEventListener('pagehide',event=>diagnostics?.pagehide(JSON.stringify({persisted:event.persisted,trusted:event.isTrusted})));
+window.addEventListener('pageshow',event=>{
+ diagnostics?.lifecycle('pageshow',JSON.stringify({persisted:event.persisted,trusted:event.isTrusted}));
+ if(running&&!document.hidden){Module._pvz_web_focus?.(1);Module.pvzMusic?.resumeIfInterrupted()}
+});
+for(const type of ['freeze','resume'])document.addEventListener(type,event=>diagnostics?.lifecycle(type,JSON.stringify({trusted:event.isTrusted})));
 function cloudUploadState(active){cloudUploads+=active?1:-1;document.getElementById('cloud-upload-warning').hidden=cloudUploads===0}
 function lineupStatus(message){document.getElementById('lineup-cloud-status').textContent=message}
 function saveLineups(){lineupStorage.save().catch(error=>lineupStatus('阵型库云同步未完成：'+error.message+'；本地阵型已保留'))}
@@ -187,9 +193,9 @@ for(const type of ['pointerdown','pointermove','pointerup','pointercancel'])canv
  e.preventDefault();
 });
 canvas.addEventListener('lostpointercapture',e=>cancelPointer(e.pointerId));
-window.addEventListener('blur',()=>{cancelPointers();Module._pvz_web_focus?.(0)});
-window.addEventListener('focus',()=>{if(!document.hidden){Module._pvz_web_focus?.(1);if(running)Module.pvzMusic?.resumeIfInterrupted()}});
-document.addEventListener('visibilitychange',()=>{if(document.hidden)cancelPointers();else if(running)Module.pvzMusic?.resumeIfInterrupted();Module._pvz_web_focus?.(document.hidden?0:1)});
+window.addEventListener('blur',event=>{diagnostics?.lifecycle('blur',JSON.stringify({trusted:event.isTrusted}));cancelPointers();Module._pvz_web_focus?.(0)});
+window.addEventListener('focus',event=>{diagnostics?.lifecycle('focus',JSON.stringify({trusted:event.isTrusted}));if(!document.hidden){Module._pvz_web_focus?.(1);if(running)Module.pvzMusic?.resumeIfInterrupted()}});
+document.addEventListener('visibilitychange',event=>{diagnostics?.lifecycle('visibilitychange',JSON.stringify({trusted:event.isTrusted}));if(document.hidden)cancelPointers();else if(running)Module.pvzMusic?.resumeIfInterrupted();Module._pvz_web_focus?.(document.hidden?0:1)});
 window.addEventListener('keydown',()=>{if(running)Module.pvzMusic?.resumeIfInterrupted()});
 for(const type of ['mousedown','mousemove','mouseup','touchstart','touchmove','touchend','touchcancel'])
  canvas.addEventListener(type,e=>{if(running){e.preventDefault();e.stopImmediatePropagation()}},{capture:true,passive:false});

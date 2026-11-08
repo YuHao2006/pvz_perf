@@ -286,7 +286,7 @@ int main(int argc, char** argv)
             for (unsigned i = 0; i < fps * 5; ++i)
             {
                 app.mApplicationTimeNs += static_cast<std::int64_t>(Sexy::gUpdateIntervalNs);
-                music.MusicUpdate(app.mApplicationTimeNs);
+                music.MusicUpdate(app.mApplicationTimeNs, Sexy::gUpdateIntervalNs);
             }
             Require(music.mMusicBurstState == MUSIC_BURST_ON, "Production night crossfade stalled");
             Require(Gain(playback, MUSIC_FILE_MAIN_MUSIC) == 0 &&
@@ -319,7 +319,7 @@ int main(int argc, char** argv)
             Require(music.mPaused && !playback.IsPlaying(MUSIC_FILE_DRUMS),
                 "Production pause did not stop the climax");
             music.GameMusicPause(false);
-            music.MusicUpdate(app.mApplicationTimeNs);
+            music.MusicUpdate(app.mApplicationTimeNs, 0);
             Require(!music.mPaused && playback.IsPlaying(MUSIC_FILE_DRUMS) &&
                 Gain(playback, MUSIC_FILE_DRUMS) == 1, "Production resume lost the climax");
             std::cout << "PASS production Music/BassMusicInterface: night setup, seek, gains, clock, pause/resume at "

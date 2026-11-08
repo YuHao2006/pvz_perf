@@ -82,10 +82,10 @@ inline constexpr Field ZOMBIE_FIELDS[] = {
 };
 inline constexpr Field PLANT_FIELDS[] = {
     DAT64_TIME(Plant, 0x2c, mAnimCounter), DAT64_TIME(Plant, 0x34, mFramePeriodNs),
-    DAT64_TIME(Plant, 0x4c, mDisappearCountdown), DAT64_TIME(Plant, 0x50, mDoSpecialCountdown),
+    DAT64_TIME(Plant, 0x4c, mDisappearCountdown), DAT64_TIME(Plant, 0x50, mSpecialEndTimeNs),
     DAT64_TIME(Plant, 0x54, mStateCountdown), DAT64_TIME(Plant, 0x58, mLaunchCounter),
     DAT64_TIME(Plant, 0x5c, mLaunchPeriodNs), DAT64_TIME(Plant, 0x90, mShootingCounter),
-    DAT64_TIME(Plant, 0xb0, mBlinkCountdown), DAT64_TIME(Plant, 0xb4, mRecentlyEatenCountdown),
+    DAT64_TIME(Plant, 0xb0, mNextBlinkTimeNs), DAT64_TIME(Plant, 0xb4, mRecentlyEatenCountdown),
     DAT64_TIME(Plant, 0xb8, mEatenFlashCountdown), DAT64_TIME(Plant, 0xbc, mBeghouledFlashCountdown),
     DAT64_TIME(Plant, 0x130, mWakeUpCounter)
 };

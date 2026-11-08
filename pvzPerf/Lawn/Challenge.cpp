@@ -4715,7 +4715,7 @@ void Challenge::IZombieSetupPlant(Plant* thePlant)
 		thePlant->mState = STATE_POTATO_ARMED;
 	}
 
-	thePlant->mBlinkCountdown = 0;
+	thePlant->mNextBlinkTimeNs = 0;
 	thePlant->UpdateReanim(static_cast<std::int64_t>(mBoard->mLevelTimeNs), animationNowNs);
 }
 

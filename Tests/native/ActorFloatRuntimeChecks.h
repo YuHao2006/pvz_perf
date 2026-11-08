@@ -175,7 +175,7 @@ inline void StinkyGardenReentry(LawnApp& app, Board& board)
         "Stinky failed to restore a valid saved garden position");
     auto* animation = app.ReanimationGet(stinky->mGridItemReanimID);
     Require((*app.mEffectSystem->mReanimationHolder).mTimeDomains[(*app.mEffectSystem->mReanimationHolder).mReanimations.DataArrayIndexOf(animation)] == ReanimTimeDomain::Visual &&
-        animation->mLastUpdateTimeNs == clocks.mVisualTimeNs,
+        (animation->mStartTimeNs + animation->mFrameAgeNs) == clocks.mVisualTimeNs,
         "Stinky creation used the reset Board clock instead of nonzero visual time");
     stinky->mGoalX = 200;
     stinky->mGoalY = 300;
@@ -185,11 +185,11 @@ inline void StinkyGardenReentry(LawnApp& app, Board& board)
         clocks.mVisualTimeNs += delta;
         // Execute the actual owner/EffectSystem/GridItem order with a reset level clock.
         garden.StinkyUpdate(stinky);
-        Require(animation->mLastUpdateTimeNs == clocks.mVisualTimeNs,
+        Require((animation->mStartTimeNs + animation->mFrameAgeNs) == clocks.mVisualTimeNs,
             "Stinky owner did not prepare the supplied visual instant before root motion");
         app.mEffectSystem->UpdateAt(clocks.mVisualTimeNs, 0);
         stinky->Update();
-        Require(animation->mLastUpdateTimeNs == clocks.mVisualTimeNs &&
+        Require((animation->mStartTimeNs + animation->mFrameAgeNs) == clocks.mVisualTimeNs &&
             (*app.mEffectSystem->mReanimationHolder).mTimeDomains[(*app.mEffectSystem->mReanimationHolder).mReanimations.DataArrayIndexOf(animation)] == ReanimTimeDomain::Visual && !animation->mDead &&
             stinky->mPosX <= initialX && stinky->mPosX >= stinky->mGoalX,
             "GridItem rewound Stinky onto Board time or its source root escaped the goal segment");
@@ -212,13 +212,13 @@ inline void StinkyGardenReentry(LawnApp& app, Board& board)
         stinky = garden.GetStinky();
         animation = app.ReanimationGet(stinky->mGridItemReanimID);
         Require(stinky->mPosX == savedX && stinky->mPosY == savedY &&
-            animation->mLastUpdateTimeNs == clocks.mVisualTimeNs &&
+            (animation->mStartTimeNs + animation->mFrameAgeNs) == clocks.mVisualTimeNs &&
             (*app.mEffectSystem->mReanimationHolder).mTimeDomains[(*app.mEffectSystem->mReanimationHolder).mReanimations.DataArrayIndexOf(animation)] == ReanimTimeDomain::Visual &&
             stinky->mRootReanimID == ReanimationID::REANIMATIONID_NULL,
             "New-board garden re-entry lost saved coordinates or retained an old root binding");
         garden.StinkyUpdate(stinky);
         stinky->Update();
-        Require(!animation->mDead && animation->mLastUpdateTimeNs == clocks.mVisualTimeNs &&
+        Require(!animation->mDead && (animation->mStartTimeNs + animation->mFrameAgeNs) == clocks.mVisualTimeNs &&
             stinky->mPosX == savedX && stinky->mPosY == savedY,
             "First re-entry update jumped the saved snail onto an old root/time origin");
         // Ordinary grid owners must still rebase from an intro's Visual domain
@@ -234,7 +234,7 @@ inline void StinkyGardenReentry(LawnApp& app, Board& board)
         ordinary.mGridItemReanimID = app.ReanimationGetID(ordinaryAnim);
         ordinary.Update();
         Require((*app.mEffectSystem->mReanimationHolder).mTimeDomains[(*app.mEffectSystem->mReanimationHolder).mReanimations.DataArrayIndexOf(ordinaryAnim)] == ReanimTimeDomain::Battle &&
-            ordinaryAnim->mLastUpdateTimeNs == 0 &&
+            (ordinaryAnim->mStartTimeNs + ordinaryAnim->mFrameAgeNs) == 0 &&
             ordinaryAnim->SamplePlayback().phaseNs == ordinaryPhase,
             "Ordinary grid item failed its Visual-intro to Battle owner clock transition");
         ordinary.GridItemDie();
@@ -315,14 +315,14 @@ inline void TreeOfWisdomEntryPose(LawnApp& app, Board& board)
         auto* tree=app.ReanimationGet(challenge.mReanimChallenge);
         const auto entry=tree->SamplePlayback().phaseNs;
         Require(entry==ReanimClock::SignedMulDiv(990,tree->mPeriodNs,1000) &&
-            tree->mLastUpdateTimeNs==clocks.mVisualTimeNs &&
+            (tree->mStartTimeNs + tree->mFrameAgeNs)==clocks.mVisualTimeNs &&
             (*app.mEffectSystem->mReanimationHolder).mTimeDomains[(*app.mEffectSystem->mReanimationHolder).mReanimations.DataArrayIndexOf(tree)]==ReanimTimeDomain::Visual,
             "Tree entry replayed growth instead of selecting the original completed pose");
         app.mGameScene=SCENE_PLAYING;
         board.mLevelTimeNs=10'000'000;
         challenge.Update(10'000'000);
         Require((*app.mEffectSystem->mReanimationHolder).mTimeDomains[(*app.mEffectSystem->mReanimationHolder).mReanimations.DataArrayIndexOf(tree)]==ReanimTimeDomain::Battle &&
-            tree->mLastUpdateTimeNs==static_cast<std::int64_t>(board.mLevelTimeNs) &&
+            (tree->mStartTimeNs + tree->mFrameAgeNs)==static_cast<std::int64_t>(board.mLevelTimeNs) &&
             tree->SamplePlayback().phaseNs==entry &&
             profile.mChallengeRecords[record]==height &&
             challenge.mChallengeState==STATECHALLENGE_TREE_WAITING_TO_BABBLE,

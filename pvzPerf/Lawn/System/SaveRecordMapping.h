@@ -209,7 +209,7 @@ template<class T, class Fn> void VisitV7Members(Fn&& visit)
         visit(offsetof(T, mRootDisplacement), 48, 8);
         visit(offsetof(T, mHasLastFrame), 56, 1);
         visit(offsetof(T, mPlaybackGeneration), 60, 4);
-        visit(offsetof(T, mLastUpdateTimeNs), 64, 8);
+        visit(offsetof(T, mFrameAgeNs), 64, 8);
     }
     else if constexpr (std::is_same_v<T, TodParticleSystem>)
     {
@@ -424,11 +424,10 @@ template<class T> std::vector<LegacyByte> WriteSaveRecord(const T& value)
                 ? holder->mTimeDomains[holder->mReanimations.DataArrayIndexOf(&value)]
                 : ReanimTimeDomain::Visual;
             V7SaveSchema::Write(expanded, offset, static_cast<std::uint32_t>(domain), 4);
-            // Preserve the processed pose's timestamp. Ownership metadata can
-            // lag an actor-created replacement until the next manager binding.
-            // Paused animations likewise keep their existing start/last pair.
+            // Store the normalized keyframe remainder. The processed pose's time
+            // is derived from keyframe birth + remainder; no update timestamp.
             V7SaveSchema::Write(expanded, offset + 64,
-                static_cast<std::uint64_t>(value.mLastUpdateTimeNs), 8);
+                static_cast<std::uint64_t>(value.mFrameAgeNs), 8);
         }
     }
     return expanded;
@@ -526,7 +525,9 @@ template<class T> void ReadSaveRecord(T& value, const LegacyByte* source, Reanim
             value.mLoopType == REANIM_PLAY_ONCE_FULL_LAST_FRAME ||
             value.mLoopType == REANIM_PLAY_ONCE_FULL_LAST_FRAME_AND_HOLD;
         const int intervals = std::max(1, fullFrame ? value.mFrameCount : value.mFrameCount - 1);
-        if (value.mPeriodNs / value.mFramePeriodNs != intervals || value.mCurrentFrame > intervals)
+        if (value.mPeriodNs / value.mFramePeriodNs != intervals || value.mCurrentFrame > intervals ||
+            value.mFrameAgeNs < 0 || value.mFrameAgeNs >= value.mFramePeriodNs ||
+            (value.mStartTimeNs > 0 && value.mFrameAgeNs > INT64_MAX - value.mStartTimeNs))
             throw std::runtime_error("saved frame cursor differs from its animation action");
         const bool full = value.mLoopType == REANIM_LOOP_FULL_LAST_FRAME ||
             value.mLoopType == REANIM_PLAY_ONCE_FULL_LAST_FRAME ||

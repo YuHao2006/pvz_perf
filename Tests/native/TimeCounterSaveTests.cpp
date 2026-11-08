@@ -378,8 +378,8 @@ void CheckV4FrameMapping()
         if (native == offsetof(Reanimation, mFramePeriodNs)) {
             Require(wire == 16 && width == 8, "v4 frame duration mapping differs"); ++mapped;
         }
-        if (native == offsetof(Reanimation, mLastUpdateTimeNs)) {
-            Require(wire == 64 && width == 8, "v4 frame clock sample mapping differs"); ++mapped;
+        if (native == offsetof(Reanimation, mFrameAgeNs)) {
+            Require(wire == 64 && width == 8, "v5 keyframe remainder mapping differs"); ++mapped;
         }
     });
     bool crossings = false, displacement = false;
@@ -500,7 +500,7 @@ void CheckEpochClockProjection()
 
 void CheckMusicFloatSave()
 {
-    static_assert(LevelSaveFormat::DAT64_VERSION == 5 && LevelSaveFormat::DAT64_MINOR_VERSION == 0);
+    static_assert(LevelSaveFormat::DAT64_VERSION == 5 && LevelSaveFormat::DAT64_MINOR_VERSION == 1);
     static_assert(std::is_same_v<decltype(Music::mBaseBPM), float>);
     static_assert(std::is_same_v<decltype(Music::mBaseModSpeed), float>);
     static_assert(std::is_trivially_copyable_v<Music>);

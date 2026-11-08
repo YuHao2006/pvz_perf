@@ -1,6 +1,6 @@
 # 纳秒计时字段与 v5 迁移审计
 
-审计起点为 3.3.8（2026-11-08），当前开发分支为 v4.0.0beta1 / DAT64 v5（2026-11-09）。下方清单按批迁移，并不表示全部完成。
+审计起点为 3.3.8（2026-11-08），当前开发分支为 v4.0.0beta2 / DAT64 v5.1（2026-11-09）。下方清单按批迁移，并不表示全部完成。
 
 ## 当前刷新调度
 
@@ -22,7 +22,7 @@
 | Board | `mBoardFadeOutCounter`、`mNextSurvivalStageCounter`、`mScoreNextMowerCounter` | 通关、换轮、小推车计分终点，核对 Board 停止而过场继续的阶段 |
 | Board | `mTutorialTimer` | 教学终点；余额警告和玉米炮输入延迟已迁移 |
 | Board | `mShakeCounter`、`mFwooshCountDown`、`mFlagRaiseCounter`、`mCoinBankFadeCount` | 震动、声效、旗帜、钱袋显示的起点或终点；随机采样仍属于模拟 |
-| Plant | `mStateCountdown`、`mDoSpecialCountdown`、`mBlinkCountdown` | 状态、技能、眨眼终点；睡眠、被压、蹦极抓取会影响推进条件 |
+| Plant | `mStateCountdown` | 状态终点；特殊动作、眨眼已迁移，睡眠、被压、蹦极抓取保留原推进条件 |
 | Plant / ZenGarden | `mZenProductionCountdown` | 产出终点；巧克力期间当前每次更新扣两次，速率切换时保持剩余进度 |
 | Zombie | `mPhaseCounter` | 动作阶段终点；逐阶段核对冻结和 ICE3/ICE4，不能更改事件顺序 |
 | Zombie | `mSummonCounter`、`mBossBungeeCounter`、`mBossStompCounter`、`mBossHeadCounter`、`mGroanCounter` | 召唤、技能、叫声终点，保持原随机调用位置和有效推进时间 |
@@ -79,3 +79,16 @@ v5 在字段迁移完成后冻结，明确每个起点／终点的时间基准�
 - 独立转换器支持原版 1073、v4、v5 相互转换，Web 工具仍为 wasm32，不加载游戏、PAK、图形或音频。v4/v5 同族转换保留文件名、外观尾数据；旧 v4 大波预告由离线转换校正。
 - 初步验证已通过：53 种植物四种调度的攻击/技能目录，620 个出生时钟场景，三项格式/纳秒测试；独立 Web 转换字节对齐、82 个生成用例和编辑器离线测试。追加验证已通过：15 种生存模式 × 五种调度、转换后的 85 株基准阵型在真实游戏里的读写往返、余额警告未来终点和炮输入逾期终点保真、按钮和花园触控回归。
 - 下一轮性能条件：施工期间用户为 LPE14 **25x**；编译完成后用户明确改锁 **11x**，本轮性能采集按 11x 标记。首次测量只评估第一批迁移，不代表 v4 全部迁移完成。
+
+
+## v4 第二批：移除时间戳依赖（2026-11-09）
+
+开发版本 `4.0.0beta2`，DAT64 v5.1 / schema `0x10747`。第一批 beta1 的 v5.0 不与本批混读；原版与 v4 从独立转换器进入当前 v5.1。
+
+- 删除 `Music::mLastUpdateTimeNs`。`MusicUpdate(nowNs, deltaNs)` 由应用管理者传入本次实际推进量；暂停期间只用该量平移高潮/鼓点控制终点。普通音乐淡出仍按应用时刻求值。
+- Plant 的 `mDoSpecialCountdown`、`mBlinkCountdown` 分别改成 `mSpecialEndTimeNs`、`mNextBlinkTimeNs`。到期前没有逐更新写入，触发前消费终点，局部暂停才平移终点。更新函数传递实际 delta，无新增每株时间戳。苏醒发生在本拍内时，保持旧更新顺序，避免多停一拍。寒冰菇/毁灭菇在更新内部进入特殊状态时，保留本拍即开始等待的行为。
+- 删除 `Reanimation::mLastUpdateTimeNs`，改为派生姿态缓存 `mFrameAgeNs`（当前关键帧内部的整数纳秒余数）。相位查询直接复用帧号与余数；关键帧出生时间仍按整帧推进。需要当前姿态采样时刻的冷路径由 `mStartTimeNs + mFrameAgeNs` 得到；变速、跳转、附件绑定不保存额外时间戳。`mLastFrameNs` 保留为上一事件相位，和上一次更新时间不同。
+- 这项 reanim 改造是缓存内容变化，8 字节时间戳换为8字节余数，不能宣称 Reanimation 因此变小。Plant 两个包装各减少8字节；Music 删除一个8字节运行时字段。
+- v5.1 的 reanimation 尾部64偏移保存帧内余数；离线工具的内部模型仍按冻结 v4 契约保存时间戳，在文件边界显式转换。存档校验检查余数非负、小于帧时长、出生时间加余数不溢出。
+- 当前仍未退休的是粒子系统管理者的时钟绑定（`TodParticleSystem::mLastUpdateTimeNs`）及旧计时包装中的前次值；粒子/发射器实例本身仍按出生时刻求年龄。这一批不能表述为整个项目已无前次计时状态。
+- 已完成验证：Music 真实 BASS 路径30/60/100/144/240/1000 FPS、确定性动态音乐测试、Plant 特殊/眨眼的重复时刻/跨越到期/睡眠暂停用例，以及独立 v4-v5.1-v4 字节往返和82个网页生成用例。帧内余数真实回归通过：7722个正放/倒放/停止/跨帧采样、1536个末帧保持/存档样本、620个对象出生场景、53种植物四种调度、15种生存模式五种调度，以及Credits暂停恢复。当前x64实测Plant528字节、Music104字节、Reanimation288字节。

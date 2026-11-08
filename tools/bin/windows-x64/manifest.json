@@ -45,10 +45,10 @@
     },
     {
       "path": "pvz_dat64_converter.exe",
-      "bytes": 551936,
-      "sha256": "7197365ee38a9dfe9004d8b493ee415552f34eaf8c138530aef44bc98f6a0d00",
-      "version": "0.2.0-v5beta1",
-      "source_commit": "0091d2c6aea5fbe856f764d4c9502cbf54b346bd",
+      "bytes": 556032,
+      "sha256": "19624c0c3bdab85733bc26288cc17c9e7e2250a4bd0bd14b023d9e232e0bd575",
+      "version": "0.2.0-v5beta2",
+      "source_commit": "c6281330efffb75cc9f555c36ae1a68dece42399",
       "development": true
     },
     {

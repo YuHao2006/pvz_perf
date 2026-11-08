@@ -41,7 +41,6 @@ Music::Music()
     SetMusicDisabled(mApp->mNoSoundNeeded || !BuildConfig::SupportsModuleMusic);
 	mFadeOutEndTimeNs = 0;
 	mFadeOutDurationNs = 0;
-	mLastUpdateTimeNs = mApp->mApplicationTimeNs;
 }
 
 //0x45A2C0
@@ -754,10 +753,10 @@ void Music::UpdateMusicBurst(std::int64_t nowNs)
 }
 
 //0x45B670
-void Music::MusicUpdate(std::int64_t nowNs)
+void Music::MusicUpdate(std::int64_t nowNs, std::uint64_t deltaNs)
 {
-    const auto elapsedNs = ReanimClock::Subtract(nowNs, mLastUpdateTimeNs);
-    mLastUpdateTimeNs = nowNs;
+    if (deltaNs > INT64_MAX) throw std::overflow_error("music update exceeds clock range");
+    const auto elapsedNs = static_cast<std::int64_t>(deltaNs);
     // The application clock keeps running through a board pause. Burst/drum
     // controller deadlines are translated; the ordinary song fade continues.
     const bool disabled = IsMusicDisabled();

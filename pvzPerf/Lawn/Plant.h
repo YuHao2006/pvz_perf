@@ -154,7 +154,7 @@ public:
     int                     mPlantMaxHealth;                //+0x44
     int                     mSubclass;                      //+0x48
     std::int64_t                     mDisappearEndTimeNs;            //+0x4C
-    Sexy::TimeCounter                     mDoSpecialCountdown;            //+0x50
+    long long                     mSpecialEndTimeNs;            //+0x50
     Sexy::TimeCounter                     mStateCountdown;                //+0x54
     // ZenGarden production duration; mutually exclusive bowling counts impacts
     // in legacy units in this same historical auxiliary slot.
@@ -180,7 +180,7 @@ public:
     ReanimationID           mBlinkReanimID;                 //+0xA4
     ReanimationID           mLightReanimID;                 //+0xA8
     ReanimationID           mSleepingReanimID;              //+0xAC
-    Sexy::TimeCounter                     mBlinkCountdown;                //+0xB0
+    long long                     mNextBlinkTimeNs;                //+0xB0
     std::int64_t                     mRecentlyEatenEndTimeNs;        //+0xB4
     std::int64_t                     mEatenFlashEndTimeNs;           //+0xB8
     std::int64_t                     mBeghouledFlashEndTimeNs;       //+0xBC
@@ -204,7 +204,7 @@ public:
 
     void                    PlantInitialize(std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, int theGridX, int theGridY, SeedType theSeedType, SeedType theImitaterType);
     void                    Update(std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, std::uint64_t theLevelDeltaNs);
-    void                    Animate(std::int64_t ownerNowNs, std::int64_t animationNowNs);
+    void                    Animate(std::int64_t ownerNowNs, std::int64_t animationNowNs, std::uint64_t deltaNs);
     void                    Draw(std::int64_t ownerNowNs, Graphics* g);
     void                    MouseDown(int x, int y, int theClickCount);
     void                    DoSpecial(std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs);
@@ -224,7 +224,7 @@ public:
     static /*inline*/ bool  IsAquatic(SeedType theSeedType);
     static /*inline*/ bool  IsFlying(SeedType theSeedtype);
     static /*inline*/ bool  IsUpgrade(SeedType theSeedtype);
-    void                    UpdateAbilities(std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs);
+    void                    UpdateAbilities(std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, std::uint64_t deltaNs);
     void                    Squish(std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs);
     void                    DoRowAreaDamage(std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, int theDamage, unsigned int theDamageFlags);
     int                     GetDamageRangeFlags(PlantWeapon thePlantWeapon = PlantWeapon::WEAPON_PRIMARY);
@@ -270,7 +270,7 @@ public:
     bool                    FindStarFruitTarget(std::int64_t ownerNowNs);
     void                    UpdateChomper(std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs);
     void                    DoBlink(std::int64_t ownerNowNs, std::int64_t animationNowNs);
-    void                    UpdateBlink(std::int64_t ownerNowNs, std::int64_t animationNowNs);
+    void                    UpdateBlink(std::int64_t ownerNowNs, std::int64_t animationNowNs, std::uint64_t deltaNs);
     void                    PlayBodyReanim(std::int64_t ownerNowNs, ReanimTrackId theTrackId, ReanimLoopType theLoopType, int theBlendTime, float theAnimRate);
     void                    UpdateMagnetShroom(std::int64_t ownerNowNs);
     MagnetItem*             GetFreeMagnetItem();

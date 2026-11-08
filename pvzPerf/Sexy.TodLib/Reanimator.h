@@ -281,7 +281,7 @@ public:
     bool                            mEnableExtraOverlayDraw;
     std::int64_t                    mLastFrameNs;
     double                          mRootDisplacement; // Completed _ground displacement, including mRootFrameScale.
-    std::int64_t                    mLastUpdateTimeNs;
+    std::int64_t                    mFrameAgeNs; // Cached nanosecond remainder inside mCurrentFrame, not an update timestamp.
     bool                            mHasLastFrame;
     bool                            mPendingTiming;
     FilterEffect                    mFilterEffect;

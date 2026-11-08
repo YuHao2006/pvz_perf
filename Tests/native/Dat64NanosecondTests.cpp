@@ -46,7 +46,7 @@ void CheckEditableHeader()
         Set32(file, 36, schema);
         Set32(file, 40, minor);
         Require(IsSupportedDat64Header(file), "Game/converter header rejected a supported version");
-        Require(IsCurrentDat64Header(file) == current, "Runtime must accept only DAT64 v4");
+        Require(IsCurrentDat64Header(file) == current, "Runtime must accept only the current DAT64 schema");
         // Neither the payload nor the former CRC field participates in the header decision.
         Set32(file, 32, 0xdeadbeef);
         file[DAT64_HEADER_SIZE + 3] ^= 0x37;
@@ -75,7 +75,7 @@ void CheckEditableHeader()
                     "Retired v3 development format accepted");
             }
             bad = file;
-            Set32(bad, 40, 1);
+            Set32(bad, 40, DAT64_MINOR_VERSION == 0 ? 1 : 0);
             Require(!IsSupportedDat64Header(bad), "Current particle layout accepted an old minor header");
         }
         bad = file;

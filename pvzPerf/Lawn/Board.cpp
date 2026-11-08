@@ -1558,7 +1558,17 @@ void Board::GetZenButtonRect(GameObjectType theObjectType, Rect& theRect)
 		theRect.mY += TodAnimateCurveNs(500'000'000, 0, mChallenge->mChallengeStateCounter.mNanoseconds, 0, -72, Curves::EaseInOut);
 	if (theObjectType == GameObjectType::OBJECT_TYPE_NEXT_GARDEN)
 	{
-		theRect.mX = frame.left + 564;
+		if (mApp->mGameMode == GameMode::GAMEMODE_TREE_OF_WISDOM)
+		{
+			// Keep both drawing and input beside Menu, clear of the tree height.
+			// The arrow image is drawn two pixels inside its button rectangle.
+			theRect.mWidth = Sexy::IMAGE_ZEN_NEXTGARDEN->mWidth + 2;
+			theRect.mX = GardenHudLayout::RightButtonX(628, frame) - theRect.mWidth;
+		}
+		else
+		{
+			theRect.mX = frame.left + 564;
+		}
 		return;
 	}
 	if (mApp->mGameMode == GameMode::GAMEMODE_TREE_OF_WISDOM)
@@ -8526,6 +8536,7 @@ void Board::DrawZenButtons(Graphics* g)
 		aButtonRect.mX = positions.x[slot];
 		if (aTool == GameObjectType::OBJECT_TYPE_NEXT_GARDEN)
 		{
+			GetZenButtonRect(aTool, aButtonRect);
 			if (!mMenuButton->mBtnNoDraw)
 			{
 				g->DrawImage(Sexy::IMAGE_ZEN_NEXTGARDEN, aButtonRect.mX + 2, aButtonRect.mY);

@@ -8,7 +8,7 @@ export async function prepareMusic(){
  finally{clearTimeout(timer)}
 }
 class MusicEngine {
- constructor(compiled,loadError=''){this.compiled=compiled;this.loadError=loadError;this.voices=new Map();this.next=1;this.error='';this.disabled=false;this.backend='pending';this.flushes=new Map();this.nextFlush=1;this.send=()=>{}}
+ constructor(compiled,loadError=''){this.compiled=compiled;this.loadError=loadError;this.voices=new Map();this.next=1;this.error='';this.disabled=false;this.backend='pending';this.flushes=new Map();this.nextFlush=1;this.syncStalled=false;this.send=()=>{}}
  disableMusic(reason){
   if(this.disabled)return;
   this.disabled=true;this.error=String(reason?.message||reason);this.backend='BGM disabled';this.send=()=>{};
@@ -36,6 +36,7 @@ class MusicEngine {
   const resumed=context.resume();resumed.catch(()=>{});
   this.sound=new SoundEngine(context);this.master=context.createGain();this.master.connect(context.destination);
   const receive=data=>{if(this.disabled)return;if(data.error){this.disableMusic((data.op?'['+data.op+(data.id?' voice '+data.id:'')+'] ':'')+data.error);return}
+   if(data.voices||data.flush)this.syncStalled=false;
    if(data.voices)for(const row of data.voices){const v=this.voices.get(row.id);if(v&&v.revision===row.revision)Object.assign(v,row)}
    if(data.flush){const done=this.flushes.get(data.flush);if(done){this.flushes.delete(data.flush);done(true)}}};
   this.receive=receive;
@@ -71,7 +72,7 @@ class MusicEngine {
   }
  }
  flush(){
-  if(this.disabled||this.context?.state!=='running')return Promise.resolve(false);
+  if(this.disabled||this.syncStalled||this.context?.state!=='running')return Promise.resolve(false);
   if(this.mixer){try{this.receive({voices:this.mixer.positions()});return Promise.resolve(true)}catch(error){this.disableMusic(error);return Promise.resolve(false)}}
   const token=this.nextFlush++,audioTime=this.context.currentTime;
   return new Promise(resolve=>{
@@ -79,7 +80,13 @@ class MusicEngine {
     // A host may suspend/interupt audio while the barrier is in flight. That
     // is an ordinary pause, not evidence that the processor has crashed.
     if(this.context?.state!=='running'){const done=this.flushes.get(token);this.flushes.delete(token);done?.(false);return}
-    this.disableMusic('Music state synchronization timed out (context='+this.context.state+', audio advanced='+Math.round((this.context.currentTime-audioTime)*1000)+'ms)');
+    // A running context is not proof that the host is scheduling its worklet.
+    // Keep the graph/voices: destroying them here turns a temporary host stall
+    // into permanent silence. Use cached state without repeatedly blocking the
+    // game; the next position report or late acknowledgement restores barriers.
+    this.syncStalled=true;
+    const done=this.flushes.get(token);this.flushes.delete(token);done?.(false);
+    console.warn('Music state reply delayed; retaining audio graph (audio advanced='+Math.round((this.context.currentTime-audioTime)*1000)+'ms)');
    },5000);
    this.flushes.set(token,result=>{clearTimeout(timer);resolve(result)});
    try{this.send({op:'flush',token})}catch(error){this.disableMusic(error)}
@@ -139,6 +146,6 @@ class MusicEngine {
   this.sound?.close();for(const id of this.voices.keys())this.command(id,'free');
   if(this.disabled){this.master?.disconnect();this.context?.close().catch(()=>{});this.context=null;this.sound=null;this.backend='pending';this.disabled=false}
   else if(this.context)this.sound=new SoundEngine(this.context);
-  this.error='';this.onWarning?.('');
+  this.syncStalled=false;this.error='';this.onWarning?.('');
  }
 }

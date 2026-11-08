@@ -130,7 +130,7 @@ ChallengeScreen::ChallengeScreen(LawnApp* theApp, ChallengePage thePage)
 	mPageIndex = thePage;
 	mApp = theApp;
 	mClip = false;
-	mCheatEnableChallenges = false;
+	mCheatEnableChallenges = mApp->mUnlockAllLevels;
 	mUnlockState = UNLOCK_OFF;
 	mUnlockChallengeIndex = -1;
 	mUnlockStateCounter = 0;
@@ -286,6 +286,8 @@ int ChallengeScreen::MoreTrophiesNeeded(int theChallengeIndex)
 	ChallengeDefinition& aDef = GetChallengeDefinition(theChallengeIndex);
 	if (aDef.mChallengeMode == GAMEMODE_CUSTOM_LEVEL)
 		return 1;
+	if (mCheatEnableChallenges)
+		return 0;
 	if (false) // GAMEMODE_UPSELL 已删除
 	{
 		return aDef.mChallengeMode == GAMEMODE_MINIGAME_FINAL_BOSS ? 1 : 0;
@@ -389,7 +391,7 @@ int ChallengeScreen::MoreTrophiesNeeded(int theChallengeIndex)
 //0x42E6E0
 bool ChallengeScreen::ShowPageButtons()
 {
-	return mApp->mTodCheatKeys && mPageIndex != CHALLENGE_PAGE_SURVIVAL && mPageIndex != CHALLENGE_PAGE_PUZZLE;
+	return (mCheatEnableChallenges || mApp->mTodCheatKeys) && mPageIndex != CHALLENGE_PAGE_SURVIVAL && mPageIndex != CHALLENGE_PAGE_PUZZLE;
 }
 
 //0x42E710
@@ -420,6 +422,8 @@ void ChallengeScreen::UpdateButtons()
 //0x42E8A0
 int ChallengeScreen::AccomplishmentsNeeded(int theChallengeIndex)
 {
+	if (mCheatEnableChallenges)
+		return MoreTrophiesNeeded(theChallengeIndex);
 	int aTrophiesNeeded = MoreTrophiesNeeded(theChallengeIndex);
 	GameMode aGameMode = GetChallengeDefinition(theChallengeIndex).mChallengeMode;
 	if (mApp->IsSurvivalEndless(aGameMode) && aTrophiesNeeded <= 3 && mApp->GetNumTrophies(CHALLENGE_PAGE_SURVIVAL) < 10 &&

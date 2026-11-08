@@ -5766,7 +5766,7 @@ void Challenge::TreeOfWisdomInit()
 		if (aCloudCounter < 0)
 		{
 			aReanimCloud->Seek(-aCloudCounter, 6000);
-			aReanimCloud->ApplyRate(0.2f);
+			aReanimCloud->ApplyRate(0.4f); // 1073: pool update plus explicit cloud update.
 			mCloudsCounter[i] = 0;
 		}
 		else
@@ -5819,6 +5819,9 @@ void Challenge::TreeOfWisdomFertilize()
 	aTreeFood->mGridY = 0;
 	aTreeFood->mRenderOrder = Board::MakeRenderOrder(RENDER_LAYER_ABOVE_UI, 0, 0);
 	Reanimation* aReanim = mApp->AddReanimation(340.0f, 300.0f, 0, REANIM_TREEOFWISDOM_TREEFOOD, (mBoard && mBoard->AnimationTimeDomain() == ReanimTimeDomain::Battle ? static_cast<std::int64_t>(mBoard->mLevelTimeNs) : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs), (mBoard ? mBoard->AnimationTimeDomain() : ReanimTimeDomain::Visual));
+	// Tree food is a GridItem too: retail advances it in both the effect
+	// pool and GridItem::Update. Encode those two passes in its playback rate.
+	aReanim->ApplyRate(aReanim->mAnimRate * 2.0f);
 	aReanim->ChangeLoopType(REANIM_PLAY_ONCE_AND_HOLD);
 	aTreeFood->mGridItemReanimID = mApp->ReanimationGetID(aReanim);
 	aTreeFood->mGridItemState = GRIDITEM_STATE_ZEN_TOOL_FERTILIZER;
@@ -5982,7 +5985,7 @@ void Challenge::TreeOfWisdomUpdate()
 			{
 				aReanimCloud->mLoopCount = 0;
 				aReanimCloud->Seek(0);
-				aReanimCloud->ApplyRate(0.2f);
+				aReanimCloud->ApplyRate(0.4f); // 1073: pool update plus explicit cloud update.
 			}
 		}
 		else if (aReanimCloud->mLoopCount > 0)

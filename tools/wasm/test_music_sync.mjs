@@ -42,7 +42,7 @@ try{
  engine.command(module,'free');
  console.log('Web BASS position scaler: raw decoder rows, 4x progress, half-pattern entry, row wrap, pause seek and invalid sentinel passed');
 
- for(const mode of ['silent','error','processor-error']){
+ for(const mode of ['error','processor-error']){
   behavior=mode;engine=await prepareMusic();await engine.unlock();const warnings=[];engine.onWarning=message=>warnings.push(message);
   await assert.doesNotReject(async()=>assert.equal(await engine.flush(),false),'Audio failure must not reject the game call');
   assert.equal(engine.disabled,true);assert.equal(engine.flushes.size,0);assert.equal(engine.node,null);assert.equal(warnings.length,1);
@@ -51,6 +51,11 @@ try{
   const stream=engine.loadStream(new Float32Array(8),2,22050);engine.command(stream,'play');engine.context.currentTime=2;assert.equal(engine.command(stream,'position'),176400,'Muted credits must still have a timeline');engine.command(stream,'pause');engine.context.currentTime=3;assert.equal(engine.command(stream,'position'),176400);engine.command(stream,'resume');engine.context.currentTime=4;assert.equal(engine.command(stream,'position'),264600);
   engine.close();assert.equal(engine.context,null);behavior='ack';await engine.unlock();assert.equal(await engine.flush(),true,'A new session may retry audio');
  }
+ behavior='silent';engine=await prepareMusic();await engine.unlock();const retained=engine.node;
+ assert.equal(await engine.flush(),false);assert.equal(engine.disabled,false);assert.equal(engine.node,retained);assert.equal(engine.syncStalled,true);assert.equal(engine.flushes.size,0);
+ const stalledPosts=posts;assert.equal(await engine.flush(),false);assert.equal(posts,stalledPosts,'A delayed worklet must not block each subsequent state query');
+ engine.receive({voices:[]});assert.equal(engine.syncStalled,false);behavior='ack';assert.equal(await engine.flush(),true,'A late worklet report restores synchronization without rebuilding music');
+ behavior='silent';assert.equal(await engine.flush(),false);engine.receive({flush:999999});assert.equal(engine.syncStalled,false,'Late acknowledgements also recover after their waiter expired');
  behavior='ack';engine=await prepareMusic();await engine.unlock();engine.context.state='suspended';const before=posts;assert.equal(await engine.flush(),false);assert.equal(posts,before);assert.equal(engine.disabled,false);await engine.context.resume();assert.equal(await engine.flush(),true);
  behavior='silent';const interrupted=engine.flush();engine.context.state='suspended';assert.equal(await interrupted,false);assert.equal(engine.disabled,false,'Host suspension during a barrier must not permanently disable music');await engine.context.resume();
  behavior='silent';const cancelled=engine.flush();engine.close();assert.equal(await cancelled,false);assert.equal(engine.flushes.size,0);

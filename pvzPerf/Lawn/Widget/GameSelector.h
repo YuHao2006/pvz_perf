@@ -127,7 +127,9 @@ public:
     void                        SyncButtons();
     void                        AddTrophySparkle();
     void                        ClickedAdventure();
+    bool                        mTrophyTouchPinned = false; // UI-only; not serialized.
     void                        UpdateTooltip();
+    void                        TouchBegan(const TouchEvent& event) override;
     /*inline*/ bool             ShouldDoZenTuturialBeforeAdventure();
     void                        AddPreviewProfiles();
     // @Patoke: implement functions

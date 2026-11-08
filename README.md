@@ -2,7 +2,7 @@
 
 基于 [PvZ-Portable](https://github.com/wszqkzqk/PvZ-Portable) 修改，继续优化《植物大战僵尸》的 CPU 热路径、资源装载、图形提交和跨平台输入。游戏行为以零售 1073 为主要核对依据。
 
-**当前发行版：[v3.3.6](https://github.com/YuHao2006/pvz_perf/releases/tag/v3.3.6)，包含四个原生包和网页版。**
+**当前发行版：[v3.3.7](https://github.com/YuHao2006/pvz_perf/releases/tag/v3.3.7)，包含四个原生包和网页版。**
 
 版本号采用三段规则：**第一个数表示破坏性更新，第二个数表示功能更新，第三个数表示 bug 修复**。兼容性以各版发行说明为准。
 
@@ -20,7 +20,7 @@
 
 发行附件同时提供完美用户档、统一无尽基准、图集布局缓存和校验清单。完美档包含坚果包扎术。不要用个人进度覆盖仓库的性能基准。
 
-**v3.x 对旧版本有资源和存档兼容边界：**游戏只直接读取 DAT64 v4／schema `0x10745`。原版 DAT、DAT64 v1/v2 使用附带转换器升级；未发布的 v3 中间格式不支持。程序、shader、PAK64 必须成套更新。见[存档转换](docs/DAT-DAT64-CONVERSION.md)与[发行说明](docs/releases/v3.3.6.md)。
+**v3.x 对旧版本有资源和存档兼容边界：**游戏只直接读取 DAT64 v4／schema `0x10745`。原版 DAT、DAT64 v1/v2 使用附带转换器升级；未发布的 v3 中间格式不支持。程序、shader、PAK64 必须成套更新。见[存档转换](docs/DAT-DAT64-CONVERSION.md)与[发行说明](docs/releases/v3.3.7.md)。
 
 ## 设置与存档
 
@@ -30,6 +30,8 @@
 - Linux 源码目标：遵循 `PVZ_APPDATA_DIR` 或 XDG 数据目录，详见[资产与运行边界](docs/ASSETS.md)。
 
 `settings.json` 首次创建时自动跟随刷新率；Windows 默认桌面 UI，Android 默认横板 UI。已有配置保留，目标帧率最低 30。横板 UI 在画幅不足时回退桌面布局。音量按滑条值保存并钳制在 0～100。退出时通过游戏菜单保存，安装覆盖或强退不会替未保存的关卡回写进度。
+
+`settings.json` 可设置 `"unlockAllLevels": true`，临时开放全部已实现的小游戏、解谜、生存关卡，并在小游戏选择页显示 Limbo 入口；默认为 `false`。修改后重启生效，不修改用户进度；改回 `false` 后恢复按用户存档解锁。未实现的“自制关卡”占位始终隐藏。
 
 Android HDR 当前禁用，设置项保留但不可启用；Win7 使用 SDR。桌面缩放配置由 `scale.json` 管理，各后端支持范围见[GPU 提交](docs/gpu-submission.md)。
 

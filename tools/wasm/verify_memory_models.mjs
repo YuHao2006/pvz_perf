@@ -11,7 +11,7 @@ try{
   await page.waitForFunction(()=>!document.getElementById('start').disabled||!document.getElementById('error').hidden,null,{timeout:120000});
   assert.equal(await page.locator('#error').isVisible(),false,await page.locator('#error').textContent());
  };
- await ready();assert.equal(await page.locator('#memory-model').inputValue(),'wasm32');
+ await ready();assert.equal(await page.locator('#memory-model').inputValue(),'wasm64');
  assert.deepEqual(await page.locator('#memory-model option').evaluateAll(xs=>xs.map(x=>x.value)),['wasm32','wasm64']);
  const change=async(id,value)=>{
   if(await page.locator(id).inputValue()===value)return;

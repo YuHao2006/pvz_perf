@@ -1059,7 +1059,7 @@ void Projectile::Update()
 
 	UpdateMotion();
 	AttachmentUpdateAndMoveAt(mAttachmentID, mPosX, mPosY + mPosZ,
-		static_cast<std::int64_t>(mBoard->mLevelTimeNs));
+		static_cast<std::int64_t>(mBoard->mLevelTimeNs), Sexy::gUpdateIntervalNs);
 }
 
 //0x46E540
@@ -1114,7 +1114,7 @@ void Projectile::Draw(Graphics* g)
 	{
 		Graphics theParticleGraphics(*g);
 		MakeParentGraphicsFrame(&theParticleGraphics);
-		AttachmentDraw(mAttachmentID, &theParticleGraphics, false);
+		AttachmentDraw(mAttachmentID, &theParticleGraphics, false, mBoard ? static_cast<std::int64_t>(mBoard->mLevelTimeNs) : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs);
 	}
 }
 
@@ -1213,8 +1213,8 @@ void Projectile::Die()
 
 	if (mProjectileType == ProjectileType::PROJECTILE_PUFF || mProjectileType == ProjectileType::PROJECTILE_SNOWPEA)
 	{
-		AttachmentCrossFade(mAttachmentID, ParticleEmitterName::fadeout);
-		AttachmentDetach(mAttachmentID, static_cast<std::int64_t>(mBoard->mLevelTimeNs));
+		AttachmentCrossFade(mAttachmentID, ParticleEmitterName::fadeout, mBoard ? static_cast<std::int64_t>(mBoard->mLevelTimeNs) : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs);
+		AttachmentDetach(mAttachmentID, std::max(mCreationTimeNs, static_cast<std::int64_t>(mBoard->mLevelTimeNs) - static_cast<std::int64_t>(Sexy::gUpdateIntervalNs)), static_cast<std::int64_t>(mBoard->mLevelTimeNs));
 	}
 	else
 	{

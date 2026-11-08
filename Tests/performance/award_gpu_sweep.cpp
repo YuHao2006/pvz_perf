@@ -50,17 +50,18 @@ bool Selected(TodParticleEmitter* emitter,int mode) {
     return mode!=None && !(mode==NoGlow && name==ParticleEmitterName::awardglow) &&
         !(mode==NoRays && name>=ParticleEmitterName::awardray1 && name<=ParticleEmitterName::awardray8);
 }
-void DrawAward(TodParticleSystem& system,Graphics& graphics,int mode,bool manual) {
-    if(!manual && mode==Full) { system.Draw(&graphics);return; }
+void DrawAward(TodParticleSystem& system,Graphics& graphics,int mode,bool manual,std::int64_t nowNs) {
+    if(!manual && mode==Full) { system.Draw(&graphics,nowNs);return; }
     for(int e=0;e<system.EmitterRosterCount();++e) {
         auto* emitter=system.EmitterRosterEmitterAt(e);
-        if(Selected(emitter,mode)) emitter->Draw(&graphics,emitter->mParticleSystem->mLastUpdateTimeNs);
+        if(Selected(emitter,mode)) emitter->Draw(&graphics,nowNs);
     }
 }
 struct Coverage { int active{},drawn{};double quadArea{},clippedAabbArea{}; };
 // Sum of clipped AABBs is an explicitly conservative coverage proxy. It counts
 // overlapping layers repeatedly and includes transparent texels; it is not GPU work.
 Coverage Measure(TodParticleSystem& system,int mode,std::ostream& emitterLog,int second) {
+    const auto nowNs=static_cast<std::int64_t>(second)*1'000'000'000;
     Coverage total;
     for(int e=0;e<system.EmitterRosterCount();++e) {
         auto* emitter=system.EmitterRosterEmitterAt(e);
@@ -69,7 +70,7 @@ Coverage Measure(TodParticleSystem& system,int mode,std::ostream& emitterLog,int
         for(int p=0;p<emitter->ParticleRosterCount();++p) {
             auto* particle=emitter->ParticleRosterParticleAt(p);ParticleRenderParams params{};
             if(!Selected(emitter,mode) || particle->mCrossFadeDurationNs>0 ||
-                !TodParticleEmitter::GetRenderParams(particle,&params,emitter->mParticleSystem->mLastUpdateTimeNs) || params.mAlpha<=0 ||
+                !TodParticleEmitter::GetRenderParams(particle,&params,nowNs) || params.mAlpha<=0 ||
                 emitter->mEmitterDef->mImageRectCount==0) continue;
             const auto& region=system.mParticleDef->mImageRects[
                 system.mVariant*system.mParticleDef->mImageRectCount+emitter->mEmitterDef->mImageRectOffset];
@@ -100,7 +101,7 @@ double Render(TestApp& app,TodParticleSystem& system,int mode,int second,bool fa
     for(int x=0;x<Width;x+=100) {
         graphics.mColor=Color(45,65,80,255);graphics.FillRect(Rect(x,0,4,Height));
     }
-    DrawAward(system,graphics,mode,manual);
+    DrawAward(system,graphics,mode,manual,static_cast<std::int64_t>(second)*1'000'000'000);
     if(fade) {
         const int alpha=std::clamp((second-4)*255/2,0,255);
         graphics.mColor=Color(255,255,255,alpha);graphics.FillRect(Rect(0,0,Width,Height));
@@ -138,11 +139,11 @@ void Run(TestApp& app,const char* pak,const std::filesystem::path& output,int sa
     TodParticleData data;data.Initialize();TodParticleHolder holder(&data);
     struct PoolCleanup {TodParticleData& data;~PoolCleanup(){data.Dispose();}} poolCleanup{data};
     Sexy::SRand(123456);
-    auto* system=holder.AllocParticleSystem(Width*.5f,Height*.5f,0,ParticleEffect::PARTICLE_SEED_PACKET_PICKUP);
+    auto* system=holder.AllocParticleSystem(Width*.5f,Height*.5f,0,ParticleEffect::PARTICLE_SEED_PACKET_PICKUP,0);
     Require(system!=nullptr,"Cannot allocate Award");
     int ageTicks=0;
     for(int second=1;second<=6;++second) {
-        while(ageTicks<second*100) {system->Update(10'000'000);++ageTicks;}
+        while(ageTicks<second*100) {system->Update(10'000'000,static_cast<std::int64_t>(ageTicks+1)*10'000'000,static_cast<std::int64_t>(ageTicks)*10'000'000);++ageTicks;}
         Render(app,*system,Full,second,false,false,properties.limits.timestampPeriod,mask);
         const auto reference=render.mRenderer->ReadScenePixels();
         Render(app,*system,Full,second,false,true,properties.limits.timestampPeriod,mask);

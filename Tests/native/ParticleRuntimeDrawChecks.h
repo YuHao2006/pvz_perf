@@ -39,7 +39,7 @@ inline void ParticleRuntimeDrawChecks(Sexy::RenderInterface& render)
                 if (reference)
                 {
                     ParticleDrawReference::ParticleRenderParams params{};
-                    ParticleDrawReference::GetRenderParams(&particle,&params);
+                    ParticleDrawReference::GetRenderParams(&particle, &params, 0);
                     const Color color(
                         ClampInt(FloatRoundToInt(params.mRed),0,255),
                         ClampInt(FloatRoundToInt(params.mGreen),0,255),
@@ -51,14 +51,14 @@ inline void ParticleRuntimeDrawChecks(Sexy::RenderInterface& render)
                         source = holder.mParticles.DataArrayTryToGet(source->mCrossFadeParticleID);
                     TodTriangleGroup triangles;
                     if (source && color.mAlpha > 0)
-                        ParticleDrawReference::RenderParticle(&graphics,source,color,&params,&triangles);
+                        ParticleDrawReference::RenderParticle(&graphics, source, color, &params, &triangles, 0);
                     triangles.DrawGroup(&graphics);
                 }
                 else
                 {
                     TodTriangleGroup triangles;
                     particle.mParticleEmitter->DrawParticle(&graphics, &particle, &triangles,
-                        particle.mParticleEmitter->mParticleSystem->mLastUpdateTimeNs);
+                        0);
                     triangles.DrawGroup(&graphics);
                 }
                 if (transformed) render.PopTransform();
@@ -105,9 +105,9 @@ inline void ParticleRuntimeDrawChecks(Sexy::RenderInterface& render)
             auto& emitter = *holder.mEmitters.DataArrayAlloc();
             emitter.mParticleSystem = &system; emitter.mEmitterDef = &emitterDefinition;
             emitter.mSystemDurationNs = 1'000'000'000;
-            RefreshParticleLifeFraction(emitter, emitter.mParticleSystem->mLastUpdateTimeNs);
+            RefreshParticleLifeFraction(emitter, 0);
             emitter.mBirthTimeNs = 0 - (370'000'003);
-            RefreshParticleLifeFraction(emitter, emitter.mParticleSystem->mLastUpdateTimeNs);
+            RefreshParticleLifeFraction(emitter, 0);
             emitter.mColorOverride = Color::White; emitter.mScaleOverride = 1;
             emitter.mFrameOverride = -1;
             for (std::size_t i = 0; i < std::size(emitter.mTrackInterp); ++i)
@@ -116,9 +116,9 @@ inline void ParticleRuntimeDrawChecks(Sexy::RenderInterface& render)
             particle.mParticleEmitter = &emitter;
             particle.mPosition = {128.25f,127.75f}; particle.mSpinPosition = .37f;
             particle.mParticleDurationNs = 1'000'000'000;
-            RefreshParticleLifeFraction(particle, particle.mParticleEmitter->mParticleSystem->mLastUpdateTimeNs);
+            RefreshParticleLifeFraction(particle, 0);
             particle.mBirthTimeNs = 0 - (370'000'003);
-            RefreshParticleLifeFraction(particle, particle.mParticleEmitter->mParticleSystem->mLastUpdateTimeNs);
+            RefreshParticleLifeFraction(particle, 0);
             particle.mAnimationBirthTimeNs = 0 - (1'234'567'891);
             particle.mImageFrame = std::max(0,emitterDefinition.mImageFrames-1);
             for (std::size_t i = 0; i < std::size(particle.mParticleInterp); ++i)
@@ -161,7 +161,7 @@ inline void ParticleRuntimeDrawChecks(Sexy::RenderInterface& render)
                     auto& emitter=*emitters[i];
                     emitter.mEmitterDef=i==0?&to:&from;emitter.mParticleSystem=&system;
                     emitter.mSystemDurationNs=1'000'000'000;emitter.mBirthTimeNs = 0 - (370'000'003);
-                    RefreshParticleLifeFraction(emitter, emitter.mParticleSystem->mLastUpdateTimeNs);
+                    RefreshParticleLifeFraction(emitter, 0);
                     emitter.mColorOverride=Color::White;emitter.mScaleOverride=1;emitter.mFrameOverride=-1;
                     std::fill_n(emitter.mTrackInterp,ParticleSystemTracks::NUM_SYSTEM_TRACKS,.37f);
                 }
@@ -175,7 +175,7 @@ inline void ParticleRuntimeDrawChecks(Sexy::RenderInterface& render)
                     p.mPosition={float(120+i*9),float(134-i*8)};
                     p.mSpinPosition=.17f+i*.11f;
                     p.mParticleDurationNs=1'000'000'000;p.mBirthTimeNs = 0 - (250'000'003);
-                    RefreshParticleLifeFraction(p, p.mParticleEmitter->mParticleSystem->mLastUpdateTimeNs);
+                    RefreshParticleLifeFraction(p, 0);
                     p.mAnimationBirthTimeNs = 0 - (1'234'567'891);
                     p.mCrossFadeParticleID=ParticleID::PARTICLEID_NULL;
                     p.mCrossFadeDurationNs=i?1'000'000'000:0;

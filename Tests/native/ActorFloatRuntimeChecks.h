@@ -187,7 +187,7 @@ inline void StinkyGardenReentry(LawnApp& app, Board& board)
         garden.StinkyUpdate(stinky);
         Require((animation->mStartTimeNs + animation->mFrameAgeNs) == clocks.mVisualTimeNs,
             "Stinky owner did not prepare the supplied visual instant before root motion");
-        app.mEffectSystem->UpdateAt(clocks.mVisualTimeNs, 0);
+        app.mEffectSystem->UpdateAt(clocks.mVisualTimeNs, 0, 0, Sexy::gUpdateIntervalNs, 0, 0);
         stinky->Update();
         Require((animation->mStartTimeNs + animation->mFrameAgeNs) == clocks.mVisualTimeNs &&
             (*app.mEffectSystem->mReanimationHolder).mTimeDomains[(*app.mEffectSystem->mReanimationHolder).mReanimations.DataArrayIndexOf(animation)] == ReanimTimeDomain::Visual && !animation->mDead &&
@@ -711,7 +711,7 @@ inline std::array<std::uint64_t, 8> Bowling(LawnApp& app, Board& board,
         PublishTime(app, board, delta);
         animation->PrepareTimeAt(static_cast<std::int64_t>(board.mLevelTimeNs));
         plant->UpdateBowling(static_cast<std::int64_t>(board.mLevelTimeNs), app.mEffectSystem->mReanimationHolder->mVisualTimeNs, (board.AnimationTimeDomain()==ReanimTimeDomain::Battle ? static_cast<std::int64_t>(board.mLevelTimeNs) : app.mEffectSystem->mReanimationHolder->mVisualTimeNs));
-        animation->UpdateAt(app.mEffectSystem->mReanimationHolder->mBattleTimeNs);
+        animation->UpdateAt(app.mEffectSystem->mReanimationHolder->mBattleTimeNs, Sexy::gUpdateIntervalNs);
         if (app.mEffectSystem->mReanimationHolder->mBattleTimeNs < 10'000'000)
             Require(plant->mY != static_cast<float>(board.GridToPixelY(0, 2)),
                 "Production bowling waits for a fixed 10ms vertical substep");
@@ -826,7 +826,7 @@ inline std::array<std::uint64_t, 6> Walking(LawnApp& app, Board& board, int freq
         if (additionalMotion) zombie.mPendingAdditionalSpeedX = -0.5f;
         animation->PrepareTimeAt(static_cast<std::int64_t>(board.mLevelTimeNs));
         zombie.UpdateZombieWalking(static_cast<std::int64_t>(zombie.mBoard->mLevelTimeNs));
-        animation->UpdateAt(static_cast<std::int64_t>(board.mLevelTimeNs));
+        animation->UpdateAt(static_cast<std::int64_t>(board.mLevelTimeNs), Sexy::gUpdateIntervalNs);
     });
     Require(zombie.mX == expectedX,
         "Production zombie walking differs from anchored root interpolation");
@@ -868,7 +868,7 @@ inline void VaultAndRoofImpSegments(LawnApp& app, Board& board)
                     PublishTime(app, board, delta);
                     animation->PrepareTimeAt(static_cast<std::int64_t>(board.mLevelTimeNs));
                     zombie.UpdateZombieWalking(static_cast<std::int64_t>(zombie.mBoard->mLevelTimeNs));
-                    animation->UpdateAt(static_cast<std::int64_t>(board.mLevelTimeNs));
+                    animation->UpdateAt(static_cast<std::int64_t>(board.mLevelTimeNs), Sexy::gUpdateIntervalNs);
                 });
                 Require(zombie.mRootBindingGeneration && zombie.mVelocityX.bound &&
                     zombie.mVelocityX.rate == 0 && static_cast<std::int64_t>(board.mLevelTimeNs) > zombie.mVelocityX.startTimeNs,
@@ -891,7 +891,7 @@ inline void VaultAndRoofImpSegments(LawnApp& app, Board& board)
                 zombie.UpdateZombiePolevaulter(static_cast<std::int64_t>(zombie.mBoard->mLevelTimeNs));
                 animation->PrepareTimeAt(static_cast<std::int64_t>(board.mLevelTimeNs));
                 zombie.UpdateZombieWalking(static_cast<std::int64_t>(zombie.mBoard->mLevelTimeNs));
-                animation->UpdateAt(static_cast<std::int64_t>(board.mLevelTimeNs));
+                animation->UpdateAt(static_cast<std::int64_t>(board.mLevelTimeNs), Sexy::gUpdateIntervalNs);
                 Require(zombie.mX == launchX, "Zero-travel vault lost its world-position segment");
             });
             animation->mLoopCount = 1;

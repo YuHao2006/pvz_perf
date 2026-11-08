@@ -250,7 +250,7 @@ template<class T, class Fn> void VisitV7Members(Fn&& visit)
         visit(offsetof(T, mRootChocolate), 232, 1);
     }
 }
-template<class T> void WriteHistoricalProjection(const T& value, std::span<LegacyByte> bytes)
+template<class T> void WriteHistoricalProjection(const T& value, std::span<LegacyByte> bytes, std::int64_t sampleNowNs)
 {
     using V7SaveSchema::PutFloat;
     if constexpr (std::is_base_of_v<GameObject, T>)
@@ -297,8 +297,8 @@ template<class T> void WriteHistoricalProjection(const T& value, std::span<Legac
                 ? float(double(age) / (duration - 10'000'000)) : 0.0f;
         };
         PutFloat(bytes, 48, float(double(value.mSpawnRemainder) / V7SaveSchema::Frame));
-        PutFloat(bytes, 72, phase(ParticleLifeAgeAt(value.mParticleSystem ? value.mParticleSystem->mLastUpdateTimeNs : 0, value.mBirthTimeNs, value.mSystemDurationNs)));
-        PutFloat(bytes, 76, phase(ParticleLifeAgeAt(value.mParticleSystem ? value.mParticleSystem->mLastUpdateTimeNs : 0, value.mBirthTimeNs, value.mSystemDurationNs)));
+        PutFloat(bytes, 72, phase(ParticleLifeAgeAt(sampleNowNs, value.mBirthTimeNs, value.mSystemDurationNs)));
+        PutFloat(bytes, 76, phase(ParticleLifeAgeAt(sampleNowNs, value.mBirthTimeNs, value.mSystemDurationNs)));
     }
     else if constexpr (std::is_same_v<T, TodParticle>)
     {
@@ -307,15 +307,15 @@ template<class T> void WriteHistoricalProjection(const T& value, std::span<Legac
             return age < 0 ? -1.0f : duration > 10'000'000
                 ? float(double(age) / (duration - 10'000'000)) : 0.0f;
         };
-        PutFloat(bytes, 16, phase(ParticleLifeAgeAt(value.mParticleEmitter && value.mParticleEmitter->mParticleSystem ? value.mParticleEmitter->mParticleSystem->mLastUpdateTimeNs : 0, value.mBirthTimeNs, value.mParticleDurationNs)));
-        PutFloat(bytes, 20, phase(ParticleLifeAgeAt(value.mParticleEmitter && value.mParticleEmitter->mParticleSystem ? value.mParticleEmitter->mParticleSystem->mLastUpdateTimeNs : 0, value.mBirthTimeNs, value.mParticleDurationNs)));
+        PutFloat(bytes, 16, phase(ParticleLifeAgeAt(sampleNowNs, value.mBirthTimeNs, value.mParticleDurationNs)));
+        PutFloat(bytes, 20, phase(ParticleLifeAgeAt(sampleNowNs, value.mBirthTimeNs, value.mParticleDurationNs)));
         // Preserve the sampled legacy image phase for explicit downgrades.
         // The current format still restores its exact elapsed time and anchor.
         auto animationPhase = value.mAnimationSampleIntegral;
         if (value.mParticleEmitter && value.mParticleEmitter->mEmitterDef)
         {
             const auto& track = value.mParticleEmitter->mEmitterDef->mAnimationRate;
-            animationPhase = TodParticleAnimationPhase(value, track, value.mParticleEmitter->mParticleSystem->mLastUpdateTimeNs);
+            animationPhase = TodParticleAnimationPhase(value, track, sampleNowNs);
         }
         if (animationPhase < 0) animationPhase += V7SaveSchema::Frame;
         PutFloat(bytes, 24, float(double(animationPhase) / V7SaveSchema::Frame));
@@ -334,7 +334,7 @@ template<class T> void WriteHistoricalProjection(const T& value, std::span<Legac
         }
     }
 }
-template<class T> std::vector<LegacyByte> WriteSaveRecord(const T& value)
+template<class T> std::vector<LegacyByte> WriteSaveRecord(const T& value, std::int64_t sampleNowNs = 0)
 {
     std::vector<LegacyByte> bytes(SaveV1Size<T>(), 0);
     const auto fields = SaveTimeFields<T>();
@@ -359,20 +359,21 @@ template<class T> std::vector<LegacyByte> WriteSaveRecord(const T& value)
         {
             if constexpr (std::is_same_v<T, TodParticle>)
                 if (field.mOffset == 12)
-                    return static_cast<std::uint64_t>(ParticleLifeAgeAt(
-                        value.mParticleEmitter && value.mParticleEmitter->mParticleSystem
-                            ? value.mParticleEmitter->mParticleSystem->mLastUpdateTimeNs : 0,
-                        value.mBirthTimeNs, value.mParticleDurationNs));
+                    // Persist the full relative anchor, including an overdue loop.
+                    // A newly supplied owner clock may precede simulation;
+                    // clamping to lifetime here would lose its next wrap remainder.
+                    return static_cast<std::uint64_t>(ReanimClock::Subtract(sampleNowNs, value.mBirthTimeNs));
             if constexpr (std::is_same_v<T, TodParticleEmitter>)
                 if (field.mOffset == 124)
                     return static_cast<std::uint64_t>(value.mCrossFadeEndTimeNs == 0 ? 0 :
                         std::max<std::int64_t>(0, ReanimClock::Subtract(value.mCrossFadeEndTimeNs,
-                            value.mParticleSystem ? value.mParticleSystem->mLastUpdateTimeNs : 0)));
+                            sampleNowNs)));
             if constexpr (std::is_same_v<T, TodParticleEmitter>)
                 if (field.mOffset == 64)
-                    return static_cast<std::uint64_t>(ParticleLifeAgeAt(
-                        value.mParticleSystem ? value.mParticleSystem->mLastUpdateTimeNs : 0,
-                        value.mBirthTimeNs, value.mSystemDurationNs));
+                    // Persist the full relative anchor, including an overdue loop.
+                    // A newly supplied owner clock may precede simulation;
+                    // clamping to lifetime here would lose its next wrap remainder.
+                    return static_cast<std::uint64_t>(ReanimClock::Subtract(sampleNowNs, value.mBirthTimeNs));
             if constexpr (std::is_same_v<T, Plant>)
                 if (field.mOffset == 100)
                 {
@@ -395,7 +396,7 @@ template<class T> std::vector<LegacyByte> WriteSaveRecord(const T& value)
             return result;
         }
     };
-    WriteHistoricalProjection(value, bytes);
+    WriteHistoricalProjection(value, bytes, sampleNowNs);
     auto expanded = Dat64TimeSchema::Expand(bytes, fields,
         [&](const auto& field, std::uint32_t) { return ReadNs(field); });
     if constexpr (!std::is_same_v<T, Board> && !std::is_same_v<T, SeedBank>)
@@ -415,8 +416,7 @@ template<class T> std::vector<LegacyByte> WriteSaveRecord(const T& value)
         });
         if constexpr (std::is_same_v<T, TodParticle>)
         {
-            const auto now = value.mParticleEmitter && value.mParticleEmitter->mParticleSystem
-                ? value.mParticleEmitter->mParticleSystem->mLastUpdateTimeNs : 0;
+            const auto now = sampleNowNs;
             V7SaveSchema::Write(expanded, offset, static_cast<std::uint64_t>(
                 ReanimClock::Subtract(now, value.mAnimationBirthTimeNs)), 8);
         }
@@ -567,9 +567,9 @@ template<class T> struct Dat64Layout
         }
         else ReadSaveRecord(value, bytes, owner);
     }
-    static void Write(LegacyByte* bytes, const T& value)
+    static void Write(LegacyByte* bytes, const T& value, std::int64_t sampleNowNs = 0)
     {
-        const auto result = WriteSaveRecord(value);
+        const auto result = WriteSaveRecord(value, sampleNowNs);
         std::memcpy(bytes, result.data(), result.size());
     }
 };

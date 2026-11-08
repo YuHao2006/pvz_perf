@@ -7267,7 +7267,8 @@ void Board::Update()
     if (mPoolIntroVisual && mApp->mGameScene == SCENE_PLAYING)
     {
         if (auto* sparkle = mApp->ParticleTryToGet(mPoolSparklyParticleID))
-            sparkle->Update(0, static_cast<std::int64_t>(mLevelTimeNs));
+            sparkle->RebaseClock(waterNowNs == static_cast<std::int64_t>(mLevelTimeNs) ? waterNowNs :
+                mApp->mPoolEffect->mSampleTimeNs, static_cast<std::int64_t>(mLevelTimeNs));
         if (StageHasPool() && mApp->mPoolEffect)
             mApp->mPoolEffect->RebaseClock(static_cast<long long>(mLevelTimeNs));
         mPoolIntroVisual = false;
@@ -7284,6 +7285,16 @@ void Board::Update()
 
 	if (mPaused)
 	{
+        // Store/Almanac may move Visual while the intro itself is paused.
+        // Water owns both effects and already retains its rendered sample;
+        // translate both origins together, without another per-system clock.
+        if (mPoolIntroVisual && mApp->mGameScene == SCENE_LEVEL_INTRO &&
+            !mCutScene->IsSurvivalRepick() && StageHasPool())
+        {
+            if (auto* sparkle = mApp->ParticleTryToGet(mPoolSparklyParticleID))
+                sparkle->RebaseClock(mApp->mPoolEffect->mSampleTimeNs, aVisualNowNs);
+            mApp->mPoolEffect->RebaseClock(aVisualNowNs);
+        }
 		mChallenge->Update(0);
 		mCursorPreview->mVisible = false;
 		mCursorObject->mVisible = false;
@@ -7319,7 +7330,8 @@ void Board::Update()
         !mCutScene->IsSurvivalRepick();
     const auto waterSampleNs = waterUsesVisual ? aVisualNowNs : static_cast<std::int64_t>(mLevelTimeNs);
     const auto waterDeltaNs = waterUsesVisual ? Sexy::gUpdateIntervalNs : aLevelDeltaNs;
-    mApp->mEffectSystem->UpdateAt(aVisualNowNs, static_cast<std::int64_t>(mLevelTimeNs), waterSampleNs);
+    mApp->mEffectSystem->UpdateAt(aVisualNowNs, static_cast<std::int64_t>(mLevelTimeNs), waterSampleNs,
+        Sexy::gUpdateIntervalNs, aLevelDeltaNs, waterDeltaNs);
 	// The opening title starts during the intro, before the battle clock runs.
 	mAdvice->Update(mAdvice->mMessageStyle == MessageStyle::MESSAGE_STYLE_HOUSE_NAME
 		? aVisualNowNs : static_cast<std::int64_t>(mLevelTimeNs));
@@ -7920,6 +7932,12 @@ void Board::DrawGameObjects(Graphics* g)
 		/* [7]  RENDER_ITEM_PLANT_MAGNET_ITEMS   */ [](Board* aBoard, Graphics* g, RenderItem& aRenderItem) { Plant* aPlant = aRenderItem.mPlant; const float x = g->mTransX, y = g->mTransY; if (aPlant->BeginDraw(g)) { aPlant->DrawMagnetItems(static_cast<std::int64_t>(aBoard->mLevelTimeNs), g); aPlant->EndDraw(g, x, y); } },
 		/* [8]  RENDER_ITEM_CURSOR_PREVIEW       */ [](Board* board, Graphics* g, RenderItem& aRenderItem) { CursorPreview* aCursorPreview = aRenderItem.mCursorPreview; const float x = g->mTransX, y = g->mTransY; if (aCursorPreview->BeginDraw(g)) { aCursorPreview->Draw(g); aCursorPreview->EndDraw(g, x, y); } board->DrawTouchPreviews(g); },
 		/* [9]  RENDER_ITEM_PARTICLE             */ [](Board* aBoard, Graphics* g, RenderItem& aRenderItem) {
+            const auto visualNow = aBoard->mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs;
+            const auto* system = aRenderItem.mParticleSytem;
+            const auto sampleNow = system->mIsAttachment ||
+                (system->mEffectType == PARTICLE_POOL_SPARKLY && aBoard->mPoolIntroVisual &&
+                 aBoard->mApp->mGameScene == SCENE_LEVEL_INTRO && !aBoard->mCutScene->IsSurvivalRepick())
+                ? visualNow : static_cast<std::int64_t>(aBoard->mLevelTimeNs);
 			const ParticleEffect aEffect = aRenderItem.mParticleSytem->mEffectType;
 			const bool aBankArrow = aEffect == ParticleEffect::PARTICLE_SEED_PACKET_PICK &&
 				aBoard->mApp->mGameMode != GameMode::GAMEMODE_LIMBO_ZEN_GARDEN &&
@@ -7928,10 +7946,10 @@ void Board::DrawGameObjects(Graphics* g)
 			{
                 Graphics aBankGraphics(*g);
                 aBankGraphics.Translate(aBoard->mApp->mScreenBounds.mX, 0);
-				aRenderItem.mParticleSytem->Draw(&aBankGraphics);
+				aRenderItem.mParticleSytem->Draw(&aBankGraphics, sampleNow);
 				return;
 			}
-			aRenderItem.mParticleSytem->Draw(g);
+			aRenderItem.mParticleSytem->Draw(g, sampleNow);
 		},
 		/* [10] RENDER_ITEM_REANIMATION          */ [](Board*, Graphics* g, RenderItem& aRenderItem) { aRenderItem.mReanimation->Draw(g); },
 		/* [11] RENDER_ITEM_ICE                  */ [](Board* aBoard, Graphics* g, RenderItem& aRenderItem) { aBoard->DrawIce(g, aRenderItem.mBoardGridY); },

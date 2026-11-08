@@ -306,7 +306,7 @@ void LawnMower::Update()
         Die();
     }
 
-    reanim->UpdateAt(nowNs);
+    reanim->UpdateAt(nowNs, Sexy::gUpdateIntervalNs);
 }
 
 //0x458A80

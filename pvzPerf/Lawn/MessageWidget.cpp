@@ -329,7 +329,7 @@ void MessageWidget::Update(std::int64_t nowNs)
 					std::int64_t(aPos) * 10'000'000, 0.0f, 40.0f, Curves::Linear));
 		}
 
-		aTextReanim->UpdateAt(mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs);  //更新动画
+		aTextReanim->UpdateAt(mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs, Sexy::gUpdateIntervalNs);  //更新动画
 	}
 }
 

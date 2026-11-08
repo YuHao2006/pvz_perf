@@ -17,7 +17,7 @@ Attachment::~Attachment()
 }
 
 //0x404490
-void Attachment::UpdateAt(std::int64_t nowNs)
+void Attachment::UpdateAt(std::int64_t nowNs, std::uint64_t deltaNs)
 {
 	TOD_ASSERT(gEffectSystem);
 
@@ -32,9 +32,7 @@ void Attachment::UpdateAt(std::int64_t nowNs)
 			TodParticleSystem* aParticleSystem = gEffectSystem->mParticleHolder->mParticleSystems.DataArrayTryToGet(aAttachEffect->mEffectID);
 			if (aParticleSystem && !aParticleSystem->mDead)
 			{
-				const auto deltaNs = nowNs > aParticleSystem->mLastUpdateTimeNs
-					? static_cast<std::uint64_t>(nowNs - aParticleSystem->mLastUpdateTimeNs) : 0;
-				aParticleSystem->Update(deltaNs, nowNs);
+				aParticleSystem->Update(deltaNs, nowNs, nowNs - static_cast<std::int64_t>(deltaNs));
 				isEmpty = false;
 			}
 			break;
@@ -50,7 +48,7 @@ void Attachment::UpdateAt(std::int64_t nowNs)
 			Reanimation* aReanimation = gEffectSystem->mReanimationHolder->mReanimations.DataArrayTryToGet(aAttachEffect->mEffectID);
 			if (aReanimation && !aReanimation->mDead)
 			{
-				aReanimation->UpdateAt(nowNs);
+				aReanimation->UpdateAt(nowNs, deltaNs);
 				isEmpty = false;
 			}
 			break;
@@ -125,6 +123,24 @@ void Attachment::SetPosition(const SexyVector2& thePosition)
 			break;
 	}
 	}
+}
+
+void Attachment::RebaseClock(std::int64_t previousNowNs, std::int64_t nowNs)
+{
+    for (int i = 0; i < mNumEffects; ++i)
+    {
+        const auto& effect = mEffectArray[i];
+        if (effect.mEffectType == EFFECT_PARTICLE)
+        {
+            if (auto* particle = gEffectSystem->mParticleHolder->mParticleSystems.DataArrayTryToGet(effect.mEffectID))
+                particle->RebaseClock(previousNowNs, nowNs);
+        }
+        else if (effect.mEffectType == EFFECT_REANIM)
+        {
+            if (auto* animation = gEffectSystem->mReanimationHolder->mReanimations.DataArrayTryToGet(effect.mEffectID))
+                animation->RebaseTime(nowNs);
+        }
+    }
 }
 
 //0x404780
@@ -260,7 +276,7 @@ void Attachment::OverrideScale(float theScale)
 }
 
 //0x404B20
-void Attachment::CrossFade(ParticleEmitterName theName)
+void Attachment::CrossFade(ParticleEmitterName theName, std::int64_t nowNs)
 {
 	TOD_ASSERT(gEffectSystem);
 
@@ -272,13 +288,13 @@ void Attachment::CrossFade(ParticleEmitterName theName)
 			TodParticleSystem* aParticleSystem = gEffectSystem->mParticleHolder->mParticleSystems.DataArrayTryToGet(aAttachEffect->mEffectID);
 			if (aParticleSystem)
 			{
-				aParticleSystem->CrossFade(theName, aParticleSystem->mLastUpdateTimeNs);
+				aParticleSystem->CrossFade(theName, nowNs);
 			}
 		}
 	}
 }
 
-void Attachment::CrossFade(ParticleEmitterNameRange theRange)
+void Attachment::CrossFade(ParticleEmitterNameRange theRange, std::int64_t nowNs)
 {
 	TOD_ASSERT(gEffectSystem);
 
@@ -290,7 +306,7 @@ void Attachment::CrossFade(ParticleEmitterNameRange theRange)
 			TodParticleSystem* aParticleSystem = gEffectSystem->mParticleHolder->mParticleSystems.DataArrayTryToGet(aAttachEffect->mEffectID);
 			if (aParticleSystem)
 			{
-				aParticleSystem->CrossFade(theRange, aParticleSystem->mLastUpdateTimeNs);
+				aParticleSystem->CrossFade(theRange, nowNs);
 			}
 		}
 	}
@@ -344,7 +360,7 @@ void Attachment::SetMatrix(const SexyTransform2D& theMatrix)
 }
 
 //0x404D10
-void Attachment::Draw(Graphics* g, bool theParentHidden)
+void Attachment::Draw(Graphics* g, bool theParentHidden, std::int64_t nowNs)
 {
 	TOD_ASSERT(gEffectSystem);
 
@@ -367,7 +383,7 @@ void Attachment::Draw(Graphics* g, bool theParentHidden)
 			TodParticleSystem* aParticleSystem = aParticleSystems.DataArrayTryToGet(aAttachEffect->mEffectID);
 			if (aParticleSystem)
 			{
-				aParticleSystem->Draw(g);
+				aParticleSystem->Draw(g, nowNs);
 			}
 			break;
 		}
@@ -397,7 +413,7 @@ void Attachment::Draw(Graphics* g, bool theParentHidden)
 }
 
 //0x404E80
-void Attachment::Detach(std::int64_t nowNs)
+void Attachment::Detach(std::int64_t previousNowNs, std::int64_t nowNs)
 {
 	TOD_ASSERT(gEffectSystem);
 
@@ -416,7 +432,7 @@ void Attachment::Detach(std::int64_t nowNs)
 			if (aParticleSystem)
 			{
 				TOD_ASSERT(aParticleSystem->mIsAttachment);
-				aParticleSystem->Update(0,nowNs);
+				aParticleSystem->RebaseClock(previousNowNs,nowNs);
 				aParticleSystem->mIsAttachment = false;
 			}
 			break;
@@ -542,7 +558,7 @@ Attachment* AttachmentHolder::AllocAttachment()
 
 //0x4051B0
 void AttachmentUpdateAndSetMatrixAt(AttachmentID& theAttachmentID, SexyTransform2D& theMatrix,
-	std::int64_t nowNs)
+	std::int64_t nowNs, std::uint64_t deltaNs)
 {
 	if (theAttachmentID == AttachmentID::ATTACHMENTID_NULL)
 		return;
@@ -551,7 +567,7 @@ void AttachmentUpdateAndSetMatrixAt(AttachmentID& theAttachmentID, SexyTransform
 	Attachment* aAttachment = gEffectSystem->mAttachmentHolder->mAttachments.DataArrayTryToGet((unsigned int)theAttachmentID);
 	if (aAttachment)
 	{
-		aAttachment->UpdateAt(nowNs);
+		aAttachment->UpdateAt(nowNs, deltaNs);
 		aAttachment->SetMatrix(theMatrix);
 	}
 	else
@@ -562,7 +578,7 @@ void AttachmentUpdateAndSetMatrixAt(AttachmentID& theAttachmentID, SexyTransform
 
 //0x405200
 void AttachmentUpdateAndMoveAt(AttachmentID& theAttachmentID, float theX, float theY,
-	std::int64_t nowNs)
+	std::int64_t nowNs, std::uint64_t deltaNs)
 {
 	if (theAttachmentID == AttachmentID::ATTACHMENTID_NULL)
 		return;
@@ -571,7 +587,7 @@ void AttachmentUpdateAndMoveAt(AttachmentID& theAttachmentID, float theX, float 
 	Attachment* aAttachment = gEffectSystem->mAttachmentHolder->mAttachments.DataArrayTryToGet((unsigned int)theAttachmentID);
 	if (aAttachment)
 	{
-		aAttachment->UpdateAt(nowNs);
+		aAttachment->UpdateAt(nowNs, deltaNs);
 		aAttachment->SetPosition(SexyVector2(theX, theY));
 	}
 	else
@@ -669,21 +685,21 @@ void AttachmentDetachCrossFadeParticleType(AttachmentID& theAttachmentID, Partic
 	});
 }
 
-void AttachmentDetachCrossFadeParticleType(AttachmentID& theAttachmentID, ParticleEffect theParticleEffect, ParticleEmitterName theName)
+void AttachmentDetachCrossFadeParticleType(AttachmentID& theAttachmentID, ParticleEffect theParticleEffect, ParticleEmitterName theName, std::int64_t nowNs)
 {
-	AttachmentDetachParticleType(theAttachmentID, theParticleEffect, [theName](TodParticleSystem* theParticleSystem)
+	AttachmentDetachParticleType(theAttachmentID, theParticleEffect, [theName, nowNs](TodParticleSystem* theParticleSystem)
 	{
 		theParticleSystem->mIsAttachment = false;
-		theParticleSystem->CrossFade(theName, theParticleSystem->mLastUpdateTimeNs);
+		theParticleSystem->CrossFade(theName, nowNs);
 	});
 }
 
-void AttachmentDetachCrossFadeParticleType(AttachmentID& theAttachmentID, ParticleEffect theParticleEffect, ParticleEmitterNameRange theRange)
+void AttachmentDetachCrossFadeParticleType(AttachmentID& theAttachmentID, ParticleEffect theParticleEffect, ParticleEmitterNameRange theRange, std::int64_t nowNs)
 {
-	AttachmentDetachParticleType(theAttachmentID, theParticleEffect, [theRange](TodParticleSystem* theParticleSystem)
+	AttachmentDetachParticleType(theAttachmentID, theParticleEffect, [theRange, nowNs](TodParticleSystem* theParticleSystem)
 	{
 		theParticleSystem->mIsAttachment = false;
-		theParticleSystem->CrossFade(theRange, theParticleSystem->mLastUpdateTimeNs);
+		theParticleSystem->CrossFade(theRange, nowNs);
 	});
 }
 
@@ -700,7 +716,7 @@ void AttachmentPropogateColor(AttachmentID& theAttachmentID, const Color& theCol
 	}
 }
 
-void AttachmentCrossFade(AttachmentID& theAttachmentID, ParticleEmitterName theName)
+void AttachmentCrossFade(AttachmentID& theAttachmentID, ParticleEmitterName theName, std::int64_t nowNs)
 {
 	if (theAttachmentID == AttachmentID::ATTACHMENTID_NULL)
 		return;
@@ -709,11 +725,11 @@ void AttachmentCrossFade(AttachmentID& theAttachmentID, ParticleEmitterName theN
 	Attachment* aAttachment = gEffectSystem->mAttachmentHolder->mAttachments.DataArrayTryToGet((unsigned int)theAttachmentID);
 	if (aAttachment)
 	{
-		aAttachment->CrossFade(theName);
+		aAttachment->CrossFade(theName, nowNs);
 	}
 }
 
-void AttachmentCrossFade(AttachmentID& theAttachmentID, ParticleEmitterNameRange theRange)
+void AttachmentCrossFade(AttachmentID& theAttachmentID, ParticleEmitterNameRange theRange, std::int64_t nowNs)
 {
 	if (theAttachmentID == AttachmentID::ATTACHMENTID_NULL)
 		return;
@@ -722,12 +738,12 @@ void AttachmentCrossFade(AttachmentID& theAttachmentID, ParticleEmitterNameRange
 	Attachment* aAttachment = gEffectSystem->mAttachmentHolder->mAttachments.DataArrayTryToGet((unsigned int)theAttachmentID);
 	if (aAttachment)
 	{
-		aAttachment->CrossFade(theRange);
+		aAttachment->CrossFade(theRange, nowNs);
 	}
 }
 
 //0x4053A0
-void AttachmentDraw(AttachmentID& theAttachmentID, Graphics* g, bool theParentHidden)
+void AttachmentDraw(AttachmentID& theAttachmentID, Graphics* g, bool theParentHidden, std::int64_t nowNs)
 {
 	if (theAttachmentID == AttachmentID::ATTACHMENTID_NULL)
 		return;
@@ -736,7 +752,7 @@ void AttachmentDraw(AttachmentID& theAttachmentID, Graphics* g, bool theParentHi
 	Attachment* aAttachment = gEffectSystem->mAttachmentHolder->mAttachments.DataArrayTryToGet((unsigned int)theAttachmentID);
 	if (aAttachment)
 	{
-		aAttachment->Draw(g, theParentHidden);
+		aAttachment->Draw(g, theParentHidden, nowNs);
 	}
 }
 
@@ -756,7 +772,7 @@ void AttachmentDie(AttachmentID& theAttachmentID)
 }
 
 //0x405430
-void AttachmentDetach(AttachmentID& theAttachmentID, std::int64_t nowNs)
+void AttachmentDetach(AttachmentID& theAttachmentID, std::int64_t previousNowNs, std::int64_t nowNs)
 {
 	if (theAttachmentID == AttachmentID::ATTACHMENTID_NULL)
 		return;
@@ -766,7 +782,7 @@ void AttachmentDetach(AttachmentID& theAttachmentID, std::int64_t nowNs)
 	theAttachmentID = AttachmentID::ATTACHMENTID_NULL;
 	if (aAttachment)
 	{
-		aAttachment->Detach(nowNs);
+		aAttachment->Detach(previousNowNs, nowNs);
 	}
 }
 

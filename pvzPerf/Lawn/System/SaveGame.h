@@ -55,7 +55,7 @@ public:
 void                SyncParticleSystem(Board* theBoard, TodParticleSystem* theParticleSystem, SaveGameContext& theContext);
 void                SyncReanimation(Board* theBoard, Reanimation* theReanimation, SaveGameContext& theContext);
 void                SyncBoard(SaveGameContext& theContext, Board* theBoard);
-void				FixBoardAfterLoad(Board* theBoard);
+void				FixBoardAfterLoad(Board* theBoard, bool rebaseAnimations = true);
 bool				LawnLoadGame(Board* theBoard, const std::string& theFilePath);
 bool				LawnSaveGame(Board* theBoard, const std::string& theFilePath);
 

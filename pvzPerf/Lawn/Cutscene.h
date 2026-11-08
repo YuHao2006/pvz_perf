@@ -42,7 +42,7 @@ public:
     void                        CancelIntro();
     void                        Update();
     TodParticleSystem*           AddVisualParticle(float x, float y, int renderOrder, ParticleEffect effect);
-    void                        UpdateVisualParticles(std::int64_t nowNs, bool simulate);
+    void                        UpdateVisualParticles(std::int64_t nowNs, std::uint64_t clockDeltaNs, bool simulate);
     void                        AnimateBoard();
     void                        UpdateSeedChooserCamera();
     /*inline*/ void             StartSeedChooser();

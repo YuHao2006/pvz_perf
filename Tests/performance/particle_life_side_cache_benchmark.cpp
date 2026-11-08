@@ -20,6 +20,7 @@
 #include <array>
 bool (*gAppCloseRequest)();
 namespace {
+constexpr std::int64_t SampleTimeNs = 370'000'003;
 float CrossFadeLerp(float theFrom, float theTo, bool theFromIsSet, bool theToIsSet, float theFraction)
 {
     if (!theFromIsSet)
@@ -83,8 +84,8 @@ static bool UncachedRender(TodParticle* theParticle, ParticleRenderParams* thePa
 
 	const auto& aHolder = *aEmitter->mParticleSystem->mParticleHolder;
 	const auto& aData = *aHolder.mData;
-	const float aSystemTime = (aEmitter->mSystemDurationNs > 0 ? static_cast<float>(double(ParticleLifeAgeAt(aEmitter->mParticleSystem->mLastUpdateTimeNs,aEmitter->mBirthTimeNs,aEmitter->mSystemDurationNs))/double(aEmitter->mSystemDurationNs)) : 0.0f);
-	const float aParticleTime = (theParticle->mParticleDurationNs > 0 ? static_cast<float>(double(ParticleLifeAgeAt(aEmitter->mParticleSystem->mLastUpdateTimeNs,theParticle->mBirthTimeNs,theParticle->mParticleDurationNs))/double(theParticle->mParticleDurationNs)) : 0.0f);
+	const float aSystemTime = (aEmitter->mSystemDurationNs > 0 ? static_cast<float>(double(ParticleLifeAgeAt(SampleTimeNs,aEmitter->mBirthTimeNs,aEmitter->mSystemDurationNs))/double(aEmitter->mSystemDurationNs)) : 0.0f);
+	const float aParticleTime = (theParticle->mParticleDurationNs > 0 ? static_cast<float>(double(ParticleLifeAgeAt(SampleTimeNs,theParticle->mBirthTimeNs,theParticle->mParticleDurationNs))/double(theParticle->mParticleDurationNs)) : 0.0f);
 	const auto systemEvaluate = [aEmitter, aSystemTime](const FloatParameterTrack& track,
 		ParticleSystemTracks index) {
 		return FloatTrackEvaluate(track, aSystemTime, aEmitter->mTrackInterp[int(index)]);
@@ -126,7 +127,7 @@ static bool UncachedRender(TodParticle* theParticle, ParticleRenderParams* thePa
 		if (UncachedRender(aCrossFadeParticle, &aCrossFadeParams, theDepth + 1))
 		{
 			float aFraction = aCrossFadeParticle->mCrossFadeDurationNs > 1
-				? static_cast<float>(double(ParticleLifeAgeAt(aEmitter->mParticleSystem->mLastUpdateTimeNs, theParticle->mBirthTimeNs, theParticle->mParticleDurationNs)) / double(aCrossFadeParticle->mCrossFadeDurationNs - 1))
+				? static_cast<float>(double(ParticleLifeAgeAt(SampleTimeNs, theParticle->mBirthTimeNs, theParticle->mParticleDurationNs)) / double(aCrossFadeParticle->mCrossFadeDurationNs - 1))
 				: 1.0f;
 			theParams->mRed = CrossFadeLerp(aCrossFadeParams.mRed, theParams->mRed, aCrossFadeParams.mRedIsSet, theParams->mRedIsSet, aFraction);
 			theParams->mGreen = CrossFadeLerp(aCrossFadeParams.mGreen, theParams->mGreen, aCrossFadeParams.mGreenIsSet, theParams->mGreenIsSet, aFraction);
@@ -161,7 +162,7 @@ unsigned long long Hash(const ParticleRenderParams& p) {
 }
 __declspec(noinline) unsigned long long Cached(TodParticle& p) {
     ParticleRenderParams result{};
-    return p.mParticleEmitter->GetRenderParams(&p,&result,p.mParticleEmitter->mParticleSystem->mLastUpdateTimeNs)?Hash(result):0;
+    return p.mParticleEmitter->GetRenderParams(&p,&result,SampleTimeNs)?Hash(result):0;
 }
 __declspec(noinline) unsigned long long Uncached(TodParticle& p) {
     ParticleRenderParams result{};
@@ -176,7 +177,6 @@ int main() {
         LawnApp app; gLawnApp=&app; app.mReadFromRegistry=false;
         TodParticleData data;data.Initialize();TodParticleHolder holder(&data);
         auto* system=holder.mParticleSystems.DataArrayAlloc();system->mParticleHolder=&holder;
-        system->mLastUpdateTimeNs=370'000'003;
         TodParticleDefinition definition{};system->mParticleDef=&definition;
         TodEmitterDefinition emitterDefinition{};
         FloatParameterTrackNode nodes[]{{0,1,1,1,1},{1,.25f,.25f,1,1}};
@@ -187,12 +187,12 @@ int main() {
         emitter->mParticleSystem=system;emitter->mEmitterDef=&emitterDefinition;
         emitter->mSystemDurationNs=1'000'000'000;emitter->mBirthTimeNs=0;
         emitter->mScaleOverride=1;emitter->mColorOverride=Color::White;
-        RefreshParticleLifeFraction(*emitter,system->mLastUpdateTimeNs);
+        RefreshParticleLifeFraction(*emitter,SampleTimeNs);
         for(unsigned i=0;i<Count;++i) {
             auto* p=holder.mParticles.DataArrayAlloc();particles[i]=p;p->mParticleEmitter=emitter;
             p->mParticleDurationNs=900'000'000+i*10'003;p->mBirthTimeNs=-static_cast<long long>(i*3'017);
             p->mPosition={float(i%29),float(i%17)};p->mSpinPosition=float(i%11)*.01f;
-            RefreshParticleLifeFraction(*p,system->mLastUpdateTimeNs);
+            RefreshParticleLifeFraction(*p,SampleTimeNs);
         }
         LARGE_INTEGER frequency;QueryPerformanceFrequency(&frequency);
         std::puts("case,scope,consumers,kernel,round,queries,ns_per_query,checksum");
@@ -207,8 +207,8 @@ int main() {
                 LARGE_INTEGER begin,end;QueryPerformanceCounter(&begin);
                 for(unsigned r=0;r<Repeats;++r) {
                     if(scope && kernel) {
-                        RefreshParticleLifeFraction(*emitter,system->mLastUpdateTimeNs);
-                        for(auto* p:particles)RefreshParticleLifeFraction(*p,system->mLastUpdateTimeNs);
+                        RefreshParticleLifeFraction(*emitter,SampleTimeNs);
+                        for(auto* p:particles)RefreshParticleLifeFraction(*p,SampleTimeNs);
                     }
                     for(unsigned use=0;use<consumers;++use)for(auto* p:particles)sum+=query(*p);
                 }

@@ -110,7 +110,7 @@ void GridItem::DrawGridItem(Graphics* g)
     TodParticleSystem* aGridItemParticle = mApp->ParticleTryToGet(mGridItemParticleID);
     if (aGridItemParticle)
     {
-        aGridItemParticle->Draw(g);
+        aGridItemParticle->Draw(g, static_cast<std::int64_t>(mBoard->mLevelTimeNs));
     }
 }
 
@@ -616,7 +616,7 @@ void GridItem::Update()
             ? static_cast<std::int64_t>(mBoard->mLevelTimeNs)
             : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs;
         mApp->mEffectSystem->mReanimationHolder->BindAnimationTime(*aGridItemReanim, domain, nowNs);
-        aGridItemReanim->UpdateAt(nowNs);
+        aGridItemReanim->UpdateAt(nowNs, Sexy::gUpdateIntervalNs);
     }
 
     if (mGridItemType == GridItemType::GRIDITEM_PORTAL_CIRCLE || mGridItemType == GridItemType::GRIDITEM_PORTAL_SQUARE)

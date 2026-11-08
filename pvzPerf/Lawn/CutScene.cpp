@@ -1535,14 +1535,12 @@ TodParticleSystem* CutScene::AddVisualParticle(float x, float y, int renderOrder
     return particle;
 }
 
-void CutScene::UpdateVisualParticles(std::int64_t nowNs, bool simulate)
+void CutScene::UpdateVisualParticles(std::int64_t nowNs, std::uint64_t clockDeltaNs, bool simulate)
 {
     for (auto it=mVisualParticleIDs.begin();it!=mVisualParticleIDs.end();) {
         auto* particle=mApp->ParticleTryToGet(*it);
         if (!particle || particle->mDead) { it=mVisualParticleIDs.erase(it); continue; }
-        const auto deltaNs=simulate && nowNs>particle->mLastUpdateTimeNs
-            ? static_cast<std::uint64_t>(nowNs-particle->mLastUpdateTimeNs) : 0;
-        particle->Update(deltaNs,nowNs);
+        particle->Update(simulate ? clockDeltaNs : 0, nowNs, nowNs-static_cast<std::int64_t>(clockDeltaNs));
         ++it;
     }
 }
@@ -1553,7 +1551,8 @@ void CutScene::Update()
 {
 	if (mPreUpdatingBoard)
 		return;
-	UpdateVisualParticles(mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs,!mBoard->mPaused);
+	if (!mBoard->mPaused)
+        UpdateVisualParticles(mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs, Sexy::gUpdateIntervalNs, true);
 
 	// 更新疯狂戴夫
 	if (IsShowingCrazyDave() && !mBoard->mPaused)

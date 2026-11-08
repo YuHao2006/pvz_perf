@@ -262,7 +262,7 @@ Plant* ZenGarden::PlacePottedPlant(intptr_t thePottedPlantIndex)
         }
 
         aPlant->UpdateReanim(static_cast<std::int64_t>(mBoard->mLevelTimeNs), (mBoard->AnimationTimeDomain() == ReanimTimeDomain::Battle ? static_cast<std::int64_t>(mBoard->mLevelTimeNs) : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs));
-        aPlantReanim->UpdateAt((mBoard->AnimationTimeDomain() == ReanimTimeDomain::Battle ? static_cast<std::int64_t>(mBoard->mLevelTimeNs) : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs));
+        aPlantReanim->UpdateAt((mBoard->AnimationTimeDomain() == ReanimTimeDomain::Battle ? static_cast<std::int64_t>(mBoard->mLevelTimeNs) : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs), Sexy::gUpdateIntervalNs);
     }
 
     PlantSetLaunchCounter(aPlant);

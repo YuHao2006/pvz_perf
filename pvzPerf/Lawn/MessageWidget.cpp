@@ -63,7 +63,7 @@ MessageWidget::MessageWidget(LawnApp* theApp)
 	mMessageStyle = MessageStyle::MESSAGE_STYLE_OFF;
 	mLabelNext[0] = ('\0');
 	mMessageStyleNext = MessageStyle::MESSAGE_STYLE_OFF;
-	mSlideDurationNs = ((100) * 10'000'000LL) * 10'000'000LL;
+	mSlideDurationNs = 1'000'000'000LL;
 	mReanimType = ReanimationType::REANIM_NONE;
 	std::fill(std::begin(mTextReanimID), std::end(mTextReanimID), ReanimationID::REANIMATIONID_NULL);
 }
@@ -102,27 +102,29 @@ void MessageWidget::SetLabel(const SexyString& theNewLabel, MessageStyle theMess
 	// MessageWidget::SetLabel 时长表：表内匿名 lambda = 原 case 体逐句迁移
 	//（生成器 + 逆变换 token 对拍 0 差异）；HUGE_WAVE 双效（时长+文字淡出
 	// reanim）随体迁移；default 具名并被缺槽/越界复用。
+	// Values below are already nanoseconds. Only the stay styles reach the
+	// 100-second sentinel; finite hints must expire so later advice can appear.
 	using MessageDurationCaseFn = void (*)(MessageWidget&, int);
 
 	// 标签共体（匿名 lambda 无法跨槽复用，复用即具名）
 	// 原 case MESSAGE_STYLE_HINT_LONG, MESSAGE_STYLE_BIG_MIDDLE, MESSAGE_STYLE_ZEN_GARDEN_LONG, MESSAGE_STYLE_HINT_TALL_LONG
 	static constexpr auto MsgDurationMessageStyleHintLong = [](MessageWidget& w, int theMessageStyle)
 	{
-	w.mDisplayDurationNs = ((1500) * 10'000'000LL) * 10'000'000LL;
+	w.mDisplayDurationNs = 15'000'000'000LL;
 	};
 
 	// 标签共体（匿名 lambda 无法跨槽复用，复用即具名）
 	// 原 case MESSAGE_STYLE_HINT_FAST, MESSAGE_STYLE_HINT_TALL_FAST, MESSAGE_STYLE_BIG_MIDDLE_FAST, MESSAGE_STYLE_TUTORIAL_LEVEL1, MESSAGE_STYLE_TUTORIAL_LEVEL2, MESSAGE_STYLE_TUTORIAL_LATER
 	static constexpr auto MsgDurationMessageStyleHintFast = [](MessageWidget& w, int theMessageStyle)
 	{
-	w.mDisplayDurationNs = ((500) * 10'000'000LL) * 10'000'000LL;
+	w.mDisplayDurationNs = 5'000'000'000LL;
 	};
 
 	// 标签共体（匿名 lambda 无法跨槽复用，复用即具名）
 	// 原 case MESSAGE_STYLE_HINT_STAY, MESSAGE_STYLE_TUTORIAL_LEVEL1_STAY, MESSAGE_STYLE_TUTORIAL_LATER_STAY
 	static constexpr auto MsgDurationMessageStyleHintStay = [](MessageWidget& w, int theMessageStyle)
 	{
-	w.mDisplayDurationNs = ((10000) * 10'000'000LL) * 10'000'000LL;
+	w.mDisplayDurationNs = 100'000'000'000LL;
 	};
 
 	// 原 default（无 case 的 1 型与表外哨兵共用）
@@ -146,7 +148,7 @@ void MessageWidget::SetLabel(const SexyString& theNewLabel, MessageStyle theMess
 	// 原 case MESSAGE_STYLE_HINT_TALL_UNLOCKMESSAGE
 	[](MessageWidget& w, int theMessageStyle)
 	{
-	w.mDisplayDurationNs = ((500) * 10'000'000LL) * 10'000'000LL;
+	w.mDisplayDurationNs = 5'000'000'000LL;
 	},  // 10 MESSAGE_STYLE_HINT_TALL_UNLOCKMESSAGE
 	MsgDurationMessageStyleHintLong,  // 11 MESSAGE_STYLE_HINT_TALL_LONG（共体）
 	MsgDurationMessageStyleHintLong,  // 12 MESSAGE_STYLE_BIG_MIDDLE（共体）
@@ -154,25 +156,25 @@ void MessageWidget::SetLabel(const SexyString& theNewLabel, MessageStyle theMess
 	// 原 case MESSAGE_STYLE_HOUSE_NAME
 	[](MessageWidget& w, int theMessageStyle)
 	{
-	w.mDisplayDurationNs = ((250) * 10'000'000LL) * 10'000'000LL;
+	w.mDisplayDurationNs = 2'500'000'000LL;
 	},  // 14 MESSAGE_STYLE_HOUSE_NAME
 	// 原 case MESSAGE_STYLE_HUGE_WAVE
 	[](MessageWidget& w, int theMessageStyle)
 	{
-	w.mDisplayDurationNs = ((750) * 10'000'000LL) * 10'000'000LL;
+	w.mDisplayDurationNs = 7'500'000'000LL;
 	w.mReanimType = ReanimationType::REANIM_TEXT_FADE_ON;
 	},  // 15 MESSAGE_STYLE_HUGE_WAVE
 	// 原 case MESSAGE_STYLE_SLOT_MACHINE
 	[](MessageWidget& w, int theMessageStyle)
 	{
-	w.mDisplayDurationNs = ((750) * 10'000'000LL) * 10'000'000LL;
+	w.mDisplayDurationNs = 7'500'000'000LL;
 	},  // 16 MESSAGE_STYLE_SLOT_MACHINE
 	MsgDurationMessageStyleHintLong,  // 17 MESSAGE_STYLE_ZEN_GARDEN_LONG（共体）
 	// 原 case MESSAGE_STYLE_ACHIEVEMENT
 	[](MessageWidget& w, int theMessageStyle)
 	{
 	// @Patoke: implemented
-	w.mDisplayDurationNs = ((250) * 10'000'000LL) * 10'000'000LL;
+	w.mDisplayDurationNs = 2'500'000'000LL;
 	},  // 18 MESSAGE_STYLE_ACHIEVEMENT
 	};
 	static_assert(sizeof(kMessageDurations) / sizeof(kMessageDurations[0]) ==
@@ -225,7 +227,7 @@ void MessageWidget::LayoutReanimText()
 	int aCurLine = 0, aCurPos = 0;
 	_Font* aFont = GetFont();
 	int aLabelLen = sexystrlen(mLabel);
-	mSlideDurationNs = ((aLabelLen + 100) * 10'000'000LL) * 10'000'000LL;
+	mSlideDurationNs = 1'000'000'000LL + std::int64_t(aLabelLen) * 10'000'000LL;
 
 	float aLineWidth[MAX_REANIM_LINES];
 	for (int aPos = 0; aPos <= aLabelLen; aPos++)
@@ -251,8 +253,10 @@ void MessageWidget::LayoutReanimText()
 	// 以下遍历字幕中的所有文本，分别在适当的位置创建每一个文字的动画
 	for (int aPos = 0; aPos < aLabelLen; aPos++)
 	{
+		// The advice owner supplies Board time; paused Visual time must not
+		// advance letters while the message deadline remains frozen.
 		// 创建文字的动画
-		Reanimation* aReanimText = mApp->AddReanimation(aCurPosX, aCurPosY, 0, mReanimType, mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs, ReanimTimeDomain::Visual);
+		Reanimation* aReanimText = mApp->AddReanimation(aCurPosX, aCurPosY, 0, mReanimType, static_cast<std::int64_t>(mApp->mBoard->mLevelTimeNs), ReanimTimeDomain::Battle);
 		aReanimText->mIsAttachment = true;
 		aReanimText->PlayReanim(ReanimTrackId::anim_enter, ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD, 0.0f, 0.0f);
 		mTextReanimID[aPos] = mApp->ReanimationGetID(aReanimText);
@@ -329,7 +333,7 @@ void MessageWidget::Update(std::int64_t nowNs)
 					std::int64_t(aPos) * 10'000'000, 0.0f, 40.0f, Curves::Linear));
 		}
 
-		aTextReanim->UpdateAt(mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs, Sexy::gUpdateIntervalNs);  //更新动画
+		aTextReanim->UpdateAt(nowNs, Sexy::gUpdateIntervalNs);  //更新动画
 	}
 }
 

@@ -45,6 +45,24 @@ def memory64_runtime(path):
     raise ValueError(f'No defined game linear memory: {path}')
 
 
+def copy_runtime_javascript(source, destination, memory64):
+    if not memory64:
+        shutil.copyfile(source, destination)
+        return
+    text = source.read_text(encoding='utf-8')
+    # Emscripten's Memory64 beforeunload callback returns a BigInt pointer,
+    # but UTF8ToString indexes the JS heap with Numbers. This cold browser
+    # callback lacks the conversion emitted for ordinary imported pointers.
+    # Do not wrap UTF8ToString globally or add work to per-frame API calls.
+    old = 'if(confirmationMessage)confirmationMessage=UTF8ToString(confirmationMessage);'
+    fixed = 'if(confirmationMessage)confirmationMessage=UTF8ToString(Number(confirmationMessage));'
+    if text.count(old) == 1:
+        text = text.replace(old, fixed, 1)
+    elif text.count(fixed) != 1:
+        raise ValueError('Review Memory64 beforeunload pointer handling after Emscripten changes')
+    destination.write_text(text, encoding='utf-8')
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--build', type=Path, default=ROOT / 'out/wasm/game/site')
@@ -117,8 +135,8 @@ def main():
     text = readme.read_text(encoding='utf-8')
     readme.write_text('pvz_perf Web v' + version + '\n' + text.split('\n', 1)[1], encoding='utf-8')
     (args.output / 'web-config.js').write_text('window.PVZWebConfig = ' + json.dumps(config, ensure_ascii=False, indent=2) + ';\n', encoding='utf-8')
-    for name in ['pvz-perf.js', 'pvz-perf.data']:
-        shutil.copyfile(args.build / name, args.output / name)
+    copy_runtime_javascript(args.build / 'pvz-perf.js', args.output / 'pvz-perf.js', args.memory64)
+    shutil.copyfile(args.build / 'pvz-perf.data', args.output / 'pvz-perf.data')
     (args.output / 'pvz-perf.wasm.gz').write_bytes(gzip.compress((args.build / 'pvz-perf.wasm').read_bytes(), compresslevel=9, mtime=0))
     files = support_files + ['web-config.js', 'pvz-perf.js', 'pvz-perf.data', 'pvz-perf.wasm.gz']
     if args.webgl_build:
@@ -126,12 +144,12 @@ def main():
             raise ValueError('--webgl-build requires --webgpu')
         if hashlib.sha256((args.webgl_build / 'pvz-perf.data').read_bytes()).digest() != hashlib.sha256((args.build / 'pvz-perf.data').read_bytes()).digest():
             raise ValueError('WebGL and WebGPU must use the same resource package')
-        shutil.copyfile(args.webgl_build / 'pvz-perf.js', args.output / 'pvz-perf-webgl.js')
+        copy_runtime_javascript(args.webgl_build / 'pvz-perf.js', args.output / 'pvz-perf-webgl.js', args.memory64)
         (args.output / 'pvz-perf-webgl.wasm.gz').write_bytes(gzip.compress((args.webgl_build / 'pvz-perf.wasm').read_bytes(), compresslevel=9, mtime=0))
         files += ['pvz-perf-webgl.js', 'pvz-perf-webgl.wasm.gz']
     for build, stem in [(args.wasm64_build, 'pvz-perf-wasm64'), (args.wasm64_webgl_build, 'pvz-perf-webgl-wasm64')]:
         if not build: continue
-        shutil.copyfile(build / 'pvz-perf.js', args.output / (stem + '.js'))
+        copy_runtime_javascript(build / 'pvz-perf.js', args.output / (stem + '.js'), True)
         (args.output / (stem + '.wasm.gz')).write_bytes(gzip.compress((build / 'pvz-perf.wasm').read_bytes(), compresslevel=9, mtime=0))
         files += [stem + '.js', stem + '.wasm.gz']
     graphics = {'version': version, 'webgpu': args.webgpu, 'fallback': bool(args.webgl_build),

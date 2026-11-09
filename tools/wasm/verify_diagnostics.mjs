@@ -3,8 +3,9 @@ const {chromium}=await import(process.env.PVZ_PLAYWRIGHT_MODULE);
 const browser=await chromium.launch({headless:true,executablePath:'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe',args:['--enable-unsafe-webgpu','--ignore-gpu-blocklist']});
 try{
  const page=await browser.newPage({viewport:{width:390,height:844},hasTouch:true}),errors=[];
- page.on('pageerror',error=>errors.push(error.message));
+ page.on('pageerror',error=>errors.push(error.stack||error.message));
  await page.addInitScript(()=>localStorage.setItem('pvz_graphics_backend','webgl'));
+ await page.route('**/web-config.js',route=>route.fulfill({contentType:'text/javascript',body:'window.PVZWebConfig={bypassBilibiliChecks:true,diagnosticsDefault:true,rewardVideoBvid:"BV1hV4P6PEDc"}'}));
  await page.goto(process.env.PVZ_DIAGNOSTICS_URL||'http://127.0.0.1:18090/');
  await page.waitForFunction(()=>!document.getElementById('start').disabled,null,{timeout:120000});
  assert.equal(await page.locator('#diagnostics-enabled').isChecked(),true);
@@ -20,6 +21,11 @@ try{
  assert.ok(report.previous.events.some(event=>event.type==='game-start'));
  assert.ok(report.previous.events.some(event=>event.state.wasmBytes>0));
  assert.ok(report.previous.events.some(event=>event.state.phase==='游戏运行'));
+ const musicSample=report.previous.events.find(event=>event.state.audio?.voiceStates?.length);
+ assert.ok(musicSample,'Missing cached music voice snapshot');
+ assert.equal(typeof musicSample.state.audio.masterGain,'number');
+ assert.equal(musicSample.state.audio.disabled,false);
+ assert.ok(musicSample.state.audio.voiceStates.every(v=>typeof v.gain==='number'&&typeof v.playing==='boolean'));
  assert.ok(report.current.events.some(event=>event.type==='export'));
  const download=page.waitForEvent('download');await page.locator('#diagnostics-download').click();
  assert.equal((await download).suggestedFilename(),'pvz-diagnostics.json');

@@ -68,7 +68,7 @@ function patchProfile(original,patch){
  if('coins'in patch){integer(patch.coins,0,999990,'金币');require(patch.coins%10===0,'金币需为 10 的倍数');v.setInt32(16,patch.coins/10,true)}
  if('finished'in patch)v.setInt32(20,integer(patch.finished,0,2147483647,'冒险通关次数'),true);
  if(patch.records){require(Array.isArray(patch.records)&&patch.records.length===100,'挑战记录数组无效');patch.records.forEach((value,i)=>v.setInt32(24+i*4,integer(value,0,2147483647,'挑战记录'),true));for(let i=0;i<20;i++)if(patch.records[i+1]!==previous.getInt32(24+(i+1)*4,true))v.setUint8(mini+i,patch.records[i+1]>0?1:0)}
- if(patch.purchases){require(Array.isArray(patch.purchases)&&patch.purchases.length===80,'商店记录数组无效');patch.purchases.forEach((value,i)=>v.setInt32(424+i*4,integer(value,0,2147483647,'购买记录'),true))}
+ if(patch.purchases){require(Array.isArray(patch.purchases)&&patch.purchases.length===80,'商店记录数组无效');patch.purchases.forEach((value,i)=>{if(i===21){require(Number.isInteger(value),'额外卡槽次数必须为整数');value=Math.max(0,Math.min(4,value))}v.setInt32(424+i*4,integer(value,0,2147483647,'购买记录'),true)})}
  if(patch.unlocks){require(Array.isArray(patch.unlocks)&&patch.unlocks.length===3,'解锁状态无效');[8,9,14].forEach((field,i)=>v.setInt32(744+field*4,patch.unlocks[i]?1:0,true))}
  if(patch.achievements){require(Array.isArray(patch.achievements)&&patch.achievements.length===20,'成就状态无效');patch.achievements.forEach((earned,i)=>{if(!!earned===(v.getUint8(achievements+i*2)!==0))return;v.setUint8(achievements+i*2,earned?1:0);v.setUint8(achievements+i*2+1,earned?1:0)})}
  return bytes;
@@ -622,7 +622,7 @@ paintOptions();render();if(parent!==window){document.querySelector('main').inert
 }
 // Inserted inside editor.js's closure by build-save-editor.mjs.
 let users=[];
-const shopNames=['机枪射手','双子向日葵','忧郁菇','香蒲','冰西瓜','吸金磁','地刺王','玉米加农炮','模仿者','额外小推车（存档值）','金盏花 1','金盏花 2','金盏花 3','金浇水壶','肥料','杀虫剂','留声机','园艺手套','蘑菇园','手推车','蜗牛','额外卡槽次数','泳池清理车','屋顶清理车','钉耙次数','水族馆','巧克力','智慧树','树肥','坚果包扎术'];
+const shopNames=['机枪射手','双子向日葵','忧郁菇','香蒲','冰西瓜','吸金磁','地刺王','玉米加农炮','模仿者','额外小推车（存档值）','金盏花 1','金盏花 2','金盏花 3','金浇水壶','肥料','杀虫剂','留声机','园艺手套','蘑菇园','手推车','蜗牛','额外卡槽次数（0～4，对应 6～10 卡槽）','泳池清理车','屋顶清理车','钉耙次数','水族馆','巧克力','智慧树','树肥','坚果包扎术'];
 function selectedUser(){const user=users.find(p=>p.id===Number($('user-list').value));if(!user)throw Error('请先新增或选择一个用户');return user}
 function inputField(parent,label,value,type='number',attributes={}){const wrap=document.createElement('label');wrap.append(document.createTextNode(label));const input=document.createElement('input');input.type=type;if(type==='checkbox')input.checked=!!value;else input.value=value;Object.assign(input,attributes);wrap.append(input);parent.append(wrap);return input}
 function loadProfiles(rows){users=rows||[];const selected=Number($('user-list').value);$('user-list').replaceChildren(...users.map(p=>new Option(p.name+' · ID '+p.id,p.id)));if(users.some(p=>p.id===selected))$('user-list').value=selected;showUser()}

@@ -5325,8 +5325,75 @@ void GardenRulesRuntime(TestApp& app)
     std::cout<<"PASS actual garden/tree rules: animated tools, growth, needs, movement, three-garden cycle, wheelbarrow, profile reload and one-shot tree feeding at four schedules\n";
 }
 
+// Retail 1073 MessageWidget/Challenge::UpdateSlotMachine timing, with real
+// production text reanimations. Distinct Visual/Board clocks expose pause jumps.
+void MessageTimingRuntime(TestApp& app)
+{
+    auto& clocks=*app.mEffectSystem->mReanimationHolder;
+    struct Restore {
+        TestApp& app; Board* board=app.mBoard; PlayerInfo* player=app.mPlayerInfo;
+        GameMode mode=app.mGameMode; GameScenes scene=app.mGameScene;
+        unsigned long long step=Sexy::gUpdateIntervalNs;
+        std::int64_t visual=app.mEffectSystem->mReanimationHolder->mVisualTimeNs;
+        std::int64_t battle=app.mEffectSystem->mReanimationHolder->mBattleTimeNs;
+        ~Restore() {app.mBoard=board;app.mPlayerInfo=player;app.mGameMode=mode;app.mGameScene=scene;
+            Sexy::gUpdateIntervalNs=step;auto& c=*app.mEffectSystem->mReanimationHolder;
+            c.mVisualTimeNs=visual;c.mBattleTimeNs=battle;}
+    } restore{app};
+    PlayerInfo profile;profile.mLevel=50;profile.mFinishedAdventure=1;
+    app.mPlayerInfo=&profile;app.mGameMode=GAMEMODE_MINIGAME_SLOT_MACHINE;app.mGameScene=SCENE_PLAYING;
+    Board board(&app);app.mBoard=&board;board.mPaused=false;
+    std::fill(std::begin(board.mHelpDisplayed),std::end(board.mHelpDisplayed),false);
+    board.mSunMoney=50;board.mLevelTimeNs=19'000'000'000LL;clocks.mBattleTimeNs=board.mLevelTimeNs;
+    clocks.mVisualTimeNs=200'000'000'000LL;
+    for(int style=1;style<=int(MESSAGE_STYLE_ACHIEVEMENT);++style) {
+        MessageWidget advice(&app);advice.SetLabel("TEST",static_cast<MessageStyle>(style));
+        const bool stay=style==MESSAGE_STYLE_TUTORIAL_LEVEL1_STAY||style==MESSAGE_STYLE_TUTORIAL_LATER_STAY||style==MESSAGE_STYLE_HINT_STAY;
+        const auto origin=style==MESSAGE_STYLE_HOUSE_NAME?clocks.mVisualTimeNs:std::int64_t(board.mLevelTimeNs);
+        const auto duration=advice.mDisplayDurationNs;
+        Require(duration>=2'500'000'000LL&&duration<=100'000'000'000LL,"Advice duration converted to nanoseconds more than once");
+        Require((advice.mEndTimeNs==INT64_MAX)==stay,"Finite retail advice became indefinite");
+        if(!stay) {advice.Update(origin+duration-1);Require(advice.IsBeingDisplayed(),"Advice expired early");
+            advice.Update(origin+duration);Require(!advice.IsBeingDisplayed(),"Advice did not expire at retail deadline");}
+    }
+    auto& advice=*board.mAdvice;auto& challenge=*board.mChallenge;
+    challenge.mChallengeState=STATECHALLENGE_NORMAL;
+    challenge.UpdateSlotMachine();
+    Require(board.mHelpIndex==ADVICE_SLOT_MACHINE_COLLECT_SUN,"Slot opening advice missing");
+    for(int spin=0;spin<3;++spin) {
+        board.mLevelTimeNs=advice.mEndTimeNs;advice.Update(board.mLevelTimeNs);challenge.UpdateSlotMachine();
+        Require(std::string_view(advice.mLabel)==gStr.ADVICE_SLOT_MACHINE_SPIN_AGAIN,"Slot did not repeat Spin Again after finite advice");
+        board.DisplayAdvice("Spin result",MESSAGE_STYLE_SLOT_MACHINE,ADVICE_NONE);
+        Require(advice.mEndTimeNs==std::int64_t(board.mLevelTimeNs)+7'500'000'000LL,"Slot result duration differs from 1073");
+    }
+    advice.ClearLabel();
+    for(const int hz:{30,60,100,240}) {
+        MessageWidget wave(&app);const auto start=std::int64_t(board.mLevelTimeNs);
+        wave.SetLabel(gStr.ADVICE_HUGE_WAVE,MESSAGE_STYLE_HUGE_WAVE);
+        Require(wave.mEndTimeNs==start+7'500'000'000LL,"Huge-wave display duration differs from 1073");
+        Require(wave.mSlideDurationNs==1'000'000'000LL+std::int64_t(std::strlen(wave.mLabel))*10'000'000LL,"Huge-wave slide window uses incorrect units");
+        const auto step=1'000'000'000LL/hz;Sexy::gUpdateIntervalNs=step;
+        auto* letter=app.ReanimationGet(wave.mTextReanimID[0]);
+        board.mLevelTimeNs+=step;clocks.mBattleTimeNs=board.mLevelTimeNs;wave.Update(board.mLevelTimeNs);
+        const auto before=letter->SamplePlayback().phaseNs;
+        Require(before>0&&letter->IsAnimPlaying(ReanimTrackId::anim_enter),"Huge-wave entry animation did not advance");
+        board.mPaused=true;clocks.mVisualTimeNs+=3'000'000'000LL;wave.Update(board.mLevelTimeNs);
+        Require(letter->SamplePlayback().phaseNs==before,"Paused advice letters advanced with Visual time");
+        board.mPaused=false;board.mLevelTimeNs+=step;clocks.mBattleTimeNs=board.mLevelTimeNs;wave.Update(board.mLevelTimeNs);
+        Require(letter->SamplePlayback().phaseNs>before&&letter->mLoopCount==0,"Resuming advice skipped to the held last frame");
+        const auto leave=start+7'500'000'000LL-wave.mSlideDurationNs;
+        board.mLevelTimeNs=leave-1;wave.Update(board.mLevelTimeNs);
+        board.mLevelTimeNs=leave+step-1;wave.Update(board.mLevelTimeNs);
+        Require(letter->IsAnimPlaying(ReanimTrackId::anim_leave),"Huge-wave leave transition lost across a variable step");
+        board.mLevelTimeNs=start+7'500'000'000LL;wave.Update(board.mLevelTimeNs);
+        Require(!wave.IsBeingDisplayed(),"Huge-wave text did not finish");
+    }
+    std::cout<<"PASS retail message deadlines, repeated slot advice, huge-wave entry/leave and paused owner clock at 30/60/100/240Hz\n";
+}
+
 void IntroRulesRuntime(TestApp& app, DecodeOnlySoundManager& sounds)
 {
+    MessageTimingRuntime(app);
     auto& clocks=*app.mEffectSystem->mReanimationHolder;
     struct Restore {
         TestApp& app;

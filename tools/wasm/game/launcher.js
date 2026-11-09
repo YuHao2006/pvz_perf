@@ -26,7 +26,14 @@ const diagnosticsReady=import('./diagnostics.js').then(({createDiagnostics})=>{
     loaded:!!Module?._pvz_web_loading_complete?.(),draws:Module?._pvz_web_draws?.(),updates:Module?._pvz_web_updates?.(),scene:Module?._pvz_web_scene?.(),
     canvas:[canvas.width,canvas.height],audio:{backend:audio?.backend,state:context?.state,time:context?.currentTime,
      sampleRate:context?.sampleRate,baseLatency:context?.baseLatency,outputLatency:context?.outputLatency,
-     buffers:audio?.sound?.sources.size,channels:audio?.sound?.channels.size,voices:audio?.voices.size}};
+     buffers:audio?.sound?.sources.size,channels:audio?.sound?.channels.size,voices:audio?.voices.size,
+     disabled:audio?.disabled,error:audio?.error?.slice(0,1000),masterGain:audio?.master?.gain.value,
+     syncStalled:audio?.syncStalled,pendingSync:audio?.flushes.size,
+     // Opt-in diagnostic snapshots only. Read the existing cached reports;
+     // never flush/query the audio worker or sample PCM from this callback.
+     voiceStates:audio?.voices?Array.from(audio.voices.values()).slice(0,8).map(v=>({
+      id:v.id,stream:v.stream,playing:v.playing,paused:v.paused,gain:v.gain,
+      position:v.position,tempo:v.tempo,speed:v.speed})):[]}};
   }});
  const checkbox=document.getElementById('diagnostics-enabled');checkbox.checked=diagnostics.enabled;
  if(window.PVZWebConfig?.diagnosticsDefault){document.getElementById('advanced-settings').open=true;document.getElementById('diagnostics-label').textContent='记录运行诊断（此诊断包默认开启）'}

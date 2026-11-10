@@ -404,9 +404,10 @@ bool Board::LoadGame(const std::string& theFileName)
 	if (mApp->IsSurvivalMode() && IsSurvivalStageWithRepick() &&
 		mNumWaves > 0 && mCurrentWave == mNumWaves &&
 		mLevelAwardSpawned && !mLevelComplete &&
-		mNextSurvivalStageCounter.mNanoseconds == 0 && mBoardFadeOutCounter < 0 &&
-		mNextZombieWaveTimeNs <= static_cast<long long>(mLevelTimeNs))
+		mNextSurvivalStageCounter.mNanoseconds == 0 && mBoardFadeOutCounter < 0)
 	{
+		// Killing the final wave can start repick before the scheduler's 55s
+		// fallback deadline. That future deadline does not invalidate this state.
 		mNextSurvivalStageCounter.mNanoseconds = 1;
 		mNextSurvivalStageCounter.mPreviousNanoseconds = 1;
 	}

@@ -115,7 +115,7 @@ def main():
     (args.output / "save-tool.html").unlink(missing_ok=True)
     (args.output / "save-tool-runtime.js").unlink(missing_ok=True)
     (args.output / "save-initial-records-v4.json.gz").unlink(missing_ok=True)
-    support_files = ['index.html', 'launcher.js', 'launcher.css', 'startup.js', 'diagnostics.js', 'rewards.js', 'lineups.js', 'lineup-storage.js', 'frame-rate.js', 'graphics.js', 'runtime-selection.js', 'save-tools.js', 'save-editor-host.js', 'progress-storage.js', 'text-input.js', 'serve.py',
+    support_files = ['index.html', 'launcher.js', 'launcher.css', 'startup.js', 'diagnostics.js', 'rewards.js', 'lineups.js', 'lineup-storage.js', 'frame-rate.js', 'graphics.js', 'runtime-selection.js', 'save-tools.js', 'save-maintenance.js', 'save-editor-host.js', 'progress-storage.js', 'text-input.js', 'serve.py',
                      'start-local.cmd', 'start-local.sh', 'README.txt']
     for name in support_files:
         shutil.copyfile(ROOT / 'tools/wasm/game' / name, args.output / name)

@@ -2843,7 +2843,13 @@
     "reanim/selectorscreen_survival_button": "images/4d5a332a3eac44e68f666a29.png",
     "reanim/selectorscreen_survival_button.png": "images/4d5a332a3eac44e68f666a29.png",
     "reanim/selectorscreen_survival_highlight": "images/8c74595845c5b38dbaebeeed.png",
-    "reanim/selectorscreen_survival_highlight.png": "images/8c74595845c5b38dbaebeeed.png"
+    "reanim/selectorscreen_survival_highlight.png": "images/8c74595845c5b38dbaebeeed.png",
+    "images/almanac_indexback": "images/224a81541fdfffb4390085c6.png",
+    "images/almanac_indexback.png": "images/224a81541fdfffb4390085c6.png",
+    "images/almanac_plantback": "images/02efd13440105330ea5bcc1c.png",
+    "images/almanac_plantback.png": "images/02efd13440105330ea5bcc1c.png",
+    "images/almanac_zombieback": "images/6b0c1ff4d914c475339df1c2.png",
+    "images/almanac_zombieback.png": "images/6b0c1ff4d914c475339df1c2.png"
   },
   "logicalSizes": {
     "images/almanac_closebutton.png": [
@@ -14213,6 +14219,30 @@
     "reanim/selectorscreen_survival_highlight.png": [
       266,
       123
+    ],
+    "images/almanac_indexback": [
+      1400,
+      600
+    ],
+    "images/almanac_indexback.png": [
+      1400,
+      600
+    ],
+    "images/almanac_plantback": [
+      1400,
+      600
+    ],
+    "images/almanac_plantback.png": [
+      1400,
+      600
+    ],
+    "images/almanac_zombieback": [
+      1400,
+      600
+    ],
+    "images/almanac_zombieback.png": [
+      1400,
+      600
     ]
   },
   "cards": {

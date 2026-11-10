@@ -1,0 +1,52 @@
+{
+  "originalCanvas": [
+    86,
+    110
+  ],
+  "sourceHighResolutionSize": [
+    149,
+    403
+  ],
+  "originalOccupiedRect": [
+    1,
+    36,
+    30,
+    109
+  ],
+  "sourceOccupiedRect": [
+    8,
+    27,
+    132,
+    398
+  ],
+  "masterSize": [
+    344,
+    440
+  ],
+  "runtimeSize": [
+    172,
+    220
+  ],
+  "previousRuntimeOccupiedRect": [
+    9,
+    15,
+    152,
+    217
+  ],
+  "correctedRuntimeOccupiedRect": [
+    2,
+    72,
+    60,
+    218
+  ],
+  "sourceSha256": "85be92e4ae1d572e117f33a9888889ffa653b9bd3c7a58cd1b92c1436cb37475",
+  "inverseAffine": [
+    1.0689655172413792,
+    0,
+    3.724137931034483,
+    0,
+    1.2705479452054795,
+    -155.95890410958904
+  ],
+  "note": "Original authored canvas/anchor unchanged; preserve highest-resolution source and 4x master."
+}

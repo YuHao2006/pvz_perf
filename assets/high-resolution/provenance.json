@@ -37295,35 +37295,38 @@
       "original": "assets/runtime/reanim/Zombie_flagpole.png",
       "file": "images/8eac3359852cfadb960a8f04.png",
       "logicalSize": [
-        86,
-        110
+        32,
+        73
       ],
       "physicalSize": [
-        172,
-        220
+        64,
+        146
       ],
-      "source": "assets/source-art/replanted/prepared-contours/Zombie_flagpole--fee939b00897.png",
-      "sourceSha256": "fd79cf380f3f388b5c47c9024b5677482b6ad05ce4edec485a09373af8aaf001",
+      "source": "assets/high-resolution-masters/reanim/flagpole/Zombie_flagpole-trimmed-4x.png",
+      "sourceSha256": "c50df9bb4c4edb4e7aea9346c5c8320ac77d59563a04d6bc2a31dde4798bdbbc",
       "mapping": {
-        "pixelPerLogical": [
-          1.7325581395348837,
-          3.6636363636363636
-        ],
-        "sourceFrameOrigin": [
-          0.0,
-          0.0
-        ],
         "logicalDrawRect": [
-          0.0,
-          2.1836228287841193,
-          86.0,
-          107.81637717121588
+          0,
+          0,
+          32,
+          73
         ],
         "originalLogicalCanvas": [
-          86,
-          110
+          32,
+          73
+        ],
+        "pixelPerLogical": [
+          4,
+          4
+        ],
+        "sourceFrameOrigin": [
+          0,
+          0
         ]
-      }
+      },
+      "master4x": "assets/high-resolution-masters/reanim/flagpole/Zombie_flagpole-trimmed-4x.png",
+      "repair": "Trim original transparent padding (1,36,33,109) and bake exact fixed-skew compensation into Zombie_flagpole DSL; two appearance variants share the pole",
+      "master4xSha256": "c50df9bb4c4edb4e7aea9346c5c8320ac77d59563a04d6bc2a31dde4798bdbbc"
     },
     {
       "original": "assets/runtime/reanim/Zombie_football_head.png",

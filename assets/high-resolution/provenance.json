@@ -1,6 +1,6 @@
 {
   "format": "pvz-high-resolution-provenance-v1",
-  "reviewSha256": "293bd86a827634955b9f8daeea50c3e2b9f407d409d5aecacc81a7f6ea13b323",
+  "reviewSha256": "2a15e94dd0b52808079b32519c84360e8e016712ae3ee8731cc600d5a62bd95a",
   "images": [
     {
       "original": "assets/runtime/images/Almanac_CloseButton.png",
@@ -48092,6 +48092,330 @@
         ]
       },
       "composition": "Unity nine-slice borders; offline compositing; existing logical positions preserved"
+    },
+    {
+      "original": "assets/runtime/reanim/Jalapeno_eye2.png",
+      "file": "images/b33d7792c4ae744bd57731cd.png",
+      "logicalSize": [
+        10,
+        11
+      ],
+      "physicalSize": [
+        20,
+        22
+      ],
+      "source": "assets/source-art/replanted/reanim-source-round20/Jalapeno_eye2--prepared.png",
+      "sourceSha256": "0438e0717b6dcd86d53104bc615be6f9441d4654d0e6594ed8f0b4344a209ed3",
+      "mapping": {
+        "logicalDrawRect": [
+          -0.25262697039206206,
+          -0.35292719557972685,
+          10.505253940784124,
+          11.705854391159454
+        ],
+        "originalLogicalCanvas": [
+          10,
+          11
+        ]
+      },
+      "approvedRound": 20
+    },
+    {
+      "original": "assets/runtime/reanim/PuffShroom_blink1.png",
+      "file": "images/376405313832cb73fd057ca7.png",
+      "logicalSize": [
+        13,
+        13
+      ],
+      "physicalSize": [
+        26,
+        26
+      ],
+      "source": "assets/source-art/replanted/reanim-source-round20/PuffShroom_blink1--prepared.png",
+      "sourceSha256": "27dd21358a8a95542e8ae7954ff8739deb3afde273090ad299d1bf1794f03741",
+      "mapping": {
+        "logicalDrawRect": [
+          -8.881784197001252e-16,
+          -8.881784197001252e-16,
+          13.000000000000002,
+          13.000000000000002
+        ],
+        "originalLogicalCanvas": [
+          13,
+          13
+        ]
+      },
+      "approvedRound": 20
+    },
+    {
+      "original": "assets/runtime/reanim/PuffShroom_blink2.png",
+      "file": "images/0a6bc1f68ef40aa2df188880.png",
+      "logicalSize": [
+        13,
+        13
+      ],
+      "physicalSize": [
+        26,
+        26
+      ],
+      "source": "assets/source-art/replanted/reanim-source-round20/PuffShroom_blink2--prepared.png",
+      "sourceSha256": "c125638dbeeb646177df855416c4d193bed27b114bd069641bddf29984169488",
+      "mapping": {
+        "logicalDrawRect": [
+          -8.881784197001252e-16,
+          -8.881784197001252e-16,
+          13.000000000000002,
+          13.000000000000002
+        ],
+        "originalLogicalCanvas": [
+          13,
+          13
+        ]
+      },
+      "approvedRound": 20
+    },
+    {
+      "original": "assets/runtime/reanim/PuffShroom_stem.png",
+      "file": "images/b9072d13bc1d7469192f9ade.png",
+      "logicalSize": [
+        7,
+        14
+      ],
+      "physicalSize": [
+        14,
+        28
+      ],
+      "source": "assets/source-art/replanted/reanim-source-round20/PuffShroom_stem--prepared.png",
+      "sourceSha256": "1ce2e5746b9a34fdb5f270d55081c3007e76a294b29cad2ea055a1a0e42c096b",
+      "mapping": {
+        "logicalDrawRect": [
+          3.315342756236743,
+          2.193754063720834,
+          4.369314487526514,
+          9.612491872558332
+        ],
+        "originalLogicalCanvas": [
+          7,
+          14
+        ]
+      },
+      "approvedRound": 20
+    },
+    {
+      "original": "assets/runtime/reanim/Starfruit_smile.png",
+      "file": "images/68b4f6aedffe1a07febf92b4.png",
+      "logicalSize": [
+        28,
+        14
+      ],
+      "physicalSize": [
+        56,
+        28
+      ],
+      "source": "assets/source-art/replanted/reanim-source-round20/Starfruit_smile--prepared.png",
+      "sourceSha256": "bc1b27f479ec8bd763bb5e8a1b527bf9107f494e67a17e4fccaad33bb3abed7a",
+      "mapping": {
+        "logicalDrawRect": [
+          0.7492884958886261,
+          -0.305065486559168,
+          27.501423008222748,
+          14.610130973118336
+        ],
+        "originalLogicalCanvas": [
+          28,
+          14
+        ]
+      },
+      "approvedRound": 20
+    },
+    {
+      "original": "assets/runtime/reanim/Tallnut_body.png",
+      "file": "images/0852f07b50a730884419ae8a.png",
+      "logicalSize": [
+        99,
+        146
+      ],
+      "physicalSize": [
+        198,
+        292
+      ],
+      "source": "assets/source-art/replanted/reanim-source-round21/Tallnut_body--with-eyes.png",
+      "sourceSha256": "1b7a8fcbc6a13bc62d15361ba52a89dc93b8a455c47f7e4cf062fd79fc5eb6e9",
+      "mapping": {
+        "logicalDrawRect": [
+          0.14835474228378587,
+          -0.21944346799709535,
+          98.95191341345618,
+          146.4388869359942
+        ],
+        "originalLogicalCanvas": [
+          99,
+          146
+        ]
+      },
+      "approvedRound": 21
+    },
+    {
+      "original": "assets/runtime/reanim/Tallnut_cracked1.png",
+      "file": "images/2b558344b6dc55dd9c47afac.png",
+      "logicalSize": [
+        99,
+        146
+      ],
+      "physicalSize": [
+        198,
+        292
+      ],
+      "source": "assets/source-art/replanted/reanim-source-round21/Tallnut_cracked1--with-eyes.png",
+      "sourceSha256": "aa357fde5d1971b3aae71d18822884b2684695ce20c23e3bf1224e827519d759",
+      "mapping": {
+        "logicalDrawRect": [
+          0.0021295176974902574,
+          -0.0031406359587293764,
+          98.99574096460502,
+          146.00628127191746
+        ],
+        "originalLogicalCanvas": [
+          99,
+          146
+        ]
+      },
+      "approvedRound": 21
+    },
+    {
+      "original": "assets/runtime/reanim/Tallnut_cracked2.png",
+      "file": "images/4466b4892071d838047826ed.png",
+      "logicalSize": [
+        99,
+        144
+      ],
+      "physicalSize": [
+        198,
+        288
+      ],
+      "source": "assets/source-art/replanted/reanim-source-round21/Tallnut_cracked2--with-eyes.png",
+      "sourceSha256": "3e7a8de3d6a15fab4b8b4838ef0d0c7e212e7cbcb85e0240cb65e38edea370f1",
+      "mapping": {
+        "logicalDrawRect": [
+          -0.08182145770892646,
+          -0.13033825129012655,
+          99.16364291541785,
+          144.0115216208832
+        ],
+        "originalLogicalCanvas": [
+          99,
+          144
+        ]
+      },
+      "approvedRound": 21
+    },
+    {
+      "original": "assets/runtime/reanim/ZenGarden_fertilize_bag1.png",
+      "file": "images/9ba762e1999e0fdd6e097047.png",
+      "logicalSize": [
+        70,
+        73
+      ],
+      "physicalSize": [
+        140,
+        146
+      ],
+      "source": "assets/source-art/replanted/reanim-source-round20/ZenGarden_fertilize_bag1--prepared.png",
+      "sourceSha256": "668f4bc0397a6d342b53cf3408df3720542f820f2536627fde153cc12a4c406c",
+      "mapping": {
+        "logicalDrawRect": [
+          1.4356598478550424,
+          11.116007771860776,
+          69.12868030428992,
+          60.76798445627845
+        ],
+        "originalLogicalCanvas": [
+          70,
+          73
+        ]
+      },
+      "approvedRound": 20
+    },
+    {
+      "original": "assets/runtime/reanim/ZenGarden_fertilizer_bag2.png",
+      "file": "images/94f26a0d31382540a5d181a4.png",
+      "logicalSize": [
+        70,
+        73
+      ],
+      "physicalSize": [
+        140,
+        146
+      ],
+      "source": "assets/source-art/replanted/reanim-source-round20/ZenGarden_fertilizer_bag2--prepared.png",
+      "sourceSha256": "d80156a4dcaa5e5100b19d635552de3335938038e141f884dfb237dd220fb8d7",
+      "mapping": {
+        "logicalDrawRect": [
+          3.2344336087069863,
+          7.34857404859725,
+          62.53113278258603,
+          66.3028519028055
+        ],
+        "originalLogicalCanvas": [
+          70,
+          73
+        ]
+      },
+      "approvedRound": 20
+    },
+    {
+      "original": "assets/runtime/reanim/ZenGarden_fertilizer_bag3.png",
+      "file": "images/6d004b46b9dc7c6d2401b6bd.png",
+      "logicalSize": [
+        70,
+        73
+      ],
+      "physicalSize": [
+        140,
+        146
+      ],
+      "source": "assets/source-art/replanted/reanim-source-round20/ZenGarden_fertilizer_bag3--prepared.png",
+      "sourceSha256": "f942bc9ba898f128cdb93de330279ddcf84ec0152a3a3378a16528e9ce2edb03",
+      "mapping": {
+        "logicalDrawRect": [
+          0.18496336347295994,
+          7.402792289896986,
+          65.63007327305408,
+          64.19441542020603
+        ],
+        "originalLogicalCanvas": [
+          70,
+          73
+        ]
+      },
+      "approvedRound": 20
+    },
+    {
+      "original": "assets/runtime/reanim/ZenGarden_phonograph_needle.png",
+      "file": "images/052699036f6b8ed0e5788307.png",
+      "logicalSize": [
+        15,
+        13
+      ],
+      "physicalSize": [
+        30,
+        26
+      ],
+      "source": "assets/source-art/replanted/reanim-source-round20/ZenGarden_phonograph_needle--prepared.png",
+      "sourceSha256": "de636a24f87aa436f1420b1effd60e3760ab751ab46d2e766a626ec100fd7eea",
+      "mapping": {
+        "logicalDrawRect": [
+          -0.07008074256672536,
+          -0.33410067037273805,
+          15.14016148513345,
+          13.457921320118622
+        ],
+        "originalLogicalCanvas": [
+          15,
+          13
+        ]
+      },
+      "approvedRound": 20
     }
   ],
   "skipped": [],

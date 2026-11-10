@@ -2899,7 +2899,13 @@
     "images/achievements_pedestal_press.png": "images/d0c335ba9b15231229e436d3.png",
     "images/achievements_pedestal_press": "images/d0c335ba9b15231229e436d3.png",
     "images/challenge_background.png": "images/d21207ee8a48ae02f0e3cf31.png",
-    "images/challenge_background": "images/d21207ee8a48ae02f0e3cf31.png"
+    "images/challenge_background": "images/d21207ee8a48ae02f0e3cf31.png",
+    "images/challenge_thumbnails.jpg": "images/33a777cafc12064a56db9706.png",
+    "images/challenge_thumbnails": "images/33a777cafc12064a56db9706.png",
+    "images/survival_thumbnails.jpg": "images/3edd007b2ed39413ab21da0c.png",
+    "images/survival_thumbnails": "images/3edd007b2ed39413ab21da0c.png",
+    "images/minigame_trophy.png": "images/f5f36846101be92db25d39d2.png",
+    "images/minigame_trophy": "images/f5f36846101be92db25d39d2.png"
   },
   "logicalSizes": {
     "images/almanac_closebutton.png": [
@@ -14397,6 +14403,30 @@
     "images/challenge_background": [
       1400,
       600
+    ],
+    "images/challenge_thumbnails.jpg": [
+      1760,
+      65
+    ],
+    "images/challenge_thumbnails": [
+      1760,
+      65
+    ],
+    "images/survival_thumbnails.jpg": [
+      880,
+      65
+    ],
+    "images/survival_thumbnails": [
+      880,
+      65
+    ],
+    "images/minigame_trophy.png": [
+      72,
+      71
+    ],
+    "images/minigame_trophy": [
+      72,
+      71
     ]
   },
   "cards": {

@@ -1,0 +1,92 @@
+[
+  {
+    "bundle": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+    "pathId": -6911080493424697187,
+    "type": "Sprite",
+    "name": "SPR_MainMenu_Button_Achievements_Over",
+    "file": "assets/source-art/replanted/ui-source-round24/SPR_MainMenu_Button_Achievements_Over.png",
+    "size": [
+      484,
+      565
+    ],
+    "borderLTRB": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "sha256": "afb947b89184cbb340542f4ab5d73b53e5f0a3f6152980aa120435c5bfba2bdc"
+  },
+  {
+    "bundle": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+    "pathId": 1425537582331725742,
+    "type": "Sprite",
+    "name": "SPR_MainMenu_Achievement_Silver",
+    "file": "assets/source-art/replanted/ui-source-round24/SPR_MainMenu_Achievement_Silver.png",
+    "size": [
+      512,
+      896
+    ],
+    "borderLTRB": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "sha256": "26f1fb67ac9bf7ad70ea9daa1e79a56be296f1c238e9cd8a6551d26fb3318bbb"
+  },
+  {
+    "bundle": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+    "pathId": 2779464793775482139,
+    "type": "Sprite",
+    "name": "SPR_Challenges_Background",
+    "file": "assets/source-art/replanted/ui-source-round24/SPR_Challenges_Background.png",
+    "size": [
+      2881,
+      2161
+    ],
+    "borderLTRB": [
+      1408.0,
+      0.0,
+      1292.0,
+      0.0
+    ],
+    "sha256": "564f2fc11ab05e3f4423f9c12f66c98e3de8239a665e9b29e61cb4ad11f349ce"
+  },
+  {
+    "bundle": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+    "pathId": 4883028004152900032,
+    "type": "Sprite",
+    "name": "SPR_MainMenu_Achievement_Gold",
+    "file": "assets/source-art/replanted/ui-source-round24/SPR_MainMenu_Achievement_Gold.png",
+    "size": [
+      512,
+      896
+    ],
+    "borderLTRB": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "sha256": "72587215b9625c03a8dc9bdb73d8d58bd3f4e8722dfac44f07249c949ac3813a"
+  },
+  {
+    "bundle": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+    "pathId": 7147696642748152665,
+    "type": "Sprite",
+    "name": "SPR_MainMenu_Button_Achievements",
+    "file": "assets/source-art/replanted/ui-source-round24/SPR_MainMenu_Button_Achievements.png",
+    "size": [
+      484,
+      565
+    ],
+    "borderLTRB": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "sha256": "ca3ca3f73f4321b261d558f24136a40280b16155cd0e365434d678ecddd851a4"
+  }
+]

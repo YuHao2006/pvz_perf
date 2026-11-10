@@ -18,6 +18,7 @@
 #include "graphics/DDInterface.h"
 #include "graphics/RenderInterface.h"
 #include "misc/SexyMatrix.h"
+#include <iterator>
 
 SeedPacket::SeedPacket()
 {
@@ -316,7 +317,7 @@ void DrawSeedPacket(Graphics* g, float x, float y, SeedType theSeedType, SeedTyp
     if constexpr(CommonUIAtlas::HasSeedCards)
     {
         const auto index=static_cast<unsigned>(theSeedType);
-        if(index<53 && (theSeedType!=SeedType::SEED_IMITATER || theImitaterType==SeedType::SEED_NONE) &&
+        if(index<std::size(CommonUIAtlas::SeedCards) && (theSeedType!=SeedType::SEED_IMITATER || theImitaterType==SeedType::SEED_NONE) &&
             CommonUIAtlas::SeedCards[index].mWidth)
             highResolutionCard=&CommonUIAtlas::SeedCards[index];
     }

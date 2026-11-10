@@ -50,12 +50,12 @@
     "images/seedchooser_background": "images/0fb5930dee09881aacd0649e.png",
     "images/seedchooser_imitateraddon.png": "images/3b9a8554fa42672b7c945a65.png",
     "images/seedchooser_imitateraddon": "images/3b9a8554fa42672b7c945a65.png",
-    "images/selectorscreen_help2.png": "images/5659540aa4a42cb9ca674b43.png",
-    "images/selectorscreen_help2": "images/5659540aa4a42cb9ca674b43.png",
-    "images/selectorscreen_options2.png": "images/3a7eaa021066cb3b1d1ac503.png",
-    "images/selectorscreen_options2": "images/3a7eaa021066cb3b1d1ac503.png",
-    "images/selectorscreen_quit2.png": "images/24563cc6a7e8870b22e0ce16.png",
-    "images/selectorscreen_quit2": "images/24563cc6a7e8870b22e0ce16.png",
+    "images/selectorscreen_help2.png": "images/decf426b36710e5962e0ec62.png",
+    "images/selectorscreen_help2": "images/decf426b36710e5962e0ec62.png",
+    "images/selectorscreen_options2.png": "images/ac0a724f3b28aeedeed5a1e3.png",
+    "images/selectorscreen_options2": "images/ac0a724f3b28aeedeed5a1e3.png",
+    "images/selectorscreen_quit2.png": "images/ca70e368cb34298dfe1c9d33.png",
+    "images/selectorscreen_quit2": "images/ca70e368cb34298dfe1c9d33.png",
     "images/selectorscreen_zengarden.png": "images/4517afd375fe7bf736133c58.png",
     "images/selectorscreen_zengarden": "images/4517afd375fe7bf736133c58.png",
     "images/selectorscreen_zengardenhighlight.png": "images/8a49feee05a20a753154b4b1.png",
@@ -2883,7 +2883,17 @@
     "images/selectorscreen_almanac.png": "images/c5e42850932ae30bd505c9d5.png",
     "images/selectorscreen_almanac": "images/c5e42850932ae30bd505c9d5.png",
     "images/selectorscreen_almanachighlight.png": "images/63692fd961a1a4a37ba6e78c.png",
-    "images/selectorscreen_almanachighlight": "images/63692fd961a1a4a37ba6e78c.png"
+    "images/selectorscreen_almanachighlight": "images/63692fd961a1a4a37ba6e78c.png",
+    "images/selectorscreen_options1.png": "images/e5196fcc7cedd90002c9c12e.png",
+    "images/selectorscreen_options1": "images/e5196fcc7cedd90002c9c12e.png",
+    "images/selectorscreen_help1.png": "images/8287f861011b94983154f148.png",
+    "images/selectorscreen_help1": "images/8287f861011b94983154f148.png",
+    "images/selectorscreen_quit1.png": "images/b897e558540406f5e746e7cb.png",
+    "images/selectorscreen_quit1": "images/b897e558540406f5e746e7cb.png",
+    "images/selectorscreen_store.png": "images/17896f8ba31006e0bf81f96f.png",
+    "images/selectorscreen_store": "images/17896f8ba31006e0bf81f96f.png",
+    "images/selectorscreen_storehighlight.png": "images/bc8103156f12f4bacae3708d.png",
+    "images/selectorscreen_storehighlight": "images/bc8103156f12f4bacae3708d.png"
   },
   "logicalSizes": {
     "images/almanac_closebutton.png": [
@@ -14317,6 +14327,46 @@
     "images/selectorscreen_almanachighlight": [
       99,
       99
+    ],
+    "images/selectorscreen_options1.png": [
+      81,
+      31
+    ],
+    "images/selectorscreen_options1": [
+      81,
+      31
+    ],
+    "images/selectorscreen_help1.png": [
+      48,
+      22
+    ],
+    "images/selectorscreen_help1": [
+      48,
+      22
+    ],
+    "images/selectorscreen_quit1.png": [
+      47,
+      27
+    ],
+    "images/selectorscreen_quit1": [
+      47,
+      27
+    ],
+    "images/selectorscreen_store.png": [
+      130,
+      89
+    ],
+    "images/selectorscreen_store": [
+      130,
+      89
+    ],
+    "images/selectorscreen_storehighlight.png": [
+      130,
+      89
+    ],
+    "images/selectorscreen_storehighlight": [
+      130,
+      89
     ]
   },
   "cards": {
@@ -14368,7 +14418,13 @@
     "47": "high-resolution/images/card-47.png",
     "50": "high-resolution/images/card-50.png",
     "49": "high-resolution/images/card-49.png",
-    "52": "high-resolution/images/card-52.png"
+    "52": "high-resolution/images/card-52.png",
+    "54": "high-resolution/images/card-special-54.png",
+    "55": "high-resolution/images/card-special-55.png",
+    "56": "high-resolution/images/card-special-56.png",
+    "57": "high-resolution/images/card-special-57.png",
+    "58": "high-resolution/images/card-special-58.png",
+    "59": "high-resolution/images/card-special-59.png"
   },
   "originalDefinitions": [
     "zombatar_zombie_head"

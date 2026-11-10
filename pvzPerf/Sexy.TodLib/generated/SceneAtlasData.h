@@ -350,12 +350,18 @@ enum class Sprite : std::uint16_t {
     SEED_CARD_50 = 74,
     SEED_CARD_49 = 75,
     SEED_CARD_52 = 76,
-    Count = 77,
+    SEED_CARD_54 = 77,
+    SEED_CARD_55 = 78,
+    SEED_CARD_56 = 79,
+    SEED_CARD_57 = 80,
+    SEED_CARD_58 = 81,
+    SEED_CARD_59 = 82,
+    Count = 83,
 };
-inline constexpr std::size_t Count = 77;
+inline constexpr std::size_t Count = 83;
 extern const Sexy::TextureRegion Images[Count];
 inline constexpr bool HasSeedCards=true;
-extern const Sexy::TextureRegion SeedCards[53];
+extern const Sexy::TextureRegion SeedCards[60];
 void Load();
 void Free();
 }

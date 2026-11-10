@@ -1,6 +1,6 @@
 {
   "format": "pvz-high-resolution-provenance-v1",
-  "reviewSha256": "8a728bff471be2bebe835f7a0b81d590b54805fbe66d6f78ab0353d42dad3eac",
+  "reviewSha256": "6660eab0a5ec15e3f126c1b80eaf8c1fc54c9bc397709542661e763f52b280ac",
   "images": [
     {
       "original": "assets/runtime/images/Almanac_CloseButton.png",
@@ -804,7 +804,7 @@
     },
     {
       "original": "assets/runtime/images/SelectorScreen_Help2.png",
-      "file": "images/5659540aa4a42cb9ca674b43.png",
+      "file": "images/decf426b36710e5962e0ec62.png",
       "logicalSize": [
         48,
         22
@@ -813,32 +813,25 @@
         96,
         44
       ],
-      "source": "assets/source-art/replanted/sprite-candidates-round3/SelectorScreen_Help2--bc7c157ea5b26890.png",
+      "source": "assets/source-art/replanted/ui-source-round23/SelectorScreen_Help2--paired.png",
       "sourceSha256": "b31e3ff4771322fff0b6adbefb9d9b9e234056366d03e00b95b6831040d33507",
       "mapping": {
-        "pixelPerLogical": [
-          3.1666666666666665,
-          2.8181818181818183
-        ],
-        "sourceFrameOrigin": [
-          0.0,
-          0.0
-        ],
         "logicalDrawRect": [
-          0.0,
-          0.0,
-          48.0,
-          22.0
+          2.0,
+          1.526315789473685,
+          44.0,
+          17.94736842105263
         ],
         "originalLogicalCanvas": [
           48,
           22
         ]
-      }
+      },
+      "approvedRound": 23
     },
     {
       "original": "assets/runtime/images/SelectorScreen_Options2.png",
-      "file": "images/3a7eaa021066cb3b1d1ac503.png",
+      "file": "images/ac0a724f3b28aeedeed5a1e3.png",
       "logicalSize": [
         81,
         31
@@ -847,32 +840,25 @@
         162,
         62
       ],
-      "source": "assets/source-art/replanted/sprite-candidates-round3/SelectorScreen_Options2--2c909b18d02ff46a.png",
+      "source": "assets/source-art/replanted/ui-source-round23/SelectorScreen_Options2--paired.png",
       "sourceSha256": "08614db3f8b9ac492729d5efe15d654f3fb0d197348523644fd694b40ce22ecf",
       "mapping": {
-        "pixelPerLogical": [
-          3.45679012345679,
-          2.935483870967742
-        ],
-        "sourceFrameOrigin": [
-          0.0,
-          0.0
-        ],
         "logicalDrawRect": [
-          0.0,
-          0.0,
-          81.0,
-          31.0
+          1.0,
+          2.1624999999999996,
+          79.0,
+          25.675
         ],
         "originalLogicalCanvas": [
           81,
           31
         ]
-      }
+      },
+      "approvedRound": 23
     },
     {
       "original": "assets/runtime/images/SelectorScreen_Quit2.png",
-      "file": "images/24563cc6a7e8870b22e0ce16.png",
+      "file": "images/ca70e368cb34298dfe1c9d33.png",
       "logicalSize": [
         47,
         27
@@ -881,28 +867,21 @@
         94,
         54
       ],
-      "source": "assets/source-art/replanted/sprite-candidates-round3/SelectorScreen_Quit2--79eba97c7046080d.png",
+      "source": "assets/source-art/replanted/ui-source-round23/SelectorScreen_Quit2--paired.png",
       "sourceSha256": "16789d6671757dd6aaa982f3406c9a578a92100f55a2b096b197adf913243c39",
       "mapping": {
-        "pixelPerLogical": [
-          3.127659574468085,
-          3.185185185185185
-        ],
-        "sourceFrameOrigin": [
-          0.0,
-          0.0
-        ],
         "logicalDrawRect": [
-          0.0,
-          0.0,
-          47.0,
-          27.0
+          2.133720930232556,
+          1.0,
+          42.73255813953489,
+          25.0
         ],
         "originalLogicalCanvas": [
           47,
           27
         ]
-      }
+      },
+      "approvedRound": 23
     },
     {
       "original": "assets/runtime/images/SelectorScreen_ZenGarden.png",
@@ -48546,6 +48525,141 @@
         ]
       },
       "repair": "Crop distant translucent shadow; preserve opaque book; uniform placement in original canvas"
+    },
+    {
+      "original": "assets/runtime/images/SelectorScreen_Options1.png",
+      "file": "images/e5196fcc7cedd90002c9c12e.png",
+      "logicalSize": [
+        81,
+        31
+      ],
+      "physicalSize": [
+        162,
+        62
+      ],
+      "source": "assets/source-art/replanted/ui-source-round23/SelectorScreen_Options1--paired.png",
+      "sourceSha256": "9b7a2a91ae86e90a5eec5cb257db56fc3c643df2919317785ccf69d522404d2c",
+      "mapping": {
+        "logicalDrawRect": [
+          1.0,
+          2.1624999999999996,
+          79.0,
+          25.675
+        ],
+        "originalLogicalCanvas": [
+          81,
+          31
+        ]
+      },
+      "approvedRound": 23
+    },
+    {
+      "original": "assets/runtime/images/SelectorScreen_Help1.png",
+      "file": "images/8287f861011b94983154f148.png",
+      "logicalSize": [
+        48,
+        22
+      ],
+      "physicalSize": [
+        96,
+        44
+      ],
+      "source": "assets/source-art/replanted/ui-source-round23/SelectorScreen_Help1--paired.png",
+      "sourceSha256": "db58b6a6d6e7c511dc848bd607e1f3e8e827cbc4ee40a9686a7573a922e0160a",
+      "mapping": {
+        "logicalDrawRect": [
+          2.0,
+          1.526315789473685,
+          44.0,
+          17.94736842105263
+        ],
+        "originalLogicalCanvas": [
+          48,
+          22
+        ]
+      },
+      "approvedRound": 23
+    },
+    {
+      "original": "assets/runtime/images/SelectorScreen_Quit1.png",
+      "file": "images/b897e558540406f5e746e7cb.png",
+      "logicalSize": [
+        47,
+        27
+      ],
+      "physicalSize": [
+        94,
+        54
+      ],
+      "source": "assets/source-art/replanted/ui-source-round23/SelectorScreen_Quit1--paired.png",
+      "sourceSha256": "b0e7f7b711ea2629e561ccb821ae1f8f2de756c6bdb973ab03490f6f80bcd0e7",
+      "mapping": {
+        "logicalDrawRect": [
+          2.133720930232556,
+          1.0,
+          42.73255813953489,
+          25.0
+        ],
+        "originalLogicalCanvas": [
+          47,
+          27
+        ]
+      },
+      "approvedRound": 23
+    },
+    {
+      "original": "assets/runtime/images/SelectorScreen_Store.png",
+      "file": "images/17896f8ba31006e0bf81f96f.png",
+      "logicalSize": [
+        130,
+        89
+      ],
+      "physicalSize": [
+        260,
+        178
+      ],
+      "source": "assets/source-art/replanted/ui-source-round23/SelectorScreen_Store--paired.png",
+      "sourceSha256": "c03872465a3fd8a216891d16468d608a5595629991c9af74cd590b8774d59aca",
+      "mapping": {
+        "logicalDrawRect": [
+          0.6289308176100548,
+          -0.2798742138364787,
+          128.7421383647799,
+          89.83962264150944
+        ],
+        "originalLogicalCanvas": [
+          130,
+          89
+        ]
+      },
+      "approvedRound": 23
+    },
+    {
+      "original": "assets/runtime/images/SelectorScreen_StoreHighlight.png",
+      "file": "images/bc8103156f12f4bacae3708d.png",
+      "logicalSize": [
+        130,
+        89
+      ],
+      "physicalSize": [
+        260,
+        178
+      ],
+      "source": "assets/source-art/replanted/ui-source-round23/SelectorScreen_StoreHighlight--paired.png",
+      "sourceSha256": "9831c317c0d9a7cb44a1fe206e887bdb8e140b0004f25c37f0a4acd6aa6e9643",
+      "mapping": {
+        "logicalDrawRect": [
+          0.6289308176100548,
+          -0.2798742138364787,
+          128.7421383647799,
+          89.83962264150944
+        ],
+        "originalLogicalCanvas": [
+          130,
+          89
+        ]
+      },
+      "approvedRound": 23
     }
   ],
   "skipped": [],
@@ -49284,6 +49398,114 @@
         100,
         140
       ]
+    },
+    {
+      "original": "SEED_BEGHOULED_BUTTON_SHUFFLE",
+      "seedId": 54,
+      "source": "assets/source-art/replanted/ui-source-round23/SPR_Beghouled_Refresh.png",
+      "sourceSha256": "f2e494f2d27110fc79037857ca9733d9bfbee21fc3a4a9bc720958f7f95a9b5f",
+      "file": "images/card-special-54.png",
+      "logicalSize": [
+        50,
+        70
+      ],
+      "physicalSize": [
+        100,
+        140
+      ],
+      "uniformSourceScale": 0.5319148936170213,
+      "approval": "User approved all minigame source artwork in chat",
+      "atlas": "CommonUI"
+    },
+    {
+      "original": "SEED_BEGHOULED_BUTTON_CRATER",
+      "seedId": 55,
+      "source": "assets/source-art/replanted/ui-source-round23/SPR_Beghouled_Crater.png",
+      "sourceSha256": "f8d2e0b3fa0f9179675412d9150da09996dc65fc28f5d4939697e2ace0998e13",
+      "file": "images/card-special-55.png",
+      "logicalSize": [
+        50,
+        70
+      ],
+      "physicalSize": [
+        100,
+        140
+      ],
+      "uniformSourceScale": 0.5319148936170213,
+      "approval": "User approved all minigame source artwork in chat",
+      "atlas": "CommonUI"
+    },
+    {
+      "original": "SEED_SLOT_MACHINE_SUN",
+      "seedId": 56,
+      "source": "assets/source-art/replanted/ui-source-round23/SPR_SlotMachine_Sun.png",
+      "sourceSha256": "b01ab202da81ba4d1a1a73c736e4650207dd9c10cb217161b2a9eae25a0e11b3",
+      "file": "images/card-special-56.png",
+      "logicalSize": [
+        50,
+        70
+      ],
+      "physicalSize": [
+        100,
+        140
+      ],
+      "uniformSourceScale": 0.5319148936170213,
+      "approval": "User approved all minigame source artwork in chat",
+      "atlas": "CommonUI"
+    },
+    {
+      "original": "SEED_SLOT_MACHINE_DIAMOND",
+      "seedId": 57,
+      "source": "assets/source-art/replanted/ui-source-round23/SPR_SlotMachine_Diamond.png",
+      "sourceSha256": "ce9ebee774a1d247fab5fb53e967da8602eefa244378842020997f44e37b448d",
+      "file": "images/card-special-57.png",
+      "logicalSize": [
+        50,
+        70
+      ],
+      "physicalSize": [
+        100,
+        140
+      ],
+      "uniformSourceScale": 0.5319148936170213,
+      "approval": "User approved all minigame source artwork in chat",
+      "atlas": "CommonUI"
+    },
+    {
+      "original": "SEED_ZOMBIQUARIUM_SNORKLE",
+      "seedId": 58,
+      "source": "assets/source-art/replanted/ui-source-round23/SPR_Zombiquarium_Snorkel.png",
+      "sourceSha256": "33e69e311ed822b938cb33b7986ff916c22e8ddf044e259d635b4a458affac48",
+      "file": "images/card-special-58.png",
+      "logicalSize": [
+        50,
+        70
+      ],
+      "physicalSize": [
+        100,
+        140
+      ],
+      "uniformSourceScale": 0.5319148936170213,
+      "approval": "User approved all minigame source artwork in chat",
+      "atlas": "CommonUI"
+    },
+    {
+      "original": "SEED_ZOMBIQUARIUM_TROPHY",
+      "seedId": 59,
+      "source": "assets/source-art/replanted/ui-source-round23/SPR_Zombiquarium_Trophy.png",
+      "sourceSha256": "2382ce034de7199fcbbc74fe2668856c86705a74d44a33e8f42f41fa36b77861",
+      "file": "images/card-special-59.png",
+      "logicalSize": [
+        50,
+        70
+      ],
+      "physicalSize": [
+        100,
+        140
+      ],
+      "uniformSourceScale": 0.5319148936170213,
+      "approval": "User approved all minigame source artwork in chat",
+      "atlas": "CommonUI"
     }
   ]
 }

@@ -45,8 +45,8 @@
     },
     {
       "path": "pvz-resource-build.exe",
-      "bytes": 1684480,
-      "sha256": "cdd8f8e912d2a1afc9678254627e67d14bae7d32f6a573f17ec02c91fd8575f7"
+      "bytes": 1685504,
+      "sha256": "0c4fe72f140adf2ab6a2adecca7bb7951e9f294402d396a5b1c19738ca8a2d5b"
     },
     {
       "path": "re2.dll",
@@ -135,6 +135,6 @@
     }
   ],
   "source_commit": "753819cb73467e4cd2db56831664b7ccf3d46ebf",
-  "resource_builder_source_commit": "57bcd3f7670dfbe2c6fe4763f6ae31050d68cd47",
+  "resource_builder_source_commit": "e90c279fb580a4a15e24d7fee46d3a8ed5e4c2ab",
   "dfu_windows_baseline": "Windows 7; MSVC 14.44; static CRT; checked for known Win8+ hard imports"
 }

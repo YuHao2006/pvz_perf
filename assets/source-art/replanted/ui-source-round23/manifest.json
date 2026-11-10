@@ -388,7 +388,7 @@
       },
       "alternatives": [],
       "processingFlags": [
-        "重植版钥匙＋挂牌成套素材；普通底图缺少英文，已从悬停图提取原生 SHOP 文字并改为深色。裁掉远端淡阴影，保持两种状态同一裁切和等比映射。"
+        "重植版钥匙＋挂牌成套素材；普通底图缺少英文，已从悬停图提取原生 SHOP 文字并改为深色，悬停字色按用户备注从黄色改为绿色。裁掉远端淡阴影，两种状态同一裁切和等比映射。"
       ],
       "processing": [
         {
@@ -414,12 +414,12 @@
       "cropAssessment": {
         "action": "alignment",
         "title": "成套裁切与等比配准",
-        "reason": "重植版钥匙＋挂牌成套素材；普通底图缺少英文，已从悬停图提取原生 SHOP 文字并改为深色。裁掉远端淡阴影，保持两种状态同一裁切和等比映射。",
+        "reason": "重植版钥匙＋挂牌成套素材；普通底图缺少英文，已从悬停图提取原生 SHOP 文字并改为深色，悬停字色按用户备注从黄色改为绿色。裁掉远端淡阴影，两种状态同一裁切和等比映射。",
         "needsCrop": false
       }
     },
     {
-      "id": "round23:fae78e42a4a3c6a374",
+      "id": "round23:c8ab5fe3bb239fd838",
       "canonicalResourceId": "ui:assets/runtime/images/SelectorScreen_StoreHighlight.png",
       "original": "assets/runtime/images/SelectorScreen_StoreHighlight.png",
       "hd": "assets/source-art/replanted/ui-source-round23/SelectorScreen_StoreHighlight--paired.png",
@@ -440,7 +440,7 @@
       },
       "alternatives": [],
       "processingFlags": [
-        "重植版钥匙＋挂牌成套素材；普通底图缺少英文，已从悬停图提取原生 SHOP 文字并改为深色。裁掉远端淡阴影，保持两种状态同一裁切和等比映射。"
+        "重植版钥匙＋挂牌成套素材；普通底图缺少英文，已从悬停图提取原生 SHOP 文字并改为深色，悬停字色按用户备注从黄色改为绿色。裁掉远端淡阴影，两种状态同一裁切和等比映射。"
       ],
       "processing": [
         {
@@ -460,13 +460,13 @@
             128.7421383647799,
             89.83962264150944
           ],
-          "sha256": "573a1ceca62b26ae8a005048666d206c79bea300cb373bcdefd67f662bd2af66"
+          "sha256": "9831c317c0d9a7cb44a1fe206e887bdb8e140b0004f25c37f0a4acd6aa6e9643"
         }
       ],
       "cropAssessment": {
         "action": "alignment",
         "title": "成套裁切与等比配准",
-        "reason": "重植版钥匙＋挂牌成套素材；普通底图缺少英文，已从悬停图提取原生 SHOP 文字并改为深色。裁掉远端淡阴影，保持两种状态同一裁切和等比映射。",
+        "reason": "重植版钥匙＋挂牌成套素材；普通底图缺少英文，已从悬停图提取原生 SHOP 文字并改为深色，悬停字色按用户备注从黄色改为绿色。裁掉远端淡阴影，两种状态同一裁切和等比映射。",
         "needsCrop": false
       }
     }

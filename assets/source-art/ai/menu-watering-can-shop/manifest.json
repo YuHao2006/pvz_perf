@@ -1,0 +1,124 @@
+{
+  "tool": "built-in image_gen",
+  "pipeline": [
+    "original",
+    "Anime4K UL x2",
+    "Anime4K UL x2",
+    "AI minimal repair"
+  ],
+  "status": "awaiting-user-review",
+  "items": [
+    {
+      "id": "round26:385439e25a42c841e3",
+      "original": "assets/runtime/images/SelectorScreen_ZenGarden.png",
+      "hd": "assets/source-art/ai/menu-watering-can-shop/candidates/ZenGarden--normal-ai-v1.png",
+      "category": "ui",
+      "groups": [
+        "主菜单AI修复"
+      ],
+      "source": {
+        "atlas": "original + Anime4K UL twice + built-in image_gen",
+        "region": "SelectorScreen_ZenGarden"
+      },
+      "processingFlags": [
+        "两次Anime4K后轻修，普通／悬停仅表面亮度差异；候选未接入。"
+      ],
+      "cropAssessment": {
+        "action": "alignment",
+        "title": "接入前统一配准",
+        "reason": "生成画布与alpha边缘仍需配准，不增加运行时操作。",
+        "needsCrop": false
+      },
+      "prompt": "Use original sprite after two Anime4K x2 passes. Minimal precise-object repair, preserve original silhouette, pose, text and 2009 painted style. Remove upscaler artifacts in negative space. Genuine transparency, no redesign, no glow.",
+      "generatedSize": [
+        1358,
+        1158
+      ],
+      "sha256": "385439e25a42c841e375bc02cc1374b3951adb37da54994a7e4722d6f2a5eb4f"
+    },
+    {
+      "id": "round26:98e5c3f8e3d9c0c7d9",
+      "original": "assets/runtime/images/SelectorScreen_ZenGardenHighlight.png",
+      "hd": "assets/source-art/ai/menu-watering-can-shop/candidates/ZenGarden--hover-ai-v1.png",
+      "category": "ui",
+      "groups": [
+        "主菜单AI修复"
+      ],
+      "source": {
+        "atlas": "original + Anime4K UL twice + built-in image_gen",
+        "region": "SelectorScreen_ZenGardenHighlight"
+      },
+      "processingFlags": [
+        "两次Anime4K后轻修，普通／悬停仅表面亮度差异；候选未接入。"
+      ],
+      "cropAssessment": {
+        "action": "alignment",
+        "title": "接入前统一配准",
+        "reason": "生成画布与alpha边缘仍需配准，不增加运行时操作。",
+        "needsCrop": false
+      },
+      "prompt": "Edit the generated normal sprite. Only brighten existing surface shading to match the original hover. Preserve geometry and transparent background; no bloom, halos, outer stroke or recolored text.",
+      "generatedSize": [
+        1358,
+        1158
+      ],
+      "sha256": "98e5c3f8e3d9c0c7d9412565c2a9c197ed553046012a7a04f2bd51957def342a"
+    },
+    {
+      "id": "round26:56fa2b1bd60d7b59aa",
+      "original": "assets/runtime/images/SelectorScreen_Store.png",
+      "hd": "assets/source-art/ai/menu-watering-can-shop/candidates/Store--normal-ai-v1.png",
+      "category": "ui",
+      "groups": [
+        "主菜单AI修复"
+      ],
+      "source": {
+        "atlas": "original + Anime4K UL twice + built-in image_gen",
+        "region": "SelectorScreen_Store"
+      },
+      "processingFlags": [
+        "两次Anime4K后轻修，普通／悬停仅表面亮度差异；候选未接入。"
+      ],
+      "cropAssessment": {
+        "action": "alignment",
+        "title": "接入前统一配准",
+        "reason": "生成画布与alpha边缘仍需配准，不增加运行时操作。",
+        "needsCrop": false
+      },
+      "prompt": "Use original sprite after two Anime4K x2 passes. Minimal precise-object repair, preserve original silhouette, pose, text and 2009 painted style. Remove upscaler artifacts in negative space. Genuine transparency, no redesign, no glow.",
+      "generatedSize": [
+        1516,
+        1038
+      ],
+      "sha256": "56fa2b1bd60d7b59aa5aa7a7f42b98dd261d46daa58e23d3ede947fa84de5265"
+    },
+    {
+      "id": "round26:9f103f86f59e7a84ab",
+      "original": "assets/runtime/images/SelectorScreen_StoreHighlight.png",
+      "hd": "assets/source-art/ai/menu-watering-can-shop/candidates/Store--hover-ai-v1.png",
+      "category": "ui",
+      "groups": [
+        "主菜单AI修复"
+      ],
+      "source": {
+        "atlas": "original + Anime4K UL twice + built-in image_gen",
+        "region": "SelectorScreen_StoreHighlight"
+      },
+      "processingFlags": [
+        "两次Anime4K后轻修，普通／悬停仅表面亮度差异；候选未接入。"
+      ],
+      "cropAssessment": {
+        "action": "alignment",
+        "title": "接入前统一配准",
+        "reason": "生成画布与alpha边缘仍需配准，不增加运行时操作。",
+        "needsCrop": false
+      },
+      "prompt": "Edit the generated normal sprite. Only brighten existing surface shading to match the original hover. Preserve geometry and transparent background; no bloom, halos, outer stroke or recolored text.",
+      "generatedSize": [
+        1515,
+        1038
+      ],
+      "sha256": "9f103f86f59e7a84aba299148980089670795e9b7efca28a543acd5ae787e639"
+    }
+  ]
+}

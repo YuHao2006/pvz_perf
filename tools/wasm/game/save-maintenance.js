@@ -110,7 +110,11 @@ export function connectSaveMaintenance({module,root,ready,idle,running,setActive
    const {decodeSummary,decodeProfile,validId,modes}=await import('./save-codec.js');
    const get=name=>files.get(name)||(module.FS.analyzePath(root+'/'+name).exists?module.FS.readFile(root+'/'+name):null);
    const summary=get('users.dat'),rows=summary?decodeSummary(summary):[];
-   for(const row of rows){const profile=get('user'+row.id+'.dat64');if(!profile)throw Error('缺少用户资料：user'+row.id+'.dat64；请同时恢复用户列表与资料');decodeProfile(profile)}
+   for(const row of rows){
+    const name='user'+row.id+'.dat64',profile=get(name);if(!profile)throw Error('缺少用户资料：'+name+'；请同时恢复用户列表与资料');
+    const details=decodeProfile(profile);
+    if(files.has(name)&&(details.purchases[21]<0||details.purchases[21]>4))throw Error('用户资料的额外卡槽次数必须在 0～4，最多十个卡槽：'+name);
+   }
    for(const [name,bytes]of files){
     if(name==='users.dat')continue;
     const profile=/^user([1-9]\d*)\.dat64$/.exec(name),level=/^game([1-9]\d*)_(\d+)\.dat64$/.exec(name);

@@ -2,7 +2,7 @@
 
 基于 [PvZ-Portable](https://github.com/wszqkzqk/PvZ-Portable) 修改，继续优化《植物大战僵尸》的 CPU 热路径、资源装载、图形提交和跨平台输入。游戏行为以零售 1073 为主要核对依据。
 
-**当前发行版：[v4.0.1](https://github.com/YuHao2006/pvz_perf/releases/tag/v4.0.1)，包含四个原生包和网页版。**
+**当前发行版：[v4.0.2](https://github.com/YuHao2006/pvz_perf/releases/tag/v4.0.2)，包含四个原生包和网页版。**
 
 版本号采用三段规则：**第一个数表示破坏性更新，第二个数表示功能更新，第三个数表示 bug 修复**。兼容性以各版发行说明为准。
 
@@ -20,7 +20,7 @@
 
 发行附件同时提供完美用户档、统一无尽基准、图集布局缓存和校验清单。完美档包含坚果包扎术。不要用个人进度覆盖仓库的性能基准。
 
-**v4.0.0 是破坏性更新，当前存档格式为 DAT64 v5.1 / schema `0x10747`。** 原生版与网页版通过独立的 DataFixerUpper（DFU）模块自动升级历史 DAT64 v4，并修复已确认的旧植物攻击动画卡死。正确的 v5.1 直接读取，不执行修复扫描。原版 DAT 可用附带转换器手动转换；未发布的 v3、v5.0 中间格式不支持。程序、DFU、shader、PAK64 必须成套更新。见[存档转换](docs/DAT-DAT64-CONVERSION.md)与[发行说明](docs/releases/v4.0.1.md)。
+**v4.0.0 是破坏性更新，当前存档格式为 DAT64 v5.1 / schema `0x10747`。** 原生版与网页版通过独立的 DataFixerUpper（DFU）模块自动升级历史 DAT64 v4，并修复已确认的旧植物攻击动画卡死。正确的 v5.1 直接读取，不执行修复扫描。原版 DAT 可用附带转换器手动转换；未发布的 v3、v5.0 中间格式不支持。程序、DFU、shader、PAK64 必须成套更新。见[存档转换](docs/DAT-DAT64-CONVERSION.md)与[发行说明](docs/releases/v4.0.2.md)。
 
 ## 设置与存档
 

@@ -4496,8 +4496,13 @@ void SurvivalRulesRuntime(TestApp& app)
             }
             // Skip intermediate combat, but use the actual last-wave spawn and
             // death callbacks to enter the five-second repick sequence.
-            board.mCurrentWave=board.mNumWaves-1;board.SpawnZombieWave();
+            board.mCurrentWave=board.mNumWaves-1;
+            board.mNextZombieWaveTimeNs=static_cast<long long>(board.mLevelTimeNs);
+            board.mHugeWaveCountDown.mNanoseconds=1;
+            board.UpdateZombieSpawning();
             Require(board.mCurrentWave==board.mNumWaves&&board.mZombies.mSize>0,"Survival final wave was not generated");
+            Require(board.mNextZombieWaveTimeNs==static_cast<long long>(board.mLevelTimeNs)+55'000'000'000LL,
+                "Final-wave scheduler did not provide its fallback deadline");
             auto& cooling=board.mSeedBank->mSeedPackets[0];
             cooling.mRefreshing=true;cooling.mActive=false;
             cooling.mRefreshStartTimeNs=static_cast<std::int64_t>(board.mLevelTimeNs);
@@ -4531,6 +4536,8 @@ void SurvivalRulesRuntime(TestApp& app)
             app.CheckForGameEnd();
             Require(challenge.mSurvivalStage==1&&app.mGameScene==SCENE_LEVEL_INTRO&&app.mSeedChooserScreen&&
                 !board.mLevelComplete&&board.mLevelTimeNs==beforeRepick,"Actual survival completion did not create the next chooser on the same Board");
+            Require(board.mAdvice->mMessageStyle==MESSAGE_STYLE_HOUSE_NAME,
+                "Repick intro did not replace the preceding More Zombies banner with its Visual-driven title");
             Require(board.mPlants.DataArrayTryToGet(retainedID)==retained&&board.mSunMoney==375&&board.mLawnMowers.mSize==mowerCount,
                 "Survival repick lost retained plants, sun or mowers");
             const auto phase=retainedBody->SamplePlayback().phaseNs;
@@ -4593,10 +4600,10 @@ void SurvivalRulesRuntime(TestApp& app)
                     case 6: app.mGameMode=GAMEMODE_ADVENTURE;break;
                     case 7: app.mGameMode=GAMEMODE_SURVIVAL_NORMAL_STAGE_3;board.mChallenge->mSurvivalStage=4;break;
                     }
-                    const auto pending=board.mNextSurvivalStageCounter.mNanoseconds;
+                    const auto pending=control==5?1:board.mNextSurvivalStageCounter.mNanoseconds;
                     Require(LawnSaveGame(&board,controlSave)&&board.LoadGame(controlSave)&&
                         board.mNextSurvivalStageCounter.mNanoseconds==pending,
-                        "Cold-load interruption repair changed a nonmatching normal state");
+                        "Cold-load interruption repair misclassified a normal state or future-deadline fast clear");
                 }
                 app.mGameMode=GAMEMODE_SURVIVAL_ENDLESS_STAGE_3;
                 Require(board.LoadGame(userSave),"Cannot load the reported endless interruption save");
@@ -4605,6 +4612,12 @@ void SurvivalRulesRuntime(TestApp& app)
                 Require(board.mCurrentWave==board.mNumWaves&&board.mLevelAwardSpawned&&
                     board.mNextSurvivalStageCounter.mNanoseconds==1&&!board.mLevelComplete,
                     "Reported zero/unfinished checkpoint did not regain a pending transition");
+                board.DisplayAdvice(gStr.ADVICE_MORE_ZOMBIES,MESSAGE_STYLE_BIG_MIDDLE,ADVICE_NONE);
+                board.mNextSurvivalStageCounter.mNanoseconds=0;
+                board.mNextSurvivalStageCounter.mPreviousNanoseconds=0;
+                Require(LawnSaveGame(&board,controlSave)&&board.LoadGame(controlSave)&&
+                    board.mNextSurvivalStageCounter.mNanoseconds==1,
+                    "Interrupted More Zombies checkpoint did not regain its pending transition");
                 app.CheckForGameEnd();
                 Require(board.mChallenge->mSurvivalStage==stage&&!app.mSeedChooserScreen,
                     "Loading a repaired checkpoint advanced past the Continue dialog");
@@ -4614,9 +4627,25 @@ void SurvivalRulesRuntime(TestApp& app)
                 Require(board.mLevelComplete,"Repaired interruption did not finish on its first resumed update");
                 app.CheckForGameEnd();
                 Require(board.mChallenge->mSurvivalStage==stage+1&&app.mSeedChooserScreen&&
-                    app.mGameScene==SCENE_LEVEL_INTRO&&board.mPlants.mSize==plants,
+                    app.mGameScene==SCENE_LEVEL_INTRO&&board.mPlants.mSize==plants&&
+                    board.mAdvice->mMessageStyle==MESSAGE_STYLE_HOUSE_NAME,
                     "Reported interruption did not reach the next chooser with its formation preserved");
                 std::cout<<"PASS reported endless save: Continue held, resumed into next chooser, plants="<<plants<<'\n';
+                // Imported chooser saves intentionally carry a short pending
+                // transition, rather than serializing an actual UI tree.
+                if(const char* generated=std::getenv("PVZ_GENERATED_REPICK_SAVE")) {
+                    app.KillSeedChooserScreen();app.ProcessSafeDeleteList();
+                    Require(board.LoadGame(generated),"Cannot load independent-generator chooser save");
+                    const auto generatedStage=board.mChallenge->mSurvivalStage;
+                    Require(board.mNextSurvivalStageCounter.mNanoseconds>0&&!board.mLevelComplete,
+                        "Generated chooser save lost its pending transition");
+                    board.mPaused=false;Sexy::ApplySimulationStep(16'666'667);
+                    board.UpdateLevelEndSequence();app.CheckForGameEnd();
+                    Require(board.mChallenge->mSurvivalStage==generatedStage+1&&app.mSeedChooserScreen&&
+                        board.mAdvice->mMessageStyle==MESSAGE_STYLE_HOUSE_NAME,
+                        "Generated chooser save stuck on More Zombies instead of creating the chooser");
+                    std::cout<<"PASS independent-generator chooser save: stage="<<board.mChallenge->mSurvivalStage<<'\n';
+                }
             }
         }
         catch(const std::exception& error) {

@@ -302,6 +302,10 @@ import('./save-editor-host.js').then(({connectSaveEditor})=>connectSaveEditor({
  library:()=>lineupStorage.library,onLineupsChanged:saveLineups,
  status:message=>{rewardStatus.textContent=message}
 })).catch(showError);
+import('./save-maintenance.js').then(({connectSaveMaintenance})=>connectSaveMaintenance({
+ module:Module,root:saveRoot,ready:()=>runtimeReady,idle:()=>!rewardBusy,running:()=>running,
+ setActive:active=>{rewardBusy=active;start.disabled=active||!runtimeReady},sync:syncSaves,tools:saveToolsReady
+})).catch(showError);
 async function progressAction(operation){
  if(!runtimeReady||running||rewardBusy)return;
  rewardBusy=true;start.disabled=true;

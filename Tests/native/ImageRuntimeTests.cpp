@@ -72,6 +72,7 @@
 #include "Lawn/System/PoolEffect.h"
 #include "Lawn/System/V7SaveSchema.h"
 #include "Lawn/System/SaveClockProjection.h"
+#include "Lawn/LawnCommon.h"
 #include "QuitDialogRuntimeChecks.h"
 #include "OpeningFlowRuntimeChecks.h"
 #include <array>
@@ -4512,6 +4513,19 @@ void SurvivalRulesRuntime(TestApp& app)
             Require(board.mLevelComplete,"Survival round-end wait never completed");
             Require(board.mLevelTimeNs-waitStart>=5'000'000'000ULL&&board.mLevelTimeNs-waitStart<5'040'000'000ULL,
                 "Survival round-end banner did not retain its five-second duration");
+            // The automatic checkpoint must precede the final decrement.
+            // A crossed legacy == 1 threshold may coincide with zero at 60Hz
+            // or with an irregular step; that zero/false snapshot cannot resume.
+            {
+                std::ifstream checkpoint(GetSavedGameName(app.mGameMode,profile.mId),std::ios::binary);
+                const std::vector<std::uint8_t> bytes((std::istreambuf_iterator<char>(checkpoint)),{});
+                const auto fields=Dat64TimeSchema::BoardFields();
+                const auto counter=52+Dat64TimeSchema::V2Offset(0x5604-0x164,fields);
+                const auto complete=52+Dat64TimeSchema::V2Offset(22184-528,fields);
+                Require(Dat64TimeSchema::Read(bytes,counter,8)>0&&
+                    Dat64TimeSchema::Read(bytes,complete,1)==0,
+                    "Survival automatic checkpoint stored an expired unfinished transition");
+            }
             const auto beforeRepick=board.mLevelTimeNs;
             const auto cooldownStart=cooling.mRefreshStartTimeNs;
             app.CheckForGameEnd();
@@ -4562,6 +4576,48 @@ void SurvivalRulesRuntime(TestApp& app)
             }
             std::cout<<"Survival primary mode="<<mode<<" Hz="<<hz<<" background="<<background
                 <<" waves="<<board.mNumWaves<<" retained=1 repick=1 final="<<!endless<<'\n';
+            if(mode==GAMEMODE_SURVIVAL_ENDLESS_STAGE_3&&hz==100)
+            if(const char* userSave=std::getenv("PVZ_ENDLESS_STUCK_SAVE")) {
+                app.mGameMode=GAMEMODE_SURVIVAL_ENDLESS_STAGE_3;
+                const auto controlSave=(std::filesystem::current_path()/"survival-load-control.dat64").string();
+                for(int control=0;control<8;++control) {
+                    app.mGameMode=GAMEMODE_SURVIVAL_ENDLESS_STAGE_3;
+                    Require(LawnLoadGame(&board,userSave),"Cannot stage the reported endless control");
+                    switch(control) {
+                    case 0: board.mCurrentWave=board.mNumWaves-1;break;
+                    case 1: board.mLevelAwardSpawned=false;break;
+                    case 2: board.mNextSurvivalStageCounter.mNanoseconds=17'000'000;break;
+                    case 3: board.mLevelComplete=true;break;
+                    case 4: board.mBoardFadeOutCounter=300;break;
+                    case 5: board.mNextZombieWaveTimeNs=static_cast<long long>(board.mLevelTimeNs)+1;break;
+                    case 6: app.mGameMode=GAMEMODE_ADVENTURE;break;
+                    case 7: app.mGameMode=GAMEMODE_SURVIVAL_NORMAL_STAGE_3;board.mChallenge->mSurvivalStage=4;break;
+                    }
+                    const auto pending=board.mNextSurvivalStageCounter.mNanoseconds;
+                    Require(LawnSaveGame(&board,controlSave)&&board.LoadGame(controlSave)&&
+                        board.mNextSurvivalStageCounter.mNanoseconds==pending,
+                        "Cold-load interruption repair changed a nonmatching normal state");
+                }
+                app.mGameMode=GAMEMODE_SURVIVAL_ENDLESS_STAGE_3;
+                Require(board.LoadGame(userSave),"Cannot load the reported endless interruption save");
+                const auto stage=board.mChallenge->mSurvivalStage;
+                const auto plants=board.mPlants.mSize;
+                Require(board.mCurrentWave==board.mNumWaves&&board.mLevelAwardSpawned&&
+                    board.mNextSurvivalStageCounter.mNanoseconds==1&&!board.mLevelComplete,
+                    "Reported zero/unfinished checkpoint did not regain a pending transition");
+                app.CheckForGameEnd();
+                Require(board.mChallenge->mSurvivalStage==stage&&!app.mSeedChooserScreen,
+                    "Loading a repaired checkpoint advanced past the Continue dialog");
+                board.mPaused=false;
+                Sexy::ApplySimulationStep(16'666'667);
+                board.UpdateLevelEndSequence();
+                Require(board.mLevelComplete,"Repaired interruption did not finish on its first resumed update");
+                app.CheckForGameEnd();
+                Require(board.mChallenge->mSurvivalStage==stage+1&&app.mSeedChooserScreen&&
+                    app.mGameScene==SCENE_LEVEL_INTRO&&board.mPlants.mSize==plants,
+                    "Reported interruption did not reach the next chooser with its formation preserved");
+                std::cout<<"PASS reported endless save: Continue held, resumed into next chooser, plants="<<plants<<'\n';
+            }
         }
         catch(const std::exception& error) {
             allPassed=false;

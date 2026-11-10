@@ -19,7 +19,7 @@ export function connectSaveEditor({module,root,ready,idle,running,setActive,auth
   return {id:plan.id,profiles:store.list(),saves:names()};
  }
  function send(value){frame.contentWindow?.postMessage({channel,...value},origin)}
- async function initial(){const m=await lineups,entries=listed(),first=entries.presets[0];const lineup=first?await m.decodeLineup(first.code):{scene:2,rake:0,cells:Array(54).fill(0)};send({op:'init',payload:{...entries,profiles:store.list(),saves:names(),code:first?first.code:await m.encodeLineup(lineup),lineup}})}
+ async function initial(){const m=await lineups,entries=listed(),first=entries.presets[0];const lineup=first?await m.decodeLineup(first.code):{scene:2,rake:0,cells:Array(54).fill(0)};send({op:'init',payload:{gameHost:true,...entries,profiles:store.list(),saves:names(),code:first?first.code:await m.encodeLineup(lineup),lineup}})}
  button.onclick=async()=>{
   if(!ready()||!idle()||running()||opening||busy)return;
   opening=true;button.disabled=true;setActive(true);
@@ -49,8 +49,6 @@ export function connectSaveEditor({module,root,ready,idle,running,setActive,auth
    if(op==='close'){dialog.close()}
    else if(op==='add-user')result=await commit(store.add({perfect:payload.perfect===true}));
    else if(op==='edit-user')result=await commit(store.edit(payload));
-   else if(op==='export-users')result={files:module.FS.readdir(root).filter(name=>/^(?:users\.dat|user[1-9]\d*\.dat64)$/.test(name)).map(name=>[name,module.FS.readFile(root+'/'+name).slice()])};
-   else if(op==='repair-plant-attacks'){const target=slot(payload.name);result=await saveTools.runSaveTool({op:'repair-plant-attacks',mode:target.mode},read(payload.name))}
    else if(op==='delete-user')result=await commit(store.remove(payload.id));
    else if(op==='delete-lineup'){
     library().remove(payload.code);result=listed();onLineupsChanged();
@@ -65,21 +63,12 @@ export function connectSaveEditor({module,root,ready,idle,running,setActive,auth
     library().replace(payload);result=listed();onLineupsChanged();
    }
    else if(op==='extract'){const target=slot(payload.name);await sync();result=await saveTools.runSaveTool({op:'extract',mode:target.mode},read(payload.name),store.details(target.id))}
-   else if(op==='export'){await sync();result={bytes:read(payload.name)}}
    else if(op==='generate'){
     const name=payload.name||'game1_58.dat64',target=slot(name);
     const r=payload.recipe;if(!r||!Array.isArray(r.cells)||r.cells.length!==54||r.cells.some(c=>!Number.isInteger(c)||c<0||c>65535||(c>>>10)>48))throw Error('阵型格子内容无效');
     const m=await lineups,recipe=m.makeRecipe(r,r.flags,r.seed,r.scene,r.sun);
     const generated=await saveTools.runSaveTool({op:'generate',mode:target.mode,recipe},null,store.details(target.id));if(!generated.bytes)throw Error('存档工具没有生成 DAT64');
     module.FS.writeFile(root+'/'+name,generated.bytes);await sync();result={saves:names()};
-   }
-   else if(op==='import'){
-    const match=/^game([1-9]\d*)_(\d+)\.dat64$/.exec(payload.name);
-    if(!match)throw Error('文件名必须为 game用户编号_模式编号.dat64');
-    if(!module.FS.analyzePath(root+'/user'+match[1]+'.dat64').exists)throw Error('目标用户不存在，请先在游戏中创建并退出');
-    const bytes=payload.bytes;if(!(bytes instanceof Uint8Array)||bytes.length>32*1024*1024||new TextDecoder().decode(bytes.subarray(0,8))!=='PVZDAT64')throw Error('DAT64 文件无效');
-    await saveTools.runSaveTool({op:'validate',mode:Number(match[2])},bytes);
-    module.FS.writeFile(root+'/'+payload.name,bytes);await sync();result={saves:names()};
    }
    else throw Error('不支持的存档操作');
    send({id,result});

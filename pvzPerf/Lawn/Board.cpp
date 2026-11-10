@@ -395,6 +395,22 @@ bool Board::LoadGame(const std::string& theFileName)
 	if (!LawnLoadGame(this, theFileName))
 		return false;
 
+	// Older variable-step builds could checkpoint after this counter expired,
+	// before committing mLevelComplete. The award flag then prevents spawning
+	// from restarting the transition, and the zero counter cannot finish it.
+	// Repair only that completed-wave signature on load, leaving normal combat,
+	// repicks and final stages untouched. Keep completion pending until Continue
+	// closes: CheckForGameEnd also runs while the modal dialog is displayed.
+	if (mApp->IsSurvivalMode() && IsSurvivalStageWithRepick() &&
+		mNumWaves > 0 && mCurrentWave == mNumWaves &&
+		mLevelAwardSpawned && !mLevelComplete &&
+		mNextSurvivalStageCounter.mNanoseconds == 0 && mBoardFadeOutCounter < 0 &&
+		mNextZombieWaveTimeNs <= static_cast<long long>(mLevelTimeNs))
+	{
+		mNextSurvivalStageCounter.mNanoseconds = 1;
+		mNextSurvivalStageCounter.mPreviousNanoseconds = 1;
+	}
+
 	LoadBackgroundImages();
 	mApp->ClearUpdateBacklog();
 	ResetFPSStats();
@@ -2033,6 +2049,16 @@ void Board::UpdateLevelEndSequence()
 	{
 		if (!IsScaryPotterDaveTalking())
 		{
+			// Save the last still-pending state, not an expired counter whose
+			// completion flag has not been committed yet. The legacy == 1
+			// comparison also matches a threshold crossed by a larger step;
+			// testing it after decrement could therefore save counter=0 and
+			// mLevelComplete=false, permanently stranding a reloaded endless.
+			if (mApp->IsSurvivalMode() &&
+				mNextSurvivalStageCounter.mNanoseconds <= static_cast<long long>(Sexy::gUpdateIntervalNs))
+			{
+				TryToSaveGame();
+			}
 			mNextSurvivalStageCounter--;
 			if (mApp->IsAdventureMode() && mApp->IsScaryPotterLevel() && mNextSurvivalStageCounter == 300)
 			{
@@ -2041,11 +2067,6 @@ void Board::UpdateLevelEndSequence()
 				mChallenge->PuzzleNextStageClear();
 				mNextSurvivalStageCounter = 100;
 			}
-		}
-
-		if (mNextSurvivalStageCounter == 1 && mApp->IsSurvivalMode())
-		{
-			TryToSaveGame();
 		}
 
 		if (!mNextSurvivalStageCounter)

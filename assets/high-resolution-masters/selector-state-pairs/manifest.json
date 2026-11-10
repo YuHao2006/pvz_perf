@@ -1,0 +1,171 @@
+{
+  "format": "pvz-shared-stone-states-v1",
+  "recipe": "Highlight = normal + bilinear(originalHighlight-originalNormal) * smooth black-protection; alpha copied unchanged. Applied offline independently at 2x and 4x.",
+  "pairs": [
+    {
+      "name": "Adventure",
+      "normal": "assets/runtime/reanim/SelectorScreen_Adventure_button.png",
+      "highlight": "assets/runtime/reanim/SelectorScreen_Adventure_Highlight.png",
+      "normalRuntime": "images/35b7337c45d540986f354b17.png",
+      "highlightRuntime": "images/26001a515e8a3f51cee9ba75.png",
+      "normalRuntimeSha256": "27010432313938cf76ba97e222c77180f299a6e1c4a0a039fef1af504b50fbc0",
+      "highlightRuntimeSha256": "edaae350c9948d11d73ff027a542b9309901291464ec1bb814a122138a002fff",
+      "normalMaster4x": "SelectorScreen_Adventure_button-normal-4x.png",
+      "highlightMaster4x": "SelectorScreen_Adventure_Highlight-shared-base-4x.png",
+      "normalMasterBasis": "approved 2x image enlarged; native AI raw separately preserved",
+      "rawAI": "SelectorScreen_Adventure_button-raw-ai.png",
+      "logicalSize": [
+        329,
+        143
+      ],
+      "runtimeSize": [
+        658,
+        286
+      ],
+      "masterSize": [
+        1316,
+        572
+      ],
+      "alphaEqual": true,
+      "previousDifferentAlphaPixels": 19721,
+      "newDifferentAlphaPixels": 0,
+      "blackLetteringAndOutlineUnchanged": true,
+      "geometryResamplingDuringStateChange": false,
+      "rawAISha256": "9e0f4bf315a71756f7bd0dba58cafad2ee05c4e47b1f7512c5e1888817a23607"
+    },
+    {
+      "name": "StartAdventure",
+      "normal": "assets/runtime/reanim/SelectorScreen_StartAdventure_Button1.png",
+      "highlight": "assets/runtime/reanim/SelectorScreen_StartAdventure_Highlight.png",
+      "normalRuntime": "images/94ee3821de3b5a01bd9f4834.png",
+      "highlightRuntime": "images/e1cb9e35cc1056811bf61013.png",
+      "normalRuntimeSha256": "7940ce758aa68ab2f75217c4060dc7bbf3820fe93ab89f7fcca6042efeb65f67",
+      "highlightRuntimeSha256": "66d6ad7e068d57ade2620fd456ce007da0f8b8d2010f7e80bef212acb5ae3936",
+      "normalMaster4x": "SelectorScreen_StartAdventure_Button1-normal-4x.png",
+      "highlightMaster4x": "SelectorScreen_StartAdventure_Highlight-shared-base-4x.png",
+      "normalMasterBasis": "approved 2x image enlarged; native AI raw separately preserved",
+      "rawAI": "SelectorScreen_StartAdventure_Button1-raw-ai.png",
+      "logicalSize": [
+        331,
+        146
+      ],
+      "runtimeSize": [
+        662,
+        292
+      ],
+      "masterSize": [
+        1324,
+        584
+      ],
+      "alphaEqual": true,
+      "previousDifferentAlphaPixels": 30518,
+      "newDifferentAlphaPixels": 0,
+      "blackLetteringAndOutlineUnchanged": true,
+      "geometryResamplingDuringStateChange": false,
+      "rawAISha256": "ac00462bf9310b0564553c06dde3982b34e8d4fbf18ef6ff448d237f7e55627f"
+    },
+    {
+      "name": "Minigames",
+      "normal": "assets/runtime/reanim/SelectorScreen_Minigames_button.png",
+      "highlight": "assets/runtime/reanim/SelectorScreen_Minigames_Highlight.png",
+      "normalRuntime": "images/9bcfe3c2000139dcadcc4b11.png",
+      "highlightRuntime": "images/0105200d45d822aa09c278f7.png",
+      "normalRuntimeSha256": "3b5ead30d29975d77b5e1628dedbf7fd7d35be818bbc3169a44dd044f38c2135",
+      "highlightRuntimeSha256": "bd37c1e2e5fee59aae90cf2142b35695c61ca0aaaa53a0c45b29a4f6d28162ec",
+      "normalMaster4x": "SelectorScreen_Minigames_button-normal-4x.png",
+      "highlightMaster4x": "SelectorScreen_Minigames_Highlight-shared-base-4x.png",
+      "normalMasterBasis": "approved 2x image enlarged; native AI raw separately preserved",
+      "rawAI": "SelectorScreen_Minigames_button-raw-ai.png",
+      "logicalSize": [
+        313,
+        133
+      ],
+      "runtimeSize": [
+        626,
+        266
+      ],
+      "masterSize": [
+        1252,
+        532
+      ],
+      "alphaEqual": true,
+      "previousDifferentAlphaPixels": 26059,
+      "newDifferentAlphaPixels": 0,
+      "blackLetteringAndOutlineUnchanged": true,
+      "geometryResamplingDuringStateChange": false,
+      "rawAISha256": "3fc764981bc3694235323d4f269dc12c3857bb4cc3239864d7c2bfe220f4041a"
+    },
+    {
+      "name": "Puzzle",
+      "normal": "assets/runtime/reanim/SelectorScreen_Puzzle_button.png",
+      "highlight": "assets/runtime/reanim/SelectorScreen_Puzzle_Highlight.png",
+      "normalRuntime": "images/cbf59f708df56f48e930585c.png",
+      "highlightRuntime": "images/e54ff7e8160566093db6fc19.png",
+      "normalRuntimeSha256": "0f9a6b137546efdc3ec7e2952bd13256c91dbe190dcf00e213514d929b46dd7a",
+      "highlightRuntimeSha256": "b9a3cf89c3494026167625e3a5ac862608a3b678098c508ce8e96654c5061b7c",
+      "normalMaster4x": "SelectorScreen_Puzzle_button-normal-4x.png",
+      "highlightMaster4x": "SelectorScreen_Puzzle_Highlight-shared-base-4x.png",
+      "normalMasterBasis": "existing registered 4x master",
+      "rawAI": "SelectorScreen_Puzzle_button-raw-ai.png",
+      "logicalSize": [
+        286,
+        122
+      ],
+      "runtimeSize": [
+        572,
+        244
+      ],
+      "masterSize": [
+        1144,
+        488
+      ],
+      "alphaEqual": true,
+      "previousDifferentAlphaPixels": 0,
+      "newDifferentAlphaPixels": 0,
+      "blackLetteringAndOutlineUnchanged": true,
+      "geometryResamplingDuringStateChange": false,
+      "rawAISha256": "92632d175596aa92dd4cb7051bc8fa89d566b15515cfd93b0e034328dd8d6d0e"
+    },
+    {
+      "name": "Survival",
+      "normal": "assets/runtime/reanim/SelectorScreen_Survival_button.png",
+      "highlight": "assets/runtime/reanim/SelectorScreen_Survival_Highlight.png",
+      "normalRuntime": "images/4d5a332a3eac44e68f666a29.png",
+      "highlightRuntime": "images/8c74595845c5b38dbaebeeed.png",
+      "normalRuntimeSha256": "1f646ec03f1218ad1eb6ea2596e65fbd53609662e3725d9f3afc14b235311efb",
+      "highlightRuntimeSha256": "0b65a908a6e28261b77cbaa492fbc60d091bd9f9f9483db9071e8e8304d647de",
+      "normalMaster4x": "SelectorScreen_Survival_button-normal-4x.png",
+      "highlightMaster4x": "SelectorScreen_Survival_Highlight-shared-base-4x.png",
+      "normalMasterBasis": "existing registered 4x master",
+      "rawAI": "SelectorScreen_Survival_button-raw-ai.png",
+      "logicalSize": [
+        266,
+        123
+      ],
+      "runtimeSize": [
+        532,
+        246
+      ],
+      "masterSize": [
+        1064,
+        492
+      ],
+      "alphaEqual": true,
+      "previousDifferentAlphaPixels": 0,
+      "newDifferentAlphaPixels": 0,
+      "blackLetteringAndOutlineUnchanged": true,
+      "geometryResamplingDuringStateChange": false,
+      "rawAISha256": "100f3b49408808b059f93afa2aedf8e0055f6eb983949e695cd78562f38aacae"
+    }
+  ],
+  "parameters": {
+    "workingColorSpace": "encoded sRGB byte RGB",
+    "referenceDelta": "original highlight RGB minus original normal RGB; zero where original normal alpha is zero",
+    "resampling": "bilinear",
+    "blackProtection": "weight = clamp((max(normal RGB)-24)/32,0,1)",
+    "rounding": "nearest, ties-to-even, clamp 0..255",
+    "alpha": "copy normal alpha byte-for-byte",
+    "runtimeNormalFiles": "unchanged",
+    "runtimeProcessing": false
+  }
+}

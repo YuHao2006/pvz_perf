@@ -18253,8 +18253,8 @@
         658,
         286
       ],
-      "source": "assets/source-art/ai/selector-stones/candidates/SelectorScreen_Adventure_Highlight--candidate-2x-v1.png",
-      "sourceSha256": "cfe941bdd80fe926bb54a9c655a60d037bad1e51dceeb18fb6db7d72b44166d4",
+      "source": "assets/high-resolution-masters/selector-state-pairs/SelectorScreen_Adventure_Highlight-shared-base-4x.png",
+      "sourceSha256": "8f30f82f4ce2fc7b30d6ce7039d9f3320916b20a31234b47f9da5098927b0dde",
       "mapping": {
         "logicalDrawRect": [
           0,
@@ -18266,7 +18266,12 @@
           329,
           143
         ]
-      }
+      },
+      "master4x": "assets/high-resolution-masters/selector-state-pairs/SelectorScreen_Adventure_Highlight-shared-base-4x.png",
+      "master4xSha256": "8f30f82f4ce2fc7b30d6ce7039d9f3320916b20a31234b47f9da5098927b0dde",
+      "repair": "Color-only state derived from approved normal image plus original highlight-minus-normal color map; identical alpha and protected black lettering/outline",
+      "stateBase": "images/35b7337c45d540986f354b17.png",
+      "stateRecipe": "assets/high-resolution-masters/selector-state-pairs/manifest.json"
     },
     {
       "original": "assets/runtime/reanim/SelectorScreen_Adventure_button.png",
@@ -18912,8 +18917,8 @@
         626,
         266
       ],
-      "source": "assets/source-art/ai/selector-stones/candidates/SelectorScreen_Minigames_Highlight--outline-2x-v2.png",
-      "sourceSha256": "39a3adab0c9102d88b8d50e30a688f63f15b54017a309b88eb38f65471402984",
+      "source": "assets/high-resolution-masters/selector-state-pairs/SelectorScreen_Minigames_Highlight-shared-base-4x.png",
+      "sourceSha256": "78a8319e81b853475de9aeb800408e1747ef96d9d54f225e9e872b65a1969902",
       "mapping": {
         "logicalDrawRect": [
           0,
@@ -18925,7 +18930,12 @@
           313,
           133
         ]
-      }
+      },
+      "master4x": "assets/high-resolution-masters/selector-state-pairs/SelectorScreen_Minigames_Highlight-shared-base-4x.png",
+      "master4xSha256": "78a8319e81b853475de9aeb800408e1747ef96d9d54f225e9e872b65a1969902",
+      "repair": "Color-only state derived from approved normal image plus original highlight-minus-normal color map; identical alpha and protected black lettering/outline",
+      "stateBase": "images/9bcfe3c2000139dcadcc4b11.png",
+      "stateRecipe": "assets/high-resolution-masters/selector-state-pairs/manifest.json"
     },
     {
       "original": "assets/runtime/reanim/SelectorScreen_Minigames_button.png",
@@ -19006,8 +19016,8 @@
         662,
         292
       ],
-      "source": "assets/source-art/ai/selector-stones/candidates/SelectorScreen_StartAdventure_Highlight--candidate-2x-v1.png",
-      "sourceSha256": "43dbd79e8f1b5da8973decbc13a4be2098fc3105e52f4582728c23a03c1cc53d",
+      "source": "assets/high-resolution-masters/selector-state-pairs/SelectorScreen_StartAdventure_Highlight-shared-base-4x.png",
+      "sourceSha256": "5ed3af5daf7b112806fde3967718b81ac65432e8ccba185728e8cf76678d5f4a",
       "mapping": {
         "logicalDrawRect": [
           0,
@@ -19019,7 +19029,12 @@
           331,
           146
         ]
-      }
+      },
+      "master4x": "assets/high-resolution-masters/selector-state-pairs/SelectorScreen_StartAdventure_Highlight-shared-base-4x.png",
+      "master4xSha256": "5ed3af5daf7b112806fde3967718b81ac65432e8ccba185728e8cf76678d5f4a",
+      "repair": "Color-only state derived from approved normal image plus original highlight-minus-normal color map; identical alpha and protected black lettering/outline",
+      "stateBase": "images/94ee3821de3b5a01bd9f4834.png",
+      "stateRecipe": "assets/high-resolution-masters/selector-state-pairs/manifest.json"
     },
     {
       "original": "assets/runtime/reanim/SelectorScreen_WoodSign1.png",
@@ -47882,8 +47897,8 @@
         572,
         244
       ],
-      "source": "assets/source-art/ai/main-menu-alignment-v2/SelectorScreen_Puzzle_Highlight-aligned-2x.png",
-      "sourceSha256": "8da8e9ffe4fad97e5869e4d1a26f777c7960eb7d2dce4cc2dc312e6110a6fda9",
+      "source": "assets/high-resolution-masters/selector-state-pairs/SelectorScreen_Puzzle_Highlight-shared-base-4x.png",
+      "sourceSha256": "fbe8c16589160801ab582d40d5a62b56a8878b7eb614dbb1fdaf0ba8f6a0426e",
       "mapping": {
         "logicalDrawRect": [
           0,
@@ -47904,9 +47919,11 @@
           0
         ]
       },
-      "repair": "Two Anime4K UL passes; independent AI crops; source-space local registration and 4x master assembly; Lanczos reduction to 2x runtime",
-      "master4x": "assets/high-resolution-masters/main-menu/SelectorScreen_Puzzle_Highlight-4x.png",
-      "master4xSha256": "50dcf10ae7bf946781842effae561e30d166d224023fb052375f79a304fa9ca0"
+      "repair": "Color-only state derived from approved normal image plus original highlight-minus-normal color map; identical alpha and protected black lettering/outline",
+      "master4x": "assets/high-resolution-masters/selector-state-pairs/SelectorScreen_Puzzle_Highlight-shared-base-4x.png",
+      "master4xSha256": "fbe8c16589160801ab582d40d5a62b56a8878b7eb614dbb1fdaf0ba8f6a0426e",
+      "stateBase": "images/cbf59f708df56f48e930585c.png",
+      "stateRecipe": "assets/high-resolution-masters/selector-state-pairs/manifest.json"
     },
     {
       "original": "assets/runtime/reanim/SelectorScreen_Survival_button.png",
@@ -47956,8 +47973,8 @@
         532,
         246
       ],
-      "source": "assets/source-art/ai/main-menu-alignment-v2/SelectorScreen_Survival_Highlight-aligned-2x.png",
-      "sourceSha256": "59749e4d933a510d4e6131584b5e530fc3fa5cb31810f7baa4c61686fe471bf1",
+      "source": "assets/high-resolution-masters/selector-state-pairs/SelectorScreen_Survival_Highlight-shared-base-4x.png",
+      "sourceSha256": "31c078e91fbb38afbee40c5e8675eb6eaa42614ad11e635733049f88ea49c40d",
       "mapping": {
         "logicalDrawRect": [
           0,
@@ -47978,9 +47995,11 @@
           0
         ]
       },
-      "repair": "Two Anime4K UL passes; independent AI crops; source-space local registration and 4x master assembly; Lanczos reduction to 2x runtime",
-      "master4x": "assets/high-resolution-masters/main-menu/SelectorScreen_Survival_Highlight-4x.png",
-      "master4xSha256": "305baaa2706757777c34d847d688ff45515a3408483791cda32c3c8c127b7559"
+      "repair": "Color-only state derived from approved normal image plus original highlight-minus-normal color map; identical alpha and protected black lettering/outline",
+      "master4x": "assets/high-resolution-masters/selector-state-pairs/SelectorScreen_Survival_Highlight-shared-base-4x.png",
+      "master4xSha256": "31c078e91fbb38afbee40c5e8675eb6eaa42614ad11e635733049f88ea49c40d",
+      "stateBase": "images/4d5a332a3eac44e68f666a29.png",
+      "stateRecipe": "assets/high-resolution-masters/selector-state-pairs/manifest.json"
     }
   ],
   "skipped": [],

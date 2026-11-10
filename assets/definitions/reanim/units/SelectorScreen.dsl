@@ -795,7 +795,7 @@ export component SelectorScreen {
     Track {
         source-name: "SelectorScreen_Survival_button";
         frame-count: 706;
-        frame 0 { x: 406; y: 732; image: IMAGE_REANIM_SELECTORSCREEN_SURVIVAL_BUTTON; }
+        frame 0 { x: 406; y: 732; image: IMAGE_REANIM_SELECTORSCREEN_MINIGAMES_BUTTON; }
         frame 1 { x: -10000; y: 685.5; image: none; }
         frame 2 { y: 638.9; }
         frame 3 { y: 592.3; }
@@ -835,7 +835,7 @@ export component SelectorScreen {
     Track {
         source-name: "SelectorScreen_Challenges_button";
         frame-count: 706;
-        frame 0 { x: 410; y: 816.5; image: IMAGE_REANIM_SELECTORSCREEN_CHALLENGES_BUTTON; }
+        frame 0 { x: 410; y: 816.5; image: IMAGE_REANIM_SELECTORSCREEN_PUZZLE_BUTTON; }
         frame 1 { x: -10000; y: 769.9; image: none; }
         frame 2 { y: 723.3; }
         frame 3 { y: 676.7; }
@@ -875,7 +875,7 @@ export component SelectorScreen {
     Track {
         source-name: "SelectorScreen_ZenGarden_button";
         frame-count: 706;
-        frame 0 { x: 413; y: 887; image: IMAGE_REANIM_SELECTORSCREEN_VASEBREAKER_BUTTON; }
+        frame 0 { x: 413; y: 887; image: IMAGE_REANIM_SELECTORSCREEN_SURVIVAL_BUTTON; }
         frame 1 { x: -10000; y: 840.4; image: none; }
         frame 2 { y: 793.9; }
         frame 3 { y: 747.3; }

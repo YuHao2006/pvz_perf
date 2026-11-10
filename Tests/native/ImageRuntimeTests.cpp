@@ -202,6 +202,34 @@ void Pixel(const ImagePixels& image,int x,unsigned expected,int tolerance=1)
             "Public image draw lost alpha or produced incorrect colors");
 }
 
+void HighResolutionImageGeometry(SexyAppBase& app)
+{
+    auto& render=*app.mDDInterface->mRenderInterface;
+    std::array<unsigned,48> pixels;
+    for(unsigned i=0;i<pixels.size();++i)
+        pixels[i]=0xff000000u | ((i*17u&255u)<<16) | ((i*29u&255u)<<8) | (i*43u&255u);
+    Image source(&app);
+    source.SetBits(pixels.data(),8,6);
+    source.mWidth=4;source.mHeight=3;
+    std::unique_ptr<Image> target(render.CreateRenderImage(4,3,2));
+    {
+        GpuImageDrawScope draw(render,target.get());
+        Graphics graphics(target.get());
+        graphics.DrawImage(&source,0,0);
+    }
+    render.Flush();
+    const auto actual=render.ReadImagePixels(*target);
+    Require(actual.width==8 && actual.height==6,"Public HD target lost native dimensions");
+    for(unsigned i=0;i<pixels.size();++i)Pixel(actual,int(i),pixels[i]);
+    Image copy(source);
+    Require(copy.mWidth==4 && copy.mHeight==3,"HD image clone changed logical layout dimensions");
+    const auto cloned=render.ReadImagePixels(copy);
+    Require(cloned.width==8 && cloned.height==6 &&
+        cloned.pixels==std::vector<unsigned>(pixels.begin(),pixels.end()),
+        "Public image clone lost HD source pixels");
+    std::cout<<"PASS public HD image: logical size, native upload, drawing and clone\n";
+}
+
 void SourceRectangleDraws(SexyAppBase& app)
 {
     auto& render=*app.mDDInterface->mRenderInterface;
@@ -7954,7 +7982,7 @@ void LandscapeHudRuntime(TestApp& app)
             for(int seed=SEED_ZOMBIE_NORMAL;seed<=SEED_ZOMBIE_IMP;++seed) {
                 auto* cached=app.mReanimatorCache->mZombieImages[Challenge::IZombieSeedTypeToZombieType(static_cast<SeedType>(seed))];
                 const auto sourcePixels=render.ReadImagePixels(*cached);
-                Require(ImageLib::WritePNGImage("iz-native-source-"+std::to_string(seed)+".png",cached->mWidth,cached->mHeight,sourcePixels.pixels),"Cannot write native IZ portrait source");
+                Require(ImageLib::WritePNGImage("iz-native-source-"+std::to_string(seed)+".png",sourcePixels.width,sourcePixels.height,sourcePixels.pixels),"Cannot write native IZ portrait source");
             }
             const auto nativePath=std::filesystem::path(__FILE__).parent_path().parent_path().parent_path()/"assets/runtime/images/landscape_ui/cards.png";
             auto* decoded=ImageLib::GetImage(nativePath.string(),false);
@@ -9680,6 +9708,7 @@ int main(int argc, char** argv)
         );
         PrecomputedTransparentEdges(app);
         FontUploadAndCopies(app);
+        HighResolutionImageGeometry(app);
         SourceRectangleDraws(app);
         NecessaryLocalClipDraws(app);
         TitleGrassRevealPixels(app);

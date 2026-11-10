@@ -155,7 +155,7 @@ void ReanimatorCache::DrawReanimatorFrame(Graphics* g, float thePosX, float theP
 //0x46F280
 Image* ReanimatorCache::MakeBlankRenderImage(int theWidth, int theHeight)
 {
-	return mApp->mDDInterface->mRenderInterface->CreateRenderImage(theWidth,theHeight);
+	return mApp->mDDInterface->mRenderInterface->CreateRenderImage(theWidth,theHeight,2);
 }
 namespace
 {

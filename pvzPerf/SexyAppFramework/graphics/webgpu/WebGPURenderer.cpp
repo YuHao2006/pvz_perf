@@ -77,6 +77,7 @@ struct WebGPUTexture
     BindGroup targetGroup;
     std::array<BindGroup, 4> sourceGroups;
     int width = 0, height = 0;
+    int drawingWidth=0, drawingHeight=0, pixelScale=1;
     unsigned int slot = ~0U, staticSlot = ~0U, flags = 0;
     bool render = false, caustic = false;
     TextureFormat format = TextureFormat::RGBA8Unorm;
@@ -161,8 +162,8 @@ struct WebGPURenderer::Impl
         auto *t = new WebGPUTexture;
         try
         {
-            t->width = w;
-            t->height = h;
+            t->width = t->drawingWidth = w;
+            t->height = t->drawingHeight = h;
             t->format = format;
             t->render = render;
             t->flags = render ? 0x80000000U : 0;
@@ -336,16 +337,18 @@ struct WebGPURenderer::Impl
         if (!open || input.size() % primitive)
             throw std::logic_error("WebGPU draw needs an open scene and complete primitives");
         auto *target = selected ? selected : scene;
-        GpuClip clip = requested ? *requested : GpuClip{0, 0, target->width, target->height};
+        GpuClip clip = requested ? *requested : GpuClip{0, 0, target->drawingWidth, target->drawingHeight};
         const long long right =
-            std::min<long long>(target->width, static_cast<long long>(clip.x) + std::max(0, clip.width));
+            std::min<long long>(target->drawingWidth, static_cast<long long>(clip.x) + std::max(0, clip.width));
         const long long bottom =
-            std::min<long long>(target->height, static_cast<long long>(clip.y) + std::max(0, clip.height));
+            std::min<long long>(target->drawingHeight, static_cast<long long>(clip.y) + std::max(0, clip.height));
         clip.x = std::max(0, clip.x);
         clip.y = std::max(0, clip.y);
         clip.width = static_cast<int>(std::max(0LL, right - clip.x));
         clip.height = static_cast<int>(std::max(0LL, bottom - clip.y));
         if (!clip.width || !clip.height)
+        clip.x*=target->pixelScale; clip.y*=target->pixelScale;
+        clip.width*=target->pixelScale; clip.height*=target->pixelScale;
             return;
         WebGPUTexture *feedback = nullptr;
         for (size_t first = 0; first < input.size();)
@@ -706,10 +709,17 @@ WebGPUTexture *WebGPURenderer::CreateCoverageMask(int w, int h, std::span<const 
     impl_->Upload(t, pixels.data(), pitch, true);
     return t;
 }
-WebGPUTexture *WebGPURenderer::CreateRenderImage(int w, int h)
+WebGPUTexture *WebGPURenderer::CreateRenderImage(int w, int h, int pixelScale)
 {
-    auto *t = impl_->Allocate(w, h, TextureFormat::RGBA16Float, true, true);
+    if(pixelScale<1 || pixelScale>2 || w<=0 || h<=0 ||
+        unsigned(w)>MaxImageDimension2D()/pixelScale || unsigned(h)>MaxImageDimension2D()/pixelScale)
+        throw std::invalid_argument("Invalid render image pixel scale or dimensions");
+
+    auto *t = impl_->Allocate(w*pixelScale, h*pixelScale, TextureFormat::RGBA16Float, true, true);
     impl_->Clear(t);
+    t->drawingWidth=w; t->drawingHeight=h; t->pixelScale=pixelScale;
+    const std::array<float,4> params{float(w),float(h),0,0};
+    impl_->context.queue.WriteBuffer(t->targetParams,0,&params,sizeof(params));
     return t;
 }
 void WebGPURenderer::SetRenderImage(WebGPUTexture *t)
@@ -753,6 +763,16 @@ unsigned int WebGPURenderer::SlotOf(const WebGPUTexture *t)
     if (!t || t->slot == ~0U)
         throw std::logic_error("WebGPU raw image not adopted");
     return t->slot | t->flags;
+}
+WebGPUTexture* WebGPURenderer::CopyTexture(WebGPUTexture* source)
+{
+    if (!source) throw std::invalid_argument("Texture copy requires a source");
+    auto* copy=CopyTextureRegion(source,0,0,source->width,source->height);
+    copy->drawingWidth=source->drawingWidth; copy->drawingHeight=source->drawingHeight;
+    copy->pixelScale=source->pixelScale;
+    const std::array<float,4> params{float(copy->drawingWidth),float(copy->drawingHeight),0,0};
+    impl_->context.queue.WriteBuffer(copy->targetParams,0,&params,sizeof(params));
+    return copy;
 }
 WebGPUTexture *WebGPURenderer::CopyTextureRegion(WebGPUTexture *source, int x, int y, int w, int h)
 {

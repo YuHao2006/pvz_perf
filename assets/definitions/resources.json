@@ -3217,6 +3217,38 @@
           {
             "tag": "Image",
             "attrs": {
+              "id": "SELECTORSCREEN_MINIGAMES_BUTTON",
+              "path": "SelectorScreen_Minigames_button"
+            },
+            "children": []
+          },
+          {
+            "tag": "Image",
+            "attrs": {
+              "id": "SELECTORSCREEN_MINIGAMES_HIGHLIGHT",
+              "path": "SelectorScreen_Minigames_Highlight"
+            },
+            "children": []
+          },
+          {
+            "tag": "Image",
+            "attrs": {
+              "id": "SELECTORSCREEN_PUZZLE_BUTTON",
+              "path": "SelectorScreen_Puzzle_button"
+            },
+            "children": []
+          },
+          {
+            "tag": "Image",
+            "attrs": {
+              "id": "SELECTORSCREEN_PUZZLE_HIGHLIGHT",
+              "path": "SelectorScreen_Puzzle_Highlight"
+            },
+            "children": []
+          },
+          {
+            "tag": "Image",
+            "attrs": {
               "id": "SELECTORSCREEN_SURVIVAL_BUTTON",
               "path": "SelectorScreen_Survival_button"
             },
@@ -3227,38 +3259,6 @@
             "attrs": {
               "id": "SELECTORSCREEN_SURVIVAL_HIGHLIGHT",
               "path": "SelectorScreen_Survival_Highlight"
-            },
-            "children": []
-          },
-          {
-            "tag": "Image",
-            "attrs": {
-              "id": "SELECTORSCREEN_CHALLENGES_BUTTON",
-              "path": "SelectorScreen_Challenges_button"
-            },
-            "children": []
-          },
-          {
-            "tag": "Image",
-            "attrs": {
-              "id": "SELECTORSCREEN_CHALLENGES_HIGHLIGHT",
-              "path": "SelectorScreen_Challenges_Highlight"
-            },
-            "children": []
-          },
-          {
-            "tag": "Image",
-            "attrs": {
-              "id": "SELECTORSCREEN_VASEBREAKER_BUTTON",
-              "path": "SelectorScreen_Vasebreaker_button"
-            },
-            "children": []
-          },
-          {
-            "tag": "Image",
-            "attrs": {
-              "id": "SELECTORSCREEN_VASEBREAKER_HIGHLIGHT",
-              "path": "SelectorScreen_Vasebreaker_Highlight"
             },
             "children": []
           },

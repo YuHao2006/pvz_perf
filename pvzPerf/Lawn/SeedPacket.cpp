@@ -312,6 +312,28 @@ void DrawSeedPacket(Graphics* g, float x, float y, SeedType theSeedType, SeedTyp
 		g->mColorizeImages = true;
 	}
 
+    const Sexy::TextureRegion* highResolutionCard=nullptr;
+    if constexpr(CommonUIAtlas::HasSeedCards)
+    {
+        const auto index=static_cast<unsigned>(theSeedType);
+        if(index<53 && (theSeedType!=SeedType::SEED_IMITATER || theImitaterType==SeedType::SEED_NONE) &&
+            CommonUIAtlas::SeedCards[index].mWidth)
+            highResolutionCard=&CommonUIAtlas::SeedCards[index];
+    }
+    if(highResolutionCard)
+    {
+        Sexy::DrawAtlasImageScaled(g,{CommonUIAtlas::Texture,0},*highResolutionCard,x,y,g->mScaleX,g->mScaleY);
+        if(thePercentDark>0.0f)
+        {
+            Graphics dark(*g);
+            dark.mColor=Color(64,64,64,255);
+            dark.mColorizeImages=true;
+            dark.ClipRect(x,y,SEED_PACKET_WIDTH,FloatRoundToInt(68.0f*thePercentDark)+2);
+            Sexy::DrawAtlasImageScaled(&dark,{CommonUIAtlas::Texture,0},*highResolutionCard,x,y,g->mScaleX,g->mScaleY);
+        }
+    }
+    else
+    {
 	int aPacketBackground =
 		theSeedType == SeedType::SEED_IMITATER ? 0 :
 		Plant::IsUpgrade(aSeedType) ? 1 :
@@ -460,6 +482,8 @@ void DrawSeedPacket(Graphics* g, float x, float y, SeedType theSeedType, SeedTyp
 			SeedPacketDrawSeed(&aPlantG, x, y, theSeedType, theImitaterType, aOffsetX, aOffsetY, aScale);
 		}
 	}
+
+    }
 
 	if (theDrawCost)
 	{

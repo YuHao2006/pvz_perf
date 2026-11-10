@@ -1213,6 +1213,12 @@ std::optional<std::vector<ImageDiagnosticRecord>> SexyAppBase::CaptureImageDiagn
         else
         {
             record.pixels = render.ReadImagePixels(*image);
+            if(!screen)
+            {
+                record.width=record.pixels->width;
+                record.height=record.pixels->height;
+                record.gpuTexels=ImageTexelBytes(record.width,record.height);
+            }
             record.pixelStatus = screen ? "native screen" : "native GPU";
         }
         records.push_back(std::move(record));
@@ -1357,6 +1363,10 @@ void SexyAppBase::WriteToRegistry()
     aDoc.SetInt("sfxVolume", std::llround(std::clamp(mSfxVolume / 0.65, 0.0, 1.0) * 100.0));
 	aDoc.SetInt("muted", (mMuteCount - mAutoMuteCount > 0) ? 1 : 0);
 	aDoc.SetString("screenMode", mIsWindowed ? "windowed" : "fullscreen");
+#ifdef _WIN32
+    aDoc.SetInt("windowWidth", mWindowClientWidth);
+    aDoc.SetInt("windowHeight", mWindowClientHeight);
+#endif
 	aDoc.SetInt("preferredX", mPreferredX);
 	aDoc.SetInt("preferredY", mPreferredY);
 	aDoc.SetInt("customCursors", mCustomCursorsEnabled ? 1 : 0);
@@ -1749,6 +1759,10 @@ void SexyAppBase::ReadFromRegistry()
 		mMuteCount = (int)aDoc.GetInt("muted", 0);
 	if (aDoc.Has("screenMode"))
 		mIsWindowed = LowerScaleText(aDoc.GetString("screenMode", "")) == "windowed";
+#ifdef _WIN32
+    mWindowClientWidth=int(std::clamp(aDoc.GetInt("windowWidth",0),0LL,16384LL));
+    mWindowClientHeight=int(std::clamp(aDoc.GetInt("windowHeight",1200),600LL,16384LL));
+#endif
 	if (aDoc.Has("preferredX"))
 		mPreferredX = (int)aDoc.GetInt("preferredX", 0);
 	if (aDoc.Has("preferredY"))

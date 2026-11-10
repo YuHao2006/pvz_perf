@@ -28,6 +28,7 @@ public:
     {
         std::string mAlphaImage, mAlphaGridImage;
         unsigned mVariant=0;
+        int mLogicalWidth=0, mLogicalHeight=0;
         bool mAutoFindAlpha=true;
         DWORD mAlphaColor=0xFFFFFF;
     };

@@ -18,12 +18,11 @@ atlas(common_ui scene:CommonUI)
 atlas(desktop_ui scene:DesktopUI)
 atlas(landscape_ui scene:LandscapeUI)
 
-# Exact CP-SAT runs offline, starting from the native MaxRects layout.
-# Cached proofs depend on dimensions, model revision and solver version.
-# Give each atlas 60 seconds; publish the best valid layout if proof takes longer.
-# Reports retain the actual proof status and gap. No image rotation is allowed.
+# Development uses native MaxRects immediately. Switch solver to exact for
+# release-size optimization; existing exact proof caches remain reusable.
+# No image rotation is allowed; both dimensions remain capped at 4096.
 atlas_defaults(
-    solver exact
+    solver maxrects
     padding 2
     max_side 4096
     time_limit_seconds 60

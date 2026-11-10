@@ -43,7 +43,7 @@ RECT ClientRect(HWND window) {
     return rect;
 }
 WindowTrackLimits WindowClientLimits(const SexyAppBase& app) {
-    int height=600;
+    int height=app.mWindowClientHeight;
     if(app.mModernScalePrepared && app.IsScalePresentActiveForMode(true) &&
         app.mDDInterface && app.mDDInterface->mRenderInterface &&
         app.mDDInterface->mRenderInterface->mRenderer) {
@@ -84,7 +84,7 @@ void SexyAppBase::MakeWindow() {
     if(mHWnd || mGpuContext) throw std::logic_error("Game window already exists");
     if constexpr (!NativeWindowsWindowApi::HdrOutput) mScaleHDREnabled=false;
     mTitle="pvz_perf";
-    const DWORD style=WS_OVERLAPPED|WS_CAPTION|WS_SYSMENU|WS_MINIMIZEBOX|
+    const DWORD style=WS_OVERLAPPED|WS_CAPTION|WS_SYSMENU|WS_MINIMIZEBOX|WS_MAXIMIZEBOX|
         WS_THICKFRAME;
     const DWORD exStyle=WS_EX_APPWINDOW;
     const POINT preferred{mPreferredX < 0 ? 0 : mPreferredX,
@@ -233,12 +233,18 @@ DEVMODEW SexyAppBase::TargetVideoMode() const {
 void SexyAppBase::ResizeWindowClient(int width,int height) {
     if(width<=0 || height<=0) throw std::invalid_argument("Invalid window client size");
     if(mNativeFullscreen) throw std::logic_error("Cannot resize a fullscreen client as a window");
-    const auto limits=WindowClientLimits(*this);
+    auto limits=WindowClientLimits(*this);
     // WarmScalePipelinesBeforeShow resizes the hidden window a second time.
     // Keep the chosen monitor ratio while applying its prepared output height.
-    if(!mNativeWindowShown)
-        width=WindowStartupSize::FromMonitor(
-            nativeStartupViewport.width,nativeStartupViewport.height,limits.height).width;
+    if(!mNativeWindowShown) {
+        MONITORINFO monitor{sizeof(monitor)};
+        if(!GetMonitorInfoW(TargetMonitor(),&monitor)) WindowFailure("GetMonitorInfo");
+        const int availableHeight=std::max(600,int(monitor.rcWork.bottom-monitor.rcWork.top)-64);
+        limits=WindowTrackLimits::FromScaleOutputHeight(std::min(limits.height,availableHeight));
+        if(mLandscapeUI)limits.minimumWidth=int((890LL*limits.height+300)/600);
+    }
+    width=mWindowClientWidth>0?mWindowClientWidth:WindowStartupSize::FromMonitor(
+        nativeStartupViewport.width,nativeStartupViewport.height,limits.height).width;
     width=limits.ConstrainWidth(width);
     height=limits.height;
     RECT rect{0,0,width,height};
@@ -324,6 +330,11 @@ void SexyAppBase::UpdateMonitorState() {
 
 void SexyAppBase::UpdateWindowGeometry() {
     mNativeResizePending=true;
+    if(!mNativeFullscreen && mNativeWindowShown && !mPhysMinimized) {
+        const auto client=ClientRect(mHWnd);
+        mWindowClientWidth=int(client.right-client.left);
+        mWindowClientHeight=int(client.bottom-client.top);
+    }
     auto& render=*mDDInterface->mRenderInterface;
     if(render.mSceneBegun) render.Flush();
     const int prepared=mDDInterface->PrepareScreenMode(mHWnd,mIsWindowed);
@@ -940,32 +951,35 @@ LRESULT CALLBACK SexyAppBase::WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 		(GetWindowLongPtrW(hWnd, GWL_STYLE) & WS_THICKFRAME) &&
 		(hWnd == aSexyApp->mHWnd || !aSexyApp->mHWnd))
 	{
-		const auto limits = WindowClientLimits(*aSexyApp);
 		RECT border{};
 		if (!NativeWindowsWindowApi::AdjustClientRect(border,
 			DWORD(GetWindowLongPtrW(hWnd, GWL_STYLE)),
 			DWORD(GetWindowLongPtrW(hWnd, GWL_EXSTYLE)), hWnd))
 			WindowFailure("AdjustClientRect");
 		const int borderWidth = border.right - border.left;
-		const int windowHeight = limits.height + border.bottom - border.top;
 		if (uMsg == WM_GETMINMAXINFO)
 		{
 			auto& info = *reinterpret_cast<MINMAXINFO*>(lParam);
-			info.ptMinTrackSize = {limits.minimumWidth + borderWidth, windowHeight};
-			info.ptMaxTrackSize = {limits.maximumWidth + borderWidth, windowHeight};
+			info.ptMinTrackSize = {aSexyApp->mLandscapeUI?890:800, 600};
+			info.ptMinTrackSize.x += borderWidth;
+			info.ptMinTrackSize.y += border.bottom-border.top;
 			return 0;
 		}
 		auto& rect = *reinterpret_cast<RECT*>(lParam);
-		const int width = limits.ConstrainWidth(
+		const int proposedHeight=std::max(600,int((rect.bottom-rect.top)-(border.bottom-border.top)));
+		auto resizeLimits=WindowTrackLimits::FromScaleOutputHeight(proposedHeight);
+		if(aSexyApp->mLandscapeUI)resizeLimits.minimumWidth=int((890LL*proposedHeight+300)/600);
+		const int width = resizeLimits.ConstrainWidth(
 			int(rect.right - rect.left) - borderWidth) + borderWidth;
+		const int resizedWindowHeight=proposedHeight+border.bottom-border.top;
 		if (wParam == WMSZ_LEFT || wParam == WMSZ_TOPLEFT || wParam == WMSZ_BOTTOMLEFT)
 			rect.left = rect.right - width;
 		else
 			rect.right = rect.left + width;
 		if (wParam == WMSZ_TOP || wParam == WMSZ_TOPLEFT || wParam == WMSZ_TOPRIGHT)
-			rect.top = rect.bottom - windowHeight;
+			rect.top = rect.bottom - resizedWindowHeight;
 		else
-			rect.bottom = rect.top + windowHeight;
+			rect.bottom = rect.top + resizedWindowHeight;
 		return TRUE;
 	}
 	if (!aSexyApp->mNativeWindowReady)

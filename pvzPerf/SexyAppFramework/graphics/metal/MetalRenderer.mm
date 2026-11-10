@@ -71,6 +71,7 @@ struct MetalRenderer::Impl {
     MetalTexture* renderImage = nullptr;
     MetalTexture* causticSource = nullptr;
     int width, height;
+    int drawingWidth=0, drawingHeight=0, pixelScale=1;
     bool sceneOpen = false, imageOnly = false, initialized = false;
     bool causticQueued = false;
     unsigned long long causticTimeNs = 0;
@@ -186,8 +187,8 @@ struct MetalRenderer::Impl {
             desc.usage |= MTLTextureUsageShaderWrite;
         result->resource = [device newTextureWithDescriptor:desc];
         if (!result->resource) MetalError(nil, "Allocate Metal texture");
-        result->width = w;
-        result->height = h;
+        result->width = result->drawingWidth = w;
+        result->height = result->drawingHeight = h;
         result->generated = generated;
         result->renderable = renderable;
         return result;
@@ -384,7 +385,7 @@ struct MetalRenderer::Impl {
             throw std::invalid_argument("Invalid Metal triangle list or blend");
         if (vertices.empty()) return;
         auto* target = Output();
-        int64_t left = 0, top = 0, right = target->width, bottom = target->height;
+        int64_t left = 0, top = 0, right = target->drawingWidth, bottom = target->drawingHeight;
         if (clip) {
             left = std::clamp<int64_t>(clip->x, 0, right);
             top = std::clamp<int64_t>(clip->y, 0, bottom);
@@ -442,7 +443,7 @@ struct MetalRenderer::Impl {
         desc.colorAttachments[0].storeAction = MTLStoreActionStore;
         id<MTLRenderCommandEncoder> encoder = [commands renderCommandEncoderWithDescriptor:desc];
         if (!encoder) MetalError(nil, "Create Metal draw encoder");
-        const MetalSceneConstants constants{float(target->width), float(target->height),
+        const MetalSceneConstants constants{float(target->drawingWidth), float(target->drawingHeight),
             target->generated ? 1u : 0u, coverage ? 1u : 0u};
         [encoder setRenderPipelineState:pipelines[target->generated ? 1 : 0][size_t(blend)]];
         [encoder setVertexBuffer:stream offset:vertexOffset atIndex:0];
@@ -456,8 +457,8 @@ struct MetalRenderer::Impl {
             input->sampled = true;
         }
         const MTLViewport viewport{0, 0, double(target->width), double(target->height), 0, 1};
-        const MTLScissorRect scissor{NSUInteger(left), NSUInteger(top),
-            NSUInteger(right - left), NSUInteger(bottom - top)};
+        const MTLScissorRect scissor{NSUInteger(left*target->pixelScale), NSUInteger(top*target->pixelScale),
+            NSUInteger((right - left)*target->pixelScale), NSUInteger((bottom - top)*target->pixelScale)};
         [encoder setViewport:viewport];
         [encoder setScissorRect:scissor];
         if (quads) {
@@ -700,10 +701,15 @@ MetalTexture* MetalRenderer::CreateCoverageMask(int w, int h, std::span<const ui
     s.Upload(texture, data.data(), pitch, 1);
     return texture;
 }
-MetalTexture* MetalRenderer::CreateRenderImage(int w, int h) {
+MetalTexture* MetalRenderer::CreateRenderImage(int w, int h, int pixelScale) {
+    if(pixelScale<1 || pixelScale>2 || w<=0 || h<=0 ||
+        unsigned(w)>MaxImageDimension2D()/pixelScale || unsigned(h)>MaxImageDimension2D()/pixelScale)
+        throw std::invalid_argument("Invalid render image pixel scale or dimensions");
+
     auto& s = *impl_;
-    auto* texture = s.Own(s.Image(w, h, MTLPixelFormatRGBA16Float, true, true), true);
+    auto* texture = s.Own(s.Image(w*pixelScale, h*pixelScale, MTLPixelFormatRGBA16Float, true, true), true);
     s.Clear(texture);
+    texture->drawingWidth=w; texture->drawingHeight=h; texture->pixelScale=pixelScale;
     return texture;
 }
 void MetalRenderer::SetRenderImage(MetalTexture* image) {
@@ -717,6 +723,14 @@ void MetalRenderer::SetRenderImage(MetalTexture* image) {
         s.sceneOpen = false;
     }
     s.renderImage = image;
+}
+MetalTexture* MetalRenderer::CopyTexture(MetalTexture* source)
+{
+    if (!source) throw std::invalid_argument("Texture copy requires a source");
+    auto* copy=CopyTextureRegion(source,0,0,source->width,source->height);
+    copy->drawingWidth=source->drawingWidth; copy->drawingHeight=source->drawingHeight;
+    copy->pixelScale=source->pixelScale;
+    return copy;
 }
 MetalTexture* MetalRenderer::CopyTextureRegion(MetalTexture* source, int x, int y, int w, int h) {
     auto& s = *impl_;
@@ -924,7 +938,7 @@ void MetalRenderer::SubmitPool(MetalTexture* texture, const GpuPoolParams& p) {
     desc.colorAttachments[0].storeAction = MTLStoreActionStore;
     id<MTLRenderCommandEncoder> encoder = [s.commands renderCommandEncoderWithDescriptor:desc];
     if (!encoder) MetalError(nil, "Create Metal pool encoder");
-    const MetalSceneConstants scene{float(target->width), float(target->height),
+    const MetalSceneConstants scene{float(target->drawingWidth), float(target->drawingHeight),
         target->generated ? 1u : 0u, 0u};
     constexpr uint32_t filters = GpuVertex::kIndependentColorFilter |
         GpuVertex::kColorFilterMask | GpuVertex::kAlphaEdgeFilter;

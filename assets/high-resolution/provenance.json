@@ -1,6 +1,6 @@
 {
   "format": "pvz-high-resolution-provenance-v1",
-  "reviewSha256": "d6d10376b9f74f262fdb64c0a1ef81ec720aab69c94a7146cb3dfe152ab23685",
+  "reviewSha256": "8a728bff471be2bebe835f7a0b81d590b54805fbe66d6f78ab0353d42dad3eac",
   "images": [
     {
       "original": "assets/runtime/images/Almanac_CloseButton.png",
@@ -48479,7 +48479,7 @@
     },
     {
       "original": "assets/runtime/images/SelectorScreen_Almanac.png",
-      "file": "images/b076039b99bf5fac17534401.png",
+      "file": "images/c5e42850932ae30bd505c9d5.png",
       "logicalSize": [
         99,
         99
@@ -48488,25 +48488,33 @@
         198,
         198
       ],
-      "source": "assets/source-art/replanted/ui-source-round22/SelectorScreen_Almanac--english.png",
-      "sourceSha256": "98c820db89aa3d3d7fdd9e6fd5f5e11d597ea6d64c4e1e958b666e3706be28ea",
+      "source": "assets/source-art/replanted/menu-almanac-crop/SelectorScreen_Almanac--cropped.png",
+      "sourceSha256": "e5e7c74ac256895d8367edd44ac56d5203c114403cb2570e2589d878ed4fc7d0",
       "mapping": {
         "logicalDrawRect": [
-          0,
-          0,
-          99,
-          99
+          3.2124999999999986,
+          1.0,
+          94.575,
+          97.53888888888889
         ],
         "originalLogicalCanvas": [
           99,
           99
+        ],
+        "pixelPerLogical": [
+          3.711340206185567,
+          3.711340206185567
+        ],
+        "sourceFrameOrigin": [
+          0,
+          0
         ]
       },
-      "fixReason": "主菜单书本原生底图没有文字；从重植版奖励书提取现成英文墨迹，按封面平面离线合成，不使用低清文字。普通／高亮采用同一文字层。"
+      "repair": "Crop distant translucent shadow; preserve opaque book; uniform placement in original canvas"
     },
     {
       "original": "assets/runtime/images/SelectorScreen_AlmanacHighlight.png",
-      "file": "images/7aa69d5237a09e6817dbc5ff.png",
+      "file": "images/63692fd961a1a4a37ba6e78c.png",
       "logicalSize": [
         99,
         99
@@ -48515,21 +48523,29 @@
         198,
         198
       ],
-      "source": "assets/source-art/replanted/ui-source-round22/SelectorScreen_AlmanacHighlight--english.png",
-      "sourceSha256": "edef413c8a05836e5ba5b8192db6d8a432cefb2bb53e1d2be2747c7f46f9be3a",
+      "source": "assets/source-art/replanted/menu-almanac-crop/SelectorScreen_AlmanacHighlight--cropped.png",
+      "sourceSha256": "b2e3da368195b6a77200376315d29a5b15ae87a70fd24a4c10a78f044679efe9",
       "mapping": {
         "logicalDrawRect": [
-          0,
-          0,
-          99,
-          99
+          3.2124999999999986,
+          1.0,
+          94.575,
+          97.53888888888889
         ],
         "originalLogicalCanvas": [
           99,
           99
+        ],
+        "pixelPerLogical": [
+          3.711340206185567,
+          3.711340206185567
+        ],
+        "sourceFrameOrigin": [
+          0,
+          0
         ]
       },
-      "fixReason": "主菜单书本原生底图没有文字；从重植版奖励书提取现成英文墨迹，按封面平面离线合成，不使用低清文字。普通／高亮采用同一文字层。"
+      "repair": "Crop distant translucent shadow; preserve opaque book; uniform placement in original canvas"
     }
   ],
   "skipped": [],

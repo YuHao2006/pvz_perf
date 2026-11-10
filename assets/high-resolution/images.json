@@ -2873,7 +2873,17 @@
     "reanim/zengarden_fertilizer_bag3.png": "images/6d004b46b9dc7c6d2401b6bd.png",
     "reanim/zengarden_fertilizer_bag3": "images/6d004b46b9dc7c6d2401b6bd.png",
     "reanim/zengarden_phonograph_needle.png": "images/052699036f6b8ed0e5788307.png",
-    "reanim/zengarden_phonograph_needle": "images/052699036f6b8ed0e5788307.png"
+    "reanim/zengarden_phonograph_needle": "images/052699036f6b8ed0e5788307.png",
+    "images/sunflower_trophy.png": "images/0476496a090c7d53ed18d611.png",
+    "images/sunflower_trophy": "images/0476496a090c7d53ed18d611.png",
+    "images/carkeys.png": "images/fb2d9726248a5ffcefbc8ac7.png",
+    "images/carkeys": "images/fb2d9726248a5ffcefbc8ac7.png",
+    "images/almanac.png": "images/c97d283f4ebf8be73e5c9f17.png",
+    "images/almanac": "images/c97d283f4ebf8be73e5c9f17.png",
+    "images/selectorscreen_almanac.png": "images/b076039b99bf5fac17534401.png",
+    "images/selectorscreen_almanac": "images/b076039b99bf5fac17534401.png",
+    "images/selectorscreen_almanachighlight.png": "images/7aa69d5237a09e6817dbc5ff.png",
+    "images/selectorscreen_almanachighlight": "images/7aa69d5237a09e6817dbc5ff.png"
   },
   "logicalSizes": {
     "images/almanac_closebutton.png": [
@@ -14267,6 +14277,46 @@
     "images/almanac_zombieback.png": [
       1400,
       600
+    ],
+    "images/sunflower_trophy.png": [
+      314,
+      269
+    ],
+    "images/sunflower_trophy": [
+      314,
+      269
+    ],
+    "images/carkeys.png": [
+      80,
+      80
+    ],
+    "images/carkeys": [
+      80,
+      80
+    ],
+    "images/almanac.png": [
+      80,
+      80
+    ],
+    "images/almanac": [
+      80,
+      80
+    ],
+    "images/selectorscreen_almanac.png": [
+      99,
+      99
+    ],
+    "images/selectorscreen_almanac": [
+      99,
+      99
+    ],
+    "images/selectorscreen_almanachighlight.png": [
+      99,
+      99
+    ],
+    "images/selectorscreen_almanachighlight": [
+      99,
+      99
     ]
   },
   "cards": {

@@ -1,6 +1,6 @@
 {
   "format": "pvz-high-resolution-provenance-v1",
-  "reviewSha256": "1482d6a148c8ee36f39ccdc1fe7cdfee07664ec52642edd69a58278148ed1329",
+  "reviewSha256": "d6d10376b9f74f262fdb64c0a1ef81ec720aab69c94a7146cb3dfe152ab23685",
   "images": [
     {
       "original": "assets/runtime/images/Almanac_CloseButton.png",
@@ -48395,6 +48395,141 @@
         ]
       },
       "approvedRound": 20
+    },
+    {
+      "original": "assets/runtime/images/Sunflower_trophy.png",
+      "file": "images/0476496a090c7d53ed18d611.png",
+      "logicalSize": [
+        314,
+        269
+      ],
+      "physicalSize": [
+        628,
+        538
+      ],
+      "source": "assets/source-art/replanted/ui-source-round22/Sunflower_trophy--silver-gold-sheet.png",
+      "sourceSha256": "46edc5b837c5fb6bd4dd1e388649a246ef89b94adbc9ad08d5a1e6a5aea3d27d",
+      "mapping": {
+        "logicalDrawRect": [
+          0,
+          0,
+          314,
+          269
+        ],
+        "originalLogicalCanvas": [
+          314,
+          269
+        ]
+      },
+      "fixReason": "补齐银／金两格，顺序与原版一致；包含光晕，原生Sprite单独保留。组合母版按旧图可见区域等比配准，游戏运行版本再缩到2倍。"
+    },
+    {
+      "original": "assets/runtime/images/CarKeys.png",
+      "file": "images/fb2d9726248a5ffcefbc8ac7.png",
+      "logicalSize": [
+        80,
+        80
+      ],
+      "physicalSize": [
+        160,
+        160
+      ],
+      "source": "assets/source-art/replanted/ui-source-round22/CarKeys--native.png",
+      "sourceSha256": "2d439e01de330d580f4671535e0f965703ad188b2360184b7fa6ca652c4a384d",
+      "mapping": {
+        "logicalDrawRect": [
+          6.1468885397712825,
+          7.278188106498604,
+          70.70622292045744,
+          68.44362378700279
+        ],
+        "originalLogicalCanvas": [
+          80,
+          80
+        ]
+      },
+      "fixReason": "使用重植版原生Sprite，保留原始像素，按原版可见轮廓居中等比配准。"
+    },
+    {
+      "original": "assets/runtime/images/Almanac.png",
+      "file": "images/c97d283f4ebf8be73e5c9f17.png",
+      "logicalSize": [
+        80,
+        80
+      ],
+      "physicalSize": [
+        160,
+        160
+      ],
+      "source": "assets/source-art/replanted/ui-source-round22/Almanac--native.png",
+      "sourceSha256": "f3d26b38ceb176d39ecd9833b7ec2296ceac1dc328d7e349089331e82e9f0cf7",
+      "mapping": {
+        "logicalDrawRect": [
+          4.176164050536045,
+          4.5395397243645945,
+          68.92336536036939,
+          72.78307382055007
+        ],
+        "originalLogicalCanvas": [
+          80,
+          80
+        ]
+      },
+      "fixReason": "使用重植版原生Sprite，保留原始像素，按原版可见轮廓居中等比配准。"
+    },
+    {
+      "original": "assets/runtime/images/SelectorScreen_Almanac.png",
+      "file": "images/b076039b99bf5fac17534401.png",
+      "logicalSize": [
+        99,
+        99
+      ],
+      "physicalSize": [
+        198,
+        198
+      ],
+      "source": "assets/source-art/replanted/ui-source-round22/SelectorScreen_Almanac--english.png",
+      "sourceSha256": "98c820db89aa3d3d7fdd9e6fd5f5e11d597ea6d64c4e1e958b666e3706be28ea",
+      "mapping": {
+        "logicalDrawRect": [
+          0,
+          0,
+          99,
+          99
+        ],
+        "originalLogicalCanvas": [
+          99,
+          99
+        ]
+      },
+      "fixReason": "主菜单书本原生底图没有文字；从重植版奖励书提取现成英文墨迹，按封面平面离线合成，不使用低清文字。普通／高亮采用同一文字层。"
+    },
+    {
+      "original": "assets/runtime/images/SelectorScreen_AlmanacHighlight.png",
+      "file": "images/7aa69d5237a09e6817dbc5ff.png",
+      "logicalSize": [
+        99,
+        99
+      ],
+      "physicalSize": [
+        198,
+        198
+      ],
+      "source": "assets/source-art/replanted/ui-source-round22/SelectorScreen_AlmanacHighlight--english.png",
+      "sourceSha256": "edef413c8a05836e5ba5b8192db6d8a432cefb2bb53e1d2be2747c7f46f9be3a",
+      "mapping": {
+        "logicalDrawRect": [
+          0,
+          0,
+          99,
+          99
+        ],
+        "originalLogicalCanvas": [
+          99,
+          99
+        ]
+      },
+      "fixReason": "主菜单书本原生底图没有文字；从重植版奖励书提取现成英文墨迹，按封面平面离线合成，不使用低清文字。普通／高亮采用同一文字层。"
     }
   ],
   "skipped": [],

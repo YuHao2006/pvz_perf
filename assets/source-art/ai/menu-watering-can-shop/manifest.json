@@ -9,19 +9,19 @@
   "status": "awaiting-user-review",
   "items": [
     {
-      "id": "round26:72e317ce119f1579b8",
+      "id": "round26:48056a69a1ab663626",
       "original": "assets/runtime/images/SelectorScreen_ZenGarden.png",
-      "hd": "assets/source-art/ai/menu-watering-can-shop/candidates/ZenGarden--normal-ai-v2.png",
+      "hd": "assets/source-art/ai/menu-watering-can-shop/candidates/ZenGarden--normal-original-shadow-v3-4x.png",
       "category": "ui",
       "groups": [
         "主菜单AI修复"
       ],
       "source": {
-        "atlas": "original + Anime4K UL twice + built-in image_gen",
+        "atlas": "v1 AI subject + program-composited original shadow",
         "region": "SelectorScreen_ZenGarden"
       },
       "processingFlags": [
-        "v2补回投影；普通／悬停仅表面亮度差异。投影形状和透明度仍需对照原版审核；候选未接入。"
+        "v3：v1无阴影AI水壶 + 程序提取原版黑色半透明投影；普通／悬停共用完全相同的alpha；保留4倍母图。"
       ],
       "cropAssessment": {
         "action": "alignment",
@@ -29,27 +29,27 @@
         "reason": "生成画布、投影边界仍需配准，不增加运行时操作。",
         "needsCrop": false
       },
-      "prompt": "Use original sprite after two Anime4K x2 passes. Minimal precise-object repair, preserve original silhouette, pose, text and 2009 painted style. Remove upscaler artifacts in negative space. Genuine transparency, no redesign, no glow. Preserve original intentional semitransparent cast shadow; do not erase it or replace it with glow.",
+      "prompt": "No new AI call. Programmatically composite v1 AI subject over original black shadow, preserving original opacity and placement.",
       "generatedSize": [
-        1358,
-        1159
+        764,
+        652
       ],
-      "sha256": "72e317ce119f1579b8a278f12d7682a7d05e3060d84997b25c15e6220cf7c58a"
+      "sha256": "48056a69a1ab663626ec26008b908fbbf5bb2ffc446c78961f71352145a1c88f"
     },
     {
-      "id": "round26:4a5bd88aa8ee396e40",
+      "id": "round26:3d002e6070e9abebf2",
       "original": "assets/runtime/images/SelectorScreen_ZenGardenHighlight.png",
-      "hd": "assets/source-art/ai/menu-watering-can-shop/candidates/ZenGarden--hover-ai-v2.png",
+      "hd": "assets/source-art/ai/menu-watering-can-shop/candidates/ZenGarden--hover-original-shadow-v3-4x.png",
       "category": "ui",
       "groups": [
         "主菜单AI修复"
       ],
       "source": {
-        "atlas": "original + Anime4K UL twice + built-in image_gen",
+        "atlas": "v1 AI subject + program-composited original shadow",
         "region": "SelectorScreen_ZenGardenHighlight"
       },
       "processingFlags": [
-        "v2补回投影；普通／悬停仅表面亮度差异。投影形状和透明度仍需对照原版审核；候选未接入。"
+        "v3：v1无阴影AI水壶 + 程序提取原版黑色半透明投影；普通／悬停共用完全相同的alpha；保留4倍母图。"
       ],
       "cropAssessment": {
         "action": "alignment",
@@ -57,12 +57,12 @@
         "reason": "生成画布、投影边界仍需配准，不增加运行时操作。",
         "needsCrop": false
       },
-      "prompt": "Edit the generated normal sprite. Only brighten existing surface shading to match the original hover. Preserve geometry and transparent background; no bloom, halos, outer stroke or recolored text. Preserve original intentional semitransparent cast shadow; do not erase it or replace it with glow.",
+      "prompt": "No new AI call. Programmatically composite v1 AI subject over original black shadow, preserving original opacity and placement.",
       "generatedSize": [
-        1358,
-        1159
+        764,
+        652
       ],
-      "sha256": "4a5bd88aa8ee396e403d785ba4a06e56445d57e47ce55e776649334495596158"
+      "sha256": "3d002e6070e9abebf24bac4a06db7f6a335a5dddf9dd34ba3948cb009008ce98"
     },
     {
       "id": "round26:80ac27e74b12cf3baf",

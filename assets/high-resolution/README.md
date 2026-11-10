@@ -12,3 +12,5 @@
 开发期间 `assets/definitions/ResourceBuild.pvzbuild` 使用 `solver maxrects` 快速装箱；定版前可切为 `solver exact` 做面积优化。两种方式均禁止旋转，并限制图集宽高不超过 4096。
 
 构建工具源码位于独立的 PvzDevTools 仓库 high-resolution 分支；本仓库使用 tools/bin 下的预编译工具。
+
+新配置默认关闭额外的 customScale 超分链。已有设置若启用了固定尺寸的窗口缩放链，需关闭 customScale 才按窗口尺寸显示原生高清画面；显式缩放配置继续保留其固定输出尺寸语义。

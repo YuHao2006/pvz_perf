@@ -448,7 +448,9 @@ SexyAppBase::SexyAppBase()
 	mEnableWindowAspect = false;
 	mWindowAspect.Set(4, 3);
 	mWindowScale = 2;
-	mUseCustomScale = true;
+	// Native 2x artwork and scene pixels need no additional upscaling chain.
+	// An explicit saved customScale setting can still opt into authoring effects.
+	mUseCustomScale = false;
 	mScaleConfigWindow = 2;
 	mWindowScaleFromPipeline = 1;
 	mScaleConfigFullscreenWidth = 0;

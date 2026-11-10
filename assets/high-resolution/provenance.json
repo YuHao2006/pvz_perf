@@ -18373,8 +18373,8 @@
         2058,
         1120
       ],
-      "source": "assets/source-art/ai/main-menu-restoration/candidates/SelectorScreen_BG_Right--stitched-2x-v1.png",
-      "sourceSha256": "132ea2c00ed43a44a458e72a98c9d8c29dd39c627528854273f0d746b2b22700",
+      "source": "assets/source-art/ai/main-menu-alignment-v2/SelectorScreen_BG_Right-repaired-2x.png",
+      "sourceSha256": "508c11d3d147eb85c299eea9345bb584852d4737e98f381d068ce1fad67622fe",
       "mapping": {
         "logicalDrawRect": [
           0,
@@ -18394,7 +18394,10 @@
           0,
           0
         ]
-      }
+      },
+      "repair": "Two Anime4K UL passes; independent AI crops; source-space local registration and 4x master assembly; Lanczos reduction to 2x runtime",
+      "master4x": "assets/high-resolution-masters/main-menu/SelectorScreen_BG_Right-4x.png",
+      "master4xSha256": "c0345b28e1dc6f5da056757de8545b4d27484d288d6d97d562f35a2344b7ad07"
     },
     {
       "original": "assets/runtime/reanim/SelectorScreen_Cloud1.png",
@@ -47827,6 +47830,154 @@
           97
         ]
       }
+    },
+    {
+      "original": "assets/runtime/reanim/SelectorScreen_Puzzle_button.png",
+      "file": "images/cbf59f708df56f48e930585c.png",
+      "logicalSize": [
+        286,
+        122
+      ],
+      "physicalSize": [
+        572,
+        244
+      ],
+      "source": "assets/source-art/ai/main-menu-alignment-v2/SelectorScreen_Puzzle_button-aligned-2x.png",
+      "sourceSha256": "0f9a6b137546efdc3ec7e2952bd13256c91dbe190dcf00e213514d929b46dd7a",
+      "mapping": {
+        "logicalDrawRect": [
+          0,
+          0,
+          286,
+          122
+        ],
+        "originalLogicalCanvas": [
+          286,
+          122
+        ],
+        "pixelPerLogical": [
+          2.0,
+          2.0
+        ],
+        "sourceFrameOrigin": [
+          0,
+          0
+        ]
+      },
+      "repair": "Two Anime4K UL passes; independent AI crops; source-space local registration and 4x master assembly; Lanczos reduction to 2x runtime",
+      "master4x": "assets/high-resolution-masters/main-menu/SelectorScreen_Puzzle_button-4x.png",
+      "master4xSha256": "a0d3234d1ae3dfbf4ea7b6a3f1623cb31147af9213a5931bd954cdd35cd4fdae"
+    },
+    {
+      "original": "assets/runtime/reanim/SelectorScreen_Puzzle_Highlight.png",
+      "file": "images/e54ff7e8160566093db6fc19.png",
+      "logicalSize": [
+        286,
+        122
+      ],
+      "physicalSize": [
+        572,
+        244
+      ],
+      "source": "assets/source-art/ai/main-menu-alignment-v2/SelectorScreen_Puzzle_Highlight-aligned-2x.png",
+      "sourceSha256": "8da8e9ffe4fad97e5869e4d1a26f777c7960eb7d2dce4cc2dc312e6110a6fda9",
+      "mapping": {
+        "logicalDrawRect": [
+          0,
+          0,
+          286,
+          122
+        ],
+        "originalLogicalCanvas": [
+          286,
+          122
+        ],
+        "pixelPerLogical": [
+          2.0,
+          2.0
+        ],
+        "sourceFrameOrigin": [
+          0,
+          0
+        ]
+      },
+      "repair": "Two Anime4K UL passes; independent AI crops; source-space local registration and 4x master assembly; Lanczos reduction to 2x runtime",
+      "master4x": "assets/high-resolution-masters/main-menu/SelectorScreen_Puzzle_Highlight-4x.png",
+      "master4xSha256": "50dcf10ae7bf946781842effae561e30d166d224023fb052375f79a304fa9ca0"
+    },
+    {
+      "original": "assets/runtime/reanim/SelectorScreen_Survival_button.png",
+      "file": "images/4d5a332a3eac44e68f666a29.png",
+      "logicalSize": [
+        266,
+        123
+      ],
+      "physicalSize": [
+        532,
+        246
+      ],
+      "source": "assets/source-art/ai/main-menu-alignment-v2/SelectorScreen_Survival_button-aligned-2x.png",
+      "sourceSha256": "1f646ec03f1218ad1eb6ea2596e65fbd53609662e3725d9f3afc14b235311efb",
+      "mapping": {
+        "logicalDrawRect": [
+          0,
+          0,
+          266,
+          123
+        ],
+        "originalLogicalCanvas": [
+          266,
+          123
+        ],
+        "pixelPerLogical": [
+          2.0,
+          2.0
+        ],
+        "sourceFrameOrigin": [
+          0,
+          0
+        ]
+      },
+      "repair": "Two Anime4K UL passes; independent AI crops; source-space local registration and 4x master assembly; Lanczos reduction to 2x runtime",
+      "master4x": "assets/high-resolution-masters/main-menu/SelectorScreen_Survival_button-4x.png",
+      "master4xSha256": "e83f832fb85f80325f1225670454a5b0a1edc41008edad8cdfb73689e099dde4"
+    },
+    {
+      "original": "assets/runtime/reanim/SelectorScreen_Survival_Highlight.png",
+      "file": "images/8c74595845c5b38dbaebeeed.png",
+      "logicalSize": [
+        266,
+        123
+      ],
+      "physicalSize": [
+        532,
+        246
+      ],
+      "source": "assets/source-art/ai/main-menu-alignment-v2/SelectorScreen_Survival_Highlight-aligned-2x.png",
+      "sourceSha256": "59749e4d933a510d4e6131584b5e530fc3fa5cb31810f7baa4c61686fe471bf1",
+      "mapping": {
+        "logicalDrawRect": [
+          0,
+          0,
+          266,
+          123
+        ],
+        "originalLogicalCanvas": [
+          266,
+          123
+        ],
+        "pixelPerLogical": [
+          2.0,
+          2.0
+        ],
+        "sourceFrameOrigin": [
+          0,
+          0
+        ]
+      },
+      "repair": "Two Anime4K UL passes; independent AI crops; source-space local registration and 4x master assembly; Lanczos reduction to 2x runtime",
+      "master4x": "assets/high-resolution-masters/main-menu/SelectorScreen_Survival_Highlight-4x.png",
+      "master4xSha256": "305baaa2706757777c34d847d688ff45515a3408483791cda32c3c8c127b7559"
     }
   ],
   "skipped": [],

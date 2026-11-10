@@ -1,0 +1,79 @@
+[
+  {
+    "key": "old-background-registered",
+    "size": [
+      4116,
+      2240
+    ],
+    "rgbMAEBefore": 22.20240181216972,
+    "rgbMAEAfter": 14.562329087668548,
+    "flowP95LogicalPx": 21.030118942260742,
+    "sourceAlphaExact": true
+  },
+  {
+    "key": "stone-upper",
+    "size": [
+      2100,
+      1520
+    ],
+    "rgbMAEBefore": 5.392322755051578,
+    "rgbMAEAfter": 4.80907442681855,
+    "flowP95LogicalPx": 10.233179092407227,
+    "sourceAlphaExact": true
+  },
+  {
+    "key": "stone-base",
+    "size": [
+      3180,
+      920
+    ],
+    "rgbMAEBefore": 13.518402200918477,
+    "rgbMAEAfter": 11.067380982941135,
+    "flowP95LogicalPx": 8.895862579345703,
+    "sourceAlphaExact": true
+  },
+  {
+    "key": "SelectorScreen_Puzzle_button",
+    "size": [
+      1144,
+      488
+    ],
+    "rgbMAEBefore": 11.193184375289555,
+    "rgbMAEAfter": 7.926177302429833,
+    "flowP95LogicalPx": 1.5018373727798462,
+    "sourceAlphaExact": true
+  },
+  {
+    "key": "SelectorScreen_Puzzle_Highlight",
+    "size": [
+      1144,
+      488
+    ],
+    "rgbMAEBefore": 7.503945667377041,
+    "rgbMAEAfter": 6.668759183025137,
+    "flowP95LogicalPx": 0.5135367512702942,
+    "sourceAlphaExact": true
+  },
+  {
+    "key": "SelectorScreen_Survival_button",
+    "size": [
+      1064,
+      492
+    ],
+    "rgbMAEBefore": 12.572297402212733,
+    "rgbMAEAfter": 7.570812504974667,
+    "flowP95LogicalPx": 1.6849569082260132,
+    "sourceAlphaExact": true
+  },
+  {
+    "key": "SelectorScreen_Survival_Highlight",
+    "size": [
+      1064,
+      492
+    ],
+    "rgbMAEBefore": 12.832326656515084,
+    "rgbMAEAfter": 9.964619517917283,
+    "flowP95LogicalPx": 1.073917269706726,
+    "sourceAlphaExact": true
+  }
+]

@@ -2835,7 +2835,15 @@
     "reanim/zombie_football_rightarm_upper.png": "images/74df96993951a69209da353b.png",
     "reanim/zombie_football_rightarm_upper": "images/74df96993951a69209da353b.png",
     "reanim/zombie_target.png": "images/79255a8390b24c74b10a0a92.png",
-    "reanim/zombie_target": "images/79255a8390b24c74b10a0a92.png"
+    "reanim/zombie_target": "images/79255a8390b24c74b10a0a92.png",
+    "reanim/selectorscreen_puzzle_button": "images/cbf59f708df56f48e930585c.png",
+    "reanim/selectorscreen_puzzle_button.png": "images/cbf59f708df56f48e930585c.png",
+    "reanim/selectorscreen_puzzle_highlight": "images/e54ff7e8160566093db6fc19.png",
+    "reanim/selectorscreen_puzzle_highlight.png": "images/e54ff7e8160566093db6fc19.png",
+    "reanim/selectorscreen_survival_button": "images/4d5a332a3eac44e68f666a29.png",
+    "reanim/selectorscreen_survival_button.png": "images/4d5a332a3eac44e68f666a29.png",
+    "reanim/selectorscreen_survival_highlight": "images/8c74595845c5b38dbaebeeed.png",
+    "reanim/selectorscreen_survival_highlight.png": "images/8c74595845c5b38dbaebeeed.png"
   },
   "logicalSizes": {
     "images/almanac_closebutton.png": [
@@ -14173,6 +14181,38 @@
     "reanim/zombie_target": [
       54,
       97
+    ],
+    "reanim/selectorscreen_puzzle_button": [
+      286,
+      122
+    ],
+    "reanim/selectorscreen_puzzle_button.png": [
+      286,
+      122
+    ],
+    "reanim/selectorscreen_puzzle_highlight": [
+      286,
+      122
+    ],
+    "reanim/selectorscreen_puzzle_highlight.png": [
+      286,
+      122
+    ],
+    "reanim/selectorscreen_survival_button": [
+      266,
+      123
+    ],
+    "reanim/selectorscreen_survival_button.png": [
+      266,
+      123
+    ],
+    "reanim/selectorscreen_survival_highlight": [
+      266,
+      123
+    ],
+    "reanim/selectorscreen_survival_highlight.png": [
+      266,
+      123
     ]
   },
   "cards": {

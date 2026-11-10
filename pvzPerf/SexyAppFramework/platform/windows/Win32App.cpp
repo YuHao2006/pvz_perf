@@ -32,8 +32,8 @@ constexpr unsigned int TouchCancelAll = 0x40000000u;
 bool TouchPromotedMouse() {
     return (static_cast<ULONG_PTR>(GetMessageExtraInfo()) & 0xFFFFFF80u) == 0xFF515780u;
 }
-constexpr char MainWindowClass[] = "pvz_perf";
-constexpr char HiddenWindowClass[] = "pvz_perf_hidden";
+constexpr char MainWindowClass[] = "pvz_perf_hd";
+constexpr char HiddenWindowClass[] = "pvz_perf_hd_hidden";
 [[noreturn]] void WindowFailure(const char* operation) {
     throw std::runtime_error(std::string(operation)+" failed: "+std::to_string(GetLastError()));
 }
@@ -43,7 +43,7 @@ RECT ClientRect(HWND window) {
     return rect;
 }
 WindowTrackLimits WindowClientLimits(const SexyAppBase& app) {
-    int height=app.mWindowClientHeight;
+    int height=1200;
     if(app.mModernScalePrepared && app.IsScalePresentActiveForMode(true) &&
         app.mDDInterface && app.mDDInterface->mRenderInterface &&
         app.mDDInterface->mRenderInterface->mRenderer) {
@@ -83,8 +83,8 @@ void SexyAppBase::MapWindowMouse(double x,double y,int& sx,int& sy) const {
 void SexyAppBase::MakeWindow() {
     if(mHWnd || mGpuContext) throw std::logic_error("Game window already exists");
     if constexpr (!NativeWindowsWindowApi::HdrOutput) mScaleHDREnabled=false;
-    mTitle="pvz_perf";
-    const DWORD style=WS_OVERLAPPED|WS_CAPTION|WS_SYSMENU|WS_MINIMIZEBOX|WS_MAXIMIZEBOX|
+    mTitle="pvz_perf HD";
+    const DWORD style=WS_OVERLAPPED|WS_CAPTION|WS_SYSMENU|WS_MINIMIZEBOX|
         WS_THICKFRAME;
     const DWORD exStyle=WS_EX_APPWINDOW;
     const POINT preferred{mPreferredX < 0 ? 0 : mPreferredX,
@@ -113,7 +113,7 @@ void SexyAppBase::MakeWindow() {
         getenv("PVZ_VULKAN_VALIDATION")!=nullptr,mScaleHDREnabled);
 #else
     VulkanInitConfig init{};
-    init.appInfo.pApplicationName="pvz_perf";
+    init.appInfo.pApplicationName="pvz_perf HD";
     init.enableValidation=getenv("PVZ_VULKAN_VALIDATION")!=nullptr;
     // 不再要求 shaderFloat64：字体内核已是纯整数实现，fp64 是 NVIDIA 有而
     // Intel 消费卡（Arc 核显）没有的特性，曾被此行全灭候选卡。
@@ -236,13 +236,6 @@ void SexyAppBase::ResizeWindowClient(int width,int height) {
     auto limits=WindowClientLimits(*this);
     // WarmScalePipelinesBeforeShow resizes the hidden window a second time.
     // Keep the chosen monitor ratio while applying its prepared output height.
-    if(!mNativeWindowShown) {
-        MONITORINFO monitor{sizeof(monitor)};
-        if(!GetMonitorInfoW(TargetMonitor(),&monitor)) WindowFailure("GetMonitorInfo");
-        const int availableHeight=std::max(600,int(monitor.rcWork.bottom-monitor.rcWork.top)-64);
-        limits=WindowTrackLimits::FromScaleOutputHeight(std::min(limits.height,availableHeight));
-        if(mLandscapeUI)limits.minimumWidth=int((890LL*limits.height+300)/600);
-    }
     width=mWindowClientWidth>0?mWindowClientWidth:WindowStartupSize::FromMonitor(
         nativeStartupViewport.width,nativeStartupViewport.height,limits.height).width;
     width=limits.ConstrainWidth(width);
@@ -333,7 +326,6 @@ void SexyAppBase::UpdateWindowGeometry() {
     if(!mNativeFullscreen && mNativeWindowShown && !mPhysMinimized) {
         const auto client=ClientRect(mHWnd);
         mWindowClientWidth=int(client.right-client.left);
-        mWindowClientHeight=int(client.bottom-client.top);
     }
     auto& render=*mDDInterface->mRenderInterface;
     if(render.mSceneBegun) render.Flush();
@@ -960,13 +952,15 @@ LRESULT CALLBACK SexyAppBase::WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 		if (uMsg == WM_GETMINMAXINFO)
 		{
 			auto& info = *reinterpret_cast<MINMAXINFO*>(lParam);
-			info.ptMinTrackSize = {aSexyApp->mLandscapeUI?890:800, 600};
+			const auto limits=WindowClientLimits(*aSexyApp);
+			info.ptMinTrackSize = {limits.minimumWidth, limits.height};
 			info.ptMinTrackSize.x += borderWidth;
 			info.ptMinTrackSize.y += border.bottom-border.top;
+			info.ptMaxTrackSize = {limits.maximumWidth+borderWidth,info.ptMinTrackSize.y};
 			return 0;
 		}
 		auto& rect = *reinterpret_cast<RECT*>(lParam);
-		const int proposedHeight=std::max(600,int((rect.bottom-rect.top)-(border.bottom-border.top)));
+		const int proposedHeight=1200;
 		auto resizeLimits=WindowTrackLimits::FromScaleOutputHeight(proposedHeight);
 		if(aSexyApp->mLandscapeUI)resizeLimits.minimumWidth=int((890LL*proposedHeight+300)/600);
 		const int width = resizeLimits.ConstrainWidth(

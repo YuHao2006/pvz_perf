@@ -400,7 +400,6 @@ public:
 	Ratio					mWindowAspect;
 	int						mWindowScale;
     int mWindowClientWidth=0;
-    int mWindowClientHeight=1200;
 	bool						mUseCustomScale;				// 自定义放缩开关
 	int						mScaleConfigWindow;				// scale.json 窗口放缩倍率
 	int						mWindowScaleFromPipeline;			// 当前窗口 pipeline 推导出的运行时倍率

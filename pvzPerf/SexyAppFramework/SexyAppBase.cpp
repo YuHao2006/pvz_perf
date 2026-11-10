@@ -1367,7 +1367,6 @@ void SexyAppBase::WriteToRegistry()
 	aDoc.SetString("screenMode", mIsWindowed ? "windowed" : "fullscreen");
 #ifdef _WIN32
     aDoc.SetInt("windowWidth", mWindowClientWidth);
-    aDoc.SetInt("windowHeight", mWindowClientHeight);
 #endif
 	aDoc.SetInt("preferredX", mPreferredX);
 	aDoc.SetInt("preferredY", mPreferredY);
@@ -1763,7 +1762,6 @@ void SexyAppBase::ReadFromRegistry()
 		mIsWindowed = LowerScaleText(aDoc.GetString("screenMode", "")) == "windowed";
 #ifdef _WIN32
     mWindowClientWidth=int(std::clamp(aDoc.GetInt("windowWidth",0),0LL,16384LL));
-    mWindowClientHeight=int(std::clamp(aDoc.GetInt("windowHeight",1200),600LL,16384LL));
 #endif
 	if (aDoc.Has("preferredX"))
 		mPreferredX = (int)aDoc.GetInt("preferredX", 0);
@@ -4321,9 +4319,9 @@ void SexyAppBase::Init()
 
 	// Create a message we can use to talk to ourselves inter-process
 #ifdef _WIN32
-	mNotifyGameMessage = RegisterWindowMessageA("pvz_perf.Notify");
+	mNotifyGameMessage = RegisterWindowMessageA("pvz_perf.HD.Notify");
 
-	std::string instanceName="pvz_perf.SingleInstance";
+	std::string instanceName="pvz_perf.HD.SingleInstance";
 	::SetLastError(ERROR_SUCCESS);
 	mMutex = ::CreateMutexA(NULL, TRUE, instanceName.c_str());
 	const DWORD aMutexError = ::GetLastError();

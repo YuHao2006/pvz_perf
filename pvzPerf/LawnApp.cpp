@@ -166,7 +166,7 @@ LawnApp::LawnApp()
 	mFullCompanyName = "PopCap Games";
 	mProdName = "PopCap\\PlantsVsZombies";
     mProductVersion = "4.0.1";
-	std::string aTitleName = "pvz_perf";
+	std::string aTitleName = "pvz_perf HD";
 #ifdef _DEBUG
 	aTitleName += " BETA ";
 	aTitleName += mProductVersion;

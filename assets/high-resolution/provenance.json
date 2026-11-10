@@ -1,6 +1,6 @@
 {
   "format": "pvz-high-resolution-provenance-v1",
-  "reviewSha256": "c4d8ca9a91259b06cfb7b2db1fd5496d0d4de69ff39b3798ea43ad06d6ab98f0",
+  "reviewSha256": "38fc6d3889342eb46b1601921c00c23747fe0305a6ca8945ddfa1ea29c791891",
   "images": [
     {
       "original": "assets/runtime/images/Almanac_CloseButton.png",
@@ -48663,7 +48663,7 @@
     },
     {
       "original": "assets/runtime/images/Achievements_pedestal.png",
-      "file": "images/14eda5d2de3bc0013187fba5.png",
+      "file": "images/cf9cb222773aa2e1a6bdd63c.png",
       "logicalSize": [
         139,
         165
@@ -48676,10 +48676,10 @@
       "sourceSha256": "704ddc95f6f08e9bf4a080d934ed71d85c2f70b278fa30a9bcc4efe580752289",
       "mapping": {
         "logicalDrawRect": [
-          0.0,
-          2.7043568464730328,
-          137.28423236514524,
-          160.30705394190872
+          -0.4754990925589908,
+          8.72050816696914,
+          134.994555353902,
+          157.6333938294011
         ],
         "originalLogicalCanvas": [
           139,
@@ -48691,7 +48691,7 @@
     },
     {
       "original": "assets/runtime/images/Achievements_pedestal_press.png",
-      "file": "images/39e41e55c336340d662fb1ed.png",
+      "file": "images/d0c335ba9b15231229e436d3.png",
       "logicalSize": [
         139,
         165
@@ -48704,10 +48704,10 @@
       "sourceSha256": "56b07688479c3d9012daf66adc505065f4267f34f1e9c79d53e6d2bc80762b4a",
       "mapping": {
         "logicalDrawRect": [
-          0.0,
-          2.7043568464730328,
-          137.28423236514524,
-          160.30705394190872
+          -0.4754990925589908,
+          8.72050816696914,
+          134.994555353902,
+          157.6333938294011
         ],
         "originalLogicalCanvas": [
           139,

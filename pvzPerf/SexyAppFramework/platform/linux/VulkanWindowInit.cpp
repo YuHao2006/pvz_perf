@@ -38,10 +38,6 @@ void SexyAppBase::MakeWindow()
     VulkanInitConfig init{};
     init.appInfo.pApplicationName = "pvz_perf";
     init.enableValidation = std::getenv("PVZ_VULKAN_VALIDATION") != nullptr;
-    if (!mScaleEffects.empty()) {
-        init.features.shaderStorageImageExtendedFormats = VK_TRUE;
-        init.features.shaderImageGatherExtended = VK_TRUE;
-    }
     VkSwapchainCreateInfoKHR swapchain{
         .sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
         .imageFormat = VK_FORMAT_B8G8R8A8_UNORM,

@@ -1224,12 +1224,11 @@ bool LawnApp::KillNewOptionsDialog()
 #else
 	const bool wantWindowed = !aNewOptionsDialog->mFullscreenCheckbox->mChecked;
 #endif
-	const bool useCustomScale = aNewOptionsDialog->mScaleCheckbox->mChecked;
 
 	// Modal/widget focus restoration must finish before the shared display
 	// request performs its final HWND focus and cursor-clip reconciliation.
 	KillDialog(Dialogs::DIALOG_NEWOPTIONS);
-	RequestScreenMode(wantWindowed, useCustomScale);
+	RequestScreenMode(wantWindowed);
 	return true;
 }
 
@@ -3444,7 +3443,6 @@ void LawnApp::SwitchScreenMode(bool wantWindowed, bool force)
 #else
 		aNewOptionsDialog->mFullscreenCheckbox->SetChecked(!mIsWindowed, false);
 #endif
-		aNewOptionsDialog->mScaleCheckbox->SetChecked(mUseCustomScale, false);
 	}
 }
 

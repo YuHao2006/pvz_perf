@@ -44,12 +44,6 @@ RECT ClientRect(HWND window) {
 }
 WindowTrackLimits WindowClientLimits(const SexyAppBase& app) {
     int height=1200;
-    if(app.mModernScalePrepared && app.IsScalePresentActiveForMode(true) &&
-        app.mDDInterface && app.mDDInterface->mRenderInterface &&
-        app.mDDInterface->mRenderInterface->mRenderer) {
-        const auto output=app.mDDInterface->mRenderInterface->mRenderer->ScaleOutput(false);
-        if(output.height>0) height=int(output.height);
-    }
     auto limits=WindowTrackLimits::FromScaleOutputHeight(app.mLandscapeUI?std::max(600,height):height);
     if(app.mLandscapeUI)limits.minimumWidth=int((890LL*limits.height+300)/600);
     return limits;
@@ -117,10 +111,7 @@ void SexyAppBase::MakeWindow() {
     init.enableValidation=getenv("PVZ_VULKAN_VALIDATION")!=nullptr;
     // 不再要求 shaderFloat64：字体内核已是纯整数实现，fp64 是 NVIDIA 有而
     // Intel 消费卡（Arc 核显）没有的特性，曾被此行全灭候选卡。
-    if(!mScaleEffects.empty()) {
-        init.features.shaderStorageImageExtendedFormats=VK_TRUE;
-        init.features.shaderImageGatherExtended=VK_TRUE;
-    }
+
     VkSwapchainCreateInfoKHR swapchain{
         .sType=VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
         .imageFormat=VK_FORMAT_B8G8R8A8_UNORM,
@@ -284,21 +275,7 @@ void SexyAppBase::UpdateHdrDisplay() {
     }
 }
 
-void SexyAppBase::PrepareFullscreenScaleForMonitor() {
-    if(!mModernScalePrepared) return;
-    const auto mode=TargetVideoMode();
-    if(int(mode.dmPelsWidth)==mModernScaleTargetW && int(mode.dmPelsHeight)==mModernScaleTargetH) return;
-    std::vector<ScaleEffectRuntimeDesc*> effects;
-    std::vector<ScaleEffectScaling> scaling;
-    if(mScaleFullscreenConfig.mDeclared && !BuildScalePipelineForMode(false,effects,scaling))
-        throw std::runtime_error("Cannot resolve resident fullscreen pipeline");
-    std::vector<GpuScaleStep> steps;
-    for(size_t i=0;i<effects.size();++i) steps.push_back({effects[i],scaling[i]});
-    auto& renderer=*mDDInterface->mRenderInterface->mRenderer;
-    renderer.PrepareScale(true,steps,mode.dmPelsWidth,mode.dmPelsHeight);
-    renderer.WarmScale(true);
-    mModernScaleTargetW=int(mode.dmPelsWidth);mModernScaleTargetH=int(mode.dmPelsHeight);
-}
+
 
 void SexyAppBase::UpdateMonitorState() {
     if(mSwitchingScreenMode) return;
@@ -313,8 +290,6 @@ void SexyAppBase::UpdateMonitorState() {
         if(!SetWindowPos(mHWnd,nullptr,rect.left,rect.top,rect.right-rect.left,
             rect.bottom-rect.top,SWP_NOZORDER|SWP_NOACTIVATE)) WindowFailure("SetWindowPos");
     }
-    PrepareFullscreenScaleForMonitor();
-    render.mRenderer->SetScaleMode(IsScalePresentActive(),!mIsWindowed);
     UpdateWindowGeometry();
     mNativeTopologyPending=false;
     mWidgetManager->MarkAllDirty();
@@ -354,14 +329,10 @@ void SexyAppBase::SwitchScreenMode(bool windowed,bool force) {
     auto& render=*mDDInterface->mRenderInterface;
     render.Flush();
     auto& renderer=*render.mRenderer;
-    if(!windowed) PrepareFullscreenScaleForMonitor();
     SetWindowFullscreen(!windowed);
     if(windowed) {
-        const auto scaled=renderer.ScaleOutput(false);
-        ResizeWindowClient(IsScalePresentActiveForMode(true)?int(scaled.width):renderer.sceneWidth,
-            IsScalePresentActiveForMode(true)?int(scaled.height):renderer.sceneHeight);
+        ResizeWindowClient(renderer.sceneWidth,renderer.sceneHeight);
     }
-    renderer.SetScaleMode(IsScalePresentActiveForMode(windowed),!windowed);
     mIsWindowed=windowed;mIsPhysWindowed=true;
     UpdateWindowGeometry();
     UpdateHdrDisplay();
@@ -1583,7 +1554,7 @@ void SexyAppBase::ProcessMessageNow(UINT uMsg, WPARAM wParam, LPARAM lParam, HWN
 			if (!mAltEnterDown)
 			{
 				mAltEnterDown = true;
-				RequestScreenMode(!mIsWindowed, mUseCustomScale);
+				RequestScreenMode(!mIsWindowed);
 			}
 			break;
 		}

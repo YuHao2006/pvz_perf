@@ -234,7 +234,7 @@ void SexyAppBase::ProcessNativeWindowEvent(const NativeWindowEvent& event)
         if (key == KEYCODE_RETURN && event.pressed && app.mAltDown) {
             if (!app.mAltEnterDown) {
                 app.mAltEnterDown = true;
-                app.RequestScreenMode(!app.mIsWindowed, app.mUseCustomScale);
+                app.RequestScreenMode(!app.mIsWindowed);
             }
             break;
         }
@@ -339,25 +339,7 @@ void SexyAppBase::SetWindowFullscreen(bool fullscreen)
     mNativeFullscreen = fullscreen;
 }
 
-void SexyAppBase::PrepareFullscreenScaleForMonitor()
-{
-    if (!mModernScalePrepared || !mNativeFullscreen) return;
-    const int width = mNativeWindow->Width, height = mNativeWindow->Height;
-    if (width == mModernScaleTargetW && height == mModernScaleTargetH) return;
-    std::vector<ScaleEffectRuntimeDesc*> effects;
-    std::vector<ScaleEffectScaling> scaling;
-    if (mScaleFullscreenConfig.mDeclared &&
-        !BuildScalePipelineForMode(false, effects, scaling))
-        throw std::runtime_error("Cannot resolve Linux fullscreen scale pipeline");
-    std::vector<GpuScaleStep> steps;
-    for (size_t i = 0; i < effects.size(); ++i)
-        steps.push_back({effects[i], scaling[i]});
-    auto& renderer = *mDDInterface->mRenderInterface->mRenderer;
-    renderer.PrepareScale(true, steps, width, height);
-    renderer.WarmScale(true);
-    mModernScaleTargetW = width;
-    mModernScaleTargetH = height;
-}
+
 
 void SexyAppBase::UpdateWindowGeometry()
 {
@@ -368,7 +350,6 @@ void SexyAppBase::UpdateWindowGeometry()
     if (prepared == DDInterface::RESULT_DEFERRED) return;
     if (prepared != DDInterface::RESULT_OK)
         throw NativeDisplayError(NativeDisplayOperation::PrepareScreenMode, prepared);
-    PrepareFullscreenScaleForMonitor();
     const int resized = mDDInterface->ResizePreparedPresent();
     if (resized == DDInterface::RESULT_DEFERRED) return;
     if (resized != DDInterface::RESULT_OK)
@@ -407,13 +388,10 @@ void SexyAppBase::SwitchScreenMode(bool windowed, bool force)
     render.Flush();
     SetWindowFullscreen(!windowed);
     if (windowed) {
-        const auto scaled = render.mRenderer->ScaleOutput(false);
-        ResizeWindowClient(IsScalePresentActiveForMode(true) ? static_cast<int>(scaled.width) : render.mRenderer->sceneWidth,
-                           IsScalePresentActiveForMode(true) ? static_cast<int>(scaled.height) : render.mRenderer->sceneHeight);
+        ResizeWindowClient(render.mRenderer->sceneWidth,render.mRenderer->sceneHeight);
     }
     mIsWindowed = windowed;
     mIsPhysWindowed = true;
-    render.mRenderer->SetScaleMode(IsScalePresentActiveForMode(windowed), !windowed);
     mWidgetManager->MarkAllDirty();
     // Wait for the compositor's actual configure dimensions before resizing WSI.
     ClearUpdateBacklog(false);

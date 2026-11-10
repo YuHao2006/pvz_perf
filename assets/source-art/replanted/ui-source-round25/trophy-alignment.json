@@ -1,0 +1,30 @@
+{
+  "states": [
+    {
+      "state": "silver",
+      "uniformScaleRelativeToPrevious": 0.9479768786127167,
+      "translationAt4x": [
+        14.173410404624292,
+        27.79190751445094
+      ],
+      "anchor": "solid lower plinth width + lower edge",
+      "alphaThreshold": 160
+    },
+    {
+      "state": "gold",
+      "uniformScaleRelativeToPrevious": 0.9556840077071291,
+      "translationAt4x": [
+        9.703275529865095,
+        27.822736030828423
+      ],
+      "anchor": "solid lower plinth width + lower edge",
+      "alphaThreshold": 160
+    }
+  ],
+  "runtimeFile": "images/d12e84d2e57fe2927761eeca.png",
+  "logicalCanvas": [
+    314,
+    269
+  ],
+  "master": "assets/source-art/replanted/ui-source-round25/Sunflower_trophy--plinth-aligned-4x.png"
+}

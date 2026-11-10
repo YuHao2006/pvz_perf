@@ -48377,7 +48377,7 @@
     },
     {
       "original": "assets/runtime/images/Sunflower_trophy.png",
-      "file": "images/0476496a090c7d53ed18d611.png",
+      "file": "images/d12e84d2e57fe2927761eeca.png",
       "logicalSize": [
         314,
         269
@@ -48386,8 +48386,8 @@
         628,
         538
       ],
-      "source": "assets/source-art/replanted/ui-source-round22/Sunflower_trophy--silver-gold-sheet.png",
-      "sourceSha256": "46edc5b837c5fb6bd4dd1e388649a246ef89b94adbc9ad08d5a1e6a5aea3d27d",
+      "source": "assets/source-art/replanted/ui-source-round25/Sunflower_trophy--plinth-aligned-4x.png",
+      "sourceSha256": "c5d46439a12dbdbfb48b662820881b6f7590f745d77286fbfd562632c89f598d",
       "mapping": {
         "logicalDrawRect": [
           0,
@@ -48400,7 +48400,29 @@
           269
         ]
       },
-      "fixReason": "补齐银／金两格，顺序与原版一致；包含光晕，原生Sprite单独保留。组合母版按旧图可见区域等比配准，游戏运行版本再缩到2倍。"
+      "fixReason": "以原版实体台面宽度与底边配准，排除光晕；金银分别等比缩放并与底座叠合检查。",
+      "plinthAlignment": [
+        {
+          "state": "silver",
+          "uniformScaleRelativeToPrevious": 0.9479768786127167,
+          "translationAt4x": [
+            14.173410404624292,
+            27.79190751445094
+          ],
+          "anchor": "solid lower plinth width + lower edge",
+          "alphaThreshold": 160
+        },
+        {
+          "state": "gold",
+          "uniformScaleRelativeToPrevious": 0.9556840077071291,
+          "translationAt4x": [
+            9.703275529865095,
+            27.822736030828423
+          ],
+          "anchor": "solid lower plinth width + lower edge",
+          "alphaThreshold": 160
+        }
+      ]
     },
     {
       "original": "assets/runtime/images/CarKeys.png",

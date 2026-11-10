@@ -1,0 +1,74 @@
+[
+  {
+    "bundle": "defaultlocalgroup_assets_coinsprites_1567b864fe644461aad8d5ae5eaa9c05.bundle",
+    "pathId": -3377306738987266229,
+    "type": "Sprite",
+    "name": "SPR_MainMenu_Button_AchievementTrophy_Silver",
+    "file": "assets/source-art/replanted/ui-source-round22/SPR_MainMenu_Button_AchievementTrophy_Silver.png",
+    "size": [
+      327,
+      572
+    ],
+    "sha256": "ebd8a244a030169f82a41649732e80d20ca08cfc5dcaa522005c11e25e76721e"
+  },
+  {
+    "bundle": "defaultlocalgroup_assets_coinsprites_1567b864fe644461aad8d5ae5eaa9c05.bundle",
+    "pathId": 644203744304105898,
+    "type": "Sprite",
+    "name": "SPR_MainMenu_Button_AchievementTrophy_Gold",
+    "file": "assets/source-art/replanted/ui-source-round22/SPR_MainMenu_Button_AchievementTrophy_Gold.png",
+    "size": [
+      327,
+      572
+    ],
+    "sha256": "32d876d24c4e159d395e508c6840e240892cdd4e496c4d84fdf841fabbb8f742"
+  },
+  {
+    "bundle": "defaultlocalgroup_assets_coinsprites_1567b864fe644461aad8d5ae5eaa9c05.bundle",
+    "pathId": 3014562400593301414,
+    "type": "Sprite",
+    "name": "SPR_CarKeys",
+    "file": "assets/source-art/replanted/ui-source-round22/SPR_CarKeys.png",
+    "size": [
+      500,
+      484
+    ],
+    "sha256": "2d439e01de330d580f4671535e0f965703ad188b2360184b7fa6ca652c4a384d"
+  },
+  {
+    "bundle": "defaultlocalgroup_assets_coinsprites_1567b864fe644461aad8d5ae5eaa9c05.bundle",
+    "pathId": 3184376822212085236,
+    "type": "Sprite",
+    "name": "SPR_Almanac",
+    "file": "assets/source-art/replanted/ui-source-round22/SPR_Almanac.png",
+    "size": [
+      500,
+      528
+    ],
+    "sha256": "f3d26b38ceb176d39ecd9833b7ec2296ceac1dc328d7e349089331e82e9f0cf7"
+  },
+  {
+    "bundle": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+    "pathId": -2053701548708769513,
+    "type": "Sprite",
+    "name": "SPR_MainMenu_Button_Almanac",
+    "file": "assets/source-art/replanted/ui-source-round22/SPR_MainMenu_Button_Almanac.png",
+    "size": [
+      496,
+      425
+    ],
+    "sha256": "d1067a620d2f4e9dea4b0e9a0c47a7a75d3d07ccc6b8cca81d33144dfc243c52"
+  },
+  {
+    "bundle": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+    "pathId": 7648859993657155953,
+    "type": "Sprite",
+    "name": "SPR_MainMenu_Button_Almanac_Over",
+    "file": "assets/source-art/replanted/ui-source-round22/SPR_MainMenu_Button_Almanac_Over.png",
+    "size": [
+      496,
+      425
+    ],
+    "sha256": "aaecc103d7b477ba71688f8bf12b15ed98296766829080fd21675ff99dfc5185"
+  }
+]

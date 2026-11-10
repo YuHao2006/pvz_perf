@@ -1,6 +1,6 @@
 {
   "format": "pvz-high-resolution-provenance-v1",
-  "reviewSha256": "2a15e94dd0b52808079b32519c84360e8e016712ae3ee8731cc600d5a62bd95a",
+  "reviewSha256": "1482d6a148c8ee36f39ccdc1fe7cdfee07664ec52642edd69a58278148ed1329",
   "images": [
     {
       "original": "assets/runtime/images/Almanac_CloseButton.png",
@@ -18301,7 +18301,7 @@
     },
     {
       "original": "assets/runtime/reanim/SelectorScreen_BG_Center.png",
-      "file": "images/50407638630505895378c354.png",
+      "file": "images/5e4d5693b409d8e8b337dc01.png",
       "logicalSize": [
         720,
         350
@@ -18310,8 +18310,8 @@
         1440,
         700
       ],
-      "source": "assets/source-art/ai/main-menu-restoration/candidates/SelectorScreen_BG_Center--stitched-2x-v1.png",
-      "sourceSha256": "d14ac6191b5a4aa66fb9227b76fd3cab1d4d9359309d4a703032103be7b6c689",
+      "source": "assets/source-art/replanted/ui-source-round22/SelectorScreen_BG_Center--replanted-native.png",
+      "sourceSha256": "862516ec390e162cf0d090496eb1871d257ad92944627eba6279b413b743f76e",
       "mapping": {
         "logicalDrawRect": [
           0,
@@ -18322,16 +18322,9 @@
         "originalLogicalCanvas": [
           720,
           350
-        ],
-        "pixelPerLogical": [
-          2.0,
-          2.0
-        ],
-        "sourceFrameOrigin": [
-          0,
-          0
         ]
-      }
+      },
+      "fixReason": "采用重植版全景现有等比裁切，2880×1400源像素对应720×350逻辑画布，不拉伸。与原版邻屋／栅栏构图有差异，墓碑仍沿用本项目修复素材。"
     },
     {
       "original": "assets/runtime/reanim/SelectorScreen_BG_Left.png",
@@ -19149,7 +19142,7 @@
         558,
         166
       ],
-      "source": "assets/source-art/replanted/reanim-source-round11/SelectorScreen_WoodSign3--native-english.png",
+      "source": "assets/source-art/replanted/ui-source-round22/SelectorScreen_WoodSign3--shared.png",
       "sourceSha256": "166a0522ec4fef3f79840222ea4053bc95741d116cfd2d47a1b1b98bd47774c5",
       "mapping": {
         "logicalDrawRect": [
@@ -19161,20 +19154,13 @@
         "originalLogicalCanvas": [
           279,
           83
-        ],
-        "pixelPerLogical": [
-          3.6129032258064515,
-          3.602409638554217
-        ],
-        "sourceFrameOrigin": [
-          0,
-          0
         ]
-      }
+      },
+      "fixReason": "两种状态共用普通图的画布、木牌、绳子与alpha；悬停只改右侧文字填色，不移动图像、不改变命中区域。"
     },
     {
       "original": "assets/runtime/reanim/SelectorScreen_WoodSign3_press.png",
-      "file": "images/781ca9d260b2a6bf915d2b6c.png",
+      "file": "images/912cb80a58e811fd7343644b.png",
       "logicalSize": [
         279,
         83
@@ -19183,8 +19169,8 @@
         558,
         166
       ],
-      "source": "assets/source-art/replanted/reanim-source-round11/SelectorScreen_WoodSign3_press--native-english.png",
-      "sourceSha256": "7ddbaf71403b8da15a5e84ebd0ed93d7a0ae315842be91ad50f4ce3f8b99ec53",
+      "source": "assets/source-art/replanted/ui-source-round22/SelectorScreen_WoodSign3_press--shared.png",
+      "sourceSha256": "304851f7d5ad635d720300d779c4a57157878009e520708ae1c1af085186fdd7",
       "mapping": {
         "logicalDrawRect": [
           0,
@@ -19195,16 +19181,9 @@
         "originalLogicalCanvas": [
           279,
           83
-        ],
-        "pixelPerLogical": [
-          3.609318996415771,
-          3.602409638554217
-        ],
-        "sourceFrameOrigin": [
-          0,
-          0
         ]
-      }
+      },
+      "fixReason": "两种状态共用普通图的画布、木牌、绳子与alpha；悬停只改右侧文字填色，不移动图像、不改变命中区域。"
     },
     {
       "original": "assets/runtime/reanim/SlotMachine_ball.png",

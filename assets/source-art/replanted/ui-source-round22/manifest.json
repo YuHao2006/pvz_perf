@@ -1,0 +1,373 @@
+{
+  "items": [
+    {
+      "id": "round22:f06bf9acc8a79075ef",
+      "canonicalResourceId": "ui:assets/runtime/reanim/SelectorScreen_WoodSign3.png",
+      "original": "assets/runtime/reanim/SelectorScreen_WoodSign3.png",
+      "hd": "assets/source-art/replanted/ui-source-round22/SelectorScreen_WoodSign3--shared.png",
+      "category": "reanim",
+      "groups": [
+        "SelectorScreen"
+      ],
+      "source": {
+        "atlas": "SPR_MainMenu_Button_Zombatar",
+        "region": "shared normal silhouette / green letter fill"
+      },
+      "alternatives": [],
+      "processingFlags": [
+        "两种状态共用普通图的画布、木牌、绳子与alpha；悬停只改右侧文字填色，不移动图像、不改变命中区域。"
+      ],
+      "processing": [
+        {
+          "file": "assets/source-art/replanted/ui-source-round22/SelectorScreen_WoodSign3--shared.png",
+          "sourceFile": "assets/source-art/replanted/ui-source-round22/SelectorScreen_WoodSign3--shared.png",
+          "size": [
+            1008,
+            299
+          ],
+          "logicalCanvas": [
+            279,
+            83
+          ],
+          "logicalDrawRect": [
+            0,
+            0,
+            279,
+            83
+          ],
+          "sha256": "166a0522ec4fef3f79840222ea4053bc95741d116cfd2d47a1b1b98bd47774c5"
+        }
+      ],
+      "cropAssessment": {
+        "action": "alignment",
+        "title": "离线合成与配准",
+        "reason": "两种状态共用普通图的画布、木牌、绳子与alpha；悬停只改右侧文字填色，不移动图像、不改变命中区域。",
+        "needsCrop": false
+      },
+      "runtimeApprovedByRequest": true
+    },
+    {
+      "id": "round22:f71daea41669ab36af",
+      "canonicalResourceId": "ui:assets/runtime/reanim/SelectorScreen_WoodSign3_press.png",
+      "original": "assets/runtime/reanim/SelectorScreen_WoodSign3_press.png",
+      "hd": "assets/source-art/replanted/ui-source-round22/SelectorScreen_WoodSign3_press--shared.png",
+      "category": "reanim",
+      "groups": [
+        "SelectorScreen"
+      ],
+      "source": {
+        "atlas": "SPR_MainMenu_Button_Zombatar",
+        "region": "shared normal silhouette / green letter fill"
+      },
+      "alternatives": [],
+      "processingFlags": [
+        "两种状态共用普通图的画布、木牌、绳子与alpha；悬停只改右侧文字填色，不移动图像、不改变命中区域。"
+      ],
+      "processing": [
+        {
+          "file": "assets/source-art/replanted/ui-source-round22/SelectorScreen_WoodSign3_press--shared.png",
+          "sourceFile": "assets/source-art/replanted/ui-source-round22/SelectorScreen_WoodSign3_press--shared.png",
+          "size": [
+            1008,
+            299
+          ],
+          "logicalCanvas": [
+            279,
+            83
+          ],
+          "logicalDrawRect": [
+            0,
+            0,
+            279,
+            83
+          ],
+          "sha256": "304851f7d5ad635d720300d779c4a57157878009e520708ae1c1af085186fdd7"
+        }
+      ],
+      "cropAssessment": {
+        "action": "alignment",
+        "title": "离线合成与配准",
+        "reason": "两种状态共用普通图的画布、木牌、绳子与alpha；悬停只改右侧文字填色，不移动图像、不改变命中区域。",
+        "needsCrop": false
+      },
+      "runtimeApprovedByRequest": true
+    },
+    {
+      "id": "round22:de0b5211ce374bd1ac",
+      "canonicalResourceId": "ui:assets/runtime/reanim/SelectorScreen_BG_Center.png",
+      "original": "assets/runtime/reanim/SelectorScreen_BG_Center.png",
+      "hd": "assets/source-art/replanted/ui-source-round22/SelectorScreen_BG_Center--replanted-native.png",
+      "category": "reanim",
+      "groups": [
+        "SelectorScreen"
+      ],
+      "source": {
+        "atlas": "SPR_MainMenu_HorizonExtended.png",
+        "region": "HorizonExtended crop",
+        "crop": [
+          440,
+          0,
+          3320,
+          1400
+        ]
+      },
+      "alternatives": [],
+      "processingFlags": [
+        "采用重植版全景现有等比裁切，2880×1400源像素对应720×350逻辑画布，不拉伸。与原版邻屋／栅栏构图有差异，墓碑仍沿用本项目修复素材。"
+      ],
+      "processing": [
+        {
+          "file": "assets/source-art/replanted/ui-source-round22/SelectorScreen_BG_Center--replanted-native.png",
+          "sourceFile": "assets/source-art/replanted/ui-source-round22/SelectorScreen_BG_Center--replanted-native.png",
+          "size": [
+            2880,
+            1400
+          ],
+          "logicalCanvas": [
+            720,
+            350
+          ],
+          "logicalDrawRect": [
+            0,
+            0,
+            720,
+            350
+          ],
+          "sha256": "862516ec390e162cf0d090496eb1871d257ad92944627eba6279b413b743f76e"
+        }
+      ],
+      "cropAssessment": {
+        "action": "alignment",
+        "title": "离线合成与配准",
+        "reason": "采用重植版全景现有等比裁切，2880×1400源像素对应720×350逻辑画布，不拉伸。与原版邻屋／栅栏构图有差异，墓碑仍沿用本项目修复素材。",
+        "needsCrop": false
+      },
+      "runtimeApprovedByRequest": true
+    },
+    {
+      "id": "round22:7427d626419f6043ed",
+      "canonicalResourceId": "ui:assets/runtime/images/Sunflower_trophy.png",
+      "original": "assets/runtime/images/Sunflower_trophy.png",
+      "hd": "assets/source-art/replanted/ui-source-round22/Sunflower_trophy--silver-gold-sheet.png",
+      "category": "ui",
+      "groups": [
+        "主菜单UI"
+      ],
+      "source": {
+        "atlas": "coinsprites",
+        "region": "SPR_MainMenu_Button_AchievementTrophy_Silver + Gold"
+      },
+      "alternatives": [],
+      "processingFlags": [
+        "补齐银／金两格，顺序与原版一致；包含光晕，原生Sprite单独保留。组合母版按旧图可见区域等比配准，游戏运行版本再缩到2倍。"
+      ],
+      "processing": [
+        {
+          "file": "assets/source-art/replanted/ui-source-round22/Sunflower_trophy--silver-gold-sheet.png",
+          "sourceFile": "assets/source-art/replanted/ui-source-round22/Sunflower_trophy--silver-gold-sheet.png",
+          "size": [
+            1256,
+            1076
+          ],
+          "logicalCanvas": [
+            314,
+            269
+          ],
+          "logicalDrawRect": [
+            0,
+            0,
+            314,
+            269
+          ],
+          "sha256": "46edc5b837c5fb6bd4dd1e388649a246ef89b94adbc9ad08d5a1e6a5aea3d27d"
+        }
+      ],
+      "cropAssessment": {
+        "action": "alignment",
+        "title": "离线合成与配准",
+        "reason": "补齐银／金两格，顺序与原版一致；包含光晕，原生Sprite单独保留。组合母版按旧图可见区域等比配准，游戏运行版本再缩到2倍。",
+        "needsCrop": false
+      }
+    },
+    {
+      "id": "round22:4577f3f11eeb296507",
+      "canonicalResourceId": "ui:assets/runtime/images/CarKeys.png",
+      "original": "assets/runtime/images/CarKeys.png",
+      "hd": "assets/source-art/replanted/ui-source-round22/CarKeys--native.png",
+      "category": "ui",
+      "groups": [
+        "主菜单UI"
+      ],
+      "source": {
+        "atlas": "defaultlocalgroup_assets_coinsprites_1567b864fe644461aad8d5ae5eaa9c05.bundle",
+        "region": "SPR_CarKeys"
+      },
+      "alternatives": [],
+      "processingFlags": [
+        "使用重植版原生Sprite，保留原始像素，按原版可见轮廓居中等比配准。"
+      ],
+      "processing": [
+        {
+          "file": "assets/source-art/replanted/ui-source-round22/CarKeys--native.png",
+          "sourceFile": "assets/source-art/replanted/ui-source-round22/CarKeys--native.png",
+          "size": [
+            500,
+            484
+          ],
+          "logicalCanvas": [
+            80,
+            80
+          ],
+          "logicalDrawRect": [
+            6.1468885397712825,
+            7.278188106498604,
+            70.70622292045744,
+            68.44362378700279
+          ],
+          "sha256": "2d439e01de330d580f4671535e0f965703ad188b2360184b7fa6ca652c4a384d"
+        }
+      ],
+      "cropAssessment": {
+        "action": "alignment",
+        "title": "离线合成与配准",
+        "reason": "使用重植版原生Sprite，保留原始像素，按原版可见轮廓居中等比配准。",
+        "needsCrop": false
+      }
+    },
+    {
+      "id": "round22:211bf875a646ac7677",
+      "canonicalResourceId": "ui:assets/runtime/images/Almanac.png",
+      "original": "assets/runtime/images/Almanac.png",
+      "hd": "assets/source-art/replanted/ui-source-round22/Almanac--native.png",
+      "category": "ui",
+      "groups": [
+        "主菜单UI"
+      ],
+      "source": {
+        "atlas": "defaultlocalgroup_assets_coinsprites_1567b864fe644461aad8d5ae5eaa9c05.bundle",
+        "region": "SPR_Almanac"
+      },
+      "alternatives": [],
+      "processingFlags": [
+        "使用重植版原生Sprite，保留原始像素，按原版可见轮廓居中等比配准。"
+      ],
+      "processing": [
+        {
+          "file": "assets/source-art/replanted/ui-source-round22/Almanac--native.png",
+          "sourceFile": "assets/source-art/replanted/ui-source-round22/Almanac--native.png",
+          "size": [
+            500,
+            528
+          ],
+          "logicalCanvas": [
+            80,
+            80
+          ],
+          "logicalDrawRect": [
+            4.176164050536045,
+            4.5395397243645945,
+            68.92336536036939,
+            72.78307382055007
+          ],
+          "sha256": "f3d26b38ceb176d39ecd9833b7ec2296ceac1dc328d7e349089331e82e9f0cf7"
+        }
+      ],
+      "cropAssessment": {
+        "action": "alignment",
+        "title": "离线合成与配准",
+        "reason": "使用重植版原生Sprite，保留原始像素，按原版可见轮廓居中等比配准。",
+        "needsCrop": false
+      }
+    },
+    {
+      "id": "round22:aa513d4fad8f3849b4",
+      "canonicalResourceId": "ui:assets/runtime/images/SelectorScreen_Almanac.png",
+      "original": "assets/runtime/images/SelectorScreen_Almanac.png",
+      "hd": "assets/source-art/replanted/ui-source-round22/SelectorScreen_Almanac--english.png",
+      "category": "ui",
+      "groups": [
+        "主菜单UI"
+      ],
+      "source": {
+        "atlas": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+        "region": "SPR_MainMenu_Button_Almanac + SPR_Almanac English ink"
+      },
+      "alternatives": [],
+      "processingFlags": [
+        "主菜单书本原生底图没有文字；从重植版奖励书提取现成英文墨迹，按封面平面离线合成，不使用低清文字。普通／高亮采用同一文字层。"
+      ],
+      "processing": [
+        {
+          "file": "assets/source-art/replanted/ui-source-round22/SelectorScreen_Almanac--english.png",
+          "sourceFile": "assets/source-art/replanted/ui-source-round22/SelectorScreen_Almanac--english.png",
+          "size": [
+            496,
+            425
+          ],
+          "logicalCanvas": [
+            99,
+            99
+          ],
+          "logicalDrawRect": [
+            0,
+            0,
+            99,
+            99
+          ],
+          "sha256": "98c820db89aa3d3d7fdd9e6fd5f5e11d597ea6d64c4e1e958b666e3706be28ea"
+        }
+      ],
+      "cropAssessment": {
+        "action": "alignment",
+        "title": "离线合成与配准",
+        "reason": "主菜单书本原生底图没有文字；从重植版奖励书提取现成英文墨迹，按封面平面离线合成，不使用低清文字。普通／高亮采用同一文字层。",
+        "needsCrop": false
+      }
+    },
+    {
+      "id": "round22:31c7616828f965c7e5",
+      "canonicalResourceId": "ui:assets/runtime/images/SelectorScreen_AlmanacHighlight.png",
+      "original": "assets/runtime/images/SelectorScreen_AlmanacHighlight.png",
+      "hd": "assets/source-art/replanted/ui-source-round22/SelectorScreen_AlmanacHighlight--english.png",
+      "category": "ui",
+      "groups": [
+        "主菜单UI"
+      ],
+      "source": {
+        "atlas": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+        "region": "SPR_MainMenu_Button_Almanac_Over + SPR_Almanac English ink"
+      },
+      "alternatives": [],
+      "processingFlags": [
+        "主菜单书本原生底图没有文字；从重植版奖励书提取现成英文墨迹，按封面平面离线合成，不使用低清文字。普通／高亮采用同一文字层。"
+      ],
+      "processing": [
+        {
+          "file": "assets/source-art/replanted/ui-source-round22/SelectorScreen_AlmanacHighlight--english.png",
+          "sourceFile": "assets/source-art/replanted/ui-source-round22/SelectorScreen_AlmanacHighlight--english.png",
+          "size": [
+            496,
+            425
+          ],
+          "logicalCanvas": [
+            99,
+            99
+          ],
+          "logicalDrawRect": [
+            0,
+            0,
+            99,
+            99
+          ],
+          "sha256": "edef413c8a05836e5ba5b8192db6d8a432cefb2bb53e1d2be2747c7f46f9be3a"
+        }
+      ],
+      "cropAssessment": {
+        "action": "alignment",
+        "title": "离线合成与配准",
+        "reason": "主菜单书本原生底图没有文字；从重植版奖励书提取现成英文墨迹，按封面平面离线合成，不使用低清文字。普通／高亮采用同一文字层。",
+        "needsCrop": false
+      }
+    }
+  ]
+}

@@ -69,6 +69,7 @@ struct D3d12Texture {
     D3D12_RESOURCE_STATES state = D3D12_RESOURCE_STATE_COMMON;
     DXGI_FORMAT format = DXGI_FORMAT_UNKNOWN;
     int width = 0, height = 0;
+    int drawingWidth=0, drawingHeight=0, pixelScale=1;
     UINT slot = InvalidSlot;
     UINT staticSlot = InvalidSlot;
     UINT rtv = InvalidSlot;
@@ -469,8 +470,8 @@ struct D3d12Renderer::Impl {
         Dimensions(w, h);
         if (inFlight) Begin();
         auto image = std::make_unique<D3d12Texture>();
-        image->width = w;
-        image->height = h;
+        image->width = image->drawingWidth = w;
+        image->height = image->drawingHeight = h;
         image->format = format;
         image->clearColor = clearColor;
         image->generated = format == DXGI_FORMAT_R16G16B16A16_FLOAT;
@@ -829,8 +830,8 @@ struct D3d12Renderer::Impl {
             hasConstants = false;
         }
         const std::array<UINT, 4> constants{
-            std::bit_cast<UINT>(float(target->width)),
-            std::bit_cast<UINT>(float(target->height)),
+            std::bit_cast<UINT>(float(target->drawingWidth)),
+            std::bit_cast<UINT>(float(target->drawingHeight)),
             target->generated ? 1u : 0u, run.coverage ? 1u : 0u};
         if (!hasConstants || boundConstants != constants) {
             commands->SetGraphicsRoot32BitConstants(0, 4, constants.data(), 0);
@@ -924,14 +925,16 @@ struct D3d12Renderer::Impl {
             throw std::invalid_argument("Invalid D3D12 triangle list/blend");
         if (input.empty()) return;
         auto* target = Output();
-        D3D12_RECT scissor{0, 0, target->width, target->height};
+        D3D12_RECT scissor{0, 0, target->drawingWidth, target->drawingHeight};
         if (clip) {
-            scissor.left = LONG(std::clamp<int64_t>(clip->x, 0, target->width));
-            scissor.top = LONG(std::clamp<int64_t>(clip->y, 0, target->height));
-            scissor.right = LONG(std::clamp<int64_t>(int64_t(clip->x) + clip->width, 0, target->width));
-            scissor.bottom = LONG(std::clamp<int64_t>(int64_t(clip->y) + clip->height, 0, target->height));
+            scissor.left = LONG(std::clamp<int64_t>(clip->x, 0, target->drawingWidth));
+            scissor.top = LONG(std::clamp<int64_t>(clip->y, 0, target->drawingHeight));
+            scissor.right = LONG(std::clamp<int64_t>(int64_t(clip->x) + clip->width, 0, target->drawingWidth));
+            scissor.bottom = LONG(std::clamp<int64_t>(int64_t(clip->y) + clip->height, 0, target->drawingHeight));
         }
         if (scissor.right <= scissor.left || scissor.bottom <= scissor.top) return;
+                scissor.left*=target->pixelScale; scissor.top*=target->pixelScale;
+        scissor.right*=target->pixelScale; scissor.bottom*=target->pixelScale;
         constexpr UINT valid = 0xfc000fffu;
         constexpr UINT keep = GpuVertex::kIndependentColorFilter |
             GpuVertex::kColorFilterMask | GpuVertex::kAlphaEdgeFilter;
@@ -1328,9 +1331,13 @@ D3d12Texture* D3d12Renderer::CreateCoverageMask(int width, int height,
     s.Upload(texture, coverage.data(), rowPitch, 1);
     return texture;
 }
-D3d12Texture* D3d12Renderer::CreateRenderImage(int width, int height) {
+D3d12Texture* D3d12Renderer::CreateRenderImage(int width, int height, int pixelScale) {
+    if(pixelScale<1 || pixelScale>2 || width<=0 || height<=0 ||
+        unsigned(width)>MaxImageDimension2D()/pixelScale || unsigned(height)>MaxImageDimension2D()/pixelScale)
+        throw std::invalid_argument("Invalid render image pixel scale or dimensions");
+
     auto& s = *impl_;
-    auto* texture = s.Own(s.Image(width, height, DXGI_FORMAT_R16G16B16A16_FLOAT,
+    auto* texture = s.Own(s.Image(width*pixelScale, height*pixelScale, DXGI_FORMAT_R16G16B16A16_FLOAT,
         true, true, true), true);
     s.Begin();
     s.Flush();
@@ -1338,6 +1345,7 @@ D3d12Texture* D3d12Renderer::CreateRenderImage(int width, int height) {
     static constexpr float clear[]{0, 0, 0, 0};
     s.commands->ClearRenderTargetView(s.Rtv(texture->rtv), clear, 0, nullptr);
     s.Transition(texture, SampleState);
+    texture->drawingWidth=width; texture->drawingHeight=height; texture->pixelScale=pixelScale;
     return texture;
 }
 void D3d12Renderer::SetRenderImage(D3d12Texture* image) {
@@ -1356,6 +1364,14 @@ void D3d12Renderer::SetRenderImage(D3d12Texture* image) {
     s.renderImage = image;
     s.InvalidateDrawState();
     if (s.sceneOpen && image) s.Snapshot(image);
+}
+D3d12Texture* D3d12Renderer::CopyTexture(D3d12Texture* source)
+{
+    if (!source) throw std::invalid_argument("Texture copy requires a source");
+    auto* copy=CopyTextureRegion(source,0,0,source->width,source->height);
+    copy->drawingWidth=source->drawingWidth; copy->drawingHeight=source->drawingHeight;
+    copy->pixelScale=source->pixelScale;
+    return copy;
 }
 D3d12Texture* D3d12Renderer::CopyTextureRegion(D3d12Texture* source,
     int x, int y, int width, int height) {
@@ -1578,7 +1594,7 @@ void D3d12Renderer::SubmitPool(D3d12Texture* texture, const GpuPoolParams& p) {
     s.commands->SetGraphicsRootDescriptorTable(2,
         s.samplerHeap->GetGPUDescriptorHandleForHeapStart());
     const std::array<UINT, 4> scene{
-        std::bit_cast<UINT>(float(target->width)), std::bit_cast<UINT>(float(target->height)),
+        std::bit_cast<UINT>(float(target->drawingWidth)), std::bit_cast<UINT>(float(target->drawingHeight)),
         target->generated ? 1u : 0u, 0u};
     s.commands->SetGraphicsRoot32BitConstants(0, 4, scene.data(), 0);
     constexpr UINT filters = GpuVertex::kIndependentColorFilter |

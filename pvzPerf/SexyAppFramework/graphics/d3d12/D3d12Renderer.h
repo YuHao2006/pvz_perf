@@ -57,8 +57,9 @@ public:
 
     // GPU-cleared RGBA16F, with premultiplied storage. The handle stays stable
     // when a write snapshots pixels previously sampled in the current frame.
-    D3d12Texture* CreateRenderImage(int width, int height);
+    D3d12Texture* CreateRenderImage(int width, int height, int pixelScale=1);
     void SetRenderImage(D3d12Texture* image);
+    D3d12Texture* CopyTexture(D3d12Texture* source);
     D3d12Texture* CopyTextureRegion(D3d12Texture* source,
         int x, int y, int width, int height);
     D3d12Texture* ProcessImage(D3d12Texture* source, const GpuImageProcessing& processing);

@@ -38,6 +38,13 @@ using OpenGLScaleStep = D3d9ScaleStep;
 namespace {
 using namespace Sexy;
 constexpr int SceneW = 320, SceneH = 280;
+// ReadScenePixels returns one native sample per logical pixel. The 2x GL
+// scene selects its lower/right sample; D3D9 still renders at logical size.
+#if defined(PVZ_TEST_D3D9)
+constexpr double SceneSampleCenter = 0.5;
+#else
+constexpr double SceneSampleCenter = 0.75;
+#endif
 void Require(bool value, const char* message)
 {
     if (!value) throw std::runtime_error(message);
@@ -171,6 +178,37 @@ void CompileShaders()
     }
 }
 #endif
+void HighResolutionCachedTarget(OpenGLRenderer& r)
+{
+    auto* target=r.CreateRenderImage(4,3,2);
+    r.SetRenderImage(target);
+    Require(r.BeginScene(),"Begin HD cached target");
+    auto red=Quad(r.whiteTexture,0,0,4,3);
+    for(auto& v:red) {v.g=0;v.b=0;}
+    Draw(r,r.whiteTexture,red);
+    auto blue=Quad(r.whiteTexture,0,0,4,3);
+    for(auto& v:blue) {v.r=0;v.g=0;}
+    const GpuClip clip{1,1,2,1};
+    r.SubmitTriangles(blue,r.whiteTexture,false,false,GpuBlend::Opaque,&clip);
+    r.SetRenderImage(nullptr);
+    const auto before=r.ReadTexturePixels(target);
+    Require(before.width==8 && before.height==6,"HD cache dimensions");
+    for(int y=0;y<6;++y)for(int x=0;x<8;++x)
+        Pixel(before.pixels,8,x,y,x>=2 && x<6 && y>=2 && y<4 ? 0xff0000ffu : 0xffff0000u);
+    auto* copy=r.CopyTexture(target);
+    r.SetRenderImage(copy);
+    Require(r.BeginScene(),"Begin HD cloned target");
+    auto green=Quad(r.whiteTexture,0,0,1,1);
+    for(auto& v:green) {v.r=0;v.b=0;}
+    Draw(r,r.whiteTexture,green);
+    r.SetRenderImage(nullptr);
+    const auto after=r.ReadTexturePixels(copy);
+    Require(after.width==8 && after.height==6,"HD clone dimensions");
+    for(int y=0;y<6;++y)for(int x=0;x<8;++x)
+        Pixel(after.pixels,8,x,y,x<2 && y<2 ? 0xff00ff00u : before.pixels[y*8+x]);
+    Require(r.ReadTexturePixels(target).pixels==before.pixels,"HD clone changed its source");
+    r.DestroyTexture(copy);r.DestroyTexture(target);
+}
 void IndependentTextureSampling(OpenGLRenderer& r)
 {
     // Mixed independent images exercise every logical slot in one submission.
@@ -208,8 +246,8 @@ void IndependentTextureSampling(OpenGLRenderer& r)
     for (int i=0; i<24; ++i) Pixel(pixels,SceneW,i*2,0,0xff000000u|(i+1)*0x050307u);
     for (int image=0; image<2; ++image) for (int mode=0; mode<4; ++mode)
         for (int y=0; y<48; ++y) for (int x=0; x<64; ++x) {
-            const double u = -1.25+(x+0.5)*3.5/64;
-            const double v = -0.75+(y+0.5)*2.5/48;
+            const double u = -1.25+(x+SceneSampleCenter)*3.5/64;
+            const double v = -0.75+(y+SceneSampleCenter)*2.5/48;
             Pixel(pixels,SceneW,mode*64+x,8+image*64+y,
                 Sample(image?large:small,image?79:3,image?67:5,u,v,mode&1,mode&2),1);
         }
@@ -384,7 +422,7 @@ void PrecompiledAtlasRegions(OpenGLRenderer& r)
         for(int y=0;y<48;++y)for(int x=0;x<64;++x)
             Pixel(sampled,SceneW,int(sampler)*64+x,y,
                 Sample(atlas.pixels,PrecompiledAtlas::Width,PrecompiledAtlas::Height,
-                    -1.25+(x+0.5)*3.5/64,-0.75+(y+0.5)*2.5/48,
+                    -1.25+(x+SceneSampleCenter)*3.5/64,-0.75+(y+SceneSampleCenter)*2.5/48,
                     (sampler&1U)!=0,(sampler&2U)!=0),1);
     auto* second=r.CreateTexture(PrecompiledAtlas::Width,PrecompiledAtlas::Height,
         atlas.pixels.data(),PrecompiledAtlas::Width*4);
@@ -405,7 +443,7 @@ void PrecompiledAtlasRegions(OpenGLRenderer& r)
         for(size_t region=0;region<PrecompiledAtlas::Regions.size();++region) {
             const auto& rect=PrecompiledAtlas::Regions[region];
             Pixel(result,SceneW,int(group*80+region*16),0,
-                Sample(atlas.regions[region],rect.width,rect.height,0.5/8,0.5/8,false,false));
+                Sample(atlas.regions[region],rect.width,rect.height,SceneSampleCenter/8,SceneSampleCenter/8,false,false));
         }
     for(auto* image:standalone)r.DestroyTexture(image);
     Require(r.GetResourceCounts().textures==initial,
@@ -814,7 +852,7 @@ void IndependentTextureFormats(OpenGLRenderer& r)
     const auto result=r.ReadScenePixels();
     for(int group=0;group<3;++group) {
         Pixel(result,SceneW,group*64,0,
-            Sample(largePixels,257,8,0.5/16.0,0.5/8.0,false,false));
+            Sample(largePixels,257,8,SceneSampleCenter/16.0,SceneSampleCenter/8.0,false,false));
         Pixel(result,SceneW,group*64+16,0,0);
         Pixel(result,SceneW,group*64+32,0,mutablePixels[0]);
         Pixel(result,SceneW,group*64+48,0,mutablePixels[0]);
@@ -1425,6 +1463,7 @@ int main(int argc, char** argv)
             IndexedQuadChecks(context,shaderDirectory);
         });
 #endif
+        rendererTest("HD-cache-logical-clip-independent-writable-copy",HighResolutionCachedTarget);
         rendererTest("production-pool-gpu-direct-UV",[](OpenGLRenderer& renderer) {
             PoolGpuChecks::Run(renderer);
         });

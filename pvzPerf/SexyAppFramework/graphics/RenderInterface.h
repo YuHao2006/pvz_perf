@@ -87,7 +87,7 @@ public:
 	bool					PreDraw();
     void ResizeScene(int width, int height);
 	[[nodiscard("caller owns the returned Image")]]
-	Image* CreateRenderImage(int width, int height);
+	Image* CreateRenderImage(int width, int height, int pixelScale=1);
 	[[nodiscard("assign the returned GPU pointer to the shared atlas binding")]]
 	GpuTexture* UploadAtlasTexture(ImageLib::Image*& decoded);
 	void FreeAtlasTextures();

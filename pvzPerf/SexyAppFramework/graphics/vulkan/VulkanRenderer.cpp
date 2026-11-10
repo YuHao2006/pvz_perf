@@ -44,6 +44,7 @@ unsigned int VulkanRenderer::benchmarkTriangles = 0, VulkanRenderer::benchmarkSc
 namespace {
 // Each frame slot owns one fixed geometry allocation; capacity exhaustion is an error.
 constexpr unsigned int kFrameVertexCapacity = 65536;
+constexpr int kScenePixelScale = 2;
 constexpr VkDeviceSize kFrameVertexBytes = VkDeviceSize{kFrameVertexCapacity} * sizeof(VulkanVertex);
 #if defined(PVZ_VULKAN_SPRITE_EXPERIMENT)
 struct PackedColorVertex {
@@ -270,6 +271,7 @@ struct VulkanTexture {
     uint32_t slot = UINT32_MAX;
     VulkanTexture** slotOwner = nullptr;
     int width = 0, height = 0;
+    int drawingWidth=0, drawingHeight=0, pixelScale=1;
     VkFormat format = VK_FORMAT_B8G8R8A8_UNORM;
     uint32_t texelBytes = 4;
     // Sampled-descriptor layout: GENERAL for compute-written images (caustics),
@@ -807,8 +809,8 @@ struct VulkanRenderer::Impl {
         VkImageLayout sampledLayout=VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
         uint32_t staticSlot=0xFFFFFFFFu, bool registerSlot=true) {
         auto image = std::make_unique<VulkanTexture>();
-        image->width = w;
-        image->height = h;
+        image->width = image->drawingWidth = w;
+        image->height = image->drawingHeight = h;
         image->opaque = opaque;
         image->format = format;
         image->texelBytes = format==VK_FORMAT_R8_UNORM?1:
@@ -1323,7 +1325,7 @@ void VulkanRenderer::Impl::Initialize(const std::string& vsPath, const std::stri
     VK_REQUIRE(vkAllocateCommandBuffers(device, &command, &imageCommand));
     VK_REQUIRE(vkCreateFence(device, &fence, nullptr, &imageFence));
 
-    scene = Image(width, height, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT |
+    scene = Image(width*kScenePixelScale, height*kScenePixelScale, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT |
         VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, false);
     VkAttachmentDescription attachment{};
     attachment.format = VK_FORMAT_B8G8R8A8_UNORM;
@@ -1351,8 +1353,8 @@ void VulkanRenderer::Impl::Initialize(const std::string& vsPath, const std::stri
     fb.renderPass = scenePass;
     fb.attachmentCount = 1;
     fb.pAttachments = &scene->view;
-    fb.width = width;
-    fb.height = height;
+    fb.width = scene->width;
+    fb.height = scene->height;
     fb.layers = 1;
     VK_REQUIRE(vkCreateFramebuffer(device, &fb, nullptr, &sceneFramebuffer));
     for (unsigned i = 0; i < pipelines.size(); ++i) pipelines[i] = Pipeline(scenePass, static_cast<VulkanBlend>(i));
@@ -1766,9 +1768,13 @@ VulkanTexture* VulkanRenderer::ConvertBenchmarkTexture(VulkanTexture* source,VkF
 }
 #endif
 
-VulkanTexture* VulkanRenderer::CreateRenderImage(int width, int height) {
+VulkanTexture* VulkanRenderer::CreateRenderImage(int width, int height, int pixelScale) {
+    if(pixelScale<1 || pixelScale>2 || width<=0 || height<=0 ||
+        unsigned(width)>MaxImageDimension2D()/pixelScale || unsigned(height)>MaxImageDimension2D()/pixelScale)
+        throw std::invalid_argument("Invalid render image pixel scale or dimensions");
+
     auto& s = *impl_;
-    auto image = s.RenderImage(width, height);
+    auto image = s.RenderImage(width*pixelScale, height*pixelScale);
     // A separate synchronous transfer touches only this new allocation. It never
     // submits the open parent frame or rewinds its mapped vertex streams.
     const auto cmd = s.BeginTransfer();
@@ -1785,6 +1791,7 @@ VulkanTexture* VulkanRenderer::CreateRenderImage(int width, int height) {
     image->uploaded = true;
     auto* handle = image.get();
     s.textures.emplace(handle, std::move(image));
+    handle->drawingWidth=width; handle->drawingHeight=height; handle->pixelScale=pixelScale;
     return handle;
 }
 
@@ -1977,13 +1984,22 @@ void VulkanRenderer::BindStaticTexture(VulkanTexture* texture,uint32_t staticSlo
     s.UpdateImageDescriptor(*texture);
 }
 
+VulkanTexture* VulkanRenderer::CopyTexture(VulkanTexture* source)
+{
+    if (!source) throw std::invalid_argument("Texture copy requires a source");
+    auto* copy=CopyTextureRegion(source,0,0,source->width,source->height);
+    copy->drawingWidth=source->drawingWidth; copy->drawingHeight=source->drawingHeight;
+    copy->pixelScale=source->pixelScale;
+    return copy;
+}
 VulkanTexture* VulkanRenderer::CopyTextureRegion(VulkanTexture* source,int x,int y,int width,int height) {
     auto& s=*impl_;
     if(!s.textures.contains(source) ||
         x<0 || y<0 || width<=0 || height<=0 || x>=source->width || y>=source->height)
         throw std::exception{};
     s.FlushTextureUploads();
-    auto allocated=s.Image(width,height,VK_IMAGE_USAGE_TRANSFER_SRC_BIT |
+    auto allocated=source->framebuffer ? s.RenderImage(width,height) :
+        s.Image(width,height,VK_IMAGE_USAGE_TRANSFER_SRC_BIT |
         VK_IMAGE_USAGE_TRANSFER_DST_BIT,source->opaque,source->format);
     auto* target=allocated.get();
     s.textures.emplace(target,std::move(allocated));
@@ -2568,7 +2584,8 @@ void VulkanRenderer::Impl::AppendRun(DrawStream* stream, VkDeviceSize offset, ui
     if (pendingRun.count != 0 && (aVpChange || aScChange || aPlChange || aDsChange))
         FlushPendingRun(cmd);
     if (aVpChange) {
-        const VkViewport viewport{0,0,static_cast<float>(vw),static_cast<float>(vh),0,1};
+        const int pixelScale=targetPassOpen?(renderImage?renderImage->pixelScale:kScenePixelScale):1;
+        const VkViewport viewport{0,0,static_cast<float>(vw*pixelScale),static_cast<float>(vh*pixelScale),0,1};
         vkCmdSetViewport(cmd,0,1,&viewport);
         const float extent[]={static_cast<float>(vw),static_cast<float>(vh)};
         vkCmdPushConstants(cmd,
@@ -2578,7 +2595,15 @@ void VulkanRenderer::Impl::AppendRun(DrawStream* stream, VkDeviceSize offset, ui
         drawState.width=vw;drawState.height=vh;
     }
     if (aScChange) {
-        vkCmdSetScissor(cmd,0,1,&scissor);
+        auto physicalScissor=scissor;
+        if(targetPassOpen) {
+            const int scale=renderImage?renderImage->pixelScale:kScenePixelScale;
+            physicalScissor.offset.x*=scale;
+            physicalScissor.offset.y*=scale;
+            physicalScissor.extent.width*=scale;
+            physicalScissor.extent.height*=scale;
+        }
+        vkCmdSetScissor(cmd,0,1,&physicalScissor);
         drawState.scissor=scissor;drawState.hasScissor=true;
     }
     if (aPlChange) {
@@ -2737,7 +2762,8 @@ void VulkanRenderer::SubmitTriangles(std::span<const VulkanVertex> vertices, Vul
     auto& s = *impl_;
     auto* output = s.renderImage ? s.renderImage : s.scene.get();
     const auto& pipelines = s.renderImage ? s.imagePipelines : s.pipelines;
-    s.Draw(vertices, texture, pipelines.at(static_cast<size_t>(blend)), clip, output->width, output->height
+    s.Draw(vertices, texture, pipelines.at(static_cast<size_t>(blend)), clip,
+        s.renderImage?output->drawingWidth:s.width,s.renderImage?output->drawingHeight:s.height
     );
 }
 
@@ -2746,7 +2772,7 @@ void VulkanRenderer::SubmitQuads(std::span<const VulkanVertex> vertices,VulkanTe
     (void)linear; (void)wrap;
     auto& s=*impl_;
     s.Draw<true>(vertices,texture,(s.renderImage ? s.imagePipelines : s.pipelines).at(size_t(blend)),
-        clip,(s.renderImage ? s.renderImage->width : s.width),(s.renderImage ? s.renderImage->height : s.height));
+        clip,(s.renderImage ? s.renderImage->drawingWidth : s.width),(s.renderImage ? s.renderImage->drawingHeight : s.height));
 }
 
 #if defined(PVZ_VULKAN_SPRITE_EXPERIMENT)
@@ -2801,8 +2827,11 @@ void VulkanRenderer::SubmitPool(VulkanTexture* texture,const GpuPoolParams& p) {
     auto* output=s.renderImage ? s.renderImage : s.scene.get();
     const auto left=std::max<int64_t>(0,p.clip.x);
     const auto top=std::max<int64_t>(0,p.clip.y);
-    const auto right=std::min<int64_t>(output->width,int64_t(p.clip.x)+p.clip.width);
-    const auto bottom=std::min<int64_t>(output->height,int64_t(p.clip.y)+p.clip.height);
+    const int logicalWidth=s.renderImage?output->drawingWidth:s.width;
+    const int logicalHeight=s.renderImage?output->drawingHeight:s.height;
+    const int pixelScale=s.renderImage?output->pixelScale:kScenePixelScale;
+    const auto right=std::min<int64_t>(logicalWidth,int64_t(p.clip.x)+p.clip.width);
+    const auto bottom=std::min<int64_t>(logicalHeight,int64_t(p.clip.y)+p.clip.height);
     if (right<=left || bottom<=top) return;
     if (texture==s.renderImage) {
         const uint32_t sourceSlot=texture->slot;
@@ -2816,8 +2845,8 @@ void VulkanRenderer::SubmitPool(VulkanTexture* texture,const GpuPoolParams& p) {
     texture->lastDraw=s.frameSerial;
     const auto& pipelines=s.renderImage ? s.poolImagePipelines : s.poolPipelines;
     const VkViewport viewport{0,0,float(output->width),float(output->height),0,1};
-    const VkRect2D scissor{{int32_t(left),int32_t(top)},
-        {uint32_t(right-left),uint32_t(bottom-top)}};
+    const VkRect2D scissor{{int32_t(left*pixelScale),int32_t(top*pixelScale)},
+        {uint32_t((right-left)*pixelScale),uint32_t((bottom-top)*pixelScale)}};
     vkCmdSetViewport(s.frame.cmd,0,1,&viewport);
     vkCmdSetScissor(s.frame.cmd,0,1,&scissor);
     vkCmdBindPipeline(s.frame.cmd,VK_PIPELINE_BIND_POINT_GRAPHICS,pipelines.at(size_t(p.blend)));
@@ -2846,7 +2875,7 @@ void VulkanRenderer::SubmitPool(VulkanTexture* texture,const GpuPoolParams& p) {
         unsigned int slot, sampler;
     };
     static_assert(sizeof(PoolPush)==16);
-    const PoolPush push{{float(output->width),float(output->height)},SlotOf(texture)|p.samplingFlags,p.sampler};
+    const PoolPush push{{float(logicalWidth),float(logicalHeight)},SlotOf(texture)|p.samplingFlags,p.sampler};
     vkCmdPushConstants(s.frame.cmd,s.poolLayout,VK_SHADER_STAGE_VERTEX_BIT,0,sizeof(push),&push);
     vkCmdDrawIndexed(s.frame.cmd,uint32_t(GpuPoolIndices.size()),1,0,0,0);
     // A dedicated layout/vertex format was bound; ordinary draws restore their
@@ -2861,7 +2890,8 @@ void VulkanRenderer::SubmitCoverageTriangles(std::span<const VulkanVertex> verti
         throw std::invalid_argument("Coverage drawing requires a live R8 mask");
     auto* output = s.renderImage ? s.renderImage : s.scene.get();
     const auto& pipelines = s.renderImage ? s.imageCoveragePipelines : s.coveragePipelines;
-    s.Draw(vertices,mask,pipelines.at(static_cast<size_t>(blend)),clip,output->width,output->height
+    s.Draw(vertices,mask,pipelines.at(static_cast<size_t>(blend)),clip,
+        s.renderImage?output->drawingWidth:s.width,s.renderImage?output->drawingHeight:s.height
     );
 }
 
@@ -2957,20 +2987,20 @@ void VulkanRenderer::ResizeScene(int width, int height) {
         throw std::logic_error("Resize the main Vulkan canvas between scenes");
     if (s.width == width && s.height == height) return;
     if (width <= 0 || height <= 0 ||
-        unsigned(width) > MaxImageDimension2D() || unsigned(height) > MaxImageDimension2D())
+        unsigned(width) > MaxImageDimension2D()/kScenePixelScale || unsigned(height) > MaxImageDimension2D()/kScenePixelScale)
         throw std::invalid_argument("Invalid Vulkan canvas size");
     s.FlushTextureUploads();
     if (s.transferOpen) s.FinishTransfer();
     s.CompleteTransfers();
     s.window.WaitForFrame();
-    auto next = s.Image(width, height, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT |
+    auto next = s.Image(width*kScenePixelScale, height*kScenePixelScale, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT |
         VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, false);
     VkFramebufferCreateInfo info{VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO};
     info.renderPass = s.scenePass;
     info.attachmentCount = 1;
     info.pAttachments = &next->view;
-    info.width = unsigned(width);
-    info.height = unsigned(height);
+    info.width = unsigned(next->width);
+    info.height = unsigned(next->height);
     info.layers = 1;
     VkFramebuffer framebuffer = VK_NULL_HANDLE;
     VK_REQUIRE(vkCreateFramebuffer(s.device, &info, nullptr, &framebuffer));
@@ -3008,7 +3038,7 @@ void VulkanRenderer::PrepareScale(bool fullscreen,std::span<const VulkanScaleSte
     std::unique_ptr<Impl::ScaleMode> next;
     if (!steps.empty()) {
         next=std::make_unique<Impl::ScaleMode>();
-        const VulkanScaleImage input{s.scene->image,s.scene->view,VK_FORMAT_B8G8R8A8_UNORM,uint32_t(s.width),uint32_t(s.height)};
+        const VulkanScaleImage input{s.scene->image,s.scene->view,VK_FORMAT_B8G8R8A8_UNORM,uint32_t(s.scene->width),uint32_t(s.scene->height)};
         next->pipeline=std::make_unique<VulkanScalePipeline>(*s.scaleLibrary,input,steps,targetW,targetH);
         const auto output=next->pipeline->output;
         next->sampledOutput=std::make_unique<VulkanTexture>();
@@ -3187,13 +3217,13 @@ std::vector<uint32_t> VulkanRenderer::ReadScenePixels() {
 #endif
     s.window.WaitForFrame();
     Buffer readback;
-    readback.Create(VkDeviceSize(s.width) * s.height * 4, VK_BUFFER_USAGE_TRANSFER_DST_BIT);
+    readback.Create(VkDeviceSize(image->width) * image->height * 4, VK_BUFFER_USAGE_TRANSFER_DST_BIT);
     auto cmd = s.BeginTransfer();
     Barrier(cmd, image->image, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
         VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_ACCESS_SHADER_READ_BIT, VK_ACCESS_TRANSFER_READ_BIT);
     VkBufferImageCopy copy{};
     copy.imageSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
-    copy.imageExtent = {static_cast<uint32_t>(s.width), static_cast<uint32_t>(s.height), 1};
+    copy.imageExtent = {static_cast<uint32_t>(image->width), static_cast<uint32_t>(image->height), 1};
     vkCmdCopyImageToBuffer(cmd, image->image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, readback.buffer, 1, &copy);
     Barrier(cmd, image->image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
         VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_ACCESS_TRANSFER_READ_BIT, VK_ACCESS_SHADER_READ_BIT);
@@ -3201,7 +3231,11 @@ std::vector<uint32_t> VulkanRenderer::ReadScenePixels() {
     s.FinishTransfer();
     s.CompleteTransfers();
     std::vector<uint32_t> pixels(size_t(s.width) * s.height);
-    std::memcpy(pixels.data(), readback.mapped, pixels.size() * 4);
+    const auto* physical=static_cast<const uint32_t*>(readback.mapped);
+    for(int y=0;y<s.height;++y)
+        for(int x=0;x<s.width;++x)
+            pixels[size_t(y)*s.width+x]=physical[size_t((y*2+1)*image->height/(s.height*2))*image->width+
+                (x*2+1)*image->width/(s.width*2)];
     return pixels;
 }
 }

@@ -189,7 +189,7 @@ bool RenderInterface::PreDraw()
 	return true;
 }
 
-Image* RenderInterface::CreateRenderImage(int width, int height)
+Image* RenderInterface::CreateRenderImage(int width, int height, int pixelScale)
 {
 	RequireImageDimensions(mRenderer, width, height);
 	auto* image = new Image(gSexyAppBase);
@@ -202,7 +202,7 @@ Image* RenderInterface::CreateRenderImage(int width, int height)
 	image->mHasAlpha = true;
 	image->mForcedMode = true;
 	image->mRenderTarget = true;
-	image->mTexture = mRenderer->CreateRenderImage(width,height);
+	image->mTexture = mRenderer->CreateRenderImage(width,height,pixelScale);
 	if (!image->mTexture)
 		throw std::runtime_error("Render image allocation returned no GPU texture");
 	mImageSet.insert(image);
@@ -286,10 +286,9 @@ ImagePixels RenderInterface::ReadImagePixels(const Image& image)
 	}
 	auto* texture=CreateImageTexture(const_cast<Image*>(&image));
 	if (!texture) throw std::logic_error("Image has no GPU texture");
-	auto result=mRenderer->ReadTexturePixels(texture);
-	if (result.width!=image.mWidth || result.height!=image.mHeight)
-		throw std::logic_error("GPU readback dimensions disagree with source image");
-	return result;
+	// Image dimensions describe layout; a native texture snapshot describes
+	// physical pixels and can be larger for a high-resolution resource.
+	return mRenderer->ReadTexturePixels(texture);
 }
 
 namespace {
@@ -620,8 +619,9 @@ GpuTexture* RenderInterface::CreateImageTexture(Image *image)
 		throw std::logic_error("Image has no loading payload for GPU upload");
 	image->CommitBits();
 	const auto& decoded=*image->mPendingDecoded;
-	if (decoded.mWidth!=image->mWidth || decoded.mHeight!=image->mHeight)
-		throw std::logic_error("Image loading payload dimensions differ");
+	// The decoded payload is physical pixels; Image dimensions remain logical
+	// game pixels even when a high-resolution replacement is uploaded.
+	RequireImageDimensions(mRenderer,decoded.mWidth,decoded.mHeight);
 	auto* texture=UploadDecodedImage(*mRenderer,decoded,!image->mHasAlpha && !image->mHasTrans);
 	if (!texture)
 		throw std::runtime_error("Image upload returned no GPU texture");
@@ -676,57 +676,15 @@ void RenderInterface::CloneUploadedImage(Image* target,const Image& source)
 	if(!original) throw GpuImageCpuAccess{};
 	if(!target || target->mTexture || target->mRenderOwner)
 		throw GpuImageCpuAccess{};
-	if (source.mRenderTarget)
-	{
-		// A copied font/render image must remain a writable GPU target. Use a
-		// temporary render target rather than a sampled-only texture copy.
-		auto* clone=CreateRenderImage(source.mWidth,source.mHeight);
-		try
-		{
-			{
-				GpuImageDrawScope drawing(*this,clone);
-				GpuImageSamplingScope sampling(*this,0);
-				struct RestoreCopyState
-				{
-					int mode=gGpuCurrentDrawMode;
-					bool linear=gLinearFilter;
-					bool wrap=RenderInterface::sSamplerAddressWrap;
-					~RestoreCopyState()
-					{
-						gGpuCurrentDrawMode=mode;
-						gLinearFilter=linear;
-						RenderInterface::sSamplerAddressWrap=wrap;
-					}
-				} restore;
-				if (!PreDraw()) throw GpuImageCpuAccess{};
-				gGpuCurrentDrawMode=Graphics::DRAWMODE_OPAQUE;
-				gLinearFilter=false;
-				sSamplerAddressWrap=false;
-				// Raw pixel copy: ignore the caller's transform and tint/filter
-				// state while retaining the source/target alpha convention.
-				TextureSource{original,0}.Blt(
-					0,0,TextureRegion{0,0,1,1,source.mWidth,source.mHeight},Color::White);
-			}
-			// Registration may allocate. Publish no ownership until it succeeds.
-			mImageSet.insert(target);
-			target->mTexture=clone->mTexture;
-			target->mRenderTarget=true;
-			target->mRenderOwner=this;
-			clone->mTexture=nullptr;
-			delete clone;
-			return;
-		}
-		catch (...) { delete clone; throw; }
-	}
-	RequireImageDimensions(mRenderer,source.mWidth,source.mHeight);
-	auto* copy=mRenderer->CopyTextureRegion(original,0,0,source.mWidth,source.mHeight);
+
+	auto* copy=mRenderer->CopyTexture(original);
 	if (!copy)
 		throw std::runtime_error("Image copy returned no GPU texture");
 	try
 	{
 	mImageSet.insert(target);
 	target->mTexture=copy;
-	target->mRenderTarget=false;
+	target->mRenderTarget=source.mRenderTarget;
 	target->mRenderOwner=this;
 	}
 	catch (...) { mRenderer->DestroyTexture(copy); throw; }

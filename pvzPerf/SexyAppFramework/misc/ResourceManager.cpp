@@ -101,7 +101,7 @@ bool ResourceManager::DecodeGroup(const unsigned char* bytes,std::size_t size,Lo
         if (!payload) return Fail(ResourceFailure::DescriptorTruncated,record,0,input.pos);
         NumericResourceReader r(payload,length);
         const auto kind=r.U32(),flags=r.U32(),variant=r.U32(),reference=r.U32();
-        if (!r.valid || kind>ResType_Font || flags>16383 ||
+        if (!r.valid || kind>ResType_Font || flags>32767 ||
             (reference!=~0u && (kind!=ResType_Font || reference>=record || !previousFonts[reference])))
             return Fail(ResourceFailure::DescriptorIdentity,record,kind,input.pos-length+r.pos);
         const auto path=r.Path(),alpha=r.Path(),alphaGrid=r.Path(),fontImage=r.Path();
@@ -116,6 +116,13 @@ bool ResourceManager::DecodeGroup(const unsigned char* bytes,std::size_t size,Lo
             image.mAlphaImage=alpha; image.mAlphaGridImage=alphaGrid;
             image.mAutoFindAlpha=(flags&1024)!=0;
             image.mAlphaColor=r.U32();
+            if (flags&16384)
+            {
+                image.mLogicalWidth=r.I32();
+                image.mLogicalHeight=r.I32();
+                if (image.mLogicalWidth<=0 || image.mLogicalHeight<=0)
+                    return Fail(ResourceFailure::DescriptorIdentity,record,flags,input.pos-length+r.pos);
+            }
         }
         else if (kind==ResType_Sound)
         {
@@ -324,6 +331,11 @@ bool ResourceManager::LoadImage(ImageRes& metadata,Image*& target,SharedImageRef
                     throw ResourceManagerException(mError);
                 decoded->CommitBits();
                 TodMarkImageForSanding(decoded);
+                if (metadata.mLogicalWidth)
+                {
+                    decoded->mWidth=metadata.mLogicalWidth;
+                    decoded->mHeight=metadata.mLogicalHeight;
+                }
             },metadata.mAutoFindAlpha && metadata.mAlphaImage.empty() && metadata.mAlphaGridImage.empty());
         if (!image.mImage) return Fail(ResourceFailure::ImageMissing,metadata.mRecord);
         owner=image;

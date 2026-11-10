@@ -10,6 +10,7 @@ struct D3d9Texture {
     DX9::Com<IDirect3DTexture9> image;
     DX9::Com<IDirect3DSurface9> surface;
     int width = 0, height = 0;
+    int drawingWidth=0, drawingHeight=0, pixelScale=1;
     D3DFORMAT format = D3DFMT_UNKNOWN;
     unsigned int slot = ~0U, staticSlot = ~0U, flags = 0;
     bool render = false, caustic = false;
@@ -80,7 +81,7 @@ struct D3d9Renderer::Impl {
     void Submit(std::span<const GpuVertex>, D3d9Texture*, GpuBlend, const GpuClip*, bool);
     void Source(Constants&, const D3d9Texture*, unsigned int sampler = 0) const;
     void SetConstants(const Constants&);
-    void Projection(int, int);
+    void Projection(int, int, int pixelScale=1);
     void Quad(int, int);
     void ImagePass(D3d9Texture*, D3d9Texture*, D3d9Texture*, int,
         const GpuImageProcessing* = nullptr, unsigned int = 0, bool = false);

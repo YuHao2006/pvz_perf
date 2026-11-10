@@ -362,7 +362,7 @@
     },
     {
       "original": "assets/runtime/images/Fertilizer.png",
-      "file": "images/53f0ab9562439c96a68ff770.png",
+      "file": "images/2cc849bcbe40b9bf57b8a8fd.png",
       "logicalSize": [
         80,
         80
@@ -371,26 +371,39 @@
         160,
         160
       ],
-      "source": "assets/source-art/replanted/ui-candidates-round2/Fertilizer--319e07d4df6a7614.png",
-      "sourceSha256": "8626df972294c16ec05b46e37cfefad33179f007b35161d0157a9d046e188f80",
+      "source": "assets/source-art/replanted/hd-followup-20261111/Fertilizer--aligned-4x.png",
+      "sourceSha256": "52d99dd14bd6564b10ae125ff7e0f02c81e859e25d398eef06de3b305101bb4b",
       "mapping": {
-        "pixelPerLogical": [
-          4.2,
-          3.7
-        ],
-        "sourceFrameOrigin": [
-          0.0,
-          0.0
-        ],
         "logicalDrawRect": [
-          0.0,
-          0.0,
-          80.0,
-          80.0
+          0,
+          0,
+          80,
+          80
         ],
         "originalLogicalCanvas": [
           80,
           80
+        ]
+      },
+      "alignmentSource": "assets/source-art/replanted/ui-candidates-round2/Fertilizer--319e07d4df6a7614.png",
+      "alignmentFix": {
+        "reason": "Fit raw native opaque body uniformly inside original visible bounds; preserve authored transparent margins and source aspect ratio.",
+        "uniformScale": 0.7904191616766467,
+        "translationAt4x": [
+          31.209580838323348,
+          55.017964071856284
+        ],
+        "originalBodyBounds": [
+          8,
+          13,
+          74,
+          73
+        ],
+        "newBodyBoundsAt4x": [
+          32,
+          56,
+          296,
+          288
         ]
       }
     },
@@ -464,7 +477,7 @@
     },
     {
       "original": "assets/runtime/images/Phonograph.png",
-      "file": "images/99ef9c2861a2186521902978.png",
+      "file": "images/2c1d0ede433dbc10b81452b7.png",
       "logicalSize": [
         68,
         68
@@ -473,26 +486,39 @@
         136,
         136
       ],
-      "source": "assets/source-art/replanted/native-ui/Phonograph.png",
-      "sourceSha256": "5a8d3f523fb86845755d00ca2aa4a47af0307c55f8a048d1fe6697ecf57f49f3",
+      "source": "assets/source-art/replanted/hd-followup-20261111/Phonograph--aligned-4x.png",
+      "sourceSha256": "7e047a0d2067ce073c391896225ea0ef57437a1336a5524d7a5691f024699330",
       "mapping": {
-        "pixelPerLogical": [
-          3.7205882352941178,
-          5.0588235294117645
-        ],
-        "sourceFrameOrigin": [
-          0.0,
-          0.0
-        ],
         "logicalDrawRect": [
-          0.0,
-          0.0,
-          68.0,
-          68.0
+          0,
+          0,
+          68,
+          68
         ],
         "originalLogicalCanvas": [
           68,
           68
+        ]
+      },
+      "alignmentSource": "assets/source-art/replanted/native-ui/Phonograph.png",
+      "alignmentFix": {
+        "reason": "Fit raw native opaque body uniformly inside original visible bounds; preserve authored transparent margins and source aspect ratio.",
+        "uniformScale": 0.7953216374269005,
+        "translationAt4x": [
+          35.39181286549709,
+          -0.7953216374268948
+        ],
+        "originalBodyBounds": [
+          9,
+          0,
+          59,
+          68
+        ],
+        "newBodyBoundsAt4x": [
+          36,
+          0,
+          236,
+          272
         ]
       }
     },
@@ -1463,7 +1489,7 @@
     },
     {
       "original": "assets/runtime/images/TreeFood.png",
-      "file": "images/d75f6d1f0bd0950bf27d6564.png",
+      "file": "images/4e24b2df1d52a7a98b50daf9.png",
       "logicalSize": [
         80,
         80
@@ -1472,26 +1498,39 @@
         160,
         160
       ],
-      "source": "assets/source-art/replanted/ui-candidates-round2/TreeFood--c98704a12288b3c8.png",
-      "sourceSha256": "a932287d96be93286c42d7ddeb82c339cfd4b2fbe2c50c37e9db88418f250eba",
+      "source": "assets/source-art/replanted/hd-followup-20261111/TreeFood--aligned-4x.png",
+      "sourceSha256": "a79a00abbd9cfe9064f0a8fce1d1d1b9604fe40a3b7befe2afd58d59f40b55ac",
       "mapping": {
-        "pixelPerLogical": [
-          2.7875,
-          2.575
-        ],
-        "sourceFrameOrigin": [
-          0.0,
-          0.0
-        ],
         "logicalDrawRect": [
-          0.0,
-          0.0,
-          80.0,
-          80.0
+          0,
+          0,
+          80,
+          80
         ],
         "originalLogicalCanvas": [
           80,
           80
+        ]
+      },
+      "alignmentSource": "assets/source-art/replanted/ui-candidates-round2/TreeFood--c98704a12288b3c8.png",
+      "alignmentFix": {
+        "reason": "Fit raw native opaque body uniformly inside original visible bounds; preserve authored transparent margins and source aspect ratio.",
+        "uniformScale": 1.2277227722772277,
+        "translationAt4x": [
+          29.108910891089124,
+          45.54455445544555
+        ],
+        "originalBodyBounds": [
+          8,
+          12,
+          75,
+          74
+        ],
+        "newBodyBoundsAt4x": [
+          32,
+          48,
+          299,
+          296
         ]
       }
     },
@@ -1531,7 +1570,7 @@
     },
     {
       "original": "assets/runtime/images/WateringCan.png",
-      "file": "images/534586bfd70fb5d32473d9e0.png",
+      "file": "images/d42bd88ed0b6ae5bbbf66791.png",
       "logicalSize": [
         80,
         80
@@ -1540,32 +1579,45 @@
         160,
         160
       ],
-      "source": "assets/source-art/replanted/ui-candidates-round2/WateringCan--bb9880eae2514d60.png",
-      "sourceSha256": "abf6dfa26ca97c370ae6637e7226c496acf4ed3d205510d711e936586b4d4522",
+      "source": "assets/source-art/replanted/hd-followup-20261111/WateringCan--aligned-4x.png",
+      "sourceSha256": "299c5bc240471cf3fe290337b51fbef4bd7f3f1e6f10e3d5046b2aee815a1684",
       "mapping": {
-        "pixelPerLogical": [
-          6.925,
-          6.8875
-        ],
-        "sourceFrameOrigin": [
-          0.0,
-          0.0
-        ],
         "logicalDrawRect": [
-          0.0,
-          0.0,
-          80.0,
-          80.0
+          0,
+          0,
+          80,
+          80
         ],
         "originalLogicalCanvas": [
           80,
           80
+        ]
+      },
+      "alignmentSource": "assets/source-art/replanted/ui-candidates-round2/WateringCan--bb9880eae2514d60.png",
+      "alignmentFix": {
+        "reason": "Fit raw native opaque body uniformly inside original visible bounds; preserve authored transparent margins and source aspect ratio.",
+        "uniformScale": 0.4852941176470588,
+        "translationAt4x": [
+          15.816176470588232,
+          34.54411764705881
+        ],
+        "originalBodyBounds": [
+          4,
+          9,
+          71,
+          75
+        ],
+        "newBodyBoundsAt4x": [
+          17,
+          36,
+          283,
+          300
         ]
       }
     },
     {
       "original": "assets/runtime/images/WateringCanGold.png",
-      "file": "images/5c569b8590a6e2bda6b99017.png",
+      "file": "images/c41ef308e8e6c38fd5acbf83.png",
       "logicalSize": [
         80,
         80
@@ -1574,32 +1626,45 @@
         160,
         160
       ],
-      "source": "assets/source-art/replanted/ui-candidates-round2/WateringCanGold--b9cad586770d2ff5.png",
-      "sourceSha256": "aac0bcae43042028ff3d392be4f4c261b90a44045e3ec5a61c5ceb0819e8b2f8",
+      "source": "assets/source-art/replanted/hd-followup-20261111/WateringCanGold--aligned-4x.png",
+      "sourceSha256": "bf86806d8506770270d0eb16abf4f2e55e8c647974ef8e4756b47c5dcc08f29e",
       "mapping": {
-        "pixelPerLogical": [
-          2.7625,
-          2.7375
-        ],
-        "sourceFrameOrigin": [
-          0.0,
-          0.0
-        ],
         "logicalDrawRect": [
-          0.0,
-          0.0,
-          80.0,
-          80.0
+          0,
+          0,
+          80,
+          80
         ],
         "originalLogicalCanvas": [
           80,
           80
         ]
+      },
+      "alignmentSource": "assets/source-art/replanted/ui-candidates-round2/WateringCanGold--b9cad586770d2ff5.png",
+      "alignmentFix": {
+        "reason": "Fit raw native opaque body uniformly inside original visible bounds; preserve authored transparent margins and source aspect ratio.",
+        "uniformScale": 1.233644859813084,
+        "translationAt4x": [
+          13.682242990654203,
+          33.532710280373834
+        ],
+        "originalBodyBounds": [
+          4,
+          9,
+          71,
+          75
+        ],
+        "newBodyBoundsAt4x": [
+          16,
+          36,
+          284,
+          300
+        ]
       }
     },
     {
       "original": "assets/runtime/images/Zen_GardenGlove.png",
-      "file": "images/619f1e850da16b49940c90e2.png",
+      "file": "images/64bbd84b1f613a36eb4c9be6.png",
       "logicalSize": [
         80,
         80
@@ -1608,26 +1673,39 @@
         160,
         160
       ],
-      "source": "assets/source-art/replanted/ui-candidates-round2/Zen_GardenGlove--7a1447907732a84f.png",
-      "sourceSha256": "8ed2b77957cb7d0230aef0e84df89222bfe75ccfc66bc61e0b728a85994c7265",
+      "source": "assets/source-art/replanted/hd-followup-20261111/Zen_GardenGlove--aligned-4x.png",
+      "sourceSha256": "ef3fbf88281f25a878d6a4f58529c420f08773a3cba9ded976de2679637a66ca",
       "mapping": {
-        "pixelPerLogical": [
-          2.625,
-          2.7
-        ],
-        "sourceFrameOrigin": [
-          0.0,
-          0.0
-        ],
         "logicalDrawRect": [
-          0.0,
-          0.0,
-          80.0,
-          80.0
+          0,
+          0,
+          80,
+          80
         ],
         "originalLogicalCanvas": [
           80,
           80
+        ]
+      },
+      "alignmentSource": "assets/source-art/replanted/ui-candidates-round2/Zen_GardenGlove--7a1447907732a84f.png",
+      "alignmentFix": {
+        "reason": "Fit raw native opaque body uniformly inside original visible bounds; preserve authored transparent margins and source aspect ratio.",
+        "uniformScale": 1.3009708737864079,
+        "translationAt4x": [
+          25.398058252427177,
+          21.495145631067942
+        ],
+        "originalBodyBounds": [
+          7,
+          6,
+          74,
+          75
+        ],
+        "newBodyBoundsAt4x": [
+          28,
+          25,
+          296,
+          300
         ]
       }
     },
@@ -2143,7 +2221,7 @@
     },
     {
       "original": "assets/runtime/images/bug_spray.png",
-      "file": "images/bf13e34832cc681aee8b73bf.png",
+      "file": "images/251ccc7879f02f289389ef8e.png",
       "logicalSize": [
         72,
         72
@@ -2152,26 +2230,39 @@
         144,
         144
       ],
-      "source": "assets/source-art/replanted/native-ui/bug_spray.png",
-      "sourceSha256": "2c5c1dd5ed603f068ccea5623fbc053741a91e3507863c533ec7886c45526622",
+      "source": "assets/source-art/replanted/hd-followup-20261111/bug_spray--aligned-4x.png",
+      "sourceSha256": "9117efb3570d5ace746c8570d2a1186ac7a7803c662dfc207ba6edc3c50abd8b",
       "mapping": {
-        "pixelPerLogical": [
-          3.1527777777777777,
-          4.736111111111111
-        ],
-        "sourceFrameOrigin": [
-          0.0,
-          0.0
-        ],
         "logicalDrawRect": [
-          0.0,
-          0.0,
-          72.0,
-          72.0
+          0,
+          0,
+          72,
+          72
         ],
         "originalLogicalCanvas": [
           72,
           72
+        ]
+      },
+      "alignmentSource": "assets/source-art/replanted/native-ui/bug_spray.png",
+      "alignmentFix": {
+        "reason": "Fit raw native opaque body uniformly inside original visible bounds; preserve authored transparent margins and source aspect ratio.",
+        "uniformScale": 0.7551622418879056,
+        "translationAt4x": [
+          48.28908554572271,
+          15.244837758112084
+        ],
+        "originalBodyBounds": [
+          12,
+          4,
+          55,
+          68
+        ],
+        "newBodyBoundsAt4x": [
+          49,
+          16,
+          219,
+          272
         ]
       }
     },
@@ -19044,7 +19135,7 @@
     },
     {
       "original": "assets/runtime/reanim/SelectorScreen_WoodSign2.png",
-      "file": "images/9d1bac53b986d7ef887ffbcb.png",
+      "file": "images/358fd4003d9d06ac41ff7538.png",
       "logicalSize": [
         291,
         68
@@ -19053,8 +19144,8 @@
         582,
         136
       ],
-      "source": "assets/source-art/replanted/reanim-source-round11/SelectorScreen_WoodSign2--english-complete.png",
-      "sourceSha256": "60419efc6dfa0f0ab8fe5493468e784f140fc7041530969045aab3101f65e224",
+      "source": "assets/source-art/replanted/hd-followup-20261111/SelectorScreen_WoodSign2--aligned-4x.png",
+      "sourceSha256": "a2b0435a3478187552b16981dd1c15c0686d6db152f2aa24f62795205138183c",
       "mapping": {
         "logicalDrawRect": [
           0,
@@ -19065,20 +19156,26 @@
         "originalLogicalCanvas": [
           291,
           68
-        ],
-        "pixelPerLogical": [
-          3.5807560137457046,
-          3.7794117647058822
-        ],
-        "sourceFrameOrigin": [
-          0,
-          0
         ]
+      },
+      "alignmentSource": "assets/source-art/replanted/reanim-source-round6/SPR_MainMenu_Button_SignIn--d7ffa7f894df.png",
+      "alignmentFix": {
+        "reason": "Share one native wood base, glyph alpha and placement across normal/hover; restore measured original text tilt.",
+        "textAngleDegreesCounterClockwise": 1.2104930089211035,
+        "sharedTextPositionAt4x": [
+          132,
+          68
+        ],
+        "sharedGlyphSizeAt4x": [
+          920,
+          49
+        ],
+        "boardUniformScale": 1.123015873015873
       }
     },
     {
       "original": "assets/runtime/reanim/SelectorScreen_WoodSign2_press.png",
-      "file": "images/b00117bffde72f09db8c184c.png",
+      "file": "images/340a06a3c3aa68bcf337768c.png",
       "logicalSize": [
         291,
         68
@@ -19087,8 +19184,8 @@
         582,
         136
       ],
-      "source": "assets/source-art/replanted/reanim-source-round11/SelectorScreen_WoodSign2_press--english-complete.png",
-      "sourceSha256": "0e6e53726c58e138e06ccbe5a81609f588bbf5a6cf529801ffb738013efc25c4",
+      "source": "assets/source-art/replanted/hd-followup-20261111/SelectorScreen_WoodSign2_press--aligned-4x.png",
+      "sourceSha256": "0999129c32a861852f1aa922b07e666d6a7bbe4deb87472d5f940c8476a7564c",
       "mapping": {
         "logicalDrawRect": [
           0,
@@ -19099,15 +19196,21 @@
         "originalLogicalCanvas": [
           291,
           68
-        ],
-        "pixelPerLogical": [
-          3.5807560137457046,
-          3.7794117647058822
-        ],
-        "sourceFrameOrigin": [
-          0,
-          0
         ]
+      },
+      "alignmentSource": "assets/source-art/replanted/reanim-source-round6/SPR_MainMenu_Button_SignIn--d7ffa7f894df.png",
+      "alignmentFix": {
+        "reason": "Share one native wood base, glyph alpha and placement across normal/hover; restore measured original text tilt.",
+        "textAngleDegreesCounterClockwise": 1.2104930089211035,
+        "sharedTextPositionAt4x": [
+          132,
+          68
+        ],
+        "sharedGlyphSizeAt4x": [
+          920,
+          49
+        ],
+        "boardUniformScale": 1.123015873015873
       }
     },
     {

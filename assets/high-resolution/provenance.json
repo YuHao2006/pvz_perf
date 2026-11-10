@@ -1,6 +1,6 @@
 {
   "format": "pvz-high-resolution-provenance-v1",
-  "reviewSha256": "6660eab0a5ec15e3f126c1b80eaf8c1fc54c9bc397709542661e763f52b280ac",
+  "reviewSha256": "c4d8ca9a91259b06cfb7b2db1fd5496d0d4de69ff39b3798ea43ad06d6ab98f0",
   "images": [
     {
       "original": "assets/runtime/images/Almanac_CloseButton.png",
@@ -48660,6 +48660,90 @@
         ]
       },
       "approvedRound": 23
+    },
+    {
+      "original": "assets/runtime/images/Achievements_pedestal.png",
+      "file": "images/14eda5d2de3bc0013187fba5.png",
+      "logicalSize": [
+        139,
+        165
+      ],
+      "physicalSize": [
+        278,
+        330
+      ],
+      "source": "assets/source-art/replanted/ui-source-round24/Achievements_pedestal--native.png",
+      "sourceSha256": "704ddc95f6f08e9bf4a080d934ed71d85c2f70b278fa30a9bcc4efe580752289",
+      "mapping": {
+        "logicalDrawRect": [
+          0.0,
+          2.7043568464730328,
+          137.28423236514524,
+          160.30705394190872
+        ],
+        "originalLogicalCanvas": [
+          139,
+          165
+        ]
+      },
+      "approvedRound": 24,
+      "runtimeKey": "images/achievements_pedestal"
+    },
+    {
+      "original": "assets/runtime/images/Achievements_pedestal_press.png",
+      "file": "images/39e41e55c336340d662fb1ed.png",
+      "logicalSize": [
+        139,
+        165
+      ],
+      "physicalSize": [
+        278,
+        330
+      ],
+      "source": "assets/source-art/replanted/ui-source-round24/Achievements_pedestal_press--native.png",
+      "sourceSha256": "56b07688479c3d9012daf66adc505065f4267f34f1e9c79d53e6d2bc80762b4a",
+      "mapping": {
+        "logicalDrawRect": [
+          0.0,
+          2.7043568464730328,
+          137.28423236514524,
+          160.30705394190872
+        ],
+        "originalLogicalCanvas": [
+          139,
+          165
+        ]
+      },
+      "approvedRound": 24,
+      "runtimeKey": "images/achievements_pedestal_press"
+    },
+    {
+      "original": "assets/source-art/ai/runtime/images/Challenge_Background.png",
+      "file": "images/d21207ee8a48ae02f0e3cf31.png",
+      "logicalSize": [
+        1400,
+        600
+      ],
+      "physicalSize": [
+        2800,
+        1200
+      ],
+      "source": "assets/source-art/replanted/ui-source-round24/Challenge_Background--sliced-2x.png",
+      "sourceSha256": "d02dfe1f6bb46cd5f1f79b7bf8497aa9d0a059614afd12040db90a9056e37922",
+      "mapping": {
+        "logicalDrawRect": [
+          0,
+          0,
+          1400,
+          600
+        ],
+        "originalLogicalCanvas": [
+          1400,
+          600
+        ]
+      },
+      "approvedRound": 24,
+      "runtimeKey": "images/challenge_background"
     }
   ],
   "skipped": [],

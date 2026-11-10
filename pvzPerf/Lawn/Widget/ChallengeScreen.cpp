@@ -584,20 +584,22 @@ void ChallengeScreen::Draw(Graphics* g)
 	g->mLinearBlend = true;
 	Image* aBackgroundImage = Sexy::IMAGE_CHALLENGE_BACKGROUND;
 	const Rect& aBounds = mApp->mScreenBounds;
-	const int aBorderWidth = 16;
-	const int aPaperWidth = aBounds.mWidth - aBorderWidth * 2;
-	// Keep paper and the title plaque in the original 800-wide world coordinates.
-	// Move only the native stone edge strips as the viewport changes, including odd widths.
-	const int aArtPadding = (aBackgroundImage->mWidth - BOARD_WIDTH) / 2;
-	const int aSourceX = aArtPadding + aBounds.mX + aBorderWidth;
+	// Replanted's Sprite border is (1408,0,1292,0) at native resolution.
+	// The HD source is composed with fixed 391/359 logical-pixel side slices.
+	// Stretch only the middle: frame ends, stone chips and paper edges retain
+	// their proportions. All three challenge pages share these three draws.
+	const int aLeftWidth = 391;
+	const int aRightWidth = 359;
+	const int aMiddleWidth = aBounds.mWidth - aLeftWidth - aRightWidth;
 	Graphics aBackground(*g);
 	aBackground.ClipRect(aBounds);
 	aBackground.DrawImage(aBackgroundImage, aBounds.mX, 0,
-		Rect(0, 0, aBorderWidth, aBackgroundImage->mHeight));
-	aBackground.DrawImage(aBackgroundImage, aBounds.mX + aBorderWidth, 0,
-		Rect(aSourceX, 0, aPaperWidth, aBackgroundImage->mHeight));
-	aBackground.DrawImage(aBackgroundImage, aBounds.mX + aBounds.mWidth - aBorderWidth, 0,
-		Rect(aBackgroundImage->mWidth - aBorderWidth, 0, aBorderWidth, aBackgroundImage->mHeight));
+		Rect(0, 0, aLeftWidth, aBackgroundImage->mHeight));
+	aBackground.DrawImage(aBackgroundImage,
+		Rect(aBounds.mX + aLeftWidth, 0, aMiddleWidth, aBackgroundImage->mHeight),
+		Rect(aLeftWidth, 0, aBackgroundImage->mWidth - aLeftWidth - aRightWidth, aBackgroundImage->mHeight));
+	aBackground.DrawImage(aBackgroundImage, aBounds.mX + aBounds.mWidth - aRightWidth, 0,
+		Rect(aBackgroundImage->mWidth - aRightWidth, 0, aRightWidth, aBackgroundImage->mHeight));
 
 	SexyString aTitleString = 
 		mPageIndex == CHALLENGE_PAGE_SURVIVAL ? gStr.PICK_AREA.c_str() : 

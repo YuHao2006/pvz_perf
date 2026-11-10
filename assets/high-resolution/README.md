@@ -13,4 +13,4 @@
 
 构建工具源码位于独立的 PvzDevTools 仓库 high-resolution 分支；本仓库使用 tools/bin 下的预编译工具。
 
-新配置默认关闭额外的 customScale 超分链。已有设置若启用了固定尺寸的窗口缩放链，需关闭 customScale 才按窗口尺寸显示原生高清画面；显式缩放配置继续保留其固定输出尺寸语义。
+运行时超分辨率入口、状态和配置解析已删除；原 Custom Scale 复选框保留为禁用的占位控件，等待以后改作其他设置。scale.json 仅保留 HDR 配置。窗口客户区高度固定为 1200，只允许横向调整宽度；settings.json 的 windowWidth 记录窗口宽度。旧的 customScale、windowHeight 字段不再使用。

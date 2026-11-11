@@ -346,40 +346,6 @@
       "status": "integrated-for-local-game-inspection"
     },
     {
-      "name": "Challenge_Background",
-      "variant": "clean-v2",
-      "master": "Challenge_Background--clean-v2--ai-stitched-4x.png",
-      "candidate": "Challenge_Background--clean-v2--ai-stitched-2x.png",
-      "tiles": [
-        {
-          "file": "tile-0-0--clean-v2.png",
-          "sha256": "03d36fe6ae2768cc099386dbbc5c208b39e9a1af790b4a1283c86676aa17d489"
-        },
-        {
-          "file": "tile-0-1--clean-v2.png",
-          "sha256": "440d861a1b0322bc9e62e456fa2a21be8e52acff75712d13d884bde0bb15908e"
-        },
-        {
-          "file": "tile-0-2--clean-v2.png",
-          "sha256": "3d582a397f2a1b93f3268f8e4ef2ecad876fe4e2a3c68c90d9022f319955f4fa"
-        },
-        {
-          "file": "tile-1-0--clean-v2.png",
-          "sha256": "6a8357dbfd1a0d7dc0ed83ad154683094bd83aea5d3b475b51c84364473dc669"
-        },
-        {
-          "file": "tile-1-1--clean-v2.png",
-          "sha256": "a7829c050e5aaf797feed049710b10f4ed6429ccd07fdff0c588053481e22856"
-        },
-        {
-          "file": "tile-1-2--clean-v2.png",
-          "sha256": "bbff53599f98e0e00a8432206d506af849a8ae512e07caec9dfef908d1f98dfe"
-        }
-      ],
-      "runtimeIntegrated": true,
-      "status": "integrated-for-local-game-inspection"
-    },
-    {
       "name": "Store_Background",
       "variant": "clean-v2",
       "master": "Store_Background--clean-v2--ai-stitched-4x.png",

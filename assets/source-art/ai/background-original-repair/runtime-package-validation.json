@@ -157,19 +157,6 @@
       "pixelsVerified": true
     },
     {
-      "original": "assets/runtime/images/Challenge_Background.png",
-      "packedLocation": "high-resolution/images/050279ccf588d6dd4dad257b.png",
-      "physicalSize": [
-        2800,
-        1200
-      ],
-      "logicalSize": [
-        1400,
-        600
-      ],
-      "pixelsVerified": true
-    },
-    {
       "original": "assets/runtime/reanim/ZenGarden_fertilizer_bag4.png",
       "packedLocation": "compiled/atlases/appearance_fertilizer.atlas.png",
       "physicalSize": [
@@ -183,7 +170,7 @@
       "pixelsVerified": true
     }
   ],
-  "runtimeBackgroundsVerified": 13,
+  "runtimeBackgroundsVerified": 12,
   "nativeFertilizerStage4Verified": true,
   "atlasesExceedingPortable4096": {
     "compiled/atlases/credits_stage.atlas.png": [

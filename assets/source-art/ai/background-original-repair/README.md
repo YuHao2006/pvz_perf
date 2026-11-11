@@ -1,8 +1,10 @@
 # Original-layout background repair candidates
 
-This batch covers thirteen backgrounds: the six battle maps, the unsodded tutorial
-yard, the aquarium, the mushroom garden, the greenhouse, both shop backgrounds
-and the challenge-selection background. `manifest.json` records the exact source
+This batch covers twelve backgrounds: the six battle maps, the unsodded tutorial
+yard, the aquarium, the mushroom garden, the greenhouse and both shop backgrounds.
+The AI challenge background was retired and deleted; all three challenge pages
+and achievement awards use the approved native Replanted background and shared
+three-slice drawing. `manifest.json` records the exact source
 path, SHA-256, canvas, six tile extents and processing state for every background.
 The garden, shop and challenge sources are existing project wide baselines; they
 are not represented as untouched 1073 images.
@@ -31,7 +33,7 @@ local features or change line weight. These candidates require art review and
 were kept out of runtime mappings during preparation. The later local in-game
 trial uses the clean-v2 revisions described below.
 
-All thirteen backgrounds also have a `clean-v2` revision. These remove invented
+All twelve backgrounds also have a `clean-v2` revision. These remove invented
 dense grain, hairline wood scratches and brush hatching, particularly the fencing
 above lawns. The edit instructions retain original sparse knots, cracks, pits,
 chips, distinct grass tufts and objects. `clean-v2-prompt.json` records the exact
@@ -44,7 +46,7 @@ paths and source hashes; this is not final visual approval.
 `noise-comparison--clean-v2.jpg` shows first revision above / cleanup below;
 `comparison--clean-v2.jpg` shows the Anime4K reference above / cleanup below.
 The seam detail images allow close inspection. `cleanup-plan.json` tracks all
-thirteen candidates, and `clean-variant-validation.json` checks decoding,
+twelve candidates, and `clean-variant-validation.json` checks decoding,
 dimensions, exact master-to-candidate reduction and unchanged pool blank regions.
 Those checks do not substitute for visual approval.
 
@@ -53,7 +55,7 @@ First-revision shop colors are therefore retained as the cleanup's broad color
 reference, preventing those patches from returning and avoiding tile-to-tile
 shading changes during cleanup. Other backgrounds use the original broad colors.
 
-The local batch-30 review page shows all thirteen backgrounds, their independently
+The local batch-30 review page shows all twelve backgrounds, their independently
 reviewed cleanup revisions, the integrated font
 preview and the missing fourth fertilizer stage candidate. Review decisions are
 separate from generation/compositing status.

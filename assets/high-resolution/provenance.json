@@ -48835,34 +48835,6 @@
       "runtimeKey": "images/achievements_pedestal_press"
     },
     {
-      "original": "assets/source-art/ai/runtime/images/Challenge_Background.png",
-      "file": "images/d21207ee8a48ae02f0e3cf31.png",
-      "logicalSize": [
-        1400,
-        600
-      ],
-      "physicalSize": [
-        2800,
-        1200
-      ],
-      "source": "assets/source-art/replanted/ui-source-round24/Challenge_Background--sliced-2x.png",
-      "sourceSha256": "d02dfe1f6bb46cd5f1f79b7bf8497aa9d0a059614afd12040db90a9056e37922",
-      "mapping": {
-        "logicalDrawRect": [
-          0,
-          0,
-          1400,
-          600
-        ],
-        "originalLogicalCanvas": [
-          1400,
-          600
-        ]
-      },
-      "approvedRound": 24,
-      "runtimeKey": "images/challenge_background"
-    },
-    {
       "original": "assets/runtime/images/Challenge_Thumbnails.jpg",
       "file": "images/33a777cafc12064a56db9706.png",
       "logicalSize": [
@@ -49570,35 +49542,6 @@
       "runtimeTrial": "User requested local in-game inspection; not a final art approval."
     },
     {
-      "original": "assets/runtime/images/Challenge_Background.png",
-      "file": "images/050279ccf588d6dd4dad257b.png",
-      "logicalSize": [
-        1400,
-        600
-      ],
-      "physicalSize": [
-        2800,
-        1200
-      ],
-      "source": "assets/source-art/ai/background-original-repair/Challenge_Background/Challenge_Background--clean-v2--ai-stitched-2x.png",
-      "sourceSha256": "c7865baec7a7e61196874b37860f834af4cb415c251e479d3eef17ce0de7e3d8",
-      "master": "assets/source-art/ai/background-original-repair/Challenge_Background/Challenge_Background--clean-v2--ai-stitched-4x.png",
-      "origin": "Two Anime4K passes, six AI tiles, conservative cleanup, minimum-error overlap stitching",
-      "mapping": {
-        "logicalDrawRect": [
-          0,
-          0,
-          1400,
-          600
-        ],
-        "originalLogicalCanvas": [
-          1400,
-          600
-        ]
-      },
-      "runtimeTrial": "User requested local in-game inspection; not a final art approval."
-    },
-    {
       "original": "assets/runtime/reanim/ZenGarden_fertilizer_bag4.png",
       "file": "images/8a6d3d460c5b28051cbd4d1f.png",
       "logicalSize": [
@@ -49626,6 +49569,34 @@
         ]
       },
       "runtimeTrial": "User requested local in-game inspection; not a final art approval."
+    },
+    {
+      "original": "assets/runtime/images/Challenge_Background.png",
+      "file": "images/d21207ee8a48ae02f0e3cf31.png",
+      "logicalSize": [
+        1400,
+        600
+      ],
+      "physicalSize": [
+        2800,
+        1200
+      ],
+      "source": "assets/source-art/replanted/ui-source-round24/Challenge_Background--sliced-2x.png",
+      "sourceSha256": "d02dfe1f6bb46cd5f1f79b7bf8497aa9d0a059614afd12040db90a9056e37922",
+      "mapping": {
+        "logicalDrawRect": [
+          0,
+          0,
+          1400,
+          600
+        ],
+        "originalLogicalCanvas": [
+          1400,
+          600
+        ]
+      },
+      "approvedRound": 24,
+      "runtimeKey": "images/challenge_background"
     }
   ],
   "skipped": [],

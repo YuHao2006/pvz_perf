@@ -582,24 +582,7 @@ void ChallengeScreen::Draw(Graphics* g)
 {
     mBackButton->mX = mApp->mScreenBounds.mX + 18;
 	g->mLinearBlend = true;
-	Image* aBackgroundImage = Sexy::IMAGE_CHALLENGE_BACKGROUND;
-	const Rect& aBounds = mApp->mScreenBounds;
-	// Replanted's Sprite border is (1408,0,1292,0) at native resolution.
-	// The HD source is composed with fixed 391/359 logical-pixel side slices.
-	// Stretch only the middle: frame ends, stone chips and paper edges retain
-	// their proportions. All three challenge pages share these three draws.
-	const int aLeftWidth = 391;
-	const int aRightWidth = 359;
-	const int aMiddleWidth = aBounds.mWidth - aLeftWidth - aRightWidth;
-	Graphics aBackground(*g);
-	aBackground.ClipRect(aBounds);
-	aBackground.DrawImage(aBackgroundImage, aBounds.mX, 0,
-		Rect(0, 0, aLeftWidth, aBackgroundImage->mHeight));
-	aBackground.DrawImage(aBackgroundImage,
-		Rect(aBounds.mX + aLeftWidth, 0, aMiddleWidth, aBackgroundImage->mHeight),
-		Rect(aLeftWidth, 0, aBackgroundImage->mWidth - aLeftWidth - aRightWidth, aBackgroundImage->mHeight));
-	aBackground.DrawImage(aBackgroundImage, aBounds.mX + aBounds.mWidth - aRightWidth, 0,
-		Rect(aBackgroundImage->mWidth - aRightWidth, 0, aRightWidth, aBackgroundImage->mHeight));
+	TodDrawChallengeBackground(g, mApp->mScreenBounds);
 
 	SexyString aTitleString = 
 		mPageIndex == CHALLENGE_PAGE_SURVIVAL ? gStr.PICK_AREA.c_str() : 

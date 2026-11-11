@@ -1,0 +1,437 @@
+{
+  "method": "Preserve original dot pixels and outline, rasterize undotted TTF stem uniformly into original stem bounds; all layout metrics unchanged.",
+  "glyphs": [
+    {
+      "font": "dwarventodcraft12",
+      "layer": 0,
+      "code": 73,
+      "dotEnd": 7,
+      "stemBounds": [
+        3,
+        7,
+        6,
+        15
+      ]
+    },
+    {
+      "font": "dwarventodcraft12",
+      "layer": 0,
+      "code": 74,
+      "dotEnd": 7,
+      "stemBounds": [
+        4,
+        7,
+        6,
+        17
+      ]
+    },
+    {
+      "font": "dwarventodcraft12",
+      "layer": 0,
+      "code": 105,
+      "dotEnd": 8,
+      "stemBounds": [
+        3,
+        8,
+        6,
+        15
+      ]
+    },
+    {
+      "font": "dwarventodcraft12",
+      "layer": 0,
+      "code": 106,
+      "dotEnd": 8,
+      "stemBounds": [
+        3,
+        8,
+        6,
+        16
+      ]
+    },
+    {
+      "font": "dwarventodcraft15",
+      "layer": 0,
+      "code": 73,
+      "dotEnd": 7,
+      "stemBounds": [
+        3,
+        7,
+        10,
+        18
+      ]
+    },
+    {
+      "font": "dwarventodcraft15",
+      "layer": 0,
+      "code": 74,
+      "dotEnd": 7,
+      "stemBounds": [
+        3,
+        7,
+        10,
+        21
+      ]
+    },
+    {
+      "font": "dwarventodcraft15",
+      "layer": 0,
+      "code": 105,
+      "dotEnd": 9,
+      "stemBounds": [
+        3,
+        9,
+        8,
+        18
+      ]
+    },
+    {
+      "font": "dwarventodcraft15",
+      "layer": 0,
+      "code": 106,
+      "dotEnd": 9,
+      "stemBounds": [
+        3,
+        9,
+        8,
+        21
+      ]
+    },
+    {
+      "font": "dwarventodcraft18",
+      "layer": 0,
+      "code": 73,
+      "dotEnd": 8,
+      "stemBounds": [
+        3,
+        8,
+        11,
+        21
+      ]
+    },
+    {
+      "font": "dwarventodcraft18",
+      "layer": 0,
+      "code": 74,
+      "dotEnd": 8,
+      "stemBounds": [
+        3,
+        8,
+        11,
+        25
+      ]
+    },
+    {
+      "font": "dwarventodcraft18",
+      "layer": 0,
+      "code": 105,
+      "dotEnd": 11,
+      "stemBounds": [
+        3,
+        11,
+        8,
+        21
+      ]
+    },
+    {
+      "font": "dwarventodcraft18",
+      "layer": 0,
+      "code": 106,
+      "dotEnd": 11,
+      "stemBounds": [
+        3,
+        11,
+        8,
+        24
+      ]
+    },
+    {
+      "font": "dwarventodcraft18brightgreeninset",
+      "layer": 0,
+      "code": 73,
+      "dotEnd": 8,
+      "stemBounds": [
+        3,
+        8,
+        11,
+        21
+      ]
+    },
+    {
+      "font": "dwarventodcraft18brightgreeninset",
+      "layer": 0,
+      "code": 74,
+      "dotEnd": 8,
+      "stemBounds": [
+        3,
+        8,
+        11,
+        25
+      ]
+    },
+    {
+      "font": "dwarventodcraft18brightgreeninset",
+      "layer": 0,
+      "code": 105,
+      "dotEnd": 11,
+      "stemBounds": [
+        3,
+        11,
+        9,
+        21
+      ]
+    },
+    {
+      "font": "dwarventodcraft18brightgreeninset",
+      "layer": 0,
+      "code": 106,
+      "dotEnd": 11,
+      "stemBounds": [
+        3,
+        11,
+        9,
+        24
+      ]
+    },
+    {
+      "font": "dwarventodcraft18greeninset",
+      "layer": 0,
+      "code": 73,
+      "dotEnd": 8,
+      "stemBounds": [
+        3,
+        8,
+        11,
+        21
+      ]
+    },
+    {
+      "font": "dwarventodcraft18greeninset",
+      "layer": 0,
+      "code": 74,
+      "dotEnd": 8,
+      "stemBounds": [
+        3,
+        8,
+        11,
+        25
+      ]
+    },
+    {
+      "font": "dwarventodcraft18greeninset",
+      "layer": 0,
+      "code": 105,
+      "dotEnd": 11,
+      "stemBounds": [
+        3,
+        11,
+        9,
+        21
+      ]
+    },
+    {
+      "font": "dwarventodcraft18greeninset",
+      "layer": 0,
+      "code": 106,
+      "dotEnd": 11,
+      "stemBounds": [
+        3,
+        11,
+        9,
+        24
+      ]
+    },
+    {
+      "font": "dwarventodcraft18yellow",
+      "layer": 0,
+      "code": 73,
+      "dotEnd": 8,
+      "stemBounds": [
+        3,
+        8,
+        11,
+        21
+      ]
+    },
+    {
+      "font": "dwarventodcraft18yellow",
+      "layer": 0,
+      "code": 74,
+      "dotEnd": 8,
+      "stemBounds": [
+        3,
+        8,
+        11,
+        25
+      ]
+    },
+    {
+      "font": "dwarventodcraft18yellow",
+      "layer": 0,
+      "code": 105,
+      "dotEnd": 11,
+      "stemBounds": [
+        3,
+        11,
+        9,
+        21
+      ]
+    },
+    {
+      "font": "dwarventodcraft18yellow",
+      "layer": 0,
+      "code": 106,
+      "dotEnd": 11,
+      "stemBounds": [
+        3,
+        11,
+        9,
+        24
+      ]
+    },
+    {
+      "font": "dwarventodcraft24",
+      "layer": 0,
+      "code": 73,
+      "dotEnd": 10,
+      "stemBounds": [
+        3,
+        10,
+        13,
+        27
+      ]
+    },
+    {
+      "font": "dwarventodcraft24",
+      "layer": 0,
+      "code": 74,
+      "dotEnd": 10,
+      "stemBounds": [
+        3,
+        10,
+        13,
+        32
+      ]
+    },
+    {
+      "font": "dwarventodcraft24",
+      "layer": 0,
+      "code": 105,
+      "dotEnd": 13,
+      "stemBounds": [
+        3,
+        13,
+        10,
+        27
+      ]
+    },
+    {
+      "font": "dwarventodcraft24",
+      "layer": 0,
+      "code": 106,
+      "dotEnd": 13,
+      "stemBounds": [
+        3,
+        13,
+        10,
+        31
+      ]
+    },
+    {
+      "font": "dwarventodcraft36brightgreeninset",
+      "layer": 0,
+      "code": 73,
+      "dotEnd": 16,
+      "stemBounds": [
+        3,
+        16,
+        18,
+        46
+      ]
+    },
+    {
+      "font": "dwarventodcraft36brightgreeninset",
+      "layer": 0,
+      "code": 74,
+      "dotEnd": 16,
+      "stemBounds": [
+        3,
+        16,
+        18,
+        56
+      ]
+    },
+    {
+      "font": "dwarventodcraft36brightgreeninset",
+      "layer": 0,
+      "code": 105,
+      "dotEnd": 23,
+      "stemBounds": [
+        3,
+        23,
+        14,
+        46
+      ]
+    },
+    {
+      "font": "dwarventodcraft36brightgreeninset",
+      "layer": 0,
+      "code": 106,
+      "dotEnd": 23,
+      "stemBounds": [
+        3,
+        23,
+        14,
+        54
+      ]
+    },
+    {
+      "font": "dwarventodcraft36greeninset",
+      "layer": 0,
+      "code": 73,
+      "dotEnd": 17,
+      "stemBounds": [
+        3,
+        17,
+        18,
+        46
+      ]
+    },
+    {
+      "font": "dwarventodcraft36greeninset",
+      "layer": 0,
+      "code": 74,
+      "dotEnd": 17,
+      "stemBounds": [
+        3,
+        17,
+        18,
+        56
+      ]
+    },
+    {
+      "font": "dwarventodcraft36greeninset",
+      "layer": 0,
+      "code": 105,
+      "dotEnd": 23,
+      "stemBounds": [
+        3,
+        23,
+        14,
+        46
+      ]
+    },
+    {
+      "font": "dwarventodcraft36greeninset",
+      "layer": 0,
+      "code": 106,
+      "dotEnd": 23,
+      "stemBounds": [
+        3,
+        23,
+        14,
+        54
+      ]
+    }
+  ]
+}

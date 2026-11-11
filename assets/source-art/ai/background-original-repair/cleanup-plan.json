@@ -17,8 +17,15 @@
     },
     {
       "name": "background1unsodded",
-      "status": "cleanup-pending",
-      "completedRawTiles": [],
+      "status": "composited-awaiting-review",
+      "completedRawTiles": [
+        "0-0",
+        "0-1",
+        "0-2",
+        "1-0",
+        "1-1",
+        "1-2"
+      ],
       "runtimeIntegrated": false
     },
     {
@@ -36,14 +43,28 @@
     },
     {
       "name": "background3",
-      "status": "cleanup-pending",
-      "completedRawTiles": [],
+      "status": "composited-awaiting-review",
+      "completedRawTiles": [
+        "0-0",
+        "0-1",
+        "0-2",
+        "1-0",
+        "1-1",
+        "1-2"
+      ],
       "runtimeIntegrated": false
     },
     {
       "name": "background4",
-      "status": "cleanup-pending",
-      "completedRawTiles": [],
+      "status": "composited-awaiting-review",
+      "completedRawTiles": [
+        "0-0",
+        "0-1",
+        "0-2",
+        "1-0",
+        "1-1",
+        "1-2"
+      ],
       "runtimeIntegrated": false
     },
     {
@@ -74,38 +95,80 @@
     },
     {
       "name": "aquarium1",
-      "status": "cleanup-pending",
-      "completedRawTiles": [],
+      "status": "composited-awaiting-review",
+      "completedRawTiles": [
+        "0-0",
+        "0-1",
+        "0-2",
+        "1-0",
+        "1-1",
+        "1-2"
+      ],
       "runtimeIntegrated": false
     },
     {
       "name": "Background_MushroomGarden",
-      "status": "cleanup-pending",
-      "completedRawTiles": [],
+      "status": "composited-awaiting-review",
+      "completedRawTiles": [
+        "0-0",
+        "0-1",
+        "0-2",
+        "1-0",
+        "1-1",
+        "1-2"
+      ],
       "runtimeIntegrated": false
     },
     {
       "name": "Background_Greenhouse",
-      "status": "cleanup-pending",
-      "completedRawTiles": [],
+      "status": "composited-awaiting-review",
+      "completedRawTiles": [
+        "0-0",
+        "0-1",
+        "0-2",
+        "1-0",
+        "1-1",
+        "1-2"
+      ],
       "runtimeIntegrated": false
     },
     {
       "name": "Store_Background",
-      "status": "cleanup-pending",
-      "completedRawTiles": [],
+      "status": "composited-awaiting-review",
+      "completedRawTiles": [
+        "0-0",
+        "0-1",
+        "0-2",
+        "1-0",
+        "1-1",
+        "1-2"
+      ],
       "runtimeIntegrated": false
     },
     {
       "name": "Store_BackgroundNight",
-      "status": "cleanup-pending",
-      "completedRawTiles": [],
+      "status": "composited-awaiting-review",
+      "completedRawTiles": [
+        "0-0",
+        "0-1",
+        "0-2",
+        "1-0",
+        "1-1",
+        "1-2"
+      ],
       "runtimeIntegrated": false
     },
     {
       "name": "Challenge_Background",
-      "status": "cleanup-pending",
-      "completedRawTiles": [],
+      "status": "composited-awaiting-review",
+      "completedRawTiles": [
+        "0-0",
+        "0-1",
+        "0-2",
+        "1-0",
+        "1-1",
+        "1-2"
+      ],
       "runtimeIntegrated": false
     }
   ]

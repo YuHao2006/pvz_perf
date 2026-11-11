@@ -1,9 +1,10 @@
 # Original-layout background repair candidates
 
-This batch covers the six battle maps, the unsodded tutorial yard, the aquarium,
-the mushroom garden and the greenhouse. `manifest.json` records the exact source
+This batch covers thirteen backgrounds: the six battle maps, the unsodded tutorial
+yard, the aquarium, the mushroom garden, the greenhouse, both shop backgrounds
+and the challenge-selection background. `manifest.json` records the exact source
 path, SHA-256, canvas, six tile extents and processing state for every background.
-The garden sources are the project's existing wide background baselines; they
+The garden, shop and challenge sources are existing project wide baselines; they
 are not represented as untouched 1073 images.
 
 Each source passed through the existing offline Anime4K UL executable twice:
@@ -29,6 +30,27 @@ and successful checks do not prove exact geometric fidelity: AI can still move
 local features or change line weight. These candidates require art review and
 have **not** replaced runtime background mappings.
 
-The local batch-30 review page shows all ten backgrounds, the integrated font
+All thirteen backgrounds also have a `clean-v2` revision. These remove invented
+dense grain, hairline wood scratches and brush hatching, particularly the fencing
+above lawns. The edit instructions retain original sparse knots, cracks, pits,
+chips, distinct grass tufts and objects. `clean-v2-prompt.json` records the exact
+instruction for each background; six `tile-*-*--clean-v2.png` files retain its raw
+outputs. The corrected four-times masters and two-times candidates remain
+separate from the first revision and have not entered runtime mappings.
+
+`noise-comparison--clean-v2.jpg` shows first revision above / cleanup below;
+`comparison--clean-v2.jpg` shows the Anime4K reference above / cleanup below.
+The seam detail images allow close inspection. `cleanup-plan.json` tracks all
+thirteen candidates, and `clean-variant-validation.json` checks decoding,
+dimensions, exact master-to-candidate reduction and unchanged pool blank regions.
+Those checks do not substitute for visual approval.
+
+The original wide shop baseline contains rectangular pasted color patches.
+First-revision shop colors are therefore retained as the cleanup's broad color
+reference, preventing those patches from returning and avoiding tile-to-tile
+shading changes during cleanup. Other backgrounds use the original broad colors.
+
+The local batch-30 review page shows all thirteen backgrounds, their independently
+reviewed cleanup revisions, the integrated font
 preview and the missing fourth fertilizer stage candidate. Review decisions are
 separate from generation/compositing status.

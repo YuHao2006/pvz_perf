@@ -1,0 +1,21 @@
+{
+  "original": "assets/runtime/reanim/ZenGarden_fertilizer_bag4.png",
+  "source": "stage4--ai-raw.png",
+  "master": "stage4--aligned-4x.png",
+  "runtime": "not integrated",
+  "status": "awaiting-review",
+  "tool": "built-in image_gen",
+  "prompt": "Faithful fourth fertilizer bag animation stage with upper-left open flap; Anime4K twice reference; preserve shape, palette, logo and transparency. Prefer sunburst if routing permits.",
+  "logicalSize": [
+    70,
+    73
+  ],
+  "originalVisibleBounds": [
+    2,
+    1,
+    64,
+    72
+  ],
+  "uniformScaleFromAI": 0.23278688524590163,
+  "rawSha256": "a1f207dcb6d58a04bd8a2ab4579b6fdbb9939cd475fce5c6283666c22ef1901a"
+}

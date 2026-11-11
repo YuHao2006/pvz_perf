@@ -45,8 +45,8 @@
     },
     {
       "path": "pvz-resource-build.exe",
-      "bytes": 1700864,
-      "sha256": "71974293980803b2db8f0814b40f3075f72410a0c176ded3d78026915aa4b49d"
+      "bytes": 1701888,
+      "sha256": "b37363af9a84b0c89b668434dfe25d526cc2bb1f988a9848ff428dd55a9a401b"
     },
     {
       "path": "re2.dll",
@@ -61,7 +61,7 @@
     {
       "path": "reanimc.exe",
       "bytes": 847360,
-      "sha256": "6fa582335c336720650bdb64c247c0b711ec121c7cf3baa50c5dec52f4abbd81"
+      "sha256": "72ce0f9064ad5b65a7e0b2ecd60be180c97b7ee68acb162b13ac511c2b581683"
     },
     {
       "path": "third-party-notices/libjpeg-turbo.txt",
@@ -135,6 +135,7 @@
     }
   ],
   "source_commit": "753819cb73467e4cd2db56831664b7ccf3d46ebf",
-  "resource_builder_source_commit": "03dde52",
-  "dfu_windows_baseline": "Windows 7; MSVC 14.44; static CRT; checked for known Win8+ hard imports"
+  "resource_builder_source_commit": "d86ad95dfad9dbde0e5b9b3f5c3dbf1d3e743bfe",
+  "dfu_windows_baseline": "Windows 7; MSVC 14.44; static CRT; checked for known Win8+ hard imports",
+  "resource_compiler_source_commit": "d86ad95dfad9dbde0e5b9b3f5c3dbf1d3e743bfe"
 }

@@ -32,8 +32,8 @@
           "sha256": "5aa0b9a5b154733f2fdba91710b9f34f869017cfc9ffda420be448108dae6ee6"
         }
       ],
-      "runtimeIntegrated": false,
-      "status": "awaiting-human-review"
+      "runtimeIntegrated": true,
+      "status": "integrated-for-local-game-inspection"
     },
     {
       "name": "background1",
@@ -66,8 +66,8 @@
           "sha256": "c15b424288e588a35505abad5bff7478e35835e3487f41759a79fd4df179c86e"
         }
       ],
-      "runtimeIntegrated": false,
-      "status": "awaiting-human-review"
+      "runtimeIntegrated": true,
+      "status": "integrated-for-local-game-inspection"
     },
     {
       "name": "background1unsodded",
@@ -100,8 +100,8 @@
           "sha256": "aa87585883b26474fa7f500c6a1dc3ac4579d54ec59e66e1c26017fb28eb77ef"
         }
       ],
-      "runtimeIntegrated": false,
-      "status": "awaiting-human-review"
+      "runtimeIntegrated": true,
+      "status": "integrated-for-local-game-inspection"
     },
     {
       "name": "background2",
@@ -134,8 +134,8 @@
           "sha256": "650e2c0e038a8eeb0e962bf951074c206959d9c71586567a4645a01a2cb3952c"
         }
       ],
-      "runtimeIntegrated": false,
-      "status": "awaiting-human-review"
+      "runtimeIntegrated": true,
+      "status": "integrated-for-local-game-inspection"
     },
     {
       "name": "background3",
@@ -168,8 +168,8 @@
           "sha256": "c49b7d5f34b890d1cd4fd462749d2f6a2fc0b10a2efb98eefe20838ae1ebe0f5"
         }
       ],
-      "runtimeIntegrated": false,
-      "status": "awaiting-human-review",
+      "runtimeIntegrated": true,
+      "status": "integrated-for-local-game-inspection",
       "poolBlankPixelsVerified": 1483505,
       "poolBlankPixelIdentity": true
     },
@@ -204,8 +204,8 @@
           "sha256": "f207296ae169416afbe0f7fa824092e17fc2ef6f636924d958581b17fc969649"
         }
       ],
-      "runtimeIntegrated": false,
-      "status": "awaiting-human-review",
+      "runtimeIntegrated": true,
+      "status": "integrated-for-local-game-inspection",
       "poolBlankPixelsVerified": 1513091,
       "poolBlankPixelIdentity": true
     },
@@ -240,8 +240,8 @@
           "sha256": "c1c94da4d80eb361220744a3b84eb2148286cc88c9e016d2fc27108c6c258400"
         }
       ],
-      "runtimeIntegrated": false,
-      "status": "awaiting-human-review"
+      "runtimeIntegrated": true,
+      "status": "integrated-for-local-game-inspection"
     },
     {
       "name": "background6boss",
@@ -274,8 +274,8 @@
           "sha256": "0be57b424bf5eeb47edc371c7d9d5ee3058e3f16d695b03310e7eb8219626b0a"
         }
       ],
-      "runtimeIntegrated": false,
-      "status": "awaiting-human-review"
+      "runtimeIntegrated": true,
+      "status": "integrated-for-local-game-inspection"
     },
     {
       "name": "Background_Greenhouse",
@@ -308,8 +308,8 @@
           "sha256": "9a958efa97c13cfea980e75f9d1961936c768634c63e05547f444ff5a844298f"
         }
       ],
-      "runtimeIntegrated": false,
-      "status": "awaiting-human-review"
+      "runtimeIntegrated": true,
+      "status": "integrated-for-local-game-inspection"
     },
     {
       "name": "Background_MushroomGarden",
@@ -342,8 +342,8 @@
           "sha256": "86f53b255e0a1c4840973ba71c95f0c391bee4429e62362b032d5c81c3976f72"
         }
       ],
-      "runtimeIntegrated": false,
-      "status": "awaiting-human-review"
+      "runtimeIntegrated": true,
+      "status": "integrated-for-local-game-inspection"
     },
     {
       "name": "Challenge_Background",
@@ -376,8 +376,8 @@
           "sha256": "bbff53599f98e0e00a8432206d506af849a8ae512e07caec9dfef908d1f98dfe"
         }
       ],
-      "runtimeIntegrated": false,
-      "status": "awaiting-human-review"
+      "runtimeIntegrated": true,
+      "status": "integrated-for-local-game-inspection"
     },
     {
       "name": "Store_Background",
@@ -410,8 +410,8 @@
           "sha256": "b05acb954e83da14f0650999a787192602e07eb88a9e8528ab9a87da034117cb"
         }
       ],
-      "runtimeIntegrated": false,
-      "status": "awaiting-human-review"
+      "runtimeIntegrated": true,
+      "status": "integrated-for-local-game-inspection"
     },
     {
       "name": "Store_BackgroundNight",
@@ -444,8 +444,8 @@
           "sha256": "9886521e345b94af336ab8e927bb3526890082cbf361e34928aec20af48e9c04"
         }
       ],
-      "runtimeIntegrated": false,
-      "status": "awaiting-human-review"
+      "runtimeIntegrated": true,
+      "status": "integrated-for-local-game-inspection"
     }
   ],
   "verification": "Image decoding, six raw tiles, master/candidate dimensions and exact Lanczos 4x-to-2x reduction. This does not prove artistic fidelity. Day/night pool blank regions are also pixel-identical to the original four-times Anime4K reference."

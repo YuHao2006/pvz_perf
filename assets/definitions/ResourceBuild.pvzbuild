@@ -20,11 +20,12 @@ atlas(landscape_ui scene:LandscapeUI)
 
 # Development uses native MaxRects immediately. Switch solver to exact for
 # release-size optimization; existing exact proof caches remain reusable.
-# No image rotation is allowed; both dimensions remain capped at 4096.
+# HD development keeps full source resolution and relaxes the portable 4096 cap.
+# No image rotation is allowed. The local Vulkan target supports 16384 per side.
 atlas_defaults(
     solver maxrects
     padding 2
-    max_side 4096
+    max_side 16384
     time_limit_seconds 60
     require_optimal false
     workers 1

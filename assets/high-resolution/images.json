@@ -2898,14 +2898,40 @@
     "images/achievements_pedestal": "images/cf9cb222773aa2e1a6bdd63c.png",
     "images/achievements_pedestal_press.png": "images/d0c335ba9b15231229e436d3.png",
     "images/achievements_pedestal_press": "images/d0c335ba9b15231229e436d3.png",
-    "images/challenge_background.png": "images/d21207ee8a48ae02f0e3cf31.png",
-    "images/challenge_background": "images/d21207ee8a48ae02f0e3cf31.png",
+    "images/challenge_background.png": "images/050279ccf588d6dd4dad257b.png",
+    "images/challenge_background": "images/050279ccf588d6dd4dad257b.png",
     "images/challenge_thumbnails.jpg": "images/33a777cafc12064a56db9706.png",
     "images/challenge_thumbnails": "images/33a777cafc12064a56db9706.png",
     "images/survival_thumbnails.jpg": "images/3edd007b2ed39413ab21da0c.png",
     "images/survival_thumbnails": "images/3edd007b2ed39413ab21da0c.png",
     "images/minigame_trophy.png": "images/f5f36846101be92db25d39d2.png",
-    "images/minigame_trophy": "images/f5f36846101be92db25d39d2.png"
+    "images/minigame_trophy": "images/f5f36846101be92db25d39d2.png",
+    "images/background1.jpg": "images/e5fc71aefdabf6e2281dc41e.png",
+    "images/background1": "images/e5fc71aefdabf6e2281dc41e.png",
+    "images/background1unsodded.jpg": "images/f11fdc2f5337c3a43d82cbaf.png",
+    "images/background1unsodded": "images/f11fdc2f5337c3a43d82cbaf.png",
+    "images/background2.jpg": "images/0d66e2ea4d20fc5300cd0003.png",
+    "images/background2": "images/0d66e2ea4d20fc5300cd0003.png",
+    "images/background3.jpg": "images/3c0415fbf7f2b6c24eadcd3b.png",
+    "images/background3": "images/3c0415fbf7f2b6c24eadcd3b.png",
+    "images/background4.jpg": "images/a985d4e0b565a1b0f3c43532.png",
+    "images/background4": "images/a985d4e0b565a1b0f3c43532.png",
+    "images/background5.jpg": "images/ee8a65732f554244543bd623.png",
+    "images/background5": "images/ee8a65732f554244543bd623.png",
+    "images/background6boss.jpg": "images/627217dc8e8ce15e94903c79.png",
+    "images/background6boss": "images/627217dc8e8ce15e94903c79.png",
+    "images/aquarium1.png": "images/dc66d02fae4f7de59c75730c.png",
+    "images/aquarium1": "images/dc66d02fae4f7de59c75730c.png",
+    "images/background_mushroomgarden.png": "images/a5f75c6859d286980733023e.png",
+    "images/background_mushroomgarden": "images/a5f75c6859d286980733023e.png",
+    "images/background_greenhouse.png": "images/9fb2c5bd4ae1f630f99d2e17.png",
+    "images/background_greenhouse": "images/9fb2c5bd4ae1f630f99d2e17.png",
+    "images/store_background.png": "images/f2ba6bb886e5b4b586dd7c3d.png",
+    "images/store_background": "images/f2ba6bb886e5b4b586dd7c3d.png",
+    "images/store_backgroundnight.png": "images/0d531fa67730cd46a999a211.png",
+    "images/store_backgroundnight": "images/0d531fa67730cd46a999a211.png",
+    "reanim/zengarden_fertilizer_bag4.png": "images/8a6d3d460c5b28051cbd4d1f.png",
+    "reanim/zengarden_fertilizer_bag4": "images/8a6d3d460c5b28051cbd4d1f.png"
   },
   "logicalSizes": {
     "images/almanac_closebutton.png": [
@@ -14427,6 +14453,110 @@
     "images/minigame_trophy": [
       72,
       71
+    ],
+    "images/background1.jpg": [
+      1400,
+      600
+    ],
+    "images/background1": [
+      1400,
+      600
+    ],
+    "images/background1unsodded.jpg": [
+      1400,
+      600
+    ],
+    "images/background1unsodded": [
+      1400,
+      600
+    ],
+    "images/background2.jpg": [
+      1400,
+      600
+    ],
+    "images/background2": [
+      1400,
+      600
+    ],
+    "images/background3.jpg": [
+      1400,
+      600
+    ],
+    "images/background3": [
+      1400,
+      600
+    ],
+    "images/background4.jpg": [
+      1400,
+      600
+    ],
+    "images/background4": [
+      1400,
+      600
+    ],
+    "images/background5.jpg": [
+      1400,
+      600
+    ],
+    "images/background5": [
+      1400,
+      600
+    ],
+    "images/background6boss.jpg": [
+      1400,
+      600
+    ],
+    "images/background6boss": [
+      1400,
+      600
+    ],
+    "images/aquarium1.png": [
+      1400,
+      600
+    ],
+    "images/aquarium1": [
+      1400,
+      600
+    ],
+    "images/background_mushroomgarden.png": [
+      1400,
+      600
+    ],
+    "images/background_mushroomgarden": [
+      1400,
+      600
+    ],
+    "images/background_greenhouse.png": [
+      1400,
+      600
+    ],
+    "images/background_greenhouse": [
+      1400,
+      600
+    ],
+    "images/store_background.png": [
+      1400,
+      600
+    ],
+    "images/store_background": [
+      1400,
+      600
+    ],
+    "images/store_backgroundnight.png": [
+      1400,
+      600
+    ],
+    "images/store_backgroundnight": [
+      1400,
+      600
+    ],
+    "reanim/zengarden_fertilizer_bag4.png": [
+      70,
+      73
+    ],
+    "reanim/zengarden_fertilizer_bag4": [
+      70,
+      73
     ]
   },
   "cards": {

@@ -28,7 +28,8 @@ candidate, plus an overview comparison and detailed horizontal/vertical seam
 comparisons. `validation.json` records hashes and structural checks. File sizes
 and successful checks do not prove exact geometric fidelity: AI can still move
 local features or change line weight. These candidates require art review and
-have **not** replaced runtime background mappings.
+were kept out of runtime mappings during preparation. The later local in-game
+trial uses the clean-v2 revisions described below.
 
 All thirteen backgrounds also have a `clean-v2` revision. These remove invented
 dense grain, hairline wood scratches and brush hatching, particularly the fencing
@@ -36,7 +37,9 @@ above lawns. The edit instructions retain original sparse knots, cracks, pits,
 chips, distinct grass tufts and objects. `clean-v2-prompt.json` records the exact
 instruction for each background; six `tile-*-*--clean-v2.png` files retain its raw
 outputs. The corrected four-times masters and two-times candidates remain
-separate from the first revision and have not entered runtime mappings.
+separate from the first revision. `runtime-integration.json` records their later
+installation for the user's local in-game inspection, including replaced mapping
+paths and source hashes; this is not final visual approval.
 
 `noise-comparison--clean-v2.jpg` shows first revision above / cleanup below;
 `comparison--clean-v2.jpg` shows the Anime4K reference above / cleanup below.

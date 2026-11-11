@@ -3014,7 +3014,7 @@
     },
     {
       "original": "assets/runtime/images/zenshopbutton.png",
-      "file": "images/5f5ed5c4edc3f48749fdf5e4.png",
+      "file": "images/2042045600dabb8dbb696fe8.png",
       "logicalSize": [
         109,
         57
@@ -3023,26 +3023,32 @@
         218,
         114
       ],
-      "source": "assets/source-art/ai/menu-watering-can-shop/candidates/zenshopbutton--shared-shop-key-4x.png",
-      "sourceSha256": "79cfb50cf856a373e5f2e657ccda4cb4a9493256216243b131b9169523823bc7",
+      "source": "assets/source-art/replanted/native-ui/zenshopbutton.png",
+      "sourceSha256": "85e3153d52805aa17c544c51766afa36331c0ac13bb27c5990f206cf61282379",
       "mapping": {
+        "pixelPerLogical": [
+          3.6055045871559632,
+          3.6140350877192984
+        ],
+        "sourceFrameOrigin": [
+          0.0,
+          0.0
+        ],
         "logicalDrawRect": [
-          0,
-          0,
-          109,
-          57
+          0.0,
+          0.0,
+          109.0,
+          57.0
         ],
         "originalLogicalCanvas": [
           109,
           57
         ]
-      },
-      "sharedArtSource": "assets/source-art/ai/menu-watering-can-shop/candidates/SelectorScreen_Store--approved-aligned-4x.png",
-      "fixReason": "Use approved main-menu AI key art for Zen Garden / Tree of Wisdom shop buttons; uniform fit, shared normal/hover alpha, no bloom."
+      }
     },
     {
       "original": "assets/runtime/images/zenshopbutton_highlight.png",
-      "file": "images/d03ebb6c8536efc9e91202af.png",
+      "file": "images/5b060d046a478df5b2b9cef5.png",
       "logicalSize": [
         109,
         57
@@ -3051,22 +3057,28 @@
         218,
         114
       ],
-      "source": "assets/source-art/ai/menu-watering-can-shop/candidates/zenshopbutton_highlight--shared-shop-key-4x.png",
-      "sourceSha256": "4608c2d243afb03e12e75ea22e747cfe8918e8e94ab357fa871a7a664e458f2e",
+      "source": "assets/source-art/replanted/sources-round4/SPR_Zen_ShopButton_Over.png",
+      "sourceSha256": "e2725e35880be61e587856dcc0723819ab79745d368403ae132abe58143c0775",
       "mapping": {
+        "pixelPerLogical": [
+          3.6055045871559632,
+          3.6140350877192984
+        ],
+        "sourceFrameOrigin": [
+          0.0,
+          0.0
+        ],
         "logicalDrawRect": [
-          0,
-          0,
-          109,
-          57
+          0.0,
+          0.0,
+          109.0,
+          57.0
         ],
         "originalLogicalCanvas": [
           109,
           57
         ]
-      },
-      "sharedArtSource": "assets/source-art/ai/menu-watering-can-shop/candidates/SelectorScreen_StoreHighlight--approved-aligned-4x.png",
-      "fixReason": "Use approved main-menu AI key art for Zen Garden / Tree of Wisdom shop buttons; uniform fit, shared normal/hover alpha, no bloom."
+      }
     },
     {
       "original": "assets/runtime/reanim/Blover_dirt_back.png",

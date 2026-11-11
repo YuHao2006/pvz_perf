@@ -1,0 +1,71 @@
+{
+  "tool": "built-in image_gen",
+  "status": "awaiting-review",
+  "mainMenuKeyUnchanged": true,
+  "items": [
+    {
+      "id": "round29:c493f82c20d00181bc",
+      "original": "assets/runtime/images/zenshopbutton.png",
+      "hd": "assets/source-art/ai/zen-shop-independent/candidates/zenshopbutton--independent-aligned-4x.png",
+      "category": "ui",
+      "groups": [
+        "独立花园钥匙"
+      ],
+      "source": {
+        "atlas": "1073 original + two Anime4K x2 passes + built-in image_gen",
+        "region": "zenshopbutton"
+      },
+      "processingFlags": [
+        "保留1073横向构图；等比配准至109×57逻辑画布；两态共用alpha；未接入。"
+      ],
+      "cropAssessment": {
+        "action": "alignment",
+        "title": "独立构图配准",
+        "needsCrop": false
+      },
+      "logicalCanvas": [
+        109,
+        57
+      ],
+      "uniformScale": 0.25930372148859543,
+      "translationAt4x": [
+        -7.150060024009605,
+        -5.5942376950780215
+      ],
+      "rawGeneration": "assets/source-art/ai/zen-shop-independent/candidates/zenshopbutton--normal-ai-v1.png",
+      "promptSummary": "Restore the distinct 1073 Zen Garden wide shop key/tag, preserve original pose and 109:57 composition; hover only brightens surfaces, no glow; retain original shadow."
+    },
+    {
+      "id": "round29:28e1094c48c014fe85",
+      "original": "assets/runtime/images/zenshopbutton_highlight.png",
+      "hd": "assets/source-art/ai/zen-shop-independent/candidates/zenshopbutton_highlight--independent-aligned-4x.png",
+      "category": "ui",
+      "groups": [
+        "独立花园钥匙"
+      ],
+      "source": {
+        "atlas": "1073 original + two Anime4K x2 passes + built-in image_gen",
+        "region": "zenshopbutton_highlight"
+      },
+      "processingFlags": [
+        "保留1073横向构图；等比配准至109×57逻辑画布；两态共用alpha；未接入。"
+      ],
+      "cropAssessment": {
+        "action": "alignment",
+        "title": "独立构图配准",
+        "needsCrop": false
+      },
+      "logicalCanvas": [
+        109,
+        57
+      ],
+      "uniformScale": 0.2591481703659268,
+      "translationAt4x": [
+        -6.884223155368915,
+        -5.523695260947804
+      ],
+      "rawGeneration": "assets/source-art/ai/zen-shop-independent/candidates/zenshopbutton--hover-ai-v1.png",
+      "promptSummary": "Restore the distinct 1073 Zen Garden wide shop key/tag, preserve original pose and 109:57 composition; hover only brightens surfaces, no glow; retain original shadow."
+    }
+  ]
+}

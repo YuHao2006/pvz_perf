@@ -50,5 +50,7 @@
       "where": "Coin reward + AwardScreen",
       "status": "already native HD, retained; separate bare-key sprite"
     }
-  ]
+  ],
+  "status": "shared-main-menu-art approach reverted",
+  "correction": "1073 Zen shop buttons have distinct wide composition; independent candidates prepared separately"
 }

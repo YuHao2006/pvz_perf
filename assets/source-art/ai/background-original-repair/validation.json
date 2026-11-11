@@ -1,6 +1,6 @@
 {
-  "scope": "Six battle maps, unsodded tutorial yard, aquarium and two garden backgrounds",
-  "count": 10,
+  "scope": "Six battle maps, unsodded tutorial yard, aquarium, two garden backgrounds, day/night shop and challenge-selection background",
+  "count": 13,
   "tool": "built-in image_gen",
   "anime4k": "Two successive 2x passes using the existing offline Anime4K UL executable",
   "resampling": "Uniform fit/crop to tile extent; no independent X/Y stretching. 2x candidate is a Lanczos reduction of the 4x composite.",
@@ -473,6 +473,147 @@
       ],
       "preservedPoolBlankPixels": 0,
       "masterSha256": "a8dba6943a47e1ebb6bd8c45be1aafebedb4d862dfae7b21508f93e86e48f5ec",
+      "status": "generated-awaiting-human-art-review",
+      "runtimeIntegrated": false
+    },
+    {
+      "name": "Store_Background",
+      "source": "assets/source-art/ai/runtime/images/Store_Background.png",
+      "sourceSha256": "ec55a779271219dc43711770f0969eb30e0314e7811d83522b1bb3a626510137",
+      "pass1Size": [
+        2800,
+        1200
+      ],
+      "pass2Size": [
+        5600,
+        2400
+      ],
+      "candidateSize": [
+        2800,
+        1200
+      ],
+      "tiles": [
+        {
+          "file": "tile-0-0--ai-raw.png",
+          "sha256": "f1f1471f9d2a360b9e1cc8d1429e89e7d4656b0ac18681543d05f95961c90822"
+        },
+        {
+          "file": "tile-0-1--ai-raw.png",
+          "sha256": "17c7f580d3304eca2e73737b5e581b2d637cef76ea324fec2868a1c84c13b615"
+        },
+        {
+          "file": "tile-0-2--ai-raw.png",
+          "sha256": "bd5033a0fc9e730d22ba4410646dc21b07d67720796ded8feb1fc957ee067fec"
+        },
+        {
+          "file": "tile-1-0--ai-raw.png",
+          "sha256": "a28f1c76e7a72fe6565caada23e27895e164a9d9bd1f75fb70bfb6a254b5b58f"
+        },
+        {
+          "file": "tile-1-1--ai-raw.png",
+          "sha256": "25d031ce074da1f02c1d475e130fe3f3162aa9eb4cd57d497d6f03310a944098"
+        },
+        {
+          "file": "tile-1-2--ai-raw.png",
+          "sha256": "dab709f08c14d59484a2a72675fddfd52489aec545c7401000df38b78ccb92ce"
+        }
+      ],
+      "preservedPoolBlankPixels": 0,
+      "masterSha256": "17e76fa149098e9ee446cca0c5d42cbc19feedaefeb93c783c946120f87c1667",
+      "status": "generated-awaiting-human-art-review",
+      "runtimeIntegrated": false
+    },
+    {
+      "name": "Store_BackgroundNight",
+      "source": "assets/source-art/ai/runtime/images/Store_BackgroundNight.png",
+      "sourceSha256": "35aa3b124a570ac088b4b39e12df09e43faaa65963210b4917a16934f746ec6b",
+      "pass1Size": [
+        2800,
+        1200
+      ],
+      "pass2Size": [
+        5600,
+        2400
+      ],
+      "candidateSize": [
+        2800,
+        1200
+      ],
+      "tiles": [
+        {
+          "file": "tile-0-0--ai-raw.png",
+          "sha256": "96eb151d7d9c2e1e0f9c009bd46393f1b8b026ef6b3f1b778fa86506381213a5"
+        },
+        {
+          "file": "tile-0-1--ai-raw.png",
+          "sha256": "d8f95ff54aaead1945343df1a25cc9a98bb649012da53b7be9bec7b407a27d3b"
+        },
+        {
+          "file": "tile-0-2--ai-raw.png",
+          "sha256": "d31d6fdd15c9b085eaddcb2f155e18c88550f10f30d853e03bce04740380932b"
+        },
+        {
+          "file": "tile-1-0--ai-raw.png",
+          "sha256": "eb895c22d5c85871e1883ecf1ed3b28743d6366bea473fb6c8fe82f1f9aa3ec3"
+        },
+        {
+          "file": "tile-1-1--ai-raw.png",
+          "sha256": "49311e412b57237b2f4a62d9da2b8029628667b86c53f16bdbc2614cf9a2a178"
+        },
+        {
+          "file": "tile-1-2--ai-raw.png",
+          "sha256": "6126ef89b94168b4acd27326dff253fe763a96f955b1b0f3e5b2d240505b591d"
+        }
+      ],
+      "preservedPoolBlankPixels": 0,
+      "masterSha256": "c639300da3de27cb398315f1606a02791996526913f55fa65a4319af8b9ee877",
+      "status": "generated-awaiting-human-art-review",
+      "runtimeIntegrated": false
+    },
+    {
+      "name": "Challenge_Background",
+      "source": "assets/source-art/ai/runtime/images/Challenge_Background.png",
+      "sourceSha256": "755e2ef2ed59c1d5452905dff1f9b8726d580f4c7ed5c09de61fea67d26badf0",
+      "pass1Size": [
+        2800,
+        1200
+      ],
+      "pass2Size": [
+        5600,
+        2400
+      ],
+      "candidateSize": [
+        2800,
+        1200
+      ],
+      "tiles": [
+        {
+          "file": "tile-0-0--ai-raw.png",
+          "sha256": "49d0acba6096b32bbb19dd0d81c8dc08d4b0d3dd6fc2ac78719db70d352344db"
+        },
+        {
+          "file": "tile-0-1--ai-raw.png",
+          "sha256": "0cc5261e96abc6a2942ffe34667e9f82e05f9958f034a9ac1c46cb63d252d2c0"
+        },
+        {
+          "file": "tile-0-2--ai-raw.png",
+          "sha256": "90085921de8babe53e42a158f46316efeddab993d9f466bac7f06833960015cc"
+        },
+        {
+          "file": "tile-1-0--ai-raw.png",
+          "sha256": "a478b82a89e76819dd0c3bb0cb556b8ccb8ec68ee82edbfd80493efb000e1d97"
+        },
+        {
+          "file": "tile-1-1--ai-raw.png",
+          "sha256": "628578baf1c9b9ce00991d0034aed351289c323b1659231a30d1e2794e13672b"
+        },
+        {
+          "file": "tile-1-2--ai-raw.png",
+          "sha256": "fee75e5f109a769a6cb4e70463536c4f0bef8534591592dbdc37e212fd0968d3"
+        }
+      ],
+      "preservedPoolBlankPixels": 0,
+      "masterSha256": "315dccc6e2ce7ecb69354a0ef3aa6cdc5d058c42b55b0f328bcfc13bfb9b9f5f",
       "status": "generated-awaiting-human-art-review",
       "runtimeIntegrated": false
     }

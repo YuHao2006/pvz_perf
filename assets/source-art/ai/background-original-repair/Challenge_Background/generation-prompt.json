@@ -1,0 +1,14 @@
+{
+  "tool": "built-in image_gen",
+  "prompt": "Prefer sunburst if routing permits. Faithful restoration of this exact cropped tile of the original Plants vs Zombies challenge-selection screen background after two Anime4K passes. This is an edit target, preserve its framing, geometry, border thickness and object positions precisely. Keep every existing stone crack, chip, dent and pit in its original location. Preserve the orange parchment panel, its broad soft cloudy coloration, gray outer stone frame and gray top banner when visible. Refine soft/jagged contours without redesign. Smooth clean cartoon surfaces: do not invent fine scratches, grain, hatching, brush texture, dirt, extra aging or new damage. Do not erase the existing large flaws. No text, buttons, icons, characters or objects. Same crop and aspect ratio, no extra margins.",
+  "perTileSuffix": " Tile ROW-COLUMN.",
+  "tiles": [
+    "0-0",
+    "0-1",
+    "0-2",
+    "1-0",
+    "1-1",
+    "1-2"
+  ],
+  "modelRouting": "Preference only; actual model is not exposed by the tool."
+}

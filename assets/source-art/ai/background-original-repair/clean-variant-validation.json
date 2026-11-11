@@ -1,0 +1,40 @@
+{
+  "policy": "Preserve original pits, dents, chips and cracks; remove only invented dense fine hatching/grain. No broad blur or removal of original damage.",
+  "items": [
+    {
+      "name": "background5",
+      "variant": "clean-v2",
+      "master": "background5--clean-v2--ai-stitched-4x.png",
+      "candidate": "background5--clean-v2--ai-stitched-2x.png",
+      "tiles": [
+        {
+          "file": "tile-0-0--clean-v2.png",
+          "sha256": "69c5cf8c1d5ac3fd98b4bad8601f0747262ab327af464770d599615e733be659"
+        },
+        {
+          "file": "tile-0-1--clean-v2.png",
+          "sha256": "ba7e99d45ce794bbe24bc33497022a34fb0967e88760e075a0e91efebd8d31f3"
+        },
+        {
+          "file": "tile-0-2--clean-v2.png",
+          "sha256": "9b9421c3d5c8e2ba9ca02595b7202b4ba9b433b44e0ddaf2ec414002db26277b"
+        },
+        {
+          "file": "tile-1-0--clean-v2.png",
+          "sha256": "1a5255cd89d1d56bef0f85af8b80b7ecb76f8e6877c9d43a3c97741e1d9e8902"
+        },
+        {
+          "file": "tile-1-1--clean-v2.png",
+          "sha256": "3ffb4aaf1482a4f3b60af76747f1517bff823fb01c8951548216c8c1252bf879"
+        },
+        {
+          "file": "tile-1-2--clean-v2.png",
+          "sha256": "c1c94da4d80eb361220744a3b84eb2148286cc88c9e016d2fc27108c6c258400"
+        }
+      ],
+      "runtimeIntegrated": false,
+      "status": "awaiting-human-review"
+    }
+  ],
+  "verification": "Image decoding, six raw tiles, master/candidate dimensions and exact Lanczos 4x-to-2x reduction. This does not prove artistic fidelity."
+}

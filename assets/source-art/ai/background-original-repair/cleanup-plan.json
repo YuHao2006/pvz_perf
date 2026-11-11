@@ -1,0 +1,112 @@
+{
+  "scope": "All thirteen backgrounds in manifest.json; not limited to roofs",
+  "policy": "Remove AI-added dense grain, brush hatching and hairline texture, especially lawn-side fencing. Preserve original sparse wood grain, knots, cracks, pits, chips, objects and layout. Review each corrected background independently.",
+  "items": [
+    {
+      "name": "background1",
+      "status": "composited-awaiting-review",
+      "completedRawTiles": [
+        "0-0",
+        "0-1",
+        "0-2",
+        "1-0",
+        "1-1",
+        "1-2"
+      ],
+      "runtimeIntegrated": false
+    },
+    {
+      "name": "background1unsodded",
+      "status": "cleanup-pending",
+      "completedRawTiles": [],
+      "runtimeIntegrated": false
+    },
+    {
+      "name": "background2",
+      "status": "composited-awaiting-review",
+      "completedRawTiles": [
+        "0-0",
+        "0-1",
+        "0-2",
+        "1-0",
+        "1-1",
+        "1-2"
+      ],
+      "runtimeIntegrated": false
+    },
+    {
+      "name": "background3",
+      "status": "cleanup-pending",
+      "completedRawTiles": [],
+      "runtimeIntegrated": false
+    },
+    {
+      "name": "background4",
+      "status": "cleanup-pending",
+      "completedRawTiles": [],
+      "runtimeIntegrated": false
+    },
+    {
+      "name": "background5",
+      "status": "composited-awaiting-review",
+      "completedRawTiles": [
+        "0-0",
+        "0-1",
+        "0-2",
+        "1-0",
+        "1-1",
+        "1-2"
+      ],
+      "runtimeIntegrated": false
+    },
+    {
+      "name": "background6boss",
+      "status": "composited-awaiting-review",
+      "completedRawTiles": [
+        "0-0",
+        "0-1",
+        "0-2",
+        "1-0",
+        "1-1",
+        "1-2"
+      ],
+      "runtimeIntegrated": false
+    },
+    {
+      "name": "aquarium1",
+      "status": "cleanup-pending",
+      "completedRawTiles": [],
+      "runtimeIntegrated": false
+    },
+    {
+      "name": "Background_MushroomGarden",
+      "status": "cleanup-pending",
+      "completedRawTiles": [],
+      "runtimeIntegrated": false
+    },
+    {
+      "name": "Background_Greenhouse",
+      "status": "cleanup-pending",
+      "completedRawTiles": [],
+      "runtimeIntegrated": false
+    },
+    {
+      "name": "Store_Background",
+      "status": "cleanup-pending",
+      "completedRawTiles": [],
+      "runtimeIntegrated": false
+    },
+    {
+      "name": "Store_BackgroundNight",
+      "status": "cleanup-pending",
+      "completedRawTiles": [],
+      "runtimeIntegrated": false
+    },
+    {
+      "name": "Challenge_Background",
+      "status": "cleanup-pending",
+      "completedRawTiles": [],
+      "runtimeIntegrated": false
+    }
+  ]
+}

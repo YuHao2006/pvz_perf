@@ -2,6 +2,74 @@
   "policy": "Preserve original pits, dents, chips and cracks; remove only invented dense fine hatching/grain. No broad blur or removal of original damage.",
   "items": [
     {
+      "name": "background1",
+      "variant": "clean-v2",
+      "master": "background1--clean-v2--ai-stitched-4x.png",
+      "candidate": "background1--clean-v2--ai-stitched-2x.png",
+      "tiles": [
+        {
+          "file": "tile-0-0--clean-v2.png",
+          "sha256": "e06915b3c08626aa47e517d4e6ffc1b41f49c33295c86191cba449bae698f5a7"
+        },
+        {
+          "file": "tile-0-1--clean-v2.png",
+          "sha256": "ccda081eeee4fc3e62e96f17cf94c40e769c154cd5e24431d6d9a508b5d6ce32"
+        },
+        {
+          "file": "tile-0-2--clean-v2.png",
+          "sha256": "bee9a097bf66e66af011f7aab7a3ba80eb382d49c204835dfe7691d926d47b96"
+        },
+        {
+          "file": "tile-1-0--clean-v2.png",
+          "sha256": "672360d71d465d320e3d5c615bd2eaf4d7e67f34cd9f1b5dd35957049c8fcdc9"
+        },
+        {
+          "file": "tile-1-1--clean-v2.png",
+          "sha256": "d5025798eab9d1633878b0449b89f4ee153ae382d6140b154f9fd8fbcd7de4f5"
+        },
+        {
+          "file": "tile-1-2--clean-v2.png",
+          "sha256": "c15b424288e588a35505abad5bff7478e35835e3487f41759a79fd4df179c86e"
+        }
+      ],
+      "runtimeIntegrated": false,
+      "status": "awaiting-human-review"
+    },
+    {
+      "name": "background2",
+      "variant": "clean-v2",
+      "master": "background2--clean-v2--ai-stitched-4x.png",
+      "candidate": "background2--clean-v2--ai-stitched-2x.png",
+      "tiles": [
+        {
+          "file": "tile-0-0--clean-v2.png",
+          "sha256": "5e24c4ae989ec80820980428806fa42ac1da51a541ec8306ae1e102bc64a15c8"
+        },
+        {
+          "file": "tile-0-1--clean-v2.png",
+          "sha256": "272a63da232efd80ceb8c6c2a658e096a295faff88b743601539f2a4b91efa84"
+        },
+        {
+          "file": "tile-0-2--clean-v2.png",
+          "sha256": "4c959881267c58fde974e3766d15b53bca353a555fb09ba4cf32189b27b9bd4b"
+        },
+        {
+          "file": "tile-1-0--clean-v2.png",
+          "sha256": "e6e1f1f74d59993fde69912a7fb6849c213fd2cc02e710153b397ad19276a1e3"
+        },
+        {
+          "file": "tile-1-1--clean-v2.png",
+          "sha256": "f85e2479334f97d48041e58c8483aa12b0cb241787e07cb759dcdfc147c40549"
+        },
+        {
+          "file": "tile-1-2--clean-v2.png",
+          "sha256": "650e2c0e038a8eeb0e962bf951074c206959d9c71586567a4645a01a2cb3952c"
+        }
+      ],
+      "runtimeIntegrated": false,
+      "status": "awaiting-human-review"
+    },
+    {
       "name": "background5",
       "variant": "clean-v2",
       "master": "background5--clean-v2--ai-stitched-4x.png",

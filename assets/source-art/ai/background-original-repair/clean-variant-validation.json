@@ -34,6 +34,40 @@
       ],
       "runtimeIntegrated": false,
       "status": "awaiting-human-review"
+    },
+    {
+      "name": "background6boss",
+      "variant": "clean-v2",
+      "master": "background6boss--clean-v2--ai-stitched-4x.png",
+      "candidate": "background6boss--clean-v2--ai-stitched-2x.png",
+      "tiles": [
+        {
+          "file": "tile-0-0--clean-v2.png",
+          "sha256": "b9645d138ddf9e481a35ebae57f3d01bd42acd6f32e7a352d798992c1ccad8e2"
+        },
+        {
+          "file": "tile-0-1--clean-v2.png",
+          "sha256": "04d0830b4dd0d36248f4ce7e96af9d1d2e256086725dde78bb387c6c88eba4fc"
+        },
+        {
+          "file": "tile-0-2--clean-v2.png",
+          "sha256": "adac75bb44f7d842473b398b208f0cbb69ec6e9a6457bd020ad7307c1965e24b"
+        },
+        {
+          "file": "tile-1-0--clean-v2.png",
+          "sha256": "05674f036c32d29ef7f02dc02cd021c94dc19097e18a03506a131c46b5581779"
+        },
+        {
+          "file": "tile-1-1--clean-v2.png",
+          "sha256": "3d1f5e2ea4011c44578191bd4668e8fd986a8b38fcb377765d04908ae3831198"
+        },
+        {
+          "file": "tile-1-2--clean-v2.png",
+          "sha256": "0be57b424bf5eeb47edc371c7d9d5ee3058e3f16d695b03310e7eb8219626b0a"
+        }
+      ],
+      "runtimeIntegrated": false,
+      "status": "awaiting-human-review"
     }
   ],
   "verification": "Image decoding, six raw tiles, master/candidate dimensions and exact Lanczos 4x-to-2x reduction. This does not prove artistic fidelity."

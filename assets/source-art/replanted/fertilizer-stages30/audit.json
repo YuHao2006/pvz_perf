@@ -3,7 +3,16 @@
   "missingRuntimeMapping": [
     "ZenGarden_fertilizer_bag4"
   ],
-  "fourthCandidate": "assets/source-art/replanted/reanim-source-round6/Fertilizer--3261f238d848.png",
+  "fourthCandidate": "assets/source-art/replanted/fertilizer-stages30/stage4--candidate-2x.png",
+  "fourthCandidateOrigin": "AI restoration of original fourth pose, styled against native third pose; not a located native fourth-stage image",
+  "fourthCandidateStatus": "awaiting-human-review; not integrated into runtime",
+  "rejectedFourthSource": {
+    "file": "assets/source-art/replanted/reanim-source-round6/Fertilizer--3261f238d848.png",
+    "reason": "This is the first bag pose, not the fourth open-flap pose. It must not be substituted for bag4."
+  },
+  "animationDefinition": "assets/definitions/reanim/units/ZenGarden_fertilizer.dsl",
+  "bagStageFrames": [0, 1, 2, 17],
+  "seedStageFrames": [[17, 18, 19, 20, 21, 22], [24, 25, 26, 27, 28, 29]],
   "currentMappings": [
     {
       "original": "assets/runtime/images/Fertilizer.png",

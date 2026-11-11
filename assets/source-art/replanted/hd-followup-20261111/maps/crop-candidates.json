@@ -25,11 +25,16 @@
       ],
       "preservesAspect": true,
       "foregroundOverlayLayersIncluded": false,
-      "status": "candidate-only-needs-grid-and-composition-review",
+      "status": "rejected",
       "notes": [
         "No LawnBush_OL / PowerPole_OL / PatioTable_OL / BBQ_OL / plant overlays merged.",
         "Transparent skyline and native-vs-original tile layout still need compositing/alignment; not installed in runtime."
-      ]
+      ],
+      "review": {
+        "status": "wrong",
+        "reason": "Original board has exactly 9 planting columns; crop trials do not align to original grid."
+      },
+      "requiredPlantingColumns": 9
     },
     {
       "original": "assets/runtime/images/background2.jpg",
@@ -56,11 +61,16 @@
       ],
       "preservesAspect": true,
       "foregroundOverlayLayersIncluded": false,
-      "status": "candidate-only-needs-grid-and-composition-review",
+      "status": "rejected",
       "notes": [
         "No LawnBush_OL / PowerPole_OL / PatioTable_OL / BBQ_OL / plant overlays merged.",
         "Transparent skyline and native-vs-original tile layout still need compositing/alignment; not installed in runtime."
-      ]
+      ],
+      "review": {
+        "status": "wrong",
+        "reason": "Original board has exactly 9 planting columns; crop trials do not align to original grid."
+      },
+      "requiredPlantingColumns": 9
     },
     {
       "original": "assets/runtime/images/background3.jpg",
@@ -87,11 +97,16 @@
       ],
       "preservesAspect": true,
       "foregroundOverlayLayersIncluded": false,
-      "status": "candidate-only-needs-grid-and-composition-review",
+      "status": "rejected",
       "notes": [
         "No LawnBush_OL / PowerPole_OL / PatioTable_OL / BBQ_OL / plant overlays merged.",
         "Transparent skyline and native-vs-original tile layout still need compositing/alignment; not installed in runtime."
-      ]
+      ],
+      "review": {
+        "status": "wrong",
+        "reason": "Original board has exactly 9 planting columns; crop trials do not align to original grid."
+      },
+      "requiredPlantingColumns": 9
     },
     {
       "original": "assets/runtime/images/background4.jpg",
@@ -118,11 +133,16 @@
       ],
       "preservesAspect": true,
       "foregroundOverlayLayersIncluded": false,
-      "status": "candidate-only-needs-grid-and-composition-review",
+      "status": "rejected",
       "notes": [
         "No LawnBush_OL / PowerPole_OL / PatioTable_OL / BBQ_OL / plant overlays merged.",
         "Transparent skyline and native-vs-original tile layout still need compositing/alignment; not installed in runtime."
-      ]
+      ],
+      "review": {
+        "status": "wrong",
+        "reason": "Original board has exactly 9 planting columns; crop trials do not align to original grid."
+      },
+      "requiredPlantingColumns": 9
     },
     {
       "original": "assets/runtime/images/background5.jpg",
@@ -149,11 +169,16 @@
       ],
       "preservesAspect": true,
       "foregroundOverlayLayersIncluded": false,
-      "status": "candidate-only-needs-grid-and-composition-review",
+      "status": "rejected",
       "notes": [
         "No LawnBush_OL / PowerPole_OL / PatioTable_OL / BBQ_OL / plant overlays merged.",
         "Transparent skyline and native-vs-original tile layout still need compositing/alignment; not installed in runtime."
-      ]
+      ],
+      "review": {
+        "status": "wrong",
+        "reason": "Original board has exactly 9 planting columns; crop trials do not align to original grid."
+      },
+      "requiredPlantingColumns": 9
     },
     {
       "original": "assets/runtime/images/background6boss.jpg",
@@ -180,11 +205,16 @@
       ],
       "preservesAspect": true,
       "foregroundOverlayLayersIncluded": false,
-      "status": "candidate-only-needs-grid-and-composition-review",
+      "status": "rejected",
       "notes": [
         "No LawnBush_OL / PowerPole_OL / PatioTable_OL / BBQ_OL / plant overlays merged.",
         "Transparent skyline and native-vs-original tile layout still need compositing/alignment; not installed in runtime."
-      ]
+      ],
+      "review": {
+        "status": "wrong",
+        "reason": "Original board has exactly 9 planting columns; crop trials do not align to original grid."
+      },
+      "requiredPlantingColumns": 9
     }
   ],
   "runtimeIntegrated": false

@@ -911,7 +911,7 @@
     },
     {
       "original": "assets/runtime/images/SelectorScreen_ZenGarden.png",
-      "file": "images/4517afd375fe7bf736133c58.png",
+      "file": "images/8cf0b517462a509dbba81652.png",
       "logicalSize": [
         191,
         163
@@ -920,32 +920,26 @@
         382,
         326
       ],
-      "source": "assets/source-art/replanted/sources-round4/SPR_MainMenu_Button_ZenGarden_EN.png",
-      "sourceSha256": "e81bf23ab124318797a04253a69604497280991e9470abc3a3ae2e5311a4af5e",
+      "source": "assets/source-art/ai/menu-watering-can-shop/candidates/SelectorScreen_ZenGarden--approved-aligned-4x.png",
+      "sourceSha256": "48056a69a1ab663626ec26008b908fbbf5bb2ffc446c78961f71352145a1c88f",
       "mapping": {
-        "pixelPerLogical": [
-          3.3717277486910993,
-          3.8220858895705523
-        ],
-        "sourceFrameOrigin": [
-          0.0,
-          0.0
-        ],
         "logicalDrawRect": [
-          0.0,
-          0.0,
-          191.0,
-          163.0
+          0,
+          0,
+          191,
+          163
         ],
         "originalLogicalCanvas": [
           191,
           163
         ]
-      }
+      },
+      "approvedSource": "assets/source-art/ai/menu-watering-can-shop/candidates/ZenGarden--normal-original-shadow-v3-4x.png",
+      "fixReason": "Approved original-style sprite. Watering can uses v1 AI art with program-composited original shadow. Normal/hover share exact alpha."
     },
     {
       "original": "assets/runtime/images/SelectorScreen_ZenGardenHighlight.png",
-      "file": "images/8a49feee05a20a753154b4b1.png",
+      "file": "images/2e5dc427102de36fdbd4b67e.png",
       "logicalSize": [
         191,
         163
@@ -954,28 +948,22 @@
         382,
         326
       ],
-      "source": "assets/source-art/replanted/sources-round4/SPR_MainMenu_Button_ZenGarden_Over_EN.png",
-      "sourceSha256": "0d4d4afecf318f66596dd2c17e8a97dd7fc6c95b95ce3e6fe7a315be048ba9dc",
+      "source": "assets/source-art/ai/menu-watering-can-shop/candidates/SelectorScreen_ZenGardenHighlight--approved-aligned-4x.png",
+      "sourceSha256": "3d002e6070e9abebf24bac4a06db7f6a335a5dddf9dd34ba3948cb009008ce98",
       "mapping": {
-        "pixelPerLogical": [
-          3.3769633507853403,
-          3.8220858895705523
-        ],
-        "sourceFrameOrigin": [
-          0.0,
-          0.0
-        ],
         "logicalDrawRect": [
-          0.0,
-          0.0,
-          191.0,
-          163.0
+          0,
+          0,
+          191,
+          163
         ],
         "originalLogicalCanvas": [
           191,
           163
         ]
-      }
+      },
+      "approvedSource": "assets/source-art/ai/menu-watering-can-shop/candidates/ZenGarden--hover-original-shadow-v3-4x.png",
+      "fixReason": "Approved original-style sprite. Watering can uses v1 AI art with program-composited original shadow. Normal/hover share exact alpha."
     },
     {
       "original": "assets/runtime/images/Shovel.png",
@@ -48734,7 +48722,7 @@
     },
     {
       "original": "assets/runtime/images/SelectorScreen_Store.png",
-      "file": "images/17896f8ba31006e0bf81f96f.png",
+      "file": "images/98da88d600c56670047bd565.png",
       "logicalSize": [
         130,
         89
@@ -48743,25 +48731,27 @@
         260,
         178
       ],
-      "source": "assets/source-art/replanted/ui-source-round23/SelectorScreen_Store--paired.png",
-      "sourceSha256": "c03872465a3fd8a216891d16468d608a5595629991c9af74cd590b8774d59aca",
+      "source": "assets/source-art/ai/menu-watering-can-shop/candidates/SelectorScreen_Store--approved-aligned-4x.png",
+      "sourceSha256": "586e69506b8f1f1dad671c96629aed7321b32590898f2e849c8d00aee12c2510",
       "mapping": {
         "logicalDrawRect": [
-          0.6289308176100548,
-          -0.2798742138364787,
-          128.7421383647799,
-          89.83962264150944
+          0,
+          0,
+          130,
+          89
         ],
         "originalLogicalCanvas": [
           130,
           89
         ]
       },
-      "approvedRound": 23
+      "approvedRound": 23,
+      "approvedSource": "assets/source-art/ai/menu-watering-can-shop/candidates/Store--normal-ai-v2.png",
+      "fixReason": "Approved original-style sprite. Watering can uses v1 AI art with program-composited original shadow. Normal/hover share exact alpha."
     },
     {
       "original": "assets/runtime/images/SelectorScreen_StoreHighlight.png",
-      "file": "images/bc8103156f12f4bacae3708d.png",
+      "file": "images/73d828621c67a3c6d72f3f06.png",
       "logicalSize": [
         130,
         89
@@ -48770,21 +48760,23 @@
         260,
         178
       ],
-      "source": "assets/source-art/replanted/ui-source-round23/SelectorScreen_StoreHighlight--paired.png",
-      "sourceSha256": "9831c317c0d9a7cb44a1fe206e887bdb8e140b0004f25c37f0a4acd6aa6e9643",
+      "source": "assets/source-art/ai/menu-watering-can-shop/candidates/SelectorScreen_StoreHighlight--approved-aligned-4x.png",
+      "sourceSha256": "77f430276c53ec8d76ac4e2d274e64cbf02b8af1f9e287fc2cae164a1ca58c79",
       "mapping": {
         "logicalDrawRect": [
-          0.6289308176100548,
-          -0.2798742138364787,
-          128.7421383647799,
-          89.83962264150944
+          0,
+          0,
+          130,
+          89
         ],
         "originalLogicalCanvas": [
           130,
           89
         ]
       },
-      "approvedRound": 23
+      "approvedRound": 23,
+      "approvedSource": "assets/source-art/ai/menu-watering-can-shop/candidates/Store--hover-ai-v2.png",
+      "fixReason": "Approved original-style sprite. Watering can uses v1 AI art with program-composited original shadow. Normal/hover share exact alpha."
     },
     {
       "original": "assets/runtime/images/Achievements_pedestal.png",

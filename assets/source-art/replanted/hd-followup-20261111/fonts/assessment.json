@@ -1,6 +1,6 @@
 {
   "feasible": true,
-  "runtimeStatus": "not integrated",
+  "runtimeStatus": "not integrated; Dwarven candidate rejected, other three samples approved",
   "integrationRequirement": "Font image loading currently lacks explicit logical-vs-physical extent metadata. Add it at resource build / font load time, not per glyph draw. Preserve old logical metrics and bitmap glyph rectangles. No save changes.",
   "samples": [
     {
@@ -430,7 +430,12 @@
         }
       ],
       "advancesOffsetsKerningUnchanged": true,
-      "purpose": "Prototype only: preserve old logical glyph rectangles, offsets, advances and kerning while rasterizing from TTF. Not integrated."
+      "purpose": "Prototype only: preserve old logical glyph rectangles, offsets, advances and kerning while rasterizing from TTF. Not integrated.",
+      "review": {
+        "status": "wrong",
+        "source": "User review in chat",
+        "note": "Mini-Games / SURVIVAL ENDLESS / 12 group rejected"
+      }
     },
     {
       "font": "briannetod16",
@@ -761,7 +766,12 @@
         }
       ],
       "advancesOffsetsKerningUnchanged": true,
-      "purpose": "Prototype only: preserve old logical glyph rectangles, offsets, advances and kerning while rasterizing from TTF. Not integrated."
+      "purpose": "Prototype only: preserve old logical glyph rectangles, offsets, advances and kerning while rasterizing from TTF. Not integrated.",
+      "review": {
+        "status": "approved",
+        "source": "User review in chat",
+        "note": "Other font sample approved"
+      }
     },
     {
       "font": "houseofterror20",
@@ -1036,7 +1046,12 @@
         }
       ],
       "advancesOffsetsKerningUnchanged": true,
-      "purpose": "Prototype only: preserve old logical glyph rectangles, offsets, advances and kerning while rasterizing from TTF. Not integrated."
+      "purpose": "Prototype only: preserve old logical glyph rectangles, offsets, advances and kerning while rasterizing from TTF. Not integrated.",
+      "review": {
+        "status": "approved",
+        "source": "User review in chat",
+        "note": "Other font sample approved"
+      }
     },
     {
       "font": "continuumbold14",
@@ -1255,7 +1270,12 @@
         }
       ],
       "advancesOffsetsKerningUnchanged": true,
-      "purpose": "Prototype only: preserve old logical glyph rectangles, offsets, advances and kerning while rasterizing from TTF. Not integrated."
+      "purpose": "Prototype only: preserve old logical glyph rectangles, offsets, advances and kerning while rasterizing from TTF. Not integrated.",
+      "review": {
+        "status": "approved",
+        "source": "User review in chat",
+        "note": "Other font sample approved"
+      }
     }
   ]
 }

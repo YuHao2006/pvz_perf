@@ -6,7 +6,7 @@
     "Anime4K UL x2",
     "AI minimal repair"
   ],
-  "status": "awaiting-user-review",
+  "status": "approved-and-integrated",
   "items": [
     {
       "id": "round26:48056a69a1ab663626",
@@ -34,7 +34,13 @@
         764,
         652
       ],
-      "sha256": "48056a69a1ab663626ec26008b908fbbf5bb2ffc446c78961f71352145a1c88f"
+      "sha256": "48056a69a1ab663626ec26008b908fbbf5bb2ffc446c78961f71352145a1c88f",
+      "review": {
+        "status": "approved",
+        "source": "User: 其他全部通过"
+      },
+      "runtimeIntegrated": true,
+      "runtimeFile": "images/8cf0b517462a509dbba81652.png"
     },
     {
       "id": "round26:3d002e6070e9abebf2",
@@ -62,7 +68,13 @@
         764,
         652
       ],
-      "sha256": "3d002e6070e9abebf24bac4a06db7f6a335a5dddf9dd34ba3948cb009008ce98"
+      "sha256": "3d002e6070e9abebf24bac4a06db7f6a335a5dddf9dd34ba3948cb009008ce98",
+      "review": {
+        "status": "approved",
+        "source": "User: 其他全部通过"
+      },
+      "runtimeIntegrated": true,
+      "runtimeFile": "images/2e5dc427102de36fdbd4b67e.png"
     },
     {
       "id": "round26:80ac27e74b12cf3baf",
@@ -90,7 +102,13 @@
         1516,
         1038
       ],
-      "sha256": "80ac27e74b12cf3bafc6b676df69e2da9307d28d4caa382f3264d4d477b1838c"
+      "sha256": "80ac27e74b12cf3bafc6b676df69e2da9307d28d4caa382f3264d4d477b1838c",
+      "review": {
+        "status": "approved",
+        "source": "User: 其他全部通过"
+      },
+      "runtimeIntegrated": true,
+      "runtimeFile": "images/98da88d600c56670047bd565.png"
     },
     {
       "id": "round26:eafdfcb3aaa6b36a11",
@@ -118,7 +136,13 @@
         1515,
         1038
       ],
-      "sha256": "eafdfcb3aaa6b36a11f0bca2a1fb17b9c6ccf0955b24bd06e47862e54c6464f6"
+      "sha256": "eafdfcb3aaa6b36a11f0bca2a1fb17b9c6ccf0955b24bd06e47862e54c6464f6",
+      "review": {
+        "status": "approved",
+        "source": "User: 其他全部通过"
+      },
+      "runtimeIntegrated": true,
+      "runtimeFile": "images/73d828621c67a3c6d72f3f06.png"
     }
   ]
 }

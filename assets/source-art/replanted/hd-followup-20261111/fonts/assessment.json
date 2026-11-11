@@ -435,6 +435,12 @@
         "status": "wrong",
         "source": "User review in chat",
         "note": "Mini-Games / SURVIVAL ENDLESS / 12 group rejected"
+      },
+      "glyphShapeReview": "approved by user; previous rejection concerned size/overlap",
+      "sizeFixCandidate": {
+        "image": "assets/source-art/replanted/hd-followup-20261111/fonts/dwarventodcraft18--fill-bounds-v2.png",
+        "status": "awaiting-review",
+        "method": "fit original white fill, exclude outline/shadow"
       }
     },
     {

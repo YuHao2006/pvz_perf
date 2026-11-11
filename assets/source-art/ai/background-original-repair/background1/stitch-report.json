@@ -81,7 +81,10 @@
   ],
   "overlapPixels": 192,
   "paletteCorrection": "original low frequency + AI high frequency",
+  "preservedPoolBlankPixels": 0,
   "tool": "built-in image_gen",
   "prompt": "Prefer sunburst if routing permits. Conservative original-style repair only; preserve every object coordinate, geometry, crop, palette, lawn columns and outer edge band. Smooth Anime4K artifacts; no redesign or new objects.",
-  "limitations": "AI can locally move contours despite fixed canvas. Composite requires visual review before runtime use."
+  "limitations": "AI can locally move contours despite fixed canvas. Composite requires visual review before runtime use.",
+  "stitching": "Minimum-error dynamic-programming seams in 192px overlaps; 4px transition to avoid displaced contour ghosting",
+  "resampling": "Uniform fit and centered crop, never independent axis scaling"
 }

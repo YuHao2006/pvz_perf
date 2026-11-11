@@ -147,7 +147,7 @@
             1962,
             1296
           ],
-          "status": "awaiting-ai"
+          "status": "ai-generated-awaiting-composite-review"
         },
         {
           "file": "tile-0-1.png",
@@ -163,7 +163,7 @@
             3829,
             1296
           ],
-          "status": "awaiting-ai"
+          "status": "ai-generated-awaiting-composite-review"
         },
         {
           "file": "tile-0-2.png",
@@ -179,7 +179,7 @@
             5600,
             1296
           ],
-          "status": "awaiting-ai"
+          "status": "ai-generated-awaiting-composite-review"
         },
         {
           "file": "tile-1-0.png",
@@ -195,7 +195,7 @@
             1962,
             2400
           ],
-          "status": "awaiting-ai"
+          "status": "ai-generated-awaiting-composite-review"
         },
         {
           "file": "tile-1-1.png",
@@ -211,7 +211,7 @@
             3829,
             2400
           ],
-          "status": "awaiting-ai"
+          "status": "ai-generated-awaiting-composite-review"
         },
         {
           "file": "tile-1-2.png",
@@ -227,7 +227,7 @@
             5600,
             2400
           ],
-          "status": "awaiting-ai"
+          "status": "ai-generated-awaiting-composite-review"
         }
       ]
     },
@@ -369,7 +369,7 @@
             1962,
             1296
           ],
-          "status": "awaiting-ai"
+          "status": "ai-generated-awaiting-composite-review"
         },
         {
           "file": "tile-0-1.png",
@@ -385,7 +385,7 @@
             3829,
             1296
           ],
-          "status": "awaiting-ai"
+          "status": "ai-generated-awaiting-composite-review"
         },
         {
           "file": "tile-0-2.png",
@@ -401,7 +401,7 @@
             5600,
             1296
           ],
-          "status": "awaiting-ai"
+          "status": "ai-generated-awaiting-composite-review"
         },
         {
           "file": "tile-1-0.png",
@@ -417,7 +417,7 @@
             1962,
             2400
           ],
-          "status": "awaiting-ai"
+          "status": "ai-generated-awaiting-composite-review"
         },
         {
           "file": "tile-1-1.png",
@@ -433,7 +433,7 @@
             3829,
             2400
           ],
-          "status": "awaiting-ai"
+          "status": "ai-generated-awaiting-composite-review"
         },
         {
           "file": "tile-1-2.png",
@@ -449,7 +449,7 @@
             5600,
             2400
           ],
-          "status": "awaiting-ai"
+          "status": "ai-generated-awaiting-composite-review"
         }
       ]
     },
@@ -480,7 +480,7 @@
             1962,
             1296
           ],
-          "status": "awaiting-ai"
+          "status": "ai-generated-awaiting-composite-review"
         },
         {
           "file": "tile-0-1.png",
@@ -496,7 +496,7 @@
             3829,
             1296
           ],
-          "status": "awaiting-ai"
+          "status": "ai-generated-awaiting-composite-review"
         },
         {
           "file": "tile-0-2.png",
@@ -512,7 +512,7 @@
             5600,
             1296
           ],
-          "status": "awaiting-ai"
+          "status": "ai-generated-awaiting-composite-review"
         },
         {
           "file": "tile-1-0.png",
@@ -528,7 +528,7 @@
             1962,
             2400
           ],
-          "status": "awaiting-ai"
+          "status": "ai-generated-awaiting-composite-review"
         },
         {
           "file": "tile-1-1.png",
@@ -544,7 +544,7 @@
             3829,
             2400
           ],
-          "status": "awaiting-ai"
+          "status": "ai-generated-awaiting-composite-review"
         },
         {
           "file": "tile-1-2.png",
@@ -560,7 +560,7 @@
             5600,
             2400
           ],
-          "status": "awaiting-ai"
+          "status": "ai-generated-awaiting-composite-review"
         }
       ]
     },
@@ -591,7 +591,7 @@
             1962,
             1296
           ],
-          "status": "awaiting-ai"
+          "status": "ai-generated-awaiting-composite-review"
         },
         {
           "file": "tile-0-1.png",
@@ -607,7 +607,7 @@
             3829,
             1296
           ],
-          "status": "awaiting-ai"
+          "status": "ai-generated-awaiting-composite-review"
         },
         {
           "file": "tile-0-2.png",
@@ -623,7 +623,7 @@
             5600,
             1296
           ],
-          "status": "awaiting-ai"
+          "status": "ai-generated-awaiting-composite-review"
         },
         {
           "file": "tile-1-0.png",
@@ -639,7 +639,7 @@
             1962,
             2400
           ],
-          "status": "awaiting-ai"
+          "status": "ai-generated-awaiting-composite-review"
         },
         {
           "file": "tile-1-1.png",
@@ -655,7 +655,7 @@
             3829,
             2400
           ],
-          "status": "awaiting-ai"
+          "status": "ai-generated-awaiting-composite-review"
         },
         {
           "file": "tile-1-2.png",
@@ -671,7 +671,7 @@
             5600,
             2400
           ],
-          "status": "awaiting-ai"
+          "status": "ai-generated-awaiting-composite-review"
         }
       ]
     },
@@ -702,7 +702,7 @@
             1962,
             1296
           ],
-          "status": "awaiting-ai"
+          "status": "ai-generated-awaiting-composite-review"
         },
         {
           "file": "tile-0-1.png",
@@ -718,7 +718,7 @@
             3829,
             1296
           ],
-          "status": "awaiting-ai"
+          "status": "ai-generated-awaiting-composite-review"
         },
         {
           "file": "tile-0-2.png",
@@ -734,7 +734,7 @@
             5600,
             1296
           ],
-          "status": "awaiting-ai"
+          "status": "ai-generated-awaiting-composite-review"
         },
         {
           "file": "tile-1-0.png",
@@ -750,7 +750,7 @@
             1962,
             2400
           ],
-          "status": "awaiting-ai"
+          "status": "ai-generated-awaiting-composite-review"
         },
         {
           "file": "tile-1-1.png",
@@ -766,7 +766,7 @@
             3829,
             2400
           ],
-          "status": "awaiting-ai"
+          "status": "ai-generated-awaiting-composite-review"
         },
         {
           "file": "tile-1-2.png",
@@ -782,7 +782,7 @@
             5600,
             2400
           ],
-          "status": "awaiting-ai"
+          "status": "ai-generated-awaiting-composite-review"
         }
       ]
     },
@@ -813,7 +813,7 @@
             1962,
             1296
           ],
-          "status": "awaiting-ai"
+          "status": "ai-generated-awaiting-composite-review"
         },
         {
           "file": "tile-0-1.png",
@@ -829,7 +829,7 @@
             3829,
             1296
           ],
-          "status": "awaiting-ai"
+          "status": "ai-generated-awaiting-composite-review"
         },
         {
           "file": "tile-0-2.png",
@@ -845,7 +845,7 @@
             5600,
             1296
           ],
-          "status": "awaiting-ai"
+          "status": "ai-generated-awaiting-composite-review"
         },
         {
           "file": "tile-1-0.png",
@@ -861,7 +861,7 @@
             1962,
             2400
           ],
-          "status": "awaiting-ai"
+          "status": "ai-generated-awaiting-composite-review"
         },
         {
           "file": "tile-1-1.png",
@@ -877,7 +877,7 @@
             3829,
             2400
           ],
-          "status": "awaiting-ai"
+          "status": "ai-generated-awaiting-composite-review"
         },
         {
           "file": "tile-1-2.png",
@@ -893,7 +893,7 @@
             5600,
             2400
           ],
-          "status": "awaiting-ai"
+          "status": "ai-generated-awaiting-composite-review"
         }
       ]
     },
@@ -924,7 +924,7 @@
             1962,
             1296
           ],
-          "status": "awaiting-ai"
+          "status": "ai-generated-awaiting-composite-review"
         },
         {
           "file": "tile-0-1.png",
@@ -940,7 +940,7 @@
             3829,
             1296
           ],
-          "status": "awaiting-ai"
+          "status": "ai-generated-awaiting-composite-review"
         },
         {
           "file": "tile-0-2.png",
@@ -956,7 +956,7 @@
             5600,
             1296
           ],
-          "status": "awaiting-ai"
+          "status": "ai-generated-awaiting-composite-review"
         },
         {
           "file": "tile-1-0.png",
@@ -972,7 +972,7 @@
             1962,
             2400
           ],
-          "status": "awaiting-ai"
+          "status": "ai-generated-awaiting-composite-review"
         },
         {
           "file": "tile-1-1.png",
@@ -988,7 +988,7 @@
             3829,
             2400
           ],
-          "status": "awaiting-ai"
+          "status": "ai-generated-awaiting-composite-review"
         },
         {
           "file": "tile-1-2.png",
@@ -1004,7 +1004,7 @@
             5600,
             2400
           ],
-          "status": "awaiting-ai"
+          "status": "ai-generated-awaiting-composite-review"
         }
       ]
     },
@@ -1035,7 +1035,7 @@
             1962,
             1296
           ],
-          "status": "awaiting-ai"
+          "status": "ai-generated-awaiting-composite-review"
         },
         {
           "file": "tile-0-1.png",
@@ -1051,7 +1051,7 @@
             3829,
             1296
           ],
-          "status": "awaiting-ai"
+          "status": "ai-generated-awaiting-composite-review"
         },
         {
           "file": "tile-0-2.png",
@@ -1067,7 +1067,7 @@
             5600,
             1296
           ],
-          "status": "awaiting-ai"
+          "status": "ai-generated-awaiting-composite-review"
         },
         {
           "file": "tile-1-0.png",
@@ -1083,7 +1083,7 @@
             1962,
             2400
           ],
-          "status": "awaiting-ai"
+          "status": "ai-generated-awaiting-composite-review"
         },
         {
           "file": "tile-1-1.png",
@@ -1099,7 +1099,7 @@
             3829,
             2400
           ],
-          "status": "awaiting-ai"
+          "status": "ai-generated-awaiting-composite-review"
         },
         {
           "file": "tile-1-2.png",
@@ -1115,7 +1115,7 @@
             5600,
             2400
           ],
-          "status": "awaiting-ai"
+          "status": "ai-generated-awaiting-composite-review"
         }
       ]
     }

@@ -8,6 +8,7 @@
 - Zombatar 暂时整套保留原分辨率；共享部件通过构建期别名隔离，不影响普通僵尸的高清素材。
 - 生成图集使用实际像素计算 UV，绘制宽高和动画坐标使用原版逻辑像素。缓存的角色缩略图同样保存两倍像素。
 - `cards` 是已审核的完整竖版卡牌；价格仍由游戏绘制。未提供完整卡牌的类型沿用原绘制路径。
+- `fonts.json` 是高清字体图层映射。BrianneTod、DwarvenTodcraft、HouseofTerror、Continuum 共十八份字体定义使用两倍像素纹理；四倍母图与原始字形指标保留在 source-art。字身按原亮色笔画范围生成，字符逻辑宽高、基线、偏移、字距和图层颜色保持原值。字体编译格式 v2 在加载时区分物理纹理尺寸与逻辑尺寸，逐字绘制路径不增加分支；未替换字体仍使用 v1。
 
 开发期间 `assets/definitions/ResourceBuild.pvzbuild` 使用 `solver maxrects` 快速装箱；定版前可切为 `solver exact` 做面积优化。两种方式均禁止旋转，并限制图集宽高不超过 4096。
 

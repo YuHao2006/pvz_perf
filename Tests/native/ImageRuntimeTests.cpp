@@ -4325,6 +4325,38 @@ void SurvivalRulesRuntime(TestApp& app)
             Require(int(board.mBackground)==background&&board.mSunMoney==50&&board.mNumWaves==(normal?10:20),
                 "Survival initial background, sun or wave count differs from its rule");
             Require(board.IsSurvivalStageWithRepick()&&!board.IsFinalSurvivalStage(),"Survival first round cannot be a final stage");
+            // Exercise the production roster selector across seeds and the
+            // retail four-/ten-flag boundaries; never mutate player saves.
+            if (hz == 100) {
+                const int oldStage=challenge.mSurvivalStage,oldSeed=board.mBoardRandSeed;
+                int giantAfterFour=0,iceAfterFour=0,redAfterTen=0;
+                for (const int stage:{1,2,3,4,5,10})
+                for (int seed=0;seed<256;++seed) {
+                    if(normal&&stage>4) continue; // Normal survival ends after stage four.
+                    challenge.mSurvivalStage=stage;board.mBoardRandSeed=seed;
+                    std::fill(std::begin(board.mZombieAllowed),std::end(board.mZombieAllowed),false);
+                    challenge.InitZombieWavesSurvival();
+                    const int flags=board.GetSurvivalFlagsCompleted();
+                    Require(flags>=4||(!board.mZombieAllowed[ZOMBIE_GARGANTUAR]&&!board.mZombieAllowed[ZOMBIE_ZAMBONI]),
+                        "Survival roster admitted giant/ice machine before four completed flags");
+                    Require(flags>=10||!board.mZombieAllowed[ZOMBIE_REDEYE_GARGANTUAR],
+                        "Survival roster admitted red-eye before ten completed flags");
+                    Require(board.StageHasPool()||(!board.mZombieAllowed[ZOMBIE_SNORKEL]&&!board.mZombieAllowed[ZOMBIE_DOLPHIN_RIDER]),
+                        "Dry survival roster admitted water-only zombies");
+                    Require(!board.StageHasRoof()||(!board.mZombieAllowed[ZOMBIE_DIGGER]&&!board.mZombieAllowed[ZOMBIE_DANCER]),
+                        "Roof survival roster admitted digger/dancer");
+                    Require(!board.StageHasGraveStones()||!board.mZombieAllowed[ZOMBIE_ZAMBONI],
+                        "Grave survival roster admitted ice machine");
+                    if(flags==4) {giantAfterFour+=board.mZombieAllowed[ZOMBIE_GARGANTUAR];iceAfterFour+=board.mZombieAllowed[ZOMBIE_ZAMBONI];}
+                    if(flags==10) redAfterTen+=board.mZombieAllowed[ZOMBIE_REDEYE_GARGANTUAR];
+                }
+                if(endless&&background==2)
+                    Require(giantAfterFour>0&&iceAfterFour>0&&redAfterTen>0,"Survival threshold fix permanently excluded late zombies");
+                challenge.mSurvivalStage=oldStage;board.mBoardRandSeed=oldSeed;
+                std::fill(std::begin(board.mZombieAllowed),std::end(board.mZombieAllowed),false);
+                challenge.InitZombieWaves();board.PickZombieWaves();
+                std::cout<<"PASS survival roster boundaries mode="<<mode<<" seeds=256 stages=6\n";
+            }
             // InitLevel precedes normal seed selection. Supply a legal chosen
             // bank before exercising the real repick constructor, which saves
             // each chosen seed's cooldown into its authored seed slot.

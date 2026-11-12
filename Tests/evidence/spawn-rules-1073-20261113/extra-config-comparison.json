@@ -1,0 +1,123 @@
+{
+  "exeSha256": "5f650f52d12751e08b63e590edb0d9b9f09d087cea900baa0eb39e4af8eda251",
+  "method": "Untouched 1073 Whack-a-Zombie machine code from 0x428b00 to 0x428c99 initializes four probability arrays in an isolated Unicorn x86 stack; boss roster read from the PE-mapped table. No original process/save access.",
+  "rows": [
+    {
+      "name": "aTripleChance",
+      "retailStackOffset": "0x28",
+      "retail": [
+        0,
+        0,
+        0,
+        0,
+        10,
+        13
+      ],
+      "project": [
+        0,
+        0,
+        0,
+        0,
+        10,
+        13
+      ],
+      "equal": true
+    },
+    {
+      "name": "aConeChance",
+      "retailStackOffset": "0x40",
+      "retail": [
+        0,
+        0,
+        30,
+        30,
+        30,
+        30
+      ],
+      "project": [
+        0,
+        0,
+        30,
+        30,
+        30,
+        30
+      ],
+      "equal": true
+    },
+    {
+      "name": "aDoubleChance",
+      "retailStackOffset": "0x58",
+      "retail": [
+        0,
+        30,
+        10,
+        10,
+        15,
+        18
+      ],
+      "project": [
+        0,
+        30,
+        10,
+        10,
+        15,
+        18
+      ],
+      "equal": true
+    },
+    {
+      "name": "aPailChance",
+      "retailStackOffset": "0x70",
+      "retail": [
+        0,
+        0,
+        0,
+        10,
+        15,
+        15
+      ],
+      "project": [
+        0,
+        0,
+        0,
+        10,
+        15,
+        15
+      ],
+      "equal": true
+    },
+    {
+      "name": "gBossZombieList",
+      "retailAddress": "0x71bf48",
+      "retail": [
+        2,
+        4,
+        7,
+        3,
+        15,
+        21,
+        12,
+        22,
+        18,
+        5,
+        6,
+        23
+      ],
+      "project": [
+        2,
+        4,
+        7,
+        3,
+        15,
+        21,
+        12,
+        22,
+        18,
+        5,
+        6,
+        23
+      ],
+      "equal": true
+    }
+  ]
+}

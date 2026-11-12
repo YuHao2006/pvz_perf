@@ -1,0 +1,1349 @@
+{
+  "method": "Execute untouched 1073 x86 selector and leaf predicates in Unicorn; isolated synthetic Board/App/Profile memory; survival stage zero; stop only after RET",
+  "entry": "0x428370",
+  "exeSha256": "5f650f52d12751e08b63e590edb0d9b9f09d087cea900baa0eb39e4af8eda251",
+  "rows": [
+    {
+      "mode": "GAMEMODE_MINIGAME_BEGHOULED",
+      "retailMode": 20,
+      "retailMachineCodeSelectedTypes": [
+        0,
+        2,
+        4,
+        5,
+        6,
+        7
+      ],
+      "projectSelectedTypes": [
+        0,
+        2,
+        4,
+        5,
+        6,
+        7
+      ],
+      "equal": true,
+      "retailWaveCount": 40,
+      "projectWaveCount": 40,
+      "waveCountEqual": true
+    },
+    {
+      "mode": "GAMEMODE_MINIGAME_BEGHOULED_TWIST",
+      "retailMode": 24,
+      "retailMachineCodeSelectedTypes": [
+        0,
+        2,
+        4,
+        5,
+        6,
+        7
+      ],
+      "projectSelectedTypes": [
+        0,
+        2,
+        4,
+        5,
+        6,
+        7
+      ],
+      "equal": true,
+      "retailWaveCount": 40,
+      "projectWaveCount": 40,
+      "waveCountEqual": true
+    },
+    {
+      "mode": "GAMEMODE_MINIGAME_BOBSLED_BONANZA",
+      "retailMode": 28,
+      "retailMachineCodeSelectedTypes": [
+        12,
+        13
+      ],
+      "projectSelectedTypes": [
+        12,
+        13
+      ],
+      "equal": true,
+      "retailWaveCount": 40,
+      "projectWaveCount": 40,
+      "waveCountEqual": true
+    },
+    {
+      "mode": "GAMEMODE_MINIGAME_COLUMN",
+      "retailMode": 27,
+      "retailMachineCodeSelectedTypes": [
+        0,
+        2,
+        4,
+        7
+      ],
+      "projectSelectedTypes": [
+        0,
+        2,
+        4,
+        7
+      ],
+      "equal": true,
+      "retailWaveCount": 30,
+      "projectWaveCount": 30,
+      "waveCountEqual": true
+    },
+    {
+      "mode": "GAMEMODE_MINIGAME_FINAL_BOSS",
+      "retailMode": 35,
+      "retailMachineCodeSelectedTypes": [
+        0,
+        2,
+        4
+      ],
+      "projectSelectedTypes": [
+        0,
+        2,
+        4
+      ],
+      "equal": true,
+      "retailWaveCount": 40,
+      "projectWaveCount": 40,
+      "waveCountEqual": true
+    },
+    {
+      "mode": "GAMEMODE_MINIGAME_INVISIGHOUL",
+      "retailMode": 21,
+      "retailMachineCodeSelectedTypes": [
+        0,
+        2,
+        4,
+        12,
+        14,
+        15
+      ],
+      "projectSelectedTypes": [
+        0,
+        2,
+        4,
+        12,
+        14,
+        15
+      ],
+      "equal": true,
+      "retailWaveCount": 20,
+      "projectWaveCount": 20,
+      "waveCountEqual": true
+    },
+    {
+      "mode": "GAMEMODE_MINIGAME_LAST_STAND",
+      "retailMode": 31,
+      "retailMachineCodeSelectedTypes": [
+        0,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        14,
+        15,
+        21
+      ],
+      "projectSelectedTypes": [
+        0,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        14,
+        15,
+        21
+      ],
+      "equal": true,
+      "retailWaveCount": 10,
+      "projectWaveCount": 10,
+      "waveCountEqual": true
+    },
+    {
+      "mode": "GAMEMODE_MINIGAME_LITTLE_TROUBLE",
+      "retailMode": 25,
+      "retailMachineCodeSelectedTypes": [
+        0,
+        2,
+        7,
+        11
+      ],
+      "projectSelectedTypes": [
+        0,
+        2,
+        7,
+        11
+      ],
+      "equal": true,
+      "retailWaveCount": 30,
+      "projectWaveCount": 30,
+      "waveCountEqual": true
+    },
+    {
+      "mode": "GAMEMODE_MINIGAME_POGO_PARTY",
+      "retailMode": 34,
+      "retailMachineCodeSelectedTypes": [
+        18
+      ],
+      "projectSelectedTypes": [
+        18
+      ],
+      "equal": true,
+      "retailWaveCount": 30,
+      "projectWaveCount": 30,
+      "waveCountEqual": true
+    },
+    {
+      "mode": "GAMEMODE_MINIGAME_PORTAL_COMBAT",
+      "retailMode": 26,
+      "retailMachineCodeSelectedTypes": [
+        0,
+        4,
+        7,
+        16
+      ],
+      "projectSelectedTypes": [
+        0,
+        4,
+        7,
+        16
+      ],
+      "equal": true,
+      "retailWaveCount": 20,
+      "projectWaveCount": 20,
+      "waveCountEqual": true
+    },
+    {
+      "mode": "GAMEMODE_MINIGAME_RAINING_SEEDS",
+      "retailMode": 19,
+      "retailMachineCodeSelectedTypes": [
+        0,
+        2,
+        4,
+        5,
+        6,
+        7,
+        15,
+        20
+      ],
+      "projectSelectedTypes": [
+        0,
+        2,
+        4,
+        5,
+        6,
+        7,
+        15,
+        20
+      ],
+      "equal": true,
+      "retailWaveCount": 40,
+      "projectWaveCount": 40,
+      "waveCountEqual": true
+    },
+    {
+      "mode": "GAMEMODE_MINIGAME_SEEING_STARS",
+      "retailMode": 22,
+      "retailMachineCodeSelectedTypes": [
+        0,
+        2,
+        4
+      ],
+      "projectSelectedTypes": [
+        0,
+        2,
+        4
+      ],
+      "equal": true,
+      "retailWaveCount": 40,
+      "projectWaveCount": 40,
+      "waveCountEqual": true
+    },
+    {
+      "mode": "GAMEMODE_MINIGAME_SLOT_MACHINE",
+      "retailMode": 18,
+      "retailMachineCodeSelectedTypes": [
+        0,
+        2,
+        4
+      ],
+      "projectSelectedTypes": [
+        0,
+        2,
+        4
+      ],
+      "equal": true,
+      "retailWaveCount": 40,
+      "projectWaveCount": 40,
+      "waveCountEqual": true
+    },
+    {
+      "mode": "GAMEMODE_MINIGAME_SPEED",
+      "retailMode": 29,
+      "retailMachineCodeSelectedTypes": [
+        0,
+        2,
+        3,
+        14
+      ],
+      "projectSelectedTypes": [
+        0,
+        2,
+        3,
+        14
+      ],
+      "equal": true,
+      "retailWaveCount": 40,
+      "projectWaveCount": 40,
+      "waveCountEqual": true
+    },
+    {
+      "mode": "GAMEMODE_MINIGAME_WALLNUT_BOWLING",
+      "retailMode": 17,
+      "retailMachineCodeSelectedTypes": [
+        0,
+        2,
+        3,
+        4,
+        5
+      ],
+      "projectSelectedTypes": [
+        0,
+        2,
+        3,
+        4,
+        5
+      ],
+      "equal": true,
+      "retailWaveCount": 20,
+      "projectWaveCount": 20,
+      "waveCountEqual": true
+    },
+    {
+      "mode": "GAMEMODE_MINIGAME_WALLNUT_BOWLING_2",
+      "retailMode": 33,
+      "retailMachineCodeSelectedTypes": [
+        0,
+        2,
+        3,
+        4,
+        5,
+        6,
+        8
+      ],
+      "projectSelectedTypes": [
+        0,
+        2,
+        3,
+        4,
+        5,
+        6,
+        8
+      ],
+      "equal": true,
+      "retailWaveCount": 30,
+      "projectWaveCount": 30,
+      "waveCountEqual": true
+    },
+    {
+      "mode": "GAMEMODE_MINIGAME_WAR_AND_PEAS",
+      "retailMode": 16,
+      "retailMachineCodeSelectedTypes": [
+        26,
+        27
+      ],
+      "projectSelectedTypes": [
+        26,
+        27
+      ],
+      "equal": true,
+      "retailWaveCount": 20,
+      "projectWaveCount": 20,
+      "waveCountEqual": true
+    },
+    {
+      "mode": "GAMEMODE_MINIGAME_WAR_AND_PEAS_2",
+      "retailMode": 32,
+      "retailMachineCodeSelectedTypes": [
+        26,
+        27,
+        28,
+        29,
+        30,
+        31
+      ],
+      "projectSelectedTypes": [
+        26,
+        27,
+        28,
+        29,
+        30,
+        31
+      ],
+      "equal": true,
+      "retailWaveCount": 30,
+      "projectWaveCount": 30,
+      "waveCountEqual": true
+    },
+    {
+      "mode": "GAMEMODE_MINIGAME_WHACK_A_ZOMBIE",
+      "retailMode": 30,
+      "retailMachineCodeSelectedTypes": [
+        0,
+        2,
+        4
+      ],
+      "projectSelectedTypes": [
+        0,
+        2,
+        4
+      ],
+      "equal": true,
+      "retailWaveCount": 12,
+      "projectWaveCount": 12,
+      "waveCountEqual": true
+    },
+    {
+      "mode": "GAMEMODE_MINIGAME_ZOMBIQUARIUM",
+      "retailMode": 23,
+      "retailMachineCodeSelectedTypes": [
+        0,
+        2,
+        4
+      ],
+      "projectSelectedTypes": [
+        0,
+        2,
+        4
+      ],
+      "equal": true,
+      "retailWaveCount": 40,
+      "projectWaveCount": 40,
+      "waveCountEqual": true
+    },
+    {
+      "mode": "GAMEMODE_LIMBO_AIR_RAID",
+      "retailMode": 41,
+      "retailMachineCodeSelectedTypes": [
+        16
+      ],
+      "projectSelectedTypes": [
+        16
+      ],
+      "equal": true,
+      "retailWaveCount": 20,
+      "projectWaveCount": 20,
+      "waveCountEqual": true
+    },
+    {
+      "mode": "GAMEMODE_LIMBO_ART_CHALLENGE_SUNFLOWER",
+      "retailMode": 40,
+      "retailMachineCodeSelectedTypes": [
+        0,
+        2,
+        4
+      ],
+      "projectSelectedTypes": [
+        0,
+        2,
+        4
+      ],
+      "equal": true,
+      "retailWaveCount": 40,
+      "projectWaveCount": 40,
+      "waveCountEqual": true
+    },
+    {
+      "mode": "GAMEMODE_LIMBO_ART_CHALLENGE_WALLNUT",
+      "retailMode": 36,
+      "retailMachineCodeSelectedTypes": [
+        0,
+        2,
+        4
+      ],
+      "projectSelectedTypes": [
+        0,
+        2,
+        4
+      ],
+      "equal": true,
+      "retailWaveCount": 40,
+      "projectWaveCount": 40,
+      "waveCountEqual": true
+    },
+    {
+      "mode": "GAMEMODE_LIMBO_BIG_TIME",
+      "retailMode": 39,
+      "retailMachineCodeSelectedTypes": [
+        0,
+        2,
+        4,
+        6,
+        7,
+        15
+      ],
+      "projectSelectedTypes": [
+        0,
+        2,
+        4,
+        6,
+        7,
+        15
+      ],
+      "equal": true,
+      "retailWaveCount": 40,
+      "projectWaveCount": 40,
+      "waveCountEqual": true
+    },
+    {
+      "mode": "GAMEMODE_LIMBO_BUNGEE_BLITZ",
+      "retailMode": 48,
+      "retailMachineCodeSelectedTypes": [
+        0,
+        2,
+        4,
+        21
+      ],
+      "projectSelectedTypes": [
+        0,
+        2,
+        4,
+        21
+      ],
+      "equal": true,
+      "retailWaveCount": 30,
+      "projectWaveCount": 30,
+      "waveCountEqual": true
+    },
+    {
+      "mode": "GAMEMODE_LIMBO_GRAVE_DANGER",
+      "retailMode": 45,
+      "retailMachineCodeSelectedTypes": [
+        0,
+        2,
+        4
+      ],
+      "projectSelectedTypes": [
+        0,
+        2,
+        4
+      ],
+      "equal": true,
+      "retailWaveCount": 20,
+      "projectWaveCount": 20,
+      "waveCountEqual": true
+    },
+    {
+      "mode": "GAMEMODE_LIMBO_HIGH_GRAVITY",
+      "retailMode": 44,
+      "retailMachineCodeSelectedTypes": [
+        0,
+        2,
+        4,
+        6,
+        16
+      ],
+      "projectSelectedTypes": [
+        0,
+        2,
+        4,
+        6,
+        16
+      ],
+      "equal": true,
+      "retailWaveCount": 20,
+      "projectWaveCount": 20,
+      "waveCountEqual": true
+    },
+    {
+      "mode": "GAMEMODE_LIMBO_ICE",
+      "retailMode": 42,
+      "retailMachineCodeSelectedTypes": [
+        0,
+        2,
+        4
+      ],
+      "projectSelectedTypes": [
+        0,
+        2,
+        4
+      ],
+      "equal": true,
+      "retailWaveCount": 40,
+      "projectWaveCount": 40,
+      "waveCountEqual": true
+    },
+    {
+      "mode": "GAMEMODE_LIMBO_RESODDED",
+      "retailMode": 38,
+      "retailMachineCodeSelectedTypes": [
+        0,
+        2,
+        4
+      ],
+      "projectSelectedTypes": [
+        0,
+        2,
+        4
+      ],
+      "equal": true,
+      "retailWaveCount": 40,
+      "projectWaveCount": 40,
+      "waveCountEqual": true
+    },
+    {
+      "mode": "GAMEMODE_LIMBO_SHOVEL",
+      "retailMode": 46,
+      "retailMachineCodeSelectedTypes": [
+        0,
+        2
+      ],
+      "projectSelectedTypes": [
+        0,
+        2
+      ],
+      "equal": true,
+      "retailWaveCount": 30,
+      "projectWaveCount": 30,
+      "waveCountEqual": true
+    },
+    {
+      "mode": "GAMEMODE_LIMBO_SQUIRREL",
+      "retailMode": 49,
+      "retailMachineCodeSelectedTypes": [
+        0,
+        2,
+        4
+      ],
+      "projectSelectedTypes": [
+        0,
+        2,
+        4
+      ],
+      "equal": true,
+      "retailWaveCount": 0,
+      "projectWaveCount": 0,
+      "waveCountEqual": true
+    },
+    {
+      "mode": "GAMEMODE_LIMBO_STORMY_NIGHT",
+      "retailMode": 47,
+      "retailMachineCodeSelectedTypes": [
+        0,
+        2,
+        14,
+        16
+      ],
+      "projectSelectedTypes": [
+        0,
+        2,
+        14,
+        16
+      ],
+      "equal": true,
+      "retailWaveCount": 30,
+      "projectWaveCount": 30,
+      "waveCountEqual": true
+    },
+    {
+      "mode": "GAMEMODE_LIMBO_SUNNY_DAY",
+      "retailMode": 37,
+      "retailMachineCodeSelectedTypes": [
+        0,
+        2,
+        3,
+        4,
+        7,
+        15
+      ],
+      "projectSelectedTypes": [
+        0,
+        2,
+        3,
+        4,
+        7,
+        15
+      ],
+      "equal": true,
+      "retailWaveCount": 40,
+      "projectWaveCount": 40,
+      "waveCountEqual": true
+    },
+    {
+      "mode": "GAMEMODE_LIMBO_ZEN_GARDEN",
+      "retailMode": 43,
+      "retailMachineCodeSelectedTypes": [
+        0,
+        2,
+        4
+      ],
+      "projectSelectedTypes": [
+        0,
+        2,
+        4
+      ],
+      "equal": true,
+      "retailWaveCount": 0,
+      "projectWaveCount": 0,
+      "waveCountEqual": true
+    },
+    {
+      "mode": "GAMEMODE_INTRO",
+      "retailMode": 71,
+      "retailMachineCodeSelectedTypes": [
+        0,
+        2,
+        4
+      ],
+      "projectSelectedTypes": [
+        0,
+        2,
+        4
+      ],
+      "equal": true,
+      "retailWaveCount": 40,
+      "projectWaveCount": 40,
+      "waveCountEqual": true
+    },
+    {
+      "mode": "GAMEMODE_PUZZLE_I_ZOMBIE_1",
+      "retailMode": 61,
+      "retailMachineCodeSelectedTypes": [
+        0,
+        2,
+        4
+      ],
+      "projectSelectedTypes": [
+        0,
+        2,
+        4
+      ],
+      "equal": true,
+      "retailWaveCount": 40,
+      "projectWaveCount": 40,
+      "waveCountEqual": true
+    },
+    {
+      "mode": "GAMEMODE_PUZZLE_I_ZOMBIE_2",
+      "retailMode": 62,
+      "retailMachineCodeSelectedTypes": [
+        0,
+        2,
+        4
+      ],
+      "projectSelectedTypes": [
+        0,
+        2,
+        4
+      ],
+      "equal": true,
+      "retailWaveCount": 40,
+      "projectWaveCount": 40,
+      "waveCountEqual": true
+    },
+    {
+      "mode": "GAMEMODE_PUZZLE_I_ZOMBIE_3",
+      "retailMode": 63,
+      "retailMachineCodeSelectedTypes": [
+        0,
+        2,
+        4
+      ],
+      "projectSelectedTypes": [
+        0,
+        2,
+        4
+      ],
+      "equal": true,
+      "retailWaveCount": 40,
+      "projectWaveCount": 40,
+      "waveCountEqual": true
+    },
+    {
+      "mode": "GAMEMODE_PUZZLE_I_ZOMBIE_4",
+      "retailMode": 64,
+      "retailMachineCodeSelectedTypes": [
+        0,
+        2,
+        4
+      ],
+      "projectSelectedTypes": [
+        0,
+        2,
+        4
+      ],
+      "equal": true,
+      "retailWaveCount": 40,
+      "projectWaveCount": 40,
+      "waveCountEqual": true
+    },
+    {
+      "mode": "GAMEMODE_PUZZLE_I_ZOMBIE_5",
+      "retailMode": 65,
+      "retailMachineCodeSelectedTypes": [
+        0,
+        2,
+        4
+      ],
+      "projectSelectedTypes": [
+        0,
+        2,
+        4
+      ],
+      "equal": true,
+      "retailWaveCount": 40,
+      "projectWaveCount": 40,
+      "waveCountEqual": true
+    },
+    {
+      "mode": "GAMEMODE_PUZZLE_I_ZOMBIE_6",
+      "retailMode": 66,
+      "retailMachineCodeSelectedTypes": [
+        0,
+        2,
+        4
+      ],
+      "projectSelectedTypes": [
+        0,
+        2,
+        4
+      ],
+      "equal": true,
+      "retailWaveCount": 40,
+      "projectWaveCount": 40,
+      "waveCountEqual": true
+    },
+    {
+      "mode": "GAMEMODE_PUZZLE_I_ZOMBIE_7",
+      "retailMode": 67,
+      "retailMachineCodeSelectedTypes": [
+        0,
+        2,
+        4
+      ],
+      "projectSelectedTypes": [
+        0,
+        2,
+        4
+      ],
+      "equal": true,
+      "retailWaveCount": 40,
+      "projectWaveCount": 40,
+      "waveCountEqual": true
+    },
+    {
+      "mode": "GAMEMODE_PUZZLE_I_ZOMBIE_8",
+      "retailMode": 68,
+      "retailMachineCodeSelectedTypes": [
+        0,
+        2,
+        4
+      ],
+      "projectSelectedTypes": [
+        0,
+        2,
+        4
+      ],
+      "equal": true,
+      "retailWaveCount": 40,
+      "projectWaveCount": 40,
+      "waveCountEqual": true
+    },
+    {
+      "mode": "GAMEMODE_PUZZLE_I_ZOMBIE_9",
+      "retailMode": 69,
+      "retailMachineCodeSelectedTypes": [
+        0,
+        2,
+        4
+      ],
+      "projectSelectedTypes": [
+        0,
+        2,
+        4
+      ],
+      "equal": true,
+      "retailWaveCount": 40,
+      "projectWaveCount": 40,
+      "waveCountEqual": true
+    },
+    {
+      "mode": "GAMEMODE_PUZZLE_I_ZOMBIE_ENDLESS",
+      "retailMode": 70,
+      "retailMachineCodeSelectedTypes": [
+        0,
+        2,
+        4
+      ],
+      "projectSelectedTypes": [
+        0,
+        2,
+        4
+      ],
+      "equal": true,
+      "retailWaveCount": 40,
+      "projectWaveCount": 40,
+      "waveCountEqual": true
+    },
+    {
+      "mode": "GAMEMODE_SCARY_POTTER_1",
+      "retailMode": 51,
+      "retailMachineCodeSelectedTypes": [
+        0,
+        2,
+        4
+      ],
+      "projectSelectedTypes": [
+        0,
+        2,
+        4
+      ],
+      "equal": true,
+      "retailWaveCount": 40,
+      "projectWaveCount": 40,
+      "waveCountEqual": true
+    },
+    {
+      "mode": "GAMEMODE_SCARY_POTTER_2",
+      "retailMode": 52,
+      "retailMachineCodeSelectedTypes": [
+        0,
+        2,
+        4
+      ],
+      "projectSelectedTypes": [
+        0,
+        2,
+        4
+      ],
+      "equal": true,
+      "retailWaveCount": 40,
+      "projectWaveCount": 40,
+      "waveCountEqual": true
+    },
+    {
+      "mode": "GAMEMODE_SCARY_POTTER_3",
+      "retailMode": 53,
+      "retailMachineCodeSelectedTypes": [
+        0,
+        2,
+        4
+      ],
+      "projectSelectedTypes": [
+        0,
+        2,
+        4
+      ],
+      "equal": true,
+      "retailWaveCount": 40,
+      "projectWaveCount": 40,
+      "waveCountEqual": true
+    },
+    {
+      "mode": "GAMEMODE_SCARY_POTTER_4",
+      "retailMode": 54,
+      "retailMachineCodeSelectedTypes": [
+        0,
+        2,
+        4
+      ],
+      "projectSelectedTypes": [
+        0,
+        2,
+        4
+      ],
+      "equal": true,
+      "retailWaveCount": 40,
+      "projectWaveCount": 40,
+      "waveCountEqual": true
+    },
+    {
+      "mode": "GAMEMODE_SCARY_POTTER_5",
+      "retailMode": 55,
+      "retailMachineCodeSelectedTypes": [
+        0,
+        2,
+        4
+      ],
+      "projectSelectedTypes": [
+        0,
+        2,
+        4
+      ],
+      "equal": true,
+      "retailWaveCount": 40,
+      "projectWaveCount": 40,
+      "waveCountEqual": true
+    },
+    {
+      "mode": "GAMEMODE_SCARY_POTTER_6",
+      "retailMode": 56,
+      "retailMachineCodeSelectedTypes": [
+        0,
+        2,
+        4
+      ],
+      "projectSelectedTypes": [
+        0,
+        2,
+        4
+      ],
+      "equal": true,
+      "retailWaveCount": 40,
+      "projectWaveCount": 40,
+      "waveCountEqual": true
+    },
+    {
+      "mode": "GAMEMODE_SCARY_POTTER_7",
+      "retailMode": 57,
+      "retailMachineCodeSelectedTypes": [
+        0,
+        2,
+        4
+      ],
+      "projectSelectedTypes": [
+        0,
+        2,
+        4
+      ],
+      "equal": true,
+      "retailWaveCount": 40,
+      "projectWaveCount": 40,
+      "waveCountEqual": true
+    },
+    {
+      "mode": "GAMEMODE_SCARY_POTTER_8",
+      "retailMode": 58,
+      "retailMachineCodeSelectedTypes": [
+        0,
+        2,
+        4
+      ],
+      "projectSelectedTypes": [
+        0,
+        2,
+        4
+      ],
+      "equal": true,
+      "retailWaveCount": 40,
+      "projectWaveCount": 40,
+      "waveCountEqual": true
+    },
+    {
+      "mode": "GAMEMODE_SCARY_POTTER_9",
+      "retailMode": 59,
+      "retailMachineCodeSelectedTypes": [
+        0,
+        2,
+        4
+      ],
+      "projectSelectedTypes": [
+        0,
+        2,
+        4
+      ],
+      "equal": true,
+      "retailWaveCount": 40,
+      "projectWaveCount": 40,
+      "waveCountEqual": true
+    },
+    {
+      "mode": "GAMEMODE_SCARY_POTTER_ENDLESS",
+      "retailMode": 60,
+      "retailMachineCodeSelectedTypes": [
+        0,
+        2,
+        4
+      ],
+      "projectSelectedTypes": [
+        0,
+        2,
+        4
+      ],
+      "equal": true,
+      "retailWaveCount": 40,
+      "projectWaveCount": 40,
+      "waveCountEqual": true
+    },
+    {
+      "mode": "GAMEMODE_SURVIVAL_ENDLESS_STAGE_1",
+      "retailMode": 11,
+      "retailMachineCodeSelectedTypes": [
+        0,
+        2,
+        4
+      ],
+      "projectSelectedTypes": [
+        0,
+        2,
+        4
+      ],
+      "equal": true,
+      "retailWaveCount": 20,
+      "projectWaveCount": 20,
+      "waveCountEqual": true
+    },
+    {
+      "mode": "GAMEMODE_SURVIVAL_ENDLESS_STAGE_2",
+      "retailMode": 12,
+      "retailMachineCodeSelectedTypes": [
+        0,
+        2,
+        4
+      ],
+      "projectSelectedTypes": [
+        0,
+        2,
+        4
+      ],
+      "equal": true,
+      "retailWaveCount": 20,
+      "projectWaveCount": 20,
+      "waveCountEqual": true
+    },
+    {
+      "mode": "GAMEMODE_SURVIVAL_ENDLESS_STAGE_3",
+      "retailMode": 13,
+      "retailMachineCodeSelectedTypes": [
+        0,
+        2,
+        4
+      ],
+      "projectSelectedTypes": [
+        0,
+        2,
+        4
+      ],
+      "equal": true,
+      "retailWaveCount": 20,
+      "projectWaveCount": 20,
+      "waveCountEqual": true
+    },
+    {
+      "mode": "GAMEMODE_SURVIVAL_ENDLESS_STAGE_4",
+      "retailMode": 14,
+      "retailMachineCodeSelectedTypes": [
+        0,
+        2,
+        4
+      ],
+      "projectSelectedTypes": [
+        0,
+        2,
+        4
+      ],
+      "equal": true,
+      "retailWaveCount": 20,
+      "projectWaveCount": 20,
+      "waveCountEqual": true
+    },
+    {
+      "mode": "GAMEMODE_SURVIVAL_ENDLESS_STAGE_5",
+      "retailMode": 15,
+      "retailMachineCodeSelectedTypes": [
+        0,
+        2,
+        4
+      ],
+      "projectSelectedTypes": [
+        0,
+        2,
+        4
+      ],
+      "equal": true,
+      "retailWaveCount": 20,
+      "projectWaveCount": 20,
+      "waveCountEqual": true
+    },
+    {
+      "mode": "GAMEMODE_SURVIVAL_HARD_STAGE_1",
+      "retailMode": 6,
+      "retailMachineCodeSelectedTypes": [
+        0,
+        2,
+        4
+      ],
+      "projectSelectedTypes": [
+        0,
+        2,
+        4
+      ],
+      "equal": true,
+      "retailWaveCount": 20,
+      "projectWaveCount": 20,
+      "waveCountEqual": true
+    },
+    {
+      "mode": "GAMEMODE_SURVIVAL_HARD_STAGE_2",
+      "retailMode": 7,
+      "retailMachineCodeSelectedTypes": [
+        0,
+        2,
+        4
+      ],
+      "projectSelectedTypes": [
+        0,
+        2,
+        4
+      ],
+      "equal": true,
+      "retailWaveCount": 20,
+      "projectWaveCount": 20,
+      "waveCountEqual": true
+    },
+    {
+      "mode": "GAMEMODE_SURVIVAL_HARD_STAGE_3",
+      "retailMode": 8,
+      "retailMachineCodeSelectedTypes": [
+        0,
+        2,
+        4
+      ],
+      "projectSelectedTypes": [
+        0,
+        2,
+        4
+      ],
+      "equal": true,
+      "retailWaveCount": 20,
+      "projectWaveCount": 20,
+      "waveCountEqual": true
+    },
+    {
+      "mode": "GAMEMODE_SURVIVAL_HARD_STAGE_4",
+      "retailMode": 9,
+      "retailMachineCodeSelectedTypes": [
+        0,
+        2,
+        4
+      ],
+      "projectSelectedTypes": [
+        0,
+        2,
+        4
+      ],
+      "equal": true,
+      "retailWaveCount": 20,
+      "projectWaveCount": 20,
+      "waveCountEqual": true
+    },
+    {
+      "mode": "GAMEMODE_SURVIVAL_HARD_STAGE_5",
+      "retailMode": 10,
+      "retailMachineCodeSelectedTypes": [
+        0,
+        2,
+        4
+      ],
+      "projectSelectedTypes": [
+        0,
+        2,
+        4
+      ],
+      "equal": true,
+      "retailWaveCount": 20,
+      "projectWaveCount": 20,
+      "waveCountEqual": true
+    },
+    {
+      "mode": "GAMEMODE_SURVIVAL_NORMAL_STAGE_1",
+      "retailMode": 1,
+      "retailMachineCodeSelectedTypes": [
+        0,
+        2
+      ],
+      "projectSelectedTypes": [
+        0,
+        2
+      ],
+      "equal": true,
+      "retailWaveCount": 10,
+      "projectWaveCount": 10,
+      "waveCountEqual": true
+    },
+    {
+      "mode": "GAMEMODE_SURVIVAL_NORMAL_STAGE_2",
+      "retailMode": 2,
+      "retailMachineCodeSelectedTypes": [
+        0,
+        2
+      ],
+      "projectSelectedTypes": [
+        0,
+        2
+      ],
+      "equal": true,
+      "retailWaveCount": 10,
+      "projectWaveCount": 10,
+      "waveCountEqual": true
+    },
+    {
+      "mode": "GAMEMODE_SURVIVAL_NORMAL_STAGE_3",
+      "retailMode": 3,
+      "retailMachineCodeSelectedTypes": [
+        0,
+        2
+      ],
+      "projectSelectedTypes": [
+        0,
+        2
+      ],
+      "equal": true,
+      "retailWaveCount": 10,
+      "projectWaveCount": 10,
+      "waveCountEqual": true
+    },
+    {
+      "mode": "GAMEMODE_SURVIVAL_NORMAL_STAGE_4",
+      "retailMode": 4,
+      "retailMachineCodeSelectedTypes": [
+        0,
+        2
+      ],
+      "projectSelectedTypes": [
+        0,
+        2
+      ],
+      "equal": true,
+      "retailWaveCount": 10,
+      "projectWaveCount": 10,
+      "waveCountEqual": true
+    },
+    {
+      "mode": "GAMEMODE_SURVIVAL_NORMAL_STAGE_5",
+      "retailMode": 5,
+      "retailMachineCodeSelectedTypes": [
+        0,
+        2
+      ],
+      "projectSelectedTypes": [
+        0,
+        2
+      ],
+      "equal": true,
+      "retailWaveCount": 10,
+      "projectWaveCount": 10,
+      "waveCountEqual": true
+    },
+    {
+      "mode": "GAMEMODE_TREE_OF_WISDOM",
+      "retailMode": 50,
+      "retailMachineCodeSelectedTypes": [
+        0,
+        2,
+        4
+      ],
+      "projectSelectedTypes": [
+        0,
+        2,
+        4
+      ],
+      "equal": true,
+      "retailWaveCount": 0,
+      "projectWaveCount": 0,
+      "waveCountEqual": true
+    }
+  ]
+}

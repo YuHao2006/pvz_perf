@@ -1,0 +1,1138 @@
+[
+  {
+    "table": "kNumWavesPerMode",
+    "mode": "GAMEMODE_MINIGAME_BEGHOULED",
+    "retailMode": 20,
+    "retailExpected": 40,
+    "projectEffective": 40,
+    "equal": true
+  },
+  {
+    "table": "kNumWavesPerMode",
+    "mode": "GAMEMODE_MINIGAME_BEGHOULED_TWIST",
+    "retailMode": 24,
+    "retailExpected": 40,
+    "projectEffective": 40,
+    "equal": true
+  },
+  {
+    "table": "kNumWavesPerMode",
+    "mode": "GAMEMODE_MINIGAME_BOBSLED_BONANZA",
+    "retailMode": 28,
+    "retailExpected": 40,
+    "projectEffective": 40,
+    "equal": true
+  },
+  {
+    "table": "kNumWavesPerMode",
+    "mode": "GAMEMODE_MINIGAME_COLUMN",
+    "retailMode": 27,
+    "retailExpected": 30,
+    "projectEffective": 30,
+    "equal": true
+  },
+  {
+    "table": "kNumWavesPerMode",
+    "mode": "GAMEMODE_MINIGAME_FINAL_BOSS",
+    "retailMode": 35,
+    "retailExpected": 40,
+    "projectEffective": 40,
+    "equal": true
+  },
+  {
+    "table": "kNumWavesPerMode",
+    "mode": "GAMEMODE_MINIGAME_INVISIGHOUL",
+    "retailMode": 21,
+    "retailExpected": 20,
+    "projectEffective": 20,
+    "equal": true
+  },
+  {
+    "table": "kNumWavesPerMode",
+    "mode": "GAMEMODE_MINIGAME_LAST_STAND",
+    "retailMode": 31,
+    "retailExpected": 10,
+    "projectEffective": 10,
+    "equal": true
+  },
+  {
+    "table": "kNumWavesPerMode",
+    "mode": "GAMEMODE_MINIGAME_LITTLE_TROUBLE",
+    "retailMode": 25,
+    "retailExpected": 30,
+    "projectEffective": 30,
+    "equal": true
+  },
+  {
+    "table": "kNumWavesPerMode",
+    "mode": "GAMEMODE_MINIGAME_POGO_PARTY",
+    "retailMode": 34,
+    "retailExpected": 30,
+    "projectEffective": 30,
+    "equal": true
+  },
+  {
+    "table": "kNumWavesPerMode",
+    "mode": "GAMEMODE_MINIGAME_PORTAL_COMBAT",
+    "retailMode": 26,
+    "retailExpected": 20,
+    "projectEffective": 20,
+    "equal": true
+  },
+  {
+    "table": "kNumWavesPerMode",
+    "mode": "GAMEMODE_MINIGAME_RAINING_SEEDS",
+    "retailMode": 19,
+    "retailExpected": 40,
+    "projectEffective": 40,
+    "equal": true
+  },
+  {
+    "table": "kNumWavesPerMode",
+    "mode": "GAMEMODE_MINIGAME_SEEING_STARS",
+    "retailMode": 22,
+    "retailExpected": 40,
+    "projectEffective": 40,
+    "equal": true
+  },
+  {
+    "table": "kNumWavesPerMode",
+    "mode": "GAMEMODE_MINIGAME_SLOT_MACHINE",
+    "retailMode": 18,
+    "retailExpected": 40,
+    "projectEffective": 40,
+    "equal": true
+  },
+  {
+    "table": "kNumWavesPerMode",
+    "mode": "GAMEMODE_MINIGAME_SPEED",
+    "retailMode": 29,
+    "retailExpected": 40,
+    "projectEffective": 40,
+    "equal": true
+  },
+  {
+    "table": "kNumWavesPerMode",
+    "mode": "GAMEMODE_MINIGAME_WALLNUT_BOWLING",
+    "retailMode": 17,
+    "retailExpected": 20,
+    "projectEffective": 20,
+    "equal": true
+  },
+  {
+    "table": "kNumWavesPerMode",
+    "mode": "GAMEMODE_MINIGAME_WALLNUT_BOWLING_2",
+    "retailMode": 33,
+    "retailExpected": 30,
+    "projectEffective": 30,
+    "equal": true
+  },
+  {
+    "table": "kNumWavesPerMode",
+    "mode": "GAMEMODE_MINIGAME_WAR_AND_PEAS",
+    "retailMode": 16,
+    "retailExpected": 20,
+    "projectEffective": 20,
+    "equal": true
+  },
+  {
+    "table": "kNumWavesPerMode",
+    "mode": "GAMEMODE_MINIGAME_WAR_AND_PEAS_2",
+    "retailMode": 32,
+    "retailExpected": 30,
+    "projectEffective": 30,
+    "equal": true
+  },
+  {
+    "table": "kNumWavesPerMode",
+    "mode": "GAMEMODE_MINIGAME_WHACK_A_ZOMBIE",
+    "retailMode": 30,
+    "retailExpected": 12,
+    "projectEffective": 12,
+    "equal": true
+  },
+  {
+    "table": "kNumWavesPerMode",
+    "mode": "GAMEMODE_MINIGAME_ZOMBIQUARIUM",
+    "retailMode": 23,
+    "retailExpected": 40,
+    "projectEffective": 40,
+    "equal": true
+  },
+  {
+    "table": "kNumWavesPerMode",
+    "mode": "GAMEMODE_LIMBO_AIR_RAID",
+    "retailMode": 41,
+    "retailExpected": 20,
+    "projectEffective": 20,
+    "equal": true
+  },
+  {
+    "table": "kNumWavesPerMode",
+    "mode": "GAMEMODE_LIMBO_ART_CHALLENGE_SUNFLOWER",
+    "retailMode": 40,
+    "retailExpected": 40,
+    "projectEffective": 40,
+    "equal": true
+  },
+  {
+    "table": "kNumWavesPerMode",
+    "mode": "GAMEMODE_LIMBO_ART_CHALLENGE_WALLNUT",
+    "retailMode": 36,
+    "retailExpected": 40,
+    "projectEffective": 40,
+    "equal": true
+  },
+  {
+    "table": "kNumWavesPerMode",
+    "mode": "GAMEMODE_LIMBO_BIG_TIME",
+    "retailMode": 39,
+    "retailExpected": 40,
+    "projectEffective": 40,
+    "equal": true
+  },
+  {
+    "table": "kNumWavesPerMode",
+    "mode": "GAMEMODE_LIMBO_BUNGEE_BLITZ",
+    "retailMode": 48,
+    "retailExpected": 30,
+    "projectEffective": 30,
+    "equal": true
+  },
+  {
+    "table": "kNumWavesPerMode",
+    "mode": "GAMEMODE_LIMBO_GRAVE_DANGER",
+    "retailMode": 45,
+    "retailExpected": 20,
+    "projectEffective": 20,
+    "equal": true
+  },
+  {
+    "table": "kNumWavesPerMode",
+    "mode": "GAMEMODE_LIMBO_HIGH_GRAVITY",
+    "retailMode": 44,
+    "retailExpected": 20,
+    "projectEffective": 20,
+    "equal": true
+  },
+  {
+    "table": "kNumWavesPerMode",
+    "mode": "GAMEMODE_LIMBO_ICE",
+    "retailMode": 42,
+    "retailExpected": 40,
+    "projectEffective": 40,
+    "equal": true
+  },
+  {
+    "table": "kNumWavesPerMode",
+    "mode": "GAMEMODE_LIMBO_RESODDED",
+    "retailMode": 38,
+    "retailExpected": 40,
+    "projectEffective": 40,
+    "equal": true
+  },
+  {
+    "table": "kNumWavesPerMode",
+    "mode": "GAMEMODE_LIMBO_SHOVEL",
+    "retailMode": 46,
+    "retailExpected": 30,
+    "projectEffective": 30,
+    "equal": true
+  },
+  {
+    "table": "kNumWavesPerMode",
+    "mode": "GAMEMODE_LIMBO_SQUIRREL",
+    "retailMode": 49,
+    "retailExpected": 0,
+    "projectEffective": 0,
+    "equal": true
+  },
+  {
+    "table": "kNumWavesPerMode",
+    "mode": "GAMEMODE_LIMBO_STORMY_NIGHT",
+    "retailMode": 47,
+    "retailExpected": 30,
+    "projectEffective": 30,
+    "equal": true
+  },
+  {
+    "table": "kNumWavesPerMode",
+    "mode": "GAMEMODE_LIMBO_SUNNY_DAY",
+    "retailMode": 37,
+    "retailExpected": 40,
+    "projectEffective": 40,
+    "equal": true
+  },
+  {
+    "table": "kNumWavesPerMode",
+    "mode": "GAMEMODE_LIMBO_ZEN_GARDEN",
+    "retailMode": 43,
+    "retailExpected": 0,
+    "projectEffective": 0,
+    "equal": true
+  },
+  {
+    "table": "kNumWavesPerMode",
+    "mode": "GAMEMODE_INTRO",
+    "retailMode": 71,
+    "retailExpected": 40,
+    "projectEffective": 40,
+    "equal": true
+  },
+  {
+    "table": "kNumWavesPerMode",
+    "mode": "GAMEMODE_PUZZLE_I_ZOMBIE_1",
+    "retailMode": 61,
+    "retailExpected": 40,
+    "projectEffective": 40,
+    "equal": true
+  },
+  {
+    "table": "kNumWavesPerMode",
+    "mode": "GAMEMODE_PUZZLE_I_ZOMBIE_2",
+    "retailMode": 62,
+    "retailExpected": 40,
+    "projectEffective": 40,
+    "equal": true
+  },
+  {
+    "table": "kNumWavesPerMode",
+    "mode": "GAMEMODE_PUZZLE_I_ZOMBIE_3",
+    "retailMode": 63,
+    "retailExpected": 40,
+    "projectEffective": 40,
+    "equal": true
+  },
+  {
+    "table": "kNumWavesPerMode",
+    "mode": "GAMEMODE_PUZZLE_I_ZOMBIE_4",
+    "retailMode": 64,
+    "retailExpected": 40,
+    "projectEffective": 40,
+    "equal": true
+  },
+  {
+    "table": "kNumWavesPerMode",
+    "mode": "GAMEMODE_PUZZLE_I_ZOMBIE_5",
+    "retailMode": 65,
+    "retailExpected": 40,
+    "projectEffective": 40,
+    "equal": true
+  },
+  {
+    "table": "kNumWavesPerMode",
+    "mode": "GAMEMODE_PUZZLE_I_ZOMBIE_6",
+    "retailMode": 66,
+    "retailExpected": 40,
+    "projectEffective": 40,
+    "equal": true
+  },
+  {
+    "table": "kNumWavesPerMode",
+    "mode": "GAMEMODE_PUZZLE_I_ZOMBIE_7",
+    "retailMode": 67,
+    "retailExpected": 40,
+    "projectEffective": 40,
+    "equal": true
+  },
+  {
+    "table": "kNumWavesPerMode",
+    "mode": "GAMEMODE_PUZZLE_I_ZOMBIE_8",
+    "retailMode": 68,
+    "retailExpected": 40,
+    "projectEffective": 40,
+    "equal": true
+  },
+  {
+    "table": "kNumWavesPerMode",
+    "mode": "GAMEMODE_PUZZLE_I_ZOMBIE_9",
+    "retailMode": 69,
+    "retailExpected": 40,
+    "projectEffective": 40,
+    "equal": true
+  },
+  {
+    "table": "kNumWavesPerMode",
+    "mode": "GAMEMODE_PUZZLE_I_ZOMBIE_ENDLESS",
+    "retailMode": 70,
+    "retailExpected": 40,
+    "projectEffective": 40,
+    "equal": true
+  },
+  {
+    "table": "kNumWavesPerMode",
+    "mode": "GAMEMODE_SCARY_POTTER_1",
+    "retailMode": 51,
+    "retailExpected": 40,
+    "projectEffective": 40,
+    "equal": true
+  },
+  {
+    "table": "kNumWavesPerMode",
+    "mode": "GAMEMODE_SCARY_POTTER_2",
+    "retailMode": 52,
+    "retailExpected": 40,
+    "projectEffective": 40,
+    "equal": true
+  },
+  {
+    "table": "kNumWavesPerMode",
+    "mode": "GAMEMODE_SCARY_POTTER_3",
+    "retailMode": 53,
+    "retailExpected": 40,
+    "projectEffective": 40,
+    "equal": true
+  },
+  {
+    "table": "kNumWavesPerMode",
+    "mode": "GAMEMODE_SCARY_POTTER_4",
+    "retailMode": 54,
+    "retailExpected": 40,
+    "projectEffective": 40,
+    "equal": true
+  },
+  {
+    "table": "kNumWavesPerMode",
+    "mode": "GAMEMODE_SCARY_POTTER_5",
+    "retailMode": 55,
+    "retailExpected": 40,
+    "projectEffective": 40,
+    "equal": true
+  },
+  {
+    "table": "kNumWavesPerMode",
+    "mode": "GAMEMODE_SCARY_POTTER_6",
+    "retailMode": 56,
+    "retailExpected": 40,
+    "projectEffective": 40,
+    "equal": true
+  },
+  {
+    "table": "kNumWavesPerMode",
+    "mode": "GAMEMODE_SCARY_POTTER_7",
+    "retailMode": 57,
+    "retailExpected": 40,
+    "projectEffective": 40,
+    "equal": true
+  },
+  {
+    "table": "kNumWavesPerMode",
+    "mode": "GAMEMODE_SCARY_POTTER_8",
+    "retailMode": 58,
+    "retailExpected": 40,
+    "projectEffective": 40,
+    "equal": true
+  },
+  {
+    "table": "kNumWavesPerMode",
+    "mode": "GAMEMODE_SCARY_POTTER_9",
+    "retailMode": 59,
+    "retailExpected": 40,
+    "projectEffective": 40,
+    "equal": true
+  },
+  {
+    "table": "kNumWavesPerMode",
+    "mode": "GAMEMODE_SCARY_POTTER_ENDLESS",
+    "retailMode": 60,
+    "retailExpected": 40,
+    "projectEffective": 40,
+    "equal": true
+  },
+  {
+    "table": "kNumWavesPerMode",
+    "mode": "GAMEMODE_SURVIVAL_ENDLESS_STAGE_1",
+    "retailMode": 11,
+    "retailExpected": 20,
+    "projectEffective": 20,
+    "equal": true
+  },
+  {
+    "table": "kNumWavesPerMode",
+    "mode": "GAMEMODE_SURVIVAL_ENDLESS_STAGE_2",
+    "retailMode": 12,
+    "retailExpected": 20,
+    "projectEffective": 20,
+    "equal": true
+  },
+  {
+    "table": "kNumWavesPerMode",
+    "mode": "GAMEMODE_SURVIVAL_ENDLESS_STAGE_3",
+    "retailMode": 13,
+    "retailExpected": 20,
+    "projectEffective": 20,
+    "equal": true
+  },
+  {
+    "table": "kNumWavesPerMode",
+    "mode": "GAMEMODE_SURVIVAL_ENDLESS_STAGE_4",
+    "retailMode": 14,
+    "retailExpected": 20,
+    "projectEffective": 20,
+    "equal": true
+  },
+  {
+    "table": "kNumWavesPerMode",
+    "mode": "GAMEMODE_SURVIVAL_ENDLESS_STAGE_5",
+    "retailMode": 15,
+    "retailExpected": 20,
+    "projectEffective": 20,
+    "equal": true
+  },
+  {
+    "table": "kNumWavesPerMode",
+    "mode": "GAMEMODE_SURVIVAL_HARD_STAGE_1",
+    "retailMode": 6,
+    "retailExpected": 20,
+    "projectEffective": 20,
+    "equal": true
+  },
+  {
+    "table": "kNumWavesPerMode",
+    "mode": "GAMEMODE_SURVIVAL_HARD_STAGE_2",
+    "retailMode": 7,
+    "retailExpected": 20,
+    "projectEffective": 20,
+    "equal": true
+  },
+  {
+    "table": "kNumWavesPerMode",
+    "mode": "GAMEMODE_SURVIVAL_HARD_STAGE_3",
+    "retailMode": 8,
+    "retailExpected": 20,
+    "projectEffective": 20,
+    "equal": true
+  },
+  {
+    "table": "kNumWavesPerMode",
+    "mode": "GAMEMODE_SURVIVAL_HARD_STAGE_4",
+    "retailMode": 9,
+    "retailExpected": 20,
+    "projectEffective": 20,
+    "equal": true
+  },
+  {
+    "table": "kNumWavesPerMode",
+    "mode": "GAMEMODE_SURVIVAL_HARD_STAGE_5",
+    "retailMode": 10,
+    "retailExpected": 20,
+    "projectEffective": 20,
+    "equal": true
+  },
+  {
+    "table": "kNumWavesPerMode",
+    "mode": "GAMEMODE_SURVIVAL_NORMAL_STAGE_1",
+    "retailMode": 1,
+    "retailExpected": 10,
+    "projectEffective": 10,
+    "equal": true
+  },
+  {
+    "table": "kNumWavesPerMode",
+    "mode": "GAMEMODE_SURVIVAL_NORMAL_STAGE_2",
+    "retailMode": 2,
+    "retailExpected": 10,
+    "projectEffective": 10,
+    "equal": true
+  },
+  {
+    "table": "kNumWavesPerMode",
+    "mode": "GAMEMODE_SURVIVAL_NORMAL_STAGE_3",
+    "retailMode": 3,
+    "retailExpected": 10,
+    "projectEffective": 10,
+    "equal": true
+  },
+  {
+    "table": "kNumWavesPerMode",
+    "mode": "GAMEMODE_SURVIVAL_NORMAL_STAGE_4",
+    "retailMode": 4,
+    "retailExpected": 10,
+    "projectEffective": 10,
+    "equal": true
+  },
+  {
+    "table": "kNumWavesPerMode",
+    "mode": "GAMEMODE_SURVIVAL_NORMAL_STAGE_5",
+    "retailMode": 5,
+    "retailExpected": 10,
+    "projectEffective": 10,
+    "equal": true
+  },
+  {
+    "table": "kNumWavesPerMode",
+    "mode": "GAMEMODE_TREE_OF_WISDOM",
+    "retailMode": 50,
+    "retailExpected": 0,
+    "projectEffective": 0,
+    "equal": true
+  },
+  {
+    "table": "kWavePointsMultPerMode",
+    "mode": "GAMEMODE_MINIGAME_BEGHOULED",
+    "retailMode": 20,
+    "retailExpected": 1,
+    "projectEffective": 1,
+    "equal": true
+  },
+  {
+    "table": "kWavePointsMultPerMode",
+    "mode": "GAMEMODE_MINIGAME_BEGHOULED_TWIST",
+    "retailMode": 24,
+    "retailExpected": 1,
+    "projectEffective": 1,
+    "equal": true
+  },
+  {
+    "table": "kWavePointsMultPerMode",
+    "mode": "GAMEMODE_MINIGAME_BOBSLED_BONANZA",
+    "retailMode": 28,
+    "retailExpected": 1,
+    "projectEffective": 1,
+    "equal": true
+  },
+  {
+    "table": "kWavePointsMultPerMode",
+    "mode": "GAMEMODE_MINIGAME_COLUMN",
+    "retailMode": 27,
+    "retailExpected": 6,
+    "projectEffective": 6,
+    "equal": true
+  },
+  {
+    "table": "kWavePointsMultPerMode",
+    "mode": "GAMEMODE_MINIGAME_FINAL_BOSS",
+    "retailMode": 35,
+    "retailExpected": 1,
+    "projectEffective": 1,
+    "equal": true
+  },
+  {
+    "table": "kWavePointsMultPerMode",
+    "mode": "GAMEMODE_MINIGAME_INVISIGHOUL",
+    "retailMode": 21,
+    "retailExpected": 2,
+    "projectEffective": 2,
+    "equal": true
+  },
+  {
+    "table": "kWavePointsMultPerMode",
+    "mode": "GAMEMODE_MINIGAME_LAST_STAND",
+    "retailMode": 31,
+    "retailExpected": 1,
+    "projectEffective": 1,
+    "equal": true
+  },
+  {
+    "table": "kWavePointsMultPerMode",
+    "mode": "GAMEMODE_MINIGAME_LITTLE_TROUBLE",
+    "retailMode": 25,
+    "retailExpected": 4,
+    "projectEffective": 4,
+    "equal": true
+  },
+  {
+    "table": "kWavePointsMultPerMode",
+    "mode": "GAMEMODE_MINIGAME_POGO_PARTY",
+    "retailMode": 34,
+    "retailExpected": 1,
+    "projectEffective": 1,
+    "equal": true
+  },
+  {
+    "table": "kWavePointsMultPerMode",
+    "mode": "GAMEMODE_MINIGAME_PORTAL_COMBAT",
+    "retailMode": 26,
+    "retailExpected": 2,
+    "projectEffective": 2,
+    "equal": true
+  },
+  {
+    "table": "kWavePointsMultPerMode",
+    "mode": "GAMEMODE_MINIGAME_RAINING_SEEDS",
+    "retailMode": 19,
+    "retailExpected": 1,
+    "projectEffective": 1,
+    "equal": true
+  },
+  {
+    "table": "kWavePointsMultPerMode",
+    "mode": "GAMEMODE_MINIGAME_SEEING_STARS",
+    "retailMode": 22,
+    "retailExpected": 1,
+    "projectEffective": 1,
+    "equal": true
+  },
+  {
+    "table": "kWavePointsMultPerMode",
+    "mode": "GAMEMODE_MINIGAME_SLOT_MACHINE",
+    "retailMode": 18,
+    "retailExpected": 1,
+    "projectEffective": 1,
+    "equal": true
+  },
+  {
+    "table": "kWavePointsMultPerMode",
+    "mode": "GAMEMODE_MINIGAME_SPEED",
+    "retailMode": 29,
+    "retailExpected": 1,
+    "projectEffective": 1,
+    "equal": true
+  },
+  {
+    "table": "kWavePointsMultPerMode",
+    "mode": "GAMEMODE_MINIGAME_WALLNUT_BOWLING",
+    "retailMode": 17,
+    "retailExpected": 4,
+    "projectEffective": 4,
+    "equal": true
+  },
+  {
+    "table": "kWavePointsMultPerMode",
+    "mode": "GAMEMODE_MINIGAME_WALLNUT_BOWLING_2",
+    "retailMode": 33,
+    "retailExpected": 4,
+    "projectEffective": 4,
+    "equal": true
+  },
+  {
+    "table": "kWavePointsMultPerMode",
+    "mode": "GAMEMODE_MINIGAME_WAR_AND_PEAS",
+    "retailMode": 16,
+    "retailExpected": 1,
+    "projectEffective": 1,
+    "equal": true
+  },
+  {
+    "table": "kWavePointsMultPerMode",
+    "mode": "GAMEMODE_MINIGAME_WAR_AND_PEAS_2",
+    "retailMode": 32,
+    "retailExpected": 1,
+    "projectEffective": 1,
+    "equal": true
+  },
+  {
+    "table": "kWavePointsMultPerMode",
+    "mode": "GAMEMODE_MINIGAME_WHACK_A_ZOMBIE",
+    "retailMode": 30,
+    "retailExpected": 1,
+    "projectEffective": 1,
+    "equal": true
+  },
+  {
+    "table": "kWavePointsMultPerMode",
+    "mode": "GAMEMODE_MINIGAME_ZOMBIQUARIUM",
+    "retailMode": 23,
+    "retailExpected": 1,
+    "projectEffective": 1,
+    "equal": true
+  },
+  {
+    "table": "kWavePointsMultPerMode",
+    "mode": "GAMEMODE_LIMBO_AIR_RAID",
+    "retailMode": 41,
+    "retailExpected": 1,
+    "projectEffective": 1,
+    "equal": true
+  },
+  {
+    "table": "kWavePointsMultPerMode",
+    "mode": "GAMEMODE_LIMBO_ART_CHALLENGE_SUNFLOWER",
+    "retailMode": 40,
+    "retailExpected": 1,
+    "projectEffective": 1,
+    "equal": true
+  },
+  {
+    "table": "kWavePointsMultPerMode",
+    "mode": "GAMEMODE_LIMBO_ART_CHALLENGE_WALLNUT",
+    "retailMode": 36,
+    "retailExpected": 1,
+    "projectEffective": 1,
+    "equal": true
+  },
+  {
+    "table": "kWavePointsMultPerMode",
+    "mode": "GAMEMODE_LIMBO_BIG_TIME",
+    "retailMode": 39,
+    "retailExpected": 1,
+    "projectEffective": 1,
+    "equal": true
+  },
+  {
+    "table": "kWavePointsMultPerMode",
+    "mode": "GAMEMODE_LIMBO_BUNGEE_BLITZ",
+    "retailMode": 48,
+    "retailExpected": 2,
+    "projectEffective": 2,
+    "equal": true
+  },
+  {
+    "table": "kWavePointsMultPerMode",
+    "mode": "GAMEMODE_LIMBO_GRAVE_DANGER",
+    "retailMode": 45,
+    "retailExpected": 1,
+    "projectEffective": 1,
+    "equal": true
+  },
+  {
+    "table": "kWavePointsMultPerMode",
+    "mode": "GAMEMODE_LIMBO_HIGH_GRAVITY",
+    "retailMode": 44,
+    "retailExpected": 1,
+    "projectEffective": 1,
+    "equal": true
+  },
+  {
+    "table": "kWavePointsMultPerMode",
+    "mode": "GAMEMODE_LIMBO_ICE",
+    "retailMode": 42,
+    "retailExpected": 1,
+    "projectEffective": 1,
+    "equal": true
+  },
+  {
+    "table": "kWavePointsMultPerMode",
+    "mode": "GAMEMODE_LIMBO_RESODDED",
+    "retailMode": 38,
+    "retailExpected": 1,
+    "projectEffective": 1,
+    "equal": true
+  },
+  {
+    "table": "kWavePointsMultPerMode",
+    "mode": "GAMEMODE_LIMBO_SHOVEL",
+    "retailMode": 46,
+    "retailExpected": 2,
+    "projectEffective": 2,
+    "equal": true
+  },
+  {
+    "table": "kWavePointsMultPerMode",
+    "mode": "GAMEMODE_LIMBO_SQUIRREL",
+    "retailMode": 49,
+    "retailExpected": 1,
+    "projectEffective": 1,
+    "equal": true
+  },
+  {
+    "table": "kWavePointsMultPerMode",
+    "mode": "GAMEMODE_LIMBO_STORMY_NIGHT",
+    "retailMode": 47,
+    "retailExpected": 1,
+    "projectEffective": 1,
+    "equal": true
+  },
+  {
+    "table": "kWavePointsMultPerMode",
+    "mode": "GAMEMODE_LIMBO_SUNNY_DAY",
+    "retailMode": 37,
+    "retailExpected": 1,
+    "projectEffective": 1,
+    "equal": true
+  },
+  {
+    "table": "kWavePointsMultPerMode",
+    "mode": "GAMEMODE_LIMBO_ZEN_GARDEN",
+    "retailMode": 43,
+    "retailExpected": 1,
+    "projectEffective": 1,
+    "equal": true
+  },
+  {
+    "table": "kWavePointsMultPerMode",
+    "mode": "GAMEMODE_INTRO",
+    "retailMode": 71,
+    "retailExpected": 1,
+    "projectEffective": 1,
+    "equal": true
+  },
+  {
+    "table": "kWavePointsMultPerMode",
+    "mode": "GAMEMODE_PUZZLE_I_ZOMBIE_1",
+    "retailMode": 61,
+    "retailExpected": 1,
+    "projectEffective": 1,
+    "equal": true
+  },
+  {
+    "table": "kWavePointsMultPerMode",
+    "mode": "GAMEMODE_PUZZLE_I_ZOMBIE_2",
+    "retailMode": 62,
+    "retailExpected": 1,
+    "projectEffective": 1,
+    "equal": true
+  },
+  {
+    "table": "kWavePointsMultPerMode",
+    "mode": "GAMEMODE_PUZZLE_I_ZOMBIE_3",
+    "retailMode": 63,
+    "retailExpected": 1,
+    "projectEffective": 1,
+    "equal": true
+  },
+  {
+    "table": "kWavePointsMultPerMode",
+    "mode": "GAMEMODE_PUZZLE_I_ZOMBIE_4",
+    "retailMode": 64,
+    "retailExpected": 1,
+    "projectEffective": 1,
+    "equal": true
+  },
+  {
+    "table": "kWavePointsMultPerMode",
+    "mode": "GAMEMODE_PUZZLE_I_ZOMBIE_5",
+    "retailMode": 65,
+    "retailExpected": 1,
+    "projectEffective": 1,
+    "equal": true
+  },
+  {
+    "table": "kWavePointsMultPerMode",
+    "mode": "GAMEMODE_PUZZLE_I_ZOMBIE_6",
+    "retailMode": 66,
+    "retailExpected": 1,
+    "projectEffective": 1,
+    "equal": true
+  },
+  {
+    "table": "kWavePointsMultPerMode",
+    "mode": "GAMEMODE_PUZZLE_I_ZOMBIE_7",
+    "retailMode": 67,
+    "retailExpected": 1,
+    "projectEffective": 1,
+    "equal": true
+  },
+  {
+    "table": "kWavePointsMultPerMode",
+    "mode": "GAMEMODE_PUZZLE_I_ZOMBIE_8",
+    "retailMode": 68,
+    "retailExpected": 1,
+    "projectEffective": 1,
+    "equal": true
+  },
+  {
+    "table": "kWavePointsMultPerMode",
+    "mode": "GAMEMODE_PUZZLE_I_ZOMBIE_9",
+    "retailMode": 69,
+    "retailExpected": 1,
+    "projectEffective": 1,
+    "equal": true
+  },
+  {
+    "table": "kWavePointsMultPerMode",
+    "mode": "GAMEMODE_PUZZLE_I_ZOMBIE_ENDLESS",
+    "retailMode": 70,
+    "retailExpected": 1,
+    "projectEffective": 1,
+    "equal": true
+  },
+  {
+    "table": "kWavePointsMultPerMode",
+    "mode": "GAMEMODE_SCARY_POTTER_1",
+    "retailMode": 51,
+    "retailExpected": 1,
+    "projectEffective": 1,
+    "equal": true
+  },
+  {
+    "table": "kWavePointsMultPerMode",
+    "mode": "GAMEMODE_SCARY_POTTER_2",
+    "retailMode": 52,
+    "retailExpected": 1,
+    "projectEffective": 1,
+    "equal": true
+  },
+  {
+    "table": "kWavePointsMultPerMode",
+    "mode": "GAMEMODE_SCARY_POTTER_3",
+    "retailMode": 53,
+    "retailExpected": 1,
+    "projectEffective": 1,
+    "equal": true
+  },
+  {
+    "table": "kWavePointsMultPerMode",
+    "mode": "GAMEMODE_SCARY_POTTER_4",
+    "retailMode": 54,
+    "retailExpected": 1,
+    "projectEffective": 1,
+    "equal": true
+  },
+  {
+    "table": "kWavePointsMultPerMode",
+    "mode": "GAMEMODE_SCARY_POTTER_5",
+    "retailMode": 55,
+    "retailExpected": 1,
+    "projectEffective": 1,
+    "equal": true
+  },
+  {
+    "table": "kWavePointsMultPerMode",
+    "mode": "GAMEMODE_SCARY_POTTER_6",
+    "retailMode": 56,
+    "retailExpected": 1,
+    "projectEffective": 1,
+    "equal": true
+  },
+  {
+    "table": "kWavePointsMultPerMode",
+    "mode": "GAMEMODE_SCARY_POTTER_7",
+    "retailMode": 57,
+    "retailExpected": 1,
+    "projectEffective": 1,
+    "equal": true
+  },
+  {
+    "table": "kWavePointsMultPerMode",
+    "mode": "GAMEMODE_SCARY_POTTER_8",
+    "retailMode": 58,
+    "retailExpected": 1,
+    "projectEffective": 1,
+    "equal": true
+  },
+  {
+    "table": "kWavePointsMultPerMode",
+    "mode": "GAMEMODE_SCARY_POTTER_9",
+    "retailMode": 59,
+    "retailExpected": 1,
+    "projectEffective": 1,
+    "equal": true
+  },
+  {
+    "table": "kWavePointsMultPerMode",
+    "mode": "GAMEMODE_SCARY_POTTER_ENDLESS",
+    "retailMode": 60,
+    "retailExpected": 1,
+    "projectEffective": 1,
+    "equal": true
+  },
+  {
+    "table": "kWavePointsMultPerMode",
+    "mode": "GAMEMODE_SURVIVAL_ENDLESS_STAGE_1",
+    "retailMode": 11,
+    "retailExpected": 1,
+    "projectEffective": 1,
+    "equal": true
+  },
+  {
+    "table": "kWavePointsMultPerMode",
+    "mode": "GAMEMODE_SURVIVAL_ENDLESS_STAGE_2",
+    "retailMode": 12,
+    "retailExpected": 1,
+    "projectEffective": 1,
+    "equal": true
+  },
+  {
+    "table": "kWavePointsMultPerMode",
+    "mode": "GAMEMODE_SURVIVAL_ENDLESS_STAGE_3",
+    "retailMode": 13,
+    "retailExpected": 1,
+    "projectEffective": 1,
+    "equal": true
+  },
+  {
+    "table": "kWavePointsMultPerMode",
+    "mode": "GAMEMODE_SURVIVAL_ENDLESS_STAGE_4",
+    "retailMode": 14,
+    "retailExpected": 1,
+    "projectEffective": 1,
+    "equal": true
+  },
+  {
+    "table": "kWavePointsMultPerMode",
+    "mode": "GAMEMODE_SURVIVAL_ENDLESS_STAGE_5",
+    "retailMode": 15,
+    "retailExpected": 1,
+    "projectEffective": 1,
+    "equal": true
+  },
+  {
+    "table": "kWavePointsMultPerMode",
+    "mode": "GAMEMODE_SURVIVAL_HARD_STAGE_1",
+    "retailMode": 6,
+    "retailExpected": 1,
+    "projectEffective": 1,
+    "equal": true
+  },
+  {
+    "table": "kWavePointsMultPerMode",
+    "mode": "GAMEMODE_SURVIVAL_HARD_STAGE_2",
+    "retailMode": 7,
+    "retailExpected": 1,
+    "projectEffective": 1,
+    "equal": true
+  },
+  {
+    "table": "kWavePointsMultPerMode",
+    "mode": "GAMEMODE_SURVIVAL_HARD_STAGE_3",
+    "retailMode": 8,
+    "retailExpected": 1,
+    "projectEffective": 1,
+    "equal": true
+  },
+  {
+    "table": "kWavePointsMultPerMode",
+    "mode": "GAMEMODE_SURVIVAL_HARD_STAGE_4",
+    "retailMode": 9,
+    "retailExpected": 1,
+    "projectEffective": 1,
+    "equal": true
+  },
+  {
+    "table": "kWavePointsMultPerMode",
+    "mode": "GAMEMODE_SURVIVAL_HARD_STAGE_5",
+    "retailMode": 10,
+    "retailExpected": 1,
+    "projectEffective": 1,
+    "equal": true
+  },
+  {
+    "table": "kWavePointsMultPerMode",
+    "mode": "GAMEMODE_SURVIVAL_NORMAL_STAGE_1",
+    "retailMode": 1,
+    "retailExpected": 1,
+    "projectEffective": 1,
+    "equal": true
+  },
+  {
+    "table": "kWavePointsMultPerMode",
+    "mode": "GAMEMODE_SURVIVAL_NORMAL_STAGE_2",
+    "retailMode": 2,
+    "retailExpected": 1,
+    "projectEffective": 1,
+    "equal": true
+  },
+  {
+    "table": "kWavePointsMultPerMode",
+    "mode": "GAMEMODE_SURVIVAL_NORMAL_STAGE_3",
+    "retailMode": 3,
+    "retailExpected": 1,
+    "projectEffective": 1,
+    "equal": true
+  },
+  {
+    "table": "kWavePointsMultPerMode",
+    "mode": "GAMEMODE_SURVIVAL_NORMAL_STAGE_4",
+    "retailMode": 4,
+    "retailExpected": 1,
+    "projectEffective": 1,
+    "equal": true
+  },
+  {
+    "table": "kWavePointsMultPerMode",
+    "mode": "GAMEMODE_SURVIVAL_NORMAL_STAGE_5",
+    "retailMode": 5,
+    "retailExpected": 1,
+    "projectEffective": 1,
+    "equal": true
+  },
+  {
+    "table": "kWavePointsMultPerMode",
+    "mode": "GAMEMODE_TREE_OF_WISDOM",
+    "retailMode": 50,
+    "retailExpected": 1,
+    "projectEffective": 1,
+    "equal": true
+  }
+]

@@ -1,0 +1,77 @@
+
+CANDIDATE
+00428251 je       0x428258
+00428253 cmp      edi, 0xe
+00428256 jne      0x42826c
+00428258 mov      eax, dword ptr [esi + 0x5564]
+0042825e cmp      eax, 2
+00428261 je       0x42826c
+00428263 cmp      eax, 3
+00428266 jne      0x42834c
+0042826c mov      eax, dword ptr [esi + 0x5564]
+00428272 cmp      eax, 4
+00428275 je       0x42827c
+00428277 cmp      eax, 5
+0042827a jne      0x42828e
+0042827c cmp      edi, 0x11
+0042827f je       0x42834c
+00428285 cmp      edi, 8
+00428288 je       0x42834c
+0042828e mov      edx, esi
+00428290 call     0x41ee00
+00428295 test     al, al
+00428297 je       0x4282a2
+00428299 cmp      edi, 0xc
+0042829c je       0x42834c
+004282a2 mov      eax, dword ptr [esi + 0x5564]
+004282a8 cmp      eax, 4
+004282ab je       0x4282cc
+004282ad cmp      eax, 5
+004282b0 je       0x4282cc
+004282b2 mov      eax, dword ptr [ebp]
+004282b5 mov      eax, dword ptr [eax + 0x918]
+004282bb add      eax, -0xb
+004282be cmp      eax, 4
+004282c1 jbe      0x4282cc
+004282c3 cmp      edi, 0x14
+004282c6 je       0x42834c
+004282cc call     0x415bd0
+004282d1 cmp      eax, 4
+004282d4 jge      0x4282e0
+004282d6 cmp      edi, 0x17
+004282d9 je       0x42834c
+004282db cmp      edi, 0xc
+004282de je       0x42834c
+004282e0 call     0x415bd0
+004282e5 cmp      eax, 0xa
+004282e8 jge      0x4282ef
+004282ea cmp      edi, 0x20
+004282ed je       0x42834c
+004282ef mov      ecx, dword ptr [ebp]
+004282f2 mov      eax, dword ptr [ecx + 0x918]
+004282f8 cmp      eax, 1
+004282fb je       0x428307
+004282fd cmp      eax, 2
+00428300 je       0x428307
+00428302 cmp      eax, 3
+00428305 jne      0x42830c
+00428307 cmp      edi, 0xb
+0042830a jg       0x42834c
+0042830c cmp      edi, 0xd
+0042830f je       0x42834c
+00428311 cmp      edi, 9
+00428314 je       0x42834c
+00428316 cmp      edi, 0x18
+00428319 je       0x42834c
+0042831b cmp      edi, 0xa
+0042831e je       0x42834c
+00428320 cmp      edi, 0x1a
+00428323 je       0x42834c
+00428325 cmp      edi, 0x1b
+00428328 je       0x42834c
+0042832a cmp      edi, 0x1f
+0042832d je       0x42834c
+0042832f cmp      edi, 0x1c
+00428332 je       0x42834c
+00428334 cmp      edi, 0x1d
+00428337 je       0x42834c

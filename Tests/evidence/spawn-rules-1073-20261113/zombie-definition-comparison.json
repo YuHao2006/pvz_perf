@@ -1,0 +1,580 @@
+[
+  {
+    "id": 0,
+    "type": "ZOMBIE_NORMAL",
+    "retail": [
+      1,
+      1,
+      1,
+      4000
+    ],
+    "project": [
+      1,
+      1,
+      1,
+      4000
+    ],
+    "equal": true
+  },
+  {
+    "id": 1,
+    "type": "ZOMBIE_FLAG",
+    "retail": [
+      1,
+      1,
+      1,
+      0
+    ],
+    "project": [
+      1,
+      1,
+      1,
+      0
+    ],
+    "equal": true
+  },
+  {
+    "id": 2,
+    "type": "ZOMBIE_TRAFFIC_CONE",
+    "retail": [
+      2,
+      3,
+      1,
+      4000
+    ],
+    "project": [
+      2,
+      3,
+      1,
+      4000
+    ],
+    "equal": true
+  },
+  {
+    "id": 3,
+    "type": "ZOMBIE_POLEVAULTER",
+    "retail": [
+      2,
+      6,
+      5,
+      2000
+    ],
+    "project": [
+      2,
+      6,
+      5,
+      2000
+    ],
+    "equal": true
+  },
+  {
+    "id": 4,
+    "type": "ZOMBIE_PAIL",
+    "retail": [
+      4,
+      8,
+      1,
+      3000
+    ],
+    "project": [
+      4,
+      8,
+      1,
+      3000
+    ],
+    "equal": true
+  },
+  {
+    "id": 5,
+    "type": "ZOMBIE_NEWSPAPER",
+    "retail": [
+      2,
+      11,
+      1,
+      1000
+    ],
+    "project": [
+      2,
+      11,
+      1,
+      1000
+    ],
+    "equal": true
+  },
+  {
+    "id": 6,
+    "type": "ZOMBIE_DOOR",
+    "retail": [
+      4,
+      13,
+      5,
+      3500
+    ],
+    "project": [
+      4,
+      13,
+      5,
+      3500
+    ],
+    "equal": true
+  },
+  {
+    "id": 7,
+    "type": "ZOMBIE_FOOTBALL",
+    "retail": [
+      7,
+      16,
+      5,
+      2000
+    ],
+    "project": [
+      7,
+      16,
+      5,
+      2000
+    ],
+    "equal": true
+  },
+  {
+    "id": 8,
+    "type": "ZOMBIE_DANCER",
+    "retail": [
+      5,
+      18,
+      5,
+      1000
+    ],
+    "project": [
+      5,
+      18,
+      5,
+      1000
+    ],
+    "equal": true
+  },
+  {
+    "id": 9,
+    "type": "ZOMBIE_BACKUP_DANCER",
+    "retail": [
+      1,
+      18,
+      1,
+      0
+    ],
+    "project": [
+      1,
+      18,
+      1,
+      0
+    ],
+    "equal": true
+  },
+  {
+    "id": 10,
+    "type": "ZOMBIE_DUCKY_TUBE",
+    "retail": [
+      1,
+      21,
+      5,
+      0
+    ],
+    "project": [
+      1,
+      21,
+      5,
+      0
+    ],
+    "equal": true
+  },
+  {
+    "id": 11,
+    "type": "ZOMBIE_SNORKEL",
+    "retail": [
+      3,
+      23,
+      10,
+      2000
+    ],
+    "project": [
+      3,
+      23,
+      10,
+      2000
+    ],
+    "equal": true
+  },
+  {
+    "id": 12,
+    "type": "ZOMBIE_ZAMBONI",
+    "retail": [
+      7,
+      26,
+      10,
+      2000
+    ],
+    "project": [
+      7,
+      26,
+      10,
+      2000
+    ],
+    "equal": true
+  },
+  {
+    "id": 13,
+    "type": "ZOMBIE_BOBSLED",
+    "retail": [
+      3,
+      26,
+      10,
+      2000
+    ],
+    "project": [
+      3,
+      26,
+      10,
+      2000
+    ],
+    "equal": true
+  },
+  {
+    "id": 14,
+    "type": "ZOMBIE_DOLPHIN_RIDER",
+    "retail": [
+      3,
+      28,
+      10,
+      1500
+    ],
+    "project": [
+      3,
+      28,
+      10,
+      1500
+    ],
+    "equal": true
+  },
+  {
+    "id": 15,
+    "type": "ZOMBIE_JACK_IN_THE_BOX",
+    "retail": [
+      3,
+      31,
+      10,
+      1000
+    ],
+    "project": [
+      3,
+      31,
+      10,
+      1000
+    ],
+    "equal": true
+  },
+  {
+    "id": 16,
+    "type": "ZOMBIE_BALLOON",
+    "retail": [
+      2,
+      33,
+      10,
+      2000
+    ],
+    "project": [
+      2,
+      33,
+      10,
+      2000
+    ],
+    "equal": true
+  },
+  {
+    "id": 17,
+    "type": "ZOMBIE_DIGGER",
+    "retail": [
+      4,
+      36,
+      10,
+      1000
+    ],
+    "project": [
+      4,
+      36,
+      10,
+      1000
+    ],
+    "equal": true
+  },
+  {
+    "id": 18,
+    "type": "ZOMBIE_POGO",
+    "retail": [
+      4,
+      38,
+      10,
+      1000
+    ],
+    "project": [
+      4,
+      38,
+      10,
+      1000
+    ],
+    "equal": true
+  },
+  {
+    "id": 19,
+    "type": "ZOMBIE_YETI",
+    "retail": [
+      4,
+      40,
+      1,
+      1
+    ],
+    "project": [
+      4,
+      40,
+      1,
+      1
+    ],
+    "equal": true
+  },
+  {
+    "id": 20,
+    "type": "ZOMBIE_BUNGEE",
+    "retail": [
+      3,
+      41,
+      10,
+      1000
+    ],
+    "project": [
+      3,
+      41,
+      10,
+      1000
+    ],
+    "equal": true
+  },
+  {
+    "id": 21,
+    "type": "ZOMBIE_LADDER",
+    "retail": [
+      4,
+      43,
+      10,
+      1000
+    ],
+    "project": [
+      4,
+      43,
+      10,
+      1000
+    ],
+    "equal": true
+  },
+  {
+    "id": 22,
+    "type": "ZOMBIE_CATAPULT",
+    "retail": [
+      5,
+      46,
+      10,
+      1500
+    ],
+    "project": [
+      5,
+      46,
+      10,
+      1500
+    ],
+    "equal": true
+  },
+  {
+    "id": 23,
+    "type": "ZOMBIE_GARGANTUAR",
+    "retail": [
+      10,
+      48,
+      15,
+      1500
+    ],
+    "project": [
+      10,
+      48,
+      15,
+      1500
+    ],
+    "equal": true
+  },
+  {
+    "id": 24,
+    "type": "ZOMBIE_IMP",
+    "retail": [
+      10,
+      48,
+      1,
+      0
+    ],
+    "project": [
+      10,
+      48,
+      1,
+      0
+    ],
+    "equal": true
+  },
+  {
+    "id": 25,
+    "type": "ZOMBIE_BOSS",
+    "retail": [
+      10,
+      50,
+      1,
+      0
+    ],
+    "project": [
+      10,
+      50,
+      1,
+      0
+    ],
+    "equal": true
+  },
+  {
+    "id": 26,
+    "type": "ZOMBIE_PEA_HEAD",
+    "retail": [
+      1,
+      99,
+      1,
+      4000
+    ],
+    "project": [
+      1,
+      99,
+      1,
+      4000
+    ],
+    "equal": true
+  },
+  {
+    "id": 27,
+    "type": "ZOMBIE_WALLNUT_HEAD",
+    "retail": [
+      4,
+      99,
+      1,
+      3000
+    ],
+    "project": [
+      4,
+      99,
+      1,
+      3000
+    ],
+    "equal": true
+  },
+  {
+    "id": 28,
+    "type": "ZOMBIE_JALAPENO_HEAD",
+    "retail": [
+      3,
+      99,
+      10,
+      1000
+    ],
+    "project": [
+      3,
+      99,
+      10,
+      1000
+    ],
+    "equal": true
+  },
+  {
+    "id": 29,
+    "type": "ZOMBIE_GATLING_HEAD",
+    "retail": [
+      3,
+      99,
+      10,
+      2000
+    ],
+    "project": [
+      3,
+      99,
+      10,
+      2000
+    ],
+    "equal": true
+  },
+  {
+    "id": 30,
+    "type": "ZOMBIE_SQUASH_HEAD",
+    "retail": [
+      3,
+      99,
+      10,
+      2000
+    ],
+    "project": [
+      3,
+      99,
+      10,
+      2000
+    ],
+    "equal": true
+  },
+  {
+    "id": 31,
+    "type": "ZOMBIE_TALLNUT_HEAD",
+    "retail": [
+      4,
+      99,
+      10,
+      2000
+    ],
+    "project": [
+      4,
+      99,
+      10,
+      2000
+    ],
+    "equal": true
+  },
+  {
+    "id": 32,
+    "type": "ZOMBIE_REDEYE_GARGANTUAR",
+    "retail": [
+      10,
+      48,
+      15,
+      6000
+    ],
+    "project": [
+      10,
+      48,
+      15,
+      6000
+    ],
+    "equal": true
+  },
+  {
+    "id": 33,
+    "type": "ZOMBIE_ZOMBATAR",
+    "retail": [
+      1,
+      1,
+      1,
+      0
+    ],
+    "project": [
+      1,
+      1,
+      1,
+      0
+    ],
+    "equal": true
+  }
+]

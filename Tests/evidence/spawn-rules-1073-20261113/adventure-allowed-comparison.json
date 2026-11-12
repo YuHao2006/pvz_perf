@@ -1,0 +1,170 @@
+{
+  "retailAddress": "0x722d98",
+  "rows": [
+    {
+      "type": "ZOMBIE_NORMAL",
+      "equal": true,
+      "differences": []
+    },
+    {
+      "type": "ZOMBIE_FLAG",
+      "equal": true,
+      "differences": []
+    },
+    {
+      "type": "ZOMBIE_TRAFFIC_CONE",
+      "equal": true,
+      "differences": []
+    },
+    {
+      "type": "ZOMBIE_POLEVAULTER",
+      "equal": true,
+      "differences": []
+    },
+    {
+      "type": "ZOMBIE_PAIL",
+      "equal": true,
+      "differences": []
+    },
+    {
+      "type": "ZOMBIE_NEWSPAPER",
+      "equal": true,
+      "differences": []
+    },
+    {
+      "type": "ZOMBIE_DOOR",
+      "equal": true,
+      "differences": []
+    },
+    {
+      "type": "ZOMBIE_FOOTBALL",
+      "equal": true,
+      "differences": []
+    },
+    {
+      "type": "ZOMBIE_DANCER",
+      "equal": true,
+      "differences": []
+    },
+    {
+      "type": "ZOMBIE_BACKUP_DANCER",
+      "equal": true,
+      "differences": []
+    },
+    {
+      "type": "ZOMBIE_DUCKY_TUBE",
+      "equal": true,
+      "differences": []
+    },
+    {
+      "type": "ZOMBIE_SNORKEL",
+      "equal": true,
+      "differences": []
+    },
+    {
+      "type": "ZOMBIE_ZAMBONI",
+      "equal": true,
+      "differences": []
+    },
+    {
+      "type": "ZOMBIE_BOBSLED",
+      "equal": true,
+      "differences": []
+    },
+    {
+      "type": "ZOMBIE_DOLPHIN_RIDER",
+      "equal": true,
+      "differences": []
+    },
+    {
+      "type": "ZOMBIE_JACK_IN_THE_BOX",
+      "equal": true,
+      "differences": []
+    },
+    {
+      "type": "ZOMBIE_BALLOON",
+      "equal": true,
+      "differences": []
+    },
+    {
+      "type": "ZOMBIE_DIGGER",
+      "equal": true,
+      "differences": []
+    },
+    {
+      "type": "ZOMBIE_POGO",
+      "equal": true,
+      "differences": []
+    },
+    {
+      "type": "ZOMBIE_YETI",
+      "equal": true,
+      "differences": []
+    },
+    {
+      "type": "ZOMBIE_BUNGEE",
+      "equal": true,
+      "differences": []
+    },
+    {
+      "type": "ZOMBIE_LADDER",
+      "equal": true,
+      "differences": []
+    },
+    {
+      "type": "ZOMBIE_CATAPULT",
+      "equal": true,
+      "differences": []
+    },
+    {
+      "type": "ZOMBIE_GARGANTUAR",
+      "equal": true,
+      "differences": []
+    },
+    {
+      "type": "ZOMBIE_IMP",
+      "equal": true,
+      "differences": []
+    },
+    {
+      "type": "ZOMBIE_BOSS",
+      "equal": true,
+      "differences": []
+    },
+    {
+      "type": "ZOMBIE_PEA_HEAD",
+      "equal": true,
+      "differences": []
+    },
+    {
+      "type": "ZOMBIE_WALLNUT_HEAD",
+      "equal": true,
+      "differences": []
+    },
+    {
+      "type": "ZOMBIE_JALAPENO_HEAD",
+      "equal": true,
+      "differences": []
+    },
+    {
+      "type": "ZOMBIE_GATLING_HEAD",
+      "equal": true,
+      "differences": []
+    },
+    {
+      "type": "ZOMBIE_SQUASH_HEAD",
+      "equal": true,
+      "differences": []
+    },
+    {
+      "type": "ZOMBIE_TALLNUT_HEAD",
+      "equal": true,
+      "differences": []
+    },
+    {
+      "type": "ZOMBIE_REDEYE_GARGANTUAR",
+      "equal": true,
+      "differences": []
+    }
+  ]
+}

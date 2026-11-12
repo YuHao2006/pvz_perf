@@ -1,0 +1,149 @@
+004281b0 or       byte ptr [ebp - 0x1a], bh
+004281b3 pop      esi
+004281b4 xor      eax, eax
+004281b6 pop      ebp
+004281b7 ret      4
+004281ba int3     
+004281bb int3     
+004281bc int3     
+004281bd int3     
+004281be int3     
+004281bf int3     
+004281c0 sub      esp, 0x9c4
+004281c6 push     ebx
+004281c7 push     ebp
+004281c8 mov      ebp, dword ptr [esp + 0x9d0]
+004281cf mov      eax, dword ptr [ebp + 4]
+004281d2 mov      byte ptr [eax + 0x54ec], 1
+004281d9 mov      ecx, dword ptr [ebp + 4]
+004281dc call     0x40c9a0
+004281e1 push     eax
+004281e2 lea      ecx, [esp + 0xc]
+004281e6 call     0x5f74c0
+004281eb push     5
+004281ed lea      ecx, [esp + 0xc]
+004281f1 call     0x5f77f0
+004281f6 test     eax, eax
+004281f8 jne      0x428206
+004281fa mov      ecx, dword ptr [ebp + 4]
+004281fd mov      byte ptr [ecx + 0x54f1], 1
+00428204 jmp      0x428210
+00428206 mov      edx, dword ptr [ebp + 4]
+00428209 mov      byte ptr [edx + 0x54ee], 1
+00428210 mov      eax, dword ptr [ebp + 0x6c]
+00428213 inc      eax
+00428214 cmp      eax, 9
+00428217 jge      0x428361
+0042821d mov      ebx, eax
+0042821f test     ebx, ebx
+00428221 jle      0x428356
+00428227 push     esi
+00428228 push     edi
+00428229 lea      esp, [esp]
+00428230 push     0x22
+00428232 lea      ecx, [esp + 0x14]
+00428236 call     0x5f77f0
+0042823b mov      esi, dword ptr [ebp + 4]
+0042823e mov      edi, eax
+00428240 cmp      byte ptr [esi + edi + 0x54ec], 0
+00428248 jne      0x42834c
+0042824e cmp      edi, 0xb
+00428251 je       0x428258
+00428253 cmp      edi, 0xe
+00428256 jne      0x42826c
+00428258 mov      eax, dword ptr [esi + 0x5564]
+0042825e cmp      eax, 2
+00428261 je       0x42826c
+00428263 cmp      eax, 3
+00428266 jne      0x42834c
+0042826c mov      eax, dword ptr [esi + 0x5564]
+00428272 cmp      eax, 4
+00428275 je       0x42827c
+00428277 cmp      eax, 5
+0042827a jne      0x42828e
+0042827c cmp      edi, 0x11
+0042827f je       0x42834c
+00428285 cmp      edi, 8
+00428288 je       0x42834c
+0042828e mov      edx, esi
+00428290 call     0x41ee00
+00428295 test     al, al
+00428297 je       0x4282a2
+00428299 cmp      edi, 0xc
+0042829c je       0x42834c
+004282a2 mov      eax, dword ptr [esi + 0x5564]
+004282a8 cmp      eax, 4
+004282ab je       0x4282cc
+004282ad cmp      eax, 5
+004282b0 je       0x4282cc
+004282b2 mov      eax, dword ptr [ebp]
+004282b5 mov      eax, dword ptr [eax + 0x918]
+004282bb add      eax, -0xb
+004282be cmp      eax, 4
+004282c1 jbe      0x4282cc
+004282c3 cmp      edi, 0x14
+004282c6 je       0x42834c
+004282cc call     0x415bd0
+004282d1 cmp      eax, 4
+004282d4 jge      0x4282e0
+004282d6 cmp      edi, 0x17
+004282d9 je       0x42834c
+004282db cmp      edi, 0xc
+004282de je       0x42834c
+004282e0 call     0x415bd0
+004282e5 cmp      eax, 0xa
+004282e8 jge      0x4282ef
+004282ea cmp      edi, 0x20
+004282ed je       0x42834c
+004282ef mov      ecx, dword ptr [ebp]
+004282f2 mov      eax, dword ptr [ecx + 0x918]
+004282f8 cmp      eax, 1
+004282fb je       0x428307
+004282fd cmp      eax, 2
+00428300 je       0x428307
+00428302 cmp      eax, 3
+00428305 jne      0x42830c
+00428307 cmp      edi, 0xb
+0042830a jg       0x42834c
+0042830c cmp      edi, 0xd
+0042830f je       0x42834c
+00428311 cmp      edi, 9
+00428314 je       0x42834c
+00428316 cmp      edi, 0x18
+00428319 je       0x42834c
+0042831b cmp      edi, 0xa
+0042831e je       0x42834c
+00428320 cmp      edi, 0x1a
+00428323 je       0x42834c
+00428325 cmp      edi, 0x1b
+00428328 je       0x42834c
+0042832a cmp      edi, 0x1f
+0042832d je       0x42834c
+0042832f cmp      edi, 0x1c
+00428332 je       0x42834c
+00428334 cmp      edi, 0x1d
+00428337 je       0x42834c
+00428339 cmp      edi, 0x1e
+0042833c je       0x42834c
+0042833e cmp      edi, 0x13
+00428341 je       0x42834c
+00428343 mov      byte ptr [esi + edi + 0x54ec], 1
+0042834b dec      ebx
+0042834c test     ebx, ebx
+0042834e jg       0x428230
+00428354 pop      edi
+00428355 pop      esi
+00428356 pop      ebp
+00428357 pop      ebx
+00428358 add      esp, 0x9c4
+0042835e ret      4
+00428361 mov      ebx, 9
+00428366 jmp      0x428227
+0042836b int3     
+0042836c int3     
+0042836d int3     
+0042836e int3     
+0042836f int3     
+00428370 mov      ecx, dword ptr [esi]
+00428372 mov      eax, dword ptr [ecx + 0x918]
+00428378 push     ebx

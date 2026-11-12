@@ -2759,6 +2759,11 @@ void Challenge::InitZombieWavesSurvival()
 		if (mBoard->StageHasRoof() && (aRandZombie == ZOMBIE_DIGGER || aRandZombie == ZOMBIE_DANCER))				continue;
 		if (mBoard->StageHasGraveStones() && aRandZombie == ZOMBIE_ZAMBONI)											continue;
 		if (!mBoard->StageHasRoof() && !mApp->IsSurvivalEndless(mApp->mGameMode) && aRandZombie == ZOMBIE_BUNGEE)	continue;
+		// Retail 1073 (0x4282cc): both Gargantuar and Zamboni enter the
+		// survival type pool only after four completed flags. This is a
+		// roster-generation rule, not their within-round first-allowed wave.
+		if (mBoard->GetSurvivalFlagsCompleted() < 4 &&
+			(aRandZombie == ZOMBIE_GARGANTUAR || aRandZombie == ZOMBIE_ZAMBONI)) continue;
 		if (mBoard->GetSurvivalFlagsCompleted() < 10 && aRandZombie == ZOMBIE_REDEYE_GARGANTUAR)								continue;
 		if (mApp->IsSurvivalNormal(mApp->mGameMode) && aRandZombie > ZOMBIE_SNORKEL)								continue;
 		if (mBoard->IsZombieTypeSpawnedOnly(aRandZombie) || Zombie::IsZombotany(aRandZombie) ||

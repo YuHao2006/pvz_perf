@@ -85,6 +85,10 @@
 #include "Lawn/System/Dat64TimeSchema.h"
 #include <iostream>
 #include <DbgHelp.h>
+#include <dxgi1_4.h>
+#include <psapi.h>
+#pragma comment(lib, "dxgi.lib")
+#pragma comment(lib, "psapi.lib")
 #pragma comment(lib, "dbghelp.lib")
 #include <stdexcept>
 #include <string_view>
@@ -95,6 +99,7 @@
 bool FixtureCloseRequest() { return false; }
 bool (*gAppCloseRequest)() = FixtureCloseRequest;
 
+static bool gVramOnly=false;
 namespace
 {
 using namespace Sexy;
@@ -8362,8 +8367,9 @@ void StorePauseClockRuntime(TestApp& app, DecodeOnlySoundManager& sounds)
     TodFoley foley;
     ReanimatorCache cache;
     cache.ReanimatorCacheInitialize();
-    for (const auto seed:{SEED_GATLINGPEA,SEED_TWINSUNFLOWER,SEED_GLOOMSHROOM,SEED_CATTAIL})
-        cache.mPlantImages[seed]=cache.MakeCachedPlantFrame(seed,VARIATION_NORMAL);
+    if(!gVramOnly)
+        for (const auto seed:{SEED_GATLINGPEA,SEED_TWINSUNFLOWER,SEED_GLOOMSHROOM,SEED_CATTAIL})
+            cache.mPlantImages[seed]=cache.MakeCachedPlantFrame(seed,VARIATION_NORMAL);
     struct RestoreWorld {
         TestApp& app;
         DecodeOnlySoundManager& sounds;
@@ -8399,6 +8405,87 @@ void StorePauseClockRuntime(TestApp& app, DecodeOnlySoundManager& sounds)
     app.mMusicInterface=&silentMusicInterface;
     app.mReanimatorCache=&cache;
     sounds.allowSilentPlayback=true;
+    if(gVramOnly) {
+#if defined(PVZ_GPU_VULKAN)
+        auto& render=*app.mDDInterface->mRenderInterface;
+        std::ofstream report("gpu-memory.jsonl");
+        const auto sample=[&](const char* phase){
+            render.Flush();
+            const auto json=render.mRenderer->MemorySnapshotJson();
+            PROCESS_MEMORY_COUNTERS_EX cpu{};cpu.cb=sizeof(cpu);
+            Require(GetProcessMemoryInfo(GetCurrentProcess(),reinterpret_cast<PROCESS_MEMORY_COUNTERS*>(&cpu),sizeof(cpu)),"Cannot query process memory");
+            uint64_t local=0,nonlocal=0;bool dxgiAvailable=false;
+            VkPhysicalDeviceIDProperties ids{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ID_PROPERTIES};
+            VkPhysicalDeviceProperties2 properties{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2};properties.pNext=&ids;
+            vkGetPhysicalDeviceProperties2(VulkanContext::physicalDevice,&properties);
+            IDXGIFactory4* factory=nullptr;IDXGIAdapter3* adapter=nullptr;
+            if(ids.deviceLUIDValid&&SUCCEEDED(CreateDXGIFactory1(IID_PPV_ARGS(&factory)))) {
+                LUID luid{};std::memcpy(&luid,ids.deviceLUID,sizeof(luid));
+                if(SUCCEEDED(factory->EnumAdapterByLuid(luid,IID_PPV_ARGS(&adapter)))){
+                    DXGI_QUERY_VIDEO_MEMORY_INFO a{},b{};
+                    dxgiAvailable=SUCCEEDED(adapter->QueryVideoMemoryInfo(0,DXGI_MEMORY_SEGMENT_GROUP_LOCAL,&a))&&SUCCEEDED(adapter->QueryVideoMemoryInfo(0,DXGI_MEMORY_SEGMENT_GROUP_NON_LOCAL,&b));
+                    local=a.CurrentUsage;nonlocal=b.CurrentUsage;adapter->Release();
+                }
+                factory->Release();
+            }
+            report<<"{\"phase\":\""<<phase<<"\",\"memory\":"<<json
+                <<",\"gpu\":\""<<properties.properties.deviceName<<"\",\"process_private_bytes\":"<<cpu.PrivateUsage<<",\"working_set_bytes\":"<<cpu.WorkingSetSize
+                <<",\"dxgi_available\":"<<(dxgiAvailable?"true":"false")<<",\"dxgi_local_bytes\":"<<local
+                <<",\"dxgi_nonlocal_bytes\":"<<nonlocal<<"}\n";report.flush();
+            std::cout<<"VRAM "<<phase<<" "<<json<<'\n';
+        };
+        sample("loaded_resources");
+        MagnetAtlas::Load();sample("magnet_atlas_loaded");
+        AlmanacAtlas::Load();sample("almanac_atlas_loaded");
+        AchievementsAtlas::Load();sample("achievements_atlas_loaded");
+        CommonUIAtlas::Load();sample("common_ui_atlas_loaded");
+        DesktopUIAtlas::Load();sample("scene_atlases_loaded");
+        cache.PrebuildCacheFrames();sample("preview_cache_prebuilt");
+        auto* target=render.CreateRenderImage(800,600);
+        sample("fixed_probe_target");
+        {
+            AlmanacDialog dialog(&app);
+            for(auto page:{ALMANAC_PAGE_INDEX,ALMANAC_PAGE_PLANTS,ALMANAC_PAGE_ZOMBIES}){
+                dialog.SetPage(page);
+                {GpuImageDrawScope scope(render,target);Graphics graphics(target);dialog.Draw(&graphics);}
+                sample(page==ALMANAC_PAGE_INDEX?"almanac_index":page==ALMANAC_PAGE_PLANTS?"almanac_plants":"almanac_zombies");
+            }
+        }
+        sample("almanac_closed");
+        profile.mFinishedAdventure=1;profile.mPurchases[STORE_ITEM_PACKET_UPGRADE]=4;
+        std::fill(std::begin(profile.mEarnedAchievements),std::end(profile.mEarnedAchievements),true);
+        std::fill(std::begin(profile.mShownAchievements),std::end(profile.mShownAchievements),true);
+        {GameSelector selector(&app);{GpuImageDrawScope scope(render,target);Graphics graphics(target);selector.Draw(&graphics);}sample("main_menu");}
+        {
+            PoolEffect pool;pool.PoolEffectInitialize();ZenGarden garden;
+            auto* previousPool=app.mPoolEffect;auto* previousGarden=app.mZenGarden;app.mPoolEffect=&pool;app.mZenGarden=&garden;
+            struct RestorePool {TestApp& app;PoolEffect* previous;ZenGarden* garden;~RestorePool(){app.KillBoard();app.ProcessSafeDeleteList();app.mPoolEffect=previous;app.mZenGarden=garden;}} restorePool{app,previousPool,previousGarden};
+            app.PreNewGame(GAMEMODE_SURVIVAL_ENDLESS_STAGE_3,false);
+            sample("endless_chooser_created");
+            app.KillSeedChooserScreen();app.StartPlaying();
+            {GpuImageDrawScope scope(render,target);Graphics graphics(target);app.mBoard->Draw(&graphics);}
+            sample("endless_started_empty_formation");
+            app.KillBoard();app.ProcessSafeDeleteList();sample("board_closed");
+            app.PreNewGame(GAMEMODE_ADVENTURE,false);app.KillSeedChooserScreen();app.StartPlaying();
+            {GpuImageDrawScope scope(render,target);Graphics graphics(target);app.mBoard->Draw(&graphics);}
+            sample("boss_conveyor_started");
+        }
+        sample("all_boards_closed");
+        delete target;sample("probe_target_destroy_requested");
+        cache.ReanimatorCacheDispose();sample("preview_cache_destroy_requested");
+        FreeSceneAtlases();sample("scene_atlases_destroy_requested");
+        // Flush alone may retain fence-retired allocations. Exercise another
+        // image-only submission so retirement is measured separately.
+        auto* drain=render.CreateRenderImage(1,1);
+        {GpuImageDrawScope scope(render,drain);Graphics graphics(drain);graphics.FillRect(0,0,1,1);}
+        render.Flush();delete drain;
+        sample("retirement_drained");
+        std::cout<<"PASS VRAM allocation baseline (no cache policy change)\n";
+        return;
+#else
+        throw std::runtime_error("VRAM baseline currently requires Vulkan");
+#endif
+    }
     if(gTouchOnly) {
         CommonUIAtlas::Load();
         if(gLandscapeOnly) {
@@ -9130,7 +9217,7 @@ void AllResourceGroups(SexyAppBase& app)
         }
     }
     Require(loadedImages==RESOURCE_LOAD_IMAGE_COUNT,"Full loading skipped an image recipe");
-    if(gPlantCatalogOnly||gZombieCatalogOnly||gMinigameRulesOnly||gPuzzleRulesOnly||gSurvivalRulesOnly||gAdventureRulesOnly||gHiddenRulesOnly||gGardenRulesOnly||gIntroRulesOnly||gUiRulesOnly||gAwardRulesOnly||gAlmanacClockOnly||gActorBirthOnly||gCreditsOnly||gLossRulesOnly||gOpeningRulesOnly||gLifecycleRulesOnly||gGraveRulesOnly||gHudSeamsOnly||gTouchOnly)
+    if(gVramOnly||gPlantCatalogOnly||gZombieCatalogOnly||gMinigameRulesOnly||gPuzzleRulesOnly||gSurvivalRulesOnly||gAdventureRulesOnly||gHiddenRulesOnly||gGardenRulesOnly||gIntroRulesOnly||gUiRulesOnly||gAwardRulesOnly||gAlmanacClockOnly||gActorBirthOnly||gCreditsOnly||gLossRulesOnly||gOpeningRulesOnly||gLifecycleRulesOnly||gGraveRulesOnly||gHudSeamsOnly||gTouchOnly)
     {
         StorePauseClockRuntime(static_cast<TestApp&>(app),sounds);
         DefinitionFreeAtlasImages();
@@ -9245,7 +9332,7 @@ void ParticleDefinitionsAndFrames(SexyAppBase& app, const char* pakPath)
     Require(gPakInterface && gPakInterface->AddPakFile(pakPath),
         "Cannot mount the production particle package");
     AllResourceGroups(app);
-    if(gPlantCatalogOnly||gZombieCatalogOnly||gMinigameRulesOnly||gPuzzleRulesOnly||gSurvivalRulesOnly||gAdventureRulesOnly||gHiddenRulesOnly||gGardenRulesOnly||gIntroRulesOnly||gUiRulesOnly||gAwardRulesOnly||gAlmanacClockOnly||gActorBirthOnly||gCreditsOnly||gLossRulesOnly||gOpeningRulesOnly||gLifecycleRulesOnly||gGraveRulesOnly||gHudSeamsOnly||gTouchOnly) return;
+    if(gVramOnly||gPlantCatalogOnly||gZombieCatalogOnly||gMinigameRulesOnly||gPuzzleRulesOnly||gSurvivalRulesOnly||gAdventureRulesOnly||gHiddenRulesOnly||gGardenRulesOnly||gIntroRulesOnly||gUiRulesOnly||gAwardRulesOnly||gAlmanacClockOnly||gActorBirthOnly||gCreditsOnly||gLossRulesOnly||gOpeningRulesOnly||gLifecycleRulesOnly||gGraveRulesOnly||gHudSeamsOnly||gTouchOnly) return;
     ResourceLoadingOwnership(app);
     ReanimationAppearanceDefinitions(app);
     constexpr ParticleEffect fireEffect=ParticleEffect::PARTICLE_ZOMBIE_BOSS_FIREBALL;
@@ -9728,6 +9815,7 @@ void PrecomputedTransparentEdges(TestApp& app)
 
 int main(int argc, char** argv)
 {
+    gVramOnly=argc==3 && std::string_view(argv[2])=="gpu-memory";
     gPlantCatalogOnly=argc==3 && std::string_view(argv[2])=="plant-attacks";
     gIce3Only=argc==3 && std::string_view(argv[2])=="ice3";
     gZombieCatalogOnly=gIce3Only || (argc==3 && std::string_view(argv[2])=="zombie-behavior");
@@ -9787,6 +9875,7 @@ int main(int argc, char** argv)
         app.mDDInterface=new DDInterface(&app);
         Require(app.mDDInterface->Init(window.handle,true)==DDInterface::RESULT_OK,
             "Cannot initialize public image runtime");
+        if(!gVramOnly) {
         WrappedTextMeasurements();
         PoolGpuChecks::Run(*app.mDDInterface->mRenderInterface->mRenderer,
 #if defined(PVZ_GPU_VULKAN)
@@ -9804,7 +9893,8 @@ int main(int argc, char** argv)
         SharedReferences(app);
         ReanimationAppearancePixels(app);
         ReanimationFullscreenPixels(app);
-        Require(argc==2||gPlantCatalogOnly||gZombieCatalogOnly||gMinigameRulesOnly||gPuzzleRulesOnly||gSurvivalRulesOnly||gAdventureRulesOnly||gHiddenRulesOnly||gGardenRulesOnly||gIntroRulesOnly||gUiRulesOnly||gAwardRulesOnly||gAlmanacClockOnly||gActorBirthOnly||gCreditsOnly||gLossRulesOnly||gOpeningRulesOnly||gLifecycleRulesOnly||gGraveRulesOnly||gHudSeamsOnly||gTouchOnly,"Pass the production main.pak64 path and optional focused case");
+        }
+        Require(argc==2||gVramOnly||gPlantCatalogOnly||gZombieCatalogOnly||gMinigameRulesOnly||gPuzzleRulesOnly||gSurvivalRulesOnly||gAdventureRulesOnly||gHiddenRulesOnly||gGardenRulesOnly||gIntroRulesOnly||gUiRulesOnly||gAwardRulesOnly||gAlmanacClockOnly||gActorBirthOnly||gCreditsOnly||gLossRulesOnly||gOpeningRulesOnly||gLifecycleRulesOnly||gGraveRulesOnly||gHudSeamsOnly||gTouchOnly,"Pass the production main.pak64 path and optional focused case");
         ParticleDefinitionsAndFrames(app,argv[1]);
     }
     catch (const ResourceManagerException& error)

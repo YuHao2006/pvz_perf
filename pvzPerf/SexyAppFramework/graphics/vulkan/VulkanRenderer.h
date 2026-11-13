@@ -75,6 +75,9 @@ public:
     // Prepares fixed compute pipelines without images or command submission.
     // Idempotent after success; business calls require the prepared pipelines.
     void PrepareLoadingPipelines();
+    // Cold diagnostic query only; never called by the game update/draw loop.
+    // Renderer allocations exclude swapchain, driver-private memory and external effects.
+    std::string MemorySnapshotJson() const;
 
     // Input matches MemoryImage: native little-endian 0xAARRGGBB (BGRA bytes).
     // Source row pitch may exceed width*4. Opaque ignores alpha

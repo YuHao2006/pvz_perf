@@ -1,0 +1,10 @@
+{
+  "source_commit": "de4e4ecac4c1d715d2814a53b06beb7e36748c49",
+  "runs": 3,
+  "pak_sha256": "B68EBDC704DBDB8405EF2D1E4B7BFAC7352A6BB518CCB08918FEBA72605C29A7",
+  "executable_sha256": "0D9FF086070A5B8AC574737D33A864ED291A3F3F75BA0DCAFC8C8B19FD2D16F8",
+  "utc": "2026-11-13T13:02:47.4031163Z",
+  "viewport": "800x600 SDR; fixed offscreen target separately sampled",
+  "scope": "Controlled production resource/cache lifecycle, empty-formation battle; not a heavy endless FPS test. All resource groups loaded. No personal saves.",
+  "accounting": "Renderer VkMemoryRequirements; pooled allocations counted once. DXGI per-process local/nonlocal usage is separate. Renderer total excludes swapchain/driver-private/external effects."
+}

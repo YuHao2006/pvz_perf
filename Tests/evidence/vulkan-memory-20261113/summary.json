@@ -1,0 +1,369 @@
+{
+  "baseline_parent": "de4e4ec",
+  "checkpoint_tag": "checkpoint/pre-vram-cache-experiment-20261113",
+  "gpu": "NVIDIA GeForce RTX 4070 Laptop GPU",
+  "runs": 3,
+  "unit": "bytes",
+  "cache_policy_changed": false,
+  "instrumented_sources_sha256": {
+    "Tests/native/ImageRuntimeTests.cpp": "7affba692948a100c673a4b29db56b37afb28cd8ff1523922ddd5c388189a94f",
+    "pvzPerf/SexyAppFramework/graphics/vulkan/VulkanRenderer.cpp": "ef592d914b29fce59976f782047481371c1536d7e1d6517758dd7b7386a89cae",
+    "pvzPerf/SexyAppFramework/graphics/vulkan/VulkanRenderer.h": "0ab9e7f63cd66fb8ab50258d0c1611a46db75c8c5e6a9dca119b8e47ece28dbc",
+    "tools/test-image-runtime.ps1": "3bc2eaf37991276235775b9d0b8c2e37937ac2f51ad4f806b8557a00b8ed3fd9",
+    "tools/measure-gpu-memory.ps1": "49656fc6bd6a576f61fdec7da8eeaaa14158c8361c35762f1b05bcc7cc4cea1b"
+  },
+  "median": {
+    "loaded_resources": {
+      "memory": {
+        "sampled_bytes": 115688448,
+        "sampled_count": 301,
+        "generated_bytes": 0,
+        "generated_count": 0,
+        "retired_bytes": 15007744,
+        "retired_count": 18,
+        "scene_bytes": 2048000,
+        "buffer_bytes": 17105796,
+        "pool_reserved_bytes": 134217728,
+        "pool_used_bytes": 132745216,
+        "renderer_allocated_bytes": 151323524
+      },
+      "dxgi_local_bytes": 138063872
+    },
+    "magnet_atlas_loaded": {
+      "memory": {
+        "sampled_bytes": 116261888,
+        "sampled_count": 302,
+        "generated_bytes": 0,
+        "generated_count": 0,
+        "retired_bytes": 15007744,
+        "retired_count": 18,
+        "scene_bytes": 2048000,
+        "buffer_bytes": 17105796,
+        "pool_reserved_bytes": 134217728,
+        "pool_used_bytes": 133318656,
+        "renderer_allocated_bytes": 151323524
+      },
+      "dxgi_local_bytes": 138063872
+    },
+    "almanac_atlas_loaded": {
+      "memory": {
+        "sampled_bytes": 129958912,
+        "sampled_count": 303,
+        "generated_bytes": 0,
+        "generated_count": 0,
+        "retired_bytes": 15007744,
+        "retired_count": 18,
+        "scene_bytes": 2048000,
+        "buffer_bytes": 25901300,
+        "pool_reserved_bytes": 201326592,
+        "pool_used_bytes": 147015680,
+        "renderer_allocated_bytes": 227227892
+      },
+      "dxgi_local_bytes": 205172736
+    },
+    "achievements_atlas_loaded": {
+      "memory": {
+        "sampled_bytes": 143655936,
+        "sampled_count": 304,
+        "generated_bytes": 0,
+        "generated_count": 0,
+        "retired_bytes": 15007744,
+        "retired_count": 18,
+        "scene_bytes": 2048000,
+        "buffer_bytes": 34741732,
+        "pool_reserved_bytes": 201326592,
+        "pool_used_bytes": 160712704,
+        "renderer_allocated_bytes": 236068324
+      },
+      "dxgi_local_bytes": 205172736
+    },
+    "common_ui_atlas_loaded": {
+      "memory": {
+        "sampled_bytes": 144573440,
+        "sampled_count": 305,
+        "generated_bytes": 0,
+        "generated_count": 0,
+        "retired_bytes": 15007744,
+        "retired_count": 18,
+        "scene_bytes": 2048000,
+        "buffer_bytes": 34741732,
+        "pool_reserved_bytes": 201326592,
+        "pool_used_bytes": 161630208,
+        "renderer_allocated_bytes": 236068324
+      },
+      "dxgi_local_bytes": 205172736
+    },
+    "scene_atlases_loaded": {
+      "memory": {
+        "sampled_bytes": 145966080,
+        "sampled_count": 306,
+        "generated_bytes": 0,
+        "generated_count": 0,
+        "retired_bytes": 15007744,
+        "retired_count": 18,
+        "scene_bytes": 2048000,
+        "buffer_bytes": 34741732,
+        "pool_reserved_bytes": 201326592,
+        "pool_used_bytes": 163022848,
+        "renderer_allocated_bytes": 236068324
+      },
+      "dxgi_local_bytes": 205172736
+    },
+    "preview_cache_prebuilt": {
+      "memory": {
+        "sampled_bytes": 169559040,
+        "sampled_count": 373,
+        "generated_bytes": 28573696,
+        "generated_count": 148,
+        "retired_bytes": 0,
+        "retired_count": 0,
+        "scene_bytes": 2048000,
+        "buffer_bytes": 41270980,
+        "pool_reserved_bytes": 201326592,
+        "pool_used_bytes": 200181760,
+        "renderer_allocated_bytes": 242597572
+      },
+      "dxgi_local_bytes": 205172736
+    },
+    "fixed_probe_target": {
+      "memory": {
+        "sampled_bytes": 169559040,
+        "sampled_count": 373,
+        "generated_bytes": 32669696,
+        "generated_count": 149,
+        "retired_bytes": 0,
+        "retired_count": 0,
+        "scene_bytes": 2048000,
+        "buffer_bytes": 41270980,
+        "pool_reserved_bytes": 268435456,
+        "pool_used_bytes": 204277760,
+        "renderer_allocated_bytes": 309706436
+      },
+      "dxgi_local_bytes": 272281600
+    },
+    "almanac_index": {
+      "memory": {
+        "sampled_bytes": 169559040,
+        "sampled_count": 373,
+        "generated_bytes": 32669696,
+        "generated_count": 149,
+        "retired_bytes": 0,
+        "retired_count": 0,
+        "scene_bytes": 2048000,
+        "buffer_bytes": 41270980,
+        "pool_reserved_bytes": 268435456,
+        "pool_used_bytes": 204277760,
+        "renderer_allocated_bytes": 309706436
+      },
+      "dxgi_local_bytes": 272281600
+    },
+    "almanac_plants": {
+      "memory": {
+        "sampled_bytes": 169559040,
+        "sampled_count": 373,
+        "generated_bytes": 32669696,
+        "generated_count": 149,
+        "retired_bytes": 0,
+        "retired_count": 0,
+        "scene_bytes": 2048000,
+        "buffer_bytes": 41270980,
+        "pool_reserved_bytes": 268435456,
+        "pool_used_bytes": 204277760,
+        "renderer_allocated_bytes": 309706436
+      },
+      "dxgi_local_bytes": 272281600
+    },
+    "almanac_zombies": {
+      "memory": {
+        "sampled_bytes": 169559040,
+        "sampled_count": 373,
+        "generated_bytes": 32669696,
+        "generated_count": 149,
+        "retired_bytes": 0,
+        "retired_count": 0,
+        "scene_bytes": 2048000,
+        "buffer_bytes": 41270980,
+        "pool_reserved_bytes": 268435456,
+        "pool_used_bytes": 204277760,
+        "renderer_allocated_bytes": 309706436
+      },
+      "dxgi_local_bytes": 272281600
+    },
+    "almanac_closed": {
+      "memory": {
+        "sampled_bytes": 169559040,
+        "sampled_count": 373,
+        "generated_bytes": 32669696,
+        "generated_count": 149,
+        "retired_bytes": 0,
+        "retired_count": 0,
+        "scene_bytes": 2048000,
+        "buffer_bytes": 41270980,
+        "pool_reserved_bytes": 268435456,
+        "pool_used_bytes": 204277760,
+        "renderer_allocated_bytes": 309706436
+      },
+      "dxgi_local_bytes": 272281600
+    },
+    "main_menu": {
+      "memory": {
+        "sampled_bytes": 181928960,
+        "sampled_count": 374,
+        "generated_bytes": 32669696,
+        "generated_count": 149,
+        "retired_bytes": 0,
+        "retired_count": 0,
+        "scene_bytes": 2048000,
+        "buffer_bytes": 41270980,
+        "pool_reserved_bytes": 268435456,
+        "pool_used_bytes": 216647680,
+        "renderer_allocated_bytes": 309706436
+      },
+      "dxgi_local_bytes": 272281600
+    },
+    "endless_chooser_created": {
+      "memory": {
+        "sampled_bytes": 181961728,
+        "sampled_count": 375,
+        "generated_bytes": 32669696,
+        "generated_count": 149,
+        "retired_bytes": 0,
+        "retired_count": 0,
+        "scene_bytes": 2048000,
+        "buffer_bytes": 41270980,
+        "pool_reserved_bytes": 268435456,
+        "pool_used_bytes": 216680448,
+        "renderer_allocated_bytes": 309706436
+      },
+      "dxgi_local_bytes": 272281600
+    },
+    "endless_started_empty_formation": {
+      "memory": {
+        "sampled_bytes": 181961728,
+        "sampled_count": 375,
+        "generated_bytes": 32669696,
+        "generated_count": 149,
+        "retired_bytes": 0,
+        "retired_count": 0,
+        "scene_bytes": 2048000,
+        "buffer_bytes": 41270980,
+        "pool_reserved_bytes": 268435456,
+        "pool_used_bytes": 216680448,
+        "renderer_allocated_bytes": 309706436
+      },
+      "dxgi_local_bytes": 272281600
+    },
+    "board_closed": {
+      "memory": {
+        "sampled_bytes": 181961728,
+        "sampled_count": 375,
+        "generated_bytes": 32669696,
+        "generated_count": 149,
+        "retired_bytes": 0,
+        "retired_count": 0,
+        "scene_bytes": 2048000,
+        "buffer_bytes": 41270980,
+        "pool_reserved_bytes": 268435456,
+        "pool_used_bytes": 216680448,
+        "renderer_allocated_bytes": 309706436
+      },
+      "dxgi_local_bytes": 272281600
+    },
+    "boss_conveyor_started": {
+      "memory": {
+        "sampled_bytes": 191230976,
+        "sampled_count": 389,
+        "generated_bytes": 32669696,
+        "generated_count": 149,
+        "retired_bytes": 0,
+        "retired_count": 0,
+        "scene_bytes": 2048000,
+        "buffer_bytes": 41270980,
+        "pool_reserved_bytes": 268435456,
+        "pool_used_bytes": 225949696,
+        "renderer_allocated_bytes": 309706436
+      },
+      "dxgi_local_bytes": 272281600
+    },
+    "all_boards_closed": {
+      "memory": {
+        "sampled_bytes": 191198208,
+        "sampled_count": 388,
+        "generated_bytes": 32669696,
+        "generated_count": 149,
+        "retired_bytes": 32768,
+        "retired_count": 1,
+        "scene_bytes": 2048000,
+        "buffer_bytes": 41270980,
+        "pool_reserved_bytes": 268435456,
+        "pool_used_bytes": 225949696,
+        "renderer_allocated_bytes": 309706436
+      },
+      "dxgi_local_bytes": 272281600
+    },
+    "probe_target_destroy_requested": {
+      "memory": {
+        "sampled_bytes": 191198208,
+        "sampled_count": 388,
+        "generated_bytes": 28573696,
+        "generated_count": 148,
+        "retired_bytes": 4128768,
+        "retired_count": 2,
+        "scene_bytes": 2048000,
+        "buffer_bytes": 41270980,
+        "pool_reserved_bytes": 268435456,
+        "pool_used_bytes": 225949696,
+        "renderer_allocated_bytes": 309706436
+      },
+      "dxgi_local_bytes": 272281600
+    },
+    "preview_cache_destroy_requested": {
+      "memory": {
+        "sampled_bytes": 191198208,
+        "sampled_count": 388,
+        "generated_bytes": 0,
+        "generated_count": 0,
+        "retired_bytes": 32702464,
+        "retired_count": 150,
+        "scene_bytes": 2048000,
+        "buffer_bytes": 41270980,
+        "pool_reserved_bytes": 268435456,
+        "pool_used_bytes": 225949696,
+        "renderer_allocated_bytes": 309706436
+      },
+      "dxgi_local_bytes": 272281600
+    },
+    "scene_atlases_destroy_requested": {
+      "memory": {
+        "sampled_bytes": 191198208,
+        "sampled_count": 388,
+        "generated_bytes": 0,
+        "generated_count": 0,
+        "retired_bytes": 32702464,
+        "retired_count": 150,
+        "scene_bytes": 2048000,
+        "buffer_bytes": 41270980,
+        "pool_reserved_bytes": 268435456,
+        "pool_used_bytes": 225949696,
+        "renderer_allocated_bytes": 309706436
+      },
+      "dxgi_local_bytes": 272281600
+    },
+    "retirement_drained": {
+      "memory": {
+        "sampled_bytes": 191198208,
+        "sampled_count": 388,
+        "generated_bytes": 0,
+        "generated_count": 0,
+        "retired_bytes": 512,
+        "retired_count": 1,
+        "scene_bytes": 2048000,
+        "buffer_bytes": 41270980,
+        "pool_reserved_bytes": 268435456,
+        "pool_used_bytes": 193248256,
+        "renderer_allocated_bytes": 309706436
+      },
+      "dxgi_local_bytes": 272281600
+    }
+  }
+}

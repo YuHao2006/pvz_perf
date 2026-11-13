@@ -18,6 +18,8 @@ constexpr const char* kPipelineCacheName="pipeline_cache_v13.bin";
 #include <fstream>
 #include <filesystem>
 #include <optional>
+#include <sstream>
+#include <unordered_set>
 #include <limits>
 #include <stdexcept>
 #include <unordered_map>
@@ -3203,5 +3205,43 @@ std::vector<uint32_t> VulkanRenderer::ReadScenePixels() {
     std::vector<uint32_t> pixels(size_t(s.width) * s.height);
     std::memcpy(pixels.data(), readback.mapped, pixels.size() * 4);
     return pixels;
+}
+}
+
+namespace Sexy {
+std::string VulkanRenderer::MemorySnapshotJson() const {
+    const auto& s=*impl_;
+    uint64_t sampled=0,generated=0,retired=0,scene=0,dedicated=0,buffers=0,poolReserved=0,poolUsed=0;
+    unsigned sampledCount=0,generatedCount=0,retiredCount=0;
+    std::unordered_set<VkImage> images;
+    const auto image=[&](const VulkanTexture* t,uint64_t& category) {
+        if(!t||!t->image||!t->ownsImage||!images.insert(t->image).second)return;
+        VkMemoryRequirements req{};vkGetImageMemoryRequirements(s.device,t->image,&req);
+        category+=req.size;if(!t->pool)dedicated+=req.size;
+    };
+    for(const auto& [key,t]:s.textures) {
+        if(t->generated){++generatedCount;image(t.get(),generated);}
+        else {++sampledCount;image(t.get(),sampled);}
+    }
+    for(const auto& t:s.retired){++retiredCount;image(t.get(),retired);}
+    image(s.scene.get(),scene);
+    for(const auto& mode:s.scaleModes)if(mode)image(mode->sampledOutput.get(),scene);
+    for(const auto& chunk:s.texturePool.chunks){poolReserved+=TextureMemoryPool::kChunkBytes;for(const auto& b:chunk.blocks)if(!b.free)poolUsed+=b.size;}
+    std::unordered_set<VkBuffer> seenBuffers;
+    const auto buffer=[&](VkBuffer b) {if(b&&seenBuffers.insert(b).second){VkMemoryRequirements req{};vkGetBufferMemoryRequirements(s.device,b,&req);buffers+=req.size;}};
+    buffer(s.staticIndices.buffer);buffer(s.poolIndexBuffer);
+    for(auto* stream:s.drawStreams)if(stream){buffer(stream->vertices.buffer);buffer(stream->indices.buffer);}
+    for(const auto& b:s.stagingRing)if(b)buffer(b->buffer);
+    if(s.reanimScratch)buffer(s.reanimScratch->buffer);
+    for(const auto& [key,t]:s.textures)if(t->computeMetadata)buffer(t->computeMetadata->buffer);
+    for(const auto& t:s.retired)if(t->computeMetadata)buffer(t->computeMetadata->buffer);
+    std::ostringstream o;
+    o<<"{\"sampled_bytes\":"<<sampled<<",\"sampled_count\":"<<sampledCount
+     <<",\"generated_bytes\":"<<generated<<",\"generated_count\":"<<generatedCount
+     <<",\"retired_bytes\":"<<retired<<",\"retired_count\":"<<retiredCount
+     <<",\"scene_bytes\":"<<scene<<",\"buffer_bytes\":"<<buffers
+     <<",\"pool_reserved_bytes\":"<<poolReserved<<",\"pool_used_bytes\":"<<poolUsed
+     <<",\"renderer_allocated_bytes\":"<<poolReserved+dedicated+buffers<<"}";
+    return o.str();
 }
 }

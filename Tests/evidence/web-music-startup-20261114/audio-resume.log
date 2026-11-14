@@ -1,0 +1,9 @@
+{
+  "state": "running",
+  "sourceCreatedSynchronously": true,
+  "graphSignalMs": 5.700000047683716,
+  "sampleRate": 48000,
+  "baseLatency": 0.01,
+  "outputLatency": 0.04,
+  "scope": "Desktop Chromium graph timing only; not iPhone or acoustic end-to-end latency"
+}

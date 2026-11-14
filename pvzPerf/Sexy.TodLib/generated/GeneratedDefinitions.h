@@ -6,6 +6,10 @@
 #include <span>
 namespace GeneratedDefinitions {
 inline constexpr int ReanimationCount=144, ParticleCount=106;
+inline constexpr unsigned ExternalTextureCount=5u;
+inline constexpr unsigned ExternalBindingCount=8u;
+extern Sexy::GpuTexture* ExternalTextures[ExternalTextureCount ? ExternalTextureCount : 1];
+extern const std::uint32_t ExternalTextureIds[ExternalBindingCount ? ExternalBindingCount : 1];
 extern ReanimatorDefinition Reanimations[ReanimationCount];
 extern TodParticleDefinition Particles[ParticleCount];
 extern const char* const ParticlePaths[ParticleCount];

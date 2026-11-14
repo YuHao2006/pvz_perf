@@ -3,6 +3,7 @@
 #include "Sexy.TodLib/DefinitionImageRegion.h"
 #include "Sexy.TodLib/ParticleDefinitionCompiled.h"
 #include "Sexy.TodLib/TodCommon.h"
+#include "Resources.h"
 #include <algorithm>
 #include <stdexcept>
 namespace GeneratedDefinitions {
@@ -3913,7 +3914,7 @@ void LoadReanimationImages(int type) {
         DefinitionBindAtlasPath(Reanimations[69].mTextures[0], 120, 103, "compiled/reanim/gravebuster.atlas.png");
         break;
     case 70:
-        DefinitionBindAtlasPath(Reanimations[70].mTextures[0], 1404, 3998, "compiled/atlases/credits_stage.atlas.png");
+        DefinitionBindAtlasPath(Reanimations[70].mTextures[0], 1667, 805, "compiled/atlases/credits_stage.atlas.png");
         break;
     case 71:
         DefinitionBindAtlasPath(Reanimations[71].mTextures[0], 578, 115, "compiled/reanim/magnetshroom.atlas.png");
@@ -5373,13 +5374,19 @@ void LoadReanimationImages(int type) {
         DefinitionBindAtlasPath(Reanimations[119].mTextures[0], 218, 161, "compiled/reanim/treefood.atlas.png");
         break;
     case 120:
-        DefinitionBindAtlasPath(Reanimations[120].mTextures[0], 1404, 3998, "compiled/atlases/credits_stage.atlas.png");
+        DefinitionBindAtlasPath(Reanimations[120].mTextures[0], 1667, 805, "compiled/atlases/credits_stage.atlas.png");
+        DefinitionBindImageResource(ExternalTextures[0], &Sexy::IMAGE_BACKGROUND1);
+        DefinitionBindImageResource(ExternalTextures[1], &Sexy::IMAGE_BACKGROUND3);
         break;
     case 121:
-        DefinitionBindAtlasPath(Reanimations[121].mTextures[0], 1404, 3998, "compiled/atlases/credits_stage.atlas.png");
+        DefinitionBindAtlasPath(Reanimations[121].mTextures[0], 1667, 805, "compiled/atlases/credits_stage.atlas.png");
+        DefinitionBindImageResource(ExternalTextures[2], &Sexy::IMAGE_BACKGROUND2);
+        DefinitionBindImageResource(ExternalTextures[3], &Sexy::IMAGE_BACKGROUND4);
         break;
     case 122:
-        DefinitionBindAtlasPath(Reanimations[122].mTextures[0], 1404, 3998, "compiled/atlases/credits_stage.atlas.png");
+        DefinitionBindAtlasPath(Reanimations[122].mTextures[0], 1667, 805, "compiled/atlases/credits_stage.atlas.png");
+        DefinitionBindImageResource(ExternalTextures[0], &Sexy::IMAGE_BACKGROUND1);
+        DefinitionBindImageResource(ExternalTextures[4], &Sexy::IMAGE_BACKGROUND5);
         break;
     case 123:
         DefinitionBindAtlasPath(Reanimations[123].mTextures[0], 270, 131, "compiled/reanim/zombie_credits_dance.atlas.png");
@@ -5421,10 +5428,12 @@ void LoadReanimationImages(int type) {
         DefinitionBindAtlasPath(Reanimations[136].mTextures[0], 32, 309, "compiled/reanim/credits_solarpower.atlas.png");
         break;
     case 137:
-        DefinitionBindAtlasPath(Reanimations[137].mTextures[0], 1404, 3998, "compiled/atlases/credits_stage.atlas.png");
+        DefinitionBindAtlasPath(Reanimations[137].mTextures[0], 1667, 805, "compiled/atlases/credits_stage.atlas.png");
+        DefinitionBindImageResource(ExternalTextures[2], &Sexy::IMAGE_BACKGROUND2);
+        DefinitionBindImageResource(ExternalTextures[0], &Sexy::IMAGE_BACKGROUND1);
         break;
     case 138:
-        DefinitionBindAtlasPath(Reanimations[138].mTextures[0], 1404, 3998, "compiled/atlases/credits_stage.atlas.png");
+        DefinitionBindAtlasPath(Reanimations[138].mTextures[0], 1667, 805, "compiled/atlases/credits_stage.atlas.png");
         break;
     case 139:
         DefinitionBindAtlasPath(Reanimations[139].mTextures[0], 54, 159, "compiled/reanim/credits_discolights.atlas.png");
@@ -5473,8 +5482,10 @@ void LoadAllImages() {
     LoadProjectileImages();
 }
 void ReleaseReanimationImages() {
-    for(auto& definition:Reanimations)
-        for(unsigned v=0;v<definition.mVariantCount;++v) DefinitionUnbindAtlas(definition.mTextures[v]);
+    for(auto& definition:Reanimations) {
+        DefinitionUnbindAtlasRange(definition.mTextures,definition.mVariantCount);
+    }
+    DefinitionUnbindAtlasRange(ExternalTextures,ExternalTextureCount);
     Reanim120Frames20[0].mFont = nullptr;
     Reanim120Frames20[1].mFont = nullptr;
     Reanim120Frames20[2].mFont = nullptr;

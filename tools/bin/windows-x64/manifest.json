@@ -45,8 +45,8 @@
     },
     {
       "path": "pvz-resource-build.exe",
-      "bytes": 1658880,
-      "sha256": "f43c89b7de65f884eb58a1f7fc043c26500f75e176d0093220547e913a32a194"
+      "bytes": 1732608,
+      "sha256": "dd3b04ba9a5ab55b60e4596c296465303da59ded38265a90c576aef318f0efe1"
     },
     {
       "path": "re2.dll",
@@ -60,8 +60,8 @@
     },
     {
       "path": "reanimc.exe",
-      "bytes": 847360,
-      "sha256": "6fa582335c336720650bdb64c247c0b711ec121c7cf3baa50c5dec52f4abbd81"
+      "bytes": 848896,
+      "sha256": "b4175298e769a9d991c8ce4da52fdc68b17c736e6ad7dd543f90ba861d098b7a"
     },
     {
       "path": "third-party-notices/libjpeg-turbo.txt",

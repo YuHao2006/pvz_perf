@@ -1931,7 +1931,6 @@ constinit ReanimatorTrack Reanim4Tracks[18] = {
     {static_cast<ReanimTrackId>(31u), {Reanim4Frames17, 104}},
 };
 constinit Sexy::GpuTexture* Reanim4Textures[1] = {
-    nullptr,
 };
 constinit const Sexy::TextureRegion Reanim4Rects[16] = {
     {0.0f, 0.0f, 0.0f, 0.0f, 0, 0},
@@ -2654,7 +2653,6 @@ constinit ReanimatorTrack Reanim12Tracks[8] = {
     {static_cast<ReanimTrackId>(772u), {Reanim12Frames7, 77}},
 };
 constinit Sexy::GpuTexture* Reanim12Textures[1] = {
-    nullptr,
 };
 constinit const Sexy::TextureRegion Reanim12Rects[6] = {
     {0.0f, 0.0f, 0.0f, 0.0f, 0, 0},
@@ -5607,7 +5605,6 @@ constinit ReanimatorTrack Reanim20Tracks[30] = {
     {static_cast<ReanimTrackId>(693u), {Reanim20Frames29, 94}},
 };
 constinit Sexy::GpuTexture* Reanim20Textures[1] = {
-    nullptr,
 };
 constinit const Sexy::TextureRegion Reanim20Rects[27] = {
     {0.0f, 0.0f, 0.0f, 0.0f, 0, 0},
@@ -6024,7 +6021,6 @@ constinit ReanimatorTrack Reanim28Tracks[7] = {
     {static_cast<ReanimTrackId>(1021u), {Reanim28Frames6, 38}},
 };
 constinit Sexy::GpuTexture* Reanim28Textures[1] = {
-    nullptr,
 };
 constinit const Sexy::TextureRegion Reanim28Rects[7] = {
     {0.0f, 0.0f, 0.0f, 0.0f, 0, 0},
@@ -6617,7 +6613,6 @@ constinit ReanimatorTrack Reanim36Tracks[12] = {
     {static_cast<ReanimTrackId>(1539u), {Reanim36Frames11, 43}},
 };
 constinit Sexy::GpuTexture* Reanim36Textures[1] = {
-    nullptr,
 };
 constinit const Sexy::TextureRegion Reanim36Rects[21] = {
     {0.0f, 0.0f, 0.0f, 0.0f, 0, 0},
@@ -7079,7 +7074,6 @@ constinit ReanimatorTrack Reanim44Tracks[14] = {
     {static_cast<ReanimTrackId>(1176u), {Reanim44Frames13, 25}},
 };
 constinit Sexy::GpuTexture* Reanim44Textures[1] = {
-    nullptr,
 };
 constinit const Sexy::TextureRegion Reanim44Rects[14] = {
     {0.0f, 0.0f, 0.0f, 0.0f, 0, 0},
@@ -7526,7 +7520,6 @@ constinit ReanimatorTrack Reanim52Tracks[9] = {
     {static_cast<ReanimTrackId>(1341u), {Reanim52Frames8, 39}},
 };
 constinit Sexy::GpuTexture* Reanim52Textures[1] = {
-    nullptr,
 };
 constinit const Sexy::TextureRegion Reanim52Rects[8] = {
     {0.0f, 0.0f, 0.0f, 0.0f, 0, 0},
@@ -12137,22 +12130,6 @@ constinit ReanimatorTrack Reanim60Tracks[27] = {
     {static_cast<ReanimTrackId>(1762u), {Reanim60Frames26, 166}},
 };
 constinit Sexy::GpuTexture* Reanim60Textures[16] = {
-    nullptr,
-    nullptr,
-    nullptr,
-    nullptr,
-    nullptr,
-    nullptr,
-    nullptr,
-    nullptr,
-    nullptr,
-    nullptr,
-    nullptr,
-    nullptr,
-    nullptr,
-    nullptr,
-    nullptr,
-    nullptr,
 };
 constinit const Sexy::TextureRegion Reanim60Rects[400] = {
     {0.0f, 0.0f, 0.0f, 0.0f, 0, 0},
@@ -13241,7 +13218,6 @@ constinit ReanimatorTrack Reanim68Tracks[3] = {
     {static_cast<ReanimTrackId>(1456u), {Reanim68Frames2, 17}},
 };
 constinit Sexy::GpuTexture* Reanim68Textures[1] = {
-    nullptr,
 };
 constinit const Sexy::TextureRegion Reanim68Rects[4] = {
     {0.0f, 0.0f, 0.0f, 0.0f, 0, 0},
@@ -13427,7 +13403,6 @@ constinit ReanimatorTrack Reanim76Tracks[5] = {
     {static_cast<ReanimTrackId>(716u), {Reanim76Frames4, 29}},
 };
 constinit Sexy::GpuTexture* Reanim76Textures[1] = {
-    nullptr,
 };
 constinit const Sexy::TextureRegion Reanim76Rects[14] = {
     {0.0f, 0.0f, 0.0f, 0.0f, 0, 0},
@@ -13645,9 +13620,6 @@ constinit ReanimatorTrack Reanim84Tracks[8] = {
     {static_cast<ReanimTrackId>(891u), {Reanim84Frames7, 19}},
 };
 constinit Sexy::GpuTexture* Reanim84Textures[3] = {
-    nullptr,
-    nullptr,
-    nullptr,
 };
 constinit const Sexy::TextureRegion Reanim84Rects[33] = {
     {0.0f, 0.0f, 0.0f, 0.0f, 0, 0},
@@ -15904,8 +15876,6 @@ constinit ReanimatorTrack Reanim92Tracks[20] = {
     {static_cast<ReanimTrackId>(1736u), {Reanim92Frames19, 105}},
 };
 constinit Sexy::GpuTexture* Reanim92Textures[2] = {
-    nullptr,
-    nullptr,
 };
 constinit const Sexy::TextureRegion Reanim92Rects[34] = {
     {0.0f, 0.0f, 0.0f, 0.0f, 0, 0},
@@ -16179,7 +16149,6 @@ constinit ReanimatorTrack Reanim100Tracks[1] = {
     {static_cast<ReanimTrackId>(446u), {Reanim100Frames0, 138}},
 };
 constinit Sexy::GpuTexture* Reanim100Textures[1] = {
-    nullptr,
 };
 constinit const Sexy::TextureRegion Reanim100Rects[1] = {
     {0.0f, 0.0f, 0.0f, 0.0f, 0, 0},
@@ -16402,7 +16371,6 @@ constinit ReanimatorTrack Reanim108Tracks[5] = {
     {static_cast<ReanimTrackId>(1139u), {Reanim108Frames4, 37}},
 };
 constinit Sexy::GpuTexture* Reanim108Textures[1] = {
-    nullptr,
 };
 constinit const Sexy::TextureRegion Reanim108Rects[6] = {
     {0.0f, 0.0f, 0.0f, 0.0f, 0, 0},
@@ -16532,7 +16500,6 @@ constinit ReanimatorTrack Reanim116Tracks[4] = {
     {static_cast<ReanimTrackId>(1284u), {Reanim116Frames3, 21}},
 };
 constinit Sexy::GpuTexture* Reanim116Textures[1] = {
-    nullptr,
 };
 constinit const Sexy::TextureRegion Reanim116Rects[5] = {
     {0.0f, 0.0f, 0.0f, 0.0f, 0, 0},
@@ -16877,7 +16844,6 @@ constinit ReanimatorTrack Reanim124Tracks[7] = {
     {static_cast<ReanimTrackId>(1096u), {Reanim124Frames6, 42}},
 };
 constinit Sexy::GpuTexture* Reanim124Textures[1] = {
-    nullptr,
 };
 constinit const Sexy::TextureRegion Reanim124Rects[10] = {
     {0.0f, 0.0f, 0.0f, 0.0f, 0, 0},
@@ -17561,7 +17527,6 @@ constinit ReanimatorTrack Reanim132Tracks[20] = {
     {static_cast<ReanimTrackId>(52u), {Reanim132Frames19, 29}},
 };
 constinit Sexy::GpuTexture* Reanim132Textures[1] = {
-    nullptr,
 };
 constinit const Sexy::TextureRegion Reanim132Rects[20] = {
     {0.0f, 0.0f, 0.0f, 0.0f, 0, 0},
@@ -17686,8 +17651,6 @@ constinit ReanimatorTrack Reanim140Tracks[2] = {
     {static_cast<ReanimTrackId>(1610u), {Reanim140Frames1, 13}},
 };
 constinit Sexy::GpuTexture* Reanim140Textures[2] = {
-    nullptr,
-    nullptr,
 };
 constinit const Sexy::TextureRegion Reanim140Rects[6] = {
     {0.0f, 0.0f, 0.0f, 0.0f, 0, 0},

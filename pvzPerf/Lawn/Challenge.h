@@ -5,6 +5,7 @@
 #include "Sexy.TodLib/FilterEffect.h"
 #include "graphics/Graphics.h"
 #include <array>
+#include <vector>
 
 #define BEGHOULED_MAX_GRIDSIZEX 8
 #define BEGHOULED_MAX_GRIDSIZEY 5
@@ -144,6 +145,7 @@ public:
     void                    DrawStormFlash(Graphics* g, std::int64_t theTimeNs, int theMaxAmount);
     void                    UpdateRainingSeeds();
     /*inline*/ void         PlayBossEnter();
+    std::vector<SeedType>   ConveyorCardTypes() const;
     void                    UpdateConveyorBelt();
     void                    PortalStart();
     void                    UpdatePortalCombat();

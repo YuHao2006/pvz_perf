@@ -8,6 +8,7 @@
 #include "VulkanSurfaceFormat.h"
 #include "VulkanSurfaceExtent.h"
 #include "VulkanEnumeration.h"
+#include "VulkanDeviceSelection.h"
 #if defined(PVZ_VULKAN_LEGACY)
 #include "VulkanLegacy.h"
 #endif
@@ -181,8 +182,9 @@ namespace {
     }
 #endif
 
-    // 选卡：打分制（独显 +1000），同时带回 graphics/present 队列族下标。
-    // 过滤顺序：自动生成的扩展/功能过滤器 → 调用者的 gpuFilter。
+    // Filter requirements without changing the loader's adapter preference.
+    // Windows loader sorting: Vulkan-Loader/docs/LoaderDriverInterface.md,
+    // "Physical Device Sorting". The application must preserve that order.
     VkPhysicalDevice PickPhysicalDevice(VkInstance instance, VkSurfaceKHR surface,
                                         VulkanGpuFilter gpuFilter,
                                         const std::vector<const char*>& requiredExtensions,
@@ -196,11 +198,11 @@ namespace {
         if (devices.empty())
             throw std::runtime_error("没有找到支持 Vulkan 的显卡");
 
-        int bestScore = -1;
-        VkPhysicalDevice best = VK_NULL_HANDLE;
+        std::vector<VulkanDeviceCandidate> compatible;
+        compatible.reserve(devices.size());
         for (VkPhysicalDevice candidate : devices)
         {
-            // 自动过滤器先行：扩展/功能/descriptor indexing 不支持的候选根本不进打分
+            // An OS-preferred device still has to satisfy this renderer's requirements.
             if (!DeviceExtensionsSupported(candidate, requiredExtensions))
                 continue;
             if (!DeviceFeaturesSupported(candidate, wantedFeatures))
@@ -244,27 +246,19 @@ namespace {
 
             VkPhysicalDeviceProperties props{};
             vkGetPhysicalDeviceProperties(candidate, &props);
-            int score = 0;
-            if (props.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU)
-                score += 1000;
-            score += static_cast<int>(props.limits.maxImageDimension2D);
-
-            if (score > bestScore)
-            {
-                bestScore = score;
-                best = candidate;
-                outGraphicsFamily = graphics;
-                outPresentFamily = present;
-            }
+            compatible.push_back({candidate, props, graphics, present});
         }
-        if (best == VK_NULL_HANDLE)
+        const auto* selected = SelectPreferredVulkanDevice(compatible);
+        if (!selected)
 #if defined(PVZ_VULKAN_LEGACY)
             throw std::runtime_error("No GPU supports Vulkan 1.0 with the requested features and graphics/present");
 #else
             throw std::runtime_error("No GPU supports Vulkan 1.3, descriptor indexing and graphics/present");
 #endif
 
-        return best;
+        outGraphicsFamily = selected->graphicsFamily;
+        outPresentFamily = selected->presentFamily;
+        return selected->device;
     }
 
     // 逻辑设备：按两个队列族各建一条队列，启用配置要求的设备扩展。

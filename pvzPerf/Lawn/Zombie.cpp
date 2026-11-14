@@ -1947,8 +1947,20 @@ void Zombie::UpdateZombiePolevaulter(std::int64_t ownerNowNs)
     {
         Reanimation* aBodyReanim = mApp->ReanimationGet(mBodyReanimID);
 
+        if (aBodyReanim->ShouldTriggerTimedEvent(0.2f))
+        {
+            mApp->PlayFoley(FoleyType::FOLEY_GRASSSTEP);
+        }
+        if (aBodyReanim->ShouldTriggerTimedEvent(0.4f))
+        {
+            mApp->PlayFoley(FoleyType::FOLEY_POLEVAULT);
+        }
+
         bool aJumpEnds = false;
-        if ((static_cast<double>(aBodyReanim->SamplePlayback().phaseNs) / aBodyReanim->mPeriodNs) > 0.6f && (static_cast<double>(aBodyReanim->SamplePlayback().phaseNs) / aBodyReanim->mPeriodNs) <= 0.7f)
+        const double aVaultPhase = static_cast<double>(aBodyReanim->SamplePlayback().phaseNs) / aBodyReanim->mPeriodNs;
+        // Keep the original repeated target check inside the blocking window,
+        // and also check an interval that jumps completely over that window.
+        if ((aVaultPhase > 0.6f && aVaultPhase <= 0.7f) || aBodyReanim->ShouldTriggerTimedEvent(0.6f))
         {
             Plant* aPlant = FindPlantTarget(ZombieAttackType::ATTACKTYPE_VAULT);
             if (aPlant && aPlant->mSeedType == SeedType::SEED_TALLNUT)
@@ -1963,18 +1975,10 @@ void Zombie::UpdateZombiePolevaulter(std::int64_t ownerNowNs)
             }
         }
 
-        if (aBodyReanim->mLoopCount > 0)
+        if (!aJumpEnds && aBodyReanim->mLoopCount > 0)
         {
             aJumpEnds = true;
             { mX -= (150.0f); mRootBindingGeneration = 0; }
-        }
-        if (aBodyReanim->ShouldTriggerTimedEvent(0.2f))
-        {
-            mApp->PlayFoley(FoleyType::FOLEY_GRASSSTEP);
-        }
-        if (aBodyReanim->ShouldTriggerTimedEvent(0.4f))
-        {
-            mApp->PlayFoley(FoleyType::FOLEY_POLEVAULT);
         }
 
         if (aJumpEnds)
@@ -2109,7 +2113,9 @@ void Zombie::UpdateZombieDolphinRider(std::int64_t ownerNowNs, std::int64_t visu
                     z.mAltitude = 30.0f;
                 }
             }
-            else if (aBodyReanim->ShouldTriggerTimedEvent(0.49f))
+            // Several animation events may be crossed in one owner interval.
+            // Only an actual Tall-nut block cancels the remaining jump events.
+            if (!aJumpEnds && aBodyReanim->ShouldTriggerTimedEvent(0.49f))
             {
                 Reanimation* aSplashReanim = z.mApp->AddReanimation((z.mX) - 63, (z.mY) + 73, z.mRenderOrder + 1, ReanimationType::REANIM_SPLASH, visualNowNs);
                 aSplashReanim->mOverlayMatrix.m00 = 1.2f;
@@ -2118,7 +2124,7 @@ void Zombie::UpdateZombieDolphinRider(std::int64_t ownerNowNs, std::int64_t visu
                 z.mApp->PlayFoley(FoleyType::FOLEY_ZOMBIE_ENTERING_WATER);
                 z.mVelX = 0.0f;
             }
-            else if (aBodyReanim->mLoopCount > 0)
+            if (!aJumpEnds && aBodyReanim->mLoopCount > 0)
             {
                 aJumpEnds = true;
                 { z.mX -= (94.0f); z.mRootBindingGeneration = 0; }
@@ -2636,7 +2642,8 @@ void Zombie::UpdateZombiePeaHead()
 
         aHeadReanim->PlayReanim(ReanimTrackId::anim_shooting, ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD, 20, 35.0f);
     }
-    else if (mPhaseCounter == 0)
+    // Preparation and firing can both be due in the same owner interval.
+    if (mPhaseCounter == 0)
     {
         Reanimation* aHeadReanim = mApp->ReanimationGet(mSpecialHeadReanimID);
 
@@ -2789,8 +2796,12 @@ void Zombie::UpdateZombieGatlingHead()
 
         aHeadReanim->PlayReanim(ReanimTrackId::anim_shooting, ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD, 20, 38.0f);
     }
-    else if (mPhaseCounter == 18 || mPhaseCounter == 35 || mPhaseCounter == 51 || mPhaseCounter == 68)
+    // Descending countdown order is chronological. Do not merge these into an
+    // OR expression: each crossed point emits its own projectile before expiry.
+    for (const int aFireCounter : {68, 51, 35, 18})
     {
+        if (mPhaseCounter != aFireCounter)
+            continue;
         mApp->PlayFoley(FoleyType::FOLEY_THROW);
 
         Reanimation* aBodyReanim = mApp->ReanimationGet(mBodyReanimID);
@@ -2817,7 +2828,7 @@ void Zombie::UpdateZombieGatlingHead()
         aProjectile->mMotionType = ProjectileMotion::MOTION_BACKWARDS;
 #endif
     }
-    else if (mPhaseCounter == 0)
+    if (mPhaseCounter == 0)
     {
         Reanimation* aHeadReanim = mApp->ReanimationGet(mSpecialHeadReanimID);
 
@@ -10124,7 +10135,7 @@ void Zombie::UpdateDeath(std::int64_t ownerNowNs, std::int64_t visualNowNs, std:
             mBoard->mShakeAmountX = 0;
             mBoard->mShakeAmountY = 3;
         }
-        else if (aBodyReanim->ShouldTriggerTimedEvent(0.98f))
+        if (aBodyReanim->ShouldTriggerTimedEvent(0.98f))
         {
             mBoard->mShakeCounter = 12;
             mBoard->mShakeAmountX = 0;
@@ -10177,24 +10188,18 @@ void Zombie::UpdateDeath(std::int64_t ownerNowNs, std::int64_t visualNowNs, std:
 
     if (((ZombieFlagsOf(mZombieType) & ZombieFlags::Boss) != 0))
     {
-        if (aBodyReanim->ShouldTriggerTimedEvent(0.1f) ||
-            aBodyReanim->ShouldTriggerTimedEvent(0.12f) ||
-            aBodyReanim->ShouldTriggerTimedEvent(0.15f) ||
-            aBodyReanim->ShouldTriggerTimedEvent(0.19f) ||
-            aBodyReanim->ShouldTriggerTimedEvent(0.2f) ||
-            aBodyReanim->ShouldTriggerTimedEvent(0.26f) ||
-            aBodyReanim->ShouldTriggerTimedEvent(0.3f) ||
-            aBodyReanim->ShouldTriggerTimedEvent(0.4f) ||
-            aBodyReanim->ShouldTriggerTimedEvent(0.42f) ||
-            aBodyReanim->ShouldTriggerTimedEvent(0.5f) ||
-            aBodyReanim->ShouldTriggerTimedEvent(0.58f) ||
-            aBodyReanim->ShouldTriggerTimedEvent(0.61f) ||
-            aBodyReanim->ShouldTriggerTimedEvent(0.71f))
+        // Each authored explosion has its own random position. Several crossed
+        // points are distinct events, not one shared boolean sound cue.
+        for (const float aEventPhase : {0.1f, 0.12f, 0.15f, 0.19f, 0.2f,
+            0.26f, 0.3f, 0.4f, 0.42f, 0.5f, 0.58f, 0.61f, 0.71f})
         {
-            float aExplosionPosX = RandRangeFloat(600.0f, 750.0f);
-            float aExplosionPosY = RandRangeFloat(50.0f, 300.0f);
-            mApp->AddTodParticle(aExplosionPosX, aExplosionPosY, (int)RenderLayer::RENDER_LAYER_TOP, ParticleEffect::PARTICLE_BOSS_EXPLOSION, ownerNowNs);
-            mApp->PlayFoley(FoleyType::FOLEY_BOSS_EXPLOSION_SMALL);
+            if (aBodyReanim->ShouldTriggerTimedEvent(aEventPhase))
+            {
+                float aExplosionPosX = RandRangeFloat(600.0f, 750.0f);
+                float aExplosionPosY = RandRangeFloat(50.0f, 300.0f);
+                mApp->AddTodParticle(aExplosionPosX, aExplosionPosY, (int)RenderLayer::RENDER_LAYER_TOP, ParticleEffect::PARTICLE_BOSS_EXPLOSION, ownerNowNs);
+                mApp->PlayFoley(FoleyType::FOLEY_BOSS_EXPLOSION_SMALL);
+            }
         }
 
         Reanimation* aHeadReanim = mApp->ReanimationTryToGet(mSpecialHeadReanimID);

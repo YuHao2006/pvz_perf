@@ -1,3 +1,4 @@
+#include "BattleCardAtlas.h"
 #include "EffectSystem.h"
 #include "Sexy.TodLib/generated/EntityStrings.h"
 #include "Board.h"
@@ -1304,7 +1305,9 @@ void CutScene::AnimateBoard()
 		// ====================================================================================================
 		int aTimeSeedChoserSlideOffStart = TimeSeedChoserSlideOffStart + mCrazyDaveTime;
 		int aTimeSeedChoserSlideOffEnd = TimeSeedChoserSlideOffEnd + mCrazyDaveTime;
-		if (mCutsceneTime > aTimeSeedChoserSlideOffStart && mCutsceneTime <= aTimeSeedChoserSlideOffEnd)
+		// Sampling may step past the authored endpoint. Keep the clamped final
+		// pose until the chooser is retired instead of leaving its last sample.
+		if (mCutsceneTime > aTimeSeedChoserSlideOffStart)
 		{
 			aSeedChoser->Move(mApp->mScreenBounds.mX, CalcPosition(std::int64_t(aTimeSeedChoserSlideOffStart) * 10'000'000, std::int64_t(aTimeSeedChoserSlideOffEnd) * 10'000'000, 0, (mBoard->mLandscapeHud ? BOARD_HEIGHT : SEED_CHOOSER_OFFSET_Y)));
 			aSeedChoser->mMenuButton->mDisabled = true;
@@ -1321,7 +1324,7 @@ void CutScene::AnimateBoard()
 	}
 	int aTimeSeedBankOnStart = TimeSeedBankOnStart + aTimePrepareEnd + mCrazyDaveTime;
 	int aTimeSeedBankOnEnd = TimeSeedBankOnEnd + aTimePrepareEnd + mCrazyDaveTime;
-	if (!mApp->IsChallengeWithoutSeedBank() && mCutsceneTime > aTimeSeedBankOnStart && mCutsceneTime <= aTimeSeedBankOnEnd)
+	if (!mApp->IsChallengeWithoutSeedBank() && mCutsceneTime > aTimeSeedBankOnStart)
 	{
 		int aSeedBankY = CalcPosition(std::int64_t(aTimeSeedBankOnStart) * 10'000'000, std::int64_t(aTimeSeedBankOnEnd) * 10'000'000, -IMAGE_SEEDBANK->mHeight, 0);
 		mBoard->mSeedBank->mX = SEED_BANK_OFFSET_X;
@@ -1506,6 +1509,11 @@ bool CutScene::IsInShovelTutorial()
 
 void CutScene::StartSeedChooser()
 {
+	// Selecting freezes the intro clock immediately, possibly just beyond the
+	// slide interval. Commit its endpoint before handing the widget its input.
+	mApp->mSeedChooserScreen->Move(mApp->mScreenBounds.mX, 0);
+	mApp->mSeedChooserScreen->mMenuButton->mY = -10;
+	mApp->mSeedChooserScreen->mMenuButton->mBtnNoDraw = false;
 	mApp->mSeedChooserScreen->mMouseVisible = true;
 	mSeedChoosing = true;
 	mApp->mWidgetManager->SetFocus(mApp->mSeedChooserScreen);
@@ -1513,6 +1521,7 @@ void CutScene::StartSeedChooser()
 
 void CutScene::EndSeedChooser()
 {
+    PrepareBattleCardAtlas(*mBoard);
 	mApp->mSeedChooserScreen->mMouseVisible = false;
 	mSeedChoosing = false;
 	mCutsceneTime = mCrazyDaveTime + TimeSeedChoserSlideOnEnd + 10;
@@ -1602,19 +1611,59 @@ void CutScene::Update()
 		UpdateIntro();
 		return;
 	}
-	if (!aCutsceneTimeStop)
+	if (aCutsceneTimeStop)
+	{
+		// A frozen movie only follows the chooser's View Lawn camera. Do not
+		// re-dispatch equality events at an interactive barrier every frame.
+		UpdateSeedChooserCamera();
+		return;
+	}
+	const int aTimeStart = TimeIntroEnd + mLawnMowerTime + mSodTime + mCrazyDaveTime + mFogTime + mBossTime + mReadySetPlantTime;
+	const int aChooserTime = TimeSeedChoserSlideOnEnd + mCrazyDaveTime;
 	{
 		mCutsceneTime.Advance(10);
-		if (mCutsceneTime == TimeSeedChoserSlideOnEnd + mCrazyDaveTime && mBoard->ChooseSeedsOnCurrentLevel())
-		{
-			StartSeedChooser();
-		}
+		// Player interaction is a barrier, not an event that can be consumed
+		// together with the movie's end. Preserve the interval start while
+		// stopping at the earliest pending barrier so its earlier events fire.
+		const auto stopAt = [&](int authoredTime) {
+			const auto endpoint = Sexy::TimeCounter::Encode(authoredTime);
+			if (mCutsceneTime.mPreviousNanoseconds < endpoint && mCutsceneTime.mNanoseconds >= endpoint)
+				mCutsceneTime.mNanoseconds = endpoint;
+		};
+		if (mCrazyDaveTime > 0 && mCrazyDaveDialogStart != -1)
+			stopAt(TimeEarlyDaveEnterEnd);
+		if (mBoard->ChooseSeedsOnCurrentLevel())
+			stopAt(aChooserTime);
+		if (mCutsceneTime > aTimeStart)
+			mCutsceneTime.mNanoseconds = Sexy::TimeCounter::Encode(aTimeStart);
 	}
+	const bool aChooserReached = mBoard->ChooseSeedsOnCurrentLevel() && mCutsceneTime == aChooserTime;
+	AnimateBoard();
+	if (mApp->mCrazyDaveMessageIndex != -1 || IsInShovelTutorial())
+	{
+		mCutsceneTime.mPreviousNanoseconds = mCutsceneTime.mNanoseconds;
+		return;
+	}
+	if (aChooserReached)
+	{
+		mCutsceneTime.mNanoseconds = Sexy::TimeCounter::Encode(aChooserTime);
+		StartSeedChooser();
+		mCutsceneTime.mPreviousNanoseconds = mCutsceneTime.mNanoseconds;
+		return;
+	}
+	if (mSeedChoosing)
+		return;
 
-	// 过场结束的判定
-	int aTimeStart = TimeIntroEnd + mLawnMowerTime + mSodTime + mCrazyDaveTime + mFogTime + mBossTime + mReadySetPlantTime;
+	// Only retire the intro after its final interval has dispatched events.
 	if (mCutsceneTime >= aTimeStart)
 	{
+		// This update can also skip AnimateBoard's entire final interval.
+		// Both ordinary packets and conveyor packets share this SeedBank.
+		if (!mApp->IsChallengeWithoutSeedBank())
+		{
+			mBoard->mSeedBank->mX = SEED_BANK_OFFSET_X_END;
+			mBoard->mSeedBank->mY = 0;
+		}
 		mBoard->RemoveCutsceneZombies();
 		if (mBoard->mTutorialState != TutorialState::TUTORIAL_ZEN_GARDEN_PICKUP_WATER)
 		{
@@ -1625,8 +1674,6 @@ void CutScene::Update()
 		mApp->StartPlaying();
 		return;
 	}
-
-	AnimateBoard();
 }
 
 //0x43C3C0

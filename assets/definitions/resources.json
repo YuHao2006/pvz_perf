@@ -1441,15 +1441,6 @@
           {
             "tag": "Image",
             "attrs": {
-              "id": "PACKET_PLANTS",
-              "path": "packet_plants",
-              "cols": "13"
-            },
-            "children": []
-          },
-          {
-            "tag": "Image",
-            "attrs": {
               "id": "ZEN_NEED_ICONS",
               "path": "zen_need_icons",
               "cols": "3"
@@ -5335,54 +5326,6 @@
             "attrs": {
               "id": "ALMANAC_ZOMBIEBLANK",
               "path": "Almanac_ZombieBlank"
-            },
-            "children": []
-          },
-          {
-            "tag": "Image",
-            "attrs": {
-              "id": "ALMANAC_GROUNDDAY",
-              "path": "Almanac_GroundDay"
-            },
-            "children": []
-          },
-          {
-            "tag": "Image",
-            "attrs": {
-              "id": "ALMANAC_GROUNDNIGHT",
-              "path": "Almanac_GroundNight"
-            },
-            "children": []
-          },
-          {
-            "tag": "Image",
-            "attrs": {
-              "id": "ALMANAC_GROUNDPOOL",
-              "path": "Almanac_GroundPool"
-            },
-            "children": []
-          },
-          {
-            "tag": "Image",
-            "attrs": {
-              "id": "ALMANAC_GROUNDNIGHTPOOL",
-              "path": "Almanac_GroundNightPool"
-            },
-            "children": []
-          },
-          {
-            "tag": "Image",
-            "attrs": {
-              "id": "ALMANAC_GROUNDROOF",
-              "path": "Almanac_GroundRoof"
-            },
-            "children": []
-          },
-          {
-            "tag": "Image",
-            "attrs": {
-              "id": "ALMANAC_GROUNDICE",
-              "path": "Almanac_GroundIce"
             },
             "children": []
           },

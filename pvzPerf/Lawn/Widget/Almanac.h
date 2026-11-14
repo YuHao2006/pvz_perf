@@ -100,3 +100,5 @@ public:
 /*inline*/ void					AlmanacInitForPlayer();
 /*inline*/ void					AlmanacPlayerDefeatedZombie(ZombieType theZombieType);
 
+
+void DrawAlmanacGround(Graphics* g,int x,int y,int map,bool ice=false);

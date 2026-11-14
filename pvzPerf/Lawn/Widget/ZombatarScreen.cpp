@@ -1,3 +1,4 @@
+#include "Almanac.h"
 #include "ZombatarScreen.h"
 
 #include "LawnApp.h"
@@ -166,12 +167,7 @@ void ZombatarScreen::Draw(Graphics* g)
 			ZOMBATAR_AVATAR_INNER_Y,
 			ZOMBATAR_PORTRAIT_INNER_WIDTH,
 			ZOMBATAR_AVATAR_INNER_HEIGHT);
-		if (AlmanacAtlas::Texture)
-		{
-			const Sexy::TextureSource texture{AlmanacAtlas::Texture, 0};
-			Sexy::DrawAtlasImage(g, texture,
-				AlmanacAtlas::Images[size_t(AlmanacAtlas::Sprite::ALMANAC_GROUNDDAY)], 600, 300);
-		}
+		DrawAlmanacGround(g,600,300,0);
 
 		// FUN_00531c50 constructs a child Graphics and draws the Zombie through
 		// its normal GameObject anchor path.  ZOMBIE_ZOMBATAR creates the

@@ -593,6 +593,9 @@ void SeedChooserScreen::UpdateViewLawn()
 	}
 	else
 	{
+		// The last sample need not land exactly on the return deadline.
+		Move(mApp->mScreenBounds.mX, chooserY);
+		mBoard->ClearAdvice(ADVICE_CLICK_TO_CONTINUE);
 		mChooseState = CHOOSE_NORMAL;
 		mViewLawnStartTimeNs = 0;
 		mViewLawnReturnTimeNs = -1;

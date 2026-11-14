@@ -1,0 +1,186 @@
+PASS pure wrapped text measurement: wrapping, newlines, color tags, no glyph draws and empty fill
+pool GPU day-normal-nearest: RGBA max=0 mean=0 poolMean=0 changedPixels=0 worst=(0,0) outsideBoundaryMax=0
+pool GPU night-normal-linear: RGBA max=0 mean=0 poolMean=0 changedPixels=0 worst=(0,0) outsideBoundaryMax=0
+pool GPU day-additive-partial-fractional: RGBA max=0 mean=0 poolMean=0 changedPixels=0 worst=(0,0) outsideBoundaryMax=0
+pool GPU night-additive-phase-wrap: RGBA max=0 mean=0 poolMean=0 changedPixels=0 worst=(0,0) outsideBoundaryMax=0
+pool GPU day-opaque-partial-fractional: RGBA max=0 mean=0 poolMean=0 changedPixels=0 worst=(0,0) outsideBoundaryMax=0
+pool GPU night-opaque-large-counter: RGBA max=0 mean=0 poolMean=0 changedPixels=0 worst=(0,0) outsideBoundaryMax=0
+pool GPU feedback-float-source-pending-batch: RGBA max=0 mean=0 poolMean=0 changedPixels=0 worst=(0,0) outsideBoundaryMax=0
+PASS production GPU pool vs independent legacy CPU mesh: day/night, normal/additive/opaque, nearest/linear/repeat, phase wrap, destination scissor, fractional translation, ordinary painter order and float target feedback
+PASS precomputed transparent edges: alpha, visible RGB, idempotency, nearest/linear, upload-discard
+PASS public font upload: deferred alpha, upload-and-discard, texture reuse, independent copies
+PASS nonzero source rectangles and repacked whole-sheet atlas views: translation, scale origins, clipping, tint, additive, local-source views and floating scales
+PASS necessary local-clip contract: independent full-pixel rect/image/source/mirror/matrix/particle/convex oracles, disjoint/partial/empty clips and negative framebuffer crossings
+PASS actual TitleScreen grass reveal: widths 0/1/157/313/314/400, translated draw and unrevealed black pixels
+PASS actual GameButton atlas states: normal, hover, press/fallbacks, disabled, overAlpha, additive glow, translation/offsets and hidden state match independent images
+PASS direct shared-image snapshots and reference lifetime
+PASS actual boss back-arm drawing: four attack offsets, reference pixels, 1024 exact shared-animation translation restorations
+PASS reanimation appearances: independent options, image slots, atlas dimensions, original centers and actual AttachmentDraw visibility pixels
+PASS fullscreen reanimation: destination fill pixels, hidden/zero alpha, color modulation, both blend modes, translation and effective clip without track matrices
+Store clock fixture: initialize
+Survival begin mode=56 Hz=100
+PASS survival roster boundaries mode=56 seeds=256 stages=6
+Survival primary mode=56 Hz=100 background=0 waves=20 retained=1 repick=1 final=0
+Survival begin mode=56 Hz=30
+Survival primary mode=56 Hz=30 background=0 waves=20 retained=1 repick=1 final=0
+Survival begin mode=56 Hz=60
+Survival primary mode=56 Hz=60 background=0 waves=20 retained=1 repick=1 final=0
+Survival begin mode=56 Hz=240
+Survival primary mode=56 Hz=240 background=0 waves=20 retained=1 repick=1 final=0
+Survival begin mode=56 Hz=0
+Survival primary mode=56 Hz=0 background=0 waves=20 retained=1 repick=1 final=0
+Survival begin mode=57 Hz=100
+PASS survival roster boundaries mode=57 seeds=256 stages=6
+Survival primary mode=57 Hz=100 background=1 waves=20 retained=1 repick=1 final=0
+Survival begin mode=57 Hz=30
+Survival primary mode=57 Hz=30 background=1 waves=20 retained=1 repick=1 final=0
+Survival begin mode=57 Hz=60
+Survival primary mode=57 Hz=60 background=1 waves=20 retained=1 repick=1 final=0
+Survival begin mode=57 Hz=240
+Survival primary mode=57 Hz=240 background=1 waves=20 retained=1 repick=1 final=0
+Survival begin mode=57 Hz=0
+Survival primary mode=57 Hz=0 background=1 waves=20 retained=1 repick=1 final=0
+Survival begin mode=58 Hz=100
+PASS survival roster boundaries mode=58 seeds=256 stages=6
+Survival primary mode=58 Hz=100 background=2 waves=20 retained=1 repick=1 final=0
+Survival begin mode=58 Hz=30
+Survival primary mode=58 Hz=30 background=2 waves=20 retained=1 repick=1 final=0
+Survival begin mode=58 Hz=60
+Survival primary mode=58 Hz=60 background=2 waves=20 retained=1 repick=1 final=0
+Survival begin mode=58 Hz=240
+Survival primary mode=58 Hz=240 background=2 waves=20 retained=1 repick=1 final=0
+Survival begin mode=58 Hz=0
+Survival primary mode=58 Hz=0 background=2 waves=20 retained=1 repick=1 final=0
+Survival begin mode=59 Hz=100
+PASS survival roster boundaries mode=59 seeds=256 stages=6
+Survival primary mode=59 Hz=100 background=3 waves=20 retained=1 repick=1 final=0
+Survival begin mode=59 Hz=30
+Survival primary mode=59 Hz=30 background=3 waves=20 retained=1 repick=1 final=0
+Survival begin mode=59 Hz=60
+Survival primary mode=59 Hz=60 background=3 waves=20 retained=1 repick=1 final=0
+Survival begin mode=59 Hz=240
+Survival primary mode=59 Hz=240 background=3 waves=20 retained=1 repick=1 final=0
+Survival begin mode=59 Hz=0
+Survival primary mode=59 Hz=0 background=3 waves=20 retained=1 repick=1 final=0
+Survival begin mode=60 Hz=100
+PASS survival roster boundaries mode=60 seeds=256 stages=6
+Survival primary mode=60 Hz=100 background=4 waves=20 retained=1 repick=1 final=0
+Survival begin mode=60 Hz=30
+Survival primary mode=60 Hz=30 background=4 waves=20 retained=1 repick=1 final=0
+Survival begin mode=60 Hz=60
+Survival primary mode=60 Hz=60 background=4 waves=20 retained=1 repick=1 final=0
+Survival begin mode=60 Hz=240
+Survival primary mode=60 Hz=240 background=4 waves=20 retained=1 repick=1 final=0
+Survival begin mode=60 Hz=0
+Survival primary mode=60 Hz=0 background=4 waves=20 retained=1 repick=1 final=0
+Survival begin mode=61 Hz=100
+PASS survival roster boundaries mode=61 seeds=256 stages=6
+Survival primary mode=61 Hz=100 background=0 waves=20 retained=1 repick=1 final=1
+Survival begin mode=61 Hz=30
+Survival primary mode=61 Hz=30 background=0 waves=20 retained=1 repick=1 final=1
+Survival begin mode=61 Hz=60
+Survival primary mode=61 Hz=60 background=0 waves=20 retained=1 repick=1 final=1
+Survival begin mode=61 Hz=240
+Survival primary mode=61 Hz=240 background=0 waves=20 retained=1 repick=1 final=1
+Survival begin mode=61 Hz=0
+Survival primary mode=61 Hz=0 background=0 waves=20 retained=1 repick=1 final=1
+Survival begin mode=62 Hz=100
+PASS survival roster boundaries mode=62 seeds=256 stages=6
+Survival primary mode=62 Hz=100 background=1 waves=20 retained=1 repick=1 final=1
+Survival begin mode=62 Hz=30
+Survival primary mode=62 Hz=30 background=1 waves=20 retained=1 repick=1 final=1
+Survival begin mode=62 Hz=60
+Survival primary mode=62 Hz=60 background=1 waves=20 retained=1 repick=1 final=1
+Survival begin mode=62 Hz=240
+Survival primary mode=62 Hz=240 background=1 waves=20 retained=1 repick=1 final=1
+Survival begin mode=62 Hz=0
+Survival primary mode=62 Hz=0 background=1 waves=20 retained=1 repick=1 final=1
+Survival begin mode=63 Hz=100
+PASS survival roster boundaries mode=63 seeds=256 stages=6
+Survival primary mode=63 Hz=100 background=2 waves=20 retained=1 repick=1 final=1
+Survival begin mode=63 Hz=30
+Survival primary mode=63 Hz=30 background=2 waves=20 retained=1 repick=1 final=1
+Survival begin mode=63 Hz=60
+Survival primary mode=63 Hz=60 background=2 waves=20 retained=1 repick=1 final=1
+Survival begin mode=63 Hz=240
+Survival primary mode=63 Hz=240 background=2 waves=20 retained=1 repick=1 final=1
+Survival begin mode=63 Hz=0
+Survival primary mode=63 Hz=0 background=2 waves=20 retained=1 repick=1 final=1
+Survival begin mode=64 Hz=100
+PASS survival roster boundaries mode=64 seeds=256 stages=6
+Survival primary mode=64 Hz=100 background=3 waves=20 retained=1 repick=1 final=1
+Survival begin mode=64 Hz=30
+Survival primary mode=64 Hz=30 background=3 waves=20 retained=1 repick=1 final=1
+Survival begin mode=64 Hz=60
+Survival primary mode=64 Hz=60 background=3 waves=20 retained=1 repick=1 final=1
+Survival begin mode=64 Hz=240
+Survival primary mode=64 Hz=240 background=3 waves=20 retained=1 repick=1 final=1
+Survival begin mode=64 Hz=0
+Survival primary mode=64 Hz=0 background=3 waves=20 retained=1 repick=1 final=1
+Survival begin mode=65 Hz=100
+PASS survival roster boundaries mode=65 seeds=256 stages=6
+Survival primary mode=65 Hz=100 background=4 waves=20 retained=1 repick=1 final=1
+Survival begin mode=65 Hz=30
+Survival primary mode=65 Hz=30 background=4 waves=20 retained=1 repick=1 final=1
+Survival begin mode=65 Hz=60
+Survival primary mode=65 Hz=60 background=4 waves=20 retained=1 repick=1 final=1
+Survival begin mode=65 Hz=240
+Survival primary mode=65 Hz=240 background=4 waves=20 retained=1 repick=1 final=1
+Survival begin mode=65 Hz=0
+Survival primary mode=65 Hz=0 background=4 waves=20 retained=1 repick=1 final=1
+Survival begin mode=66 Hz=100
+PASS survival roster boundaries mode=66 seeds=256 stages=6
+Survival primary mode=66 Hz=100 background=0 waves=10 retained=1 repick=1 final=1
+Survival begin mode=66 Hz=30
+Survival primary mode=66 Hz=30 background=0 waves=10 retained=1 repick=1 final=1
+Survival begin mode=66 Hz=60
+Survival primary mode=66 Hz=60 background=0 waves=10 retained=1 repick=1 final=1
+Survival begin mode=66 Hz=240
+Survival primary mode=66 Hz=240 background=0 waves=10 retained=1 repick=1 final=1
+Survival begin mode=66 Hz=0
+Survival primary mode=66 Hz=0 background=0 waves=10 retained=1 repick=1 final=1
+Survival begin mode=67 Hz=100
+PASS survival roster boundaries mode=67 seeds=256 stages=6
+Survival primary mode=67 Hz=100 background=1 waves=10 retained=1 repick=1 final=1
+Survival begin mode=67 Hz=30
+Survival primary mode=67 Hz=30 background=1 waves=10 retained=1 repick=1 final=1
+Survival begin mode=67 Hz=60
+Survival primary mode=67 Hz=60 background=1 waves=10 retained=1 repick=1 final=1
+Survival begin mode=67 Hz=240
+Survival primary mode=67 Hz=240 background=1 waves=10 retained=1 repick=1 final=1
+Survival begin mode=67 Hz=0
+Survival primary mode=67 Hz=0 background=1 waves=10 retained=1 repick=1 final=1
+Survival begin mode=68 Hz=100
+PASS survival roster boundaries mode=68 seeds=256 stages=6
+Survival primary mode=68 Hz=100 background=2 waves=10 retained=1 repick=1 final=1
+Survival begin mode=68 Hz=30
+Survival primary mode=68 Hz=30 background=2 waves=10 retained=1 repick=1 final=1
+Survival begin mode=68 Hz=60
+Survival primary mode=68 Hz=60 background=2 waves=10 retained=1 repick=1 final=1
+Survival begin mode=68 Hz=240
+Survival primary mode=68 Hz=240 background=2 waves=10 retained=1 repick=1 final=1
+Survival begin mode=68 Hz=0
+Survival primary mode=68 Hz=0 background=2 waves=10 retained=1 repick=1 final=1
+Survival begin mode=69 Hz=100
+PASS survival roster boundaries mode=69 seeds=256 stages=6
+Survival primary mode=69 Hz=100 background=3 waves=10 retained=1 repick=1 final=1
+Survival begin mode=69 Hz=30
+Survival primary mode=69 Hz=30 background=3 waves=10 retained=1 repick=1 final=1
+Survival begin mode=69 Hz=60
+Survival primary mode=69 Hz=60 background=3 waves=10 retained=1 repick=1 final=1
+Survival begin mode=69 Hz=240
+Survival primary mode=69 Hz=240 background=3 waves=10 retained=1 repick=1 final=1
+Survival begin mode=69 Hz=0
+Survival primary mode=69 Hz=0 background=3 waves=10 retained=1 repick=1 final=1
+Survival begin mode=70 Hz=100
+PASS survival roster boundaries mode=70 seeds=256 stages=6
+Survival primary mode=70 Hz=100 background=4 waves=10 retained=1 repick=1 final=1
+Survival begin mode=70 Hz=30
+Survival primary mode=70 Hz=30 background=4 waves=10 retained=1 repick=1 final=1
+Survival begin mode=70 Hz=60
+Survival primary mode=70 Hz=60 background=4 waves=10 retained=1 repick=1 final=1
+Survival begin mode=70 Hz=240
+Survival primary mode=70 Hz=240 background=4 waves=10 retained=1 repick=1 final=1
+Survival begin mode=70 Hz=0
+Survival primary mode=70 Hz=0 background=4 waves=10 retained=1 repick=1 final=1
+PASS actual fifteen survival rules: first/final waves, repick callbacks, retained actors, pause and fixed/endless boundaries at five schedules

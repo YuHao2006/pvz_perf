@@ -1,4 +1,7 @@
 export component Credits_Main2 {
+    shared-image: IMAGE_REANIM_BACKGROUND2 IMAGE_BACKGROUND2;
+    shared-image: IMAGE_REANIM_BACKGROUND4 IMAGE_BACKGROUND4;
+
     fps: 7;
     Track {
         source-name: "Background";

@@ -1,3 +1,4 @@
+#include "BattleCardAtlas.h"
 #include "Sexy.TodLib/generated/EntityStrings.h"  // 动态键实体表（阶段 3）
 #include "Sexy.TodLib/generated/ReanimVariantOptions.h"
 #include "Coin.h"
@@ -31,9 +32,28 @@
 #include "Widget/AchievementsWidget.h"
 #include "Sexy.TodLib/generated/SceneAtlasData.h"
 #include "graphics/AtlasDraw.h"
+#include <array>
 
 namespace
 {
+// The next state-changing launch event, rather than the next emitted bullet.
+// A repeater's first preparation and a Cattail's first preparation precede the
+// ordinary launch deadline. Events already consumed by this window are omitted.
+std::int64_t NextShooterTrigger(const Plant& plant, std::int64_t windowStartNs)
+{
+    static constexpr auto kLeadNs=[] {
+        std::array<std::int64_t,SeedType::NUM_SEED_TYPES> result{};
+        result[SeedType::SEED_CATTAIL]=50*PlantLaunchClock::Tick;
+        result[SeedType::SEED_REPEATER]=25*PlantLaunchClock::Tick;
+        result[SeedType::SEED_LEFTPEATER]=25*PlantLaunchClock::Tick;
+        result[SeedType::SEED_SPLITPEA]=25*PlantLaunchClock::Tick;
+        return result;
+    }();
+    const auto lead=kLeadNs[plant.mSeedType];
+    const auto preparation=plant.mNextLaunchTimeNs-lead;
+    return lead && preparation>windowStartNs ? preparation : plant.mNextLaunchTimeNs;
+}
+
 constexpr MagnetAtlas::Sprite kMagnetSprites[] = {
     MagnetAtlas::Sprite::Count,
     MagnetAtlas::Sprite::REANIM_ZOMBIE_BUCKET1,
@@ -1158,33 +1178,67 @@ void Plant::StarFruitFire()
 }
 
 //0x45F8A0
-void Plant::UpdateShooter(std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs)
+void Plant::UpdateShooter(std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, std::int64_t shootingProcessedUntilNs)
 {
     mLaunchClockActive = true;
     const auto aNow = ownerNowNs;
     auto aWindowStart = mLaunchWindowStartNs;
+    auto aShootingCursor = shootingProcessedUntilNs == INT64_MIN ? aWindowStart : shootingProcessedUntilNs;
+    const auto aDrainShooting = [&](std::int64_t untilNs) {
+        if (untilNs <= aShootingCursor)
+            return;
+        UpdateShooting(untilNs, visualNowNs, animationNowNs, aShootingCursor);
+        aShootingCursor = untilNs;
+    };
+    const auto aStartAt = [&](std::int64_t eventNs, auto&& start) {
+        aDrainShooting(eventNs);
+        if (eventNs == aNow)
+        {
+            start(eventNs);
+            return;
+        }
+        struct AnimationState {Reanimation* animation;std::uint32_t generation;};
+        std::array<AnimationState,4> animations{};
+        int count=0;
+        for (const auto id : {mBodyReanimID,mHeadReanimID,mHeadReanimID2,mHeadReanimID3})
+            if (auto* animation=mApp->ReanimationTryToGet(id))
+                animations[count++]={animation,animation->mPlaybackGeneration};
+        start(eventNs);
+        // Only newly restarted one-shot attacks inherit this step's elapsed
+        // part. Split Pea also restores/synchronizes its front idle here; that
+        // looping idle must stay synchronized with its already-sampled body.
+        const auto animationEventNs=ReanimClock::Subtract(animationNowNs,aNow-eventNs);
+        for (int index=0;index<count;++index)
+            if (animations[index].animation->mPlaybackGeneration!=animations[index].generation &&
+                animations[index].animation->mLoopType!=ReanimLoopType::REANIM_LOOP &&
+                animations[index].animation->mLoopType!=ReanimLoopType::REANIM_LOOP_FULL_LAST_FRAME)
+            {
+                animations[index].animation->RebaseTime(animationEventNs);
+                animations[index].animation->PrepareTimeAt(animationNowNs);
+            }
+    };
     const auto aSecondaryFire = [&](std::int64_t aWindowEnd)
     {
         if (mSeedType == SeedType::SEED_CATTAIL &&
             PlantLaunchClock::Crossed(aWindowStart, aWindowEnd,
                 mNextLaunchTimeNs - 50 * PlantLaunchClock::Tick))
-            FindTargetAndFire(ownerNowNs, visualNowNs, animationNowNs, mRow, PlantWeapon::WEAPON_PRIMARY);
+            aStartAt(mNextLaunchTimeNs-50*PlantLaunchClock::Tick,[&](std::int64_t eventNs) {
+                FindTargetAndFire(eventNs,visualNowNs,animationNowNs,mRow,PlantWeapon::WEAPON_PRIMARY);
+            });
         const auto aFirstShotStart = mNextLaunchTimeNs - 25 * PlantLaunchClock::Tick;
         if (PlantLaunchClock::Crossed(aWindowStart, aWindowEnd, aFirstShotStart))
         {
-            bool aStartedShooting = false;
             if (mSeedType == SeedType::SEED_REPEATER || mSeedType == SeedType::SEED_LEFTPEATER)
-                aStartedShooting = FindTargetAndFire(ownerNowNs, visualNowNs, animationNowNs, mRow, PlantWeapon::WEAPON_PRIMARY);
+                aStartAt(aFirstShotStart,[&](std::int64_t eventNs) {
+                    FindTargetAndFire(eventNs,visualNowNs,animationNowNs,mRow,PlantWeapon::WEAPON_PRIMARY);
+                });
             else if (mSeedType == SeedType::SEED_SPLITPEA)
             {
-                aStartedShooting = FindTargetAndFire(ownerNowNs, visualNowNs, animationNowNs, mRow, PlantWeapon::WEAPON_PRIMARY);
-                aStartedShooting |= FindTargetAndFire(ownerNowNs, visualNowNs, animationNowNs, mRow, PlantWeapon::WEAPON_SECONDARY);
+                aStartAt(aFirstShotStart,[&](std::int64_t eventNs) {
+                    FindTargetAndFire(eventNs,visualNowNs,animationNowNs,mRow,PlantWeapon::WEAPON_PRIMARY);
+                    FindTargetAndFire(eventNs,visualNowNs,animationNowNs,mRow,PlantWeapon::WEAPON_SECONDARY);
+                });
             }
-            // The first shot starts at its deadline inside this update, not
-            // at the update endpoint. Otherwise the next trigger can reset
-            // its 26-unit timer before it crosses the one-unit fire event.
-            if (aStartedShooting)
-                mShootingEndTimeNs = ReanimClock::Add(mShootingEndTimeNs, aFirstShotStart - aNow);
         }
     };
     int aEvents = 0;
@@ -1192,6 +1246,9 @@ void Plant::UpdateShooter(std::int64_t ownerNowNs, std::int64_t visualNowNs, std
     {
         const auto aDue = mNextLaunchTimeNs;
         aSecondaryFire(aDue);
+        // Earlier shots (including their random Foley choices) precede this
+        // launch's draw for its next period at every simulation step size.
+        aDrainShooting(aDue);
         // The launch deadline is independent of the shooting animation timer.
         // In particular, Gloom's next volley starts before its 200-tick timer
         // finishes. Gating on that timer silently discards every other volley.
@@ -1291,11 +1348,15 @@ void Plant::UpdateShooter(std::int64_t ownerNowNs, std::int64_t visualNowNs, std
 
         if ((unsigned)mSeedType < sizeof(kShooterFireCases) / sizeof(kShooterFireCases[0]))
         {
-            kShooterFireCases[mSeedType](ownerNowNs, visualNowNs, animationNowNs, this);
+            aStartAt(aDue,[&](std::int64_t eventNs) {
+                kShooterFireCases[mSeedType](eventNs,visualNowNs,animationNowNs,this);
+            });
         }
         else
         {
-            kShooterDefaultFire(ownerNowNs, visualNowNs, animationNowNs, this);  // 原 else 支（哨兵越界等价）
+            aStartAt(aDue,[&](std::int64_t eventNs) {
+                kShooterDefaultFire(eventNs,visualNowNs,animationNowNs,this);
+            });  // 原 else 支（哨兵越界等价）
         }
         aWindowStart = aDue;
         ++aEvents;
@@ -1303,6 +1364,7 @@ void Plant::UpdateShooter(std::int64_t ownerNowNs, std::int64_t visualNowNs, std
     if (mNextLaunchTimeNs > aNow)
     {
         aSecondaryFire(aNow);
+        aDrainShooting(aNow);
         aWindowStart = aNow;
     }
     // Preserve a bounded backlog instead of dropping overdue periods.
@@ -1324,6 +1386,9 @@ void Plant::UpdateProductionPlant(std::int64_t ownerNowNs)
     if (mBoard->HasLevelAwardDropped())
         return;
 
+    auto aNow = ownerNowNs;
+    std::int64_t aStopNs = 0;
+    bool aStopping = false;
     if (mSeedType == SeedType::SEED_MARIGOLD && mBoard->mCurrentWave == mBoard->mNumWaves)
     {
         if (mState != PlantState::STATE_MARIGOLD_ENDING)
@@ -1332,14 +1397,27 @@ void Plant::UpdateProductionPlant(std::int64_t ownerNowNs)
             mStateCountdown = 6000;
         }
         else if (mStateCountdown <= 0)
-            return;
+        {
+            if (mStateCountdown.mPreviousNanoseconds <= 0)
+                return; // This retirement boundary was already consumed.
+            const auto deltaNs = static_cast<std::int64_t>(Sexy::gUpdateIntervalNs);
+            aStopNs = ReanimClock::Add(ReanimClock::Subtract(ownerNowNs, deltaNs),
+                std::clamp<std::int64_t>(mStateCountdown.mPreviousNanoseconds, 0, deltaNs));
+            // At an exact tie 1073 stops before production. Earlier coins in
+            // this same interval must still be consumed before retiring.
+            aNow = ReanimClock::Subtract(aStopNs, 1);
+            aStopping = true;
+        }
     }
 
     if (mApp->mGameMode == GameMode::GAMEMODE_MINIGAME_LAST_STAND && mBoard->mChallenge->mChallengeState != ChallengeState::STATECHALLENGE_LAST_STAND_ONSLAUGHT)
+    {
+        if (aStopping)
+            mStateCountdown = 0;
         return;
+    }
 
     mLaunchClockActive = true;
-    const auto aNow = ownerNowNs;
     const auto aRemaining = mNextLaunchTimeNs - aNow;
     if (aRemaining <= 100 * PlantLaunchClock::Tick)
     {
@@ -1467,6 +1545,14 @@ void Plant::UpdateProductionPlant(std::int64_t ownerNowNs)
             }
         }
     }
+    if (aStopping)
+    {
+        mStateCountdown = 0;
+        // Plant::Update freezes only the part after retirement. Subsequent
+        // stopped updates then preserve the remaining next-production time.
+        mLaunchWindowStartNs = aStopNs;
+        mLaunchClockActive = false;
+    }
 }
 
 //0x45FB70
@@ -1478,9 +1564,24 @@ void Plant::UpdateSunShroom(std::int64_t ownerNowNs)
     {
         if (mStateCountdown == 0)
         {
+            const auto deltaNs = static_cast<std::int64_t>(Sexy::gUpdateIntervalNs);
+            const auto aGrowNs = ReanimClock::Add(ReanimClock::Subtract(ownerNowNs, deltaNs),
+                std::clamp<std::int64_t>(mStateCountdown.mPreviousNanoseconds, 0, deltaNs));
+            if (mNextLaunchTimeNs < aGrowNs)
+                UpdateProductionPlant(ReanimClock::Subtract(aGrowNs, 1));
             PlayBodyReanim(ownerNowNs, ReanimTrackId::anim_grow, ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD, 10, 12.0f);
             mState = PlantState::STATE_SUNSHROOM_GROWING;
             mApp->PlayFoley(FoleyType::FOLEY_PLANTGROW);
+            // At the exact growth instant 1073 already selects the large sun.
+            // Production is paused for the remainder of the growing interval.
+            UpdateProductionPlant(aGrowNs);
+            if (mLaunchClockActive)
+            {
+                const auto aFrozenNs = ReanimClock::Subtract(ownerNowNs, aGrowNs);
+                mNextLaunchTimeNs = PlantLaunchClock::Add(mNextLaunchTimeNs, aFrozenNs);
+                mLaunchWindowStartNs = PlantLaunchClock::Add(mLaunchWindowStartNs, aFrozenNs);
+            }
+            return;
         }
 
         UpdateProductionPlant(ownerNowNs);
@@ -1722,13 +1823,15 @@ void Plant::UpdateSpikeweed(std::int64_t ownerNowNs, std::int64_t visualNowNs, s
 
     if (mState == PlantState::STATE_SPIKEWEED_ATTACKING)
     {
-        if (mStateCountdown == 0)
+        // A single owner interval may contain both damage pulses and expiry.
+        // Consume the pulses first; TimeCounter equality includes crossed points.
+        if (mSeedType == SeedType::SEED_SPIKEROCK)
         {
-            mState = PlantState::STATE_NOTREADY;
-        }
-        else if (mSeedType == SeedType::SEED_SPIKEROCK)
-        {
-            if (mStateCountdown == 70 || mStateCountdown == 32)
+            if (mStateCountdown == 70)
+            {
+                DoRowAreaDamage(ownerNowNs, visualNowNs, animationNowNs, 20, 33U);
+            }
+            if (mStateCountdown == 32 && !mDead)
             {
                 DoRowAreaDamage(ownerNowNs, visualNowNs, animationNowNs, 20, 33U);
             }
@@ -1736,6 +1839,14 @@ void Plant::UpdateSpikeweed(std::int64_t ownerNowNs, std::int64_t visualNowNs, s
         else if (mStateCountdown == 75)
         {
             DoRowAreaDamage(ownerNowNs, visualNowNs, animationNowNs, 20, 33U);
+        }
+
+        // A vehicle hit can destroy this plant during the earlier pulse.
+        if (mDead)
+            return;
+        if (mStateCountdown == 0)
+        {
+            mState = PlantState::STATE_NOTREADY;
         }
 
         if (aBodyReanim->mLoopCount > 0)
@@ -3258,6 +3369,19 @@ void Plant::UpdateAbilities(std::int64_t ownerNowNs, std::int64_t visualNowNs, s
             mDisappearEndTimeNs = nowNs - static_cast<std::int64_t>(Sexy::gUpdateIntervalNs) + 2'000'000'000;
         if (nowNs > mDisappearEndTimeNs)
         {
+            // Do not retire a special before consuming its earlier event in
+            // the same interval. A squished/asleep/carried plant still cannot
+            // execute an attack. Removal is strictly after its deadline, so a
+            // special at that exact deadline retains its original priority.
+            if (mState == PlantState::STATE_DOINGSPECIAL && !mSquished && !mIsAsleep &&
+                mOnBungeeState == PlantOnBungeeState::NOT_ON_BUNGEE &&
+                mSpecialEndTimeNs != 0 && mSpecialEndTimeNs <= mDisappearEndTimeNs)
+            {
+                mSpecialEndTimeNs = 0;
+                DoSpecial(ownerNowNs, visualNowNs, animationNowNs);
+                if (mDead)
+                    return;
+            }
             Die(ownerNowNs, visualNowNs, animationNowNs);
             return;
         }
@@ -3284,7 +3408,22 @@ void Plant::UpdateAbilities(std::int64_t ownerNowNs, std::int64_t visualNowNs, s
         return;
     }
 
-    UpdateShooting(ownerNowNs, visualNowNs, animationNowNs);
+    // Preserve the original pre-ability shooting/cleanup order, but stop before
+    // a launch would replace the pending action. UpdateShooter consumes the
+    // remaining subintervals in deadline order below; no per-object timestamp.
+    // No pending attack: leave the cursor at the existing launch-window start.
+    // The scheduler will still consume a newly started attack in this interval.
+    std::int64_t aShootingUntilNs=INT64_MIN;
+    if (mShootingEndTimeNs!=0)
+    {
+        const auto aShootingBeginNs=mSubclass==PlantSubClass::SUBCLASS_SHOOTER
+            ? std::min(ownerNowNs,mLaunchWindowStartNs)
+            : ownerNowNs-static_cast<std::int64_t>(Sexy::gUpdateIntervalNs);
+        aShootingUntilNs=mSubclass==PlantSubClass::SUBCLASS_SHOOTER
+            ? std::clamp(NextShooterTrigger(*this,mLaunchWindowStartNs),aShootingBeginNs,ownerNowNs)
+            : ownerNowNs;
+        UpdateShooting(aShootingUntilNs,visualNowNs,animationNowNs,aShootingBeginNs);
+    }
 
     if (mStateCountdown > 0)
         mStateCountdown--;
@@ -3369,7 +3508,7 @@ void Plant::UpdateAbilities(std::int64_t ownerNowNs, std::int64_t visualNowNs, s
     }
     if (mSubclass == PlantSubClass::SUBCLASS_SHOOTER)
     {
-        UpdateShooter(ownerNowNs, visualNowNs, animationNowNs);
+        UpdateShooter(ownerNowNs,visualNowNs,animationNowNs,aShootingUntilNs);
     }
     if (mSpecialEndTimeNs != 0 && ownerNowNs >= mSpecialEndTimeNs)
     {
@@ -4121,7 +4260,7 @@ void Plant::AnimatePumpkin()
 }
 
 //0x464820
-void Plant::UpdateShooting(std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs)
+void Plant::UpdateShooting(std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, std::int64_t intervalStartNs)
 {
     if (NotOnGround() || mShootingEndTimeNs == 0)
         return;
@@ -4129,7 +4268,8 @@ void Plant::UpdateShooting(std::int64_t ownerNowNs, std::int64_t visualNowNs, st
     // Use the owner's interval, never decrement a stored countdown. Keep an
     // expired deadline active until animation cleanup completes. Zero alone
     // is inactive; old invalid checkpoints are repaired in DevTools only.
-    const auto beforeNs = ownerNowNs - static_cast<std::int64_t>(Sexy::gUpdateIntervalNs);
+    const auto beforeNs = intervalStartNs==INT64_MIN
+        ? ownerNowNs-static_cast<std::int64_t>(Sexy::gUpdateIntervalNs) : intervalStartNs;
     const auto crossed = [&](std::int64_t remainingUnits) {
         const auto eventNs = mShootingEndTimeNs - remainingUnits * PlantLaunchClock::Tick;
         return beforeNs < eventNs && eventNs <= ownerNowNs;
@@ -5929,6 +6069,7 @@ int Plant::DistanceToClosestZombie()
 //0x4679B0
 void Plant::Die(std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs)
 {
+    if(mIsOnBoard&&Plant::IsUpgrade(mSeedType)&&mApp->mBattleCardAtlas)mApp->mBattleCardAtlas->InvalidatePrices();
     // PSS 修复（用户方案）：玉米炮死亡即清空瞄准该炮的发射状态——防
     // DataArray 槽位回收复用后 mCobCannonPlantID 悬空（1073 原版：模仿者
     // 土豆雷复用同 ID 会被 CobCannonFire 强改状态卡出无敌土豆，且土豆

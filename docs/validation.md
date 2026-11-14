@@ -77,9 +77,13 @@ CPU粒子绘制按293项原始发射器／变体／裁剪情况与独立CPU参�
 
 Vulkan独立GPU实验将像素正确性、同步校验与timestamp计时分开。历史独立实验结果只支持对应产物和输入，不当作当前完整WSI套件、所有驱动或手机功耗证明。[GPU专项](gpu-submission.md)维护合批、16位索引、透明边缘和帧资源复用边界。[GPU泳池](gpu-pool-production.md)维护水波及焦散契约；Windows主机不能代替Linux、Android、macOS及旧API设备验收。
 
-音乐入口`tools/test-music-runtime.ps1`检查实际BASS设备、夜晚高潮声部、音量和暂停恢复；静音或只验证返回值不能替代扬声器听音。Linux OpenAL和其他后端在各自环境单独运行，不能由本机Windows构建成功推断。
+设备选择入口`sexy_vulkan_device_selection_tests`验证Loader顺序不被独显类型／纹理尺寸覆盖，以及CPU设备的末位回退；真实初始化与绘制另行校验。[结果及超时边界](../Tests/evidence/vulkan-device-selection-20261114/README.txt)保留60秒CTest超时记录和108.696秒独立完整绘制通过记录，不将本机RTX启动成功表述为UHD 630低帧已解决。
+
+音乐入口`tools/test-music-runtime.ps1`检查实际BASS设备、标题曲在后台曲目加载前播放、冒险奖励／选卡／战斗切曲的淡出清除及轨道配置、夜晚高潮声部、音量和暂停恢复。测试使用静音主音量并查询真实通道及PCM，不能替代扬声器听音。Web MO3反复切曲另用`tools/wasm/test_music_transitions.mjs`回放；[结果与边界](../Tests/evidence/music-loading-20261114/README.txt)不把控制器及解码器定向通过写成已复现／修复浏览器完整冒险换关的缺主旋律反馈。Linux OpenAL和其他后端在各自环境单独运行，不能由本机Windows构建成功推断。
 
 ## 性能与证据
+
+大步长事件定向入口为 `-Case step-events`。真实生产对象覆盖射手按截止时刻派发、同拍多发／多周期、地刺伤害与结束、撑杆／海豚高坚果阻挡、僵尸头部连发、巨人两次震动、选卡与传送带端点、交互屏障、巨大波语音／音乐以及 Credits 段尾与补拍总时间。补充覆盖寒冰菇／毁灭菇特技早于清除、金盏花停产、阳光菇成长前／同刻／之后的生产顺序、僵王独立爆炸事件、关底小推车金币结算、冰道到期空粒子以及收集物大步长收敛。射手检查包含 100／30／60Hz、250ms、500ms、2秒和3.5秒单步；关底结算另测6.1秒跨终点及截止后的事件排除。不将“候选扫描覆盖531个非生成C++／头文件”表述为证明任意步长下所有状态机绝无缺陷。原有植物目录、僵尸目录、ICE3／ICE4、花园、奖励、开场、Credits、生存及静态定义生命周期回归同时保留，见 [事件审计与运行记录](../Tests/evidence/variable-step-events-20261114/README.txt)。本轮不改存档布局。
 
 整局帧率和CPU以[性能优化与测量](perf-fix-ledger.md)的新基线为准；历史算法及固定Draw小指标保留同口径对照，不将它们称为后续版本已复测。CPU百分比以单核100%，进程CPU毫秒／绘制帧包含进程内所有线程；一秒样本不能声称逐帧p99或GPU耗时。
 

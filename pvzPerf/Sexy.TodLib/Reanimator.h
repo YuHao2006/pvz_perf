@@ -61,10 +61,14 @@ class ReanimatorDefinition
 public:
     ReanimatorTrackArray            mTracks{nullptr, 0};
     float                           mFPS = 12.0f;
-    Sexy::GpuTexture**              mTextures = nullptr;
+    // Zero for ordinary definitions; shared image slots form a compact tail.
+    std::uint32_t                   mExternalImageSlotBegin = 0;
+    Sexy::GpuTexture**              mTextures = nullptr; // One owned atlas per variant.
     std::uint32_t                   mVariantCount = 0;
     std::uint32_t                   mImageSlotCount = 0;
     std::uint32_t                   mVariantActionCount = 0;
+    // Offset into the global external-only binding IDs, never an owned atlas.
+    std::uint32_t                   mExternalBindingOffset = 0;
     // Static definition data [variant][image slot]. Row zero supplies geometry.
     const Sexy::TextureRegion*      mImageRects = nullptr;
     std::uint32_t*                  mVariantTransitions = nullptr;
@@ -72,7 +76,6 @@ public:
     std::uint32_t*                  mVariantActionStarts = nullptr;
     std::uint32_t*                  mVariantActionCounts = nullptr;
     std::uint32_t*                  mVariantOptions = nullptr;
-
 };
 extern ReanimatorDefinition* gReanimatorDefArray;   //[0x6A9EE8]
 
@@ -326,6 +329,8 @@ public:
     void                            DrawRenderGroup(Graphics* g, int theRenderGroup);
     bool                            DrawTrack(Graphics* g, int theTrackIndex, int theRenderGroup,
         const ReanimatorFrameTime* theFrameTime = nullptr);
+    bool                            DrawTrackWithTexture(Graphics* g, int theTrackIndex,
+        const ReanimatorFrameTime* theFrameTime, Sexy::GpuTexture* theTexture);
     void                            GetCurrentTransform(int theTrackIndex, ReanimatorTransform* theTransformCurrent, const ReanimatorFrameTime* theFrameTime = nullptr);
     void                            GetTransformAtTime(int theTrackIndex, ReanimatorTransform* theTransform, const ReanimatorFrameTime* theFrameTime);
     void                            GetFrameTime(ReanimatorFrameTime* theFrameTime);

@@ -1,0 +1,7 @@
+{
+  "all_ordinary_arrays_unchanged": true,
+  "shared_frame_rows_checked": 41890,
+  "shared_uv_rows_checked": 100,
+  "only_change_in_frames": "image slot renumbering with exactly corresponding UV permutation",
+  "generated_arrays_checked": 2785
+}

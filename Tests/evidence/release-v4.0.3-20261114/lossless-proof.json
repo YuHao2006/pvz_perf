@@ -1,0 +1,9 @@
+{
+  "same_entries": 745,
+  "pngs_recompressed": 206,
+  "all_decoded_RGBA_identical": true,
+  "normal_bytes": 39429341,
+  "lossless_bytes": 39053104,
+  "normal_sha256": "d186c6bce10fc6191aa94588a34b3e99a387c61067d66986a218920bfbb4b398",
+  "lossless_sha256": "4cd462db50231737bd82a362a6f797158188c5f9fc49e754c04564cdf92b857a"
+}

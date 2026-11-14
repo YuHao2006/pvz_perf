@@ -1,0 +1,14 @@
+{
+  "owned_pointers": 2830,
+  "shared_pointers": 100,
+  "shared_definitions": {
+    "120": 15,
+    "121": 16,
+    "122": 22,
+    "137": 47
+  },
+  "pointer_bytes": 23440,
+  "static_definition_extra_bytes": 1152,
+  "original_extra_bytes": 1952,
+  "removed_flat_pointer_bytes": 986240
+}

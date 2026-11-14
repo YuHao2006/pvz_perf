@@ -4,25 +4,33 @@
 #include "graphics/TextureSource.h"
 #include "misc/SexyMatrix.h"
 #include <cmath>
+#include <algorithm>
 
 using namespace Sexy;
 
 namespace
 {
-void DrawRegion(Graphics& graphics, const Rect& destination,
-    const TextureRegion& source, bool linearFilter)
+void DrawRegion(Graphics& graphics, ZombatarImage image, const Rect& destination,
+    const Rect& requested, bool linearFilter)
 {
-    if (destination.mWidth <= 0 || destination.mHeight <= 0 ||
-        source.mWidth <= 0 || source.mHeight <= 0)
-        return;
+    const auto index=static_cast<std::size_t>(image);
+    const auto& packed=gZombatarAtlas.mImages[index];
+    const auto& crop=gZombatarAtlas.mCrops[index];
+    if(destination.mWidth<=0||destination.mHeight<=0||requested.mWidth<=0||requested.mHeight<=0)return;
+    const int x=std::max(requested.mX,crop.mX),y=std::max(requested.mY,crop.mY);
+    const int right=std::min(requested.mX+requested.mWidth,crop.mX+crop.mWidth);
+    const int bottom=std::min(requested.mY+requested.mHeight,crop.mY+crop.mHeight);
+    if(right<=x||bottom<=y)return;
+    auto region=packed;region.mWidth=crop.mWidth;region.mHeight=crop.mHeight;
+    const auto source=CropTextureRegion(region,Rect(x-crop.mX,y-crop.mY,right-x,bottom-y));
     if (!graphics.mDestImage || !graphics.mDestImage->IsGpuDrawTarget())
         throw NonScreenDrawError(DrawOperation::StretchBlt);
     auto& render = *graphics.mDestImage->mRenderOwner;
     render.SelectDrawSurface(graphics.mDestImage);
     SexyTransform2D transform;
-    transform.Scale(float(destination.mWidth) / source.mWidth,
-        float(destination.mHeight) / source.mHeight);
-    transform.Translate(float(destination.mX), float(destination.mY));
+    const float sx=float(destination.mWidth)/requested.mWidth,sy=float(destination.mHeight)/requested.mHeight;
+    transform.Scale(sx,sy);
+    transform.Translate(destination.mX+(x-requested.mX)*sx,destination.mY+(y-requested.mY)*sy);
     render.BltTransformed(
         TextureSource{gZombatarAtlas.mTexture, 0},
         &graphics.mClipRect, graphics.mColorizeImages ? graphics.mColor : Color::White,
@@ -47,7 +55,7 @@ void DrawZombatarImage(Graphics* graphics, ZombatarImage image, float x, float y
             int(std::ceil(source.mWidth * graphics->mScaleX)),
             int(std::ceil(source.mHeight * graphics->mScaleY)))
         : Rect(translatedX, translatedY, source.mWidth, source.mHeight);
-    DrawRegion(*graphics, destination, source, scaled && !graphics->mFastStretch);
+    DrawRegion(*graphics,image,destination,Rect(0,0,source.mWidth,source.mHeight),scaled && !graphics->mFastStretch);
 }
 
 void DrawZombatarImage(Graphics* graphics, ZombatarImage image,
@@ -56,9 +64,9 @@ void DrawZombatarImage(Graphics* graphics, ZombatarImage image,
     if (image == ZombatarImage::None)
         return;
     const TextureRegion& source = gZombatarAtlas.mImages[static_cast<std::size_t>(image)];
-    DrawRegion(*graphics,
+    DrawRegion(*graphics,image,
         Rect(int(x + graphics->mTransX), int(y + graphics->mTransY), width, height),
-        source, !graphics->mFastStretch);
+        Rect(0,0,source.mWidth,source.mHeight), !graphics->mFastStretch);
 }
 
 void DrawZombatarImage(Graphics* graphics, ZombatarImage image,
@@ -67,9 +75,7 @@ void DrawZombatarImage(Graphics* graphics, ZombatarImage image,
     if (image == ZombatarImage::None)
         return;
     const TextureRegion& packed = gZombatarAtlas.mImages[static_cast<std::size_t>(image)];
-    const TextureRegion atlasSource = CropTextureRegion(packed, source);
-    DrawRegion(*graphics,
+    DrawRegion(*graphics,image,
         Rect(int(destination.mX + graphics->mTransX), int(destination.mY + graphics->mTransY),
-            destination.mWidth, destination.mHeight),
-        atlasSource, !graphics->mFastStretch);
+            destination.mWidth, destination.mHeight), source, !graphics->mFastStretch);
 }

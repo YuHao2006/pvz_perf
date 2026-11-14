@@ -1,0 +1,37 @@
+{
+  "scope": "fixed DrawScreen CPU, LP14, ABBA processes; old per-group samples only; 32 plants/40 zombies; flush, readback, logic excluded; frequency not independently verified; an unrelated compiler process existed on the host",
+  "runs": [
+    {
+      "run": "perf-0-before",
+      "samples": 320,
+      "mean_us": 1175.9703125,
+      "median_us": 1162.85,
+      "median_cycles": 3521433.5,
+      "pixels_sha256": "11549dd58e808c8d336ee2f06a80cfa6ce7d06b324c05e13132316cc99458c37"
+    },
+    {
+      "run": "perf-1-after",
+      "samples": 640,
+      "mean_us": 1165.5546875,
+      "median_us": 1154.85,
+      "median_cycles": 3499315.0,
+      "pixels_sha256": "11549dd58e808c8d336ee2f06a80cfa6ce7d06b324c05e13132316cc99458c37"
+    },
+    {
+      "run": "perf-2-after",
+      "samples": 640,
+      "mean_us": 1164.92578125,
+      "median_us": 1154.15,
+      "median_cycles": 3497779.5,
+      "pixels_sha256": "11549dd58e808c8d336ee2f06a80cfa6ce7d06b324c05e13132316cc99458c37"
+    },
+    {
+      "run": "perf-3-before",
+      "samples": 320,
+      "mean_us": 1174.1821875,
+      "median_us": 1162.25,
+      "median_cycles": 3519897.5,
+      "pixels_sha256": "11549dd58e808c8d336ee2f06a80cfa6ce7d06b324c05e13132316cc99458c37"
+    }
+  ]
+}

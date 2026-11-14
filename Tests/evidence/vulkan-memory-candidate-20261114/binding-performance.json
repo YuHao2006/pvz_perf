@@ -1,0 +1,55 @@
+{
+  "scope": "fixed DrawScreen CPU binding strategy comparison, LP14; no verified clock frequency; 800x600; ABBA blocks, 32 plants/40 zombies, no update/flush/readback included",
+  "runs": [
+    {
+      "run": "run3",
+      "sample_count": 640,
+      "pixels_sha256": "11549dd58e808c8d336ee2f06a80cfa6ce7d06b324c05e13132316cc99458c37",
+      "per-slot": {
+        "draw_cpu_us": {
+          "mean": 1190.976875,
+          "median": 1179.25
+        },
+        "thread_cycles": {
+          "mean": 3574586.871875,
+          "median": 3569049.5
+        }
+      },
+      "per-group": {
+        "draw_cpu_us": {
+          "mean": 1174.6775,
+          "median": 1162.65
+        },
+        "thread_cycles": {
+          "mean": 3530687.003125,
+          "median": 3517440.0
+        }
+      }
+    },
+    {
+      "run": "run4",
+      "sample_count": 640,
+      "pixels_sha256": "11549dd58e808c8d336ee2f06a80cfa6ce7d06b324c05e13132316cc99458c37",
+      "per-slot": {
+        "draw_cpu_us": {
+          "mean": 1185.3284375,
+          "median": 1173.5
+        },
+        "thread_cycles": {
+          "mean": 3574505.28125,
+          "median": 3554918.5
+        }
+      },
+      "per-group": {
+        "draw_cpu_us": {
+          "mean": 1184.55875,
+          "median": 1156.75
+        },
+        "thread_cycles": {
+          "mean": 3565600.35,
+          "median": 3502080.0
+        }
+      }
+    }
+  ]
+}

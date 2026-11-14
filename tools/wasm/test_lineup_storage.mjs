@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 // deliberately not duplicated as hand-maintained source in the game repo.
 const directory=process.env.PVZ_TOY_DIRECTORY||'../../out/wasm-webgpu/toy/';
 const {LineupStorage}=await import(new URL(directory.replace(/\/?$/,'/')+'lineup-storage.js',import.meta.url));
-import {defaultLineups} from './game/lineups.js';
+const {defaultLineups}=await import(new URL(directory.replace(/\/?$/,'/')+'lineups.js',import.meta.url));
 const memory=()=>{const data=new Map();return {getItem:k=>data.get(k)??null,setItem:(k,v)=>data.set(k,v)}};
 const cloud={pvz_progress_v1:'untouched'},writes=[];let failCommit=false;
 const toy={getCloudStorage:async keys=>Object.fromEntries(keys.filter(k=>Object.hasOwn(cloud,k)).map(k=>[k,cloud[k]])),setCloudStorage:async rows=>{

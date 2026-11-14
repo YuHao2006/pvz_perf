@@ -1,0 +1,18 @@
+{
+  "Index": {
+    "max_visible_error": 0,
+    "alpha_equal": true
+  },
+  "Plant": {
+    "max_visible_error": 0,
+    "alpha_equal": true
+  },
+  "Zombie": {
+    "max_visible_error": 0,
+    "alpha_equal": true
+  },
+  "ZombatarStaticUI": {
+    "max_visible_error": 0,
+    "alpha_equal": true
+  }
+}

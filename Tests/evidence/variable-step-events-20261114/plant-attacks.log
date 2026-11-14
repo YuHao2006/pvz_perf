@@ -1,0 +1,372 @@
+PASS pure wrapped text measurement: wrapping, newlines, color tags, no glyph draws and empty fill
+pool GPU day-normal-nearest: RGBA max=0 mean=0 poolMean=0 changedPixels=0 worst=(0,0) outsideBoundaryMax=0
+pool GPU night-normal-linear: RGBA max=0 mean=0 poolMean=0 changedPixels=0 worst=(0,0) outsideBoundaryMax=0
+pool GPU day-additive-partial-fractional: RGBA max=0 mean=0 poolMean=0 changedPixels=0 worst=(0,0) outsideBoundaryMax=0
+pool GPU night-additive-phase-wrap: RGBA max=0 mean=0 poolMean=0 changedPixels=0 worst=(0,0) outsideBoundaryMax=0
+pool GPU day-opaque-partial-fractional: RGBA max=0 mean=0 poolMean=0 changedPixels=0 worst=(0,0) outsideBoundaryMax=0
+pool GPU night-opaque-large-counter: RGBA max=0 mean=0 poolMean=0 changedPixels=0 worst=(0,0) outsideBoundaryMax=0
+pool GPU feedback-float-source-pending-batch: RGBA max=0 mean=0 poolMean=0 changedPixels=0 worst=(0,0) outsideBoundaryMax=0
+PASS production GPU pool vs independent legacy CPU mesh: day/night, normal/additive/opaque, nearest/linear/repeat, phase wrap, destination scissor, fractional translation, ordinary painter order and float target feedback
+PASS precomputed transparent edges: alpha, visible RGB, idempotency, nearest/linear, upload-discard
+PASS public font upload: deferred alpha, upload-and-discard, texture reuse, independent copies
+PASS nonzero source rectangles and repacked whole-sheet atlas views: translation, scale origins, clipping, tint, additive, local-source views and floating scales
+PASS necessary local-clip contract: independent full-pixel rect/image/source/mirror/matrix/particle/convex oracles, disjoint/partial/empty clips and negative framebuffer crossings
+PASS actual TitleScreen grass reveal: widths 0/1/157/313/314/400, translated draw and unrevealed black pixels
+PASS actual GameButton atlas states: normal, hover, press/fallbacks, disabled, overAlpha, additive glow, translation/offsets and hidden state match independent images
+PASS direct shared-image snapshots and reference lifetime
+PASS actual boss back-arm drawing: four attack offsets, reference pixels, 1024 exact shared-animation translation restorations
+PASS reanimation appearances: independent options, image slots, atlas dimensions, original centers and actual AttachmentDraw visibility pixels
+PASS fullscreen reanimation: destination fill pixels, hidden/zero alpha, color modulation, both blend modes, translation and effective clip without track matrices
+Store clock fixture: initialize
+PASS Plant special/blink deadlines: duplicate timestamps, overshot expiry and local sleep at three step sizes
+Plant attack seed=0 Hz=100 shots=1 types=1 damage=20 coins=0
+Plant attack seed=0 Hz=30 shots=1 types=1 damage=20 coins=0
+Plant attack seed=0 Hz=240 shots=1 types=1 damage=20 coins=0
+Plant attack seed=0 Hz=0 shots=1 types=1 damage=20 coins=0
+Plant attack seed=5 Hz=100 shots=1 types=2 damage=20 coins=0
+Plant attack seed=5 Hz=30 shots=1 types=2 damage=20 coins=0
+Plant attack seed=5 Hz=240 shots=1 types=2 damage=20 coins=0
+Plant attack seed=5 Hz=0 shots=1 types=2 damage=20 coins=0
+Plant attack seed=7 Hz=100 shots=2 types=1 damage=40 coins=0
+Plant attack seed=7 Hz=30 shots=2 types=1 damage=40 coins=0
+Plant attack seed=7 Hz=240 shots=2 types=1 damage=40 coins=0
+Plant attack seed=7 Hz=0 shots=2 types=1 damage=40 coins=0
+Plant attack seed=8 Hz=100 shots=1 types=16 damage=20 coins=0
+Plant attack seed=8 Hz=30 shots=1 types=16 damage=20 coins=0
+Plant attack seed=8 Hz=240 shots=1 types=16 damage=20 coins=0
+Plant attack seed=8 Hz=0 shots=1 types=16 damage=20 coins=0
+Plant attack seed=10 Hz=100 shots=0 types=0 damage=20 coins=0
+Plant attack seed=10 Hz=30 shots=0 types=0 damage=20 coins=0
+Plant attack seed=10 Hz=240 shots=0 types=0 damage=20 coins=0
+Plant attack seed=10 Hz=0 shots=0 types=0 damage=20 coins=0
+Plant attack seed=13 Hz=100 shots=1 types=16 damage=20 coins=0
+Plant attack seed=13 Hz=30 shots=1 types=16 damage=20 coins=0
+Plant attack seed=13 Hz=240 shots=1 types=16 damage=20 coins=0
+Plant attack seed=13 Hz=0 shots=1 types=16 damage=20 coins=0
+Plant attack seed=18 Hz=100 shots=3 types=1 damage=20 coins=0
+Plant attack seed=18 Hz=30 shots=3 types=1 damage=20 coins=0
+Plant attack seed=18 Hz=240 shots=3 types=1 damage=20 coins=0
+Plant attack seed=18 Hz=0 shots=3 types=1 damage=20 coins=0
+Plant attack seed=24 Hz=100 shots=1 types=16 damage=20 coins=0
+Plant attack seed=24 Hz=30 shots=1 types=16 damage=20 coins=0
+Plant attack seed=24 Hz=240 shots=1 types=16 damage=20 coins=0
+Plant attack seed=24 Hz=0 shots=1 types=16 damage=20 coins=0
+Plant attack seed=26 Hz=100 shots=1 types=256 damage=20 coins=0
+Plant attack seed=26 Hz=30 shots=1 types=256 damage=20 coins=0
+Plant attack seed=26 Hz=240 shots=1 types=256 damage=20 coins=0
+Plant attack seed=26 Hz=0 shots=1 types=256 damage=20 coins=0
+Plant attack seed=28 Hz=100 shots=3 types=1 damage=20 coins=0
+Plant attack seed=28 Hz=30 shots=3 types=1 damage=20 coins=0
+Plant attack seed=28 Hz=240 shots=3 types=1 damage=20 coins=0
+Plant attack seed=28 Hz=0 shots=3 types=1 damage=20 coins=0
+Plant attack seed=29 Hz=100 shots=5 types=128 damage=0 coins=0
+Plant attack seed=29 Hz=30 shots=5 types=128 damage=0 coins=0
+Plant attack seed=29 Hz=240 shots=5 types=128 damage=0 coins=0
+Plant attack seed=29 Hz=0 shots=5 types=128 damage=0 coins=0
+Plant attack seed=32 Hz=100 shots=1 types=4 damage=40 coins=0
+Plant attack seed=32 Hz=30 shots=1 types=4 damage=40 coins=0
+Plant attack seed=32 Hz=240 shots=1 types=4 damage=40 coins=0
+Plant attack seed=32 Hz=0 shots=1 types=4 damage=40 coins=0
+Plant attack seed=34 Hz=100 shots=1 types=1024 damage=20 coins=0
+Plant attack seed=34 Hz=30 shots=1 types=1024 damage=20 coins=0
+Plant attack seed=34 Hz=240 shots=1 types=1024 damage=20 coins=0
+Plant attack seed=34 Hz=0 shots=1 types=1024 damage=20 coins=0
+Plant attack seed=39 Hz=100 shots=1 types=8 damage=80 coins=0
+Plant attack seed=39 Hz=30 shots=1 types=8 damage=80 coins=0
+Plant attack seed=39 Hz=240 shots=1 types=8 damage=80 coins=0
+Plant attack seed=39 Hz=0 shots=1 types=8 damage=80 coins=0
+Plant attack seed=40 Hz=100 shots=4 types=1 damage=80 coins=0
+Plant attack seed=40 Hz=30 shots=4 types=1 damage=80 coins=0
+Plant attack seed=40 Hz=240 shots=4 types=1 damage=80 coins=0
+Plant attack seed=40 Hz=0 shots=4 types=1 damage=80 coins=0
+Plant attack seed=42 Hz=100 shots=0 types=0 damage=80 coins=0
+Plant attack seed=42 Hz=30 shots=0 types=0 damage=80 coins=0
+Plant attack seed=42 Hz=240 shots=0 types=0 damage=80 coins=0
+Plant attack seed=42 Hz=0 shots=0 types=0 damage=80 coins=0
+Plant attack seed=43 Hz=100 shots=2 types=256 damage=40 coins=0
+Plant attack seed=43 Hz=30 shots=2 types=256 damage=40 coins=0
+Plant attack seed=43 Hz=240 shots=2 types=256 damage=40 coins=0
+Plant attack seed=43 Hz=0 shots=2 types=256 damage=40 coins=0
+Plant attack seed=44 Hz=100 shots=1 types=32 damage=80 coins=0
+PASS repeated Winter Melon Hz=100 shots=20 idle restored
+Plant attack seed=44 Hz=60 shots=1 types=32 damage=80 coins=0
+PASS repeated Winter Melon Hz=60 shots=20 idle restored
+Plant attack seed=44 Hz=30 shots=1 types=32 damage=80 coins=0
+PASS repeated Winter Melon Hz=30 shots=20 idle restored
+Plant attack seed=44 Hz=240 shots=1 types=32 damage=80 coins=0
+PASS repeated Winter Melon Hz=240 shots=20 idle restored
+Plant attack seed=44 Hz=0 shots=1 types=32 damage=80 coins=0
+PASS repeated Winter Melon Hz=0 shots=20 idle restored
+Plant attack seed=52 Hz=100 shots=2 types=1 damage=0 coins=0
+Plant attack seed=52 Hz=30 shots=2 types=1 damage=0 coins=0
+Plant attack seed=52 Hz=240 shots=2 types=1 damage=0 coins=0
+Plant attack seed=52 Hz=0 shots=2 types=1 damage=0 coins=0
+Plant attack seed=1 Hz=100 shots=0 types=0 damage=0 coins=1
+Plant attack seed=1 Hz=30 shots=0 types=0 damage=0 coins=1
+Plant attack seed=1 Hz=240 shots=0 types=0 damage=0 coins=1
+Plant attack seed=1 Hz=0 shots=0 types=0 damage=0 coins=1
+Plant attack seed=41 Hz=100 shots=0 types=0 damage=0 coins=2
+Plant attack seed=41 Hz=30 shots=0 types=0 damage=0 coins=2
+Plant attack seed=41 Hz=240 shots=0 types=0 damage=0 coins=2
+Plant attack seed=41 Hz=0 shots=0 types=0 damage=0 coins=2
+Plant attack seed=9 Hz=100 shots=0 types=0 damage=0 coins=1
+Plant attack seed=9 Hz=30 shots=0 types=0 damage=0 coins=1
+Plant attack seed=9 Hz=240 shots=0 types=0 damage=0 coins=1
+Plant attack seed=9 Hz=0 shots=0 types=0 damage=0 coins=1
+Plant attack seed=38 Hz=100 shots=0 types=0 damage=0 coins=1
+Plant attack seed=38 Hz=30 shots=0 types=0 damage=0 coins=1
+Plant attack seed=38 Hz=240 shots=0 types=0 damage=0 coins=1
+Plant attack seed=38 Hz=0 shots=0 types=0 damage=0 coins=1
+PASS actual Plant attack catalog: 23 types, first-volley counts/types, area pulses and production at 100/30/240Hz and jitter
+Plant special begin seed=2 Hz=100
+Plant special end seed=2 Hz=100 state=0 dead=1 targetDead=0 damage=1800 targetRow=1
+Plant special begin seed=2 Hz=30
+Plant special end seed=2 Hz=30 state=0 dead=1 targetDead=0 damage=1800 targetRow=1
+Plant special begin seed=2 Hz=240
+Plant special end seed=2 Hz=240 state=0 dead=1 targetDead=0 damage=1800 targetRow=1
+Plant special begin seed=2 Hz=0
+Plant special end seed=2 Hz=0 state=0 dead=1 targetDead=0 damage=1800 targetRow=1
+Plant special begin seed=4 Hz=100
+Plant special end seed=4 Hz=100 state=16 dead=1 targetDead=0 damage=1800 targetRow=1
+Plant special begin seed=4 Hz=30
+Plant special end seed=4 Hz=30 state=16 dead=1 targetDead=0 damage=1800 targetRow=1
+Plant special begin seed=4 Hz=240
+Plant special end seed=4 Hz=240 state=16 dead=1 targetDead=0 damage=1800 targetRow=1
+Plant special begin seed=4 Hz=0
+Plant special end seed=4 Hz=0 state=16 dead=1 targetDead=0 damage=1800 targetRow=1
+Plant special begin seed=6 Hz=100
+Plant special end seed=6 Hz=100 state=13 dead=0 targetDead=1 damage=0 targetRow=1
+Plant special begin seed=6 Hz=30
+Plant special end seed=6 Hz=30 state=13 dead=0 targetDead=1 damage=0 targetRow=1
+Plant special begin seed=6 Hz=240
+Plant special end seed=6 Hz=240 state=13 dead=0 targetDead=1 damage=0 targetRow=1
+Plant special begin seed=6 Hz=0
+Plant special end seed=6 Hz=0 state=13 dead=0 targetDead=1 damage=0 targetRow=1
+Plant special begin seed=11 Hz=100
+Plant special end seed=11 Hz=100 state=9 dead=1 targetDead=0 damage=0 targetRow=1
+Plant special begin seed=11 Hz=30
+Plant special end seed=11 Hz=30 state=9 dead=1 targetDead=0 damage=0 targetRow=1
+Plant special begin seed=11 Hz=240
+Plant special end seed=11 Hz=240 state=9 dead=1 targetDead=0 damage=0 targetRow=1
+Plant special begin seed=11 Hz=0
+Plant special end seed=11 Hz=0 state=9 dead=1 targetDead=0 damage=0 targetRow=1
+Plant special begin seed=12 Hz=100
+Plant special end seed=12 Hz=100 state=0 dead=1 targetDead=0 damage=0 targetRow=1
+Plant special begin seed=12 Hz=30
+Plant special end seed=12 Hz=30 state=0 dead=1 targetDead=0 damage=0 targetRow=1
+Plant special begin seed=12 Hz=240
+Plant special end seed=12 Hz=240 state=0 dead=1 targetDead=0 damage=0 targetRow=1
+Plant special begin seed=12 Hz=0
+Plant special end seed=12 Hz=0 state=0 dead=1 targetDead=0 damage=0 targetRow=1
+Plant special begin seed=14 Hz=100
+Plant special end seed=14 Hz=100 state=2 dead=1 targetDead=0 damage=20 targetRow=1
+Plant special begin seed=14 Hz=30
+Plant special end seed=14 Hz=30 state=2 dead=1 targetDead=0 damage=20 targetRow=1
+Plant special begin seed=14 Hz=240
+Plant special end seed=14 Hz=240 state=2 dead=1 targetDead=0 damage=20 targetRow=1
+Plant special begin seed=14 Hz=0
+Plant special end seed=14 Hz=0 state=2 dead=1 targetDead=0 damage=20 targetRow=1
+Plant special begin seed=15 Hz=100
+Plant special end seed=15 Hz=100 state=2 dead=1 targetDead=0 damage=1800 targetRow=1
+Plant special begin seed=15 Hz=30
+Plant special end seed=15 Hz=30 state=2 dead=1 targetDead=0 damage=1800 targetRow=1
+Plant special begin seed=15 Hz=240
+Plant special end seed=15 Hz=240 state=2 dead=1 targetDead=0 damage=1800 targetRow=1
+Plant special begin seed=15 Hz=0
+Plant special end seed=15 Hz=0 state=2 dead=1 targetDead=0 damage=1800 targetRow=1
+Plant special begin seed=17 Hz=100
+Plant special end seed=17 Hz=100 state=7 dead=1 targetDead=0 damage=1800 targetRow=1
+Plant special begin seed=17 Hz=30
+Plant special end seed=17 Hz=30 state=7 dead=1 targetDead=0 damage=1800 targetRow=1
+Plant special begin seed=17 Hz=240
+Plant special end seed=17 Hz=240 state=7 dead=1 targetDead=0 damage=1800 targetRow=1
+Plant special begin seed=17 Hz=0
+Plant special end seed=17 Hz=0 state=7 dead=1 targetDead=0 damage=1800 targetRow=1
+Plant special begin seed=19 Hz=100
+Plant special end seed=19 Hz=100 state=34 dead=1 targetDead=1 damage=0 targetRow=2
+Plant special begin seed=19 Hz=30
+Plant special end seed=19 Hz=30 state=34 dead=1 targetDead=1 damage=0 targetRow=2
+Plant special begin seed=19 Hz=240
+Plant special end seed=19 Hz=240 state=34 dead=1 targetDead=1 damage=0 targetRow=2
+Plant special begin seed=19 Hz=0
+Plant special end seed=19 Hz=0 state=34 dead=1 targetDead=1 damage=0 targetRow=2
+Plant special begin seed=20 Hz=100
+Plant special end seed=20 Hz=100 state=0 dead=1 targetDead=0 damage=1800 targetRow=1
+Plant special begin seed=20 Hz=30
+Plant special end seed=20 Hz=30 state=0 dead=1 targetDead=0 damage=1800 targetRow=1
+Plant special begin seed=20 Hz=240
+Plant special end seed=20 Hz=240 state=0 dead=1 targetDead=0 damage=1800 targetRow=1
+Plant special begin seed=20 Hz=0
+Plant special end seed=20 Hz=0 state=0 dead=1 targetDead=0 damage=1800 targetRow=1
+Plant special begin seed=35 Hz=100
+Plant special end seed=35 Hz=100 state=2 dead=1 targetDead=0 damage=0 targetRow=1
+Plant special begin seed=35 Hz=30
+Plant special end seed=35 Hz=30 state=2 dead=1 targetDead=0 damage=0 targetRow=1
+Plant special begin seed=35 Hz=240
+Plant special end seed=35 Hz=240 state=2 dead=1 targetDead=0 damage=0 targetRow=1
+Plant special begin seed=35 Hz=0
+Plant special end seed=35 Hz=0 state=2 dead=1 targetDead=0 damage=0 targetRow=1
+Plant special begin seed=36 Hz=100
+Plant special end seed=36 Hz=100 state=0 dead=0 targetDead=0 damage=0 targetRow=0
+Plant special begin seed=36 Hz=30
+Plant special end seed=36 Hz=30 state=0 dead=0 targetDead=0 damage=0 targetRow=0
+Plant special begin seed=36 Hz=240
+Plant special end seed=36 Hz=240 state=0 dead=0 targetDead=0 damage=0 targetRow=0
+Plant special begin seed=36 Hz=0
+Plant special end seed=36 Hz=0 state=0 dead=0 targetDead=0 damage=0 targetRow=0
+Plant special begin seed=37 Hz=100
+Plant special end seed=37 Hz=100 state=0 dead=0 targetDead=0 damage=0 targetRow=1
+Plant special begin seed=37 Hz=30
+Plant special end seed=37 Hz=30 state=0 dead=0 targetDead=0 damage=0 targetRow=1
+Plant special begin seed=37 Hz=240
+Plant special end seed=37 Hz=240 state=0 dead=0 targetDead=0 damage=0 targetRow=1
+Plant special begin seed=37 Hz=0
+Plant special end seed=37 Hz=0 state=0 dead=0 targetDead=0 damage=0 targetRow=1
+Plant special begin seed=47 Hz=100
+Plant special end seed=47 Hz=100 state=35 dead=0 targetDead=0 damage=5400 targetRow=1
+PASS repeated cob launch/rearm; no runtime old-save repair Hz=100 shots=3
+Plant special begin seed=47 Hz=60
+Plant special end seed=47 Hz=60 state=35 dead=0 targetDead=0 damage=5400 targetRow=1
+PASS repeated cob launch/rearm; no runtime old-save repair Hz=60 shots=3
+Plant special begin seed=47 Hz=30
+Plant special end seed=47 Hz=30 state=35 dead=0 targetDead=0 damage=5400 targetRow=1
+PASS repeated cob launch/rearm; no runtime old-save repair Hz=30 shots=3
+Plant special begin seed=47 Hz=240
+Plant special end seed=47 Hz=240 state=35 dead=0 targetDead=0 damage=5400 targetRow=1
+PASS repeated cob launch/rearm; no runtime old-save repair Hz=240 shots=3
+Plant special begin seed=47 Hz=0
+Plant special end seed=47 Hz=0 state=35 dead=0 targetDead=0 damage=5400 targetRow=1
+PASS repeated cob launch/rearm; no runtime old-save repair Hz=0 shots=3
+Plant special begin seed=47 Hz=-30
+Plant special end seed=47 Hz=-30 state=35 dead=0 targetDead=0 damage=5400 targetRow=1
+PASS repeated cob launch/rearm; no runtime old-save repair Hz=-30 shots=3
+Plant special begin seed=48 Hz=100
+Plant special end seed=48 Hz=100 state=42 dead=1 targetDead=0 damage=0 targetRow=1
+Plant special begin seed=48 Hz=30
+Plant special end seed=48 Hz=30 state=42 dead=1 targetDead=0 damage=0 targetRow=1
+Plant special begin seed=48 Hz=240
+Plant special end seed=48 Hz=240 state=42 dead=1 targetDead=0 damage=0 targetRow=1
+Plant special begin seed=48 Hz=0
+Plant special end seed=48 Hz=0 state=42 dead=1 targetDead=0 damage=0 targetRow=1
+Plant special begin seed=3 Hz=100
+Plant special end seed=3 Hz=100 state=0 dead=0 targetDead=0 damage=0 targetRow=1
+Plant special begin seed=3 Hz=30
+Plant special end seed=3 Hz=30 state=0 dead=0 targetDead=0 damage=0 targetRow=1
+Plant special begin seed=3 Hz=240
+Plant special end seed=3 Hz=240 state=0 dead=0 targetDead=0 damage=0 targetRow=1
+Plant special begin seed=3 Hz=0
+Plant special end seed=3 Hz=0 state=0 dead=0 targetDead=0 damage=0 targetRow=1
+Plant special begin seed=23 Hz=100
+Plant special end seed=23 Hz=100 state=0 dead=0 targetDead=0 damage=0 targetRow=1
+Plant special begin seed=23 Hz=30
+Plant special end seed=23 Hz=30 state=0 dead=0 targetDead=0 damage=0 targetRow=1
+Plant special begin seed=23 Hz=240
+Plant special end seed=23 Hz=240 state=0 dead=0 targetDead=0 damage=0 targetRow=1
+Plant special begin seed=23 Hz=0
+Plant special end seed=23 Hz=0 state=0 dead=0 targetDead=0 damage=0 targetRow=1
+Plant special begin seed=30 Hz=100
+Plant special end seed=30 Hz=100 state=0 dead=0 targetDead=0 damage=0 targetRow=1
+Plant special begin seed=30 Hz=30
+Plant special end seed=30 Hz=30 state=0 dead=0 targetDead=0 damage=0 targetRow=1
+Plant special begin seed=30 Hz=240
+Plant special end seed=30 Hz=240 state=0 dead=0 targetDead=0 damage=0 targetRow=1
+Plant special begin seed=30 Hz=0
+Plant special end seed=30 Hz=0 state=0 dead=0 targetDead=0 damage=0 targetRow=1
+Plant special begin seed=16 Hz=100
+Plant special end seed=16 Hz=100 state=0 dead=0 targetDead=0 damage=0 targetRow=2
+Plant special begin seed=16 Hz=30
+Plant special end seed=16 Hz=30 state=0 dead=0 targetDead=0 damage=0 targetRow=2
+Plant special begin seed=16 Hz=240
+Plant special end seed=16 Hz=240 state=0 dead=0 targetDead=0 damage=0 targetRow=2
+Plant special begin seed=16 Hz=0
+Plant special end seed=16 Hz=0 state=0 dead=0 targetDead=0 damage=0 targetRow=2
+Plant special begin seed=33 Hz=100
+Plant special end seed=33 Hz=100 state=0 dead=0 targetDead=0 damage=0 targetRow=1
+Plant special begin seed=33 Hz=30
+Plant special end seed=33 Hz=30 state=0 dead=0 targetDead=0 damage=0 targetRow=1
+Plant special begin seed=33 Hz=240
+Plant special end seed=33 Hz=240 state=0 dead=0 targetDead=0 damage=0 targetRow=1
+Plant special begin seed=33 Hz=0
+Plant special end seed=33 Hz=0 state=0 dead=0 targetDead=0 damage=0 targetRow=1
+Plant special begin seed=21 Hz=100
+Plant special end seed=21 Hz=100 state=18 dead=0 targetDead=0 damage=80 targetRow=1
+Plant special begin seed=21 Hz=30
+Plant special end seed=21 Hz=30 state=18 dead=0 targetDead=0 damage=80 targetRow=1
+Plant special begin seed=21 Hz=240
+Plant special end seed=21 Hz=240 state=18 dead=0 targetDead=0 damage=80 targetRow=1
+Plant special begin seed=21 Hz=0
+Plant special end seed=21 Hz=0 state=18 dead=0 targetDead=0 damage=80 targetRow=1
+Plant special begin seed=46 Hz=100
+Plant special end seed=46 Hz=100 state=18 dead=0 targetDead=0 damage=160 targetRow=1
+Plant special begin seed=46 Hz=30
+Plant special end seed=46 Hz=30 state=18 dead=0 targetDead=0 damage=160 targetRow=1
+Plant special begin seed=46 Hz=240
+Plant special end seed=46 Hz=240 state=18 dead=0 targetDead=0 damage=160 targetRow=1
+Plant special begin seed=46 Hz=0
+Plant special end seed=46 Hz=0 state=18 dead=0 targetDead=0 damage=160 targetRow=1
+Plant special begin seed=22 Hz=100
+Plant special end seed=22 Hz=100 state=0 dead=0 targetDead=0 damage=0 targetRow=1
+Plant special begin seed=22 Hz=30
+Plant special end seed=22 Hz=30 state=0 dead=0 targetDead=0 damage=0 targetRow=1
+Plant special begin seed=22 Hz=240
+Plant special end seed=22 Hz=240 state=0 dead=0 targetDead=0 damage=0 targetRow=1
+Plant special begin seed=22 Hz=0
+Plant special end seed=22 Hz=0 state=0 dead=0 targetDead=0 damage=0 targetRow=1
+Plant special begin seed=25 Hz=100
+Plant special end seed=25 Hz=100 state=0 dead=0 targetDead=0 damage=0 targetRow=1
+Plant special begin seed=25 Hz=30
+Plant special end seed=25 Hz=30 state=0 dead=0 targetDead=0 damage=0 targetRow=1
+Plant special begin seed=25 Hz=240
+Plant special end seed=25 Hz=240 state=0 dead=0 targetDead=0 damage=0 targetRow=1
+Plant special begin seed=25 Hz=0
+Plant special end seed=25 Hz=0 state=0 dead=0 targetDead=0 damage=0 targetRow=1
+Plant special begin seed=27 Hz=100
+Plant special end seed=27 Hz=100 state=2 dead=1 targetDead=1 damage=0 targetRow=1
+Plant special begin seed=27 Hz=30
+Plant special end seed=27 Hz=30 state=2 dead=1 targetDead=1 damage=0 targetRow=1
+Plant special begin seed=27 Hz=240
+Plant special end seed=27 Hz=240 state=2 dead=1 targetDead=1 damage=0 targetRow=1
+Plant special begin seed=27 Hz=0
+Plant special end seed=27 Hz=0 state=2 dead=1 targetDead=1 damage=0 targetRow=1
+Plant special begin seed=31 Hz=100
+Plant special end seed=31 Hz=100 state=27 dead=0 targetDead=0 damage=0 targetRow=1
+Plant special begin seed=31 Hz=30
+Plant special end seed=31 Hz=30 state=27 dead=0 targetDead=0 damage=0 targetRow=1
+Plant special begin seed=31 Hz=240
+Plant special end seed=31 Hz=240 state=27 dead=0 targetDead=0 damage=0 targetRow=1
+Plant special begin seed=31 Hz=0
+Plant special end seed=31 Hz=0 state=27 dead=0 targetDead=0 damage=0 targetRow=1
+Plant special begin seed=45 Hz=100
+Plant special end seed=45 Hz=100 state=1 dead=0 targetDead=0 damage=0 targetRow=1
+Plant special begin seed=45 Hz=30
+Plant special end seed=45 Hz=30 state=1 dead=0 targetDead=0 damage=0 targetRow=1
+Plant special begin seed=45 Hz=240
+Plant special end seed=45 Hz=240 state=1 dead=0 targetDead=0 damage=0 targetRow=1
+Plant special begin seed=45 Hz=0
+Plant special end seed=45 Hz=0 state=1 dead=0 targetDead=0 damage=0 targetRow=1
+Plant special begin seed=49 Hz=100
+Plant special end seed=49 Hz=100 state=0 dead=1 targetDead=0 damage=1800 targetRow=1
+Plant special begin seed=49 Hz=30
+Plant special end seed=49 Hz=30 state=0 dead=1 targetDead=0 damage=1800 targetRow=1
+Plant special begin seed=49 Hz=240
+Plant special end seed=49 Hz=240 state=0 dead=1 targetDead=0 damage=1800 targetRow=1
+Plant special begin seed=49 Hz=0
+Plant special end seed=49 Hz=0 state=0 dead=1 targetDead=0 damage=1800 targetRow=1
+Plant special begin seed=50 Hz=100
+Plant special end seed=50 Hz=100 state=0 dead=1 targetDead=1 damage=1000000 targetRow=1
+Plant special begin seed=50 Hz=30
+Plant special end seed=50 Hz=30 state=0 dead=1 targetDead=1 damage=1000000 targetRow=1
+Plant special begin seed=50 Hz=240
+Plant special end seed=50 Hz=240 state=0 dead=1 targetDead=1 damage=1000000 targetRow=1
+Plant special begin seed=50 Hz=0
+Plant special end seed=50 Hz=0 state=0 dead=1 targetDead=1 damage=1000000 targetRow=1
+Plant special begin seed=51 Hz=100
+Plant special end seed=51 Hz=100 state=0 dead=0 targetDead=0 damage=0 targetRow=1
+Plant special begin seed=51 Hz=30
+Plant special end seed=51 Hz=30 state=0 dead=0 targetDead=0 damage=0 targetRow=1
+Plant special begin seed=51 Hz=240
+Plant special end seed=51 Hz=240 state=0 dead=0 targetDead=0 damage=0 targetRow=1
+Plant special begin seed=51 Hz=0
+Plant special end seed=51 Hz=0 state=0 dead=0 targetDead=0 damage=0 targetRow=1
+PASS actual Plant specials/support: 30 types, real damage/status/consumption, defenses, torchwood, magnets, bowling and garden sprout at four schedules
+PASS complete Plant primary-behavior catalog: all 53 SeedType values, four schedules each

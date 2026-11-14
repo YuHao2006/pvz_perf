@@ -75,6 +75,7 @@
 #include "Lawn/LawnCommon.h"
 #include "QuitDialogRuntimeChecks.h"
 #include "OpeningFlowRuntimeChecks.h"
+#include "BattleCardAtlasRuntimeChecks.h"
 #include <array>
 #include <algorithm>
 #include <cmath>
@@ -87,6 +88,13 @@
 #include <DbgHelp.h>
 #include <dxgi1_4.h>
 #include <psapi.h>
+#include "StepActorEventRuntimeChecks.h"
+#include "StepUiEventRuntimeChecks.h"
+#include "StepShooterRuntimeChecks.h"
+#include "StepCueRuntimeChecks.h"
+#include "StepCollectionRuntimeChecks.h"
+#include "StepProductionRuntimeChecks.h"
+#include "StepBoardTerminalRuntimeChecks.h"
 #pragma comment(lib, "dxgi.lib")
 #pragma comment(lib, "psapi.lib")
 #pragma comment(lib, "dbghelp.lib")
@@ -99,7 +107,7 @@
 bool FixtureCloseRequest() { return false; }
 bool (*gAppCloseRequest)() = FixtureCloseRequest;
 
-static bool gVramOnly=false;
+static bool gVramOnly=false,gCardAtlasOnly=false,gStepEventsOnly=false;
 namespace
 {
 using namespace Sexy;
@@ -8405,6 +8413,21 @@ void StorePauseClockRuntime(TestApp& app, DecodeOnlySoundManager& sounds)
     app.mMusicInterface=&silentMusicInterface;
     app.mReanimatorCache=&cache;
     sounds.allowSilentPlayback=true;
+    if(gStepEventsOnly) {
+        CheckStepProductionEvents(app);
+        CheckStepBoardTerminalEvents(app,sounds);
+        CheckStepCollectionEvents(app);
+        CheckStepShooterEvents(app);
+        CheckStepActorEvents(app);
+        CheckStepUiEvents(app);
+        CheckStepCueEvents(app);
+        return;
+    }
+    if(gCardAtlasOnly) {
+        cache.PrebuildCacheFrames();LoadSceneAtlases(false);LandscapeUIAtlas::Load();
+        CheckBattleCardAtlas(app,[](LawnApp& a){static_cast<TestApp&>(a).ProcessSafeDeleteList();});
+        FreeSceneAtlases();return;
+    }
     if(gVramOnly) {
 #if defined(PVZ_GPU_VULKAN)
         auto& render=*app.mDDInterface->mRenderInterface;
@@ -9217,7 +9240,7 @@ void AllResourceGroups(SexyAppBase& app)
         }
     }
     Require(loadedImages==RESOURCE_LOAD_IMAGE_COUNT,"Full loading skipped an image recipe");
-    if(gVramOnly||gPlantCatalogOnly||gZombieCatalogOnly||gMinigameRulesOnly||gPuzzleRulesOnly||gSurvivalRulesOnly||gAdventureRulesOnly||gHiddenRulesOnly||gGardenRulesOnly||gIntroRulesOnly||gUiRulesOnly||gAwardRulesOnly||gAlmanacClockOnly||gActorBirthOnly||gCreditsOnly||gLossRulesOnly||gOpeningRulesOnly||gLifecycleRulesOnly||gGraveRulesOnly||gHudSeamsOnly||gTouchOnly)
+    if(gStepEventsOnly||gCardAtlasOnly||gVramOnly||gPlantCatalogOnly||gZombieCatalogOnly||gMinigameRulesOnly||gPuzzleRulesOnly||gSurvivalRulesOnly||gAdventureRulesOnly||gHiddenRulesOnly||gGardenRulesOnly||gIntroRulesOnly||gUiRulesOnly||gAwardRulesOnly||gAlmanacClockOnly||gActorBirthOnly||gCreditsOnly||gLossRulesOnly||gOpeningRulesOnly||gLifecycleRulesOnly||gGraveRulesOnly||gHudSeamsOnly||gTouchOnly)
     {
         StorePauseClockRuntime(static_cast<TestApp&>(app),sounds);
         DefinitionFreeAtlasImages();
@@ -9332,7 +9355,7 @@ void ParticleDefinitionsAndFrames(SexyAppBase& app, const char* pakPath)
     Require(gPakInterface && gPakInterface->AddPakFile(pakPath),
         "Cannot mount the production particle package");
     AllResourceGroups(app);
-    if(gVramOnly||gPlantCatalogOnly||gZombieCatalogOnly||gMinigameRulesOnly||gPuzzleRulesOnly||gSurvivalRulesOnly||gAdventureRulesOnly||gHiddenRulesOnly||gGardenRulesOnly||gIntroRulesOnly||gUiRulesOnly||gAwardRulesOnly||gAlmanacClockOnly||gActorBirthOnly||gCreditsOnly||gLossRulesOnly||gOpeningRulesOnly||gLifecycleRulesOnly||gGraveRulesOnly||gHudSeamsOnly||gTouchOnly) return;
+    if(gStepEventsOnly||gCardAtlasOnly||gVramOnly||gPlantCatalogOnly||gZombieCatalogOnly||gMinigameRulesOnly||gPuzzleRulesOnly||gSurvivalRulesOnly||gAdventureRulesOnly||gHiddenRulesOnly||gGardenRulesOnly||gIntroRulesOnly||gUiRulesOnly||gAwardRulesOnly||gAlmanacClockOnly||gActorBirthOnly||gCreditsOnly||gLossRulesOnly||gOpeningRulesOnly||gLifecycleRulesOnly||gGraveRulesOnly||gHudSeamsOnly||gTouchOnly) return;
     ResourceLoadingOwnership(app);
     ReanimationAppearanceDefinitions(app);
     constexpr ParticleEffect fireEffect=ParticleEffect::PARTICLE_ZOMBIE_BOSS_FIREBALL;
@@ -9815,6 +9838,8 @@ void PrecomputedTransparentEdges(TestApp& app)
 
 int main(int argc, char** argv)
 {
+    gCardAtlasOnly=argc==3 && std::string_view(argv[2])=="card-atlas";
+    gStepEventsOnly=argc==3 && std::string_view(argv[2])=="step-events";
     gVramOnly=argc==3 && std::string_view(argv[2])=="gpu-memory";
     gPlantCatalogOnly=argc==3 && std::string_view(argv[2])=="plant-attacks";
     gIce3Only=argc==3 && std::string_view(argv[2])=="ice3";
@@ -9875,7 +9900,7 @@ int main(int argc, char** argv)
         app.mDDInterface=new DDInterface(&app);
         Require(app.mDDInterface->Init(window.handle,true)==DDInterface::RESULT_OK,
             "Cannot initialize public image runtime");
-        if(!gVramOnly) {
+        if(!gStepEventsOnly&&!gVramOnly&&!gCardAtlasOnly) {
         WrappedTextMeasurements();
         PoolGpuChecks::Run(*app.mDDInterface->mRenderInterface->mRenderer,
 #if defined(PVZ_GPU_VULKAN)
@@ -9894,7 +9919,7 @@ int main(int argc, char** argv)
         ReanimationAppearancePixels(app);
         ReanimationFullscreenPixels(app);
         }
-        Require(argc==2||gVramOnly||gPlantCatalogOnly||gZombieCatalogOnly||gMinigameRulesOnly||gPuzzleRulesOnly||gSurvivalRulesOnly||gAdventureRulesOnly||gHiddenRulesOnly||gGardenRulesOnly||gIntroRulesOnly||gUiRulesOnly||gAwardRulesOnly||gAlmanacClockOnly||gActorBirthOnly||gCreditsOnly||gLossRulesOnly||gOpeningRulesOnly||gLifecycleRulesOnly||gGraveRulesOnly||gHudSeamsOnly||gTouchOnly,"Pass the production main.pak64 path and optional focused case");
+        Require(argc==2||gStepEventsOnly||gCardAtlasOnly||gVramOnly||gPlantCatalogOnly||gZombieCatalogOnly||gMinigameRulesOnly||gPuzzleRulesOnly||gSurvivalRulesOnly||gAdventureRulesOnly||gHiddenRulesOnly||gGardenRulesOnly||gIntroRulesOnly||gUiRulesOnly||gAwardRulesOnly||gAlmanacClockOnly||gActorBirthOnly||gCreditsOnly||gLossRulesOnly||gOpeningRulesOnly||gLifecycleRulesOnly||gGraveRulesOnly||gHudSeamsOnly||gTouchOnly,"Pass the production main.pak64 path and optional focused case");
         ParticleDefinitionsAndFrames(app,argv[1]);
     }
     catch (const ResourceManagerException& error)

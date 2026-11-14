@@ -3235,13 +3235,27 @@ std::string VulkanRenderer::MemorySnapshotJson() const {
     if(s.reanimScratch)buffer(s.reanimScratch->buffer);
     for(const auto& [key,t]:s.textures)if(t->computeMetadata)buffer(t->computeMetadata->buffer);
     for(const auto& t:s.retired)if(t->computeMetadata)buffer(t->computeMetadata->buffer);
+    uint64_t stagingBytes=0,geometryBytes=0;
+    for(const auto& b:s.stagingRing)if(b){VkMemoryRequirements r{};vkGetBufferMemoryRequirements(s.device,b->buffer,&r);stagingBytes+=r.size;}
+    for(auto* stream:s.drawStreams)if(stream)for(auto b:{stream->vertices.buffer,stream->indices.buffer})if(b){VkMemoryRequirements r{};vkGetBufferMemoryRequirements(s.device,b,&r);geometryBytes+=r.size;}
     std::ostringstream o;
     o<<"{\"sampled_bytes\":"<<sampled<<",\"sampled_count\":"<<sampledCount
      <<",\"generated_bytes\":"<<generated<<",\"generated_count\":"<<generatedCount
      <<",\"retired_bytes\":"<<retired<<",\"retired_count\":"<<retiredCount
      <<",\"scene_bytes\":"<<scene<<",\"buffer_bytes\":"<<buffers
      <<",\"pool_reserved_bytes\":"<<poolReserved<<",\"pool_used_bytes\":"<<poolUsed
-     <<",\"renderer_allocated_bytes\":"<<poolReserved+dedicated+buffers<<"}";
+     <<",\"renderer_allocated_bytes\":"<<poolReserved+dedicated+buffers
+     <<",\"staging_bytes\":"<<stagingBytes<<",\"geometry_bytes\":"<<geometryBytes
+     <<",\"images\":[";
+    bool first=true;
+    for(const auto& [key,t]:s.textures)if(t->ownsImage&&t->image){
+        VkMemoryRequirements r{};vkGetImageMemoryRequirements(s.device,t->image,&r);
+        if(!first)o<<',';first=false;
+        o<<"{\"width\":"<<t->width<<",\"height\":"<<t->height
+         <<",\"format\":"<<int(t->format)<<",\"generated\":"<<(t->generated?"true":"false")
+         <<",\"bytes\":"<<r.size<<'}';
+    }
+    o<<"]}";
     return o.str();
 }
 }

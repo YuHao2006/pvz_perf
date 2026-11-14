@@ -1,0 +1,715 @@
+{
+  "counts": {
+    "approved": 3
+  },
+  "assets": [
+    {
+      "original": "assets/runtime/reanim/Tallnut_body.png",
+      "hdFile": "assets/source-art/replanted/reanim-source-round21/Tallnut_body--with-eyes.png",
+      "category": "reanim",
+      "groups": [
+        "Tallnut"
+      ],
+      "review": {
+        "status": "approved",
+        "note": "用户在对话中确认：全部通过。",
+        "updatedAt": "2026-11-11",
+        "needsCrop": false
+      },
+      "selectedInRound": 21,
+      "candidateId": "round21:1b7a8fcbc6a13bc62d",
+      "source": {
+        "atlas": "Tallnut.atlas",
+        "region": "Tallnut_body + Tallnut_eyes",
+        "eyePosition": [
+          159,
+          101
+        ]
+      },
+      "processing": [
+        {
+          "file": "assets/source-art/replanted/reanim-source-round21/Tallnut_body--with-eyes.png",
+          "sourceFile": "assets/source-art/replanted/reanim-source-round21/Tallnut_body--with-eyes.png",
+          "size": [
+            398,
+            589
+          ],
+          "sourceCanvas": [
+            398,
+            589
+          ],
+          "crop": [
+            0,
+            0,
+            398,
+            589
+          ],
+          "logicalCanvas": [
+            99,
+            146
+          ],
+          "logicalDrawRect": [
+            0.14835474228378587,
+            -0.21944346799709535,
+            98.95191341345618,
+            146.4388869359942
+          ],
+          "pixelPerLogical": [
+            4.022155674110261,
+            4.022155674110261
+          ],
+          "resampled": false,
+          "alphaAspectRatioDifference": 0.9940148514002505,
+          "sha256": "1b7a8fcbc6a13bc62d15361ba52a89dc93b8a455c47f7e4cf062fd79fc5eb6e9",
+          "eyeSource": "Tallnut.atlas / Tallnut_eyes",
+          "eyePosition": [
+            159,
+            101
+          ],
+          "composite": "native-resolution alpha composite using Spine setup bone and skin attachment positions; rounded to nearest source pixel"
+        }
+      ],
+      "processingFlags": [
+        "重植版将睁眼独立为眼睛图；依照同一骨骼坐标合成到对应身体状态，二阶受损用专用受损眼睛，保留原生像素。眨眼仍由现有独立轨道覆盖。"
+      ],
+      "runtimeIntegrated": false,
+      "sha256": "1b7a8fcbc6a13bc62d15361ba52a89dc93b8a455c47f7e4cf062fd79fc5eb6e9",
+      "history": [
+        {
+          "original": "assets/runtime/reanim/Tallnut_body.png",
+          "hdFile": "assets/source-art/replanted/native-parts/Tallnut_body.png",
+          "category": "reanim",
+          "groups": [
+            "Tallnut"
+          ],
+          "review": {
+            "status": "pending",
+            "note": "",
+            "updatedAt": "2026-11-09T09:43:23.806Z",
+            "needsCrop": false
+          },
+          "selectedInRound": 1,
+          "candidateId": "part:assets/runtime/reanim/Tallnut_body.png"
+        },
+        {
+          "original": "assets/runtime/reanim/Tallnut_body.png",
+          "hdFile": "assets/source-art/replanted/reanim-source-round20/Tallnut_body--prepared.png",
+          "category": "reanim",
+          "groups": [
+            "Tallnut"
+          ],
+          "review": {
+            "status": "approved",
+            "note": "眼睛没了",
+            "updatedAt": "2026-11-10T18:30:57.798Z",
+            "needsCrop": false
+          },
+          "selectedInRound": 20,
+          "candidateId": "round20:6cf085fdcb08aca0dd",
+          "source": {
+            "atlas": "Tallnut.atlas",
+            "page": "tallnut",
+            "region": "Tallnut_body",
+            "bounds": [
+              2,
+              109,
+              398,
+              589
+            ],
+            "rotation": 90,
+            "fields": {
+              "bounds": "2,109,398,589",
+              "rotate": "90"
+            }
+          },
+          "processing": [
+            {
+              "file": "assets/source-art/replanted/reanim-source-round20/Tallnut_body--prepared.png",
+              "sourceFile": "assets/source-art/replanted/reanim-source-audit/Tallnut--e6ee0e5f9fb4664f.png",
+              "size": [
+                398,
+                589
+              ],
+              "sourceCanvas": [
+                398,
+                589
+              ],
+              "crop": [
+                0,
+                0,
+                398,
+                589
+              ],
+              "logicalCanvas": [
+                99,
+                146
+              ],
+              "logicalDrawRect": [
+                0.14835474228378587,
+                -0.21944346799709535,
+                98.95191341345618,
+                146.4388869359942
+              ],
+              "pixelPerLogical": [
+                4.022155674110261,
+                4.022155674110261
+              ],
+              "resampled": false,
+              "alphaAspectRatioDifference": 0.9940148514002505,
+              "sha256": "f313d9897f24bd1ace7f827deaa0e8a1c7223a82e090ebf3d8694e50ff6ab873"
+            }
+          ],
+          "processingFlags": [
+            "仅裁掉全透明余量并保留1源像素边缘；原始像素不缩放。预览按可见轮廓中心定位，横纵共用同一倍率，不拉伸。形状差异须在组合动作中确认。"
+          ],
+          "runtimeIntegrated": false,
+          "sha256": "f313d9897f24bd1ace7f827deaa0e8a1c7223a82e090ebf3d8694e50ff6ab873"
+        },
+        {
+          "original": "assets/runtime/reanim/Tallnut_body.png",
+          "hdFile": "assets/source-art/replanted/reanim-source-round21/Tallnut_body--with-eyes.png",
+          "category": "reanim",
+          "groups": [
+            "Tallnut"
+          ],
+          "review": {
+            "status": "approved",
+            "note": "用户在对话中确认：全部通过。",
+            "updatedAt": "2026-11-11",
+            "needsCrop": false
+          },
+          "selectedInRound": 21,
+          "candidateId": "round21:1b7a8fcbc6a13bc62d",
+          "source": {
+            "atlas": "Tallnut.atlas",
+            "region": "Tallnut_body + Tallnut_eyes",
+            "eyePosition": [
+              159,
+              101
+            ]
+          },
+          "processing": [
+            {
+              "file": "assets/source-art/replanted/reanim-source-round21/Tallnut_body--with-eyes.png",
+              "sourceFile": "assets/source-art/replanted/reanim-source-round21/Tallnut_body--with-eyes.png",
+              "size": [
+                398,
+                589
+              ],
+              "sourceCanvas": [
+                398,
+                589
+              ],
+              "crop": [
+                0,
+                0,
+                398,
+                589
+              ],
+              "logicalCanvas": [
+                99,
+                146
+              ],
+              "logicalDrawRect": [
+                0.14835474228378587,
+                -0.21944346799709535,
+                98.95191341345618,
+                146.4388869359942
+              ],
+              "pixelPerLogical": [
+                4.022155674110261,
+                4.022155674110261
+              ],
+              "resampled": false,
+              "alphaAspectRatioDifference": 0.9940148514002505,
+              "sha256": "1b7a8fcbc6a13bc62d15361ba52a89dc93b8a455c47f7e4cf062fd79fc5eb6e9",
+              "eyeSource": "Tallnut.atlas / Tallnut_eyes",
+              "eyePosition": [
+                159,
+                101
+              ],
+              "composite": "native-resolution alpha composite using Spine setup bone and skin attachment positions; rounded to nearest source pixel"
+            }
+          ],
+          "processingFlags": [
+            "重植版将睁眼独立为眼睛图；依照同一骨骼坐标合成到对应身体状态，二阶受损用专用受损眼睛，保留原生像素。眨眼仍由现有独立轨道覆盖。"
+          ],
+          "runtimeIntegrated": false,
+          "sha256": "1b7a8fcbc6a13bc62d15361ba52a89dc93b8a455c47f7e4cf062fd79fc5eb6e9"
+        }
+      ]
+    },
+    {
+      "original": "assets/runtime/reanim/Tallnut_cracked1.png",
+      "hdFile": "assets/source-art/replanted/reanim-source-round21/Tallnut_cracked1--with-eyes.png",
+      "category": "reanim",
+      "groups": [
+        "Tallnut"
+      ],
+      "review": {
+        "status": "approved",
+        "note": "用户在对话中确认：全部通过。",
+        "updatedAt": "2026-11-11",
+        "needsCrop": false
+      },
+      "selectedInRound": 21,
+      "candidateId": "round21:aa357fde5d1971b3aa",
+      "source": {
+        "atlas": "Tallnut.atlas",
+        "region": "Tallnut_cracked1 + Tallnut_eyes",
+        "eyePosition": [
+          159,
+          98
+        ]
+      },
+      "processing": [
+        {
+          "file": "assets/source-art/replanted/reanim-source-round21/Tallnut_cracked1--with-eyes.png",
+          "sourceFile": "assets/source-art/replanted/reanim-source-round21/Tallnut_cracked1--with-eyes.png",
+          "size": [
+            398,
+            587
+          ],
+          "sourceCanvas": [
+            398,
+            587
+          ],
+          "crop": [
+            0,
+            0,
+            398,
+            587
+          ],
+          "logicalCanvas": [
+            99,
+            146
+          ],
+          "logicalDrawRect": [
+            0.0021295176974902574,
+            -0.0031406359587293764,
+            98.99574096460502,
+            146.00628127191746
+          ],
+          "pixelPerLogical": [
+            4.020374978983198,
+            4.020374978983198
+          ],
+          "resampled": false,
+          "alphaAspectRatioDifference": 0.9999139607316778,
+          "sha256": "aa357fde5d1971b3aae71d18822884b2684695ce20c23e3bf1224e827519d759",
+          "eyeSource": "Tallnut.atlas / Tallnut_eyes",
+          "eyePosition": [
+            159,
+            98
+          ],
+          "composite": "native-resolution alpha composite using Spine setup bone and skin attachment positions; rounded to nearest source pixel"
+        }
+      ],
+      "processingFlags": [
+        "重植版将睁眼独立为眼睛图；依照同一骨骼坐标合成到对应身体状态，二阶受损用专用受损眼睛，保留原生像素。眨眼仍由现有独立轨道覆盖。"
+      ],
+      "runtimeIntegrated": false,
+      "sha256": "aa357fde5d1971b3aae71d18822884b2684695ce20c23e3bf1224e827519d759",
+      "history": [
+        {
+          "original": "assets/runtime/reanim/Tallnut_cracked1.png",
+          "hdFile": "assets/source-art/replanted/native-parts/Tallnut_cracked1.png",
+          "category": "reanim",
+          "groups": [
+            "Tallnut"
+          ],
+          "review": {
+            "status": "pending",
+            "note": "",
+            "updatedAt": "2026-11-09T09:43:24.500Z",
+            "needsCrop": false
+          },
+          "selectedInRound": 1,
+          "candidateId": "part:assets/runtime/reanim/Tallnut_cracked1.png"
+        },
+        {
+          "original": "assets/runtime/reanim/Tallnut_cracked1.png",
+          "hdFile": "assets/source-art/replanted/reanim-source-round20/Tallnut_cracked1--prepared.png",
+          "category": "reanim",
+          "groups": [
+            "Tallnut"
+          ],
+          "review": {
+            "status": "approved",
+            "note": "眼睛没了",
+            "updatedAt": "2026-11-10T18:31:06.810Z",
+            "needsCrop": false
+          },
+          "selectedInRound": 20,
+          "candidateId": "round20:e39a8f64177a9a5ae3",
+          "source": {
+            "atlas": "Tallnut.atlas",
+            "page": "tallnut",
+            "region": "Tallnut_cracked1",
+            "bounds": [
+              593,
+              109,
+              398,
+              587
+            ],
+            "rotation": 90,
+            "fields": {
+              "bounds": "593,109,398,587",
+              "rotate": "90"
+            }
+          },
+          "processing": [
+            {
+              "file": "assets/source-art/replanted/reanim-source-round20/Tallnut_cracked1--prepared.png",
+              "sourceFile": "assets/source-art/replanted/reanim-source-audit/Tallnut--66cb7a878893ad75.png",
+              "size": [
+                398,
+                587
+              ],
+              "sourceCanvas": [
+                398,
+                587
+              ],
+              "crop": [
+                0,
+                0,
+                398,
+                587
+              ],
+              "logicalCanvas": [
+                99,
+                146
+              ],
+              "logicalDrawRect": [
+                0.0021295176974902574,
+                -0.0031406359587293764,
+                98.99574096460502,
+                146.00628127191746
+              ],
+              "pixelPerLogical": [
+                4.020374978983198,
+                4.020374978983198
+              ],
+              "resampled": false,
+              "alphaAspectRatioDifference": 0.9999139607316778,
+              "sha256": "55b3c360ad04927ee6af5f7e578f7fef632de4214017be979b04790902b52a86"
+            }
+          ],
+          "processingFlags": [
+            "仅裁掉全透明余量并保留1源像素边缘；原始像素不缩放。预览按可见轮廓中心定位，横纵共用同一倍率，不拉伸。形状差异须在组合动作中确认。"
+          ],
+          "runtimeIntegrated": false,
+          "sha256": "55b3c360ad04927ee6af5f7e578f7fef632de4214017be979b04790902b52a86"
+        },
+        {
+          "original": "assets/runtime/reanim/Tallnut_cracked1.png",
+          "hdFile": "assets/source-art/replanted/reanim-source-round21/Tallnut_cracked1--with-eyes.png",
+          "category": "reanim",
+          "groups": [
+            "Tallnut"
+          ],
+          "review": {
+            "status": "approved",
+            "note": "用户在对话中确认：全部通过。",
+            "updatedAt": "2026-11-11",
+            "needsCrop": false
+          },
+          "selectedInRound": 21,
+          "candidateId": "round21:aa357fde5d1971b3aa",
+          "source": {
+            "atlas": "Tallnut.atlas",
+            "region": "Tallnut_cracked1 + Tallnut_eyes",
+            "eyePosition": [
+              159,
+              98
+            ]
+          },
+          "processing": [
+            {
+              "file": "assets/source-art/replanted/reanim-source-round21/Tallnut_cracked1--with-eyes.png",
+              "sourceFile": "assets/source-art/replanted/reanim-source-round21/Tallnut_cracked1--with-eyes.png",
+              "size": [
+                398,
+                587
+              ],
+              "sourceCanvas": [
+                398,
+                587
+              ],
+              "crop": [
+                0,
+                0,
+                398,
+                587
+              ],
+              "logicalCanvas": [
+                99,
+                146
+              ],
+              "logicalDrawRect": [
+                0.0021295176974902574,
+                -0.0031406359587293764,
+                98.99574096460502,
+                146.00628127191746
+              ],
+              "pixelPerLogical": [
+                4.020374978983198,
+                4.020374978983198
+              ],
+              "resampled": false,
+              "alphaAspectRatioDifference": 0.9999139607316778,
+              "sha256": "aa357fde5d1971b3aae71d18822884b2684695ce20c23e3bf1224e827519d759",
+              "eyeSource": "Tallnut.atlas / Tallnut_eyes",
+              "eyePosition": [
+                159,
+                98
+              ],
+              "composite": "native-resolution alpha composite using Spine setup bone and skin attachment positions; rounded to nearest source pixel"
+            }
+          ],
+          "processingFlags": [
+            "重植版将睁眼独立为眼睛图；依照同一骨骼坐标合成到对应身体状态，二阶受损用专用受损眼睛，保留原生像素。眨眼仍由现有独立轨道覆盖。"
+          ],
+          "runtimeIntegrated": false,
+          "sha256": "aa357fde5d1971b3aae71d18822884b2684695ce20c23e3bf1224e827519d759"
+        }
+      ]
+    },
+    {
+      "original": "assets/runtime/reanim/Tallnut_cracked2.png",
+      "hdFile": "assets/source-art/replanted/reanim-source-round21/Tallnut_cracked2--with-eyes.png",
+      "category": "reanim",
+      "groups": [
+        "Tallnut"
+      ],
+      "review": {
+        "status": "approved",
+        "note": "用户在对话中确认：全部通过。",
+        "updatedAt": "2026-11-11",
+        "needsCrop": false
+      },
+      "selectedInRound": 21,
+      "candidateId": "round21:3e7a8de3d6a15fab4b",
+      "source": {
+        "atlas": "Tallnut.atlas",
+        "region": "Tallnut_cracked2 + Tallnut_eyes_cracked2",
+        "eyePosition": [
+          159,
+          98
+        ]
+      },
+      "processing": [
+        {
+          "file": "assets/source-art/replanted/reanim-source-round21/Tallnut_cracked2--with-eyes.png",
+          "sourceFile": "assets/source-art/replanted/reanim-source-round21/Tallnut_cracked2--with-eyes.png",
+          "size": [
+            398,
+            578
+          ],
+          "sourceCanvas": [
+            398,
+            587
+          ],
+          "crop": [
+            0,
+            9,
+            398,
+            587
+          ],
+          "logicalCanvas": [
+            99,
+            144
+          ],
+          "logicalDrawRect": [
+            -0.08182145770892646,
+            -0.13033825129012655,
+            99.16364291541785,
+            144.0115216208832
+          ],
+          "pixelPerLogical": [
+            4.0135677582909715,
+            4.0135677582909715
+          ],
+          "resampled": false,
+          "alphaAspectRatioDifference": 1.00330864975579,
+          "sha256": "3e7a8de3d6a15fab4b8b4838ef0d0c7e212e7cbcb85e0240cb65e38edea370f1",
+          "eyeSource": "Tallnut.atlas / Tallnut_eyes_cracked2",
+          "eyePosition": [
+            159,
+            98
+          ],
+          "composite": "native-resolution alpha composite using Spine setup bone and skin attachment positions; rounded to nearest source pixel"
+        }
+      ],
+      "processingFlags": [
+        "重植版将睁眼独立为眼睛图；依照同一骨骼坐标合成到对应身体状态，二阶受损用专用受损眼睛，保留原生像素。眨眼仍由现有独立轨道覆盖。"
+      ],
+      "runtimeIntegrated": false,
+      "sha256": "3e7a8de3d6a15fab4b8b4838ef0d0c7e212e7cbcb85e0240cb65e38edea370f1",
+      "history": [
+        {
+          "original": "assets/runtime/reanim/Tallnut_cracked2.png",
+          "hdFile": "assets/source-art/replanted/native-parts/Tallnut_cracked2.png",
+          "category": "reanim",
+          "groups": [
+            "Tallnut"
+          ],
+          "review": {
+            "status": "pending",
+            "note": "",
+            "updatedAt": "2026-11-09T09:43:25.147Z",
+            "needsCrop": false
+          },
+          "selectedInRound": 1,
+          "candidateId": "part:assets/runtime/reanim/Tallnut_cracked2.png"
+        },
+        {
+          "original": "assets/runtime/reanim/Tallnut_cracked2.png",
+          "hdFile": "assets/source-art/replanted/reanim-source-round20/Tallnut_cracked2--prepared.png",
+          "category": "reanim",
+          "groups": [
+            "Tallnut"
+          ],
+          "review": {
+            "status": "approved",
+            "note": "眼睛没了",
+            "updatedAt": "2026-11-10T18:31:09.991Z",
+            "needsCrop": false
+          },
+          "selectedInRound": 20,
+          "candidateId": "round20:9c9495fa8e5ca8ea70",
+          "source": {
+            "atlas": "Tallnut.atlas",
+            "page": "tallnut",
+            "region": "Tallnut_cracked2",
+            "bounds": [
+              1182,
+              109,
+              398,
+              587
+            ],
+            "rotation": 90,
+            "fields": {
+              "bounds": "1182,109,398,587",
+              "rotate": "90"
+            }
+          },
+          "processing": [
+            {
+              "file": "assets/source-art/replanted/reanim-source-round20/Tallnut_cracked2--prepared.png",
+              "sourceFile": "assets/source-art/replanted/reanim-source-audit/Tallnut--a5febd0a6c773866.png",
+              "size": [
+                398,
+                578
+              ],
+              "sourceCanvas": [
+                398,
+                587
+              ],
+              "crop": [
+                0,
+                9,
+                398,
+                587
+              ],
+              "logicalCanvas": [
+                99,
+                144
+              ],
+              "logicalDrawRect": [
+                -0.08182145770892646,
+                -0.13033825129012655,
+                99.16364291541785,
+                144.0115216208832
+              ],
+              "pixelPerLogical": [
+                4.0135677582909715,
+                4.0135677582909715
+              ],
+              "resampled": false,
+              "alphaAspectRatioDifference": 1.00330864975579,
+              "sha256": "a347e082e5151780d13e0477ae3c359616bff7734d718c441f450d54e3846466"
+            }
+          ],
+          "processingFlags": [
+            "仅裁掉全透明余量并保留1源像素边缘；原始像素不缩放。预览按可见轮廓中心定位，横纵共用同一倍率，不拉伸。形状差异须在组合动作中确认。"
+          ],
+          "runtimeIntegrated": false,
+          "sha256": "a347e082e5151780d13e0477ae3c359616bff7734d718c441f450d54e3846466"
+        },
+        {
+          "original": "assets/runtime/reanim/Tallnut_cracked2.png",
+          "hdFile": "assets/source-art/replanted/reanim-source-round21/Tallnut_cracked2--with-eyes.png",
+          "category": "reanim",
+          "groups": [
+            "Tallnut"
+          ],
+          "review": {
+            "status": "approved",
+            "note": "用户在对话中确认：全部通过。",
+            "updatedAt": "2026-11-11",
+            "needsCrop": false
+          },
+          "selectedInRound": 21,
+          "candidateId": "round21:3e7a8de3d6a15fab4b",
+          "source": {
+            "atlas": "Tallnut.atlas",
+            "region": "Tallnut_cracked2 + Tallnut_eyes_cracked2",
+            "eyePosition": [
+              159,
+              98
+            ]
+          },
+          "processing": [
+            {
+              "file": "assets/source-art/replanted/reanim-source-round21/Tallnut_cracked2--with-eyes.png",
+              "sourceFile": "assets/source-art/replanted/reanim-source-round21/Tallnut_cracked2--with-eyes.png",
+              "size": [
+                398,
+                578
+              ],
+              "sourceCanvas": [
+                398,
+                587
+              ],
+              "crop": [
+                0,
+                9,
+                398,
+                587
+              ],
+              "logicalCanvas": [
+                99,
+                144
+              ],
+              "logicalDrawRect": [
+                -0.08182145770892646,
+                -0.13033825129012655,
+                99.16364291541785,
+                144.0115216208832
+              ],
+              "pixelPerLogical": [
+                4.0135677582909715,
+                4.0135677582909715
+              ],
+              "resampled": false,
+              "alphaAspectRatioDifference": 1.00330864975579,
+              "sha256": "3e7a8de3d6a15fab4b8b4838ef0d0c7e212e7cbcb85e0240cb65e38edea370f1",
+              "eyeSource": "Tallnut.atlas / Tallnut_eyes_cracked2",
+              "eyePosition": [
+                159,
+                98
+              ],
+              "composite": "native-resolution alpha composite using Spine setup bone and skin attachment positions; rounded to nearest source pixel"
+            }
+          ],
+          "processingFlags": [
+            "重植版将睁眼独立为眼睛图；依照同一骨骼坐标合成到对应身体状态，二阶受损用专用受损眼睛，保留原生像素。眨眼仍由现有独立轨道覆盖。"
+          ],
+          "runtimeIntegrated": false,
+          "sha256": "3e7a8de3d6a15fab4b8b4838ef0d0c7e212e7cbcb85e0240cb65e38edea370f1"
+        }
+      ]
+    }
+  ]
+}

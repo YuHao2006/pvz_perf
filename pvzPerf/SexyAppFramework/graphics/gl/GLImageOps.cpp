@@ -79,6 +79,14 @@ GLTexture* GLRenderer::ProcessImage(GLTexture* source, const GpuImageProcessing&
     catch (...) { DestroyTexture(target); throw; }
     return target;
 }
+GLTexture* GLRenderer::CopyTexture(GLTexture* source)
+{
+    if (!source) throw std::invalid_argument("Texture copy requires a source");
+    auto* copy=CopyTextureRegion(source,0,0,source->width,source->height);
+    copy->drawingWidth=source->drawingWidth; copy->drawingHeight=source->drawingHeight;
+    copy->pixelScale=source->pixelScale;
+    return copy;
+}
 GLTexture* GLRenderer::CopyTextureRegion(GLTexture* source, int x, int y, int w, int h)
 {
     auto& s = *impl_;
@@ -314,7 +322,14 @@ std::vector<unsigned int> GLRenderer::ReadScenePixels()
 {
     if (!impl_->sceneInitialized)
         throw std::logic_error("OpenGL scene readback requires a completed main scene");
-    return ReadTexturePixels(impl_->scene).pixels;
+    const auto native=ReadTexturePixels(impl_->scene);
+    std::vector<unsigned int> logical(size_t(impl_->width)*impl_->height);
+    for(int y=0;y<impl_->height;++y)
+        for(int x=0;x<impl_->width;++x)
+            logical[size_t(y)*impl_->width+x]=native.pixels[
+                size_t((y*2+1)*native.height/(impl_->height*2))*native.width+
+                (x*2+1)*native.width/(impl_->width*2)];
+    return logical;
 }
 std::vector<unsigned int> GLRenderer::ReadScalePixels(bool)
 {

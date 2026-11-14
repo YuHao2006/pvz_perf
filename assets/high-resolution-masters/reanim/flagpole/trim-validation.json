@@ -1,0 +1,35 @@
+{
+  "originalCanvas": [
+    86,
+    110
+  ],
+  "crop": [
+    1,
+    36,
+    33,
+    109
+  ],
+  "trimmedCanvas": [
+    32,
+    73
+  ],
+  "originalFrame0": [
+    -57.8,
+    -22
+  ],
+  "newFrame0": [
+    -37.189149802689414,
+    7.445034252722859
+  ],
+  "newFrame1": [
+    -37.10980195719574,
+    7.415530210385459
+  ],
+  "fixedSkewDegrees": 326.6,
+  "interpolationSamples": 1001,
+  "maximumPositionDifferenceDouble": 2.842170943040401e-14,
+  "quadAreaReduction": 0.7530655391120508,
+  "runtimeExtraFields": 0,
+  "runtimeExtraOperations": 0,
+  "maximumFloat32PositionDifference": 7.62939453125e-06
+}

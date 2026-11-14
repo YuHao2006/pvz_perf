@@ -1,0 +1,221 @@
+{
+  "maps": [
+    {
+      "original": "assets/runtime/images/background1.jpg",
+      "source": "Area1_Lawn.png",
+      "nativeSourceSize": [
+        5260,
+        2160
+      ],
+      "crop": [
+        110,
+        0,
+        5150,
+        2160
+      ],
+      "nativeCrop": "assets/source-art/replanted/hd-followup-20261111/maps/background1--clean-crop-native.png",
+      "preview": "assets/source-art/replanted/hd-followup-20261111/maps/background1--clean-crop-2x.png",
+      "runtimeLogicalSize": [
+        1400,
+        600
+      ],
+      "previewSize": [
+        2800,
+        1200
+      ],
+      "preservesAspect": true,
+      "foregroundOverlayLayersIncluded": false,
+      "status": "rejected",
+      "notes": [
+        "No LawnBush_OL / PowerPole_OL / PatioTable_OL / BBQ_OL / plant overlays merged.",
+        "Transparent skyline and native-vs-original tile layout still need compositing/alignment; not installed in runtime."
+      ],
+      "review": {
+        "status": "wrong",
+        "reason": "Original board has exactly 9 planting columns; crop trials do not align to original grid."
+      },
+      "requiredPlantingColumns": 9
+    },
+    {
+      "original": "assets/runtime/images/background2.jpg",
+      "source": "Area2_Lawn.png",
+      "nativeSourceSize": [
+        5260,
+        2160
+      ],
+      "crop": [
+        110,
+        0,
+        5150,
+        2160
+      ],
+      "nativeCrop": "assets/source-art/replanted/hd-followup-20261111/maps/background2--clean-crop-native.png",
+      "preview": "assets/source-art/replanted/hd-followup-20261111/maps/background2--clean-crop-2x.png",
+      "runtimeLogicalSize": [
+        1400,
+        600
+      ],
+      "previewSize": [
+        2800,
+        1200
+      ],
+      "preservesAspect": true,
+      "foregroundOverlayLayersIncluded": false,
+      "status": "rejected",
+      "notes": [
+        "No LawnBush_OL / PowerPole_OL / PatioTable_OL / BBQ_OL / plant overlays merged.",
+        "Transparent skyline and native-vs-original tile layout still need compositing/alignment; not installed in runtime."
+      ],
+      "review": {
+        "status": "wrong",
+        "reason": "Original board has exactly 9 planting columns; crop trials do not align to original grid."
+      },
+      "requiredPlantingColumns": 9
+    },
+    {
+      "original": "assets/runtime/images/background3.jpg",
+      "source": "Area3_Lawn.png",
+      "nativeSourceSize": [
+        5260,
+        2160
+      ],
+      "crop": [
+        110,
+        0,
+        5150,
+        2160
+      ],
+      "nativeCrop": "assets/source-art/replanted/hd-followup-20261111/maps/background3--clean-crop-native.png",
+      "preview": "assets/source-art/replanted/hd-followup-20261111/maps/background3--clean-crop-2x.png",
+      "runtimeLogicalSize": [
+        1400,
+        600
+      ],
+      "previewSize": [
+        2800,
+        1200
+      ],
+      "preservesAspect": true,
+      "foregroundOverlayLayersIncluded": false,
+      "status": "rejected",
+      "notes": [
+        "No LawnBush_OL / PowerPole_OL / PatioTable_OL / BBQ_OL / plant overlays merged.",
+        "Transparent skyline and native-vs-original tile layout still need compositing/alignment; not installed in runtime."
+      ],
+      "review": {
+        "status": "wrong",
+        "reason": "Original board has exactly 9 planting columns; crop trials do not align to original grid."
+      },
+      "requiredPlantingColumns": 9
+    },
+    {
+      "original": "assets/runtime/images/background4.jpg",
+      "source": "Area4_Lawn.png",
+      "nativeSourceSize": [
+        5260,
+        2160
+      ],
+      "crop": [
+        110,
+        0,
+        5150,
+        2160
+      ],
+      "nativeCrop": "assets/source-art/replanted/hd-followup-20261111/maps/background4--clean-crop-native.png",
+      "preview": "assets/source-art/replanted/hd-followup-20261111/maps/background4--clean-crop-2x.png",
+      "runtimeLogicalSize": [
+        1400,
+        600
+      ],
+      "previewSize": [
+        2800,
+        1200
+      ],
+      "preservesAspect": true,
+      "foregroundOverlayLayersIncluded": false,
+      "status": "rejected",
+      "notes": [
+        "No LawnBush_OL / PowerPole_OL / PatioTable_OL / BBQ_OL / plant overlays merged.",
+        "Transparent skyline and native-vs-original tile layout still need compositing/alignment; not installed in runtime."
+      ],
+      "review": {
+        "status": "wrong",
+        "reason": "Original board has exactly 9 planting columns; crop trials do not align to original grid."
+      },
+      "requiredPlantingColumns": 9
+    },
+    {
+      "original": "assets/runtime/images/background5.jpg",
+      "source": "Area5_Roof.png",
+      "nativeSourceSize": [
+        4825,
+        1670
+      ],
+      "crop": [
+        600,
+        1,
+        4492,
+        1669
+      ],
+      "nativeCrop": "assets/source-art/replanted/hd-followup-20261111/maps/background5--clean-crop-native.png",
+      "preview": "assets/source-art/replanted/hd-followup-20261111/maps/background5--clean-crop-2x.png",
+      "runtimeLogicalSize": [
+        1400,
+        600
+      ],
+      "previewSize": [
+        2800,
+        1200
+      ],
+      "preservesAspect": true,
+      "foregroundOverlayLayersIncluded": false,
+      "status": "rejected",
+      "notes": [
+        "No LawnBush_OL / PowerPole_OL / PatioTable_OL / BBQ_OL / plant overlays merged.",
+        "Transparent skyline and native-vs-original tile layout still need compositing/alignment; not installed in runtime."
+      ],
+      "review": {
+        "status": "wrong",
+        "reason": "Original board has exactly 9 planting columns; crop trials do not align to original grid."
+      },
+      "requiredPlantingColumns": 9
+    },
+    {
+      "original": "assets/runtime/images/background6boss.jpg",
+      "source": "Area6_Roof.png",
+      "nativeSourceSize": [
+        4825,
+        1670
+      ],
+      "crop": [
+        600,
+        1,
+        4492,
+        1669
+      ],
+      "nativeCrop": "assets/source-art/replanted/hd-followup-20261111/maps/background6--clean-crop-native.png",
+      "preview": "assets/source-art/replanted/hd-followup-20261111/maps/background6--clean-crop-2x.png",
+      "runtimeLogicalSize": [
+        1400,
+        600
+      ],
+      "previewSize": [
+        2800,
+        1200
+      ],
+      "preservesAspect": true,
+      "foregroundOverlayLayersIncluded": false,
+      "status": "rejected",
+      "notes": [
+        "No LawnBush_OL / PowerPole_OL / PatioTable_OL / BBQ_OL / plant overlays merged.",
+        "Transparent skyline and native-vs-original tile layout still need compositing/alignment; not installed in runtime."
+      ],
+      "review": {
+        "status": "wrong",
+        "reason": "Original board has exactly 9 planting columns; crop trials do not align to original grid."
+      },
+      "requiredPlantingColumns": 9
+    }
+  ],
+  "runtimeIntegrated": false
+}

@@ -22,6 +22,24 @@
 #include "misc/AutoCrit.h"
 #include "graphics/Image.h"
 #include "graphics/Graphics.h"
+
+void TodDrawChallengeBackground(Sexy::Graphics* theGraphics, const Sexy::Rect& theBounds)
+{
+    // Replanted's native sprite border maps to 391/359 logical-pixel ends.
+    // All challenge/achievement users preserve the ends and stretch only the
+    // middle, including when the caller has a translated widget coordinate space.
+    Image* const image = IMAGE_CHALLENGE_BACKGROUND;
+    constexpr int left = 391, right = 359;
+    Graphics background(*theGraphics);
+    background.ClipRect(theBounds);
+    background.DrawImage(image, theBounds.mX, theBounds.mY,
+        Rect(0, 0, left, image->mHeight));
+    background.DrawImage(image,
+        Rect(theBounds.mX + left, theBounds.mY, theBounds.mWidth - left - right, image->mHeight),
+        Rect(left, 0, image->mWidth - left - right, image->mHeight));
+    background.DrawImage(image, theBounds.mX + theBounds.mWidth - right, theBounds.mY,
+        Rect(image->mWidth - right, 0, right, image->mHeight));
+}
 #include "graphics/ImageFont.h"
 #include "misc/PerfTimer.h"
 #include "misc/StableTime.h"
@@ -1161,10 +1179,12 @@ _Font* TodLoadCreditsFont()
 {
     if (gSexyAppBase == nullptr || gSexyAppBase->mResourceManager == nullptr)
         return nullptr;
-    if (!FONT_BRIANNETOD32 &&
+    // Credits uses the Main glyph layer only; the plain definition shares its texture
+    // with BrianneTod32, without changing other UI fonts or per-glyph draw work.
+    if (!FONT_BRIANNETOD32PLAIN &&
         !gSexyAppBase->mResourceManager->TodLoadResources(ResourceGroupId::DelayLoad_Credits))
         return nullptr;
-    return FONT_BRIANNETOD32;
+    return FONT_BRIANNETOD32PLAIN;
 }
 
 bool TodLoadNextResource()

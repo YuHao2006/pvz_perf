@@ -94,7 +94,7 @@ void D3d9Renderer::Impl::Dimensions(int w, int h) const
 void D3d9Renderer::Impl::InitializeTexture(D3d9Texture& result, int w, int h, D3DFORMAT format)
 {
     Dimensions(w, h);
-    result.width = w; result.height = h; result.format = format;
+    result.width = result.drawingWidth = w; result.height = result.drawingHeight = h; result.format = format;
     Check(device->CreateTexture(w, h, 1, D3DUSAGE_RENDERTARGET, format, D3DPOOL_DEFAULT,
         result.image.put(), nullptr), "Allocate D3D9 render texture");
     Check(result.image->GetSurfaceLevel(0, result.surface.put()), "Get D3D9 texture surface");
@@ -238,10 +238,10 @@ void D3d9Renderer::Impl::SetConstants(const Constants& constants)
     Check(device->SetPixelShaderConstantF(0, &constants[0].x, static_cast<UINT>(constants.size())),
         "Set D3D9 pixel constants");
 }
-void D3d9Renderer::Impl::Projection(int w, int h)
+void D3d9Renderer::Impl::Projection(int w, int h, int pixelScale)
 {
     const float projection[]{2.0f / float(w), -2.0f / float(h),
-        -1.0f - 1.0f / float(w), 1.0f + 1.0f / float(h)};
+        -1.0f - 1.0f / (float(w)*pixelScale), 1.0f + 1.0f / (float(h)*pixelScale)};
     Check(device->SetVertexShaderConstantF(S::Projection, projection, 1), "Set D3D9 projection");
 }
 void D3d9Renderer::Impl::Flush()
@@ -269,7 +269,7 @@ void D3d9Renderer::Impl::Flush()
     Check(device->SetStreamSource(0, stream.value, 0, sizeof(Vertex)), "Bind D3D9 vertex stream");
     Check(device->SetVertexShader(sceneVS.value), "Bind D3D9 scene vertex shader");
     Check(device->SetPixelShader(scenePS.value), "Bind D3D9 scene pixel shader");
-    Projection(target->width, target->height);
+    Projection(target->drawingWidth, target->drawingHeight,target->pixelScale);
     Check(device->SetRenderState(D3DRS_SCISSORTESTENABLE, TRUE), "Enable D3D9 scissor");
     Check(device->SetRenderState(D3DRS_SRCBLEND, target->render ? D3DBLEND_ONE : D3DBLEND_SRCALPHA),
         "Set D3D9 source blend");
@@ -325,13 +325,15 @@ void D3d9Renderer::Impl::Submit(std::span<const GpuVertex> input, D3d9Texture*,
 {
     if (!open || input.size() % 3) throw std::logic_error("D3D9 submission requires an open triangle scene");
     auto* target = selected ? selected : scene;
-    GpuClip clip = requested ? *requested : GpuClip{0, 0, target->width, target->height};
-    const auto right = std::clamp<long long>(static_cast<long long>(clip.x) + std::max(0, clip.width), 0, target->width);
-    const auto bottom = std::clamp<long long>(static_cast<long long>(clip.y) + std::max(0, clip.height), 0, target->height);
-    clip.x = std::clamp(clip.x, 0, target->width); clip.y = std::clamp(clip.y, 0, target->height);
+    GpuClip clip = requested ? *requested : GpuClip{0, 0, target->drawingWidth, target->drawingHeight};
+    const auto right = std::clamp<long long>(static_cast<long long>(clip.x) + std::max(0, clip.width), 0, target->drawingWidth);
+    const auto bottom = std::clamp<long long>(static_cast<long long>(clip.y) + std::max(0, clip.height), 0, target->drawingHeight);
+    clip.x = std::clamp(clip.x, 0, target->drawingWidth); clip.y = std::clamp(clip.y, 0, target->drawingHeight);
     clip.width = static_cast<int>(std::max<long long>(0, right - clip.x));
     clip.height = static_cast<int>(std::max<long long>(0, bottom - clip.y));
     if (!clip.width || !clip.height) return;
+    clip.x*=target->pixelScale; clip.y*=target->pixelScale;
+    clip.width*=target->pixelScale; clip.height*=target->pixelScale;
     D3d9Texture* feedback = nullptr;
     for (size_t index = 0; index < input.size(); index += 3) {
         const auto& firstVertex = input[index];
@@ -511,16 +513,21 @@ D3d9Texture* D3d9Renderer::CreateCoverageMask(int w, int h, std::span<const unsi
     catch (...) { DestroyTexture(image); throw; }
     return image;
 }
-D3d9Texture* D3d9Renderer::CreateRenderImage(int w, int h)
+D3d9Texture* D3d9Renderer::CreateRenderImage(int w, int h, int pixelScale)
 {
+    if(pixelScale<1 || pixelScale>2 || w<=0 || h<=0 ||
+        unsigned(w)>MaxImageDimension2D()/pixelScale || unsigned(h)>MaxImageDimension2D()/pixelScale)
+        throw std::invalid_argument("Invalid render image pixel scale or dimensions");
+
     auto& s = *impl_;
     s.Flush();
-    auto* image = s.Allocate(w, h, D3DFMT_A32B32G32R32F, true);
+    auto* image = s.Allocate(w*pixelScale, h*pixelScale, D3DFMT_A32B32G32R32F, true);
     image->render = true; image->flags = 0x80000000U;
     try {
-        s.Target(image->surface.value, w, h);
+        s.Target(image->surface.value, w*pixelScale, h*pixelScale);
         Check(s.device->Clear(0, nullptr, D3DCLEAR_TARGET, 0, 1, 0), "Clear D3D9 float render image");
     } catch (...) { DestroyTexture(image); throw; }
+    image->drawingWidth=w; image->drawingHeight=h; image->pixelScale=pixelScale;
     return image;
 }
 void D3d9Renderer::DestroyTexture(D3d9Texture* image)
@@ -603,7 +610,7 @@ void D3d9Renderer::SubmitPool(D3d9Texture* texture,const GpuPoolParams& params)
     Check(d->SetIndices(s.poolIndices.value),"Bind static D3D9 pool indices");
     Check(d->SetVertexShader(s.poolVS.value),"Bind D3D9 pool vertex shader");
     Check(d->SetPixelShader(s.scenePS.value),"Bind D3D9 pool scene pixel shader");
-    s.Projection(target->width,target->height);
+    s.Projection(target->drawingWidth,target->drawingHeight,target->pixelScale);
     const auto flags=texture->flags|params.samplingFlags;
     const unsigned packed=
         unsigned(bool(flags&0x80000000U))*S::Generated+

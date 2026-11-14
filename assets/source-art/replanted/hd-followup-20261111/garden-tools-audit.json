@@ -1,0 +1,186 @@
+[
+  {
+    "name": "WateringCan",
+    "originalLogicalSize": [
+      80,
+      80
+    ],
+    "originalBodyBounds": [
+      4,
+      9,
+      71,
+      75
+    ],
+    "hdBodyBoundsInLogicalUnits": [
+      0.5,
+      0.5,
+      79.5,
+      79.5
+    ],
+    "bodyScaleVsOriginal": [
+      1.1791044776119404,
+      1.196969696969697
+    ]
+  },
+  {
+    "name": "WateringCanGold",
+    "originalLogicalSize": [
+      80,
+      80
+    ],
+    "originalBodyBounds": [
+      4,
+      9,
+      71,
+      75
+    ],
+    "hdBodyBoundsInLogicalUnits": [
+      0.5,
+      1.0,
+      79.5,
+      79.0
+    ],
+    "bodyScaleVsOriginal": [
+      1.1791044776119404,
+      1.1818181818181819
+    ]
+  },
+  {
+    "name": "Fertilizer",
+    "originalLogicalSize": [
+      80,
+      80
+    ],
+    "originalBodyBounds": [
+      8,
+      13,
+      74,
+      73
+    ],
+    "hdBodyBoundsInLogicalUnits": [
+      0.0,
+      0.0,
+      80.0,
+      80.0
+    ],
+    "bodyScaleVsOriginal": [
+      1.2121212121212122,
+      1.3333333333333333
+    ]
+  },
+  {
+    "name": "bug_spray",
+    "originalLogicalSize": [
+      72,
+      72
+    ],
+    "originalBodyBounds": [
+      12,
+      4,
+      55,
+      68
+    ],
+    "hdBodyBoundsInLogicalUnits": [
+      0.5,
+      0.0,
+      72.0,
+      72.0
+    ],
+    "bodyScaleVsOriginal": [
+      1.6627906976744187,
+      1.125
+    ]
+  },
+  {
+    "name": "Phonograph",
+    "originalLogicalSize": [
+      68,
+      68
+    ],
+    "originalBodyBounds": [
+      9,
+      0,
+      59,
+      68
+    ],
+    "hdBodyBoundsInLogicalUnits": [
+      0.0,
+      0.0,
+      68.0,
+      68.0
+    ],
+    "bodyScaleVsOriginal": [
+      1.36,
+      1.0
+    ]
+  },
+  {
+    "name": "TreeFood",
+    "originalLogicalSize": [
+      80,
+      80
+    ],
+    "originalBodyBounds": [
+      8,
+      12,
+      75,
+      74
+    ],
+    "hdBodyBoundsInLogicalUnits": [
+      1.0,
+      1.0,
+      79.0,
+      79.0
+    ],
+    "bodyScaleVsOriginal": [
+      1.164179104477612,
+      1.2580645161290323
+    ]
+  },
+  {
+    "name": "Zen_GardenGlove",
+    "originalLogicalSize": [
+      80,
+      80
+    ],
+    "originalBodyBounds": [
+      7,
+      6,
+      74,
+      75
+    ],
+    "hdBodyBoundsInLogicalUnits": [
+      0.5,
+      1.0,
+      79.0,
+      79.5
+    ],
+    "bodyScaleVsOriginal": [
+      1.171641791044776,
+      1.1376811594202898
+    ]
+  },
+  {
+    "name": "chocolate",
+    "originalLogicalSize": [
+      57,
+      66
+    ],
+    "originalBodyBounds": [
+      0,
+      0,
+      56,
+      65
+    ],
+    "hdBodyBoundsInLogicalUnits": [
+      0.0,
+      0.0,
+      57.0,
+      66.0
+    ],
+    "bodyScaleVsOriginal": [
+      1.0178571428571428,
+      1.0153846153846153
+    ]
+  }
+]

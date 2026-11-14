@@ -1,0 +1,418 @@
+{
+  "policy": "Preserve original pits, dents, chips and cracks; remove only invented dense fine hatching/grain. No broad blur or removal of original damage.",
+  "items": [
+    {
+      "name": "aquarium1",
+      "variant": "clean-v2",
+      "master": "aquarium1--clean-v2--ai-stitched-4x.png",
+      "candidate": "aquarium1--clean-v2--ai-stitched-2x.png",
+      "tiles": [
+        {
+          "file": "tile-0-0--clean-v2.png",
+          "sha256": "db4c9a9a7dd4b052c3671e6413567e55b0baa235a8330f7eae434503ff4e5d78"
+        },
+        {
+          "file": "tile-0-1--clean-v2.png",
+          "sha256": "e660fd070e5377533a8da8fc5919ba22e099818afa767c8ed81a42d34736225b"
+        },
+        {
+          "file": "tile-0-2--clean-v2.png",
+          "sha256": "869e4974127eca437a916aa03982784b9248109f621f36ccdcb192296e4c9392"
+        },
+        {
+          "file": "tile-1-0--clean-v2.png",
+          "sha256": "96357d0bae6aa29e78b9721f74c7d85299d37b6fc82c5a8df64bcc0d7b4859fa"
+        },
+        {
+          "file": "tile-1-1--clean-v2.png",
+          "sha256": "764208606435ac503cfd15dba50fcb730378770e1e4b272c6bbc2abb05849391"
+        },
+        {
+          "file": "tile-1-2--clean-v2.png",
+          "sha256": "5aa0b9a5b154733f2fdba91710b9f34f869017cfc9ffda420be448108dae6ee6"
+        }
+      ],
+      "runtimeIntegrated": true,
+      "status": "integrated-for-local-game-inspection"
+    },
+    {
+      "name": "background1",
+      "variant": "clean-v2",
+      "master": "background1--clean-v2--ai-stitched-4x.png",
+      "candidate": "background1--clean-v2--ai-stitched-2x.png",
+      "tiles": [
+        {
+          "file": "tile-0-0--clean-v2.png",
+          "sha256": "e06915b3c08626aa47e517d4e6ffc1b41f49c33295c86191cba449bae698f5a7"
+        },
+        {
+          "file": "tile-0-1--clean-v2.png",
+          "sha256": "ccda081eeee4fc3e62e96f17cf94c40e769c154cd5e24431d6d9a508b5d6ce32"
+        },
+        {
+          "file": "tile-0-2--clean-v2.png",
+          "sha256": "bee9a097bf66e66af011f7aab7a3ba80eb382d49c204835dfe7691d926d47b96"
+        },
+        {
+          "file": "tile-1-0--clean-v2.png",
+          "sha256": "672360d71d465d320e3d5c615bd2eaf4d7e67f34cd9f1b5dd35957049c8fcdc9"
+        },
+        {
+          "file": "tile-1-1--clean-v2.png",
+          "sha256": "d5025798eab9d1633878b0449b89f4ee153ae382d6140b154f9fd8fbcd7de4f5"
+        },
+        {
+          "file": "tile-1-2--clean-v2.png",
+          "sha256": "c15b424288e588a35505abad5bff7478e35835e3487f41759a79fd4df179c86e"
+        }
+      ],
+      "runtimeIntegrated": true,
+      "status": "integrated-for-local-game-inspection"
+    },
+    {
+      "name": "background1unsodded",
+      "variant": "clean-v2",
+      "master": "background1unsodded--clean-v2--ai-stitched-4x.png",
+      "candidate": "background1unsodded--clean-v2--ai-stitched-2x.png",
+      "tiles": [
+        {
+          "file": "tile-0-0--clean-v2.png",
+          "sha256": "ceb5a0697dea7d2c74ce999bb061fd8a68f2c139fdee23483862bf8e6ec5e969"
+        },
+        {
+          "file": "tile-0-1--clean-v2.png",
+          "sha256": "ac561b61d071db326c42d2ae28a82d39b6832ca3dd7e79500eda81cebaa557bc"
+        },
+        {
+          "file": "tile-0-2--clean-v2.png",
+          "sha256": "427528e57dad426fdc65d6d16b92bb8524ae319d21f7d55d577828206fd90fd3"
+        },
+        {
+          "file": "tile-1-0--clean-v2.png",
+          "sha256": "400368518bd3bd6a8dfce84f3f877784823d56cc6bc933430301342000cd1999"
+        },
+        {
+          "file": "tile-1-1--clean-v2.png",
+          "sha256": "b0af63ac7b85835a216bc7ccd0775907fef64779ac75cb37b6817d59430b6849"
+        },
+        {
+          "file": "tile-1-2--clean-v2.png",
+          "sha256": "aa87585883b26474fa7f500c6a1dc3ac4579d54ec59e66e1c26017fb28eb77ef"
+        }
+      ],
+      "runtimeIntegrated": true,
+      "status": "integrated-for-local-game-inspection"
+    },
+    {
+      "name": "background2",
+      "variant": "clean-v2",
+      "master": "background2--clean-v2--ai-stitched-4x.png",
+      "candidate": "background2--clean-v2--ai-stitched-2x.png",
+      "tiles": [
+        {
+          "file": "tile-0-0--clean-v2.png",
+          "sha256": "5e24c4ae989ec80820980428806fa42ac1da51a541ec8306ae1e102bc64a15c8"
+        },
+        {
+          "file": "tile-0-1--clean-v2.png",
+          "sha256": "272a63da232efd80ceb8c6c2a658e096a295faff88b743601539f2a4b91efa84"
+        },
+        {
+          "file": "tile-0-2--clean-v2.png",
+          "sha256": "4c959881267c58fde974e3766d15b53bca353a555fb09ba4cf32189b27b9bd4b"
+        },
+        {
+          "file": "tile-1-0--clean-v2.png",
+          "sha256": "e6e1f1f74d59993fde69912a7fb6849c213fd2cc02e710153b397ad19276a1e3"
+        },
+        {
+          "file": "tile-1-1--clean-v2.png",
+          "sha256": "f85e2479334f97d48041e58c8483aa12b0cb241787e07cb759dcdfc147c40549"
+        },
+        {
+          "file": "tile-1-2--clean-v2.png",
+          "sha256": "650e2c0e038a8eeb0e962bf951074c206959d9c71586567a4645a01a2cb3952c"
+        }
+      ],
+      "runtimeIntegrated": true,
+      "status": "integrated-for-local-game-inspection"
+    },
+    {
+      "name": "background3",
+      "variant": "clean-v2",
+      "master": "background3--clean-v2--ai-stitched-4x.png",
+      "candidate": "background3--clean-v2--ai-stitched-2x.png",
+      "tiles": [
+        {
+          "file": "tile-0-0--clean-v2.png",
+          "sha256": "33a262bbfb4f67605ac5cd29f720b75a90e66aa06bfd9e76e82b7d39bef9cf66"
+        },
+        {
+          "file": "tile-0-1--clean-v2.png",
+          "sha256": "213c3be6606b54c5d37b3fe541f02998caa997185d485e04d942ae8e866cc037"
+        },
+        {
+          "file": "tile-0-2--clean-v2.png",
+          "sha256": "49b53d1e237516717e0010d8a17a3d89d064a76c80228d1266be11e012a1e680"
+        },
+        {
+          "file": "tile-1-0--clean-v2.png",
+          "sha256": "9e3b83936310af3610518439c359edbbf6d8ad8f5443e1ff0d4f3dca84c0ae0d"
+        },
+        {
+          "file": "tile-1-1--clean-v2.png",
+          "sha256": "9d4ffb7bc3e9f29481bbec0375c824451a50b765330578c1da2a07de16bf499d"
+        },
+        {
+          "file": "tile-1-2--clean-v2.png",
+          "sha256": "c49b7d5f34b890d1cd4fd462749d2f6a2fc0b10a2efb98eefe20838ae1ebe0f5"
+        }
+      ],
+      "runtimeIntegrated": true,
+      "status": "integrated-for-local-game-inspection",
+      "poolBlankPixelsVerified": 1483505,
+      "poolBlankPixelIdentity": true
+    },
+    {
+      "name": "background4",
+      "variant": "clean-v2",
+      "master": "background4--clean-v2--ai-stitched-4x.png",
+      "candidate": "background4--clean-v2--ai-stitched-2x.png",
+      "tiles": [
+        {
+          "file": "tile-0-0--clean-v2.png",
+          "sha256": "692d4cd4285ab9da4e83d2e5cb0d4faf4f179b52425b30a27e18940aadf99086"
+        },
+        {
+          "file": "tile-0-1--clean-v2.png",
+          "sha256": "2a10906c3883c315b4474a1e7568550c0ca975bb358ff161652dcea4b9476400"
+        },
+        {
+          "file": "tile-0-2--clean-v2.png",
+          "sha256": "caa560ca6bb4214a20ab4ef93ae242186f2edcf8df6812117f5cb1512ec11e7c"
+        },
+        {
+          "file": "tile-1-0--clean-v2.png",
+          "sha256": "08d22858355d37330796a514776ebcd9306667a0f28ccd9575ec9af2dc18bada"
+        },
+        {
+          "file": "tile-1-1--clean-v2.png",
+          "sha256": "9020b11cab08d52383e9488a4e61474f694669ad4dddca5d74f2e7e921eba4f1"
+        },
+        {
+          "file": "tile-1-2--clean-v2.png",
+          "sha256": "f207296ae169416afbe0f7fa824092e17fc2ef6f636924d958581b17fc969649"
+        }
+      ],
+      "runtimeIntegrated": true,
+      "status": "integrated-for-local-game-inspection",
+      "poolBlankPixelsVerified": 1513091,
+      "poolBlankPixelIdentity": true
+    },
+    {
+      "name": "background5",
+      "variant": "clean-v2",
+      "master": "background5--clean-v2--ai-stitched-4x.png",
+      "candidate": "background5--clean-v2--ai-stitched-2x.png",
+      "tiles": [
+        {
+          "file": "tile-0-0--clean-v2.png",
+          "sha256": "69c5cf8c1d5ac3fd98b4bad8601f0747262ab327af464770d599615e733be659"
+        },
+        {
+          "file": "tile-0-1--clean-v2.png",
+          "sha256": "ba7e99d45ce794bbe24bc33497022a34fb0967e88760e075a0e91efebd8d31f3"
+        },
+        {
+          "file": "tile-0-2--clean-v2.png",
+          "sha256": "9b9421c3d5c8e2ba9ca02595b7202b4ba9b433b44e0ddaf2ec414002db26277b"
+        },
+        {
+          "file": "tile-1-0--clean-v2.png",
+          "sha256": "1a5255cd89d1d56bef0f85af8b80b7ecb76f8e6877c9d43a3c97741e1d9e8902"
+        },
+        {
+          "file": "tile-1-1--clean-v2.png",
+          "sha256": "3ffb4aaf1482a4f3b60af76747f1517bff823fb01c8951548216c8c1252bf879"
+        },
+        {
+          "file": "tile-1-2--clean-v2.png",
+          "sha256": "c1c94da4d80eb361220744a3b84eb2148286cc88c9e016d2fc27108c6c258400"
+        }
+      ],
+      "runtimeIntegrated": true,
+      "status": "integrated-for-local-game-inspection"
+    },
+    {
+      "name": "background6boss",
+      "variant": "clean-v2",
+      "master": "background6boss--clean-v2--ai-stitched-4x.png",
+      "candidate": "background6boss--clean-v2--ai-stitched-2x.png",
+      "tiles": [
+        {
+          "file": "tile-0-0--clean-v2.png",
+          "sha256": "b9645d138ddf9e481a35ebae57f3d01bd42acd6f32e7a352d798992c1ccad8e2"
+        },
+        {
+          "file": "tile-0-1--clean-v2.png",
+          "sha256": "04d0830b4dd0d36248f4ce7e96af9d1d2e256086725dde78bb387c6c88eba4fc"
+        },
+        {
+          "file": "tile-0-2--clean-v2.png",
+          "sha256": "adac75bb44f7d842473b398b208f0cbb69ec6e9a6457bd020ad7307c1965e24b"
+        },
+        {
+          "file": "tile-1-0--clean-v2.png",
+          "sha256": "05674f036c32d29ef7f02dc02cd021c94dc19097e18a03506a131c46b5581779"
+        },
+        {
+          "file": "tile-1-1--clean-v2.png",
+          "sha256": "3d1f5e2ea4011c44578191bd4668e8fd986a8b38fcb377765d04908ae3831198"
+        },
+        {
+          "file": "tile-1-2--clean-v2.png",
+          "sha256": "0be57b424bf5eeb47edc371c7d9d5ee3058e3f16d695b03310e7eb8219626b0a"
+        }
+      ],
+      "runtimeIntegrated": true,
+      "status": "integrated-for-local-game-inspection"
+    },
+    {
+      "name": "Background_Greenhouse",
+      "variant": "clean-v2",
+      "master": "Background_Greenhouse--clean-v2--ai-stitched-4x.png",
+      "candidate": "Background_Greenhouse--clean-v2--ai-stitched-2x.png",
+      "tiles": [
+        {
+          "file": "tile-0-0--clean-v2.png",
+          "sha256": "65aac52ba4a309b611ade7150ee3bf998ad605969fb914d12ff076fbbeacd6e4"
+        },
+        {
+          "file": "tile-0-1--clean-v2.png",
+          "sha256": "94816e06066a7cdf590deebd7c71ff5c420f2bcc302236f957fa7a48644b5410"
+        },
+        {
+          "file": "tile-0-2--clean-v2.png",
+          "sha256": "55bfb7c95c93400aee6dd5856d5141db2c6cffcbbe5d8e1829cfcde78e3b31fa"
+        },
+        {
+          "file": "tile-1-0--clean-v2.png",
+          "sha256": "47b5ba3955eefa2a20f1feeec370918dcc5b48b08f612d116099cde94423d59b"
+        },
+        {
+          "file": "tile-1-1--clean-v2.png",
+          "sha256": "97bd60ad913018da8e8c8c013339e5efb85ba9cb06b3135172bc2cacdb97c802"
+        },
+        {
+          "file": "tile-1-2--clean-v2.png",
+          "sha256": "9a958efa97c13cfea980e75f9d1961936c768634c63e05547f444ff5a844298f"
+        }
+      ],
+      "runtimeIntegrated": true,
+      "status": "integrated-for-local-game-inspection"
+    },
+    {
+      "name": "Background_MushroomGarden",
+      "variant": "clean-v2",
+      "master": "Background_MushroomGarden--clean-v2--ai-stitched-4x.png",
+      "candidate": "Background_MushroomGarden--clean-v2--ai-stitched-2x.png",
+      "tiles": [
+        {
+          "file": "tile-0-0--clean-v2.png",
+          "sha256": "25d534fcc208ebee1bf4956e7ca1f400bfaf53e2d61e070a20ac72257bb72415"
+        },
+        {
+          "file": "tile-0-1--clean-v2.png",
+          "sha256": "6bf5260a8f79abdb6c1a1db817d899ca8fc343eb0ff6e9502015c5782ea10d7f"
+        },
+        {
+          "file": "tile-0-2--clean-v2.png",
+          "sha256": "a2780bb527c3befdca230eb3a3c447921e9c4e0fd1502a2d82959e8747112b74"
+        },
+        {
+          "file": "tile-1-0--clean-v2.png",
+          "sha256": "fdd19f93846f54051d99af0bf4416ae6f970a632bb865794e4e8513511eaafa6"
+        },
+        {
+          "file": "tile-1-1--clean-v2.png",
+          "sha256": "46e36b3cd39cd4e6d9aaca2dfb8c2bb002eb994821a6911b96456734981dc674"
+        },
+        {
+          "file": "tile-1-2--clean-v2.png",
+          "sha256": "86f53b255e0a1c4840973ba71c95f0c391bee4429e62362b032d5c81c3976f72"
+        }
+      ],
+      "runtimeIntegrated": true,
+      "status": "integrated-for-local-game-inspection"
+    },
+    {
+      "name": "Store_Background",
+      "variant": "clean-v2",
+      "master": "Store_Background--clean-v2--ai-stitched-4x.png",
+      "candidate": "Store_Background--clean-v2--ai-stitched-2x.png",
+      "tiles": [
+        {
+          "file": "tile-0-0--clean-v2.png",
+          "sha256": "d898bae60669bc0355263a1008f992183b120e22a2c89f6f849098fff3d7c0ee"
+        },
+        {
+          "file": "tile-0-1--clean-v2.png",
+          "sha256": "8f297ceed0bb7b3d8265d0e1cc359682430ea0e2deba87d29678ec0644c91299"
+        },
+        {
+          "file": "tile-0-2--clean-v2.png",
+          "sha256": "cdde1cf14a2dc81d69faf0d265232a442a3a23da7d2835f16671f59fe69c71bb"
+        },
+        {
+          "file": "tile-1-0--clean-v2.png",
+          "sha256": "4581bdd15cae3def76a5fe11b2a3ff55aa9043c2234dd933c34afd5d34f88dcb"
+        },
+        {
+          "file": "tile-1-1--clean-v2.png",
+          "sha256": "1d3199bce18574c5b998f1b6c36d880e296638c160a916b336a7e3c4c449d1e4"
+        },
+        {
+          "file": "tile-1-2--clean-v2.png",
+          "sha256": "b05acb954e83da14f0650999a787192602e07eb88a9e8528ab9a87da034117cb"
+        }
+      ],
+      "runtimeIntegrated": true,
+      "status": "integrated-for-local-game-inspection"
+    },
+    {
+      "name": "Store_BackgroundNight",
+      "variant": "clean-v2",
+      "master": "Store_BackgroundNight--clean-v2--ai-stitched-4x.png",
+      "candidate": "Store_BackgroundNight--clean-v2--ai-stitched-2x.png",
+      "tiles": [
+        {
+          "file": "tile-0-0--clean-v2.png",
+          "sha256": "006287b102263337f9e0f2364f7baaaf9b542d81a1c930fb2ca958d2ff5772fa"
+        },
+        {
+          "file": "tile-0-1--clean-v2.png",
+          "sha256": "128366ca7c370b0b5eb102af93711f750775823eb2c27b58e2204801a007c2d9"
+        },
+        {
+          "file": "tile-0-2--clean-v2.png",
+          "sha256": "e6b87841170517de5acf59f576a98680adb6626b07de20d10242c834576011a2"
+        },
+        {
+          "file": "tile-1-0--clean-v2.png",
+          "sha256": "b0c4e4faf19d09d2103bc4cbb69a925b152c14a595f62ee489ff1e29f187e57b"
+        },
+        {
+          "file": "tile-1-1--clean-v2.png",
+          "sha256": "2bbdc618bf6b814d3dc563cbb9f5b878cc5beb67629694f1f4e8989361f6daa5"
+        },
+        {
+          "file": "tile-1-2--clean-v2.png",
+          "sha256": "9886521e345b94af336ab8e927bb3526890082cbf361e34928aec20af48e9c04"
+        }
+      ],
+      "runtimeIntegrated": true,
+      "status": "integrated-for-local-game-inspection"
+    }
+  ],
+  "verification": "Image decoding, six raw tiles, master/candidate dimensions and exact Lanczos 4x-to-2x reduction. This does not prove artistic fidelity. Day/night pool blank regions are also pixel-identical to the original four-times Anime4K reference."
+}

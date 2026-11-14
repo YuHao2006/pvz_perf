@@ -1,0 +1,53 @@
+{
+  "source": "User feedback in chat",
+  "fonts": {
+    "dwarventodcraft18": "glyph shape approved; v1 size/overlap rejected; v2 size correction awaiting review",
+    "briannetod16": "approved",
+    "houseofterror20": "approved",
+    "continuumbold14": "approved"
+  },
+  "maps": {
+    "allSix": "wrong",
+    "requiredPlantingColumns": 9
+  },
+  "gardenToolsAndChangeUserSign": "approved",
+  "menuSpriteCandidates": "approved",
+  "menuRuntimeImages": [
+    {
+      "original": "assets/runtime/images/SelectorScreen_ZenGarden.png",
+      "runtimeFile": "images/8cf0b517462a509dbba81652.png",
+      "logicalSize": [
+        191,
+        163
+      ],
+      "master": "assets/source-art/ai/menu-watering-can-shop/candidates/SelectorScreen_ZenGarden--approved-aligned-4x.png"
+    },
+    {
+      "original": "assets/runtime/images/SelectorScreen_ZenGardenHighlight.png",
+      "runtimeFile": "images/2e5dc427102de36fdbd4b67e.png",
+      "logicalSize": [
+        191,
+        163
+      ],
+      "master": "assets/source-art/ai/menu-watering-can-shop/candidates/SelectorScreen_ZenGardenHighlight--approved-aligned-4x.png"
+    },
+    {
+      "original": "assets/runtime/images/SelectorScreen_Store.png",
+      "runtimeFile": "images/98da88d600c56670047bd565.png",
+      "logicalSize": [
+        130,
+        89
+      ],
+      "master": "assets/source-art/ai/menu-watering-can-shop/candidates/SelectorScreen_Store--approved-aligned-4x.png"
+    },
+    {
+      "original": "assets/runtime/images/SelectorScreen_StoreHighlight.png",
+      "runtimeFile": "images/73d828621c67a3c6d72f3f06.png",
+      "logicalSize": [
+        130,
+        89
+      ],
+      "master": "assets/source-art/ai/menu-watering-can-shop/candidates/SelectorScreen_StoreHighlight--approved-aligned-4x.png"
+    }
+  ]
+}

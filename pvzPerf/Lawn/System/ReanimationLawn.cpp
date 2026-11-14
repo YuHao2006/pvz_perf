@@ -155,7 +155,7 @@ void ReanimatorCache::DrawReanimatorFrame(Graphics* g, float thePosX, float theP
 //0x46F280
 Image* ReanimatorCache::MakeBlankRenderImage(int theWidth, int theHeight)
 {
-	return mApp->mDDInterface->mRenderInterface->CreateRenderImage(theWidth,theHeight);
+	return mApp->mDDInterface->mRenderInterface->CreateRenderImage(theWidth,theHeight,2);
 }
 namespace
 {
@@ -214,25 +214,22 @@ void ReanimatorCache::PrebuildCacheFrames()
 
 void ReanimatorCache::GetPlantImageSize(SeedType theSeedType, int& theOffsetX, int& theOffsetY, int& theWidth, int& theHeight)
 {
-	theOffsetX = -20;
-	theOffsetY = -20;
-	theWidth = 120;
-	theHeight = 120;
-
-	if (theSeedType == SeedType::SEED_TALLNUT)
-	{
-		theOffsetY = -40;
-		theHeight += 40;
-	}
-	else if (theSeedType == SeedType::SEED_MELONPULT || theSeedType == SeedType::SEED_WINTERMELON)
-	{
-		theOffsetX = -40;
-		theWidth += 40;
-	}
-	else if (theSeedType == SeedType::SEED_COBCANNON)
-	{
-		theWidth += 80;
-	}
+    struct Bounds { int x,y,width,height; };
+    static constexpr auto bounds=[] {
+        std::array<Bounds,NUM_SEED_TYPES> values{};
+        for(auto& v:values)v={-20,-20,120,120};
+        values[SEED_TALLNUT]={-20,-40,120,160};
+        // The HD throwing arm / melon reaches above the old cache's top edge.
+        // Expand the canvas and move its origin together, preserving world position.
+        values[SEED_MELONPULT]={-40,-40,160,140};
+        values[SEED_WINTERMELON]={-40,-40,160,140};
+        values[SEED_CABBAGEPULT]={-40,-20,140,120};
+        values[SEED_COBCANNON]={-20,-20,200,120};
+        return values;
+    }();
+    TOD_ASSERT(theSeedType>=0 && theSeedType<NUM_SEED_TYPES);
+    const auto& b=bounds[static_cast<std::size_t>(theSeedType)];
+    theOffsetX=b.x;theOffsetY=b.y;theWidth=b.width;theHeight=b.height;
 }
 
 namespace

@@ -1,0 +1,26 @@
+{
+  "sourceBundle": "C:\\Program Files (x86)\\Steam\\steamapps\\common\\PVZ Replanted\\Replanted_Data\\StreamingAssets\\aa\\StandaloneWindows64\\spineassets_assets_assets\\art\\characters\\spine.bundle",
+  "atlas": "ZenGarden_fertilizer.atlas",
+  "texture": "ZenGarden_fertilizer",
+  "region": "bag4",
+  "bounds": [
+    1058,
+    84,
+    350,
+    365
+  ],
+  "rotation": 0,
+  "nativeCanvas": [
+    350,
+    365
+  ],
+  "logicalCanvas": [
+    70,
+    73
+  ],
+  "scale": 5,
+  "sha256": "70b6ed04f9f642f8d4427874a15b2c840215bfb04441ed62d7d433e07073dd47",
+  "status": "integrated for local game inspection",
+  "runtimeIntegrated": true,
+  "discovery": "Fourth stage uses bare region name bag4, without the ZenGarden_fertilizer prefix."
+}

@@ -1,0 +1,74 @@
+[
+  {
+    "symbol": "IMAGE_REANIM_PUFFSHROOM_BLINK1",
+    "losslessTransparentCrop": true,
+    "uniformScale": 2.3076923076923075,
+    "shapeRatio": 1.0
+  },
+  {
+    "symbol": "IMAGE_REANIM_PUFFSHROOM_BLINK2",
+    "losslessTransparentCrop": true,
+    "uniformScale": 2.3076923076923075,
+    "shapeRatio": 1.0
+  },
+  {
+    "symbol": "IMAGE_REANIM_PUFFSHROOM_STEM",
+    "losslessTransparentCrop": true,
+    "uniformScale": 3.4330328116279762,
+    "shapeRatio": 2.121212121212121
+  },
+  {
+    "symbol": "IMAGE_REANIM_JALAPENO_EYE2",
+    "losslessTransparentCrop": true,
+    "uniformScale": 3.331666249791536,
+    "shapeRatio": 0.9810810810810809
+  },
+  {
+    "symbol": "IMAGE_REANIM_STARFRUIT_SMILE",
+    "losslessTransparentCrop": true,
+    "uniformScale": 3.4907284605344464,
+    "shapeRatio": 0.9947089947089947
+  },
+  {
+    "symbol": "IMAGE_REANIM_TALLNUT_BODY",
+    "losslessTransparentCrop": true,
+    "uniformScale": 4.022155674110261,
+    "shapeRatio": 0.9940148514002505
+  },
+  {
+    "symbol": "IMAGE_REANIM_TALLNUT_CRACKED1",
+    "losslessTransparentCrop": true,
+    "uniformScale": 4.020374978983198,
+    "shapeRatio": 0.9999139607316778
+  },
+  {
+    "symbol": "IMAGE_REANIM_TALLNUT_CRACKED2",
+    "losslessTransparentCrop": true,
+    "uniformScale": 4.0135677582909715,
+    "shapeRatio": 1.00330864975579
+  },
+  {
+    "symbol": "IMAGE_REANIM_ZENGARDEN_FERTILIZER_BAG2",
+    "losslessTransparentCrop": true,
+    "uniformScale": 5.037490702354951,
+    "shapeRatio": 0.9137627432808155
+  },
+  {
+    "symbol": "IMAGE_REANIM_ZENGARDEN_FERTILIZER_BAG3",
+    "losslessTransparentCrop": true,
+    "uniformScale": 4.875813541585413,
+    "shapeRatio": 1.038484726688103
+  },
+  {
+    "symbol": "IMAGE_REANIM_ZENGARDEN_FERTILIZE_BAG1",
+    "losslessTransparentCrop": true,
+    "uniformScale": 4.903898042141023,
+    "shapeRatio": 1.0213135930047694
+  },
+  {
+    "symbol": "IMAGE_REANIM_ZENGARDEN_PHONOGRAPH_NEEDLE",
+    "losslessTransparentCrop": true,
+    "uniformScale": 4.755563543407303,
+    "shapeRatio": 0.9629629629629631
+  }
+]

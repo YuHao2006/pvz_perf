@@ -1,0 +1,1377 @@
+{
+  "counts": {
+    "approved": 8
+  },
+  "assets": [
+    {
+      "original": "assets/runtime/images/SelectorScreen_Options1.png",
+      "hdFile": "assets/source-art/replanted/ui-source-round23/SelectorScreen_Options1--paired.png",
+      "category": "ui",
+      "groups": [
+        "主菜单成套按钮"
+      ],
+      "review": {
+        "status": "approved",
+        "note": "",
+        "updatedAt": "2026-11-10T19:31:25.017Z",
+        "needsCrop": false
+      },
+      "requestedColorFixApplied": false,
+      "selectedInRound": 23,
+      "candidateId": "round23:955f9e2213047ab682",
+      "source": {
+        "bundle": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+        "pathId": 2588736048113711528,
+        "type": "Sprite",
+        "name": "SPR_MainMenu_Button_Options",
+        "file": "assets/source-art/replanted/ui-source-round23/SPR_MainMenu_Button_Options.png",
+        "size": [
+          280,
+          91
+        ],
+        "sha256": "9b7a2a91ae86e90a5eec5cb257db56fc3c643df2919317785ccf69d522404d2c",
+        "atlas": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+        "region": "SPR_MainMenu_Button_Options",
+        "crop": [
+          0,
+          0,
+          280,
+          91
+        ]
+      },
+      "processing": [
+        {
+          "file": "assets/source-art/replanted/ui-source-round23/SelectorScreen_Options1--paired.png",
+          "sourceFile": "assets/source-art/replanted/ui-source-round23/SPR_MainMenu_Button_Options.png",
+          "size": [
+            280,
+            91
+          ],
+          "logicalCanvas": [
+            81,
+            31
+          ],
+          "logicalDrawRect": [
+            1.0,
+            2.1624999999999996,
+            79.0,
+            25.675
+          ],
+          "sha256": "9b7a2a91ae86e90a5eec5cb257db56fc3c643df2919317785ccf69d522404d2c"
+        }
+      ],
+      "processingFlags": [
+        "重植版成套文字图，正常和悬停共用裁切框与等比映射；只替换文字叠层，不替换背景里的花瓶。"
+      ],
+      "runtimeIntegrated": true,
+      "sha256": "9b7a2a91ae86e90a5eec5cb257db56fc3c643df2919317785ccf69d522404d2c",
+      "history": [
+        {
+          "original": "assets/runtime/images/SelectorScreen_Options1.png",
+          "hdFile": "assets/source-art/replanted/sprite-candidates-round3/SelectorScreen_Options1--df903e3a4808dbed.png",
+          "category": "ui",
+          "groups": [
+            "主菜单"
+          ],
+          "review": {
+            "status": "pending",
+            "note": "透明度不同",
+            "updatedAt": "2026-11-09T12:50:41.598Z",
+            "needsCrop": false
+          },
+          "selectedInRound": 3,
+          "candidateId": "round3-sprite:df903e3a4808dbed",
+          "source": {
+            "bundle": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+            "type": "Sprite",
+            "pathId": 2588736048113711528,
+            "name": "SPR_MainMenu_Button_Options",
+            "width": 280.0,
+            "height": 91.0
+          },
+          "pixelSize": [
+            280,
+            91
+          ],
+          "sha256": "9b7a2a91ae86e90a5eec5cb257db56fc3c643df2919317785ccf69d522404d2c",
+          "processingFlags": [
+            "这是同用途 UI 组件的来源定位；新旧构图、文字或九宫格可能不同，尚不是可直接替换的成品。"
+          ],
+          "sourceEvidence": null,
+          "runtimeIntegrated": false
+        },
+        {
+          "original": "assets/runtime/images/SelectorScreen_Options1.png",
+          "hdFile": "assets/source-art/replanted/ui-source-round23/SelectorScreen_Options1--paired.png",
+          "category": "ui",
+          "groups": [
+            "主菜单成套按钮"
+          ],
+          "review": {
+            "status": "approved",
+            "note": "",
+            "updatedAt": "2026-11-10T19:31:25.017Z",
+            "needsCrop": false
+          },
+          "requestedColorFixApplied": false,
+          "selectedInRound": 23,
+          "candidateId": "round23:955f9e2213047ab682",
+          "source": {
+            "bundle": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+            "pathId": 2588736048113711528,
+            "type": "Sprite",
+            "name": "SPR_MainMenu_Button_Options",
+            "file": "assets/source-art/replanted/ui-source-round23/SPR_MainMenu_Button_Options.png",
+            "size": [
+              280,
+              91
+            ],
+            "sha256": "9b7a2a91ae86e90a5eec5cb257db56fc3c643df2919317785ccf69d522404d2c",
+            "atlas": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+            "region": "SPR_MainMenu_Button_Options",
+            "crop": [
+              0,
+              0,
+              280,
+              91
+            ]
+          },
+          "processing": [
+            {
+              "file": "assets/source-art/replanted/ui-source-round23/SelectorScreen_Options1--paired.png",
+              "sourceFile": "assets/source-art/replanted/ui-source-round23/SPR_MainMenu_Button_Options.png",
+              "size": [
+                280,
+                91
+              ],
+              "logicalCanvas": [
+                81,
+                31
+              ],
+              "logicalDrawRect": [
+                1.0,
+                2.1624999999999996,
+                79.0,
+                25.675
+              ],
+              "sha256": "9b7a2a91ae86e90a5eec5cb257db56fc3c643df2919317785ccf69d522404d2c"
+            }
+          ],
+          "processingFlags": [
+            "重植版成套文字图，正常和悬停共用裁切框与等比映射；只替换文字叠层，不替换背景里的花瓶。"
+          ],
+          "runtimeIntegrated": true,
+          "sha256": "9b7a2a91ae86e90a5eec5cb257db56fc3c643df2919317785ccf69d522404d2c"
+        }
+      ]
+    },
+    {
+      "original": "assets/runtime/images/SelectorScreen_Options2.png",
+      "hdFile": "assets/source-art/replanted/ui-source-round23/SelectorScreen_Options2--paired.png",
+      "category": "ui",
+      "groups": [
+        "主菜单成套按钮"
+      ],
+      "review": {
+        "status": "approved",
+        "note": "",
+        "updatedAt": "2026-11-10T19:31:27.119Z",
+        "needsCrop": false
+      },
+      "requestedColorFixApplied": false,
+      "selectedInRound": 23,
+      "candidateId": "round23:b7db1bfd410635df0f",
+      "source": {
+        "bundle": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+        "pathId": 8254357258277870406,
+        "type": "Sprite",
+        "name": "SPR_MainMenu_Button_Options_Over",
+        "file": "assets/source-art/replanted/ui-source-round23/SPR_MainMenu_Button_Options_Over.png",
+        "size": [
+          280,
+          91
+        ],
+        "sha256": "08614db3f8b9ac492729d5efe15d654f3fb0d197348523644fd694b40ce22ecf",
+        "atlas": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+        "region": "SPR_MainMenu_Button_Options_Over",
+        "crop": [
+          0,
+          0,
+          280,
+          91
+        ]
+      },
+      "processing": [
+        {
+          "file": "assets/source-art/replanted/ui-source-round23/SelectorScreen_Options2--paired.png",
+          "sourceFile": "assets/source-art/replanted/ui-source-round23/SPR_MainMenu_Button_Options_Over.png",
+          "size": [
+            280,
+            91
+          ],
+          "logicalCanvas": [
+            81,
+            31
+          ],
+          "logicalDrawRect": [
+            1.0,
+            2.1624999999999996,
+            79.0,
+            25.675
+          ],
+          "sha256": "08614db3f8b9ac492729d5efe15d654f3fb0d197348523644fd694b40ce22ecf"
+        }
+      ],
+      "processingFlags": [
+        "重植版成套文字图，正常和悬停共用裁切框与等比映射；只替换文字叠层，不替换背景里的花瓶。"
+      ],
+      "runtimeIntegrated": true,
+      "sha256": "08614db3f8b9ac492729d5efe15d654f3fb0d197348523644fd694b40ce22ecf",
+      "history": [
+        {
+          "original": "assets/runtime/images/SelectorScreen_Options2.png",
+          "hdFile": "assets/source-art/replanted/sprite-candidates-round3/SelectorScreen_Options2--2c909b18d02ff46a.png",
+          "category": "ui",
+          "groups": [
+            "主菜单"
+          ],
+          "review": {
+            "status": "approved",
+            "note": "",
+            "updatedAt": "2026-11-09T12:50:43.266Z",
+            "needsCrop": false
+          },
+          "selectedInRound": 3,
+          "candidateId": "round3-sprite:2c909b18d02ff46a",
+          "source": {
+            "bundle": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+            "type": "Sprite",
+            "pathId": 8254357258277870406,
+            "name": "SPR_MainMenu_Button_Options_Over",
+            "width": 280.0,
+            "height": 91.0
+          },
+          "pixelSize": [
+            280,
+            91
+          ],
+          "sha256": "08614db3f8b9ac492729d5efe15d654f3fb0d197348523644fd694b40ce22ecf",
+          "processingFlags": [
+            "这是同用途 UI 组件的来源定位；新旧构图、文字或九宫格可能不同，尚不是可直接替换的成品。"
+          ],
+          "sourceEvidence": null,
+          "runtimeIntegrated": false
+        },
+        {
+          "original": "assets/runtime/images/SelectorScreen_Options2.png",
+          "hdFile": "assets/source-art/replanted/ui-source-round23/SelectorScreen_Options2--paired.png",
+          "category": "ui",
+          "groups": [
+            "主菜单成套按钮"
+          ],
+          "review": {
+            "status": "approved",
+            "note": "",
+            "updatedAt": "2026-11-10T19:31:27.119Z",
+            "needsCrop": false
+          },
+          "requestedColorFixApplied": false,
+          "selectedInRound": 23,
+          "candidateId": "round23:b7db1bfd410635df0f",
+          "source": {
+            "bundle": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+            "pathId": 8254357258277870406,
+            "type": "Sprite",
+            "name": "SPR_MainMenu_Button_Options_Over",
+            "file": "assets/source-art/replanted/ui-source-round23/SPR_MainMenu_Button_Options_Over.png",
+            "size": [
+              280,
+              91
+            ],
+            "sha256": "08614db3f8b9ac492729d5efe15d654f3fb0d197348523644fd694b40ce22ecf",
+            "atlas": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+            "region": "SPR_MainMenu_Button_Options_Over",
+            "crop": [
+              0,
+              0,
+              280,
+              91
+            ]
+          },
+          "processing": [
+            {
+              "file": "assets/source-art/replanted/ui-source-round23/SelectorScreen_Options2--paired.png",
+              "sourceFile": "assets/source-art/replanted/ui-source-round23/SPR_MainMenu_Button_Options_Over.png",
+              "size": [
+                280,
+                91
+              ],
+              "logicalCanvas": [
+                81,
+                31
+              ],
+              "logicalDrawRect": [
+                1.0,
+                2.1624999999999996,
+                79.0,
+                25.675
+              ],
+              "sha256": "08614db3f8b9ac492729d5efe15d654f3fb0d197348523644fd694b40ce22ecf"
+            }
+          ],
+          "processingFlags": [
+            "重植版成套文字图，正常和悬停共用裁切框与等比映射；只替换文字叠层，不替换背景里的花瓶。"
+          ],
+          "runtimeIntegrated": true,
+          "sha256": "08614db3f8b9ac492729d5efe15d654f3fb0d197348523644fd694b40ce22ecf"
+        }
+      ]
+    },
+    {
+      "original": "assets/runtime/images/SelectorScreen_Help1.png",
+      "hdFile": "assets/source-art/replanted/ui-source-round23/SelectorScreen_Help1--paired.png",
+      "category": "ui",
+      "groups": [
+        "主菜单成套按钮"
+      ],
+      "review": {
+        "status": "approved",
+        "note": "",
+        "updatedAt": "2026-11-10T19:31:28.663Z",
+        "needsCrop": false
+      },
+      "requestedColorFixApplied": false,
+      "selectedInRound": 23,
+      "candidateId": "round23:e2fc71d548d747bae2",
+      "source": {
+        "bundle": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+        "pathId": -8561012095059521932,
+        "type": "Sprite",
+        "name": "SPR_MainMenu_Button_Help",
+        "file": "assets/source-art/replanted/ui-source-round23/SPR_MainMenu_Button_Help.png",
+        "size": [
+          152,
+          62
+        ],
+        "sha256": "db58b6a6d6e7c511dc848bd607e1f3e8e827cbc4ee40a9686a7573a922e0160a",
+        "atlas": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+        "region": "SPR_MainMenu_Button_Help",
+        "crop": [
+          0,
+          0,
+          152,
+          62
+        ]
+      },
+      "processing": [
+        {
+          "file": "assets/source-art/replanted/ui-source-round23/SelectorScreen_Help1--paired.png",
+          "sourceFile": "assets/source-art/replanted/ui-source-round23/SPR_MainMenu_Button_Help.png",
+          "size": [
+            152,
+            62
+          ],
+          "logicalCanvas": [
+            48,
+            22
+          ],
+          "logicalDrawRect": [
+            2.0,
+            1.526315789473685,
+            44.0,
+            17.94736842105263
+          ],
+          "sha256": "db58b6a6d6e7c511dc848bd607e1f3e8e827cbc4ee40a9686a7573a922e0160a"
+        }
+      ],
+      "processingFlags": [
+        "重植版成套文字图，正常和悬停共用裁切框与等比映射；只替换文字叠层，不替换背景里的花瓶。"
+      ],
+      "runtimeIntegrated": true,
+      "sha256": "db58b6a6d6e7c511dc848bd607e1f3e8e827cbc4ee40a9686a7573a922e0160a",
+      "history": [
+        {
+          "original": "assets/runtime/images/SelectorScreen_Help1.png",
+          "hdFile": "assets/source-art/replanted/sprite-candidates-round3/SelectorScreen_Help1--b67ac183618d520a.png",
+          "category": "ui",
+          "groups": [
+            "主菜单"
+          ],
+          "review": {
+            "status": "pending",
+            "note": "透明度不同",
+            "updatedAt": "2026-11-09T12:50:35.320Z",
+            "needsCrop": false
+          },
+          "selectedInRound": 3,
+          "candidateId": "round3-sprite:b67ac183618d520a",
+          "source": {
+            "bundle": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+            "type": "Sprite",
+            "pathId": -8561012095059521932,
+            "name": "SPR_MainMenu_Button_Help",
+            "width": 152.0,
+            "height": 62.0
+          },
+          "pixelSize": [
+            152,
+            62
+          ],
+          "sha256": "db58b6a6d6e7c511dc848bd607e1f3e8e827cbc4ee40a9686a7573a922e0160a",
+          "processingFlags": [
+            "这是同用途 UI 组件的来源定位；新旧构图、文字或九宫格可能不同，尚不是可直接替换的成品。"
+          ],
+          "sourceEvidence": null,
+          "runtimeIntegrated": false
+        },
+        {
+          "original": "assets/runtime/images/SelectorScreen_Help1.png",
+          "hdFile": "assets/source-art/replanted/ui-source-round23/SelectorScreen_Help1--paired.png",
+          "category": "ui",
+          "groups": [
+            "主菜单成套按钮"
+          ],
+          "review": {
+            "status": "approved",
+            "note": "",
+            "updatedAt": "2026-11-10T19:31:28.663Z",
+            "needsCrop": false
+          },
+          "requestedColorFixApplied": false,
+          "selectedInRound": 23,
+          "candidateId": "round23:e2fc71d548d747bae2",
+          "source": {
+            "bundle": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+            "pathId": -8561012095059521932,
+            "type": "Sprite",
+            "name": "SPR_MainMenu_Button_Help",
+            "file": "assets/source-art/replanted/ui-source-round23/SPR_MainMenu_Button_Help.png",
+            "size": [
+              152,
+              62
+            ],
+            "sha256": "db58b6a6d6e7c511dc848bd607e1f3e8e827cbc4ee40a9686a7573a922e0160a",
+            "atlas": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+            "region": "SPR_MainMenu_Button_Help",
+            "crop": [
+              0,
+              0,
+              152,
+              62
+            ]
+          },
+          "processing": [
+            {
+              "file": "assets/source-art/replanted/ui-source-round23/SelectorScreen_Help1--paired.png",
+              "sourceFile": "assets/source-art/replanted/ui-source-round23/SPR_MainMenu_Button_Help.png",
+              "size": [
+                152,
+                62
+              ],
+              "logicalCanvas": [
+                48,
+                22
+              ],
+              "logicalDrawRect": [
+                2.0,
+                1.526315789473685,
+                44.0,
+                17.94736842105263
+              ],
+              "sha256": "db58b6a6d6e7c511dc848bd607e1f3e8e827cbc4ee40a9686a7573a922e0160a"
+            }
+          ],
+          "processingFlags": [
+            "重植版成套文字图，正常和悬停共用裁切框与等比映射；只替换文字叠层，不替换背景里的花瓶。"
+          ],
+          "runtimeIntegrated": true,
+          "sha256": "db58b6a6d6e7c511dc848bd607e1f3e8e827cbc4ee40a9686a7573a922e0160a"
+        }
+      ]
+    },
+    {
+      "original": "assets/runtime/images/SelectorScreen_Help2.png",
+      "hdFile": "assets/source-art/replanted/ui-source-round23/SelectorScreen_Help2--paired.png",
+      "category": "ui",
+      "groups": [
+        "主菜单成套按钮"
+      ],
+      "review": {
+        "status": "approved",
+        "note": "",
+        "updatedAt": "2026-11-10T19:31:33.316Z",
+        "needsCrop": false
+      },
+      "requestedColorFixApplied": false,
+      "selectedInRound": 23,
+      "candidateId": "round23:ecc70e743ce8e61e20",
+      "source": {
+        "bundle": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+        "pathId": 269663784966413621,
+        "type": "Sprite",
+        "name": "SPR_MainMenu_Button_Help_Over",
+        "file": "assets/source-art/replanted/ui-source-round23/SPR_MainMenu_Button_Help_Over.png",
+        "size": [
+          152,
+          62
+        ],
+        "sha256": "b31e3ff4771322fff0b6adbefb9d9b9e234056366d03e00b95b6831040d33507",
+        "atlas": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+        "region": "SPR_MainMenu_Button_Help_Over",
+        "crop": [
+          0,
+          0,
+          152,
+          62
+        ]
+      },
+      "processing": [
+        {
+          "file": "assets/source-art/replanted/ui-source-round23/SelectorScreen_Help2--paired.png",
+          "sourceFile": "assets/source-art/replanted/ui-source-round23/SPR_MainMenu_Button_Help_Over.png",
+          "size": [
+            152,
+            62
+          ],
+          "logicalCanvas": [
+            48,
+            22
+          ],
+          "logicalDrawRect": [
+            2.0,
+            1.526315789473685,
+            44.0,
+            17.94736842105263
+          ],
+          "sha256": "b31e3ff4771322fff0b6adbefb9d9b9e234056366d03e00b95b6831040d33507"
+        }
+      ],
+      "processingFlags": [
+        "重植版成套文字图，正常和悬停共用裁切框与等比映射；只替换文字叠层，不替换背景里的花瓶。"
+      ],
+      "runtimeIntegrated": true,
+      "sha256": "b31e3ff4771322fff0b6adbefb9d9b9e234056366d03e00b95b6831040d33507",
+      "history": [
+        {
+          "original": "assets/runtime/images/SelectorScreen_Help2.png",
+          "hdFile": "assets/source-art/replanted/sprite-candidates-round3/SelectorScreen_Help2--bc7c157ea5b26890.png",
+          "category": "ui",
+          "groups": [
+            "主菜单"
+          ],
+          "review": {
+            "status": "approved",
+            "note": "",
+            "updatedAt": "2026-11-09T12:50:26.364Z",
+            "needsCrop": false
+          },
+          "selectedInRound": 3,
+          "candidateId": "round3-sprite:bc7c157ea5b26890",
+          "source": {
+            "bundle": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+            "type": "Sprite",
+            "pathId": 269663784966413621,
+            "name": "SPR_MainMenu_Button_Help_Over",
+            "width": 152.0,
+            "height": 62.0
+          },
+          "pixelSize": [
+            152,
+            62
+          ],
+          "sha256": "b31e3ff4771322fff0b6adbefb9d9b9e234056366d03e00b95b6831040d33507",
+          "processingFlags": [
+            "这是同用途 UI 组件的来源定位；新旧构图、文字或九宫格可能不同，尚不是可直接替换的成品。"
+          ],
+          "sourceEvidence": null,
+          "runtimeIntegrated": false
+        },
+        {
+          "original": "assets/runtime/images/SelectorScreen_Help2.png",
+          "hdFile": "assets/source-art/replanted/ui-source-round23/SelectorScreen_Help2--paired.png",
+          "category": "ui",
+          "groups": [
+            "主菜单成套按钮"
+          ],
+          "review": {
+            "status": "approved",
+            "note": "",
+            "updatedAt": "2026-11-10T19:31:33.316Z",
+            "needsCrop": false
+          },
+          "requestedColorFixApplied": false,
+          "selectedInRound": 23,
+          "candidateId": "round23:ecc70e743ce8e61e20",
+          "source": {
+            "bundle": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+            "pathId": 269663784966413621,
+            "type": "Sprite",
+            "name": "SPR_MainMenu_Button_Help_Over",
+            "file": "assets/source-art/replanted/ui-source-round23/SPR_MainMenu_Button_Help_Over.png",
+            "size": [
+              152,
+              62
+            ],
+            "sha256": "b31e3ff4771322fff0b6adbefb9d9b9e234056366d03e00b95b6831040d33507",
+            "atlas": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+            "region": "SPR_MainMenu_Button_Help_Over",
+            "crop": [
+              0,
+              0,
+              152,
+              62
+            ]
+          },
+          "processing": [
+            {
+              "file": "assets/source-art/replanted/ui-source-round23/SelectorScreen_Help2--paired.png",
+              "sourceFile": "assets/source-art/replanted/ui-source-round23/SPR_MainMenu_Button_Help_Over.png",
+              "size": [
+                152,
+                62
+              ],
+              "logicalCanvas": [
+                48,
+                22
+              ],
+              "logicalDrawRect": [
+                2.0,
+                1.526315789473685,
+                44.0,
+                17.94736842105263
+              ],
+              "sha256": "b31e3ff4771322fff0b6adbefb9d9b9e234056366d03e00b95b6831040d33507"
+            }
+          ],
+          "processingFlags": [
+            "重植版成套文字图，正常和悬停共用裁切框与等比映射；只替换文字叠层，不替换背景里的花瓶。"
+          ],
+          "runtimeIntegrated": true,
+          "sha256": "b31e3ff4771322fff0b6adbefb9d9b9e234056366d03e00b95b6831040d33507"
+        }
+      ]
+    },
+    {
+      "original": "assets/runtime/images/SelectorScreen_Quit1.png",
+      "hdFile": "assets/source-art/replanted/ui-source-round23/SelectorScreen_Quit1--paired.png",
+      "category": "ui",
+      "groups": [
+        "主菜单成套按钮"
+      ],
+      "review": {
+        "status": "approved",
+        "note": "",
+        "updatedAt": "2026-11-10T19:31:35.612Z",
+        "needsCrop": false
+      },
+      "requestedColorFixApplied": false,
+      "selectedInRound": 23,
+      "candidateId": "round23:d318d28fe31a492002",
+      "source": {
+        "bundle": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+        "pathId": -5382507700332463411,
+        "type": "Sprite",
+        "name": "SPR_MainMenu_Button_Quit",
+        "file": "assets/source-art/replanted/ui-source-round23/SPR_MainMenu_Button_Quit.png",
+        "size": [
+          147,
+          86
+        ],
+        "sha256": "b0e7f7b711ea2629e561ccb821ae1f8f2de756c6bdb973ab03490f6f80bcd0e7",
+        "atlas": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+        "region": "SPR_MainMenu_Button_Quit",
+        "crop": [
+          0,
+          0,
+          147,
+          86
+        ]
+      },
+      "processing": [
+        {
+          "file": "assets/source-art/replanted/ui-source-round23/SelectorScreen_Quit1--paired.png",
+          "sourceFile": "assets/source-art/replanted/ui-source-round23/SPR_MainMenu_Button_Quit.png",
+          "size": [
+            147,
+            86
+          ],
+          "logicalCanvas": [
+            47,
+            27
+          ],
+          "logicalDrawRect": [
+            2.133720930232556,
+            1.0,
+            42.73255813953489,
+            25.0
+          ],
+          "sha256": "b0e7f7b711ea2629e561ccb821ae1f8f2de756c6bdb973ab03490f6f80bcd0e7"
+        }
+      ],
+      "processingFlags": [
+        "重植版成套文字图，正常和悬停共用裁切框与等比映射；只替换文字叠层，不替换背景里的花瓶。"
+      ],
+      "runtimeIntegrated": true,
+      "sha256": "b0e7f7b711ea2629e561ccb821ae1f8f2de756c6bdb973ab03490f6f80bcd0e7",
+      "history": [
+        {
+          "original": "assets/runtime/images/SelectorScreen_Quit1.png",
+          "hdFile": "assets/source-art/replanted/sprite-candidates-round3/SelectorScreen_Quit1--06eafd2ea15424f3.png",
+          "category": "ui",
+          "groups": [
+            "主菜单"
+          ],
+          "review": {
+            "status": "pending",
+            "note": "透明度不同",
+            "updatedAt": "2026-11-09T12:50:50.065Z",
+            "needsCrop": false
+          },
+          "selectedInRound": 3,
+          "candidateId": "round3-sprite:06eafd2ea15424f3",
+          "source": {
+            "bundle": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+            "type": "Sprite",
+            "pathId": -5382507700332463411,
+            "name": "SPR_MainMenu_Button_Quit",
+            "width": 147.0,
+            "height": 86.0
+          },
+          "pixelSize": [
+            147,
+            86
+          ],
+          "sha256": "b0e7f7b711ea2629e561ccb821ae1f8f2de756c6bdb973ab03490f6f80bcd0e7",
+          "processingFlags": [
+            "这是同用途 UI 组件的来源定位；新旧构图、文字或九宫格可能不同，尚不是可直接替换的成品。"
+          ],
+          "sourceEvidence": null,
+          "runtimeIntegrated": false
+        },
+        {
+          "original": "assets/runtime/images/SelectorScreen_Quit1.png",
+          "hdFile": "assets/source-art/replanted/ui-source-round23/SelectorScreen_Quit1--paired.png",
+          "category": "ui",
+          "groups": [
+            "主菜单成套按钮"
+          ],
+          "review": {
+            "status": "approved",
+            "note": "",
+            "updatedAt": "2026-11-10T19:31:35.612Z",
+            "needsCrop": false
+          },
+          "requestedColorFixApplied": false,
+          "selectedInRound": 23,
+          "candidateId": "round23:d318d28fe31a492002",
+          "source": {
+            "bundle": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+            "pathId": -5382507700332463411,
+            "type": "Sprite",
+            "name": "SPR_MainMenu_Button_Quit",
+            "file": "assets/source-art/replanted/ui-source-round23/SPR_MainMenu_Button_Quit.png",
+            "size": [
+              147,
+              86
+            ],
+            "sha256": "b0e7f7b711ea2629e561ccb821ae1f8f2de756c6bdb973ab03490f6f80bcd0e7",
+            "atlas": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+            "region": "SPR_MainMenu_Button_Quit",
+            "crop": [
+              0,
+              0,
+              147,
+              86
+            ]
+          },
+          "processing": [
+            {
+              "file": "assets/source-art/replanted/ui-source-round23/SelectorScreen_Quit1--paired.png",
+              "sourceFile": "assets/source-art/replanted/ui-source-round23/SPR_MainMenu_Button_Quit.png",
+              "size": [
+                147,
+                86
+              ],
+              "logicalCanvas": [
+                47,
+                27
+              ],
+              "logicalDrawRect": [
+                2.133720930232556,
+                1.0,
+                42.73255813953489,
+                25.0
+              ],
+              "sha256": "b0e7f7b711ea2629e561ccb821ae1f8f2de756c6bdb973ab03490f6f80bcd0e7"
+            }
+          ],
+          "processingFlags": [
+            "重植版成套文字图，正常和悬停共用裁切框与等比映射；只替换文字叠层，不替换背景里的花瓶。"
+          ],
+          "runtimeIntegrated": true,
+          "sha256": "b0e7f7b711ea2629e561ccb821ae1f8f2de756c6bdb973ab03490f6f80bcd0e7"
+        }
+      ]
+    },
+    {
+      "original": "assets/runtime/images/SelectorScreen_Quit2.png",
+      "hdFile": "assets/source-art/replanted/ui-source-round23/SelectorScreen_Quit2--paired.png",
+      "category": "ui",
+      "groups": [
+        "主菜单成套按钮"
+      ],
+      "review": {
+        "status": "approved",
+        "note": "",
+        "updatedAt": "2026-11-10T19:31:37.331Z",
+        "needsCrop": false
+      },
+      "requestedColorFixApplied": false,
+      "selectedInRound": 23,
+      "candidateId": "round23:ff007b2b5d67b23402",
+      "source": {
+        "bundle": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+        "pathId": 882397557596598853,
+        "type": "Sprite",
+        "name": "SPR_MainMenu_Button_Quit_Over",
+        "file": "assets/source-art/replanted/ui-source-round23/SPR_MainMenu_Button_Quit_Over.png",
+        "size": [
+          147,
+          86
+        ],
+        "sha256": "16789d6671757dd6aaa982f3406c9a578a92100f55a2b096b197adf913243c39",
+        "atlas": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+        "region": "SPR_MainMenu_Button_Quit_Over",
+        "crop": [
+          0,
+          0,
+          147,
+          86
+        ]
+      },
+      "processing": [
+        {
+          "file": "assets/source-art/replanted/ui-source-round23/SelectorScreen_Quit2--paired.png",
+          "sourceFile": "assets/source-art/replanted/ui-source-round23/SPR_MainMenu_Button_Quit_Over.png",
+          "size": [
+            147,
+            86
+          ],
+          "logicalCanvas": [
+            47,
+            27
+          ],
+          "logicalDrawRect": [
+            2.133720930232556,
+            1.0,
+            42.73255813953489,
+            25.0
+          ],
+          "sha256": "16789d6671757dd6aaa982f3406c9a578a92100f55a2b096b197adf913243c39"
+        }
+      ],
+      "processingFlags": [
+        "重植版成套文字图，正常和悬停共用裁切框与等比映射；只替换文字叠层，不替换背景里的花瓶。"
+      ],
+      "runtimeIntegrated": true,
+      "sha256": "16789d6671757dd6aaa982f3406c9a578a92100f55a2b096b197adf913243c39",
+      "history": [
+        {
+          "original": "assets/runtime/images/SelectorScreen_Quit2.png",
+          "hdFile": "assets/source-art/replanted/sprite-candidates-round3/SelectorScreen_Quit2--79eba97c7046080d.png",
+          "category": "ui",
+          "groups": [
+            "主菜单"
+          ],
+          "review": {
+            "status": "approved",
+            "note": "",
+            "updatedAt": "2026-11-09T12:50:51.737Z",
+            "needsCrop": false
+          },
+          "selectedInRound": 3,
+          "candidateId": "round3-sprite:79eba97c7046080d",
+          "source": {
+            "bundle": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+            "type": "Sprite",
+            "pathId": 882397557596598853,
+            "name": "SPR_MainMenu_Button_Quit_Over",
+            "width": 147.0,
+            "height": 86.0
+          },
+          "pixelSize": [
+            147,
+            86
+          ],
+          "sha256": "16789d6671757dd6aaa982f3406c9a578a92100f55a2b096b197adf913243c39",
+          "processingFlags": [
+            "这是同用途 UI 组件的来源定位；新旧构图、文字或九宫格可能不同，尚不是可直接替换的成品。"
+          ],
+          "sourceEvidence": null,
+          "runtimeIntegrated": false
+        },
+        {
+          "original": "assets/runtime/images/SelectorScreen_Quit2.png",
+          "hdFile": "assets/source-art/replanted/ui-source-round23/SelectorScreen_Quit2--paired.png",
+          "category": "ui",
+          "groups": [
+            "主菜单成套按钮"
+          ],
+          "review": {
+            "status": "approved",
+            "note": "",
+            "updatedAt": "2026-11-10T19:31:37.331Z",
+            "needsCrop": false
+          },
+          "requestedColorFixApplied": false,
+          "selectedInRound": 23,
+          "candidateId": "round23:ff007b2b5d67b23402",
+          "source": {
+            "bundle": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+            "pathId": 882397557596598853,
+            "type": "Sprite",
+            "name": "SPR_MainMenu_Button_Quit_Over",
+            "file": "assets/source-art/replanted/ui-source-round23/SPR_MainMenu_Button_Quit_Over.png",
+            "size": [
+              147,
+              86
+            ],
+            "sha256": "16789d6671757dd6aaa982f3406c9a578a92100f55a2b096b197adf913243c39",
+            "atlas": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+            "region": "SPR_MainMenu_Button_Quit_Over",
+            "crop": [
+              0,
+              0,
+              147,
+              86
+            ]
+          },
+          "processing": [
+            {
+              "file": "assets/source-art/replanted/ui-source-round23/SelectorScreen_Quit2--paired.png",
+              "sourceFile": "assets/source-art/replanted/ui-source-round23/SPR_MainMenu_Button_Quit_Over.png",
+              "size": [
+                147,
+                86
+              ],
+              "logicalCanvas": [
+                47,
+                27
+              ],
+              "logicalDrawRect": [
+                2.133720930232556,
+                1.0,
+                42.73255813953489,
+                25.0
+              ],
+              "sha256": "16789d6671757dd6aaa982f3406c9a578a92100f55a2b096b197adf913243c39"
+            }
+          ],
+          "processingFlags": [
+            "重植版成套文字图，正常和悬停共用裁切框与等比映射；只替换文字叠层，不替换背景里的花瓶。"
+          ],
+          "runtimeIntegrated": true,
+          "sha256": "16789d6671757dd6aaa982f3406c9a578a92100f55a2b096b197adf913243c39"
+        }
+      ]
+    },
+    {
+      "original": "assets/runtime/images/SelectorScreen_Store.png",
+      "hdFile": "assets/source-art/replanted/ui-source-round23/SelectorScreen_Store--paired.png",
+      "category": "ui",
+      "groups": [
+        "主菜单成套按钮"
+      ],
+      "review": {
+        "status": "approved",
+        "note": "",
+        "updatedAt": "2026-11-10T19:31:39.827Z",
+        "needsCrop": false
+      },
+      "requestedColorFixApplied": false,
+      "selectedInRound": 23,
+      "candidateId": "round23:abbea063d05586f4d1",
+      "source": {
+        "atlas": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+        "region": "SPR_MainMenu_Button_Shop",
+        "file": "assets/source-art/replanted/ui-source-round23/SPR_MainMenu_Button_Shop.png",
+        "crop": [
+          5,
+          0,
+          465,
+          321
+        ]
+      },
+      "processing": [
+        {
+          "file": "assets/source-art/replanted/ui-source-round23/SelectorScreen_Store--paired.png",
+          "sourceFile": "assets/source-art/replanted/ui-source-round23/SPR_MainMenu_Button_Shop.png",
+          "size": [
+            460,
+            321
+          ],
+          "logicalCanvas": [
+            130,
+            89
+          ],
+          "logicalDrawRect": [
+            0.6289308176100548,
+            -0.2798742138364787,
+            128.7421383647799,
+            89.83962264150944
+          ],
+          "sha256": "c03872465a3fd8a216891d16468d608a5595629991c9af74cd590b8774d59aca"
+        }
+      ],
+      "processingFlags": [
+        "重植版钥匙＋挂牌成套素材；普通底图缺少英文，已从悬停图提取原生 SHOP 文字并改为深色，悬停字色按用户备注从黄色改为绿色。裁掉远端淡阴影，两种状态同一裁切和等比映射。"
+      ],
+      "runtimeIntegrated": true,
+      "sha256": "c03872465a3fd8a216891d16468d608a5595629991c9af74cd590b8774d59aca",
+      "history": [
+        {
+          "original": "assets/runtime/images/SelectorScreen_Store.png",
+          "hdFile": "assets/source-art/replanted/sprite-candidates-round3/SelectorScreen_Store--730fceb2df3d6964.png",
+          "category": "ui",
+          "groups": [
+            "主菜单"
+          ],
+          "review": {
+            "status": "pending",
+            "note": "文字不见了",
+            "updatedAt": "2026-11-09T12:50:56.863Z",
+            "needsCrop": false
+          },
+          "selectedInRound": 3,
+          "candidateId": "round3-sprite:730fceb2df3d6964",
+          "source": {
+            "bundle": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+            "type": "Sprite",
+            "pathId": 4807520167575868109,
+            "name": "SPR_MainMenu_Button_Shop",
+            "width": 504.0,
+            "height": 355.0
+          },
+          "pixelSize": [
+            504,
+            355
+          ],
+          "sha256": "1afb362ecb2982000af8d26d65491cd65d3a6c4770fcd37311270f0b2142b8c1",
+          "processingFlags": [
+            "这是同用途 UI 组件的来源定位；新旧构图、文字或九宫格可能不同，尚不是可直接替换的成品。"
+          ],
+          "sourceEvidence": null,
+          "runtimeIntegrated": false
+        },
+        {
+          "original": "assets/runtime/images/SelectorScreen_Store.png",
+          "hdFile": "assets/source-art/replanted/ui-source-round23/SelectorScreen_Store--paired.png",
+          "category": "ui",
+          "groups": [
+            "主菜单成套按钮"
+          ],
+          "review": {
+            "status": "approved",
+            "note": "",
+            "updatedAt": "2026-11-10T19:31:39.827Z",
+            "needsCrop": false
+          },
+          "requestedColorFixApplied": false,
+          "selectedInRound": 23,
+          "candidateId": "round23:abbea063d05586f4d1",
+          "source": {
+            "atlas": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+            "region": "SPR_MainMenu_Button_Shop",
+            "file": "assets/source-art/replanted/ui-source-round23/SPR_MainMenu_Button_Shop.png",
+            "crop": [
+              5,
+              0,
+              465,
+              321
+            ]
+          },
+          "processing": [
+            {
+              "file": "assets/source-art/replanted/ui-source-round23/SelectorScreen_Store--paired.png",
+              "sourceFile": "assets/source-art/replanted/ui-source-round23/SPR_MainMenu_Button_Shop.png",
+              "size": [
+                460,
+                321
+              ],
+              "logicalCanvas": [
+                130,
+                89
+              ],
+              "logicalDrawRect": [
+                0.6289308176100548,
+                -0.2798742138364787,
+                128.7421383647799,
+                89.83962264150944
+              ],
+              "sha256": "c03872465a3fd8a216891d16468d608a5595629991c9af74cd590b8774d59aca"
+            }
+          ],
+          "processingFlags": [
+            "重植版钥匙＋挂牌成套素材；普通底图缺少英文，已从悬停图提取原生 SHOP 文字并改为深色，悬停字色按用户备注从黄色改为绿色。裁掉远端淡阴影，两种状态同一裁切和等比映射。"
+          ],
+          "runtimeIntegrated": true,
+          "sha256": "c03872465a3fd8a216891d16468d608a5595629991c9af74cd590b8774d59aca"
+        }
+      ]
+    },
+    {
+      "original": "assets/runtime/images/SelectorScreen_StoreHighlight.png",
+      "hdFile": "assets/source-art/replanted/ui-source-round23/SelectorScreen_StoreHighlight--paired.png",
+      "category": "ui",
+      "groups": [
+        "主菜单成套按钮"
+      ],
+      "review": {
+        "status": "approved",
+        "note": "黄色需要改成绿色",
+        "updatedAt": "2026-11-10T19:31:58.517Z",
+        "needsCrop": false
+      },
+      "requestedColorFixApplied": true,
+      "selectedInRound": 23,
+      "candidateId": "round23:c8ab5fe3bb239fd838",
+      "source": {
+        "atlas": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+        "region": "SPR_MainMenu_Button_Shop_Over",
+        "file": "assets/source-art/replanted/ui-source-round23/SPR_MainMenu_Button_Shop_Over.png",
+        "crop": [
+          5,
+          0,
+          465,
+          321
+        ]
+      },
+      "processing": [
+        {
+          "file": "assets/source-art/replanted/ui-source-round23/SelectorScreen_StoreHighlight--paired.png",
+          "sourceFile": "assets/source-art/replanted/ui-source-round23/SPR_MainMenu_Button_Shop_Over.png",
+          "size": [
+            460,
+            321
+          ],
+          "logicalCanvas": [
+            130,
+            89
+          ],
+          "logicalDrawRect": [
+            0.6289308176100548,
+            -0.2798742138364787,
+            128.7421383647799,
+            89.83962264150944
+          ],
+          "sha256": "9831c317c0d9a7cb44a1fe206e887bdb8e140b0004f25c37f0a4acd6aa6e9643"
+        }
+      ],
+      "processingFlags": [
+        "重植版钥匙＋挂牌成套素材；普通底图缺少英文，已从悬停图提取原生 SHOP 文字并改为深色，悬停字色按用户备注从黄色改为绿色。裁掉远端淡阴影，两种状态同一裁切和等比映射。"
+      ],
+      "runtimeIntegrated": true,
+      "sha256": "9831c317c0d9a7cb44a1fe206e887bdb8e140b0004f25c37f0a4acd6aa6e9643",
+      "history": [
+        {
+          "original": "assets/runtime/images/SelectorScreen_StoreHighlight.png",
+          "hdFile": "assets/source-art/replanted/sprite-candidates-round3/SelectorScreen_StoreHighlight--88a0cee1b9e20614.png",
+          "category": "ui",
+          "groups": [
+            "主菜单"
+          ],
+          "review": {
+            "status": "wrong",
+            "note": "",
+            "updatedAt": "2026-11-09T12:51:10.662Z",
+            "needsCrop": false
+          },
+          "selectedInRound": 3,
+          "candidateId": "round3-sprite:88a0cee1b9e20614",
+          "source": {
+            "bundle": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+            "type": "Sprite",
+            "pathId": 491605873306895875,
+            "name": "SPR_MainMenu_Button_Shop_Over",
+            "width": 504.0,
+            "height": 355.0
+          },
+          "pixelSize": [
+            504,
+            355
+          ],
+          "sha256": "9d3361a02a6c36fd41717fc238d4435cac4263201b23475ae38c325d84cd1fd4",
+          "processingFlags": [
+            "这是同用途 UI 组件的来源定位；新旧构图、文字或九宫格可能不同，尚不是可直接替换的成品。"
+          ],
+          "sourceEvidence": null,
+          "runtimeIntegrated": false
+        },
+        {
+          "original": "assets/runtime/images/SelectorScreen_StoreHighlight.png",
+          "hdFile": "assets/source-art/replanted/ui-source-round23/SelectorScreen_StoreHighlight--paired.png",
+          "category": "ui",
+          "groups": [
+            "主菜单成套按钮"
+          ],
+          "review": {
+            "status": "approved",
+            "note": "黄色需要改成绿色",
+            "updatedAt": "2026-11-10T19:31:58.517Z",
+            "needsCrop": false
+          },
+          "requestedColorFixApplied": true,
+          "selectedInRound": 23,
+          "candidateId": "round23:c8ab5fe3bb239fd838",
+          "source": {
+            "atlas": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+            "region": "SPR_MainMenu_Button_Shop_Over",
+            "file": "assets/source-art/replanted/ui-source-round23/SPR_MainMenu_Button_Shop_Over.png",
+            "crop": [
+              5,
+              0,
+              465,
+              321
+            ]
+          },
+          "processing": [
+            {
+              "file": "assets/source-art/replanted/ui-source-round23/SelectorScreen_StoreHighlight--paired.png",
+              "sourceFile": "assets/source-art/replanted/ui-source-round23/SPR_MainMenu_Button_Shop_Over.png",
+              "size": [
+                460,
+                321
+              ],
+              "logicalCanvas": [
+                130,
+                89
+              ],
+              "logicalDrawRect": [
+                0.6289308176100548,
+                -0.2798742138364787,
+                128.7421383647799,
+                89.83962264150944
+              ],
+              "sha256": "9831c317c0d9a7cb44a1fe206e887bdb8e140b0004f25c37f0a4acd6aa6e9643"
+            }
+          ],
+          "processingFlags": [
+            "重植版钥匙＋挂牌成套素材；普通底图缺少英文，已从悬停图提取原生 SHOP 文字并改为深色，悬停字色按用户备注从黄色改为绿色。裁掉远端淡阴影，两种状态同一裁切和等比映射。"
+          ],
+          "runtimeIntegrated": true,
+          "sha256": "9831c317c0d9a7cb44a1fe206e887bdb8e140b0004f25c37f0a4acd6aa6e9643"
+        }
+      ]
+    }
+  ],
+  "specialCards": [
+    {
+      "original": "SEED_BEGHOULED_BUTTON_SHUFFLE",
+      "seedId": 54,
+      "source": "assets/source-art/replanted/ui-source-round23/SPR_Beghouled_Refresh.png",
+      "sourceSha256": "f2e494f2d27110fc79037857ca9733d9bfbee21fc3a4a9bc720958f7f95a9b5f",
+      "file": "images/card-special-54.png",
+      "logicalSize": [
+        50,
+        70
+      ],
+      "physicalSize": [
+        100,
+        140
+      ],
+      "uniformSourceScale": 0.5319148936170213,
+      "approval": "User approved all minigame source artwork in chat",
+      "atlas": "CommonUI"
+    },
+    {
+      "original": "SEED_BEGHOULED_BUTTON_CRATER",
+      "seedId": 55,
+      "source": "assets/source-art/replanted/ui-source-round23/SPR_Beghouled_Crater.png",
+      "sourceSha256": "f8d2e0b3fa0f9179675412d9150da09996dc65fc28f5d4939697e2ace0998e13",
+      "file": "images/card-special-55.png",
+      "logicalSize": [
+        50,
+        70
+      ],
+      "physicalSize": [
+        100,
+        140
+      ],
+      "uniformSourceScale": 0.5319148936170213,
+      "approval": "User approved all minigame source artwork in chat",
+      "atlas": "CommonUI"
+    },
+    {
+      "original": "SEED_SLOT_MACHINE_SUN",
+      "seedId": 56,
+      "source": "assets/source-art/replanted/ui-source-round23/SPR_SlotMachine_Sun.png",
+      "sourceSha256": "b01ab202da81ba4d1a1a73c736e4650207dd9c10cb217161b2a9eae25a0e11b3",
+      "file": "images/card-special-56.png",
+      "logicalSize": [
+        50,
+        70
+      ],
+      "physicalSize": [
+        100,
+        140
+      ],
+      "uniformSourceScale": 0.5319148936170213,
+      "approval": "User approved all minigame source artwork in chat",
+      "atlas": "CommonUI"
+    },
+    {
+      "original": "SEED_SLOT_MACHINE_DIAMOND",
+      "seedId": 57,
+      "source": "assets/source-art/replanted/ui-source-round23/SPR_SlotMachine_Diamond.png",
+      "sourceSha256": "ce9ebee774a1d247fab5fb53e967da8602eefa244378842020997f44e37b448d",
+      "file": "images/card-special-57.png",
+      "logicalSize": [
+        50,
+        70
+      ],
+      "physicalSize": [
+        100,
+        140
+      ],
+      "uniformSourceScale": 0.5319148936170213,
+      "approval": "User approved all minigame source artwork in chat",
+      "atlas": "CommonUI"
+    },
+    {
+      "original": "SEED_ZOMBIQUARIUM_SNORKLE",
+      "seedId": 58,
+      "source": "assets/source-art/replanted/ui-source-round23/SPR_Zombiquarium_Snorkel.png",
+      "sourceSha256": "33e69e311ed822b938cb33b7986ff916c22e8ddf044e259d635b4a458affac48",
+      "file": "images/card-special-58.png",
+      "logicalSize": [
+        50,
+        70
+      ],
+      "physicalSize": [
+        100,
+        140
+      ],
+      "uniformSourceScale": 0.5319148936170213,
+      "approval": "User approved all minigame source artwork in chat",
+      "atlas": "CommonUI"
+    },
+    {
+      "original": "SEED_ZOMBIQUARIUM_TROPHY",
+      "seedId": 59,
+      "source": "assets/source-art/replanted/ui-source-round23/SPR_Zombiquarium_Trophy.png",
+      "sourceSha256": "2382ce034de7199fcbbc74fe2668856c86705a74d44a33e8f42f41fa36b77861",
+      "file": "images/card-special-59.png",
+      "logicalSize": [
+        50,
+        70
+      ],
+      "physicalSize": [
+        100,
+        140
+      ],
+      "uniformSourceScale": 0.5319148936170213,
+      "approval": "User approved all minigame source artwork in chat",
+      "atlas": "CommonUI"
+    }
+  ]
+}

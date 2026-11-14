@@ -519,7 +519,6 @@ elseif(PVZ_RENDER_BACKEND STREQUAL "METAL")
     set(gameShaderDirectory "${CMAKE_BINARY_DIR}/SexyAppFramework/graphics/metal/shaders")
 endif()
 if(APPLE)
-    pvz_stage_macos_shader_compiler(${PROJECT_NAME})
     add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
         COMMAND "${CMAKE_COMMAND}" -E copy_directory
             "${gameShaderDirectory}" "$<TARGET_FILE_DIR:${PROJECT_NAME}>/shaders"
@@ -555,23 +554,11 @@ else()
             "${gameShaderDirectory}"
             "$<TARGET_FILE_DIR:${PROJECT_NAME}>/shaders"
         COMMAND "${CMAKE_COMMAND}"
-            "-DSOURCE=${CMAKE_SOURCE_DIR}/effects"
-            "-DDESTINATION=$<TARGET_FILE_DIR:${PROJECT_NAME}>/effects"
-            -P "${CMAKE_SOURCE_DIR}/CMake/StageNumericEffects.cmake"
-        COMMAND "${CMAKE_COMMAND}"
             "-DSOURCE=${CMAKE_SOURCE_DIR}/scale.json"
             "-DDESTINATION=$<TARGET_FILE_DIR:${PROJECT_NAME}>"
             -P "${CMAKE_SOURCE_DIR}/CMake/StageScaleConfig.cmake"
-        COMMAND "${CMAKE_COMMAND}" -E copy_if_different
-            "$<TARGET_FILE:Microsoft::DirectXShaderCompiler>"
-            "$<TARGET_FILE_DIR:${PROJECT_NAME}>"
         VERBATIM)
-if(NOT ANDROID AND NOT CMAKE_SYSTEM_NAME STREQUAL "Android")
-add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-    COMMAND "${CMAKE_COMMAND}" -E copy_if_different
-        "$<TARGET_FILE_DIR:Microsoft::DirectXShaderCompiler>/${CMAKE_SHARED_LIBRARY_PREFIX}dxil${CMAKE_SHARED_LIBRARY_SUFFIX}"
-        "$<TARGET_FILE_DIR:${PROJECT_NAME}>" VERBATIM)
-endif()
+
 endif()
 
 set(ADDITIONAL_LIBRARY_DEPENDENCIES

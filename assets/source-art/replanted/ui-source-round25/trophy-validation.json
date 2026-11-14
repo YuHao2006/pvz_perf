@@ -1,0 +1,40 @@
+{
+  "plinthBodyAlignment": [
+    {
+      "state": 0,
+      "referenceAt2x": [
+        36,
+        0,
+        282,
+        144
+      ],
+      "actualAt2x": [
+        36,
+        0,
+        282,
+        144
+      ]
+    },
+    {
+      "state": 1,
+      "referenceAt2x": [
+        34,
+        0,
+        282,
+        148
+      ],
+      "actualAt2x": [
+        34,
+        0,
+        282,
+        148
+      ]
+    }
+  ],
+  "uniformScaleOnly": true,
+  "logicalSizeUnchanged": [
+    314,
+    269
+  ],
+  "runtimeCodeChanged": false
+}

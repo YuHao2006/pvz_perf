@@ -36,8 +36,9 @@ public:
     void BindStaticTexture(MetalTexture* texture, uint32_t staticSlot);
     MetalTexture* CreateCoverageMask(int width, int height,
         std::span<const uint8_t> coverage, int rowPitch);
-    MetalTexture* CreateRenderImage(int width, int height);
+    MetalTexture* CreateRenderImage(int width, int height, int pixelScale=1);
     void SetRenderImage(MetalTexture* image);
+    MetalTexture* CopyTexture(MetalTexture* source);
     MetalTexture* CopyTextureRegion(MetalTexture* source, int x, int y, int width, int height);
     MetalTexture* ProcessImage(MetalTexture* source, const GpuImageProcessing& processing);
     MetalTexture* ComposeAlphaRaw(MetalTexture* base, MetalTexture* alpha,

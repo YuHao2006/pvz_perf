@@ -38,7 +38,7 @@ BattleCardAtlas::BattleCardAtlas(Board& board):board_(&board),landscape_(board.m
 }
 void BattleCardAtlas::Rebuild() {
     image_.reset(board_->mApp->mDDInterface->mRenderInterface->CreateRenderImage(
-        static_cast<int>(entries_.size())*(width_+4),height_+4));
+        static_cast<int>(entries_.size())*(width_+4),height_+4,2));
     for(int i=0;i<static_cast<int>(entries_.size());++i) if(entries_[i].seed!=SEED_NONE)Paint(i);
 }
 void BattleCardAtlas::Paint(int slot) {

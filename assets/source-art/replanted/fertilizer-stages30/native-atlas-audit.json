@@ -1,0 +1,7 @@
+{
+  "source": "Replanted spine bundle atlas text export",
+  "atlases": {
+    "ZenGarden_fertilizer.atlas": "ZenGarden_fertilizer.png\r\nsize:2048,512\r\nfilter:Linear,Linear\r\nZenGarden_fertilize_bag1.png\r\nbounds:2,84,350,365\r\nZenGarden_fertilizer_bag2.png\r\nbounds:354,84,350,365\r\nZenGarden_fertilizer_bag3.png\r\nbounds:706,84,350,365\r\nZenGarden_fertilizer_seed1.png\r\nbounds:2,2,80,290\r\nrotate:90\r\nZenGarden_fertilizer_seed2.png\r\nbounds:1410,159,80,290\r\nZenGarden_fertilizer_seed3.png\r\nbounds:294,2,80,290\r\nrotate:90\r\nZenGarden_fertilizer_seed4.png\r\nbounds:1492,159,80,290\r\nZenGarden_fertilizer_seed5.png\r\nbounds:586,2,80,290\r\nrotate:90\r\nZenGarden_fertilizer_seed6.png\r\nbounds:1574,159,80,290\r\nbag4\r\nbounds:1058,84,350,365\r\n"
+  },
+  "interpretation": "Four bag rectangles: three have complete ZenGarden names, fourth uses bare name bag4. Six seed rectangles are also present. Native bag4 matches the original open-flap pose."
+}

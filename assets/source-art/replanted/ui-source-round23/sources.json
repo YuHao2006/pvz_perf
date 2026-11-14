@@ -1,0 +1,242 @@
+[
+  {
+    "bundle": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+    "pathId": -8561012095059521932,
+    "type": "Sprite",
+    "name": "SPR_MainMenu_Button_Help",
+    "file": "assets/source-art/replanted/ui-source-round23/SPR_MainMenu_Button_Help.png",
+    "size": [
+      152,
+      62
+    ],
+    "sha256": "db58b6a6d6e7c511dc848bd607e1f3e8e827cbc4ee40a9686a7573a922e0160a"
+  },
+  {
+    "bundle": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+    "pathId": -6384671499744538901,
+    "type": "Sprite",
+    "name": "SPR_Zombiquarium_Trophy",
+    "file": "assets/source-art/replanted/ui-source-round23/SPR_Zombiquarium_Trophy.png",
+    "size": [
+      188,
+      260
+    ],
+    "sha256": "2382ce034de7199fcbbc74fe2668856c86705a74d44a33e8f42f41fa36b77861"
+  },
+  {
+    "bundle": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+    "pathId": -5449693646306264338,
+    "type": "Sprite",
+    "name": "SPR_Beghouled_Twist_overlay",
+    "file": "assets/source-art/replanted/ui-source-round23/SPR_Beghouled_Twist_overlay.png",
+    "size": [
+      624,
+      623
+    ],
+    "sha256": "3785ef1aa19e160391d9f536c1673fc034c566ecd0c9969d208d8adc78eeff84"
+  },
+  {
+    "bundle": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+    "pathId": -5382507700332463411,
+    "type": "Sprite",
+    "name": "SPR_MainMenu_Button_Quit",
+    "file": "assets/source-art/replanted/ui-source-round23/SPR_MainMenu_Button_Quit.png",
+    "size": [
+      147,
+      86
+    ],
+    "sha256": "b0e7f7b711ea2629e561ccb821ae1f8f2de756c6bdb973ab03490f6f80bcd0e7"
+  },
+  {
+    "bundle": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+    "pathId": -4385633296583651605,
+    "type": "Sprite",
+    "name": "SPR_SlotMachine_Diamond",
+    "file": "assets/source-art/replanted/ui-source-round23/SPR_SlotMachine_Diamond.png",
+    "size": [
+      188,
+      259
+    ],
+    "sha256": "ce9ebee774a1d247fab5fb53e967da8602eefa244378842020997f44e37b448d"
+  },
+  {
+    "bundle": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+    "pathId": -3351126655120863509,
+    "type": "Sprite",
+    "name": "SPR_SlotMachine_Sun",
+    "file": "assets/source-art/replanted/ui-source-round23/SPR_SlotMachine_Sun.png",
+    "size": [
+      188,
+      259
+    ],
+    "sha256": "b01ab202da81ba4d1a1a73c736e4650207dd9c10cb217161b2a9eae25a0e11b3"
+  },
+  {
+    "bundle": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+    "pathId": -2220997661382460183,
+    "type": "Sprite",
+    "name": "SPR_Seedpackets_SlotMachine_Sun",
+    "file": "assets/source-art/replanted/ui-source-round23/SPR_Seedpackets_SlotMachine_Sun.png",
+    "size": [
+      188,
+      259
+    ],
+    "sha256": "82f74b4507933ac0737926841356a193e393122ae87180f9d41e9391ba3fea8c"
+  },
+  {
+    "bundle": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+    "pathId": 196614834233752809,
+    "type": "Sprite",
+    "name": "SPR_Seedpackets_SlotMachine_Diamond",
+    "file": "assets/source-art/replanted/ui-source-round23/SPR_Seedpackets_SlotMachine_Diamond.png",
+    "size": [
+      188,
+      259
+    ],
+    "sha256": "93dc8fced404e9a94dda87ae0ff51cd82c155b71c9b287864792ec09420d634a"
+  },
+  {
+    "bundle": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+    "pathId": 249822377597795878,
+    "type": "Sprite",
+    "name": "SPR_SlotMachine_Panel",
+    "file": "assets/source-art/replanted/ui-source-round23/SPR_SlotMachine_Panel.png",
+    "size": [
+      1030,
+      390
+    ],
+    "sha256": "49e631c4779dc7e8ce1ebf998fe4de19618d2092c43b6d1fdd9c3f6b824dc446"
+  },
+  {
+    "bundle": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+    "pathId": 269663784966413621,
+    "type": "Sprite",
+    "name": "SPR_MainMenu_Button_Help_Over",
+    "file": "assets/source-art/replanted/ui-source-round23/SPR_MainMenu_Button_Help_Over.png",
+    "size": [
+      152,
+      62
+    ],
+    "sha256": "b31e3ff4771322fff0b6adbefb9d9b9e234056366d03e00b95b6831040d33507"
+  },
+  {
+    "bundle": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+    "pathId": 491605873306895875,
+    "type": "Sprite",
+    "name": "SPR_MainMenu_Button_Shop_Over",
+    "file": "assets/source-art/replanted/ui-source-round23/SPR_MainMenu_Button_Shop_Over.png",
+    "size": [
+      504,
+      355
+    ],
+    "sha256": "9d3361a02a6c36fd41717fc238d4435cac4263201b23475ae38c325d84cd1fd4"
+  },
+  {
+    "bundle": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+    "pathId": 882397557596598853,
+    "type": "Sprite",
+    "name": "SPR_MainMenu_Button_Quit_Over",
+    "file": "assets/source-art/replanted/ui-source-round23/SPR_MainMenu_Button_Quit_Over.png",
+    "size": [
+      147,
+      86
+    ],
+    "sha256": "16789d6671757dd6aaa982f3406c9a578a92100f55a2b096b197adf913243c39"
+  },
+  {
+    "bundle": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+    "pathId": 1326760550189260093,
+    "type": "Sprite",
+    "name": "SPR_wallnut_bowlingstripe",
+    "file": "assets/source-art/replanted/ui-source-round23/SPR_wallnut_bowlingstripe.png",
+    "size": [
+      74,
+      1527
+    ],
+    "sha256": "d73f4a27d71b850e3d63a946f6d276e720a9a3a4c3dd3bab702557f6fe5d348f"
+  },
+  {
+    "bundle": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+    "pathId": 1557018304701370091,
+    "type": "Sprite",
+    "name": "SPR_Zombiquarium_Snorkel",
+    "file": "assets/source-art/replanted/ui-source-round23/SPR_Zombiquarium_Snorkel.png",
+    "size": [
+      188,
+      260
+    ],
+    "sha256": "33e69e311ed822b938cb33b7986ff916c22e8ddf044e259d635b4a458affac48"
+  },
+  {
+    "bundle": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+    "pathId": 2588736048113711528,
+    "type": "Sprite",
+    "name": "SPR_MainMenu_Button_Options",
+    "file": "assets/source-art/replanted/ui-source-round23/SPR_MainMenu_Button_Options.png",
+    "size": [
+      280,
+      91
+    ],
+    "sha256": "9b7a2a91ae86e90a5eec5cb257db56fc3c643df2919317785ccf69d522404d2c"
+  },
+  {
+    "bundle": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+    "pathId": 3131682693412851435,
+    "type": "Sprite",
+    "name": "SPR_Beghouled_Crater",
+    "file": "assets/source-art/replanted/ui-source-round23/SPR_Beghouled_Crater.png",
+    "size": [
+      188,
+      259
+    ],
+    "sha256": "f8d2e0b3fa0f9179675412d9150da09996dc65fc28f5d4939697e2ace0998e13"
+  },
+  {
+    "bundle": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+    "pathId": 3390661809962423469,
+    "type": "Sprite",
+    "name": "SPR_MainHud_Hammer",
+    "file": "assets/source-art/replanted/ui-source-round23/SPR_MainHud_Hammer.png",
+    "size": [
+      179,
+      257
+    ],
+    "sha256": "28e7b507c21a366b2dc27aa71f29820756bef49f4825f24029d9939d35dd1938"
+  },
+  {
+    "bundle": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+    "pathId": 4122470751701798635,
+    "type": "Sprite",
+    "name": "SPR_Beghouled_Refresh",
+    "file": "assets/source-art/replanted/ui-source-round23/SPR_Beghouled_Refresh.png",
+    "size": [
+      188,
+      259
+    ],
+    "sha256": "f2e494f2d27110fc79037857ca9733d9bfbee21fc3a4a9bc720958f7f95a9b5f"
+  },
+  {
+    "bundle": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+    "pathId": 4807520167575868109,
+    "type": "Sprite",
+    "name": "SPR_MainMenu_Button_Shop",
+    "file": "assets/source-art/replanted/ui-source-round23/SPR_MainMenu_Button_Shop.png",
+    "size": [
+      504,
+      355
+    ],
+    "sha256": "1afb362ecb2982000af8d26d65491cd65d3a6c4770fcd37311270f0b2142b8c1"
+  },
+  {
+    "bundle": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+    "pathId": 8254357258277870406,
+    "type": "Sprite",
+    "name": "SPR_MainMenu_Button_Options_Over",
+    "file": "assets/source-art/replanted/ui-source-round23/SPR_MainMenu_Button_Options_Over.png",
+    "size": [
+      280,
+      91
+    ],
+    "sha256": "08614db3f8b9ac492729d5efe15d654f3fb0d197348523644fd694b40ce22ecf"
+  }
+]

@@ -187,7 +187,7 @@ void Image::CommitBits()
 		if (!mPendingDecoded || !mPendingDecoded->mBits) throw GpuImageCpuAccess{};
 		mHasAlpha = false;
 		mHasTrans = false;
-		const auto count = PixelCount(mWidth, mHeight);
+		const auto count = PixelCount(mPendingDecoded->mWidth, mPendingDecoded->mHeight);
 		for (size_t i = 0; i < count; ++i)
 		{
 			const auto alpha = mPendingDecoded->mBits[i] >> 24;
@@ -208,14 +208,14 @@ bool Image::Palletize()
 	if (!mPendingDecoded || mTexture || mPendingDecoded->HasComposition())
 		return false;
 	CommitBits();
-	const auto count = PixelCount(mWidth, mHeight);
+	const auto count = PixelCount(mPendingDecoded->mWidth, mPendingDecoded->mHeight);
 	unsigned char* indices = nullptr;
 	unsigned int* palette = nullptr;
 	try
 	{
 		indices = new unsigned char[count];
 		palette = new unsigned int[256];
-		if (!Quantize8Bit(mPendingDecoded->mBits, mWidth, mHeight, indices, palette))
+		if (!Quantize8Bit(mPendingDecoded->mBits, mPendingDecoded->mWidth, mPendingDecoded->mHeight, indices, palette))
 		{
 			delete[] indices;
 			delete[] palette;

@@ -34,8 +34,9 @@ class WebGPURenderer final
     void ReserveStaticTextureSlots(unsigned int count);
     void BindStaticTexture(WebGPUTexture *texture, unsigned int slot);
     WebGPUTexture *CreateCoverageMask(int width, int height, std::span<const unsigned char> coverage, int pitch);
-    WebGPUTexture *CreateRenderImage(int width, int height);
+    WebGPUTexture *CreateRenderImage(int width, int height, int pixelScale=1);
     void SetRenderImage(WebGPUTexture *texture);
+    WebGPUTexture* CopyTexture(WebGPUTexture* source);
     WebGPUTexture *CopyTextureRegion(WebGPUTexture *source, int x, int y, int width, int height);
     WebGPUTexture *ProcessImage(WebGPUTexture *source, const GpuImageProcessing &processing);
     WebGPUTexture *ComposeAlphaRaw(WebGPUTexture *base, WebGPUTexture *alpha, unsigned int color, bool colorOnly);

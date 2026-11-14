@@ -14,6 +14,7 @@ namespace Sexy {
 struct GLTexture {
     unsigned int image = 0, framebuffer = 0;
     int width = 0, height = 0;
+    int drawingWidth=0, drawingHeight=0, pixelScale=1;
     unsigned int format = 0;
     unsigned int slot = ~0U, staticSlot = ~0U, flags = 0;
     unsigned int sampler = 0; // Actual GL texture filter/wrap state; GL 3.0 has no core sampler objects.

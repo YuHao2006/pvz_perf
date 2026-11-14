@@ -1,0 +1,17 @@
+{
+  "tool": "built-in image_gen",
+  "prompt": "Prefer sunburst if routing permits. Conservative noise cleanup of Image 1 (AI-restored game background tile); Image 2 is the authoritative original after Anime4K twice. Preserve exact composition and all object positions, lawn rows/columns, clover patches, flowers, isolated colored dots, plants, fence-board silhouettes and broad original shading. Especially CLEAN THE FENCE: remove invented dense hairline wood grain, parallel scratch noise, tiny speckles and brush hatching; retain only the sparse broad original wood-grain knots, cracks and marks present in Image 2. On lawn, walls, sidewalk and asphalt reduce invented dense microtexture to clean soft cartoon color planes, retaining original distinct grass tufts and clover shapes. Preserve EVERY original pit, dent, chip, missing chunk, crack and localized dot cluster from Image 2; do NOT fill intentional damage or erase deliberate motifs. No redesign, new objects/detail, extra outlines, synthetic texture, blur filter look, zoom, crop, stretch or changed perspective. Same tile and aspect ratio. Preserve the daytime shop background. Image 2 contains accidental rectangular pasted color patches: do NOT restore those patches, preserve the continuous sky/sidewalk/foliage of Image 1 while cleaning invented grain. No car or characters.",
+  "tiles": [
+    "0-0",
+    "0-1",
+    "0-2",
+    "1-0",
+    "1-1",
+    "1-2"
+  ],
+  "references": [
+    "first AI tile",
+    "original after Anime4K twice"
+  ],
+  "modelRouting": "Preference only; actual model not exposed."
+}

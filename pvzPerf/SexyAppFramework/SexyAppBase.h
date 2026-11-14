@@ -12,8 +12,6 @@
 #include "graphics/GpuBackend.h"
 #include "misc/Ratio.h"
 #include "misc/FrameTiming.h"
-#include "effect/ScaleEffectCompiler.h"
-#include "effect/ScaleEffectSizing.h"
 #include <atomic>
 #include <functional>
 #include <thread>
@@ -193,7 +191,6 @@ public:
     DEVMODEW TargetVideoMode() const;
 #endif
     void UpdateNativeCursorSelection();
-    void PrepareFullscreenScaleForMonitor();
     void MapWindowMouse(double windowX, double windowY, int& sceneX, int& sceneY) const;
     void NativeMouseMove(double x, double y);
     POINT ReadNativeMousePosition();
@@ -398,35 +395,7 @@ public:
 	// Optional source-art bounds for horizontal framing; zero width means centered.
 	bool					mEnableWindowAspect;
 	Ratio					mWindowAspect;
-	int						mWindowScale;
-	bool						mUseCustomScale;				// 自定义放缩开关
-	int						mScaleConfigWindow;				// scale.json 窗口放缩倍率
-	int						mWindowScaleFromPipeline;			// 当前窗口 pipeline 推导出的运行时倍率
-
-	int						mScaleConfigFullscreenWidth;
-	int						mScaleConfigFullscreenHeight;
-
-	// MagpieFX-style scaling pipelines (scale.json):
-	// External JSON paths are retained; parameter names and mode strings decode
-	// once at LoadScaleConfig into local ParamIds and numeric scaling fields.
-	struct ScaleEffectConfig
-	{
-		std::string mPath;
-		ScaleRuntimeParams mParams;
-		size_t mEffectSlot = SIZE_MAX;
-		int mScalingType = SCALE_SCALING_NORMAL;
-		float mScaleX = 1.0f;
-		float mScaleY = 1.0f;
-	};
-	struct ScalePipelineConfig
-	{
-		std::vector<ScaleEffectConfig> mEffects;
-		int mOutputWidth;
-		int mOutputHeight;
-		bool mDeclared = false;
-	};
-	ScalePipelineConfig					mScaleWindowConfig;
-	ScalePipelineConfig					mScaleFullscreenConfig;
+    int mWindowClientWidth=0;
 	// scale.json 顶级 HDR 对象：启用时交换链切 HDR10/PQ（运行时不可切换，
 	// 仅启动时应用一次；请求后若显示器/Windows/交换链不满足则立即失败）。
 	// 唯一暴露项 = strength（AutoHDRStrength 同义，默认 1）。亮度锚
@@ -435,13 +404,10 @@ public:
 	// 渲染为 AutoHDR 复刻（dxgi.dll Sdr2HdrData 反汇编重建）；无饱和度
 	// 参数（Windows 校准色度矩阵已作用于全部内容）。
 	bool								mScaleHDREnabled = false;
-    bool mModernScalePrepared = false;
-    int mModernScaleTargetW = 0, mModernScaleTargetH = 0;
 	float								mScaleHDRPaperWhite = 80.0f;   // nits ↔ PaperWhiteNits
 	float								mScaleHDRMaxNits = 1000.0f;    // nits ↔ MaxTVNits（私有查询/面板元数据）
 	float								mScaleHDRReinhardPaperNits = 0.0f; // nits ↔ ReinhardPaperWhiteNits（SDR 白公式）
 	float								mScaleHDRStrength = 1.0f;      // ↔ AutoHDRStrength（唯一可调）
-	std::vector<ScaleEffectRuntimeDesc>		mScaleEffects;
 	ResourceManager*		mResourceManager;
 
 	LONG					mOldWndProc;
@@ -452,7 +418,6 @@ protected:
 	virtual void			SwitchScreenMode();
 	virtual void			SwitchScreenMode(bool wantWindowed);
 	virtual void			SwitchScreenMode(bool wantWindowed, bool force);
-	void					ReconfigureScale(bool theUseCustomScale);
 	bool					ProcessDeferredMessages(bool singleMessage);
 #if defined(__APPLE__)
 	void ProcessMacWindowEvent(const MacWindowEvent& event);
@@ -464,7 +429,6 @@ protected:
 	void					ProcessMessageNow(UINT uMsg, WPARAM wParam, LPARAM lParam, NativeWindowHandle hWnd);
 #endif
 	void					UpdateFTimeAcc();
-	bool					ResizeAppWindowForMode(bool wantWindowed);
 	virtual bool			Process(bool allowSleep = true);		
 	virtual void			UpdateFrames();
 	virtual bool			DoUpdateFrames();
@@ -594,7 +558,7 @@ public:
 		// The sole user-facing display request. Input and UI callers provide only
 		// the desired logical mode and scale policy; transaction details remain
 		// internal so every source receives the same completion semantics.
-		void					RequestScreenMode(bool wantWindowed, bool useCustomScale);
+		void					RequestScreenMode(bool wantWindowed);
 		virtual void			SetAlphaDisabled(bool isDisabled);
 
 	
@@ -674,23 +638,12 @@ public:
 	virtual bool			UpdateAppStep(bool* updated);
 	virtual bool			UpdateApp();
 		int						InitDDInterface();
-		void					LoadScaleConfig();
+		void					LoadHdrConfig();
 
 	void					ResolveHDRAutoParams();
-	void					CompileScaleEffects();
-				bool					IsScalePresentActive() const;
-				bool					IsScalePresentActiveForMode(bool theWindowed) const;
 
-			bool					BuildScalePipelineForMode(bool theWindowed, std::vector<ScaleEffectRuntimeDesc*>& outEffects, std::vector<ScaleEffectScaling>& outScalings);
-			bool					ComputeCustomScaleOutputSize(bool theWindowed, int theSrcW, int theSrcH, int& outW, int& outH);
-				bool					GetCustomScalePresentSize(int& outW, int& outH);
-				bool					GetCustomScalePresentSizeForMode(bool theWindowed, int& outW, int& outH);
 
-			int					GetWindowScaleForCustomScale() const;
-			void					UpdateWindowScaleFromPipeline();
-	bool					PrepareScalePipelineObjects();
-	void					WarmScalePipelinesBeforeShow();
-	void					CleanupScalePresent();
+	void					InitializeNativePresentation();
 	void					ClearUpdateBacklog(bool relaxForASecond = false);
 	virtual bool			AppCanRestore();
 #ifdef _WIN32

@@ -144,8 +144,8 @@ GameSelector::GameSelector(LawnApp* theApp)
 		this, 
 		"", 
 		nullptr, 
-		Sexy::IMAGE_REANIM_SELECTORSCREEN_ADVENTURE_BUTTON, 
-		Sexy::IMAGE_REANIM_SELECTORSCREEN_ADVENTURE_HIGHLIGHT, 
+		Sexy::IMAGE_REANIM_SELECTORSCREEN_ADVENTURE_BUTTON,
+		Sexy::IMAGE_REANIM_SELECTORSCREEN_ADVENTURE_HIGHLIGHT,
 		Sexy::IMAGE_REANIM_SELECTORSCREEN_ADVENTURE_HIGHLIGHT
 	);
 	
@@ -159,16 +159,19 @@ GameSelector::GameSelector(LawnApp* theApp)
 	mAdventureButton->mPolygonShape[3] = SexyVector2(1.0f, 78.0f);
 	mAdventureButton->mUsePolygonShape = true;
 
+	// 1073 kept legacy track names: Survival -> minigames, Challenges -> puzzle,
+	// Vasebreaker/ZenGarden -> survival. Image resources use their actual menu roles;
+	// keep imported track names and numeric track IDs unchanged.
 	mMinigameButton = MakeNewButton(
 		GameSelector::GameSelector_Minigame, 
 		this, 
 		"", 
 		nullptr, 
-		Sexy::IMAGE_REANIM_SELECTORSCREEN_SURVIVAL_BUTTON, 
-		Sexy::IMAGE_REANIM_SELECTORSCREEN_SURVIVAL_HIGHLIGHT, 
-		Sexy::IMAGE_REANIM_SELECTORSCREEN_SURVIVAL_HIGHLIGHT
+		Sexy::IMAGE_REANIM_SELECTORSCREEN_MINIGAMES_BUTTON,
+		Sexy::IMAGE_REANIM_SELECTORSCREEN_MINIGAMES_HIGHLIGHT,
+		Sexy::IMAGE_REANIM_SELECTORSCREEN_MINIGAMES_HIGHLIGHT
 	);
-	mMinigameButton->Resize(0, 0, Sexy::IMAGE_REANIM_SELECTORSCREEN_SURVIVAL_BUTTON->mWidth, 130);
+	mMinigameButton->Resize(0, 0, Sexy::IMAGE_REANIM_SELECTORSCREEN_MINIGAMES_BUTTON->mWidth, 130);
 	mMinigameButton->mClip = false;
 	mMinigameButton->mBtnNoDraw = true;
 	mMinigameButton->mMouseVisible = false;
@@ -183,11 +186,11 @@ GameSelector::GameSelector(LawnApp* theApp)
 		this, 
 		"", 
 		nullptr, 
-		Sexy::IMAGE_REANIM_SELECTORSCREEN_CHALLENGES_BUTTON, 
-		Sexy::IMAGE_REANIM_SELECTORSCREEN_CHALLENGES_HIGHLIGHT, 
-		Sexy::IMAGE_REANIM_SELECTORSCREEN_CHALLENGES_HIGHLIGHT
+		Sexy::IMAGE_REANIM_SELECTORSCREEN_PUZZLE_BUTTON,
+		Sexy::IMAGE_REANIM_SELECTORSCREEN_PUZZLE_HIGHLIGHT,
+		Sexy::IMAGE_REANIM_SELECTORSCREEN_PUZZLE_HIGHLIGHT
 	);
-	mPuzzleButton->Resize(0, 0, Sexy::IMAGE_REANIM_SELECTORSCREEN_CHALLENGES_BUTTON->mWidth, 121);
+	mPuzzleButton->Resize(0, 0, Sexy::IMAGE_REANIM_SELECTORSCREEN_PUZZLE_BUTTON->mWidth, 121);
 	mPuzzleButton->mClip = false;
 	mPuzzleButton->mBtnNoDraw = true;
 	mPuzzleButton->mMouseVisible = false;
@@ -202,11 +205,11 @@ GameSelector::GameSelector(LawnApp* theApp)
 		this, 
 		"", 
 		nullptr, 
-		Sexy::IMAGE_REANIM_SELECTORSCREEN_VASEBREAKER_BUTTON, 
-		Sexy::IMAGE_REANIM_SELECTORSCREEN_VASEBREAKER_HIGHLIGHT, 
-		Sexy::IMAGE_REANIM_SELECTORSCREEN_VASEBREAKER_HIGHLIGHT
+		Sexy::IMAGE_REANIM_SELECTORSCREEN_SURVIVAL_BUTTON,
+		Sexy::IMAGE_REANIM_SELECTORSCREEN_SURVIVAL_HIGHLIGHT,
+		Sexy::IMAGE_REANIM_SELECTORSCREEN_SURVIVAL_HIGHLIGHT
 	);
-	mSurvivalButton->Resize(0, 0, Sexy::IMAGE_REANIM_SELECTORSCREEN_VASEBREAKER_BUTTON->mWidth, 124);
+	mSurvivalButton->Resize(0, 0, Sexy::IMAGE_REANIM_SELECTORSCREEN_SURVIVAL_BUTTON->mWidth, 124);
 	mSurvivalButton->mClip = false;
 	mSurvivalButton->mBtnNoDraw = true;
 	mSurvivalButton->mMouseVisible = false;
@@ -530,38 +533,38 @@ void GameSelector::SyncButtons()
 	// @Patoke: all of these are already assigned in the constructor, why assign them here? (this fixes the hover highlight)
 	if (mMinigamesLocked)
 	{
-		//mMinigameButton->mOverImage = Sexy::IMAGE_REANIM_SELECTORSCREEN_SURVIVAL_HIGHLIGHT;
-		//mMinigameButton->mDownImage = Sexy::IMAGE_REANIM_SELECTORSCREEN_SURVIVAL_HIGHLIGHT;
+		//mMinigameButton->mOverImage = Sexy::IMAGE_REANIM_SELECTORSCREEN_MINIGAMES_HIGHLIGHT;
+		//mMinigameButton->mDownImage = Sexy::IMAGE_REANIM_SELECTORSCREEN_MINIGAMES_HIGHLIGHT;
 		mMinigameButton->SetColor(ButtonWidget::COLOR_BKG, Color(128, 128, 128));
 	}
 	else
 	{
-		//mMinigameButton->mOverImage = Sexy::IMAGE_REANIM_SELECTORSCREEN_SURVIVAL_HIGHLIGHT;
-		//mMinigameButton->mDownImage = Sexy::IMAGE_REANIM_SELECTORSCREEN_SURVIVAL_HIGHLIGHT;
+		//mMinigameButton->mOverImage = Sexy::IMAGE_REANIM_SELECTORSCREEN_MINIGAMES_HIGHLIGHT;
+		//mMinigameButton->mDownImage = Sexy::IMAGE_REANIM_SELECTORSCREEN_MINIGAMES_HIGHLIGHT;
 		mMinigameButton->SetColor(ButtonWidget::COLOR_BKG, Color::White);
 	}
 	if (mPuzzleLocked)
 	{
-		//mPuzzleButton->mOverImage = Sexy::IMAGE_REANIM_SELECTORSCREEN_CHALLENGES_HIGHLIGHT;
-		//mPuzzleButton->mDownImage = Sexy::IMAGE_REANIM_SELECTORSCREEN_CHALLENGES_HIGHLIGHT;
+		//mPuzzleButton->mOverImage = Sexy::IMAGE_REANIM_SELECTORSCREEN_PUZZLE_HIGHLIGHT;
+		//mPuzzleButton->mDownImage = Sexy::IMAGE_REANIM_SELECTORSCREEN_PUZZLE_HIGHLIGHT;
 		mPuzzleButton->SetColor(ButtonWidget::COLOR_BKG, Color(128, 128, 128));
 	}
 	else
 	{
-		//mPuzzleButton->mOverImage = Sexy::IMAGE_REANIM_SELECTORSCREEN_CHALLENGES_HIGHLIGHT;
-		//mPuzzleButton->mDownImage = Sexy::IMAGE_REANIM_SELECTORSCREEN_CHALLENGES_HIGHLIGHT;
+		//mPuzzleButton->mOverImage = Sexy::IMAGE_REANIM_SELECTORSCREEN_PUZZLE_HIGHLIGHT;
+		//mPuzzleButton->mDownImage = Sexy::IMAGE_REANIM_SELECTORSCREEN_PUZZLE_HIGHLIGHT;
 		mPuzzleButton->SetColor(ButtonWidget::COLOR_BKG, Color::White);
 	}
 	if (mSurvivalLocked)
 	{
-		//mSurvivalButton->mOverImage = Sexy::IMAGE_REANIM_SELECTORSCREEN_VASEBREAKER_HIGHLIGHT;
-		//mSurvivalButton->mDownImage = Sexy::IMAGE_REANIM_SELECTORSCREEN_VASEBREAKER_HIGHLIGHT;
+		//mSurvivalButton->mOverImage = Sexy::IMAGE_REANIM_SELECTORSCREEN_SURVIVAL_HIGHLIGHT;
+		//mSurvivalButton->mDownImage = Sexy::IMAGE_REANIM_SELECTORSCREEN_SURVIVAL_HIGHLIGHT;
 		mSurvivalButton->SetColor(ButtonWidget::COLOR_BKG, Color(128, 128, 128));
 	}
 	else
 	{
-		//mSurvivalButton->mOverImage = Sexy::IMAGE_REANIM_SELECTORSCREEN_VASEBREAKER_HIGHLIGHT;
-		//mSurvivalButton->mDownImage = Sexy::IMAGE_REANIM_SELECTORSCREEN_VASEBREAKER_HIGHLIGHT;
+		//mSurvivalButton->mOverImage = Sexy::IMAGE_REANIM_SELECTORSCREEN_SURVIVAL_HIGHLIGHT;
+		//mSurvivalButton->mDownImage = Sexy::IMAGE_REANIM_SELECTORSCREEN_SURVIVAL_HIGHLIGHT;
 		mSurvivalButton->SetColor(ButtonWidget::COLOR_BKG, Color::White);
 	}
 

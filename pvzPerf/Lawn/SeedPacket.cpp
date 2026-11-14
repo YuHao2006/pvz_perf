@@ -8,6 +8,7 @@
 #include "Challenge.h"
 #include "SeedPacket.h"
 #include "LandscapeHud.h"
+#include "System/ReanimationLawn.h"
 #include "Sexy.TodLib/generated/SceneAtlasData.h"
 #include "graphics/AtlasDraw.h"
 #include "LawnCommon.h"
@@ -19,6 +20,7 @@
 #include "graphics/DDInterface.h"
 #include "graphics/RenderInterface.h"
 #include "misc/SexyMatrix.h"
+#include <iterator>
 
 SeedPacket::SeedPacket()
 {
@@ -199,6 +201,29 @@ void SeedPacket::Update()
 //0x487380
 static void SeedPacketDrawSeed(Graphics* g, float x, float y, SeedType theSeedType, SeedType theImitaterType, float theOffsetX, float theOffsetY, float theScale)
 {
+    const auto effective=theSeedType==SEED_IMITATER && theImitaterType!=SEED_NONE?theImitaterType:theSeedType;
+    struct CardPortrait { float scale,x,y; };
+    // Match the visible bounds/centre of the original 50x70 packet_plants
+    // cels, using the HD placement cache with one uniform scale. Constants
+    // are derived offline; no alpha-bound scans or animation evaluation here.
+    static constexpr auto portraits=[] {
+        std::array<CardPortrait,NUM_SEED_TYPES> values{};
+        values[SEED_TALLNUT]={0.3277310924f,6.1638655462f,9.1806722689f};
+        values[SEED_COBCANNON]={0.2626865672f,0.5044776119f,17.7492537313f};
+        return values;
+    }();
+    if(g->mScaleX<=1.0f && static_cast<unsigned>(effective)<portraits.size() && portraits[effective].scale!=0)
+    {
+        const auto& pose=portraits[effective];
+        auto& cache=*gLawnApp->mReanimatorCache;
+        // Tall-nut is a legal imitater target; Cob Cannon is not.
+        Image* image=theSeedType==SEED_IMITATER && theImitaterType!=SEED_NONE?
+            cache.mImageVariations.At(effective,VARIATION_IMITATER):cache.mPlantImages[effective];
+        if(!image)throw std::logic_error("Card portrait cache was not prebuilt");
+        TodDrawImageScaledF(g,image,x+pose.x*g->mScaleX,y+pose.y*g->mScaleY,
+            pose.scale*g->mScaleX,pose.scale*g->mScaleY);
+        return;
+    }
     Graphics seed(*g);
     seed.mScaleX=theScale*g->mScaleX;
     seed.mScaleY=theScale*g->mScaleY;
@@ -225,6 +250,28 @@ void DrawSeedPacket(Graphics* g, float x, float y, SeedType theSeedType, SeedTyp
 		g->mColorizeImages = true;
 	}
 
+    const Sexy::TextureRegion* highResolutionCard=nullptr;
+    if constexpr(CommonUIAtlas::HasSeedCards)
+    {
+        const auto index=static_cast<unsigned>(theSeedType);
+        if(index<std::size(CommonUIAtlas::SeedCards) && (theSeedType!=SeedType::SEED_IMITATER || theImitaterType==SeedType::SEED_NONE) &&
+            CommonUIAtlas::SeedCards[index].mWidth)
+            highResolutionCard=&CommonUIAtlas::SeedCards[index];
+    }
+    if(highResolutionCard)
+    {
+        Sexy::DrawAtlasImageScaled(g,{CommonUIAtlas::Texture,0},*highResolutionCard,x,y,g->mScaleX,g->mScaleY);
+        if(thePercentDark>0.0f)
+        {
+            Graphics dark(*g);
+            dark.mColor=Color(64,64,64,255);
+            dark.mColorizeImages=true;
+            dark.ClipRect(x,y,SEED_PACKET_WIDTH,FloatRoundToInt(68.0f*thePercentDark)+2);
+            Sexy::DrawAtlasImageScaled(&dark,{CommonUIAtlas::Texture,0},*highResolutionCard,x,y,g->mScaleX,g->mScaleY);
+        }
+    }
+    else
+    {
 	int aPacketBackground =
 		theSeedType == SeedType::SEED_IMITATER ? 0 :
 		Plant::IsUpgrade(aSeedType) ? 1 :
@@ -373,6 +420,8 @@ void DrawSeedPacket(Graphics* g, float x, float y, SeedType theSeedType, SeedTyp
 			SeedPacketDrawSeed(&aPlantG, x, y, theSeedType, theImitaterType, aOffsetX, aOffsetY, aScale);
 		}
 	}
+
+    }
 
 	if (theDrawCost)
 	{

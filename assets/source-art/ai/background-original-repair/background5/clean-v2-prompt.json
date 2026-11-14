@@ -1,0 +1,12 @@
+{
+  "tool": "built-in image_gen",
+  "prompt": "Prefer sunburst if routing permits. Precise texture cleanup of Image 1, a Plants vs Zombies roof game background tile. Image 2 is the authoritative original. Preserve EVERY original localized pit, dent, dark dot cluster, chip, missing chunk, scratch and crack from Image 2 at its original coordinate, size, color and count: intentional damage MUST NOT be filled or removed. Preserve original roof seams, chimney brick divisions, gutter, flowers, leaves, satellite dish and cloud shapes. Remove ONLY Image 1's invented dense fine brush hatching, paper/canvas grain and uniform tiny speckle BETWEEN the original damage. Clean undamaged surfaces should have smooth softly shaded cartoon color planes, retaining the broad original lighting. No new pits, scratches, detail, objects or lettering; no plastic 3D, thick outlines, zoom, crop, stretch or redesign. Preserve exact registered framing and aspect ratio.",
+  "tiles": [
+    "0-0",
+    "0-2",
+    "1-0",
+    "1-1",
+    "1-2"
+  ],
+  "reusedSample": "tile-0-1--clean-preserve-damage-sample.png"
+}

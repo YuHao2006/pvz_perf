@@ -1,0 +1,28 @@
+{
+  "reason": "1073 garden/tree Shop button has its own wide key design; main-menu art must not be substituted.",
+  "mainMenuChanged": false,
+  "items": [
+    {
+      "resource": "zenshopbutton",
+      "original": "assets/runtime/images/zenshopbutton.png",
+      "logicalCanvas": [
+        109,
+        57
+      ],
+      "reference": "assets/source-art/ai/zen-shop-independent/inputs/zenshopbutton--anime4k-pass2.png",
+      "originalSha256": "4d18543c26940024e9fad5afefb94f69ded076b3928c5e9d2591a5e35b847726",
+      "restoredRuntimeFile": "images/2042045600dabb8dbb696fe8.png"
+    },
+    {
+      "resource": "zenshopbutton_highlight",
+      "original": "assets/runtime/images/zenshopbutton_highlight.png",
+      "logicalCanvas": [
+        109,
+        57
+      ],
+      "reference": "assets/source-art/ai/zen-shop-independent/inputs/zenshopbutton_highlight--anime4k-pass2.png",
+      "originalSha256": "58a584279f90108831172f88c80b64957c9e637f90e77df1a13d0e1ef2d1ab4a",
+      "restoredRuntimeFile": "images/5b060d046a478df5b2b9cef5.png"
+    }
+  ]
+}

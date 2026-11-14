@@ -16,6 +16,7 @@ endforeach()
 file(GLOB_RECURSE PVZ_RESOURCE_INPUTS CONFIGURE_DEPENDS
     "${CMAKE_SOURCE_DIR}/assets/definitions/*"
     "${CMAKE_SOURCE_DIR}/assets/runtime/*"
+    "${CMAKE_SOURCE_DIR}/assets/high-resolution/*"
     "${CMAKE_SOURCE_DIR}/assets/source-art/ai/runtime/*"
     "${CMAKE_SOURCE_DIR}/assets/source-art/ai/runtime-overlay.json"
     "${PVZ_GAME_SOURCE_DIR}/*.cpp"

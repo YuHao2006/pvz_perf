@@ -1,0 +1,148 @@
+{
+  "items": [
+    {
+      "id": "round24:428b008a94314c7c6a",
+      "canonicalResourceId": "ui:assets/runtime/images/Achievements_pedestal.png",
+      "original": "assets/runtime/images/Achievements_pedestal.png",
+      "hd": "assets/source-art/replanted/ui-source-round24/Achievements_pedestal--native.png",
+      "category": "ui",
+      "groups": [
+        "底座与挑战页背景"
+      ],
+      "source": {
+        "atlas": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+        "region": "SPR_MainMenu_Button_Achievements",
+        "file": "assets/source-art/replanted/ui-source-round24/SPR_MainMenu_Button_Achievements.png"
+      },
+      "alternatives": [],
+      "processingFlags": [
+        "重植版独立底座，普通／悬停成套；普通底图缺少文字，从悬停图提取原生字形并改为深色，按不透明主体配准，忽略原版极淡外影；保持同一逻辑尺寸与等比定位。"
+      ],
+      "processing": [
+        {
+          "file": "assets/source-art/replanted/ui-source-round24/Achievements_pedestal--native.png",
+          "sourceFile": "assets/source-art/replanted/ui-source-round24/SPR_MainMenu_Button_Achievements.png",
+          "size": [
+            483,
+            564
+          ],
+          "logicalCanvas": [
+            139,
+            165
+          ],
+          "logicalDrawRect": [
+            -0.4754990925589908,
+            8.72050816696914,
+            134.994555353902,
+            157.6333938294011
+          ],
+          "sha256": "704ddc95f6f08e9bf4a080d934ed71d85c2f70b278fa30a9bcc4efe580752289"
+        }
+      ],
+      "cropAssessment": {
+        "action": "alignment",
+        "title": "共用配准／横向切片",
+        "reason": "重植版独立底座，普通／悬停成套；普通底图缺少文字，从悬停图提取原生字形并改为深色，按不透明主体配准，忽略原版极淡外影；保持同一逻辑尺寸与等比定位。",
+        "needsCrop": false
+      }
+    },
+    {
+      "id": "round24:458823bd65c57a782a",
+      "canonicalResourceId": "ui:assets/runtime/images/Achievements_pedestal_press.png",
+      "original": "assets/runtime/images/Achievements_pedestal_press.png",
+      "hd": "assets/source-art/replanted/ui-source-round24/Achievements_pedestal_press--native.png",
+      "category": "ui",
+      "groups": [
+        "底座与挑战页背景"
+      ],
+      "source": {
+        "atlas": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+        "region": "SPR_MainMenu_Button_Achievements_Over",
+        "file": "assets/source-art/replanted/ui-source-round24/SPR_MainMenu_Button_Achievements_Over.png"
+      },
+      "alternatives": [],
+      "processingFlags": [
+        "重植版独立底座，普通／悬停成套；普通底图缺少文字，从悬停图提取原生字形并改为深色，按不透明主体配准，忽略原版极淡外影；保持同一逻辑尺寸与等比定位。"
+      ],
+      "processing": [
+        {
+          "file": "assets/source-art/replanted/ui-source-round24/Achievements_pedestal_press--native.png",
+          "sourceFile": "assets/source-art/replanted/ui-source-round24/SPR_MainMenu_Button_Achievements_Over.png",
+          "size": [
+            483,
+            564
+          ],
+          "logicalCanvas": [
+            139,
+            165
+          ],
+          "logicalDrawRect": [
+            -0.4754990925589908,
+            8.72050816696914,
+            134.994555353902,
+            157.6333938294011
+          ],
+          "sha256": "56b07688479c3d9012daf66adc505065f4267f34f1e9c79d53e6d2bc80762b4a"
+        }
+      ],
+      "cropAssessment": {
+        "action": "alignment",
+        "title": "共用配准／横向切片",
+        "reason": "重植版独立底座，普通／悬停成套；普通底图缺少文字，从悬停图提取原生字形并改为深色，按不透明主体配准，忽略原版极淡外影；保持同一逻辑尺寸与等比定位。",
+        "needsCrop": false
+      }
+    },
+    {
+      "id": "round24:c80b3d3b4b80ef4cf3",
+      "canonicalResourceId": "ui:assets/source-art/ai/runtime/images/Challenge_Background.png",
+      "original": "assets/source-art/ai/runtime/images/Challenge_Background.png",
+      "hd": "assets/source-art/replanted/ui-source-round24/Challenge_Background--sliced-2x.png",
+      "category": "ui",
+      "groups": [
+        "底座与挑战页背景"
+      ],
+      "source": {
+        "atlas": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+        "region": "SPR_Challenges_Background",
+        "file": "assets/source-art/replanted/ui-source-round24/SPR_Challenges_Background.png",
+        "unityBorderLeftBottomRightTop": [
+          1408.0,
+          0.0,
+          1292.0,
+          0.0
+        ]
+      },
+      "alternatives": [],
+      "processingFlags": [
+        "小游戏／解谜／生存共用。依据原生横向切片，左391、右359逻辑像素保持原比例，只伸缩中间纸张与石牌空白。离线生成1400×600逻辑资源；运行时仍为三次提交，不纵向拉伸。"
+      ],
+      "processing": [
+        {
+          "file": "assets/source-art/replanted/ui-source-round24/Challenge_Background--sliced-2x.png",
+          "sourceFile": "assets/source-art/replanted/ui-source-round24/SPR_Challenges_Background.png",
+          "size": [
+            2800,
+            1200
+          ],
+          "logicalCanvas": [
+            1400,
+            600
+          ],
+          "logicalDrawRect": [
+            0,
+            0,
+            1400,
+            600
+          ],
+          "sha256": "d02dfe1f6bb46cd5f1f79b7bf8497aa9d0a059614afd12040db90a9056e37922"
+        }
+      ],
+      "cropAssessment": {
+        "action": "alignment",
+        "title": "共用配准／横向切片",
+        "reason": "小游戏／解谜／生存共用。依据原生横向切片，左391、右359逻辑像素保持原比例，只伸缩中间纸张与石牌空白。离线生成1400×600逻辑资源；运行时仍为三次提交，不纵向拉伸。",
+        "needsCrop": false
+      }
+    }
+  ]
+}

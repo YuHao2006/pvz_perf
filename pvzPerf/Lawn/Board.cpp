@@ -415,6 +415,32 @@ bool Board::LoadGame(const std::string& theFileName)
 		mNextSurvivalStageCounter.mPreviousNanoseconds = 1;
 	}
 
+	// Old variable-step intros could save a conveyor before its slide reached
+	// the screen. Loaded games resume Playing without replaying that slide.
+	// Restrict recovery to conveyors; some other modes intentionally hide a bank.
+	if (HasConveyorBeltSeedBank() && mSeedBank->mY < 0)
+	{
+		mSeedBank->mX = SEED_BANK_OFFSET_X_END;
+		mSeedBank->mY = 0;
+	}
+
+	// Older variable-step builds could checkpoint after this counter expired,
+	// before committing mLevelComplete. The award flag then prevents spawning
+	// from restarting the transition, and the zero counter cannot finish it.
+	// Repair only that completed-wave signature on load, leaving normal combat,
+	// repicks and final stages untouched. Keep completion pending until Continue
+	// closes: CheckForGameEnd also runs while the modal dialog is displayed.
+	if (mApp->IsSurvivalMode() && IsSurvivalStageWithRepick() &&
+		mNumWaves > 0 && mCurrentWave == mNumWaves &&
+		mLevelAwardSpawned && !mLevelComplete &&
+		mNextSurvivalStageCounter.mNanoseconds == 0 && mBoardFadeOutCounter < 0)
+	{
+		// Killing the final wave can start repick before the scheduler's 55s
+		// fallback deadline. That future deadline does not invalidate this state.
+		mNextSurvivalStageCounter.mNanoseconds = 1;
+		mNextSurvivalStageCounter.mPreviousNanoseconds = 1;
+	}
+
 	LoadBackgroundImages();
 	mApp->ClearUpdateBacklog();
 	ResetFPSStats();

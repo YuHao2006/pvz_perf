@@ -80,6 +80,14 @@ D3d9Texture* D3d9Renderer::ProcessImage(D3d9Texture* source, const GpuImageProce
     } catch (...) { DestroyTexture(target); throw; }
     return target;
 }
+D3d9Texture* D3d9Renderer::CopyTexture(D3d9Texture* source)
+{
+    if (!source) throw std::invalid_argument("Texture copy requires a source");
+    auto* copy=CopyTextureRegion(source,0,0,source->width,source->height);
+    copy->drawingWidth=source->drawingWidth; copy->drawingHeight=source->drawingHeight;
+    copy->pixelScale=source->pixelScale;
+    return copy;
+}
 D3d9Texture* D3d9Renderer::CopyTextureRegion(D3d9Texture* source, int x, int y, int w, int h)
 {
     auto& s = *impl_;

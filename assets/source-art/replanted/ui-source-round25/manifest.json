@@ -1,0 +1,970 @@
+{
+  "items": [
+    {
+      "id": "round25:e38b94343f6e5d4c7a",
+      "canonicalResourceId": "assets/runtime/images/Challenge_Thumbnails.jpg:0",
+      "original": "assets/runtime/images/Challenge_Thumbnails.jpg",
+      "originalCell": 0,
+      "reference": "assets/source-art/replanted/ui-source-round25/original-Challenge_Thumbnails-0.png",
+      "hd": "assets/source-art/replanted/ui-source-round25/SPR_MiniGames_ZomBotany.png",
+      "category": "ui",
+      "groups": [
+        "关卡封面"
+      ],
+      "source": {
+        "atlas": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+        "region": "SPR_MiniGames_ZomBotany",
+        "file": "assets/source-art/replanted/ui-source-round25/SPR_MiniGames_ZomBotany.png"
+      },
+      "processingFlags": [
+        "重植版原生图片；尚未接入运行资源，保留完整源像素。"
+      ],
+      "cropAssessment": {
+        "action": "keep",
+        "title": "完整封面／徽标",
+        "reason": "按原版槽位对照，批准后再统一装图集。",
+        "needsCrop": false
+      },
+      "size": [
+        288,
+        234
+      ],
+      "runtimeIntegrated": true,
+      "runtimeFile": "images/33a777cafc12064a56db9706.png",
+      "review": {
+        "status": "approved",
+        "source": "User: 全部通过"
+      }
+    },
+    {
+      "id": "round25:344ee6e6578dd6248f",
+      "canonicalResourceId": "assets/runtime/images/Challenge_Thumbnails.jpg:1",
+      "original": "assets/runtime/images/Challenge_Thumbnails.jpg",
+      "originalCell": 1,
+      "reference": "assets/source-art/replanted/ui-source-round25/original-Challenge_Thumbnails-1.png",
+      "hd": "assets/source-art/replanted/ui-source-round25/SPR_MiniGames_Beghouled.png",
+      "category": "ui",
+      "groups": [
+        "关卡封面"
+      ],
+      "source": {
+        "atlas": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+        "region": "SPR_MiniGames_Beghouled",
+        "file": "assets/source-art/replanted/ui-source-round25/SPR_MiniGames_Beghouled.png"
+      },
+      "processingFlags": [
+        "重植版原生图片；尚未接入运行资源，保留完整源像素。"
+      ],
+      "cropAssessment": {
+        "action": "keep",
+        "title": "完整封面／徽标",
+        "reason": "按原版槽位对照，批准后再统一装图集。",
+        "needsCrop": false
+      },
+      "size": [
+        288,
+        234
+      ],
+      "runtimeIntegrated": true,
+      "runtimeFile": "images/33a777cafc12064a56db9706.png",
+      "review": {
+        "status": "approved",
+        "source": "User: 全部通过"
+      }
+    },
+    {
+      "id": "round25:5fbf6b6441057b3001",
+      "canonicalResourceId": "assets/runtime/images/Challenge_Thumbnails.jpg:2",
+      "original": "assets/runtime/images/Challenge_Thumbnails.jpg",
+      "originalCell": 2,
+      "reference": "assets/source-art/replanted/ui-source-round25/original-Challenge_Thumbnails-2.png",
+      "hd": "assets/source-art/replanted/ui-source-round25/SPR_MiniGames_SlotMachine.png",
+      "category": "ui",
+      "groups": [
+        "关卡封面"
+      ],
+      "source": {
+        "atlas": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+        "region": "SPR_MiniGames_SlotMachine",
+        "file": "assets/source-art/replanted/ui-source-round25/SPR_MiniGames_SlotMachine.png"
+      },
+      "processingFlags": [
+        "重植版原生图片；尚未接入运行资源，保留完整源像素。"
+      ],
+      "cropAssessment": {
+        "action": "keep",
+        "title": "完整封面／徽标",
+        "reason": "按原版槽位对照，批准后再统一装图集。",
+        "needsCrop": false
+      },
+      "size": [
+        288,
+        234
+      ],
+      "runtimeIntegrated": true,
+      "runtimeFile": "images/33a777cafc12064a56db9706.png",
+      "review": {
+        "status": "approved",
+        "source": "User: 全部通过"
+      }
+    },
+    {
+      "id": "round25:2d5e01e6cc5bbdb6fb",
+      "canonicalResourceId": "assets/runtime/images/Challenge_Thumbnails.jpg:3",
+      "original": "assets/runtime/images/Challenge_Thumbnails.jpg",
+      "originalCell": 3,
+      "reference": "assets/source-art/replanted/ui-source-round25/original-Challenge_Thumbnails-3.png",
+      "hd": "assets/source-art/replanted/ui-source-round25/SPR_MiniGames_ItsRainingSeeds.png",
+      "category": "ui",
+      "groups": [
+        "关卡封面"
+      ],
+      "source": {
+        "atlas": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+        "region": "SPR_MiniGames_ItsRainingSeeds",
+        "file": "assets/source-art/replanted/ui-source-round25/SPR_MiniGames_ItsRainingSeeds.png"
+      },
+      "processingFlags": [
+        "重植版原生图片；尚未接入运行资源，保留完整源像素。"
+      ],
+      "cropAssessment": {
+        "action": "keep",
+        "title": "完整封面／徽标",
+        "reason": "按原版槽位对照，批准后再统一装图集。",
+        "needsCrop": false
+      },
+      "size": [
+        288,
+        234
+      ],
+      "runtimeIntegrated": true,
+      "runtimeFile": "images/33a777cafc12064a56db9706.png",
+      "review": {
+        "status": "approved",
+        "source": "User: 全部通过"
+      }
+    },
+    {
+      "id": "round25:069580709439bf63f1",
+      "canonicalResourceId": "assets/runtime/images/Challenge_Thumbnails.jpg:4",
+      "original": "assets/runtime/images/Challenge_Thumbnails.jpg",
+      "originalCell": 4,
+      "reference": "assets/source-art/replanted/ui-source-round25/original-Challenge_Thumbnails-4.png",
+      "hd": "assets/source-art/replanted/ui-source-round25/SPR_MiniGames_ColumnLikeYouSeeEm.png",
+      "category": "ui",
+      "groups": [
+        "关卡封面"
+      ],
+      "source": {
+        "atlas": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+        "region": "SPR_MiniGames_ColumnLikeYouSeeEm",
+        "file": "assets/source-art/replanted/ui-source-round25/SPR_MiniGames_ColumnLikeYouSeeEm.png"
+      },
+      "processingFlags": [
+        "重植版原生图片；尚未接入运行资源，保留完整源像素。"
+      ],
+      "cropAssessment": {
+        "action": "keep",
+        "title": "完整封面／徽标",
+        "reason": "按原版槽位对照，批准后再统一装图集。",
+        "needsCrop": false
+      },
+      "size": [
+        288,
+        234
+      ],
+      "runtimeIntegrated": true,
+      "runtimeFile": "images/33a777cafc12064a56db9706.png",
+      "review": {
+        "status": "approved",
+        "source": "User: 全部通过"
+      }
+    },
+    {
+      "id": "round25:a2193848e449f64e2f",
+      "canonicalResourceId": "assets/runtime/images/Challenge_Thumbnails.jpg:5",
+      "original": "assets/runtime/images/Challenge_Thumbnails.jpg",
+      "originalCell": 5,
+      "reference": "assets/source-art/replanted/ui-source-round25/original-Challenge_Thumbnails-5.png",
+      "hd": "assets/source-art/replanted/ui-source-round25/SPR_MiniGames_SeeingStars.png",
+      "category": "ui",
+      "groups": [
+        "关卡封面"
+      ],
+      "source": {
+        "atlas": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+        "region": "SPR_MiniGames_SeeingStars",
+        "file": "assets/source-art/replanted/ui-source-round25/SPR_MiniGames_SeeingStars.png"
+      },
+      "processingFlags": [
+        "重植版原生图片；尚未接入运行资源，保留完整源像素。"
+      ],
+      "cropAssessment": {
+        "action": "keep",
+        "title": "完整封面／徽标",
+        "reason": "按原版槽位对照，批准后再统一装图集。",
+        "needsCrop": false
+      },
+      "size": [
+        288,
+        234
+      ],
+      "runtimeIntegrated": true,
+      "runtimeFile": "images/33a777cafc12064a56db9706.png",
+      "review": {
+        "status": "approved",
+        "source": "User: 全部通过"
+      }
+    },
+    {
+      "id": "round25:96ee665fc4fc94694e",
+      "canonicalResourceId": "assets/runtime/images/Challenge_Thumbnails.jpg:6",
+      "original": "assets/runtime/images/Challenge_Thumbnails.jpg",
+      "originalCell": 6,
+      "reference": "assets/source-art/replanted/ui-source-round25/original-Challenge_Thumbnails-6.png",
+      "hd": "assets/source-art/replanted/ui-source-round25/SPR_MiniGames_Wall-NutBowling.png",
+      "category": "ui",
+      "groups": [
+        "关卡封面"
+      ],
+      "source": {
+        "atlas": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+        "region": "SPR_MiniGames_Wall-NutBowling",
+        "file": "assets/source-art/replanted/ui-source-round25/SPR_MiniGames_Wall-NutBowling.png"
+      },
+      "processingFlags": [
+        "重植版原生图片；尚未接入运行资源，保留完整源像素。"
+      ],
+      "cropAssessment": {
+        "action": "keep",
+        "title": "完整封面／徽标",
+        "reason": "按原版槽位对照，批准后再统一装图集。",
+        "needsCrop": false
+      },
+      "size": [
+        288,
+        234
+      ],
+      "runtimeIntegrated": true,
+      "runtimeFile": "images/33a777cafc12064a56db9706.png",
+      "review": {
+        "status": "approved",
+        "source": "User: 全部通过"
+      }
+    },
+    {
+      "id": "round25:c2343e737e9d8ff212",
+      "canonicalResourceId": "assets/runtime/images/Challenge_Thumbnails.jpg:7",
+      "original": "assets/runtime/images/Challenge_Thumbnails.jpg",
+      "originalCell": 7,
+      "reference": "assets/source-art/replanted/ui-source-round25/original-Challenge_Thumbnails-7.png",
+      "hd": "assets/source-art/replanted/ui-source-round25/SPR_MiniGames_Zombiquarium.png",
+      "category": "ui",
+      "groups": [
+        "关卡封面"
+      ],
+      "source": {
+        "atlas": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+        "region": "SPR_MiniGames_Zombiquarium",
+        "file": "assets/source-art/replanted/ui-source-round25/SPR_MiniGames_Zombiquarium.png"
+      },
+      "processingFlags": [
+        "重植版原生图片；尚未接入运行资源，保留完整源像素。"
+      ],
+      "cropAssessment": {
+        "action": "keep",
+        "title": "完整封面／徽标",
+        "reason": "按原版槽位对照，批准后再统一装图集。",
+        "needsCrop": false
+      },
+      "size": [
+        288,
+        234
+      ],
+      "runtimeIntegrated": true,
+      "runtimeFile": "images/33a777cafc12064a56db9706.png",
+      "review": {
+        "status": "approved",
+        "source": "User: 全部通过"
+      }
+    },
+    {
+      "id": "round25:8284a82491f83409cf",
+      "canonicalResourceId": "assets/runtime/images/Challenge_Thumbnails.jpg:8",
+      "original": "assets/runtime/images/Challenge_Thumbnails.jpg",
+      "originalCell": 8,
+      "reference": "assets/source-art/replanted/ui-source-round25/original-Challenge_Thumbnails-8.png",
+      "hd": "assets/source-art/replanted/ui-source-round25/SPR_MiniGames_Invisi-Ghoul.png",
+      "category": "ui",
+      "groups": [
+        "关卡封面"
+      ],
+      "source": {
+        "atlas": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+        "region": "SPR_MiniGames_Invisi-Ghoul",
+        "file": "assets/source-art/replanted/ui-source-round25/SPR_MiniGames_Invisi-Ghoul.png"
+      },
+      "processingFlags": [
+        "重植版原生图片；尚未接入运行资源，保留完整源像素。"
+      ],
+      "cropAssessment": {
+        "action": "keep",
+        "title": "完整封面／徽标",
+        "reason": "按原版槽位对照，批准后再统一装图集。",
+        "needsCrop": false
+      },
+      "size": [
+        288,
+        234
+      ],
+      "runtimeIntegrated": true,
+      "runtimeFile": "images/33a777cafc12064a56db9706.png",
+      "review": {
+        "status": "approved",
+        "source": "User: 全部通过"
+      }
+    },
+    {
+      "id": "round25:12c4c9904bdbed2491",
+      "canonicalResourceId": "assets/runtime/images/Challenge_Thumbnails.jpg:9",
+      "original": "assets/runtime/images/Challenge_Thumbnails.jpg",
+      "originalCell": 9,
+      "reference": "assets/source-art/replanted/ui-source-round25/original-Challenge_Thumbnails-9.png",
+      "hd": "assets/source-art/replanted/ui-source-round25/SPR_Challenges_Thumbnails_15.png",
+      "category": "ui",
+      "groups": [
+        "关卡封面"
+      ],
+      "source": {
+        "atlas": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+        "region": "SPR_Challenges_Thumbnails_15",
+        "file": "assets/source-art/replanted/ui-source-round25/SPR_Challenges_Thumbnails_15.png"
+      },
+      "processingFlags": [
+        "重植版原生图片；尚未接入运行资源，保留完整源像素。"
+      ],
+      "cropAssessment": {
+        "action": "keep",
+        "title": "完整封面／徽标",
+        "reason": "按原版槽位对照，批准后再统一装图集。",
+        "needsCrop": false
+      },
+      "size": [
+        288,
+        234
+      ],
+      "runtimeIntegrated": true,
+      "runtimeFile": "images/33a777cafc12064a56db9706.png",
+      "review": {
+        "status": "approved",
+        "source": "User: 全部通过"
+      }
+    },
+    {
+      "id": "round25:63f5b4d074d1c19c70",
+      "canonicalResourceId": "assets/runtime/images/Challenge_Thumbnails.jpg:10",
+      "original": "assets/runtime/images/Challenge_Thumbnails.jpg",
+      "originalCell": 10,
+      "reference": "assets/source-art/replanted/ui-source-round25/original-Challenge_Thumbnails-10.png",
+      "hd": "assets/source-art/replanted/ui-source-round25/SPR_Puzzle_Vase.png",
+      "category": "ui",
+      "groups": [
+        "关卡封面"
+      ],
+      "source": {
+        "atlas": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+        "region": "SPR_Puzzle_Vase",
+        "file": "assets/source-art/replanted/ui-source-round25/SPR_Puzzle_Vase.png"
+      },
+      "processingFlags": [
+        "重植版原生图片；尚未接入运行资源，保留完整源像素。"
+      ],
+      "cropAssessment": {
+        "action": "keep",
+        "title": "完整封面／徽标",
+        "reason": "按原版槽位对照，批准后再统一装图集。",
+        "needsCrop": false
+      },
+      "size": [
+        288,
+        234
+      ],
+      "runtimeIntegrated": true,
+      "runtimeFile": "images/33a777cafc12064a56db9706.png",
+      "review": {
+        "status": "approved",
+        "source": "User: 全部通过"
+      }
+    },
+    {
+      "id": "round25:5507283da108b70be0",
+      "canonicalResourceId": "assets/runtime/images/Challenge_Thumbnails.jpg:11",
+      "original": "assets/runtime/images/Challenge_Thumbnails.jpg",
+      "originalCell": 11,
+      "reference": "assets/source-art/replanted/ui-source-round25/original-Challenge_Thumbnails-11.png",
+      "hd": "assets/source-art/replanted/ui-source-round25/SPR_Puzzle_Zombies.png",
+      "category": "ui",
+      "groups": [
+        "关卡封面"
+      ],
+      "source": {
+        "atlas": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+        "region": "SPR_Puzzle_Zombies",
+        "file": "assets/source-art/replanted/ui-source-round25/SPR_Puzzle_Zombies.png"
+      },
+      "processingFlags": [
+        "重植版原生图片；尚未接入运行资源，保留完整源像素。"
+      ],
+      "cropAssessment": {
+        "action": "keep",
+        "title": "完整封面／徽标",
+        "reason": "按原版槽位对照，批准后再统一装图集。",
+        "needsCrop": false
+      },
+      "size": [
+        288,
+        234
+      ],
+      "runtimeIntegrated": true,
+      "runtimeFile": "images/33a777cafc12064a56db9706.png",
+      "review": {
+        "status": "approved",
+        "source": "User: 全部通过"
+      }
+    },
+    {
+      "id": "round25:0487b7a688722f9ec7",
+      "canonicalResourceId": "assets/runtime/images/Challenge_Thumbnails.jpg:12",
+      "original": "assets/runtime/images/Challenge_Thumbnails.jpg",
+      "originalCell": 12,
+      "reference": "assets/source-art/replanted/ui-source-round25/original-Challenge_Thumbnails-12.png",
+      "hd": "assets/source-art/replanted/ui-source-round25/SPR_MiniGames_BigTroubleLittleZombie.png",
+      "category": "ui",
+      "groups": [
+        "关卡封面"
+      ],
+      "source": {
+        "atlas": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+        "region": "SPR_MiniGames_BigTroubleLittleZombie",
+        "file": "assets/source-art/replanted/ui-source-round25/SPR_MiniGames_BigTroubleLittleZombie.png"
+      },
+      "processingFlags": [
+        "重植版原生图片；尚未接入运行资源，保留完整源像素。"
+      ],
+      "cropAssessment": {
+        "action": "keep",
+        "title": "完整封面／徽标",
+        "reason": "按原版槽位对照，批准后再统一装图集。",
+        "needsCrop": false
+      },
+      "size": [
+        288,
+        234
+      ],
+      "runtimeIntegrated": true,
+      "runtimeFile": "images/33a777cafc12064a56db9706.png",
+      "review": {
+        "status": "approved",
+        "source": "User: 全部通过"
+      }
+    },
+    {
+      "id": "round25:36a52188621e769d27",
+      "canonicalResourceId": "assets/runtime/images/Challenge_Thumbnails.jpg:14",
+      "original": "assets/runtime/images/Challenge_Thumbnails.jpg",
+      "originalCell": 14,
+      "reference": "assets/source-art/replanted/ui-source-round25/original-Challenge_Thumbnails-14.png",
+      "hd": "assets/source-art/replanted/ui-source-round25/SPR_MiniGames_PogoParty.png",
+      "category": "ui",
+      "groups": [
+        "关卡封面"
+      ],
+      "source": {
+        "atlas": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+        "region": "SPR_MiniGames_PogoParty",
+        "file": "assets/source-art/replanted/ui-source-round25/SPR_MiniGames_PogoParty.png"
+      },
+      "processingFlags": [
+        "重植版原生图片；尚未接入运行资源，保留完整源像素。"
+      ],
+      "cropAssessment": {
+        "action": "keep",
+        "title": "完整封面／徽标",
+        "reason": "按原版槽位对照，批准后再统一装图集。",
+        "needsCrop": false
+      },
+      "size": [
+        288,
+        234
+      ],
+      "runtimeIntegrated": true,
+      "runtimeFile": "images/33a777cafc12064a56db9706.png",
+      "review": {
+        "status": "approved",
+        "source": "User: 全部通过"
+      }
+    },
+    {
+      "id": "round25:1472ad2a27fcca4214",
+      "canonicalResourceId": "assets/runtime/images/Challenge_Thumbnails.jpg:15",
+      "original": "assets/runtime/images/Challenge_Thumbnails.jpg",
+      "originalCell": 15,
+      "reference": "assets/source-art/replanted/ui-source-round25/original-Challenge_Thumbnails-15.png",
+      "hd": "assets/source-art/replanted/ui-source-round25/SPR_MiniGames_PortalCombat.png",
+      "category": "ui",
+      "groups": [
+        "关卡封面"
+      ],
+      "source": {
+        "atlas": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+        "region": "SPR_MiniGames_PortalCombat",
+        "file": "assets/source-art/replanted/ui-source-round25/SPR_MiniGames_PortalCombat.png"
+      },
+      "processingFlags": [
+        "重植版原生图片；尚未接入运行资源，保留完整源像素。"
+      ],
+      "cropAssessment": {
+        "action": "keep",
+        "title": "完整封面／徽标",
+        "reason": "按原版槽位对照，批准后再统一装图集。",
+        "needsCrop": false
+      },
+      "size": [
+        288,
+        234
+      ],
+      "runtimeIntegrated": true,
+      "runtimeFile": "images/33a777cafc12064a56db9706.png",
+      "review": {
+        "status": "approved",
+        "source": "User: 全部通过"
+      }
+    },
+    {
+      "id": "round25:34f6147abaf60ecc06",
+      "canonicalResourceId": "assets/runtime/images/Challenge_Thumbnails.jpg:16",
+      "original": "assets/runtime/images/Challenge_Thumbnails.jpg",
+      "originalCell": 16,
+      "reference": "assets/source-art/replanted/ui-source-round25/original-Challenge_Thumbnails-16.png",
+      "hd": "assets/source-art/replanted/ui-source-round25/SPR_MiniGames_WhackaZombie.png",
+      "category": "ui",
+      "groups": [
+        "关卡封面"
+      ],
+      "source": {
+        "atlas": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+        "region": "SPR_MiniGames_WhackaZombie",
+        "file": "assets/source-art/replanted/ui-source-round25/SPR_MiniGames_WhackaZombie.png"
+      },
+      "processingFlags": [
+        "重植版原生图片；尚未接入运行资源，保留完整源像素。"
+      ],
+      "cropAssessment": {
+        "action": "keep",
+        "title": "完整封面／徽标",
+        "reason": "按原版槽位对照，批准后再统一装图集。",
+        "needsCrop": false
+      },
+      "size": [
+        288,
+        234
+      ],
+      "runtimeIntegrated": true,
+      "runtimeFile": "images/33a777cafc12064a56db9706.png",
+      "review": {
+        "status": "approved",
+        "source": "User: 全部通过"
+      }
+    },
+    {
+      "id": "round25:de4b6d559d81266099",
+      "canonicalResourceId": "assets/runtime/images/Challenge_Thumbnails.jpg:17",
+      "original": "assets/runtime/images/Challenge_Thumbnails.jpg",
+      "originalCell": 17,
+      "reference": "assets/source-art/replanted/ui-source-round25/original-Challenge_Thumbnails-17.png",
+      "hd": "assets/source-art/replanted/ui-source-round25/SPR_MiniGames_BobsledBonanza.png",
+      "category": "ui",
+      "groups": [
+        "关卡封面"
+      ],
+      "source": {
+        "atlas": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+        "region": "SPR_MiniGames_BobsledBonanza",
+        "file": "assets/source-art/replanted/ui-source-round25/SPR_MiniGames_BobsledBonanza.png"
+      },
+      "processingFlags": [
+        "重植版原生图片；尚未接入运行资源，保留完整源像素。"
+      ],
+      "cropAssessment": {
+        "action": "keep",
+        "title": "完整封面／徽标",
+        "reason": "按原版槽位对照，批准后再统一装图集。",
+        "needsCrop": false
+      },
+      "size": [
+        288,
+        234
+      ],
+      "runtimeIntegrated": true,
+      "runtimeFile": "images/33a777cafc12064a56db9706.png",
+      "review": {
+        "status": "approved",
+        "source": "User: 全部通过"
+      }
+    },
+    {
+      "id": "round25:e54c76bddb0081579d",
+      "canonicalResourceId": "assets/runtime/images/Challenge_Thumbnails.jpg:18",
+      "original": "assets/runtime/images/Challenge_Thumbnails.jpg",
+      "originalCell": 18,
+      "reference": "assets/source-art/replanted/ui-source-round25/original-Challenge_Thumbnails-18.png",
+      "hd": "assets/source-art/replanted/ui-source-round25/SPR_MiniGames_ZombieNimbleZombieQuick.png",
+      "category": "ui",
+      "groups": [
+        "关卡封面"
+      ],
+      "source": {
+        "atlas": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+        "region": "SPR_MiniGames_ZombieNimbleZombieQuick",
+        "file": "assets/source-art/replanted/ui-source-round25/SPR_MiniGames_ZombieNimbleZombieQuick.png"
+      },
+      "processingFlags": [
+        "重植版原生图片；尚未接入运行资源，保留完整源像素。"
+      ],
+      "cropAssessment": {
+        "action": "keep",
+        "title": "完整封面／徽标",
+        "reason": "按原版槽位对照，批准后再统一装图集。",
+        "needsCrop": false
+      },
+      "size": [
+        288,
+        234
+      ],
+      "runtimeIntegrated": true,
+      "runtimeFile": "images/33a777cafc12064a56db9706.png",
+      "review": {
+        "status": "approved",
+        "source": "User: 全部通过"
+      }
+    },
+    {
+      "id": "round25:2b3c2d07d0475cfa56",
+      "canonicalResourceId": "assets/runtime/images/Challenge_Thumbnails.jpg:19",
+      "original": "assets/runtime/images/Challenge_Thumbnails.jpg",
+      "originalCell": 19,
+      "reference": "assets/source-art/replanted/ui-source-round25/original-Challenge_Thumbnails-19.png",
+      "hd": "assets/source-art/replanted/ui-source-round25/SPR_MiniGames_DrZombossRevenge.png",
+      "category": "ui",
+      "groups": [
+        "关卡封面"
+      ],
+      "source": {
+        "atlas": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+        "region": "SPR_MiniGames_DrZombossRevenge",
+        "file": "assets/source-art/replanted/ui-source-round25/SPR_MiniGames_DrZombossRevenge.png"
+      },
+      "processingFlags": [
+        "重植版原生图片；尚未接入运行资源，保留完整源像素。"
+      ],
+      "cropAssessment": {
+        "action": "keep",
+        "title": "完整封面／徽标",
+        "reason": "按原版槽位对照，批准后再统一装图集。",
+        "needsCrop": false
+      },
+      "size": [
+        288,
+        234
+      ],
+      "runtimeIntegrated": true,
+      "runtimeFile": "images/33a777cafc12064a56db9706.png",
+      "review": {
+        "status": "approved",
+        "source": "User: 全部通过"
+      }
+    },
+    {
+      "id": "round25:ec6021aff13d0d7ec0",
+      "canonicalResourceId": "assets/runtime/images/Challenge_Thumbnails.jpg:20",
+      "original": "assets/runtime/images/Challenge_Thumbnails.jpg",
+      "originalCell": 20,
+      "reference": "assets/source-art/replanted/ui-source-round25/original-Challenge_Thumbnails-20.png",
+      "hd": "assets/source-art/replanted/ui-source-round25/SPR_MiniGames_BeghouledTwist.png",
+      "category": "ui",
+      "groups": [
+        "关卡封面"
+      ],
+      "source": {
+        "atlas": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+        "region": "SPR_MiniGames_BeghouledTwist",
+        "file": "assets/source-art/replanted/ui-source-round25/SPR_MiniGames_BeghouledTwist.png"
+      },
+      "processingFlags": [
+        "重植版原生图片；尚未接入运行资源，保留完整源像素。"
+      ],
+      "cropAssessment": {
+        "action": "keep",
+        "title": "完整封面／徽标",
+        "reason": "按原版槽位对照，批准后再统一装图集。",
+        "needsCrop": false
+      },
+      "size": [
+        288,
+        234
+      ],
+      "runtimeIntegrated": true,
+      "runtimeFile": "images/33a777cafc12064a56db9706.png",
+      "review": {
+        "status": "approved",
+        "source": "User: 全部通过"
+      }
+    },
+    {
+      "id": "round25:1f247263576038ca7e",
+      "canonicalResourceId": "assets/runtime/images/Challenge_Thumbnails.jpg:21",
+      "original": "assets/runtime/images/Challenge_Thumbnails.jpg",
+      "originalCell": 21,
+      "reference": "assets/source-art/replanted/ui-source-round25/original-Challenge_Thumbnails-21.png",
+      "hd": "assets/source-art/replanted/ui-source-round25/SPR_MiniGames_LastStand.png",
+      "category": "ui",
+      "groups": [
+        "关卡封面"
+      ],
+      "source": {
+        "atlas": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+        "region": "SPR_MiniGames_LastStand",
+        "file": "assets/source-art/replanted/ui-source-round25/SPR_MiniGames_LastStand.png"
+      },
+      "processingFlags": [
+        "重植版原生图片；尚未接入运行资源，保留完整源像素。"
+      ],
+      "cropAssessment": {
+        "action": "keep",
+        "title": "完整封面／徽标",
+        "reason": "按原版槽位对照，批准后再统一装图集。",
+        "needsCrop": false
+      },
+      "size": [
+        288,
+        234
+      ],
+      "runtimeIntegrated": true,
+      "runtimeFile": "images/33a777cafc12064a56db9706.png",
+      "review": {
+        "status": "approved",
+        "source": "User: 全部通过"
+      }
+    },
+    {
+      "id": "round25:122a5ee657945b83aa",
+      "canonicalResourceId": "assets/runtime/images/Survival_Thumbnails.jpg:0",
+      "original": "assets/runtime/images/Survival_Thumbnails.jpg",
+      "originalCell": 0,
+      "reference": "assets/source-art/replanted/ui-source-round25/original-Survival_Thumbnails-0.png",
+      "hd": "assets/source-art/replanted/ui-source-round25/SPR_Endless_Thumbnails_Day.png",
+      "category": "ui",
+      "groups": [
+        "关卡封面"
+      ],
+      "source": {
+        "atlas": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+        "region": "SPR_Endless_Thumbnails_Day",
+        "file": "assets/source-art/replanted/ui-source-round25/SPR_Endless_Thumbnails_Day.png"
+      },
+      "processingFlags": [
+        "重植版原生图片；尚未接入运行资源，保留完整源像素。"
+      ],
+      "cropAssessment": {
+        "action": "keep",
+        "title": "完整封面／徽标",
+        "reason": "按原版槽位对照，批准后再统一装图集。",
+        "needsCrop": false
+      },
+      "size": [
+        288,
+        234
+      ],
+      "runtimeIntegrated": true,
+      "runtimeFile": "images/3edd007b2ed39413ab21da0c.png",
+      "review": {
+        "status": "approved",
+        "source": "User: 全部通过"
+      }
+    },
+    {
+      "id": "round25:07f3e3d9569fbe9268",
+      "canonicalResourceId": "assets/runtime/images/Survival_Thumbnails.jpg:1",
+      "original": "assets/runtime/images/Survival_Thumbnails.jpg",
+      "originalCell": 1,
+      "reference": "assets/source-art/replanted/ui-source-round25/original-Survival_Thumbnails-1.png",
+      "hd": "assets/source-art/replanted/ui-source-round25/SPR_Endless_Thumbnails_Night.png",
+      "category": "ui",
+      "groups": [
+        "关卡封面"
+      ],
+      "source": {
+        "atlas": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+        "region": "SPR_Endless_Thumbnails_Night",
+        "file": "assets/source-art/replanted/ui-source-round25/SPR_Endless_Thumbnails_Night.png"
+      },
+      "processingFlags": [
+        "重植版原生图片；尚未接入运行资源，保留完整源像素。"
+      ],
+      "cropAssessment": {
+        "action": "keep",
+        "title": "完整封面／徽标",
+        "reason": "按原版槽位对照，批准后再统一装图集。",
+        "needsCrop": false
+      },
+      "size": [
+        288,
+        234
+      ],
+      "runtimeIntegrated": true,
+      "runtimeFile": "images/3edd007b2ed39413ab21da0c.png",
+      "review": {
+        "status": "approved",
+        "source": "User: 全部通过"
+      }
+    },
+    {
+      "id": "round25:9e3e9b9da29d7a1fa5",
+      "canonicalResourceId": "assets/runtime/images/Survival_Thumbnails.jpg:2",
+      "original": "assets/runtime/images/Survival_Thumbnails.jpg",
+      "originalCell": 2,
+      "reference": "assets/source-art/replanted/ui-source-round25/original-Survival_Thumbnails-2.png",
+      "hd": "assets/source-art/replanted/ui-source-round25/SPR_Endless_Thumbnails_Pool.png",
+      "category": "ui",
+      "groups": [
+        "关卡封面"
+      ],
+      "source": {
+        "atlas": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+        "region": "SPR_Endless_Thumbnails_Pool",
+        "file": "assets/source-art/replanted/ui-source-round25/SPR_Endless_Thumbnails_Pool.png"
+      },
+      "processingFlags": [
+        "重植版原生图片；尚未接入运行资源，保留完整源像素。"
+      ],
+      "cropAssessment": {
+        "action": "keep",
+        "title": "完整封面／徽标",
+        "reason": "按原版槽位对照，批准后再统一装图集。",
+        "needsCrop": false
+      },
+      "size": [
+        288,
+        234
+      ],
+      "runtimeIntegrated": true,
+      "runtimeFile": "images/3edd007b2ed39413ab21da0c.png",
+      "review": {
+        "status": "approved",
+        "source": "User: 全部通过"
+      }
+    },
+    {
+      "id": "round25:61453ae4b61b0aa150",
+      "canonicalResourceId": "assets/runtime/images/Survival_Thumbnails.jpg:3",
+      "original": "assets/runtime/images/Survival_Thumbnails.jpg",
+      "originalCell": 3,
+      "reference": "assets/source-art/replanted/ui-source-round25/original-Survival_Thumbnails-3.png",
+      "hd": "assets/source-art/replanted/ui-source-round25/SPR_Endless_Thumbnails_Fog.png",
+      "category": "ui",
+      "groups": [
+        "关卡封面"
+      ],
+      "source": {
+        "atlas": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+        "region": "SPR_Endless_Thumbnails_Fog",
+        "file": "assets/source-art/replanted/ui-source-round25/SPR_Endless_Thumbnails_Fog.png"
+      },
+      "processingFlags": [
+        "重植版原生图片；尚未接入运行资源，保留完整源像素。"
+      ],
+      "cropAssessment": {
+        "action": "keep",
+        "title": "完整封面／徽标",
+        "reason": "按原版槽位对照，批准后再统一装图集。",
+        "needsCrop": false
+      },
+      "size": [
+        288,
+        234
+      ],
+      "runtimeIntegrated": true,
+      "runtimeFile": "images/3edd007b2ed39413ab21da0c.png",
+      "review": {
+        "status": "approved",
+        "source": "User: 全部通过"
+      }
+    },
+    {
+      "id": "round25:359566ffbc35269842",
+      "canonicalResourceId": "assets/runtime/images/Survival_Thumbnails.jpg:4",
+      "original": "assets/runtime/images/Survival_Thumbnails.jpg",
+      "originalCell": 4,
+      "reference": "assets/source-art/replanted/ui-source-round25/original-Survival_Thumbnails-4.png",
+      "hd": "assets/source-art/replanted/ui-source-round25/SPR_Endless_Thumbnails_Roof.png",
+      "category": "ui",
+      "groups": [
+        "关卡封面"
+      ],
+      "source": {
+        "atlas": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+        "region": "SPR_Endless_Thumbnails_Roof",
+        "file": "assets/source-art/replanted/ui-source-round25/SPR_Endless_Thumbnails_Roof.png"
+      },
+      "processingFlags": [
+        "重植版原生图片；尚未接入运行资源，保留完整源像素。"
+      ],
+      "cropAssessment": {
+        "action": "keep",
+        "title": "完整封面／徽标",
+        "reason": "按原版槽位对照，批准后再统一装图集。",
+        "needsCrop": false
+      },
+      "size": [
+        288,
+        234
+      ],
+      "runtimeIntegrated": true,
+      "runtimeFile": "images/3edd007b2ed39413ab21da0c.png",
+      "review": {
+        "status": "approved",
+        "source": "User: 全部通过"
+      }
+    },
+    {
+      "id": "round25:red-triangle-trophy",
+      "original": "assets/runtime/images/MiniGame_trophy.png",
+      "reference": "assets/source-art/replanted/ui-source-round25/original-MiniGame_trophy-reference.png",
+      "hd": "assets/source-art/replanted/ui-source-round25/SPR_Challenges_ItemWindow_Trophy.png",
+      "category": "ui",
+      "groups": [
+        "红三角与奖杯"
+      ],
+      "source": {
+        "atlas": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+        "region": "SPR_Challenges_ItemWindow_Trophy",
+        "file": "assets/source-art/replanted/ui-source-round25/SPR_Challenges_ItemWindow_Trophy.png"
+      },
+      "processingFlags": [
+        "红三角、描边与奖杯合在一张252×254原生图。左侧是经典TV资源对照，本项目源路径为图集占位文件。"
+      ],
+      "cropAssessment": {
+        "action": "keep",
+        "needsCrop": false
+      },
+      "runtimeIntegrated": true,
+      "runtimeFile": "images/f5f36846101be92db25d39d2.png",
+      "review": {
+        "status": "approved",
+        "source": "User: 全部通过"
+      }
+    }
+  ],
+  "unusedOriginalCell": 13,
+  "note": "原版13号为黑色空占位，不作为缺失封面。普通／困难生存共用对应场景图；ZomBotany2和Bowling2复用原封面。"
+}

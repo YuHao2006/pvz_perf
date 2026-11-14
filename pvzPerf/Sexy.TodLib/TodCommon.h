@@ -23,6 +23,7 @@ namespace Sexy
 };
 //using namespace std;
 using namespace Sexy;
+void TodDrawChallengeBackground(Sexy::Graphics* theGraphics, const Sexy::Rect& theBounds);
 
 #define DEG_TO_RAD(deg) ((deg) * 0.017453292f)
 #define RAD_TO_DEG(rad) ((rad) * 57.29578f)

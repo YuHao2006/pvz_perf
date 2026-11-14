@@ -1,0 +1,1287 @@
+{
+  "feasible": true,
+  "runtimeStatus": "not integrated; Dwarven candidate rejected, other three samples approved",
+  "integrationRequirement": "Font image loading currently lacks explicit logical-vs-physical extent metadata. Add it at resource build / font load time, not per glyph draw. Preserve old logical metrics and bitmap glyph rectangles. No save changes.",
+  "samples": [
+    {
+      "font": "dwarventodcraft18",
+      "vectorSource": "assets/source-art/replanted/localization-study/fonts/FNT_DwarvenTodcraft.ttf",
+      "compiledSourceImage": "data/DwarvenTodcraft18",
+      "glyphs": [
+        {
+          "char": "M",
+          "logicalAdvance": 22,
+          "sourceRect": [
+            233,
+            0,
+            26,
+            28
+          ],
+          "sourceOffset": [
+            -3,
+            0
+          ]
+        },
+        {
+          "char": "i",
+          "logicalAdvance": 7,
+          "sourceRect": [
+            689,
+            0,
+            12,
+            28
+          ],
+          "sourceOffset": [
+            -3,
+            0
+          ]
+        },
+        {
+          "char": "n",
+          "logicalAdvance": 13,
+          "sourceRect": [
+            771,
+            0,
+            18,
+            28
+          ],
+          "sourceOffset": [
+            -3,
+            0
+          ]
+        },
+        {
+          "char": "i",
+          "logicalAdvance": 7,
+          "sourceRect": [
+            689,
+            0,
+            12,
+            28
+          ],
+          "sourceOffset": [
+            -3,
+            0
+          ]
+        },
+        {
+          "char": "-",
+          "logicalAdvance": 9,
+          "sourceRect": [
+            1383,
+            0,
+            14,
+            28
+          ],
+          "sourceOffset": [
+            -3,
+            0
+          ]
+        },
+        {
+          "char": "G",
+          "logicalAdvance": 15,
+          "sourceRect": [
+            120,
+            0,
+            20,
+            28
+          ],
+          "sourceOffset": [
+            -3,
+            0
+          ]
+        },
+        {
+          "char": "a",
+          "logicalAdvance": 12,
+          "sourceRect": [
+            551,
+            0,
+            18,
+            28
+          ],
+          "sourceOffset": [
+            -3,
+            0
+          ]
+        },
+        {
+          "char": "m",
+          "logicalAdvance": 16,
+          "sourceRect": [
+            749,
+            0,
+            21,
+            28
+          ],
+          "sourceOffset": [
+            -3,
+            0
+          ]
+        },
+        {
+          "char": "e",
+          "logicalAdvance": 10,
+          "sourceRect": [
+            620,
+            0,
+            15,
+            28
+          ],
+          "sourceOffset": [
+            -3,
+            0
+          ]
+        },
+        {
+          "char": "s",
+          "logicalAdvance": 9,
+          "sourceRect": [
+            863,
+            0,
+            14,
+            28
+          ],
+          "sourceOffset": [
+            -3,
+            0
+          ]
+        },
+        {
+          "char": "S",
+          "logicalAdvance": 11,
+          "sourceRect": [
+            367,
+            0,
+            17,
+            28
+          ],
+          "sourceOffset": [
+            -3,
+            0
+          ]
+        },
+        {
+          "char": "U",
+          "logicalAdvance": 17,
+          "sourceRect": [
+            406,
+            0,
+            22,
+            28
+          ],
+          "sourceOffset": [
+            -3,
+            0
+          ]
+        },
+        {
+          "char": "R",
+          "logicalAdvance": 15,
+          "sourceRect": [
+            346,
+            0,
+            20,
+            28
+          ],
+          "sourceOffset": [
+            -3,
+            0
+          ]
+        },
+        {
+          "char": "V",
+          "logicalAdvance": 17,
+          "sourceRect": [
+            429,
+            0,
+            22,
+            28
+          ],
+          "sourceOffset": [
+            -3,
+            0
+          ]
+        },
+        {
+          "char": "I",
+          "logicalAdvance": 9,
+          "sourceRect": [
+            163,
+            0,
+            14,
+            28
+          ],
+          "sourceOffset": [
+            -3,
+            0
+          ]
+        },
+        {
+          "char": "V",
+          "logicalAdvance": 17,
+          "sourceRect": [
+            429,
+            0,
+            22,
+            28
+          ],
+          "sourceOffset": [
+            -3,
+            0
+          ]
+        },
+        {
+          "char": "A",
+          "logicalAdvance": 17,
+          "sourceRect": [
+            0,
+            0,
+            22,
+            28
+          ],
+          "sourceOffset": [
+            -3,
+            0
+          ]
+        },
+        {
+          "char": "L",
+          "logicalAdvance": 13,
+          "sourceRect": [
+            214,
+            0,
+            18,
+            28
+          ],
+          "sourceOffset": [
+            -3,
+            0
+          ]
+        },
+        {
+          "char": "E",
+          "logicalAdvance": 13,
+          "sourceRect": [
+            83,
+            0,
+            18,
+            28
+          ],
+          "sourceOffset": [
+            -3,
+            0
+          ]
+        },
+        {
+          "char": "N",
+          "logicalAdvance": 17,
+          "sourceRect": [
+            260,
+            0,
+            22,
+            28
+          ],
+          "sourceOffset": [
+            -3,
+            0
+          ]
+        },
+        {
+          "char": "D",
+          "logicalAdvance": 14,
+          "sourceRect": [
+            64,
+            0,
+            18,
+            28
+          ],
+          "sourceOffset": [
+            -3,
+            0
+          ]
+        },
+        {
+          "char": "L",
+          "logicalAdvance": 13,
+          "sourceRect": [
+            214,
+            0,
+            18,
+            28
+          ],
+          "sourceOffset": [
+            -3,
+            0
+          ]
+        },
+        {
+          "char": "E",
+          "logicalAdvance": 13,
+          "sourceRect": [
+            83,
+            0,
+            18,
+            28
+          ],
+          "sourceOffset": [
+            -3,
+            0
+          ]
+        },
+        {
+          "char": "S",
+          "logicalAdvance": 11,
+          "sourceRect": [
+            367,
+            0,
+            17,
+            28
+          ],
+          "sourceOffset": [
+            -3,
+            0
+          ]
+        },
+        {
+          "char": "S",
+          "logicalAdvance": 11,
+          "sourceRect": [
+            367,
+            0,
+            17,
+            28
+          ],
+          "sourceOffset": [
+            -3,
+            0
+          ]
+        },
+        {
+          "char": "1",
+          "logicalAdvance": 8,
+          "sourceRect": [
+            1034,
+            0,
+            14,
+            28
+          ],
+          "sourceOffset": [
+            -3,
+            0
+          ]
+        },
+        {
+          "char": "2",
+          "logicalAdvance": 12,
+          "sourceRect": [
+            1049,
+            0,
+            18,
+            28
+          ],
+          "sourceOffset": [
+            -3,
+            0
+          ]
+        },
+        {
+          "char": "3",
+          "logicalAdvance": 11,
+          "sourceRect": [
+            1068,
+            0,
+            17,
+            28
+          ],
+          "sourceOffset": [
+            -3,
+            0
+          ]
+        },
+        {
+          "char": "4",
+          "logicalAdvance": 13,
+          "sourceRect": [
+            1086,
+            0,
+            19,
+            28
+          ],
+          "sourceOffset": [
+            -3,
+            0
+          ]
+        },
+        {
+          "char": "5",
+          "logicalAdvance": 12,
+          "sourceRect": [
+            1106,
+            0,
+            17,
+            28
+          ],
+          "sourceOffset": [
+            -3,
+            0
+          ]
+        }
+      ],
+      "advancesOffsetsKerningUnchanged": true,
+      "purpose": "Prototype only: preserve old logical glyph rectangles, offsets, advances and kerning while rasterizing from TTF. Not integrated.",
+      "review": {
+        "status": "wrong",
+        "source": "User review in chat",
+        "note": "Mini-Games / SURVIVAL ENDLESS / 12 group rejected"
+      },
+      "glyphShapeReview": "approved by user; previous rejection concerned size/overlap",
+      "sizeFixCandidate": {
+        "image": "assets/source-art/replanted/hd-followup-20261111/fonts/dwarventodcraft18--fill-bounds-v2.png",
+        "status": "awaiting-review",
+        "method": "fit original white fill, exclude outline/shadow"
+      }
+    },
+    {
+      "font": "briannetod16",
+      "vectorSource": "assets/source-art/replanted/localization-study/fonts/FNT_BrianneTod.ttf",
+      "compiledSourceImage": "data/BrianneTod16",
+      "glyphs": [
+        {
+          "char": "L",
+          "logicalAdvance": 12,
+          "sourceRect": [
+            137,
+            0,
+            12,
+            23
+          ],
+          "sourceOffset": [
+            0,
+            0
+          ]
+        },
+        {
+          "char": "a",
+          "logicalAdvance": 9,
+          "sourceRect": [
+            327,
+            0,
+            10,
+            23
+          ],
+          "sourceOffset": [
+            0,
+            0
+          ]
+        },
+        {
+          "char": "s",
+          "logicalAdvance": 8,
+          "sourceRect": [
+            502,
+            0,
+            9,
+            23
+          ],
+          "sourceOffset": [
+            0,
+            0
+          ]
+        },
+        {
+          "char": "t",
+          "logicalAdvance": 9,
+          "sourceRect": [
+            512,
+            0,
+            9,
+            23
+          ],
+          "sourceOffset": [
+            0,
+            0
+          ]
+        },
+        {
+          "char": "S",
+          "logicalAdvance": 10,
+          "sourceRect": [
+            228,
+            0,
+            11,
+            23
+          ],
+          "sourceOffset": [
+            0,
+            0
+          ]
+        },
+        {
+          "char": "e",
+          "logicalAdvance": 8,
+          "sourceRect": [
+            366,
+            0,
+            8,
+            23
+          ],
+          "sourceOffset": [
+            0,
+            0
+          ]
+        },
+        {
+          "char": "l",
+          "logicalAdvance": 4,
+          "sourceRect": [
+            433,
+            0,
+            4,
+            23
+          ],
+          "sourceOffset": [
+            0,
+            0
+          ]
+        },
+        {
+          "char": "e",
+          "logicalAdvance": 8,
+          "sourceRect": [
+            366,
+            0,
+            8,
+            23
+          ],
+          "sourceOffset": [
+            0,
+            0
+          ]
+        },
+        {
+          "char": "c",
+          "logicalAdvance": 7,
+          "sourceRect": [
+            348,
+            0,
+            7,
+            23
+          ],
+          "sourceOffset": [
+            0,
+            0
+          ]
+        },
+        {
+          "char": "t",
+          "logicalAdvance": 9,
+          "sourceRect": [
+            512,
+            0,
+            9,
+            23
+          ],
+          "sourceOffset": [
+            0,
+            0
+          ]
+        },
+        {
+          "char": "i",
+          "logicalAdvance": 5,
+          "sourceRect": [
+            408,
+            0,
+            4,
+            23
+          ],
+          "sourceOffset": [
+            0,
+            0
+          ]
+        },
+        {
+          "char": "o",
+          "logicalAdvance": 9,
+          "sourceRect": [
+            462,
+            0,
+            9,
+            23
+          ],
+          "sourceOffset": [
+            0,
+            0
+          ]
+        },
+        {
+          "char": "n",
+          "logicalAdvance": 10,
+          "sourceRect": [
+            451,
+            0,
+            10,
+            23
+          ],
+          "sourceOffset": [
+            0,
+            0
+          ]
+        },
+        {
+          "char": "1",
+          "logicalAdvance": 4,
+          "sourceRect": [
+            591,
+            0,
+            4,
+            23
+          ],
+          "sourceOffset": [
+            0,
+            0
+          ]
+        },
+        {
+          "char": "2",
+          "logicalAdvance": 10,
+          "sourceRect": [
+            596,
+            0,
+            10,
+            23
+          ],
+          "sourceOffset": [
+            0,
+            0
+          ]
+        },
+        {
+          "char": "3",
+          "logicalAdvance": 10,
+          "sourceRect": [
+            607,
+            0,
+            10,
+            23
+          ],
+          "sourceOffset": [
+            0,
+            0
+          ]
+        },
+        {
+          "char": "4",
+          "logicalAdvance": 9,
+          "sourceRect": [
+            618,
+            0,
+            9,
+            23
+          ],
+          "sourceOffset": [
+            0,
+            0
+          ]
+        },
+        {
+          "char": "5",
+          "logicalAdvance": 10,
+          "sourceRect": [
+            628,
+            0,
+            10,
+            23
+          ],
+          "sourceOffset": [
+            0,
+            0
+          ]
+        },
+        {
+          "char": "6",
+          "logicalAdvance": 10,
+          "sourceRect": [
+            639,
+            0,
+            10,
+            23
+          ],
+          "sourceOffset": [
+            0,
+            0
+          ]
+        },
+        {
+          "char": "7",
+          "logicalAdvance": 10,
+          "sourceRect": [
+            650,
+            0,
+            10,
+            23
+          ],
+          "sourceOffset": [
+            0,
+            0
+          ]
+        },
+        {
+          "char": "8",
+          "logicalAdvance": 10,
+          "sourceRect": [
+            661,
+            0,
+            10,
+            23
+          ],
+          "sourceOffset": [
+            0,
+            0
+          ]
+        },
+        {
+          "char": "9",
+          "logicalAdvance": 10,
+          "sourceRect": [
+            672,
+            0,
+            9,
+            23
+          ],
+          "sourceOffset": [
+            0,
+            0
+          ]
+        },
+        {
+          "char": "0",
+          "logicalAdvance": 9,
+          "sourceRect": [
+            581,
+            0,
+            9,
+            23
+          ],
+          "sourceOffset": [
+            0,
+            0
+          ]
+        }
+      ],
+      "advancesOffsetsKerningUnchanged": true,
+      "purpose": "Prototype only: preserve old logical glyph rectangles, offsets, advances and kerning while rasterizing from TTF. Not integrated.",
+      "review": {
+        "status": "approved",
+        "source": "User review in chat",
+        "note": "Other font sample approved"
+      }
+    },
+    {
+      "font": "houseofterror20",
+      "vectorSource": "assets/source-art/replanted/localization-study/fonts/FNT_MonsterFonts-HouseofTerror.ttf",
+      "compiledSourceImage": "data/HouseofTerror20",
+      "glyphs": [
+        {
+          "char": "A",
+          "logicalAdvance": 13,
+          "sourceRect": [
+            0,
+            0,
+            20,
+            43
+          ],
+          "sourceOffset": [
+            -4,
+            0
+          ]
+        },
+        {
+          "char": "H",
+          "logicalAdvance": 13,
+          "sourceRect": [
+            143,
+            0,
+            21,
+            43
+          ],
+          "sourceOffset": [
+            -4,
+            0
+          ]
+        },
+        {
+          "char": "U",
+          "logicalAdvance": 13,
+          "sourceRect": [
+            412,
+            0,
+            20,
+            43
+          ],
+          "sourceOffset": [
+            -4,
+            0
+          ]
+        },
+        {
+          "char": "G",
+          "logicalAdvance": 11,
+          "sourceRect": [
+            123,
+            0,
+            19,
+            43
+          ],
+          "sourceOffset": [
+            -4,
+            0
+          ]
+        },
+        {
+          "char": "E",
+          "logicalAdvance": 11,
+          "sourceRect": [
+            83,
+            0,
+            19,
+            43
+          ],
+          "sourceOffset": [
+            -4,
+            0
+          ]
+        },
+        {
+          "char": "W",
+          "logicalAdvance": 19,
+          "sourceRect": [
+            455,
+            0,
+            26,
+            43
+          ],
+          "sourceOffset": [
+            -4,
+            0
+          ]
+        },
+        {
+          "char": "A",
+          "logicalAdvance": 13,
+          "sourceRect": [
+            0,
+            0,
+            20,
+            43
+          ],
+          "sourceOffset": [
+            -4,
+            0
+          ]
+        },
+        {
+          "char": "V",
+          "logicalAdvance": 13,
+          "sourceRect": [
+            433,
+            0,
+            21,
+            43
+          ],
+          "sourceOffset": [
+            -4,
+            0
+          ]
+        },
+        {
+          "char": "E",
+          "logicalAdvance": 11,
+          "sourceRect": [
+            83,
+            0,
+            19,
+            43
+          ],
+          "sourceOffset": [
+            -4,
+            0
+          ]
+        },
+        {
+          "char": "O",
+          "logicalAdvance": 11,
+          "sourceRect": [
+            287,
+            0,
+            19,
+            43
+          ],
+          "sourceOffset": [
+            -4,
+            0
+          ]
+        },
+        {
+          "char": "F",
+          "logicalAdvance": 12,
+          "sourceRect": [
+            103,
+            0,
+            19,
+            43
+          ],
+          "sourceOffset": [
+            -4,
+            0
+          ]
+        },
+        {
+          "char": "Z",
+          "logicalAdvance": 13,
+          "sourceRect": [
+            530,
+            0,
+            20,
+            43
+          ],
+          "sourceOffset": [
+            -4,
+            0
+          ]
+        },
+        {
+          "char": "O",
+          "logicalAdvance": 11,
+          "sourceRect": [
+            287,
+            0,
+            19,
+            43
+          ],
+          "sourceOffset": [
+            -4,
+            0
+          ]
+        },
+        {
+          "char": "M",
+          "logicalAdvance": 16,
+          "sourceRect": [
+            241,
+            0,
+            24,
+            43
+          ],
+          "sourceOffset": [
+            -4,
+            0
+          ]
+        },
+        {
+          "char": "B",
+          "logicalAdvance": 12,
+          "sourceRect": [
+            21,
+            0,
+            19,
+            43
+          ],
+          "sourceOffset": [
+            -4,
+            0
+          ]
+        },
+        {
+          "char": "I",
+          "logicalAdvance": 7,
+          "sourceRect": [
+            165,
+            0,
+            15,
+            43
+          ],
+          "sourceOffset": [
+            -4,
+            0
+          ]
+        },
+        {
+          "char": "E",
+          "logicalAdvance": 11,
+          "sourceRect": [
+            83,
+            0,
+            19,
+            43
+          ],
+          "sourceOffset": [
+            -4,
+            0
+          ]
+        },
+        {
+          "char": "S",
+          "logicalAdvance": 11,
+          "sourceRect": [
+            370,
+            0,
+            19,
+            43
+          ],
+          "sourceOffset": [
+            -4,
+            0
+          ]
+        },
+        {
+          "char": "!",
+          "logicalAdvance": 6,
+          "sourceRect": [
+            1306,
+            0,
+            14,
+            43
+          ],
+          "sourceOffset": [
+            -4,
+            0
+          ]
+        }
+      ],
+      "advancesOffsetsKerningUnchanged": true,
+      "purpose": "Prototype only: preserve old logical glyph rectangles, offsets, advances and kerning while rasterizing from TTF. Not integrated.",
+      "review": {
+        "status": "approved",
+        "source": "User review in chat",
+        "note": "Other font sample approved"
+      }
+    },
+    {
+      "font": "continuumbold14",
+      "vectorSource": "assets/source-art/replanted/localization-study/fonts/FNT_contb.ttf",
+      "compiledSourceImage": "data/ContinuumBold14",
+      "glyphs": [
+        {
+          "char": "S",
+          "logicalAdvance": 10,
+          "sourceRect": [
+            351,
+            0,
+            17,
+            26
+          ],
+          "sourceOffset": [
+            0,
+            5
+          ]
+        },
+        {
+          "char": "u",
+          "logicalAdvance": 10,
+          "sourceRect": [
+            881,
+            0,
+            17,
+            26
+          ],
+          "sourceOffset": [
+            1,
+            5
+          ]
+        },
+        {
+          "char": "n",
+          "logicalAdvance": 10,
+          "sourceRect": [
+            756,
+            0,
+            17,
+            26
+          ],
+          "sourceOffset": [
+            1,
+            5
+          ]
+        },
+        {
+          "char": ":",
+          "logicalAdvance": 5,
+          "sourceRect": [
+            1544,
+            0,
+            12,
+            26
+          ],
+          "sourceOffset": [
+            0,
+            5
+          ]
+        },
+        {
+          "char": "9",
+          "logicalAdvance": 11,
+          "sourceRect": [
+            1174,
+            0,
+            18,
+            26
+          ],
+          "sourceOffset": [
+            1,
+            5
+          ]
+        },
+        {
+          "char": "9",
+          "logicalAdvance": 11,
+          "sourceRect": [
+            1174,
+            0,
+            18,
+            26
+          ],
+          "sourceOffset": [
+            1,
+            5
+          ]
+        },
+        {
+          "char": "9",
+          "logicalAdvance": 11,
+          "sourceRect": [
+            1174,
+            0,
+            18,
+            26
+          ],
+          "sourceOffset": [
+            1,
+            5
+          ]
+        },
+        {
+          "char": "0",
+          "logicalAdvance": 12,
+          "sourceRect": [
+            1003,
+            0,
+            18,
+            26
+          ],
+          "sourceOffset": [
+            1,
+            5
+          ]
+        },
+        {
+          "char": "F",
+          "logicalAdvance": 10,
+          "sourceRect": [
+            101,
+            0,
+            17,
+            26
+          ],
+          "sourceOffset": [
+            1,
+            5
+          ]
+        },
+        {
+          "char": "P",
+          "logicalAdvance": 11,
+          "sourceRect": [
+            291,
+            0,
+            18,
+            26
+          ],
+          "sourceOffset": [
+            0,
+            5
+          ]
+        },
+        {
+          "char": "S",
+          "logicalAdvance": 10,
+          "sourceRect": [
+            351,
+            0,
+            17,
+            26
+          ],
+          "sourceOffset": [
+            0,
+            5
+          ]
+        },
+        {
+          "char": ":",
+          "logicalAdvance": 5,
+          "sourceRect": [
+            1544,
+            0,
+            12,
+            26
+          ],
+          "sourceOffset": [
+            0,
+            5
+          ]
+        },
+        {
+          "char": "2",
+          "logicalAdvance": 11,
+          "sourceRect": [
+            1037,
+            0,
+            17,
+            26
+          ],
+          "sourceOffset": [
+            1,
+            5
+          ]
+        },
+        {
+          "char": "4",
+          "logicalAdvance": 11,
+          "sourceRect": [
+            1075,
+            0,
+            17,
+            26
+          ],
+          "sourceOffset": [
+            1,
+            5
+          ]
+        },
+        {
+          "char": "0",
+          "logicalAdvance": 12,
+          "sourceRect": [
+            1003,
+            0,
+            18,
+            26
+          ],
+          "sourceOffset": [
+            1,
+            5
+          ]
+        }
+      ],
+      "advancesOffsetsKerningUnchanged": true,
+      "purpose": "Prototype only: preserve old logical glyph rectangles, offsets, advances and kerning while rasterizing from TTF. Not integrated.",
+      "review": {
+        "status": "approved",
+        "source": "User review in chat",
+        "note": "Other font sample approved"
+      }
+    }
+  ]
+}

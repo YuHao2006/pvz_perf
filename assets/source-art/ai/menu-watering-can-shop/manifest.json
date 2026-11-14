@@ -1,0 +1,148 @@
+{
+  "tool": "built-in image_gen",
+  "pipeline": [
+    "original",
+    "Anime4K UL x2",
+    "Anime4K UL x2",
+    "AI minimal repair"
+  ],
+  "status": "approved-and-integrated",
+  "items": [
+    {
+      "id": "round26:48056a69a1ab663626",
+      "original": "assets/runtime/images/SelectorScreen_ZenGarden.png",
+      "hd": "assets/source-art/ai/menu-watering-can-shop/candidates/ZenGarden--normal-original-shadow-v3-4x.png",
+      "category": "ui",
+      "groups": [
+        "主菜单AI修复"
+      ],
+      "source": {
+        "atlas": "v1 AI subject + program-composited original shadow",
+        "region": "SelectorScreen_ZenGarden"
+      },
+      "processingFlags": [
+        "v3：v1无阴影AI水壶 + 程序提取原版黑色半透明投影；普通／悬停共用完全相同的alpha；保留4倍母图。"
+      ],
+      "cropAssessment": {
+        "action": "alignment",
+        "title": "接入前统一配准",
+        "reason": "生成画布、投影边界仍需配准，不增加运行时操作。",
+        "needsCrop": false
+      },
+      "prompt": "No new AI call. Programmatically composite v1 AI subject over original black shadow, preserving original opacity and placement.",
+      "generatedSize": [
+        764,
+        652
+      ],
+      "sha256": "48056a69a1ab663626ec26008b908fbbf5bb2ffc446c78961f71352145a1c88f",
+      "review": {
+        "status": "approved",
+        "source": "User: 其他全部通过"
+      },
+      "runtimeIntegrated": true,
+      "runtimeFile": "images/8cf0b517462a509dbba81652.png"
+    },
+    {
+      "id": "round26:3d002e6070e9abebf2",
+      "original": "assets/runtime/images/SelectorScreen_ZenGardenHighlight.png",
+      "hd": "assets/source-art/ai/menu-watering-can-shop/candidates/ZenGarden--hover-original-shadow-v3-4x.png",
+      "category": "ui",
+      "groups": [
+        "主菜单AI修复"
+      ],
+      "source": {
+        "atlas": "v1 AI subject + program-composited original shadow",
+        "region": "SelectorScreen_ZenGardenHighlight"
+      },
+      "processingFlags": [
+        "v3：v1无阴影AI水壶 + 程序提取原版黑色半透明投影；普通／悬停共用完全相同的alpha；保留4倍母图。"
+      ],
+      "cropAssessment": {
+        "action": "alignment",
+        "title": "接入前统一配准",
+        "reason": "生成画布、投影边界仍需配准，不增加运行时操作。",
+        "needsCrop": false
+      },
+      "prompt": "No new AI call. Programmatically composite v1 AI subject over original black shadow, preserving original opacity and placement.",
+      "generatedSize": [
+        764,
+        652
+      ],
+      "sha256": "3d002e6070e9abebf24bac4a06db7f6a335a5dddf9dd34ba3948cb009008ce98",
+      "review": {
+        "status": "approved",
+        "source": "User: 其他全部通过"
+      },
+      "runtimeIntegrated": true,
+      "runtimeFile": "images/2e5dc427102de36fdbd4b67e.png"
+    },
+    {
+      "id": "round26:80ac27e74b12cf3baf",
+      "original": "assets/runtime/images/SelectorScreen_Store.png",
+      "hd": "assets/source-art/ai/menu-watering-can-shop/candidates/Store--normal-ai-v2.png",
+      "category": "ui",
+      "groups": [
+        "主菜单AI修复"
+      ],
+      "source": {
+        "atlas": "original + Anime4K UL twice + built-in image_gen",
+        "region": "SelectorScreen_Store"
+      },
+      "processingFlags": [
+        "v2补回投影；普通／悬停仅表面亮度差异。投影形状和透明度仍需对照原版审核；候选未接入。"
+      ],
+      "cropAssessment": {
+        "action": "alignment",
+        "title": "接入前统一配准",
+        "reason": "生成画布、投影边界仍需配准，不增加运行时操作。",
+        "needsCrop": false
+      },
+      "prompt": "Use original sprite after two Anime4K x2 passes. Minimal precise-object repair, preserve original silhouette, pose, text and 2009 painted style. Remove upscaler artifacts in negative space. Genuine transparency, no redesign, no glow. Preserve original intentional semitransparent cast shadow; do not erase it or replace it with glow.",
+      "generatedSize": [
+        1516,
+        1038
+      ],
+      "sha256": "80ac27e74b12cf3bafc6b676df69e2da9307d28d4caa382f3264d4d477b1838c",
+      "review": {
+        "status": "approved",
+        "source": "User: 其他全部通过"
+      },
+      "runtimeIntegrated": true,
+      "runtimeFile": "images/98da88d600c56670047bd565.png"
+    },
+    {
+      "id": "round26:eafdfcb3aaa6b36a11",
+      "original": "assets/runtime/images/SelectorScreen_StoreHighlight.png",
+      "hd": "assets/source-art/ai/menu-watering-can-shop/candidates/Store--hover-ai-v2.png",
+      "category": "ui",
+      "groups": [
+        "主菜单AI修复"
+      ],
+      "source": {
+        "atlas": "original + Anime4K UL twice + built-in image_gen",
+        "region": "SelectorScreen_StoreHighlight"
+      },
+      "processingFlags": [
+        "v2补回投影；普通／悬停仅表面亮度差异。投影形状和透明度仍需对照原版审核；候选未接入。"
+      ],
+      "cropAssessment": {
+        "action": "alignment",
+        "title": "接入前统一配准",
+        "reason": "生成画布、投影边界仍需配准，不增加运行时操作。",
+        "needsCrop": false
+      },
+      "prompt": "Edit the generated normal sprite. Only brighten existing surface shading to match the original hover. Preserve geometry and transparent background; no bloom, halos, outer stroke or recolored text. Preserve original intentional semitransparent cast shadow; do not erase it or replace it with glow.",
+      "generatedSize": [
+        1515,
+        1038
+      ],
+      "sha256": "eafdfcb3aaa6b36a11f0bca2a1fb17b9c6ccf0955b24bd06e47862e54c6464f6",
+      "review": {
+        "status": "approved",
+        "source": "User: 其他全部通过"
+      },
+      "runtimeIntegrated": true,
+      "runtimeFile": "images/73d828621c67a3c6d72f3f06.png"
+    }
+  ]
+}

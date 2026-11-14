@@ -1,12 +1,13 @@
 export component Zombie_flagpole {
     fps: 12;
+    // Pole canvas trimmed by (1,36); fixed-skew frame translations include the crop offset.
     Track {
         source-name: "Zombie_flagpole";
         frame-count: 13;
-        frame 0 { x: -57.8; y: -22; skew-x: 326.6; skew-y: 326.6; scale-x: 0.998; scale-y: 0.998; image: IMAGE_REANIM_ZOMBIE_FLAGPOLE; }
-        frame 1 { x: -57.7; y: -10000; skew-x: -10000; skew-y: -10000; scale-x: 0.997; scale-y: 0.997; image: none; }
+        frame 0 { x: -37.189149803; y: 7.445034253; skew-x: 326.6; skew-y: 326.6; scale-x: 0.998; scale-y: 0.998; image: IMAGE_REANIM_ZOMBIE_FLAGPOLE; }
+        frame 1 { x: -37.109801957; y: 7.415530210; skew-x: -10000; skew-y: -10000; scale-x: 0.997; scale-y: 0.997; image: none; }
         frame 2 { x: -10000; scale-x: -10000; scale-y: -10000; }
-        frame 12 { x: -57.8; scale-x: 0.998; scale-y: 0.998; }
+        frame 12 { x: -37.189149803; y: 7.445034253; scale-x: 0.998; scale-y: 0.998; }
     }
     Track {
         source-name: "Zombie_flag";

@@ -1,0 +1,14 @@
+{
+  "tool": "built-in image_gen",
+  "prompt": "Prefer sunburst if routing permits. Edit the provided cropped tile of a classic Plants vs Zombies nighttime shop background. Faithful restoration, not redesign. Preserve exactly the framing, object positions, original blue night palette, tree and leaf silhouettes, fence boards, sidewalk edges and existing authored cracks/dents. Smooth clean cartoon gradients, crisp restrained contours. Do not add grain, hatching, brush noise, new scratches or fine texture. Repair only blur/jaggies and obvious accidental rectangular pasted color patches: blend those artificial patch boundaries into continuous night sky/sidewalk/foliage while retaining the house and yellow windows if present. Do not remove original pits or damage. No car, characters, text, UI, new objects, camera changes, extra borders or perspective changes. Return the same tile composition and aspect ratio.",
+  "perTileSuffix": " Tile identifier ROW-COLUMN.",
+  "tiles": [
+    "0-0",
+    "0-1",
+    "0-2",
+    "1-0",
+    "1-1",
+    "1-2"
+  ],
+  "modelRouting": "Preference only; actual model is not exposed by the tool."
+}

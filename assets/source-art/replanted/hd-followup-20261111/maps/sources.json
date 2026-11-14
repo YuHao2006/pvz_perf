@@ -1,0 +1,289 @@
+{
+  "selected": [
+    {
+      "bundle": "backgroundatlases_assets_all_19e402bc532d2cf4f6d062dcf0b108ec.bundle",
+      "pathId": -6086618680843260956,
+      "type": "Sprite",
+      "name": "Area5_Ground",
+      "file": "assets/source-art/replanted/hd-followup-20261111/maps/Area5_Ground.png",
+      "size": [
+        5715,
+        1387
+      ],
+      "pivot": [
+        0.0,
+        0.0
+      ],
+      "pixelsToUnits": 100.0,
+      "frontOverlaysExcluded": true
+    },
+    {
+      "bundle": "backgroundatlases_assets_all_19e402bc532d2cf4f6d062dcf0b108ec.bundle",
+      "pathId": -5618597942158915493,
+      "type": "Sprite",
+      "name": "Area4_Lawn_ParralaxLayer",
+      "file": "assets/source-art/replanted/hd-followup-20261111/maps/Area4_Lawn_ParralaxLayer.png",
+      "size": [
+        842,
+        166
+      ],
+      "pivot": [
+        0.0,
+        1.0
+      ],
+      "pixelsToUnits": 100.0,
+      "frontOverlaysExcluded": true
+    },
+    {
+      "bundle": "backgroundatlases_assets_all_19e402bc532d2cf4f6d062dcf0b108ec.bundle",
+      "pathId": -5079667051938085663,
+      "type": "Sprite",
+      "name": "Area1_Lawn",
+      "file": "assets/source-art/replanted/hd-followup-20261111/maps/Area1_Lawn.png",
+      "size": [
+        5260,
+        2160
+      ],
+      "pivot": [
+        0.0,
+        1.0
+      ],
+      "pixelsToUnits": 100.0,
+      "frontOverlaysExcluded": true
+    },
+    {
+      "bundle": "backgroundatlases_assets_all_19e402bc532d2cf4f6d062dcf0b108ec.bundle",
+      "pathId": -4937601283803352165,
+      "type": "Sprite",
+      "name": "Area1_unsodded_Lawn",
+      "file": "assets/source-art/replanted/hd-followup-20261111/maps/Area1_unsodded_Lawn.png",
+      "size": [
+        5260,
+        2160
+      ],
+      "pivot": [
+        0.0,
+        1.0
+      ],
+      "pixelsToUnits": 100.0,
+      "frontOverlaysExcluded": true
+    },
+    {
+      "bundle": "backgroundatlases_assets_all_19e402bc532d2cf4f6d062dcf0b108ec.bundle",
+      "pathId": -4638796598826804800,
+      "type": "Sprite",
+      "name": "Area6_Ground",
+      "file": "assets/source-art/replanted/hd-followup-20261111/maps/Area6_Ground.png",
+      "size": [
+        5715,
+        1387
+      ],
+      "pivot": [
+        0.0,
+        0.0
+      ],
+      "pixelsToUnits": 100.0,
+      "frontOverlaysExcluded": true
+    },
+    {
+      "bundle": "backgroundatlases_assets_all_19e402bc532d2cf4f6d062dcf0b108ec.bundle",
+      "pathId": -3805141821165995931,
+      "type": "Sprite",
+      "name": "Area6_Roof",
+      "file": "assets/source-art/replanted/hd-followup-20261111/maps/Area6_Roof.png",
+      "size": [
+        4825,
+        1670
+      ],
+      "pivot": [
+        0.0,
+        1.0
+      ],
+      "pixelsToUnits": 100.0,
+      "frontOverlaysExcluded": true
+    },
+    {
+      "bundle": "backgroundatlases_assets_all_19e402bc532d2cf4f6d062dcf0b108ec.bundle",
+      "pathId": -2793886699635156614,
+      "type": "Sprite",
+      "name": "Area2_Background",
+      "file": "assets/source-art/replanted/hd-followup-20261111/maps/Area2_Background.png",
+      "size": [
+        4758,
+        724
+      ],
+      "pivot": [
+        0.0,
+        1.0
+      ],
+      "pixelsToUnits": 100.0,
+      "frontOverlaysExcluded": true
+    },
+    {
+      "bundle": "backgroundatlases_assets_all_19e402bc532d2cf4f6d062dcf0b108ec.bundle",
+      "pathId": -2788727250674930628,
+      "type": "Sprite",
+      "name": "Area3_PoolWater",
+      "file": "assets/source-art/replanted/hd-followup-20261111/maps/Area3_PoolWater.png",
+      "size": [
+        2044,
+        496
+      ],
+      "pivot": [
+        0.0,
+        1.0
+      ],
+      "pixelsToUnits": 100.0,
+      "frontOverlaysExcluded": true
+    },
+    {
+      "bundle": "backgroundatlases_assets_all_19e402bc532d2cf4f6d062dcf0b108ec.bundle",
+      "pathId": -2163697072649759069,
+      "type": "Sprite",
+      "name": "Area4_PoolWater",
+      "file": "assets/source-art/replanted/hd-followup-20261111/maps/Area4_PoolWater.png",
+      "size": [
+        2044,
+        498
+      ],
+      "pivot": [
+        0.0,
+        1.0
+      ],
+      "pixelsToUnits": 100.0,
+      "frontOverlaysExcluded": true
+    },
+    {
+      "bundle": "backgroundatlases_assets_all_19e402bc532d2cf4f6d062dcf0b108ec.bundle",
+      "pathId": -1666418294934239823,
+      "type": "Sprite",
+      "name": "Area1_Background 1",
+      "file": "assets/source-art/replanted/hd-followup-20261111/maps/Area1_Background_1.png",
+      "size": [
+        4754,
+        617
+      ],
+      "pivot": [
+        0.0,
+        1.0
+      ],
+      "pixelsToUnits": 100.0,
+      "frontOverlaysExcluded": true
+    },
+    {
+      "bundle": "backgroundatlases_assets_all_19e402bc532d2cf4f6d062dcf0b108ec.bundle",
+      "pathId": -862295070748595336,
+      "type": "Sprite",
+      "name": "Area4_Lawn",
+      "file": "assets/source-art/replanted/hd-followup-20261111/maps/Area4_Lawn.png",
+      "size": [
+        5260,
+        2160
+      ],
+      "pivot": [
+        0.0,
+        1.0
+      ],
+      "pixelsToUnits": 100.0,
+      "frontOverlaysExcluded": true
+    },
+    {
+      "bundle": "backgroundatlases_assets_all_19e402bc532d2cf4f6d062dcf0b108ec.bundle",
+      "pathId": 168671993959782991,
+      "type": "Sprite",
+      "name": "Area3_Lawn_ParralaxLayer",
+      "file": "assets/source-art/replanted/hd-followup-20261111/maps/Area3_Lawn_ParralaxLayer.png",
+      "size": [
+        790,
+        176
+      ],
+      "pivot": [
+        0.0,
+        1.0
+      ],
+      "pixelsToUnits": 100.0,
+      "frontOverlaysExcluded": true
+    },
+    {
+      "bundle": "backgroundatlases_assets_all_19e402bc532d2cf4f6d062dcf0b108ec.bundle",
+      "pathId": 2626339017825894994,
+      "type": "Sprite",
+      "name": "Area2_Lawn",
+      "file": "assets/source-art/replanted/hd-followup-20261111/maps/Area2_Lawn.png",
+      "size": [
+        5260,
+        2160
+      ],
+      "pivot": [
+        0.0,
+        1.0
+      ],
+      "pixelsToUnits": 100.0,
+      "frontOverlaysExcluded": true
+    },
+    {
+      "bundle": "backgroundatlases_assets_all_19e402bc532d2cf4f6d062dcf0b108ec.bundle",
+      "pathId": 5561502518982650690,
+      "type": "Sprite",
+      "name": "Area3_Lawn",
+      "file": "assets/source-art/replanted/hd-followup-20261111/maps/Area3_Lawn.png",
+      "size": [
+        5260,
+        2160
+      ],
+      "pivot": [
+        0.0,
+        1.0
+      ],
+      "pixelsToUnits": 100.0,
+      "frontOverlaysExcluded": true
+    },
+    {
+      "bundle": "backgroundatlases_assets_all_19e402bc532d2cf4f6d062dcf0b108ec.bundle",
+      "pathId": 6300021484793803998,
+      "type": "Sprite",
+      "name": "Area5_Roof",
+      "file": "assets/source-art/replanted/hd-followup-20261111/maps/Area5_Roof.png",
+      "size": [
+        4825,
+        1670
+      ],
+      "pivot": [
+        0.0,
+        1.0
+      ],
+      "pixelsToUnits": 100.0,
+      "frontOverlaysExcluded": true
+    }
+  ],
+  "excludedOverlaySprites": [
+    "Area3_BBQ_OL",
+    "Area3_LawnBush_OL",
+    "Area6_Chimney_OL",
+    "Area1_Tricycle_OL",
+    "Area4_Lawn_ParralaxLayer",
+    "Area4_PottedPlant_OL",
+    "Area4_PatioTable_OL",
+    "Area2_Roof_OL",
+    "Area4_BBQ_OL",
+    "Area3_PatioTable_OL",
+    "Area5_PowerPole_OL",
+    "Area4_House_OL",
+    "Area2_Tricycle_OL",
+    "Area3_Lawn_ParralaxLayer",
+    "Area6_Trees_OL",
+    "Area6_PowerPole_OL",
+    "Area4_DoorOpen_OL",
+    "Area3_PottedPlant_OL",
+    "Area3_DoorOpen_OL",
+    "Area1_Plant_OL",
+    "Area1_Roof_OL",
+    "Area4_Fence_OL",
+    "Area2_DoorOpen_OL",
+    "Area2_Plant_OL",
+    "Area3_House_OL",
+    "Area5_Chimney_OL",
+    "Area4_LawnBush_OL",
+    "Area3_Fence_OL"
+  ]
+}

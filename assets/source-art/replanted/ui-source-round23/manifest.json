@@ -1,0 +1,474 @@
+{
+  "items": [
+    {
+      "id": "round23:955f9e2213047ab682",
+      "canonicalResourceId": "ui:assets/runtime/images/SelectorScreen_Options1.png",
+      "original": "assets/runtime/images/SelectorScreen_Options1.png",
+      "hd": "assets/source-art/replanted/ui-source-round23/SelectorScreen_Options1--paired.png",
+      "category": "ui",
+      "groups": [
+        "主菜单成套按钮"
+      ],
+      "source": {
+        "bundle": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+        "pathId": 2588736048113711528,
+        "type": "Sprite",
+        "name": "SPR_MainMenu_Button_Options",
+        "file": "assets/source-art/replanted/ui-source-round23/SPR_MainMenu_Button_Options.png",
+        "size": [
+          280,
+          91
+        ],
+        "sha256": "9b7a2a91ae86e90a5eec5cb257db56fc3c643df2919317785ccf69d522404d2c",
+        "atlas": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+        "region": "SPR_MainMenu_Button_Options",
+        "crop": [
+          0,
+          0,
+          280,
+          91
+        ]
+      },
+      "alternatives": [],
+      "processingFlags": [
+        "重植版成套文字图，正常和悬停共用裁切框与等比映射；只替换文字叠层，不替换背景里的花瓶。"
+      ],
+      "processing": [
+        {
+          "file": "assets/source-art/replanted/ui-source-round23/SelectorScreen_Options1--paired.png",
+          "sourceFile": "assets/source-art/replanted/ui-source-round23/SPR_MainMenu_Button_Options.png",
+          "size": [
+            280,
+            91
+          ],
+          "logicalCanvas": [
+            81,
+            31
+          ],
+          "logicalDrawRect": [
+            1.0,
+            2.1624999999999996,
+            79.0,
+            25.675
+          ],
+          "sha256": "9b7a2a91ae86e90a5eec5cb257db56fc3c643df2919317785ccf69d522404d2c"
+        }
+      ],
+      "cropAssessment": {
+        "action": "alignment",
+        "title": "成套裁切与等比配准",
+        "reason": "重植版成套文字图，正常和悬停共用裁切框与等比映射；只替换文字叠层，不替换背景里的花瓶。",
+        "needsCrop": false
+      }
+    },
+    {
+      "id": "round23:b7db1bfd410635df0f",
+      "canonicalResourceId": "ui:assets/runtime/images/SelectorScreen_Options2.png",
+      "original": "assets/runtime/images/SelectorScreen_Options2.png",
+      "hd": "assets/source-art/replanted/ui-source-round23/SelectorScreen_Options2--paired.png",
+      "category": "ui",
+      "groups": [
+        "主菜单成套按钮"
+      ],
+      "source": {
+        "bundle": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+        "pathId": 8254357258277870406,
+        "type": "Sprite",
+        "name": "SPR_MainMenu_Button_Options_Over",
+        "file": "assets/source-art/replanted/ui-source-round23/SPR_MainMenu_Button_Options_Over.png",
+        "size": [
+          280,
+          91
+        ],
+        "sha256": "08614db3f8b9ac492729d5efe15d654f3fb0d197348523644fd694b40ce22ecf",
+        "atlas": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+        "region": "SPR_MainMenu_Button_Options_Over",
+        "crop": [
+          0,
+          0,
+          280,
+          91
+        ]
+      },
+      "alternatives": [],
+      "processingFlags": [
+        "重植版成套文字图，正常和悬停共用裁切框与等比映射；只替换文字叠层，不替换背景里的花瓶。"
+      ],
+      "processing": [
+        {
+          "file": "assets/source-art/replanted/ui-source-round23/SelectorScreen_Options2--paired.png",
+          "sourceFile": "assets/source-art/replanted/ui-source-round23/SPR_MainMenu_Button_Options_Over.png",
+          "size": [
+            280,
+            91
+          ],
+          "logicalCanvas": [
+            81,
+            31
+          ],
+          "logicalDrawRect": [
+            1.0,
+            2.1624999999999996,
+            79.0,
+            25.675
+          ],
+          "sha256": "08614db3f8b9ac492729d5efe15d654f3fb0d197348523644fd694b40ce22ecf"
+        }
+      ],
+      "cropAssessment": {
+        "action": "alignment",
+        "title": "成套裁切与等比配准",
+        "reason": "重植版成套文字图，正常和悬停共用裁切框与等比映射；只替换文字叠层，不替换背景里的花瓶。",
+        "needsCrop": false
+      }
+    },
+    {
+      "id": "round23:e2fc71d548d747bae2",
+      "canonicalResourceId": "ui:assets/runtime/images/SelectorScreen_Help1.png",
+      "original": "assets/runtime/images/SelectorScreen_Help1.png",
+      "hd": "assets/source-art/replanted/ui-source-round23/SelectorScreen_Help1--paired.png",
+      "category": "ui",
+      "groups": [
+        "主菜单成套按钮"
+      ],
+      "source": {
+        "bundle": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+        "pathId": -8561012095059521932,
+        "type": "Sprite",
+        "name": "SPR_MainMenu_Button_Help",
+        "file": "assets/source-art/replanted/ui-source-round23/SPR_MainMenu_Button_Help.png",
+        "size": [
+          152,
+          62
+        ],
+        "sha256": "db58b6a6d6e7c511dc848bd607e1f3e8e827cbc4ee40a9686a7573a922e0160a",
+        "atlas": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+        "region": "SPR_MainMenu_Button_Help",
+        "crop": [
+          0,
+          0,
+          152,
+          62
+        ]
+      },
+      "alternatives": [],
+      "processingFlags": [
+        "重植版成套文字图，正常和悬停共用裁切框与等比映射；只替换文字叠层，不替换背景里的花瓶。"
+      ],
+      "processing": [
+        {
+          "file": "assets/source-art/replanted/ui-source-round23/SelectorScreen_Help1--paired.png",
+          "sourceFile": "assets/source-art/replanted/ui-source-round23/SPR_MainMenu_Button_Help.png",
+          "size": [
+            152,
+            62
+          ],
+          "logicalCanvas": [
+            48,
+            22
+          ],
+          "logicalDrawRect": [
+            2.0,
+            1.526315789473685,
+            44.0,
+            17.94736842105263
+          ],
+          "sha256": "db58b6a6d6e7c511dc848bd607e1f3e8e827cbc4ee40a9686a7573a922e0160a"
+        }
+      ],
+      "cropAssessment": {
+        "action": "alignment",
+        "title": "成套裁切与等比配准",
+        "reason": "重植版成套文字图，正常和悬停共用裁切框与等比映射；只替换文字叠层，不替换背景里的花瓶。",
+        "needsCrop": false
+      }
+    },
+    {
+      "id": "round23:ecc70e743ce8e61e20",
+      "canonicalResourceId": "ui:assets/runtime/images/SelectorScreen_Help2.png",
+      "original": "assets/runtime/images/SelectorScreen_Help2.png",
+      "hd": "assets/source-art/replanted/ui-source-round23/SelectorScreen_Help2--paired.png",
+      "category": "ui",
+      "groups": [
+        "主菜单成套按钮"
+      ],
+      "source": {
+        "bundle": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+        "pathId": 269663784966413621,
+        "type": "Sprite",
+        "name": "SPR_MainMenu_Button_Help_Over",
+        "file": "assets/source-art/replanted/ui-source-round23/SPR_MainMenu_Button_Help_Over.png",
+        "size": [
+          152,
+          62
+        ],
+        "sha256": "b31e3ff4771322fff0b6adbefb9d9b9e234056366d03e00b95b6831040d33507",
+        "atlas": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+        "region": "SPR_MainMenu_Button_Help_Over",
+        "crop": [
+          0,
+          0,
+          152,
+          62
+        ]
+      },
+      "alternatives": [],
+      "processingFlags": [
+        "重植版成套文字图，正常和悬停共用裁切框与等比映射；只替换文字叠层，不替换背景里的花瓶。"
+      ],
+      "processing": [
+        {
+          "file": "assets/source-art/replanted/ui-source-round23/SelectorScreen_Help2--paired.png",
+          "sourceFile": "assets/source-art/replanted/ui-source-round23/SPR_MainMenu_Button_Help_Over.png",
+          "size": [
+            152,
+            62
+          ],
+          "logicalCanvas": [
+            48,
+            22
+          ],
+          "logicalDrawRect": [
+            2.0,
+            1.526315789473685,
+            44.0,
+            17.94736842105263
+          ],
+          "sha256": "b31e3ff4771322fff0b6adbefb9d9b9e234056366d03e00b95b6831040d33507"
+        }
+      ],
+      "cropAssessment": {
+        "action": "alignment",
+        "title": "成套裁切与等比配准",
+        "reason": "重植版成套文字图，正常和悬停共用裁切框与等比映射；只替换文字叠层，不替换背景里的花瓶。",
+        "needsCrop": false
+      }
+    },
+    {
+      "id": "round23:d318d28fe31a492002",
+      "canonicalResourceId": "ui:assets/runtime/images/SelectorScreen_Quit1.png",
+      "original": "assets/runtime/images/SelectorScreen_Quit1.png",
+      "hd": "assets/source-art/replanted/ui-source-round23/SelectorScreen_Quit1--paired.png",
+      "category": "ui",
+      "groups": [
+        "主菜单成套按钮"
+      ],
+      "source": {
+        "bundle": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+        "pathId": -5382507700332463411,
+        "type": "Sprite",
+        "name": "SPR_MainMenu_Button_Quit",
+        "file": "assets/source-art/replanted/ui-source-round23/SPR_MainMenu_Button_Quit.png",
+        "size": [
+          147,
+          86
+        ],
+        "sha256": "b0e7f7b711ea2629e561ccb821ae1f8f2de756c6bdb973ab03490f6f80bcd0e7",
+        "atlas": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+        "region": "SPR_MainMenu_Button_Quit",
+        "crop": [
+          0,
+          0,
+          147,
+          86
+        ]
+      },
+      "alternatives": [],
+      "processingFlags": [
+        "重植版成套文字图，正常和悬停共用裁切框与等比映射；只替换文字叠层，不替换背景里的花瓶。"
+      ],
+      "processing": [
+        {
+          "file": "assets/source-art/replanted/ui-source-round23/SelectorScreen_Quit1--paired.png",
+          "sourceFile": "assets/source-art/replanted/ui-source-round23/SPR_MainMenu_Button_Quit.png",
+          "size": [
+            147,
+            86
+          ],
+          "logicalCanvas": [
+            47,
+            27
+          ],
+          "logicalDrawRect": [
+            2.133720930232556,
+            1.0,
+            42.73255813953489,
+            25.0
+          ],
+          "sha256": "b0e7f7b711ea2629e561ccb821ae1f8f2de756c6bdb973ab03490f6f80bcd0e7"
+        }
+      ],
+      "cropAssessment": {
+        "action": "alignment",
+        "title": "成套裁切与等比配准",
+        "reason": "重植版成套文字图，正常和悬停共用裁切框与等比映射；只替换文字叠层，不替换背景里的花瓶。",
+        "needsCrop": false
+      }
+    },
+    {
+      "id": "round23:ff007b2b5d67b23402",
+      "canonicalResourceId": "ui:assets/runtime/images/SelectorScreen_Quit2.png",
+      "original": "assets/runtime/images/SelectorScreen_Quit2.png",
+      "hd": "assets/source-art/replanted/ui-source-round23/SelectorScreen_Quit2--paired.png",
+      "category": "ui",
+      "groups": [
+        "主菜单成套按钮"
+      ],
+      "source": {
+        "bundle": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+        "pathId": 882397557596598853,
+        "type": "Sprite",
+        "name": "SPR_MainMenu_Button_Quit_Over",
+        "file": "assets/source-art/replanted/ui-source-round23/SPR_MainMenu_Button_Quit_Over.png",
+        "size": [
+          147,
+          86
+        ],
+        "sha256": "16789d6671757dd6aaa982f3406c9a578a92100f55a2b096b197adf913243c39",
+        "atlas": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+        "region": "SPR_MainMenu_Button_Quit_Over",
+        "crop": [
+          0,
+          0,
+          147,
+          86
+        ]
+      },
+      "alternatives": [],
+      "processingFlags": [
+        "重植版成套文字图，正常和悬停共用裁切框与等比映射；只替换文字叠层，不替换背景里的花瓶。"
+      ],
+      "processing": [
+        {
+          "file": "assets/source-art/replanted/ui-source-round23/SelectorScreen_Quit2--paired.png",
+          "sourceFile": "assets/source-art/replanted/ui-source-round23/SPR_MainMenu_Button_Quit_Over.png",
+          "size": [
+            147,
+            86
+          ],
+          "logicalCanvas": [
+            47,
+            27
+          ],
+          "logicalDrawRect": [
+            2.133720930232556,
+            1.0,
+            42.73255813953489,
+            25.0
+          ],
+          "sha256": "16789d6671757dd6aaa982f3406c9a578a92100f55a2b096b197adf913243c39"
+        }
+      ],
+      "cropAssessment": {
+        "action": "alignment",
+        "title": "成套裁切与等比配准",
+        "reason": "重植版成套文字图，正常和悬停共用裁切框与等比映射；只替换文字叠层，不替换背景里的花瓶。",
+        "needsCrop": false
+      }
+    },
+    {
+      "id": "round23:abbea063d05586f4d1",
+      "canonicalResourceId": "ui:assets/runtime/images/SelectorScreen_Store.png",
+      "original": "assets/runtime/images/SelectorScreen_Store.png",
+      "hd": "assets/source-art/replanted/ui-source-round23/SelectorScreen_Store--paired.png",
+      "category": "ui",
+      "groups": [
+        "主菜单成套按钮"
+      ],
+      "source": {
+        "atlas": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+        "region": "SPR_MainMenu_Button_Shop",
+        "file": "assets/source-art/replanted/ui-source-round23/SPR_MainMenu_Button_Shop.png",
+        "crop": [
+          5,
+          0,
+          465,
+          321
+        ]
+      },
+      "alternatives": [],
+      "processingFlags": [
+        "重植版钥匙＋挂牌成套素材；普通底图缺少英文，已从悬停图提取原生 SHOP 文字并改为深色，悬停字色按用户备注从黄色改为绿色。裁掉远端淡阴影，两种状态同一裁切和等比映射。"
+      ],
+      "processing": [
+        {
+          "file": "assets/source-art/replanted/ui-source-round23/SelectorScreen_Store--paired.png",
+          "sourceFile": "assets/source-art/replanted/ui-source-round23/SPR_MainMenu_Button_Shop.png",
+          "size": [
+            460,
+            321
+          ],
+          "logicalCanvas": [
+            130,
+            89
+          ],
+          "logicalDrawRect": [
+            0.6289308176100548,
+            -0.2798742138364787,
+            128.7421383647799,
+            89.83962264150944
+          ],
+          "sha256": "c03872465a3fd8a216891d16468d608a5595629991c9af74cd590b8774d59aca"
+        }
+      ],
+      "cropAssessment": {
+        "action": "alignment",
+        "title": "成套裁切与等比配准",
+        "reason": "重植版钥匙＋挂牌成套素材；普通底图缺少英文，已从悬停图提取原生 SHOP 文字并改为深色，悬停字色按用户备注从黄色改为绿色。裁掉远端淡阴影，两种状态同一裁切和等比映射。",
+        "needsCrop": false
+      }
+    },
+    {
+      "id": "round23:c8ab5fe3bb239fd838",
+      "canonicalResourceId": "ui:assets/runtime/images/SelectorScreen_StoreHighlight.png",
+      "original": "assets/runtime/images/SelectorScreen_StoreHighlight.png",
+      "hd": "assets/source-art/replanted/ui-source-round23/SelectorScreen_StoreHighlight--paired.png",
+      "category": "ui",
+      "groups": [
+        "主菜单成套按钮"
+      ],
+      "source": {
+        "atlas": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+        "region": "SPR_MainMenu_Button_Shop_Over",
+        "file": "assets/source-art/replanted/ui-source-round23/SPR_MainMenu_Button_Shop_Over.png",
+        "crop": [
+          5,
+          0,
+          465,
+          321
+        ]
+      },
+      "alternatives": [],
+      "processingFlags": [
+        "重植版钥匙＋挂牌成套素材；普通底图缺少英文，已从悬停图提取原生 SHOP 文字并改为深色，悬停字色按用户备注从黄色改为绿色。裁掉远端淡阴影，两种状态同一裁切和等比映射。"
+      ],
+      "processing": [
+        {
+          "file": "assets/source-art/replanted/ui-source-round23/SelectorScreen_StoreHighlight--paired.png",
+          "sourceFile": "assets/source-art/replanted/ui-source-round23/SPR_MainMenu_Button_Shop_Over.png",
+          "size": [
+            460,
+            321
+          ],
+          "logicalCanvas": [
+            130,
+            89
+          ],
+          "logicalDrawRect": [
+            0.6289308176100548,
+            -0.2798742138364787,
+            128.7421383647799,
+            89.83962264150944
+          ],
+          "sha256": "9831c317c0d9a7cb44a1fe206e887bdb8e140b0004f25c37f0a4acd6aa6e9643"
+        }
+      ],
+      "cropAssessment": {
+        "action": "alignment",
+        "title": "成套裁切与等比配准",
+        "reason": "重植版钥匙＋挂牌成套素材；普通底图缺少英文，已从悬停图提取原生 SHOP 文字并改为深色，悬停字色按用户备注从黄色改为绿色。裁掉远端淡阴影，两种状态同一裁切和等比映射。",
+        "needsCrop": false
+      }
+    }
+  ]
+}

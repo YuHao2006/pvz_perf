@@ -3,8 +3,10 @@
 #include <emscripten.h>
 #include <cstring>
 // ABI adapter for the existing music controller. No BASS binary is loaded.
-EM_JS(unsigned int, web_music_load, (const void* data,unsigned int size,int stream), {
-    return Module.pvzMusic.load(HEAPU8.slice(Number(data),Number(data)+size),!!stream);
+EM_ASYNC_JS(unsigned int, web_music_load, (const void* data,unsigned int size,int stream), {
+    const voice=Module.pvzMusic.load(HEAPU8.slice(Number(data),Number(data)+size),!!stream);
+    await Module.pvzMusic.waitForLoads();
+    return voice;
 });
 EM_JS(unsigned int, web_music_pcm, (const float* data,int samples,int channels,int rate), {
     return Module.pvzMusic.loadStream(HEAPF32.subarray(Number(data)/4,Number(data)/4+samples),channels,rate);

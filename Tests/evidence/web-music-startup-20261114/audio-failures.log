@@ -1,0 +1,4 @@
+missing-ack: loaded, kept effects and rendering, no fatal error; {"backend":"AudioWorklet","disabled":false,"error":"","pending":0,"effects":168,"heap":193331200}
+command-error: loaded, kept effects and rendering, no fatal error; {"backend":"BGM disabled","disabled":true,"error":"[load voice 999999] Error: Cannot decode MO3 voice 999999\n    at MusicMixer.command (http://127.0.0.1:18104/audio/music-mixer.js:29:18)\n    at PvzMusicProcessor.port.onmessage (http://127.0.0.1:18104/audio/music-worklet.js:14:21)","pending":0,"effects":168,"heap":193331200}
+module-error: loaded, kept effects and rendering, no fatal error; {"backend":"BGM disabled","disabled":true,"error":"injected module failure","pending":0,"effects":168,"heap":193331200}
+script-processor: loaded, kept effects and rendering, no fatal error; {"backend":"ScriptProcessor fallback","disabled":false,"error":"","pending":0,"effects":168,"heap":193331200}

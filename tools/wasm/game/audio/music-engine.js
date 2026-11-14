@@ -1,6 +1,6 @@
 import {SoundEngine,createPCMBuffer} from './sound-engine.js';
 export async function prepareMusic(){
- const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),15000);
+ const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),30000);
  try{
   const response=await fetch('./audio/libopenmpt.wasm',{signal:controller.signal});if(!response.ok)throw Error('Cannot load MO3 decoder: '+response.status);
   return new MusicEngine(await WebAssembly.compile(await response.arrayBuffer()));
@@ -8,10 +8,10 @@ export async function prepareMusic(){
  finally{clearTimeout(timer)}
 }
 class MusicEngine {
- constructor(compiled,loadError=''){this.compiled=compiled;this.loadError=loadError;this.voices=new Map();this.next=1;this.error='';this.disabled=false;this.backend='pending';this.flushes=new Map();this.nextFlush=1;this.syncStalled=false;this.send=()=>{}}
+ constructor(compiled,loadError=''){this.compiled=compiled;this.loadError=loadError;this.voices=new Map();this.next=1;this.error='';this.disabled=false;this.backend='pending';this.flushes=new Map();this.nextFlush=1;this.syncStalled=false;this.ready=false;this.startupDeadline=0;this.pendingLoads=new Set();this.loadWaiters=new Set();this.queued=[];this.send=c=>this.queued.push(c)}
  disableMusic(reason){
   if(this.disabled)return;
-  this.disabled=true;this.error=String(reason?.message||reason);this.backend='BGM disabled';this.send=()=>{};
+  this.disabled=true;this.error=String(reason?.message||reason);this.backend='BGM disabled';this.send=()=>{};this.queued.length=0;this.finishLoads(false);
   const node=this.node,mixer=this.mixer;this.node=null;this.mixer=null;
   try{if(node){node.onprocessorerror=null;if(node.port){node.port.onmessage=null;node.port.close()}node.disconnect()}}catch{}
   try{mixer?.close()}catch{}
@@ -29,50 +29,75 @@ class MusicEngine {
   try{context.resume().catch(()=>{})}catch{}
  }
  async unlock(){
-  if(this.context){await this.context.resume();return}
+  if(!this.startupDeadline)this.startupDeadline=performance.now()+30000;
+  if(this.context){this.resumeIfInterrupted();return this.unlocking}
   const context=this.context=new AudioContext({latencyHint:'interactive'});
-  // Resume in the user gesture. Await readiness only after the worklet is in
-  // the active graph: some hosts defer audio-thread work for disconnected nodes.
   const resumed=context.resume();resumed.catch(()=>{});
   this.sound=new SoundEngine(context);this.master=context.createGain();this.master.connect(context.destination);
-  const receive=data=>{if(this.disabled)return;if(data.error){this.disableMusic((data.op?'['+data.op+(data.id?' voice '+data.id:'')+'] ':'')+data.error);return}
+  this.ready=false;this.send=c=>this.queued.push(c);
+  // A timeout releases game startup, not the audio graph. A late worker can
+  // still install and drain the load/seek/gain/play commands in FIFO order.
+  const initialization=this.initializeMusic(context,resumed);
+  this.unlocking=this.withStartupBudget(initialization);
+  return this.unlocking;
+ }
+ withStartupBudget(operation){
+  const remaining=Math.max(0,this.startupDeadline-performance.now());
+  if(!remaining)return Promise.resolve(false);
+  let timer;return Promise.race([operation,new Promise(resolve=>{timer=setTimeout(()=>resolve(false),remaining)})]).finally(()=>clearTimeout(timer));
+ }
+ finishLoads(ok){for(const done of this.loadWaiters)done(ok);this.loadWaiters.clear()}
+ loaded(id){this.pendingLoads.delete(id);if(!this.pendingLoads.size)this.finishLoads(true)}
+ waitForLoads(){
+  if(this.disabled)return Promise.resolve(false);
+  if(!this.pendingLoads.size)return Promise.resolve(true);
+  const remaining=Math.max(0,this.startupDeadline-performance.now());
+  if(!remaining)return Promise.resolve(false);
+  return new Promise(resolve=>{
+   let timer;const done=ok=>{clearTimeout(timer);this.loadWaiters.delete(done);resolve(ok)};
+   this.loadWaiters.add(done);timer=setTimeout(()=>done(false),remaining);
+  });
+ }
+ async initializeMusic(context,resumed){
+  const receive=data=>{if(this.context!==context||this.disabled)return;if(data.error){this.disableMusic((data.op?'['+data.op+(data.id?' voice '+data.id:'')+'] ':'')+data.error);return}
+   if(data.loaded)this.loaded(data.loaded);
    if(data.voices||data.flush)this.syncStalled=false;
-   if(data.voices)for(const row of data.voices){const v=this.voices.get(row.id);if(v&&v.revision===row.revision)Object.assign(v,row)}
+   if(data.voices)for(const row of data.voices){this.loaded(row.id);const v=this.voices.get(row.id);if(v&&v.revision===row.revision)Object.assign(v,row)}
    if(data.flush){const done=this.flushes.get(data.flush);if(done){this.flushes.delete(data.flush);done(true)}}};
   this.receive=receive;
   try{
    if(!this.compiled)throw Error(this.loadError);
+   let send,backend;
    if(context.audioWorklet){
-    let timer;
-    await Promise.race([context.audioWorklet.addModule('./audio/music-worklet.js'),new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('加载音频工作线程超时')),15000)})]).finally(()=>clearTimeout(timer));
-    this.node=new AudioWorkletNode(context,'pvz-music',{numberOfInputs:0,numberOfOutputs:1,outputChannelCount:[2],processorOptions:{compiled:this.compiled,entropy:crypto.getRandomValues(new Uint8Array(65536))}});
+    await context.audioWorklet.addModule('./audio/music-worklet.js');
+    if(this.context!==context)return false;
+    const node=this.node=new AudioWorkletNode(context,'pvz-music',{numberOfInputs:0,numberOfOutputs:1,outputChannelCount:[2],processorOptions:{compiled:this.compiled,entropy:crypto.getRandomValues(new Uint8Array(65536))}});
     await new Promise((resolve,reject)=>{
-     const timer=setTimeout(()=>reject(Error('音频工作线程初始化超时')),15000);
-     const finish=(error)=>{clearTimeout(timer);if(error)reject(error);else resolve()};
-     this.node.port.onmessage=event=>{if(event.data.ready)finish();else if(event.data.error)finish(Error(event.data.error));else receive(event.data)};
-     this.node.onprocessorerror=()=>finish(Error('Music audio thread failed'));
-     this.node.connect(this.master);
+     node.port.onmessage=event=>{if(event.data.ready)resolve();else if(event.data.error)reject(Error(event.data.error));else receive(event.data)};
+     node.onprocessorerror=()=>reject(Error('Music audio thread failed'));
+     node.connect(this.master);
     });
-    this.node.port.onmessage=event=>receive(event.data);
-    this.node.onprocessorerror=()=>receive({error:'Music audio thread failed'});
-    this.send=c=>this.node.port.postMessage(c,c.data?[c.data.buffer]:[]);this.backend='AudioWorklet';
+    if(this.context!==context)return false;
+    node.port.onmessage=event=>receive(event.data);
+    node.onprocessorerror=()=>receive({error:'Music audio thread failed'});
+    send=c=>node.port.postMessage(c,c.data?[c.data.buffer]:[]);backend='AudioWorklet';
    }else{
-   // Plain HTTP on a LAN has no AudioWorklet. Keep that development case usable.
-   const {MusicMixer}=await import('./music-mixer.js');
-   const mixer=await MusicMixer.create(this.compiled,context.sampleRate);this.mixer=mixer;
-   this.node=context.createScriptProcessor(2048,0,2);this.node.onaudioprocess=event=>{try{mixer.render(event.outputBuffer.getChannelData(0),event.outputBuffer.getChannelData(1));receive({voices:mixer.positions()})}catch(error){receive({error:String(error)})}};
-   this.send=c=>mixer.command(c);this.backend='ScriptProcessor fallback';
-    this.node.connect(this.master);
+    const {MusicMixer}=await import('./music-mixer.js');
+    const mixer=await MusicMixer.create(this.compiled,context.sampleRate);
+    if(this.context!==context){mixer.close();return false}
+    this.mixer=mixer;this.node=context.createScriptProcessor(2048,0,2);
+    this.node.onaudioprocess=event=>{try{mixer.render(event.outputBuffer.getChannelData(0),event.outputBuffer.getChannelData(1));receive({voices:mixer.positions()})}catch(error){receive({error:String(error)})}};
+    send=c=>{mixer.command(c);if(c.op==='load')this.loaded(c.id)};backend='ScriptProcessor fallback';this.node.connect(this.master);
    }
-   await resumed;
-  }catch(error){
-   // Keep WebAudio sound effects alive. An unavailable music worker must not
-   // reject the Wasm startup or leave it waiting on a dead message port.
-   this.disableMusic(error);
-  }
+   await resumed;if(this.context!==context)return false;
+   this.send=send;this.backend=backend;this.ready=true;
+   const commands=this.queued;this.queued=[];for(const command of commands)this.send(command);
+   return true;
+  }catch(error){if(this.context===context)this.disableMusic(error);return false}
  }
+
  flush(){
-  if(this.disabled||this.syncStalled||this.context?.state!=='running')return Promise.resolve(false);
+  if(this.disabled||!this.ready||this.pendingLoads.size||this.syncStalled||this.context?.state!=='running')return Promise.resolve(false);
   if(this.mixer){try{this.receive({voices:this.mixer.positions()});return Promise.resolve(true)}catch(error){this.disableMusic(error);return Promise.resolve(false)}}
   const token=this.nextFlush++,audioTime=this.context.currentTime;
   return new Promise(resolve=>{
@@ -95,7 +120,7 @@ class MusicEngine {
  load(data,stream){
   if(stream)throw Error('OGG streams must be decoded by Wasm');
   const id=this.next++,v={id,stream,playing:false,paused:false,position:0,positionScale:1,revision:0,tempo:155,speed:3,gain:0,flags:0,offset:0};this.voices.set(id,v);
-  this.send({op:'load',id,data});
+  if(!this.disabled)this.pendingLoads.add(id);this.send({op:'load',id,data});
   return id;
  }
  loadStream(samples,channels,rate){
@@ -112,7 +137,7 @@ class MusicEngine {
  command(id,op,value=0,extra=0){
   if(op==='master'){this.master.gain.setValueAtTime(value,this.context.currentTime);return 1}
   const v=this.voices.get(id);if(!v)return 0;
-  if(op==='free'){v.source?.stop();v.gainNode?.disconnect();if(!v.stream)this.send({id,op});this.voices.delete(id);return 1}
+  if(op==='free'){this.loaded(id);v.source?.stop();v.gainNode?.disconnect();if(!v.stream)this.send({id,op});this.voices.delete(id);return 1}
   if(op==='state')return v.paused?3:v.playing?1:0;
   if(op==='position'){
    if(v.stream)return Math.floor(this.streamPosition(v)*v.byteRate);
@@ -142,9 +167,10 @@ class MusicEngine {
   if(!v.stream)this.send({id,op,value,channel:extra,restart:!!value});return 1;
  }
  close(){
+  this.finishLoads(false);this.pendingLoads.clear();this.startupDeadline=0;
   for(const done of this.flushes.values())done(false);this.flushes.clear();
   this.sound?.close();for(const id of this.voices.keys())this.command(id,'free');
-  if(this.disabled){this.master?.disconnect();this.context?.close().catch(()=>{});this.context=null;this.sound=null;this.backend='pending';this.disabled=false}
+  if(this.disabled||!this.ready){this.node?.disconnect();this.node?.port?.close();this.node=null;this.queued=[];this.master?.disconnect();this.context?.close().catch(()=>{});this.context=null;this.sound=null;this.backend='pending';this.disabled=false;this.ready=false;this.unlocking=null}
   else if(this.context)this.sound=new SoundEngine(this.context);
   this.syncStalled=false;this.error='';this.onWarning?.('');
  }

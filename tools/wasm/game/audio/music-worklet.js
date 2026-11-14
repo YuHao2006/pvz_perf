@@ -11,7 +11,7 @@ class PvzMusicProcessor extends AudioWorkletProcessor {
   super();this.mixer=null;this.reportFrames=0;this.failed=false;
   this.port.onmessage=event=>{try{
    if(event.data.op==='flush')this.port.postMessage({flush:event.data.token,voices:this.mixer.positions()});
-   else this.mixer.command(event.data);
+   else {this.mixer.command(event.data);if(event.data.op==='load')this.port.postMessage({loaded:event.data.id})}
   }catch(error){this.fail(error,event.data)}};
   MusicMixer.create(options.processorOptions.compiled,sampleRate,options.processorOptions.entropy).then(mixer=>{this.mixer=mixer;this.port.postMessage({ready:true})}).catch(error=>this.fail(error));
  }

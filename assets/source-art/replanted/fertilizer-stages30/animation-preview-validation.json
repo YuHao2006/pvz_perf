@@ -1,0 +1,17 @@
+{
+  "source": "batch30/fertilizer-player.html",
+  "assetsLoaded": 10,
+  "sides": 2,
+  "frame17VisiblePixels": [
+    {
+      "id": "old",
+      "pixels": 23117
+    },
+    {
+      "id": "hd",
+      "pixels": 22704
+    }
+  ],
+  "playbackWrapVerified": true,
+  "errors": []
+}

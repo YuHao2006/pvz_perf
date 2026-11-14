@@ -1,0 +1,152 @@
+{
+  "format": "pvz-hd-master-v1",
+  "logicalPixelScale": 4,
+  "generator": "built-in image_gen; actual model not exposed",
+  "note": "Raw AI files are preserved unchanged at their actual generated dimensions; 4x registered masters are constructed directly from raw AI, never by enlarging the 2x runtime textures.",
+  "assets": [
+    {
+      "original": "assets/runtime/reanim/SelectorScreen_BG_Right.png",
+      "master": "SelectorScreen_BG_Right-4x.png",
+      "logicalSize": [
+        1029,
+        560
+      ],
+      "physicalSize": [
+        4116,
+        2240
+      ],
+      "sha256": "c0345b28e1dc6f5da056757de8545b4d27484d288d6d97d562f35a2344b7ad07",
+      "runtimeDerivative": "SelectorScreen_BG_Right-repaired-2x.png"
+    },
+    {
+      "original": "assets/runtime/reanim/SelectorScreen_Puzzle_button.png",
+      "master": "SelectorScreen_Puzzle_button-4x.png",
+      "logicalSize": [
+        286,
+        122
+      ],
+      "physicalSize": [
+        1144,
+        488
+      ],
+      "sha256": "a0d3234d1ae3dfbf4ea7b6a3f1623cb31147af9213a5931bd954cdd35cd4fdae",
+      "runtimeDerivative": "SelectorScreen_Puzzle_button-aligned-2x.png"
+    },
+    {
+      "original": "assets/runtime/reanim/SelectorScreen_Puzzle_Highlight.png",
+      "master": "SelectorScreen_Puzzle_Highlight-4x.png",
+      "logicalSize": [
+        286,
+        122
+      ],
+      "physicalSize": [
+        1144,
+        488
+      ],
+      "sha256": "50dcf10ae7bf946781842effae561e30d166d224023fb052375f79a304fa9ca0",
+      "runtimeDerivative": "SelectorScreen_Puzzle_Highlight-aligned-2x.png"
+    },
+    {
+      "original": "assets/runtime/reanim/SelectorScreen_Survival_button.png",
+      "master": "SelectorScreen_Survival_button-4x.png",
+      "logicalSize": [
+        266,
+        123
+      ],
+      "physicalSize": [
+        1064,
+        492
+      ],
+      "sha256": "e83f832fb85f80325f1225670454a5b0a1edc41008edad8cdfb73689e099dde4",
+      "runtimeDerivative": "SelectorScreen_Survival_button-aligned-2x.png"
+    },
+    {
+      "original": "assets/runtime/reanim/SelectorScreen_Survival_Highlight.png",
+      "master": "SelectorScreen_Survival_Highlight-4x.png",
+      "logicalSize": [
+        266,
+        123
+      ],
+      "physicalSize": [
+        1064,
+        492
+      ],
+      "sha256": "305baaa2706757777c34d847d688ff45515a3408483791cda32c3c8c127b7559",
+      "runtimeDerivative": "SelectorScreen_Survival_Highlight-aligned-2x.png"
+    }
+  ],
+  "generations": [
+    {
+      "key": "stone-upper",
+      "file": "stone-upper-anime4k-pass2-guide.png",
+      "desc": "This is the UPPER CROP of a large blank main-menu tombstone. Crop aspect 525:380. Keep the stone's huge blank gray-purple face, cracks and edge shadows and small right wall fragment EXACTLY in place. The art is CUT OFF on the bottom and right; keep these cut edges exactly, DO NOT complete the stone, DO NOT add margin. No text.",
+      "prompt": "Use case: precise-object-edit. Faithful restoration of an existing Plants vs Zombies sprite for a 2x native-resolution texture. Model preference sunburst if selectable. Input is a twice-Anime4K UL reference; the flat #808080 gray is ONLY a temporary transparency preview, remove it to actual transparent alpha. Minimal edge smoothing and clean hand-painted shading ONLY; preserve source composition, silhouettes, geometry, camera, colors and scale. Do not redesign, add details, change proportions, or add padding. This is the UPPER CROP of a large blank main-menu tombstone. Crop aspect 525:380. Keep the stone's huge blank gray-purple face, cracks and edge shadows and small right wall fragment EXACTLY in place. The art is CUT OFF on the bottom and right; keep these cut edges exactly, DO NOT complete the stone, DO NOT add margin. No text. Output only the restored sprite/cropped texture at the same aspect ratio, true transparent background. This must rejoin adjacent texture pieces at exactly the same source-space coordinates.",
+      "archivedRaw": "raw-ai/stone-upper-raw.png",
+      "rawDimensions": [
+        1474,
+        1067
+      ],
+      "sha256": "05027e41227c5a1c5c24d4011a97752eefd177808ec87d9bf45399dda206b279"
+    },
+    {
+      "key": "stone-base",
+      "file": "stone-base-anime4k-pass2-guide.png",
+      "desc": "This is the LOWER CROP of the same main-menu tombstone: stone steps, dirt and THREE pale green flower vases. Aspect 795:230. Preserve EXACT horizontal framing and all individual vase centers, heights, step corners and flower petals. Keep the image cut off at top, bottom and right exactly as supplied. Do not reconstruct a complete tombstone or zoom out. No text.",
+      "prompt": "Use case: precise-object-edit. Faithful restoration of an existing Plants vs Zombies sprite for a 2x native-resolution texture. Model preference sunburst if selectable. Input is a twice-Anime4K UL reference; the flat #808080 gray is ONLY a temporary transparency preview, remove it to actual transparent alpha. Minimal edge smoothing and clean hand-painted shading ONLY; preserve source composition, silhouettes, geometry, camera, colors and scale. Do not redesign, add details, change proportions, or add padding. This is the LOWER CROP of the same main-menu tombstone: stone steps, dirt and THREE pale green flower vases. Aspect 795:230. Preserve EXACT horizontal framing and all individual vase centers, heights, step corners and flower petals. Keep the image cut off at top, bottom and right exactly as supplied. Do not reconstruct a complete tombstone or zoom out. No text. Output only the restored sprite/cropped texture at the same aspect ratio, true transparent background. This must rejoin adjacent texture pieces at exactly the same source-space coordinates.",
+      "archivedRaw": "raw-ai/stone-base-raw.png",
+      "rawDimensions": [
+        2172,
+        724
+      ],
+      "sha256": "4be05c639513769215a5c2248174aba373566750c68a43040722127472f0208b"
+    },
+    {
+      "key": "SelectorScreen_Puzzle_button",
+      "file": "SelectorScreen_Puzzle_button--anime4k-pass2-guide.png",
+      "desc": "This is the NORMAL dark menu stone sign. Exact carved text \"PUZZLE\". Preserve the original tilted lettering, cracks, BLACK OUTLINE and stone shape, same source framing and same relative text location. Keep original cool gray purple colors; do not brighten the normal state. Aspect 286:122.",
+      "prompt": "Use case: precise-object-edit. Faithful restoration of an existing Plants vs Zombies sprite for a 2x native-resolution texture. Model preference sunburst if selectable. Input is a twice-Anime4K UL reference; the flat #808080 gray is ONLY a temporary transparency preview, remove it to actual transparent alpha. Minimal edge smoothing and clean hand-painted shading ONLY; preserve source composition, silhouettes, geometry, camera, colors and scale. Do not redesign, add details, change proportions, or add padding. This is the NORMAL dark menu stone sign. Exact carved text \"PUZZLE\". Preserve the original tilted lettering, cracks, BLACK OUTLINE and stone shape, same source framing and same relative text location. Keep original cool gray purple colors; do not brighten the normal state. Aspect 286:122. Output only the restored sprite/cropped texture at the same aspect ratio, true transparent background. This must rejoin adjacent texture pieces at exactly the same source-space coordinates.",
+      "archivedRaw": "raw-ai/SelectorScreen_Puzzle_button-raw.png",
+      "rawDimensions": [
+        1920,
+        819
+      ],
+      "sha256": "92632d175596aa92dd4cb7051bc8fa89d566b15515cfd93b0e034328dd8d6d0e"
+    },
+    {
+      "key": "SelectorScreen_Puzzle_Highlight",
+      "file": "SelectorScreen_Puzzle_Highlight--anime4k-pass2-guide.png",
+      "desc": "This is the HOVER HIGHLIGHT (paler top edge) menu stone sign. Exact carved text \"PUZZLE\". Preserve the original tilted lettering, cracks, BLACK OUTLINE and stone shape, same source framing and same relative text location. Keep original cool gray purple colors; do not brighten the normal state. Aspect 286:122.",
+      "prompt": "Use case: precise-object-edit. Faithful restoration of an existing Plants vs Zombies sprite for a 2x native-resolution texture. Model preference sunburst if selectable. Input is a twice-Anime4K UL reference; the flat #808080 gray is ONLY a temporary transparency preview, remove it to actual transparent alpha. Minimal edge smoothing and clean hand-painted shading ONLY; preserve source composition, silhouettes, geometry, camera, colors and scale. Do not redesign, add details, change proportions, or add padding. This is the HOVER HIGHLIGHT (paler top edge) menu stone sign. Exact carved text \"PUZZLE\". Preserve the original tilted lettering, cracks, BLACK OUTLINE and stone shape, same source framing and same relative text location. Keep original cool gray purple colors; do not brighten the normal state. Aspect 286:122. Output only the restored sprite/cropped texture at the same aspect ratio, true transparent background. This must rejoin adjacent texture pieces at exactly the same source-space coordinates.",
+      "archivedRaw": "raw-ai/SelectorScreen_Puzzle_Highlight-raw.png",
+      "rawDimensions": [
+        1920,
+        819
+      ],
+      "sha256": "0dfaa2f7feec7cfbcd98f82f33763892f6bd4cf6f077a43ad9703ba332ed0fee"
+    },
+    {
+      "key": "SelectorScreen_Survival_button",
+      "file": "SelectorScreen_Survival_button--anime4k-pass2-guide.png",
+      "desc": "This is the NORMAL dark menu stone sign. Exact carved text \"SURVIVAL\". Preserve the original tilted lettering, cracks, BLACK OUTLINE and stone shape, same source framing and same relative text location. Keep original cool gray purple colors; do not brighten the normal state. Aspect 266:123.",
+      "prompt": "Use case: precise-object-edit. Faithful restoration of an existing Plants vs Zombies sprite for a 2x native-resolution texture. Model preference sunburst if selectable. Input is a twice-Anime4K UL reference; the flat #808080 gray is ONLY a temporary transparency preview, remove it to actual transparent alpha. Minimal edge smoothing and clean hand-painted shading ONLY; preserve source composition, silhouettes, geometry, camera, colors and scale. Do not redesign, add details, change proportions, or add padding. This is the NORMAL dark menu stone sign. Exact carved text \"SURVIVAL\". Preserve the original tilted lettering, cracks, BLACK OUTLINE and stone shape, same source framing and same relative text location. Keep original cool gray purple colors; do not brighten the normal state. Aspect 266:123. Output only the restored sprite/cropped texture at the same aspect ratio, true transparent background. This must rejoin adjacent texture pieces at exactly the same source-space coordinates.",
+      "archivedRaw": "raw-ai/SelectorScreen_Survival_button-raw.png",
+      "rawDimensions": [
+        1846,
+        852
+      ],
+      "sha256": "100f3b49408808b059f93afa2aedf8e0055f6eb983949e695cd78562f38aacae"
+    },
+    {
+      "key": "SelectorScreen_Survival_Highlight",
+      "file": "SelectorScreen_Survival_Highlight--anime4k-pass2-guide.png",
+      "desc": "This is the HOVER HIGHLIGHT (paler top edge) menu stone sign. Exact carved text \"SURVIVAL\". Preserve the original tilted lettering, cracks, BLACK OUTLINE and stone shape, same source framing and same relative text location. Keep original cool gray purple colors; do not brighten the normal state. Aspect 266:123.",
+      "prompt": "Use case: precise-object-edit. Faithful restoration of an existing Plants vs Zombies sprite for a 2x native-resolution texture. Model preference sunburst if selectable. Input is a twice-Anime4K UL reference; the flat #808080 gray is ONLY a temporary transparency preview, remove it to actual transparent alpha. Minimal edge smoothing and clean hand-painted shading ONLY; preserve source composition, silhouettes, geometry, camera, colors and scale. Do not redesign, add details, change proportions, or add padding. This is the HOVER HIGHLIGHT (paler top edge) menu stone sign. Exact carved text \"SURVIVAL\". Preserve the original tilted lettering, cracks, BLACK OUTLINE and stone shape, same source framing and same relative text location. Keep original cool gray purple colors; do not brighten the normal state. Aspect 266:123. Output only the restored sprite/cropped texture at the same aspect ratio, true transparent background. This must rejoin adjacent texture pieces at exactly the same source-space coordinates.",
+      "archivedRaw": "raw-ai/SelectorScreen_Survival_Highlight-raw.png",
+      "rawDimensions": [
+        1844,
+        853
+      ],
+      "sha256": "2f26e128c1bc1f1669c4b33b25059916ce03b2b4bcd612c6646b7654b787983e"
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "original": "assets/runtime/reanim/ZenGarden_fertilizer_bag4.png",
+  "source": "stage4--ai-raw-v2.png",
+  "master": "stage4--aligned-4x.png",
+  "candidate": "stage4--candidate-2x.png",
+  "runtimeIntegrated": false,
+  "status": "awaiting-review",
+  "tool": "built-in image_gen",
+  "promptFile": "stage4-v2-prompt.json",
+  "styleReference": "assets/source-art/replanted/reanim-source-round20/ZenGarden_fertilizer_bag3--prepared.png",
+  "logicalSize": [
+    70,
+    73
+  ],
+  "uniformScaleFromAI": 0.23946037099494097,
+  "rawSha256": "87b55be8e8f97a91c8075d567a540b277ee38bc3a365c86aa2566510d6d37c4b"
+}

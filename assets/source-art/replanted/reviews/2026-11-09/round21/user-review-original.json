@@ -1,0 +1,26 @@
+{
+  "source": "User explicitly approved all three composites in chat",
+  "entries": [
+    {
+      "id": "round21:1b7a8fcbc6a13bc62d",
+      "status": "approved",
+      "note": "用户在对话中确认：全部通过。",
+      "needsCrop": false,
+      "updatedAt": "2026-11-11"
+    },
+    {
+      "id": "round21:aa357fde5d1971b3aa",
+      "status": "approved",
+      "note": "用户在对话中确认：全部通过。",
+      "needsCrop": false,
+      "updatedAt": "2026-11-11"
+    },
+    {
+      "id": "round21:3e7a8de3d6a15fab4b",
+      "status": "approved",
+      "note": "用户在对话中确认：全部通过。",
+      "needsCrop": false,
+      "updatedAt": "2026-11-11"
+    }
+  ]
+}

@@ -1,0 +1,400 @@
+{
+  "status": "integrated-for-local-game-inspection",
+  "authorization": "User: 现在怎么样了?先接入游戏看看",
+  "pixelScale": 2,
+  "backgroundCount": 12,
+  "fertilizerNewStages": 1,
+  "records": [
+    {
+      "original": "assets/runtime/images/background1.jpg",
+      "file": "images/e5fc71aefdabf6e2281dc41e.png",
+      "logicalSize": [
+        1400,
+        600
+      ],
+      "physicalSize": [
+        2800,
+        1200
+      ],
+      "source": "assets/source-art/ai/background-original-repair/background1/background1--clean-v2--ai-stitched-2x.png",
+      "sourceSha256": "5a2bd12e07b2220472a3d1f91f814cfcf6929f2b464dda5117662db5730f8ca4",
+      "master": "assets/source-art/ai/background-original-repair/background1/background1--clean-v2--ai-stitched-4x.png",
+      "origin": "Two Anime4K passes, six AI tiles, conservative cleanup, minimum-error overlap stitching",
+      "mapping": {
+        "logicalDrawRect": [
+          0,
+          0,
+          1400,
+          600
+        ],
+        "originalLogicalCanvas": [
+          1400,
+          600
+        ]
+      },
+      "runtimeTrial": "User requested local in-game inspection; not a final art approval.",
+      "previousRuntimeFile": null
+    },
+    {
+      "original": "assets/runtime/images/background1unsodded.jpg",
+      "file": "images/f11fdc2f5337c3a43d82cbaf.png",
+      "logicalSize": [
+        1400,
+        600
+      ],
+      "physicalSize": [
+        2800,
+        1200
+      ],
+      "source": "assets/source-art/ai/background-original-repair/background1unsodded/background1unsodded--clean-v2--ai-stitched-2x.png",
+      "sourceSha256": "20b188eefb7e0d45a312db7cac138f9afe42122f9cefe070fc823bbf8509514a",
+      "master": "assets/source-art/ai/background-original-repair/background1unsodded/background1unsodded--clean-v2--ai-stitched-4x.png",
+      "origin": "Two Anime4K passes, six AI tiles, conservative cleanup, minimum-error overlap stitching",
+      "mapping": {
+        "logicalDrawRect": [
+          0,
+          0,
+          1400,
+          600
+        ],
+        "originalLogicalCanvas": [
+          1400,
+          600
+        ]
+      },
+      "runtimeTrial": "User requested local in-game inspection; not a final art approval.",
+      "previousRuntimeFile": null
+    },
+    {
+      "original": "assets/runtime/images/background2.jpg",
+      "file": "images/0d66e2ea4d20fc5300cd0003.png",
+      "logicalSize": [
+        1400,
+        600
+      ],
+      "physicalSize": [
+        2800,
+        1200
+      ],
+      "source": "assets/source-art/ai/background-original-repair/background2/background2--clean-v2--ai-stitched-2x.png",
+      "sourceSha256": "60cb733fec862c84abeab08b5c869f190bb362a95640928016e13b86166c0d93",
+      "master": "assets/source-art/ai/background-original-repair/background2/background2--clean-v2--ai-stitched-4x.png",
+      "origin": "Two Anime4K passes, six AI tiles, conservative cleanup, minimum-error overlap stitching",
+      "mapping": {
+        "logicalDrawRect": [
+          0,
+          0,
+          1400,
+          600
+        ],
+        "originalLogicalCanvas": [
+          1400,
+          600
+        ]
+      },
+      "runtimeTrial": "User requested local in-game inspection; not a final art approval.",
+      "previousRuntimeFile": null
+    },
+    {
+      "original": "assets/runtime/images/background3.jpg",
+      "file": "images/3c0415fbf7f2b6c24eadcd3b.png",
+      "logicalSize": [
+        1400,
+        600
+      ],
+      "physicalSize": [
+        2800,
+        1200
+      ],
+      "source": "assets/source-art/ai/background-original-repair/background3/background3--clean-v2--ai-stitched-2x.png",
+      "sourceSha256": "a848b39e9cafb7a8489bdfba86abaca1714774cb36ccc1669d4c83fca5dbf1e1",
+      "master": "assets/source-art/ai/background-original-repair/background3/background3--clean-v2--ai-stitched-4x.png",
+      "origin": "Two Anime4K passes, six AI tiles, conservative cleanup, minimum-error overlap stitching",
+      "mapping": {
+        "logicalDrawRect": [
+          0,
+          0,
+          1400,
+          600
+        ],
+        "originalLogicalCanvas": [
+          1400,
+          600
+        ]
+      },
+      "runtimeTrial": "User requested local in-game inspection; not a final art approval.",
+      "previousRuntimeFile": null
+    },
+    {
+      "original": "assets/runtime/images/background4.jpg",
+      "file": "images/a985d4e0b565a1b0f3c43532.png",
+      "logicalSize": [
+        1400,
+        600
+      ],
+      "physicalSize": [
+        2800,
+        1200
+      ],
+      "source": "assets/source-art/ai/background-original-repair/background4/background4--clean-v2--ai-stitched-2x.png",
+      "sourceSha256": "303d20378be4393fe6f6c60d09c728c16f96011009129b061f22d6bb705f75cb",
+      "master": "assets/source-art/ai/background-original-repair/background4/background4--clean-v2--ai-stitched-4x.png",
+      "origin": "Two Anime4K passes, six AI tiles, conservative cleanup, minimum-error overlap stitching",
+      "mapping": {
+        "logicalDrawRect": [
+          0,
+          0,
+          1400,
+          600
+        ],
+        "originalLogicalCanvas": [
+          1400,
+          600
+        ]
+      },
+      "runtimeTrial": "User requested local in-game inspection; not a final art approval.",
+      "previousRuntimeFile": null
+    },
+    {
+      "original": "assets/runtime/images/background5.jpg",
+      "file": "images/ee8a65732f554244543bd623.png",
+      "logicalSize": [
+        1400,
+        600
+      ],
+      "physicalSize": [
+        2800,
+        1200
+      ],
+      "source": "assets/source-art/ai/background-original-repair/background5/background5--clean-v2--ai-stitched-2x.png",
+      "sourceSha256": "ed54ab72bae24edf1ae147aad4c9fcbf901e7b43e13b19d960838d1efd2e73fc",
+      "master": "assets/source-art/ai/background-original-repair/background5/background5--clean-v2--ai-stitched-4x.png",
+      "origin": "Two Anime4K passes, six AI tiles, conservative cleanup, minimum-error overlap stitching",
+      "mapping": {
+        "logicalDrawRect": [
+          0,
+          0,
+          1400,
+          600
+        ],
+        "originalLogicalCanvas": [
+          1400,
+          600
+        ]
+      },
+      "runtimeTrial": "User requested local in-game inspection; not a final art approval.",
+      "previousRuntimeFile": null
+    },
+    {
+      "original": "assets/runtime/images/background6boss.jpg",
+      "file": "images/627217dc8e8ce15e94903c79.png",
+      "logicalSize": [
+        1400,
+        600
+      ],
+      "physicalSize": [
+        2800,
+        1200
+      ],
+      "source": "assets/source-art/ai/background-original-repair/background6boss/background6boss--clean-v2--ai-stitched-2x.png",
+      "sourceSha256": "9d12e4e52149b27cb42198cfbc58515db044e810ab9a24940779e93fffb27f14",
+      "master": "assets/source-art/ai/background-original-repair/background6boss/background6boss--clean-v2--ai-stitched-4x.png",
+      "origin": "Two Anime4K passes, six AI tiles, conservative cleanup, minimum-error overlap stitching",
+      "mapping": {
+        "logicalDrawRect": [
+          0,
+          0,
+          1400,
+          600
+        ],
+        "originalLogicalCanvas": [
+          1400,
+          600
+        ]
+      },
+      "runtimeTrial": "User requested local in-game inspection; not a final art approval.",
+      "previousRuntimeFile": null
+    },
+    {
+      "original": "assets/runtime/images/aquarium1.png",
+      "file": "images/dc66d02fae4f7de59c75730c.png",
+      "logicalSize": [
+        1400,
+        600
+      ],
+      "physicalSize": [
+        2800,
+        1200
+      ],
+      "source": "assets/source-art/ai/background-original-repair/aquarium1/aquarium1--clean-v2--ai-stitched-2x.png",
+      "sourceSha256": "dda300218d9d13f1b8d9422062da1015a31c458bc8567a4d014a30098b9dd68e",
+      "master": "assets/source-art/ai/background-original-repair/aquarium1/aquarium1--clean-v2--ai-stitched-4x.png",
+      "origin": "Two Anime4K passes, six AI tiles, conservative cleanup, minimum-error overlap stitching",
+      "mapping": {
+        "logicalDrawRect": [
+          0,
+          0,
+          1400,
+          600
+        ],
+        "originalLogicalCanvas": [
+          1400,
+          600
+        ]
+      },
+      "runtimeTrial": "User requested local in-game inspection; not a final art approval.",
+      "previousRuntimeFile": null
+    },
+    {
+      "original": "assets/runtime/images/Background_MushroomGarden.png",
+      "file": "images/a5f75c6859d286980733023e.png",
+      "logicalSize": [
+        1400,
+        600
+      ],
+      "physicalSize": [
+        2800,
+        1200
+      ],
+      "source": "assets/source-art/ai/background-original-repair/Background_MushroomGarden/Background_MushroomGarden--clean-v2--ai-stitched-2x.png",
+      "sourceSha256": "f30a5eb46c66127ab8ca075fb2edab32db285bc651cbf12a1b18c5fcd7c45f32",
+      "master": "assets/source-art/ai/background-original-repair/Background_MushroomGarden/Background_MushroomGarden--clean-v2--ai-stitched-4x.png",
+      "origin": "Two Anime4K passes, six AI tiles, conservative cleanup, minimum-error overlap stitching",
+      "mapping": {
+        "logicalDrawRect": [
+          0,
+          0,
+          1400,
+          600
+        ],
+        "originalLogicalCanvas": [
+          1400,
+          600
+        ]
+      },
+      "runtimeTrial": "User requested local in-game inspection; not a final art approval.",
+      "previousRuntimeFile": null
+    },
+    {
+      "original": "assets/runtime/images/Background_Greenhouse.png",
+      "file": "images/9fb2c5bd4ae1f630f99d2e17.png",
+      "logicalSize": [
+        1400,
+        600
+      ],
+      "physicalSize": [
+        2800,
+        1200
+      ],
+      "source": "assets/source-art/ai/background-original-repair/Background_Greenhouse/Background_Greenhouse--clean-v2--ai-stitched-2x.png",
+      "sourceSha256": "751d147249db82a1bbfdc6366da75c5a0bd3dad38e524c22fa0a6794e80ad1d3",
+      "master": "assets/source-art/ai/background-original-repair/Background_Greenhouse/Background_Greenhouse--clean-v2--ai-stitched-4x.png",
+      "origin": "Two Anime4K passes, six AI tiles, conservative cleanup, minimum-error overlap stitching",
+      "mapping": {
+        "logicalDrawRect": [
+          0,
+          0,
+          1400,
+          600
+        ],
+        "originalLogicalCanvas": [
+          1400,
+          600
+        ]
+      },
+      "runtimeTrial": "User requested local in-game inspection; not a final art approval.",
+      "previousRuntimeFile": null
+    },
+    {
+      "original": "assets/runtime/images/Store_Background.png",
+      "file": "images/f2ba6bb886e5b4b586dd7c3d.png",
+      "logicalSize": [
+        1400,
+        600
+      ],
+      "physicalSize": [
+        2800,
+        1200
+      ],
+      "source": "assets/source-art/ai/background-original-repair/Store_Background/Store_Background--clean-v2--ai-stitched-2x.png",
+      "sourceSha256": "aeb281b4b993760f7118535da34c3325813154320239d9c83810181e4f16b786",
+      "master": "assets/source-art/ai/background-original-repair/Store_Background/Store_Background--clean-v2--ai-stitched-4x.png",
+      "origin": "Two Anime4K passes, six AI tiles, conservative cleanup, minimum-error overlap stitching",
+      "mapping": {
+        "logicalDrawRect": [
+          0,
+          0,
+          1400,
+          600
+        ],
+        "originalLogicalCanvas": [
+          1400,
+          600
+        ]
+      },
+      "runtimeTrial": "User requested local in-game inspection; not a final art approval.",
+      "previousRuntimeFile": null
+    },
+    {
+      "original": "assets/runtime/images/Store_BackgroundNight.png",
+      "file": "images/0d531fa67730cd46a999a211.png",
+      "logicalSize": [
+        1400,
+        600
+      ],
+      "physicalSize": [
+        2800,
+        1200
+      ],
+      "source": "assets/source-art/ai/background-original-repair/Store_BackgroundNight/Store_BackgroundNight--clean-v2--ai-stitched-2x.png",
+      "sourceSha256": "6847c71768b4f819e3108053aab527878e89aa8034a45da7a3703706e4c27a27",
+      "master": "assets/source-art/ai/background-original-repair/Store_BackgroundNight/Store_BackgroundNight--clean-v2--ai-stitched-4x.png",
+      "origin": "Two Anime4K passes, six AI tiles, conservative cleanup, minimum-error overlap stitching",
+      "mapping": {
+        "logicalDrawRect": [
+          0,
+          0,
+          1400,
+          600
+        ],
+        "originalLogicalCanvas": [
+          1400,
+          600
+        ]
+      },
+      "runtimeTrial": "User requested local in-game inspection; not a final art approval.",
+      "previousRuntimeFile": null
+    },
+    {
+      "original": "assets/runtime/reanim/ZenGarden_fertilizer_bag4.png",
+      "file": "images/8a6d3d460c5b28051cbd4d1f.png",
+      "logicalSize": [
+        70,
+        73
+      ],
+      "physicalSize": [
+        140,
+        146
+      ],
+      "source": "assets/source-art/replanted/fertilizer-stages30/stage4--native-2x.png",
+      "sourceSha256": "a1047171d3e923a245f0e21810016178ba929a01010c9e2b525ebb1f2c6850f3",
+      "master": "assets/source-art/replanted/fertilizer-stages30/stage4--native-5x.png",
+      "origin": "Native Replanted ZenGarden_fertilizer atlas region bag4, 350x365, no AI redraw",
+      "mapping": {
+        "logicalDrawRect": [
+          0,
+          0,
+          70,
+          73
+        ],
+        "originalLogicalCanvas": [
+          70,
+          73
+        ]
+      },
+      "runtimeTrial": "User requested local in-game inspection; not a final art approval.",
+      "previousRuntimeFile": null
+    }
+  ],
+  "challengeBackground": "Restored approved native Replanted round24 sliced background shared by the three challenge pages; excludes AI candidate."
+}

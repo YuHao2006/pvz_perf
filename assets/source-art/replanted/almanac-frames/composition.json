@@ -1,0 +1,146 @@
+{
+  "pixelScale": 2,
+  "borders": {
+    "Frame_Wood": [
+      104,
+      109,
+      95,
+      82
+    ],
+    "Frame_Stone": [
+      96,
+      99,
+      94,
+      82
+    ],
+    "Frame_Grey": [
+      103,
+      106,
+      104,
+      108
+    ],
+    "Header_Wood_01": [
+      150,
+      0,
+      132,
+      0
+    ],
+    "Header_Stone_01": [
+      712,
+      0,
+      840,
+      0
+    ],
+    "Header_Stone_02": [
+      148,
+      0,
+      152,
+      0
+    ]
+  },
+  "pages": [
+    {
+      "original": "assets/runtime/images/Almanac_IndexBack.png",
+      "file": "images/224a81541fdfffb4390085c6.png",
+      "logicalSize": [
+        1400,
+        600
+      ],
+      "physicalSize": [
+        2800,
+        1200
+      ],
+      "source": "assets/source-art/replanted/almanac-frames",
+      "sources": [
+        "SPR_Almanac_Frame_Grey.png",
+        "SPR_Almanac_Header_Stone_01.png",
+        "SPR_Almanac_PlantPanel.png",
+        "SPR_Almanac_ZombiePanel.png"
+      ],
+      "mapping": {
+        "logicalDrawRect": [
+          0,
+          0,
+          1400,
+          600
+        ],
+        "originalLogicalCanvas": [
+          1400,
+          600
+        ]
+      },
+      "composition": "Unity nine-slice borders; offline compositing; existing logical positions preserved"
+    },
+    {
+      "original": "assets/runtime/images/Almanac_PlantBack.png",
+      "file": "images/02efd13440105330ea5bcc1c.png",
+      "logicalSize": [
+        1400,
+        600
+      ],
+      "physicalSize": [
+        2800,
+        1200
+      ],
+      "source": "assets/source-art/replanted/almanac-frames",
+      "sources": [
+        "SPR_Almanac_Frame_Wood.png",
+        "SPR_Almanac_Header_Wood_01.png"
+      ],
+      "mapping": {
+        "logicalDrawRect": [
+          0,
+          0,
+          1400,
+          600
+        ],
+        "originalLogicalCanvas": [
+          1400,
+          600
+        ]
+      },
+      "composition": "Unity nine-slice borders; offline compositing; existing logical positions preserved"
+    },
+    {
+      "original": "assets/runtime/images/Almanac_ZombieBack.png",
+      "file": "images/6b0c1ff4d914c475339df1c2.png",
+      "logicalSize": [
+        1400,
+        600
+      ],
+      "physicalSize": [
+        2800,
+        1200
+      ],
+      "source": "assets/source-art/replanted/almanac-frames",
+      "sources": [
+        "SPR_Almanac_Frame_Stone.png",
+        "SPR_Almanac_Header_Stone_02.png"
+      ],
+      "mapping": {
+        "logicalDrawRect": [
+          0,
+          0,
+          1400,
+          600
+        ],
+        "originalLogicalCanvas": [
+          1400,
+          600
+        ]
+      },
+      "composition": "Unity nine-slice borders; offline compositing; existing logical positions preserved"
+    }
+  ],
+  "sourceBundles": [
+    "uiatlasalmanac_assets_all.bundle",
+    "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle"
+  ],
+  "replantedBuild": "21398230",
+  "notes": [
+    "Raw extracted sprites are preserved at native dimensions for future higher-resolution builds.",
+    "Only panel frames and plaques are replaced. The approved paper and original plant slot grid are retained.",
+    "Corners are resampled uniformly; nine-slice centers extend horizontally/vertically. Shadows are included in the source alpha.",
+    "No runtime extra draw calls, branches, or save format changes."
+  ]
+}

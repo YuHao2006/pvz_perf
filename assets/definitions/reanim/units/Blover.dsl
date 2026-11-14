@@ -73,103 +73,78 @@ export component Blover {
         frame 43 { x: 38.6; skew-y: 12.1; scale-y: 0.818; }
         frame 44 { x: -10000; skew-y: -10000; scale-y: -10000; }
     }
+    // Retired drawing slot: preserve the original track index for existing
+    // DAT64 track-instance arrays. The full stem is drawn by stem1 below.
     Track {
         source-name: "Blover_stem2";
         frame-count: 62;
-        frame 0 { x: 30.6; y: 52.3; scale-x: 0.8; scale-y: 0.8; image: IMAGE_REANIM_BLOVER_STEM2; }
-        frame 1 { x: 29.3; y: 50.9; skew-x: -1.4; skew-y: -3.7; scale-x: -10000; scale-y: 0.893; image: none; }
-        frame 2 { x: 28; y: 49.4; skew-x: -2.9; skew-y: -7.4; scale-x: 0.799; scale-y: 0.986; }
-        frame 3 { x: 26.4; y: 48.1; skew-x: -4.4; skew-y: -11.2; scale-x: -10000; scale-y: 1.079; }
-        frame 4 { x: 24.6; y: 46.6; skew-x: -6.1; skew-y: -15.1; scale-y: 1.173; }
-        frame 5 { x: 23.8; y: 48.9; skew-x: -9.4; skew-y: -18.4; scale-x: 0.798; scale-y: 1.122; }
-        frame 6 { x: 23; y: 51.1; skew-x: -12.7; skew-y: -21.7; scale-x: -10000; scale-y: 1.072; }
-        frame 7 { x: 22.5; y: 53.5; skew-x: -16.2; skew-y: -25; scale-y: 1.022; }
-        frame 8 { x: 21.8; y: 55.7; skew-x: -19.6; skew-y: -28.5; scale-y: 0.974; }
-        frame 9 { x: 22.3; y: 53.5; skew-x: -16.2; skew-y: -25; scale-x: 0.797; scale-y: 1.028; }
-        frame 10 { x: 23; y: 51.2; skew-x: -12.7; skew-y: -21.7; scale-x: 0.798; scale-y: 1.084; }
-        frame 11 { x: 23.7; y: 48.9; skew-x: -9.4; skew-y: -18.4; scale-x: -10000; scale-y: 1.14; }
-        frame 12 { x: 24.5; y: 46.7; skew-x: -6.1; skew-y: -15.1; scale-x: 0.799; scale-y: 1.196; }
-        frame 13 { x: 26.1; y: 47.9; skew-x: -4.4; skew-y: -11.2; scale-x: -10000; scale-y: 1.097; }
-        frame 14 { x: 27.8; y: 49.3; skew-x: -2.9; skew-y: -7.4; scale-y: 0.998; }
-        frame 15 { x: 29.2; y: 50.8; skew-x: -1.4; skew-y: -3.7; scale-x: 0.8; scale-y: 0.899; }
-        frame 16 { x: 30.6; y: 52.3; skew-x: 0; skew-y: 0; scale-x: -10000; scale-y: 0.8; }
-        frame 17 { x: 33; y: 49.5; skew-x: 6.3; skew-y: 6.3; scale-x: 0.799; scale-y: 0.904; }
-        frame 18 { x: 35.7; y: 46.8; skew-x: 12.5; skew-y: 12.5; scale-x: 0.798; scale-y: 1.007; }
-        frame 19 { x: 38.8; y: 44.3; skew-x: 18.8; skew-y: 18.8; scale-x: -10000; scale-y: 1.111; }
-        frame 20 { x: 42.1; y: 42.1; skew-x: 25.3; skew-y: 25.3; scale-y: 1.216; }
-        frame 21 { x: 43.2; y: 43.9; skew-x: 30.3; skew-y: 30.3; scale-x: 0.796; scale-y: 1.109; }
-        frame 22 { x: 44.3; y: 45.6; skew-x: 35.4; skew-y: 35.4; scale-x: 0.795; scale-y: 1.004; }
-        frame 23 { x: 45.1; y: 47.3; skew-x: 40.6; skew-y: 40.6; scale-x: -10000; scale-y: 0.899; }
-        frame 24 { x: 45.8; y: 49; skew-x: 45.6; skew-y: 45.6; scale-x: 0.796; scale-y: 0.796; }
-        frame 25 { x: 44.7; y: 47.6; skew-x: 40.1; skew-y: 40.1; scale-x: 0.795; scale-y: 0.874; }
-        frame 26 { x: 43.5; y: 46.3; skew-x: 34.8; skew-y: 34.8; scale-x: -10000; scale-y: 0.953; }
-        frame 27 { x: 42; y: 44.9; skew-x: 29.3; skew-y: 29.3; scale-x: 0.796; scale-y: 1.033; }
-        frame 28 { x: 40.5; y: 43.4; skew-x: 24; skew-y: 24; scale-x: 0.797; scale-y: 1.114; }
-        frame 29 { x: 37.6; y: 45.3; skew-x: 17.8; skew-y: 17.8; scale-x: -10000; scale-y: 1.035; }
-        frame 30 { x: 35.1; y: 47.6; skew-x: 11.8; skew-y: 11.8; scale-x: 0.798; scale-y: 0.956; }
-        frame 31 { x: 32.6; y: 49.8; skew-x: 5.8; skew-y: 5.8; scale-x: 0.799; scale-y: 0.878; }
-        frame 32 { x: 30.6; y: 52.3; skew-x: 0; skew-y: 0; scale-x: 0.8; scale-y: 0.8; }
-        frame 33 { x: 29.1; y: 53.5; skew-x: -5.2; skew-y: -5.9; scale-x: 0.799; scale-y: 0.801; }
-        frame 34 { x: 27.8; y: 55; skew-x: -10.4; skew-y: -12.2; scale-x: -10000; scale-y: 0.803; }
-        frame 35 { x: 26.6; y: 56.5; skew-x: -15.7; skew-y: -18.2; scale-x: 0.798; scale-y: 0.804; }
-        frame 36 { x: 25.3; y: 58; skew-x: -20.9; skew-y: -24.4; scale-x: -10000; scale-y: 0.806; }
-        frame 37 { x: 24.3; y: 59.6; skew-x: -26.2; skew-y: -30.5; scale-x: 0.797; scale-y: 0.808; }
-        frame 38 { x: 23.2; y: 61.2; skew-x: -31.5; skew-y: -36.7; scale-x: -10000; scale-y: 0.809; }
-        frame 39 { x: 22.2; y: 63.1; skew-x: -36.7; skew-y: -42.8; scale-y: 0.812; }
-        frame 40 { x: 26.2; y: 56.6; skew-x: -14.2; skew-y: -18.9; scale-y: 0.838; }
-        frame 41 { x: 32.1; y: 51.2; skew-x: 7.9; skew-y: 4.9; scale-y: 0.865; }
-        frame 42 { x: 37.5; y: 47.5; skew-x: 20.8; skew-y: 19.3; scale-y: 0.934; }
-        frame 43 { x: 43.6; y: 44.8; skew-x: 33.8; skew-y: 33.8; scale-x: 0.798; scale-y: 1.005; }
-        frame 44 { x: -10000; y: -10000; skew-x: -10000; skew-y: -10000; scale-x: -10000; scale-y: -10000; }
+        frame 0 { cel: -1; }
     }
     Track {
         source-name: "Blover_stem1";
         frame-count: 62;
-        frame 0 { x: 29.1; y: 38; scale-x: 0.8; scale-y: 0.8; image: IMAGE_REANIM_BLOVER_STEM1; }
-        frame 1 { x: 26.8; y: 36.3; skew-x: -2.7; skew-y: -3.2; scale-x: 0.802; scale-y: 0.857; image: none; }
-        frame 2 { x: 24.4; y: 34.7; skew-x: -5.7; skew-y: -6.7; scale-x: 0.804; scale-y: 0.915; }
-        frame 3 { x: 21.9; y: 33.2; skew-x: -8.7; skew-y: -10.2; scale-x: 0.806; scale-y: 0.972; }
-        frame 4 { x: 19.6; y: 31.6; skew-x: -11.8; skew-y: -13.6; scale-x: 0.808; scale-y: 1.03; }
-        frame 5 { x: 17.7; y: 34.3; skew-x: -12; skew-y: -17.5; scale-x: 0.816; scale-y: 0.993; }
-        frame 6 { x: 15.9; y: 37; skew-x: -12.2; skew-y: -21.5; scale-x: 0.824; scale-y: 0.957; }
-        frame 7 { x: 14; y: 39.7; skew-x: -12.5; skew-y: -25.5; scale-x: 0.833; scale-y: 0.92; }
-        frame 8 { x: 12.2; y: 42.6; skew-x: -12.8; skew-y: -29.5; scale-x: 0.842; scale-y: 0.885; }
-        frame 9 { x: 13.9; y: 40.3; skew-x: -12.5; skew-y: -25.5; scale-x: 0.833; scale-y: 0.886; }
-        frame 10 { x: 15.8; y: 37.9; skew-x: -12.2; skew-y: -21.5; scale-x: 0.824; scale-y: 0.888; }
-        frame 11 { x: 17.6; y: 35.6; skew-x: -12; skew-y: -17.5; scale-x: 0.816; scale-y: 0.891; }
-        frame 12 { x: 19.5; y: 33.2; skew-x: -11.8; skew-y: -13.6; scale-x: 0.808; scale-y: 0.893; }
-        frame 13 { x: 22; y: 34.4; skew-x: -8.7; skew-y: -10.2; scale-x: 0.806; scale-y: 0.87; }
-        frame 14 { x: 24.4; y: 35.5; skew-x: -5.7; skew-y: -6.7; scale-x: 0.804; scale-y: 0.846; }
-        frame 15 { x: 26.9; y: 36.8; skew-x: -2.7; skew-y: -3.2; scale-x: 0.802; scale-y: 0.823; }
-        frame 16 { x: 29.1; y: 38; skew-x: 0; skew-y: 0; scale-x: 0.8; scale-y: 0.8; }
-        frame 17 { x: 32.6; y: 35.6; skew-x: 1; skew-y: 4.3; scale-x: 0.816; scale-y: 0.856; }
-        frame 18 { x: 36.3; y: 33.2; skew-x: 2; skew-y: 8.5; scale-x: 0.833; scale-y: 0.911; }
-        frame 19 { x: 40; y: 30.9; skew-x: 3; skew-y: 12.8; scale-x: 0.849; scale-y: 0.967; }
-        frame 20 { x: 43.8; y: 28.6; skew-x: 4; skew-y: 17; scale-x: 0.866; scale-y: 1.023; }
-        frame 21 { x: 45.5; y: 31.2; skew-x: 7.1; skew-y: 21.3; scale-x: 0.857; scale-y: 1.006; }
-        frame 22 { x: 47.1; y: 33.8; skew-x: 10.3; skew-y: 25.6; scale-x: 0.848; scale-y: 0.989; }
-        frame 23 { x: 48.6; y: 36.5; skew-x: 13.5; skew-y: 29.8; scale-x: 0.84; scale-y: 0.972; }
-        frame 24 { x: 50.3; y: 39.1; skew-x: 16.7; skew-y: 34.2; scale-x: 0.832; scale-y: 0.957; }
-        frame 25 { x: 48.7; y: 36.3; skew-x: 14.5; skew-y: 30.8; scale-x: 0.84; scale-y: 0.97; }
-        frame 26 { x: 47.1; y: 33.6; skew-x: 12.3; skew-y: 27.5; scale-x: 0.848; scale-y: 0.986; }
-        frame 27 { x: 45.6; y: 30.9; skew-x: 10; skew-y: 24.1; scale-x: 0.857; scale-y: 1.001; }
-        frame 28 { x: 44; y: 28.5; skew-x: 7.9; skew-y: 20.8; scale-x: 0.866; scale-y: 1.017; }
-        frame 29 { x: 40.1; y: 30.8; skew-x: 5.8; skew-y: 15.5; scale-x: 0.849; scale-y: 0.962; }
-        frame 30 { x: 36.4; y: 33.1; skew-x: 3.8; skew-y: 10.3; scale-x: 0.833; scale-y: 0.908; }
-        frame 31 { x: 32.6; y: 35.5; skew-x: 1.8; skew-y: 5.1; scale-x: 0.816; scale-y: 0.854; }
-        frame 32 { x: 29.1; y: 38; skew-x: 0; skew-y: 0; scale-x: 0.8; scale-y: 0.8; }
-        frame 33 { x: 27; y: 39.1; skew-x: -1.2; skew-y: -3.4; scale-x: 0.792; scale-y: 0.808; }
-        frame 34 { x: 24.8; y: 40.3; skew-x: -2.4; skew-y: -7.2; scale-x: 0.784; scale-y: 0.815; }
-        frame 35 { x: 22.7; y: 41.4; skew-x: -3.7; skew-y: -10.7; scale-x: 0.775; scale-y: 0.823; }
-        frame 36 { x: 20.6; y: 42.6; skew-x: -4.9; skew-y: -14.5; scale-x: 0.767; scale-y: 0.831; }
-        frame 37 { x: 18.5; y: 43.7; skew-x: -6.2; skew-y: -18.2; scale-x: 0.759; scale-y: 0.839; }
-        frame 38 { x: 16.2; y: 45.1; skew-x: -7.5; skew-y: -21.7; scale-x: 0.751; scale-y: 0.846; }
-        frame 39 { x: 14.3; y: 46.6; skew-x: -8.9; skew-y: -25.5; scale-x: 0.743; scale-y: 0.855; }
-        frame 40 { x: 22.8; y: 42.3; skew-x: -3.7; skew-y: -11.7; scale-x: 0.758; scale-y: 0.887; }
-        frame 41 { x: 31.3; y: 38.3; skew-x: 1; skew-y: 2.1; scale-x: 0.774; scale-y: 0.92; }
-        frame 42 { x: 40.1; y: 32.8; skew-x: 9.1; skew-y: 13.8; scale-x: 0.789; scale-y: 1.054; }
-        frame 43 { x: 50.1; y: 27.6; skew-x: 17.5; skew-y: 25.9; scale-x: 0.805; scale-y: 1.189; }
-        frame 44 { x: -10000; y: -10000; skew-x: -10000; skew-y: -10000; scale-x: -10000; scale-y: -10000; }
+        frame 0 { x: 29.1; y: 38; skew-x: 0; skew-y: -0.37549236; scale-x: 0.80000001; scale-y: 0.84287523; cel: 0; alpha: 1; image: IMAGE_REANIM_BLOVER_STEM1; }
+        frame 1 { x: 26.799999; y: 36.299999; skew-x: -2.7; skew-y: -4.0715335; scale-x: 0.80199999; scale-y: 0.91236724; cel: 0; alpha: 1; }
+        frame 2 { x: 24.4; y: 34.700001; skew-x: -5.6999998; skew-y: -7.8397204; scale-x: 0.80400002; scale-y: 0.97967916; cel: 0; alpha: 1; }
+        frame 3 { x: 21.9; y: 33.200001; skew-x: -8.6999998; skew-y: -11.257135; scale-x: 0.80599999; scale-y: 1.050801; cel: 0; alpha: 1; }
+        frame 4 { x: 19.6; y: 31.6; skew-x: -11.8; skew-y: -14.153397; scale-x: 0.80800003; scale-y: 1.1175825; cel: 0; alpha: 1; }
+        frame 5 { x: 17.700001; y: 34.299999; skew-x: -12; skew-y: -17.684058; scale-x: 0.81599998; scale-y: 1.0694985; cel: 0; alpha: 1; }
+        frame 6 { x: 15.9; y: 37; skew-x: -12.2; skew-y: -21.231166; scale-x: 0.824; scale-y: 1.0204142; cel: 0; alpha: 1; }
+        frame 7 { x: 14; y: 39.700001; skew-x: -12.5; skew-y: -25.321758; scale-x: 0.833; scale-y: 0.98276456; cel: 0; alpha: 1; }
+        frame 8 { x: 12.2; y: 42.599998; skew-x: -12.8; skew-y: -29.456584; scale-x: 0.84200001; scale-y: 0.93569586; cel: 0; alpha: 1; }
+        frame 9 { x: 13.9; y: 40.299999; skew-x: -12.5; skew-y: -25.57775; scale-x: 0.833; scale-y: 0.96924928; cel: 0; alpha: 1; }
+        frame 10 { x: 15.8; y: 37.900002; skew-x: -12.2; skew-y: -21.856874; scale-x: 0.824; scale-y: 1.0067172; cel: 0; alpha: 1; }
+        frame 11 { x: 17.6; y: 35.599998; skew-x: -12; skew-y: -18.310019; scale-x: 0.81599998; scale-y: 1.0439438; cel: 0; alpha: 1; }
+        frame 12 { x: 19.5; y: 33.200001; skew-x: -11.8; skew-y: -14.715837; scale-x: 0.80800003; scale-y: 1.0885628; cel: 0; alpha: 1; }
+        frame 13 { x: 22; y: 34.400002; skew-x: -8.6999998; skew-y: -11.065424; scale-x: 0.80599999; scale-y: 1.0191167; cel: 0; alpha: 1; }
+        frame 14 { x: 24.4; y: 35.5; skew-x: -5.6999998; skew-y: -7.7082068; scale-x: 0.80400002; scale-y: 0.95994236; cel: 0; alpha: 1; }
+        frame 15 { x: 26.9; y: 36.799999; skew-x: -2.7; skew-y: -3.7842164; scale-x: 0.80199999; scale-y: 0.89813021; cel: 0; alpha: 1; }
+        frame 16 { x: 29.1; y: 38; skew-x: 0; skew-y: -0.37549236; scale-x: 0.80000001; scale-y: 0.84287523; cel: 0; alpha: 1; }
+        frame 17 { x: 32.599998; y: 35.599998; skew-x: 1; skew-y: 5.5799893; scale-x: 0.81599998; scale-y: 0.91840373; cel: 0; alpha: 1; }
+        frame 18 { x: 36.299999; y: 33.200001; skew-x: 2; skew-y: 11.317838; scale-x: 0.833; scale-y: 0.99861317; cel: 0; alpha: 1; }
+        frame 19 { x: 40; y: 30.9; skew-x: 3; skew-y: 16.410037; scale-x: 0.84899998; scale-y: 1.0821111; cel: 0; alpha: 1; }
+        frame 20 { x: 43.799999; y: 28.6; skew-x: 4; skew-y: 21.410106; scale-x: 0.866; scale-y: 1.1746031; cel: 0; alpha: 1; }
+        frame 21 { x: 45.5; y: 31.200001; skew-x: 7.0999999; skew-y: 25.4756; scale-x: 0.85699999; scale-y: 1.1051153; cel: 0; alpha: 1; }
+        frame 22 { x: 47.099998; y: 33.799999; skew-x: 10.3; skew-y: 29.559978; scale-x: 0.84799999; scale-y: 1.0342846; cel: 0; alpha: 1; }
+        frame 23 { x: 48.599998; y: 36.5; skew-x: 13.5; skew-y: 34.117091; scale-x: 0.83999997; scale-y: 0.96668384; cel: 0; alpha: 1; }
+        frame 24 { x: 50.299999; y: 39.099998; skew-x: 16.700001; skew-y: 38.937029; scale-x: 0.83200002; scale-y: 0.90992391; cel: 0; alpha: 1; }
+        frame 25 { x: 48.700001; y: 36.299999; skew-x: 14.5; skew-y: 34.125505; scale-x: 0.83999997; scale-y: 0.96446282; cel: 0; alpha: 1; }
+        frame 26 { x: 47.099998; y: 33.599998; skew-x: 12.3; skew-y: 29.71967; scale-x: 0.84799999; scale-y: 1.0248354; cel: 0; alpha: 1; }
+        frame 27 { x: 45.599998; y: 30.9; skew-x: 10; skew-y: 25.980973; scale-x: 0.85699999; scale-y: 1.0899011; cel: 0; alpha: 1; }
+        frame 28 { x: 44; y: 28.5; skew-x: 7.9000001; skew-y: 22.558761; scale-x: 0.866; scale-y: 1.1433289; cel: 0; alpha: 1; }
+        frame 29 { x: 40.099998; y: 30.799999; skew-x: 5.8000002; skew-y: 17.458194; scale-x: 0.84899998; scale-y: 1.0580179; cel: 0; alpha: 1; }
+        frame 30 { x: 36.400002; y: 33.099998; skew-x: 3.8; skew-y: 11.860771; scale-x: 0.833; scale-y: 0.98454339; cel: 0; alpha: 1; }
+        frame 31 { x: 32.599998; y: 35.5; skew-x: 1.8; skew-y: 5.9758348; scale-x: 0.81599998; scale-y: 0.90886278; cel: 0; alpha: 1; }
+        frame 32 { x: 29.1; y: 38; skew-x: 0; skew-y: -0.37549236; scale-x: 0.80000001; scale-y: 0.84287523; cel: 0; alpha: 1; }
+        frame 33 { x: 27; y: 39.099998; skew-x: -1.2; skew-y: -4.820059; scale-x: 0.792; scale-y: 0.82499481; cel: 0; alpha: 1; }
+        frame 34 { x: 24.799999; y: 40.299999; skew-x: -2.4000001; skew-y: -10.057678; scale-x: 0.78399998; scale-y: 0.81492677; cel: 0; alpha: 1; }
+        frame 35 { x: 22.700001; y: 41.400002; skew-x: -3.7; skew-y: -15.019166; scale-x: 0.77499998; scale-y: 0.80869129; cel: 0; alpha: 1; }
+        frame 36 { x: 20.6; y: 42.599998; skew-x: -4.9000001; skew-y: -19.856095; scale-x: 0.76700002; scale-y: 0.80017477; cel: 0; alpha: 1; }
+        frame 37 { x: 18.5; y: 43.700001; skew-x: -6.1999998; skew-y: -24.891551; scale-x: 0.759; scale-y: 0.8009431; cel: 0; alpha: 1; }
+        frame 38 { x: 16.200001; y: 45.099998; skew-x: -7.5; skew-y: -30.274211; scale-x: 0.75099999; scale-y: 0.79607647; cel: 0; alpha: 1; }
+        frame 39 { x: 14.3; y: 46.599998; skew-x: -8.8999996; skew-y: -34.688995; scale-x: 0.74299997; scale-y: 0.79490479; cel: 0; alpha: 1; }
+        frame 40 { x: 22.799999; y: 42.299999; skew-x: -3.7; skew-y: -15.43048; scale-x: 0.75800002; scale-y: 0.81099969; cel: 0; alpha: 1; }
+        frame 41 { x: 31.299999; y: 38.299999; skew-x: 1; skew-y: 3.0791671; scale-x: 0.77399999; scale-y: 0.87602395; cel: 0; alpha: 1; }
+        frame 42 { x: 40.099998; y: 32.799999; skew-x: 9.1000004; skew-y: 16.970754; scale-x: 0.78899997; scale-y: 1.0004751; cel: 0; alpha: 1; }
+        frame 43 { x: 50.099998; y: 27.6; skew-x: 17.5; skew-y: 29.200166; scale-x: 0.80500001; scale-y: 1.163209; cel: 0; alpha: 1; }
+        frame 44 { x: 50.099998; y: 27.6; skew-x: 17.5; skew-y: 29.200166; scale-x: 0.80500001; scale-y: 1.163209; cel: 0; alpha: 1; }
+        frame 45 { x: 50.099998; y: 27.6; skew-x: 17.5; skew-y: 29.200166; scale-x: 0.80500001; scale-y: 1.163209; cel: 0; alpha: 1; }
+        frame 46 { x: 50.099998; y: 27.6; skew-x: 17.5; skew-y: 29.200166; scale-x: 0.80500001; scale-y: 1.163209; cel: 0; alpha: 1; }
+        frame 47 { x: 50.099998; y: 27.6; skew-x: 17.5; skew-y: 29.200166; scale-x: 0.80500001; scale-y: 1.163209; cel: 0; alpha: 1; }
+        frame 48 { x: 50.099998; y: 27.6; skew-x: 17.5; skew-y: 29.200166; scale-x: 0.80500001; scale-y: 1.163209; cel: 0; alpha: 1; }
+        frame 49 { x: 50.099998; y: 27.6; skew-x: 17.5; skew-y: 29.200166; scale-x: 0.80500001; scale-y: 1.163209; cel: 0; alpha: 1; }
+        frame 50 { x: 50.099998; y: 27.6; skew-x: 17.5; skew-y: 29.200166; scale-x: 0.80500001; scale-y: 1.163209; cel: 0; alpha: 1; }
+        frame 51 { x: 50.099998; y: 27.6; skew-x: 17.5; skew-y: 29.200166; scale-x: 0.80500001; scale-y: 1.163209; cel: 0; alpha: 1; }
+        frame 52 { x: 50.099998; y: 27.6; skew-x: 17.5; skew-y: 29.200166; scale-x: 0.80500001; scale-y: 1.163209; cel: 0; alpha: 1; }
+        frame 53 { x: 50.099998; y: 27.6; skew-x: 17.5; skew-y: 29.200166; scale-x: 0.80500001; scale-y: 1.163209; cel: 0; alpha: 1; }
+        frame 54 { x: 50.099998; y: 27.6; skew-x: 17.5; skew-y: 29.200166; scale-x: 0.80500001; scale-y: 1.163209; cel: 0; alpha: 1; }
+        frame 55 { x: 50.099998; y: 27.6; skew-x: 17.5; skew-y: 29.200166; scale-x: 0.80500001; scale-y: 1.163209; cel: 0; alpha: 1; }
+        frame 56 { x: 50.099998; y: 27.6; skew-x: 17.5; skew-y: 29.200166; scale-x: 0.80500001; scale-y: 1.163209; cel: 0; alpha: 1; }
+        frame 57 { x: 50.099998; y: 27.6; skew-x: 17.5; skew-y: 29.200166; scale-x: 0.80500001; scale-y: 1.163209; cel: 0; alpha: 1; }
+        frame 58 { x: 50.099998; y: 27.6; skew-x: 17.5; skew-y: 29.200166; scale-x: 0.80500001; scale-y: 1.163209; cel: 0; alpha: 1; }
+        frame 59 { x: 50.099998; y: 27.6; skew-x: 17.5; skew-y: 29.200166; scale-x: 0.80500001; scale-y: 1.163209; cel: 0; alpha: 1; }
+        frame 60 { x: 50.099998; y: 27.6; skew-x: 17.5; skew-y: 29.200166; scale-x: 0.80500001; scale-y: 1.163209; cel: 0; alpha: 1; }
+        frame 61 { x: 50.099998; y: 27.6; skew-x: 17.5; skew-y: 29.200166; scale-x: 0.80500001; scale-y: 1.163209; cel: 0; alpha: 1; }
     }
     Track {
         source-name: "Blover_dirt_front";

@@ -1,0 +1,700 @@
+{
+  "fontFaceUnchanged": true,
+  "reason": "Previous prototype fitted white glyphs to old alpha bbox, which included outline and shadow. Fit to white fill bbox instead.",
+  "advancesOffsetsKerningUnchanged": true,
+  "newWhiteFillContainedInOriginalWhiteFillBounds": true,
+  "runtimeIntegrated": false,
+  "status": "awaiting-review",
+  "glyphs": [
+    {
+      "char": "M",
+      "advance": 22,
+      "oldFillBounds": [
+        3,
+        8,
+        23,
+        21
+      ],
+      "oldFullAlphaBounds": [
+        0,
+        5,
+        25,
+        23
+      ],
+      "newFillBoundsAt4x": [
+        32,
+        64,
+        112,
+        116
+      ],
+      "positionX": 8
+    },
+    {
+      "char": "i",
+      "advance": 7,
+      "oldFillBounds": [
+        3,
+        7,
+        8,
+        21
+      ],
+      "oldFullAlphaBounds": [
+        0,
+        4,
+        11,
+        23
+      ],
+      "newFillBoundsAt4x": [
+        120,
+        69,
+        140,
+        107
+      ],
+      "positionX": 30
+    },
+    {
+      "char": "n",
+      "advance": 13,
+      "oldFillBounds": [
+        3,
+        11,
+        15,
+        21
+      ],
+      "oldFullAlphaBounds": [
+        0,
+        8,
+        17,
+        24
+      ],
+      "newFillBoundsAt4x": [
+        149,
+        76,
+        194,
+        116
+      ],
+      "positionX": 37
+    },
+    {
+      "char": "i",
+      "advance": 7,
+      "oldFillBounds": [
+        3,
+        7,
+        8,
+        21
+      ],
+      "oldFullAlphaBounds": [
+        0,
+        4,
+        11,
+        23
+      ],
+      "newFillBoundsAt4x": [
+        200,
+        69,
+        220,
+        107
+      ],
+      "positionX": 50
+    },
+    {
+      "char": "-",
+      "advance": 9,
+      "oldFillBounds": [
+        3,
+        12,
+        11,
+        15
+      ],
+      "oldFullAlphaBounds": [
+        0,
+        9,
+        13,
+        17
+      ],
+      "newFillBoundsAt4x": [
+        228,
+        80,
+        260,
+        91
+      ],
+      "positionX": 57
+    },
+    {
+      "char": "G",
+      "advance": 15,
+      "oldFillBounds": [
+        3,
+        8,
+        17,
+        21
+      ],
+      "oldFullAlphaBounds": [
+        0,
+        5,
+        19,
+        23
+      ],
+      "newFillBoundsAt4x": [
+        264,
+        64,
+        320,
+        116
+      ],
+      "positionX": 66
+    },
+    {
+      "char": "a",
+      "advance": 12,
+      "oldFillBounds": [
+        3,
+        11,
+        14,
+        21
+      ],
+      "oldFullAlphaBounds": [
+        0,
+        7,
+        17,
+        23
+      ],
+      "newFillBoundsAt4x": [
+        324,
+        76,
+        368,
+        115
+      ],
+      "positionX": 81
+    },
+    {
+      "char": "m",
+      "advance": 16,
+      "oldFillBounds": [
+        4,
+        11,
+        18,
+        21
+      ],
+      "oldFullAlphaBounds": [
+        0,
+        8,
+        20,
+        23
+      ],
+      "newFillBoundsAt4x": [
+        376,
+        77,
+        432,
+        115
+      ],
+      "positionX": 93
+    },
+    {
+      "char": "e",
+      "advance": 10,
+      "oldFillBounds": [
+        3,
+        11,
+        12,
+        21
+      ],
+      "oldFullAlphaBounds": [
+        0,
+        8,
+        14,
+        23
+      ],
+      "newFillBoundsAt4x": [
+        437,
+        76,
+        471,
+        116
+      ],
+      "positionX": 109
+    },
+    {
+      "char": "s",
+      "advance": 9,
+      "oldFillBounds": [
+        3,
+        10,
+        11,
+        21
+      ],
+      "oldFullAlphaBounds": [
+        0,
+        6,
+        13,
+        23
+      ],
+      "newFillBoundsAt4x": [
+        477,
+        72,
+        506,
+        116
+      ],
+      "positionX": 119
+    },
+    {
+      "char": "S",
+      "advance": 11,
+      "oldFillBounds": [
+        3,
+        7,
+        13,
+        21
+      ],
+      "oldFullAlphaBounds": [
+        0,
+        3,
+        16,
+        23
+      ],
+      "newFillBoundsAt4x": [
+        601,
+        60,
+        639,
+        116
+      ],
+      "positionX": 150
+    },
+    {
+      "char": "U",
+      "advance": 17,
+      "oldFillBounds": [
+        3,
+        8,
+        18,
+        21
+      ],
+      "oldFullAlphaBounds": [
+        0,
+        5,
+        21,
+        23
+      ],
+      "newFillBoundsAt4x": [
+        644,
+        64,
+        704,
+        115
+      ],
+      "positionX": 161
+    },
+    {
+      "char": "R",
+      "advance": 15,
+      "oldFillBounds": [
+        3,
+        8,
+        17,
+        21
+      ],
+      "oldFullAlphaBounds": [
+        0,
+        5,
+        19,
+        23
+      ],
+      "newFillBoundsAt4x": [
+        712,
+        64,
+        767,
+        116
+      ],
+      "positionX": 178
+    },
+    {
+      "char": "V",
+      "advance": 17,
+      "oldFillBounds": [
+        3,
+        8,
+        18,
+        21
+      ],
+      "oldFullAlphaBounds": [
+        0,
+        5,
+        21,
+        23
+      ],
+      "newFillBoundsAt4x": [
+        772,
+        64,
+        832,
+        116
+      ],
+      "positionX": 193
+    },
+    {
+      "char": "I",
+      "advance": 9,
+      "oldFillBounds": [
+        3,
+        3,
+        11,
+        21
+      ],
+      "oldFullAlphaBounds": [
+        0,
+        0,
+        13,
+        23
+      ],
+      "newFillBoundsAt4x": [
+        840,
+        51,
+        872,
+        109
+      ],
+      "positionX": 210
+    },
+    {
+      "char": "V",
+      "advance": 17,
+      "oldFillBounds": [
+        3,
+        8,
+        18,
+        21
+      ],
+      "oldFullAlphaBounds": [
+        0,
+        5,
+        21,
+        23
+      ],
+      "newFillBoundsAt4x": [
+        876,
+        64,
+        936,
+        116
+      ],
+      "positionX": 219
+    },
+    {
+      "char": "A",
+      "advance": 17,
+      "oldFillBounds": [
+        3,
+        8,
+        18,
+        21
+      ],
+      "oldFullAlphaBounds": [
+        0,
+        5,
+        21,
+        23
+      ],
+      "newFillBoundsAt4x": [
+        936,
+        64,
+        996,
+        115
+      ],
+      "positionX": 234
+    },
+    {
+      "char": "L",
+      "advance": 13,
+      "oldFillBounds": [
+        3,
+        8,
+        14,
+        21
+      ],
+      "oldFullAlphaBounds": [
+        0,
+        5,
+        17,
+        23
+      ],
+      "newFillBoundsAt4x": [
+        1004,
+        65,
+        1048,
+        115
+      ],
+      "positionX": 251
+    },
+    {
+      "char": "E",
+      "advance": 13,
+      "oldFillBounds": [
+        3,
+        8,
+        14,
+        21
+      ],
+      "oldFullAlphaBounds": [
+        0,
+        5,
+        17,
+        23
+      ],
+      "newFillBoundsAt4x": [
+        1100,
+        65,
+        1144,
+        114
+      ],
+      "positionX": 275
+    },
+    {
+      "char": "N",
+      "advance": 17,
+      "oldFillBounds": [
+        3,
+        8,
+        18,
+        22
+      ],
+      "oldFullAlphaBounds": [
+        0,
+        5,
+        21,
+        24
+      ],
+      "newFillBoundsAt4x": [
+        1152,
+        66,
+        1212,
+        117
+      ],
+      "positionX": 288
+    },
+    {
+      "char": "D",
+      "advance": 14,
+      "oldFillBounds": [
+        3,
+        8,
+        15,
+        21
+      ],
+      "oldFullAlphaBounds": [
+        0,
+        5,
+        17,
+        23
+      ],
+      "newFillBoundsAt4x": [
+        1220,
+        64,
+        1268,
+        115
+      ],
+      "positionX": 305
+    },
+    {
+      "char": "L",
+      "advance": 13,
+      "oldFillBounds": [
+        3,
+        8,
+        14,
+        21
+      ],
+      "oldFullAlphaBounds": [
+        0,
+        5,
+        17,
+        23
+      ],
+      "newFillBoundsAt4x": [
+        1276,
+        65,
+        1320,
+        115
+      ],
+      "positionX": 319
+    },
+    {
+      "char": "E",
+      "advance": 13,
+      "oldFillBounds": [
+        3,
+        8,
+        14,
+        21
+      ],
+      "oldFullAlphaBounds": [
+        0,
+        5,
+        17,
+        23
+      ],
+      "newFillBoundsAt4x": [
+        1328,
+        65,
+        1372,
+        114
+      ],
+      "positionX": 332
+    },
+    {
+      "char": "S",
+      "advance": 11,
+      "oldFillBounds": [
+        3,
+        7,
+        13,
+        21
+      ],
+      "oldFullAlphaBounds": [
+        0,
+        3,
+        16,
+        23
+      ],
+      "newFillBoundsAt4x": [
+        1381,
+        60,
+        1419,
+        116
+      ],
+      "positionX": 345
+    },
+    {
+      "char": "S",
+      "advance": 11,
+      "oldFillBounds": [
+        3,
+        7,
+        13,
+        21
+      ],
+      "oldFullAlphaBounds": [
+        0,
+        3,
+        16,
+        23
+      ],
+      "newFillBoundsAt4x": [
+        1425,
+        60,
+        1463,
+        116
+      ],
+      "positionX": 356
+    },
+    {
+      "char": "1",
+      "advance": 8,
+      "oldFillBounds": [
+        3,
+        7,
+        10,
+        21
+      ],
+      "oldFullAlphaBounds": [
+        0,
+        4,
+        13,
+        23
+      ],
+      "newFillBoundsAt4x": [
+        1512,
+        61,
+        1540,
+        114
+      ],
+      "positionX": 378
+    },
+    {
+      "char": "2",
+      "advance": 12,
+      "oldFillBounds": [
+        3,
+        7,
+        15,
+        21
+      ],
+      "oldFullAlphaBounds": [
+        0,
+        4,
+        17,
+        23
+      ],
+      "newFillBoundsAt4x": [
+        1545,
+        60,
+        1591,
+        116
+      ],
+      "positionX": 386
+    },
+    {
+      "char": "3",
+      "advance": 11,
+      "oldFillBounds": [
+        3,
+        7,
+        14,
+        21
+      ],
+      "oldFullAlphaBounds": [
+        0,
+        4,
+        16,
+        23
+      ],
+      "newFillBoundsAt4x": [
+        1593,
+        60,
+        1635,
+        116
+      ],
+      "positionX": 398
+    },
+    {
+      "char": "4",
+      "advance": 13,
+      "oldFillBounds": [
+        3,
+        7,
+        15,
+        21
+      ],
+      "oldFullAlphaBounds": [
+        0,
+        4,
+        18,
+        23
+      ],
+      "newFillBoundsAt4x": [
+        1636,
+        61,
+        1684,
+        115
+      ],
+      "positionX": 409
+    },
+    {
+      "char": "5",
+      "advance": 12,
+      "oldFillBounds": [
+        3,
+        7,
+        14,
+        21
+      ],
+      "oldFullAlphaBounds": [
+        0,
+        4,
+        16,
+        23
+      ],
+      "newFillBoundsAt4x": [
+        1688,
+        60,
+        1731,
+        116
+      ],
+      "positionX": 422
+    }
+  ]
+}

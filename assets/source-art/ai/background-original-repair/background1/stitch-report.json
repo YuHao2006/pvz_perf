@@ -1,0 +1,90 @@
+{
+  "status": "awaiting-geometry-and-style-review",
+  "runtimeIntegrated": false,
+  "masterSize": [
+    5600,
+    2400
+  ],
+  "tiles": [
+    {
+      "tile": "0-0",
+      "raw": "tile-0-0--ai-raw.png",
+      "rawSize": [
+        1542,
+        1020
+      ],
+      "targetSize": [
+        1962,
+        1296
+      ]
+    },
+    {
+      "tile": "0-1",
+      "raw": "tile-0-1--ai-raw.png",
+      "rawSize": [
+        1581,
+        995
+      ],
+      "targetSize": [
+        2059,
+        1296
+      ]
+    },
+    {
+      "tile": "0-2",
+      "raw": "tile-0-2--ai-raw.png",
+      "rawSize": [
+        1543,
+        1019
+      ],
+      "targetSize": [
+        1963,
+        1296
+      ]
+    },
+    {
+      "tile": "1-0",
+      "raw": "tile-1-0--ai-raw.png",
+      "rawSize": [
+        1542,
+        1020
+      ],
+      "targetSize": [
+        1962,
+        1296
+      ]
+    },
+    {
+      "tile": "1-1",
+      "raw": "tile-1-1--ai-raw.png",
+      "rawSize": [
+        1581,
+        995
+      ],
+      "targetSize": [
+        2059,
+        1296
+      ]
+    },
+    {
+      "tile": "1-2",
+      "raw": "tile-1-2--ai-raw.png",
+      "rawSize": [
+        1543,
+        1019
+      ],
+      "targetSize": [
+        1963,
+        1296
+      ]
+    }
+  ],
+  "overlapPixels": 192,
+  "paletteCorrection": "original low frequency + AI high frequency",
+  "preservedPoolBlankPixels": 0,
+  "tool": "built-in image_gen",
+  "prompt": "Prefer sunburst if routing permits. Conservative original-style repair only; preserve every object coordinate, geometry, crop, palette, lawn columns and outer edge band. Smooth Anime4K artifacts; no redesign or new objects.",
+  "limitations": "AI can locally move contours despite fixed canvas. Composite requires visual review before runtime use.",
+  "stitching": "Minimum-error dynamic-programming seams in 192px overlaps; 4px transition to avoid displaced contour ghosting",
+  "resampling": "Uniform fit and centered crop, never independent axis scaling"
+}

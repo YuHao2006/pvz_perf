@@ -91,7 +91,7 @@ public:
     // on the GPU; attachment, blend, filtering, storage and transfer usages checked.
     // Its pointer stays stable when writes snapshot a previously sampled version.
     // Premultiplied storage does not retain hidden RGB at exactly zero alpha.
-    VulkanTexture* CreateRenderImage(int width, int height);
+    VulkanTexture* CreateRenderImage(int width, int height, int pixelScale=1);
     void RenderFontAtlas(VulkanTexture* target,VulkanTexture* source,
         std::span<const VulkanFontGlyph> glyphs,uint32_t samplingFlags,bool forceWhite);
     VulkanTexture* CreateRawTexture(int width,int height,const void* bgra,int pitch);
@@ -101,6 +101,7 @@ public:
     VulkanTexture* ComposeAlpha(VulkanTexture* base,VulkanTexture* alpha,
         uint32_t color,bool colorOnly);
     // Device-local immutable-pixel copy; source image edges are zero padded.
+    VulkanTexture* CopyTexture(VulkanTexture* source);
     VulkanTexture* CopyTextureRegion(VulkanTexture* source,int x,int y,int width,int height);
     VulkanTexture* ProcessImage(VulkanTexture* source,
         const VulkanImageProcessing& processing);

@@ -218,14 +218,10 @@ SeedChooserScreen::SeedChooserScreen()
 	mStoreButton->mTextOffsetY = 1;
 
 	mImitaterButton = new GameButton(SeedChooserScreen::SeedChooserScreen_Imitater);
-	mImitaterButton->mButtonImage = Sexy::IMAGE_IMITATERSEED;
-	mImitaterButton->mOverImage = Sexy::IMAGE_IMITATERSEED;
-	mImitaterButton->mDownImage = Sexy::IMAGE_IMITATERSEED;
-	mImitaterButton->mDisabledImage = Sexy::IMAGE_IMITATERSEEDDISABLED;
 	mImitaterButton->mX = 464;
 	mImitaterButton->mY = 515;
-	mImitaterButton->mWidth = Sexy::IMAGE_IMITATERSEED->mWidth;
-	mImitaterButton->mHeight = Sexy::IMAGE_IMITATERSEED->mHeight;
+	mImitaterButton->mWidth = SEED_PACKET_WIDTH;
+	mImitaterButton->mHeight = SEED_PACKET_HEIGHT;
 	mImitaterButton->mParentWidget = this;
 
 	if (!mApp->CanShowAlmanac())
@@ -527,7 +523,15 @@ void SeedChooserScreen::Draw(Graphics* g)
         g->mColor = savedColor;
         g->mColorizeImages = savedColorize;
     }
-    else mImitaterButton->Draw(g);
+    else if (!mImitaterButton->mBtnNoDraw)
+    {
+        // Reuse the same card base and prebuilt plant portrait as other seeds.
+        // The button remains responsible for input; no reanim is evaluated here.
+        Graphics card(*g);
+        DrawSeedPacket(&card, mImitaterButton->mX, mImitaterButton->mY,
+            SEED_IMITATER, SEED_NONE, 0, mImitaterButton->mDisabled ? 115 : 255,
+            false, false);
+    }
 	for (SeedType aSeedType = SEED_PEASHOOTER; aSeedType < NUM_SEEDS_IN_CHOOSER; aSeedType = (SeedType)(aSeedType + 1))
 	{
 		ChosenSeed& aChosenSeed = mChosenSeeds[aSeedType];

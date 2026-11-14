@@ -1,0 +1,37 @@
+{
+  "source": "explicit conditional approval; verified Coin.cpp and AwardScreen.cpp usage",
+  "entries": [
+    {
+      "id": "round22:f06bf9acc8a79075ef",
+      "status": "approved"
+    },
+    {
+      "id": "round22:f71daea41669ab36af",
+      "status": "approved"
+    },
+    {
+      "id": "round22:de0b5211ce374bd1ac",
+      "status": "approved"
+    },
+    {
+      "id": "round22:7427d626419f6043ed",
+      "status": "approved"
+    },
+    {
+      "id": "round22:4577f3f11eeb296507",
+      "status": "approved"
+    },
+    {
+      "id": "round22:211bf875a646ac7677",
+      "status": "approved"
+    },
+    {
+      "id": "round22:aa513d4fad8f3849b4",
+      "status": "approved"
+    },
+    {
+      "id": "round22:31c7616828f965c7e5",
+      "status": "approved"
+    }
+  ]
+}

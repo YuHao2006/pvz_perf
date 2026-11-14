@@ -1,0 +1,1345 @@
+{
+  "pipeline": [
+    "original",
+    "Anime4K UL 2x",
+    "Anime4K UL 2x",
+    "overlapped AI repair",
+    "registered composite"
+  ],
+  "runtimeScale": 2,
+  "masterScale": 4,
+  "items": [
+    {
+      "name": "background1",
+      "source": "assets/runtime/images/background1.jpg",
+      "sha256": "ad2100045025a71343277d9ab13bbdb69126132f8482e14987ab2c4f4729dbbc",
+      "originalSize": [
+        1400,
+        600
+      ],
+      "masterSize": [
+        5600,
+        2400
+      ],
+      "tiles": [
+        {
+          "file": "tile-0-0.png",
+          "core": [
+            0,
+            0,
+            1866,
+            1200
+          ],
+          "box": [
+            0,
+            0,
+            1962,
+            1296
+          ],
+          "status": "ai-generated-awaiting-composite-review"
+        },
+        {
+          "file": "tile-0-1.png",
+          "core": [
+            1866,
+            0,
+            3733,
+            1200
+          ],
+          "box": [
+            1770,
+            0,
+            3829,
+            1296
+          ],
+          "status": "ai-generated-awaiting-composite-review"
+        },
+        {
+          "file": "tile-0-2.png",
+          "core": [
+            3733,
+            0,
+            5600,
+            1200
+          ],
+          "box": [
+            3637,
+            0,
+            5600,
+            1296
+          ],
+          "status": "ai-generated-awaiting-composite-review"
+        },
+        {
+          "file": "tile-1-0.png",
+          "core": [
+            0,
+            1200,
+            1866,
+            2400
+          ],
+          "box": [
+            0,
+            1104,
+            1962,
+            2400
+          ],
+          "status": "ai-generated-awaiting-composite-review"
+        },
+        {
+          "file": "tile-1-1.png",
+          "core": [
+            1866,
+            1200,
+            3733,
+            2400
+          ],
+          "box": [
+            1770,
+            1104,
+            3829,
+            2400
+          ],
+          "status": "ai-generated-awaiting-composite-review"
+        },
+        {
+          "file": "tile-1-2.png",
+          "core": [
+            3733,
+            1200,
+            5600,
+            2400
+          ],
+          "box": [
+            3637,
+            1104,
+            5600,
+            2400
+          ],
+          "status": "ai-generated-awaiting-composite-review"
+        }
+      ]
+    },
+    {
+      "name": "background1unsodded",
+      "source": "assets/runtime/images/background1unsodded.jpg",
+      "sha256": "a2b6433be7e2b62f152d7413f05ea58d67fe8d182c0015a824754e9b63d8d286",
+      "originalSize": [
+        1400,
+        600
+      ],
+      "masterSize": [
+        5600,
+        2400
+      ],
+      "tiles": [
+        {
+          "file": "tile-0-0.png",
+          "core": [
+            0,
+            0,
+            1866,
+            1200
+          ],
+          "box": [
+            0,
+            0,
+            1962,
+            1296
+          ],
+          "status": "ai-generated-awaiting-composite-review"
+        },
+        {
+          "file": "tile-0-1.png",
+          "core": [
+            1866,
+            0,
+            3733,
+            1200
+          ],
+          "box": [
+            1770,
+            0,
+            3829,
+            1296
+          ],
+          "status": "ai-generated-awaiting-composite-review"
+        },
+        {
+          "file": "tile-0-2.png",
+          "core": [
+            3733,
+            0,
+            5600,
+            1200
+          ],
+          "box": [
+            3637,
+            0,
+            5600,
+            1296
+          ],
+          "status": "ai-generated-awaiting-composite-review"
+        },
+        {
+          "file": "tile-1-0.png",
+          "core": [
+            0,
+            1200,
+            1866,
+            2400
+          ],
+          "box": [
+            0,
+            1104,
+            1962,
+            2400
+          ],
+          "status": "ai-generated-awaiting-composite-review"
+        },
+        {
+          "file": "tile-1-1.png",
+          "core": [
+            1866,
+            1200,
+            3733,
+            2400
+          ],
+          "box": [
+            1770,
+            1104,
+            3829,
+            2400
+          ],
+          "status": "ai-generated-awaiting-composite-review"
+        },
+        {
+          "file": "tile-1-2.png",
+          "core": [
+            3733,
+            1200,
+            5600,
+            2400
+          ],
+          "box": [
+            3637,
+            1104,
+            5600,
+            2400
+          ],
+          "status": "ai-generated-awaiting-composite-review"
+        }
+      ]
+    },
+    {
+      "name": "background2",
+      "source": "assets/runtime/images/background2.jpg",
+      "sha256": "eefca4c5e08823c4feff453efd1089d1226f3ebe8c0b3705057bde880db0f26e",
+      "originalSize": [
+        1400,
+        600
+      ],
+      "masterSize": [
+        5600,
+        2400
+      ],
+      "tiles": [
+        {
+          "file": "tile-0-0.png",
+          "core": [
+            0,
+            0,
+            1866,
+            1200
+          ],
+          "box": [
+            0,
+            0,
+            1962,
+            1296
+          ],
+          "status": "ai-generated-awaiting-composite-review"
+        },
+        {
+          "file": "tile-0-1.png",
+          "core": [
+            1866,
+            0,
+            3733,
+            1200
+          ],
+          "box": [
+            1770,
+            0,
+            3829,
+            1296
+          ],
+          "status": "ai-generated-awaiting-composite-review"
+        },
+        {
+          "file": "tile-0-2.png",
+          "core": [
+            3733,
+            0,
+            5600,
+            1200
+          ],
+          "box": [
+            3637,
+            0,
+            5600,
+            1296
+          ],
+          "status": "ai-generated-awaiting-composite-review"
+        },
+        {
+          "file": "tile-1-0.png",
+          "core": [
+            0,
+            1200,
+            1866,
+            2400
+          ],
+          "box": [
+            0,
+            1104,
+            1962,
+            2400
+          ],
+          "status": "ai-generated-awaiting-composite-review"
+        },
+        {
+          "file": "tile-1-1.png",
+          "core": [
+            1866,
+            1200,
+            3733,
+            2400
+          ],
+          "box": [
+            1770,
+            1104,
+            3829,
+            2400
+          ],
+          "status": "ai-generated-awaiting-composite-review"
+        },
+        {
+          "file": "tile-1-2.png",
+          "core": [
+            3733,
+            1200,
+            5600,
+            2400
+          ],
+          "box": [
+            3637,
+            1104,
+            5600,
+            2400
+          ],
+          "status": "ai-generated-awaiting-composite-review"
+        }
+      ]
+    },
+    {
+      "name": "background3",
+      "source": "assets/runtime/images/background3.jpg",
+      "sha256": "0548a126e25426889bd2ffcc7ffe5e2d0bf5e275fc65e57814e02e3cf83b9a27",
+      "originalSize": [
+        1400,
+        600
+      ],
+      "masterSize": [
+        5600,
+        2400
+      ],
+      "tiles": [
+        {
+          "file": "tile-0-0.png",
+          "core": [
+            0,
+            0,
+            1866,
+            1200
+          ],
+          "box": [
+            0,
+            0,
+            1962,
+            1296
+          ],
+          "status": "ai-generated-awaiting-composite-review"
+        },
+        {
+          "file": "tile-0-1.png",
+          "core": [
+            1866,
+            0,
+            3733,
+            1200
+          ],
+          "box": [
+            1770,
+            0,
+            3829,
+            1296
+          ],
+          "status": "ai-generated-awaiting-composite-review"
+        },
+        {
+          "file": "tile-0-2.png",
+          "core": [
+            3733,
+            0,
+            5600,
+            1200
+          ],
+          "box": [
+            3637,
+            0,
+            5600,
+            1296
+          ],
+          "status": "ai-generated-awaiting-composite-review"
+        },
+        {
+          "file": "tile-1-0.png",
+          "core": [
+            0,
+            1200,
+            1866,
+            2400
+          ],
+          "box": [
+            0,
+            1104,
+            1962,
+            2400
+          ],
+          "status": "ai-generated-awaiting-composite-review"
+        },
+        {
+          "file": "tile-1-1.png",
+          "core": [
+            1866,
+            1200,
+            3733,
+            2400
+          ],
+          "box": [
+            1770,
+            1104,
+            3829,
+            2400
+          ],
+          "status": "ai-generated-awaiting-composite-review"
+        },
+        {
+          "file": "tile-1-2.png",
+          "core": [
+            3733,
+            1200,
+            5600,
+            2400
+          ],
+          "box": [
+            3637,
+            1104,
+            5600,
+            2400
+          ],
+          "status": "ai-generated-awaiting-composite-review"
+        }
+      ]
+    },
+    {
+      "name": "background4",
+      "source": "assets/runtime/images/background4.jpg",
+      "sha256": "856edc0843c58b2d62fd6bbb7ae79145b8aea999fe1ad1a41e2619de3009d3cd",
+      "originalSize": [
+        1400,
+        600
+      ],
+      "masterSize": [
+        5600,
+        2400
+      ],
+      "tiles": [
+        {
+          "file": "tile-0-0.png",
+          "core": [
+            0,
+            0,
+            1866,
+            1200
+          ],
+          "box": [
+            0,
+            0,
+            1962,
+            1296
+          ],
+          "status": "ai-generated-awaiting-composite-review"
+        },
+        {
+          "file": "tile-0-1.png",
+          "core": [
+            1866,
+            0,
+            3733,
+            1200
+          ],
+          "box": [
+            1770,
+            0,
+            3829,
+            1296
+          ],
+          "status": "ai-generated-awaiting-composite-review"
+        },
+        {
+          "file": "tile-0-2.png",
+          "core": [
+            3733,
+            0,
+            5600,
+            1200
+          ],
+          "box": [
+            3637,
+            0,
+            5600,
+            1296
+          ],
+          "status": "ai-generated-awaiting-composite-review"
+        },
+        {
+          "file": "tile-1-0.png",
+          "core": [
+            0,
+            1200,
+            1866,
+            2400
+          ],
+          "box": [
+            0,
+            1104,
+            1962,
+            2400
+          ],
+          "status": "ai-generated-awaiting-composite-review"
+        },
+        {
+          "file": "tile-1-1.png",
+          "core": [
+            1866,
+            1200,
+            3733,
+            2400
+          ],
+          "box": [
+            1770,
+            1104,
+            3829,
+            2400
+          ],
+          "status": "ai-generated-awaiting-composite-review"
+        },
+        {
+          "file": "tile-1-2.png",
+          "core": [
+            3733,
+            1200,
+            5600,
+            2400
+          ],
+          "box": [
+            3637,
+            1104,
+            5600,
+            2400
+          ],
+          "status": "ai-generated-awaiting-composite-review"
+        }
+      ]
+    },
+    {
+      "name": "background5",
+      "source": "assets/runtime/images/background5.jpg",
+      "sha256": "5769edf7b52077600ace6a90591babd22219f0ae9ca9cea7f554b367927a43b4",
+      "originalSize": [
+        1400,
+        600
+      ],
+      "masterSize": [
+        5600,
+        2400
+      ],
+      "tiles": [
+        {
+          "file": "tile-0-0.png",
+          "core": [
+            0,
+            0,
+            1866,
+            1200
+          ],
+          "box": [
+            0,
+            0,
+            1962,
+            1296
+          ],
+          "status": "ai-generated-awaiting-composite-review"
+        },
+        {
+          "file": "tile-0-1.png",
+          "core": [
+            1866,
+            0,
+            3733,
+            1200
+          ],
+          "box": [
+            1770,
+            0,
+            3829,
+            1296
+          ],
+          "status": "ai-generated-awaiting-composite-review"
+        },
+        {
+          "file": "tile-0-2.png",
+          "core": [
+            3733,
+            0,
+            5600,
+            1200
+          ],
+          "box": [
+            3637,
+            0,
+            5600,
+            1296
+          ],
+          "status": "ai-generated-awaiting-composite-review"
+        },
+        {
+          "file": "tile-1-0.png",
+          "core": [
+            0,
+            1200,
+            1866,
+            2400
+          ],
+          "box": [
+            0,
+            1104,
+            1962,
+            2400
+          ],
+          "status": "ai-generated-awaiting-composite-review"
+        },
+        {
+          "file": "tile-1-1.png",
+          "core": [
+            1866,
+            1200,
+            3733,
+            2400
+          ],
+          "box": [
+            1770,
+            1104,
+            3829,
+            2400
+          ],
+          "status": "ai-generated-awaiting-composite-review"
+        },
+        {
+          "file": "tile-1-2.png",
+          "core": [
+            3733,
+            1200,
+            5600,
+            2400
+          ],
+          "box": [
+            3637,
+            1104,
+            5600,
+            2400
+          ],
+          "status": "ai-generated-awaiting-composite-review"
+        }
+      ]
+    },
+    {
+      "name": "background6boss",
+      "source": "assets/runtime/images/background6boss.jpg",
+      "sha256": "90726dfd15ab7ca1917e110b3909574a29d6a7b71323d6a94c9b0f1e1f5df61f",
+      "originalSize": [
+        1400,
+        600
+      ],
+      "masterSize": [
+        5600,
+        2400
+      ],
+      "tiles": [
+        {
+          "file": "tile-0-0.png",
+          "core": [
+            0,
+            0,
+            1866,
+            1200
+          ],
+          "box": [
+            0,
+            0,
+            1962,
+            1296
+          ],
+          "status": "ai-generated-awaiting-composite-review"
+        },
+        {
+          "file": "tile-0-1.png",
+          "core": [
+            1866,
+            0,
+            3733,
+            1200
+          ],
+          "box": [
+            1770,
+            0,
+            3829,
+            1296
+          ],
+          "status": "ai-generated-awaiting-composite-review"
+        },
+        {
+          "file": "tile-0-2.png",
+          "core": [
+            3733,
+            0,
+            5600,
+            1200
+          ],
+          "box": [
+            3637,
+            0,
+            5600,
+            1296
+          ],
+          "status": "ai-generated-awaiting-composite-review"
+        },
+        {
+          "file": "tile-1-0.png",
+          "core": [
+            0,
+            1200,
+            1866,
+            2400
+          ],
+          "box": [
+            0,
+            1104,
+            1962,
+            2400
+          ],
+          "status": "ai-generated-awaiting-composite-review"
+        },
+        {
+          "file": "tile-1-1.png",
+          "core": [
+            1866,
+            1200,
+            3733,
+            2400
+          ],
+          "box": [
+            1770,
+            1104,
+            3829,
+            2400
+          ],
+          "status": "ai-generated-awaiting-composite-review"
+        },
+        {
+          "file": "tile-1-2.png",
+          "core": [
+            3733,
+            1200,
+            5600,
+            2400
+          ],
+          "box": [
+            3637,
+            1104,
+            5600,
+            2400
+          ],
+          "status": "ai-generated-awaiting-composite-review"
+        }
+      ]
+    },
+    {
+      "name": "aquarium1",
+      "source": "assets/runtime/images/aquarium1.png",
+      "sha256": "898a1d3575c43a56e0a5620d80620fa466b7a222407bb0f1debc5989d563f8eb",
+      "originalSize": [
+        1400,
+        600
+      ],
+      "masterSize": [
+        5600,
+        2400
+      ],
+      "tiles": [
+        {
+          "file": "tile-0-0.png",
+          "core": [
+            0,
+            0,
+            1866,
+            1200
+          ],
+          "box": [
+            0,
+            0,
+            1962,
+            1296
+          ],
+          "status": "ai-generated-awaiting-composite-review"
+        },
+        {
+          "file": "tile-0-1.png",
+          "core": [
+            1866,
+            0,
+            3733,
+            1200
+          ],
+          "box": [
+            1770,
+            0,
+            3829,
+            1296
+          ],
+          "status": "ai-generated-awaiting-composite-review"
+        },
+        {
+          "file": "tile-0-2.png",
+          "core": [
+            3733,
+            0,
+            5600,
+            1200
+          ],
+          "box": [
+            3637,
+            0,
+            5600,
+            1296
+          ],
+          "status": "ai-generated-awaiting-composite-review"
+        },
+        {
+          "file": "tile-1-0.png",
+          "core": [
+            0,
+            1200,
+            1866,
+            2400
+          ],
+          "box": [
+            0,
+            1104,
+            1962,
+            2400
+          ],
+          "status": "ai-generated-awaiting-composite-review"
+        },
+        {
+          "file": "tile-1-1.png",
+          "core": [
+            1866,
+            1200,
+            3733,
+            2400
+          ],
+          "box": [
+            1770,
+            1104,
+            3829,
+            2400
+          ],
+          "status": "ai-generated-awaiting-composite-review"
+        },
+        {
+          "file": "tile-1-2.png",
+          "core": [
+            3733,
+            1200,
+            5600,
+            2400
+          ],
+          "box": [
+            3637,
+            1104,
+            5600,
+            2400
+          ],
+          "status": "ai-generated-awaiting-composite-review"
+        }
+      ]
+    },
+    {
+      "name": "Background_MushroomGarden",
+      "source": "assets/source-art/ai/runtime/images/Background_MushroomGarden.png",
+      "sha256": "6d16e27ab3653976dea029eec8a39e02709901c297d044dcf0c73e0b5315583f",
+      "originalSize": [
+        1400,
+        600
+      ],
+      "masterSize": [
+        5600,
+        2400
+      ],
+      "tiles": [
+        {
+          "file": "tile-0-0.png",
+          "core": [
+            0,
+            0,
+            1866,
+            1200
+          ],
+          "box": [
+            0,
+            0,
+            1962,
+            1296
+          ],
+          "status": "ai-generated-awaiting-composite-review"
+        },
+        {
+          "file": "tile-0-1.png",
+          "core": [
+            1866,
+            0,
+            3733,
+            1200
+          ],
+          "box": [
+            1770,
+            0,
+            3829,
+            1296
+          ],
+          "status": "ai-generated-awaiting-composite-review"
+        },
+        {
+          "file": "tile-0-2.png",
+          "core": [
+            3733,
+            0,
+            5600,
+            1200
+          ],
+          "box": [
+            3637,
+            0,
+            5600,
+            1296
+          ],
+          "status": "ai-generated-awaiting-composite-review"
+        },
+        {
+          "file": "tile-1-0.png",
+          "core": [
+            0,
+            1200,
+            1866,
+            2400
+          ],
+          "box": [
+            0,
+            1104,
+            1962,
+            2400
+          ],
+          "status": "ai-generated-awaiting-composite-review"
+        },
+        {
+          "file": "tile-1-1.png",
+          "core": [
+            1866,
+            1200,
+            3733,
+            2400
+          ],
+          "box": [
+            1770,
+            1104,
+            3829,
+            2400
+          ],
+          "status": "ai-generated-awaiting-composite-review"
+        },
+        {
+          "file": "tile-1-2.png",
+          "core": [
+            3733,
+            1200,
+            5600,
+            2400
+          ],
+          "box": [
+            3637,
+            1104,
+            5600,
+            2400
+          ],
+          "status": "ai-generated-awaiting-composite-review"
+        }
+      ]
+    },
+    {
+      "name": "Background_Greenhouse",
+      "source": "assets/source-art/ai/runtime/images/Background_Greenhouse.png",
+      "sha256": "606014356d4e3b169221e89d332a8ac45d7b3bc3cc33a802049aba58e3132acd",
+      "originalSize": [
+        1400,
+        600
+      ],
+      "masterSize": [
+        5600,
+        2400
+      ],
+      "tiles": [
+        {
+          "file": "tile-0-0.png",
+          "core": [
+            0,
+            0,
+            1866,
+            1200
+          ],
+          "box": [
+            0,
+            0,
+            1962,
+            1296
+          ],
+          "status": "ai-generated-awaiting-composite-review"
+        },
+        {
+          "file": "tile-0-1.png",
+          "core": [
+            1866,
+            0,
+            3733,
+            1200
+          ],
+          "box": [
+            1770,
+            0,
+            3829,
+            1296
+          ],
+          "status": "ai-generated-awaiting-composite-review"
+        },
+        {
+          "file": "tile-0-2.png",
+          "core": [
+            3733,
+            0,
+            5600,
+            1200
+          ],
+          "box": [
+            3637,
+            0,
+            5600,
+            1296
+          ],
+          "status": "ai-generated-awaiting-composite-review"
+        },
+        {
+          "file": "tile-1-0.png",
+          "core": [
+            0,
+            1200,
+            1866,
+            2400
+          ],
+          "box": [
+            0,
+            1104,
+            1962,
+            2400
+          ],
+          "status": "ai-generated-awaiting-composite-review"
+        },
+        {
+          "file": "tile-1-1.png",
+          "core": [
+            1866,
+            1200,
+            3733,
+            2400
+          ],
+          "box": [
+            1770,
+            1104,
+            3829,
+            2400
+          ],
+          "status": "ai-generated-awaiting-composite-review"
+        },
+        {
+          "file": "tile-1-2.png",
+          "core": [
+            3733,
+            1200,
+            5600,
+            2400
+          ],
+          "box": [
+            3637,
+            1104,
+            5600,
+            2400
+          ],
+          "status": "ai-generated-awaiting-composite-review"
+        }
+      ]
+    },
+    {
+      "name": "Store_Background",
+      "source": "assets/source-art/ai/runtime/images/Store_Background.png",
+      "sha256": "ec55a779271219dc43711770f0969eb30e0314e7811d83522b1bb3a626510137",
+      "originalSize": [
+        1400,
+        600
+      ],
+      "masterSize": [
+        5600,
+        2400
+      ],
+      "tiles": [
+        {
+          "file": "tile-0-0.png",
+          "core": [
+            0,
+            0,
+            1866,
+            1200
+          ],
+          "box": [
+            0,
+            0,
+            1962,
+            1296
+          ],
+          "status": "ai-generated-awaiting-composite-review"
+        },
+        {
+          "file": "tile-0-1.png",
+          "core": [
+            1866,
+            0,
+            3733,
+            1200
+          ],
+          "box": [
+            1770,
+            0,
+            3829,
+            1296
+          ],
+          "status": "ai-generated-awaiting-composite-review"
+        },
+        {
+          "file": "tile-0-2.png",
+          "core": [
+            3733,
+            0,
+            5600,
+            1200
+          ],
+          "box": [
+            3637,
+            0,
+            5600,
+            1296
+          ],
+          "status": "ai-generated-awaiting-composite-review"
+        },
+        {
+          "file": "tile-1-0.png",
+          "core": [
+            0,
+            1200,
+            1866,
+            2400
+          ],
+          "box": [
+            0,
+            1104,
+            1962,
+            2400
+          ],
+          "status": "ai-generated-awaiting-composite-review"
+        },
+        {
+          "file": "tile-1-1.png",
+          "core": [
+            1866,
+            1200,
+            3733,
+            2400
+          ],
+          "box": [
+            1770,
+            1104,
+            3829,
+            2400
+          ],
+          "status": "ai-generated-awaiting-composite-review"
+        },
+        {
+          "file": "tile-1-2.png",
+          "core": [
+            3733,
+            1200,
+            5600,
+            2400
+          ],
+          "box": [
+            3637,
+            1104,
+            5600,
+            2400
+          ],
+          "status": "ai-generated-awaiting-composite-review"
+        }
+      ]
+    },
+    {
+      "name": "Store_BackgroundNight",
+      "source": "assets/source-art/ai/runtime/images/Store_BackgroundNight.png",
+      "sha256": "35aa3b124a570ac088b4b39e12df09e43faaa65963210b4917a16934f746ec6b",
+      "originalSize": [
+        1400,
+        600
+      ],
+      "masterSize": [
+        5600,
+        2400
+      ],
+      "tiles": [
+        {
+          "file": "tile-0-0.png",
+          "core": [
+            0,
+            0,
+            1866,
+            1200
+          ],
+          "box": [
+            0,
+            0,
+            1962,
+            1296
+          ],
+          "status": "ai-generated-awaiting-composite-review"
+        },
+        {
+          "file": "tile-0-1.png",
+          "core": [
+            1866,
+            0,
+            3733,
+            1200
+          ],
+          "box": [
+            1770,
+            0,
+            3829,
+            1296
+          ],
+          "status": "ai-generated-awaiting-composite-review"
+        },
+        {
+          "file": "tile-0-2.png",
+          "core": [
+            3733,
+            0,
+            5600,
+            1200
+          ],
+          "box": [
+            3637,
+            0,
+            5600,
+            1296
+          ],
+          "status": "ai-generated-awaiting-composite-review"
+        },
+        {
+          "file": "tile-1-0.png",
+          "core": [
+            0,
+            1200,
+            1866,
+            2400
+          ],
+          "box": [
+            0,
+            1104,
+            1962,
+            2400
+          ],
+          "status": "ai-generated-awaiting-composite-review"
+        },
+        {
+          "file": "tile-1-1.png",
+          "core": [
+            1866,
+            1200,
+            3733,
+            2400
+          ],
+          "box": [
+            1770,
+            1104,
+            3829,
+            2400
+          ],
+          "status": "ai-generated-awaiting-composite-review"
+        },
+        {
+          "file": "tile-1-2.png",
+          "core": [
+            3733,
+            1200,
+            5600,
+            2400
+          ],
+          "box": [
+            3637,
+            1104,
+            5600,
+            2400
+          ],
+          "status": "ai-generated-awaiting-composite-review"
+        }
+      ]
+    }
+  ]
+}

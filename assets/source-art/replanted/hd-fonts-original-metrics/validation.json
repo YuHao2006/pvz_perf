@@ -1,0 +1,106 @@
+{
+  "fonts": [
+    {
+      "font": "briannetod12",
+      "layers": 1,
+      "metricsIdentical": true
+    },
+    {
+      "font": "briannetod16",
+      "layers": 1,
+      "metricsIdentical": true
+    },
+    {
+      "font": "briannetod32",
+      "layers": 2,
+      "metricsIdentical": true
+    },
+    {
+      "font": "briannetod32black",
+      "layers": 1,
+      "metricsIdentical": true
+    },
+    {
+      "font": "continuumbold14",
+      "layers": 1,
+      "metricsIdentical": true
+    },
+    {
+      "font": "continuumbold14outback",
+      "layers": 1,
+      "metricsIdentical": true
+    },
+    {
+      "font": "dwarventodcraft12",
+      "layers": 1,
+      "metricsIdentical": true
+    },
+    {
+      "font": "dwarventodcraft15",
+      "layers": 1,
+      "metricsIdentical": true
+    },
+    {
+      "font": "dwarventodcraft18",
+      "layers": 1,
+      "metricsIdentical": true
+    },
+    {
+      "font": "dwarventodcraft18brightgreeninset",
+      "layers": 1,
+      "metricsIdentical": true
+    },
+    {
+      "font": "dwarventodcraft18greeninset",
+      "layers": 1,
+      "metricsIdentical": true
+    },
+    {
+      "font": "dwarventodcraft18yellow",
+      "layers": 1,
+      "metricsIdentical": true
+    },
+    {
+      "font": "dwarventodcraft24",
+      "layers": 1,
+      "metricsIdentical": true
+    },
+    {
+      "font": "dwarventodcraft36brightgreeninset",
+      "layers": 1,
+      "metricsIdentical": true
+    },
+    {
+      "font": "dwarventodcraft36greeninset",
+      "layers": 1,
+      "metricsIdentical": true
+    },
+    {
+      "font": "houseofterror16",
+      "layers": 2,
+      "metricsIdentical": true
+    },
+    {
+      "font": "houseofterror20",
+      "layers": 2,
+      "metricsIdentical": true
+    },
+    {
+      "font": "houseofterror28",
+      "layers": 1,
+      "metricsIdentical": true
+    }
+  ],
+  "glyphLayerRecords": 1949,
+  "physicalScale": 2,
+  "allLegacyMetricsPreserved": true,
+  "checks": [
+    "CRC and record completeness",
+    "character maps",
+    "layer tags, scalar metrics and colors",
+    "glyph dimensions, advances, offsets, ordering and kerning",
+    "physical/logical uniform scale",
+    "all glyphs within logical atlas"
+  ],
+  "runtimeBuild": "build-hd-fonts30.log"
+}

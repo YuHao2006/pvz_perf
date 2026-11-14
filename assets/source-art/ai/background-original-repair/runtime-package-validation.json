@@ -1,0 +1,183 @@
+{
+  "items": [
+    {
+      "original": "assets/runtime/images/background1.jpg",
+      "packedLocation": "high-resolution/images/e5fc71aefdabf6e2281dc41e.png",
+      "physicalSize": [
+        2800,
+        1200
+      ],
+      "logicalSize": [
+        1400,
+        600
+      ],
+      "pixelsVerified": true
+    },
+    {
+      "original": "assets/runtime/images/background1unsodded.jpg",
+      "packedLocation": "high-resolution/images/f11fdc2f5337c3a43d82cbaf.png",
+      "physicalSize": [
+        2800,
+        1200
+      ],
+      "logicalSize": [
+        1400,
+        600
+      ],
+      "pixelsVerified": true
+    },
+    {
+      "original": "assets/runtime/images/background2.jpg",
+      "packedLocation": "high-resolution/images/0d66e2ea4d20fc5300cd0003.png",
+      "physicalSize": [
+        2800,
+        1200
+      ],
+      "logicalSize": [
+        1400,
+        600
+      ],
+      "pixelsVerified": true
+    },
+    {
+      "original": "assets/runtime/images/background3.jpg",
+      "packedLocation": "high-resolution/images/3c0415fbf7f2b6c24eadcd3b.png",
+      "physicalSize": [
+        2800,
+        1200
+      ],
+      "logicalSize": [
+        1400,
+        600
+      ],
+      "pixelsVerified": true
+    },
+    {
+      "original": "assets/runtime/images/background4.jpg",
+      "packedLocation": "high-resolution/images/a985d4e0b565a1b0f3c43532.png",
+      "physicalSize": [
+        2800,
+        1200
+      ],
+      "logicalSize": [
+        1400,
+        600
+      ],
+      "pixelsVerified": true
+    },
+    {
+      "original": "assets/runtime/images/background5.jpg",
+      "packedLocation": "high-resolution/images/ee8a65732f554244543bd623.png",
+      "physicalSize": [
+        2800,
+        1200
+      ],
+      "logicalSize": [
+        1400,
+        600
+      ],
+      "pixelsVerified": true
+    },
+    {
+      "original": "assets/runtime/images/background6boss.jpg",
+      "packedLocation": "high-resolution/images/627217dc8e8ce15e94903c79.png",
+      "physicalSize": [
+        2800,
+        1200
+      ],
+      "logicalSize": [
+        1400,
+        600
+      ],
+      "pixelsVerified": true
+    },
+    {
+      "original": "assets/runtime/images/aquarium1.png",
+      "packedLocation": "high-resolution/images/dc66d02fae4f7de59c75730c.png",
+      "physicalSize": [
+        2800,
+        1200
+      ],
+      "logicalSize": [
+        1400,
+        600
+      ],
+      "pixelsVerified": true
+    },
+    {
+      "original": "assets/runtime/images/Background_MushroomGarden.png",
+      "packedLocation": "high-resolution/images/a5f75c6859d286980733023e.png",
+      "physicalSize": [
+        2800,
+        1200
+      ],
+      "logicalSize": [
+        1400,
+        600
+      ],
+      "pixelsVerified": true
+    },
+    {
+      "original": "assets/runtime/images/Background_Greenhouse.png",
+      "packedLocation": "high-resolution/images/9fb2c5bd4ae1f630f99d2e17.png",
+      "physicalSize": [
+        2800,
+        1200
+      ],
+      "logicalSize": [
+        1400,
+        600
+      ],
+      "pixelsVerified": true
+    },
+    {
+      "original": "assets/runtime/images/Store_Background.png",
+      "packedLocation": "high-resolution/images/f2ba6bb886e5b4b586dd7c3d.png",
+      "physicalSize": [
+        2800,
+        1200
+      ],
+      "logicalSize": [
+        1400,
+        600
+      ],
+      "pixelsVerified": true
+    },
+    {
+      "original": "assets/runtime/images/Store_BackgroundNight.png",
+      "packedLocation": "high-resolution/images/0d531fa67730cd46a999a211.png",
+      "physicalSize": [
+        2800,
+        1200
+      ],
+      "logicalSize": [
+        1400,
+        600
+      ],
+      "pixelsVerified": true
+    },
+    {
+      "original": "assets/runtime/reanim/ZenGarden_fertilizer_bag4.png",
+      "packedLocation": "compiled/atlases/appearance_fertilizer.atlas.png",
+      "physicalSize": [
+        140,
+        146
+      ],
+      "logicalSize": [
+        70,
+        73
+      ],
+      "pixelsVerified": true
+    }
+  ],
+  "runtimeBackgroundsVerified": 12,
+  "nativeFertilizerStage4Verified": true,
+  "atlasesExceedingPortable4096": {
+    "compiled/atlases/credits_stage.atlas.png": [
+      15957,
+      1204
+    ]
+  },
+  "largestSide": 15957,
+  "saveFormatChanged": false
+}

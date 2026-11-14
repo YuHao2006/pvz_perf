@@ -1,0 +1,162 @@
+{
+  "scope": "All thirteen backgrounds in manifest.json; not limited to roofs",
+  "policy": "Remove AI-added dense grain, brush hatching and hairline texture, especially lawn-side fencing. Preserve original sparse wood grain, knots, cracks, pits, chips, objects and layout. Review each corrected background independently.",
+  "items": [
+    {
+      "name": "background1",
+      "status": "integrated-for-local-game-inspection",
+      "completedRawTiles": [
+        "0-0",
+        "0-1",
+        "0-2",
+        "1-0",
+        "1-1",
+        "1-2"
+      ],
+      "runtimeIntegrated": true
+    },
+    {
+      "name": "background1unsodded",
+      "status": "integrated-for-local-game-inspection",
+      "completedRawTiles": [
+        "0-0",
+        "0-1",
+        "0-2",
+        "1-0",
+        "1-1",
+        "1-2"
+      ],
+      "runtimeIntegrated": true
+    },
+    {
+      "name": "background2",
+      "status": "integrated-for-local-game-inspection",
+      "completedRawTiles": [
+        "0-0",
+        "0-1",
+        "0-2",
+        "1-0",
+        "1-1",
+        "1-2"
+      ],
+      "runtimeIntegrated": true
+    },
+    {
+      "name": "background3",
+      "status": "integrated-for-local-game-inspection",
+      "completedRawTiles": [
+        "0-0",
+        "0-1",
+        "0-2",
+        "1-0",
+        "1-1",
+        "1-2"
+      ],
+      "runtimeIntegrated": true
+    },
+    {
+      "name": "background4",
+      "status": "integrated-for-local-game-inspection",
+      "completedRawTiles": [
+        "0-0",
+        "0-1",
+        "0-2",
+        "1-0",
+        "1-1",
+        "1-2"
+      ],
+      "runtimeIntegrated": true
+    },
+    {
+      "name": "background5",
+      "status": "integrated-for-local-game-inspection",
+      "completedRawTiles": [
+        "0-0",
+        "0-1",
+        "0-2",
+        "1-0",
+        "1-1",
+        "1-2"
+      ],
+      "runtimeIntegrated": true
+    },
+    {
+      "name": "background6boss",
+      "status": "integrated-for-local-game-inspection",
+      "completedRawTiles": [
+        "0-0",
+        "0-1",
+        "0-2",
+        "1-0",
+        "1-1",
+        "1-2"
+      ],
+      "runtimeIntegrated": true
+    },
+    {
+      "name": "aquarium1",
+      "status": "integrated-for-local-game-inspection",
+      "completedRawTiles": [
+        "0-0",
+        "0-1",
+        "0-2",
+        "1-0",
+        "1-1",
+        "1-2"
+      ],
+      "runtimeIntegrated": true
+    },
+    {
+      "name": "Background_MushroomGarden",
+      "status": "integrated-for-local-game-inspection",
+      "completedRawTiles": [
+        "0-0",
+        "0-1",
+        "0-2",
+        "1-0",
+        "1-1",
+        "1-2"
+      ],
+      "runtimeIntegrated": true
+    },
+    {
+      "name": "Background_Greenhouse",
+      "status": "integrated-for-local-game-inspection",
+      "completedRawTiles": [
+        "0-0",
+        "0-1",
+        "0-2",
+        "1-0",
+        "1-1",
+        "1-2"
+      ],
+      "runtimeIntegrated": true
+    },
+    {
+      "name": "Store_Background",
+      "status": "integrated-for-local-game-inspection",
+      "completedRawTiles": [
+        "0-0",
+        "0-1",
+        "0-2",
+        "1-0",
+        "1-1",
+        "1-2"
+      ],
+      "runtimeIntegrated": true
+    },
+    {
+      "name": "Store_BackgroundNight",
+      "status": "integrated-for-local-game-inspection",
+      "completedRawTiles": [
+        "0-0",
+        "0-1",
+        "0-2",
+        "1-0",
+        "1-1",
+        "1-2"
+      ],
+      "runtimeIntegrated": true
+    }
+  ]
+}

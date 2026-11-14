@@ -1,0 +1,137 @@
+{
+  "repairedGlyphRecords": 36,
+  "checks": [
+    "18 font layouts unchanged",
+    "Only nine Dwarven atlases changed",
+    "Pixel changes confined to I/J/i/j and resampling fringe",
+    "All 36 intended glyphs changed"
+  ],
+  "atlasResults": [
+    {
+      "font": "briannetod12",
+      "layer": 0,
+      "changedPixels": 0,
+      "changesRestrictedTo": "unchanged"
+    },
+    {
+      "font": "briannetod16",
+      "layer": 0,
+      "changedPixels": 0,
+      "changesRestrictedTo": "unchanged"
+    },
+    {
+      "font": "briannetod32",
+      "layer": 1,
+      "changedPixels": 0,
+      "changesRestrictedTo": "unchanged"
+    },
+    {
+      "font": "briannetod32",
+      "layer": 0,
+      "changedPixels": 0,
+      "changesRestrictedTo": "unchanged"
+    },
+    {
+      "font": "briannetod32black",
+      "layer": 0,
+      "changedPixels": 0,
+      "changesRestrictedTo": "unchanged"
+    },
+    {
+      "font": "continuumbold14",
+      "layer": 0,
+      "changedPixels": 0,
+      "changesRestrictedTo": "unchanged"
+    },
+    {
+      "font": "continuumbold14outback",
+      "layer": 0,
+      "changedPixels": 0,
+      "changesRestrictedTo": "unchanged"
+    },
+    {
+      "font": "dwarventodcraft12",
+      "layer": 0,
+      "changedPixels": 982,
+      "changesRestrictedTo": "I/J/i/j"
+    },
+    {
+      "font": "dwarventodcraft15",
+      "layer": 0,
+      "changedPixels": 1875,
+      "changesRestrictedTo": "I/J/i/j"
+    },
+    {
+      "font": "dwarventodcraft18",
+      "layer": 0,
+      "changedPixels": 2234,
+      "changesRestrictedTo": "I/J/i/j"
+    },
+    {
+      "font": "dwarventodcraft18brightgreeninset",
+      "layer": 0,
+      "changedPixels": 2363,
+      "changesRestrictedTo": "I/J/i/j"
+    },
+    {
+      "font": "dwarventodcraft18greeninset",
+      "layer": 0,
+      "changedPixels": 2338,
+      "changesRestrictedTo": "I/J/i/j"
+    },
+    {
+      "font": "dwarventodcraft18yellow",
+      "layer": 0,
+      "changedPixels": 2147,
+      "changesRestrictedTo": "I/J/i/j"
+    },
+    {
+      "font": "dwarventodcraft24",
+      "layer": 0,
+      "changedPixels": 3172,
+      "changesRestrictedTo": "I/J/i/j"
+    },
+    {
+      "font": "dwarventodcraft36brightgreeninset",
+      "layer": 0,
+      "changedPixels": 6308,
+      "changesRestrictedTo": "I/J/i/j"
+    },
+    {
+      "font": "dwarventodcraft36greeninset",
+      "layer": 0,
+      "changedPixels": 6315,
+      "changesRestrictedTo": "I/J/i/j"
+    },
+    {
+      "font": "houseofterror16",
+      "layer": 1,
+      "changedPixels": 0,
+      "changesRestrictedTo": "unchanged"
+    },
+    {
+      "font": "houseofterror16",
+      "layer": 0,
+      "changedPixels": 0,
+      "changesRestrictedTo": "unchanged"
+    },
+    {
+      "font": "houseofterror20",
+      "layer": 1,
+      "changedPixels": 0,
+      "changesRestrictedTo": "unchanged"
+    },
+    {
+      "font": "houseofterror20",
+      "layer": 0,
+      "changedPixels": 0,
+      "changesRestrictedTo": "unchanged"
+    },
+    {
+      "font": "houseofterror28",
+      "layer": 0,
+      "changedPixels": 0,
+      "changesRestrictedTo": "unchanged"
+    }
+  ]
+}

@@ -1,0 +1,2429 @@
+{
+  "format": "pvz-replanted-correspondence-review-v1",
+  "exportedAt": "2026-11-10T18:31:45.632Z",
+  "entries": [
+    {
+      "id": "round6:0a52a38d4db3389891",
+      "status": "wrong",
+      "note": "",
+      "updatedAt": "2026-11-10T07:19:28.302Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:f29c164a5599bd25a8",
+      "status": "wrong",
+      "note": "",
+      "updatedAt": "2026-11-10T07:19:36.283Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:561183b421e01f1742",
+      "status": "wrong",
+      "note": "",
+      "updatedAt": "2026-11-10T07:19:39.311Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:6751a2091bf8b7b019",
+      "status": "wrong",
+      "note": "",
+      "updatedAt": "2026-11-10T07:19:46.844Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:02748f14e7b35c15ae",
+      "status": "wrong",
+      "note": "",
+      "updatedAt": "2026-11-10T07:19:56.237Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:c00a574333ac748453",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T07:19:59.586Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:29a9d86495e77ceab7",
+      "status": "wrong",
+      "note": "",
+      "updatedAt": "2026-11-10T07:20:05.339Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:bc7a18f21da78ac447",
+      "status": "pending",
+      "note": "",
+      "updatedAt": "2026-11-10T07:20:08.943Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:1edd89b62a864054de",
+      "status": "pending",
+      "note": "",
+      "updatedAt": "2026-11-10T07:20:17.445Z",
+      "needsCrop": true
+    },
+    {
+      "id": "round6:f848a85b696f8263f7",
+      "status": "wrong",
+      "note": "",
+      "updatedAt": "2026-11-10T07:20:22.147Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:32ada9f650064f3d64",
+      "status": "wrong",
+      "note": "",
+      "updatedAt": "2026-11-10T07:20:22.558Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:e1e7f0ff818b5bf70d",
+      "status": "wrong",
+      "note": "",
+      "updatedAt": "2026-11-10T07:20:23.299Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:4cf14c50c7ecb39fc0",
+      "status": "wrong",
+      "note": "",
+      "updatedAt": "2026-11-10T07:20:23.863Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:7900f69cfc7951abce",
+      "status": "wrong",
+      "note": "",
+      "updatedAt": "2026-11-10T07:20:25.425Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:10f5ba8ae0267c0e86",
+      "status": "wrong",
+      "note": "",
+      "updatedAt": "2026-11-10T07:20:26.231Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:76759068343f9242f7",
+      "status": "wrong",
+      "note": "",
+      "updatedAt": "2026-11-10T07:20:26.921Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:77e38d816c0d6130ac",
+      "status": "wrong",
+      "note": "",
+      "updatedAt": "2026-11-10T07:20:27.928Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:9540148781d19b0be0",
+      "status": "pending",
+      "note": "重植版是俩轮子,需要裁剪",
+      "updatedAt": "2026-11-10T07:20:52.126Z",
+      "needsCrop": true
+    },
+    {
+      "id": "round6:113f83a28a3904ad5d",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T07:20:56.771Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:228af99b4a79ed47d5",
+      "status": "wrong",
+      "note": "",
+      "updatedAt": "2026-11-10T07:20:59.677Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:a635dad3ec02f29061",
+      "status": "wrong",
+      "note": "",
+      "updatedAt": "2026-11-10T07:21:00.755Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:62460f2f0a70558ec3",
+      "status": "wrong",
+      "note": "",
+      "updatedAt": "2026-11-10T07:21:02.082Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:fcf60f4cfc405fb0ab",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T07:21:06.775Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:2fca1743b8aadd6b89",
+      "status": "pending",
+      "note": "重植版又是用了俩,需要取一个",
+      "updatedAt": "2026-11-10T07:21:51.563Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:3d00567601f8a68f45",
+      "status": "wrong",
+      "note": "",
+      "updatedAt": "2026-11-10T07:21:34.290Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:ac0de6cbcdc5c69ec0",
+      "status": "wrong",
+      "note": "",
+      "updatedAt": "2026-11-10T07:21:38.537Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:2764ea8cdeea5679eb",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T07:21:40.428Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:57c9050e01f3f2b221",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T07:21:41.782Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:70d280ba7ba6006176",
+      "status": "wrong",
+      "note": "",
+      "updatedAt": "2026-11-10T07:21:44.190Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:1afad44fbda87b6454",
+      "status": "wrong",
+      "note": "",
+      "updatedAt": "2026-11-10T07:21:47.160Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:f73a9279562d630531",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T07:21:59.200Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:95c4ce37e5d6b1ef46",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T07:22:07.270Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:4e224172486f42d18e",
+      "status": "wrong",
+      "note": "",
+      "updatedAt": "2026-11-10T07:22:09.335Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:1e514c84e7da494102",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T07:22:13.303Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:64dacf170394e09553",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T07:22:14.662Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:850c1a82a1807f8973",
+      "status": "wrong",
+      "note": "",
+      "updatedAt": "2026-11-10T07:22:17.668Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:f5c77e50f03e712097",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T07:22:19.680Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:ea1a1d664e9ca4ec43",
+      "status": "wrong",
+      "note": "",
+      "updatedAt": "2026-11-10T07:22:23.585Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:b41446de93ffe9a7e2",
+      "status": "wrong",
+      "note": "",
+      "updatedAt": "2026-11-10T07:22:24.979Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:fa44c51496d5c7c0f6",
+      "status": "wrong",
+      "note": "",
+      "updatedAt": "2026-11-10T07:22:25.956Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:a432af4d00346722d8",
+      "status": "wrong",
+      "note": "",
+      "updatedAt": "2026-11-10T07:22:26.348Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:e33d85fe0294d1d43e",
+      "status": "wrong",
+      "note": "",
+      "updatedAt": "2026-11-10T07:22:27.486Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:407015ad0fbc8664cb",
+      "status": "pending",
+      "note": "交给AI生成吧,雨滴特效重植版太随意了",
+      "updatedAt": "2026-11-10T07:22:58.120Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:24f3a81291f75c212b",
+      "status": "pending",
+      "note": "画风不一样啊",
+      "updatedAt": "2026-11-10T07:23:25.800Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:23c8edb0c0419f73d1",
+      "status": "pending",
+      "note": "",
+      "updatedAt": "2026-11-10T07:23:15.414Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:5fb41fc6f7751ff8a8",
+      "status": "pending",
+      "note": "",
+      "updatedAt": "2026-11-10T07:23:16.758Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:298756bd6bb226c9a4",
+      "status": "pending",
+      "note": "",
+      "updatedAt": "2026-11-10T07:23:18.500Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:b16d6b904e296be80d",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T07:23:34.771Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:e2fd075fb93eb271ef",
+      "status": "wrong",
+      "note": "",
+      "updatedAt": "2026-11-10T07:23:43.752Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:758a601db16eca247a",
+      "status": "wrong",
+      "note": "",
+      "updatedAt": "2026-11-10T07:23:45.635Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:071dcdc3ec6225fba5",
+      "status": "pending",
+      "note": "需要旋转",
+      "updatedAt": "2026-11-10T07:23:58.432Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:f59128041bb6a61399",
+      "status": "pending",
+      "note": "需要旋转",
+      "updatedAt": "2026-11-10T07:24:04.931Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:21054078b51517ca38",
+      "status": "pending",
+      "note": "旋转",
+      "updatedAt": "2026-11-10T07:24:08.327Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:a2df11708a24cb3636",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T07:24:11.204Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:75823766be79bb8d62",
+      "status": "wrong",
+      "note": "",
+      "updatedAt": "2026-11-10T07:24:12.514Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:901c3c2c9e2d71626c",
+      "status": "wrong",
+      "note": "",
+      "updatedAt": "2026-11-10T07:24:13.224Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:83db132189cbd3ea0c",
+      "status": "wrong",
+      "note": "",
+      "updatedAt": "2026-11-10T07:24:14.050Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:b0c54c74ff53a35bbe",
+      "status": "wrong",
+      "note": "",
+      "updatedAt": "2026-11-10T07:24:14.675Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:a5c3e771af75d017d0",
+      "status": "wrong",
+      "note": "",
+      "updatedAt": "2026-11-10T07:24:15.080Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:78c007922bc2debeed",
+      "status": "pending",
+      "note": "可以,高清图没有字,注意需要字体",
+      "updatedAt": "2026-11-10T07:24:35.922Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:57068c547e0223e69c",
+      "status": "pending",
+      "note": "也是没有字",
+      "updatedAt": "2026-11-10T07:24:41.513Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:a5ae793724eaed3af9",
+      "status": "pending",
+      "note": "没有字",
+      "updatedAt": "2026-11-10T07:24:45.761Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:22eba007892b2e0e0b",
+      "status": "wrong",
+      "note": "",
+      "updatedAt": "2026-11-10T07:24:51.142Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:99e0ddba714de7435a",
+      "status": "wrong",
+      "note": "",
+      "updatedAt": "2026-11-10T07:24:56.089Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:32c149e1a6a4de66dc",
+      "status": "wrong",
+      "note": "",
+      "updatedAt": "2026-11-10T07:24:58.289Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:17cd2fd4872ce1bf47",
+      "status": "wrong",
+      "note": "",
+      "updatedAt": "2026-11-10T07:25:02.504Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:d091d8e64e622b41df",
+      "status": "wrong",
+      "note": "",
+      "updatedAt": "2026-11-10T07:25:03.464Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:392b50ec19da72fa73",
+      "status": "wrong",
+      "note": "",
+      "updatedAt": "2026-11-10T07:25:05.315Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:f025b064f36a1b11d2",
+      "status": "wrong",
+      "note": "",
+      "updatedAt": "2026-11-10T07:25:06.774Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:c7800c3a02441f293f",
+      "status": "pending",
+      "note": "这几个都是阴影,",
+      "updatedAt": "2026-11-10T07:25:21.228Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:ffc2b3d0641a242335",
+      "status": "pending",
+      "note": "",
+      "updatedAt": "2026-11-10T07:25:22.454Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:c82b36352bc630bec8",
+      "status": "pending",
+      "note": "",
+      "updatedAt": "2026-11-10T07:25:40.321Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:0966289f832fa61cf8",
+      "status": "pending",
+      "note": "",
+      "updatedAt": "2026-11-10T07:25:41.114Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:24eaf47850ca821b71",
+      "status": "pending",
+      "note": "",
+      "updatedAt": "2026-11-10T07:25:41.482Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:e99d86017c1cfd2a65",
+      "status": "pending",
+      "note": "",
+      "updatedAt": "2026-11-10T07:25:42.049Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:35cc2e1290591f5235",
+      "status": "wrong",
+      "note": "",
+      "updatedAt": "2026-11-10T07:25:46.935Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:c8cfc6e6f6a27b3fa3",
+      "status": "wrong",
+      "note": "",
+      "updatedAt": "2026-11-10T07:25:48.866Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:59aa207a02684d925c",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T07:25:52.484Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:4494783278a2cf5ea7",
+      "status": "wrong",
+      "note": "",
+      "updatedAt": "2026-11-10T07:26:06.162Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:4e0f6ec2d67989dec4",
+      "status": "wrong",
+      "note": "",
+      "updatedAt": "2026-11-10T07:26:06.523Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:452bbfccec7813dc0c",
+      "status": "wrong",
+      "note": "",
+      "updatedAt": "2026-11-10T07:26:07.429Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:6748a2c52b355f6ba1",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T07:26:11.179Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:a703e6c7ec43fd90f0",
+      "status": "pending",
+      "note": "",
+      "updatedAt": "2026-11-10T07:26:23.592Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:89cda58eeb376cdfdb",
+      "status": "pending",
+      "note": "",
+      "updatedAt": "2026-11-10T07:26:24.973Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:513d2511b04037080e",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T07:26:31.327Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:4c7a85ebc74f792fc3",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T07:26:34.416Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:9a2d5378701c810e59",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T07:26:37.252Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:39473d6575dbc96356",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T07:26:39.939Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:277c9915f7d1dfc694",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T07:26:43.087Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:e32057f404606cb045",
+      "status": "pending",
+      "note": "",
+      "updatedAt": "2026-11-10T07:26:47.711Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:442aa2f97e0a2a786e",
+      "status": "wrong",
+      "note": "",
+      "updatedAt": "2026-11-10T07:26:51.299Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:24a5f84ac72f1898e8",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T07:26:54.707Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:324d6914a0d43421c1",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T07:26:56.099Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:e78124980eeca9e4cc",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T07:26:57.148Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:0ca06480e314181c79",
+      "status": "wrong",
+      "note": "",
+      "updatedAt": "2026-11-10T07:26:58.608Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:fab621f8ef627a44c6",
+      "status": "wrong",
+      "note": "",
+      "updatedAt": "2026-11-10T07:27:01.403Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:ca483167c762b4471f",
+      "status": "wrong",
+      "note": "",
+      "updatedAt": "2026-11-10T07:27:02.347Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:a06c2908a11cee1a36",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T07:27:03.883Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:189d6c485f9b31ed1b",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T07:27:09.564Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:dee09b07608954c118",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T07:27:10.959Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:180b2cfe3bcb872ad6",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T07:27:11.488Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:a286aa99fa10907177",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T07:27:13.927Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:b771b5d811b1564ab9",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T07:27:15.364Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:ba73285b63fbdcfe58",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T07:27:16.517Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:d50b6bbc75958d5064",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T07:27:17.686Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:a2bb5389295167e619",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T07:27:19.169Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:2dd45c48b57959a9e3",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T07:27:20.171Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:c96a63287a93184142",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T07:27:21.524Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:8ad1579cd58a33b762",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T07:27:24.793Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:bb324dc352b5173bd2",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T07:27:26.034Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:844db7b73eb974cd49",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T07:27:26.645Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:56f658a21c0ccfe935",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T07:27:27.722Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:ff5516e6a2a54c98be",
+      "status": "pending",
+      "note": "重植版把俩图拼一起了怎么",
+      "updatedAt": "2026-11-10T07:27:46.648Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:f69c539bf8a988d5d3",
+      "status": "pending",
+      "note": "",
+      "updatedAt": "2026-11-10T07:27:48.311Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:ca30740d9d1de94a67",
+      "status": "pending",
+      "note": "重植版应该扣透明而不是画棕色",
+      "updatedAt": "2026-11-10T07:28:12.997Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round6:704f72722270b90bcc",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T07:28:16.503Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round7:e83fe4e5f34cd44915",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T07:46:31.753Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round7:76b758d0ae59a833e1",
+      "status": "pending",
+      "note": "原素材左右两侧留了空白?",
+      "updatedAt": "2026-11-10T07:47:04.366Z",
+      "needsCrop": true
+    },
+    {
+      "id": "round7:2a13d27282321484fd",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T07:47:08.426Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round7:311d12ee9f3bee8ec5",
+      "status": "wrong",
+      "note": "",
+      "updatedAt": "2026-11-10T07:47:16.000Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round7:d13ca98fa3e47bc982",
+      "status": "wrong",
+      "note": "",
+      "updatedAt": "2026-11-10T07:47:18.286Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round7:3fb849465a0ac6caef",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T07:47:21.325Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round8:a0f9c7c894b9bf28a5",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T07:56:38.004Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round8:6ef6f90f5d59fe1cba",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T07:56:44.746Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round8:708a7a22508804c81c",
+      "status": "wrong",
+      "note": "",
+      "updatedAt": "2026-11-10T07:56:49.975Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round8:2f2b7865c6ff6e6637",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T07:56:51.404Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round8:e26af2df5c7a901ff6",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T07:56:52.809Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round8:0563e051a8ceac97af",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T07:56:54.776Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round8:2c3d72df9d74591968",
+      "status": "wrong",
+      "note": "",
+      "updatedAt": "2026-11-10T07:56:59.471Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round8:d08209492733e18fed",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T07:57:02.747Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round8:e3d254edcc98d24d48",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T07:57:04.397Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round8:850704ef159174395d",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T07:57:07.435Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round8:11afac39612ca0a776",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T07:57:09.284Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round8:3a144b5e2ac3a007c2",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T07:57:12.573Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round8:4619ac7607850b5792",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T07:57:15.389Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round8:17bc569ec6a172b5d3",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T07:57:16.867Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round9:03bf6b55fd2c5bac32",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T08:12:12.465Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round9:eac137f7266e90b1a4",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T08:12:30.885Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round9:cb308cea8e9b3c8c6e",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T08:12:33.530Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round9:32323a33b1cb387890",
+      "status": "pending",
+      "note": "旋转",
+      "updatedAt": "2026-11-10T08:12:41.929Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round9:3edc9141d8c66fb442",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T08:12:43.931Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round9:ae46a0aab132c4b184",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T08:12:45.936Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round9:6141f844c84e0faf33",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T08:12:48.917Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round9:60e3285f7916ee9be6",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T08:12:52.914Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round9:7ed2b74560d41279b9",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T08:12:54.460Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round9:3020e1a3627226c1e8",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T08:12:58.621Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round9:8aa619f3c1a3190dfa",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T08:13:00.882Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round9:70a276ae4cb0af24d0",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T08:13:02.175Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round9:bf966194d987517ef5",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T08:13:05.174Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round10:6da51d82cdfd88c286",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T08:28:04.507Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round9:6556f4c28b108a51f3",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T08:28:10.948Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round9:9be4dd9887e88d50a0",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T08:28:13.779Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round10:37a2c78be5c5f9f0f1",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T08:28:18.436Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round10:afe0bb8302c1e20925",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T08:28:19.559Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round10:e7e19024113b9b8d29",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T08:28:20.307Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round9:edd14e032ecf4a9aef",
+      "status": "pending",
+      "note": "旋转再看看",
+      "updatedAt": "2026-11-10T08:28:40.301Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round9:331f1d2f14ed7f43d5",
+      "status": "pending",
+      "note": "这衣服不对啊",
+      "updatedAt": "2026-11-10T08:28:55.083Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round9:283fd778246e07adad",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T08:28:52.637Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round9:e0ded965c840eb695b",
+      "status": "wrong",
+      "note": "",
+      "updatedAt": "2026-11-10T08:29:00.225Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round9:2a4fe8714c5cea4948",
+      "status": "wrong",
+      "note": "",
+      "updatedAt": "2026-11-10T08:29:04.053Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round9:2db740a0f5a7b48df5",
+      "status": "wrong",
+      "note": "",
+      "updatedAt": "2026-11-10T08:29:05.410Z",
+      "needsCrop": false
+    },
+    {
+      "id": "ai-selector-stones:145249606a3865b720",
+      "status": "pending",
+      "note": "黑色边缘没了",
+      "updatedAt": "2026-11-10T09:01:30.792Z",
+      "needsCrop": false
+    },
+    {
+      "id": "ai-selector-stones:0826551469159e2123",
+      "status": "pending",
+      "note": "也是黑色边缘没了",
+      "updatedAt": "2026-11-10T09:01:45.892Z",
+      "needsCrop": false
+    },
+    {
+      "id": "ai-selector-stones:7f1e223502ae0a013d",
+      "status": "pending",
+      "note": "",
+      "updatedAt": "2026-11-10T09:01:48.639Z",
+      "needsCrop": false
+    },
+    {
+      "id": "ai-selector-stones:056cb29f91c9f589a4",
+      "status": "pending",
+      "note": "",
+      "updatedAt": "2026-11-10T09:01:50.066Z",
+      "needsCrop": false
+    },
+    {
+      "id": "ai-selector-stones:5500b215d091d11a1a",
+      "status": "pending",
+      "note": "",
+      "updatedAt": "2026-11-10T09:01:51.203Z",
+      "needsCrop": false
+    },
+    {
+      "id": "ai-selector-stones:0e2fda3c378062ce46",
+      "status": "pending",
+      "note": "",
+      "updatedAt": "2026-11-10T09:01:54.334Z",
+      "needsCrop": false
+    },
+    {
+      "id": "ai-selector-stones:290c5c08c1b823517a",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T09:02:01.126Z",
+      "needsCrop": false
+    },
+    {
+      "id": "ai-selector-stones:d8d85dded11b485250",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T09:02:03.496Z",
+      "needsCrop": false
+    },
+    {
+      "id": "ai-selector-stones:9397a1b99aa4aa3f1f",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T09:02:05.375Z",
+      "needsCrop": false
+    },
+    {
+      "id": "ai-selector-stones:110b9686a7e5899c00",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T09:02:07.695Z",
+      "needsCrop": false
+    },
+    {
+      "id": "ai-stone-outline:747338ff79c3730a5a",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T09:10:39.193Z",
+      "needsCrop": false
+    },
+    {
+      "id": "ai-stone-outline:39a3adab0c9102d88b",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T09:10:40.748Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round11:f06bf9acc8a79075ef",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T09:21:30.140Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round11:fd785e36e4f4675776",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T09:21:32.810Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round11:19a696f127636f47f7",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T09:21:43.470Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round11:d0f15771be81a71fb1",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T09:21:47.488Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round11:4643eced0d22f25b07",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T09:21:49.327Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round14:main-menu-tombstone",
+      "status": "pending",
+      "note": "AI生成吧,但是很容易撞到AI的像素上限.",
+      "updatedAt": "2026-11-10T09:22:50.506Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round15:woodsign1-rope-crop",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T09:27:32.578Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round16:de0510701327689bd0",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T10:03:26.804Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round16:d14ac6191b5a4aa66f",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T10:03:28.883Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round16:132ea2c00ed43a44a4",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T10:03:37.437Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round16:224840c07f0a178cc1",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T10:03:50.039Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round16:0bf1d3d26938a259b7",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T10:03:51.248Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round16:00f6c19fc3393f8418",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T10:03:53.538Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round16:096986933b8e7cb2ee",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T10:03:55.671Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round16:5905394ca0235add3a",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T10:03:57.176Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round16:f2b7382752e846f727",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T10:04:00.363Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round17:60479c0c9fae4b9963",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T10:17:43.523Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round17:4dd598a46f26964274",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T10:17:48.835Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round17:b816b8ca24f1d5df56",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T10:17:59.965Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round17:a6deb944c3289e875e",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T10:18:11.064Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round17:3d33335f0e965edf9d",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T10:18:15.343Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round18:fba5dcad14c9822e58",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T10:43:22.674Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round18:ef77604e77a21e48b3",
+      "status": "pending",
+      "note": "颜色不对,建议AI生图",
+      "updatedAt": "2026-11-10T10:43:40.874Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round18:0c75af6a966139e709",
+      "status": "pending",
+      "note": "颜色不对,这是一整个色块,直接覆盖为原版颜色",
+      "updatedAt": "2026-11-10T10:44:02.316Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round18:cda4a4ba8ffb1afe5c",
+      "status": "pending",
+      "note": "颜色不对",
+      "updatedAt": "2026-11-10T10:44:44.821Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round18:cceefd1405d3f14ffc",
+      "status": "pending",
+      "note": "颜色不对",
+      "updatedAt": "2026-11-10T10:44:20.244Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round18:d2d80bbd96c060bf58",
+      "status": "pending",
+      "note": "颜色不对",
+      "updatedAt": "2026-11-10T10:44:23.990Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round18:97c1a246c8d185d120",
+      "status": "pending",
+      "note": "颜色不对",
+      "updatedAt": "2026-11-10T10:44:26.342Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round18:4c60733a88270ccee5",
+      "status": "pending",
+      "note": "颜色不对",
+      "updatedAt": "2026-11-10T10:44:28.123Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round18:a3dd955c1ca596dcab",
+      "status": "pending",
+      "note": "颜色不对",
+      "updatedAt": "2026-11-10T10:44:31.126Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round18:d5ad02b95c0e889693",
+      "status": "pending",
+      "note": "颜色不对",
+      "updatedAt": "2026-11-10T10:44:32.940Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round18:415a0e3cd1f073bb8f",
+      "status": "pending",
+      "note": "颜色不对",
+      "updatedAt": "2026-11-10T10:44:35.344Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round19:4b033d4fdcd8748868",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T10:50:35.151Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round19:7d5b705faca29293fb",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T10:50:37.069Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round19:eb63798e92db949c2b",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T10:50:39.507Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round19:56dc56fb3881bbe541",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T10:50:41.893Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round19:bcef60a2f79e124aad",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T10:50:45.058Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round19:d920808bf7e9d03cbc",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T10:50:50.351Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round19:02648d5359ef584db2",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T10:50:52.785Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round19:8d8a6823c94c99e234",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T10:50:54.142Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round19:c8bdefa30599215e3c",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T10:50:56.094Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round19:bf32fd5eed6156869b",
+      "status": "approved",
+      "note": "",
+      "updatedAt": "2026-11-10T10:50:57.467Z",
+      "needsCrop": false
+    },
+    {
+      "id": "round20:ac7919bbd59a6f8c7b",
+      "canonicalResourceId": "part:assets/runtime/reanim/Jalapeno_eye2.png",
+      "original": "assets/runtime/reanim/Jalapeno_eye2.png",
+      "hd": "assets/source-art/replanted/reanim-source-round20/Jalapeno_eye2--prepared.png",
+      "category": "reanim",
+      "groups": [
+        "Jalapeno"
+      ],
+      "source": {
+        "atlas": "Jalapeno.atlas",
+        "page": "jalapeno",
+        "region": "Jalapeno_eye2",
+        "bounds": [
+          759,
+          197,
+          47,
+          47
+        ],
+        "rotation": 0,
+        "fields": {
+          "bounds": "759,197,47,47"
+        }
+      },
+      "alternatives": [],
+      "processingFlags": [
+        "仅裁掉全透明余量并保留1源像素边缘；原始像素不缩放。预览按可见轮廓中心定位，横纵共用同一倍率，不拉伸。形状差异须在组合动作中确认。"
+      ],
+      "cropAssessment": {
+        "action": "alignment",
+        "title": "透明裁切与等比定位候选",
+        "reason": "仅裁掉全透明余量并保留1源像素边缘；原始像素不缩放。预览按可见轮廓中心定位，横纵共用同一倍率，不拉伸。形状差异须在组合动作中确认。",
+        "needsCrop": false
+      },
+      "processing": [
+        {
+          "file": "assets/source-art/replanted/reanim-source-round20/Jalapeno_eye2--prepared.png",
+          "sourceFile": "assets/source-art/replanted/reanim-source-audit/Jalapeno--7a7c92756c4aaef2.png",
+          "size": [
+            35,
+            39
+          ],
+          "sourceCanvas": [
+            47,
+            47
+          ],
+          "crop": [
+            8,
+            5,
+            43,
+            44
+          ],
+          "logicalCanvas": [
+            10,
+            11
+          ],
+          "logicalDrawRect": [
+            -0.25262697039206206,
+            -0.35292719557972685,
+            10.505253940784124,
+            11.705854391159454
+          ],
+          "pixelPerLogical": [
+            3.331666249791536,
+            3.331666249791536
+          ],
+          "resampled": false,
+          "alphaAspectRatioDifference": 0.9810810810810809,
+          "sha256": "0438e0717b6dcd86d53104bc615be6f9441d4654d0e6594ed8f0b4344a209ed3"
+        }
+      ],
+      "status": "approved",
+      "note": "先试试吧,眼睛周围没有红色",
+      "needsCrop": false,
+      "updatedAt": "2026-11-10T18:30:16.991Z"
+    },
+    {
+      "id": "round20:eb703c8bdef7c9eb1d",
+      "canonicalResourceId": "part:assets/runtime/reanim/PuffShroom_blink1.png",
+      "original": "assets/runtime/reanim/PuffShroom_blink1.png",
+      "hd": "assets/source-art/replanted/reanim-source-round20/PuffShroom_blink1--prepared.png",
+      "category": "reanim",
+      "groups": [
+        "PuffShroom"
+      ],
+      "source": {
+        "atlas": "PuffShroom.atlas",
+        "page": "puffshroom",
+        "region": "PuffShroom_blink1",
+        "bounds": [
+          126,
+          86,
+          30,
+          30
+        ],
+        "rotation": 0,
+        "fields": {
+          "bounds": "126,86,30,30"
+        }
+      },
+      "alternatives": [],
+      "processingFlags": [
+        "仅裁掉全透明余量并保留1源像素边缘；原始像素不缩放。预览按可见轮廓中心定位，横纵共用同一倍率，不拉伸。形状差异须在组合动作中确认。"
+      ],
+      "cropAssessment": {
+        "action": "alignment",
+        "title": "透明裁切与等比定位候选",
+        "reason": "仅裁掉全透明余量并保留1源像素边缘；原始像素不缩放。预览按可见轮廓中心定位，横纵共用同一倍率，不拉伸。形状差异须在组合动作中确认。",
+        "needsCrop": false
+      },
+      "processing": [
+        {
+          "file": "assets/source-art/replanted/reanim-source-round20/PuffShroom_blink1--prepared.png",
+          "sourceFile": "assets/source-art/replanted/reanim-source-audit/PuffShroom--55ef5ba8da93c1f7.png",
+          "size": [
+            30,
+            30
+          ],
+          "sourceCanvas": [
+            30,
+            30
+          ],
+          "crop": [
+            0,
+            0,
+            30,
+            30
+          ],
+          "logicalCanvas": [
+            13,
+            13
+          ],
+          "logicalDrawRect": [
+            -8.881784197001252e-16,
+            -8.881784197001252e-16,
+            13.000000000000002,
+            13.000000000000002
+          ],
+          "pixelPerLogical": [
+            2.3076923076923075,
+            2.3076923076923075
+          ],
+          "resampled": false,
+          "alphaAspectRatioDifference": 1,
+          "sha256": "27dd21358a8a95542e8ae7954ff8739deb3afde273090ad299d1bf1794f03741"
+        }
+      ],
+      "status": "approved",
+      "note": "先试试",
+      "needsCrop": false,
+      "updatedAt": "2026-11-10T18:30:29.940Z"
+    },
+    {
+      "id": "round20:fb0aee6c6087edc4ce",
+      "canonicalResourceId": "part:assets/runtime/reanim/PuffShroom_blink2.png",
+      "original": "assets/runtime/reanim/PuffShroom_blink2.png",
+      "hd": "assets/source-art/replanted/reanim-source-round20/PuffShroom_blink2--prepared.png",
+      "category": "reanim",
+      "groups": [
+        "PuffShroom"
+      ],
+      "source": {
+        "atlas": "PuffShroom.atlas",
+        "page": "puffshroom",
+        "region": "PuffShroom_blink2",
+        "bounds": [
+          196,
+          148,
+          30,
+          30
+        ],
+        "rotation": 0,
+        "fields": {
+          "bounds": "196,148,30,30"
+        }
+      },
+      "alternatives": [],
+      "processingFlags": [
+        "仅裁掉全透明余量并保留1源像素边缘；原始像素不缩放。预览按可见轮廓中心定位，横纵共用同一倍率，不拉伸。形状差异须在组合动作中确认。"
+      ],
+      "cropAssessment": {
+        "action": "alignment",
+        "title": "透明裁切与等比定位候选",
+        "reason": "仅裁掉全透明余量并保留1源像素边缘；原始像素不缩放。预览按可见轮廓中心定位，横纵共用同一倍率，不拉伸。形状差异须在组合动作中确认。",
+        "needsCrop": false
+      },
+      "processing": [
+        {
+          "file": "assets/source-art/replanted/reanim-source-round20/PuffShroom_blink2--prepared.png",
+          "sourceFile": "assets/source-art/replanted/reanim-source-audit/PuffShroom--f8e7a2a31bc8efc0.png",
+          "size": [
+            30,
+            30
+          ],
+          "sourceCanvas": [
+            30,
+            30
+          ],
+          "crop": [
+            0,
+            0,
+            30,
+            30
+          ],
+          "logicalCanvas": [
+            13,
+            13
+          ],
+          "logicalDrawRect": [
+            -8.881784197001252e-16,
+            -8.881784197001252e-16,
+            13.000000000000002,
+            13.000000000000002
+          ],
+          "pixelPerLogical": [
+            2.3076923076923075,
+            2.3076923076923075
+          ],
+          "resampled": false,
+          "alphaAspectRatioDifference": 1,
+          "sha256": "c125638dbeeb646177df855416c4d193bed27b114bd069641bddf29984169488"
+        }
+      ],
+      "status": "approved",
+      "note": "",
+      "needsCrop": false,
+      "updatedAt": "2026-11-10T18:30:35.898Z"
+    },
+    {
+      "id": "round20:dbae41809e520aa58d",
+      "canonicalResourceId": "part:assets/runtime/reanim/PuffShroom_stem.png",
+      "original": "assets/runtime/reanim/PuffShroom_stem.png",
+      "hd": "assets/source-art/replanted/reanim-source-round20/PuffShroom_stem--prepared.png",
+      "category": "reanim",
+      "groups": [
+        "PuffShroom"
+      ],
+      "source": {
+        "atlas": "PuffShroom.atlas",
+        "page": "puffshroom",
+        "region": "PuffShroom_stem",
+        "bounds": [
+          8,
+          8,
+          15,
+          33
+        ],
+        "rotation": 90,
+        "fields": {
+          "bounds": "8,8,15,33",
+          "rotate": "90"
+        }
+      },
+      "alternatives": [],
+      "processingFlags": [
+        "【轮廓比例差异明显，待进一步适配，不可直接采用】仅裁掉全透明余量并保留1源像素边缘；原始像素不缩放。预览按可见轮廓中心定位，横纵共用同一倍率，不拉伸。形状差异须在组合动作中确认。"
+      ],
+      "cropAssessment": {
+        "action": "alignment",
+        "title": "透明裁切与等比定位候选",
+        "reason": "【轮廓比例差异明显，待进一步适配，不可直接采用】仅裁掉全透明余量并保留1源像素边缘；原始像素不缩放。预览按可见轮廓中心定位，横纵共用同一倍率，不拉伸。形状差异须在组合动作中确认。",
+        "needsCrop": false
+      },
+      "processing": [
+        {
+          "file": "assets/source-art/replanted/reanim-source-round20/PuffShroom_stem--prepared.png",
+          "sourceFile": "assets/source-art/replanted/reanim-source-audit/PuffShroom--8a44565532afb8d3.png",
+          "size": [
+            15,
+            33
+          ],
+          "sourceCanvas": [
+            15,
+            33
+          ],
+          "crop": [
+            0,
+            0,
+            15,
+            33
+          ],
+          "logicalCanvas": [
+            7,
+            14
+          ],
+          "logicalDrawRect": [
+            3.315342756236743,
+            2.193754063720834,
+            4.369314487526514,
+            9.612491872558332
+          ],
+          "pixelPerLogical": [
+            3.4330328116279762,
+            3.4330328116279762
+          ],
+          "resampled": false,
+          "alphaAspectRatioDifference": 2.121212121212121,
+          "sha256": "1ce2e5746b9a34fdb5f270d55081c3007e76a294b29cad2ea055a1a0e42c096b"
+        }
+      ],
+      "status": "approved",
+      "note": "",
+      "needsCrop": false,
+      "updatedAt": "2026-11-10T18:30:37.597Z"
+    },
+    {
+      "id": "round20:73f5bfaab46d35c79d",
+      "canonicalResourceId": "part:assets/runtime/reanim/Starfruit_smile.png",
+      "original": "assets/runtime/reanim/Starfruit_smile.png",
+      "hd": "assets/source-art/replanted/reanim-source-round20/Starfruit_smile--prepared.png",
+      "category": "reanim",
+      "groups": [
+        "Starfruit"
+      ],
+      "source": {
+        "atlas": "Starfruit.atlas",
+        "page": "starfruit",
+        "region": "Starfruit_smile",
+        "bounds": [
+          431,
+          394,
+          110,
+          55
+        ],
+        "rotation": 90,
+        "fields": {
+          "bounds": "431,394,110,55",
+          "rotate": "90"
+        }
+      },
+      "alternatives": [],
+      "processingFlags": [
+        "仅裁掉全透明余量并保留1源像素边缘；原始像素不缩放。预览按可见轮廓中心定位，横纵共用同一倍率，不拉伸。形状差异须在组合动作中确认。"
+      ],
+      "cropAssessment": {
+        "action": "alignment",
+        "title": "透明裁切与等比定位候选",
+        "reason": "仅裁掉全透明余量并保留1源像素边缘；原始像素不缩放。预览按可见轮廓中心定位，横纵共用同一倍率，不拉伸。形状差异须在组合动作中确认。",
+        "needsCrop": false
+      },
+      "processing": [
+        {
+          "file": "assets/source-art/replanted/reanim-source-round20/Starfruit_smile--prepared.png",
+          "sourceFile": "assets/source-art/replanted/reanim-source-audit/Starfruit--eb6e9c92194efa66.png",
+          "size": [
+            96,
+            51
+          ],
+          "sourceCanvas": [
+            110,
+            55
+          ],
+          "crop": [
+            11,
+            4,
+            107,
+            55
+          ],
+          "logicalCanvas": [
+            28,
+            14
+          ],
+          "logicalDrawRect": [
+            0.7492884958886261,
+            -0.305065486559168,
+            27.501423008222748,
+            14.610130973118336
+          ],
+          "pixelPerLogical": [
+            3.4907284605344464,
+            3.4907284605344464
+          ],
+          "resampled": false,
+          "alphaAspectRatioDifference": 0.9947089947089947,
+          "sha256": "bc1b27f479ec8bd763bb5e8a1b527bf9107f494e67a17e4fccaad33bb3abed7a"
+        }
+      ],
+      "status": "approved",
+      "note": "",
+      "needsCrop": false,
+      "updatedAt": "2026-11-10T18:30:46.836Z"
+    },
+    {
+      "id": "round20:6cf085fdcb08aca0dd",
+      "canonicalResourceId": "part:assets/runtime/reanim/Tallnut_body.png",
+      "original": "assets/runtime/reanim/Tallnut_body.png",
+      "hd": "assets/source-art/replanted/reanim-source-round20/Tallnut_body--prepared.png",
+      "category": "reanim",
+      "groups": [
+        "Tallnut"
+      ],
+      "source": {
+        "atlas": "Tallnut.atlas",
+        "page": "tallnut",
+        "region": "Tallnut_body",
+        "bounds": [
+          2,
+          109,
+          398,
+          589
+        ],
+        "rotation": 90,
+        "fields": {
+          "bounds": "2,109,398,589",
+          "rotate": "90"
+        }
+      },
+      "alternatives": [],
+      "processingFlags": [
+        "仅裁掉全透明余量并保留1源像素边缘；原始像素不缩放。预览按可见轮廓中心定位，横纵共用同一倍率，不拉伸。形状差异须在组合动作中确认。"
+      ],
+      "cropAssessment": {
+        "action": "alignment",
+        "title": "透明裁切与等比定位候选",
+        "reason": "仅裁掉全透明余量并保留1源像素边缘；原始像素不缩放。预览按可见轮廓中心定位，横纵共用同一倍率，不拉伸。形状差异须在组合动作中确认。",
+        "needsCrop": false
+      },
+      "processing": [
+        {
+          "file": "assets/source-art/replanted/reanim-source-round20/Tallnut_body--prepared.png",
+          "sourceFile": "assets/source-art/replanted/reanim-source-audit/Tallnut--e6ee0e5f9fb4664f.png",
+          "size": [
+            398,
+            589
+          ],
+          "sourceCanvas": [
+            398,
+            589
+          ],
+          "crop": [
+            0,
+            0,
+            398,
+            589
+          ],
+          "logicalCanvas": [
+            99,
+            146
+          ],
+          "logicalDrawRect": [
+            0.14835474228378587,
+            -0.21944346799709535,
+            98.95191341345618,
+            146.4388869359942
+          ],
+          "pixelPerLogical": [
+            4.022155674110261,
+            4.022155674110261
+          ],
+          "resampled": false,
+          "alphaAspectRatioDifference": 0.9940148514002505,
+          "sha256": "f313d9897f24bd1ace7f827deaa0e8a1c7223a82e090ebf3d8694e50ff6ab873"
+        }
+      ],
+      "status": "approved",
+      "note": "眼睛没了",
+      "needsCrop": false,
+      "updatedAt": "2026-11-10T18:30:57.798Z"
+    },
+    {
+      "id": "round20:e39a8f64177a9a5ae3",
+      "canonicalResourceId": "part:assets/runtime/reanim/Tallnut_cracked1.png",
+      "original": "assets/runtime/reanim/Tallnut_cracked1.png",
+      "hd": "assets/source-art/replanted/reanim-source-round20/Tallnut_cracked1--prepared.png",
+      "category": "reanim",
+      "groups": [
+        "Tallnut"
+      ],
+      "source": {
+        "atlas": "Tallnut.atlas",
+        "page": "tallnut",
+        "region": "Tallnut_cracked1",
+        "bounds": [
+          593,
+          109,
+          398,
+          587
+        ],
+        "rotation": 90,
+        "fields": {
+          "bounds": "593,109,398,587",
+          "rotate": "90"
+        }
+      },
+      "alternatives": [],
+      "processingFlags": [
+        "仅裁掉全透明余量并保留1源像素边缘；原始像素不缩放。预览按可见轮廓中心定位，横纵共用同一倍率，不拉伸。形状差异须在组合动作中确认。"
+      ],
+      "cropAssessment": {
+        "action": "alignment",
+        "title": "透明裁切与等比定位候选",
+        "reason": "仅裁掉全透明余量并保留1源像素边缘；原始像素不缩放。预览按可见轮廓中心定位，横纵共用同一倍率，不拉伸。形状差异须在组合动作中确认。",
+        "needsCrop": false
+      },
+      "processing": [
+        {
+          "file": "assets/source-art/replanted/reanim-source-round20/Tallnut_cracked1--prepared.png",
+          "sourceFile": "assets/source-art/replanted/reanim-source-audit/Tallnut--66cb7a878893ad75.png",
+          "size": [
+            398,
+            587
+          ],
+          "sourceCanvas": [
+            398,
+            587
+          ],
+          "crop": [
+            0,
+            0,
+            398,
+            587
+          ],
+          "logicalCanvas": [
+            99,
+            146
+          ],
+          "logicalDrawRect": [
+            0.0021295176974902574,
+            -0.0031406359587293764,
+            98.99574096460502,
+            146.00628127191746
+          ],
+          "pixelPerLogical": [
+            4.020374978983198,
+            4.020374978983198
+          ],
+          "resampled": false,
+          "alphaAspectRatioDifference": 0.9999139607316778,
+          "sha256": "55b3c360ad04927ee6af5f7e578f7fef632de4214017be979b04790902b52a86"
+        }
+      ],
+      "status": "approved",
+      "note": "眼睛没了",
+      "needsCrop": false,
+      "updatedAt": "2026-11-10T18:31:06.810Z"
+    },
+    {
+      "id": "round20:9c9495fa8e5ca8ea70",
+      "canonicalResourceId": "part:assets/runtime/reanim/Tallnut_cracked2.png",
+      "original": "assets/runtime/reanim/Tallnut_cracked2.png",
+      "hd": "assets/source-art/replanted/reanim-source-round20/Tallnut_cracked2--prepared.png",
+      "category": "reanim",
+      "groups": [
+        "Tallnut"
+      ],
+      "source": {
+        "atlas": "Tallnut.atlas",
+        "page": "tallnut",
+        "region": "Tallnut_cracked2",
+        "bounds": [
+          1182,
+          109,
+          398,
+          587
+        ],
+        "rotation": 90,
+        "fields": {
+          "bounds": "1182,109,398,587",
+          "rotate": "90"
+        }
+      },
+      "alternatives": [],
+      "processingFlags": [
+        "仅裁掉全透明余量并保留1源像素边缘；原始像素不缩放。预览按可见轮廓中心定位，横纵共用同一倍率，不拉伸。形状差异须在组合动作中确认。"
+      ],
+      "cropAssessment": {
+        "action": "alignment",
+        "title": "透明裁切与等比定位候选",
+        "reason": "仅裁掉全透明余量并保留1源像素边缘；原始像素不缩放。预览按可见轮廓中心定位，横纵共用同一倍率，不拉伸。形状差异须在组合动作中确认。",
+        "needsCrop": false
+      },
+      "processing": [
+        {
+          "file": "assets/source-art/replanted/reanim-source-round20/Tallnut_cracked2--prepared.png",
+          "sourceFile": "assets/source-art/replanted/reanim-source-audit/Tallnut--a5febd0a6c773866.png",
+          "size": [
+            398,
+            578
+          ],
+          "sourceCanvas": [
+            398,
+            587
+          ],
+          "crop": [
+            0,
+            9,
+            398,
+            587
+          ],
+          "logicalCanvas": [
+            99,
+            144
+          ],
+          "logicalDrawRect": [
+            -0.08182145770892646,
+            -0.13033825129012655,
+            99.16364291541785,
+            144.0115216208832
+          ],
+          "pixelPerLogical": [
+            4.0135677582909715,
+            4.0135677582909715
+          ],
+          "resampled": false,
+          "alphaAspectRatioDifference": 1.00330864975579,
+          "sha256": "a347e082e5151780d13e0477ae3c359616bff7734d718c441f450d54e3846466"
+        }
+      ],
+      "status": "approved",
+      "note": "眼睛没了",
+      "needsCrop": false,
+      "updatedAt": "2026-11-10T18:31:09.991Z"
+    },
+    {
+      "id": "round20:64711a1c439a488925",
+      "canonicalResourceId": "part:assets/runtime/reanim/ZenGarden_fertilizer_bag2.png",
+      "original": "assets/runtime/reanim/ZenGarden_fertilizer_bag2.png",
+      "hd": "assets/source-art/replanted/reanim-source-round20/ZenGarden_fertilizer_bag2--prepared.png",
+      "category": "reanim",
+      "groups": [
+        "ZenGarden_fertilizer"
+      ],
+      "source": {
+        "atlas": "ZenGarden_fertilizer.atlas",
+        "page": "zengarden_fertilizer",
+        "region": "ZenGarden_fertilizer_bag2.png",
+        "bounds": [
+          354,
+          84,
+          350,
+          365
+        ],
+        "rotation": 0,
+        "fields": {
+          "bounds": "354,84,350,365"
+        }
+      },
+      "alternatives": [],
+      "processingFlags": [
+        "仅裁掉全透明余量并保留1源像素边缘；原始像素不缩放。预览按可见轮廓中心定位，横纵共用同一倍率，不拉伸。形状差异须在组合动作中确认。"
+      ],
+      "cropAssessment": {
+        "action": "alignment",
+        "title": "透明裁切与等比定位候选",
+        "reason": "仅裁掉全透明余量并保留1源像素边缘；原始像素不缩放。预览按可见轮廓中心定位，横纵共用同一倍率，不拉伸。形状差异须在组合动作中确认。",
+        "needsCrop": false
+      },
+      "processing": [
+        {
+          "file": "assets/source-art/replanted/reanim-source-round20/ZenGarden_fertilizer_bag2--prepared.png",
+          "sourceFile": "assets/source-art/replanted/reanim-source-audit/ZenGarden_fertilizer--91bdea3a1fb2adc9.png",
+          "size": [
+            315,
+            334
+          ],
+          "sourceCanvas": [
+            350,
+            365
+          ],
+          "crop": [
+            8,
+            21,
+            323,
+            355
+          ],
+          "logicalCanvas": [
+            70,
+            73
+          ],
+          "logicalDrawRect": [
+            3.2344336087069863,
+            7.34857404859725,
+            62.53113278258603,
+            66.3028519028055
+          ],
+          "pixelPerLogical": [
+            5.037490702354951,
+            5.037490702354951
+          ],
+          "resampled": false,
+          "alphaAspectRatioDifference": 0.9137627432808155,
+          "sha256": "d80156a4dcaa5e5100b19d635552de3335938038e141f884dfb237dd220fb8d7"
+        }
+      ],
+      "status": "approved",
+      "note": "",
+      "needsCrop": false,
+      "updatedAt": "2026-11-10T18:31:25.395Z"
+    },
+    {
+      "id": "round20:1ca7920e57a8b47ce0",
+      "canonicalResourceId": "part:assets/runtime/reanim/ZenGarden_fertilizer_bag3.png",
+      "original": "assets/runtime/reanim/ZenGarden_fertilizer_bag3.png",
+      "hd": "assets/source-art/replanted/reanim-source-round20/ZenGarden_fertilizer_bag3--prepared.png",
+      "category": "reanim",
+      "groups": [
+        "ZenGarden_fertilizer"
+      ],
+      "source": {
+        "atlas": "ZenGarden_fertilizer.atlas",
+        "page": "zengarden_fertilizer",
+        "region": "ZenGarden_fertilizer_bag3.png",
+        "bounds": [
+          706,
+          84,
+          350,
+          365
+        ],
+        "rotation": 0,
+        "fields": {
+          "bounds": "706,84,350,365"
+        }
+      },
+      "alternatives": [],
+      "processingFlags": [
+        "仅裁掉全透明余量并保留1源像素边缘；原始像素不缩放。预览按可见轮廓中心定位，横纵共用同一倍率，不拉伸。形状差异须在组合动作中确认。"
+      ],
+      "cropAssessment": {
+        "action": "alignment",
+        "title": "透明裁切与等比定位候选",
+        "reason": "仅裁掉全透明余量并保留1源像素边缘；原始像素不缩放。预览按可见轮廓中心定位，横纵共用同一倍率，不拉伸。形状差异须在组合动作中确认。",
+        "needsCrop": false
+      },
+      "processing": [
+        {
+          "file": "assets/source-art/replanted/reanim-source-round20/ZenGarden_fertilizer_bag3--prepared.png",
+          "sourceFile": "assets/source-art/replanted/reanim-source-audit/ZenGarden_fertilizer--d1d8941d49aa81aa.png",
+          "size": [
+            320,
+            313
+          ],
+          "sourceCanvas": [
+            350,
+            365
+          ],
+          "crop": [
+            8,
+            42,
+            328,
+            355
+          ],
+          "logicalCanvas": [
+            70,
+            73
+          ],
+          "logicalDrawRect": [
+            0.18496336347295994,
+            7.402792289896986,
+            65.63007327305408,
+            64.19441542020603
+          ],
+          "pixelPerLogical": [
+            4.875813541585413,
+            4.875813541585413
+          ],
+          "resampled": false,
+          "alphaAspectRatioDifference": 1.038484726688103,
+          "sha256": "f942bc9ba898f128cdb93de330279ddcf84ec0152a3a3378a16528e9ce2edb03"
+        }
+      ],
+      "status": "approved",
+      "note": "",
+      "needsCrop": false,
+      "updatedAt": "2026-11-10T18:31:28.142Z"
+    },
+    {
+      "id": "round20:e88c6d2517df1235e8",
+      "canonicalResourceId": "part:assets/runtime/reanim/ZenGarden_fertilize_bag1.png",
+      "original": "assets/runtime/reanim/ZenGarden_fertilize_bag1.png",
+      "hd": "assets/source-art/replanted/reanim-source-round20/ZenGarden_fertilize_bag1--prepared.png",
+      "category": "reanim",
+      "groups": [
+        "ZenGarden_fertilizer"
+      ],
+      "source": {
+        "atlas": "ZenGarden_fertilizer.atlas",
+        "page": "zengarden_fertilizer",
+        "region": "ZenGarden_fertilize_bag1.png",
+        "bounds": [
+          2,
+          84,
+          350,
+          365
+        ],
+        "rotation": 0,
+        "fields": {
+          "bounds": "2,84,350,365"
+        }
+      },
+      "alternatives": [],
+      "processingFlags": [
+        "仅裁掉全透明余量并保留1源像素边缘；原始像素不缩放。预览按可见轮廓中心定位，横纵共用同一倍率，不拉伸。形状差异须在组合动作中确认。"
+      ],
+      "cropAssessment": {
+        "action": "alignment",
+        "title": "透明裁切与等比定位候选",
+        "reason": "仅裁掉全透明余量并保留1源像素边缘；原始像素不缩放。预览按可见轮廓中心定位，横纵共用同一倍率，不拉伸。形状差异须在组合动作中确认。",
+        "needsCrop": false
+      },
+      "processing": [
+        {
+          "file": "assets/source-art/replanted/reanim-source-round20/ZenGarden_fertilize_bag1--prepared.png",
+          "sourceFile": "assets/source-art/replanted/reanim-source-audit/ZenGarden_fertilizer--c2bcbc5b879d7ceb.png",
+          "size": [
+            339,
+            298
+          ],
+          "sourceCanvas": [
+            350,
+            365
+          ],
+          "crop": [
+            8,
+            57,
+            347,
+            355
+          ],
+          "logicalCanvas": [
+            70,
+            73
+          ],
+          "logicalDrawRect": [
+            1.4356598478550424,
+            11.116007771860776,
+            69.12868030428992,
+            60.76798445627845
+          ],
+          "pixelPerLogical": [
+            4.903898042141023,
+            4.903898042141023
+          ],
+          "resampled": false,
+          "alphaAspectRatioDifference": 1.0213135930047694,
+          "sha256": "668f4bc0397a6d342b53cf3408df3720542f820f2536627fde153cc12a4c406c"
+        }
+      ],
+      "status": "approved",
+      "note": "",
+      "needsCrop": false,
+      "updatedAt": "2026-11-10T18:31:30.223Z"
+    },
+    {
+      "id": "round20:dfedde8dba66c45d7c",
+      "canonicalResourceId": "part:assets/runtime/reanim/ZenGarden_phonograph_needle.png",
+      "original": "assets/runtime/reanim/ZenGarden_phonograph_needle.png",
+      "hd": "assets/source-art/replanted/reanim-source-round20/ZenGarden_phonograph_needle--prepared.png",
+      "category": "reanim",
+      "groups": [
+        "ZenGarden_phonograph"
+      ],
+      "source": {
+        "atlas": "ZenGarden_phonograph.atlas",
+        "page": "zengarden_phonograph",
+        "region": "ZenGarden_phonograph_needle.png",
+        "bounds": [
+          204,
+          2,
+          75,
+          65
+        ],
+        "rotation": 90,
+        "fields": {
+          "bounds": "204,2,75,65",
+          "rotate": "90"
+        }
+      },
+      "alternatives": [],
+      "processingFlags": [
+        "仅裁掉全透明余量并保留1源像素边缘；原始像素不缩放。预览按可见轮廓中心定位，横纵共用同一倍率，不拉伸。形状差异须在组合动作中确认。"
+      ],
+      "cropAssessment": {
+        "action": "alignment",
+        "title": "透明裁切与等比定位候选",
+        "reason": "仅裁掉全透明余量并保留1源像素边缘；原始像素不缩放。预览按可见轮廓中心定位，横纵共用同一倍率，不拉伸。形状差异须在组合动作中确认。",
+        "needsCrop": false
+      },
+      "processing": [
+        {
+          "file": "assets/source-art/replanted/reanim-source-round20/ZenGarden_phonograph_needle--prepared.png",
+          "sourceFile": "assets/source-art/replanted/reanim-source-audit/ZenGarden_phonograph--785932ab40aca37f.png",
+          "size": [
+            72,
+            64
+          ],
+          "sourceCanvas": [
+            75,
+            65
+          ],
+          "crop": [
+            0,
+            1,
+            72,
+            65
+          ],
+          "logicalCanvas": [
+            15,
+            13
+          ],
+          "logicalDrawRect": [
+            -0.07008074256672536,
+            -0.33410067037273805,
+            15.14016148513345,
+            13.457921320118622
+          ],
+          "pixelPerLogical": [
+            4.755563543407303,
+            4.755563543407303
+          ],
+          "resampled": false,
+          "alphaAspectRatioDifference": 0.9629629629629631,
+          "sha256": "de636a24f87aa436f1420b1effd60e3760ab751ab46d2e766a626ec100fd7eea"
+        }
+      ],
+      "status": "approved",
+      "note": "",
+      "needsCrop": false,
+      "updatedAt": "2026-11-10T18:31:38.447Z"
+    }
+  ]
+}

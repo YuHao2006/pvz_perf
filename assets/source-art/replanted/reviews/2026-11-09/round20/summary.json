@@ -1,0 +1,1987 @@
+{
+  "counts": {
+    "approved": 12
+  },
+  "assets": [
+    {
+      "original": "assets/runtime/reanim/Jalapeno_eye2.png",
+      "hdFile": "assets/source-art/replanted/reanim-source-round20/Jalapeno_eye2--prepared.png",
+      "category": "reanim",
+      "groups": [
+        "Jalapeno"
+      ],
+      "review": {
+        "status": "approved",
+        "note": "先试试吧,眼睛周围没有红色",
+        "updatedAt": "2026-11-10T18:30:16.991Z",
+        "needsCrop": false
+      },
+      "selectedInRound": 20,
+      "candidateId": "round20:ac7919bbd59a6f8c7b",
+      "source": {
+        "atlas": "Jalapeno.atlas",
+        "page": "jalapeno",
+        "region": "Jalapeno_eye2",
+        "bounds": [
+          759,
+          197,
+          47,
+          47
+        ],
+        "rotation": 0,
+        "fields": {
+          "bounds": "759,197,47,47"
+        }
+      },
+      "processing": [
+        {
+          "file": "assets/source-art/replanted/reanim-source-round20/Jalapeno_eye2--prepared.png",
+          "sourceFile": "assets/source-art/replanted/reanim-source-audit/Jalapeno--7a7c92756c4aaef2.png",
+          "size": [
+            35,
+            39
+          ],
+          "sourceCanvas": [
+            47,
+            47
+          ],
+          "crop": [
+            8,
+            5,
+            43,
+            44
+          ],
+          "logicalCanvas": [
+            10,
+            11
+          ],
+          "logicalDrawRect": [
+            -0.25262697039206206,
+            -0.35292719557972685,
+            10.505253940784124,
+            11.705854391159454
+          ],
+          "pixelPerLogical": [
+            3.331666249791536,
+            3.331666249791536
+          ],
+          "resampled": false,
+          "alphaAspectRatioDifference": 0.9810810810810809,
+          "sha256": "0438e0717b6dcd86d53104bc615be6f9441d4654d0e6594ed8f0b4344a209ed3"
+        }
+      ],
+      "processingFlags": [
+        "仅裁掉全透明余量并保留1源像素边缘；原始像素不缩放。预览按可见轮廓中心定位，横纵共用同一倍率，不拉伸。形状差异须在组合动作中确认。"
+      ],
+      "runtimeIntegrated": false,
+      "sha256": "0438e0717b6dcd86d53104bc615be6f9441d4654d0e6594ed8f0b4344a209ed3",
+      "history": [
+        {
+          "original": "assets/runtime/reanim/Jalapeno_eye2.png",
+          "hdFile": "assets/source-art/replanted/native-parts/Jalapeno_eye2.png",
+          "category": "reanim",
+          "groups": [
+            "Jalapeno"
+          ],
+          "review": {
+            "status": "pending",
+            "note": "",
+            "updatedAt": "2026-11-09T09:33:55.225Z",
+            "needsCrop": false
+          },
+          "selectedInRound": 1,
+          "candidateId": "part:assets/runtime/reanim/Jalapeno_eye2.png"
+        },
+        {
+          "original": "assets/runtime/reanim/Jalapeno_eye2.png",
+          "hdFile": "assets/source-art/replanted/reanim-source-round20/Jalapeno_eye2--prepared.png",
+          "category": "reanim",
+          "groups": [
+            "Jalapeno"
+          ],
+          "review": {
+            "status": "approved",
+            "note": "先试试吧,眼睛周围没有红色",
+            "updatedAt": "2026-11-10T18:30:16.991Z",
+            "needsCrop": false
+          },
+          "selectedInRound": 20,
+          "candidateId": "round20:ac7919bbd59a6f8c7b",
+          "source": {
+            "atlas": "Jalapeno.atlas",
+            "page": "jalapeno",
+            "region": "Jalapeno_eye2",
+            "bounds": [
+              759,
+              197,
+              47,
+              47
+            ],
+            "rotation": 0,
+            "fields": {
+              "bounds": "759,197,47,47"
+            }
+          },
+          "processing": [
+            {
+              "file": "assets/source-art/replanted/reanim-source-round20/Jalapeno_eye2--prepared.png",
+              "sourceFile": "assets/source-art/replanted/reanim-source-audit/Jalapeno--7a7c92756c4aaef2.png",
+              "size": [
+                35,
+                39
+              ],
+              "sourceCanvas": [
+                47,
+                47
+              ],
+              "crop": [
+                8,
+                5,
+                43,
+                44
+              ],
+              "logicalCanvas": [
+                10,
+                11
+              ],
+              "logicalDrawRect": [
+                -0.25262697039206206,
+                -0.35292719557972685,
+                10.505253940784124,
+                11.705854391159454
+              ],
+              "pixelPerLogical": [
+                3.331666249791536,
+                3.331666249791536
+              ],
+              "resampled": false,
+              "alphaAspectRatioDifference": 0.9810810810810809,
+              "sha256": "0438e0717b6dcd86d53104bc615be6f9441d4654d0e6594ed8f0b4344a209ed3"
+            }
+          ],
+          "processingFlags": [
+            "仅裁掉全透明余量并保留1源像素边缘；原始像素不缩放。预览按可见轮廓中心定位，横纵共用同一倍率，不拉伸。形状差异须在组合动作中确认。"
+          ],
+          "runtimeIntegrated": false,
+          "sha256": "0438e0717b6dcd86d53104bc615be6f9441d4654d0e6594ed8f0b4344a209ed3"
+        }
+      ]
+    },
+    {
+      "original": "assets/runtime/reanim/PuffShroom_blink1.png",
+      "hdFile": "assets/source-art/replanted/reanim-source-round20/PuffShroom_blink1--prepared.png",
+      "category": "reanim",
+      "groups": [
+        "PuffShroom"
+      ],
+      "review": {
+        "status": "approved",
+        "note": "先试试",
+        "updatedAt": "2026-11-10T18:30:29.940Z",
+        "needsCrop": false
+      },
+      "selectedInRound": 20,
+      "candidateId": "round20:eb703c8bdef7c9eb1d",
+      "source": {
+        "atlas": "PuffShroom.atlas",
+        "page": "puffshroom",
+        "region": "PuffShroom_blink1",
+        "bounds": [
+          126,
+          86,
+          30,
+          30
+        ],
+        "rotation": 0,
+        "fields": {
+          "bounds": "126,86,30,30"
+        }
+      },
+      "processing": [
+        {
+          "file": "assets/source-art/replanted/reanim-source-round20/PuffShroom_blink1--prepared.png",
+          "sourceFile": "assets/source-art/replanted/reanim-source-audit/PuffShroom--55ef5ba8da93c1f7.png",
+          "size": [
+            30,
+            30
+          ],
+          "sourceCanvas": [
+            30,
+            30
+          ],
+          "crop": [
+            0,
+            0,
+            30,
+            30
+          ],
+          "logicalCanvas": [
+            13,
+            13
+          ],
+          "logicalDrawRect": [
+            -8.881784197001252e-16,
+            -8.881784197001252e-16,
+            13.000000000000002,
+            13.000000000000002
+          ],
+          "pixelPerLogical": [
+            2.3076923076923075,
+            2.3076923076923075
+          ],
+          "resampled": false,
+          "alphaAspectRatioDifference": 1.0,
+          "sha256": "27dd21358a8a95542e8ae7954ff8739deb3afde273090ad299d1bf1794f03741"
+        }
+      ],
+      "processingFlags": [
+        "仅裁掉全透明余量并保留1源像素边缘；原始像素不缩放。预览按可见轮廓中心定位，横纵共用同一倍率，不拉伸。形状差异须在组合动作中确认。"
+      ],
+      "runtimeIntegrated": false,
+      "sha256": "27dd21358a8a95542e8ae7954ff8739deb3afde273090ad299d1bf1794f03741",
+      "history": [
+        {
+          "original": "assets/runtime/reanim/PuffShroom_blink1.png",
+          "hdFile": "assets/source-art/replanted/native-parts/PuffShroom_blink1.png",
+          "category": "reanim",
+          "groups": [
+            "PuffShroom"
+          ],
+          "review": {
+            "status": "pending",
+            "note": "",
+            "updatedAt": "2026-11-09T09:38:14.044Z",
+            "needsCrop": false
+          },
+          "selectedInRound": 1,
+          "candidateId": "part:assets/runtime/reanim/PuffShroom_blink1.png"
+        },
+        {
+          "original": "assets/runtime/reanim/PuffShroom_blink1.png",
+          "hdFile": "assets/source-art/replanted/reanim-source-round20/PuffShroom_blink1--prepared.png",
+          "category": "reanim",
+          "groups": [
+            "PuffShroom"
+          ],
+          "review": {
+            "status": "approved",
+            "note": "先试试",
+            "updatedAt": "2026-11-10T18:30:29.940Z",
+            "needsCrop": false
+          },
+          "selectedInRound": 20,
+          "candidateId": "round20:eb703c8bdef7c9eb1d",
+          "source": {
+            "atlas": "PuffShroom.atlas",
+            "page": "puffshroom",
+            "region": "PuffShroom_blink1",
+            "bounds": [
+              126,
+              86,
+              30,
+              30
+            ],
+            "rotation": 0,
+            "fields": {
+              "bounds": "126,86,30,30"
+            }
+          },
+          "processing": [
+            {
+              "file": "assets/source-art/replanted/reanim-source-round20/PuffShroom_blink1--prepared.png",
+              "sourceFile": "assets/source-art/replanted/reanim-source-audit/PuffShroom--55ef5ba8da93c1f7.png",
+              "size": [
+                30,
+                30
+              ],
+              "sourceCanvas": [
+                30,
+                30
+              ],
+              "crop": [
+                0,
+                0,
+                30,
+                30
+              ],
+              "logicalCanvas": [
+                13,
+                13
+              ],
+              "logicalDrawRect": [
+                -8.881784197001252e-16,
+                -8.881784197001252e-16,
+                13.000000000000002,
+                13.000000000000002
+              ],
+              "pixelPerLogical": [
+                2.3076923076923075,
+                2.3076923076923075
+              ],
+              "resampled": false,
+              "alphaAspectRatioDifference": 1.0,
+              "sha256": "27dd21358a8a95542e8ae7954ff8739deb3afde273090ad299d1bf1794f03741"
+            }
+          ],
+          "processingFlags": [
+            "仅裁掉全透明余量并保留1源像素边缘；原始像素不缩放。预览按可见轮廓中心定位，横纵共用同一倍率，不拉伸。形状差异须在组合动作中确认。"
+          ],
+          "runtimeIntegrated": false,
+          "sha256": "27dd21358a8a95542e8ae7954ff8739deb3afde273090ad299d1bf1794f03741"
+        }
+      ]
+    },
+    {
+      "original": "assets/runtime/reanim/PuffShroom_blink2.png",
+      "hdFile": "assets/source-art/replanted/reanim-source-round20/PuffShroom_blink2--prepared.png",
+      "category": "reanim",
+      "groups": [
+        "PuffShroom"
+      ],
+      "review": {
+        "status": "approved",
+        "note": "",
+        "updatedAt": "2026-11-10T18:30:35.898Z",
+        "needsCrop": false
+      },
+      "selectedInRound": 20,
+      "candidateId": "round20:fb0aee6c6087edc4ce",
+      "source": {
+        "atlas": "PuffShroom.atlas",
+        "page": "puffshroom",
+        "region": "PuffShroom_blink2",
+        "bounds": [
+          196,
+          148,
+          30,
+          30
+        ],
+        "rotation": 0,
+        "fields": {
+          "bounds": "196,148,30,30"
+        }
+      },
+      "processing": [
+        {
+          "file": "assets/source-art/replanted/reanim-source-round20/PuffShroom_blink2--prepared.png",
+          "sourceFile": "assets/source-art/replanted/reanim-source-audit/PuffShroom--f8e7a2a31bc8efc0.png",
+          "size": [
+            30,
+            30
+          ],
+          "sourceCanvas": [
+            30,
+            30
+          ],
+          "crop": [
+            0,
+            0,
+            30,
+            30
+          ],
+          "logicalCanvas": [
+            13,
+            13
+          ],
+          "logicalDrawRect": [
+            -8.881784197001252e-16,
+            -8.881784197001252e-16,
+            13.000000000000002,
+            13.000000000000002
+          ],
+          "pixelPerLogical": [
+            2.3076923076923075,
+            2.3076923076923075
+          ],
+          "resampled": false,
+          "alphaAspectRatioDifference": 1.0,
+          "sha256": "c125638dbeeb646177df855416c4d193bed27b114bd069641bddf29984169488"
+        }
+      ],
+      "processingFlags": [
+        "仅裁掉全透明余量并保留1源像素边缘；原始像素不缩放。预览按可见轮廓中心定位，横纵共用同一倍率，不拉伸。形状差异须在组合动作中确认。"
+      ],
+      "runtimeIntegrated": false,
+      "sha256": "c125638dbeeb646177df855416c4d193bed27b114bd069641bddf29984169488",
+      "history": [
+        {
+          "original": "assets/runtime/reanim/PuffShroom_blink2.png",
+          "hdFile": "assets/source-art/replanted/native-parts/PuffShroom_blink2.png",
+          "category": "reanim",
+          "groups": [
+            "PuffShroom"
+          ],
+          "review": {
+            "status": "pending",
+            "note": "",
+            "updatedAt": "2026-11-09T09:38:16.739Z",
+            "needsCrop": false
+          },
+          "selectedInRound": 1,
+          "candidateId": "part:assets/runtime/reanim/PuffShroom_blink2.png"
+        },
+        {
+          "original": "assets/runtime/reanim/PuffShroom_blink2.png",
+          "hdFile": "assets/source-art/replanted/reanim-source-round20/PuffShroom_blink2--prepared.png",
+          "category": "reanim",
+          "groups": [
+            "PuffShroom"
+          ],
+          "review": {
+            "status": "approved",
+            "note": "",
+            "updatedAt": "2026-11-10T18:30:35.898Z",
+            "needsCrop": false
+          },
+          "selectedInRound": 20,
+          "candidateId": "round20:fb0aee6c6087edc4ce",
+          "source": {
+            "atlas": "PuffShroom.atlas",
+            "page": "puffshroom",
+            "region": "PuffShroom_blink2",
+            "bounds": [
+              196,
+              148,
+              30,
+              30
+            ],
+            "rotation": 0,
+            "fields": {
+              "bounds": "196,148,30,30"
+            }
+          },
+          "processing": [
+            {
+              "file": "assets/source-art/replanted/reanim-source-round20/PuffShroom_blink2--prepared.png",
+              "sourceFile": "assets/source-art/replanted/reanim-source-audit/PuffShroom--f8e7a2a31bc8efc0.png",
+              "size": [
+                30,
+                30
+              ],
+              "sourceCanvas": [
+                30,
+                30
+              ],
+              "crop": [
+                0,
+                0,
+                30,
+                30
+              ],
+              "logicalCanvas": [
+                13,
+                13
+              ],
+              "logicalDrawRect": [
+                -8.881784197001252e-16,
+                -8.881784197001252e-16,
+                13.000000000000002,
+                13.000000000000002
+              ],
+              "pixelPerLogical": [
+                2.3076923076923075,
+                2.3076923076923075
+              ],
+              "resampled": false,
+              "alphaAspectRatioDifference": 1.0,
+              "sha256": "c125638dbeeb646177df855416c4d193bed27b114bd069641bddf29984169488"
+            }
+          ],
+          "processingFlags": [
+            "仅裁掉全透明余量并保留1源像素边缘；原始像素不缩放。预览按可见轮廓中心定位，横纵共用同一倍率，不拉伸。形状差异须在组合动作中确认。"
+          ],
+          "runtimeIntegrated": false,
+          "sha256": "c125638dbeeb646177df855416c4d193bed27b114bd069641bddf29984169488"
+        }
+      ]
+    },
+    {
+      "original": "assets/runtime/reanim/PuffShroom_stem.png",
+      "hdFile": "assets/source-art/replanted/reanim-source-round20/PuffShroom_stem--prepared.png",
+      "category": "reanim",
+      "groups": [
+        "PuffShroom"
+      ],
+      "review": {
+        "status": "approved",
+        "note": "",
+        "updatedAt": "2026-11-10T18:30:37.597Z",
+        "needsCrop": false
+      },
+      "selectedInRound": 20,
+      "candidateId": "round20:dbae41809e520aa58d",
+      "source": {
+        "atlas": "PuffShroom.atlas",
+        "page": "puffshroom",
+        "region": "PuffShroom_stem",
+        "bounds": [
+          8,
+          8,
+          15,
+          33
+        ],
+        "rotation": 90,
+        "fields": {
+          "bounds": "8,8,15,33",
+          "rotate": "90"
+        }
+      },
+      "processing": [
+        {
+          "file": "assets/source-art/replanted/reanim-source-round20/PuffShroom_stem--prepared.png",
+          "sourceFile": "assets/source-art/replanted/reanim-source-audit/PuffShroom--8a44565532afb8d3.png",
+          "size": [
+            15,
+            33
+          ],
+          "sourceCanvas": [
+            15,
+            33
+          ],
+          "crop": [
+            0,
+            0,
+            15,
+            33
+          ],
+          "logicalCanvas": [
+            7,
+            14
+          ],
+          "logicalDrawRect": [
+            3.315342756236743,
+            2.193754063720834,
+            4.369314487526514,
+            9.612491872558332
+          ],
+          "pixelPerLogical": [
+            3.4330328116279762,
+            3.4330328116279762
+          ],
+          "resampled": false,
+          "alphaAspectRatioDifference": 2.121212121212121,
+          "sha256": "1ce2e5746b9a34fdb5f270d55081c3007e76a294b29cad2ea055a1a0e42c096b"
+        }
+      ],
+      "processingFlags": [
+        "【轮廓比例差异明显，待进一步适配，不可直接采用】仅裁掉全透明余量并保留1源像素边缘；原始像素不缩放。预览按可见轮廓中心定位，横纵共用同一倍率，不拉伸。形状差异须在组合动作中确认。"
+      ],
+      "runtimeIntegrated": false,
+      "sha256": "1ce2e5746b9a34fdb5f270d55081c3007e76a294b29cad2ea055a1a0e42c096b",
+      "history": [
+        {
+          "original": "assets/runtime/reanim/PuffShroom_stem.png",
+          "hdFile": "assets/source-art/replanted/native-parts/PuffShroom_stem.png",
+          "category": "reanim",
+          "groups": [
+            "PuffShroom"
+          ],
+          "review": {
+            "status": "pending",
+            "note": "",
+            "updatedAt": "2026-11-09T09:38:34.973Z",
+            "needsCrop": false
+          },
+          "selectedInRound": 1,
+          "candidateId": "part:assets/runtime/reanim/PuffShroom_stem.png"
+        },
+        {
+          "original": "assets/runtime/reanim/PuffShroom_stem.png",
+          "hdFile": "assets/source-art/replanted/reanim-source-round20/PuffShroom_stem--prepared.png",
+          "category": "reanim",
+          "groups": [
+            "PuffShroom"
+          ],
+          "review": {
+            "status": "approved",
+            "note": "",
+            "updatedAt": "2026-11-10T18:30:37.597Z",
+            "needsCrop": false
+          },
+          "selectedInRound": 20,
+          "candidateId": "round20:dbae41809e520aa58d",
+          "source": {
+            "atlas": "PuffShroom.atlas",
+            "page": "puffshroom",
+            "region": "PuffShroom_stem",
+            "bounds": [
+              8,
+              8,
+              15,
+              33
+            ],
+            "rotation": 90,
+            "fields": {
+              "bounds": "8,8,15,33",
+              "rotate": "90"
+            }
+          },
+          "processing": [
+            {
+              "file": "assets/source-art/replanted/reanim-source-round20/PuffShroom_stem--prepared.png",
+              "sourceFile": "assets/source-art/replanted/reanim-source-audit/PuffShroom--8a44565532afb8d3.png",
+              "size": [
+                15,
+                33
+              ],
+              "sourceCanvas": [
+                15,
+                33
+              ],
+              "crop": [
+                0,
+                0,
+                15,
+                33
+              ],
+              "logicalCanvas": [
+                7,
+                14
+              ],
+              "logicalDrawRect": [
+                3.315342756236743,
+                2.193754063720834,
+                4.369314487526514,
+                9.612491872558332
+              ],
+              "pixelPerLogical": [
+                3.4330328116279762,
+                3.4330328116279762
+              ],
+              "resampled": false,
+              "alphaAspectRatioDifference": 2.121212121212121,
+              "sha256": "1ce2e5746b9a34fdb5f270d55081c3007e76a294b29cad2ea055a1a0e42c096b"
+            }
+          ],
+          "processingFlags": [
+            "【轮廓比例差异明显，待进一步适配，不可直接采用】仅裁掉全透明余量并保留1源像素边缘；原始像素不缩放。预览按可见轮廓中心定位，横纵共用同一倍率，不拉伸。形状差异须在组合动作中确认。"
+          ],
+          "runtimeIntegrated": false,
+          "sha256": "1ce2e5746b9a34fdb5f270d55081c3007e76a294b29cad2ea055a1a0e42c096b"
+        }
+      ]
+    },
+    {
+      "original": "assets/runtime/reanim/Starfruit_smile.png",
+      "hdFile": "assets/source-art/replanted/reanim-source-round20/Starfruit_smile--prepared.png",
+      "category": "reanim",
+      "groups": [
+        "Starfruit"
+      ],
+      "review": {
+        "status": "approved",
+        "note": "",
+        "updatedAt": "2026-11-10T18:30:46.836Z",
+        "needsCrop": false
+      },
+      "selectedInRound": 20,
+      "candidateId": "round20:73f5bfaab46d35c79d",
+      "source": {
+        "atlas": "Starfruit.atlas",
+        "page": "starfruit",
+        "region": "Starfruit_smile",
+        "bounds": [
+          431,
+          394,
+          110,
+          55
+        ],
+        "rotation": 90,
+        "fields": {
+          "bounds": "431,394,110,55",
+          "rotate": "90"
+        }
+      },
+      "processing": [
+        {
+          "file": "assets/source-art/replanted/reanim-source-round20/Starfruit_smile--prepared.png",
+          "sourceFile": "assets/source-art/replanted/reanim-source-audit/Starfruit--eb6e9c92194efa66.png",
+          "size": [
+            96,
+            51
+          ],
+          "sourceCanvas": [
+            110,
+            55
+          ],
+          "crop": [
+            11,
+            4,
+            107,
+            55
+          ],
+          "logicalCanvas": [
+            28,
+            14
+          ],
+          "logicalDrawRect": [
+            0.7492884958886261,
+            -0.305065486559168,
+            27.501423008222748,
+            14.610130973118336
+          ],
+          "pixelPerLogical": [
+            3.4907284605344464,
+            3.4907284605344464
+          ],
+          "resampled": false,
+          "alphaAspectRatioDifference": 0.9947089947089947,
+          "sha256": "bc1b27f479ec8bd763bb5e8a1b527bf9107f494e67a17e4fccaad33bb3abed7a"
+        }
+      ],
+      "processingFlags": [
+        "仅裁掉全透明余量并保留1源像素边缘；原始像素不缩放。预览按可见轮廓中心定位，横纵共用同一倍率，不拉伸。形状差异须在组合动作中确认。"
+      ],
+      "runtimeIntegrated": false,
+      "sha256": "bc1b27f479ec8bd763bb5e8a1b527bf9107f494e67a17e4fccaad33bb3abed7a",
+      "history": [
+        {
+          "original": "assets/runtime/reanim/Starfruit_smile.png",
+          "hdFile": "assets/source-art/replanted/native-parts/Starfruit_smile.png",
+          "category": "reanim",
+          "groups": [
+            "Starfruit"
+          ],
+          "review": {
+            "status": "pending",
+            "note": "",
+            "updatedAt": "2026-11-09T09:42:25.634Z",
+            "needsCrop": false
+          },
+          "selectedInRound": 1,
+          "candidateId": "part:assets/runtime/reanim/Starfruit_smile.png"
+        },
+        {
+          "original": "assets/runtime/reanim/Starfruit_smile.png",
+          "hdFile": "assets/source-art/replanted/reanim-source-round20/Starfruit_smile--prepared.png",
+          "category": "reanim",
+          "groups": [
+            "Starfruit"
+          ],
+          "review": {
+            "status": "approved",
+            "note": "",
+            "updatedAt": "2026-11-10T18:30:46.836Z",
+            "needsCrop": false
+          },
+          "selectedInRound": 20,
+          "candidateId": "round20:73f5bfaab46d35c79d",
+          "source": {
+            "atlas": "Starfruit.atlas",
+            "page": "starfruit",
+            "region": "Starfruit_smile",
+            "bounds": [
+              431,
+              394,
+              110,
+              55
+            ],
+            "rotation": 90,
+            "fields": {
+              "bounds": "431,394,110,55",
+              "rotate": "90"
+            }
+          },
+          "processing": [
+            {
+              "file": "assets/source-art/replanted/reanim-source-round20/Starfruit_smile--prepared.png",
+              "sourceFile": "assets/source-art/replanted/reanim-source-audit/Starfruit--eb6e9c92194efa66.png",
+              "size": [
+                96,
+                51
+              ],
+              "sourceCanvas": [
+                110,
+                55
+              ],
+              "crop": [
+                11,
+                4,
+                107,
+                55
+              ],
+              "logicalCanvas": [
+                28,
+                14
+              ],
+              "logicalDrawRect": [
+                0.7492884958886261,
+                -0.305065486559168,
+                27.501423008222748,
+                14.610130973118336
+              ],
+              "pixelPerLogical": [
+                3.4907284605344464,
+                3.4907284605344464
+              ],
+              "resampled": false,
+              "alphaAspectRatioDifference": 0.9947089947089947,
+              "sha256": "bc1b27f479ec8bd763bb5e8a1b527bf9107f494e67a17e4fccaad33bb3abed7a"
+            }
+          ],
+          "processingFlags": [
+            "仅裁掉全透明余量并保留1源像素边缘；原始像素不缩放。预览按可见轮廓中心定位，横纵共用同一倍率，不拉伸。形状差异须在组合动作中确认。"
+          ],
+          "runtimeIntegrated": false,
+          "sha256": "bc1b27f479ec8bd763bb5e8a1b527bf9107f494e67a17e4fccaad33bb3abed7a"
+        }
+      ]
+    },
+    {
+      "original": "assets/runtime/reanim/Tallnut_body.png",
+      "hdFile": "assets/source-art/replanted/reanim-source-round20/Tallnut_body--prepared.png",
+      "category": "reanim",
+      "groups": [
+        "Tallnut"
+      ],
+      "review": {
+        "status": "approved",
+        "note": "眼睛没了",
+        "updatedAt": "2026-11-10T18:30:57.798Z",
+        "needsCrop": false
+      },
+      "selectedInRound": 20,
+      "candidateId": "round20:6cf085fdcb08aca0dd",
+      "source": {
+        "atlas": "Tallnut.atlas",
+        "page": "tallnut",
+        "region": "Tallnut_body",
+        "bounds": [
+          2,
+          109,
+          398,
+          589
+        ],
+        "rotation": 90,
+        "fields": {
+          "bounds": "2,109,398,589",
+          "rotate": "90"
+        }
+      },
+      "processing": [
+        {
+          "file": "assets/source-art/replanted/reanim-source-round20/Tallnut_body--prepared.png",
+          "sourceFile": "assets/source-art/replanted/reanim-source-audit/Tallnut--e6ee0e5f9fb4664f.png",
+          "size": [
+            398,
+            589
+          ],
+          "sourceCanvas": [
+            398,
+            589
+          ],
+          "crop": [
+            0,
+            0,
+            398,
+            589
+          ],
+          "logicalCanvas": [
+            99,
+            146
+          ],
+          "logicalDrawRect": [
+            0.14835474228378587,
+            -0.21944346799709535,
+            98.95191341345618,
+            146.4388869359942
+          ],
+          "pixelPerLogical": [
+            4.022155674110261,
+            4.022155674110261
+          ],
+          "resampled": false,
+          "alphaAspectRatioDifference": 0.9940148514002505,
+          "sha256": "f313d9897f24bd1ace7f827deaa0e8a1c7223a82e090ebf3d8694e50ff6ab873"
+        }
+      ],
+      "processingFlags": [
+        "仅裁掉全透明余量并保留1源像素边缘；原始像素不缩放。预览按可见轮廓中心定位，横纵共用同一倍率，不拉伸。形状差异须在组合动作中确认。"
+      ],
+      "runtimeIntegrated": false,
+      "sha256": "f313d9897f24bd1ace7f827deaa0e8a1c7223a82e090ebf3d8694e50ff6ab873",
+      "history": [
+        {
+          "original": "assets/runtime/reanim/Tallnut_body.png",
+          "hdFile": "assets/source-art/replanted/native-parts/Tallnut_body.png",
+          "category": "reanim",
+          "groups": [
+            "Tallnut"
+          ],
+          "review": {
+            "status": "pending",
+            "note": "",
+            "updatedAt": "2026-11-09T09:43:23.806Z",
+            "needsCrop": false
+          },
+          "selectedInRound": 1,
+          "candidateId": "part:assets/runtime/reanim/Tallnut_body.png"
+        },
+        {
+          "original": "assets/runtime/reanim/Tallnut_body.png",
+          "hdFile": "assets/source-art/replanted/reanim-source-round20/Tallnut_body--prepared.png",
+          "category": "reanim",
+          "groups": [
+            "Tallnut"
+          ],
+          "review": {
+            "status": "approved",
+            "note": "眼睛没了",
+            "updatedAt": "2026-11-10T18:30:57.798Z",
+            "needsCrop": false
+          },
+          "selectedInRound": 20,
+          "candidateId": "round20:6cf085fdcb08aca0dd",
+          "source": {
+            "atlas": "Tallnut.atlas",
+            "page": "tallnut",
+            "region": "Tallnut_body",
+            "bounds": [
+              2,
+              109,
+              398,
+              589
+            ],
+            "rotation": 90,
+            "fields": {
+              "bounds": "2,109,398,589",
+              "rotate": "90"
+            }
+          },
+          "processing": [
+            {
+              "file": "assets/source-art/replanted/reanim-source-round20/Tallnut_body--prepared.png",
+              "sourceFile": "assets/source-art/replanted/reanim-source-audit/Tallnut--e6ee0e5f9fb4664f.png",
+              "size": [
+                398,
+                589
+              ],
+              "sourceCanvas": [
+                398,
+                589
+              ],
+              "crop": [
+                0,
+                0,
+                398,
+                589
+              ],
+              "logicalCanvas": [
+                99,
+                146
+              ],
+              "logicalDrawRect": [
+                0.14835474228378587,
+                -0.21944346799709535,
+                98.95191341345618,
+                146.4388869359942
+              ],
+              "pixelPerLogical": [
+                4.022155674110261,
+                4.022155674110261
+              ],
+              "resampled": false,
+              "alphaAspectRatioDifference": 0.9940148514002505,
+              "sha256": "f313d9897f24bd1ace7f827deaa0e8a1c7223a82e090ebf3d8694e50ff6ab873"
+            }
+          ],
+          "processingFlags": [
+            "仅裁掉全透明余量并保留1源像素边缘；原始像素不缩放。预览按可见轮廓中心定位，横纵共用同一倍率，不拉伸。形状差异须在组合动作中确认。"
+          ],
+          "runtimeIntegrated": false,
+          "sha256": "f313d9897f24bd1ace7f827deaa0e8a1c7223a82e090ebf3d8694e50ff6ab873"
+        }
+      ]
+    },
+    {
+      "original": "assets/runtime/reanim/Tallnut_cracked1.png",
+      "hdFile": "assets/source-art/replanted/reanim-source-round20/Tallnut_cracked1--prepared.png",
+      "category": "reanim",
+      "groups": [
+        "Tallnut"
+      ],
+      "review": {
+        "status": "approved",
+        "note": "眼睛没了",
+        "updatedAt": "2026-11-10T18:31:06.810Z",
+        "needsCrop": false
+      },
+      "selectedInRound": 20,
+      "candidateId": "round20:e39a8f64177a9a5ae3",
+      "source": {
+        "atlas": "Tallnut.atlas",
+        "page": "tallnut",
+        "region": "Tallnut_cracked1",
+        "bounds": [
+          593,
+          109,
+          398,
+          587
+        ],
+        "rotation": 90,
+        "fields": {
+          "bounds": "593,109,398,587",
+          "rotate": "90"
+        }
+      },
+      "processing": [
+        {
+          "file": "assets/source-art/replanted/reanim-source-round20/Tallnut_cracked1--prepared.png",
+          "sourceFile": "assets/source-art/replanted/reanim-source-audit/Tallnut--66cb7a878893ad75.png",
+          "size": [
+            398,
+            587
+          ],
+          "sourceCanvas": [
+            398,
+            587
+          ],
+          "crop": [
+            0,
+            0,
+            398,
+            587
+          ],
+          "logicalCanvas": [
+            99,
+            146
+          ],
+          "logicalDrawRect": [
+            0.0021295176974902574,
+            -0.0031406359587293764,
+            98.99574096460502,
+            146.00628127191746
+          ],
+          "pixelPerLogical": [
+            4.020374978983198,
+            4.020374978983198
+          ],
+          "resampled": false,
+          "alphaAspectRatioDifference": 0.9999139607316778,
+          "sha256": "55b3c360ad04927ee6af5f7e578f7fef632de4214017be979b04790902b52a86"
+        }
+      ],
+      "processingFlags": [
+        "仅裁掉全透明余量并保留1源像素边缘；原始像素不缩放。预览按可见轮廓中心定位，横纵共用同一倍率，不拉伸。形状差异须在组合动作中确认。"
+      ],
+      "runtimeIntegrated": false,
+      "sha256": "55b3c360ad04927ee6af5f7e578f7fef632de4214017be979b04790902b52a86",
+      "history": [
+        {
+          "original": "assets/runtime/reanim/Tallnut_cracked1.png",
+          "hdFile": "assets/source-art/replanted/native-parts/Tallnut_cracked1.png",
+          "category": "reanim",
+          "groups": [
+            "Tallnut"
+          ],
+          "review": {
+            "status": "pending",
+            "note": "",
+            "updatedAt": "2026-11-09T09:43:24.500Z",
+            "needsCrop": false
+          },
+          "selectedInRound": 1,
+          "candidateId": "part:assets/runtime/reanim/Tallnut_cracked1.png"
+        },
+        {
+          "original": "assets/runtime/reanim/Tallnut_cracked1.png",
+          "hdFile": "assets/source-art/replanted/reanim-source-round20/Tallnut_cracked1--prepared.png",
+          "category": "reanim",
+          "groups": [
+            "Tallnut"
+          ],
+          "review": {
+            "status": "approved",
+            "note": "眼睛没了",
+            "updatedAt": "2026-11-10T18:31:06.810Z",
+            "needsCrop": false
+          },
+          "selectedInRound": 20,
+          "candidateId": "round20:e39a8f64177a9a5ae3",
+          "source": {
+            "atlas": "Tallnut.atlas",
+            "page": "tallnut",
+            "region": "Tallnut_cracked1",
+            "bounds": [
+              593,
+              109,
+              398,
+              587
+            ],
+            "rotation": 90,
+            "fields": {
+              "bounds": "593,109,398,587",
+              "rotate": "90"
+            }
+          },
+          "processing": [
+            {
+              "file": "assets/source-art/replanted/reanim-source-round20/Tallnut_cracked1--prepared.png",
+              "sourceFile": "assets/source-art/replanted/reanim-source-audit/Tallnut--66cb7a878893ad75.png",
+              "size": [
+                398,
+                587
+              ],
+              "sourceCanvas": [
+                398,
+                587
+              ],
+              "crop": [
+                0,
+                0,
+                398,
+                587
+              ],
+              "logicalCanvas": [
+                99,
+                146
+              ],
+              "logicalDrawRect": [
+                0.0021295176974902574,
+                -0.0031406359587293764,
+                98.99574096460502,
+                146.00628127191746
+              ],
+              "pixelPerLogical": [
+                4.020374978983198,
+                4.020374978983198
+              ],
+              "resampled": false,
+              "alphaAspectRatioDifference": 0.9999139607316778,
+              "sha256": "55b3c360ad04927ee6af5f7e578f7fef632de4214017be979b04790902b52a86"
+            }
+          ],
+          "processingFlags": [
+            "仅裁掉全透明余量并保留1源像素边缘；原始像素不缩放。预览按可见轮廓中心定位，横纵共用同一倍率，不拉伸。形状差异须在组合动作中确认。"
+          ],
+          "runtimeIntegrated": false,
+          "sha256": "55b3c360ad04927ee6af5f7e578f7fef632de4214017be979b04790902b52a86"
+        }
+      ]
+    },
+    {
+      "original": "assets/runtime/reanim/Tallnut_cracked2.png",
+      "hdFile": "assets/source-art/replanted/reanim-source-round20/Tallnut_cracked2--prepared.png",
+      "category": "reanim",
+      "groups": [
+        "Tallnut"
+      ],
+      "review": {
+        "status": "approved",
+        "note": "眼睛没了",
+        "updatedAt": "2026-11-10T18:31:09.991Z",
+        "needsCrop": false
+      },
+      "selectedInRound": 20,
+      "candidateId": "round20:9c9495fa8e5ca8ea70",
+      "source": {
+        "atlas": "Tallnut.atlas",
+        "page": "tallnut",
+        "region": "Tallnut_cracked2",
+        "bounds": [
+          1182,
+          109,
+          398,
+          587
+        ],
+        "rotation": 90,
+        "fields": {
+          "bounds": "1182,109,398,587",
+          "rotate": "90"
+        }
+      },
+      "processing": [
+        {
+          "file": "assets/source-art/replanted/reanim-source-round20/Tallnut_cracked2--prepared.png",
+          "sourceFile": "assets/source-art/replanted/reanim-source-audit/Tallnut--a5febd0a6c773866.png",
+          "size": [
+            398,
+            578
+          ],
+          "sourceCanvas": [
+            398,
+            587
+          ],
+          "crop": [
+            0,
+            9,
+            398,
+            587
+          ],
+          "logicalCanvas": [
+            99,
+            144
+          ],
+          "logicalDrawRect": [
+            -0.08182145770892646,
+            -0.13033825129012655,
+            99.16364291541785,
+            144.0115216208832
+          ],
+          "pixelPerLogical": [
+            4.0135677582909715,
+            4.0135677582909715
+          ],
+          "resampled": false,
+          "alphaAspectRatioDifference": 1.00330864975579,
+          "sha256": "a347e082e5151780d13e0477ae3c359616bff7734d718c441f450d54e3846466"
+        }
+      ],
+      "processingFlags": [
+        "仅裁掉全透明余量并保留1源像素边缘；原始像素不缩放。预览按可见轮廓中心定位，横纵共用同一倍率，不拉伸。形状差异须在组合动作中确认。"
+      ],
+      "runtimeIntegrated": false,
+      "sha256": "a347e082e5151780d13e0477ae3c359616bff7734d718c441f450d54e3846466",
+      "history": [
+        {
+          "original": "assets/runtime/reanim/Tallnut_cracked2.png",
+          "hdFile": "assets/source-art/replanted/native-parts/Tallnut_cracked2.png",
+          "category": "reanim",
+          "groups": [
+            "Tallnut"
+          ],
+          "review": {
+            "status": "pending",
+            "note": "",
+            "updatedAt": "2026-11-09T09:43:25.147Z",
+            "needsCrop": false
+          },
+          "selectedInRound": 1,
+          "candidateId": "part:assets/runtime/reanim/Tallnut_cracked2.png"
+        },
+        {
+          "original": "assets/runtime/reanim/Tallnut_cracked2.png",
+          "hdFile": "assets/source-art/replanted/reanim-source-round20/Tallnut_cracked2--prepared.png",
+          "category": "reanim",
+          "groups": [
+            "Tallnut"
+          ],
+          "review": {
+            "status": "approved",
+            "note": "眼睛没了",
+            "updatedAt": "2026-11-10T18:31:09.991Z",
+            "needsCrop": false
+          },
+          "selectedInRound": 20,
+          "candidateId": "round20:9c9495fa8e5ca8ea70",
+          "source": {
+            "atlas": "Tallnut.atlas",
+            "page": "tallnut",
+            "region": "Tallnut_cracked2",
+            "bounds": [
+              1182,
+              109,
+              398,
+              587
+            ],
+            "rotation": 90,
+            "fields": {
+              "bounds": "1182,109,398,587",
+              "rotate": "90"
+            }
+          },
+          "processing": [
+            {
+              "file": "assets/source-art/replanted/reanim-source-round20/Tallnut_cracked2--prepared.png",
+              "sourceFile": "assets/source-art/replanted/reanim-source-audit/Tallnut--a5febd0a6c773866.png",
+              "size": [
+                398,
+                578
+              ],
+              "sourceCanvas": [
+                398,
+                587
+              ],
+              "crop": [
+                0,
+                9,
+                398,
+                587
+              ],
+              "logicalCanvas": [
+                99,
+                144
+              ],
+              "logicalDrawRect": [
+                -0.08182145770892646,
+                -0.13033825129012655,
+                99.16364291541785,
+                144.0115216208832
+              ],
+              "pixelPerLogical": [
+                4.0135677582909715,
+                4.0135677582909715
+              ],
+              "resampled": false,
+              "alphaAspectRatioDifference": 1.00330864975579,
+              "sha256": "a347e082e5151780d13e0477ae3c359616bff7734d718c441f450d54e3846466"
+            }
+          ],
+          "processingFlags": [
+            "仅裁掉全透明余量并保留1源像素边缘；原始像素不缩放。预览按可见轮廓中心定位，横纵共用同一倍率，不拉伸。形状差异须在组合动作中确认。"
+          ],
+          "runtimeIntegrated": false,
+          "sha256": "a347e082e5151780d13e0477ae3c359616bff7734d718c441f450d54e3846466"
+        }
+      ]
+    },
+    {
+      "original": "assets/runtime/reanim/ZenGarden_fertilizer_bag2.png",
+      "hdFile": "assets/source-art/replanted/reanim-source-round20/ZenGarden_fertilizer_bag2--prepared.png",
+      "category": "reanim",
+      "groups": [
+        "ZenGarden_fertilizer"
+      ],
+      "review": {
+        "status": "approved",
+        "note": "",
+        "updatedAt": "2026-11-10T18:31:25.395Z",
+        "needsCrop": false
+      },
+      "selectedInRound": 20,
+      "candidateId": "round20:64711a1c439a488925",
+      "source": {
+        "atlas": "ZenGarden_fertilizer.atlas",
+        "page": "zengarden_fertilizer",
+        "region": "ZenGarden_fertilizer_bag2.png",
+        "bounds": [
+          354,
+          84,
+          350,
+          365
+        ],
+        "rotation": 0,
+        "fields": {
+          "bounds": "354,84,350,365"
+        }
+      },
+      "processing": [
+        {
+          "file": "assets/source-art/replanted/reanim-source-round20/ZenGarden_fertilizer_bag2--prepared.png",
+          "sourceFile": "assets/source-art/replanted/reanim-source-audit/ZenGarden_fertilizer--91bdea3a1fb2adc9.png",
+          "size": [
+            315,
+            334
+          ],
+          "sourceCanvas": [
+            350,
+            365
+          ],
+          "crop": [
+            8,
+            21,
+            323,
+            355
+          ],
+          "logicalCanvas": [
+            70,
+            73
+          ],
+          "logicalDrawRect": [
+            3.2344336087069863,
+            7.34857404859725,
+            62.53113278258603,
+            66.3028519028055
+          ],
+          "pixelPerLogical": [
+            5.037490702354951,
+            5.037490702354951
+          ],
+          "resampled": false,
+          "alphaAspectRatioDifference": 0.9137627432808155,
+          "sha256": "d80156a4dcaa5e5100b19d635552de3335938038e141f884dfb237dd220fb8d7"
+        }
+      ],
+      "processingFlags": [
+        "仅裁掉全透明余量并保留1源像素边缘；原始像素不缩放。预览按可见轮廓中心定位，横纵共用同一倍率，不拉伸。形状差异须在组合动作中确认。"
+      ],
+      "runtimeIntegrated": false,
+      "sha256": "d80156a4dcaa5e5100b19d635552de3335938038e141f884dfb237dd220fb8d7",
+      "history": [
+        {
+          "original": "assets/runtime/reanim/ZenGarden_fertilizer_bag2.png",
+          "hdFile": "assets/source-art/replanted/native-parts/ZenGarden_fertilizer_bag2.png",
+          "category": "reanim",
+          "groups": [
+            "ZenGarden_fertilizer"
+          ],
+          "review": {
+            "status": "pending",
+            "note": "",
+            "updatedAt": "2026-11-09T09:46:37.800Z",
+            "needsCrop": false
+          },
+          "selectedInRound": 1,
+          "candidateId": "part:assets/runtime/reanim/ZenGarden_fertilizer_bag2.png"
+        },
+        {
+          "original": "assets/runtime/reanim/ZenGarden_fertilizer_bag2.png",
+          "hdFile": "assets/source-art/replanted/reanim-source-round20/ZenGarden_fertilizer_bag2--prepared.png",
+          "category": "reanim",
+          "groups": [
+            "ZenGarden_fertilizer"
+          ],
+          "review": {
+            "status": "approved",
+            "note": "",
+            "updatedAt": "2026-11-10T18:31:25.395Z",
+            "needsCrop": false
+          },
+          "selectedInRound": 20,
+          "candidateId": "round20:64711a1c439a488925",
+          "source": {
+            "atlas": "ZenGarden_fertilizer.atlas",
+            "page": "zengarden_fertilizer",
+            "region": "ZenGarden_fertilizer_bag2.png",
+            "bounds": [
+              354,
+              84,
+              350,
+              365
+            ],
+            "rotation": 0,
+            "fields": {
+              "bounds": "354,84,350,365"
+            }
+          },
+          "processing": [
+            {
+              "file": "assets/source-art/replanted/reanim-source-round20/ZenGarden_fertilizer_bag2--prepared.png",
+              "sourceFile": "assets/source-art/replanted/reanim-source-audit/ZenGarden_fertilizer--91bdea3a1fb2adc9.png",
+              "size": [
+                315,
+                334
+              ],
+              "sourceCanvas": [
+                350,
+                365
+              ],
+              "crop": [
+                8,
+                21,
+                323,
+                355
+              ],
+              "logicalCanvas": [
+                70,
+                73
+              ],
+              "logicalDrawRect": [
+                3.2344336087069863,
+                7.34857404859725,
+                62.53113278258603,
+                66.3028519028055
+              ],
+              "pixelPerLogical": [
+                5.037490702354951,
+                5.037490702354951
+              ],
+              "resampled": false,
+              "alphaAspectRatioDifference": 0.9137627432808155,
+              "sha256": "d80156a4dcaa5e5100b19d635552de3335938038e141f884dfb237dd220fb8d7"
+            }
+          ],
+          "processingFlags": [
+            "仅裁掉全透明余量并保留1源像素边缘；原始像素不缩放。预览按可见轮廓中心定位，横纵共用同一倍率，不拉伸。形状差异须在组合动作中确认。"
+          ],
+          "runtimeIntegrated": false,
+          "sha256": "d80156a4dcaa5e5100b19d635552de3335938038e141f884dfb237dd220fb8d7"
+        }
+      ]
+    },
+    {
+      "original": "assets/runtime/reanim/ZenGarden_fertilizer_bag3.png",
+      "hdFile": "assets/source-art/replanted/reanim-source-round20/ZenGarden_fertilizer_bag3--prepared.png",
+      "category": "reanim",
+      "groups": [
+        "ZenGarden_fertilizer"
+      ],
+      "review": {
+        "status": "approved",
+        "note": "",
+        "updatedAt": "2026-11-10T18:31:28.142Z",
+        "needsCrop": false
+      },
+      "selectedInRound": 20,
+      "candidateId": "round20:1ca7920e57a8b47ce0",
+      "source": {
+        "atlas": "ZenGarden_fertilizer.atlas",
+        "page": "zengarden_fertilizer",
+        "region": "ZenGarden_fertilizer_bag3.png",
+        "bounds": [
+          706,
+          84,
+          350,
+          365
+        ],
+        "rotation": 0,
+        "fields": {
+          "bounds": "706,84,350,365"
+        }
+      },
+      "processing": [
+        {
+          "file": "assets/source-art/replanted/reanim-source-round20/ZenGarden_fertilizer_bag3--prepared.png",
+          "sourceFile": "assets/source-art/replanted/reanim-source-audit/ZenGarden_fertilizer--d1d8941d49aa81aa.png",
+          "size": [
+            320,
+            313
+          ],
+          "sourceCanvas": [
+            350,
+            365
+          ],
+          "crop": [
+            8,
+            42,
+            328,
+            355
+          ],
+          "logicalCanvas": [
+            70,
+            73
+          ],
+          "logicalDrawRect": [
+            0.18496336347295994,
+            7.402792289896986,
+            65.63007327305408,
+            64.19441542020603
+          ],
+          "pixelPerLogical": [
+            4.875813541585413,
+            4.875813541585413
+          ],
+          "resampled": false,
+          "alphaAspectRatioDifference": 1.038484726688103,
+          "sha256": "f942bc9ba898f128cdb93de330279ddcf84ec0152a3a3378a16528e9ce2edb03"
+        }
+      ],
+      "processingFlags": [
+        "仅裁掉全透明余量并保留1源像素边缘；原始像素不缩放。预览按可见轮廓中心定位，横纵共用同一倍率，不拉伸。形状差异须在组合动作中确认。"
+      ],
+      "runtimeIntegrated": false,
+      "sha256": "f942bc9ba898f128cdb93de330279ddcf84ec0152a3a3378a16528e9ce2edb03",
+      "history": [
+        {
+          "original": "assets/runtime/reanim/ZenGarden_fertilizer_bag3.png",
+          "hdFile": "assets/source-art/replanted/native-parts/ZenGarden_fertilizer_bag3.png",
+          "category": "reanim",
+          "groups": [
+            "ZenGarden_fertilizer"
+          ],
+          "review": {
+            "status": "pending",
+            "note": "",
+            "updatedAt": "2026-11-09T09:46:38.505Z",
+            "needsCrop": false
+          },
+          "selectedInRound": 1,
+          "candidateId": "part:assets/runtime/reanim/ZenGarden_fertilizer_bag3.png"
+        },
+        {
+          "original": "assets/runtime/reanim/ZenGarden_fertilizer_bag3.png",
+          "hdFile": "assets/source-art/replanted/reanim-source-round20/ZenGarden_fertilizer_bag3--prepared.png",
+          "category": "reanim",
+          "groups": [
+            "ZenGarden_fertilizer"
+          ],
+          "review": {
+            "status": "approved",
+            "note": "",
+            "updatedAt": "2026-11-10T18:31:28.142Z",
+            "needsCrop": false
+          },
+          "selectedInRound": 20,
+          "candidateId": "round20:1ca7920e57a8b47ce0",
+          "source": {
+            "atlas": "ZenGarden_fertilizer.atlas",
+            "page": "zengarden_fertilizer",
+            "region": "ZenGarden_fertilizer_bag3.png",
+            "bounds": [
+              706,
+              84,
+              350,
+              365
+            ],
+            "rotation": 0,
+            "fields": {
+              "bounds": "706,84,350,365"
+            }
+          },
+          "processing": [
+            {
+              "file": "assets/source-art/replanted/reanim-source-round20/ZenGarden_fertilizer_bag3--prepared.png",
+              "sourceFile": "assets/source-art/replanted/reanim-source-audit/ZenGarden_fertilizer--d1d8941d49aa81aa.png",
+              "size": [
+                320,
+                313
+              ],
+              "sourceCanvas": [
+                350,
+                365
+              ],
+              "crop": [
+                8,
+                42,
+                328,
+                355
+              ],
+              "logicalCanvas": [
+                70,
+                73
+              ],
+              "logicalDrawRect": [
+                0.18496336347295994,
+                7.402792289896986,
+                65.63007327305408,
+                64.19441542020603
+              ],
+              "pixelPerLogical": [
+                4.875813541585413,
+                4.875813541585413
+              ],
+              "resampled": false,
+              "alphaAspectRatioDifference": 1.038484726688103,
+              "sha256": "f942bc9ba898f128cdb93de330279ddcf84ec0152a3a3378a16528e9ce2edb03"
+            }
+          ],
+          "processingFlags": [
+            "仅裁掉全透明余量并保留1源像素边缘；原始像素不缩放。预览按可见轮廓中心定位，横纵共用同一倍率，不拉伸。形状差异须在组合动作中确认。"
+          ],
+          "runtimeIntegrated": false,
+          "sha256": "f942bc9ba898f128cdb93de330279ddcf84ec0152a3a3378a16528e9ce2edb03"
+        }
+      ]
+    },
+    {
+      "original": "assets/runtime/reanim/ZenGarden_fertilize_bag1.png",
+      "hdFile": "assets/source-art/replanted/reanim-source-round20/ZenGarden_fertilize_bag1--prepared.png",
+      "category": "reanim",
+      "groups": [
+        "ZenGarden_fertilizer"
+      ],
+      "review": {
+        "status": "approved",
+        "note": "",
+        "updatedAt": "2026-11-10T18:31:30.223Z",
+        "needsCrop": false
+      },
+      "selectedInRound": 20,
+      "candidateId": "round20:e88c6d2517df1235e8",
+      "source": {
+        "atlas": "ZenGarden_fertilizer.atlas",
+        "page": "zengarden_fertilizer",
+        "region": "ZenGarden_fertilize_bag1.png",
+        "bounds": [
+          2,
+          84,
+          350,
+          365
+        ],
+        "rotation": 0,
+        "fields": {
+          "bounds": "2,84,350,365"
+        }
+      },
+      "processing": [
+        {
+          "file": "assets/source-art/replanted/reanim-source-round20/ZenGarden_fertilize_bag1--prepared.png",
+          "sourceFile": "assets/source-art/replanted/reanim-source-audit/ZenGarden_fertilizer--c2bcbc5b879d7ceb.png",
+          "size": [
+            339,
+            298
+          ],
+          "sourceCanvas": [
+            350,
+            365
+          ],
+          "crop": [
+            8,
+            57,
+            347,
+            355
+          ],
+          "logicalCanvas": [
+            70,
+            73
+          ],
+          "logicalDrawRect": [
+            1.4356598478550424,
+            11.116007771860776,
+            69.12868030428992,
+            60.76798445627845
+          ],
+          "pixelPerLogical": [
+            4.903898042141023,
+            4.903898042141023
+          ],
+          "resampled": false,
+          "alphaAspectRatioDifference": 1.0213135930047694,
+          "sha256": "668f4bc0397a6d342b53cf3408df3720542f820f2536627fde153cc12a4c406c"
+        }
+      ],
+      "processingFlags": [
+        "仅裁掉全透明余量并保留1源像素边缘；原始像素不缩放。预览按可见轮廓中心定位，横纵共用同一倍率，不拉伸。形状差异须在组合动作中确认。"
+      ],
+      "runtimeIntegrated": false,
+      "sha256": "668f4bc0397a6d342b53cf3408df3720542f820f2536627fde153cc12a4c406c",
+      "history": [
+        {
+          "original": "assets/runtime/reanim/ZenGarden_fertilize_bag1.png",
+          "hdFile": "assets/source-art/replanted/native-parts/ZenGarden_fertilize_bag1.png",
+          "category": "reanim",
+          "groups": [
+            "ZenGarden_fertilizer"
+          ],
+          "review": {
+            "status": "pending",
+            "note": "",
+            "updatedAt": "2026-11-09T09:46:37.121Z",
+            "needsCrop": false
+          },
+          "selectedInRound": 1,
+          "candidateId": "part:assets/runtime/reanim/ZenGarden_fertilize_bag1.png"
+        },
+        {
+          "original": "assets/runtime/reanim/ZenGarden_fertilize_bag1.png",
+          "hdFile": "assets/source-art/replanted/reanim-source-round20/ZenGarden_fertilize_bag1--prepared.png",
+          "category": "reanim",
+          "groups": [
+            "ZenGarden_fertilizer"
+          ],
+          "review": {
+            "status": "approved",
+            "note": "",
+            "updatedAt": "2026-11-10T18:31:30.223Z",
+            "needsCrop": false
+          },
+          "selectedInRound": 20,
+          "candidateId": "round20:e88c6d2517df1235e8",
+          "source": {
+            "atlas": "ZenGarden_fertilizer.atlas",
+            "page": "zengarden_fertilizer",
+            "region": "ZenGarden_fertilize_bag1.png",
+            "bounds": [
+              2,
+              84,
+              350,
+              365
+            ],
+            "rotation": 0,
+            "fields": {
+              "bounds": "2,84,350,365"
+            }
+          },
+          "processing": [
+            {
+              "file": "assets/source-art/replanted/reanim-source-round20/ZenGarden_fertilize_bag1--prepared.png",
+              "sourceFile": "assets/source-art/replanted/reanim-source-audit/ZenGarden_fertilizer--c2bcbc5b879d7ceb.png",
+              "size": [
+                339,
+                298
+              ],
+              "sourceCanvas": [
+                350,
+                365
+              ],
+              "crop": [
+                8,
+                57,
+                347,
+                355
+              ],
+              "logicalCanvas": [
+                70,
+                73
+              ],
+              "logicalDrawRect": [
+                1.4356598478550424,
+                11.116007771860776,
+                69.12868030428992,
+                60.76798445627845
+              ],
+              "pixelPerLogical": [
+                4.903898042141023,
+                4.903898042141023
+              ],
+              "resampled": false,
+              "alphaAspectRatioDifference": 1.0213135930047694,
+              "sha256": "668f4bc0397a6d342b53cf3408df3720542f820f2536627fde153cc12a4c406c"
+            }
+          ],
+          "processingFlags": [
+            "仅裁掉全透明余量并保留1源像素边缘；原始像素不缩放。预览按可见轮廓中心定位，横纵共用同一倍率，不拉伸。形状差异须在组合动作中确认。"
+          ],
+          "runtimeIntegrated": false,
+          "sha256": "668f4bc0397a6d342b53cf3408df3720542f820f2536627fde153cc12a4c406c"
+        }
+      ]
+    },
+    {
+      "original": "assets/runtime/reanim/ZenGarden_phonograph_needle.png",
+      "hdFile": "assets/source-art/replanted/reanim-source-round20/ZenGarden_phonograph_needle--prepared.png",
+      "category": "reanim",
+      "groups": [
+        "ZenGarden_phonograph"
+      ],
+      "review": {
+        "status": "approved",
+        "note": "",
+        "updatedAt": "2026-11-10T18:31:38.447Z",
+        "needsCrop": false
+      },
+      "selectedInRound": 20,
+      "candidateId": "round20:dfedde8dba66c45d7c",
+      "source": {
+        "atlas": "ZenGarden_phonograph.atlas",
+        "page": "zengarden_phonograph",
+        "region": "ZenGarden_phonograph_needle.png",
+        "bounds": [
+          204,
+          2,
+          75,
+          65
+        ],
+        "rotation": 90,
+        "fields": {
+          "bounds": "204,2,75,65",
+          "rotate": "90"
+        }
+      },
+      "processing": [
+        {
+          "file": "assets/source-art/replanted/reanim-source-round20/ZenGarden_phonograph_needle--prepared.png",
+          "sourceFile": "assets/source-art/replanted/reanim-source-audit/ZenGarden_phonograph--785932ab40aca37f.png",
+          "size": [
+            72,
+            64
+          ],
+          "sourceCanvas": [
+            75,
+            65
+          ],
+          "crop": [
+            0,
+            1,
+            72,
+            65
+          ],
+          "logicalCanvas": [
+            15,
+            13
+          ],
+          "logicalDrawRect": [
+            -0.07008074256672536,
+            -0.33410067037273805,
+            15.14016148513345,
+            13.457921320118622
+          ],
+          "pixelPerLogical": [
+            4.755563543407303,
+            4.755563543407303
+          ],
+          "resampled": false,
+          "alphaAspectRatioDifference": 0.9629629629629631,
+          "sha256": "de636a24f87aa436f1420b1effd60e3760ab751ab46d2e766a626ec100fd7eea"
+        }
+      ],
+      "processingFlags": [
+        "仅裁掉全透明余量并保留1源像素边缘；原始像素不缩放。预览按可见轮廓中心定位，横纵共用同一倍率，不拉伸。形状差异须在组合动作中确认。"
+      ],
+      "runtimeIntegrated": false,
+      "sha256": "de636a24f87aa436f1420b1effd60e3760ab751ab46d2e766a626ec100fd7eea",
+      "history": [
+        {
+          "original": "assets/runtime/reanim/ZenGarden_phonograph_needle.png",
+          "hdFile": "assets/source-art/replanted/native-parts/ZenGarden_phonograph_needle.png",
+          "category": "reanim",
+          "groups": [
+            "ZenGarden_phonograph"
+          ],
+          "review": {
+            "status": "pending",
+            "note": "",
+            "updatedAt": "2026-11-09T09:46:59.933Z",
+            "needsCrop": false
+          },
+          "selectedInRound": 1,
+          "candidateId": "part:assets/runtime/reanim/ZenGarden_phonograph_needle.png"
+        },
+        {
+          "original": "assets/runtime/reanim/ZenGarden_phonograph_needle.png",
+          "hdFile": "assets/source-art/replanted/reanim-source-round20/ZenGarden_phonograph_needle--prepared.png",
+          "category": "reanim",
+          "groups": [
+            "ZenGarden_phonograph"
+          ],
+          "review": {
+            "status": "approved",
+            "note": "",
+            "updatedAt": "2026-11-10T18:31:38.447Z",
+            "needsCrop": false
+          },
+          "selectedInRound": 20,
+          "candidateId": "round20:dfedde8dba66c45d7c",
+          "source": {
+            "atlas": "ZenGarden_phonograph.atlas",
+            "page": "zengarden_phonograph",
+            "region": "ZenGarden_phonograph_needle.png",
+            "bounds": [
+              204,
+              2,
+              75,
+              65
+            ],
+            "rotation": 90,
+            "fields": {
+              "bounds": "204,2,75,65",
+              "rotate": "90"
+            }
+          },
+          "processing": [
+            {
+              "file": "assets/source-art/replanted/reanim-source-round20/ZenGarden_phonograph_needle--prepared.png",
+              "sourceFile": "assets/source-art/replanted/reanim-source-audit/ZenGarden_phonograph--785932ab40aca37f.png",
+              "size": [
+                72,
+                64
+              ],
+              "sourceCanvas": [
+                75,
+                65
+              ],
+              "crop": [
+                0,
+                1,
+                72,
+                65
+              ],
+              "logicalCanvas": [
+                15,
+                13
+              ],
+              "logicalDrawRect": [
+                -0.07008074256672536,
+                -0.33410067037273805,
+                15.14016148513345,
+                13.457921320118622
+              ],
+              "pixelPerLogical": [
+                4.755563543407303,
+                4.755563543407303
+              ],
+              "resampled": false,
+              "alphaAspectRatioDifference": 0.9629629629629631,
+              "sha256": "de636a24f87aa436f1420b1effd60e3760ab751ab46d2e766a626ec100fd7eea"
+            }
+          ],
+          "processingFlags": [
+            "仅裁掉全透明余量并保留1源像素边缘；原始像素不缩放。预览按可见轮廓中心定位，横纵共用同一倍率，不拉伸。形状差异须在组合动作中确认。"
+          ],
+          "runtimeIntegrated": false,
+          "sha256": "de636a24f87aa436f1420b1effd60e3760ab751ab46d2e766a626ec100fd7eea"
+        }
+      ]
+    }
+  ]
+}

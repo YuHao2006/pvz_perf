@@ -1324,6 +1324,9 @@ void CutScene::AnimateBoard()
 	}
 	int aTimeSeedBankOnStart = TimeSeedBankOnStart + aTimePrepareEnd + mCrazyDaveTime;
 	int aTimeSeedBankOnEnd = TimeSeedBankOnEnd + aTimePrepareEnd + mCrazyDaveTime;
+	// A real update can cross the entire slide interval. Keep evaluating after
+	// its end: CalcPosition clamps to the destination instead of leaving the
+	// bank permanently above the screen (notably during the 5-10 opening).
 	if (!mApp->IsChallengeWithoutSeedBank() && mCutsceneTime > aTimeSeedBankOnStart)
 	{
 		int aSeedBankY = CalcPosition(std::int64_t(aTimeSeedBankOnStart) * 10'000'000, std::int64_t(aTimeSeedBankOnEnd) * 10'000'000, -IMAGE_SEEDBANK->mHeight, 0);

@@ -1,0 +1,39 @@
+{
+  "pipeline": "cached source UL x2 then UL x2, source-coordinate split, AI minimal repair, geometric registration, original-coordinate stitch",
+  "shader": "effects/Anime4K/Anime4K_Upscale_Denoise_UL.hlsl",
+  "parts": [
+    {
+      "key": "stone-upper",
+      "rect": [
+        275,
+        0,
+        800,
+        380
+      ],
+      "reference": "inputs/stone-upper-anime4k-pass2.png",
+      "original": "inputs/stone-upper-original.png"
+    },
+    {
+      "key": "stone-base",
+      "rect": [
+        0,
+        330,
+        795,
+        560
+      ],
+      "reference": "inputs/stone-base-anime4k-pass2.png",
+      "original": "inputs/stone-base-original.png"
+    },
+    {
+      "key": "right-ground",
+      "rect": [
+        730,
+        0,
+        1029,
+        560
+      ],
+      "reference": "inputs/right-ground-anime4k-pass2.png",
+      "original": "inputs/right-ground-original.png"
+    }
+  ]
+}

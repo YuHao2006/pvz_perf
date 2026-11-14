@@ -29,8 +29,9 @@ public:
     void ReserveStaticTextureSlots(unsigned int);
     void BindStaticTexture(D3d9Texture*, unsigned int);
     D3d9Texture* CreateCoverageMask(int, int, std::span<const unsigned char>, int);
-    D3d9Texture* CreateRenderImage(int, int);
+    D3d9Texture* CreateRenderImage(int width, int height, int pixelScale=1);
     void SetRenderImage(D3d9Texture*);
+    D3d9Texture* CopyTexture(D3d9Texture* source);
     D3d9Texture* CopyTextureRegion(D3d9Texture*, int, int, int, int);
     D3d9Texture* ProcessImage(D3d9Texture*, const GpuImageProcessing&);
     D3d9Texture* ComposeAlphaRaw(D3d9Texture*, D3d9Texture*, unsigned int, bool);

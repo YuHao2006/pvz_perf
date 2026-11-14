@@ -1,0 +1,364 @@
+{
+  "approvedItems": 27,
+  "runtimeImages": [
+    {
+      "original": "assets/runtime/images/Challenge_Thumbnails.jpg",
+      "file": "images/33a777cafc12064a56db9706.png",
+      "logicalSize": [
+        1760,
+        65
+      ],
+      "physicalSize": [
+        3520,
+        130
+      ],
+      "source": "assets/source-art/replanted/ui-source-round25/Challenge_Thumbnails--native-assembled.png",
+      "sourceSha256": "b8c89d5b7faeadae7463d630c810ba3d77a9b2df99704c412f5cd330a6674c24",
+      "approvedRound": 25,
+      "sources": [
+        {
+          "cell": 0,
+          "source": {
+            "atlas": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+            "region": "SPR_MiniGames_ZomBotany",
+            "file": "assets/source-art/replanted/ui-source-round25/SPR_MiniGames_ZomBotany.png"
+          }
+        },
+        {
+          "cell": 1,
+          "source": {
+            "atlas": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+            "region": "SPR_MiniGames_Beghouled",
+            "file": "assets/source-art/replanted/ui-source-round25/SPR_MiniGames_Beghouled.png"
+          }
+        },
+        {
+          "cell": 2,
+          "source": {
+            "atlas": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+            "region": "SPR_MiniGames_SlotMachine",
+            "file": "assets/source-art/replanted/ui-source-round25/SPR_MiniGames_SlotMachine.png"
+          }
+        },
+        {
+          "cell": 3,
+          "source": {
+            "atlas": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+            "region": "SPR_MiniGames_ItsRainingSeeds",
+            "file": "assets/source-art/replanted/ui-source-round25/SPR_MiniGames_ItsRainingSeeds.png"
+          }
+        },
+        {
+          "cell": 4,
+          "source": {
+            "atlas": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+            "region": "SPR_MiniGames_ColumnLikeYouSeeEm",
+            "file": "assets/source-art/replanted/ui-source-round25/SPR_MiniGames_ColumnLikeYouSeeEm.png"
+          }
+        },
+        {
+          "cell": 5,
+          "source": {
+            "atlas": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+            "region": "SPR_MiniGames_SeeingStars",
+            "file": "assets/source-art/replanted/ui-source-round25/SPR_MiniGames_SeeingStars.png"
+          }
+        },
+        {
+          "cell": 6,
+          "source": {
+            "atlas": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+            "region": "SPR_MiniGames_Wall-NutBowling",
+            "file": "assets/source-art/replanted/ui-source-round25/SPR_MiniGames_Wall-NutBowling.png"
+          }
+        },
+        {
+          "cell": 7,
+          "source": {
+            "atlas": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+            "region": "SPR_MiniGames_Zombiquarium",
+            "file": "assets/source-art/replanted/ui-source-round25/SPR_MiniGames_Zombiquarium.png"
+          }
+        },
+        {
+          "cell": 8,
+          "source": {
+            "atlas": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+            "region": "SPR_MiniGames_Invisi-Ghoul",
+            "file": "assets/source-art/replanted/ui-source-round25/SPR_MiniGames_Invisi-Ghoul.png"
+          }
+        },
+        {
+          "cell": 9,
+          "source": {
+            "atlas": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+            "region": "SPR_Challenges_Thumbnails_15",
+            "file": "assets/source-art/replanted/ui-source-round25/SPR_Challenges_Thumbnails_15.png"
+          }
+        },
+        {
+          "cell": 10,
+          "source": {
+            "atlas": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+            "region": "SPR_Puzzle_Vase",
+            "file": "assets/source-art/replanted/ui-source-round25/SPR_Puzzle_Vase.png"
+          }
+        },
+        {
+          "cell": 11,
+          "source": {
+            "atlas": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+            "region": "SPR_Puzzle_Zombies",
+            "file": "assets/source-art/replanted/ui-source-round25/SPR_Puzzle_Zombies.png"
+          }
+        },
+        {
+          "cell": 12,
+          "source": {
+            "atlas": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+            "region": "SPR_MiniGames_BigTroubleLittleZombie",
+            "file": "assets/source-art/replanted/ui-source-round25/SPR_MiniGames_BigTroubleLittleZombie.png"
+          }
+        },
+        {
+          "cell": 14,
+          "source": {
+            "atlas": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+            "region": "SPR_MiniGames_PogoParty",
+            "file": "assets/source-art/replanted/ui-source-round25/SPR_MiniGames_PogoParty.png"
+          }
+        },
+        {
+          "cell": 15,
+          "source": {
+            "atlas": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+            "region": "SPR_MiniGames_PortalCombat",
+            "file": "assets/source-art/replanted/ui-source-round25/SPR_MiniGames_PortalCombat.png"
+          }
+        },
+        {
+          "cell": 16,
+          "source": {
+            "atlas": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+            "region": "SPR_MiniGames_WhackaZombie",
+            "file": "assets/source-art/replanted/ui-source-round25/SPR_MiniGames_WhackaZombie.png"
+          }
+        },
+        {
+          "cell": 17,
+          "source": {
+            "atlas": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+            "region": "SPR_MiniGames_BobsledBonanza",
+            "file": "assets/source-art/replanted/ui-source-round25/SPR_MiniGames_BobsledBonanza.png"
+          }
+        },
+        {
+          "cell": 18,
+          "source": {
+            "atlas": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+            "region": "SPR_MiniGames_ZombieNimbleZombieQuick",
+            "file": "assets/source-art/replanted/ui-source-round25/SPR_MiniGames_ZombieNimbleZombieQuick.png"
+          }
+        },
+        {
+          "cell": 19,
+          "source": {
+            "atlas": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+            "region": "SPR_MiniGames_DrZombossRevenge",
+            "file": "assets/source-art/replanted/ui-source-round25/SPR_MiniGames_DrZombossRevenge.png"
+          }
+        },
+        {
+          "cell": 20,
+          "source": {
+            "atlas": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+            "region": "SPR_MiniGames_BeghouledTwist",
+            "file": "assets/source-art/replanted/ui-source-round25/SPR_MiniGames_BeghouledTwist.png"
+          }
+        },
+        {
+          "cell": 21,
+          "source": {
+            "atlas": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+            "region": "SPR_MiniGames_LastStand",
+            "file": "assets/source-art/replanted/ui-source-round25/SPR_MiniGames_LastStand.png"
+          }
+        }
+      ],
+      "mapping": {
+        "logicalDrawRect": [
+          0,
+          0,
+          1760,
+          65
+        ],
+        "originalLogicalCanvas": [
+          1760,
+          65
+        ]
+      }
+    },
+    {
+      "original": "assets/runtime/images/Survival_Thumbnails.jpg",
+      "file": "images/3edd007b2ed39413ab21da0c.png",
+      "logicalSize": [
+        880,
+        65
+      ],
+      "physicalSize": [
+        1760,
+        130
+      ],
+      "source": "assets/source-art/replanted/ui-source-round25/Survival_Thumbnails--native-assembled.png",
+      "sourceSha256": "7b1d557944ab025a7f3e6142053b4f4b5a5e32a0cc26b11dc3494c53ad111ae5",
+      "approvedRound": 25,
+      "sources": [
+        {
+          "cell": 0,
+          "scene": 0,
+          "source": {
+            "atlas": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+            "region": "SPR_Endless_Thumbnails_Day",
+            "file": "assets/source-art/replanted/ui-source-round25/SPR_Endless_Thumbnails_Day.png"
+          }
+        },
+        {
+          "cell": 1,
+          "scene": 1,
+          "source": {
+            "atlas": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+            "region": "SPR_Endless_Thumbnails_Night",
+            "file": "assets/source-art/replanted/ui-source-round25/SPR_Endless_Thumbnails_Night.png"
+          }
+        },
+        {
+          "cell": 2,
+          "scene": 2,
+          "source": {
+            "atlas": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+            "region": "SPR_Endless_Thumbnails_Pool",
+            "file": "assets/source-art/replanted/ui-source-round25/SPR_Endless_Thumbnails_Pool.png"
+          }
+        },
+        {
+          "cell": 3,
+          "scene": 3,
+          "source": {
+            "atlas": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+            "region": "SPR_Endless_Thumbnails_Fog",
+            "file": "assets/source-art/replanted/ui-source-round25/SPR_Endless_Thumbnails_Fog.png"
+          }
+        },
+        {
+          "cell": 4,
+          "scene": 4,
+          "source": {
+            "atlas": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+            "region": "SPR_Endless_Thumbnails_Roof",
+            "file": "assets/source-art/replanted/ui-source-round25/SPR_Endless_Thumbnails_Roof.png"
+          }
+        },
+        {
+          "cell": 5,
+          "scene": 0,
+          "source": {
+            "atlas": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+            "region": "SPR_Endless_Thumbnails_Day",
+            "file": "assets/source-art/replanted/ui-source-round25/SPR_Endless_Thumbnails_Day.png"
+          }
+        },
+        {
+          "cell": 6,
+          "scene": 1,
+          "source": {
+            "atlas": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+            "region": "SPR_Endless_Thumbnails_Night",
+            "file": "assets/source-art/replanted/ui-source-round25/SPR_Endless_Thumbnails_Night.png"
+          }
+        },
+        {
+          "cell": 7,
+          "scene": 2,
+          "source": {
+            "atlas": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+            "region": "SPR_Endless_Thumbnails_Pool",
+            "file": "assets/source-art/replanted/ui-source-round25/SPR_Endless_Thumbnails_Pool.png"
+          }
+        },
+        {
+          "cell": 8,
+          "scene": 3,
+          "source": {
+            "atlas": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+            "region": "SPR_Endless_Thumbnails_Fog",
+            "file": "assets/source-art/replanted/ui-source-round25/SPR_Endless_Thumbnails_Fog.png"
+          }
+        },
+        {
+          "cell": 9,
+          "scene": 4,
+          "source": {
+            "atlas": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+            "region": "SPR_Endless_Thumbnails_Roof",
+            "file": "assets/source-art/replanted/ui-source-round25/SPR_Endless_Thumbnails_Roof.png"
+          }
+        },
+        {
+          "cell": 10,
+          "scene": 2,
+          "source": {
+            "atlas": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+            "region": "SPR_Endless_Thumbnails_Pool",
+            "file": "assets/source-art/replanted/ui-source-round25/SPR_Endless_Thumbnails_Pool.png"
+          }
+        }
+      ],
+      "mapping": {
+        "logicalDrawRect": [
+          0,
+          0,
+          880,
+          65
+        ],
+        "originalLogicalCanvas": [
+          880,
+          65
+        ]
+      }
+    },
+    {
+      "original": "assets/runtime/images/MiniGame_trophy.png",
+      "file": "images/f5f36846101be92db25d39d2.png",
+      "logicalSize": [
+        72,
+        71
+      ],
+      "physicalSize": [
+        144,
+        142
+      ],
+      "source": "assets/source-art/replanted/ui-source-round25/MiniGame_trophy--native-assembled.png",
+      "sourceSha256": "2c9476da1f2edd9d696d654b3b9ccedd9a7beff282550c8b93d2c2ded00ef9b3",
+      "approvedRound": 25,
+      "sources": [
+        {
+          "atlas": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+          "region": "SPR_Challenges_ItemWindow_Trophy",
+          "file": "assets/source-art/replanted/ui-source-round25/SPR_Challenges_ItemWindow_Trophy.png"
+        }
+      ],
+      "mapping": {
+        "logicalDrawRect": [
+          0,
+          0,
+          72,
+          71
+        ],
+        "originalLogicalCanvas": [
+          72,
+          71
+        ]
+      }
+    }
+  ]
+}

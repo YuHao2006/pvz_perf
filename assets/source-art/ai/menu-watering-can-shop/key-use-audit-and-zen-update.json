@@ -1,0 +1,56 @@
+{
+  "updated": [
+    {
+      "original": "assets/runtime/images/zenshopbutton.png",
+      "runtimeFile": "images/5f5ed5c4edc3f48749fdf5e4.png",
+      "logicalSize": [
+        109,
+        57
+      ],
+      "source": "assets/source-art/ai/menu-watering-can-shop/candidates/SelectorScreen_Store--approved-aligned-4x.png",
+      "master": "assets/source-art/ai/menu-watering-can-shop/candidates/zenshopbutton--shared-shop-key-4x.png",
+      "uniformScale": 0.6404494382022472,
+      "translationAt4x": [
+        51.48314606741573,
+        0.0
+      ]
+    },
+    {
+      "original": "assets/runtime/images/zenshopbutton_highlight.png",
+      "runtimeFile": "images/d03ebb6c8536efc9e91202af.png",
+      "logicalSize": [
+        109,
+        57
+      ],
+      "source": "assets/source-art/ai/menu-watering-can-shop/candidates/SelectorScreen_StoreHighlight--approved-aligned-4x.png",
+      "master": "assets/source-art/ai/menu-watering-can-shop/candidates/zenshopbutton_highlight--shared-shop-key-4x.png",
+      "uniformScale": 0.6404494382022472,
+      "translationAt4x": [
+        51.48314606741573,
+        0.0
+      ]
+    }
+  ],
+  "drawingCodeChanged": false,
+  "newBranches": 0,
+  "normalHoverAlphaExact": true,
+  "uses": [
+    {
+      "resource": "IMAGE_SELECTORSCREEN_STORE / HIGHLIGHT",
+      "where": "GameSelector main menu",
+      "status": "already updated"
+    },
+    {
+      "resource": "IMAGE_ZENSHOPBUTTON / HIGHLIGHT",
+      "where": "Board constructor: Zen Garden and Tree of Wisdom",
+      "status": "updated here"
+    },
+    {
+      "resource": "IMAGE_CARKEYS",
+      "where": "Coin reward + AwardScreen",
+      "status": "already native HD, retained; separate bare-key sprite"
+    }
+  ],
+  "status": "shared-main-menu-art approach reverted",
+  "correction": "1073 Zen shop buttons have distinct wide composition; independent candidates prepared separately"
+}

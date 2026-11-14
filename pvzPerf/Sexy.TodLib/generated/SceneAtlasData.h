@@ -39,23 +39,35 @@ void Free();
 namespace AlmanacAtlas {
 extern Sexy::GpuTexture* Texture;
 enum class Sprite : std::uint16_t {
-    ALMANAC_INDEXBACK = 0,
-    ALMANAC_PLANTBACK = 1,
-    ALMANAC_ZOMBIEBACK = 2,
-    ALMANAC_PLANTCARD = 3,
-    ALMANAC_ZOMBIECARD = 4,
-    ALMANAC_ZOMBIEWINDOW = 5,
-    ALMANAC_ZOMBIEWINDOW2 = 6,
-    ALMANAC_ZOMBIEBLANK = 7,
-    ALMANAC_CLOSEBUTTON = 8,
-    ALMANAC_CLOSEBUTTONHIGHLIGHT = 9,
-    ALMANAC_INDEXBUTTON = 10,
-    ALMANAC_INDEXBUTTONHIGHLIGHT = 11,
-    ALMANAC_IMITATER = 12,
-    ALMANAC_COMMON_BACK = 13,
-    Count = 14,
+    ALMANAC_PAPER = 0,
+    ALMANAC_INDEXPANELS = 1,
+    ALMANAC_PLANTDECOR = 2,
+    ALMANAC_ZOMBIEDECOR = 3,
+    ALMANAC_INDEXHEADER = 4,
+    ALMANAC_PLANTHEADER = 5,
+    ALMANAC_ZOMBIEHEADER = 6,
+    ALMANAC_INDEXBACK = 7,
+    ALMANAC_PLANTBACK = 8,
+    ALMANAC_ZOMBIEBACK = 9,
+    ALMANAC_PLANTCARD = 10,
+    ALMANAC_ZOMBIECARD = 11,
+    ALMANAC_ZOMBIEWINDOW = 12,
+    ALMANAC_ZOMBIEWINDOW2 = 13,
+    ALMANAC_ZOMBIEBLANK = 14,
+    ALMANAC_GROUNDDAY = 15,
+    ALMANAC_GROUNDNIGHT = 16,
+    ALMANAC_GROUNDPOOL = 17,
+    ALMANAC_GROUNDNIGHTPOOL = 18,
+    ALMANAC_GROUNDROOF = 19,
+    ALMANAC_GROUNDICE = 20,
+    ALMANAC_CLOSEBUTTON = 21,
+    ALMANAC_CLOSEBUTTONHIGHLIGHT = 22,
+    ALMANAC_INDEXBUTTON = 23,
+    ALMANAC_INDEXBUTTONHIGHLIGHT = 24,
+    ALMANAC_IMITATER = 25,
+    Count = 26,
 };
-inline constexpr std::size_t Count = 14;
+inline constexpr std::size_t Count = 26;
 extern const Sexy::TextureRegion Images[Count];
 extern const Sexy::Rect Crops[Count];
 void Load();
@@ -297,12 +309,18 @@ enum class Sprite : std::uint16_t {
     TOUCH_FRAME_TR = 25,
     TOUCH_FRAME_BL = 26,
     TOUCH_FRAME_BR = 27,
-    Count = 28,
+    SEED_CARD_54 = 28,
+    SEED_CARD_55 = 29,
+    SEED_CARD_56 = 30,
+    SEED_CARD_57 = 31,
+    SEED_CARD_58 = 32,
+    SEED_CARD_59 = 33,
+    Count = 34,
 };
-inline constexpr std::size_t Count = 28;
+inline constexpr std::size_t Count = 34;
 extern const Sexy::TextureRegion Images[Count];
-inline constexpr bool HasSeedCards=false;
-extern const Sexy::TextureRegion SeedCards[53];
+inline constexpr bool HasSeedCards=true;
+extern const Sexy::TextureRegion SeedCards[60];
 void Load();
 void Free();
 }

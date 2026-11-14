@@ -9159,8 +9159,8 @@ void AllResourceGroups(SexyAppBase& app)
         "Cannot parse production resource plans for full loading");
     Require(manager.GetNumResources()==RESOURCE_LOAD_PLAN_RECORD_COUNT &&
         manager.GetNumImages()==RESOURCE_LOAD_IMAGE_COUNT &&
-        manager.GetNumSounds()==168 && manager.GetNumFonts()==20,
-        "Production resource acceptance counts changed");
+        manager.GetNumSounds()==168 && manager.GetNumFonts()==21, // HD adds its approved title-font binding.
+        ("Production resource acceptance counts changed: records="+std::to_string(manager.GetNumResources())+"/"+std::to_string(RESOURCE_LOAD_PLAN_RECORD_COUNT)+", images="+std::to_string(manager.GetNumImages())+"/"+std::to_string(RESOURCE_LOAD_IMAGE_COUNT)+", sounds="+std::to_string(manager.GetNumSounds())+", fonts="+std::to_string(manager.GetNumFonts())).c_str());
     unsigned expectedVolumeCalls=0,expectedPanCalls=0,loadedGroups=0;
     std::vector<SharedImageMap::key_type> imageRecipes;
     for (unsigned group=1;group<=RESOURCE_GROUP_COUNT;++group)

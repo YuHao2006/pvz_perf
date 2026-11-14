@@ -438,6 +438,36 @@ void BatchedAlphaComposition(Sexy::VulkanRenderer& renderer) {
     std::cout<<"PASS: 1100 alpha dispatches retain distinct image bindings across transfer batches\n";
 }
 
+void HighResolutionCachedTarget(Sexy::VulkanRenderer& renderer) {
+    using namespace Sexy;
+    auto* target=renderer.CreateRenderImage(4,3,2);
+    renderer.SetRenderImage(target);
+    Require(renderer.BeginScene(),"Cannot begin HD cache target");
+    SubmitImage(renderer,Quad(0,0,4,3,1,0,0),renderer.whiteTexture,false,false,VulkanBlend::Opaque);
+    const VulkanClip clip{1,1,2,1};
+    SubmitImage(renderer,Quad(0,0,4,3,0,0,1),renderer.whiteTexture,false,false,VulkanBlend::Opaque,&clip);
+    renderer.SetRenderImage(nullptr);
+    const auto original=renderer.ReadTexturePixels(target);
+    Require(original.width==8 && original.height==6,"HD cache lost its native pixel dimensions");
+    for(int y=0;y<6;++y) for(int x=0;x<8;++x)
+        Require(original.pixels[y*8+x]==(x>=2 && x<6 && y>=2 && y<4 ? 0xff0000ffu : 0xffff0000u),
+            "HD target projection or clipping changed logical geometry");
+    auto* copy=renderer.CopyTexture(target);
+    renderer.SetRenderImage(copy);
+    Require(renderer.BeginScene(),"Cannot draw into cloned HD cache");
+    SubmitImage(renderer,Quad(0,0,1,1,0,1,0),renderer.whiteTexture,false,false,VulkanBlend::Opaque);
+    renderer.SetRenderImage(nullptr);
+    const auto changed=renderer.ReadTexturePixels(copy);
+    Require(changed.width==8 && changed.height==6,"HD clone dimensions changed");
+    for(int y=0;y<6;++y) for(int x=0;x<8;++x)
+        Require(changed.pixels[y*8+x]==(x<2 && y<2 ? 0xff00ff00u : original.pixels[y*8+x]),
+            "HD clone lost pixels or logical drawing scale");
+    Require(renderer.ReadTexturePixels(target).pixels==original.pixels,"HD clone modified its source");
+    renderer.DestroyTexture(copy);
+    renderer.DestroyTexture(target);
+    std::cout<<"PASS HD cache: native pixels, logical clip, writable independent clone\n";
+}
+
 void RawFilterAliasEdges(Sexy::VulkanRenderer& renderer) {
     using namespace Sexy;
     // Opaque red beside fully transparent blue exposes straight-RGB leakage.
@@ -779,6 +809,7 @@ void Run() {
         std::string(PVZ_NATIVE_SHADER_DIR)+"/game_vs.spv",
         std::string(PVZ_NATIVE_SHADER_DIR)+"/game_ps.spv");
     renderer.PrepareLoadingPipelines();
+    HighResolutionCachedTarget(renderer);
     Require(!renderer.PresentRetainedScene(), "An uninitialized scene was falsely presented");
     Require(!renderer.PresentRetainedScene(), "Repeated startup deferral changed scene state");
     TwoFrameReuseAndRetirement(renderer,window,native);

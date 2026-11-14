@@ -1,0 +1,48 @@
+[
+  {
+    "resource": "plantshadow",
+    "logicalCanvas": [
+      86,
+      36
+    ],
+    "originalAlphaBounds": [
+      12,
+      4,
+      76,
+      32
+    ],
+    "hdAlphaBoundsInLogicalPixels": [
+      1.0,
+      0.5,
+      85.0,
+      35.5
+    ],
+    "originalAlphaMax": 128,
+    "hdAlphaMax": 128,
+    "usedBy": "Zombie::DrawShadow and shared plant shadow texture",
+    "finding": "Native opaque region was fitted to complete original canvas, losing original transparent padding"
+  },
+  {
+    "resource": "plantshadow2",
+    "logicalCanvas": [
+      86,
+      36
+    ],
+    "originalAlphaBounds": [
+      14,
+      5,
+      74,
+      33
+    ],
+    "hdAlphaBoundsInLogicalPixels": [
+      1.0,
+      1.0,
+      85.0,
+      35.0
+    ],
+    "originalAlphaMax": 64,
+    "hdAlphaMax": 64,
+    "usedBy": "Zombie::DrawShadow and shared plant shadow texture",
+    "finding": "Native opaque region was fitted to complete original canvas, losing original transparent padding"
+  }
+]

@@ -1,0 +1,51 @@
+{
+  "method": "Composite v1 AI watering can over original black semitransparent shadow",
+  "original": "assets/runtime/images/SelectorScreen_ZenGarden.png",
+  "shadowSelection": {
+    "rgb": [
+      0,
+      0,
+      0
+    ],
+    "alphaMin": 1,
+    "alphaMax": 128,
+    "opaqueOutlineExcluded": true
+  },
+  "shadowUpscale": "Lanczos 4x original alpha; RGB remains pure black",
+  "logicalCanvas": [
+    191,
+    163
+  ],
+  "masterSize": [
+    764,
+    652
+  ],
+  "previewSize": [
+    382,
+    326
+  ],
+  "normalHoverShareExactAlpha": true,
+  "runtimeBranchesAdded": 0,
+  "transforms": [
+    {
+      "state": "normal",
+      "uniformScale": 0.5526036131774708,
+      "translationAt4x": [
+        6.342189160467626,
+        2.7630180658873655
+      ]
+    },
+    {
+      "state": "hover",
+      "uniformScale": 0.5549626467449307,
+      "translationAt4x": [
+        5.78014941302024,
+        1.9423692636072474
+      ]
+    }
+  ],
+  "outputs": [
+    "assets/source-art/ai/menu-watering-can-shop/candidates/ZenGarden--normal-original-shadow-v3-4x.png",
+    "assets/source-art/ai/menu-watering-can-shop/candidates/ZenGarden--hover-original-shadow-v3-4x.png"
+  ]
+}

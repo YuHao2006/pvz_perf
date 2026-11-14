@@ -1,0 +1,146 @@
+[
+  {
+    "original": "assets/runtime/images/seeds.png",
+    "originalCell": 3,
+    "originalCrop": [
+      150,
+      0,
+      200,
+      70
+    ],
+    "usage": "宝石迷阵：填坑",
+    "source": {
+      "bundle": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+      "pathId": 3131682693412851435,
+      "type": "Sprite",
+      "name": "SPR_Beghouled_Crater",
+      "file": "assets/source-art/replanted/ui-source-round23/SPR_Beghouled_Crater.png",
+      "size": [
+        188,
+        259
+      ],
+      "sha256": "f8d2e0b3fa0f9179675412d9150da09996dc65fc28f5d4939697e2ace0998e13"
+    },
+    "state": "source located; shared sheet assembly pending"
+  },
+  {
+    "original": "assets/runtime/images/seeds.png",
+    "originalCell": 4,
+    "originalCrop": [
+      200,
+      0,
+      250,
+      70
+    ],
+    "usage": "宝石迷阵：洗牌",
+    "source": {
+      "bundle": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+      "pathId": 4122470751701798635,
+      "type": "Sprite",
+      "name": "SPR_Beghouled_Refresh",
+      "file": "assets/source-art/replanted/ui-source-round23/SPR_Beghouled_Refresh.png",
+      "size": [
+        188,
+        259
+      ],
+      "sha256": "f2e494f2d27110fc79037857ca9733d9bfbee21fc3a4a9bc720958f7f95a9b5f"
+    },
+    "state": "source located; shared sheet assembly pending"
+  },
+  {
+    "original": "assets/runtime/images/seeds.png",
+    "originalCell": 5,
+    "originalCrop": [
+      250,
+      0,
+      300,
+      70
+    ],
+    "usage": "老虎机：阳光",
+    "source": {
+      "bundle": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+      "pathId": -3351126655120863509,
+      "type": "Sprite",
+      "name": "SPR_SlotMachine_Sun",
+      "file": "assets/source-art/replanted/ui-source-round23/SPR_SlotMachine_Sun.png",
+      "size": [
+        188,
+        259
+      ],
+      "sha256": "b01ab202da81ba4d1a1a73c736e4650207dd9c10cb217161b2a9eae25a0e11b3"
+    },
+    "state": "source located; shared sheet assembly pending"
+  },
+  {
+    "original": "assets/runtime/images/seeds.png",
+    "originalCell": 6,
+    "originalCrop": [
+      300,
+      0,
+      350,
+      70
+    ],
+    "usage": "老虎机：钻石",
+    "source": {
+      "bundle": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+      "pathId": -4385633296583651605,
+      "type": "Sprite",
+      "name": "SPR_SlotMachine_Diamond",
+      "file": "assets/source-art/replanted/ui-source-round23/SPR_SlotMachine_Diamond.png",
+      "size": [
+        188,
+        259
+      ],
+      "sha256": "ce9ebee774a1d247fab5fb53e967da8602eefa244378842020997f44e37b448d"
+    },
+    "state": "source located; shared sheet assembly pending"
+  },
+  {
+    "original": "assets/runtime/images/seeds.png",
+    "originalCell": 7,
+    "originalCrop": [
+      350,
+      0,
+      400,
+      70
+    ],
+    "usage": "僵尸水族馆：潜水僵尸",
+    "source": {
+      "bundle": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+      "pathId": 1557018304701370091,
+      "type": "Sprite",
+      "name": "SPR_Zombiquarium_Snorkel",
+      "file": "assets/source-art/replanted/ui-source-round23/SPR_Zombiquarium_Snorkel.png",
+      "size": [
+        188,
+        260
+      ],
+      "sha256": "33e69e311ed822b938cb33b7986ff916c22e8ddf044e259d635b4a458affac48"
+    },
+    "state": "source located; shared sheet assembly pending"
+  },
+  {
+    "original": "assets/runtime/images/seeds.png",
+    "originalCell": 8,
+    "originalCrop": [
+      400,
+      0,
+      450,
+      70
+    ],
+    "usage": "僵尸水族馆：奖杯",
+    "source": {
+      "bundle": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+      "pathId": -6384671499744538901,
+      "type": "Sprite",
+      "name": "SPR_Zombiquarium_Trophy",
+      "file": "assets/source-art/replanted/ui-source-round23/SPR_Zombiquarium_Trophy.png",
+      "size": [
+        188,
+        260
+      ],
+      "sha256": "2382ce034de7199fcbbc74fe2668856c86705a74d44a33e8f42f41fa36b77861"
+    },
+    "state": "source located; shared sheet assembly pending"
+  }
+]

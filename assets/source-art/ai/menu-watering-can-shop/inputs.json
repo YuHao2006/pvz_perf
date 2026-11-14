@@ -1,0 +1,50 @@
+{
+  "pipeline": [
+    "Original",
+    "Anime4K UL x2",
+    "Anime4K UL x2",
+    "AI minimal repair"
+  ],
+  "items": [
+    {
+      "resource": "SelectorScreen_ZenGarden",
+      "original": "assets/runtime/images/SelectorScreen_ZenGarden.png",
+      "reference": "assets/source-art/ai/menu-watering-can-shop/inputs/SelectorScreen_ZenGarden--anime4k-pass2.png",
+      "logicalCanvas": [
+        191,
+        163
+      ],
+      "originalSha256": "f31e18f84fc3bd23ebaf5b18d64dedacf56da8bad1b945155a4b5f2c8c79a932"
+    },
+    {
+      "resource": "SelectorScreen_ZenGardenHighlight",
+      "original": "assets/runtime/images/SelectorScreen_ZenGardenHighlight.png",
+      "reference": "assets/source-art/ai/menu-watering-can-shop/inputs/SelectorScreen_ZenGardenHighlight--anime4k-pass2.png",
+      "logicalCanvas": [
+        191,
+        163
+      ],
+      "originalSha256": "95d884246415c98beabb066e3f2fda60d7fe026db8746ea220bbb0ff593774d4"
+    },
+    {
+      "resource": "SelectorScreen_Store",
+      "original": "assets/runtime/images/SelectorScreen_Store.png",
+      "reference": "assets/source-art/ai/menu-watering-can-shop/inputs/SelectorScreen_Store--anime4k-pass2.png",
+      "logicalCanvas": [
+        130,
+        89
+      ],
+      "originalSha256": "ea0544b81b24d7fb9d0e81004e6dad82658c0a47667b4fa8c6781c2402ab98fe"
+    },
+    {
+      "resource": "SelectorScreen_StoreHighlight",
+      "original": "assets/runtime/images/SelectorScreen_StoreHighlight.png",
+      "reference": "assets/source-art/ai/menu-watering-can-shop/inputs/SelectorScreen_StoreHighlight--anime4k-pass2.png",
+      "logicalCanvas": [
+        130,
+        89
+      ],
+      "originalSha256": "82b76eb02a56ad1a997c1b8d0750e3edb285cf2424df1151780aa80042981616"
+    }
+  ]
+}

@@ -1,0 +1,1166 @@
+{
+  "counts": {
+    "approved": 8
+  },
+  "assets": [
+    {
+      "original": "assets/runtime/reanim/SelectorScreen_WoodSign3.png",
+      "hdFile": "assets/source-art/replanted/ui-source-round22/SelectorScreen_WoodSign3--shared.png",
+      "category": "reanim",
+      "groups": [
+        "SelectorScreen"
+      ],
+      "review": {
+        "status": "approved",
+        "note": "用户确认全部通过；钥匙和奖励图鉴已核实用于掉落物及奖励介绍页。",
+        "updatedAt": "2026-11-11",
+        "needsCrop": false
+      },
+      "selectedInRound": 22,
+      "candidateId": "round22:f06bf9acc8a79075ef",
+      "source": {
+        "atlas": "SPR_MainMenu_Button_Zombatar",
+        "region": "shared normal silhouette / green letter fill"
+      },
+      "processing": [
+        {
+          "file": "assets/source-art/replanted/ui-source-round22/SelectorScreen_WoodSign3--shared.png",
+          "sourceFile": "assets/source-art/replanted/ui-source-round22/SelectorScreen_WoodSign3--shared.png",
+          "size": [
+            1008,
+            299
+          ],
+          "logicalCanvas": [
+            279,
+            83
+          ],
+          "logicalDrawRect": [
+            0,
+            0,
+            279,
+            83
+          ],
+          "sha256": "166a0522ec4fef3f79840222ea4053bc95741d116cfd2d47a1b1b98bd47774c5"
+        }
+      ],
+      "processingFlags": [
+        "两种状态共用普通图的画布、木牌、绳子与alpha；悬停只改右侧文字填色，不移动图像、不改变命中区域。"
+      ],
+      "runtimeIntegrated": true,
+      "sha256": "166a0522ec4fef3f79840222ea4053bc95741d116cfd2d47a1b1b98bd47774c5",
+      "history": [
+        {
+          "original": "assets/runtime/reanim/SelectorScreen_WoodSign3.png",
+          "hdFile": "assets/source-art/replanted/reanim-source-round11/SelectorScreen_WoodSign3--native-english.png",
+          "category": "reanim",
+          "groups": [
+            "SelectorScreen"
+          ],
+          "review": {
+            "status": "approved",
+            "note": "",
+            "updatedAt": "2026-11-10T09:21:30.140Z",
+            "needsCrop": false
+          },
+          "selectedInRound": 14,
+          "candidateId": "round11:f06bf9acc8a79075ef",
+          "source": {
+            "atlas": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+            "region": "SPR_MainMenu_Button_Zombatar",
+            "type": "Sprite",
+            "pathId": -4456111488279062936
+          },
+          "processing": [
+            {
+              "file": "assets/source-art/replanted/reanim-source-round11/SelectorScreen_WoodSign3--native-english.png",
+              "sourceFile": "assets/source-art/replanted/reanim-source-round11/SPR_MainMenu_Button_Zombatar.png",
+              "source": {
+                "atlas": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+                "region": "SPR_MainMenu_Button_Zombatar",
+                "type": "Sprite",
+                "pathId": -4456111488279062936
+              },
+              "size": [
+                1008,
+                299
+              ],
+              "sha256": "166a0522ec4fef3f79840222ea4053bc95741d116cfd2d47a1b1b98bd47774c5",
+              "steps": [
+                "Keep native source pixels and existing English logo."
+              ],
+              "logicalCanvas": [
+                279,
+                83
+              ]
+            }
+          ],
+          "processingFlags": [
+            "找到重植版现成的 Zombatar 英文木牌；普通／高亮状态分别对应，不重画标识。"
+          ],
+          "runtimeIntegrated": false,
+          "sha256": "166a0522ec4fef3f79840222ea4053bc95741d116cfd2d47a1b1b98bd47774c5"
+        },
+        {
+          "original": "assets/runtime/reanim/SelectorScreen_WoodSign3.png",
+          "hdFile": "assets/source-art/replanted/ui-source-round22/SelectorScreen_WoodSign3--shared.png",
+          "category": "reanim",
+          "groups": [
+            "SelectorScreen"
+          ],
+          "review": {
+            "status": "approved",
+            "note": "用户确认全部通过；钥匙和奖励图鉴已核实用于掉落物及奖励介绍页。",
+            "updatedAt": "2026-11-11",
+            "needsCrop": false
+          },
+          "selectedInRound": 22,
+          "candidateId": "round22:f06bf9acc8a79075ef",
+          "source": {
+            "atlas": "SPR_MainMenu_Button_Zombatar",
+            "region": "shared normal silhouette / green letter fill"
+          },
+          "processing": [
+            {
+              "file": "assets/source-art/replanted/ui-source-round22/SelectorScreen_WoodSign3--shared.png",
+              "sourceFile": "assets/source-art/replanted/ui-source-round22/SelectorScreen_WoodSign3--shared.png",
+              "size": [
+                1008,
+                299
+              ],
+              "logicalCanvas": [
+                279,
+                83
+              ],
+              "logicalDrawRect": [
+                0,
+                0,
+                279,
+                83
+              ],
+              "sha256": "166a0522ec4fef3f79840222ea4053bc95741d116cfd2d47a1b1b98bd47774c5"
+            }
+          ],
+          "processingFlags": [
+            "两种状态共用普通图的画布、木牌、绳子与alpha；悬停只改右侧文字填色，不移动图像、不改变命中区域。"
+          ],
+          "runtimeIntegrated": true,
+          "sha256": "166a0522ec4fef3f79840222ea4053bc95741d116cfd2d47a1b1b98bd47774c5"
+        }
+      ]
+    },
+    {
+      "original": "assets/runtime/reanim/SelectorScreen_WoodSign3_press.png",
+      "hdFile": "assets/source-art/replanted/ui-source-round22/SelectorScreen_WoodSign3_press--shared.png",
+      "category": "reanim",
+      "groups": [
+        "SelectorScreen"
+      ],
+      "review": {
+        "status": "approved",
+        "note": "用户确认全部通过；钥匙和奖励图鉴已核实用于掉落物及奖励介绍页。",
+        "updatedAt": "2026-11-11",
+        "needsCrop": false
+      },
+      "selectedInRound": 22,
+      "candidateId": "round22:f71daea41669ab36af",
+      "source": {
+        "atlas": "SPR_MainMenu_Button_Zombatar",
+        "region": "shared normal silhouette / green letter fill"
+      },
+      "processing": [
+        {
+          "file": "assets/source-art/replanted/ui-source-round22/SelectorScreen_WoodSign3_press--shared.png",
+          "sourceFile": "assets/source-art/replanted/ui-source-round22/SelectorScreen_WoodSign3_press--shared.png",
+          "size": [
+            1008,
+            299
+          ],
+          "logicalCanvas": [
+            279,
+            83
+          ],
+          "logicalDrawRect": [
+            0,
+            0,
+            279,
+            83
+          ],
+          "sha256": "304851f7d5ad635d720300d779c4a57157878009e520708ae1c1af085186fdd7"
+        }
+      ],
+      "processingFlags": [
+        "两种状态共用普通图的画布、木牌、绳子与alpha；悬停只改右侧文字填色，不移动图像、不改变命中区域。"
+      ],
+      "runtimeIntegrated": true,
+      "sha256": "304851f7d5ad635d720300d779c4a57157878009e520708ae1c1af085186fdd7",
+      "history": [
+        {
+          "original": "assets/runtime/reanim/SelectorScreen_WoodSign3_press.png",
+          "hdFile": "assets/source-art/replanted/reanim-source-round11/SelectorScreen_WoodSign3_press--native-english.png",
+          "category": "reanim",
+          "groups": [
+            "SelectorScreen"
+          ],
+          "review": {
+            "status": "approved",
+            "note": "",
+            "updatedAt": "2026-11-10T09:21:32.810Z",
+            "needsCrop": false
+          },
+          "selectedInRound": 14,
+          "candidateId": "round11:fd785e36e4f4675776",
+          "source": {
+            "atlas": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+            "region": "SPR_MainMenu_Button_Zombatar_Over",
+            "type": "Sprite",
+            "pathId": -5764609745810880801
+          },
+          "processing": [
+            {
+              "file": "assets/source-art/replanted/reanim-source-round11/SelectorScreen_WoodSign3_press--native-english.png",
+              "sourceFile": "assets/source-art/replanted/reanim-source-round11/SPR_MainMenu_Button_Zombatar_Over.png",
+              "source": {
+                "atlas": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+                "region": "SPR_MainMenu_Button_Zombatar_Over",
+                "type": "Sprite",
+                "pathId": -5764609745810880801
+              },
+              "size": [
+                1007,
+                299
+              ],
+              "sha256": "7ddbaf71403b8da15a5e84ebd0ed93d7a0ae315842be91ad50f4ce3f8b99ec53",
+              "steps": [
+                "Keep native source pixels and existing English logo."
+              ],
+              "logicalCanvas": [
+                279,
+                83
+              ]
+            }
+          ],
+          "processingFlags": [
+            "找到重植版现成的 Zombatar 英文木牌；普通／高亮状态分别对应，不重画标识。"
+          ],
+          "runtimeIntegrated": false,
+          "sha256": "7ddbaf71403b8da15a5e84ebd0ed93d7a0ae315842be91ad50f4ce3f8b99ec53"
+        },
+        {
+          "original": "assets/runtime/reanim/SelectorScreen_WoodSign3_press.png",
+          "hdFile": "assets/source-art/replanted/ui-source-round22/SelectorScreen_WoodSign3_press--shared.png",
+          "category": "reanim",
+          "groups": [
+            "SelectorScreen"
+          ],
+          "review": {
+            "status": "approved",
+            "note": "用户确认全部通过；钥匙和奖励图鉴已核实用于掉落物及奖励介绍页。",
+            "updatedAt": "2026-11-11",
+            "needsCrop": false
+          },
+          "selectedInRound": 22,
+          "candidateId": "round22:f71daea41669ab36af",
+          "source": {
+            "atlas": "SPR_MainMenu_Button_Zombatar",
+            "region": "shared normal silhouette / green letter fill"
+          },
+          "processing": [
+            {
+              "file": "assets/source-art/replanted/ui-source-round22/SelectorScreen_WoodSign3_press--shared.png",
+              "sourceFile": "assets/source-art/replanted/ui-source-round22/SelectorScreen_WoodSign3_press--shared.png",
+              "size": [
+                1008,
+                299
+              ],
+              "logicalCanvas": [
+                279,
+                83
+              ],
+              "logicalDrawRect": [
+                0,
+                0,
+                279,
+                83
+              ],
+              "sha256": "304851f7d5ad635d720300d779c4a57157878009e520708ae1c1af085186fdd7"
+            }
+          ],
+          "processingFlags": [
+            "两种状态共用普通图的画布、木牌、绳子与alpha；悬停只改右侧文字填色，不移动图像、不改变命中区域。"
+          ],
+          "runtimeIntegrated": true,
+          "sha256": "304851f7d5ad635d720300d779c4a57157878009e520708ae1c1af085186fdd7"
+        }
+      ]
+    },
+    {
+      "original": "assets/runtime/reanim/SelectorScreen_BG_Center.png",
+      "hdFile": "assets/source-art/replanted/ui-source-round22/SelectorScreen_BG_Center--replanted-native.png",
+      "category": "reanim",
+      "groups": [
+        "SelectorScreen"
+      ],
+      "review": {
+        "status": "approved",
+        "note": "用户确认全部通过；钥匙和奖励图鉴已核实用于掉落物及奖励介绍页。",
+        "updatedAt": "2026-11-11",
+        "needsCrop": false
+      },
+      "selectedInRound": 22,
+      "candidateId": "round22:de0b5211ce374bd1ac",
+      "source": {
+        "atlas": "SPR_MainMenu_HorizonExtended.png",
+        "region": "HorizonExtended crop",
+        "crop": [
+          440,
+          0,
+          3320,
+          1400
+        ]
+      },
+      "processing": [
+        {
+          "file": "assets/source-art/replanted/ui-source-round22/SelectorScreen_BG_Center--replanted-native.png",
+          "sourceFile": "assets/source-art/replanted/ui-source-round22/SelectorScreen_BG_Center--replanted-native.png",
+          "size": [
+            2880,
+            1400
+          ],
+          "logicalCanvas": [
+            720,
+            350
+          ],
+          "logicalDrawRect": [
+            0,
+            0,
+            720,
+            350
+          ],
+          "sha256": "862516ec390e162cf0d090496eb1871d257ad92944627eba6279b413b743f76e"
+        }
+      ],
+      "processingFlags": [
+        "采用重植版全景现有等比裁切，2880×1400源像素对应720×350逻辑画布，不拉伸。与原版邻屋／栅栏构图有差异，墓碑仍沿用本项目修复素材。"
+      ],
+      "runtimeIntegrated": true,
+      "sha256": "862516ec390e162cf0d090496eb1871d257ad92944627eba6279b413b743f76e",
+      "history": [
+        {
+          "original": "assets/runtime/reanim/SelectorScreen_BG_Center.png",
+          "hdFile": "assets/source-art/replanted/reanim-source-round6/SPR_MainMenu_Background_Tree--634bb716b8f8.png",
+          "category": "reanim",
+          "groups": [
+            "SelectorScreen"
+          ],
+          "review": {
+            "status": "wrong",
+            "note": "",
+            "needsCrop": false,
+            "updatedAt": "2026-11-10T07:23:43.752Z"
+          },
+          "selectedInRound": 6,
+          "candidateId": "round6:e2fd075fb93eb271ef",
+          "source": {
+            "atlas": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+            "region": "SPR_MainMenu_Background_Tree",
+            "pathId": -2208174765962129659,
+            "type": "Sprite"
+          },
+          "alternatives": [
+            {
+              "file": "assets/source-art/replanted/reanim-source-round6/SPR_MainMenu_BushExtended--ff58fe287918.png",
+              "source": {
+                "atlas": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+                "region": "SPR_MainMenu_BushExtended",
+                "pathId": -596123656537010649,
+                "type": "Sprite"
+              },
+              "size": [
+                3853,
+                917
+              ],
+              "sha256": "5ff26a9069f75d6c418e1196fc3a96bc808145853a7acd9a8b99d47aa1f2e6cc",
+              "attachments": []
+            },
+            {
+              "file": "assets/source-art/replanted/reanim-source-round6/SPR_MainMenu_Sky--d3e198978fa0.png",
+              "source": {
+                "atlas": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+                "region": "SPR_MainMenu_Sky",
+                "pathId": 2713584282845673062,
+                "type": "Sprite"
+              },
+              "size": [
+                4096,
+                2160
+              ],
+              "sha256": "7505ffc7c9eeb95faa1f5f72a1a1ff7eb97cc88691e06bd7ccef0243ae5c4b46",
+              "attachments": []
+            }
+          ],
+          "processingFlags": [
+            "material: located through full recursive bundle index; sequence/combined layer must be aligned or composited, not an automatically approved match"
+          ],
+          "runtimeIntegrated": false,
+          "sha256": "7c970470873093eb3deacd7ea378757e55df7139b02487848dd3d84c3dd14b66"
+        },
+        {
+          "original": "assets/runtime/reanim/SelectorScreen_BG_Center.png",
+          "hdFile": "assets/source-art/ai/main-menu-restoration/candidates/SelectorScreen_BG_Center--stitched-2x-v1.png",
+          "category": "reanim",
+          "groups": [
+            "SelectorScreen"
+          ],
+          "review": {
+            "status": "approved",
+            "note": "用户在对话中确认：全部通过。",
+            "updatedAt": "2026-11-10",
+            "needsCrop": false
+          },
+          "selectedInRound": 16,
+          "candidateId": "round16:d14ac6191b5a4aa66f",
+          "source": {
+            "atlas": "AI：原版主界面修复",
+            "region": "SelectorScreen_BG_Center",
+            "promptFile": "assets/source-art/ai/main-menu-restoration/background-generation-v1.json",
+            "mode": "built-in image_gen"
+          },
+          "processing": [
+            {
+              "file": "assets/source-art/ai/main-menu-restoration/candidates/SelectorScreen_BG_Center--stitched-2x-v1.png",
+              "sourceFile": "assets/source-art/ai/main-menu-restoration/inputs/SelectorScreen_BG_Center--tile0--original.png",
+              "size": [
+                1440,
+                700
+              ],
+              "logicalCanvas": [
+                720,
+                350
+              ],
+              "sha256": "d14ac6191b5a4aa66fb9227b76fd3cab1d4d9359309d4a703032103be7b6c689",
+              "tiles": [
+                {
+                  "rawAIFile": "assets/source-art/ai/main-menu-restoration/candidates/SelectorScreen_BG_Center--tile0--raw-v1.png",
+                  "rect": [
+                    0,
+                    0,
+                    720,
+                    350
+                  ],
+                  "registration": {
+                    "sourceSolidBounds": [
+                      0,
+                      6,
+                      720,
+                      350
+                    ],
+                    "generatedSolidBounds": [
+                      0,
+                      10,
+                      1800,
+                      874
+                    ],
+                    "inverseAffine": [
+                      1.25,
+                      0,
+                      0.0,
+                      0,
+                      1.255813953488372,
+                      -5.069767441860465
+                    ]
+                  }
+                }
+              ],
+              "seams": [],
+              "alphaIoU": 0.9807515989087169
+            }
+          ],
+          "processingFlags": [
+            "按原版图像，经两遍Anime4K参照后单张AI修复，按透明主体边界对齐回原逻辑画布。 局部轮廓与细节仍可能变化，需要复审。"
+          ],
+          "runtimeIntegrated": false,
+          "sha256": "d14ac6191b5a4aa66fb9227b76fd3cab1d4d9359309d4a703032103be7b6c689"
+        },
+        {
+          "original": "assets/runtime/reanim/SelectorScreen_BG_Center.png",
+          "hdFile": "assets/source-art/replanted/ui-source-round22/SelectorScreen_BG_Center--replanted-native.png",
+          "category": "reanim",
+          "groups": [
+            "SelectorScreen"
+          ],
+          "review": {
+            "status": "approved",
+            "note": "用户确认全部通过；钥匙和奖励图鉴已核实用于掉落物及奖励介绍页。",
+            "updatedAt": "2026-11-11",
+            "needsCrop": false
+          },
+          "selectedInRound": 22,
+          "candidateId": "round22:de0b5211ce374bd1ac",
+          "source": {
+            "atlas": "SPR_MainMenu_HorizonExtended.png",
+            "region": "HorizonExtended crop",
+            "crop": [
+              440,
+              0,
+              3320,
+              1400
+            ]
+          },
+          "processing": [
+            {
+              "file": "assets/source-art/replanted/ui-source-round22/SelectorScreen_BG_Center--replanted-native.png",
+              "sourceFile": "assets/source-art/replanted/ui-source-round22/SelectorScreen_BG_Center--replanted-native.png",
+              "size": [
+                2880,
+                1400
+              ],
+              "logicalCanvas": [
+                720,
+                350
+              ],
+              "logicalDrawRect": [
+                0,
+                0,
+                720,
+                350
+              ],
+              "sha256": "862516ec390e162cf0d090496eb1871d257ad92944627eba6279b413b743f76e"
+            }
+          ],
+          "processingFlags": [
+            "采用重植版全景现有等比裁切，2880×1400源像素对应720×350逻辑画布，不拉伸。与原版邻屋／栅栏构图有差异，墓碑仍沿用本项目修复素材。"
+          ],
+          "runtimeIntegrated": true,
+          "sha256": "862516ec390e162cf0d090496eb1871d257ad92944627eba6279b413b743f76e"
+        }
+      ]
+    },
+    {
+      "original": "assets/runtime/images/Sunflower_trophy.png",
+      "hdFile": "assets/source-art/replanted/ui-source-round22/Sunflower_trophy--silver-gold-sheet.png",
+      "category": "ui",
+      "groups": [
+        "主菜单UI"
+      ],
+      "review": {
+        "status": "approved",
+        "note": "用户确认全部通过；钥匙和奖励图鉴已核实用于掉落物及奖励介绍页。",
+        "updatedAt": "2026-11-11",
+        "needsCrop": false
+      },
+      "selectedInRound": 22,
+      "candidateId": "round22:7427d626419f6043ed",
+      "source": {
+        "atlas": "coinsprites",
+        "region": "SPR_MainMenu_Button_AchievementTrophy_Silver + Gold"
+      },
+      "processing": [
+        {
+          "file": "assets/source-art/replanted/ui-source-round22/Sunflower_trophy--silver-gold-sheet.png",
+          "sourceFile": "assets/source-art/replanted/ui-source-round22/Sunflower_trophy--silver-gold-sheet.png",
+          "size": [
+            1256,
+            1076
+          ],
+          "logicalCanvas": [
+            314,
+            269
+          ],
+          "logicalDrawRect": [
+            0,
+            0,
+            314,
+            269
+          ],
+          "sha256": "46edc5b837c5fb6bd4dd1e388649a246ef89b94adbc9ad08d5a1e6a5aea3d27d"
+        }
+      ],
+      "processingFlags": [
+        "补齐银／金两格，顺序与原版一致；包含光晕，原生Sprite单独保留。组合母版按旧图可见区域等比配准，游戏运行版本再缩到2倍。"
+      ],
+      "runtimeIntegrated": true,
+      "sha256": "46edc5b837c5fb6bd4dd1e388649a246ef89b94adbc9ad08d5a1e6a5aea3d27d",
+      "history": [
+        {
+          "original": "assets/runtime/images/Sunflower_trophy.png",
+          "hdFile": "assets/source-art/replanted/sprite-candidates-round3/Sunflower_trophy--a9e6655d93daa930.png",
+          "category": "ui",
+          "groups": [
+            "其他 UI"
+          ],
+          "review": {
+            "status": "pending",
+            "note": "银向呢",
+            "updatedAt": "2026-11-09T12:48:43.745Z",
+            "needsCrop": false
+          },
+          "selectedInRound": 3,
+          "candidateId": "round3-sprite:a9e6655d93daa930",
+          "source": {
+            "bundle": "defaultlocalgroup_assets_coinsprites_1567b864fe644461aad8d5ae5eaa9c05.bundle",
+            "type": "Sprite",
+            "pathId": 644203744304105898,
+            "name": "SPR_MainMenu_Button_AchievementTrophy_Gold"
+          },
+          "pixelSize": [
+            327,
+            572
+          ],
+          "sha256": "32d876d24c4e159d395e508c6840e240892cdd4e496c4d84fdf841fabbb8f742",
+          "processingFlags": [
+            "本项目可能按序列帧／分块读取，需按原帧网格重组；不能用一张新 Sprite 覆盖整张旧帧表。原网格 {'columns': 2, 'rows': 1}",
+            "这是同用途 UI 组件的来源定位；新旧构图、文字或九宫格可能不同，尚不是可直接替换的成品。"
+          ],
+          "sourceEvidence": null,
+          "runtimeIntegrated": false
+        },
+        {
+          "original": "assets/runtime/images/Sunflower_trophy.png",
+          "hdFile": "assets/source-art/replanted/ui-source-round22/Sunflower_trophy--silver-gold-sheet.png",
+          "category": "ui",
+          "groups": [
+            "主菜单UI"
+          ],
+          "review": {
+            "status": "approved",
+            "note": "用户确认全部通过；钥匙和奖励图鉴已核实用于掉落物及奖励介绍页。",
+            "updatedAt": "2026-11-11",
+            "needsCrop": false
+          },
+          "selectedInRound": 22,
+          "candidateId": "round22:7427d626419f6043ed",
+          "source": {
+            "atlas": "coinsprites",
+            "region": "SPR_MainMenu_Button_AchievementTrophy_Silver + Gold"
+          },
+          "processing": [
+            {
+              "file": "assets/source-art/replanted/ui-source-round22/Sunflower_trophy--silver-gold-sheet.png",
+              "sourceFile": "assets/source-art/replanted/ui-source-round22/Sunflower_trophy--silver-gold-sheet.png",
+              "size": [
+                1256,
+                1076
+              ],
+              "logicalCanvas": [
+                314,
+                269
+              ],
+              "logicalDrawRect": [
+                0,
+                0,
+                314,
+                269
+              ],
+              "sha256": "46edc5b837c5fb6bd4dd1e388649a246ef89b94adbc9ad08d5a1e6a5aea3d27d"
+            }
+          ],
+          "processingFlags": [
+            "补齐银／金两格，顺序与原版一致；包含光晕，原生Sprite单独保留。组合母版按旧图可见区域等比配准，游戏运行版本再缩到2倍。"
+          ],
+          "runtimeIntegrated": true,
+          "sha256": "46edc5b837c5fb6bd4dd1e388649a246ef89b94adbc9ad08d5a1e6a5aea3d27d"
+        }
+      ]
+    },
+    {
+      "original": "assets/runtime/images/CarKeys.png",
+      "hdFile": "assets/source-art/replanted/ui-source-round22/CarKeys--native.png",
+      "category": "ui",
+      "groups": [
+        "主菜单UI"
+      ],
+      "review": {
+        "status": "approved",
+        "note": "用户确认全部通过；钥匙和奖励图鉴已核实用于掉落物及奖励介绍页。",
+        "updatedAt": "2026-11-11",
+        "needsCrop": false
+      },
+      "selectedInRound": 22,
+      "candidateId": "round22:4577f3f11eeb296507",
+      "source": {
+        "atlas": "defaultlocalgroup_assets_coinsprites_1567b864fe644461aad8d5ae5eaa9c05.bundle",
+        "region": "SPR_CarKeys"
+      },
+      "processing": [
+        {
+          "file": "assets/source-art/replanted/ui-source-round22/CarKeys--native.png",
+          "sourceFile": "assets/source-art/replanted/ui-source-round22/CarKeys--native.png",
+          "size": [
+            500,
+            484
+          ],
+          "logicalCanvas": [
+            80,
+            80
+          ],
+          "logicalDrawRect": [
+            6.1468885397712825,
+            7.278188106498604,
+            70.70622292045744,
+            68.44362378700279
+          ],
+          "sha256": "2d439e01de330d580f4671535e0f965703ad188b2360184b7fa6ca652c4a384d"
+        }
+      ],
+      "processingFlags": [
+        "使用重植版原生Sprite，保留原始像素，按原版可见轮廓居中等比配准。"
+      ],
+      "runtimeIntegrated": true,
+      "sha256": "2d439e01de330d580f4671535e0f965703ad188b2360184b7fa6ca652c4a384d",
+      "history": [
+        {
+          "original": "assets/runtime/images/CarKeys.png",
+          "hdFile": "assets/source-art/replanted/ui-candidates-round2/CarKeys--eace9f02a0422ac1.png",
+          "category": "ui",
+          "groups": [
+            "新增 UI"
+          ],
+          "review": {
+            "status": "pending",
+            "note": "素材不太一样",
+            "updatedAt": "2026-11-09T12:06:46.057Z",
+            "needsCrop": false
+          },
+          "selectedInRound": 2,
+          "candidateId": "round2-ui:eace9f02a0422ac1",
+          "source": {
+            "bundle": "defaultlocalgroup_assets_coinsprites_1567b864fe644461aad8d5ae5eaa9c05.bundle",
+            "type": "Sprite",
+            "pathId": 3014562400593301414,
+            "name": "SPR_CarKeys"
+          },
+          "pixelSize": [
+            500,
+            484
+          ],
+          "sha256": "2d439e01de330d580f4671535e0f965703ad188b2360184b7fa6ca652c4a384d",
+          "previousState": "unmatched"
+        },
+        {
+          "original": "assets/runtime/images/CarKeys.png",
+          "hdFile": "assets/source-art/replanted/ui-source-round22/CarKeys--native.png",
+          "category": "ui",
+          "groups": [
+            "主菜单UI"
+          ],
+          "review": {
+            "status": "approved",
+            "note": "用户确认全部通过；钥匙和奖励图鉴已核实用于掉落物及奖励介绍页。",
+            "updatedAt": "2026-11-11",
+            "needsCrop": false
+          },
+          "selectedInRound": 22,
+          "candidateId": "round22:4577f3f11eeb296507",
+          "source": {
+            "atlas": "defaultlocalgroup_assets_coinsprites_1567b864fe644461aad8d5ae5eaa9c05.bundle",
+            "region": "SPR_CarKeys"
+          },
+          "processing": [
+            {
+              "file": "assets/source-art/replanted/ui-source-round22/CarKeys--native.png",
+              "sourceFile": "assets/source-art/replanted/ui-source-round22/CarKeys--native.png",
+              "size": [
+                500,
+                484
+              ],
+              "logicalCanvas": [
+                80,
+                80
+              ],
+              "logicalDrawRect": [
+                6.1468885397712825,
+                7.278188106498604,
+                70.70622292045744,
+                68.44362378700279
+              ],
+              "sha256": "2d439e01de330d580f4671535e0f965703ad188b2360184b7fa6ca652c4a384d"
+            }
+          ],
+          "processingFlags": [
+            "使用重植版原生Sprite，保留原始像素，按原版可见轮廓居中等比配准。"
+          ],
+          "runtimeIntegrated": true,
+          "sha256": "2d439e01de330d580f4671535e0f965703ad188b2360184b7fa6ca652c4a384d"
+        }
+      ]
+    },
+    {
+      "original": "assets/runtime/images/Almanac.png",
+      "hdFile": "assets/source-art/replanted/ui-source-round22/Almanac--native.png",
+      "category": "ui",
+      "groups": [
+        "主菜单UI"
+      ],
+      "review": {
+        "status": "approved",
+        "note": "用户确认全部通过；钥匙和奖励图鉴已核实用于掉落物及奖励介绍页。",
+        "updatedAt": "2026-11-11",
+        "needsCrop": false
+      },
+      "selectedInRound": 22,
+      "candidateId": "round22:211bf875a646ac7677",
+      "source": {
+        "atlas": "defaultlocalgroup_assets_coinsprites_1567b864fe644461aad8d5ae5eaa9c05.bundle",
+        "region": "SPR_Almanac"
+      },
+      "processing": [
+        {
+          "file": "assets/source-art/replanted/ui-source-round22/Almanac--native.png",
+          "sourceFile": "assets/source-art/replanted/ui-source-round22/Almanac--native.png",
+          "size": [
+            500,
+            528
+          ],
+          "logicalCanvas": [
+            80,
+            80
+          ],
+          "logicalDrawRect": [
+            4.176164050536045,
+            4.5395397243645945,
+            68.92336536036939,
+            72.78307382055007
+          ],
+          "sha256": "f3d26b38ceb176d39ecd9833b7ec2296ceac1dc328d7e349089331e82e9f0cf7"
+        }
+      ],
+      "processingFlags": [
+        "使用重植版原生Sprite，保留原始像素，按原版可见轮廓居中等比配准。"
+      ],
+      "runtimeIntegrated": true,
+      "sha256": "f3d26b38ceb176d39ecd9833b7ec2296ceac1dc328d7e349089331e82e9f0cf7",
+      "history": [
+        {
+          "original": "assets/runtime/images/Almanac.png",
+          "hdFile": "assets/source-art/replanted/ui-candidates-round2/Almanac--1088e163123d487c.png",
+          "category": "ui",
+          "groups": [
+            "新增 UI"
+          ],
+          "review": {
+            "status": "pending",
+            "note": "重植版素材不太一样啊",
+            "updatedAt": "2026-11-09T12:06:30.254Z",
+            "needsCrop": false
+          },
+          "selectedInRound": 2,
+          "candidateId": "round2-ui:1088e163123d487c",
+          "source": {
+            "bundle": "defaultlocalgroup_assets_coinsprites_1567b864fe644461aad8d5ae5eaa9c05.bundle",
+            "type": "Sprite",
+            "pathId": 3184376822212085236,
+            "name": "SPR_Almanac"
+          },
+          "pixelSize": [
+            500,
+            528
+          ],
+          "sha256": "f3d26b38ceb176d39ecd9833b7ec2296ceac1dc328d7e349089331e82e9f0cf7",
+          "previousState": "unmatched"
+        },
+        {
+          "original": "assets/runtime/images/Almanac.png",
+          "hdFile": "assets/source-art/replanted/ui-source-round22/Almanac--native.png",
+          "category": "ui",
+          "groups": [
+            "主菜单UI"
+          ],
+          "review": {
+            "status": "approved",
+            "note": "用户确认全部通过；钥匙和奖励图鉴已核实用于掉落物及奖励介绍页。",
+            "updatedAt": "2026-11-11",
+            "needsCrop": false
+          },
+          "selectedInRound": 22,
+          "candidateId": "round22:211bf875a646ac7677",
+          "source": {
+            "atlas": "defaultlocalgroup_assets_coinsprites_1567b864fe644461aad8d5ae5eaa9c05.bundle",
+            "region": "SPR_Almanac"
+          },
+          "processing": [
+            {
+              "file": "assets/source-art/replanted/ui-source-round22/Almanac--native.png",
+              "sourceFile": "assets/source-art/replanted/ui-source-round22/Almanac--native.png",
+              "size": [
+                500,
+                528
+              ],
+              "logicalCanvas": [
+                80,
+                80
+              ],
+              "logicalDrawRect": [
+                4.176164050536045,
+                4.5395397243645945,
+                68.92336536036939,
+                72.78307382055007
+              ],
+              "sha256": "f3d26b38ceb176d39ecd9833b7ec2296ceac1dc328d7e349089331e82e9f0cf7"
+            }
+          ],
+          "processingFlags": [
+            "使用重植版原生Sprite，保留原始像素，按原版可见轮廓居中等比配准。"
+          ],
+          "runtimeIntegrated": true,
+          "sha256": "f3d26b38ceb176d39ecd9833b7ec2296ceac1dc328d7e349089331e82e9f0cf7"
+        }
+      ]
+    },
+    {
+      "original": "assets/runtime/images/SelectorScreen_Almanac.png",
+      "hdFile": "assets/source-art/replanted/ui-source-round22/SelectorScreen_Almanac--english.png",
+      "category": "ui",
+      "groups": [
+        "主菜单UI"
+      ],
+      "review": {
+        "status": "approved",
+        "note": "用户确认全部通过；钥匙和奖励图鉴已核实用于掉落物及奖励介绍页。",
+        "updatedAt": "2026-11-11",
+        "needsCrop": false
+      },
+      "selectedInRound": 22,
+      "candidateId": "round22:aa513d4fad8f3849b4",
+      "source": {
+        "atlas": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+        "region": "SPR_MainMenu_Button_Almanac + SPR_Almanac English ink"
+      },
+      "processing": [
+        {
+          "file": "assets/source-art/replanted/ui-source-round22/SelectorScreen_Almanac--english.png",
+          "sourceFile": "assets/source-art/replanted/ui-source-round22/SelectorScreen_Almanac--english.png",
+          "size": [
+            496,
+            425
+          ],
+          "logicalCanvas": [
+            99,
+            99
+          ],
+          "logicalDrawRect": [
+            0,
+            0,
+            99,
+            99
+          ],
+          "sha256": "98c820db89aa3d3d7fdd9e6fd5f5e11d597ea6d64c4e1e958b666e3706be28ea"
+        }
+      ],
+      "processingFlags": [
+        "主菜单书本原生底图没有文字；从重植版奖励书提取现成英文墨迹，按封面平面离线合成，不使用低清文字。普通／高亮采用同一文字层。"
+      ],
+      "runtimeIntegrated": true,
+      "sha256": "98c820db89aa3d3d7fdd9e6fd5f5e11d597ea6d64c4e1e958b666e3706be28ea",
+      "history": [
+        {
+          "original": "assets/runtime/images/SelectorScreen_Almanac.png",
+          "hdFile": "assets/source-art/replanted/sprite-candidates-round3/SelectorScreen_Almanac--25355e813b9dffaf.png",
+          "category": "ui",
+          "groups": [
+            "主菜单"
+          ],
+          "review": {
+            "status": "pending",
+            "note": "文字不见了",
+            "updatedAt": "2026-11-09T12:50:06.605Z",
+            "needsCrop": false
+          },
+          "selectedInRound": 3,
+          "candidateId": "round3-sprite:25355e813b9dffaf",
+          "source": {
+            "bundle": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+            "type": "Sprite",
+            "pathId": -2053701548708769513,
+            "name": "SPR_MainMenu_Button_Almanac",
+            "width": 504.0,
+            "height": 425.0
+          },
+          "pixelSize": [
+            496,
+            425
+          ],
+          "sha256": "d1067a620d2f4e9dea4b0e9a0c47a7a75d3d07ccc6b8cca81d33144dfc243c52",
+          "processingFlags": [
+            "这是同用途 UI 组件的来源定位；新旧构图、文字或九宫格可能不同，尚不是可直接替换的成品。"
+          ],
+          "sourceEvidence": null,
+          "runtimeIntegrated": false
+        },
+        {
+          "original": "assets/runtime/images/SelectorScreen_Almanac.png",
+          "hdFile": "assets/source-art/replanted/ui-source-round22/SelectorScreen_Almanac--english.png",
+          "category": "ui",
+          "groups": [
+            "主菜单UI"
+          ],
+          "review": {
+            "status": "approved",
+            "note": "用户确认全部通过；钥匙和奖励图鉴已核实用于掉落物及奖励介绍页。",
+            "updatedAt": "2026-11-11",
+            "needsCrop": false
+          },
+          "selectedInRound": 22,
+          "candidateId": "round22:aa513d4fad8f3849b4",
+          "source": {
+            "atlas": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+            "region": "SPR_MainMenu_Button_Almanac + SPR_Almanac English ink"
+          },
+          "processing": [
+            {
+              "file": "assets/source-art/replanted/ui-source-round22/SelectorScreen_Almanac--english.png",
+              "sourceFile": "assets/source-art/replanted/ui-source-round22/SelectorScreen_Almanac--english.png",
+              "size": [
+                496,
+                425
+              ],
+              "logicalCanvas": [
+                99,
+                99
+              ],
+              "logicalDrawRect": [
+                0,
+                0,
+                99,
+                99
+              ],
+              "sha256": "98c820db89aa3d3d7fdd9e6fd5f5e11d597ea6d64c4e1e958b666e3706be28ea"
+            }
+          ],
+          "processingFlags": [
+            "主菜单书本原生底图没有文字；从重植版奖励书提取现成英文墨迹，按封面平面离线合成，不使用低清文字。普通／高亮采用同一文字层。"
+          ],
+          "runtimeIntegrated": true,
+          "sha256": "98c820db89aa3d3d7fdd9e6fd5f5e11d597ea6d64c4e1e958b666e3706be28ea"
+        }
+      ]
+    },
+    {
+      "original": "assets/runtime/images/SelectorScreen_AlmanacHighlight.png",
+      "hdFile": "assets/source-art/replanted/ui-source-round22/SelectorScreen_AlmanacHighlight--english.png",
+      "category": "ui",
+      "groups": [
+        "主菜单UI"
+      ],
+      "review": {
+        "status": "approved",
+        "note": "用户确认全部通过；钥匙和奖励图鉴已核实用于掉落物及奖励介绍页。",
+        "updatedAt": "2026-11-11",
+        "needsCrop": false
+      },
+      "selectedInRound": 22,
+      "candidateId": "round22:31c7616828f965c7e5",
+      "source": {
+        "atlas": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+        "region": "SPR_MainMenu_Button_Almanac_Over + SPR_Almanac English ink"
+      },
+      "processing": [
+        {
+          "file": "assets/source-art/replanted/ui-source-round22/SelectorScreen_AlmanacHighlight--english.png",
+          "sourceFile": "assets/source-art/replanted/ui-source-round22/SelectorScreen_AlmanacHighlight--english.png",
+          "size": [
+            496,
+            425
+          ],
+          "logicalCanvas": [
+            99,
+            99
+          ],
+          "logicalDrawRect": [
+            0,
+            0,
+            99,
+            99
+          ],
+          "sha256": "edef413c8a05836e5ba5b8192db6d8a432cefb2bb53e1d2be2747c7f46f9be3a"
+        }
+      ],
+      "processingFlags": [
+        "主菜单书本原生底图没有文字；从重植版奖励书提取现成英文墨迹，按封面平面离线合成，不使用低清文字。普通／高亮采用同一文字层。"
+      ],
+      "runtimeIntegrated": true,
+      "sha256": "edef413c8a05836e5ba5b8192db6d8a432cefb2bb53e1d2be2747c7f46f9be3a",
+      "history": [
+        {
+          "original": "assets/runtime/images/SelectorScreen_AlmanacHighlight.png",
+          "hdFile": "assets/source-art/replanted/sprite-candidates-round3/SelectorScreen_AlmanacHighlight--3fa0711c2853c920.png",
+          "category": "ui",
+          "groups": [
+            "主菜单"
+          ],
+          "review": {
+            "status": "pending",
+            "note": "文字不见了",
+            "updatedAt": "2026-11-09T12:50:15.182Z",
+            "needsCrop": false
+          },
+          "selectedInRound": 3,
+          "candidateId": "round3-sprite:3fa0711c2853c920",
+          "source": {
+            "bundle": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+            "type": "Sprite",
+            "pathId": 7648859993657155953,
+            "name": "SPR_MainMenu_Button_Almanac_Over",
+            "width": 504.0,
+            "height": 425.0
+          },
+          "pixelSize": [
+            496,
+            425
+          ],
+          "sha256": "aaecc103d7b477ba71688f8bf12b15ed98296766829080fd21675ff99dfc5185",
+          "processingFlags": [
+            "这是同用途 UI 组件的来源定位；新旧构图、文字或九宫格可能不同，尚不是可直接替换的成品。"
+          ],
+          "sourceEvidence": null,
+          "runtimeIntegrated": false
+        },
+        {
+          "original": "assets/runtime/images/SelectorScreen_AlmanacHighlight.png",
+          "hdFile": "assets/source-art/replanted/ui-source-round22/SelectorScreen_AlmanacHighlight--english.png",
+          "category": "ui",
+          "groups": [
+            "主菜单UI"
+          ],
+          "review": {
+            "status": "approved",
+            "note": "用户确认全部通过；钥匙和奖励图鉴已核实用于掉落物及奖励介绍页。",
+            "updatedAt": "2026-11-11",
+            "needsCrop": false
+          },
+          "selectedInRound": 22,
+          "candidateId": "round22:31c7616828f965c7e5",
+          "source": {
+            "atlas": "defaultlocalgroup_assets_ui/sprites_5b5218033ecdc00622a31e94d7a6a379.bundle",
+            "region": "SPR_MainMenu_Button_Almanac_Over + SPR_Almanac English ink"
+          },
+          "processing": [
+            {
+              "file": "assets/source-art/replanted/ui-source-round22/SelectorScreen_AlmanacHighlight--english.png",
+              "sourceFile": "assets/source-art/replanted/ui-source-round22/SelectorScreen_AlmanacHighlight--english.png",
+              "size": [
+                496,
+                425
+              ],
+              "logicalCanvas": [
+                99,
+                99
+              ],
+              "logicalDrawRect": [
+                0,
+                0,
+                99,
+                99
+              ],
+              "sha256": "edef413c8a05836e5ba5b8192db6d8a432cefb2bb53e1d2be2747c7f46f9be3a"
+            }
+          ],
+          "processingFlags": [
+            "主菜单书本原生底图没有文字；从重植版奖励书提取现成英文墨迹，按封面平面离线合成，不使用低清文字。普通／高亮采用同一文字层。"
+          ],
+          "runtimeIntegrated": true,
+          "sha256": "edef413c8a05836e5ba5b8192db6d8a432cefb2bb53e1d2be2747c7f46f9be3a"
+        }
+      ]
+    }
+  ]
+}

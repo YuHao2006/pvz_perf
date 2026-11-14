@@ -638,7 +638,7 @@ void AwardScreen::DrawAchievements(Graphics* g) {
 	g->FillRect(aScreenRect);
 	g->mColorizeImages = false;
 
-	DrawAwardBackground(g, IMAGE_CHALLENGE_BACKGROUND, *this);
+	TodDrawChallengeBackground(g, aScreenRect);
 
 	TodDrawString(g, ("ACHIEVEMENTS"), BOARD_WIDTH / 2, 58, FONT_HOUSEOFTERROR28, Color(220, 220, 220), DS_ALIGN_CENTER);
 

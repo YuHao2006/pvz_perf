@@ -2438,19 +2438,19 @@ void ZenGarden::PottedPlantUpdate(Plant* thePlant)
 
 namespace
 {
-    // ZenGarden::DrawPlantOverlay 需求图标表：原 switch 五 case 中三槽同构
-    // IMAGE_ZEN_NEED_ICONS 的 30x30 图标（行序 = PLANTNEED_
-    // FERTILIZER..PHONOGRAPH 枚举段序 0..2）；WATER/NONE 不入表（见分发点）。
+    // Reuse the full-resolution inventory art. Rectangles use logical
+    // coordinates; trimming and sizing are authored once, not scanned per frame.
     struct ZenNeedIcon
     {
-        int mX;
-        int mCel;
+        Image** mImage;
+        int mSourceX, mSourceY, mSourceWidth, mSourceHeight;
+        int mX, mY, mWidth, mHeight;
     };
     static constexpr ZenNeedIcon kZenNeedIcon[(int)PottedPlantNeed::PLANTNEED_PHONOGRAPH -
                                        (int)PottedPlantNeed::PLANTNEED_FERTILIZER + 1] = {
-        {61, 0},  // 0 PLANTNEED_FERTILIZER
-        {61, 1},  // 1 PLANTNEED_BUGSPRAY
-        {60, 2},  // 2 PLANTNEED_PHONOGRAPH
+        {&IMAGE_FERTILIZER, 7,13,68,60, 61,9,30,26},
+        {&IMAGE_BUG_SPRAY, 12,3,44,66, 66,8,19,28},
+        {&IMAGE_PHONOGRAPH, 8,0,51,68, 66,8,21,28},
     };
     static_assert(sizeof(kZenNeedIcon) / sizeof(kZenNeedIcon[0]) ==
         (int)PottedPlantNeed::PLANTNEED_PHONOGRAPH - (int)PottedPlantNeed::PLANTNEED_FERTILIZER + 1,
@@ -2473,9 +2473,7 @@ void ZenGarden::DrawPlantOverlay(Graphics* g, Plant* thePlant)
     }
 
     g->DrawImage(IMAGE_PLANTSPEECHBUBBLE, 50, 0);
-    // B 形态 -> 常量表（上方 kZenNeedIcon）：FERTILIZER/BUGSPRAY/PHONOGRAPH
-    // 三槽同构源矩形；WATER 特例（DrawImage 单帧水滴）表外；NONE 已
-    // 提前 return（原 NONE case 为防御空操作）。
+    // WATER remains a separate single-frame sprite; the other needs use the fixed table.
     if (aPlantNeed == PottedPlantNeed::PLANTNEED_WATER)
     {
         g->DrawImage(IMAGE_WATERDROP, 67, 9);
@@ -2483,7 +2481,8 @@ void ZenGarden::DrawPlantOverlay(Graphics* g, Plant* thePlant)
     else
     {
         const ZenNeedIcon& aIcon = kZenNeedIcon[(int)aPlantNeed - (int)PottedPlantNeed::PLANTNEED_FERTILIZER];
-        g->DrawImage(IMAGE_ZEN_NEED_ICONS, aIcon.mX, 7, Rect(aIcon.mCel * 30, 0, 30, 30));
+        g->DrawImage(*aIcon.mImage, Rect(aIcon.mX,aIcon.mY,aIcon.mWidth,aIcon.mHeight),
+            Rect(aIcon.mSourceX,aIcon.mSourceY,aIcon.mSourceWidth,aIcon.mSourceHeight));
     }
 }
 

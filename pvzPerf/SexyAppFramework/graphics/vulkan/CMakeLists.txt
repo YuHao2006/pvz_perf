@@ -132,50 +132,11 @@ add_library(sexy_vulkan_effects STATIC
     ../../effect/ScaleEffectSizing.cpp)
 target_include_directories(sexy_vulkan_effects PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}/../../effect")
 target_compile_features(sexy_vulkan_effects PUBLIC cxx_std_23)
-if(NOT ANDROID AND NOT CMAKE_SYSTEM_NAME STREQUAL "Android")
-    target_compile_definitions(sexy_vulkan_effects PUBLIC SEXY_SCALE_EFFECT_AUTHORING=1)
-    target_link_libraries(sexy_vulkan_effects PUBLIC Vulkan::Vulkan PRIVATE Microsoft::DirectXShaderCompiler)
-else()
-    target_link_libraries(sexy_vulkan_effects PUBLIC Vulkan::Vulkan)
-endif()
+target_link_libraries(sexy_vulkan_effects PUBLIC Vulkan::Vulkan)
 if(MSVC)
     target_compile_options(sexy_vulkan_effects PRIVATE /W4 /utf-8 /permissive-)
 elseif(ANDROID OR CMAKE_SYSTEM_NAME STREQUAL "Android")
     target_compile_options(sexy_vulkan_effects PRIVATE -Wno-missing-field-initializers)
-endif()
-
-# Authoring parsers/DXC are available only in the explicitly offline asset tool.
-if(NOT ANDROID AND NOT CMAKE_SYSTEM_NAME STREQUAL "Android")
-add_executable(compile_numeric_scale EXCLUDE_FROM_ALL
-    "${CMAKE_SOURCE_DIR}/tools/compile-numeric-scale.cpp"
-    ../../effect/ScaleEffectCompiler.cpp)
-target_compile_definitions(compile_numeric_scale PRIVATE SEXY_SCALE_EFFECT_AUTHORING=1)
-target_compile_features(compile_numeric_scale PRIVATE cxx_std_23)
-target_include_directories(compile_numeric_scale PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/../../effect")
-target_link_libraries(compile_numeric_scale PRIVATE Vulkan::Vulkan Microsoft::DirectXShaderCompiler)
-add_custom_command(TARGET compile_numeric_scale POST_BUILD
-    COMMAND "${CMAKE_COMMAND}" -E copy_if_different
-        "$<TARGET_FILE:Microsoft::DirectXShaderCompiler>" "$<TARGET_FILE_DIR:compile_numeric_scale>")
-if(MSVC)
-    target_compile_options(compile_numeric_scale PRIVATE /W4 /utf-8 /permissive-)
-endif()
-
-set(PVZ_EFFECTS_ROOT "${CMAKE_SOURCE_DIR}/effects")
-file(GLOB_RECURSE scaleSources CONFIGURE_DEPENDS "${PVZ_EFFECTS_ROOT}/*.hlsl")
-file(GLOB_RECURSE scaleIncludes CONFIGURE_DEPENDS "${PVZ_EFFECTS_ROOT}/*.hlsli")
-foreach(source IN LISTS scaleSources)
-    list(APPEND numericEffects "${source}.vfx")
-endforeach()
-if(numericEffects)
-    add_custom_command(OUTPUT ${numericEffects}
-        COMMAND "$<TARGET_FILE:compile_numeric_scale>" --effects "${PVZ_EFFECTS_ROOT}"
-        DEPENDS compile_numeric_scale ${scaleSources} ${scaleIncludes}
-        COMMENT "Baking numeric scale assets offline"
-        VERBATIM)
-else()
-    message(STATUS "No external scaling effects found; skipping offline effect baking")
-endif()
-add_custom_target(bake_numeric_scale DEPENDS ${numericEffects})
 endif()
 
 target_link_libraries(sexy_vulkan PRIVATE sexy_vulkan_effects)
@@ -183,8 +144,6 @@ set_target_properties(sexy_vulkan sexy_vulkan_effects PROPERTIES
     INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE)
 
 if(BUILD_TESTING AND NOT ANDROID AND NOT CMAKE_SYSTEM_NAME STREQUAL "Android")
-    set(PVZ_TEST_EFFECTS_DIR "${CMAKE_SOURCE_DIR}/effects" CACHE PATH
-        "External scaling effect fixtures for Vulkan tests")
     add_executable(sexy_vulkan_enumeration_tests tests/enumeration_tests.cpp)
     target_compile_features(sexy_vulkan_enumeration_tests PRIVATE cxx_std_23)
     target_include_directories(sexy_vulkan_enumeration_tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
@@ -197,20 +156,9 @@ if(BUILD_TESTING AND NOT ANDROID AND NOT CMAKE_SYSTEM_NAME STREQUAL "Android")
     target_link_libraries(sexy_vulkan_device_selection_tests PRIVATE Vulkan::Headers)
     add_test(NAME sexy_vulkan_device_selection COMMAND sexy_vulkan_device_selection_tests)
     set_tests_properties(sexy_vulkan_device_selection PROPERTIES TIMEOUT 10)
-    add_executable(sexy_vulkan_scale_compile_tests tests/scale_compile_tests.cpp)
-    target_link_libraries(sexy_vulkan_scale_compile_tests PRIVATE sexy_vulkan_effects)
-    target_compile_definitions(sexy_vulkan_scale_compile_tests PRIVATE
-        PVZ_EFFECTS_DIR="${PVZ_TEST_EFFECTS_DIR}")
-    add_custom_command(TARGET sexy_vulkan_scale_compile_tests POST_BUILD
-        COMMAND "${CMAKE_COMMAND}" -E copy_if_different
-            "$<TARGET_FILE:Microsoft::DirectXShaderCompiler>"
-            "$<TARGET_FILE_DIR:sexy_vulkan_scale_compile_tests>")
-    add_test(NAME sexy_vulkan_scale_compile COMMAND sexy_vulkan_scale_compile_tests)
-    set_tests_properties(sexy_vulkan_scale_compile PROPERTIES TIMEOUT 180)
 endif()
 
 if(BUILD_TESTING AND WIN32)
-    add_library(sexy_scale_authoring ALIAS sexy_vulkan_effects)
     if(WIN32 AND NOT PVZ_WINDOWS_PLATFORM STREQUAL "WIN7")
         add_executable(sexy_vulkan_hdr_observer_tests tests/hdr_observer_tests.cpp)
         target_link_libraries(sexy_vulkan_hdr_observer_tests PRIVATE sexy_vulkan ole32)
@@ -250,25 +198,6 @@ if(BUILD_TESTING AND WIN32)
         add_test(NAME sexy_vulkan_hdr COMMAND sexy_vulkan_hdr_tests)
         set_tests_properties(sexy_vulkan_hdr PROPERTIES TIMEOUT 60 ENVIRONMENT "VK_LAYER_VALIDATE_SYNC=1")
     endif()
-    add_executable(sexy_vulkan_scale_pipeline_tests tests/scale_pipeline_tests.cpp)
-    target_link_libraries(sexy_vulkan_scale_pipeline_tests PRIVATE sexy_vulkan_effects sexy_vulkan)
-    target_compile_definitions(sexy_vulkan_scale_pipeline_tests PRIVATE
-        PVZ_NATIVE_SHADER_DIR="${PVZ_NATIVE_SHADER_DIR}"
-        PVZ_EFFECTS_DIR="${PVZ_TEST_EFFECTS_DIR}")
-    add_custom_command(TARGET sexy_vulkan_scale_pipeline_tests POST_BUILD
-        COMMAND "${CMAKE_COMMAND}" -E copy_if_different
-            "$<TARGET_FILE:Microsoft::DirectXShaderCompiler>" "$<TARGET_FILE_DIR:sexy_vulkan_scale_pipeline_tests>")
-    add_test(NAME sexy_vulkan_scale_pipeline COMMAND sexy_vulkan_scale_pipeline_tests)
-    set_tests_properties(sexy_vulkan_scale_pipeline PROPERTIES TIMEOUT 180 ENVIRONMENT "VK_LAYER_VALIDATE_SYNC=1")
-    add_executable(sexy_vulkan_scale_gpu_tests tests/scale_gpu_tests.cpp)
-    target_link_libraries(sexy_vulkan_scale_gpu_tests PRIVATE sexy_vulkan_effects sexy_vulkan)
-    target_compile_definitions(sexy_vulkan_scale_gpu_tests PRIVATE
-        PVZ_EFFECTS_DIR="${PVZ_TEST_EFFECTS_DIR}")
-    add_custom_command(TARGET sexy_vulkan_scale_gpu_tests POST_BUILD
-        COMMAND "${CMAKE_COMMAND}" -E copy_if_different
-            "$<TARGET_FILE:Microsoft::DirectXShaderCompiler>" "$<TARGET_FILE_DIR:sexy_vulkan_scale_gpu_tests>")
-    add_test(NAME sexy_vulkan_scale_gpu COMMAND sexy_vulkan_scale_gpu_tests)
-    set_tests_properties(sexy_vulkan_scale_gpu PROPERTIES TIMEOUT 180 ENVIRONMENT "VK_LAYER_VALIDATE_SYNC=1")
     if(WIN32)
         add_executable(sexy_vulkan_compare_tests EXCLUDE_FROM_ALL
             "${CMAKE_SOURCE_DIR}/Tests/native/BackendPixelCases.cpp")

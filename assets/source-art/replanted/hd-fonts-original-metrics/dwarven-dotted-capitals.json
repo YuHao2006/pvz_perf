@@ -1,0 +1,8 @@
+{
+  "family": "dwarventodcraft",
+  "reason": "Legacy bitmap I/J/i/j have dots. All four replacement TTF forms are undotted and do not match the preserved original outline.",
+  "sourceFont": "assets/source-art/replanted/localization-study/fonts/FNT_DwarvenTodcraft.ttf",
+  "rasterizationRepair": "Preserve the original dot and outline; fit each undotted TTF stem only inside the original stem bounds, below the dot/stem separation.",
+  "scope": "Rasterization only, all Dwarven sizes and color styles. Original character codes, dimensions, offsets, advances, kerning and layer settings remain unchanged.",
+  "generator": "out/verification/hd-contours-800/prepare_hd_fonts30.py"
+}

@@ -1,0 +1,69 @@
+{
+  "reason": "User reported squeezed main-menu Almanac",
+  "items": [
+    {
+      "original": "assets/runtime/images/SelectorScreen_Almanac.png",
+      "sourceCanvas": [
+        496,
+        425
+      ],
+      "bookBoundsAlpha64": [
+        2,
+        0,
+        349,
+        360
+      ],
+      "sharedCrop": [
+        0,
+        0,
+        351,
+        362
+      ],
+      "croppedSize": [
+        351,
+        362
+      ],
+      "logicalDrawRect": [
+        3.2124999999999986,
+        1.0,
+        94.575,
+        97.53888888888889
+      ],
+      "uniformPixelScale": 3.711340206185567,
+      "opaquePixelsRetained": true,
+      "runtimeFile": "images/c5e42850932ae30bd505c9d5.png"
+    },
+    {
+      "original": "assets/runtime/images/SelectorScreen_AlmanacHighlight.png",
+      "sourceCanvas": [
+        496,
+        425
+      ],
+      "bookBoundsAlpha64": [
+        2,
+        0,
+        349,
+        360
+      ],
+      "sharedCrop": [
+        0,
+        0,
+        351,
+        362
+      ],
+      "croppedSize": [
+        351,
+        362
+      ],
+      "logicalDrawRect": [
+        3.2124999999999986,
+        1.0,
+        94.575,
+        97.53888888888889
+      ],
+      "uniformPixelScale": 3.711340206185567,
+      "opaquePixelsRetained": true,
+      "runtimeFile": "images/63692fd961a1a4a37ba6e78c.png"
+    }
+  ]
+}

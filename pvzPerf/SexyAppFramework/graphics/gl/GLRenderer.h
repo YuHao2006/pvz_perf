@@ -33,8 +33,9 @@ public:
     void BindStaticTexture(GLTexture* texture, unsigned int slot);
     GLTexture* CreateCoverageMask(int width, int height,
         std::span<const unsigned char> coverage, int pitch);
-    GLTexture* CreateRenderImage(int width, int height);
+    GLTexture* CreateRenderImage(int width, int height, int pixelScale=1);
     void SetRenderImage(GLTexture* texture);
+    GLTexture* CopyTexture(GLTexture* source);
     GLTexture* CopyTextureRegion(GLTexture* source, int x, int y, int width, int height);
     GLTexture* ProcessImage(GLTexture* source, const GpuImageProcessing& processing);
     GLTexture* ComposeAlphaRaw(GLTexture* base, GLTexture* alpha,

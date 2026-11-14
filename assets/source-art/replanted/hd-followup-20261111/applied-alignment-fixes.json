@@ -1,0 +1,191 @@
+{
+  "resources": [
+    {
+      "original": "assets/runtime/images/WateringCan.png",
+      "runtimeFile": "images/d42bd88ed0b6ae5bbbf66791.png",
+      "reason": "Fit raw native opaque body uniformly inside original visible bounds; preserve authored transparent margins and source aspect ratio.",
+      "uniformScale": 0.4852941176470588,
+      "translationAt4x": [
+        15.816176470588232,
+        34.54411764705881
+      ],
+      "originalBodyBounds": [
+        4,
+        9,
+        71,
+        75
+      ],
+      "newBodyBoundsAt4x": [
+        17,
+        36,
+        283,
+        300
+      ]
+    },
+    {
+      "original": "assets/runtime/images/WateringCanGold.png",
+      "runtimeFile": "images/c41ef308e8e6c38fd5acbf83.png",
+      "reason": "Fit raw native opaque body uniformly inside original visible bounds; preserve authored transparent margins and source aspect ratio.",
+      "uniformScale": 1.233644859813084,
+      "translationAt4x": [
+        13.682242990654203,
+        33.532710280373834
+      ],
+      "originalBodyBounds": [
+        4,
+        9,
+        71,
+        75
+      ],
+      "newBodyBoundsAt4x": [
+        16,
+        36,
+        284,
+        300
+      ]
+    },
+    {
+      "original": "assets/runtime/images/Fertilizer.png",
+      "runtimeFile": "images/2cc849bcbe40b9bf57b8a8fd.png",
+      "reason": "Fit raw native opaque body uniformly inside original visible bounds; preserve authored transparent margins and source aspect ratio.",
+      "uniformScale": 0.7904191616766467,
+      "translationAt4x": [
+        31.209580838323348,
+        55.017964071856284
+      ],
+      "originalBodyBounds": [
+        8,
+        13,
+        74,
+        73
+      ],
+      "newBodyBoundsAt4x": [
+        32,
+        56,
+        296,
+        288
+      ]
+    },
+    {
+      "original": "assets/runtime/images/bug_spray.png",
+      "runtimeFile": "images/251ccc7879f02f289389ef8e.png",
+      "reason": "Fit raw native opaque body uniformly inside original visible bounds; preserve authored transparent margins and source aspect ratio.",
+      "uniformScale": 0.7551622418879056,
+      "translationAt4x": [
+        48.28908554572271,
+        15.244837758112084
+      ],
+      "originalBodyBounds": [
+        12,
+        4,
+        55,
+        68
+      ],
+      "newBodyBoundsAt4x": [
+        49,
+        16,
+        219,
+        272
+      ]
+    },
+    {
+      "original": "assets/runtime/images/Phonograph.png",
+      "runtimeFile": "images/2c1d0ede433dbc10b81452b7.png",
+      "reason": "Fit raw native opaque body uniformly inside original visible bounds; preserve authored transparent margins and source aspect ratio.",
+      "uniformScale": 0.7953216374269005,
+      "translationAt4x": [
+        35.39181286549709,
+        -0.7953216374268948
+      ],
+      "originalBodyBounds": [
+        9,
+        0,
+        59,
+        68
+      ],
+      "newBodyBoundsAt4x": [
+        36,
+        0,
+        236,
+        272
+      ]
+    },
+    {
+      "original": "assets/runtime/images/TreeFood.png",
+      "runtimeFile": "images/4e24b2df1d52a7a98b50daf9.png",
+      "reason": "Fit raw native opaque body uniformly inside original visible bounds; preserve authored transparent margins and source aspect ratio.",
+      "uniformScale": 1.2277227722772277,
+      "translationAt4x": [
+        29.108910891089124,
+        45.54455445544555
+      ],
+      "originalBodyBounds": [
+        8,
+        12,
+        75,
+        74
+      ],
+      "newBodyBoundsAt4x": [
+        32,
+        48,
+        299,
+        296
+      ]
+    },
+    {
+      "original": "assets/runtime/images/Zen_GardenGlove.png",
+      "runtimeFile": "images/64bbd84b1f613a36eb4c9be6.png",
+      "reason": "Fit raw native opaque body uniformly inside original visible bounds; preserve authored transparent margins and source aspect ratio.",
+      "uniformScale": 1.3009708737864079,
+      "translationAt4x": [
+        25.398058252427177,
+        21.495145631067942
+      ],
+      "originalBodyBounds": [
+        7,
+        6,
+        74,
+        75
+      ],
+      "newBodyBoundsAt4x": [
+        28,
+        25,
+        296,
+        300
+      ]
+    },
+    {
+      "original": "assets/runtime/reanim/SelectorScreen_WoodSign2.png",
+      "runtimeFile": "images/358fd4003d9d06ac41ff7538.png",
+      "reason": "Share one native wood base, glyph alpha and placement across normal/hover; restore measured original text tilt.",
+      "textAngleDegreesCounterClockwise": 1.2104930089211035,
+      "sharedTextPositionAt4x": [
+        132,
+        68
+      ],
+      "sharedGlyphSizeAt4x": [
+        920,
+        49
+      ],
+      "boardUniformScale": 1.123015873015873
+    },
+    {
+      "original": "assets/runtime/reanim/SelectorScreen_WoodSign2_press.png",
+      "runtimeFile": "images/340a06a3c3aa68bcf337768c.png",
+      "reason": "Share one native wood base, glyph alpha and placement across normal/hover; restore measured original text tilt.",
+      "textAngleDegreesCounterClockwise": 1.2104930089211035,
+      "sharedTextPositionAt4x": [
+        132,
+        68
+      ],
+      "sharedGlyphSizeAt4x": [
+        920,
+        49
+      ],
+      "boardUniformScale": 1.123015873015873
+    }
+  ],
+  "runtimeCodeChanged": false,
+  "saveFormatChanged": false,
+  "signNormalHoverAlphaExact": true
+}

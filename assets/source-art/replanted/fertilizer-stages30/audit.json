@@ -1,0 +1,374 @@
+{
+  "distinctBagStagesLocated": 4,
+  "missingRuntimeMapping": [],
+  "fourthCandidate": "assets/source-art/replanted/fertilizer-stages30/stage4--native-2x.png",
+  "fourthCandidateOrigin": "Native Replanted ZenGarden_fertilizer atlas region bag4: bounds 1058,84,350,365; exact five-times original canvas. Bare region name caused previous matching miss.",
+  "fourthCandidateStatus": "integrated for local game inspection; awaiting final visual approval",
+  "rejectedFourthSource": {
+    "file": "assets/source-art/replanted/reanim-source-round6/Fertilizer--3261f238d848.png",
+    "reason": "This is the first bag pose, not the fourth open-flap pose. It must not be substituted for bag4."
+  },
+  "animationDefinition": "assets/definitions/reanim/units/ZenGarden_fertilizer.dsl",
+  "bagStageFrames": [
+    0,
+    1,
+    2,
+    17
+  ],
+  "seedStageFrames": [
+    [
+      17,
+      18,
+      19,
+      20,
+      21,
+      22
+    ],
+    [
+      24,
+      25,
+      26,
+      27,
+      28,
+      29
+    ]
+  ],
+  "currentMappings": [
+    {
+      "original": "assets/runtime/images/Fertilizer.png",
+      "file": "images/2cc849bcbe40b9bf57b8a8fd.png",
+      "logicalSize": [
+        80,
+        80
+      ],
+      "physicalSize": [
+        160,
+        160
+      ],
+      "source": "assets/source-art/replanted/hd-followup-20261111/Fertilizer--aligned-4x.png",
+      "sourceSha256": "52d99dd14bd6564b10ae125ff7e0f02c81e859e25d398eef06de3b305101bb4b",
+      "mapping": {
+        "logicalDrawRect": [
+          0,
+          0,
+          80,
+          80
+        ],
+        "originalLogicalCanvas": [
+          80,
+          80
+        ]
+      },
+      "alignmentSource": "assets/source-art/replanted/ui-candidates-round2/Fertilizer--319e07d4df6a7614.png",
+      "alignmentFix": {
+        "reason": "Fit raw native opaque body uniformly inside original visible bounds; preserve authored transparent margins and source aspect ratio.",
+        "uniformScale": 0.7904191616766467,
+        "translationAt4x": [
+          31.209580838323348,
+          55.017964071856284
+        ],
+        "originalBodyBounds": [
+          8,
+          13,
+          74,
+          73
+        ],
+        "newBodyBoundsAt4x": [
+          32,
+          56,
+          296,
+          288
+        ]
+      }
+    },
+    {
+      "original": "assets/runtime/reanim/ZenGarden_fertilizer_seed1.png",
+      "file": "images/51a06d3f83d70bb1ffd30c60.png",
+      "logicalSize": [
+        16,
+        58
+      ],
+      "physicalSize": [
+        32,
+        116
+      ],
+      "source": "assets/source-art/replanted/prepared-contours/ZenGarden_fertilizer_seed1--d37435cb2423f9e6--5dfd6206cc4e.png",
+      "sourceSha256": "f9b5f8a334730d9cdb4ea9d8a277535aa8d8071c7690342aaf02f2577d3a3393",
+      "mapping": {
+        "pixelPerLogical": [
+          5.0,
+          5.0
+        ],
+        "sourceFrameOrigin": [
+          0.0,
+          0.0
+        ],
+        "logicalDrawRect": [
+          3.2,
+          5.6,
+          11.2,
+          17.6
+        ],
+        "originalLogicalCanvas": [
+          16,
+          58
+        ]
+      }
+    },
+    {
+      "original": "assets/runtime/reanim/ZenGarden_fertilizer_seed2.png",
+      "file": "images/fb9ebd370ad4689006fbed37.png",
+      "logicalSize": [
+        16,
+        58
+      ],
+      "physicalSize": [
+        32,
+        116
+      ],
+      "source": "assets/source-art/replanted/prepared-contours/ZenGarden_fertilizer_seed2--76154dbbff5c6c1e--8348c99d555e.png",
+      "sourceSha256": "1078db451b474f92bb362dbbaabbb0b921bb6f55c9d0aa1d897aeb8d5d1d2ef4",
+      "mapping": {
+        "pixelPerLogical": [
+          5.0,
+          5.0
+        ],
+        "sourceFrameOrigin": [
+          0.0,
+          0.0
+        ],
+        "logicalDrawRect": [
+          3.0,
+          4.6,
+          11.4,
+          32.8
+        ],
+        "originalLogicalCanvas": [
+          16,
+          58
+        ]
+      }
+    },
+    {
+      "original": "assets/runtime/reanim/ZenGarden_fertilizer_seed3.png",
+      "file": "images/2e0bbf7b623c6b25270cdec7.png",
+      "logicalSize": [
+        16,
+        58
+      ],
+      "physicalSize": [
+        32,
+        116
+      ],
+      "source": "assets/source-art/replanted/prepared-contours/ZenGarden_fertilizer_seed3--28e81542e2ff8af2--0a6fe8edbda7.png",
+      "sourceSha256": "7bc581b2d3caf94eb16ce31f3c7f8e48a7bf3d46abe8f097c1963d985714ae80",
+      "mapping": {
+        "pixelPerLogical": [
+          5.0,
+          5.0
+        ],
+        "sourceFrameOrigin": [
+          0.0,
+          0.0
+        ],
+        "logicalDrawRect": [
+          2.0,
+          2.8,
+          12.4,
+          40.8
+        ],
+        "originalLogicalCanvas": [
+          16,
+          58
+        ]
+      }
+    },
+    {
+      "original": "assets/runtime/reanim/ZenGarden_fertilizer_seed4.png",
+      "file": "images/e9e1be1551901f0122dbb3fb.png",
+      "logicalSize": [
+        16,
+        58
+      ],
+      "physicalSize": [
+        32,
+        116
+      ],
+      "source": "assets/source-art/replanted/prepared-contours/ZenGarden_fertilizer_seed4--02115ac590fa9155--1253ffd775fe.png",
+      "sourceSha256": "4477c931e93692bb95c233b1360441fa032577706827c0c23cde81d5da80759e",
+      "mapping": {
+        "pixelPerLogical": [
+          5.0,
+          5.0
+        ],
+        "sourceFrameOrigin": [
+          0.0,
+          0.0
+        ],
+        "logicalDrawRect": [
+          4.2,
+          8.2,
+          9.8,
+          44.6
+        ],
+        "originalLogicalCanvas": [
+          16,
+          58
+        ]
+      }
+    },
+    {
+      "original": "assets/runtime/reanim/ZenGarden_fertilizer_seed5.png",
+      "file": "images/a7a62fdcebdbe3ce1a8c6159.png",
+      "logicalSize": [
+        16,
+        58
+      ],
+      "physicalSize": [
+        32,
+        116
+      ],
+      "source": "assets/source-art/replanted/prepared-contours/ZenGarden_fertilizer_seed5--724087409ead0026--56d05579a952.png",
+      "sourceSha256": "f5d0e89c0e4f32019ac1a5bd86a4675f8c7de0d3f5d4724a10453b9c0f8e6e6a",
+      "mapping": {
+        "pixelPerLogical": [
+          5.0,
+          5.0
+        ],
+        "sourceFrameOrigin": [
+          0.0,
+          0.0
+        ],
+        "logicalDrawRect": [
+          5.6,
+          16.2,
+          8.0,
+          40.8
+        ],
+        "originalLogicalCanvas": [
+          16,
+          58
+        ]
+      }
+    },
+    {
+      "original": "assets/runtime/reanim/ZenGarden_fertilizer_seed6.png",
+      "file": "images/e5fa2daa0dea9c9b832b1c6e.png",
+      "logicalSize": [
+        16,
+        58
+      ],
+      "physicalSize": [
+        32,
+        116
+      ],
+      "source": "assets/source-art/replanted/prepared-contours/ZenGarden_fertilizer_seed6--34e0784c4344fe0f--d31aac02b663.png",
+      "sourceSha256": "e29945f5b08e00d9b246d05fa60a4057d4233d1c65de78cb77cbe3eed7d27133",
+      "mapping": {
+        "pixelPerLogical": [
+          5.0,
+          5.0
+        ],
+        "sourceFrameOrigin": [
+          0.0,
+          0.0
+        ],
+        "logicalDrawRect": [
+          7.8,
+          24.6,
+          4.6,
+          24.0
+        ],
+        "originalLogicalCanvas": [
+          16,
+          58
+        ]
+      }
+    },
+    {
+      "original": "assets/runtime/reanim/ZenGarden_fertilize_bag1.png",
+      "file": "images/9ba762e1999e0fdd6e097047.png",
+      "logicalSize": [
+        70,
+        73
+      ],
+      "physicalSize": [
+        140,
+        146
+      ],
+      "source": "assets/source-art/replanted/reanim-source-round20/ZenGarden_fertilize_bag1--prepared.png",
+      "sourceSha256": "668f4bc0397a6d342b53cf3408df3720542f820f2536627fde153cc12a4c406c",
+      "mapping": {
+        "logicalDrawRect": [
+          1.4356598478550424,
+          11.116007771860776,
+          69.12868030428992,
+          60.76798445627845
+        ],
+        "originalLogicalCanvas": [
+          70,
+          73
+        ]
+      },
+      "approvedRound": 20
+    },
+    {
+      "original": "assets/runtime/reanim/ZenGarden_fertilizer_bag2.png",
+      "file": "images/94f26a0d31382540a5d181a4.png",
+      "logicalSize": [
+        70,
+        73
+      ],
+      "physicalSize": [
+        140,
+        146
+      ],
+      "source": "assets/source-art/replanted/reanim-source-round20/ZenGarden_fertilizer_bag2--prepared.png",
+      "sourceSha256": "d80156a4dcaa5e5100b19d635552de3335938038e141f884dfb237dd220fb8d7",
+      "mapping": {
+        "logicalDrawRect": [
+          3.2344336087069863,
+          7.34857404859725,
+          62.53113278258603,
+          66.3028519028055
+        ],
+        "originalLogicalCanvas": [
+          70,
+          73
+        ]
+      },
+      "approvedRound": 20
+    },
+    {
+      "original": "assets/runtime/reanim/ZenGarden_fertilizer_bag3.png",
+      "file": "images/6d004b46b9dc7c6d2401b6bd.png",
+      "logicalSize": [
+        70,
+        73
+      ],
+      "physicalSize": [
+        140,
+        146
+      ],
+      "source": "assets/source-art/replanted/reanim-source-round20/ZenGarden_fertilizer_bag3--prepared.png",
+      "sourceSha256": "f942bc9ba898f128cdb93de330279ddcf84ec0152a3a3378a16528e9ce2edb03",
+      "mapping": {
+        "logicalDrawRect": [
+          0.18496336347295994,
+          7.402792289896986,
+          65.63007327305408,
+          64.19441542020603
+        ],
+        "originalLogicalCanvas": [
+          70,
+          73
+        ]
+      },
+      "approvedRound": 20
+    }
+  ],
+  "missingNativeStages": [],
+  "supersededAICandidate": "stage4--candidate-2x.png retained for comparison only; native fourth stage takes priority",
+  "fourthNativeSource": "stage4--native-source.json",
+  "animationPreview": "animation-preview-manifest.json"
+}

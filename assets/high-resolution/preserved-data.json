@@ -1,0 +1,13 @@
+{
+  "format": "pvz-high-resolution-preserved-data-v1",
+  "purpose": "Distinguish fixed algorithm input textures from display artwork during HD coverage audits. This file does not alter runtime resource loading.",
+  "images": {
+    "images/pool_caustic_effect.jpg": {
+      "classification": "fixed-compute-input",
+      "dimensions": [256, 256],
+      "reason": "PoolEffectInitialize explicitly requires a 256x256 source texture. This is the caustic calculation input, not the resolution of the displayed pool image. Enlarging it as artwork changes the algorithm contract and causes initialization to fail.",
+      "evidence": "pvzPerf/Lawn/System/PoolEffect.cpp:19",
+      "action": "Retain the original data; do not generate or substitute an HD mapping."
+    }
+  }
+}

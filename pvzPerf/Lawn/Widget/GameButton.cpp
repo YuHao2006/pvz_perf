@@ -16,9 +16,9 @@ static Color gGameButtonColors[6] = { Color(0, 0, 0), Color(0, 0, 0), Color(0, 0
 static void DrawStoneButton(Graphics* g, int x, int y, int theWidth, int theHeight, bool isDown, bool isHighLighted, const SexyString& theLabel)
 {
 	using enum CommonUIAtlas::Sprite;
-	const TextureRegion& left = CommonUIAtlas::Images[static_cast<size_t>(isDown ? BUTTON_DOWN_LEFT : BUTTON_LEFT)];
-	const TextureRegion& middle = CommonUIAtlas::Images[static_cast<size_t>(isDown ? BUTTON_DOWN_MIDDLE : BUTTON_MIDDLE)];
-	const TextureRegion& right = CommonUIAtlas::Images[static_cast<size_t>(isDown ? BUTTON_DOWN_RIGHT : BUTTON_RIGHT)];
+	const TextureRegion& left = CommonUIAtlas::Images[static_cast<size_t>(BUTTON_LEFT)];
+	const TextureRegion& middle = CommonUIAtlas::Images[static_cast<size_t>(BUTTON_MIDDLE)];
+	const TextureRegion& right = CommonUIAtlas::Images[static_cast<size_t>(BUTTON_RIGHT)];
 	const Sexy::TextureSource texture{CommonUIAtlas::Texture, 0};
 	int aFontX = x;
 	int aFontY = y;
@@ -28,6 +28,9 @@ static void DrawStoneButton(Graphics* g, int x, int y, int theWidth, int theHeig
 		aFontX++;
 		aFontY++;
 		aImageX++;
+		// 1073's pressed artwork is the normal image shifted down one pixel.
+		// Reuse its atlas regions instead of storing another three images.
+		y++;
 	}
 
 	int aRepeat = (theWidth - left.mWidth - right.mWidth) / middle.mWidth;

@@ -11,8 +11,7 @@
 #include "graphics/Font.h"
 #include "Sexy.TodLib/TodCommon.h"
 #include "Sexy.TodLib/Reanimator.h"
-#include "Sexy.TodLib/ReanimTrackMphfGlobal.h"
-#include "Sexy.TodLib/generated/ReanimActionData.h"
+#include "Sexy.TodLib/ReanimRuntimeLookup.h"
 #include "Sexy.TodLib/TodStringFile.h"
 #include <cstdlib>
 #include <cstring>
@@ -22,11 +21,8 @@ namespace
 // TextFadeOn's first two legacy tracks were action markers. Resolve the
 // locator's dense index at compile time; never assume the old numeric slot
 // or perform a name/MPHF query for each glyph in the draw loop.
-constexpr int kTextLocatorSavedIndex = MphfLookupGlobal(
-    unsigned(ReanimationType::REANIM_TEXT_FADE_ON), unsigned(ReanimTrackId::locator_text));
-static_assert(kTextLocatorSavedIndex >= 0);
-constexpr int kTextLocatorTrackIndex = ReanimActionData::Layouts[
-    unsigned(ReanimationType::REANIM_TEXT_FADE_ON)].savedToRuntime[kTextLocatorSavedIndex];
+constexpr int kTextLocatorTrackIndex = static_cast<std::int16_t>(ReanimLookupGlobal(
+    unsigned(ReanimationType::REANIM_TEXT_FADE_ON), unsigned(ReanimTrackId::locator_text)));
 static_assert(kTextLocatorTrackIndex >= 0);
 void CopyMessageLabel(SexyChar (&theDestination)[MAX_MESSAGE_LENGTH], const SexyString& theLabel)
 {

@@ -30,8 +30,10 @@ anchors, drawable tracks and duplicate-name first-match behavior are preserved.
 
 `GetFramesForLayer`, `IsAnimPlaying`, `SetBasePoseFromAnim` and playback use the generated
 action ranges; `TrackExists`, attachment and transform queries use physical tracks.
-`ActionExists` tests action membership. Both use the existing enum/MPHF lookup, without
-runtime strings. Known-index range queries read generated constants instead of scanning
+`ActionExists` tests action membership. The runtime enum/MPHF lookup directly returns a packed physical index and action
+record index, without strings or a legacy-to-runtime array read. Each slot remains
+16 bytes; the low signed 16 bits hold the physical index and the high 16 bits hold
+the action index. Known-index range queries read generated constants instead of scanning
 keyframes. Generated activity and attacher data use dense runtime track indices.
 
 The source corpus contains 671 actions. Removing 392 pure action markers eliminates

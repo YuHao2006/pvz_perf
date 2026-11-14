@@ -8,7 +8,7 @@
 #include "ReanimRenderSemantics.h"
 #include "ReanimActionLayout.h"
 #include "generated/ReanimActionData.h"
-#include "ReanimTrackMphfGlobal.h"  // 全局单表 MPHF（唯一 MPHF 层）：(type,id) 联合键 -> trackIndex + 语料成员位图（reanimc compile-v2 生成）
+#include "ReanimRuntimeLookup.h"  // 全局单表 MPHF（唯一 MPHF 层）：(type,id) 联合键 -> trackIndex + 语料成员位图（reanimc compile-v2 生成）
 #include "generated/ReanimAttacherMasks.h"  // P4：每类型轨道数 + attacher 位掩码（编译期生成，与本 cpp 独占包含）
 #include "generated/GeneratedDefinitions.h"
 #include "Attachment.h"
@@ -79,14 +79,14 @@ static int ReanimatorTrackIndexOf(ReanimationType theReanimType, ReanimTrackId t
 	}
 	const int aType = (int)theReanimType;
 	// 全局单表 MPHF（唯一查找层）：全语料 (type,id) 联合键（(type<<32)|id）
-	// 一次查找（ReanimTrackMphfGlobal.h 烘焙；桶/槽均 2 的幂，取模全为掩码零
+	// 一次查找（ReanimRuntimeLookup.h 烘焙；桶/槽均 2 的幂，取模全为掩码零
 	// div；函数体与 reanimc 求解器逐运算一致）。键集 = 每类型首见该 id 的轨道
 	// 下标。语料已覆盖全部 144 类型（含 Zombie_FlagPole/Disco/Backup/Zombatar），
 	// 无兜底第二层：-1 即"该定义确无此轨道"的终答——探测式消费方
 	//（TrackExists/AssignRenderGroupToTrack）取 false，直用式消费方经
 	// FindTrackIndex 弹错退出，绝不静默回轨道 0。
-	const int aIndex = MphfLookupGlobal((std::uint32_t)aType, (std::uint32_t)theTrackId);
-	return aIndex>=0?ReanimActionData::Layouts[aType].savedToRuntime[aIndex]:-1;
+	const int packed = ReanimLookupGlobal((std::uint32_t)aType, (std::uint32_t)theTrackId);
+	return static_cast<std::int16_t>(packed);
 }
 
 
@@ -1446,9 +1446,9 @@ void Reanimation::GetAttachmentOverlayMatrix(int theTrackIndex, SexyTransform2D&
 void Reanimation::GetFramesForLayer(ReanimTrackId theTrackId, int& theFrameStart, int& theFrameCount)
 {
     if(unsigned(mReanimationType)>=gReanimatorDefCount)throw std::invalid_argument("Invalid reanimation type");
-    const int index=MphfLookupGlobal(unsigned(mReanimationType),unsigned(theTrackId));
+    const int index=ReanimLookupGlobal(unsigned(mReanimationType),unsigned(theTrackId));
     if(index<0)throw std::invalid_argument("Unknown animation action");
-    const auto range=ReanimActionData::Layouts[unsigned(mReanimationType)].actions[index];
+    const auto range=ReanimActionData::Layouts[unsigned(mReanimationType)].actions[unsigned(index)>>16];
     if(!range.count)throw std::invalid_argument("Track has no declared animation action");
     theFrameStart=range.first;theFrameCount=range.count;
 }
@@ -1510,8 +1510,8 @@ bool Reanimation::TrackExists(ReanimTrackId theTrackId)
 bool Reanimation::ActionExists(ReanimTrackId id) const
 {
     if(unsigned(mReanimationType)>=gReanimatorDefCount)return false;
-    const int index=MphfLookupGlobal(unsigned(mReanimationType),unsigned(id));
-    return index>=0&&ReanimActionData::Layouts[unsigned(mReanimationType)].actions[index].count>0;
+    const int index=ReanimLookupGlobal(unsigned(mReanimationType),unsigned(id));
+    return index>=0&&ReanimActionData::Layouts[unsigned(mReanimationType)].actions[unsigned(index)>>16].count>0;
 }
 
 //0x473310

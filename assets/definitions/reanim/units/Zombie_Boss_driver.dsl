@@ -1,10 +1,12 @@
 export component Zombie_Boss_driver {
     fps: 17;
-    Track {
-        source-name: "anim_swell";
-        frame-count: 187;
-        frame 9 { cel: -1; }
-        frame 10 { cel: -10000; }
+    frame-count: 187;
+    Actions {
+        "anim_swell" { first-frame: 0; frame-count: 9; }
+    }
+
+    Actions {
+        "anim_idle" { first-frame: 9; frame-count: 15; }
     }
     Track {
         source-name: "anim_idle";
@@ -16,64 +18,30 @@ export component Zombie_Boss_driver {
         frame 24 { cel: -1; }
         frame 25 { cel: -10000; }
     }
-    Track {
-        source-name: "anim_drive";
-        frame-count: 187;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 24 { cel: 0; }
-        frame 25 { cel: -10000; }
-        frame 49 { cel: -1; }
-        frame 50 { cel: -10000; }
+    Actions {
+        "anim_drive" { first-frame: 24; frame-count: 25; }
     }
-    Track {
-        source-name: "anim_damage";
-        frame-count: 187;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 49 { cel: 0; }
-        frame 50 { cel: -10000; }
-        frame 61 { cel: -1; }
-        frame 62 { cel: -10000; }
+
+    Actions {
+        "anim_damage" { first-frame: 49; frame-count: 12; }
     }
-    Track {
-        source-name: "anim_laugh";
-        frame-count: 187;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 65 { cel: 0; }
-        frame 66 { cel: -10000; }
-        frame 78 { cel: -1; }
-        frame 79 { cel: -10000; }
+
+    Actions {
+        "anim_laugh" { first-frame: 65; frame-count: 13; }
     }
-    Track {
-        source-name: "anim_death";
-        frame-count: 187;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 78 { cel: 0; }
-        frame 79 { cel: -10000; }
-        frame 164 { cel: -1; }
-        frame 165 { cel: -10000; }
+
+    Actions {
+        "anim_death" { first-frame: 78; frame-count: 86; }
     }
-    Track {
-        source-name: "anim_flag";
-        frame-count: 187;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 164 { cel: 0; }
-        frame 165 { cel: -10000; }
-        frame 178 { cel: -1; }
-        frame 179 { cel: -10000; }
+
+    Actions {
+        "anim_flag" { first-frame: 164; frame-count: 14; }
     }
-    Track {
-        source-name: "anim_flag_loop";
-        frame-count: 187;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 178 { cel: 0; }
-        frame 179 { cel: -10000; }
+
+    Actions {
+        "anim_flag_loop" { first-frame: 178; frame-count: 9; }
     }
+
     Track {
         source-name: "flagpole";
         frame-count: 187;

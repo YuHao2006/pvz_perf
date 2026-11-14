@@ -1,5 +1,6 @@
 export component StartReadySetPlant {
     fps: 12;
+    frame-count: 22;
     Track {
         source-name: "Plant";
         frame-count: 22;

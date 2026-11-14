@@ -1,109 +1,50 @@
 export component Zombie_credits_dance {
     fps: 12;
-    Track {
-        source-name: "anim_dance1";
-        frame-count: 588;
-        frame 12 { cel: -1; }
-        frame 13 { cel: -10000; }
+    frame-count: 588;
+    Actions {
+        "anim_dance1" { first-frame: 0; frame-count: 12; }
     }
-    Track {
-        source-name: "anim_dance2";
-        frame-count: 588;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 12 { y: 1.5; cel: 0; }
-        frame 13 { y: -10000; cel: -10000; }
-        frame 24 { cel: -1; }
-        frame 25 { cel: -10000; }
+
+    Actions {
+        "anim_dance2" { first-frame: 12; frame-count: 12; }
     }
-    Track {
-        source-name: "anim_dance3";
-        frame-count: 588;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 24 { x: 63.8; y: 2; cel: 0; }
-        frame 25 { x: -10000; y: -10000; cel: -10000; }
-        frame 141 { cel: -1; }
-        frame 142 { cel: -10000; }
+
+    Actions {
+        "anim_dance3" { first-frame: 24; frame-count: 117; }
     }
-    Track {
-        source-name: "anim_dance4";
-        frame-count: 588;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 141 { x: 6; cel: 0; }
-        frame 142 { x: -10000; cel: -10000; }
-        frame 191 { cel: -1; }
-        frame 192 { cel: -10000; }
+
+    Actions {
+        "anim_dance4" { first-frame: 141; frame-count: 50; }
     }
-    Track {
-        source-name: "anim_dance5";
-        frame-count: 588;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 191 { x: -9.2; y: 7.1; skew-x: -8.9; skew-y: -8.9; scale-x: 0.999; scale-y: 0.999; cel: 0; }
-        frame 192 { x: -10000; y: -10000; skew-x: -10000; skew-y: -10000; scale-x: -10000; scale-y: -10000; cel: -10000; }
-        frame 217 { cel: -1; }
-        frame 218 { cel: -10000; }
+
+    Actions {
+        "anim_dance5" { first-frame: 191; frame-count: 26; }
     }
-    Track {
-        source-name: "anim_dance6";
-        frame-count: 588;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 217 { x: 3.5; y: -6.6; skew-x: 7.1; skew-y: 7.1; cel: 0; }
-        frame 218 { x: -10000; y: -10000; skew-x: -10000; skew-y: -10000; cel: -10000; }
-        frame 267 { cel: -1; }
-        frame 268 { cel: -10000; }
+
+    Actions {
+        "anim_dance6" { first-frame: 217; frame-count: 50; }
     }
-    Track {
-        source-name: "anim_dance7";
-        frame-count: 588;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 267 { y: 9; cel: 0; }
-        frame 268 { y: -10000; cel: -10000; }
-        frame 279 { cel: -1; }
-        frame 280 { cel: -10000; }
+
+    Actions {
+        "anim_dance7" { first-frame: 267; frame-count: 12; }
     }
-    Track {
-        source-name: "anim_dance8";
-        frame-count: 588;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 279 { x: 3; y: 7.9; skew-x: 4.6; skew-y: 4.6; cel: 0; }
-        frame 280 { x: -10000; y: -10000; skew-x: -10000; skew-y: -10000; cel: -10000; }
-        frame 380 { cel: -1; }
-        frame 381 { cel: -10000; }
+
+    Actions {
+        "anim_dance8" { first-frame: 279; frame-count: 101; }
     }
-    Track {
-        source-name: "anim_dance9";
-        frame-count: 588;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 380 { y: 9; cel: 0; }
-        frame 381 { y: -10000; cel: -10000; }
-        frame 496 { cel: -1; }
-        frame 497 { cel: -10000; }
+
+    Actions {
+        "anim_dance9" { first-frame: 380; frame-count: 116; }
     }
-    Track {
-        source-name: "anim_dance10";
-        frame-count: 588;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 496 { y: 9; cel: 0; }
-        frame 497 { y: -10000; cel: -10000; }
-        frame 563 { cel: -1; }
-        frame 564 { cel: -10000; }
+
+    Actions {
+        "anim_dance10" { first-frame: 496; frame-count: 67; }
     }
-    Track {
-        source-name: "anim_dance11";
-        frame-count: 588;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 563 { x: 66.9; y: 9; cel: 0; }
-        frame 564 { x: -10000; y: -10000; cel: -10000; }
+
+    Actions {
+        "anim_dance11" { first-frame: 563; frame-count: 25; }
     }
+
     Track {
         source-name: "shadow";
         frame-count: 588;
@@ -321,6 +262,9 @@ export component Zombie_credits_dance {
         frame 537 { x: -10000; y: -10000; scale-x: -10000; scale-y: -10000; }
         frame 563 { cel: -1; }
         frame 564 { cel: -10000; }
+    }
+    Actions {
+        "anim_innerarm_hand" { first-frame: 0; frame-count: 588; }
     }
     Track {
         source-name: "anim_innerarm_hand";
@@ -914,6 +858,9 @@ export component Zombie_credits_dance {
         frame 586 { x: 26.4; y: 64.9; skew-x: 750.8; skew-y: 750.8; scale-x: 0.793; scale-y: 0.793; }
         frame 587 { x: 29.3; y: 67.8; skew-x: 734.6; skew-y: 734.6; scale-x: 0.794; scale-y: 0.794; }
     }
+    Actions {
+        "anim_innerarm_lower" { first-frame: 0; frame-count: 588; }
+    }
     Track {
         source-name: "anim_innerarm_lower";
         frame-count: 588;
@@ -1505,6 +1452,9 @@ export component Zombie_credits_dance {
         frame 585 { x: 29; y: 54; skew-x: 389.8; skew-y: 389.8; scale-x: -10000; scale-y: -10000; }
         frame 586 { x: 30.2; y: 54.2; skew-x: 377.3; skew-y: 377.3; }
         frame 587 { x: 31.4; y: 54.9; skew-x: 364.8; skew-y: 364.8; scale-x: 0.796; scale-y: 0.796; }
+    }
+    Actions {
+        "anim_innerarm_upper" { first-frame: 0; frame-count: 588; }
     }
     Track {
         source-name: "anim_innerarm_upper";
@@ -2689,6 +2639,9 @@ export component Zombie_credits_dance {
         frame 585 { x: 38.7; y: 32.7; skew-x: 375; skew-y: 375; scale-x: -10000; scale-y: -10000; }
         frame 586 { x: 37.8; y: 31.5; skew-x: 374.8; skew-y: 374.8; }
         frame 587 { x: 36.7; y: 30.2; skew-x: -10000; skew-y: -10000; }
+    }
+    Actions {
+        "anim_head" { first-frame: 0; frame-count: 588; }
     }
     Track {
         source-name: "anim_head";
@@ -7740,6 +7693,9 @@ export component Zombie_credits_dance {
         frame 586 { x: 28.4; y: 47; skew-x: 360.6; skew-y: 360.6; scale-x: -10000; scale-y: -10000; }
         frame 587 { x: 27.6; y: 46.2; skew-x: 358.7; skew-y: 358.7; }
     }
+    Actions {
+        "anim_jaw" { first-frame: 0; frame-count: 588; }
+    }
     Track {
         source-name: "anim_jaw";
         frame-count: 588;
@@ -8331,6 +8287,9 @@ export component Zombie_credits_dance {
         frame 585 { x: 22.4; y: 32.3; skew-x: 379.6; skew-y: 379.6; scale-x: -10000; scale-y: -10000; }
         frame 586 { x: 20.4; y: 31.2; skew-x: 380; skew-y: 380; scale-x: 0.797; scale-y: 0.797; }
         frame 587 { x: 18.3; y: 30.2; skew-x: 380.5; skew-y: 380.5; scale-x: 0.798; scale-y: 0.798; }
+    }
+    Actions {
+        "anim_tongue" { first-frame: 0; frame-count: 588; }
     }
     Track {
         source-name: "anim_tongue";
@@ -10744,6 +10703,9 @@ export component Zombie_credits_dance {
         frame 585 { x: 38.1; y: 56.4; skew-x: 379.3; skew-y: 379.3; scale-x: -10000; scale-y: -10000; }
         frame 586 { x: 37.1; y: 58.5; skew-x: 363.3; skew-y: 363.3; }
         frame 587 { x: 36.8; y: 61.6; skew-x: 347.3; skew-y: 347.3; }
+    }
+    Actions {
+        "anim_hair" { first-frame: 0; frame-count: 588; }
     }
     Track {
         source-name: "anim_hair";

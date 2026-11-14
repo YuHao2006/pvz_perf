@@ -1,10 +1,12 @@
 export component Zombie_boss {
     fps: 12;
-    Track {
-        source-name: "anim_enter";
-        frame-count: 792;
-        frame 40 { cel: -1; }
-        frame 41 { cel: -10000; }
+    frame-count: 792;
+    Actions {
+        "anim_enter" { first-frame: 0; frame-count: 40; }
+    }
+
+    Actions {
+        "anim_idle" { first-frame: 40; frame-count: 15; }
     }
     Track {
         source-name: "anim_idle";
@@ -16,214 +18,90 @@ export component Zombie_boss {
         frame 55 { cel: -1; }
         frame 56 { cel: -10000; }
     }
-    Track {
-        source-name: "anim_spawn_5";
-        frame-count: 792;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 55 { cel: 0; }
-        frame 56 { cel: -10000; }
-        frame 76 { cel: -1; }
-        frame 77 { cel: -10000; }
+    Actions {
+        "anim_spawn_5" { first-frame: 55; frame-count: 21; }
     }
-    Track {
-        source-name: "anim_spawn_4";
-        frame-count: 792;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 76 { cel: 0; }
-        frame 77 { cel: -10000; }
-        frame 97 { cel: -1; }
-        frame 98 { cel: -10000; }
+
+    Actions {
+        "anim_spawn_4" { first-frame: 76; frame-count: 21; }
     }
-    Track {
-        source-name: "anim_spawn_3";
-        frame-count: 792;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 97 { cel: 0; }
-        frame 98 { cel: -10000; }
-        frame 118 { cel: -1; }
-        frame 119 { cel: -10000; }
+
+    Actions {
+        "anim_spawn_3" { first-frame: 97; frame-count: 21; }
     }
-    Track {
-        source-name: "anim_spawn_2";
-        frame-count: 792;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 118 { cel: 0; }
-        frame 119 { cel: -10000; }
-        frame 139 { cel: -1; }
-        frame 140 { cel: -10000; }
+
+    Actions {
+        "anim_spawn_2" { first-frame: 118; frame-count: 21; }
     }
-    Track {
-        source-name: "anim_spawn_1";
-        frame-count: 792;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 139 { cel: 0; }
-        frame 140 { cel: -10000; }
-        frame 161 { cel: -1; }
-        frame 162 { cel: -10000; }
+
+    Actions {
+        "anim_spawn_1" { first-frame: 139; frame-count: 22; }
     }
-    Track {
-        source-name: "anim_bungee_1_enter";
-        frame-count: 792;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 161 { cel: 0; }
-        frame 162 { cel: -10000; }
-        frame 186 { cel: -1; }
-        frame 187 { cel: -10000; }
+
+    Actions {
+        "anim_bungee_1_enter" { first-frame: 161; frame-count: 25; }
     }
-    Track {
-        source-name: "anim_bungee_1_leave";
-        frame-count: 792;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 186 { cel: 0; }
-        frame 187 { cel: -10000; }
-        frame 204 { cel: -1; }
-        frame 205 { cel: -10000; }
+
+    Actions {
+        "anim_bungee_1_leave" { first-frame: 186; frame-count: 18; }
     }
-    Track {
-        source-name: "anim_stomp_1";
-        frame-count: 792;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 205 { cel: 0; }
-        frame 206 { cel: -10000; }
-        frame 236 { cel: -1; }
-        frame 237 { cel: -10000; }
+
+    Actions {
+        "anim_stomp_1" { first-frame: 205; frame-count: 31; }
     }
-    Track {
-        source-name: "anim_stomp_2";
-        frame-count: 792;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 236 { cel: 0; }
-        frame 237 { cel: -10000; }
-        frame 267 { cel: -1; }
-        frame 268 { cel: -10000; }
+
+    Actions {
+        "anim_stomp_2" { first-frame: 236; frame-count: 31; }
     }
-    Track {
-        source-name: "anim_stomp_3";
-        frame-count: 792;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 267 { cel: 0; }
-        frame 268 { cel: -10000; }
-        frame 296 { cel: -1; }
-        frame 297 { cel: -10000; }
+
+    Actions {
+        "anim_stomp_3" { first-frame: 267; frame-count: 29; }
     }
-    Track {
-        source-name: "anim_stomp_4";
-        frame-count: 792;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 296 { cel: 0; }
-        frame 297 { cel: -10000; }
-        frame 325 { cel: -1; }
-        frame 326 { cel: -10000; }
+
+    Actions {
+        "anim_stomp_4" { first-frame: 296; frame-count: 29; }
     }
-    Track {
-        source-name: "anim_head_enter";
-        frame-count: 792;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 325 { cel: 0; }
-        frame 326 { cel: -10000; }
-        frame 382 { cel: -1; }
-        frame 383 { cel: -10000; }
+
+    Actions {
+        "anim_head_enter" { first-frame: 325; frame-count: 57; }
     }
-    Track {
-        source-name: "anim_head_idle";
-        frame-count: 792;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 382 { cel: 0; }
-        frame 383 { cel: -10000; }
-        frame 399 { cel: -1; }
-        frame 400 { cel: -10000; }
+
+    Actions {
+        "anim_head_idle" { first-frame: 382; frame-count: 17; }
     }
-    Track {
-        source-name: "anim_head_attack_1";
-        frame-count: 792;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 399 { cel: 0; }
-        frame 400 { cel: -10000; }
-        frame 439 { cel: -1; }
-        frame 440 { cel: -10000; }
+
+    Actions {
+        "anim_head_attack_1" { first-frame: 399; frame-count: 40; }
     }
-    Track {
-        source-name: "anim_head_attack_2";
-        frame-count: 792;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 439 { cel: 0; }
-        frame 440 { cel: -10000; }
-        frame 479 { cel: -1; }
-        frame 480 { cel: -10000; }
+
+    Actions {
+        "anim_head_attack_2" { first-frame: 439; frame-count: 40; }
     }
-    Track {
-        source-name: "anim_head_attack_3";
-        frame-count: 792;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 479 { cel: 0; }
-        frame 480 { cel: -10000; }
-        frame 519 { cel: -1; }
-        frame 520 { cel: -10000; }
+
+    Actions {
+        "anim_head_attack_3" { first-frame: 479; frame-count: 40; }
     }
-    Track {
-        source-name: "anim_head_attack_4";
-        frame-count: 792;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 519 { cel: 0; }
-        frame 520 { cel: -10000; }
-        frame 559 { cel: -1; }
-        frame 560 { cel: -10000; }
+
+    Actions {
+        "anim_head_attack_4" { first-frame: 519; frame-count: 40; }
     }
-    Track {
-        source-name: "anim_head_attack_5";
-        frame-count: 792;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 559 { cel: 0; }
-        frame 560 { cel: -10000; }
-        frame 602 { cel: -1; }
-        frame 603 { cel: -10000; }
+
+    Actions {
+        "anim_head_attack_5" { first-frame: 559; frame-count: 43; }
     }
-    Track {
-        source-name: "anim_head_leave";
-        frame-count: 792;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 602 { cel: 0; }
-        frame 603 { cel: -10000; }
-        frame 647 { cel: -1; }
-        frame 648 { cel: -10000; }
+
+    Actions {
+        "anim_head_leave" { first-frame: 602; frame-count: 45; }
     }
-    Track {
-        source-name: "anim_death";
-        frame-count: 792;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 647 { cel: 0; }
-        frame 648 { cel: -10000; }
-        frame 754 { cel: -1; }
-        frame 755 { cel: -10000; }
+
+    Actions {
+        "anim_death" { first-frame: 647; frame-count: 107; }
     }
-    Track {
-        source-name: "anim_RV_1";
-        frame-count: 792;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 754 { y: 40; cel: 0; }
-        frame 755 { y: -10000; cel: -10000; }
+
+    Actions {
+        "anim_RV_1" { first-frame: 754; frame-count: 38; }
     }
+
     Track {
         source-name: "Boss_innerarm_bits";
         frame-count: 792;

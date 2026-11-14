@@ -1,19 +1,19 @@
 export component HypnoShroom {
     fps: 12;
+    frame-count: 40;
+    Actions {
+        "anim_idle" { first-frame: 0; frame-count: 20; }
+    }
     Track {
         source-name: "anim_idle";
         frame-count: 40;
         frame 20 { cel: -1; }
         frame 21 { cel: -10000; }
     }
-    Track {
-        source-name: "anim_sleep";
-        frame-count: 40;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 20 { cel: 0; }
-        frame 21 { cel: -10000; }
+    Actions {
+        "anim_sleep" { first-frame: 20; frame-count: 20; }
     }
+
     Track {
         source-name: "Layer 1";
         frame-count: 40;

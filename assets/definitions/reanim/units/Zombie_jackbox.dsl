@@ -1,5 +1,9 @@
 export component Zombie_jackbox {
     fps: 12;
+    frame-count: 103;
+    Actions {
+        "anim_idle" { first-frame: 13; frame-count: 17; }
+    }
     Track {
         source-name: "anim_idle";
         frame-count: 103;
@@ -10,43 +14,24 @@ export component Zombie_jackbox {
         frame 30 { cel: -1; }
         frame 31 { cel: -10000; }
     }
-    Track {
-        source-name: "anim_walk";
-        frame-count: 103;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 30 { x: -9; y: 8.8; skew-x: -10.3; skew-y: -10.3; scale-x: 0.998; scale-y: 0.998; cel: 0; }
-        frame 31 { x: -10000; y: -10000; skew-x: -10000; skew-y: -10000; scale-x: -10000; scale-y: -10000; cel: -10000; }
-        frame 49 { cel: -1; }
-        frame 50 { cel: -10000; }
+    Actions {
+        "anim_walk" { first-frame: 30; frame-count: 19; }
     }
-    Track {
-        source-name: "anim_eat";
-        frame-count: 103;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 49 { cel: 0; }
-        frame 50 { cel: -10000; }
-        frame 64 { cel: -1; }
-        frame 65 { cel: -10000; }
+
+    Actions {
+        "anim_eat" { first-frame: 49; frame-count: 15; }
     }
-    Track {
-        source-name: "anim_pop";
-        frame-count: 103;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 64 { cel: 0; }
-        frame 65 { cel: -10000; }
-        frame 80 { cel: -1; }
-        frame 81 { cel: -10000; }
+
+    Actions {
+        "anim_pop" { first-frame: 64; frame-count: 16; }
     }
-    Track {
-        source-name: "anim_death";
-        frame-count: 103;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 80 { cel: 0; }
-        frame 81 { cel: -10000; }
+
+    Actions {
+        "anim_death" { first-frame: 80; frame-count: 23; }
+    }
+
+    Actions {
+        "_ground" { first-frame: 30; frame-count: 19; }
     }
     Track {
         source-name: "_ground";
@@ -960,6 +945,9 @@ export component Zombie_jackbox {
         frame 101 { x: -10000; y: 122.3; skew-x: -72.1; skew-y: -74.9; scale-x: -10000; scale-y: -10000; }
         frame 102 { y: 122.9; skew-x: -10000; skew-y: -10000; }
     }
+    Actions {
+        "anim_head1" { first-frame: 13; frame-count: 67; }
+    }
     Track {
         source-name: "anim_head1";
         frame-count: 103;
@@ -1032,6 +1020,9 @@ export component Zombie_jackbox {
         frame 79 { x: 28.5; y: -15.2; skew-x: 14; skew-y: 14; scale-x: 0.773; scale-y: 0.824; }
         frame 80 { x: -10000; y: -10000; skew-x: -10000; skew-y: -10000; scale-x: -10000; scale-y: -10000; cel: -1; }
         frame 81 { cel: -10000; }
+    }
+    Actions {
+        "anim_head2" { first-frame: 13; frame-count: 67; }
     }
     Track {
         source-name: "anim_head2";

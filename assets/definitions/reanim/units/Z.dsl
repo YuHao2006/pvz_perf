@@ -1,5 +1,6 @@
 export component Z {
     fps: 12;
+    frame-count: 17;
     Track {
         source-name: "z1";
         frame-count: 17;

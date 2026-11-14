@@ -1,32 +1,20 @@
 export component PeaShooter {
     fps: 12;
-    Track {
-        source-name: "anim_full_idle";
-        frame-count: 104;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 79 { cel: 0; }
-        frame 80 { cel: -10000; }
+    frame-count: 104;
+    Actions {
+        "anim_full_idle" { first-frame: 79; frame-count: 25; }
     }
-    Track {
-        source-name: "anim_shooting";
-        frame-count: 104;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 54 { cel: 0; }
-        frame 55 { cel: -10000; }
-        frame 79 { cel: -1; }
-        frame 80 { cel: -10000; }
+
+    Actions {
+        "anim_shooting" { first-frame: 54; frame-count: 25; }
     }
-    Track {
-        source-name: "anim_head_idle";
-        frame-count: 104;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 29 { cel: 0; }
-        frame 30 { cel: -10000; }
-        frame 54 { cel: -1; }
-        frame 55 { cel: -10000; }
+
+    Actions {
+        "anim_head_idle" { first-frame: 29; frame-count: 25; }
+    }
+
+    Actions {
+        "anim_idle" { first-frame: 4; frame-count: 25; }
     }
     Track {
         source-name: "anim_idle";
@@ -501,6 +489,9 @@ export component PeaShooter {
         frame 101 { x: 19.4; y: 61.2; skew-x: 2.8; skew-y: 2.8; scale-x: 0.58; scale-y: 0.552; }
         frame 102 { x: 19.3; y: 61.4; skew-x: 1.3; skew-y: 1.3; scale-x: 0.567; scale-y: 0.554; }
         frame 103 { x: 19.4; y: 61.6; skew-x: 0; skew-y: 0; scale-x: 0.555; scale-y: 0.555; }
+    }
+    Actions {
+        "anim_stem" { first-frame: 4; frame-count: 100; }
     }
     Track {
         source-name: "anim_stem";
@@ -1046,6 +1037,9 @@ export component PeaShooter {
         frame 102 { x: -10000; y: 17.6; skew-x: -4.9; skew-y: -4.9; scale-x: 0.536; scale-y: 0.527; }
         frame 103 { x: 13; y: 18.4; skew-x: 0; skew-y: 0; scale-x: 0.527; scale-y: 0.513; }
     }
+    Actions {
+        "anim_face" { first-frame: 29; frame-count: 75; }
+    }
     Track {
         source-name: "anim_face";
         frame-count: 104;
@@ -1221,6 +1215,9 @@ export component PeaShooter {
         frame 69 { x: -10000; y: 19.9; scale-y: 0.521; image: none; }
         frame 70 { y: -10000; scale-y: -10000; cel: -1; }
         frame 71 { cel: -10000; }
+    }
+    Actions {
+        "anim_blink" { first-frame: 1; frame-count: 3; }
     }
     Track {
         source-name: "anim_blink";

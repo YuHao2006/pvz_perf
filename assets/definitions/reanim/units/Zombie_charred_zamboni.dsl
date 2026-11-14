@@ -1,19 +1,14 @@
 export component Zombie_charred_zamboni {
     fps: 15;
-    Track {
-        source-name: "anim_blink";
-        frame-count: 54;
-        frame 22 { cel: -1; }
-        frame 23 { cel: -10000; }
+    frame-count: 54;
+    Actions {
+        "anim_blink" { first-frame: 0; frame-count: 22; }
     }
-    Track {
-        source-name: "anim_crumble";
-        frame-count: 54;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 22 { cel: 0; }
-        frame 23 { cel: -10000; }
+
+    Actions {
+        "anim_crumble" { first-frame: 22; frame-count: 32; }
     }
+
     Track {
         source-name: "body";
         frame-count: 54;

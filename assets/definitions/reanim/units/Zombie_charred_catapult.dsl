@@ -1,5 +1,6 @@
 export component Zombie_charred_catapult {
     fps: 12;
+    frame-count: 30;
     Track {
         source-name: "charred";
         frame-count: 30;

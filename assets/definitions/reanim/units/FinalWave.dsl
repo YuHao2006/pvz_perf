@@ -1,5 +1,6 @@
 export component FinalWave {
     fps: 12;
+    frame-count: 23;
     Track {
         source-name: "FinalWave";
         frame-count: 23;

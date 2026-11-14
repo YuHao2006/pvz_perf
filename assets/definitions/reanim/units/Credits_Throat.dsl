@@ -1,5 +1,6 @@
 export component Credits_Throat {
     fps: 12;
+    frame-count: 72;
     Track {
         source-name: "throat";
         frame-count: 72;

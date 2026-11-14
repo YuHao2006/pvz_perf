@@ -1,5 +1,6 @@
 export component RoofCleaner {
     fps: 12;
+    frame-count: 9;
     Track {
         source-name: "RoofCleaner_backwheel1";
         frame-count: 9;

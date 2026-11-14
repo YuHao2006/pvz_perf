@@ -3,6 +3,7 @@ export component Credits_Main3 {
     shared-image: IMAGE_REANIM_BACKGROUND5 IMAGE_BACKGROUND5;
 
     fps: 7;
+    frame-count: 330;
     Track {
         source-name: "Background";
         frame-count: 330;

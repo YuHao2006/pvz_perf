@@ -1,32 +1,20 @@
 export component Chomper {
     fps: 12;
-    Track {
-        source-name: "anim_swallow";
-        frame-count: 94;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 66 { x: 23.8; y: -22.2; skew-x: 25; skew-y: 25; scale-x: 0.999; scale-y: 0.999; cel: 0; }
-        frame 67 { x: -10000; y: -10000; skew-x: -10000; skew-y: -10000; scale-x: -10000; scale-y: -10000; cel: -10000; }
+    frame-count: 94;
+    Actions {
+        "anim_swallow" { first-frame: 66; frame-count: 28; }
     }
-    Track {
-        source-name: "anim_chew";
-        frame-count: 94;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 50 { x: 3.6; y: -2.9; skew-x: 6; skew-y: 6; cel: 0; }
-        frame 51 { x: -10000; y: -10000; skew-x: -10000; skew-y: -10000; cel: -10000; }
-        frame 66 { cel: -1; }
-        frame 67 { cel: -10000; }
+
+    Actions {
+        "anim_chew" { first-frame: 50; frame-count: 16; }
     }
-    Track {
-        source-name: "anim_bite";
-        frame-count: 94;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 25 { cel: 0; }
-        frame 26 { cel: -10000; }
-        frame 50 { cel: -1; }
-        frame 51 { cel: -10000; }
+
+    Actions {
+        "anim_bite" { first-frame: 25; frame-count: 25; }
+    }
+
+    Actions {
+        "anim_idle" { first-frame: 0; frame-count: 25; }
     }
     Track {
         source-name: "anim_idle";

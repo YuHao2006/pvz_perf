@@ -1,13 +1,12 @@
 export component Magnetshroom {
     fps: 12;
-    Track {
-        source-name: "anim_blink";
-        frame-count: 131;
-        frame 0 { cel: -1; }
-        frame 1 { cel: 0; }
-        frame 2 { cel: -10000; }
-        frame 4 { cel: -1; }
-        frame 5 { cel: -10000; }
+    frame-count: 131;
+    Actions {
+        "anim_blink" { first-frame: 1; frame-count: 3; }
+    }
+
+    Actions {
+        "anim_idle" { first-frame: 4; frame-count: 29; }
     }
     Track {
         source-name: "anim_idle";
@@ -19,44 +18,22 @@ export component Magnetshroom {
         frame 33 { cel: -1; }
         frame 34 { cel: -10000; }
     }
-    Track {
-        source-name: "anim_nonactive_idle";
-        frame-count: 131;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 33 { cel: 0; }
-        frame 34 { cel: -10000; }
-        frame 62 { cel: -1; }
-        frame 63 { cel: -10000; }
+    Actions {
+        "anim_nonactive_idle" { first-frame: 33; frame-count: 29; }
     }
-    Track {
-        source-name: "anim_shooting";
-        frame-count: 131;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 71 { cel: 0; }
-        frame 72 { cel: -10000; }
-        frame 97 { cel: -1; }
-        frame 98 { cel: -10000; }
+
+    Actions {
+        "anim_shooting" { first-frame: 71; frame-count: 26; }
     }
-    Track {
-        source-name: "anim_sleep";
-        frame-count: 131;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 108 { cel: 0; }
-        frame 109 { cel: -10000; }
-        frame 126 { cel: -1; }
-        frame 127 { cel: -10000; }
+
+    Actions {
+        "anim_sleep" { first-frame: 108; frame-count: 18; }
     }
-    Track {
-        source-name: "anim_nonactive_idle2";
-        frame-count: 131;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 126 { cel: 0; }
-        frame 127 { cel: -10000; }
+
+    Actions {
+        "anim_nonactive_idle2" { first-frame: 126; frame-count: 5; }
     }
+
     Track {
         source-name: "Magnetshroom_stem";
         frame-count: 131;
@@ -297,6 +274,9 @@ export component Magnetshroom {
         frame 129 { x: 40.9; y: 44.8; skew-y: 34.6; scale-x: 0.599; scale-y: 0.606; }
         frame 130 { x: 41.1; y: 45; skew-y: 34.7; scale-x: 0.6; scale-y: 0.607; }
     }
+    Actions {
+        "anim_face" { first-frame: 4; frame-count: 127; }
+    }
     Track {
         source-name: "anim_face";
         frame-count: 131;
@@ -536,6 +516,9 @@ export component Magnetshroom {
         frame 129 { x: 39.8; y: 44; skew-x: 16.8; skew-y: 25.8; scale-y: 0.608; }
         frame 130 { x: 40.5; y: 43.7; skew-x: 18.6; skew-y: 27.6; scale-x: 0.594; scale-y: 0.609; }
     }
+    Actions {
+        "anim_eyes" { first-frame: 4; frame-count: 127; }
+    }
     Track {
         source-name: "anim_eyes";
         frame-count: 131;
@@ -625,6 +608,9 @@ export component Magnetshroom {
         frame 128 { x: 49.3; y: 39.7; skew-x: 18.8; skew-y: 18.8; scale-x: 0.593; scale-y: 0.615; }
         frame 129 { x: 49.8; y: 39.8; skew-x: 21.3; skew-y: 21.3; scale-x: 0.592; scale-y: 0.614; }
         frame 130 { x: 50.1; y: -10000; skew-x: 23.9; skew-y: 23.9; scale-x: 0.593; scale-y: 0.615; }
+    }
+    Actions {
+        "anim_eyes2" { first-frame: 4; frame-count: 127; }
     }
     Track {
         source-name: "anim_eyes2";
@@ -749,6 +735,9 @@ export component Magnetshroom {
         frame 125 { x: 49.6; y: 31.9; scale-x: 0.522; scale-y: 0.522; }
         frame 126 { x: -10000; y: -10000; scale-x: -10000; scale-y: -10000; cel: -1; }
         frame 127 { cel: -10000; }
+    }
+    Actions {
+        "anim_eyes22" { first-frame: 72; frame-count: 54; }
     }
     Track {
         source-name: "anim_eyes22";

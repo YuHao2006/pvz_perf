@@ -1,5 +1,9 @@
 export component ZenGarden_fertilizer {
     fps: 20;
+    frame-count: 31;
+    Actions {
+        "bag" { first-frame: 0; frame-count: 31; }
+    }
     Track {
         source-name: "bag";
         frame-count: 31;

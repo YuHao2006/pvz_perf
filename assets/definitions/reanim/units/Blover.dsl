@@ -1,29 +1,23 @@
 export component Blover {
     fps: 12;
+    frame-count: 62;
+    Actions {
+        "anim_idle" { first-frame: 0; frame-count: 33; }
+    }
     Track {
         source-name: "anim_idle";
         frame-count: 62;
         frame 33 { cel: -1; }
         frame 34 { cel: -10000; }
     }
-    Track {
-        source-name: "anim_loop";
-        frame-count: 62;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 52 { cel: 0; }
-        frame 53 { cel: -10000; }
+    Actions {
+        "anim_loop" { first-frame: 52; frame-count: 10; }
     }
-    Track {
-        source-name: "anim_blow";
-        frame-count: 62;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 33 { x: 5; cel: 0; }
-        frame 34 { x: -10000; cel: -10000; }
-        frame 53 { cel: -1; }
-        frame 54 { cel: -10000; }
+
+    Actions {
+        "anim_blow" { first-frame: 33; frame-count: 20; }
     }
+
     Track {
         source-name: "Blover_dirt_back";
         frame-count: 62;

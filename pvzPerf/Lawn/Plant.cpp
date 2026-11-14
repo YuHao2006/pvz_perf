@@ -578,7 +578,7 @@ void Plant::PlantInitialize(std::int64_t ownerNowNs, std::int64_t visualNowNs, s
         aBodyReanim->ChangeLoopType(ReanimLoopType::REANIM_LOOP);
         aBodyReanim->ApplyRate(RandRangeFloat(10.0f, 15.0f));
 
-        if (aBodyReanim->TrackExists(ReanimTrackId::anim_idle))
+        if (aBodyReanim->ActionExists(ReanimTrackId::anim_idle))
             aBodyReanim->SetFramesForLayer(ReanimTrackId::anim_idle);
 
         if (mApp->IsWallnutBowlingLevel() && aBodyReanim->TrackExists(ReanimTrackId::_ground))
@@ -716,7 +716,7 @@ void Plant::SetSleeping(std::int64_t ownerNowNs, std::int64_t animationNowNs, bo
         {
             aBodyReanim->SetFramesForLayer(ReanimTrackId::anim_bigsleep);
         }
-        else if (aBodyReanim->TrackExists(ReanimTrackId::anim_sleep))
+        else if (aBodyReanim->ActionExists(ReanimTrackId::anim_sleep))
         {
             const auto aAnimPhase = aBodyReanim->SamplePlayback().phaseNs;
             const auto aAnimPeriod = aBodyReanim->mPeriodNs;
@@ -737,7 +737,7 @@ void Plant::SetSleeping(std::int64_t ownerNowNs, std::int64_t animationNowNs, bo
         {
             aBodyReanim->SetFramesForLayer(ReanimTrackId::anim_bigidle);
         }
-        else if (aBodyReanim->TrackExists(ReanimTrackId::anim_idle))
+        else if (aBodyReanim->ActionExists(ReanimTrackId::anim_idle))
         {
             const auto aAnimPhase = aBodyReanim->SamplePlayback().phaseNs;
             const auto aAnimPeriod = aBodyReanim->mPeriodNs;
@@ -934,7 +934,7 @@ bool Plant::FindTargetAndFire(std::int64_t ownerNowNs, std::int64_t visualNowNs,
         aHeadReanim2->SetFramesForLayer(ReanimTrackId::anim_splitpea_shooting);
         mShootingEndTimeNs = ReanimClock::Add(ownerNowNs, 26 * PlantLaunchClock::Tick);
     }
-    else if (aHeadReanim && aHeadReanim->TrackExists(ReanimTrackId::anim_shooting))
+    else if (aHeadReanim && aHeadReanim->ActionExists(ReanimTrackId::anim_shooting))
     {
         aHeadReanim->StartBlend(20);
         aHeadReanim->ChangeLoopType(ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD);
@@ -968,7 +968,7 @@ bool Plant::FindTargetAndFire(std::int64_t ownerNowNs, std::int64_t visualNowNs,
         PlayBodyReanim(ownerNowNs, ReanimTrackId::anim_shooting, ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD, 20, 30.0f);
         mShootingEndTimeNs = ReanimClock::Add(ownerNowNs, 50 * PlantLaunchClock::Tick);
     }
-    else if (aBodyReanim && aBodyReanim->TrackExists(ReanimTrackId::anim_shooting))
+    else if (aBodyReanim && aBodyReanim->ActionExists(ReanimTrackId::anim_shooting))
     {
         PlayBodyReanim(ownerNowNs, ReanimTrackId::anim_shooting, ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD, 20, 35.0f);
 
@@ -3880,7 +3880,7 @@ Reanimation* Plant::AttachBlinkAnim(std::int64_t ownerNowNs, std::int64_t animat
     static constexpr BlinkCaseFn kBlinkWallnutFamily = [](std::int64_t ownerNowNs, Plant& p, Reanimation* theReanimBody, BlinkSelection& aSel)
     {
         int aHit = Rand(10);
-        if (aHit < 1 && theReanimBody->TrackExists(ReanimTrackId::anim_blink_twitch))
+        if (aHit < 1 && theReanimBody->ActionExists(ReanimTrackId::anim_blink_twitch))
         {
             aSel.mTrackToPlay = ReanimTrackId::anim_blink_twitch;
         }

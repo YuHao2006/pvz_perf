@@ -1,19 +1,14 @@
 export component fire {
     fps: 12;
-    Track {
-        source-name: "anim_flame";
-        frame-count: 13;
-        frame 3 { cel: -1; }
-        frame 4 { cel: -10000; }
+    frame-count: 13;
+    Actions {
+        "anim_flame" { first-frame: 0; frame-count: 3; }
     }
-    Track {
-        source-name: "anim_done";
-        frame-count: 13;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 3 { cel: 0; }
-        frame 4 { cel: -10000; }
+
+    Actions {
+        "anim_done" { first-frame: 3; frame-count: 10; }
     }
+
     Track {
         source-name: "Layer 1";
         frame-count: 13;

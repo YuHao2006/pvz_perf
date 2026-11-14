@@ -1,30 +1,20 @@
 export component CrazyDave {
     fps: 24;
-    Track {
-        source-name: "anim_enter";
-        frame-count: 266;
-        frame 18 { cel: -1; }
-        frame 19 { cel: -10000; }
+    frame-count: 266;
+    Actions {
+        "anim_enter" { first-frame: 0; frame-count: 18; }
     }
-    Track {
-        source-name: "anim_leave";
-        frame-count: 266;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 18 { cel: 0; }
-        frame 19 { cel: -10000; }
-        frame 33 { cel: -1; }
-        frame 34 { cel: -10000; }
+
+    Actions {
+        "anim_leave" { first-frame: 18; frame-count: 15; }
     }
-    Track {
-        source-name: "anim_blahblah";
-        frame-count: 266;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 33 { cel: 0; }
-        frame 34 { cel: -10000; }
-        frame 64 { cel: -1; }
-        frame 65 { cel: -10000; }
+
+    Actions {
+        "anim_blahblah" { first-frame: 33; frame-count: 31; }
+    }
+
+    Actions {
+        "anim_idle" { first-frame: 64; frame-count: 21; }
     }
     Track {
         source-name: "anim_idle";
@@ -36,94 +26,42 @@ export component CrazyDave {
         frame 85 { cel: -1; }
         frame 86 { cel: -10000; }
     }
-    Track {
-        source-name: "anim_smalltalk";
-        frame-count: 266;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 85 { cel: 0; }
-        frame 86 { cel: -10000; }
-        frame 94 { cel: -1; }
-        frame 95 { cel: -10000; }
+    Actions {
+        "anim_smalltalk" { first-frame: 85; frame-count: 9; }
     }
-    Track {
-        source-name: "anim_crazy";
-        frame-count: 266;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 94 { cel: 0; }
-        frame 95 { cel: -10000; }
-        frame 130 { cel: -1; }
-        frame 131 { cel: -10000; }
+
+    Actions {
+        "anim_crazy" { first-frame: 94; frame-count: 36; }
     }
-    Track {
-        source-name: "anim_mediumtalk";
-        frame-count: 266;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 130 { cel: 0; }
-        frame 131 { cel: -10000; }
-        frame 148 { cel: -1; }
-        frame 149 { cel: -10000; }
+
+    Actions {
+        "anim_mediumtalk" { first-frame: 130; frame-count: 18; }
     }
-    Track {
-        source-name: "anim_blink";
-        frame-count: 266;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 148 { cel: 0; }
-        frame 149 { cel: -10000; }
-        frame 154 { cel: -1; }
-        frame 155 { cel: -10000; }
+
+    Actions {
+        "anim_blink" { first-frame: 148; frame-count: 6; }
     }
-    Track {
-        source-name: "anim_grab";
-        frame-count: 266;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 154 { cel: 0; }
-        frame 155 { cel: -10000; }
-        frame 210 { cel: -1; }
-        frame 211 { cel: -10000; }
+
+    Actions {
+        "anim_grab" { first-frame: 154; frame-count: 56; }
     }
-    Track {
-        source-name: "anim_enter_handing";
-        frame-count: 266;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 210 { cel: 0; }
-        frame 211 { cel: -10000; }
-        frame 228 { cel: -1; }
-        frame 229 { cel: -10000; }
+
+    Actions {
+        "anim_enter_handing" { first-frame: 210; frame-count: 18; }
     }
-    Track {
-        source-name: "anim_idle_handing";
-        frame-count: 266;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 228 { cel: 0; }
-        frame 229 { cel: -10000; }
-        frame 249 { cel: -1; }
-        frame 250 { cel: -10000; }
+
+    Actions {
+        "anim_idle_handing" { first-frame: 228; frame-count: 21; }
     }
-    Track {
-        source-name: "anim_talk_handing";
-        frame-count: 266;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 249 { cel: 0; }
-        frame 250 { cel: -10000; }
-        frame 258 { cel: -1; }
-        frame 259 { cel: -10000; }
+
+    Actions {
+        "anim_talk_handing" { first-frame: 249; frame-count: 9; }
     }
-    Track {
-        source-name: "anim_enterup";
-        frame-count: 266;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 258 { cel: 0; }
-        frame 259 { cel: -10000; }
+
+    Actions {
+        "anim_enterup" { first-frame: 258; frame-count: 8; }
     }
+
     Track {
         source-name: "zombie_body";
         frame-count: 266;

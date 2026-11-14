@@ -16,6 +16,7 @@
 #include "Lawn/MessageWidget.h"
 #include "Sexy.TodLib/Attachment.h"
 #include "Sexy.TodLib/Reanimator.h"
+#include "Sexy.TodLib/ReanimActionLayout.h"
 #include "Sexy.TodLib/TodParticle.h"
 #include "Sexy.TodLib/TodAllocator.h"
 #include "Sexy.TodLib/TodCommon.h"
@@ -672,7 +673,15 @@ void SyncReanimation(Board* theBoard, Reanimation* theReanimation, SaveGameConte
 				anAllocator->Calloc(aNativeSize)));
 			aTracks = aPendingTracks.get();
 		}
-		SyncDat64TrackInstances(theContext, aTracks, aTrackCount);
+        const auto savedLayout=ReanimatorGetSavedTrackLayout(theReanimation->mReanimationType);
+        if(savedLayout.savedCount!=aTrackCount){
+            // DAT64 v5 keeps the old count and order. Only the in-memory array is dense.
+            std::vector<ReanimatorTrackInstance> savedTracks(savedLayout.savedCount);
+            if(!theContext.mReading)for(int saved=0;saved<savedLayout.savedCount;++saved){const int runtime=savedLayout.savedToRuntime[saved];if(runtime>=0)savedTracks[saved]=aTracks[runtime];}
+            SyncDat64TrackInstances(theContext,savedTracks.data(),savedLayout.savedCount);
+            if(theContext.mFailed)return;
+            if(theContext.mReading)for(int saved=0;saved<savedLayout.savedCount;++saved){const int runtime=savedLayout.savedToRuntime[saved];if(runtime>=0)aTracks[runtime]=savedTracks[saved];else if(savedTracks[saved].mAttachmentID!=AttachmentID::ATTACHMENTID_NULL){theContext.mFailed=true;return;}}
+        }else SyncDat64TrackInstances(theContext,aTracks,aTrackCount);
 		if (theContext.mFailed)
 			return;
 

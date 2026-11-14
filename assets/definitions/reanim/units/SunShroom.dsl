@@ -1,32 +1,20 @@
 export component SunShroom {
     fps: 12;
-    Track {
-        source-name: "anim_bigsleep";
-        frame-count: 63;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 51 { cel: 0; }
-        frame 52 { cel: -10000; }
+    frame-count: 63;
+    Actions {
+        "anim_bigsleep" { first-frame: 51; frame-count: 12; }
     }
-    Track {
-        source-name: "anim_bigidle";
-        frame-count: 63;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 39 { cel: 0; }
-        frame 40 { cel: -10000; }
-        frame 51 { cel: -1; }
-        frame 52 { cel: -10000; }
+
+    Actions {
+        "anim_bigidle" { first-frame: 39; frame-count: 12; }
     }
-    Track {
-        source-name: "anim_grow";
-        frame-count: 63;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 27 { cel: 0; }
-        frame 28 { cel: -10000; }
-        frame 39 { cel: -1; }
-        frame 40 { cel: -10000; }
+
+    Actions {
+        "anim_grow" { first-frame: 27; frame-count: 12; }
+    }
+
+    Actions {
+        "anim_sleep" { first-frame: 17; frame-count: 10; }
     }
     Track {
         source-name: "anim_sleep";
@@ -38,6 +26,10 @@ export component SunShroom {
         frame 27 { cel: -1; }
         frame 28 { cel: -10000; }
     }
+
+    Actions {
+        "anim_idle" { first-frame: 5; frame-count: 12; }
+    }
     Track {
         source-name: "anim_idle";
         frame-count: 63;
@@ -47,6 +39,9 @@ export component SunShroom {
         frame 6 { cel: -10000; }
         frame 17 { cel: -1; }
         frame 18 { cel: -10000; }
+    }
+    Actions {
+        "anim_face" { first-frame: 5; frame-count: 58; }
     }
     Track {
         source-name: "anim_face";
@@ -141,6 +136,9 @@ export component SunShroom {
         frame 60 { x: 34.5; y: 45.9; scale-x: 0.587; }
         frame 61 { x: 34.6; y: 45.4; scale-x: 0.575; }
         frame 62 { x: -10000; y: 44.8; scale-x: 0.563; }
+    }
+    Actions {
+        "anim_blink" { first-frame: 1; frame-count: 3; }
     }
     Track {
         source-name: "anim_blink";

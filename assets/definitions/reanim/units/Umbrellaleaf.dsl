@@ -1,10 +1,12 @@
 export component Umbrellaleaf {
     fps: 12;
-    Track {
-        source-name: "anim_blink";
-        frame-count: 32;
-        frame 4 { cel: -1; }
-        frame 5 { cel: -10000; }
+    frame-count: 32;
+    Actions {
+        "anim_blink" { first-frame: 0; frame-count: 4; }
+    }
+
+    Actions {
+        "anim_idle" { first-frame: 4; frame-count: 15; }
     }
     Track {
         source-name: "anim_idle";
@@ -16,13 +18,12 @@ export component Umbrellaleaf {
         frame 19 { cel: -1; }
         frame 20 { cel: -10000; }
     }
-    Track {
-        source-name: "anim_block";
-        frame-count: 32;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 19 { x: -57.5; y: -53.1; scale-x: 2.479; scale-y: 3.089; cel: 0; }
-        frame 20 { x: -10000; y: -10000; scale-x: -10000; scale-y: -10000; cel: -10000; }
+    Actions {
+        "anim_block" { first-frame: 19; frame-count: 13; }
+    }
+
+    Actions {
+        "anim_face" { first-frame: 4; frame-count: 28; }
     }
     Track {
         source-name: "anim_face";

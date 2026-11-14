@@ -1,68 +1,41 @@
 export component Zombie_ladder {
     fps: 12;
+    frame-count: 215;
+    Actions {
+        "anim_idle" { first-frame: 0; frame-count: 25; }
+    }
     Track {
         source-name: "anim_idle";
         frame-count: 215;
         frame 25 { cel: -1; }
         frame 26 { cel: -10000; }
     }
-    Track {
-        source-name: "anim_ladderwalk";
-        frame-count: 215;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 25 { cel: 0; }
-        frame 26 { cel: -10000; }
-        frame 72 { cel: -1; }
-        frame 73 { cel: -10000; }
+    Actions {
+        "anim_ladderwalk" { first-frame: 25; frame-count: 47; }
     }
-    Track {
-        source-name: "anim_laddereat";
-        frame-count: 215;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 72 { cel: 0; }
-        frame 73 { cel: -10000; }
-        frame 96 { cel: -1; }
-        frame 97 { cel: -10000; }
+
+    Actions {
+        "anim_laddereat" { first-frame: 72; frame-count: 24; }
     }
-    Track {
-        source-name: "anim_death";
-        frame-count: 215;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 96 { cel: 0; }
-        frame 97 { cel: -10000; }
-        frame 132 { cel: -1; }
-        frame 133 { cel: -10000; }
+
+    Actions {
+        "anim_death" { first-frame: 96; frame-count: 36; }
     }
-    Track {
-        source-name: "anim_walk";
-        frame-count: 215;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 132 { cel: 0; }
-        frame 133 { cel: -10000; }
-        frame 179 { cel: -1; }
-        frame 180 { cel: -10000; }
+
+    Actions {
+        "anim_walk" { first-frame: 132; frame-count: 47; }
     }
-    Track {
-        source-name: "anim_eat";
-        frame-count: 215;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 179 { cel: 0; }
-        frame 180 { cel: -10000; }
-        frame 203 { cel: -1; }
-        frame 204 { cel: -10000; }
+
+    Actions {
+        "anim_eat" { first-frame: 179; frame-count: 24; }
     }
-    Track {
-        source-name: "anim_placeladder";
-        frame-count: 215;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 203 { cel: 0; }
-        frame 204 { cel: -10000; }
+
+    Actions {
+        "anim_placeladder" { first-frame: 203; frame-count: 12; }
+    }
+
+    Actions {
+        "_ground" { first-frame: 25; frame-count: 154; }
     }
     Track {
         source-name: "_ground";
@@ -2669,6 +2642,9 @@ export component Zombie_ladder {
         frame 213 { x: 22.7; y: 36.4; skew-x: 351.3; skew-y: 351.3; }
         frame 214 { x: 18.7; y: 41.3; skew-x: 346.2; skew-y: 346; scale-x: 0.847; }
     }
+    Actions {
+        "anim_head2" { first-frame: 0; frame-count: 215; }
+    }
     Track {
         source-name: "anim_head2";
         frame-count: 215;
@@ -2853,6 +2829,9 @@ export component Zombie_ladder {
         frame 212 { x: 18.3; y: 35.8; skew-x: 363.5; skew-y: 363.5; }
         frame 213 { x: 13.8; y: 40.2; skew-x: 358.3; skew-y: 358.3; }
         frame 214 { x: 10.2; y: 45.8; skew-x: 353.2; skew-y: 353; }
+    }
+    Actions {
+        "anim_head1" { first-frame: 0; frame-count: 215; }
     }
     Track {
         source-name: "anim_head1";

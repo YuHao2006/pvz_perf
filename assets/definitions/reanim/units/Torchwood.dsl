@@ -1,5 +1,9 @@
 export component Torchwood {
     fps: 12;
+    frame-count: 25;
+    Actions {
+        "anim_idle" { first-frame: 4; frame-count: 21; }
+    }
     Track {
         source-name: "anim_idle";
         frame-count: 25;
@@ -8,12 +12,10 @@ export component Torchwood {
         frame 4 { cel: 0; }
         frame 5 { cel: -10000; }
     }
-    Track {
-        source-name: "anim_blink";
-        frame-count: 25;
-        frame 4 { cel: -1; }
-        frame 5 { cel: -10000; }
+    Actions {
+        "anim_blink" { first-frame: 0; frame-count: 4; }
     }
+
     Track {
         source-name: "Layer 35";
         frame-count: 25;
@@ -117,6 +119,9 @@ export component Torchwood {
         frame 22 { x: 18.2; y: -9.4; scale-x: 0.7; scale-y: 0.972; image: IMAGE_REANIM_TORCHWOOD_FIRE1A; }
         frame 23 { x: 17.8; y: -9.9; scale-x: 0.747; scale-y: 1.027; image: IMAGE_REANIM_TORCHWOOD_FIRE1B; }
         frame 24 { x: 17.7; y: -12.2; scale-x: 0.696; scale-y: 1.024; image: IMAGE_REANIM_TORCHWOOD_FIRE1C; }
+    }
+    Actions {
+        "anim_face" { first-frame: 4; frame-count: 21; }
     }
     Track {
         source-name: "anim_face";

@@ -1,19 +1,14 @@
 export component TextFadeOn {
     fps: 12;
-    Track {
-        source-name: "anim_leave";
-        frame-count: 40;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 19 { cel: 0; }
-        frame 20 { cel: -10000; }
+    frame-count: 40;
+    Actions {
+        "anim_leave" { first-frame: 19; frame-count: 21; }
     }
-    Track {
-        source-name: "anim_enter";
-        frame-count: 40;
-        frame 20 { cel: -1; }
-        frame 21 { cel: -10000; }
+
+    Actions {
+        "anim_enter" { first-frame: 0; frame-count: 20; }
     }
+
     Track {
         source-name: "locator_text";
         frame-count: 40;

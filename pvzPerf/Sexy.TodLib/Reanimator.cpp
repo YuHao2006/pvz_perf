@@ -6,6 +6,8 @@
 #include "Reanimator.h"
 #include <chrono>
 #include "ReanimRenderSemantics.h"
+#include "ReanimActionLayout.h"
+#include "generated/ReanimActionData.h"
 #include "ReanimTrackMphfGlobal.h"  // 全局单表 MPHF（唯一 MPHF 层）：(type,id) 联合键 -> trackIndex + 语料成员位图（reanimc compile-v2 生成）
 #include "generated/ReanimAttacherMasks.h"  // P4：每类型轨道数 + attacher 位掩码（编译期生成，与本 cpp 独占包含）
 #include "generated/GeneratedDefinitions.h"
@@ -56,9 +58,15 @@ std::uint32_t ReanimatorTrackIdAt(ReanimationType theReanimType, int theTrackInd
 extern constexpr std::array<int, (int)ReanimationType::NUM_REANIMS> gReanimGroundTrackIndices = [] {
     std::array<int, (int)ReanimationType::NUM_REANIMS> indices{};
     for (unsigned int type = 0; type < indices.size(); ++type)
-        indices[type] = MphfLookupGlobal(type, (unsigned int)ReanimTrackId::_ground);
+        indices[type] = ReanimActionData::Layouts[type].groundIndex;
     return indices;
 }();
+
+ReanimSavedTrackLayout ReanimatorGetSavedTrackLayout(ReanimationType type)
+{
+    const auto& layout=ReanimActionData::Layouts[unsigned(type)];
+    return {layout.savedToRuntime,layout.savedCount};
+}
 
 static int ReanimatorTrackIndexOf(ReanimationType theReanimType, ReanimTrackId theTrackId)
 {
@@ -78,7 +86,7 @@ static int ReanimatorTrackIndexOf(ReanimationType theReanimType, ReanimTrackId t
 	//（TrackExists/AssignRenderGroupToTrack）取 false，直用式消费方经
 	// FindTrackIndex 弹错退出，绝不静默回轨道 0。
 	const int aIndex = MphfLookupGlobal((std::uint32_t)aType, (std::uint32_t)theTrackId);
-	return aIndex;
+	return aIndex>=0?ReanimActionData::Layouts[aType].savedToRuntime[aIndex]:-1;
 }
 
 
@@ -833,7 +841,7 @@ void Reanimation::UpdateAt(std::int64_t nowNs, std::uint64_t deltaNs)
 	// 置位仅浪费一次空访，方向安全）。
 	{
 		TOD_ASSERT((unsigned)mReanimationType < (unsigned)kReanimAttacherTypeCount);
-		const std::uint64_t* aAttacher = kReanimAttacherMasks[(int)mReanimationType];
+		const std::uint64_t* aAttacher = ReanimActionData::AttacherMasks[(int)mReanimationType];
 		uint64_t aWords[kReanimActiveMaskWords];
 		for (int w = 0; w < kReanimActiveMaskWords; w++)
 			aWords[w] = mActiveMask[w] | (w < kReanimAttacherMaskWords ? aAttacher[w] : 0);
@@ -1437,29 +1445,19 @@ void Reanimation::GetAttachmentOverlayMatrix(int theTrackIndex, SexyTransform2D&
 //0x4731D0
 void Reanimation::GetFramesForLayer(ReanimTrackId theTrackId, int& theFrameStart, int& theFrameCount)
 {
-	// 原版对 0 轨道定义先回 (0,0)：现语料全部 144 定义均非空（smoke:
-	// defs=144 tracks=2641），空定义上的层查询按调用点 bug 硬错（FindTrackIndex）。
-	GetFramesForTrackIndex(FindTrackIndex(theTrackId), theFrameStart, theFrameCount);
+    if(unsigned(mReanimationType)>=gReanimatorDefCount)throw std::invalid_argument("Invalid reanimation type");
+    const int index=MphfLookupGlobal(unsigned(mReanimationType),unsigned(theTrackId));
+    if(index<0)throw std::invalid_argument("Unknown animation action");
+    const auto range=ReanimActionData::Layouts[unsigned(mReanimationType)].actions[index];
+    if(!range.count)throw std::invalid_argument("Track has no declared animation action");
+    theFrameStart=range.first;theFrameCount=range.count;
 }
 
-void Reanimation::GetFramesForTrackIndex(int theTrackIndex, int& theFrameStart, int& theFrameCount)
+void Reanimation::GetFramesForTrackIndex(int index,int& first,int& count)
 {
-	TOD_ASSERT(theTrackIndex >= 0 && theTrackIndex < mDefinition->mTracks.count);
-	ReanimatorTrack* aTrack = &mDefinition->mTracks.tracks[theTrackIndex];
-	if (aTrack->mTransforms.mTransforms == nullptr)
-		throw std::logic_error("GetFramesForTrackIndex requires CPU keyframes for track index " +
-			std::to_string(theTrackIndex) + " (id " + std::to_string(static_cast<std::uint32_t>(aTrack->mTrackId)) + ")");
-	theFrameStart = 0;
-	theFrameCount = 1;
-	for (int i = 0; i < aTrack->mTransforms.count; i++)
-		if (aTrack->mTransforms.mTransforms[i].mFrame >= 0.0f)
-		{
-			theFrameStart = i;  // 取轨道上的首个非空白帧作为起始帧
-			break;
-		}
-	for (int j = theFrameStart; j < aTrack->mTransforms.count; j++)
-		if (aTrack->mTransforms.mTransforms[j].mFrame >= 0.0f)
-			theFrameCount = j - theFrameStart + 1;  // 取从起始帧至轨道最后一个非空白帧之间为帧数量
+    TOD_ASSERT(index>=0&&index<mDefinition->mTracks.count);
+    const auto range=ReanimActionData::Layouts[unsigned(mReanimationType)].tracks[index];
+    first=range.first;count=range.count;
 }
 
 //0x473280
@@ -1467,11 +1465,16 @@ void Reanimation::SetFramesForLayer(ReanimTrackId theTrackId)
 {
 	// 原 0 轨道定义传 0 的分支已删（"count==0 ? 0 : FindTrackIndex"）：
 	// 空定义上的层查询是调用点 bug，miss 由 FindTrackIndex 硬错。
-	SetFramesForLayerIndex(FindTrackIndex(theTrackId));
+	int first,count;GetFramesForLayer(theTrackId,first,count);SetFrameRange(first,count);
 }
 
 // index 直达版：时间复位逻辑自 SetFramesForLayer 原样抽出，id 版内部共用。
-void Reanimation::SetFramesForLayerIndex(int theTrackIndex)
+void Reanimation::SetFramesForLayerIndex(int index)
+{
+    int first,count;GetFramesForTrackIndex(index,first,count);SetFrameRange(first,count);
+}
+
+void Reanimation::SetFrameRange(int first,int count)
 {
 	const auto nowNs = mStartTimeNs + mFrameAgeNs;
 	++mPlaybackGeneration;
@@ -1487,7 +1490,7 @@ void Reanimation::SetFramesForLayerIndex(int theTrackIndex)
 		mFrameAgeNs = 0;
 		return;
 	}
-	GetFramesForTrackIndex(theTrackIndex, mFrameStart, mFrameCount);
+	mFrameStart=first;mFrameCount=count;
 	if (mAnimRate != 0)
 		ConfigureFramePeriod(*this, ReanimClock::PeriodFromRate(mFrameCount, mAnimRate));
 	ConfigureFramePeriod(*this, mPeriodNs);
@@ -1501,7 +1504,14 @@ void Reanimation::SetFramesForLayerIndex(int theTrackIndex)
 //0x4732C0
 bool Reanimation::TrackExists(ReanimTrackId theTrackId)
 {
-	return ReanimatorTrackIndexOf(mReanimationType, theTrackId) >= 0;
+	return ReanimatorTrackIndexOf(mReanimationType,theTrackId)>=0;
+}
+
+bool Reanimation::ActionExists(ReanimTrackId id) const
+{
+    if(unsigned(mReanimationType)>=gReanimatorDefCount)return false;
+    const int index=MphfLookupGlobal(unsigned(mReanimationType),unsigned(id));
+    return index>=0&&ReanimActionData::Layouts[unsigned(mReanimationType)].actions[index].count>0;
 }
 
 //0x473310

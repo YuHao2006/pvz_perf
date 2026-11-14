@@ -1,5 +1,6 @@
 export component SodRoll {
     fps: 24;
+    frame-count: 48;
     Track {
         source-name: "SodRoll";
         frame-count: 48;

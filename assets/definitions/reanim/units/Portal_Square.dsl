@@ -1,41 +1,22 @@
 export component Portal_Square {
     fps: 12;
-    Track {
-        source-name: "anim_appear";
-        frame-count: 60;
-        frame 0 { x: 11.2; }
-        frame 1 { x: -10000; }
-        frame 13 { cel: -1; }
-        frame 14 { cel: -10000; }
+    frame-count: 60;
+    Actions {
+        "anim_appear" { first-frame: 0; frame-count: 13; }
     }
-    Track {
-        source-name: "anim_pulse";
-        frame-count: 60;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 13 { x: 25.6; cel: 0; }
-        frame 14 { x: -10000; cel: -10000; }
-        frame 31 { cel: -1; }
-        frame 32 { cel: -10000; }
+
+    Actions {
+        "anim_pulse" { first-frame: 13; frame-count: 18; }
     }
-    Track {
-        source-name: "anim_pulse_reverse";
-        frame-count: 60;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 31 { x: 11.2; cel: 0; }
-        frame 32 { x: -10000; cel: -10000; }
-        frame 47 { cel: -1; }
-        frame 48 { cel: -10000; }
+
+    Actions {
+        "anim_pulse_reverse" { first-frame: 31; frame-count: 16; }
     }
-    Track {
-        source-name: "anim_dissapear";
-        frame-count: 60;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 47 { x: 11.2; cel: 0; }
-        frame 48 { x: -10000; cel: -10000; }
+
+    Actions {
+        "anim_dissapear" { first-frame: 47; frame-count: 13; }
     }
+
     Track {
         source-name: "Portal_Square_glow";
         frame-count: 60;

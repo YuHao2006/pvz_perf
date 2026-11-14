@@ -1,52 +1,28 @@
 export component Zombie_paper {
     fps: 12;
-    Track {
-        source-name: "anim_death";
-        frame-count: 216;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 96 { cel: 0; }
-        frame 97 { cel: -10000; }
-        frame 132 { cel: -1; }
-        frame 133 { cel: -10000; }
+    frame-count: 216;
+    Actions {
+        "anim_death" { first-frame: 96; frame-count: 36; }
     }
-    Track {
-        source-name: "anim_eat";
-        frame-count: 216;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 72 { cel: 0; }
-        frame 73 { cel: -10000; }
-        frame 96 { cel: -1; }
-        frame 97 { cel: -10000; }
+
+    Actions {
+        "anim_eat" { first-frame: 72; frame-count: 24; }
     }
-    Track {
-        source-name: "anim_eat_nopaper";
-        frame-count: 216;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 192 { cel: 0; }
-        frame 193 { cel: -10000; }
+
+    Actions {
+        "anim_eat_nopaper" { first-frame: 192; frame-count: 24; }
     }
-    Track {
-        source-name: "anim_walk";
-        frame-count: 216;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 25 { cel: 0; }
-        frame 26 { cel: -10000; }
-        frame 72 { cel: -1; }
-        frame 73 { cel: -10000; }
+
+    Actions {
+        "anim_walk" { first-frame: 25; frame-count: 47; }
     }
-    Track {
-        source-name: "anim_walk_nopaper";
-        frame-count: 216;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 145 { cel: 0; }
-        frame 146 { cel: -10000; }
-        frame 192 { cel: -1; }
-        frame 193 { cel: -10000; }
+
+    Actions {
+        "anim_walk_nopaper" { first-frame: 145; frame-count: 47; }
+    }
+
+    Actions {
+        "anim_idle" { first-frame: 0; frame-count: 25; }
     }
     Track {
         source-name: "anim_idle";
@@ -54,15 +30,12 @@ export component Zombie_paper {
         frame 25 { cel: -1; }
         frame 26 { cel: -10000; }
     }
-    Track {
-        source-name: "anim_gasp";
-        frame-count: 216;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 132 { cel: 0; }
-        frame 133 { cel: -10000; }
-        frame 145 { cel: -1; }
-        frame 146 { cel: -10000; }
+    Actions {
+        "anim_gasp" { first-frame: 132; frame-count: 13; }
+    }
+
+    Actions {
+        "_ground" { first-frame: 25; frame-count: 167; }
     }
     Track {
         source-name: "_ground";
@@ -2911,6 +2884,9 @@ export component Zombie_paper {
         frame 214 { x: 41; y: 64.8; skew-x: 346.9; skew-y: 346.9; scale-x: 0.698; scale-y: 0.698; }
         frame 215 { x: 41.1; y: 63.8; skew-x: 353.7; skew-y: 353.7; scale-x: 0.699; scale-y: 0.699; }
     }
+    Actions {
+        "anim_hair" { first-frame: 0; frame-count: 216; }
+    }
     Track {
         source-name: "anim_hair";
         frame-count: 216;
@@ -3095,6 +3071,9 @@ export component Zombie_paper {
         frame 214 { x: -2.6; y: 16.4; skew-x: 350.2; skew-y: 350.2; }
         frame 215 { x: 0.3; y: 14.1; skew-x: 351.7; skew-y: 351.7; scale-x: 0.799; scale-y: 0.799; }
     }
+    Actions {
+        "anim_head1" { first-frame: 0; frame-count: 216; }
+    }
     Track {
         source-name: "anim_head1";
         frame-count: 216;
@@ -3268,6 +3247,9 @@ export component Zombie_paper {
         frame 214 { x: 2; y: 18.4; skew-x: 350.4; skew-y: 350.4; scale-y: 0.797; }
         frame 215 { x: 5; y: 16.4; skew-x: 351.9; skew-y: 351.9; scale-y: 0.799; }
     }
+    Actions {
+        "anim_head_look" { first-frame: 132; frame-count: 13; }
+    }
     Track {
         source-name: "anim_head_look";
         frame-count: 216;
@@ -3287,6 +3269,9 @@ export component Zombie_paper {
         frame 145 { x: -10000; skew-x: -10000; skew-y: -10000; cel: -1; }
         frame 146 { cel: -10000; }
     }
+    Actions {
+        "anim_head_pupils" { first-frame: 132; frame-count: 13; }
+    }
     Track {
         source-name: "anim_head_pupils";
         frame-count: 216;
@@ -3305,6 +3290,9 @@ export component Zombie_paper {
         frame 144 { skew-x: -14.6; skew-y: -12.3; scale-x: 0.76; scale-y: 0.82; }
         frame 145 { skew-x: -10000; skew-y: -10000; scale-x: -10000; scale-y: -10000; cel: -1; }
         frame 146 { cel: -10000; }
+    }
+    Actions {
+        "anim_hairpiece" { first-frame: 0; frame-count: 216; }
     }
     Track {
         source-name: "anim_hairpiece";
@@ -3492,6 +3480,9 @@ export component Zombie_paper {
         frame 214 { x: 3.7; y: 15.2; skew-x: 350.4; skew-y: 350.4; scale-x: 0.828; scale-y: 0.798; }
         frame 215 { x: 6.8; y: 13; skew-x: 351.9; skew-y: 351.9; scale-x: 0.829; scale-y: 0.799; }
     }
+    Actions {
+        "anim_head_jaw" { first-frame: 0; frame-count: 216; }
+    }
     Track {
         source-name: "anim_head_jaw";
         frame-count: 216;
@@ -3675,6 +3666,9 @@ export component Zombie_paper {
         frame 213 { x: 12.8; y: 50; skew-x: 349; skew-y: 349; scale-x: 0.799; scale-y: 0.799; }
         frame 214 { x: 14.9; y: 48.9; skew-x: 350.5; skew-y: 350.5; scale-x: -10000; scale-y: -10000; }
         frame 215 { x: 17; y: 47.8; skew-x: 351.9; skew-y: 351.9; }
+    }
+    Actions {
+        "anim_head_glasses" { first-frame: 0; frame-count: 216; }
     }
     Track {
         source-name: "anim_head_glasses";

@@ -1,58 +1,32 @@
 export component Zombie_Jackson {
     fps: 12;
-    Track {
-        source-name: "anim_moonwalk";
-        frame-count: 147;
-        frame 27 { cel: -1; }
-        frame 28 { cel: -10000; }
+    frame-count: 147;
+    Actions {
+        "anim_moonwalk" { first-frame: 0; frame-count: 27; }
     }
-    Track {
-        source-name: "anim_point";
-        frame-count: 147;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 27 { cel: 0; }
-        frame 28 { cel: -10000; }
-        frame 37 { cel: -1; }
-        frame 38 { cel: -10000; }
+
+    Actions {
+        "anim_point" { first-frame: 27; frame-count: 10; }
     }
-    Track {
-        source-name: "anim_walk";
-        frame-count: 147;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 46 { cel: 0; }
-        frame 47 { cel: -10000; }
-        frame 67 { cel: -1; }
-        frame 68 { cel: -10000; }
+
+    Actions {
+        "anim_walk" { first-frame: 46; frame-count: 21; }
     }
-    Track {
-        source-name: "anim_armraise";
-        frame-count: 147;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 67 { cel: 0; }
-        frame 68 { cel: -10000; }
-        frame 78 { cel: -1; }
-        frame 79 { cel: -10000; }
+
+    Actions {
+        "anim_armraise" { first-frame: 67; frame-count: 11; }
     }
-    Track {
-        source-name: "anim_eat";
-        frame-count: 147;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 78 { cel: 0; }
-        frame 79 { cel: -10000; }
-        frame 112 { cel: -1; }
-        frame 113 { cel: -10000; }
+
+    Actions {
+        "anim_eat" { first-frame: 78; frame-count: 34; }
     }
-    Track {
-        source-name: "anim_death";
-        frame-count: 147;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 112 { cel: 0; }
-        frame 113 { cel: -10000; }
+
+    Actions {
+        "anim_death" { first-frame: 112; frame-count: 35; }
+    }
+
+    Actions {
+        "_ground" { first-frame: 0; frame-count: 67; }
     }
     Track {
         source-name: "_ground";
@@ -1907,6 +1881,9 @@ export component Zombie_Jackson {
         frame 145 { x: 187.1; y: 109.3; skew-x: 127.6; skew-y: 124.6; scale-x: -10000; }
         frame 146 { x: 188.6; y: 110.3; skew-x: 129.1; skew-y: 123.1; scale-x: 0.799; scale-y: 0.799; }
     }
+    Actions {
+        "anim_head1" { first-frame: 0; frame-count: 112; }
+    }
     Track {
         source-name: "anim_head1";
         frame-count: 147;
@@ -2022,6 +1999,9 @@ export component Zombie_Jackson {
         frame 112 { x: -10000; y: -10000; skew-x: -10000; skew-y: -10000; scale-x: -10000; cel: -1; }
         frame 113 { cel: -10000; }
     }
+    Actions {
+        "anim_head2" { first-frame: 0; frame-count: 112; }
+    }
     Track {
         source-name: "anim_head2";
         frame-count: 147;
@@ -2134,6 +2114,9 @@ export component Zombie_Jackson {
         frame 111 { x: 22.8; y: 38.4; skew-x: 5; skew-y: 5; scale-x: 0.799; scale-y: 0.799; }
         frame 112 { x: -10000; y: -10000; skew-x: -10000; skew-y: -10000; scale-x: -10000; scale-y: -10000; cel: -1; }
         frame 113 { cel: -10000; }
+    }
+    Actions {
+        "anim_hair" { first-frame: 0; frame-count: 112; }
     }
     Track {
         source-name: "anim_hair";

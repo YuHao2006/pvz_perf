@@ -1,20 +1,16 @@
 export component Zombie_catapult {
     fps: 12;
-    Track {
-        source-name: "anim_walk";
-        frame-count: 85;
-        frame 25 { cel: -1; }
-        frame 26 { cel: -10000; }
+    frame-count: 85;
+    Actions {
+        "anim_walk" { first-frame: 0; frame-count: 25; }
     }
-    Track {
-        source-name: "anim_shoot";
-        frame-count: 85;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 25 { cel: 0; }
-        frame 26 { cel: -10000; }
-        frame 57 { cel: -1; }
-        frame 58 { cel: -10000; }
+
+    Actions {
+        "anim_shoot" { first-frame: 25; frame-count: 32; }
+    }
+
+    Actions {
+        "anim_idle" { first-frame: 57; frame-count: 13; }
     }
     Track {
         source-name: "anim_idle";
@@ -26,14 +22,10 @@ export component Zombie_catapult {
         frame 70 { cel: -1; }
         frame 71 { cel: -10000; }
     }
-    Track {
-        source-name: "anim_bounce";
-        frame-count: 85;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 70 { cel: 0; }
-        frame 71 { cel: -10000; }
+    Actions {
+        "anim_bounce" { first-frame: 70; frame-count: 15; }
     }
+
     Track {
         source-name: "Zombie_catapult_crank";
         frame-count: 85;

@@ -1,5 +1,6 @@
 export component Credits_Infantry {
     fps: 7;
+    frame-count: 31;
     Track {
         source-name: "attacher__anim_sunflower";
         frame-count: 31;

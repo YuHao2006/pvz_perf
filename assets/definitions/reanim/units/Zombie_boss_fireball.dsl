@@ -1,18 +1,16 @@
 export component Zombie_boss_fireball {
     fps: 12;
-    Track {
-        source-name: "anim_form";
-        frame-count: 73;
-        frame 16 { cel: -1; }
-        frame 17 { cel: -10000; }
+    frame-count: 73;
+    Actions {
+        "anim_form" { first-frame: 0; frame-count: 16; }
     }
-    Track {
-        source-name: "anim_role";
-        frame-count: 73;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 16 { cel: 0; }
-        frame 17 { cel: -10000; }
+
+    Actions {
+        "anim_role" { first-frame: 16; frame-count: 57; }
+    }
+
+    Actions {
+        "_ground" { first-frame: 16; frame-count: 57; }
     }
     Track {
         source-name: "_ground";

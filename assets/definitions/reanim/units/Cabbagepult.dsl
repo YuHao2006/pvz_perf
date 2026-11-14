@@ -1,10 +1,12 @@
 export component Cabbagepult {
     fps: 12;
-    Track {
-        source-name: "anim_blink";
-        frame-count: 74;
-        frame 5 { cel: -1; }
-        frame 6 { cel: -10000; }
+    frame-count: 74;
+    Actions {
+        "anim_blink" { first-frame: 0; frame-count: 5; }
+    }
+
+    Actions {
+        "anim_idle" { first-frame: 5; frame-count: 31; }
     }
     Track {
         source-name: "anim_idle";
@@ -16,14 +18,10 @@ export component Cabbagepult {
         frame 36 { cel: -1; }
         frame 37 { cel: -10000; }
     }
-    Track {
-        source-name: "anim_shooting";
-        frame-count: 74;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 36 { x: -5.6; y: -8; skew-x: 7.3; skew-y: 7.3; cel: 0; }
-        frame 37 { x: -10000; y: -10000; skew-x: -10000; skew-y: -10000; cel: -10000; }
+    Actions {
+        "anim_shooting" { first-frame: 36; frame-count: 38; }
     }
+
     Track {
         source-name: "Cabbagepult_backleaf1";
         frame-count: 74;
@@ -749,6 +747,9 @@ export component Cabbagepult {
         frame 71 { x: 36.3; y: 11.5; skew-x: 11; skew-y: 14.3; scale-y: 0.804; }
         frame 72 { x: 34.5; y: 11.6; skew-x: 9.3; skew-y: 11; scale-x: 0.799; scale-y: 0.802; }
         frame 73 { x: 32.6; y: 11.3; skew-x: 7.8; skew-y: 7.8; scale-x: 0.8; scale-y: 0.8; }
+    }
+    Actions {
+        "anim_face" { first-frame: 5; frame-count: 69; }
     }
     Track {
         source-name: "anim_face";

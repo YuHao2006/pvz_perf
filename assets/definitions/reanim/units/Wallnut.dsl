@@ -1,5 +1,9 @@
 export component Wallnut {
     fps: 12;
+    frame-count: 56;
+    Actions {
+        "_ground" { first-frame: 43; frame-count: 13; }
+    }
     Track {
         source-name: "_ground";
         frame-count: 56;
@@ -19,11 +23,17 @@ export component Wallnut {
         frame 54 { x: -162.5; }
         frame 55 { x: -179.8; }
     }
+    Actions {
+        "anim_idle" { first-frame: 0; frame-count: 17; }
+    }
     Track {
         source-name: "anim_idle";
         frame-count: 56;
         frame 17 { cel: -1; }
         frame 18 { cel: -10000; }
+    }
+    Actions {
+        "anim_face" { first-frame: 0; frame-count: 56; }
     }
     Track {
         source-name: "anim_face";
@@ -61,6 +71,9 @@ export component Wallnut {
         frame 54 { x: -6.3; y: 25.9; skew-x: 332.4; skew-y: 332.4; scale-x: -10000; scale-y: -10000; }
         frame 55 { x: 6.9; y: 3.6; skew-x: 360; skew-y: 360; scale-x: 0.7; scale-y: 0.719; }
     }
+    Actions {
+        "anim_blink_twitch" { first-frame: 17; frame-count: 5; }
+    }
     Track {
         source-name: "anim_blink_twitch";
         frame-count: 56;
@@ -73,6 +86,9 @@ export component Wallnut {
         frame 21 { y: 35.6; }
         frame 22 { y: -10000; cel: -1; }
         frame 23 { cel: -10000; }
+    }
+    Actions {
+        "anim_blink_twice" { first-frame: 23; frame-count: 7; }
     }
     Track {
         source-name: "anim_blink_twice";
@@ -88,6 +104,9 @@ export component Wallnut {
         frame 29 { y: 21.6; image: IMAGE_REANIM_WALLNUT_BLINK1; }
         frame 30 { y: -10000; cel: -1; image: none; }
         frame 31 { cel: -10000; }
+    }
+    Actions {
+        "anim_blink_thrice" { first-frame: 31; frame-count: 11; }
     }
     Track {
         source-name: "anim_blink_thrice";

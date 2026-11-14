@@ -1,38 +1,29 @@
 export component Zombie_yeti {
     fps: 20;
-    Track {
-        source-name: "anim_death";
-        frame-count: 105;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 78 { cel: 0; }
-        frame 79 { cel: -10000; }
+    frame-count: 105;
+    Actions {
+        "anim_death" { first-frame: 78; frame-count: 27; }
     }
-    Track {
-        source-name: "anim_eat";
-        frame-count: 105;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 49 { cel: 0; }
-        frame 50 { cel: -10000; }
-        frame 78 { cel: -1; }
-        frame 79 { cel: -10000; }
+
+    Actions {
+        "anim_eat" { first-frame: 49; frame-count: 29; }
     }
-    Track {
-        source-name: "anim_walk";
-        frame-count: 105;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 15 { x: 7.8; cel: 0; }
-        frame 16 { x: -10000; cel: -10000; }
-        frame 49 { cel: -1; }
-        frame 50 { cel: -10000; }
+
+    Actions {
+        "anim_walk" { first-frame: 15; frame-count: 34; }
+    }
+
+    Actions {
+        "anim_idle" { first-frame: 0; frame-count: 15; }
     }
     Track {
         source-name: "anim_idle";
         frame-count: 105;
         frame 15 { cel: -1; }
         frame 16 { cel: -10000; }
+    }
+    Actions {
+        "_ground" { first-frame: 15; frame-count: 34; }
     }
     Track {
         source-name: "_ground";
@@ -1091,6 +1082,9 @@ export component Zombie_yeti {
         frame 103 { x: -34.5; y: 106.9; skew-x: -28.5; skew-y: -28.5; scale-x: 0.711; scale-y: 0.711; }
         frame 104 { x: -33.7; y: 106.8; skew-x: -20.7; skew-y: -20.7; scale-x: 0.713; scale-y: 0.713; }
     }
+    Actions {
+        "anim_head1" { first-frame: 0; frame-count: 78; }
+    }
     Track {
         source-name: "anim_head1";
         frame-count: 105;
@@ -1174,6 +1168,9 @@ export component Zombie_yeti {
         frame 77 { x: -12.6; y: -10.3; skew-x: 0; skew-y: 0; scale-x: 0.72; scale-y: 0.72; }
         frame 78 { x: -10000; y: -10000; skew-x: -10000; skew-y: -10000; scale-x: -10000; scale-y: -10000; cel: -1; }
         frame 79 { cel: -10000; }
+    }
+    Actions {
+        "anim_head2" { first-frame: 0; frame-count: 78; }
     }
     Track {
         source-name: "anim_head2";

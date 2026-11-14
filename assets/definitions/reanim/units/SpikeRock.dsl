@@ -1,10 +1,12 @@
 export component SpikeRock {
     fps: 12;
-    Track {
-        source-name: "anim_blink";
-        frame-count: 33;
-        frame 3 { cel: -1; }
-        frame 4 { cel: -10000; }
+    frame-count: 33;
+    Actions {
+        "anim_blink" { first-frame: 0; frame-count: 3; }
+    }
+
+    Actions {
+        "anim_idle" { first-frame: 3; frame-count: 15; }
     }
     Track {
         source-name: "anim_idle";
@@ -16,14 +18,10 @@ export component SpikeRock {
         frame 18 { cel: -1; }
         frame 19 { cel: -10000; }
     }
-    Track {
-        source-name: "anim_attack";
-        frame-count: 33;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 18 { cel: 0; }
-        frame 19 { cel: -10000; }
+    Actions {
+        "anim_attack" { first-frame: 18; frame-count: 15; }
     }
+
     Track {
         source-name: "spike1";
         frame-count: 33;
@@ -323,6 +321,9 @@ export component SpikeRock {
         frame 31 { x: 66.9; y: 41.6; scale-y: 0.772; }
         frame 32 { x: 67; y: 44.9; scale-y: 0.635; }
     }
+    Actions {
+        "anim_face" { first-frame: 3; frame-count: 30; }
+    }
     Track {
         source-name: "anim_face";
         frame-count: 33;
@@ -467,6 +468,9 @@ export component SpikeRock {
         frame 31 { y: 27.7; scale-y: 0.881; }
         frame 32 { y: 29.1; scale-y: 0.8; }
     }
+    Actions {
+        "anim_eye_leftbrow" { first-frame: 0; frame-count: 33; }
+    }
     Track {
         source-name: "anim_eye_leftbrow";
         frame-count: 33;
@@ -503,6 +507,9 @@ export component SpikeRock {
         frame 30 { y: 47.2; scale-x: 0.799; scale-y: 0.799; }
         frame 31 { y: 46.4; scale-x: -10000; scale-y: -10000; }
         frame 32 { y: 45.5; scale-x: 0.8; scale-y: 0.8; }
+    }
+    Actions {
+        "anim_eye_rightbrow" { first-frame: 0; frame-count: 33; }
     }
     Track {
         source-name: "anim_eye_rightbrow";

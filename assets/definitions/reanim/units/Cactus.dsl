@@ -1,10 +1,12 @@
 export component Cactus {
     fps: 12;
-    Track {
-        source-name: "anim_blink";
-        frame-count: 95;
-        frame 5 { cel: -1; }
-        frame 6 { cel: -10000; }
+    frame-count: 95;
+    Actions {
+        "anim_blink" { first-frame: 0; frame-count: 5; }
+    }
+
+    Actions {
+        "anim_idle" { first-frame: 5; frame-count: 15; }
     }
     Track {
         source-name: "anim_idle";
@@ -16,54 +18,26 @@ export component Cactus {
         frame 20 { cel: -1; }
         frame 21 { cel: -10000; }
     }
-    Track {
-        source-name: "anim_shooting";
-        frame-count: 95;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 20 { cel: 0; }
-        frame 21 { cel: -10000; }
-        frame 38 { cel: -1; }
-        frame 39 { cel: -10000; }
+    Actions {
+        "anim_shooting" { first-frame: 20; frame-count: 18; }
     }
-    Track {
-        source-name: "anim_rise";
-        frame-count: 95;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 38 { cel: 0; }
-        frame 39 { cel: -10000; }
-        frame 53 { cel: -1; }
-        frame 54 { cel: -10000; }
+
+    Actions {
+        "anim_rise" { first-frame: 38; frame-count: 15; }
     }
-    Track {
-        source-name: "anim_idlehigh";
-        frame-count: 95;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 53 { cel: 0; }
-        frame 54 { cel: -10000; }
-        frame 68 { cel: -1; }
-        frame 69 { cel: -10000; }
+
+    Actions {
+        "anim_idlehigh" { first-frame: 53; frame-count: 15; }
     }
-    Track {
-        source-name: "anim_shootinghigh";
-        frame-count: 95;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 68 { y: -50.9; cel: 0; }
-        frame 69 { y: -10000; cel: -10000; }
-        frame 82 { cel: -1; }
-        frame 83 { cel: -10000; }
+
+    Actions {
+        "anim_shootinghigh" { first-frame: 68; frame-count: 14; }
     }
-    Track {
-        source-name: "anim_lower";
-        frame-count: 95;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 82 { y: -76.4; cel: 0; }
-        frame 83 { y: -10000; cel: -10000; }
+
+    Actions {
+        "anim_lower" { first-frame: 82; frame-count: 13; }
     }
+
     Track {
         source-name: "Cactus_flower";
         frame-count: 95;
@@ -778,6 +752,9 @@ export component Cactus {
         frame 92 { x: 17; scale-x: 0.826; }
         frame 93 { x: 17.3; scale-x: 0.813; }
         frame 94 { x: 17.4; scale-x: 0.8; }
+    }
+    Actions {
+        "anim_face" { first-frame: 5; frame-count: 90; }
     }
     Track {
         source-name: "anim_face";

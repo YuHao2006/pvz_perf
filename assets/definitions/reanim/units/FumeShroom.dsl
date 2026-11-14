@@ -1,22 +1,16 @@
 export component FumeShroom {
     fps: 12;
-    Track {
-        source-name: "anim_sleep";
-        frame-count: 68;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 51 { cel: 0; }
-        frame 52 { cel: -10000; }
+    frame-count: 68;
+    Actions {
+        "anim_sleep" { first-frame: 51; frame-count: 17; }
     }
-    Track {
-        source-name: "anim_shooting";
-        frame-count: 68;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 21 { cel: 0; }
-        frame 22 { cel: -10000; }
-        frame 51 { cel: -1; }
-        frame 52 { cel: -10000; }
+
+    Actions {
+        "anim_shooting" { first-frame: 21; frame-count: 30; }
+    }
+
+    Actions {
+        "anim_idle" { first-frame: 4; frame-count: 17; }
     }
     Track {
         source-name: "anim_idle";
@@ -27,6 +21,9 @@ export component FumeShroom {
         frame 5 { cel: -10000; }
         frame 21 { cel: -1; }
         frame 22 { cel: -10000; }
+    }
+    Actions {
+        "anim_face" { first-frame: 4; frame-count: 64; }
     }
     Track {
         source-name: "anim_face";
@@ -140,6 +137,9 @@ export component FumeShroom {
         frame 65 { y: 50.7; }
         frame 66 { y: 50.9; }
         frame 67 { y: 51; }
+    }
+    Actions {
+        "anim_blink" { first-frame: 1; frame-count: 3; }
     }
     Track {
         source-name: "anim_blink";

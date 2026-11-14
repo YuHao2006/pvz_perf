@@ -1,38 +1,29 @@
 export component Zombie_football {
     fps: 12;
-    Track {
-        source-name: "anim_death";
-        frame-count: 105;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 87 { cel: 0; }
-        frame 88 { cel: -10000; }
+    frame-count: 105;
+    Actions {
+        "anim_death" { first-frame: 87; frame-count: 18; }
     }
-    Track {
-        source-name: "anim_eat";
-        frame-count: 105;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 51 { cel: 0; }
-        frame 52 { cel: -10000; }
-        frame 87 { cel: -1; }
-        frame 88 { cel: -10000; }
+
+    Actions {
+        "anim_eat" { first-frame: 51; frame-count: 36; }
     }
-    Track {
-        source-name: "anim_walk";
-        frame-count: 105;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 21 { cel: 0; }
-        frame 22 { cel: -10000; }
-        frame 51 { cel: -1; }
-        frame 52 { cel: -10000; }
+
+    Actions {
+        "anim_walk" { first-frame: 21; frame-count: 30; }
+    }
+
+    Actions {
+        "anim_idle" { first-frame: 0; frame-count: 21; }
     }
     Track {
         source-name: "anim_idle";
         frame-count: 105;
         frame 21 { cel: -1; }
         frame 22 { cel: -10000; }
+    }
+    Actions {
+        "_ground" { first-frame: 21; frame-count: 30; }
     }
     Track {
         source-name: "_ground";
@@ -1174,6 +1165,9 @@ export component Zombie_football {
         frame 103 { x: 170.9; y: 39.9; skew-x: 417.7; skew-y: 417.7; scale-x: 0.793; scale-y: 0.793; }
         frame 104 { x: 175; y: 42.4; skew-x: 420.7; skew-y: 420.7; scale-x: 0.795; scale-y: 0.795; }
     }
+    Actions {
+        "anim_hair" { first-frame: 0; frame-count: 87; }
+    }
     Track {
         source-name: "anim_hair";
         frame-count: 105;
@@ -1266,6 +1260,9 @@ export component Zombie_football {
         frame 86 { x: 26.7; y: 7.5; skew-x: 0; skew-y: 0; scale-x: 0.8; }
         frame 87 { x: -10000; y: -10000; skew-x: -10000; skew-y: -10000; scale-x: -10000; cel: -1; }
         frame 88 { cel: -10000; }
+    }
+    Actions {
+        "anim_head1" { first-frame: 0; frame-count: 87; }
     }
     Track {
         source-name: "anim_head1";
@@ -1683,6 +1680,9 @@ export component Zombie_football {
         frame 102 { x: 166.5; y: 36.9; skew-x: 414.8; skew-y: 413.6; scale-x: 0.794; scale-y: 0.795; }
         frame 103 { x: 170.6; y: 39.4; skew-x: 417.7; skew-y: 416.6; scale-x: 0.793; scale-y: 0.794; }
         frame 104 { x: 174.7; y: 41.9; skew-x: 420.7; skew-y: 419.5; scale-x: 0.795; scale-y: 0.795; }
+    }
+    Actions {
+        "anim_head2" { first-frame: 0; frame-count: 87; }
     }
     Track {
         source-name: "anim_head2";

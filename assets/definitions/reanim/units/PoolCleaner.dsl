@@ -1,39 +1,22 @@
 export component PoolCleaner {
     fps: 12;
-    Track {
-        source-name: "anim_land";
-        frame-count: 70;
-        frame 11 { cel: -1; }
-        frame 12 { cel: -10000; }
+    frame-count: 70;
+    Actions {
+        "anim_land" { first-frame: 0; frame-count: 11; }
     }
-    Track {
-        source-name: "anim_water";
-        frame-count: 70;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 11 { cel: 0; }
-        frame 12 { cel: -10000; }
-        frame 23 { cel: -1; }
-        frame 24 { cel: -10000; }
+
+    Actions {
+        "anim_water" { first-frame: 11; frame-count: 12; }
     }
-    Track {
-        source-name: "anim_suck";
-        frame-count: 70;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 23 { cel: 0; }
-        frame 24 { cel: -10000; }
-        frame 47 { cel: -1; }
-        frame 48 { cel: -10000; }
+
+    Actions {
+        "anim_suck" { first-frame: 23; frame-count: 24; }
     }
-    Track {
-        source-name: "anim_landsuck";
-        frame-count: 70;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 47 { cel: 0; }
-        frame 48 { cel: -10000; }
+
+    Actions {
+        "anim_landsuck" { first-frame: 47; frame-count: 23; }
     }
+
     Track {
         source-name: "PoolCleaner_backwheel1";
         frame-count: 70;

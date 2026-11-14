@@ -1,60 +1,37 @@
 export component Zombie_balloon {
     fps: 12;
+    frame-count: 155;
+    Actions {
+        "anim_idle" { first-frame: 0; frame-count: 13; }
+    }
     Track {
         source-name: "anim_idle";
         frame-count: 155;
         frame 13 { cel: -1; }
         frame 14 { cel: -10000; }
     }
-    Track {
-        source-name: "anim_swing";
-        frame-count: 155;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 13 { cel: 0; }
-        frame 14 { cel: -10000; }
-        frame 31 { cel: -1; }
-        frame 32 { cel: -10000; }
+    Actions {
+        "anim_swing" { first-frame: 13; frame-count: 18; }
     }
-    Track {
-        source-name: "anim_pop";
-        frame-count: 155;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 31 { cel: 0; }
-        frame 32 { cel: -10000; }
-        frame 59 { cel: -1; }
-        frame 60 { cel: -10000; }
+
+    Actions {
+        "anim_pop" { first-frame: 31; frame-count: 28; }
     }
-    Track {
-        source-name: "anim_eat";
-        frame-count: 155;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 59 { cel: 0; }
-        frame 60 { cel: -10000; }
-        frame 84 { cel: -1; }
-        frame 85 { cel: -10000; }
+
+    Actions {
+        "anim_eat" { first-frame: 59; frame-count: 25; }
     }
-    Track {
-        source-name: "anim_walk";
-        frame-count: 155;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 84 { cel: 0; }
-        frame 85 { cel: -10000; }
-        frame 125 { cel: -1; }
-        frame 126 { cel: -10000; }
+
+    Actions {
+        "anim_walk" { first-frame: 84; frame-count: 41; }
     }
-    Track {
-        source-name: "anim_death";
-        frame-count: 155;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 125 { cel: 0; }
-        frame 126 { cel: -10000; }
-        frame 153 { cel: -1; }
-        frame 154 { cel: -10000; }
+
+    Actions {
+        "anim_death" { first-frame: 125; frame-count: 28; }
+    }
+
+    Actions {
+        "_ground" { first-frame: 84; frame-count: 41; }
     }
     Track {
         source-name: "_ground";
@@ -1956,6 +1933,9 @@ export component Zombie_balloon {
         frame 153 { y: -10000; skew-x: -10000; skew-y: -10000; cel: -1; }
         frame 154 { cel: -10000; }
     }
+    Actions {
+        "anim_head1" { first-frame: 0; frame-count: 125; }
+    }
     Track {
         source-name: "anim_head1";
         frame-count: 155;
@@ -2086,6 +2066,9 @@ export component Zombie_balloon {
         frame 124 { x: 7.7; skew-x: 10.1; skew-y: 10.1; scale-x: 0.797; scale-y: 0.797; }
         frame 125 { x: -10000; skew-x: -10000; skew-y: -10000; scale-x: -10000; scale-y: -10000; cel: -1; }
         frame 126 { cel: -10000; }
+    }
+    Actions {
+        "anim_head2" { first-frame: 0; frame-count: 125; }
     }
     Track {
         source-name: "anim_head2";
@@ -2777,6 +2760,9 @@ export component Zombie_balloon {
         frame 32 { x: 10.7; y: -35.9; skew-x: 0; skew-y: 0; scale-x: 0.552; scale-y: 0.552; cel: -10000; image: IMAGE_REANIM_ZOMBIE_BALLOON_POP2; }
         frame 33 { x: -10000; y: -10000; skew-x: -10000; skew-y: -10000; scale-x: -10000; scale-y: -10000; cel: -1; image: none; }
         frame 34 { cel: -10000; }
+    }
+    Actions {
+        "propeller" { first-frame: 153; frame-count: 2; }
     }
     Track {
         source-name: "propeller";

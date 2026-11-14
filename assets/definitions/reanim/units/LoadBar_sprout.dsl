@@ -1,9 +1,10 @@
 export component LoadBar_sprout {
     fps: 12;
-    Track {
-        source-name: "anim_sprout";
-        frame-count: 18;
+    frame-count: 18;
+    Actions {
+        "anim_sprout" { first-frame: 0; frame-count: 18; }
     }
+
     Track {
         source-name: "rock";
         frame-count: 18;

@@ -1,10 +1,12 @@
 export component Cattail {
     fps: 12;
-    Track {
-        source-name: "anim_blink";
-        frame-count: 40;
-        frame 5 { cel: -1; }
-        frame 6 { cel: -10000; }
+    frame-count: 40;
+    Actions {
+        "anim_blink" { first-frame: 0; frame-count: 5; }
+    }
+
+    Actions {
+        "anim_idle" { first-frame: 5; frame-count: 19; }
     }
     Track {
         source-name: "anim_idle";
@@ -16,14 +18,10 @@ export component Cattail {
         frame 24 { cel: -1; }
         frame 25 { cel: -10000; }
     }
-    Track {
-        source-name: "anim_shooting";
-        frame-count: 40;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 24 { cel: 0; }
-        frame 25 { cel: -10000; }
+    Actions {
+        "anim_shooting" { first-frame: 24; frame-count: 16; }
     }
+
     Track {
         source-name: "Cattail_paw2";
         frame-count: 40;
@@ -256,6 +254,9 @@ export component Cattail {
         frame 37 { x: 18.7; y: 1.4; skew-x: 25.1; skew-y: 21.8; scale-x: 0.771; scale-y: 0.857; }
         frame 38 { x: 8.7; y: 4.7; skew-x: 12.5; skew-y: 10.8; scale-x: 0.786; scale-y: 0.828; }
         frame 39 { x: -0.7; y: 8.8; skew-x: 0; skew-y: 0; scale-x: 0.8; scale-y: 0.8; }
+    }
+    Actions {
+        "anim_face" { first-frame: 5; frame-count: 35; }
     }
     Track {
         source-name: "anim_face";

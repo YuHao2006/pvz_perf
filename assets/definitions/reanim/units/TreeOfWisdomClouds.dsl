@@ -1,5 +1,9 @@
 export component TreeOfWisdomClouds {
     fps: 12;
+    frame-count: 625;
+    Actions {
+        "Cloud6" { first-frame: 0; frame-count: 138; }
+    }
     Track {
         source-name: "Cloud6";
         frame-count: 625;
@@ -144,6 +148,9 @@ export component TreeOfWisdomClouds {
         frame 138 { x: -10000; y: -10000; scale-x: -10000; scale-y: -10000; cel: -1; }
         frame 139 { cel: -10000; }
     }
+    Actions {
+        "Cloud5" { first-frame: 138; frame-count: 98; }
+    }
     Track {
         source-name: "Cloud5";
         frame-count: 625;
@@ -249,6 +256,9 @@ export component TreeOfWisdomClouds {
         frame 235 { x: -186.6; y: 311.9; skew-x: -39.9; skew-y: -39.9; scale-x: 0.994; scale-y: 0.994; }
         frame 236 { x: -10000; y: -10000; skew-x: -10000; skew-y: -10000; scale-x: -10000; scale-y: -10000; cel: -1; }
         frame 237 { cel: -10000; }
+    }
+    Actions {
+        "Cloud4" { first-frame: 236; frame-count: 113; }
     }
     Track {
         source-name: "Cloud4";
@@ -371,6 +381,9 @@ export component TreeOfWisdomClouds {
         frame 349 { x: -10000; y: -10000; skew-x: -10000; skew-y: -10000; scale-x: -10000; scale-y: -10000; cel: -1; }
         frame 350 { cel: -10000; }
     }
+    Actions {
+        "Cloud3" { first-frame: 349; frame-count: 87; }
+    }
     Track {
         source-name: "Cloud3";
         frame-count: 625;
@@ -465,6 +478,9 @@ export component TreeOfWisdomClouds {
         frame 435 { x: -168.4; y: 276.2; skew-x: -45.4; skew-y: -45.4; scale-x: 0.696; scale-y: 0.696; }
         frame 436 { x: -10000; y: -10000; skew-x: -10000; skew-y: -10000; scale-x: -10000; scale-y: -10000; cel: -1; }
         frame 437 { cel: -10000; }
+    }
+    Actions {
+        "Cloud2" { first-frame: 436; frame-count: 106; }
     }
     Track {
         source-name: "Cloud2";
@@ -579,6 +595,9 @@ export component TreeOfWisdomClouds {
         frame 541 { x: -65.5; y: 324.4; skew-x: -13.2; skew-y: -13.2; scale-x: 0.915; }
         frame 542 { x: -10000; y: -10000; skew-x: -10000; skew-y: -10000; scale-x: -10000; cel: -1; }
         frame 543 { cel: -10000; }
+    }
+    Actions {
+        "Cloud1" { first-frame: 542; frame-count: 83; }
     }
     Track {
         source-name: "Cloud1";

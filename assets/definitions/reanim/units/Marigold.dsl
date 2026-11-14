@@ -1,5 +1,9 @@
 export component Marigold {
     fps: 33;
+    frame-count: 30;
+    Actions {
+        "anim_idle" { first-frame: 5; frame-count: 25; }
+    }
     Track {
         source-name: "anim_idle";
         frame-count: 30;
@@ -8,12 +12,10 @@ export component Marigold {
         frame 5 { cel: 0; }
         frame 6 { cel: -10000; }
     }
-    Track {
-        source-name: "anim_blink";
-        frame-count: 30;
-        frame 5 { cel: -1; }
-        frame 6 { cel: -10000; }
+    Actions {
+        "anim_blink" { first-frame: 0; frame-count: 5; }
     }
+
     Track {
         source-name: "backleaf";
         frame-count: 30;
@@ -292,6 +294,9 @@ export component Marigold {
         frame 27 { x: 14.6; y: 3; scale-y: 0.688; }
         frame 28 { x: 14.2; y: 4.5; scale-y: 0.676; }
         frame 29 { x: 13.8; y: 6; scale-y: 0.664; }
+    }
+    Actions {
+        "anim_face" { first-frame: 5; frame-count: 25; }
     }
     Track {
         source-name: "anim_face";

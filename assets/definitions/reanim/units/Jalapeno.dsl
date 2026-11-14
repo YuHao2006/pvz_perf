@@ -1,10 +1,12 @@
 export component Jalapeno {
     fps: 12;
-    Track {
-        source-name: "anim_blink";
-        frame-count: 25;
-        frame 5 { cel: -1; }
-        frame 6 { cel: -10000; }
+    frame-count: 25;
+    Actions {
+        "anim_blink" { first-frame: 0; frame-count: 5; }
+    }
+
+    Actions {
+        "anim_idle" { first-frame: 5; frame-count: 7; }
     }
     Track {
         source-name: "anim_idle";
@@ -16,14 +18,10 @@ export component Jalapeno {
         frame 12 { cel: -1; }
         frame 13 { cel: -10000; }
     }
-    Track {
-        source-name: "anim_explode";
-        frame-count: 25;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 12 { cel: 0; }
-        frame 13 { cel: -10000; }
+    Actions {
+        "anim_explode" { first-frame: 12; frame-count: 13; }
     }
+
     Track {
         source-name: "Jalapeno_stem";
         frame-count: 25;

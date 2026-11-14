@@ -1,5 +1,9 @@
 export component Tallnut {
     fps: 12;
+    frame-count: 37;
+    Actions {
+        "anim_idle" { first-frame: 20; frame-count: 17; }
+    }
     Track {
         source-name: "anim_idle";
         frame-count: 37;
@@ -23,6 +27,9 @@ export component Tallnut {
         frame 35 { x: 0.2; y: -36.4; skew-x: 0.3; skew-y: 0.2; scale-x: 0.804; scale-y: 0.81; }
         frame 36 { x: 0; y: -37.1; skew-x: 0; skew-y: 0; scale-x: 0.8; scale-y: 0.816; }
     }
+    Actions {
+        "anim_blink_twice" { first-frame: 1; frame-count: 7; }
+    }
     Track {
         source-name: "anim_blink_twice";
         frame-count: 37;
@@ -36,6 +43,9 @@ export component Tallnut {
         frame 7 { x: 31.2; image: IMAGE_REANIM_TALLNUT_BLINK1; }
         frame 8 { x: -10000; cel: -1; image: none; }
         frame 9 { cel: -10000; }
+    }
+    Actions {
+        "anim_blink_thrice" { first-frame: 9; frame-count: 11; }
     }
     Track {
         source-name: "anim_blink_thrice";

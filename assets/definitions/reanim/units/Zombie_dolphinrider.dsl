@@ -1,88 +1,49 @@
 export component Zombie_dolphinrider {
     fps: 12;
+    frame-count: 289;
+    Actions {
+        "anim_idle" { first-frame: 0; frame-count: 15; }
+    }
     Track {
         source-name: "anim_idle";
         frame-count: 289;
         frame 15 { cel: -1; }
         frame 16 { cel: -10000; }
     }
-    Track {
-        source-name: "anim_walkdolphin";
-        frame-count: 289;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 15 { cel: 0; }
-        frame 16 { cel: -10000; }
-        frame 54 { cel: -1; }
-        frame 55 { cel: -10000; }
+    Actions {
+        "anim_walkdolphin" { first-frame: 15; frame-count: 39; }
     }
-    Track {
-        source-name: "anim_walk";
-        frame-count: 289;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 54 { cel: 0; }
-        frame 55 { cel: -10000; }
-        frame 93 { cel: -1; }
-        frame 94 { cel: -10000; }
+
+    Actions {
+        "anim_walk" { first-frame: 54; frame-count: 39; }
     }
-    Track {
-        source-name: "anim_jumpinpool";
-        frame-count: 289;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 93 { cel: 0; }
-        frame 94 { cel: -10000; }
-        frame 138 { cel: -1; }
-        frame 139 { cel: -10000; }
+
+    Actions {
+        "anim_jumpinpool" { first-frame: 93; frame-count: 45; }
     }
-    Track {
-        source-name: "anim_ride";
-        frame-count: 289;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 138 { cel: 0; }
-        frame 139 { cel: -10000; }
-        frame 143 { cel: -1; }
-        frame 144 { cel: -10000; }
+
+    Actions {
+        "anim_ride" { first-frame: 138; frame-count: 5; }
     }
-    Track {
-        source-name: "anim_dolphinjump";
-        frame-count: 289;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 143 { x: -25.7; y: -27.8; skew-x: 10.8; skew-y: 10.8; scale-x: 0.999; scale-y: 0.999; cel: 0; }
-        frame 144 { x: -10000; y: -10000; skew-x: -10000; skew-y: -10000; scale-x: -10000; scale-y: -10000; cel: -10000; }
-        frame 166 { cel: -1; }
-        frame 167 { cel: -10000; }
+
+    Actions {
+        "anim_dolphinjump" { first-frame: 143; frame-count: 23; }
     }
-    Track {
-        source-name: "anim_eat";
-        frame-count: 289;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 166 { cel: 0; }
-        frame 167 { cel: -10000; }
-        frame 208 { cel: -1; }
-        frame 209 { cel: -10000; }
+
+    Actions {
+        "anim_eat" { first-frame: 166; frame-count: 42; }
     }
-    Track {
-        source-name: "anim_swim";
-        frame-count: 289;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 208 { cel: 0; }
-        frame 209 { cel: -10000; }
-        frame 250 { cel: -1; }
-        frame 251 { cel: -10000; }
+
+    Actions {
+        "anim_swim" { first-frame: 208; frame-count: 42; }
     }
-    Track {
-        source-name: "anim_death";
-        frame-count: 289;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 250 { cel: 0; }
-        frame 251 { cel: -10000; }
+
+    Actions {
+        "anim_death" { first-frame: 250; frame-count: 39; }
+    }
+
+    Actions {
+        "_ground" { first-frame: 15; frame-count: 235; }
     }
     Track {
         source-name: "_ground";
@@ -3051,6 +3012,9 @@ export component Zombie_dolphinrider {
         frame 287 { x: 40.1; y: 77.2; skew-x: 2.3; skew-y: 2.3; scale-x: 0.071; scale-y: 0.193; image: IMAGE_REANIM_ZOMBIE_DOLPHINRIDER_WHITEWATER2; }
         frame 288 { x: -10000; y: -10000; skew-x: -10000; skew-y: -10000; scale-x: -10000; scale-y: -10000; cel: -1; image: none; }
     }
+    Actions {
+        "anim_head2" { first-frame: 0; frame-count: 250; }
+    }
     Track {
         source-name: "anim_head2";
         frame-count: 289;
@@ -3306,6 +3270,9 @@ export component Zombie_dolphinrider {
         frame 249 { x: 8.1; y: 48.5; skew-x: 1; skew-y: 1; scale-x: 0.799; scale-y: 0.799; }
         frame 250 { x: -10000; y: -10000; skew-x: -10000; skew-y: -10000; scale-x: -10000; scale-y: -10000; cel: -1; }
         frame 251 { cel: -10000; }
+    }
+    Actions {
+        "anim_head1" { first-frame: 0; frame-count: 250; }
     }
     Track {
         source-name: "anim_head1";

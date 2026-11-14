@@ -1,21 +1,14 @@
 export component ZenGarden_wateringcan {
     fps: 20;
-    Track {
-        source-name: "anim_water";
-        frame-count: 34;
-        frame 0 { skew-x: 356.5; skew-y: 356.5; }
-        frame 1 { skew-x: -10000; skew-y: -10000; }
-        frame 17 { cel: -1; }
-        frame 18 { cel: -10000; }
+    frame-count: 34;
+    Actions {
+        "anim_water" { first-frame: 0; frame-count: 17; }
     }
-    Track {
-        source-name: "anim_water_area";
-        frame-count: 34;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 17 { skew-x: -3.4; skew-y: -3.4; cel: 0; }
-        frame 18 { skew-x: -10000; skew-y: -10000; cel: -10000; }
+
+    Actions {
+        "anim_water_area" { first-frame: 17; frame-count: 17; }
     }
+
     Track {
         source-name: "can";
         frame-count: 34;

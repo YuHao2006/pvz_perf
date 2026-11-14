@@ -1,42 +1,24 @@
 export component Squash {
     fps: 12;
-    Track {
-        source-name: "anim_jumpdown";
-        frame-count: 73;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 65 { cel: 0; }
-        frame 66 { cel: -10000; }
+    frame-count: 73;
+    Actions {
+        "anim_jumpdown" { first-frame: 65; frame-count: 8; }
     }
-    Track {
-        source-name: "anim_jumpup";
-        frame-count: 73;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 50 { cel: 0; }
-        frame 51 { cel: -10000; }
-        frame 65 { cel: -1; }
-        frame 66 { cel: -10000; }
+
+    Actions {
+        "anim_jumpup" { first-frame: 50; frame-count: 15; }
     }
-    Track {
-        source-name: "anim_lookright";
-        frame-count: 73;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 37 { cel: 0; }
-        frame 38 { cel: -10000; }
-        frame 43 { cel: -1; }
-        frame 44 { cel: -10000; }
+
+    Actions {
+        "anim_lookright" { first-frame: 37; frame-count: 6; }
     }
-    Track {
-        source-name: "anim_lookleft";
-        frame-count: 73;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 24 { cel: 0; }
-        frame 25 { cel: -10000; }
-        frame 30 { cel: -1; }
-        frame 31 { cel: -10000; }
+
+    Actions {
+        "anim_lookleft" { first-frame: 24; frame-count: 6; }
+    }
+
+    Actions {
+        "anim_idle" { first-frame: 5; frame-count: 19; }
     }
     Track {
         source-name: "anim_idle";
@@ -48,12 +30,10 @@ export component Squash {
         frame 24 { cel: -1; }
         frame 25 { cel: -10000; }
     }
-    Track {
-        source-name: "anim_blink";
-        frame-count: 73;
-        frame 5 { cel: -1; }
-        frame 6 { cel: -10000; }
+    Actions {
+        "anim_blink" { first-frame: 0; frame-count: 5; }
     }
+
     Track {
         source-name: "Squash_stem";
         frame-count: 73;
@@ -150,6 +130,9 @@ export component Squash {
         frame 71 { x: -4.1; y: 31.5; scale-x: 1.02; scale-y: 0.521; }
         frame 72 { x: -7.7; y: 40.1; scale-x: 1.093; scale-y: 0.428; }
     }
+    Actions {
+        "anim_face" { first-frame: 5; frame-count: 68; }
+    }
     Track {
         source-name: "anim_face";
         frame-count: 73;
@@ -221,6 +204,9 @@ export component Squash {
         frame 70 { x: 31.2; y: 41.7; scale-x: 0.915; scale-y: 0.614; }
         frame 71 { x: 30.1; y: 47.5; scale-x: 0.973; scale-y: 0.521; }
         frame 72 { x: 29.2; y: 53.4; scale-x: 1.03; scale-y: 0.428; }
+    }
+    Actions {
+        "anim_eye" { first-frame: 0; frame-count: 73; }
     }
     Track {
         source-name: "anim_eye";

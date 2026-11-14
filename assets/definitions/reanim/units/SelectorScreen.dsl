@@ -1,22 +1,16 @@
 export component SelectorScreen {
     fps: 20;
-    Track {
-        source-name: "anim_open";
-        frame-count: 706;
-        frame 0 { x: 0.1; y: -10.3; scale-x: 1.017; scale-y: 1.017; }
-        frame 1 { x: -10000; y: -10000; scale-x: -10000; scale-y: -10000; }
-        frame 13 { cel: -1; }
-        frame 14 { cel: -10000; }
+    frame-count: 706;
+    Actions {
+        "anim_open" { first-frame: 0; frame-count: 13; }
     }
-    Track {
-        source-name: "anim_sign";
-        frame-count: 706;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 13 { cel: 0; }
-        frame 14 { cel: -10000; }
-        frame 41 { cel: -1; }
-        frame 42 { cel: -10000; }
+
+    Actions {
+        "anim_sign" { first-frame: 13; frame-count: 28; }
+    }
+
+    Actions {
+        "anim_idle" { first-frame: 41; frame-count: 37; }
     }
     Track {
         source-name: "anim_idle";
@@ -28,108 +22,50 @@ export component SelectorScreen {
         frame 78 { cel: -1; }
         frame 79 { cel: -10000; }
     }
-    Track {
-        source-name: "anim_grass";
-        frame-count: 706;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 78 { cel: 0; }
-        frame 79 { cel: -10000; }
-        frame 103 { cel: -1; }
-        frame 104 { cel: -10000; }
+    Actions {
+        "anim_grass" { first-frame: 78; frame-count: 25; }
     }
-    Track {
-        source-name: "anim_flower2";
-        frame-count: 706;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 103 { cel: 0; }
-        frame 104 { cel: -10000; }
-        frame 161 { cel: -1; }
-        frame 162 { cel: -10000; }
+
+    Actions {
+        "anim_flower2" { first-frame: 103; frame-count: 58; }
     }
-    Track {
-        source-name: "anim_flower1";
-        frame-count: 706;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 161 { cel: 0; }
-        frame 162 { cel: -10000; }
-        frame 179 { cel: -1; }
-        frame 180 { cel: -10000; }
+
+    Actions {
+        "anim_flower1" { first-frame: 161; frame-count: 18; }
     }
-    Track {
-        source-name: "anim_flower3";
-        frame-count: 706;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 179 { cel: 0; }
-        frame 180 { cel: -10000; }
-        frame 198 { cel: -1; }
-        frame 199 { cel: -10000; }
+
+    Actions {
+        "anim_flower3" { first-frame: 179; frame-count: 19; }
     }
-    Track {
-        source-name: "anim_start";
-        frame-count: 706;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
+
+    Actions {
+        "anim_start" { first-frame: 0; frame-count: 1; }
     }
-    Track {
-        source-name: "anim_cloud1";
-        frame-count: 706;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 198 { cel: 0; }
-        frame 199 { cel: -10000; }
-        frame 336 { cel: -1; }
-        frame 337 { cel: -10000; }
+
+    Actions {
+        "anim_cloud1" { first-frame: 198; frame-count: 138; }
     }
-    Track {
-        source-name: "anim_cloud7";
-        frame-count: 706;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 336 { cel: 0; }
-        frame 337 { cel: -10000; }
-        frame 422 { cel: -1; }
-        frame 423 { cel: -10000; }
+
+    Actions {
+        "anim_cloud7" { first-frame: 336; frame-count: 86; }
     }
-    Track {
-        source-name: "anim_cloud2";
-        frame-count: 706;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 422 { cel: 0; }
-        frame 423 { cel: -10000; }
-        frame 503 { cel: -1; }
-        frame 504 { cel: -10000; }
+
+    Actions {
+        "anim_cloud2" { first-frame: 422; frame-count: 81; }
     }
-    Track {
-        source-name: "anim_cloud4";
-        frame-count: 706;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 503 { cel: 0; }
-        frame 504 { cel: -10000; }
+
+    Actions {
+        "anim_cloud4" { first-frame: 503; frame-count: 203; }
     }
-    Track {
-        source-name: "anim_cloud6";
-        frame-count: 706;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 569 { cel: 0; }
-        frame 570 { cel: -10000; }
-        frame 639 { cel: -1; }
-        frame 640 { cel: -10000; }
+
+    Actions {
+        "anim_cloud6" { first-frame: 569; frame-count: 70; }
     }
-    Track {
-        source-name: "anim_cloud5";
-        frame-count: 706;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 639 { cel: 0; }
-        frame 640 { cel: -10000; }
+
+    Actions {
+        "anim_cloud5" { first-frame: 639; frame-count: 67; }
     }
+
     Track {
         source-name: "SelectorScreen_BG";
         frame-count: 706;

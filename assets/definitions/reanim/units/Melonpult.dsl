@@ -1,10 +1,12 @@
 export component Melonpult {
     fps: 12;
-    Track {
-        source-name: "anim_blink";
-        frame-count: 74;
-        frame 5 { cel: -1; }
-        frame 6 { cel: -10000; }
+    frame-count: 74;
+    Actions {
+        "anim_blink" { first-frame: 0; frame-count: 5; }
+    }
+
+    Actions {
+        "anim_idle" { first-frame: 5; frame-count: 31; }
     }
     Track {
         source-name: "anim_idle";
@@ -16,14 +18,10 @@ export component Melonpult {
         frame 36 { cel: -1; }
         frame 37 { cel: -10000; }
     }
-    Track {
-        source-name: "anim_shooting";
-        frame-count: 74;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 36 { cel: 0; }
-        frame 37 { cel: -10000; }
+    Actions {
+        "anim_shooting" { first-frame: 36; frame-count: 38; }
     }
+
     Track {
         source-name: "frontleaf_right_tip";
         frame-count: 74;
@@ -446,6 +444,9 @@ export component Melonpult {
         frame 71 { x: 16.4; y: 12.4; skew-x: 22.1; skew-y: 19.3; scale-x: 0.918; scale-y: 0.756; }
         frame 72 { x: 16.2; y: 16.9; skew-x: 11; skew-y: 9.5; scale-x: 0.859; scale-y: 0.778; }
         frame 73 { x: 16.5; y: 21.2; skew-x: 0; skew-y: 0; scale-x: 0.8; scale-y: 0.8; }
+    }
+    Actions {
+        "anim_face" { first-frame: 5; frame-count: 69; }
     }
     Track {
         source-name: "anim_face";

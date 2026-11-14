@@ -1,19 +1,14 @@
 export component Hammer {
     fps: 12;
-    Track {
-        source-name: "anim_open_pot";
-        frame-count: 17;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 9 { x: -4.3; y: 5.8; skew-x: -3.4; skew-y: -3.4; cel: 0; }
-        frame 10 { x: -10000; y: -10000; skew-x: -10000; skew-y: -10000; cel: -10000; }
+    frame-count: 17;
+    Actions {
+        "anim_open_pot" { first-frame: 9; frame-count: 8; }
     }
-    Track {
-        source-name: "anim_whack_zombie";
-        frame-count: 17;
-        frame 9 { cel: -1; }
-        frame 10 { cel: -10000; }
+
+    Actions {
+        "anim_whack_zombie" { first-frame: 0; frame-count: 9; }
     }
+
     Track {
         source-name: "hammer_3";
         frame-count: 17;

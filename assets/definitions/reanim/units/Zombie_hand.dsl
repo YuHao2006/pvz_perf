@@ -1,5 +1,6 @@
 export component Zombie_hand {
     fps: 30;
+    frame-count: 25;
     Track {
         source-name: "arm";
         frame-count: 25;

@@ -2,6 +2,52 @@
 
 This page describes the current runtime resource contract and the retained offline interchange formats. Reanimation and projectile behavior is generated as static C++ data; particles load complete PTC1 CPU records. Definitions share behavior and select an appearance row with its atlas pointer and final UVs. Reanimation/particle evaluation and drawing preparation run on the CPU; there are no GRU1/PGP1 GPU animation records in the runtime package.
 
+## Explicit reanimation actions
+
+All 146 source components declare their timeline length and action intervals explicitly:
+
+```text
+export component Example {
+    fps: 12;
+    frame-count: 40;
+    Actions {
+        anim_idle { first-frame: 0; frame-count: 20; }
+        anim_shooting { first-frame: 20; frame-count: 20; }
+    }
+    Track {
+        source-name: "body";
+        frame-count: 40;
+        // Transform/image keyframes.
+    }
+}
+```
+
+Actions use zero-based frame offsets and positive lengths. The compiler rejects duplicate
+names, missing fields, zero lengths and intervals outside the component timeline.
+A drawing or attachment track can also declare an action with the same name; it remains
+a physical track. Prefixes alone do not prove a track is disposable. `_ground`, attachment
+anchors, drawable tracks and duplicate-name first-match behavior are preserved.
+
+`GetFramesForLayer`, `IsAnimPlaying`, `SetBasePoseFromAnim` and playback use the generated
+action ranges; `TrackExists`, attachment and transform queries use physical tracks.
+`ActionExists` tests action membership. Both use the existing enum/MPHF lookup, without
+runtime strings. Known-index range queries read generated constants instead of scanning
+keyframes. Generated activity and attacher data use dense runtime track indices.
+
+The source corpus contains 671 actions. Removing 392 pure action markers eliminates
+90,224 source keyframe records. Only 144 indexed definitions enter the game; the two
+unindexed source components are migrated as well. These are structural counts, not a
+claim of whole-game FPS improvement. Playback rate, timing, root motion, blending,
+source images and retained transforms are unchanged.
+
+DAT64 remains version 5. A generated legacy-to-runtime index map is used only during
+save/load. The writer retains the original track count/order and emits default records
+for removed markers; the reader restores retained track state into the dense array.
+Unexpected attachments on removed markers cause a read failure rather than silent loss.
+No new per-instance action array, loading-time scan or experiment environment switch is
+introduced. Tool sources and parser/corpus regression tests live in PvzDevTools; this
+repository carries the paired native compiler executables.
+
 ## Runtime sampling contract
 
 `Sexy::TextureRegion` is a public aggregate:

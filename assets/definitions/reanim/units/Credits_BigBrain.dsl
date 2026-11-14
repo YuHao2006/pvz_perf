@@ -1,5 +1,6 @@
 export component Credits_BigBrain {
     fps: 12;
+    frame-count: 12;
     Track {
         source-name: "Layer 1";
         frame-count: 12;

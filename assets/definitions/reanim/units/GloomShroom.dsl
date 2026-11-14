@@ -1,10 +1,12 @@
 export component GloomShroom {
     fps: 12;
-    Track {
-        source-name: "anim_blink";
-        frame-count: 71;
-        frame 5 { cel: -1; }
-        frame 6 { cel: -10000; }
+    frame-count: 71;
+    Actions {
+        "anim_blink" { first-frame: 0; frame-count: 5; }
+    }
+
+    Actions {
+        "anim_idle" { first-frame: 5; frame-count: 19; }
     }
     Track {
         source-name: "anim_idle";
@@ -16,24 +18,14 @@ export component GloomShroom {
         frame 24 { cel: -1; }
         frame 25 { cel: -10000; }
     }
-    Track {
-        source-name: "anim_sleep";
-        frame-count: 71;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 24 { cel: 0; }
-        frame 25 { cel: -10000; }
-        frame 43 { cel: -1; }
-        frame 44 { cel: -10000; }
+    Actions {
+        "anim_sleep" { first-frame: 24; frame-count: 19; }
     }
-    Track {
-        source-name: "anim_shooting";
-        frame-count: 71;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 43 { cel: 0; }
-        frame 44 { cel: -10000; }
+
+    Actions {
+        "anim_shooting" { first-frame: 43; frame-count: 28; }
     }
+
     Track {
         source-name: "GloomShroom_base";
         frame-count: 71;
@@ -294,6 +286,9 @@ export component GloomShroom {
         frame 68 { x: 28.2; y: -3.8; scale-x: 0.808; scale-y: 0.805; }
         frame 69 { x: 28.3; y: -2.6; scale-x: 0.804; scale-y: 0.802; }
         frame 70 { x: -10000; y: -1.4; scale-x: 0.8; scale-y: 0.8; }
+    }
+    Actions {
+        "anim_face" { first-frame: 5; frame-count: 66; }
     }
     Track {
         source-name: "anim_face";

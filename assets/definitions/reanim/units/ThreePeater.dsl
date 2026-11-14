@@ -1,94 +1,42 @@
 export component ThreePeater {
     fps: 12;
-    Track {
-        source-name: "anim_shooting2";
-        frame-count: 149;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 111 { cel: 0; }
-        frame 112 { cel: -10000; }
-        frame 124 { cel: -1; }
-        frame 125 { cel: -10000; }
+    frame-count: 149;
+    Actions {
+        "anim_shooting2" { first-frame: 111; frame-count: 13; }
     }
-    Track {
-        source-name: "anim_head_idle2";
-        frame-count: 149;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 86 { cel: 0; }
-        frame 87 { cel: -10000; }
-        frame 111 { cel: -1; }
-        frame 112 { cel: -10000; }
+
+    Actions {
+        "anim_head_idle2" { first-frame: 86; frame-count: 25; }
     }
-    Track {
-        source-name: "anim_blink2";
-        frame-count: 149;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 83 { cel: 0; }
-        frame 84 { cel: -10000; }
-        frame 86 { cel: -1; }
-        frame 87 { cel: -10000; }
+
+    Actions {
+        "anim_blink2" { first-frame: 83; frame-count: 3; }
     }
-    Track {
-        source-name: "anim_shooting3";
-        frame-count: 149;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 70 { cel: 0; }
-        frame 71 { cel: -10000; }
-        frame 83 { cel: -1; }
-        frame 84 { cel: -10000; }
+
+    Actions {
+        "anim_shooting3" { first-frame: 70; frame-count: 13; }
     }
-    Track {
-        source-name: "anim_head_idle3";
-        frame-count: 149;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 45 { cel: 0; }
-        frame 46 { cel: -10000; }
-        frame 70 { cel: -1; }
-        frame 71 { cel: -10000; }
+
+    Actions {
+        "anim_head_idle3" { first-frame: 45; frame-count: 25; }
     }
-    Track {
-        source-name: "anim_blink3";
-        frame-count: 149;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 42 { cel: 0; }
-        frame 43 { cel: -10000; }
-        frame 45 { cel: -1; }
-        frame 46 { cel: -10000; }
+
+    Actions {
+        "anim_blink3" { first-frame: 42; frame-count: 3; }
     }
-    Track {
-        source-name: "anim_shooting1";
-        frame-count: 149;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 29 { cel: 0; }
-        frame 30 { cel: -10000; }
-        frame 42 { cel: -1; }
-        frame 43 { cel: -10000; }
+
+    Actions {
+        "anim_shooting1" { first-frame: 29; frame-count: 13; }
     }
-    Track {
-        source-name: "anim_head_idle1";
-        frame-count: 149;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 4 { cel: 0; }
-        frame 5 { cel: -10000; }
-        frame 29 { cel: -1; }
-        frame 30 { cel: -10000; }
+
+    Actions {
+        "anim_head_idle1" { first-frame: 4; frame-count: 25; }
     }
-    Track {
-        source-name: "anim_blink1";
-        frame-count: 149;
-        frame 0 { cel: -1; }
-        frame 1 { cel: 0; }
-        frame 2 { cel: -10000; }
-        frame 4 { cel: -1; }
-        frame 5 { cel: -10000; }
+
+    Actions {
+        "anim_blink1" { first-frame: 1; frame-count: 3; }
     }
+
     Track {
         source-name: "backleaf";
         frame-count: 149;
@@ -337,6 +285,9 @@ export component ThreePeater {
         frame 147 { x: 56.1; y: -10000; skew-x: -1.4; skew-y: -1.4; scale-x: 0.584; scale-y: 0.554; }
         frame 148 { x: 56.3; y: 56; skew-x: 0; skew-y: 0; scale-x: 0.555; scale-y: 0.555; }
     }
+    Actions {
+        "anim_idle" { first-frame: 124; frame-count: 25; }
+    }
     Track {
         source-name: "anim_idle";
         frame-count: 149;
@@ -367,6 +318,9 @@ export component ThreePeater {
         frame 146 { x: 19.4; y: 61.2; skew-x: 2.8; skew-y: 2.8; scale-x: 0.58; scale-y: 0.552; }
         frame 147 { x: 19.3; y: 61.4; skew-x: 1.3; skew-y: 1.3; scale-x: 0.567; scale-y: 0.554; }
         frame 148 { x: 19.4; y: 61.6; skew-x: 0; skew-y: 0; scale-x: 0.555; scale-y: 0.555; }
+    }
+    Actions {
+        "anim_head1" { first-frame: 124; frame-count: 25; }
     }
     Track {
         source-name: "anim_head1";
@@ -444,6 +398,9 @@ export component ThreePeater {
         frame 41 { x: 42.8; y: 38.7; skew-x: 0; skew-y: 0; scale-x: 0.8; scale-y: -10000; }
         frame 42 { x: -10000; y: -10000; skew-x: -10000; skew-y: -10000; scale-x: -10000; cel: -1; }
         frame 43 { cel: -10000; }
+    }
+    Actions {
+        "anim_face1" { first-frame: 4; frame-count: 38; }
     }
     Track {
         source-name: "anim_face1";
@@ -551,6 +508,9 @@ export component ThreePeater {
         frame 41 { x: 67.9; y: 32.4; skew-x: 14.4; skew-y: 15.6; scale-y: 0.616; }
         frame 42 { x: -10000; y: -10000; skew-x: -10000; skew-y: -10000; scale-y: -10000; cel: -1; }
         frame 43 { cel: -10000; }
+    }
+    Actions {
+        "anim_head3" { first-frame: 124; frame-count: 25; }
     }
     Track {
         source-name: "anim_head3";
@@ -721,6 +681,9 @@ export component ThreePeater {
         frame 83 { x: -10000; y: -10000; skew-x: -10000; skew-y: -10000; scale-x: -10000; scale-y: -10000; cel: -1; }
         frame 84 { cel: -10000; }
     }
+    Actions {
+        "anim_face3" { first-frame: 45; frame-count: 38; }
+    }
     Track {
         source-name: "anim_face3";
         frame-count: 149;
@@ -828,6 +791,9 @@ export component ThreePeater {
         frame 82 { x: 31.8; y: 0.5; scale-y: 0.603; }
         frame 83 { x: -10000; y: -10000; scale-y: -10000; cel: -1; }
         frame 84 { cel: -10000; }
+    }
+    Actions {
+        "anim_head2" { first-frame: 124; frame-count: 25; }
     }
     Track {
         source-name: "anim_head2";
@@ -951,6 +917,9 @@ export component ThreePeater {
         frame 123 { x: 25; y: 21.8; skew-x: 0; skew-y: 0; scale-x: 0.8; scale-y: 0.8; }
         frame 124 { x: -10000; y: -10000; skew-x: -10000; skew-y: -10000; scale-x: -10000; scale-y: -10000; cel: -1; }
         frame 125 { cel: -10000; }
+    }
+    Actions {
+        "anim_face2" { first-frame: 86; frame-count: 38; }
     }
     Track {
         source-name: "anim_face2";

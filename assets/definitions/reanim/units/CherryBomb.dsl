@@ -1,10 +1,12 @@
 export component CherryBomb {
     fps: 30;
-    Track {
-        source-name: "anim_explode";
-        frame-count: 27;
-        frame 14 { cel: -1; }
-        frame 15 { cel: -10000; }
+    frame-count: 27;
+    Actions {
+        "anim_explode" { first-frame: 0; frame-count: 14; }
+    }
+
+    Actions {
+        "anim_idle" { first-frame: 14; frame-count: 13; }
     }
     Track {
         source-name: "anim_idle";

@@ -1,8 +1,15 @@
 export component Zombie_credits_screendoor {
     fps: 12;
+    frame-count: 29;
+    Actions {
+        "anim_idle" { first-frame: 0; frame-count: 29; }
+    }
     Track {
         source-name: "anim_idle";
         frame-count: 29;
+    }
+    Actions {
+        "anim_innerarm3" { first-frame: 0; frame-count: 29; }
     }
     Track {
         source-name: "anim_innerarm3";
@@ -37,6 +44,9 @@ export component Zombie_credits_screendoor {
         frame 27 { x: 24.9; y: 82.1; skew-x: 353.4; skew-y: 353.4; }
         frame 28 { x: 24.4; y: 81.2; skew-x: 354.2; skew-y: 354.2; scale-x: 0.8; scale-y: 0.8; }
     }
+    Actions {
+        "anim_innerarm2" { first-frame: 0; frame-count: 29; }
+    }
     Track {
         source-name: "anim_innerarm2";
         frame-count: 29;
@@ -69,6 +79,9 @@ export component Zombie_credits_screendoor {
         frame 26 { x: 24.2; y: 68.2; skew-x: 352.5; skew-y: 352.5; }
         frame 27 { x: 24.1; y: 67.7; skew-x: 353.4; skew-y: 353.4; }
         frame 28 { x: 23.8; y: 67.1; skew-x: 354.2; skew-y: 354.2; scale-x: 0.8; scale-y: 0.8; }
+    }
+    Actions {
+        "anim_innerarm1" { first-frame: 0; frame-count: 29; }
     }
     Track {
         source-name: "anim_innerarm1";
@@ -168,6 +181,9 @@ export component Zombie_credits_screendoor {
         frame 26 { x: 28.7; y: 35.2; skew-x: -1.7; skew-y: -1.7; scale-x: 0.837; scale-y: 0.797; }
         frame 27 { x: 29.1; y: 34.5; skew-x: -0.7; skew-y: -0.7; scale-x: -10000; scale-y: -10000; }
         frame 28 { x: 29.4; y: 34; skew-x: 0.1; skew-y: 0.1; scale-x: 0.838; scale-y: 0.798; }
+    }
+    Actions {
+        "anim_head1" { first-frame: 0; frame-count: 29; }
     }
     Track {
         source-name: "anim_head1";
@@ -377,6 +393,9 @@ export component Zombie_credits_screendoor {
         frame 27 { x: 23.8; y: 51.1; skew-x: 353.5; skew-y: 353.5; scale-y: 0.806; }
         frame 28 { x: -10000; y: 50.9; skew-x: 351.5; skew-y: 351.5; scale-x: 0.8; scale-y: 0.8; }
     }
+    Actions {
+        "anim_head2" { first-frame: 0; frame-count: 29; }
+    }
     Track {
         source-name: "anim_head2";
         frame-count: 29;
@@ -409,6 +428,9 @@ export component Zombie_credits_screendoor {
         frame 26 { x: -10000; y: 44.5; skew-x: -8.7; skew-y: -8.7; }
         frame 27 { x: 13.5; y: 42.5; skew-x: -4.2; skew-y: -4.2; scale-x: 0.8; scale-y: 0.8; }
         frame 28 { x: -10000; y: 40.6; skew-x: 0; skew-y: 0; scale-x: -10000; scale-y: -10000; }
+    }
+    Actions {
+        "anim_screendoor" { first-frame: 0; frame-count: 29; }
     }
     Track {
         source-name: "anim_screendoor";
@@ -508,6 +530,9 @@ export component Zombie_credits_screendoor {
         frame 26 { x: 32.1; y: 44.4; skew-x: -2.2; skew-y: -2.2; scale-x: 0.8; scale-y: 0.8; }
         frame 27 { x: 32.5; y: 44.1; skew-x: -1; skew-y: -1; scale-x: -10000; scale-y: -10000; }
         frame 28 { x: 33; y: 44; skew-x: 0; skew-y: 0; }
+    }
+    Actions {
+        "anim_hair" { first-frame: 0; frame-count: 29; }
     }
     Track {
         source-name: "anim_hair";

@@ -1,5 +1,6 @@
 export component Credits_CrazyDave {
     fps: 12;
+    frame-count: 36;
     Track {
         source-name: "rope";
         frame-count: 36;

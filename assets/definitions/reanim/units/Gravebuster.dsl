@@ -1,10 +1,12 @@
 export component Gravebuster {
     fps: 12;
-    Track {
-        source-name: "anim_land";
-        frame-count: 39;
-        frame 7 { cel: -1; }
-        frame 8 { cel: -10000; }
+    frame-count: 39;
+    Actions {
+        "anim_land" { first-frame: 0; frame-count: 7; }
+    }
+
+    Actions {
+        "anim_idle" { first-frame: 11; frame-count: 28; }
     }
     Track {
         source-name: "anim_idle";

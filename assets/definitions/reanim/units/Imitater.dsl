@@ -1,10 +1,12 @@
 export component Imitater {
     fps: 48;
-    Track {
-        source-name: "anim_blink";
-        frame-count: 84;
-        frame 3 { cel: -1; }
-        frame 4 { cel: -10000; }
+    frame-count: 84;
+    Actions {
+        "anim_blink" { first-frame: 0; frame-count: 3; }
+    }
+
+    Actions {
+        "anim_idle" { first-frame: 3; frame-count: 50; }
     }
     Track {
         source-name: "anim_idle";
@@ -16,14 +18,10 @@ export component Imitater {
         frame 53 { cel: -1; }
         frame 54 { cel: -10000; }
     }
-    Track {
-        source-name: "anim_explode";
-        frame-count: 84;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 53 { cel: 0; }
-        frame 54 { cel: -10000; }
+    Actions {
+        "anim_explode" { first-frame: 53; frame-count: 31; }
     }
+
     Track {
         source-name: "Imitater_root4";
         frame-count: 84;
@@ -197,6 +195,9 @@ export component Imitater {
         frame 52 { x: 15.8; y: 49; skew-x: -15.2; skew-y: -15.2; scale-x: 0.799; scale-y: 0.819; }
         frame 53 { x: -10000; y: -10000; skew-x: -10000; skew-y: -10000; scale-x: -10000; scale-y: -10000; cel: -1; }
         frame 54 { cel: -10000; }
+    }
+    Actions {
+        "anim_face" { first-frame: 3; frame-count: 50; }
     }
     Track {
         source-name: "anim_face";

@@ -1,5 +1,6 @@
 export component ZenGarden_phonograph {
     fps: 30;
+    frame-count: 37;
     Track {
         source-name: "base";
         frame-count: 37;

@@ -1,29 +1,23 @@
 export component Pot {
     fps: 12;
+    frame-count: 39;
+    Actions {
+        "anim_idle" { first-frame: 0; frame-count: 13; }
+    }
     Track {
         source-name: "anim_idle";
         frame-count: 39;
         frame 13 { cel: -1; }
         frame 14 { cel: -10000; }
     }
-    Track {
-        source-name: "anim_zengarden";
-        frame-count: 39;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 13 { cel: 0; }
-        frame 14 { cel: -10000; }
-        frame 26 { cel: -1; }
-        frame 27 { cel: -10000; }
+    Actions {
+        "anim_zengarden" { first-frame: 13; frame-count: 13; }
     }
-    Track {
-        source-name: "anim_waterplants";
-        frame-count: 39;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 26 { cel: 0; }
-        frame 27 { cel: -10000; }
+
+    Actions {
+        "anim_waterplants" { first-frame: 26; frame-count: 13; }
     }
+
     Track {
         source-name: "Pot_bottom";
         frame-count: 39;

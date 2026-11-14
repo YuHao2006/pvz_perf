@@ -1,5 +1,6 @@
 export component Zombie_charred_imp {
     fps: 15;
+    frame-count: 35;
     Track {
         source-name: "pile1";
         frame-count: 35;

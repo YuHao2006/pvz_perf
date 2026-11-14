@@ -1,22 +1,16 @@
 export component DoomShroom {
     fps: 12;
-    Track {
-        source-name: "anim_sleep";
-        frame-count: 77;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 52 { cel: 0; }
-        frame 53 { cel: -10000; }
+    frame-count: 77;
+    Actions {
+        "anim_sleep" { first-frame: 52; frame-count: 25; }
     }
-    Track {
-        source-name: "anim_explode";
-        frame-count: 77;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 19 { cel: 0; }
-        frame 20 { cel: -10000; }
-        frame 52 { cel: -1; }
-        frame 53 { cel: -10000; }
+
+    Actions {
+        "anim_explode" { first-frame: 19; frame-count: 33; }
+    }
+
+    Actions {
+        "anim_idle" { first-frame: 0; frame-count: 20; }
     }
     Track {
         source-name: "anim_idle";

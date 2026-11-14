@@ -1,5 +1,9 @@
 export component Plantern {
     fps: 12;
+    frame-count: 25;
+    Actions {
+        "anim_idle" { first-frame: 5; frame-count: 20; }
+    }
     Track {
         source-name: "anim_idle";
         frame-count: 25;
@@ -8,12 +12,10 @@ export component Plantern {
         frame 5 { cel: 0; }
         frame 6 { cel: -10000; }
     }
-    Track {
-        source-name: "anim_blink";
-        frame-count: 25;
-        frame 5 { cel: -1; }
-        frame 6 { cel: -10000; }
+    Actions {
+        "anim_blink" { first-frame: 0; frame-count: 5; }
     }
+
     Track {
         source-name: "Plantern_stem";
         frame-count: 25;
@@ -21,6 +23,9 @@ export component Plantern {
         frame 1 { cel: -10000; }
         frame 5 { x: 24.5; y: 56.8; scale-x: 0.8; scale-y: 0.8; cel: 0; image: IMAGE_REANIM_PLANTERN_STEM; }
         frame 6 { x: -10000; y: -10000; scale-x: -10000; scale-y: -10000; cel: -10000; image: none; }
+    }
+    Actions {
+        "anim_face" { first-frame: 5; frame-count: 20; }
     }
     Track {
         source-name: "anim_face";

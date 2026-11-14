@@ -6,7 +6,10 @@
     [int]$Seconds = 0,
     [ValidateSet('11x','25x')][string]$CpuMultiplier = '11x',
     [string]$OutputDirectory = '',
-    [switch]$NoPrompt
+    [switch]$NoPrompt,
+    [string]$ChartLabel = "pvz_perf / Vulkan",
+    [string]$BaselineDirectory = "",
+    [switch]$NoOpenChart
 )
 $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
@@ -54,3 +57,9 @@ if (!$NoPrompt) {
 & python @probeArguments
 if ($LASTEXITCODE -ne 0) { throw 'External performance observation failed.' }
 Write-Output ('Measurement saved to ' + $measurementDirectory)
+
+$plotArguments = @((Join-Path $root 'Tests/performance/plot-windows-observation.py'), $measurementDirectory, '--label', $ChartLabel)
+if ($BaselineDirectory) { $plotArguments += @('--baseline', $BaselineDirectory) }
+if ($NoOpenChart) { $plotArguments += '--no-open' }
+& python @plotArguments
+if ($LASTEXITCODE -ne 0) { throw 'Measurement is saved, but automatic chart generation failed.' }

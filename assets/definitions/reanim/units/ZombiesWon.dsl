@@ -1,12 +1,10 @@
 export component ZombiesWon {
     fps: 24;
-    Track {
-        source-name: "anim_screen";
-        frame-count: 25;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 24 { cel: 0; }
+    frame-count: 25;
+    Actions {
+        "anim_screen" { first-frame: 24; frame-count: 1; }
     }
+
     Track {
         source-name: "fullscreen";
         frame-count: 25;
@@ -40,6 +38,9 @@ export component ZombiesWon {
         frame 10 { alpha: 0.45; }
         frame 11 { alpha: 0.5; }
         frame 12 { alpha: -10000; }
+    }
+    Actions {
+        "ZombiesWon" { first-frame: 0; frame-count: 24; }
     }
     Track {
         source-name: "ZombiesWon";

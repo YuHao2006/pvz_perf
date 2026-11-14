@@ -1,5 +1,6 @@
 export component GatlingPea {
     fps: 12;
+    frame-count: 93;
     Track {
         source-name: "backleaf";
         frame-count: 93;
@@ -264,6 +265,9 @@ export component GatlingPea {
         frame 29 { x: -10000; y: -10000; skew-x: -10000; skew-y: -10000; scale-x: -10000; scale-y: -10000; cel: -1; }
         frame 30 { cel: -10000; }
     }
+    Actions {
+        "anim_idle" { first-frame: 4; frame-count: 25; }
+    }
     Track {
         source-name: "anim_idle";
         frame-count: 93;
@@ -297,23 +301,16 @@ export component GatlingPea {
         frame 29 { x: -10000; y: -10000; cel: -1; }
         frame 30 { cel: -10000; }
     }
-    Track {
-        source-name: "anim_shooting";
-        frame-count: 93;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 54 { cel: 0; }
-        frame 55 { cel: -10000; }
+    Actions {
+        "anim_shooting" { first-frame: 54; frame-count: 39; }
     }
-    Track {
-        source-name: "anim_head_idle";
-        frame-count: 93;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 29 { cel: 0; }
-        frame 30 { cel: -10000; }
-        frame 54 { cel: -1; }
-        frame 55 { cel: -10000; }
+
+    Actions {
+        "anim_head_idle" { first-frame: 29; frame-count: 25; }
+    }
+
+    Actions {
+        "anim_face" { first-frame: 29; frame-count: 64; }
     }
     Track {
         source-name: "anim_face";
@@ -832,6 +829,9 @@ export component GatlingPea {
         frame 85 { x: 38.5; y: 22.2; skew-x: 1.5; scale-x: 0.556; scale-y: 0.519; image: IMAGE_REANIM_GATLINGPEA_BLINK1; }
         frame 86 { x: -10000; y: -10000; skew-x: -10000; scale-x: -10000; scale-y: -10000; cel: -1; image: none; }
         frame 87 { cel: -10000; }
+    }
+    Actions {
+        "anim_blink" { first-frame: 1; frame-count: 3; }
     }
     Track {
         source-name: "anim_blink";

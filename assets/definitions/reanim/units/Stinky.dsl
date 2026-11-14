@@ -1,5 +1,9 @@
 export component Stinky {
     fps: 12;
+    frame-count: 71;
+    Actions {
+        "_ground" { first-frame: 0; frame-count: 16; }
+    }
     Track {
         source-name: "_ground";
         frame-count: 71;
@@ -19,6 +23,9 @@ export component Stinky {
         frame 16 { cel: -1; }
         frame 17 { cel: -10000; }
     }
+    Actions {
+        "turn" { first-frame: 16; frame-count: 8; }
+    }
     Track {
         source-name: "turn";
         frame-count: 71;
@@ -35,41 +42,24 @@ export component Stinky {
         frame 24 { y: -10000; cel: -1; image: none; }
         frame 25 { cel: -10000; }
     }
-    Track {
-        source-name: "anim_crawl";
-        frame-count: 71;
-        frame 16 { cel: -1; }
-        frame 17 { cel: -10000; }
+    Actions {
+        "anim_crawl" { first-frame: 0; frame-count: 16; }
     }
-    Track {
-        source-name: "anim_turn";
-        frame-count: 71;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 16 { cel: 0; }
-        frame 17 { cel: -10000; }
-        frame 24 { cel: -1; }
-        frame 25 { cel: -10000; }
+
+    Actions {
+        "anim_turn" { first-frame: 16; frame-count: 8; }
     }
-    Track {
-        source-name: "anim_in";
-        frame-count: 71;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 24 { cel: 0; }
-        frame 25 { cel: -10000; }
-        frame 43 { cel: -1; }
-        frame 44 { cel: -10000; }
+
+    Actions {
+        "anim_in" { first-frame: 24; frame-count: 19; }
     }
-    Track {
-        source-name: "anim_out";
-        frame-count: 71;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 43 { cel: 0; }
-        frame 44 { cel: -10000; }
-        frame 58 { cel: -1; }
-        frame 59 { cel: -10000; }
+
+    Actions {
+        "anim_out" { first-frame: 43; frame-count: 15; }
+    }
+
+    Actions {
+        "anim_idle" { first-frame: 58; frame-count: 13; }
     }
     Track {
         source-name: "anim_idle";

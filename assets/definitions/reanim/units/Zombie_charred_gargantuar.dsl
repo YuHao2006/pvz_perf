@@ -1,5 +1,6 @@
 export component Zombie_charred_gargantuar {
     fps: 12;
+    frame-count: 43;
     Track {
         source-name: "body";
         frame-count: 43;

@@ -1188,12 +1188,12 @@ Reanimation* Zombie::LoadReanim(std::int64_t ownerNowNs, std::int64_t visualNowN
 
     if (!IsOnBoard())
     {
-        if (Rand(4) > 0 && aBodyReanim->TrackExists(ReanimTrackId::anim_idle2))
+        if (Rand(4) > 0 && aBodyReanim->ActionExists(ReanimTrackId::anim_idle2))
         {
             float aRanimRate = RandRangeFloat(12.0f, 24.0f);
             PlayZombieReanim(ownerNowNs, ReanimTrackId::anim_idle2, ReanimLoopType::REANIM_LOOP, 0, aRanimRate);
         }
-        else if (aBodyReanim->TrackExists(ReanimTrackId::anim_idle))
+        else if (aBodyReanim->ActionExists(ReanimTrackId::anim_idle))
         {
             float aRanimRate = RandRangeFloat(12.0f, 18.0f);
             PlayZombieReanim(ownerNowNs, ReanimTrackId::anim_idle, ReanimLoopType::REANIM_LOOP, 0, aRanimRate);
@@ -7403,7 +7403,7 @@ void Zombie::StartWalkAnim(std::int64_t ownerNowNs, int theBlendTime)
     {
         PlayZombieReanim(ownerNowNs, ReanimTrackId::anim_walk_nopaper, ReanimLoopType::REANIM_LOOP, theBlendTime, 0.0f);
     }
-    else if (mInPool && mZombieHeight != ZombieHeight::HEIGHT_IN_TO_POOL && mZombieHeight != ZombieHeight::HEIGHT_OUT_OF_POOL && aBodyReanim->TrackExists(ReanimTrackId::anim_swim))
+    else if (mInPool && mZombieHeight != ZombieHeight::HEIGHT_IN_TO_POOL && mZombieHeight != ZombieHeight::HEIGHT_OUT_OF_POOL && aBodyReanim->ActionExists(ReanimTrackId::anim_swim))
     {
         PlayZombieReanim(ownerNowNs, ReanimTrackId::anim_swim, ReanimLoopType::REANIM_LOOP, theBlendTime, 0.0f);
     }
@@ -7423,11 +7423,11 @@ void Zombie::StartWalkAnim(std::int64_t ownerNowNs, int theBlendTime)
             aWalkAnimVariant = 0;
         }
 
-        if (aWalkAnimVariant == 0 && aBodyReanim->TrackExists(ReanimTrackId::anim_walk2))
+        if (aWalkAnimVariant == 0 && aBodyReanim->ActionExists(ReanimTrackId::anim_walk2))
         {
             PlayZombieReanim(ownerNowNs, ReanimTrackId::anim_walk2, ReanimLoopType::REANIM_LOOP, theBlendTime, 0.0f);
         }
-        else if (aBodyReanim->TrackExists(ReanimTrackId::anim_walk))
+        else if (aBodyReanim->ActionExists(ReanimTrackId::anim_walk))
         {
             PlayZombieReanim(ownerNowNs, ReanimTrackId::anim_walk, ReanimLoopType::REANIM_LOOP, theBlendTime, 0.0f);
         }
@@ -9856,7 +9856,7 @@ void Zombie::PlayDeathAnim(std::int64_t ownerNowNs, std::int64_t visualNowNs, st
         return;
 
     Reanimation* aBodyReanim = mApp->ReanimationTryToGet(mBodyReanimID);
-    if (aBodyReanim == nullptr || !aBodyReanim->TrackExists(ReanimTrackId::anim_death))
+    if (aBodyReanim == nullptr || !aBodyReanim->ActionExists(ReanimTrackId::anim_death))
     {
         DieNoLoot(ownerNowNs, visualNowNs, animationNowNs);
         return;
@@ -10008,17 +10008,17 @@ void Zombie::PlayDeathAnim(std::int64_t ownerNowNs, std::int64_t visualNowNs, st
     // The shipped main.pak also retains its active frame range 292..428.
     // Keep the original eligibility checks; this is not a restored unused egg.
     bool aCanDoSuperLongDeath = mApp->HasFinishedAdventure() || mBoard->mLevel > 5;
-    if (mInPool && aBodyReanim->TrackExists(ReanimTrackId::anim_waterdeath))
+    if (mInPool && aBodyReanim->ActionExists(ReanimTrackId::anim_waterdeath))
     {
         aDeathTrackName = ReanimTrackId::anim_waterdeath;
         ReanimIgnoreClipRect(ReanimTrackId::Zombie_duckytube, false);
     }
-    else if (aDeathAnimHit == 99 && aBodyReanim->TrackExists(ReanimTrackId::anim_superlongdeath) && aCanDoSuperLongDeath && mChilledEndTimeNs <= aStatusNowNs && mBoard->CountZombiesOnScreen() <= 5)
+    else if (aDeathAnimHit == 99 && aBodyReanim->ActionExists(ReanimTrackId::anim_superlongdeath) && aCanDoSuperLongDeath && mChilledEndTimeNs <= aStatusNowNs && mBoard->CountZombiesOnScreen() <= 5)
     {
         aDeathAnimRate = 14.0f;
         aDeathTrackName = ReanimTrackId::anim_superlongdeath;
     }
-    else if (aDeathAnimHit > 50 && aBodyReanim->TrackExists(ReanimTrackId::anim_death2))
+    else if (aDeathAnimHit > 50 && aBodyReanim->ActionExists(ReanimTrackId::anim_death2))
     {
         aDeathTrackName = ReanimTrackId::anim_death2;
     }
@@ -10648,7 +10648,7 @@ void Zombie::WalkIntoHouse(std::int64_t ownerNowNs)
         }
 
         Reanimation* aBodyReanim = mApp->ReanimationTryToGet(mBodyReanimID);
-        if (aBodyReanim && aBodyReanim->TrackExists(ReanimTrackId::anim_idle) && mZombieType != ZombieType::ZOMBIE_POLEVAULTER)
+        if (aBodyReanim && aBodyReanim->ActionExists(ReanimTrackId::anim_idle) && mZombieType != ZombieType::ZOMBIE_POLEVAULTER)
         {
             PlayZombieReanim(ownerNowNs, ReanimTrackId::anim_idle, ReanimLoopType::REANIM_LOOP, 0, 15.0f);
         }

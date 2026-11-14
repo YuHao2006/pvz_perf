@@ -1,10 +1,18 @@
 export component Tanglekelp {
     fps: 12;
+    frame-count: 54;
+    Actions {
+        "anim_blink" { first-frame: 0; frame-count: 5; }
+    }
     Track {
         source-name: "anim_blink";
         frame-count: 54;
         frame 5 { cel: -1; }
         frame 6 { cel: -10000; }
+    }
+
+    Actions {
+        "anim_idle" { first-frame: 5; frame-count: 22; }
     }
     Track {
         source-name: "anim_idle";
@@ -16,23 +24,16 @@ export component Tanglekelp {
         frame 27 { cel: -1; }
         frame 28 { cel: -10000; }
     }
-    Track {
-        source-name: "anim_grab";
-        frame-count: 54;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 27 { cel: 0; }
-        frame 28 { cel: -10000; }
-        frame 32 { cel: -1; }
-        frame 33 { cel: -10000; }
+    Actions {
+        "anim_grab" { first-frame: 27; frame-count: 5; }
     }
-    Track {
-        source-name: "anim_idle_aquarium";
-        frame-count: 54;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 32 { cel: 0; }
-        frame 33 { cel: -10000; }
+
+    Actions {
+        "anim_idle_aquarium" { first-frame: 32; frame-count: 22; }
+    }
+
+    Actions {
+        "anim_face" { first-frame: 5; frame-count: 49; }
     }
     Track {
         source-name: "anim_face";
@@ -85,6 +86,9 @@ export component Tanglekelp {
         frame 51 { y: 12.4; scale-y: 0.792; }
         frame 52 { x: 2.4; y: 12.1; scale-y: 0.796; }
         frame 53 { x: -10000; y: 11.8; scale-y: 0.8; }
+    }
+    Actions {
+        "anim_waterline" { first-frame: 5; frame-count: 22; }
     }
     Track {
         source-name: "anim_waterline";

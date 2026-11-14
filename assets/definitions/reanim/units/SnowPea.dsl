@@ -1,32 +1,20 @@
 export component SnowPea {
     fps: 12;
-    Track {
-        source-name: "anim_full_idle";
-        frame-count: 104;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 79 { y: 4.2; scale-y: 0.915; cel: 0; }
-        frame 80 { y: -10000; scale-y: -10000; cel: -10000; }
+    frame-count: 104;
+    Actions {
+        "anim_full_idle" { first-frame: 79; frame-count: 25; }
     }
-    Track {
-        source-name: "anim_shooting";
-        frame-count: 104;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 54 { cel: 0; }
-        frame 55 { cel: -10000; }
-        frame 79 { cel: -1; }
-        frame 80 { cel: -10000; }
+
+    Actions {
+        "anim_shooting" { first-frame: 54; frame-count: 25; }
     }
-    Track {
-        source-name: "anim_head_idle";
-        frame-count: 104;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 29 { y: 4.2; scale-y: 0.915; cel: 0; }
-        frame 30 { y: -10000; scale-y: -10000; cel: -10000; }
-        frame 54 { cel: -1; }
-        frame 55 { cel: -10000; }
+
+    Actions {
+        "anim_head_idle" { first-frame: 29; frame-count: 25; }
+    }
+
+    Actions {
+        "anim_idle" { first-frame: 4; frame-count: 25; }
     }
     Track {
         source-name: "anim_idle";
@@ -502,6 +490,9 @@ export component SnowPea {
         frame 102 { x: 19.3; y: 61.4; skew-x: 1.3; skew-y: 1.3; scale-x: 0.567; scale-y: 0.554; }
         frame 103 { x: 19.4; y: 61.6; skew-x: 0; skew-y: 0; scale-x: 0.555; scale-y: 0.555; }
     }
+    Actions {
+        "anim_stem" { first-frame: 4; frame-count: 100; }
+    }
     Track {
         source-name: "anim_stem";
         frame-count: 104;
@@ -803,6 +794,9 @@ export component SnowPea {
         frame 102 { x: 8.3; y: 25.2; skew-x: -3.9; scale-x: -10000; scale-y: 0.519; }
         frame 103 { x: 7.7; y: 26.3; skew-x: -2.9; scale-x: 0.551; scale-y: 0.503; }
     }
+    Actions {
+        "anim_face" { first-frame: 29; frame-count: 75; }
+    }
     Track {
         source-name: "anim_face";
         frame-count: 104;
@@ -978,6 +972,9 @@ export component SnowPea {
         frame 69 { x: -10000; y: 19.9; scale-y: 0.521; image: none; }
         frame 70 { y: -10000; scale-y: -10000; cel: -1; }
         frame 71 { cel: -10000; }
+    }
+    Actions {
+        "anim_blink" { first-frame: 1; frame-count: 3; }
     }
     Track {
         source-name: "anim_blink";

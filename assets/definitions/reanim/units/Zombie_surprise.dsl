@@ -1,5 +1,6 @@
 export component Zombie_surprise {
     fps: 12;
+    frame-count: 15;
     Track {
         source-name: "Layer 1";
         frame-count: 15;

@@ -1,5 +1,6 @@
 export component Rain_circle {
     fps: 12;
+    frame-count: 19;
     Track {
         source-name: "Layer 4";
         frame-count: 19;

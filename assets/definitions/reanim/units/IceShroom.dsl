@@ -1,5 +1,9 @@
 export component IceShroom {
     fps: 12;
+    frame-count: 38;
+    Actions {
+        "anim_idle" { first-frame: 4; frame-count: 17; }
+    }
     Track {
         source-name: "anim_idle";
         frame-count: 38;
@@ -10,6 +14,9 @@ export component IceShroom {
         frame 21 { cel: -1; }
         frame 22 { cel: -10000; }
     }
+    Actions {
+        "anim_sleep" { first-frame: 21; frame-count: 17; }
+    }
     Track {
         source-name: "anim_sleep";
         frame-count: 38;
@@ -17,6 +24,10 @@ export component IceShroom {
         frame 1 { cel: -10000; }
         frame 21 { cel: 0; }
         frame 22 { cel: -10000; }
+    }
+
+    Actions {
+        "anim_face" { first-frame: 4; frame-count: 34; }
     }
     Track {
         source-name: "anim_face";
@@ -88,6 +99,9 @@ export component IceShroom {
         frame 35 { y: 38.6; }
         frame 36 { y: 38.3; }
         frame 37 { y: 37.9; }
+    }
+    Actions {
+        "anim_blink" { first-frame: 1; frame-count: 3; }
     }
     Track {
         source-name: "anim_blink";

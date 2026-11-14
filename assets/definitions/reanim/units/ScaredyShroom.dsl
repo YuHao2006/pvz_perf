@@ -1,52 +1,28 @@
 export component ScaredyShroom {
     fps: 12;
-    Track {
-        source-name: "anim_sleep";
-        frame-count: 86;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 70 { cel: 0; }
-        frame 71 { cel: -10000; }
+    frame-count: 86;
+    Actions {
+        "anim_sleep" { first-frame: 70; frame-count: 16; }
     }
-    Track {
-        source-name: "anim_grow";
-        frame-count: 86;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 60 { cel: 0; }
-        frame 61 { cel: -10000; }
-        frame 70 { cel: -1; }
-        frame 71 { cel: -10000; }
+
+    Actions {
+        "anim_grow" { first-frame: 60; frame-count: 10; }
     }
-    Track {
-        source-name: "anim_scaredidle";
-        frame-count: 86;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 49 { cel: 0; }
-        frame 50 { cel: -10000; }
-        frame 60 { cel: -1; }
-        frame 61 { cel: -10000; }
+
+    Actions {
+        "anim_scaredidle" { first-frame: 49; frame-count: 11; }
     }
-    Track {
-        source-name: "anim_scared";
-        frame-count: 86;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 36 { cel: 0; }
-        frame 37 { cel: -10000; }
-        frame 49 { cel: -1; }
-        frame 50 { cel: -10000; }
+
+    Actions {
+        "anim_scared" { first-frame: 36; frame-count: 13; }
     }
-    Track {
-        source-name: "anim_shooting";
-        frame-count: 86;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 21 { cel: 0; }
-        frame 22 { cel: -10000; }
-        frame 36 { cel: -1; }
-        frame 37 { cel: -10000; }
+
+    Actions {
+        "anim_shooting" { first-frame: 21; frame-count: 15; }
+    }
+
+    Actions {
+        "anim_idle" { first-frame: 5; frame-count: 16; }
     }
     Track {
         source-name: "anim_idle";
@@ -58,15 +34,10 @@ export component ScaredyShroom {
         frame 21 { cel: -1; }
         frame 22 { cel: -10000; }
     }
-    Track {
-        source-name: "anim_blink";
-        frame-count: 86;
-        frame 0 { cel: -1; }
-        frame 1 { cel: 0; }
-        frame 2 { cel: -10000; }
-        frame 4 { cel: -1; }
-        frame 5 { cel: -10000; }
+    Actions {
+        "anim_blink" { first-frame: 1; frame-count: 3; }
     }
+
     Track {
         source-name: "ScaredyShroom_head_inner";
         frame-count: 86;
@@ -153,6 +124,9 @@ export component ScaredyShroom {
         frame 84 { y: 26; skew-x: 22.3; skew-y: -10000; scale-x: 0.764; scale-y: 0.796; }
         frame 85 { x: 27.6; y: 25.5; skew-x: 22.6; skew-y: 22.6; scale-x: 0.762; scale-y: 0.799; }
     }
+    Actions {
+        "anim_face" { first-frame: 5; frame-count: 81; }
+    }
     Track {
         source-name: "anim_face";
         frame-count: 86;
@@ -225,6 +199,9 @@ export component ScaredyShroom {
         frame 83 { y: 36.2; scale-y: 0.78; }
         frame 84 { y: 35.6; scale-y: 0.79; }
         frame 85 { y: 35.1; scale-y: 0.8; }
+    }
+    Actions {
+        "anim_eye2" { first-frame: 1; frame-count: 85; }
     }
     Track {
         source-name: "anim_eye2";
@@ -474,6 +451,9 @@ export component ScaredyShroom {
         frame 83 { x: -10000; y: 40.7; skew-x: 1.5; skew-y: 1.5; scale-y: 0.786; }
         frame 84 { x: 43.5; y: 40.1; skew-x: 0.8; skew-y: 0.8; scale-y: 0.793; }
         frame 85 { x: -10000; y: 39.5; skew-x: 0; skew-y: 0; scale-y: 0.8; }
+    }
+    Actions {
+        "anim_eye1" { first-frame: 1; frame-count: 85; }
     }
     Track {
         source-name: "anim_eye1";

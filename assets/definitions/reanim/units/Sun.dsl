@@ -1,5 +1,6 @@
 export component Sun {
     fps: 12;
+    frame-count: 13;
     Track {
         source-name: "Sun3";
         frame-count: 13;

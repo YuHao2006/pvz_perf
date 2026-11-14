@@ -1,40 +1,24 @@
 export component Zombie_backup {
     fps: 24;
-    Track {
-        source-name: "anim_walk";
-        frame-count: 118;
-        frame 0 { y: -16.9; }
-        frame 1 { y: -10000; }
-        frame 21 { cel: -1; }
-        frame 22 { cel: -10000; }
+    frame-count: 118;
+    Actions {
+        "anim_walk" { first-frame: 0; frame-count: 21; }
     }
-    Track {
-        source-name: "anim_armraise";
-        frame-count: 118;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 21 { y: -16.9; cel: 0; }
-        frame 22 { y: -10000; cel: -10000; }
-        frame 43 { cel: -1; }
-        frame 44 { cel: -10000; }
+
+    Actions {
+        "anim_armraise" { first-frame: 21; frame-count: 22; }
     }
-    Track {
-        source-name: "anim_eat";
-        frame-count: 118;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 43 { x: -0.4; y: -13.9; skew-x: 3.3; skew-y: 3.3; cel: 0; }
-        frame 44 { x: -10000; y: -10000; skew-x: -10000; skew-y: -10000; cel: -10000; }
-        frame 74 { cel: -1; }
-        frame 75 { cel: -10000; }
+
+    Actions {
+        "anim_eat" { first-frame: 43; frame-count: 31; }
     }
-    Track {
-        source-name: "anim_death";
-        frame-count: 118;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 74 { x: 200.5; y: 59.4; skew-x: 99.1; skew-y: 99.1; scale-x: 0.999; scale-y: 0.999; cel: 0; }
-        frame 75 { x: -10000; y: -10000; skew-x: -10000; skew-y: -10000; scale-x: -10000; scale-y: -10000; cel: -10000; }
+
+    Actions {
+        "anim_death" { first-frame: 74; frame-count: 44; }
+    }
+
+    Actions {
+        "_ground" { first-frame: 0; frame-count: 21; }
     }
     Track {
         source-name: "_ground";
@@ -991,6 +975,9 @@ export component Zombie_backup {
         frame 74 { cel: -1; }
         frame 75 { cel: -10000; }
     }
+    Actions {
+        "anim_head1" { first-frame: 0; frame-count: 74; }
+    }
     Track {
         source-name: "anim_head1";
         frame-count: 118;
@@ -1057,6 +1044,9 @@ export component Zombie_backup {
         frame 72 { x: -10000; y: -10000; skew-x: -10000; skew-y: -10000; }
         frame 74 { cel: -1; }
         frame 75 { cel: -10000; }
+    }
+    Actions {
+        "anim_head2" { first-frame: 0; frame-count: 74; }
     }
     Track {
         source-name: "anim_head2";
@@ -1125,18 +1115,19 @@ export component Zombie_backup {
         frame 74 { cel: -1; }
         frame 75 { cel: -10000; }
     }
+    Actions {
+        "anim_hair" { first-frame: 0; frame-count: 1; }
+    }
     Track {
         source-name: "anim_hair";
         frame-count: 118;
         frame 0 { cel: -1; }
         frame 1 { cel: -10000; }
     }
-    Track {
-        source-name: "anim_earing";
-        frame-count: 118;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
+    Actions {
+        "anim_earing" { first-frame: 0; frame-count: 1; }
     }
+
     Track {
         source-name: "Zombie_backup_stash";
         frame-count: 118;

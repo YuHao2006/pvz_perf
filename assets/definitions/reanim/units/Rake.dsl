@@ -1,5 +1,6 @@
 export component Rake {
     fps: 20;
+    frame-count: 8;
     Track {
         source-name: "Layer 1";
         frame-count: 8;

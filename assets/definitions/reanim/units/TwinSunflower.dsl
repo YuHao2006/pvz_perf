@@ -1,20 +1,16 @@
 export component TwinSunflower {
     fps: 12;
-    Track {
-        source-name: "anim_blink";
-        frame-count: 34;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 4 { cel: 0; }
-        frame 5 { cel: -10000; }
-        frame 9 { cel: -1; }
-        frame 10 { cel: -10000; }
+    frame-count: 34;
+    Actions {
+        "anim_blink" { first-frame: 4; frame-count: 5; }
     }
-    Track {
-        source-name: "anim_blink2";
-        frame-count: 34;
-        frame 4 { cel: -1; }
-        frame 5 { cel: -10000; }
+
+    Actions {
+        "anim_blink2" { first-frame: 0; frame-count: 4; }
+    }
+
+    Actions {
+        "anim_idle" { first-frame: 9; frame-count: 25; }
     }
     Track {
         source-name: "anim_idle";
@@ -396,6 +392,9 @@ export component TwinSunflower {
         frame 32 { x: 36; y: -4; scale-y: 0.598; }
         frame 33 { x: 36.9; y: -3.2; scale-y: 0.6; }
     }
+    Actions {
+        "anim_face2" { first-frame: 9; frame-count: 25; }
+    }
     Track {
         source-name: "anim_face2";
         frame-count: 34;
@@ -457,6 +456,9 @@ export component TwinSunflower {
         frame 31 { x: -1.6; y: 11.8; scale-y: 0.598; }
         frame 32 { x: -2.7; y: 13; scale-y: 0.599; }
         frame 33 { x: -3.8; y: 14.1; scale-y: 0.6; }
+    }
+    Actions {
+        "anim_face" { first-frame: 9; frame-count: 25; }
     }
     Track {
         source-name: "anim_face";

@@ -1,10 +1,12 @@
 export component Starfruit {
     fps: 12;
-    Track {
-        source-name: "anim_blink";
-        frame-count: 39;
-        frame 5 { cel: -1; }
-        frame 6 { cel: -10000; }
+    frame-count: 39;
+    Actions {
+        "anim_blink" { first-frame: 0; frame-count: 5; }
+    }
+
+    Actions {
+        "anim_idle" { first-frame: 5; frame-count: 17; }
     }
     Track {
         source-name: "anim_idle";
@@ -16,13 +18,12 @@ export component Starfruit {
         frame 22 { cel: -1; }
         frame 23 { cel: -10000; }
     }
-    Track {
-        source-name: "anim_shoot";
-        frame-count: 39;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 22 { cel: 0; }
-        frame 23 { cel: -10000; }
+    Actions {
+        "anim_shoot" { first-frame: 22; frame-count: 17; }
+    }
+
+    Actions {
+        "anim_face" { first-frame: 5; frame-count: 34; }
     }
     Track {
         source-name: "anim_face";

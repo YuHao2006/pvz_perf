@@ -1,11 +1,18 @@
 export component LilyPad {
     fps: 12;
+    frame-count: 4;
+    Actions {
+        "anim_idle" { first-frame: 0; frame-count: 1; }
+    }
     Track {
         source-name: "anim_idle";
         frame-count: 4;
         frame 0 { x: -0.2; y: 5.5; scale-x: 0.8; scale-y: 0.8; image: IMAGE_REANIM_LILYPAD_BODY; }
         frame 1 { x: -10000; y: -10000; scale-x: -10000; scale-y: -10000; cel: -1; image: none; }
         frame 2 { cel: -10000; }
+    }
+    Actions {
+        "anim_blink" { first-frame: 1; frame-count: 3; }
     }
     Track {
         source-name: "anim_blink";

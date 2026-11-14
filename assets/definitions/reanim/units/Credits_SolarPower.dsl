@@ -1,5 +1,6 @@
 export component Credits_SolarPower {
     fps: 7;
+    frame-count: 21;
     Track {
         source-name: "attacher__anim_sunflower";
         frame-count: 21;

@@ -1,48 +1,33 @@
 export component Zombie_gargantuar {
     fps: 12;
+    frame-count: 197;
+    Actions {
+        "anim_idle" { first-frame: 0; frame-count: 22; }
+    }
     Track {
         source-name: "anim_idle";
         frame-count: 197;
         frame 22 { cel: -1; }
         frame 23 { cel: -10000; }
     }
-    Track {
-        source-name: "anim_walk";
-        frame-count: 197;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 22 { cel: 0; }
-        frame 23 { cel: -10000; }
-        frame 71 { cel: -1; }
-        frame 72 { cel: -10000; }
+    Actions {
+        "anim_walk" { first-frame: 22; frame-count: 49; }
     }
-    Track {
-        source-name: "anim_smash";
-        frame-count: 197;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 71 { cel: 0; }
-        frame 72 { cel: -10000; }
-        frame 104 { cel: -1; }
-        frame 105 { cel: -10000; }
+
+    Actions {
+        "anim_smash" { first-frame: 71; frame-count: 33; }
     }
-    Track {
-        source-name: "anim_throw";
-        frame-count: 197;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 104 { x: 6.2; y: -36.8; skew-x: 20.7; skew-y: 20.7; scale-x: 0.993; scale-y: 0.993; cel: 0; }
-        frame 105 { x: -10000; y: -10000; skew-x: -10000; skew-y: -10000; scale-x: -10000; scale-y: -10000; cel: -10000; }
-        frame 138 { cel: -1; }
-        frame 139 { cel: -10000; }
+
+    Actions {
+        "anim_throw" { first-frame: 104; frame-count: 34; }
     }
-    Track {
-        source-name: "anim_death";
-        frame-count: 197;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 138 { x: 0.4; y: -3.9; cel: 0; }
-        frame 139 { x: -10000; y: -10000; cel: -10000; }
+
+    Actions {
+        "anim_death" { first-frame: 138; frame-count: 59; }
+    }
+
+    Actions {
+        "_ground" { first-frame: 22; frame-count: 49; }
     }
     Track {
         source-name: "_ground";
@@ -4051,6 +4036,9 @@ export component Zombie_gargantuar {
         frame 194 { x: -95.4; y: 71.2; skew-x: -46.3; skew-y: -46.2; scale-x: 1.076; scale-y: 0.989; }
         frame 195 { x: -94.9; y: 74.2; skew-x: -47.1; skew-y: -47.1; scale-x: 1.066; scale-y: 0.988; }
         frame 196 { x: -94.6; y: 77.1; skew-x: -48; skew-y: -48; scale-x: 1.059; scale-y: 0.99; }
+    }
+    Actions {
+        "anim_head1" { first-frame: 0; frame-count: 197; }
     }
     Track {
         source-name: "anim_head1";

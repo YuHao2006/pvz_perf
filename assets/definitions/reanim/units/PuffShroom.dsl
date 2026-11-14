@@ -1,22 +1,16 @@
 export component PuffShroom {
     fps: 12;
-    Track {
-        source-name: "anim_sleep";
-        frame-count: 51;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 34 { cel: 0; }
-        frame 35 { cel: -10000; }
+    frame-count: 51;
+    Actions {
+        "anim_sleep" { first-frame: 34; frame-count: 17; }
     }
-    Track {
-        source-name: "anim_shooting";
-        frame-count: 51;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 21 { cel: 0; }
-        frame 22 { cel: -10000; }
-        frame 34 { cel: -1; }
-        frame 35 { cel: -10000; }
+
+    Actions {
+        "anim_shooting" { first-frame: 21; frame-count: 13; }
+    }
+
+    Actions {
+        "anim_idle" { first-frame: 4; frame-count: 17; }
     }
     Track {
         source-name: "anim_idle";
@@ -27,6 +21,9 @@ export component PuffShroom {
         frame 5 { cel: -10000; }
         frame 21 { cel: -1; }
         frame 22 { cel: -10000; }
+    }
+    Actions {
+        "anim_face" { first-frame: 4; frame-count: 47; }
     }
     Track {
         source-name: "anim_face";
@@ -267,6 +264,9 @@ export component PuffShroom {
         frame 48 { y: 48.9; scale-y: 0.466; }
         frame 49 { y: 49; scale-y: 0.461; }
         frame 50 { y: 49.3; scale-y: 0.455; }
+    }
+    Actions {
+        "anim_blink" { first-frame: 1; frame-count: 3; }
     }
     Track {
         source-name: "anim_blink";

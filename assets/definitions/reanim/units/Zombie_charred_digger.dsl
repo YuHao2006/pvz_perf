@@ -1,19 +1,14 @@
 export component Zombie_charred_digger {
     fps: 15;
-    Track {
-        source-name: "anim_crumble";
-        frame-count: 74;
-        frame 37 { cel: -1; }
-        frame 38 { cel: -10000; }
+    frame-count: 74;
+    Actions {
+        "anim_crumble" { first-frame: 0; frame-count: 37; }
     }
-    Track {
-        source-name: "anim_crumble_noaxe";
-        frame-count: 74;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 37 { cel: 0; }
-        frame 38 { cel: -10000; }
+
+    Actions {
+        "anim_crumble_noaxe" { first-frame: 37; frame-count: 37; }
     }
+
     Track {
         source-name: "body";
         frame-count: 74;

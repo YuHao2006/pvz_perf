@@ -1,5 +1,6 @@
 export component Credits_Jackbox {
     fps: 12;
+    frame-count: 138;
     Track {
         source-name: "attacher__Zombie_jackbox";
         frame-count: 138;

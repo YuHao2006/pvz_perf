@@ -1,29 +1,23 @@
 export component Coffeebean {
     fps: 12;
+    frame-count: 29;
+    Actions {
+        "anim_idle" { first-frame: 0; frame-count: 9; }
+    }
     Track {
         source-name: "anim_idle";
         frame-count: 29;
         frame 9 { cel: -1; }
         frame 10 { cel: -10000; }
     }
-    Track {
-        source-name: "anim_twitch";
-        frame-count: 29;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 9 { cel: 0; }
-        frame 10 { cel: -10000; }
-        frame 14 { cel: -1; }
-        frame 15 { cel: -10000; }
+    Actions {
+        "anim_twitch" { first-frame: 9; frame-count: 5; }
     }
-    Track {
-        source-name: "anim_crumble";
-        frame-count: 29;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 14 { cel: 0; }
-        frame 15 { cel: -10000; }
+
+    Actions {
+        "anim_crumble" { first-frame: 14; frame-count: 15; }
     }
+
     Track {
         source-name: "Coffeebean_leaf";
         frame-count: 29;

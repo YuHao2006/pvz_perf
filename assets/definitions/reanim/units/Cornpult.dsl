@@ -1,10 +1,12 @@
 export component Cornpult {
     fps: 12;
-    Track {
-        source-name: "anim_blink";
-        frame-count: 77;
-        frame 5 { cel: -1; }
-        frame 6 { cel: -10000; }
+    frame-count: 77;
+    Actions {
+        "anim_blink" { first-frame: 0; frame-count: 5; }
+    }
+
+    Actions {
+        "anim_idle" { first-frame: 5; frame-count: 19; }
     }
     Track {
         source-name: "anim_idle";
@@ -16,24 +18,14 @@ export component Cornpult {
         frame 24 { cel: -1; }
         frame 25 { cel: -10000; }
     }
-    Track {
-        source-name: "anim_shooting";
-        frame-count: 77;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 24 { cel: 0; }
-        frame 25 { cel: -10000; }
-        frame 58 { cel: -1; }
-        frame 59 { cel: -10000; }
+    Actions {
+        "anim_shooting" { first-frame: 24; frame-count: 34; }
     }
-    Track {
-        source-name: "anim_full_idle";
-        frame-count: 77;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 58 { cel: 0; }
-        frame 59 { cel: -10000; }
+
+    Actions {
+        "anim_full_idle" { first-frame: 58; frame-count: 19; }
     }
+
     Track {
         source-name: "Cornpult_husk5";
         frame-count: 77;
@@ -179,6 +171,9 @@ export component Cornpult {
         frame 74 { x: 15.3; y: 55.8; skew-x: -1.2; scale-x: 0.854; scale-y: 0.749; }
         frame 75 { x: 16; y: 55.4; skew-x: -0.5; scale-x: 0.827; scale-y: 0.774; }
         frame 76 { x: 16.8; y: 55.1; skew-x: 0; scale-x: 0.8; scale-y: 0.8; }
+    }
+    Actions {
+        "anim_face" { first-frame: 5; frame-count: 72; }
     }
     Track {
         source-name: "anim_face";

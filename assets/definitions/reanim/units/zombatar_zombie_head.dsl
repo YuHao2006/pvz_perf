@@ -1,16 +1,26 @@
 export component zombatar_zombie_head {
     fps: 12;
+    frame-count: 2;
+    Actions {
+        "anim_head1" { first-frame: 0; frame-count: 2; }
+    }
     Track {
         source-name: "anim_head1";
         frame-count: 2;
         frame 0 { x: 19; y: 19.6; scale-x: 0.8; scale-y: 0.8; image: IMAGE_REANIM_ZOMBIE_HEAD; }
         frame 1 { x: -10000; y: -10000; scale-x: -10000; scale-y: -10000; image: none; }
     }
+    Actions {
+        "anim_head2" { first-frame: 0; frame-count: 2; }
+    }
     Track {
         source-name: "anim_head2";
         frame-count: 2;
         frame 0 { x: 25.3; y: 50.1; scale-x: 0.8; scale-y: 0.8; image: IMAGE_REANIM_ZOMBIE_JAW; }
         frame 1 { x: -10000; y: -10000; scale-x: -10000; scale-y: -10000; image: none; }
+    }
+    Actions {
+        "anim_hair" { first-frame: 0; frame-count: 2; }
     }
     Track {
         source-name: "anim_hair";

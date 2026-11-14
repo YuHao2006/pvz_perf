@@ -1,519 +1,214 @@
 export component treeofWisdom {
     fps: 12;
-    Track {
-        source-name: "anim_start";
-        frame-count: 354;
-        frame 11 { cel: -1; }
-        frame 12 { cel: -10000; }
+    frame-count: 354;
+    Actions {
+        "anim_start" { first-frame: 0; frame-count: 11; }
     }
-    Track {
-        source-name: "anim_grow1";
-        frame-count: 354;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 11 { cel: 0; }
-        frame 12 { cel: -10000; }
-        frame 19 { cel: -1; }
-        frame 20 { cel: -10000; }
+
+    Actions {
+        "anim_grow1" { first-frame: 11; frame-count: 8; }
     }
-    Track {
-        source-name: "anim_grow2";
-        frame-count: 354;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 19 { cel: 0; }
-        frame 20 { cel: -10000; }
-        frame 30 { cel: -1; }
-        frame 31 { cel: -10000; }
+
+    Actions {
+        "anim_grow2" { first-frame: 19; frame-count: 11; }
     }
-    Track {
-        source-name: "anim_grow3";
-        frame-count: 354;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 30 { cel: 0; }
-        frame 31 { cel: -10000; }
-        frame 37 { cel: -1; }
-        frame 38 { cel: -10000; }
+
+    Actions {
+        "anim_grow3" { first-frame: 30; frame-count: 7; }
     }
-    Track {
-        source-name: "anim_grow4";
-        frame-count: 354;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 37 { cel: 0; }
-        frame 38 { cel: -10000; }
-        frame 44 { cel: -1; }
-        frame 45 { cel: -10000; }
+
+    Actions {
+        "anim_grow4" { first-frame: 37; frame-count: 7; }
     }
-    Track {
-        source-name: "anim_grow5";
-        frame-count: 354;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 44 { cel: 0; }
-        frame 45 { cel: -10000; }
-        frame 51 { cel: -1; }
-        frame 52 { cel: -10000; }
+
+    Actions {
+        "anim_grow5" { first-frame: 44; frame-count: 7; }
     }
-    Track {
-        source-name: "anim_grow6";
-        frame-count: 354;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 51 { cel: 0; }
-        frame 52 { cel: -10000; }
-        frame 57 { cel: -1; }
-        frame 58 { cel: -10000; }
+
+    Actions {
+        "anim_grow6" { first-frame: 51; frame-count: 6; }
     }
-    Track {
-        source-name: "anim_grow7";
-        frame-count: 354;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 57 { cel: 0; }
-        frame 58 { cel: -10000; }
-        frame 67 { cel: -1; }
-        frame 68 { cel: -10000; }
+
+    Actions {
+        "anim_grow7" { first-frame: 57; frame-count: 10; }
     }
-    Track {
-        source-name: "anim_grow8";
-        frame-count: 354;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 67 { cel: 0; }
-        frame 68 { cel: -10000; }
-        frame 74 { cel: -1; }
-        frame 75 { cel: -10000; }
+
+    Actions {
+        "anim_grow8" { first-frame: 67; frame-count: 7; }
     }
-    Track {
-        source-name: "anim_grow9";
-        frame-count: 354;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 74 { cel: 0; }
-        frame 75 { cel: -10000; }
-        frame 81 { cel: -1; }
-        frame 82 { cel: -10000; }
+
+    Actions {
+        "anim_grow9" { first-frame: 74; frame-count: 7; }
     }
-    Track {
-        source-name: "anim_grow10";
-        frame-count: 354;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 81 { cel: 0; }
-        frame 82 { cel: -10000; }
-        frame 88 { cel: -1; }
-        frame 89 { cel: -10000; }
+
+    Actions {
+        "anim_grow10" { first-frame: 81; frame-count: 7; }
     }
-    Track {
-        source-name: "anim_grow11";
-        frame-count: 354;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 88 { cel: 0; }
-        frame 89 { cel: -10000; }
-        frame 95 { cel: -1; }
-        frame 96 { cel: -10000; }
+
+    Actions {
+        "anim_grow11" { first-frame: 88; frame-count: 7; }
     }
-    Track {
-        source-name: "anim_grow12";
-        frame-count: 354;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 95 { cel: 0; }
-        frame 96 { cel: -10000; }
-        frame 104 { cel: -1; }
-        frame 105 { cel: -10000; }
+
+    Actions {
+        "anim_grow12" { first-frame: 95; frame-count: 9; }
     }
-    Track {
-        source-name: "anim_grow13";
-        frame-count: 354;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 104 { cel: 0; }
-        frame 105 { cel: -10000; }
-        frame 110 { cel: -1; }
-        frame 111 { cel: -10000; }
+
+    Actions {
+        "anim_grow13" { first-frame: 104; frame-count: 6; }
     }
-    Track {
-        source-name: "anim_grow14";
-        frame-count: 354;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 110 { cel: 0; }
-        frame 111 { cel: -10000; }
-        frame 116 { cel: -1; }
-        frame 117 { cel: -10000; }
+
+    Actions {
+        "anim_grow14" { first-frame: 110; frame-count: 6; }
     }
-    Track {
-        source-name: "anim_grow15";
-        frame-count: 354;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 116 { cel: 0; }
-        frame 117 { cel: -10000; }
-        frame 123 { cel: -1; }
-        frame 124 { cel: -10000; }
+
+    Actions {
+        "anim_grow15" { first-frame: 116; frame-count: 7; }
     }
-    Track {
-        source-name: "anim_grow16";
-        frame-count: 354;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 123 { cel: 0; }
-        frame 124 { cel: -10000; }
-        frame 130 { cel: -1; }
-        frame 131 { cel: -10000; }
+
+    Actions {
+        "anim_grow16" { first-frame: 123; frame-count: 7; }
     }
-    Track {
-        source-name: "anim_grow17";
-        frame-count: 354;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 130 { cel: 0; }
-        frame 131 { cel: -10000; }
-        frame 137 { cel: -1; }
-        frame 138 { cel: -10000; }
+
+    Actions {
+        "anim_grow17" { first-frame: 130; frame-count: 7; }
     }
-    Track {
-        source-name: "anim_grow18";
-        frame-count: 354;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 137 { cel: 0; }
-        frame 138 { cel: -10000; }
-        frame 146 { cel: -1; }
-        frame 147 { cel: -10000; }
+
+    Actions {
+        "anim_grow18" { first-frame: 137; frame-count: 9; }
     }
-    Track {
-        source-name: "anim_grow19";
-        frame-count: 354;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 146 { cel: 0; }
-        frame 147 { cel: -10000; }
-        frame 153 { cel: -1; }
-        frame 154 { cel: -10000; }
+
+    Actions {
+        "anim_grow19" { first-frame: 146; frame-count: 7; }
     }
-    Track {
-        source-name: "anim_grow20";
-        frame-count: 354;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 153 { cel: 0; }
-        frame 154 { cel: -10000; }
-        frame 160 { cel: -1; }
-        frame 161 { cel: -10000; }
+
+    Actions {
+        "anim_grow20" { first-frame: 153; frame-count: 7; }
     }
-    Track {
-        source-name: "anim_grow21";
-        frame-count: 354;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 160 { cel: 0; }
-        frame 161 { cel: -10000; }
-        frame 167 { cel: -1; }
-        frame 168 { cel: -10000; }
+
+    Actions {
+        "anim_grow21" { first-frame: 160; frame-count: 7; }
     }
-    Track {
-        source-name: "anim_grow22";
-        frame-count: 354;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 167 { cel: 0; }
-        frame 168 { cel: -10000; }
-        frame 173 { cel: -1; }
-        frame 174 { cel: -10000; }
+
+    Actions {
+        "anim_grow22" { first-frame: 167; frame-count: 6; }
     }
-    Track {
-        source-name: "anim_grow23";
-        frame-count: 354;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 173 { cel: 0; }
-        frame 174 { cel: -10000; }
-        frame 182 { cel: -1; }
-        frame 183 { cel: -10000; }
+
+    Actions {
+        "anim_grow23" { first-frame: 173; frame-count: 9; }
     }
-    Track {
-        source-name: "anim_grow24";
-        frame-count: 354;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 182 { cel: 0; }
-        frame 183 { cel: -10000; }
-        frame 189 { cel: -1; }
-        frame 190 { cel: -10000; }
+
+    Actions {
+        "anim_grow24" { first-frame: 182; frame-count: 7; }
     }
-    Track {
-        source-name: "anim_grow25";
-        frame-count: 354;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 189 { cel: 0; }
-        frame 190 { cel: -10000; }
-        frame 196 { cel: -1; }
-        frame 197 { cel: -10000; }
+
+    Actions {
+        "anim_grow25" { first-frame: 189; frame-count: 7; }
     }
-    Track {
-        source-name: "anim_grow26";
-        frame-count: 354;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 196 { cel: 0; }
-        frame 197 { cel: -10000; }
-        frame 203 { cel: -1; }
-        frame 204 { cel: -10000; }
+
+    Actions {
+        "anim_grow26" { first-frame: 196; frame-count: 7; }
     }
-    Track {
-        source-name: "anim_grow27";
-        frame-count: 354;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 203 { cel: 0; }
-        frame 204 { cel: -10000; }
-        frame 210 { cel: -1; }
-        frame 211 { cel: -10000; }
+
+    Actions {
+        "anim_grow27" { first-frame: 203; frame-count: 7; }
     }
-    Track {
-        source-name: "anim_grow28";
-        frame-count: 354;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 210 { cel: 0; }
-        frame 211 { cel: -10000; }
-        frame 217 { cel: -1; }
-        frame 218 { cel: -10000; }
+
+    Actions {
+        "anim_grow28" { first-frame: 210; frame-count: 7; }
     }
-    Track {
-        source-name: "anim_grow29";
-        frame-count: 354;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 217 { cel: 0; }
-        frame 218 { cel: -10000; }
-        frame 224 { cel: -1; }
-        frame 225 { cel: -10000; }
+
+    Actions {
+        "anim_grow29" { first-frame: 217; frame-count: 7; }
     }
-    Track {
-        source-name: "anim_grow30";
-        frame-count: 354;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 224 { cel: 0; }
-        frame 225 { cel: -10000; }
-        frame 231 { cel: -1; }
-        frame 232 { cel: -10000; }
+
+    Actions {
+        "anim_grow30" { first-frame: 224; frame-count: 7; }
     }
-    Track {
-        source-name: "anim_grow31";
-        frame-count: 354;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 231 { cel: 0; }
-        frame 232 { cel: -10000; }
-        frame 238 { cel: -1; }
-        frame 239 { cel: -10000; }
+
+    Actions {
+        "anim_grow31" { first-frame: 231; frame-count: 7; }
     }
-    Track {
-        source-name: "anim_grow32";
-        frame-count: 354;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 238 { cel: 0; }
-        frame 239 { cel: -10000; }
-        frame 244 { cel: -1; }
-        frame 245 { cel: -10000; }
+
+    Actions {
+        "anim_grow32" { first-frame: 238; frame-count: 6; }
     }
-    Track {
-        source-name: "anim_grow33";
-        frame-count: 354;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 244 { cel: 0; }
-        frame 245 { cel: -10000; }
-        frame 252 { cel: -1; }
-        frame 253 { cel: -10000; }
+
+    Actions {
+        "anim_grow33" { first-frame: 244; frame-count: 8; }
     }
-    Track {
-        source-name: "anim_grow34";
-        frame-count: 354;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 252 { cel: 0; }
-        frame 253 { cel: -10000; }
-        frame 259 { cel: -1; }
-        frame 260 { cel: -10000; }
+
+    Actions {
+        "anim_grow34" { first-frame: 252; frame-count: 7; }
     }
-    Track {
-        source-name: "anim_grow35";
-        frame-count: 354;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 259 { cel: 0; }
-        frame 260 { cel: -10000; }
-        frame 266 { cel: -1; }
-        frame 267 { cel: -10000; }
+
+    Actions {
+        "anim_grow35" { first-frame: 259; frame-count: 7; }
     }
-    Track {
-        source-name: "anim_grow36";
-        frame-count: 354;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 266 { cel: 0; }
-        frame 267 { cel: -10000; }
-        frame 275 { cel: -1; }
-        frame 276 { cel: -10000; }
+
+    Actions {
+        "anim_grow36" { first-frame: 266; frame-count: 9; }
     }
-    Track {
-        source-name: "anim_grow37";
-        frame-count: 354;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 275 { cel: 0; }
-        frame 276 { cel: -10000; }
-        frame 279 { cel: -1; }
-        frame 280 { cel: -10000; }
+
+    Actions {
+        "anim_grow37" { first-frame: 275; frame-count: 4; }
     }
-    Track {
-        source-name: "anim_grow38";
-        frame-count: 354;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 279 { cel: 0; }
-        frame 280 { cel: -10000; }
-        frame 283 { cel: -1; }
-        frame 284 { cel: -10000; }
+
+    Actions {
+        "anim_grow38" { first-frame: 279; frame-count: 4; }
     }
-    Track {
-        source-name: "anim_grow39";
-        frame-count: 354;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 283 { cel: 0; }
-        frame 284 { cel: -10000; }
-        frame 287 { cel: -1; }
-        frame 288 { cel: -10000; }
+
+    Actions {
+        "anim_grow39" { first-frame: 283; frame-count: 4; }
     }
-    Track {
-        source-name: "anim_grow40";
-        frame-count: 354;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 287 { cel: 0; }
-        frame 288 { cel: -10000; }
-        frame 291 { cel: -1; }
-        frame 292 { cel: -10000; }
+
+    Actions {
+        "anim_grow40" { first-frame: 287; frame-count: 4; }
     }
-    Track {
-        source-name: "anim_grow41";
-        frame-count: 354;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 291 { cel: 0; }
-        frame 292 { cel: -10000; }
-        frame 295 { cel: -1; }
-        frame 296 { cel: -10000; }
+
+    Actions {
+        "anim_grow41" { first-frame: 291; frame-count: 4; }
     }
-    Track {
-        source-name: "anim_grow42";
-        frame-count: 354;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 295 { cel: 0; }
-        frame 296 { cel: -10000; }
-        frame 304 { cel: -1; }
-        frame 305 { cel: -10000; }
+
+    Actions {
+        "anim_grow42" { first-frame: 295; frame-count: 9; }
     }
-    Track {
-        source-name: "anim_grow43";
-        frame-count: 354;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 304 { cel: 0; }
-        frame 305 { cel: -10000; }
-        frame 308 { cel: -1; }
-        frame 309 { cel: -10000; }
+
+    Actions {
+        "anim_grow43" { first-frame: 304; frame-count: 4; }
     }
-    Track {
-        source-name: "anim_grow44";
-        frame-count: 354;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 308 { cel: 0; }
-        frame 309 { cel: -10000; }
-        frame 312 { cel: -1; }
-        frame 313 { cel: -10000; }
+
+    Actions {
+        "anim_grow44" { first-frame: 308; frame-count: 4; }
     }
-    Track {
-        source-name: "anim_grow45";
-        frame-count: 354;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 312 { cel: 0; }
-        frame 313 { cel: -10000; }
-        frame 320 { cel: -1; }
-        frame 321 { cel: -10000; }
+
+    Actions {
+        "anim_grow45" { first-frame: 312; frame-count: 8; }
     }
-    Track {
-        source-name: "anim_grow46";
-        frame-count: 354;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 320 { cel: 0; }
-        frame 321 { cel: -10000; }
-        frame 324 { cel: -1; }
-        frame 325 { cel: -10000; }
+
+    Actions {
+        "anim_grow46" { first-frame: 320; frame-count: 4; }
     }
-    Track {
-        source-name: "anim_grow47";
-        frame-count: 354;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 324 { cel: 0; }
-        frame 325 { cel: -10000; }
-        frame 328 { cel: -1; }
-        frame 329 { cel: -10000; }
+
+    Actions {
+        "anim_grow47" { first-frame: 324; frame-count: 4; }
     }
-    Track {
-        source-name: "anim_grow48";
-        frame-count: 354;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 328 { cel: 0; }
-        frame 329 { cel: -10000; }
-        frame 332 { cel: -1; }
-        frame 333 { cel: -10000; }
+
+    Actions {
+        "anim_grow48" { first-frame: 328; frame-count: 4; }
     }
-    Track {
-        source-name: "anim_grow49";
-        frame-count: 354;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 332 { cel: 0; }
-        frame 333 { cel: -10000; }
-        frame 335 { cel: -1; }
-        frame 336 { cel: -10000; }
+
+    Actions {
+        "anim_grow49" { first-frame: 332; frame-count: 3; }
     }
-    Track {
-        source-name: "anim_grow50";
-        frame-count: 354;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 335 { y: -31.1; cel: 0; }
-        frame 336 { y: -10000; cel: -10000; }
-        frame 345 { cel: -1; }
-        frame 346 { cel: -10000; }
+
+    Actions {
+        "anim_grow50" { first-frame: 335; frame-count: 10; }
     }
-    Track {
-        source-name: "anim_grow51";
-        frame-count: 354;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 345 { y: -31.1; cel: 0; }
-        frame 346 { y: -10000; cel: -10000; }
+
+    Actions {
+        "anim_grow51" { first-frame: 345; frame-count: 9; }
     }
+
     Track {
         source-name: "bg";
         frame-count: 354;

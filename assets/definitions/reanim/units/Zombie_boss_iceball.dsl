@@ -1,21 +1,16 @@
 export component Zombie_boss_iceball {
     fps: 12;
-    Track {
-        source-name: "anim_form";
-        frame-count: 76;
-        frame 0 { cel: -1; }
-        frame 1 { cel: 0; }
-        frame 2 { cel: -10000; }
-        frame 17 { cel: -1; }
-        frame 18 { cel: -10000; }
+    frame-count: 76;
+    Actions {
+        "anim_form" { first-frame: 1; frame-count: 16; }
     }
-    Track {
-        source-name: "anim_role";
-        frame-count: 76;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 17 { cel: 0; }
-        frame 18 { cel: -10000; }
+
+    Actions {
+        "anim_role" { first-frame: 17; frame-count: 59; }
+    }
+
+    Actions {
+        "_ground" { first-frame: 17; frame-count: 59; }
     }
     Track {
         source-name: "_ground";

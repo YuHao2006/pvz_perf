@@ -1,13 +1,10 @@
 export component Puff {
     fps: 12;
-    Track {
-        source-name: "anim_puff";
-        frame-count: 15;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 6 { x: 88.3; y: 94; cel: 0; }
-        frame 7 { x: -10000; y: -10000; cel: -10000; }
+    frame-count: 15;
+    Actions {
+        "anim_puff" { first-frame: 6; frame-count: 9; }
     }
+
     Track {
         source-name: "Puff";
         frame-count: 15;

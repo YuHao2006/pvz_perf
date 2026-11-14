@@ -1,19 +1,14 @@
 export component Credits_WeAreTheUndead {
     fps: 10.5;
-    Track {
-        source-name: "anim_so_undead";
-        frame-count: 88;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 44 { cel: 0; }
-        frame 45 { cel: -10000; }
+    frame-count: 88;
+    Actions {
+        "anim_so_undead" { first-frame: 44; frame-count: 44; }
     }
-    Track {
-        source-name: "anim_undead";
-        frame-count: 88;
-        frame 44 { cel: -1; }
-        frame 45 { cel: -10000; }
+
+    Actions {
+        "anim_undead" { first-frame: 0; frame-count: 44; }
     }
+
     Track {
         source-name: "attacher__Zombie1";
         frame-count: 88;

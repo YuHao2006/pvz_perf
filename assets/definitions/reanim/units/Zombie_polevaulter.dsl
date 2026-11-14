@@ -1,58 +1,37 @@
 export component Zombie_polevaulter {
     fps: 12;
+    frame-count: 193;
+    Actions {
+        "anim_idle" { first-frame: 0; frame-count: 13; }
+    }
     Track {
         source-name: "anim_idle";
         frame-count: 193;
         frame 13 { cel: -1; }
         frame 14 { cel: -10000; }
     }
-    Track {
-        source-name: "anim_run";
-        frame-count: 193;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 13 { x: 6.1; y: 27.1; skew-x: 5; skew-y: 5.2; scale-x: 0.993; scale-y: 0.995; cel: 0; }
-        frame 14 { x: -10000; y: -10000; skew-x: -10000; skew-y: -10000; scale-x: -10000; scale-y: -10000; cel: -10000; }
-        frame 50 { cel: -1; }
-        frame 51 { cel: -10000; }
+    Actions {
+        "anim_run" { first-frame: 13; frame-count: 37; }
     }
-    Track {
-        source-name: "anim_jump";
-        frame-count: 193;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 50 { x: 6.1; y: 27.1; skew-x: 5; skew-y: 5.2; scale-x: 0.993; scale-y: 0.995; cel: 0; }
-        frame 51 { x: -10000; y: -10000; skew-x: -10000; skew-y: -10000; scale-x: -10000; scale-y: -10000; cel: -10000; }
-        frame 93 { cel: -1; }
-        frame 94 { cel: -10000; }
+
+    Actions {
+        "anim_jump" { first-frame: 50; frame-count: 43; }
     }
-    Track {
-        source-name: "anim_walk";
-        frame-count: 193;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 93 { x: 6.1; y: 27.1; skew-x: 5; skew-y: 5.2; scale-x: 0.993; scale-y: 0.995; cel: 0; }
-        frame 94 { x: -10000; y: -10000; skew-x: -10000; skew-y: -10000; scale-x: -10000; scale-y: -10000; cel: -10000; }
-        frame 138 { cel: -1; }
-        frame 139 { cel: -10000; }
+
+    Actions {
+        "anim_walk" { first-frame: 93; frame-count: 45; }
     }
-    Track {
-        source-name: "anim_death";
-        frame-count: 193;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 138 { x: 6.1; y: 27.1; skew-x: 5; skew-y: 5.2; scale-x: 0.993; scale-y: 0.995; cel: 0; }
-        frame 139 { x: -10000; y: -10000; skew-x: -10000; skew-y: -10000; scale-x: -10000; scale-y: -10000; cel: -10000; }
-        frame 165 { cel: -1; }
-        frame 166 { cel: -10000; }
+
+    Actions {
+        "anim_death" { first-frame: 138; frame-count: 27; }
     }
-    Track {
-        source-name: "anim_eat";
-        frame-count: 193;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 165 { x: 6.1; y: 27.1; skew-x: 5; skew-y: 5.2; scale-x: 0.993; scale-y: 0.995; cel: 0; }
-        frame 166 { x: -10000; y: -10000; skew-x: -10000; skew-y: -10000; scale-x: -10000; scale-y: -10000; cel: -10000; }
+
+    Actions {
+        "anim_eat" { first-frame: 165; frame-count: 28; }
+    }
+
+    Actions {
+        "_ground" { first-frame: 13; frame-count: 125; }
     }
     Track {
         source-name: "_ground";
@@ -2791,6 +2770,9 @@ export component Zombie_polevaulter {
         frame 191 { x: 40.2; y: 39.4; skew-x: 0.5; skew-y: 0.5; scale-x: -10000; scale-y: -10000; }
         frame 192 { x: 40.1; y: 39; skew-x: 0; skew-y: 0; scale-x: 0.8; scale-y: 0.8; }
     }
+    Actions {
+        "anim_head1" { first-frame: 0; frame-count: 193; }
+    }
     Track {
         source-name: "anim_head1";
         frame-count: 193;
@@ -2963,6 +2945,9 @@ export component Zombie_polevaulter {
         frame 191 { x: 17.4; y: 14; skew-x: -6.2; skew-y: -6.2; scale-x: 0.789; scale-y: 0.819; }
         frame 192 { x: 20.5; y: 11.3; skew-x: 0; skew-y: 0; scale-x: 0.8; scale-y: 0.8; }
     }
+    Actions {
+        "anim_head2" { first-frame: 0; frame-count: 193; }
+    }
     Track {
         source-name: "anim_head2";
         frame-count: 193;
@@ -3134,6 +3119,9 @@ export component Zombie_polevaulter {
         frame 190 { x: 27.3; y: 44.6; skew-x: -11.3; skew-y: -11.3; scale-x: 0.797; scale-y: 0.797; }
         frame 191 { x: 26.4; y: 44; skew-x: -5.5; skew-y: -5.5; scale-x: 0.798; scale-y: 0.798; }
         frame 192 { x: 25.5; y: 43.3; skew-x: 0; skew-y: 0; scale-x: 0.8; scale-y: 0.8; }
+    }
+    Actions {
+        "anim_hair" { first-frame: 0; frame-count: 193; }
     }
     Track {
         source-name: "anim_hair";

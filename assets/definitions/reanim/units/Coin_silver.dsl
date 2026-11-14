@@ -1,5 +1,6 @@
 export component Coin_silver {
     fps: 30;
+    frame-count: 21;
     Track {
         source-name: "glow";
         frame-count: 21;

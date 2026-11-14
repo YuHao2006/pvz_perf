@@ -3,6 +3,7 @@ export component Credits_AnyHour {
     shared-image: IMAGE_REANIM_BACKGROUND2 IMAGE_BACKGROUND2;
 
     fps: 12;
+    frame-count: 30;
     Track {
         source-name: "Background2";
         frame-count: 30;

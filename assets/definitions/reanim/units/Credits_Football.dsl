@@ -1,5 +1,6 @@
 export component Credits_Football {
     fps: 12;
+    frame-count: 149;
     Track {
         source-name: "attacher__Zombie_football";
         frame-count: 149;

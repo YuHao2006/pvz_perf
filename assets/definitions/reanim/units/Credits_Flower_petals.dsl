@@ -1,5 +1,6 @@
 export component Credits_Flower_petals {
     fps: 7;
+    frame-count: 19;
     Track {
         source-name: "Petal1";
         frame-count: 19;

@@ -1,19 +1,14 @@
 export component LawnMower {
     fps: 20;
-    Track {
-        source-name: "anim_normal";
-        frame-count: 34;
-        frame 17 { cel: -1; }
-        frame 18 { cel: -10000; }
+    frame-count: 34;
+    Actions {
+        "anim_normal" { first-frame: 0; frame-count: 17; }
     }
-    Track {
-        source-name: "anim_tricked";
-        frame-count: 34;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 17 { cel: 0; }
-        frame 18 { cel: -10000; }
+
+    Actions {
+        "anim_tricked" { first-frame: 17; frame-count: 17; }
     }
+
     Track {
         source-name: "lawnmower_backwheelpiece1";
         frame-count: 34;

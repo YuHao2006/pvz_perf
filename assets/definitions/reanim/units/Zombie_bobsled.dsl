@@ -1,58 +1,37 @@
 export component Zombie_bobsled {
     fps: 12;
+    frame-count: 176;
+    Actions {
+        "anim_idle" { first-frame: 0; frame-count: 15; }
+    }
     Track {
         source-name: "anim_idle";
         frame-count: 176;
         frame 15 { cel: -1; }
         frame 16 { cel: -10000; }
     }
-    Track {
-        source-name: "anim_walk";
-        frame-count: 176;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 15 { cel: 0; }
-        frame 16 { cel: -10000; }
-        frame 54 { cel: -1; }
-        frame 55 { cel: -10000; }
+    Actions {
+        "anim_walk" { first-frame: 15; frame-count: 39; }
     }
-    Track {
-        source-name: "anim_push";
-        frame-count: 176;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 54 { cel: 0; }
-        frame 55 { cel: -10000; }
-        frame 78 { cel: -1; }
-        frame 79 { cel: -10000; }
+
+    Actions {
+        "anim_push" { first-frame: 54; frame-count: 24; }
     }
-    Track {
-        source-name: "anim_jump";
-        frame-count: 176;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 78 { cel: 0; }
-        frame 79 { cel: -10000; }
-        frame 102 { cel: -1; }
-        frame 103 { cel: -10000; }
+
+    Actions {
+        "anim_jump" { first-frame: 78; frame-count: 24; }
     }
-    Track {
-        source-name: "anim_death";
-        frame-count: 176;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 102 { cel: 0; }
-        frame 103 { cel: -10000; }
-        frame 134 { cel: -1; }
-        frame 135 { cel: -10000; }
+
+    Actions {
+        "anim_death" { first-frame: 102; frame-count: 32; }
     }
-    Track {
-        source-name: "anim_eat";
-        frame-count: 176;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 134 { cel: 0; }
-        frame 135 { cel: -10000; }
+
+    Actions {
+        "anim_eat" { first-frame: 134; frame-count: 42; }
+    }
+
+    Actions {
+        "_ground" { first-frame: 15; frame-count: 119; }
     }
     Track {
         source-name: "_ground";
@@ -2242,6 +2221,9 @@ export component Zombie_bobsled {
         frame 174 { x: 59; y: 65.6; skew-x: 45.4; skew-y: 45.4; scale-x: -10000; scale-y: 0.816; }
         frame 175 { x: 58.7; y: 66.2; skew-x: 47; skew-y: 47; scale-x: 0.769; scale-y: 0.818; }
     }
+    Actions {
+        "anim_head1" { first-frame: 0; frame-count: 176; }
+    }
     Track {
         source-name: "anim_head1";
         frame-count: 176;
@@ -2391,6 +2373,9 @@ export component Zombie_bobsled {
         frame 173 { x: -1.6; y: 16.3; skew-x: 2.5; skew-y: 2.5; scale-x: 0.798; scale-y: 0.798; }
         frame 174 { x: 0.7; y: 14.6; skew-x: 4.8; skew-y: 4.8; scale-x: 0.799; scale-y: 0.799; }
         frame 175 { x: 3.3; y: 12.9; skew-x: 7.1; skew-y: 7.1; scale-x: 0.8; scale-y: 0.8; }
+    }
+    Actions {
+        "anim_head2" { first-frame: 0; frame-count: 176; }
     }
     Track {
         source-name: "anim_head2";

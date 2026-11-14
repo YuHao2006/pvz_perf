@@ -1,5 +1,6 @@
 export component Credits_Tombstones {
     fps: 7;
+    frame-count: 16;
     Track {
         source-name: "attacher__zombie1";
         frame-count: 16;

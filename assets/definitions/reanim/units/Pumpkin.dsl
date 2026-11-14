@@ -1,5 +1,9 @@
 export component Pumpkin {
     fps: 12;
+    frame-count: 21;
+    Actions {
+        "anim_idle" { first-frame: 0; frame-count: 21; }
+    }
     Track {
         source-name: "anim_idle";
         frame-count: 21;

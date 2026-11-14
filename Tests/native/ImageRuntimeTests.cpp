@@ -5497,6 +5497,13 @@ void MessageTimingRuntime(TestApp& app)
         Require(advice.mEndTimeNs==std::int64_t(board.mLevelTimeNs)+7'500'000'000LL,"Slot result duration differs from 1073");
     }
     advice.ClearLabel();
+    auto& messageRender=*app.mDDInterface->mRenderInterface;
+    std::unique_ptr<Image> messageTarget(messageRender.CreateRenderImage(800,600));
+    const auto drawWave=[&](MessageWidget& wave) {
+        GpuImageDrawScope destination(messageRender,messageTarget.get());
+        Graphics graphics(messageTarget.get());
+        wave.Draw(&graphics); // Exercise the actual glyph locator, not only the action clock.
+    };
     for(const int hz:{30,60,100,240}) {
         MessageWidget wave(&app);const auto start=std::int64_t(board.mLevelTimeNs);
         wave.SetLabel(gStr.ADVICE_HUGE_WAVE,MESSAGE_STYLE_HUGE_WAVE);
@@ -5505,9 +5512,11 @@ void MessageTimingRuntime(TestApp& app)
         const auto step=1'000'000'000LL/hz;Sexy::gUpdateIntervalNs=step;
         auto* letter=app.ReanimationGet(wave.mTextReanimID[0]);
         board.mLevelTimeNs+=step;clocks.mBattleTimeNs=board.mLevelTimeNs;wave.Update(board.mLevelTimeNs);
+        drawWave(wave);
         const auto before=letter->SamplePlayback().phaseNs;
         Require(before>0&&letter->IsAnimPlaying(ReanimTrackId::anim_enter),"Huge-wave entry animation did not advance");
         board.mPaused=true;clocks.mVisualTimeNs+=3'000'000'000LL;wave.Update(board.mLevelTimeNs);
+        drawWave(wave);
         Require(letter->SamplePlayback().phaseNs==before,"Paused advice letters advanced with Visual time");
         board.mPaused=false;board.mLevelTimeNs+=step;clocks.mBattleTimeNs=board.mLevelTimeNs;wave.Update(board.mLevelTimeNs);
         Require(letter->SamplePlayback().phaseNs>before&&letter->mLoopCount==0,"Resuming advice skipped to the held last frame");

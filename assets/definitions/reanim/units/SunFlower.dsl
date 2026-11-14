@@ -1,5 +1,6 @@
 export component SunFlower {
     fps: 12;
+    frame-count: 29;
     Track {
         source-name: "backleaf";
         frame-count: 29;
@@ -837,6 +838,9 @@ export component SunFlower {
         frame 27 { x: 33; y: 11.6; skew-x: -0.4; scale-y: 0.902; }
         frame 28 { x: 31.9; y: 14.7; skew-x: 0; scale-y: 0.8; }
     }
+    Actions {
+        "anim_idle" { first-frame: 4; frame-count: 25; }
+    }
     Track {
         source-name: "anim_idle";
         frame-count: 29;
@@ -867,6 +871,9 @@ export component SunFlower {
         frame 26 { x: 16.5; y: 15.5; scale-y: 0.771; }
         frame 27 { x: 15.4; y: 17.9; scale-y: 0.741; }
         frame 28 { x: 14.3; y: 20.4; scale-y: 0.712; }
+    }
+    Actions {
+        "anim_blink" { first-frame: 1; frame-count: 3; }
     }
     Track {
         source-name: "anim_blink";

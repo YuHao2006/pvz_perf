@@ -1,12 +1,12 @@
 export component Caltrop {
     fps: 12;
-    Track {
-        source-name: "anim_attack";
-        frame-count: 35;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 25 { cel: 0; }
-        frame 26 { cel: -10000; }
+    frame-count: 35;
+    Actions {
+        "anim_attack" { first-frame: 25; frame-count: 10; }
+    }
+
+    Actions {
+        "anim_idle" { first-frame: 4; frame-count: 21; }
     }
     Track {
         source-name: "anim_idle";
@@ -17,6 +17,9 @@ export component Caltrop {
         frame 5 { cel: -10000; }
         frame 25 { cel: -1; }
         frame 26 { cel: -10000; }
+    }
+    Actions {
+        "anim_face" { first-frame: 4; frame-count: 31; }
     }
     Track {
         source-name: "anim_face";
@@ -201,6 +204,9 @@ export component Caltrop {
         frame 32 { x: 54.8; y: 45.8; skew-x: -6.2; skew-y: -4.9; scale-x: 0.753; scale-y: 0.995; }
         frame 33 { x: 55.6; y: 47.8; skew-x: -2.9; skew-y: -2.4; scale-x: 0.777; scale-y: 0.898; }
         frame 34 { x: 56.5; y: 49.8; skew-x: 0; skew-y: 0; scale-x: 0.8; scale-y: 0.8; }
+    }
+    Actions {
+        "anim_blink" { first-frame: 1; frame-count: 3; }
     }
     Track {
         source-name: "anim_blink";

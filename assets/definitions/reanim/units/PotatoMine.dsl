@@ -1,23 +1,16 @@
 export component PotatoMine {
     fps: 12;
-    Track {
-        source-name: "anim_armed";
-        frame-count: 37;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 20 { cel: 0; }
-        frame 21 { cel: -10000; }
-        frame 31 { cel: -1; }
-        frame 32 { cel: -10000; }
+    frame-count: 37;
+    Actions {
+        "anim_armed" { first-frame: 20; frame-count: 11; }
     }
-    Track {
-        source-name: "anim_rise";
-        frame-count: 37;
-        frame 0 { cel: -1; }
-        frame 1 { cel: 0; }
-        frame 2 { cel: -10000; }
-        frame 20 { cel: -1; }
-        frame 21 { cel: -10000; }
+
+    Actions {
+        "anim_rise" { first-frame: 1; frame-count: 19; }
+    }
+
+    Actions {
+        "anim_idle" { first-frame: 0; frame-count: 1; }
     }
     Track {
         source-name: "anim_idle";
@@ -25,15 +18,12 @@ export component PotatoMine {
         frame 1 { cel: -1; }
         frame 2 { cel: -10000; }
     }
-    Track {
-        source-name: "anim_blink";
-        frame-count: 37;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 32 { cel: 0; }
-        frame 33 { cel: -10000; }
-        frame 35 { cel: -1; }
-        frame 36 { cel: -10000; }
+    Actions {
+        "anim_blink" { first-frame: 32; frame-count: 3; }
+    }
+
+    Actions {
+        "anim_mashed" { first-frame: 36; frame-count: 1; }
     }
     Track {
         source-name: "anim_mashed";
@@ -86,6 +76,9 @@ export component PotatoMine {
         frame 31 { cel: -1; }
         frame 32 { cel: -10000; }
     }
+    Actions {
+        "anim_face" { first-frame: 10; frame-count: 21; }
+    }
     Track {
         source-name: "anim_face";
         frame-count: 37;
@@ -126,6 +119,9 @@ export component PotatoMine {
         frame 14 { x: 19.1; y: 37; scale-x: 0.836; scale-y: 0.8; alpha: 0; }
         frame 15 { x: -10000; y: -10000; scale-x: -10000; scale-y: -10000; cel: -1; alpha: -10000; }
         frame 16 { cel: -10000; }
+    }
+    Actions {
+        "anim_eye" { first-frame: 10; frame-count: 21; }
     }
     Track {
         source-name: "anim_eye";
@@ -292,6 +288,9 @@ export component PotatoMine {
         frame 31 { y: -10000; scale-x: -10000; scale-y: -10000; cel: -1; }
         frame 32 { cel: -10000; }
     }
+    Actions {
+        "anim_light" { first-frame: 0; frame-count: 31; }
+    }
     Track {
         source-name: "anim_light";
         frame-count: 37;
@@ -325,6 +324,9 @@ export component PotatoMine {
         frame 30 { x: 28.2; y: 12.5; scale-x: 0.8; scale-y: 0.8; }
         frame 31 { x: -10000; y: -10000; scale-x: -10000; scale-y: -10000; cel: -1; }
         frame 32 { cel: -10000; }
+    }
+    Actions {
+        "anim_glow" { first-frame: 20; frame-count: 1; }
     }
     Track {
         source-name: "anim_glow";

@@ -1,6 +1,6 @@
 {
   "format": "pvz-devtools-binaries-v1",
-  "version": "0.2.0-dfu-v5.1",
+  "version": "0.2.1-rereanim",
   "platform": "windows-x64",
   "files": [
     {
@@ -45,8 +45,8 @@
     },
     {
       "path": "pvz-resource-build.exe",
-      "bytes": 1732608,
-      "sha256": "dd3b04ba9a5ab55b60e4596c296465303da59ded38265a90c576aef318f0efe1"
+      "bytes": 1746944,
+      "sha256": "02e1bab57cc34c0ebfde336883656eb3eafc09e8bc52c5c973c96af09bf656a3"
     },
     {
       "path": "re2.dll",
@@ -60,8 +60,8 @@
     },
     {
       "path": "reanimc.exe",
-      "bytes": 848896,
-      "sha256": "b4175298e769a9d991c8ce4da52fdc68b17c736e6ad7dd543f90ba861d098b7a"
+      "bytes": 860672,
+      "sha256": "65ee7544959d070d7a3ae3e27da73635315ebf2cbdf24686921c4c9220dd0faa"
     },
     {
       "path": "third-party-notices/libjpeg-turbo.txt",
@@ -136,5 +136,7 @@
   ],
   "source_commit": "753819cb73467e4cd2db56831664b7ccf3d46ebf",
   "resource_builder_source_commit": "57bcd3f7670dfbe2c6fe4763f6ae31050d68cd47",
-  "dfu_windows_baseline": "Windows 7; MSVC 14.44; static CRT; checked for known Win8+ hard imports"
+  "dfu_windows_baseline": "Windows 7; MSVC 14.44; static CRT; checked for known Win8+ hard imports",
+  "sourceRepository": "https://github.com/YuHao2006/PvzDevTools",
+  "sourceCommit": "f29cfb3"
 }

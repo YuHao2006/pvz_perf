@@ -331,6 +331,7 @@ public:
         const ReanimatorFrameTime* theFrameTime = nullptr);
     bool                            DrawTrackWithTexture(Graphics* g, int theTrackIndex,
         const ReanimatorFrameTime* theFrameTime, Sexy::GpuTexture* theTexture);
+    void                            SetFrameRange(int first,int count);
     void                            GetCurrentTransform(int theTrackIndex, ReanimatorTransform* theTransformCurrent, const ReanimatorFrameTime* theFrameTime = nullptr);
     void                            GetTransformAtTime(int theTrackIndex, ReanimatorTransform* theTransform, const ReanimatorFrameTime* theFrameTime);
     void                            GetFrameTime(ReanimatorFrameTime* theFrameTime);
@@ -343,6 +344,7 @@ public:
     void                            SetFramesForLayerIndex(int theTrackIndex);
     static void                     MatrixFromTransform(const ReanimatorTransform& theTransform, SexyMatrix3& theMatrix);
     bool                            TrackExists(ReanimTrackId theTrackId);
+    bool                            ActionExists(ReanimTrackId id) const;
     void                            StartBlend(int theBlendTime);
     /*inline*/ void                 SetShakeOverride(ReanimTrackId theTrackId, float theShakeAmount);
     void                            SelectVariant(std::uint32_t theVariant);

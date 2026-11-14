@@ -1,5 +1,6 @@
 export component Zombie_flagpole {
     fps: 12;
+    frame-count: 13;
     Track {
         source-name: "Zombie_flagpole";
         frame-count: 13;
@@ -7,6 +8,9 @@ export component Zombie_flagpole {
         frame 1 { x: -57.7; y: -10000; skew-x: -10000; skew-y: -10000; scale-x: 0.997; scale-y: 0.997; image: none; }
         frame 2 { x: -10000; scale-x: -10000; scale-y: -10000; }
         frame 12 { x: -57.8; scale-x: 0.998; scale-y: 0.998; }
+    }
+    Actions {
+        "Zombie_flag" { first-frame: 0; frame-count: 13; }
     }
     Track {
         source-name: "Zombie_flag";

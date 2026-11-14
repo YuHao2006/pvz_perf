@@ -1,78 +1,45 @@
 export component Zombie_digger {
     fps: 16;
+    frame-count: 200;
+    Actions {
+        "anim_idle" { first-frame: 0; frame-count: 18; }
+    }
     Track {
         source-name: "anim_idle";
         frame-count: 200;
         frame 18 { cel: -1; }
         frame 19 { cel: -10000; }
     }
-    Track {
-        source-name: "anim_walk";
-        frame-count: 200;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 18 { cel: 0; }
-        frame 19 { cel: -10000; }
-        frame 55 { cel: -1; }
-        frame 56 { cel: -10000; }
+    Actions {
+        "anim_walk" { first-frame: 18; frame-count: 37; }
     }
-    Track {
-        source-name: "anim_eat";
-        frame-count: 200;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 55 { cel: 0; }
-        frame 56 { cel: -10000; }
-        frame 88 { cel: -1; }
-        frame 89 { cel: -10000; }
+
+    Actions {
+        "anim_eat" { first-frame: 55; frame-count: 33; }
     }
-    Track {
-        source-name: "anim_death";
-        frame-count: 200;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 88 { cel: 0; }
-        frame 89 { cel: -10000; }
-        frame 128 { cel: -1; }
-        frame 129 { cel: -10000; }
+
+    Actions {
+        "anim_death" { first-frame: 88; frame-count: 40; }
     }
-    Track {
-        source-name: "anim_dig";
-        frame-count: 200;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 128 { cel: 0; }
-        frame 129 { cel: -10000; }
-        frame 146 { cel: -1; }
-        frame 147 { cel: -10000; }
+
+    Actions {
+        "anim_dig" { first-frame: 128; frame-count: 18; }
     }
-    Track {
-        source-name: "anim_drill";
-        frame-count: 200;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 146 { x: 0.5; cel: 0; }
-        frame 147 { x: -10000; cel: -10000; }
-        frame 165 { cel: -1; }
-        frame 166 { cel: -10000; }
+
+    Actions {
+        "anim_drill" { first-frame: 146; frame-count: 19; }
     }
-    Track {
-        source-name: "anim_landing";
-        frame-count: 200;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 165 { cel: 0; }
-        frame 166 { cel: -10000; }
-        frame 179 { cel: -1; }
-        frame 180 { cel: -10000; }
+
+    Actions {
+        "anim_landing" { first-frame: 165; frame-count: 14; }
     }
-    Track {
-        source-name: "anim_dizzy";
-        frame-count: 200;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 179 { x: -0.9; y: 2.5; scale-x: 1.036; scale-y: 0.981; cel: 0; }
-        frame 180 { x: -10000; y: -10000; scale-x: -10000; scale-y: -10000; cel: -10000; }
+
+    Actions {
+        "anim_dizzy" { first-frame: 179; frame-count: 21; }
+    }
+
+    Actions {
+        "_ground" { first-frame: 18; frame-count: 37; }
     }
     Track {
         source-name: "_ground";
@@ -1523,6 +1490,9 @@ export component Zombie_digger {
         frame 198 { x: 16.6; y: 31.7; skew-x: -0.9; skew-y: -0.9; }
         frame 199 { x: 18.6; y: 31.3; skew-x: 0; skew-y: 0; }
     }
+    Actions {
+        "anim_head1" { first-frame: 0; frame-count: 200; }
+    }
     Track {
         source-name: "anim_head1";
         frame-count: 200;
@@ -1724,6 +1694,9 @@ export component Zombie_digger {
         frame 197 { x: -20; y: 21.1; }
         frame 198 { x: -18.7; y: 19.6; }
         frame 199 { x: -14.2; y: 16.9; }
+    }
+    Actions {
+        "anim_head2" { first-frame: 0; frame-count: 200; }
     }
     Track {
         source-name: "anim_head2";

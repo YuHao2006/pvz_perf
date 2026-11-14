@@ -1,5 +1,6 @@
 export component Diamond {
     fps: 30;
+    frame-count: 52;
     Track {
         source-name: "Diamond";
         frame-count: 52;

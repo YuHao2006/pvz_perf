@@ -1,5 +1,6 @@
 export component splash {
     fps: 18;
+    frame-count: 14;
     Track {
         source-name: "splash_ring";
         frame-count: 14;

@@ -1,20 +1,16 @@
 export component SeaShroom {
     fps: 12;
-    Track {
-        source-name: "anim_blink";
-        frame-count: 93;
-        frame 4 { cel: -1; }
-        frame 5 { cel: -10000; }
+    frame-count: 93;
+    Actions {
+        "anim_blink" { first-frame: 0; frame-count: 4; }
     }
-    Track {
-        source-name: "anim_sleep";
-        frame-count: 93;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 43 { cel: 0; }
-        frame 44 { cel: -10000; }
-        frame 68 { cel: -1; }
-        frame 69 { cel: -10000; }
+
+    Actions {
+        "anim_sleep" { first-frame: 43; frame-count: 25; }
+    }
+
+    Actions {
+        "anim_idle" { first-frame: 4; frame-count: 25; }
     }
     Track {
         source-name: "anim_idle";
@@ -26,24 +22,14 @@ export component SeaShroom {
         frame 29 { cel: -1; }
         frame 30 { cel: -10000; }
     }
-    Track {
-        source-name: "anim_idle_aquarium";
-        frame-count: 93;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 68 { cel: 0; }
-        frame 69 { cel: -10000; }
+    Actions {
+        "anim_idle_aquarium" { first-frame: 68; frame-count: 25; }
     }
-    Track {
-        source-name: "anim_shooting";
-        frame-count: 93;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 29 { cel: 0; }
-        frame 30 { cel: -10000; }
-        frame 43 { cel: -1; }
-        frame 44 { cel: -10000; }
+
+    Actions {
+        "anim_shooting" { first-frame: 29; frame-count: 14; }
     }
+
     Track {
         source-name: "SeaShroom_tentacles";
         frame-count: 93;
@@ -115,6 +101,9 @@ export component SeaShroom {
         frame 67 { x: 17.6; scale-x: 0.7; scale-y: 0.7; }
         frame 68 { x: -10000; y: -10000; scale-x: -10000; scale-y: -10000; cel: -1; }
         frame 69 { cel: -10000; }
+    }
+    Actions {
+        "anim_face" { first-frame: 4; frame-count: 89; }
     }
     Track {
         source-name: "anim_face";
@@ -340,6 +329,9 @@ export component SeaShroom {
         frame 90 { x: 17.1; y: 46.6; scale-x: 0.699; scale-y: 0.763; }
         frame 91 { x: 17.2; y: 46.9; scale-x: -10000; scale-y: 0.731; }
         frame 92 { x: 17; y: 47.3; scale-x: 0.7; scale-y: 0.7; }
+    }
+    Actions {
+        "anim_waterline" { first-frame: 4; frame-count: 64; }
     }
     Track {
         source-name: "anim_waterline";

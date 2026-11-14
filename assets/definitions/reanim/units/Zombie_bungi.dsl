@@ -1,49 +1,31 @@
 export component Zombie_bungi {
     fps: 12;
+    frame-count: 67;
+    Actions {
+        "anim_idle" { first-frame: 0; frame-count: 20; }
+    }
     Track {
         source-name: "anim_idle";
         frame-count: 67;
         frame 20 { cel: -1; }
         frame 21 { cel: -10000; }
     }
-    Track {
-        source-name: "anim_drop";
-        frame-count: 67;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 20 { cel: 0; }
-        frame 21 { cel: -10000; }
-        frame 29 { cel: -1; }
-        frame 30 { cel: -10000; }
+    Actions {
+        "anim_drop" { first-frame: 20; frame-count: 9; }
     }
-    Track {
-        source-name: "anim_grab";
-        frame-count: 67;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 29 { cel: 0; }
-        frame 30 { cel: -10000; }
-        frame 44 { cel: -1; }
-        frame 45 { cel: -10000; }
+
+    Actions {
+        "anim_grab" { first-frame: 29; frame-count: 15; }
     }
-    Track {
-        source-name: "anim_hold";
-        frame-count: 67;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 44 { cel: 0; }
-        frame 45 { cel: -10000; }
-        frame 54 { cel: -1; }
-        frame 55 { cel: -10000; }
+
+    Actions {
+        "anim_hold" { first-frame: 44; frame-count: 10; }
     }
-    Track {
-        source-name: "anim_raise";
-        frame-count: 67;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 54 { cel: 0; }
-        frame 55 { cel: -10000; }
+
+    Actions {
+        "anim_raise" { first-frame: 54; frame-count: 13; }
     }
+
     Track {
         source-name: "Zombie_bungi_body";
         frame-count: 67;
@@ -1028,6 +1010,9 @@ export component Zombie_bungi {
         frame 64 { y: 34.6; scale-y: 0.839; }
         frame 65 { y: 33; scale-y: 0.903; }
         frame 66 { y: 31.2; scale-y: 0.966; }
+    }
+    Actions {
+        "anim_head1" { first-frame: 0; frame-count: 67; }
     }
     Track {
         source-name: "anim_head1";

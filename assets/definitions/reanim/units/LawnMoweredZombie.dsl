@@ -1,5 +1,6 @@
 export component LawnMoweredZombie {
     fps: 12;
+    frame-count: 8;
     Track {
         source-name: "locator";
         frame-count: 8;

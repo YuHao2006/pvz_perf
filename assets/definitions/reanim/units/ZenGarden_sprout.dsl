@@ -1,22 +1,16 @@
 export component ZenGarden_sprout {
     fps: 12;
-    Track {
-        source-name: "anim_sprout";
-        frame-count: 60;
-        frame 0 { x: 34.9; y: 42.2; }
-        frame 1 { x: -10000; y: -10000; }
-        frame 10 { cel: -1; }
-        frame 11 { cel: -10000; }
+    frame-count: 60;
+    Actions {
+        "anim_sprout" { first-frame: 0; frame-count: 10; }
     }
-    Track {
-        source-name: "anim_flower";
-        frame-count: 60;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 10 { x: 34.9; y: 42.2; cel: 0; }
-        frame 11 { x: -10000; y: -10000; cel: -10000; }
-        frame 18 { cel: -1; }
-        frame 19 { cel: -10000; }
+
+    Actions {
+        "anim_flower" { first-frame: 10; frame-count: 8; }
+    }
+
+    Actions {
+        "anim_idle" { first-frame: 18; frame-count: 21; }
     }
     Track {
         source-name: "anim_idle";
@@ -28,14 +22,10 @@ export component ZenGarden_sprout {
         frame 39 { cel: -1; }
         frame 40 { cel: -10000; }
     }
-    Track {
-        source-name: "anim_idle_noflower";
-        frame-count: 60;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 39 { x: 34.9; y: 42.2; cel: 0; }
-        frame 40 { x: -10000; y: -10000; cel: -10000; }
+    Actions {
+        "anim_idle_noflower" { first-frame: 39; frame-count: 21; }
     }
+
     Track {
         source-name: "rock";
         frame-count: 60;

@@ -1,5 +1,6 @@
 export component Credits_stage {
     fps: 12.25;
+    frame-count: 42;
     Track {
         source-name: "stage";
         frame-count: 42;

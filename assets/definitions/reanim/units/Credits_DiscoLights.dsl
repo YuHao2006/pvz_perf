@@ -1,5 +1,6 @@
 export component Credits_DiscoLights {
     fps: 7;
+    frame-count: 34;
     Track {
         source-name: "Spot1";
         frame-count: 34;

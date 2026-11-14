@@ -1,5 +1,6 @@
 export component ZenGarden_bugspray {
     fps: 30;
+    frame-count: 26;
     Track {
         source-name: "spray";
         frame-count: 26;

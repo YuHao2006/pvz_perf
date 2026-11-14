@@ -1,5 +1,9 @@
 export component Zombie_pogo {
     fps: 12;
+    frame-count: 166;
+    Actions {
+        "_ground" { first-frame: 29; frame-count: 47; }
+    }
     Track {
         source-name: "_ground";
         frame-count: 166;
@@ -54,33 +58,20 @@ export component Zombie_pogo {
         frame 76 { x: -10000; cel: -1; }
         frame 77 { cel: -10000; }
     }
-    Track {
-        source-name: "anim_pogo";
-        frame-count: 166;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 155 { cel: 0; }
-        frame 156 { cel: -10000; }
+    Actions {
+        "anim_pogo" { first-frame: 155; frame-count: 11; }
     }
-    Track {
-        source-name: "anim_death";
-        frame-count: 166;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 116 { cel: 0; }
-        frame 117 { cel: -10000; }
-        frame 155 { cel: -1; }
-        frame 156 { cel: -10000; }
+
+    Actions {
+        "anim_death" { first-frame: 116; frame-count: 39; }
     }
-    Track {
-        source-name: "anim_walk";
-        frame-count: 166;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 29 { cel: 0; }
-        frame 30 { cel: -10000; }
-        frame 76 { cel: -1; }
-        frame 77 { cel: -10000; }
+
+    Actions {
+        "anim_walk" { first-frame: 29; frame-count: 47; }
+    }
+
+    Actions {
+        "anim_idle" { first-frame: 0; frame-count: 29; }
     }
     Track {
         source-name: "anim_idle";
@@ -88,15 +79,12 @@ export component Zombie_pogo {
         frame 29 { cel: -1; }
         frame 30 { cel: -10000; }
     }
-    Track {
-        source-name: "anim_eat";
-        frame-count: 166;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 76 { cel: 0; }
-        frame 77 { cel: -10000; }
-        frame 116 { cel: -1; }
-        frame 117 { cel: -10000; }
+    Actions {
+        "anim_eat" { first-frame: 76; frame-count: 40; }
+    }
+
+    Actions {
+        "anim_innerarm3" { first-frame: 0; frame-count: 150; }
     }
     Track {
         source-name: "anim_innerarm3";
@@ -253,6 +241,9 @@ export component Zombie_pogo {
         frame 149 { x: 1.1; y: 121.2; skew-x: 264.5; skew-y: 264.5; }
         frame 150 { x: -10000; y: -10000; skew-x: -10000; skew-y: -10000; cel: -1; }
         frame 151 { cel: -10000; }
+    }
+    Actions {
+        "anim_innerarm2" { first-frame: 0; frame-count: 166; }
     }
     Track {
         source-name: "anim_innerarm2";
@@ -420,6 +411,9 @@ export component Zombie_pogo {
         frame 163 { x: 36.1; y: 56.8; skew-x: 411.1; skew-y: 426.9; }
         frame 164 { x: 34.9; y: 54.9; skew-x: 404.8; skew-y: 420.7; }
         frame 165 { x: 33.6; y: 53; skew-x: 398.8; skew-y: 414.6; scale-x: 0.593; scale-y: 1.122; }
+    }
+    Actions {
+        "anim_innerarm1" { first-frame: 0; frame-count: 166; }
     }
     Track {
         source-name: "anim_innerarm1";
@@ -1628,6 +1622,9 @@ export component Zombie_pogo {
         frame 164 { y: 26.5; skew-x: -0.7; skew-y: -0.7; scale-y: 0.807; }
         frame 165 { y: 24.8; skew-x: 0; skew-y: 0; scale-y: 0.799; }
     }
+    Actions {
+        "anim_head1" { first-frame: 0; frame-count: 166; }
+    }
     Track {
         source-name: "anim_head1";
         frame-count: 166;
@@ -1760,6 +1757,9 @@ export component Zombie_pogo {
         frame 163 { x: 4.5; y: 13.3; skew-x: -9.5; skew-y: -9.5; }
         frame 164 { x: 4.6; y: 10.9; skew-x: -8.7; skew-y: -8.7; }
         frame 165 { x: 4.7; y: 8.4; skew-x: -8; skew-y: -8; scale-x: 0.8; scale-y: 0.8; }
+    }
+    Actions {
+        "anim_head2" { first-frame: 0; frame-count: 166; }
     }
     Track {
         source-name: "anim_head2";
@@ -1894,6 +1894,9 @@ export component Zombie_pogo {
         frame 164 { x: 17.2; y: 41.9; skew-x: -8.2; skew-y: -8.2; }
         frame 165 { x: 16.9; y: 38.5; skew-x: -7.5; skew-y: -7.5; scale-x: 0.799; scale-y: 0.799; }
     }
+    Actions {
+        "anim_head_glasses" { first-frame: 0; frame-count: 166; }
+    }
     Track {
         source-name: "anim_head_glasses";
         frame-count: 166;
@@ -2026,6 +2029,9 @@ export component Zombie_pogo {
         frame 163 { x: -10000; y: 34.7; skew-x: 342.7; skew-y: 342.7; }
         frame 164 { y: 31.4; skew-x: 343.4; skew-y: 343.4; }
         frame 165 { x: 6; y: 27.9; skew-x: 344.2; skew-y: 344.2; scale-x: 0.798; scale-y: 0.798; }
+    }
+    Actions {
+        "anim_hair" { first-frame: 0; frame-count: 166; }
     }
     Track {
         source-name: "anim_hair";

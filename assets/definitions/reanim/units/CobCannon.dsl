@@ -1,14 +1,12 @@
 export component CobCannon {
     fps: 12;
-    Track {
-        source-name: "anim_unarmed_idle";
-        frame-count: 100;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 5 { cel: 0; }
-        frame 6 { cel: -10000; }
-        frame 24 { cel: -1; }
-        frame 25 { cel: -10000; }
+    frame-count: 100;
+    Actions {
+        "anim_unarmed_idle" { first-frame: 5; frame-count: 19; }
+    }
+
+    Actions {
+        "anim_idle" { first-frame: 39; frame-count: 19; }
     }
     Track {
         source-name: "anim_idle";
@@ -20,33 +18,18 @@ export component CobCannon {
         frame 58 { cel: -1; }
         frame 59 { cel: -10000; }
     }
-    Track {
-        source-name: "anim_shooting";
-        frame-count: 100;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 58 { cel: 0; }
-        frame 59 { cel: -10000; }
+    Actions {
+        "anim_shooting" { first-frame: 58; frame-count: 42; }
     }
-    Track {
-        source-name: "anim_charge";
-        frame-count: 100;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 24 { cel: 0; }
-        frame 25 { cel: -10000; }
-        frame 39 { cel: -1; }
-        frame 40 { cel: -10000; }
+
+    Actions {
+        "anim_charge" { first-frame: 24; frame-count: 15; }
     }
-    Track {
-        source-name: "anim_blink";
-        frame-count: 100;
-        frame 0 { cel: -1; }
-        frame 1 { cel: 0; }
-        frame 2 { cel: -10000; }
-        frame 4 { cel: -1; }
-        frame 5 { cel: -10000; }
+
+    Actions {
+        "anim_blink" { first-frame: 1; frame-count: 3; }
     }
+
     Track {
         source-name: "CobCannon_backwheels";
         frame-count: 100;
@@ -677,6 +660,9 @@ export component CobCannon {
         frame 97 { x: 12.4; y: 3; scale-x: 0.816; scale-y: 0.792; }
         frame 98 { x: 13; y: 1.7; scale-x: 0.808; scale-y: 0.796; }
         frame 99 { x: 13.5; y: 0.3; scale-x: 0.8; scale-y: 0.8; }
+    }
+    Actions {
+        "anim_face" { first-frame: 5; frame-count: 95; }
     }
     Track {
         source-name: "anim_face";

@@ -1,11 +1,10 @@
 export component Credits_Bossdance {
     fps: 12;
-    Track {
-        source-name: "anim_dance";
-        frame-count: 36;
-        frame 0 { x: 28.8; y: 65.5; skew-x: 343.2; skew-y: 343.2; scale-x: 0.999; scale-y: 0.999; }
-        frame 1 { x: -10000; y: -10000; skew-x: -10000; skew-y: -10000; scale-x: -10000; scale-y: -10000; }
+    frame-count: 36;
+    Actions {
+        "anim_dance" { first-frame: 0; frame-count: 36; }
     }
+
     Track {
         source-name: "Boss_innerleg_foot";
         frame-count: 36;

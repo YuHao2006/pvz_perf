@@ -1,5 +1,6 @@
 export component SplitPea {
     fps: 12;
+    frame-count: 132;
     Track {
         source-name: "backleaf";
         frame-count: 132;
@@ -264,6 +265,9 @@ export component SplitPea {
         frame 32 { x: -10000; y: -10000; skew-x: -10000; skew-y: -10000; scale-x: -10000; scale-y: -10000; cel: -1; }
         frame 33 { cel: -10000; }
     }
+    Actions {
+        "anim_idle" { first-frame: 7; frame-count: 25; }
+    }
     Track {
         source-name: "anim_idle";
         frame-count: 132;
@@ -297,23 +301,16 @@ export component SplitPea {
         frame 32 { x: -10000; y: -10000; cel: -1; }
         frame 33 { cel: -10000; }
     }
-    Track {
-        source-name: "anim_shooting";
-        frame-count: 132;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 107 { cel: 0; }
-        frame 108 { cel: -10000; }
+    Actions {
+        "anim_shooting" { first-frame: 107; frame-count: 25; }
     }
-    Track {
-        source-name: "anim_head_idle";
-        frame-count: 132;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 82 { cel: 0; }
-        frame 83 { cel: -10000; }
-        frame 107 { cel: -1; }
-        frame 108 { cel: -10000; }
+
+    Actions {
+        "anim_head_idle" { first-frame: 82; frame-count: 25; }
+    }
+
+    Actions {
+        "anim_face" { first-frame: 82; frame-count: 50; }
     }
     Track {
         source-name: "anim_face";
@@ -427,26 +424,14 @@ export component SplitPea {
         frame 130 { x: 52.4; y: 13.6; scale-y: 0.559; }
         frame 131 { x: -10000; y: 13.9; scale-y: 0.555; }
     }
-    Track {
-        source-name: "anim_splitpea_idle";
-        frame-count: 132;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 32 { cel: 0; }
-        frame 33 { cel: -10000; }
-        frame 57 { cel: -1; }
-        frame 58 { cel: -10000; }
+    Actions {
+        "anim_splitpea_idle" { first-frame: 32; frame-count: 25; }
     }
-    Track {
-        source-name: "anim_splitpea_shooting";
-        frame-count: 132;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 57 { cel: 0; }
-        frame 58 { cel: -10000; }
-        frame 70 { cel: -1; }
-        frame 71 { cel: -10000; }
+
+    Actions {
+        "anim_splitpea_shooting" { first-frame: 57; frame-count: 13; }
     }
+
     Track {
         source-name: "SplitPea_head";
         frame-count: 132;
@@ -564,6 +549,9 @@ export component SplitPea {
         frame 68 { x: -10000; y: -10000; skew-y: -10000; scale-x: -10000; scale-y: -10000; cel: -1; image: none; }
         frame 69 { cel: -10000; }
     }
+    Actions {
+        "anim_blink" { first-frame: 1; frame-count: 3; }
+    }
     Track {
         source-name: "anim_blink";
         frame-count: 132;
@@ -573,6 +561,9 @@ export component SplitPea {
         frame 3 { x: 37.6; y: 23.5; image: IMAGE_REANIM_PEASHOOTER_BLINK1; }
         frame 4 { x: -10000; y: -10000; cel: -1; image: none; }
         frame 5 { cel: -10000; }
+    }
+    Actions {
+        "anim_SplitPea_blink" { first-frame: 4; frame-count: 3; }
     }
     Track {
         source-name: "anim_SplitPea_blink";

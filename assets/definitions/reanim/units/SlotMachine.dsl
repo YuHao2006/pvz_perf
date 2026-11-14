@@ -1,19 +1,14 @@
 export component SlotMachine {
     fps: 12;
-    Track {
-        source-name: "anim_return";
-        frame-count: 9;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 4 { cel: 0; }
-        frame 5 { cel: -10000; }
+    frame-count: 9;
+    Actions {
+        "anim_return" { first-frame: 4; frame-count: 5; }
     }
-    Track {
-        source-name: "anim_pull";
-        frame-count: 9;
-        frame 5 { cel: -1; }
-        frame 6 { cel: -10000; }
+
+    Actions {
+        "anim_pull" { first-frame: 0; frame-count: 5; }
     }
+
     Track {
         source-name: "shaft";
         frame-count: 9;

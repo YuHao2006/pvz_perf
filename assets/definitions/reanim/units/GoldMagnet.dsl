@@ -1,13 +1,12 @@
 export component GoldMagnet {
     fps: 12;
-    Track {
-        source-name: "anim_blink";
-        frame-count: 83;
-        frame 0 { cel: -1; }
-        frame 1 { cel: 0; }
-        frame 2 { cel: -10000; }
-        frame 4 { cel: -1; }
-        frame 5 { cel: -10000; }
+    frame-count: 83;
+    Actions {
+        "anim_blink" { first-frame: 1; frame-count: 3; }
+    }
+
+    Actions {
+        "anim_idle" { first-frame: 5; frame-count: 47; }
     }
     Track {
         source-name: "anim_idle";
@@ -19,14 +18,10 @@ export component GoldMagnet {
         frame 52 { cel: -1; }
         frame 53 { cel: -10000; }
     }
-    Track {
-        source-name: "anim_attract";
-        frame-count: 83;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 52 { cel: 0; }
-        frame 53 { cel: -10000; }
+    Actions {
+        "anim_attract" { first-frame: 52; frame-count: 31; }
     }
+
     Track {
         source-name: "GoldMagnet_stem";
         frame-count: 83;
@@ -441,6 +436,9 @@ export component GoldMagnet {
         frame 80 { x: 59.3; y: 41.8; skew-x: 17.1; skew-y: 22.1; scale-x: 0.543; scale-y: 0.561; }
         frame 81 { x: 55.5; y: 41.4; skew-x: 8.5; skew-y: 11; scale-x: 0.546; scale-y: 0.556; }
         frame 82 { x: 51.8; y: 41.1; skew-x: 0; skew-y: 0; scale-x: 0.55; scale-y: 0.55; }
+    }
+    Actions {
+        "anim_face" { first-frame: 5; frame-count: 78; }
     }
     Track {
         source-name: "anim_face";

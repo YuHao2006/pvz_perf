@@ -1,20 +1,16 @@
 export component Zombie_zamboni {
     fps: 30;
-    Track {
-        source-name: "anim_drive";
-        frame-count: 62;
-        frame 13 { cel: -1; }
-        frame 14 { cel: -10000; }
+    frame-count: 62;
+    Actions {
+        "anim_drive" { first-frame: 0; frame-count: 13; }
     }
-    Track {
-        source-name: "anim_wheelie1";
-        frame-count: 62;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 13 { cel: 0; }
-        frame 14 { cel: -10000; }
-        frame 29 { cel: -1; }
-        frame 30 { cel: -10000; }
+
+    Actions {
+        "anim_wheelie1" { first-frame: 13; frame-count: 16; }
+    }
+
+    Actions {
+        "anim_wheelie2" { first-frame: 29; frame-count: 33; }
     }
     Track {
         source-name: "anim_wheelie2";

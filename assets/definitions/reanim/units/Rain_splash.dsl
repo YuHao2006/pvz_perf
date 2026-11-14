@@ -1,5 +1,6 @@
 export component Rain_splash {
     fps: 12;
+    frame-count: 8;
     Track {
         source-name: "rain";
         frame-count: 8;

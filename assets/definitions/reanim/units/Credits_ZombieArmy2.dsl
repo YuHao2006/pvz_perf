@@ -1,5 +1,6 @@
 export component Credits_ZombieArmy2 {
     fps: 7;
+    frame-count: 1;
     Track {
         source-name: "attacher__ZombieArmy2";
         frame-count: 1;

@@ -1,5 +1,6 @@
 export component FirePea {
     fps: 12;
+    frame-count: 25;
     Track {
         source-name: "FirePea_spark3";
         frame-count: 25;

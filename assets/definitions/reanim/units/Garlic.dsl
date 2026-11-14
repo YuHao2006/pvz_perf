@@ -1,13 +1,12 @@
 export component Garlic {
     fps: 12;
-    Track {
-        source-name: "anim_blink";
-        frame-count: 19;
-        frame 0 { cel: -1; }
-        frame 1 { cel: 0; }
-        frame 2 { cel: -10000; }
-        frame 4 { cel: -1; }
-        frame 5 { cel: -10000; }
+    frame-count: 19;
+    Actions {
+        "anim_blink" { first-frame: 1; frame-count: 3; }
+    }
+
+    Actions {
+        "anim_idle" { first-frame: 4; frame-count: 15; }
     }
     Track {
         source-name: "anim_idle";
@@ -79,6 +78,9 @@ export component Garlic {
         frame 16 { x: 40.8; y: 24.5; skew-x: 1.8; scale-x: 0.936; scale-y: 0.875; }
         frame 17 { x: -10000; y: 23.7; skew-x: 0.8; scale-x: 0.918; scale-y: 0.888; }
         frame 18 { y: 22.9; skew-x: 0; scale-x: 0.9; scale-y: 0.9; }
+    }
+    Actions {
+        "anim_face" { first-frame: 4; frame-count: 15; }
     }
     Track {
         source-name: "anim_face";

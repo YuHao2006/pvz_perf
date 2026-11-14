@@ -1,98 +1,53 @@
 export component Zombie_snorkle {
     fps: 12;
-    Track {
-        source-name: "anim_aquarium_death";
-        frame-count: 249;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 212 { cel: 0; }
-        frame 213 { cel: -10000; }
+    frame-count: 249;
+    Actions {
+        "anim_aquarium_death" { first-frame: 212; frame-count: 37; }
     }
-    Track {
-        source-name: "anim_aquarium_bite";
-        frame-count: 249;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 197 { cel: 0; }
-        frame 198 { cel: -10000; }
-        frame 212 { cel: -1; }
-        frame 213 { cel: -10000; }
+
+    Actions {
+        "anim_aquarium_bite" { first-frame: 197; frame-count: 15; }
     }
-    Track {
-        source-name: "anim_aquarium_swim";
-        frame-count: 249;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 157 { cel: 0; }
-        frame 158 { cel: -10000; }
-        frame 186 { cel: -1; }
-        frame 187 { cel: -10000; }
+
+    Actions {
+        "anim_aquarium_swim" { first-frame: 157; frame-count: 29; }
     }
-    Track {
-        source-name: "anim_death";
-        frame-count: 249;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 122 { cel: 0; }
-        frame 123 { cel: -10000; }
-        frame 157 { cel: -1; }
-        frame 158 { cel: -10000; }
+
+    Actions {
+        "anim_death" { first-frame: 122; frame-count: 35; }
     }
-    Track {
-        source-name: "anim_eat";
-        frame-count: 249;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 97 { cel: 0; }
-        frame 98 { cel: -10000; }
-        frame 122 { cel: -1; }
-        frame 123 { cel: -10000; }
+
+    Actions {
+        "anim_eat" { first-frame: 97; frame-count: 25; }
     }
-    Track {
-        source-name: "anim_uptoeat";
-        frame-count: 249;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 85 { cel: 0; }
-        frame 86 { cel: -10000; }
-        frame 97 { cel: -1; }
-        frame 98 { cel: -10000; }
+
+    Actions {
+        "anim_uptoeat" { first-frame: 85; frame-count: 12; }
     }
-    Track {
-        source-name: "anim_swim";
-        frame-count: 249;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 78 { cel: 0; }
-        frame 79 { cel: -10000; }
-        frame 85 { cel: -1; }
-        frame 86 { cel: -10000; }
+
+    Actions {
+        "anim_swim" { first-frame: 78; frame-count: 7; }
     }
-    Track {
-        source-name: "anim_jumpinpool";
-        frame-count: 249;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 59 { x: 16.8; y: 94.8; cel: 0; }
-        frame 60 { x: -10000; y: -10000; cel: -10000; }
-        frame 78 { cel: -1; }
-        frame 79 { cel: -10000; }
+
+    Actions {
+        "anim_jumpinpool" { first-frame: 59; frame-count: 19; }
     }
-    Track {
-        source-name: "anim_walk";
-        frame-count: 249;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 22 { cel: 0; }
-        frame 23 { cel: -10000; }
-        frame 59 { cel: -1; }
-        frame 60 { cel: -10000; }
+
+    Actions {
+        "anim_walk" { first-frame: 22; frame-count: 37; }
+    }
+
+    Actions {
+        "anim_idle" { first-frame: 0; frame-count: 22; }
     }
     Track {
         source-name: "anim_idle";
         frame-count: 249;
         frame 22 { cel: -1; }
         frame 23 { cel: -10000; }
+    }
+    Actions {
+        "_ground" { first-frame: 22; frame-count: 37; }
     }
     Track {
         source-name: "_ground";
@@ -2231,6 +2186,9 @@ export component Zombie_snorkle {
         frame 247 { y: 42.2; }
         frame 248 { x: 148.4; y: 41.6; skew-x: 137.5; skew-y: 137.5; scale-x: 0.79; scale-y: 0.79; }
     }
+    Actions {
+        "anim_head1" { first-frame: 0; frame-count: 249; }
+    }
     Track {
         source-name: "anim_head1";
         frame-count: 249;
@@ -2450,6 +2408,9 @@ export component Zombie_snorkle {
         frame 247 { x: 153.5; y: -10000; skew-x: 208.5; skew-y: 208.5; }
         frame 248 { x: 152.4; skew-x: 210; skew-y: 210; scale-x: 0.791; scale-y: 0.791; }
     }
+    Actions {
+        "anim_head_lips" { first-frame: 92; frame-count: 135; }
+    }
     Track {
         source-name: "anim_head_lips";
         frame-count: 249;
@@ -2491,6 +2452,9 @@ export component Zombie_snorkle {
         frame 226 { x: 174.4; y: 71.2; skew-x: 172.9; skew-y: 172.9; scale-x: 0.792; scale-y: 0.792; }
         frame 227 { x: -10000; y: -10000; skew-x: -10000; skew-y: -10000; scale-x: -10000; scale-y: -10000; cel: -1; }
         frame 228 { cel: -10000; }
+    }
+    Actions {
+        "anim_head_jaw" { first-frame: 97; frame-count: 152; }
     }
     Track {
         source-name: "anim_head_jaw";
@@ -2563,6 +2527,9 @@ export component Zombie_snorkle {
         frame 246 { x: 164; skew-x: -163.6; skew-y: -163.6; }
         frame 247 { x: 162.7; y: 87; skew-x: -162.1; skew-y: -162.1; }
         frame 248 { x: 161.5; y: -10000; skew-x: -160.4; skew-y: -160.4; scale-x: 0.818; scale-y: 0.795; }
+    }
+    Actions {
+        "anim_head_snorkle" { first-frame: 92; frame-count: 157; }
     }
     Track {
         source-name: "anim_head_snorkle";

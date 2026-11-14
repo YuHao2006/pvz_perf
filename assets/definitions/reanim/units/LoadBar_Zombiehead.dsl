@@ -1,9 +1,10 @@
 export component LoadBar_Zombiehead {
     fps: 12;
-    Track {
-        source-name: "anim_zombie";
-        frame-count: 18;
+    frame-count: 18;
+    Actions {
+        "anim_zombie" { first-frame: 0; frame-count: 18; }
     }
+
     Track {
         source-name: "Zombie_head";
         frame-count: 18;

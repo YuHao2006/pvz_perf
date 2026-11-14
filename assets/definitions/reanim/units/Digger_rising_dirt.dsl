@@ -1,5 +1,6 @@
 export component Digger_rising_dirt {
     fps: 12;
+    frame-count: 25;
     Track {
         source-name: "Digger_rising_dirt";
         frame-count: 25;

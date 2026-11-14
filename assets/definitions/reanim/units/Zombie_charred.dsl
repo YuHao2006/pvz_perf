@@ -1,15 +1,14 @@
 export component Zombie_charred {
     fps: 15;
-    Track {
-        source-name: "anim_blink";
-        frame-count: 43;
-        frame 20 { cel: -1; }
-        frame 21 { cel: -10000; }
+    frame-count: 43;
+    Actions {
+        "anim_blink" { first-frame: 0; frame-count: 20; }
     }
-    Track {
-        source-name: "anim_crumble";
-        frame-count: 43;
+
+    Actions {
+        "anim_crumble" { first-frame: 0; frame-count: 43; }
     }
+
     Track {
         source-name: "Zombie_charred_body";
         frame-count: 43;

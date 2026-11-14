@@ -1,48 +1,28 @@
 export component Zombie_imp {
     fps: 12;
-    Track {
-        source-name: "anim_land";
-        frame-count: 104;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 98 { cel: 0; }
-        frame 99 { cel: -10000; }
+    frame-count: 104;
+    Actions {
+        "anim_land" { first-frame: 98; frame-count: 6; }
     }
-    Track {
-        source-name: "anim_thrown";
-        frame-count: 104;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 82 { cel: 0; }
-        frame 83 { cel: -10000; }
-        frame 98 { cel: -1; }
-        frame 99 { cel: -10000; }
+
+    Actions {
+        "anim_thrown" { first-frame: 82; frame-count: 16; }
     }
-    Track {
-        source-name: "anim_walk";
-        frame-count: 104;
-        frame 33 { cel: -1; }
-        frame 34 { cel: -10000; }
+
+    Actions {
+        "anim_walk" { first-frame: 0; frame-count: 33; }
     }
-    Track {
-        source-name: "anim_eat";
-        frame-count: 104;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 33 { cel: 0; }
-        frame 34 { cel: -10000; }
-        frame 60 { cel: -1; }
-        frame 61 { cel: -10000; }
+
+    Actions {
+        "anim_eat" { first-frame: 33; frame-count: 27; }
     }
-    Track {
-        source-name: "anim_death";
-        frame-count: 104;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 60 { cel: 0; }
-        frame 61 { cel: -10000; }
-        frame 82 { cel: -1; }
-        frame 83 { cel: -10000; }
+
+    Actions {
+        "anim_death" { first-frame: 60; frame-count: 22; }
+    }
+
+    Actions {
+        "_ground" { first-frame: 0; frame-count: 33; }
     }
     Track {
         source-name: "_ground";
@@ -1148,6 +1128,9 @@ export component Zombie_imp {
         frame 102 { x: 56; y: 99.9; skew-x: -336.6; skew-y: -336.6; scale-x: 0.971; scale-y: 0.977; }
         frame 103 { x: 53.4; y: 100.1; skew-x: -350.2; skew-y: -350.4; scale-x: -10000; scale-y: -10000; }
     }
+    Actions {
+        "anim_head1" { first-frame: 0; frame-count: 104; }
+    }
     Track {
         source-name: "anim_head1";
         frame-count: 104;
@@ -1235,6 +1218,9 @@ export component Zombie_imp {
         frame 101 { x: 15.6; y: 65.7; skew-x: -380.2; skew-y: -380.2; }
         frame 102 { x: 22.3; y: 55.8; skew-x: -368.9; skew-y: -368.9; scale-x: 0.971; scale-y: 0.971; }
         frame 103 { x: 29.7; y: 46.5; skew-x: -357.9; skew-y: -357.9; scale-x: 0.972; scale-y: 0.972; }
+    }
+    Actions {
+        "anim_head2" { first-frame: 0; frame-count: 104; }
     }
     Track {
         source-name: "anim_head2";

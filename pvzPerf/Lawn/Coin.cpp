@@ -690,8 +690,21 @@ void Coin::UpdateCollected()
     const float deltaX = static_cast<float>(aDestX) - mPosX;
     const float deltaY = static_cast<float>(aDestY) - mPosY;
     mCollectionDistance = std::sqrt(deltaX * deltaX + deltaY * deltaY);
-    mPosX += Sexy::UpdateDelta(deltaX / 21.0f);
-    mPosY += Sexy::UpdateDelta(deltaY / 21.0f);
+    // The original pursuit step reaches its destination after 21 legacy
+    // intervals. A longer actual interval must stop there: extrapolating past
+    // it reverses the error, and intervals >= twice that duration never
+    // converge. Keep the ordinary-step arithmetic and scoring order intact.
+    if (Sexy::gUpdateIntervalNs >= 210'000'000ULL)
+    {
+        mPosX = static_cast<float>(aDestX);
+        mPosY = static_cast<float>(aDestY);
+        mCollectionDistance = 0.0f;
+    }
+    else
+    {
+        mPosX += Sexy::UpdateDelta(deltaX / 21.0f);
+        mPosY += Sexy::UpdateDelta(deltaY / 21.0f);
+    }
 
     if (IsPresentWithAdvice())
     {

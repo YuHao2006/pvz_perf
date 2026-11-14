@@ -1,19 +1,26 @@
 #include "OpeningFlowRuntimeChecks.h"
+#include "GameConstants.h"
 #include "LawnApp.h"
 #include "Lawn/Board.h"
+#include "Lawn/Challenge.h"
+#include "Lawn/LawnCommon.h"
 #include "Lawn/Cutscene.h"
 #include "Lawn/Plant.h"
 #include "Lawn/SeedPacket.h"
 #include "Lawn/System/ReanimationLawn.h"
 #include "Lawn/System/PlayerInfo.h"
 #include "Lawn/System/PoolEffect.h"
+#include "Lawn/System/SaveGame.h"
 #include "Lawn/ZenGarden.h"
 #include "Lawn/Widget/GameButton.h"
+#include "Lawn/Widget/ContinueDialog.h"
+#include "Lawn/Widget/NewOptionsDialog.h"
 #include "Lawn/Widget/LawnDialog.h"
 #include "Lawn/Widget/SeedChooserScreen.h"
 #include "Lawn/Widget/StoreScreen.h"
 #include "Sexy.TodLib/EffectSystem.h"
 #include "Sexy.TodLib/Reanimator.h"
+#include "Sexy.TodLib/generated/SceneAtlasData.h"
 #include "SexyAppFramework/graphics/AtlasDraw.h"
 #include "SexyAppFramework/graphics/DDInterface.h"
 #include "SexyAppFramework/graphics/Graphics.h"
@@ -22,6 +29,7 @@
 #include "SexyAppFramework/widget/WidgetManager.h"
 #include <algorithm>
 #include <array>
+#include <filesystem>
 #include <iostream>
 #include <stdexcept>
 
@@ -46,6 +54,7 @@ struct Cleanup
     GameScenes scene=app.mGameScene;
     Rect bounds=app.mScreenBounds;
     BoardResult result=app.mBoardResult;
+    bool landscape=app.mLandscapeUI,landscapeActive=app.mLandscapeUIActive;
     unsigned long long interval=gUpdateIntervalNs, legacyPhase=gLegacyTickPhaseNs;
     int whole=gWholeLegacyTicks;
     double ticks=gUpdateTicks,steps=gStepsPerLegacyTick;
@@ -66,6 +75,7 @@ struct Cleanup
         Close();
         app.mPlayerInfo=player;app.mZenGarden=garden;app.mPoolEffect=pool;
         app.mGameMode=mode;app.mGameScene=scene;app.mScreenBounds=bounds;app.mBoardResult=result;
+        app.mLandscapeUI=landscape;app.mLandscapeUIActive=landscapeActive;
         gUpdateIntervalNs=interval;gLegacyTickPhaseNs=legacyPhase;gWholeLegacyTicks=whole;
         gUpdateTicks=ticks;gStepsPerLegacyTick=steps;
         app.mEffectSystem->mReanimationHolder->mVisualTimeNs=visual;
@@ -210,6 +220,186 @@ void CheckOpeningFlows(LawnApp& app, std::function<bool(bool*)>& nestedPump,
             for(int hz:{100,30,240,0}) run(GAMEMODE_ADVENTURE,level,false,stock,answer,hz);
     for(int hz:{100,30,240,0}) run(GAMEMODE_ADVENTURE,13,false,1,0,hz);
     Check(cases==720,"Opening scenario coverage changed unexpectedly");
+
+    // The ordinary corpus never supplies a frame longer than its authored
+    // 250 ms bank slide. Exercise the actual CutScene with a single frame
+    // spanning that whole interval, then with one spanning the intro's end.
+    // Advance(10) scales wall nanoseconds by ten: the legacy constants below
+    // are internal cutscene units, not a requested simulation step size.
+    const bool hadLandscapeAtlas=LandscapeUIAtlas::Texture!=0;
+    if(!hadLandscapeAtlas) LandscapeUIAtlas::Load();
+    struct RestoreLandscapeAtlas {
+        bool hadAtlas;
+        ~RestoreLandscapeAtlas(){if(!hadAtlas)LandscapeUIAtlas::Free();}
+    } restoreLandscapeAtlas{hadLandscapeAtlas};
+    int bossGapCases=0;
+    for(bool landscape:{false,true})
+        for(bool replay:{false,true})
+            for(bool crossIntroEnd:{false,true})
+    {
+        PlayerInfo profile;ZenGarden garden;PoolEffect pool;pool.PoolEffectInitialize();
+        profile.mId=50;profile.mLevel=50;profile.mFinishedAdventure=replay?1:0;
+        std::fill(std::begin(profile.mEarnedAchievements),std::end(profile.mEarnedAchievements),true);
+        std::fill(std::begin(profile.mShownAchievements),std::end(profile.mShownAchievements),true);
+        app.mPlayerInfo=&profile;app.mZenGarden=&garden;app.mPoolEffect=&pool;
+        app.mLandscapeUI=landscape;app.mLandscapeUIActive=landscape;
+        app.mScreenBounds=Rect(-300,0,1400,600);
+        clocks.mVisualTimeNs=456'789'012'000;clocks.mBattleTimeNs=0;
+        gLegacyTickPhaseNs=0;SRand(0xB05500+int(landscape)*4+int(replay)*2+int(crossIntroEnd));
+        const auto save=std::filesystem::current_path()/
+            (std::string("opening-boss-conveyor-")+(landscape?"landscape-":"desktop-")+
+                (replay?"replay-":"first-")+(crossIntroEnd?"end":"slide")+".dat64");
+        struct RemoveCheckpoint {
+            const std::filesystem::path& path;
+            ~RemoveCheckpoint(){std::error_code ignored;std::filesystem::remove(path,ignored);}
+        } removeCheckpoint{save};
+        try {
+            app.PreNewGame(GAMEMODE_ADVENTURE,false);
+            auto& board=*app.mBoard;
+            auto& movie=*board.mCutScene;
+            auto& bank=*board.mSeedBank;
+            Check(board.mLandscapeHud==landscape&&board.HasConveyorBeltSeedBank(),
+                "Boss gap fixture did not create the requested production conveyor HUD");
+            const auto draw=[&]() {
+                GpuImageDrawScope scope(render,target.image);Graphics graphics(target.image);
+                graphics.Translate(board.mX-app.mScreenBounds.mX,board.mY-app.mScreenBounds.mY);
+                board.Draw(&graphics);
+            };
+            draw();
+            const int slideStart=6000+movie.mBossTime+movie.mFogTime+movie.mSodTime+movie.mCrazyDaveTime;
+            const int slideEnd=slideStart+250;
+            const int introEnd=6000+movie.mLawnMowerTime+movie.mSodTime+movie.mCrazyDaveTime+
+                movie.mFogTime+movie.mBossTime+movie.mReadySetPlantTime;
+            const auto beforeSlideNs=std::int64_t(slideStart-10)*10'000'000;
+            std::uint64_t elapsed=0;
+            while(app.mGameScene==SCENE_LEVEL_INTRO&&movie.mCutsceneTime.mNanoseconds<beforeSlideNs&&
+                elapsed<60'000'000'000ULL)
+            {
+                if(app.mCrazyDaveMessageIndex!=-1&&movie.IsShowingCrazyDave())
+                    movie.KeyDown(KEYCODE_SPACE);
+                ApplySimulationStep(10'000'000);app.UpdateFrames();elapsed+=10'000'000;
+                processDeletes(app);
+                Check(app.mBoard==&board,"Boss gap fixture unexpectedly replaced its Board");
+            }
+            Check(app.mGameScene==SCENE_LEVEL_INTRO&&
+                movie.mCutsceneTime.mNanoseconds==beforeSlideNs&&bank.mY<0,
+                "Boss gap fixture did not reach the authored offscreen pre-slide boundary");
+            const auto gapNs=crossIntroEnd?
+                static_cast<unsigned long long>((std::int64_t(introEnd)*10'000'000-beforeSlideNs)/10+1):
+                300'000'000ULL;
+            ApplySimulationStep(gapNs);app.UpdateFrames();processDeletes(app);
+            Check(app.mBoard==&board&&movie.mCutsceneTime.mNanoseconds>
+                std::int64_t(slideEnd)*10'000'000,
+                "Boss gap failed to cross the entire card-bank slide");
+            Check(bank.mY==0&&bank.mX==SEED_BANK_OFFSET_X_END,
+                "Boss conveyor remained offscreen after crossing its entire slide interval");
+            Check(app.mGameScene==(crossIntroEnd?SCENE_PLAYING:SCENE_LEVEL_INTRO),
+                "Boss gap entered the wrong scene after its injected long frame");
+            while(app.mGameScene==SCENE_LEVEL_INTRO&&elapsed<60'000'000'000ULL) {
+                ApplySimulationStep(10'000'000);app.UpdateFrames();elapsed+=10'000'000;
+                processDeletes(app);
+            }
+            Check(app.mGameScene==SCENE_PLAYING&&!app.mSeedChooserScreen&&
+                bank.mY==0&&bank.mX==SEED_BANK_OFFSET_X_END,
+                "Boss conveyor final coordinates were not committed before Playing");
+            draw();
+
+            // Persist the actual historical failure, overwrite the live
+            // coordinates, then enter through Board::LoadGame (not the lower
+            // level decoder) so this also exercises the targeted load repair.
+            bank.mX=SEED_BANK_OFFSET_X;bank.mY=-bank.mHeight;
+            Check(LawnSaveGame(&board,save.string()),"Cannot serialize the offscreen conveyor checkpoint");
+            bank.mX=987;bank.mY=123;
+            Check(LawnLoadGame(&board,save.string())&&bank.mY==-bank.mHeight&&bank.mX==SEED_BANK_OFFSET_X,
+                "Offscreen conveyor checkpoint did not preserve the actual negative-Y failure signature");
+            Check(board.LoadGame(save.string()),"Cannot reload the offscreen conveyor checkpoint");
+            Check(bank.mY==0&&bank.mX==SEED_BANK_OFFSET_X_END&&board.mLandscapeHud==landscape,
+                "Loading an offscreen conveyor checkpoint did not restore its final HUD coordinates");
+            draw();
+            std::cout<<"Opening boss gap landscape="<<landscape<<" replay="<<replay
+                <<" crossIntroEnd="<<crossIntroEnd<<" gapNs="<<gapNs<<" loadRepair=1 ok=1\n";
+        } catch(const std::exception& error) {
+            passed=false;std::cerr<<"Opening boss gap failed landscape="<<landscape<<" replay="<<replay
+                <<" crossIntroEnd="<<crossIntroEnd<<" message="<<error.what()<<'\n';
+        }
+        restore.Close();++bossGapCases;
+    }
+    Check(bossGapCases==8,"Boss gap scenario coverage changed unexpectedly");
+
+    // A whole save -> load -> Continue -> Restart -> save -> load sequence in
+    // one app instance. Isolated fixture paths only: never read player saves.
+    int restartCases=0;
+    for(const auto mode:{GAMEMODE_ADVENTURE,GAMEMODE_SURVIVAL_NORMAL_STAGE_3,
+                        GAMEMODE_SURVIVAL_ENDLESS_STAGE_3})
+        for(bool optionsRestart:{false,true})
+    {
+        PlayerInfo profile;ZenGarden garden;PoolEffect pool;pool.PoolEffectInitialize();
+        profile.mId=57;profile.mLevel=12;profile.mFinishedAdventure=1;
+        std::fill(std::begin(profile.mEarnedAchievements),std::end(profile.mEarnedAchievements),true);
+        std::fill(std::begin(profile.mShownAchievements),std::end(profile.mShownAchievements),true);
+        app.mPlayerInfo=&profile;app.mZenGarden=&garden;app.mPoolEffect=&pool;
+        app.mLandscapeUI=app.mLandscapeUIActive=false;
+        const std::string save=GetSavedGameName(mode,profile.mId);
+        struct RemoveCheckpoint {
+            const std::string& path;
+            ~RemoveCheckpoint(){std::error_code ignored;std::filesystem::remove(path,ignored);}
+        } removeCheckpoint{save};
+        try {
+            app.PreNewGame(mode,false);app.KillSeedChooserScreen();app.StartPlaying();
+            app.mBoard->mSunMoney=1777;
+            app.mBoard->mLevelTimeNs=23'456'789'012ULL;
+            if(app.IsSurvivalMode())app.mBoard->mChallenge->mSurvivalStage=2;
+            app.mBoard->TryToSaveGame();
+            Check(app.FileExists(save),"SL fixture failed to create its interruption file");
+            app.KillBoard();processDeletes(app);app.PreNewGame(mode,true);
+            auto* continued=static_cast<ContinueDialog*>(app.GetDialog(DIALOG_CONTINUE));
+            Check(continued&&app.mBoard&&app.mBoard->mSunMoney==1777,
+                "SL did not restore the expected older checkpoint");
+            continued->ButtonDepress(ContinueDialog::ContinueDialog_Continue);
+            processDeletes(app);
+            Check(!app.FileExists(save),"Continue failed to consume the old checkpoint");
+            const auto beforeRestart=app.mBoardRevision;
+            if(optionsRestart) {
+                nestedPump=[&](bool* updated) {
+                    auto* confirm=static_cast<LawnDialog*>(app.GetDialog(DIALOG_CONFIRM_RESTART));
+                    Check(confirm!=nullptr,"Restart waited on an unexpected dialog");
+                    confirm->ButtonDepress(Dialog::ID_YES);
+                    if(updated)*updated=true;
+                    return true;
+                };
+                app.DoNewOptions(false);
+                auto* options=static_cast<NewOptionsDialog*>(app.GetDialog(DIALOG_NEWOPTIONS));
+                options->ButtonDepress(options->mRestartButton->mId);
+                nestedPump={};
+            } else {
+                app.FinishRestartConfirmDialog();
+            }
+            processDeletes(app);
+            Check(app.mBoard&&app.mBoardRevision!=beforeRestart&&
+                app.mGameScene==SCENE_LEVEL_INTRO&&app.mBoard->mLevelTimeNs==0&&
+                app.mBoard->mSunMoney!=1777&&app.mBoard->mChallenge->mSurvivalStage==0,
+                "Restart retained the previous board's checkpoint state");
+            Check(!app.FileExists(save)&&!app.GetDialog(DIALOG_CONTINUE),
+                "Restart retained an old interruption file or Continue dialog");
+            app.KillSeedChooserScreen();app.StartPlaying();
+            app.mBoard->mSunMoney=2002;app.mBoard->mLevelTimeNs=987'654'321;
+            app.mBoard->TryToSaveGame();
+            Check(app.FileExists(save),"Restarted board failed to write its replacement checkpoint");
+            app.KillBoard();processDeletes(app);app.PreNewGame(mode,true);
+            Check(app.mBoard&&app.GetDialog(DIALOG_CONTINUE)&&app.mBoard->mSunMoney==2002&&
+                app.mBoard->mLevelTimeNs==987'654'321&&app.mBoard->mChallenge->mSurvivalStage==0,
+                "SL after Restart resurrected the previous checkpoint");
+            app.KillDialog(DIALOG_CONTINUE);
+            std::cout<<"SL restart mode="<<int(mode)<<" options="<<optionsRestart<<" ok=1\n";
+        } catch(const std::exception& error) {
+            passed=false;std::cerr<<"SL restart failed mode="<<int(mode)<<" options="<<optionsRestart
+                <<" message="<<error.what()<<'\n';
+            app.KillDialog(DIALOG_CONTINUE);app.KillDialog(DIALOG_CONFIRM_RESTART);
+            app.KillDialog(DIALOG_RESTARTCONFIRM);app.KillNewOptionsDialog();
+        }
+        restore.Close();++restartCases;
+    }
+    Check(restartCases==6,"SL restart scenario coverage changed unexpectedly");
     Check(passed,"Opening routes have failed cases; inspect per-case output");
-    std::cout<<"PASS actual opening flows: 720 contexts, authored Dave inputs, shovel, chooser and packet confirmations\n";
+    std::cout<<"PASS actual opening flows: 720 contexts, authored Dave inputs, shovel, chooser and packet confirmations; 8 two-layout boss gaps and checkpoint repairs\n";
 }

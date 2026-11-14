@@ -45,8 +45,8 @@
     },
     {
       "path": "pvz-resource-build.exe",
-      "bytes": 1701888,
-      "sha256": "b37363af9a84b0c89b668434dfe25d526cc2bb1f988a9848ff428dd55a9a401b"
+      "bytes": 1703424,
+      "sha256": "2ea56a6f18eb26edb3ebdb688bc9a60a086990458ba669b4f87a95c967e407ff"
     },
     {
       "path": "re2.dll",

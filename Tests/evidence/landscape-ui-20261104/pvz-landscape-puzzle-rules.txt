@@ -1,0 +1,359 @@
+PASS pure wrapped text measurement: wrapping, newlines, color tags, no glyph draws and empty fill
+pool GPU day-normal-nearest: RGBA max=0 mean=0 poolMean=0 changedPixels=0 worst=(0,0) outsideBoundaryMax=0
+pool GPU night-normal-linear: RGBA max=0 mean=0 poolMean=0 changedPixels=0 worst=(0,0) outsideBoundaryMax=0
+pool GPU day-additive-partial-fractional: RGBA max=0 mean=0 poolMean=0 changedPixels=0 worst=(0,0) outsideBoundaryMax=0
+pool GPU night-additive-phase-wrap: RGBA max=0 mean=0 poolMean=0 changedPixels=0 worst=(0,0) outsideBoundaryMax=0
+pool GPU day-opaque-partial-fractional: RGBA max=0 mean=0 poolMean=0 changedPixels=0 worst=(0,0) outsideBoundaryMax=0
+pool GPU night-opaque-large-counter: RGBA max=0 mean=0 poolMean=0 changedPixels=0 worst=(0,0) outsideBoundaryMax=0
+pool GPU feedback-float-source-pending-batch: RGBA max=0 mean=0 poolMean=0 changedPixels=0 worst=(0,0) outsideBoundaryMax=0
+PASS production GPU pool vs independent legacy CPU mesh: day/night, normal/additive/opaque, nearest/linear/repeat, phase wrap, destination scissor, fractional translation, ordinary painter order and float target feedback
+PASS precomputed transparent edges: alpha, visible RGB, idempotency, nearest/linear, upload-discard
+PASS public font upload: deferred alpha, upload-and-discard, texture reuse, independent copies
+PASS nonzero source rectangles and repacked whole-sheet atlas views: translation, scale origins, clipping, tint, additive, local-source views and floating scales
+PASS necessary local-clip contract: independent full-pixel rect/image/source/mirror/matrix/particle/convex oracles, disjoint/partial/empty clips and negative framebuffer crossings
+PASS actual TitleScreen grass reveal: widths 0/1/157/313/314/400, translated draw and unrevealed black pixels
+PASS actual GameButton atlas states: normal, hover, press/fallbacks, disabled, overAlpha, additive glow, translation/offsets and hidden state match independent images
+PASS direct shared-image snapshots and reference lifetime
+PASS actual boss back-arm drawing: four attack offsets, reference pixels, 1024 exact shared-animation translation restorations
+PASS reanimation appearances: independent options, image slots, atlas dimensions, original centers and actual AttachmentDraw visibility pixels
+PASS fullscreen reanimation: destination fill pixels, hidden/zero alpha, color modulation, both blend modes, translation and effective clip without track matrices
+Store clock fixture: initialize
+Puzzle begin mode=36 Hz=100
+Puzzle defender mode=36 Hz=100 kind=shoot observed=1
+Puzzle bite mode=36 Hz=100 type=0 health=1 score=0
+Puzzle brains mode=36 Hz=100 complete=5 nextStage=0
+Puzzle primary mode=36 Hz=100 stage=0 award=0 result=2
+Puzzle begin mode=36 Hz=30
+Puzzle defender mode=36 Hz=30 kind=shoot observed=1
+Puzzle bite mode=36 Hz=30 type=0 health=1 score=0
+Puzzle brains mode=36 Hz=30 complete=5 nextStage=0
+Puzzle primary mode=36 Hz=30 stage=0 award=0 result=2
+Puzzle begin mode=36 Hz=240
+Puzzle defender mode=36 Hz=240 kind=shoot observed=1
+Puzzle bite mode=36 Hz=240 type=0 health=1 score=0
+Puzzle brains mode=36 Hz=240 complete=5 nextStage=0
+Puzzle primary mode=36 Hz=240 stage=0 award=0 result=2
+Puzzle begin mode=36 Hz=0
+Puzzle defender mode=36 Hz=0 kind=shoot observed=1
+Puzzle bite mode=36 Hz=0 type=0 health=1 score=0
+Puzzle brains mode=36 Hz=0 complete=5 nextStage=0
+Puzzle primary mode=36 Hz=0 stage=0 award=0 result=2
+Puzzle begin mode=37 Hz=100
+Puzzle defender mode=37 Hz=100 kind=shoot observed=1
+Puzzle bite mode=37 Hz=100 type=0 health=1 score=0
+Puzzle brains mode=37 Hz=100 complete=5 nextStage=0
+Puzzle primary mode=37 Hz=100 stage=0 award=0 result=2
+Puzzle begin mode=37 Hz=30
+Puzzle defender mode=37 Hz=30 kind=shoot observed=1
+Puzzle bite mode=37 Hz=30 type=0 health=1 score=0
+Puzzle brains mode=37 Hz=30 complete=5 nextStage=0
+Puzzle primary mode=37 Hz=30 stage=0 award=0 result=2
+Puzzle begin mode=37 Hz=240
+Puzzle defender mode=37 Hz=240 kind=shoot observed=1
+Puzzle bite mode=37 Hz=240 type=0 health=1 score=0
+Puzzle brains mode=37 Hz=240 complete=5 nextStage=0
+Puzzle primary mode=37 Hz=240 stage=0 award=0 result=2
+Puzzle begin mode=37 Hz=0
+Puzzle defender mode=37 Hz=0 kind=shoot observed=1
+Puzzle bite mode=37 Hz=0 type=0 health=1 score=0
+Puzzle brains mode=37 Hz=0 complete=5 nextStage=0
+Puzzle primary mode=37 Hz=0 stage=0 award=0 result=2
+Puzzle begin mode=38 Hz=100
+Puzzle defender mode=38 Hz=100 kind=shoot observed=1
+Puzzle bite mode=38 Hz=100 type=0 health=1 score=0
+Puzzle brains mode=38 Hz=100 complete=5 nextStage=0
+Puzzle primary mode=38 Hz=100 stage=0 award=0 result=2
+Puzzle begin mode=38 Hz=30
+Puzzle defender mode=38 Hz=30 kind=shoot observed=1
+Puzzle bite mode=38 Hz=30 type=0 health=1 score=0
+Puzzle brains mode=38 Hz=30 complete=5 nextStage=0
+Puzzle primary mode=38 Hz=30 stage=0 award=0 result=2
+Puzzle begin mode=38 Hz=240
+Puzzle defender mode=38 Hz=240 kind=shoot observed=1
+Puzzle bite mode=38 Hz=240 type=0 health=1 score=0
+Puzzle brains mode=38 Hz=240 complete=5 nextStage=0
+Puzzle primary mode=38 Hz=240 stage=0 award=0 result=2
+Puzzle begin mode=38 Hz=0
+Puzzle defender mode=38 Hz=0 kind=shoot observed=1
+Puzzle bite mode=38 Hz=0 type=0 health=1 score=0
+Puzzle brains mode=38 Hz=0 complete=5 nextStage=0
+Puzzle primary mode=38 Hz=0 stage=0 award=0 result=2
+Puzzle begin mode=39 Hz=100
+Puzzle defender mode=39 Hz=100 kind=shoot observed=1
+Puzzle bite mode=39 Hz=100 type=0 health=1 score=0
+Puzzle brains mode=39 Hz=100 complete=5 nextStage=0
+Puzzle primary mode=39 Hz=100 stage=0 award=0 result=2
+Puzzle begin mode=39 Hz=30
+Puzzle defender mode=39 Hz=30 kind=shoot observed=1
+Puzzle bite mode=39 Hz=30 type=0 health=1 score=0
+Puzzle brains mode=39 Hz=30 complete=5 nextStage=0
+Puzzle primary mode=39 Hz=30 stage=0 award=0 result=2
+Puzzle begin mode=39 Hz=240
+Puzzle defender mode=39 Hz=240 kind=shoot observed=1
+Puzzle bite mode=39 Hz=240 type=0 health=1 score=0
+Puzzle brains mode=39 Hz=240 complete=5 nextStage=0
+Puzzle primary mode=39 Hz=240 stage=0 award=0 result=2
+Puzzle begin mode=39 Hz=0
+Puzzle defender mode=39 Hz=0 kind=shoot observed=1
+Puzzle bite mode=39 Hz=0 type=0 health=1 score=0
+Puzzle brains mode=39 Hz=0 complete=5 nextStage=0
+Puzzle primary mode=39 Hz=0 stage=0 award=0 result=2
+Puzzle begin mode=40 Hz=100
+Puzzle defender mode=40 Hz=100 kind=shoot observed=1
+Puzzle bite mode=40 Hz=100 type=0 health=1 score=0
+Puzzle brains mode=40 Hz=100 complete=5 nextStage=0
+Puzzle primary mode=40 Hz=100 stage=0 award=0 result=2
+Puzzle begin mode=40 Hz=30
+Puzzle defender mode=40 Hz=30 kind=shoot observed=1
+Puzzle bite mode=40 Hz=30 type=0 health=1 score=0
+Puzzle brains mode=40 Hz=30 complete=5 nextStage=0
+Puzzle primary mode=40 Hz=30 stage=0 award=0 result=2
+Puzzle begin mode=40 Hz=240
+Puzzle defender mode=40 Hz=240 kind=shoot observed=1
+Puzzle bite mode=40 Hz=240 type=0 health=1 score=0
+Puzzle brains mode=40 Hz=240 complete=5 nextStage=0
+Puzzle primary mode=40 Hz=240 stage=0 award=0 result=2
+Puzzle begin mode=40 Hz=0
+Puzzle defender mode=40 Hz=0 kind=shoot observed=1
+Puzzle bite mode=40 Hz=0 type=0 health=1 score=0
+Puzzle brains mode=40 Hz=0 complete=5 nextStage=0
+Puzzle primary mode=40 Hz=0 stage=0 award=0 result=2
+Puzzle begin mode=41 Hz=100
+Puzzle defender mode=41 Hz=100 kind=shoot observed=1
+Puzzle bite mode=41 Hz=100 type=0 health=1 score=0
+Puzzle brains mode=41 Hz=100 complete=5 nextStage=0
+Puzzle primary mode=41 Hz=100 stage=0 award=0 result=2
+Puzzle begin mode=41 Hz=30
+Puzzle defender mode=41 Hz=30 kind=shoot observed=1
+Puzzle bite mode=41 Hz=30 type=0 health=1 score=0
+Puzzle brains mode=41 Hz=30 complete=5 nextStage=0
+Puzzle primary mode=41 Hz=30 stage=0 award=0 result=2
+Puzzle begin mode=41 Hz=240
+Puzzle defender mode=41 Hz=240 kind=shoot observed=1
+Puzzle bite mode=41 Hz=240 type=0 health=1 score=0
+Puzzle brains mode=41 Hz=240 complete=5 nextStage=0
+Puzzle primary mode=41 Hz=240 stage=0 award=0 result=2
+Puzzle begin mode=41 Hz=0
+Puzzle defender mode=41 Hz=0 kind=shoot observed=1
+Puzzle bite mode=41 Hz=0 type=0 health=1 score=0
+Puzzle brains mode=41 Hz=0 complete=5 nextStage=0
+Puzzle primary mode=41 Hz=0 stage=0 award=0 result=2
+Puzzle begin mode=42 Hz=100
+Puzzle defender mode=42 Hz=100 kind=mine observed=1
+Puzzle bite mode=42 Hz=100 type=0 health=1 score=0
+Puzzle brains mode=42 Hz=100 complete=5 nextStage=0
+Puzzle primary mode=42 Hz=100 stage=0 award=0 result=2
+Puzzle begin mode=42 Hz=30
+Puzzle defender mode=42 Hz=30 kind=mine observed=1
+Puzzle bite mode=42 Hz=30 type=0 health=1 score=0
+Puzzle brains mode=42 Hz=30 complete=5 nextStage=0
+Puzzle primary mode=42 Hz=30 stage=0 award=0 result=2
+Puzzle begin mode=42 Hz=240
+Puzzle defender mode=42 Hz=240 kind=mine observed=1
+Puzzle bite mode=42 Hz=240 type=0 health=1 score=0
+Puzzle brains mode=42 Hz=240 complete=5 nextStage=0
+Puzzle primary mode=42 Hz=240 stage=0 award=0 result=2
+Puzzle begin mode=42 Hz=0
+Puzzle defender mode=42 Hz=0 kind=mine observed=1
+Puzzle bite mode=42 Hz=0 type=0 health=1 score=0
+Puzzle brains mode=42 Hz=0 complete=5 nextStage=0
+Puzzle primary mode=42 Hz=0 stage=0 award=0 result=2
+Puzzle begin mode=43 Hz=100
+Puzzle defender mode=43 Hz=100 kind=shoot observed=1
+Puzzle bite mode=43 Hz=100 type=24 health=1 score=0
+Puzzle brains mode=43 Hz=100 complete=5 nextStage=0
+Puzzle primary mode=43 Hz=100 stage=0 award=0 result=2
+Puzzle begin mode=43 Hz=30
+Puzzle defender mode=43 Hz=30 kind=shoot observed=1
+Puzzle bite mode=43 Hz=30 type=24 health=1 score=0
+Puzzle brains mode=43 Hz=30 complete=5 nextStage=0
+Puzzle primary mode=43 Hz=30 stage=0 award=0 result=2
+Puzzle begin mode=43 Hz=240
+Puzzle defender mode=43 Hz=240 kind=shoot observed=1
+Puzzle bite mode=43 Hz=240 type=24 health=1 score=0
+Puzzle brains mode=43 Hz=240 complete=5 nextStage=0
+Puzzle primary mode=43 Hz=240 stage=0 award=0 result=2
+Puzzle begin mode=43 Hz=0
+Puzzle defender mode=43 Hz=0 kind=shoot observed=1
+Puzzle bite mode=43 Hz=0 type=24 health=1 score=0
+Puzzle brains mode=43 Hz=0 complete=5 nextStage=0
+Puzzle primary mode=43 Hz=0 stage=0 award=0 result=2
+Puzzle begin mode=44 Hz=100
+Puzzle defender mode=44 Hz=100 kind=shoot observed=1
+Puzzle bite mode=44 Hz=100 type=24 health=1 score=0
+Puzzle brains mode=44 Hz=100 complete=5 nextStage=0
+Puzzle primary mode=44 Hz=100 stage=0 award=0 result=2
+Puzzle begin mode=44 Hz=30
+Puzzle defender mode=44 Hz=30 kind=shoot observed=1
+Puzzle bite mode=44 Hz=30 type=24 health=1 score=0
+Puzzle brains mode=44 Hz=30 complete=5 nextStage=0
+Puzzle primary mode=44 Hz=30 stage=0 award=0 result=2
+Puzzle begin mode=44 Hz=240
+Puzzle defender mode=44 Hz=240 kind=shoot observed=1
+Puzzle bite mode=44 Hz=240 type=24 health=1 score=0
+Puzzle brains mode=44 Hz=240 complete=5 nextStage=0
+Puzzle primary mode=44 Hz=240 stage=0 award=0 result=2
+Puzzle begin mode=44 Hz=0
+Puzzle defender mode=44 Hz=0 kind=shoot observed=1
+Puzzle bite mode=44 Hz=0 type=24 health=1 score=0
+Puzzle brains mode=44 Hz=0 complete=5 nextStage=0
+Puzzle primary mode=44 Hz=0 stage=0 award=0 result=2
+Puzzle begin mode=45 Hz=100
+Puzzle defender mode=45 Hz=100 kind=shoot observed=1
+Puzzle bite mode=45 Hz=100 type=24 health=1 score=0
+Puzzle brains mode=45 Hz=100 complete=5 nextStage=1
+Puzzle primary mode=45 Hz=100 stage=1 award=0 result=2
+Puzzle begin mode=45 Hz=30
+Puzzle defender mode=45 Hz=30 kind=shoot observed=1
+Puzzle bite mode=45 Hz=30 type=24 health=1 score=0
+Puzzle brains mode=45 Hz=30 complete=5 nextStage=1
+Puzzle primary mode=45 Hz=30 stage=1 award=0 result=2
+Puzzle begin mode=45 Hz=240
+Puzzle defender mode=45 Hz=240 kind=shoot observed=1
+Puzzle bite mode=45 Hz=240 type=24 health=1 score=0
+Puzzle brains mode=45 Hz=240 complete=5 nextStage=1
+Puzzle primary mode=45 Hz=240 stage=1 award=0 result=2
+Puzzle begin mode=45 Hz=0
+Puzzle defender mode=45 Hz=0 kind=shoot observed=1
+Puzzle bite mode=45 Hz=0 type=24 health=1 score=0
+Puzzle brains mode=45 Hz=0 complete=5 nextStage=1
+Puzzle primary mode=45 Hz=0 stage=1 award=0 result=2
+Puzzle begin mode=46 Hz=100
+Puzzle pots mode=46 Hz=100 opened=25 nextStage=0
+Puzzle primary mode=46 Hz=100 stage=0 award=1 result=1
+Puzzle begin mode=46 Hz=30
+Puzzle pots mode=46 Hz=30 opened=25 nextStage=0
+Puzzle primary mode=46 Hz=30 stage=0 award=1 result=1
+Puzzle begin mode=46 Hz=240
+Puzzle pots mode=46 Hz=240 opened=25 nextStage=0
+Puzzle primary mode=46 Hz=240 stage=0 award=1 result=1
+Puzzle begin mode=46 Hz=0
+Puzzle pots mode=46 Hz=0 opened=25 nextStage=0
+Puzzle primary mode=46 Hz=0 stage=0 award=1 result=1
+Puzzle begin mode=47 Hz=100
+Puzzle pots mode=47 Hz=100 opened=25 nextStage=0
+Puzzle primary mode=47 Hz=100 stage=0 award=1 result=1
+Puzzle begin mode=47 Hz=30
+Puzzle pots mode=47 Hz=30 opened=25 nextStage=0
+Puzzle primary mode=47 Hz=30 stage=0 award=1 result=1
+Puzzle begin mode=47 Hz=240
+Puzzle pots mode=47 Hz=240 opened=25 nextStage=0
+Puzzle primary mode=47 Hz=240 stage=0 award=1 result=1
+Puzzle begin mode=47 Hz=0
+Puzzle pots mode=47 Hz=0 opened=25 nextStage=0
+Puzzle primary mode=47 Hz=0 stage=0 award=1 result=1
+Puzzle begin mode=48 Hz=100
+Puzzle pots mode=48 Hz=100 opened=30 nextStage=0
+Puzzle primary mode=48 Hz=100 stage=0 award=1 result=1
+Puzzle begin mode=48 Hz=30
+Puzzle pots mode=48 Hz=30 opened=30 nextStage=0
+Puzzle primary mode=48 Hz=30 stage=0 award=1 result=1
+Puzzle begin mode=48 Hz=240
+Puzzle pots mode=48 Hz=240 opened=30 nextStage=0
+Puzzle primary mode=48 Hz=240 stage=0 award=1 result=1
+Puzzle begin mode=48 Hz=0
+Puzzle pots mode=48 Hz=0 opened=30 nextStage=0
+Puzzle primary mode=48 Hz=0 stage=0 award=1 result=1
+Puzzle begin mode=49 Hz=100
+Puzzle pots mode=49 Hz=100 opened=35 nextStage=0
+Puzzle primary mode=49 Hz=100 stage=0 award=1 result=1
+Puzzle begin mode=49 Hz=30
+Puzzle pots mode=49 Hz=30 opened=35 nextStage=0
+Puzzle primary mode=49 Hz=30 stage=0 award=1 result=1
+Puzzle begin mode=49 Hz=240
+Puzzle pots mode=49 Hz=240 opened=35 nextStage=0
+Puzzle primary mode=49 Hz=240 stage=0 award=1 result=1
+Puzzle begin mode=49 Hz=0
+Puzzle pots mode=49 Hz=0 opened=35 nextStage=0
+Puzzle primary mode=49 Hz=0 stage=0 award=1 result=1
+Puzzle begin mode=50 Hz=100
+Puzzle pots mode=50 Hz=100 opened=35 nextStage=0
+Puzzle primary mode=50 Hz=100 stage=0 award=1 result=1
+Puzzle begin mode=50 Hz=30
+Puzzle pots mode=50 Hz=30 opened=35 nextStage=0
+Puzzle primary mode=50 Hz=30 stage=0 award=1 result=1
+Puzzle begin mode=50 Hz=240
+Puzzle pots mode=50 Hz=240 opened=35 nextStage=0
+Puzzle primary mode=50 Hz=240 stage=0 award=1 result=1
+Puzzle begin mode=50 Hz=0
+Puzzle pots mode=50 Hz=0 opened=35 nextStage=0
+Puzzle primary mode=50 Hz=0 stage=0 award=1 result=1
+Puzzle begin mode=51 Hz=100
+Puzzle pots mode=51 Hz=100 opened=35 nextStage=0
+Puzzle primary mode=51 Hz=100 stage=0 award=1 result=1
+Puzzle begin mode=51 Hz=30
+Puzzle pots mode=51 Hz=30 opened=35 nextStage=0
+Puzzle primary mode=51 Hz=30 stage=0 award=1 result=1
+Puzzle begin mode=51 Hz=240
+Puzzle pots mode=51 Hz=240 opened=35 nextStage=0
+Puzzle primary mode=51 Hz=240 stage=0 award=1 result=1
+Puzzle begin mode=51 Hz=0
+Puzzle pots mode=51 Hz=0 opened=35 nextStage=0
+Puzzle primary mode=51 Hz=0 stage=0 award=1 result=1
+Puzzle begin mode=52 Hz=100
+Puzzle pots mode=52 Hz=100 opened=30 nextStage=0
+Puzzle primary mode=52 Hz=100 stage=0 award=1 result=1
+Puzzle begin mode=52 Hz=30
+Puzzle pots mode=52 Hz=30 opened=30 nextStage=0
+Puzzle primary mode=52 Hz=30 stage=0 award=1 result=1
+Puzzle begin mode=52 Hz=240
+Puzzle pots mode=52 Hz=240 opened=30 nextStage=0
+Puzzle primary mode=52 Hz=240 stage=0 award=1 result=1
+Puzzle begin mode=52 Hz=0
+Puzzle pots mode=52 Hz=0 opened=30 nextStage=0
+Puzzle primary mode=52 Hz=0 stage=0 award=1 result=1
+Puzzle begin mode=53 Hz=100
+Puzzle pots mode=53 Hz=100 opened=35 nextStage=0
+Puzzle primary mode=53 Hz=100 stage=0 award=1 result=1
+Puzzle begin mode=53 Hz=30
+Puzzle pots mode=53 Hz=30 opened=35 nextStage=0
+Puzzle primary mode=53 Hz=30 stage=0 award=1 result=1
+Puzzle begin mode=53 Hz=240
+Puzzle pots mode=53 Hz=240 opened=35 nextStage=0
+Puzzle primary mode=53 Hz=240 stage=0 award=1 result=1
+Puzzle begin mode=53 Hz=0
+Puzzle pots mode=53 Hz=0 opened=35 nextStage=0
+Puzzle primary mode=53 Hz=0 stage=0 award=1 result=1
+Puzzle begin mode=54 Hz=100
+Puzzle pots mode=54 Hz=100 opened=35 nextStage=0
+Puzzle primary mode=54 Hz=100 stage=0 award=1 result=1
+Puzzle begin mode=54 Hz=30
+Puzzle pots mode=54 Hz=30 opened=35 nextStage=0
+Puzzle primary mode=54 Hz=30 stage=0 award=1 result=1
+Puzzle begin mode=54 Hz=240
+Puzzle pots mode=54 Hz=240 opened=35 nextStage=0
+Puzzle primary mode=54 Hz=240 stage=0 award=1 result=1
+Puzzle begin mode=54 Hz=0
+Puzzle pots mode=54 Hz=0 opened=35 nextStage=0
+Puzzle primary mode=54 Hz=0 stage=0 award=1 result=1
+Puzzle begin mode=55 Hz=100
+Puzzle pots mode=55 Hz=100 opened=35 nextStage=1
+Puzzle primary mode=55 Hz=100 stage=1 award=0 result=1
+Puzzle begin mode=55 Hz=30
+Puzzle pots mode=55 Hz=30 opened=35 nextStage=1
+Puzzle primary mode=55 Hz=30 stage=1 award=0 result=1
+Puzzle begin mode=55 Hz=240
+Puzzle pots mode=55 Hz=240 opened=35 nextStage=1
+Puzzle primary mode=55 Hz=240 stage=1 award=0 result=1
+Puzzle begin mode=55 Hz=0
+Puzzle pots mode=55 Hz=0 opened=35 nextStage=1
+Puzzle primary mode=55 Hz=0 stage=1 award=0 result=1
+Puzzle endless mode=45 stage=0 reward=0 giants=0 puffs=0 sunflowers=8
+Puzzle endless mode=45 stage=1 reward=0 giants=0 puffs=1 sunflowers=7
+Puzzle endless mode=45 stage=2 reward=1 giants=0 puffs=4 sunflowers=4
+Puzzle endless mode=45 stage=8 reward=1 giants=0 puffs=5 sunflowers=3
+Puzzle endless mode=45 stage=9 reward=0 giants=0 puffs=5 sunflowers=3
+Puzzle endless mode=45 stage=10 reward=0 giants=0 puffs=7 sunflowers=1
+Puzzle endless mode=45 stage=19 reward=0 giants=0 puffs=7 sunflowers=1
+Puzzle endless mode=45 stage=79 reward=0 giants=0 puffs=7 sunflowers=1
+Puzzle endless mode=45 stage=80 reward=1 giants=0 puffs=7 sunflowers=1
+Puzzle endless mode=55 stage=0 reward=0 giants=1 puffs=0 sunflowers=0
+Puzzle endless mode=55 stage=1 reward=0 giants=1 puffs=0 sunflowers=0
+Puzzle endless mode=55 stage=2 reward=0 giants=1 puffs=0 sunflowers=0
+Puzzle endless mode=55 stage=8 reward=0 giants=1 puffs=0 sunflowers=0
+Puzzle endless mode=55 stage=9 reward=1 giants=1 puffs=0 sunflowers=0
+Puzzle endless mode=55 stage=10 reward=0 giants=2 puffs=0 sunflowers=0
+Puzzle endless mode=55 stage=19 reward=1 giants=2 puffs=0 sunflowers=0
+Puzzle endless mode=55 stage=79 reward=1 giants=8 puffs=0 sunflowers=0
+Puzzle endless mode=55 stage=80 reward=0 giants=9 puffs=0 sunflowers=0
+PASS actual twenty puzzle rules: formations, inputs, payloads, brain bites, terminal rules and endless repopulation at four schedules

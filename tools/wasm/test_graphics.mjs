@@ -1,17 +1,18 @@
 import assert from 'node:assert/strict';
-import {detectGraphics,capabilityText} from './game/graphics.js';
+import {detectGraphics,capabilityText,graphicsStartupError} from './game/graphics.js';
+let contextRequests=0,textureAllocations=0,listenerRemovals=0,creationError='';
 let glAvailable=true,floatAvailable=true,framebufferComplete=true,released=0,textureLimit=4096,drawValid=true,shaderValid=true;
 const gl={RGBA16F:0x881a,FRAMEBUFFER_COMPLETE:0x8cd5,NO_ERROR:0,
  getParameter:()=>textureLimit,
  getExtension:name=>name==='WEBGL_lose_context'?{loseContext(){released++}}:floatAvailable?{}:null,
- createTexture:()=>({}),createFramebuffer:()=>({}),checkFramebufferStatus:()=>framebufferComplete?0x8cd5:0,
+ createTexture:()=>{textureAllocations++;return {}},createFramebuffer:()=>({}),checkFramebufferStatus:()=>framebufferComplete?0x8cd5:0,
  createShader:()=>({}),getShaderParameter:()=>shaderValid,getShaderInfoLog:()=> 'test shader failure',
  createProgram:()=>({}),getProgramParameter:()=>true,createVertexArray:()=>({}),getUniformLocation:()=>0,getError:()=>0,
  readPixels:(x,y,w,h,format,type,data)=>data.set(drawValid?[102,76,76,255]:[0,0,0,0])};
 for(const name of ['bindTexture','texParameteri','texImage2D','bindFramebuffer','framebufferTexture2D','deleteFramebuffer','deleteTexture',
  'shaderSource','compileShader','attachShader','linkProgram','bindVertexArray','useProgram','uniform1i','activeTexture',
  'viewport','clearColor','clear','enable','disable','blendFuncSeparate','drawArrays','deleteProgram','deleteShader','deleteVertexArray'])gl[name]=()=>{};
-globalThis.document={createElement:()=>({addEventListener(){},getContext:(kind,attributes)=>{assert.equal(kind,'webgl2');assert.deepEqual(attributes,{alpha:true,depth:false,stencil:false,antialias:false});return glAvailable?gl:null}})};
+globalThis.document={createElement:()=>({listener:null,addEventListener(name,fn){this.listener=fn},removeEventListener(name,fn){assert.equal(fn,this.listener);listenerRemovals++},getContext(kind,attributes){contextRequests++;if(!glAvailable&&creationError)this.listener({statusMessage:creationError});assert.equal(kind,'webgl2');assert.deepEqual(attributes,{alpha:true,depth:false,stencil:false,antialias:false});return glAvailable?gl:null}})};
 const limits={maxTextureDimension2D:8192,maxSampledTexturesPerShaderStage:16,maxBindGroups:4};
 let requests=0,destroyed=0,requested,gpuDrawValid=true,gpuValidationError=null;
 globalThis.GPUShaderStage={FRAGMENT:2};globalThis.GPUTextureUsage={TEXTURE_BINDING:4,COPY_DST:2,COPY_SRC:1,RENDER_ATTACHMENT:16};
@@ -31,7 +32,7 @@ result=await detectGraphics({requestAdapter:async()=>({...adapter,requestDevice:
 result=await detectGraphics({requestAdapter:async()=>({...adapter,features:new Set()})});assert.equal(result.backend,'webgpu');assert.deepEqual(requested.requiredFeatures,[]);
 const before=requests;result=await detectGraphics(gpu,{webgpu:false});assert.equal(result.backend,'webgl');assert.equal(result.webgpuProbed,false);assert.equal(requests,before);
 result=await detectGraphics(gpu,{webgl:false});assert.equal(result.backend,'webgpu');assert.equal(result.webgl,false);assert.match(result.webglReason,/未包含/);
-glAvailable=false;result=await detectGraphics(undefined);assert.equal(result.backend,null);assert.equal(result.webgl,false);assert.match(result.webglReason,/上下文/);
+glAvailable=false;const beforeContexts=contextRequests,beforeTextures=textureAllocations;creationError='Failed to create a WebGL2 context.';result=await detectGraphics(undefined);assert.equal(contextRequests-beforeContexts,1);assert.equal(textureAllocations,beforeTextures);assert.equal(result.webglFailureStage,'context');assert.equal(result.webglContextCreationError,creationError);assert.match(capabilityText(result),/原始创建错误/);const desktopError=graphicsStartupError(result,{fallback:true,userAgent:'Windows NT 6.1 bilibili/1.19.0 Chrome/108.0.5359.215 Electron/22.3.27'});assert.match(desktopError,/B 站桌面客户端/);assert.match(desktopError,/复制到系统浏览器/);assert.doesNotMatch(graphicsStartupError(result,{userAgent:'Android Chrome/108'}),/B 站桌面客户端/);creationError='';assert.equal(result.backend,null);assert.equal(result.webgl,false);assert.match(result.webglReason,/上下文|context/);
 result=await detectGraphics(gpu);assert.equal(result.backend,'webgpu');assert.equal(result.webgl,false);
 glAvailable=true;floatAvailable=false;result=await detectGraphics(undefined);assert.equal(result.backend,null);assert.match(result.webglReason,/EXT_color_buffer_float/);
 floatAvailable=true;framebufferComplete=false;result=await detectGraphics(undefined);assert.equal(result.backend,null);assert.match(result.webglReason,/RGBA16F/);
@@ -40,6 +41,6 @@ drawValid=true;shaderValid=false;result=await detectGraphics(undefined);assert.e
 shaderValid=true;gpuDrawValid=false;result=await detectGraphics(gpu);assert.equal(result.backend,'webgl');assert.match(result.reason,/实际绘制.*像素/);
 gpuDrawValid=true;gpuValidationError={message:'probe validation error'};result=await detectGraphics(gpu);assert.equal(result.backend,'webgl');assert.match(result.reason,/probe validation error/);
 gpuValidationError=null;
-assert.ok(released>0);
+assert.ok(released>0);assert.equal(listenerRemovals,contextRequests);
 textureLimit=2048;result=await detectGraphics(undefined);assert.equal(result.backend,null);assert.match(result.webglReason,/2048.*4096/);
 console.log('Graphics capability selection and fallback: passed');

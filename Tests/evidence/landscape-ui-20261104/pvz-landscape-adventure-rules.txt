@@ -1,0 +1,829 @@
+PASS pure wrapped text measurement: wrapping, newlines, color tags, no glyph draws and empty fill
+pool GPU day-normal-nearest: RGBA max=0 mean=0 poolMean=0 changedPixels=0 worst=(0,0) outsideBoundaryMax=0
+pool GPU night-normal-linear: RGBA max=0 mean=0 poolMean=0 changedPixels=0 worst=(0,0) outsideBoundaryMax=0
+pool GPU day-additive-partial-fractional: RGBA max=0 mean=0 poolMean=0 changedPixels=0 worst=(0,0) outsideBoundaryMax=0
+pool GPU night-additive-phase-wrap: RGBA max=0 mean=0 poolMean=0 changedPixels=0 worst=(0,0) outsideBoundaryMax=0
+pool GPU day-opaque-partial-fractional: RGBA max=0 mean=0 poolMean=0 changedPixels=0 worst=(0,0) outsideBoundaryMax=0
+pool GPU night-opaque-large-counter: RGBA max=0 mean=0 poolMean=0 changedPixels=0 worst=(0,0) outsideBoundaryMax=0
+pool GPU feedback-float-source-pending-batch: RGBA max=0 mean=0 poolMean=0 changedPixels=0 worst=(0,0) outsideBoundaryMax=0
+PASS production GPU pool vs independent legacy CPU mesh: day/night, normal/additive/opaque, nearest/linear/repeat, phase wrap, destination scissor, fractional translation, ordinary painter order and float target feedback
+PASS precomputed transparent edges: alpha, visible RGB, idempotency, nearest/linear, upload-discard
+PASS public font upload: deferred alpha, upload-and-discard, texture reuse, independent copies
+PASS nonzero source rectangles and repacked whole-sheet atlas views: translation, scale origins, clipping, tint, additive, local-source views and floating scales
+PASS necessary local-clip contract: independent full-pixel rect/image/source/mirror/matrix/particle/convex oracles, disjoint/partial/empty clips and negative framebuffer crossings
+PASS actual TitleScreen grass reveal: widths 0/1/157/313/314/400, translated draw and unrevealed black pixels
+PASS actual GameButton atlas states: normal, hover, press/fallbacks, disabled, overAlpha, additive glow, translation/offsets and hidden state match independent images
+PASS direct shared-image snapshots and reference lifetime
+PASS actual boss back-arm drawing: four attack offsets, reference pixels, 1024 exact shared-animation translation restorations
+PASS reanimation appearances: independent options, image slots, atlas dimensions, original centers and actual AttachmentDraw visibility pixels
+PASS fullscreen reanimation: destination fill pixels, hidden/zero alpha, color modulation, both blend modes, translation and effective clip without track matrices
+Store clock fixture: initialize
+Adventure begin level=1 replay=0 Hz=100
+Adventure tutorial level=1 Hz=100 planted=2 completed=1
+Adventure primary level=1 replay=0 Hz=100 background=0 waves=4 rows=1 conveyor=0 award=7
+Adventure begin level=1 replay=0 Hz=30
+Adventure tutorial level=1 Hz=30 planted=2 completed=1
+Adventure primary level=1 replay=0 Hz=30 background=0 waves=4 rows=1 conveyor=0 award=7
+Adventure begin level=1 replay=0 Hz=240
+Adventure tutorial level=1 Hz=240 planted=2 completed=1
+Adventure primary level=1 replay=0 Hz=240 background=0 waves=4 rows=1 conveyor=0 award=7
+Adventure begin level=1 replay=0 Hz=0
+Adventure tutorial level=1 Hz=0 planted=2 completed=1
+Adventure primary level=1 replay=0 Hz=0 background=0 waves=4 rows=1 conveyor=0 award=7
+Adventure begin level=2 replay=0 Hz=100
+Adventure tutorial level=2 Hz=100 planted=3 completed=1
+Adventure primary level=2 replay=0 Hz=100 background=0 waves=6 rows=3 conveyor=0 award=7
+Adventure begin level=2 replay=0 Hz=30
+Adventure tutorial level=2 Hz=30 planted=3 completed=1
+Adventure primary level=2 replay=0 Hz=30 background=0 waves=6 rows=3 conveyor=0 award=7
+Adventure begin level=2 replay=0 Hz=240
+Adventure tutorial level=2 Hz=240 planted=3 completed=1
+Adventure primary level=2 replay=0 Hz=240 background=0 waves=6 rows=3 conveyor=0 award=7
+Adventure begin level=2 replay=0 Hz=0
+Adventure tutorial level=2 Hz=0 planted=3 completed=1
+Adventure primary level=2 replay=0 Hz=0 background=0 waves=6 rows=3 conveyor=0 award=7
+Adventure begin level=3 replay=0 Hz=100
+Adventure primary level=3 replay=0 Hz=100 background=0 waves=8 rows=3 conveyor=0 award=7
+Adventure begin level=3 replay=0 Hz=30
+Adventure primary level=3 replay=0 Hz=30 background=0 waves=8 rows=3 conveyor=0 award=7
+Adventure begin level=3 replay=0 Hz=240
+Adventure primary level=3 replay=0 Hz=240 background=0 waves=8 rows=3 conveyor=0 award=7
+Adventure begin level=3 replay=0 Hz=0
+Adventure primary level=3 replay=0 Hz=0 background=0 waves=8 rows=3 conveyor=0 award=7
+Adventure begin level=4 replay=0 Hz=100
+Adventure primary level=4 replay=0 Hz=100 background=0 waves=10 rows=5 conveyor=0 award=9
+Adventure begin level=4 replay=0 Hz=30
+Adventure primary level=4 replay=0 Hz=30 background=0 waves=10 rows=5 conveyor=0 award=9
+Adventure begin level=4 replay=0 Hz=240
+Adventure primary level=4 replay=0 Hz=240 background=0 waves=10 rows=5 conveyor=0 award=9
+Adventure begin level=4 replay=0 Hz=0
+Adventure primary level=4 replay=0 Hz=0 background=0 waves=10 rows=5 conveyor=0 award=9
+Adventure begin level=5 replay=0 Hz=100
+Adventure primary level=5 replay=0 Hz=100 background=0 waves=8 rows=5 conveyor=1 award=7
+Adventure begin level=5 replay=0 Hz=30
+Adventure primary level=5 replay=0 Hz=30 background=0 waves=8 rows=5 conveyor=1 award=7
+Adventure begin level=5 replay=0 Hz=240
+Adventure primary level=5 replay=0 Hz=240 background=0 waves=8 rows=5 conveyor=1 award=7
+Adventure begin level=5 replay=0 Hz=0
+Adventure primary level=5 replay=0 Hz=0 background=0 waves=8 rows=5 conveyor=1 award=7
+Adventure begin level=6 replay=0 Hz=100
+Adventure primary level=6 replay=0 Hz=100 background=0 waves=10 rows=5 conveyor=0 award=7
+Adventure begin level=6 replay=0 Hz=30
+Adventure primary level=6 replay=0 Hz=30 background=0 waves=10 rows=5 conveyor=0 award=7
+Adventure begin level=6 replay=0 Hz=240
+Adventure primary level=6 replay=0 Hz=240 background=0 waves=10 rows=5 conveyor=0 award=7
+Adventure begin level=6 replay=0 Hz=0
+Adventure primary level=6 replay=0 Hz=0 background=0 waves=10 rows=5 conveyor=0 award=7
+Adventure begin level=7 replay=0 Hz=100
+Adventure primary level=7 replay=0 Hz=100 background=0 waves=20 rows=5 conveyor=0 award=7
+Adventure begin level=7 replay=0 Hz=30
+Adventure primary level=7 replay=0 Hz=30 background=0 waves=20 rows=5 conveyor=0 award=7
+Adventure begin level=7 replay=0 Hz=240
+Adventure primary level=7 replay=0 Hz=240 background=0 waves=20 rows=5 conveyor=0 award=7
+Adventure begin level=7 replay=0 Hz=0
+Adventure primary level=7 replay=0 Hz=0 background=0 waves=20 rows=5 conveyor=0 award=7
+Adventure begin level=8 replay=0 Hz=100
+Adventure primary level=8 replay=0 Hz=100 background=0 waves=10 rows=5 conveyor=0 award=7
+Adventure begin level=8 replay=0 Hz=30
+Adventure primary level=8 replay=0 Hz=30 background=0 waves=10 rows=5 conveyor=0 award=7
+Adventure begin level=8 replay=0 Hz=240
+Adventure primary level=8 replay=0 Hz=240 background=0 waves=10 rows=5 conveyor=0 award=7
+Adventure begin level=8 replay=0 Hz=0
+Adventure primary level=8 replay=0 Hz=0 background=0 waves=10 rows=5 conveyor=0 award=7
+Adventure begin level=9 replay=0 Hz=100
+Adventure primary level=9 replay=0 Hz=100 background=0 waves=20 rows=5 conveyor=0 award=15
+Adventure begin level=9 replay=0 Hz=30
+Adventure primary level=9 replay=0 Hz=30 background=0 waves=20 rows=5 conveyor=0 award=15
+Adventure begin level=9 replay=0 Hz=240
+Adventure primary level=9 replay=0 Hz=240 background=0 waves=20 rows=5 conveyor=0 award=15
+Adventure begin level=9 replay=0 Hz=0
+Adventure primary level=9 replay=0 Hz=0 background=0 waves=20 rows=5 conveyor=0 award=15
+Adventure begin level=10 replay=0 Hz=100
+Adventure primary level=10 replay=0 Hz=100 background=0 waves=20 rows=5 conveyor=1 award=7
+Adventure begin level=10 replay=0 Hz=30
+Adventure primary level=10 replay=0 Hz=30 background=0 waves=20 rows=5 conveyor=1 award=7
+Adventure begin level=10 replay=0 Hz=240
+Adventure primary level=10 replay=0 Hz=240 background=0 waves=20 rows=5 conveyor=1 award=7
+Adventure begin level=10 replay=0 Hz=0
+Adventure primary level=10 replay=0 Hz=0 background=0 waves=20 rows=5 conveyor=1 award=7
+Adventure begin level=11 replay=0 Hz=100
+Adventure primary level=11 replay=0 Hz=100 background=1 waves=10 rows=5 conveyor=0 award=7
+Adventure begin level=11 replay=0 Hz=30
+Adventure primary level=11 replay=0 Hz=30 background=1 waves=10 rows=5 conveyor=0 award=7
+Adventure begin level=11 replay=0 Hz=240
+Adventure primary level=11 replay=0 Hz=240 background=1 waves=10 rows=5 conveyor=0 award=7
+Adventure begin level=11 replay=0 Hz=0
+Adventure primary level=11 replay=0 Hz=0 background=1 waves=10 rows=5 conveyor=0 award=7
+Adventure begin level=12 replay=0 Hz=100
+Adventure primary level=12 replay=0 Hz=100 background=1 waves=20 rows=5 conveyor=0 award=7
+Adventure begin level=12 replay=0 Hz=30
+Adventure primary level=12 replay=0 Hz=30 background=1 waves=20 rows=5 conveyor=0 award=7
+Adventure begin level=12 replay=0 Hz=240
+Adventure primary level=12 replay=0 Hz=240 background=1 waves=20 rows=5 conveyor=0 award=7
+Adventure begin level=12 replay=0 Hz=0
+Adventure primary level=12 replay=0 Hz=0 background=1 waves=20 rows=5 conveyor=0 award=7
+Adventure begin level=13 replay=0 Hz=100
+Adventure primary level=13 replay=0 Hz=100 background=1 waves=10 rows=5 conveyor=0 award=7
+Adventure begin level=13 replay=0 Hz=30
+Adventure primary level=13 replay=0 Hz=30 background=1 waves=10 rows=5 conveyor=0 award=7
+Adventure begin level=13 replay=0 Hz=240
+Adventure primary level=13 replay=0 Hz=240 background=1 waves=10 rows=5 conveyor=0 award=7
+Adventure begin level=13 replay=0 Hz=0
+Adventure primary level=13 replay=0 Hz=0 background=1 waves=10 rows=5 conveyor=0 award=7
+Adventure begin level=14 replay=0 Hz=100
+Adventure primary level=14 replay=0 Hz=100 background=1 waves=20 rows=5 conveyor=0 award=10
+Adventure begin level=14 replay=0 Hz=30
+Adventure primary level=14 replay=0 Hz=30 background=1 waves=20 rows=5 conveyor=0 award=10
+Adventure begin level=14 replay=0 Hz=240
+Adventure primary level=14 replay=0 Hz=240 background=1 waves=20 rows=5 conveyor=0 award=10
+Adventure begin level=14 replay=0 Hz=0
+Adventure primary level=14 replay=0 Hz=0 background=1 waves=20 rows=5 conveyor=0 award=10
+Adventure begin level=15 replay=0 Hz=100
+Adventure primary level=15 replay=0 Hz=100 background=1 waves=8 rows=5 conveyor=0 award=7
+Adventure begin level=15 replay=0 Hz=30
+Adventure primary level=15 replay=0 Hz=30 background=1 waves=8 rows=5 conveyor=0 award=7
+Adventure begin level=15 replay=0 Hz=240
+Adventure primary level=15 replay=0 Hz=240 background=1 waves=8 rows=5 conveyor=0 award=7
+Adventure begin level=15 replay=0 Hz=0
+Adventure primary level=15 replay=0 Hz=0 background=1 waves=8 rows=5 conveyor=0 award=7
+Adventure begin level=16 replay=0 Hz=100
+Adventure primary level=16 replay=0 Hz=100 background=1 waves=10 rows=5 conveyor=0 award=7
+Adventure begin level=16 replay=0 Hz=30
+Adventure primary level=16 replay=0 Hz=30 background=1 waves=10 rows=5 conveyor=0 award=7
+Adventure begin level=16 replay=0 Hz=240
+Adventure primary level=16 replay=0 Hz=240 background=1 waves=10 rows=5 conveyor=0 award=7
+Adventure begin level=16 replay=0 Hz=0
+Adventure primary level=16 replay=0 Hz=0 background=1 waves=10 rows=5 conveyor=0 award=7
+Adventure begin level=17 replay=0 Hz=100
+Adventure primary level=17 replay=0 Hz=100 background=1 waves=20 rows=5 conveyor=0 award=7
+Adventure begin level=17 replay=0 Hz=30
+Adventure primary level=17 replay=0 Hz=30 background=1 waves=20 rows=5 conveyor=0 award=7
+Adventure begin level=17 replay=0 Hz=240
+Adventure primary level=17 replay=0 Hz=240 background=1 waves=20 rows=5 conveyor=0 award=7
+Adventure begin level=17 replay=0 Hz=0
+Adventure primary level=17 replay=0 Hz=0 background=1 waves=20 rows=5 conveyor=0 award=7
+Adventure begin level=18 replay=0 Hz=100
+Adventure primary level=18 replay=0 Hz=100 background=1 waves=10 rows=5 conveyor=0 award=7
+Adventure begin level=18 replay=0 Hz=30
+Adventure primary level=18 replay=0 Hz=30 background=1 waves=10 rows=5 conveyor=0 award=7
+Adventure begin level=18 replay=0 Hz=240
+Adventure primary level=18 replay=0 Hz=240 background=1 waves=10 rows=5 conveyor=0 award=7
+Adventure begin level=18 replay=0 Hz=0
+Adventure primary level=18 replay=0 Hz=0 background=1 waves=10 rows=5 conveyor=0 award=7
+Adventure begin level=19 replay=0 Hz=100
+Adventure primary level=19 replay=0 Hz=100 background=1 waves=20 rows=5 conveyor=0 award=15
+Adventure begin level=19 replay=0 Hz=30
+Adventure primary level=19 replay=0 Hz=30 background=1 waves=20 rows=5 conveyor=0 award=15
+Adventure begin level=19 replay=0 Hz=240
+Adventure primary level=19 replay=0 Hz=240 background=1 waves=20 rows=5 conveyor=0 award=15
+Adventure begin level=19 replay=0 Hz=0
+Adventure primary level=19 replay=0 Hz=0 background=1 waves=20 rows=5 conveyor=0 award=15
+Adventure begin level=20 replay=0 Hz=100
+Adventure primary level=20 replay=0 Hz=100 background=1 waves=20 rows=5 conveyor=1 award=7
+Adventure begin level=20 replay=0 Hz=30
+Adventure primary level=20 replay=0 Hz=30 background=1 waves=20 rows=5 conveyor=1 award=7
+Adventure begin level=20 replay=0 Hz=240
+Adventure primary level=20 replay=0 Hz=240 background=1 waves=20 rows=5 conveyor=1 award=7
+Adventure begin level=20 replay=0 Hz=0
+Adventure primary level=20 replay=0 Hz=0 background=1 waves=20 rows=5 conveyor=1 award=7
+Adventure begin level=21 replay=0 Hz=100
+Adventure primary level=21 replay=0 Hz=100 background=2 waves=10 rows=6 conveyor=0 award=7
+Adventure begin level=21 replay=0 Hz=30
+Adventure primary level=21 replay=0 Hz=30 background=2 waves=10 rows=6 conveyor=0 award=7
+Adventure begin level=21 replay=0 Hz=240
+Adventure primary level=21 replay=0 Hz=240 background=2 waves=10 rows=6 conveyor=0 award=7
+Adventure begin level=21 replay=0 Hz=0
+Adventure primary level=21 replay=0 Hz=0 background=2 waves=10 rows=6 conveyor=0 award=7
+Adventure begin level=22 replay=0 Hz=100
+Adventure primary level=22 replay=0 Hz=100 background=2 waves=20 rows=6 conveyor=0 award=7
+Adventure begin level=22 replay=0 Hz=30
+Adventure primary level=22 replay=0 Hz=30 background=2 waves=20 rows=6 conveyor=0 award=7
+Adventure begin level=22 replay=0 Hz=240
+Adventure primary level=22 replay=0 Hz=240 background=2 waves=20 rows=6 conveyor=0 award=7
+Adventure begin level=22 replay=0 Hz=0
+Adventure primary level=22 replay=0 Hz=0 background=2 waves=20 rows=6 conveyor=0 award=7
+Adventure begin level=23 replay=0 Hz=100
+Adventure primary level=23 replay=0 Hz=100 background=2 waves=20 rows=6 conveyor=0 award=7
+Adventure begin level=23 replay=0 Hz=30
+Adventure primary level=23 replay=0 Hz=30 background=2 waves=20 rows=6 conveyor=0 award=7
+Adventure begin level=23 replay=0 Hz=240
+Adventure primary level=23 replay=0 Hz=240 background=2 waves=20 rows=6 conveyor=0 award=7
+Adventure begin level=23 replay=0 Hz=0
+Adventure primary level=23 replay=0 Hz=0 background=2 waves=20 rows=6 conveyor=0 award=7
+Adventure begin level=24 replay=0 Hz=100
+Adventure primary level=24 replay=0 Hz=100 background=2 waves=30 rows=6 conveyor=0 award=11
+Adventure begin level=24 replay=0 Hz=30
+Adventure primary level=24 replay=0 Hz=30 background=2 waves=30 rows=6 conveyor=0 award=11
+Adventure begin level=24 replay=0 Hz=240
+Adventure primary level=24 replay=0 Hz=240 background=2 waves=30 rows=6 conveyor=0 award=11
+Adventure begin level=24 replay=0 Hz=0
+Adventure primary level=24 replay=0 Hz=0 background=2 waves=30 rows=6 conveyor=0 award=11
+Adventure begin level=25 replay=0 Hz=100
+Adventure primary level=25 replay=0 Hz=100 background=2 waves=20 rows=6 conveyor=1 award=7
+Adventure begin level=25 replay=0 Hz=30
+Adventure primary level=25 replay=0 Hz=30 background=2 waves=20 rows=6 conveyor=1 award=7
+Adventure begin level=25 replay=0 Hz=240
+Adventure primary level=25 replay=0 Hz=240 background=2 waves=20 rows=6 conveyor=1 award=7
+Adventure begin level=25 replay=0 Hz=0
+Adventure primary level=25 replay=0 Hz=0 background=2 waves=20 rows=6 conveyor=1 award=7
+Adventure begin level=26 replay=0 Hz=100
+Adventure primary level=26 replay=0 Hz=100 background=2 waves=20 rows=6 conveyor=0 award=7
+Adventure begin level=26 replay=0 Hz=30
+Adventure primary level=26 replay=0 Hz=30 background=2 waves=20 rows=6 conveyor=0 award=7
+Adventure begin level=26 replay=0 Hz=240
+Adventure primary level=26 replay=0 Hz=240 background=2 waves=20 rows=6 conveyor=0 award=7
+Adventure begin level=26 replay=0 Hz=0
+Adventure primary level=26 replay=0 Hz=0 background=2 waves=20 rows=6 conveyor=0 award=7
+Adventure begin level=27 replay=0 Hz=100
+Adventure primary level=27 replay=0 Hz=100 background=2 waves=30 rows=6 conveyor=0 award=7
+Adventure begin level=27 replay=0 Hz=30
+Adventure primary level=27 replay=0 Hz=30 background=2 waves=30 rows=6 conveyor=0 award=7
+Adventure begin level=27 replay=0 Hz=240
+Adventure primary level=27 replay=0 Hz=240 background=2 waves=30 rows=6 conveyor=0 award=7
+Adventure begin level=27 replay=0 Hz=0
+Adventure primary level=27 replay=0 Hz=0 background=2 waves=30 rows=6 conveyor=0 award=7
+Adventure begin level=28 replay=0 Hz=100
+Adventure primary level=28 replay=0 Hz=100 background=2 waves=20 rows=6 conveyor=0 award=7
+Adventure begin level=28 replay=0 Hz=30
+Adventure primary level=28 replay=0 Hz=30 background=2 waves=20 rows=6 conveyor=0 award=7
+Adventure begin level=28 replay=0 Hz=240
+Adventure primary level=28 replay=0 Hz=240 background=2 waves=20 rows=6 conveyor=0 award=7
+Adventure begin level=28 replay=0 Hz=0
+Adventure primary level=28 replay=0 Hz=0 background=2 waves=20 rows=6 conveyor=0 award=7
+Adventure begin level=29 replay=0 Hz=100
+Adventure primary level=29 replay=0 Hz=100 background=2 waves=30 rows=6 conveyor=0 award=15
+Adventure begin level=29 replay=0 Hz=30
+Adventure primary level=29 replay=0 Hz=30 background=2 waves=30 rows=6 conveyor=0 award=15
+Adventure begin level=29 replay=0 Hz=240
+Adventure primary level=29 replay=0 Hz=240 background=2 waves=30 rows=6 conveyor=0 award=15
+Adventure begin level=29 replay=0 Hz=0
+Adventure primary level=29 replay=0 Hz=0 background=2 waves=30 rows=6 conveyor=0 award=15
+Adventure begin level=30 replay=0 Hz=100
+Adventure primary level=30 replay=0 Hz=100 background=2 waves=30 rows=6 conveyor=1 award=7
+Adventure begin level=30 replay=0 Hz=30
+Adventure primary level=30 replay=0 Hz=30 background=2 waves=30 rows=6 conveyor=1 award=7
+Adventure begin level=30 replay=0 Hz=240
+Adventure primary level=30 replay=0 Hz=240 background=2 waves=30 rows=6 conveyor=1 award=7
+Adventure begin level=30 replay=0 Hz=0
+Adventure primary level=30 replay=0 Hz=0 background=2 waves=30 rows=6 conveyor=1 award=7
+Adventure begin level=31 replay=0 Hz=100
+Adventure primary level=31 replay=0 Hz=100 background=3 waves=10 rows=6 conveyor=0 award=7
+Adventure begin level=31 replay=0 Hz=30
+Adventure primary level=31 replay=0 Hz=30 background=3 waves=10 rows=6 conveyor=0 award=7
+Adventure begin level=31 replay=0 Hz=240
+Adventure primary level=31 replay=0 Hz=240 background=3 waves=10 rows=6 conveyor=0 award=7
+Adventure begin level=31 replay=0 Hz=0
+Adventure primary level=31 replay=0 Hz=0 background=3 waves=10 rows=6 conveyor=0 award=7
+Adventure begin level=32 replay=0 Hz=100
+Adventure primary level=32 replay=0 Hz=100 background=3 waves=20 rows=6 conveyor=0 award=7
+Adventure begin level=32 replay=0 Hz=30
+Adventure primary level=32 replay=0 Hz=30 background=3 waves=20 rows=6 conveyor=0 award=7
+Adventure begin level=32 replay=0 Hz=240
+Adventure primary level=32 replay=0 Hz=240 background=3 waves=20 rows=6 conveyor=0 award=7
+Adventure begin level=32 replay=0 Hz=0
+Adventure primary level=32 replay=0 Hz=0 background=3 waves=20 rows=6 conveyor=0 award=7
+Adventure begin level=33 replay=0 Hz=100
+Adventure primary level=33 replay=0 Hz=100 background=3 waves=10 rows=6 conveyor=0 award=7
+Adventure begin level=33 replay=0 Hz=30
+Adventure primary level=33 replay=0 Hz=30 background=3 waves=10 rows=6 conveyor=0 award=7
+Adventure begin level=33 replay=0 Hz=240
+Adventure primary level=33 replay=0 Hz=240 background=3 waves=10 rows=6 conveyor=0 award=7
+Adventure begin level=33 replay=0 Hz=0
+Adventure primary level=33 replay=0 Hz=0 background=3 waves=10 rows=6 conveyor=0 award=7
+Adventure begin level=34 replay=0 Hz=100
+Adventure primary level=34 replay=0 Hz=100 background=3 waves=20 rows=6 conveyor=0 award=14
+Adventure begin level=34 replay=0 Hz=30
+Adventure primary level=34 replay=0 Hz=30 background=3 waves=20 rows=6 conveyor=0 award=14
+Adventure begin level=34 replay=0 Hz=240
+Adventure primary level=34 replay=0 Hz=240 background=3 waves=20 rows=6 conveyor=0 award=14
+Adventure begin level=34 replay=0 Hz=0
+Adventure primary level=34 replay=0 Hz=0 background=3 waves=20 rows=6 conveyor=0 award=14
+Adventure begin level=35 replay=0 Hz=100
+Adventure primary level=35 replay=0 Hz=100 background=1 waves=20 rows=5 conveyor=0 award=7
+Adventure begin level=35 replay=0 Hz=30
+Adventure primary level=35 replay=0 Hz=30 background=1 waves=20 rows=5 conveyor=0 award=7
+Adventure begin level=35 replay=0 Hz=240
+Adventure primary level=35 replay=0 Hz=240 background=1 waves=20 rows=5 conveyor=0 award=7
+Adventure begin level=35 replay=0 Hz=0
+Adventure primary level=35 replay=0 Hz=0 background=1 waves=20 rows=5 conveyor=0 award=7
+Adventure begin level=36 replay=0 Hz=100
+Adventure primary level=36 replay=0 Hz=100 background=3 waves=10 rows=6 conveyor=0 award=7
+Adventure begin level=36 replay=0 Hz=30
+Adventure primary level=36 replay=0 Hz=30 background=3 waves=10 rows=6 conveyor=0 award=7
+Adventure begin level=36 replay=0 Hz=240
+Adventure primary level=36 replay=0 Hz=240 background=3 waves=10 rows=6 conveyor=0 award=7
+Adventure begin level=36 replay=0 Hz=0
+Adventure primary level=36 replay=0 Hz=0 background=3 waves=10 rows=6 conveyor=0 award=7
+Adventure begin level=37 replay=0 Hz=100
+Adventure primary level=37 replay=0 Hz=100 background=3 waves=20 rows=6 conveyor=0 award=7
+Adventure begin level=37 replay=0 Hz=30
+Adventure primary level=37 replay=0 Hz=30 background=3 waves=20 rows=6 conveyor=0 award=7
+Adventure begin level=37 replay=0 Hz=240
+Adventure primary level=37 replay=0 Hz=240 background=3 waves=20 rows=6 conveyor=0 award=7
+Adventure begin level=37 replay=0 Hz=0
+Adventure primary level=37 replay=0 Hz=0 background=3 waves=20 rows=6 conveyor=0 award=7
+Adventure begin level=38 replay=0 Hz=100
+Adventure primary level=38 replay=0 Hz=100 background=3 waves=10 rows=6 conveyor=0 award=7
+Adventure begin level=38 replay=0 Hz=30
+Adventure primary level=38 replay=0 Hz=30 background=3 waves=10 rows=6 conveyor=0 award=7
+Adventure begin level=38 replay=0 Hz=240
+Adventure primary level=38 replay=0 Hz=240 background=3 waves=10 rows=6 conveyor=0 award=7
+Adventure begin level=38 replay=0 Hz=0
+Adventure primary level=38 replay=0 Hz=0 background=3 waves=10 rows=6 conveyor=0 award=7
+Adventure begin level=39 replay=0 Hz=100
+Adventure primary level=39 replay=0 Hz=100 background=3 waves=20 rows=6 conveyor=0 award=15
+Adventure begin level=39 replay=0 Hz=30
+Adventure primary level=39 replay=0 Hz=30 background=3 waves=20 rows=6 conveyor=0 award=15
+Adventure begin level=39 replay=0 Hz=240
+Adventure primary level=39 replay=0 Hz=240 background=3 waves=20 rows=6 conveyor=0 award=15
+Adventure begin level=39 replay=0 Hz=0
+Adventure primary level=39 replay=0 Hz=0 background=3 waves=20 rows=6 conveyor=0 award=15
+Adventure begin level=40 replay=0 Hz=100
+Adventure primary level=40 replay=0 Hz=100 background=3 waves=20 rows=6 conveyor=1 award=7
+Adventure begin level=40 replay=0 Hz=30
+Adventure primary level=40 replay=0 Hz=30 background=3 waves=20 rows=6 conveyor=1 award=7
+Adventure begin level=40 replay=0 Hz=240
+Adventure primary level=40 replay=0 Hz=240 background=3 waves=20 rows=6 conveyor=1 award=7
+Adventure begin level=40 replay=0 Hz=0
+Adventure primary level=40 replay=0 Hz=0 background=3 waves=20 rows=6 conveyor=1 award=7
+Adventure begin level=41 replay=0 Hz=100
+Adventure primary level=41 replay=0 Hz=100 background=4 waves=10 rows=5 conveyor=0 award=7
+Adventure begin level=41 replay=0 Hz=30
+Adventure primary level=41 replay=0 Hz=30 background=4 waves=10 rows=5 conveyor=0 award=7
+Adventure begin level=41 replay=0 Hz=240
+Adventure primary level=41 replay=0 Hz=240 background=4 waves=10 rows=5 conveyor=0 award=7
+Adventure begin level=41 replay=0 Hz=0
+Adventure primary level=41 replay=0 Hz=0 background=4 waves=10 rows=5 conveyor=0 award=7
+Adventure begin level=42 replay=0 Hz=100
+Adventure primary level=42 replay=0 Hz=100 background=4 waves=20 rows=5 conveyor=0 award=7
+Adventure begin level=42 replay=0 Hz=30
+Adventure primary level=42 replay=0 Hz=30 background=4 waves=20 rows=5 conveyor=0 award=7
+Adventure begin level=42 replay=0 Hz=240
+Adventure primary level=42 replay=0 Hz=240 background=4 waves=20 rows=5 conveyor=0 award=7
+Adventure begin level=42 replay=0 Hz=0
+Adventure primary level=42 replay=0 Hz=0 background=4 waves=20 rows=5 conveyor=0 award=7
+Adventure begin level=43 replay=0 Hz=100
+Adventure primary level=43 replay=0 Hz=100 background=4 waves=20 rows=5 conveyor=0 award=7
+Adventure begin level=43 replay=0 Hz=30
+Adventure primary level=43 replay=0 Hz=30 background=4 waves=20 rows=5 conveyor=0 award=7
+Adventure begin level=43 replay=0 Hz=240
+Adventure primary level=43 replay=0 Hz=240 background=4 waves=20 rows=5 conveyor=0 award=7
+Adventure begin level=43 replay=0 Hz=0
+Adventure primary level=43 replay=0 Hz=0 background=4 waves=20 rows=5 conveyor=0 award=7
+Adventure begin level=44 replay=0 Hz=100
+Adventure primary level=44 replay=0 Hz=100 background=4 waves=30 rows=5 conveyor=0 award=13
+Adventure begin level=44 replay=0 Hz=30
+Adventure primary level=44 replay=0 Hz=30 background=4 waves=30 rows=5 conveyor=0 award=13
+Adventure begin level=44 replay=0 Hz=240
+Adventure primary level=44 replay=0 Hz=240 background=4 waves=30 rows=5 conveyor=0 award=13
+Adventure begin level=44 replay=0 Hz=0
+Adventure primary level=44 replay=0 Hz=0 background=4 waves=30 rows=5 conveyor=0 award=13
+Adventure begin level=45 replay=0 Hz=100
+Adventure primary level=45 replay=0 Hz=100 background=4 waves=20 rows=5 conveyor=1 award=7
+Adventure begin level=45 replay=0 Hz=30
+Adventure primary level=45 replay=0 Hz=30 background=4 waves=20 rows=5 conveyor=1 award=7
+Adventure begin level=45 replay=0 Hz=240
+Adventure primary level=45 replay=0 Hz=240 background=4 waves=20 rows=5 conveyor=1 award=7
+Adventure begin level=45 replay=0 Hz=0
+Adventure primary level=45 replay=0 Hz=0 background=4 waves=20 rows=5 conveyor=1 award=7
+Adventure begin level=46 replay=0 Hz=100
+Adventure primary level=46 replay=0 Hz=100 background=4 waves=20 rows=5 conveyor=0 award=7
+Adventure begin level=46 replay=0 Hz=30
+Adventure primary level=46 replay=0 Hz=30 background=4 waves=20 rows=5 conveyor=0 award=7
+Adventure begin level=46 replay=0 Hz=240
+Adventure primary level=46 replay=0 Hz=240 background=4 waves=20 rows=5 conveyor=0 award=7
+Adventure begin level=46 replay=0 Hz=0
+Adventure primary level=46 replay=0 Hz=0 background=4 waves=20 rows=5 conveyor=0 award=7
+Adventure begin level=47 replay=0 Hz=100
+Adventure primary level=47 replay=0 Hz=100 background=4 waves=30 rows=5 conveyor=0 award=7
+Adventure begin level=47 replay=0 Hz=30
+Adventure primary level=47 replay=0 Hz=30 background=4 waves=30 rows=5 conveyor=0 award=7
+Adventure begin level=47 replay=0 Hz=240
+Adventure primary level=47 replay=0 Hz=240 background=4 waves=30 rows=5 conveyor=0 award=7
+Adventure begin level=47 replay=0 Hz=0
+Adventure primary level=47 replay=0 Hz=0 background=4 waves=30 rows=5 conveyor=0 award=7
+Adventure begin level=48 replay=0 Hz=100
+Adventure primary level=48 replay=0 Hz=100 background=4 waves=20 rows=5 conveyor=0 award=7
+Adventure begin level=48 replay=0 Hz=30
+Adventure primary level=48 replay=0 Hz=30 background=4 waves=20 rows=5 conveyor=0 award=7
+Adventure begin level=48 replay=0 Hz=240
+Adventure primary level=48 replay=0 Hz=240 background=4 waves=20 rows=5 conveyor=0 award=7
+Adventure begin level=48 replay=0 Hz=0
+Adventure primary level=48 replay=0 Hz=0 background=4 waves=20 rows=5 conveyor=0 award=7
+Adventure begin level=49 replay=0 Hz=100
+Adventure primary level=49 replay=0 Hz=100 background=4 waves=30 rows=5 conveyor=0 award=15
+Adventure begin level=49 replay=0 Hz=30
+Adventure primary level=49 replay=0 Hz=30 background=4 waves=30 rows=5 conveyor=0 award=15
+Adventure begin level=49 replay=0 Hz=240
+Adventure primary level=49 replay=0 Hz=240 background=4 waves=30 rows=5 conveyor=0 award=15
+Adventure begin level=49 replay=0 Hz=0
+Adventure primary level=49 replay=0 Hz=0 background=4 waves=30 rows=5 conveyor=0 award=15
+Adventure begin level=50 replay=0 Hz=100
+Adventure primary level=50 replay=0 Hz=100 background=5 waves=30 rows=5 conveyor=1 award=21
+Adventure begin level=50 replay=0 Hz=30
+Adventure primary level=50 replay=0 Hz=30 background=5 waves=30 rows=5 conveyor=1 award=21
+Adventure begin level=50 replay=0 Hz=240
+Adventure primary level=50 replay=0 Hz=240 background=5 waves=30 rows=5 conveyor=1 award=21
+Adventure begin level=50 replay=0 Hz=0
+Adventure primary level=50 replay=0 Hz=0 background=5 waves=30 rows=5 conveyor=1 award=21
+Adventure begin level=1 replay=1 Hz=100
+Adventure primary level=1 replay=1 Hz=100 background=0 waves=20 rows=5 conveyor=0 award=18
+Adventure begin level=1 replay=1 Hz=30
+Adventure primary level=1 replay=1 Hz=30 background=0 waves=20 rows=5 conveyor=0 award=18
+Adventure begin level=1 replay=1 Hz=240
+Adventure primary level=1 replay=1 Hz=240 background=0 waves=20 rows=5 conveyor=0 award=18
+Adventure begin level=1 replay=1 Hz=0
+Adventure primary level=1 replay=1 Hz=0 background=0 waves=20 rows=5 conveyor=0 award=18
+Adventure begin level=2 replay=1 Hz=100
+Adventure primary level=2 replay=1 Hz=100 background=0 waves=20 rows=5 conveyor=0 award=18
+Adventure begin level=2 replay=1 Hz=30
+Adventure primary level=2 replay=1 Hz=30 background=0 waves=20 rows=5 conveyor=0 award=18
+Adventure begin level=2 replay=1 Hz=240
+Adventure primary level=2 replay=1 Hz=240 background=0 waves=20 rows=5 conveyor=0 award=18
+Adventure begin level=2 replay=1 Hz=0
+Adventure primary level=2 replay=1 Hz=0 background=0 waves=20 rows=5 conveyor=0 award=18
+Adventure begin level=3 replay=1 Hz=100
+Adventure primary level=3 replay=1 Hz=100 background=0 waves=20 rows=5 conveyor=0 award=18
+Adventure begin level=3 replay=1 Hz=30
+Adventure primary level=3 replay=1 Hz=30 background=0 waves=20 rows=5 conveyor=0 award=18
+Adventure begin level=3 replay=1 Hz=240
+Adventure primary level=3 replay=1 Hz=240 background=0 waves=20 rows=5 conveyor=0 award=18
+Adventure begin level=3 replay=1 Hz=0
+Adventure primary level=3 replay=1 Hz=0 background=0 waves=20 rows=5 conveyor=0 award=18
+Adventure begin level=4 replay=1 Hz=100
+Adventure primary level=4 replay=1 Hz=100 background=0 waves=20 rows=5 conveyor=0 award=18
+Adventure begin level=4 replay=1 Hz=30
+Adventure primary level=4 replay=1 Hz=30 background=0 waves=20 rows=5 conveyor=0 award=18
+Adventure begin level=4 replay=1 Hz=240
+Adventure primary level=4 replay=1 Hz=240 background=0 waves=20 rows=5 conveyor=0 award=18
+Adventure begin level=4 replay=1 Hz=0
+Adventure primary level=4 replay=1 Hz=0 background=0 waves=20 rows=5 conveyor=0 award=18
+Adventure begin level=5 replay=1 Hz=100
+Adventure primary level=5 replay=1 Hz=100 background=0 waves=20 rows=5 conveyor=1 award=18
+Adventure begin level=5 replay=1 Hz=30
+Adventure primary level=5 replay=1 Hz=30 background=0 waves=20 rows=5 conveyor=1 award=18
+Adventure begin level=5 replay=1 Hz=240
+Adventure primary level=5 replay=1 Hz=240 background=0 waves=20 rows=5 conveyor=1 award=18
+Adventure begin level=5 replay=1 Hz=0
+Adventure primary level=5 replay=1 Hz=0 background=0 waves=20 rows=5 conveyor=1 award=18
+Adventure begin level=6 replay=1 Hz=100
+Adventure primary level=6 replay=1 Hz=100 background=0 waves=20 rows=5 conveyor=0 award=18
+Adventure begin level=6 replay=1 Hz=30
+Adventure primary level=6 replay=1 Hz=30 background=0 waves=20 rows=5 conveyor=0 award=18
+Adventure begin level=6 replay=1 Hz=240
+Adventure primary level=6 replay=1 Hz=240 background=0 waves=20 rows=5 conveyor=0 award=18
+Adventure begin level=6 replay=1 Hz=0
+Adventure primary level=6 replay=1 Hz=0 background=0 waves=20 rows=5 conveyor=0 award=18
+Adventure begin level=7 replay=1 Hz=100
+Adventure primary level=7 replay=1 Hz=100 background=0 waves=30 rows=5 conveyor=0 award=18
+Adventure begin level=7 replay=1 Hz=30
+Adventure primary level=7 replay=1 Hz=30 background=0 waves=30 rows=5 conveyor=0 award=18
+Adventure begin level=7 replay=1 Hz=240
+Adventure primary level=7 replay=1 Hz=240 background=0 waves=30 rows=5 conveyor=0 award=18
+Adventure begin level=7 replay=1 Hz=0
+Adventure primary level=7 replay=1 Hz=0 background=0 waves=30 rows=5 conveyor=0 award=18
+Adventure begin level=8 replay=1 Hz=100
+Adventure primary level=8 replay=1 Hz=100 background=0 waves=20 rows=5 conveyor=0 award=18
+Adventure begin level=8 replay=1 Hz=30
+Adventure primary level=8 replay=1 Hz=30 background=0 waves=20 rows=5 conveyor=0 award=18
+Adventure begin level=8 replay=1 Hz=240
+Adventure primary level=8 replay=1 Hz=240 background=0 waves=20 rows=5 conveyor=0 award=18
+Adventure begin level=8 replay=1 Hz=0
+Adventure primary level=8 replay=1 Hz=0 background=0 waves=20 rows=5 conveyor=0 award=18
+Adventure begin level=9 replay=1 Hz=100
+Adventure primary level=9 replay=1 Hz=100 background=0 waves=30 rows=5 conveyor=0 award=15
+Adventure begin level=9 replay=1 Hz=30
+Adventure primary level=9 replay=1 Hz=30 background=0 waves=30 rows=5 conveyor=0 award=15
+Adventure begin level=9 replay=1 Hz=240
+Adventure primary level=9 replay=1 Hz=240 background=0 waves=30 rows=5 conveyor=0 award=15
+Adventure begin level=9 replay=1 Hz=0
+Adventure primary level=9 replay=1 Hz=0 background=0 waves=30 rows=5 conveyor=0 award=15
+Adventure begin level=10 replay=1 Hz=100
+Adventure primary level=10 replay=1 Hz=100 background=0 waves=20 rows=5 conveyor=1 award=18
+Adventure begin level=10 replay=1 Hz=30
+Adventure primary level=10 replay=1 Hz=30 background=0 waves=20 rows=5 conveyor=1 award=18
+Adventure begin level=10 replay=1 Hz=240
+Adventure primary level=10 replay=1 Hz=240 background=0 waves=20 rows=5 conveyor=1 award=18
+Adventure begin level=10 replay=1 Hz=0
+Adventure primary level=10 replay=1 Hz=0 background=0 waves=20 rows=5 conveyor=1 award=18
+Adventure begin level=11 replay=1 Hz=100
+Adventure primary level=11 replay=1 Hz=100 background=1 waves=20 rows=5 conveyor=0 award=18
+Adventure begin level=11 replay=1 Hz=30
+Adventure primary level=11 replay=1 Hz=30 background=1 waves=20 rows=5 conveyor=0 award=18
+Adventure begin level=11 replay=1 Hz=240
+Adventure primary level=11 replay=1 Hz=240 background=1 waves=20 rows=5 conveyor=0 award=18
+Adventure begin level=11 replay=1 Hz=0
+Adventure primary level=11 replay=1 Hz=0 background=1 waves=20 rows=5 conveyor=0 award=18
+Adventure begin level=12 replay=1 Hz=100
+Adventure primary level=12 replay=1 Hz=100 background=1 waves=30 rows=5 conveyor=0 award=18
+Adventure begin level=12 replay=1 Hz=30
+Adventure primary level=12 replay=1 Hz=30 background=1 waves=30 rows=5 conveyor=0 award=18
+Adventure begin level=12 replay=1 Hz=240
+Adventure primary level=12 replay=1 Hz=240 background=1 waves=30 rows=5 conveyor=0 award=18
+Adventure begin level=12 replay=1 Hz=0
+Adventure primary level=12 replay=1 Hz=0 background=1 waves=30 rows=5 conveyor=0 award=18
+Adventure begin level=13 replay=1 Hz=100
+Adventure primary level=13 replay=1 Hz=100 background=1 waves=20 rows=5 conveyor=0 award=18
+Adventure begin level=13 replay=1 Hz=30
+Adventure primary level=13 replay=1 Hz=30 background=1 waves=20 rows=5 conveyor=0 award=18
+Adventure begin level=13 replay=1 Hz=240
+Adventure primary level=13 replay=1 Hz=240 background=1 waves=20 rows=5 conveyor=0 award=18
+Adventure begin level=13 replay=1 Hz=0
+Adventure primary level=13 replay=1 Hz=0 background=1 waves=20 rows=5 conveyor=0 award=18
+Adventure begin level=14 replay=1 Hz=100
+Adventure primary level=14 replay=1 Hz=100 background=1 waves=30 rows=5 conveyor=0 award=18
+Adventure begin level=14 replay=1 Hz=30
+Adventure primary level=14 replay=1 Hz=30 background=1 waves=30 rows=5 conveyor=0 award=18
+Adventure begin level=14 replay=1 Hz=240
+Adventure primary level=14 replay=1 Hz=240 background=1 waves=30 rows=5 conveyor=0 award=18
+Adventure begin level=14 replay=1 Hz=0
+Adventure primary level=14 replay=1 Hz=0 background=1 waves=30 rows=5 conveyor=0 award=18
+Adventure begin level=15 replay=1 Hz=100
+Adventure primary level=15 replay=1 Hz=100 background=1 waves=8 rows=5 conveyor=0 award=18
+Adventure begin level=15 replay=1 Hz=30
+Adventure primary level=15 replay=1 Hz=30 background=1 waves=8 rows=5 conveyor=0 award=18
+Adventure begin level=15 replay=1 Hz=240
+Adventure primary level=15 replay=1 Hz=240 background=1 waves=8 rows=5 conveyor=0 award=18
+Adventure begin level=15 replay=1 Hz=0
+Adventure primary level=15 replay=1 Hz=0 background=1 waves=8 rows=5 conveyor=0 award=18
+Adventure begin level=16 replay=1 Hz=100
+Adventure primary level=16 replay=1 Hz=100 background=1 waves=20 rows=5 conveyor=0 award=18
+Adventure begin level=16 replay=1 Hz=30
+Adventure primary level=16 replay=1 Hz=30 background=1 waves=20 rows=5 conveyor=0 award=18
+Adventure begin level=16 replay=1 Hz=240
+Adventure primary level=16 replay=1 Hz=240 background=1 waves=20 rows=5 conveyor=0 award=18
+Adventure begin level=16 replay=1 Hz=0
+Adventure primary level=16 replay=1 Hz=0 background=1 waves=20 rows=5 conveyor=0 award=18
+Adventure begin level=17 replay=1 Hz=100
+Adventure primary level=17 replay=1 Hz=100 background=1 waves=30 rows=5 conveyor=0 award=18
+Adventure begin level=17 replay=1 Hz=30
+Adventure primary level=17 replay=1 Hz=30 background=1 waves=30 rows=5 conveyor=0 award=18
+Adventure begin level=17 replay=1 Hz=240
+Adventure primary level=17 replay=1 Hz=240 background=1 waves=30 rows=5 conveyor=0 award=18
+Adventure begin level=17 replay=1 Hz=0
+Adventure primary level=17 replay=1 Hz=0 background=1 waves=30 rows=5 conveyor=0 award=18
+Adventure begin level=18 replay=1 Hz=100
+Adventure primary level=18 replay=1 Hz=100 background=1 waves=20 rows=5 conveyor=0 award=18
+Adventure begin level=18 replay=1 Hz=30
+Adventure primary level=18 replay=1 Hz=30 background=1 waves=20 rows=5 conveyor=0 award=18
+Adventure begin level=18 replay=1 Hz=240
+Adventure primary level=18 replay=1 Hz=240 background=1 waves=20 rows=5 conveyor=0 award=18
+Adventure begin level=18 replay=1 Hz=0
+Adventure primary level=18 replay=1 Hz=0 background=1 waves=20 rows=5 conveyor=0 award=18
+Adventure begin level=19 replay=1 Hz=100
+Adventure primary level=19 replay=1 Hz=100 background=1 waves=30 rows=5 conveyor=0 award=15
+Adventure begin level=19 replay=1 Hz=30
+Adventure primary level=19 replay=1 Hz=30 background=1 waves=30 rows=5 conveyor=0 award=15
+Adventure begin level=19 replay=1 Hz=240
+Adventure primary level=19 replay=1 Hz=240 background=1 waves=30 rows=5 conveyor=0 award=15
+Adventure begin level=19 replay=1 Hz=0
+Adventure primary level=19 replay=1 Hz=0 background=1 waves=30 rows=5 conveyor=0 award=15
+Adventure begin level=20 replay=1 Hz=100
+Adventure primary level=20 replay=1 Hz=100 background=1 waves=20 rows=5 conveyor=1 award=18
+Adventure begin level=20 replay=1 Hz=30
+Adventure primary level=20 replay=1 Hz=30 background=1 waves=20 rows=5 conveyor=1 award=18
+Adventure begin level=20 replay=1 Hz=240
+Adventure primary level=20 replay=1 Hz=240 background=1 waves=20 rows=5 conveyor=1 award=18
+Adventure begin level=20 replay=1 Hz=0
+Adventure primary level=20 replay=1 Hz=0 background=1 waves=20 rows=5 conveyor=1 award=18
+Adventure begin level=21 replay=1 Hz=100
+Adventure primary level=21 replay=1 Hz=100 background=2 waves=20 rows=6 conveyor=0 award=18
+Adventure begin level=21 replay=1 Hz=30
+Adventure primary level=21 replay=1 Hz=30 background=2 waves=20 rows=6 conveyor=0 award=18
+Adventure begin level=21 replay=1 Hz=240
+Adventure primary level=21 replay=1 Hz=240 background=2 waves=20 rows=6 conveyor=0 award=18
+Adventure begin level=21 replay=1 Hz=0
+Adventure primary level=21 replay=1 Hz=0 background=2 waves=20 rows=6 conveyor=0 award=18
+Adventure begin level=22 replay=1 Hz=100
+Adventure primary level=22 replay=1 Hz=100 background=2 waves=30 rows=6 conveyor=0 award=18
+Adventure begin level=22 replay=1 Hz=30
+Adventure primary level=22 replay=1 Hz=30 background=2 waves=30 rows=6 conveyor=0 award=18
+Adventure begin level=22 replay=1 Hz=240
+Adventure primary level=22 replay=1 Hz=240 background=2 waves=30 rows=6 conveyor=0 award=18
+Adventure begin level=22 replay=1 Hz=0
+Adventure primary level=22 replay=1 Hz=0 background=2 waves=30 rows=6 conveyor=0 award=18
+Adventure begin level=23 replay=1 Hz=100
+Adventure primary level=23 replay=1 Hz=100 background=2 waves=30 rows=6 conveyor=0 award=18
+Adventure begin level=23 replay=1 Hz=30
+Adventure primary level=23 replay=1 Hz=30 background=2 waves=30 rows=6 conveyor=0 award=18
+Adventure begin level=23 replay=1 Hz=240
+Adventure primary level=23 replay=1 Hz=240 background=2 waves=30 rows=6 conveyor=0 award=18
+Adventure begin level=23 replay=1 Hz=0
+Adventure primary level=23 replay=1 Hz=0 background=2 waves=30 rows=6 conveyor=0 award=18
+Adventure begin level=24 replay=1 Hz=100
+Adventure primary level=24 replay=1 Hz=100 background=2 waves=40 rows=6 conveyor=0 award=18
+Adventure begin level=24 replay=1 Hz=30
+Adventure primary level=24 replay=1 Hz=30 background=2 waves=40 rows=6 conveyor=0 award=18
+Adventure begin level=24 replay=1 Hz=240
+Adventure primary level=24 replay=1 Hz=240 background=2 waves=40 rows=6 conveyor=0 award=18
+Adventure begin level=24 replay=1 Hz=0
+Adventure primary level=24 replay=1 Hz=0 background=2 waves=40 rows=6 conveyor=0 award=18
+Adventure begin level=25 replay=1 Hz=100
+Adventure primary level=25 replay=1 Hz=100 background=2 waves=30 rows=6 conveyor=1 award=18
+Adventure begin level=25 replay=1 Hz=30
+Adventure primary level=25 replay=1 Hz=30 background=2 waves=30 rows=6 conveyor=1 award=18
+Adventure begin level=25 replay=1 Hz=240
+Adventure primary level=25 replay=1 Hz=240 background=2 waves=30 rows=6 conveyor=1 award=18
+Adventure begin level=25 replay=1 Hz=0
+Adventure primary level=25 replay=1 Hz=0 background=2 waves=30 rows=6 conveyor=1 award=18
+Adventure begin level=26 replay=1 Hz=100
+Adventure primary level=26 replay=1 Hz=100 background=2 waves=30 rows=6 conveyor=0 award=18
+Adventure begin level=26 replay=1 Hz=30
+Adventure primary level=26 replay=1 Hz=30 background=2 waves=30 rows=6 conveyor=0 award=18
+Adventure begin level=26 replay=1 Hz=240
+Adventure primary level=26 replay=1 Hz=240 background=2 waves=30 rows=6 conveyor=0 award=18
+Adventure begin level=26 replay=1 Hz=0
+Adventure primary level=26 replay=1 Hz=0 background=2 waves=30 rows=6 conveyor=0 award=18
+Adventure begin level=27 replay=1 Hz=100
+Adventure primary level=27 replay=1 Hz=100 background=2 waves=40 rows=6 conveyor=0 award=18
+Adventure begin level=27 replay=1 Hz=30
+Adventure primary level=27 replay=1 Hz=30 background=2 waves=40 rows=6 conveyor=0 award=18
+Adventure begin level=27 replay=1 Hz=240
+Adventure primary level=27 replay=1 Hz=240 background=2 waves=40 rows=6 conveyor=0 award=18
+Adventure begin level=27 replay=1 Hz=0
+Adventure primary level=27 replay=1 Hz=0 background=2 waves=40 rows=6 conveyor=0 award=18
+Adventure begin level=28 replay=1 Hz=100
+Adventure primary level=28 replay=1 Hz=100 background=2 waves=30 rows=6 conveyor=0 award=18
+Adventure begin level=28 replay=1 Hz=30
+Adventure primary level=28 replay=1 Hz=30 background=2 waves=30 rows=6 conveyor=0 award=18
+Adventure begin level=28 replay=1 Hz=240
+Adventure primary level=28 replay=1 Hz=240 background=2 waves=30 rows=6 conveyor=0 award=18
+Adventure begin level=28 replay=1 Hz=0
+Adventure primary level=28 replay=1 Hz=0 background=2 waves=30 rows=6 conveyor=0 award=18
+Adventure begin level=29 replay=1 Hz=100
+Adventure primary level=29 replay=1 Hz=100 background=2 waves=40 rows=6 conveyor=0 award=15
+Adventure begin level=29 replay=1 Hz=30
+Adventure primary level=29 replay=1 Hz=30 background=2 waves=40 rows=6 conveyor=0 award=15
+Adventure begin level=29 replay=1 Hz=240
+Adventure primary level=29 replay=1 Hz=240 background=2 waves=40 rows=6 conveyor=0 award=15
+Adventure begin level=29 replay=1 Hz=0
+Adventure primary level=29 replay=1 Hz=0 background=2 waves=40 rows=6 conveyor=0 award=15
+Adventure begin level=30 replay=1 Hz=100
+Adventure primary level=30 replay=1 Hz=100 background=2 waves=30 rows=6 conveyor=1 award=18
+Adventure begin level=30 replay=1 Hz=30
+Adventure primary level=30 replay=1 Hz=30 background=2 waves=30 rows=6 conveyor=1 award=18
+Adventure begin level=30 replay=1 Hz=240
+Adventure primary level=30 replay=1 Hz=240 background=2 waves=30 rows=6 conveyor=1 award=18
+Adventure begin level=30 replay=1 Hz=0
+Adventure primary level=30 replay=1 Hz=0 background=2 waves=30 rows=6 conveyor=1 award=18
+Adventure begin level=31 replay=1 Hz=100
+Adventure primary level=31 replay=1 Hz=100 background=3 waves=20 rows=6 conveyor=0 award=18
+Adventure begin level=31 replay=1 Hz=30
+Adventure primary level=31 replay=1 Hz=30 background=3 waves=20 rows=6 conveyor=0 award=18
+Adventure begin level=31 replay=1 Hz=240
+Adventure primary level=31 replay=1 Hz=240 background=3 waves=20 rows=6 conveyor=0 award=18
+Adventure begin level=31 replay=1 Hz=0
+Adventure primary level=31 replay=1 Hz=0 background=3 waves=20 rows=6 conveyor=0 award=18
+Adventure begin level=32 replay=1 Hz=100
+Adventure primary level=32 replay=1 Hz=100 background=3 waves=30 rows=6 conveyor=0 award=18
+Adventure begin level=32 replay=1 Hz=30
+Adventure primary level=32 replay=1 Hz=30 background=3 waves=30 rows=6 conveyor=0 award=18
+Adventure begin level=32 replay=1 Hz=240
+Adventure primary level=32 replay=1 Hz=240 background=3 waves=30 rows=6 conveyor=0 award=18
+Adventure begin level=32 replay=1 Hz=0
+Adventure primary level=32 replay=1 Hz=0 background=3 waves=30 rows=6 conveyor=0 award=18
+Adventure begin level=33 replay=1 Hz=100
+Adventure primary level=33 replay=1 Hz=100 background=3 waves=20 rows=6 conveyor=0 award=18
+Adventure begin level=33 replay=1 Hz=30
+Adventure primary level=33 replay=1 Hz=30 background=3 waves=20 rows=6 conveyor=0 award=18
+Adventure begin level=33 replay=1 Hz=240
+Adventure primary level=33 replay=1 Hz=240 background=3 waves=20 rows=6 conveyor=0 award=18
+Adventure begin level=33 replay=1 Hz=0
+Adventure primary level=33 replay=1 Hz=0 background=3 waves=20 rows=6 conveyor=0 award=18
+Adventure begin level=34 replay=1 Hz=100
+Adventure primary level=34 replay=1 Hz=100 background=3 waves=30 rows=6 conveyor=0 award=18
+Adventure begin level=34 replay=1 Hz=30
+Adventure primary level=34 replay=1 Hz=30 background=3 waves=30 rows=6 conveyor=0 award=18
+Adventure begin level=34 replay=1 Hz=240
+Adventure primary level=34 replay=1 Hz=240 background=3 waves=30 rows=6 conveyor=0 award=18
+Adventure begin level=34 replay=1 Hz=0
+Adventure primary level=34 replay=1 Hz=0 background=3 waves=30 rows=6 conveyor=0 award=18
+Adventure begin level=35 replay=1 Hz=100
+Adventure primary level=35 replay=1 Hz=100 background=1 waves=30 rows=5 conveyor=0 award=18
+Adventure begin level=35 replay=1 Hz=30
+Adventure primary level=35 replay=1 Hz=30 background=1 waves=30 rows=5 conveyor=0 award=18
+Adventure begin level=35 replay=1 Hz=240
+Adventure primary level=35 replay=1 Hz=240 background=1 waves=30 rows=5 conveyor=0 award=18
+Adventure begin level=35 replay=1 Hz=0
+Adventure primary level=35 replay=1 Hz=0 background=1 waves=30 rows=5 conveyor=0 award=18
+Adventure begin level=36 replay=1 Hz=100
+Adventure primary level=36 replay=1 Hz=100 background=3 waves=20 rows=6 conveyor=0 award=18
+Adventure begin level=36 replay=1 Hz=30
+Adventure primary level=36 replay=1 Hz=30 background=3 waves=20 rows=6 conveyor=0 award=18
+Adventure begin level=36 replay=1 Hz=240
+Adventure primary level=36 replay=1 Hz=240 background=3 waves=20 rows=6 conveyor=0 award=18
+Adventure begin level=36 replay=1 Hz=0
+Adventure primary level=36 replay=1 Hz=0 background=3 waves=20 rows=6 conveyor=0 award=18
+Adventure begin level=37 replay=1 Hz=100
+Adventure primary level=37 replay=1 Hz=100 background=3 waves=30 rows=6 conveyor=0 award=18
+Adventure begin level=37 replay=1 Hz=30
+Adventure primary level=37 replay=1 Hz=30 background=3 waves=30 rows=6 conveyor=0 award=18
+Adventure begin level=37 replay=1 Hz=240
+Adventure primary level=37 replay=1 Hz=240 background=3 waves=30 rows=6 conveyor=0 award=18
+Adventure begin level=37 replay=1 Hz=0
+Adventure primary level=37 replay=1 Hz=0 background=3 waves=30 rows=6 conveyor=0 award=18
+Adventure begin level=38 replay=1 Hz=100
+Adventure primary level=38 replay=1 Hz=100 background=3 waves=20 rows=6 conveyor=0 award=18
+Adventure begin level=38 replay=1 Hz=30
+Adventure primary level=38 replay=1 Hz=30 background=3 waves=20 rows=6 conveyor=0 award=18
+Adventure begin level=38 replay=1 Hz=240
+Adventure primary level=38 replay=1 Hz=240 background=3 waves=20 rows=6 conveyor=0 award=18
+Adventure begin level=38 replay=1 Hz=0
+Adventure primary level=38 replay=1 Hz=0 background=3 waves=20 rows=6 conveyor=0 award=18
+Adventure begin level=39 replay=1 Hz=100
+Adventure primary level=39 replay=1 Hz=100 background=3 waves=30 rows=6 conveyor=0 award=15
+Adventure begin level=39 replay=1 Hz=30
+Adventure primary level=39 replay=1 Hz=30 background=3 waves=30 rows=6 conveyor=0 award=15
+Adventure begin level=39 replay=1 Hz=240
+Adventure primary level=39 replay=1 Hz=240 background=3 waves=30 rows=6 conveyor=0 award=15
+Adventure begin level=39 replay=1 Hz=0
+Adventure primary level=39 replay=1 Hz=0 background=3 waves=30 rows=6 conveyor=0 award=15
+Adventure begin level=40 replay=1 Hz=100
+Adventure primary level=40 replay=1 Hz=100 background=3 waves=30 rows=6 conveyor=1 award=18
+Adventure begin level=40 replay=1 Hz=30
+Adventure primary level=40 replay=1 Hz=30 background=3 waves=30 rows=6 conveyor=1 award=18
+Adventure begin level=40 replay=1 Hz=240
+Adventure primary level=40 replay=1 Hz=240 background=3 waves=30 rows=6 conveyor=1 award=18
+Adventure begin level=40 replay=1 Hz=0
+Adventure primary level=40 replay=1 Hz=0 background=3 waves=30 rows=6 conveyor=1 award=18
+Adventure begin level=41 replay=1 Hz=100
+Adventure primary level=41 replay=1 Hz=100 background=4 waves=20 rows=5 conveyor=0 award=18
+Adventure begin level=41 replay=1 Hz=30
+Adventure primary level=41 replay=1 Hz=30 background=4 waves=20 rows=5 conveyor=0 award=18
+Adventure begin level=41 replay=1 Hz=240
+Adventure primary level=41 replay=1 Hz=240 background=4 waves=20 rows=5 conveyor=0 award=18
+Adventure begin level=41 replay=1 Hz=0
+Adventure primary level=41 replay=1 Hz=0 background=4 waves=20 rows=5 conveyor=0 award=18
+Adventure begin level=42 replay=1 Hz=100
+Adventure primary level=42 replay=1 Hz=100 background=4 waves=30 rows=5 conveyor=0 award=18
+Adventure begin level=42 replay=1 Hz=30
+Adventure primary level=42 replay=1 Hz=30 background=4 waves=30 rows=5 conveyor=0 award=18
+Adventure begin level=42 replay=1 Hz=240
+Adventure primary level=42 replay=1 Hz=240 background=4 waves=30 rows=5 conveyor=0 award=18
+Adventure begin level=42 replay=1 Hz=0
+Adventure primary level=42 replay=1 Hz=0 background=4 waves=30 rows=5 conveyor=0 award=18
+Adventure begin level=43 replay=1 Hz=100
+Adventure primary level=43 replay=1 Hz=100 background=4 waves=30 rows=5 conveyor=0 award=18
+Adventure begin level=43 replay=1 Hz=30
+Adventure primary level=43 replay=1 Hz=30 background=4 waves=30 rows=5 conveyor=0 award=18
+Adventure begin level=43 replay=1 Hz=240
+Adventure primary level=43 replay=1 Hz=240 background=4 waves=30 rows=5 conveyor=0 award=18
+Adventure begin level=43 replay=1 Hz=0
+Adventure primary level=43 replay=1 Hz=0 background=4 waves=30 rows=5 conveyor=0 award=18
+Adventure begin level=44 replay=1 Hz=100
+Adventure primary level=44 replay=1 Hz=100 background=4 waves=40 rows=5 conveyor=0 award=18
+Adventure begin level=44 replay=1 Hz=30
+Adventure primary level=44 replay=1 Hz=30 background=4 waves=40 rows=5 conveyor=0 award=18
+Adventure begin level=44 replay=1 Hz=240
+Adventure primary level=44 replay=1 Hz=240 background=4 waves=40 rows=5 conveyor=0 award=18
+Adventure begin level=44 replay=1 Hz=0
+Adventure primary level=44 replay=1 Hz=0 background=4 waves=40 rows=5 conveyor=0 award=18
+Adventure begin level=45 replay=1 Hz=100
+Adventure primary level=45 replay=1 Hz=100 background=4 waves=30 rows=5 conveyor=1 award=18
+Adventure begin level=45 replay=1 Hz=30
+Adventure primary level=45 replay=1 Hz=30 background=4 waves=30 rows=5 conveyor=1 award=18
+Adventure begin level=45 replay=1 Hz=240
+Adventure primary level=45 replay=1 Hz=240 background=4 waves=30 rows=5 conveyor=1 award=18
+Adventure begin level=45 replay=1 Hz=0
+Adventure primary level=45 replay=1 Hz=0 background=4 waves=30 rows=5 conveyor=1 award=18
+Adventure begin level=46 replay=1 Hz=100
+Adventure primary level=46 replay=1 Hz=100 background=4 waves=30 rows=5 conveyor=0 award=18
+Adventure begin level=46 replay=1 Hz=30
+Adventure primary level=46 replay=1 Hz=30 background=4 waves=30 rows=5 conveyor=0 award=18
+Adventure begin level=46 replay=1 Hz=240
+Adventure primary level=46 replay=1 Hz=240 background=4 waves=30 rows=5 conveyor=0 award=18
+Adventure begin level=46 replay=1 Hz=0
+Adventure primary level=46 replay=1 Hz=0 background=4 waves=30 rows=5 conveyor=0 award=18
+Adventure begin level=47 replay=1 Hz=100
+Adventure primary level=47 replay=1 Hz=100 background=4 waves=40 rows=5 conveyor=0 award=18
+Adventure begin level=47 replay=1 Hz=30
+Adventure primary level=47 replay=1 Hz=30 background=4 waves=40 rows=5 conveyor=0 award=18
+Adventure begin level=47 replay=1 Hz=240
+Adventure primary level=47 replay=1 Hz=240 background=4 waves=40 rows=5 conveyor=0 award=18
+Adventure begin level=47 replay=1 Hz=0
+Adventure primary level=47 replay=1 Hz=0 background=4 waves=40 rows=5 conveyor=0 award=18
+Adventure begin level=48 replay=1 Hz=100
+Adventure primary level=48 replay=1 Hz=100 background=4 waves=30 rows=5 conveyor=0 award=18
+Adventure begin level=48 replay=1 Hz=30
+Adventure primary level=48 replay=1 Hz=30 background=4 waves=30 rows=5 conveyor=0 award=18
+Adventure begin level=48 replay=1 Hz=240
+Adventure primary level=48 replay=1 Hz=240 background=4 waves=30 rows=5 conveyor=0 award=18
+Adventure begin level=48 replay=1 Hz=0
+Adventure primary level=48 replay=1 Hz=0 background=4 waves=30 rows=5 conveyor=0 award=18
+Adventure begin level=49 replay=1 Hz=100
+Adventure primary level=49 replay=1 Hz=100 background=4 waves=40 rows=5 conveyor=0 award=15
+Adventure begin level=49 replay=1 Hz=30
+Adventure primary level=49 replay=1 Hz=30 background=4 waves=40 rows=5 conveyor=0 award=15
+Adventure begin level=49 replay=1 Hz=240
+Adventure primary level=49 replay=1 Hz=240 background=4 waves=40 rows=5 conveyor=0 award=15
+Adventure begin level=49 replay=1 Hz=0
+Adventure primary level=49 replay=1 Hz=0 background=4 waves=40 rows=5 conveyor=0 award=15
+Adventure begin level=50 replay=1 Hz=100
+Adventure primary level=50 replay=1 Hz=100 background=5 waves=40 rows=5 conveyor=1 award=18
+Adventure begin level=50 replay=1 Hz=30
+Adventure primary level=50 replay=1 Hz=30 background=5 waves=40 rows=5 conveyor=1 award=18
+Adventure begin level=50 replay=1 Hz=240
+Adventure primary level=50 replay=1 Hz=240 background=5 waves=40 rows=5 conveyor=1 award=18
+Adventure begin level=50 replay=1 Hz=0
+Adventure primary level=50 replay=1 Hz=0 background=5 waves=40 rows=5 conveyor=1 award=18
+PASS actual fifty adventure levels: first/replay rules, teaching actions, waves, special routes, pause and enemy-driven rewards at four schedules

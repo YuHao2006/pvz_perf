@@ -37,7 +37,7 @@ constinit ReanimatorDefinition Reanimations[ReanimationCount] = {
     {{Reanim32Tracks, 6}, 18.0f, Reanim32Textures, 1u, 7u, 0u, Reanim32Rects, nullptr, Reanim32ActionStarts, Reanim32ActionCounts, Reanim32Options},
     {{Reanim33Tracks, 11}, 12.0f, Reanim33Textures, 1u, 9u, 0u, Reanim33Rects, nullptr, Reanim33ActionStarts, Reanim33ActionCounts, Reanim33Options},
     {{Reanim34Tracks, 3}, 12.0f, Reanim34Textures, 1u, 13u, 0u, Reanim34Rects, nullptr, Reanim34ActionStarts, Reanim34ActionCounts, Reanim34Options},
-    {{Reanim35Tracks, 4}, 30.0f, Reanim35Textures, 1u, 5u, 0u, Reanim35Rects, nullptr, Reanim35ActionStarts, Reanim35ActionCounts, Reanim35Options},
+    {{Reanim35Tracks, 4}, 30.0f, Reanim35Textures, 1u, 4u, 0u, Reanim35Rects, nullptr, Reanim35ActionStarts, Reanim35ActionCounts, Reanim35Options},
     {{Reanim36Tracks, 12}, 15.0f, Reanim36Textures, 1u, 21u, 0u, Reanim36Rects, nullptr, Reanim36ActionStarts, Reanim36ActionCounts, Reanim36Options},
     {{Reanim37Tracks, 10}, 15.0f, Reanim37Textures, 1u, 17u, 0u, Reanim37Rects, nullptr, Reanim37ActionStarts, Reanim37ActionCounts, Reanim37Options},
     {{Reanim38Tracks, 12}, 15.0f, Reanim38Textures, 1u, 24u, 0u, Reanim38Rects, nullptr, Reanim38ActionStarts, Reanim38ActionCounts, Reanim38Options},
@@ -50,7 +50,7 @@ constinit ReanimatorDefinition Reanimations[ReanimationCount] = {
     {{Reanim45Tracks, 9}, 12.0f, Reanim45Textures, 1u, 11u, 0u, Reanim45Rects, nullptr, Reanim45ActionStarts, Reanim45ActionCounts, Reanim45Options},
     {{Reanim46Tracks, 22}, 12.0f, Reanim46Textures, 1u, 22u, 0u, Reanim46Rects, nullptr, Reanim46ActionStarts, Reanim46ActionCounts, Reanim46Options},
     {{Reanim47Tracks, 13}, 12.0f, Reanim47Textures, 1u, 13u, 0u, Reanim47Rects, nullptr, Reanim47ActionStarts, Reanim47ActionCounts, Reanim47Options},
-    {{Reanim48Tracks, 11}, 12.0f, Reanim48Textures, 1u, 10u, 0u, Reanim48Rects, nullptr, Reanim48ActionStarts, Reanim48ActionCounts, Reanim48Options},
+    {{Reanim48Tracks, 11}, 12.0f, Reanim48Textures, 1u, 9u, 0u, Reanim48Rects, nullptr, Reanim48ActionStarts, Reanim48ActionCounts, Reanim48Options},
     {{Reanim49Tracks, 8}, 12.0f, Reanim49Textures, 2u, 9u, 2u, Reanim49Rects, Reanim49Transitions, Reanim49ActionStarts, Reanim49ActionCounts, Reanim49Options},
     {{Reanim50Tracks, 22}, 12.0f, Reanim50Textures, 1u, 18u, 0u, Reanim50Rects, nullptr, Reanim50ActionStarts, Reanim50ActionCounts, Reanim50Options},
     {{Reanim51Tracks, 17}, 12.0f, Reanim51Textures, 1u, 25u, 0u, Reanim51Rects, nullptr, Reanim51ActionStarts, Reanim51ActionCounts, Reanim51Options},
@@ -118,7 +118,7 @@ constinit ReanimatorDefinition Reanimations[ReanimationCount] = {
     {{Reanim113Tracks, 3}, 12.0f, Reanim113Textures, 1u, 4u, 0u, Reanim113Rects, nullptr, Reanim113ActionStarts, Reanim113ActionCounts, Reanim113Options},
     {{Reanim114Tracks, 1}, 12.0f, Reanim114Textures, 1u, 5u, 0u, Reanim114Rects, nullptr, Reanim114ActionStarts, Reanim114ActionCounts, Reanim114Options},
     {{Reanim115Tracks, 1}, 12.0f, Reanim115Textures, 1u, 2u, 0u, Reanim115Rects, nullptr, Reanim115ActionStarts, Reanim115ActionCounts, Reanim115Options},
-    {{Reanim116Tracks, 4}, 30.0f, Reanim116Textures, 1u, 5u, 0u, Reanim116Rects, nullptr, Reanim116ActionStarts, Reanim116ActionCounts, Reanim116Options},
+    {{Reanim116Tracks, 4}, 30.0f, Reanim116Textures, 1u, 4u, 0u, Reanim116Rects, nullptr, Reanim116ActionStarts, Reanim116ActionCounts, Reanim116Options},
     {{Reanim117Tracks, 109}, 12.0f, Reanim117Textures, 1u, 86u, 0u, Reanim117Rects, nullptr, Reanim117ActionStarts, Reanim117ActionCounts, Reanim117Options},
     {{Reanim118Tracks, 6}, 12.0f, Reanim118Textures, 1u, 7u, 0u, Reanim118Rects, nullptr, Reanim118ActionStarts, Reanim118ActionCounts, Reanim118Options},
     {{Reanim119Tracks, 2}, 20.0f, Reanim119Textures, 1u, 11u, 0u, Reanim119Rects, nullptr, Reanim119ActionStarts, Reanim119ActionCounts, Reanim119Options},
@@ -403,8 +403,8 @@ constinit std::span<AttacherSegmentRT> AttacherSegments[ReanimationCount] = {
     {},
 };
 constinit ProjectileAtlasDefinition Projectiles = {
-    {{{{0.664634168f, 0.449999988f, 0.835365832f, 0.605555534f, 28, 28},1.0f},{{0.823170722f, 0.655555546f, 0.993902445f, 0.811111093f, 28, 28},1.0f},{{0.609756112f, 0.844444454f, 0.792682946f, 0.99444443f, 30, 27},1.0f},{{0.00609756075f, 0.449999988f, 0.341463417f, 0.716666639f, 55, 48},1.0f},{{0.664634168f, 0.616666675f, 0.76219511f, 0.691666663f, 32, 27},0.300000012f},{{0.00609756075f, 0.727777779f, 0.341463417f, 0.99444443f, 55, 48},1.0f},{{0.0f, 0.0f, 0.0f, 0.0f, 0, 0},1.0f},{{0.353658527f, 0.73888886f, 0.585365832f, 0.949999988f, 38, 38},1.0f},{{0.597561002f, 0.74444443f, 0.780487776f, 0.833333313f, 30, 16},1.0f},{{0.804878056f, 0.822222233f, 0.993902445f, 0.99444443f, 31, 31},1.10000002f},{{0.847561002f, 0.449999988f, 0.975609779f, 0.572222233f, 21, 22},0.949999988f},{{0.00609756075f, 0.00555555569f, 0.993902445f, 0.438888878f, 162, 78},0.899999976f},{{0.353658527f, 0.449999988f, 0.652438998f, 0.727777779f, 49, 50},0.800000012f},{{0.664634168f, 0.449999988f, 0.835365832f, 0.605555534f, 28, 28},1.0f}}},
-    {{{0.865853667f, 0.61944443f, 0.929878056f, 0.644444466f, 21, 9},{0.929878056f, 0.61944443f, 0.993902445f, 0.644444466f, 21, 9}}}, nullptr
+    {{{{0.389140278f, 0.578571439f, 0.515837133f, 0.778571427f, 28, 28},1.0f},{{0.393665165f, 0.79285717f, 0.52036202f, 0.992857158f, 28, 28},1.0f},{{0.529411793f, 0.800000012f, 0.665158391f, 0.992857158f, 30, 27},1.0f},{{0.74660635f, 0.00714285718f, 0.995475113f, 0.349999994f, 55, 48},1.0f},{{0.235294119f, 0.578571439f, 0.380090505f, 0.771428585f, 32, 27},0.300000012f},{{0.74660635f, 0.364285707f, 0.995475113f, 0.70714283f, 55, 48},1.0f},{{0.0f, 0.0f, 0.0f, 0.0f, 0, 0},1.0f},{{0.823529422f, 0.721428573f, 0.995475113f, 0.992857158f, 38, 38},1.0f},{{0.524886906f, 0.657142878f, 0.660633504f, 0.771428585f, 30, 16},1.0f},{{0.674208164f, 0.771428585f, 0.814479649f, 0.992857158f, 31, 31},1.10000002f},{{0.289592773f, 0.835714281f, 0.384615391f, 0.992857158f, 21, 22},0.949999988f},{{0.00452488707f, 0.00714285718f, 0.737556577f, 0.564285696f, 162, 78},0.899999976f},{{0.00452488707f, 0.578571439f, 0.226244345f, 0.935714304f, 49, 50},0.800000012f},{{0.389140278f, 0.578571439f, 0.515837133f, 0.778571427f, 28, 28},1.0f}}},
+    {{{0.524886906f, 0.578571439f, 0.619909525f, 0.642857134f, 21, 9},{0.619909525f, 0.578571439f, 0.714932144f, 0.642857134f, 21, 9}}}, nullptr
 };
 static_assert(static_cast<int>(ReanimationType::NUM_REANIMS)==144);
 static_assert(static_cast<int>(ReanimationType::REANIM_LOADBAR_SPROUT)==0);

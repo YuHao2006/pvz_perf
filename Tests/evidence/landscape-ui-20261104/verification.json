@@ -1,0 +1,82 @@
+{
+  "setting": "landscapeUI",
+  "default": false,
+  "preview_release_value": true,
+  "save_format_unchanged": "DAT64 v4/schema 0x10745",
+  "tests": {
+    "landscape_runtime": "PASS: 800/900/950/1000/1067/1333/1400; source/cooldown pixels; ten-slot compact bank/conveyor/shovel; top painter phases; camera-invariant HUD; sun target; shake; chooser focus/scroll; DAT64 v4",
+    "classic_touch_and_garden": "PASS; hardware-filtered repacked atlas vs independent image differs by at most 1 RGBA8 unit at fractional translations",
+    "scene_dsl_unit": 13,
+    "atlas_group_metadata": 7,
+    "scene_original_pixel_corpus": 3,
+    "denormal_flush": "PASS",
+    "settings_reader_writer": "PASS",
+    "android_device_test": "awaiting user visual verification of 3px selection and planting guide rules",
+    "window_constraints": "PASS: every width 800..1400; left-first landscape, right-first desktop; symmetric 1000..1240 then capped left=220/right<=380; native minimum 900x600/mobile 3:2; beyond 21:9 pillarboxing",
+    "modal_focus": "PASS: actual Menu/Almanac/Store close and wheel dispatch in classic and landscape layouts; imitater close",
+    "global_sunlight": "PASS: slot keeps classic cards and shares the native global sunlight frame; GPU pixel oracle",
+    "android_cross_build": "PASS",
+    "middle_tiling": "PASS: 152 exact copies; panel border pixels identical before/after at 800/1067/1400; middle geometry submissions reduced from 152 to 1",
+    "android_install": "PASS: FY241471004E; latest 3px selection/valid-target guides/shovel glow package; signature and 16KB alignment verified; exact library/PAK pair verified; game not running; settings/saves retained",
+    "challenge_input": "PASS: constexpr static mode/Adventure dispatch; actual twenty minigames, vase/IZ puzzles, Adventure rules at 100/30/240Hz and jittered nanosecond steps; touch garden",
+    "aquarium_touch": "PASS: release-only empty tap; pickup/drag/cancel do not feed; fish card, pause, scene/coin priority and immediate mouse feed/glass preserved; cannon swept pickup remains valid",
+    "sun_target_and_shake": "PASS: exact collection delta toward Board-local HUD; collecting/ordinary render pixel equality; shake amplitude and return-to-origin including legacy displaced camera",
+    "guide_visibility": "PASS: actual day/pool/roof legal targets show additive bands; occupied targets suppress the entire crosshair; cached validity recovers; shovel draws no bands and retains target glow; idle touch emits no bands",
+    "selection_frame": "PASS: native three-pixel thickness/fourteen-pixel corner length, classic original frame pixel oracle retained"
+  },
+  "outputs": [
+    {
+      "path": "out/x64-win32-vulkan/Release/pvz_perf.exe",
+      "sha256": "16d78a65d245e54e248a419b8ad6b809f2efe5ae62e8ef76e3869c8d5b7b53a5"
+    },
+    {
+      "path": "out/x64-win32-vulkan/Release/main.pak64",
+      "sha256": "3a011345b87613911a0183f61e375042bfd57d87294a43532e7ec406026d55eb"
+    },
+    {
+      "path": "out/android-arm64/Release/libpvz_perf.so",
+      "sha256": "1d5f1916b764ad8f8e865af774c5c1ce3e31c6249936d00b140ff3aef6268350"
+    },
+    {
+      "path": "out/android-arm64/Release/main.pak64",
+      "sha256": "3a011345b87613911a0183f61e375042bfd57d87294a43532e7ec406026d55eb"
+    },
+    {
+      "path": "out/arm64-android14-vulkan1.3/landscape-ui/pvz_perf-landscape-ui.apk",
+      "sha256": "328c7acad4dcbddb06c901ffe637b38ac9ee0907e703b31177700ec7c0820a95"
+    }
+  ],
+  "native_card_size": [
+    81,
+    53
+  ],
+  "native_sun_size": [
+    85,
+    31
+  ],
+  "bank_slot_pitch": 48,
+  "shovel_bounds_window": [
+    0,
+    520,
+    84,
+    41
+  ],
+  "native_ui_minimum": [
+    900,
+    600
+  ],
+  "native_art_expansion_limits": {
+    "left": 220,
+    "right": 380
+  },
+  "updated": "2026-11-05",
+  "native_selection_frame": {
+    "stroke_pixels": 3,
+    "corner_length_pixels": 14,
+    "color_rgb": [
+      70,
+      180,
+      255
+    ]
+  }
+}

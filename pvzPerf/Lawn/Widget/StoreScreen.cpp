@@ -461,7 +461,7 @@ void StoreScreen::DrawItemIcon(Graphics* g, int theItemPosition, StoreItem theIt
     { nullptr, 0, 0, false },                                   // 5 STORE_ITEM_PLANT_GOLD_MAGNET（种子包默认支）
     { nullptr, 0, 0, false },                                   // 6 STORE_ITEM_PLANT_SPIKEROCK（种子包默认支）
     { nullptr, 0, 0, false },                                   // 7 STORE_ITEM_PLANT_COBCANNON（种子包默认支）
-    { &Sexy::IMAGE_IMITATERSEED, 0, 0, false },                 // 8 STORE_ITEM_PLANT_IMITATER
+    { nullptr, 0, 0, false },                                   // 8 STORE_ITEM_PLANT_IMITATER（复用底板与预览缓存）
     { nullptr, 0, 0, false },                                   // 9 STORE_ITEM_BONUS_LAWN_MOWER（种子包默认支）
     { nullptr, 0, 0, false },                                   // 10 STORE_ITEM_POTTED_MARIGOLD_1（表外 IsPottedPlant 支）
     { nullptr, 0, 0, false },                                   // 11 STORE_ITEM_POTTED_MARIGOLD_2（表外 IsPottedPlant 支）
@@ -488,10 +488,10 @@ void StoreScreen::DrawItemIcon(Graphics* g, int theItemPosition, StoreItem theIt
     (int)StoreItem::STORE_ITEM_FIRSTAID + 1, "kStoreIconDrawRows 槽位须与 StoreItem 枚举同步");
     static_assert(kStoreIconDrawRows[(int)StoreItem::STORE_ITEM_POOL_CLEANER].mImage == &Sexy::IMAGE_ICON_POOLCLEANER &&
     kStoreIconDrawRows[(int)StoreItem::STORE_ITEM_WHEEL_BARROW].mImage == &Sexy::IMAGE_ZEN_WHEELBARROW &&
-    kStoreIconDrawRows[(int)StoreItem::STORE_ITEM_PLANT_IMITATER].mImage == &Sexy::IMAGE_IMITATERSEED &&
+    kStoreIconDrawRows[(int)StoreItem::STORE_ITEM_PLANT_IMITATER].mImage == nullptr &&
     kStoreIconDrawRows[(int)StoreItem::STORE_ITEM_PACKET_UPGRADE].mImage == nullptr &&
     kStoreIconDrawRows[(int)StoreItem::STORE_ITEM_PLANT_GATLINGPEA].mImage == nullptr,
-    "kStoreIconDrawRows 关键槽位锚定（POOL_CLEANER/WHEEL_BARROW/IMITATER 有图，PACKET_UPGRADE/GATLINGPEA 默认）");
+    "kStoreIconDrawRows 关键槽位锚定（POOL_CLEANER/WHEEL_BARROW 有图，IMITATER/PACKET_UPGRADE/GATLINGPEA 默认）");
 
     if (theIsForHighlight)
     {

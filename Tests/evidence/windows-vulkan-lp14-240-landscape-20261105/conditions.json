@@ -1,0 +1,30 @@
+{
+  "collection": "external read-only counters, process CPU time, no game instrumentation",
+  "settings": {
+    "targetFps": 240,
+    "autoDetectFrameRate": false,
+    "landscapeUI": true,
+    "musicVolume": 100,
+    "sfxVolume": 100,
+    "muted": 0,
+    "screenMode": "windowed",
+    "preferredX": 541,
+    "preferredY": 254,
+    "customCursors": 0,
+    "waitForVSync": 0,
+    "customScale": 0
+  },
+  "pak_sha256": "3a011345b87613911a0183f61e375042bfd57d87294a43532e7ec406026d55eb",
+  "date": "2026-11-05",
+  "ui": "landscape",
+  "target_fps": 240,
+  "affinity": "0x4000",
+  "checkpoint_sha256": "cb18bdbe8a5104ac16a7aa923bbd350b7780e48f4c26a78c8e690b47adc86541",
+  "cpu_multiplier": "11x (inherited user setting; not independently measured)",
+  "stop": "Quit/game exit",
+  "logical_processor": 14,
+  "backend": "Vulkan",
+  "hdr_enabled": false,
+  "source_save_sha256": "a1bbc2f43a129b655f0068de8f28a731f1ef6814170419d3f4ec406436437cf1",
+  "exe_sha256": "16d78a65d245e54e248a419b8ad6b809f2efe5ae62e8ef76e3869c8d5b7b53a5"
+}

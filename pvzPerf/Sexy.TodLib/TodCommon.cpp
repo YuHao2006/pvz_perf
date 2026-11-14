@@ -1179,10 +1179,12 @@ _Font* TodLoadCreditsFont()
 {
     if (gSexyAppBase == nullptr || gSexyAppBase->mResourceManager == nullptr)
         return nullptr;
-    if (!FONT_BRIANNETOD32 &&
+    // Credits uses the Main glyph layer only; the plain definition shares its texture
+    // with BrianneTod32, without changing other UI fonts or per-glyph draw work.
+    if (!FONT_BRIANNETOD32PLAIN &&
         !gSexyAppBase->mResourceManager->TodLoadResources(ResourceGroupId::DelayLoad_Credits))
         return nullptr;
-    return FONT_BRIANNETOD32;
+    return FONT_BRIANNETOD32PLAIN;
 }
 
 bool TodLoadNextResource()

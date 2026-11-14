@@ -1648,6 +1648,22 @@ void CreditsMovieOwnerClockRuntime(TestApp& app)
     credits.Resize(0,0,800,600);
     auto& render=*app.mDDInterface->mRenderInterface;
     std::unique_ptr<Image> target(render.CreateRenderImage(800,600));
+    {
+        std::unique_ptr<Image> fontTarget(render.CreateRenderImage(800,160));
+        {
+            GpuImageDrawScope destination(render,fontTarget.get());
+            Graphics g(fontTarget.get());
+            g.mColor=Color::Black;g.FillRect(0,0,800,160);
+            TodDrawString(&g,"PLANTS VS. ZOMBIES",400,50,FONT_HOUSEOFTERROR16,Color::White,DS_ALIGN_CENTER);
+            SexyMatrix3 matrix;matrix.LoadIdentity();matrix.m02=240;matrix.m12=115;
+            TodDrawStringMatrix(&g,FONT_BRIANNETOD32PLAIN,matrix,"Plants vs. Zombies",Color::White);
+        }
+        const auto pixels=render.ReadImagePixels(*fontTarget);
+        const auto visible=std::count_if(pixels.pixels.begin(),pixels.pixels.end(),[](unsigned p){return (p&0x00ffffff)>0;});
+        Require(visible>100,"Production Credits fonts produced no visible glyphs");
+        Require(ImageLib::WritePNGImage("credits-title-fonts.png",800,160,pixels.pixels),"Cannot write Credits title font proof");
+        std::cout<<"PASS production Credits glyph rendering: final-roll title and plain animated subtitle, visiblePixels="<<visible<<"\n";
+    }
     const auto beforeDraw=clocks.mVisualTimeNs;
     credits.Update();
     Require(credits.mUpdateCount==0 && clocks.mVisualTimeNs==beforeDraw,
@@ -1734,7 +1750,7 @@ void CreditsMovieOwnerClockRuntime(TestApp& app)
     credits.mCreditsPaused=true;
     int extendedScenes=0;
     struct Scene { CreditsPhase phase; int frame; };
-    for (const auto scene : {Scene{CreditsPhase::CREDITS_MAIN1,230},
+    for (const auto scene : {Scene{CreditsPhase::CREDITS_MAIN1,5}, Scene{CreditsPhase::CREDITS_MAIN1,230},
             Scene{CreditsPhase::CREDITS_MAIN1,320}, Scene{CreditsPhase::CREDITS_MAIN2,50},
             Scene{CreditsPhase::CREDITS_MAIN2,95}, Scene{CreditsPhase::CREDITS_MAIN3,95},
             Scene{CreditsPhase::CREDITS_MAIN2,150},
@@ -4561,12 +4577,52 @@ void SurvivalRulesRuntime(TestApp& app)
             cooling.mRefreshing=true;cooling.mActive=false;
             cooling.mRefreshStartTimeNs=static_cast<std::int64_t>(board.mLevelTimeNs);
             cooling.mCooldownDurationNs=(Plant::GetRefreshTime(cooling.mPacketType,cooling.mImitaterType)) * 10'000'000LL;
+            // Save/reload the final-wave wait and the repick banner, not only
+            // ordinary wave deadlines. Real users may exit at either boundary.
+            if (endless && background == 2) {
+                // Earlier scheduler-only probes deliberately move Board time
+                // backwards. Discard their transient effects before testing a
+                // real save; particles cannot be sampled before their birth.
+                TodParticleSystem* transient=nullptr;
+                while (app.mEffectSystem->mParticleHolder->mParticleSystems.IterateNext(transient))
+                    transient->ParticleSystemDie();
+                app.mEffectSystem->ProcessDeleteQueue();
+                board.mPoolSparklyParticleID=PARTICLESYSTEMID_NULL;
+                const auto save=(std::filesystem::current_path()/"survival-final-wave-resume.dat64").string();
+                const auto now=board.mLevelTimeNs;
+                const auto deadline=board.mNextZombieWaveTimeNs;
+                Require(LawnSaveGame(&board,save)&&LawnLoadGame(&board,save),
+                    "Survival final-wave checkpoint could not roundtrip");
+                Require(board.mLevelTimeNs==now&&board.mNextZombieWaveTimeNs==deadline&&
+                    board.mCurrentWave==board.mNumWaves&&!board.mLevelComplete,
+                    "Survival final-wave checkpoint changed its scheduler state");
+            }
             removeEnemies();
             Require(board.mNextSurvivalStageCounter>0&&!board.mLevelComplete,"Survival did not enter its round-end wait");
+            if (endless && background == 2) {
+                const auto save=(std::filesystem::current_path()/"survival-repick-banner-resume.dat64").string();
+                const auto now=board.mLevelTimeNs;
+                const auto remaining=board.mNextSurvivalStageCounter.mNanoseconds;
+                Require(LawnSaveGame(&board,save)&&LawnLoadGame(&board,save),
+                    "Survival repick-banner checkpoint could not roundtrip");
+                Require(board.mLevelTimeNs==now&&board.mNextSurvivalStageCounter.mNanoseconds==remaining&&
+                    !board.mLevelComplete,"Survival repick-banner checkpoint changed its remaining wait");
+            }
             const auto waitStart=board.mLevelTimeNs;
             advance(500'000'000);
             Require(board.mLevelTimeNs==waitStart+500'000'000ULL&&!board.mLevelComplete,
                 "Survival froze Board time during the round-end banner");
+            if (endless && background == 2) {
+                const auto remaining=static_cast<unsigned long long>(board.mNextSurvivalStageCounter.mNanoseconds);
+                Require(remaining>1,"Repick edge fixture must start before expiry");
+                advance(remaining-1);
+                Require(board.mNextSurvivalStageCounter.mNanoseconds==1&&!board.mLevelComplete,
+                    "Repick edge fixture did not reach the last nanosecond");
+                const auto save=(std::filesystem::current_path()/"survival-repick-expiry-resume.dat64").string();
+                Require(LawnSaveGame(&board,save)&&LawnLoadGame(&board,save)&&
+                    board.mNextSurvivalStageCounter.mNanoseconds==1&&!board.mLevelComplete,
+                    "Repick last-nanosecond checkpoint changed during restore");
+            }
             while(!board.mLevelComplete&&board.mLevelTimeNs-waitStart<6'000'000'000ULL)
                 update(hz?1'000'000'000ULL/hz:jitter[sequence++%jitter.size()]);
             Require(board.mLevelComplete,"Survival round-end wait never completed");
@@ -8930,6 +8986,9 @@ void SeedPacketCooldownPixels(SexyAppBase& app)
 {
     auto& render=*app.mDDInterface->mRenderInterface;
     Require(IMAGE_SEEDS && IMAGE_SEEDS->mTexture,"Cooldown test requires resident production seed texture");
+    if constexpr(CommonUIAtlas::HasSeedCards)
+        Require(CommonUIAtlas::Texture != nullptr,
+            "HD cooldown test requires the resident production card atlas");
     std::unique_ptr<Image> target(render.CreateRenderImage(80,100));
     const auto capture=[&](float fraction,int grayness) {
         {
@@ -8992,7 +9051,7 @@ void AllResourceGroups(SexyAppBase& app)
         "Cannot parse production resource plans for full loading");
     Require(manager.GetNumResources()==RESOURCE_LOAD_PLAN_RECORD_COUNT &&
         manager.GetNumImages()==RESOURCE_LOAD_IMAGE_COUNT &&
-        manager.GetNumSounds()==168 && manager.GetNumFonts()==20,
+        manager.GetNumSounds()==168 && manager.GetNumFonts()==21,
         "Production resource acceptance counts changed");
     unsigned expectedVolumeCalls=0,expectedPanCalls=0,loadedGroups=0;
     std::vector<SharedImageMap::key_type> imageRecipes;
@@ -9053,8 +9112,8 @@ void AllResourceGroups(SexyAppBase& app)
     for (auto** image:namedImages)
         Require(*image && (*image)->mTexture && !(*image)->mPendingDecoded,
             "Resource loading failed to publish a named GPU-only image");
-    std::array<_Font**,20> fonts{
-        &FONT_BRIANNETOD32,&FONT_BRIANNETOD32BLACK,&FONT_BRIANNETOD16,&FONT_BRIANNETOD12,
+    std::array<_Font**,21> fonts{
+        &FONT_BRIANNETOD32,&FONT_BRIANNETOD32PLAIN,&FONT_BRIANNETOD32BLACK,&FONT_BRIANNETOD16,&FONT_BRIANNETOD12,
         &FONT_CONTINUUMBOLD14,&FONT_CONTINUUMBOLD14OUTLINE,&FONT_DWARVENTODCRAFT12,
         &FONT_DWARVENTODCRAFT15,&FONT_DWARVENTODCRAFT18,&FONT_DWARVENTODCRAFT18BRIGHTGREENINSET,
         &FONT_DWARVENTODCRAFT18GREENINSET,&FONT_DWARVENTODCRAFT18YELLOW,&FONT_DWARVENTODCRAFT24,
@@ -9079,10 +9138,12 @@ void AllResourceGroups(SexyAppBase& app)
         DefinitionFreeAtlasImages();
         return;
     }
+    // HD special packets live in CommonUI, unlike legacy IMAGE_SEEDS.
+    // Load the same production atlas before asking either card path to draw.
+    CommonUIAtlas::Load();
     SeedPacketCooldownPixels(app);
     ProjectileAtlasPixels(static_cast<LawnApp&>(app));
     PoolScenePixels(app);
-    CommonUIAtlas::Load();
     StorePauseClockRuntime(static_cast<TestApp&>(app),sounds);
     {
         auto& render=*app.mDDInterface->mRenderInterface;

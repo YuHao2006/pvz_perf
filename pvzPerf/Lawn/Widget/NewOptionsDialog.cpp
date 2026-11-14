@@ -38,7 +38,7 @@ NewOptionsDialog::NewOptionsDialog(LawnApp* theApp, bool theFromGameSelector) :
         nullptr, 
         IMAGE_OPTIONS_BACKTOGAMEBUTTON0, 
         IMAGE_OPTIONS_BACKTOGAMEBUTTON0, 
-        IMAGE_OPTIONS_BACKTOGAMEBUTTON2
+        IMAGE_OPTIONS_BACKTOGAMEBUTTON0
     );
     mBackToGameButton->mTranslateX = 0;
     mBackToGameButton->mTranslateY = 0;

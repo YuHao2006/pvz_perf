@@ -1,0 +1,17 @@
+probe.cpp
+caller=27792 explicit_flush=0 before_load=0x1f80
+BASS_version=0x02041100 after_load=0x1fa0
+after_init=0x1fa0 update_threads=1
+callback_thread=21488 kind=stream control=0x9fc0 FTZ=1 DAZ=1 samples=22
+callback_thread=21488 kind=DSP control=0x9fc0 FTZ=1 DAZ=1 samples=22
+callback_thread=27792 kind=stream control=0x9fc0 FTZ=1 DAZ=1 samples=1
+callback_thread=27792 kind=DSP control=0x9fc0 FTZ=1 DAZ=1 samples=1
+after_free=0x1fa0
+caller=21196 explicit_flush=1 before_load=0x9fc0
+BASS_version=0x02041100 after_load=0x9fe0
+after_init=0x9fe0 update_threads=1
+callback_thread=9240 kind=stream control=0x9fc0 FTZ=1 DAZ=1 samples=22
+callback_thread=9240 kind=DSP control=0x9fc0 FTZ=1 DAZ=1 samples=22
+callback_thread=21196 kind=stream control=0x9fc0 FTZ=1 DAZ=1 samples=1
+callback_thread=21196 kind=DSP control=0x9fc0 FTZ=1 DAZ=1 samples=1
+after_free=0x9fe0

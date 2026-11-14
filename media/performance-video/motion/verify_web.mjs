@@ -10,6 +10,7 @@ const errors=[];
 try{
  const page=await browser.newPage({viewport:{width:1280,height:800}});page.on('pageerror',e=>errors.push(String(e)));
  await page.goto(pathToFileURL(file).href);await page.evaluate(()=>Promise.all([ReanimPlayer.ready,document.fonts.ready]));
+ await page.waitForFunction(()=>!FILM.audio||document.getElementById('soundtrack').readyState>=1);
  const state=await page.evaluate(()=>{
   const p=ReanimPlayer;
   const expected=[['PeaShooter',24,104,'anim_full_idle',79,25],['SunFlower',29,29,'anim_idle',4,25],['Zombie',42,504,'anim_walk',44,47]];
@@ -58,7 +59,16 @@ try{
   const traces=WEB_INPUTS.traces;
   for(const d of Object.values(traces.desktop))if(d.cpuFrequency!==null)throw Error('Invented desktop CPU frequency');
   for(const d of Object.values(traces.phone))if(d.fps!==null||d.cpuPercent!==null)throw Error('Mixed phone captures');
-  return {definitions:expected.map(a=>({name:a[0],tracks:a[1],frames:a[2],clip:a[3],start:a[4],count:a[5]})),pngCount:Object.keys(p.images).length,scenes:FILM.scenes.length,duration:FILM.duration,textWarnings:FILM.textWarnings,finiteErrors:FILM.finiteErrors};
+  const audio=document.getElementById('soundtrack');
+  if(FILM.audio){
+   if(Math.abs(audio.duration-FILM.duration)>.05||!audio.currentSrc.startsWith('data:audio/mp4;base64,'))throw Error('Embedded soundtrack duration differs from video');
+   for(const s of FILM_AUDIO.scenes){
+    if(s.voiceStart+s.voiceDuration>s.start+s.duration-.35)throw Error('Narration overlaps the scene transition: '+s.id);
+    if(s.captions.some(([at])=>at>=s.duration))throw Error('Subtitle outside scene: '+s.id);
+    if(['desktop-traces','external-traces','phone-frequency','phone-power'].includes(s.id)&&s.duration<6.5)throw Error('Chart reading time shortened');
+   }
+  }
+  return {definitions:expected.map(a=>({name:a[0],tracks:a[1],frames:a[2],clip:a[3],start:a[4],count:a[5]})),pngCount:Object.keys(p.images).length,scenes:FILM.scenes.length,duration:FILM.duration,audio:FILM.audio,textWarnings:FILM.textWarnings,finiteErrors:FILM.finiteErrors};
  });
  const actorTime=await page.evaluate(()=>FILM.scenes.find(s=>s.id==='rows').start+14.3);
  await page.evaluate(t=>FILM.draw(t),actorTime);const before=await page.locator('canvas').screenshot();
@@ -73,7 +83,17 @@ try{
  await page.locator('#play').click();await page.waitForTimeout(250);await page.locator('#play').click();
  const controlState=await page.evaluate(()=>({playing:document.getElementById('play').textContent,seek:Number(document.getElementById('seek').value),chapter:document.getElementById('chapters').value}));
  if(!(controlState.seek>Number(controlState.chapter)+.7)||controlState.playing!=='播放')throw Error('Playback controls failed');
+ if(state.audio){
+  const paused=await page.evaluate(()=>document.getElementById('soundtrack').currentTime);
+  await page.waitForTimeout(120);
+  if(Math.abs(await page.evaluate(()=>document.getElementById('soundtrack').currentTime)-paused)>.01)throw Error('Narration continues while the picture is paused');
+  const sourceTime=await page.evaluate(()=>Math.abs(document.getElementById('soundtrack').currentTime-Number(document.getElementById('seek').value)));
+  if(sourceTime>.06)throw Error('Picture and narration clocks diverged');
+  await page.locator('#mute').click();
+  if(!await page.evaluate(()=>document.getElementById('soundtrack').muted))throw Error('Mute control failed');
+  await page.locator('#mute').click();
+ }
  if(errors.length||state.textWarnings.length||state.finiteErrors.length)throw Error(JSON.stringify({errors,state}));
- const result={...state,errors,deterministicSeek:true,animatedPixels:true,controls:true,rootMotionContinuousLeft:true,noDoubleGroundTransform:true,rootMotionArchivedEndpoints:true,velocityIntegrationDiagram:true,rootMotionOwnershipExplicit:true,openingAndClosingRepositoryLinks:true,originalSourceHashesIn:'web-input-provenance.json',mp4Exported:false};
+ const result={...state,errors,deterministicSeek:true,animatedPixels:true,controls:true,audioMasterClock:!!state.audio,rootMotionContinuousLeft:true,noDoubleGroundTransform:true,rootMotionArchivedEndpoints:true,velocityIntegrationDiagram:true,rootMotionOwnershipExplicit:true,openingAndClosingRepositoryLinks:true,originalSourceHashesIn:'web-input-provenance.json',mp4Exported:false};
  fs.writeFileSync(path.join(defaultOutput,'web-verification.json'),JSON.stringify(result,null,2));console.log(JSON.stringify(result));
 }finally{await browser.close();}

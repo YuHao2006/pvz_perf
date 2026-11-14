@@ -1,0 +1,11 @@
+{
+  "change": "Enable FTZ+DAZ once on game-owned x86-64 threads; FZ on AArch64",
+  "fp_fast": false,
+  "baseline_tag": "v3.3",
+  "target_fps": 240,
+  "affinity_mask": "0x4000",
+  "cpu_multiplier_expected": "11x; user-controlled, not independently measured",
+  "save_source": "out/distribution/v3.3/perfect-save-and-endless-v3.3.zip",
+  "format_change": false,
+  "measurement": "External process observation; Enter to arm, resume at +3s, Quit to stop"
+}

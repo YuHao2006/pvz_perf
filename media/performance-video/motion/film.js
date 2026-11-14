@@ -39,23 +39,23 @@ function animatePath(points,p,color=C.green){let lengths=[],total=0;for(let i=1;
 const scenes=[
  {id:'opening',chapter:`先看结果 / pvz_perf ${VERSION}`,title:'同一颗低频核心，为什么能跑到近 197 帧？',sub:'Windows · LP14 · 用户设置 11x · 泳池无尽整轮实测',duration:16,captions:[[0,'先看结果：原版平均 43.95 FPS，本项目平均 196.74 FPS。'],[5,'绘制之外，本项目的逻辑更新也接近 197Hz。'],[10,'这些时间省在哪里？从一颗子弹的发射，看每帧反复做的工作。']]},
  {id:'lookup',chapter:'01 / 静态数据表',title:'植物类型与武器类型，直接决定子弹类型',sub:'典型例子：Plant::Fire 的 kFireProjectiles · 图中为简化伪代码',duration:24,captions:[[0,'豌豆射手发豌豆，寒冰射手发冰豌豆；玉米投手还要区分玉米粒与黄油。'],[8,'把确定的子弹类型映射写进二维常量表，植物类型选行，武器类型选列。'],[16,'玉米粒与黄油落在同一行的不同列，取出数据即可，不必再做一次类型判断。']]},
- {id:'table-lookup',chapter:'01 / 测量',title:'子弹类型选择：相同夹具下的局部成本',sub:'单位 ns/次 · 当前数据表声明 vs 原 switch 与黄油特判模型',duration:10,table:'selection',captions:[[0,'这组测试只覆盖子弹类型选择与共同校验，具体范围见表下注明。'],[5,'子弹类型选好了，接下来还得找到它会击中的僵尸。']]},
- {id:'rows',chapter:'02 / 缩小集合',title:'这颗豌豆，只关心这一行',sub:'对象仍在同一个池中；行索引提供候选集合',duration:24,captions:[[0,'再看全池扫描：别的行也被访问，然后才因行号不同被排除。'],[8,'建立行索引以后，查询只进入当前行，仍按正确顺序做碰撞判定。'],[16,'图中对象是示意。实际微基准使用 1024 只僵尸，其中本行 171 只。']]},
+ {id:'table-lookup',chapter:'01 / 测量',title:'子弹类型选择：相同夹具下的局部成本',sub:'单位 ns/次 · 当前数据表声明 vs 原 switch 与黄油特判模型',duration:10,table:'selection',captions:[[0,'子弹类型选好了，接下来还得找到它会击中的僵尸。']]},
+ {id:'rows',chapter:'02 / 缩小集合',title:'这颗豌豆，只关心这一行',sub:'对象仍在同一个池中；行索引提供候选集合',duration:24,captions:[[0,'再看全池扫描：别的行也被访问，然后才因行号不同被排除。'],[8,'建立行索引以后，查询只进入当前行，仍按正确顺序做碰撞判定。'],[16,'实际微基准使用 1024 只僵尸。']]},
  {id:'mask',chapter:'02 / 缩小集合',title:'没有工作的轨道，连读取也省掉',sub:'活动位图 · 混合／抖动／附件工作',duration:16,captions:[[0,'同样的筛选也用于动画：活动位图直接指出这一拍需要处理的轨道。'],[8,'依次取出最低有效位，处理后清除它。掩码归零，这轮工作就结束。']]},
- {id:'table-candidates',chapter:'02 / 测量',title:'让遍历接近真正的工作量',sub:'行索引、植物格桶、活动轨道与占用绘制组',duration:12,table:'candidates',captions:[[0,'从行索引到活动位图，都在缩小访问范围；表下列出了各项测量边界。'],[7,'对象找到了，动画内部还要回答：该用哪一条轨道？']]},
+ {id:'table-candidates',chapter:'02 / 测量',title:'让遍历接近真正的工作量',sub:'行索引、植物格桶、活动轨道与占用绘制组',duration:12,table:'candidates',captions:[[0,'从行索引到活动位图，都在缩小访问范围。'],[7,'对象找到了，动画内部还要回答：该用哪一条轨道？']]},
  {id:'identity',chapter:'03 / 编译期身份',title:'名字只需要理解一次',sub:'reanim：轨道枚举 + 生成的最小完美哈希表',duration:24,captions:[[0,'如果每次都靠名字找轨道，就在反复解释同一个名字；这一步可以前移到编译期。'],[8,'轨道名变成枚举键，再用生成的查找表定位，校验后直接取轨道下标。'],[16,'粒子的具名查找也改用枚举和前缀区间，减少反复解析名字的工作。']]},
- {id:'table-identity',chapter:'03 / 测量',title:'减少运行时身份解析',sub:'单位 ns/查询 · reanim 测量当前 ID 扫描与生产 API',duration:12,table:'identity',captions:[[0,'表中 reanim 的对照已使用整数 ID；这里测的是继续缩短查找路径的成本。'],[7,'确定了该用哪些轨道，接下来把它们高效地画出来。']]},
+ {id:'table-identity',chapter:'03 / 测量',title:'减少运行时身份解析',sub:'单位 ns/查询 · reanim 测量当前 ID 扫描与生产 API',duration:12,table:'identity',captions:[[0,'确定了该用哪些轨道，接下来把它们高效地画出来。']]},
  {id:'batch',chapter:'04 / 提交画面',title:'保持顺序，把兼容绘制接在一起',sub:'普通混合 N · 加亮混合 A · 双源混合支持时',duration:24,captions:[[0,'画面里的普通和加亮效果交替出现，会因混合状态切换而拆开批次。'],[8,'统一混合规则后，相邻兼容图元进入同一批，仍按原顺序叠加。'],[16,'双源混合减少混合状态造成的断批；它与 bindless 的纹理绑定优化各有分工。']]},
  {id:'quad',chapter:'04 / 动态数据',title:'两个三角形，共用四个角',sub:'静态索引复用顶点 · 动态顶点每个 40 字节',duration:20,captions:[[0,'批次可以合并，每个矩形提交的数据也能减少：六个顶点中，有两个角重复。'],[7,'把相同角合并，静态索引仍然描述两个三角形。'],[14,'每个矩形的动态顶点从 240 字节减到 160 字节，少传三分之一。']]},
  {id:'frames',chapter:'04 / 帧资源',title:'轮换几何缓冲，共享素材纹理',sub:'两套帧资源 · 单槽 65536 顶点 · 不复制全部图片',duration:20,captions:[[0,'数据少了，还要避免过早覆盖它。两套帧资源轮换使用，素材纹理保持共享。'],[7,'第三次绘制先检查 A 的 fence；尚未完成，就跳过本次绘制，逻辑继续更新。'],[14,'这样让下一帧有机会提前准备；共享资源修改等操作仍可能需要同步。']]},
- {id:'table-gpu',chapter:'04 / 测量',title:'提交结构与 CPU 绘制成本',sub:'前两行是计数；后两行是固定场景的 DX12 CPU 计时',duration:12,table:'gpu',captions:[[0,'提交次数、数据量和 CPU 绘制成本分别记录，各项测量范围见表下。'],[6,'绘制负担减轻以后，还有一个问题：刷新率变了，僵尸能否走到同一个位置？']]},
+ {id:'table-gpu',chapter:'04 / 测量',title:'提交结构与 CPU 绘制成本',sub:'前两行是计数；后两行是固定场景的 DX12 CPU 计时',duration:12,table:'gpu',captions:[[0,'绘制负担减轻以后，还有一个问题：刷新率变了，僵尸能否走到同一个位置？']]},
  {id:'legacy-motion',chapter:'05 / 回看原版旧算法',title:'原版旧算法：先求速度，再累加位置',sub:'先解释原版 1073 的移动方法 · 原版逻辑固定 100Hz',duration:24,captions:[[0,'先回看原版：用相邻 ground 帧的横坐标差，乘动画速率得到速度。'],[6,'原版再用这次取到的速度乘本次步长，把位移累加到僵尸的世界位置。'],[13,'沿用原版算法改变步长时，一步可能跨过速度变化点，取样差异就会影响位移。'],[19,'除了这种离散积分的差异，原版反复累加浮点位置也会叠加舍入误差。']]},
  {id:'motion-steps',chapter:'05 / 原版算术重建实验',title:'重建原版算法：不同步长，终点不同',sub:'普通僵尸 ground 轨道 · 原算术重建实验，不是原版 EXE 变帧率实测',duration:12,captions:[[0,'把原版算术放入多步长实验：起点、速率和时长相同，累加得到的终点仍有差异。'],[6,'为避开对步长分割的依赖，本项目改用相位直接求位移。']]},
  {id:'phase',chapter:'05 / 本项目的相位插值',title:'本项目：按相位直接求位移',sub:'整数纳秒记录时间 · 在相邻关键帧间插值位置与角度',duration:26,captions:[[0,'本项目由当前时间求帧号与纳秒余数，再在相邻关键帧之间直接插值位移。'],[8,'周期内，位置等于基础位移加插值位移；完成一整个周期，才累加一次周期距离。'],[17,'这先解决不同步长下的一致性。求出的帧号和余数，还能交给绘制继续复用。']]},
  {id:'trig',chapter:'05 / 共享计算',title:'一条轨道的变换，四个角一起用',sub:'每个 skew 轴一组 sin / cos · 共享角度归一化',duration:24,captions:[[0,'沿着同一份帧状态，绘制还要插值角度，再求 sin 和 cos 来构造变换。'],[7,'同一个角度只归一化一次，再求两项多项式；两个 skew 轴各算一组。'],[15,'由这两组值构造一次矩阵，矩形四角共用计算结果。']]},
- {id:'table-time',chapter:'05 / 测量',title:'把推进、查询和三角函数分开看',sub:'局部成本不代表完整一帧 · 不同测量范围不强算倍率',duration:12,table:'time',captions:[[0,'共享 sin/cos 后，这一局部计算成本降低约 14%；整帧收益仍要单独测量。'],[7,'既然四个角能复用结果，把这些计算交给 GPU，会更划算吗？']]},
- {id:'tradeoff',chapter:'06 / 取舍',title:'并行并不自动减少工作',sub:'本项目当前负载：reanim 与粒子仍在 CPU 处理',duration:18,captions:[[0,'我们试过。CPU 每条轨道算一次变换，朴素顶点着色却可能在四个角上重复计算。'],[7,'GPU 动画和线程流水线试验都未达到本项目的性能门槛，现行版本保留 CPU 路径。'],[13,'这是已测实现与设备上的取舍。接下来，把留下的方案放回完整关卡检验。']]},
- {id:'whole',chapter:'07 / 整局验证',title:'回到开头那一整局无尽',sub:'LP14 · 用户设置 11x · 本项目目标 240Hz · 基准采自 3.2.4',duration:20,captions:[[0,'现在回到开头的结果：同源基准阵型，从第 0 波测到第 20 波。'],[9,'原版逻辑固定 100Hz，本项目的绘制和逻辑都接近 197Hz。'],[15,'这是整套实现共同作用的整轮平均值，下面展开实际战斗中的变化。']]},
+ {id:'table-time',chapter:'05 / 测量',title:'把推进、查询和三角函数分开看',sub:'局部成本不代表完整一帧 · 不同测量范围不强算倍率',duration:12,table:'time',captions:[[0,'共享 sin/cos 后，这一局部计算成本降低约 14%。'],[7,'既然四个角能复用结果，把这些计算交给 GPU，会更划算吗？']]},
+ {id:'tradeoff',chapter:'06 / 取舍',title:'并行并不自动减少工作',sub:'本项目当前负载：reanim 与粒子仍在 CPU 处理',duration:18,captions:[[0,'我们试过。CPU 每条轨道算一次变换，朴素顶点着色却可能在四个角上重复计算。'],[7,'GPU 动画和线程流水线试验都未达到本项目的性能门槛，现行版本保留 CPU 路径。'],[13,'接下来，把留下的方案放回完整关卡检验。']]},
+ {id:'whole',chapter:'07 / 整局验证',title:'回到开头那一整局无尽',sub:'LP14 · 用户设置 11x · 本项目目标 240Hz · 基准采自 3.2.4',duration:20,captions:[[0,'现在回到开头的结果：同源基准阵型，从第 0 波测到第 20 波。'],[9,'原版逻辑固定 100Hz，本项目的绘制和逻辑都接近 197Hz。'],[15,'下面展开实际战斗中的变化。']]},
  {id:'desktop-traces',chapter:'07 / 原始时间序列',title:'整轮 FPS 与 CPU 占用',sub:'原版与本项目 · 同源阵型；步长与渲染器不同 · 各轮起点归零，波次未对齐',duration:6.5,trace:'desktop',captions:[[0,'绿色看 FPS，橙色看 CPU 占用；整轮平均值背后的高低起伏都保留在这里。']]},
  {id:'external',chapter:'08 / 横向参照',title:'再与精华版作一个横向参照',sub:'相同阵型、相似出怪 · 比较仅用于视频 · 非严格同局',duration:18,captions:[[0,'看完原版，再对照精华版：电脑版解除绘制帧率限制，逻辑仍为 100Hz。'],[8,'电脑比较呈现表现，手机则另测电池侧整机功耗；两者的测量范围分别标明。']]},
  {id:'external-traces',chapter:'08 / 电脑原始曲线',title:'相似阵型下，各自的整轮表现',sub:'精华版 RTSS 呈现计数 / 本项目游戏绘制计数 · 不同计数口径',duration:6.5,trace:'desktop',captions:[[0,'先展开电脑曲线：同为 LP14、用户设置 11x，阵型相同，出怪轨迹相似。']]},
@@ -63,7 +63,18 @@ const scenes=[
  {id:'phone-power',chapter:'08 / 手机原始功耗',title:'再看整段功耗与时间加权平均',sub:'电池侧整机功耗 · 包含屏幕、风扇与系统',duration:6.5,trace:'phone',captions:[[0,'功耗也看完整采样区间的平均值；两轮温度与时长差异一并列出。']]},
  {id:'closing',chapter:`pvz_perf / ${VERSION}`,title:'每一份性能，都要有来处',sub:'源码、原始测量和测量范围，都可以追溯',duration:10,captions:[[0,'从减少重复工作，到验证一整局的结果：实现与原始数据，都在这个仓库里。']]}
 ];
-let total=0;for(const s of scenes){s.start=total;total+=s.duration;}
+const audioSpec=window.FILM_AUDIO;
+let total=0;for(const s of scenes){
+ s.authoredDuration=s.duration;
+ if(audioSpec){
+  const spoken=audioSpec.scenes.find(a=>a.id===s.id);
+  if(!spoken)throw Error('Missing narration for '+s.id);
+  if(Math.abs(spoken.start-total)>.00001)throw Error('Audio scene boundary mismatch: '+s.id);
+  s.duration=spoken.duration;s.captions=spoken.captions;
+ }
+ s.start=total;total+=s.duration;
+}
+if(audioSpec&&Math.abs(audioSpec.duration-total)>.00001)throw Error('Soundtrack duration mismatch');
 function background(t){g.fillStyle=C.bg;g.fillRect(0,0,W,H);const gr=g.createRadialGradient(1500,330,0,1500,330,1100);gr.addColorStop(0,'#142e37');gr.addColorStop(1,C.bg);g.fillStyle=gr;g.fillRect(0,0,W,H);g.fillStyle='#1c303d';for(let x=48;x<W;x+=48)for(let y=240;y<920;y+=48)g.fillRect(x,y,2,2);}
 function header(s,t){text('pvz_perf',72,47,25,C.green,'left',400,700,mono);text(s.chapter,1848,47,24,C.muted,'right');text(s.title,72,122,54,C.ink,'left',1760,700);text(s.sub,76,185,27,C.muted,'left',1750);line(72,221,1848,221,C.line,1);}
 function footer(s,t,global){const cap=s.captions.filter(([at])=>t>=at).at(-1)?.[1]||'';rect(54,948,1812,74,'#0c1822',12);text(cap,960,984,32,C.ink,'center',1710,500);text(s.trace?'原始采样展开 · 未平滑 / 未补点':s.table?'原始测量数据 · 详见性能文档':'过程动画为机制示意，非运行耗时比例',72,1040,21,C.dim);text('AI配音',1848,1040,22,C.dim,'right',250,400);rect(0,1072,W,8,'#1c303d',0);rect(0,1072,W*global/total,8,C.green,0);for(const c of scenes)line(W*c.start/total,1072,W*c.start/total,1080,C.bg,3);}
@@ -297,6 +308,7 @@ function bar(x,y,w,value,max,label,color,showValue,p){text(label,x,y-30,29,C.mut
 drawFns.whole=(t)=>{
  const p=ramp(t,0,3);tag('平均绘制帧率',110,274,380,C.teal);bar(145,385,1160,43.95,240,'原版 1073',C.orange,'43.95 FPS',p);bar(145,548,1160,196.74,240,'pvz_perf · 240Hz 上限',C.green,'196.74 FPS',p);
  const rows=[['逻辑更新','100.00 Hz','196.76 Hz'],['进程 CPU / 单核 100%','90.87%','89.55%'],['CPU 时间 / 绘制帧','20.676 ms','4.552 ms']];rows.forEach((r,i)=>{const y=712+i*63;text(r[0],145,y,27,C.muted);text(r[1],968,y,31,C.orange,'center',300,600,mono);text(r[2],1390,y,31,C.green,'center',360,600,mono);});
+ text('整轮观测 · 同源阵型 · 战斗轨迹、步长与渲染器不同',145,906,24,C.muted,'left',1700);
 };
 drawFns.external=(t)=>{
  const p=ramp(t,0,3);tag('电脑 · 平均绘制 / 呈现 FPS',100,270,760,C.teal);tag('手机 · 平均整机功耗',1020,270,760,C.teal);
@@ -369,20 +381,39 @@ function draw(time){
  repoLink.hidden=s.id!=='opening'&&s.id!=='closing';
  g.setTransform(1,0,0,1,0,0);g.globalAlpha=1;background(time);
  const enter=out(t/.55),exit=clamp((s.duration-t)/.35);g.save();g.globalAlpha=enter*exit;g.translate(0,(1-enter)*12);
- header(s,t);if(s.table)tableScene(s,t);else drawFns[s.id](t);g.restore();footer(s,t,time);
+ // Keep authored mechanism diagrams in their original range as narration
+ // changes the scene duration. Measured charts retain the real 1.5 s reveal.
+ const animationTime=s.trace?t:t*s.authoredDuration/s.duration;
+ header(s,t);if(s.table)tableScene(s,t);else drawFns[s.id](animationTime);g.restore();footer(s,t,time);
  const matrix=g.getTransform();if(!Number.isFinite(matrix.a)||!Number.isFinite(matrix.e)){const err=`non-finite at ${time}`;if(!finiteErrors.includes(err))finiteErrors.push(err);}
  return {id:s.id,time};
 }
-window.FILM={draw,scenes,duration:total,textWarnings,finiteErrors,traces,phaseState,rootComparisonState,legacySteps,repositoryUrl:REPOSITORY_URL,version:VERSION};
-let playing=false,current=0,last=0;const seek=document.getElementById('seek'),play=document.getElementById('play'),clock=document.getElementById('clock'),chapters=document.getElementById('chapters');seek.max=total;
+window.FILM={draw,scenes,duration:total,textWarnings,finiteErrors,traces,phaseState,rootComparisonState,legacySteps,repositoryUrl:REPOSITORY_URL,version:VERSION,audio:audioSpec?{voice:audioSpec.voiceName,duration:audioSpec.duration,subtitleTiming:audioSpec.subtitleTiming}:null};
+let playing=false,current=0,last=0,playRequest=0;
+const seek=document.getElementById('seek'),play=document.getElementById('play'),clock=document.getElementById('clock'),chapters=document.getElementById('chapters'),soundtrack=document.getElementById('soundtrack'),mute=document.getElementById('mute');seek.max=total;
+if(audioSpec)soundtrack.src=audioSpec.dataUri;
+mute.disabled=!audioSpec;
+mute.onclick=()=>{soundtrack.muted=!soundtrack.muted;mute.textContent=soundtrack.muted?'取消静音':'静音';};
 function format(t){return `${Math.floor(t/60)}:${String(Math.floor(t%60)).padStart(2,'0')}`;}
 function update(){draw(current);seek.value=current;clock.textContent=`${format(current)} / ${format(total)}`;}
-play.onclick=()=>{playing=!playing;play.textContent=playing?'暂停':'播放';last=performance.now();};
-seek.oninput=()=>{current=Number(seek.value);update();};
+function setTime(time){current=clamp(time,0,total);if(audioSpec)soundtrack.currentTime=current;update();}
+function pause(){playRequest++;playing=false;soundtrack.pause();play.textContent='播放';}
+play.onclick=async()=>{
+ if(playing){pause();return;}
+ if(current>=total-.02)setTime(0);
+ const request=++playRequest;playing=true;play.textContent='暂停';last=performance.now();
+ if(audioSpec){try{await soundtrack.play();if(request!==playRequest)soundtrack.pause();}
+ catch(e){pause();textWarnings.push('音频播放失败：'+e.message);clock.textContent='音频播放失败，请刷新后重试';}}
+};
+seek.oninput=()=>setTime(Number(seek.value));
 scenes.forEach(s=>{const o=document.createElement('option');o.value=s.start;o.textContent=`${format(s.start)}  ${s.title}`;chapters.append(o);});
-chapters.onchange=()=>{current=Number(chapters.value)+.7;update();};
+chapters.onchange=()=>setTime(Number(chapters.value)+.7);
 document.addEventListener('keydown',e=>{if(e.code==='Space'&&e.target.tagName!=='SELECT'){e.preventDefault();play.click();}});
 document.getElementById('track-bounds').onchange=e=>{ReanimPlayer.debugBounds=e.target.checked;update();};
-function tick(now){if(playing){current+=(now-last)/1000;if(current>=total){current=0;playing=false;play.textContent='播放';}update();}last=now;requestAnimationFrame(tick);}requestAnimationFrame(tick);draw(.75);clock.textContent=`0:00 / ${format(total)}`;
+soundtrack.onended=()=>{current=total;pause();update();};
+function tick(now){if(playing){
+ if(audioSpec)current=Math.min(total,soundtrack.currentTime);else current+=(now-last)/1000;
+ if(current>=total){current=total;pause();}update();
+}last=now;requestAnimationFrame(tick);}requestAnimationFrame(tick);draw(.75);clock.textContent=`0:00 / ${format(total)}`;
 play.disabled=true;ReanimPlayer.ready.then(()=>{play.disabled=false;draw(.75);}).catch(e=>{textWarnings.push(String(e));document.getElementById('clock').textContent='原版素材加载失败：'+e.message;});
 })();

@@ -1,0 +1,82 @@
+{
+  "builds": [
+    {
+      "renderer": "vulkan1.0",
+      "apk": "C:\\Users\\Administrator\\CLionProjects\\codex\\PlantsVsZombiesModern\\out\\arm64-android7-vulkan1.0\\pvz_perf-arm64-android7-vulkan1.0-release.apk",
+      "apk_sha256": "02769596cba5f11c02f8a176353fa80ab5484f6994e19b37ba58341848a8eb60",
+      "files": {
+        "lib/arm64-v8a/libbass.so": 324744,
+        "lib/arm64-v8a/libpvz_perf.so": 107262464,
+        "assets/bundled-saves/game1_58.dat64": 673781,
+        "assets/bundled-saves/user1.dat64": 894,
+        "assets/bundled-saves/users.dat": 24
+      },
+      "spirv_versions": {
+        "assets/shaders/game_alpha_cs.spv": "0x10000",
+        "assets/shaders/game_caustic_cs.spv": "0x10000",
+        "assets/shaders/game_color_cs.spv": "0x10000",
+        "assets/shaders/game_coverage_ps.spv": "0x10000",
+        "assets/shaders/game_font_cs.spv": "0x10000",
+        "assets/shaders/game_pool_vs.spv": "0x10000",
+        "assets/shaders/game_ps.spv": "0x10000",
+        "assets/shaders/game_sprite_mixed_ps.spv": "0x10000",
+        "assets/shaders/game_sprite_ps.spv": "0x10000",
+        "assets/shaders/game_vs.spv": "0x10000"
+      },
+      "native_and_pak_match_build": true
+    },
+    {
+      "renderer": "vulkan1.3",
+      "apk": "C:\\Users\\Administrator\\CLionProjects\\codex\\PlantsVsZombiesModern\\out\\arm64-android14-vulkan1.3\\landscape-ui\\pvz_perf-arm64-android14-vulkan1.3-release.apk",
+      "apk_sha256": "0ee7f0862854eaa3e62c0ac3c126a7bb4b886c90b373d0a61426118100ca7509",
+      "files": {
+        "lib/arm64-v8a/libbass.so": 324744,
+        "lib/arm64-v8a/libpvz_perf.so": 107236544,
+        "assets/bundled-saves/game1_58.dat64": 673781,
+        "assets/bundled-saves/user1.dat64": 894,
+        "assets/bundled-saves/users.dat": 24
+      },
+      "spirv_versions": {
+        "assets/shaders/game_alpha_cs.spv": "0x10600",
+        "assets/shaders/game_caustic_cs.spv": "0x10600",
+        "assets/shaders/game_color_cs.spv": "0x10600",
+        "assets/shaders/game_coverage_ps.spv": "0x10600",
+        "assets/shaders/game_font_cs.spv": "0x10600",
+        "assets/shaders/game_pool_vs.spv": "0x10600",
+        "assets/shaders/game_ps.spv": "0x10600",
+        "assets/shaders/game_sprite_mixed_ps.spv": "0x10600",
+        "assets/shaders/game_sprite_ps.spv": "0x10600",
+        "assets/shaders/game_vs.spv": "0x10600"
+      },
+      "native_and_pak_match_build": true
+    }
+  ],
+  "ui": {
+    "minimum": [
+      890,
+      600
+    ],
+    "sun_text_center_x": 53,
+    "selection": "Native WP 92x60 yellow/orange art, four unscaled corners",
+    "layer": "UI_TOP below ABOVE_UI collectibles"
+  },
+  "tests": {
+    "legacy_vulkan_initialization": "passed with validation",
+    "legacy_vulkan_pixels_and_lifetime": "passed with zero validation errors",
+    "modern_vulkan_pixels_and_lifetime": "passed directly; CTest exceeded 60 seconds under concurrent LTO load",
+    "viewport_889_890_boundary": "passed",
+    "landscape_production_runtime": "passed 800/900/950/1000/1067/1333/1400"
+  },
+  "android7_device_validation": "not performed; no Android 7 device connected",
+  "tablet": {
+    "serial": "0680CC7248741540",
+    "android": 16,
+    "sdk": 36,
+    "gpu": "Mali-G925-Immortalis",
+    "vulkan": "1.3.278",
+    "install_failure": "Downloaded unsigned APK: INSTALL_PARSE_FAILED_NO_CERTIFICATES",
+    "startup_failure": "Isolated staging omitted bundled-saves and libbass; required contents are now checked before publishing output",
+    "modern_repaired_startup": "Title screen reached and process remained alive; no new pvz_perf error"
+  },
+  "saves": "No runtime save schema change"
+}

@@ -2,17 +2,21 @@
 // canvas here would prevent switching that canvas to the other graphics API.
 function probeWebGL(){
  const canvas=document.createElement('canvas');canvas.width=canvas.height=2;
- let gl=null,reason='';const textures=[],framebuffers=[],shaders=[];let program=null,vao=null;
- canvas.addEventListener('webglcontextcreationerror',event=>{reason=event.statusMessage||reason});
+ let gl=null,reason='',stage='context';const textures=[],framebuffers=[],shaders=[];let program=null,vao=null;
+ const creationError=event=>{reason=event.statusMessage||reason};
+ canvas.addEventListener('webglcontextcreationerror',creationError);
  try{
   // Keep these in sync with WebWindow.cpp's explicit SDL/EGL framebuffer
   // attributes. Probe the same 2D surface configuration the game will request.
   gl=canvas.getContext('webgl2',{alpha:true,depth:false,stencil:false,antialias:false});
   if(!gl)throw Error(reason||'浏览器无法创建 WebGL 2 上下文');
+  stage='limits';
   const webglLimits={maxTextureDimension2D:gl.getParameter(gl.MAX_TEXTURE_SIZE),maxRenderbufferSize:gl.getParameter(gl.MAX_RENDERBUFFER_SIZE)};
   if(webglLimits.maxTextureDimension2D<4096)throw Error('最大二维纹理仅 '+webglLimits.maxTextureDimension2D+'，此资源包需要 4096');
   // The renderer uses RGBA16F intermediate images, including generated fonts.
+  stage='float-target';
   if(!gl.getExtension('EXT_color_buffer_float'))throw Error('缺少 EXT_color_buffer_float，无法绘制浮点中间纹理');
+  stage='draw-validation';
   const texture=(format,width,height,data=null)=>{
    const value=gl.createTexture();textures.push(value);gl.bindTexture(gl.TEXTURE_2D,value);
    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
@@ -55,8 +59,9 @@ void main(){color=texture(image,uv);}`);
   const error=gl.getError();if(error!==gl.NO_ERROR)throw Error('WebGL 绘制验证失败，GL error '+error);
   verifyProbePixel(pixel,'WebGL');
   return {webgl:true,webglReason:'',webglLimits};
- }catch(error){return {webgl:false,webglReason:error.message||String(error)}}
- finally{if(gl){gl.bindFramebuffer(gl.FRAMEBUFFER,null);for(const value of framebuffers)gl.deleteFramebuffer(value);for(const value of textures)gl.deleteTexture(value);if(program)gl.deleteProgram(program);for(const value of shaders)gl.deleteShader(value);if(vao)gl.deleteVertexArray(vao);gl.getExtension('WEBGL_lose_context')?.loseContext()}}
+ }catch(error){return {webgl:false,webglReason:error.message||String(error),webglFailureStage:stage,
+   ...(reason?{webglContextCreationError:reason}: {})}}
+ finally{canvas.removeEventListener?.('webglcontextcreationerror',creationError);if(gl){gl.bindFramebuffer(gl.FRAMEBUFFER,null);for(const value of framebuffers)gl.deleteFramebuffer(value);for(const value of textures)gl.deleteTexture(value);if(program)gl.deleteProgram(program);for(const value of shaders)gl.deleteShader(value);if(vao)gl.deleteVertexArray(vao);gl.getExtension('WEBGL_lose_context')?.loseContext()}}
 }
 function verifyProbePixel(pixel,backend){
  const expected=[102,76,76,255];
@@ -138,11 +143,27 @@ export function capabilityText(result){
   result.webgl?'WebGL 2：可用（RGBA16F 绘制／混合／采样验证通过）':'WebGL 2：无法运行本游戏（'+result.webglReason+'）',
   '双源混合：'+(result.features.includes('dual-source-blending')?'支持，WebGPU 路径启用':'不支持，normal/additive 分开提交'),
   '帧资源：两套动态顶点资源，纹理共用','Bindless：未启用，使用缓存绑定组'];
+ if(result.webglFailureStage)lines.push('WebGL 2 失败阶段：'+({context:'上下文创建（尚未加载游戏）',limits:'设备上限检查','float-target':'浮点目标能力检查','draw-validation':'实际绘制验证'}[result.webglFailureStage]||result.webglFailureStage));
+ if(result.webglContextCreationError)lines.push('WebGL 2 原始创建错误：'+result.webglContextCreationError);
  if(result.webglLimits)lines.push('WebGL 2 最大二维纹理：'+result.webglLimits.maxTextureDimension2D+'；最大绘制目标：'+result.webglLimits.maxRenderbufferSize);
  if(Object.keys(result.adapter).length)lines.push('适配器：'+Object.values(result.adapter).join(' / '));
  if(result.limits.maxTextureDimension2D)lines.push('最大二维纹理：'+result.limits.maxTextureDimension2D,
   '每着色阶段纹理上限：'+result.limits.maxSampledTexturesPerShaderStage,
   '绑定组上限：'+result.limits.maxBindGroups);
  lines.push('其他可选能力：'+(['timestamp-query','shader-f16','float32-filterable','texture-compression-bc','texture-compression-astc'].filter(f=>result.features.includes(f)).join('、')||'无'));
+ return lines.join('\n');
+}
+
+// This describes an unavailable host API; it never retries contexts, changes
+// rendering requirements or treats WebGL 1/software rendering as a fallback.
+export function graphicsStartupError(result,{fallback=false,userAgent=''}={}){
+ const lines=[fallback?'当前浏览器的 WebGPU 和 WebGL 2 都无法运行本游戏。':'此包提供的图形接口无法运行本游戏。'];
+ if(result.webglFailureStage==='context'){
+  lines.push('浏览器未能创建 WebGL 2 上下文，游戏尚未启动。');
+  if(/\bElectron\//i.test(userAgent)&&/\bbilibili\//i.test(userAgent))
+   lines.push('当前在 B 站桌面客户端内打开。请将同一 Toy 链接复制到系统浏览器（例如 Edge 或 Chrome）测试；客户端的嵌入浏览器可能没有开放图形加速。');
+  else lines.push('请在设备上的其他支持 WebGL 2 的浏览器中打开同一链接，并检查浏览器的图形加速是否可用。');
+  lines.push('换用浏览器后仍会检测实际能力；如果 WebGPU 和 WebGL 2 都不可用，此设备环境无法运行当前网页版。');
+ }else lines.push('请查看下方检测结果，或换用其他浏览器测试。');
  return lines.join('\n');
 }

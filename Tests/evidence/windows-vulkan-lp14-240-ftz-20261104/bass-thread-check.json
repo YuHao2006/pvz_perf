@@ -1,0 +1,26 @@
+{
+  "library": "out/x64-win32-vulkan/Release/bass.dll",
+  "sha256": "4c92a8c9ef753e79840aa8d625c1426095dd0eb1f611750ddc62463b9bd1df42",
+  "BASS_GetVersion": "0x02041100",
+  "version": "2.4.17.0",
+  "method": "Separate silent floating-point playback + stream/DSP callbacks, using same DLL; no game injection",
+  "automatic_update_threads": 1,
+  "caller_FTZ_DAZ_off": {
+    "caller_control": "0x1f80",
+    "after_load_control": "0x1f80",
+    "worker_stream_control": "0x9fc0",
+    "worker_DSP_control": "0x9fc0",
+    "worker_stream_samples": 22,
+    "worker_DSP_samples": 22,
+    "after_free_control": "0x1f80"
+  },
+  "caller_FTZ_DAZ_on": {
+    "caller_control": "0x9fc0",
+    "worker_stream_control": "0x9fc0",
+    "worker_DSP_control": "0x9fc0",
+    "worker_stream_samples": 22,
+    "worker_DSP_samples": 22
+  },
+  "status_bits": "Raw logs also include sticky exception status; control values here mask low six bits",
+  "scope": "Windows x64 BASS float stream/DSP processing; not a claim for DirectSound/OpenAL, every decoder/plugin or all platforms"
+}

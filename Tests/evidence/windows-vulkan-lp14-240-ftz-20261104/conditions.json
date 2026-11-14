@@ -1,0 +1,23 @@
+{
+  "source_base": "61993e716ef0aa6af306788e534454f4d313f112",
+  "source_delta": "FTZ/DAZ initialization on game-owned threads; no /fp:fast",
+  "observed_main_thread_mxcsr": "0x9fe0",
+  "main_thread_FTZ": true,
+  "main_thread_DAZ": true,
+  "settings": {
+    "targetFps": 240,
+    "autoDetectFrameRate": false,
+    "musicVolume": 100,
+    "sfxVolume": 100,
+    "muted": 0,
+    "screenMode": "windowed",
+    "preferredX": 1097,
+    "preferredY": 533,
+    "customCursors": 0,
+    "waitForVSync": 0,
+    "customScale": 0
+  },
+  "cpu_gpu_frequency": "Not independently sampled; multiplier 11x is user-controlled",
+  "no_production_frame_instrumentation": true,
+  "save_format_change": false
+}

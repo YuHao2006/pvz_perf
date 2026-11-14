@@ -424,14 +424,15 @@ async function boot(){
  const dropdown=document.getElementById('graphics-backend');
  document.getElementById('graphics-field').hidden=false;
  dropdown.replaceChildren(new Option('正在检测图形接口…',''));dropdown.disabled=true;
- const {detectGraphics,capabilityText}=await import('./graphics.js');
+ setStartupPhase('检测浏览器图形能力');
+ const {detectGraphics,capabilityText,graphicsStartupError}=await import('./graphics.js');
  const capabilities=await detectGraphics(navigator.gpu,{webgpu:config.webgpu,webgl:!config.webgpu||config.fallback});
  document.getElementById('graphics-capabilities').textContent=capabilityText(capabilities);
  Module.pvzGraphicsCapabilities=capabilities;
  const available=[['webgpu','WebGPU'],['webgl','WebGL 2']].filter(([name])=>capabilities[name]);
  if(!available.length){
   dropdown.replaceChildren(new Option('无可用图形接口',''));
-  throw Error(config.fallback?'当前浏览器的 WebGPU 和 WebGL 2 都无法运行本游戏。请查看下方检测结果，或换用其他浏览器。':'此包提供的图形接口无法运行本游戏。请查看下方检测结果。');
+  throw Error(graphicsStartupError(capabilities,{fallback:config.fallback,userAgent:navigator.userAgent}));
  }
  // Preferences cannot make an unavailable API selectable. Reset stale values
  // to auto so browser upgrades can use a newly available backend next time.

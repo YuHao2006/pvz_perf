@@ -1,0 +1,126 @@
+{
+  "baseline": {
+    "seconds": 364.00014789999113,
+    "fps": 192.56860307446513,
+    "cpu_percent": 89.7321063973139,
+    "cpu_ms_per_frame": 4.659747485555318,
+    "min_one_second_fps": 134.98427433408241,
+    "max_one_second_fps": 240.94737709185839,
+    "wave_first": 0.0,
+    "wave_last": 20.0,
+    "below_100_seconds": 0,
+    "below_150_seconds": 20.00003199998173
+  },
+  "current": {
+    "seconds": 378.0002861999674,
+    "fps": 189.8702266115009,
+    "cpu_percent": 88.80614969228269,
+    "cpu_ms_per_frame": 4.677202491256915,
+    "min_one_second_fps": 128.03290445361048,
+    "max_one_second_fps": 240.0806430871898,
+    "wave_first": 0.0,
+    "wave_last": 20.0,
+    "below_100_seconds": 0,
+    "below_150_seconds": 44.99927409994416
+  },
+  "common_board_interval_ns": [
+    2292933801200.0,
+    2655934896200.0
+  ],
+  "common_board_interval": {
+    "baseline": {
+      "seconds": 364.00014789999113,
+      "fps": 192.56860307446513,
+      "cpu_percent": 89.7321063973139,
+      "cpu_ms_per_frame": 4.659747485555318,
+      "min_one_second_fps": 134.98427433408241,
+      "max_one_second_fps": 240.94737709185839,
+      "wave_first": 0.0,
+      "wave_last": 20.0,
+      "below_100_seconds": 0,
+      "below_150_seconds": 20.00003199998173
+    },
+    "current": {
+      "seconds": 363.00042749999557,
+      "fps": 188.01355268376602,
+      "cpu_percent": 89.35939889492388,
+      "cpu_ms_per_frame": 4.75281689108998,
+      "min_one_second_fps": 128.03290445361048,
+      "max_one_second_fps": 240.0806430871898,
+      "wave_first": 0.0,
+      "wave_last": 20.0,
+      "below_100_seconds": 0,
+      "below_150_seconds": 44.99927409994416
+    }
+  },
+  "slowest_current_samples": [
+    {
+      "elapsed_s": 228.0004926000256,
+      "draw_fps": 128.03290445361048,
+      "cpu_percent": 93.77409994160925,
+      "cpu_ms_per_draw_frame": 7.324218750000001,
+      "wave": 13.0,
+      "board_counter": 2517110676000.0
+    },
+    {
+      "elapsed_s": 215.00071270001354,
+      "draw_fps": 128.96102798085278,
+      "cpu_percent": 89.03559344608294,
+      "cpu_ms_per_draw_frame": 6.90406976744186,
+      "wave": 12.0,
+      "board_counter": 2504105336500.0
+    },
+    {
+      "elapsed_s": 237.0005617000279,
+      "draw_fps": 131.01431986743552,
+      "cpu_percent": 89.07223559689676,
+      "cpu_ms_per_draw_frame": 6.798664122137405,
+      "wave": 14.0,
+      "board_counter": 2526110391700.0
+    },
+    {
+      "elapsed_s": 233.0007418000023,
+      "draw_fps": 131.99755804963164,
+      "cpu_percent": 96.87320784892474,
+      "cpu_ms_per_draw_frame": 7.339015151515151,
+      "wave": 14.0,
+      "board_counter": 2522104438500.0
+    },
+    {
+      "elapsed_s": 227.00074960000347,
+      "draw_fps": 132.9611221736763,
+      "cpu_percent": 99.97076855163631,
+      "cpu_ms_per_draw_frame": 7.518796992481202,
+      "wave": 13.0,
+      "board_counter": 2516102041400.0
+    }
+  ],
+  "relative_change_percent": {
+    "fps": -1.4012546281601201,
+    "cpu_percent": -1.0319123691706067,
+    "cpu_ms_per_frame": 0.3745912360209491
+  },
+  "common_board_interval_change_percent": {
+    "fps": -2.3654169568533945,
+    "cpu_percent": -0.4153557933207819,
+    "cpu_ms_per_frame": 1.9973057729665955
+  },
+  "interpretation": {
+    "comparison_is_ui_only_ab": false,
+    "reason": "Different executable hashes and gameplay trajectories; native landscape UI plus intervening fixes differ from the retained desktop run. CPU/GPU clocks were not independently measured.",
+    "cpu_metric": "Whole-process user+kernel CPU time divided by produced draw count, not single-frame wall latency.",
+    "min_fps_metric": "Minimum mean FPS within a valid approximately one-second sampling interval, not an instantaneous minimum.",
+    "official_performance_ledger_updated": false,
+    "exit": "observer completed normally after game exit; no observer error recorded"
+  },
+  "wave_onsets_seconds_from_checkpoint": {
+    "desktop": {
+      "10": 165.9752682,
+      "20": 306.9765702
+    },
+    "landscape": {
+      "10": 179.1505592,
+      "20": 322.1507968
+    }
+  }
+}

@@ -5,11 +5,13 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { spawnSync } from 'node:child_process';
-import { buildPage } from './build_page.mjs';
+import { buildPage, defaultOutput } from './build_page.mjs';
 const here=path.dirname(fileURLToPath(import.meta.url));
 const args=process.argv.slice(2);
 const option=(name,fallback)=>{const i=args.indexOf(name);return i<0?fallback:args[i+1];};
 const out=path.resolve(option('--output',path.join(here,'../../../out/media/performance-v3.2.4-motion')));
+const videoEncoder=option('--video-encoder','copy');
+if(!['copy','nvenc'].includes(videoEncoder))throw Error('Use --video-encoder copy or nvenc');
 fs.mkdirSync(out,{recursive:true});
 if(!args.includes('--preview')&&!args.includes('--export-mp4'))throw Error('Use --preview for webpage checks. MP4 export requires explicit --export-mp4.');
 const html=buildPage();
@@ -57,9 +59,23 @@ try{
   },{from,end,fps});
   fs.closeSync(fd);
   if(errors.length||result.finiteErrors.length)throw Error(JSON.stringify({errors,result}));
-  const mux=spawnSync('ffmpeg',['-hide_banner','-loglevel','warning','-y','-r',String(fps),'-i',rawPath,'-c:v','copy','-video_track_timescale','30000','-movflags','+faststart',dest+'.mp4'],{encoding:'utf8'});
+  const muxArgs=['-hide_banner','-loglevel','warning','-y'];
+  if(videoEncoder==='nvenc')muxArgs.push('-hwaccel','cuda','-hwaccel_output_format','cuda');
+  muxArgs.push('-r',String(fps),'-i',rawPath);
+  const audioManifest=path.join(defaultOutput,'audio-manifest.json');
+  const hasAudio=fs.existsSync(audioManifest);
+  if(hasAudio){
+   const spec=JSON.parse(fs.readFileSync(audioManifest,'utf8'));
+   muxArgs.push('-ss',String(from),'-i',path.join(defaultOutput,spec.mixFile),'-map','0:v:0','-map','1:a:0');
+   if(from===0&&end===duration)muxArgs.push('-c:a','copy');
+   else muxArgs.push('-c:a','aac','-b:a','192k');
+  }
+  if(videoEncoder==='nvenc')muxArgs.push('-c:v','h264_nvenc','-preset','p5','-tune','hq','-rc','vbr','-cq','19','-b:v','0');
+  else muxArgs.push('-c:v','copy');
+  muxArgs.push('-t',String(end-from),'-video_track_timescale','30000','-movflags','+faststart',dest+'.mp4');
+  const mux=spawnSync('ffmpeg',muxArgs,{encoding:'utf8'});
   if(mux.status!==0)throw Error(mux.stderr);fs.unlinkSync(rawPath);
-  fs.writeFileSync(dest+'-render.json',JSON.stringify({...result,bytes,errors},null,2));
+  fs.writeFileSync(dest+'-render.json',JSON.stringify({...result,bytes,errors,audioIncluded:hasAudio,videoEncoder},null,2));
   console.log(JSON.stringify({completed:dest+'.mp4',...result,bytes}));
  }
 }finally{await browser.close();}

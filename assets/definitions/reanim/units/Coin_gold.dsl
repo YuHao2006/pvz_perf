@@ -25,10 +25,11 @@ export component Coin_gold {
         frame 19 { x: -26.7; scale-x: 1.174; }
         frame 20 { x: -27.1; scale-x: 1.181; }
     }
+    // Retired back-face image. Keep the track and its index for DAT64 saves.
     Track {
         source-name: "black";
         frame-count: 21;
-        frame 0 { x: 0.7; y: -3.7; scale-x: 1.001; scale-y: 1.321; image: IMAGE_REANIM_COIN_BLACK_GOLD; }
+        frame 0 { x: 0.7; y: -3.7; scale-x: 1.001; scale-y: 1.321; image: none; }
         frame 1 { x: -10000; y: -10000; scale-x: -10000; scale-y: -10000; image: none; }
         frame 2 { x: 0.9; scale-x: 0.974; }
         frame 3 { x: -10000; y: -3.8; scale-x: 0.946; }

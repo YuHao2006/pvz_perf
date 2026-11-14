@@ -117,11 +117,11 @@ public:
 	void					GetTiming(CreditsTiming** theBeforeTiming, CreditsTiming** theAfterTiming, float* theFraction);
 	static Reanimation*		FindSubReanim(Reanimation* theReanim, ReanimationType theReanimType);
 	void					DrawFogEffect(Graphics* g, float theTime);
-	void					UpdateBlink();
+	void					UpdateBlink(std::uint64_t deltaNs = Sexy::gUpdateIntervalNs);
 	void					TurnOffTongues(Reanimation* theReanim, int aParentTrack);
 	void					DrawFinalCredits(Graphics* g);
 	void					DrawOverlay(Graphics* g);
-	void					UpdateMovie();
+	void					UpdateMovie(std::uint64_t deltaNs = Sexy::gUpdateIntervalNs);
 	void					PauseCredits();
 	void					PreLoadCredits();
 };

@@ -2,7 +2,16 @@
 
 This page describes the current runtime resource contract and the retained offline interchange formats. Reanimation and projectile behavior is generated as static C++ data; particles load complete PTC1 CPU records. Definitions share behavior and select an appearance row with its atlas pointer and final UVs. Reanimation/particle evaluation and drawing preparation run on the CPU; there are no GRU1/PGP1 GPU animation records in the runtime package.
 
-## Explicit reanimation actions
+## ReReanim — 废弃试验，保留作参考
+
+**本节仅描述 `ReReanim` 分支的废弃候选，不是主线采用的优化。**
+2026-11-15 决定停止推进，不合并到 main 或高清分支。分支和测试数据保留，
+便于复查。单轮整局测量仅呈现约 2% 的帧率变化，战斗轨迹不同且基线末段
+存在编译干扰，不能证明稳定收益；静态数据约减少 4.87 MiB 不足以成为继续
+复杂化运行时的理由。按帧转置关键帧数组尚未实施，也不继续推进。
+该候选保持 DAT64 V5 兼容，没有为试验升级存档格式。
+
+### 废弃候选的实现说明
 
 All 146 source components declare their timeline length and action intervals explicitly:
 

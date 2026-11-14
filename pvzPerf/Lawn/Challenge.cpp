@@ -1973,6 +1973,30 @@ namespace
 }  // namespace
 
 //0x422CD0
+std::vector<SeedType> Challenge::ConveyorCardTypes() const
+{
+	const ConveyorSeedSet* aSeedSet = nullptr;
+	if (mApp->IsAdventureMode())
+	{
+		int aLevelIndex = mBoard->mLevel - 1;
+		if ((unsigned)aLevelIndex < (unsigned)(sizeof(kConveyorSeedsPerLevel) / sizeof(kConveyorSeedsPerLevel[0])))
+		{
+			aSeedSet = &kConveyorSeedsPerLevel[aLevelIndex];
+		}
+	}
+	else
+	{
+		int aMode = (int)mApp->mGameMode;
+		if ((unsigned)aMode < (unsigned)(sizeof(kConveyorSeedsPerMode) / sizeof(kConveyorSeedsPerMode[0])))
+		{
+			aSeedSet = &kConveyorSeedsPerMode[aMode];
+		}
+	}
+	std::vector<SeedType> result;
+	if(aSeedSet && aSeedSet->mRows) for(int i=0;i<aSeedSet->mCount;++i) result.push_back(aSeedSet->mRows[i].mSeed);
+	return result;
+}
+
 void Challenge::UpdateConveyorBelt()
 {
 	if (mBoard->HasLevelAwardDropped())

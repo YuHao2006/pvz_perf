@@ -564,9 +564,17 @@ inline void LaunchDeadlines(LawnApp& app, Board& board)
         int volleys = 0, hits = 0, completedVolleys = 0;
         Schedule(frequency, 12'000'000'000, [&](std::int64_t delta) {
             board.mLevelTimeNs += delta;
+            const auto now = static_cast<std::int64_t>(board.mLevelTimeNs);
+            auto& clocks = *app.mEffectSystem->mReanimationHolder;
+            clocks.mVisualTimeNs = clocks.mBattleTimeNs = now;
+            for (const auto id : {gloom.mBodyReanimID, gloom.mHeadReanimID, gloom.mHeadReanimID2, gloom.mHeadReanimID3})
+                if (auto* animation = app.ReanimationTryToGet(id)) animation->PrepareTimeAt(now);
             const int health = target->mBodyHealth;
             const auto projectiles = board.mProjectiles.mSize;
-            gloom.UpdateShooting(static_cast<std::int64_t>(board.mLevelTimeNs), app.mEffectSystem->mReanimationHolder->mVisualTimeNs, (board.AnimationTimeDomain()==ReanimTimeDomain::Battle ? static_cast<std::int64_t>(board.mLevelTimeNs) : app.mEffectSystem->mReanimationHolder->mVisualTimeNs));
+            const auto due = gloom.mNextLaunchTimeNs;
+            // UpdateShooter now owns interval consumption. Calling a separate
+            // UpdateShooting here would dispatch the same interval twice.
+            gloom.UpdateShooter(now, now, now);
             if (isGloom ? target->mBodyHealth != health : board.mProjectiles.mSize != projectiles)
             {
                 Require(isGloom ? target->mBodyHealth == health - 20 :
@@ -578,8 +586,6 @@ inline void LaunchDeadlines(LawnApp& app, Board& board)
                     "Gloom/Gatling pulse did not cross its original firing instant");
                 ++hits;
             }
-            const auto due = gloom.mNextLaunchTimeNs;
-            gloom.UpdateShooter(static_cast<std::int64_t>(board.mLevelTimeNs), app.mEffectSystem->mReanimationHolder->mVisualTimeNs, (board.AnimationTimeDomain()==ReanimTimeDomain::Battle ? static_cast<std::int64_t>(board.mLevelTimeNs) : app.mEffectSystem->mReanimationHolder->mVisualTimeNs));
             if (due <= board.mLevelTimeNs)
             {
                 if (volleys)
@@ -587,7 +593,7 @@ inline void LaunchDeadlines(LawnApp& app, Board& board)
                     Require(hits == 4, "Gloom/Gatling volley lost one of its four pulses");
                     ++completedVolleys;
                 }
-                Require(gloom.mShootingEndTimeNs - static_cast<std::int64_t>(board.mLevelTimeNs) ==
+                Require(gloom.mShootingEndTimeNs - due ==
                     (isGloom ? 200 : 100) * PlantLaunchClock::Tick,
                     "Gloom/Gatling skipped a launch deadline while its previous shooting timer was positive");
                 const auto period = gloom.mNextLaunchTimeNs - due;
@@ -597,7 +603,7 @@ inline void LaunchDeadlines(LawnApp& app, Board& board)
                     "Gloom/Gatling changed its original launch period");
                 ++volleys;
                 hits = 0;
-                volleyStart = board.mLevelTimeNs;
+                volleyStart = due;
             }
         });
         Require((isGloom ? volleys == 7 : volleys >= 8) && completedVolleys == volleys - 1,
@@ -612,9 +618,14 @@ inline void LaunchDeadlines(LawnApp& app, Board& board)
         plant.PlantInitialize(static_cast<std::int64_t>(board.mLevelTimeNs), app.mEffectSystem->mReanimationHolder->mVisualTimeNs, (board.AnimationTimeDomain()==ReanimTimeDomain::Battle ? static_cast<std::int64_t>(board.mLevelTimeNs) : app.mEffectSystem->mReanimationHolder->mVisualTimeNs), 3, 2, seed, SeedType::SEED_NONE);
         plant.mNextLaunchTimeNs = 1'000'000'000;
         plant.mLaunchWindowStartNs = 0;
-        plant.mShootingEndTimeNs = 100'000'000;
+        plant.mShootingEndTimeNs = 3'000'000'000;
         board.mLevelTimeNs = seed == SeedType::SEED_CATTAIL ? 500'000'000 : 750'000'000;
-        plant.UpdateShooter(static_cast<std::int64_t>(board.mLevelTimeNs), app.mEffectSystem->mReanimationHolder->mVisualTimeNs, (board.AnimationTimeDomain()==ReanimTimeDomain::Battle ? static_cast<std::int64_t>(board.mLevelTimeNs) : app.mEffectSystem->mReanimationHolder->mVisualTimeNs));
+        const auto now = static_cast<std::int64_t>(board.mLevelTimeNs);
+        auto& clocks = *app.mEffectSystem->mReanimationHolder;
+        clocks.mVisualTimeNs = clocks.mBattleTimeNs = now;
+        for (const auto id : {plant.mBodyReanimID, plant.mHeadReanimID, plant.mHeadReanimID2, plant.mHeadReanimID3})
+            if (auto* animation = app.ReanimationTryToGet(id)) animation->PrepareTimeAt(now);
+        plant.UpdateShooter(now, now, now);
         Require(plant.mShootingEndTimeNs - static_cast<std::int64_t>(board.mLevelTimeNs) ==
             (seed == SeedType::SEED_CATTAIL ? 50 : 26) * PlantLaunchClock::Tick,
             "Secondary launch was suppressed by an unfinished shooting timer");
@@ -636,9 +647,13 @@ inline void LaunchDeadlines(LawnApp& app, Board& board)
         int attacks = 0, shots = 0;
         Schedule(frequency, 8'000'000'000, [&](std::int64_t delta) {
             board.mLevelTimeNs += delta;
-            plant.UpdateShooting(board.mLevelTimeNs, board.mLevelTimeNs, board.mLevelTimeNs);
+            const auto now = static_cast<std::int64_t>(board.mLevelTimeNs);
+            auto& clocks = *app.mEffectSystem->mReanimationHolder;
+            clocks.mVisualTimeNs = clocks.mBattleTimeNs = now;
+            for (const auto id : {plant.mBodyReanimID, plant.mHeadReanimID, plant.mHeadReanimID2, plant.mHeadReanimID3})
+                if (auto* animation = app.ReanimationTryToGet(id)) animation->PrepareTimeAt(now);
             const auto due = plant.mNextLaunchTimeNs;
-            plant.UpdateShooter(board.mLevelTimeNs, board.mLevelTimeNs, board.mLevelTimeNs);
+            plant.UpdateShooter(now, now, now);
             if (due <= board.mLevelTimeNs)
             {
                 Require(board.mProjectiles.mSize == 1,

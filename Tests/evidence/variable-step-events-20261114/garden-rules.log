@@ -1,0 +1,97 @@
+PASS pure wrapped text measurement: wrapping, newlines, color tags, no glyph draws and empty fill
+pool GPU day-normal-nearest: RGBA max=0 mean=0 poolMean=0 changedPixels=0 worst=(0,0) outsideBoundaryMax=0
+pool GPU night-normal-linear: RGBA max=0 mean=0 poolMean=0 changedPixels=0 worst=(0,0) outsideBoundaryMax=0
+pool GPU day-additive-partial-fractional: RGBA max=0 mean=0 poolMean=0 changedPixels=0 worst=(0,0) outsideBoundaryMax=0
+pool GPU night-additive-phase-wrap: RGBA max=0 mean=0 poolMean=0 changedPixels=0 worst=(0,0) outsideBoundaryMax=0
+pool GPU day-opaque-partial-fractional: RGBA max=0 mean=0 poolMean=0 changedPixels=0 worst=(0,0) outsideBoundaryMax=0
+pool GPU night-opaque-large-counter: RGBA max=0 mean=0 poolMean=0 changedPixels=0 worst=(0,0) outsideBoundaryMax=0
+pool GPU feedback-float-source-pending-batch: RGBA max=0 mean=0 poolMean=0 changedPixels=0 worst=(0,0) outsideBoundaryMax=0
+PASS production GPU pool vs independent legacy CPU mesh: day/night, normal/additive/opaque, nearest/linear/repeat, phase wrap, destination scissor, fractional translation, ordinary painter order and float target feedback
+PASS precomputed transparent edges: alpha, visible RGB, idempotency, nearest/linear, upload-discard
+PASS public font upload: deferred alpha, upload-and-discard, texture reuse, independent copies
+PASS nonzero source rectangles and repacked whole-sheet atlas views: translation, scale origins, clipping, tint, additive, local-source views and floating scales
+PASS necessary local-clip contract: independent full-pixel rect/image/source/mirror/matrix/particle/convex oracles, disjoint/partial/empty clips and negative framebuffer crossings
+PASS actual TitleScreen grass reveal: widths 0/1/157/313/314/400, translated draw and unrevealed black pixels
+PASS actual GameButton atlas states: normal, hover, press/fallbacks, disabled, overAlpha, additive glow, translation/offsets and hidden state match independent images
+PASS direct shared-image snapshots and reference lifetime
+PASS actual boss back-arm drawing: four attack offsets, reference pixels, 1024 exact shared-animation translation restorations
+PASS reanimation appearances: independent options, image slots, atlas dimensions, original centers and actual AttachmentDraw visibility pixels
+PASS fullscreen reanimation: destination fill pixels, hidden/zero alpha, color modulation, both blend modes, translation and effective clip without track matrices
+Store clock fixture: initialize
+Garden begin Hz=100
+Garden tool timing Hz=100 cursor=9 state=14 frames=17 rate=40 periodNs=425000000 completionNs=440000000
+Garden tool timing Hz=100 cursor=10 state=15 frames=31 rate=40 periodNs=774999990 completionNs=790000000
+Garden tool timing Hz=100 cursor=10 state=15 frames=31 rate=40 periodNs=774999990 completionNs=790000000
+Garden tool timing Hz=100 cursor=10 state=15 frames=31 rate=40 periodNs=774999990 completionNs=790000000
+Garden tool timing Hz=100 cursor=9 state=18 frames=17 rate=16 periodNs=1062500000 completionNs=1080000000
+Garden tool timing Hz=100 cursor=11 state=16 frames=26 rate=60 periodNs=433333325 completionNs=450000000
+Garden tool timing Hz=100 cursor=12 state=17 frames=37 rate=40 periodNs=924999984 completionNs=1860000000
+Garden primary Hz=100 growth=3 tools=7 gardens=3 wheelbarrow=1 reload=1
+Garden begin Hz=30
+Garden tool timing Hz=30 cursor=9 state=14 frames=17 rate=40 periodNs=425000000 completionNs=466666662
+Garden tool timing Hz=30 cursor=10 state=15 frames=31 rate=40 periodNs=774999990 completionNs=833333325
+Garden tool timing Hz=30 cursor=10 state=15 frames=31 rate=40 periodNs=774999990 completionNs=833333325
+Garden tool timing Hz=30 cursor=10 state=15 frames=31 rate=40 periodNs=774999990 completionNs=833333325
+Garden tool timing Hz=30 cursor=9 state=18 frames=17 rate=16 periodNs=1062500000 completionNs=1099999989
+Garden tool timing Hz=30 cursor=11 state=16 frames=26 rate=60 periodNs=433333325 completionNs=466666662
+Garden tool timing Hz=30 cursor=12 state=17 frames=37 rate=40 periodNs=924999984 completionNs=1899999981
+Garden primary Hz=30 growth=3 tools=7 gardens=3 wheelbarrow=1 reload=1
+Garden begin Hz=240
+Garden tool timing Hz=240 cursor=9 state=14 frames=17 rate=40 periodNs=425000000 completionNs=433333264
+Garden tool timing Hz=240 cursor=10 state=15 frames=31 rate=40 periodNs=774999990 completionNs=783333208
+Garden tool timing Hz=240 cursor=10 state=15 frames=31 rate=40 periodNs=774999990 completionNs=783333208
+Garden tool timing Hz=240 cursor=10 state=15 frames=31 rate=40 periodNs=774999990 completionNs=783333208
+Garden tool timing Hz=240 cursor=9 state=18 frames=17 rate=16 periodNs=1062500000 completionNs=1070833162
+Garden tool timing Hz=240 cursor=11 state=16 frames=26 rate=60 periodNs=433333325 completionNs=441666596
+Garden tool timing Hz=240 cursor=12 state=17 frames=37 rate=40 periodNs=924999984 completionNs=1858333036
+Garden primary Hz=240 growth=3 tools=7 gardens=3 wheelbarrow=1 reload=1
+Garden begin Hz=0
+Garden tool timing Hz=0 cursor=9 state=14 frames=17 rate=40 periodNs=425000000 completionNs=460171171
+Garden tool timing Hz=0 cursor=10 state=15 frames=31 rate=40 periodNs=774999990 completionNs=807675670
+Garden tool timing Hz=0 cursor=10 state=15 frames=31 rate=40 periodNs=774999990 completionNs=807675670
+Garden tool timing Hz=0 cursor=10 state=15 frames=31 rate=40 periodNs=774999990 completionNs=807675670
+Garden tool timing Hz=0 cursor=9 state=18 frames=17 rate=16 periodNs=1062500000 completionNs=1074412602
+Garden tool timing Hz=0 cursor=11 state=16 frames=26 rate=60 periodNs=433333325 completionNs=468062182
+Garden tool timing Hz=0 cursor=12 state=17 frames=37 rate=40 periodNs=924999984 completionNs=1863086150
+Garden primary Hz=0 growth=3 tools=7 gardens=3 wheelbarrow=1 reload=1
+Tree begin height=0 Hz=100
+Tree primary height=0 Hz=100 grown=1 charged=1
+Tree begin height=0 Hz=30
+Tree primary height=0 Hz=30 grown=1 charged=1
+Tree begin height=0 Hz=240
+Tree primary height=0 Hz=240 grown=1 charged=1
+Tree begin height=0 Hz=0
+Tree primary height=0 Hz=0 grown=1 charged=1
+Tree begin height=1 Hz=100
+Tree primary height=1 Hz=100 grown=2 charged=1
+Tree begin height=1 Hz=30
+Tree primary height=1 Hz=30 grown=2 charged=1
+Tree begin height=1 Hz=240
+Tree primary height=1 Hz=240 grown=2 charged=1
+Tree begin height=1 Hz=0
+Tree primary height=1 Hz=0 grown=2 charged=1
+Tree begin height=12 Hz=100
+Tree primary height=12 Hz=100 grown=13 charged=1
+Tree begin height=12 Hz=30
+Tree primary height=12 Hz=30 grown=13 charged=1
+Tree begin height=12 Hz=240
+Tree primary height=12 Hz=240 grown=13 charged=1
+Tree begin height=12 Hz=0
+Tree primary height=12 Hz=0 grown=13 charged=1
+Tree begin height=50 Hz=100
+Tree primary height=50 Hz=100 grown=51 charged=1
+Tree begin height=50 Hz=30
+Tree primary height=50 Hz=30 grown=51 charged=1
+Tree begin height=50 Hz=240
+Tree primary height=50 Hz=240 grown=51 charged=1
+Tree begin height=50 Hz=0
+Tree primary height=50 Hz=0 grown=51 charged=1
+Tree begin height=99 Hz=100
+Tree primary height=99 Hz=100 grown=100 charged=1
+Tree begin height=99 Hz=30
+Tree primary height=99 Hz=30 grown=100 charged=1
+Tree begin height=99 Hz=240
+Tree primary height=99 Hz=240 grown=100 charged=1
+Tree begin height=99 Hz=0
+Tree primary height=99 Hz=0 grown=100 charged=1
+PASS actual garden/tree rules: animated tools, growth, needs, movement, three-garden cycle, wheelbarrow, profile reload and one-shot tree feeding at four schedules

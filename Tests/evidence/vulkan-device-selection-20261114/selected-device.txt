@@ -1,0 +1,10 @@
+Selection: loader order, first compatible GPU; CPU only as last resort
+Device: NVIDIA GeForce RTX 4070 Laptop GPU
+Device type: 2 (CPU/software=0)
+Device Vulkan API: 1.4.325
+Driver version (vendor encoding): 2479554560
+Vendor/device: 0x10de/0x2860
+Graphics/present queue families: 0/0
+Driver: NVIDIA
+Driver info: 591.44
+Native non-uniform sampled-image indexing: 1

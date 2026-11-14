@@ -1026,16 +1026,39 @@ bool Reanimation::DrawTrack(Graphics* g, int theTrackIndex, int theRenderGroup,
 	const ReanimatorFrameTime* theFrameTime )
 {
 	(void)theRenderGroup;
+	// Compatibility entry point for isolated track callers. Production drawing
+	// resolves the binding mode once per group and calls the shared body below.
+	const auto& trackData = mDefinition->mTracks.tracks[theTrackIndex].mTransforms;
+	if (!trackData.mTransforms)
+		throw std::logic_error("CPU reanimation track has no transform data");
+	ReanimatorFrameTime frameTime;
+	if (!theFrameTime)
+	{
+		GetFrameTime(&frameTime);
+		theFrameTime = &frameTime;
+	}
+	auto* texture = mDefinition->mTextures ? mDefinition->mTextures[mVariant] : nullptr;
+	if (mDefinition->mExternalImageSlotBegin)
+	{
+		const auto slot = trackData.mTransforms[theFrameTime->mAnimFrameBeforeInt].mImageSlot;
+		if (slot >= mDefinition->mExternalImageSlotBegin)
+		{
+			const auto count = mDefinition->mImageSlotCount - mDefinition->mExternalImageSlotBegin;
+			const auto id = GeneratedDefinitions::ExternalTextureIds[mDefinition->mExternalBindingOffset +
+				std::size_t(mVariant) * count + slot - mDefinition->mExternalImageSlotBegin];
+			if (id) texture = GeneratedDefinitions::ExternalTextures[id - 1];
+		}
+	}
+	return DrawTrackWithTexture(g, theTrackIndex, theFrameTime, texture);
+}
+
+bool Reanimation::DrawTrackWithTexture(Graphics* g, int theTrackIndex,
+	const ReanimatorFrameTime* theFrameTime, GpuTexture* theTexture)
+{
 	const auto& trackData = mDefinition->mTracks.tracks[theTrackIndex].mTransforms;
 	if (!trackData.mTransforms)
 		throw std::logic_error("CPU reanimation track has no transform data");
 	ReanimatorTrackInstance* aTrackInstance = &mTrackInstances[theTrackIndex];  // 目标轨道的指针
-	ReanimatorFrameTime aFrameTime;
-	if (theFrameTime == nullptr)
-	{
-		GetFrameTime(&aFrameTime);
-		theFrameTime = &aFrameTime;
-	}
 	const auto& aBefore = trackData.mTransforms[theFrameTime->mAnimFrameBeforeInt];
 	const auto& aAfter = trackData.mTransforms[theFrameTime->mAnimFrameAfterInt];
 	// Frame/image/text metadata comes from the preceding keyframe even during
@@ -1135,7 +1158,7 @@ bool Reanimation::DrawTrack(Graphics* g, int theTrackIndex, int theRenderGroup,
 	if (aHasImage)
 	{
 		const TextureRegion& aSrcRect = *aImageRect;
-		auto* const aTexture = mDefinition->mTextures[mVariant];
+		auto* const aTexture = theTexture;
 		if (!aTexture)
 			throw std::logic_error("reanimation appearance atlas is not uploaded");
 		TextureSource source{aTexture,0};
@@ -1230,6 +1253,44 @@ void Reanimation::DrawRenderGroup(Graphics* g, int theRenderGroup)
 
 	ReanimatorFrameTime aFrameTime;
 	bool aHasFrameTime = false;
+	// Binding mode is definition-wide. Only the few shared-image Credits
+	// definitions resolve external slots; battle tracks receive one atlas value.
+	if (mDefinition->mExternalImageSlotBegin)
+	{
+		const auto firstExternal = mDefinition->mExternalImageSlotBegin;
+		const auto externalCount = mDefinition->mImageSlotCount - firstExternal;
+		const auto* const externalIds = GeneratedDefinitions::ExternalTextureIds +
+			mDefinition->mExternalBindingOffset + std::size_t(mVariant) * externalCount;
+		auto* const atlas = mDefinition->mTextures ? mDefinition->mTextures[mVariant] : nullptr;
+		for (int aTrackIndex = 0; aTrackIndex < mDefinition->mTracks.count; ++aTrackIndex)
+		{
+			auto* aTrackInstance = &mTrackInstances[aTrackIndex];
+			if (aTrackInstance->mRenderGroup != theRenderGroup)
+				continue;
+			if (!aHasFrameTime)
+			{
+				GetFrameTime(&aFrameTime);
+				aHasFrameTime = true;
+			}
+			const auto* transforms = mDefinition->mTracks.tracks[aTrackIndex].mTransforms.mTransforms;
+			if (!transforms)
+				throw std::logic_error("CPU reanimation track has no transform data");
+			const auto slot = transforms[aFrameTime.mAnimFrameBeforeInt].mImageSlot;
+			auto* texture = atlas;
+			if (slot >= firstExternal)
+			{
+				const auto id = externalIds[slot - firstExternal];
+				if (id) texture = GeneratedDefinitions::ExternalTextures[id - 1];
+			}
+			const bool aTrackDrawn = DrawTrackWithTexture(g, aTrackIndex, &aFrameTime, texture);
+			if (aTrackInstance->mAttachmentID != AttachmentID::ATTACHMENTID_NULL)
+				AttachmentDraw(aTrackInstance->mAttachmentID, g, !aTrackDrawn, mStartTimeNs + mFrameAgeNs);
+		}
+		return;
+	}
+	// Pure text/fullscreen fixtures do not require an atlas at all. Resolve this
+	// once, outside the track loop, retaining their existing null-texture support.
+	auto* const texture = mDefinition->mTextures ? mDefinition->mTextures[mVariant] : nullptr;
 	for (int aTrackIndex = 0; aTrackIndex < mDefinition->mTracks.count; aTrackIndex++)
 	{
 		ReanimatorTrackInstance* aTrackInstance = &mTrackInstances[aTrackIndex];
@@ -1243,7 +1304,7 @@ void Reanimation::DrawRenderGroup(Graphics* g, int theRenderGroup)
 				GetFrameTime(&aFrameTime);
 				aHasFrameTime = true;
 			}
-			bool aTrackDrawn = DrawTrack(g, aTrackIndex, theRenderGroup, &aFrameTime);
+			bool aTrackDrawn = DrawTrackWithTexture(g, aTrackIndex, &aFrameTime, texture);
 			if (aTrackInstance->mAttachmentID != AttachmentID::ATTACHMENTID_NULL)
 			{
 				AttachmentDraw(aTrackInstance->mAttachmentID, g, !aTrackDrawn, mStartTimeNs + mFrameAgeNs);

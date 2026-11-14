@@ -1,0 +1,35 @@
+{
+  "goal_turn_classification": "progress",
+  "gameplay_source_hashes_still_match_passing_tests": true,
+  "main_build_succeeded": true,
+  "hd_build_succeeded": true,
+  "main_exe_sha256": "4a5205660ffa0b5782952749195a8d070e0c55da5c9806032c425f8f5e8e7cd3",
+  "hd_exe_sha256": "653930272e96d124eab13bcd492a55c4329a43e764e4e38816a1367c51626136",
+  "main_pak_bytes": 39429341,
+  "main_pak_sha256": "d186c6bce10fc6191aa94588a34b3e99a387c61067d66986a218920bfbb4b398",
+  "hd_pak_bytes": 175501541,
+  "hd_pak_sha256": "1d7cfeb36edd05b30d8f0d9f4f7d81da83e1fe01bb6de34c5285260e54eaf806",
+  "final_cases_passed": [
+    "step-events",
+    "plant-attacks",
+    "ice3",
+    "survival-rules",
+    "award-rules",
+    "garden-rules",
+    "zombie-behavior",
+    "card-atlas",
+    "gpu-memory"
+  ],
+  "hd_logic_sync": "11 selected hunks in Plant/Zombie/Board/Coin; resource-specific hunks excluded",
+  "hd_withdrawal_check": "hd-withdrawal-check.json",
+  "binding_performance_check": "binding-performance.json",
+  "lossless_pixel_check": "lossless-proof.json",
+  "memory_scope": "all-resource-groups fixture, empty endless; measured allocation requirements lower, driver pool reservation unchanged",
+  "limits": [
+    "No new whole-game FPS improvement claimed",
+    "Private process memory is noisy",
+    "Discrete collision precision is not claimed exact through arbitrary stalls",
+    "No Android/device or full Web ZIP build performed in this audit",
+    "No publish or push performed"
+  ]
+}

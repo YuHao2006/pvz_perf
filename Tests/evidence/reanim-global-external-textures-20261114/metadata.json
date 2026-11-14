@@ -1,0 +1,19 @@
+{
+  "source_sha256": {
+    "pvzPerf/Sexy.TodLib/Reanimator.h": "b169d0186ba812d38c81139fe859e36c236e6a07e46307bb9e196c61f406a500",
+    "pvzPerf/Sexy.TodLib/Reanimator.cpp": "7269bb0921527d6460d8d6c5e1d3d6f669e6c96a5813d13fb0e41b2de8b889ea",
+    "pvzPerf/Sexy.TodLib/generated/GeneratedDefinitions.h": "def43724fea745caba32baa06ceeec1b5a25103138a649f87ffdeefb107b04d1",
+    "pvzPerf/Sexy.TodLib/generated/GeneratedDefinitions.cpp": "4883215f2dc2fe8769233089e69a41edb8757f145b3daf7a92f00ce950c3005c",
+    "pvzPerf/Sexy.TodLib/generated/GeneratedDefinitionLoading.cpp": "56d0309209ab7184a240d9845d3466cf45166ac07000fc771d6bee29dfe11311",
+    "Tests/native/StaticDefinitionRuntimeTests.cpp": "f020356dd238d8ee3749e0aed86b1730964564bb81f7ff8947b51ff7466d9c66",
+    "tools/bin/windows-x64/pvz-resource-build.exe": "dd3b04ba9a5ab55b60e4596c296465303da59ded38265a90c576aef318f0efe1"
+  },
+  "tool_source_sha256": "8e8161ef98b8b069034c37e03350cf6edf90b30c04d3c8e2404906826443bfe1",
+  "normal_pak_sha256": "d186c6bce10fc6191aa94588a34b3e99a387c61067d66986a218920bfbb4b398",
+  "normal_pak_unchanged": true,
+  "x64_definition_bytes": 88,
+  "external_pointers": 5,
+  "external_binding_ids": 8,
+  "x64_global_table_bytes": 72,
+  "serialized_layout_changed": false
+}

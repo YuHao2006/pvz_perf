@@ -1,5 +1,6 @@
 # .pvzbuild selects definition files; .dsl files contain only asset definitions.
 resource_build(1)
+compact_ui(1)
 
 sources(reanim "reanim/units/*.dsl")
 sources(reanim "reanim/appearances/*.dsl")
@@ -42,6 +43,7 @@ atlas(pea_family
 )
 
 # The same scene sprites recur across these animation definitions.
+
 atlas(credits_stage
     reanim:Credits_Main
     reanim:Credits_Main2

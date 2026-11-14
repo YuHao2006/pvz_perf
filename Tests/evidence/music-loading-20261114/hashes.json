@@ -1,0 +1,26 @@
+[
+  {
+    "path": "C:\\Users\\Administrator\\CLionProjects\\codex\\PlantsVsZombiesModern-v4.0.2\\out\\x64-win32-vulkan\\Release\\pvz_perf.exe",
+    "sha256": "0DD89B10A52F33CB7C27CDC3D67BAFF4D8D6A694A8760E3F05AD7B48D17D2AB7"
+  },
+  {
+    "path": "C:\\Users\\Administrator\\CLionProjects\\codex\\PlantsVsZombiesModern-v4.0.2\\out\\x64-win32-vulkan\\Release\\main.pak64",
+    "sha256": "D186C6BCE10FC6191AA94588A34B3E99A387C61067D66986A218920BFBB4B398"
+  },
+  {
+    "path": "C:\\Users\\Administrator\\CLionProjects\\codex\\PlantsVsZombiesModern-v4.0.2\\out\\wasm-v4.0.2-fixed\\toy\\audio\\libopenmpt.wasm",
+    "sha256": "7D3C33CB6C7EE3FD5EF10CC62DCC676541D33455E355CF2DDE4BD0D8A5F40139"
+  },
+  {
+    "path": "C:\\Users\\Administrator\\CLionProjects\\codex\\PlantsVsZombiesModern-v4.0.2\\Tests\\native\\MusicRuntimeTests.cpp",
+    "sha256": "252C2D058986B1D003CA2E14BD758EDF4DA87DCB7D1034934DEA38AA1142E0AC"
+  },
+  {
+    "path": "C:\\Users\\Administrator\\CLionProjects\\codex\\PlantsVsZombiesModern-v4.0.2\\tools\\wasm\\test_music_transitions.mjs",
+    "sha256": "74F485A4A1D21A1AD077B78D1AFEA7FA74732436BEAAF2D23FF5EA5335527B4A"
+  },
+  {
+    "path": "C:\\Users\\Administrator\\CLionProjects\\codex\\PlantsVsZombiesModern-v4.0.2\\pvzPerf\\Lawn\\System\\Music.cpp",
+    "sha256": "8851B5E78B90CCC4FEA9482CE7101EE6AE00B35844D3A6D0089B220D3099E4A6"
+  }
+]

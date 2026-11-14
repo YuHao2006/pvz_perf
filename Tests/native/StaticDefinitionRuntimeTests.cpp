@@ -29,6 +29,7 @@
 #include <stdexcept>
 #include <string>
 #include <thread>
+#include <utility>
 #include <vector>
 #include <cmath>
 #include <random>
@@ -394,8 +395,8 @@ void CheckTextures(const Definition& definition, bool loaded)
         for (unsigned slot=0;slot<count;++slot)
             hasImage|=definition.mImageRects[variant*count+slot].mWidth>0;
         Require(loaded ? (!hasImage || definition.mTextures[variant]) :
-            !definition.mTextures[variant],
-            "Definition GPU slots disagree with their loading state");
+            !definition.mTextures[variant],"Definition GPU slots disagree with their loading state");
+
     }
 }
 
@@ -406,10 +407,20 @@ void CheckParticleTextures(bool loaded)
 
 void CheckReanimationTextures(bool loaded)
 {
+    static_assert(sizeof(void*)!=8 || sizeof(ReanimatorDefinition)==88,
+        "External binding metadata must fit the static definition's alignment gaps");
     for (const auto& definition : Definitions::Reanimations)
     {
         CheckTextures(definition, loaded);
+        if(definition.mExternalImageSlotBegin) {
+            const auto count=definition.mImageSlotCount-definition.mExternalImageSlotBegin;
+            Require(definition.mExternalBindingOffset+count*definition.mVariantCount<=Definitions::ExternalBindingCount,
+                "External binding range exceeds the global ID table");
+        }
     }
+    for(unsigned id=0;id<Definitions::ExternalTextureCount;++id)
+        Require(loaded?Definitions::ExternalTextures[id]!=nullptr:Definitions::ExternalTextures[id]==nullptr,
+            "Global external texture table did not follow resource release/reload");
 }
 
 void CheckSceneTextures(TestApp& app,bool loaded)
@@ -489,6 +500,15 @@ void ReleaseAll(TestApp& app)
 
 void LoadAll(TestApp& app)
 {
+    // Credits borrow real map images from ResourceManager. Parsing the plans
+    // alone does not satisfy the loader's publication contract: these images
+    // must exist before shared definition slots can be uploaded or inspected.
+    for (const auto group : {ResourceGroupId::DelayLoad_Background1,
+        ResourceGroupId::DelayLoad_Background2, ResourceGroupId::DelayLoad_Background3,
+        ResourceGroupId::DelayLoad_Background4, ResourceGroupId::DelayLoad_Background5})
+        Require(app.mResourceManager->LoadResources(group),
+            "Cannot load shared Credits background resource dependencies");
+    DefinitionPublishImageResources();
     LoadSceneAtlases(false);
     LandscapeUIAtlas::Load();
     // Exercise the consuming upload boundary with every real scene PNG.
@@ -507,15 +527,38 @@ void LoadAll(TestApp& app)
     ReanimatorLoadDefinitions(gLawnReanimationArray, static_cast<int>(ReanimationType::NUM_REANIMS));
     TodParticleLoadDefinitions(gLawnParticleArray, ParticleEffect::NUM_PARTICLES);
     ReanimatorLoadAllDefinitionData();
+    Require(Definitions::ExternalTextureCount==5&&Definitions::ExternalBindingCount==8,
+        "External-only binding table was not globally deduplicated");
+    const std::array expectedImages{IMAGE_BACKGROUND1,IMAGE_BACKGROUND3,IMAGE_BACKGROUND2,
+        IMAGE_BACKGROUND4,IMAGE_BACKGROUND5};
+    for(unsigned id=0;id<Definitions::ExternalTextureCount;++id) {
+        Require(expectedImages[id]&&Definitions::ExternalTextures[id]==render.CreateImageTexture(expectedImages[id]),
+            "Global external table did not borrow the actual map texture");
+        for(const auto& definition:Definitions::Reanimations)
+            for(unsigned variant=0;variant<definition.mVariantCount;++variant)
+                Require(Definitions::ExternalTextures[id]!=definition.mTextures[variant],
+                    "An owned reanimation atlas leaked into the global external texture table");
+    }
+    const std::array expectedIds{1u,2u,3u,4u,1u,5u,3u,1u};
+    Require(std::equal(expectedIds.begin(),expectedIds.end(),Definitions::ExternalTextureIds),
+        "Compact external bindings refer to the wrong global resources");
+    for(const unsigned index:{120u,121u,122u,137u}) {
+        const auto& definition=Definitions::Reanimations[index];
+        Require(definition.mExternalImageSlotBegin==definition.mImageSlotCount-2,
+            "Ordinary image slots were retained in an external binding row");
+    }
     const auto tasks = app.mCompletedLoadingThreadTasks.load();
     const auto projectile = Definitions::Projectiles.mTexture;
     const std::array<GpuTexture*,6> scenes{
         MagnetAtlas::Texture,AlmanacAtlas::Texture,AchievementsAtlas::Texture,CommonUIAtlas::Texture,DesktopUIAtlas::Texture,LandscapeUIAtlas::Texture};
     CheckSceneTextures(app,true);
     std::vector<GpuTexture*> textures;
-    for (const auto& definition : Definitions::Reanimations)
+    for (const auto& definition : Definitions::Reanimations) {
         textures.insert(textures.end(), definition.mTextures,
             definition.mTextures + definition.mVariantCount);
+    }
+    textures.insert(textures.end(),Definitions::ExternalTextures,
+        Definitions::ExternalTextures+Definitions::ExternalTextureCount);
     for (const auto& definition : Definitions::Particles)
         textures.insert(textures.end(), definition.mTextures,
             definition.mTextures + definition.mVariantCount);
@@ -526,9 +569,12 @@ void LoadAll(TestApp& app)
     LoadSceneAtlases(false);
     LandscapeUIAtlas::Load();
     std::vector<GpuTexture*> repeated;
-    for (const auto& definition : Definitions::Reanimations)
+    for (const auto& definition : Definitions::Reanimations) {
         repeated.insert(repeated.end(), definition.mTextures,
             definition.mTextures + definition.mVariantCount);
+    }
+    repeated.insert(repeated.end(),Definitions::ExternalTextures,
+        Definitions::ExternalTextures+Definitions::ExternalTextureCount);
     for (const auto& definition : Definitions::Particles)
         repeated.insert(repeated.end(), definition.mTextures,
             definition.mTextures + definition.mVariantCount);
@@ -549,7 +595,8 @@ void LoadAll(TestApp& app)
     unique.insert(projectile);
     unique.insert(gZombatarAtlas.mTexture);
     unique.erase(nullptr);
-    Require(unique.size() == 193, "Definitions did not share the 193 physical atlas textures");
+    Require(unique.size() == 198,
+        "Definitions did not share 193 physical atlases and five ResourceManager map textures");
     std::unique_ptr<Image> sceneTarget(render.CreateRenderImage(120,120));
     std::size_t drawn=0;
     {
@@ -1081,7 +1128,7 @@ void Lifecycle(TestApp& app, const StaticSnapshot& snapshot, int reanimationInde
     ReleaseAll(app);
     snapshot.Check();
     std::cout << "PASS full 144/106 catalogs: stable roots/tracks/fields/nodes/rectangles/actions, "
-        "two release/reload cycles, repeated bulk loads, 193 shared GPU atlases, real consumers, "
+        "two release/reload cycles, repeated bulk loads, 193 shared GPU atlases plus five maps, real consumers, "
         "independent kind release and pixels, pending worker assignment cancellation\n";
 }
 

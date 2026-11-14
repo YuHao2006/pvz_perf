@@ -1,0 +1,9 @@
+{
+  "entries": 745,
+  "byte_identical_entries": 539,
+  "reencoded_images_with_identical_RGBA": 206,
+  "source_bytes": 39429341,
+  "lossless_bytes": 39053104,
+  "source_sha256": "d186c6bce10fc6191aa94588a34b3e99a387c61067d66986a218920bfbb4b398",
+  "lossless_sha256": "4cd462db50231737bd82a362a6f797158188c5f9fc49e754c04564cdf92b857a"
+}

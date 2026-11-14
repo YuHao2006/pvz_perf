@@ -1,0 +1,11 @@
+{
+  "removed_asset_count": 125,
+  "reanim": 73,
+  "particle": 52,
+  "map_entries": 4544,
+  "all_removed_aliases_absent": true,
+  "approved_credits_hashes_valid": true,
+  "candidates_retained_unchanged": true,
+  "images_sha256": "cc15376074a078b447db51d8127a9c735c7b68a62ee1fea376ce6fcb3af94290",
+  "provenance_sha256": "69cc1afbbac33484f5de527ddfd115de8a97f7f93aa9761cb766e38d62a7038d"
+}

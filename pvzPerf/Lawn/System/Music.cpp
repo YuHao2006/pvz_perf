@@ -195,6 +195,9 @@ void Music::MusicTitleScreenInit()
 	if (IsMusicDisabled())
 		return;
 
+	// The title owns this slot before StartLoadingThread creates the other
+	// music voices. Start it now, rather than waiting for the complete table
+	// to be published: module playback below accesses this already-loaded slot.
 	LoadSong(MusicFile::MUSIC_FILE_MAIN_MUSIC, "sounds\\mainmusic.mo3");
 	MakeSureMusicIsPlaying(MusicTune::MUSIC_TUNE_TITLE_CRAZY_DAVE_MAIN_THEME);
 }

@@ -1,0 +1,20 @@
+ImageRuntimeTests.cpp
+OpeningFlowRuntimeChecks.cpp
+正在生成代码
+已完成代码的生成
+Store clock fixture: initialize
+PASS terminal production intervals: specials, Marigold stop, Sun-shroom growth ties, Boss explosions
+PASS real Board fade/mower terminal intervalNs=6100000000
+PASS real Board fade/mower terminal intervalNs=560000000
+PASS real Board fade/mower terminal intervalNs=10000000
+PASS real Board ice expiry with absent and live sparkle particles
+PASS collected sun/money/gifts converge at ordinary, 133ms, 420ms and 2s steps
+PASS shooter deadlines: actual-time projectile counts at 100/30/60Hz, 250/500ms and one/two-cycle steps
+PASS actor event intervals: spikes, head volleys, jump blocks/completion and Gargantuar death
+PASS real UI interval endpoints landscape=0 conveyor=0
+PASS real UI interval endpoints landscape=0 conveyor=1
+PASS real UI interval endpoints landscape=1 conveyor=0
+PASS real UI interval endpoints landscape=1 conveyor=1
+PASS real huge-wave night cues intervalNs=600000000
+PASS real huge-wave night cues intervalNs=7600000000
+PASS real Credits terminal StopFoley and bounded catch-up time budget

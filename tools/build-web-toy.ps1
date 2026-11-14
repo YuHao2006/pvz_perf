@@ -29,7 +29,15 @@ if (-not $JsonInclude) {
 }
 $webRoot = if ($GraphicsBackend -eq 'WEBGPU') { 'out/wasm-webgpu' } else { 'out/wasm' }
 $webBuild = Join-Path $projectRoot ($webRoot + '/game')
-if (-not $PakFile) { $PakFile = Join-Path $projectRoot 'out/x64-win32-vulkan/cache/resources/main-compact.pak64' }
+if (-not $PakFile) {
+    $sourcePak = Join-Path $projectRoot 'out/x64-win32-vulkan/cache/resources/main.pak64'
+    $PakFile = Join-Path $projectRoot 'out/x64-win32-vulkan/cache/resources/main-lossless.pak64'
+    if (-not (Test-Path -LiteralPath $sourcePak)) { throw 'Build main.pak64 first.' }
+    if (!(Test-Path -LiteralPath $PakFile) -or (Get-Item -LiteralPath $sourcePak).LastWriteTimeUtc -gt (Get-Item -LiteralPath $PakFile).LastWriteTimeUtc) {
+        & "$projectRoot/tools/bin/windows-x64/pvz-resource-build.exe" compact --input $sourcePak --output $PakFile --mode lossless
+        if ($LASTEXITCODE) { throw 'Lossless Web resource compression failed.' }
+    }
+}
 if (-not (Test-Path -LiteralPath $PakFile)) {
     throw 'Build the requested main.pak64 resource package first.'
 }

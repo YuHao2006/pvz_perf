@@ -1,0 +1,9 @@
+Test project C:/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern-v4.0.2/out/x64-win32-vulkan
+    Start 58: sexy_vulkan_device_selection
+1/2 Test #58: sexy_vulkan_device_selection .....   Passed    0.02 sec
+    Start 61: sexy_vulkan_initialization
+2/2 Test #61: sexy_vulkan_initialization .......   Passed    2.27 sec
+
+100% tests passed out of 2
+
+Total Test time (real) =   2.31 sec

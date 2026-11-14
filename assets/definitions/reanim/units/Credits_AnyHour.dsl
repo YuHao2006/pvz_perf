@@ -1,4 +1,7 @@
 export component Credits_AnyHour {
+    shared-image: IMAGE_REANIM_BACKGROUND1 IMAGE_BACKGROUND1;
+    shared-image: IMAGE_REANIM_BACKGROUND2 IMAGE_BACKGROUND2;
+
     fps: 12;
     Track {
         source-name: "Background2";

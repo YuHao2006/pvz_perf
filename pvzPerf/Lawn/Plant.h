@@ -212,7 +212,7 @@ public:
     [[nodiscard]] Zombie*                 FindTargetZombie(int theRow, PlantWeapon thePlantWeapon = PlantWeapon::WEAPON_PRIMARY);
     void                    Die(std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs);
     void                    UpdateProductionPlant(std::int64_t ownerNowNs);
-    void                    UpdateShooter(std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs);
+    void                    UpdateShooter(std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, std::int64_t shootingProcessedUntilNs = INT64_MIN);
     bool                    FindTargetAndFire(std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, int theRow, PlantWeapon thePlantWeapon = PlantWeapon::WEAPON_PRIMARY);
     void                    LaunchThreepeater(std::int64_t ownerNowNs);
     static int              GetCost(SeedType theSeedType, SeedType theImitaterType = SeedType::SEED_NONE);
@@ -281,7 +281,7 @@ public:
     int                     CalcRenderOrder();
     void                    AnimateNuts(std::int64_t ownerNowNs);
     void                    SetSleeping(std::int64_t ownerNowNs, std::int64_t animationNowNs, bool theIsAsleep);
-    void                    UpdateShooting(std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs);
+    void                    UpdateShooting(std::int64_t ownerNowNs, std::int64_t visualNowNs, std::int64_t animationNowNs, std::int64_t intervalStartNs = INT64_MIN);
     void                    DrawShadow(std::int64_t ownerNowNs, Graphics* g, float theOffsetX, float theOffsetY);
     void                    UpdateScaredyShroom(std::int64_t ownerNowNs);
     int                     DistanceToClosestZombie();

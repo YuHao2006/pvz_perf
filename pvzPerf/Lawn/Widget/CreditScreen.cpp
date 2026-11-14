@@ -1097,9 +1097,9 @@ Reanimation* CreditScreen::FindSubReanim(Reanimation* theReanim, ReanimationType
 }
 
 //0x436940
-void CreditScreen::UpdateBlink()
+void CreditScreen::UpdateBlink(std::uint64_t deltaNs)
 {
-    mBlinkCountdown--;
+    mBlinkCountdown.AddNanoseconds(-static_cast<std::int64_t>(deltaNs));
     if (mBlinkCountdown > 0)
     {
         return;
@@ -1181,17 +1181,21 @@ void CreditScreen::Update()
         }
 
         int aUnsyncedDuration = aDurationSinceStart - aDurationReanimation;
-        const double aFrameMs = mApp->mFrameTiming.mIntervalNs / 1'000'000.0;
-        int aUnsyncedFrames = static_cast<int>((aUnsyncedDuration + aFrameMs * 0.5) / aFrameMs);
         if (aUnsyncedDuration > 10000)
         {
             JumpToFrame((CreditsPhase)((int)mCreditsPhase + 1), 0.0f);
-            aUnsyncedFrames = 0;
+            aUnsyncedDuration = 0;
         }
-        while (aUnsyncedFrames > 0)
+        // Catch up the missing total once. A delayed app update can be much
+        // longer than the target frame interval; reusing its whole delta for
+        // every movie iteration would multiply elapsed movie time.
+        auto remainingNs = static_cast<std::uint64_t>(std::max(0, aUnsyncedDuration)) * 1'000'000;
+        const auto quantumNs = std::max<std::uint64_t>(1, mApp->mFrameTiming.mIntervalNs);
+        while (remainingNs != 0)
         {
-            UpdateMovie();
-            aUnsyncedFrames--;
+            const auto stepNs = std::min(remainingNs, quantumNs);
+            UpdateMovie(stepNs);
+            remainingNs -= stepNs;
         }
     }
 
@@ -1218,12 +1222,12 @@ namespace
     // CreditScreen::UpdateMovie 相位推进表：表内匿名 lambda = 原 case 体逐句
     // 迁移（原支 mLoopCount > 0 前置保留在 lambda 内）；aCreditsReanim 经引用
     // 传出（MAIN1/MAIN2 支 PlayReanim 重指向）。
-    using CreditsPhaseFn = void (*)(CreditScreen&, Reanimation*&);
+    using CreditsPhaseFn = void (*)(CreditScreen&, Reanimation*&, std::uint64_t);
 
     // 匿名 lambda 函数指针表，行序 = CreditsPhase 枚举值序（0..3）。
     constexpr CreditsPhaseFn kCreditsPhaseCases[(int)CreditsPhase::CREDITS_END + 1] = {
         // 原 case CREDITS_MAIN1 && mLoopCount > 0
-        [](CreditScreen& s, Reanimation*& aCreditsReanim)
+        [](CreditScreen& s, Reanimation*& aCreditsReanim, std::uint64_t)
         {
             if (aCreditsReanim->mLoopCount > 0)
             {
@@ -1232,7 +1236,7 @@ namespace
             }
         },  // 0 CREDITS_MAIN1
         // 原 case CREDITS_MAIN2 && mLoopCount > 0
-        [](CreditScreen& s, Reanimation*& aCreditsReanim)
+        [](CreditScreen& s, Reanimation*& aCreditsReanim, std::uint64_t)
         {
             if (aCreditsReanim->mLoopCount > 0)
             {
@@ -1241,7 +1245,7 @@ namespace
             }
         },  // 1 CREDITS_MAIN2
         // 原 case CREDITS_MAIN3 && mLoopCount > 0
-        [](CreditScreen& s, Reanimation*& aCreditsReanim)
+        [](CreditScreen& s, Reanimation*& aCreditsReanim, std::uint64_t)
         {
             if (aCreditsReanim->mLoopCount > 0)
             {
@@ -1249,10 +1253,10 @@ namespace
             }
         },  // 2 CREDITS_MAIN3
         // 原 case CREDITS_END
-        [](CreditScreen& s, Reanimation*& aCreditsReanim)
+        [](CreditScreen& s, Reanimation*& aCreditsReanim, std::uint64_t deltaNs)
         {
             (void)aCreditsReanim;
-            s.mCreditsPhaseCounter++;
+            s.mCreditsPhaseCounter.AddNanoseconds(static_cast<std::int64_t>(deltaNs));
             if (s.mCreditsPhaseCounter == 50)
             {
                 s.mMainMenuButton->SetVisible(true);
@@ -1320,33 +1324,24 @@ namespace
 }  // namespace
 
 //0x436BE0
-void CreditScreen::UpdateMovie()
+void CreditScreen::UpdateMovie(std::uint64_t deltaNs)
 {
-    UpdateBlink();
-
     // Credits owns this clock: each catch-up iteration is a real movie step.
     // LawnApp leaves it frozen while Credits is paused or awaiting its first draw.
-    if (Sexy::gUpdateIntervalNs > INT64_MAX)
+    if (deltaNs > INT64_MAX)
         throw std::overflow_error("credits movie update exceeds clock range");
+    UpdateBlink(deltaNs);
     auto& visualNowNs = mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs;
-    visualNowNs = ReanimClock::Add(visualNowNs, static_cast<std::int64_t>(Sexy::gUpdateIntervalNs));
+    visualNowNs = ReanimClock::Add(visualNowNs, static_cast<std::int64_t>(deltaNs));
 
     Reanimation* aCreditsReanim = mApp->ReanimationGet(mCreditsReanimID);
     const int aFrameCount = aCreditsReanim->mDefinition->mTracks.tracks->mTransforms.count - 1;
     float aFrameFactor = 1.0f / aFrameCount;
 
-    aCreditsReanim->UpdateAt(visualNowNs, Sexy::gUpdateIntervalNs);
-    mApp->mEffectSystem->UpdateAt(visualNowNs, visualNowNs, visualNowNs, Sexy::gUpdateIntervalNs, Sexy::gUpdateIntervalNs, Sexy::gUpdateIntervalNs);
-    mApp->mPoolEffect->PoolEffectUpdate(visualNowNs, Sexy::gUpdateIntervalNs);
+    aCreditsReanim->UpdateAt(visualNowNs, deltaNs);
+    mApp->mEffectSystem->UpdateAt(visualNowNs, visualNowNs, visualNowNs, deltaNs, deltaNs, deltaNs);
+    mApp->mPoolEffect->PoolEffectUpdate(visualNowNs, deltaNs);
     TurnOffTongues(aCreditsReanim, 0);
-
-    // C 形态 -> 匿名 lambda 表（上方 kCreditsPhaseCases）：行序 = CreditsPhase
-    // 枚举序（0..3，无 NUM 哨兵=末值 CREDITS_END 锚定）；全槽覆盖无 default。
-    const unsigned aPhaseIndex = static_cast<unsigned>(mCreditsPhase);
-    if (aPhaseIndex <= static_cast<unsigned>(CreditsPhase::CREDITS_END))
-    {
-        kCreditsPhaseCases[aPhaseIndex](*this, aCreditsReanim);
-    }
 
     if (mCreditsPhase == CreditsPhase::CREDITS_MAIN1)
     {
@@ -1611,6 +1606,17 @@ void CreditScreen::UpdateMovie()
                 ? kSunflowerHeadAppearance[aSunflowerFrame] : 0u;
             aSunFlowerReanim->SetVariantOption(ReanimTrackId::anim_idle, aHeadAppearance);
         }
+    }
+
+    // Consume the retiring movie's whole event interval and pose first.
+    // PlayReanim marks that movie and its attachments dead, so changing phase
+    // earlier would discard crossed events (including sound stop/particle
+    // cleanup), and mix the new movie with the old frame-count denominator.
+    // Nothing below this point may use the retiring animation pointers.
+    const unsigned aPhaseIndex = static_cast<unsigned>(mCreditsPhase);
+    if (aPhaseIndex <= static_cast<unsigned>(CreditsPhase::CREDITS_END))
+    {
+        kCreditsPhaseCases[aPhaseIndex](*this, aCreditsReanim, deltaNs);
     }
 }
 

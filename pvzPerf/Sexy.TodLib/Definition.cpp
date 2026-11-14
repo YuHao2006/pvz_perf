@@ -11,6 +11,7 @@
 #include "imagelib/ImageLib.h"
 #include "SexyAppBase.h"
 #include <mutex>
+#include <atomic>
 #include <unordered_map>
 #include <string>
 #include <utility>
@@ -19,6 +20,7 @@
 namespace
 {
 std::mutex gDefinitionAtlasMutex;
+std::atomic<bool> gImageResourcesPublished{false};
 // Loading/lifetime bookkeeping, never referenced by drawing code.
 struct AtlasResource
 {
@@ -31,8 +33,11 @@ struct PendingAtlasBinding
 {
     Sexy::GpuTexture** destination;
     AtlasResource* resource;
+    unsigned count=1;
 };
 std::vector<PendingAtlasBinding> gPendingAtlasBindings;
+struct PendingImageBinding {Sexy::GpuTexture** destination;Sexy::Image** image;};
+std::vector<PendingImageBinding> gPendingImageBindings;
 
 AtlasResource& LoadSharedDefinitionAtlas(const std::string& path,
     unsigned width,unsigned height)
@@ -79,6 +84,8 @@ void DefinitionFreeAtlasImages()
         std::lock_guard lock(gDefinitionAtlasMutex);
         std::vector<PendingAtlasBinding>().swap(gPendingAtlasBindings);
         images.swap(gDefinitionAtlasImages);
+        gPendingImageBindings.clear();
+        gImageResourcesPublished.store(false,std::memory_order_relaxed);
     }
     for (const auto& entry:images)
         delete entry.second.decoded;
@@ -90,6 +97,12 @@ void DefinitionFreeAtlasImages()
 void DefinitionBindAtlasPath(Sexy::GpuTexture*& texture,int width,int height,
     const char* path)
 {
+    DefinitionBindAtlasRange(&texture,1,width,height,path);
+}
+void DefinitionBindAtlasRange(Sexy::GpuTexture** textures,unsigned count,int width,int height,const char* path)
+{
+    if(!count)return;
+    auto& texture=*textures;
     if (width==0)
     {
         texture=nullptr;
@@ -106,10 +119,10 @@ void DefinitionBindAtlasPath(Sexy::GpuTexture*& texture,int width,int height,
         gSexyAppBase->mDDInterface->mRenderInterface->mRenderer)
         image.texture=gSexyAppBase->mDDInterface->mRenderInterface->UploadAtlasTexture(image.decoded);
     if (image.texture)
-        texture=image.texture;
+        std::fill_n(textures,count,image.texture);
     else if (std::none_of(gPendingAtlasBindings.begin(),gPendingAtlasBindings.end(),
         [&](const auto& binding) { return binding.destination==&texture; }))
-        gPendingAtlasBindings.push_back({&texture,&image});
+        gPendingAtlasBindings.push_back({&texture,&image,count});
 }
 
 int DefinitionUploadAtlasImages()
@@ -119,6 +132,8 @@ int DefinitionUploadAtlasImages()
         throw std::logic_error("Definition atlas upload requires the primary renderer thread");
     auto& render=*gSexyAppBase->mDDInterface->mRenderInterface;
     std::lock_guard lock(gDefinitionAtlasMutex);
+    // Do not read globals still being assigned by the resource loading thread.
+    if(!gPendingImageBindings.empty()&&!gImageResourcesPublished.load(std::memory_order_acquire))return -1;
     int uploaded=0;
     for (auto& [path,image]:gDefinitionAtlasImages)
     {
@@ -129,8 +144,13 @@ int DefinitionUploadAtlasImages()
         }
     }
     for (const auto& binding:gPendingAtlasBindings)
-        *binding.destination=binding.resource->texture;
+        std::fill_n(binding.destination,binding.count,binding.resource->texture);
     std::vector<PendingAtlasBinding>().swap(gPendingAtlasBindings);
+    for(const auto& binding:gPendingImageBindings) {
+        if(!*binding.image)throw std::logic_error("Shared definition image resource is not loaded");
+        *binding.destination=render.CreateImageTexture(*binding.image);
+    }
+    std::vector<PendingImageBinding>().swap(gPendingImageBindings);
     return uploaded;
 }
 
@@ -140,7 +160,18 @@ void DefinitionUnbindAtlas(Sexy::GpuTexture*& texture)
     std::erase_if(gPendingAtlasBindings,[&](const PendingAtlasBinding& binding) {
         return binding.destination==&texture;
     });
+    std::erase_if(gPendingImageBindings,[&](const auto& binding){return binding.destination==&texture;});
     texture=nullptr;
+}
+void DefinitionBindImageResource(Sexy::GpuTexture*& texture,Sexy::Image** image) {
+    std::lock_guard lock(gDefinitionAtlasMutex);
+    if(gSexyAppBase&&CurrentNativeThreadIdentity()==gSexyAppBase->mPrimaryThreadId&&*image&&
+        gSexyAppBase->mDDInterface&&gSexyAppBase->mDDInterface->mRenderInterface) {
+        texture=gSexyAppBase->mDDInterface->mRenderInterface->CreateImageTexture(*image);return;
+    }
+    if(std::none_of(gPendingImageBindings.begin(),gPendingImageBindings.end(),
+        [&](const auto& binding){return binding.destination==&texture;}))
+        gPendingImageBindings.push_back({&texture,image});
 }
 
 //0x4448E0
@@ -200,3 +231,14 @@ float FloatTrackEvaluateFromLastTime(const FloatParameterTrack& theTrack, double
 {
     return theTimeValue < 0.0f ? 0.0f : FloatTrackEvaluate(theTrack, theTimeValue, theInterp);
 }
+
+void DefinitionUnbindAtlasRange(Sexy::GpuTexture** textures,unsigned count) {
+    std::lock_guard lock(gDefinitionAtlasMutex);
+    const auto first=reinterpret_cast<std::uintptr_t>(textures),last=first+sizeof(*textures)*count;
+    const auto contains=[&](auto* pointer){const auto p=reinterpret_cast<std::uintptr_t>(pointer);return p>=first&&p<last;};
+    std::erase_if(gPendingAtlasBindings,[&](const auto& b){return contains(b.destination);});
+    std::erase_if(gPendingImageBindings,[&](const auto& b){return contains(b.destination);});
+    std::fill_n(textures,count,nullptr);
+}
+
+void DefinitionPublishImageResources(){gImageResourcesPublished.store(true,std::memory_order_release);}

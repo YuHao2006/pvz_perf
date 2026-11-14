@@ -56,6 +56,7 @@ public:
 	LevelStats() : mUnusedLawnMowers(0) {}
 };
 
+class BattleCardAtlas;
 class LawnApp : public SexyApp
 {
 public:
@@ -84,6 +85,7 @@ public:
 	ZenGarden*						mZenGarden;										//+0x81C
 	EffectSystem*					mEffectSystem;									//+0x820
 	ReanimatorCache*				mReanimatorCache;
+    std::unique_ptr<BattleCardAtlas> mBattleCardAtlas;
 	bool            mCacheFramesPrebuilt = false;  // 缓存帧装载期预建（一次性）								//+0x824
 	ProfileMgr*						mProfileMgr;									//+0x828
 	PlayerInfo*						mPlayerInfo;									//+0x82C

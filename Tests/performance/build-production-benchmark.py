@@ -90,9 +90,12 @@ def main():
     for dll in (build / "Release").glob("*.dll"):
         shutil.copy2(dll, output / dll.name)
     shutil.copy2(bass, output / "bass.dll")
-    shaders = build / "Release/shaders"
-    if shaders.is_dir():
-        shutil.copytree(shaders, output / "shaders", dirs_exist_ok=True)
+    # Both shader binaries and scale-effect sources are resolved next to the
+    # executable. A benchmark's entry point lives outside the paired Release.
+    for directory in ("shaders", "effects"):
+        resources = build / "Release" / directory
+        if resources.is_dir():
+            shutil.copytree(resources, output / directory, dirs_exist_ok=True)
     metadata = {
         "source": str(source),
         "source_sha256": hashlib.sha256(source.read_bytes()).hexdigest(),

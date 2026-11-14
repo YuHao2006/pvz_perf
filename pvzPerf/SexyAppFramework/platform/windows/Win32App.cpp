@@ -11,11 +11,13 @@
 #include "misc/DemoDialogTemplate.h"
 #include "misc/DemoJumpTime.h"
 #include "WindowApi.h"
+#include "Common.h"
 #include <windowsx.h>
 #include <mmsystem.h>
 #include <regstr.h>
 #include <algorithm>
 #include <cmath>
+#include <fstream>
 #include <stdexcept>
 #include <utility>
 
@@ -26,6 +28,38 @@ void SexyAppBase::RequestNativeClose() {
 }
 
 namespace {
+#if defined(PVZ_GPU_VULKAN)
+void WriteVulkanDeviceReport(const VulkanContext& context) {
+    // One overwritten startup report, never a per-frame trace. Keep this in
+    // the Windows host so the Vulkan library has no application-path policy.
+    std::ofstream report(GetLogFilePath("gpu-device.txt"), std::ios::trunc);
+    if (!report) return; // An unwritable diagnostic directory cannot disable play.
+    VkPhysicalDeviceProperties properties{};
+    vkGetPhysicalDeviceProperties(context.physicalDevice, &properties);
+    report << "Selection: loader order, first compatible GPU; CPU only as last resort\n"
+        << "Device: " << properties.deviceName << '\n'
+        << "Device type: " << properties.deviceType << " (CPU/software="
+        << (properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_CPU) << ")\n"
+        << "Device Vulkan API: " << VK_API_VERSION_MAJOR(properties.apiVersion)
+        << '.' << VK_API_VERSION_MINOR(properties.apiVersion)
+        << '.' << VK_API_VERSION_PATCH(properties.apiVersion) << '\n'
+        << "Driver version (vendor encoding): " << properties.driverVersion << '\n'
+        << "Vendor/device: 0x" << std::hex << properties.vendorID
+        << "/0x" << properties.deviceID << std::dec << '\n'
+        << "Graphics/present queue families: " << context.graphicsFamily
+        << '/' << context.presentFamily << '\n';
+#if !defined(PVZ_VULKAN_LEGACY)
+    VkPhysicalDeviceVulkan12Properties details{
+        VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_PROPERTIES};
+    VkPhysicalDeviceProperties2 queried{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2, &details};
+    vkGetPhysicalDeviceProperties2(context.physicalDevice, &queried);
+    report << "Driver: " << details.driverName << '\n'
+        << "Driver info: " << details.driverInfo << '\n'
+        << "Native non-uniform sampled-image indexing: "
+        << details.shaderSampledImageArrayNonUniformIndexingNative << '\n';
+#endif
+}
+#endif
 constexpr UINT NativeTouchMessage = WM_APP + 0x305;
 constexpr unsigned int TouchCancel = 0x80000000u;
 constexpr unsigned int TouchCancelAll = 0x40000000u;
@@ -136,6 +170,7 @@ void SexyAppBase::MakeWindow() {
         swapchain.imageColorSpace=VK_COLOR_SPACE_EXTENDED_SRGB_LINEAR_EXT;
     }
     mGpuContext=std::make_unique<GpuContext>(init,mHWnd,swapchain);
+    WriteVulkanDeviceReport(*mGpuContext);
     mScaleHDREnabled = mScaleHDREnabled &&
         mGpuContext->swapchainColorSpace == VK_COLOR_SPACE_EXTENDED_SRGB_LINEAR_EXT;
 #endif

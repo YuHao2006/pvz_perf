@@ -1,0 +1,360 @@
+PASS pure wrapped text measurement: wrapping, newlines, color tags, no glyph draws and empty fill
+pool GPU day-normal-nearest: RGBA max=0 mean=0 poolMean=0 changedPixels=0 worst=(0,0) outsideBoundaryMax=0
+pool GPU night-normal-linear: RGBA max=0 mean=0 poolMean=0 changedPixels=0 worst=(0,0) outsideBoundaryMax=0
+pool GPU day-additive-partial-fractional: RGBA max=0 mean=0 poolMean=0 changedPixels=0 worst=(0,0) outsideBoundaryMax=0
+pool GPU night-additive-phase-wrap: RGBA max=0 mean=0 poolMean=0 changedPixels=0 worst=(0,0) outsideBoundaryMax=0
+pool GPU day-opaque-partial-fractional: RGBA max=0 mean=0 poolMean=0 changedPixels=0 worst=(0,0) outsideBoundaryMax=0
+pool GPU night-opaque-large-counter: RGBA max=0 mean=0 poolMean=0 changedPixels=0 worst=(0,0) outsideBoundaryMax=0
+pool GPU feedback-float-source-pending-batch: RGBA max=0 mean=0 poolMean=0 changedPixels=0 worst=(0,0) outsideBoundaryMax=0
+PASS production GPU pool vs independent legacy CPU mesh: day/night, normal/additive/opaque, nearest/linear/repeat, phase wrap, destination scissor, fractional translation, ordinary painter order and float target feedback
+PASS precomputed transparent edges: alpha, visible RGB, idempotency, nearest/linear, upload-discard
+PASS public font upload: deferred alpha, upload-and-discard, texture reuse, independent copies
+PASS nonzero source rectangles and repacked whole-sheet atlas views: translation, scale origins, clipping, tint, additive, local-source views and floating scales
+PASS necessary local-clip contract: independent full-pixel rect/image/source/mirror/matrix/particle/convex oracles, disjoint/partial/empty clips and negative framebuffer crossings
+PASS actual TitleScreen grass reveal: widths 0/1/157/313/314/400, translated draw and unrevealed black pixels
+PASS actual GameButton atlas states: normal, hover, press/fallbacks, disabled, overAlpha, additive glow, translation/offsets and hidden state match independent images
+PASS direct shared-image snapshots and reference lifetime
+PASS actual boss back-arm drawing: four attack offsets, reference pixels, 1024 exact shared-animation translation restorations
+PASS reanimation appearances: independent options, image slots, atlas dimensions, original centers and actual AttachmentDraw visibility pixels
+PASS fullscreen reanimation: destination fill pixels, hidden/zero alpha, color modulation, both blend modes, translation and effective clip without track matrices
+Store clock fixture: initialize
+ICE3 result type=23 Hz=100 stun=0 armed=1 retried=0 imps=1
+PASS ICE3 type=23 Hz=100 stun=0 retried=0 imps=1
+ICE3 result type=23 Hz=100 stun=1 armed=1 retried=1 imps=1
+PASS ICE3 type=23 Hz=100 stun=1 retried=1 imps=1
+ICE3 result type=23 Hz=100 stun=2 armed=1 retried=1 imps=1
+PASS ICE3 type=23 Hz=100 stun=2 retried=1 imps=1
+ICE3 result type=23 Hz=30 stun=0 armed=1 retried=0 imps=1
+PASS ICE3 type=23 Hz=30 stun=0 retried=0 imps=1
+ICE3 result type=23 Hz=30 stun=1 armed=1 retried=1 imps=1
+PASS ICE3 type=23 Hz=30 stun=1 retried=1 imps=1
+ICE3 result type=23 Hz=30 stun=2 armed=1 retried=1 imps=1
+PASS ICE3 type=23 Hz=30 stun=2 retried=1 imps=1
+ICE3 result type=23 Hz=240 stun=0 armed=1 retried=0 imps=1
+PASS ICE3 type=23 Hz=240 stun=0 retried=0 imps=1
+ICE3 result type=23 Hz=240 stun=1 armed=1 retried=1 imps=1
+PASS ICE3 type=23 Hz=240 stun=1 retried=1 imps=1
+ICE3 result type=23 Hz=240 stun=2 armed=1 retried=1 imps=1
+PASS ICE3 type=23 Hz=240 stun=2 retried=1 imps=1
+ICE3 result type=23 Hz=0 stun=0 armed=1 retried=0 imps=1
+PASS ICE3 type=23 Hz=0 stun=0 retried=0 imps=1
+ICE3 result type=23 Hz=0 stun=1 armed=1 retried=1 imps=1
+PASS ICE3 type=23 Hz=0 stun=1 retried=1 imps=1
+ICE3 result type=23 Hz=0 stun=2 armed=1 retried=1 imps=1
+PASS ICE3 type=23 Hz=0 stun=2 retried=1 imps=1
+ICE3 result type=32 Hz=100 stun=0 armed=1 retried=0 imps=1
+PASS ICE3 type=32 Hz=100 stun=0 retried=0 imps=1
+ICE3 result type=32 Hz=100 stun=1 armed=1 retried=1 imps=1
+PASS ICE3 type=32 Hz=100 stun=1 retried=1 imps=1
+ICE3 result type=32 Hz=100 stun=2 armed=1 retried=1 imps=1
+PASS ICE3 type=32 Hz=100 stun=2 retried=1 imps=1
+ICE3 result type=32 Hz=30 stun=0 armed=1 retried=0 imps=1
+PASS ICE3 type=32 Hz=30 stun=0 retried=0 imps=1
+ICE3 result type=32 Hz=30 stun=1 armed=1 retried=1 imps=1
+PASS ICE3 type=32 Hz=30 stun=1 retried=1 imps=1
+ICE3 result type=32 Hz=30 stun=2 armed=1 retried=1 imps=1
+PASS ICE3 type=32 Hz=30 stun=2 retried=1 imps=1
+ICE3 result type=32 Hz=240 stun=0 armed=1 retried=0 imps=1
+PASS ICE3 type=32 Hz=240 stun=0 retried=0 imps=1
+ICE3 result type=32 Hz=240 stun=1 armed=1 retried=1 imps=1
+PASS ICE3 type=32 Hz=240 stun=1 retried=1 imps=1
+ICE3 result type=32 Hz=240 stun=2 armed=1 retried=1 imps=1
+PASS ICE3 type=32 Hz=240 stun=2 retried=1 imps=1
+ICE3 result type=32 Hz=0 stun=0 armed=1 retried=0 imps=1
+PASS ICE3 type=32 Hz=0 stun=0 retried=0 imps=1
+ICE3 result type=32 Hz=0 stun=1 armed=1 retried=1 imps=1
+PASS ICE3 type=32 Hz=0 stun=1 retried=1 imps=1
+ICE3 result type=32 Hz=0 stun=2 armed=1 retried=1 imps=1
+PASS ICE3 type=32 Hz=0 stun=2 retried=1 imps=1
+ICE4 result type=23 Hz=100 stun=0 armed=1 finishedFirst=0 retried=0 squished=1
+PASS ICE4 type=23 Hz=100 stun=0 retried=0
+ICE4 result type=23 Hz=100 stun=1 armed=1 finishedFirst=1 retried=1 squished=1
+PASS ICE4 type=23 Hz=100 stun=1 retried=1
+ICE4 result type=23 Hz=100 stun=2 armed=1 finishedFirst=1 retried=1 squished=1
+PASS ICE4 type=23 Hz=100 stun=2 retried=1
+ICE4 result type=23 Hz=30 stun=0 armed=1 finishedFirst=0 retried=0 squished=1
+PASS ICE4 type=23 Hz=30 stun=0 retried=0
+ICE4 result type=23 Hz=30 stun=1 armed=1 finishedFirst=1 retried=1 squished=1
+PASS ICE4 type=23 Hz=30 stun=1 retried=1
+ICE4 result type=23 Hz=30 stun=2 armed=1 finishedFirst=1 retried=1 squished=1
+PASS ICE4 type=23 Hz=30 stun=2 retried=1
+ICE4 result type=23 Hz=240 stun=0 armed=1 finishedFirst=0 retried=0 squished=1
+PASS ICE4 type=23 Hz=240 stun=0 retried=0
+ICE4 result type=23 Hz=240 stun=1 armed=1 finishedFirst=1 retried=1 squished=1
+PASS ICE4 type=23 Hz=240 stun=1 retried=1
+ICE4 result type=23 Hz=240 stun=2 armed=1 finishedFirst=1 retried=1 squished=1
+PASS ICE4 type=23 Hz=240 stun=2 retried=1
+ICE4 result type=23 Hz=0 stun=0 armed=1 finishedFirst=0 retried=0 squished=1
+PASS ICE4 type=23 Hz=0 stun=0 retried=0
+ICE4 result type=23 Hz=0 stun=1 armed=1 finishedFirst=1 retried=1 squished=1
+PASS ICE4 type=23 Hz=0 stun=1 retried=1
+ICE4 result type=23 Hz=0 stun=2 armed=1 finishedFirst=1 retried=1 squished=1
+PASS ICE4 type=23 Hz=0 stun=2 retried=1
+ICE4 result type=32 Hz=100 stun=0 armed=1 finishedFirst=0 retried=0 squished=1
+PASS ICE4 type=32 Hz=100 stun=0 retried=0
+ICE4 result type=32 Hz=100 stun=1 armed=1 finishedFirst=1 retried=1 squished=1
+PASS ICE4 type=32 Hz=100 stun=1 retried=1
+ICE4 result type=32 Hz=100 stun=2 armed=1 finishedFirst=1 retried=1 squished=1
+PASS ICE4 type=32 Hz=100 stun=2 retried=1
+ICE4 result type=32 Hz=30 stun=0 armed=1 finishedFirst=0 retried=0 squished=1
+PASS ICE4 type=32 Hz=30 stun=0 retried=0
+ICE4 result type=32 Hz=30 stun=1 armed=1 finishedFirst=1 retried=1 squished=1
+PASS ICE4 type=32 Hz=30 stun=1 retried=1
+ICE4 result type=32 Hz=30 stun=2 armed=1 finishedFirst=1 retried=1 squished=1
+PASS ICE4 type=32 Hz=30 stun=2 retried=1
+ICE4 result type=32 Hz=240 stun=0 armed=1 finishedFirst=0 retried=0 squished=1
+PASS ICE4 type=32 Hz=240 stun=0 retried=0
+ICE4 result type=32 Hz=240 stun=1 armed=1 finishedFirst=1 retried=1 squished=1
+PASS ICE4 type=32 Hz=240 stun=1 retried=1
+ICE4 result type=32 Hz=240 stun=2 armed=1 finishedFirst=1 retried=1 squished=1
+PASS ICE4 type=32 Hz=240 stun=2 retried=1
+ICE4 result type=32 Hz=0 stun=0 armed=1 finishedFirst=0 retried=0 squished=1
+PASS ICE4 type=32 Hz=0 stun=0 retried=0
+ICE4 result type=32 Hz=0 stun=1 armed=1 finishedFirst=1 retried=1 squished=1
+PASS ICE4 type=32 Hz=0 stun=1 retried=1
+ICE4 result type=32 Hz=0 stun=2 armed=1 finishedFirst=1 retried=1 squished=1
+PASS ICE4 type=32 Hz=0 stun=2 retried=1
+Catapult Hz=100 launch=1 ammoNs=190000000 shots=1
+Catapult Hz=100 launch=2 ammoNs=180000000 shots=2
+Catapult Hz=100 launch=3 ammoNs=170000000 shots=3
+Catapult Hz=100 launch=4 ammoNs=160000000 shots=4
+Catapult Hz=100 launch=5 ammoNs=150000000 shots=5
+Catapult Hz=100 launch=6 ammoNs=140000000 shots=6
+Catapult Hz=100 launch=7 ammoNs=130000000 shots=7
+Catapult Hz=100 launch=8 ammoNs=120000000 shots=8
+Catapult Hz=100 launch=9 ammoNs=110000000 shots=9
+Catapult Hz=100 launch=10 ammoNs=100000000 shots=10
+Catapult Hz=100 launch=11 ammoNs=90000000 shots=11
+Catapult Hz=100 launch=12 ammoNs=80000000 shots=12
+Catapult Hz=100 launch=13 ammoNs=70000000 shots=13
+Catapult Hz=100 launch=14 ammoNs=60000000 shots=14
+Catapult Hz=100 launch=15 ammoNs=50000000 shots=15
+Catapult Hz=100 launch=16 ammoNs=40000000 shots=16
+Catapult Hz=100 launch=17 ammoNs=30000000 shots=17
+Catapult Hz=100 launch=18 ammoNs=20000000 shots=18
+Catapult Hz=100 launch=19 ammoNs=10000000 shots=19
+Catapult Hz=100 launch=20 ammoNs=0 shots=20
+Catapult end Hz=100 launches=20 shots=20 ammoNs=0 x=649.676 scene=3
+Catapult Hz=30 launch=1 ammoNs=190000000 shots=1
+Catapult Hz=30 launch=2 ammoNs=180000000 shots=2
+Catapult Hz=30 launch=3 ammoNs=170000000 shots=3
+Catapult Hz=30 launch=4 ammoNs=160000000 shots=4
+Catapult Hz=30 launch=5 ammoNs=150000000 shots=5
+Catapult Hz=30 launch=6 ammoNs=140000000 shots=6
+Catapult Hz=30 launch=7 ammoNs=130000000 shots=7
+Catapult Hz=30 launch=8 ammoNs=120000000 shots=8
+Catapult Hz=30 launch=9 ammoNs=110000000 shots=9
+Catapult Hz=30 launch=10 ammoNs=100000000 shots=10
+Catapult Hz=30 launch=11 ammoNs=90000000 shots=11
+Catapult Hz=30 launch=12 ammoNs=80000000 shots=12
+Catapult Hz=30 launch=13 ammoNs=70000000 shots=13
+Catapult Hz=30 launch=14 ammoNs=60000000 shots=14
+Catapult Hz=30 launch=15 ammoNs=50000000 shots=15
+Catapult Hz=30 launch=16 ammoNs=40000000 shots=16
+Catapult Hz=30 launch=17 ammoNs=30000000 shots=17
+Catapult Hz=30 launch=18 ammoNs=20000000 shots=18
+Catapult Hz=30 launch=19 ammoNs=10000000 shots=19
+Catapult Hz=30 launch=20 ammoNs=0 shots=20
+Catapult end Hz=30 launches=20 shots=20 ammoNs=0 x=648.529 scene=3
+Catapult Hz=240 launch=1 ammoNs=190000000 shots=1
+Catapult Hz=240 launch=2 ammoNs=180000000 shots=2
+Catapult Hz=240 launch=3 ammoNs=170000000 shots=3
+Catapult Hz=240 launch=4 ammoNs=160000000 shots=4
+Catapult Hz=240 launch=5 ammoNs=150000000 shots=5
+Catapult Hz=240 launch=6 ammoNs=140000000 shots=6
+Catapult Hz=240 launch=7 ammoNs=130000000 shots=7
+Catapult Hz=240 launch=8 ammoNs=120000000 shots=8
+Catapult Hz=240 launch=9 ammoNs=110000000 shots=9
+Catapult Hz=240 launch=10 ammoNs=100000000 shots=10
+Catapult Hz=240 launch=11 ammoNs=90000000 shots=11
+Catapult Hz=240 launch=12 ammoNs=80000000 shots=12
+Catapult Hz=240 launch=13 ammoNs=70000000 shots=13
+Catapult Hz=240 launch=14 ammoNs=60000000 shots=14
+Catapult Hz=240 launch=15 ammoNs=50000000 shots=15
+Catapult Hz=240 launch=16 ammoNs=40000000 shots=16
+Catapult Hz=240 launch=17 ammoNs=30000000 shots=17
+Catapult Hz=240 launch=18 ammoNs=20000000 shots=18
+Catapult Hz=240 launch=19 ammoNs=10000000 shots=19
+Catapult Hz=240 launch=20 ammoNs=0 shots=20
+Catapult end Hz=240 launches=20 shots=20 ammoNs=0 x=649.86 scene=3
+Catapult Hz=0 launch=1 ammoNs=190000000 shots=1
+Catapult Hz=0 launch=2 ammoNs=180000000 shots=2
+Catapult Hz=0 launch=3 ammoNs=170000000 shots=3
+Catapult Hz=0 launch=4 ammoNs=160000000 shots=4
+Catapult Hz=0 launch=5 ammoNs=150000000 shots=5
+Catapult Hz=0 launch=6 ammoNs=140000000 shots=6
+Catapult Hz=0 launch=7 ammoNs=130000000 shots=7
+Catapult Hz=0 launch=8 ammoNs=120000000 shots=8
+Catapult Hz=0 launch=9 ammoNs=110000000 shots=9
+Catapult Hz=0 launch=10 ammoNs=100000000 shots=10
+Catapult Hz=0 launch=11 ammoNs=90000000 shots=11
+Catapult Hz=0 launch=12 ammoNs=80000000 shots=12
+Catapult Hz=0 launch=13 ammoNs=70000000 shots=13
+Catapult Hz=0 launch=14 ammoNs=60000000 shots=14
+Catapult Hz=0 launch=15 ammoNs=50000000 shots=15
+Catapult Hz=0 launch=16 ammoNs=40000000 shots=16
+Catapult Hz=0 launch=17 ammoNs=30000000 shots=17
+Catapult Hz=0 launch=18 ammoNs=20000000 shots=18
+Catapult Hz=0 launch=19 ammoNs=10000000 shots=19
+Catapult Hz=0 launch=20 ammoNs=0 shots=20
+Catapult end Hz=0 launches=20 shots=20 ammoNs=0 x=649.388 scene=3
+PASS actual Catapult ammunition: twenty shots and one unit per completed launch at four schedules
+Zombie butter type=22 Hz=100 maxResumeJump=0.245117 finalX=635.248
+Zombie butter type=22 Hz=30 maxResumeJump=0.816895 finalX=635.493
+Zombie butter type=22 Hz=240 maxResumeJump=0.102112 finalX=635.493
+Zombie butter type=22 Hz=0 maxResumeJump=0.792419 finalX=635.345
+Zombie butter type=11 Hz=100 maxResumeJump=0.66217 finalX=593.123
+Zombie butter type=11 Hz=30 maxResumeJump=2.20721 finalX=593.785
+Zombie butter type=11 Hz=240 maxResumeJump=0.27594 finalX=593.785
+Zombie butter type=11 Hz=0 maxResumeJump=2.14099 finalX=593.384
+Zombie butter type=14 Hz=100 maxResumeJump=0.890747 finalX=570.04
+Zombie butter type=14 Hz=30 maxResumeJump=2.96899 finalX=570.931
+Zombie butter type=14 Hz=240 maxResumeJump=0.371155 finalX=570.931
+Zombie butter type=14 Hz=0 maxResumeJump=2.87994 finalX=570.391
+Zombie butter type=0 Hz=100 maxResumeJump=0.141357 finalX=596.418
+Zombie butter type=0 Hz=30 maxResumeJump=0.471069 finalX=593.883
+Zombie butter type=0 Hz=240 maxResumeJump=0.0588989 finalX=595.978
+Zombie butter type=0 Hz=0 maxResumeJump=0.456909 finalX=595.86
+Zombie butter type=10 Hz=100 maxResumeJump=0.158142 finalX=645.83
+Zombie butter type=10 Hz=30 maxResumeJump=0.527039 finalX=646.967
+Zombie butter type=10 Hz=240 maxResumeJump=0.065918 finalX=645.712
+Zombie butter type=10 Hz=0 maxResumeJump=0.511169 finalX=646.06
+PASS actual zombie butter: three linear movers, root plus offset, and pool entry hold/resume at four schedules
+Zombie primary type=0 Hz=100 ok=1 phase=0 x=310.385 timeNs=8920000000 dead=0 plantDead=0 ate=1 shots=0 followers=0
+Zombie primary type=0 Hz=30 ok=1 phase=0 x=310.471 timeNs=8933333244 dead=0 plantDead=0 ate=1 shots=0 followers=0
+Zombie primary type=0 Hz=240 ok=1 phase=0 x=310.262 timeNs=8920831906 dead=0 plantDead=0 ate=1 shots=0 followers=0
+Zombie primary type=0 Hz=0 ok=1 phase=0 x=309.722 timeNs=8940765706 dead=0 plantDead=0 ate=1 shots=0 followers=0
+Zombie primary type=1 Hz=100 ok=1 phase=0 x=310.393 timeNs=6080000000 dead=0 plantDead=0 ate=1 shots=0 followers=0
+Zombie primary type=1 Hz=30 ok=1 phase=0 x=310.28 timeNs=6099999939 dead=0 plantDead=0 ate=1 shots=0 followers=0
+Zombie primary type=1 Hz=240 ok=1 phase=0 x=310.122 timeNs=6083332360 dead=0 plantDead=0 ate=1 shots=0 followers=0
+Zombie primary type=1 Hz=0 ok=1 phase=0 x=310.109 timeNs=6081567528 dead=0 plantDead=0 ate=1 shots=0 followers=0
+Zombie primary type=2 Hz=100 ok=1 phase=0 x=310.574 timeNs=11080000000 dead=0 plantDead=0 ate=1 shots=0 followers=0
+Zombie primary type=2 Hz=30 ok=1 phase=0 x=310.428 timeNs=11099999889 dead=0 plantDead=0 ate=1 shots=0 followers=0
+Zombie primary type=2 Hz=240 ok=1 phase=0 x=310.401 timeNs=11083331560 dead=0 plantDead=0 ate=1 shots=0 followers=0
+Zombie primary type=2 Hz=0 ok=1 phase=0 x=310.31 timeNs=11085156679 dead=0 plantDead=0 ate=1 shots=0 followers=0
+Zombie primary type=3 Hz=100 ok=1 phase=13 x=209.969 timeNs=4280000000 dead=0 plantDead=0 ate=0 shots=0 followers=0
+Zombie primary type=3 Hz=30 ok=1 phase=13 x=209.76 timeNs=4333333290 dead=0 plantDead=0 ate=0 shots=0 followers=0
+Zombie primary type=3 Hz=240 ok=1 phase=13 x=209.89 timeNs=4266665984 dead=0 plantDead=0 ate=0 shots=0 followers=0
+Zombie primary type=3 Hz=0 ok=1 phase=13 x=209.402 timeNs=4281915618 dead=0 plantDead=0 ate=0 shots=0 followers=0
+Zombie primary type=4 Hz=100 ok=1 phase=0 x=310.059 timeNs=9520000000 dead=0 plantDead=0 ate=1 shots=0 followers=0
+Zombie primary type=4 Hz=30 ok=1 phase=0 x=310.074 timeNs=9533333238 dead=0 plantDead=0 ate=1 shots=0 followers=0
+Zombie primary type=4 Hz=240 ok=1 phase=0 x=309.931 timeNs=9520831810 dead=0 plantDead=0 ate=1 shots=0 followers=0
+Zombie primary type=4 Hz=0 ok=1 phase=0 x=310.31 timeNs=9506138675 dead=0 plantDead=0 ate=1 shots=0 followers=0
+Zombie primary type=5 Hz=100 ok=1 phase=31 x=310.29 timeNs=9160000000 dead=0 plantDead=0 ate=1 shots=0 followers=0
+Zombie primary type=5 Hz=30 ok=1 phase=31 x=309.908 timeNs=9199999908 dead=0 plantDead=0 ate=1 shots=0 followers=0
+Zombie primary type=5 Hz=240 ok=1 phase=31 x=310.217 timeNs=9154165202 dead=0 plantDead=0 ate=1 shots=0 followers=0
+Zombie primary type=5 Hz=0 ok=1 phase=31 x=309.771 timeNs=9190959418 dead=0 plantDead=0 ate=1 shots=0 followers=0
+Zombie primary type=6 Hz=100 ok=1 phase=0 x=310.01 timeNs=7680000000 dead=0 plantDead=0 ate=1 shots=0 followers=0
+Zombie primary type=6 Hz=30 ok=1 phase=0 x=310.87 timeNs=7666666590 dead=0 plantDead=0 ate=1 shots=0 followers=0
+Zombie primary type=6 Hz=240 ok=1 phase=0 x=310.983 timeNs=7641665444 dead=0 plantDead=0 ate=1 shots=0 followers=0
+Zombie primary type=6 Hz=0 ok=1 phase=0 x=310.728 timeNs=7648484634 dead=0 plantDead=0 ate=1 shots=0 followers=0
+Zombie primary type=7 Hz=100 ok=1 phase=0 x=280.427 timeNs=4880000000 dead=0 plantDead=0 ate=1 shots=0 followers=0
+Zombie primary type=7 Hz=30 ok=1 phase=0 x=280.676 timeNs=4899999951 dead=0 plantDead=0 ate=1 shots=0 followers=0
+Zombie primary type=7 Hz=240 ok=1 phase=0 x=279.741 timeNs=4883332552 dead=0 plantDead=0 ate=1 shots=0 followers=0
+Zombie primary type=7 Hz=0 ok=1 phase=0 x=278.096 timeNs=4902387356 dead=0 plantDead=0 ate=1 shots=0 followers=0
+Zombie primary type=8 Hz=100 ok=1 phase=44 x=566.746 timeNs=5420000000 dead=0 plantDead=1 ate=0 shots=0 followers=4
+Zombie primary type=8 Hz=30 ok=1 phase=44 x=566.574 timeNs=5499999945 dead=0 plantDead=1 ate=0 shots=0 followers=4
+Zombie primary type=8 Hz=240 ok=1 phase=44 x=566.358 timeNs=5424999132 dead=0 plantDead=1 ate=0 shots=0 followers=4
+Zombie primary type=8 Hz=0 ok=1 phase=44 x=567.69 timeNs=5394883769 dead=0 plantDead=1 ate=0 shots=0 followers=4
+Zombie primary type=9 Hz=100 ok=1 phase=44 x=280.803 timeNs=11000000000 dead=0 plantDead=0 ate=1 shots=0 followers=0
+Zombie primary type=9 Hz=30 ok=1 phase=44 x=279.797 timeNs=11499999885 dead=0 plantDead=0 ate=1 shots=0 followers=0
+Zombie primary type=9 Hz=240 ok=1 phase=44 x=279.49 timeNs=11004164906 dead=0 plantDead=0 ate=1 shots=0 followers=0
+Zombie primary type=9 Hz=0 ok=1 phase=44 x=280.992 timeNs=10967845892 dead=0 plantDead=0 ate=1 shots=0 followers=0
+Zombie primary type=10 Hz=100 ok=1 phase=0 x=310.359 timeNs=11200000000 dead=0 plantDead=0 ate=1 shots=0 followers=0
+Zombie primary type=10 Hz=30 ok=1 phase=0 x=310.038 timeNs=11233333221 dead=0 plantDead=0 ate=1 shots=0 followers=0
+Zombie primary type=10 Hz=240 ok=1 phase=0 x=310.196 timeNs=11204164874 dead=0 plantDead=0 ate=1 shots=0 followers=0
+Zombie primary type=10 Hz=0 ok=1 phase=0 x=310.9 timeNs=11165924246 dead=0 plantDead=0 ate=1 shots=0 followers=0
+Zombie primary type=11 Hz=100 ok=1 phase=61 x=335.989 timeNs=19870000000 dead=0 plantDead=0 ate=1 shots=0 followers=0
+Zombie primary type=11 Hz=30 ok=1 phase=61 x=334.914 timeNs=19966666467 dead=0 plantDead=0 ate=1 shots=0 followers=0
+Zombie primary type=11 Hz=240 ok=1 phase=61 x=335.888 timeNs=19870830154 dead=0 plantDead=0 ate=1 shots=0 followers=0
+Zombie primary type=11 Hz=0 ok=1 phase=61 x=335.657 timeNs=19870056049 dead=0 plantDead=0 ate=1 shots=0 followers=0
+Zombie primary type=12 Hz=100 ok=1 phase=0 x=270.83 timeNs=16570000000 dead=0 plantDead=1 ate=0 shots=0 followers=0
+Zombie primary type=12 Hz=30 ok=1 phase=0 x=270.513 timeNs=16599999834 dead=0 plantDead=1 ate=0 shots=0 followers=0
+Zombie primary type=12 Hz=240 ok=1 phase=0 x=270.95 timeNs=16562497350 dead=0 plantDead=1 ate=0 shots=0 followers=0
+Zombie primary type=12 Hz=0 ok=1 phase=0 x=270.75 timeNs=16577351235 dead=0 plantDead=1 ate=0 shots=0 followers=0
+Zombie primary type=13 Hz=100 ok=1 phase=0 x=155.939 timeNs=9000000000 dead=0 plantDead=0 ate=0 shots=0 followers=3
+Zombie primary type=13 Hz=30 ok=1 phase=0 x=84.1243 timeNs=10233333231 dead=0 plantDead=0 ate=0 shots=0 followers=3
+Zombie primary type=13 Hz=240 ok=1 phase=0 x=172.687 timeNs=8716665272 dead=0 plantDead=0 ate=0 shots=0 followers=3
+Zombie primary type=13 Hz=0 ok=1 phase=0 x=151.194 timeNs=9102300840 dead=0 plantDead=0 ate=0 shots=0 followers=3
+Dolphin mount Hz=100 delta=-70.9074 nextDelta=-0.90741 ok=1
+Zombie primary type=14 Hz=100 ok=1 phase=55 x=209.497 timeNs=8490000000 dead=0 plantDead=0 ate=0 shots=0 followers=0
+Dolphin mount Hz=30 delta=-73.0247 nextDelta=-3.02478 ok=1
+Zombie primary type=14 Hz=30 ok=1 phase=55 x=206.84 timeNs=8599999914 dead=0 plantDead=0 ate=0 shots=0 followers=0
+Dolphin mount Hz=240 delta=-70.3781 nextDelta=-0.378052 ok=1
+Zombie primary type=14 Hz=240 ok=1 phase=55 x=209.405 timeNs=8483331976 dead=0 plantDead=0 ate=0 shots=0 followers=0
+Dolphin mount Hz=0 delta=-71.0082 nextDelta=-0.112061 ok=1
+Zombie primary type=14 Hz=0 ok=1 phase=55 x=207.356 timeNs=8504594538 dead=0 plantDead=0 ate=0 shots=0 followers=0
+Zombie primary type=15 Hz=100 ok=1 phase=16 x=310.267 timeNs=20400000000 dead=1 plantDead=1 ate=1 shots=0 followers=0
+Zombie primary type=15 Hz=30 ok=1 phase=16 x=309.964 timeNs=20466666462 dead=1 plantDead=1 ate=1 shots=0 followers=0
+Zombie primary type=15 Hz=240 ok=1 phase=16 x=310.154 timeNs=20408330068 dead=1 plantDead=1 ate=1 shots=0 followers=0
+Zombie primary type=15 Hz=0 ok=1 phase=16 x=309.468 timeNs=20409760220 dead=1 plantDead=1 ate=1 shots=0 followers=0
+Zombie primary type=16 Hz=100 ok=1 phase=73 x=179.727 timeNs=7210000000 dead=0 plantDead=0 ate=0 shots=0 followers=0
+Zombie primary type=16 Hz=30 ok=1 phase=73 x=178.884 timeNs=7233333261 dead=0 plantDead=0 ate=0 shots=0 followers=0
+Zombie primary type=16 Hz=240 ok=1 phase=73 x=179.937 timeNs=7204165514 dead=0 plantDead=0 ate=0 shots=0 followers=0
+Zombie primary type=16 Hz=0 ok=1 phase=73 x=179.788 timeNs=7208313463 dead=0 plantDead=0 ate=0 shots=0 followers=0
+Zombie primary type=17 Hz=100 ok=1 phase=37 x=30.0043 timeNs=10780000000 dead=0 plantDead=0 ate=0 shots=0 followers=0
+Zombie primary type=17 Hz=30 ok=1 phase=37 x=30.0267 timeNs=11099999889 dead=0 plantDead=0 ate=0 shots=0 followers=0
+Zombie primary type=17 Hz=240 ok=1 phase=37 x=30.0167 timeNs=10729164950 dead=0 plantDead=0 ate=0 shots=0 followers=0
+Zombie primary type=17 Hz=0 ok=1 phase=37 x=30.0485 timeNs=10923621545 dead=0 plantDead=0 ate=0 shots=0 followers=0
+Zombie primary type=18 Hz=100 ok=1 phase=20 x=179.95 timeNs=5630000000 dead=0 plantDead=0 ate=0 shots=0 followers=0
+Zombie primary type=18 Hz=30 ok=1 phase=20 x=179.458 timeNs=5766666609 dead=0 plantDead=0 ate=0 shots=0 followers=0
+Zombie primary type=18 Hz=240 ok=1 phase=20 x=179.843 timeNs=5645832430 dead=0 plantDead=0 ate=0 shots=0 followers=0
+Zombie primary type=18 Hz=0 ok=1 phase=20 x=179.278 timeNs=5673729690 dead=0 plantDead=0 ate=0 shots=0 followers=0
+Zombie primary type=19 Hz=100 ok=1 phase=91 x=410.327 timeNs=20130000000 dead=0 plantDead=0 ate=0 shots=0 followers=0
+Zombie primary type=19 Hz=30 ok=1 phase=91 x=411.696 timeNs=20166666465 dead=0 plantDead=0 ate=0 shots=0 followers=0
+Zombie primary type=19 Hz=240 ok=1 phase=91 x=409.994 timeNs=20133330112 dead=0 plantDead=0 ate=0 shots=0 followers=0
+Zombie primary type=19 Hz=0 ok=1 phase=91 x=409.818 timeNs=20135124186 dead=0 plantDead=0 ate=0 shots=0 followers=0
+Zombie primary type=20 Hz=100 ok=1 phase=8 x=280 timeNs=8210000000 dead=1 plantDead=1 ate=0 shots=0 followers=0
+Zombie primary type=20 Hz=30 ok=1 phase=8 x=280 timeNs=8266666584 dead=1 plantDead=1 ate=0 shots=0 followers=0
+Zombie primary type=20 Hz=240 ok=1 phase=8 x=280 timeNs=8216665352 dead=1 plantDead=1 ate=0 shots=0 followers=0
+Zombie primary type=20 Hz=0 ok=1 phase=8 x=280 timeNs=8238291834 dead=1 plantDead=1 ate=0 shots=0 followers=0
+Zombie primary type=21 Hz=100 ok=1 phase=0 x=340.393 timeNs=2760000000 dead=0 plantDead=0 ate=0 shots=0 followers=0
+Zombie primary type=21 Hz=30 ok=1 phase=0 x=339.166 timeNs=2799999972 dead=0 plantDead=0 ate=0 shots=0 followers=0
+Zombie primary type=21 Hz=240 ok=1 phase=0 x=340.7 timeNs=2754166226 dead=0 plantDead=0 ate=0 shots=0 followers=0
+Zombie primary type=21 Hz=0 ok=1 phase=0 x=340.729 timeNs=2747331845 dead=0 plantDead=0 ate=0 shots=0 followers=0
+Zombie primary type=23 Hz=100 ok=1 phase=69 x=462.78 timeNs=12880000000 dead=0 plantDead=1 ate=0 shots=0 followers=1
+Zombie primary type=23 Hz=30 ok=1 phase=69 x=462.626 timeNs=12999999870 dead=0 plantDead=1 ate=0 shots=0 followers=1
+Zombie primary type=23 Hz=240 ok=1 phase=69 x=462.886 timeNs=12841664612 dead=0 plantDead=1 ate=0 shots=0 followers=1
+Zombie primary type=23 Hz=0 ok=1 phase=69 x=462.507 timeNs=12866043156 dead=0 plantDead=1 ate=0 shots=0 followers=1
+Zombie primary type=24 Hz=100 ok=1 phase=0 x=280.747 timeNs=10640000000 dead=0 plantDead=0 ate=1 shots=0 followers=0
+Zombie primary type=24 Hz=30 ok=1 phase=0 x=280.918 timeNs=10699999893 dead=0 plantDead=0 ate=1 shots=0 followers=0
+Zombie primary type=24 Hz=240 ok=1 phase=0 x=280.844 timeNs=10604164970 dead=0 plantDead=0 ate=1 shots=0 followers=0
+Zombie primary type=24 Hz=0 ok=1 phase=0 x=280.796 timeNs=10600551277 dead=0 plantDead=0 ate=1 shots=0 followers=0
+Zombie primary type=26 Hz=100 ok=1 phase=0 x=419.233 timeNs=1500000000 dead=0 plantDead=0 ate=0 shots=1 followers=0
+Zombie primary type=26 Hz=30 ok=1 phase=0 x=419.579 timeNs=1533333318 dead=0 plantDead=0 ate=0 shots=1 followers=0
+Zombie primary type=26 Hz=240 ok=1 phase=0 x=419.137 timeNs=1504166426 dead=0 plantDead=0 ate=0 shots=1 followers=0
+Zombie primary type=26 Hz=0 ok=1 phase=0 x=419.083 timeNs=1510149542 dead=0 plantDead=0 ate=0 shots=1 followers=0
+Zombie primary type=27 Hz=100 ok=1 phase=0 x=309.893 timeNs=8960000000 dead=0 plantDead=0 ate=1 shots=0 followers=0
+Zombie primary type=27 Hz=30 ok=1 phase=0 x=310.119 timeNs=8966666577 dead=0 plantDead=0 ate=1 shots=0 followers=0
+Zombie primary type=27 Hz=240 ok=1 phase=0 x=309.7 timeNs=8962498566 dead=0 plantDead=0 ate=1 shots=0 followers=0
+Zombie primary type=27 Hz=0 ok=1 phase=0 x=310.328 timeNs=8940765706 dead=0 plantDead=0 ate=1 shots=0 followers=0
+Zombie primary type=28 Hz=100 ok=1 phase=0 x=310.492 timeNs=23320000000 dead=1 plantDead=1 ate=1 shots=0 followers=0
+Zombie primary type=28 Hz=30 ok=1 phase=0 x=310.043 timeNs=23333333100 dead=1 plantDead=1 ate=1 shots=0 followers=0
+Zombie primary type=28 Hz=240 ok=1 phase=0 x=310.311 timeNs=23320829602 dead=1 plantDead=1 ate=1 shots=0 followers=0
+Zombie primary type=28 Hz=0 ok=1 phase=0 x=309.879 timeNs=23325283643 dead=1 plantDead=1 ate=1 shots=0 followers=0
+Zombie primary type=29 Hz=100 ok=1 phase=0 x=419.405 timeNs=1320000000 dead=0 plantDead=0 ate=0 shots=4 followers=0
+Zombie primary type=29 Hz=30 ok=1 phase=0 x=419.768 timeNs=1333333320 dead=0 plantDead=0 ate=0 shots=4 followers=0
+Zombie primary type=29 Hz=240 ok=1 phase=0 x=419.309 timeNs=1320833122 dead=0 plantDead=0 ate=0 shots=4 followers=0
+Zombie primary type=29 Hz=0 ok=1 phase=0 x=419.227 timeNs=1348614408 dead=0 plantDead=0 ate=0 shots=4 followers=0
+Zombie primary type=30 Hz=100 ok=1 phase=95 x=310.013 timeNs=4500000000 dead=0 plantDead=0 ate=1 shots=0 followers=0
+Zombie primary type=30 Hz=30 ok=1 phase=95 x=309.374 timeNs=4599999954 dead=0 plantDead=0 ate=1 shots=0 followers=0
+Zombie primary type=30 Hz=240 ok=1 phase=95 x=309.638 timeNs=4504165946 dead=0 plantDead=0 ate=1 shots=0 followers=0
+Zombie primary type=30 Hz=0 ok=1 phase=95 x=309.064 timeNs=4522983752 dead=0 plantDead=0 ate=1 shots=0 followers=0
+Zombie primary type=31 Hz=100 ok=1 phase=0 x=310.509 timeNs=8840000000 dead=0 plantDead=0 ate=1 shots=0 followers=0
+Zombie primary type=31 Hz=30 ok=1 phase=0 x=310.266 timeNs=8866666578 dead=0 plantDead=0 ate=1 shots=0 followers=0
+Zombie primary type=31 Hz=240 ok=1 phase=0 x=310.364 timeNs=8841665252 dead=0 plantDead=0 ate=1 shots=0 followers=0
+Zombie primary type=31 Hz=0 ok=1 phase=0 x=309.859 timeNs=8859998139 dead=0 plantDead=0 ate=1 shots=0 followers=0
+Zombie primary type=32 Hz=100 ok=1 phase=69 x=463.303 timeNs=12400000000 dead=0 plantDead=1 ate=0 shots=0 followers=1
+Zombie primary type=32 Hz=30 ok=1 phase=69 x=462.925 timeNs=12533333208 dead=0 plantDead=1 ate=0 shots=0 followers=1
+Zombie primary type=32 Hz=240 ok=1 phase=69 x=463.142 timeNs=12370831354 dead=0 plantDead=1 ate=0 shots=0 followers=1
+Zombie primary type=32 Hz=0 ok=1 phase=69 x=463.153 timeNs=12381437754 dead=0 plantDead=1 ate=0 shots=0 followers=1
+Zombie primary type=33 Hz=100 ok=1 phase=0 x=310.393 timeNs=6080000000 dead=0 plantDead=0 ate=1 shots=0 followers=0
+Zombie primary type=33 Hz=30 ok=1 phase=0 x=310.28 timeNs=6099999939 dead=0 plantDead=0 ate=1 shots=0 followers=0
+Zombie primary type=33 Hz=240 ok=1 phase=0 x=310.122 timeNs=6083332360 dead=0 plantDead=0 ate=1 shots=0 followers=0
+Zombie primary type=33 Hz=0 ok=1 phase=0 x=310.109 timeNs=6081567528 dead=0 plantDead=0 ate=1 shots=0 followers=0
+PASS actual Zombie primary catalog: 32 types plus twenty-shot Catapult, four schedules each
+Zombie Boss Hz=100 stage=5 spawn=1 ball=1 rv=1 bungee=1 stomp=1 phase=79
+Zombie Boss Hz=30 stage=5 spawn=1 ball=1 rv=1 bungee=1 stomp=1 phase=79
+Zombie Boss Hz=240 stage=5 spawn=1 ball=1 rv=1 bungee=1 stomp=1 phase=79
+Zombie Boss Hz=0 stage=5 spawn=1 ball=1 rv=1 bungee=1 stomp=1 phase=79
+PASS actual Boss primary actions: entry, spawn, head ball, RV, bungee and stomp at four schedules

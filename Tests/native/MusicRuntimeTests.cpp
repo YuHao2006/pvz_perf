@@ -130,6 +130,17 @@ int main(int argc, char** argv)
         auto& music = *app.mMusic;
         const std::string assets = argv[1];
         music.LoadSong(MUSIC_FILE_MAIN_MUSIC, assets + "/sounds/mainmusic.mo3");
+        music.MakeSureMusicIsPlaying(MUSIC_TUNE_TITLE_CRAZY_DAVE_MAIN_THEME);
+        Require(!playback.mSlotsPublished.load(std::memory_order_acquire),
+            "Title fixture must run before background music publication");
+        Require(music.mCurMusicTune == MUSIC_TUNE_TITLE_CRAZY_DAVE_MAIN_THEME &&
+            playback.mMusicSlots[MUSIC_FILE_MAIN_MUSIC]->mPlayback.State() == BASS_ACTIVE_PLAYING &&
+            Gain(playback, MUSIC_FILE_MAIN_MUSIC) == 1.0f,
+            "Loading-screen theme did not start with only the main-thread title slot loaded");
+        Require(!playback.mMusicSlots[MUSIC_FILE_DRUMS] &&
+            !playback.mMusicSlots[MUSIC_FILE_HIHATS],
+            "Title playback unexpectedly depends on later background music layers");
+        std::cout << "PASS title theme plays before loading-thread publication with only its own slot\n";
         std::exception_ptr loadError;
         unsigned workerAfterMusic = ~0U, workerAfterDecode = ~0U;
         std::thread loader([&] {
@@ -185,6 +196,43 @@ int main(int argc, char** argv)
             }
         } detach{app};
         Board board(&app);
+        // Ordinary adventure passes through the award's garden theme and the
+        // next intro's seed-selection/theme before StartGameMusic. Reuse the
+        // same decoder slots, including after the night climax muted its main.
+        for (auto tune : {MUSIC_TUNE_DAY_GRASSWALK, MUSIC_TUNE_NIGHT_MOONGRAINS,
+            MUSIC_TUNE_POOL_WATERYGRAVES, MUSIC_TUNE_FOG_RIGORMORMIST,
+            MUSIC_TUNE_ROOF_GRAZETHEROOF})
+        {
+            music.MakeSureMusicIsPlaying(MUSIC_TUNE_ZEN_GARDEN);
+            music.MakeSureMusicIsPlaying(MUSIC_TUNE_CHOOSE_YOUR_SEEDS);
+            music.FadeOut(150);
+            app.mApplicationTimeNs += 750'000'000;
+            music.MusicUpdate(app.mApplicationTimeNs, 750'000'000);
+            Require(Gain(playback, MUSIC_FILE_MAIN_MUSIC) == .5f,
+                "Adventure intro did not apply the previous tune's fade");
+            music.MakeSureMusicIsPlaying(tune);
+            Require(music.mFadeOutEndTimeNs == 0 &&
+                music.mMusicBurstState == MUSIC_BURST_OFF &&
+                Gain(playback, MUSIC_FILE_MAIN_MUSIC) == 1.0f &&
+                playback.IsPlaying(MUSIC_FILE_MAIN_MUSIC),
+                "Adventure level transition retained the previous fade or muted the main voice");
+            const auto handle = playback.mMusicSlots[MUSIC_FILE_MAIN_MUSIC]->mHMusic;
+            const int last = tune == MUSIC_TUNE_DAY_GRASSWALK ? 23 :
+                tune == MUSIC_TUNE_NIGHT_MOONGRAINS ? 29 :
+                tune == MUSIC_TUNE_FOG_RIGORMORMIST ? 15 : 17;
+            for (int channel = 0; channel < 30; ++channel)
+            {
+                float gain = -1;
+                Require(Sexy::gBass->BASS_ChannelGetAttribute(handle,
+                    BASS_ATTRIB_MUSIC_VOL_CHAN + channel, &gain) &&
+                    gain == (channel <= last ? 1.0f : 0.0f),
+                    "Adventure level transition retained another theme's channel mask");
+            }
+            // Start the next transition from the gain used by a night climax.
+            playback.SetSongVolume(MUSIC_FILE_MAIN_MUSIC, 0);
+        }
+        std::cout << "PASS adventure award/intro/battle: five themes reset fades, main gain and channel masks\n";
+        music.StopAllMusic();
         music.PlayMusic(MUSIC_TUNE_DAY_GRASSWALK);
         auto& dayMain = playback.mMusicSlots[MUSIC_FILE_MAIN_MUSIC]->mPlayback;
         const auto dayRow = [&](unsigned order, unsigned row) {

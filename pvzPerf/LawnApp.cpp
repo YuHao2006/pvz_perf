@@ -4,6 +4,7 @@
 #include <time.h>
 #include <cstdlib>
 #include "LawnApp.h"
+#include "Lawn/BattleCardAtlas.h"
 #include "Sexy.TodLib/generated/ReanimVariantOptions.h"
 #include "misc/StableTime.h"
 #include "Lawn/Board.h"
@@ -165,7 +166,7 @@ LawnApp::LawnApp()
 	mDebugKeysEnabled = false;
 	mFullCompanyName = "PopCap Games";
 	mProdName = "PopCap\\PlantsVsZombies";
-    mProductVersion = "4.0.2";
+    mProductVersion = "4.0.3";
 	std::string aTitleName = "pvz_perf";
 #ifdef _DEBUG
 	aTitleName += " BETA ";
@@ -205,6 +206,7 @@ LawnApp::~LawnApp()
 		mCloseRequest = true;
 	}
 	WaitForLoadingThread();
+    mBattleCardAtlas.reset();
 	if (mBoard)
 	{
 		WriteCurrentUserConfig();
@@ -1894,6 +1896,7 @@ void LawnApp::LoadingThreadProc()
 	// 线程在此等"队列空 && 主线程清扫净"——装载屏仍在 tick（驱动主线程
 	// 泵+清扫），无死锁；快进玩家也不会再撞首盘懒建尖峰。清扫在主线程
 	// UpdateApp 执行（Vulkan 上传严禁跨线程，焦散案同型竞态教训）。
+    DefinitionPublishImageResources();
     HostFinishResourcePrewarm(*this, mCloseRequest);
 
 

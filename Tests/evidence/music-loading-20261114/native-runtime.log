@@ -1,0 +1,15 @@
+MusicRuntimeTests.cpp
+正在生成代码
+已完成代码的生成
+PASS title theme plays before loading-thread publication with only its own slot
+PASS real worker module/stream output device=1 and sound-decoder device restoration
+PASS adventure award/intro/battle: five themes reset fades, main gain and channel masks
+PASS production day BASS: raw row 31/32 entry, pattern-wrap release, zero gain and exact pause row
+PASS production Music/BassMusicInterface: night setup, seek, gains, clock, pause/resume at 30 FPS; PCM peak=2243 moduleGlobal=64 amplify=50
+PASS production Music/BassMusicInterface: night setup, seek, gains, clock, pause/resume at 60 FPS; PCM peak=2243 moduleGlobal=64 amplify=50
+PASS production Music/BassMusicInterface: night setup, seek, gains, clock, pause/resume at 100 FPS; PCM peak=2243 moduleGlobal=64 amplify=50
+PASS production Music/BassMusicInterface: night setup, seek, gains, clock, pause/resume at 144 FPS; PCM peak=2243 moduleGlobal=64 amplify=50
+PASS production Music/BassMusicInterface: night setup, seek, gains, clock, pause/resume at 240 FPS; PCM peak=2243 moduleGlobal=64 amplify=50
+PASS production Music/BassMusicInterface: night setup, seek, gains, clock, pause/resume at 1000 FPS; PCM peak=2243 moduleGlobal=64 amplify=50
+
+

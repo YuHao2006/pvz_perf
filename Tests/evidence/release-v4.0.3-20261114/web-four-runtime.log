@@ -1,0 +1,4 @@
+PASS wasm32/webgpu: exact runtime, loaded/drawn, normal Quit, shared settings/IDBFS
+PASS wasm64/webgpu: exact runtime, loaded/drawn, normal Quit, shared settings/IDBFS
+PASS wasm64/webgl: exact runtime, loaded/drawn, normal Quit, shared settings/IDBFS
+PASS wasm32/webgl: exact runtime, loaded/drawn, normal Quit, shared settings/IDBFS

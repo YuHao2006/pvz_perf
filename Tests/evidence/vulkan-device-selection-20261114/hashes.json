@@ -1,0 +1,26 @@
+[
+  {
+    "path": "C:\\Users\\Administrator\\CLionProjects\\codex\\PlantsVsZombiesModern-v4.0.2\\out\\x64-win32-vulkan\\Release\\pvz_perf.exe",
+    "sha256": "59B0EE3104DCCCC43652CDB6205207980504B9E52BEE7210D563CC4B94D12174"
+  },
+  {
+    "path": "C:\\Users\\Administrator\\CLionProjects\\codex\\PlantsVsZombiesModern-v4.0.2\\out\\x64-win32-vulkan\\Release\\main.pak64",
+    "sha256": "D186C6BCE10FC6191AA94588A34B3E99A387C61067D66986A218920BFBB4B398"
+  },
+  {
+    "path": "C:\\Users\\Administrator\\CLionProjects\\codex\\PlantsVsZombiesModern-v4.0.2\\pvzPerf\\SexyAppFramework\\graphics\\vulkan\\VulkanContext.cpp",
+    "sha256": "60DE47B0202BB67AB1C2080B92481B61EDAAD5229415FD33B981D989FB94FEC5"
+  },
+  {
+    "path": "C:\\Users\\Administrator\\CLionProjects\\codex\\PlantsVsZombiesModern-v4.0.2\\pvzPerf\\SexyAppFramework\\graphics\\vulkan\\VulkanDeviceSelection.h",
+    "sha256": "6E3FCB32A7FAE9D996A2F09344E6EAE1666618A496D2E9360D44D1C5901D45B3"
+  },
+  {
+    "path": "C:\\Users\\Administrator\\CLionProjects\\codex\\PlantsVsZombiesModern-v4.0.2\\pvzPerf\\SexyAppFramework\\platform\\windows\\Win32App.cpp",
+    "sha256": "C35F1ED6F6F4C2E67823AD2C80B35509B0CE772A964CFCD118E666F3463A215B"
+  },
+  {
+    "path": "C:\\Users\\Administrator\\CLionProjects\\codex\\PlantsVsZombiesModern-v4.0.2\\pvzPerf\\SexyAppFramework\\graphics\\vulkan\\tests\\device_selection_tests.cpp",
+    "sha256": "62B425005B1D0F9AB485EC200910BB77E9186C38F71911205806B9AEF44FBEF7"
+  }
+]

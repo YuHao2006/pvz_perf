@@ -1,0 +1,5 @@
+Store clock fixture: initialize
+PASS card atlas landscape=0 conveyor=0 pixels/prices/lifetime
+PASS card atlas landscape=0 conveyor=1 pixels/prices/lifetime
+PASS card atlas landscape=1 conveyor=0 pixels/prices/lifetime
+PASS card atlas landscape=1 conveyor=1 pixels/prices/lifetime

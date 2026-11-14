@@ -1,3 +1,4 @@
+#include "BattleCardAtlas.h"
 #include "ReanimClock.h"
 #include "Sexy.TodLib/EffectSystem.h"
 #include "Sexy.TodLib/Reanimator.h"
@@ -198,98 +199,10 @@ void SeedPacket::Update()
 //0x487380
 static void SeedPacketDrawSeed(Graphics* g, float x, float y, SeedType theSeedType, SeedType theImitaterType, float theOffsetX, float theOffsetY, float theScale)
 {
-	Image* aImage = IMAGE_PACKET_PLANTS;
-	SeedType aSeedType = theSeedType;
-	GpuImageColorFilter aColorFilter = GpuImageColorFilter::None;
-	if (theSeedType == SeedType::SEED_IMITATER && theImitaterType != SeedType::SEED_NONE)
-	{
-		aSeedType = theImitaterType;
-		aColorFilter = GpuImageColorFilter::WashedOut;
-		if (theImitaterType == SeedType::SEED_HYPNOSHROOM || theImitaterType == SeedType::SEED_SQUASH || theImitaterType == SeedType::SEED_POTATOMINE ||
-			theImitaterType == SeedType::SEED_GARLIC || theImitaterType == SeedType::SEED_LILYPAD)
-			aColorFilter = GpuImageColorFilter::LessWashedOut;
-	}
-
-	// B 形态 -> cel 列号表 kSeedPacketCel（原 13 支同判别式链合并；行序 =
-	// SeedType 枚举序 0..52，仅 cel 号不同）。0xFF = 无行（其余种子/小体型
-	// 走下方 DrawSeedType 兜底 = 原 else）；g->mScaleX <= 1.0f 门槛保留在
-	// 判别式里（原 13 支均带此条件）。
-	static constexpr uint8_t kSeedPacketCelNone = 0xFF;
-	static constexpr uint8_t kSeedPacketCel[(int)SeedType::NUM_SEED_TYPES] = {
-		kSeedPacketCelNone,  // 0 SEED_PEASHOOTER
-		kSeedPacketCelNone,  // 1 SEED_SUNFLOWER
-		kSeedPacketCelNone,  // 2 SEED_CHERRYBOMB
-		kSeedPacketCelNone,  // 3 SEED_WALLNUT
-		0,                   // 4 SEED_POTATOMINE
-		kSeedPacketCelNone,  // 5 SEED_SNOWPEA
-		1,                   // 6 SEED_CHOMPER
-		kSeedPacketCelNone,  // 7 SEED_REPEATER
-		kSeedPacketCelNone,  // 8 SEED_PUFFSHROOM
-		kSeedPacketCelNone,  // 9 SEED_SUNSHROOM
-		kSeedPacketCelNone,  // 10 SEED_FUMESHROOM
-		kSeedPacketCelNone,  // 11 SEED_GRAVEBUSTER
-		2,                   // 12 SEED_HYPNOSHROOM
-		kSeedPacketCelNone,  // 13 SEED_SCAREDYSHROOM
-		kSeedPacketCelNone,  // 14 SEED_ICESHROOM
-		kSeedPacketCelNone,  // 15 SEED_DOOMSHROOM
-		kSeedPacketCelNone,  // 16 SEED_LILYPAD
-		kSeedPacketCelNone,  // 17 SEED_SQUASH
-		kSeedPacketCelNone,  // 18 SEED_THREEPEATER
-		kSeedPacketCelNone,  // 19 SEED_TANGLEKELP
-		kSeedPacketCelNone,  // 20 SEED_JALAPENO
-		kSeedPacketCelNone,  // 21 SEED_SPIKEWEED
-		kSeedPacketCelNone,  // 22 SEED_TORCHWOOD
-		3,                   // 23 SEED_TALLNUT
-		kSeedPacketCelNone,  // 24 SEED_SEASHROOM
-		kSeedPacketCelNone,  // 25 SEED_PLANTERN
-		kSeedPacketCelNone,  // 26 SEED_CACTUS
-		4,                   // 27 SEED_BLOVER
-		kSeedPacketCelNone,  // 28 SEED_SPLITPEA
-		kSeedPacketCelNone,  // 29 SEED_STARFRUIT
-		5,                   // 30 SEED_PUMPKINSHELL
-		kSeedPacketCelNone,  // 31 SEED_MAGNETSHROOM
-		8,                   // 32 SEED_CABBAGEPULT
-		kSeedPacketCelNone,  // 33 SEED_FLOWERPOT
-		9,                   // 34 SEED_KERNELPULT
-		kSeedPacketCelNone,  // 35 SEED_INSTANT_COFFEE
-		kSeedPacketCelNone,  // 36 SEED_GARLIC
-		kSeedPacketCelNone,  // 37 SEED_UMBRELLA
-		kSeedPacketCelNone,  // 38 SEED_MARIGOLD
-		10,                  // 39 SEED_MELONPULT
-		kSeedPacketCelNone,  // 40 SEED_GATLINGPEA
-		6,                   // 41 SEED_TWINSUNFLOWER
-		kSeedPacketCelNone,  // 42 SEED_GLOOMSHROOM
-		kSeedPacketCelNone,  // 43 SEED_CATTAIL
-		11,                  // 44 SEED_WINTERMELON
-		kSeedPacketCelNone,  // 45 SEED_GOLD_MAGNET
-		12,                  // 46 SEED_SPIKEROCK
-		7,                   // 47 SEED_COBCANNON
-		kSeedPacketCelNone,  // 48 SEED_IMITATER
-		kSeedPacketCelNone,  // 49 SEED_EXPLODE_O_NUT
-		kSeedPacketCelNone,  // 50 SEED_GIANT_WALLNUT
-		kSeedPacketCelNone,  // 51 SEED_SPROUT
-		kSeedPacketCelNone,  // 52 SEED_LEFTPEATER
-	};
-	static_assert(sizeof(kSeedPacketCel) / sizeof(kSeedPacketCel[0]) == (int)SeedType::NUM_SEED_TYPES,
-		"kSeedPacketCel 槽位须与 SeedType 枚举同步");
-	if (g->mScaleX <= 1.0f &&
-		(unsigned)aSeedType < sizeof(kSeedPacketCel) / sizeof(kSeedPacketCel[0]) &&
-		kSeedPacketCel[(int)aSeedType] != kSeedPacketCelNone)
-	{
-		auto& aRender = *gSexyAppBase->mDDInterface->mRenderInterface;
-		auto aSamplingFlags = aRender.sImageSamplingFlags;
-		if (aColorFilter != GpuImageColorFilter::None)
-			aSamplingFlags = (aSamplingFlags & ~0x30000000u) | static_cast<uint32_t>(aColorFilter);
-		GpuImageSamplingScope aSamplingScope(aRender, aSamplingFlags);
-		TodDrawImageRectScaledF(g, aImage, x, y, Rect(kSeedPacketCel[(int)aSeedType] * 50, 0, 50, 70), g->mScaleX, g->mScaleY);
-	}
-	else
-	{
-		Graphics aSeedG(*g);
-		aSeedG.mScaleX = theScale * g->mScaleX;
-		aSeedG.mScaleY = theScale * g->mScaleY;
-		Plant::DrawSeedType(&aSeedG, theSeedType, theImitaterType, DrawVariation::VARIATION_NORMAL, x + theOffsetX, y + theOffsetY);
-	}
+    Graphics seed(*g);
+    seed.mScaleX=theScale*g->mScaleX;
+    seed.mScaleY=theScale*g->mScaleY;
+    Plant::DrawSeedType(&seed,theSeedType,theImitaterType,VARIATION_NORMAL,x+theOffsetX,y+theOffsetY);
 }
 
 //0x4876F0
@@ -647,6 +560,7 @@ void SeedPacket::Draw(Graphics* g)
 			aGrayness = 128;
 		}
 
+        if(mApp->mBattleCardAtlas&&mApp->mBattleCardAtlas->Draw(*this,g,aPercentDark,aGrayness))return;
 		if (mBoard->mLandscapeHud)
             LandscapeHud::DrawPacket(g,0,0,mPacketType,mImitaterType,aPercentDark,aGrayness,aDrawCost,true);
         else

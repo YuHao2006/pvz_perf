@@ -1,3 +1,4 @@
+#include "BattleCardAtlas.h"
 #include <time.h>
 #include <type_traits>
 #include "ZenGarden.h"
@@ -271,6 +272,7 @@ Board::~Board()
 // GOTY @Patoke: 0x40B320
 void Board::DisposeBoard()
 {
+    mApp->mBattleCardAtlas.reset();
 	if (mApp->mGameMode == GameMode::GAMEMODE_LIMBO_ZEN_GARDEN)
 		mApp->mZenGarden->LeaveGarden();
 	if (mApp->mGameMode == GameMode::GAMEMODE_TREE_OF_WISDOM)
@@ -394,6 +396,7 @@ bool Board::LoadGame(const std::string& theFileName)
 {
 	if (!LawnLoadGame(this, theFileName))
 		return false;
+    PrepareBattleCardAtlas(*this);
 
 	// Older variable-step builds could checkpoint after this counter expired,
 	// before committing mLevelComplete. The award flag then prevents spawning
@@ -1513,6 +1516,7 @@ void Board::FreezeEffectsForCutscene(bool theFreeze)
 //0x40AD60
 void Board::InitSurvivalStage()
 {
+    mApp->mBattleCardAtlas.reset();
 	RefreshSeedPacketFromCursor();
 	mApp->mSoundSystem->GamePause(true);
 	FreezeEffectsForCutscene(true);
@@ -1989,6 +1993,7 @@ bool Board::ChooseSeedsOnCurrentLevel()
 // GOTY @Patoke: 0x40E6A0
 void Board::StartLevel()
 {
+    PrepareBattleCardAtlas(*this);
 	mCoinBankFadeCount = 0;
 	mApp->mLastLevelStats->mUnusedLawnMowers = 0;
 	mChallenge->StartLevel();
@@ -2104,13 +2109,16 @@ void Board::UpdateLevelEndSequence()
 	if (mBoardFadeOutCounter < 0)
 		return;
 
-	mBoardFadeOutCounter--;
-	if (mBoardFadeOutCounter == 0)
+	if (!mBoardFadeOutCounter)
 	{
 		mLevelComplete = true;
 		return;
 	}
-	if (mBoardFadeOutCounter == 300)
+	const auto aPreviousFadeNs = mBoardFadeOutCounter.mNanoseconds;
+	const auto aFadeDeltaNs = std::min<std::uint64_t>(Sexy::gUpdateIntervalNs, aPreviousFadeNs);
+	mBoardFadeOutCounter--;
+	if (aPreviousFadeNs > Sexy::TimeCounter::Encode(300) &&
+		mBoardFadeOutCounter.mNanoseconds <= Sexy::TimeCounter::Encode(300))
 	{
 		if (!IsSurvivalStageWithRepick() && !(mLevel == 9 || mLevel == 19 || mLevel == 29 || mLevel == 39 || mLevel == 49))
 		{
@@ -2118,21 +2126,21 @@ void Board::UpdateLevelEndSequence()
 		}
 	}
 
-	if (mScoreNextMowerCounter > 0)
-	{
-		mScoreNextMowerCounter--;
-		if (mScoreNextMowerCounter)
-		{
-			return;
-		}
-	}
-
 	if (CanDropLoot() && !IsSurvivalStageWithRepick())
 	{
-		mScoreNextMowerCounter = 40;
-		LawnMower* aLawnMower = GetBottomLawnMower();
-		if (aLawnMower)
+		// Preserve the scheduled spacing, including overshoot. Only consume
+		// events up to the fade deadline; the board is retired immediately
+		// afterwards, so a large final step must settle all preceding mowers.
+		mScoreNextMowerCounter.AddNanoseconds(-static_cast<long long>(aFadeDeltaNs));
+		while (mScoreNextMowerCounter.mNanoseconds <= 0)
 		{
+			LawnMower* aLawnMower = GetBottomLawnMower();
+			if (!aLawnMower)
+			{
+				mScoreNextMowerCounter = 40;
+				break;
+			}
+			mScoreNextMowerCounter.AddNanoseconds(Sexy::TimeCounter::Encode(40));
 			AddCoin(aLawnMower->mPosX + 40, aLawnMower->mPosY + 40, CoinType::COIN_GOLD, CoinMotion::COIN_MOTION_LAWNMOWER_COIN);
 			SoundInstance* aSoundInstance = mApp->mSoundManager->GetSoundInstance(Sexy::SOUND_POINTS);
 			if (aSoundInstance)
@@ -2143,6 +2151,17 @@ void Board::UpdateLevelEndSequence()
 			}
 			aLawnMower->Die();
 		}
+	}
+	if (!mBoardFadeOutCounter)
+	{
+		// LAWNMOWER_COIN begins collection immediately. Coins created by
+		// this terminal interval will have no subsequent Coin::Update before
+		// CheckForGameEnd destroys the board, so bank pending collections now.
+		Coin* aCoin = nullptr;
+		while (IterateCoins(aCoin))
+			if (aCoin->mIsBeingCollected)
+				aCoin->ScoreCoin();
+		mLevelComplete = true;
 	}
 }
 
@@ -2402,6 +2421,7 @@ bool Board::IsPoolSquare(int theGridX, int theGridY)
 //0x40CE20
 Plant* Board::NewPlant(int theGridX, int theGridY, SeedType theSeedType, SeedType theImitaterType)
 {
+    if(Plant::IsUpgrade(theSeedType)&&mApp->mBattleCardAtlas)mApp->mBattleCardAtlas->InvalidatePrices();
 	const auto domain = AnimationTimeDomain();
 	const auto visualNowNs = mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs;
 	const auto animationNowNs = domain == ReanimTimeDomain::Battle ? static_cast<std::int64_t>(mLevelTimeNs) : visualNowNs;
@@ -6322,6 +6342,7 @@ void Board::UpdateGameObjects(std::uint64_t theLevelDeltaNs)
 	{
 		mSeedBank->mSeedPackets[i].Update();
 	}
+    if(mApp->mBattleCardAtlas)mApp->mBattleCardAtlas->UpdatePrices();
 }
 
 //0x413220
@@ -6720,6 +6741,26 @@ void Board::UpdateZombieSpawning()
         mHugeWaveCountDown.mPreviousNanoseconds = mHugeWaveCountDown.mNanoseconds;
         mHugeWaveCountDown.mNanoseconds = std::max(0LL,
             mNextZombieWaveTimeNs - static_cast<long long>(mLevelTimeNs));
+		// Dispatch all cues crossed by this interval before consuming expiry.
+		// Voice and music are separate events: a long step can cross both.
+		if (mHugeWaveCountDown.mPreviousNanoseconds > 7'250'000'000LL &&
+			mHugeWaveCountDown.mNanoseconds <= 7'250'000'000LL)
+		{
+			mApp->PlaySample(Sexy::SOUND_HUGE_WAVE);
+		}
+		const auto aTune = mApp->mMusic->mCurMusicTune;
+		const auto aBurstThresholdNs = aTune == MusicTune::MUSIC_TUNE_NIGHT_MOONGRAINS
+			? 7'000'000'000LL :
+			(aTune == MusicTune::MUSIC_TUNE_DAY_GRASSWALK ||
+			 aTune == MusicTune::MUSIC_TUNE_POOL_WATERYGRAVES ||
+			 aTune == MusicTune::MUSIC_TUNE_FOG_RIGORMORMIST ||
+			 aTune == MusicTune::MUSIC_TUNE_ROOF_GRAZETHEROOF) ? 4'000'000'000LL : 0LL;
+		if (aBurstThresholdNs != 0 &&
+			mHugeWaveCountDown.mPreviousNanoseconds > aBurstThresholdNs &&
+			mHugeWaveCountDown.mNanoseconds <= aBurstThresholdNs)
+		{
+			mApp->mMusic->StartBurst();
+		}
         if (static_cast<long long>(mLevelTimeNs) >= mNextZombieWaveTimeNs)
 		{
 			ClearAdvice(AdviceType::ADVICE_HUGE_WAVE);
@@ -6729,33 +6770,6 @@ void Board::UpdateZombieSpawning()
 		}
 		else
 		{
-			if (mHugeWaveCountDown.mPreviousNanoseconds > 7'250'000'000LL &&
-                    mHugeWaveCountDown.mNanoseconds <= 7'250'000'000LL)
-			{
-				mApp->PlaySample(Sexy::SOUND_HUGE_WAVE);
-			}
-			else
-			{
-				if (mApp->mMusic->mCurMusicTune == MusicTune::MUSIC_TUNE_DAY_GRASSWALK ||
-					mApp->mMusic->mCurMusicTune == MusicTune::MUSIC_TUNE_POOL_WATERYGRAVES ||
-					mApp->mMusic->mCurMusicTune == MusicTune::MUSIC_TUNE_FOG_RIGORMORMIST ||
-					mApp->mMusic->mCurMusicTune == MusicTune::MUSIC_TUNE_ROOF_GRAZETHEROOF)
-				{
-					if (mHugeWaveCountDown.mPreviousNanoseconds > 4'000'000'000LL &&
-                    mHugeWaveCountDown.mNanoseconds <= 4'000'000'000LL)
-					{
-						mApp->mMusic->StartBurst();
-					}
-				}
-				else if (mApp->mMusic->mCurMusicTune == MusicTune::MUSIC_TUNE_NIGHT_MOONGRAINS)
-				{
-					if (mHugeWaveCountDown.mPreviousNanoseconds > 7'000'000'000LL &&
-                    mHugeWaveCountDown.mNanoseconds <= 7'000'000'000LL)
-					{
-						mApp->mMusic->StartBurst();
-					}
-				}
-			}
             // The old voice-cue fallthrough consumed a second countdown and
             // could spawn early, then overwrite the final-wave repick timeout.
             // Never run the ordinary scheduler before this deadline.
@@ -6863,6 +6877,8 @@ void Board::UpdateIce()
 				{
 					aParticleIce->ParticleSystemDie();
 				}
+				mIceParticleID[aRow] = ParticleSystemID::PARTICLESYSTEMID_NULL;
+				continue;
 			}
 			else
 			{

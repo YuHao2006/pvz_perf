@@ -12,6 +12,7 @@ struct ZombatarAtlasDefinition
 {
     std::array<Sexy::TextureRegion, static_cast<std::size_t>(ZombatarImage::Count)> mImages{};
     Sexy::GpuTexture* mTexture = nullptr;
+    std::array<Sexy::Rect, static_cast<std::size_t>(ZombatarImage::Count)> mCrops{};
 };
 
 extern ZombatarAtlasDefinition gZombatarAtlas;

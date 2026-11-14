@@ -47,21 +47,17 @@ enum class Sprite : std::uint16_t {
     ALMANAC_ZOMBIEWINDOW = 5,
     ALMANAC_ZOMBIEWINDOW2 = 6,
     ALMANAC_ZOMBIEBLANK = 7,
-    ALMANAC_GROUNDDAY = 8,
-    ALMANAC_GROUNDNIGHT = 9,
-    ALMANAC_GROUNDPOOL = 10,
-    ALMANAC_GROUNDNIGHTPOOL = 11,
-    ALMANAC_GROUNDROOF = 12,
-    ALMANAC_GROUNDICE = 13,
-    ALMANAC_CLOSEBUTTON = 14,
-    ALMANAC_CLOSEBUTTONHIGHLIGHT = 15,
-    ALMANAC_INDEXBUTTON = 16,
-    ALMANAC_INDEXBUTTONHIGHLIGHT = 17,
-    ALMANAC_IMITATER = 18,
-    Count = 19,
+    ALMANAC_CLOSEBUTTON = 8,
+    ALMANAC_CLOSEBUTTONHIGHLIGHT = 9,
+    ALMANAC_INDEXBUTTON = 10,
+    ALMANAC_INDEXBUTTONHIGHLIGHT = 11,
+    ALMANAC_IMITATER = 12,
+    ALMANAC_COMMON_BACK = 13,
+    Count = 14,
 };
-inline constexpr std::size_t Count = 19;
+inline constexpr std::size_t Count = 14;
 extern const Sexy::TextureRegion Images[Count];
+extern const Sexy::Rect Crops[Count];
 void Load();
 void Free();
 }
@@ -305,6 +301,8 @@ enum class Sprite : std::uint16_t {
 };
 inline constexpr std::size_t Count = 28;
 extern const Sexy::TextureRegion Images[Count];
+inline constexpr bool HasSeedCards=false;
+extern const Sexy::TextureRegion SeedCards[53];
 void Load();
 void Free();
 }

@@ -41,8 +41,8 @@ inline GpuPoolParams Parameters(std::uint32_t counter, std::uint32_t layer,
     p.time2 = phase / 150.0;
     p.time3 = phase / 900.0;
     p.time5 = phase / 110.0;
-    // This is vertex-alpha clipping in untransformed coordinates. Deliberately
-    // place edges between mesh points so raster scissoring cannot match it.
+    // Destination-pixel scissor, including translated previews. Place edges
+    // between mesh points to catch accidental vertex-alpha clipping.
     p.clip = partialClip ? GpuClip{127, 304, 513, 112} :
         GpuClip{0, 0, Width, Height};
     p.layer = layer;
@@ -53,7 +53,7 @@ inline GpuPoolParams Parameters(std::uint32_t counter, std::uint32_t layer,
 }
 
 inline std::array<GpuVertex, 450> LegacyVertices(
-    const GpuPoolParams& p, std::uint32_t slot, bool destinationClip = false)
+    const GpuPoolParams& p, std::uint32_t slot, bool destinationClip = true)
 {
     // Intentionally independent of GpuPoolVertices/GpuPoolIndices: an incorrect
     // shared grid, winding, edge classification or phase must fail this oracle.
@@ -140,7 +140,7 @@ void Rectangle(Renderer& renderer, Texture* texture, float x, float y,
 
 template<class Renderer, class Texture>
 void Pool(Renderer& renderer, Texture* texture, const GpuPoolParams& p, bool gpu,
-    float offsetU = 0.f, float offsetV = 0.f, bool destinationClip = false)
+    float offsetU = 0.f, float offsetV = 0.f, bool destinationClip = true)
 {
     if (gpu) renderer.SubmitPool(texture, p);
     else
@@ -229,7 +229,7 @@ void CompareFloatsIfAvailable(Renderer& renderer, Texture* expected,
 }
 
 template<class Renderer>
-void Run(Renderer& renderer, bool destinationClip = false)
+void Run(Renderer& renderer, bool destinationClip = true)
 {
     using Texture = std::remove_pointer_t<decltype(renderer.CreateRenderImage(1, 1))>;
     // Raw pointers match the renderer's ownership contract; unwind cleanup is

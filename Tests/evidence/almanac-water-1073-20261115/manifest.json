@@ -1,0 +1,30 @@
+{
+  "retailExecutable": "C:\\UserProgram\\Plants_Vs_Zombies_V1.2.0.1073_EN\\PlantsVsZombies.exe",
+  "sha256": "5f650f52d12751e08b63e590edb0d9b9f09d087cea900baa0eb39e4af8eda251",
+  "routines": {
+    "AlmanacUpdate": {
+      "start": "0x402f50",
+      "end": "0x40309c"
+    },
+    "AlmanacDrawPlants": {
+      "start": "0x403290",
+      "end": "0x403dd8"
+    },
+    "PoolDraw": {
+      "start": "0x46e180",
+      "end": "0x46ea4b"
+    },
+    "UpdateWaterEffect": {
+      "start": "0x46e040",
+      "end": "0x46e179"
+    }
+  },
+  "verified": {
+    "counterIncrement": "0x403089: inc dword ptr [eax + 0xc]",
+    "plantPagePoolCall": "0x4035e2 -> 0x46e180",
+    "drawTimeCausticGeneration": "0x46e994 -> 0x46e040",
+    "threeDGate": "0x403501 / 0x4035a5 -> 0x5da700"
+  },
+  "runtimeChanged": false,
+  "note": "Addresses are verified GOTY1073 VAs, not inherited decompilation comments from another layout."
+}

@@ -428,8 +428,8 @@ async function boot(){
  const dropdown=document.getElementById('graphics-backend');
  document.getElementById('graphics-field').hidden=false;
  dropdown.replaceChildren(new Option('正在检测图形接口…',''));dropdown.disabled=true;
- const {detectGraphics,capabilityText}=await import('./graphics.js');
- const capabilities=await detectGraphics(navigator.gpu,{webgpu:config.webgpu,webgl:!config.webgpu||config.fallback});
+ const {detectGraphics,capabilityText,prepareWebGLContext}=await import('./graphics.js');
+ const capabilities=await detectGraphics(navigator.gpu,{webgpu:config.webgpu,webgl:!config.webgpu||config.fallback,gameCanvas:canvas});
  document.getElementById('graphics-capabilities').textContent=capabilityText(capabilities);
  Module.pvzGraphicsCapabilities=capabilities;
  const available=[['webgpu','WebGPU'],['webgl','WebGL 2']].filter(([name])=>capabilities[name]);
@@ -447,6 +447,8 @@ async function boot(){
  dropdown.value=available.length>1?mode:backend;dropdown.disabled=available.length<2;
  dropdown.onchange=()=>switchRuntime('pvz_graphics_backend',dropdown.value);
  document.getElementById('graphics-info').textContent='当前使用 '+(backend==='webgpu'?'WebGPU':'WebGL 2')+'；切换接口会重新加载设置页，存档保留。';
+ // Reuse the validated browser context; SDL/EGL must not request another one.
+ if(backend==='webgl')Module.preinitializedWebGLContext=prepareWebGLContext(canvas);
  Module.pvzSelectedBackend=backend;
  const stem=runtimeStem(config,backend,memoryModel);
  Module.pvzRuntimeStem=stem;

@@ -65,12 +65,7 @@ vertex MetalGameVaryings pvz_pool_vertex(
         float2((704.0f / 15.0f) * x + 45.0f, 30.0f * y + 288.0f) :
         float2((p.width / 15.0f) * x + 35.0f, (p.height / 5.0f) * y + 279.0f);
     float alpha = 255.0f;
-    const int2 clipPosition = int2(position); // Rect::Contains truncates toward zero.
-    const int2 clipOrigin = int2(p.clipX, p.clipY);
-    if (any(clipPosition < clipOrigin) ||
-        any(clipPosition >= clipOrigin + int2(p.clipWidth, p.clipHeight)))
-        alpha = 0.0f;
-    else if (p.layer == 2u)
+    if (p.layer == 2u)
         alpha = (x == 0.0f || x == 15.0f || y == 0.0f) ? 32.0f :
             (p.night != 0u ? 48.0f : (x <= 7.0f ? 192.0f : 128.0f));
     const float2 ndc = (position + float2(p.transX, p.transY)) /

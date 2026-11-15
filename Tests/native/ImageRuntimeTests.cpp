@@ -5699,8 +5699,76 @@ void SelectorTrophyTouchRuntime(TestApp& app)
     std::cout<<"PASS selector trophy tooltip: tap-to-pin, release retention, outside dismissal, no drag-in, mouse coexistence and main-page offset\n";
 }
 
+void StandardDialogBakingRuntime(TestApp& app)
+{
+    CommonUIAtlas::Load();
+    struct FreeUI {~FreeUI(){CommonUIAtlas::Free();}} freeUI;
+    Require(CommonUIAtlas::HasBakedDialogs,"Standard dialog bodies were not baked");
+    auto& renderer=*app.mDDInterface->mRenderInterface;
+    using S=CommonUIAtlas::Sprite;
+    const auto original=[&](Graphics* g,int width,int height,bool tall) {
+        const TextureSource texture{CommonUIAtlas::Texture,0};
+        const auto image=[](S id)->const TextureRegion& {return CommonUIAtlas::Images[size_t(id)];};
+        const int columns=(width-227)/93;
+        const int rows=(height-DIALOG_HEADER_OFFSET-97-(tall?148:112))/54;
+        const auto row=[&](S left,S middle,S right,int y) {
+            DrawAtlasImage(g,texture,image(left),0,y);
+            for(int x=0;x<columns;++x) DrawAtlasImage(g,texture,image(middle),107+x*93,y);
+            DrawAtlasImage(g,texture,image(right),107+columns*93,y);
+        };
+        row(S::DIALOG_TOPLEFT,S::DIALOG_TOPMIDDLE,S::DIALOG_TOPRIGHT,DIALOG_HEADER_OFFSET);
+        for(int y=0;y<rows;++y)
+            row(S::DIALOG_CENTERLEFT,S::DIALOG_CENTERMIDDLE,S::DIALOG_CENTERRIGHT,DIALOG_HEADER_OFFSET+97+y*54);
+        row(tall?S::DIALOG_BIGBOTTOMLEFT:S::DIALOG_BOTTOMLEFT,
+            tall?S::DIALOG_BIGBOTTOMMIDDLE:S::DIALOG_BOTTOMMIDDLE,
+            tall?S::DIALOG_BIGBOTTOMRIGHT:S::DIALOG_BOTTOMRIGHT,DIALOG_HEADER_OFFSET+97+rows*54);
+        const auto& header=image(S::DIALOG_HEADER);
+        DrawAtlasImage(g,texture,header,(width-header.mWidth)/2-5,0);
+    };
+    for(const bool tall:{false,true})for(const int width:{320,506,692})
+    for(const int rows:(width==320?std::vector<int>{0,1}:std::vector<int>{3})) {
+        LawnDialog dialog(&app,DIALOG_PAUSED,true,"","","",Dialog::BUTTONS_YES_NO);
+        dialog.mTallBottom=tall;
+        const int height=DIALOG_HEADER_OFFSET+97+rows*54+(tall?148:112);
+        dialog.Resize(0,0,width,height);
+        const auto yes=dialog.mYesButton->GetRect(),no=dialog.mNoButton->GetRect();
+        std::unique_ptr<Image> actual(renderer.CreateRenderImage(width,height+4));
+        std::unique_ptr<Image> expected(renderer.CreateRenderImage(width,height+4));
+        {GpuImageDrawScope scope(renderer,actual.get());Graphics g(actual.get());g.mColor=Color(32,56,64);g.FillRect(0,0,width,height+4);dialog.Draw(&g);}
+        {GpuImageDrawScope scope(renderer,expected.get());Graphics g(expected.get());g.mColor=Color(32,56,64);g.FillRect(0,0,width,height+4);original(&g,width,height,tall);}
+        renderer.Flush();const auto pixels=renderer.ReadImagePixels(*actual),reference=renderer.ReadImagePixels(*expected);
+        const auto compare=[&](Rect area) {
+            for(int y=area.mY;y<area.mY+area.mHeight;++y)for(int x=area.mX;x<area.mX+area.mWidth;++x)
+                for(int shift:{0,8,16,24})
+                    Require(std::abs(int((pixels.pixels[y*width+x]>>shift)&255)-int((reference.pixels[y*width+x]>>shift)&255))<=1,
+                        "Baked dialog changed original corner/header/footer pixels");
+        };
+        if(width==320) compare(Rect(0,0,width,height+4));
+        else {
+            compare(Rect(0,0,107,142));compare(Rect(width-120,45,120,97));
+            compare(Rect(0,height-(tall?148:112),107,(tall?148:112)+2));
+            compare(Rect(width-120,height-(tall?148:112),120,(tall?148:112)+2));
+        }
+        Require(dialog.mYesButton->GetRect()==yes && dialog.mNoButton->GetRect()==no,"Baking moved dialog buttons");
+        Require(ImageLib::WritePNGImage(std::string("dialog-baked-")+(tall?"tall-":"normal-")+std::to_string(width)+(rows==0?"-minimum":"")+".png",width,height+4,pixels.pixels),"Cannot save baked dialog proof");
+        std::cout<<"PASS baked dialog tall="<<tall<<" width="<<width<<" rows="<<rows<<" body quads "<<((width-227)/93+2)*(rows+2)<<" -> "<<(rows==0?6:9)<<"; original corners, footer and buttons retained\n";
+        if(rows==0) continue;
+        dialog.mDialogHeader="Choose a user";
+        dialog.mDialogLines="A longer message can wrap onto several lines. The original button layout and footer must remain separate from the baked background.";
+        {GpuImageDrawScope scope(renderer,actual.get());Graphics g(actual.get());g.mColor=Color(32,56,64);g.FillRect(0,0,width,height+4);dialog.Draw(&g);
+            for(auto* button:{dialog.mYesButton,dialog.mNoButton}) {
+                Graphics child(g);child.Translate(button->mX,button->mY);button->Draw(&child);
+            }
+        }
+        renderer.Flush();const auto message=renderer.ReadImagePixels(*actual);
+        Require(ImageLib::WritePNGImage(std::string("dialog-message-")+(tall?"tall-":"normal-")+std::to_string(width)+".png",width,height+4,message.pixels),"Cannot save wrapped dialog proof");
+    }
+}
+
 void AlmanacRulesRuntime(TestApp& app, bool clockOnly=false)
 {
+    LoadSceneAtlases(false);
+    struct FreeAlmanacUI {~FreeAlmanacUI(){FreeSceneAtlases();}} freeAlmanacUI;
     auto& clocks=*app.mEffectSystem->mReanimationHolder;
     struct Restore {
         TestApp& app;
@@ -5789,6 +5857,28 @@ void AlmanacRulesRuntime(TestApp& app, bool clockOnly=false)
                 app.ReanimationGet(dialog->mPlant->mBodyReanimID)->SamplePlayback().phaseNs!=indexPhase,
                 "Actual Almanac index did not animate while its owning battle was paused");
             if(inLevel) Require(app.mBoard->mPaused&&app.mBoard->mLevelTimeNs==battle,"Almanac advanced the paused battle");
+            if (!inLevel && hz==100) {
+                dialog->SetPage(ALMANAC_PAGE_PLANTS);
+                for (auto seed:{SEED_LILYPAD,SEED_TANGLEKELP,SEED_CATTAIL,SEED_SEASHROOM}) {
+                    int x,y;dialog->GetSeedPosition(seed,x,y);dialog->MouseDown(x+5,y+5,1);
+                    const auto waterPixels=capture();
+                    Require(ImageLib::WritePNGImage("almanac-water-"+std::to_string(int(seed))+"-"+std::to_string(width)+".png",width,600,waterPixels),"Cannot write aquatic Almanac proof");
+                    int blue=0;
+                    for(int yy=155;yy<240;++yy)for(int xx=530;xx<545;++xx) {
+                        const auto pixel=waterPixels[yy*width+xx+(width-800)/2];
+                        const int red=(pixel>>16)&255,green=(pixel>>8)&255,channelBlue=pixel&255;
+                        blue+=channelBlue>red+15 && green>red+15;
+                    }
+                    Require(blue>15*85/2,"Aquatic Almanac background has no blue water (white map opening)");
+                    int white=0;
+                    for(int yy=131;yy<139;++yy)for(int xx=535;xx<705;++xx) {
+                        const auto pixel=waterPixels[yy*width+xx+(width-800)/2];
+                        const int r=(pixel>>16)&255,g=(pixel>>8)&255,b=pixel&255;
+                        white+=std::min({r,g,b})>225 && std::max({r,g,b})-std::min({r,g,b})<8;
+                    }
+                    Require(white<170,"Aquatic Almanac retained the white strip above its water surface");
+                }
+            }
             if(!clockOnly) {
             dialog->SetPage(ALMANAC_PAGE_PLANTS);
             for(int seed=0;seed<NUM_ALMANAC_SEEDS;++seed)
@@ -8550,7 +8640,7 @@ void StorePauseClockRuntime(TestApp& app, DecodeOnlySoundManager& sounds)
     if(gIntroRulesOnly) {IntroRulesRuntime(app,sounds);return;}
     if(gUiRulesOnly) {ChallengeUnlockRulesRuntime(app);SelectorTrophyTouchRuntime(app);AlmanacRulesRuntime(app);AwardRulesRuntime(app);return;}
     if(gAwardRulesOnly) {AwardRulesRuntime(app);return;}
-    if(gAlmanacClockOnly) {AlmanacRulesRuntime(app,true);return;}
+    if(gAlmanacClockOnly) {AlmanacRulesRuntime(app,true);StandardDialogBakingRuntime(app);return;}
     if(gActorBirthOnly) {FrameDivisionSampleRuntime();ExplicitReanimationOwnerTime(app);ActorBirthClockRuntime(app);return;}
     if(gCreditsOnly) {CreditsMovieOwnerClockRuntime(app);return;}
     if(gLossRulesOnly) {LossRulesRuntime(app);return;}
@@ -9902,13 +9992,7 @@ int main(int argc, char** argv)
             "Cannot initialize public image runtime");
         if(!gStepEventsOnly&&!gVramOnly&&!gCardAtlasOnly) {
         WrappedTextMeasurements();
-        PoolGpuChecks::Run(*app.mDDInterface->mRenderInterface->mRenderer,
-#if defined(PVZ_GPU_VULKAN)
-            true
-#else
-            false
-#endif
-        );
+        PoolGpuChecks::Run(*app.mDDInterface->mRenderInterface->mRenderer);
         PrecomputedTransparentEdges(app);
         FontUploadAndCopies(app);
         SourceRectangleDraws(app);

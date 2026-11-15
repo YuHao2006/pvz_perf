@@ -38,11 +38,7 @@ VertexOut PoolVS(float4 grid : POSITION)
         float2((704.0 / 15.0) * x + 45.0, 30.0 * y + 288.0) :
         float2((poolSize.x / 15.0) * x + 35.0, (poolSize.y / 5.0) * y + 279.0);
     float alpha = 255.0;
-    const int2 clipPosition = int2(position); // Rect::Contains truncates toward zero.
-    if (any(clipPosition < int2(clipRect.xy)) ||
-        any(clipPosition >= int2(clipRect.xy) + int2(clipRect.zw)))
-        alpha = 0.0;
-    else if (layer == 2u)
+    if (layer == 2u)
         alpha = (x == 0.0 || x == 15.0 || y == 0.0) ? 32.0 :
             (night != 0u ? 48.0 : (x <= 7.0 ? 192.0 : 128.0));
     const float2 ndc = (position + translation) / float2(sceneWidth, sceneHeight) * 2.0 - 1.0;

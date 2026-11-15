@@ -909,6 +909,11 @@ void MetalRenderer::SubmitPool(MetalTexture* texture, const GpuPoolParams& p) {
         throw std::invalid_argument("Invalid Metal pool draw parameters");
     s.Begin();
     auto* target = s.Output();
+    const auto left = std::clamp<long long>(p.clip.x, 0, target->width);
+    const auto top = std::clamp<long long>(p.clip.y, 0, target->height);
+    const auto right = std::clamp<long long>(static_cast<long long>(p.clip.x) + p.clip.width, 0, target->width);
+    const auto bottom = std::clamp<long long>(static_cast<long long>(p.clip.y) + p.clip.height, 0, target->height);
+    if (right <= left || bottom <= top) return;
     auto* source = texture;
     if (source == target) {
         s.Snapshot(target, true);
@@ -944,7 +949,7 @@ void MetalRenderer::SubmitPool(MetalTexture* texture, const GpuPoolParams& p) {
         [encoder setFragmentSamplerState:s.samplers[i] atIndex:i];
     [encoder useResource:source->resource usage:MTLResourceUsageRead stages:MTLRenderStageFragment];
     const MTLViewport viewport{0, 0, double(target->width), double(target->height), 0, 1};
-    const MTLScissorRect scissor{0, 0, NSUInteger(target->width), NSUInteger(target->height)};
+    const MTLScissorRect scissor{NSUInteger(left), NSUInteger(top), NSUInteger(right-left), NSUInteger(bottom-top)};
     [encoder setViewport:viewport];
     [encoder setScissorRect:scissor];
     [encoder drawIndexedPrimitives:MTLPrimitiveTypeTriangle indexCount:GpuPoolIndices.size()

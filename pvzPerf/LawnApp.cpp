@@ -166,7 +166,7 @@ LawnApp::LawnApp()
 	mDebugKeysEnabled = false;
 	mFullCompanyName = "PopCap Games";
 	mProdName = "PopCap\\PlantsVsZombies";
-    mProductVersion = "4.0.3";
+    mProductVersion = "4.0.4";
 	std::string aTitleName = "pvz_perf";
 #ifdef _DEBUG
 	aTitleName += " BETA ";

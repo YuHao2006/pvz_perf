@@ -592,6 +592,11 @@ void D3d9Renderer::SubmitPool(D3d9Texture* texture,const GpuPoolParams& params)
         throw std::invalid_argument("Invalid D3D9 pool layer/sampler/blend");
     s.Flush();
     auto* target=s.selected ? s.selected : s.scene;
+    const auto left = std::clamp<long long>(params.clip.x, 0, target->width);
+    const auto top = std::clamp<long long>(params.clip.y, 0, target->height);
+    const auto right = std::clamp<long long>(static_cast<long long>(params.clip.x) + params.clip.width, 0, target->width);
+    const auto bottom = std::clamp<long long>(static_cast<long long>(params.clip.y) + params.clip.height, 0, target->height);
+    if (right <= left || bottom <= top) return;
     D3d9Texture feedback;
     if (texture==target) {
         s.Snapshot(feedback,texture);
@@ -626,7 +631,9 @@ void D3d9Renderer::SubmitPool(D3d9Texture* texture,const GpuPoolParams& params)
     Check(d->SetPixelShaderConstantF(S::SourceTexture,&pixel[0].x,UINT(pixel.size())),
         "Set D3D9 pool pixel constants");
     Check(d->SetTexture(0,feedback.image ? feedback.image.value : texture->image.value),"Bind D3D9 pool texture");
-    Check(d->SetRenderState(D3DRS_SCISSORTESTENABLE,FALSE),"Use pool vertex clip alpha");
+    const RECT clip{LONG(left), LONG(top), LONG(right), LONG(bottom)};
+    Check(d->SetScissorRect(&clip), "Set D3D9 pool scissor");
+    Check(d->SetRenderState(D3DRS_SCISSORTESTENABLE,TRUE),"Enable pool scissor");
     Check(d->SetRenderState(D3DRS_ALPHABLENDENABLE,params.blend!=GpuBlend::Opaque),"Set D3D9 pool blending");
     Check(d->SetRenderState(D3DRS_SRCBLEND,target->render ? D3DBLEND_ONE : D3DBLEND_SRCALPHA),
         "Set D3D9 pool source blend");

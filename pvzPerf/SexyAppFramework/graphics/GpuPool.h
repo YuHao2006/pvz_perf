@@ -35,7 +35,7 @@ struct GpuPoolParams {
     float width, height;
     float transX, transY;
     float time1, time2, time3, time5;
-    GpuClip clip;
+    GpuClip clip; // Destination pixels after translation; use a hardware scissor.
     std::uint32_t layer, night;
     std::uint32_t samplingFlags, sampler;
     GpuBlend blend;

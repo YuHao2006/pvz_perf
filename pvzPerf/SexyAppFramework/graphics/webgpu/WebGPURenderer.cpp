@@ -978,12 +978,9 @@ void WebGPURenderer::SubmitPool(WebGPUTexture *texture, const GpuPoolParams &p)
     for (size_t i = 0; i < v.size(); i++)
     {
         const auto &m = mesh[GpuPoolIndices[i]];
-        const int x = static_cast<int>(m.x - p.transX), y = static_cast<int>(m.y - p.transY);
-        const bool visible = x >= p.clip.x && y >= p.clip.y && x < static_cast<long long>(p.clip.x) + p.clip.width &&
-                             y < static_cast<long long>(p.clip.y) + p.clip.height;
-        v[i] = {m.x, m.y, 1, 1, 1, visible ? m.alpha : 0.0f, m.u, m.v, SlotOf(texture) | p.samplingFlags, p.sampler};
+        v[i] = {m.x, m.y, 1, 1, 1, m.alpha, m.u, m.v, SlotOf(texture) | p.samplingFlags, p.sampler};
     }
-    impl_->Draw(v, p.blend, nullptr, false, false);
+    impl_->Draw(v, p.blend, &p.clip, false, false);
 }
 void WebGPURenderer::EndSceneAndPresent()
 {

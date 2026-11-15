@@ -297,10 +297,14 @@ enum class Sprite : std::uint16_t {
     TOUCH_FRAME_TR = 25,
     TOUCH_FRAME_BL = 26,
     TOUCH_FRAME_BR = 27,
-    Count = 28,
+    DIALOG_BAKED_NORMAL = 28,
+    DIALOG_BAKED_TALL = 29,
+    Count = 30,
 };
-inline constexpr std::size_t Count = 28;
+inline constexpr std::size_t Count = 30;
 extern const Sexy::TextureRegion Images[Count];
+inline constexpr bool HasBakedDialogs=true;
+extern const Sexy::TextureRegion BakedDialogs[2];
 inline constexpr bool HasSeedCards=false;
 extern const Sexy::TextureRegion SeedCards[53];
 void Load();

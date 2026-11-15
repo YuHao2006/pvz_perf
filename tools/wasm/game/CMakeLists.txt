@@ -76,6 +76,10 @@ target_link_options(pvz-perf PRIVATE -Oz -flto -fexceptions -sUSE_SDL=2 -sUSE_ZL
 # --preload-file is a linker argument, not an inferred Ninja input.
 # Rebuild the data archive whenever the resource package changes.
 set_property(TARGET pvz-perf APPEND PROPERTY LINK_DEPENDS "${PVZ_WEB_PAK}")
+# Adopt the launcher-validated canvas context instead of requesting another EGL context.
+if(PVZ_WEB_BACKEND STREQUAL "WEBGL")
+    target_link_options(pvz-perf PRIVATE -sGL_PREINITIALIZED_CONTEXT=1)
+endif()
 if(PVZ_WEB_MEMORY64)
     target_compile_options(pvz-perf PRIVATE -sMEMORY64=1)
     target_link_options(pvz-perf PRIVATE -sMEMORY64=1)

@@ -49,9 +49,6 @@ Output poolVS(Input input)
     if (poolLayer.x>1.5)
         alpha=(x==0 || x==15 || y==0) ? 32.0/255 :
             poolLayer.y!=0 ? 48.0/255 : x<=7 ? 192.0/255 : 128.0/255;
-    int2 clippedPosition=(int2)position;
-    if (clippedPosition.x<poolClip.x || clippedPosition.y<poolClip.y ||
-        clippedPosition.x>=poolClip.z || clippedPosition.y>=poolClip.w) alpha=0;
     output.color=float4(1,1,1,alpha);
     output.rect=float4(0,0,poolLayer.zw);
     output.flags=poolFlags.x;

@@ -58,7 +58,7 @@ struct GLRenderer::Impl {
     const bool frameSync;
     unsigned int sceneProgram = 0, spriteProgram = 0, mixedSpriteProgram = 0, imageProgram = 0, fontProgram = 0, presentProgram = 0;
     unsigned int poolProgram = 0, poolVao = 0, poolVertices = 0, poolIndices = 0;
-    std::array<int, 12> poolUniforms{};
+    std::array<int, 11> poolUniforms{};
     UniformLocations sceneUniforms{}, spriteUniforms{}, mixedSpriteUniforms{}, imageUniforms{}, fontUniforms{}, presentUniforms{};
     bool open = false, mainFrame = false, initialized = false, sceneInitialized = false;
     GLTexture* white = nullptr;

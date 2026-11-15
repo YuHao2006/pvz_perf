@@ -1565,6 +1565,11 @@ void D3d12Renderer::SubmitPool(D3d12Texture* texture, const GpuPoolParams& p) {
         throw std::invalid_argument("Invalid D3D12 pool draw parameters");
     s.Flush();
     auto* target = s.Output();
+    const auto left = std::clamp<long long>(p.clip.x, 0, target->width);
+    const auto top = std::clamp<long long>(p.clip.y, 0, target->height);
+    const auto right = std::clamp<long long>(static_cast<long long>(p.clip.x) + p.clip.width, 0, target->width);
+    const auto bottom = std::clamp<long long>(static_cast<long long>(p.clip.y) + p.clip.height, 0, target->height);
+    if (right <= left || bottom <= top) return;
     auto* source = texture;
     if (source == target) {
         s.Snapshot(target, true);
@@ -1603,7 +1608,7 @@ void D3d12Renderer::SubmitPool(D3d12Texture* texture, const GpuPoolParams& p) {
     s.commands->IASetVertexBuffers(0, 1, &vertices);
     s.commands->IASetIndexBuffer(&indices);
     s.commands->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-    const D3D12_RECT scissor{0, 0, target->width, target->height};
+    const D3D12_RECT scissor{LONG(left), LONG(top), LONG(right), LONG(bottom)};
     s.commands->RSSetScissorRects(1, &scissor);
     s.commands->DrawIndexedInstanced(UINT(GpuPoolIndices.size()), 1, 0, 0, 0);
     s.InvalidateDrawState();

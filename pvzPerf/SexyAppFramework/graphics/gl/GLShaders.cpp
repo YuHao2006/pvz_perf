@@ -8,7 +8,7 @@ std::string_view PoolVertexShader()
 in vec2 inPosition;
 in vec2 inColor;
 uniform vec2 targetExtent, poolSize, poolTranslation;
-uniform vec4 waveTime, poolClip;
+uniform vec4 waveTime;
 uniform uint poolLayer, poolNight, poolSlot, poolSampler;
 out vec4 color;
 out vec2 uv;
@@ -40,9 +40,6 @@ void main()
     if (poolLayer==2u)
         alpha=(x==0.0 || x==15.0 || y==0.0) ? 32.0/255.0 :
             poolNight!=0u ? 48.0/255.0 : x<=7.0 ? 192.0/255.0 : 128.0/255.0;
-    ivec2 clippedPosition=ivec2(position);
-    if (clippedPosition.x<int(poolClip.x) || clippedPosition.y<int(poolClip.y) ||
-        clippedPosition.x>=int(poolClip.z) || clippedPosition.y>=int(poolClip.w)) alpha=0.0;
     color=vec4(1.0,1.0,1.0,alpha);
     slot=poolSlot; samplerIndex=poolSampler;
     gl_Position=vec4((position+poolTranslation)/targetExtent*2.0-1.0,0.0,1.0);

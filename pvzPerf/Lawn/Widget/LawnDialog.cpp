@@ -15,8 +15,32 @@
 #include "graphics/AtlasDraw.h"
 #include "Sexy.TodLib/generated/SceneAtlasData.h"
 #include <chrono>
+#include <array>
 
 namespace { using enum CommonUIAtlas::Sprite; }
+
+namespace
+{
+void DrawBakedDialogBody(Graphics* g, const Sexy::TextureSource& texture,
+    const Sexy::TextureRegion& image, int width, int height, int bottom)
+{
+    // Preserve the original corners and footer; only the plain interior and
+    // straight edge spans adapt. Original right/middle footers extend 2 pixels
+    // below the left footer that CalcSize uses. Keep that footprint unchanged.
+    constexpr int left=107, right=120, top=97;
+    const std::array<int,4> sx{0,left,image.mWidth-right,image.mWidth};
+    const std::array<int,4> sy{0,top,image.mHeight-bottom,image.mHeight};
+    const std::array<int,4> dx{0,left,width-right,width};
+    const std::array<int,4> dy{DIALOG_HEADER_OFFSET,DIALOG_HEADER_OFFSET+top,
+        height+2-bottom,height+2};
+    for(unsigned y=0;y<3;++y)
+        for(unsigned x=0;x<3;++x)
+            if(dx[x+1]>dx[x] && dy[y+1]>dy[y])
+                Sexy::DrawAtlasImage(g,texture,image,
+                    Rect(dx[x],dy[y],dx[x+1]-dx[x],dy[y+1]-dy[y]),
+                    Rect(sx[x],sy[y],sx[x+1]-sx[x],sy[y+1]-sy[y]));
+}
+}
 
 //0x456A80
 LawnDialog::LawnDialog(LawnApp* theApp, int theId, bool isModal, const SexyString& theDialogHeader, const SexyString& theDialogLines, const SexyString& theDialogFooter, int theButtonMode) :
@@ -288,60 +312,11 @@ void LawnDialog::Draw(Graphics* g)
     if (!mDrawStandardBack)
         return;
 
-    const TextureRegion& bottomLeft = CommonUIAtlas::Images[size_t(mTallBottom ? DIALOG_BIGBOTTOMLEFT : DIALOG_BOTTOMLEFT)];
-    const TextureRegion& bottomMiddle = CommonUIAtlas::Images[size_t(mTallBottom ? DIALOG_BIGBOTTOMMIDDLE : DIALOG_BOTTOMMIDDLE)];
-    const TextureRegion& bottomRight = CommonUIAtlas::Images[size_t(mTallBottom ? DIALOG_BIGBOTTOMRIGHT : DIALOG_BOTTOMRIGHT)];
-    const TextureRegion& topLeft = CommonUIAtlas::Images[size_t(DIALOG_TOPLEFT)];
-    const TextureRegion& topMiddle = CommonUIAtlas::Images[size_t(DIALOG_TOPMIDDLE)];
-    const TextureRegion& topRight = CommonUIAtlas::Images[size_t(DIALOG_TOPRIGHT)];
-    const TextureRegion& centerLeft = CommonUIAtlas::Images[size_t(DIALOG_CENTERLEFT)];
-    const TextureRegion& centerMiddle = CommonUIAtlas::Images[size_t(DIALOG_CENTERMIDDLE)];
-    const TextureRegion& centerRight = CommonUIAtlas::Images[size_t(DIALOG_CENTERRIGHT)];
-    const TextureRegion& header = CommonUIAtlas::Images[size_t(DIALOG_HEADER)];
-    const Sexy::TextureSource texture{CommonUIAtlas::Texture, 0};
-
-    int aRepeatX = (mWidth - topRight.mWidth - topLeft.mWidth) / topMiddle.mWidth;
-    int aRepeatY = (mHeight - topLeft.mHeight - bottomLeft.mHeight - DIALOG_HEADER_OFFSET) / centerLeft.mHeight;
-
-    int aPosX = 0;
-    int aPosY = DIALOG_HEADER_OFFSET;
-    Sexy::DrawAtlasImage(g, texture, topLeft, aPosX, aPosY);
-    aPosX += topLeft.mWidth;
-    for (int i = 0; i < aRepeatX; i++)
-    {
-        Sexy::DrawAtlasImage(g, texture, topMiddle, aPosX, aPosY);
-        aPosX += topMiddle.mWidth;
-    }
-    Sexy::DrawAtlasImage(g, texture, topRight, aPosX, aPosY);
-
-    aPosY += topRight.mHeight;
-    for (int y = 0; y < aRepeatY; y++)
-    {
-        aPosX = 0;
-
-        Sexy::DrawAtlasImage(g, texture, centerLeft, aPosX, aPosY);
-        aPosX += centerLeft.mWidth;
-
-        for (int x = 0; x < aRepeatX; x++)
-        {
-            Sexy::DrawAtlasImage(g, texture, centerMiddle, aPosX, aPosY);
-            aPosX += centerMiddle.mWidth;
-        }
-
-        Sexy::DrawAtlasImage(g, texture, centerRight, aPosX, aPosY);
-        aPosY += centerLeft.mHeight;
-    }
-
-    aPosX = 0;
-    Sexy::DrawAtlasImage(g, texture, bottomLeft, aPosX, aPosY);
-    aPosX += bottomLeft.mWidth;
-    for (int i = 0; i < aRepeatX; i++)
-    {
-        Sexy::DrawAtlasImage(g, texture, bottomMiddle, aPosX, aPosY);
-        aPosX += bottomMiddle.mWidth;
-    }
-    Sexy::DrawAtlasImage(g, texture, bottomRight, aPosX, aPosY);
-    Sexy::DrawAtlasImage(g, texture, header, (mWidth - header.mWidth) / 2 - 5, 0);
+    const Sexy::TextureSource texture{CommonUIAtlas::Texture,0};
+    DrawBakedDialogBody(g,texture,CommonUIAtlas::BakedDialogs[mTallBottom?1:0],
+        mWidth,mHeight,mTallBottom?150:114);
+    const auto& header=CommonUIAtlas::Images[size_t(DIALOG_HEADER)];
+    Sexy::DrawAtlasImage(g,texture,header,(mWidth-header.mWidth)/2-5,0);
 
     int aFontY = mContentInsets.mTop + mBackgroundInsets.mTop + DIALOG_HEADER_OFFSET;
     if (mDialogHeader.size() > 0)

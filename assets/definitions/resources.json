@@ -454,6 +454,22 @@
           {
             "tag": "Image",
             "attrs": {
+              "id": "DIALOG_BAKED_NORMAL",
+              "path": "dialog_baked_normal"
+            },
+            "children": []
+          },
+          {
+            "tag": "Image",
+            "attrs": {
+              "id": "DIALOG_BAKED_TALL",
+              "path": "dialog_baked_tall"
+            },
+            "children": []
+          },
+          {
+            "tag": "Image",
+            "attrs": {
               "id": "BUTTON_LEFT",
               "path": "button_left"
             },

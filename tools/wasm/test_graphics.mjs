@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {detectGraphics,capabilityText} from './game/graphics.js';
+import {detectGraphics,capabilityText,prepareWebGLContext} from './game/graphics.js';
 let glAvailable=true,floatAvailable=true,framebufferComplete=true,released=0,textureLimit=4096,drawValid=true,shaderValid=true;
 const gl={RGBA16F:0x881a,FRAMEBUFFER_COMPLETE:0x8cd5,NO_ERROR:0,
  getParameter:()=>textureLimit,
@@ -43,3 +43,22 @@ gpuValidationError=null;
 assert.ok(released>0);
 textureLimit=2048;result=await detectGraphics(undefined);assert.equal(result.backend,null);assert.match(result.webglReason,/2048.*4096/);
 console.log('Graphics capability selection and fallback: passed');
+
+// The failing Android path must use the exact GL context that passed detection.
+textureLimit=4096;
+let actualCreations=0;
+const actualCanvas={width:960,height:600,addEventListener(){},getContext(kind,attrs){actualCreations++;assert.equal(kind,'webgl2');assert.deepEqual(attrs,{alpha:true,depth:false,stencil:false,antialias:false});return gl}};
+const beforeActualRelease=released;
+result=await detectGraphics(undefined,{gameCanvas:actualCanvas});
+assert.equal(result.backend,'webgl');assert.equal(actualCreations,1);assert.equal(released,beforeActualRelease);
+assert.equal(actualCanvas.width,960);assert.equal(actualCanvas.height,600);
+assert.equal(prepareWebGLContext(actualCanvas),gl);assert.equal(prepareWebGLContext(actualCanvas),gl);assert.equal(actualCreations,1);
+const order=[];const failedGPU={requestAdapter:async()=>{order.push('gpu');return {...adapter,requestDevice:async()=>{order.push('device');throw Error('A valid external Instance reference no longer exists.')}}}};
+const orderedCanvas={addEventListener(){},getContext(){order.push('gl');return gl}};
+result=await detectGraphics(failedGPU,{gameCanvas:orderedCanvas});assert.equal(result.backend,'webgl');assert.deepEqual(order,['gpu','device','gl']);assert.equal(prepareWebGLContext(orderedCanvas),gl);
+// A successful WebGPU probe must leave the actual canvas free for WebGPU.
+let untouched=0;const gpuCanvas={addEventListener(){},getContext(){untouched++;return gl}};
+result=await detectGraphics(gpu,{gameCanvas:gpuCanvas});assert.equal(result.backend,'webgpu');assert.equal(untouched,0);
+assert.equal(prepareWebGLContext(gpuCanvas),gl);assert.equal(untouched,1);
+gl.isContextLost=()=>true;assert.throws(()=>prepareWebGLContext(gpuCanvas),/已丢失/);delete gl.isContextLost;
+console.log('GL game-canvas retention, one creation, GPU-before-GL order, API switching and lost-context diagnostics: passed');

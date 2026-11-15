@@ -441,7 +441,7 @@ void GLRenderer::PrepareLoadingPipelines()
     cache(s.fontProgram,s.fontUniforms);cache(s.presentProgram,s.presentUniforms);
     s.poolProgram = s.Program(PoolVertexShader(), SceneFragmentShader());
     static constexpr std::array poolNames{"targetExtent","image","premultipliedOutput","coverageInput",
-        "poolSize","poolTranslation","waveTime","poolClip","poolLayer","poolNight","poolSlot","poolSampler"};
+        "poolSize","poolTranslation","waveTime","poolLayer","poolNight","poolSlot","poolSampler"};
     for (size_t i=0;i<poolNames.size();++i)
         s.poolUniforms[i]=glGetUniformLocation(s.poolProgram,poolNames[i]);
     glGenVertexArrays(1,&s.poolVao); glBindVertexArray(s.poolVao);
@@ -625,6 +625,11 @@ void GLRenderer::SubmitPool(GLTexture* texture,const GpuPoolParams& params)
         throw std::invalid_argument("Invalid OpenGL pool layer/sampler/blend");
     s.Flush();
     auto* target=s.selected ? s.selected : s.scene;
+    const auto left = std::clamp<long long>(params.clip.x, 0, target->width);
+    const auto top = std::clamp<long long>(params.clip.y, 0, target->height);
+    const auto right = std::clamp<long long>(static_cast<long long>(params.clip.x) + params.clip.width, 0, target->width);
+    const auto bottom = std::clamp<long long>(static_cast<long long>(params.clip.y) + params.clip.height, 0, target->height);
+    if (right <= left || bottom <= top) return;
     GLTexture feedback;
     if (texture==target) {
         s.Snapshot(*texture,feedback);
@@ -637,14 +642,14 @@ void GLRenderer::SubmitPool(GLTexture* texture,const GpuPoolParams& params)
     glUniform2f(u[4],params.width,params.height);
     glUniform2f(u[5],params.transX,params.transY);
     glUniform4f(u[6],params.time1,params.time2,params.time3,params.time5);
-    glUniform4f(u[7],float(params.clip.x),float(params.clip.y),
-        float(double(params.clip.x)+params.clip.width),float(double(params.clip.y)+params.clip.height));
-    glUniform1ui(u[8],params.layer); glUniform1ui(u[9],params.night);
-    glUniform1ui(u[10],texture->slot|texture->flags|params.samplingFlags);
-    glUniform1ui(u[11],params.sampler);
+    glUniform1ui(u[7],params.layer); glUniform1ui(u[8],params.night);
+    glUniform1ui(u[9],texture->slot|texture->flags|params.samplingFlags);
+    glUniform1ui(u[10],params.sampler);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D,feedback.image ? feedback.image : texture->image);
-    glDisable(GL_SCISSOR_TEST);
+    glEnable(GL_SCISSOR_TEST);
+    glScissor(static_cast<int>(left), static_cast<int>(top),
+        static_cast<int>(right-left), static_cast<int>(bottom-top));
     if (params.blend==GpuBlend::Opaque) glDisable(GL_BLEND);
     else {
         glEnable(GL_BLEND);

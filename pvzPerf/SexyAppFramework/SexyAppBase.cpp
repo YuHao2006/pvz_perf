@@ -450,6 +450,7 @@ SexyAppBase::SexyAppBase()
 	mWindowScale = 2;
 	mUseCustomScale = true;
 	mScaleConfigWindow = 2;
+	mScaleConfigWindowDeclared = false;
 	mWindowScaleFromPipeline = 1;
 	mScaleConfigFullscreenWidth = 0;
 	mScaleConfigFullscreenHeight = 0;
@@ -3819,8 +3820,7 @@ bool SexyAppBase::PrepareScalePipelineObjects()
         return true;
     }
     if (mModernScalePrepared) return true;
-    const int windowScale = std::max(1, mScaleWindowConfig.mEffects.empty() ?
-        mScaleConfigWindow : mWindowScaleFromPipeline);
+    const int windowScale = GetWindowScaleForCustomScale();
     const int windowTargetW = renderer.sceneWidth * windowScale;
     const int windowTargetH = renderer.sceneHeight * windowScale;
     std::vector<GpuScaleStep> steps;
@@ -4796,6 +4796,7 @@ void SexyAppBase::LoadScaleConfig()
     if(mModernScalePrepared) throw std::logic_error("Scale configuration may only load before renderer preparation");
     mScaleEffects.clear();
 	mScaleConfigWindow = 1;
+	mScaleConfigWindowDeclared = false;
 	mWindowScaleFromPipeline = 1;
 	mScaleConfigFullscreenWidth = 0;
 	mScaleConfigFullscreenHeight = 0;
@@ -4911,7 +4912,10 @@ void SexyAppBase::LoadScaleConfig()
 		mScaleWindowConfig.mDeclared = true;
 		const long long aMultiplier = aDoc.GetInt("window/multiplier", 0);
 		if (aMultiplier > 0)
+		{
 			mScaleConfigWindow = (int)aMultiplier;
+			mScaleConfigWindowDeclared = true;
+		}
         LoadPipelineEffects("window", mScaleWindowConfig);
 	}
 
@@ -5064,11 +5068,20 @@ bool SexyAppBase::BuildScalePipelineForMode(bool theWindowed,
 		return ComputeCustomScaleOutputSize(theWindowed, mWidth, mHeight, outW, outH);
 	}
 
+	// scale.json 的 window/multiplier 同时是上限：外部 pipeline（如 Anime4K x2）
+	// 推出的倍率更高时按配置值收窄，避免"配置写了 1、窗口却按 2x 铺满"的静默忽略。
+	// 未显式写 multiplier 时保持旧行为（管线倍率优先）。
 	int SexyAppBase::GetWindowScaleForCustomScale() const
 	{
+		const int aConfigured = std::max(1, mScaleConfigWindow);
 		if (!mScaleWindowConfig.mEffects.empty())
-			return std::max(1, mWindowScaleFromPipeline);
-		return std::max(1, mScaleConfigWindow);
+		{
+			const int aFromPipeline = std::max(1, mWindowScaleFromPipeline);
+			if (mScaleConfigWindowDeclared)
+				return std::max(1, std::min(aFromPipeline, aConfigured));
+			return aFromPipeline;
+		}
+		return aConfigured;
 	}
 
 	void SexyAppBase::UpdateWindowScaleFromPipeline()

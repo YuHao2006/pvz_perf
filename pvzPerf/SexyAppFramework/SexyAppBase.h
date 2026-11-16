@@ -401,6 +401,7 @@ public:
 	int						mWindowScale;
 	bool						mUseCustomScale;				// 自定义放缩开关
 	int						mScaleConfigWindow;				// scale.json 窗口放缩倍率
+	bool						mScaleConfigWindowDeclared;		// scale.json 是否显式写了 window/multiplier
 	int						mWindowScaleFromPipeline;			// 当前窗口 pipeline 推导出的运行时倍率
 
 	int						mScaleConfigFullscreenWidth;

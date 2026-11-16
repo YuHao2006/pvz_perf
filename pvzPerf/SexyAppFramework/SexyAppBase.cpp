@@ -3218,26 +3218,43 @@ bool SexyAppBase::ResizeAppWindowForMode(bool wantWindowed)
 		if (mEnableMaximizeButton)
 			aWindowStyle |= WS_MAXIMIZEBOX;
 
-		int aClientW = mWidth * (mWindowScale > 1 ? mWindowScale : 1);
-		int aClientH = mHeight * (mWindowScale > 1 ? mWindowScale : 1);
-
-		RECT aRect;
-		aRect.left = 0;
-		aRect.top = 0;
-		aRect.right = aClientW;
-		aRect.bottom = aClientH;
-		if (!AdjustWindowRect(&aRect, aWindowStyle, FALSE))
-		{
-			return false;
-		}
-		aWidth = aRect.right - aRect.left;
-		aHeight = aRect.bottom - aRect.top;
-
 		RECT aDesktopRect;
 		if (!::SystemParametersInfo(SPI_GETWORKAREA, 0, &aDesktopRect, 0))
 		{
 			return false;
 		}
+
+		// The custom scale (or the scale implied by an external pipeline such as
+		// Anime4K x2) can produce a window larger than the desktop; on a 1080p
+		// panel that put the title bar above the visible area, which made the
+		// window impossible to move or close. Use the largest integer scale that
+		// still fits the work area for the window geometry only: mWindowScale
+		// itself stays untouched so the presentation pipeline prepared for the
+		// configured scale keeps its target size.
+		const int aWorkWidth = aDesktopRect.right - aDesktopRect.left;
+		const int aWorkHeight = aDesktopRect.bottom - aDesktopRect.top;
+
+		int aWindowScale = mWindowScale > 1 ? mWindowScale : 1;
+		RECT aRect;
+		for (;;)
+		{
+			aRect.left = 0;
+			aRect.top = 0;
+			aRect.right = mWidth * aWindowScale;
+			aRect.bottom = mHeight * aWindowScale;
+			if (!AdjustWindowRect(&aRect, aWindowStyle, FALSE))
+			{
+				return false;
+			}
+			if (aWindowScale <= 1 ||
+				(aRect.right - aRect.left <= aWorkWidth && aRect.bottom - aRect.top <= aWorkHeight))
+			{
+				break;
+			}
+			aWindowScale--;
+		}
+		aWidth = aRect.right - aRect.left;
+		aHeight = aRect.bottom - aRect.top;
 
 		aPlaceX = 64;
 		aPlaceY = 64;

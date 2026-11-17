@@ -1,0 +1,30 @@
+[
+  {
+    "profile": "wasm32-webgl",
+    "bytes": 24105989,
+    "sha256": "576e69a72f178d8331552d040717202e6890f68bc9a1d2e653a2cf44def5f296",
+    "v128Type": false,
+    "simdInstructions": 0
+  },
+  {
+    "profile": "wasm32-webgpu",
+    "bytes": 24126009,
+    "sha256": "f1797461ce441366cc4af5d7eb26b347bb956ef16233504154959af7ba8f95f0",
+    "v128Type": true,
+    "simdInstructions": 4604
+  },
+  {
+    "profile": "wasm64-webgl",
+    "bytes": 28064947,
+    "sha256": "6ab50e0c3372f55d9368c0b5b6ecb7eeb868f10456f7892f8cb9e139315b6c55",
+    "v128Type": true,
+    "simdInstructions": 6520
+  },
+  {
+    "profile": "wasm64-webgpu",
+    "bytes": 28084630,
+    "sha256": "7056cc81ae0253e671be9e33eee431c66e749d05d2d0350999536f18b53df808",
+    "v128Type": true,
+    "simdInstructions": 6688
+  }
+]

@@ -19,6 +19,10 @@
 | [Android](android-port.md) | 平台边界、构建打包、窗口和存档目录 |
 | [Web 网页版](../tools/wasm/README.md) | v3.3.3 WebGPU／WebGL 2 包、能力检测、本地存档与自定义无尽 |
 
+## main 待办
+
+[main 待办与用户反馈入口](main-backlog.md)：当前未实施项、已完成项、暂缓项与新用户反馈统一从这里登记。
+
 ## 性能、缺陷与证据
 
 | 文档 | 内容 |
@@ -27,7 +31,7 @@
 | [修复总账](fix-ledger.md) | 按根因归类的有效修复，不保存工作过程 |
 | [验证说明](validation.md) | 测试入口、覆盖范围和平台限制 |
 | [原版调查](research/README.md) | 1073、WP、Free及素材／协议证据 |
-| [最新发布说明](releases/v3.3.3.md) | v3.3.3 的内容、格式和附件 |
+| [最新发布说明](releases/v4.0.4.md) | v4.0.4 的内容、格式和附件 |
 | [历史发行](https://github.com/YuHao2006/pvz_perf/releases) | 每个已发布版本的冻结说明与原包 |
 
 构建及配置入口见[项目说明](../README.md)。测试工具见[性能采集工具](../Tests/performance/README.md)。

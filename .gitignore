@@ -473,3 +473,31 @@ standalone_build.log
 !/tools/bin/android-arm64/
 !/tools/bin/android-arm64/libpvz_dfu.so
 !/tools/bin/android-arm64/manifest.json
+
+# Game artwork is local-only on every branch, including restored/AI/native masters.
+# Keep compiler layout caches and generated C++/headers tracked.
+*.[aA][vV][iI][fF]
+*.[bB][mM][pP]
+*.[dD][dD][sS]
+*.[eE][xX][rR]
+*.[gG][iI][fF]
+*.[hH][dD][rR]
+*.[hH][eE][iI][cC]
+*.[hH][eE][iI][fF]
+*.[iI][cC][nN][sS]
+*.[iI][cC][oO]
+*.[jJ][pP]2
+*.[jJ][pP][eE][gG]
+*.[jJ][pP][gG]
+*.[jJ][xX][lL]
+*.[kK][tT][xX]
+*.[kK][tT][xX]2
+*.[pP][nN][gG]
+*.[pP][sS][dD]
+*.[pP][vV][rR]
+*.[sS][vV][gG]
+*.[tT][gG][aA]
+*.[tT][iI][fF]
+*.[tT][iI][fF][fF]
+*.[wW][eE][bB][pP]
+!**/.gitkeep

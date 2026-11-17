@@ -21,7 +21,7 @@ assert.deepEqual((await create().readCloud()).value,deleted,'Interrupted publica
 failCommit=false;await a.save();b=create();await b.prepare();assert.deepEqual(b.library.snapshot(),a.library.snapshot());
 // Deliberately empty is a valid snapshot, never a request to restore defaults.
 a.library.replace({format:1,lineups:[]});await a.save();b=create();await b.prepare();assert.deepEqual(b.library.snapshot().lineups,[]);
-const local=memory(),c=create(local);c.library.replace({format:1,lineups:[defaultLineups[0]]});await c.prepare();assert.equal(c.needsChoice,true);await assert.rejects(c.save(),/先选择/);await c.save(true);assert.deepEqual((await create().readCloud()).value.lineups,[defaultLineups[0]]);
+const local=memory(),c=create(local);c.library.replace({format:1,lineups:[defaultLineups[0]]});await c.prepare();assert.deepEqual(c.library.snapshot().lineups,[],'Unknown local timestamp restores cloud automatically');assert.ok(local.getItem('pvz_lineups_conflict_v1'));c.library.replace({format:1,lineups:[defaultLineups[0]]});await c.save();assert.deepEqual((await create().readCloud()).value.lineups,[defaultLineups[0]]);
 const head=JSON.parse(cloud.pvz_lineups_v1),part='pvz_lineups_'+head.slot+'_0',old=cloud[part];cloud[part]='AAAA';await assert.rejects(create().readCloud(),/校验失败/);cloud[part]=old;
 assert.equal(cloud.pvz_progress_v1,'untouched','Lineup synchronization must not touch profile or battle data');
 const disabled=new LineupStorage(memory(),{cloudEnabled:false,remote:async()=>{throw Error('Offline must not call SDK')},report(){}});await disabled.prepare();await disabled.save();
@@ -33,6 +33,6 @@ const sharedCreate=()=>new LineupStorage(memory(),{cloudEnabled:true,remote:asyn
 const migrating=sharedCreate();await migrating.prepare();assert.deepEqual(migrating.library.snapshot().lineups,[defaultLineups[0]]);
 assert.ok(shared.pvz_lineups_v1);assert.deepEqual(cloud,legacyBefore,'Lineup migration leaves private storage unchanged');
 const stale=sharedCreate();await stale.prepare();migrating.library.replace({format:1,lineups:[defaultLineups[1]]});await migrating.save(true);
-stale.library.replace({format:1,lineups:[defaultLineups[2]]});await assert.rejects(stale.save(),/云端有更新|时间无法确认/);
+stale.library.replace({format:1,lineups:[defaultLineups[2]]});stale.modifiedAt=1;stale.localText=JSON.stringify(stale.library.snapshot());await stale.save();assert.deepEqual(stale.library.snapshot().lineups,[defaultLineups[1]]);
 assert.deepEqual((await sharedCreate().readCloud()).value.lineups,[defaultLineups[1]]);
 console.log('Toy KV JSON lineup snapshots: upload/restore, deletion, empty library, interrupted commit, conflicts, digest, namespace and offline isolation passed');

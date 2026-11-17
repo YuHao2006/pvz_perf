@@ -1097,7 +1097,7 @@ constexpr BackgroundInfo kBackgrounds[] = {
 	/* BACKGROUND_MUSHROOM_GARDEN */ { &Sexy::IMAGE_BACKGROUND_MUSHROOMGARDEN, { PlantRowType::PLANTROW_NORMAL, PlantRowType::PLANTROW_NORMAL, PlantRowType::PLANTROW_NORMAL, PlantRowType::PLANTROW_NORMAL, PlantRowType::PLANTROW_NORMAL, PlantRowType::PLANTROW_DIRT }, ResourceGroupId::DelayLoad_MushroomGarden, ResourceGroupId::Invalid },
 	/* BACKGROUND_GREENHOUSE      */ { &Sexy::IMAGE_BACKGROUND_GREENHOUSE,     { PlantRowType::PLANTROW_NORMAL, PlantRowType::PLANTROW_NORMAL, PlantRowType::PLANTROW_NORMAL, PlantRowType::PLANTROW_NORMAL, PlantRowType::PLANTROW_NORMAL, PlantRowType::PLANTROW_DIRT }, ResourceGroupId::DelayLoad_GreenHouseGarden, ResourceGroupId::DelayLoad_GreenHouseOverlay },
 	/* BACKGROUND_ZOMBIQUARIUM    */ { &Sexy::IMAGE_AQUARIUM1,      { PlantRowType::PLANTROW_NORMAL, PlantRowType::PLANTROW_NORMAL, PlantRowType::PLANTROW_POOL,   PlantRowType::PLANTROW_POOL,   PlantRowType::PLANTROW_NORMAL, PlantRowType::PLANTROW_NORMAL }, ResourceGroupId::DelayLoad_Zombiquarium, ResourceGroupId::DelayLoad_GreenHouseOverlay },
-	/* BACKGROUND_TREEOFWISDOM    */ { nullptr,                      { PlantRowType::PLANTROW_NORMAL, PlantRowType::PLANTROW_NORMAL, PlantRowType::PLANTROW_NORMAL, PlantRowType::PLANTROW_NORMAL, PlantRowType::PLANTROW_NORMAL, PlantRowType::PLANTROW_DIRT }, ResourceGroupId::Invalid, ResourceGroupId::Invalid },
+	/* BACKGROUND_TREEOFWISDOM    */ { nullptr,                      { PlantRowType::PLANTROW_NORMAL, PlantRowType::PLANTROW_NORMAL, PlantRowType::PLANTROW_NORMAL, PlantRowType::PLANTROW_NORMAL, PlantRowType::PLANTROW_NORMAL, PlantRowType::PLANTROW_DIRT }, ResourceGroupId::DelayLoad_TreeOfWisdom, ResourceGroupId::Invalid },
 };
 static_assert(sizeof(kBackgrounds) / sizeof(kBackgrounds[0]) == (int)BackgroundType::BACKGROUND_TREEOFWISDOM + 1,
 	"背景信息表槽位须与 BackgroundType 枚举尾同步");
@@ -9075,27 +9075,29 @@ void Board::DrawUIBottom(Graphics* g)
 	if (mBackground == BackgroundType::BACKGROUND_ZOMBIQUARIUM)
 	{
 		int aWaveTime = std::abs(static_cast<int>((mLevelTimeNs / 80'000'000) % 22) - 11);
-		const Rect aWaveSource(0, aWaveTime * 27, 160, 27);
-		g->mDrawMode = Graphics::DRAWMODE_ADDITIVE;
-		g->DrawImage(Sexy::IMAGE_WAVESIDE, 0, 40, aWaveSource);
-		g->DrawImage(Sexy::IMAGE_WAVECENTER, 160, 40, aWaveSource);
-		g->DrawImage(Sexy::IMAGE_WAVECENTER, 320, 40, aWaveSource);
-		g->DrawImage(Sexy::IMAGE_WAVECENTER, 480, 40, aWaveSource);
-		TodDrawImageRectScaled(g, Sexy::IMAGE_WAVESIDE, 800, 40, aWaveSource, -1.0f, 1.0f);
+		// HD uses only the approved full-width native line; omit the old low-res side sheet.
+		TOD_ASSERT(Sexy::IMAGE_WAVECENTER->mWidth == BOARD_WIDTH);
+		// The native HD water material is baked offline as one complete line.
+		// Its transparent row margins were cropped; compensate by position,
+		// preserving the original cadence and avoiding shader work per frame.
+		constexpr int waveHeight = 20;
+		constexpr int waveY = 42;
+		const int sourceY = aWaveTime * waveHeight;
+		g->mDrawMode = Graphics::DRAWMODE_NORMAL;
+		g->DrawImage(Sexy::IMAGE_WAVECENTER, 0, waveY,
+			Rect(0, sourceY, BOARD_WIDTH, waveHeight));
 		if (mApp->mScreenBounds.mWidth > BOARD_WIDTH)
 		{
 			const int left = std::min(0, mApp->mScreenBounds.mX - mX);
 			const int right = std::max(BOARD_WIDTH,
 				mApp->mScreenBounds.mX + mApp->mScreenBounds.mWidth - mX);
-			constexpr int waveWidth = 160;
-			Graphics aLeftWaves(*g);
-			aLeftWaves.ClipRect(left, 0, -left, BOARD_HEIGHT);
-			for (int edge = 0; edge > left; edge -= waveWidth)
-				TodDrawImageRectScaled(&aLeftWaves, Sexy::IMAGE_WAVESIDE, edge, 40, aWaveSource, -1.0f, 1.0f);
-			Graphics aRightWaves(*g);
-			aRightWaves.ClipRect(BOARD_WIDTH, 0, right - BOARD_WIDTH, BOARD_HEIGHT);
-			for (int edge = BOARD_WIDTH; edge < right; edge += waveWidth)
-				aRightWaves.DrawImage(Sexy::IMAGE_WAVESIDE, edge, 40, aWaveSource);
+			if (left < 0)
+				g->DrawImage(Sexy::IMAGE_WAVECENTER,
+					Rect(left, waveY, -left, waveHeight), Rect(0, sourceY, 1, waveHeight));
+			if (right > BOARD_WIDTH)
+				g->DrawImage(Sexy::IMAGE_WAVECENTER,
+					Rect(BOARD_WIDTH, waveY, right - BOARD_WIDTH, waveHeight),
+					Rect(BOARD_WIDTH - 1, sourceY, 1, waveHeight));
 		}
 		g->mDrawMode = Graphics::DRAWMODE_NORMAL;
 	}

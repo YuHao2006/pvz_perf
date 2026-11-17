@@ -152,7 +152,7 @@ void AchievementsWidget::Draw(Graphics* g) {
 	DrawAtlasImage(g,aTexture,aChina,-kBackgroundExtension,mHeight-aChina.mHeight-50);
 	
 	if (aBackButtonRect.Contains(aMousePosition))
-		DrawAtlasImage(g,aTexture,AchievementsAtlas::Images[static_cast<unsigned>(AchievementSprite::ACHEESEMENTS_BACK_HIGHLIGHT)],128,55);
+		DrawAtlasImage(g,aTexture,AchievementsAtlas::Images[static_cast<unsigned>(AchievementSprite::ACHEESEMENTS_BACK_HIGHLIGHT)],110,40);
 
 	for (int i = 0; i < MAX_ACHIEVEMENTS; i++) {
 		bool aHasAchievement;

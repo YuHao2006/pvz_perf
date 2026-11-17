@@ -4,6 +4,7 @@
 #include <stdexcept>
 #include "Definition.h"
 #include "DefinitionImageRegion.h"
+#include "AtlasSourceExtent.h"
 #include "generated/GeneratedDefinitions.h"
 #include "Lawn/Widget/ZombatarResources.h"
 #include "graphics/DDInterface.h"
@@ -26,7 +27,7 @@ struct AtlasResource
 {
     Sexy::GpuTexture* texture;
     ImageLib::Image* decoded;
-    int width,height;
+    int width,height; // Authored extent; upload uses decoded's actual page size.
 };
 std::unordered_map<std::string,AtlasResource> gDefinitionAtlasImages;
 struct PendingAtlasBinding
@@ -58,7 +59,8 @@ AtlasResource& LoadSharedDefinitionAtlas(const std::string& path,
     try
     {
         if (!decoded || !decoded->mBits || decoded->HasComposition() ||
-            decoded->mWidth!=int(width) || decoded->mHeight!=int(height))
+            !DefinitionAtlasSourceExtentMatches(width, height,
+                unsigned(decoded->mWidth), unsigned(decoded->mHeight)))
             throw std::runtime_error("definition atlas PNG dimensions mismatch: "+path);
         const auto [entry,inserted]=gDefinitionAtlasImages.emplace(
             path,AtlasResource{nullptr,decoded,int(width),int(height)});

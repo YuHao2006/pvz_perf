@@ -11,7 +11,7 @@
 <div id="audio-warning" role="status" aria-live="polite" hidden></div>
 <section id="cover"><form id="launch-form" class="panel">
 <p class="eyebrow">PLANTS VS. ZOMBIES · WEB</p><h1>植物大战僵尸 · 网页</h1><p class="intro">设置好画面与帧率，进入游戏。</p>
-<div class="launch-row top-actions"><div class="primary-actions"><button id="start" type="submit" disabled>开始游戏</button><button id="upload-progress" class="secondary" type="button" disabled>上传云端</button><button id="restore-progress" class="secondary" type="button" disabled>从云端恢复</button></div><div class="load-state"><span id="status" role="status" aria-live="polite">正在加载程序和资源…</span><progress id="progress"></progress></div><strong id="cloud-upload-warning" role="status" aria-live="assertive" hidden>正在上传云端，请勿关闭或刷新页面。</strong><strong id="level-save-cloud-warning">注意：关卡 DAT64 存档不会上传云端。关卡中的阵容、波次和未完成进度仅保存在当前浏览器，请在“高级选项”中导出备份。</strong><small id="cloud-status" role="status"></small><small id="lineup-cloud-status" role="status"></small></div>
+<div class="launch-row top-actions"><div class="primary-actions"><button id="start" type="submit" disabled>开始游戏</button><a id="high-resolution" class="secondary" target="_blank" rel="noopener noreferrer" hidden>高清版</a></div><div class="load-state"><span id="status" role="status" aria-live="polite">正在加载程序和资源…</span><progress id="progress"></progress></div><strong id="cloud-upload-warning" role="status" aria-live="assertive" hidden>正在上传云端，请勿关闭或刷新页面。</strong><strong id="quit-save-warning">请通过游戏菜单选择 Quit 正常退出，并等待云端上传完成。不要直接杀进程、关闭或刷新页面，否则用户进度可能无法同步。</strong><strong id="level-save-cloud-warning">注意：关卡 DAT64 存档不会上传云端。关卡中的阵容、波次和未完成进度仅保存在当前浏览器，请在“高级选项”中导出备份。</strong><small id="cloud-status" role="status"></small><small id="lineup-cloud-status" role="status"></small></div>
 <div class="settings">
 
 <label class="field"><span>目标帧率</span><input id="target-fps" type="number" min="30" max="1000000000" step="1" value="100" required><small id="target-fps-info">最低 30 FPS；实际绘制受浏览器与屏幕限制。</small></label>
@@ -38,7 +38,7 @@
 <footer><span>点击／拖动 · 空格暂停 · Esc 菜单</span><span>基于 <a href="https://github.com/wszqkzqk/PvZ-Portable" target="_blank" rel="noopener">PvZ-Portable</a> 修改 · <a href="https://github.com/YuHao2006/pvz_perf" target="_blank" rel="noopener">源码与原生版</a></span></footer>
 <script src="./web-config.js"></script><script src="./graphics-config.js"></script><script defer src="./launcher.js"></script>
 
-<dialog id="cloud-restore-dialog"><h2>恢复云端进度与阵型库？</h2><p>将用云端已有内容覆盖本地用户资料、通关进度、花园状态及阵型列表。云端没有的项目保留本地内容。关卡 DAT64 不在云端，不会被本操作删除。请先备份需要保留的关卡文件。</p><div><button type="button" value="cancel" class="secondary" autofocus>取消</button><button type="button" value="restore">覆盖本地并恢复</button></div></dialog>
+
 
 
 </body></html>

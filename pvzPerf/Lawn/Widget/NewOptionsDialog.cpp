@@ -41,9 +41,11 @@ NewOptionsDialog::NewOptionsDialog(LawnApp* theApp, bool theFromGameSelector) :
         IMAGE_OPTIONS_BACKTOGAMEBUTTON0
     );
     mBackToGameButton->mTranslateX = 0;
-    mBackToGameButton->mTranslateY = 0;
+    mBackToGameButton->mTranslateY = 1;
     mBackToGameButton->mTextOffsetX = -2;
-    mBackToGameButton->mTextOffsetY = -5;
+    // NewLawnButton adds mTranslateY to the normal label too. Compensate
+    // that baseline while letting the shared button image move when pressed.
+    mBackToGameButton->mTextOffsetY = -6;
     mBackToGameButton->mTextDownOffsetX = 0;
     mBackToGameButton->mTextDownOffsetY = 1;
     mBackToGameButton->SetFont(FONT_DWARVENTODCRAFT36GREENINSET);

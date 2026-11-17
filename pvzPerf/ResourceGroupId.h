@@ -34,9 +34,10 @@ enum class ResourceGroupId : std::uint32_t
     LoadingFonts = 27,
     LoadingImages = 28,
     LoadingSounds = 29,
+    DelayLoad_TreeOfWisdom = 30,
 };
 
-inline constexpr std::uint32_t RESOURCE_GROUP_COUNT = 29;
+inline constexpr std::uint32_t RESOURCE_GROUP_COUNT = 30;
 
 constexpr bool IsCanonicalResourceGroupId(ResourceGroupId theGroup) noexcept
 {

@@ -89,9 +89,8 @@ void PoolEffect::PoolEffectDraw(Sexy::Graphics* g, bool theIsNight)
     params.night=theIsNight;
     params.sampler=g->mLinearBlend ? 1u : 0u;
     params.blend=static_cast<Sexy::GpuBlend>(g->mDrawMode);
-    render.DrawPool(theIsNight ? IMAGE_POOL_BASE_NIGHT : IMAGE_POOL_BASE,params);
-    params.layer=1;
-    render.DrawPool(theIsNight ? IMAGE_POOL_SHADING_NIGHT : IMAGE_POOL_SHADING,params);
+    // HD day/night maps already contain the reviewed water and inner walls.
+    // Keep only the original white, translucent caustics over that baked art.
     params.layer=2;
     params.sampler|=2u;
     render.DrawPool(mCausticImage,params);

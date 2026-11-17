@@ -189,8 +189,10 @@ struct ScaleEffectCompiler::Impl {
                      std::vector<uint8_t>& dxil, std::string& error) {
         dxil.clear();
         const auto path = std::filesystem::absolute(std::filesystem::path(std::u8string(sourcePath.begin(), sourcePath.end())));
-        const auto name = path.wstring(), directory = path.parent_path().wstring();
-        const wchar_t* args[] = {name.c_str(), L"-E", L"__M", L"-T", L"cs_6_0",
+        const auto directory = path.parent_path().wstring();
+        // This names generated memory source, not the original on-disk effect.
+        // Keep it ASCII to avoid DXC reopening the raw file for Unicode paths.
+        const wchar_t* args[] = {L"pvz_generated_effect.hlsl", L"-E", L"__M", L"-T", L"cs_6_0",
             L"-HV", L"2018", L"-O3", L"-Ges", L"-I", directory.c_str()};
         DxcBuffer input{source.data(), source.size(), DXC_CP_UTF8};
         DxcPtr<IDxcResult> result;
@@ -225,8 +227,10 @@ struct ScaleEffectCompiler::Impl {
     bool Compile(const std::string& source, const std::string& sourcePath,
                  std::vector<uint32_t>& spirv, std::string& error) {
         const auto path = std::filesystem::absolute(std::filesystem::path(std::u8string(sourcePath.begin(), sourcePath.end())));
-        const auto name = path.wstring(), directory = path.parent_path().wstring();
-        const wchar_t* args[] = {name.c_str(), L"-E", L"__M", L"-T", L"cs_6_0",
+        const auto directory = path.parent_path().wstring();
+        // The real directory remains available for relative includes; no
+        // temporary file or writable ASCII installation directory is needed.
+        const wchar_t* args[] = {L"pvz_generated_effect.hlsl", L"-E", L"__M", L"-T", L"cs_6_0",
             L"-spirv", L"-fspv-target-env=vulkan1.2", L"-HV", L"2018",
             L"-O3", L"-Ges", L"-I", directory.c_str()};
         DxcBuffer input{source.data(), source.size(), DXC_CP_UTF8};
@@ -475,7 +479,7 @@ bool ScaleEffectCompiler::CompileAll(const std::string& theEffectsDir, std::vect
 
 bool ScaleEffectCompiler::ParseEffect(const std::string& thePath, ScaleEffectDesc& ioDesc)
 {
-	std::ifstream aFile(thePath, std::ios::binary);
+	std::ifstream aFile(std::filesystem::path(std::u8string(thePath.begin(), thePath.end())), std::ios::binary);
 	if (!aFile)
 	{
 		ioDesc.mError = "cannot open " + thePath;
@@ -1166,7 +1170,7 @@ bool ScaleEffectCompiler::CompileBinary(const std::string& sourcePath,const Scal
     if(!CompileEffect(sourcePath,overrides,authored)) { error=authored.mError; return false; }
     ScaleEffectRuntimeDesc runtime;
     if(!CompileRuntimeMetadata(authored,runtime,error)) return false;
-    writtenPath=ScaleEffectBinary::DefaultPath(sourcePath);
+    writtenPath=ScaleEffectBinary::DefaultPath(std::filesystem::path(std::u8string(sourcePath.begin(),sourcePath.end())));
     return ScaleEffectBinary::Save(writtenPath,runtime,error);
 }
 }

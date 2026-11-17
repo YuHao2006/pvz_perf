@@ -1081,7 +1081,7 @@ void Zombie::SetupReanimLayers(Reanimation* aReanim, ZombieType theZombieType)
         { kNoLayerOp, kNoLayerOp, kNoLayerOp, kNoLayerOp },  // 30 ZOMBIE_SQUASH_HEAD（无 case）
         { kNoLayerOp, kNoLayerOp, kNoLayerOp, kNoLayerOp },  // 31 ZOMBIE_TALLNUT_HEAD（无 case）
         { kNoLayerOp, kNoLayerOp, kNoLayerOp, kNoLayerOp },  // 32 ZOMBIE_REDEYE_GARGANTUAR（无 case）
-        { { ReanimTrackRanges::anim_innerarm, RENDER_GROUP_HIDDEN }, { JustTrack(ReanimTrackId::Zombie_flaghand), RENDER_GROUP_NORMAL }, { JustTrack(ReanimTrackId::Zombie_innerarm_screendoor), RENDER_GROUP_NORMAL }, { JustTrack(ReanimTrackId::anim_head1), RENDER_GROUP_OVER_SHIELD } },  // 33 ZOMBIE_ZOMBATAR（FLAG 共体 + anim_head1 单轨）
+        { { ReanimTrackRanges::anim_innerarm, RENDER_GROUP_HIDDEN }, { JustTrack(ReanimTrackId::Zombie_flaghand), RENDER_GROUP_NORMAL }, { JustTrack(ReanimTrackId::Zombie_innerarm_screendoor), RENDER_GROUP_NORMAL }, { JustTrack(ReanimTrackId::anim_head1), RENDER_GROUP_NORMAL } },  // 33 ZOMBIE_ZOMBATAR: draw the attached head at its authored position, behind the collar.
     };
     static_assert(sizeof(kZombieLayerOps) / sizeof(kZombieLayerOps[0]) ==
         (int)ZombieType::NUM_ZOMBIE_TYPES, "kZombieLayerOps 槽位须与 ZombieType 枚举同步");
@@ -5932,9 +5932,11 @@ void Zombie::DrawBobsledReanim(std::int64_t ownerNowNs, Graphics* g, const Zombi
         g->mColor = Color::Black;
     }
 
+    // The HD interior omits the old 89-pixel transparent left margin. Keep
+    // registration in the draw origin, including the additive damage flash.
     if (aDrawBack && aBobsledDamageStatus != 3)
     {
-        g->DrawImageF(IMAGE_ZOMBIE_BOBSLED_INSIDE, aOffsetX, aOffsetY);
+        g->DrawImageF(IMAGE_ZOMBIE_BOBSLED_INSIDE, aOffsetX + 89.0f, aOffsetY);
     }
     if (aDrawFront)
     {
@@ -5950,7 +5952,7 @@ void Zombie::DrawBobsledReanim(std::int64_t ownerNowNs, Graphics* g, const Zombi
 
         if (aDrawBack && aBobsledDamageStatus != 3)
         {
-            g->DrawImageF(IMAGE_ZOMBIE_BOBSLED_INSIDE, aOffsetX, aOffsetY);
+            g->DrawImageF(IMAGE_ZOMBIE_BOBSLED_INSIDE, aOffsetX + 89.0f, aOffsetY);
         }
         if (aDrawFront)
         {
@@ -6229,18 +6231,14 @@ void Zombie::DrawReanim(std::int64_t ownerNowNs, Graphics* g, const ZombieDrawPo
         aBodyReanim->DrawRenderGroup(g, RENDER_GROUP_OVER_SHIELD);
     }
 
-    // 1073 FUN_0053D950 has a dedicated Zombatar path after the normal
-    // render group.  The Zombatar body keeps anim_head1 in render group 3
-    // (with the custom head attached to it), and its extra accessory tracks
-    // are in group 4.  The generic shield-only path above never reaches
-    // these groups because a Zombatar has no shield; omitting them makes the
-    // avatar preview render as a headless body.
+    // The attached head is drawn in authored track order in the normal
+    // group, so the body's collar covers its neck. Extra accessories keep
+    // their separate foreground pass.
     if (mZombieType == ZombieType::ZOMBIE_ZOMBATAR)
     {
         aBodyReanim->mColorOverride = aColorOverride;
         aBodyReanim->mExtraAdditiveColor = aExtraAdditiveColor;
         aBodyReanim->mEnableExtraAdditiveDraw = aEnableExtraAdditiveDraw;
-        aBodyReanim->DrawRenderGroup(g, RENDER_GROUP_OVER_SHIELD);
         aBodyReanim->DrawRenderGroup(g, 4);
     }
 

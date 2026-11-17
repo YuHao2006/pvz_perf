@@ -44,7 +44,7 @@ class ZombatarAtlasTests(unittest.TestCase):
             str(path.relative_to(cls.source_root)).replace("\\", "/").lower(): path
             for path in (cls.source_root / "images").rglob("*") if path.is_file()
         }
-        overlay = ROOT / "assets/source-art/ai/runtime"
+        overlay = ROOT / "assets/source-art/archive/2026-11-16-pre-library/ai/runtime"
         cls.files.update({
             str(path.relative_to(overlay)).replace("\\", "/").lower(): path
             for path in overlay.rglob("*") if path.is_file()

@@ -2024,132 +2024,180 @@ export component Zombie_catapult {
     Track {
         source-name: "Zombie_catapult_body_overlays";
         frame-count: 85;
-        frame 0 { x: 81; y: 105.5; scale-x: 0.9; scale-y: 0.9; image: IMAGE_REANIM_ZOMBIE_CATAPULT_BODY_OVERLAY1; }
-        frame 1 { x: -10000; y: 105.3; scale-x: -10000; scale-y: -10000; image: none; }
-        frame 2 { y: 105; }
-        frame 3 { x: 81; y: 104.8; }
-        frame 4 { x: -10000; y: 104.6; }
-        frame 5 { y: 104.3; }
-        frame 6 { y: 104.2; }
-        frame 7 { y: 104.3; }
-        frame 8 { y: 104.6; }
-        frame 9 { y: 104.8; }
-        frame 10 { y: 105; }
-        frame 11 { y: 105.2; }
-        frame 12 { y: 105.3; }
-        frame 13 { y: 105.2; }
-        frame 14 { y: 105; }
-        frame 15 { y: 104.8; }
-        frame 16 { y: 104.6; }
-        frame 17 { y: 104.3; }
-        frame 18 { y: 104.2; }
-        frame 19 { y: 104.3; }
-        frame 20 { y: 104.6; }
-        frame 21 { y: 104.8; }
-        frame 22 { y: 105; }
-        frame 23 { y: 105.2; }
-        frame 24 { y: 105.3; }
-        frame 25 { y: -10000; }
-        frame 43 { x: 80.6; y: 104.8; skew-x: -0.4; skew-y: -0.4; }
-        frame 44 { x: 80.2; y: 104.1; skew-x: -1.2; skew-y: -1.2; }
-        frame 45 { x: 79.8; y: 103.4; skew-x: -1.9; skew-y: -1.9; }
-        frame 46 { x: 79.5; y: 102.9; skew-x: -2.7; skew-y: -2.7; }
-        frame 47 { x: 80.1; y: 103.7; skew-x: -1.7; skew-y: -1.7; }
-        frame 48 { x: 80.5; y: 104.6; skew-x: -0.7; skew-y: -0.7; }
-        frame 49 { x: 81; y: 105.3; skew-x: 0; skew-y: 0; }
-        frame 50 { x: -10000; y: -10000; skew-x: -10000; skew-y: -10000; }
-        frame 58 { y: 105.8; }
-        frame 59 { y: 106.2; }
-        frame 60 { y: 105.8; }
-        frame 61 { y: 105.3; }
-        frame 62 { y: 105.8; }
-        frame 63 { y: 106.2; }
-        frame 64 { y: 105.8; }
-        frame 65 { y: 105.3; }
-        frame 66 { y: 105.8; }
-        frame 67 { y: 106.2; }
-        frame 68 { y: 105.8; }
-        frame 69 { y: 105.3; }
-        frame 70 { y: -10000; }
-        frame 71 { x: 83.8; y: 96.4; skew-x: 6; skew-y: 6; scale-x: 0.899; scale-y: 0.899; }
-        frame 72 { x: 86.4; y: 87.2; skew-x: 12.4; skew-y: 12.4; scale-x: -10000; scale-y: -10000; }
-        frame 73 { x: 85; y: 88; skew-x: 8.3; skew-y: 8.3; }
-        frame 74 { x: 83.5; y: 88.8; skew-x: 4; skew-y: 4; }
-        frame 75 { x: 81.9; y: 89.5; skew-x: 0; skew-y: 0; }
-        frame 76 { x: 80.3; y: 90.2; skew-x: -3.9; skew-y: -3.9; }
-        frame 77 { x: 80.5; y: 96.2; skew-x: -10000; skew-y: -10000; scale-x: 0.898; scale-y: 0.898; }
-        frame 78 { x: 80.6; y: 102; scale-x: 0.899; scale-y: 0.899; }
-        frame 79 { x: 81.1; y: 103.6; skew-x: -3; skew-y: -3.2; scale-x: 0.907; scale-y: 0.889; }
-        frame 80 { x: 81.7; y: 105.3; skew-x: -2.3; skew-y: -2.5; scale-x: 0.916; scale-y: 0.88; }
-        frame 81 { x: -10000; y: 103.1; skew-x: -2.2; skew-y: -2.4; scale-x: 0.907; scale-y: 0.889; }
-        frame 82 { y: 101; skew-x: -2.4; skew-y: -10000; scale-x: 0.899; scale-y: 0.899; }
-        frame 83 { y: 102.8; skew-x: -2.2; skew-y: -2.2; scale-x: -10000; scale-y: -10000; }
-        frame 84 { y: 104.5; skew-x: -2.4; skew-y: -2.4; }
+        frame 0 { x: 27.60563495; y: 69.27441239; skew-x: 0; skew-y: -0; scale-x: 0.9993103448; scale-y: 0.9993102986; cel: 0; alpha: 1; image: IMAGE_REANIM_ZOMBIE_CATAPULT_BODY_OVERLAY1; }
+        frame 1 { x: 27.6139605; y: 69.05775528; skew-x: 0; skew-y: -5.298571066e-06; scale-x: 0.9993103448; scale-y: 0.999310331; cel: 0; alpha: 1; }
+        frame 2 { x: 27.62228606; y: 68.74109818; skew-x: 0; skew-y: -5.298570894e-06; scale-x: 0.9993103448; scale-y: 0.9993103634; cel: 0; alpha: 1; }
+        frame 3 { x: 27.63061771; y: 68.62444107; skew-x: 0; skew-y: 0; scale-x: 0.9993103448; scale-y: 0.9993103958; cel: 0; alpha: 1; }
+        frame 4 { x: 27.63894326; y: 68.30779006; skew-x: 0; skew-y: -5.298571041e-06; scale-x: 0.9993103448; scale-y: 0.9993103358; cel: 0; alpha: 1; }
+        frame 5 { x: 27.64727491; y: 68.19113826; skew-x: 0; skew-y: 0; scale-x: 0.9993103448; scale-y: 0.9993102938; cel: 0; alpha: 1; }
+        frame 6 { x: 27.65560047; y: 67.97448115; skew-x: 0; skew-y: -5.298571092e-06; scale-x: 0.9993103448; scale-y: 0.9993103262; cel: 0; alpha: 1; }
+        frame 7 { x: 27.65560047; y: 68.17448105; skew-x: 0; skew-y: -5.29857108e-06; scale-x: 0.9993103448; scale-y: 0.9993103285; cel: 0; alpha: 1; }
+        frame 8 { x: 27.65560047; y: 68.27447565; skew-x: 0; skew-y: -5.298570673e-06; scale-x: 0.9993103448; scale-y: 0.9993104051; cel: 0; alpha: 1; }
+        frame 9 { x: 27.65560047; y: 68.57447555; skew-x: 0; skew-y: -5.298570661e-06; scale-x: 0.9993103448; scale-y: 0.9993104074; cel: 0; alpha: 1; }
+        frame 10 { x: 27.65560047; y: 68.67448155; skew-x: 0; skew-y: -5.298571139e-06; scale-x: 0.9993103448; scale-y: 0.9993103172; cel: 0; alpha: 1; }
+        frame 11 { x: 27.65560047; y: 68.97448145; skew-x: 0; skew-y: -5.298571127e-06; scale-x: 0.9993103448; scale-y: 0.9993103195; cel: 0; alpha: 1; }
+        frame 12 { x: 27.65560047; y: 69.17448135; skew-x: 0; skew-y: -5.298571116e-06; scale-x: 0.9993103448; scale-y: 0.9993103217; cel: 0; alpha: 1; }
+        frame 13 { x: 27.65560047; y: 68.97448144; skew-x: 0; skew-y: -5.298571134e-06; scale-x: 0.9993103448; scale-y: 0.9993103183; cel: 0; alpha: 1; }
+        frame 14 { x: 27.65560047; y: 68.67448154; skew-x: 0; skew-y: -5.298571146e-06; scale-x: 0.9993103448; scale-y: 0.9993103161; cel: 0; alpha: 1; }
+        frame 15 { x: 27.65560047; y: 68.57447553; skew-x: 0; skew-y: -5.298570671e-06; scale-x: 0.9993103448; scale-y: 0.9993104056; cel: 0; alpha: 1; }
+        frame 16 { x: 27.65560047; y: 68.27447563; skew-x: 0; skew-y: -5.298570655e-06; scale-x: 0.9993103448; scale-y: 0.9993104086; cel: 0; alpha: 1; }
+        frame 17 { x: 27.65560047; y: 68.17448102; skew-x: 0; skew-y: -5.298571064e-06; scale-x: 0.9993103448; scale-y: 0.9993103314; cel: 0; alpha: 1; }
+        frame 18 { x: 27.65560047; y: 67.97448112; skew-x: 0; skew-y: -5.298571079e-06; scale-x: 0.9993103448; scale-y: 0.9993103285; cel: 0; alpha: 1; }
+        frame 19 { x: 27.64727491; y: 68.19113829; skew-x: 0; skew-y: 0; scale-x: 0.9993103448; scale-y: 0.999310291; cel: 0; alpha: 1; }
+        frame 20 { x: 27.63894326; y: 68.30778929; skew-x: 0; skew-y: -5.298570963e-06; scale-x: 0.9993103448; scale-y: 0.9993103504; cel: 0; alpha: 1; }
+        frame 21 { x: 27.63061771; y: 68.62444109; skew-x: 0; skew-y: 0; scale-x: 0.9993103448; scale-y: 0.9993103976; cel: 0; alpha: 1; }
+        frame 22 { x: 27.62228606; y: 68.74109819; skew-x: 0; skew-y: -5.298570888e-06; scale-x: 0.9993103448; scale-y: 0.9993103646; cel: 0; alpha: 1; }
+        frame 23 { x: 27.6139605; y: 69.05775529; skew-x: 0; skew-y: -5.29857106e-06; scale-x: 0.9993103448; scale-y: 0.9993103322; cel: 0; alpha: 1; }
+        frame 24 { x: 27.60563495; y: 69.27441239; skew-x: 0; skew-y: 0; scale-x: 0.9993103448; scale-y: 0.9993102986; cel: 0; alpha: 1; }
+        frame 25 { x: 27.65560047; y: 69.17448135; skew-x: 0; skew-y: -5.298571116e-06; scale-x: 0.9993103448; scale-y: 0.9993103217; cel: 0; alpha: 1; }
+        frame 26 { x: 27.65560047; y: 69.17448135; skew-x: 0; skew-y: -5.298571116e-06; scale-x: 0.9993103448; scale-y: 0.9993103217; cel: 0; alpha: 1; }
+        frame 27 { x: 27.65560047; y: 69.17448135; skew-x: 0; skew-y: -5.298571116e-06; scale-x: 0.9993103448; scale-y: 0.9993103217; cel: 0; alpha: 1; }
+        frame 28 { x: 27.65560047; y: 69.17448135; skew-x: 0; skew-y: -5.298571116e-06; scale-x: 0.9993103448; scale-y: 0.9993103217; cel: 0; alpha: 1; }
+        frame 29 { x: 27.65560047; y: 69.17448135; skew-x: 0; skew-y: -5.298571116e-06; scale-x: 0.9993103448; scale-y: 0.9993103217; cel: 0; alpha: 1; }
+        frame 30 { x: 27.65560047; y: 69.17448135; skew-x: 0; skew-y: -5.298571116e-06; scale-x: 0.9993103448; scale-y: 0.9993103217; cel: 0; alpha: 1; }
+        frame 31 { x: 27.65560047; y: 69.17448135; skew-x: 0; skew-y: -5.298571116e-06; scale-x: 0.9993103448; scale-y: 0.9993103217; cel: 0; alpha: 1; }
+        frame 32 { x: 27.65560047; y: 69.17448135; skew-x: 0; skew-y: -5.298571116e-06; scale-x: 0.9993103448; scale-y: 0.9993103217; cel: 0; alpha: 1; }
+        frame 33 { x: 27.65560047; y: 69.17448135; skew-x: 0; skew-y: -5.298571116e-06; scale-x: 0.9993103448; scale-y: 0.9993103217; cel: 0; alpha: 1; }
+        frame 34 { x: 27.65560047; y: 69.17448135; skew-x: 0; skew-y: -5.298571116e-06; scale-x: 0.9993103448; scale-y: 0.9993103217; cel: 0; alpha: 1; }
+        frame 35 { x: 27.65560047; y: 69.17448135; skew-x: 0; skew-y: -5.298571116e-06; scale-x: 0.9993103448; scale-y: 0.9993103217; cel: 0; alpha: 1; }
+        frame 36 { x: 27.65560047; y: 69.17448135; skew-x: 0; skew-y: -5.298571116e-06; scale-x: 0.9993103448; scale-y: 0.9993103217; cel: 0; alpha: 1; }
+        frame 37 { x: 27.65560047; y: 69.17448135; skew-x: 0; skew-y: -5.298571116e-06; scale-x: 0.9993103448; scale-y: 0.9993103217; cel: 0; alpha: 1; }
+        frame 38 { x: 27.65560047; y: 69.17448135; skew-x: 0; skew-y: -5.298571116e-06; scale-x: 0.9993103448; scale-y: 0.9993103217; cel: 0; alpha: 1; }
+        frame 39 { x: 27.65560047; y: 69.17448135; skew-x: 0; skew-y: -5.298571116e-06; scale-x: 0.9993103448; scale-y: 0.9993103217; cel: 0; alpha: 1; }
+        frame 40 { x: 27.65560047; y: 69.17448135; skew-x: 0; skew-y: -5.298571116e-06; scale-x: 0.9993103448; scale-y: 0.9993103217; cel: 0; alpha: 1; }
+        frame 41 { x: 27.65560047; y: 69.17448135; skew-x: 0; skew-y: -5.298571116e-06; scale-x: 0.9993103448; scale-y: 0.9993103217; cel: 0; alpha: 1; }
+        frame 42 { x: 27.65560047; y: 69.17448135; skew-x: 0; skew-y: -5.298571116e-06; scale-x: 0.9993103448; scale-y: 0.9993103217; cel: 0; alpha: 1; }
+        frame 43 { x: 26.89027818; y: 69.13261698; skew-x: -0.4000039795; skew-y: -0.3999997855; scale-x: 0.999310353; scale-y: 0.999310281; cel: 0; alpha: 1; }
+        frame 44 { x: 26.09577581; y: 69.17930533; skew-x: -1.200002421; skew-y: -1.199999398; scale-x: 0.9993103385; scale-y: 0.9993103129; cel: 0; alpha: 1; }
+        frame 45 { x: 25.28014693; y: 69.17703108; skew-x: -1.899999312; skew-y: -1.89999615; scale-x: 0.9993103224; scale-y: 0.9993103929; cel: 0; alpha: 1; }
+        frame 46 { x: 24.47749688; y: 69.32030043; skew-x: -2.699999177; skew-y: -2.699998318; scale-x: 0.9993103386; scale-y: 0.9993103918; cel: 0; alpha: 1; }
+        frame 47 { x: 25.55799731; y: 69.19368884; skew-x: -1.700002833; skew-y: -1.69999789; scale-x: 0.9993103446; scale-y: 0.9993102966; cel: 0; alpha: 1; }
+        frame 48 { x: 26.63191137; y: 69.16418898; skew-x: -0.6999997769; skew-y: -0.699999504; scale-x: 0.9993103594; scale-y: 0.9993103219; cel: 0; alpha: 1; }
+        frame 49 { x: 27.65560047; y: 69.17448135; skew-x: 0; skew-y: -5.298571116e-06; scale-x: 0.9993103448; scale-y: 0.9993103217; cel: 0; alpha: 1; }
+        frame 50 { x: 27.65560047; y: 69.17448135; skew-x: 0; skew-y: -5.298571116e-06; scale-x: 0.9993103448; scale-y: 0.9993103217; cel: 0; alpha: 1; }
+        frame 51 { x: 27.65560047; y: 69.17448135; skew-x: 0; skew-y: -5.298571116e-06; scale-x: 0.9993103448; scale-y: 0.9993103217; cel: 0; alpha: 1; }
+        frame 52 { x: 27.65560047; y: 69.17448135; skew-x: 0; skew-y: -5.298571116e-06; scale-x: 0.9993103448; scale-y: 0.9993103217; cel: 0; alpha: 1; }
+        frame 53 { x: 27.65560047; y: 69.17448135; skew-x: 0; skew-y: -5.298571116e-06; scale-x: 0.9993103448; scale-y: 0.9993103217; cel: 0; alpha: 1; }
+        frame 54 { x: 27.65560047; y: 69.17448135; skew-x: 0; skew-y: -5.298571116e-06; scale-x: 0.9993103448; scale-y: 0.9993103217; cel: 0; alpha: 1; }
+        frame 55 { x: 27.65560047; y: 69.17448135; skew-x: 0; skew-y: -5.298571116e-06; scale-x: 0.9993103448; scale-y: 0.9993103217; cel: 0; alpha: 1; }
+        frame 56 { x: 27.65560047; y: 69.17448135; skew-x: 0; skew-y: -5.298571116e-06; scale-x: 0.9993103448; scale-y: 0.9993103217; cel: 0; alpha: 1; }
+        frame 57 { x: 27.65560047; y: 69.17448135; skew-x: 0; skew-y: -5.298571116e-06; scale-x: 0.9993103448; scale-y: 0.9993103217; cel: 0; alpha: 1; }
+        frame 58 { x: 27.65560047; y: 69.57447555; skew-x: 0; skew-y: -5.298570661e-06; scale-x: 0.9993103448; scale-y: 0.9993104074; cel: 0; alpha: 1; }
+        frame 59 { x: 27.65560047; y: 69.97448115; skew-x: 0; skew-y: -5.298571092e-06; scale-x: 0.9993103448; scale-y: 0.9993103262; cel: 0; alpha: 1; }
+        frame 60 { x: 27.65560047; y: 69.57447555; skew-x: 0; skew-y: -5.298570661e-06; scale-x: 0.9993103448; scale-y: 0.9993104074; cel: 0; alpha: 1; }
+        frame 61 { x: 27.65560047; y: 69.17448135; skew-x: 0; skew-y: -5.298571116e-06; scale-x: 0.9993103448; scale-y: 0.9993103217; cel: 0; alpha: 1; }
+        frame 62 { x: 27.65560047; y: 69.57447555; skew-x: 0; skew-y: -5.298570661e-06; scale-x: 0.9993103448; scale-y: 0.9993104074; cel: 0; alpha: 1; }
+        frame 63 { x: 27.65560047; y: 69.97448115; skew-x: 0; skew-y: -5.298571092e-06; scale-x: 0.9993103448; scale-y: 0.9993103262; cel: 0; alpha: 1; }
+        frame 64 { x: 27.65560047; y: 69.57447555; skew-x: 0; skew-y: -5.298570661e-06; scale-x: 0.9993103448; scale-y: 0.9993104074; cel: 0; alpha: 1; }
+        frame 65 { x: 27.65560047; y: 69.17448134; skew-x: 0; skew-y: -5.298571122e-06; scale-x: 0.9993103448; scale-y: 0.9993103206; cel: 0; alpha: 1; }
+        frame 66 { x: 27.65560047; y: 69.57447558; skew-x: 0; skew-y: -5.298570649e-06; scale-x: 0.9993103448; scale-y: 0.9993104097; cel: 0; alpha: 1; }
+        frame 67 { x: 27.65560047; y: 69.97448118; skew-x: 0; skew-y: -5.298571079e-06; scale-x: 0.9993103448; scale-y: 0.9993103286; cel: 0; alpha: 1; }
+        frame 68 { x: 27.65560047; y: 69.57447555; skew-x: 0; skew-y: -5.298570661e-06; scale-x: 0.9993103448; scale-y: 0.9993104074; cel: 0; alpha: 1; }
+        frame 69 { x: 27.65560047; y: 69.17448135; skew-x: 0; skew-y: -5.298571116e-06; scale-x: 0.9993103448; scale-y: 0.9993103217; cel: 0; alpha: 1; }
+        frame 70 { x: 27.65560047; y: 69.17448135; skew-x: 0; skew-y: -5.298571116e-06; scale-x: 0.9993103448; scale-y: 0.9993103217; cel: 0; alpha: 1; }
+        frame 71 { x: 34.41249764; y: 54.74581151; skew-x: 5.99999739; skew-y: 5.999999242; scale-x: 0.9982000125; scale-y: 0.9981999442; cel: 0; alpha: 1; }
+        frame 72 { x: 41.99615731; y: 40.48477759; skew-x: 12.39999836; skew-y: 12.40000101; scale-x: 0.9981999937; scale-y: 0.9981999831; cel: 0; alpha: 1; }
+        frame 73 { x: 37.33984855; y: 44.58509496; skew-x: 8.300000048; skew-y: 8.29999695; scale-x: 0.9982000325; scale-y: 0.9981999661; cel: 0; alpha: 1; }
+        frame 74 { x: 32.73887282; y: 48.81662062; skew-x: 3.999998647; skew-y: 3.999998872; scale-x: 0.9981999965; scale-y: 0.9981999907; cel: 0; alpha: 1; }
+        frame 75 { x: 28.67358278; y: 53.23851913; skew-x: 6.308650341e-07; skew-y: -8.184277361e-10; scale-x: 0.9981999854; scale-y: 0.998200013; cel: 0; alpha: 1; }
+        frame 76 { x: 24.70286362; y: 57.86323556; skew-x: -3.899997067; skew-y: -3.899999957; scale-x: 0.9981999964; scale-y: 0.9982000426; cel: 0; alpha: 1; }
+        frame 77 { x: 24.86871138; y: 63.8537103; skew-x: -3.899997067; skew-y: -3.899999994; scale-x: 0.9970896516; scale-y: 0.9970896885; cel: 0; alpha: 1; }
+        frame 78 { x: 25.00286361; y: 69.5632399; skew-x: -3.900002514; skew-y: -3.900000332; scale-x: 0.9982000031; scale-y: 0.9981999501; cel: 0; alpha: 1; }
+        frame 79 { x: 25.35164815; y: 70.81122231; skew-x: -2.999998448; skew-y: -3.200001725; scale-x: 1.007082755; scale-y: 0.9870965648; cel: 0; alpha: 1; }
+        frame 80 { x: 25.82807321; y: 72.06703202; skew-x: -2.299997997; skew-y: -2.500002161; scale-x: 1.017075837; scale-y: 0.9771034817; cel: 0; alpha: 1; }
+        frame 81 { x: 26.32031468; y: 69.34182881; skew-x: -2.200002886; skew-y: -2.400001121; scale-x: 1.007082728; scale-y: 0.9870964977; cel: 0; alpha: 1; }
+        frame 82 { x: 26.85828181; y: 67.06806705; skew-x: -2.39999979; skew-y: -2.399995973; scale-x: 0.9981999577; scale-y: 0.9982000304; cel: 0; alpha: 1; }
+        frame 83 { x: 26.92539559; y: 68.67432931; skew-x: -2.19999979; skew-y: -2.199995981; scale-x: 0.9981999577; scale-y: 0.998200027; cel: 0; alpha: 1; }
+        frame 84 { x: 26.85828181; y: 70.56806724; skew-x: -2.39999979; skew-y: -2.399995987; scale-x: 0.9981999577; scale-y: 0.9982000248; cel: 0; alpha: 1; }
     }
     Track {
         source-name: "Zombie_catapult_body_overlays2";
         frame-count: 85;
-        frame 0 { x: 27.2; y: 69.3; scale-x: 0.9; scale-y: 0.9; image: IMAGE_REANIM_ZOMBIE_CATAPULT_BODY_OVERLAY2; }
-        frame 1 { x: -10000; y: 69.2; scale-x: -10000; scale-y: -10000; image: none; }
-        frame 2 { y: 68.9; }
-        frame 3 { x: 27.3; y: 68.7; }
-        frame 4 { x: -10000; y: 68.5; }
-        frame 5 { y: 68.3; }
-        frame 6 { y: 68.1; }
-        frame 7 { y: 68.3; }
-        frame 8 { y: 68.5; }
-        frame 9 { y: 68.7; }
-        frame 10 { y: 68.8; }
-        frame 11 { y: 69.1; }
-        frame 12 { y: 69.3; }
-        frame 13 { y: 69.1; }
-        frame 14 { y: 68.8; }
-        frame 15 { y: 68.7; }
-        frame 16 { y: 68.5; }
-        frame 17 { y: 68.3; }
-        frame 18 { y: 68.1; }
-        frame 19 { y: 68.3; }
-        frame 20 { y: 68.5; }
-        frame 21 { y: 68.7; }
-        frame 22 { y: 68.8; }
-        frame 23 { y: 69.1; }
-        frame 24 { y: 69.3; }
-        frame 25 { y: -10000; }
-        frame 43 { x: 26.5; y: 69.2; skew-x: -0.4; skew-y: -0.4; }
-        frame 44 { x: 25.7; y: 69.3; skew-x: -1.2; skew-y: -1.2; }
-        frame 45 { x: 24.9; y: -10000; skew-x: -1.9; skew-y: -1.9; }
-        frame 46 { x: 24.1; y: 69.4; skew-x: -2.7; skew-y: -2.7; }
-        frame 47 { x: 25.2; y: 69.3; skew-x: -1.7; skew-y: -1.7; }
-        frame 48 { x: 26.3; y: 69.2; skew-x: -0.7; skew-y: -0.7; }
-        frame 49 { x: 27.3; y: 69.3; skew-x: 0; skew-y: 0; }
-        frame 50 { x: -10000; y: -10000; skew-x: -10000; skew-y: -10000; }
-        frame 58 { y: 69.7; }
-        frame 59 { y: 70.1; }
-        frame 60 { y: 69.7; }
-        frame 61 { y: 69.3; }
-        frame 62 { y: 69.7; }
-        frame 63 { y: 70.1; }
-        frame 64 { y: 69.7; }
-        frame 65 { y: 69.3; }
-        frame 66 { y: 69.7; }
-        frame 67 { y: 70.1; }
-        frame 68 { y: 69.7; }
-        frame 69 { y: 69.3; }
-        frame 70 { y: -10000; }
-        frame 71 { x: 34.1; y: 54.9; skew-x: 6; skew-y: 6; scale-x: 0.899; scale-y: 0.899; }
-        frame 72 { x: 41.6; y: 40.5; skew-x: 12.4; skew-y: 12.4; scale-x: -10000; scale-y: -10000; }
-        frame 73 { x: 37; y: 44.6; skew-x: 8.3; skew-y: 8.3; }
-        frame 74 { x: 32.5; y: 49; skew-x: 4; skew-y: 4; }
-        frame 75 { x: 28.2; y: 53.5; skew-x: 0; skew-y: 0; }
-        frame 76 { x: 24.3; y: 58; skew-x: -3.9; skew-y: -3.9; }
-        frame 77 { x: 24.5; y: 64; skew-x: -10000; skew-y: -10000; scale-x: 0.898; scale-y: 0.898; }
-        frame 78 { x: -10000; y: 69.8; scale-x: 0.899; scale-y: 0.899; }
-        frame 79 { x: 25; y: 70.8; skew-x: -3; skew-y: -3.2; scale-x: 0.907; scale-y: 0.889; }
-        frame 80 { x: 25.4; y: 72.3; skew-x: -2.3; skew-y: -2.5; scale-x: 0.916; scale-y: 0.88; }
-        frame 81 { x: 26; y: 69.6; skew-x: -2.2; skew-y: -2.4; scale-x: 0.907; scale-y: 0.889; }
-        frame 82 { x: 26.5; y: 67.2; skew-x: -2.4; skew-y: -10000; scale-x: 0.899; scale-y: 0.899; }
-        frame 83 { x: 26.6; y: 68.8; skew-x: -2.2; skew-y: -2.2; scale-x: -10000; scale-y: -10000; }
-        frame 84 { x: 26.5; y: 70.7; skew-x: -2.4; skew-y: -2.4; }
+        frame 0 { x: 26.4; y: 69.3; skew-x: 0; skew-y: 0; scale-x: 0.9; scale-y: 0.9; cel: 0; alpha: 1; image: IMAGE_REANIM_ZOMBIE_CATAPULT_BODY_OVERLAY2; }
+        frame 1 { x: 26.4; y: 69.1; skew-x: 0; skew-y: 0; scale-x: 0.9; scale-y: 0.9; cel: 0; alpha: 1; }
+        frame 2 { x: 26.4; y: 68.8; skew-x: 0; skew-y: 0; scale-x: 0.9; scale-y: 0.9; cel: 0; alpha: 1; }
+        frame 3 { x: 26.4; y: 68.7; skew-x: 0; skew-y: 0; scale-x: 0.9; scale-y: 0.9; cel: 0; alpha: 1; }
+        frame 4 { x: 26.4; y: 68.4; skew-x: 0; skew-y: 0; scale-x: 0.9; scale-y: 0.9; cel: 0; alpha: 1; }
+        frame 5 { x: 26.4; y: 68.3; skew-x: 0; skew-y: 0; scale-x: 0.9; scale-y: 0.9; cel: 0; alpha: 1; }
+        frame 6 { x: 26.4; y: 68.1; skew-x: 0; skew-y: 0; scale-x: 0.9; scale-y: 0.9; cel: 0; alpha: 1; }
+        frame 7 { x: 26.4; y: 68.3; skew-x: 0; skew-y: 0; scale-x: 0.9; scale-y: 0.9; cel: 0; alpha: 1; }
+        frame 8 { x: 26.4; y: 68.4; skew-x: 0; skew-y: 0; scale-x: 0.9; scale-y: 0.9; cel: 0; alpha: 1; }
+        frame 9 { x: 26.4; y: 68.7; skew-x: 0; skew-y: 0; scale-x: 0.9; scale-y: 0.9; cel: 0; alpha: 1; }
+        frame 10 { x: 26.4; y: 68.8; skew-x: 0; skew-y: 0; scale-x: 0.9; scale-y: 0.9; cel: 0; alpha: 1; }
+        frame 11 { x: 26.4; y: 69.1; skew-x: 0; skew-y: 0; scale-x: 0.9; scale-y: 0.9; cel: 0; alpha: 1; }
+        frame 12 { x: 26.4; y: 69.3; skew-x: 0; skew-y: 0; scale-x: 0.9; scale-y: 0.9; cel: 0; alpha: 1; }
+        frame 13 { x: 26.4; y: 69.1; skew-x: 0; skew-y: 0; scale-x: 0.9; scale-y: 0.9; cel: 0; alpha: 1; }
+        frame 14 { x: 26.4; y: 68.8; skew-x: 0; skew-y: 0; scale-x: 0.9; scale-y: 0.9; cel: 0; alpha: 1; }
+        frame 15 { x: 26.4; y: 68.7; skew-x: 0; skew-y: 0; scale-x: 0.9; scale-y: 0.9; cel: 0; alpha: 1; }
+        frame 16 { x: 26.4; y: 68.4; skew-x: 0; skew-y: 0; scale-x: 0.9; scale-y: 0.9; cel: 0; alpha: 1; }
+        frame 17 { x: 26.4; y: 68.3; skew-x: 0; skew-y: 0; scale-x: 0.9; scale-y: 0.9; cel: 0; alpha: 1; }
+        frame 18 { x: 26.4; y: 68.1; skew-x: 0; skew-y: 0; scale-x: 0.9; scale-y: 0.9; cel: 0; alpha: 1; }
+        frame 19 { x: 26.4; y: 68.3; skew-x: 0; skew-y: 0; scale-x: 0.9; scale-y: 0.9; cel: 0; alpha: 1; }
+        frame 20 { x: 26.4; y: 68.4; skew-x: 0; skew-y: 0; scale-x: 0.9; scale-y: 0.9; cel: 0; alpha: 1; }
+        frame 21 { x: 26.4; y: 68.7; skew-x: 0; skew-y: 0; scale-x: 0.9; scale-y: 0.9; cel: 0; alpha: 1; }
+        frame 22 { x: 26.4; y: 68.8; skew-x: 0; skew-y: 0; scale-x: 0.9; scale-y: 0.9; cel: 0; alpha: 1; }
+        frame 23 { x: 26.4; y: 69.1; skew-x: 0; skew-y: 0; scale-x: 0.9; scale-y: 0.9; cel: 0; alpha: 1; }
+        frame 24 { x: 26.4; y: 69.3; skew-x: 0; skew-y: 0; scale-x: 0.9; scale-y: 0.9; cel: 0; alpha: 1; }
+        frame 25 { x: 26.4; y: 69.3; skew-x: 0; skew-y: 0; scale-x: 0.9; scale-y: 0.9; cel: 0; alpha: 1; }
+        frame 26 { x: 26.4; y: 69.3; skew-x: 0; skew-y: 0; scale-x: 0.9; scale-y: 0.9; cel: 0; alpha: 1; }
+        frame 27 { x: 26.4; y: 69.3; skew-x: 0; skew-y: 0; scale-x: 0.9; scale-y: 0.9; cel: 0; alpha: 1; }
+        frame 28 { x: 26.4; y: 69.3; skew-x: 0; skew-y: 0; scale-x: 0.9; scale-y: 0.9; cel: 0; alpha: 1; }
+        frame 29 { x: 26.4; y: 69.3; skew-x: 0; skew-y: 0; scale-x: 0.9; scale-y: 0.9; cel: 0; alpha: 1; }
+        frame 30 { x: 26.4; y: 69.3; skew-x: 0; skew-y: 0; scale-x: 0.9; scale-y: 0.9; cel: 0; alpha: 1; }
+        frame 31 { x: 26.4; y: 69.3; skew-x: 0; skew-y: 0; scale-x: 0.9; scale-y: 0.9; cel: 0; alpha: 1; }
+        frame 32 { x: 26.4; y: 69.3; skew-x: 0; skew-y: 0; scale-x: 0.9; scale-y: 0.9; cel: 0; alpha: 1; }
+        frame 33 { x: 26.4; y: 69.3; skew-x: 0; skew-y: 0; scale-x: 0.9; scale-y: 0.9; cel: 0; alpha: 1; }
+        frame 34 { x: 26.4; y: 69.3; skew-x: 0; skew-y: 0; scale-x: 0.9; scale-y: 0.9; cel: 0; alpha: 1; }
+        frame 35 { x: 26.4; y: 69.3; skew-x: 0; skew-y: 0; scale-x: 0.9; scale-y: 0.9; cel: 0; alpha: 1; }
+        frame 36 { x: 26.4; y: 69.3; skew-x: 0; skew-y: 0; scale-x: 0.9; scale-y: 0.9; cel: 0; alpha: 1; }
+        frame 37 { x: 26.4; y: 69.3; skew-x: 0; skew-y: 0; scale-x: 0.9; scale-y: 0.9; cel: 0; alpha: 1; }
+        frame 38 { x: 26.4; y: 69.3; skew-x: 0; skew-y: 0; scale-x: 0.9; scale-y: 0.9; cel: 0; alpha: 1; }
+        frame 39 { x: 26.4; y: 69.3; skew-x: 0; skew-y: 0; scale-x: 0.9; scale-y: 0.9; cel: 0; alpha: 1; }
+        frame 40 { x: 26.4; y: 69.3; skew-x: 0; skew-y: 0; scale-x: 0.9; scale-y: 0.9; cel: 0; alpha: 1; }
+        frame 41 { x: 26.4; y: 69.3; skew-x: 0; skew-y: 0; scale-x: 0.9; scale-y: 0.9; cel: 0; alpha: 1; }
+        frame 42 { x: 26.4; y: 69.3; skew-x: 0; skew-y: 0; scale-x: 0.9; scale-y: 0.9; cel: 0; alpha: 1; }
+        frame 43 { x: 25.6746958; y: 69.2986765; skew-x: -0.4; skew-y: -0.4; scale-x: 0.9; scale-y: 0.9; cel: 0; alpha: 1; }
+        frame 44 { x: 24.9198618; y: 69.3944897; skew-x: -1.2; skew-y: -1.2; scale-x: 0.9; scale-y: 0.9; cel: 0; alpha: 1; }
+        frame 45 { x: 24.1422421; y: 69.4391932; skew-x: -1.9; skew-y: -1.9; scale-x: 0.9; scale-y: 0.9; cel: 0; alpha: 1; }
+        frame 46 { x: 23.3767781; y: 69.6313449; skew-x: -2.7; skew-y: -2.7; scale-x: 0.9; scale-y: 0.9; cel: 0; alpha: 1; }
+        frame 47 { x: 24.4077194; y: 69.4408587; skew-x: -1.7; skew-y: -1.7; scale-x: 0.9; scale-y: 0.9; cel: 0; alpha: 1; }
+        frame 48 { x: 25.4297943; y: 69.3473444; skew-x: -0.7; skew-y: -0.7; scale-x: 0.9; scale-y: 0.9; cel: 0; alpha: 1; }
+        frame 49 { x: 26.4; y: 69.3; skew-x: 0; skew-y: 0; scale-x: 0.9; scale-y: 0.9; cel: 0; alpha: 1; }
+        frame 50 { x: 26.4; y: 69.3; skew-x: 0; skew-y: 0; scale-x: 0.9; scale-y: 0.9; cel: 0; alpha: 1; }
+        frame 51 { x: 26.4; y: 69.3; skew-x: 0; skew-y: 0; scale-x: 0.9; scale-y: 0.9; cel: 0; alpha: 1; }
+        frame 52 { x: 26.4; y: 69.3; skew-x: 0; skew-y: 0; scale-x: 0.9; scale-y: 0.9; cel: 0; alpha: 1; }
+        frame 53 { x: 26.4; y: 69.3; skew-x: 0; skew-y: 0; scale-x: 0.9; scale-y: 0.9; cel: 0; alpha: 1; }
+        frame 54 { x: 26.4; y: 69.3; skew-x: 0; skew-y: 0; scale-x: 0.9; scale-y: 0.9; cel: 0; alpha: 1; }
+        frame 55 { x: 26.4; y: 69.3; skew-x: 0; skew-y: 0; scale-x: 0.9; scale-y: 0.9; cel: 0; alpha: 1; }
+        frame 56 { x: 26.4; y: 69.3; skew-x: 0; skew-y: 0; scale-x: 0.9; scale-y: 0.9; cel: 0; alpha: 1; }
+        frame 57 { x: 26.4; y: 69.3; skew-x: 0; skew-y: 0; scale-x: 0.9; scale-y: 0.9; cel: 0; alpha: 1; }
+        frame 58 { x: 26.4; y: 69.7; skew-x: 0; skew-y: 0; scale-x: 0.9; scale-y: 0.9; cel: 0; alpha: 1; }
+        frame 59 { x: 26.4; y: 70.1; skew-x: 0; skew-y: 0; scale-x: 0.9; scale-y: 0.9; cel: 0; alpha: 1; }
+        frame 60 { x: 26.4; y: 69.7; skew-x: 0; skew-y: 0; scale-x: 0.9; scale-y: 0.9; cel: 0; alpha: 1; }
+        frame 61 { x: 26.4; y: 69.3; skew-x: 0; skew-y: 0; scale-x: 0.9; scale-y: 0.9; cel: 0; alpha: 1; }
+        frame 62 { x: 26.4; y: 69.7; skew-x: 0; skew-y: 0; scale-x: 0.9; scale-y: 0.9; cel: 0; alpha: 1; }
+        frame 63 { x: 26.4; y: 70.1; skew-x: 0; skew-y: 0; scale-x: 0.9; scale-y: 0.9; cel: 0; alpha: 1; }
+        frame 64 { x: 26.4; y: 69.7; skew-x: 0; skew-y: 0; scale-x: 0.9; scale-y: 0.9; cel: 0; alpha: 1; }
+        frame 65 { x: 26.4; y: 69.3; skew-x: 0; skew-y: 0; scale-x: 0.9; scale-y: 0.9; cel: 0; alpha: 1; }
+        frame 66 { x: 26.4; y: 69.7; skew-x: 0; skew-y: 0; scale-x: 0.9; scale-y: 0.9; cel: 0; alpha: 1; }
+        frame 67 { x: 26.4; y: 70.1; skew-x: 0; skew-y: 0; scale-x: 0.9; scale-y: 0.9; cel: 0; alpha: 1; }
+        frame 68 { x: 26.4; y: 69.7; skew-x: 0; skew-y: 0; scale-x: 0.9; scale-y: 0.9; cel: 0; alpha: 1; }
+        frame 69 { x: 26.4; y: 69.3; skew-x: 0; skew-y: 0; scale-x: 0.9; scale-y: 0.9; cel: 0; alpha: 1; }
+        frame 70 { x: 26.4; y: 69.3; skew-x: 0; skew-y: 0; scale-x: 0.9; scale-y: 0.9; cel: 0; alpha: 1; }
+        frame 71 { x: 33.1827528; y: 54.735977; skew-x: 6; skew-y: 6; scale-x: 0.899; scale-y: 0.899; cel: 0; alpha: 1; }
+        frame 72 { x: 40.6803434; y: 40.3138464; skew-x: 12.4; skew-y: 12.4; scale-x: 0.899; scale-y: 0.899; cel: 0; alpha: 1; }
+        frame 73 { x: 36.1093632; y: 44.5278434; skew-x: 8.3; skew-y: 8.3; scale-x: 0.899; scale-y: 0.899; cel: 0; alpha: 1; }
+        frame 74 { x: 31.5453898; y: 48.8684752; skew-x: 4; skew-y: 4; scale-x: 0.899; scale-y: 0.899; cel: 0; alpha: 1; }
+        frame 75 { x: 27.468; y: 53.388; skew-x: 0; skew-y: 0; scale-x: 0.899; scale-y: 0.899; cel: 0; alpha: 1; }
+        frame 76 { x: 23.4351303; y: 58.1063541; skew-x: -3.9; skew-y: -3.9; scale-x: 0.899; scale-y: 0.899; cel: 0; alpha: 1; }
+        frame 77 { x: 23.6023882; y: 64.0965584; skew-x: -3.9; skew-y: -3.9; scale-x: 0.898; scale-y: 0.898; cel: 0; alpha: 1; }
+        frame 78 { x: 23.7351303; y: 69.8063541; skew-x: -3.9; skew-y: -3.9; scale-x: 0.899; scale-y: 0.899; cel: 0; alpha: 1; }
+        frame 79 { x: 24.0797274; y: 71.0323673; skew-x: -3; skew-y: -3.2; scale-x: 0.907; scale-y: 0.889; cel: 0; alpha: 1; }
+        frame 80 { x: 24.5490068; y: 72.2736061; skew-x: -2.3; skew-y: -2.5; scale-x: 0.916; scale-y: 0.88; cel: 0; alpha: 1; }
+        frame 81 { x: 25.0493364; y: 69.5444746; skew-x: -2.2; skew-y: -2.4; scale-x: 0.907; scale-y: 0.889; cel: 0; alpha: 1; }
+        frame 82 { x: 25.5945201; y: 67.2738583; skew-x: -2.4; skew-y: -2.4; scale-x: 0.899; scale-y: 0.899; cel: 0; alpha: 1; }
+        frame 83 { x: 25.6609233; y: 68.8757079; skew-x: -2.2; skew-y: -2.2; scale-x: 0.899; scale-y: 0.899; cel: 0; alpha: 1; }
+        frame 84 { x: 25.5945201; y: 70.7738583; skew-x: -2.4; skew-y: -2.4; scale-x: 0.899; scale-y: 0.899; cel: 0; alpha: 1; }
     }
     Track {
         source-name: "Zombie_catapult_engine";
@@ -2340,77 +2388,90 @@ export component Zombie_catapult {
     Track {
         source-name: "Zombie_catapult_tape";
         frame-count: 85;
-        frame 0 { x: 79.6; y: 115.2; scale-x: 0.9; scale-y: 0.9; image: IMAGE_REANIM_ZOMBIE_CATAPULT_TAPE; }
-        frame 1 { x: 79.8; y: 115; scale-x: -10000; scale-y: 0.919; image: none; }
-        frame 2 { x: 80; y: 114.8; scale-y: 0.939; }
-        frame 3 { x: -10000; y: 114.6; scale-y: 0.908; }
-        frame 4 { y: 114.3; scale-y: 0.877; }
-        frame 5 { y: 114.1; scale-y: 0.845; }
-        frame 6 { y: 113.8; scale-y: 0.814; }
-        frame 7 { x: 79.6; y: 113.3; skew-x: 1.3; skew-y: 1.3; scale-y: -10000; }
-        frame 8 { x: 79.3; y: 112.6; skew-x: 2.5; skew-y: 2.5; }
-        frame 9 { x: 79.5; y: 113.2; skew-x: 1.8; skew-y: 1.8; scale-y: 0.836; }
-        frame 10 { x: 79.6; y: 113.9; skew-x: 1.3; skew-y: 1.3; scale-y: 0.857; }
-        frame 11 { x: 79.8; y: 114.5; skew-x: 0.5; skew-y: 0.5; scale-y: 0.879; }
-        frame 12 { x: 80; y: 115.2; skew-x: 0; skew-y: 0; scale-y: 0.9; }
-        frame 13 { x: 79.9; y: 115; skew-x: -10000; skew-y: -10000; scale-y: 0.919; }
-        frame 14 { x: 79.8; y: 114.8; scale-y: 0.939; }
-        frame 15 { x: 79.7; y: 114.6; scale-y: 0.908; }
-        frame 16 { x: -10000; y: 114.3; scale-y: 0.877; }
-        frame 17 { x: 79.6; y: 114.1; scale-y: 0.845; }
-        frame 18 { x: 79.5; y: 113.8; scale-y: 0.814; }
-        frame 19 { x: -10000; y: 113.3; skew-x: 1.3; skew-y: 1.3; scale-y: -10000; }
-        frame 20 { y: 112.6; skew-x: 2.5; skew-y: 2.5; }
-        frame 21 { x: 79.6; y: 113.3; skew-x: 1.8; skew-y: 1.8; scale-y: 0.836; }
-        frame 22 { x: 79.8; y: 114; skew-x: 1.3; skew-y: 1.3; scale-y: 0.857; }
-        frame 23 { x: -10000; y: 114.6; skew-x: 0.5; skew-y: 0.5; scale-y: 0.879; }
-        frame 24 { x: 80; y: 115.2; skew-x: 0; skew-y: 0; scale-y: 0.9; }
-        frame 25 { x: -10000; y: -10000; skew-x: -10000; skew-y: -10000; scale-y: -10000; }
-        frame 27 { x: 80; }
-        frame 28 { x: -10000; }
-        frame 30 { x: 79.9; }
-        frame 31 { x: -10000; }
-        frame 34 { x: 79.8; }
-        frame 35 { x: -10000; }
-        frame 43 { x: 79.3; y: 114.7; skew-x: -1.7; skew-y: -1.7; }
-        frame 44 { x: 79; y: 114.3; skew-x: -3.7; skew-y: -3.7; }
-        frame 45 { x: 78.6; y: 114; skew-x: -5.4; skew-y: -5.4; scale-x: 0.899; scale-y: 0.899; }
-        frame 46 { x: 78.2; y: 113.6; skew-x: -7.5; skew-y: -7.5; scale-x: 0.9; scale-y: 0.9; }
-        frame 47 { x: 77.5; y: 114.8; skew-x: -16.2; skew-y: -16.2; scale-x: 0.899; scale-y: 0.899; }
-        frame 48 { x: 78.6; y: -10000; skew-x: -7.9; skew-y: -7.9; scale-x: -10000; scale-y: -10000; }
-        frame 49 { x: 79.8; y: 115.2; skew-x: 0; skew-y: 0; scale-x: 0.9; scale-y: 0.9; }
-        frame 50 { x: 80; y: -10000; skew-x: -10000; skew-y: -10000; scale-x: -10000; scale-y: 0.946; }
-        frame 51 { x: 80.3; scale-y: 0.992; }
-        frame 52 { x: 80.1; scale-y: 0.961; }
-        frame 53 { x: 79.9; scale-y: 0.931; }
-        frame 54 { x: 79.8; scale-y: 0.9; }
-        frame 55 { x: -10000; scale-y: -10000; }
-        frame 58 { x: 79.7; y: 115.6; }
-        frame 59 { x: 79.5; y: 116; }
-        frame 60 { x: 79.8; y: 116.2; }
-        frame 61 { x: 79.5; y: 115.2; }
-        frame 62 { x: 79.8; y: 115; }
-        frame 63 { x: 79.5; y: 116; }
-        frame 64 { x: 79.8; y: 116.2; }
-        frame 65 { x: 79.5; y: 115.2; }
-        frame 66 { x: 79.8; y: 115; }
-        frame 67 { x: -10000; y: 116; }
-        frame 68 { y: 116.2; }
-        frame 69 { y: 115.2; }
-        frame 70 { y: -10000; }
-        frame 71 { x: 81.3; y: 105.8; skew-x: 6; skew-y: 6; scale-x: 0.899; scale-y: 0.899; }
-        frame 72 { x: 83; y: 96.5; skew-x: 12.4; skew-y: 12.4; scale-x: -10000; scale-y: -10000; }
-        frame 73 { x: 82.3; y: 97.4; skew-x: 8.3; skew-y: 8.3; }
-        frame 74 { x: 81.3; y: 98.3; skew-x: 4; skew-y: 4; }
-        frame 75 { x: 80.6; y: 99.2; skew-x: 0; skew-y: 0; }
-        frame 76 { x: 79.8; y: 100.1; skew-x: -3.9; skew-y: -3.9; }
-        frame 77 { x: 80; y: 106; skew-x: -10000; skew-y: -10000; scale-x: 0.898; scale-y: 0.898; }
-        frame 78 { x: 80.1; y: 111.8; scale-x: 0.899; scale-y: 0.899; }
-        frame 79 { x: 80.5; y: 113.8; skew-x: -3; skew-y: -3.2; scale-x: 0.907; scale-y: 0.932; }
-        frame 80 { x: 80.8; y: 115.7; skew-x: -2.3; skew-y: -2.5; scale-x: 0.916; scale-y: 0.966; }
-        frame 81 { x: -10000; y: 113.3; skew-x: -2.2; skew-y: -2.4; scale-x: 0.907; scale-y: 0.932; }
-        frame 82 { y: 110.8; skew-x: -2.4; skew-y: -10000; scale-x: 0.899; scale-y: 0.899; }
-        frame 83 { x: 80.9; y: 112.6; skew-x: -2.2; skew-y: -2.2; scale-x: -10000; scale-y: -10000; }
-        frame 84 { x: 80.8; y: 114.3; skew-x: -2.4; skew-y: -2.4; }
+        frame 0 { x: 80.35372737; y: 115.6605512; skew-x: 3.903238206e-06; skew-y: -3.486731873e-06; scale-x: 0.9993102008; scale-y: 0.9993103882; cel: 0; alpha: 1; image: IMAGE_REANIM_ZOMBIE_CATAPULT_TAPE; }
+        frame 1 { x: 80.46123038; y: 115.4208697; skew-x: -0.03782182648; skew-y: -0.5480046619; scale-x: 0.9975192263; scale-y: 1.02404133; cel: 0; alpha: 1; }
+        frame 2 { x: 80.56873335; y: 115.0811874; skew-x: -0.0757815494; skew-y: -1.070116687; scale-x: 0.9957286674; scale-y: 1.04886159; cel: 0; alpha: 1; }
+        frame 3 { x: 80.56873335; y: 115.0307807; skew-x: -0.001584928309; skew-y: -1.113482662; scale-x: 0.9957277968; scale-y: 1.00801721; cel: 0; alpha: 1; }
+        frame 4 { x: 80.5687333; y: 114.7803736; skew-x: 0.07261177358; skew-y: -1.160511249; scale-x: 0.9957286022; scale-y: 0.9671734403; cel: 0; alpha: 1; }
+        frame 5 { x: 80.5687333; y: 114.729969; skew-x: 0.1468058807; skew-y: -1.211687198; scale-x: 0.9957310711; scale-y: 0.9263303082; cel: 0; alpha: 1; }
+        frame 6 { x: 80.5687333; y: 114.5795607; skew-x: 0.22099982; skew-y: -1.267583765; scale-x: 0.9957352097; scale-y: 0.8854882047; cel: 0; alpha: 1; }
+        frame 7 { x: 80.43240784; y: 114.2900774; skew-x: 1.66330188; skew-y: 1.275100502; scale-x: 0.9993932978; scale-y: 0.8561413059; cel: 0; alpha: 1; }
+        frame 8 { x: 80.29944071; y: 113.9034122; skew-x: 3.093747848; skew-y: 3.995434244; scale-x: 1.003249653; scale-y: 0.8282775867; cel: 0; alpha: 1; }
+        frame 9 { x: 80.37041327; y: 114.4167148; skew-x: 2.325181126; skew-y: 2.565095755; scale-x: 1.001223909; scale-y: 0.8705096971; cel: 0; alpha: 1; }
+        frame 10 { x: 80.43894831; y: 114.730643; skew-x: 1.553295305; skew-y: 1.243970977; scale-x: 0.9992942299; scale-y: 0.913155471; cel: 0; alpha: 1; }
+        frame 11 { x: 80.50505277; y: 115.2452401; skew-x: 0.7781978304; skew-y: 0.01846607453; scale-x: 0.9974618128; scale-y: 0.9561666976; cel: 0; alpha: 1; }
+        frame 12 { x: 80.56873335; y: 115.6605512; skew-x: 3.917281179e-06; skew-y: -1.122969733; scale-x: 0.9957277964; scale-y: 0.9995023571; cel: 0; alpha: 1; }
+        frame 13 { x: 80.5090091; y: 115.4208696; skew-x: -0.03785191464; skew-y: -0.7915327075; scale-x: 0.9967231397; scale-y: 1.024092207; cel: 0; alpha: 1; }
+        frame 14 { x: 80.44928491; y: 115.0811874; skew-x: -0.07563038096; skew-y: -0.4756492502; scale-x: 0.9977189069; scale-y: 1.048714793; cel: 0; alpha: 1; }
+        frame 15 { x: 80.41942269; y: 115.0307807; skew-x: -0.001583757408; skew-y: -0.340266698; scale-x: 0.9982155906; scale-y: 1.007844688; cel: 0; alpha: 1; }
+        frame 16 { x: 80.38956059; y: 114.7803737; skew-x: 0.07239115647; skew-y: -0.1934403713; scale-x: 0.9987139482; scale-y: 0.9669806591; cel: 0; alpha: 1; }
+        frame 17 { x: 80.35969846; y: 114.7299691; skew-x: 0.1462906021; skew-y: -0.03365811987; scale-x: 0.9992139709; scale-y: 0.9261234262; cel: 0; alpha: 1; }
+        frame 18 { x: 80.32983633; y: 114.5795623; skew-x: 0.220115414; skew-y: 0.1408713044; scale-x: 0.9997156542; scale-y: 0.8852741555; cel: 0; alpha: 1; }
+        frame 19 { x: 80.37268341; y: 114.2900788; skew-x: 1.661644863; skew-y: 1.639099191; scale-x: 1.000387975; scale-y: 0.8562796134; cel: 0; alpha: 1; }
+        frame 20 { x: 80.41888931; y: 113.9034135; skew-x: 3.099898998; skew-y: 3.243821059; scale-x: 1.001262308; scale-y: 0.8275905304; cel: 0; alpha: 1; }
+        frame 21 { x: 80.40624842; y: 114.416715; skew-x: 2.326567669; skew-y: 2.350392167; scale-x: 1.00062728; scale-y: 0.8703696825; cel: 0; alpha: 1; }
+        frame 22 { x: 80.39116961; y: 114.7306434; skew-x: 1.552056992; skew-y: 1.517001866; scale-x: 1.000090025; scale-y: 0.9132603172; cel: 0; alpha: 1; }
+        frame 23 { x: 80.37365949; y: 115.24524; skew-x: 0.7764929826; skew-y: 0.7357354567; scale-x: 0.9996509163; scale-y: 0.95624551; cel: 0; alpha: 1; }
+        frame 24 { x: 80.35372737; y: 115.6605512; skew-x: 3.903238206e-06; skew-y: -3.486731873e-06; scale-x: 0.9993102008; scale-y: 0.9993103882; cel: 0; alpha: 1; }
+        frame 25 { x: 80.54484633; y: 115.6605512; skew-x: 3.915716029e-06; skew-y: -0.9982313716; scale-x: 0.9961257984; scale-y: 0.9994620732; cel: 0; alpha: 1; }
+        frame 26 { x: 80.53887333; y: 115.6605512; skew-x: 3.915324829e-06; skew-y: -0.9670441237; scale-x: 0.9962253264; scale-y: 0.9994527421; cel: 0; alpha: 1; }
+        frame 27 { x: 80.53290054; y: 115.6605512; skew-x: 3.914933734e-06; skew-y: -0.9358549379; scale-x: 0.9963248475; scale-y: 0.9994437067; cel: 0; alpha: 1; }
+        frame 28 { x: 80.52692827; y: 115.6605512; skew-x: 3.914542564e-06; skew-y: -0.9046626181; scale-x: 0.9964244078; scale-y: 0.9994349668; cel: 0; alpha: 1; }
+        frame 29 { x: 80.52095526; y: 115.6605512; skew-x: 3.914151687e-06; skew-y: -0.8734744383; scale-x: 0.9965239132; scale-y: 0.9994265244; cel: 0; alpha: 1; }
+        frame 30 { x: 80.51498308; y: 115.6605512; skew-x: 3.913761047e-06; skew-y: -0.8422807211; scale-x: 0.9966233782; scale-y: 0.9994183768; cel: 0; alpha: 1; }
+        frame 31 { x: 80.50901072; y: 115.6605512; skew-x: 3.91337028e-06; skew-y: -0.8110886779; scale-x: 0.9967228952; scale-y: 0.999410526; cel: 0; alpha: 1; }
+        frame 32 { x: 80.50303795; y: 115.6605512; skew-x: 3.912979568e-06; skew-y: -0.779896648; scale-x: 0.9968224184; scale-y: 0.9994029715; cel: 0; alpha: 1; }
+        frame 33 { x: 80.49706498; y: 115.6605512; skew-x: 3.912588834e-06; skew-y: -0.7487049887; scale-x: 0.996921967; scale-y: 0.9993957135; cel: 0; alpha: 1; }
+        frame 34 { x: 80.49109264; y: 115.6605512; skew-x: 3.912198293e-06; skew-y: -0.7175113031; scale-x: 0.9970214861; scale-y: 0.9993887512; cel: 0; alpha: 1; }
+        frame 35 { x: 80.48511986; y: 115.6605512; skew-x: 3.911807822e-06; skew-y: -0.6863181971; scale-x: 0.9971210072; scale-y: 0.9993820854; cel: 0; alpha: 1; }
+        frame 36 { x: 80.47914747; y: 115.6605512; skew-x: 3.911417639e-06; skew-y: -0.6551233263; scale-x: 0.997220475; scale-y: 0.9993757155; cel: 0; alpha: 1; }
+        frame 37 { x: 80.47317513; y: 115.6605512; skew-x: 3.911027332e-06; skew-y: -0.62392842; scale-x: 0.9973199941; scale-y: 0.999369642; cel: 0; alpha: 1; }
+        frame 38 { x: 80.46720236; y: 115.6605512; skew-x: 3.910637087e-06; skew-y: -0.5927338934; scale-x: 0.9974195173; scale-y: 0.9993638648; cel: 0; alpha: 1; }
+        frame 39 { x: 80.46122937; y: 115.6605512; skew-x: 3.910246829e-06; skew-y: -0.5615401037; scale-x: 0.9975190638; scale-y: 0.9993583841; cel: 0; alpha: 1; }
+        frame 40 { x: 80.45525727; y: 115.6605512; skew-x: 3.909856774e-06; skew-y: -0.5303425229; scale-x: 0.9976185782; scale-y: 0.999353199; cel: 0; alpha: 1; }
+        frame 41 { x: 80.44928481; y: 115.6605512; skew-x: 3.909467053e-06; skew-y: -0.4991467375; scale-x: 0.9977180273; scale-y: 0.9993483106; cel: 0; alpha: 1; }
+        frame 42 { x: 80.44928481; y: 115.6605515; skew-x: 1.646807264e-06; skew-y: -0.4991467457; scale-x: 0.9977180273; scale-y: 0.9993482942; cel: 0; alpha: 1; }
+        frame 43 { x: 79.91787633; y: 115.4414679; skew-x: -1.483363839; skew-y: -1.78556618; scale-x: 0.9985578823; scale-y: 0.9988750477; cel: 0; alpha: 1; }
+        frame 44 { x: 79.68014257; y: 114.9422172; skew-x: -3.367548943; skew-y: -3.476304142; scale-x: 0.9993461883; scale-y: 0.9984777833; cel: 0; alpha: 1; }
+        frame 45 { x: 79.33945978; y: 114.4869894; skew-x: -5.152657258; skew-y: -5.070757385; scale-x: 1.000084993; scale-y: 0.9981621378; cel: 0; alpha: 1; }
+        frame 46 { x: 79.08902064; y: 114.0822487; skew-x: -7.038781772; skew-y: -6.768299739; scale-x: 1.000776565; scale-y: 0.9979335101; cel: 0; alpha: 1; }
+        frame 47 { x: 78.72880494; y: 115.726345; skew-x: -14.24798866; skew-y: -14.65841327; scale-x: 0.9997576252; scale-y: 0.9403850041; cel: 0; alpha: 1; }
+        frame 48 { x: 79.41936753; y: 115.7646032; skew-x: -6.966654031; skew-y: -7.249473895; scale-x: 0.9999840236; scale-y: 0.9697101849; cel: 0; alpha: 1; }
+        frame 49 { x: 80.44928427; y: 115.6605508; skew-x: 3.422995347e-06; skew-y: -0.4991500897; scale-x: 0.9977181029; scale-y: 0.999348419; cel: 0; alpha: 1; }
+        frame 50 { x: 80.56873363; y: 115.5805394; skew-x: -0.1023494642; skew-y: -1.059936573; scale-x: 0.9957294327; scale-y: 1.058934244; cel: 0; alpha: 1; }
+        frame 51 { x: 80.68818239; y: 115.500528; skew-x: -0.205109256; skew-y: -1.560933837; scale-x: 0.9937439179; scale-y: 1.118610605; cel: 0; alpha: 1; }
+        frame 52 { x: 80.60854901; y: 115.5538689; skew-x: -0.1365564852; skew-y: -1.233095962; scale-x: 0.9950672691; scale-y: 1.07881697; cel: 0; alpha: 1; }
+        frame 53 { x: 80.52891697; y: 115.60721; skew-x: -0.06818592965; skew-y: -0.8801534714; scale-x: 0.9963919547; scale-y: 1.03906134; cel: 0; alpha: 1; }
+        frame 54 { x: 80.44928481; y: 115.6605512; skew-x: 3.909467053e-06; skew-y: -0.4991467375; scale-x: 0.9977180273; scale-y: 0.9993483106; cel: 0; alpha: 1; }
+        frame 55 { x: 80.44928481; y: 115.6605512; skew-x: 3.909467053e-06; skew-y: -0.4991467375; scale-x: 0.9977180273; scale-y: 0.9993483106; cel: 0; alpha: 1; }
+        frame 56 { x: 80.44928481; y: 115.6605512; skew-x: 3.909467053e-06; skew-y: -0.4991467375; scale-x: 0.9977180273; scale-y: 0.9993483106; cel: 0; alpha: 1; }
+        frame 57 { x: 80.44928481; y: 115.6605512; skew-x: 3.909467053e-06; skew-y: -0.4991467375; scale-x: 0.9977180273; scale-y: 0.9993483106; cel: 0; alpha: 1; }
+        frame 58 { x: 80.38956056; y: 116.0605524; skew-x: -5.782103302e-07; skew-y: -0.1871811769; scale-x: 0.9987131531; scale-y: 0.9993159213; cel: 0; alpha: 1; }
+        frame 59 { x: 80.32983633; y: 116.4605553; skew-x: -2.205036559e-06; skew-y: 0.1247954227; scale-x: 0.9997082768; scale-y: 0.9993130777; cel: 0; alpha: 1; }
+        frame 60 { x: 80.44928485; y: 116.3472293; skew-x: -0.2743006807; skew-y: -0.4864330692; scale-x: 0.9977294817; scale-y: 1.025465529; cel: 0; alpha: 1; }
+        frame 61 { x: 80.32983633; y: 115.6605512; skew-x: 3.901683968e-06; skew-y: 0.1247954626; scale-x: 0.9997082768; scale-y: 0.9993127586; cel: 0; alpha: 1; }
+        frame 62 { x: 80.44928476; y: 115.7738764; skew-x: 0.2743012748; skew-y: -0.5125416406; scale-x: 0.9977294673; scale-y: 0.9732314986; cel: 0; alpha: 1; }
+        frame 63 { x: 80.32983633; y: 116.460555; skew-x: 5.311863882e-08; skew-y: 0.1247954207; scale-x: 0.9997082768; scale-y: 0.9993130941; cel: 0; alpha: 1; }
+        frame 64 { x: 80.44928476; y: 116.3472295; skew-x: -0.2743029472; skew-y: -0.4864337243; scale-x: 0.9977294674; scale-y: 1.025465513; cel: 0; alpha: 1; }
+        frame 65 { x: 80.32983633; y: 115.6605511; skew-x: 3.781807729e-06; skew-y: 0.1247954622; scale-x: 0.9997082768; scale-y: 0.9993127619; cel: 0; alpha: 1; }
+        frame 66 { x: 80.44928471; y: 115.7738765; skew-x: 0.2743012737; skew-y: -0.5125415129; scale-x: 0.9977294734; scale-y: 0.9732315008; cel: 0; alpha: 1; }
+        frame 67 { x: 80.44928485; y: 116.4605552; skew-x: 5.86765365e-07; skew-y: -0.4991458074; scale-x: 0.9977180479; scale-y: 0.999348596; cel: 0; alpha: 1; }
+        frame 68 { x: 80.44928485; y: 116.3472295; skew-x: -0.2743029433; skew-y: -0.486433077; scale-x: 0.9977294819; scale-y: 1.025465512; cel: 0; alpha: 1; }
+        frame 69 { x: 80.44928481; y: 115.6605512; skew-x: 3.909467053e-06; skew-y: -0.4991467375; scale-x: 0.9977180273; scale-y: 0.9993483106; cel: 0; alpha: 1; }
+        frame 70 { x: 80.44928481; y: 115.6605512; skew-x: 3.909467053e-06; skew-y: -0.4991467375; scale-x: 0.9977180273; scale-y: 0.9993483106; cel: 0; alpha: 1; }
+        frame 71 { x: 81.99838421; y: 106.3188398; skew-x: 6.106602946; skew-y: 5.755334292; scale-x: 0.997430027; scale-y: 0.9880621994; cel: 0; alpha: 1; }
+        frame 72 { x: 83.47480174; y: 97.05421413; skew-x: 12.47832454; skew-y: 11.94403709; scale-x: 0.9967587945; scale-y: 0.9907809095; cel: 0; alpha: 1; }
+        frame 73 { x: 82.80389145; y: 97.99882907; skew-x: 8.432782637; skew-y: 8.138298537; scale-x: 0.9976939559; scale-y: 0.9855616305; cel: 0; alpha: 1; }
+        frame 74 { x: 82.10958743; y: 98.68647739; skew-x: 4.133528425; skew-y: 3.881482595; scale-x: 0.9978298214; scale-y: 0.9854861674; cel: 0; alpha: 1; }
+        frame 75 { x: 81.41532849; y: 99.61910628; skew-x: 0.07460496341; skew-y: -0.2820339896; scale-x: 0.9973085319; scale-y: 0.991111848; cel: 0; alpha: 1; }
+        frame 76 { x: 80.47195562; y: 100.6860946; skew-x: -3.949321309; skew-y: -4.497995695; scale-x: 0.9962859448; scale-y: 1.002944152; cel: 0; alpha: 1; }
+        frame 77 { x: 80.57576894; y: 106.6289358; skew-x: -3.949320814; skew-y: -4.497996367; scale-x: 0.9951777139; scale-y: 1.00182841; cel: 0; alpha: 1; }
+        frame 78 { x: 80.7719559; y: 112.3860911; skew-x: -3.949315748; skew-y: -4.497996152; scale-x: 0.9962859091; scale-y: 1.002944119; cel: 0; alpha: 1; }
+        frame 79 { x: 81.03567908; y: 114.0715825; skew-x: -3.325321713; skew-y: -3.648933166; scale-x: 1.005552743; scale-y: 1.065023954; cel: 0; alpha: 1; }
+        frame 80 { x: 81.48479237; y: 115.6374177; skew-x: -2.896237637; skew-y: -2.858664425; scale-x: 1.015802171; scale-y: 1.128290142; cel: 0; alpha: 1; }
+        frame 81 { x: 81.40569054; y: 113.3815636; skew-x: -2.532104856; skew-y: -2.880906745; scale-x: 1.005443371; scale-y: 1.0656805; cel: 0; alpha: 1; }
+        frame 82 { x: 81.50132615; y: 111.3457947; skew-x: -2.462641558; skew-y: -3.015722516; scale-x: 0.9962268794; scale-y: 1.004213856; cel: 0; alpha: 1; }
+        frame 83 { x: 81.41354892; y: 113.1425267; skew-x: -2.262644196; skew-y: -2.815722428; scale-x: 0.9962268814; scale-y: 1.004213885; cel: 0; alpha: 1; }
+        frame 84 { x: 81.50132615; y: 114.8457942; skew-x: -2.462641559; skew-y: -3.015722462; scale-x: 0.9962268794; scale-y: 1.004213874; cel: 0; alpha: 1; }
     }
 }

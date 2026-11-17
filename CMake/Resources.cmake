@@ -2,6 +2,16 @@ include("${CMAKE_SOURCE_DIR}/CMake/DevTools.cmake")
 pvz_import_dev_tool(reanimc reanimc PVZ_RESOURCE_COMPILER_HOST)
 pvz_import_dev_tool(pvz_resource_builder pvz-resource-build PVZ_RESOURCE_BUILDER_HOST)
 
+# This policy exists only in the HD checkout. Refuse to produce a misleading 4x
+# package from 2x inputs or from missing/unreviewed original-resolution artwork.
+set(PVZ_HD_PACKAGE_PREFLIGHT)
+if(EXISTS "${CMAKE_SOURCE_DIR}/assets/high-resolution/package-policy.json")
+    find_package(Python3 REQUIRED COMPONENTS Interpreter)
+    list(APPEND PVZ_HD_PACKAGE_PREFLIGHT
+        COMMAND "${Python3_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/tools/verify_hd_package.py"
+            --root "${CMAKE_SOURCE_DIR}")
+endif()
+
 set(PVZ_RESOURCE_CACHE "${CMAKE_BINARY_DIR}/cache/resources" CACHE PATH
     "Resource compiler cache, optionally shared with a verified host build")
 set(PVZ_STATIC_DEFINITION_SOURCES
@@ -17,8 +27,8 @@ file(GLOB_RECURSE PVZ_RESOURCE_INPUTS CONFIGURE_DEPENDS
     "${CMAKE_SOURCE_DIR}/assets/definitions/*"
     "${CMAKE_SOURCE_DIR}/assets/runtime/*"
     "${CMAKE_SOURCE_DIR}/assets/high-resolution/*"
-    "${CMAKE_SOURCE_DIR}/assets/source-art/ai/runtime/*"
-    "${CMAKE_SOURCE_DIR}/assets/source-art/ai/runtime-overlay.json"
+    "${CMAKE_SOURCE_DIR}/assets/source-art/archive/2026-11-16-pre-library/ai/runtime/*"
+    "${CMAKE_SOURCE_DIR}/assets/source-art/archive/2026-11-16-pre-library/ai/runtime-overlay.json"
     "${PVZ_GAME_SOURCE_DIR}/*.cpp"
     "${PVZ_GAME_SOURCE_DIR}/*.h")
 list(FILTER PVZ_RESOURCE_INPUTS EXCLUDE REGEX "/generated/")
@@ -65,10 +75,12 @@ add_custom_command(
         "${PVZ_GAME_SOURCE_DIR}/Sexy.TodLib/generated/ReanimAttacherMasks.h"
         "${PVZ_GAME_SOURCE_DIR}/Sexy.TodLib/ReanimTrackId.h"
         "${PVZ_GAME_SOURCE_DIR}/Sexy.TodLib/ReanimTrackMphfGlobal.h"
+    ${PVZ_HD_PACKAGE_PREFLIGHT}
     COMMAND "$<TARGET_FILE:pvz_resource_builder>" build --root "${CMAKE_SOURCE_DIR}"
         --compiler "$<TARGET_FILE:reanimc>" --cache "${PVZ_RESOURCE_CACHE}"
         --config "${CMAKE_SOURCE_DIR}/assets/definitions/ResourceBuild.pvzbuild"
     DEPENDS reanimc pvz_resource_builder ${PVZ_RESOURCE_INPUTS} ${PVZ_DEVTOOLS_BINARY_INPUTS}
+        "${CMAKE_SOURCE_DIR}/tools/verify_hd_package.py"
     COMMENT "Compiling definitions, generated C++ and runtime PAK64"
     VERBATIM)
 add_custom_target(pvz_resources

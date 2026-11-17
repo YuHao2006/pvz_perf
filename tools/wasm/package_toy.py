@@ -74,6 +74,7 @@ def main():
     parser.add_argument('--diagnostics', action='store_true', help='Separate diagnostic distribution with recording enabled by default')
     parser.add_argument('--memory64', action='store_true', help='Require native Wasm Memory64 (diagnostic package, no wasm32 fallback)')
     parser.add_argument('--webgpu', action='store_true', help='Package WebGPU; optionally add selectable WebGL through --webgl-build')
+    parser.add_argument('--omit-wasm32-webgpu', action='store_true', help='Ship wasm64 WebGPU/WebGL plus scalar wasm32 WebGL only')
     parser.add_argument('--webgl-build', type=Path, help='Include selectable WebGL runtime, sharing the same data package')
     parser.add_argument('--wasm64-build', type=Path, help='Add optional Memory64 primary runtime; Memory64-capable browsers prefer wasm64')
     parser.add_argument('--wasm64-webgl-build', type=Path, help='Memory64 WebGL runtime paired with --webgl-build')
@@ -99,11 +100,14 @@ def main():
         parser.error('--webgl-build requires --webgpu')
     if bool(args.wasm64_webgl_build) != bool(args.wasm64_build and args.webgl_build):
         parser.error('Dual-backend Memory64 needs both --wasm64-build and --wasm64-webgl-build')
-    builds = [(args.build, args.memory64)]
+    if args.omit_wasm32_webgpu and (args.memory64 or not args.webgpu or not args.webgl_build or not args.wasm64_build or not args.wasm64_webgl_build):
+        parser.error('--omit-wasm32-webgpu requires all three alternative runtimes and a wasm32 primary build')
+    builds = [] if args.omit_wasm32_webgpu else [(args.build, args.memory64)]
     if args.webgl_build: builds.append((args.webgl_build, args.memory64))
     if args.wasm64_build: builds.append((args.wasm64_build, True))
     if args.wasm64_webgl_build: builds.append((args.wasm64_webgl_build, True))
-    resource_hash = hashlib.sha256((args.build / 'pvz-perf.data').read_bytes()).digest()
+    resource_build = args.webgl_build if args.omit_wasm32_webgpu else args.build
+    resource_hash = hashlib.sha256((resource_build / 'pvz-perf.data').read_bytes()).digest()
     for build, is64 in builds:
         for name in required:
             if not (build / name).is_file(): raise FileNotFoundError(build / name)
@@ -135,14 +139,19 @@ def main():
     text = readme.read_text(encoding='utf-8')
     readme.write_text('pvz_perf Web v' + version + '\n' + text.split('\n', 1)[1], encoding='utf-8')
     (args.output / 'web-config.js').write_text('window.PVZWebConfig = ' + json.dumps(config, ensure_ascii=False, indent=2) + ';\n', encoding='utf-8')
-    copy_runtime_javascript(args.build / 'pvz-perf.js', args.output / 'pvz-perf.js', args.memory64)
-    shutil.copyfile(args.build / 'pvz-perf.data', args.output / 'pvz-perf.data')
-    (args.output / 'pvz-perf.wasm.gz').write_bytes(gzip.compress((args.build / 'pvz-perf.wasm').read_bytes(), compresslevel=9, mtime=0))
-    files = support_files + ['web-config.js', 'pvz-perf.js', 'pvz-perf.data', 'pvz-perf.wasm.gz']
+    shutil.copyfile(resource_build / 'pvz-perf.data', args.output / 'pvz-perf.data')
+    files = support_files + ['web-config.js', 'pvz-perf.data']
+    if not args.omit_wasm32_webgpu:
+        copy_runtime_javascript(args.build / 'pvz-perf.js', args.output / 'pvz-perf.js', args.memory64)
+        (args.output / 'pvz-perf.wasm.gz').write_bytes(gzip.compress((args.build / 'pvz-perf.wasm').read_bytes(), compresslevel=9, mtime=0))
+        files += ['pvz-perf.js', 'pvz-perf.wasm.gz']
+    else:
+        for name in ('pvz-perf.js', 'pvz-perf.wasm.gz'):
+            (args.output / name).unlink(missing_ok=True)
     if args.webgl_build:
         if not args.webgpu:
             raise ValueError('--webgl-build requires --webgpu')
-        if hashlib.sha256((args.webgl_build / 'pvz-perf.data').read_bytes()).digest() != hashlib.sha256((args.build / 'pvz-perf.data').read_bytes()).digest():
+        if hashlib.sha256((args.webgl_build / 'pvz-perf.data').read_bytes()).digest() != resource_hash:
             raise ValueError('WebGL and WebGPU must use the same resource package')
         copy_runtime_javascript(args.webgl_build / 'pvz-perf.js', args.output / 'pvz-perf-webgl.js', args.memory64)
         (args.output / 'pvz-perf-webgl.wasm.gz').write_bytes(gzip.compress((args.webgl_build / 'pvz-perf.wasm').read_bytes(), compresslevel=9, mtime=0))
@@ -153,7 +162,8 @@ def main():
         (args.output / (stem + '.wasm.gz')).write_bytes(gzip.compress((build / 'pvz-perf.wasm').read_bytes(), compresslevel=9, mtime=0))
         files += [stem + '.js', stem + '.wasm.gz']
     graphics = {'version': version, 'webgpu': args.webgpu, 'fallback': bool(args.webgl_build),
-                'memory64': args.memory64, 'memory64Available': bool(args.wasm64_build), 'simd128': True}
+                'memory64': args.memory64, 'memory64Available': bool(args.wasm64_build), 'simd128': True,
+                'webgpuMemory64Only': args.omit_wasm32_webgpu}
     (args.output / 'graphics-config.js').write_text('window.PVZGraphicsConfig = ' + json.dumps(graphics) + ';\n', encoding='utf-8')
     files.append('graphics-config.js')
     license_path = args.output / 'licenses/stb-vorbis.txt'

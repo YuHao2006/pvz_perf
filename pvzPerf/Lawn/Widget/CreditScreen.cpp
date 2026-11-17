@@ -376,6 +376,7 @@ CreditScreen::CreditScreen(LawnApp* theApp)
 //0x433E20、0x433E40
 CreditScreen::~CreditScreen()
 {
+    StopPoolSparkles();
 	mApp->SetMusicVolume(mOriginalMusicVolume);
 	delete mReplayButton;
 	delete mMainMenuButton;
@@ -585,6 +586,7 @@ void CreditScreen::GetTiming(CreditsTiming** theBeforeTiming, CreditsTiming** th
 //0x434D60
 Reanimation* CreditScreen::PlayReanim(int aIndex)
 {
+    StopPoolSparkles();
     Reanimation* aCreditsReanim = mApp->ReanimationTryToGet(mCreditsReanimID);
     if (aCreditsReanim)
     {
@@ -932,7 +934,8 @@ void CreditScreen::Draw(Graphics* destination)
             const TextureRegion& aRegion = aCreditsReanim->mDefinition->mImageRects[aTransformBackground3.mImageSlot];
             aBackground3G.ClipRect(20, 260, aRegion.mWidth - 1, aRegion.mHeight - 1);
             aBackground3G.DrawImageF(IMAGE_BACKGROUND3, -220.0f, 0.0f);
-            aBackground3G.DrawImageF(IMAGE_POOL, 34.0f, 278.0f);
+            // The HD map already includes the same-master pool crop.
+            DrawPoolSparkles(&aBackground3G);
         }
         if (aTransformBackground4.mFrame != -1.0f)
         {
@@ -1016,6 +1019,7 @@ void CreditScreen::Draw(Graphics* destination)
         if (aDrawPool || aDrawNightPool)
         {
             mApp->mPoolEffect->PoolEffectDraw(&aBackground2G, aDrawNightPool);
+            DrawPoolSparkles(&aBackground2G);
         }
     }
     
@@ -1324,6 +1328,53 @@ namespace
 }  // namespace
 
 //0x436BE0
+void CreditScreen::StopPoolSparkles()
+{
+    if (auto* sparkle = mApp->ParticleTryToGet(mPoolSparklyParticleID))
+        sparkle->ParticleSystemDie();
+    mPoolSparklyParticleID = ParticleSystemID::PARTICLESYSTEMID_NULL;
+}
+
+void CreditScreen::UpdatePoolSparkles(Reanimation& movie, std::uint64_t deltaNs, std::int64_t nowNs)
+{
+    const double phase = static_cast<double>(movie.SamplePlayback().phaseNs) / movie.mPeriodNs;
+    const float factor = 1.0f / (movie.mDefinition->mTracks.tracks->mTransforms.count - 1);
+    const auto visible = [&](ReanimTrackId track) {
+        ReanimatorTransform transform;
+        movie.GetCurrentTransform(movie.FindTrackIndex(track), &transform);
+        return transform.mFrame != -1.0f;
+    };
+    bool active = false;
+    if (mCreditsPhase == CreditsPhase::CREDITS_MAIN1)
+        active = ((phase > factor * 203 && phase < factor * 268) ||
+                  (phase > factor * 305 && phase < factor * 339)) && visible(ReanimTrackId::Background2);
+    else if (mCreditsPhase == CreditsPhase::CREDITS_MAIN2)
+        active = (phase < factor * 125 && visible(ReanimTrackId::Background3)) ||
+                 (phase > factor * 187 && phase < factor * 249 && visible(ReanimTrackId::Background2));
+    if (!active) { StopPoolSparkles(); return; }
+    auto* sparkle = mApp->ParticleTryToGet(mPoolSparklyParticleID);
+    if (!sparkle || sparkle->mDead)
+    {
+        sparkle = mApp->AddTodParticle(450, 295, 0, ParticleEffect::PARTICLE_POOL_SPARKLY,
+            nowNs - static_cast<std::int64_t>(deltaNs));
+        if (!sparkle) return;
+        // Credits owns this system's update and draw. Exclude it from the
+        // global pass, which would draw it a second time over actors/lyrics.
+        sparkle->mIsAttachment = true;
+        mPoolSparklyParticleID = mApp->ParticleGetID(sparkle);
+    }
+    sparkle->Update(deltaNs, nowNs, nowNs - static_cast<std::int64_t>(deltaNs));
+}
+
+void CreditScreen::DrawPoolSparkles(Graphics* g)
+{
+    auto* sparkle = mApp->ParticleTryToGet(mPoolSparklyParticleID);
+    if (!sparkle || sparkle->mDead) return;
+    Graphics water(*g);
+    water.ClipRect(35, 279, 720, 159);
+    sparkle->Draw(&water, mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs);
+}
+
 void CreditScreen::UpdateMovie(std::uint64_t deltaNs)
 {
     // Credits owns this clock: each catch-up iteration is a real movie step.
@@ -1340,6 +1391,7 @@ void CreditScreen::UpdateMovie(std::uint64_t deltaNs)
 
     aCreditsReanim->UpdateAt(visualNowNs, deltaNs);
     mApp->mEffectSystem->UpdateAt(visualNowNs, visualNowNs, visualNowNs, deltaNs, deltaNs, deltaNs);
+    UpdatePoolSparkles(*aCreditsReanim, deltaNs, visualNowNs);
     mApp->mPoolEffect->PoolEffectUpdate(visualNowNs, deltaNs);
     TurnOffTongues(aCreditsReanim, 0);
 

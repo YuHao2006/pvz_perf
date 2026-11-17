@@ -2,7 +2,9 @@
 
 基于 [PvZ-Portable](https://github.com/wszqkzqk/PvZ-Portable) 修改，继续优化《植物大战僵尸》的 CPU 热路径、资源装载、图形提交和跨平台输入。游戏行为以零售 1073 为主要核对依据。
 
-**当前发行版：[v4.0.3](https://github.com/YuHao2006/pvz_perf/releases/tag/v4.0.3)，包含四个原生包和使用无损资源包的网页版。**
+**高清分支说明：当前高清版（发行2×／开发4×）尚未实现按场景动态加载、卸载高清纹理，不属于已完成低显存适配的版本。** 本分支专属的加载策略、显存计算与4×／2×包定位见[高清资源加载与显存说明](docs/high-resolution/resource-loading.md)；该说明不适用于普通版 `main`。
+
+**本高清分支发行版：[v4.1](https://github.com/YuHao2006/pvz_perf/releases/tag/v4.1)，包含四个原生包，均携带2× PAK64。高清网页版暂缓发布。普通版见 `main` 分支。**
 
 版本号采用三段规则：**第一个数表示破坏性更新，第二个数表示功能更新，第三个数表示 bug 修复**。兼容性以各版发行说明为准。
 
@@ -14,7 +16,7 @@
 | `x64-win7-openGL3.3` | Windows 7 x64、OpenGL 3.3 |
 | `arm64-android14-vulkan1.3` | Android 14、Armv9-A、Vulkan 1.3 及所需 descriptor indexing 能力；不要求 SVE/SVE2 |
 | `arm64-android7-vulkan1.0` | Android 7、Armv8-A、Vulkan 1.0；传统纹理绑定 |
-| `wasm-web` | 包含 wasm32／wasm64 与 WebGPU／WebGL 2 四个运行时；支持 Memory64 时自动选 wasm64，否则 wasm32；优先 WebGPU，可在高级设置切换 |
+| 高清网页版 | 暂缓发布，本次不提供网页附件 |
 
 下载入口：[GitHub Releases](https://github.com/YuHao2006/pvz_perf/releases)。Windows ZIP 完整解压到可写目录后运行 `pvz_perf.exe`；需要兼容的 VC++ x64 运行库。Android APK 已包含资源，不需要另拷数据包或在手机安装 Java。设备满足系统版本还不够，CPU、驱动和所需图形格式也必须满足对应要求。
 

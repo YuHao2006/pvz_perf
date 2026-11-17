@@ -1,0 +1,366 @@
+{
+  "format": "pvz-hd-package4x-validation-v1",
+  "imagesManifestSha256": "5536653650f1e1e0e83066da3637abd3cb59c02c8ffa2be789dd1758b8363a0d",
+  "fontsManifestSha256": "11c3a3eb811425f75a66db6039ebe1a331cad3c91327f5c045a98b6ae3f1aab0",
+  "libraryCatalogSha256": "6b44761cf258a08cee01b373a970ccc772d71249d8e4d92fe7045429db815ba0",
+  "pixelScale": 4,
+  "atlasMaxSide": 8192,
+  "solver": "maxrects",
+  "unresolved": [],
+  "lowResolutionFallbacks": [],
+  "unreviewedRepairs": [],
+  "activePhysicalFiles": 2356,
+  "reviewedPoolAssets": [
+    "images/background3",
+    "images/pool",
+    "images/background4",
+    "images/pool_night"
+  ],
+  "switchedBindings": [],
+  "removedUnusedAliases": [],
+  "fixedDataTextures": [
+    {
+      "id": "images/pool_caustic_effect",
+      "path": "images/pool_caustic_effect.jpg",
+      "source": "assets/runtime/images/pool_caustic_effect.jpg",
+      "size": [
+        256,
+        256
+      ],
+      "sha256": "b7cacd76f84c2f815573541d5377f8b6b576d201dd2bc01d498f0dde64a5a974",
+      "classification": "fixed-size-caustics-compute-input-not-displayed-art",
+      "resize": false
+    }
+  ],
+  "source": "Actual compiler reference coverage including live variants; unresolved items block packaging.",
+  "rejectedRepairs": [],
+  "mechanicalRepair": "assets/source-art/work/ui-seams-coins-20261117/repair-report.json",
+  "mechanicalRepairScope": "User-requested seams, base-derived hover, skull rim and retained native coin reverses; no AI generation or new animation tracks",
+  "approvedCoinReanim": "assets/source-art/work/coins-native-reanim-20261117/chat-approval.json",
+  "approvedAchievements": "assets/source-art/work/achievements-minimal-20261117/chat-approval.json",
+  "jpegExports": {
+    "current/images/aquarium1.jpg": {
+      "id": "images/aquarium1",
+      "path": "high-resolution/current/images/aquarium1.jpg",
+      "losslessSource": "assets/high-resolution/exports4x/images/aquarium1.png",
+      "losslessSourceSha256": "123c22672d1dbc9e4a46898e013d542950315b0518f89567a765457dfebe52f8",
+      "sha256": "ad91db29e715cbd44037450a084937835b8f67ce35cbef547b02f522abcd661d",
+      "quality": 95,
+      "subsampling": "4:4:4",
+      "size": [
+        5600,
+        2400
+      ],
+      "pngBytes": 24128282,
+      "jpegBytes": 2440752,
+      "psnrDb": 48.24966194856902,
+      "mae": 0.6646933555603027,
+      "maximumChannelDifference": 17.0,
+      "logicalGeometryAndUvsUnchanged": true
+    },
+    "current/images/background1.jpg": {
+      "id": "images/background1",
+      "path": "high-resolution/current/images/background1.jpg",
+      "losslessSource": "assets/high-resolution/exports4x/images/background1.png",
+      "losslessSourceSha256": "033628feb9af90b203eec656631d2e153b33c11ad2a2ca9078317d859ea5bbd1",
+      "sha256": "8f8d7f6a36f78a287c7026150f9f2f10369f7f87a05bc4726e4aa0b94eade02b",
+      "quality": 95,
+      "subsampling": "4:4:4",
+      "size": [
+        5600,
+        2400
+      ],
+      "pngBytes": 28756788,
+      "jpegBytes": 3964600,
+      "psnrDb": 45.87283939391006,
+      "mae": 0.8583759665489197,
+      "maximumChannelDifference": 21.0,
+      "logicalGeometryAndUvsUnchanged": true
+    },
+    "current/images/background1unsodded.jpg": {
+      "id": "images/background1unsodded",
+      "path": "high-resolution/current/images/background1unsodded.jpg",
+      "losslessSource": "assets/high-resolution/exports4x/images/background1unsodded.png",
+      "losslessSourceSha256": "68463b87fd0f7a5461d4898403cddc700a3ca42409e114f6a36aaa04250e18d9",
+      "sha256": "ae8788cf69fe23cfb70ba193f55eb9fe16364d1ab840203c151791ee86bb761d",
+      "quality": 95,
+      "subsampling": "4:4:4",
+      "size": [
+        5600,
+        2400
+      ],
+      "pngBytes": 25456798,
+      "jpegBytes": 2919034,
+      "psnrDb": 47.26313028466211,
+      "mae": 0.7176604866981506,
+      "maximumChannelDifference": 20.0,
+      "logicalGeometryAndUvsUnchanged": true
+    },
+    "current/images/background2.jpg": {
+      "id": "images/background2",
+      "path": "high-resolution/current/images/background2.jpg",
+      "losslessSource": "assets/high-resolution/exports4x/images/background2.png",
+      "losslessSourceSha256": "cb944b681ad3921bc01965bcc32c483b9e4d163638373e5cc1f0b76a300daeba",
+      "sha256": "40b2bbfdf5d7bdab2b49ef581c46eba8e287fcaca067d9ee396264c3f7913fe3",
+      "quality": 95,
+      "subsampling": "4:4:4",
+      "size": [
+        5600,
+        2400
+      ],
+      "pngBytes": 26385202,
+      "jpegBytes": 3218282,
+      "psnrDb": 46.88814183328194,
+      "mae": 0.7677661776542664,
+      "maximumChannelDifference": 18.0,
+      "logicalGeometryAndUvsUnchanged": true
+    },
+    "current/images/background3.jpg": {
+      "id": "images/background3",
+      "path": "high-resolution/current/images/background3.jpg",
+      "losslessSource": "assets/high-resolution/exports4x/images/background3.png",
+      "losslessSourceSha256": "32e76ef3dfbbe5f8af7aca4509319a8fc647394a4abbc0b2344f9f5fb59d68c9",
+      "sha256": "14ffb5dbd95e66487ccdeae97d9e8848c84309a49cfeb64700f24b146afa3fa6",
+      "quality": 95,
+      "subsampling": "4:4:4",
+      "size": [
+        5600,
+        2400
+      ],
+      "pngBytes": 9787395,
+      "jpegBytes": 3101160,
+      "psnrDb": 49.27500981241117,
+      "mae": 0.5769771933555603,
+      "maximumChannelDifference": 12.0,
+      "logicalGeometryAndUvsUnchanged": true
+    },
+    "current/images/background4.jpg": {
+      "id": "images/background4",
+      "path": "high-resolution/current/images/background4.jpg",
+      "losslessSource": "assets/high-resolution/exports4x/images/background4.png",
+      "losslessSourceSha256": "1dcbc491e75d783ae241d9dd564499239bea3dd3c96c71ffa69e4f40f45b721c",
+      "sha256": "3585cc2b777e1077a67e7d4d7c03c4abd2951a90188a4b3e4af61760de4bd15d",
+      "quality": 95,
+      "subsampling": "4:4:4",
+      "size": [
+        5600,
+        2400
+      ],
+      "pngBytes": 9922719,
+      "jpegBytes": 3023802,
+      "psnrDb": 48.69415899038252,
+      "mae": 0.6108060479164124,
+      "maximumChannelDifference": 19.0,
+      "logicalGeometryAndUvsUnchanged": true
+    },
+    "current/images/background5.jpg": {
+      "id": "images/background5",
+      "path": "high-resolution/current/images/background5.jpg",
+      "losslessSource": "assets/high-resolution/exports4x/images/background5.png",
+      "losslessSourceSha256": "7e004c7d969ecf79950544479b18bfbf96c32fda76a4bdbdf48dd5536a0c282e",
+      "sha256": "edc994f19faae6fe309ab98f3404c36f8e6231ea407379565404997a955887b1",
+      "quality": 95,
+      "subsampling": "4:4:4",
+      "size": [
+        5600,
+        2400
+      ],
+      "pngBytes": 25820003,
+      "jpegBytes": 3142503,
+      "psnrDb": 47.0284357834348,
+      "mae": 0.7484791278839111,
+      "maximumChannelDifference": 21.0,
+      "logicalGeometryAndUvsUnchanged": true
+    },
+    "current/images/background6boss.jpg": {
+      "id": "images/background6boss",
+      "path": "high-resolution/current/images/background6boss.jpg",
+      "losslessSource": "assets/high-resolution/exports4x/images/background6boss.png",
+      "losslessSourceSha256": "c8d31d8120e3782f97588bb48786c43885bf2391362fa4b562982ac5dc534c3b",
+      "sha256": "a3179e65de63e95db1548db7284c9865c5c5d49d146f6006274088f32ed89742",
+      "quality": 95,
+      "subsampling": "4:4:4",
+      "size": [
+        5600,
+        2400
+      ],
+      "pngBytes": 23413775,
+      "jpegBytes": 2628345,
+      "psnrDb": 48.01610973329101,
+      "mae": 0.6649574637413025,
+      "maximumChannelDifference": 19.0,
+      "logicalGeometryAndUvsUnchanged": true
+    },
+    "current/images/background_greenhouse.jpg": {
+      "id": "images/background_greenhouse",
+      "path": "high-resolution/current/images/background_greenhouse.jpg",
+      "losslessSource": "assets/high-resolution/exports4x/images/background_greenhouse.png",
+      "losslessSourceSha256": "ed0e1add576c8e8c8309f1825fe9683fcd21c5b20a82f5705e9ec2e8ef919f4f",
+      "sha256": "61138ce011a7406de61e5b07c7597521f9a660bcd3797b7d785cf6e8b87a602e",
+      "quality": 95,
+      "subsampling": "4:4:4",
+      "size": [
+        5600,
+        2400
+      ],
+      "pngBytes": 28265777,
+      "jpegBytes": 4238106,
+      "psnrDb": 45.67709297087093,
+      "mae": 0.8807214498519897,
+      "maximumChannelDifference": 21.0,
+      "logicalGeometryAndUvsUnchanged": true
+    },
+    "current/images/background_greenhouse_overlay.jpg": {
+      "id": "images/background_greenhouse_overlay",
+      "path": "high-resolution/current/images/background_greenhouse_overlay.jpg",
+      "losslessSource": "assets/high-resolution/exports4x/images/background_greenhouse_overlay.png",
+      "losslessSourceSha256": "73e335628c24682f78ff2fbc5dbe3a82a3ab3e86a876feaf85a3a0276e28db95",
+      "sha256": "e7500cf38a5640c0d5250408baeb63926896ec442b0b9e40b6352fd7454dc8c3",
+      "quality": 95,
+      "subsampling": "4:4:4",
+      "size": [
+        400,
+        300
+      ],
+      "pngBytes": 81926,
+      "jpegBytes": 9877,
+      "psnrDb": 56.034164463626,
+      "mae": 0.14610555768013,
+      "maximumChannelDifference": 4.0,
+      "logicalGeometryAndUvsUnchanged": true
+    },
+    "current/images/background_mushroomgarden.jpg": {
+      "id": "images/background_mushroomgarden",
+      "path": "high-resolution/current/images/background_mushroomgarden.jpg",
+      "losslessSource": "assets/high-resolution/exports4x/images/background_mushroomgarden.png",
+      "losslessSourceSha256": "30aa766a60764777fb063c5b5844ffdefa04cb972892e978e6d8e0498da519fb",
+      "sha256": "bdb21a3ded3d005beb22399732d30c9be744f22ac9f66a87b1412917c22073dd",
+      "quality": 95,
+      "subsampling": "4:4:4",
+      "size": [
+        5600,
+        2400
+      ],
+      "pngBytes": 28675588,
+      "jpegBytes": 4633435,
+      "psnrDb": 44.98522421113126,
+      "mae": 0.9121083617210388,
+      "maximumChannelDifference": 24.0,
+      "logicalGeometryAndUvsUnchanged": true
+    },
+    "current/images/challenge_background.jpg": {
+      "id": "images/challenge_background",
+      "path": "high-resolution/current/images/challenge_background.jpg",
+      "losslessSource": "assets/high-resolution/exports4x/images/challenge_background.png",
+      "losslessSourceSha256": "ebc614405c18f8bd56d32ad6c9c482e07edcd2571bb6e5998848388d63f62efd",
+      "sha256": "513de83449497e28f274e540d692b11d4904a52fb63ad12e88f895e861db3e7f",
+      "quality": 95,
+      "subsampling": "4:4:4",
+      "size": [
+        5600,
+        2400
+      ],
+      "pngBytes": 7136984,
+      "jpegBytes": 1382661,
+      "psnrDb": 50.68179174798158,
+      "mae": 0.44933441281318665,
+      "maximumChannelDifference": 15.0,
+      "logicalGeometryAndUvsUnchanged": true
+    },
+    "current/images/challenge_thumbnails.jpg": {
+      "id": "images/challenge_thumbnails",
+      "path": "high-resolution/current/images/challenge_thumbnails.jpg",
+      "losslessSource": "assets/high-resolution/exports4x/images/challenge_thumbnails.png",
+      "losslessSourceSha256": "14370af1bb3cda22fd4fb3fe3d946c872d4d3e57f2926b9909af2bfa81673636",
+      "sha256": "ad968c9336d419a23ff51ba24203d9cd1a8ba00830c8864be757d3f4cf16be57",
+      "quality": 95,
+      "subsampling": "4:4:4",
+      "size": [
+        7040,
+        260
+      ],
+      "pngBytes": 3955568,
+      "jpegBytes": 875404,
+      "psnrDb": 42.76785757175949,
+      "mae": 1.1897852420806885,
+      "maximumChannelDifference": 22.0,
+      "logicalGeometryAndUvsUnchanged": true
+    },
+    "current/images/pool.jpg": {
+      "id": "images/pool",
+      "path": "high-resolution/current/images/pool.jpg",
+      "losslessSource": "assets/high-resolution/exports4x/images/pool.png",
+      "losslessSourceSha256": "e5b29452a24fd260d283119a4c3dc74f32527d47559a54464c9e3ada49780af1",
+      "sha256": "2014fecadd57d3ee46f132975417a3031d9bdcc1fd3b69386d63c291c0e9c2b7",
+      "quality": 95,
+      "subsampling": "4:4:4",
+      "size": [
+        2880,
+        636
+      ],
+      "pngBytes": 793715,
+      "jpegBytes": 333202,
+      "psnrDb": 50.32091745294995,
+      "mae": 0.5056070685386658,
+      "maximumChannelDifference": 6.0,
+      "logicalGeometryAndUvsUnchanged": true
+    },
+    "current/images/popcap_logo.jpg": {
+      "id": "images/popcap_logo",
+      "path": "high-resolution/current/images/popcap_logo.jpg",
+      "losslessSource": "assets/high-resolution/exports4x/images/popcap_logo.png",
+      "losslessSourceSha256": "56de3615173fc73590f1a9336b57e0ec728c5cfacdc05700cd95a5ab61b6b2f7",
+      "sha256": "905d877734f84f33f58c467f0e9f77b6e868d5beffcdbe3ad8ac92c7cfc72fef",
+      "quality": 95,
+      "subsampling": "4:4:4",
+      "size": [
+        1200,
+        1200
+      ],
+      "pngBytes": 2017653,
+      "jpegBytes": 279833,
+      "psnrDb": 48.056712638926626,
+      "mae": 0.49109259247779846,
+      "maximumChannelDifference": 20.0,
+      "logicalGeometryAndUvsUnchanged": true
+    },
+    "current/images/store_background.jpg": {
+      "id": "images/store_background",
+      "path": "high-resolution/current/images/store_background.jpg",
+      "losslessSource": "assets/high-resolution/exports4x/images/store_background.png",
+      "losslessSourceSha256": "097ef8c539ebf77034a3782e5f0d613c7e1eaee7b33901a0097985b59976c5e7",
+      "sha256": "6d95133a5861007b8cf85fc993b992f50079e4dc50593da212aa76125be6032c",
+      "quality": 95,
+      "subsampling": "4:4:4",
+      "size": [
+        5600,
+        2400
+      ],
+      "pngBytes": 23419537,
+      "jpegBytes": 2514770,
+      "psnrDb": 48.084135893385906,
+      "mae": 0.6725786924362183,
+      "maximumChannelDifference": 22.0,
+      "logicalGeometryAndUvsUnchanged": true
+    },
+    "current/images/store_backgroundnight.jpg": {
+      "id": "images/store_backgroundnight",
+      "path": "high-resolution/current/images/store_backgroundnight.jpg",
+      "losslessSource": "assets/high-resolution/exports4x/images/store_backgroundnight.png",
+      "losslessSourceSha256": "a1dc87dc4c23c8b232d8367c8a83fc9564e0c28b60c63412fb6f9d0881ae44fd",
+      "sha256": "2fd6ba573460186e254ce07109c18d30bbec3130777596f22b6e83b3c8b94a11",
+      "quality": 95,
+      "subsampling": "4:4:4",
+      "size": [
+        5600,
+        2400
+      ],
+      "pngBytes": 17392708,
+      "jpegBytes": 1837123,
+      "psnrDb": 49.45902744771239,
+      "mae": 0.5508479475975037,
+      "maximumChannelDifference": 21.0,
+      "logicalGeometryAndUvsUnchanged": true
+    }
+  }
+}

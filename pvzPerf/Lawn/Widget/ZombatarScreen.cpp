@@ -157,8 +157,9 @@ void ZombatarScreen::Draw(Graphics* g)
 
 	if (mZombiePreview)
 	{
-		// 1073 DAT_00726ec4 is IMAGE_ALMANAC_GROUNDDAY (resource-table index
-		// 606), a 200x200 image drawn at (600,300).  The same temporary clip
+		// 1073 DAT_00726ec4 is the day-ground portrait (resource-table index
+		// 606), a 200x200 image drawn at (600,300). The current port samples
+		// the real map instead of retaining a separate portrait. The same clip
 		// must cover both the background and the Zombie reanimation; clipping
 		// only the background still lets the flag zombie leak below the frame.
 		GraphicsAutoState aAvatarState(g);

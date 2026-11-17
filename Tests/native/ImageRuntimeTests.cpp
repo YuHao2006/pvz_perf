@@ -46,6 +46,7 @@
 #include "Lawn/Widget/SeedChooserScreen.h"
 #include "Lawn/Widget/ImitaterDialog.h"
 #include "Lawn/Widget/NewOptionsDialog.h"
+#include "Lawn/Widget/ZombatarItems.h"
 #include "Lawn/Widget/TitleScreen.h"
 #include "Lawn/Widget/CreditScreen.h"
 #include "Lawn/Widget/LawnDialog.h"
@@ -122,6 +123,8 @@ bool gHiddenRulesOnly=false;
 bool gGardenRulesOnly=false;
 bool gIntroRulesOnly=false;
 bool gUiRulesOnly=false;
+bool gDialogBakingOnly=false;
+bool gMenuTransitionOnly=false;
 bool gAwardRulesOnly=false;
 bool gAlmanacClockOnly=false;
 bool gActorBirthOnly=false;
@@ -5942,6 +5945,8 @@ void ActorBirthClockRuntime(TestApp& app)
 
 void AwardRulesRuntime(TestApp& app)
 {
+    LoadSceneAtlases(false);
+    struct FreeAwardUI {~FreeAwardUI(){FreeSceneAtlases();}} freeAwardUI;
     auto& clocks=*app.mEffectSystem->mReanimationHolder;
     struct Restore {
         TestApp& app;
@@ -6036,6 +6041,26 @@ void AwardRulesRuntime(TestApp& app)
                 }
                 Require(award->mFadeInCounter==0&&!award->mShowingAchievements,"Controlled award failed to finish its normal fade");
                 draw(*award);
+                if (!replay && level==1 && hz==100) {
+                    render.Flush();const auto pixels=render.ReadImagePixels(*target.image);
+                    Require(ImageLib::WritePNGImage("award-runtime-1400.png",1400,600,pixels.pixels),"Cannot write wide Award proof");
+                    Require((pixels.pixels[300*1400+100]&0x00ffffff)!=0,"Shared Award parchment was not loaded");
+                    const auto oldBounds=app.mScreenBounds;
+                    app.mScreenBounds=Rect(0,0,800,600);
+                    std::unique_ptr<Image> narrow(render.CreateRenderImage(800,600));
+                    {GpuImageDrawScope scope(render,narrow.get());Graphics g(narrow.get());award->Draw(&g);}
+                    render.Flush();const auto narrowPixels=render.ReadImagePixels(*narrow);
+                    Require(ImageLib::WritePNGImage("award-runtime-800.png",800,600,narrowPixels.pixels),"Cannot write narrow Award proof");
+                    // The central award and live map window must not move or
+                    // change size when only the viewport width changes.
+                    // Exclude the rounded window's translucent edge: it blends
+                    // against paper whose gradient intentionally follows width.
+                    for(const Rect area:{Rect(240,300,320,180),Rect(310,124,180,153)})
+                        for(int y=area.mY;y<area.mY+area.mHeight;++y)
+                            for(int x=area.mX;x<area.mX+area.mWidth;++x)
+                                Require(pixels.pixels[y*1400+x+300]==narrowPixels.pixels[y*800+x],"Award centre changed with aspect ratio");
+                    app.mScreenBounds=oldBounds;
+                }
                 {WidgetLifetimeHold hold(*award);award->StartButtonPressed();}
                 app.ProcessSafeDeleteList();
             };
@@ -8358,6 +8383,139 @@ void LandscapeHudRuntime(TestApp& app)
     }
 }
 
+void MenuAchievementsTransitionRuntime(TestApp& app)
+{
+    LoadSceneAtlases(false);
+    struct FreeUI {~FreeUI(){FreeSceneAtlases();}} freeUI;
+    ZenGarden garden;auto* previousGarden=app.mZenGarden;app.mZenGarden=&garden;
+    struct RestoreGarden {TestApp& app;ZenGarden* previous;~RestoreGarden(){app.mZenGarden=previous;}} restoreGarden{app,previousGarden};
+    auto& manager=*app.mWidgetManager;
+    auto& render=*app.mDDInterface->mRenderInterface;
+    app.mPlayerInfo->mName="Preview";
+    app.mPlayerInfo->mFinishedAdventure=2;
+    GameSelector selector(&app);
+    selector.Resize(-800,0,2400,600);
+    manager.AddWidget(&selector);
+    struct Remove {WidgetManager& manager;GameSelector& selector;~Remove(){manager.RemoveWidget(&selector);}} remove{manager,selector};
+    auto* animation=app.ReanimationGet(selector.mSelectorReanimID);
+    animation->PlayReanim(ReanimTrackId::anim_sign,REANIM_PLAY_ONCE_AND_HOLD,0,0);
+    animation->Seek(1,1);selector.mSelectorState=SelectorAnimState::SELECTOR_IDLE;
+    std::unique_ptr<Image> target(render.CreateRenderImage(800,600));
+    for(const int offset:{0,150,300,450,600}) {
+        selector.Move(-800,-offset);
+        {Graphics g(target.get());g.mColor=Color(20,30,20);g.FillRect(Rect(0,0,800,600));manager.DrawWidgetsTo(&g);}
+        render.Flush();const auto pixels=render.ReadImagePixels(*target);
+        Require(ImageLib::WritePNGImage("menu-achievements-"+std::to_string(offset)+".png",800,600,pixels.pixels),"Cannot write menu transition proof");
+    }
+    std::cout<<"PASS actual menu/achievements transition render: five scroll positions\n";
+}
+
+void BakedDialogBackgroundRuntime(TestApp& app)
+{
+    Require(CommonUIAtlas::HasBakedDialogs,"HD dialog fixture requires baked bodies");
+    CommonUIAtlas::Load();
+    struct FreeUI {~FreeUI(){CommonUIAtlas::Free();}} freeUI;
+    auto& render=*app.mDDInterface->mRenderInterface;
+    for(const bool tall:{false,true}) for(const int width:{320,506,692}) {
+        LawnDialog dialog(&app,Dialogs::DIALOG_PAUSED,true,"Dialog background",
+            width==692?"A longer message verifies word wrapping and the original button layout. The stone border and bottom foot must retain their height.":"Confirm this action?",
+            "OK",Dialog::BUTTONS_FOOTER);
+        dialog.mTallBottom=tall;
+        const int height=DIALOG_HEADER_OFFSET+97+(tall?148:112)+(width==320?0:108);
+        dialog.Resize(0,0,width,height);
+        Require(dialog.mYesButton!=nullptr,"Dialog fixture lost its footer button");
+        const Rect button(dialog.mYesButton->mX,dialog.mYesButton->mY,dialog.mYesButton->mWidth,dialog.mYesButton->mHeight);
+        std::unique_ptr<Image> target(render.CreateRenderImage(width+40,height+42));
+        {Graphics graphics(target.get());graphics.mColor=Color(43,55,42);graphics.FillRect(Rect(0,0,width+40,height+42));graphics.Translate(20,20);dialog.Draw(&graphics);
+         graphics.Translate(button.mX,button.mY);dialog.mYesButton->Draw(&graphics);}
+        render.Flush();
+        const auto pixels=render.ReadImagePixels(*target);
+        const auto name="dialog-"+std::string(tall?"tall":"normal")+"-"+std::to_string(width)+".png";
+        Require(ImageLib::WritePNGImage(name,width+40,height+42,pixels.pixels),"Cannot write baked dialog proof");
+        Require(dialog.mYesButton->mX==button.mX&&dialog.mYesButton->mY==button.mY&&dialog.mYesButton->mWidth==button.mWidth&&dialog.mYesButton->mHeight==button.mHeight,
+            "Background draw changed dialog button geometry");
+    }
+    std::cout<<"PASS baked dialog backgrounds: normal/tall, three widths, minimum height, long message, unchanged footer geometry\n";
+    // Exercise the actual Options constructor: the OK artwork and highlighted
+    // label must move together, rather than only moving the text on press.
+    PlayerInfo profile;
+    auto* previousProfile=app.mPlayerInfo;
+    app.mPlayerInfo=&profile;
+    struct RestoreProfile {TestApp& app;PlayerInfo* value;~RestoreProfile(){app.mPlayerInfo=value;}} restore{app,previousProfile};
+    NewOptionsDialog options(&app,true);
+    auto* button=options.mBackToGameButton;
+    button->mIsOver=true;
+    const int width=button->mWidth+12,height=button->mHeight+12;
+    auto capture=[&](bool down){
+        button->mIsDown=down;
+        std::unique_ptr<Image> target(render.CreateRenderImage(width,height));
+        {Graphics graphics(target.get());graphics.mColor=Color(43,55,42);graphics.FillRect(Rect(0,0,width,height));graphics.Translate(5,5);button->Draw(&graphics);}
+        render.Flush();return render.ReadImagePixels(*target);
+    };
+    const auto normal=capture(false),pressed=capture(true);
+    for(int y=1;y<height;++y)for(int x=0;x<width;++x)
+        Require(pressed.pixels[static_cast<size_t>(y)*width+x]==normal.pixels[static_cast<size_t>(y-1)*width+x],
+            "Options OK artwork and label did not shift together on press");
+    Require(ImageLib::WritePNGImage("options-ok-normal.png",width,height,normal.pixels)&&
+        ImageLib::WritePNGImage("options-ok-pressed.png",width,height,pressed.pixels),"Cannot write Options press proof");
+    std::cout<<"PASS actual Options OK button: entire artwork and label translate down one logical pixel\n";
+    ZombatarLoadResources();
+    {
+        const bool mouseEnabled=app.mWidgetManager->mMouseHoverEnabled;
+        app.mWidgetManager->mMouseHoverEnabled=false;
+        ZombatarItems editor(&app);
+        for(int state=0;state<5;++state) {
+            editor.mHairButton->mIsOver=state>=1&&state<=3;
+            editor.mHairButton->mIsDown=state==2;
+            editor.mHatsButton->mIsOver=state==3;
+            editor.mState=state==4?ZombatarEditorState::CONFIRMATION:ZombatarEditorState::EDITING;
+            std::unique_ptr<Image> target(render.CreateRenderImage(560,600));
+            {Graphics graphics(target.get());graphics.mColor=Color(43,55,42);graphics.FillRect(Rect(0,0,560,600));
+             DrawZombatarImage(&graphics,ZombatarImage::DISPLAY_WINDOW,-20,-25);editor.Draw(&graphics);}
+            render.Flush();const auto pixels=render.ReadImagePixels(*target);
+            const auto name="zombatar-editor-"+std::to_string(state)+".png";
+            Require(ImageLib::WritePNGImage(name,560,600,pixels.pixels),"Cannot write Zombatar editor proof");
+            if(const auto* referenceDirectory=std::getenv("PVZ_ZOMBATAR_REFERENCE_DIR")) {
+                const auto path=(std::filesystem::path(referenceDirectory)/name).string();
+                std::unique_ptr<ImageLib::Image> reference(ImageLib::GetImage(path,false));
+                Require(reference&&reference->mWidth==560&&reference->mHeight==600,"Cannot load Zombatar reference");
+                unsigned maximum=0;size_t changed=0,flatChanges=0;uint64_t totalError=0;
+                for(size_t i=0;i<pixels.pixels.size();++i) {
+                    if(pixels.pixels[i]!=reference->mBits[i])++changed;
+                    unsigned error=0;
+                    for(int shift:{0,8,16,24}) {
+                        const auto delta=unsigned(std::abs(int((pixels.pixels[i]>>shift)&255)-int((reference->mBits[i]>>shift)&255)));
+                        error=std::max(error,delta);totalError+=delta;
+                    }
+                    maximum=std::max(maximum,error);
+                    if(error>2) {
+                        const int x=int(i%560),y=int(i/560);bool flat=true;
+                        // Include the two-logical-pixel filter/transparent-guard
+                        // footprint when identifying a genuinely flat field.
+                        for(int yy=std::max(0,y-2);yy<=std::min(599,y+2);++yy)
+                            for(int xx=std::max(0,x-2);xx<=std::min(559,x+2);++xx)
+                                for(int shift:{0,8,16,24})
+                                    flat=flat&&std::abs(int((reference->mBits[i]>>shift)&255)-int((reference->mBits[yy*560+xx]>>shift)&255))<=2;
+                        flatChanges+=flat;
+                    }
+                }
+                const double mean=double(totalError)/(pixels.pixels.size()*4);
+                std::cout<<"Zombatar editor state="<<state<<" changed="<<changed<<" maximum="<<maximum<<" mean="<<mean<<" flatChanges="<<flatChanges<<'\n';
+                // Repacking the large atlas changes quantized UV edge samples,
+                // including unrelated unchanged button art. Allow sparse edge
+                // differences, but reject any flat-field change or broad drift.
+                // Less than 0.1% of the 8-bit channel range on average; flat
+                // fields remain strict. Layer precomposition changes filtered
+                // edge colors, so source-identical art is not pixel-identical.
+                Require(flatChanges==0 && mean<0.25,
+                    "Zombatar editor bake changed flat fields or exceeded edge-sampling tolerance");
+            }
+        }
+        app.mWidgetManager->mMouseHoverEnabled=mouseEnabled;
+    }
+    ZombatarFreeResources();
+}
+
 void StorePauseClockRuntime(TestApp& app, DecodeOnlySoundManager& sounds)
 {
     std::cerr<<"Store clock fixture: initialize\n";
@@ -8548,6 +8706,8 @@ void StorePauseClockRuntime(TestApp& app, DecodeOnlySoundManager& sounds)
     if(gHiddenRulesOnly) {HiddenRulesRuntime(app,sounds);return;}
     if(gGardenRulesOnly) {GardenRulesRuntime(app);return;}
     if(gIntroRulesOnly) {IntroRulesRuntime(app,sounds);return;}
+    if(gMenuTransitionOnly) {MenuAchievementsTransitionRuntime(app);return;}
+    if(gDialogBakingOnly) {BakedDialogBackgroundRuntime(app);return;}
     if(gUiRulesOnly) {ChallengeUnlockRulesRuntime(app);SelectorTrophyTouchRuntime(app);AlmanacRulesRuntime(app);AwardRulesRuntime(app);return;}
     if(gAwardRulesOnly) {AwardRulesRuntime(app);return;}
     if(gAlmanacClockOnly) {AlmanacRulesRuntime(app,true);return;}
@@ -9240,7 +9400,7 @@ void AllResourceGroups(SexyAppBase& app)
         }
     }
     Require(loadedImages==RESOURCE_LOAD_IMAGE_COUNT,"Full loading skipped an image recipe");
-    if(gStepEventsOnly||gCardAtlasOnly||gVramOnly||gPlantCatalogOnly||gZombieCatalogOnly||gMinigameRulesOnly||gPuzzleRulesOnly||gSurvivalRulesOnly||gAdventureRulesOnly||gHiddenRulesOnly||gGardenRulesOnly||gIntroRulesOnly||gUiRulesOnly||gAwardRulesOnly||gAlmanacClockOnly||gActorBirthOnly||gCreditsOnly||gLossRulesOnly||gOpeningRulesOnly||gLifecycleRulesOnly||gGraveRulesOnly||gHudSeamsOnly||gTouchOnly)
+    if(gStepEventsOnly||gCardAtlasOnly||gVramOnly||gPlantCatalogOnly||gZombieCatalogOnly||gMinigameRulesOnly||gPuzzleRulesOnly||gSurvivalRulesOnly||gAdventureRulesOnly||gHiddenRulesOnly||gGardenRulesOnly||gIntroRulesOnly||gMenuTransitionOnly||gDialogBakingOnly||gUiRulesOnly||gAwardRulesOnly||gAlmanacClockOnly||gActorBirthOnly||gCreditsOnly||gLossRulesOnly||gOpeningRulesOnly||gLifecycleRulesOnly||gGraveRulesOnly||gHudSeamsOnly||gTouchOnly)
     {
         StorePauseClockRuntime(static_cast<TestApp&>(app),sounds);
         DefinitionFreeAtlasImages();
@@ -9355,7 +9515,7 @@ void ParticleDefinitionsAndFrames(SexyAppBase& app, const char* pakPath)
     Require(gPakInterface && gPakInterface->AddPakFile(pakPath),
         "Cannot mount the production particle package");
     AllResourceGroups(app);
-    if(gStepEventsOnly||gCardAtlasOnly||gVramOnly||gPlantCatalogOnly||gZombieCatalogOnly||gMinigameRulesOnly||gPuzzleRulesOnly||gSurvivalRulesOnly||gAdventureRulesOnly||gHiddenRulesOnly||gGardenRulesOnly||gIntroRulesOnly||gUiRulesOnly||gAwardRulesOnly||gAlmanacClockOnly||gActorBirthOnly||gCreditsOnly||gLossRulesOnly||gOpeningRulesOnly||gLifecycleRulesOnly||gGraveRulesOnly||gHudSeamsOnly||gTouchOnly) return;
+    if(gStepEventsOnly||gCardAtlasOnly||gVramOnly||gPlantCatalogOnly||gZombieCatalogOnly||gMinigameRulesOnly||gPuzzleRulesOnly||gSurvivalRulesOnly||gAdventureRulesOnly||gHiddenRulesOnly||gGardenRulesOnly||gIntroRulesOnly||gMenuTransitionOnly||gDialogBakingOnly||gUiRulesOnly||gAwardRulesOnly||gAlmanacClockOnly||gActorBirthOnly||gCreditsOnly||gLossRulesOnly||gOpeningRulesOnly||gLifecycleRulesOnly||gGraveRulesOnly||gHudSeamsOnly||gTouchOnly) return;
     ResourceLoadingOwnership(app);
     ReanimationAppearanceDefinitions(app);
     constexpr ParticleEffect fireEffect=ParticleEffect::PARTICLE_ZOMBIE_BOSS_FIREBALL;
@@ -9851,6 +10011,8 @@ int main(int argc, char** argv)
     gHiddenRulesOnly=argc==3 && std::string_view(argv[2])=="hidden-rules";
     gGardenRulesOnly=argc==3 && std::string_view(argv[2])=="garden-rules";
     gIntroRulesOnly=argc==3 && std::string_view(argv[2])=="intro-rules";
+    gMenuTransitionOnly=argc==3 && std::string_view(argv[2])=="menu-transition";
+    gDialogBakingOnly=argc==3 && std::string_view(argv[2])=="dialog-baking";
     gUiRulesOnly=argc==3 && std::string_view(argv[2])=="ui-rules";
     gAwardRulesOnly=argc==3 && std::string_view(argv[2])=="award-rules";
     gAlmanacClockOnly=argc==3 && std::string_view(argv[2])=="almanac-clock";
@@ -9919,7 +10081,7 @@ int main(int argc, char** argv)
         ReanimationAppearancePixels(app);
         ReanimationFullscreenPixels(app);
         }
-        Require(argc==2||gStepEventsOnly||gCardAtlasOnly||gVramOnly||gPlantCatalogOnly||gZombieCatalogOnly||gMinigameRulesOnly||gPuzzleRulesOnly||gSurvivalRulesOnly||gAdventureRulesOnly||gHiddenRulesOnly||gGardenRulesOnly||gIntroRulesOnly||gUiRulesOnly||gAwardRulesOnly||gAlmanacClockOnly||gActorBirthOnly||gCreditsOnly||gLossRulesOnly||gOpeningRulesOnly||gLifecycleRulesOnly||gGraveRulesOnly||gHudSeamsOnly||gTouchOnly,"Pass the production main.pak64 path and optional focused case");
+        Require(argc==2||gStepEventsOnly||gCardAtlasOnly||gVramOnly||gPlantCatalogOnly||gZombieCatalogOnly||gMinigameRulesOnly||gPuzzleRulesOnly||gSurvivalRulesOnly||gAdventureRulesOnly||gHiddenRulesOnly||gGardenRulesOnly||gIntroRulesOnly||gMenuTransitionOnly||gDialogBakingOnly||gUiRulesOnly||gAwardRulesOnly||gAlmanacClockOnly||gActorBirthOnly||gCreditsOnly||gLossRulesOnly||gOpeningRulesOnly||gLifecycleRulesOnly||gGraveRulesOnly||gHudSeamsOnly||gTouchOnly,"Pass the production main.pak64 path and optional focused case");
         ParticleDefinitionsAndFrames(app,argv[1]);
     }
     catch (const ResourceManagerException& error)

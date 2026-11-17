@@ -1,6 +1,9 @@
 # .pvzbuild selects definition files; .dsl files contain only asset definitions.
 resource_build(1)
 
+# Development: lossless PNG, low deflate level and no adaptive filter search.
+png_compression(1)
+
 sources(reanim "reanim/units/*.dsl")
 sources(reanim "reanim/appearances/*.dsl")
 sources(particle "particles/particles/*.particle.dsl")
@@ -20,12 +23,13 @@ atlas(landscape_ui scene:LandscapeUI)
 
 # Development uses native MaxRects immediately. Switch solver to exact for
 # release-size optimization; existing exact proof caches remain reusable.
-# HD development keeps full source resolution and relaxes the portable 4096 cap.
-# No image rotation is allowed. The local Vulkan target supports 16384 per side.
+# Author the HD package at 4x, with an 8192 atlas limit. Derive 2x by halving
+# entire atlas pages, preserving the layout and normalized UVs. Do not repack.
+# Padding 4 at 4x leaves 2 texels after deriving the 2x package.
 atlas_defaults(
     solver maxrects
-    padding 2
-    max_side 16384
+    padding 4
+    max_side 8192
     time_limit_seconds 60
     require_optimal false
     workers 1

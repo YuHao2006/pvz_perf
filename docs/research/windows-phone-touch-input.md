@@ -121,4 +121,4 @@ Windows 需要继续支持 Win7，可使用 WM_TOUCH 作为共同入口，而非
 
 `AtlasResources_480x800.cs` 的 SeedAtlas 区域表给出卡面总图 324×689、4 列 13 行，即每张原始图像为 81×53。`Constants.cs` 中 SMALL_SEEDPACKET_HEIGHT=52 是布局常量，不等于图像像素高度。原生阳光栏为 143×44，价格底片 33×20；因此在本项目 600 高内，可按阳光栏 44＋顶部间隔 2＋十卡 530＋九个间隔 18＝594 排下，不需要缩放。
 
-对应原始 PNG 已在本机 `wp移植版0.0.7.1.zip/Assets.zip/Content/images/480x800/SeedAtlas.png` 核对；这份 PNG 为 996×814。按原始区域裁出后逐像素保存，不使用旧精华 1.5.3 的混淆 XNB 像素，也不把 Free 960 的 108×70 卡面缩成 81×53。可复核来源与区域见[清单](../../assets/source-art/landscape-ui/native-source.json)。
+对应原始 PNG 已在本机 `wp移植版0.0.7.1.zip/Assets.zip/Content/images/480x800/SeedAtlas.png` 核对；这份 PNG 为 996×814。按原始区域裁出后逐像素保存，不使用旧精华 1.5.3 的混淆 XNB 像素，也不把 Free 960 的 108×70 卡面缩成 81×53。可复核来源与区域见[清单](../../assets/source-art/archive/2026-11-16-pre-library/landscape-ui/native-source.json)。

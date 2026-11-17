@@ -1,0 +1,13 @@
+{
+  "valid": true,
+  "counts": {
+    "currentFiles": 2499,
+    "exports4x": 2439,
+    "sourceFiles": 4838
+  },
+  "pendingImages": 0,
+  "errors": [],
+  "masterResolutionPreserved": true,
+  "buildPixelScale": 4,
+  "globalActiveScale": 4
+}

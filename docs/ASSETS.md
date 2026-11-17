@@ -9,7 +9,7 @@
 | `assets/definitions/ResourceBuild.pvzbuild` | 枚举顺序、定义文件、共享图集与装箱策略 |
 | `assets/definitions/` 中的 reanim、particle、projectile、场景 DSL | 动作、粒子、投掷物及图集作者数据 |
 | `assets/runtime/` | 原生图片、字体、音效和音乐源资源 |
-| `assets/source-art/ai/` 及其中的 `runtime-overlay.json` | AI 原始成品与在用成品的显式路径映射；不与原生源图混放 |
+| `assets/source-art/archive/2026-11-16-pre-library/ai/` 及其中的 `runtime-overlay.json` | AI 原始成品与在用成品的显式路径映射；不与原生源图混放 |
 | `assets/definitions/atlas-cache/` | 已完成布局搜索结果；不是运行时资源 |
 | `pvzPerf/Sexy.TodLib/generated/` | 可复现生成的 C++ 数值、枚举、UV 和绑定代码 |
 | `Tests/manifest.json` 及其引用档案 | 原版 DAT 和项目无尽基准的来源与哈希 |

@@ -484,7 +484,7 @@ void ChallengeScreen::DrawButton(Graphics* g, int theChallengeIndex)
 			// ============================================================================================
 			bool aHighLight = aChallengeButton->mIsOver && theChallengeIndex != mUnlockChallengeIndex;
 			g->mColorizeImages = false;
-			g->DrawImage(aHighLight ? Sexy::IMAGE_CHALLENGE_WINDOW : Sexy::IMAGE_CHALLENGE_WINDOW_HIGHLIGHT, aPosX - 6, aPosY - 2);
+			g->DrawImage(aHighLight ? Sexy::IMAGE_CHALLENGE_WINDOW_HIGHLIGHT : Sexy::IMAGE_CHALLENGE_WINDOW, aPosX - 6, aPosY - 2);
 
 			// ============================================================================================
 			// ▲ 绘制小游戏的名称
@@ -600,7 +600,8 @@ void ChallengeScreen::Draw(Graphics* g)
 		aTrophyString += FormatInt(aTotalBuf, aTrophiesTotal);
 		TodDrawString(g, aTrophyString, 739, 73, Sexy::FONT_DWARVENTODCRAFT15, Color(255, 240, 0), DS_ALIGN_CENTER);
 	}
-	TodDrawImageScaledF(g, Sexy::IMAGE_TROPHY, 718, 26, 0.5f, 0.5f);
+	// Share the award trophy texture; no second low-resolution trophy image.
+	TodDrawImageScaledF(g, Sexy::IMAGE_TROPHY_HI_RES, 718, 26, 0.25f, 0.25f);
 
 	for (int aChallengeMode = 0; aChallengeMode < NUM_CHALLENGE_MODES; aChallengeMode++)
 		DrawButton(g, aChallengeMode);

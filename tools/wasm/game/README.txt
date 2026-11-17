@@ -56,3 +56,5 @@ Build source and file hashes: web-build-manifest.json.
 Custom Save is the single gated entry for visual lineups, endless settings, user progress editing, and DAT64 import/export. Authorization is checked once when opening it. The HTML editor is built from PvzDevTools; see save-editor-manifest.json. Upload-in-progress is shown in red.
 
 Custom Save opens on Users: add/delete users, change IDs/names and progress without running gameplay. ID changes also rename the user's checkpoints. Perfect-profile replacement was removed. Generated filenames default to game1_58.dat64; the filename guide lists current project mode IDs, with Limbo and four hidden endless entries collapsed. Advanced graphics/aspect/FPS options are collapsed. Local save retry appears only after persistence failure.
+
+An optional compact package contains wasm64 WebGPU, wasm64 WebGL 2 and scalar wasm32 WebGL 2. WebGPU is omitted from the 32-bit selector in that package.

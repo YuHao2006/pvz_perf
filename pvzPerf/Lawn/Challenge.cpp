@@ -5680,9 +5680,9 @@ void Challenge::TreeOfWisdomDraw(Graphics* g)
 	aReanimTree->mEnableExtraOverlayDraw = false;
 	const Rect& view = mApp->mScreenBounds;
 	// Ultra uses this same gradient sky; only the backdrop fills the viewport.
-	g->DrawImage(Sexy::IMAGE_REANIM_TREE_BG,
+	g->DrawImage(Sexy::IMAGE_BACKGROUND_TREEOFWISDOM,
 		Rect(view.mX - mBoard->mX, view.mY - mBoard->mY, view.mWidth, view.mHeight),
-		Rect(0, 0, Sexy::IMAGE_REANIM_TREE_BG->mWidth, Sexy::IMAGE_REANIM_TREE_BG->mHeight));
+		Rect(0, 0, Sexy::IMAGE_BACKGROUND_TREEOFWISDOM->mWidth, Sexy::IMAGE_BACKGROUND_TREEOFWISDOM->mHeight));
 	for (int i = 0; i < 6; i++)
 	{
 		mApp->ReanimationGet(mReanimClouds[i])->Draw(g);

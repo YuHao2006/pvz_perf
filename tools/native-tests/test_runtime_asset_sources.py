@@ -45,19 +45,19 @@ class RuntimeAssetSourcesTests(unittest.TestCase):
         self.file("assets/runtime/images/Native.png", b"native")
         for name in ("master.png", "inputs/input.png", "prompts/request.txt",
                      "runtime/images/Unlisted.png"):
-            self.file("assets/source-art/ai/" + name)
+            self.file("assets/source-art/archive/2026-11-16-pre-library/ai/" + name)
         self.assertEqual(set(sources.inventory(self.root)), {"images/native.png"})
 
     def test_duplicate_native_and_overlay_virtual_paths_fail_case_insensitively(self):
         self.file("assets/runtime/images/Shared.png")
-        self.file("assets/source-art/ai/runtime/images/shared.png")
-        self.manifest({"IMAGES/SHARED.PNG": "assets/source-art/ai/runtime/images/shared.png"})
+        self.file("assets/source-art/archive/2026-11-16-pre-library/ai/runtime/images/shared.png")
+        self.manifest({"IMAGES/SHARED.PNG": "assets/source-art/archive/2026-11-16-pre-library/ai/runtime/images/shared.png"})
         with self.assertRaisesRegex(ValueError, "Duplicate runtime asset"):
             sources.inventory(self.root)
 
     def test_duplicate_overlay_names_and_source_aliases_fail(self):
-        first = "assets/source-art/ai/runtime/images/First.png"
-        second = "assets/source-art/ai/runtime/images/Second.png"
+        first = "assets/source-art/archive/2026-11-16-pre-library/ai/runtime/images/First.png"
+        second = "assets/source-art/archive/2026-11-16-pre-library/ai/runtime/images/Second.png"
         self.file(first)
         self.file(second)
         self.manifest({"images/First.png": first, "IMAGES/FIRST.PNG": second})
@@ -68,7 +68,7 @@ class RuntimeAssetSourcesTests(unittest.TestCase):
             sources.inventory(self.root)
 
     def test_virtual_and_physical_traversal_and_raw_master_mapping_are_rejected(self):
-        good = "assets/source-art/ai/runtime/images/Good.png"
+        good = "assets/source-art/archive/2026-11-16-pre-library/ai/runtime/images/Good.png"
         self.file(good)
         for name in ("../escape.png", "/images/escape.png", "C:/escape.png",
                      "images\\escape.png", "images/./escape.png", "images//escape.png"):
@@ -77,8 +77,8 @@ class RuntimeAssetSourcesTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "Invalid runtime asset relative path"):
                     sources.inventory(self.root)
         for source in ("../escape.png", "/escape.png", "C:/escape.png",
-                       "assets/source-art/ai/runtime/../raw.png",
-                       "assets/source-art/ai/master.png", "assets/runtime/images/Native.png"):
+                       "assets/source-art/archive/2026-11-16-pre-library/ai/runtime/../raw.png",
+                       "assets/source-art/archive/2026-11-16-pre-library/ai/master.png", "assets/runtime/images/Native.png"):
             with self.subTest(source=source):
                 self.manifest({"images/Good.png": source})
                 with self.assertRaises(ValueError):
@@ -88,7 +88,7 @@ class RuntimeAssetSourcesTests(unittest.TestCase):
         (self.root / sources.AI_OVERLAY_MANIFEST).unlink()
         with self.assertRaisesRegex(ValueError, "Missing AI runtime overlay manifest"):
             sources.inventory(self.root)
-        self.manifest({"images/Missing.png": "assets/source-art/ai/runtime/images/Missing.png"})
+        self.manifest({"images/Missing.png": "assets/source-art/archive/2026-11-16-pre-library/ai/runtime/images/Missing.png"})
         with self.assertRaisesRegex(ValueError, "Missing AI runtime overlay source"):
             sources.inventory(self.root)
 
@@ -111,7 +111,7 @@ class RuntimeAssetSourcesTests(unittest.TestCase):
             with self.subTest(virtual=virtual):
                 self.assertEqual(inventory[virtual.casefold()], ROOT / physical)
                 self.assertFalse((ROOT / "assets/runtime" / virtual).exists())
-        self.assertNotIn("assets/source-art/ai/common-menu-paper-hires-v1.png", inventory)
+        self.assertNotIn("assets/source-art/archive/2026-11-16-pre-library/ai/common-menu-paper-hires-v1.png", inventory)
         self.assertIn("images/aquarium1.png", inventory)
         self.assertIn("reanim/selectorscreen_bg_right.png", inventory)
 

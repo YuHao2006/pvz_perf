@@ -66,7 +66,11 @@ for(const type of ['freeze','resume'])document.addEventListener(type,event=>diag
 function cloudUploadState(active){cloudUploads+=active?1:-1;document.getElementById('cloud-upload-warning').hidden=cloudUploads===0}
 function lineupStatus(message){document.getElementById('lineup-cloud-status').textContent=message}
 function saveLineups(){lineupStorage.save().catch(error=>lineupStatus('阵型库云同步未完成：'+error.message+'；本地阵型已保留'))}
-for(const button of document.querySelectorAll('#cloud-restore-dialog button'))button.onclick=()=>document.getElementById('cloud-restore-dialog').close(button.value);
+async function synchronizeProgress(){
+ const results=await Promise.allSettled([progressStorage.save(true),lineupStorage.save(true)]);
+ for(let i=0;i<results.length;i++)if(results[i].status==='rejected')document.getElementById(i?'lineup-cloud-status':'cloud-status').textContent='自动同步暂未完成，继续使用本地存档：'+results[i].reason.message;
+}
+
 const mobileUA=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 const mobileInput=mobileUA||
  (navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1)||matchMedia('(pointer:coarse)').matches;
@@ -266,7 +270,7 @@ async function preparePersistentFiles(){
  Module.FS.mkdirTree(saveRoot);
  const {ProgressStorage}=await progressToolsReady;
  progressStorage=new ProgressStorage(Module.FS,saveRoot,{cloudEnabled:!webConfig.bypassBilibiliChecks,
-  sharedStorageId:webConfig.sharedStorageId,
+  sharedStorageId:webConfig.sharedStorageId,canApplyRemote:()=>!running,onRestore:()=>syncSaves(),
   provideToy:async()=>(await import('./rewards.js')).provideBilibiliToy(),
   report:message=>{document.getElementById('cloud-status').textContent=message},
   uploadState:cloudUploadState});
@@ -317,19 +321,6 @@ async function progressAction(operation){
  try{await operation()}catch(error){document.getElementById('cloud-status').textContent=error.message}
  finally{rewardBusy=false;start.disabled=false}
 }
-document.getElementById('upload-progress').onclick=()=>progressAction(async()=>{
- const results=await Promise.allSettled([progressStorage.save(true),lineupStorage.save(true)]);
- const errors=results.filter(r=>r.status==='rejected').map(r=>r.reason.message);if(errors.length)throw Error(errors.join('；'));
-});
-document.getElementById('restore-progress').onclick=()=>progressAction(async()=>{
- await Promise.allSettled([progressStorage.saving,lineupStorage.saving]);
- const [saved,lineups]=await Promise.all([progressStorage.readCloud(),lineupStorage.readCloud()]);if(!saved&&!lineups)throw Error('当前 B 站账号尚无云端进度或阵型库');
- const dialog=document.getElementById('cloud-restore-dialog');
- const confirmed=new Promise(resolve=>{dialog.addEventListener('close',()=>resolve(dialog.returnValue==='restore'),{once:true});dialog.returnValue='cancel';dialog.showModal()});
- if(!await confirmed)return;
- if(saved){progressStorage.apply(saved.files,saved.modifiedAt);progressStorage.needsChoice=false;await syncSaves();await progressStorage.save()}
- if(lineups){lineupStorage.restore(lineups);lineupStatus('阵型库已从云端恢复')}
-});
 document.getElementById('save-local').onclick=()=>progressAction(async()=>{
  await syncSaves(true);document.getElementById('local-save-status').textContent='本地存档已写入浏览器';
 });
@@ -346,16 +337,16 @@ async function returnToSettings(){
  document.getElementById('game-fps').hidden=true;
  Module.pvzTextInput.hide();cancelPointers();
  try{await syncSaves();document.getElementById('local-save-status').textContent='本地存档已写入浏览器'}catch(error){document.getElementById('local-save-status').textContent='本地保存失败：'+error.message+'。请重试保存或导出 DAT64，不要刷新页面。'}
- progressStorage?.save().catch(error=>{document.getElementById('cloud-status').textContent='进度备份未完成：'+error.message});
- if(lineupStorage)saveLineups();
  if(document.fullscreenElement)await document.exitFullscreen().catch(console.warn);
  running=false;document.body.classList.remove('playing','portrait-game');stage.classList.remove('running');
+ await synchronizeProgress();
+
  document.documentElement.classList.remove('playing');window.scrollTo(0,0);
  for(const input of form.elements)input.disabled=false;
  formEdited=false;fillPreferences({...readPreferences(),...loadNativeSettings()});
  document.getElementById('graphics-backend').disabled=document.getElementById('graphics-backend').options.length<2;
  document.getElementById('memory-model').disabled=document.getElementById('memory-model').options.length<2;
- document.getElementById('upload-progress').disabled=document.getElementById('restore-progress').disabled=webConfig.bypassBilibiliChecks;
+
  statusText.textContent='准备就绪';startupPhase='设置页面';start.disabled=false;scheduleResize();
 }
 canvas.addEventListener('webglcontextcreationerror',event=>{Module.pvzWebGLCreationError=event.statusMessage||'浏览器未提供创建失败的详情'});
@@ -367,7 +358,7 @@ var Module={canvas,locateFile:name=>'./'+name,pvzRefreshRate:60,pvzMobileInput:m
  print:message=>console.log(message),printErr:message=>console.error(message),onAbort:showError,pvzOnError:showError,
  monitorRunDependencies:left=>{statusText.textContent=left?'正在准备资源与存档…':'加载完成';startupPhase=statusText.textContent},
  preRun:[function(){Module.FS.mkdir('/persist');Module.addRunDependency('savedata');preparePersistentFiles().catch(error=>{Module.pvzStorageError=true;showError('存档准备失败，未清除原有存档：'+error.message)}).finally(()=>Module.removeRunDependency('savedata'))}],
- onRuntimeInitialized:()=>{runtimeReady=!Module.pvzStorageError;if(!formEdited)fillPreferences({...readPreferences(),...loadNativeSettings()});document.getElementById('progress').hidden=true;statusText.textContent='准备就绪';start.disabled=!runtimeReady||!Module.pvzMusic;document.getElementById('upload-progress').disabled=document.getElementById('restore-progress').disabled=webConfig.bypassBilibiliChecks||!runtimeReady;scheduleResize()}
+ onRuntimeInitialized:()=>{runtimeReady=!Module.pvzStorageError;if(!formEdited)fillPreferences({...readPreferences(),...loadNativeSettings()});document.getElementById('progress').hidden=true;statusText.textContent='准备就绪';start.disabled=!runtimeReady||!Module.pvzMusic;scheduleResize()}
 };
 fillPreferences(readPreferences());
 form.addEventListener('input',()=>{formEdited=true;updateControls()});form.addEventListener('change',()=>{formEdited=true;updateControls()});
@@ -387,6 +378,7 @@ form.addEventListener('submit',async event=>{
   const audio=Module.pvzMusic.unlock();
   await startupDeadline(Promise.all([audio,textInputReady,full]),'初始化音频与输入');
   document.documentElement.classList.add('playing');document.body.classList.add('playing');window.scrollTo(0,0);fitCanvas();
+  await synchronizeProgress();
   await startupDeadline(saveSettings(p),'保存启动设置');
   try{await fixLocalLevelSaves()}finally{(await saveToolsReady).releaseSaveTools()}
   running=true;lastWidth=Module.pvzViewport.width;stage.classList.add('running');
@@ -409,7 +401,7 @@ form.addEventListener('submit',async event=>{
 window.addEventListener('error',event=>showError(event.error||event.message));window.addEventListener('unhandledrejection',event=>showError(event.reason));
 async function boot(){
  const config=window.PVZGraphicsConfig||{webgpu:false};
- const {supportsMemory64,supportsSimd128,memoryModels,selectMemoryModel,runtimeStem}=await import('./runtime-selection.js');
+ const {supportsMemory64,supportsSimd128,memoryModels,selectMemoryModel,runtimeStem,highResolutionLink}=await import('./runtime-selection.js');
  const memorySupported=supportsMemory64(),simdSupported=supportsSimd128(),models=memoryModels(config,memorySupported,simdSupported);
  Module.pvzSimdSupported=simdSupported;
  let savedMemory=null;try{savedMemory=localStorage.getItem('pvz_wasm_memory_override')}catch{}
@@ -437,9 +429,16 @@ async function boot(){
  dropdown.replaceChildren(new Option('正在检测图形接口…',''));dropdown.disabled=true;
  const {detectGraphics,capabilityText}=await import('./graphics.js');
  const capabilities=await detectGraphics(navigator.gpu,{webgpu:config.webgpu&&(!config.simd128||simdSupported),webgl:!config.webgpu||config.fallback});
+ // Reuse the normal WebGPU probe. A WebGL-only distribution may probe HD
+ // separately without changing its available game runtimes or delaying startup.
+ if(highResolutionLink(webConfig,memorySupported,simdSupported,true)){
+  const showHD=report=>{const url=highResolutionLink(webConfig,memorySupported,simdSupported,report.webgpu);if(url){const link=document.getElementById('high-resolution');link.href=url;link.hidden=false}};
+  if(config.webgpu)showHD(capabilities);
+  else void detectGraphics(navigator.gpu,{webgpu:true,webgl:false}).then(showHD).catch(()=>{});
+ }
  document.getElementById('graphics-capabilities').textContent=capabilityText(capabilities);
  Module.pvzGraphicsCapabilities=capabilities;
- const available=[['webgpu','WebGPU'],['webgl','WebGL 2']].filter(([name])=>capabilities[name]);
+ const available=[['webgpu','WebGPU'],['webgl','WebGL 2']].filter(([name])=>capabilities[name]&&!(name==='webgpu'&&config.webgpuMemory64Only&&memoryModel!=='wasm64'));
  if(!available.length){
   dropdown.replaceChildren(new Option('无可用图形接口',''));
   throw Error(config.fallback?'当前浏览器的 WebGPU 和 WebGL 2 都无法运行本游戏。请查看下方检测结果，或换用其他浏览器。':'此包提供的图形接口无法运行本游戏。请查看下方检测结果。');

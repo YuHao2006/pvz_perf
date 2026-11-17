@@ -22,7 +22,8 @@
             "tag": "Image",
             "attrs": {
               "id": "BLANK",
-              "path": "blank"
+              "path": "blank.png",
+              "noalpha": "true"
             },
             "children": []
           },
@@ -95,7 +96,8 @@
             "tag": "Image",
             "attrs": {
               "id": "PVZ_LOGO",
-              "path": "PvZ_Logo"
+              "path": "PvZ_Logo.png",
+              "noalpha": "true"
             },
             "children": []
           },
@@ -454,6 +456,22 @@
           {
             "tag": "Image",
             "attrs": {
+              "id": "DIALOG_BAKED_TALL",
+              "path": "dialog_baked_tall"
+            },
+            "children": []
+          },
+          {
+            "tag": "Image",
+            "attrs": {
+              "id": "DIALOG_BAKED_NORMAL",
+              "path": "dialog_baked_normal"
+            },
+            "children": []
+          },
+          {
+            "tag": "Image",
+            "attrs": {
               "id": "BUTTON_LEFT",
               "path": "button_left"
             },
@@ -763,7 +781,8 @@
             "tag": "Image",
             "attrs": {
               "id": "OPTIONS_MENUBACK",
-              "path": "options_menuback"
+              "path": "options_menuback.png",
+              "noalpha": "true"
             },
             "children": []
           },
@@ -4936,8 +4955,9 @@
             "tag": "Image",
             "attrs": {
               "id": "FOG",
-              "path": "fog",
-              "cols": "8"
+              "path": "fog.png",
+              "cols": "8",
+              "noalpha": "true"
             },
             "children": []
           },
@@ -5144,8 +5164,17 @@
           {
             "tag": "SetDefaults",
             "attrs": {
-              "path": "images",
+              "path": "reanim",
               "idprefix": "IMAGE_"
+            },
+            "children": []
+          },
+          {
+            "tag": "Image",
+            "attrs": {
+              "id": "BACKGROUND_TREEOFWISDOM",
+              "path": "tree_bg",
+              "a8r8g8b8": ""
             },
             "children": []
           }
@@ -5168,8 +5197,17 @@
           {
             "tag": "Image",
             "attrs": {
-              "id": "AWARDSCREEN_BACK",
-              "path": "AwardScreen_Back",
+              "id": "AWARDSCREEN_PANEL",
+              "path": "AwardScreen_Panel",
+              "a8r8g8b8": ""
+            },
+            "children": []
+          },
+          {
+            "tag": "Image",
+            "attrs": {
+              "id": "AWARDSCREEN_FRAME",
+              "path": "AwardScreen_Frame",
               "a8r8g8b8": ""
             },
             "children": []

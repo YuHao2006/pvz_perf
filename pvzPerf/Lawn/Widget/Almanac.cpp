@@ -60,22 +60,22 @@ void DrawAlmanacBackground(Graphics* g, const TextureSource& theTexture,
 		Rect(theDecorationX, 0, aDecoration.mWidth, aDecoration.mHeight),
 		Rect(0, 0, aDecoration.mWidth, aDecoration.mHeight));
 
-	const auto& aFrame = AlmanacAtlas::Images[static_cast<unsigned>(theFrame)];
 	constexpr int b = 64;
-	const int sx = aFrame.mWidth - b, sy = aFrame.mHeight - b;
 	const int dx = aLeft + theBounds.mWidth - b, dy = theBounds.mHeight - b;
-	const std::array<Rect, 8> aSources{{
-		{0,0,b,b}, {b,0,sx-b,b}, {sx,0,b,b},
-		{0,b,b,sy-b}, {sx,b,b,sy-b},
-		{0,sy,b,b}, {b,sy,sx-b,b}, {sx,sy,b,b}
-	}};
 	const std::array<Rect, 8> aDestinations{{
 		{aLeft,0,b,b}, {aLeft+b,0,dx-aLeft-b,b}, {dx,0,b,b},
 		{aLeft,b,b,dy-b}, {dx,b,b,dy-b},
 		{aLeft,dy,b,b}, {aLeft+b,dy,dx-aLeft-b,b}, {dx,dy,b,b}
 	}};
-	for (unsigned int i = 0; i < aSources.size(); ++i)
-		DrawAtlasImage(&aBackground, theTexture, aFrame, aDestinations[i], aSources[i]);
+	// Eight consecutive entries contain exactly the old sampled border strips.
+	// The unused transparent centre no longer occupies atlas pixels. Draw count
+	// and destination geometry remain unchanged.
+	for (unsigned int i = 0; i < aDestinations.size(); ++i)
+	{
+		const auto& aPiece = AlmanacAtlas::Images[static_cast<unsigned>(theFrame) + i];
+		DrawAtlasImage(&aBackground, theTexture, aPiece, aDestinations[i],
+			Rect(1, 1, aPiece.mWidth - 2, aPiece.mHeight - 2));
+	}
 	const auto& aHeader = AlmanacAtlas::Images[static_cast<unsigned>(theHeader)];
 	DrawAtlasImage(&aBackground, theTexture, aHeader,
 		Rect(theHeaderX, theHeaderY, aHeader.mWidth, aHeader.mHeight),
@@ -84,11 +84,16 @@ void DrawAlmanacBackground(Graphics* g, const TextureSource& theTexture,
 
 } // namespace
 
+static Rect AlmanacGroundSourceRect(int map)
+{
+    return Rect(map == 4 ? 764 : 595, map == 4 ? 301 : map == 2 || map == 3 ? 270 : 145, 200, 200);
+}
+
 // Draw directly from resident maps. No duplicate 200x200 ground textures.
 void DrawAlmanacGround(Graphics* g,int x,int y,int map,bool ice) {
     const std::array<Image*,5> maps{IMAGE_BACKGROUND1,IMAGE_BACKGROUND2,IMAGE_BACKGROUND3,IMAGE_BACKGROUND4,IMAGE_BACKGROUND5};
     Graphics ground(*g);ground.ClipRect(x,y,200,200);
-    ground.DrawImage(maps[map],x,y,Rect(map==4?764:595,map==4?301:map==2||map==3?270:145,200,200));
+    ground.DrawImage(maps[map],x,y,AlmanacGroundSourceRect(map));
     if(ice){ground.DrawImage(IMAGE_ICE_CAP,x+120,y+125);ground.DrawImage(IMAGE_ICE,x+135,y+125);}
 }
 
@@ -400,6 +405,8 @@ void AlmanacDialog::DrawIndex(Graphics* g)
 	{
 		Graphics aZombieGraphics = Graphics(*g);
 		mZombie->BeginDraw(&aZombieGraphics);
+		Graphics aShadowGraphics(aZombieGraphics);
+		mZombie->DrawShadow(&aShadowGraphics);
 		mZombie->Draw(visualNowNs, &aZombieGraphics);
 	}
 }
@@ -447,7 +454,10 @@ void AlmanacDialog::DrawPlants(Graphics* g)
 
 		Graphics aPoolGraphics(*g);
 		aPoolGraphics.ClipRect(521, 107, 200, 200);
-		aPoolGraphics.Translate(0, -145);
+        // PoolEffect uses board coordinates (background origin -220,0).
+        // Apply exactly the same source-to-destination transform as the map crop.
+        const Rect aSource = AlmanacGroundSourceRect(aNight ? 3 : 2);
+        aPoolGraphics.Translate(521 + 220 - aSource.mX, 107 - aSource.mY);
 		mApp->mPoolEffect->PoolEffectDraw(&aPoolGraphics, aNight);
 	}
 	else

@@ -843,9 +843,9 @@ ZombatarItems::ZombatarItems(LawnApp* theApp) :
 	mDeleteRect(321, 121, 60, 20),
 	mPressedButtonId(-1)
 {
-	// 1073 gives the child the asset width but keeps the full logical screen
-	// height for the controls below the 560x493 artwork.
-	const int aWidth = gZombatarAtlas.mImages[static_cast<size_t>(ZombatarImage::WIDGET_BG)].mWidth;
+	// 1073's editor is 560 logical pixels wide. Its former background is now
+	// baked into the parent chrome; texture bounds no longer define layout.
+	const int aWidth = 560;
 	const int aHeight = mApp ? mApp->mHeight : 600;
 	Resize(25, 25, aWidth, aHeight);
 
@@ -1223,7 +1223,10 @@ void ZombatarItems::Draw(Graphics* g)
 	// (253, appHeight-97) is the separate transparent Main Menu/Back target.
 	UpdateViewButtonLayout();
 
-	DrawZombatarImage(g, ZombatarImage::WIDGET_BG, 0, 0);
+	// DISPLAY_WINDOW includes the fixed editor interior. Restore the original
+	// opaque base patch for pages that do not display that editor interior.
+	if (mState==ZombatarEditorState::CONFIRMATION || mState==ZombatarEditorState::BROWSING)
+		DrawZombatarImage(g,ZombatarImage::WIDGET_BG,33,100);
 
 	// C 形态 -> 成员函数内 lambda 表（表在类作用域内→private 方法 DrawEditor/
 	// DrawConfirmation/DrawSavedZombatars 可访问）；ENTERING/LEAVING 共体
@@ -1264,18 +1267,41 @@ void ZombatarItems::Draw(Graphics* g)
 		}
 	}
 
+	// The selector's extended foreground overlaps the left edge of this
+	// baked rock. Restore its full normal appearance before the hover layer.
+	const Rect aBackSource(mX + mMainMenuButton->mX, mY + mMainMenuButton->mY,
+		mMainMenuButton->mWidth, mMainMenuButton->mHeight);
+	DrawZombatarImage(g, ZombatarImage::MAIN_BG,
+		Rect(mMainMenuButton->mX, mMainMenuButton->mY,
+			mMainMenuButton->mWidth, mMainMenuButton->mHeight), aBackSource);
 	mMainMenuButton->Draw(g);
 }
 
 void ZombatarItems::DrawEditor(Graphics* g)
 {
-	DrawZombatarImage(g, ZombatarImage::WIDGET_INNER_BG, 127, 100);
-	for (ZombatarButton* aButton : {
+	const std::array<ZombatarButton*,9> aCategoryButtons = {
 		mSkinButton, mHairButton, mFacialHairButton, mTidbitsButton,
 		mEyeWearButton, mClothesButton, mAccessoryButton, mHatsButton,
-		mBackdropsButton })
+		mBackdropsButton };
+	const bool aLiveCategoryColumn=std::any_of(aCategoryButtons.begin(),aCategoryButtons.end(),[](const ZombatarButton* button) {
+		return button->mBtnNoDraw || button->IsButtonDown() ||
+			((button->mIsOver || button->IsMouseOver()) && button->mHoverImage!=button->mNormalImage);
+	});
+	if (aLiveCategoryColumn)
 	{
-		aButton->Draw(g);
+		// Replace the complete category column in the full-frame bake. Repaint
+		// its original base, panel overlap and live buttons so translucent edges,
+		// overlapping rows and multiple touch contacts retain their old order.
+		DrawZombatarImage(g,ZombatarImage::WIDGET_BG,
+			Rect(33,100,104,335),Rect(0,0,104,335));
+		DrawZombatarImage(g,ZombatarImage::WIDGET_INNER_BG,127,100);
+		for (auto* button:aCategoryButtons)button->Draw(g);
+	}
+	else
+	{
+		// The parent has already drawn the complete fixed editor UI.
+		g->mColor=Color::Black;
+		g->mFont=nullptr;
 	}
 
 	if (mCurrentCategory == ZOMBATAR_CUSTOM_SKIN)

@@ -32,23 +32,36 @@ void RefreshAwardLayout(AwardScreen& theScreen)
 		theScreen.mX + theScreen.mWidth - aBounds.mX - aBounds.mWidth);
 }
 
-void DrawAwardBackground(Graphics* g, Image* theImage, const AwardScreen& theScreen)
+void DrawAwardBackground(Graphics* g, const AwardScreen& theScreen)
 {
-	Rect aBounds = theScreen.mApp->mScreenBounds;
-	aBounds.Offset(-theScreen.mX, -theScreen.mY);
-	const int aBorder = 16;
-	const int aPadding = (theImage->mWidth - BOARD_WIDTH) / 2;
-	const int aSourceX = aPadding + aBounds.mX + aBorder;
-	Graphics aBackground(*g);
-	aBackground.ClipRect(aBounds);
-	// Native center crops retain the authored UI; the outer frame follows the viewport.
-	// AwardScreen_Back uses the original brown wooden border.
-	aBackground.DrawImage(theImage, aBounds.mX, 0,
-		Rect(0, 0, aBorder, theImage->mHeight));
-	aBackground.DrawImage(theImage, aBounds.mX + aBorder, 0,
-		Rect(aSourceX, 0, aBounds.mWidth - 2 * aBorder, theImage->mHeight));
-	aBackground.DrawImage(theImage, aBounds.mX + aBounds.mWidth - aBorder, 0,
-		Rect(theImage->mWidth - aBorder, 0, aBorder, theImage->mHeight));
+	Rect bounds = theScreen.mApp->mScreenBounds;
+	bounds.Offset(-theScreen.mX, -theScreen.mY);
+	Graphics background(*g);
+	background.ClipRect(bounds);
+	// Only the paper stretches. Fixed UI and the map window keep their
+	// original 800x600 coordinates, independent of viewport aspect ratio.
+	const auto& paper = AlmanacAtlas::Images[static_cast<unsigned>(AlmanacAtlas::Sprite::ALMANAC_PAPER)];
+	DrawAtlasImage(&background, {AlmanacAtlas::Texture, 0}, paper, bounds,
+		Rect(0, 0, paper.mWidth, paper.mHeight));
+	{
+		Graphics ground(background);
+		ground.ClipRect(300, 114, 200, 173);
+		DrawAlmanacGround(&ground, 300, 114, 0);
+	}
+	background.DrawImage(IMAGE_AWARDSCREEN_PANEL, 124, 16);
+	// FillCenter=false: do not slice the paper gradient with the wooden frame.
+	constexpr int border = 16;
+	const int source[] = {0, border, 64 - border, 64};
+	const int dx[] = {bounds.mX, bounds.mX + border,
+		bounds.mX + bounds.mWidth - border, bounds.mX + bounds.mWidth};
+	const int dy[] = {bounds.mY, bounds.mY + border,
+		bounds.mY + bounds.mHeight - border, bounds.mY + bounds.mHeight};
+	for (int y = 0; y < 3; ++y)
+		for (int x = 0; x < 3; ++x)
+			if (x != 1 || y != 1)
+				background.DrawImage(IMAGE_AWARDSCREEN_FRAME,
+					Rect(dx[x], dy[y], dx[x+1] - dx[x], dy[y+1] - dy[y]),
+					Rect(source[x], source[y], source[x+1] - source[x], source[y+1] - source[y]));
 }
 }
 
@@ -325,7 +338,7 @@ void AwardScreen::Draw(Graphics* g)
 
 	int aLevel = mApp->mPlayerInfo->mLevel;
 	if (!mShowingAchievements && !IsPaperNote() && mAwardType != AWARD_ACHIEVEMENTONLY)
-		DrawAwardBackground(g, Sexy::IMAGE_AWARDSCREEN_BACK, *this);
+		DrawAwardBackground(g, *this);
 	if (mShowingAchievements) // @Patoke: add call
 		DrawAchievements(g);
 	else if (mAwardType == AWARD_CREDITS_ZOMBIENOTE)

@@ -1091,158 +1091,164 @@ export component Cornpult {
     Track {
         source-name: "Cornpult_stalk1";
         frame-count: 77;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 5 { x: 38.8; y: 9.4; skew-x: 4.1; skew-y: 4.1; scale-x: 0.8; scale-y: 0.8; cel: 0; image: IMAGE_REANIM_CORNPULT_STALK1; }
-        frame 6 { x: 38.6; y: 9.8; skew-x: 3.5; skew-y: 3.5; scale-x: -10000; scale-y: -10000; cel: -10000; image: none; }
-        frame 7 { x: 38.5; y: 10.1; skew-x: 3; skew-y: 3; }
-        frame 8 { x: -10000; y: 10.5; skew-x: 2.6; skew-y: 2.6; }
-        frame 9 { x: 38.4; y: 10.8; skew-x: 2.3; skew-y: 2.3; }
-        frame 10 { x: 38.3; y: 11.2; skew-x: 1.8; skew-y: 1.8; }
-        frame 11 { x: 38.1; y: 11.5; skew-x: 1.3; skew-y: 1.3; }
-        frame 12 { x: -10000; y: 12; skew-x: 0.8; skew-y: 0.8; }
-        frame 13 { x: 38; y: 12.3; skew-x: 0.3; skew-y: 0.3; }
-        frame 14 { x: -10000; y: 12.6; skew-x: 0; skew-y: 0; }
-        frame 15 { y: 12.3; skew-x: -10000; skew-y: -10000; }
-        frame 16 { y: 12.1; }
-        frame 17 { x: 38; y: 11.7; skew-x: 0.5; skew-y: 0.5; }
-        frame 18 { x: 38.2; y: 11.3; skew-x: 1; skew-y: 1; }
-        frame 19 { x: 38.3; y: 10.9; skew-x: 1.6; skew-y: 1.6; }
-        frame 20 { x: 38.4; y: 10.5; skew-x: 2.3; skew-y: 2.3; }
-        frame 21 { x: 38.5; y: 10.2; skew-x: 2.8; skew-y: 2.8; }
-        frame 22 { x: 38.6; y: 9.8; skew-x: 3.3; skew-y: 3.3; }
-        frame 23 { x: 38.8; y: 9.4; skew-x: 4.1; skew-y: 4.1; }
-        frame 24 { x: -10000; y: -10000; skew-x: -10000; skew-y: -10000; }
-        frame 25 { x: 35.9; y: 10.6; skew-x: -3.9; skew-y: -1.7; scale-x: 0.803; }
-        frame 26 { x: 33; y: 11.8; skew-x: -12.2; skew-y: -7.7; scale-x: 0.805; scale-y: 0.799; }
-        frame 27 { x: 30.4; y: 13.1; skew-x: -20.2; skew-y: -13.5; scale-x: 0.808; scale-y: -10000; }
-        frame 28 { x: 27.8; y: 14.4; skew-x: -28.5; skew-y: -19.5; scale-x: 0.811; scale-y: 0.798; }
-        frame 29 { x: 25.4; y: 15.8; skew-x: -36.8; skew-y: -25.5; scale-x: 0.815; scale-y: 0.799; }
-        frame 30 { x: 25; y: -10000; skew-x: -35.8; skew-y: -36.8; scale-x: 0.749; scale-y: 0.863; }
-        frame 31 { x: 24.6; y: 16.1; skew-x: -35; skew-y: -48.2; scale-x: 0.685; scale-y: 0.93; }
-        frame 32 { x: 30.7; y: 11.8; skew-x: -17.2; skew-y: -27.7; scale-x: 0.684; scale-y: 0.921; }
-        frame 33 { x: 37.8; y: 8.3; skew-x: 0.3; skew-y: -7.5; scale-x: -10000; scale-y: 0.914; }
-        frame 34 { x: 45.5; y: 5.3; skew-x: 8.4; skew-y: 15.1; scale-x: 0.679; scale-y: 1.06; }
-        frame 35 { x: 54.3; y: 4.7; skew-x: 49; skew-y: 35.8; scale-x: 0.685; scale-y: 0.928; }
-        frame 36 { x: 55.2; y: -10000; skew-x: 48.9; skew-y: 35.6; scale-x: 0.683; scale-y: 0.927; }
-        frame 37 { x: 56.1; skew-x: 48.7; skew-y: -10000; scale-x: 0.684; scale-y: 0.928; }
-        frame 38 { x: 55.9; skew-x: 48.9; scale-x: 0.683; scale-y: 0.927; }
-        frame 39 { x: 55.5; skew-x: -10000; scale-x: -10000; scale-y: -10000; }
-        frame 40 { x: 55.3; }
-        frame 41 { x: 55; }
-        frame 42 { x: 54.8; y: 4.6; scale-x: 0.684; }
-        frame 43 { x: 54.5; y: 4.7; skew-y: 35.8; scale-x: -10000; }
-        frame 44 { x: 54.3; y: -10000; skew-x: 49; skew-y: -10000; scale-x: 0.685; scale-y: 0.928; }
-        frame 45 { x: 54.4; skew-x: 48.9; scale-x: 0.683; scale-y: 0.927; }
-        frame 46 { x: 54.5; skew-x: -10000; scale-x: -10000; scale-y: 0.926; }
-        frame 47 { x: 54.6; skew-y: 35.6; scale-y: -10000; }
-        frame 48 { x: 54.8; skew-y: -10000; }
-        frame 49 { x: 54.9; }
-        frame 50 { x: 55; y: 4.8; scale-y: 0.925; }
-        frame 51 { x: 55.1; y: 4.7; scale-y: 0.927; }
-        frame 52 { x: 52.2; y: 5.9; skew-x: 41.4; skew-y: 30.3; scale-x: 0.701; scale-y: 0.849; }
-        frame 53 { x: 49.5; y: 7.3; skew-x: 33.8; skew-y: 25; scale-x: 0.721; scale-y: 0.775; }
-        frame 54 { x: 46.6; y: 6.3; skew-x: 26.3; skew-y: 19.8; scale-x: 0.741; scale-y: 0.862; }
-        frame 55 { x: 43.9; y: 7.1; skew-x: 18.8; skew-y: 14.5; scale-x: 0.76; scale-y: 0.841; }
-        frame 56 { x: 41.3; y: 8.2; skew-x: 11.3; skew-y: 9.3; scale-x: 0.78; scale-y: 0.82; }
-        frame 57 { x: 38.8; y: 9.4; skew-x: 4.1; skew-y: 4.1; scale-x: 0.8; scale-y: 0.8; }
-        frame 58 { x: -10000; y: -10000; skew-x: -10000; skew-y: -10000; scale-x: -10000; scale-y: -10000; }
-        frame 59 { x: 38.6; y: 9.8; skew-x: 3.5; skew-y: 3.5; }
-        frame 60 { x: 38.5; y: 10.1; skew-x: 3; skew-y: 3; }
-        frame 61 { x: -10000; y: 10.5; skew-x: 2.6; skew-y: 2.6; }
-        frame 62 { x: 38.4; y: 10.8; skew-x: 2.3; skew-y: 2.3; }
-        frame 63 { x: 38.3; y: 11.2; skew-x: 1.8; skew-y: 1.8; }
-        frame 64 { x: 38.1; y: 11.5; skew-x: 1.3; skew-y: 1.3; }
-        frame 65 { x: -10000; y: 12; skew-x: 0.8; skew-y: 0.8; }
-        frame 66 { x: 38; y: 12.3; skew-x: 0.3; skew-y: 0.3; }
-        frame 67 { x: -10000; y: 12.6; skew-x: 0; skew-y: 0; }
-        frame 68 { y: 12.3; skew-x: -10000; skew-y: -10000; }
-        frame 69 { y: 12.1; }
-        frame 70 { x: 38; y: 11.7; skew-x: 0.5; skew-y: 0.5; }
-        frame 71 { x: 38.2; y: 11.3; skew-x: 1; skew-y: 1; }
-        frame 72 { x: 38.3; y: 10.9; skew-x: 1.6; skew-y: 1.6; }
-        frame 73 { x: 38.4; y: 10.5; skew-x: 2.3; skew-y: 2.3; }
-        frame 74 { x: 38.5; y: 10.2; skew-x: 2.8; skew-y: 2.8; }
-        frame 75 { x: 38.6; y: 9.8; skew-x: 3.3; skew-y: 3.3; }
-        frame 76 { x: 38.8; y: 9.4; skew-x: 4.1; skew-y: 4.1; }
+        frame 0 { x: 8.74841816; y: 2.5036156; skew-x: 29.853727; skew-y: 29.853727; scale-x: 0.637819481; scale-y: 0.637819481; cel: -1; }
+        frame 1 { x: 8.74841816; y: 2.5036156; skew-x: 29.853727; skew-y: 29.853727; scale-x: 0.637819481; scale-y: 0.637819481; cel: -10000; }
+        frame 2 { x: 8.74841816; y: 2.5036156; skew-x: 29.853727; skew-y: 29.853727; scale-x: 0.637819481; scale-y: 0.637819481;  }
+        frame 3 { x: 8.74841816; y: 2.5036156; skew-x: 29.853727; skew-y: 29.853727; scale-x: 0.637819481; scale-y: 0.637819481;  }
+        frame 4 { x: 8.74841816; y: 2.5036156; skew-x: 29.853727; skew-y: 29.853727; scale-x: 0.637819481; scale-y: 0.637819481;  }
+        frame 5 { x: 38.2879991; y: 11.2425653; skew-x: 1.3583216; skew-y: 1.3583216; scale-x: 0.679971791; scale-y: 0.679971791; cel: 0; image: IMAGE_REANIM_CORNPULT_STALK1; }
+        frame 6 { x: 38.2718128; y: 11.5749938; skew-x: 1.501662; skew-y: 1.501662; scale-x: 0.677849894; scale-y: 0.677849894; cel: -10000; image: none; }
+        frame 7 { x: 38.3248011; y: 11.8360467; skew-x: 1.57610268; skew-y: 1.57610268; scale-x: 0.675329994; scale-y: 0.675329994;  }
+        frame 8 { x: 38.2795746; y: 12.2528693; skew-x: 0.941199965; skew-y: 0.941199965; scale-x: 0.676463249; scale-y: 0.676463249;  }
+        frame 9 { x: 38.2352204; y: 12.5782171; skew-x: 0.734415169; skew-y: 0.734415169; scale-x: 0.674063933; scale-y: 0.674063933;  }
+        frame 10 { x: 38.1234062; y: 12.8823879; skew-x: 0.399467835; skew-y: 0.399467835; scale-x: 0.678760961; scale-y: 0.678760961;  }
+        frame 11 { x: 38.0115565; y: 13.2140358; skew-x: 0.0640706439; skew-y: 0.0640706439; scale-x: 0.675266083; scale-y: 0.675266083;  }
+        frame 12 { x: 37.9795428; y: 13.6974457; skew-x: -0.545086333; skew-y: -0.545086333; scale-x: 0.677432959; scale-y: 0.677432959;  }
+        frame 13 { x: 37.893764; y: 14.0087182; skew-x: -1.07498932; skew-y: -1.07498932; scale-x: 0.677053055; scale-y: 0.677053055;  }
+        frame 14 { x: 37.8384131; y: 14.3734223; skew-x: -1.76089773; skew-y: -1.76089773; scale-x: 0.676668791; scale-y: 0.676668791;  }
+        frame 15 { x: 37.8045893; y: 14.1096527; skew-x: -1.97092834; skew-y: -1.97092834; scale-x: 0.676384283; scale-y: 0.676384283;  }
+        frame 16 { x: 37.7101517; y: 13.8597651; skew-x: -2.13762494; skew-y: -2.13762494; scale-x: 0.681387495; scale-y: 0.681387495;  }
+        frame 17 { x: 37.7500262; y: 13.4698146; skew-x: -1.49307718; skew-y: -1.49307718; scale-x: 0.679108329; scale-y: 0.679108329;  }
+        frame 18 { x: 37.8221602; y: 13.0626121; skew-x: -1.34605558; skew-y: -1.34605558; scale-x: 0.682919166; scale-y: 0.682919166;  }
+        frame 19 { x: 37.9528956; y: 12.7294168; skew-x: -0.775112472; skew-y: -0.775112472; scale-x: 0.678589205; scale-y: 0.678589205;  }
+        frame 20 { x: 38.0277433; y: 12.3224441; skew-x: -0.077615782; skew-y: -0.077615782; scale-x: 0.67878025; scale-y: 0.67878025;  }
+        frame 21 { x: 38.0955762; y: 11.977422; skew-x: 0.477259474; skew-y: 0.477259474; scale-x: 0.680938835; scale-y: 0.680938835;  }
+        frame 22 { x: 38.0878131; y: 11.6270405; skew-x: 0.530338062; skew-y: 0.530338062; scale-x: 0.681669558; scale-y: 0.681669558;  }
+        frame 23 { x: 38.2879991; y: 11.2425653; skew-x: 1.3583216; skew-y: 1.3583216; scale-x: 0.679971791; scale-y: 0.679971791;  }
+        frame 24 { x: 38.2879991; y: 11.2425653; skew-x: 1.3583216; skew-y: 1.3583216; scale-x: 0.679971791; scale-y: 0.679971791;  }
+        frame 25 { x: 35.7058086; y: 12.2866538; skew-x: -4.47066811; skew-y: -4.47066811; scale-x: 0.671257895; scale-y: 0.671257895;  }
+        frame 26 { x: 33.1084662; y: 13.3478071; skew-x: -10.6600953; skew-y: -10.6600953; scale-x: 0.657876951; scale-y: 0.657876951;  }
+        frame 27 { x: 30.6285629; y: 14.522646; skew-x: -17.1396563; skew-y: -17.1396563; scale-x: 0.649942592; scale-y: 0.649942592;  }
+        frame 28 { x: 28.0687442; y: 15.6700926; skew-x: -23.9308466; skew-y: -23.9308466; scale-x: 0.643585958; scale-y: 0.643585958;  }
+        frame 29 { x: 25.653899; y: 16.9199829; skew-x: -30.6565846; skew-y: -30.6565846; scale-x: 0.639600405; scale-y: 0.639600405;  }
+        frame 30 { x: 25.8690581; y: 16.9813168; skew-x: -32.7445291; skew-y: -32.7445291; scale-x: 0.71116489; scale-y: 0.71116489;  }
+        frame 31 { x: 26.0867811; y: 17.0745233; skew-x: -35.9012472; skew-y: -35.9012472; scale-x: 0.779526132; scale-y: 0.779526132;  }
+        frame 32 { x: 31.5426785; y: 13.1522517; skew-x: -16.6026758; skew-y: -16.6026758; scale-x: 0.770531374; scale-y: 0.770531374;  }
+        frame 33 { x: 38.2951842; y: 9.68233222; skew-x: 3.55418782; skew-y: 3.55418782; scale-x: 0.754329703; scale-y: 0.754329703;  }
+        frame 34 { x: 45.7325016; y: 7.66958667; skew-x: 27.3623165; skew-y: 27.3623165; scale-x: 0.721941745; scale-y: 0.721941745;  }
+        frame 35 { x: 53.4261387; y: 7.52262335; skew-x: 48.636182; skew-y: 48.636182; scale-x: 0.716007865; scale-y: 0.716007865;  }
+        frame 36 { x: 54.2319092; y: 7.42060625; skew-x: 48.0251015; skew-y: 48.0251015; scale-x: 0.719480463; scale-y: 0.719480463;  }
+        frame 37 { x: 54.9198777; y: 7.35915581; skew-x: 47.0763696; skew-y: 47.0763696; scale-x: 0.720903813; scale-y: 0.720903813;  }
+        frame 38 { x: 54.7604768; y: 7.3997415; skew-x: 47.3328148; skew-y: 47.3328148; scale-x: 0.719149207; scale-y: 0.719149207;  }
+        frame 39 { x: 54.5030063; y: 7.43721912; skew-x: 47.9215686; skew-y: 47.9215686; scale-x: 0.718416916; scale-y: 0.718416916;  }
+        frame 40 { x: 54.2695332; y: 7.47290154; skew-x: 47.8119215; skew-y: 47.8119215; scale-x: 0.716370809; scale-y: 0.716370809;  }
+        frame 41 { x: 54.0866003; y: 7.47249477; skew-x: 48.2764324; skew-y: 48.2764324; scale-x: 0.717362808; scale-y: 0.717362808;  }
+        frame 42 { x: 53.8579236; y: 7.45971091; skew-x: 48.1881904; skew-y: 48.1881904; scale-x: 0.713129768; scale-y: 0.713129768;  }
+        frame 43 { x: 53.6496287; y: 7.53208076; skew-x: 48.7112095; skew-y: 48.7112095; scale-x: 0.714228312; scale-y: 0.714228312;  }
+        frame 44 { x: 53.4261387; y: 7.52262335; skew-x: 48.636182; skew-y: 48.636182; scale-x: 0.716007865; scale-y: 0.716007865;  }
+        frame 45 { x: 53.5564322; y: 7.53418248; skew-x: 48.7734007; skew-y: 48.7734007; scale-x: 0.713848792; scale-y: 0.713848792;  }
+        frame 46 { x: 53.6506902; y: 7.47420524; skew-x: 48.6816221; skew-y: 48.6816221; scale-x: 0.716088756; scale-y: 0.716088756;  }
+        frame 47 { x: 53.706847; y: 7.48943241; skew-x: 48.3419547; skew-y: 48.3419547; scale-x: 0.716013956; scale-y: 0.716013956;  }
+        frame 48 { x: 53.8610082; y: 7.50348138; skew-x: 48.1692692; skew-y: 48.1692692; scale-x: 0.714927611; scale-y: 0.714927611;  }
+        frame 49 { x: 53.9739621; y: 7.51817242; skew-x: 48.2307739; skew-y: 48.2307739; scale-x: 0.714307465; scale-y: 0.714307465;  }
+        frame 50 { x: 54.0362433; y: 7.44811759; skew-x: 47.9416158; skew-y: 47.9416158; scale-x: 0.721759669; scale-y: 0.721759669;  }
+        frame 51 { x: 54.1892818; y: 7.48004166; skew-x: 48.2921969; skew-y: 48.2921969; scale-x: 0.717011009; scale-y: 0.717011009;  }
+        frame 52 { x: 51.7089563; y: 8.40963581; skew-x: 39.9877592; skew-y: 39.9877592; scale-x: 0.677389884; scale-y: 0.677389884;  }
+        frame 53 { x: 49.2603797; y: 8.87316189; skew-x: 31.2104342; skew-y: 31.2104342; scale-x: 0.673127026; scale-y: 0.673127026;  }
+        frame 54 { x: 46.3687968; y: 8.08586578; skew-x: 26.6556111; skew-y: 26.6556111; scale-x: 0.715380814; scale-y: 0.715380814;  }
+        frame 55 { x: 43.8943598; y: 8.98771819; skew-x: 19.3429311; skew-y: 19.3429311; scale-x: 0.690972784; scale-y: 0.690972784;  }
+        frame 56 { x: 41.2701495; y: 9.9550656; skew-x: 11.307339; skew-y: 11.307339; scale-x: 0.681569439; scale-y: 0.681569439;  }
+        frame 57 { x: 38.2879991; y: 11.2425653; skew-x: 1.3583216; skew-y: 1.3583216; scale-x: 0.679971791; scale-y: 0.679971791;  }
+        frame 58 { x: 38.2879991; y: 11.2425653; skew-x: 1.3583216; skew-y: 1.3583216; scale-x: 0.679971791; scale-y: 0.679971791;  }
+        frame 59 { x: 38.2718128; y: 11.5749938; skew-x: 1.501662; skew-y: 1.501662; scale-x: 0.677849894; scale-y: 0.677849894;  }
+        frame 60 { x: 38.3248011; y: 11.8360467; skew-x: 1.57610268; skew-y: 1.57610268; scale-x: 0.675329994; scale-y: 0.675329994;  }
+        frame 61 { x: 38.2795746; y: 12.2528693; skew-x: 0.941199965; skew-y: 0.941199965; scale-x: 0.676463249; scale-y: 0.676463249;  }
+        frame 62 { x: 38.2352204; y: 12.5782171; skew-x: 0.734415169; skew-y: 0.734415169; scale-x: 0.674063933; scale-y: 0.674063933;  }
+        frame 63 { x: 38.1234062; y: 12.8823879; skew-x: 0.399467835; skew-y: 0.399467835; scale-x: 0.678760961; scale-y: 0.678760961;  }
+        frame 64 { x: 38.0115565; y: 13.2140358; skew-x: 0.0640706439; skew-y: 0.0640706439; scale-x: 0.675266083; scale-y: 0.675266083;  }
+        frame 65 { x: 37.9795428; y: 13.6974457; skew-x: -0.545086333; skew-y: -0.545086333; scale-x: 0.677432959; scale-y: 0.677432959;  }
+        frame 66 { x: 37.893764; y: 14.0087182; skew-x: -1.07498932; skew-y: -1.07498932; scale-x: 0.677053055; scale-y: 0.677053055;  }
+        frame 67 { x: 37.8384131; y: 14.3734223; skew-x: -1.76089773; skew-y: -1.76089773; scale-x: 0.676668791; scale-y: 0.676668791;  }
+        frame 68 { x: 37.8045893; y: 14.1096527; skew-x: -1.97092834; skew-y: -1.97092834; scale-x: 0.676384283; scale-y: 0.676384283;  }
+        frame 69 { x: 37.7101517; y: 13.8597651; skew-x: -2.13762494; skew-y: -2.13762494; scale-x: 0.681387495; scale-y: 0.681387495;  }
+        frame 70 { x: 37.7500262; y: 13.4698146; skew-x: -1.49307718; skew-y: -1.49307718; scale-x: 0.679108329; scale-y: 0.679108329;  }
+        frame 71 { x: 37.8221602; y: 13.0626121; skew-x: -1.34605558; skew-y: -1.34605558; scale-x: 0.682919166; scale-y: 0.682919166;  }
+        frame 72 { x: 37.9528956; y: 12.7294168; skew-x: -0.775112472; skew-y: -0.775112472; scale-x: 0.678589205; scale-y: 0.678589205;  }
+        frame 73 { x: 38.0277433; y: 12.3224441; skew-x: -0.077615782; skew-y: -0.077615782; scale-x: 0.67878025; scale-y: 0.67878025;  }
+        frame 74 { x: 38.0955762; y: 11.977422; skew-x: 0.477259474; skew-y: 0.477259474; scale-x: 0.680938835; scale-y: 0.680938835;  }
+        frame 75 { x: 38.0878131; y: 11.6270405; skew-x: 0.530338062; skew-y: 0.530338062; scale-x: 0.681669558; scale-y: 0.681669558;  }
+        frame 76 { x: 38.2879991; y: 11.2425653; skew-x: 1.3583216; skew-y: 1.3583216; scale-x: 0.679971791; scale-y: 0.679971791;  }
     }
     Track {
         source-name: "Cornpult_stalk2";
         frame-count: 77;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 5 { x: 26.2; y: 8.5; skew-x: 4.1; skew-y: 4.1; scale-x: 0.8; scale-y: 0.8; cel: 0; image: IMAGE_REANIM_CORNPULT_STALK2; }
-        frame 6 { x: 26.6; y: 8.1; skew-x: 7.3; skew-y: 7.3; scale-x: 0.799; scale-y: 0.799; cel: -10000; image: none; }
-        frame 7 { x: 27.1; y: 7.6; skew-x: 10.8; skew-y: 10.8; scale-x: -10000; scale-y: -10000; }
-        frame 8 { x: 26.8; y: 8.5; skew-x: 8.5; skew-y: 8.5; }
-        frame 9 { x: 26.6; y: 9.3; skew-x: 6.3; skew-y: 6.3; }
-        frame 10 { x: 26.3; y: 10; skew-x: 4.1; skew-y: 4.1; }
-        frame 11 { x: 26.1; y: 10.8; skew-x: 2; skew-y: 2; }
-        frame 12 { x: 25.9; y: 11.7; skew-x: 0; skew-y: 0; scale-x: 0.8; scale-y: 0.8; }
-        frame 13 { x: 25.7; y: 12.5; skew-x: -2.2; skew-y: -2.2; scale-x: -10000; scale-y: -10000; }
-        frame 14 { x: 25.5; y: 13.4; skew-x: -4.4; skew-y: -4.4; }
-        frame 15 { x: -10000; y: 13.6; skew-x: -6.4; skew-y: -3.9; scale-x: 0.801; }
-        frame 16 { x: 25.4; y: 13.8; skew-x: -8.6; skew-y: -3.4; scale-x: 0.803; }
-        frame 17 { x: 25.5; y: 13; skew-x: -6.7; skew-y: -2.2; scale-x: 0.802; }
-        frame 18 { x: -10000; y: 12.2; skew-x: -4.9; skew-y: -1.2; scale-x: -10000; }
-        frame 19 { x: 25.7; y: 11.5; skew-x: -3; skew-y: -0.2; scale-x: 0.801; }
-        frame 20 { x: 25.8; y: 10.7; skew-x: -1.2; skew-y: 0.8; scale-x: -10000; }
-        frame 21 { x: 25.9; y: 10; skew-x: 0.3; skew-y: 1.8; }
-        frame 22 { x: -10000; y: 9.3; skew-x: 2.1; skew-y: 2.8; scale-x: 0.8; }
-        frame 23 { x: 26.2; y: 8.5; skew-x: 4.1; skew-y: 4.1; scale-x: -10000; }
-        frame 24 { x: -10000; y: -10000; skew-x: -10000; skew-y: -10000; }
-        frame 25 { x: 23.5; y: 10.6; skew-x: -1.7; skew-y: -1.7; }
-        frame 26 { x: 20.9; y: 12.8; skew-x: -7.7; skew-y: -7.7; scale-x: 0.799; scale-y: 0.799; }
-        frame 27 { x: 18.4; y: 15.1; skew-x: -13.5; skew-y: -13.5; scale-x: -10000; scale-y: -10000; }
-        frame 28 { x: 15.9; y: 17.4; skew-x: -19.5; skew-y: -19.5; scale-x: 0.798; scale-y: 0.798; }
-        frame 29 { x: 13.6; y: 19.8; skew-x: -25.5; skew-y: -25.5; scale-x: 0.799; scale-y: 0.799; }
-        frame 30 { x: 14.5; y: 19.6; skew-x: -24.4; skew-y: -19; scale-x: 0.798; scale-y: 0.805; }
-        frame 31 { x: 15.4; y: 19.3; skew-x: -23.4; skew-y: -12.8; scale-x: 0.799; scale-y: 0.813; }
-        frame 32 { x: 21.4; y: 9; skew-x: 9; skew-y: 19.6; scale-x: 0.803; scale-y: 0.805; }
-        frame 33 { x: 32.4; y: 0.4; skew-x: 41.7; skew-y: 52.3; scale-x: 0.808; scale-y: 0.799; }
-        frame 34 { x: 46.9; y: -4.6; skew-x: 78.5; skew-y: 88.8; scale-x: 0.921; scale-y: 0.803; }
-        frame 35 { x: 61.1; y: 0.9; skew-x: 115.2; skew-y: 126; scale-x: 0.798; scale-y: 0.81; }
-        frame 36 { x: 62.4; y: 1.3; skew-x: 118.9; skew-y: 129.6; scale-x: 0.796; scale-y: 0.809; }
-        frame 37 { x: 63.5; y: 1.8; skew-x: 122.7; skew-y: 133.5; scale-x: 0.797; scale-y: 0.81; }
-        frame 38 { x: 63.2; y: 1.7; skew-x: 121.6; skew-y: 132.4; scale-x: 0.796; scale-y: 0.809; }
-        frame 39 { x: 62.9; y: 1.6; skew-x: 120.6; skew-y: 131.4; scale-x: -10000; scale-y: -10000; }
-        frame 40 { x: 62.5; y: 1.5; skew-x: 119.6; skew-y: 130.3; }
-        frame 41 { x: 62.2; y: 1.3; skew-x: 118.3; skew-y: 129.1; }
-        frame 42 { x: 61.8; y: 1.2; skew-x: 117.3; skew-y: 128.1; }
-        frame 43 { x: 61.5; y: 1.1; skew-x: 116.3; skew-y: 127.1; }
-        frame 44 { x: 61.1; y: 0.9; skew-x: 115.2; skew-y: 126; scale-x: 0.798; scale-y: 0.81; }
-        frame 45 { x: 61.3; y: 1; skew-x: 115.6; skew-y: 126.4; scale-x: 0.796; scale-y: 0.809; }
-        frame 46 { x: 61.5; y: -10000; skew-x: 116.3; skew-y: 127.1; scale-x: -10000; scale-y: -10000; }
-        frame 47 { x: 61.6; y: 1.1; skew-x: 116.8; skew-y: 127.6; scale-y: 0.808; }
-        frame 48 { x: 61.8; y: 1.2; skew-x: 117.3; skew-y: 128.1; scale-y: -10000; }
-        frame 49 { x: 62; y: 1.3; skew-x: 117.8; skew-y: 128.6; }
-        frame 50 { x: 62.1; y: 1.2; skew-x: 118.3; skew-y: 129.1; scale-x: 0.795; }
-        frame 51 { x: 62.4; y: 1.4; skew-x: 118.9; skew-y: 129.6; scale-x: 0.796; scale-y: 0.809; }
-        frame 52 { x: 57; y: -0.4; skew-x: 99.6; skew-y: 108.6; scale-x: -10000; scale-y: 0.806; }
-        frame 53 { x: 50.9; y: -1.9; skew-x: 80.7; skew-y: 88; scale-y: 0.805; }
-        frame 54 { x: 43.8; y: -2.5; skew-x: 61.4; skew-y: 66.9; scale-x: 0.797; scale-y: 0.803; }
-        frame 55 { x: 37.6; y: -0.1; skew-x: 42.4; skew-y: 45.9; scale-x: -10000; scale-y: 0.801; }
-        frame 56 { x: 31.7; y: 3.5; skew-x: 23.1; skew-y: 25; scale-x: 0.798; scale-y: 0.8; }
-        frame 57 { x: 26.2; y: 8.5; skew-x: 4.1; skew-y: 4.1; scale-x: 0.8; scale-y: -10000; }
-        frame 58 { x: -10000; y: -10000; skew-x: -10000; skew-y: -10000; scale-x: -10000; }
-        frame 59 { x: 26.6; y: 8.1; skew-x: 7.3; skew-y: 7.3; scale-x: 0.799; scale-y: 0.799; }
-        frame 60 { x: 27.1; y: 7.6; skew-x: 10.8; skew-y: 10.8; scale-x: -10000; scale-y: -10000; }
-        frame 61 { x: 26.8; y: 8.5; skew-x: 8.5; skew-y: 8.5; }
-        frame 62 { x: 26.6; y: 9.3; skew-x: 6.3; skew-y: 6.3; }
-        frame 63 { x: 26.3; y: 10; skew-x: 4.1; skew-y: 4.1; }
-        frame 64 { x: 26.1; y: 10.8; skew-x: 2; skew-y: 2; }
-        frame 65 { x: 25.9; y: 11.7; skew-x: 0; skew-y: 0; scale-x: 0.8; scale-y: 0.8; }
-        frame 66 { x: 25.7; y: 12.5; skew-x: -2.2; skew-y: -2.2; scale-x: -10000; scale-y: -10000; }
-        frame 67 { x: 25.5; y: 13.4; skew-x: -4.4; skew-y: -4.4; }
-        frame 68 { x: -10000; y: 13.6; skew-x: -6.4; skew-y: -3.9; scale-x: 0.801; }
-        frame 69 { x: 25.4; y: 13.8; skew-x: -8.6; skew-y: -3.4; scale-x: 0.803; }
-        frame 70 { x: 25.5; y: 13; skew-x: -6.7; skew-y: -2.2; scale-x: 0.802; }
-        frame 71 { x: -10000; y: 12.2; skew-x: -4.9; skew-y: -1.2; scale-x: -10000; }
-        frame 72 { x: 25.7; y: 11.5; skew-x: -3; skew-y: -0.2; scale-x: 0.801; }
-        frame 73 { x: 25.8; y: 10.7; skew-x: -1.2; skew-y: 0.8; scale-x: -10000; }
-        frame 74 { x: 25.9; y: 10; skew-x: 0.3; skew-y: 1.8; }
-        frame 75 { x: -10000; y: 9.3; skew-x: 2.1; skew-y: 2.8; scale-x: 0.8; }
-        frame 76 { x: 26.2; y: 8.5; skew-x: 4.1; skew-y: 4.1; scale-x: -10000; }
+        frame 0 { x: 5.74386978; y: 7.00097545; skew-x: -55.447534; skew-y: -55.447534; scale-x: 0.233597393; scale-y: 0.233597393; cel: -1; }
+        frame 1 { x: 5.74386978; y: 7.00097545; skew-x: -55.447534; skew-y: -55.447534; scale-x: 0.233597393; scale-y: 0.233597393; cel: -10000; }
+        frame 2 { x: 5.74386978; y: 7.00097545; skew-x: -55.447534; skew-y: -55.447534; scale-x: 0.233597393; scale-y: 0.233597393;  }
+        frame 3 { x: 5.74386978; y: 7.00097545; skew-x: -55.447534; skew-y: -55.447534; scale-x: 0.233597393; scale-y: 0.233597393;  }
+        frame 4 { x: 5.74386978; y: 7.00097545; skew-x: -55.447534; skew-y: -55.447534; scale-x: 0.233597393; scale-y: 0.233597393;  }
+        frame 5 { x: 26.4471968; y: 8.51603272; skew-x: 4.19634252; skew-y: 4.19634252; scale-x: 0.777768839; scale-y: 0.777768839; cel: 0; image: IMAGE_REANIM_CORNPULT_STALK2; }
+        frame 6 { x: 26.9207271; y: 8.1931821; skew-x: 7.53866402; skew-y: 7.53866402; scale-x: 0.764246991; scale-y: 0.764246991; cel: -10000; image: none; }
+        frame 7 { x: 27.4183924; y: 7.7913879; skew-x: 10.9226945; skew-y: 10.9226945; scale-x: 0.755944745; scale-y: 0.755944745;  }
+        frame 8 { x: 27.2244305; y: 8.67920032; skew-x: 8.72238537; skew-y: 8.72238537; scale-x: 0.753347751; scale-y: 0.753347751;  }
+        frame 9 { x: 26.9780156; y: 9.48738836; skew-x: 6.40142693; skew-y: 6.40142693; scale-x: 0.753497659; scale-y: 0.753497659;  }
+        frame 10 { x: 26.7774845; y: 10.2425473; skew-x: 4.4181767; skew-y: 4.4181767; scale-x: 0.750400912; scale-y: 0.750400912;  }
+        frame 11 { x: 26.5211642; y: 11.0864679; skew-x: 2.02504359; skew-y: 2.02504359; scale-x: 0.74922061; scale-y: 0.74922061;  }
+        frame 12 { x: 26.3430306; y: 11.9406862; skew-x: 0.24276576; skew-y: 0.24276576; scale-x: 0.75252719; scale-y: 0.75252719;  }
+        frame 13 { x: 26.1038485; y: 12.7070269; skew-x: -1.89989021; skew-y: -1.89989021; scale-x: 0.755462199; scale-y: 0.755462199;  }
+        frame 14 { x: 25.8664152; y: 13.488851; skew-x: -3.90194134; skew-y: -3.90194134; scale-x: 0.76166898; scale-y: 0.76166898;  }
+        frame 15 { x: 25.5131442; y: 13.4051547; skew-x: -4.923659; skew-y: -4.923659; scale-x: 0.778078181; scale-y: 0.778078181;  }
+        frame 16 { x: 25.0689949; y: 13.3880215; skew-x: -6.08673917; skew-y: -6.08673917; scale-x: 0.796516886; scale-y: 0.796516886;  }
+        frame 17 { x: 25.2457432; y: 12.7039664; skew-x: -4.75239747; skew-y: -4.75239747; scale-x: 0.790327691; scale-y: 0.790327691;  }
+        frame 18 { x: 25.3723727; y: 11.9317255; skew-x: -3.17591217; skew-y: -3.17591217; scale-x: 0.791392637; scale-y: 0.791392637;  }
+        frame 19 { x: 25.578849; y: 11.2970411; skew-x: -1.86474378; skew-y: -1.86474378; scale-x: 0.789504994; scale-y: 0.789504994;  }
+        frame 20 { x: 25.761897; y: 10.6305977; skew-x: -0.635968039; skew-y: -0.635968039; scale-x: 0.786020494; scale-y: 0.786020494;  }
+        frame 21 { x: 25.947041; y: 9.94209441; skew-x: 0.952482836; skew-y: 0.952482836; scale-x: 0.784095897; scale-y: 0.784095897;  }
+        frame 22 { x: 26.0731413; y: 9.29419884; skew-x: 2.31795511; skew-y: 2.31795511; scale-x: 0.781553227; scale-y: 0.781553227;  }
+        frame 23 { x: 26.4471968; y: 8.51603272; skew-x: 4.19634252; skew-y: 4.19634252; scale-x: 0.777768839; scale-y: 0.777768839;  }
+        frame 24 { x: 26.4471968; y: 8.51603272; skew-x: 4.19634252; skew-y: 4.19634252; scale-x: 0.777768839; scale-y: 0.777768839;  }
+        frame 25 { x: 24.0618089; y: 10.7814086; skew-x: -1.31645459; skew-y: -1.31645459; scale-x: 0.753618461; scale-y: 0.753618461;  }
+        frame 26 { x: 21.6663297; y: 13.0881631; skew-x: -7.36758473; skew-y: -7.36758473; scale-x: 0.735228344; scale-y: 0.735228344;  }
+        frame 27 { x: 19.2485543; y: 15.333017; skew-x: -12.9142444; skew-y: -12.9142444; scale-x: 0.733456221; scale-y: 0.733456221;  }
+        frame 28 { x: 16.8120149; y: 17.5950291; skew-x: -18.733115; skew-y: -18.733115; scale-x: 0.734604097; scale-y: 0.734604097;  }
+        frame 29 { x: 14.4591058; y: 19.7856287; skew-x: -23.713166; skew-y: -23.713166; scale-x: 0.744086224; scale-y: 0.744086224;  }
+        frame 30 { x: 14.507933; y: 19.689022; skew-x: -22.677935; skew-y: -22.677935; scale-x: 0.764195887; scale-y: 0.764195887;  }
+        frame 31 { x: 14.705231; y: 19.4326719; skew-x: -21.2012224; skew-y: -21.2012224; scale-x: 0.775968635; scale-y: 0.775968635;  }
+        frame 32 { x: 20.5770025; y: 8.24165915; skew-x: 12.004696; skew-y: 12.004696; scale-x: 0.810180964; scale-y: 0.810180964;  }
+        frame 33 { x: 32.6143336; y: -0.481701149; skew-x: 46.1275025; skew-y: 46.1275025; scale-x: 0.790800785; scale-y: 0.790800785;  }
+        frame 34 { x: 48.1208143; y: -4.58411482; skew-x: 84.031139; skew-y: 84.031139; scale-x: 0.829494583; scale-y: 0.829494583;  }
+        frame 35 { x: 61.0471893; y: -0.129169938; skew-x: 115.67857; skew-y: 115.67857; scale-x: 0.72378286; scale-y: 0.72378286;  }
+        frame 36 { x: 62.470313; y: 0.256783108; skew-x: 119.12068; skew-y: 119.12068; scale-x: 0.726703606; scale-y: 0.726703606;  }
+        frame 37 { x: 63.9016843; y: 0.638426685; skew-x: 122.724955; skew-y: 122.724955; scale-x: 0.738586446; scale-y: 0.738586446;  }
+        frame 38 { x: 63.4824569; y: 0.543346379; skew-x: 121.538585; skew-y: 121.538585; scale-x: 0.733089786; scale-y: 0.733089786;  }
+        frame 39 { x: 63.1060966; y: 0.52993005; skew-x: 121.091054; skew-y: 121.091054; scale-x: 0.730738803; scale-y: 0.730738803;  }
+        frame 40 { x: 62.6763311; y: 0.402447899; skew-x: 119.947046; skew-y: 119.947046; scale-x: 0.728937253; scale-y: 0.728937253;  }
+        frame 41 { x: 62.301545; y: 0.261451168; skew-x: 118.946039; skew-y: 118.946039; scale-x: 0.727665781; scale-y: 0.727665781;  }
+        frame 42 { x: 61.8665456; y: 0.127636444; skew-x: 117.904368; skew-y: 117.904368; scale-x: 0.723946177; scale-y: 0.723946177;  }
+        frame 43 { x: 61.4832035; y: 0.0278217596; skew-x: 116.863761; skew-y: 116.863761; scale-x: 0.725181891; scale-y: 0.725181891;  }
+        frame 44 { x: 61.0471893; y: -0.129169938; skew-x: 115.67857; skew-y: 115.67857; scale-x: 0.72378286; scale-y: 0.72378286;  }
+        frame 45 { x: 61.2277986; y: -0.0897934478; skew-x: 115.965664; skew-y: 115.965664; scale-x: 0.724236328; scale-y: 0.724236328;  }
+        frame 46 { x: 61.4534825; y: 0.00657591555; skew-x: 116.85473; skew-y: 116.85473; scale-x: 0.722694667; scale-y: 0.722694667;  }
+        frame 47 { x: 61.5897975; y: 0.104129989; skew-x: 117.325719; skew-y: 117.325719; scale-x: 0.721922715; scale-y: 0.721922715;  }
+        frame 48 { x: 61.8628704; y: 0.184840288; skew-x: 117.909647; skew-y: 117.909647; scale-x: 0.723364541; scale-y: 0.723364541;  }
+        frame 49 { x: 62.0837089; y: 0.255389086; skew-x: 118.452343; skew-y: 118.452343; scale-x: 0.725190951; scale-y: 0.725190951;  }
+        frame 50 { x: 62.2557708; y: 0.27859827; skew-x: 119.015292; skew-y: 119.015292; scale-x: 0.726439917; scale-y: 0.726439917;  }
+        frame 51 { x: 62.4857296; y: 0.37709469; skew-x: 119.553595; skew-y: 119.553595; scale-x: 0.726413165; scale-y: 0.726413165;  }
+        frame 52 { x: 56.6209783; y: -0.765033542; skew-x: 100.232008; skew-y: 100.232008; scale-x: 0.701193004; scale-y: 0.701193004;  }
+        frame 53 { x: 50.6192707; y: -1.91458525; skew-x: 81.1908381; skew-y: 81.1908381; scale-x: 0.732251862; scale-y: 0.732251862;  }
+        frame 54 { x: 43.5174548; y: -2.77807456; skew-x: 61.9526258; skew-y: 61.9526258; scale-x: 0.75963116; scale-y: 0.75963116;  }
+        frame 55 { x: 37.5426866; y: 0.594123058; skew-x: 41.9168046; skew-y: 41.9168046; scale-x: 0.708123686; scale-y: 0.708123686;  }
+        frame 56 { x: 31.9442066; y: 4.27818048; skew-x: 22.0857564; skew-y: 22.0857564; scale-x: 0.717415086; scale-y: 0.717415086;  }
+        frame 57 { x: 26.4471968; y: 8.51603272; skew-x: 4.19634252; skew-y: 4.19634252; scale-x: 0.777768839; scale-y: 0.777768839;  }
+        frame 58 { x: 26.4471968; y: 8.51603272; skew-x: 4.19634252; skew-y: 4.19634252; scale-x: 0.777768839; scale-y: 0.777768839;  }
+        frame 59 { x: 26.9207271; y: 8.1931821; skew-x: 7.53866402; skew-y: 7.53866402; scale-x: 0.764246991; scale-y: 0.764246991;  }
+        frame 60 { x: 27.4183924; y: 7.7913879; skew-x: 10.9226945; skew-y: 10.9226945; scale-x: 0.755944745; scale-y: 0.755944745;  }
+        frame 61 { x: 27.2244305; y: 8.67920032; skew-x: 8.72238537; skew-y: 8.72238537; scale-x: 0.753347751; scale-y: 0.753347751;  }
+        frame 62 { x: 26.9780156; y: 9.48738836; skew-x: 6.40142693; skew-y: 6.40142693; scale-x: 0.753497659; scale-y: 0.753497659;  }
+        frame 63 { x: 26.7774845; y: 10.2425473; skew-x: 4.4181767; skew-y: 4.4181767; scale-x: 0.750400912; scale-y: 0.750400912;  }
+        frame 64 { x: 26.5211642; y: 11.0864679; skew-x: 2.02504359; skew-y: 2.02504359; scale-x: 0.74922061; scale-y: 0.74922061;  }
+        frame 65 { x: 26.3430306; y: 11.9406862; skew-x: 0.24276576; skew-y: 0.24276576; scale-x: 0.75252719; scale-y: 0.75252719;  }
+        frame 66 { x: 26.1038485; y: 12.7070269; skew-x: -1.89989021; skew-y: -1.89989021; scale-x: 0.755462199; scale-y: 0.755462199;  }
+        frame 67 { x: 25.8664152; y: 13.488851; skew-x: -3.90194134; skew-y: -3.90194134; scale-x: 0.76166898; scale-y: 0.76166898;  }
+        frame 68 { x: 25.5131442; y: 13.4051547; skew-x: -4.923659; skew-y: -4.923659; scale-x: 0.778078181; scale-y: 0.778078181;  }
+        frame 69 { x: 25.0689949; y: 13.3880215; skew-x: -6.08673917; skew-y: -6.08673917; scale-x: 0.796516886; scale-y: 0.796516886;  }
+        frame 70 { x: 25.2457432; y: 12.7039664; skew-x: -4.75239747; skew-y: -4.75239747; scale-x: 0.790327691; scale-y: 0.790327691;  }
+        frame 71 { x: 25.3723727; y: 11.9317255; skew-x: -3.17591217; skew-y: -3.17591217; scale-x: 0.791392637; scale-y: 0.791392637;  }
+        frame 72 { x: 25.578849; y: 11.2970411; skew-x: -1.86474378; skew-y: -1.86474378; scale-x: 0.789504994; scale-y: 0.789504994;  }
+        frame 73 { x: 25.761897; y: 10.6305977; skew-x: -0.635968039; skew-y: -0.635968039; scale-x: 0.786020494; scale-y: 0.786020494;  }
+        frame 74 { x: 25.947041; y: 9.94209441; skew-x: 0.952482836; skew-y: 0.952482836; scale-x: 0.784095897; scale-y: 0.784095897;  }
+        frame 75 { x: 26.0731413; y: 9.29419884; skew-x: 2.31795511; skew-y: 2.31795511; scale-x: 0.781553227; scale-y: 0.781553227;  }
+        frame 76 { x: 26.4471968; y: 8.51603272; skew-x: 4.19634252; skew-y: 4.19634252; scale-x: 0.777768839; scale-y: 0.777768839;  }
     }
     Track {
         source-name: "Cornpult_stalk4";
@@ -1325,80 +1331,83 @@ export component Cornpult {
     Track {
         source-name: "Cornpult_stalk3";
         frame-count: 77;
-        frame 0 { cel: -1; }
-        frame 1 { cel: -10000; }
-        frame 5 { x: 14.6; y: 16; skew-x: 4.1; skew-y: 4.1; scale-x: 0.8; scale-y: 0.8; cel: 0; image: IMAGE_REANIM_CORNPULT_STALK3; }
-        frame 6 { x: 14.8; y: 14.5; skew-x: 8.3; skew-y: 8.3; scale-x: 0.799; scale-y: 0.799; cel: -10000; image: none; }
-        frame 7 { x: 15.1; y: 13; skew-x: 12.8; skew-y: 12.8; scale-x: -10000; scale-y: -10000; }
-        frame 8 { x: -10000; y: 14.5; skew-x: 9.5; skew-y: 9.5; }
-        frame 9 { x: 15; y: 16; skew-x: 6.3; skew-y: 6.3; }
-        frame 10 { y: 17.4; skew-x: 3.1; skew-y: 3.1; }
-        frame 11 { x: -10000; y: 18.9; skew-x: 0; skew-y: 0; }
-        frame 12 { y: 20.4; skew-x: -2.9; skew-y: -2.9; }
-        frame 13 { y: 21.9; skew-x: -6.2; skew-y: -6.2; }
-        frame 14 { y: 23.4; skew-x: -9.4; skew-y: -9.4; scale-x: 0.8; scale-y: 0.8; }
-        frame 15 { x: 15; y: 24.1; skew-x: -12.4; skew-y: -8.2; scale-x: 0.803; scale-y: 0.799; }
-        frame 16 { y: 25; skew-x: -15.5; skew-y: -7.2; scale-x: 0.808; scale-y: -10000; }
-        frame 17 { x: 14.9; y: 23.7; skew-x: -12.7; skew-y: -5.4; scale-x: 0.806; }
-        frame 18 { x: 14.7; y: 22.4; skew-x: -9.7; skew-y: -3.9; scale-x: 0.805; }
-        frame 19 { x: 14.6; y: 21.2; skew-x: -6.9; skew-y: -2.2; scale-x: 0.804; }
-        frame 20 { x: -10000; y: 20; skew-x: -4.2; skew-y: -0.7; scale-x: 0.803; scale-y: 0.8; }
-        frame 21 { x: 14.5; y: 18.7; skew-x: -1.4; skew-y: 0.8; scale-x: 0.802; scale-y: -10000; }
-        frame 22 { x: -10000; y: 17.5; skew-x: 1.1; skew-y: 2.3; scale-x: 0.801; }
-        frame 23 { x: 14.6; y: 16; skew-x: 4.1; skew-y: 4.1; scale-x: 0.8; }
-        frame 24 { x: -10000; y: -10000; skew-x: -10000; skew-y: -10000; scale-x: -10000; }
-        frame 25 { x: 13; y: 19.8; skew-x: -5.7; skew-y: -5.7; scale-x: 0.799; scale-y: 0.799; }
-        frame 26 { x: 11.7; y: 23.7; skew-x: -15.5; skew-y: -15.5; scale-x: 0.798; scale-y: 0.798; }
-        frame 27 { x: 10.5; y: 27.8; skew-x: -25.5; skew-y: -25.5; scale-x: -10000; scale-y: -10000; }
-        frame 28 { x: 9.7; y: 31.8; skew-x: -35.3; skew-y: -35.3; scale-x: 0.797; scale-y: 0.797; }
-        frame 29 { x: 9; y: 35.7; skew-x: -45.2; skew-y: -45.2; scale-x: 0.798; scale-y: 0.798; }
-        frame 30 { x: 9.1; y: 35.6; skew-x: -44; skew-y: -44; scale-x: 0.797; scale-y: 0.797; }
-        frame 31 { x: 9.2; y: 35.3; skew-x: -42.9; skew-y: -42.9; scale-x: 0.798; scale-y: 0.798; }
-        frame 32 { x: 7.4; y: 23.8; skew-x: -32; skew-y: -32; scale-x: 0.795; scale-y: 0.795; }
-        frame 33 { x: 13.3; y: 5.6; skew-x: -2.4; skew-y: -2.4; scale-x: -10000; scale-y: 0.794; }
-        frame 34 { x: 30.5; y: -12.7; skew-x: 46.6; skew-y: 46.6; scale-y: 0.793; }
-        frame 35 { x: 55.3; y: -15; skew-x: 95.7; skew-y: 95.7; scale-x: 0.797; scale-y: 0.795; }
-        frame 36 { x: 58.1; y: -14.7; skew-x: 101.8; skew-y: 101.8; scale-x: 0.796; scale-y: 0.794; }
-        frame 37 { x: 60.9; y: -14.5; skew-x: 108; skew-y: 108; scale-x: -10000; scale-y: -10000; }
-        frame 38 { x: 60.1; y: -10000; skew-x: 106.3; skew-y: 106.3; }
-        frame 39 { x: 59.4; y: -14.6; skew-x: 104.5; skew-y: 104.5; }
-        frame 40 { x: 58.6; y: -14.7; skew-x: 102.8; skew-y: 102.8; }
-        frame 41 { x: 57.8; y: -14.8; skew-x: 101; skew-y: 101; }
-        frame 42 { x: 57; y: -14.9; skew-x: 99.1; skew-y: 99.3; }
-        frame 43 { x: 56.1; y: -15; skew-x: 97.3; skew-y: 97.3; scale-x: 0.797; scale-y: 0.795; }
-        frame 44 { x: 55.3; y: -10000; skew-x: 95.7; skew-y: 95.7; scale-x: -10000; scale-y: -10000; }
-        frame 45 { x: 55.6; skew-x: 96.5; skew-y: 96.5; }
-        frame 46 { x: 56.1; y: -14.9; skew-x: 97.3; skew-y: 97.3; scale-x: 0.796; scale-y: 0.794; }
-        frame 47 { x: 56.5; y: -14.8; skew-x: 98.3; skew-y: 98.3; scale-x: -10000; scale-y: -10000; }
-        frame 48 { x: 57; y: -10000; skew-x: 99.1; skew-y: 99.1; }
-        frame 49 { x: 57.4; skew-x: 100; skew-y: 100; }
-        frame 50 { x: 57.8; y: -14.7; skew-x: 100.8; skew-y: 100.8; }
-        frame 51 { x: 58.2; y: -10000; skew-x: 101.8; skew-y: 101.8; }
-        frame 52 { x: 48.9; y: -13.1; skew-x: 85.5; skew-y: 85.7; scale-y: 0.795; }
-        frame 53 { x: 39.2; y: -11; skew-x: 69.2; skew-y: 69.2; scale-y: 0.794; }
-        frame 54 { x: 29.5; y: -8.1; skew-x: 52.9; skew-y: 52.9; scale-x: 0.797; scale-y: 0.796; }
-        frame 55 { x: 24.2; y: -0.6; skew-x: 36.6; skew-y: 36.6; scale-x: -10000; scale-y: -10000; }
-        frame 56 { x: 19.2; y: 7.3; skew-x: 20.3; skew-y: 20.3; scale-x: 0.798; scale-y: 0.798; }
-        frame 57 { x: 14.6; y: 16; skew-x: 4.1; skew-y: 4.1; scale-x: 0.8; scale-y: 0.8; }
-        frame 58 { x: -10000; y: -10000; skew-x: -10000; skew-y: -10000; scale-x: -10000; scale-y: -10000; }
-        frame 59 { x: 14.8; y: 14.5; skew-x: 8.3; skew-y: 8.3; scale-x: 0.799; scale-y: 0.799; }
-        frame 60 { x: 15.1; y: 13; skew-x: 12.8; skew-y: 12.8; scale-x: -10000; scale-y: -10000; }
-        frame 61 { x: -10000; y: 14.5; skew-x: 9.5; skew-y: 9.5; }
-        frame 62 { x: 15; y: 16; skew-x: 6.3; skew-y: 6.3; }
-        frame 63 { y: 17.4; skew-x: 3.1; skew-y: 3.1; }
-        frame 64 { x: -10000; y: 18.9; skew-x: 0; skew-y: 0; }
-        frame 65 { y: 20.4; skew-x: -2.9; skew-y: -2.9; }
-        frame 66 { y: 21.9; skew-x: -6.2; skew-y: -6.2; }
-        frame 67 { y: 23.4; skew-x: -9.4; skew-y: -9.4; scale-x: 0.8; scale-y: 0.8; }
-        frame 68 { x: 15; y: 24.1; skew-x: -12.4; skew-y: -8.2; scale-x: 0.803; scale-y: 0.799; }
-        frame 69 { y: 25; skew-x: -15.5; skew-y: -7.2; scale-x: 0.808; scale-y: -10000; }
-        frame 70 { x: 14.9; y: 23.7; skew-x: -12.7; skew-y: -5.4; scale-x: 0.806; }
-        frame 71 { x: 14.7; y: 22.4; skew-x: -9.7; skew-y: -3.9; scale-x: 0.805; }
-        frame 72 { x: 14.6; y: 21.2; skew-x: -6.9; skew-y: -2.2; scale-x: 0.804; }
-        frame 73 { x: -10000; y: 20; skew-x: -4.2; skew-y: -0.7; scale-x: 0.803; scale-y: 0.8; }
-        frame 74 { x: 14.5; y: 18.7; skew-x: -1.4; skew-y: 0.8; scale-x: 0.802; scale-y: -10000; }
-        frame 75 { x: -10000; y: 17.5; skew-x: 1.1; skew-y: 2.3; scale-x: 0.801; }
-        frame 76 { x: 14.6; y: 16; skew-x: 4.1; skew-y: 4.1; scale-x: 0.8; }
+        frame 0 { x: 2.37631603; y: 1.2630987; skew-x: 37.840842; skew-y: 37.840842; scale-x: 0.605444425; scale-y: 0.605444425; cel: -1; }
+        frame 1 { x: 2.37631603; y: 1.2630987; skew-x: 37.840842; skew-y: 37.840842; scale-x: 0.605444425; scale-y: 0.605444425; cel: -10000; }
+        frame 2 { x: 2.37631603; y: 1.2630987; skew-x: 37.840842; skew-y: 37.840842; scale-x: 0.605444425; scale-y: 0.605444425;  }
+        frame 3 { x: 2.37631603; y: 1.2630987; skew-x: 37.840842; skew-y: 37.840842; scale-x: 0.605444425; scale-y: 0.605444425;  }
+        frame 4 { x: 2.37631603; y: 1.2630987; skew-x: 37.840842; skew-y: 37.840842; scale-x: 0.605444425; scale-y: 0.605444425;  }
+        frame 5 { x: 14.6901678; y: 16.5040279; skew-x: 2.82928579; skew-y: 2.82928579; scale-x: 0.78546481; scale-y: 0.78546481; cel: 0; image: IMAGE_REANIM_CORNPULT_STALK3; }
+        frame 6 { x: 14.8851719; y: 15.0036749; skew-x: 7.65029826; skew-y: 7.65029826; scale-x: 0.781435256; scale-y: 0.781435256; cel: -10000; image: none; }
+        frame 7 { x: 15.1579203; y: 13.5123692; skew-x: 12.3544363; skew-y: 12.3544363; scale-x: 0.779144775; scale-y: 0.779144775;  }
+        frame 8 { x: 15.2093938; y: 15.0179658; skew-x: 9.36751979; skew-y: 9.36751979; scale-x: 0.773989732; scale-y: 0.773989732;  }
+        frame 9 { x: 15.1283257; y: 16.507482; skew-x: 6.02962581; skew-y: 6.02962581; scale-x: 0.776193272; scale-y: 0.776193272;  }
+        frame 10 { x: 15.1595738; y: 17.9130874; skew-x: 2.73170272; skew-y: 2.73170272; scale-x: 0.772580309; scale-y: 0.772580309;  }
+        frame 11 { x: 15.1769254; y: 19.4062374; skew-x: -0.56680188; skew-y: -0.56680188; scale-x: 0.773681127; scale-y: 0.773681127;  }
+        frame 12 { x: 15.1969962; y: 20.8906513; skew-x: -3.47328956; skew-y: -3.47328956; scale-x: 0.775893115; scale-y: 0.775893115;  }
+        frame 13 { x: 15.2111259; y: 22.3693498; skew-x: -6.85346557; skew-y: -6.85346557; scale-x: 0.780337261; scale-y: 0.780337261;  }
+        frame 14 { x: 15.2290792; y: 23.8396777; skew-x: -9.91208588; skew-y: -9.91208588; scale-x: 0.786358483; scale-y: 0.786358483;  }
+        frame 15 { x: 15.0609551; y: 24.539577; skew-x: -12.6017998; skew-y: -12.6017998; scale-x: 0.789376172; scale-y: 0.789376172;  }
+        frame 16 { x: 14.8863765; y: 25.4671829; skew-x: -15.9293052; skew-y: -15.9293052; scale-x: 0.792051012; scale-y: 0.792051012;  }
+        frame 17 { x: 14.8103445; y: 24.1732514; skew-x: -13.3188057; skew-y: -13.3188057; scale-x: 0.788617193; scale-y: 0.788617193;  }
+        frame 18 { x: 14.6483929; y: 22.8781411; skew-x: -10.6184802; skew-y: -10.6184802; scale-x: 0.787403886; scale-y: 0.787403886;  }
+        frame 19 { x: 14.5619741; y: 21.669341; skew-x: -7.95610546; skew-y: -7.95610546; scale-x: 0.790925353; scale-y: 0.790925353;  }
+        frame 20 { x: 14.5859777; y: 20.4927744; skew-x: -5.69279958; skew-y: -5.69279958; scale-x: 0.788031877; scale-y: 0.788031877;  }
+        frame 21 { x: 14.521489; y: 19.1889988; skew-x: -2.85256902; skew-y: -2.85256902; scale-x: 0.789056689; scale-y: 0.789056689;  }
+        frame 22 { x: 14.5561451; y: 18.0083481; skew-x: -0.384424457; skew-y: -0.384424457; scale-x: 0.783697725; scale-y: 0.783697725;  }
+        frame 23 { x: 14.6901678; y: 16.5040279; skew-x: 2.82928579; skew-y: 2.82928579; scale-x: 0.78546481; scale-y: 0.78546481;  }
+        frame 24 { x: 14.6901678; y: 16.5040279; skew-x: 2.82928579; skew-y: 2.82928579; scale-x: 0.78546481; scale-y: 0.78546481;  }
+        frame 25 { x: 13.2409987; y: 20.2927914; skew-x: -6.13435074; skew-y: -6.13435074; scale-x: 0.769602778; scale-y: 0.769602778;  }
+        frame 26 { x: 12.0596745; y: 24.1558271; skew-x: -15.6277212; skew-y: -15.6277212; scale-x: 0.758218911; scale-y: 0.758218911;  }
+        frame 27 { x: 10.9289322; y: 28.1865945; skew-x: -25.6746064; skew-y: -25.6746064; scale-x: 0.759276248; scale-y: 0.759276248;  }
+        frame 28 { x: 10.1700278; y: 32.1253444; skew-x: -35.9440117; skew-y: -35.9440117; scale-x: 0.761448479; scale-y: 0.761448479;  }
+        frame 29 { x: 9.46947373; y: 35.9140347; skew-x: -45.4679945; skew-y: -45.4679945; scale-x: 0.777177428; scale-y: 0.777177428;  }
+        frame 30 { x: 9.62150641; y: 35.8490675; skew-x: -44.5880209; skew-y: -44.5880209; scale-x: 0.759421155; scale-y: 0.759421155;  }
+        frame 31 { x: 9.77764708; y: 35.5833268; skew-x: -43.752364; skew-y: -43.752364; scale-x: 0.742749944; scale-y: 0.742749944;  }
+        frame 32 { x: 7.79845375; y: 24.1022752; skew-x: -32.1010774; skew-y: -32.1010774; scale-x: 0.777614012; scale-y: 0.777614012;  }
+        frame 33 { x: 13.593467; y: 6.10812016; skew-x: -1.58366844; skew-y: -1.58366844; scale-x: 0.749895961; scale-y: 0.749895961;  }
+        frame 34 { x: 30.2604949; y: -12.1320619; skew-x: 46.4156104; skew-y: 46.4156104; scale-x: 0.742988387; scale-y: 0.742988387;  }
+        frame 35 { x: 54.6727114; y: -14.8050568; skew-x: 95.1509867; skew-y: 95.1509867; scale-x: 0.734887535; scale-y: 0.734887535;  }
+        frame 36 { x: 57.4558043; y: -14.5706645; skew-x: 101.291351; skew-y: 101.291351; scale-x: 0.73355852; scale-y: 0.73355852;  }
+        frame 37 { x: 60.2905859; y: -14.4417986; skew-x: 107.776337; skew-y: 107.776337; scale-x: 0.745443268; scale-y: 0.745443268;  }
+        frame 38 { x: 59.4745706; y: -14.4249003; skew-x: 105.922752; skew-y: 105.922752; scale-x: 0.740867476; scale-y: 0.740867476;  }
+        frame 39 { x: 58.7774819; y: -14.5002705; skew-x: 104.224502; skew-y: 104.224502; scale-x: 0.740417064; scale-y: 0.740417064;  }
+        frame 40 { x: 57.9842836; y: -14.5801112; skew-x: 102.588786; skew-y: 102.588786; scale-x: 0.741133741; scale-y: 0.741133741;  }
+        frame 41 { x: 57.1774369; y: -14.6609067; skew-x: 100.688062; skew-y: 100.688062; scale-x: 0.738409476; scale-y: 0.738409476;  }
+        frame 42 { x: 56.3900891; y: -14.7451361; skew-x: 98.9369179; skew-y: 98.9369179; scale-x: 0.739346116; scale-y: 0.739346116;  }
+        frame 43 { x: 55.4801263; y: -14.8348396; skew-x: 96.6542147; skew-y: 96.6542147; scale-x: 0.739576085; scale-y: 0.739576085;  }
+        frame 44 { x: 54.6727114; y: -14.8050568; skew-x: 95.1509867; skew-y: 95.1509867; scale-x: 0.734887535; scale-y: 0.734887535;  }
+        frame 45 { x: 54.9715211; y: -14.8320122; skew-x: 95.6283139; skew-y: 95.6283139; scale-x: 0.737757878; scale-y: 0.737757878;  }
+        frame 46 { x: 55.4614217; y: -14.719591; skew-x: 96.7404045; skew-y: 96.7404045; scale-x: 0.731859006; scale-y: 0.731859006;  }
+        frame 47 { x: 55.8624982; y: -14.6247689; skew-x: 97.8969276; skew-y: 97.8969276; scale-x: 0.73208736; scale-y: 0.73208736;  }
+        frame 48 { x: 56.3768963; y: -14.6289247; skew-x: 98.9531856; skew-y: 98.9531856; scale-x: 0.735622846; scale-y: 0.735622846;  }
+        frame 49 { x: 56.7827315; y: -14.6477942; skew-x: 99.7579412; skew-y: 99.7579412; scale-x: 0.738821434; scale-y: 0.738821434;  }
+        frame 50 { x: 57.1655754; y: -14.5282703; skew-x: 100.96952; skew-y: 100.96952; scale-x: 0.73174003; scale-y: 0.73174003;  }
+        frame 51 { x: 57.574534; y: -14.5679857; skew-x: 101.510831; skew-y: 101.510831; scale-x: 0.737966583; scale-y: 0.737966583;  }
+        frame 52 { x: 48.3069754; y: -12.6827206; skew-x: 86.9427385; skew-y: 86.9427385; scale-x: 0.710534914; scale-y: 0.710534914;  }
+        frame 53 { x: 38.7151602; y: -10.4710052; skew-x: 69.3481167; skew-y: 69.3481167; scale-x: 0.714880723; scale-y: 0.714880723;  }
+        frame 54 { x: 29.2029269; y: -7.62804485; skew-x: 52.4317831; skew-y: 52.4317831; scale-x: 0.763865157; scale-y: 0.763865157;  }
+        frame 55 { x: 24.1153728; y: 0.0916974187; skew-x: 37.6431079; skew-y: 37.6431079; scale-x: 0.721252395; scale-y: 0.721252395;  }
+        frame 56 { x: 19.2626838; y: 7.97916728; skew-x: 20.3770864; skew-y: 20.3770864; scale-x: 0.72903698; scale-y: 0.72903698;  }
+        frame 57 { x: 14.6901678; y: 16.5040279; skew-x: 2.82928579; skew-y: 2.82928579; scale-x: 0.78546481; scale-y: 0.78546481;  }
+        frame 58 { x: 14.6901678; y: 16.5040279; skew-x: 2.82928579; skew-y: 2.82928579; scale-x: 0.78546481; scale-y: 0.78546481;  }
+        frame 59 { x: 14.8851719; y: 15.0036749; skew-x: 7.65029826; skew-y: 7.65029826; scale-x: 0.781435256; scale-y: 0.781435256;  }
+        frame 60 { x: 15.1579203; y: 13.5123692; skew-x: 12.3544363; skew-y: 12.3544363; scale-x: 0.779144775; scale-y: 0.779144775;  }
+        frame 61 { x: 15.2093938; y: 15.0179658; skew-x: 9.36751979; skew-y: 9.36751979; scale-x: 0.773989732; scale-y: 0.773989732;  }
+        frame 62 { x: 15.1283257; y: 16.507482; skew-x: 6.02962581; skew-y: 6.02962581; scale-x: 0.776193272; scale-y: 0.776193272;  }
+        frame 63 { x: 15.1595738; y: 17.9130874; skew-x: 2.73170272; skew-y: 2.73170272; scale-x: 0.772580309; scale-y: 0.772580309;  }
+        frame 64 { x: 15.1769254; y: 19.4062374; skew-x: -0.56680188; skew-y: -0.56680188; scale-x: 0.773681127; scale-y: 0.773681127;  }
+        frame 65 { x: 15.1969962; y: 20.8906513; skew-x: -3.47328956; skew-y: -3.47328956; scale-x: 0.775893115; scale-y: 0.775893115;  }
+        frame 66 { x: 15.2111259; y: 22.3693498; skew-x: -6.85346557; skew-y: -6.85346557; scale-x: 0.780337261; scale-y: 0.780337261;  }
+        frame 67 { x: 15.2290792; y: 23.8396777; skew-x: -9.91208588; skew-y: -9.91208588; scale-x: 0.786358483; scale-y: 0.786358483;  }
+        frame 68 { x: 15.0609551; y: 24.539577; skew-x: -12.6017998; skew-y: -12.6017998; scale-x: 0.789376172; scale-y: 0.789376172;  }
+        frame 69 { x: 14.8863765; y: 25.4671829; skew-x: -15.9293052; skew-y: -15.9293052; scale-x: 0.792051012; scale-y: 0.792051012;  }
+        frame 70 { x: 14.8103445; y: 24.1732514; skew-x: -13.3188057; skew-y: -13.3188057; scale-x: 0.788617193; scale-y: 0.788617193;  }
+        frame 71 { x: 14.6483929; y: 22.8781411; skew-x: -10.6184802; skew-y: -10.6184802; scale-x: 0.787403886; scale-y: 0.787403886;  }
+        frame 72 { x: 14.5619741; y: 21.669341; skew-x: -7.95610546; skew-y: -7.95610546; scale-x: 0.790925353; scale-y: 0.790925353;  }
+        frame 73 { x: 14.5859777; y: 20.4927744; skew-x: -5.69279958; skew-y: -5.69279958; scale-x: 0.788031877; scale-y: 0.788031877;  }
+        frame 74 { x: 14.521489; y: 19.1889988; skew-x: -2.85256902; skew-y: -2.85256902; scale-x: 0.789056689; scale-y: 0.789056689;  }
+        frame 75 { x: 14.5561451; y: 18.0083481; skew-x: -0.384424457; skew-y: -0.384424457; scale-x: 0.783697725; scale-y: 0.783697725;  }
+        frame 76 { x: 14.6901678; y: 16.5040279; skew-x: 2.82928579; skew-y: 2.82928579; scale-x: 0.78546481; scale-y: 0.78546481;  }
     }
     Track {
         source-name: "Cornpult_eyebrow1";

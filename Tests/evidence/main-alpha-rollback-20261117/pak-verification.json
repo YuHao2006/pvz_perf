@@ -1,0 +1,12 @@
+{
+  "originalResourceRecipesByteIdentical": true,
+  "onlyChangedExistingPakEntry": [
+    "compiled/atlases/zombatar.atlas.png"
+  ],
+  "originalPakBytes": 39477052,
+  "rollbackPakBytes": 39587202,
+  "growthBytes": 110150,
+  "losslessPakBytes": 39209797,
+  "textureBakeAndAlmanacOptimizationRetained": true,
+  "hdUnchanged": true
+}

@@ -5704,39 +5704,6 @@ void SelectorTrophyTouchRuntime(TestApp& app)
 
 
 
-// The offline resource compiler defines the canonical RGBA decoding. Existing
-// JPEGli runtime JPEG results differ slightly; PNG loads on both backends must
-// match the compiler-colour references reconstructed from untouched originals.
-void SolidifiedAlphaRuntime()
-{
-    const char* path=std::getenv("PVZ_ALPHA_COMPARISON_LIST");
-    if(!path) return;
-    std::ifstream list(path);Require(bool(list),"Cannot open alpha migration proof list");
-    std::string line;int maximum=0,legacyMaximum=0,count=0;
-    while(std::getline(list,line)) {
-        if(line.empty())continue;
-        std::array<std::string,4> fields;std::istringstream row(line);
-        for(auto& field:fields)Require(bool(std::getline(row,field,'\t')),"Invalid alpha proof row");
-        std::unique_ptr<ImageLib::Image> actual(ImageLib::GetImage(fields[0],false)),reference(ImageLib::GetImage(fields[3],false));
-        std::unique_ptr<ImageLib::Image> original(ImageLib::GetImage(fields[1],false));
-        std::unique_ptr<ImageLib::Image> mask(fields[2]=="-"?nullptr:ImageLib::GetImage(fields[2],false));
-        Require(actual&&reference&&original&&actual->mBits&&reference->mBits&&original->mBits,"Cannot decode alpha proof inputs");
-        Require(actual->mWidth==reference->mWidth&&actual->mHeight==reference->mHeight&&actual->mWidth==original->mWidth&&actual->mHeight==original->mHeight,"Alpha migration changed geometry");
-        if(mask)Require(mask->mWidth==original->mWidth&&mask->mHeight==original->mHeight&&mask->mBits,"Alpha proof mask size mismatch");
-        for(int i=0;i<actual->mWidth*actual->mHeight;++i) {
-            const auto legacy=mask?(original->mBits[i]&0xffffffu)|((mask->mBits[i]&255u)<<24):original->mBits[i];
-            for(int shift:{0,8,16,24}) {
-                maximum=std::max(maximum,std::abs(int((actual->mBits[i]>>shift)&255)-int((reference->mBits[i]>>shift)&255)));
-                legacyMaximum=std::max(legacyMaximum,std::abs(int((actual->mBits[i]>>shift)&255)-int((legacy>>shift)&255)));
-            }
-        }
-        ++count;
-    }
-    std::cout<<"Canonical compiler RGBA alpha migration: images="<<count<<" maxError="<<maximum
-        <<" legacyJpegDecoderMax="<<legacyMaximum<<'\n';
-    Require(count>0&&maximum<=1,"Solidified PNG differs from canonical compiler-colour RGBA");
-}
-
 // Local reference PNGs are intentionally absent from the public source tree.
 void ZombatarFixedUiRuntime(TestApp& app)
 {
@@ -8747,7 +8714,7 @@ void StorePauseClockRuntime(TestApp& app, DecodeOnlySoundManager& sounds)
     if(gIntroRulesOnly) {IntroRulesRuntime(app,sounds);return;}
     if(gUiRulesOnly) {ChallengeUnlockRulesRuntime(app);SelectorTrophyTouchRuntime(app);AlmanacRulesRuntime(app);AwardRulesRuntime(app);return;}
     if(gAwardRulesOnly) {AwardRulesRuntime(app);return;}
-    if(gAlmanacClockOnly) {AlmanacRulesRuntime(app,true);StandardDialogBakingRuntime(app);SolidifiedAlphaRuntime();ZombatarFixedUiRuntime(app);return;}
+    if(gAlmanacClockOnly) {AlmanacRulesRuntime(app,true);StandardDialogBakingRuntime(app);ZombatarFixedUiRuntime(app);return;}
     if(gActorBirthOnly) {FrameDivisionSampleRuntime();ExplicitReanimationOwnerTime(app);ActorBirthClockRuntime(app);return;}
     if(gCreditsOnly) {CreditsMovieOwnerClockRuntime(app);return;}
     if(gLossRulesOnly) {LossRulesRuntime(app);return;}

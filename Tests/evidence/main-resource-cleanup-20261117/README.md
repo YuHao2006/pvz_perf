@@ -1,5 +1,7 @@
 # main 透明度固化与大头贴 UI 验证
 
+**历史实验记录：透明度固化随后已撤回，大头贴烘焙保留。当前回退验证见 `../main-alpha-rollback-20261117/`。**
+
 2026-11-17，本地 Windows 11 上的 Vulkan／OpenGL Release。`verification.json` 记录原生测试结果，`actual-pak-alpha-audit.json` 来自最终生产 PAK，`new-layout-caches.json` 列出新增可复用装箱缓存。
 
 图像源、归档和 PNG 证据只在本机保存，见 `assets/source-art/main-resource-cleanup-20261117.json`。源图固化以资源编译器色值为准；旧 JPEGli 运行时的 JPG 解码存在差异，不宣称与其逐像素相同。45 项新 PNG 的实际两后端解码均与原始输入重建的基准一致。未增加 Android、Win7 实机或手机浏览器覆盖。

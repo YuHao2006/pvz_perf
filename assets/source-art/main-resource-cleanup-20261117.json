@@ -1,8 +1,79 @@
 {
   "format": "pvz-main-rgba-migration-v1",
   "date": "2026-11-17",
-  "policy": "Preserve original JPEG bytes for opaque unmasked images; bake only actual transparency into PNG; retire all external transparency masks.",
-  "activeRgbaSources": [
+  "policy": "Keep original main JPEG/PNG plus external transparency masks to preserve the ordinary Bilibili package size budget. Retain fixed Zombatar UI baking and aquatic-only Almanac updates.",
+  "retiredTransparencyMasks": [],
+  "opaqueJpegsRetained": [
+    "images/almanac_groundday.jpg",
+    "images/almanac_groundice.jpg",
+    "images/almanac_groundnight.jpg",
+    "images/almanac_groundnightpool.jpg",
+    "images/almanac_groundpool.jpg",
+    "images/almanac_groundroof.jpg",
+    "images/background1.jpg",
+    "images/background1unsodded.jpg",
+    "images/background2.jpg",
+    "images/background3.jpg",
+    "images/background4.jpg",
+    "images/background5.jpg",
+    "images/background6boss.jpg",
+    "images/background_greenhouse_overlay.jpg",
+    "images/challenge_thumbnails.jpg",
+    "images/pool.jpg",
+    "images/pool_base_night.jpg",
+    "images/pool_caustic_effect.jpg",
+    "images/pool_night.jpg",
+    "images/pool_shading_night.jpg",
+    "images/popcap_logo.jpg",
+    "images/reloaded/acheese/acheesements_more-top.jpg",
+    "images/reloaded/acheese/reloaded_acheesements.jpg",
+    "images/reloaded/zombatar_bg.jpg",
+    "images/reloaded/zombatar_layout.jpg",
+    "images/reloaded/zombatar_layout_800x600.jpg",
+    "images/survival_thumbnails.jpg",
+    "reanim/credits_nozombies.jpg",
+    "reanim/credits_throat.jpg",
+    "reanim/tree_bg.jpg"
+  ],
+  "originalArchive": "assets/source-art/archive/main-resource-cleanup-20261117",
+  "originalImagesRemainLocalOnly": true,
+  "zombatarBake": {
+    "frameSize": [
+      800,
+      600
+    ],
+    "widgetLogicalSizePreserved": [
+      560,
+      493
+    ],
+    "editorOrigin": [
+      33,
+      100
+    ],
+    "restorePatch": [
+      0,
+      0,
+      499,
+      335
+    ],
+    "panelStrip": [
+      499,
+      0,
+      10,
+      335
+    ],
+    "dynamicRestoreColumn": [
+      33,
+      100,
+      104,
+      335
+    ],
+    "newTextureObjects": 0,
+    "newImageSlots": 0,
+    "sourceImages": "main original only"
+  },
+  "status": "alpha solidification reverted; fixed UI baking retained",
+  "revertedRgbaSources": [
     {
       "symbol": "IMAGE_PVZ_LOGO",
       "file": "images/PvZ_Logo_rgba_788fa7eb.png",
@@ -589,107 +660,6 @@
       ]
     }
   ],
-  "retiredTransparencyMasks": [
-    "images/blank_.gif",
-    "images/credits_bigbrain_.png",
-    "images/credits_zombienote.png",
-    "images/fog_.jpg",
-    "images/options_menuback_.png",
-    "images/pool_base_.png",
-    "images/pool_shading_.jpg",
-    "images/pvz_logo_.png",
-    "images/sod1row_.png",
-    "images/sod3row_.png",
-    "images/store_car_.png",
-    "images/store_carclosed_.png",
-    "images/tombstones_.png",
-    "images/zen_goldtoolreticle_.png",
-    "images/zombiefinalnote.png",
-    "images/zombienote1.png",
-    "images/zombienote2.png",
-    "images/zombienote3.png",
-    "images/zombienote4.png",
-    "images/zombienote_.png",
-    "images/zombienotehelp.png",
-    "reanim/crazydave_body1_.png",
-    "reanim/credits_wearetheundead_.png",
-    "reanim/tree6_.png",
-    "reanim/tree7_.png",
-    "reanim/tree8_.png",
-    "reanim/tree9_.png",
-    "reanim/tree_overlay8_.png",
-    "reanim/tree_overlay9_.png",
-    "reanim/zombie_boss_neck_.png",
-    "reanim/zombie_boss_upperbody_.png",
-    "reanim/zombieswon_.png"
-  ],
-  "opaqueJpegsRetained": [
-    "images/almanac_groundday.jpg",
-    "images/almanac_groundice.jpg",
-    "images/almanac_groundnight.jpg",
-    "images/almanac_groundnightpool.jpg",
-    "images/almanac_groundpool.jpg",
-    "images/almanac_groundroof.jpg",
-    "images/background1.jpg",
-    "images/background1unsodded.jpg",
-    "images/background2.jpg",
-    "images/background3.jpg",
-    "images/background4.jpg",
-    "images/background5.jpg",
-    "images/background6boss.jpg",
-    "images/background_greenhouse_overlay.jpg",
-    "images/challenge_thumbnails.jpg",
-    "images/pool.jpg",
-    "images/pool_base_night.jpg",
-    "images/pool_caustic_effect.jpg",
-    "images/pool_night.jpg",
-    "images/pool_shading_night.jpg",
-    "images/popcap_logo.jpg",
-    "images/reloaded/acheese/acheesements_more-top.jpg",
-    "images/reloaded/acheese/reloaded_acheesements.jpg",
-    "images/reloaded/zombatar_bg.jpg",
-    "images/reloaded/zombatar_layout.jpg",
-    "images/reloaded/zombatar_layout_800x600.jpg",
-    "images/survival_thumbnails.jpg",
-    "reanim/credits_nozombies.jpg",
-    "reanim/credits_throat.jpg",
-    "reanim/tree_bg.jpg"
-  ],
-  "originalArchive": "assets/source-art/archive/main-resource-cleanup-20261117",
-  "originalImagesRemainLocalOnly": true,
-  "zombatarBake": {
-    "frameSize": [
-      800,
-      600
-    ],
-    "widgetLogicalSizePreserved": [
-      560,
-      493
-    ],
-    "editorOrigin": [
-      33,
-      100
-    ],
-    "restorePatch": [
-      0,
-      0,
-      499,
-      335
-    ],
-    "panelStrip": [
-      499,
-      0,
-      10,
-      335
-    ],
-    "dynamicRestoreColumn": [
-      33,
-      100,
-      104,
-      335
-    ],
-    "newTextureObjects": 0,
-    "newImageSlots": 0,
-    "sourceImages": "main original only"
-  }
+  "activeRgbaSources": [],
+  "rollbackDate": "2026-11-17"
 }

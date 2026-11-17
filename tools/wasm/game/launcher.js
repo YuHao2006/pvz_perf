@@ -409,8 +409,9 @@ form.addEventListener('submit',async event=>{
 window.addEventListener('error',event=>showError(event.error||event.message));window.addEventListener('unhandledrejection',event=>showError(event.reason));
 async function boot(){
  const config=window.PVZGraphicsConfig||{webgpu:false};
- const {supportsMemory64,memoryModels,selectMemoryModel,runtimeStem}=await import('./runtime-selection.js');
- const memorySupported=supportsMemory64(),models=memoryModels(config,memorySupported);
+ const {supportsMemory64,supportsSimd128,memoryModels,selectMemoryModel,runtimeStem}=await import('./runtime-selection.js');
+ const memorySupported=supportsMemory64(),simdSupported=supportsSimd128(),models=memoryModels(config,memorySupported,simdSupported);
+ Module.pvzSimdSupported=simdSupported;
  let savedMemory=null;try{savedMemory=localStorage.getItem('pvz_wasm_memory_override')}catch{}
  const memoryModel=selectMemoryModel(models,savedMemory);
  Module.pvzMemoryModel=memoryModel;
@@ -429,13 +430,13 @@ async function boot(){
  memoryDropdown.onchange=()=>switchRuntime('pvz_wasm_memory_override',memoryDropdown.value);
  document.getElementById('memory-info').textContent=models.length>1
   ?'已检测到 Memory64，默认优先 64 位；仍可手动选择 32 位。切换会重新加载，设置和存档共用。'
-  :!memorySupported?'当前浏览器不支持 Memory64，使用 32 位。':config.memory64?'此包仅包含 Memory64 诊断版本。':'此包仅包含 32 位版本。';
+  :config.simd128&&!simdSupported?'未检测到 SIMD128，使用 32 位 WebGL 2 兼容版本。':!memorySupported?'当前浏览器不支持 Memory64，使用 32 位。':config.memory64?'此包仅包含 Memory64 诊断版本。':'此包仅包含 32 位版本。';
  if(config.version){document.title='pvz_perf · 网页 v'+config.version;document.getElementById('web-version').textContent='网页 v'+config.version}
  const dropdown=document.getElementById('graphics-backend');
  document.getElementById('graphics-field').hidden=false;
  dropdown.replaceChildren(new Option('正在检测图形接口…',''));dropdown.disabled=true;
  const {detectGraphics,capabilityText,prepareWebGLContext}=await import('./graphics.js');
- const capabilities=await detectGraphics(navigator.gpu,{webgpu:config.webgpu,webgl:!config.webgpu||config.fallback,gameCanvas:canvas});
+ const capabilities=await detectGraphics(navigator.gpu,{webgpu:config.webgpu&&(!config.simd128||simdSupported),webgl:!config.webgpu||config.fallback,gameCanvas:canvas});
  document.getElementById('graphics-capabilities').textContent=capabilityText(capabilities);
  Module.pvzGraphicsCapabilities=capabilities;
  const available=[['webgpu','WebGPU'],['webgl','WebGL 2']].filter(([name])=>capabilities[name]);

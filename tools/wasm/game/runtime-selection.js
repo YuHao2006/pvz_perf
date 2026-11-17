@@ -3,7 +3,15 @@
 export function supportsMemory64(){
  try{return WebAssembly.validate(new Uint8Array([0,97,115,109,1,0,0,0,5,3,1,4,1]))}catch{return false}
 }
-export function memoryModels(config,supported){
+export function supportsSimd128(){
+ try{return WebAssembly.validate(new Uint8Array([0,97,115,109,1,0,0,0,1,5,1,96,0,1,123,3,2,1,0,10,22,1,20,0,253,12,...Array(16).fill(0),11]))}catch{return false}
+}
+export function memoryModels(config,supported,simdSupported=true){
+ if(config.simd128&&!simdSupported){
+  if(config.memory64||config.webgpu&&!config.fallback)throw Error('此包需要 WebAssembly SIMD128；请更新浏览器或 B站 App。');
+  return ['wasm32'];
+ }
+
  if(config.memory64){
   if(!supported)throw Error('此诊断包需要 Wasm Memory64；当前浏览器不支持。64 位手机或操作系统不等于浏览器支持 Memory64。');
   return ['wasm64'];

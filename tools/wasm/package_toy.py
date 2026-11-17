@@ -153,7 +153,7 @@ def main():
         (args.output / (stem + '.wasm.gz')).write_bytes(gzip.compress((build / 'pvz-perf.wasm').read_bytes(), compresslevel=9, mtime=0))
         files += [stem + '.js', stem + '.wasm.gz']
     graphics = {'version': version, 'webgpu': args.webgpu, 'fallback': bool(args.webgl_build),
-                'memory64': args.memory64, 'memory64Available': bool(args.wasm64_build)}
+                'memory64': args.memory64, 'memory64Available': bool(args.wasm64_build), 'simd128': True}
     (args.output / 'graphics-config.js').write_text('window.PVZGraphicsConfig = ' + json.dumps(graphics) + ';\n', encoding='utf-8')
     files.append('graphics-config.js')
     license_path = args.output / 'licenses/stb-vorbis.txt'

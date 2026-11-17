@@ -1,0 +1,64 @@
+[
+  {
+    "case": "wasm64-webgl",
+    "passed": true,
+    "packageBytes": 39209797,
+    "releasedMemfsBytes": 39209797,
+    "loadedMemory": 193331200,
+    "growth": {
+      "before": 193331200,
+      "after": 334626816
+    },
+    "restartedMemory": 334626816,
+    "backend": "webgl",
+    "model": "wasm64"
+  },
+  {
+    "case": "wasm32-webgl",
+    "passed": true,
+    "packageBytes": 39209797,
+    "releasedMemfsBytes": 39209797,
+    "loadedMemory": 193331200,
+    "growth": {
+      "before": 193331200,
+      "after": 295305216
+    },
+    "restartedMemory": 295305216,
+    "backend": "webgl",
+    "model": "wasm32"
+  },
+  {
+    "case": "wasm64-webgpu",
+    "passed": true,
+    "packageBytes": 39209797,
+    "releasedMemfsBytes": 39209797,
+    "loadedMemory": 193331200,
+    "growth": {
+      "before": 193331200,
+      "after": 359530496
+    },
+    "restartedMemory": 359530496,
+    "backend": "webgpu",
+    "model": "wasm64"
+  },
+  {
+    "case": "wasm32-webgpu",
+    "passed": true,
+    "packageBytes": 39209797,
+    "releasedMemfsBytes": 39209797,
+    "loadedMemory": 193331200,
+    "growth": {
+      "before": 193331200,
+      "after": 331415552
+    },
+    "restartedMemory": 331415552,
+    "backend": "webgpu",
+    "model": "wasm32"
+  },
+  {
+    "case": "invalid-package",
+    "passed": true,
+    "rejectedPackageRetained": true,
+    "packageBytes": 39209797
+  }
+]

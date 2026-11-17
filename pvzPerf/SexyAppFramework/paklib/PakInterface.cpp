@@ -13,6 +13,35 @@
 #include <vector>
 #include <cstdint>
 #include <stdexcept>
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#include <cstdlib>
+
+namespace
+{
+// Owned by the Wasm instance, not LawnApp: Quit/Start rebuilds the package
+// index but reuses these bytes. Native pointers survive WebAssembly.Memory
+// growth; no JavaScript typed-array view is retained across that growth.
+void* gWebPackageBytes = nullptr;
+unsigned int gWebPackageSize = 0;
+
+EM_JS(int, WebPackageSourceSize, (const char* path), {
+    try { return FS.stat(UTF8ToString(Number(path))).size; } catch { return 0; }
+});
+EM_JS(int, WebPackageCopySource, (const char* path, void* destination, unsigned int size), {
+    try {
+        const node = FS.lookupPath(UTF8ToString(Number(path))).node;
+        if (!node.contents || node.usedBytes !== size) return 0;
+        new Uint8Array(HEAPU8.buffer, Number(destination), size).set(node.contents.subarray(0, size));
+        return 1;
+    } catch { return 0; }
+});
+EM_JS(void, WebPackageReleaseSource, (const char* path, unsigned int size), {
+    try { FS.unlink(UTF8ToString(Number(path))); } catch {}
+    Module.pvzPackageBytes = size;
+});
+}
+#endif
 
 typedef unsigned char uchar;
 typedef unsigned short ushort;
@@ -49,7 +78,27 @@ static unsigned int ReadPakU32(const unsigned char* theData)
 
 static bool AddPakFileZipOnly(PakInterface* theInterface, const std::string& theFileName)
 {
-#ifdef _WIN32
+#ifdef __EMSCRIPTEN__
+	const auto aName = std::filesystem::path(theFileName).lexically_normal().generic_string();
+	if (aName != "main.pak64" && aName != "/main.pak64") return false;
+	const bool aNewWebPackage = gWebPackageBytes == nullptr;
+	if (aNewWebPackage)
+	{
+		const int aSize = WebPackageSourceSize(theFileName.c_str());
+		if (aSize < 22) return false;
+		gWebPackageBytes = std::malloc(static_cast<size_t>(aSize));
+		if (!gWebPackageBytes) return false;
+		gWebPackageSize = static_cast<unsigned int>(aSize);
+		if (!WebPackageCopySource(theFileName.c_str(), gWebPackageBytes, gWebPackageSize))
+		{
+			std::free(gWebPackageBytes); gWebPackageBytes = nullptr; gWebPackageSize = 0;
+			return false;
+		}
+	}
+	const auto aFileSize = gWebPackageSize;
+	void* aPtr = gWebPackageBytes;
+	const int aFileHandle = -1;
+#elif defined(_WIN32)
 	HANDLE aFileHandle = CreateFile(theFileName.c_str(), GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
 	if (aFileHandle == INVALID_HANDLE_VALUE)
 		return false;
@@ -93,7 +142,12 @@ static bool AddPakFileZipOnly(PakInterface* theInterface, const std::string& the
 			theInterface->mPakRecordMap.erase(aKey);
 		if (aCollectionAdded)
 			theInterface->mPakCollectionList.pop_back();
-#ifdef _WIN32
+#ifdef __EMSCRIPTEN__
+		if (aNewWebPackage)
+		{
+			std::free(gWebPackageBytes); gWebPackageBytes = nullptr; gWebPackageSize = 0;
+		}
+#elif defined(_WIN32)
 		UnmapViewOfFile(aPtr);
 		CloseHandle(aFileMapping);
 		CloseHandle(aFileHandle);
@@ -129,7 +183,7 @@ static bool AddPakFileZipOnly(PakInterface* theInterface, const std::string& the
 	aCollection->mFileHandle = aFileHandle;
 #ifdef _WIN32
 	aCollection->mMappingHandle = aFileMapping;
-#else
+#elif !defined(__EMSCRIPTEN__)
 	aCollection->mMappingSize = aFileSize;
 #endif
 	aCollection->mDataPtr = aPtr;
@@ -175,6 +229,11 @@ static bool AddPakFileZipOnly(PakInterface* theInterface, const std::string& the
 		}
 		aPos += 46 + aNameSize + anExtraSize + aCommentSize;
 	}
+#ifdef __EMSCRIPTEN__
+	// Commit ownership only after validating the complete ZIP index. A rejected
+	// package keeps its MEMFS source, while a valid package needs just one copy.
+	if (aNewWebPackage) WebPackageReleaseSource(theFileName.c_str(), aFileSize);
+#endif
 	return true;
 }
 
@@ -189,8 +248,8 @@ PakInterface::~PakInterface()
 #ifndef _WIN32
 	for (auto& collection : mPakCollectionList)
 	{
-		munmap(collection.mDataPtr, collection.mMappingSize);
-		close(collection.mFileHandle);
+		if (collection.mMappingSize != 0) munmap(collection.mDataPtr, collection.mMappingSize);
+		if (collection.mFileHandle >= 0) close(collection.mFileHandle);
 	}
 	if (*gPakInterfaceP == this) *gPakInterfaceP = nullptr;
 #endif

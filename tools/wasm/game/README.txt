@@ -39,8 +39,15 @@ or export the full file. The coin-video link is on the settings page.
 Generate, deploy, extract lineup and export DAT64 only before the game starts.
 Quit normally to save current progress and return to the Web settings screen.
 
-Browser storage: IndexedDB /persist, FILE_DATA; virtual game directory
-/persist/development-v331/. Different origins/browsers/devices do not share it.
+Browser saves: direct IndexedDB pvz_perf_local_saves_v1, files/meta stores.
+The old IDBFS /persist database is imported once and retained as a backup.
+/persist/development-v331/ remains the synchronous in-memory game path.
+Closed writable save files are committed asynchronously; explicit save waits
+for transaction completion. Browser persistent-storage permission is requested
+on Start and may be denied. Different origins/browsers/devices do not share local saves.
+Toy profile/lineup cloud snapshots migrate to shared space st_v1sneoksfl8xqth1
+when a player opens the updated original Toy. Legacy private cloud data remains.
+Full battle DAT64 cloud sync is not enabled; export important checkpoints.
 Use Export DAT64 to obtain an ordinary file. Mobile WebView downloads and
 Bilibili host permissions require actual-device verification.
 Music decoder licenses: audio/licenses/.

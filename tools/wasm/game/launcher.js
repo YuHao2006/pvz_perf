@@ -9,8 +9,9 @@ const musicVolume=document.getElementById('music-volume'),launchFullscreen=docum
 const saveToolsReady=import('./save-tools.js'),lineupToolsReady=import('./lineups.js');
 const progressToolsReady=import('./progress-storage.js');
 const lineupStorageReady=import('./lineup-storage.js');
+const localStorageReady=import('./local-save-storage.js');
 const startupToolsReady=import('./startup.js');
-let progressStorage,lineupStorage,cloudUploads=0;
+let progressStorage,lineupStorage,localSaveStorage,cloudUploads=0;
 let diagnostics;
 const diagnosticsReady=import('./diagnostics.js').then(({createDiagnostics})=>{
  diagnostics=createDiagnostics({storage:localStorage,defaultEnabled:window.PVZWebConfig?.diagnosticsDefault===true,
@@ -21,6 +22,7 @@ const diagnosticsReady=import('./diagnostics.js').then(({createDiagnostics})=>{
     visibilityState:document.visibilityState,focused:document.hasFocus(),
     wallTimeMs:Date.now(),monotonicMs:performance.now(),
     wasmBytes:Module?.pvzMemory?.buffer.byteLength??null,
+    persistentStorage:localSaveStorage?.persistent??null,
     // Optional Chromium heap metric, not portable and not process RSS.
     jsHeapBytes:performance.memory?.usedJSHeapSize??null,
     loaded:!!Module?._pvz_web_loading_complete?.(),draws:Module?._pvz_web_draws?.(),updates:Module?._pvz_web_updates?.(),scene:Module?._pvz_web_scene?.(),
@@ -55,7 +57,7 @@ document.getElementById('diagnostics-download').onclick=async()=>{
  if(navigator.canShare?.({files:[file]})){try{await navigator.share({files:[file]});return}catch(error){if(error.name==='AbortError')return}}
  const url=URL.createObjectURL(file),link=document.createElement('a');link.href=url;link.download=file.name;document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),30000);
 };
-window.addEventListener('pagehide',event=>diagnostics?.pagehide(JSON.stringify({persisted:event.persisted,trusted:event.isTrusted})));
+window.addEventListener('pagehide',event=>{diagnostics?.pagehide(JSON.stringify({persisted:event.persisted,trusted:event.isTrusted}));localSaveStorage?.flush().catch(()=>{})});
 window.addEventListener('pageshow',event=>{
  diagnostics?.lifecycle('pageshow',JSON.stringify({persisted:event.persisted,trusted:event.isTrusted}));
  if(running&&!document.hidden){Module._pvz_web_focus?.(1);Module.pvzMusic?.resumeIfInterrupted()}
@@ -202,7 +204,7 @@ for(const type of ['pointerdown','pointermove','pointerup','pointercancel'])canv
 canvas.addEventListener('lostpointercapture',e=>cancelPointer(e.pointerId));
 window.addEventListener('blur',event=>{diagnostics?.lifecycle('blur',JSON.stringify({trusted:event.isTrusted}));cancelPointers();Module._pvz_web_focus?.(0)});
 window.addEventListener('focus',event=>{diagnostics?.lifecycle('focus',JSON.stringify({trusted:event.isTrusted}));if(!document.hidden){Module._pvz_web_focus?.(1);if(running)Module.pvzMusic?.resumeIfInterrupted()}});
-document.addEventListener('visibilitychange',event=>{diagnostics?.lifecycle('visibilitychange',JSON.stringify({trusted:event.isTrusted}));if(document.hidden)cancelPointers();else if(running)Module.pvzMusic?.resumeIfInterrupted();Module._pvz_web_focus?.(document.hidden?0:1)});
+document.addEventListener('visibilitychange',event=>{diagnostics?.lifecycle('visibilitychange',JSON.stringify({trusted:event.isTrusted}));if(document.hidden){cancelPointers();localSaveStorage?.flush().catch(()=>{})}else if(running)Module.pvzMusic?.resumeIfInterrupted();Module._pvz_web_focus?.(document.hidden?0:1)});
 window.addEventListener('keydown',()=>{if(running)Module.pvzMusic?.resumeIfInterrupted()});
 for(const type of ['mousedown','mousemove','mouseup','touchstart','touchmove','touchend','touchcancel'])
  canvas.addEventListener(type,e=>{if(running){e.preventDefault();e.stopImmediatePropagation()}},{capture:true,passive:false});
@@ -220,7 +222,7 @@ async function saveSettings(p){
  Module.pvzLandscapeActive=settings.landscapeUI;
  Module.FS.writeFile(saveRoot+'/settings.json',JSON.stringify(settings,null,2)+'\n');
  try{localStorage.setItem(storageKey,JSON.stringify(p))}catch{}
- await new Promise((resolve,reject)=>Module.FS.syncfs(false,error=>error?reject(error):resolve()));
+ await localSaveStorage.sync();
 }
 function clearUserSaves(){
  const fs=Module.FS;
@@ -235,7 +237,7 @@ async function installBaseline(){
  for(const [name,bytes] of Object.entries(files))Module.FS.writeFile(saveRoot+'/'+name,bytes);
  await syncSaves();
 }
-function syncSaves(){return new Promise((resolve,reject)=>Module.FS.syncfs(false,error=>error?reject(error):resolve())).then(()=>{document.getElementById('save-local').hidden=true;document.getElementById('local-save-status').textContent='本地存档已写入浏览器'},error=>{document.getElementById('save-local').hidden=false;document.getElementById('local-save-status').textContent='本地保存失败：'+error.message+'。请重试，不要刷新页面。';throw error})}
+function syncSaves(){return localSaveStorage.sync().then(()=>{document.getElementById('save-local').hidden=true;document.getElementById('local-save-status').textContent='本地存档已写入浏览器'},error=>{document.getElementById('save-local').hidden=false;document.getElementById('local-save-status').textContent='本地保存失败：'+error.message+'。请重试，不要刷新页面。';throw error})}
 // DFU runs in a standalone wasm32 worker before the game starts. Stage every
 // replacement before touching MEMFS, then persist once. It never calls the game.
 async function fixLocalLevelSaves(){
@@ -258,10 +260,13 @@ async function fixLocalLevelSaves(){
  if(replacements.length)await syncSaves();
 }
 async function preparePersistentFiles(){
- await new Promise((resolve,reject)=>Module.FS.syncfs(true,error=>error?reject(error):resolve()));
+ const {LocalSaveStorage}=await localStorageReady;
+ localSaveStorage=new LocalSaveStorage(Module.FS,{legacyFileSystem:Module.IDBFS,report:message=>{document.getElementById('save-local').hidden=false;document.getElementById('local-save-status').textContent=message}});
+ await localSaveStorage.prepare();
  Module.FS.mkdirTree(saveRoot);
  const {ProgressStorage}=await progressToolsReady;
  progressStorage=new ProgressStorage(Module.FS,saveRoot,{cloudEnabled:!webConfig.bypassBilibiliChecks,
+  sharedStorageId:webConfig.sharedStorageId,
   provideToy:async()=>(await import('./rewards.js')).provideBilibiliToy(),
   report:message=>{document.getElementById('cloud-status').textContent=message},
   uploadState:cloudUploadState});
@@ -322,8 +327,8 @@ document.getElementById('restore-progress').onclick=()=>progressAction(async()=>
  const dialog=document.getElementById('cloud-restore-dialog');
  const confirmed=new Promise(resolve=>{dialog.addEventListener('close',()=>resolve(dialog.returnValue==='restore'),{once:true});dialog.returnValue='cancel';dialog.showModal()});
  if(!await confirmed)return;
- if(saved){progressStorage.apply(saved.files);progressStorage.needsChoice=false;await syncSaves();await progressStorage.save()}
- if(lineups){lineupStorage.library.replace(lineups.value);lineupStorage.needsChoice=false;lineupStatus('阵型库已从云端恢复')}
+ if(saved){progressStorage.apply(saved.files,saved.modifiedAt);progressStorage.needsChoice=false;await syncSaves();await progressStorage.save()}
+ if(lineups){lineupStorage.restore(lineups);lineupStatus('阵型库已从云端恢复')}
 });
 document.getElementById('save-local').onclick=()=>progressAction(async()=>{
  await syncSaves();document.getElementById('local-save-status').textContent='本地存档已写入浏览器';
@@ -361,7 +366,7 @@ var Module={canvas,locateFile:name=>'./'+name,pvzRefreshRate:60,pvzMobileInput:m
  pvzOnQuit:()=>returnToSettings().catch(showError),
  print:message=>console.log(message),printErr:message=>console.error(message),onAbort:showError,pvzOnError:showError,
  monitorRunDependencies:left=>{statusText.textContent=left?'正在准备资源与存档…':'加载完成';startupPhase=statusText.textContent},
- preRun:[function(){Module.FS.mkdir('/persist');Module.FS.mount(Module.IDBFS,{autoPersist:false},'/persist');Module.addRunDependency('savedata');preparePersistentFiles().catch(error=>{Module.pvzStorageError=true;showError('存档准备失败，未清除原有存档：'+error.message)}).finally(()=>Module.removeRunDependency('savedata'))}],
+ preRun:[function(){Module.FS.mkdir('/persist');Module.addRunDependency('savedata');preparePersistentFiles().catch(error=>{Module.pvzStorageError=true;showError('存档准备失败，未清除原有存档：'+error.message)}).finally(()=>Module.removeRunDependency('savedata'))}],
  onRuntimeInitialized:()=>{runtimeReady=!Module.pvzStorageError;if(!formEdited)fillPreferences({...readPreferences(),...loadNativeSettings()});document.getElementById('progress').hidden=true;statusText.textContent='准备就绪';start.disabled=!runtimeReady||!Module.pvzMusic;document.getElementById('upload-progress').disabled=document.getElementById('restore-progress').disabled=webConfig.bypassBilibiliChecks||!runtimeReady;scheduleResize()}
 };
 fillPreferences(readPreferences());
@@ -369,6 +374,7 @@ form.addEventListener('input',()=>{formEdited=true;updateControls()});form.addEv
 new ResizeObserver(scheduleResize).observe(stage);
 form.addEventListener('submit',async event=>{
  event.preventDefault();if(!runtimeReady||running||rewardBusy)return;
+ localSaveStorage.requestPersistence().then(persistent=>diagnostics?.record('persistent-storage',JSON.stringify({granted:persistent})));
  const p=preferences();fps.value=p.targetFps;start.disabled=true;
  if(p.unlockAllLevels&&!unlockAuthorized){
   // Unlock WebAudio inside this gesture even if the account check awaits I/O.

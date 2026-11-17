@@ -1,6 +1,6 @@
-// Profile persistence is event-driven, outside update/draw. Battle DAT64 files
-// stay local: reading a battle consumes its MEMFS file, so autoPersist must not
-// erase the durable checkpoint before normal Quit writes its replacement.
+import {sharedStorage,validModifiedAt,nextModifiedAt,assertCloudWrite,newSlot,validSlot,previousSnapshot,discardOldSnapshot} from './shared-storage.js';
+// Profile cloud persistence is event-driven, outside update/draw. Battle DAT64
+// files belong to LocalSaveStorage and must never be replaced by profile sync.
 const profileName=name=>/^(users\.dat|user[1-9]\d*\.dat64)$/.test(name);
 const headKey='pvz_progress_v1',chunkSize=1000,chunkCount=60;
 const key=(slot,index)=>'pvz_progress_'+slot+'_'+index;
@@ -20,17 +20,17 @@ function validate(files){
   if(bytes.length>2*1024*1024||name!=='users.dat'&&new TextDecoder().decode(bytes.subarray(0,8))!=='PVZUSR64')throw Error('进度文件无效：'+name);
  }
  if(!Object.hasOwn(files,'users.dat'))throw Error('进度缺少用户列表');
- return files;
+ return Object.fromEntries(Object.entries(files).sort(([a],[b])=>a.localeCompare(b)));
 }
 function localDatabase(){return new Promise((resolve,reject)=>{
  const open=indexedDB.open('pvz_perf_progress_backup_v1',1);
  open.onupgradeneeded=()=>open.result.createObjectStore('backup');open.onsuccess=()=>resolve(open.result);open.onerror=()=>reject(open.error);
 })}
-async function backup(operation,value){
+async function backup(operation,value,record='profiles'){
  const db=await localDatabase();
  try{return await new Promise((resolve,reject)=>{
   const tx=db.transaction('backup',operation==='get'?'readonly':'readwrite'),store=tx.objectStore('backup');
-  const request=operation==='get'?store.get('profiles'):store.put(value,'profiles');let result;
+  const request=operation==='get'?store.get(record):store.put(value,record);let result;
   request.onsuccess=()=>{result=request.result};tx.oncomplete=()=>resolve(result);tx.onerror=tx.onabort=()=>reject(tx.error||Error('进度备份失败'));
  })}finally{db.close()}
 }
@@ -42,74 +42,93 @@ export async function cloudCall(operation){
 }
 export function deadline(operation){let timer;return Promise.race([operation,new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('云端进度请求超时')),15000)})]).finally(()=>clearTimeout(timer))}
 export class ProgressStorage {
- constructor(fs,root,{cloudEnabled,provideToy,report,uploadState=()=>{}}){Object.assign(this,{fs,root,cloudEnabled,provideToy,report,uploadState});this.head=null;this.saving=null;this.pending=null;this.lastLocal='';this.lastCloud='';this.needsChoice=false}
+ constructor(fs,root,{cloudEnabled,provideToy,report,sharedStorageId='',uploadState=()=>{}}){Object.assign(this,{fs,root,cloudEnabled,provideToy,report,sharedStorageId,uploadState});this.head=null;this.saving=null;this.pending=null;this.lastLocal='';this.lastCloud='';this.needsChoice=false;this.localText='';this.modifiedAt=0;this.applying=false}
  snapshot(){
   const files={};for(const name of this.fs.readdir(this.root).filter(profileName).sort())files[name]=encode(this.fs.readFile(this.root+'/'+name));
   return Object.hasOwn(files,'users.dat')?files:null;
  }
- apply(files){
-  validate(files);
+ apply(files,modifiedAt=0){
+  files=validate(files);this.applying=true;
+  try{
   for(const name of this.fs.readdir(this.root).filter(profileName))if(!Object.hasOwn(files,name))this.fs.unlink(this.root+'/'+name);
-  for(const [name,value] of Object.entries(files))this.fs.writeFile(this.root+'/'+name,decode(value));
+  for(const [name,value] of Object.entries(files)){this.fs.writeFile(this.root+'/'+name,decode(value));if(validModifiedAt(modifiedAt)&&this.fs.utime)this.fs.utime(this.root+'/'+name,modifiedAt,modifiedAt)}
+  this.localText=JSON.stringify(files);this.modifiedAt=modifiedAt;
+  }finally{this.applying=false}
  }
  async remote(){
   if(!this.cloudEnabled)throw Error('云端进度仅在登录后的 B 站 Toy 中可用');
   const toy=await deadline(this.provideToy());
   if(typeof toy?.getCloudStorage!=='function'||typeof toy?.setCloudStorage!=='function')throw Error('当前宿主未开放云存储');
-  return toy;
+  return this.sharedStorageId?sharedStorage(toy,this.sharedStorageId):toy;
  }
  async readCloud(){
   const toy=await this.remote(),rows=await deadline(cloudCall(()=>toy.getCloudStorage([headKey]))),raw=rows[headKey];
   if(!raw){this.head=null;this.lastCloud='';return null}
   const head=JSON.parse(raw);
-  if(head.format!==1||!['a','b'].includes(head.slot)||!Number.isInteger(head.count)||head.count<1||head.count>chunkCount||!/^[a-f0-9]{64}$/.test(head.digest))throw Error('云端进度索引无效');
+  if(!validSlot(head)||!Number.isInteger(head.count)||head.count<1||head.count>chunkCount||!/^[a-f0-9]{64}$/.test(head.digest))throw Error('云端进度索引无效');
   const keys=Array.from({length:head.count},(_,i)=>key(head.slot,i));
   const data=await deadline(cloudCall(()=>toy.getCloudStorage(keys)));
   if(keys.some(k=>typeof data[k]!=='string'||data[k].length>chunkSize))throw Error('云端进度分片缺失');
   const bytes=decode(keys.map(k=>data[k]).join(''));
   if(await digest(bytes)!==head.digest)throw Error('云端进度校验失败，保留本地存档');
-  const files=validate(await unpack(bytes));this.head=head;this.lastCloud=JSON.stringify(files);
-  return {files,savedAt:head.savedAt};
+  const files=validate(await unpack(bytes));
+  if(toy.finishLegacyRead&&!await deadline(cloudCall(()=>toy.finishLegacyRead())))return this.readCloud();
+  this.head=head;this.lastCloud=JSON.stringify(files);
+  return {files,savedAt:head.savedAt,modifiedAt:head.modifiedAt,digest:head.digest,text:this.lastCloud};
  }
  async prepare(){
   let restored=false;
   try{
    const saved=await backup('get'),current=this.snapshot();
    const newest=Math.max(0,...this.fs.readdir(this.root).filter(profileName).map(name=>Number(this.fs.stat(this.root+'/'+name).mtime)));
-   if(saved?.files&&(!current||saved.savedAt>newest&&JSON.stringify(saved.files)!==JSON.stringify(current))){this.apply(saved.files);restored=true;this.report('已从浏览器独立备份恢复用户进度')}
+   if(saved?.files&&(!current||saved.savedAt>newest&&JSON.stringify(saved.files)!==JSON.stringify(current))){this.apply(saved.files,saved.modifiedAt||saved.savedAt);restored=true;this.report('已从浏览器独立备份恢复用户进度')}
+   const local=this.snapshot();if(local){this.localText=JSON.stringify(local);this.modifiedAt=saved&&JSON.stringify(saved.files)===this.localText?(saved.modifiedAt||saved.savedAt):newest}
   }catch(error){this.report('本地进度备份不可用：'+error.message)}
   if(this.cloudEnabled)try{
    const saved=await this.readCloud();
-   if(saved&&!this.snapshot()){this.apply(saved.files);restored=true;this.report('已恢复云端用户进度；关卡状态仍使用本地 DAT64')}
+   if(saved&&(!this.snapshot()||this.localText!==saved.text&&validModifiedAt(this.modifiedAt)&&validModifiedAt(saved.modifiedAt)&&saved.modifiedAt>this.modifiedAt)){
+    const current=this.snapshot();if(current)await backup('put',{files:current,savedAt:this.modifiedAt,modifiedAt:this.modifiedAt},'conflict');
+    this.apply(saved.files,saved.modifiedAt);restored=true;this.report('已恢复较新的云端用户进度；关卡状态仍使用本地 DAT64')
+   }
    else {
-    this.needsChoice=!!saved&&JSON.stringify(this.snapshot())!==this.lastCloud;
-    this.report(this.needsChoice?'本地与云端进度不同，请选择上传本地或恢复云端':saved?'云端进度与本地一致':'尚无云端进度，正常退出后自动备份');
+    this.needsChoice=!!saved&&JSON.stringify(this.snapshot())!==this.lastCloud&&!(validModifiedAt(this.modifiedAt)&&validModifiedAt(saved.modifiedAt)&&this.modifiedAt>saved.modifiedAt);
+    this.report(this.needsChoice?'本地与云端进度不同，请选择上传本地或恢复云端':saved?(JSON.stringify(this.snapshot())===this.lastCloud?'云端进度与本地一致':'本地进度较新，正常退出后自动备份'):'尚无云端进度，正常退出后自动备份');
    }
   }catch(error){this.report('云端暂不可用，继续使用本地存档：'+error.message)}
   return restored;
  }
- async writeCloud(files){
-  const text=JSON.stringify(files);if(text===this.lastCloud)return;
+ async writeCloud(files,modifiedAt=this.modifiedAt,force=false){
+  files=validate(files);const text=JSON.stringify(files);if(text===this.lastCloud)return;
+  const baseline=this.head?.digest,saved=await this.readCloud();
+  try{assertCloudWrite(saved,text,modifiedAt,baseline,force)}catch(error){this.needsChoice=true;throw error}
+  if(text===this.lastCloud)return;
+  const previous=this.head,expectedHead=previous?JSON.stringify(previous):'';
   this.uploadState(true);
   try{
   const bytes=new Uint8Array(await new Response(new Blob([text]).stream().pipeThrough(new CompressionStream('gzip'))).arrayBuffer()),encoded=encode(bytes),count=Math.ceil(encoded.length/chunkSize);
   if(count>chunkCount)throw Error('用户进度超过云端容量，本地存档仍保留；关卡 DAT64 请导出');
-  const toy=await this.remote(),slot=this.head?.slot==='a'?'b':'a',values={};
+  const toy=await this.remote(),slot=newSlot(),values={};
   for(let i=0;i<count;++i)values[key(slot,i)]=encoded.slice(i*chunkSize,(i+1)*chunkSize);
-  const head={format:1,slot,count,digest:await digest(bytes),savedAt:Date.now()};
+  const head={format:2,slot,count,digest:await digest(bytes),modifiedAt,savedAt:Date.now(),previous:previousSnapshot(previous)};
   // Publish data before switching the index. An interrupted upload cannot
   // replace the last complete snapshot with missing or truncated chunks.
+  // Reclaim the older backup before allocating a new version, so normal
+  // uploads need at most current + staged chunks within the KV quota.
+  await deadline(cloudCall(()=>discardOldSnapshot(toy,'pvz_progress_',previous?.previous)));
   await deadline(cloudCall(()=>toy.setCloudStorage(values)));
+  const current=await deadline(cloudCall(()=>toy.getCloudStorage([headKey])));
+  if((current[headKey]||'')!==expectedHead){this.needsChoice=true;throw Error('上传期间云端已更新，保留本地进度，请重新同步')}
   await deadline(cloudCall(()=>toy.setCloudStorage({[headKey]:JSON.stringify(head)})));
   this.head=head;this.lastCloud=text;
+
   }finally{this.uploadState(false)}
  }
- async store(files){
+ async store(files,modifiedAt=this.modifiedAt,force=false){
    const text=JSON.stringify(files);
    let localError;
-   if(text!==this.lastLocal)try{await backup('put',{files,savedAt:Date.now()});this.lastLocal=text}catch(error){localError=error}
+   if(text!==this.lastLocal)try{await backup('put',{files,savedAt:modifiedAt,modifiedAt});this.lastLocal=text}catch(error){localError=error}
    if(this.cloudEnabled&&this.needsChoice)throw Error('本地与云端进度不同，请先选择上传本地或恢复云端');
-   if(this.cloudEnabled){await this.writeCloud(files);this.report('用户进度已备份到当前 B 站账号；关卡 DAT64 仅在本地')}
+   if(this.cloudEnabled){await this.writeCloud(files,modifiedAt,force);this.report('用户进度已备份到当前 B 站账号；关卡 DAT64 仅在本地')}
    else if(localError)throw localError;
  }
  save(force=false){
@@ -117,10 +136,12 @@ export class ProgressStorage {
   const files=this.snapshot();if(!files)return Promise.resolve();
   // At most the active snapshot and newest pending snapshot survive. Do not
   // enqueue every intermediate profile write behind a slow network request.
-  this.pending=files;if(this.saving)return this.saving;
+  const text=JSON.stringify(files);
+  if(text!==this.localText||force){this.modifiedAt=nextModifiedAt(this.modifiedAt);this.localText=text}
+  this.pending={files,modifiedAt:this.modifiedAt,force};if(this.saving)return this.saving;
   this.saving=(async()=>{
    let error;
-   while(this.pending){const next=this.pending;this.pending=null;try{await this.store(next);error=null}catch(e){error=e}}
+   while(this.pending){const next=this.pending;this.pending=null;try{await this.store(next.files,next.modifiedAt,next.force);error=null}catch(e){error=e}}
    if(error)throw error;
   })().finally(()=>{this.saving=null});
   return this.saving;
@@ -129,7 +150,7 @@ export class ProgressStorage {
   const original=this.fs.close,owner=this;let queued=false;
   this.fs.close=function(stream){
    const path=stream.path,written=(stream.flags&3)!==0;const result=original.call(this,stream);
-   if(written&&path?.startsWith(owner.root+'/user')&&profileName(path.slice(owner.root.length+1))&&!queued){
+   if(!owner.applying&&written&&path?.startsWith(owner.root+'/user')&&profileName(path.slice(owner.root.length+1))&&!queued){
     queued=true;queueMicrotask(()=>{queued=false;owner.save().catch(error=>owner.report('进度备份未完成：'+error.message))});
    }
    return result;

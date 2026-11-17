@@ -25,4 +25,14 @@ const local=memory(),c=create(local);c.library.replace({format:1,lineups:[defaul
 const head=JSON.parse(cloud.pvz_lineups_v1),part='pvz_lineups_'+head.slot+'_0',old=cloud[part];cloud[part]='AAAA';await assert.rejects(create().readCloud(),/校验失败/);cloud[part]=old;
 assert.equal(cloud.pvz_progress_v1,'untouched','Lineup synchronization must not touch profile or battle data');
 const disabled=new LineupStorage(memory(),{cloudEnabled:false,remote:async()=>{throw Error('Offline must not call SDK')},report(){}});await disabled.prepare();await disabled.save();
+const {sharedStorage}=await import(new URL(directory.replace(/\/?$/,'/')+'shared-storage.js',import.meta.url));
+const shared={},legacyBefore=structuredClone(cloud),storageId='st_v1sneoksfl8xqth1';
+const sdk={...toy,getSharedStorage:async(id,keys)=>{assert.equal(id,storageId);return Object.fromEntries(keys.filter(k=>Object.hasOwn(shared,k)).map(k=>[k,shared[k]]))},
+ setSharedStorage:async(id,rows)=>{assert.equal(id,storageId);Object.assign(shared,rows)},removeSharedStorage:async(id,keys)=>{keys.forEach(k=>delete shared[k])}};
+const sharedCreate=()=>new LineupStorage(memory(),{cloudEnabled:true,remote:async()=>sharedStorage(sdk,storageId),report(){}});
+const migrating=sharedCreate();await migrating.prepare();assert.deepEqual(migrating.library.snapshot().lineups,[defaultLineups[0]]);
+assert.ok(shared.pvz_lineups_v1);assert.deepEqual(cloud,legacyBefore,'Lineup migration leaves private storage unchanged');
+const stale=sharedCreate();await stale.prepare();migrating.library.replace({format:1,lineups:[defaultLineups[1]]});await migrating.save(true);
+stale.library.replace({format:1,lineups:[defaultLineups[2]]});await assert.rejects(stale.save(),/云端有更新|时间无法确认/);
+assert.deepEqual((await sharedCreate().readCloud()).value.lineups,[defaultLineups[1]]);
 console.log('Toy KV JSON lineup snapshots: upload/restore, deletion, empty library, interrupted commit, conflicts, digest, namespace and offline isolation passed');

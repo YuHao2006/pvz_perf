@@ -20,6 +20,7 @@
 #include "SexyAppFramework/paklib/PakInterface.h"
 #include "SexyAppFramework/sound/DummyMusicInterface.h"
 #include <cstdio>
+#include <cstdlib>
 #include <algorithm>
 #include <array>
 #include <bit>
@@ -160,6 +161,14 @@ void LoadCurrentWithResources(LawnApp& app, HiddenWindow& window, const char* sa
         return;
     }
     Require(LawnLoadGame(&board, save), "Full production v4 save load failed");
+    if (std::getenv("PVZ_SAVE_ALL_REANIMS"))
+    {
+        for (int type = 0; type < static_cast<int>(ReanimationType::NUM_REANIMS); ++type)
+            Require(app.AddReanimation(0, 0, 0, static_cast<ReanimationType>(type),
+                app.mEffectSystem->mReanimationHolder->mBattleTimeNs, ReanimTimeDomain::Battle) != nullptr,
+                "Cannot create the all-definition compatibility probe");
+        std::cout << "Fixture: all reanimation roots included in compatibility save" << std::endl;
+    }
     Require(!board.mPoolIntroVisual, "Loaded board restarted the first-entry Visual water clock");
     Require(app.mGameScene == GameScenes::SCENE_PLAYING, "Save load did not publish the playing scene");
     auto& systems = app.mEffectSystem->mParticleHolder->mParticleSystems;

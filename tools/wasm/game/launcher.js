@@ -222,7 +222,7 @@ async function saveSettings(p){
  Module.pvzLandscapeActive=settings.landscapeUI;
  Module.FS.writeFile(saveRoot+'/settings.json',JSON.stringify(settings,null,2)+'\n');
  try{localStorage.setItem(storageKey,JSON.stringify(p))}catch{}
- await localSaveStorage.sync();
+ await localSaveStorage.flush();
 }
 function clearUserSaves(){
  const fs=Module.FS;
@@ -237,7 +237,7 @@ async function installBaseline(){
  for(const [name,bytes] of Object.entries(files))Module.FS.writeFile(saveRoot+'/'+name,bytes);
  await syncSaves();
 }
-function syncSaves(){return localSaveStorage.sync().then(()=>{document.getElementById('save-local').hidden=true;document.getElementById('local-save-status').textContent='本地存档已写入浏览器'},error=>{document.getElementById('save-local').hidden=false;document.getElementById('local-save-status').textContent='本地保存失败：'+error.message+'。请重试，不要刷新页面。';throw error})}
+function syncSaves(reconcile=false){return (reconcile?localSaveStorage.sync():localSaveStorage.flush()).then(()=>{document.getElementById('save-local').hidden=true;document.getElementById('local-save-status').textContent='本地存档已写入浏览器'},error=>{document.getElementById('save-local').hidden=false;document.getElementById('local-save-status').textContent='本地保存失败：'+error.message+'。请重试，不要刷新页面。';throw error})}
 // DFU runs in a standalone wasm32 worker before the game starts. Stage every
 // replacement before touching MEMFS, then persist once. It never calls the game.
 async function fixLocalLevelSaves(){
@@ -331,7 +331,7 @@ document.getElementById('restore-progress').onclick=()=>progressAction(async()=>
  if(lineups){lineupStorage.restore(lineups);lineupStatus('阵型库已从云端恢复')}
 });
 document.getElementById('save-local').onclick=()=>progressAction(async()=>{
- await syncSaves();document.getElementById('local-save-status').textContent='本地存档已写入浏览器';
+ await syncSaves(true);document.getElementById('local-save-status').textContent='本地存档已写入浏览器';
 });
 let startupPhase='页面初始化',startupMonitor=null;
 function setStartupPhase(phase){startupPhase=phase;startupMonitor?.setPhase(phase);diagnostics?.record('phase',phase)}

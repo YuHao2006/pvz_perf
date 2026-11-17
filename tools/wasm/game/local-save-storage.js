@@ -73,8 +73,9 @@ export class LocalSaveStorage {
   await this.flush();
  }
  watch(){
-  const fs=this.fs,owner=this,close=fs.close,unlink=fs.unlink,rename=fs.rename;
+  const fs=this.fs,owner=this,close=fs.close,unlink=fs.unlink,rename=fs.rename,utime=fs.utime;
   fs.close=function(stream){const path=stream.path,written=(stream.flags&3)!==0;const result=close.call(this,stream);if(written)owner.capture(path);return result};
+  fs.utime=function(path,atime,mtime){const result=utime.call(this,path,atime,mtime);const row=owner.pending.get(path);if(row)row.mtime=Number(this.stat(path).mtime);return result};
   fs.unlink=function(path){const result=unlink.call(this,path);owner.erase(path);return result};
   fs.rename=function(from,to){const result=rename.call(this,from,to);if(owner.valid(from)||owner.valid(to))owner.sync().catch(error=>owner.report('本地改名保存失败：'+error.message));return result};
  }

@@ -20,9 +20,10 @@ function fileSystem(legacy={}){
 }
 const fs=fileSystem({[path]:bytes('PVZDAT64 old checkpoint'),[profile]:bytes('users')}),storage=new LocalSaveStorage(fs);
 await storage.prepare();assert.equal(fs.imports,1);assert.equal(text(fs.readFile(path)),'PVZDAT64 old checkpoint');
-fs.writeFile(path,bytes('PVZDAT64 current'));await storage.flush();
+fs.writeFile(path,bytes('PVZDAT64 current'));fs.utime(path,12345,12345);await storage.flush();
 const db=await storage.database;
 const row=await new Promise((resolve,reject)=>{const r=db.transaction('files').objectStore('files').get(path);r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error)});
+assert.equal(row.mtime,12345,'Cloud restore must preserve its timestamp without a whole-directory rescan');
 assert.equal(text(row.bytes),'PVZDAT64 current','Close must persist a checkpoint without a whole-directory sync');
 const fs2=fileSystem({[path]:bytes('obsolete legacy checkpoint')}),storage2=new LocalSaveStorage(fs2);
 await storage2.prepare();assert.equal(fs2.imports,0);assert.equal(fs2.mounts,0,'Steady-state startup must not mount IDBFS');

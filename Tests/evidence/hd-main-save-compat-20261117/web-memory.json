@@ -1,0 +1,86 @@
+{
+  "before": {
+    "persist": [
+      {
+        "path": "/persist/development-v331/users.dat",
+        "logical": 24,
+        "capacity": 24,
+        "buffer": 24
+      },
+      {
+        "path": "/persist/development-v331/user1.dat64",
+        "logical": 894,
+        "capacity": 894,
+        "buffer": 894
+      },
+      {
+        "path": "/persist/development-v331/game1_58.dat64",
+        "logical": 673781,
+        "capacity": 673781,
+        "buffer": 673781
+      }
+    ],
+    "persistLogical": 674699,
+    "persistCapacity": 674699,
+    "pak": {
+      "logical": 39209797,
+      "capacity": 39209797,
+      "buffer": 39209797,
+      "sharesWasm": false
+    },
+    "wasmLinearBytes": 134217728,
+    "mappings": [],
+    "pakFileDescriptors": 0
+  },
+  "loaded": {
+    "persist": [
+      {
+        "path": "/persist/development-v331/users.dat",
+        "logical": 24,
+        "capacity": 24,
+        "buffer": 24
+      },
+      {
+        "path": "/persist/development-v331/user1.dat64",
+        "logical": 894,
+        "capacity": 894,
+        "buffer": 894
+      },
+      {
+        "path": "/persist/development-v331/game1_58.dat64",
+        "logical": 673781,
+        "capacity": 673781,
+        "buffer": 673781
+      },
+      {
+        "path": "/persist/development-v331/settings.json",
+        "logical": 212,
+        "capacity": 212,
+        "buffer": 212
+      },
+      {
+        "path": "/persist/development-v331/.instance.lock",
+        "logical": 0,
+        "capacity": 0,
+        "buffer": 0
+      }
+    ],
+    "persistLogical": 674911,
+    "persistCapacity": 674911,
+    "pak": {
+      "logical": 39209797,
+      "capacity": 39209797,
+      "buffer": 39209797,
+      "sharesWasm": false
+    },
+    "wasmLinearBytes": 193331200,
+    "mappings": [
+      {
+        "length": 39209797,
+        "ptr": 31850496,
+        "allocated": true
+      }
+    ],
+    "pakFileDescriptors": 1
+  }
+}

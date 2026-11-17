@@ -76,6 +76,38 @@ RECT ClientRect(HWND window) {
     if(!GetClientRect(window,&rect)) WindowFailure("GetClientRect");
     return rect;
 }
+// The prepared pipeline can be taller than the desktop: Anime4K x2 turns the
+// 600-pixel logical height into 1200, and on a 1080p panel that pushed the
+// title bar above the visible area. Keep the prepared height whenever it fits
+// and otherwise fall back to the largest logical step (600/1200/...) that does,
+// so the window stays movable. Only the window client is affected; the prepared
+// pipeline output is untouched.
+int FitClientHeightToWorkArea(const SexyAppBase& app, int height) {
+    if (height <= 600)
+        return height;
+
+    RECT work{};
+    if (!SystemParametersInfo(SPI_GETWORKAREA, 0, &work, 0))
+        return height;
+    const int aWorkHeight = work.bottom - work.top;
+    if (aWorkHeight <= 0)
+        return height;
+
+    const DWORD style = app.mHWnd ? DWORD(GetWindowLongPtrW(app.mHWnd, GWL_STYLE))
+        : (WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_THICKFRAME);
+    const DWORD exStyle = app.mHWnd ? DWORD(GetWindowLongPtrW(app.mHWnd, GWL_EXSTYLE)) : 0;
+
+    for (int aHeight = height; aHeight > 600; aHeight -= 600)
+    {
+        RECT probe{ 0, 0, int((800LL * aHeight + 300) / 600), aHeight };
+        if (!NativeWindowsWindowApi::AdjustClientRect(probe, style, exStyle, app.mHWnd))
+            return height;
+        if (probe.bottom - probe.top <= aWorkHeight)
+            return aHeight;
+    }
+    return 600;
+}
+
 WindowTrackLimits WindowClientLimits(const SexyAppBase& app) {
     int height=600;
     if(app.mModernScalePrepared && app.IsScalePresentActiveForMode(true) &&
@@ -84,6 +116,7 @@ WindowTrackLimits WindowClientLimits(const SexyAppBase& app) {
         const auto output=app.mDDInterface->mRenderInterface->mRenderer->ScaleOutput(false);
         if(output.height>0) height=int(output.height);
     }
+    height=FitClientHeightToWorkArea(app,height);
     auto limits=WindowTrackLimits::FromScaleOutputHeight(app.mLandscapeUI?std::max(600,height):height);
     if(app.mLandscapeUI)limits.minimumWidth=int((890LL*limits.height+300)/600);
     return limits;

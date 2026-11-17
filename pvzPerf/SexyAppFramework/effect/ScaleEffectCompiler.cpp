@@ -44,6 +44,65 @@ namespace Sexy
 namespace
 {
 
+// DXC is handed the generated pass source in memory, but a non-ASCII install
+// path makes it compile the on-disk effect instead of that buffer: the injected
+// preamble disappears and only the raw Magpie source is built (measured on a
+// Chinese directory: missing builtins, read-only Texture2D writes). ASCII paths
+// are unaffected, so stage the same source under an ASCII temporary name only
+// when the resolved path is not plain ASCII.
+#ifdef _WIN32
+bool NeedsAsciiSourceStage(const std::wstring& thePath)
+{
+	for (const wchar_t aChar : thePath)
+		if (aChar > 0x7F)
+			return true;
+	return false;
+}
+
+std::wstring AsciiStageDirectory()
+{
+	wchar_t aTemp[MAX_PATH] = {};
+	if (::GetTempPathW(MAX_PATH, aTemp) != 0 && !NeedsAsciiSourceStage(aTemp))
+		return aTemp;
+
+	wchar_t aSystemDrive[MAX_PATH] = {};
+	if (::GetEnvironmentVariableW(L"SystemDrive", aSystemDrive, MAX_PATH) != 0)
+		return std::wstring(aSystemDrive) + L"\\";
+	return std::wstring();
+}
+
+// Writes the source to an ASCII scratch file and returns its wide path, empty
+// on failure (callers then keep the original path).
+std::wstring StageSourceOnAsciiPath(const std::string& theSource, int theIndex)
+{
+	const std::wstring aDirectory = AsciiStageDirectory();
+	if (aDirectory.empty())
+		return std::wstring();
+
+	const std::wstring aPath = aDirectory + L"pvz_perf_effect_" +
+		std::to_wstring(::GetCurrentProcessId()) + L"_" + std::to_wstring(theIndex) + L".hlsl";
+	HANDLE aFile = ::CreateFileW(aPath.c_str(), GENERIC_WRITE, 0, nullptr, CREATE_ALWAYS,
+		FILE_ATTRIBUTE_NORMAL, nullptr);
+	if (aFile == INVALID_HANDLE_VALUE)
+		return std::wstring();
+
+	DWORD aWritten = 0;
+	const BOOL aOk = ::WriteFile(aFile, theSource.data(),
+		static_cast<DWORD>(theSource.size()), &aWritten, nullptr);
+	::CloseHandle(aFile);
+	if (!aOk || aWritten != theSource.size())
+		return std::wstring();
+	return aPath;
+}
+#else
+// Only the Win32 backends hand wide paths to DXC; other hosts keep the
+// original path untouched.
+bool NeedsAsciiSourceStage(const std::wstring&)
+{
+	return false;
+}
+#endif
+
 std::string Trim(const std::string& theText)
 {
 	size_t aStart = theText.find_first_not_of(" \t\r\n");
@@ -225,7 +284,15 @@ struct ScaleEffectCompiler::Impl {
     bool Compile(const std::string& source, const std::string& sourcePath,
                  std::vector<uint32_t>& spirv, std::string& error) {
         const auto path = std::filesystem::absolute(std::filesystem::path(std::u8string(sourcePath.begin(), sourcePath.end())));
-        const auto name = path.wstring(), directory = path.parent_path().wstring();
+        const auto declaredName = path.wstring(), declaredDirectory = path.parent_path().wstring();
+        std::wstring stagedPath;
+        if (NeedsAsciiSourceStage(declaredName)) {
+            static int sStageIndex = 0;
+            stagedPath = StageSourceOnAsciiPath(source, sStageIndex++);
+        }
+        const std::wstring& name = stagedPath.empty() ? declaredName : stagedPath;
+        const std::wstring directory = stagedPath.empty() ? declaredDirectory
+            : std::filesystem::path(stagedPath).parent_path().wstring();
         const wchar_t* args[] = {name.c_str(), L"-E", L"__M", L"-T", L"cs_6_0",
             L"-spirv", L"-fspv-target-env=vulkan1.2", L"-HV", L"2018",
             L"-O3", L"-Ges", L"-I", directory.c_str()};

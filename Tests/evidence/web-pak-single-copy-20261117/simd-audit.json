@@ -1,0 +1,11 @@
+{
+  "module": "wasm64 WebGL main game",
+  "sha256": "21118ccebcc3b1d0021433c02daf6fa3c74e6c87a1f32fdc71f1854d4f860cb0",
+  "simdInstructions": 0,
+  "v128Type": false,
+  "commonCompileOptions": [
+    "-Oz",
+    "-flto"
+  ],
+  "simd128Enabled": false
+}

@@ -1,0 +1,115 @@
+{
+  "format": "pvz-exact-atlas-v2",
+  "key": "0d9c77b67e1924786a851561ac4be8a3275c7afc6d096d5e6927a3e5e2334256",
+  "layout": {
+    "width": 2176,
+    "height": 1149,
+    "regions": [
+      [
+        2,
+        2,
+        1400,
+        600
+      ],
+      [
+        1762,
+        1108,
+        89,
+        26
+      ],
+      [
+        1855,
+        1108,
+        89,
+        26
+      ],
+      [
+        1406,
+        547,
+        34,
+        43
+      ],
+      [
+        2,
+        606,
+        756,
+        541
+      ],
+      [
+        1762,
+        1048,
+        164,
+        26
+      ],
+      [
+        1762,
+        1078,
+        164,
+        26
+      ],
+      [
+        762,
+        606,
+        756,
+        541
+      ],
+      [
+        1850,
+        547,
+        324,
+        484
+      ],
+      [
+        1406,
+        2,
+        756,
+        541
+      ],
+      [
+        1522,
+        1048,
+        76,
+        76
+      ],
+      [
+        1522,
+        547,
+        324,
+        497
+      ],
+      [
+        1602,
+        1048,
+        76,
+        76
+      ],
+      [
+        1682,
+        1048,
+        76,
+        76
+      ]
+    ],
+    "shelf_area": 2696480,
+    "search_attempts": 1319,
+    "search_microseconds": 1737,
+    "method": "native-maxrects",
+    "exact": {
+      "status": "OPTIMAL",
+      "best_bound": 2500224,
+      "optimal": true,
+      "gap": 0.0,
+      "elapsed_seconds": 12.9424101,
+      "cache_hit": false,
+      "cache_key": "0d9c77b67e1924786a851561ac4be8a3275c7afc6d096d5e6927a3e5e2334256",
+      "solver": "ortools-cp-sat",
+      "solver_version": "9.15.6755",
+      "model_version": "integer-nonrotating-padded-global-area-v2",
+      "search_complete": true,
+      "solve_budget_seconds": 60.0,
+      "proof_scope": "minimum integer atlas area; fixed orientation; configured padding and max_side",
+      "objective_area": 2500224
+    }
+  },
+  "layout_sha256": "aadae62ea86be9f345228899442be24ced0dab8db1fb73283928e097bfff506d"
+}

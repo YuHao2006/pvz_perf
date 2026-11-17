@@ -1,0 +1,93 @@
+{
+  "date": "2026-11-17",
+  "scope": "main, after v4.0.4; not yet a new release",
+  "backends": {
+    "vulkan": {
+      "build": "Release",
+      "host": "Windows 11 desktop; not a physical Windows 7 test",
+      "canonicalPngImages": 45,
+      "canonicalPngMaxChannelError": 0,
+      "legacyJpegliDifferenceMax": 34,
+      "legacyJpegliDifferenceIsNotClaimedPixelIdentical": true,
+      "zombatarCases": [
+        {
+          "case": 0,
+          "maxChannelError": 1
+        },
+        {
+          "case": 1,
+          "maxChannelError": 1
+        },
+        {
+          "case": 2,
+          "maxChannelError": 1
+        },
+        {
+          "case": 3,
+          "maxChannelError": 1
+        },
+        {
+          "case": 4,
+          "maxChannelError": 1
+        },
+        {
+          "case": 5,
+          "maxChannelError": 0
+        },
+        {
+          "case": 6,
+          "maxChannelError": 0
+        }
+      ],
+      "almanacClockCases": 16,
+      "aquaticDemandChecks": "passed",
+      "poolGpuRegressionCases": 7,
+      "standardDialogCases": 8
+    },
+    "opengl": {
+      "build": "Release",
+      "host": "Windows 11 desktop; not a physical Windows 7 test",
+      "canonicalPngImages": 45,
+      "canonicalPngMaxChannelError": 0,
+      "legacyJpegliDifferenceMax": 34,
+      "legacyJpegliDifferenceIsNotClaimedPixelIdentical": true,
+      "zombatarCases": [
+        {
+          "case": 0,
+          "maxChannelError": 1
+        },
+        {
+          "case": 1,
+          "maxChannelError": 1
+        },
+        {
+          "case": 2,
+          "maxChannelError": 1
+        },
+        {
+          "case": 3,
+          "maxChannelError": 1
+        },
+        {
+          "case": 4,
+          "maxChannelError": 1
+        },
+        {
+          "case": 5,
+          "maxChannelError": 0
+        },
+        {
+          "case": 6,
+          "maxChannelError": 0
+        }
+      ],
+      "almanacClockCases": 16,
+      "aquaticDemandChecks": "passed",
+      "poolGpuRegressionCases": 14,
+      "standardDialogCases": 8
+    }
+  },
+  "saveFormatChanged": false,
+  "newTexturesOrImageSlots": 0,
+  "artworkFilesCommitted": false
+}

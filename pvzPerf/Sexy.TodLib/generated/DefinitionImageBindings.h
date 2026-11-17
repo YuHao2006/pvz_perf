@@ -3057,7 +3057,7 @@ inline constexpr std::array<Extent, 193> Extents{{
     {"compiled/atlases/sunflower_family.atlas.png", 172u, 254u},
     {"compiled/atlases/vase_shards.atlas.png", 108u, 324u},
     {"compiled/atlases/zamboni_family.atlas.png", 1144u, 233u},
-    {"compiled/atlases/zombatar.atlas.png", 927u, 2753u},
+    {"compiled/atlases/zombatar.atlas.png", 1559u, 1658u},
     {"compiled/atlases/zombie_arms.atlas.png", 129u, 143u},
     {"compiled/atlases/zombie_heads.atlas.png", 302u, 189u},
     {"compiled/atlases/zombie_mustaches.atlas.png", 54u, 78u},

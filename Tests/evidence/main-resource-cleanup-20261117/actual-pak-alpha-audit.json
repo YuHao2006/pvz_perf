@@ -1,0 +1,50 @@
+{
+  "activeImageRecipes": 205,
+  "externalAlphaRecipes": 0,
+  "automaticAlphaLookupRecipes": 0,
+  "unchangedOpaqueJpegEntries": 14,
+  "retiredTransparencyMasksPacked": 0,
+  "standaloneImagesComparedExactly": 204,
+  "nonStandaloneResources": [
+    "images/blank"
+  ],
+  "unchangedAtlasImages": 2148,
+  "intentionalAtlasChanges": [
+    "images/zombatar_display_window.png",
+    "images/zombatar_widget_inner_bg.png"
+  ],
+  "oldPakBytes": 39477052,
+  "newPakBytes": 40936757,
+  "oldAtlasBytes": {
+    "rgba_bytes": 112977528,
+    "source_occurrence_rgba_bytes": 103912240,
+    "unique_source_rgba_bytes": 101451864,
+    "duplicate_source_rgba_bytes": 2460376,
+    "source_pixels_also_retained_globally_rgba_bytes": 2718816,
+    "padding_and_unused_rgba_bytes": 9065288,
+    "extrusion_rgba_bytes": 5468928,
+    "unused_gap_rgba_bytes": 3596360,
+    "padded_region_occupancy": 0.9681674748627886,
+    "definition_atlas_count": 199,
+    "packing_shelf_rgba_bytes": 126982416,
+    "packing_saved_rgba_bytes": 14004888,
+    "packing_search_attempts": 164170,
+    "packing_search_microseconds": 24834561
+  },
+  "newAtlasBytes": {
+    "rgba_bytes": 113108692,
+    "source_occurrence_rgba_bytes": 104051600,
+    "unique_source_rgba_bytes": 101591224,
+    "duplicate_source_rgba_bytes": 2460376,
+    "source_pixels_also_retained_globally_rgba_bytes": 2718816,
+    "padding_and_unused_rgba_bytes": 9057092,
+    "extrusion_rgba_bytes": 5470592,
+    "unused_gap_rgba_bytes": 3586500,
+    "padded_region_occupancy": 0.9682915615362258,
+    "definition_atlas_count": 199,
+    "packing_shelf_rgba_bytes": 127258992,
+    "packing_saved_rgba_bytes": 14150300,
+    "packing_search_attempts": 164103,
+    "packing_search_microseconds": 20585328
+  }
+}

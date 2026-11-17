@@ -20,6 +20,8 @@
 
 QuickPlay 源 PNG 仅在本地保存，界面代码、运行时绑定及包内条目已退役。AI 提示词、蒙版、原始返回文件和未引用图片不因保留在本地就进入 PAK。
 
+本地透明度固化已将外置透明蒙版合入对应 PNG；不透明 JPG 保留原编码。大头贴固定 UI 进一步烘焙及原始素材归档见[实施记录](main-resource-baking-backlog.md)。染色、特效和字体遮罩不在退役范围。
+
 ## 定义与图集
 
 reanim、projectile 行为使用生成的静态 C++；particle 的完整 CPU 定义从 `compiled/particle-runtime/` 的 PTC1 读取。原 reanim、PAV6、PRJ1 等编译产物中，仍被生成器使用的部分属于离线中间格式，不能统称为游戏启动时需要加载的行为文件。

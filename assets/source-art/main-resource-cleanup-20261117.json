@@ -1,0 +1,695 @@
+{
+  "format": "pvz-main-rgba-migration-v1",
+  "date": "2026-11-17",
+  "policy": "Preserve original JPEG bytes for opaque unmasked images; bake only actual transparency into PNG; retire all external transparency masks.",
+  "activeRgbaSources": [
+    {
+      "symbol": "IMAGE_PVZ_LOGO",
+      "file": "images/PvZ_Logo_rgba_788fa7eb.png",
+      "inputs": [
+        "images/pvz_logo.jpg",
+        "images/pvz_logo_.png"
+      ],
+      "rgbaSha256": "788fa7ebf9e736a15e46b03b973670850481d2eac78c680c2ef29a22adba9673",
+      "size": [
+        700,
+        116
+      ]
+    },
+    {
+      "symbol": "IMAGE_OPTIONS_MENUBACK",
+      "file": "images/options_menuback_rgba_77e29945.png",
+      "inputs": [
+        "images/options_menuback.jpg",
+        "images/options_menuback_.png"
+      ],
+      "rgbaSha256": "77e299458301fdbe15385e44e43ccf87b6b620a8d266a40424c39f97e03f5c70",
+      "size": [
+        423,
+        498
+      ]
+    },
+    {
+      "symbol": "IMAGE_TOMBSTONES",
+      "file": "images/Tombstones_rgba_7f5594ed.png",
+      "inputs": [
+        "images/tombstones.jpg",
+        "images/tombstones_.png"
+      ],
+      "rgbaSha256": "7f5594ed37df811c1e9d1eff7b2ed9b9dcf6861d5c0d30ce6f53738b1d1fcf48",
+      "size": [
+        430,
+        364
+      ]
+    },
+    {
+      "symbol": "IMAGE_ZEN_GOLDTOOLRETICLE",
+      "file": "images/Zen_GoldToolReticle_rgba_0b4406d7.png",
+      "inputs": [
+        "images/zen_goldtoolreticle.png",
+        "images/zen_goldtoolreticle_.png"
+      ],
+      "rgbaSha256": "0b4406d78d540ea7b726498d2fee3be348c7c83d674fd9c8694afdb9051e15e2",
+      "size": [
+        193,
+        196
+      ]
+    },
+    {
+      "symbol": "IMAGE_POOL_BASE",
+      "file": "images/pool_base_rgba_101db2c8.png",
+      "inputs": [
+        "images/pool_base.jpg",
+        "images/pool_base_.png"
+      ],
+      "rgbaSha256": "101db2c8cfd4e8036f883bd6e16ff4cec39bd0515b80b7d00ee42a0c2876291d",
+      "size": [
+        721,
+        162
+      ]
+    },
+    {
+      "symbol": "IMAGE_POOL_BASE_NIGHT",
+      "file": "images/pool_base_night_rgba_e3adfad0.png",
+      "inputs": [
+        "images/pool_base_.png",
+        "images/pool_base_night.jpg"
+      ],
+      "rgbaSha256": "e3adfad008df988a6c99a5cd6f6b56a7c14b3ff2cdfff06ed25b1d38c6ddd3b0",
+      "size": [
+        721,
+        162
+      ]
+    },
+    {
+      "symbol": "IMAGE_POOL_SHADING",
+      "file": "images/pool_shading_rgba_59fb0172.png",
+      "inputs": [
+        "images/pool_shading.jpg",
+        "images/pool_shading_.jpg"
+      ],
+      "rgbaSha256": "59fb0172708ce9ad6b4ae05eee25bd635b954e30162defc2a3b664bd50745609",
+      "size": [
+        721,
+        162
+      ]
+    },
+    {
+      "symbol": "IMAGE_POOL_SHADING_NIGHT",
+      "file": "images/pool_shading_night_rgba_01e08514.png",
+      "inputs": [
+        "images/pool_shading_.jpg",
+        "images/pool_shading_night.jpg"
+      ],
+      "rgbaSha256": "01e085149b81fdb09f9634020be75602773bccb66197fb701867aeaa881b539e",
+      "size": [
+        721,
+        162
+      ]
+    },
+    {
+      "symbol": "IMAGE_SOD1ROW",
+      "file": "images/sod1row_rgba_d5174c72.png",
+      "inputs": [
+        "images/sod1row.jpg",
+        "images/sod1row_.png"
+      ],
+      "rgbaSha256": "d5174c72b92c7404a40e6c82a7a9ba53d105009dca8ccd04e1adfadb6b2f3e22",
+      "size": [
+        771,
+        127
+      ]
+    },
+    {
+      "symbol": "IMAGE_SOD3ROW",
+      "file": "images/sod3row_rgba_64af0e0e.png",
+      "inputs": [
+        "images/sod3row.jpg",
+        "images/sod3row_.png"
+      ],
+      "rgbaSha256": "64af0e0ee5160eed880315d0c3fffa529e1b405dc4639b834e866290daa5bf77",
+      "size": [
+        771,
+        355
+      ]
+    },
+    {
+      "symbol": "IMAGE_FOG",
+      "file": "images/fog_rgba_19a8520a.png",
+      "inputs": [
+        "images/fog.jpg",
+        "images/fog_.jpg"
+      ],
+      "rgbaSha256": "19a8520adce6bba7ba2e1ae315ff9456b6dbabdd192be2af35bc4fa53f818c07",
+      "size": [
+        1680,
+        190
+      ]
+    },
+    {
+      "symbol": "IMAGE_STORE_CAR",
+      "file": "images/Store_Car_rgba_3a953647.png",
+      "inputs": [
+        "images/store_car.png",
+        "images/store_car_.png"
+      ],
+      "rgbaSha256": "3a9536477e2d7daf3104462f641508b00fcc0c4d39655f40212724b981b67f7a",
+      "size": [
+        904,
+        462
+      ]
+    },
+    {
+      "symbol": "IMAGE_STORE_CARCLOSED",
+      "file": "images/Store_CarClosed_rgba_4e14a0c1.png",
+      "inputs": [
+        "images/store_carclosed.png",
+        "images/store_carclosed_.png"
+      ],
+      "rgbaSha256": "4e14a0c196dfb1c35e2cd1924acae15b32897a4fe81a9b15c7af3d3e2f71e76c",
+      "size": [
+        904,
+        462
+      ]
+    },
+    {
+      "symbol": "IMAGE_ZOMBIE_NOTE",
+      "file": "images/ZombieNote_rgba_b28b55d8.png",
+      "inputs": [
+        "images/zombienote.jpg",
+        "images/zombienote_.png"
+      ],
+      "rgbaSha256": "b28b55d896faf65774b393f1cf1cec4f6c1b564c373c19722c04f58fe1356d21",
+      "size": [
+        654,
+        427
+      ]
+    },
+    {
+      "symbol": "IMAGE_ZOMBIE_NOTE1",
+      "file": "images/ZombieNoteBlack1_rgba_e271aa93.png",
+      "inputs": [
+        "images/zombienote1.png",
+        "images/zombienoteblack1.png"
+      ],
+      "rgbaSha256": "e271aa935c0c2dfd0eefa264c9b18302e7511f44d3a9d8e6cf1f97ce5e68834c",
+      "size": [
+        537,
+        344
+      ]
+    },
+    {
+      "symbol": "IMAGE_ZOMBIE_NOTE2",
+      "file": "images/ZombieNoteBlack2_rgba_55e4573a.png",
+      "inputs": [
+        "images/zombienote2.png",
+        "images/zombienoteblack2.png"
+      ],
+      "rgbaSha256": "55e4573aeec9b5bd81a99e104f9996ec54e28f057b3b43351968460628ad37d1",
+      "size": [
+        550,
+        343
+      ]
+    },
+    {
+      "symbol": "IMAGE_ZOMBIE_NOTE3",
+      "file": "images/ZombieNoteBlack3_rgba_fa455718.png",
+      "inputs": [
+        "images/zombienote3.png",
+        "images/zombienoteblack3.png"
+      ],
+      "rgbaSha256": "fa4557183ef9445e809e7e982a2d7535aa0726d2241ef88f04bfa700e16b7166",
+      "size": [
+        574,
+        361
+      ]
+    },
+    {
+      "symbol": "IMAGE_ZOMBIE_NOTE4",
+      "file": "images/ZombieNoteBlack4_rgba_43e89c82.png",
+      "inputs": [
+        "images/zombienote4.png",
+        "images/zombienoteblack4.png"
+      ],
+      "rgbaSha256": "43e89c82fbb0284e4aaa2d3267089d481386a3a7da82286fe2ea9c675090fb3e",
+      "size": [
+        575,
+        356
+      ]
+    },
+    {
+      "symbol": "IMAGE_ZOMBIE_FINAL_NOTE",
+      "file": "images/ZombieFinalNoteBlack_rgba_096677a3.png",
+      "inputs": [
+        "images/zombiefinalnote.png",
+        "images/zombiefinalnoteblack.png"
+      ],
+      "rgbaSha256": "096677a38d823ef43a27a0b98981deb6470fad4980acace6ea2514e05fccb411",
+      "size": [
+        546,
+        321
+      ]
+    },
+    {
+      "symbol": "IMAGE_ZOMBIE_NOTE_HELP",
+      "file": "images/ZombieNoteHelpBlack_rgba_3b79f57a.png",
+      "inputs": [
+        "images/zombienotehelp.png",
+        "images/zombienotehelpblack.png"
+      ],
+      "rgbaSha256": "3b79f57aa41895f865e48947903f0ce2d23ae4804148bb9ec7b7d96fd530a9bb",
+      "size": [
+        529,
+        323
+      ]
+    },
+    {
+      "symbol": "IMAGE_CREDITS_ZOMBIENOTE",
+      "file": "images/Credits_ZombieNoteBlack_rgba_ffd4a102.png",
+      "inputs": [
+        "images/credits_zombienote.png",
+        "images/credits_zombienoteblack.png"
+      ],
+      "rgbaSha256": "ffd4a102b2a3f019ae0635710787aec2c3fab643e88ed0761c9023930c9b91b1",
+      "size": [
+        537,
+        359
+      ]
+    },
+    {
+      "symbol": "inferred:images/credits_bigbrain",
+      "file": "images/credits_bigbrain.png",
+      "inputs": [
+        "images/credits_bigbrain.jpg",
+        "images/credits_bigbrain_.png"
+      ],
+      "rgbaSha256": "77518248fdfbe52e3113194bdfd3696eb525c129a8eb7b27b252d62f8bf35148",
+      "size": [
+        340,
+        315
+      ]
+    },
+    {
+      "symbol": "inferred:images/fog",
+      "file": "images/fog.png",
+      "inputs": [
+        "images/fog.jpg",
+        "images/fog_.jpg"
+      ],
+      "rgbaSha256": "19a8520adce6bba7ba2e1ae315ff9456b6dbabdd192be2af35bc4fa53f818c07",
+      "size": [
+        1680,
+        190
+      ]
+    },
+    {
+      "symbol": "inferred:images/options_menuback",
+      "file": "images/options_menuback.png",
+      "inputs": [
+        "images/options_menuback.jpg",
+        "images/options_menuback_.png"
+      ],
+      "rgbaSha256": "77e299458301fdbe15385e44e43ccf87b6b620a8d266a40424c39f97e03f5c70",
+      "size": [
+        423,
+        498
+      ]
+    },
+    {
+      "symbol": "inferred:images/pool_base",
+      "file": "images/pool_base.png",
+      "inputs": [
+        "images/pool_base.jpg",
+        "images/pool_base_.png"
+      ],
+      "rgbaSha256": "101db2c8cfd4e8036f883bd6e16ff4cec39bd0515b80b7d00ee42a0c2876291d",
+      "size": [
+        721,
+        162
+      ]
+    },
+    {
+      "symbol": "inferred:images/pool_shading",
+      "file": "images/pool_shading.png",
+      "inputs": [
+        "images/pool_shading.jpg",
+        "images/pool_shading_.jpg"
+      ],
+      "rgbaSha256": "59fb0172708ce9ad6b4ae05eee25bd635b954e30162defc2a3b664bd50745609",
+      "size": [
+        721,
+        162
+      ]
+    },
+    {
+      "symbol": "inferred:images/pvz_logo",
+      "file": "images/pvz_logo.png",
+      "inputs": [
+        "images/pvz_logo.jpg",
+        "images/pvz_logo_.png"
+      ],
+      "rgbaSha256": "788fa7ebf9e736a15e46b03b973670850481d2eac78c680c2ef29a22adba9673",
+      "size": [
+        700,
+        116
+      ]
+    },
+    {
+      "symbol": "inferred:images/sod1row",
+      "file": "images/sod1row.png",
+      "inputs": [
+        "images/sod1row.jpg",
+        "images/sod1row_.png"
+      ],
+      "rgbaSha256": "d5174c72b92c7404a40e6c82a7a9ba53d105009dca8ccd04e1adfadb6b2f3e22",
+      "size": [
+        771,
+        127
+      ]
+    },
+    {
+      "symbol": "inferred:images/sod3row",
+      "file": "images/sod3row.png",
+      "inputs": [
+        "images/sod3row.jpg",
+        "images/sod3row_.png"
+      ],
+      "rgbaSha256": "64af0e0ee5160eed880315d0c3fffa529e1b405dc4639b834e866290daa5bf77",
+      "size": [
+        771,
+        355
+      ]
+    },
+    {
+      "symbol": "inferred:images/store_car",
+      "file": "images/store_car.png",
+      "inputs": [
+        "images/store_car.png",
+        "images/store_car_.png"
+      ],
+      "rgbaSha256": "3a9536477e2d7daf3104462f641508b00fcc0c4d39655f40212724b981b67f7a",
+      "size": [
+        904,
+        462
+      ]
+    },
+    {
+      "symbol": "inferred:images/store_carclosed",
+      "file": "images/store_carclosed.png",
+      "inputs": [
+        "images/store_carclosed.png",
+        "images/store_carclosed_.png"
+      ],
+      "rgbaSha256": "4e14a0c196dfb1c35e2cd1924acae15b32897a4fe81a9b15c7af3d3e2f71e76c",
+      "size": [
+        904,
+        462
+      ]
+    },
+    {
+      "symbol": "inferred:images/tombstones",
+      "file": "images/tombstones.png",
+      "inputs": [
+        "images/tombstones.jpg",
+        "images/tombstones_.png"
+      ],
+      "rgbaSha256": "7f5594ed37df811c1e9d1eff7b2ed9b9dcf6861d5c0d30ce6f53738b1d1fcf48",
+      "size": [
+        430,
+        364
+      ]
+    },
+    {
+      "symbol": "inferred:images/zen_goldtoolreticle",
+      "file": "images/zen_goldtoolreticle.png",
+      "inputs": [
+        "images/zen_goldtoolreticle.png",
+        "images/zen_goldtoolreticle_.png"
+      ],
+      "rgbaSha256": "0b4406d78d540ea7b726498d2fee3be348c7c83d674fd9c8694afdb9051e15e2",
+      "size": [
+        193,
+        196
+      ]
+    },
+    {
+      "symbol": "inferred:images/zombienote",
+      "file": "images/zombienote.png",
+      "inputs": [
+        "images/zombienote.jpg",
+        "images/zombienote_.png"
+      ],
+      "rgbaSha256": "b28b55d896faf65774b393f1cf1cec4f6c1b564c373c19722c04f58fe1356d21",
+      "size": [
+        654,
+        427
+      ]
+    },
+    {
+      "symbol": "inferred:reanim/crazydave_body1",
+      "file": "reanim/crazydave_body1.png",
+      "inputs": [
+        "reanim/crazydave_body1.jpg",
+        "reanim/crazydave_body1_.png"
+      ],
+      "rgbaSha256": "04b6aafb2cc02b2c77450046353ee7c63dca4260063c390efa692391027d2bc9",
+      "size": [
+        344,
+        401
+      ]
+    },
+    {
+      "symbol": "inferred:reanim/credits_wearetheundead",
+      "file": "reanim/credits_wearetheundead.png",
+      "inputs": [
+        "reanim/credits_wearetheundead.jpg",
+        "reanim/credits_wearetheundead_.png"
+      ],
+      "rgbaSha256": "9f98db711595a1cc2cf1bc5703309a7603e84f5860e5385e568b280a43c5e83e",
+      "size": [
+        750,
+        131
+      ]
+    },
+    {
+      "symbol": "inferred:reanim/tree6",
+      "file": "reanim/tree6.png",
+      "inputs": [
+        "reanim/tree6.jpg",
+        "reanim/tree6_.png"
+      ],
+      "rgbaSha256": "1b686fc9cd76e170c4b93e57212848055bd19b4f22fba0df5a70c0b81a4ae3fd",
+      "size": [
+        435,
+        506
+      ]
+    },
+    {
+      "symbol": "inferred:reanim/tree7",
+      "file": "reanim/tree7.png",
+      "inputs": [
+        "reanim/tree7.jpg",
+        "reanim/tree7_.png"
+      ],
+      "rgbaSha256": "cdbbd4935192a29328cffd1819a95c1eab05f155c22a23b2b7177849eca48728",
+      "size": [
+        681,
+        548
+      ]
+    },
+    {
+      "symbol": "inferred:reanim/tree8",
+      "file": "reanim/tree8.png",
+      "inputs": [
+        "reanim/tree8.jpg",
+        "reanim/tree8_.png"
+      ],
+      "rgbaSha256": "a8dda92a77a02488fff8949353fd80c911384903af2d5ddf5a818264f6f0fb92",
+      "size": [
+        806,
+        561
+      ]
+    },
+    {
+      "symbol": "inferred:reanim/tree9",
+      "file": "reanim/tree9.png",
+      "inputs": [
+        "reanim/tree9.jpg",
+        "reanim/tree9_.png"
+      ],
+      "rgbaSha256": "b36d67f2b816ea58fcdeea44a48869d6f068cd989f4f216c24a575a5e0e6b199",
+      "size": [
+        525,
+        559
+      ]
+    },
+    {
+      "symbol": "inferred:reanim/tree_overlay8",
+      "file": "reanim/tree_overlay8.png",
+      "inputs": [
+        "reanim/tree_overlay8.jpg",
+        "reanim/tree_overlay8_.png"
+      ],
+      "rgbaSha256": "47e0ab7abcca3b4b0d65afabcbe1e21f33ad48d7b5e5f5c338d6affe42759098",
+      "size": [
+        482,
+        147
+      ]
+    },
+    {
+      "symbol": "inferred:reanim/tree_overlay9",
+      "file": "reanim/tree_overlay9.png",
+      "inputs": [
+        "reanim/tree_overlay9.jpg",
+        "reanim/tree_overlay9_.png"
+      ],
+      "rgbaSha256": "5fb76c2b67033be0ffed8477dd1563b5ff45febfb4b235b16d988c7e95e07996",
+      "size": [
+        515,
+        180
+      ]
+    },
+    {
+      "symbol": "inferred:reanim/zombieswon",
+      "file": "reanim/zombieswon.png",
+      "inputs": [
+        "reanim/zombieswon.jpg",
+        "reanim/zombieswon_.png"
+      ],
+      "rgbaSha256": "5c4baa63c06a1975fe18019a226d065e08eba591a0f42783d52f54322c6192cc",
+      "size": [
+        564,
+        468
+      ]
+    },
+    {
+      "symbol": "inferred:reanim/zombie_boss_neck",
+      "file": "reanim/zombie_boss_neck.png",
+      "inputs": [
+        "reanim/zombie_boss_neck.jpg",
+        "reanim/zombie_boss_neck_.png"
+      ],
+      "rgbaSha256": "997da909462c21b2e5b6ec98a3e89b4215edc4277a26c5540c093b94e985fad9",
+      "size": [
+        268,
+        289
+      ]
+    },
+    {
+      "symbol": "inferred:reanim/zombie_boss_upperbody",
+      "file": "reanim/zombie_boss_upperbody.png",
+      "inputs": [
+        "reanim/zombie_boss_upperbody.jpg",
+        "reanim/zombie_boss_upperbody_.png"
+      ],
+      "rgbaSha256": "812cd0d2d9c64ea4febd3d25b9fb75a5b6324c55e90a0cfab7b9ed706e8bfbd8",
+      "size": [
+        522,
+        479
+      ]
+    }
+  ],
+  "retiredTransparencyMasks": [
+    "images/blank_.gif",
+    "images/credits_bigbrain_.png",
+    "images/credits_zombienote.png",
+    "images/fog_.jpg",
+    "images/options_menuback_.png",
+    "images/pool_base_.png",
+    "images/pool_shading_.jpg",
+    "images/pvz_logo_.png",
+    "images/sod1row_.png",
+    "images/sod3row_.png",
+    "images/store_car_.png",
+    "images/store_carclosed_.png",
+    "images/tombstones_.png",
+    "images/zen_goldtoolreticle_.png",
+    "images/zombiefinalnote.png",
+    "images/zombienote1.png",
+    "images/zombienote2.png",
+    "images/zombienote3.png",
+    "images/zombienote4.png",
+    "images/zombienote_.png",
+    "images/zombienotehelp.png",
+    "reanim/crazydave_body1_.png",
+    "reanim/credits_wearetheundead_.png",
+    "reanim/tree6_.png",
+    "reanim/tree7_.png",
+    "reanim/tree8_.png",
+    "reanim/tree9_.png",
+    "reanim/tree_overlay8_.png",
+    "reanim/tree_overlay9_.png",
+    "reanim/zombie_boss_neck_.png",
+    "reanim/zombie_boss_upperbody_.png",
+    "reanim/zombieswon_.png"
+  ],
+  "opaqueJpegsRetained": [
+    "images/almanac_groundday.jpg",
+    "images/almanac_groundice.jpg",
+    "images/almanac_groundnight.jpg",
+    "images/almanac_groundnightpool.jpg",
+    "images/almanac_groundpool.jpg",
+    "images/almanac_groundroof.jpg",
+    "images/background1.jpg",
+    "images/background1unsodded.jpg",
+    "images/background2.jpg",
+    "images/background3.jpg",
+    "images/background4.jpg",
+    "images/background5.jpg",
+    "images/background6boss.jpg",
+    "images/background_greenhouse_overlay.jpg",
+    "images/challenge_thumbnails.jpg",
+    "images/pool.jpg",
+    "images/pool_base_night.jpg",
+    "images/pool_caustic_effect.jpg",
+    "images/pool_night.jpg",
+    "images/pool_shading_night.jpg",
+    "images/popcap_logo.jpg",
+    "images/reloaded/acheese/acheesements_more-top.jpg",
+    "images/reloaded/acheese/reloaded_acheesements.jpg",
+    "images/reloaded/zombatar_bg.jpg",
+    "images/reloaded/zombatar_layout.jpg",
+    "images/reloaded/zombatar_layout_800x600.jpg",
+    "images/survival_thumbnails.jpg",
+    "reanim/credits_nozombies.jpg",
+    "reanim/credits_throat.jpg",
+    "reanim/tree_bg.jpg"
+  ],
+  "originalArchive": "assets/source-art/archive/main-resource-cleanup-20261117",
+  "originalImagesRemainLocalOnly": true,
+  "zombatarBake": {
+    "frameSize": [
+      800,
+      600
+    ],
+    "widgetLogicalSizePreserved": [
+      560,
+      493
+    ],
+    "editorOrigin": [
+      33,
+      100
+    ],
+    "restorePatch": [
+      0,
+      0,
+      499,
+      335
+    ],
+    "panelStrip": [
+      499,
+      0,
+      10,
+      335
+    ],
+    "dynamicRestoreColumn": [
+      33,
+      100,
+      104,
+      335
+    ],
+    "newTextureObjects": 0,
+    "newImageSlots": 0,
+    "sourceImages": "main original only"
+  }
+}

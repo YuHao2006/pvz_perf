@@ -1223,7 +1223,11 @@ void ZombatarItems::Draw(Graphics* g)
 	// (253, appHeight-97) is the separate transparent Main Menu/Back target.
 	UpdateViewButtonLayout();
 
-	DrawZombatarImage(g, ZombatarImage::WIDGET_BG, 0, 0);
+	// The parent DISPLAY_WINDOW includes the complete fixed editor UI.
+    // Other pages restore the original opaque interior without a second frame.
+    if (mState == ZombatarEditorState::CONFIRMATION || mState == ZombatarEditorState::BROWSING)
+        DrawZombatarImage(g, ZombatarImage::WIDGET_INNER_BG,
+            Rect(33,100,499,335), Rect(0,0,499,335));
 
 	// C 形态 -> 成员函数内 lambda 表（表在类作用域内→private 方法 DrawEditor/
 	// DrawConfirmation/DrawSavedZombatars 可访问）；ENTERING/LEAVING 共体
@@ -1269,14 +1273,28 @@ void ZombatarItems::Draw(Graphics* g)
 
 void ZombatarItems::DrawEditor(Graphics* g)
 {
-	DrawZombatarImage(g, ZombatarImage::WIDGET_INNER_BG, 127, 100);
-	for (ZombatarButton* aButton : {
-		mSkinButton, mHairButton, mFacialHairButton, mTidbitsButton,
-		mEyeWearButton, mClothesButton, mAccessoryButton, mHatsButton,
-		mBackdropsButton })
-	{
-		aButton->Draw(g);
-	}
+    const std::array<ZombatarButton*,9> buttons = {
+        mSkinButton, mHairButton, mFacialHairButton, mTidbitsButton,
+        mEyeWearButton, mClothesButton, mAccessoryButton, mHatsButton, mBackdropsButton };
+    const bool liveColumn = std::any_of(buttons.begin(), buttons.end(), [](const ZombatarButton* button) {
+        return button->mBtnNoDraw || button->IsButtonDown() ||
+            ((button->mIsOver || button->IsMouseOver()) && button->mHoverImage != button->mNormalImage);
+    });
+    if (liveColumn)
+    {
+        // Restore the full original column before redrawing live buttons. This
+        // preserves translucent edges, overlapping rows and multiple contacts.
+        DrawZombatarImage(g, ZombatarImage::WIDGET_INNER_BG,
+            Rect(33,100,104,335), Rect(0,0,104,335));
+        DrawZombatarImage(g, ZombatarImage::WIDGET_INNER_BG,
+            Rect(127,100,10,335), Rect(499,0,10,335));
+        for (auto* button : buttons) button->Draw(g);
+    }
+    else
+    {
+        g->mColor = Color::Black;
+        g->mFont = nullptr;
+    }
 
 	if (mCurrentCategory == ZOMBATAR_CUSTOM_SKIN)
 	{

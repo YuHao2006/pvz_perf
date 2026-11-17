@@ -47,6 +47,7 @@
 #include "Lawn/Widget/ImitaterDialog.h"
 #include "Lawn/Widget/NewOptionsDialog.h"
 #include "Lawn/Widget/TitleScreen.h"
+#include "Lawn/Widget/ZombatarItems.h"
 #include "Lawn/Widget/CreditScreen.h"
 #include "Lawn/Widget/LawnDialog.h"
 #include "Lawn/Widget/AchievementsWidget.h"
@@ -5699,6 +5700,98 @@ void SelectorTrophyTouchRuntime(TestApp& app)
     std::cout<<"PASS selector trophy tooltip: tap-to-pin, release retention, outside dismissal, no drag-in, mouse coexistence and main-page offset\n";
 }
 
+
+
+
+
+// The offline resource compiler defines the canonical RGBA decoding. Existing
+// JPEGli runtime JPEG results differ slightly; PNG loads on both backends must
+// match the compiler-colour references reconstructed from untouched originals.
+void SolidifiedAlphaRuntime()
+{
+    const char* path=std::getenv("PVZ_ALPHA_COMPARISON_LIST");
+    if(!path) return;
+    std::ifstream list(path);Require(bool(list),"Cannot open alpha migration proof list");
+    std::string line;int maximum=0,legacyMaximum=0,count=0;
+    while(std::getline(list,line)) {
+        if(line.empty())continue;
+        std::array<std::string,4> fields;std::istringstream row(line);
+        for(auto& field:fields)Require(bool(std::getline(row,field,'\t')),"Invalid alpha proof row");
+        std::unique_ptr<ImageLib::Image> actual(ImageLib::GetImage(fields[0],false)),reference(ImageLib::GetImage(fields[3],false));
+        std::unique_ptr<ImageLib::Image> original(ImageLib::GetImage(fields[1],false));
+        std::unique_ptr<ImageLib::Image> mask(fields[2]=="-"?nullptr:ImageLib::GetImage(fields[2],false));
+        Require(actual&&reference&&original&&actual->mBits&&reference->mBits&&original->mBits,"Cannot decode alpha proof inputs");
+        Require(actual->mWidth==reference->mWidth&&actual->mHeight==reference->mHeight&&actual->mWidth==original->mWidth&&actual->mHeight==original->mHeight,"Alpha migration changed geometry");
+        if(mask)Require(mask->mWidth==original->mWidth&&mask->mHeight==original->mHeight&&mask->mBits,"Alpha proof mask size mismatch");
+        for(int i=0;i<actual->mWidth*actual->mHeight;++i) {
+            const auto legacy=mask?(original->mBits[i]&0xffffffu)|((mask->mBits[i]&255u)<<24):original->mBits[i];
+            for(int shift:{0,8,16,24}) {
+                maximum=std::max(maximum,std::abs(int((actual->mBits[i]>>shift)&255)-int((reference->mBits[i]>>shift)&255)));
+                legacyMaximum=std::max(legacyMaximum,std::abs(int((actual->mBits[i]>>shift)&255)-int((legacy>>shift)&255)));
+            }
+        }
+        ++count;
+    }
+    std::cout<<"Canonical compiler RGBA alpha migration: images="<<count<<" maxError="<<maximum
+        <<" legacyJpegDecoderMax="<<legacyMaximum<<'\n';
+    Require(count>0&&maximum<=1,"Solidified PNG differs from canonical compiler-colour RGBA");
+}
+
+// Local reference PNGs are intentionally absent from the public source tree.
+void ZombatarFixedUiRuntime(TestApp& app)
+{
+    const char* referenceDirectory=std::getenv("PVZ_ZOMBATAR_REFERENCE");
+    if(!referenceDirectory) return;
+    ZombatarLoadResources();
+    struct Free {~Free(){ZombatarFreeResources();}} free;
+    PlayerInfo player;auto* previousPlayer=app.mPlayerInfo;app.mPlayerInfo=&player;
+    struct RestorePlayer {TestApp& app;PlayerInfo* previous;~RestorePlayer(){app.mPlayerInfo=previous;}} restore{app,previousPlayer};
+    ZombatarItems items(&app);
+    auto& renderer=*app.mDDInterface->mRenderInterface;
+    std::map<std::string,std::unique_ptr<Image>> sources;
+    const auto original=[&](const std::string& name)->Image* {
+        auto& image=sources[name];
+        if(!image) {
+            const auto path=std::filesystem::path(referenceDirectory)/(name+".png");
+            std::unique_ptr<ImageLib::Image> decoded(ImageLib::GetImage(path.string(),false));
+            Require(decoded && decoded->mBits,"Missing original Zombatar proof image");
+            image=std::make_unique<Image>(&app);image->SetBits(decoded->mBits,decoded->mWidth,decoded->mHeight);
+        }
+        return image.get();
+    };
+    const std::array<ZombatarButton*,9> buttons={items.mSkinButton,items.mHairButton,items.mFacialHairButton,
+        items.mTidbitsButton,items.mEyeWearButton,items.mClothesButton,items.mAccessoryButton,items.mHatsButton,items.mBackdropsButton};
+    const auto oldMouse=app.mWidgetManager->mLastMouseX,oldY=app.mWidgetManager->mLastMouseY;
+    app.mWidgetManager->mLastMouseX=app.mWidgetManager->mLastMouseY=-1000;
+    for(int state=0;state<7;++state) {
+        for(auto* b:buttons)b->mIsDown=b->mIsOver=b->mBtnNoDraw=false;
+        items.mState=ZombatarEditorState::EDITING;
+        if(state==1)buttons[1]->mIsOver=true;
+        if(state==2)buttons[1]->mIsDown=buttons[1]->mIsOver=true;
+        if(state==3){buttons[1]->mIsOver=true;buttons[4]->mIsDown=buttons[4]->mIsOver=true;}
+        if(state==4)buttons[2]->mBtnNoDraw=true;
+        if(state==5)items.mState=ZombatarEditorState::CONFIRMATION;
+        if(state==6)items.mState=ZombatarEditorState::BROWSING;
+        std::unique_ptr<Image> actual(renderer.CreateRenderImage(800,650)),expected(renderer.CreateRenderImage(800,650));
+        {GpuImageDrawScope scope(renderer,actual.get());Graphics g(actual.get());g.mColor=Color(40,70,60);g.FillRect(0,0,800,650);
+         DrawZombatarImage(&g,ZombatarImage::DISPLAY_WINDOW,5,0);g.Translate(25,25);items.Draw(&g);}
+        {GpuImageDrawScope scope(renderer,expected.get());Graphics g(expected.get());g.mColor=Color(40,70,60);g.FillRect(0,0,800,650);
+         g.DrawImage(original("zombatar_display_window"),5,0);g.Translate(25,25);g.DrawImage(original("zombatar_widget_bg"),0,0);
+         if(state<5){g.DrawImage(original("zombatar_widget_inner_bg"),127,100);for(auto* b:buttons)b->Draw(&g);
+          DrawZombatarImage(&g,ZombatarImage::SKIN_BUTTON_HIGHLIGHT,items.mSkinButton->mX,items.mSkinButton->mY);}}
+        renderer.Flush();auto a=renderer.ReadImagePixels(*actual),b=renderer.ReadImagePixels(*expected);
+        int maxError=0;
+        for(int y=125;y<460;++y)if(state!=5 || y<215 || y>=335)
+        for(int x=58;x<162;++x)for(int shift:{0,8,16,24})
+            maxError=std::max(maxError,std::abs(int((a.pixels[y*800+x]>>shift)&255)-int((b.pixels[y*800+x]>>shift)&255)));
+        Require(ImageLib::WritePNGImage("zombatar-fixed-ui-"+std::to_string(state)+".png",800,650,a.pixels),"Cannot save UI proof");
+        std::cout<<"Zombatar original-column comparison state="<<state<<" maxError="<<maxError<<'\n';
+        Require(maxError<=1,"Baked Zombatar UI changed original category column");
+    }
+    app.mWidgetManager->mLastMouseX=oldMouse;app.mWidgetManager->mLastMouseY=oldY;
+    std::cout<<"PASS Zombatar fixed UI: normal, hover, press, multi-contact, hidden, confirmation and browsing\n";
+}
+
 void StandardDialogBakingRuntime(TestApp& app)
 {
     CommonUIAtlas::Load();
@@ -5857,6 +5950,20 @@ void AlmanacRulesRuntime(TestApp& app, bool clockOnly=false)
                 app.ReanimationGet(dialog->mPlant->mBodyReanimID)->SamplePlayback().phaseNs!=indexPhase,
                 "Actual Almanac index did not animate while its owning battle was paused");
             if(inLevel) Require(app.mBoard->mPaused&&app.mBoard->mLevelTimeNs==battle,"Almanac advanced the paused battle");
+            if(clockOnly && !inLevel && width==800 && hz==100) {
+                for(const auto seed:{SEED_PEASHOOTER,SEED_LILYPAD,SEED_SEASHROOM,SEED_TANGLEKELP,SEED_CATTAIL,SEED_SUNFLOWER}) {
+                    dialog->ShowPlant(seed);const auto before=app.mPoolEffect->mSampleTimeNs;
+                    advance(20'000'000);
+                    const bool water=seed==SEED_LILYPAD||seed==SEED_SEASHROOM||seed==SEED_TANGLEKELP||seed==SEED_CATTAIL;
+                    Require(water ? app.mPoolEffect->mSampleTimeNs>before : app.mPoolEffect->mSampleTimeNs==before,
+                        "Almanac caustics updated without a water preview or missed a water preview");
+                }
+                dialog->ShowZombie(ZOMBIE_SNORKEL);const auto before=app.mPoolEffect->mSampleTimeNs;advance(20'000'000);
+                Require(app.mPoolEffect->mSampleTimeNs==before,"Zombie Almanac page queued unused water compute");
+                dialog->SetPage(ALMANAC_PAGE_INDEX);advance(20'000'000);
+                Require(app.mPoolEffect->mSampleTimeNs==before,"Almanac index queued unused water compute");
+                std::cout<<"PASS Almanac caustics demand: four aquatic plants, dry plants, zombie and index pages\n";
+            }
             if (!inLevel && hz==100) {
                 dialog->SetPage(ALMANAC_PAGE_PLANTS);
                 for (auto seed:{SEED_LILYPAD,SEED_TANGLEKELP,SEED_CATTAIL,SEED_SEASHROOM}) {
@@ -8640,7 +8747,7 @@ void StorePauseClockRuntime(TestApp& app, DecodeOnlySoundManager& sounds)
     if(gIntroRulesOnly) {IntroRulesRuntime(app,sounds);return;}
     if(gUiRulesOnly) {ChallengeUnlockRulesRuntime(app);SelectorTrophyTouchRuntime(app);AlmanacRulesRuntime(app);AwardRulesRuntime(app);return;}
     if(gAwardRulesOnly) {AwardRulesRuntime(app);return;}
-    if(gAlmanacClockOnly) {AlmanacRulesRuntime(app,true);StandardDialogBakingRuntime(app);return;}
+    if(gAlmanacClockOnly) {AlmanacRulesRuntime(app,true);StandardDialogBakingRuntime(app);SolidifiedAlphaRuntime();ZombatarFixedUiRuntime(app);return;}
     if(gActorBirthOnly) {FrameDivisionSampleRuntime();ExplicitReanimationOwnerTime(app);ActorBirthClockRuntime(app);return;}
     if(gCreditsOnly) {CreditsMovieOwnerClockRuntime(app);return;}
     if(gLossRulesOnly) {LossRulesRuntime(app);return;}

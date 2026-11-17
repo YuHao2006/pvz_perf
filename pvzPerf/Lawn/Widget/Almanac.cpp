@@ -25,6 +25,12 @@ static bool gZombieDefeated[NUM_ZOMBIE_TYPES] = { false };
 namespace
 {
 using AlmanacSprite = AlmanacAtlas::Sprite;
+bool PlantPreviewUsesPool(SeedType seed)
+{
+    return seed == SEED_LILYPAD || seed == SEED_TANGLEKELP ||
+        seed == SEED_CATTAIL || seed == SEED_SEASHROOM;
+}
+
 void RefreshAlmanacLayout(AlmanacDialog& theDialog)
 {
 	const Rect& aBounds = theDialog.mApp->mScreenBounds;
@@ -361,7 +367,8 @@ void AlmanacDialog::Update()
 		mApp->SetCursor(CURSOR_POINTER);
 	}
 
-	mApp->mPoolEffect->PoolEffectUpdate(visualNowNs, Sexy::gUpdateIntervalNs);
+	if (mOpenPage == AlmanacPage::ALMANAC_PAGE_PLANTS && PlantPreviewUsesPool(mSelectedSeed))
+        mApp->mPoolEffect->PoolEffectUpdate(visualNowNs, Sexy::gUpdateIntervalNs);
 	MarkDirty();
 }
 
@@ -425,8 +432,7 @@ void AlmanacDialog::DrawPlants(Graphics* g)
 		}
 	}
 
-	if (mSelectedSeed == SeedType::SEED_LILYPAD || mSelectedSeed == SeedType::SEED_TANGLEKELP ||
-		mSelectedSeed == SeedType::SEED_CATTAIL || mSelectedSeed == SeedType::SEED_SEASHROOM)
+	if (PlantPreviewUsesPool(mSelectedSeed))
 	{
 		bool aNight = mSelectedSeed == SeedType::SEED_SEASHROOM;
 		DrawAlmanacGround(g,521,107,aNight?3:2);

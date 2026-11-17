@@ -1,0 +1,121 @@
+{
+  "format": "pvz-exact-atlas-v2",
+  "key": "949ca89598d182508f3d4d97ef94a151d43a535633face24e451872d3abe1a5c",
+  "layout": {
+    "width": 1667,
+    "height": 805,
+    "regions": [
+      [
+        1561,
+        82,
+        52,
+        49
+      ],
+      [
+        1375,
+        137,
+        290,
+        210
+      ],
+      [
+        2,
+        2,
+        801,
+        801
+      ],
+      [
+        1599,
+        476,
+        62,
+        90
+      ],
+      [
+        1375,
+        351,
+        269,
+        121
+      ],
+      [
+        1375,
+        476,
+        220,
+        220
+      ],
+      [
+        807,
+        2,
+        750,
+        131
+      ],
+      [
+        1561,
+        2,
+        86,
+        36
+      ],
+      [
+        1561,
+        42,
+        86,
+        36
+      ],
+      [
+        1599,
+        570,
+        50,
+        155
+      ],
+      [
+        1375,
+        779,
+        50,
+        20
+      ],
+      [
+        807,
+        609,
+        280,
+        183
+      ],
+      [
+        1091,
+        609,
+        280,
+        183
+      ],
+      [
+        807,
+        137,
+        564,
+        468
+      ],
+      [
+        1375,
+        700,
+        130,
+        75
+      ]
+    ],
+    "shelf_area": 1560090,
+    "search_attempts": 927,
+    "search_microseconds": 1539,
+    "method": "native-maxrects",
+    "exact": {
+      "status": "FEASIBLE",
+      "best_bound": 1308196,
+      "optimal": false,
+      "gap": 0.02514205233487464,
+      "elapsed_seconds": 60.0769578,
+      "cache_hit": false,
+      "cache_key": "949ca89598d182508f3d4d97ef94a151d43a535633face24e451872d3abe1a5c",
+      "solver": "ortools-cp-sat",
+      "solver_version": "9.15.6755",
+      "model_version": "integer-nonrotating-padded-global-area-v2",
+      "search_complete": true,
+      "solve_budget_seconds": 60.0,
+      "proof_scope": "minimum integer atlas area; fixed orientation; configured padding and max_side",
+      "objective_area": 1341935
+    }
+  },
+  "layout_sha256": "9b27106a31faeb5e4b6614dc150b34bb9fab144a80e00d535c0b7e0a0b2f70c5"
+}

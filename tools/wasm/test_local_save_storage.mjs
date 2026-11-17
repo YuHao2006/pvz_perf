@@ -44,3 +44,25 @@ let requests=0;assert.equal(await storage4.requestPersistence({persisted:async()
 assert.equal(await storage4.requestPersistence({persisted:async()=>false,persist:async()=>false}),false);
 assert.equal(await storage4.requestPersistence({persisted:async()=>{throw Error('denied')},persist:async()=>false}),null);
 console.log('Direct IndexedDB saves: atomic legacy migration, close-to-commit, reload, reads, deletion, rename, retry and persistent-storage denial passed');
+
+// Exercise the actual bundled editor mutation plan through durable storage.
+const {ProfileStore,encodeSummary,newProfile}=await import('../bin/web/save-codec.js');
+const root='/persist/development-v331';
+fs4.analyzePath=path=>({exists:fs4.nodes.has(path)});
+fs4.writeFile(root+'/users.dat',encodeSummary([{id:1,name:'Player1',useSeq:1},{id:11,name:'Player11',useSeq:2}]));
+for(const id of [1,11]){
+ fs4.writeFile(root+'/user'+id+'.dat64',newProfile());
+ for(const mode of [0,58,72])fs4.writeFile(root+'/game'+id+'_'+mode+'.dat64',bytes('checkpoint '+id));
+}
+await storage4.flush();
+const plan=new ProfileStore(fs4,root).remove(1);
+assert.deepEqual([...plan.removes].sort(),['user1.dat64','game1_0.dat64','game1_58.dat64','game1_72.dat64'].sort());
+for(const [name,value] of plan.writes)fs4.writeFile(root+'/'+name,value);
+for(const name of plan.removes)fs4.unlink(root+'/'+name);
+await storage4.flush();
+const reloaded=fileSystem(),reloadedStorage=new LocalSaveStorage(reloaded);await reloadedStorage.prepare();
+reloaded.analyzePath=path=>({exists:reloaded.nodes.has(path)});
+assert.deepEqual(new ProfileStore(reloaded,root).rows().map(row=>row.id),[11]);
+for(const name of plan.removes)assert.ok(!reloaded.nodes.has(root+'/'+name),'Deleted user checkpoint resurrected: '+name);
+for(const name of ['user11.dat64','game11_0.dat64','game11_58.dat64','game11_72.dat64'])assert.ok(reloaded.nodes.has(root+'/'+name),'Another user was affected: '+name);
+console.log('PASS editor user deletion: all owned modes removed from IndexedDB across reload; user 11 retained when deleting user 1');

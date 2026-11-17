@@ -20,6 +20,13 @@ export function memoryModels(config,supported,simdSupported=true){
 }
 export function selectMemoryModel(models,saved){return models.includes(saved)?saved:models.includes('wasm64')?'wasm64':models[0]}
 export function runtimeStem(config,backend,memoryModel){
+ if(config.webgpuMemory64Only&&backend==='webgpu'&&memoryModel!=='wasm64')throw Error('WebGPU 仅提供 Memory64 版本；32 位请使用 WebGL 2。');
  const base=config.webgpu&&backend==='webgl'?'pvz-perf-webgl':'pvz-perf';
  return base+(memoryModel==='wasm64'&&!config.memory64?'-wasm64':'');
+}
+
+// Only advertise HD when its configured destination and all required features exist.
+export function highResolutionLink(config,memory64,simd128,webgpu){
+ if(!memory64||!simd128||!webgpu||typeof config?.highResolutionUrl!=='string'||!config.highResolutionUrl.trim())return '';
+ try{const url=new URL(config.highResolutionUrl);return ['https:','http:'].includes(url.protocol)?url.href:''}catch{return ''}
 }

@@ -615,8 +615,9 @@ void StoreScreen::Draw(Graphics* g)
     // layer separately would move the shelves away from their item hit boxes.
     if (!mHatchTimer && mHatchOpen)
     {
-        g->DrawImage(Sexy::IMAGE_STORE_CAR, mShakeX + 196, mShakeY + 138);
-        g->DrawImage(Sexy::IMAGE_STORE_HATCHBACKOPEN, mShakeX + 299, mShakeY);
+        // Main's original car and open hatch are composed offline. Night
+        // patches remain shared, avoiding four duplicated full-car textures.
+        g->DrawImage(Sexy::IMAGE_STORE_CAR, mShakeX + 196, mShakeY);
         if (mApp->IsNight())
         {
             g->DrawImage(Sexy::IMAGE_STORE_CAR_NIGHT, mShakeX + 688, mShakeY + 193);

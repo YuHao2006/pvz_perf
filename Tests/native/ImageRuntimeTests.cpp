@@ -1717,6 +1717,60 @@ void CreditsMovieOwnerClockRuntime(TestApp& app)
     }
     render.Flush();
     std::cout<<"PASS Credits movie owner clock: distinct catch-up steps, one-shot blink, paused app updates and single-step resume\n";
+    // Credits owns one ordinary PoolSparkly system, outside the global
+    // particle update/draw pass. Drawing itself must not create or age it.
+    for (const auto shot : {std::pair{CreditsPhase::CREDITS_MAIN1,230},
+            std::pair{CreditsPhase::CREDITS_MAIN1,320},
+            std::pair{CreditsPhase::CREDITS_MAIN2,95},
+            std::pair{CreditsPhase::CREDITS_MAIN2,210}})
+    {
+        movie=credits.PlayReanim(shot.first==CreditsPhase::CREDITS_MAIN1?1:2);
+        credits.mCreditsPhase=shot.first;credits.mCreditsPaused=false;
+        movie->Seek(shot.second,movie->mDefinition->mTracks.tracks->mTransforms.count-1);
+        for(int step=0;step<3;++step)credits.UpdateMovie(100'000'000);
+        auto* sparkle=app.ParticleTryToGet(credits.mPoolSparklyParticleID);
+        Require(sparkle&&!sparkle->mDead&&sparkle->mIsAttachment,
+            "Credits visible pool has no separately owned sparkle system");
+        Require(sparkle->EmitterRosterCount()>0,"Credits sparkle system has no emitters");
+        auto* emitter=sparkle->EmitterRosterEmitterAt(0);
+        Require(emitter->mParticlesSpawned>0,"Credits pool sparkles did not spawn");
+        const auto birth=emitter->mBirthTimeNs;const auto spawned=emitter->mParticlesSpawned;
+        const auto now=clocks.mVisualTimeNs;
+        credits.mCreditsPaused=true;
+        for(int step=0;step<12;++step){app.UpdateFrames();credits.Update();}
+        Require(clocks.mVisualTimeNs==now&&emitter->mBirthTimeNs==birth&&emitter->mParticlesSpawned==spawned,
+            "Paused Credits updated its pool sparkle clock");
+        const auto captureSparkles=[&] {
+            {GpuImageDrawScope destination(render,target.get());Graphics g(target.get());credits.Draw(&g);}
+            render.Flush();return render.ReadImagePixels(*target).pixels;
+        };
+        const auto first=captureSparkles(),second=captureSparkles();
+        Require(first==second&&emitter->mBirthTimeNs==birth&&emitter->mParticlesSpawned==spawned,
+            "Credits draw created or advanced pool sparkles");
+        if(shot.first==CreditsPhase::CREDITS_MAIN1&&shot.second==230) {
+            sparkle->mDead=true;const auto without=captureSparkles();sparkle->mDead=false;
+            ReanimatorTransform transform;movie->GetCurrentTransform(movie->FindTrackIndex(ReanimTrackId::Background2),&transform);
+            const Rect water(int(transform.mTransX)+255,279,720,159);int changed=0;
+            for(int y=0;y<600;++y)for(int x=0;x<800;++x)if(first[y*800+x]!=without[y*800+x]) {
+                Require(water.Contains(x,y),"Credits sparkle escaped the moving pool clip");++changed;
+            }
+            Require(changed>0,"Credits pool sparkles produced no visible pixels");
+            Require(ImageLib::WritePNGImage("credits-pool-sparkles.png",800,600,first),"Cannot write Credits sparkle proof");
+        }
+        const auto retiring=credits.mPoolSparklyParticleID;
+        credits.PlayReanim(1);
+        Require(credits.mPoolSparklyParticleID==ParticleSystemID::PARTICLESYSTEMID_NULL&&
+            (!app.ParticleTryToGet(retiring)||app.ParticleTryToGet(retiring)->mDead),
+            "Changing Credits shot retained its pool sparkle system");
+    }
+    movie=credits.PlayReanim(1);credits.mCreditsPhase=CreditsPhase::CREDITS_MAIN1;
+    movie->Seek(230,movie->mDefinition->mTracks.tracks->mTransforms.count-1);credits.UpdateMovie(100'000'000);
+    const auto retiredPool=credits.mPoolSparklyParticleID;
+    movie->Seek(280,movie->mDefinition->mTracks.tracks->mTransforms.count-1);credits.UpdateMovie(10'000'000);
+    Require(credits.mPoolSparklyParticleID==ParticleSystemID::PARTICLESYSTEMID_NULL&&
+        (!app.ParticleTryToGet(retiredPool)||app.ParticleTryToGet(retiredPool)->mDead),
+        "Leaving Credits water shot retained its pool sparkles");
+    std::cout<<"PASS Credits pool sparkles: four water shots, visible clipped pixels, pause, pure repeated draw and shot cleanup\n";
     std::unique_ptr<Image> wide(render.CreateRenderImage(1400,600));
     credits.mCreditsPaused=true;
     int extendedScenes=0;
@@ -5704,6 +5758,66 @@ void SelectorTrophyTouchRuntime(TestApp& app)
 
 
 
+// Opt-in local proof: the public repository does not contain artwork.
+void RetiredAlphaPngsRuntime()
+{
+    const char* list=std::getenv("PVZ_ALPHA_COMPARISON_LIST");
+    if(!list)return;
+    std::ifstream input(list);Require(bool(input),"Missing alpha comparison list");
+    unsigned count=0;std::string line;
+    while(std::getline(input,line))
+    {
+        if(!line.empty()&&line.back()=='\r')line.pop_back();
+        if(line.empty())continue;
+        const auto first=line.find('\t'),last=line.rfind('\t');
+        Require(first!=std::string::npos&&last>first,"Invalid alpha comparison row");
+        std::unique_ptr<ImageLib::Image> actual(ImageLib::GetImage(line.substr(0,first),false));
+        std::unique_ptr<ImageLib::Image> expected(ImageLib::GetImage(line.substr(last+1),false));
+        Require(actual&&expected&&actual->mWidth==expected->mWidth&&actual->mHeight==expected->mHeight,
+            ("Retired-alpha PNG dimensions changed: "+line.substr(0,first)).c_str());
+        Require(std::equal(actual->mBits,actual->mBits+actual->mWidth*actual->mHeight,expected->mBits),
+            ("Retired-alpha PNG differs from native RGBA baseline: "+line.substr(0,first)).c_str());
+        ++count;
+    }
+    Require(count>0,"Empty alpha comparison list");
+    std::cout<<"PASS "<<count<<" retired-alpha PNG recipes: native decoder RGBA exactly preserved\n";
+}
+
+void StoreCarBakingRuntime(TestApp& app)
+{
+    const char* reference=std::getenv("PVZ_STORE_BAKING_REFERENCE");
+    if(!reference)return;
+    const auto original=[&](const char* name,const char* mask=nullptr) {
+        std::unique_ptr<ImageLib::Image> decoded(ImageLib::GetImage((std::filesystem::path(reference)/name).string(),false));
+        Require(decoded&&decoded->mBits,"Missing original Store baking image");
+        if(mask){
+            std::unique_ptr<ImageLib::Image> alpha(ImageLib::GetImage((std::filesystem::path(reference)/mask).string(),false));
+            Require(alpha&&alpha->mWidth==decoded->mWidth&&alpha->mHeight==decoded->mHeight,"Store alpha dimensions differ");
+            for(int i=0;i<decoded->mWidth*decoded->mHeight;++i)
+                decoded->mBits[i]=(decoded->mBits[i]&0xffffffu)|((alpha->mBits[i]&255u)<<24);
+        }
+        ImageLib::FixTransparentEdges(*decoded);
+        auto result=std::make_unique<Image>(&app);result->SetBits(decoded->mBits,decoded->mWidth,decoded->mHeight);return result;
+    };
+    auto car=original("Store_Car.png","store_car_.png"),closed=original("Store_CarClosed.png","store_carclosed_.png"),hatch=original("Store_HatchbackOpen.png");
+    auto& renderer=*app.mDDInterface->mRenderInterface;
+    for(bool open:{false,true})for(bool night:{false,true}){
+        std::unique_ptr<Image> actual(renderer.CreateRenderImage(1100,600)),expected(renderer.CreateRenderImage(1100,600));
+        for(bool old:{false,true}){
+            GpuImageDrawScope scope(renderer,old?expected.get():actual.get());Graphics g(old?expected.get():actual.get());
+            g.mColor=Color(35,60,45);g.FillRect(0,0,1100,600);
+            if(old){g.DrawImage(open?car.get():closed.get(),196,138);if(open)g.DrawImage(hatch.get(),299,0);}
+            else g.DrawImage(open?IMAGE_STORE_CAR:IMAGE_STORE_CARCLOSED,196,open?0:138);
+            if(night){g.DrawImage(IMAGE_STORE_CAR_NIGHT,688,193);if(!open)g.DrawImage(IMAGE_STORE_CARCLOSED_NIGHT,337,187);}
+        }
+        renderer.Flush();const auto a=renderer.ReadImagePixels(*actual),b=renderer.ReadImagePixels(*expected);int maxError=0;
+        for(size_t i=0;i<a.pixels.size();++i)for(int shift:{0,8,16,24})
+            maxError=std::max(maxError,std::abs(int((a.pixels[i]>>shift)&255)-int((b.pixels[i]>>shift)&255)));
+        Require(maxError<=3,("Baked Store car differs from original layers: "+std::to_string(maxError)).c_str());
+        std::cout<<"PASS Store car baked open="<<open<<" night="<<night<<" maximum RGBA error="<<maxError<<'\n';
+    }
+}
+
 // Local reference PNGs are intentionally absent from the public source tree.
 void ZombatarFixedUiRuntime(TestApp& app)
 {
@@ -5912,6 +6026,22 @@ void AlmanacRulesRuntime(TestApp& app, bool clockOnly=false)
                  dialog->Draw(&graphics);}
                 render.Flush();return render.ReadImagePixels(*target.image).pixels;
             };
+            if(!inLevel&&width==800&&hz==100) {
+                auto* zombie=dialog->mZombie;
+                const auto index=[&](bool reference,bool shadow) {
+                    {GpuImageDrawScope scope(render,target.image);Graphics graphics(target.image);
+                     graphics.mColor=Color::Black;graphics.FillRect(0,0,width,600);
+                     if(reference)dialog->mZombie=nullptr;
+                     dialog->DrawIndex(&graphics);dialog->mZombie=zombie;
+                     if(reference){Graphics actor(graphics);zombie->BeginDraw(&actor);
+                         if(shadow)zombie->DrawShadow(&actor);zombie->Draw(clocks.mVisualTimeNs,&actor);}}
+                    render.Flush();return render.ReadImagePixels(*target.image).pixels;
+                };
+                const auto actual=index(false,true),expected=index(true,true),missing=index(true,false);
+                Require(actual==expected&&actual!=missing,"Almanac index zombie did not draw its independent foot shadow");
+                Require(ImageLib::WritePNGImage("almanac-index-shadow.png",width,600,actual),"Cannot write Almanac shadow proof");
+                std::cout<<"PASS Almanac index: zombie body over original independent foot shadow\n";
+            }
             advance(200'000'000);
             Require(clocks.mVisualTimeNs==start+200'000'000&&
                 app.ReanimationGet(dialog->mPlant->mBodyReanimID)->SamplePlayback().phaseNs!=indexPhase,
@@ -8714,7 +8844,7 @@ void StorePauseClockRuntime(TestApp& app, DecodeOnlySoundManager& sounds)
     if(gIntroRulesOnly) {IntroRulesRuntime(app,sounds);return;}
     if(gUiRulesOnly) {ChallengeUnlockRulesRuntime(app);SelectorTrophyTouchRuntime(app);AlmanacRulesRuntime(app);AwardRulesRuntime(app);return;}
     if(gAwardRulesOnly) {AwardRulesRuntime(app);return;}
-    if(gAlmanacClockOnly) {AlmanacRulesRuntime(app,true);StandardDialogBakingRuntime(app);ZombatarFixedUiRuntime(app);return;}
+    if(gAlmanacClockOnly) {RetiredAlphaPngsRuntime();StoreCarBakingRuntime(app);AlmanacRulesRuntime(app,true);StandardDialogBakingRuntime(app);ZombatarFixedUiRuntime(app);return;}
     if(gActorBirthOnly) {FrameDivisionSampleRuntime();ExplicitReanimationOwnerTime(app);ActorBirthClockRuntime(app);return;}
     if(gCreditsOnly) {CreditsMovieOwnerClockRuntime(app);return;}
     if(gLossRulesOnly) {LossRulesRuntime(app);return;}
@@ -9212,14 +9342,13 @@ void PoolScenePixels(SexyAppBase& app)
                     if (!legacy) pool.PoolEffectDraw(&g,night);
                     else
                     {
-                        Image* layers[]{night ? IMAGE_POOL_BASE_NIGHT : IMAGE_POOL_BASE,
-                            night ? IMAGE_POOL_SHADING_NIGHT : IMAGE_POOL_SHADING,
-                            pool.mCausticImage};
-                        for (unsigned layer=0;layer<3;++layer)
+                        // Static water is now part of the map. Compare the live
+                        // caustic overlay against the original triangle evaluator.
+                        for (unsigned layer=2;layer<3;++layer)
                         {
                             auto p=PoolGpuChecks::Parameters(97,layer,night,GpuBlend::Normal,false,false);
-                            p.width=float(IMAGE_POOL->mWidth);
-                            p.height=float(IMAGE_POOL->mHeight);
+                            p.width=720.0f;
+                            p.height=159.0f;
                             p.transX=p.transY=0;
                             p.clip={g.mClipRect.mX,g.mClipRect.mY,g.mClipRect.mWidth,g.mClipRect.mHeight};
                             const auto vertices=PoolGpuChecks::LegacyVertices(p,0);
@@ -9232,7 +9361,7 @@ void PoolScenePixels(SexyAppBase& app)
                                 out.color=(unsigned(std::lround(v.a*255))<<24)|0xffffffu;
                             }
                             render.sSamplerAddressWrap=layer==2;
-                            g.DrawTrianglesTex(layers[layer],triangles,150);
+                            g.DrawTrianglesTex(pool.mCausticImage,triangles,150);
                         }
                         render.sSamplerAddressWrap=false;
                     }

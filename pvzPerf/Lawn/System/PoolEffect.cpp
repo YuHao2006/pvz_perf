@@ -77,8 +77,8 @@ void PoolEffect::PoolEffectDraw(Sexy::Graphics* g, bool theIsNight)
     // the draw parameters retain the existing phase and clock behavior.
     const double phase=static_cast<double>(static_cast<unsigned long long>(mSampleTimeNs - mBirthTimeNs) % 1'584'000'000'000ull)*2*PI;
     Sexy::GpuPoolParams params{};
-    params.width=float(IMAGE_POOL->mWidth);
-    params.height=float(IMAGE_POOL->mHeight);
+    params.width=720.0f;
+    params.height=159.0f;
     params.transX=g->mTransX;
     params.transY=g->mTransY;
     params.time1=float(phase/8'000'000'000.0);
@@ -89,9 +89,8 @@ void PoolEffect::PoolEffectDraw(Sexy::Graphics* g, bool theIsNight)
     params.night=theIsNight;
     params.sampler=g->mLinearBlend ? 1u : 0u;
     params.blend=static_cast<Sexy::GpuBlend>(g->mDrawMode);
-    render.DrawPool(theIsNight ? IMAGE_POOL_BASE_NIGHT : IMAGE_POOL_BASE,params);
-    params.layer=1;
-    render.DrawPool(theIsNight ? IMAGE_POOL_SHADING_NIGHT : IMAGE_POOL_SHADING,params);
+    // Static day/night water and inner walls are baked into the map offline.
+    // Retain the original translucent caustics and their animation/clock.
     params.layer=2;
     params.sampler|=2u;
     render.DrawPool(mCausticImage,params);

@@ -97,6 +97,10 @@ public:
 	// Movie/debug counters can advance or reset while this roll is frozen.
 	std::uint64_t           mCreditsScrollPhaseNs = 0;
 	int                     mCreditsContentHeight;
+    ParticleSystemID        mPoolSparklyParticleID = ParticleSystemID::PARTICLESYSTEMID_NULL;
+    void                    StopPoolSparkles();
+    void                    UpdatePoolSparkles(Reanimation& movie, std::uint64_t deltaNs, std::int64_t nowNs);
+    void                    DrawPoolSparkles(Graphics* g);
 	int                     DrawCreditsContent(Graphics* g, int theY, bool theDraw);
 
 	virtual void			Update();

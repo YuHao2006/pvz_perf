@@ -207,6 +207,24 @@ if(BUILD_TESTING AND NOT ANDROID AND NOT CMAKE_SYSTEM_NAME STREQUAL "Android")
             "$<TARGET_FILE_DIR:sexy_vulkan_scale_compile_tests>")
     add_test(NAME sexy_vulkan_scale_compile COMMAND sexy_vulkan_scale_compile_tests)
     set_tests_properties(sexy_vulkan_scale_compile PROPERTIES TIMEOUT 180)
+    if(WIN32)
+        add_executable(sexy_scale_unicode_tests
+            "${CMAKE_SOURCE_DIR}/tools/native-tests/scale_effect_unicode_tests.cpp")
+        target_link_libraries(sexy_scale_unicode_tests PRIVATE sexy_vulkan_effects)
+        if(MSVC)
+            target_compile_options(sexy_scale_unicode_tests PRIVATE /utf-8)
+            target_link_options(sexy_scale_unicode_tests PRIVATE
+                "/MANIFEST:EMBED"
+                "/MANIFESTINPUT:${CMAKE_SOURCE_DIR}/tools/native-tests/scale_effect_gbk.manifest")
+        endif()
+        add_custom_command(TARGET sexy_scale_unicode_tests POST_BUILD
+            COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+                "$<TARGET_FILE:Microsoft::DirectXShaderCompiler>"
+                "$<TARGET_FILE_DIR:Microsoft::DirectXShaderCompiler>/dxil.dll"
+                "$<TARGET_FILE_DIR:sexy_scale_unicode_tests>")
+        add_test(NAME sexy_scale_unicode COMMAND sexy_scale_unicode_tests)
+        set_tests_properties(sexy_scale_unicode PROPERTIES TIMEOUT 180)
+    endif()
 endif()
 
 if(BUILD_TESTING AND WIN32)

@@ -1,4 +1,4 @@
-import {validModifiedAt,nextModifiedAt,assertCloudWrite,newSlot,validSlot,previousSnapshot,discardOldSnapshot} from './shared-storage.js';
+import {validModifiedAt,nextModifiedAt,savedTime,preferCloud,newSlot,validSlot,previousSnapshot,discardOldSnapshot} from './shared-storage.js';
 import {LineupLibrary,normalizeLineupLibrary} from './lineup-library.js';
 import {defaultLineups,decodeLineup} from './lineups.js';
 import {encode,decode,digest,unpack,cloudCall,deadline} from './progress-storage.js';
@@ -11,7 +11,7 @@ export class LineupStorage {
  constructor(storage,{cloudEnabled,remote,report,uploadState=()=>{}}){
   Object.assign(this,{cloudEnabled,remote,report,uploadState});
   this.storage=storage;this.modifiedAt=0;this.localText='';
-  this.library=new LineupLibrary(storage,defaultLineups);this.head=null;this.cloudRead=false;this.lastCloud='';this.needsChoice=false;this.pending=null;this.saving=null;
+  this.library=new LineupLibrary(storage,defaultLineups);this.head=null;this.cloudRead=false;this.lastCloud='';this.pending=null;this.saving=null;
  }
  async validate(value){const next=normalizeLineupLibrary(value);for(const entry of next.lineups)await decodeLineup(entry.code);return next}
  async readCloud(){
@@ -32,25 +32,27 @@ export class LineupStorage {
   if(!this.cloudEnabled)return;
   try{const meta=JSON.parse(this.storage.getItem('pvz_lineups_sync_v1')||'null');this.localText=JSON.stringify(this.library.snapshot());if(meta?.text===this.localText)this.modifiedAt=meta.modifiedAt}catch{}
   try{
-   const saved=await this.readCloud();
-   if(saved&&(!this.library.existed||this.localText!==saved.text&&validModifiedAt(this.modifiedAt)&&validModifiedAt(saved.modifiedAt)&&saved.modifiedAt>this.modifiedAt)){
-    if(this.library.existed)this.storage.setItem('pvz_lineups_conflict_v1',JSON.stringify({value:this.library.snapshot(),modifiedAt:this.modifiedAt}));
-    this.restore(saved);this.report('阵型库已从较新的云端存档恢复')
-   }
-   else if(saved){this.needsChoice=JSON.stringify(this.library.snapshot())!==this.lastCloud&&!(validModifiedAt(this.modifiedAt)&&validModifiedAt(saved.modifiedAt)&&this.modifiedAt>saved.modifiedAt);if(this.needsChoice)this.report('本地与云端阵型库不同，请选择上传本地或恢复云端')}
-  }catch(error){this.needsChoice=true;this.report('云端阵型库暂不可用，继续使用本地：'+error.message)}
+   const saved=await this.readCloud(),local=this.library.snapshot();
+   if(saved&&(!this.library.existed||JSON.stringify(local)!==saved.text&&preferCloud(this.modifiedAt,saved))){
+    if(this.library.existed)this.backupConflict(local,this.modifiedAt);
+    this.restore(saved);this.report('阵型库已按时间戳自动恢复');
+   }else await this.writeCloud(local,this.modifiedAt);
+  }catch(error){this.report('云端阵型库暂不可用，继续使用本地：'+error.message)}
  }
+ backupConflict(value,modifiedAt){this.storage.setItem('pvz_lineups_conflict_v1',JSON.stringify({value,modifiedAt}))}
  restore(saved){
-  this.library.replace(saved.value);this.modifiedAt=saved.modifiedAt||0;this.localText=JSON.stringify(this.library.snapshot());
-  this.storage.setItem('pvz_lineups_sync_v1',JSON.stringify({text:this.localText,modifiedAt:this.modifiedAt}));this.needsChoice=false;
+  this.library.replace(saved.value);this.modifiedAt=savedTime(saved);this.localText=JSON.stringify(this.library.snapshot());
+  this.storage.setItem('pvz_lineups_sync_v1',JSON.stringify({text:this.localText,modifiedAt:this.modifiedAt}));
  }
- async writeCloud(value,modifiedAt=this.modifiedAt,force=false){
+ async writeCloud(value,modifiedAt=this.modifiedAt,refresh=false){
   if(!this.cloudEnabled)return;
-  if(this.needsChoice)throw Error('本地与云端阵型库不同，请先选择上传本地或恢复云端');
-  const text=JSON.stringify(value);if(text===this.lastCloud)return;
-  const baseline=this.head?.digest,saved=await this.readCloud();
-  try{assertCloudWrite(saved,text,modifiedAt,baseline,force)}catch(error){this.needsChoice=true;throw error}
+  const text=JSON.stringify(value);if(text===this.lastCloud&&!refresh)return;
+  const saved=await this.readCloud();
   if(text===this.lastCloud)return;
+  if(preferCloud(modifiedAt,saved)){
+   if(this.localText&&this.localText!==text)return;
+   this.backupConflict(value,modifiedAt);this.restore(saved);this.report('阵型库已按时间戳自动恢复');return;
+  }
   const previous=this.head,expectedHead=previous?JSON.stringify(previous):'';
   this.uploadState(true);
   try{
@@ -64,20 +66,19 @@ export class LineupStorage {
   await deadline(cloudCall(()=>discardOldSnapshot(toy,'pvz_lineups_',previous?.previous)));
   await deadline(cloudCall(()=>toy.setCloudStorage(values)));
    const current=await deadline(cloudCall(()=>toy.getCloudStorage([headKey])));
-   if((current[headKey]||'')!==expectedHead){this.needsChoice=true;throw Error('上传期间云端阵型库已更新，请重新同步')}
+   if((current[headKey]||'')!==expectedHead){this.report('云端阵型库已更新，稍后自动同步');return}
    await deadline(cloudCall(()=>toy.setCloudStorage({[headKey]:JSON.stringify(head)})));
    this.head=head;this.lastCloud=text;
 
    this.report('阵型库已备份到当前 B 站账号');
   }finally{this.uploadState(false)}
  }
- save(force=false){
-  if(force)this.needsChoice=false;
+ async save(refresh=false){
   if(!this.cloudEnabled)return Promise.resolve();
   const value=this.library.snapshot(),text=JSON.stringify(value);
-  if(text!==this.localText||force){this.modifiedAt=nextModifiedAt(this.modifiedAt);this.localText=text;this.storage.setItem('pvz_lineups_sync_v1',JSON.stringify({text,modifiedAt:this.modifiedAt}))}
-  this.pending={value,modifiedAt:this.modifiedAt,force};if(this.saving)return this.saving;
-  this.saving=(async()=>{let error;while(this.pending){const next=this.pending;this.pending=null;try{await this.writeCloud(next.value,next.modifiedAt,next.force);error=null}catch(e){error=e}}if(error)throw error})().finally(()=>{this.saving=null});
+  if(text!==this.localText){this.modifiedAt=nextModifiedAt(this.modifiedAt);this.localText=text;this.storage.setItem('pvz_lineups_sync_v1',JSON.stringify({text,modifiedAt:this.modifiedAt}))}
+  this.pending={value,modifiedAt:this.modifiedAt,refresh:refresh||!!this.pending?.refresh};if(this.saving)return this.saving;
+  this.saving=(async()=>{let error;while(this.pending){const next=this.pending;this.pending=null;try{await this.writeCloud(next.value,next.modifiedAt,next.refresh);error=null}catch(e){error=e}}if(error)throw error})().finally(()=>{this.saving=null});
   return this.saving;
  }
 }

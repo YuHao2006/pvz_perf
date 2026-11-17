@@ -78,11 +78,7 @@ void DrawAlmanacGround(Graphics* g,int x,int y,int map,bool ice) {
     const std::array<Image*,5> maps{IMAGE_BACKGROUND1,IMAGE_BACKGROUND2,IMAGE_BACKGROUND3,IMAGE_BACKGROUND4,IMAGE_BACKGROUND5};
     Graphics ground(*g);ground.ClipRect(x,y,200,200);
     ground.DrawImage(maps[map],x,y,Rect(map==4?764:595,map==4?301:map==2||map==3?270:145,200,200));
-    // Pool maps contain a white opening, not a baked water surface. Reuse the
-    // resident base underneath the animated layers, in the same map coordinates.
-    if (map == 2 || map == 3)
-        ground.DrawImage(map == 3 ? IMAGE_POOL_BASE_NIGHT : IMAGE_POOL_BASE,
-            x + BOARD_OFFSET + 35 - 595, y + 279 - 270);
+    // Pool map crops already contain the same baked water as the battle map.
     if(ice){ground.DrawImage(IMAGE_ICE_CAP,x+120,y+125);ground.DrawImage(IMAGE_ICE,x+135,y+125);}
 }
 
@@ -394,6 +390,8 @@ void AlmanacDialog::DrawIndex(Graphics* g)
 	{
 		Graphics aZombieGraphics = Graphics(*g);
 		mZombie->BeginDraw(&aZombieGraphics);
+		Graphics aShadowGraphics(aZombieGraphics);
+		mZombie->DrawShadow(&aShadowGraphics);
 		mZombie->Draw(visualNowNs, &aZombieGraphics);
 	}
 }

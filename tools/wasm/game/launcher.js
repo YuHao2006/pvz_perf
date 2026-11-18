@@ -318,6 +318,15 @@ async function preparePersistentFiles(){
  try{await fixLocalLevelSaves()}finally{(await saveToolsReady).releaseSaveTools()}
  progressStorage.watchProfileWrites();
 }
+const standardToy=document.getElementById('standard-toy');
+standardToy.onclick=event=>{
+ if(webConfig.bypassBilibiliChecks||typeof globalThis.toy?.navigate!=='function')return;
+ event.preventDefault();
+ globalThis.toy.navigate({type:'toy',id:'pvz_perf'}).catch(()=>{
+  standardToy.onclick=null;
+  document.getElementById('standard-toy-status').textContent='请再次点击“打开普通版”，使用网页链接进入。';
+ });
+};
 const rewardStatus=document.getElementById('reward-status');
 document.getElementById('coin-video').href='https://www.bilibili.com/video/'+webConfig.rewardVideoBvid+'/';
 document.getElementById('coin-video').onclick=event=>{

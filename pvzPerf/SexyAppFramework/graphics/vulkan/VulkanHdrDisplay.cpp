@@ -18,7 +18,9 @@ VulkanHdrDisplayInfo QueryVulkanHdrDisplay(NativeMonitorHandle monitor) {
     try {
         Apartment apartment;
         using namespace winrt::Windows::Graphics::Display;
-        auto factory=winrt::get_activation_factory<DisplayInformation,IDisplayInformationStaticsInterop>();
+        winrt::com_ptr<IDisplayInformationStaticsInterop> factory;
+        const winrt::hstring className{winrt::name_of<DisplayInformation>()};
+        winrt::check_hresult(RoGetActivationFactory(reinterpret_cast<HSTRING>(winrt::get_abi(className)), __uuidof(IDisplayInformationStaticsInterop), factory.put_void()));
         DisplayInformation display{nullptr};
         winrt::check_hresult(factory->GetForMonitor(monitor,winrt::guid_of<DisplayInformation>(),winrt::put_abi(display)));
         const auto color=display.GetAdvancedColorInfo();

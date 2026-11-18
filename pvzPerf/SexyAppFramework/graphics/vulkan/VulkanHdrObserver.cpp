@@ -109,7 +109,10 @@ struct VulkanHdrDisplayObserver::Impl {
         if (native==target && !force) return;
         Invoke([s=state,target] {
             s->Unbind();
-            auto factory=winrt::get_activation_factory<DisplayInformation,IDisplayInformationStaticsInterop>();
+            // This observer can outlive an earlier COM apartment. Acquire a fresh factory on its dispatcher.
+            winrt::com_ptr<IDisplayInformationStaticsInterop> factory;
+            const winrt::hstring className{winrt::name_of<DisplayInformation>()};
+            winrt::check_hresult(RoGetActivationFactory(reinterpret_cast<HSTRING>(winrt::get_abi(className)), __uuidof(IDisplayInformationStaticsInterop), factory.put_void()));
             winrt::check_hresult(factory->GetForMonitor(target,winrt::guid_of<DisplayInformation>(),winrt::put_abi(s->display)));
             const auto binding=s->binding;
             s->token=s->display.AdvancedColorInfoChanged([weak=std::weak_ptr<State>(s),binding](auto const& sender,auto const&) noexcept {

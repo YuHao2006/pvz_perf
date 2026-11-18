@@ -22,12 +22,14 @@ export async function authorizeReward(config,provideToy){
 export async function authorizeFullUnlock(config,provideToy){
  if(config.bypassBilibiliChecks===true)return;
  const bvid=config.unlockVideoBvid;
- if(!/^BV[0-9A-Za-z]{10}$/.test(bvid||'') || bvid===config.rewardVideoBvid)
+ const videoConfigured=bvid!=null && bvid!=='';
+ if(videoConfigured && (!/^BV[0-9A-Za-z]{10}$/.test(bvid) || bvid===config.rewardVideoBvid))
   throw Error('全解锁视频尚未开放。');
  const toy=await provideToy();
  const relation=await toy.getAuthorRelation();
  if(relation?.status!=='ok'||relation.data?.isFollowing!==true)
   throw Error('请先关注作者，再领取全解锁。');
+ if(!videoConfigured)return;
  const result=await toy.getVideoUserActions({videos:[{bvid}]});
  const item=result?.items?.find(entry=>entry.bvid===bvid && entry.status==='ok');
  if(!['ok','partial'].includes(result?.status)||!item||

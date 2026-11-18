@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {authorizeReward} from './game/rewards.js';
+import {authorizeReward,authorizeFullUnlock} from './game/rewards.js';
 const bvid='BV1hV4P6PEDc',config={bypassBilibiliChecks:false,rewardVideoBvid:bvid};
 let calls=0;
 await authorizeReward({bypassBilibiliChecks:true},async()=>{++calls;throw Error('Offline contacted SDK')});
@@ -15,3 +15,12 @@ await authorizeReward(config,async()=>({getAuthorRelation:async()=>{throw Error(
 await authorizeReward(config,async()=>({getVideoUserActions:async()=>({status:'partial',items:[{bvid,status:'ok',coinCount:2}]})}));
 await assert.rejects(authorizeReward({...config,rewardVideoBvid:''},async()=>response(2)),/BV/);
 console.log('PASS: author or two coins on the exact configured BV; following, one coin, wrong video and failed statuses do not grant saves; offline calls no SDK');
+
+const following=async()=>({status:'ok',data:{isFollowing:true}});
+await authorizeFullUnlock({...config,unlockVideoBvid:''},async()=>({getAuthorRelation:following}));
+await assert.rejects(authorizeFullUnlock(config,async()=>({getAuthorRelation:async()=>({status:'ok',data:{isFollowing:false}})})),/关注/);
+const unlockVideoBvid='BV0000000001',videoConfig={...config,unlockVideoBvid};
+for(const liked of [false,true]){
+ const check=authorizeFullUnlock(videoConfig,async()=>({getAuthorRelation:following,getVideoUserActions:async()=>({status:'ok',items:[{status:'ok',bvid:unlockVideoBvid,liked,favorited:true,coinCount:1}]})}));
+ if(liked)await check;else await assert.rejects(check,/点赞/);
+}

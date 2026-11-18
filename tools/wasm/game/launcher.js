@@ -78,6 +78,7 @@ const saveRoot='/persist/development-v331';
 const storageKey='pvz_perf_web_launcher_v1';
 // Distribution policy is read once, outside the game loop and user preferences.
 const webConfig=window.PVZWebConfig;
+if(webConfig.unlockVideoBvid)document.getElementById('unlock-requirement').textContent='需关注作者，并给指定视频点赞、投币、收藏。';
 if(typeof webConfig?.bypassBilibiliChecks!=='boolean')throw Error('缺少有效的 web-config.js 配置');
 const fixedMobileRate=mobileUA&&!webConfig.bypassBilibiliChecks;
 let fpsTimer=0;

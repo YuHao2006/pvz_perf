@@ -2,9 +2,9 @@
 
 基于 [PvZ-Portable](https://github.com/wszqkzqk/PvZ-Portable) 修改，继续优化《植物大战僵尸》的 CPU 热路径、资源装载、图形提交和跨平台输入。游戏行为以零售 1073 为主要核对依据。
 
-**高清分支说明：当前高清版（发行2×／开发4×）尚未实现按场景动态加载、卸载高清纹理，不属于已完成低显存适配的版本。** 本分支专属的加载策略、显存计算与4×／2×包定位见[高清资源加载与显存说明](docs/high-resolution/resource-loading.md)；该说明不适用于普通版 `main`。
+**高清分支说明：当前高清版（2×／4×）尚未实现按场景动态加载、卸载高清纹理，不属于已完成低显存适配的版本。** 本分支专属的加载策略、显存计算与4×／2×包定位见[高清资源加载与显存说明](docs/high-resolution/resource-loading.md)；该说明不适用于普通版 `main`。
 
-**本高清分支发行版：[v4.1](https://github.com/YuHao2006/pvz_perf/releases/tag/v4.1)，仅含 Windows 10／Vulkan 1.3 和 Android 14／Vulkan 1.3 两个原生包，均携带2× PAK64。高清网页版暂缓发布。普通版见 `main` 分支。**
+**高清分支 [v4.1.1](https://github.com/YuHao2006/pvz_perf/releases/tag/v4.1.1) 提供 Windows 10 Vulkan 1.3、Android 14 Vulkan 1.3（2× 与 4×）、独立 4× PAK64 和完美存档。普通版见 main 分支。**
 
 版本号采用三段规则：**第一个数表示破坏性更新，第二个数表示功能更新，第三个数表示 bug 修复**。兼容性以各版发行说明为准。
 
@@ -14,13 +14,13 @@
 | --- | --- |
 | `x64-win10-vulkan1.3` | Windows 10 x64、Vulkan 1.3 及所需 descriptor indexing 能力 |
 | `arm64-android14-vulkan1.3` | Android 14、Armv9-A、Vulkan 1.3 及所需 descriptor indexing 能力；不要求 SVE/SVE2 |
-| 高清网页版 | 暂缓发布，本次不提供网页附件 |
+| 高清网页版 | 独立构建，仅支持 wasm64、SIMD128 和 WebGPU，平台上线另行安排 |
 
 下载入口：[GitHub Releases](https://github.com/YuHao2006/pvz_perf/releases)。Windows ZIP 完整解压到可写目录后运行 `pvz_perf.exe`；需要兼容的 VC++ x64 运行库。Android APK 已包含资源，不需要另拷数据包或在手机安装 Java。设备满足系统版本还不够，CPU、驱动和所需图形格式也必须满足对应要求。
 
-发行附件同时提供完美用户档、统一无尽基准、图集布局缓存和校验清单。完美档包含坚果包扎术。不要用个人进度覆盖仓库的性能基准。
+发行附件提供完美用户档、无尽基准和校验清单。完美档包含坚果包扎术。不要用个人进度覆盖仓库的性能基准。
 
-**v4.0.0 是破坏性更新，当前存档格式为 DAT64 v5.1 / schema `0x10747`。** 原生版与网页版通过独立的 DataFixerUpper（DFU）模块自动升级历史 DAT64 v4，并修复已确认的旧植物攻击动画卡死。正确的 v5.1 不执行旧植物动画修复扫描；v4.0.2 在读档冷路径恢复已确认的生存换轮卡档，不改变格式。原版 DAT 可用附带转换器手动转换；未发布的 v3、v5.0 中间格式不支持。程序、DFU、shader、PAK64 必须成套更新。见[存档转换](docs/DAT-DAT64-CONVERSION.md)与[发行说明](docs/releases/v4.0.3.md)。
+**v4.0.0 是破坏性更新，当前存档格式为 DAT64 v5.1 / schema `0x10747`。** 原生版与网页版通过独立的 DataFixerUpper（DFU）模块自动升级历史 DAT64 v4，并修复已确认的旧植物攻击动画卡死。正确的 v5.1 不执行旧植物动画修复扫描；v4.0.2 在读档冷路径恢复已确认的生存换轮卡档，不改变格式。原版 DAT 可用附带转换器手动转换；未发布的 v3、v5.0 中间格式不支持。程序、DFU、shader、PAK64 必须成套更新。见[存档转换](docs/DAT-DAT64-CONVERSION.md)与[发行说明](docs/releases/v4.1.1.md)。
 
 ## 设置与存档
 

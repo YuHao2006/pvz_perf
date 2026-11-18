@@ -370,23 +370,8 @@ std::optional<VkExtent2D> VulkanContext::QuerySwapchainExtent(VkSurfaceCapabilit
     if (!drawable.width || !drawable.height)
         return std::nullopt;
     VK_CHECK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice,surface,&caps));
-    const auto extent = ChooseVulkanSurfaceExtent(caps,static_cast<int>(drawable.width),
-                                                static_cast<int>(drawable.height));
-#if defined(__ANDROID__)
-    if (!extent) return std::nullopt;
-    // Android WSI scales swapchain images to the surface. Submit at the game's
-    // native 600-pixel height, preserving the surface aspect and letterboxing.
-    // Do not resize ANativeWindow: touch/client coordinates stay in screen pixels.
-    constexpr unsigned int nativeHeight = 600;
-    const auto nativeWidth = (static_cast<unsigned long long>(extent->width) * nativeHeight +
-                              extent->height / 2) / extent->height;
-    if (nativeWidth < caps.minImageExtent.width || nativeWidth > caps.maxImageExtent.width ||
-        nativeHeight < caps.minImageExtent.height || nativeHeight > caps.maxImageExtent.height)
-        throw std::runtime_error("Android surface cannot present the native game resolution");
-    return VkExtent2D{static_cast<unsigned int>(nativeWidth),nativeHeight};
-#else
-    return extent;
-#endif
+    return ChooseVulkanSurfaceExtent(caps,static_cast<int>(drawable.width),
+                                     static_cast<int>(drawable.height));
 }
 
 void VulkanContext::CreateSwapchain(const VkSurfaceCapabilitiesKHR& caps, VkExtent2D extent) {

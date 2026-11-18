@@ -19,6 +19,8 @@
 #include <cmath>
 #include <fstream>
 #include <stdexcept>
+#include <string_view>
+#include <vector>
 #include <utility>
 
 using namespace Sexy;
@@ -76,12 +78,8 @@ RECT ClientRect(HWND window) {
     if(!GetClientRect(window,&rect)) WindowFailure("GetClientRect");
     return rect;
 }
-WindowTrackLimits WindowClientLimits(const SexyAppBase& app) {
-    int height=1200;
-    auto limits=WindowTrackLimits::FromScaleOutputHeight(app.mLandscapeUI?std::max(600,height):height);
-    if(app.mLandscapeUI)limits.minimumWidth=int((890LL*limits.height+300)/600);
-    return limits;
-}
+constexpr int MinClientWidth=800, MinClientHeight=600;
+constexpr int MaxClientWidth=5600, MaxClientHeight=2400;
 Point LogicalMouse(SexyAppBase& app,double x,double y) {
     int sx=0,sy=0;
     app.MapWindowMouse(x,y,sx,sy);
@@ -129,6 +127,17 @@ void SexyAppBase::MakeWindow() {
         mPreferredX<0?CW_USEDEFAULT:mPreferredX,mPreferredY<0?CW_USEDEFAULT:mPreferredY,
         bounds.right-bounds.left,bounds.bottom-bounds.top,nullptr,nullptr,gHInstance,this);
     if(!mHWnd) WindowFailure("CreateWindowEx");
+#if defined(PVZ_GPU_VULKAN) || defined(PVZ_GPU_D3D12)
+    if (mScaleHDREnabled) {
+        try {
+            mScaleHDREnabled = QueryVulkanHdrDisplay(TargetMonitor()).hdr;
+        } catch (const std::runtime_error& error) {
+            OutputDebugStringA(error.what());
+            mScaleHDREnabled = false;
+        }
+    }
+#endif
+
 #if defined(PVZ_GPU_D3D9)
     mScaleHDREnabled=false;
     mGpuContext=std::make_unique<GpuContext>(mHWnd,false,false);
@@ -155,6 +164,19 @@ void SexyAppBase::MakeWindow() {
         .presentMode=VK_PRESENT_MODE_MAILBOX_KHR,
         .clipped=VK_TRUE
     };
+    if (mScaleHDREnabled) {
+        uint32_t count = 0;
+        mScaleHDREnabled = false;
+        if (vkEnumerateInstanceExtensionProperties(nullptr, &count, nullptr) == VK_SUCCESS) {
+            std::vector<VkExtensionProperties> extensions(count);
+            if (vkEnumerateInstanceExtensionProperties(nullptr, &count, extensions.data()) == VK_SUCCESS)
+                mScaleHDREnabled = std::any_of(extensions.begin(), extensions.begin()+count,
+                    [](const auto& extension) {
+                        return std::string_view(extension.extensionName) ==
+                            VK_EXT_SWAPCHAIN_COLOR_SPACE_EXTENSION_NAME;
+                    });
+        }
+    }
     if(mScaleHDREnabled) {
         init.extraExtensions.push_back(VK_EXT_SWAPCHAIN_COLOR_SPACE_EXTENSION_NAME);
         swapchain.imageFormat=VK_FORMAT_R16G16B16A16_SFLOAT;
@@ -259,13 +281,11 @@ DEVMODEW SexyAppBase::TargetVideoMode() const {
 void SexyAppBase::ResizeWindowClient(int width,int height) {
     if(width<=0 || height<=0) throw std::invalid_argument("Invalid window client size");
     if(mNativeFullscreen) throw std::logic_error("Cannot resize a fullscreen client as a window");
-    auto limits=WindowClientLimits(*this);
-    // WarmScalePipelinesBeforeShow resizes the hidden window a second time.
-    // Keep the chosen monitor ratio while applying its prepared output height.
-    width=mWindowClientWidth>0?mWindowClientWidth:WindowStartupSize::FromMonitor(
-        nativeStartupViewport.width,nativeStartupViewport.height,limits.height).width;
-    width=limits.ConstrainWidth(width);
-    height=limits.height;
+    width=std::clamp(mWindowClientWidth>0 ? mWindowClientWidth :
+        WindowStartupSize::FromMonitor(nativeStartupViewport.width,nativeStartupViewport.height,1200).width,
+        MinClientWidth,MaxClientWidth);
+    height=std::clamp(mWindowClientHeight>0 ? mWindowClientHeight : 1200,
+        MinClientHeight,MaxClientHeight);
     RECT rect{0,0,width,height};
     const auto style=DWORD(GetWindowLongPtrW(mHWnd,GWL_STYLE));
     const auto exStyle=DWORD(GetWindowLongPtrW(mHWnd,GWL_EXSTYLE));
@@ -336,6 +356,7 @@ void SexyAppBase::UpdateWindowGeometry() {
     if(!mNativeFullscreen && mNativeWindowShown && !mPhysMinimized) {
         const auto client=ClientRect(mHWnd);
         mWindowClientWidth=int(client.right-client.left);
+        mWindowClientHeight=int(client.bottom-client.top);
     }
     auto& render=*mDDInterface->mRenderInterface;
     if(render.mSceneBegun) render.Flush();
@@ -958,20 +979,16 @@ LRESULT CALLBACK SexyAppBase::WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 		if (uMsg == WM_GETMINMAXINFO)
 		{
 			auto& info = *reinterpret_cast<MINMAXINFO*>(lParam);
-			const auto limits=WindowClientLimits(*aSexyApp);
-			info.ptMinTrackSize = {limits.minimumWidth, limits.height};
-			info.ptMinTrackSize.x += borderWidth;
-			info.ptMinTrackSize.y += border.bottom-border.top;
-			info.ptMaxTrackSize = {limits.maximumWidth+borderWidth,info.ptMinTrackSize.y};
-			return 0;
-		}
-		auto& rect = *reinterpret_cast<RECT*>(lParam);
-		const int proposedHeight=1200;
-		auto resizeLimits=WindowTrackLimits::FromScaleOutputHeight(proposedHeight);
-		if(aSexyApp->mLandscapeUI)resizeLimits.minimumWidth=int((890LL*proposedHeight+300)/600);
-		const int width = resizeLimits.ConstrainWidth(
-			int(rect.right - rect.left) - borderWidth) + borderWidth;
-		const int resizedWindowHeight=proposedHeight+border.bottom-border.top;
+            info.ptMinTrackSize = {MinClientWidth+borderWidth,MinClientHeight+border.bottom-border.top};
+            info.ptMaxTrackSize = {MaxClientWidth+borderWidth,MaxClientHeight+border.bottom-border.top};
+            return 0;
+        }
+        auto& rect = *reinterpret_cast<RECT*>(lParam);
+        const int borderHeight = border.bottom - border.top;
+        const int width = std::clamp(int(rect.right-rect.left)-borderWidth,
+            MinClientWidth,MaxClientWidth)+borderWidth;
+        const int resizedWindowHeight = std::clamp(int(rect.bottom-rect.top)-borderHeight,
+            MinClientHeight,MaxClientHeight)+borderHeight;
 		if (wParam == WMSZ_LEFT || wParam == WMSZ_TOPLEFT || wParam == WMSZ_BOTTOMLEFT)
 			rect.left = rect.right - width;
 		else
@@ -1082,8 +1099,8 @@ LRESULT CALLBACK SexyAppBase::WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 		{
 			const auto& rect = *reinterpret_cast<const RECT*>(lParam);
 			const auto client = ClientRect(hWnd);
-			const auto limits = WindowClientLimits(*aSexyApp);
-			RECT bounds{0, 0, limits.ConstrainWidth(client.right), limits.height};
+			RECT bounds{0, 0, std::clamp(int(client.right),MinClientWidth,MaxClientWidth),
+                std::clamp(int(client.bottom),MinClientHeight,MaxClientHeight)};
 			if (!NativeWindowsWindowApi::AdjustClientRect(bounds,
 				DWORD(GetWindowLongPtrW(hWnd, GWL_STYLE)),
 				DWORD(GetWindowLongPtrW(hWnd, GWL_EXSTYLE)), hWnd))

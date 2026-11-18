@@ -47,6 +47,50 @@ namespace {
 // Each frame slot owns one fixed geometry allocation; capacity exhaustion is an error.
 constexpr unsigned int kFrameVertexCapacity = 65536;
 constexpr int kScenePixelScale = 2;
+
+VulkanClip FitGameSceneToSurface(int sceneWidth, int sceneHeight, int width, int height)
+{
+    // The game viewport rounds width to a logical pixel. The matching surface
+    // ratio can differ by half a logical pixel without needing a letterbox.
+    const auto difference = int64_t(width)*sceneHeight - int64_t(height)*sceneWidth;
+    if (difference*2 >= -int64_t(height) && difference*2 <= int64_t(height))
+        return {0,0,width,height};
+    return FitSceneToSurface(sceneWidth,sceneHeight,width,height);
+}
+
+
+VulkanClip ScenePixelExtent(const VulkanContext& window, int width, int height)
+{
+#if defined(__ANDROID__)
+    if (window.swapchainExtent.width && window.swapchainExtent.height)
+        return FitGameSceneToSurface(width, height,
+            int(window.swapchainExtent.width), int(window.swapchainExtent.height));
+#else
+    (void)window;
+#endif
+    return {0, 0, width*kScenePixelScale, height*kScenePixelScale};
+}
+
+VkRect2D ScaleSceneScissor(VkRect2D rect, int width, int height, int pixelWidth, int pixelHeight)
+{
+#if defined(__ANDROID__)
+    const auto scale = [](int64_t edge, int pixels, int logical) {
+        return int32_t(edge*pixels/logical);
+    };
+    const auto left = scale(rect.offset.x,pixelWidth,width);
+    const auto top = scale(rect.offset.y,pixelHeight,height);
+    const auto right = scale(int64_t(rect.offset.x)+rect.extent.width,pixelWidth,width);
+    const auto bottom = scale(int64_t(rect.offset.y)+rect.extent.height,pixelHeight,height);
+    return {{left,top},{uint32_t(right-left),uint32_t(bottom-top)}};
+#else
+    const int scale = pixelWidth == width ? 1 : kScenePixelScale;
+    (void)height;
+    (void)pixelHeight;
+    return {{rect.offset.x*scale,rect.offset.y*scale},
+        {rect.extent.width*scale,rect.extent.height*scale}};
+#endif
+}
+
 constexpr VkDeviceSize kFrameVertexBytes = VkDeviceSize{kFrameVertexCapacity} * sizeof(VulkanVertex);
 #if defined(PVZ_VULKAN_SPRITE_EXPERIMENT)
 struct PackedColorVertex {
@@ -1327,7 +1371,8 @@ void VulkanRenderer::Impl::Initialize(const std::string& vsPath, const std::stri
     VK_REQUIRE(vkAllocateCommandBuffers(device, &command, &imageCommand));
     VK_REQUIRE(vkCreateFence(device, &fence, nullptr, &imageFence));
 
-    scene = Image(width*kScenePixelScale, height*kScenePixelScale, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT |
+    const auto extent = ScenePixelExtent(window,width,height);
+    scene = Image(extent.width, extent.height, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT |
         VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, false);
     VkAttachmentDescription attachment{};
     attachment.format = VK_FORMAT_B8G8R8A8_UNORM;
@@ -2586,8 +2631,10 @@ void VulkanRenderer::Impl::AppendRun(DrawStream* stream, VkDeviceSize offset, ui
     if (pendingRun.count != 0 && (aVpChange || aScChange || aPlChange || aDsChange))
         FlushPendingRun(cmd);
     if (aVpChange) {
-        const int pixelScale=targetPassOpen?(renderImage?renderImage->pixelScale:kScenePixelScale):1;
-        const VkViewport viewport{0,0,static_cast<float>(vw*pixelScale),static_cast<float>(vh*pixelScale),0,1};
+        const int pixelScale=targetPassOpen && renderImage ? renderImage->pixelScale : 1;
+        const bool mainScene=targetPassOpen && !renderImage;
+        const VkViewport viewport{0,0,float(mainScene ? scene->width : vw*pixelScale),
+            float(mainScene ? scene->height : vh*pixelScale),0,1};
         vkCmdSetViewport(cmd,0,1,&viewport);
         const float extent[]={static_cast<float>(vw),static_cast<float>(vh)};
         vkCmdPushConstants(cmd,
@@ -2598,8 +2645,10 @@ void VulkanRenderer::Impl::AppendRun(DrawStream* stream, VkDeviceSize offset, ui
     }
     if (aScChange) {
         auto physicalScissor=scissor;
-        if(targetPassOpen) {
-            const int scale=renderImage?renderImage->pixelScale:kScenePixelScale;
+        if (targetPassOpen && !renderImage)
+            physicalScissor = ScaleSceneScissor(scissor,vw,vh,scene->width,scene->height);
+        else if (targetPassOpen) {
+            const int scale=renderImage->pixelScale;
             physicalScissor.offset.x*=scale;
             physicalScissor.offset.y*=scale;
             physicalScissor.extent.width*=scale;
@@ -2831,7 +2880,6 @@ void VulkanRenderer::SubmitPool(VulkanTexture* texture,const GpuPoolParams& p) {
     const auto top=std::max<int64_t>(0,p.clip.y);
     const int logicalWidth=s.renderImage?output->drawingWidth:s.width;
     const int logicalHeight=s.renderImage?output->drawingHeight:s.height;
-    const int pixelScale=s.renderImage?output->pixelScale:kScenePixelScale;
     const auto right=std::min<int64_t>(logicalWidth,int64_t(p.clip.x)+p.clip.width);
     const auto bottom=std::min<int64_t>(logicalHeight,int64_t(p.clip.y)+p.clip.height);
     if (right<=left || bottom<=top) return;
@@ -2847,8 +2895,10 @@ void VulkanRenderer::SubmitPool(VulkanTexture* texture,const GpuPoolParams& p) {
     texture->lastDraw=s.frameSerial;
     const auto& pipelines=s.renderImage ? s.poolImagePipelines : s.poolPipelines;
     const VkViewport viewport{0,0,float(output->width),float(output->height),0,1};
-    const VkRect2D scissor{{int32_t(left*pixelScale),int32_t(top*pixelScale)},
-        {uint32_t((right-left)*pixelScale),uint32_t((bottom-top)*pixelScale)}};
+    const VkRect2D logicalScissor{{int32_t(left),int32_t(top)},
+        {uint32_t(right-left),uint32_t(bottom-top)}};
+    const auto scissor = ScaleSceneScissor(logicalScissor,logicalWidth,logicalHeight,
+        output->width,output->height);
     vkCmdSetViewport(s.frame.cmd,0,1,&viewport);
     vkCmdSetScissor(s.frame.cmd,0,1,&scissor);
     vkCmdBindPipeline(s.frame.cmd,VK_PIPELINE_BIND_POINT_GRAPHICS,pipelines.at(size_t(p.blend)));
@@ -2987,15 +3037,16 @@ void VulkanRenderer::ResizeScene(int width, int height) {
     auto& s = *impl_;
     if (s.frame.valid || s.renderImage)
         throw std::logic_error("Resize the main Vulkan canvas between scenes");
-    if (s.width == width && s.height == height) return;
-    if (width <= 0 || height <= 0 ||
-        unsigned(width) > MaxImageDimension2D()/kScenePixelScale || unsigned(height) > MaxImageDimension2D()/kScenePixelScale)
+    const auto extent = ScenePixelExtent(s.window,width,height);
+    if (s.width == width && s.height == height &&
+        s.scene->width == extent.width && s.scene->height == extent.height) return;
+    if (unsigned(extent.width) > MaxImageDimension2D() || unsigned(extent.height) > MaxImageDimension2D())
         throw std::invalid_argument("Invalid Vulkan canvas size");
     s.FlushTextureUploads();
     if (s.transferOpen) s.FinishTransfer();
     s.CompleteTransfers();
     s.window.WaitForFrame();
-    auto next = s.Image(width*kScenePixelScale, height*kScenePixelScale, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT |
+    auto next = s.Image(extent.width, extent.height, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT |
         VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, false);
     VkFramebufferCreateInfo info{VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO};
     info.renderPass = s.scenePass;
@@ -3106,7 +3157,7 @@ VulkanClip VulkanRenderer::PresentRect(int fw,int fh) const {
         // User-defined output size: center and clip/letterbox, never rescale.
         return {(fw-int(image.width))/2,(fh-int(image.height))/2,int(image.width),int(image.height)};
     }
-    return FitSceneToSurface(s.width,s.height,fw,fh);
+    return FitGameSceneToSurface(s.width,s.height,fw,fh);
 }
 VulkanRenderer::ScaleCounts VulkanRenderer::GetScaleCounts() const {
     const auto& s=*impl_;

@@ -1,6 +1,7 @@
-﻿param(
+param(
     [string]$BuildDirectory = (Join-Path $PSScriptRoot '..\out\android-arm64'),
     [string]$PakFile = "",
+    [ValidateSet('','2x','4x')][string]$TexturePack = '',
     [string]$BassLibrary = '',
     [string]$OutputDirectory = '',
     [string]$JavaHome = $env:JAVA_HOME,
@@ -17,7 +18,7 @@ if (!$build) { throw "Android build directory does not exist: $BuildDirectory" }
 $build = $build.Path
 $cache = Get-Content -LiteralPath (Join-Path $build 'CMakeCache.txt') -Raw
 $legacy = $cache -match '(?m)^PVZ_VULKAN_LEGACY:BOOL=ON\r?$'
-$hdrTest = if ($cache -match '(?m)^PVZ_ANDROID_HDR_TEST:BOOL=ON\r?$') { 'true' } else { 'false' }
+$hdrTest = 'false'
 $platform = if ($legacy) { 'arm64-android7-vulkan1.0' } else { 'arm64-android14-vulkan1.3' }
 $minSdk = if ($legacy) { 24 } else { 34 }
 if ($legacy -and $cache -notmatch '(?m)^ANDROID_PLATFORM:[^=]+=android-24\r?$') {
@@ -26,6 +27,8 @@ if ($legacy -and $cache -notmatch '(?m)^ANDROID_PLATFORM:[^=]+=android-24\r?$') 
 if (!$OutputDirectory) { $OutputDirectory = Join-Path $root "out\$platform" }
 # Resolve while still in the caller's directory; Gradle runs after Push-Location.
 $OutputDirectory = [IO.Path]::GetFullPath([IO.Path]::Combine($PWD.Path, $OutputDirectory))
+if ($TexturePack -and !$PakFile) { throw 'Specify -PakFile for the selected HD texture pack.' }
+$packageVariant = if ($TexturePack) { "$platform-hd-$TexturePack" } else { $platform }
 if (!$PakFile) { $PakFile = Join-Path $build "Release\main.pak64" }
 if (!(Test-Path -LiteralPath $PakFile)) { throw "main.pak64 not found: $PakFile" }
 $project = Join-Path $root 'android'
@@ -54,7 +57,8 @@ foreach ($required in @('game_vs.spv', 'game_ps.spv', 'game_sprite_ps.spv', 'gam
     }
 }
 New-Item -ItemType Directory -Force -Path $assetDir | Out-Null
-Copy-Item -LiteralPath (Join-Path $root 'pvzPerf/SexyAppFramework/platform/android/default-scale.json') -Destination (Join-Path $assetDir 'scale.json') -Force
+$stagedLegacyScale = Join-Path $assetDir 'scale.json'
+if (Test-Path -LiteralPath $stagedLegacyScale -PathType Leaf) { Remove-Item -LiteralPath $stagedLegacyScale }
 New-Item -ItemType Directory -Force -Path $jniDir | Out-Null
 Copy-Item -LiteralPath $BassLibrary -Destination (Join-Path $jniDir 'libbass.so') -Force
 $bundledAssets = Join-Path $assetDir 'bundled-saves'
@@ -118,7 +122,7 @@ try {
     $archive = [IO.Compression.ZipFile]::OpenRead($apk)
     try {
         foreach ($entry in @('lib/arm64-v8a/libpvz_perf.so','lib/arm64-v8a/libbass.so',
-                'assets/main.pak64','assets/scale.json') + @($bundledNames | ForEach-Object { "assets/bundled-saves/$_" })) {
+                'assets/main.pak64') + @($bundledNames | ForEach-Object { "assets/bundled-saves/$_" })) {
             $file = $archive.GetEntry($entry)
             if (!$file -or $file.Length -eq 0) { throw "APK runtime dependency is missing or empty: $entry" }
         }
@@ -133,8 +137,8 @@ try {
         if (!$buildTools) { throw 'Android build-tools are required for APK signing.' }
         $key = Join-Path $env:USERPROFILE '.android\debug.keystore'
         if (!(Test-Path -LiteralPath $key)) { throw 'Development signing requires ~/.android/debug.keystore.' }
-        $aligned = Join-Path $OutputDirectory ("pvz_perf-$platform-aligned.apk")
-        $signed = Join-Path $OutputDirectory ("pvz_perf-$platform-" + $Configuration.ToLower() + '.apk')
+        $aligned = Join-Path $OutputDirectory ("pvz_perf-$packageVariant-aligned.apk")
+        $signed = Join-Path $OutputDirectory ("pvz_perf-$packageVariant-" + $Configuration.ToLower() + '.apk')
         & (Join-Path $buildTools.FullName 'zipalign.exe') -P 16 -f 4 $apk $aligned
         if ($LASTEXITCODE -ne 0) { throw 'APK alignment failed.' }
         & (Join-Path $buildTools.FullName 'apksigner.bat') sign --ks $key --ks-key-alias androiddebugkey `
@@ -146,7 +150,7 @@ try {
         $apk=$signed
         $suffix=''
     }
-    $outputApk = Join-Path $OutputDirectory ("pvz_perf-" + $platform + '-' + $Configuration.ToLower() + $suffix + '.apk')
+    $outputApk = Join-Path $OutputDirectory ("pvz_perf-" + $packageVariant + '-' + $Configuration.ToLower() + $suffix + '.apk')
     if ([IO.Path]::GetFullPath($apk) -ne [IO.Path]::GetFullPath($outputApk)) {
         Copy-Item -LiteralPath $apk -Destination $outputApk -Force
     }

@@ -1343,6 +1343,9 @@ void SexyAppBase::WriteToRegistry()
     aDoc.SetBool("unlockAllLevels",mUnlockAllLevels);
 #if defined(__ANDROID__)
     aDoc.SetBool("hdr", false);
+#else
+    aDoc.SetBool("hdr", mHdrRequested);
+    aDoc.SetFloat("hdrStrength", mScaleHDRStrength);
 #endif
     // Persist slider percentages, not mixer gain. The original SFX slider's
     // full-scale gain is 0.65; both JSON fields still range from 0 to 100.
@@ -1352,6 +1355,7 @@ void SexyAppBase::WriteToRegistry()
 	aDoc.SetString("screenMode", mIsWindowed ? "windowed" : "fullscreen");
 #ifdef _WIN32
     aDoc.SetInt("windowWidth", mWindowClientWidth);
+    aDoc.SetInt("windowHeight", mWindowClientHeight);
 #endif
 	aDoc.SetInt("preferredX", mPreferredX);
 	aDoc.SetInt("preferredY", mPreferredY);
@@ -1745,7 +1749,8 @@ void SexyAppBase::ReadFromRegistry()
 	if (aDoc.Has("screenMode"))
 		mIsWindowed = LowerScaleText(aDoc.GetString("screenMode", "")) == "windowed";
 #ifdef _WIN32
-    mWindowClientWidth=int(std::clamp(aDoc.GetInt("windowWidth",0),0LL,16384LL));
+    mWindowClientWidth=int(std::clamp(aDoc.GetInt("windowWidth",0),0LL,5600LL));
+    mWindowClientHeight=int(std::clamp(aDoc.GetInt("windowHeight",0),0LL,2400LL));
 #endif
 	if (aDoc.Has("preferredX"))
 		mPreferredX = (int)aDoc.GetInt("preferredX", 0);
@@ -4452,37 +4457,28 @@ static std::string LowerScaleText(const std::string& theText)
 	return aResult;
 }
 
-// The legacy configuration filename now contains HDR settings only.
 void SexyAppBase::LoadHdrConfig()
 {
-    mScaleHDREnabled=false;
-    mScaleHDRPaperWhite=80.0f;
-    mScaleHDRMaxNits=1000.0f;
-    mScaleHDRReinhardPaperNits=0.0f;
-    mScaleHDRStrength=1.0f;
-    JsonDoc document;
-    const char* file=getenv("PVZ_SCALE_CONFIG_FILE");
-    if(!document.LoadFile(file?file:"scale.json")) {
-        if(document.mStatus==JsonDoc::LoadStatus::ParseError)
-            throw std::runtime_error("scale.json: "+document.mError);
-        return;
+#if !defined(__ANDROID__)
+    JsonDoc settings;
+    settings.LoadFile(SettingsPath());
+    mHdrRequested = settings.GetBool("hdr", false);
+    double strength = settings.GetFloat("hdrStrength", 1.0);
+    if (!settings.Has("hdr")) {
+        JsonDoc legacy;
+        if (legacy.LoadFile("scale.json") && legacy.GetType("HDR") == JsonDoc::Type::Object) {
+            mHdrRequested = legacy.GetBool("HDR/enable", true);
+            strength = legacy.GetFloat("HDR/strength", 1.0);
+        }
     }
-    if(document.GetType("HDR")!=JsonDoc::Type::Object)return;
-    mScaleHDREnabled=document.GetBool("HDR/enable",true);
-    if(document.Has("HDR/strength")) {
-        const double strength=document.GetFloat("HDR/strength",0.0);
-        if(document.GetType("HDR/strength")!=JsonDoc::Type::Number ||
-            !std::isfinite(strength) || strength<0.0 || strength>1.0)
-            throw std::runtime_error("HDR strength must be a finite number in [0,1]");
-        mScaleHDRStrength=float(strength);
-    }
+    mScaleHDREnabled = mHdrRequested;
+    if (!std::isfinite(strength) || strength < 0.0 || strength > 1.0)
+        throw std::runtime_error("HDR strength must be a finite number in [0,1]");
+    mScaleHDRStrength = static_cast<float>(strength);
+#endif
 }
 
-
-// <HDR> 参数解析：亮度锚全部来自显示器运行时探测（与微软 AutoHDR 同源，
-// 查询使用独立于渲染 API 的 Windows AdvancedColorInfo；公式保留 legacy），
-// 不暴露、不回写 scale.json；启动读一次，之后接收系统通知而不轮询。strength 是 scale.json
-// 唯一暴露项（AutoHDRStrength 同义，默认 1）。
+// Display brightness anchors come from the active display.
 void SexyAppBase::ResolveHDRAutoParams()
 {
 #if (defined(PVZ_GPU_OPENGL) || defined(PVZ_GPU_WEBGL) || defined(PVZ_GPU_WEBGPU)) || defined(PVZ_GPU_D3D9)

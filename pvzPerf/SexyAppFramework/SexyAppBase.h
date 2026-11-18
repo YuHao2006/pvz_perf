@@ -396,6 +396,7 @@ public:
 	bool					mEnableWindowAspect;
 	Ratio					mWindowAspect;
     int mWindowClientWidth=0;
+    int mWindowClientHeight=0;
 	// scale.json 顶级 HDR 对象：启用时交换链切 HDR10/PQ（运行时不可切换，
 	// 仅启动时应用一次；请求后若显示器/Windows/交换链不满足则立即失败）。
 	// 唯一暴露项 = strength（AutoHDRStrength 同义，默认 1）。亮度锚
@@ -403,7 +404,8 @@ public:
 	// 运行时探测（微软 AutoHDR 同源，启动读一次，不轮询）。
 	// 渲染为 AutoHDR 复刻（dxgi.dll Sdr2HdrData 反汇编重建）；无饱和度
 	// 参数（Windows 校准色度矩阵已作用于全部内容）。
-	bool								mScaleHDREnabled = false;
+	bool mHdrRequested = false;
+    bool								mScaleHDREnabled = false;
 	float								mScaleHDRPaperWhite = 80.0f;   // nits ↔ PaperWhiteNits
 	float								mScaleHDRMaxNits = 1000.0f;    // nits ↔ MaxTVNits（私有查询/面板元数据）
 	float								mScaleHDRReinhardPaperNits = 0.0f; // nits ↔ ReinhardPaperWhiteNits（SDR 白公式）

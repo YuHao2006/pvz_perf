@@ -1,8 +1,4 @@
 {
-  "HDR": {
-    "enable": false,
-    "strength": 1.0
-  },
   "window": {
     "multiplier": 2,
     "effects": [

@@ -61,6 +61,10 @@ inline void UpdateWindowsHdr(State& state, App& app, FindMonitor&& findMonitor)
         }
         if (app.mHdrDisplayRevision == state.observer->Revision()) return;
         const auto snapshot = state.observer->Snapshot();
+        if (!snapshot.display.hdr) {
+            app.mHdrDisplayRevision = snapshot.revision;
+            return;
+        }
         const auto params = snapshot.display.Params(app.mScaleHDRStrength);
         auto& render = *app.mDDInterface->mRenderInterface;
         render.Flush();

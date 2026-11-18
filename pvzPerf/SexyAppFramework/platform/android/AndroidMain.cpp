@@ -257,13 +257,6 @@ void android_main(android_app* state) {
             if (!settings.SaveFile(settingsPath))
                 throw std::runtime_error("Cannot create settings: " + settingsPath);
         }
-        const auto scalePath = userDirectory / "scale.json";
-        if (!std::filesystem::exists(scalePath)) {
-            const auto temporary = userDirectory / "scale.json.tmp";
-            ExtractAsset(state->activity->assetManager, "scale.json", temporary);
-            std::filesystem::rename(temporary, scalePath);
-        }
-        setenv("PVZ_SCALE_CONFIG_FILE", scalePath.string().c_str(), 1);
         if (!std::filesystem::exists(userDirectory / "users.dat")) {
             for (const char* name : {"user1.dat64", "game1_58.dat64", "users.dat"}) {
                 const std::string asset = std::string("bundled-saves/") + name;

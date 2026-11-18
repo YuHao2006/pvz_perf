@@ -64,12 +64,16 @@ NewOptionsDialog::NewOptionsDialog(LawnApp* theApp, bool theFromGameSelector) :
 #if defined(__ANDROID__)
     mFullscreenCheckbox = MakeNewCheckbox(NewOptionsDialog::NewOptionsDialog_Fullscreen, this, false);
     mFullscreenCheckbox->mDisabled = true;
+    mFullscreenCheckbox->SetVisible(false);
 #else
     mFullscreenCheckbox = MakeNewCheckbox(NewOptionsDialog::NewOptionsDialog_Fullscreen, this, !theApp->mIsWindowed);
 #endif
-    // Keep the existing UI slot for a future setting, without a scaling path.
-    mScaleCheckbox = MakeNewCheckbox(NewOptionsDialog::NewOptionsDialog_Scale, this, false);
-    mScaleCheckbox->mDisabled = true;
+    constexpr bool canConfigureHdr = BuildConfig::Windows == BuildConfig::WindowsApi::Win10 &&
+        (BuildConfig::Graphics == BuildConfig::GraphicsApi::Vulkan ||
+            BuildConfig::Graphics == BuildConfig::GraphicsApi::D3d12);
+    mHdrCheckbox = MakeNewCheckbox(NewOptionsDialog::NewOptionsDialog_Hdr, this,
+        canConfigureHdr && theApp->mHdrRequested);
+    mHdrCheckbox->mDisabled = !canConfigureHdr;
 
     if (mFromGameSelector)
     {
@@ -111,7 +115,7 @@ NewOptionsDialog::~NewOptionsDialog()
     delete mMusicVolumeSlider;
     delete mSfxVolumeSlider;
     delete mFullscreenCheckbox;
-    delete mScaleCheckbox;
+    delete mHdrCheckbox;
     delete mAlmanacButton;
     delete mRestartButton;
     delete mBackToMainButton;
@@ -135,7 +139,7 @@ void NewOptionsDialog::AddedToManager(Sexy::WidgetManager* theWidgetManager)
     AddWidget(mMusicVolumeSlider);
     AddWidget(mSfxVolumeSlider);
     AddWidget(mFullscreenCheckbox);
-    AddWidget(mScaleCheckbox);
+    AddWidget(mHdrCheckbox);
     AddWidget(mBackToGameButton);
 }
 
@@ -147,7 +151,7 @@ void NewOptionsDialog::RemovedFromManager(Sexy::WidgetManager* theWidgetManager)
     RemoveWidget(mMusicVolumeSlider);
     RemoveWidget(mSfxVolumeSlider);
     RemoveWidget(mFullscreenCheckbox);
-    RemoveWidget(mScaleCheckbox);
+    RemoveWidget(mHdrCheckbox);
     RemoveWidget(mBackToMainButton);
     RemoveWidget(mBackToGameButton);
     RemoveWidget(mRestartButton);
@@ -165,10 +169,10 @@ void NewOptionsDialog::Resize(int theX, int theY, int theWidth, int theHeight)
     mBackToMainButton->Resize(mRestartButton->mX, mRestartButton->mY + 43, 209, 46);
     mBackToGameButton->Resize(30, 381, mBackToGameButton->mWidth, mBackToGameButton->mHeight);
 
-    mScaleCheckbox->Resize(283, 175, 46, 45);
+    mHdrCheckbox->Resize(283, 175, 46, 45);
     if (mFromGameSelector)
     {
-        mScaleCheckbox->mY += 15;
+        mHdrCheckbox->mY += 15;
         mMusicVolumeSlider->mY += 5;
         mSfxVolumeSlider->mY += 10;
         mFullscreenCheckbox->mY += 20;
@@ -198,8 +202,9 @@ void NewOptionsDialog::Draw(Sexy::Graphics* g)
 
     TodDrawString(g, ("Music"), 186, 140 + aMusicOffset, FONT_DWARVENTODCRAFT18, aTextColor, DrawStringJustification::DS_ALIGN_RIGHT);
     TodDrawString(g, ("Sound FX"), 186, 167 + aSfxOffset, FONT_DWARVENTODCRAFT18, aTextColor, DrawStringJustification::DS_ALIGN_RIGHT);
-    TodDrawString(g, "Custom Scale", 274, 197 + (mFromGameSelector ? 15 : 0), FONT_DWARVENTODCRAFT18, Color(150, 150, 150), DrawStringJustification::DS_ALIGN_RIGHT);
-    TodDrawString(g, gStr.OPTIONS_DISPLAY_MODE, 274, 229 + aFullScreenOffset, FONT_DWARVENTODCRAFT18, aTextColor, DrawStringJustification::DS_ALIGN_RIGHT);
+    TodDrawString(g, mHdrCheckbox->mDisabled ? "HDR" : "HDR (Restart)", 274, 197 + (mFromGameSelector ? 15 : 0), FONT_DWARVENTODCRAFT18, mHdrCheckbox->mDisabled ? Color(150, 150, 150) : aTextColor, DrawStringJustification::DS_ALIGN_RIGHT);
+    if (mFullscreenCheckbox->mVisible)
+        TodDrawString(g, gStr.OPTIONS_DISPLAY_MODE, 274, 229 + aFullScreenOffset, FONT_DWARVENTODCRAFT18, aTextColor, DrawStringJustification::DS_ALIGN_RIGHT);
 }
 
 //0x45CF50
@@ -228,6 +233,12 @@ void NewOptionsDialog::CheckboxChecked(int theId, bool checked)
 {
     switch (theId)
     {
+    case NewOptionsDialog::NewOptionsDialog_Hdr:
+        if (!mHdrCheckbox->mDisabled) {
+            mApp->mHdrRequested = checked;
+            mApp->WriteToRegistry();
+        }
+        break;
     case NewOptionsDialog::NewOptionsDialog_Fullscreen:
 #if defined(__ANDROID__)
         // This widget is HDR on Android. Never feed it into windowed/fullscreen.

@@ -159,10 +159,10 @@ def package(args):
         "All DAT64 v3 intermediate inputs and targets are unsupported.\n"
         "The game uses the Microsoft Visual C++ x64 runtime (/MD); the converter is /MT.\n"
         "CRT DLLs are not bundled. Install a compatible Microsoft Visual C++ x64 runtime on the host.\n"
-        + ("External scaling effects are configured in scale.json; see effects/README.md.\n"
+        + ("HDR is configured in settings.json. Change HDR in Options, then restart the game.\n"
            if modern else
            "Magpie effects and licenses are included for reference. This backend cannot run them.\n"
-           "scale.json disables HDR, external effects and custom scaling.\n")
+           "This backend runs in SDR.\n")
         + (f"Requires {api} and the game's bindless feature set.\n\n" if modern else
            f"Requires a vendor graphics driver supporting {api}; Microsoft Basic/GDI OpenGL is insufficient.\n"
            "Win7/old-GPU support requires the stated driver capabilities; real hardware coverage is limited.\n"

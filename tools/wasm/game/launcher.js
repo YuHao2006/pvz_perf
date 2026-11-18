@@ -432,7 +432,23 @@ async function boot(){
  // Reuse the normal WebGPU probe. A WebGL-only distribution may probe HD
  // separately without changing its available game runtimes or delaying startup.
  if(highResolutionLink(webConfig,memorySupported,simdSupported,true)){
-  const showHD=report=>{const url=highResolutionLink(webConfig,memorySupported,simdSupported,report.webgpu);if(url){const link=document.getElementById('high-resolution');link.href=url;link.hidden=false}};
+  const showHD=report=>{
+   const url=highResolutionLink(webConfig,memorySupported,simdSupported,report.webgpu);
+   if(!url)return;
+   const link=document.getElementById('high-resolution');
+   link.href=url;
+   link.hidden=false;
+   const target=new URL(url);
+   const slug=target.hostname==='www.bilibili.com' && /^\/toy\/([\w-]+)\/index\.html$/.exec(target.pathname)?.[1];
+   if(slug)link.onclick=event=>{
+    if(webConfig.bypassBilibiliChecks||typeof globalThis.toy?.navigate!=='function')return;
+    event.preventDefault();
+    globalThis.toy.navigate({type:'toy',id:slug}).catch(()=>{
+     link.onclick=null;
+     document.getElementById('reward-status').textContent='请再次点击“高清版”，使用网页链接进入。';
+    });
+   };
+  };
   if(config.webgpu)showHD(capabilities);
   else void detectGraphics(navigator.gpu,{webgpu:true,webgl:false}).then(showHD).catch(()=>{});
  }
